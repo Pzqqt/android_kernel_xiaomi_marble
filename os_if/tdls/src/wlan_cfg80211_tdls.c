@@ -33,9 +33,7 @@
 #include <qdf_mem.h>
 #include <wlan_utility.h>
 #include <wlan_reg_services_api.h>
-#ifdef QCA_SUPPORT_CP_STATS
 #include "wlan_cfg80211_mc_cp_stats.h"
-#endif
 
 #define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
 
@@ -684,7 +682,6 @@ fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 }
 
-#ifdef QCA_SUPPORT_CP_STATS
 static void wlan_cfg80211_update_tdls_peers_rssi(struct wlan_objmgr_vdev *vdev)
 {
 	int ret = 0, i;
@@ -706,11 +703,6 @@ static void wlan_cfg80211_update_tdls_peers_rssi(struct wlan_objmgr_vdev *vdev)
 
 	wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
 }
-#else
-static void wlan_cfg80211_update_tdls_peers_rssi(struct wlan_objmgr_vdev *vdev)
-{
-}
-#endif
 
 int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 				char *buf, int buflen)

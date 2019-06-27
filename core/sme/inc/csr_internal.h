@@ -180,14 +180,6 @@ enum csr_roam_wmstatus_changetypes {
 	eCsrDeauthenticated
 };
 
-enum csr_roam_stats_classtypes {
-	eCsrSummaryStats = 0,
-	eCsrGlobalClassAStats,
-	eCsrGlobalClassDStats,
-	csr_per_chain_rssi_stats,
-	eCsrMaxStats
-};
-
 enum csr_diagwlan_status_eventsubtype {
 	eCSR_WLAN_STATUS_CONNECT = 0,
 	eCSR_WLAN_STATUS_DISCONNECT
@@ -686,12 +678,6 @@ struct csr_roamstruct {
 	uint32_t numValidChannels;       /* total number of channels in CFG */
 	int32_t sPendingCommands;
 	qdf_mc_timer_t hTimerWaitForKey; /* support timeout for WaitForKey */
-#ifndef QCA_SUPPORT_CP_STATS
-	tCsrSummaryStatsInfo summaryStatsInfo;
-	tCsrGlobalClassAStatsInfo classAStatsInfo;
-	tCsrGlobalClassDStatsInfo classDStatsInfo;
-	struct csr_per_chain_rssi_stats_info  per_chain_rssi_stats;
-#endif
 	struct csr_timer_info WaitForKeyTimerInfo;
 	struct csr_roam_session *roamSession;
 	tCsrNeighborRoamControlInfo neighborRoamInfo[WLAN_MAX_VDEVS];

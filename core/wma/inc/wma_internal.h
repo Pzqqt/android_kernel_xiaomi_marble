@@ -32,17 +32,10 @@
 
 #define WMA_2_4_GHZ_MAX_FREQ  3000
 
-/* pdev vdev and peer stats*/
-#define FW_PDEV_STATS_SET 0x1
-#define FW_VDEV_STATS_SET 0x2
-#define FW_PEER_STATS_SET 0x4
-#define FW_RSSI_PER_CHAIN_STATS_SET 0x8
-
 /*AR9888/AR6320  noise floor approx value
  * similar to the mentioned the WMA
  */
 #define WMA_TGT_NOISE_FLOOR_DBM (-96)
-#define WMA_TGT_MAX_SNR         (WMA_TGT_NOISE_FLOOR_DBM * (-1))
 #define WMA_INVALID_PER_CHAIN_SNR  (0x80)
 #define WMA_INVALID_PER_CHAIN_RSSI (0xFF)
 

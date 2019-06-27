@@ -731,7 +731,6 @@ ht_vht_done:
 	return ret;
 }
 
-#ifdef QCA_SUPPORT_CP_STATS
 /**
  * wma_cp_stats_set_rate_flag() - set rate flags within cp_stats priv object
  * @wma: wma handle
@@ -756,9 +755,6 @@ static void wma_cp_stats_set_rate_flag(tp_wma_handle wma, uint8_t vdev_id)
 	ucfg_mc_cp_stats_set_rate_flags(vdev, iface->rate_flags);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 }
-#else
-static void wma_cp_stats_set_rate_flag(tp_wma_handle wma, uint8_t vdev_id) {}
-#endif
 
 /**
  * wma_set_bss_rate_flags() - set rate flags based on BSS capability

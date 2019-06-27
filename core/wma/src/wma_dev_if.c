@@ -6018,12 +6018,6 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 		goto fail_del_bss_ho_fail;
 	}
 
-	/* Free the allocated stats response buffer for the the session */
-	if (iface->stats_rsp) {
-		qdf_mem_free(iface->stats_rsp);
-		iface->stats_rsp = NULL;
-	}
-
 	if (iface->psnr_req) {
 		qdf_mem_free(iface->psnr_req);
 		iface->psnr_req = NULL;
@@ -6190,11 +6184,6 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		WMA_LOGE("%s vdev id %d is already deleted",
 				__func__, params->smesessionId);
 		goto out;
-	}
-	/*Free the allocated stats response buffer for the the session */
-	if (iface->stats_rsp) {
-		qdf_mem_free(iface->stats_rsp);
-		iface->stats_rsp = NULL;
 	}
 
 	if (iface->psnr_req) {

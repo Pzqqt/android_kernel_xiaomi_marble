@@ -317,10 +317,7 @@ struct sme_context {
 	/* linkspeed callback */
 	sme_link_speed_cb link_speed_cb;
 	void *link_speed_context;
-	/* get peer info callback */
-	void (*pget_peer_info_ind_cb)(struct sir_peer_info_resp *param,
-		void *pcontext);
-	void *pget_peer_info_cb_context;
+
 	/* get extended peer info callback */
 	void (*pget_peer_info_ext_ind_cb)(struct sir_peer_info_ext_resp *param,
 		void *pcontext);

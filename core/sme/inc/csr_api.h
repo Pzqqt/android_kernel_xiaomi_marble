@@ -1420,7 +1420,6 @@ QDF_STATUS csr_set_channels(struct mac_context *mac,
 const char *get_e_roam_cmd_status_str(eRoamCmdStatus val);
 const char *get_e_csr_roam_result_str(eCsrRoamResult val);
 const char *csr_phy_mode_str(eCsrPhyMode phy_mode);
-typedef void (*tCsrRssiCallback)(int8_t rssi, uint32_t staId, void *pContext);
 
 #ifdef FEATURE_WLAN_ESE
 typedef void (*tCsrTsmStatsCallback)(tAniTrafStrmMetrics tsmMetrics,

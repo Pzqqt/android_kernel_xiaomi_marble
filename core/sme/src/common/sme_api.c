@@ -1941,8 +1941,6 @@ static QDF_STATUS sme_process_antenna_mode_resp(struct mac_context *mac,
 QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct sir_peer_info *peer_stats;
-	struct sir_peer_info_resp *peer_info_rsp;
 
 	if (!pMsg) {
 		sme_err("Empty message for SME");
@@ -2094,23 +2092,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		break;
 	case eWNI_SME_STATS_EXT_EVENT:
 		status = sme_stats_ext_event(mac, pMsg->bodyptr);
-		qdf_mem_free(pMsg->bodyptr);
-		break;
-	case eWNI_SME_GET_PEER_INFO_IND:
-		if (mac->sme.pget_peer_info_ind_cb)
-			mac->sme.pget_peer_info_ind_cb(pMsg->bodyptr,
-				mac->sme.pget_peer_info_cb_context);
-		if (pMsg->bodyptr) {
-			peer_info_rsp = (struct sir_peer_info_resp *)
-							(pMsg->bodyptr);
-			peer_stats = (struct sir_peer_info *)
-							(peer_info_rsp->info);
-			if (peer_stats) {
-				mac->peer_rssi = peer_stats[0].rssi;
-				mac->peer_txrate = peer_stats[0].tx_rate;
-				mac->peer_rxrate = peer_stats[0].rx_rate;
-			}
-		}
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	case eWNI_SME_GET_PEER_INFO_EXT_IND:

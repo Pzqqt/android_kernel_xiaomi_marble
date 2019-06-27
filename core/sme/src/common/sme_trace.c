@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -85,8 +85,6 @@ static uint8_t *sme_trace_get_rx_msg_string(uint32_t code)
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_EXIT_WOWL);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_SET_KEY);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_REMOVE_KEY);
-		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_GET_STATS);
-		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_GET_RSSI);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_GET_CNTRYCODE);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_SET_CNTRYCODE);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_SET_CFGPRIVACY);

@@ -199,12 +199,6 @@
 
 #define WMA_VDEV_SET_KEY_WAKELOCK_TIMEOUT	WAKELOCK_DURATION_RECOMMENDED
 
-#define WMA_TGT_INVALID_SNR (0)
-#define WMA_TGT_IS_VALID_RSSI(x)  ((x) != 0xFF)
-
-#define WMA_TGT_IS_VALID_SNR(x)  ((x) >= 0 && (x) < WMA_TGT_MAX_SNR)
-#define WMA_TGT_IS_INVALID_SNR(x) (!WMA_TGT_IS_VALID_SNR(x))
-
 #define WMA_TX_Q_RECHECK_TIMER_WAIT      2      /* 2 ms */
 #define WMA_MAX_NUM_ARGS 8
 
@@ -735,7 +729,6 @@ struct roam_synch_frame_ind {
  * @key: GTK key
  * @uapsd_cached_val: uapsd cached value
  * @stats_rsp: stats response
- * @fw_stats_set: fw stats value
  * @del_staself_req: delete sta self request
  * @bss_status: bss status
  * @rate_flags: rate flags
@@ -801,8 +794,6 @@ struct wma_txrx_node {
 	wma_igtk_key_t key;
 #endif /* WLAN_FEATURE_11W */
 	uint32_t uapsd_cached_val;
-	tAniGetPEStatsRsp *stats_rsp;
-	uint8_t fw_stats_set;
 	void *del_staself_req;
 	bool is_del_sta_defered;
 	qdf_atomic_t bss_status;
@@ -957,7 +948,6 @@ struct wma_wlm_stats_data {
  * @pGetRssiReq: get RSSI request
  * @get_one_peer_info: When a "get peer info" request is active, is
  *   the request for a single peer?
- * @get_sta_peer_info: Is a "get peer info" request active?
  * @peer_macaddr: When @get_one_peer_info is true, the peer's mac address
  * @thermal_mgmt_info: Thermal mitigation related info
  * @enable_mc_list: To Check if Multicast list filtering is enabled in FW
@@ -994,10 +984,6 @@ struct wma_wlm_stats_data {
  * @old_hw_mode_index: Previous configured HW mode index
  * @new_hw_mode_index: Current configured HW mode index
  * @peer_authorized_cb: peer authorized hdd callback
- * @wow_unspecified_wake_count: Number of wake events which did not
- *   correspond to known wake events. Note that known wake events are
- *   tracked on a per-vdev basis via the struct sir_vdev_wow_stats
- *   wow_stats in struct wma_txrx_node
  * @ocb_config_req: OCB request context
  * @self_gen_frm_pwr: Self-generated frame power
  * @tx_chain_mask_cck: Is the CCK tx chain mask enabled
@@ -1091,7 +1077,6 @@ typedef struct {
 	uint8_t powersave_mode;
 	void *pGetRssiReq;
 	bool get_one_peer_info;
-	bool get_sta_peer_info;
 	struct qdf_mac_addr peer_macaddr;
 	t_thermal_mgmt thermal_mgmt_info;
 	bool enable_mc_list;
@@ -1129,7 +1114,6 @@ typedef struct {
 	uint32_t old_hw_mode_index;
 	uint32_t new_hw_mode_index;
 	wma_peer_authorized_fp peer_authorized_cb;
-	uint32_t wow_unspecified_wake_count;
 	struct sir_ocb_config *ocb_config_req;
 	uint16_t self_gen_frm_pwr;
 	bool tx_chain_mask_cck;

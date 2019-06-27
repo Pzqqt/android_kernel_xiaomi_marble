@@ -48,6 +48,7 @@ struct mac_context;
 #include "wlan_policy_mgr_api.h"
 #include "wlan_tdls_public_structs.h"
 #include "qca_vendor.h"
+#include "wlan_cp_stats_mc_defs.h"
 
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
@@ -1383,41 +1384,6 @@ struct set_context_rsp {
 	struct qdf_mac_addr peer_macaddr;
 };
 
-/*
- * tpAniGetPEStatsRsp is tied to
- * for PE ==> SME eWNI_SME_GET_STATISTICS_RSP msgId  and
- * for HAL ==> PE SIR_HAL_GET_STATISTICS_RSP msgId
- */
-typedef struct sAniGetPEStatsRsp {
-	/* Common for all types are responses */
-	uint16_t msgType;       /* message type is same as the request type */
-	/* length of the entire request, includes the pStatsBuf length too */
-	uint16_t msgLen;
-	uint8_t sessionId;
-	uint32_t rc;            /* success/failure */
-	uint32_t staId;         /* Per STA stats request must contain valid */
-	/* categories of stats requested. look at ePEStatsMask */
-	uint32_t statsMask;
-	/* void                  *pStatsBuf; */
-	/*
-	 * The Stats buffer starts here and can be an aggregate of more than one
-	 * statistics structure depending on statsMask. The void pointer
-	 * "pStatsBuf" is commented out intentionally and the src code that uses
-	 * this structure should take that into account.
-	 */
-} tAniGetPEStatsRsp, *tpAniGetPEStatsRsp;
-
-typedef struct sAniGetRssiReq {
-	/* Common for all types are requests */
-	uint16_t msgType;       /* message type is same as the request type */
-	uint16_t msgLen;        /* length of the entire request */
-	uint8_t sessionId;
-	uint8_t staId;
-	int8_t lastRSSI;        /* in case of error, return last RSSI */
-	void *rssiCallback;
-	void *pDevContext;      /* device context */
-} tAniGetRssiReq, *tpAniGetRssiReq;
-
 typedef struct sAniGetSnrReq {
 	/* Common for all types are requests */
 	uint16_t msgType;       /* message type is same as the request type */
@@ -1459,29 +1425,7 @@ typedef struct sAniTXFailMonitorInd {
 	void *txFailIndCallback;
 } tAniTXFailMonitorInd, *tpAniTXFailMonitorInd;
 
-#ifndef QCA_SUPPORT_CP_STATS
-/**
- * enum tx_rate_info - tx_rate flags
- * @TX_RATE_LEGACY: Legacy rates
- * @TX_RATE_HT20: HT20 rates
- * @TX_RATE_HT40: HT40 rates
- * @TX_RATE_SGI: Rate with Short guard interval
- * @TX_RATE_LGI: Rate with Long guard interval
- * @TX_RATE_VHT20: VHT 20 rates
- * @TX_RATE_VHT40: VHT 40 rates
- * @TX_RATE_VHT80: VHT 80 rates
- */
-enum tx_rate_info {
-	TX_RATE_LEGACY = 0x1,
-	TX_RATE_HT20 = 0x2,
-	TX_RATE_HT40 = 0x4,
-	TX_RATE_SGI = 0x8,
-	TX_RATE_LGI = 0x10,
-	TX_RATE_VHT20 = 0x20,
-	TX_RATE_VHT40 = 0x40,
-	TX_RATE_VHT80 = 0x80
-};
-#endif
+
 /**********************PE Statistics end*************************/
 
 typedef struct sSirP2PNoaAttr {
@@ -2587,34 +2531,6 @@ struct link_speed_info {
 	/* MAC Address for the peer */
 	struct qdf_mac_addr peer_macaddr;
 	uint32_t estLinkSpeed;  /* Linkspeed from firmware */
-};
-
-/**
- * struct sir_peer_info - peer information struct
- * @peer_macaddr: MAC address
- * @rssi: rssi
- * @tx_rate: last tx rate
- * @rx_rate: last rx rate
- *
- * a station's information
- */
-struct sir_peer_info {
-	struct qdf_mac_addr peer_macaddr;
-	int8_t rssi;
-	uint32_t tx_rate;
-	uint32_t rx_rate;
-};
-
-/**
- * struct sir_peer_info_resp - all peers information struct
- * @count: peer's number
- * @info: peer information
- *
- * all station's information
- */
-struct sir_peer_info_resp {
-	uint8_t count;
-	struct sir_peer_info info[0];
 };
 
 /**

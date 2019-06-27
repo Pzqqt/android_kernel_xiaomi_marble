@@ -1121,15 +1121,6 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef QCA_SUPPORT_CP_STATS
-static void csr_init_tl_stats(struct mac_context *mac_ctx) {}
-#else
-static void csr_init_tl_stats(struct mac_context *mac_ctx)
-{
-	mac_ctx->roam.tlStatsReqInfo.numClient = 0;
-}
-#endif /* QCA_SUPPORT_CP_STATS */
-
 QDF_STATUS csr_start(struct mac_context *mac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1146,7 +1137,6 @@ QDF_STATUS csr_start(struct mac_context *mac)
 		mac->roam.sPendingCommands = 0;
 		for (i = 0; i < WLAN_MAX_VDEVS; i++)
 			status = csr_neighbor_roam_init(mac, i);
-		csr_init_tl_stats(mac);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sme_warn("Couldn't Init HO control blk");
 			break;

@@ -2909,11 +2909,6 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 		vdev->del_staself_req = NULL;
 	}
 
-	if (vdev->stats_rsp) {
-		qdf_mem_free(vdev->stats_rsp);
-		vdev->stats_rsp = NULL;
-	}
-
 	if (vdev->psnr_req) {
 		qdf_mem_free(vdev->psnr_req);
 		vdev->psnr_req = NULL;
@@ -2969,18 +2964,6 @@ void wma_wmi_stop(void)
 	}
 	wmi_stop(wma_handle->wmi_handle);
 }
-
-#ifdef QCA_SUPPORT_CP_STATS
-static void wma_register_stats_events(wmi_unified_t wmi_handle) {}
-#else
-static void wma_register_stats_events(wmi_unified_t wmi_handle)
-{
-	wmi_unified_register_event_handler(wmi_handle,
-					   wmi_update_stats_event_id,
-					   wma_stats_event_handler,
-					   WMA_RX_SERIALIZER_CTX);
-}
-#endif
 
 #ifdef CONFIG_WMI_BCN_OFFLOAD
 static QDF_STATUS
@@ -3424,9 +3407,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wmi_peer_sta_kickout_event_id,
 					   wma_peer_sta_kickout_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
-
-	/* register for stats event */
-	wma_register_stats_events(wma_handle->wmi_handle);
 
 	/* register for stats response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
