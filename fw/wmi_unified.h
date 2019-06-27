@@ -1336,6 +1336,7 @@ typedef enum {
     /* Event to report a rogue ap info that is detected in fw */
     WMI_PDEV_RAP_INFO_EVENTID,
 
+    WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID,
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -2533,6 +2534,16 @@ typedef struct {
      *   WMI_CHAN_RF_CHARACTERIZATION_INFO wmi_chan_rf_characterization_info[];
      */
 } wmi_service_ready_ext_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_chan_rf_characterization_info_event_fixed_param */
+    /*
+     * A variable-length TLV array of wmi_chan_rf_characterization_info will
+     * follow this fixed_param TLV, containing rx characterization info for
+     * primary channels.
+     * WMI_CHAN_RF_CHARACTERIZATION_INFO wmi_chan_rf_characterization_info[];
+     */
+} wmi_chan_rf_characterization_info_event_fixed_param;
 
 typedef enum {
     WMI_FW_STA_RTT_INITR =     0x00000001,

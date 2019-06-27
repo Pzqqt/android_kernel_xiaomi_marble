@@ -991,6 +991,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_twt_btwt_remove_sta_complete_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_delete_all_peer_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_delete_all_peer_resp_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_chan_rf_characterization_info_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1624,6 +1625,7 @@ typedef enum {
     OP(WMI_TWT_BTWT_INVITE_STA_COMPLETE_EVENTID) \
     OP(WMI_TWT_BTWT_REMOVE_STA_COMPLETE_EVENTID) \
     OP(WMI_VDEV_DELETE_ALL_PEER_RESP_EVENTID) \
+    OP(WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4041,6 +4043,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_AVAILABLE_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_spectral_bin_scaling_params, wmi_bin_scaling_params, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_CHAN_RF_CHARACTERIZATION_INFO, wmi_chan_rf_characterization_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
+
+#define WMITLV_TABLE_WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID(id,op,buf,len) \
+     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_chan_rf_characterization_info_event_fixed_param, wmi_chan_rf_characterization_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_CHAN_RF_CHARACTERIZATION_INFO, wmi_chan_rf_characterization_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID);
 
 /* iface combination indication event */
 #define WMITLV_TABLE_WMI_IFACE_COMBINATION_IND_EVENTID(id,op,buf,len) \

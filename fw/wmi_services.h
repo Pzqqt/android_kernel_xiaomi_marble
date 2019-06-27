@@ -399,6 +399,7 @@ typedef  enum  {
     WMI_SERVICE_DELETE_ALL_PEER_SUPPORT = 214, /* target supports cmd to delete all peers within a vdev */
     WMI_SERVICE_DYNAMIC_HW_MODE_SWITCH_SUPPORT = 215, /* target supports Dynamic HW mode switch */
     WMI_SERVICE_MSDU_FLOW_OVERRIDE_BY_HOST = 216, /* target supports flow override feature */
+    WMI_SERVICE_WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENT= 217, /* target will send WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENT */
 
     /******* ADD NEW SERVICES HERE *******/
 
