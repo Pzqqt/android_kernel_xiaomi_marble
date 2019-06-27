@@ -218,7 +218,8 @@ struct htt_rx_ring_tlv_filter {
  * Return: HTT handle on success; NULL on failure
  */
 void *
-htt_soc_initialize(void *htt_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
+htt_soc_initialize(struct htt_soc *htt_soc, void *ctrl_psoc,
+		   HTC_HANDLE htc_soc,
 		   void *hal_soc, qdf_device_t osdev);
 
 /*
@@ -264,12 +265,13 @@ void htt_soc_htc_dealloc(struct htt_soc *htt_handle);
  */
 QDF_STATUS htt_soc_htc_prealloc(struct htt_soc *htt_soc);
 
-void htt_soc_detach(void *soc);
+void htt_soc_detach(struct htt_soc *soc);
 
-int htt_srng_setup(void *htt_soc, int pdev_id, hal_ring_handle_t hal_ring_hdl,
+int htt_srng_setup(struct htt_soc *htt_soc, int pdev_id,
+		   hal_ring_handle_t hal_ring_hdl,
 		   int hal_ring_type);
 
-int htt_soc_attach_target(void *htt_soc);
+int htt_soc_attach_target(struct htt_soc *htt_soc);
 
 /*
  * htt_h2t_rx_ring_cfg() - Send SRNG packet and TLV filter
@@ -283,7 +285,7 @@ int htt_soc_attach_target(void *htt_soc);
  *
  * Return: 0 on success; error code on failure
  */
-int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id,
+int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 			hal_ring_handle_t hal_ring_hdl,
 			int hal_ring_type, int ring_buf_size,
 			struct htt_rx_ring_tlv_filter *htt_tlv_filter);

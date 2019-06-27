@@ -580,10 +580,10 @@ static int htt_h2t_ver_req_msg(struct htt_soc *soc)
  *
  * Return: 0 on success; error code on failure
  */
-int htt_srng_setup(void *htt_soc, int mac_id, hal_ring_handle_t hal_ring_hdl,
+int htt_srng_setup(struct htt_soc *soc, int mac_id,
+		   hal_ring_handle_t hal_ring_hdl,
 		   int hal_ring_type)
 {
-	struct htt_soc *soc = (struct htt_soc *)htt_soc;
 	struct dp_htt_htc_pkt *pkt;
 	qdf_nbuf_t htt_msg;
 	uint32_t *msg_word;
@@ -846,7 +846,7 @@ fail0:
  * @htt_tlv_filter:	Rx SRNG TLV and filter setting
  * Return: 0 on success; error code on failure
  */
-int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id,
+int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 			hal_ring_handle_t hal_ring_hdl,
 			int hal_ring_type, int ring_buf_size,
 			struct htt_rx_ring_tlv_filter *htt_tlv_filter)
@@ -3124,7 +3124,7 @@ error:
  *
  * Return: 0 on success; error code on failure
  */
-int htt_soc_attach_target(void *htt_soc)
+int htt_soc_attach_target(struct htt_soc *htt_soc)
 {
 	struct htt_soc *soc = (struct htt_soc *)htt_soc;
 
@@ -3581,7 +3581,8 @@ htt_htc_soc_attach(struct htt_soc *soc)
  * Return: HTT handle on success; NULL on failure
  */
 void *
-htt_soc_initialize(void *htt_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
+htt_soc_initialize(struct htt_soc *htt_soc, void *ctrl_psoc,
+		   HTC_HANDLE htc_soc,
 		   void *hal_soc, qdf_device_t osdev)
 {
 	struct htt_soc *soc = (struct htt_soc *)htt_soc;
@@ -3635,7 +3636,7 @@ QDF_STATUS htt_soc_htc_prealloc(struct htt_soc *soc)
  * htt_soc_detach() - Free SOC level HTT handle
  * @htt_hdl: HTT SOC handle
  */
-void htt_soc_detach(void *htt_hdl)
+void htt_soc_detach(struct htt_soc *htt_hdl)
 {
 	struct htt_soc *htt_handle = (struct htt_soc *)htt_hdl;
 
