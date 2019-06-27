@@ -159,7 +159,37 @@ typedef QDF_STATUS (*wlan_ser_umac_cmd_cb)(void *umac_cmd);
 
 /**
  * enum wlan_umac_cmd_id - Command Type
- * @WLAN_SER_CMD_SCAN:     Scan command
+ * @WLAN_SER_CMD_SCAN: Scan command
+ * @WLAN_SER_CMD_NONSCAN: Non-scan command
+ * @WLAN_SER_CMD_HDD_ISSUE_REASSOC_SAME_AP: HDD Reassoc cmd
+ * @WLAN_SER_CMD_SME_ISSUE_REASSOC_SAME_AP: SME Reassoc cmd
+ * @WLAN_SER_CMD_SME_ISSUE_DISASSOC_FOR_HANDOFF: SME Disassoc cmd
+ * @WLAN_SER_CMD_SME_ISSUE_ASSOC_TO_SIMILAR_AP: SME Assoc cmd
+ * @WLAN_SER_CMD_FORCE_IBSS_LEAVE: IBSS leave AP cmd
+ * @WLAN_SER_CMD_SME_ISSUE_FT_REASSOC: SME reassoc cmd
+ * @WLAN_SER_CMD_FORCE_DISASSOC_STA: Force diassoc for STA vap
+ * @WLAN_SER_CMD_FORCE_DEAUTH_STA: Force deauth for STA vap
+ * @WLAN_SER_CMD_PERFORM_PRE_AUTH: Pre auth ops cmd
+ * @WLAN_SER_CMD_WM_STATUS_CHANGE: WM status modification cmd
+ * @WLAN_SER_CMD_NDP_INIT_REQ: NDP init request cmd
+ * @WLAN_SER_CMD_NDP_RESP_REQ: NDP response to request cmd
+ * @WLAN_SER_CMD_NDP_DATA_END_INIT_REQ: NDP data end init request
+ * @WLAN_SER_CMD_NDP_END_ALL_REQ: NDP close all request
+ * @WLAN_SER_CMD_ADDTS: ADD Ts cmd
+ * @WLAN_SER_CMD_DELTS: Del Ts cmd
+ * @WLAN_SER_CMD_TDLS_SEND_MGMT: TDLS mgmt send cmd
+ * @WLAN_SER_CMD_TDLS_ADD_PEER: TDLS cmd to add peer
+ * @WLAN_SER_CMD_TDLS_DEL_PEER: TDLS cmd to del peer
+ * @WLAN_SER_CMD_SET_HW_MODE: Cmd to set hardware mode change
+ * @WLAN_SER_CMD_NSS_UPDATE: Cmd to update NSS config
+ * @WLAN_SER_CMD_SET_DUAL_MAC_CONFIG: Cmd to set dual mac
+ * @WLAN_SER_CMD_SET_ANTENNA_MODE: Set antenna mode
+ * @WLAN_SER_CMD_DEL_STA_SESSION: Cmd to del STA session
+ * @WLAN_SER_CMD_VDEV_START_BSS: Cmd to start a AP VDEV
+ * @WLAN_SER_CMD_VDEV_STOP_BSS: Cmd to stop a AP VDEV
+ * @WLAN_SER_CMD_VDEV_CONNECT: Cmd to start a STA VDEV
+ * @WLAN_SER_CMD_VDEV_DISCONNECT: Cmd to stop a STA VDEV
+ * @WLAN_SER_CMD_VDEV_RESTART: Cmd to restart a VDEV
  */
 enum wlan_serialization_cmd_type {
 	/* all scan command before non-scan */
