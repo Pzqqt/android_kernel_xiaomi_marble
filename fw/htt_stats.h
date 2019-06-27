@@ -226,7 +226,8 @@ enum htt_dbg_ext_stats_type {
     /* HTT_DBG_EXT_STATS_PDEV_CCA_STATS
      * PARAMS:
      *   - config_param0:
-     *      [Bit0] - 1 sec interval histogram
+     *      [Bit0] - Clear bit0 to read 1sec,100ms & cumulative CCA stats.
+     *               Set bit0 to 1 to read 1sec interval histogram.
      *      [Bit1] - 100ms interval histogram
      *      [Bit3] - Cumulative CCA stats
      * RESP MSG:
@@ -256,7 +257,8 @@ enum htt_dbg_ext_stats_type {
      * PARAMS:
      *   - config_param0:
      *      [Bit0]          vdev_id_set:1
-     *          set to 1 if vdev_id is set and vdev stats are requested
+     *          set to 1 if vdev_id is set and vdev stats are requested.
+     *          set to 0 if pdev_stats sounding stats are requested.
      *      [Bit8 : Bit1]   vdev_id:8
      *          note:0xFF to get all active vdevs based on pdev_mask.
      *      [Bit31 : Bit9]  rsvd:22
