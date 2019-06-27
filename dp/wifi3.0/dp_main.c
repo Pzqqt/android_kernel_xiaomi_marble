@@ -5093,6 +5093,10 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		peer->ctrl_peer = ctrl_peer;
 
 		dp_local_peer_id_alloc(pdev, peer);
+
+		qdf_spinlock_create(&peer->peer_info_lock);
+		dp_peer_rx_bufq_resources_init(peer);
+
 		DP_STATS_INIT(peer);
 		DP_STATS_UPD(peer, rx.avg_rssi, INVALID_RSSI);
 
