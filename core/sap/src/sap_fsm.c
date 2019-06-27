@@ -222,8 +222,8 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 	ch_params->ch_width = ch_wd;
 	if (sap_ctx->acs_cfg) {
 		acs_info.acs_mode = sap_ctx->acs_cfg->acs_mode;
-		acs_info.channel_list = sap_ctx->channelList;
-		acs_info.num_of_channel = sap_ctx->num_of_channel;
+		acs_info.channel_list = sap_ctx->acs_cfg->ch_list;
+		acs_info.num_of_channel = sap_ctx->acs_cfg->ch_list_count;
 	} else {
 		acs_info.acs_mode = false;
 	}
