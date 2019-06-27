@@ -232,6 +232,12 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 		flag |= DFS_RANDOM_CH_FLAG_NO_DFS_CH;
 	if (mac_ctx->mlme_cfg->dfs_cfg.dfs_disable_japan_w53)
 		flag |= DFS_RANDOM_CH_FLAG_NO_JAPAN_W53_CH;
+	if (mac_ctx->sap.SapDfsInfo.sap_operating_chan_preferred_location
+	    == 1)
+		flag |= DFS_RANDOM_CH_FLAG_NO_UPEER_5G_CH;
+	else if (mac_ctx->sap.SapDfsInfo.
+		 sap_operating_chan_preferred_location == 2)
+		flag |= DFS_RANDOM_CH_FLAG_NO_LOWER_5G_CH;
 
 	if (QDF_IS_STATUS_ERROR(utils_dfs_get_random_channel(
 	    pdev, flag, ch_params, &hw_mode, &ch, &acs_info))) {
