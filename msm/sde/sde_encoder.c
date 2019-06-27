@@ -2751,7 +2751,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	struct sde_rm_hw_iter dsc_iter, pp_iter, qdss_iter;
 	struct sde_rm_hw_request request_hw;
 	enum sde_intf_mode intf_mode;
-
+	bool is_cmd_mode = false;
 	int i = 0, ret;
 
 	if (!drm_enc) {
@@ -2766,6 +2766,9 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	SDE_DEBUG_ENC(sde_enc, "\n");
+
+	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
+		is_cmd_mode = true;
 
 	priv = drm_enc->dev->dev_private;
 	sde_kms = to_sde_kms(priv->kms);
@@ -2815,7 +2818,9 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		sde_encoder_virt_mode_switch(intf_mode, sde_enc, adj_mode);
 
 	/* release resources before seamless mode change */
-	if (msm_is_mode_seamless_dms(adj_mode)) {
+	if (msm_is_mode_seamless_dms(adj_mode) ||
+			(msm_is_mode_seamless_dyn_clk(adj_mode) &&
+			 is_cmd_mode)) {
 		/* restore resource state before releasing them */
 		ret = sde_encoder_resource_control(drm_enc,
 				SDE_ENC_RC_EVENT_PRE_MODESET);
@@ -2905,7 +2910,9 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	}
 
 	/* update resources after seamless mode change */
-	if (msm_is_mode_seamless_dms(adj_mode))
+	if (msm_is_mode_seamless_dms(adj_mode) ||
+			(msm_is_mode_seamless_dyn_clk(adj_mode) &&
+			is_cmd_mode))
 		sde_encoder_resource_control(&sde_enc->base,
 						SDE_ENC_RC_EVENT_POST_MODESET);
 }
@@ -3190,7 +3197,8 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 	}
 
 	/* register input handler if not already registered */
-	if (sde_enc->input_handler && !msm_is_mode_seamless_dms(cur_mode)) {
+	if (sde_enc->input_handler && !msm_is_mode_seamless_dms(cur_mode) &&
+			!msm_is_mode_seamless_dyn_clk(cur_mode)) {
 		ret = _sde_encoder_input_handler_register(
 				sde_enc->input_handler);
 		if (ret)
@@ -3199,7 +3207,8 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 	}
 
 	if (!(msm_is_mode_seamless_vrr(cur_mode)
-			|| msm_is_mode_seamless_dms(cur_mode)))
+			|| msm_is_mode_seamless_dms(cur_mode)
+			|| msm_is_mode_seamless_dyn_clk(cur_mode)))
 		kthread_init_delayed_work(&sde_enc->delayed_off_work,
 			sde_encoder_off_work);
 
@@ -3235,7 +3244,8 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 			 * already. Invoke restore to reconfigure the
 			 * new mode.
 			 */
-			if (msm_is_mode_seamless_dms(cur_mode) &&
+			if ((msm_is_mode_seamless_dms(cur_mode) ||
+				msm_is_mode_seamless_dyn_clk(cur_mode)) &&
 					phys->ops.restore)
 				phys->ops.restore(phys);
 			else if (phys->ops.enable)
@@ -3248,7 +3258,8 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 						sde_enc->misr_frame_count);
 	}
 
-	if (msm_is_mode_seamless_dms(cur_mode) &&
+	if ((msm_is_mode_seamless_dms(cur_mode) ||
+			msm_is_mode_seamless_dyn_clk(cur_mode)) &&
 			sde_enc->cur_master->ops.restore)
 		sde_enc->cur_master->ops.restore(sde_enc->cur_master);
 	else if (sde_enc->cur_master->ops.enable)
