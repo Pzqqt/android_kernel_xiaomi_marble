@@ -316,6 +316,7 @@ static int msm_audio_ion_map_buf(struct dma_buf *dma_buf, dma_addr_t *paddr,
 	if (rc) {
 		pr_err("%s: ION Get Physical for AUDIO failed, rc = %d\n",
 				__func__, rc);
+		dma_buf_put(dma_buf);
 		goto err;
 	}
 
@@ -323,6 +324,7 @@ static int msm_audio_ion_map_buf(struct dma_buf *dma_buf, dma_addr_t *paddr,
 	if (IS_ERR_OR_NULL(*vaddr)) {
 		pr_err("%s: ION memory mapping for AUDIO failed\n", __func__);
 		rc = -ENOMEM;
+		msm_audio_dma_buf_unmap(dma_buf);
 		goto err;
 	}
 
@@ -384,17 +386,13 @@ int msm_audio_ion_alloc(struct dma_buf **dma_buf, size_t bufsz,
 	rc = msm_audio_ion_map_buf(*dma_buf, paddr, plen, vaddr);
 	if (rc) {
 		pr_err("%s: failed to map ION buf, rc = %d\n", __func__, rc);
-		goto err_dma_buf;
+		goto err;
 	}
 	pr_debug("%s: mapped address = %pK, size=%zd\n", __func__,
 		*vaddr, bufsz);
 
 	memset(*vaddr, 0, bufsz);
 
-	return rc;
-
-err_dma_buf:
-	dma_buf_put(*dma_buf);
 err:
 	return rc;
 }
@@ -488,7 +486,7 @@ int msm_audio_ion_import(struct dma_buf **dma_buf, int fd,
 	rc = msm_audio_ion_map_buf(*dma_buf, paddr, plen, vaddr);
 	if (rc) {
 		pr_err("%s: failed to map ION buf, rc = %d\n", __func__, rc);
-		goto err_ion_flag;
+		goto err;
 	}
 	pr_debug("%s: mapped address = %pK, size=%zd\n", __func__,
 		*vaddr, bufsz);
