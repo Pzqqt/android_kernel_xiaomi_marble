@@ -98,6 +98,7 @@ static inline ol_txrx_soc_handle cdp_soc_attach(
 	case QCA8074_DEVICE_ID: /* Hawekeye */
 	case QCA8074V2_DEVICE_ID: /* Hawekeye V2*/
 	case QCA6290_DEVICE_ID:
+	case QCN9000_DEVICE_ID:
 	case QCA6390_DEVICE_ID:
 	case QCA6390_EMULATION_DEVICE_ID:
 	case RUMIM2M_DEVICE_ID_NODE0: /*lithium emulation */

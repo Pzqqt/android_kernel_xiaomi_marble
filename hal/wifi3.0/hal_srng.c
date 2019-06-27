@@ -33,6 +33,9 @@ void hal_qca8074v2_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCA6390
 void hal_qca6390_attach(struct hal_soc *hal);
 #endif
+#ifdef QCA_WIFI_QCN9000
+void hal_qcn9000_attach(struct hal_soc *hal);
+#endif
 
 #ifdef ENABLE_VERBOSE_DEBUG
 bool is_hal_verbose_debug_enabled;
@@ -258,6 +261,13 @@ static void hal_target_based_configure(struct hal_soc *hal)
 #if defined(QCA_WIFI_QCA6018)
 	case TARGET_TYPE_QCA6018:
 		hal_qca8074v2_attach(hal);
+	break;
+#endif
+
+#ifdef QCA_WIFI_QCN9000
+	case TARGET_TYPE_QCN9000:
+		hal->use_register_windowing = true;
+		hal_qcn9000_attach(hal);
 	break;
 #endif
 	default:

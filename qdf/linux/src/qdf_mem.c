@@ -1696,7 +1696,9 @@ static inline void *qdf_mem_dma_alloc(qdf_device_t osdev, void *dev,
 	return vaddr;
 }
 
-#elif defined(QCA_WIFI_QCA8074_VP) && defined(BUILD_X86)
+#elif defined(QCA_WIFI_QCA8074_VP) && defined(BUILD_X86) && \
+	!defined(QCA_WIFI_QCN9000)
+
 #define QCA8074_RAM_BASE 0x50000000
 #define QDF_MEM_ALLOC_X86_MAX_RETRIES 10
 void *qdf_mem_dma_alloc(qdf_device_t osdev, void *dev, qdf_size_t size,

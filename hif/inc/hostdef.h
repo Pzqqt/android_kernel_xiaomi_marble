@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016,2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016,2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,5 +41,5 @@ extern struct hostdef_s *IPQ4019_HOSTdef;
 extern struct hostdef_s *QCA8074_HOSTdef;
 extern struct hostdef_s *QCA8074V2_HOSTDEF;
 extern struct hostdef_s *QCA6018_HOSTDEF;
-
+extern struct hostdef_s *QCN9000_HOSTDEF;
 #endif

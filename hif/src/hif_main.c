@@ -488,7 +488,8 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 }
 
 #if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
-	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
+	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
+	defined(QCA_WIFI_QCN9000)
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
@@ -813,6 +814,12 @@ int hif_get_device_type(uint32_t device_id,
 		*hif_type = HIF_TYPE_QCA6290;
 		*target_type = TARGET_TYPE_QCA6290;
 		HIF_INFO(" *********** QCA6290EMU *************\n");
+		break;
+
+	case QCN9000_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCN9000;
+		*target_type = TARGET_TYPE_QCN9000;
+		HIF_INFO(" *********** QCN9000 *************\n");
 		break;
 
 	case QCN7605_DEVICE_ID:

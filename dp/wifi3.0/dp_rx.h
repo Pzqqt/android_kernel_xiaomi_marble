@@ -597,7 +597,8 @@ void dp_2k_jump_handle(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 		qdf_nbuf_set_next((tail), NULL);                      \
 	} while (0)
 
-#ifndef BUILD_X86
+/*for qcn9000 emulation the pcie is complete phy and no address restrictions*/
+#if !defined(BUILD_X86) || defined(QCA_WIFI_QCN9000)
 static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 		qdf_dma_addr_t *paddr, struct dp_pdev *pdev)
 {

@@ -2019,6 +2019,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	if ((target_type == TARGET_TYPE_QCA8074) ||
 	    (target_type == TARGET_TYPE_QCA8074V2) ||
 	    (target_type == TARGET_TYPE_QCA6018) ||
+	    (target_type == TARGET_TYPE_QCN9000) ||
 	    (target_type == TARGET_TYPE_QCA6290)) {
 		spectral->spectral_gen = SPECTRAL_GEN3;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN3;

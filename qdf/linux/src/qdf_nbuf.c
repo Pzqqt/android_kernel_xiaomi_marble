@@ -377,7 +377,8 @@ void __qdf_nbuf_count_dec(__qdf_nbuf_t nbuf)
 qdf_export_symbol(__qdf_nbuf_count_dec);
 #endif
 
-#if defined(QCA_WIFI_QCA8074_VP) && defined(BUILD_X86)
+#if defined(QCA_WIFI_QCA8074_VP) && defined(BUILD_X86) && \
+	!defined(QCA_WIFI_QCN9000)
 struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 				 int align, int prio, const char *func,
 				 uint32_t line)
@@ -3213,7 +3214,7 @@ uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 
 	return num_segs;
 }
-#else
+#elif !defined(QCA_WIFI_QCN9000)
 uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 {
 	uint32_t i, gso_size, tmp_len, num_segs = 0;
@@ -3241,6 +3242,42 @@ uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 			goto fail;
 	}
 
+
+	gso_size = skb_shinfo(skb)->gso_size;
+	tmp_len = skb->len - ((skb_transport_header(skb) - skb_mac_header(skb))
+			+ tcp_hdrlen(skb));
+	while (tmp_len) {
+		num_segs++;
+		if (tmp_len > gso_size)
+			tmp_len -= gso_size;
+		else
+			break;
+	}
+
+	return num_segs;
+
+	/*
+	 * Do not free this frame, just do socket level accounting
+	 * so that this is not reused.
+	 */
+fail:
+	if (skb->sk)
+		atomic_sub(skb->truesize, &(skb->sk->sk_wmem_alloc));
+
+	return 0;
+}
+#else
+uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
+{
+	uint32_t i, gso_size, tmp_len, num_segs = 0;
+	struct skb_frag_struct *frag = NULL;
+
+	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+		frag = &skb_shinfo(skb)->frags[i];
+
+		if (!frag)
+			goto fail;
+	}
 
 	gso_size = skb_shinfo(skb)->gso_size;
 	tmp_len = skb->len - ((skb_transport_header(skb) - skb_mac_header(skb))

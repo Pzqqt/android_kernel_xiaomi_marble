@@ -2348,8 +2348,10 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define REO_DST_RING_SIZE_QCA6290 1023
 #ifndef QCA_WIFI_QCA8074_VP
 #define REO_DST_RING_SIZE_QCA8074 1023
+#define REO_DST_RING_SIZE_QCN9000 2048
 #else
 #define REO_DST_RING_SIZE_QCA8074 8
+#define REO_DST_RING_SIZE_QCN9000 8
 #endif /* QCA_WIFI_QCA8074_VP */
 
 #else
@@ -2357,8 +2359,10 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define REO_DST_RING_SIZE_QCA6290 1024
 #ifndef QCA_WIFI_QCA8074_VP
 #define REO_DST_RING_SIZE_QCA8074 2048
+#define REO_DST_RING_SIZE_QCN9000 2048
 #else
 #define REO_DST_RING_SIZE_QCA8074 8
+#define REO_DST_RING_SIZE_QCN9000 8
 #endif /* QCA_WIFI_QCA8074_VP */
 #endif /* IPA_OFFLOAD */
 
@@ -9824,6 +9828,16 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle,
 		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
 		soc->da_war_enabled = false;
 		soc->is_rx_fse_full_cache_invalidate_war_enabled = true;
+		break;
+	case TARGET_TYPE_QCN9000:
+		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
+					       REO_DST_RING_SIZE_QCN9000);
+		soc->ast_override_support = 1;
+		soc->da_war_enabled = false;
+		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, false);
+		soc->hw_nac_monitor_support = 1;
+		soc->per_tid_basize_max_tid = 8;
+		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);
