@@ -37,9 +37,6 @@
 #include "ce_reg.h"
 #include "ce_assignment.h"
 #include "ce_tasklet.h"
-#ifndef CONFIG_WIN
-#include "qwlan_version.h"
-#endif
 #include "qdf_module.h"
 
 #define CE_POLL_TIMEOUT 10      /* ms */
@@ -2973,8 +2970,7 @@ int hif_wlan_enable(struct hif_softc *scn)
 	if (BYPASS_QMI)
 		return 0;
 	else
-		return pld_wlan_enable(scn->qdf_dev->dev, &cfg,
-				       mode, QWLAN_VERSIONSTR);
+		return pld_wlan_enable(scn->qdf_dev->dev, &cfg, mode);
 }
 
 #ifdef WLAN_FEATURE_EPPING
