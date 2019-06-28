@@ -3014,8 +3014,6 @@ fail1:
  */
 static void dp_soc_cmn_cleanup(struct dp_soc *soc)
 {
-	dp_tx_soc_detach(soc);
-
 	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
 
 	dp_reo_cmdlist_destroy(soc);
@@ -3870,6 +3868,11 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 	dp_cal_client_detach(&pdev->cal_client_ctx);
 
 	soc->pdev_count--;
+
+	/* only do soc common cleanup when last pdev do detach */
+	if (!(soc->pdev_count))
+		dp_soc_cmn_cleanup(soc);
+
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
 	if (pdev->invalid_peer)
 		qdf_mem_free(pdev->invalid_peer);
@@ -3971,11 +3974,6 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 		dp_pdev_deinit(txrx_pdev, force);
 		dp_pdev_detach(txrx_pdev, force);
 	}
-
-	/* only do soc common cleanup when last pdev do detach */
-	if (!(soc->pdev_count))
-		dp_soc_cmn_cleanup(soc);
-
 }
 
 /*
@@ -4151,6 +4149,8 @@ static void dp_soc_detach(void *txrx_soc)
 	/* Free the ring memories */
 	/* Common rings */
 	dp_srng_cleanup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
+
+	dp_tx_soc_detach(soc);
 
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
