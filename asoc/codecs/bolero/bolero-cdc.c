@@ -501,8 +501,10 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 	priv->macro_params[macro_id].dev = dev;
 	priv->current_mclk_mux_macro[macro_id] =
 				bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
-	if (macro_id == TX_MACRO)
+	if (macro_id == TX_MACRO) {
 		priv->macro_params[macro_id].reg_wake_irq = ops->reg_wake_irq;
+		priv->macro_params[macro_id].clk_switch = ops->clk_switch;
+	}
 
 	priv->num_dais += ops->num_dais;
 	priv->num_macros_registered++;
@@ -562,8 +564,10 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 	priv->macro_params[macro_id].dai_ptr = NULL;
 	priv->macro_params[macro_id].event_handler = NULL;
 	priv->macro_params[macro_id].dev = NULL;
-	if (macro_id == TX_MACRO)
+	if (macro_id == TX_MACRO) {
 		priv->macro_params[macro_id].reg_wake_irq = NULL;
+		priv->macro_params[macro_id].clk_switch = NULL;
+	}
 
 	priv->num_dais -= priv->macro_params[macro_id].num_dais;
 	priv->num_macros_registered--;
@@ -767,6 +771,37 @@ int bolero_register_wake_irq(struct snd_soc_component *component,
 	return 0;
 }
 EXPORT_SYMBOL(bolero_register_wake_irq);
+
+/**
+ * bolero_tx_clk_switch - Switch tx macro clock
+ *
+ * @component: pointer to codec component instance.
+ *
+ * Returns 0 on success or -EINVAL on error.
+ */
+int bolero_tx_clk_switch(struct snd_soc_component *component)
+{
+	struct bolero_priv *priv = NULL;
+	int ret = 0;
+
+	if (!component)
+		return -EINVAL;
+
+	priv = snd_soc_component_get_drvdata(component);
+	if (!priv)
+		return -EINVAL;
+
+	if (!bolero_is_valid_codec_dev(priv->dev)) {
+		dev_err(component->dev, "%s: invalid codec\n", __func__);
+		return -EINVAL;
+	}
+
+	if (priv->macro_params[TX_MACRO].clk_switch)
+		ret = priv->macro_params[TX_MACRO].clk_switch(component);
+
+	return ret;
+}
+EXPORT_SYMBOL(bolero_tx_clk_switch);
 
 static int bolero_soc_codec_probe(struct snd_soc_component *component)
 {
