@@ -721,11 +721,6 @@ static QDF_STATUS p2p_get_frame_info(uint8_t *data_buf, uint32_t length,
 	}
 
 	frame_info->type = P2P_FRAME_MGMT;
-	if (sub_type != P2P_MGMT_PROBE_RSP &&
-		sub_type != P2P_MGMT_ACTION) {
-		p2p_err("not support sub type");
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	if (sub_type == P2P_MGMT_PROBE_RSP) {
 		frame_info->sub_type = P2P_MGMT_PROBE_RSP;
@@ -737,6 +732,11 @@ static QDF_STATUS p2p_get_frame_info(uint8_t *data_buf, uint32_t length,
 		frame_info->sub_type = P2P_MGMT_PROBE_REQ;
 		p2p_debug("Probe Request");
 		return QDF_STATUS_SUCCESS;
+	}
+
+	if (sub_type != P2P_MGMT_ACTION) {
+		p2p_debug("not support sub type");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	frame_info->sub_type = P2P_MGMT_ACTION;
