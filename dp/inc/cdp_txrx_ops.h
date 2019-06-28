@@ -1233,24 +1233,30 @@ struct cdp_cfg_ops {
 
 /**
  * struct cdp_flowctl_ops - mcl flow control
- * @register_pause_cb:
- * @set_desc_global_pool_size:
- * @dump_flow_pool_info:
+ * @flow_pool_map_handler: handler to map flow_id and pool descriptors
+ * @flow_pool_unmap_handler: handler to unmap flow_id and pool descriptors
+ * @register_pause_cb: handler to register tx pause callback
+ * @set_desc_global_pool_size: handler to set global pool size
+ * @dump_flow_pool_info: handler to dump global and flow pool info
+ * @tx_desc_thresh_reached: handler to set tx desc threshold
+ *
+ * Function pointers for operations related to flow control
  */
 struct cdp_flowctl_ops {
 	QDF_STATUS (*flow_pool_map_handler)(struct cdp_soc_t *soc,
-					    struct cdp_pdev *pdev,
+					    uint8_t pdev_id,
 					    uint8_t vdev_id);
 	void (*flow_pool_unmap_handler)(struct cdp_soc_t *soc,
-					struct cdp_pdev *pdev,
+					uint8_t pdev_id,
 					uint8_t vdev_id);
 	QDF_STATUS (*register_pause_cb)(struct cdp_soc_t *soc,
 					tx_pause_callback);
 	void (*set_desc_global_pool_size)(uint32_t num_msdu_desc);
 
-	void (*dump_flow_pool_info)(void *);
+	void (*dump_flow_pool_info)(struct cdp_soc_t *soc_hdl);
 
-	bool (*tx_desc_thresh_reached)(struct cdp_vdev *vdev);
+	bool (*tx_desc_thresh_reached)(struct cdp_soc_t *soc_hdl,
+				       uint8_t vdev_id);
 };
 
 /**

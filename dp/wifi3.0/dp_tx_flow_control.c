@@ -173,9 +173,9 @@ dp_tx_flow_pool_dump_threshold(struct dp_tx_desc_pool_s *pool)
  *
  * Return: none
  */
-void dp_tx_dump_flow_pool_info(void *ctx)
+void dp_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl)
 {
-	struct dp_soc *soc = ctx;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_txrx_pool_stats *pool_stats = &soc->pool_stats;
 	struct dp_tx_desc_pool_s *pool = NULL;
 	struct dp_tx_desc_pool_s tmp_pool;
@@ -357,8 +357,7 @@ static void dp_tx_flow_pool_vdev_map(struct dp_pdev *pdev,
 	struct dp_vdev *vdev;
 	struct dp_soc *soc = pdev->soc;
 
-	vdev = (struct dp_vdev *)cdp_get_vdev_from_vdev_id((void *)soc,
-					(struct cdp_pdev *)pdev, vdev_id);
+	vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		   "%s: invalid vdev_id %d",
@@ -387,8 +386,7 @@ static void dp_tx_flow_pool_vdev_unmap(struct dp_pdev *pdev,
 	struct dp_vdev *vdev;
 	struct dp_soc *soc = pdev->soc;
 
-	vdev = (struct dp_vdev *)cdp_get_vdev_from_vdev_id((void *)soc,
-					(struct cdp_pdev *)pdev, vdev_id);
+	vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		   "%s: invalid vdev_id %d",
@@ -571,19 +569,35 @@ QDF_STATUS dp_txrx_register_pause_cb(struct cdp_soc_t *handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS dp_tx_flow_pool_map(struct cdp_soc_t *handle, struct cdp_pdev *pdev,
-				uint8_t vdev_id)
+QDF_STATUS dp_tx_flow_pool_map(struct cdp_soc_t *handle, uint8_t pdev_id,
+			       uint8_t vdev_id)
 {
-	struct dp_soc *soc = (struct dp_soc *)handle;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(handle);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	int tx_ring_size = wlan_cfg_tx_ring_size(soc->wlan_cfg_ctx);
 
-	return (dp_tx_flow_pool_map_handler((struct dp_pdev *)pdev, vdev_id,
-				FLOW_TYPE_VDEV,	vdev_id, tx_ring_size));
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return dp_tx_flow_pool_map_handler(pdev, vdev_id, FLOW_TYPE_VDEV,
+					   vdev_id, tx_ring_size);
 }
 
-void dp_tx_flow_pool_unmap(struct cdp_soc_t *soc, struct cdp_pdev *pdev,
+void dp_tx_flow_pool_unmap(struct cdp_soc_t *handle, uint8_t pdev_id,
 			   uint8_t vdev_id)
 {
-	return(dp_tx_flow_pool_unmap_handler((struct dp_pdev *)pdev, vdev_id,
-				FLOW_TYPE_VDEV, vdev_id));
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(handle);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return;
+	}
+
+	return dp_tx_flow_pool_unmap_handler(pdev, vdev_id,
+					     FLOW_TYPE_VDEV, vdev_id);
 }

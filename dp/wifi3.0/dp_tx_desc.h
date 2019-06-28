@@ -23,7 +23,6 @@
 #include "dp_tx.h"
 #include "dp_internal.h"
 
-
 /**
  * 21 bits cookie
  * 2 bits pool id 0 ~ 3,
@@ -97,9 +96,9 @@ void dp_tx_flow_control_deinit(struct dp_soc *);
 
 QDF_STATUS dp_txrx_register_pause_cb(struct cdp_soc_t *soc,
 	tx_pause_callback pause_cb);
-QDF_STATUS dp_tx_flow_pool_map(struct cdp_soc_t *soc, struct cdp_pdev *pdev,
-				uint8_t vdev_id);
-void dp_tx_flow_pool_unmap(struct cdp_soc_t *soc, struct cdp_pdev *pdev,
+QDF_STATUS dp_tx_flow_pool_map(struct cdp_soc_t *soc, uint8_t pdev_id,
+			       uint8_t vdev_id);
+void dp_tx_flow_pool_unmap(struct cdp_soc_t *handle, uint8_t pdev_id,
 			   uint8_t vdev_id);
 void dp_tx_clear_flow_pool_stats(struct dp_soc *soc);
 struct dp_tx_desc_pool_s *dp_tx_create_flow_pool(struct dp_soc *soc,
@@ -489,15 +488,17 @@ out:
 #endif /* QCA_AC_BASED_FLOW_CONTROL */
 
 static inline bool
-dp_tx_desc_thresh_reached(struct cdp_vdev *vdev)
+dp_tx_desc_thresh_reached(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
-	struct dp_vdev *dp_vdev = (struct dp_vdev *)vdev;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc,
+								  vdev_id);
 	struct dp_tx_desc_pool_s *pool;
 
 	if (!vdev)
 		return false;
 
-	pool = dp_vdev->pool;
+	pool = vdev->pool;
 
 	return  dp_tx_is_threshold_reached(pool, pool->avail_desc);
 }

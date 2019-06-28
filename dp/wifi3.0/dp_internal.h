@@ -1343,7 +1343,7 @@ static inline QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev,
 
 #endif /* CONFIG_WIN */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
-void dp_tx_dump_flow_pool_info(void *soc);
+void dp_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl);
 int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 	bool force);
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */

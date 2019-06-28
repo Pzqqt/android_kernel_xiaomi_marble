@@ -182,16 +182,16 @@ cdp_vdev_attach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 #ifdef DP_FLOW_CTL
 /**
  * cdp_flow_pool_map() - Create flow pool for vdev
- * @soc - data path soc handle
- * @pdev
- * @vdev_id - vdev_id corresponding to vdev start
+ * @soc: data path soc handle
+ * @pdev_id: id of dp pdev handle
+ * @vdev_id: vdev_id corresponding to vdev start
  *
  * Create per vdev flow pool.
  *
  * return none
  */
 static inline QDF_STATUS cdp_flow_pool_map(ol_txrx_soc_handle soc,
-					struct cdp_pdev *pdev, uint8_t vdev_id)
+					   uint8_t pdev_id, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -204,21 +204,22 @@ static inline QDF_STATUS cdp_flow_pool_map(ol_txrx_soc_handle soc,
 	    !soc->ops->flowctl_ops->flow_pool_map_handler)
 		return QDF_STATUS_E_INVAL;
 
-	return soc->ops->flowctl_ops->flow_pool_map_handler(soc, pdev, vdev_id);
+	return soc->ops->flowctl_ops->flow_pool_map_handler(soc, pdev_id,
+							    vdev_id);
 }
 
 /**
  * cdp_flow_pool_unmap() - Delete flow pool
- * @soc - data path soc handle
- * @pdev
- * @vdev_id - vdev_id corresponding to vdev start
+ * @soc: data path soc handle
+ * @pdev_id: id of dp pdev handle
+ * @vdev_id: vdev_id corresponding to vdev start
  *
  * Delete flow pool
  *
  * return none
  */
 static inline void cdp_flow_pool_unmap(ol_txrx_soc_handle soc,
-					struct cdp_pdev *pdev, uint8_t vdev_id)
+				       uint8_t pdev_id, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -231,7 +232,7 @@ static inline void cdp_flow_pool_unmap(ol_txrx_soc_handle soc,
 	    !soc->ops->flowctl_ops->flow_pool_unmap_handler)
 		return;
 
-	return soc->ops->flowctl_ops->flow_pool_unmap_handler(soc, pdev,
+	return soc->ops->flowctl_ops->flow_pool_unmap_handler(soc, pdev_id,
 							vdev_id);
 }
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,8 +92,6 @@ cdp_set_desc_global_pool_size(ol_txrx_soc_handle soc,
 static inline void
 cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 {
-	void *dp_soc = (void *)soc;
-
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
@@ -105,18 +103,18 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 	    !soc->ops->flowctl_ops->dump_flow_pool_info)
 		return;
 
-	soc->ops->flowctl_ops->dump_flow_pool_info(dp_soc);
+	soc->ops->flowctl_ops->dump_flow_pool_info(soc);
 }
 
 /**
  * cdp_tx_desc_thresh_reached() - Check if avail tx desc meet threshold
- * @soc - data path soc handle
- * @vdev - dp vdev handle
+ * @soc: data path soc handle
+ * @vdev_id: vdev_id corresponding to vdev start
  *
  * Return: true if threshold is met, false if not
  */
 static inline bool
-cdp_tx_desc_thresh_reached(struct cdp_soc_t *soc, struct cdp_vdev *vdev)
+cdp_tx_desc_thresh_reached(struct cdp_soc_t *soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -129,6 +127,6 @@ cdp_tx_desc_thresh_reached(struct cdp_soc_t *soc, struct cdp_vdev *vdev)
 	    !soc->ops->flowctl_ops->tx_desc_thresh_reached)
 		return false;
 
-	return soc->ops->flowctl_ops->tx_desc_thresh_reached(vdev);
+	return soc->ops->flowctl_ops->tx_desc_thresh_reached(soc, vdev_id);
 }
 #endif /* _CDP_TXRX_FC_V2_H_ */
