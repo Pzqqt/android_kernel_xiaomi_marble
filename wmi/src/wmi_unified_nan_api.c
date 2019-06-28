@@ -55,11 +55,10 @@ QDF_STATUS wmi_extract_nan_event_rsp(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_ndp_initiator_req_cmd_send(void *wmi_hdl,
-					struct nan_datapath_initiator_req *req)
+QDF_STATUS
+wmi_unified_ndp_initiator_req_cmd_send(wmi_unified_t wmi_handle,
+				       struct nan_datapath_initiator_req *req)
 {
-	wmi_unified_t wmi_handle = wmi_hdl;
-
 	if (wmi_handle->ops->send_ndp_initiator_req_cmd)
 		return wmi_handle->ops->send_ndp_initiator_req_cmd(wmi_handle,
 								   req);
@@ -67,11 +66,10 @@ QDF_STATUS wmi_unified_ndp_initiator_req_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_ndp_responder_req_cmd_send(void *wmi_hdl,
-				struct nan_datapath_responder_req *req)
+QDF_STATUS
+wmi_unified_ndp_responder_req_cmd_send(wmi_unified_t wmi_handle,
+				       struct nan_datapath_responder_req *req)
 {
-	wmi_unified_t wmi_handle = wmi_hdl;
-
 	if (wmi_handle->ops->send_ndp_responder_req_cmd)
 		return wmi_handle->ops->send_ndp_responder_req_cmd(wmi_handle,
 								   req);
@@ -90,11 +88,9 @@ QDF_STATUS wmi_unified_terminate_all_ndps_req_cmd(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_ndp_end_req_cmd_send(void *wmi_hdl,
+QDF_STATUS wmi_unified_ndp_end_req_cmd_send(wmi_unified_t wmi_handle,
 					    struct nan_datapath_end_req *req)
 {
-	wmi_unified_t wmi_handle = wmi_hdl;
-
 	if (wmi_handle->ops->send_ndp_end_req_cmd)
 		return wmi_handle->ops->send_ndp_end_req_cmd(wmi_handle,
 							     req);

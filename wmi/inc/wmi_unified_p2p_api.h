@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,22 +26,22 @@
 
 /**
  * wmi_unified_set_p2pgo_oppps_req() - send p2p go opp power save request to fw
- * @wmi_hdl: wmi handle
- * @opps: p2p opp power save parameters
+ * @wmi_handle: wmi handle
+ * @oppps: p2p opp power save parameters
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_set_p2pgo_oppps_req(void *wmi_hdl,
+QDF_STATUS wmi_unified_set_p2pgo_oppps_req(wmi_unified_t wmi_handle,
 					   struct p2p_ps_params *oppps);
 
 /**
  * wmi_unified_set_p2pgo_noa_req_cmd() - send p2p go noa request to fw
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @noa: p2p power save parameters
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_set_p2pgo_noa_req_cmd(void *wmi_hdl,
+QDF_STATUS wmi_unified_set_p2pgo_noa_req_cmd(wmi_unified_t wmi_handle,
 					     struct p2p_ps_params *noa);
 
 /**
@@ -52,52 +52,54 @@ QDF_STATUS wmi_unified_set_p2pgo_noa_req_cmd(void *wmi_hdl,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_extract_p2p_noa_ev_param(void *wmi_hdl,
+QDF_STATUS wmi_extract_p2p_noa_ev_param(wmi_unified_t wmi_handle,
 					void *evt_buf,
 					struct p2p_noa_info *param);
 
 /**
  * wmi_send_set_mac_addr_rx_filter_cmd() - set mac addr rx filter cmd
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @param: Pointer to set mac filter struct
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS
-wmi_send_set_mac_addr_rx_filter_cmd(void *wmi_hdl,
+wmi_send_set_mac_addr_rx_filter_cmd(wmi_unified_t wmi_handle,
 				    struct p2p_set_mac_filter *param);
 
 /**
  * wmi_extract_mac_addr_rx_filter_evt_param() - extract mac addr rx filter evt
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @evt_buf: pointer to event buffer
  * @param: Pointer to extracted evt info
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS
-wmi_extract_mac_addr_rx_filter_evt_param(void *wmi_hdl, void *evt_buf,
+wmi_extract_mac_addr_rx_filter_evt_param(wmi_unified_t wmi_handle,
+					 void *evt_buf,
 					 struct p2p_set_mac_filter_evt *param);
 
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * wmi_unified_p2p_lo_start_cmd() - send p2p lo start request to fw
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @param: p2p listen offload start parameters
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_p2p_lo_start_cmd(void *wmi_hdl,
+QDF_STATUS wmi_unified_p2p_lo_start_cmd(wmi_unified_t wmi_handle,
 					struct p2p_lo_start *param);
 
 /**
  * wmi_unified_p2p_lo_stop_cmd() - send p2p lo stop request to fw
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @vdev_id: vdev id
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_p2p_lo_stop_cmd(void *wmi_hdl, uint8_t vdev_id);
+QDF_STATUS wmi_unified_p2p_lo_stop_cmd(wmi_unified_t wmi_handle,
+				       uint8_t vdev_id);
 
 /**
  * wmi_extract_p2p_lo_stop_ev_param() - extract p2p lo stop param from event
@@ -107,7 +109,7 @@ QDF_STATUS wmi_unified_p2p_lo_stop_cmd(void *wmi_hdl, uint8_t vdev_id);
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_extract_p2p_lo_stop_ev_param(void *wmi_hdl,
+QDF_STATUS wmi_extract_p2p_lo_stop_ev_param(wmi_unified_t wmi_handle,
 					    void *evt_buf,
 					    struct p2p_lo_event *param);
 #endif /* FEATURE_P2P_LISTEN_OFFLOAD */
