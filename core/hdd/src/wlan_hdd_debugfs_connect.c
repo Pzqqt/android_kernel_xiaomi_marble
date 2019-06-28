@@ -42,12 +42,8 @@ static ssize_t
 wlan_hdd_version_info_debugfs(struct hdd_context *hdd_ctx, uint8_t *buf,
 			      ssize_t buf_avail_len)
 {
-	uint32_t major_spid = 0, minor_spid = 0, siid = 0, crmid = 0, sub_id;
 	ssize_t length = 0;
 	int ret_val;
-
-	hdd_get_fw_version(hdd_ctx, &major_spid, &minor_spid, &siid, &crmid);
-	sub_id = (hdd_ctx->target_fw_vers_ext & 0xf0000000) >> 28;
 
 	ret_val = scnprintf(buf, buf_avail_len,
 			    "\nVERSION DETAILS\n");
@@ -62,10 +58,15 @@ wlan_hdd_version_info_debugfs(struct hdd_context *hdd_ctx, uint8_t *buf,
 
 	ret_val = scnprintf(buf + length, buf_avail_len - length,
 			    "Host Driver Version: %s\n"
-			    "Firmware Version: %d.%d.%d.%d.%d\n"
+			    "Firmware Version: %d.%d.%d.%d.%d.%d\n"
 			    "Hardware Version: %s\n",
 			    QWLAN_VERSIONSTR,
-			    major_spid, minor_spid, siid, crmid, sub_id,
+			    hdd_ctx->fw_version_info.major_spid,
+			    hdd_ctx->fw_version_info.minor_spid,
+			    hdd_ctx->fw_version_info.siid,
+			    hdd_ctx->fw_version_info.rel_id,
+			    hdd_ctx->fw_version_info.crmid,
+			    hdd_ctx->fw_version_info.sub_id,
 			    hdd_ctx->target_hw_name);
 	if (ret_val <= 0)
 		return length;
