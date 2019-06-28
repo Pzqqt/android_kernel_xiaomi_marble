@@ -39,6 +39,7 @@
 #include "pld_snoc.h"
 #include "pld_sdio.h"
 #include "pld_usb.h"
+#include "qwlan_version.h"
 
 #define PLD_PCIE_REGISTERED BIT(0)
 #define PLD_SNOC_REGISTERED BIT(1)
@@ -349,7 +350,6 @@ void pld_unregister_driver(void)
  * @dev: device
  * @config: WLAN configuration data
  * @mode: WLAN mode
- * @host_version: host software version
  *
  * This function enables WLAN FW. It passed WLAN configuration data,
  * WLAN mode and host software version to FW.
@@ -358,23 +358,24 @@ void pld_unregister_driver(void)
  *         Non zero failure code for errors
  */
 int pld_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
-		    enum pld_driver_mode mode, const char *host_version)
+		    enum pld_driver_mode mode)
 {
 	int ret = 0;
 	struct device *ifdev;
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_wlan_enable(dev, config, mode, host_version);
+		ret = pld_pcie_wlan_enable(dev, config, mode, QWLAN_VERSIONSTR);
 		break;
 	case PLD_BUS_TYPE_SNOC:
-		ret = pld_snoc_wlan_enable(dev, config, mode, host_version);
+		ret = pld_snoc_wlan_enable(dev, config, mode, QWLAN_VERSIONSTR);
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		break;
 	case PLD_BUS_TYPE_USB:
 		ifdev = pld_get_if_dev(dev);
-		ret = pld_usb_wlan_enable(ifdev, config, mode, host_version);
+		ret = pld_usb_wlan_enable(ifdev, config, mode,
+					  QWLAN_VERSIONSTR);
 		break;
 	default:
 		ret = -EINVAL;
