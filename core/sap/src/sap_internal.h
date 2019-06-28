@@ -460,13 +460,7 @@ uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg);
  *
  * Return: true if sap is in cac wait state
  */
-static inline bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
-{
-	if (!sap_ctx)
-		return false;
-
-	return  QDF_IS_STATUS_SUCCESS(wlan_vdev_is_dfs_cac_wait(sap_ctx->vdev));
-}
+bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx);
 
 /**
  * sap_channel_in_acs_channel_list() - check if channel in acs channel list

@@ -1893,6 +1893,44 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 }
 
+bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
+{
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+	struct mac_context *mac_ctx;
+	mac_handle_t mac_handle;
+
+	if (!sap_ctx) {
+		sap_err("Invalid sap context");
+		return false;
+	}
+
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_handle) {
+		sap_err("invalid mac_handle");
+		return false;
+	}
+
+	mac_ctx = MAC_CONTEXT(mac_handle);
+	if (!mac_ctx) {
+		sap_err("Invalid MAC context");
+		return false;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+						    sap_ctx->sessionId,
+						    WLAN_DFS_ID);
+	if (!vdev) {
+		sap_err("vdev is NULL for vdev_id: %u", sap_ctx->sessionId);
+		return false;
+	}
+
+	status = wlan_vdev_is_dfs_cac_wait(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_DFS_ID);
+
+	return QDF_IS_STATUS_SUCCESS(status);
+}
+
 /**
  * sap_find_cac_wait_session() - Get context of a SAP session in CAC wait state
  * @handle: Global MAC handle
