@@ -151,11 +151,14 @@ enum wmi_target_type {
  * enum wmi_rx_exec_ctx - wmi rx execution context
  * @WMI_RX_WORK_CTX: work queue context execution provided by WMI layer
  * @WMI_RX_UMAC_CTX: execution context provided by umac layer
+ * @WMI_RX_SERIALIZER_CTX: Execution context is serialized thread context
  *
  */
 enum wmi_rx_exec_ctx {
 	WMI_RX_WORK_CTX,
-	WMI_RX_UMAC_CTX
+	WMI_RX_UMAC_CTX,
+	WMI_RX_TASKLET_CTX = WMI_RX_UMAC_CTX,
+	WMI_RX_SERIALIZER_CTX = 2
 };
 
 /**
@@ -3628,7 +3631,6 @@ wmi_unified_send_peer_cfr_capture_cmd(wmi_unified_t wmi_handle,
 QDF_STATUS
 wmi_extract_cfr_peer_tx_event_param(wmi_unified_t wmi_handle, void *evt_buf,
 				    wmi_cfr_peer_tx_event_param *peer_tx_event);
-
 #endif /* WLAN_CFR_ENABLE */
 
 #ifdef WIFI_POS_CONVERGED
@@ -3644,4 +3646,13 @@ QDF_STATUS
 wmi_extract_oem_response_param(wmi_unified_t wmi_hdl, void *resp_buf,
 			       struct wmi_oem_response_param *oem_resp_param);
 #endif /* WIFI_POS_CONVERGED */
+/**
+ * wmi_critical_events_in_flight() - get the number of critical events in flight
+ *
+ * @wmi_hdl: WMI handle
+ *
+ * Return: the number of critical events in flight.
+ */
+uint32_t wmi_critical_events_in_flight(struct wmi_unified *wmi);
+
 #endif /* _WMI_UNIFIED_API_H_ */

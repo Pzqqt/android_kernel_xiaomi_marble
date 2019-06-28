@@ -2127,6 +2127,7 @@ struct wmi_unified {
 	struct wmi_soc *soc;
 	uint16_t wmi_max_cmds;
 	struct dentry *debugfs_de[NUM_DEBUG_INFOS];
+	qdf_atomic_t critical_events_in_flight;
 #ifdef WMI_EXT_DBG
 	int wmi_ext_dbg_msg_queue_size;
 	qdf_list_t wmi_ext_dbg_msg_queue;
@@ -2170,6 +2171,16 @@ struct wmi_soc {
 	uint32_t buf_offset_command;
 	uint32_t buf_offset_event;
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
+};
+
+/**
+ * struct wmi_process_fw_event_params - fw event parameters
+ * @wmi_handle: wmi handle
+ * @evt_buf: event buffer
+ */
+struct wmi_process_fw_event_params {
+	void *wmi_handle;
+	void *evt_buf;
 };
 
 /**
