@@ -524,6 +524,13 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 	pe_info("maxDuration = %d sign = %d maxMeasduration = %d measDuration = %d",
 		maxDuration, sign, maxMeasduration, measDuration);
 
+	if (measDuration == 0 &&
+	    pBeaconReq->measurement_request.Beacon.meas_mode !=
+	    eSIR_BEACON_TABLE) {
+		pe_err("Invalid measurement duration");
+		return eRRM_REFUSED;
+	}
+
 	if (maxMeasduration < measDuration) {
 		if (pBeaconReq->durationMandatory) {
 			pe_err("Dropping the request: duration mandatory and maxduration > measduration");
