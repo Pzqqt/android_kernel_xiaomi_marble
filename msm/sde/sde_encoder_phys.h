@@ -511,6 +511,12 @@ void sde_encoder_helper_get_pp_line_count(struct drm_encoder *drm_enc,
 		struct sde_hw_pp_vsync_info *info);
 
 /**
+ * sde_encoder_helper_needs_hw_reset - hw reset helper function
+ * @drm_enc:    Pointer to drm encoder structure
+ */
+void sde_encoder_helper_needs_hw_reset(struct drm_encoder *drm_enc);
+
+/**
  * sde_encoder_helper_trigger_flush - control flush helper function
  *	This helper function may be optionally specified by physical
  *	encoders if they require ctl_flush triggering.
