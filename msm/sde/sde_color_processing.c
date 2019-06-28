@@ -1453,8 +1453,7 @@ int sde_cp_crtc_set_property(struct drm_crtc *crtc,
 	 * crtc. Check LM and dspp counts based on whether feature is a
 	 * dspp/lm feature.
 	 */
-	if (!sde_crtc->num_mixers ||
-	    sde_crtc->num_mixers > ARRAY_SIZE(sde_crtc->mixers)) {
+	if (sde_crtc->num_mixers > ARRAY_SIZE(sde_crtc->mixers)) {
 		DRM_INFO("Invalid mixer config act cnt %d max cnt %ld\n",
 			sde_crtc->num_mixers,
 				(long)ARRAY_SIZE(sde_crtc->mixers));
