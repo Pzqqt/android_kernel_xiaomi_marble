@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,17 +26,18 @@
 #include "reg_services_public_struct.h"
 /**
  * reg_chan_list_update_handler() - function to update channel list
- * @handle: wma handle
+ * @wmi_handle: wmi handle
  * @event_buf: event buffer
+ * @reg_info regulatory info
  * @len: length of buffer
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS wmi_extract_reg_chan_list_update_event(void *wmi_hdl,
-						  uint8_t *evt_buf,
-						  struct cur_regulatory_info
-						  *reg_info,
-						  uint32_t len);
+QDF_STATUS wmi_extract_reg_chan_list_update_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct cur_regulatory_info *reg_info,
+		uint32_t len);
 
 /*
  * wmi_unified_send_stop_11d_scan_cmd() - stop 11d scan
@@ -60,14 +61,15 @@ QDF_STATUS wmi_unified_send_start_11d_scan_cmd(wmi_unified_t wmi_handle,
 
 /**
  * wmi_extract_reg_11d_new_cc_event() - function to extract the 11d new country
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @evt_buf: event buffer
  * @reg_11d_new_cc: pointer to new 11d country info
  * @len: length of buffer
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
+QDF_STATUS wmi_extract_reg_11d_new_cc_event(
+		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct reg_11d_new_country *reg_11d_new_cc,
 		uint32_t len);
@@ -80,19 +82,21 @@ QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_set_user_country_code_cmd_send(void *wmi_hdl,
+QDF_STATUS wmi_unified_set_user_country_code_cmd_send(
+		wmi_unified_t wmi_handle,
 		uint8_t pdev_id, struct cc_regdmn_s *rd);
 
 /**
  * wmi_extract_reg_ch_avoid_event() - process freq avoid event
- * @wmi_hdl: wmi handle.
+ * @wmi_handle: wmi handle.
  * @evt_buf: event buffer
  * @ch_avoid_ind: buffer pointer to save the event processed data
  * @len: length of buffer
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_extract_reg_ch_avoid_event(void *wmi_hdl,
+QDF_STATUS wmi_extract_reg_ch_avoid_event(
+		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct ch_avoid_ind_type *ch_avoid_ind,
 		uint32_t len);
