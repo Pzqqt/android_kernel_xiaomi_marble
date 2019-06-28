@@ -60,6 +60,12 @@ all:
 	$(shell cd $(KERNEL_BINARY_DIR) && $(KERNEL_SRC)/scripts/headers_install.sh $(UAPI_OUT)/linux/ $(AUDIO_ROOT)/include/uapi/linux/ $(notdir $(AUDIO_KERNEL_HEADERS_PATH1)))
 	$(shell cd $(KERNEL_BINARY_DIR) && $(KERNEL_SRC)/scripts/headers_install.sh $(UAPI_OUT)/linux/mfd/wcd9xxx/ $(AUDIO_ROOT)/include/uapi/linux/mfd/wcd9xxx/ $(notdir $(AUDIO_KERNEL_HEADERS_PATH2)))
 	$(shell cd $(KERNEL_BINARY_DIR) && $(KERNEL_SRC)/scripts/headers_install.sh $(UAPI_OUT)/sound/ $(AUDIO_ROOT)/include/uapi/sound/ $(notdir $(AUDIO_KERNEL_HEADERS_PATH3)))
+	$(shell mkdir $(KERNEL_BINARY_DIR)/usr/include/sound)
+	$(shell mkdir $(KERNEL_BINARY_DIR)/usr/include/linux/mfd)
+	$(shell mkdir $(KERNEL_BINARY_DIR)/usr/include/linux/mfd/wcd9xxx)
+	$(shell cd $(KERNEL_BINARY_DIR) && $(KERNEL_SRC)/scripts/headers_install.sh $(KERNEL_BINARY_DIR)/usr/include/linux/ $(AUDIO_ROOT)/include/uapi/linux/ $(notdir $(AUDIO_KERNEL_HEADERS_PATH1)))
+	$(shell cd $(KERNEL_BINARY_DIR) && $(KERNEL_SRC)/scripts/headers_install.sh $(KERNEL_BINARY_DIR)/usr/include/linux/mfd/wcd9xxx/ $(AUDIO_ROOT)/include/uapi/linux/mfd/wcd9xxx/ $(notdir $(AUDIO_KERNEL_HEADERS_PATH2)))
+	$(shell cd $(KERNEL_BINARY_DIR) && $(KERNEL_SRC)/scripts/headers_install.sh $(KERNEL_BINARY_DIR)/usr/include/sound/ $(AUDIO_ROOT)/include/uapi/sound/ $(notdir $(AUDIO_KERNEL_HEADERS_PATH3)))
 	$(MAKE) -C $(KERNEL_SRC) M=$(shell pwd) modules $(KBUILD_OPTIONS)
 
 modules_install:
