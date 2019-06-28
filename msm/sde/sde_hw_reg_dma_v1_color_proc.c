@@ -379,6 +379,11 @@ static int reg_dmav1_get_dspp_blk(struct sde_hw_cp_cfg *hw_cfg,
 
 	/* Treat first dspp as master to simplify setup */
 	dspp = hw_cfg->dspp[0];
+	if(!dspp) {
+		DRM_ERROR("Invalid dspp NULL");
+		return -EINVAL;
+	}
+
 	if (hw_cfg->broadcast_disabled) {
 		*blk = dspp_mapping[curr_dspp];
 		(*num_of_mixers)++;
@@ -390,6 +395,11 @@ static int reg_dmav1_get_dspp_blk(struct sde_hw_cp_cfg *hw_cfg,
 
 		for (i = 0 ; i < hw_cfg->num_of_mixers; i++) {
 			dspp = hw_cfg->dspp[i];
+			if (!dspp) {
+				DRM_ERROR("Invalid dspp NULL");
+				rc = -EINVAL;
+				break;
+			}
 			if (dspp->idx >= DSPP_MAX) {
 				DRM_ERROR("Invalid dspp idx %d", dspp->idx);
 				rc = -EINVAL;
