@@ -1146,7 +1146,7 @@ void wlan_flush_host_logs_for_fatal(void)
 #endif
 }
 
-#ifdef CONFIG_MCL
+#ifdef FEATURE_PKTLOG
 #ifndef REMOVE_PKT_LOG
 
 static uint8_t gtx_count;
@@ -1532,5 +1532,5 @@ void wlan_register_txrx_packetdump(void)
 	grx_count = 0;
 }
 #endif /* REMOVE_PKT_LOG */
-#endif /* CONFIG_MCL */
+#endif /* FEATURE_PKTLOG */
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
