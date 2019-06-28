@@ -1189,7 +1189,20 @@ typedef enum {
 #define HTT_TX_PEER_STATS_NUM_MCS_COUNTERS 12
 #define HTT_TX_PEER_STATS_NUM_GI_COUNTERS 4
 #define HTT_TX_PEER_STATS_NUM_DCM_COUNTERS 5
+ /* HTT_TX_PEER_STATS_NUM_BW_COUNTERS:
+  * bw index 0: rssi_pri20_chain0
+  * bw index 1: rssi_ext20_chain0
+  * bw index 2: rssi_ext40_low20_chain0
+  * bw index 3: rssi_ext40_high20_chain0
+  */
 #define HTT_TX_PEER_STATS_NUM_BW_COUNTERS 4
+/* HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS:
+ * bw index 4 (bw ext index 0): rssi_ext80_low20_chain0
+ * bw index 5 (bw ext index 1): rssi_ext80_low_high20_chain0
+ * bw index 6 (bw ext index 2): rssi_ext80_high_low20_chain0
+ * bw index 7 (bw ext index 3): rssi_ext80_high20_chain0
+ */
+#define HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS 4
 #define HTT_TX_PEER_STATS_NUM_SPATIAL_STREAMS 8
 #define HTT_TX_PEER_STATS_NUM_PREAMBLE_TYPES HTT_STATS_PREAM_COUNT
 
@@ -1268,6 +1281,8 @@ typedef struct _htt_rx_peer_rate_stats_tlv {
     A_UINT32 rx_ulmumimo_data_ppdu;       /* ppdu level */
     A_UINT32 rx_ulmumimo_mpdu_ok;         /* mpdu level */
     A_UINT32 rx_ulmumimo_mpdu_fail;       /* mpdu level */
+
+    A_UINT8  rssi_chain_ext[HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS]; /* units = dB above noise floor */
 } htt_rx_peer_rate_stats_tlv;
 
 typedef enum {
