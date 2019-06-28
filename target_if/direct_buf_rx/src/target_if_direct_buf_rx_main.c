@@ -562,7 +562,7 @@ static QDF_STATUS target_if_dbr_cfg_tgt(struct wlan_objmgr_pdev *pdev,
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;
-	void *wmi_hdl;
+	wmi_unified_t wmi_hdl;
 	struct direct_buf_rx_cfg_req dbr_cfg_req = {0};
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;

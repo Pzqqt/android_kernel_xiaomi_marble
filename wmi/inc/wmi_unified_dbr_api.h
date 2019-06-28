@@ -30,32 +30,32 @@ typedef struct wmi_unified *wmi_unified_t;
 
 /**
  * wmi_unified_dbr_ring_cfg: Configure direct buffer rx rings
- * @wmi_hdl: WMI handle
+ * @wmi_handle: WMI handle
  * @cfg: pointer to direct buffer rx config request
  *
  * Return: QDF status of operation
  */
-QDF_STATUS wmi_unified_dbr_ring_cfg(void *wmi_hdl,
-				struct direct_buf_rx_cfg_req *cfg);
+QDF_STATUS wmi_unified_dbr_ring_cfg(wmi_unified_t wmi_handle,
+				    struct direct_buf_rx_cfg_req *cfg);
 
 /**
  * wmi_extract_dbr_buf_release_fixed : Extract direct buffer rx fixed param
  *				     from buffer release event
- * @wmi_hdl: WMI handle
+ * @wmi_handle: WMI handle
  * @evt_buf: Event buffer
  * @param: Pointer to direct buffer rx response struct
  *
  * Return: QDF status of operation
  */
 QDF_STATUS wmi_extract_dbr_buf_release_fixed(
-			void *wmi_hdl,
+			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
 			struct direct_buf_rx_rsp *param);
 
 /**
  * wmi_extract_dbr_buf_release_entry: Extract direct buffer rx buffer tlv
  *
- * @wmi_hdl: WMI handle
+ * @wmi_handle: WMI handle
  * @evt_buf: Event buffer
  * @idx: Index of the module for which capability is received
  * @param: Pointer to direct buffer rx entry
@@ -63,14 +63,14 @@ QDF_STATUS wmi_extract_dbr_buf_release_fixed(
  * Return: QDF status of operation
  */
 QDF_STATUS wmi_extract_dbr_buf_release_entry(
-			void *wmi_hdl,
+			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t idx,
 			struct direct_buf_rx_entry *param);
 
 /**
  * wmi_extract_dbr_buf_metadata: Extract direct buffer metadata
  *
- * @wmi_hdl: WMI handle
+ * @wmi_handle: WMI handle
  * @evt_buf: Event buffer
  * @idx: Index of the module for which capability is received
  * @param: Pointer to direct buffer metadata
@@ -78,7 +78,7 @@ QDF_STATUS wmi_extract_dbr_buf_release_entry(
  * Return: QDF status of operation
  */
 QDF_STATUS wmi_extract_dbr_buf_metadata(
-			void *wmi_hdl,
+			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t idx,
 			struct direct_buf_rx_metadata *param);
 

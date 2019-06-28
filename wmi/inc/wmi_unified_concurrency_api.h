@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,22 +24,22 @@
 
 /**
  * wmi_unified_set_mcc_channel_time_quota_cmd() - set MCC channel time quota
- * @wmi: wmi handle
- * @adapter_1_chan_number: adapter 1 channel number
+ * @wmi_handle: wmi handle
+ * @adapter_1_chan_freq: adapter 1 channel number
  * @adapter_1_quota: adapter 1 quota
- * @adapter_2_chan_number: adapter 2 channel number
+ * @adapter_2_chan_freq: adapter 2 channel number
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_set_mcc_channel_time_quota_cmd
-	(void *wmi_hdl,
+QDF_STATUS wmi_unified_set_mcc_channel_time_quota_cmd(
+	wmi_unified_t wmi_handle,
 	uint32_t adapter_1_chan_freq,
 	uint32_t adapter_1_quota, uint32_t adapter_2_chan_freq);
 
 /**
  * wmi_unified_set_mcc_channel_time_latency_cmd() - set MCC channel time latency
- * @wmi: wmi handle
- * @mcc_channel: mcc channel
+ * @wmi_handle: wmi handle
+ * @mcc_channel_freq: mcc channel freq
  * @mcc_channel_time_latency: MCC channel time latency.
  *
  * Currently used to set time latency for an MCC vdev/adapter using operating
@@ -48,8 +48,8 @@ QDF_STATUS wmi_unified_set_mcc_channel_time_quota_cmd
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_set_mcc_channel_time_latency_cmd
-	(void *wmi_hdl,
+QDF_STATUS wmi_unified_set_mcc_channel_time_latency_cmd(
+	wmi_unified_t wmi_handle,
 	uint32_t mcc_channel_freq, uint32_t mcc_channel_time_latency);
 
 /**
@@ -57,13 +57,14 @@ QDF_STATUS wmi_unified_set_mcc_channel_time_latency_cmd
  *								 scheduler
  * @wmi_handle: wmi handle
  * @mcc_adaptive_scheduler: enable/disable
+ * @pdev_id: pdev id
  *
  * This function enable/disable mcc adaptive scheduler in fw.
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 QDF_STATUS wmi_unified_set_enable_disable_mcc_adaptive_scheduler_cmd(
-		   void *wmi_hdl, uint32_t mcc_adaptive_scheduler,
-		   uint32_t pdev_id);
+		wmi_unified_t wmi_handle, uint32_t mcc_adaptive_scheduler,
+		uint32_t pdev_id);
 
 #endif /* _WMI_UNIFIED_CONCURRENCY_API_H_ */

@@ -19,11 +19,9 @@
 #include "wmi_unified_priv.h"
 #include "qdf_module.h"
 
-QDF_STATUS wmi_unified_dbr_ring_cfg(void *wmi_hdl,
-				struct direct_buf_rx_cfg_req *cfg)
+QDF_STATUS wmi_unified_dbr_ring_cfg(wmi_unified_t wmi_handle,
+				    struct direct_buf_rx_cfg_req *cfg)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_dbr_cfg_cmd)
 		return wmi_handle->ops->send_dbr_cfg_cmd(wmi_handle, cfg);
 
@@ -31,12 +29,10 @@ QDF_STATUS wmi_unified_dbr_ring_cfg(void *wmi_hdl,
 }
 
 QDF_STATUS wmi_extract_dbr_buf_release_fixed(
-			void *wmi_hdl,
+			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
 			struct direct_buf_rx_rsp *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_dbr_buf_release_fixed)
 		return wmi_handle->ops->extract_dbr_buf_release_fixed(
 				wmi_handle,
@@ -46,12 +42,10 @@ QDF_STATUS wmi_extract_dbr_buf_release_fixed(
 }
 
 QDF_STATUS wmi_extract_dbr_buf_release_entry(
-			void *wmi_hdl,
+			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t idx,
 			struct direct_buf_rx_entry *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_dbr_buf_release_entry)
 		return wmi_handle->ops->extract_dbr_buf_release_entry(
 				wmi_handle,
@@ -61,12 +55,10 @@ QDF_STATUS wmi_extract_dbr_buf_release_entry(
 }
 
 QDF_STATUS wmi_extract_dbr_buf_metadata(
-			void *wmi_hdl,
+			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t idx,
 			struct direct_buf_rx_metadata *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
-
 	if (wmi_handle->ops->extract_dbr_buf_metadata)
 		return wmi_handle->ops->extract_dbr_buf_metadata(
 				wmi_handle,
