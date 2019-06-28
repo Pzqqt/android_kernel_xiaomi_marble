@@ -2875,15 +2875,9 @@ static void _sde_cp_crtc_disable_ltm_hist(struct sde_crtc *sde_crtc,
 	struct sde_hw_dspp *hw_dspp, struct sde_hw_cp_cfg *hw_cfg)
 {
 	unsigned long irq_flags;
-	struct sde_hw_mixer *hw_lm = hw_cfg->mixer_info;
 	u32 i = 0;
 
 	spin_lock_irqsave(&sde_crtc->ltm_lock, irq_flags);
-	if (!hw_lm->cfg.right_mixer && !sde_crtc->ltm_hist_en) {
-		/* histogram is already disabled */
-		spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
-		return;
-	}
 	sde_crtc->ltm_hist_en = false;
 	INIT_LIST_HEAD(&sde_crtc->ltm_buf_free);
 	INIT_LIST_HEAD(&sde_crtc->ltm_buf_busy);
