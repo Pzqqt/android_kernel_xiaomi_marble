@@ -1289,19 +1289,15 @@ static int wcd9xxx_slim_probe(struct slim_device *slim)
 	int ret = 0;
 	int intf_type;
 
+	if (!slim)
+		return -EINVAL;
+
 	intf_type = wcd9xxx_get_intf_type();
 
 	wcd9xxx = devm_kzalloc(&slim->dev, sizeof(struct wcd9xxx),
 				GFP_KERNEL);
-	if (!wcd9xxx) {
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	if (!slim) {
-		ret = -EINVAL;
-		goto err;
-	}
+	if (!wcd9xxx)
+		return -ENOMEM;
 
 	if (intf_type == WCD9XXX_INTERFACE_TYPE_I2C) {
 		dev_dbg(&slim->dev, "%s:Codec is detected in I2C mode\n",
