@@ -3733,6 +3733,6 @@ static void __exit sde_rotator_exit_module(void)
 	platform_driver_unregister(&rotator_driver);
 }
 
-module_init(sde_rotator_init_module);
+late_initcall(sde_rotator_init_module);
 module_exit(sde_rotator_exit_module);
 MODULE_DESCRIPTION("MSM SDE ROTATOR driver");
