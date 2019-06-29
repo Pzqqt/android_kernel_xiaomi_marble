@@ -1587,10 +1587,8 @@ void sde_cp_crtc_destroy_properties(struct drm_crtc *crtc)
 	mutex_destroy(&sde_crtc->crtc_cp_lock);
 	INIT_LIST_HEAD(&sde_crtc->active_list);
 	INIT_LIST_HEAD(&sde_crtc->dirty_list);
-	INIT_LIST_HEAD(&sde_crtc->feature_list);
 	INIT_LIST_HEAD(&sde_crtc->ad_dirty);
 	INIT_LIST_HEAD(&sde_crtc->ad_active);
-	mutex_destroy(&sde_crtc->ltm_buffer_lock);
 	INIT_LIST_HEAD(&sde_crtc->ltm_buf_free);
 	INIT_LIST_HEAD(&sde_crtc->ltm_buf_busy);
 }
@@ -1644,6 +1642,7 @@ void sde_cp_crtc_clear(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc = NULL;
 	unsigned long flags;
+	u32 i = 0;
 
 	if (!crtc) {
 		DRM_ERROR("crtc %pK\n", crtc);
@@ -1665,6 +1664,21 @@ void sde_cp_crtc_clear(struct drm_crtc *crtc)
 	spin_lock_irqsave(&sde_crtc->spin_lock, flags);
 	list_del_init(&sde_crtc->user_event_list);
 	spin_unlock_irqrestore(&sde_crtc->spin_lock, flags);
+
+	for (i = 0; i < sde_crtc->ltm_buffer_cnt; i++) {
+		if (sde_crtc->ltm_buffers[i]) {
+			msm_gem_put_vaddr(sde_crtc->ltm_buffers[i]->gem);
+			drm_framebuffer_put(sde_crtc->ltm_buffers[i]->fb);
+			msm_gem_put_iova(sde_crtc->ltm_buffers[i]->gem,
+					sde_crtc->ltm_buffers[i]->aspace);
+			kfree(sde_crtc->ltm_buffers[i]);
+			sde_crtc->ltm_buffers[i] = NULL;
+		}
+	}
+	sde_crtc->ltm_buffer_cnt = 0;
+	sde_crtc->ltm_hist_en = false;
+	INIT_LIST_HEAD(&sde_crtc->ltm_buf_free);
+	INIT_LIST_HEAD(&sde_crtc->ltm_buf_busy);
 }
 
 static void dspp_pcc_install_property(struct drm_crtc *crtc)
