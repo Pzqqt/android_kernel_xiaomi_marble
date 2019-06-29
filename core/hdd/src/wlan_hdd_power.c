@@ -2147,7 +2147,6 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	struct net_device *ndev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	int status;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	hdd_enter_dev(ndev);
 
@@ -2167,20 +2166,27 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	if (status)
 		return status;
 
-	if (sta_ctx->hdd_reassoc_scenario) {
-		hdd_debug("Roaming is in progress, rej this req");
-		return -EINVAL;
+	if (adapter->device_mode == QDF_STA_MODE ||
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
+		struct hdd_station_ctx *sta_ctx;
+
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		if (sta_ctx->hdd_reassoc_scenario) {
+			hdd_debug("Roaming is in progress, rej this req");
+			return -EINVAL;
+		}
+
+		if (sta_ctx->conn_info.conn_state !=
+		    eConnectionState_Associated) {
+			hdd_debug("Not associated");
+			return 0;
+		}
 	}
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
 		hdd_debug("Driver Module not enabled return success");
 		/* Send cached data to upperlayer*/
 		*dbm = adapter->hdd_stats.class_a_stat.max_pwr;
-		return 0;
-	}
-
-	if (sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
-		hdd_debug("Not associated");
 		return 0;
 	}
 
