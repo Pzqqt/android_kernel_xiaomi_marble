@@ -2419,3 +2419,19 @@ void mlme_free_self_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 		mlme_priv->self_disconnect_ies.len = 0;
 	}
 }
+
+struct wlan_ies *mlme_get_self_disconnect_ies(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return NULL;
+	}
+
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
+
+	return &mlme_priv->self_disconnect_ies;
+}

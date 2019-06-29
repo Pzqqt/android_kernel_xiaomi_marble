@@ -300,4 +300,12 @@ void mlme_set_self_disconnect_ies(struct wlan_objmgr_vdev *vdev,
  * Return: None
  */
 void mlme_free_self_disconnect_ies(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_get_self_disconnect_ies() - Get diconnect IEs from vdev object
+ * @vdev: vdev pointer
+ *
+ * Return: Returns a pointer to the self disconnect IEs present in vdev object
+ */
+struct wlan_ies *mlme_get_self_disconnect_ies(struct wlan_objmgr_vdev *vdev);
 #endif
