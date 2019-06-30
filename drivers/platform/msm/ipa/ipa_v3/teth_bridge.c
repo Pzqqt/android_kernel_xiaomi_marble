@@ -31,6 +31,12 @@
 #define TETH_ERR(fmt, args...) \
 	pr_err(TETH_BRIDGE_DRV_NAME " %s:%d " fmt, __func__, __LINE__, ## args)
 
+enum ipa_num_teth_iface {
+	IPA_TETH_IFACE_1 = 0,
+	IPA_TETH_IFACE_2 = 1,
+	IPA_TETH_IFACE_MAX
+};
+
 /**
  * struct ipa3_teth_bridge_ctx - Tethering bridge driver context information
  * @class: kernel class pointer
@@ -43,7 +49,7 @@ struct ipa3_teth_bridge_ctx {
 	dev_t dev_num;
 	struct device *dev;
 	struct cdev cdev;
-	u32 modem_pm_hdl;
+	u32 modem_pm_hdl[IPA_TETH_IFACE_MAX];
 };
 static struct ipa3_teth_bridge_ctx *ipa3_teth_ctx;
 
@@ -115,19 +121,25 @@ EXPORT_SYMBOL(ipa3_teth_bridge_init);
  * Return codes: handle
  *		-EINVAL - Bad parameter
  */
-int ipa3_teth_bridge_get_pm_hdl(void)
+int ipa3_teth_bridge_get_pm_hdl(enum ipa_client_type client)
 {
-	TETH_DBG_FUNC_ENTRY();
+	u32 pm_hdl;
 
-	if (ipa3_teth_ctx->modem_pm_hdl == ~0) {
+	TETH_DBG_FUNC_ENTRY();
+	if (client == IPA_CLIENT_USB2_PROD)
+		pm_hdl = ipa3_teth_ctx->modem_pm_hdl[IPA_TETH_IFACE_2];
+	else
+		pm_hdl = ipa3_teth_ctx->modem_pm_hdl[IPA_TETH_IFACE_1];
+
+	if (pm_hdl == ~0) {
 		TETH_ERR("Bad parameter\n");
 		TETH_DBG_FUNC_EXIT();
 		return -EINVAL;
 	}
 
-	TETH_DBG("Return pm-handle %d\n", ipa3_teth_ctx->modem_pm_hdl);
+	TETH_DBG("Return pm-handle %d\n", pm_hdl);
 	TETH_DBG_FUNC_EXIT();
-	return ipa3_teth_ctx->modem_pm_hdl;
+	return pm_hdl;
 }
 
 /**
@@ -136,17 +148,23 @@ int ipa3_teth_bridge_get_pm_hdl(void)
 int ipa3_teth_bridge_disconnect(enum ipa_client_type client)
 {
 	int res = 0;
+	int *pm_hdl = NULL;
 
 	TETH_DBG_FUNC_ENTRY();
-	res = ipa_pm_deactivate_sync(ipa3_teth_ctx->modem_pm_hdl);
 
+	if (client == IPA_CLIENT_USB2_PROD)
+		pm_hdl = &ipa3_teth_ctx->modem_pm_hdl[IPA_TETH_IFACE_2];
+	else
+		pm_hdl = &ipa3_teth_ctx->modem_pm_hdl[IPA_TETH_IFACE_1];
+
+	res = ipa_pm_deactivate_sync(*pm_hdl);
 	if (res) {
 		TETH_ERR("fail to deactivate modem %d\n", res);
 		return res;
 	}
+	res = ipa_pm_deregister(*pm_hdl);
+	*pm_hdl = ~0;
 
-	res = ipa_pm_deregister(ipa3_teth_ctx->modem_pm_hdl);
-	ipa3_teth_ctx->modem_pm_hdl = ~0;
 	TETH_DBG_FUNC_EXIT();
 
 	return res;
@@ -166,20 +184,30 @@ int ipa3_teth_bridge_connect(struct teth_bridge_connect_params *connect_params)
 {
 	int res = 0;
 	struct ipa_pm_register_params reg_params;
+	u32 *pm = NULL;
 
 	memset(&reg_params, 0, sizeof(reg_params));
 
 	TETH_DBG_FUNC_ENTRY();
 
-	reg_params.name = "MODEM (USB RMNET)";
+	if (connect_params->tethering_mode ==
+		TETH_TETHERING_MODE_RMNET_2) {
+		reg_params.name = "MODEM (USB RMNET_CV2X)";
+		pm = &ipa3_teth_ctx->modem_pm_hdl[IPA_TETH_IFACE_2];
+	} else {
+		reg_params.name = "MODEM (USB RMNET)";
+		pm = &ipa3_teth_ctx->modem_pm_hdl[IPA_TETH_IFACE_1];
+	}
 	reg_params.group = IPA_PM_GROUP_MODEM;
 	reg_params.skip_clk_vote = true;
 	res = ipa_pm_register(&reg_params,
-		&ipa3_teth_ctx->modem_pm_hdl);
+		pm);
 	if (res) {
 		TETH_ERR("fail to register with PM %d\n", res);
 		return res;
 	}
+	res = ipa_pm_activate_sync(*pm);
+
 	/* vote for turbo in case of MHIP channels*/
 	if (ipa3_is_apq())
 		res = ipa_pm_set_throughput(ipa3_teth_ctx->modem_pm_hdl,
@@ -210,7 +238,7 @@ static const struct file_operations ipa3_teth_bridge_drv_fops = {
  */
 int ipa3_teth_bridge_driver_init(void)
 {
-	int res;
+	int res, i;
 
 	TETH_DBG("Tethering bridge driver init\n");
 	ipa3_teth_ctx = kzalloc(sizeof(*ipa3_teth_ctx), GFP_KERNEL);
@@ -249,7 +277,9 @@ int ipa3_teth_bridge_driver_init(void)
 		goto fail_cdev_add;
 	}
 
-	ipa3_teth_ctx->modem_pm_hdl = ~0;
+	for (i = 0; i < IPA_TETH_IFACE_MAX; i++)
+		ipa3_teth_ctx->modem_pm_hdl[i] = ~0;
+
 	TETH_DBG("Tethering bridge driver init OK\n");
 
 	return 0;

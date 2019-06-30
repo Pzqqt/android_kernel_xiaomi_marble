@@ -2761,7 +2761,7 @@ void ipa3_release_wdi3_gsi_smmu_mappings(u8 dir);
  * Tethering bridge (Rmnet / MBIM)
  */
 
-int ipa3_teth_bridge_get_pm_hdl(void);
+int ipa3_teth_bridge_get_pm_hdl(enum ipa_client_type client);
 
 /*
  * Tethering client info
