@@ -44,6 +44,16 @@ struct wlan_mlme_psoc_obj {
 };
 
 /**
+ * struct wlan_ies - Generic WLAN Information Element(s) format
+ * @len: Total length of the IEs
+ * @data: IE data
+ */
+struct wlan_ies {
+	uint16_t len;
+	uint8_t *data;
+};
+
+/**
  * struct peer_mlme_priv_obj - peer MLME component object
  * @ucast_key_cipher: unicast crypto type.
  */
@@ -76,6 +86,8 @@ enum vdev_assoc_type {
  * @ini_cfg: Max configuration of nss, chains supported for vdev.
  * @sta_dynamic_oce_value: Dyanmic oce flags value for sta
  * @roam_invoke_params: Roam invoke params
+ * @self_disconnect_ies: Disconnect IEs to be sent in deauth/disassoc frames
+ *			 originated from driver
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -88,6 +100,7 @@ struct mlme_legacy_priv {
 	struct wlan_mlme_nss_chains ini_cfg;
 	uint8_t sta_dynamic_oce_value;
 	struct mlme_roam_after_data_stall roam_invoke_params;
+	struct wlan_ies self_disconnect_ies;
 };
 
 #ifndef CRYPTO_SET_KEY_CONVERGED
@@ -270,4 +283,21 @@ struct wlan_mlme_psoc_obj *mlme_get_psoc_obj_fl(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS mlme_init_ibss_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_ibss_cfg *ibss_cfg);
 
+/**
+ * mlme_set_self_disconnect_ies() - Set diconnect IEs configured from userspace
+ * @vdev: vdev pointer
+ * @ie: pointer for disconnect IEs
+ *
+ * Return: None
+ */
+void mlme_set_self_disconnect_ies(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_ies *ie);
+
+/**
+ * mlme_free_self_disconnect_ies() - Free the self diconnect IEs
+ * @vdev: vdev pointer
+ *
+ * Return: None
+ */
+void mlme_free_self_disconnect_ies(struct wlan_objmgr_vdev *vdev);
 #endif
