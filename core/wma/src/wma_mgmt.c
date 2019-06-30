@@ -4405,7 +4405,9 @@ QDF_STATUS wma_register_roaming_callbacks(
 		struct bss_description *bss_desc_ptr,
 		enum sir_roam_op_code reason),
 	QDF_STATUS (*pe_disconnect_cb) (struct mac_context *mac,
-					uint8_t vdev_id))
+					uint8_t vdev_id,
+					uint8_t *deauth_disassoc_frame,
+					uint16_t deauth_disassoc_frame_len))
 {
 
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);

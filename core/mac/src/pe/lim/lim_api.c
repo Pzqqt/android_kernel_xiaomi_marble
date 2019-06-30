@@ -2261,7 +2261,9 @@ lim_copy_and_free_hlp_data_from_session(struct pe_session *session_ptr,
 #endif
 
 QDF_STATUS
-pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id)
+pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
+		       uint8_t *deauth_disassoc_frame,
+		       uint16_t deauth_disassoc_frame_len)
 {
 	struct pe_session *session;
 
@@ -2271,6 +2273,8 @@ pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	lim_extract_ies_from_deauth_disassoc(session, deauth_disassoc_frame,
+					     deauth_disassoc_frame_len);
 	lim_tear_down_link_with_ap(mac, vdev_id,
 				   eSIR_MAC_UNSPEC_FAILURE_REASON);
 
