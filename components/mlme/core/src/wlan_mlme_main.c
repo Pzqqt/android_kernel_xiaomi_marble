@@ -2362,3 +2362,60 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 	return status;
 }
+
+void mlme_set_self_disconnect_ies(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_ies *ie)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	if (!ie || !ie->len || !ie->data) {
+		mlme_legacy_debug("disocnnect IEs are NULL");
+		return;
+	}
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return;
+	}
+
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
+
+	if (mlme_priv->self_disconnect_ies.data) {
+		qdf_mem_free(mlme_priv->self_disconnect_ies.data);
+		mlme_priv->self_disconnect_ies.len = 0;
+	}
+
+	mlme_priv->self_disconnect_ies.data = qdf_mem_malloc(ie->len);
+	if (!mlme_priv->self_disconnect_ies.data)
+		return;
+
+	qdf_mem_copy(mlme_priv->self_disconnect_ies.data, ie->data, ie->len);
+	mlme_priv->self_disconnect_ies.len = ie->len;
+
+	mlme_legacy_debug("Self disconnect IEs");
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_MLME, QDF_TRACE_LEVEL_DEBUG,
+			   mlme_priv->self_disconnect_ies.data,
+			   mlme_priv->self_disconnect_ies.len);
+}
+
+void mlme_free_self_disconnect_ies(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return;
+	}
+
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
+
+	if (mlme_priv->self_disconnect_ies.data) {
+		qdf_mem_free(mlme_priv->self_disconnect_ies.data);
+		mlme_priv->self_disconnect_ies.data = NULL;
+		mlme_priv->self_disconnect_ies.len = 0;
+	}
+}
