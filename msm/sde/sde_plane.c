@@ -2536,8 +2536,7 @@ static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 
 	if (!psde->pipe_sblk) {
 		SDE_ERROR_PLANE(psde, "invalid catalog\n");
-		ret = -EINVAL;
-		goto exit;
+		return -EINVAL;
 	}
 
 	/* src values are in Q16 fixed point, convert to integer */
@@ -2605,6 +2604,9 @@ static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 		ret = -EINVAL;
 	}
 
+	if (ret)
+		return ret;
+
 	ret = _sde_atomic_check_decimation_scaler(state, psde, fmt, pstate,
 		&src, &dst, width, height);
 
@@ -2626,7 +2628,6 @@ modeset_update:
 	if (!ret)
 		_sde_plane_sspp_atomic_check_mode_changed(psde,
 				state, plane->state);
-exit:
 	return ret;
 }
 
