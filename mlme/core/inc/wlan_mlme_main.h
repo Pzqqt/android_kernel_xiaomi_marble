@@ -88,6 +88,8 @@ enum vdev_assoc_type {
  * @roam_invoke_params: Roam invoke params
  * @self_disconnect_ies: Disconnect IEs to be sent in deauth/disassoc frames
  *			 originated from driver
+ * @peer_disconnect_ies: Disconnect IEs received in deauth/disassoc frames
+ *			 from peer
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -101,6 +103,7 @@ struct mlme_legacy_priv {
 	uint8_t sta_dynamic_oce_value;
 	struct mlme_roam_after_data_stall roam_invoke_params;
 	struct wlan_ies self_disconnect_ies;
+	struct wlan_ies peer_disconnect_ies;
 };
 
 #ifndef CRYPTO_SET_KEY_CONVERGED
@@ -308,4 +311,30 @@ void mlme_free_self_disconnect_ies(struct wlan_objmgr_vdev *vdev);
  * Return: Returns a pointer to the self disconnect IEs present in vdev object
  */
 struct wlan_ies *mlme_get_self_disconnect_ies(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_set_peer_disconnect_ies() - Cache disconnect IEs received from peer
+ * @vdev: vdev pointer
+ * @ie: pointer for disconnect IEs
+ *
+ * Return: None
+ */
+void mlme_set_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_ies *ie);
+
+/**
+ * mlme_free_peer_disconnect_ies() - Free the peer diconnect IEs
+ * @vdev: vdev pointer
+ *
+ * Return: None
+ */
+void mlme_free_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_get_peer_disconnect_ies() - Get diconnect IEs from vdev object
+ * @vdev: vdev pointer
+ *
+ * Return: Returns a pointer to the peer disconnect IEs present in vdev object
+ */
+struct wlan_ies *mlme_get_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev);
 #endif

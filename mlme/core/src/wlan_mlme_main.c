@@ -2435,3 +2435,76 @@ struct wlan_ies *mlme_get_self_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 
 	return &mlme_priv->self_disconnect_ies;
 }
+
+void mlme_set_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_ies *ie)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	if (!ie || !ie->len || !ie->data) {
+		mlme_legacy_debug("disocnnect IEs are NULL");
+		return;
+	}
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return;
+	}
+
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
+
+	if (mlme_priv->peer_disconnect_ies.data) {
+		qdf_mem_free(mlme_priv->peer_disconnect_ies.data);
+		mlme_priv->peer_disconnect_ies.len = 0;
+	}
+
+	mlme_priv->peer_disconnect_ies.data = qdf_mem_malloc(ie->len);
+	if (!mlme_priv->peer_disconnect_ies.data)
+		return;
+
+	qdf_mem_copy(mlme_priv->peer_disconnect_ies.data, ie->data, ie->len);
+	mlme_priv->peer_disconnect_ies.len = ie->len;
+
+	mlme_legacy_debug("peer disconnect IEs");
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_MLME, QDF_TRACE_LEVEL_DEBUG,
+			   mlme_priv->peer_disconnect_ies.data,
+			   mlme_priv->peer_disconnect_ies.len);
+}
+
+void mlme_free_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return;
+	}
+
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
+
+	if (mlme_priv->peer_disconnect_ies.data) {
+		qdf_mem_free(mlme_priv->peer_disconnect_ies.data);
+		mlme_priv->peer_disconnect_ies.data = NULL;
+		mlme_priv->peer_disconnect_ies.len = 0;
+	}
+}
+
+struct wlan_ies *mlme_get_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return NULL;
+	}
+
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
+
+	return &mlme_priv->peer_disconnect_ies;
+}
