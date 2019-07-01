@@ -492,22 +492,28 @@ enum ctl_value {
  * struct ch_params
  * @ch_width: channel width
  * @sec_ch_offset: secondary channel offset
- * @center_freq_seg0: center freq for segment 0
- * @center_freq_seg1: center freq for segment 1
+ * @center_freq_seg0: channel number for segment 0
+ * @center_freq_seg1: channel number segment 1
+ * @mhz_freq_seg0: Center frequency for segment 0
+ * @mhz_freq_seg1: Center frequency for segment 1
  */
 struct ch_params {
 	enum phy_ch_width ch_width;
 	uint8_t sec_ch_offset;
 	uint8_t center_freq_seg0;
 	uint8_t center_freq_seg1;
+	uint16_t mhz_freq_seg0;
+	uint16_t mhz_freq_seg1;
 };
 
 /**
  * struct channel_power
+ * @center_freq: Channel Center Frequency
  * @chan_num: channel number
  * @tx_power: TX power
  */
 struct channel_power {
+	uint32_t center_freq;
 	uint32_t chan_num;
 	uint32_t tx_power;
 };
@@ -674,6 +680,16 @@ struct bonded_channel {
 	uint16_t end_ch;
 };
 
+/**
+ * struct bonded_channel_freq
+ * @start_freq: start channel frequency
+ * @end_freq: end channel frequency
+ */
+struct bonded_channel_freq {
+	uint16_t start_freq;
+	uint16_t end_freq;
+};
+
 struct set_country {
 	uint8_t country[REG_ALPHA2_LEN + 1];
 	uint8_t pdev_id;
@@ -734,7 +750,7 @@ struct cur_reg_rule {
  * @min_bw_5g: minimum 5G bw
  * @max_bw_5g: maximum 5G bw
  * @num_2g_reg_rules: number 2G reg rules
- * @num_5g_reg_rules: number 5G reg rules
+ * @num_5g_reg_rules: number 5G  and 6G reg rules
  * @reg_rules_2g_ptr: ptr to 2G reg rules
  * @reg_rules_5g_ptr: ptr to 5G reg rules
  */

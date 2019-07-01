@@ -33,6 +33,7 @@
 #define REG_ETSI13_SRD_START_FREQ 5745
 #define REG_ETSI13_SRD_END_FREQ   5865
 
+#ifdef CONFIG_CHAN_NUM_API
 #define REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan)	\
 	((curchan) > (newchan) ?				\
 	 REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	\
@@ -41,6 +42,7 @@
 	 REG_CH_TO_FREQ(reg_get_chan_enum(newchan))	\
 	 - REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	\
 	 > REG_SBS_SEPARATION_THRESHOLD)
+#endif /* CONFIG_LEGACY_REG_API */
 
 /**
  * reg_is_world_ctry_code() - Check if the given country code is WORLD regdomain
@@ -50,7 +52,7 @@
  */
 bool reg_is_world_ctry_code(uint16_t ctry_code);
 
-#ifdef CONFIG_REG_CLIENT
+#if defined(CONFIG_REG_CLIENT) && defined(CONFIG_CHAN_NUM_API)
 /**
  * reg_chan_has_dfs_attribute() - check channel has dfs attribue or not
  * @ch: channel number.
@@ -61,6 +63,156 @@ bool reg_is_world_ctry_code(uint16_t ctry_code);
  */
 bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch);
 
+/**
+ * reg_is_passive_or_disable_ch() - Check if the given channel is passive or
+ * disabled.
+ * @pdev: Pointer to physical dev
+ * @chan: Channel number
+ *
+ * Return: true if channel is passive or disabled, else false.
+ */
+bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+
+/**
+ * reg_is_disable_ch() - Check if the given channel in disable state
+ * @pdev: Pointer to pdev
+ * @chan: channel number
+ *
+ * Return: True if channel state is disabled, else false
+ */
+bool reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+#else
+static inline bool
+reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch)
+{
+	return false;
+}
+
+static inline bool
+reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
+{
+	return false;
+}
+
+static inline bool
+reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
+{
+	return false;
+}
+#endif /* defined(CONFIG_REG_CLIENT) && defined(CONFIG_CHAN_NUM_API) */
+
+#if defined(CONFIG_REG_CLIENT) && defined(CONFIG_CHAN_FREQ_API)
+/**
+ * reg_chan_has_dfs_attribute_for_freq() - check channel frequency has dfs
+ * attribue or not
+ * @freq: channel frequency.
+ *
+ * This API gets initial dfs attribute flag of the channel frequency from
+ * regdomain
+ *
+ * Return: true if channel frequency is dfs, otherwise false
+ */
+bool reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
+					 uint16_t freq);
+/**
+ * reg_is_passive_or_disable_for_freq() - Check if the given channel is
+ * passive or disabled.
+ * @pdev: Pointer to physical dev
+ * @chan: Channel frequency
+ *
+ * Return: true if channel frequency is passive or disabled, else false.
+ */
+bool reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
+					uint16_t freq);
+/**
+ * reg_is_disable_for_freq() - Check if the given channel frequency in
+ * disable state
+ * @pdev: Pointer to pdev
+ * @freq: Channel frequency
+ *
+ * Return: True if channel state is disabled, else false
+ */
+bool reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
+#else
+static inline bool
+reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
+				    uint16_t freq)
+{
+	return false;
+}
+
+static inline bool
+reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
+				   uint16_t freq)
+{
+	return false;
+}
+
+static inline bool
+reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq)
+{
+	return false;
+}
+#endif /* defined(CONFIG_REG_CLIENT) && defined(CONFIG_CHAN_FREQ_API) */
+
+#ifdef DISABLE_CHANNEL_LIST
+/**
+ * reg_restore_cached_channels() - Cache the current state of the channels
+ * @pdev: The physical dev to cache the channels for
+ */
+QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DISABLE_CHANNEL_LIST */
+
+#if defined(DISABLE_CHANNEL_LIST) && defined(CONFIG_CHAN_FREQ_API)
+/**
+ * reg_cache_channel_freq_state() - Cache the current state of the channels
+ * based on the channel center frequency
+ * @pdev: The physical dev to cache the channels for
+ * @channel_list: List of the channels for which states needs to be cached
+ * @num_channels: Number of channels in the list
+ *
+ */
+QDF_STATUS reg_cache_channel_freq_state(struct wlan_objmgr_pdev *pdev,
+					uint32_t *channel_list,
+					uint32_t num_channels);
+#else
+static inline
+QDF_STATUS reg_cache_channel_freq_state(struct wlan_objmgr_pdev *pdev,
+					uint32_t *channel_list,
+					uint32_t num_channels)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* defined(DISABLE_CHANNEL_LIST) && defined(CONFIG_CHAN_FREQ_API) */
+
+#if defined(DISABLE_CHANNEL_LIST) && defined(CONFIG_CHAN_NUM_API)
+/**
+ * reg_cache_channel_state() - Cache the current state of the channels
+ * @pdev: The physical dev to cache the channels for
+ * @channel_list: List of the channels for which states needs to be cached
+ * @num_channels: Number of channels in the list
+ *
+ */
+QDF_STATUS reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
+				   uint32_t *channel_list,
+				   uint32_t num_channels);
+#else
+static inline
+QDF_STATUS reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
+				   uint32_t *channel_list,
+				   uint32_t num_channels)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* defined (DISABLE_CHANNEL_LIST) && defined(CONFIG_CHAN_NUM_API) */
+
+#ifdef CONFIG_REG_CLIENT
 /**
  * reg_set_band() - Sets the band information for the PDEV
  * @pdev: The physical dev to set the band for
@@ -78,39 +230,6 @@ QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev, enum band_info band);
  * Return: QDF_STATUS
  */
 QDF_STATUS reg_get_band(struct wlan_objmgr_pdev *pdev, enum band_info *band);
-
-#ifdef DISABLE_CHANNEL_LIST
-/**
- * reg_restore_cached_channels() - Cache the current state of the channels
- * @pdev: The physical dev to cache the channels for
- */
-QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev);
-
-/**
- * reg_cache_channel_state() - Cache the current state of the channels
- * @pdev: The physical dev to cache the channels for
- * @channel_list: List of the channels for which states needs to be cached
- * @num_channels: Number of channels in the list
- *
- */
-QDF_STATUS reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
-				   uint32_t *channel_list,
-				   uint32_t num_channels);
-#else
-static inline
-QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
-				   uint32_t *channel_list,
-				   uint32_t num_channels)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  * reg_set_fcc_constraint() - Apply fcc constraints on channels 12/13
@@ -198,25 +317,6 @@ QDF_STATUS reg_reset_country(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 					    const uint8_t *country_alpha2,
 					    enum country_src source);
-
-/**
- * reg_is_passive_or_disable_ch() - Check if the given channel is passive or
- * disabled.
- * @pdev: Pointer to physical dev
- * @chan: Channel number
- *
- * Return: true if channel is passive or disabled, else false.
- */
-bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
-
-/**
- * reg_is_disable_ch() - Check if the given channel in disable state
- * @pdev: Pointer to pdev
- * @chan: channel number
- *
- * Return: True if channel state is disabled, else false
- */
-bool reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
 
 /**
  * reg_set_config_vars () - set configration variables
@@ -308,13 +408,6 @@ bool reg_ignore_default_country(struct wlan_regulatory_psoc_priv_obj *soc_reg,
 				struct cur_regulatory_info *regulat_info);
 
 #else
-
-static inline bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev,
-					      uint32_t ch)
-{
-	return false;
-}
-
 static inline QDF_STATUS reg_read_current_country(struct wlan_objmgr_psoc *psoc,
 						  uint8_t *country_code)
 {
@@ -347,18 +440,6 @@ static inline QDF_STATUS reg_get_domain_from_country_code(
 	enum country_src source)
 {
 	return QDF_STATUS_SUCCESS;
-}
-
-static inline bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
-						uint32_t chan)
-{
-	return false;
-}
-
-static inline bool reg_is_disable_ch(struct wlan_objmgr_pdev *pdev,
-				     uint32_t chan)
-{
-	return false;
 }
 
 static inline QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
@@ -428,6 +509,18 @@ bool reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 
 #if defined(WLAN_FEATURE_DSRC) && defined(CONFIG_REG_CLIENT)
 /**
+ * reg_is_dsrc_freq () - Checks the channel frequency is DSRC or not
+ * @freq: Channel center frequency
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+bool reg_is_dsrc_freq(uint16_t freq);
+#endif /* CONFIG_CHAN_FREQ_API*/
+
+#ifdef CONFIG_CHAN_NUM_API
+/**
  * reg_is_dsrc_chan () - Checks the channel for DSRC or not
  * @chan: channel
  * @pdev: pdev ptr
@@ -435,6 +528,7 @@ bool reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq)
  * Return: true or false
  */
 bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+#endif /* CONFIG_CHAN_NUM_API */
 
 static inline bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
 					  uint32_t chan)
@@ -443,6 +537,20 @@ static inline bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
 }
 
 static inline bool reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev)
+{
+	return false;
+}
+
+/**
+ * reg_is_etsi13_srd_chan_for_freq() - Checks the channel for ETSI13 srd ch
+ * frequency or not
+ * @freq: Channel center frequency
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+static inline bool
+reg_is_etsi13_srd_chan_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq)
 {
 	return false;
 }
@@ -459,6 +567,16 @@ static inline bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev,
 	return false;
 }
 
+static inline bool reg_is_dsrc_freq(uint16_t freq)
+{
+	return false;
+}
+
+#ifdef CONFIG_CHAN_FREQ_API
+bool reg_is_etsi13_srd_chan_for_freq(struct wlan_objmgr_pdev
+				     *pdev, uint16_t freq);
+#endif /*CONFIG_CHAN_FREQ_API */
+
 /**
  * reg_is_etsi13_regdmn () - Checks if the current reg domain is ETSI13 or not
  * @pdev: pdev ptr
@@ -467,6 +585,7 @@ static inline bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev,
  */
 bool reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev);
 
+#ifdef CONFIG_CHAN_NUM_API
 /**
  * reg_is_etsi13_srd_chan () - Checks the channel for ETSI13 srd ch or not
  * @chan: channel
@@ -475,6 +594,7 @@ bool reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev);
  * Return: true or false
  */
 bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+#endif /* CONFIG_CHAN_NUM_API */
 
 /**
  * reg_is_etsi13_srd_chan_allowed_master_mode() - Checks if regdmn is ETSI13
@@ -488,6 +608,18 @@ bool reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev);
 #else
 static inline bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev,
 				    uint32_t chan)
+{
+	return false;
+}
+
+static inline bool reg_is_dsrc_freq(uint16_t freq)
+{
+	return false;
+}
+
+static inline
+bool reg_is_etsi13_srd_chan_for_freq(struct wlan_objmgr_pdev *pdev,
+				     uint16_t freq)
 {
 	return false;
 }
