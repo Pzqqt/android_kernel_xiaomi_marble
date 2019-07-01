@@ -661,6 +661,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 					   VHT_SIG_A_INFO_0, STBC);
 			value =  HAL_RX_GET(vht_sig_a_info,
 					    VHT_SIG_A_INFO_0, N_STS);
+			value = value & VHT_SIG_SU_NSS_MASK;
 			if (ppdu_info->rx_status.is_stbc && (value > 0))
 				value = ((value + 1) >> 1) - 1;
 			ppdu_info->rx_status.nss =
@@ -674,6 +675,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 					   VHT_SIG_A_INFO_0, STBC);
 			value =  HAL_RX_GET(vht_sig_a_info,
 					    VHT_SIG_A_INFO_0, N_STS);
+			value = value & VHT_SIG_SU_NSS_MASK;
 			if (ppdu_info->rx_status.is_stbc && (value > 0))
 				value = ((value + 1) >> 1) - 1;
 			ppdu_info->rx_status.nss =
