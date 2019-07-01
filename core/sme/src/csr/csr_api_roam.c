@@ -9482,6 +9482,13 @@ QDF_STATUS csr_continue_lfr2_connect(struct mac_context *mac,
 	if (!scan_handle_roam_ap)
 		goto POST_ROAM_FAILURE;
 
+	if ((mac->roam.roamSession[session_id].connectState ==
+				eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED) ||
+	    (mac->roam.roamSession[session_id].connectState ==
+				eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING)) {
+		goto purge_scan_result;
+	}
+
 	status = csr_roam_lfr2_issue_connect(mac, session_id,
 						scan_handle_roam_ap,
 						roam_id);
@@ -9489,6 +9496,8 @@ QDF_STATUS csr_continue_lfr2_connect(struct mac_context *mac,
 		qdf_mem_free(roam_info);
 		return status;
 	}
+
+purge_scan_result:
 	csr_scan_result_purge(mac, scan_handle_roam_ap);
 
 POST_ROAM_FAILURE:
