@@ -60,7 +60,7 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 	      peer_mac[3],
 	      peer_mac[4],
 	      peer_mac[5]);
-	PRINT("\tpeer cookie: %016llx\n", (peer_cookie & 0xFFFFFFFF00000000)
+	PRINT("\tpeer cookie: %016lx\n", (peer_cookie & 0xFFFFFFFF00000000)
 					>> WLANSTATS_PEER_COOKIE_LSB);
 	is_lithium =  (peer_cookie & WLANSTATS_COOKIE_PLATFORM_OFFSET)
 					>> WLANSTATS_PEER_COOKIE_LSB;
@@ -97,7 +97,7 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 			      rx_stats->num_msdus,
 			      rx_stats->num_mpdus,
 			      rx_stats->num_ppdus);
-			PRINT(" %10u | %10u | %10u |\n",
+			PRINT(" %10u | %10u | %10lu |\n",
 			      rx_stats->num_retries,
 			      rx_stats->num_sgi,
 			      rx_stats->avg_rssi);
@@ -214,12 +214,12 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 			printf(" %10u |", tmp_rx_stats->rate);
 			for (chain = 0; chain < max_chain; chain++) {
 				for (bw = 0; bw < max_bw; bw++) {
-					printf(" %10d |",
+					printf(" %10lx |",
 					tmp_rx_stats->avg_rssi_ant[chain][bw]);
 				}
 				printf("            \n\t     ");
 			}
-			PRINT("");
+			PRINT(" ");
 		}
 		tmp_rx_stats = tmp_rx_stats + 1;
 	}
@@ -243,7 +243,7 @@ dp_peer_tx_sojourn_stats_print(uint8_t *peer_mac,
 	      peer_mac[3],
 	      peer_mac[4],
 	      peer_mac[5]);
-	PRINT("\tPEER Cookie: %016llx\n", peer_cookie);
+	PRINT("\tPEER Cookie: %016lx\n", peer_cookie);
 	PRINT("\n...........................................");
 	PRINT("...................................");
 	PRINT("..................................");
@@ -259,7 +259,7 @@ dp_peer_tx_sojourn_stats_print(uint8_t *peer_mac,
 		      sojourn_stats->sum_sojourn_msdu[tid],
 		      sojourn_stats->num_msdus[tid]);
 	}
-	PRINT("sizeof(avg): %d", sizeof(sojourn_stats->avg_sojourn_msdu[tid]));
+	PRINT("sizeof(avg): %lx", sizeof(sojourn_stats->avg_sojourn_msdu[tid]));
 	PRINT("\n...........................................");
 	PRINT("...................................");
 	PRINT("...................................");
@@ -293,7 +293,7 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 	      peer_mac[3],
 	      peer_mac[4],
 	      peer_mac[5]);
-	PRINT("\tPEER Cookie: %016llx", peer_cookie);
+	PRINT("\tPEER Cookie: %016lx", peer_cookie);
 	PRINT("\n...........................................");
 	PRINT("...................................");
 	PRINT("...................................");
