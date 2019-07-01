@@ -18638,7 +18638,7 @@ disconnected:
 	 */
 	hdd_debug("Send disconnected event to userspace");
 	wlan_hdd_cfg80211_indicate_disconnect(adapter->dev, true,
-						WLAN_REASON_UNSPECIFIED);
+					      WLAN_REASON_UNSPECIFIED, NULL, 0);
 #endif
 
 	return result;

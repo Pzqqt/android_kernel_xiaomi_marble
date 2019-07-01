@@ -1179,6 +1179,7 @@ struct csr_roam_info {
 #endif
 	struct assoc_ind *owe_pending_assoc_ind;
 	uint16_t roam_reason;
+	struct wlan_ies *disconnect_ies;
 };
 
 typedef struct sSirSmeAssocIndToUpperLayerCnf {

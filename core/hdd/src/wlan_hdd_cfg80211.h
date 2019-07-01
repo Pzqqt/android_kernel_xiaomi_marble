@@ -445,20 +445,26 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter);
 
 #if defined(CFG80211_DISCONNECTED_V2) || \
 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0))
-static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
-							bool locally_generated,
-							int reason)
+static inline void
+wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
+				      bool locally_generated,
+				      int reason,
+				      uint8_t *disconnect_ies,
+				      uint16_t disconnect_ies_len)
 {
-	cfg80211_disconnected(dev, reason, NULL, 0,
-				locally_generated, GFP_KERNEL);
+	cfg80211_disconnected(dev, reason, disconnect_ies, disconnect_ies_len,
+			      locally_generated, GFP_KERNEL);
 }
 #else
-static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
-							bool locally_generated,
-							int reason)
+static inline void
+wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
+				      bool locally_generated,
+				      int reason,
+				      uint8_t *disconnect_ies,
+				      uint16_t disconnect_ies_len)
 {
-	cfg80211_disconnected(dev, reason, NULL, 0,
-				GFP_KERNEL);
+	cfg80211_disconnected(dev, reason, disconnect_ies, disconnect_ies_len,
+			      GFP_KERNEL);
 }
 #endif
 

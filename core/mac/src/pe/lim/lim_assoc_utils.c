@@ -4827,3 +4827,28 @@ void lim_send_sme_tsm_ie_ind(struct mac_context *mac,
 	lim_sys_process_mmh_msg_api(mac, &msg);
 }
 #endif /* FEATURE_WLAN_ESE */
+
+void lim_extract_ies_from_deauth_disassoc(struct pe_session *session,
+					  uint8_t *deauth_disassoc_frame,
+					  uint16_t deauth_disassoc_frame_len)
+{
+	uint16_t reason_code, ie_offset;
+	struct wlan_ies ie;
+
+	if (!session) {
+		pe_err("NULL session");
+		return;
+	}
+
+	/* Get the offset of IEs */
+	ie_offset = sizeof(struct wlan_frame_hdr) + sizeof(reason_code);
+
+	if (!deauth_disassoc_frame || deauth_disassoc_frame_len <= ie_offset)
+		return;
+
+	ie.data = deauth_disassoc_frame + ie_offset;
+	ie.len = deauth_disassoc_frame_len - ie_offset;
+
+	mlme_set_peer_disconnect_ies(session->vdev, &ie);
+}
+

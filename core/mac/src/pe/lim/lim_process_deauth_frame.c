@@ -314,6 +314,8 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		}
 	}
 
+	lim_extract_ies_from_deauth_disassoc(pe_session, (uint8_t *)pHdr,
+					WMA_GET_RX_MPDU_LEN(pRxPacketInfo));
 	lim_perform_deauth(mac, pe_session, reasonCode, pHdr->sa,
 			   frame_rssi);
 

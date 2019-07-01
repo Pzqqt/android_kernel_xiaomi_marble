@@ -310,6 +310,8 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 
 	} /* if (sta->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) */
 
+	lim_extract_ies_from_deauth_disassoc(pe_session, (uint8_t *)pHdr,
+					WMA_GET_RX_MPDU_LEN(pRxPacketInfo));
 	lim_perform_disassoc(mac, frame_rssi, reasonCode,
 			     pe_session, pHdr->sa);
 
