@@ -6688,7 +6688,7 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 static void wma_init_wifi_pos_dma_rings(t_wma_handle *wma_handle,
 					uint8_t num_mac, void *buf)
 {
-	struct hif_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	void *hal_soc;
 
 	if (!hif_ctx) {

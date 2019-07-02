@@ -1171,7 +1171,7 @@ struct hdd_adapter {
 	qdf_spinlock_t vdev_lock;
 	uint8_t vdev_id;
 
-	void *txrx_vdev;
+	struct cdp_vdev *txrx_vdev;
 
 	/** Handle to the network device */
 	struct net_device *dev;

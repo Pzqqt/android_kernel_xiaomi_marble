@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,11 +48,11 @@
  *
  * Return: skb/NULL for success
  */
-qdf_nbuf_t ol_tx_data(void *data_vdev, qdf_nbuf_t skb)
+qdf_nbuf_t ol_tx_data(struct cdp_vdev *data_vdev, qdf_nbuf_t skb)
 {
 	struct ol_txrx_pdev_t *pdev;
 	qdf_nbuf_t ret;
-	ol_txrx_vdev_handle vdev = data_vdev;
+	ol_txrx_vdev_handle vdev = (struct ol_txrx_vdev_t *)data_vdev;
 
 	if (qdf_unlikely(!vdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
