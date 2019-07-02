@@ -88,7 +88,7 @@
  *
  * Return: none
  */
-#ifdef CONFIG_WMI_BCN_OFFLOAD
+#ifdef WLAN_WMI_BCN
 static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 				struct cdp_pdev *pdev,
 				uint8_t vdev_id,
@@ -264,7 +264,7 @@ wma_send_bcn_buf_ll(tp_wma_handle wma,
  *
  * Return: 0 for success or error code
  */
-#ifdef CONFIG_WMI_BCN_OFFLOAD
+#ifdef WLAN_WMI_BCN
 int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;

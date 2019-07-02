@@ -2965,7 +2965,7 @@ void wma_wmi_stop(void)
 	wmi_stop(wma_handle->wmi_handle);
 }
 
-#ifdef CONFIG_WMI_BCN_OFFLOAD
+#ifdef WLAN_WMI_BCN
 static QDF_STATUS
 wma_register_swba_events(wmi_unified_t wmi_handle)
 {

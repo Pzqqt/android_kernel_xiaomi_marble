@@ -1214,6 +1214,7 @@ endif
 
 ifeq ($(CONFIG_WMI_BCN_OFFLOAD), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_bcn_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_bcn_tlv.o
 endif
 
 ########### FWLOG ###########
@@ -2358,6 +2359,8 @@ else
 #Open P2P device interface only for non-Mobile router use cases
 cppflags-$(CONFIG_WLAN_OPEN_P2P_INTERFACE) += -DWLAN_OPEN_P2P_INTERFACE
 endif
+
+cppflags-$(CONFIG_WMI_BCN_OFFLOAD) += -DWLAN_WMI_BCN
 
 #Enable wbuff
 cppflags-$(CONFIG_WLAN_WBUFF) += -DWLAN_FEATURE_WBUFF

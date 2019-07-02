@@ -684,7 +684,7 @@ uint32_t wma_get_bcn_rate_code(uint16_t rate);
 /*
  * wma_mgmt.c functions declarations
  */
-#ifdef CONFIG_WMI_BCN_OFFLOAD
+#ifdef WLAN_WMI_BCN
 int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len);
 #endif
 

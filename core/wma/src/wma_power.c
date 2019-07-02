@@ -1250,7 +1250,7 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_WMI_BCN_OFFLOAD
+#ifdef WLAN_WMI_BCN
 /**
  * wma_add_p2p_ie() - add p2p IE
  * @frm: ptr where p2p ie needs to add
