@@ -1129,10 +1129,12 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
  * @buf_addr_info: opaque pointer to the REO error ring descriptor
  * @buf_addr_info: void pointer to the buffer_addr_info
  * @bm_action: put to idle_list or release to msdu_list
- * Return: QDF_STATUS
+ *
+ * Return: QDF_STATUS_E_FAILURE for failure else QDF_STATUS_SUCCESS
  */
 QDF_STATUS
-dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action);
+dp_rx_link_desc_return(struct dp_soc *soc, hal_ring_desc_t ring_desc,
+		       uint8_t bm_action);
 
 /**
  * dp_rx_link_desc_return_by_addr - Return a MPDU link descriptor to
@@ -1141,11 +1143,12 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action);
  * @soc: core DP main context
  * @link_desc_addr: link descriptor addr
  *
- * Return: QDF_STATUS
+ * Return: QDF_STATUS_E_FAILURE for failure else QDF_STATUS_SUCCESS
  */
 QDF_STATUS
-dp_rx_link_desc_return_by_addr(struct dp_soc *soc, void *link_desc_addr,
-					uint8_t bm_action);
+dp_rx_link_desc_return_by_addr(struct dp_soc *soc,
+			       hal_ring_desc_t link_desc_addr,
+			       uint8_t bm_action);
 
 /**
  * dp_rxdma_err_process() - RxDMA error processing functionality
@@ -1182,7 +1185,8 @@ dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev);
  * Return: void
  */
 void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
-				void *ring_desc, struct dp_rx_desc *rx_desc);
+				hal_ring_desc_t ring_desc,
+				struct dp_rx_desc *rx_desc);
 
 void dp_rx_compute_delay(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
 #ifdef RX_DESC_DEBUG_CHECK

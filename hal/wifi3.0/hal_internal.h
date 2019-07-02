@@ -172,6 +172,13 @@ enum hal_srng_dir {
 #define SRNG_LOCK_DESTROY(_lock) qdf_spinlock_destroy(_lock)
 
 struct hal_soc;
+
+/**
+ * hal_ring_desc - opaque handle for DP ring descriptor
+ */
+struct hal_ring_desc;
+typedef struct hal_ring_desc *hal_ring_desc_t;
+
 #define MAX_SRNG_REG_GROUPS 2
 
 /* Common SRNG ring structure for source and destination rings */

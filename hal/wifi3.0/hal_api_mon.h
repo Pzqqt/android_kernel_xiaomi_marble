@@ -277,10 +277,10 @@ uint32_t HAL_RX_HW_DESC_GET_PPDUID_GET(void *hw_desc_addr)
  * Return: void
  */
 static inline
-void hal_rx_reo_ent_buf_paddr_get(void *rx_desc,
-	struct hal_buf_info *buf_info,
-	void **pp_buf_addr_info,
-	uint32_t *msdu_cnt
+void hal_rx_reo_ent_buf_paddr_get(hal_ring_desc_t rx_desc,
+				  struct hal_buf_info *buf_info,
+				  void **pp_buf_addr_info,
+				  uint32_t *msdu_cnt
 )
 {
 	struct reo_entrance_ring *reo_ent_ring =

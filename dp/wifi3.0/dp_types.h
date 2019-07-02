@@ -545,7 +545,7 @@ struct dp_rx_tid {
 	TAILQ_ENTRY(dp_rx_tid) defrag_waitlist_elem;
 
 	/* Store dst desc for reinjection */
-	void *dst_ring_desc;
+	hal_ring_desc_t dst_ring_desc;
 	struct dp_rx_desc *head_frag_desc;
 
 	/* rx_tid lock */

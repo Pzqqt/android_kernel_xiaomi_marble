@@ -1015,7 +1015,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 	uint32_t *mpdu_wrd;
 	uint32_t ret, cookie;
 
-	void *dst_ring_desc =
+	hal_ring_desc_t dst_ring_desc =
 		peer->rx_tid[tid].dst_ring_desc;
 	void *hal_srng = soc->reo_reinject_ring.hal_srng;
 
@@ -1352,8 +1352,11 @@ void dp_rx_defrag_cleanup(struct dp_peer *peer, unsigned tid)
  *
  * Returns: None
  */
-static QDF_STATUS dp_rx_defrag_save_info_from_ring_desc(void *ring_desc,
-	struct dp_rx_desc *rx_desc, struct dp_peer *peer, unsigned tid)
+static QDF_STATUS
+dp_rx_defrag_save_info_from_ring_desc(hal_ring_desc_t ring_desc,
+				      struct dp_rx_desc *rx_desc,
+				      struct dp_peer *peer,
+				      unsigned int tid)
 {
 	void *dst_ring_desc = qdf_mem_malloc(
 			sizeof(struct reo_destination_ring));
@@ -1385,13 +1388,14 @@ static QDF_STATUS dp_rx_defrag_save_info_from_ring_desc(void *ring_desc,
  *
  * Returns: QDF_STATUS
  */
-static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
-			void *ring_desc,
-			union dp_rx_desc_list_elem_t **head,
-			union dp_rx_desc_list_elem_t **tail,
-			struct hal_rx_mpdu_desc_info *mpdu_desc_info,
-			unsigned tid, struct dp_rx_desc *rx_desc,
-			uint32_t *rx_bfs)
+static QDF_STATUS
+dp_rx_defrag_store_fragment(struct dp_soc *soc,
+			    hal_ring_desc_t ring_desc,
+			    union dp_rx_desc_list_elem_t **head,
+			    union dp_rx_desc_list_elem_t **tail,
+			    struct hal_rx_mpdu_desc_info *mpdu_desc_info,
+			    unsigned int tid, struct dp_rx_desc *rx_desc,
+			    uint32_t *rx_bfs)
 {
 	struct dp_rx_reorder_array_elem *rx_reorder_array_elem;
 	struct dp_pdev *pdev;
@@ -1648,7 +1652,7 @@ end:
  *
  * Return: uint32_t: No. of elements processed
  */
-uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
+uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 			   struct hal_rx_mpdu_desc_info *mpdu_desc_info,
 			   struct dp_rx_desc *rx_desc,
 			   uint8_t *mac_id,

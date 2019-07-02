@@ -1474,7 +1474,7 @@ static inline void hal_setup_link_idle_list(void *halsoc,
  * @ring_desc: Opaque ring descriptor handle
  */
 static inline void hal_srng_dump_ring_desc(struct hal_soc *hal, void *hal_ring,
-					   void *ring_desc)
+					   hal_ring_desc_t ring_desc)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 

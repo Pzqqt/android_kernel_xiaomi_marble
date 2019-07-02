@@ -56,7 +56,8 @@ void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
 }
 #else
 void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
-				void *ring_desc, struct dp_rx_desc *rx_desc)
+				hal_ring_desc_t ring_desc,
+				struct dp_rx_desc *rx_desc)
 {
 	void *hal_soc = soc->hal_soc;
 
@@ -1460,8 +1461,9 @@ int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
  *
  * Return: NONE
  */
-static inline void dp_rx_desc_nbuf_sanity_check(void *ring_desc,
-					   struct dp_rx_desc *rx_desc)
+static inline
+void dp_rx_desc_nbuf_sanity_check(hal_ring_desc_t ring_desc,
+				  struct dp_rx_desc *rx_desc)
 {
 	struct hal_buf_info hbi;
 
@@ -1471,8 +1473,9 @@ static inline void dp_rx_desc_nbuf_sanity_check(void *ring_desc,
 			  qdf_nbuf_get_frag_paddr(rx_desc->nbuf, 0));
 }
 #else
-static inline void dp_rx_desc_nbuf_sanity_check(void *ring_desc,
-					   struct dp_rx_desc *rx_desc)
+static inline
+void dp_rx_desc_nbuf_sanity_check(hal_ring_desc_t ring_desc,
+				  struct dp_rx_desc *rx_desc)
 {
 }
 #endif
@@ -1619,7 +1622,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		       uint8_t reo_ring_num, uint32_t quota)
 {
 	void *hal_soc;
-	void *ring_desc;
+	hal_ring_desc_t ring_desc;
 	struct dp_rx_desc *rx_desc = NULL;
 	qdf_nbuf_t nbuf, next;
 	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT];

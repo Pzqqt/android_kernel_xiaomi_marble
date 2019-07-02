@@ -161,8 +161,9 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-dp_rx_link_desc_return_by_addr(struct dp_soc *soc, void *link_desc_addr,
-					uint8_t bm_action)
+dp_rx_link_desc_return_by_addr(struct dp_soc *soc,
+			       hal_ring_desc_t link_desc_addr,
+			       uint8_t bm_action)
 {
 	struct dp_srng *wbm_desc_rel_ring = &soc->wbm_desc_rel_ring;
 	void *wbm_rel_srng = wbm_desc_rel_ring->hal_srng;
@@ -220,10 +221,10 @@ done:
  * Return: QDF_STATUS
  */
 QDF_STATUS
-dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
+dp_rx_link_desc_return(struct dp_soc *soc, hal_ring_desc_t ring_desc,
+		       uint8_t bm_action)
 {
-	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(ring_desc);
-	return dp_rx_link_desc_return_by_addr(soc, buf_addr_info, bm_action);
+	return dp_rx_link_desc_return_by_addr(soc, ring_desc, bm_action);
 }
 
 /**
@@ -240,10 +241,11 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
  *
  * Return: uint32_t: No. of elements processed
  */
-static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
-		struct hal_rx_mpdu_desc_info *mpdu_desc_info,
-		uint8_t *mac_id,
-		uint32_t quota)
+static uint32_t
+dp_rx_msdus_drop(struct dp_soc *soc, hal_ring_desc_t ring_desc,
+		 struct hal_rx_mpdu_desc_info *mpdu_desc_info,
+		 uint8_t *mac_id,
+		 uint32_t quota)
 {
 	uint32_t rx_bufs_used = 0;
 	void *link_desc_va;
@@ -327,7 +329,7 @@ static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
  * Return: uint32_t: No. of elements processed
  */
 static uint32_t
-dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
+dp_rx_pn_error_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 		      struct hal_rx_mpdu_desc_info *mpdu_desc_info,
 		      uint8_t *mac_id,
 		      uint32_t quota)
@@ -390,7 +392,7 @@ dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
  * Return: uint32_t: No. of elements processed
  */
 static uint32_t
-dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
+dp_rx_2k_jump_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 		     struct hal_rx_mpdu_desc_info *mpdu_desc_info,
 		     uint8_t *mac_id, uint32_t quota)
 {
@@ -1090,7 +1092,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		  void *hal_ring, uint32_t quota)
 {
 	void *hal_soc;
-	void *ring_desc;
+	hal_ring_desc_t ring_desc;
 	uint32_t count = 0;
 	uint32_t rx_bufs_used = 0;
 	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = { 0 };
@@ -1277,7 +1279,7 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		      void *hal_ring, uint32_t quota)
 {
 	void *hal_soc;
-	void *ring_desc;
+	hal_ring_desc_t ring_desc;
 	struct dp_rx_desc *rx_desc;
 	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT] = { NULL };
 	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT] = { NULL };
@@ -1567,7 +1569,7 @@ done:
  * Return: void
  */
 static void dup_desc_dbg(struct dp_soc *soc,
-			 void *rxdma_dst_ring_desc,
+			 hal_ring_desc_t rxdma_dst_ring_desc,
 			 void *rx_desc)
 {
 	DP_STATS_INC(soc, rx.err.hal_rxdma_err_dup, 1);
@@ -1590,7 +1592,7 @@ static void dup_desc_dbg(struct dp_soc *soc,
  */
 static inline uint32_t
 dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
-	void *rxdma_dst_ring_desc,
+	hal_ring_desc_t rxdma_dst_ring_desc,
 	union dp_rx_desc_list_elem_t **head,
 	union dp_rx_desc_list_elem_t **tail)
 {
@@ -1609,7 +1611,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t rxdma_error_code = 0;
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
-	void *ring_desc;
+	hal_ring_desc_t ring_desc;
 
 	msdu = 0;
 
@@ -1717,7 +1719,7 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
 	void *hal_soc;
-	void *rxdma_dst_ring_desc;
+	hal_ring_desc_t rxdma_dst_ring_desc;
 	void *err_dst_srng;
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;

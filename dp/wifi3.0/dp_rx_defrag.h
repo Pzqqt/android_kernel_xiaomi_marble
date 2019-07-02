@@ -48,11 +48,11 @@ struct dp_rx_defrag_cipher {
 	uint8_t ic_miclen;
 };
 
-uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
-		struct hal_rx_mpdu_desc_info *mpdu_desc_info,
-		struct dp_rx_desc *rx_desc,
-		uint8_t *mac_id,
-		uint32_t quota);
+uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t  ring_desc,
+			   struct hal_rx_mpdu_desc_info *mpdu_desc_info,
+			   struct dp_rx_desc *rx_desc,
+			   uint8_t *mac_id,
+			   uint32_t quota);
 
 /*
  * dp_rx_frag_get_mac_hdr() - Return pointer to the mac hdr

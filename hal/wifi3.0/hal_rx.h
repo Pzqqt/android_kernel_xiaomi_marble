@@ -2163,8 +2163,9 @@ hal_rx_msdu_reo_dst_ind_get(hal_soc_handle_t hal_soc_hdl, void *msdu_link_desc)
  * @ buf_info: structure to return the buffer information
  * Return: void
  */
-static inline void hal_rx_reo_buf_paddr_get(void *rx_desc,
-	 struct hal_buf_info *buf_info)
+static inline
+void hal_rx_reo_buf_paddr_get(hal_ring_desc_t rx_desc,
+			      struct hal_buf_info *buf_info)
 {
 	struct reo_destination_ring *reo_ring =
 		 (struct reo_destination_ring *)rx_desc;
@@ -2345,7 +2346,7 @@ enum hal_rx_wbm_buf_type {
  *
  * Return: true: error caused by PN check, false: other error
  */
-static inline bool hal_rx_reo_is_pn_error(void *rx_desc)
+static inline bool hal_rx_reo_is_pn_error(hal_ring_desc_t rx_desc)
 {
 	struct reo_destination_ring *reo_desc =
 			(struct reo_destination_ring *)rx_desc;
@@ -2365,7 +2366,7 @@ static inline bool hal_rx_reo_is_pn_error(void *rx_desc)
  *
  * Return: true: error caused by 2K jump, false: other error
  */
-static inline bool hal_rx_reo_is_2k_jump(void *rx_desc)
+static inline bool hal_rx_reo_is_2k_jump(hal_ring_desc_t rx_desc)
 {
 	struct reo_destination_ring *reo_desc =
 			(struct reo_destination_ring *)rx_desc;
@@ -2388,9 +2389,11 @@ static inline bool hal_rx_reo_is_2k_jump(void *rx_desc)
  * Return: void
  */
 /* look at implementation at dp_hw_link_desc_pool_setup()*/
-static inline void hal_rx_msdu_link_desc_set(struct hal_soc *soc,
-			void *src_srng_desc, void *buf_addr_info,
-			uint8_t bm_action)
+static inline
+void hal_rx_msdu_link_desc_set(struct hal_soc *soc,
+			       void *src_srng_desc,
+			       hal_ring_desc_t buf_addr_info,
+			       uint8_t bm_action)
 {
 	struct wbm_release_ring *wbm_rel_srng =
 			(struct wbm_release_ring *)src_srng_desc;
@@ -2430,7 +2433,8 @@ static inline void hal_rx_msdu_link_desc_reinject(struct hal_soc *soc,
  *			     (Assumption -- BUFFER_ADDR_INFO is the
  *			     first field in the descriptor structure)
  */
-#define HAL_RX_BUF_ADDR_INFO_GET(ring_desc)	((void *)(ring_desc))
+#define HAL_RX_BUF_ADDR_INFO_GET(ring_desc)	\
+			((hal_ring_desc_t)(ring_desc))
 
 #define HAL_RX_REO_BUF_ADDR_INFO_GET HAL_RX_BUF_ADDR_INFO_GET
 
@@ -2445,7 +2449,7 @@ static inline void hal_rx_msdu_link_desc_reinject(struct hal_soc *soc,
  * Return: uint8_t (value of the return_buffer_manager)
  */
 static inline
-uint8_t hal_rx_ret_buf_manager_get(void *ring_desc)
+uint8_t hal_rx_ret_buf_manager_get(hal_ring_desc_t ring_desc)
 {
 	/*
 	 * The following macro takes buf_addr_info as argument,
@@ -3082,9 +3086,10 @@ int hal_rx_chain_msdu_links(struct hal_soc *hal_soc, qdf_nbuf_t msdu,
  * Returns: None
  */
 static inline
-void hal_rx_defrag_update_src_ring_desc(void *ring_desc,
-	void *saved_mpdu_desc_info,
-	struct hal_rx_msdu_link_ptr_info *saved_msdu_link_ptr)
+void hal_rx_defrag_update_src_ring_desc(
+		hal_ring_desc_t ring_desc,
+		void *saved_mpdu_desc_info,
+		struct hal_rx_msdu_link_ptr_info *saved_msdu_link_ptr)
 {
 	struct reo_entrance_ring *reo_ent_ring;
 	struct rx_mpdu_desc_info *reo_ring_mpdu_desc_info;
@@ -3157,7 +3162,7 @@ uint16_t hal_rx_get_desc_len(void)
  * Returns: value of rxdma_push_reason
  */
 static inline
-uint8_t hal_rx_reo_ent_rxdma_push_reason_get(void *reo_ent_desc)
+uint8_t hal_rx_reo_ent_rxdma_push_reason_get(hal_ring_desc_t reo_ent_desc)
 {
 	return _HAL_MS((*_OFFSET_TO_WORD_PTR(reo_ent_desc,
 		REO_ENTRANCE_RING_6_RXDMA_PUSH_REASON_OFFSET)),
@@ -3172,7 +3177,7 @@ uint8_t hal_rx_reo_ent_rxdma_push_reason_get(void *reo_ent_desc)
  * Return: value of rxdma_error_code
  */
 static inline
-uint8_t hal_rx_reo_ent_rxdma_error_code_get(void *reo_ent_desc)
+uint8_t hal_rx_reo_ent_rxdma_error_code_get(hal_ring_desc_t reo_ent_desc)
 {
 	return _HAL_MS((*_OFFSET_TO_WORD_PTR(reo_ent_desc,
 		REO_ENTRANCE_RING_6_RXDMA_ERROR_CODE_OFFSET)),
