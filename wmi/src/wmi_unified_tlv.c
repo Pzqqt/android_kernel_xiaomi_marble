@@ -6501,6 +6501,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		WMI_RSRC_CFG_FLAG_TX_COMPLETION_TX_TSF64_ENABLE_SET(
 						resource_cfg->flag1, 1);
 
+	if (tgt_res_cfg->three_way_coex_config_legacy_en)
+		WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT_SET(
+						resource_cfg->flag1, 1);
+
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 	resource_cfg->peer_map_unmap_v2_support =
 		tgt_res_cfg->peer_map_unmap_v2;
@@ -12540,6 +12544,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_DSM_ROAM_FILTER;
 	wmi_service[wmi_service_vdev_delete_all_peer] =
 			WMI_SERVICE_DELETE_ALL_PEER_SUPPORT;
+	wmi_service[wmi_service_three_way_coex_config_legacy] =
+			WMI_SERVICE_THREE_WAY_COEX_CONFIG_LEGACY;
 }
 
 /**
