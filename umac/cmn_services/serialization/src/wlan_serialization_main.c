@@ -252,6 +252,8 @@ static QDF_STATUS wlan_serialization_pdev_create_handler(
 			max_active_cmds = WLAN_SER_MAX_ACTIVE_CMDS;
 			max_pending_cmds = WLAN_SER_MAX_PENDING_CMDS;
 			cmd_pool_size = max_active_cmds + max_pending_cmds;
+			ser_debug("max_active_cmds %d max_pending_cmds %d",
+				  max_active_cmds, max_pending_cmds);
 			break;
 		}
 		qdf_list_create(&pdev_queue->active_list,
@@ -406,8 +408,16 @@ wlan_serialization_vdev_create_handler(struct wlan_objmgr_vdev *vdev,
 		case SER_VDEV_QUEUE_COMP_NON_SCAN:
 			max_active_cmds = WLAN_SER_MAX_ACTIVE_CMDS /
 				WLAN_SER_MAX_VDEVS;
-			max_pending_cmds = WLAN_SER_MAX_PENDING_CMDS /
-				WLAN_SER_MAX_VDEVS;
+			if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE ||
+			    wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_GO_MODE)
+				max_pending_cmds = WLAN_SER_MAX_PENDING_CMDS_AP;
+			else
+				max_pending_cmds =
+						WLAN_SER_MAX_PENDING_CMDS_STA;
+
+			ser_debug("Vdev type %d max_pending_cmds %d",
+				  wlan_vdev_mlme_get_opmode(vdev),
+				  max_pending_cmds);
 			break;
 		}
 

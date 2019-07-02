@@ -142,6 +142,8 @@ enum wlan_serialization_status wlan_ser_add_non_scan_cmd(
 			ser_pdev_obj, cmd_list, is_cmd_for_active_queue);
 
 	if (vdev_status == WLAN_SER_CMD_DENIED_LIST_FULL) {
+		ser_err_rl("List is full cannot add CMD %d cmd id %d",
+			   cmd_list->cmd.cmd_type, cmd_list->cmd.cmd_id);
 		status = vdev_status;
 		goto vdev_error;
 	}

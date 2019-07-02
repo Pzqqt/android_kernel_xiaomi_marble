@@ -550,6 +550,8 @@ wlan_serialization_add_cmd_to_queue(
 
 	if (qdf_list_size(queue) == qdf_list_max_size(queue)) {
 		status = WLAN_SER_CMD_DENIED_LIST_FULL;
+		ser_err("qdf_list_size: %d is already max %d",
+			qdf_list_size(queue), qdf_list_max_size(queue));
 		goto error;
 	}
 

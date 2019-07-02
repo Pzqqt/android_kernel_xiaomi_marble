@@ -28,10 +28,22 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <qdf_mc_timer.h>
 
-#define WLAN_SER_MAX_VDEVS 17
+#define WLAN_SER_MAX_VDEVS WLAN_UMAC_PDEV_MAX_VDEVS
 
 #define WLAN_SER_MAX_ACTIVE_CMDS WLAN_SER_MAX_VDEVS
+
+#ifndef WLAN_SER_MAX_PENDING_CMDS
 #define WLAN_SER_MAX_PENDING_CMDS (WLAN_SER_MAX_VDEVS * 4)
+#endif
+
+#ifndef WLAN_SER_MAX_PENDING_CMDS_AP
+#define WLAN_SER_MAX_PENDING_CMDS_AP \
+	(WLAN_SER_MAX_PENDING_CMDS / WLAN_SER_MAX_VDEVS)
+#endif
+#ifndef WLAN_SER_MAX_PENDING_CMDS_STA
+#define WLAN_SER_MAX_PENDING_CMDS_STA \
+	(WLAN_SER_MAX_PENDING_CMDS / WLAN_SER_MAX_VDEVS)
+#endif
 
 #define WLAN_SER_MAX_ACTIVE_SCAN_CMDS 8
 #define WLAN_SER_MAX_PENDING_SCAN_CMDS 24
@@ -59,6 +71,13 @@
 
 #define ser_err_no_fl(params...) \
 	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
+
+/*
+ * Rate limited serialization logging api
+ */
+#define ser_err_rl(params...) \
+	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_SERIALIZATION, params)
+
 /**
  * struct serialization_legacy_callback - to handle legacy serialization cb
  * @serialization_purge_cmd_list: function ptr to be filled by serialization
