@@ -3867,6 +3867,17 @@ typedef struct {
 
     A_UINT32 num_obss_tx_ppdu_success;
     A_UINT32 num_obss_tx_ppdu_failure;
+    /* num_sr_tx_tranmissions:
+     * Counter of TX done by aborting other BSS RX with spatial reuse
+     * (for cases where rx RSSI from other BSS is below the packet-detection
+     * threshold for doing spatial reuse)
+     */
+    A_UINT32 num_sr_tx_tranmissions;
+    /* num_sr_rx_ge_pd_rssi_thr
+     * counter of rx from other BSS for which RSSI was above the
+     * packet-detection threshold specified for enabling spatial reuse
+     */
+    A_UINT32 num_sr_rx_ge_pd_rssi_thr;
 } htt_pdev_obss_pd_stats_tlv;
 
 /* NOTE:
