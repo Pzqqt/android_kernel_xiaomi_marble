@@ -318,7 +318,9 @@ struct cdp_cmn_ops {
 	 *
 	 * Return: None
 	 */
-	void *(*txrx_soc_init)(void *soc, void *ctrl_psoc, void *hif_handle,
+	void *(*txrx_soc_init)(void *soc,
+			       struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+			       void *hif_handle,
 			       HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			       struct ol_if_ops *ol_ops, uint16_t device_id);
 
@@ -925,14 +927,17 @@ struct ol_if_ops {
 #else
 	uint8_t (*rx_invalid_peer)(uint8_t vdev_id, void *wh);
 #endif
-	int  (*peer_map_event)(void *ol_soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
-			uint8_t vdev_id, uint8_t *peer_mac_addr,
-			enum cdp_txrx_ast_entry_type peer_type,
-			uint32_t tx_ast_hashidx);
-	int (*peer_unmap_event)(void *ol_soc_handle, uint16_t peer_id,
+	int  (*peer_map_event)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
+			       uint16_t peer_id, uint16_t hw_peer_id,
+			       uint8_t vdev_id, uint8_t *peer_mac_addr,
+			       enum cdp_txrx_ast_entry_type peer_type,
+			       uint32_t tx_ast_hashidx);
+	int (*peer_unmap_event)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
+				uint16_t peer_id,
 				uint8_t vdev_id);
 
-	int (*get_dp_cfg_param)(void *ol_soc_handle, enum cdp_cfg_param_type param_num);
+	int (*get_dp_cfg_param)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
+				enum cdp_cfg_param_type param_num);
 
 	void (*rx_mic_error)(void *ol_soc_handle,
 			     struct cdp_rx_mic_err_info *info);

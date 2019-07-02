@@ -265,7 +265,8 @@ struct wlan_cfg_dp_pdev_ctxt {
  *
  * Return: Handle to configuration context
  */
-struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *ctrl_obj);
+struct wlan_cfg_dp_soc_ctxt *
+wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_obj);
 
 /**
  * wlan_cfg_soc_detach() - Detach soc configuration handle
@@ -287,7 +288,8 @@ void wlan_cfg_soc_detach(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
  *
  * Return: Handle to configuration context
  */
-struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void *ctrl_obj);
+struct wlan_cfg_dp_pdev_ctxt *
+wlan_cfg_pdev_attach(struct cdp_ctrl_objmgr_psoc *ctrl_obj);
 
 /**
  * wlan_cfg_pdev_detach() Detach and free pdev configuration handle

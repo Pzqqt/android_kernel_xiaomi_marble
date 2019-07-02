@@ -829,7 +829,7 @@ struct dp_soc {
 	struct cdp_soc_t cdp_soc;
 
 	/* SoC Obj */
-	void *ctrl_psoc;
+	struct cdp_ctrl_objmgr_psoc *ctrl_psoc;
 
 	/* OS device abstraction */
 	qdf_device_t osdev;

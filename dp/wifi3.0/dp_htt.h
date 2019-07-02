@@ -114,7 +114,7 @@ struct dp_htt_htc_pkt_union {
 };
 
 struct htt_soc {
-	void *ctrl_psoc;
+	struct cdp_ctrl_objmgr_psoc *ctrl_psoc;
 	void *dp_soc;
 	void *hal_soc;
 	/* htt_logger handle */
@@ -218,7 +218,8 @@ struct htt_rx_ring_tlv_filter {
  * Return: HTT handle on success; NULL on failure
  */
 void *
-htt_soc_initialize(struct htt_soc *htt_soc, void *ctrl_psoc,
+htt_soc_initialize(struct htt_soc *htt_soc,
+		   struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		   HTC_HANDLE htc_soc,
 		   void *hal_soc, qdf_device_t osdev);
 

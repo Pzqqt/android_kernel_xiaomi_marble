@@ -134,7 +134,8 @@ dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, int val)
 void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle);
 static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force);
 static struct dp_soc *
-dp_soc_attach(void *ctrl_psoc, HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc, HTC_HANDLE htc_handle,
+	      qdf_device_t qdf_osdev,
 	      struct ol_if_ops *ol_ops, uint16_t device_id);
 static void dp_pktlogmod_exit(struct dp_pdev *handle);
 static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
@@ -4341,7 +4342,8 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 			if (soc->cdp_soc.ol_ops->
 				is_hw_dbs_2x2_capable) {
 				dbs_enable = soc->cdp_soc.ol_ops->
-					is_hw_dbs_2x2_capable(soc->ctrl_psoc);
+					is_hw_dbs_2x2_capable(
+							(void *)soc->ctrl_psoc);
 			}
 
 			if (dbs_enable) {
@@ -9424,7 +9426,8 @@ void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
  *
  * Return: DP SOC handle on success, NULL on failure
  */
-void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
+void *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+			  void *hif_handle,
 			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			  struct ol_if_ops *ol_ops, uint16_t device_id)
 {
@@ -9453,7 +9456,8 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
  *
  * Return: DP SOC handle on success, NULL on failure
  */
-void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
+void *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+			  void *hif_handle,
 			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			  struct ol_if_ops *ol_ops, uint16_t device_id)
 {
@@ -9477,7 +9481,8 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
  * Return: DP SOC handle on success, NULL on failure
  */
 static struct dp_soc *
-dp_soc_attach(void *ctrl_psoc, HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc, HTC_HANDLE htc_handle,
+	      qdf_device_t qdf_osdev,
 	      struct ol_if_ops *ol_ops, uint16_t device_id)
 {
 	int int_ctx;
@@ -9644,7 +9649,8 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle)
  *
  * Return: DP SOC handle on success, NULL on failure
  */
-void *dp_soc_init_wifi3(void *dpsoc, void *ctrl_psoc, void *hif_handle,
+void *dp_soc_init_wifi3(void *dpsoc, struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+			void *hif_handle,
 			HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			struct ol_if_ops *ol_ops, uint16_t device_id)
 {
@@ -9684,7 +9690,7 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 	bool dbs_enable = false;
 	if (soc->cdp_soc.ol_ops->is_hw_dbs_2x2_capable)
 		dbs_enable = soc->cdp_soc.ol_ops->
-		is_hw_dbs_2x2_capable(soc->ctrl_psoc);
+		is_hw_dbs_2x2_capable((void *)soc->ctrl_psoc);
 
 	*max_mac_rings = (dbs_enable)?(*max_mac_rings):1;
 }

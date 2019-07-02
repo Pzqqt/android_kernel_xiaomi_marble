@@ -284,7 +284,8 @@ void wlan_set_srng_cfg(struct wlan_srng_cfg **wlan_cfg)
  * @psoc - Object manager psoc
  * Return: wlan_cfg_ctx - Handle to Configuration context
  */
-struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *psoc)
+struct wlan_cfg_dp_soc_ctxt *
+wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 {
 	int i = 0;
 
@@ -418,7 +419,8 @@ void wlan_cfg_soc_detach(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
 	qdf_mem_free(wlan_cfg_ctx);
 }
 
-struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void *psoc)
+struct wlan_cfg_dp_pdev_ctxt *
+wlan_cfg_pdev_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 {
 	struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx =
 		qdf_mem_malloc(sizeof(struct wlan_cfg_dp_pdev_ctxt));

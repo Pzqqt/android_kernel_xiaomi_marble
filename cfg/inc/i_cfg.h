@@ -70,7 +70,8 @@ struct cfg_values {
 
 struct cfg_values *cfg_psoc_get_values(struct wlan_objmgr_psoc *psoc);
 
-#define __cfg_get(psoc, id) (cfg_psoc_get_values(psoc)->id##_internal)
+#define __cfg_get(psoc, id) (cfg_psoc_get_values( \
+			(struct wlan_objmgr_psoc *)psoc)->id##_internal)
 
 #endif /* __I_CFG_H */
 

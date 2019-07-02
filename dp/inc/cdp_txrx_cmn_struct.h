@@ -358,7 +358,7 @@ enum cdp_ast_free_status {
  * @cookie: cookie
  * @cdp_ast_free_status: ast free status
  */
-typedef void (*txrx_ast_free_cb)(void *ctrl_soc,
+typedef void (*txrx_ast_free_cb)(struct cdp_ctrl_objmgr_psoc *ctrl_soc,
 				 void *cdp_soc,
 				 void *cookie,
 				 enum cdp_ast_free_status);

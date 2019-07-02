@@ -526,7 +526,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	return;
 }
 
-void dp_peer_free_hmwds_cb(void *ctrl_psoc,
+void dp_peer_free_hmwds_cb(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 			   void *dp_soc,
 			   void *cookie,
 			   enum cdp_ast_free_status status)
