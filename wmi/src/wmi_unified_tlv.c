@@ -3942,49 +3942,6 @@ static QDF_STATUS send_peer_rate_report_cmd_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 
-#ifdef CONFIG_MCL
-/**
- * send_bcn_buf_ll_cmd_tlv() - prepare and send beacon buffer to fw for LL
- * @wmi_handle: wmi handle
- * @param: bcn ll cmd parameter
- *
- * Return: QDF_STATUS_SUCCESS for success otherwise failure
- */
-static QDF_STATUS send_bcn_buf_ll_cmd_tlv(wmi_unified_t wmi_handle,
-			wmi_bcn_send_from_host_cmd_fixed_param *param)
-{
-	wmi_bcn_send_from_host_cmd_fixed_param *cmd;
-	wmi_buf_t wmi_buf;
-	QDF_STATUS ret;
-
-	wmi_buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
-	if (!wmi_buf)
-		return QDF_STATUS_E_FAILURE;
-
-	cmd = (wmi_bcn_send_from_host_cmd_fixed_param *) wmi_buf_data(wmi_buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_bcn_send_from_host_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_bcn_send_from_host_cmd_fixed_param));
-	cmd->vdev_id = param->vdev_id;
-	cmd->data_len = param->data_len;
-	cmd->frame_ctrl = param->frame_ctrl;
-	cmd->frag_ptr = param->frag_ptr;
-	cmd->dtim_flag = param->dtim_flag;
-
-	wmi_mtrace(WMI_PDEV_SEND_BCN_CMDID, cmd->vdev_id, 0);
-	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf, sizeof(*cmd),
-				      WMI_PDEV_SEND_BCN_CMDID);
-
-	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_PDEV_SEND_BCN_CMDID command");
-		wmi_buf_free(wmi_buf);
-	}
-
-	return ret;
-}
-#endif /* CONFIG_MCL */
-
 /**
  * send_process_update_edca_param_cmd_tlv() - update EDCA params
  * @wmi_handle: wmi handle
@@ -11808,9 +11765,6 @@ struct wmi_ops tlv_ops =  {
 	.send_snr_request_cmd = send_snr_request_cmd_tlv,
 	.send_snr_cmd = send_snr_cmd_tlv,
 	.send_link_status_req_cmd = send_link_status_req_cmd_tlv,
-#ifdef CONFIG_MCL
-	.send_bcn_buf_ll_cmd = send_bcn_buf_ll_cmd_tlv,
-#endif
 #if !defined(REMOVE_PKT_LOG) && defined(FEATURE_PKTLOG)
 	.send_pktlog_wmi_send_cmd = send_pktlog_wmi_send_cmd_tlv,
 #endif
@@ -12647,6 +12601,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_dbr_attach_tlv(wmi_handle);
 	wmi_atf_attach_tlv(wmi_handle);
 	wmi_ap_attach_tlv(wmi_handle);
+	wmi_bcn_attach_tlv(wmi_handle);
 	wmi_ocb_attach_tlv(wmi_handle);
 	wmi_nan_attach_tlv(wmi_handle);
 	wmi_p2p_attach_tlv(wmi_handle);

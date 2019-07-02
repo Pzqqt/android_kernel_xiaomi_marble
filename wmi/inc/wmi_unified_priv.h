@@ -783,7 +783,7 @@ QDF_STATUS (*send_config_packet_filter_cmd)(wmi_unified_t wmi_handle,
 		uint8_t filter_id, bool enable);
 #endif
 #endif /* end of WLAN_POWER_MANAGEMENT_OFFLOAD */
-#ifdef CONFIG_MCL
+#ifdef WLAN_WMI_BCN
 QDF_STATUS (*send_bcn_buf_ll_cmd)(wmi_unified_t wmi_handle,
 			wmi_bcn_send_from_host_cmd_fixed_param * param);
 #endif
@@ -2368,6 +2368,14 @@ void wmi_blacklist_mgr_attach_tlv(struct wmi_unified *wmi_handle)
 void wmi_sta_attach_tlv(struct wmi_unified *wmi_handle);
 #else
 static inline void wmi_sta_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
+#ifdef WLAN_WMI_BCN
+void wmi_bcn_attach_tlv(wmi_unified_t wmi_handle);
+#else
+static inline void wmi_bcn_attach_tlv(wmi_unified_t wmi_handle)
 {
 }
 #endif
