@@ -2727,6 +2727,29 @@ ccflags-y += -DWLAN_MAX_PDEVS=$(CONFIG_WLAN_MAX_PDEVS)
 CONFIG_WLAN_MAX_VDEVS ?= 5
 ccflags-y += -DWLAN_MAX_VDEVS=$(CONFIG_WLAN_MAX_VDEVS)
 
+#Maximum pending commands for a vdev is calculated in vdev create handler
+#by WLAN_SER_MAX_PENDING_CMDS/WLAN_SER_MAX_VDEVS. For SAP case, we will need
+#to accommodate 32 Pending commands to handle multiple STA sending
+#deauth/disassoc at the same time and for STA vdev,4 non scan pending commands
+#are supported. So calculate WLAN_SER_MAX_PENDING_COMMANDS based on the SAP
+#modes supported and no of STA vdev total non scan pending queue. Reserve
+#additional 3 pending commands for WLAN_SER_MAX_PENDING_CMDS_AP to account for
+#other commands like hardware mode change.
+
+ifdef CONFIG_SIR_SAP_MAX_NUM_PEERS
+CONFIG_WLAN_SER_MAX_PENDING_CMDS_AP ?=$(CONFIG_SIR_SAP_MAX_NUM_PEERS)
+else
+CONFIG_WLAN_SER_MAX_PENDING_CMDS_AP ?=32
+endif
+ccflags-y += -DWLAN_SER_MAX_PENDING_CMDS_AP=$(CONFIG_WLAN_SER_MAX_PENDING_CMDS_AP)+3
+
+CONFIG_WLAN_SER_MAX_PENDING_CMDS_STA ?= 4
+ccflags-y += -DWLAN_SER_MAX_PENDING_CMDS_STA=$(CONFIG_WLAN_SER_MAX_PENDING_CMDS_STA)
+
+CONFIG_WLAN_MAX_PENDING_CMDS ?= $(CONFIG_WLAN_SER_MAX_PENDING_CMDS_AP)*3+$(CONFIG_WLAN_SER_MAX_PENDING_CMDS_STA)*2
+
+ccflags-y += -DWLAN_SER_MAX_PENDING_CMDS=$(CONFIG_WLAN_MAX_PENDING_CMDS)
+
 CONFIG_WLAN_PDEV_MAX_VDEVS ?= $(CONFIG_WLAN_MAX_VDEVS)
 ccflags-y += -DWLAN_PDEV_MAX_VDEVS=$(CONFIG_WLAN_PDEV_MAX_VDEVS)
 
