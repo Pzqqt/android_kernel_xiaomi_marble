@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,6 +54,15 @@ QDF_STATUS ol_cds_init(qdf_device_t qdf_dev, void *hif_ctx);
 void ol_cds_free(void);
 void ol_init_ini_config(struct ol_context *ol_ctx,
 			struct ol_config_info *cfg);
+/**
+ * ol_set_fw_crashed_cb() - set firmware crashed callback
+ * @ol_ctx: ol context
+ * @callback_fn: fw crashed callback function
+ *
+ * Return: None
+ */
+void ol_set_fw_crashed_cb(struct ol_context *ol_ctx,
+			  void (*callback_fn)(void));
 void bmi_cleanup(struct ol_context *scn);
 QDF_STATUS bmi_done(struct ol_context *ol_ctx);
 void bmi_target_ready(struct hif_opaque_softc *scn, void *cfg_ctx);
@@ -73,6 +82,11 @@ static inline void ol_cds_free(void)
 
 static inline void
 ol_init_ini_config(struct ol_context *ol_ctx, struct ol_config_info *cfg)
+{
+}
+
+static inline void
+ol_set_fw_crashed_cb(struct ol_context *ol_ctx, void (*callback_fn)(void))
 {
 }
 

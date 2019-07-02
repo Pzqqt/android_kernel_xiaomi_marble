@@ -14294,6 +14294,22 @@ void hdd_clean_up_pre_cac_interface(struct hdd_context *hdd_ctx)
 }
 
 /**
+ * hdd_svc_fw_crashed_ind() - API to send FW CRASHED IND to Userspace
+ *
+ * Return: void
+ */
+static void hdd_svc_fw_crashed_ind(void)
+{
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	hdd_ctx ? wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+					      WLAN_SVC_FW_CRASHED_IND,
+					      NULL, 0) : 0;
+}
+
+/**
  * hdd_update_ol_config - API to update ol configuration parameters
  * @hdd_ctx: HDD context
  *
@@ -14320,6 +14336,7 @@ static void hdd_update_ol_config(struct hdd_context *hdd_ctx)
 	cfg.enable_lpass_support = hdd_lpass_is_supported(hdd_ctx);
 
 	ol_init_ini_config(ol_ctx, &cfg);
+	ol_set_fw_crashed_cb(ol_ctx, hdd_svc_fw_crashed_ind);
 }
 
 #ifdef FEATURE_RUNTIME_PM
