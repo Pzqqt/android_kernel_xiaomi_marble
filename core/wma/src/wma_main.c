@@ -6758,6 +6758,34 @@ static inline void wma_init_dbr_params(t_wma_handle *wma_handle)
 #endif
 
 /**
+ * wma_set_coex_res_cfg() - Set target COEX resource configuration.
+ * @wma_handle: pointer to wma global structure
+ * @wlan_res_cfg: Pointer to target resource configuration
+ *
+ * Return: none
+ */
+#ifdef FEATURE_COEX_CONFIG
+static void wma_set_coex_res_cfg(t_wma_handle *wma_handle,
+				 struct wmi_unified *wmi_handle,
+				 target_resource_config *wlan_res_cfg)
+{
+	if (cfg_get(wma_handle->psoc, CFG_THREE_WAY_COEX_CONFIG_LEGACY) &&
+	    wmi_service_enabled(wmi_handle,
+				wmi_service_three_way_coex_config_legacy)) {
+		wlan_res_cfg->three_way_coex_config_legacy_en = true;
+	} else {
+		wlan_res_cfg->three_way_coex_config_legacy_en = false;
+	}
+}
+#else
+static void wma_set_coex_res_cfg(t_wma_handle *wma_handle,
+				 struct wmi_unified *wmi_handle,
+				 target_resource_config *wlan_res_cfg)
+{
+}
+#endif
+
+/**
  * wma_rx_service_ready_ext_event() - evt handler for sevice ready ext event.
  * @handle: wma handle
  * @event: params of the service ready extended event
@@ -6864,6 +6892,8 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	}
 
 	wma_init_dbr_params(wma_handle);
+
+	wma_set_coex_res_cfg(wma_handle, wmi_handle, wlan_res_cfg);
 
 	return 0;
 }

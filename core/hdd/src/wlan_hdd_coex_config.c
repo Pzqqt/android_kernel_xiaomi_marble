@@ -29,6 +29,7 @@
 #include "qca_vendor.h"
 #include "wlan_osif_request_manager.h"
 #include "osif_sync.h"
+#include "wlan_fwol_ucfg_api.h"
 
 static const struct nla_policy
 coex_config_three_way_policy[QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_MAX + 1] = {
@@ -67,6 +68,7 @@ static int __wlan_hdd_cfg80211_set_coex_config(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_MAX + 1];
 	uint32_t config_type;
 	struct coex_config_params coex_cfg_params = {0};
+	struct wlan_fwol_coex_config config = {0};
 	int errno;
 	QDF_STATUS status;
 
@@ -75,6 +77,16 @@ static int __wlan_hdd_cfg80211_set_coex_config(struct wiphy *wiphy,
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno != 0)
 		return errno;
+
+	status = ucfg_fwol_get_coex_config_params(hdd_ctx->psoc, &config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Unable to get coex config params");
+		return -EINVAL;
+	}
+	if (!config.btc_three_way_coex_config_legacy_enable) {
+		hdd_err("Coex legacy feature should be enable first");
+		return -EINVAL;
+	}
 
 	if (wlan_cfg80211_nla_parse(tb,
 				    QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_MAX,

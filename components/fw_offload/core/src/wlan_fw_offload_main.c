@@ -52,6 +52,32 @@ fwol_mpta_helper_config_get(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+/**
+ * fwol_three_way_coex_config_legacy_config_get: Populate
+ * btc_three_way_coex_config_legacy_enable from cfg
+ * @psoc: The global psoc handler
+ * @coex_config: The cfg structure
+ *
+ * Return: none
+ */
+#ifdef FEATURE_COEX_CONFIG
+static void
+fwol_three_way_coex_config_legacy_config_get(
+			struct wlan_objmgr_psoc *psoc,
+			struct wlan_fwol_coex_config *coex_config)
+{
+	coex_config->btc_three_way_coex_config_legacy_enable =
+			cfg_get(psoc, CFG_THREE_WAY_COEX_CONFIG_LEGACY);
+}
+#else
+static void
+fwol_three_way_coex_config_legacy_config_get(
+			struct wlan_objmgr_psoc *psoc,
+			struct wlan_fwol_coex_config *coex_config)
+{
+}
+#endif
+
 static void
 fwol_init_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 			     struct wlan_fwol_coex_config *coex_config)
@@ -79,6 +105,7 @@ fwol_init_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 	fwol_mpta_helper_config_get(psoc, coex_config);
 	coex_config->bt_sco_allow_wlan_2g_scan =
 				cfg_get(psoc, CFG_BT_SCO_ALLOW_WLAN_2G_SCAN);
+	fwol_three_way_coex_config_legacy_config_get(psoc, coex_config);
 }
 
 static void
