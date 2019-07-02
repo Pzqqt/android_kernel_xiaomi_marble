@@ -401,6 +401,7 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	uint32_t ppdu_rx_rate = 0;
 	uint32_t nss = 0;
 	uint32_t rix;
+	uint16_t ratecode;
 
 	if (!peer || !ppdu)
 		return;
@@ -415,7 +416,8 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 				   nss,
 				   ppdu->u.preamble,
 				   ppdu->u.bw,
-				   &rix);
+				   &rix,
+				   &ratecode);
 
 	if (!ratekbps)
 		return;
@@ -426,9 +428,7 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	ppdu_rx_rate = dp_ath_rate_out(peer->stats.rx.avg_rx_rate);
 	DP_STATS_UPD(peer, rx.rnd_avg_rx_rate, ppdu_rx_rate);
 	ppdu->rx_ratekbps = ratekbps;
-	ppdu->rx_ratecode = CDP_TXRX_RATECODE(ppdu->u.mcs,
-					      nss,
-					      ppdu->u.preamble);
+	ppdu->rx_ratecode = ratecode;
 
 	if (peer->vdev)
 		peer->vdev->stats.rx.last_rx_rate = ratekbps;

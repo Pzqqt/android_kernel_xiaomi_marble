@@ -166,7 +166,7 @@ enum DP_CMN_MODULATION_TYPE dp_getmodulation(
 
 uint32_t
 dp_getrateindex(uint32_t gi, uint16_t mcs, uint8_t nss, uint8_t preamble,
-		uint8_t bw, uint32_t *rix);
+		uint8_t bw, uint32_t *rix, uint16_t *ratecode);
 
 int dp_rate_idx_to_kbps(uint8_t rate_idx, uint8_t gintval);
 

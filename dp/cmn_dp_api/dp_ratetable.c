@@ -3209,17 +3209,20 @@ enum DP_CMN_MODULATION_TYPE dp_getmodulation(
  * preamble - preamble
  * @bw - Transmission Bandwidth
  * @rix: rate index to be populated
+ * @ratecode: ratecode
  *
  * return - rate in kbps
  */
 uint32_t
 dp_getrateindex(uint32_t gi, uint16_t mcs, uint8_t nss, uint8_t preamble,
-		uint8_t bw, uint32_t *rix)
+		uint8_t bw, uint32_t *rix, uint16_t *ratecode)
 {
 	uint32_t ratekbps = 0, res = RT_INVALID_INDEX; /* represents failure */
 	uint16_t rc;
 	enum DP_CMN_MODULATION_TYPE mod;
 
+	/* For error case, where idx exceeds bountry limit */
+	*ratecode = 0;
 	mod = dp_getmodulation(preamble, bw);
 	rc = mcs;
 
@@ -3269,6 +3272,7 @@ dp_getrateindex(uint32_t gi, uint16_t mcs, uint8_t nss, uint8_t preamble,
 			break;
 		}
 	}
+	*ratecode = dp_11abgnratetable.info[res].ratecode;
 done:
 	*rix = res;
 

@@ -122,11 +122,6 @@
 #define CDP_TXRX_RATECODE_PREM_MASK 0x3
 #define CDP_TXRX_RATECODE_PREM_LSB 6
 
-#define CDP_TXRX_RATECODE(mcsb, nssb, premb) \
-	(((mcsb) & CDP_TXRX_RATECODE_MCS_MASK) | \
-	(((nssb) & CDP_TXRX_RATECODE_NSS_MASK) << CDP_TXRX_RATECODE_NSS_LSB) | \
-	(((premb) & CDP_TXRX_RATECODE_PREM_MASK) << CDP_TXRX_RATECODE_PREM_LSB))
-
 /*
  * cdp_tx_transmit_type: Transmit type index
  * SU: SU Transmit type index

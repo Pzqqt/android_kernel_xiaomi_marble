@@ -100,6 +100,10 @@
 
 #define CDP_DATA_TID_MAX 8
 #define CDP_DATA_NON_QOS_TID 16
+
+#define CDP_NUM_SA_BW 4
+#define CDP_PERCENT_MACRO 100
+#define CDP_NUM_KB_IN_MB 1000
 /*
  * advance rx monitor filter
  * */
@@ -1278,6 +1282,7 @@ struct cdp_delayed_tx_completion_ppdu_user {
  * @sa_tx_antenna: antenna in which packet is transmitted
  * @sa_max_rates: smart antenna tx feedback info max rates
  * @sa_goodput: smart antenna tx feedback info goodput
+ * @current_rate_per: Moving average per
  */
 struct cdp_tx_completion_ppdu_user {
 	uint32_t completion_status:8,
@@ -1292,7 +1297,7 @@ struct cdp_tx_completion_ppdu_user {
 	uint16_t mpdu_failed:16;
 	uint32_t long_retries:4,
 		 short_retries:4,
-		 tx_ratecode:8,
+		 tx_ratecode:16,
 		 is_ampdu:1,
 		 ppdu_type:5;
 	uint32_t success_bytes;
@@ -1339,8 +1344,28 @@ struct cdp_tx_completion_ppdu_user {
 	uint8_t sa_is_training;
 	uint32_t rssi_chain[CDP_RSSI_CHAIN_LEN];
 	uint32_t sa_tx_antenna;
-	uint32_t sa_max_rates;
+	/*Max rates for BW: 20MHZ, 40MHZ and 80MHZ and 160MHZ
+	 * |---------------------------------------|
+	 * | 16 bits | 16 bits | 16 bits | 16 bits |
+	 * |   BW-1  |   BW-2  |   BW-3  |   BW-4  |
+	 * |      /\  \                            |
+	 * |     /  \  \                           |
+	 * |    /    \  \                          |
+	 * |   /      \  \                         |
+	 * |  /        \  \                        |
+	 * | /          \  \                       |
+	 * |/            \  \                      |
+	 * |[11|8]     [5|8] \                     |
+	 * | BW1      PADDED  \                    |
+	 * |---------------------------------------|
+	 */
+	uint16_t sa_max_rates[CDP_NUM_SA_BW];
 	uint32_t sa_goodput;
+	/* below field is used to calculate goodput in non-training period
+	 * Note: As host is exposing goodput and hence current_rate_per is
+	 * of no use. It is just for Host computation.
+	 */
+	uint32_t current_rate_per;
 };
 
 /**
@@ -1705,7 +1730,7 @@ struct cdp_rx_indication_ppdu {
 
 	uint32_t retries;
 	uint32_t rx_byte_count;
-	uint8_t rx_ratecode;
+	uint16_t rx_ratecode;
 	uint8_t fcs_error_mpdus;
 	uint16_t frame_ctrl;
 	int8_t rssi_chain[SS_COUNT][MAX_BW];

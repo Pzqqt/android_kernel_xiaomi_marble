@@ -7843,9 +7843,10 @@ static int dp_txrx_get_ratekbps(int preamb, int mcs,
 				int htflag, int gintval)
 {
 	uint32_t rix;
+	uint16_t ratecode;
 
 	return dp_getrateindex((uint32_t)gintval, (uint16_t)mcs, 1,
-			       (uint8_t)preamb, 1, &rix);
+			       (uint8_t)preamb, 1, &rix, &ratecode);
 }
 #else
 static int dp_txrx_get_ratekbps(int preamb, int mcs,

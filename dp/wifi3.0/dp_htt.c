@@ -183,6 +183,7 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	uint32_t ratekbps = 0;
 	uint64_t ppdu_tx_rate = 0;
 	uint32_t rix;
+	uint16_t ratecode = 0;
 
 	if (!peer || !ppdu)
 		return;
@@ -192,15 +193,25 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 				   ppdu->nss,
 				   ppdu->preamble,
 				   ppdu->bw,
-				   &rix);
+				   &rix,
+				   &ratecode);
 
 	DP_STATS_UPD(peer, tx.last_tx_rate, ratekbps);
 
 	if (!ratekbps)
 		return;
 
+	/* Calculate goodput in non-training period
+	 * In training period, don't do anything as
+	 * pending pkt is send as goodput.
+	 */
+	if ((!peer->bss_peer) && (!ppdu->sa_is_training)) {
+		ppdu->sa_goodput = ((ratekbps / CDP_NUM_KB_IN_MB) *
+				(CDP_PERCENT_MACRO - ppdu->current_rate_per));
+	}
 	ppdu->rix = rix;
 	ppdu->tx_ratekbps = ratekbps;
+	ppdu->tx_ratecode = ratecode;
 	peer->stats.tx.avg_tx_rate =
 		dp_ath_rate_lpf(peer->stats.tx.avg_tx_rate, ratekbps);
 	ppdu_tx_rate = dp_ath_rate_out(peer->stats.tx.avg_tx_rate);
@@ -2332,6 +2343,7 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
+	uint8_t bw_iter;
 	htt_ppdu_stats_user_cmpltn_common_tlv *dp_stats_buf =
 		(htt_ppdu_stats_user_cmpltn_common_tlv *)tag_buf;
 
@@ -2402,6 +2414,34 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 	 * htt_ppdu_stats_user_cmpltn_common_tlv
 	 */
 	ppdu_desc->bar_num_users++;
+
+	tag_buf++;
+	for (bw_iter = 0; bw_iter < CDP_RSSI_CHAIN_LEN; bw_iter++) {
+		ppdu_user_desc->rssi_chain[bw_iter] =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_GET(*tag_buf);
+		tag_buf++;
+	}
+
+	ppdu_user_desc->sa_tx_antenna =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TX_ANTENNA_MASK_GET(*tag_buf);
+
+	tag_buf++;
+	ppdu_user_desc->sa_is_training =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_TRAINING_GET(*tag_buf);
+	if (ppdu_user_desc->sa_is_training) {
+		ppdu_user_desc->sa_goodput =
+			HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PENDING_TRAINING_PKTS_GET(*tag_buf);
+	}
+
+	tag_buf++;
+	for (bw_iter = 0; bw_iter < CDP_NUM_SA_BW; bw_iter++) {
+		ppdu_user_desc->sa_max_rates[bw_iter] =
+			HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MAX_RATES_GET(tag_buf[bw_iter]);
+	}
+
+	tag_buf += CDP_NUM_SA_BW;
+	ppdu_user_desc->current_rate_per =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CURRENT_RATE_PER_GET(*tag_buf);
 }
 
 /*
