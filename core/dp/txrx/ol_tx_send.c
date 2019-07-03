@@ -328,6 +328,13 @@ ol_tx_download_done_hl_free(void *txrx_pdev,
 	tx_desc = ol_tx_desc_find(pdev, msdu_id);
 	qdf_assert(tx_desc);
 
+	DPTRACE(qdf_dp_trace_ptr(msdu,
+				 QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
+				 QDF_TRACE_DEFAULT_PDEV_ID,
+				 qdf_nbuf_data_addr(msdu),
+				 sizeof(qdf_nbuf_data(msdu)), tx_desc->id,
+				 status));
+
 	ol_tx_download_done_base(pdev, status, msdu, msdu_id);
 
 	/*

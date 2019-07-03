@@ -108,7 +108,6 @@ static inline void ol_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
 
 	qdf_dp_trace_log_pkt(vdev_id, skb, QDF_TX, QDF_TRACE_DEFAULT_PDEV_ID);
 
-	qdf_dp_trace_set_track(skb, QDF_TX);
 	DPTRACE(qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
 				      QDF_DP_TRACE_TX_PACKET_RECORD,
 				      msdu_id, QDF_TX));

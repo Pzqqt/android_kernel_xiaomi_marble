@@ -1353,6 +1353,8 @@ DONE:
 			ol_rx_timestamp(pdev->ctrl_pdev, rx_desc, msdu);
 			OL_TXRX_LIST_APPEND(deliver_list_head,
 					    deliver_list_tail, msdu);
+			QDF_NBUF_CB_DP_TRACE_PRINT(msdu) = false;
+			qdf_dp_trace_set_track(msdu, QDF_RX);
 		}
 		msdu = next;
 	}
