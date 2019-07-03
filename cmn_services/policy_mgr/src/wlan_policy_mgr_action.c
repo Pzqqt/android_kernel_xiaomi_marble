@@ -34,6 +34,7 @@
 #include "qdf_platform.h"
 #include "wlan_nan_api.h"
 #include "nan_ucfg_api.h"
+#include "sap_api.h"
 
 enum policy_mgr_conc_next_action (*policy_mgr_get_current_pref_hw_mode_ptr)
 	(struct wlan_objmgr_psoc *psoc);
@@ -1555,6 +1556,11 @@ void policy_mgr_nan_sap_post_enable_conc_check(struct wlan_objmgr_psoc *psoc)
 
 	policy_mgr_debug("Force SCC for NAN+SAP Ch: %d",
 			 WLAN_REG_IS_5GHZ_CH(sap_ch) ? nan_ch_5g : nan_ch_2g);
+	if (pm_ctx->hdd_cbacks.wlan_hdd_set_sap_csa_reason)
+		pm_ctx->hdd_cbacks.wlan_hdd_set_sap_csa_reason(psoc,
+					sap_info->vdev_id,
+					CSA_REASON_CONCURRENT_NAN_EVENT);
+
 	if (WLAN_REG_IS_5GHZ_CH(sap_ch)) {
 		policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
 						       nan_ch_5g,
@@ -1607,6 +1613,11 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc)
 		if (QDF_IS_STATUS_ERROR(status))
 			policy_mgr_err("wait for event failed, still continue with channel switch");
 	}
+
+	if (pm_ctx->hdd_cbacks.wlan_hdd_set_sap_csa_reason)
+		pm_ctx->hdd_cbacks.wlan_hdd_set_sap_csa_reason(psoc,
+					sap_info->vdev_id,
+					CSA_REASON_CONCURRENT_NAN_EVENT);
 
 	policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
 					       sap_ch,
