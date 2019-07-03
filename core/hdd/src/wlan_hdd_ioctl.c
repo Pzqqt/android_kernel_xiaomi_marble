@@ -7015,6 +7015,8 @@ static int drv_cmd_set_channel_switch(struct hdd_adapter *adapter,
 
 	hdd_debug("CH:%d BW:%d", chan_number, chan_bw);
 
+	wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, adapter->vdev_id,
+				    CSA_REASON_USER_INITIATED);
 	status = hdd_softap_set_channel_change(dev, chan_number, width, true);
 	if (status) {
 		hdd_err("Set channel change fail");

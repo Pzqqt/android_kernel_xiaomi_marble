@@ -335,6 +335,7 @@ QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 		sap_ctx->SSIDList[0].ssidHidden;
 
 	sap_ctx->csr_roamProfile.BSSIDs.numOfBSSIDs = 1; /* This is true for now. */
+	sap_ctx->csa_reason = CSA_REASON_UNKNOWN;
 	sap_ctx->csr_roamProfile.BSSIDs.bssid = &sap_ctx->bssid;
 	sap_ctx->csr_roamProfile.csrPersona = mode;
 	qdf_mem_copy(sap_ctx->self_mac_addr, addr, QDF_MAC_ADDR_SIZE);
@@ -1329,6 +1330,38 @@ static inline void sap_start_csa_restart(struct mac_context *mac,
 }
 
 /**
+ * sap_get_csa_reason_str() - Get csa reason in string
+ * @reason: sap reason enum value
+ *
+ * Return: string reason
+ */
+static char *sap_get_csa_reason_str(enum sap_csa_reason_code reason)
+{
+	switch (reason) {
+	case CSA_REASON_UNKNOWN:
+		return "UNKNOWN";
+	case CSA_REASON_STA_CONNECT_DFS_TO_NON_DFS:
+		return "STA_CONNECT_DFS_TO_NON_DFS";
+	case CSA_REASON_USER_INITIATED:
+		return "USER_INITIATED";
+	case CSA_REASON_PEER_ACTION_FRAME:
+		return "PEER_ACTION_FRAME";
+	case CSA_REASON_PRE_CAC_SUCCESS:
+		return "PRE_CAC_SUCCESS";
+	case CSA_REASON_CONCURRENT_STA_CHANGED_CHANNEL:
+		return "CONCURRENT_STA_CHANGED_CHANNEL";
+	case CSA_REASON_UNSAFE_CHANNEL:
+		return "UNSAFE_CHANNEL";
+	case CSA_REASON_LTE_COEX:
+		return "LTE_COEX";
+	case CSA_REASON_CONCURRENT_NAN_EVENT:
+		return "CONCURRENT_NAN_EVENT";
+	default:
+		return "UNKNOWN";
+	}
+}
+
+/**
  * wlansap_set_channel_change_with_csa() - Set channel change with CSA
  * @sap_ctx: Pointer to SAP context
  * @targetChannel: Target channel
@@ -1373,10 +1406,12 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAULT;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-		"%s: sap chan:%d target:%d conn on 5GHz:%d",
+		"%s: sap chan:%d target:%d conn on 5GHz:%d, csa_reason:%s(%d)",
 		__func__, sap_ctx->channel, targetChannel,
 		policy_mgr_is_any_mode_active_on_band_along_with_session(
-			mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5));
+			mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5),
+			sap_get_csa_reason_str(sap_ctx->csa_reason),
+			sap_ctx->csa_reason);
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(mac->psoc);

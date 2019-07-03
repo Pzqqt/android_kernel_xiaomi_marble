@@ -2735,6 +2735,8 @@ static void hdd_register_policy_manager_callback(
 		hdd_wapi_security_sta_exist;
 	hdd_cbacks.hdd_is_chan_switch_in_progress =
 				hdd_is_chan_switch_in_progress;
+	hdd_cbacks.wlan_hdd_set_sap_csa_reason =
+				wlan_hdd_set_sap_csa_reason;
 
 	if (QDF_STATUS_SUCCESS !=
 	    policy_mgr_register_hdd_cb(psoc, &hdd_cbacks)) {
@@ -8840,9 +8842,13 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			hdd_ctxt->acs_policy.acs_channel = AUTO_CHANNEL_SELECT;
 			ucfg_mlme_get_sap_internal_restart(hdd_ctxt->psoc,
 							   &value);
-			if (value)
+			if (value) {
+				wlan_hdd_set_sap_csa_reason(hdd_ctxt->psoc,
+						adapter->vdev_id,
+						CSA_REASON_UNSAFE_CHANNEL);
 				hdd_switch_sap_channel(adapter, restart_chan,
 						       true);
+			}
 			else {
 				hdd_debug("sending coex indication");
 				wlan_hdd_send_svc_nlink_msg(
@@ -8912,6 +8918,8 @@ static void hdd_lte_coex_restart_sap(struct hdd_adapter *adapter,
 
 	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
 				    WLAN_SVC_LTE_COEX_IND, NULL, 0);
+	wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, adapter->vdev_id,
+				    CSA_REASON_LTE_COEX);
 	hdd_switch_sap_channel(adapter, restart_chan, true);
 }
 
@@ -15078,7 +15086,8 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 		if (!restart_chan ||
 		    wlan_reg_is_dfs_ch(hdd_ctx->pdev, restart_chan))
 			restart_chan = SAP_DEFAULT_5GHZ_CHANNEL;
-
+		wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, ap_adapter->vdev_id,
+					CSA_REASON_STA_CONNECT_DFS_TO_NON_DFS);
 		hdd_switch_sap_channel(ap_adapter, restart_chan, true);
 	}
 }

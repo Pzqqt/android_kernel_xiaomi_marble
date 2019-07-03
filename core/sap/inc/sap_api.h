@@ -466,6 +466,31 @@ enum  sap_acs_dfs_mode {
 	ACS_DFS_MODE_DEPRIORITIZE
 };
 
+/**
+ * enum sap_csa_reason_code - SAP channel switch reason code
+ * @CSA_REASON_UNKNOWN: Unknown reason
+ * @CSA_REASON_STA_CONNECT_DFS_TO_NON_DFS: STA connection from DFS to NON DFS.
+ * @CSA_REASON_USER_INITIATED: User initiated form north bound.
+ * @CSA_REASON_PEER_ACTION_FRAME: Action frame received on sta iface.
+ * @CSA_REASON_PRE_CAC_SUCCESS: Pre CAC success.
+ * @CSA_REASON_CONCURRENT_STA_CHANGED_CHANNEL: concurrent sta changed channel.
+ * @CSA_REASON_UNSAFE_CHANNEL: Unsafe channel.
+ * @CSA_REASON_LTE_COEX: LTE coex.
+ * @CSA_REASON_CONCURRENT_NAN_EVENT: NAN concurrency.
+ *
+ */
+enum sap_csa_reason_code {
+	CSA_REASON_UNKNOWN,
+	CSA_REASON_STA_CONNECT_DFS_TO_NON_DFS,
+	CSA_REASON_USER_INITIATED,
+	CSA_REASON_PEER_ACTION_FRAME,
+	CSA_REASON_PRE_CAC_SUCCESS,
+	CSA_REASON_CONCURRENT_STA_CHANGED_CHANNEL,
+	CSA_REASON_UNSAFE_CHANNEL,
+	CSA_REASON_LTE_COEX,
+	CSA_REASON_CONCURRENT_NAN_EVENT
+};
+
 struct sap_config {
 	tSap_SSIDInfo_t SSIDinfo;
 	eCsrPhyMode SapHw_mode;         /* Wireless Mode */

@@ -466,6 +466,9 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCSAP_PARAM_SET_CHANNEL_CHANGE:
 		if ((QDF_SAP_MODE == adapter->device_mode) ||
 		   (QDF_P2P_GO_MODE == adapter->device_mode)) {
+			wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc,
+						    adapter->vdev_id,
+						    CSA_REASON_USER_INITIATED);
 			hdd_debug("SET Channel Change to new channel= %d",
 			       set_value);
 			ret = hdd_softap_set_channel_change(dev, set_value,

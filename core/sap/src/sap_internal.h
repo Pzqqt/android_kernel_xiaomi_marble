@@ -146,6 +146,7 @@ struct sap_context {
 	 * track of state machine
 	 */
 	enum sap_fsm_state fsm_state;
+	enum sap_csa_reason_code csa_reason;
 
 	/* Actual storage for AP and self (STA) SSID */
 	tCsrSSIDInfo SSIDList[2];

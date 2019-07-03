@@ -89,6 +89,20 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				uint8_t *sec_ch);
 #endif
 
+/**
+ * wlan_hdd_set_sap_csa_reason() - Function to set
+ * sap csa reason
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ * @reason: reason to be updated
+ *
+ * This function sets the reason for SAP channel switch
+ *
+ * Return: None
+ *
+ */
+void wlan_hdd_set_sap_csa_reason(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+				 uint8_t reason);
 eCsrEncryptionType
 hdd_translate_rsn_to_csr_encryption_type(uint8_t cipher_suite[4]);
 
