@@ -61,12 +61,14 @@ enum pld_bus_type {
 /**
  * enum pld_bus_width_type - bus bandwidth
  * @PLD_BUS_WIDTH_NONE: don't vote for bus bandwidth
+ * @PLD_BUS_WIDTH_IDLE: vote for idle bandwidth
  * @PLD_BUS_WIDTH_LOW: vote for low bus bandwidth
  * @PLD_BUS_WIDTH_MEDIUM: vote for medium bus bandwidth
  * @PLD_BUS_WIDTH_HIGH: vote for high bus bandwidth
  */
 enum pld_bus_width_type {
 	PLD_BUS_WIDTH_NONE,
+	PLD_BUS_WIDTH_IDLE,
 	PLD_BUS_WIDTH_LOW,
 	PLD_BUS_WIDTH_MEDIUM,
 	PLD_BUS_WIDTH_HIGH

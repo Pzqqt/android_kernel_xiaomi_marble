@@ -7873,7 +7873,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	uint64_t temp_tx = 0, avg_rx = 0;
 	uint64_t no_rx_offload_pkts = 0, avg_no_rx_offload_pkts = 0;
 	uint64_t rx_offload_pkts = 0, avg_rx_offload_pkts = 0;
-	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_NONE;
+	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_IDLE;
 	static enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
@@ -7891,10 +7891,10 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	else if (total_pkts > hdd_ctx->config->bus_bw_low_threshold)
 		next_vote_level = PLD_BUS_WIDTH_LOW;
 	else
-		next_vote_level = PLD_BUS_WIDTH_NONE;
+		next_vote_level = PLD_BUS_WIDTH_IDLE;
 
 	dptrace_high_tput_req =
-			next_vote_level > PLD_BUS_WIDTH_NONE ? true : false;
+			next_vote_level > PLD_BUS_WIDTH_IDLE ? true : false;
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
 		hdd_debug("trigger level %d, tx_packets: %lld, rx_packets: %lld",
@@ -7903,7 +7903,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		vote_level_change = true;
 		pld_request_bus_bandwidth(hdd_ctx->parent_dev, next_vote_level);
 		if ((next_vote_level == PLD_BUS_WIDTH_LOW) ||
-		    (next_vote_level == PLD_BUS_WIDTH_NONE)) {
+		    (next_vote_level == PLD_BUS_WIDTH_IDLE)) {
 			if (hdd_ctx->hbw_requested) {
 				pld_remove_pm_qos(hdd_ctx->parent_dev);
 				hdd_ctx->hbw_requested = false;
