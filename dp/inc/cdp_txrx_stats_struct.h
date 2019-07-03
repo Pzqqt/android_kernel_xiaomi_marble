@@ -1618,6 +1618,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_SET_CMD_OBSS_PD_THRESHOLD_ENABLE = 421,
 	/* Get baseline radio level channel width */
 	OL_ATH_PARAM_RCHWIDTH = 422,
+	/* Whether external ACS request is in progress */
+	OL_ATH_EXT_ACS_REQUEST_IN_PROGRESS = 423,
 };
 #endif
 /* Bitmasks for stats that can block */
