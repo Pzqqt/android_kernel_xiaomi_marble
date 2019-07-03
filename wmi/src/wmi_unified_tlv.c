@@ -12560,6 +12560,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 				WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID;
 	event_ids[wmi_roam_auth_offload_event_id] =
 				WMI_ROAM_PREAUTH_START_EVENTID;
+	event_ids[wmi_get_elna_bypass_event_id] = WMI_GET_ELNA_BYPASS_EVENTID;
 }
 
 /**
@@ -12885,6 +12886,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_pmo_attach_tlv(wmi_handle);
 	wmi_sta_attach_tlv(wmi_handle);
 	wmi_11ax_bss_color_attach_tlv(wmi_handle);
+	wmi_fwol_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 

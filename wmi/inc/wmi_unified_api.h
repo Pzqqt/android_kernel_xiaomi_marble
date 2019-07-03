@@ -96,6 +96,10 @@
 #include "wmi_unified_sta_api.h"
 #endif
 
+#ifdef WLAN_FW_OFFLOAD
+#include "wmi_unified_fwol_api.h"
+#endif
+
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
 

@@ -4521,6 +4521,7 @@ typedef enum {
 	wmi_chan_rf_characterization_info_event_id,
 	wmi_roam_auth_offload_event_id,
 	wmi_service_ready_ext2_event_id,
+	wmi_get_elna_bypass_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 

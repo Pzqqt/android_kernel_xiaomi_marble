@@ -254,6 +254,8 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_MLME_OBJMGR_ID:        MLME object manager operations VAP, Node
  * @WLAN_OFFCHAN_TX_ID:         Offchannel Tx operations
  * @WLAN_MISC_ID:               power manager, PAPI, rate set, etc.
+ * @WLAN_FWOL_NB_ID:            fw offload northbound operations
+ * @WLAN_FWOL_SB_ID:            fw offload southbound operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -330,6 +332,8 @@ typedef enum {
 	WLAN_MLME_OBJMGR_ID   = 67,
 	WLAN_OFFCHAN_TX_ID    = 68,
 	WLAN_MISC_ID          = 69,
+	WLAN_FWOL_NB_ID       = 70,
+	WLAN_FWOL_SB_ID       = 71,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -413,6 +417,8 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_MLME_OBJMGR_ID",
 					"WLAN_OFFCHAN_TX_ID",
 					"WLAN_MISC_ID",
+					"WLAN_FWOL_NB_ID",
+					"WLAN_FWOL_SB_ID",
 					"WLAN_REF_ID_MAX"};
 
 	return (char *)strings[id];

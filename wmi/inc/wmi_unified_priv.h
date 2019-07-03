@@ -29,6 +29,10 @@
 #include "qdf_atomic.h"
 #include <wbuff.h>
 
+#ifdef WLAN_FW_OFFLOAD
+#include "wlan_fwol_public_structs.h"
+#endif
+
 #ifdef DFS_COMPONENT_ENABLE
 #include <wlan_dfs_public_struct.h>
 #endif
@@ -2021,6 +2025,16 @@ QDF_STATUS (*extract_hw_mode_resp_event)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_roam_trigger_cmd)(wmi_unified_t wmi_handle,
 					uint32_t vdev_id,
 					uint32_t trigger_bitmap);
+
+#ifdef WLAN_FEATURE_ELNA
+QDF_STATUS (*send_set_elna_bypass_cmd)(wmi_unified_t wmi_handle,
+				       struct set_elna_bypass_request *req);
+QDF_STATUS (*send_get_elna_bypass_cmd)(wmi_unified_t wmi_handle,
+				       struct get_elna_bypass_request *req);
+QDF_STATUS (*extract_get_elna_bypass_resp)(wmi_unified_t wmi_handle,
+					 void *resp_buf,
+					 struct get_elna_bypass_response *resp);
+#endif /* WLAN_FEATURE_ELNA */
 };
 
 /* Forward declartion for psoc*/
@@ -2400,6 +2414,20 @@ static inline void wmi_sta_attach_tlv(struct wmi_unified *wmi_handle)
 void wmi_bcn_attach_tlv(wmi_unified_t wmi_handle);
 #else
 static inline void wmi_bcn_attach_tlv(wmi_unified_t wmi_handle)
+{
+}
+#endif
+
+/**
+ * wmi_fwol_attach_tlv() - attach fw offload tlv handlers
+ * @wmi_handle: wmi handle
+ *
+ * Return: void
+ */
+#ifdef WLAN_FW_OFFLOAD
+void wmi_fwol_attach_tlv(wmi_unified_t wmi_handle);
+#else
+static inline void wmi_fwol_attach_tlv(wmi_unified_t wmi_handle)
 {
 }
 #endif
