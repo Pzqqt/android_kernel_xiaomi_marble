@@ -1427,30 +1427,6 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 }
 #endif
 
-/**
- * hdd_get_peer_idx() - Get the idx for given address in peer table
- * @sta_ctx: pointer to HDD Station Context
- * @addr: pointer to Peer Mac address
- *
- * Return: index when success else INVALID_PEER_IDX
- */
-int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx,
-		     struct qdf_mac_addr *addr)
-{
-	uint8_t idx;
-
-	for (idx = 0; idx < MAX_PEERS; idx++) {
-		if (sta_ctx->conn_info.sta_id[idx] == HDD_WLAN_INVALID_STA_ID)
-			continue;
-		if (qdf_mem_cmp(&sta_ctx->conn_info.peer_macaddr[idx],
-				addr, sizeof(struct qdf_mac_addr)))
-			continue;
-		return idx;
-	}
-
-	return INVALID_PEER_IDX;
-}
-
 /*
  * hdd_is_mcast_replay() - checks if pkt is multicast replay
  * @skb: packet skb

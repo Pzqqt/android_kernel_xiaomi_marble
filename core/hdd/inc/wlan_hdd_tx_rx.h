@@ -275,9 +275,6 @@ static inline void
 {}
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
-int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx,
-		     struct qdf_mac_addr *addr);
-
 const char *hdd_reason_type_to_string(enum netif_reason_type reason);
 const char *hdd_action_type_to_string(enum netif_action_type action);
 
