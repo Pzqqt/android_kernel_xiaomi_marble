@@ -1039,32 +1039,29 @@ void dp_print_ast_stats(struct dp_soc *soc)
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
-					DP_PRINT_STATS("%6d mac_addr = %pM",
-						       ++num_entries,
-						       ase->mac_addr.raw);
-					DP_PRINT_STATS(" peer_mac_addr = %pM",
-						       ase->peer->mac_addr.raw);
-					DP_PRINT_STATS(" peer_id = %u",
-						       ase->peer->peer_ids[0]);
-					DP_PRINT_STATS(" type = %s",
-						       type[ase->type]);
-					DP_PRINT_STATS(" next_hop = %d",
-						       ase->next_hop);
-					DP_PRINT_STATS(" is_active = %d",
-						       ase->is_active);
-					DP_PRINT_STATS(" is_bss = %d",
-						       ase->is_bss);
-					DP_PRINT_STATS(" ast_idx = %d",
-						       ase->ast_idx);
-					DP_PRINT_STATS(" ast_hash = %d",
-						       ase->ast_hash_value);
-					DP_PRINT_STATS("delete_in_progress= %d",
-						       ase->delete_in_progress
-						       );
-					DP_PRINT_STATS(" pdev_id = %d",
-						       ase->pdev_id);
-					DP_PRINT_STATS(" vdev_id = %d",
-						       ase->vdev_id);
+				    DP_PRINT_STATS("%6d mac_addr = %pM"
+					    " peer_mac_addr = %pM"
+					    " peer_id = %u"
+					    " type = %s"
+					    " next_hop = %d"
+					    " is_active = %d"
+					    " ast_idx = %d"
+					    " ast_hash = %d"
+					    " delete_in_progress = %d"
+					    " pdev_id = %d"
+					    " vdev_id = %d",
+					    ++num_entries,
+					    ase->mac_addr.raw,
+					    ase->peer->mac_addr.raw,
+					    ase->peer->peer_ids[0],
+					    type[ase->type],
+					    ase->next_hop,
+					    ase->is_active,
+					    ase->ast_idx,
+					    ase->ast_hash_value,
+					    ase->delete_in_progress,
+					    ase->pdev_id,
+					    ase->vdev_id);
 				}
 			}
 		}

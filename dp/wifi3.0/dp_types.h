@@ -789,7 +789,6 @@ struct dp_ast_entry {
 	struct dp_peer *peer;
 	bool next_hop;
 	bool is_active;
-	bool is_bss;
 	bool is_mapped;
 	uint8_t pdev_id;
 	uint8_t vdev_id;
