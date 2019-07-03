@@ -189,9 +189,11 @@
  * 3.68 Add ipa_drop threshold fields to HTT_H2T_MSG_TYPE_SRING_SETUP
  * 3.69 Add htt_ul_ofdma_user_info_v0 defs
  * 3.70 Add AST1-AST3 fields to HTT_T2H PEER_MAP_V2 msg
+ * 3.71 Add rx offload engine / flow search engine htt setup message defs for
+ *      HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG, HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 70
+#define HTT_CURRENT_VERSION_MINOR 71
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -530,6 +532,8 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_RFS_CONFIG            = 0xf,
     HTT_H2T_MSG_TYPE_EXT_STATS_REQ         = 0x10,
     HTT_H2T_MSG_TYPE_PPDU_STATS_CFG        = 0x11,
+    HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG      = 0x12,
+    HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG  = 0x13,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -5825,6 +5829,466 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
         HTT_CHECK_SET_VAL(HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK, _val);  \
         ((_var) |= ((_val) << HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK_S)); \
     } while (0)
+
+/**
+ * @brief Host-->target HTT RX FSE setup message
+ * @details
+ * Through this message, the host will provide details of the flow tables
+ * in host DDR along with hash keys.
+ * This message can be sent per SOC or per PDEV, which is differentiated
+ * by pdev id values.
+ * The host will allocate flow search table and sends table size,
+ * physical DMA address of flow table, and hash keys to firmware to
+ * program into the RXOLE FSE HW block.
+ *
+ * The following field definitions describe the format of the RX FSE setup
+ * message sent from the host to target
+ *
+ * Header fields:
+ *  dword0 - b'7:0   - msg_type: This will be set to
+ *                     HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG
+ *           b'15:8  - pdev_id:  0 indicates msg is for all LMAC rings, i.e. soc
+ *                     1, 2, 3 indicates pdev_id 0,1,2 and the msg is for that
+ *                     pdev's LMAC ring.
+ *           b'31:16 - reserved : Reserved for future use
+ *  dword1 - b'19:0  - number of records: This field indicates the number of
+ *                     entries in the flow table. For example: 8k number of
+ *                     records is equivalent to
+ *                         8 * 1024 * sizeof(RX_FLOW_SEARCH_ENTRY_STRUCT)
+ *           b'27:20 - max search: This field specifies the skid length to FSE
+ *                     parser HW module whenever match is not found at the
+ *                     exact index pointed by hash.
+ *           b'29:28 - ip_da_sa: This indicates which IPV4-IPV6 RFC to be used.
+ *                     Refer htt_ip_da_sa_prefix below for more details.
+ *           b'31:30 - reserved: Reserved for future use
+ *  dword2 - b'31:0  - base address lo: Lower 4 bytes base address of flow
+ *                     table allocated by host in DDR
+ *  dword3 - b'31:0  - base address hi: Higher 4 bytes of base address of flow
+ *                     table allocated by host in DDR
+ *  dword4:13 - b'31:0 - Toeplitz: 315 bits of Toeplitz keys for flow table
+ *                     entry hashing
+ *
+ *
+ *       |31 30|29 28|27|26|25    20|19   16|15          8|7            0|
+ *       |---------------------------------------------------------------|
+ *       |              reserved            |   pdev_id   |  MSG_TYPE    |
+ *       |---------------------------------------------------------------|
+ *       |resvd|IPDSA|  max_search  |      Number  of  records           |
+ *       |---------------------------------------------------------------|
+ *       |                       base address lo                         |
+ *       |---------------------------------------------------------------|
+ *       |                       base address high                       |
+ *       |---------------------------------------------------------------|
+ *       |                       toeplitz key 31_0                       |
+ *       |---------------------------------------------------------------|
+ *       |                       toeplitz key 63_32                      |
+ *       |---------------------------------------------------------------|
+ *       |                       toeplitz key 95_64                      |
+ *       |---------------------------------------------------------------|
+ *       |                       toeplitz key 127_96                     |
+ *       |---------------------------------------------------------------|
+ *       |                       toeplitz key 159_128                    |
+ *       |---------------------------------------------------------------|
+ *       |                       toeplitz key 191_160                    |
+ *       |---------------------------------------------------------------|
+ *       |                       toeplitz key 223_192                    |
+ *       |---------------------------------------------------------------|
+ *       |                       toeplitz key 255_224                    |
+ *       |---------------------------------------------------------------|
+ *       |                       toeplitz key 287_256                    |
+ *       |---------------------------------------------------------------|
+ *       |   reserved   |       toeplitz key 314_288(26:0 bits)          |
+ *       |---------------------------------------------------------------|
+ * where:
+ *     IPDSA = ip_da_sa
+ */
+
+/**
+ * @brief: htt_ip_da_sa_prefix
+ * 0x0 -> Prefix is 0x20010db8_00000000_00000000
+ *        IPv6 addresses beginning with 0x20010db8 are reserved for
+ *        documentation per RFC3849
+ * 0x1 -> Prefix is 0x00000000_00000000_0000ffff RFC4291 IPv4-mapped IPv6
+ * 0x2 -> Prefix is 0x0  RFC4291 IPv4-compatible IPv6
+ * 0x3 -> Prefix is 0x0064ff9b_00000000_00000000  RFC6052 well-known prefix
+ */
+
+enum htt_ip_da_sa_prefix {
+        HTT_RX_IPV6_20010db8,
+        HTT_RX_IPV4_MAPPED_IPV6,
+        HTT_RX_IPV4_COMPATIBLE_IPV6,
+        HTT_RX_IPV6_64FF9B,
+};
+
+PREPACK struct htt_h2t_msg_rx_fse_setup_t {
+        A_UINT32 msg_type:8,  /* HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG */
+                 pdev_id:8,
+                 reserved0:16;
+        A_UINT32 num_records:20,
+                 max_search:8,
+                 ip_da_sa:2, /* htt_ip_da_sa_prefix enumeration */
+                 reserved1:2;
+        A_UINT32 base_addr_lo;
+        A_UINT32 base_addr_hi;
+        A_UINT32 toeplitz31_0;
+        A_UINT32 toeplitz63_32;
+        A_UINT32 toeplitz95_64;
+        A_UINT32 toeplitz127_96;
+        A_UINT32 toeplitz159_128;
+        A_UINT32 toeplitz191_160;
+        A_UINT32 toeplitz223_192;
+        A_UINT32 toeplitz255_224;
+        A_UINT32 toeplitz287_256;
+        A_UINT32 toeplitz314_288:27,
+                 reserved2:5;
+} POSTPACK;
+
+#define HTT_RX_FSE_SETUP_SZ  (sizeof(struct htt_h2t_msg_rx_fse_setup_t))
+#define HTT_RX_FSE_OPERATION_SZ (sizeof(struct htt_h2t_msg_rx_fse_operation_t))
+
+#define HTT_RX_FSE_SETUP_HASH_314_288_M 0x07ffffff
+#define HTT_RX_FSE_SETUP_HASH_314_288_S 0
+
+/* DWORD 0: Pdev ID */
+#define HTT_RX_FSE_SETUP_PDEV_ID_M                  0x0000ff00
+#define HTT_RX_FSE_SETUP_PDEV_ID_S                  8
+#define HTT_RX_FSE_SETUP_PDEV_ID_GET(_var) \
+        (((_var) & HTT_RX_FSE_SETUP_PDEV_ID_M) >> \
+                HTT_RX_FSE_SETUP_PDEV_ID_S)
+#define HTT_RX_FSE_SETUP_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FSE_SETUP_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_RX_FSE_SETUP_PDEV_ID_S)); \
+        } while (0)
+
+/* DWORD 1:num of records */
+#define HTT_RX_FSE_SETUP_NUM_REC_M                  0x000fffff
+#define HTT_RX_FSE_SETUP_NUM_REC_S                  0
+#define HTT_RX_FSE_SETUP_NUM_REC_GET(_var) \
+        (((_var) & HTT_RX_FSE_SETUP_NUM_REC_M) >> \
+            HTT_RX_FSE_SETUP_NUM_REC_S)
+#define HTT_RX_FSE_SETUP_NUM_REC_SET(_var, _val) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_SETUP_NUM_REC, _val); \
+           ((_var) |= ((_val) << HTT_RX_FSE_SETUP_NUM_REC_S)); \
+      } while (0)
+
+/* DWORD 1:max_search */
+#define HTT_RX_FSE_SETUP_MAX_SEARCH_M               0x0ff00000
+#define HTT_RX_FSE_SETUP_MAX_SEARCH_S               20
+#define HTT_RX_FSE_SETUP_MAX_SEARCH_GET(_var) \
+        (((_var) & HTT_RX_FSE_SETUP_MAX_SEARCH_M) >> \
+            HTT_RX_FSE_SETUP_MAX_SEARCH_S)
+#define HTT_RX_FSE_SETUP_MAX_SEARCH_SET(_var, _val) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_SETUP_MAX_SEARCH, _val); \
+          ((_var) |= ((_val) << HTT_RX_FSE_SETUP_MAX_SEARCH_S)); \
+      } while (0)
+
+/* DWORD 1:ip_da_sa prefix */
+#define HTT_RX_FSE_SETUP_IP_DA_SA_PREFIX_M               0x30000000
+#define HTT_RX_FSE_SETUP_IP_DA_SA_PREFIX_S               28
+#define HTT_RX_FSE_SETUP_IP_DA_SA_PREFIX_GET(_var) \
+        (((_var) & HTT_RX_FSE_SETUP_IP_DA_SA_PREFIX_M) >> \
+            HTT_RX_FSE_SETUP_IP_DA_SA_PREFIX_S)
+#define HTT_RX_FSE_SETUP_IP_DA_SA_PREFIX_SET(_var, _val) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_SETUP_IP_DA_SA_PREFIX, _val); \
+          ((_var) |= ((_val) << HTT_RX_FSE_SETUP_IP_DA_SA_PREFIX_S)); \
+      } while (0)
+
+/* DWORD 2: Base Address LO */
+#define HTT_RX_FSE_SETUP_BASE_ADDR_LO_M        0xffffffff
+#define HTT_RX_FSE_SETUP_BASE_ADDR_LO_S        0
+#define HTT_RX_FSE_SETUP_BASE_ADDR_LO_GET(_var) \
+        (((_var) & HTT_RX_FSE_SETUP_BASE_ADDR_LO_M) >> \
+            HTT_RX_FSE_SETUP_BASE_ADDR_LO_S)
+#define HTT_RX_FSE_SETUP_BASE_ADDR_LO_SET(_var, _val) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_SETUP_BASE_ADDR_LO, _val); \
+          ((_var) |= ((_val) << HTT_RX_FSE_SETUP_BASE_ADDR_LO_S)); \
+      } while (0)
+
+/* DWORD 3: Base Address High */
+#define HTT_RX_FSE_SETUP_BASE_ADDR_HI_M        0xffffffff
+#define HTT_RX_FSE_SETUP_BASE_ADDR_HI_S        0
+#define HTT_RX_FSE_SETUP_BASE_ADDR_HI_GET(_var) \
+        (((_var) & HTT_RX_FSE_SETUP_BASE_ADDR_HI_M) >> \
+            HTT_RX_FSE_SETUP_BASE_ADDR_HI_S)
+#define HTT_RX_FSE_SETUP_BASE_ADDR_HI_SET(_var, _val) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_SETUP_BASE_ADDR_HI, _val); \
+        ((_var) |= ((_val) << HTT_RX_FSE_SETUP_BASE_ADDR_HI_S)); \
+      } while (0)
+
+/* DWORD 4-12: Hash Value */
+#define HTT_RX_FSE_SETUP_HASH_VALUE_M        0xffffffff
+#define HTT_RX_FSE_SETUP_HASH_VALUE_S        0
+#define HTT_RX_FSE_SETUP_HASH_VALUE_GET(_var) \
+        (((_var) & HTT_RX_FSE_SETUP_HASH_VALUE_M) >> \
+            HTT_RX_FSE_SETUP_HASH_VALUE_S)
+#define HTT_RX_FSE_SETUP_HASH_VALUE_SET(_var, _val) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_SETUP_HASH_VALUE, _val); \
+          ((_var) |= ((_val) << HTT_RX_FSE_SETUP_HASH_VALUE_S)); \
+      } while (0)
+
+/* DWORD 13: Hash Value 314:288 bits */
+#define HTT_RX_FSE_SETUP_HASH_314_288_GET(_var) \
+    (((_var) & HTT_RX_FSE_SETUP_HASH_314_288_M) >> \
+    HTT_RX_FSE_SETUP_HASH_314_288_S)
+#define HTT_RX_FSE_SETUP_HASH_314_288_SET(_var, _val) \
+    do {                                                     \
+        HTT_CHECK_SET_VAL(HTT_RX_FSE_SETUP_HASH_314_288, _val);  \
+        ((_var) |= ((_val) << HTT_RX_FSE_SETUP_HASH_314_288_S)); \
+    } while (0)
+
+/**
+ * @brief Host-->target HTT RX FSE operation message
+ * @details
+ * The host will send this Flow Search Engine (FSE) operation message for
+ * every flow add/delete operation.
+ * The FSE operation includes FSE full cache invalidation or individual entry
+ * invalidation.
+ * This message can be sent per SOC or per PDEV which is differentiated
+ * by pdev id values.
+ *
+ *       |31                            16|15          8|7          1|0|
+ *       |-------------------------------------------------------------|
+ *       |             reserved           |   pdev_id   |  MSG_TYPE    |
+ *       |-------------------------------------------------------------|
+ *       |             reserved                         | operation  |I|
+ *       |-------------------------------------------------------------|
+ *       |                      ip_src_addr_31_0                       |
+ *       |-------------------------------------------------------------|
+ *       |                      ip_src_addr_63_32                      |
+ *       |-------------------------------------------------------------|
+ *       |                      ip_src_addr_95_64                      |
+ *       |-------------------------------------------------------------|
+ *       |                      ip_src_addr_127_96                     |
+ *       |-------------------------------------------------------------|
+ *       |                      ip_dst_addr_31_0                       |
+ *       |-------------------------------------------------------------|
+ *       |                      ip_dst_addr_63_32                      |
+ *       |-------------------------------------------------------------|
+ *       |                      ip_dst_addr_95_64                      |
+ *       |-------------------------------------------------------------|
+ *       |                      ip_dst_addr_127_96                     |
+ *       |-------------------------------------------------------------|
+ *       |         l4_dst_port           |       l4_src_port           |
+ *       |                (32-bit SPI incase of IPsec)                 |
+ *       |-------------------------------------------------------------|
+ *       |                   reserved                   |  l4_proto    |
+ *       |-------------------------------------------------------------|
+ *
+ * where I is 1-bit ipsec_valid.
+ *
+ * The following field definitions describe the format of the RX FSE operation
+ * message sent from the host to target for every add/delete flow entry to flow
+ * table.
+ *
+ * Header fields:
+ *  dword0 - b'7:0   - msg_type: This will be set to
+ *                     HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG
+ *           b'15:8  - pdev_id:  0 indicates msg is for all LMAC rings, i.e. soc
+ *                     1, 2, 3 indicates pdev_id 0,1,2 and the msg is for the
+ *                     specified pdev's LMAC ring.
+ *           b'31:16 - reserved : Reserved for future use
+ *  dword1 - b'0     - ipsec_valid: This indicates protocol IP or IPsec
+ *                     (Internet Protocol Security).
+ *                     IPsec describes the framework for providing security at
+ *                     IP layer. IPsec is defined for both versions of IP:
+ *                     IPV4 and IPV6.
+ *                     Please refer to htt_rx_flow_proto enumeration below for
+ *                     more info.
+ *                         ipsec_valid = 1 for IPSEC packets
+ *                         ipsec_valid = 0 for IP Packets
+ *           b'7:1   - operation: This indicates types of FSE operation.
+ *                     Refer to htt_rx_fse_operation enumeration:
+ *                         0 - No Cache Invalidation required
+ *                         1 - Cache invalidate only one entry given by IP
+ *                             src/dest address at DWORD[2:9]
+ *                         2 - Complete FSE Cache Invalidation
+ *                         3 - FSE Disable
+ *                         4 - FSE Enable
+ *           b'31:8  - reserved: Reserved for future use
+ *  dword2:9-b'31:0  - IP src/dest: IPV4/IPV6 source and destination address
+ *                     for per flow addition/deletion
+ *                     For IPV4 src/dest addresses, the first A_UINT32 is used
+ *                     and the subsequent 3 A_UINT32 will be padding bytes.
+ *                     For IPV6 src/dest Addresses, all A_UINT32 are used.
+ *  dword10 -b'31:0  - L4 src port (15:0): 16-bit Source Port numbers range
+ *                     from 0 to 65535 but only 0 to 1023 are designated as
+ *                     well-known ports. Refer to [RFC1700] for more details.
+ *                     This field is valid only if
+ *                         (valid_ip_proto(l4_proto) && (ipsec_valid == 0))
+ *                   - L4 dest port (31:16): 16-bit Destination Port numbers
+ *                     range from 0 to 65535 but only 0 to 1023 are designated
+ *                     as well-known ports. Refer to [RFC1700] for more details.
+ *                     This field is valid only if
+ *                         (valid_ip_proto(l4_proto) && (ipsec_valid == 0))
+ *                   - SPI (31:0): Security Parameters Index is an
+ *                     identification tag added to the header while using IPsec
+ *                     for tunneling the IP traffici.
+ *                     Valid only if IPSec_valid bit (in DWORD1) is set to 1.
+ *  dword11 -b'7:0   - l4_proto: This carries L4 protocol numbers, which are
+ *                     Assigned Internet Protocol Numbers.
+ *                     l4_proto numbers for standard protocol like UDP/TCP
+ *                     protocol at l4 layer, e.g. l4_proto = 6 for TCP,
+ *                     l4_proto = 17 for UDP etc.
+ *           b'31:8  - reserved: Reserved for future use.
+ *
+ */
+
+PREPACK struct htt_h2t_msg_rx_fse_operation_t {
+        A_UINT32 msg_type:8,
+                 pdev_id:8,
+                 reserved0:16;
+        A_UINT32 ipsec_valid:1,
+                 operation:7,
+                 reserved1:24;
+        A_UINT32 ip_src_addr_31_0;
+        A_UINT32 ip_src_addr_63_32;
+        A_UINT32 ip_src_addr_95_64;
+        A_UINT32 ip_src_addr_127_96;
+        A_UINT32 ip_dest_addr_31_0;
+        A_UINT32 ip_dest_addr_63_32;
+        A_UINT32 ip_dest_addr_95_64;
+        A_UINT32 ip_dest_addr_127_96;
+        union {
+           A_UINT32 spi;
+           struct {
+             A_UINT32 l4_src_port:16,
+                      l4_dest_port:16;
+            } ip;
+        } u;
+        A_UINT32 l4_proto:8,
+                 reserved:24;
+} POSTPACK;
+
+/**
+ * Enumeration for IP Protocol or IPSEC Protocol
+ * IPsec describes the framework for providing security at IP layer.
+ * IPsec is defined for both versions of IP: IPV4 and IPV6.
+ */
+enum htt_rx_flow_proto {
+        HTT_RX_FLOW_IP_PROTO,
+        HTT_RX_FLOW_IPSEC_PROTO,
+};
+
+/**
+ * Enumeration for FSE Cache Invalidation
+ * 0 - No Cache Invalidation required
+ * 1 - Cache invalidate only one entry given by IP src/dest address at DWORD2:9
+ * 2 - Complete FSE Cache Invalidation
+ * 3 - FSE Disable
+ * 4 - FSE Enable
+ */
+enum htt_rx_fse_operation {
+        HTT_RX_FSE_CACHE_INVALIDATE_NONE,
+        HTT_RX_FSE_CACHE_INVALIDATE_ENTRY,
+        HTT_RX_FSE_CACHE_INVALIDATE_FULL,
+        HTT_RX_FSE_DISABLE,
+        HTT_RX_FSE_ENABLE,
+};
+
+/* DWORD 0: Pdev ID */
+#define HTT_RX_FSE_OPERATION_PDEV_ID_M                  0x0000ff00
+#define HTT_RX_FSE_OPERATION_PDEV_ID_S                  8
+#define HTT_RX_FSE_OPERATION_PDEV_ID_GET(_var) \
+        (((_var) & HTT_RX_FSE_OPERATION_PDEV_ID_M) >> \
+                HTT_RX_FSE_OPERATION_PDEV_ID_S)
+#define HTT_RX_FSE_OPERATION_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FSE_OPERATION_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_RX_FSE_OPERATION_PDEV_ID_S)); \
+        } while (0)
+
+/* DWORD 1:IP PROTO or IPSEC */
+#define HTT_RX_FSE_IPSEC_VALID_M      0x00000001
+#define HTT_RX_FSE_IPSEC_VALID_S      0
+
+#define HTT_RX_FSE_IPSEC_VALID_SET(word, ipsec_valid)           \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_IPSEC_VALID, ipsec_valid); \
+          (word) |= ((ipsec_valid) << HTT_RX_FSE_IPSEC_VALID_S);  \
+      } while (0)
+#define HTT_RX_FSE_IPSEC_VALID_GET(word) \
+        (((word) & HTT_RX_FSE_IPSEC_VALID_M) >> HTT_RX_FSE_IPSEC_VALID_S)
+
+/* DWORD 1:FSE Operation */
+#define HTT_RX_FSE_OPERATION_M      0x000000fe
+#define HTT_RX_FSE_OPERATION_S      1
+
+#define HTT_RX_FSE_OPERATION_SET(word, op_val)           \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_OPERATION, op_val); \
+          (word) |= ((op_val) << HTT_RX_FSE_OPERATION_S);  \
+      } while (0)
+#define HTT_RX_FSE_OPERATION_GET(word) \
+        (((word) & HTT_RX_FSE_OPERATION_M) >> HTT_RX_FSE_OPERATION_S)
+
+/* DWORD 2-9:IP Address */
+#define HTT_RX_FSE_OPERATION_IP_ADDR_M        0xffffffff
+#define HTT_RX_FSE_OPERATION_IP_ADDR_S        0
+#define HTT_RX_FSE_OPERATION_IP_ADDR_GET(_var) \
+        (((_var) & HTT_RX_FSE_OPERATION_IP_ADDR_M) >> \
+            HTT_RX_FSE_OPERATION_IP_ADDR_S)
+#define HTT_RX_FSE_OPERATION_IP_ADDR_SET(_var, _val) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_OPERATION_IP_ADDR, _val); \
+          ((_var) |= ((_val) << HTT_RX_FSE_OPERATION_IP_ADDR_S)); \
+      } while (0)
+
+/* DWORD 10:Source Port Number */
+#define HTT_RX_FSE_SOURCEPORT_M      0x0000ffff
+#define HTT_RX_FSE_SOURCEPORT_S      0
+
+#define HTT_RX_FSE_SOURCEPORT_SET(word, sport)           \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_SOURCEPORT, sport); \
+          (word) |= ((sport) << HTT_RX_FSE_SOURCEPORT_S);  \
+      } while (0)
+#define HTT_RX_FSE_SOURCEPORT_GET(word) \
+        (((word) & HTT_RX_FSE_SOURCEPORT_M) >> HTT_RX_FSE_SOURCEPORT_S)
+
+
+/* DWORD 11:Destination Port Number */
+#define HTT_RX_FSE_DESTPORT_M      0xffff0000
+#define HTT_RX_FSE_DESTPORT_S      16
+
+#define HTT_RX_FSE_DESTPORT_SET(word, dport)           \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_DESTPORT, dport); \
+          (word) |= ((dport) << HTT_RX_FSE_DESTPORT_S);  \
+      } while (0)
+#define HTT_RX_FSE_DESTPORT_GET(word) \
+        (((word) & HTT_RX_FSE_DESTPORT_M) >> HTT_RX_FSE_DESTPORT_S)
+
+/* DWORD 10-11:SPI (In case of IPSEC) */
+#define HTT_RX_FSE_OPERATION_SPI_M        0xffffffff
+#define HTT_RX_FSE_OPERATION_SPI_S        0
+#define HTT_RX_FSE_OPERATION_SPI_GET(_var) \
+        (((_var) & HTT_RX_FSE_OPERATION_SPI_ADDR_M) >> \
+            HTT_RX_FSE_OPERATION_SPI_ADDR_S)
+#define HTT_RX_FSE_OPERATION_SPI_SET(_var, _val) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_OPERATION_SPI, _val); \
+          ((_var) |= ((_val) << HTT_RX_FSE_OPERATION_SPI_S)); \
+      } while (0)
+
+/* DWORD 12:L4 PROTO */
+#define HTT_RX_FSE_L4_PROTO_M      0x000000ff
+#define HTT_RX_FSE_L4_PROTO_S      0
+
+#define HTT_RX_FSE_L4_PROTO_SET(word, proto_val)           \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_RX_FSE_L4_PROTO, proto_val); \
+          (word) |= ((proto_val) << HTT_RX_FSE_L4_PROTO_S);  \
+      } while (0)
+#define HTT_RX_FSE_L4_PROTO_GET(word) \
+        (((word) & HTT_RX_FSE_L4_PROTO_M) >> HTT_RX_FSE_L4_PROTO_S)
+
 
 
 /*=== target -> host messages ===============================================*/
