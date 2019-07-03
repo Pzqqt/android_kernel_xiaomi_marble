@@ -1543,11 +1543,15 @@ void policy_mgr_nan_sap_post_enable_conc_check(struct wlan_objmgr_psoc *psoc)
 	if (nan_ch_2g == 0)
 		return;
 
-	status = qdf_wait_single_event(&pm_ctx->channel_switch_complete_evt,
-				       CHANNEL_SWITCH_COMPLETE_TIMEOUT);
-	policy_mgr_reset_chan_switch_complete_evt(psoc);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		policy_mgr_err("SAP Ch Switch wait fail. Force new Ch switch");
+	if (pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress &&
+	    pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress()) {
+		policy_mgr_debug("wait as channel switch is already in progress");
+		status = qdf_wait_single_event(
+					&pm_ctx->channel_switch_complete_evt,
+					CHANNEL_SWITCH_COMPLETE_TIMEOUT);
+		if (QDF_IS_STATUS_ERROR(status))
+			policy_mgr_err("wait for event failed, still continue with channel switch");
+	}
 
 	policy_mgr_debug("Force SCC for NAN+SAP Ch: %d",
 			 WLAN_REG_IS_5GHZ_CH(sap_ch) ? nan_ch_5g : nan_ch_2g);
@@ -1594,11 +1598,15 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc)
 							 false);
 	policy_mgr_debug("User/ACS orig ch: %d New SAP ch: %d",
 			 pm_ctx->user_config_sap_channel, sap_ch);
-	status = qdf_wait_single_event(&pm_ctx->channel_switch_complete_evt,
-				       CHANNEL_SWITCH_COMPLETE_TIMEOUT);
-	policy_mgr_reset_chan_switch_complete_evt(psoc);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		policy_mgr_err("SAP Ch Switch wait fail. Force new Ch switch");
+	if (pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress &&
+	    pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress()) {
+		policy_mgr_debug("wait as channel switch is already in progress");
+		status = qdf_wait_single_event(
+					&pm_ctx->channel_switch_complete_evt,
+					CHANNEL_SWITCH_COMPLETE_TIMEOUT);
+		if (QDF_IS_STATUS_ERROR(status))
+			policy_mgr_err("wait for event failed, still continue with channel switch");
+	}
 
 	policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
 					       sap_ch,
@@ -2205,106 +2213,15 @@ done:
 	return status;
 }
 
-QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
-		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan)
+QDF_STATUS policy_mgr_check_and_set_hw_mode_for_channel_switch(
+		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan,
+		enum policy_mgr_conn_update_reason reason)
 {
 	QDF_STATUS status;
 	struct policy_mgr_conc_connection_info info;
 	uint8_t num_cxn_del = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	enum policy_mgr_conc_next_action next_action = PM_NOP;
-	enum policy_mgr_conn_update_reason reason =
-			POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid context");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!policy_mgr_is_hw_dbs_capable(psoc)) {
-		policy_mgr_err("DBS is disabled");
-		return QDF_STATUS_E_NOSUPPORT;
-	}
-
-	/*
-	 * Stop opportunistic timer as current connection info will change once
-	 * channel is switched and thus if required it will be started once
-	 * channel switch is completed. With new connection info.
-	 */
-	policy_mgr_stop_opportunistic_timer(psoc);
-
-	/*
-	 * Return if driver is already in the dbs mode, movement to
-	 * Single mac/SBS mode will be decided and changed once channel
-	 * switch is completed. This will avoid changing to SBS/Single mac
-	 * till new channel is configured, while the old channel still
-	 * requires DBS.
-	 */
-	if (policy_mgr_is_current_hwmode_dbs(psoc)) {
-		policy_mgr_err("Already in DBS mode");
-		return QDF_STATUS_E_ALREADY;
-	}
-
-	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	/*
-	 * Store the connection's parameter and temporarily delete it
-	 * from the concurrency table. This way the allow concurrency
-	 * check can be used as though a new connection is coming up,
-	 * after check, restore the connection to concurrency table.
-	 */
-	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, vdev_id,
-						      &info, &num_cxn_del);
-	status = policy_mgr_get_next_action(psoc, vdev_id, chan, reason,
-					    &next_action);
-	/* Restore the connection entry */
-	if (num_cxn_del)
-		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
-	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		goto chk_opportunistic_timer;
-
-	status = policy_mgr_reset_connection_update(psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		policy_mgr_err("clearing event failed");
-
-	if (PM_NOP != next_action)
-		status = policy_mgr_next_actions(psoc, vdev_id,
-						 next_action, reason);
-	else
-		status = QDF_STATUS_E_NOSUPPORT;
-
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = policy_mgr_wait_for_connection_update(psoc);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			policy_mgr_err("qdf wait for event failed");
-		}
-	}
-
-chk_opportunistic_timer:
-	/*
-	 * If hw mode change failed restart the opportunistic timer to
-	 * Switch to single mac if required.
-	 */
-	if (status == QDF_STATUS_E_FAILURE) {
-		policy_mgr_err("Failed to update HW modeStatus %d", status);
-		policy_mgr_check_n_start_opportunistic_timer(psoc);
-	}
-
-	return status;
-}
-
-QDF_STATUS policy_mgr_check_and_set_hw_mode_sta_channel_switch(
-		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan)
-{
-	QDF_STATUS status;
-	struct policy_mgr_conc_connection_info info;
-	uint8_t num_cxn_del = 0;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	enum policy_mgr_conc_next_action next_action = PM_NOP;
-	enum policy_mgr_conn_update_reason reason =
-			POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {

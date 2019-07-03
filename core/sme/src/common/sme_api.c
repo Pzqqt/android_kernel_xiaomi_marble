@@ -211,8 +211,13 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		csr_saved_scan_cmd_free_fields(mac, session);
 	}
 	if (reason == POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA) {
-		sme_debug(" Continue channel switch for STA");
+		sme_info("Continue channel switch for STA");
 		csr_sta_continue_csa(mac, session_id);
+	}
+
+	if (reason == POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH) {
+		sme_info("Continue channel switch for SAP");
+		csr_csa_restart(mac, session_id);
 	}
 	if (reason == POLICY_MGR_UPDATE_REASON_LFR2_ROAM)
 		csr_continue_lfr2_connect(mac, session_id);

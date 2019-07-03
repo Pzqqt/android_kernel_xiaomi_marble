@@ -1350,7 +1350,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 	struct mac_context *mac;
 	mac_handle_t mac_handle;
 	bool valid;
-	QDF_STATUS status;
+	QDF_STATUS status, hw_mode_status;
 	bool sta_sap_scc_on_dfs_chan;
 
 	if (!sap_ctx) {
@@ -1421,25 +1421,30 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 			if (status != QDF_STATUS_SUCCESS)
 				return status;
 
-			status = policy_mgr_set_hw_mode_before_channel_switch(
-						mac->psoc,
-						sap_ctx->sessionId,
-						targetChannel);
+			hw_mode_status =
+			  policy_mgr_check_and_set_hw_mode_for_channel_switch(
+				   mac->psoc, sap_ctx->sessionId, targetChannel,
+				   POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH);
+
 			/*
-			 * If status is QDF_STATUS_E_FAILURE that mean HW mode
-			 * change was required but set HW mode change failed.
+			 * If hw_mode_status is QDF_STATUS_E_FAILURE, mean HW
+			 * mode change was required but driver failed to set HW
+			 * mode so ignore CSA for the channel.
 			 */
-			if (status == QDF_STATUS_E_FAILURE) {
+			if (hw_mode_status == QDF_STATUS_E_FAILURE) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("HW change required but failed to set hw mode"));
-				return status;
+				return hw_mode_status;
 			}
 
 			status = policy_mgr_reset_chan_switch_complete_evt(
 								mac->psoc);
-			if (QDF_IS_STATUS_ERROR(status))
+			if (QDF_IS_STATUS_ERROR(status)) {
+				policy_mgr_check_n_start_opportunistic_timer(
+								mac->psoc);
 				return status;
+			}
 			/*
 			 * Copy the requested target channel
 			 * to sap context.
@@ -1494,6 +1499,26 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 			mac->sap.SapDfsInfo.cac_state =
 					eSAP_DFS_DO_NOT_SKIP_CAC;
 			sap_cac_reset_notify(mac_handle);
+
+			/*
+			 * If hw_mode_status is QDF_STATUS_SUCCESS mean HW mode
+			 * change was required and was successfully requested so
+			 * the channel switch will continue after HW mode change
+			 * completion.
+			 */
+			if (QDF_IS_STATUS_SUCCESS(hw_mode_status)) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_INFO,
+					  FL("Channel change will continue after HW mode change"));
+				return QDF_STATUS_SUCCESS;
+			}
+			/*
+			 * If hw_mode_status is QDF_STATUS_E_NOSUPPORT or
+			 * QDF_STATUS_E_ALREADY (not QDF_STATUS_E_FAILURE and
+			 * not QDF_STATUS_SUCCESS), mean DBS is not supported or
+			 * required HW mode is already set, So contunue with
+			 * CSA from here.
+			 */
 			sap_start_csa_restart(mac, sap_ctx);
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

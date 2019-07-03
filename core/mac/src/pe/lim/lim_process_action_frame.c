@@ -83,9 +83,10 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 		       pe_session->gLimChannelSwitch.switchMode);
 
 	mac->lim.limTimers.gLimChannelSwitchTimer.sessionId = sessionId;
-	status = policy_mgr_check_and_set_hw_mode_sta_channel_switch(mac->psoc,
+	status = policy_mgr_check_and_set_hw_mode_for_channel_switch(mac->psoc,
 				pe_session->smeSessionId,
-				pe_session->gLimChannelSwitch.primaryChannel);
+				pe_session->gLimChannelSwitch.primaryChannel,
+				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA);
 
 	/*
 	 * If status is QDF_STATUS_E_FAILURE, mean HW mode change was required
