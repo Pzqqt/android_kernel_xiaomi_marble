@@ -321,7 +321,6 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
 	struct dsi_display *display;
 	struct dsi_display_mode dsi_mode, cur_dsi_mode, *panel_dsi_mode;
-	struct drm_display_mode cur_mode;
 	struct drm_crtc_state *crtc_state;
 
 	crtc_state = container_of(mode, struct drm_crtc_state, mode);
@@ -373,9 +372,9 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 
 	if (bridge->encoder && bridge->encoder->crtc &&
 			crtc_state->crtc) {
-
-		convert_to_dsi_mode(&crtc_state->crtc->state->mode,
-							&cur_dsi_mode);
+		const struct drm_display_mode *cur_mode =
+				&crtc_state->crtc->state->mode;
+		convert_to_dsi_mode(cur_mode, &cur_dsi_mode);
 		cur_dsi_mode.timing.dsc_enabled =
 				dsi_mode.priv_info->dsc_enabled;
 		cur_dsi_mode.timing.dsc = &dsi_mode.priv_info->dsc;
@@ -385,8 +384,6 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 			pr_debug("[%s] vrr mode mismatch failure rc=%d\n",
 				c_bridge->display->name, rc);
 
-		cur_mode = crtc_state->crtc->mode;
-
 		/* No panel mode switch when drm pipeline is changing */
 		if ((dsi_mode.panel_mode != cur_dsi_mode.panel_mode) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
@@ -394,7 +391,7 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 				crtc_state->crtc->state->enable))
 			dsi_mode.dsi_mode_flags |= DSI_MODE_FLAG_POMS;
 		/* No DMS/VRR when drm pipeline is changing */
-		if (!drm_mode_equal(&cur_mode, adjusted_mode) &&
+		if (!drm_mode_equal(cur_mode, adjusted_mode) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS)) &&
 			(!crtc_state->active_changed ||
