@@ -3124,7 +3124,7 @@ void sde_encoder_virt_restore(struct drm_encoder *drm_enc)
 	sde_enc = to_sde_encoder_virt(drm_enc);
 
 	if (!sde_enc->cur_master) {
-		SDE_ERROR("virt encoder has no master\n");
+		SDE_DEBUG("virt encoder has no master\n");
 		return;
 	}
 
