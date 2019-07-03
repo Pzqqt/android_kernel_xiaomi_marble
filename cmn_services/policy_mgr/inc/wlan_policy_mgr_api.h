@@ -1844,29 +1844,19 @@ QDF_STATUS policy_mgr_set_hw_mode_on_channel_switch(
 		struct wlan_objmgr_psoc *psoc, uint8_t session_id);
 
 /**
- * policy_mgr_set_hw_mode_before_channel_switch() - Set hw mode
- * before channel switch, this is required if DBS mode is 2x2
- * @psoc: PSOC object information
- * @vdev_id: vdev id on which channel switch is required
- * @chan: New channel to which channel switch is requested
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
-		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan);
-
-/**
- * policy_mgr_check_and_set_hw_mode_sta_channel_switch() - check if hw mode
- * change is required before channel switch for STA,
+ * policy_mgr_check_and_set_hw_mode_for_channel_switch() - check if hw mode
+ * change is required before channel switch for STA/SAP,
  * this is required if DBS mode is 2x2
  * @psoc: PSOC object information
  * @vdev_id: vdev id on which channel switch is required
  * @chan: New channel to which channel switch is requested
+ * @reason: reason for hw mode change
  *
  * Return: QDF_STATUS, success if HW mode change is required else Failure
  */
-QDF_STATUS policy_mgr_check_and_set_hw_mode_sta_channel_switch(
-		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan);
+QDF_STATUS policy_mgr_check_and_set_hw_mode_for_channel_switch(
+		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan,
+		enum policy_mgr_conn_update_reason reason);
 
 /**
  * policy_mgr_set_do_hw_mode_change_flag() - Set flag to indicate hw mode change
