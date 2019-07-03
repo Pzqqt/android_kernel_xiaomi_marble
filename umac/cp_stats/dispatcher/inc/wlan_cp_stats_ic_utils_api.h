@@ -261,6 +261,8 @@ VDEV_CP_STATS_SET_FUNCS(authorize_attempt);
 VDEV_CP_STATS_SET_FUNCS(authorize_success);
 VDEV_CP_STATS_SET_FUNCS(peer_delete_req);
 VDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
+VDEV_CP_STATS_SET_FUNCS(peer_delete_all_req);
+VDEV_CP_STATS_SET_FUNCS(peer_delete_all_resp);
 
 #define VDEV_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \

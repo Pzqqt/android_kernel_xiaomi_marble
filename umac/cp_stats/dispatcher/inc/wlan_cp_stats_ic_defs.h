@@ -295,6 +295,8 @@ struct pdev_ic_cp_stats {
  * @authorize_success: no of Authorization successful
  * @peer_delete_req: no of peer delete req sent to target
  * @peer_delete_resp: no of peer delete resp rcvd from target
+ * @peer_delete_all_req: no of peer delete all req sent to target
+ * @peer_delete_all_resp: no of peer delete all resp rcvd from target
  */
 struct vdev_80211_stats {
 	uint64_t cs_rx_wrongbss;
@@ -362,6 +364,8 @@ struct vdev_80211_stats {
 	uint64_t cs_authorize_success;
 	uint64_t cs_peer_delete_req;
 	uint64_t cs_peer_delete_resp;
+	uint64_t cs_peer_delete_all_req;
+	uint64_t cs_peer_delete_all_resp;
 };
 
 /**
