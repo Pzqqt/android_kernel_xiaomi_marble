@@ -123,6 +123,9 @@ dp_rx_mon_enh_capture_set_protocol_tag(struct dp_pdev *pdev,
 	uint32_t cce_metadata = 0;
 	uint16_t protocol_tag = 0;
 
+	if (user_id >= MAX_MU_USERS)
+		return;
+
 	/**
 	 * Since skb->cb is memset to 0, we can skip setting protocol tag to 0
 	 * in all the error paths.
@@ -291,7 +294,7 @@ dp_rx_handle_enh_capture(struct dp_soc *soc, struct dp_pdev *pdev,
 	user = 0;
 	mpdu_q = &pdev->mpdu_q[user];
 
-	while (!qdf_nbuf_is_queue_empty(mpdu_q)) {
+	while (!qdf_nbuf_is_queue_empty(mpdu_q) && user < MAX_MU_USERS) {
 		msdu_list = &pdev->msdu_list[user];
 		dp_rx_free_msdu_list(msdu_list);
 		mpdu_ind = &pdev->mpdu_ind[user];
@@ -343,6 +346,9 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 		return;
 
 	user_id = ppdu_info->user_id;
+
+	if (user_id >= MAX_MU_USERS)
+		return;
 
 	if ((tlv_status == HAL_TLV_STATUS_HEADER) && (
 	    (pdev->rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_MPDU_MSDU) ||
