@@ -117,11 +117,14 @@ static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
 	mode = wlan_vdev_mlme_get_opmode(vdev);
 	p2p_debug("vdev mode:%d", mode);
 
-	/* drop probe response for go, sap */
+	/* drop probe response/disassoc/deauth for go, sap */
 	if ((mode == QDF_SAP_MODE ||
 	     mode == QDF_P2P_GO_MODE) &&
-	    tx_ctx->frame_info.sub_type == P2P_MGMT_PROBE_RSP) {
-		p2p_debug("drop probe response, mode:%d", mode);
+	    ((tx_ctx->frame_info.sub_type == P2P_MGMT_PROBE_RSP) ||
+	     (tx_ctx->frame_info.sub_type == P2P_MGMT_DISASSOC) ||
+	     (tx_ctx->frame_info.sub_type == P2P_MGMT_DEAUTH))) {
+		p2p_debug("drop frame, mode:%d, sub type:%d", mode,
+			  tx_ctx->frame_info.sub_type);
 		status = QDF_STATUS_E_FAILURE;
 	}
 
@@ -150,12 +153,15 @@ static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
 	mode = wlan_vdev_mlme_get_opmode(vdev);
 	p2p_debug("vdev mode:%d", mode);
 
-	/* drop probe response for sta, go, sap */
-	if ((mode == QDF_STA_MODE ||
-	     mode == QDF_SAP_MODE ||
-	     mode == QDF_P2P_GO_MODE) &&
-	    tx_ctx->frame_info.sub_type == P2P_MGMT_PROBE_RSP) {
-		p2p_debug("drop probe response, mode:%d", mode);
+	/* drop probe response/disassoc/deauth for sta, go, sap */
+	if ((mode == QDF_STA_MODE &&
+	     tx_ctx->frame_info.sub_type == P2P_MGMT_PROBE_RSP) ||
+	    ((mode == QDF_SAP_MODE || mode == QDF_P2P_GO_MODE) &&
+	     ((tx_ctx->frame_info.sub_type == P2P_MGMT_PROBE_RSP) ||
+	     (tx_ctx->frame_info.sub_type == P2P_MGMT_DISASSOC) ||
+	     (tx_ctx->frame_info.sub_type == P2P_MGMT_DEAUTH)))) {
+		p2p_debug("drop frame, mode:%d, sub type:%d", mode,
+			  tx_ctx->frame_info.sub_type);
 		status = QDF_STATUS_E_FAILURE;
 	}
 
@@ -623,17 +629,6 @@ static char *p2p_get_frame_type_str(struct p2p_frame_info *frame_info)
 	if (frame_info->sub_type == P2P_MGMT_NOT_SUPPORT)
 		return "Not support sub frame";
 
-	switch (frame_info->sub_type) {
-	case P2P_MGMT_PROBE_REQ:
-		return "P2P roc request";
-	case P2P_MGMT_PROBE_RSP:
-		return "P2P cancel roc request";
-	case P2P_MGMT_ACTION:
-		break;
-	default:
-		return "Invalid P2P command";
-	}
-
 	if (frame_info->action_type == P2P_ACTION_PRESENCE_REQ)
 		return "P2P action presence request";
 	if (frame_info->action_type == P2P_ACTION_PRESENCE_RSP)
@@ -667,7 +662,7 @@ static char *p2p_get_frame_type_str(struct p2p_frame_info *frame_info)
 	case P2P_PUBLIC_ACTION_GAS_COMB_RSP:
 		return "GAS come back response";
 	default:
-		return "Not support action frame";
+		return "Other frame";
 	}
 }
 
@@ -720,26 +715,12 @@ static QDF_STATUS p2p_get_frame_info(uint8_t *data_buf, uint32_t length,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	frame_info->type = P2P_FRAME_MGMT;
+	frame_info->type = type;
+	frame_info->sub_type = sub_type;
 
-	if (sub_type == P2P_MGMT_PROBE_RSP) {
-		frame_info->sub_type = P2P_MGMT_PROBE_RSP;
-		p2p_debug("Probe Response");
+	if (sub_type != P2P_MGMT_ACTION)
 		return QDF_STATUS_SUCCESS;
-	}
 
-	if (sub_type == P2P_MGMT_PROBE_REQ) {
-		frame_info->sub_type = P2P_MGMT_PROBE_REQ;
-		p2p_debug("Probe Request");
-		return QDF_STATUS_SUCCESS;
-	}
-
-	if (sub_type != P2P_MGMT_ACTION) {
-		p2p_debug("not support sub type");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	frame_info->sub_type = P2P_MGMT_ACTION;
 	buf += P2P_ACTION_OFFSET;
 	if (length > P2P_PUBLIC_ACTION_FRAME_TYPE_OFFSET &&
 	    buf[0] == P2P_PUBLIC_ACTION_FRAME &&
