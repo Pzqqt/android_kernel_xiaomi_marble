@@ -27,8 +27,6 @@
 #include <ol_txrx_internal.h>
 #include <qdf_hrtimer.h>
 
-#define OL_TXRX_PDEV_ID 0
-
 /*
  * Pool of tx descriptors reserved for
  * high-priority traffic, such as ARP/EAPOL etc
@@ -449,16 +447,26 @@ uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev);
  * Return: true ; forward the packet, i.e., below threshold
  *         false; not enough descriptors, drop the packet
  */
-bool ol_txrx_fwd_desc_thresh_check(struct cdp_vdev *vdev);
+bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *txrx_vdev);
 
 /**
  * ol_tx_desc_thresh_reached() - is tx desc threshold reached
- * @vdev: vdev handle
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: id of vdev
  *
  * Return: true if tx desc available reached threshold or false otherwise
  */
-static inline bool ol_tx_desc_thresh_reached(struct cdp_vdev *vdev)
+static inline bool ol_tx_desc_thresh_reached(struct cdp_soc_t *soc_hdl,
+					     uint8_t vdev_id)
 {
+	struct ol_txrx_vdev_t *vdev;
+
+	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	if (!vdev) {
+		dp_err("vdev is NULL");
+		return false;
+	}
+
 	return !(ol_txrx_fwd_desc_thresh_check(vdev));
 }
 
@@ -476,7 +484,7 @@ uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
 }
 
 static inline
-bool ol_txrx_fwd_desc_thresh_check(struct cdp_vdev *vdev)
+bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *txrx_vdev)
 {
 	return true;
 }

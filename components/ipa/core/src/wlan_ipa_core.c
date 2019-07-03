@@ -425,15 +425,9 @@ static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
 {
 	int ret = WLAN_IPA_FORWARD_PKT_NONE;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if ((desc & FW_RX_DESC_FORWARD_M)) {
-		void *vdev = cdp_get_vdev_from_vdev_id(soc, pdev,
-						       iface_ctx->session_id);
-		if (!vdev)
-			goto drop_pkt;
-
-		if (cdp_tx_desc_thresh_reached(soc, vdev)) {
+		if (cdp_tx_desc_thresh_reached(soc, iface_ctx->session_id)) {
 			/* Drop the packet*/
 			ipa_ctx->stats.num_tx_fwd_err++;
 			goto drop_pkt;

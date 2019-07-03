@@ -1533,7 +1533,7 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 	}
 
 	/* to get flow pool status before freeing descs */
-	ol_tx_dump_flow_pool_info((void *)pdev);
+	ol_tx_dump_flow_pool_info(cds_get_context(QDF_MODULE_ID_SOC));
 	ol_tx_free_descs_inuse(pdev);
 	ol_tx_deregister_flow_control(pdev);
 
@@ -4480,7 +4480,7 @@ ol_txrx_display_stats(void *soc, uint16_t value,
 		if (verb_level == QDF_STATS_VERBOSITY_LEVEL_LOW)
 			ol_tx_dump_flow_pool_info_compact((void *)pdev);
 		else
-			ol_tx_dump_flow_pool_info((void *)pdev);
+			ol_tx_dump_flow_pool_info(soc);
 		break;
 	case CDP_TXRX_DESC_STATS:
 		qdf_nbuf_tx_desc_count_display();
@@ -4984,15 +4984,18 @@ exit:
 
 /**
  * ol_txrx_register_pause_cb() - register pause callback
+ * @soc_hdl: Datapath soc handle
  * @pause_cb: pause callback
  *
  * Return: QDF status
  */
-static QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
+static QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc_hdl,
 					    tx_pause_callback pause_cb)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev;
 
+	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev || !pause_cb) {
 		ol_txrx_err("pdev or pause_cb is NULL");
 		return QDF_STATUS_E_INVAL;

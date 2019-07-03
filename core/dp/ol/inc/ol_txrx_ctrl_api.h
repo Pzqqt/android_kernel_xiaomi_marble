@@ -510,7 +510,7 @@ static inline void ol_tx_flow_pool_resize_handler(uint8_t flow_pool_id,
 
 void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev);
 void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev);
-void ol_tx_dump_flow_pool_info(void *pdev);
+void ol_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl);
 void ol_tx_dump_flow_pool_info_compact(void *pdev);
 void ol_tx_clear_flow_pool_stats(void);
 void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
@@ -557,11 +557,10 @@ static inline void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
 }
 
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_HL_NETDEV_FLOW_CONTROL)
-void ol_tx_dump_flow_pool_info(void *pdev);
+void ol_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl);
 void ol_tx_dump_flow_pool_info_compact(void *pdev);
 #else
-static inline
-void ol_tx_dump_flow_pool_info(void *ctx)
+static inline void ol_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl)
 {
 }
 

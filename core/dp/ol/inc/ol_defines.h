@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016, 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +21,8 @@
  */
 #ifndef _DEV_OL_DEFINES_H
 #define _DEV_OL_DEFINES_H
+
+#define OL_TXRX_PDEV_ID 0
 
  /**
   * ol_txrx_pdev_handle - opaque handle for txrx physical device

@@ -11726,7 +11726,7 @@ static void hdd_v2_flow_pool_map(int vdev_id)
 	QDF_STATUS status;
 
 	status = cdp_flow_pool_map(cds_get_context(QDF_MODULE_ID_SOC),
-				   cds_get_context(QDF_MODULE_ID_TXRX),
+				   OL_TXRX_PDEV_ID,
 				   vdev_id);
 	/*
 	 * For Adrastea flow control v2 is based on FW MAP events,
@@ -11749,7 +11749,7 @@ static void hdd_v2_flow_pool_map(int vdev_id)
 static void hdd_v2_flow_pool_unmap(int vdev_id)
 {
 	cdp_flow_pool_unmap(cds_get_context(QDF_MODULE_ID_SOC),
-			    cds_get_context(QDF_MODULE_ID_TXRX), vdev_id);
+			    OL_TXRX_PDEV_ID, vdev_id);
 }
 
 /**

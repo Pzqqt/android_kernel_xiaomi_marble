@@ -83,9 +83,8 @@ ol_tx_deregister_global_mgmt_pool(struct ol_txrx_pdev_t *pdev)
 }
 #endif
 
-bool ol_txrx_fwd_desc_thresh_check(struct cdp_vdev *vdev)
+bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *txrx_vdev)
 {
-	struct ol_txrx_vdev_t *txrx_vdev = (struct ol_txrx_vdev_t *)vdev;
 	struct ol_tx_flow_pool_t *pool;
 	bool enough_desc_flag;
 
@@ -181,9 +180,12 @@ void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
 {
 	int i = 0;
 	struct ol_tx_flow_pool_t *pool = NULL;
+	struct cdp_soc_t *soc;
 
 	if (!ol_tx_get_is_mgmt_over_wmi_enabled())
 		ol_tx_deregister_global_mgmt_pool(pdev);
+
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
 	while (!TAILQ_EMPTY(&pdev->tx_desc.flow_pool_list)) {
@@ -194,7 +196,7 @@ void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
 		ol_txrx_info("flow pool list is not empty %d!!!\n", i++);
 
 		if (i == 1)
-			ol_tx_dump_flow_pool_info((void *)pdev);
+			ol_tx_dump_flow_pool_info(soc);
 
 		ol_tx_dec_pool_ref(pool, true);
 		qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
@@ -410,18 +412,24 @@ void ol_tx_dump_flow_pool_info_compact(void *ctx)
 
 /**
  * ol_tx_dump_flow_pool_info() - dump global_pool and flow_pool info
- * @ctx: cdp_soc context, required only in lithium_dp flow control.
- *	 Remove void * while cleaning up cds_get_context.
+ * @soc_hdl: cdp_soc context, required only in lithium_dp flow control.
  *
  * Return: none
  */
-void ol_tx_dump_flow_pool_info(void *ctx)
+void ol_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev;
 	struct ol_tx_flow_pool_t *pool = NULL, *pool_prev = NULL;
 	struct ol_tx_flow_pool_t tmp_pool;
 
+	if (qdf_unlikely(!soc)) {
+		ol_txrx_err("soc is NULL");
+		QDF_ASSERT(0);
+		return;
+	}
 
+	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
 		ol_txrx_err("ERROR: pdev NULL");
 		QDF_ASSERT(0); /* traceback */
