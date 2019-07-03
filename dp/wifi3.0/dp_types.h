@@ -1338,6 +1338,9 @@ struct dp_pdev {
 
 	struct dp_srng rxdma_mon_desc_ring[NUM_RXDMA_RINGS_PER_PDEV];
 
+	/* Stuck count on monitor destination ring MPDU process */
+	uint32_t mon_dest_ring_stuck_cnt;
+
 	/*
 	 * re-use memory section ends
 	 * reuse memory/deinit indicator

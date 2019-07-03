@@ -38,6 +38,12 @@
  * It is assume wrap around.
  */
 #define NOT_PPDU_ID_WRAP_AROUND 20000
+/*
+ * The destination ring processing is stuck if the destrination is not
+ * moving while status ring moves 16 ppdu. the destination ring processing
+ * skips this destination ring ppdu as walkaround
+ */
+#define MON_DEST_RING_STUCK_MAX_CNT 16
 
 /**
  * dp_rx_mon_link_desc_return() - Return a MPDU link descriptor to HW
@@ -1068,6 +1074,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	union dp_rx_desc_list_elem_t *tail = NULL;
 	uint32_t ppdu_id;
 	uint32_t rx_bufs_used;
+	uint32_t mpdu_rx_bufs_used;
 	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
 	struct cdp_pdev_mon_stats *rx_mon_stats;
 
@@ -1105,11 +1112,28 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		head_msdu = (qdf_nbuf_t) NULL;
 		tail_msdu = (qdf_nbuf_t) NULL;
 
-		rx_bufs_used += dp_rx_mon_mpdu_pop(soc, mac_id,
-					rxdma_dst_ring_desc,
-					&head_msdu, &tail_msdu,
-					&npackets, &ppdu_id,
-					&head, &tail);
+		mpdu_rx_bufs_used =
+			dp_rx_mon_mpdu_pop(soc, mac_id,
+					   rxdma_dst_ring_desc,
+					   &head_msdu, &tail_msdu,
+					   &npackets, &ppdu_id,
+					   &head, &tail);
+
+		rx_bufs_used += mpdu_rx_bufs_used;
+
+		if (mpdu_rx_bufs_used)
+			pdev->mon_dest_ring_stuck_cnt = 0;
+		else
+			pdev->mon_dest_ring_stuck_cnt++;
+
+		if (pdev->mon_dest_ring_stuck_cnt >
+		    MON_DEST_RING_STUCK_MAX_CNT) {
+			dp_alert("destination ring stuck");
+			dp_alert("ppdu_id status=%d dest=%d",
+				 pdev->ppdu_info.com_info.ppdu_id, ppdu_id);
+			pdev->ppdu_info.com_info.ppdu_id = ppdu_id;
+			continue;
+		}
 
 		if (ppdu_id != pdev->ppdu_info.com_info.ppdu_id) {
 			rx_mon_stats->stat_ring_ppdu_id_hist[
