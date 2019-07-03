@@ -125,6 +125,7 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 {
 	struct hdd_adapter *adapter = (struct hdd_adapter *)adapter_context;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	u32 p_qpaused;
 	u32 np_qpaused;
 
@@ -133,6 +134,10 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 		return;
 	}
 
+	cdp_display_stats(soc, CDP_DUMP_TX_FLOW_POOL_INFO,
+			  QDF_STATS_VERBOSITY_LEVEL_LOW);
+	wlan_hdd_display_netif_queue_history(hdd_ctx,
+					     QDF_STATS_VERBOSITY_LEVEL_LOW);
 	hdd_debug("Enabling queues");
 	spin_lock_bh(&adapter->pause_map_lock);
 	p_qpaused = adapter->pause_map & BIT(WLAN_DATA_FLOW_CONTROL_PRIORITY);

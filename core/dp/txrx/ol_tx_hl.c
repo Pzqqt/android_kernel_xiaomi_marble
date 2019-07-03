@@ -1829,10 +1829,14 @@ void ol_txrx_update_tx_queue_groups(
 			 */
 			if (!vdev_bit_mask) {
 				/* Set Group Pointer (vdev and peer) to NULL */
+				ol_txrx_info("Group membership removed for vdev_id %d from group_id %d",
+					     vdev->vdev_id, group_id);
 				ol_tx_set_vdev_group_ptr(
 						pdev, vdev->vdev_id, NULL);
 			} else {
 				/* Set Group Pointer (vdev and peer) */
+				ol_txrx_info("Group membership updated for vdev_id %d to group_id %d",
+					     vdev->vdev_id, group_id);
 				ol_tx_set_vdev_group_ptr(
 						pdev, vdev->vdev_id, group);
 			}
@@ -1840,6 +1844,8 @@ void ol_txrx_update_tx_queue_groups(
 	}
 	/* Update membership */
 	group->membership = membership;
+	ol_txrx_info("Group membership updated for group_id %d membership 0x%x",
+		     group_id, group->membership);
 credit_update:
 	/* Update Credit */
 	ol_txrx_update_group_credit(group, credit, absolute);
@@ -1993,5 +1999,77 @@ int ol_txrx_set_vdev_tx_desc_limit(u8 vdev_id, u8 chan)
 	qdf_spin_unlock_bh(&vdev->pdev->tx_mutex);
 
 	return 0;
+}
+
+void ol_tx_dump_flow_pool_info_compact(void *ctx)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	char *comb_log_str;
+	int bytes_written = 0;
+	uint32_t free_size;
+	struct ol_txrx_vdev_t *vdev;
+	int i = 0;
+
+	free_size = WLAN_MAX_VDEVS * 100;
+	comb_log_str = qdf_mem_malloc(free_size);
+	if (!comb_log_str)
+		return;
+
+	qdf_spin_lock_bh(&pdev->tx_mutex);
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		bytes_written += snprintf(&comb_log_str[bytes_written],
+				free_size, "%d (%d,%d)(%d,%d)(%d,%d) |",
+				vdev->vdev_id, vdev->tx_desc_limit,
+				qdf_atomic_read(&vdev->tx_desc_count),
+				qdf_atomic_read(&vdev->os_q_paused),
+				vdev->prio_q_paused, vdev->queue_stop_th,
+				vdev->queue_restart_th);
+		free_size -= bytes_written;
+	}
+	qdf_spin_unlock_bh(&pdev->tx_mutex);
+	qdf_nofl_debug("STATS | FC: %s", comb_log_str);
+
+	free_size = WLAN_MAX_VDEVS * 100;
+	bytes_written = 0;
+	qdf_mem_zero(comb_log_str, free_size);
+
+	bytes_written = snprintf(&comb_log_str[bytes_written], free_size,
+				 "%d ",
+				 qdf_atomic_read(&pdev->target_tx_credit));
+	for (i = 0; i < OL_TX_MAX_TXQ_GROUPS; i++) {
+		bytes_written += snprintf(&comb_log_str[bytes_written],
+					  free_size, "|%d, (0x%x, %d)", i,
+					  OL_TXQ_GROUP_VDEV_ID_MASK_GET(
+					  pdev->txq_grps[i].membership),
+					  qdf_atomic_read(
+					  &pdev->txq_grps[i].credit));
+	       free_size -= bytes_written;
+	}
+	qdf_nofl_debug("STATS | CREDIT: %s", comb_log_str);
+	qdf_mem_free(comb_log_str);
+}
+
+void ol_tx_dump_flow_pool_info(void *ctx)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_vdev_t *vdev;
+
+	if (!pdev) {
+		ol_txrx_err("pdev is NULL");
+		return;
+	}
+
+	qdf_spin_lock_bh(&pdev->tx_mutex);
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		txrx_nofl_info("vdev_id %d", vdev->vdev_id);
+		txrx_nofl_info("limit %d available %d stop_threshold %d restart_threshold %d",
+			       vdev->tx_desc_limit,
+			       qdf_atomic_read(&vdev->tx_desc_count),
+			       vdev->queue_stop_th, vdev->queue_restart_th);
+		txrx_nofl_info("q_paused %d prio_q_paused %d",
+			       qdf_atomic_read(&vdev->os_q_paused),
+			       vdev->prio_q_paused);
+	}
+	qdf_spin_unlock_bh(&pdev->tx_mutex);
 }
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */

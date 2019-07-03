@@ -4419,7 +4419,10 @@ ol_txrx_display_stats(void *soc, uint16_t value,
 		ol_txrx_stats_display_tso(pdev);
 		break;
 	case CDP_DUMP_TX_FLOW_POOL_INFO:
-		ol_tx_dump_flow_pool_info((void *)pdev);
+		if (verb_level == QDF_STATS_VERBOSITY_LEVEL_LOW)
+			ol_tx_dump_flow_pool_info_compact((void *)pdev);
+		else
+			ol_tx_dump_flow_pool_info((void *)pdev);
 		break;
 	case CDP_TXRX_DESC_STATS:
 		qdf_nbuf_tx_desc_count_display();

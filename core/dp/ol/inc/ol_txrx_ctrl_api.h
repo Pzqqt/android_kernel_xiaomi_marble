@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -510,7 +510,8 @@ static inline void ol_tx_flow_pool_resize_handler(uint8_t flow_pool_id,
 
 void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev);
 void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev);
-void ol_tx_dump_flow_pool_info(void *);
+void ol_tx_dump_flow_pool_info(void *pdev);
+void ol_tx_dump_flow_pool_info_compact(void *pdev);
 void ol_tx_clear_flow_pool_stats(void);
 void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 				 uint8_t flow_pool_id, uint16_t flow_pool_size);
@@ -545,6 +546,7 @@ QDF_STATUS ol_tx_inc_pool_ref(struct ol_tx_flow_pool_t *pool);
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS ol_tx_dec_pool_ref(struct ol_tx_flow_pool_t *pool, bool force);
+
 #else
 
 static inline void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev)
@@ -553,9 +555,22 @@ static inline void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev)
 static inline void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
 {
 }
-static inline void ol_tx_dump_flow_pool_info(void *ctx)
+
+#if defined(CONFIG_HL_SUPPORT) && defined(QCA_HL_NETDEV_FLOW_CONTROL)
+void ol_tx_dump_flow_pool_info(void *pdev);
+void ol_tx_dump_flow_pool_info_compact(void *pdev);
+#else
+static inline
+void ol_tx_dump_flow_pool_info(void *ctx)
 {
 }
+
+static inline
+void ol_tx_dump_flow_pool_info_compact(void *ctx)
+{
+}
+#endif
+
 static inline void ol_tx_clear_flow_pool_stats(void)
 {
 }

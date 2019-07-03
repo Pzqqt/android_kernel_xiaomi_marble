@@ -347,6 +347,43 @@ static const char *ol_tx_flow_pool_status_to_str
 	}
 }
 
+void ol_tx_dump_flow_pool_info_compact(void *ctx)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	char *comb_log_str;
+	int bytes_written = 0;
+	uint32_t free_size;
+	struct ol_tx_flow_pool_t *pool = NULL;
+
+	free_size = WLAN_MAX_VDEVS * 100 + 100;
+	comb_log_str = qdf_mem_malloc(free_size);
+	if (!comb_log_str)
+		return;
+
+	bytes_written = snprintf(&comb_log_str[bytes_written], free_size,
+				 "G:(%d,%d) ",
+				 pdev->tx_desc.pool_size,
+				 pdev->tx_desc.num_free);
+
+	free_size -= bytes_written;
+
+	qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
+	TAILQ_FOREACH(pool, &pdev->tx_desc.flow_pool_list,
+		      flow_pool_list_elem) {
+		qdf_spin_lock_bh(&pool->flow_pool_lock);
+		bytes_written += snprintf(&comb_log_str[bytes_written],
+					  free_size, "| %d (%d,%d)",
+					  pool->flow_pool_id,
+					  pool->flow_pool_size,
+					  pool->avail_desc);
+		free_size -= bytes_written;
+		qdf_spin_unlock_bh(&pool->flow_pool_lock);
+	}
+	qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
+	qdf_nofl_debug("STATS | FC: %s", comb_log_str);
+	qdf_mem_free(comb_log_str);
+}
+
 /**
  * ol_tx_dump_flow_pool_info() - dump global_pool and flow_pool info
  * @ctx: cdp_soc context, required only in lithium_dp flow control.
