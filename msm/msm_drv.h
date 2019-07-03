@@ -357,6 +357,7 @@ struct msm_roi_caps {
  * @range_max_qp:            Max QP allowed.
  * @range_bpg_offset:        Bits per group adjustment.
  * @extra_width:             Extra width required in timing calculations.
+ * @pps_delay_ms:            Post PPS command delay in milliseconds.
  */
 struct msm_display_dsc_info {
 	u8 version;
@@ -414,6 +415,7 @@ struct msm_display_dsc_info {
 	char *range_bpg_offset;
 
 	u32 extra_width;
+	u32 pps_delay_ms;
 };
 
 /**
