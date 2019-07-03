@@ -79,13 +79,19 @@ enum p2p_frame_type {
  * enum p2p_frame_sub_type - frame sub type
  * @P2P_MGMT_PROBE_REQ:       probe request frame
  * @P2P_MGMT_PROBE_RSP:       probe response frame
+ * @P2P_MGMT_DISASSOC:        disassociation frame
+ * @P2P_MGMT_AUTH:            authentication frame
+ * @P2P_MGMT_DEAUTH:          deauthentication frame
  * @P2P_MGMT_ACTION:          action frame
  * @P2P_MGMT_NOT_SUPPORT:     not support sub frame type
  */
 enum p2p_frame_sub_type {
 	P2P_MGMT_PROBE_REQ = 4,
 	P2P_MGMT_PROBE_RSP,
-	P2P_MGMT_ACTION = 13,
+	P2P_MGMT_DISASSOC = 10,
+	P2P_MGMT_AUTH,
+	P2P_MGMT_DEAUTH,
+	P2P_MGMT_ACTION,
 	P2P_MGMT_NOT_SUPPORT,
 };
 
