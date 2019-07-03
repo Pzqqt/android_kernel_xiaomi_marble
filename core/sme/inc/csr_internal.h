@@ -971,7 +971,6 @@ bool csr_roam_is_ese_assoc(struct mac_context *mac, uint32_t sessionId);
 bool csr_roam_is_ese_ini_feature_enabled(struct mac_context *mac);
 QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 		tCsrTsmStatsCallback callback,
-		uint8_t staId,
 		struct qdf_mac_addr bssId,
 		void *pContext, uint8_t tid);
 #endif

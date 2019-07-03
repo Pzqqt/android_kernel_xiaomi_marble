@@ -591,7 +591,7 @@ QDF_STATUS sme_get_snr(mac_handle_t mac_handle,
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS sme_get_tsm_stats(mac_handle_t mac_handle,
 		tCsrTsmStatsCallback callback,
-		uint8_t staId, struct qdf_mac_addr bssId,
+		struct qdf_mac_addr bssId,
 		void *pContext, uint8_t tid);
 QDF_STATUS sme_set_cckm_ie(mac_handle_t mac_handle,
 		uint8_t sessionId,

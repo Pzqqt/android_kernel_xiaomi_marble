@@ -1373,8 +1373,8 @@ void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac,
 		/* Fill the Session Id */
 		pPeStats->sessionId = pPeSessionEntry->smeSessionId;
 	} else {
-		pe_err("Session not found for the Sta id: %d",
-		       pPeStats->staId);
+		pe_err("Session not found for the Sta peer:" QDF_MAC_ADDR_STR,
+		       QDF_MAC_ADDR_ARRAY(pPeStats->bssid.bytes));
 		qdf_mem_free(pPeStats->tsmStatsReq);
 		qdf_mem_free(pPeStats);
 		return;

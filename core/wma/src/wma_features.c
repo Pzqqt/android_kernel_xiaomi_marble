@@ -2889,7 +2889,6 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 		qdf_mem_free(pTsmStatsMsg);
 		return QDF_STATUS_E_NOMEM;
 	}
-	pTsmRspParams->staId = pStats->staId;
 	qdf_copy_macaddr(&pTsmRspParams->bssid, &pStats->bssId);
 	pTsmRspParams->rc = QDF_STATUS_E_FAILURE;
 	pTsmRspParams->tsmStatsReq = pStats;

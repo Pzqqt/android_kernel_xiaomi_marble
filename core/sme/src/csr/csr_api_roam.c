@@ -1811,8 +1811,6 @@ static void csr_tsm_stats_rsp_processor(struct mac_context *mac, void *pMsg)
 				((tCsrTsmStatsCallback)
 				 (reqBkp->tsmStatsCallback))(pTsmStatsRsp->
 							     tsmMetrics,
-							     pTsmStatsRsp->
-							     staId,
 							     reqBkp->
 							     pDevContext);
 				reqBkp->tsmStatsCallback = NULL;
@@ -1889,7 +1887,6 @@ static void csr_send_ese_adjacent_ap_rep_ind(struct mac_context *mac,
  */
 QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 			     tCsrTsmStatsCallback callback,
-			     uint8_t staId,
 			     struct qdf_mac_addr bssId,
 			     void *pContext, uint8_t tid)
 {
@@ -1903,7 +1900,6 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 	/* need to initiate a stats request to PE */
 	pMsg->msgType = eWNI_SME_GET_TSM_STATS_REQ;
 	pMsg->msgLen = (uint16_t) sizeof(tAniGetTsmStatsReq);
-	pMsg->staId = staId;
 	pMsg->tid = tid;
 	qdf_copy_macaddr(&pMsg->bssId, &bssId);
 	pMsg->tsmStatsCallback = callback;

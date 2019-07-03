@@ -797,7 +797,6 @@ typedef struct sAniGetTsmStatsReq {
 	/* Common for all types are requests */
 	uint16_t msgType;       /* message type is same as the request type */
 	uint16_t msgLen;        /* length of the entire request */
-	uint8_t staId;
 	uint8_t tid;            /* traffic id */
 	struct qdf_mac_addr bssId;
 	void *tsmStatsCallback;
@@ -816,10 +815,6 @@ typedef struct sAniGetTsmStatsRsp {
 				 */
 	uint8_t sessionId;
 	uint32_t rc;            /* success/failure */
-	uint32_t staId;         /*
-				 * Per STA stats request must
-				 * contain valid
-				 */
 	struct qdf_mac_addr bssid; /* bssid to get the tsm stats for */
 	tAniTrafStrmMetrics tsmMetrics;
 	void *tsmStatsReq;      /* tsm stats request backup */

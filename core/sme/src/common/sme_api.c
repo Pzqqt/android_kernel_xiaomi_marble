@@ -1701,7 +1701,7 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_get_tsm_stats(mac_handle_t mac_handle,
 			     tCsrTsmStatsCallback callback,
-			     uint8_t staId, struct qdf_mac_addr bssId,
+			     struct qdf_mac_addr bssId,
 			     void *pContext, uint8_t tid)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -1710,7 +1710,7 @@ QDF_STATUS sme_get_tsm_stats(mac_handle_t mac_handle,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_get_tsm_stats(mac, callback,
-					   staId, bssId, pContext,
+					   bssId, pContext,
 					   tid);
 		sme_release_global_lock(&mac->sme);
 	}

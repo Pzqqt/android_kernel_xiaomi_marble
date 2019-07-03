@@ -1423,7 +1423,7 @@ const char *csr_phy_mode_str(eCsrPhyMode phy_mode);
 
 #ifdef FEATURE_WLAN_ESE
 typedef void (*tCsrTsmStatsCallback)(tAniTrafStrmMetrics tsmMetrics,
-				     uint32_t staId, void *pContext);
+				     void *pContext);
 #endif /* FEATURE_WLAN_ESE */
 typedef void (*tCsrSnrCallback)(int8_t snr, void *pContext);
 
