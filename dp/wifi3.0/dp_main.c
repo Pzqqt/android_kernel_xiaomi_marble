@@ -9566,7 +9566,6 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle)
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA8074);
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);
-		soc->hw_nac_monitor_support = 1;
 		soc->da_war_enabled = true;
 		break;
 	case TARGET_TYPE_QCA8074V2:
