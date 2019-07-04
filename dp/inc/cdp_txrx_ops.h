@@ -1372,21 +1372,24 @@ struct cdp_ipa_ops {
 #ifdef DP_POWER_SAVE
 /**
  * struct cdp_tx_delay_ops - mcl tx delay ops
- * @tx_delay:
- * @tx_delay_hist:
- * @tx_packet_count:
- * @tx_set_compute_interval:
+ * @tx_delay: handler to get tx packet delay
+ * @tx_delay_hist: handler to get tx packet delay histogram
+ * @tx_packet_count: handler to get tx packet count
+ * @tx_set_compute_interval: update compute interval period for TSM stats
+ *
+ * Function pointer for operations related to tx delay.
  */
 struct cdp_tx_delay_ops {
-	void (*tx_delay)(struct cdp_pdev *pdev, uint32_t *queue_delay_microsec,
-		uint32_t *tx_delay_microsec, int category);
-	void (*tx_delay_hist)(struct cdp_pdev *pdev,
-		uint16_t *bin_values, int category);
-	void (*tx_packet_count)(struct cdp_pdev *pdev,
-		uint16_t *out_packet_count,
-		uint16_t *out_packet_loss_count, int category);
-	void (*tx_set_compute_interval)(struct cdp_pdev *pdev,
-		uint32_t interval);
+	void (*tx_delay)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			 uint32_t *queue_delay_microsec,
+			 uint32_t *tx_delay_microsec, int category);
+	void (*tx_delay_hist)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			      uint16_t *bin_values, int category);
+	void (*tx_packet_count)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				uint16_t *out_packet_count,
+				uint16_t *out_packet_loss_count, int category);
+	void (*tx_set_compute_interval)(struct cdp_soc_t *soc_hdl,
+					uint8_t pdev_id, uint32_t interval);
 };
 
 /**
