@@ -586,6 +586,15 @@ int dsi_display_clock_gate(struct dsi_display *display, bool enable);
 int dsi_dispaly_static_frame(struct dsi_display *display, bool enable);
 
 /**
+ * dsi_display_get_drm_panel() - get drm_panel from display.
+ * @display:            Handle to display.
+ * Get drm_panel which was inclued in dsi_display's dsi_panel.
+ *
+ * Return: drm_panel/NULL.
+ */
+struct drm_panel *dsi_display_get_drm_panel(struct dsi_display *display);
+
+/**
  * dsi_display_enable_event() - enable interrupt based connector event
  * @connector:          Pointer to drm connector structure
  * @display:            Handle to display.
