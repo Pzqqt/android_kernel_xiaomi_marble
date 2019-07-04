@@ -505,6 +505,54 @@ QDF_STATUS init_deinit_spectral_scaling_params_free(
 
 qdf_export_symbol(init_deinit_spectral_scaling_params_free);
 
+#ifdef DBS_SBS_BAND_LIMITATION_WAR
+#define phy0               0
+#define phy2               2
+#define NUM_RF_MODES       2 /* (DBS + DBS_SBS) */
+/**
+ * init_deinit_update_phy_reg_cap() - Update the low/high frequency for phy0.
+ * @psoc: PSOC common object
+ * @info: FW or lower layer related info
+ * @wlan_psoc_host_hal_reg_capabilities_ext: Reg caps per PHY
+ *
+ * For the DBS_SBS capable board, update the low or high frequency
+ * for phy0 by leveraging the frequency populated for phy2
+ * depending on whether it is mapped to upper or lower 5G band by
+ * FW/HAL-PHY.
+ */
+static void init_deinit_update_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
+					struct tgt_info *info,
+					struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap)
+{
+	struct target_psoc_info *tgt_hdl;
+	enum wmi_host_hw_mode_config_type mode;
+
+	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
+						psoc);
+	if (!tgt_hdl) {
+		target_if_err("target_psoc_info is null in service ready ev");
+		return;
+	}
+
+	mode = target_psoc_get_preferred_hw_mode(tgt_hdl);
+
+	if ((mode == WMI_HOST_HW_MODE_DBS) &&
+		(info->hw_modes.num_modes == NUM_RF_MODES)) {
+		if (reg_cap[phy0].low_5ghz_chan > reg_cap[phy2].low_5ghz_chan)
+			reg_cap[phy0].low_5ghz_chan = reg_cap[phy2].low_5ghz_chan;
+		else if (reg_cap[phy0].high_5ghz_chan < reg_cap[phy2].high_5ghz_chan)
+			reg_cap[phy0].high_5ghz_chan = reg_cap[phy2].high_5ghz_chan;
+	}
+
+}
+#else
+static void init_deinit_update_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
+					struct tgt_info *info,
+					struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap)
+{
+}
+#endif
+
 int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 				void *handle, uint8_t *event,
 				struct tgt_info *info, bool service_ready)
@@ -548,6 +596,7 @@ int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
+	init_deinit_update_phy_reg_cap(psoc, info, reg_cap);
 	status = ucfg_reg_set_hal_reg_cap(psoc, reg_cap, num_phy_reg_cap);
 
 	return qdf_status_to_os_return(status);
