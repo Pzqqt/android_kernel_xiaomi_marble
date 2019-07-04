@@ -1297,36 +1297,56 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 
 #ifdef QCA_COMPUTE_TX_DELAY
 /**
- * @brief updates the compute interval period for TSM stats.
- * @details
- * @param interval - interval for stats computation
+ * ol_tx_set_compute_interval -  updates the compute interval
+ *				 period for TSM stats.
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ * @param interval: interval for stats computation
+ *
+ * Return: None
  */
-void ol_tx_set_compute_interval(struct cdp_pdev *ppdev, uint32_t interval)
+void ol_tx_set_compute_interval(struct cdp_soc_t *soc_hdl,
+				uint8_t pdev_id, uint32_t interval)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
+
+	if (!pdev) {
+		ol_txrx_err("pdev is NULL");
+		return;
+	}
 
 	pdev->tx_delay.avg_period_ticks = qdf_system_msecs_to_ticks(interval);
 }
 
 /**
- * @brief Return the uplink (transmitted) packet count and loss count.
- * @details
+ * ol_tx_packet_count() -  Return the uplink (transmitted) packet count
+			   and loss count.
+ * @soc_hdl: soc handle
+ * @pdev_id: pdev identifier
+ * @out_packet_count - number of packets transmitted
+ * @out_packet_loss_count - number of packets lost
+ * @category - access category of interest
+ *
  *  This function will be called for getting uplink packet count and
  *  loss count for given stream (access category) a regular interval.
  *  This also resets the counters hence, the value returned is packets
  *  counted in last 5(default) second interval. These counter are
  *  incremented per access category in ol_tx_completion_handler()
- *
- * @param category - access category of interest
- * @param out_packet_count - number of packets transmitted
- * @param out_packet_loss_count - number of packets lost
  */
 void
-ol_tx_packet_count(struct cdp_pdev *ppdev,
+ol_tx_packet_count(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		   uint16_t *out_packet_count,
 		   uint16_t *out_packet_loss_count, int category)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
+
+	if (!pdev) {
+		ol_txrx_err("pdev is NULL");
+		return;
+	}
+
 	*out_packet_count = pdev->packet_count[category];
 	*out_packet_loss_count = pdev->packet_loss_count[category];
 	pdev->packet_count[category] = 0;
@@ -1351,16 +1371,22 @@ static uint32_t ol_tx_delay_avg(uint64_t sum, uint32_t num)
 }
 
 void
-ol_tx_delay(struct cdp_pdev *ppdev,
+ol_tx_delay(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	    uint32_t *queue_delay_microsec,
 	    uint32_t *tx_delay_microsec, int category)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 	int index;
 	uint32_t avg_delay_ticks;
 	struct ol_tx_delay_data *data;
 
 	qdf_assert(category >= 0 && category < QCA_TX_DELAY_NUM_CATEGORIES);
+
+	if (!pdev) {
+		ol_txrx_err("pdev is NULL");
+		return;
+	}
 
 	qdf_spin_lock_bh(&pdev->tx_delay.mutex);
 	index = 1 - pdev->tx_delay.cats[category].in_progress_idx;
@@ -1398,14 +1424,20 @@ ol_tx_delay(struct cdp_pdev *ppdev,
 }
 
 void
-ol_tx_delay_hist(struct cdp_pdev *ppdev,
+ol_tx_delay_hist(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		 uint16_t *report_bin_values, int category)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 	int index, i, j;
 	struct ol_tx_delay_data *data;
 
 	qdf_assert(category >= 0 && category < QCA_TX_DELAY_NUM_CATEGORIES);
+
+	if (!pdev) {
+		ol_txrx_err("pdev is NULL");
+		return;
+	}
 
 	qdf_spin_lock_bh(&pdev->tx_delay.mutex);
 	index = 1 - pdev->tx_delay.cats[category].in_progress_idx;

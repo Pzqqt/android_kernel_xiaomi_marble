@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,16 +86,19 @@ ol_tx_send_nonstd(struct ol_txrx_pdev_t *pdev,
 #ifdef QCA_COMPUTE_TX_DELAY
 /**
  * ol_tx_set_compute_interval() - update compute interval period for TSM stats
- * @ppdev: physical device instance
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  * @interval: interval for stats computation
  *
  * Return: NONE
  */
-void ol_tx_set_compute_interval(struct cdp_pdev *ppdev, uint32_t interval);
+void ol_tx_set_compute_interval(struct cdp_soc_t *soc_hdl,
+				uint8_t pdev_id, uint32_t interval);
 
 /**
  * ol_tx_packet_count() - Return the uplink (transmitted) packet counts
- * @ppdev: physical device instance
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  * @out_packet_count: number of packets transmitted
  * @out_packet_loss_count: number of packets lost
  * @category: access category of interest
@@ -109,13 +112,14 @@ void ol_tx_set_compute_interval(struct cdp_pdev *ppdev, uint32_t interval);
  * Return: NONE
  */
 void
-ol_tx_packet_count(struct cdp_pdev *ppdev,
+ol_tx_packet_count(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		   uint16_t *out_packet_count,
 		   uint16_t *out_packet_loss_count, int category);
 
 /**
  * ol_tx_delay() - get tx packet delay
- * @ppdev: physical device instance
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  * @queue_delay_microsec: tx packet delay within queue, usec
  * @tx_delay_microsec: tx packet delay, usec
  * @category: packet category
@@ -123,20 +127,21 @@ ol_tx_packet_count(struct cdp_pdev *ppdev,
  * Return: NONE
  */
 void
-ol_tx_delay(struct cdp_pdev *ppdev,
+ol_tx_delay(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	    uint32_t *queue_delay_microsec,
 	    uint32_t *tx_delay_microsec, int category);
 
 /**
  * ol_tx_delay_hist() - get tx packet delay histogram
- * @ppdev: physical device instance
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  * @report_bin_values: bin
  * @category: packet category
  *
  * Return: NONE
  */
 void
-ol_tx_delay_hist(struct cdp_pdev *ppdev,
+ol_tx_delay_hist(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		 uint16_t *report_bin_values, int category);
 #endif /* QCA_COMPUTE_TX_DELAY */
 

@@ -2791,17 +2791,11 @@ static QDF_STATUS wma_set_tsm_interval(struct add_ts_param *req)
 	 *
 	 */
 	uint32_t interval_milliseconds;
-	struct cdp_pdev *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	interval_milliseconds = (req->tsm_interval * 1024) / 1000;
 
 	cdp_tx_set_compute_interval(cds_get_context(QDF_MODULE_ID_SOC),
-			pdev,
+			WMI_PDEV_ID_SOC,
 			interval_milliseconds);
 	return QDF_STATUS_SUCCESS;
 }
@@ -2874,25 +2868,18 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	 * than required by TSM, hence different (6) size array used
 	 */
 	uint16_t bin_values[QCA_TX_DELAY_HIST_REPORT_BINS] = { 0, };
-	struct cdp_pdev *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	if (!pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
-		qdf_mem_free(pTsmStatsMsg);
-		return QDF_STATUS_E_INVAL;
-	}
 
 	/* get required values from data path APIs */
 	cdp_tx_delay(soc,
-		pdev,
+		WMI_PDEV_ID_SOC,
 		&queue_delay_microsec,
 		&tx_delay_microsec, tid);
 	cdp_tx_delay_hist(soc,
-		pdev,
+		WMI_PDEV_ID_SOC,
 		bin_values, tid);
 	cdp_tx_packet_count(soc,
-		pdev,
+		WMI_PDEV_ID_SOC,
 		&packet_count,
 		&packet_loss_count, tid);
 
