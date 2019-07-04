@@ -6349,6 +6349,7 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	int ht_cap_info, vht_cap_info;
 	uint8_t phyid, our_hw_mode = hw_mode, num_hw_modes;
 	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
+	struct wlan_psoc_target_capability_info *tgt_cap_info;
 
 	if (!wma_handle) {
 		WMA_LOGE("Invalid wma handle");
@@ -6365,6 +6366,7 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	vht_cap_info = target_if_get_vht_cap_info(tgt_hdl);
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
+	tgt_cap_info = target_psoc_get_target_caps(tgt_hdl);
 
 	if (!num_hw_modes) {
 		WMA_LOGD("Invalid number of hw modes, use legacy HT/VHT caps");
@@ -6377,6 +6379,14 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		caps_per_phy->he_2g[1] = 0;
 		caps_per_phy->he_5g[0] = 0;
 		caps_per_phy->he_5g[1] = 0;
+		caps_per_phy->tx_chain_mask_2G =
+			EXTRACT_TX_CHAIN_MASK_2G(tgt_cap_info->txrx_chainmask);
+		caps_per_phy->rx_chain_mask_2G =
+			EXTRACT_RX_CHAIN_MASK_2G(tgt_cap_info->txrx_chainmask);
+		caps_per_phy->tx_chain_mask_5G =
+			EXTRACT_TX_CHAIN_MASK_5G(tgt_cap_info->txrx_chainmask);
+		caps_per_phy->rx_chain_mask_5G =
+			EXTRACT_RX_CHAIN_MASK_5G(tgt_cap_info->txrx_chainmask);
 
 		return QDF_STATUS_SUCCESS;
 	}

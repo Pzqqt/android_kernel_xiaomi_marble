@@ -391,6 +391,19 @@
 		WMA_HW_MODE_SBS_MODE_BITPOS)
 
 /*
+ * Extract 2G or 5G tx/rx chainmask
+ * format of txrx_chainmask (from wmi_service_ready_event_fixed_param):
+ *    [7:0]   - 2G band tx chain mask
+ *    [15:8]  - 2G band rx chain mask
+ *    [23:16] - 5G band tx chain mask
+ *    [31:24] - 5G band rx chain mask
+ */
+#define EXTRACT_TX_CHAIN_MASK_2G(chainmask) ((chainmask) & 0xFF)
+#define EXTRACT_RX_CHAIN_MASK_2G(chainmask) (((chainmask) >> 8) & 0xFF)
+#define EXTRACT_TX_CHAIN_MASK_5G(chainmask) (((chainmask) >> 16) & 0xFF)
+#define EXTRACT_RX_CHAIN_MASK_5G(chainmask) (((chainmask) >> 24) & 0xFF)
+
+/*
  * PROBE_REQ_TX_DELAY
  * param to specify probe request Tx delay for scans triggered on this VDEV
  */
