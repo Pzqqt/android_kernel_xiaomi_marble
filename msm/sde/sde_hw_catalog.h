@@ -765,6 +765,7 @@ struct sde_dspp_sub_blks {
 	struct sde_pp_blk hist;
 	struct sde_pp_blk ad;
 	struct sde_pp_blk ltm;
+	struct sde_pp_blk spr;
 	struct sde_pp_blk vlut;
 	struct sde_dspp_rc rc;
 };
@@ -1545,6 +1546,7 @@ struct sde_mdss_cfg {
 	u32 ad_count;
 	u32 ltm_count;
 	u32 rc_count;
+	u32 spr_count;
 
 	u32 merge_3d_count;
 	struct sde_merge_3d_cfg merge_3d[MAX_BLOCKS];

@@ -371,6 +371,14 @@ struct sde_hw_dspp *sde_hw_dspp_init(enum sde_dspp idx,
 				c->hw.blk_off + cfg->sblk->rc.base +
 				cfg->sblk->rc.len, c->hw.xin_id);
 	}
+
+	if ((cfg->sblk->spr.id == SDE_DSPP_SPR) && cfg->sblk->spr.base) {
+		snprintf(buf, ARRAY_SIZE(buf), "%s_%d", "spr", c->idx - DSPP_0);
+		sde_dbg_reg_register_dump_range(SDE_DBG_NAME, buf,
+				c->hw.blk_off + cfg->sblk->spr.base,
+				c->hw.blk_off + cfg->sblk->spr.base +
+				cfg->sblk->spr.len, c->hw.xin_id);
+	}
 	return c;
 
 blk_init_error:
