@@ -27,9 +27,10 @@
  *
  * return: void
  */
-void dp_cal_client_attach(void **cal_client_ctx, void *pdev,
+void dp_cal_client_attach(struct cdp_cal_client **cal_client_ctx,
+			  struct cdp_pdev *pdev,
 			  qdf_device_t osdev,
-			  void (*dp_iterate_peer_list)(void *))
+			  void (*dp_iterate_peer_list)(struct cdp_pdev *))
 {
 	struct cal_client *cal_cl;
 
@@ -54,7 +55,7 @@ qdf_export_symbol(dp_cal_client_attach);
  *
  * return: void
  */
-void dp_cal_client_detach(void **cal_client_ctx)
+void dp_cal_client_detach(struct cdp_cal_client **cal_client_ctx)
 {
 	struct cal_client *cal_cl;
 

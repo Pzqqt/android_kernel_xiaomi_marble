@@ -3321,7 +3321,7 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
  * @pdev_hdl: pdev handle
  */
 #ifdef ATH_SUPPORT_EXT_STAT
-void  dp_iterate_update_peer_list(void *pdev_hdl)
+void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
 	struct dp_soc *soc = pdev->soc;
@@ -3339,7 +3339,7 @@ void  dp_iterate_update_peer_list(void *pdev_hdl)
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 }
 #else
-void  dp_iterate_update_peer_list(void *pdev_hdl)
+void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl)
 {
 }
 #endif
@@ -3602,7 +3602,9 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		qdf_mem_zero(sojourn_buf, sizeof(struct cdp_tx_sojourn_stats));
 	}
 	/* initlialize cal client timer */
-	dp_cal_client_attach(&pdev->cal_client_ctx, pdev, pdev->soc->osdev,
+	dp_cal_client_attach(&pdev->cal_client_ctx,
+			     dp_pdev_to_cdp_pdev(pdev),
+			     pdev->soc->osdev,
 			     &dp_iterate_update_peer_list);
 	qdf_event_create(&pdev->fw_peer_stats_event);
 

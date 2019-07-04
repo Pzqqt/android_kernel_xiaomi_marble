@@ -1328,4 +1328,10 @@ struct cdp_vdev *dp_vdev_to_cdp_vdev(struct dp_vdev *vdev)
 {
 	return (struct cdp_vdev *)vdev;
 }
+
+static inline
+struct cdp_pdev *dp_pdev_to_cdp_pdev(struct dp_pdev *pdev)
+{
+	return (struct cdp_pdev *)pdev;
+}
 #endif /* #ifndef _DP_INTERNAL_H_ */

@@ -53,4 +53,8 @@ struct cdp_ctrl_objmgr_vdev;
  */
 struct cdp_ctrl_objmgr_peer;
 
+/**
+ * cdp_cal_client - opaque handle for cal client object
+ */
+struct cdp_cal_client;
 #endif

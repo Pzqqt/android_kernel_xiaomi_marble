@@ -1575,7 +1575,7 @@ struct dp_pdev {
 	 */
 	uint8_t is_primary;
 	/* Context of cal client timer */
-	void *cal_client_ctx;
+	struct cdp_cal_client *cal_client_ctx;
 	struct cdp_tx_sojourn_stats sojourn_stats;
 	qdf_nbuf_t sojourn_buf;
 
