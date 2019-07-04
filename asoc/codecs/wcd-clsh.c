@@ -243,7 +243,14 @@ static void wcd_clsh_flyback_ctrl(struct snd_soc_component *component,
 		__func__, clsh_d->flyback_users, enable, mode_to_str(mode));
 }
 
-static void wcd_clsh_set_hph_mode(struct snd_soc_component *component,
+/*
+ * Function: wcd_clsh_set_hph_mode
+ * Params: soc component, hph mode class
+ * Description:
+ * This function updates class H mode configuration based on
+ * the input mode.
+ */
+void wcd_clsh_set_hph_mode(struct snd_soc_component *component,
 				  int mode)
 {
 	u8 val = 0;
@@ -273,6 +280,7 @@ static void wcd_clsh_set_hph_mode(struct snd_soc_component *component,
 
 	snd_soc_component_update_bits(component, WCD9XXX_ANA_HPH, 0x0C, val);
 }
+EXPORT_SYMBOL(wcd_clsh_set_hph_mode);
 
 static void wcd_clsh_set_flyback_current(struct snd_soc_component *component,
 				int mode)
