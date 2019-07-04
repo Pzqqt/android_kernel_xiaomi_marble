@@ -15,9 +15,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <linux/msm_drm_notify.h>
-#include <linux/notifier.h>
+#include <drm/drm_panel.h>
 
 #include "msm_drv.h"
 #include "msm_gem.h"
@@ -33,49 +31,6 @@ struct msm_commit {
 	bool nonblock;
 	struct kthread_work commit_work;
 };
-
-static BLOCKING_NOTIFIER_HEAD(msm_drm_notifier_list);
-
-/**
- * msm_drm_register_client - register a client notifier
- * @nb: notifier block to callback on events
- *
- * This function registers a notifier callback function
- * to msm_drm_notifier_list, which would be called when
- * received unblank/power down event.
- */
-int msm_drm_register_client(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&msm_drm_notifier_list,
-						nb);
-}
-EXPORT_SYMBOL(msm_drm_register_client);
-
-/**
- * msm_drm_unregister_client - unregister a client notifier
- * @nb: notifier block to callback on events
- *
- * This function unregisters the callback function from
- * msm_drm_notifier_list.
- */
-int msm_drm_unregister_client(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&msm_drm_notifier_list,
-						  nb);
-}
-EXPORT_SYMBOL(msm_drm_unregister_client);
-
-/**
- * msm_drm_notifier_call_chain - notify clients of drm_events
- * @val: event MSM_DRM_EARLY_EVENT_BLANK or MSM_DRM_EVENT_BLANK
- * @v: notifier data, inculde display id and display blank
- *     event(unblank or power down).
- */
-static int msm_drm_notifier_call_chain(unsigned long val, void *v)
-{
-	return blocking_notifier_call_chain(&msm_drm_notifier_list, val,
-					    v);
-}
 
 static inline bool _msm_seamless_for_crtc(struct drm_atomic_state *state,
 			struct drm_crtc_state *crtc_state, bool enable)
@@ -186,7 +141,7 @@ msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 	struct drm_connector_state *old_conn_state;
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state;
-	struct msm_drm_notifier notifier_data;
+	struct drm_panel_notifier notifier_data;
 	int i, blank;
 
 	SDE_ATRACE_BEGIN("msm_disable");
@@ -195,7 +150,6 @@ msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 		const struct drm_encoder_helper_funcs *funcs;
 		struct drm_encoder *encoder;
 		struct drm_crtc_state *old_crtc_state;
-		unsigned int crtc_idx;
 
 		/*
 		 * Shut down everything that's in the changeset and currently
@@ -204,7 +158,6 @@ msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 		if (!old_conn_state->crtc)
 			continue;
 
-		crtc_idx = drm_crtc_index(old_conn_state->crtc);
 		old_crtc_state = drm_atomic_get_old_crtc_state(old_state,
 							old_conn_state->crtc);
 
@@ -230,11 +183,12 @@ msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 
 		if (connector->state->crtc &&
 			connector->state->crtc->state->active_changed) {
-			blank = MSM_DRM_BLANK_POWERDOWN;
+			blank = DRM_PANEL_BLANK_POWERDOWN;
 			notifier_data.data = &blank;
-			notifier_data.id = crtc_idx;
-			msm_drm_notifier_call_chain(MSM_DRM_EARLY_EVENT_BLANK,
-						     &notifier_data);
+			if (connector->panel)
+				drm_panel_notifier_call_chain(connector->panel,
+					DRM_PANEL_EARLY_EVENT_BLANK,
+					&notifier_data);
 		}
 		/*
 		 * Each encoder has at most one connector (since we always steal
@@ -254,8 +208,10 @@ msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 		if (connector->state->crtc &&
 			connector->state->crtc->state->active_changed) {
 			DRM_DEBUG_ATOMIC("Notify blank\n");
-			msm_drm_notifier_call_chain(MSM_DRM_EVENT_BLANK,
-						&notifier_data);
+			if (connector->panel)
+				drm_panel_notifier_call_chain(connector->panel,
+					DRM_PANEL_EVENT_BLANK,
+					&notifier_data);
 		}
 	}
 
@@ -398,7 +354,7 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 	struct drm_crtc_state *new_crtc_state;
 	struct drm_connector *connector;
 	struct drm_connector_state *new_conn_state;
-	struct msm_drm_notifier notifier_data;
+	struct drm_panel_notifier notifier_data;
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_kms *kms = priv->kms;
 	int bridge_enable_count = 0;
@@ -468,13 +424,13 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 
 		if (splash || (connector->state->crtc &&
 			connector->state->crtc->state->active_changed)) {
-			blank = MSM_DRM_BLANK_UNBLANK;
+			blank = DRM_PANEL_BLANK_UNBLANK;
 			notifier_data.data = &blank;
-			notifier_data.id =
-				connector->state->crtc->index;
 			DRM_DEBUG_ATOMIC("Notify early unblank\n");
-			msm_drm_notifier_call_chain(MSM_DRM_EARLY_EVENT_BLANK,
-					    &notifier_data);
+			if (connector->panel)
+				drm_panel_notifier_call_chain(connector->panel,
+					DRM_PANEL_EARLY_EVENT_BLANK,
+					&notifier_data);
 		}
 		/*
 		 * Each encoder has at most one connector (since we always steal
@@ -528,8 +484,10 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 		if (splash || (connector->state->crtc &&
 			connector->state->crtc->state->active_changed)) {
 			DRM_DEBUG_ATOMIC("Notify unblank\n");
-			msm_drm_notifier_call_chain(MSM_DRM_EVENT_BLANK,
-					    &notifier_data);
+			if (connector->panel)
+				drm_panel_notifier_call_chain(connector->panel,
+					DRM_PANEL_EVENT_BLANK,
+					&notifier_data);
 		}
 	}
 	SDE_ATRACE_END("msm_enable");
