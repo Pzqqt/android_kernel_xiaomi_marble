@@ -116,6 +116,61 @@ policy_mgr_get_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool
+policy_mgr_get_dfs_master_dynamic_enabled(
+	struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool sta_on_5g = false;
+	bool sta_on_2g = false;
+	uint32_t i;
+	bool enable;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return true;
+	}
+
+	if (!pm_ctx->cfg.sta_sap_scc_on_dfs_chnl)
+		return true;
+	if (pm_ctx->cfg.sta_sap_scc_on_dfs_chnl ==
+	    PM_STA_SAP_ON_DFS_MASTER_MODE_DISABLED)
+		return false;
+	if (pm_ctx->cfg.sta_sap_scc_on_dfs_chnl !=
+	    PM_STA_SAP_ON_DFS_MASTER_MODE_FLEX) {
+		policy_mgr_debug("sta_sap_scc_on_dfs_chnl %d unknown",
+				 pm_ctx->cfg.sta_sap_scc_on_dfs_chnl);
+		return true;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (!((pm_conc_connection_list[i].vdev_id != vdev_id) &&
+		      pm_conc_connection_list[i].in_use &&
+		      (pm_conc_connection_list[i].mode == PM_STA_MODE ||
+		       pm_conc_connection_list[i].mode == PM_P2P_CLIENT_MODE)))
+			continue;
+		if (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[i].chan))
+			sta_on_5g = true;
+		else
+			sta_on_2g = true;
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	if (policy_mgr_is_hw_dbs_capable(psoc) && !sta_on_5g)
+		enable = true;
+	else if (!sta_on_5g && !sta_on_2g)
+		enable = true;
+	else
+		enable = false;
+	policy_mgr_debug("sta_sap_scc_on_dfs_chnl %d sta_on_2g %d sta_on_5g %d enable %d",
+			 pm_ctx->cfg.sta_sap_scc_on_dfs_chnl, sta_on_2g,
+			 sta_on_5g, enable);
+
+	return enable;
+}
+
 QDF_STATUS
 policy_mgr_get_sta_sap_scc_lte_coex_chnl(struct wlan_objmgr_psoc *psoc,
 					 uint8_t *sta_sap_scc_lte_coex)
