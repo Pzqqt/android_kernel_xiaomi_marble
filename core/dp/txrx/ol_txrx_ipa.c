@@ -357,6 +357,7 @@ static inline void ol_txrx_ipa_wdi_tx_smmu_params(
 	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(tx_smmu) = 0;
 }
 
+#ifdef QCA_WIFI_3_0
 /**
  * ol_txrx_ipa_wdi_rx_smmu_params() - Config IPA RX params
  * @ipa_res: IPA resources
@@ -389,6 +390,25 @@ static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(rx_smmu) = 0;
 
 }
+#else
+static inline void ol_txrx_ipa_wdi_rx_smmu_params(
+				struct ol_txrx_ipa_resources *ipa_res,
+				qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu)
+{
+	QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(rx_smmu) =
+		IPA_CLIENT_WLAN1_PROD;
+	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_BASE(
+				rx_smmu),
+		     &ipa_res->rx_rdy_ring->sgtable,
+		     sizeof(sgtable_t));
+	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_SIZE(rx_smmu) =
+		ipa_res->rx_rdy_ring->mem_info.size;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_DOORBELL_PA(rx_smmu) =
+		ipa_res->rx_proc_done_idx->mem_info.pa;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(rx_smmu) = 0;
+}
+
+#endif
 
 #else
 
@@ -442,6 +462,7 @@ static inline void ol_txrx_ipa_wdi_tx_params(
 	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(tx) = 0;
 }
 
+#ifdef QCA_WIFI_3_0
 /**
  * ol_txrx_ipa_wdi_rx_params() - Config IPA RX params
  * @ipa_res: IPA resources
@@ -469,6 +490,23 @@ static inline void ol_txrx_ipa_wdi_rx_params(
 	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx) = 0;
 }
 
+#else
+
+static inline void ol_txrx_ipa_wdi_rx_params(
+				struct ol_txrx_ipa_resources *ipa_res,
+				qdf_ipa_wdi_pipe_setup_info_t *rx)
+{
+	QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) = IPA_CLIENT_WLAN1_PROD;
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(rx) =
+		ipa_res->rx_rdy_ring->mem_info.pa;
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(rx) =
+		ipa_res->rx_rdy_ring->mem_info.size;
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(rx) =
+		ipa_res->rx_proc_done_idx->mem_info.pa;
+	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx) = 0;
+}
+
+#endif
 /**
  * ol_txrx_ipa_setup() - Setup and connect IPA pipes
  * @pdev: handle to the device instance
