@@ -4944,7 +4944,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	uint16_t prev_rsn_length = 0;
 	enum dfs_mode mode;
 	bool ignore_cac = 0;
-	uint8_t is_overlap_enable = 0, scc_on_dfs_chan = 0;
+	uint8_t is_overlap_enable = 0;
 	uint8_t beacon_fixed_len, indoor_chnl_marking = 0;
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
@@ -5155,18 +5155,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		status = ucfg_mlme_get_dfs_ignore_cac(hdd_ctx->psoc,
 						      &ignore_cac);
 		if (!QDF_IS_STATUS_SUCCESS(status))
-			hdd_err("can't get sta-sap scc on dfs chnl, use def");
-		status =
-		ucfg_policy_mgr_get_sta_sap_scc_on_dfs_chnl(hdd_ctx->psoc,
-							    &scc_on_dfs_chan);
-
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			hdd_err("can't get sta-sap scc on dfs chnl, use def");
-
-		if (ignore_cac ||
-		    ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
-		     scc_on_dfs_chan))
-			ignore_cac = 1;
+			hdd_err("can't get ignore cac flag");
 
 		wlansap_set_dfs_ignore_cac(mac_handle, ignore_cac);
 
@@ -6213,8 +6202,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	 * assumed disabled in the driver.
 	 */
 	if ((wlan_reg_get_channel_state(hdd_ctx->pdev, channel) ==
-	     CHANNEL_STATE_DFS) && sta_sap_scc_on_dfs_chan && !sta_cnt) {
-		hdd_err("SAP not allowed on DFS channel!!");
+	     CHANNEL_STATE_DFS) && !sta_cnt && sta_sap_scc_on_dfs_chan &&
+	     !ucfg_policy_mgr_get_dfs_master_dynamic_enabled(
+				hdd_ctx->psoc, adapter->vdev_id)) {
+		hdd_err("SAP not allowed on DFS channel if no dfs master capability!!");
 		return -EINVAL;
 	}
 	if (!wlan_reg_is_etsi13_srd_chan_allowed_master_mode(hdd_ctx->pdev) &&

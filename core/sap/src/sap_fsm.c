@@ -2622,7 +2622,10 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 			if ((false == sap_dfs_info->ignore_cac) &&
 			    (eSAP_DFS_DO_NOT_SKIP_CAC ==
 			    sap_dfs_info->cac_state) &&
-			    !sap_ctx->pre_cac_complete) {
+			    !sap_ctx->pre_cac_complete &&
+			    policy_mgr_get_dfs_master_dynamic_enabled(
+					mac_ctx->psoc,
+					sap_ctx->sessionId)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
 					  FL("start cac timer"));

@@ -368,7 +368,10 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 	} else if (is_ch_dfs) {
 		if ((false == mac_ctx->sap.SapDfsInfo.ignore_cac)
 		    && (eSAP_DFS_DO_NOT_SKIP_CAC ==
-			mac_ctx->sap.SapDfsInfo.cac_state)) {
+			mac_ctx->sap.SapDfsInfo.cac_state) &&
+		    policy_mgr_get_dfs_master_dynamic_enabled(
+					mac_ctx->psoc,
+					sap_ctx->sessionId)) {
 			sap_ctx->fsm_state = SAP_INIT;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				  "%s: %d: sapdfs: => SAP_INIT with ignore cac false on sapctx[%pK]",
@@ -790,7 +793,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 	mac_handle_t mac_handle;
 	struct mac_context *mac_ctx;
 	uint8_t intf;
-	bool sta_sap_scc_on_dfs_chan;
 
 	if (QDF_IS_STATUS_ERROR(wlansap_context_get(sap_ctx)))
 		return QDF_STATUS_E_FAILURE;
@@ -804,9 +806,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			FL("roam_status = %d, roam_result = %d"),
 			roam_status, roam_result);
-
-	sta_sap_scc_on_dfs_chan =
-		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(mac_ctx->psoc);
 
 	mac_handle = MAC_HANDLE(mac_ctx);
 
@@ -892,7 +891,8 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 			  "Received Radar Indication on sap ch %d, session %d",
 			  sap_ctx->channel, sap_ctx->sessionId);
 
-		if (sta_sap_scc_on_dfs_chan) {
+		if (!policy_mgr_get_dfs_master_dynamic_enabled(
+				mac_ctx->psoc, sap_ctx->sessionId)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_DEBUG,
 				  FL("Ignore the Radar indication"));
@@ -1195,7 +1195,8 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 
 		break;
 	case eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND:
-		if (sta_sap_scc_on_dfs_chan)
+		if (!policy_mgr_get_dfs_master_dynamic_enabled(
+				mac_ctx->psoc, sap_ctx->sessionId))
 			break;
 		wlansap_roam_process_dfs_radar_found(mac_ctx, sap_ctx,
 						&qdf_ret_status);

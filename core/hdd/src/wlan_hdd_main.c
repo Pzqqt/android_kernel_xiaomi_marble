@@ -15038,7 +15038,9 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 	    test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags) &&
 	    wlan_reg_is_dfs_ch(hdd_ctx->pdev,
 			       ap_adapter->session.ap.operating_channel)) {
-
+		if (policy_mgr_get_dfs_master_dynamic_enabled(
+				hdd_ctx->psoc, ap_adapter->vdev_id))
+			return;
 		hdd_warn("STA-AP Mode DFS not supported, Switch SAP channel to Non DFS");
 
 		restart_chan =
