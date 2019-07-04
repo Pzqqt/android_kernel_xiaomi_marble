@@ -378,7 +378,7 @@ QDF_STATUS
 target_if_scan_start(struct wlan_objmgr_pdev *pdev,
 		struct scan_start_request *req)
 {
-	void *pdev_wmi_handle;
+	wmi_unified_t pdev_wmi_handle;
 
 	pdev_wmi_handle = GET_WMI_HDL_FROM_PDEV(pdev);
 	if (!pdev_wmi_handle) {
@@ -392,7 +392,7 @@ QDF_STATUS
 target_if_scan_cancel(struct wlan_objmgr_pdev *pdev,
 		struct scan_cancel_param *req)
 {
-	void *pdev_wmi_handle;
+	wmi_unified_t pdev_wmi_handle;
 
 	pdev_wmi_handle = GET_WMI_HDL_FROM_PDEV(pdev);
 	if (!pdev_wmi_handle) {

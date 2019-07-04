@@ -285,7 +285,7 @@ static QDF_STATUS target_if_dfs_set_phyerr_filter_offload(
 					bool dfs_phyerr_filter_offload)
 {
 	QDF_STATUS status;
-	void *wmi_handle;
+	wmi_unified_t wmi_handle;
 
 	if (!pdev) {
 		target_if_err("null pdev");

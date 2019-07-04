@@ -118,7 +118,7 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	struct cdp_peer *peer = NULL;
 	uint8_t peer_id;
 	uint8_t def_tx_idx;
-	void *pdev_wmi_handle;
+	wmi_unified_t pdev_wmi_handle;
 	bool pairwise;
 	QDF_STATUS status;
 

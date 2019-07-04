@@ -118,12 +118,6 @@ struct CE_state;
 #define HIF_MAX_GROUP 8
 #endif
 
-#ifdef CONFIG_SLUB_DEBUG_ON
-#ifndef CONFIG_WIN
-#define HIF_CONFIG_SLUB_DEBUG_ON
-#endif
-#endif
-
 #ifndef NAPI_YIELD_BUDGET_BASED
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
 #define QCA_NAPI_DEF_SCALE_BIN_SHIFT 1

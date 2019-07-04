@@ -3090,12 +3090,7 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 		goto out;
 	}
 
-	if (qdf_likely(!peer->bss_peer)) {
-		DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
-
-		if (ts->status == HAL_TX_TQM_RR_FRAME_ACKED)
-			DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
-	} else {
+	if (qdf_unlikely(peer->bss_peer && vdev->opmode == wlan_op_mode_ap)) {
 		if (ts->status != HAL_TX_TQM_RR_REM_CMD_REM) {
 			DP_STATS_INC_PKT(peer, tx.mcast, 1, length);
 
@@ -3105,6 +3100,10 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 				DP_STATS_INC_PKT(peer, tx.bcast, 1, length);
 			}
 		}
+	} else {
+		DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
+		if (ts->status == HAL_TX_TQM_RR_FRAME_ACKED)
+			DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
 	}
 
 	dp_tx_update_peer_stats(tx_desc, ts, peer, ring_id);

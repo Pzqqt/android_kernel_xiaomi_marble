@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -140,7 +140,7 @@ QDF_STATUS target_if_green_ap_enable_egap(
 		struct wlan_green_ap_egap_params *egap_params)
 {
 	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
-	void *wmi_hdl;
+	wmi_unified_t wmi_hdl;
 
 	if (!pdev) {
 		green_ap_err("pdev context passed is NULL");
@@ -175,7 +175,7 @@ QDF_STATUS target_if_green_ap_enable_egap(
 QDF_STATUS target_if_green_ap_set_ps_on_off(struct wlan_objmgr_pdev *pdev,
 					    bool value, uint8_t pdev_id)
 {
-	void *wmi_hdl;
+	wmi_unified_t wmi_hdl;
 
 	if (!pdev) {
 		green_ap_err("pdev context passed is NULL");

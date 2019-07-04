@@ -5260,7 +5260,7 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 		       pdev->stats.tx.dropped.age_out);
 	DP_PRINT_STATS("	headroom insufficient = %d",
 		       pdev->stats.tx_i.dropped.headroom_insufficient);
-	DP_PRINT_STATS("	Multicast:");
+	DP_PRINT_STATS("Multicast:");
 	DP_PRINT_STATS("	Packets: %u",
 		       pdev->stats.tx.mcast.num);
 	DP_PRINT_STATS("	Bytes: %llu",

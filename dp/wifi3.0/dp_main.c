@@ -1028,6 +1028,8 @@ void dp_print_ast_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("	Entries Added   = %d", soc->stats.ast.added);
 	DP_PRINT_STATS("	Entries Deleted = %d", soc->stats.ast.deleted);
 	DP_PRINT_STATS("	Entries Agedout = %d", soc->stats.ast.aged_out);
+	DP_PRINT_STATS("	Entries MAP ERR  = %d", soc->stats.ast.map_err);
+
 	DP_PRINT_STATS("AST Table:");
 
 	qdf_spin_lock_bh(&soc->ast_lock);
@@ -3863,6 +3865,8 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_htt_ppdu_stats_detach(pdev);
 
+	dp_tx_ppdu_stats_detach(pdev);
+
 	qdf_nbuf_free(pdev->sojourn_buf);
 
 	dp_cal_client_detach(&pdev->cal_client_ctx);
@@ -3919,8 +3923,6 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	}
 
 	dp_mon_link_free(pdev);
-
-	dp_tx_ppdu_stats_detach(pdev);
 
 	/* Cleanup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
@@ -5091,6 +5093,10 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		peer->ctrl_peer = ctrl_peer;
 
 		dp_local_peer_id_alloc(pdev, peer);
+
+		qdf_spinlock_create(&peer->peer_info_lock);
+		dp_peer_rx_bufq_resources_init(peer);
+
 		DP_STATS_INIT(peer);
 		DP_STATS_UPD(peer, rx.avg_rssi, INVALID_RSSI);
 

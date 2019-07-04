@@ -26,7 +26,6 @@
 #include "hif_debug.h"
 #include "epping_main.h"
 #include "hif_main.h"
-#include "qwlan_version.h"
 #include "usb_api.h"
 
 #define DELAY_FOR_TARGET_READY 200	/* 200ms */
@@ -532,8 +531,7 @@ int hif_usb_bus_configure(struct hif_softc *scn)
 	else
 		mode = PLD_MISSION;
 
-	return pld_wlan_enable(scn->qdf_dev->dev, &cfg,
-			       mode, QWLAN_VERSIONSTR);
+	return pld_wlan_enable(scn->qdf_dev->dev, &cfg, mode);
 }
 #else
 /**
@@ -706,7 +704,6 @@ void hif_usb_ramdump_handler(struct hif_opaque_softc *scn)
 
 	if (pattern == FW_ASSERT_PATTERN) {
 		HIF_ERROR("Firmware crash detected...\n");
-		HIF_ERROR("Host SW version: %s\n", QWLAN_VERSIONSTR);
 		HIF_ERROR("target_type: %d.target_version %d. target_revision%d.",
 			tgt_info->target_type,
 			tgt_info->target_version,

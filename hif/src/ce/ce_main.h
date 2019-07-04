@@ -76,10 +76,6 @@ enum ce_target_type {
 	CE_MAX_TARGET_TYPE
 };
 
-#ifdef CONFIG_WIN
-#define QWLAN_VERSIONSTR "WIN"
-#endif
-
 enum ol_ath_hif_pkt_ecodes {
 	HIF_PIPE_NO_RESOURCE = 0
 };

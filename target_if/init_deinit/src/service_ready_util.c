@@ -142,7 +142,8 @@ int init_deinit_populate_service_bitmap(void *wmi_handle, uint8_t *event,
 	return 0;
 }
 
-int init_deinit_populate_fw_version_cmd(void *wmi_handle, uint8_t *event)
+int init_deinit_populate_fw_version_cmd(wmi_unified_t wmi_handle,
+					uint8_t *event)
 {
 	QDF_STATUS status;
 
