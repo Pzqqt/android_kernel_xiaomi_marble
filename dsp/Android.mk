@@ -4,7 +4,7 @@
 
 # Check if this driver needs be built for current target
 ifeq ($(call is-board-platform,msmnile),true)
-ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), msmnile_au))
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), msmnile_au msmnile_gvmq))
 AUDIO_SELECT  := CONFIG_SND_SOC_SA8155=m
 else
 AUDIO_SELECT  := CONFIG_SND_SOC_SM8150=m
@@ -76,7 +76,7 @@ LOCAL_MODULE_DEBUG_ENABLE := true
 LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
 include $(DLKM_DIR)/AndroidKernelModule.mk
 ############################################################
-ifneq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), msmnile_au))
+ifneq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), msmnile_au msmnile_gvmq))
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_usf.ko
 LOCAL_MODULE_KBUILD_NAME  := usf_dlkm.ko

@@ -48,6 +48,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/qcs405autoconf.h
 	endif
+	ifeq ($(CONFIG_QTI_GVM), y)
+		include $(AUDIO_ROOT)/config/gvmauto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/gvmautoconf.h
+	endif
 endif
 
 # As per target team, build is done as follows:

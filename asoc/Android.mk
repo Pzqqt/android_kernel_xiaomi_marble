@@ -5,7 +5,7 @@
 # Check if this driver needs be built for current target
 ifeq ($(call is-board-platform,msmnile),true)
 TARGET := msmnile
-ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), msmnile_au))
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), msmnile_au msmnile_gvmq))
 AUDIO_SELECT  := CONFIG_SND_SOC_SA8155=m
 else
 AUDIO_SELECT  := CONFIG_SND_SOC_SM8150=m
