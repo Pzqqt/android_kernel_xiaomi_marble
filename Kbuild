@@ -2558,6 +2558,8 @@ cppflags-$(CONFIG_WMI_ROAM_SUPPORT) += -DWMI_ROAM_SUPPORT
 cppflags-$(CONFIG_WMI_CONCURRENCY_SUPPORT) += -DWMI_CONCURRENCY_SUPPORT
 cppflags-$(CONFIG_WMI_STA_SUPPORT) += -DWMI_STA_SUPPORT
 
+cppflags-y += -DWMI_MULTI_MAC_SVC
+
 # Dummy flag for WIN/MCL converged data path compilation
 cppflags-y += -DDP_PRINT_ENABLE=0
 cppflags-y += -DATH_SUPPORT_WRAP=0
