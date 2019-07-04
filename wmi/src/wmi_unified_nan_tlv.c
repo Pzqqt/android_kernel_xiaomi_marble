@@ -817,24 +817,30 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGD("ndp_app_info - %d bytes",
 		 fixed_params->ndp_app_info_len);
 
-	rsp->ndp_config.ndp_cfg_len = fixed_params->ndp_cfg_len;
-	rsp->ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
 	rsp->ncs_sk_type = fixed_params->nan_csid;
-	rsp->scid.scid_len = fixed_params->nan_scid_len;
+	if (event->ndp_cfg) {
+		rsp->ndp_config.ndp_cfg_len = fixed_params->ndp_cfg_len;
+		if (rsp->ndp_config.ndp_cfg_len > NDP_QOS_INFO_LEN)
+			rsp->ndp_config.ndp_cfg_len = NDP_QOS_INFO_LEN;
+		qdf_mem_copy(rsp->ndp_config.ndp_cfg, event->ndp_cfg,
+			     rsp->ndp_config.ndp_cfg_len);
+	}
 
-	if (rsp->ndp_config.ndp_cfg_len > NDP_QOS_INFO_LEN)
-		rsp->ndp_config.ndp_cfg_len = NDP_QOS_INFO_LEN;
-	qdf_mem_copy(rsp->ndp_config.ndp_cfg, event->ndp_cfg,
-		     rsp->ndp_config.ndp_cfg_len);
+	if (event->ndp_app_info) {
+		rsp->ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
+		if (rsp->ndp_info.ndp_app_info_len > NDP_APP_INFO_LEN)
+			rsp->ndp_info.ndp_app_info_len = NDP_APP_INFO_LEN;
+		qdf_mem_copy(rsp->ndp_info.ndp_app_info, event->ndp_app_info,
+			     rsp->ndp_info.ndp_app_info_len);
+	}
 
-	if (rsp->ndp_info.ndp_app_info_len > NDP_APP_INFO_LEN)
-		rsp->ndp_info.ndp_app_info_len = NDP_APP_INFO_LEN;
-	qdf_mem_copy(rsp->ndp_info.ndp_app_info, event->ndp_app_info,
-		     rsp->ndp_info.ndp_app_info_len);
-
-	if (rsp->scid.scid_len > NDP_SCID_BUF_LEN)
-		rsp->scid.scid_len = NDP_SCID_BUF_LEN;
-	qdf_mem_copy(rsp->scid.scid, event->ndp_scid, rsp->scid.scid_len);
+	if (event->ndp_scid) {
+		rsp->scid.scid_len = fixed_params->nan_scid_len;
+		if (rsp->scid.scid_len > NDP_SCID_BUF_LEN)
+			rsp->scid.scid_len = NDP_SCID_BUF_LEN;
+		qdf_mem_copy(rsp->scid.scid, event->ndp_scid,
+			     rsp->scid.scid_len);
+	}
 
 	if (event->ndp_transport_ip_param &&
 	    event->num_ndp_transport_ip_param) {
