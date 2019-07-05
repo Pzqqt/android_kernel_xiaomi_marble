@@ -60,6 +60,8 @@
  * @bt_interference_high_ll: Lower limit of high level BT interference
  * @bt_interference_high_ul: Upper limit of high level BT interference
  * @btc_mpta_helper_enable: Enable/Disable tri-radio MPTA helper
+ * @bt_sco_allow_wlan_2g_scan: Enable/Disble wlan 2g scan when
+ *                             BT SCO connection is on
  */
 struct wlan_fwol_coex_config {
 	uint8_t btc_mode;
@@ -76,6 +78,7 @@ struct wlan_fwol_coex_config {
 #ifdef FEATURE_MPTA_HELPER
 	bool    btc_mpta_helper_enable;
 #endif
+	bool bt_sco_allow_wlan_2g_scan;
 };
 
 #define FWOL_THERMAL_LEVEL_MAX 4
