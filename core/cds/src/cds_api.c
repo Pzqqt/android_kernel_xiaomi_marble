@@ -2301,7 +2301,8 @@ uint32_t cds_get_log_indicator(void)
  */
 void cds_wlan_flush_host_logs_for_fatal(void)
 {
-	wlan_flush_host_logs_for_fatal();
+	if (cds_is_log_report_in_progress())
+		wlan_flush_host_logs_for_fatal();
 }
 
 /**
