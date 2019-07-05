@@ -844,4 +844,58 @@ static inline QDF_STATUS cdp_vdev_get_neighbour_rssi(ol_txrx_soc_handle soc,
 								rssi);
 }
 #endif
-#endif
+
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+/**
+ * cdp_set_rx_flow_tag() - wrapper function to set the flow
+ *                         tag in CDP layer from cfg layer
+ * @soc: SOC TXRX handle
+ * @pdev: CDP pdev pointer
+ * @flow_info: Flow 5-tuple, along with tag, if any, that needs to added/deleted
+ *
+ * Return: Success when add/del operation is successful, error otherwise
+ */
+static inline QDF_STATUS
+cdp_set_rx_flow_tag(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+		    struct cdp_rx_flow_info *flow_info)
+{
+	if (!soc || !soc->ops) {
+		dp_err("Invalid SOC instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_rx_flow_tag)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_set_rx_flow_tag(pdev, flow_info);
+}
+
+/**
+ * cdp_dump_rx_flow_tag_stats() - wrapper function to dump the flow
+ *                                tag statistics for given flow
+ * @soc: SOC TXRX handle
+ * @pdev: CDP pdev pointer
+ * @flow_info: Flow tuple for which we want to print the statistics
+ *
+ * Return: Success when flow is found and stats are printed, error otherwise
+ */
+static inline QDF_STATUS
+cdp_dump_rx_flow_tag_stats(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+			   struct cdp_rx_flow_info *flow_info)
+{
+	if (!soc || !soc->ops) {
+		dp_err("Invalid SOC instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_dump_rx_flow_tag_stats)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_dump_rx_flow_tag_stats(pdev, flow_info);
+}
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+#endif /* _CDP_TXRX_CTRL_H_ */

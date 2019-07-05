@@ -1405,4 +1405,90 @@ struct cdp_soc_t *dp_soc_to_cdp_soc_t(struct dp_soc *psoc)
 {
 	return (struct cdp_soc_t *)psoc;
 }
+
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+/**
+ * dp_rx_flow_update_fse_stats() - Update a flow's statistics
+ * @pdev: pdev handle
+ * @flow_id: flow index (truncated hash) in the Rx FST
+ *
+ * Return: Success when flow statistcs is updated, error on failure
+ */
+QDF_STATUS dp_rx_flow_get_fse_stats(struct dp_pdev *pdev,
+				    struct cdp_rx_flow_info *rx_flow_info,
+				    struct cdp_flow_stats *stats);
+
+/**
+ * dp_rx_flow_delete_entry() - Delete a flow entry from flow search table
+ * @pdev: pdev handle
+ * @rx_flow_info: DP flow parameters
+ *
+ * Return: Success when flow is deleted, error on failure
+ */
+QDF_STATUS dp_rx_flow_delete_entry(struct dp_pdev *pdev,
+				   struct cdp_rx_flow_info *rx_flow_info);
+
+/**
+ * dp_rx_flow_add_entry() - Add a flow entry to flow search table
+ * @pdev: DP pdev instance
+ * @rx_flow_info: DP flow paramaters
+ *
+ * Return: Success when flow is added, no-memory or already exists on error
+ */
+QDF_STATUS dp_rx_flow_add_entry(struct dp_pdev *pdev,
+				struct cdp_rx_flow_info *rx_flow_info);
+
+/**
+ * dp_rx_fst_attach() - Initialize Rx FST and setup necessary parameters
+ * @soc: SoC handle
+ * @pdev: Pdev handle
+ *
+ * Return: Handle to flow search table entry
+ */
+QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev);
+
+/**
+ * dp_rx_fst_detach() - De-initialize Rx FST
+ * @soc: SoC handle
+ * @pdev: Pdev handle
+ *
+ * Return: None
+ */
+void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev);
+
+/**
+ * dp_rx_flow_send_fst_fw_setup() - Program FST parameters in FW/HW post-attach
+ * @soc: SoC handle
+ * @pdev: Pdev handle
+ *
+ * Return: Success when fst parameters are programmed in FW, error otherwise
+ */
+QDF_STATUS dp_rx_flow_send_fst_fw_setup(struct dp_soc *soc,
+					struct dp_pdev *pdev);
+#else
+/**
+ * dp_rx_fst_attach() - Initialize Rx FST and setup necessary parameters
+ * @soc: SoC handle
+ * @pdev: Pdev handle
+ *
+ * Return: Handle to flow search table entry
+ */
+static inline
+QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_rx_fst_detach() - De-initialize Rx FST
+ * @soc: SoC handle
+ * @pdev: Pdev handle
+ *
+ * Return: None
+ */
+static inline
+void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+}
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
 #endif /* #ifndef _DP_INTERNAL_H_ */

@@ -43,6 +43,7 @@
 #include <hal_api.h>
 #include <hal_api_mon.h>
 #include "hal_rx.h"
+//#include "hal_rx_flow.h"
 
 #define MAX_BW 7
 #define MAX_RETRIES 4
@@ -116,6 +117,7 @@ struct dp_soc;
 union dp_rx_desc_list_elem_t;
 struct cdp_peer_rate_stats_ctx;
 struct cdp_soc_rate_stats_ctx;
+struct dp_rx_fst;
 
 #define DP_PDEV_ITERATE_VDEV_LIST(_pdev, _vdev) \
 	TAILQ_FOREACH((_vdev), &(_pdev)->vdev_list, vdev_list_elem)
@@ -1128,6 +1130,19 @@ struct dp_soc {
 	qdf_atomic_t num_tx_outstanding;
 	/* Num Tx allowed */
 	uint32_t num_tx_allowed;
+
+	/**
+	 * Flag to indicate whether WAR to address single cache entry
+	 * invalidation bug is enabled or not
+	 */
+	bool is_rx_fse_full_cache_invalidate_war_enabled;
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+	/**
+	 * Pointer to DP RX Flow FST at SOC level if
+	 * is_rx_flow_search_table_per_pdev is false
+	 */
+	struct dp_rx_fst *rx_fst;
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
 };
 
 #ifdef IPA_OFFLOAD
@@ -1292,13 +1307,13 @@ struct dp_peer_tx_capture {
  * at end of each MSDU in monitor-lite mode
  * @reserved1: reserved for future use
  * @reserved2: reserved for future use
- * @reserved3: reserved for future use
+ * @flow_tag: flow tag value read from skb->cb
  * @protocol_tag: protocol tag value read from skb->cb
  */
 struct dp_rx_mon_enh_trailer_data {
 	uint16_t reserved1;
 	uint16_t reserved2;
-	uint16_t reserved3;
+	uint16_t flow_tag;
 	uint16_t protocol_tag;
 };
 #endif /* WLAN_RX_PKT_CAPTURE_ENH */
@@ -1647,6 +1662,13 @@ struct dp_pdev {
 	 * belonging to one ppdu
 	 */
 	qdf_nbuf_queue_t rx_ppdu_buf_q;
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+	/**
+	 * Pointer to DP Flow FST at SOC level if
+	 * is_rx_flow_search_table_per_pdev is true
+	 */
+	struct dp_rx_fst *rx_fst;
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
 };
 
 struct dp_peer;
@@ -1997,5 +2019,50 @@ struct dp_tx_me_buf_t {
 	struct dp_tx_me_buf_t *next;
 	uint8_t data[QDF_MAC_ADDR_SIZE];
 };
+
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+struct hal_rx_fst;
+
+struct dp_rx_fse {
+	/* HAL Rx Flow Search Entry which matches HW definition */
+	void *hal_rx_fse;
+	/* Toeplitz hash value */
+	uint32_t flow_hash;
+	/* Flow index, equivalent to hash value truncated to FST size */
+	uint32_t flow_id;
+	/* Stats tracking for this flow */
+	struct cdp_flow_stats stats;
+	/* Flag indicating whether flow is IPv4 address tuple */
+	bool is_ipv4_addr_entry;
+	/* Flag indicating whether flow is valid */
+	bool is_valid;
+};
+
+struct dp_rx_fst {
+	/* Software (DP) FST */
+	uint8_t *base;
+	/* Pointer to HAL FST */
+	struct hal_rx_fst *hal_rx_fst;
+	/* Base physical address of HAL RX HW FST */
+	uint64_t hal_rx_fst_base_paddr;
+	/* Maximum number of flows FSE supports */
+	uint16_t max_entries;
+	/* Num entries in flow table */
+	uint16_t num_entries;
+	/* SKID Length */
+	uint16_t max_skid_length;
+	/* Hash mask to obtain legitimate hash entry */
+	uint32_t hash_mask;
+	/* Timer for bundling of flows */
+	qdf_timer_t cache_invalidate_timer;
+	/**
+	 * Flag which tracks whether cache update
+	 * is needed on timer expiry
+	 */
+	qdf_atomic_t is_cache_update_pending;
+	/* Flag to indicate completion of FSE setup in HW/FW */
+	bool fse_setup_done;
+};
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
 
 #endif /* _DP_TYPES_H_ */

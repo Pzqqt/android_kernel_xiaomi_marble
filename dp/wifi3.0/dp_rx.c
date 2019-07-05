@@ -2064,6 +2064,9 @@ done:
 		dp_rx_update_protocol_tag(soc, vdev, nbuf, rx_tlv_hdr,
 					  reo_ring_num, false, true);
 
+		/* Update the flow tag in SKB based on FSE metadata */
+		dp_rx_update_flow_tag(soc, vdev, nbuf, rx_tlv_hdr, true);
+
 		dp_rx_msdu_stats_update(soc, nbuf, rx_tlv_hdr, peer,
 					ring_id, tid_stats);
 
@@ -2371,6 +2374,8 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	uint32_t rx_sw_desc_weight;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
+	QDF_STATUS ret_val;
+
 
 	if (wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
@@ -2393,6 +2398,15 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 
 	rx_desc_pool->owner = DP_WBM2SW_RBM;
 	/* For Rx buffers, WBM release ring is SW RING 3,for all pdev's */
+
+	ret_val = dp_rx_fst_attach(soc, pdev);
+	if ((ret_val != QDF_STATUS_SUCCESS) &&
+	    (ret_val != QDF_STATUS_E_NOSUPPORT)) {
+		QDF_TRACE(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_ERROR,
+			  "RX Flow Search Table attach failed: pdev %d err %d",
+			  pdev_id, ret_val);
+		return ret_val;
+	}
 
 	return dp_pdev_rx_buffers_attach(soc, pdev_id, dp_rxdma_srng,
 					 rx_desc_pool, rxdma_entries - 1);

@@ -469,10 +469,18 @@ struct hal_rx_nac_info {
 
 /**
  * struct hal_rx_ppdu_msdu_info - struct for msdu info from HW TLVs
- * @cce_metadata: cached metadata value received in the MSDU_END TLV
+ * @cce_metadata: cached CCE metadata value received in the MSDU_END TLV
+ * @is_flow_idx_timeout: flag to indicate if flow search timeout occurred
+ * @is_flow_idx_invalid: flag to indicate if flow idx is valid or not
+ * @fse_metadata: cached FSE metadata value received in the MSDU END TLV
+ * @flow_idx: flow idx matched in FSE received in the MSDU END TLV
  */
 struct hal_rx_ppdu_msdu_info {
 	uint16_t cce_metadata;
+	bool is_flow_idx_timeout;
+	bool is_flow_idx_invalid;
+	uint32_t fse_metadata;
+	uint32_t flow_idx;
 };
 
 struct hal_rx_ppdu_info {

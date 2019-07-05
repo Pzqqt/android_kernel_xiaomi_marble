@@ -1827,4 +1827,75 @@ struct cdp_peer_cookie {
 	uint8_t cookie;
 	struct cdp_stats_cookie *ctx;
 };
+
+/**
+ * cdp_flow_stats - Per-Flow (5-tuple) statistics
+ * @msdu_count: number of rx msdus matching this flow
+ *
+ * HW also includes msdu_byte_count and timestamp, which
+ * are not currently tracked in SW.
+ */
+struct cdp_flow_stats {
+	uint32_t msdu_count;
+};
+
+/**
+ * cdp_flow_fst_operation - RX FST operations allowed
+ */
+enum cdp_flow_fst_operation {
+	CDP_FLOW_FST_ENTRY_ADD,
+	CDP_FLOW_FST_ENTRY_DEL,
+	CDP_FLOW_FST_RX_BYPASS_ENABLE,
+	CDP_FLOW_FST_RX_BYPASS_DISABLE
+};
+
+/**
+ * cdp_flow_protocol_type - RX FST supported protocol types, mapped to HW spec
+ */
+enum cdp_flow_protocol_type {
+	CDP_FLOW_PROTOCOL_TYPE_TCP = 6,
+	CDP_FLOW_PROTOCOL_TYPE_UDP = 17,
+};
+
+/**
+ * cdp_rx_flow_tuple_info - RX flow tuple info used for addition/deletion
+ * @dest_ip_127_96: destination IP address bit fields 96-127
+ * @dest_ip_95_64: destination IP address bit fields 64-95
+ * @dest_ip_63_32: destination IP address bit fields 32-63
+ * @dest_ip_31_0: destination IP address bit fields 0-31
+ * @src_ip_127_96: source IP address bit fields 96-127
+ * @src_ip_95_64: source IP address bit fields 64-95
+ * @src_ip_63_32: source IP address bit fields 32-63
+ * @src_ip_31_0: source IP address bit fields 0-31
+ * @dest_port: destination port of flow
+ * @src_port: source port of flow
+ * @l4_protocol: protocol type in flow (TCP/UDP)
+ */
+struct cdp_rx_flow_tuple_info {
+	uint32_t dest_ip_127_96;
+	uint32_t dest_ip_95_64;
+	uint32_t dest_ip_63_32;
+	uint32_t dest_ip_31_0;
+	uint32_t src_ip_127_96;
+	uint32_t src_ip_95_64;
+	uint32_t src_ip_63_32;
+	uint32_t src_ip_31_0;
+	uint16_t dest_port;
+	uint16_t src_port;
+	uint16_t l4_protocol;
+};
+
+/**
+ * cdp_rx_flow_info - RX flow info used for addition/deletion
+ * @is_addr_ipv4: indicates whether given IP address is IPv4/IPv6
+ * @op_code: add/delete/enable/disable operation requested
+ * @flow_tupe_info: structure containing tuple info
+ * @fse_metadata: metadata to be set in RX flow
+ */
+struct cdp_rx_flow_info {
+	bool is_addr_ipv4;
+	enum cdp_flow_fst_operation op_code;
+	struct cdp_rx_flow_tuple_info flow_tuple_info;
+	uint16_t fse_metadata;
+};
 #endif

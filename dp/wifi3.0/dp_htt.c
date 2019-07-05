@@ -4160,3 +4160,277 @@ dp_peer_update_inactive_time(struct dp_pdev *pdev, uint32_t tag_type,
 		qdf_err("Invalid tag_type");
 	}
 }
+
+/**
+ * dp_htt_rx_flow_fst_setup(): Send HTT Rx FST setup message to FW
+ * @pdev: DP pdev handle
+ * @fse_setup_info: FST setup parameters
+ *
+ * Return: Success when HTT message is sent, error on failure
+ */
+QDF_STATUS
+dp_htt_rx_flow_fst_setup(struct dp_pdev *pdev,
+			 struct dp_htt_rx_flow_fst_setup *fse_setup_info)
+{
+	struct htt_soc *soc = pdev->soc->htt_handle;
+	struct dp_htt_htc_pkt *pkt;
+	qdf_nbuf_t msg;
+	u_int32_t *msg_word;
+	struct htt_h2t_msg_rx_fse_setup_t *fse_setup;
+	uint8_t *htt_logger_bufp;
+	u_int32_t *key;
+
+	msg = qdf_nbuf_alloc(
+		soc->osdev,
+		HTT_MSG_BUF_SIZE(sizeof(struct htt_h2t_msg_rx_fse_setup_t)),
+		/* reserve room for the HTC header */
+		HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4, TRUE);
+
+	if (!msg)
+		return QDF_STATUS_E_NOMEM;
+
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	if (!qdf_nbuf_put_tail(msg,
+			       sizeof(struct htt_h2t_msg_rx_fse_setup_t))) {
+		qdf_err("Failed to expand head for HTT RX_FSE_SETUP msg");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* fill in the message contents */
+	msg_word = (u_int32_t *)qdf_nbuf_data(msg);
+
+	memset(msg_word, 0, sizeof(struct htt_h2t_msg_rx_fse_setup_t));
+	/* rewind beyond alignment pad to get to the HTC header reserved area */
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	htt_logger_bufp = (uint8_t *)msg_word;
+
+	*msg_word = 0;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG);
+
+	fse_setup = (struct htt_h2t_msg_rx_fse_setup_t *)msg_word;
+
+	HTT_RX_FSE_SETUP_PDEV_ID_SET(*msg_word, fse_setup_info->pdev_id);
+
+	msg_word++;
+	HTT_RX_FSE_SETUP_NUM_REC_SET(*msg_word, fse_setup_info->max_entries);
+	HTT_RX_FSE_SETUP_MAX_SEARCH_SET(*msg_word, fse_setup_info->max_search);
+	HTT_RX_FSE_SETUP_IP_DA_SA_PREFIX_SET(*msg_word,
+					     fse_setup_info->ip_da_sa_prefix);
+
+	msg_word++;
+	HTT_RX_FSE_SETUP_BASE_ADDR_LO_SET(*msg_word,
+					  fse_setup_info->base_addr_lo);
+	msg_word++;
+	HTT_RX_FSE_SETUP_BASE_ADDR_HI_SET(*msg_word,
+					  fse_setup_info->base_addr_hi);
+
+	key = (u_int32_t *)fse_setup_info->hash_key;
+	fse_setup->toeplitz31_0 = *key++;
+	fse_setup->toeplitz63_32 = *key++;
+	fse_setup->toeplitz95_64 = *key++;
+	fse_setup->toeplitz127_96 = *key++;
+	fse_setup->toeplitz159_128 = *key++;
+	fse_setup->toeplitz191_160 = *key++;
+	fse_setup->toeplitz223_192 = *key++;
+	fse_setup->toeplitz255_224 = *key++;
+	fse_setup->toeplitz287_256 = *key++;
+	fse_setup->toeplitz314_288 = *key;
+
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_VALUE_SET(*msg_word, fse_setup->toeplitz31_0);
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_VALUE_SET(*msg_word, fse_setup->toeplitz63_32);
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_VALUE_SET(*msg_word, fse_setup->toeplitz95_64);
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_VALUE_SET(*msg_word, fse_setup->toeplitz127_96);
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_VALUE_SET(*msg_word, fse_setup->toeplitz159_128);
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_VALUE_SET(*msg_word, fse_setup->toeplitz191_160);
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_VALUE_SET(*msg_word, fse_setup->toeplitz223_192);
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_VALUE_SET(*msg_word, fse_setup->toeplitz255_224);
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_VALUE_SET(*msg_word, fse_setup->toeplitz287_256);
+	msg_word++;
+	HTT_RX_FSE_SETUP_HASH_314_288_SET(*msg_word,
+					  fse_setup->toeplitz314_288);
+
+	pkt = htt_htc_pkt_alloc(soc);
+	if (!pkt) {
+		qdf_err("Fail to allocate dp_htt_htc_pkt buffer");
+		qdf_assert(0);
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_RESOURCES; /* failure */
+	}
+
+	pkt->soc_ctxt = NULL; /* not used during send-done callback */
+
+	SET_HTC_PACKET_INFO_TX(
+		&pkt->htc_pkt,
+		dp_htt_h2t_send_complete_free_netbuf,
+		qdf_nbuf_data(msg),
+		qdf_nbuf_len(msg),
+		soc->htc_endpoint,
+		1); /* tag - not relevant here */
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
+
+	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG,
+			    htt_logger_bufp);
+
+	qdf_info("HTT_H2T RX_FSE_SETUP sent to FW for pdev = %u",
+		 fse_setup_info->pdev_id);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_DEBUG,
+			   (void *)fse_setup_info->hash_key,
+			   fse_setup_info->hash_key_len);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_htt_rx_flow_fse_operation(): Send HTT Flow Search Entry msg to
+ * add/del a flow in HW
+ * @pdev: DP pdev handle
+ * @fse_op_info: Flow entry parameters
+ *
+ * Return: Success when HTT message is sent, error on failure
+ */
+QDF_STATUS
+dp_htt_rx_flow_fse_operation(struct dp_pdev *pdev,
+			     struct dp_htt_rx_flow_fst_operation *fse_op_info)
+{
+	struct htt_soc *soc = pdev->soc->htt_handle;
+	struct dp_htt_htc_pkt *pkt;
+	qdf_nbuf_t msg;
+	u_int32_t *msg_word;
+	struct htt_h2t_msg_rx_fse_operation_t *fse_operation;
+	uint8_t *htt_logger_bufp;
+
+	msg = qdf_nbuf_alloc(
+		soc->osdev,
+		HTT_MSG_BUF_SIZE(sizeof(struct htt_h2t_msg_rx_fse_operation_t)),
+		/* reserve room for the HTC header */
+		HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4, TRUE);
+	if (!msg)
+		return QDF_STATUS_E_NOMEM;
+
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	if (!qdf_nbuf_put_tail(msg,
+			       sizeof(struct htt_h2t_msg_rx_fse_operation_t))) {
+		qdf_err("Failed to expand head for HTT_RX_FSE_OPERATION msg");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* fill in the message contents */
+	msg_word = (u_int32_t *)qdf_nbuf_data(msg);
+
+	memset(msg_word, 0, sizeof(struct htt_h2t_msg_rx_fse_operation_t));
+	/* rewind beyond alignment pad to get to the HTC header reserved area */
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	htt_logger_bufp = (uint8_t *)msg_word;
+
+	*msg_word = 0;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG);
+
+	fse_operation = (struct htt_h2t_msg_rx_fse_operation_t *)msg_word;
+
+	HTT_RX_FSE_OPERATION_PDEV_ID_SET(*msg_word, fse_op_info->pdev_id);
+	msg_word++;
+	HTT_RX_FSE_IPSEC_VALID_SET(*msg_word, false);
+	if (fse_op_info->op_code == DP_HTT_FST_CACHE_INVALIDATE_ENTRY) {
+		HTT_RX_FSE_OPERATION_SET(*msg_word,
+					 HTT_RX_FSE_CACHE_INVALIDATE_ENTRY);
+		msg_word++;
+		HTT_RX_FSE_OPERATION_IP_ADDR_SET(
+		*msg_word,
+		qdf_htonl(fse_op_info->rx_flow->flow_tuple_info.src_ip_31_0));
+		msg_word++;
+		HTT_RX_FSE_OPERATION_IP_ADDR_SET(
+		*msg_word,
+		qdf_htonl(fse_op_info->rx_flow->flow_tuple_info.src_ip_63_32));
+		msg_word++;
+		HTT_RX_FSE_OPERATION_IP_ADDR_SET(
+		*msg_word,
+		qdf_htonl(fse_op_info->rx_flow->flow_tuple_info.src_ip_95_64));
+		msg_word++;
+		HTT_RX_FSE_OPERATION_IP_ADDR_SET(
+		*msg_word,
+		qdf_htonl(fse_op_info->rx_flow->flow_tuple_info.src_ip_127_96));
+		msg_word++;
+		HTT_RX_FSE_OPERATION_IP_ADDR_SET(
+		*msg_word,
+		qdf_htonl(fse_op_info->rx_flow->flow_tuple_info.dest_ip_31_0));
+		msg_word++;
+		HTT_RX_FSE_OPERATION_IP_ADDR_SET(
+		*msg_word,
+		qdf_htonl(fse_op_info->rx_flow->flow_tuple_info.dest_ip_63_32));
+		msg_word++;
+		HTT_RX_FSE_OPERATION_IP_ADDR_SET(
+		*msg_word,
+		qdf_htonl(fse_op_info->rx_flow->flow_tuple_info.dest_ip_95_64));
+		msg_word++;
+		HTT_RX_FSE_OPERATION_IP_ADDR_SET(
+		*msg_word,
+		qdf_htonl(
+		fse_op_info->rx_flow->flow_tuple_info.dest_ip_127_96));
+		msg_word++;
+		HTT_RX_FSE_SOURCEPORT_SET(
+			*msg_word,
+			fse_op_info->rx_flow->flow_tuple_info.src_port);
+		HTT_RX_FSE_DESTPORT_SET(
+			*msg_word,
+			fse_op_info->rx_flow->flow_tuple_info.dest_port);
+		msg_word++;
+		HTT_RX_FSE_L4_PROTO_SET(
+			*msg_word,
+			fse_op_info->rx_flow->flow_tuple_info.l4_protocol);
+	} else if (fse_op_info->op_code == DP_HTT_FST_CACHE_INVALIDATE_FULL) {
+		HTT_RX_FSE_OPERATION_SET(*msg_word,
+					 HTT_RX_FSE_CACHE_INVALIDATE_FULL);
+	} else if (fse_op_info->op_code == DP_HTT_FST_DISABLE) {
+		HTT_RX_FSE_OPERATION_SET(*msg_word, HTT_RX_FSE_DISABLE);
+	} else if (fse_op_info->op_code == DP_HTT_FST_ENABLE) {
+		HTT_RX_FSE_OPERATION_SET(*msg_word, HTT_RX_FSE_ENABLE);
+	}
+
+	pkt = htt_htc_pkt_alloc(soc);
+	if (!pkt) {
+		qdf_err("Fail to allocate dp_htt_htc_pkt buffer");
+		qdf_assert(0);
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_RESOURCES; /* failure */
+	}
+
+	pkt->soc_ctxt = NULL; /* not used during send-done callback */
+
+	SET_HTC_PACKET_INFO_TX(
+		&pkt->htc_pkt,
+		dp_htt_h2t_send_complete_free_netbuf,
+		qdf_nbuf_data(msg),
+		qdf_nbuf_len(msg),
+		soc->htc_endpoint,
+		1); /* tag - not relevant here */
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
+
+	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG,
+			    htt_logger_bufp);
+
+	qdf_info("HTT_H2T RX_FSE_OPERATION_CFG sent to FW for pdev = %u",
+		 fse_op_info->pdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}

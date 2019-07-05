@@ -1403,6 +1403,14 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		if (user_id < HAL_MAX_UL_MU_USERS) {
 			ppdu_info->rx_msdu_info[user_id].cce_metadata =
 				HAL_RX_MSDU_END_CCE_METADATA_GET(rx_tlv);
+			ppdu_info->rx_msdu_info[user_id].fse_metadata =
+				HAL_RX_MSDU_END_FSE_METADATA_GET(rx_tlv);
+			ppdu_info->rx_msdu_info[user_id].is_flow_idx_timeout =
+				HAL_RX_MSDU_END_FLOW_IDX_TIMEOUT_GET(rx_tlv);
+			ppdu_info->rx_msdu_info[user_id].is_flow_idx_invalid =
+				HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(rx_tlv);
+			ppdu_info->rx_msdu_info[user_id].flow_idx =
+				HAL_RX_MSDU_END_FLOW_IDX_GET(rx_tlv);
 		}
 		return HAL_TLV_STATUS_MSDU_END;
 	case 0:

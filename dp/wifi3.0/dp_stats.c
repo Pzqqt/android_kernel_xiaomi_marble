@@ -4525,6 +4525,12 @@ void dp_print_soc_cfg_params(struct dp_soc *soc)
 		       soc_cfg_ctx->tx_sw_internode_queue);
 	DP_PRINT_STATS("RXDMA err dst ring: %u ",
 		       soc_cfg_ctx->rxdma_err_dst_ring);
+	DP_PRINT_STATS("RX Flow Tag Enabled: %u ",
+		       soc_cfg_ctx->is_rx_flow_tag_enabled);
+	DP_PRINT_STATS("RX Flow Search Table Size (# of entries): %u ",
+		       soc_cfg_ctx->rx_flow_search_table_size);
+	DP_PRINT_STATS("RX Flow Search Table Per PDev : %u ",
+		       soc_cfg_ctx->is_rx_flow_search_table_per_pdev);
 }
 
 void

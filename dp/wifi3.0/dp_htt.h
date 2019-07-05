@@ -207,6 +207,56 @@ struct htt_rx_ring_tlv_filter {
 	uint16_t rx_attn_offset;
 };
 
+/**
+ * struct dp_htt_rx_flow_fst_setup - Rx FST setup message
+ * @pdev_id: DP Pdev identifier
+ * @max_entries: Size of Rx FST in number of entries
+ * @max_search: Number of collisions allowed
+ * @base_addr_lo: lower 32-bit physical address
+ * @base_addr_hi: upper 32-bit physical address
+ * @ip_da_sa_prefix: IPv4 prefix to map to IPv6 address scheme
+ * @hash_key_len: Rx FST hash key size
+ * @hash_key: Rx FST Toeplitz hash key
+ */
+struct dp_htt_rx_flow_fst_setup {
+	uint8_t pdev_id;
+	uint32_t max_entries;
+	uint32_t max_search;
+	uint32_t base_addr_lo;
+	uint32_t base_addr_hi;
+	uint32_t ip_da_sa_prefix;
+	uint32_t hash_key_len;
+	uint8_t *hash_key;
+};
+
+/**
+ * enum dp_htt_flow_fst_operation - FST related operations allowed
+ * @DP_HTT_FST_CACHE_OP_NONE: Cache no-op
+ * @DP_HTT_FST_CACHE_INVALIDATE_ENTRY: Invalidate single cache entry
+ * @DP_HTT_FST_CACHE_INVALIDATE_FULL: Invalidate entire cache
+ * @DP_HTT_FST_ENABLE: Bypass FST is enabled
+ * @DP_HTT_FST_DISABLE: Disable bypass FST
+ */
+enum dp_htt_flow_fst_operation {
+	DP_HTT_FST_CACHE_OP_NONE,
+	DP_HTT_FST_CACHE_INVALIDATE_ENTRY,
+	DP_HTT_FST_CACHE_INVALIDATE_FULL,
+	DP_HTT_FST_ENABLE,
+	DP_HTT_FST_DISABLE
+};
+
+/**
+ * struct dp_htt_rx_flow_fst_setup - Rx FST setup message
+ * @pdev_id: DP Pdev identifier
+ * @op_code: FST operation to be performed by FW/HW
+ * @rx_flow: Rx Flow information on which operation is to be performed
+ */
+struct dp_htt_rx_flow_fst_operation {
+	uint8_t pdev_id;
+	enum dp_htt_flow_fst_operation op_code;
+	struct cdp_rx_flow_info *rx_flow;
+};
+
 /*
  * htt_soc_initialize() - SOC level HTT initialization
  * @htt_soc: Opaque htt SOC handle
@@ -325,4 +375,26 @@ void
 dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 			       struct ppdu_info *ppdu_info);
 
+/**
+ * dp_htt_rx_flow_fst_setup(): Send HTT Rx FST setup message to FW
+ * @pdev: DP pdev handle
+ * @fse_setup_info: FST setup parameters
+ *
+ * Return: Success when HTT message is sent, error on failure
+ */
+QDF_STATUS
+dp_htt_rx_flow_fst_setup(struct dp_pdev *pdev,
+			 struct dp_htt_rx_flow_fst_setup *setup_info);
+
+/**
+ * dp_htt_rx_flow_fse_operation(): Send HTT Flow Search Entry msg to
+ * add/del a flow in HW
+ * @pdev: DP pdev handle
+ * @fse_op_info: Flow entry parameters
+ *
+ * Return: Success when HTT message is sent, error on failure
+ */
+QDF_STATUS
+dp_htt_rx_flow_fse_operation(struct dp_pdev *pdev,
+			     struct dp_htt_rx_flow_fst_operation *op_info);
 #endif /* _DP_HTT_H_ */

@@ -3835,6 +3835,7 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_pktlogmod_exit(pdev);
 
+	dp_rx_fst_detach(soc, pdev);
 	dp_rx_pdev_detach(pdev);
 	dp_rx_pdev_mon_detach(pdev);
 	dp_neighbour_peers_detach(pdev);
@@ -4539,6 +4540,50 @@ dp_rxdma_ring_sel_cfg(struct dp_soc *soc)
 #endif
 
 /*
+ * dp_rx_target_fst_config() - configure the RXOLE Flow Search Engine
+ *
+ * This function is used to configure the FSE HW block in RX OLE on a
+ * per pdev basis. Here, we will be programming parameters related to
+ * the Flow Search Table.
+ *
+ * @soc: data path SoC handle
+ *
+ * Return: zero on success, non-zero on failure
+ */
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+static QDF_STATUS
+dp_rx_target_fst_config(struct dp_soc *soc)
+{
+	int i;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		struct dp_pdev *pdev = soc->pdev_list[i];
+
+		if (pdev) {
+			status = dp_rx_flow_send_fst_fw_setup(pdev->soc, pdev);
+			if (status != QDF_STATUS_SUCCESS)
+				break;
+		}
+	}
+	return status;
+}
+#else
+/**
+ * dp_rx_target_fst_config() - Configure RX OLE FSE engine in HW
+ * @soc: SoC handle
+ *
+ * Return: Success
+ */
+static inline QDF_STATUS
+dp_rx_target_fst_config(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+
+/*
  * dp_soc_attach_target_wifi3() - SOC initialization in the target
  * @cdp_soc: Opaque Datapath SOC handle
  *
@@ -4561,6 +4606,12 @@ dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 	status = dp_rxdma_ring_sel_cfg(soc);
 	if (status != QDF_STATUS_SUCCESS) {
 		dp_err("Failed to send htt ring config message to target");
+		return status;
+	}
+
+	status = dp_rx_target_fst_config(soc);
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_err("Failed to send htt fst setup config message to target");
 		return status;
 	}
 
@@ -6277,10 +6328,13 @@ QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 			htt_tlv_filter.enable_mo = 0;
 		} else if (pdev->rx_enh_capture_mode ==
 			   CDP_RX_ENH_CAPTURE_MPDU_MSDU) {
+			bool is_rx_mon_proto_flow_tag_enabled =
+			    wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(
+						    soc->wlan_cfg_ctx);
 			htt_tlv_filter.header_per_msdu = 1;
 			htt_tlv_filter.enable_mo = 0;
-			if (pdev->is_rx_protocol_tagging_enabled ||
-			    pdev->is_rx_enh_capture_trailer_enabled)
+			if (pdev->is_rx_enh_capture_trailer_enabled ||
+			    is_rx_mon_proto_flow_tag_enabled)
 				htt_tlv_filter.msdu_end = 1;
 		}
 	}
@@ -8626,6 +8680,97 @@ dp_update_pdev_rx_protocol_tag(struct cdp_pdev *pdev_handle,
 }
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+/**
+ * dp_set_rx_flow_tag - add/delete a flow
+ * @pdev_handle: cdp_pdev handle
+ * @flow_info: flow tuple that is to be added to/deleted from flow search table
+ *
+ * Return: 0 for success, nonzero for failure
+ */
+static inline QDF_STATUS
+dp_set_rx_flow_tag(struct cdp_pdev *pdev_handle,
+		   struct cdp_rx_flow_info *flow_info)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct wlan_cfg_dp_soc_ctxt *cfg = pdev->soc->wlan_cfg_ctx;
+
+	if (qdf_unlikely(!wlan_cfg_is_rx_flow_tag_enabled(cfg))) {
+		dp_err("RX Flow tag feature disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	if (flow_info->op_code == CDP_FLOW_FST_ENTRY_ADD)
+		return dp_rx_flow_add_entry(pdev, flow_info);
+	if (flow_info->op_code == CDP_FLOW_FST_ENTRY_DEL)
+		return dp_rx_flow_delete_entry(pdev, flow_info);
+
+	return QDF_STATUS_E_INVAL;
+}
+
+/**
+ * dp_dump_rx_flow_tag_stats - dump the number of packets tagged for
+ * given flow 5-tuple
+ * @pdev_handle: cdp_pdev handle
+ * @flow_info: flow 5-tuple for which stats should be displayed
+ *
+ * Return: 0 for success, nonzero for failure
+ */
+static inline QDF_STATUS
+dp_dump_rx_flow_tag_stats(struct cdp_pdev *pdev_handle,
+			  struct cdp_rx_flow_info *flow_info)
+{
+	QDF_STATUS status;
+	struct cdp_flow_stats stats;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct wlan_cfg_dp_soc_ctxt *cfg = pdev->soc->wlan_cfg_ctx;
+
+	if (qdf_unlikely(!wlan_cfg_is_rx_flow_tag_enabled(cfg))) {
+		dp_err("RX Flow tag feature disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	status = dp_rx_flow_get_fse_stats(pdev, flow_info, &stats);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_err("Unable to get flow stats, error: %u", status);
+		return status;
+	}
+
+	DP_PRINT_STATS("Dest IP address %x:%x:%x:%x",
+		       flow_info->flow_tuple_info.dest_ip_127_96,
+		       flow_info->flow_tuple_info.dest_ip_95_64,
+		       flow_info->flow_tuple_info.dest_ip_63_32,
+		       flow_info->flow_tuple_info.dest_ip_31_0);
+	DP_PRINT_STATS("Source IP address %x:%x:%x:%x",
+		       flow_info->flow_tuple_info.src_ip_127_96,
+		       flow_info->flow_tuple_info.src_ip_95_64,
+		       flow_info->flow_tuple_info.src_ip_63_32,
+		       flow_info->flow_tuple_info.src_ip_31_0);
+	DP_PRINT_STATS("Dest port %u, Src Port %u, Protocol %u",
+		       flow_info->flow_tuple_info.dest_port,
+		       flow_info->flow_tuple_info.src_port,
+		       flow_info->flow_tuple_info.l4_protocol);
+	DP_PRINT_STATS("MSDU Count: %u", stats.msdu_count);
+
+	return status;
+}
+#else
+static inline QDF_STATUS
+dp_set_rx_flow_tag(struct cdp_pdev *pdev,
+		   struct cdp_rx_flow_info *flow_info)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+dp_dump_rx_flow_tag_stats(struct cdp_pdev *pdev,
+			  struct cdp_rx_flow_info *flow_info)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+
 static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 					   uint32_t max_peers,
 					   uint32_t max_ast_index,
@@ -9086,6 +9231,10 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 				dp_dump_pdev_rx_protocol_tag_stats,
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+	.txrx_set_rx_flow_tag = dp_set_rx_flow_tag,
+	.txrx_dump_rx_flow_tag_stats = dp_dump_rx_flow_tag_stats,
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
 #ifdef QCA_MULTIPASS_SUPPORT
 	.txrx_peer_set_vlan_id = dp_peer_set_vlan_id,
 #endif /*QCA_MULTIPASS_SUPPORT*/
@@ -9647,6 +9796,7 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle,
 					       REO_DST_RING_SIZE_QCA8074);
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);
 		soc->da_war_enabled = true;
+		soc->is_rx_fse_full_cache_invalidate_war_enabled = true;
 		break;
 	case TARGET_TYPE_QCA8074V2:
 	case TARGET_TYPE_QCA6018:
@@ -9658,6 +9808,7 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle,
 		soc->per_tid_basize_max_tid = 8;
 		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
 		soc->da_war_enabled = false;
+		soc->is_rx_fse_full_cache_invalidate_war_enabled = true;
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);

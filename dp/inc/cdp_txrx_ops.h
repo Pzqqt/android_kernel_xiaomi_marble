@@ -668,6 +668,14 @@ struct cdp_ctrl_ops {
 				uint16_t protocol_type);
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+	QDF_STATUS (*txrx_set_rx_flow_tag)(
+		struct cdp_pdev *txrx_pdev_handle,
+		struct cdp_rx_flow_info *flow_info);
+	QDF_STATUS (*txrx_dump_rx_flow_tag_stats)(
+		struct cdp_pdev *txrx_pdev_handle,
+		struct cdp_rx_flow_info *flow_info);
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
 #ifdef QCA_MULTIPASS_SUPPORT
 	void (*txrx_peer_set_vlan_id)(ol_txrx_soc_handle soc,
 				      struct cdp_vdev *vdev, uint8_t *peer_mac,

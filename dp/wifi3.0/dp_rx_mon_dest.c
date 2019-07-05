@@ -758,8 +758,9 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 			is_first_frag = 0;
 		}
 
-		/* Update protocol tag for MSDU */
-		dp_rx_mon_update_protocol_tag(soc, dp_pdev, msdu_orig, rx_desc);
+		/* Update protocol and flow tag for MSDU */
+		dp_rx_mon_update_protocol_flow_tag(soc, dp_pdev,
+						   msdu_orig, rx_desc);
 
 		dest = qdf_nbuf_put_tail(prev_buf,
 				msdu_llc_len + amsdu_pad);

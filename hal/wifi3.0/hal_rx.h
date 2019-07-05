@@ -1926,13 +1926,13 @@ hal_rx_msdu_end_last_msdu_get(uint8_t *buf)
 #define HAL_RX_MSDU_END_CCE_METADATA_GET(_rx_msdu_end)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
 		RX_MSDU_END_16_CCE_METADATA_OFFSET)),	\
-		RX_MSDU_END_16_CCE_METADATA_MASK,		\
+		RX_MSDU_END_16_CCE_METADATA_MASK,	\
 		RX_MSDU_END_16_CCE_METADATA_LSB))
 
 /**
  * hal_rx_msdu_cce_metadata_get: API to get CCE metadata
  * from rx_msdu_end TLV
- * @ buf: pointer to the start of RX PKT TLV headers
+ * @buf: pointer to the start of RX PKT TLV headers
  * Return: last_msdu
  */
 
@@ -3443,4 +3443,118 @@ bool HAL_IS_DECAP_FORMAT_RAW(uint8_t *rx_tlv_hdr)
 	return true;
 }
 #endif
+
+#define HAL_RX_MSDU_END_FSE_METADATA_GET(_rx_msdu_end)  \
+		(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,  \
+		RX_MSDU_END_15_FSE_METADATA_OFFSET)),  \
+		RX_MSDU_END_15_FSE_METADATA_MASK,    \
+		RX_MSDU_END_15_FSE_METADATA_LSB))
+
+/**
+ * hal_rx_msdu_fse_metadata_get: API to get FSE metadata
+ * from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ *
+ * Return: fse metadata value from MSDU END TLV
+ */
+static inline uint32_t hal_rx_msdu_fse_metadata_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint32_t fse_metadata;
+
+	fse_metadata = HAL_RX_MSDU_END_FSE_METADATA_GET(msdu_end);
+	return fse_metadata;
+}
+
+#define HAL_RX_MSDU_END_FLOW_IDX_GET(_rx_msdu_end)  \
+		(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,  \
+		RX_MSDU_END_14_FLOW_IDX_OFFSET)),  \
+		RX_MSDU_END_14_FLOW_IDX_MASK,    \
+		RX_MSDU_END_14_FLOW_IDX_LSB))
+
+/**
+ * hal_rx_msdu_flow_idx_get: API to get flow index
+ * from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ *
+ * Return: flow index value from MSDU END TLV
+ */
+static inline uint32_t hal_rx_msdu_flow_idx_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint32_t flow_idx;
+
+	flow_idx = HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
+	return flow_idx;
+}
+
+#define HAL_RX_MSDU_END_FLOW_IDX_TIMEOUT_GET(_rx_msdu_end)  \
+		(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,  \
+		RX_MSDU_END_5_FLOW_IDX_TIMEOUT_OFFSET)),  \
+		RX_MSDU_END_5_FLOW_IDX_TIMEOUT_MASK,    \
+		RX_MSDU_END_5_FLOW_IDX_TIMEOUT_LSB))
+
+/**
+ * hal_rx_msdu_flow_idx_timeout: API to get flow index timeout
+ * from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ *
+ * Return: flow index timeout value from MSDU END TLV
+ */
+static inline bool hal_rx_msdu_flow_idx_timeout(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	bool timeout;
+
+	timeout = HAL_RX_MSDU_END_FLOW_IDX_TIMEOUT_GET(msdu_end);
+	return timeout;
+}
+
+#define HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(_rx_msdu_end)  \
+		(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,  \
+		RX_MSDU_END_5_FLOW_IDX_INVALID_OFFSET)),  \
+		RX_MSDU_END_5_FLOW_IDX_INVALID_MASK,    \
+		RX_MSDU_END_5_FLOW_IDX_INVALID_LSB))
+/**
+ * hal_rx_msdu_flow_idx_invalid: API to get flow index invalid
+ * from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ *
+ * Return: flow index invalid value from MSDU END TLV
+ */
+static inline bool hal_rx_msdu_flow_idx_invalid(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	bool invalid;
+
+	invalid = HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(msdu_end);
+	return invalid;
+}
+
+/**
+ * hal_rx_msdu_get_flow_params: API to get flow index, flow index invalid
+ * and flow index timeout from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ * @flow_invalid: pointer to return value of flow_idx_valid
+ * @flow_timeout: pointer to return value of flow_idx_timeout
+ * @flow_index: pointer to return value of flow_idx
+ *
+ * Return: none
+ */
+static inline void hal_rx_msdu_get_flow_params(uint8_t *buf,
+					       bool *flow_invalid,
+					       bool *flow_timeout,
+					       uint32_t *flow_index)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	*flow_invalid = HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(msdu_end);
+	*flow_timeout = HAL_RX_MSDU_END_FLOW_IDX_TIMEOUT_GET(msdu_end);
+	*flow_index = HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
+}
 #endif /* _HAL_RX_H */
