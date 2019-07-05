@@ -922,6 +922,7 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	}
 }
 
+#ifndef MDM_PLATFORM
 /**
  * wlan_ipa_w2i_cb() - SSR wrapper for __wlan_ipa_w2i_cb
  * @priv: pointer to private data registered with IPA (we register a
@@ -952,6 +953,13 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 
 	qdf_op_unprotect(op_sync);
 }
+#else /* MDM_PLATFORM */
+static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			    unsigned long data)
+{
+	__wlan_ipa_w2i_cb(priv, evt, data);
+}
+#endif /* MDM_PLATFORM */
 
 /**
  * __wlan_ipa_i2w_cb() - IPA to WLAN callback
