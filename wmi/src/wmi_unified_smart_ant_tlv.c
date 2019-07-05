@@ -296,6 +296,9 @@ send_set_ant_switch_tbl_cmd_tlv(wmi_unified_t wmi_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	ctrl_chain = (wmi_pdev_set_ant_ctrl_chain *)buf_ptr;
 
+	WMITLV_SET_HDR(&ctrl_chain->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_ant_ctrl_chain,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_set_ant_ctrl_chain));
 	ctrl_chain->pdev_id =
 		wmi_handle->ops->convert_pdev_id_host_to_target(param->pdev_id);
 	ctrl_chain->antCtrlChain = param->antCtrlChain;
@@ -304,6 +307,7 @@ send_set_ant_switch_tbl_cmd_tlv(wmi_unified_t wmi_handle,
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID)) {
 		wmi_buf_free(buf);
+		WMI_LOGE("%s :WMI Failed\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -470,6 +474,81 @@ static QDF_STATUS send_smart_ant_set_node_config_cmd_tlv(
 	return ret;
 }
 
+/**
+ * extract_peer_ratecode_list_ev_tlv() - extract peer ratecode from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param peer_mac: Pointer to hold peer mac address
+ * @param rate_cap: Pointer to hold ratecode
+ *
+ * @return QDF_STATUS_SUCCESS on success or error code
+ */
+static QDF_STATUS extract_peer_ratecode_list_ev_tlv(
+				wmi_unified_t wmi_handle,
+				void *evt_buf,
+				uint8_t *peer_mac,
+				wmi_sa_rate_cap *rate_cap)
+{
+	WMI_PEER_RATECODE_LIST_EVENTID_param_tlvs *param_buf;
+	wmi_peer_ratecode_list_event_fixed_param *ev;
+	wmi_peer_cck_ofdm_rate_info *ofdm_rate;
+	wmi_peer_mcs_rate_info *mcs_rate;
+	uint8_t i, htindex, j;
+	uint8_t shift = 0;
+
+	param_buf = (WMI_PEER_RATECODE_LIST_EVENTID_param_tlvs *)evt_buf;
+	ev = (wmi_peer_ratecode_list_event_fixed_param *)param_buf->fixed_param;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, peer_mac);
+
+	for (i = 0; i < SA_BYTES_IN_DWORD; i++) {
+		rate_cap->ratecount[i] = ((ev->ratecount >> (i*8)) &
+						SA_MASK_BYTE);
+	}
+
+	htindex = 0;
+	if (rate_cap->ratecount[0]) {
+		if (param_buf->num_ratecode_legacy >
+				SA_MAX_LEGACY_RATE_DWORDS) {
+			WMI_LOGE("Invalid Number of ratecode_legacy %d",
+					param_buf->num_ratecode_legacy);
+			return QDF_STATUS_E_FAILURE;
+		}
+		for (i = 0; i < param_buf->num_ratecode_legacy; i++) {
+			ofdm_rate = param_buf->ratecode_legacy;
+			for (j = 0; j < SA_BYTES_IN_DWORD; j++) {
+				rate_cap->ratecode_legacy[htindex] =
+					((ofdm_rate->ratecode_legacy >> (8*j)) &
+					SA_MASK_BYTE);
+				htindex++;
+			}
+			ofdm_rate++;
+		}
+	}
+
+	htindex = 0;
+	if (param_buf->num_ratecode_mcs > SA_MAX_HT_RATE_DWORDS) {
+		WMI_LOGE("Invalid Number of ratecode_mcs %d",
+				param_buf->num_ratecode_mcs);
+		return QDF_STATUS_E_FAILURE;
+	}
+	for (i = 0; i < param_buf->num_ratecode_mcs; i++) {
+		mcs_rate = param_buf->ratecode_mcs;
+		for (j = 0; j < SA_BYTES_IN_DWORD; j++) {
+			shift = (8*j);
+			rate_cap->ratecode_20[htindex] =
+			    ((mcs_rate->ratecode_20 >> (shift)) & SA_MASK_BYTE);
+			rate_cap->ratecode_40[htindex] =
+			    ((mcs_rate->ratecode_40 >> (shift)) & SA_MASK_BYTE);
+			rate_cap->ratecode_80[htindex] =
+			    ((mcs_rate->ratecode_80 >> (shift)) & SA_MASK_BYTE);
+			htindex++;
+		}
+		mcs_rate++;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_smart_ant_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -482,4 +561,5 @@ void wmi_smart_ant_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_smart_ant_set_node_config_cmd =
 				send_smart_ant_set_node_config_cmd_tlv;
 	ops->send_set_ant_switch_tbl_cmd = send_set_ant_switch_tbl_cmd_tlv;
+	ops->extract_peer_ratecode_list_ev = extract_peer_ratecode_list_ev_tlv;
 }
