@@ -3117,6 +3117,12 @@ QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
 
 	ipa_debug("enter");
 
+	if (!osdev) {
+		ipa_err("osdev null");
+		status = QDF_STATUS_E_FAILURE;
+		goto fail_return;
+	}
+
 	for (i = 0; i < WLAN_IPA_MAX_SESSION; i++) {
 		ipa_ctx->vdev_to_iface[i] = WLAN_IPA_MAX_SESSION;
 		ipa_ctx->vdev_offload_enabled[i] = false;
