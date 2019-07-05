@@ -49,11 +49,6 @@
   Preprocessor definitions and constants
   ------------------------------------------------------------------------*/
 
-#define SME_SUMMARY_STATS         (1 << eCsrSummaryStats)
-#define SME_GLOBAL_CLASSA_STATS   (1 << eCsrGlobalClassAStats)
-#define SME_GLOBAL_CLASSD_STATS   (1 << eCsrGlobalClassDStats)
-#define SME_PER_CHAIN_RSSI_STATS  (1 << csr_per_chain_rssi_stats)
-
 #define sme_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_SME, params)
 #define sme_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_SME, params)
 #define sme_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_SME, params)
@@ -593,12 +588,6 @@ QDF_STATUS sme_roam_get_wpa_rsn_rsp_ie(mac_handle_t mac_handle,
 
 QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 				struct sme_config_params *pParam);
-#ifndef QCA_SUPPORT_CP_STATS
-QDF_STATUS sme_get_statistics(mac_handle_t mac_handle,
-		eCsrStatsRequesterType requesterId,
-		uint32_t statsMask, tCsrStatsCallback callback,
-		uint8_t staId, void *pContext, uint8_t sessionId);
-#endif
 QDF_STATUS sme_get_snr(mac_handle_t mac_handle,
 		tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);

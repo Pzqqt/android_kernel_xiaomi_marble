@@ -479,36 +479,6 @@ struct csr_roam_connectedinfo {
 	uint8_t staId;
 };
 
-#ifndef QCA_SUPPORT_CP_STATS
-struct csr_pestats_reqinfo {
-	tListElem link;         /* list links */
-	uint32_t statsMask;
-	bool rspPending;
-	uint8_t staId;
-	uint8_t numClient;
-	struct mac_context *mac;
-	uint8_t sessionId;
-};
-
-struct csr_statsclient_reqinfo {
-	tListElem link;         /* list links */
-	eCsrStatsRequesterType requesterId;
-	tCsrStatsCallback callback;
-	void *pContext;
-	uint32_t statsMask;
-	struct csr_pestats_reqinfo *pPeStaEntry;
-	uint8_t staId;
-	qdf_mc_timer_t timer;
-	bool timerExpired;
-	struct mac_context *mac;    /* TODO: Confirm this change BTAMP */
-	uint8_t sessionId;
-};
-
-struct csr_tlstats_reqinfo {
-	uint8_t numClient;
-};
-#endif /* QCA_SUPPORT_CP_STATS */
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 enum csr_roamoffload_authstatus {
 	/* reassociation is done but couldn't finish security handshake */
@@ -721,9 +691,6 @@ struct csr_roamstruct {
 	tCsrGlobalClassAStatsInfo classAStatsInfo;
 	tCsrGlobalClassDStatsInfo classDStatsInfo;
 	struct csr_per_chain_rssi_stats_info  per_chain_rssi_stats;
-	tDblLinkList statsClientReqList;
-	tDblLinkList peStatsReqList;
-	struct csr_tlstats_reqinfo tlStatsReqInfo;
 #endif
 	struct csr_timer_info WaitForKeyTimerInfo;
 	struct csr_roam_session *roamSession;
@@ -944,10 +911,6 @@ bool csr_is_valid_mc_concurrent_session(struct mac_context *mac,
 					struct bss_description *bss_desc);
 bool csr_is_conn_state_connected_infra_ap(struct mac_context *mac,
 		uint32_t sessionId);
-QDF_STATUS csr_get_statistics(struct mac_context *mac,
-		eCsrStatsRequesterType requesterId,
-		uint32_t statsMask, tCsrStatsCallback callback,
-		uint8_t staId, void *pContext, uint8_t sessionId);
 QDF_STATUS csr_get_snr(struct mac_context *mac, tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
 QDF_STATUS csr_get_config_param(struct mac_context *mac,

@@ -2649,21 +2649,6 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 }
 
 /**
- * wma_post_stats() - update stats to PE
- * @wma: wma handle
- * @node: txrx node
- *
- * Return: none
- */
-static void wma_post_stats(tp_wma_handle wma, struct wma_txrx_node *node)
-{
-	/* send response to UMAC */
-	wma_send_msg(wma, WMA_GET_STATISTICS_RSP, node->stats_rsp, 0);
-	node->stats_rsp = NULL;
-	node->fw_stats_set = 0;
-}
-
-/**
  * wma_update_peer_stats() - update peer stats
  * @wma: wma handle
  * @peer_stats: peer stats
@@ -3222,12 +3207,6 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 		}
 	}
 
-	for (i = 0; i < wma->max_bssid; i++) {
-		node = &wma->interfaces[i];
-		if (node->fw_stats_set & FW_PEER_STATS_SET)
-			wma_post_stats(wma, node);
-	}
-
 	return 0;
 }
 #endif /* QCA_SUPPORT_CP_STATS */
@@ -3753,129 +3732,6 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 
 	return 0;
 }
-
-#ifndef QCA_SUPPORT_CP_STATS
-/**
- * wma_get_stats_rsp_buf() - fill get stats response buffer
- * @get_stats_param: get stats parameters
- *
- * Return: stats response buffer
- */
-static tAniGetPEStatsRsp *wma_get_stats_rsp_buf
-			(tAniGetPEStatsReq *get_stats_param)
-{
-	tAniGetPEStatsRsp *stats_rsp_params;
-	uint32_t len, temp_mask;
-
-	len = sizeof(tAniGetPEStatsRsp);
-	temp_mask = get_stats_param->statsMask;
-
-	if (temp_mask & (1 << eCsrSummaryStats))
-		len += sizeof(tCsrSummaryStatsInfo);
-
-	if (temp_mask & (1 << eCsrGlobalClassAStats))
-		len += sizeof(tCsrGlobalClassAStatsInfo);
-
-	if (temp_mask & (1 << eCsrGlobalClassDStats))
-		len += sizeof(tCsrGlobalClassDStatsInfo);
-
-	if (temp_mask & (1 << csr_per_chain_rssi_stats))
-		len += sizeof(struct csr_per_chain_rssi_stats_info);
-
-	stats_rsp_params = qdf_mem_malloc(len);
-	if (!stats_rsp_params) {
-		QDF_ASSERT(0);
-		return NULL;
-	}
-
-	stats_rsp_params->staId = get_stats_param->staId;
-	stats_rsp_params->statsMask = get_stats_param->statsMask;
-	stats_rsp_params->msgType = WMA_GET_STATISTICS_RSP;
-	stats_rsp_params->msgLen = len - sizeof(tAniGetPEStatsRsp);
-	stats_rsp_params->rc = QDF_STATUS_SUCCESS;
-	return stats_rsp_params;
-}
-
-/**
- * wma_get_stats_req() - get stats request
- * @handle: wma handle
- * @get_stats_param: stats params
- *
- * Return: none
- */
-void wma_get_stats_req(WMA_HANDLE handle,
-		       tAniGetPEStatsReq *get_stats_param)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	struct wma_txrx_node *node;
-	struct stats_request_params cmd = {0};
-	tAniGetPEStatsRsp *pGetPEStatsRspParams;
-
-
-	WMA_LOGD("%s: Enter", __func__);
-	node = &wma_handle->interfaces[get_stats_param->sessionId];
-	if (node->stats_rsp) {
-		pGetPEStatsRspParams = node->stats_rsp;
-		if (pGetPEStatsRspParams->staId == get_stats_param->staId &&
-		    pGetPEStatsRspParams->statsMask ==
-		    get_stats_param->statsMask) {
-			WMA_LOGD("Stats for staId %d with stats mask %d is pending.. ignore new request",
-				 get_stats_param->staId,
-				 get_stats_param->statsMask);
-			pGetPEStatsRspParams =
-				wma_get_stats_rsp_buf(get_stats_param);
-			if (!pGetPEStatsRspParams) {
-				WMA_LOGE("failed to allocate memory for stats response");
-				goto end;
-			}
-			goto req_pending;
-		} else {
-			qdf_mem_free(node->stats_rsp);
-			node->stats_rsp = NULL;
-			node->fw_stats_set = 0;
-		}
-	}
-
-	pGetPEStatsRspParams = wma_get_stats_rsp_buf(get_stats_param);
-	if (!pGetPEStatsRspParams)
-		goto end;
-
-	node->fw_stats_set = 0;
-	if (node->stats_rsp) {
-		WMA_LOGD(FL("stats_rsp is not null, prev_value: %pK"),
-			node->stats_rsp);
-		qdf_mem_free(node->stats_rsp);
-		node->stats_rsp = NULL;
-	}
-	node->stats_rsp = pGetPEStatsRspParams;
-	wma_handle->get_sta_peer_info = false;
-	WMA_LOGD("stats_rsp allocated: %pK, sta_id: %d, mask: %d, vdev_id: %d",
-		node->stats_rsp, node->stats_rsp->staId,
-		node->stats_rsp->statsMask, get_stats_param->sessionId);
-
-	cmd.vdev_id = get_stats_param->sessionId;
-	cmd.stats_id = get_stats_param->statsMask;
-	if (wmi_unified_stats_request_send(wma_handle->wmi_handle,
-					   node->bssid,
-					   &cmd)) {
-		WMA_LOGE("%s: Failed to send WMI_REQUEST_STATS_CMDID",
-			 __func__);
-		goto failed;
-	}
-
-	goto end;
-failed:
-	node->stats_rsp = NULL;
-req_pending:
-	pGetPEStatsRspParams->rc = QDF_STATUS_E_FAILURE;
-	/* send response to UMAC */
-	wma_send_msg(wma_handle, WMA_GET_STATISTICS_RSP, pGetPEStatsRspParams,
-		     0);
-end:
-	qdf_mem_free(get_stats_param);
-	WMA_LOGD("%s: Exit", __func__);
-}
-#endif /* QCA_SUPPORT_CP_STATS */
 
 /**
  * wma_get_cca_stats() - send request to fw to get CCA

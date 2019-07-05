@@ -3509,46 +3509,6 @@ QDF_STATUS sme_get_snr(mac_handle_t mac_handle,
 	return status;
 }
 
-#ifndef QCA_SUPPORT_CP_STATS
-/*
- * sme_get_statistics() -
- * A wrapper function that client calls to register a callback to get
- *   different PHY level statistics from CSR.
- *
- * requesterId - different client requesting for statistics,
- *	HDD, UMA/GAN etc
- * statsMask - The different category/categories of stats requester
- *	is looking for
- * callback - SME sends back the requested stats using the callback
- * periodicity - If requester needs periodic update in millisec, 0 means
- *			 it's an one time request
- * cache - If requester is happy with cached stats
- * staId - The station ID for which the stats is requested for
- * pContext - user context to be passed back along with the callback
- * sessionId - sme session interface
- * Return QDF_STATUS
- */
-QDF_STATUS sme_get_statistics(mac_handle_t mac_handle,
-			      eCsrStatsRequesterType requesterId,
-			      uint32_t statsMask, tCsrStatsCallback callback,
-			      uint8_t staId, void *pContext, uint8_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_get_statistics(mac, requesterId, statsMask,
-					    callback, staId, pContext,
-					    sessionId);
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-
-}
-#endif
-
 QDF_STATUS sme_get_link_status(mac_handle_t mac_handle,
 			       csr_link_status_callback callback,
 			       void *context, uint8_t session_id)

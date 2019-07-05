@@ -1345,66 +1345,6 @@ lim_send_sme_delts_ind(struct mac_context *mac, struct delts_req_info *delts,
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 }
 
-#ifndef QCA_SUPPORT_CP_STATS
-/**
- * lim_send_sme_pe_statistics_rsp()
- *
- ***FUNCTION:
- * This function is called to send 802.11 statistics response to HDD.
- * This function posts the result back to HDD. This is a response to
- * HDD's request for statistics.
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param mac         Pointer to Global MAC structure
- * @param p80211Stats  Statistics sent in response
- * @param resultCode   TODO:
- *
- *
- * @return none
- */
-
-void
-lim_send_sme_pe_statistics_rsp(struct mac_context *mac, uint16_t msgType, void *stats)
-{
-	struct scheduler_msg mmhMsg = {0};
-	uint8_t sessionId;
-	tAniGetPEStatsRsp *pPeStats = (tAniGetPEStatsRsp *) stats;
-	struct pe_session *pPeSessionEntry;
-
-	/* Get the Session Id based on Sta Id */
-	pPeSessionEntry =
-		pe_find_session_by_sta_id(mac, pPeStats->staId, &sessionId);
-
-	/* Fill the Session Id */
-	if (pPeSessionEntry) {
-		/* Fill the Session Id */
-		pPeStats->sessionId = pPeSessionEntry->smeSessionId;
-	}
-
-	pPeStats->msgType = eWNI_SME_GET_STATISTICS_RSP;
-
-	/* msgType should be WMA_GET_STATISTICS_RSP */
-	mmhMsg.type = eWNI_SME_GET_STATISTICS_RSP;
-
-	mmhMsg.bodyptr = stats;
-	mmhMsg.bodyval = 0;
-	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, NO_SESSION, mmhMsg.type));
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
-
-	return;
-
-} /*** end lim_send_sme_pe_statistics_rsp() ***/
-#endif
-
 #ifdef FEATURE_WLAN_ESE
 /**
  * lim_send_sme_pe_ese_tsm_rsp() - send tsm response

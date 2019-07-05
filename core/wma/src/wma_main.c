@@ -8646,10 +8646,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif
-	case WMA_GET_STATISTICS_REQ:
-		wma_get_stats_req(wma_handle,
-				  (tAniGetPEStatsReq *) msg->bodyptr);
-		break;
 
 	case WMA_UPDATE_OP_MODE:
 		wma_process_update_opmode(wma_handle,
