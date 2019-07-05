@@ -257,6 +257,15 @@ static qdf_wake_lock_t wlan_wake_lock;
 #define IS_IDLE_STOP (!cds_is_driver_unloading() && \
 		      !cds_is_driver_recovering() && !cds_is_driver_loading())
 
+#define HDD_FW_VER_MAJOR_SPID(tgt_fw_ver)     ((tgt_fw_ver & 0xf0000000) >> 28)
+#define HDD_FW_VER_MINOR_SPID(tgt_fw_ver)     ((tgt_fw_ver & 0xf000000) >> 24)
+#define HDD_FW_VER_SIID(tgt_fw_ver)           ((tgt_fw_ver & 0xf00000) >> 20)
+#define HDD_FW_VER_CRM_ID(tgt_fw_ver)         (tgt_fw_ver & 0x7fff)
+#define HDD_FW_VER_SUB_ID(tgt_fw_ver_ext) \
+((tgt_fw_ver_ext & 0xf0000000) >> 28)
+#define HDD_FW_VER_REL_ID(tgt_fw_ver_ext) \
+((tgt_fw_ver_ext &  0xf800000) >> 23)
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 static const struct wiphy_wowlan_support wowlan_support_reg_init = {
 	.flags = WIPHY_WOWLAN_ANY |
@@ -1770,6 +1779,22 @@ static void hdd_update_vhtcap_2g(struct hdd_context *hdd_ctx)
 	}
 }
 
+static void hdd_extract_fw_version_info(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->fw_version_info.major_spid =
+			HDD_FW_VER_MAJOR_SPID(hdd_ctx->target_fw_version);
+	hdd_ctx->fw_version_info.minor_spid =
+			HDD_FW_VER_MINOR_SPID(hdd_ctx->target_fw_version);
+	hdd_ctx->fw_version_info.siid =
+			HDD_FW_VER_SIID(hdd_ctx->target_fw_version);
+	hdd_ctx->fw_version_info.crmid =
+			HDD_FW_VER_CRM_ID(hdd_ctx->target_fw_version);
+	hdd_ctx->fw_version_info.sub_id =
+			HDD_FW_VER_SUB_ID(hdd_ctx->target_fw_vers_ext);
+	hdd_ctx->fw_version_info.rel_id =
+			HDD_FW_VER_REL_ID(hdd_ctx->target_fw_vers_ext);
+}
+
 int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 {
 	int ret;
@@ -1911,6 +1936,7 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 
 	hdd_ctx->target_fw_version = cfg->target_fw_version;
 	hdd_ctx->target_fw_vers_ext = cfg->target_fw_vers_ext;
+	hdd_extract_fw_version_info(hdd_ctx);
 
 	hdd_ctx->hw_bd_id = cfg->hw_bd_id;
 	qdf_mem_copy(&hdd_ctx->hw_bd_info, &cfg->hw_bd_info,
@@ -2539,7 +2565,6 @@ uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 			      const size_t version_len, uint8_t *version)
 {
 	uint32_t size;
-	uint32_t msp_id = 0, mspid = 0, siid = 0, crmid = 0, sub_id = 0;
 
 	if (!hdd_ctx) {
 		hdd_err("Invalid context, HDD context is null");
@@ -2551,16 +2576,15 @@ uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 		return 0;
 	}
 
-	msp_id = (hdd_ctx->target_fw_version & 0xf0000000) >> 28;
-	mspid = (hdd_ctx->target_fw_version & 0xf000000) >> 24;
-	siid = (hdd_ctx->target_fw_version & 0xf00000) >> 20;
-	crmid = hdd_ctx->target_fw_version & 0x7fff;
-	sub_id = (hdd_ctx->target_fw_vers_ext & 0xf0000000) >> 28;
-
 	size = scnprintf(version, version_len,
-			 "Host SW:%s, FW:%d.%d.%d.%d.%d, HW:%s, Board ver: %x Ref design id: %x, Customer id: %x, Project id: %x, Board Data Rev: %x",
+			 "Host SW:%s, FW:%d.%d.%d.%d.%d.%d, HW:%s, Board ver: %x Ref design id: %x, Customer id: %x, Project id: %x, Board Data Rev: %x",
 			 QWLAN_VERSIONSTR,
-			 msp_id, mspid, siid, crmid, sub_id,
+			 hdd_ctx->fw_version_info.major_spid,
+			 hdd_ctx->fw_version_info.minor_spid,
+			 hdd_ctx->fw_version_info.siid,
+			 hdd_ctx->fw_version_info.rel_id,
+			 hdd_ctx->fw_version_info.crmid,
+			 hdd_ctx->fw_version_info.sub_id,
 			 hdd_ctx->target_hw_name,
 			 hdd_ctx->hw_bd_info.bdf_version,
 			 hdd_ctx->hw_bd_info.ref_design_id,
@@ -12922,29 +12946,6 @@ end:
 	 */
 	hdd_err("SAP restart after SSR failed! Reload WLAN and try SAP again");
 
-}
-
-/**
- * hdd_get_fw_version() - Get FW version
- * @hdd_ctx:     pointer to HDD context.
- * @major_spid:  FW version - major spid.
- * @minor_spid:  FW version - minor spid
- * @ssid:        FW version - ssid
- * @crmid:       FW version - crmid
- *
- * This function is called to get the firmware build version stored
- * as part of the HDD context
- *
- * Return:   None
- */
-void hdd_get_fw_version(struct hdd_context *hdd_ctx,
-			uint32_t *major_spid, uint32_t *minor_spid,
-			uint32_t *siid, uint32_t *crmid)
-{
-	*major_spid = (hdd_ctx->target_fw_version & 0xf0000000) >> 28;
-	*minor_spid = (hdd_ctx->target_fw_version & 0xf000000) >> 24;
-	*siid = (hdd_ctx->target_fw_version & 0xf00000) >> 20;
-	*crmid = hdd_ctx->target_fw_version & 0x7fff;
 }
 
 #ifdef QCA_CONFIG_SMP

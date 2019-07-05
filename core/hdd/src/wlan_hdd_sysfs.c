@@ -81,17 +81,16 @@ static ssize_t show_driver_version(struct kobject *kobj,
 static ssize_t __show_fw_version(struct hdd_context *hdd_ctx,
 				 char *buf)
 {
-	uint32_t major_spid = 0, minor_spid = 0, siid = 0, crmid = 0;
-	uint32_t sub_id = 0;
-
 	hdd_debug("Rcvd req for FW version");
-	hdd_get_fw_version(hdd_ctx, &major_spid, &minor_spid, &siid,
-			   &crmid);
-	sub_id = (hdd_ctx->target_fw_vers_ext & 0xf0000000) >> 28;
 
 	return scnprintf(buf, PAGE_SIZE,
-			 "FW:%d.%d.%d.%d.%d HW:%s Board version: %x Ref design id: %x Customer id: %x Project id: %x Board Data Rev: %x\n",
-			 major_spid, minor_spid, siid, crmid, sub_id,
+			 "FW:%d.%d.%d.%d.%d.%d HW:%s Board version: %x Ref design id: %x Customer id: %x Project id: %x Board Data Rev: %x\n",
+			 hdd_ctx->fw_version_info.major_spid,
+			 hdd_ctx->fw_version_info.minor_spid,
+			 hdd_ctx->fw_version_info.siid,
+			 hdd_ctx->fw_version_info.rel_id,
+			 hdd_ctx->fw_version_info.crmid,
+			 hdd_ctx->fw_version_info.sub_id,
 			 hdd_ctx->target_hw_name,
 			 hdd_ctx->hw_bd_info.bdf_version,
 			 hdd_ctx->hw_bd_info.ref_design_id,
