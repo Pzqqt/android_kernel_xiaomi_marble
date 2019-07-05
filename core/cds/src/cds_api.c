@@ -2388,7 +2388,8 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
  */
 void cds_logging_set_fw_flush_complete(void)
 {
-	wlan_logging_set_fw_flush_complete();
+	if (cds_is_fatal_event_enabled())
+		wlan_logging_set_fw_flush_complete();
 }
 
 /**
