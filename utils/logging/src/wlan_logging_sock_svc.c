@@ -1107,11 +1107,7 @@ void wlan_logging_set_per_pkt_stats(void)
  */
 void wlan_logging_set_fw_flush_complete(void)
 {
-	if (gwlan_logging.is_active == false
-#ifdef CONFIG_MCL
-	    || !cds_is_fatal_event_enabled()
-#endif
-	   )
+	if (!gwlan_logging.is_active)
 		return;
 
 	set_bit(HOST_LOG_FW_FLUSH_COMPLETE, &gwlan_logging.eventFlag);
