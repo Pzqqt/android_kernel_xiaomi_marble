@@ -1455,6 +1455,51 @@ bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
 	return is_mcc;
 }
 
+bool policy_mgr_is_sap_p2pgo_on_dfs(struct wlan_objmgr_psoc *psoc)
+{
+	int index, count;
+	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	struct policy_mgr_psoc_priv_obj *pm_ctx = NULL;
+
+	if (psoc)
+		pm_ctx = policy_mgr_get_context(psoc);
+
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	index = 0;
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	count = policy_mgr_mode_specific_connection_count(psoc,
+							  PM_SAP_MODE,
+							  list);
+	while (index < count) {
+		if (wlan_reg_is_dfs_ch(pm_ctx->pdev,
+				       pm_conc_connection_list
+				       [list[index]].chan)){
+			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+			return true;
+		}
+		index++;
+	}
+	count = policy_mgr_mode_specific_connection_count(psoc,
+							  PM_P2P_GO_MODE,
+							  list);
+	index = 0;
+	while (index < count) {
+		if (wlan_reg_is_dfs_ch(pm_ctx->pdev,
+				       pm_conc_connection_list
+				       [list[index]].chan)){
+			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+			return true;
+		}
+		index++;
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	return false;
+}
+
 /**
  * policy_mgr_set_concurrency_mode() - To set concurrency mode
  * @psoc: PSOC object data
@@ -2045,6 +2090,9 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		 *    DFS channel then allow concurrency but make sure it is
 		 *    going to DBS and send PCL to firmware indicating that
 		 *    don't allow STA to roam to 5G channels.
+		 * 4) On a single MAC device, if a SAP/P2PGO is already on a DFS
+		 *    channel, don't allow a 2 channel as it will result
+		 *    in MCC which is not allowed.
 		 */
 		if (!policy_mgr_is_5g_channel_allowed(psoc,
 			channel, list, PM_P2P_GO_MODE))
@@ -2066,6 +2114,15 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		if (true == match) {
 			policy_mgr_err("No MCC, SAP/GO about to come up on DFS channel");
 			goto done;
+		}
+		if ((policy_mgr_is_hw_dbs_capable(psoc) != true) &&
+		    num_connections) {
+			if (WLAN_REG_IS_24GHZ_CH(channel)) {
+				if (policy_mgr_is_sap_p2pgo_on_dfs(psoc)) {
+					policy_mgr_err("MCC not allowed: SAP/P2PGO on DFS");
+					goto done;
+				}
+			}
 		}
 	}
 
@@ -2176,7 +2233,6 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("This concurrency combination is not allowed");
 		goto done;
 	}
-
 	/* don't allow two P2P GO on same band */
 	if (channel && (mode == PM_P2P_GO_MODE) && num_connections) {
 		index = 0;
