@@ -1126,20 +1126,14 @@ void wlan_flush_host_logs_for_fatal(void)
 {
 	unsigned long flags;
 
-#ifdef CONFIG_MCL
-	if (cds_is_log_report_in_progress()) {
-#endif
-		if (gwlan_logging.flush_timer_period == 0)
-			pr_info("%s:flush all host logs Setting HOST_LOG_POST_MASK\n",
-				__func__);
-		spin_lock_irqsave(&gwlan_logging.spin_lock, flags);
-		wlan_queue_logmsg_for_app();
-		spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
-		set_bit(HOST_LOG_DRIVER_MSG, &gwlan_logging.eventFlag);
-		wake_up_interruptible(&gwlan_logging.wait_queue);
-#ifdef CONFIG_MCL
-	}
-#endif
+	if (gwlan_logging.flush_timer_period == 0)
+		pr_info("%s:flush all host logs Setting HOST_LOG_POST_MASK\n",
+			__func__);
+	spin_lock_irqsave(&gwlan_logging.spin_lock, flags);
+	wlan_queue_logmsg_for_app();
+	spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
+	set_bit(HOST_LOG_DRIVER_MSG, &gwlan_logging.eventFlag);
+	wake_up_interruptible(&gwlan_logging.wait_queue);
 }
 
 #ifdef FEATURE_PKTLOG
