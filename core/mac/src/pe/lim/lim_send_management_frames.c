@@ -4736,7 +4736,10 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 		pe_err("refused addba req");
 	}
 	frm.addba_param_set.tid = tid;
-	frm.addba_param_set.buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
+	if (lim_is_session_he_capable(session))
+		frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
+	else
+		frm.addba_param_set.buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
 	if (mac_ctx->usr_cfg_ba_buff_size)
 		frm.addba_param_set.buff_size = mac_ctx->usr_cfg_ba_buff_size;
 

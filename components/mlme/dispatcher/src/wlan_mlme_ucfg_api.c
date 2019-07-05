@@ -1414,6 +1414,34 @@ ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef SAP_AVOID_ACS_FREQ_LIST
+QDF_STATUS
+ucfg_mlme_get_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
+				  uint16_t *freq_list, uint8_t *freq_list_num)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	qdf_size_t avoid_acs_freq_list_num;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		qdf_uint16_array_parse(
+				cfg_default(CFG_SAP_AVOID_ACS_FREQ_LIST),
+				freq_list, CFG_VALID_CHANNEL_LIST_LEN,
+				&avoid_acs_freq_list_num);
+		*freq_list_num = avoid_acs_freq_list_num;
+
+		mlme_legacy_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*freq_list_num = mlme_obj->cfg.reg.avoid_acs_freq_list_num;
+	qdf_mem_copy(freq_list, mlme_obj->cfg.reg.avoid_acs_freq_list,
+		     *freq_list_num * sizeof(uint16_t));
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS
 ucfg_mlme_get_11d_in_world_mode(struct wlan_objmgr_psoc *psoc,
 				bool *value)

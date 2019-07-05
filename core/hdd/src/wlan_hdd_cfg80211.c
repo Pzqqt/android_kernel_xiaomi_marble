@@ -2530,6 +2530,55 @@ int hdd_start_vendor_acs(struct hdd_adapter *adapter)
 }
 
 /**
+ * hdd_avoid_acs_channels() - Avoid acs channels
+ * @hdd_ctx: Pointer to the hdd context
+ * @sap_config: Sap config structure pointer
+ *
+ * This function avoids channels from the acs corresponding to
+ * the frequencies configured in the ini sap_avoid_acs_freq_list
+ *
+ * Return: None
+ */
+
+#ifdef SAP_AVOID_ACS_FREQ_LIST
+static void hdd_avoid_acs_channels(struct hdd_context *hdd_ctx,
+				   struct sap_config *sap_config)
+{
+	int i, j, ch_cnt = 0;
+	uint16_t avoid_acs_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t avoid_acs_freq_list_num;
+
+	hdd_enter();
+
+	ucfg_mlme_get_acs_avoid_freq_list(hdd_ctx->psoc,
+					  avoid_acs_freq_list,
+					  &avoid_acs_freq_list_num);
+
+	for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++) {
+		for (j = 0; j < avoid_acs_freq_list_num; j++) {
+			if (sap_config->acs_cfg.ch_list[i] ==
+				wlan_reg_freq_to_chan(
+						hdd_ctx->pdev,
+						avoid_acs_freq_list[j])) {
+				hdd_debug("skip channel %d",
+					  sap_config->acs_cfg.ch_list[i]);
+				break;
+			}
+		}
+		if (j == avoid_acs_freq_list_num)
+			sap_config->acs_cfg.ch_list[ch_cnt++] =
+						sap_config->acs_cfg.ch_list[i];
+	}
+	sap_config->acs_cfg.ch_list_count = ch_cnt;
+}
+#else
+static void hdd_avoid_acs_channels(struct hdd_context *hdd_ctx,
+				   struct sap_config *sap_config)
+{
+}
+#endif
+
+/**
  * __wlan_hdd_cfg80211_do_acs(): CFG80211 handler function for DO_ACS Vendor CMD
  * @wiphy:  Linux wiphy struct pointer
  * @wdev:   Linux wireless device struct pointer
@@ -2762,6 +2811,9 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		}
 		sap_config->acs_cfg.ch_list_count = ch_cnt;
 	}
+
+	hdd_avoid_acs_channels(hdd_ctx, sap_config);
+
 	hdd_debug("get pcl for DO_ACS vendor command");
 
 	pm_mode =

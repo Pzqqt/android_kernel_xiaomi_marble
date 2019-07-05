@@ -656,6 +656,9 @@ CONFIG_LTE_COEX := y
 #Flag to enable/disable TARGET 11d scan
 CONFIG_TARGET_11D_SCAN := y
 
+#Flag to enable/disable Avoid acs freq feature
+CONFIG_SAP_AVOID_ACS_FREQ_LIST := y
+
 #Flag to enable HOST OPCLASS feature
 CONFIG_HOST_OPCLASS := y
 
