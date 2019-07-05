@@ -46,6 +46,13 @@ ifndef CONFIG_ROME_IF
 endif
 endif
 
+ifeq (m,$(findstring m,$(CONFIG_CNSS2)))
+ifndef CONFIG_ROME_IF
+	#use pci as default interface
+	CONFIG_ROME_IF = pci
+endif
+endif
+
 # Make WLAN as open-source driver by default
 WLAN_OPEN_SOURCE := y
 
@@ -176,6 +183,17 @@ CONFIG_ADAPTIVE_11R := y
 CONFIG_WLAN_FEATURE_FILS := y
 ifneq ($(CONFIG_QCA_CLD_WLAN),)
 	ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2) $(CONFIG_ICNSS)))
+	#Flag to enable Protected Management Frames (11w) feature
+	CONFIG_WLAN_FEATURE_11W := y
+	#Flag to enable LTE CoEx feature
+	CONFIG_QCOM_LTE_COEX := y
+		ifneq ($(CONFIG_MOBILE_ROUTER), y)
+		#Flag to enable LPSS feature
+		CONFIG_WLAN_FEATURE_LPSS := y
+		endif
+	endif
+
+	ifeq (m,$(findstring m,$(CONFIG_CNSS2)))
 	#Flag to enable Protected Management Frames (11w) feature
 	CONFIG_WLAN_FEATURE_11W := y
 	#Flag to enable LTE CoEx feature
@@ -818,6 +836,13 @@ endif
 endif
 
 ifeq ($(CONFIG_CNSS2), y)
+ifeq ($(CONFIG_HIF_PCI), y)
+CONFIG_PLD_PCIE_CNSS_FLAG := y
+CONFIG_PLD_PCIE_INIT_FLAG := y
+endif
+endif
+
+ifeq ($(CONFIG_CNSS2), m)
 ifeq ($(CONFIG_HIF_PCI), y)
 CONFIG_PLD_PCIE_CNSS_FLAG := y
 CONFIG_PLD_PCIE_INIT_FLAG := y
