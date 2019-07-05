@@ -912,6 +912,12 @@ static inline void ol_txrx_ipa_tx_params(
 {
 	qdf_device_t osdev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
+	if (!osdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: qdf device is null!", __func__);
+		return;
+	}
+
 	QDF_IPA_PIPE_IN_DL_COMP_RING_BASE_PA(pipe_in) =
 		qdf_mem_get_dma_addr(osdev,
 				&ipa_res->tx_comp_ring->mem_info);
@@ -939,6 +945,14 @@ static inline void ol_txrx_ipa_rx_params(
 					struct ol_txrx_ipa_resources *ipa_res,
 					qdf_ipa_wdi_in_params_t *pipe_in)
 {
+	qdf_device_t osdev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!osdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: qdf device is null!", __func__);
+		return;
+	}
+
 	QDF_IPA_PIPE_IN_UL_RDY_RING_BASE_PA(pipe_in) =
 		ipa_res->rx_rdy_ring->mem_info.pa;
 	QDF_IPA_PIPE_IN_UL_RDY_RING_SIZE(pipe_in) =
@@ -946,7 +960,7 @@ static inline void ol_txrx_ipa_rx_params(
 	QDF_IPA_PIPE_IN_UL_RDY_RING_RP_PA(pipe_in) =
 		ipa_res->rx_proc_done_idx->mem_info.pa;
 	OL_TXRX_IPA_WDI2_SET(pipe_in, ipa_res,
-			     cds_get_context(QDF_MODULE_ID_QDF_DEVICE));
+			     osdev);
 }
 
 /**
@@ -977,6 +991,12 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	uint32_t tx_comp_db_dmaaddr = 0, rx_rdy_db_dmaaddr = 0;
 
 	int ret;
+
+	if (!osdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: qdf device is null!", __func__);
+		return QDF_STATUS_E_NOENT;
+	}
 
 	qdf_mem_zero(&pipe_in, sizeof(pipe_in));
 	qdf_mem_zero(&pipe_out, sizeof(pipe_out));
