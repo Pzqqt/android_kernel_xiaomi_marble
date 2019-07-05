@@ -141,9 +141,14 @@ ucfg_blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 }
 
 void
-ucfg_blm_flush_reject_ap_list(struct wlan_objmgr_pdev *pdev)
+ucfg_blm_wifi_off(struct wlan_objmgr_pdev *pdev)
 {
 	struct blm_pdev_priv_obj *blm_ctx;
+
+	if (!pdev) {
+		blm_err("pdev is NULL");
+		return;
+	}
 
 	blm_ctx = blm_get_pdev_obj(pdev);
 	if (!blm_ctx) {
