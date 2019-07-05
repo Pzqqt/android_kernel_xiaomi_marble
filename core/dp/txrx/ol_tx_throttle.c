@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -196,13 +196,20 @@ ol_tx_set_throttle_phase_time(struct ol_txrx_pdev_t *pdev, int level, int *ms)
 }
 #endif
 
-void ol_tx_throttle_set_level(struct cdp_pdev *ppdev, int level)
+void ol_tx_throttle_set_level(struct cdp_soc_t *soc_hdl,
+			      uint8_t pdev_id, int level)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 	int ms = 0;
 
 	if (level >= THROTTLE_LEVEL_MAX) {
 		ol_txrx_dbg("invalid throttle level set %d, ignoring", level);
+		return;
+	}
+
+	if (qdf_unlikely(!pdev)) {
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 
@@ -217,11 +224,24 @@ void ol_tx_throttle_set_level(struct cdp_pdev *ppdev, int level)
 		qdf_timer_start(&pdev->tx_throttle.phase_timer, ms);
 }
 
-void ol_tx_throttle_init_period(struct cdp_pdev *ppdev, int period,
+void ol_tx_throttle_init_period(struct cdp_soc_t *soc_hdl,
+				uint8_t pdev_id, int period,
 				uint8_t *dutycycle_level)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev;
 	int i;
+
+	if (qdf_unlikely(!soc)) {
+		ol_txrx_err("soc is NULL");
+		return;
+	}
+
+	pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
+	if (qdf_unlikely(!pdev)) {
+		ol_txrx_err("pdev is NULL");
+		return;
+	}
 
 	/* Set the current throttle level */
 	pdev->tx_throttle.throttle_period_ms = period;
@@ -260,7 +280,7 @@ void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev)
 		dutycycle_level[i] =
 			ol_cfg_throttle_duty_cycle_level(pdev->ctrl_pdev, i);
 
-	ol_tx_throttle_init_period((struct cdp_pdev *)pdev,
+	ol_tx_throttle_init_period(cds_get_context(QDF_MODULE_ID_SOC), pdev->id,
 				   throttle_period, &dutycycle_level[0]);
 
 	qdf_timer_init(pdev->osdev, &pdev->tx_throttle.phase_timer,

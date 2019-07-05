@@ -1772,7 +1772,6 @@ static QDF_STATUS wma_update_thermal_cfg_to_fw(tp_wma_handle wma)
 QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 					 t_thermal_mgmt *pThermalParams)
 {
-	struct cdp_pdev *curr_pdev;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 #ifdef FW_THERMAL_THROTTLE_SUPPORT
 	int i = 0;
@@ -1782,10 +1781,6 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 		WMA_LOGE("TM Invalid input");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!curr_pdev)
-		return QDF_STATUS_E_FAILURE;
 
 	WMA_LOGD("TM enable %d period %d", pThermalParams->thermalMgmtEnabled,
 		 pThermalParams->throttlePeriod);
@@ -1844,7 +1839,7 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 		if (!wma->fw_therm_throt_support) {
 			cdp_throttle_init_period(
 				cds_get_context(QDF_MODULE_ID_SOC),
-				curr_pdev, pThermalParams->throttlePeriod,
+				WMI_PDEV_ID_SOC, pThermalParams->throttlePeriod,
 				&pThermalParams->throttle_duty_cycle_tbl[0]);
 		} else {
 			qdf_status = wma_update_thermal_mitigation_to_fw(
@@ -1898,16 +1893,10 @@ static void wma_set_thermal_level_ind(u_int8_t level)
 QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 					 uint8_t thermal_level)
 {
-	struct cdp_pdev *curr_pdev;
-
 	if (!wma) {
 		WMA_LOGE("TM Invalid input");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!curr_pdev)
-		return QDF_STATUS_E_FAILURE;
 
 	WMA_LOGE("TM set level %d", thermal_level);
 
@@ -1931,7 +1920,7 @@ QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 	wma->thermal_mgmt_info.thermalCurrLevel = thermal_level;
 
 	cdp_throttle_set_level(cds_get_context(QDF_MODULE_ID_SOC),
-			       curr_pdev, thermal_level);
+			       WMI_PDEV_ID_SOC, thermal_level);
 
 	/* Send SME SET_THERMAL_LEVEL_IND message */
 	wma_set_thermal_level_ind(thermal_level);
@@ -2022,7 +2011,6 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	uint8_t thermal_level;
 	t_thermal_cmd_params thermal_params;
 	WMI_THERMAL_MGMT_EVENTID_param_tlvs *param_buf;
-	struct cdp_pdev *curr_pdev;
 
 	if (!event || !handle) {
 		WMA_LOGE("Invalid thermal mitigation event buffer");
@@ -2037,10 +2025,6 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	}
 
 	param_buf = (WMI_THERMAL_MGMT_EVENTID_param_tlvs *) event;
-
-	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!curr_pdev)
-		return -EINVAL;
 
 	/* Check if thermal mitigation is enabled */
 	if (!wma->thermal_mgmt_info.thermalMgmtEnabled) {
@@ -2068,7 +2052,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	if (!wma->fw_therm_throt_support) {
 		/* Inform txrx */
 		cdp_throttle_set_level(cds_get_context(QDF_MODULE_ID_SOC),
-				       curr_pdev, thermal_level);
+				       WMI_PDEV_ID_SOC, thermal_level);
 	}
 
 	/* Send SME SET_THERMAL_LEVEL_IND message */

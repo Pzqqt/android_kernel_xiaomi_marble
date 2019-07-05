@@ -436,8 +436,10 @@ ol_tx_queues_display(struct ol_txrx_pdev_t *pdev)
 #define ol_tx_queue_decs_reinit(peer, peer_id)  /* no-op */
 
 #ifdef QCA_SUPPORT_TX_THROTTLE
-void ol_tx_throttle_set_level(struct cdp_pdev *ppdev, int level);
-void ol_tx_throttle_init_period(struct cdp_pdev *ppdev, int period,
+void ol_tx_throttle_set_level(struct cdp_soc_t *soc_hdl,
+			      uint8_t pdev_id, int level);
+void ol_tx_throttle_init_period(struct cdp_soc_t *soc_hdl,
+				uint8_t pdev_id, int period,
 				uint8_t *dutycycle_level);
 
 /**
@@ -448,12 +450,13 @@ void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev);
 #else
 static inline void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev) {}
 
-static inline void ol_tx_throttle_set_level(struct cdp_pdev *ppdev, int level)
+static inline void ol_tx_throttle_set_level(struct cdp_soc_t *soc_hdl,
+					    uint8_t pdev_id, int level)
 {}
 
-static inline void ol_tx_throttle_init_period(struct cdp_pdev *ppdev,
-					      int period,
-					      uint8_t *dutycycle_level)
+static inline void
+ol_tx_throttle_init_period(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			   int period, uint8_t *dutycycle_level)
 {}
 #endif
 
