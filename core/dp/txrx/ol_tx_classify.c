@@ -517,11 +517,9 @@ ol_tx_classify(
 			 * associated peer. It is illegitimate to send unicast
 			 * data if there is no peer to send it to.
 			 */
-			QDF_TRACE(QDF_MODULE_ID_TXRX,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "Error: vdev %pK ("QDF_MAC_ADDR_STR") trying to send unicast tx data frame to an unknown peer\n",
-				  vdev,
-				  QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
+			ol_txrx_err_rl("Error: vdev %pK (" QDF_MAC_ADDR_STR ") trying to send unicast tx data frame to an unknown peer",
+				       vdev,
+				       QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
 			return NULL; /* error */
 		}
 		TX_SCHED_DEBUG_PRINT("Peer found\n");

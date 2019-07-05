@@ -94,6 +94,9 @@
 #define txrx_nofl_dbg(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_TXRX, params)
 
+#define ol_txrx_err_rl(params...) \
+	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_TXRX, params)
+
 /*
  * define PN check failure message print rate
  * as 1 second
@@ -114,6 +117,8 @@
 #define txrx_nofl_warn(params...)
 #define txrx_nofl_info(params...)
 #define txrx_nofl_dbg(params...)
+
+#define ol_txrx_err_rl(params...)
 
 #endif /* TXRX_PRINT_ENABLE */
 
