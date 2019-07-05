@@ -1987,6 +1987,18 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_is_sap_p2pgo_on_dfs() - check if there is a P2PGO or SAP
+ * operating in a DFS channel
+ * @psoc: PSOC object information
+ * This routine is called to check if there is a P2PGO/SAP on DFS channel
+ *
+ * Return: True  - P2PGO/SAP present on DFS Channel
+ * False - Otherwise
+ */
+
+bool policy_mgr_is_sap_p2pgo_on_dfs(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_register_sme_cb() - register SME callbacks
  * @psoc: PSOC object information
  * @sme_cbacks: function pointers from SME
