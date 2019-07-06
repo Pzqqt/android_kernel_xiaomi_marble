@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -194,14 +194,14 @@ QDF_STATUS ucfg_ocb_update_dp_handle(struct wlan_objmgr_psoc *soc,
 				     void *dp_soc);
 
 /**
- * ucfg_ocb_set_txrx_handle() - register pdev txrx handler
+ * ucfg_ocb_set_txrx_pdev_id() - register txrx pdev id
  * @soc: soc handle
- * @txrx_handle: data path pdev txrx handle
+ * @pdev_id: data path pdev ID
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS ucfg_ocb_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
-				    void *txrx_handle);
+QDF_STATUS ucfg_ocb_set_txrx_pdev_id(struct wlan_objmgr_psoc *psoc,
+				     uint8_t pdev_id);
 #else
 /**
  * ucfg_ocb_init() - OCB module initialization
@@ -274,15 +274,15 @@ QDF_STATUS ucfg_ocb_update_dp_handle(struct wlan_objmgr_psoc *soc,
 }
 
 /**
- * ucfg_ocb_set_txrx_handle() - register pdev txrx handler
+ * ucfg_ocb_set_txrx_pdev_id() - register txrx pdev id
  * @soc: soc handle
- * @txrx_handle: data path pdev txrx handle
+ * @pdev_id: data path pdev ID
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
 static inline
-QDF_STATUS ucfg_ocb_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
-				    void *txrx_handle)
+QDF_STATUS ucfg_ocb_set_txrx_pdev_id(struct wlan_objmgr_psoc *psoc,
+				     uint8_t pdev_id)
 {
 	return QDF_STATUS_SUCCESS;
 }

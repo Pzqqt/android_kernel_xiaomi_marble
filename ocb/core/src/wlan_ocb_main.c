@@ -92,7 +92,7 @@ static QDF_STATUS ocb_set_chan_info(void *dp_soc,
 	ocb_set_chan.ocb_channel_count = config->channel_count;
 
 	/* release old settings */
-	ocb_channel_info = cdp_get_ocb_chan_info(dp_soc, dp_vdev);
+	ocb_channel_info = cdp_get_ocb_chan_info(dp_soc, vdev_id);
 	if (ocb_channel_info)
 		qdf_mem_free(ocb_channel_info);
 
@@ -118,7 +118,7 @@ static QDF_STATUS ocb_set_chan_info(void *dp_soc,
 		ocb_set_chan.ocb_channel_info = NULL;
 	}
 	ocb_debug("Sync channel config to dp");
-	cdp_set_ocb_chan_info(dp_soc, dp_vdev, ocb_set_chan);
+	cdp_set_ocb_chan_info(dp_soc, vdev_id, ocb_set_chan);
 
 	return QDF_STATUS_SUCCESS;
 }
