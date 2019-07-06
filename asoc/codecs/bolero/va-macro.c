@@ -209,6 +209,7 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 	int retry_cnt = MAX_RETRY_ATTEMPTS;
+	int ret = 0;
 
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
@@ -234,6 +235,19 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 				"%s: va_mclk_users is non-zero still, audio SSR fail!!\n",
 				__func__);
 		break;
+	case BOLERO_MACRO_EVT_SSR_UP:
+		/* enable&disable VA_CORE_CLK to reset GFMUX reg */
+		ret = bolero_clk_rsc_request_clock(va_priv->dev,
+						va_priv->default_clk_id,
+						VA_CORE_CLK, true);
+		if (ret < 0)
+			dev_err_ratelimited(va_priv->dev,
+				"%s, failed to enable clk, ret:%d\n",
+				__func__, ret);
+		else
+			bolero_clk_rsc_request_clock(va_priv->dev,
+						va_priv->default_clk_id,
+						VA_CORE_CLK, false);
 	case BOLERO_MACRO_EVT_CLK_RESET:
 		bolero_rsc_clk_reset(va_dev, VA_CORE_CLK);
 		break;
