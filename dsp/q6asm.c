@@ -3085,6 +3085,7 @@ int q6asm_open_read_compressed(struct audio_client *ac, uint32_t format,
 	 */
 	if (format == FORMAT_IEC61937) {
 		open.mode_flags = 0x1;
+		open.frames_per_buf = 1;
 		pr_debug("%s: Flag 1 IEC61937 output\n", __func__);
 	} else {
 		open.mode_flags = 0;
