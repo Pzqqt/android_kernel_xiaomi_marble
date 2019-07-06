@@ -1079,14 +1079,16 @@ struct cdp_misc_ops {
 
 /**
  * struct cdp_ocb_ops - mcl ocb ops
- * @set_ocb_chan_info:
- * @get_ocb_chan_info:
+ * @set_ocb_chan_info: set OCB channel info
+ * @get_ocb_chan_info: get OCB channel info
+ *
+ * Function pointers for operations related to OCB.
  */
 struct cdp_ocb_ops {
-	void (*set_ocb_chan_info)(struct cdp_vdev *vdev,
-			struct ol_txrx_ocb_set_chan ocb_set_chan);
-	struct ol_txrx_ocb_chan_info *
-		(*get_ocb_chan_info)(struct cdp_vdev *vdev);
+	void (*set_ocb_chan_info)(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+				  struct ol_txrx_ocb_set_chan ocb_set_chan);
+	struct ol_txrx_ocb_chan_info *(*get_ocb_chan_info)(
+				struct cdp_soc_t *soc_hdl, uint8_t vdev_id);
 };
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,14 +23,14 @@
 /**
  * cdp_set_ocb_chan_info() - set OCB channel info to vdev.
  * @soc - data path soc handle
- * @vdev: vdev handle
+ * @vdev_id: vdev_id corresponding to vdev start
  * @ocb_set_chan: OCB channel information to be set in vdev.
  *
  * Return: NONE
  */
 static inline void
-cdp_set_ocb_chan_info(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-		struct ol_txrx_ocb_set_chan ocb_set_chan)
+cdp_set_ocb_chan_info(ol_txrx_soc_handle soc, uint8_t vdev_id,
+		      struct ol_txrx_ocb_set_chan ocb_set_chan)
 {
 	if (!soc || !soc->ops || !soc->ops->ocb_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -39,19 +39,19 @@ cdp_set_ocb_chan_info(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	}
 
 	if (soc->ops->ocb_ops->set_ocb_chan_info)
-		soc->ops->ocb_ops->set_ocb_chan_info(vdev,
+		soc->ops->ocb_ops->set_ocb_chan_info(soc, vdev_id,
 			ocb_set_chan);
 
 }
 /**
  * cdp_get_ocb_chan_info() - return handle to vdev ocb_channel_info
  * @soc - data path soc handle
- * @vdev: vdev handle
+ * @vdev_id: vdev_id corresponding to vdev start
  *
  * Return: handle to struct ol_txrx_ocb_chan_info
  */
 static inline struct ol_txrx_ocb_chan_info *
-cdp_get_ocb_chan_info(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+cdp_get_ocb_chan_info(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops || !soc->ops->ocb_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -60,7 +60,7 @@ cdp_get_ocb_chan_info(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 	}
 
 	if (soc->ops->ocb_ops->get_ocb_chan_info)
-		return soc->ops->ocb_ops->get_ocb_chan_info(vdev);
+		return soc->ops->ocb_ops->get_ocb_chan_info(soc, vdev_id);
 
 	return NULL;
 }
