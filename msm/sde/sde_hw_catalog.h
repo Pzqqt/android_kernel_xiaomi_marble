@@ -367,12 +367,13 @@ enum {
 
 /**
  * PINGPONG sub-blocks
- * @SDE_PINGPONG_TE         Tear check block
- * @SDE_PINGPONG_TE2        Additional tear check block for split pipes
- * @SDE_PINGPONG_SPLIT      PP block supports split fifo
- * @SDE_PINGPONG_SLAVE      PP block is a suitable slave for split fifo
- * @SDE_PINGPONG_DSC,       Display stream compression blocks
- * @SDE_PINGPONG_DITHER,    Dither blocks
+ * @SDE_PINGPONG_TE              Tear check block
+ * @SDE_PINGPONG_TE2             Additional tear check block for split pipes
+ * @SDE_PINGPONG_SPLIT           PP block supports split fifo
+ * @SDE_PINGPONG_SLAVE           PP block is a suitable slave for split fifo
+ * @SDE_PINGPONG_DSC,            Display stream compression blocks
+ * @SDE_PINGPONG_DITHER,         Dither blocks
+ * @SDE_PINGPONG_DITHER_LUMA,    Dither sub-blocks and features
  * @SDE_PINGPONG_MERGE_3D,  Separate MERGE_3D block exists
  * @SDE_PINGPONG_MAX
  */
@@ -383,6 +384,7 @@ enum {
 	SDE_PINGPONG_SLAVE,
 	SDE_PINGPONG_DSC,
 	SDE_PINGPONG_DITHER,
+	SDE_PINGPONG_DITHER_LUMA,
 	SDE_PINGPONG_MERGE_3D,
 	SDE_PINGPONG_MAX
 };
@@ -1407,6 +1409,7 @@ struct sde_limit_cfg {
  * @has_mixer_combined_alpha     Mixer has single register for FG & BG alpha
  * @vbif_disable_inner_outer_shareable     VBIF requires disabling shareables
  * @inline_disable_const_clr     Disable constant color during inline rotate
+ * @dither_luma_mode_support   Enables dither luma mode
  * @sc_cfg: system cache configuration
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
@@ -1464,6 +1467,7 @@ struct sde_mdss_cfg {
 	bool has_mixer_combined_alpha;
 	bool vbif_disable_inner_outer_shareable;
 	bool inline_disable_const_clr;
+	bool dither_luma_mode_support;
 
 	struct sde_sc_cfg sc_cfg;
 

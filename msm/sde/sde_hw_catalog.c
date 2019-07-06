@@ -3344,6 +3344,9 @@ static int sde_pp_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 		sblk->dither.version = PROP_VALUE_ACCESS(prop_value, DITHER_VER,
 								0);
 
+		if (sde_cfg->dither_luma_mode_support)
+			set_bit(SDE_PINGPONG_DITHER_LUMA, &pp->features);
+
 		if (prop_exists[PP_MERGE_3D_ID]) {
 			set_bit(SDE_PINGPONG_MERGE_3D, &pp->features);
 			pp->merge_3d_id = PROP_VALUE_ACCESS(prop_value,
@@ -4561,6 +4564,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_0;
 		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_1;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
+		sde_cfg->dither_luma_mode_support = true;
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;

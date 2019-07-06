@@ -2354,6 +2354,61 @@ static void _sde_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
 	memset(&sde_enc->cur_conn_roi, 0, sizeof(sde_enc->cur_conn_roi));
 }
 
+static void _sde_encoder_setup_dither(struct sde_encoder_phys *phys)
+{
+	void *dither_cfg = NULL;
+	int ret = 0, i = 0;
+	size_t len = 0;
+	enum sde_rm_topology_name topology;
+	struct drm_encoder *drm_enc;
+	struct msm_display_dsc_info *dsc = NULL;
+	struct sde_encoder_virt *sde_enc;
+	struct sde_hw_pingpong *hw_pp;
+	u32 bpp, bpc;
+
+	if (!phys || !phys->connector || !phys->hw_pp ||
+			!phys->hw_pp->ops.setup_dither || !phys->parent)
+		return;
+
+	topology = sde_connector_get_topology_name(phys->connector);
+	if ((topology == SDE_RM_TOPOLOGY_PPSPLIT) &&
+			(phys->split_role == ENC_ROLE_SLAVE))
+		return;
+
+	drm_enc = phys->parent;
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	dsc = &sde_enc->mode_info.comp_info.dsc_info;
+
+	bpc = dsc->config.bits_per_component;
+	bpp = dsc->config.bits_per_pixel;
+
+	/* disable dither for 10 bpp or 10bpc dsc config */
+	if (bpp == 10 || bpc == 10) {
+		phys->hw_pp->ops.setup_dither(phys->hw_pp, NULL, 0);
+		return;
+	}
+
+	ret = sde_connector_get_dither_cfg(phys->connector,
+			phys->connector->state, &dither_cfg,
+			&len, sde_enc->idle_pc_restore);
+
+	/* skip reg writes when return values are invalid or no data */
+	if (ret && ret == -ENODATA)
+		return;
+
+	if (TOPOLOGY_DUALPIPE_MERGE_MODE(topology)) {
+		for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
+			hw_pp = sde_enc->hw_pp[i];
+			phys->hw_pp->ops.setup_dither(hw_pp,
+					dither_cfg, len);
+		}
+
+	} else {
+		phys->hw_pp->ops.setup_dither(phys->hw_pp,
+				dither_cfg, len);
+	}
+}
+
 void sde_encoder_virt_restore(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
@@ -2386,6 +2441,8 @@ void sde_encoder_virt_restore(struct drm_encoder *drm_enc)
 
 		if ((phys != sde_enc->cur_master) && phys->ops.restore)
 			phys->ops.restore(phys);
+
+		_sde_encoder_setup_dither(phys);
 	}
 
 	if (sde_enc->cur_master->ops.restore)
@@ -3450,55 +3507,6 @@ void sde_encoder_trigger_kickoff_pending(struct drm_encoder *drm_enc)
 		}
 	}
 	sde_enc->idle_pc_restore = false;
-}
-
-static void _sde_encoder_setup_dither(struct sde_encoder_phys *phys)
-{
-	void *dither_cfg;
-	int ret = 0, i = 0;
-	size_t len = 0;
-	enum sde_rm_topology_name topology;
-	struct drm_encoder *drm_enc;
-	struct msm_display_dsc_info *dsc = NULL;
-	struct sde_encoder_virt *sde_enc;
-	struct sde_hw_pingpong *hw_pp;
-	u16 bpp;
-
-	if (!phys || !phys->connector || !phys->hw_pp ||
-			!phys->hw_pp->ops.setup_dither || !phys->parent)
-		return;
-
-	topology = sde_connector_get_topology_name(phys->connector);
-	if ((topology == SDE_RM_TOPOLOGY_PPSPLIT) &&
-			(phys->split_role == ENC_ROLE_SLAVE))
-		return;
-
-	drm_enc = phys->parent;
-	sde_enc = to_sde_encoder_virt(drm_enc);
-	dsc = &sde_enc->mode_info.comp_info.dsc_info;
-	/* disable dither for 10 bpp or 10bpc dsc config */
-	bpp = DSC_BPP(dsc->config);
-	if (bpp == 10 || dsc->config.bits_per_component == 10) {
-		phys->hw_pp->ops.setup_dither(phys->hw_pp, NULL, 0);
-		return;
-	}
-
-	ret = sde_connector_get_dither_cfg(phys->connector,
-			phys->connector->state, &dither_cfg, &len);
-	if (ret)
-		return;
-
-	if (TOPOLOGY_DUALPIPE_MERGE_MODE(topology)) {
-		for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
-			hw_pp = sde_enc->hw_pp[i];
-			if (hw_pp) {
-				phys->hw_pp->ops.setup_dither(hw_pp, dither_cfg,
-								len);
-			}
-		}
-	} else {
-		phys->hw_pp->ops.setup_dither(phys->hw_pp, dither_cfg, len);
-	}
 }
 
 static u32 _sde_encoder_calculate_linetime(struct sde_encoder_virt *sde_enc,
