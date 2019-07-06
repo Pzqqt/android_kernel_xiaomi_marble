@@ -817,7 +817,7 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 		goto intr_close;
 
 	ucfg_pmo_psoc_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
-	ucfg_ocb_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
+	ucfg_ocb_set_txrx_pdev_id(psoc, WMI_PDEV_ID_SOC);
 
 	cds_debug("CDS successfully Opened");
 

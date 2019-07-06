@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -82,7 +82,7 @@ enum ocb_southbound_event {
  * @ocb_channel_count: channel count
  * @channel_config: current channel configurations
  * @dp_soc: psoc data path handle
- * @dp_pdev: pdev data path handle
+ * @dp_pdev_id: pdev data path ID
  * @ocb_cbs: legacy callback functions
  * @ocb_txops: tx opertions for target interface
  * @ocb_rxops: rx opertions for target interface
@@ -93,7 +93,7 @@ struct ocb_pdev_obj {
 	uint32_t ocb_channel_count;
 	struct ocb_config *channel_config;
 	void *dp_soc;
-	void *dp_pdev;
+	uint8_t dp_pdev_id;
 	struct ocb_callbacks ocb_cbs;
 	struct wlan_ocb_tx_ops ocb_txops;
 	struct wlan_ocb_rx_ops ocb_rxops;

@@ -2687,15 +2687,23 @@ ol_txrx_remove_peers_for_vdev_no_lock(struct cdp_vdev *pvdev,
 #ifdef WLAN_FEATURE_DSRC
 /**
  * ol_txrx_set_ocb_chan_info() - set OCB channel info to vdev.
- * @vdev: vdev handle
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: id of vdev
  * @ocb_set_chan: OCB channel information to be set in vdev.
  *
  * Return: NONE
  */
-static void ol_txrx_set_ocb_chan_info(struct cdp_vdev *pvdev,
+static void
+ol_txrx_set_ocb_chan_info(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			  struct ol_txrx_ocb_set_chan ocb_set_chan)
 {
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+
+	if (qdf_unlikely(!vdev)) {
+		ol_txrx_err("pdev is NULL");
+		return;
+	}
 
 	vdev->ocb_channel_info = ocb_set_chan.ocb_channel_info;
 	vdev->ocb_channel_count = ocb_set_chan.ocb_channel_count;
@@ -2703,14 +2711,21 @@ static void ol_txrx_set_ocb_chan_info(struct cdp_vdev *pvdev,
 
 /**
  * ol_txrx_get_ocb_chan_info() - return handle to vdev ocb_channel_info
- * @vdev: vdev handle
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: id of vdev
  *
  * Return: handle to struct ol_txrx_ocb_chan_info
  */
 static struct ol_txrx_ocb_chan_info *
-ol_txrx_get_ocb_chan_info(struct cdp_vdev *pvdev)
+ol_txrx_get_ocb_chan_info(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+
+	if (qdf_unlikely(!vdev)) {
+		ol_txrx_err("pdev is NULL");
+		return NULL;
+	}
 
 	return vdev->ocb_channel_info;
 }
