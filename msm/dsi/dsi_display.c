@@ -5749,6 +5749,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 			  struct dsi_display_mode **out_modes)
 {
 	struct dsi_dfps_capabilities dfps_caps;
+	struct dsi_display_ctrl *ctrl;
 	u32 num_dfps_rates, panel_mode_count, total_mode_count;
 	u32 mode_idx, array_idx = 0;
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
@@ -5760,6 +5761,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 	}
 
 	*out_modes = NULL;
+	ctrl = &display->ctrl[0];
 
 	mutex_lock(&display->display_lock);
 
@@ -5793,6 +5795,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 	for (mode_idx = 0; mode_idx < panel_mode_count; mode_idx++) {
 		struct dsi_display_mode panel_mode;
 		int topology_override = NO_OVERRIDE;
+		u32 frame_threshold_us = ctrl->ctrl->frame_threshold_time_us;
 
 		if (display->cmdline_timing == mode_idx)
 			topology_override = display->cmdline_topology;
@@ -5812,7 +5815,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 		if (display->panel->panel_mode == DSI_OP_CMD_MODE) {
 			dsi_panel_calc_dsi_transfer_time(
 					&display->panel->host_config,
-					&panel_mode.timing);
+					&panel_mode, frame_threshold_us);
 			panel_mode.priv_info->dsi_transfer_time_us =
 				panel_mode.timing.dsi_transfer_time_us;
 			panel_mode.priv_info->min_dsi_clk_hz =

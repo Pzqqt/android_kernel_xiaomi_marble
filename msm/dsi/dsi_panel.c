@@ -25,8 +25,6 @@
 
 #define DSI_PANEL_DEFAULT_LABEL  "Default dsi panel"
 
-#define DEFAULT_MDP_TRANSFER_TIME 14000
-
 #define DEFAULT_PANEL_JITTER_NUMERATOR		2
 #define DEFAULT_PANEL_JITTER_DENOMINATOR	1
 #define DEFAULT_PANEL_JITTER_ARRAY_SIZE		2
@@ -763,8 +761,7 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		display_mode->priv_info->mdp_transfer_time_us =
 			mode->mdp_transfer_time_us;
 	else
-		display_mode->priv_info->mdp_transfer_time_us =
-			DEFAULT_MDP_TRANSFER_TIME;
+		display_mode->priv_info->mdp_transfer_time_us = 0;
 
 	rc = utils->read_u32(utils->data,
 				"qcom,mdss-dsi-panel-framerate",
@@ -3362,19 +3359,17 @@ void dsi_panel_put_mode(struct dsi_display_mode *mode)
 }
 
 void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
-		struct dsi_mode_info *timing)
+		struct dsi_display_mode *mode, u32 frame_threshold_us)
 {
 	u32 frame_time_us,nslices;
 	u64 min_bitclk, total_active_pixels, bits_per_line;
-	struct msm_display_dsc_info *dsc = timing->dsc;
+	struct msm_display_dsc_info *dsc = mode->timing.dsc;
+	struct dsi_mode_info *timing = &mode->timing;
 
 	/* Packet overlead in bits,2 bytes header + 2 bytes checksum
 	 * + 1 byte dcs data command.
         */
 	const u32 packet_overhead = 56;
-
-	/* Default time between pingpong done to TE in microsecs */
-	const u32 max_tx_threshold_time = 2166;
 
 	frame_time_us = mult_frac(1000, 1000, (timing->refresh_rate));
 
@@ -3403,9 +3398,12 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 		/* adjust the transfer time proportionately for bit clk*/
 		timing->dsi_transfer_time_us = mult_frac(frame_time_us,
 				min_bitclk, timing->clk_rate_hz);
+	} else if (mode->priv_info->mdp_transfer_time_us) {
+		timing->dsi_transfer_time_us =
+			mode->priv_info->mdp_transfer_time_us;
 	} else {
 		timing->dsi_transfer_time_us = frame_time_us -
-			max_tx_threshold_time;
+			frame_threshold_us;
 	}
 }
 
