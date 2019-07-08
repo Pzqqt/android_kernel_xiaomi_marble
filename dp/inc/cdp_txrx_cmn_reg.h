@@ -57,28 +57,30 @@ ol_txrx_soc_handle ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_
  * Return: DP SOC handle on success, NULL on failure
  */
 #if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018)
-void *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-			  void *hif_handle,
-			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-			  struct ol_if_ops *ol_ops, uint16_t device_id);
+struct cdp_soc_t *
+dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+		    struct hif_opaque_softc *hif_handle,
+		    HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+		    struct ol_if_ops *ol_ops, uint16_t device_id);
 void *dp_soc_init_wifi3(void *soc, struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-			void *hif_handle,
+			struct hif_opaque_softc *hif_handle,
 			HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			struct ol_if_ops *ol_ops, uint16_t device_id);
 #else
-static inline void *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-					void *hif_handle,
-					HTC_HANDLE htc_handle,
-					qdf_device_t qdf_osdev,
-					struct ol_if_ops *ol_ops,
-					uint16_t device_id)
+static inline
+struct cdp_soc_t *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+				      struct hif_opaque_softc *hif_handle,
+				      HTC_HANDLE htc_handle,
+				      qdf_device_t qdf_osdev,
+				      struct ol_if_ops *ol_ops,
+				      uint16_t device_id)
 {
 	return NULL;
 }
 
 static inline
 void *dp_soc_init_wifi3(void *soc, struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-			void *hif_handle,
+			struct hif_opaque_softc *hif_handle,
 			HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			struct ol_if_ops *ol_ops, uint16_t device_id)
 {

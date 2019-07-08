@@ -141,7 +141,7 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 			      struct dp_ast_entry *ast_entry);
 
 void dp_peer_free_hmwds_cb(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-			   void *dp_soc,
+			   struct cdp_soc *dp_soc,
 			   void *cookie,
 			   enum cdp_ast_free_status status);
 

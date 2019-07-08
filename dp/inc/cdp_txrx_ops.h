@@ -44,6 +44,8 @@
 #define CDP_PEER_DELETE_NO_SPECIAL             0
 #define CDP_PEER_DO_NOT_START_UNMAP_TIMER      1
 
+struct hif_opaque_softc;
+
 /* same as ieee80211_nac_param */
 enum cdp_nac_param_cmd {
 	/* IEEE80211_NAC_PARAM_ADD */
@@ -320,7 +322,7 @@ struct cdp_cmn_ops {
 	 */
 	void *(*txrx_soc_init)(void *soc,
 			       struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-			       void *hif_handle,
+			       struct hif_opaque_softc *hif_handle,
 			       HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			       struct ol_if_ops *ol_ops, uint16_t device_id);
 

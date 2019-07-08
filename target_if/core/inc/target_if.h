@@ -110,7 +110,6 @@ struct host_fw_ver {
 };
 
 struct common_dbglog_handle;
-struct common_hif_handle;
 struct common_accelerator_handle;
 
 /**
@@ -123,7 +122,7 @@ struct common_accelerator_handle;
  * @dbglog_hdl: Debug log handle
  */
 struct comp_hdls {
-	struct common_hif_handle *hif_hdl;
+	struct hif_opaque_softc *hif_hdl;
 	HTC_HANDLE htc_hdl;
 	struct wmi_unified *wmi_hdl;
 	struct common_accelerator_handle *accelerator_hdl;
@@ -875,7 +874,7 @@ static inline uint32_t target_psoc_get_num_mem_chunks
  */
 static inline void target_psoc_set_hif_hdl
 		(struct target_psoc_info *psoc_info,
-		 struct common_hif_handle *hif_hdl)
+		 struct hif_opaque_softc *hif_hdl)
 {
 	if (!psoc_info)
 		return;
@@ -891,7 +890,7 @@ static inline void target_psoc_set_hif_hdl
  *
  * Return: hif_hdl
  */
-static inline struct common_hif_handle *target_psoc_get_hif_hdl
+static inline struct hif_opaque_softc *target_psoc_get_hif_hdl
 		(struct target_psoc_info *psoc_info)
 {
 	if (!psoc_info)

@@ -213,7 +213,8 @@ struct hif_softc {
 #endif
 };
 
-static inline void *hif_get_hal_handle(void *hif_hdl)
+static inline
+void *hif_get_hal_handle(struct hif_opaque_softc *hif_hdl)
 {
 	struct hif_softc *sc = (struct hif_softc *)hif_hdl;
 

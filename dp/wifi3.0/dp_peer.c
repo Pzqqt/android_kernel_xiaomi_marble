@@ -269,7 +269,7 @@ static inline void dp_peer_ast_cleanup(struct dp_soc *soc,
 		ast->callback = NULL;
 		ast->cookie = NULL;
 		cb(soc->ctrl_psoc,
-		   soc,
+		   dp_psoc_to_cdp_psoc(soc),
 		   cookie,
 		   CDP_TXRX_AST_DELETE_IN_PROGRESS);
 	}
@@ -527,7 +527,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 }
 
 void dp_peer_free_hmwds_cb(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-			   void *dp_soc,
+			   struct cdp_soc *dp_soc,
 			   void *cookie,
 			   enum cdp_ast_free_status status)
 {
@@ -715,7 +715,9 @@ int dp_peer_add_ast(struct dp_soc *soc,
 
 			/* Call the saved callback*/
 			if (cb) {
-				cb(soc->ctrl_psoc, soc, cookie,
+				cb(soc->ctrl_psoc,
+				   dp_psoc_to_cdp_psoc(soc),
+				   cookie,
 				   CDP_TXRX_AST_DELETE_IN_PROGRESS);
 			}
 			return 0;
@@ -1140,7 +1142,7 @@ static int dp_peer_ast_free_entry_by_mac(struct dp_soc *soc,
 
 	if (cb) {
 		cb(soc->ctrl_psoc,
-		   soc,
+		   dp_psoc_to_cdp_psoc(soc),
 		   cookie,
 		   CDP_TXRX_AST_DELETED);
 	}

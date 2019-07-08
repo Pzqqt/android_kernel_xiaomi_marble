@@ -159,7 +159,7 @@ void lmac_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
  *
  * Return: hif handler
  */
-struct common_hif_handle *lmac_get_hif_hdl(struct wlan_objmgr_psoc *psoc);
+struct hif_opaque_softc *lmac_get_hif_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
  * lmac_get_ol_hif_hdl() - get hif handle

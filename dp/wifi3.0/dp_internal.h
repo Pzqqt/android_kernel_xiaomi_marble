@@ -1323,15 +1323,39 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 }
 #endif
 
+/**
+ * dp_vdev_to_cdp_vdev() - typecast dp vdev to cdp vdev
+ * @vdev: DP vdev handle
+ *
+ * Return: struct cdp_vdev pointer
+ */
 static inline
 struct cdp_vdev *dp_vdev_to_cdp_vdev(struct dp_vdev *vdev)
 {
 	return (struct cdp_vdev *)vdev;
 }
 
+/**
+ * dp_pdev_to_cdp_pdev() - typecast dp pdev to cdp pdev
+ * @pdev: DP pdev handle
+ *
+ * Return: struct cdp_pdev pointer
+ */
 static inline
 struct cdp_pdev *dp_pdev_to_cdp_pdev(struct dp_pdev *pdev)
 {
 	return (struct cdp_pdev *)pdev;
+}
+
+/**
+ * dp_soc_to_cdp_soc() - typecast dp psoc to cdp psoc
+ * @psoc: DP psoc handle
+ *
+ * Return: struct cdp_soc pointer
+ */
+static inline
+struct cdp_soc *dp_soc_to_cdp_soc(struct dp_soc *psoc)
+{
+	return (struct cdp_soc *)psoc;
 }
 #endif /* #ifndef _DP_INTERNAL_H_ */
