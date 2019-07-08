@@ -1023,13 +1023,20 @@ blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 							max_entry_time;
 		if ((connection_age >
 		     SECONDS_TO_MS(blm_psoc_obj->blm_cfg.
-				   bad_bssid_counter_reset_time)) ||
-		    !blm_entry->reject_ap_type) {
-			blm_debug("Bad Bssid timer expired/AP cleared from all blacklisting, removed %pM from list",
-				  blm_entry->bssid.bytes);
-			qdf_list_remove_node(&blm_ctx->reject_ap_list,
-					     &blm_entry->node);
-			qdf_mem_free(blm_entry);
+				   bad_bssid_counter_reset_time))) {
+			blm_entry->driver_avoidlist = false;
+			blm_entry->driver_blacklist = false;
+			blm_entry->driver_monitorlist = false;
+			blm_entry->userspace_avoidlist = false;
+			blm_debug("updated reject ap type %d ",
+				  blm_entry->reject_ap_type);
+			if (!blm_entry->reject_ap_type) {
+				blm_debug("Bad Bssid timer expired/AP cleared from all blacklisting, removed %pM from list",
+					  blm_entry->bssid.bytes);
+				qdf_list_remove_node(&blm_ctx->reject_ap_list,
+						     &blm_entry->node);
+				qdf_mem_free(blm_entry);
+			}
 		}
 		break;
 	default:
