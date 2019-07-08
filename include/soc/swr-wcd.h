@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015, 2017-2019 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _LINUX_SWR_WCD_H
@@ -21,6 +21,7 @@ enum {
 	SWR_DEVICE_SSR_UP,
 	SWR_REGISTER_WAKE_IRQ,
 	SWR_SET_PORT_MAP,
+	SWR_REQ_CLK_SWITCH,
 };
 
 struct swr_mstr_port {
