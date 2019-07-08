@@ -198,7 +198,7 @@
  *
  * @min: 0x0
  * @max: 0xffffffff
- * @defalut: 0xc8a
+ * @defalut: 0xc83
  *
  * |31  12|  11  |  10  |9    8|7    6|5    4|3    2|  1  |  0  |
  * +------+------+------+------+------+------+------+-----+-----+
@@ -231,7 +231,7 @@
 #define CFG_LATENCY_FLAGS_ULTLOW CFG_INI_UINT("wlm_latency_flags_ultralow",\
 					      0, \
 					      0xffffffff, \
-					      0xc8a, \
+					      0xc83, \
 					      CFG_VALUE_OR_DEFAULT, \
 					      "WLM flags for ultralow level")
 
