@@ -52,7 +52,8 @@
 #define WLAN_IPA_UC_RT_DEBUG_FILL_INTERVAL  10000
 
 #define WLAN_IPA_WLAN_HDR_DES_MAC_OFFSET    0
-#define WLAN_IPA_MAX_IFACE                  3
+#define WLAN_IPA_MAX_IFACE                  MAX_IPA_IFACE
+#define WLAN_IPA_CLIENT_MAX_IFACE           3
 #define WLAN_IPA_MAX_SYSBAM_PIPE            4
 #define WLAN_IPA_MAX_SESSION                5
 #define WLAN_IPA_MAX_STA_COUNT              41
