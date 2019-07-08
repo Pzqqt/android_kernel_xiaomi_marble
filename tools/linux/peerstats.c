@@ -214,7 +214,7 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 			printf(" %10u |", tmp_rx_stats->rate);
 			for (chain = 0; chain < max_chain; chain++) {
 				for (bw = 0; bw < max_bw; bw++) {
-					printf(" %10lx |",
+					printf(" %10lu |",
 					tmp_rx_stats->avg_rssi_ant[chain][bw]);
 				}
 				printf("            \n\t     ");
@@ -259,7 +259,7 @@ dp_peer_tx_sojourn_stats_print(uint8_t *peer_mac,
 		      sojourn_stats->sum_sojourn_msdu[tid],
 		      sojourn_stats->num_msdus[tid]);
 	}
-	PRINT("sizeof(avg): %lx", sizeof(sojourn_stats->avg_sojourn_msdu[tid]));
+	PRINT("sizeof(avg): %lu", sizeof(sojourn_stats->avg_sojourn_msdu[tid]));
 	PRINT("\n...........................................");
 	PRINT("...................................");
 	PRINT("...................................");
