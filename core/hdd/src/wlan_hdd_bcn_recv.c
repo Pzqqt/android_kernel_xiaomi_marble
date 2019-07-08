@@ -492,7 +492,7 @@ void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
 	 * the QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_AUTO_RESUMES shall not be
 	 * set by the driver.
 	 */
-	if (!is_disconnected || !do_not_resume)
+	if (!is_disconnected && !do_not_resume)
 		if (nla_put_flag(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_AUTO_RESUMES)) {
 			hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
