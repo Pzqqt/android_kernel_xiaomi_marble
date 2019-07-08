@@ -31,7 +31,7 @@ static struct wlan_ipa_priv *gp_ipa;
 static struct wlan_ipa_iface_2_client {
 	qdf_ipa_client_type_t cons_client;
 	qdf_ipa_client_type_t prod_client;
-} wlan_ipa_iface_2_client[WLAN_IPA_MAX_IFACE] = {
+} wlan_ipa_iface_2_client[WLAN_IPA_CLIENT_MAX_IFACE] = {
 	{
 		QDF_IPA_CLIENT_WLAN2_CONS, QDF_IPA_CLIENT_WLAN1_PROD
 	}, {

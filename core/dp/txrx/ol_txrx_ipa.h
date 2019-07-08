@@ -83,7 +83,7 @@ struct ol_txrx_ipa_uc_rx_hdr {
 #define OL_TXRX_IPA_IPV4_NAME_EXT              "_ipv4"
 #define OL_TXRX_IPA_IPV6_NAME_EXT              "_ipv6"
 
-#define OL_TXRX_IPA_MAX_IFACE                  3
+#define OL_TXRX_IPA_MAX_IFACE                  MAX_IPA_IFACE
 
 #define OL_TXRX_IPA_WLAN_FRAG_HEADER        sizeof(struct frag_header)
 #define OL_TXRX_IPA_WLAN_IPA_HEADER         sizeof(struct ipa_header)

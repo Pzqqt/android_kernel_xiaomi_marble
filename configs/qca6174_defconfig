@@ -468,6 +468,13 @@ ifeq ($(CONFIG_IPA3), y)
 CONFIG_IPA_OFFLOAD := y
 endif
 
+#Set MAX IPA Offload Interface
+ifeq ($(CONFIG_ARCH_SDXPOORWILLS), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+CONFIG_NUM_IPA_IFACE := 2
+endif
+endif
+
 #Flag to enable SMMU S1 support
 ifeq ($(CONFIG_ARCH_SDM845), y)
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
@@ -476,6 +483,12 @@ endif
 endif
 
 ifeq ($(CONFIG_ARCH_SM8150), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
+endif
+endif
+
+ifeq ($(CONFIG_ARCH_SDXPOORWILLS), y)
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
 CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
 endif
