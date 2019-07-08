@@ -1026,8 +1026,14 @@ static void dp_display_mst_attention(struct dp_display_private *dp)
 
 	if (dp->mst.mst_active && dp->mst.cbs.hpd_irq) {
 		hpd_irq.mst_hpd_sim = dp->debug->mst_hpd_sim;
+		hpd_irq.mst_sim_add_con = dp->debug->mst_sim_add_con;
+		hpd_irq.mst_sim_remove_con = dp->debug->mst_sim_remove_con;
+		hpd_irq.mst_sim_remove_con_id = dp->debug->mst_sim_remove_con_id;
+		hpd_irq.edid = dp->debug->get_edid(dp->debug);
 		dp->mst.cbs.hpd_irq(&dp->dp_display, &hpd_irq);
 		dp->debug->mst_hpd_sim = false;
+		dp->debug->mst_sim_add_con = false;
+		dp->debug->mst_sim_remove_con = false;
 	}
 
 	DP_MST_DEBUG("mst_attention_work. mst_active:%d\n", dp->mst.mst_active);

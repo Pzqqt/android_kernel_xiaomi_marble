@@ -16,13 +16,24 @@
 /**
  * struct dp_debug
  * @debug_en: specifies whether debug mode enabled
+ * @sim_mode: specifies whether sim mode enabled
+ * @psm_enabled: specifies whether psm enabled
+ * @hdcp_disabled: specifies if hdcp is disabled
  * @hdcp_wait_sink_sync: used to wait for sink synchronization before HDCP auth
+ * @aspect_ratio: used to filter out aspect_ratio value
  * @vdisplay: used to filter out vdisplay value
  * @hdisplay: used to filter out hdisplay value
  * @vrefresh: used to filter out vrefresh value
  * @tpg_state: specifies whether tpg feature is enabled
  * @max_pclk_khz: max pclk supported
  * @force_encryption: enable/disable forced encryption for HDCP 2.2
+ * @hdcp_status: string holding hdcp status information
+ * @dp_mst_connector_list: list containing all dp mst connectors
+ * @mst_hpd_sim: specifies whether simulated hpd enabled
+ * @mst_sim_add_con: specifies whether new sim connector is to be added
+ * @mst_sim_remove_con: specifies whether sim connector is to be removed
+ * @mst_sim_remove_con_id: specifies id of sim connector to be removed
+ * @mst_port_cnt: number of mst ports to be added during hpd
  */
 struct dp_debug {
 	bool debug_en;
@@ -40,6 +51,9 @@ struct dp_debug {
 	char hdcp_status[SZ_128];
 	struct dp_mst_connector dp_mst_connector_list;
 	bool mst_hpd_sim;
+	bool mst_sim_add_con;
+	bool mst_sim_remove_con;
+	int mst_sim_remove_con_id;
 	u32 mst_port_cnt;
 
 	u8 *(*get_edid)(struct dp_debug *dp_debug);

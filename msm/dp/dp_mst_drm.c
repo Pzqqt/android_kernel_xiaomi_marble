@@ -94,9 +94,16 @@ struct dp_mst_sim_port_data {
 	u8 num_sdp_stream_sinks;
 };
 
+struct dp_mst_sim_port_edid {
+	u8 port_number;
+	u8 edid[SZ_256];
+	bool valid;
+};
+
 struct dp_mst_sim_mode {
 	bool mst_state;
 	struct edid *edid;
+	struct dp_mst_sim_port_edid port_edids[DP_MST_SIM_MAX_PORTS];
 	struct work_struct probe_work;
 	const struct drm_dp_mst_topology_cbs *cbs;
 	u32 port_cnt;
@@ -156,7 +163,21 @@ static void dp_mst_sim_destroy_port(struct kref *ref)
 {
 	struct drm_dp_mst_port *port = container_of(ref,
 			struct drm_dp_mst_port, kref);
-	kfree(port);
+	struct drm_dp_mst_topology_mgr *mgr = port->mgr;
+
+	if (port->cached_edid)
+		kfree(port->cached_edid);
+
+	if (port->connector) {
+		mutex_lock(&mgr->destroy_connector_lock);
+		kref_get(&port->parent->kref);
+		list_add(&port->next, &mgr->destroy_connector_list);
+		mutex_unlock(&mgr->destroy_connector_lock);
+		schedule_work(&mgr->destroy_connector_work);
+		return;
+	} else {
+		kfree(port);
+	}
 }
 
 /* DRM DP MST Framework simulator OPs */
@@ -218,7 +239,7 @@ static void dp_mst_sim_link_probe_work(struct work_struct *work)
 	struct dp_mst_sim_mode *sim;
 	struct dp_mst_private *mst;
 	struct dp_mst_sim_port_data port_data;
-	u8 cnt;
+	u8 cnt, i;
 
 	DP_MST_DEBUG("enter\n");
 	sim = container_of(work, struct dp_mst_sim_mode, probe_work);
@@ -233,8 +254,21 @@ static void dp_mst_sim_link_probe_work(struct work_struct *work)
 	port_data.num_sdp_streams = 0;
 	port_data.num_sdp_stream_sinks = 0;
 
+	for (i = 0; i < DP_MST_SIM_MAX_PORTS; i++)
+		sim->port_edids[i].valid = false;
+
 	for (cnt = 0; cnt < sim->port_cnt; cnt++) {
 		port_data.port_number = cnt;
+
+		for (i = 0; i < DP_MST_SIM_MAX_PORTS; i++) {
+			if (sim->port_edids[i].valid) continue;
+
+			sim->port_edids[i].port_number = port_data.port_number;
+			memcpy(sim->port_edids[i].edid, sim->edid, SZ_256);
+			sim->port_edids[i].valid = true;
+			break;
+		}
+
 		dp_mst_sim_add_port(mst, &port_data);
 	}
 
@@ -351,8 +385,19 @@ static struct edid *dp_mst_sim_get_edid(struct drm_connector *connector,
 {
 	struct dp_mst_private *mst = container_of(mgr,
 			struct dp_mst_private, mst_mgr);
+	int i;
 
-	return drm_edid_duplicate(mst->simulator.edid);
+	for (i = 0; i < DP_MST_SIM_MAX_PORTS; i++) {
+		if (mst->simulator.port_edids[i].valid &&
+				mst->simulator.port_edids[i].port_number ==
+				port->port_num) {
+			return drm_edid_duplicate((struct edid *)
+					(mst->simulator.port_edids[i].edid));
+		}
+	}
+
+	DRM_ERROR("edid not found for connector %d\n", connector->base.id);
+	return NULL;
 }
 
 static int dp_mst_sim_topology_mgr_set_mst(
@@ -368,6 +413,83 @@ static int dp_mst_sim_topology_mgr_set_mst(
 
 	mst->simulator.mst_state = mst_state;
 	return 0;
+}
+
+static void dp_mst_sim_handle_hpd_irq(void *dp_display,
+		struct dp_mst_hpd_info *info)
+{
+	struct dp_display *dp;
+	struct dp_mst_private *mst;
+	struct drm_dp_mst_port *port;
+	struct dp_mst_sim_port_data port_data;
+	struct drm_dp_mst_branch *mstb;
+	int i;
+	bool in_list, port_available;
+
+	dp = dp_display;
+	mst = dp->dp_mst_prv_info;
+
+	if (info->mst_sim_add_con) {
+		port_available = false;
+		for (i = 0; i < DP_MST_SIM_MAX_PORTS; i++) {
+			if (mst->simulator.port_edids[i].valid) continue;
+
+			port_data.port_number = i;
+			mst->simulator.port_edids[i].port_number = i;
+			memcpy(mst->simulator.port_edids[i].edid, info->edid,
+					SZ_256);
+			mst->simulator.port_edids[i].valid = true;
+			port_available = true;
+			break;
+		}
+
+		if (!port_available) {
+			DRM_ERROR("add port failed, limit (%d) reached\n",
+					DP_MST_SIM_MAX_PORTS);
+			return;
+		}
+
+		port_data.input_port = false;
+		port_data.peer_device_type = DP_PEER_DEVICE_SST_SINK;
+		port_data.mcs = false;
+		port_data.ddps = true;
+		port_data.legacy_device_plug_status = false;
+		port_data.dpcd_revision = 0;
+		port_data.num_sdp_streams = 0;
+		port_data.num_sdp_stream_sinks = 0;
+
+		dp_mst_sim_add_port(mst, &port_data);
+	} else if (info->mst_sim_remove_con) {
+		mstb = mst->mst_mgr.mst_primary;
+		in_list = false;
+
+		mutex_lock(&mst->mst_mgr.lock);
+		list_for_each_entry(port,
+				&mstb->ports, next) {
+			if (port->connector && port->connector->base.id ==
+					info->mst_sim_remove_con_id) {
+				in_list = true;
+				list_del(&port->next);
+				break;
+			}
+		}
+		mutex_unlock(&mst->mst_mgr.lock);
+
+		if (!in_list) {
+			DRM_ERROR("invalid connector id %d\n",
+					info->mst_sim_remove_con_id);
+			return;
+		}
+
+		for (i = 0; i < DP_MST_SIM_MAX_PORTS; i++) {
+			if (mst->simulator.port_edids[i].port_number ==
+					port->port_num) {
+				mst->simulator.port_edids[i].valid = false;
+			}
+		}
+
+		kref_put(&port->kref, dp_mst_sim_destroy_port);
+	}
 }
 
 static void _dp_mst_get_vcpi_info(
@@ -1857,6 +1979,20 @@ static void dp_mst_display_hpd_irq(void *dp_display,
 	bool handled;
 
 	if (info->mst_hpd_sim) {
+		if (info->mst_sim_add_con || info->mst_sim_remove_con) {
+			dp_mst_sim_handle_hpd_irq(dp_display, info);
+
+			/*
+			 * When removing a connector, hpd_irq -> sim_destroy ->
+			 * destroy_connector_work will be executed in a thread.
+			 * This thread will perform the dp_mst_hotplug at the
+			 * appropriate time. Do not perform hotplug here
+			 * because it may be too early.
+			 */
+			if (info->mst_sim_remove_con)
+				return;
+		}
+
 		dp_mst_hotplug(&mst->mst_mgr);
 		return;
 	}

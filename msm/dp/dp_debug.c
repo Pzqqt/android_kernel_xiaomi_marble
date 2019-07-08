@@ -511,6 +511,90 @@ end:
 	return len;
 }
 
+static ssize_t dp_debug_write_mst_con_add(struct file *file,
+		const char __user *user_buff, size_t count, loff_t *ppos)
+{
+	struct dp_debug_private *debug = file->private_data;
+	char buf[SZ_32];
+	size_t len = 0;
+	const int dp_en = BIT(3), hpd_high = BIT(7), hpd_irq = BIT(8);
+	int vdo = dp_en | hpd_high | hpd_irq;
+
+	if (!debug)
+		return -ENODEV;
+
+	if (*ppos)
+		return 0;
+
+	/* Leave room for termination char */
+	len = min_t(size_t, count, SZ_32 - 1);
+	if (copy_from_user(buf, user_buff, len))
+		goto end;
+
+	debug->dp_debug.mst_hpd_sim = true;
+	debug->dp_debug.mst_sim_add_con = true;
+	debug->hpd->simulate_attention(debug->hpd, vdo);
+end:
+	return len;
+}
+
+static ssize_t dp_debug_write_mst_con_remove(struct file *file,
+		const char __user *user_buff, size_t count, loff_t *ppos)
+{
+	struct dp_debug_private *debug = file->private_data;
+	struct dp_mst_connector *mst_connector;
+	char buf[SZ_32];
+	size_t len = 0;
+	int con_id = 0;
+	bool in_list = false;
+	const int dp_en = BIT(3), hpd_high = BIT(7), hpd_irq = BIT(8);
+	int vdo = dp_en | hpd_high | hpd_irq;
+
+	if (!debug)
+		return -ENODEV;
+
+	if (*ppos)
+		return 0;
+
+	/* Leave room for termination char */
+	len = min_t(size_t, count, SZ_32 - 1);
+	if (copy_from_user(buf, user_buff, len))
+		goto end;
+
+	buf[len] = '\0';
+
+	if (sscanf(buf, "%d", &con_id) != 1) {
+		len = 0;
+		goto end;
+	}
+
+	if (!con_id)
+		goto end;
+
+	/* Verify that the connector id is for a valid mst connector. */
+	mutex_lock(&debug->dp_debug.dp_mst_connector_list.lock);
+	list_for_each_entry(mst_connector,
+			&debug->dp_debug.dp_mst_connector_list.list, list) {
+		if (mst_connector->con_id == con_id) {
+			in_list = true;
+			break;
+		}
+	}
+	mutex_unlock(&debug->dp_debug.dp_mst_connector_list.lock);
+
+	if (!in_list) {
+		DRM_ERROR("invalid connector id %u\n", con_id);
+		goto end;
+	}
+
+	debug->dp_debug.mst_hpd_sim = true;
+	debug->dp_debug.mst_sim_remove_con = true;
+	debug->dp_debug.mst_sim_remove_con_id = con_id;
+	debug->hpd->simulate_attention(debug->hpd, vdo);
+end:
+	return len;
+}
+
 static ssize_t dp_debug_bw_code_write(struct file *file,
 		const char __user *user_buff, size_t count, loff_t *ppos)
 {
@@ -1699,6 +1783,16 @@ static const struct file_operations mst_con_id_fops = {
 	.write = dp_debug_write_mst_con_id,
 };
 
+static const struct file_operations mst_con_add_fops = {
+	.open = simple_open,
+	.write = dp_debug_write_mst_con_add,
+};
+
+static const struct file_operations mst_con_remove_fops = {
+	.open = simple_open,
+	.write = dp_debug_write_mst_con_remove,
+};
+
 static const struct file_operations hpd_fops = {
 	.open = simple_open,
 	.write = dp_debug_write_hpd,
@@ -1851,6 +1945,24 @@ static int dp_debug_init(struct dp_debug *dp_debug)
 	if (IS_ERR_OR_NULL(file)) {
 		rc = PTR_ERR(file);
 		pr_err("[%s] debugfs create mst_conn_info failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		goto error_remove_dir;
+	}
+
+	file = debugfs_create_file("mst_con_add", 0644, dir,
+					debug, &mst_con_add_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DRM_ERROR("[%s] debugfs create mst_con_add failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		goto error_remove_dir;
+	}
+
+	file = debugfs_create_file("mst_con_remove", 0644, dir,
+					debug, &mst_con_remove_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DRM_ERROR("[%s] debugfs create mst_con_remove failed, rc=%d\n",
 		       DEBUG_NAME, rc);
 		goto error_remove_dir;
 	}
