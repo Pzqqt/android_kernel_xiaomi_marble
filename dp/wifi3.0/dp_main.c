@@ -131,7 +131,8 @@ dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, int val)
 }
 #endif
 
-void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle);
+void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle,
+		  struct hif_opaque_softc *hif_handle);
 static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force);
 static struct dp_soc *
 dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc, HTC_HANDLE htc_handle,
@@ -423,7 +424,7 @@ static int dp_get_num_rx_contexts(struct cdp_soc_t *soc_hdl)
  */
 static void dp_pktlogmod_exit(struct dp_pdev *handle)
 {
-	void *scn = (void *)handle->soc->hif_handle;
+	struct hif_opaque_softc *scn = (void *)handle->soc->hif_handle;
 
 	if (!scn) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -770,7 +771,7 @@ static QDF_STATUS dp_peer_ast_entry_del_by_soc(struct cdp_soc_t *soc_handle,
 	qdf_spin_unlock_bh(&soc->ast_lock);
 	if (cb) {
 		cb(soc->ctrl_psoc,
-		   soc,
+		   dp_soc_to_cdp_soc(soc),
 		   arg,
 		   CDP_TXRX_AST_DELETE_IN_PROGRESS);
 	}
@@ -832,7 +833,7 @@ static QDF_STATUS dp_peer_ast_entry_del_by_pdev(struct cdp_soc_t *soc_handle,
 
 	if (cb) {
 		cb(soc->ctrl_psoc,
-		   soc,
+		   dp_soc_to_cdp_soc(soc),
 		   arg,
 		   CDP_TXRX_AST_DELETE_IN_PROGRESS);
 	}
@@ -1269,7 +1270,7 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 			 int ring_type, int ring_num, int mac_id,
 			 uint32_t num_entries, bool cached)
 {
-	void *hal_soc = soc->hal_soc;
+	hal_soc_handle_t hal_soc = soc->hal_soc;
 	uint32_t entry_size = hal_srng_get_entrysize(hal_soc, ring_type);
 	/* TODO: See if we should get align size from hal */
 	uint32_t ring_base_align = 8;
@@ -1413,13 +1414,13 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 }
 
 /* TODO: Need this interface from HIF */
-void *hif_get_hal_handle(void *hif_handle);
+void *hif_get_hal_handle(struct hif_opaque_softc *hif_handle);
 
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
 int dp_srng_access_start(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
 			 hal_ring_handle_t hal_ring_hdl)
 {
-	void *hal_soc = dp_soc->hal_soc;
+	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
 	uint32_t hp, tp;
 	uint8_t ring_id;
 
@@ -1435,7 +1436,7 @@ int dp_srng_access_start(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
 void dp_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
 			hal_ring_handle_t hal_ring_hdl)
 {
-	void *hal_soc = dp_soc->hal_soc;
+	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
 	uint32_t hp, tp;
 	uint8_t ring_id;
 
@@ -2095,6 +2096,9 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 					 soc->link_desc_banks[i].size,
 					 "link_desc_bank");
 		}
+		qdf_minidump_log((soc->link_desc_banks[i].base_vaddr),
+				 soc->link_desc_banks[i].size,
+				 "link_desc_bank");
 	}
 
 	if (last_bank_size) {
@@ -2130,6 +2134,9 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 					 soc->link_desc_banks[i].size,
 					 "link_desc_bank");
 		}
+		qdf_minidump_log((soc->link_desc_banks[i].base_vaddr),
+				 soc->link_desc_banks[i].size,
+				 "link_desc_bank");
 	}
 
 
@@ -3067,13 +3074,13 @@ static QDF_STATUS dp_lro_hash_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 
 	dp_info("toeplitz_hash_ipv4:");
 	qdf_trace_hex_dump(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			   (void *)lro_hash.toeplitz_hash_ipv4,
+			   lro_hash.toeplitz_hash_ipv4,
 			   (sizeof(lro_hash.toeplitz_hash_ipv4[0]) *
 			   LRO_IPV4_SEED_ARR_SZ));
 
 	dp_info("toeplitz_hash_ipv6:");
 	qdf_trace_hex_dump(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			   (void *)lro_hash.toeplitz_hash_ipv6,
+			   lro_hash.toeplitz_hash_ipv6,
 			   (sizeof(lro_hash.toeplitz_hash_ipv6[0]) *
 			   LRO_IPV6_SEED_ARR_SZ));
 
@@ -5220,7 +5227,8 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 			pdev->next_peer_cookie--;
 			qdf_err("Failed to initialize peer rate stats");
 		} else {
-			peer->wlanstats_ctx = (void *)peer_cookie.ctx;
+			peer->wlanstats_ctx = (struct cdp_peer_rate_stats_ctx *)
+						peer_cookie.ctx;
 		}
 	}
 	return (void *)peer;
@@ -5430,7 +5438,7 @@ static void dp_cp_peer_del_resp_handler(struct cdp_soc_t *soc_hdl,
 
 	if (cb) {
 		cb(soc->ctrl_psoc,
-		   soc,
+		   dp_soc_to_cdp_soc(soc),
 		   cookie,
 		   CDP_TXRX_AST_DELETED);
 	}
@@ -5812,7 +5820,8 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 		qdf_mem_copy(peer_cookie.mac_addr, peer->mac_addr.raw,
 			     QDF_MAC_ADDR_SIZE);
 		peer_cookie.ctx = NULL;
-		peer_cookie.ctx = (void *)peer->wlanstats_ctx;
+		peer_cookie.ctx = (struct cdp_stats_cookie *)
+					peer->wlanstats_ctx;
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 		dp_wdi_event_handler(WDI_EVENT_PEER_DESTROY,
 				     pdev->soc,
@@ -9133,7 +9142,7 @@ static QDF_STATUS dp_runtime_resume(struct cdp_pdev *opaque_pdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
 	struct dp_soc *soc = pdev->soc;
-	void *hal_srng;
+	hal_ring_handle_t hal_srng;
 	int i;
 
 	if (soc->intr_mode == DP_INTR_POLL)
@@ -9428,10 +9437,11 @@ void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
  *
  * Return: DP SOC handle on success, NULL on failure
  */
-void *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-			  void *hif_handle,
-			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-			  struct ol_if_ops *ol_ops, uint16_t device_id)
+struct cdp_soc_t *
+dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+		    struct hif_opaque_softc *hif_handle,
+		    HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+		    struct ol_if_ops *ol_ops, uint16_t device_id)
 {
 	struct dp_soc *dp_soc =  NULL;
 
@@ -9443,7 +9453,7 @@ void *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	if (!dp_soc_init(dp_soc, htc_handle, hif_handle))
 		return NULL;
 
-	return (void *)dp_soc;
+	return dp_soc_to_cdp_soc_t(dp_soc);
 }
 #else
 
@@ -9458,16 +9468,17 @@ void *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
  *
  * Return: DP SOC handle on success, NULL on failure
  */
-void *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-			  void *hif_handle,
-			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-			  struct ol_if_ops *ol_ops, uint16_t device_id)
+struct cdp_soc_t *
+dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+		    struct hif_opaque_softc *hif_handle,
+		    HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+		    struct ol_if_ops *ol_ops, uint16_t device_id)
 {
 	struct dp_soc *dp_soc = NULL;
 
 	dp_soc = dp_soc_attach(ctrl_psoc, htc_handle, qdf_osdev,
 			       ol_ops, device_id);
-	return (void *)dp_soc;
+	return dp_soc_to_cdp_soc_t(dp_soc);
 }
 
 #endif
@@ -9523,7 +9534,7 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc, HTC_HANDLE htc_handle,
 	if (htt_soc_htc_prealloc(htt_soc) != QDF_STATUS_SUCCESS)
 		goto fail2;
 
-	return (void *)soc;
+	return soc;
 fail2:
 	htt_soc_detach(htt_soc);
 fail1:
@@ -9540,7 +9551,8 @@ fail0:
  *
  * Return: DP SOC handle on success, NULL on failure
  */
-void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle)
+void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle,
+		  struct hif_opaque_softc *hif_handle)
 {
 	int target_type;
 	struct dp_soc *soc = (struct dp_soc *)dpsoc;
@@ -9652,7 +9664,7 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle)
  * Return: DP SOC handle on success, NULL on failure
  */
 void *dp_soc_init_wifi3(void *dpsoc, struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-			void *hif_handle,
+			struct hif_opaque_softc *hif_handle,
 			HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			struct ol_if_ops *ol_ops, uint16_t device_id)
 {

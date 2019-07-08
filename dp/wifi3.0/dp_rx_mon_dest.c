@@ -59,7 +59,7 @@ dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
 {
 	struct dp_srng *dp_srng;
 	hal_ring_handle_t hal_ring_hdl;
-	void *hal_soc;
+	hal_soc_handle_t hal_soc;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	void *src_srng_desc;
 	int mac_for_pdev = dp_get_mac_id_for_mac(dp_pdev->soc, mac_id);
@@ -1076,8 +1076,8 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	uint8_t pdev_id;
-	void *hal_soc;
 	hal_ring_desc_t rxdma_dst_ring_desc;
+	hal_soc_handle_t hal_soc;
 	void *mon_dst_srng;
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;

@@ -3584,14 +3584,14 @@ void *
 htt_soc_initialize(struct htt_soc *htt_soc,
 		   struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		   HTC_HANDLE htc_soc,
-		   void *hal_soc, qdf_device_t osdev)
+		   hal_soc_handle_t hal_soc_hdl, qdf_device_t osdev)
 {
 	struct htt_soc *soc = (struct htt_soc *)htt_soc;
 
 	soc->osdev = osdev;
 	soc->ctrl_psoc = ctrl_psoc;
 	soc->htc_soc = htc_soc;
-	soc->hal_soc = hal_soc;
+	soc->hal_soc = hal_soc_hdl;
 
 	if (htt_htc_soc_attach(soc))
 		goto fail2;

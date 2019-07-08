@@ -1496,7 +1496,7 @@ static inline void hal_setup_link_idle_list(void *halsoc,
  * @hal_ring_hdl: Source ring pointer
  * @ring_desc: Opaque ring descriptor handle
  */
-static inline void hal_srng_dump_ring_desc(struct hal_soc *hal,
+static inline void hal_srng_dump_ring_desc(hal_soc_handle_t hal_soc_hdl,
 					   hal_ring_handle_t hal_ring_hdl,
 					   hal_ring_desc_t ring_desc)
 {
@@ -1512,7 +1512,7 @@ static inline void hal_srng_dump_ring_desc(struct hal_soc *hal,
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring_hdl: Source ring pointer
  */
-static inline void hal_srng_dump_ring(struct hal_soc *hal,
+static inline void hal_srng_dump_ring(hal_soc_handle_t hal_soc_hdl,
 				      hal_ring_handle_t hal_ring_hdl)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;

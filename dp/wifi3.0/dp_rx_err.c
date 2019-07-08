@@ -166,8 +166,8 @@ dp_rx_link_desc_return_by_addr(struct dp_soc *soc,
 			       uint8_t bm_action)
 {
 	struct dp_srng *wbm_desc_rel_ring = &soc->wbm_desc_rel_ring;
-	void *wbm_rel_srng = wbm_desc_rel_ring->hal_srng;
-	void *hal_soc = soc->hal_soc;
+	hal_ring_handle_t wbm_rel_srng = wbm_desc_rel_ring->hal_srng;
+	hal_soc_handle_t hal_soc = soc->hal_soc;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	void *src_srng_desc;
 
@@ -1091,8 +1091,8 @@ uint32_t
 dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		  hal_ring_handle_t hal_ring_hdl, uint32_t quota)
 {
-	void *hal_soc;
 	hal_ring_desc_t ring_desc;
+	hal_soc_handle_t hal_soc;
 	uint32_t count = 0;
 	uint32_t rx_bufs_used = 0;
 	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = { 0 };
@@ -1279,8 +1279,8 @@ uint32_t
 dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		      hal_ring_handle_t hal_ring_hdl, uint32_t quota)
 {
-	void *hal_soc;
 	hal_ring_desc_t ring_desc;
+	hal_soc_handle_t hal_soc;
 	struct dp_rx_desc *rx_desc;
 	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT] = { NULL };
 	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT] = { NULL };
@@ -1720,8 +1720,8 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
-	void *hal_soc;
 	hal_ring_desc_t rxdma_dst_ring_desc;
+	hal_soc_handle_t hal_soc;
 	void *err_dst_srng;
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;

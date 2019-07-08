@@ -116,7 +116,7 @@ struct dp_htt_htc_pkt_union {
 struct htt_soc {
 	struct cdp_ctrl_objmgr_psoc *ctrl_psoc;
 	struct dp_soc *dp_soc;
-	void *hal_soc;
+	hal_soc_handle_t hal_soc;
 	/* htt_logger handle */
 	struct htt_logger *htt_logger_handle;
 	HTC_HANDLE htc_soc;
@@ -221,7 +221,7 @@ void *
 htt_soc_initialize(struct htt_soc *htt_soc,
 		   struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		   HTC_HANDLE htc_soc,
-		   void *hal_soc, qdf_device_t osdev);
+		   hal_soc_handle_t hal_soc_hdl, qdf_device_t osdev);
 
 /*
  * htt_soc_attach() - attach DP and HTT SOC

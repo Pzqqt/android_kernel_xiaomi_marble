@@ -2381,7 +2381,7 @@ static inline bool hal_rx_reo_is_2k_jump(hal_ring_desc_t rx_desc)
 /**
  * hal_rx_msdu_link_desc_set: Retrieves MSDU Link Descriptor to WBM
  *
- * @ soc		: HAL version of the SOC pointer
+ * @ hal_soc_hdl	: HAL version of the SOC pointer
  * @ src_srng_desc	: void pointer to the WBM Release Ring descriptor
  * @ buf_addr_info	: void pointer to the buffer_addr_info
  * @ bm_action		: put in IDLE list or release to MSDU_LIST
@@ -2390,7 +2390,7 @@ static inline bool hal_rx_reo_is_2k_jump(hal_ring_desc_t rx_desc)
  */
 /* look at implementation at dp_hw_link_desc_pool_setup()*/
 static inline
-void hal_rx_msdu_link_desc_set(struct hal_soc *soc,
+void hal_rx_msdu_link_desc_set(hal_soc_handle_t hal_soc_hdl,
 			       void *src_srng_desc,
 			       hal_ring_desc_t buf_addr_info,
 			       uint8_t bm_action)
@@ -3194,8 +3194,10 @@ uint8_t hal_rx_reo_ent_rxdma_error_code_get(hal_ring_desc_t reo_ent_desc)
  */
 static inline void hal_rx_wbm_err_info_get(void *wbm_desc,
 				struct hal_wbm_err_desc_info *wbm_er_info,
-				struct hal_soc *hal_soc)
+				hal_soc_handle_t hal_soc_hdl)
 {
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
 	hal_soc->ops->hal_rx_wbm_err_info_get(wbm_desc, (void *)wbm_er_info);
 }
 

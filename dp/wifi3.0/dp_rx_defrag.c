@@ -1014,10 +1014,9 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 	uint32_t nbuf_len, seq_no, dst_ind;
 	uint32_t *mpdu_wrd;
 	uint32_t ret, cookie;
-
 	hal_ring_desc_t dst_ring_desc =
 		peer->rx_tid[tid].dst_ring_desc;
-	void *hal_srng = soc->reo_reinject_ring.hal_srng;
+	hal_ring_handle_t hal_srng = soc->reo_reinject_ring.hal_srng;
 
 	ent_ring_desc = hal_srng_src_get_next(soc->hal_soc, hal_srng);
 	if (!ent_ring_desc) {

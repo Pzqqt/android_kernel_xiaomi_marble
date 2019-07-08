@@ -826,7 +826,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota)
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
-	void *hal_soc;
+	hal_soc_handle_t hal_soc;
 	void *mon_status_srng;
 	void *rxdma_mon_status_ring_entry;
 	QDF_STATUS status;

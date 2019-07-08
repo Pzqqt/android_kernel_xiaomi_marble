@@ -60,7 +60,7 @@ void dp_rx_dump_info_and_assert(struct dp_soc *soc,
 				hal_ring_desc_t ring_desc,
 				struct dp_rx_desc *rx_desc)
 {
-	void *hal_soc = soc->hal_soc;
+	hal_soc_handle_t hal_soc = soc->hal_soc;
 
 	dp_rx_desc_dump(rx_desc);
 	hal_srng_dump_ring_desc(hal_soc, hal_ring_hdl, ring_desc);
@@ -1622,8 +1622,8 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 		       uint8_t reo_ring_num, uint32_t quota)
 {
-	void *hal_soc;
 	hal_ring_desc_t ring_desc;
+	hal_soc_handle_t hal_soc;
 	struct dp_rx_desc *rx_desc = NULL;
 	qdf_nbuf_t nbuf, next;
 	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT];
@@ -2224,7 +2224,7 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 			  uint32_t num_req_buffers)
 {
 	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(dp_soc, mac_id);
-	void *rxdma_srng = dp_rxdma_srng->hal_srng;
+	hal_ring_handle_t rxdma_srng = dp_rxdma_srng->hal_srng;
 	union dp_rx_desc_list_elem_t *next;
 	void *rxdma_ring_entry;
 	qdf_dma_addr_t paddr;

@@ -1238,7 +1238,7 @@ static inline int dp_srng_access_start(struct dp_intr *int_ctx,
 				       struct dp_soc *dp_soc,
 				       hal_ring_handle_t hal_ring_hdl)
 {
-	void *hal_soc = dp_soc->hal_soc;
+	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
 
 	return hal_srng_access_start(hal_soc, hal_ring_hdl);
 }
@@ -1247,7 +1247,7 @@ static inline void dp_srng_access_end(struct dp_intr *int_ctx,
 				      struct dp_soc *dp_soc,
 				      hal_ring_handle_t hal_ring_hdl)
 {
-	void *hal_soc = dp_soc->hal_soc;
+	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
 
 	return hal_srng_access_end(hal_soc, hal_ring_hdl);
 }
@@ -1357,5 +1357,18 @@ static inline
 struct cdp_soc *dp_soc_to_cdp_soc(struct dp_soc *psoc)
 {
 	return (struct cdp_soc *)psoc;
+}
+
+/**
+ * dp_soc_to_cdp_soc_t() - typecast dp psoc to
+ * ol txrx soc handle
+ * @psoc: DP psoc handle
+ *
+ * Return: struct cdp_soc_t pointer
+ */
+static inline
+struct cdp_soc_t *dp_soc_to_cdp_soc_t(struct dp_soc *psoc)
+{
+	return (struct cdp_soc_t *)psoc;
 }
 #endif /* #ifndef _DP_INTERNAL_H_ */

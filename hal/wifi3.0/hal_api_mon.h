@@ -345,8 +345,10 @@ void hal_rx_mon_next_link_desc_get(void *rx_msdu_link_desc,
  * Return: void
  */
 
-static inline void hal_rx_mon_msdu_link_desc_set(struct hal_soc *soc,
-			void *src_srng_desc, void *buf_addr_info)
+static inline
+void hal_rx_mon_msdu_link_desc_set(hal_soc_handle_t hal_soc_hdl,
+				   void *src_srng_desc,
+				   void *buf_addr_info)
 {
 	struct buffer_addr_info *wbm_srng_buffer_addr_info =
 			(struct buffer_addr_info *)src_srng_desc;
