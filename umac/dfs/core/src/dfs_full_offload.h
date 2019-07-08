@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -31,21 +31,17 @@
  * dfs_fill_emulate_bang_radar_test() - Update dfs unit test arguments and
  * send bangradar command to firmware.
  * @dfs: Pointer to wlan_dfs structure.
- * @segid: Segment Identifier(Primary and Secondary)
- * @is_chirp: Boolean to determine if Chirp or Non Chirp.
- * @freq_offset: Value of frequency offset from centre frequency.
- * @dfs_unit_test: Pointer to Unit test command structure
+ * @bangradar_params: Parameters of the radar to be simulated.
  *
  * Return: If the event is received return 0.
  */
-int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
-		uint8_t segid, bool is_chirp, int32_t freq_offset,
-		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
-
+int
+dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
+				 struct dfs_bangradar_params *bangradar_params);
 #else
-static inline int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
-		uint8_t segid, bool is_chirp, int32_t freq_offset,
-		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
+static inline int
+dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
+				 struct dfs_bangradar_params *bangradar_params)
 {
 	return 0;
 }

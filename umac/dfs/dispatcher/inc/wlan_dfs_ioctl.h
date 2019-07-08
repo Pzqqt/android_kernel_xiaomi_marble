@@ -167,12 +167,14 @@ enum dfs_bangradar_types {
  * @seg_id:         Segment ID information.
  * @is_chirp:       Chirp radar or not.
  * @freq_offset:    Frequency offset at which radar was found.
+ * @detector_id:    Detector ID corresponding to primary/agile detectors.
  */
 struct dfs_bangradar_params {
 	enum dfs_bangradar_types bangradar_type;
 	uint8_t seg_id;
 	uint8_t is_chirp;
 	int32_t freq_offset;
+	uint8_t detector_id;
 };
 #define DFS_IOCTL_PARAM_NOVAL  65535
 #define DFS_IOCTL_PARAM_ENABLE 0x8000

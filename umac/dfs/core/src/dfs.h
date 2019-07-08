@@ -917,6 +917,8 @@ struct dfs_event_log {
 
 #define FREQ_OFFSET_BOUNDARY_FOR_80MHZ 40
 
+#define FREQ_OFFSET_BOUNDARY_FOR_160MHZ 80
+
 /**
  * struct dfs_mode_switch_defer_params - Parameters storing DFS information
  * before defer, as part of HW mode switch.

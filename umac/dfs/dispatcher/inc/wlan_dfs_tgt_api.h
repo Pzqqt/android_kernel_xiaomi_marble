@@ -47,19 +47,20 @@
  *                         1). Segment ID,
  *                         2). Chirp information (is chirp or non chirp),
  *                         3). Frequency offset.
+ *                         4). Detector ID.
  *
  * The packed argument structure is:
  *
- * ------------------------------32 bits arg-------------------------
+ * ------------------------------32 bits arg----------------------------
  *
- * ------------21 bits-------------|-------8 bits------|1 bit|2 bits|
- * __________________________________________________________________
- *|                                | | | | | | | | | | |     |   |   |
- *|---------21 Unused bits---------|x|x|x| |x|x|x|x| |x|  x  | x | x |
- *|________________________________|_|_|_|_|_|_|_|_|_|_|_____|___|___|
+ * ------------19 bits-------|--2 bits-|-------8 bits------|1 bit|2 bits|
+ * ______________________________________________________________________
+ *|                          |   | |   | | | | | | | | | | |     |   |   |
+ *|------19 Unused bits------| x | | x |x|x|x| |x|x|x|x| |x|  x  | x | x |
+ *|__________________________|___|_|___|_|_|_|_|_|_|_|_|_|_|_____|___|___|
  *
- *                                 |___________________|_____|_______|
- *                                   freq.offset        Chirp  segID
+ *                           |_________|___________________|_____|_______|
+ *                              det.ID     freq.offset      Chirp  seg.ID
  *
  * @DFS_UNIT_TEST_NUM_ARGS:     Number of arguments for bangradar unit test
  *                              command.
@@ -74,9 +75,14 @@ enum {
 	DFS_MAX_NUM_UNIT_TEST_ARGS = DFS_UNIT_TEST_NUM_ARGS
 };
 
-#define SEG_ID_SIZE 2
-#define IS_CHIRP_SIZE 1
-#define MASK 0xFF
+#define SEG_ID_SHIFT         0
+#define IS_CHIRP_SHIFT       2
+#define FREQ_OFF_SHIFT       3
+#define DET_ID_SHIFT        11
+#define SEG_ID_MASK       0x03
+#define IS_CHIRP_MASK     0x01
+#define FREQ_OFFSET_MASK  0xFF
+#define DET_ID_MASK       0x03
 
 /**
  * struct dfs_emulate_bang_radar_test_cmd - Unit test command structure to send
