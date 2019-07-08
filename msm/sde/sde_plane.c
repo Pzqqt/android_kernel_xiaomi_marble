@@ -376,7 +376,8 @@ static void _sde_plane_set_qos_lut(struct drm_plane *plane,
 
 		if (fmt && SDE_FORMAT_IS_LINEAR(fmt))
 			lut_usage = SDE_QOS_LUT_USAGE_LINEAR;
-		else if (psde->features & BIT(SDE_SSPP_SCALER_QSEED3))
+		else if (psde->features & BIT(SDE_SSPP_SCALER_QSEED3) ||
+			psde->features & BIT(SDE_SSPP_SCALER_QSEED3LITE))
 			lut_usage = SDE_QOS_LUT_USAGE_MACROTILE_QSEED;
 		else
 			lut_usage = SDE_QOS_LUT_USAGE_MACROTILE;
@@ -3194,7 +3195,8 @@ static int sde_plane_sspp_atomic_update(struct drm_plane *plane,
 		return 0;
 	pstate->pending = true;
 
-	psde->is_rt_pipe = (sde_crtc_get_client_type(crtc) != NRT_CLIENT);
+	psde->is_rt_pipe =
+		(sde_crtc_get_client_type_for_qos(crtc) != NRT_CLIENT);
 	_sde_plane_set_qos_ctrl(plane, false, SDE_PLANE_QOS_PANIC_CTRL);
 
 	_sde_plane_update_properties(plane, crtc, fb);
