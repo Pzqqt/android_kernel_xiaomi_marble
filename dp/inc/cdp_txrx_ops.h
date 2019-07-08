@@ -1297,14 +1297,16 @@ struct cdp_lflowctl_ops {
 };
 
 /**
- * struct cdp_ocb_ops - mcl ocb ops
- * @throttle_init_period:
- * @throttle_set_level:
+ * struct cdp_throttle_ops - mcl throttle ops
+ * @throttle_init_period: handler to initialize tx throttle time
+ * @throttle_set_level: handler to set tx throttle level
  */
 struct cdp_throttle_ops {
-	void (*throttle_init_period)(struct cdp_pdev *pdev, int period,
-			uint8_t *dutycycle_level);
-	void (*throttle_set_level)(struct cdp_pdev *pdev, int level);
+	void (*throttle_init_period)(struct cdp_soc_t *soc_hdl,
+				     uint8_t pdev_id, int period,
+				     uint8_t *dutycycle_level);
+	void (*throttle_set_level)(struct cdp_soc_t *soc_hdl,
+				   uint8_t pdev_id, int level);
 };
 #endif
 
