@@ -37,6 +37,7 @@
 #endif
 #include "wlan_hdd_power.h"
 #include "wlan_policy_mgr_ucfg.h"
+#include <ol_defines.h>
 #include <cdp_txrx_stats.h>
 #include "wlan_dfs_utils_api.h"
 #include <wlan_ipa_ucfg_api.h>
@@ -957,7 +958,8 @@ static __iw_softap_setparam(struct net_device *dev,
 			break;
 		default:
 			if (soc)
-				cdp_clear_stats(soc, set_value);
+				cdp_clear_stats(soc, OL_TXRX_PDEV_ID,
+						set_value);
 		}
 		break;
 	}

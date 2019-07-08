@@ -55,6 +55,8 @@
 #include "dbglog_host.h"
 #include "wma.h"
 
+#include <ol_defines.h>
+
 #include "wlan_hdd_power.h"
 #include "qwlan_version.h"
 #include "wlan_hdd_host_offload.h"
@@ -4811,6 +4813,7 @@ static int hdd_we_clear_stats(struct hdd_adapter *adapter, int option)
 		break;
 	default:
 		status = cdp_clear_stats(cds_get_context(QDF_MODULE_ID_SOC),
+					 OL_TXRX_PDEV_ID,
 					 option);
 		if (status != QDF_STATUS_SUCCESS)
 			hdd_debug("Failed to dump stats for option: %d",
