@@ -54,7 +54,6 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_cfg80211.o \
 		$(HDD_SRC_DIR)/wlan_hdd_data_stall_detection.o \
 		$(HDD_SRC_DIR)/wlan_hdd_driver_ops.o \
-		$(HDD_SRC_DIR)/wlan_hdd_ext_scan.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ftm.o \
 		$(HDD_SRC_DIR)/wlan_hdd_hostapd.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ioctl.o \
@@ -75,6 +74,10 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 ifeq ($(CONFIG_WLAN_WEXT_SUPPORT_ENABLE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_wext.o \
 	    $(HDD_SRC_DIR)/wlan_hdd_hostapd_wext.o
+endif
+
+ifeq ($(CONFIG_FEATURE_WLAN_EXTSCAN), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_ext_scan.o
 endif
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
