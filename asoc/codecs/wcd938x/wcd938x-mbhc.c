@@ -1009,6 +1009,9 @@ int wcd938x_mbhc_post_ssr_init(struct wcd938x_mbhc *mbhc,
 		return -EINVAL;
 	}
 
+	/* Reset detection type to insertion after SSR recovery */
+	snd_soc_component_update_bits(component, WCD938X_ANA_MBHC_MECH,
+				0x20, 0x20);
 	ret = wcd_mbhc_init(wcd_mbhc, component, &mbhc_cb, &intr_ids,
 			    wcd_mbhc_registers, WCD938X_ZDET_SUPPORTED);
 	if (ret) {
