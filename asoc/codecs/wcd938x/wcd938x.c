@@ -26,6 +26,7 @@
 
 #define WCD938X_DRV_NAME "wcd938x_codec"
 #define NUM_SWRS_DT_PARAMS 5
+#define WCD938X_VARIANT_ENTRY_SIZE 32
 
 #define WCD938X_VERSION_1_0 1
 #define WCD938X_VERSION_ENTRY_SIZE 32
@@ -2482,12 +2483,46 @@ static struct snd_info_entry_ops wcd938x_info_ops = {
 	.read = wcd938x_version_read,
 };
 
+static ssize_t wcd938x_variant_read(struct snd_info_entry *entry,
+				    void *file_private_data,
+				    struct file *file,
+				    char __user *buf, size_t count,
+				    loff_t pos)
+{
+	struct wcd938x_priv *priv;
+	char buffer[WCD938X_VARIANT_ENTRY_SIZE];
+	int len = 0;
+
+	priv = (struct wcd938x_priv *) entry->private_data;
+	if (!priv) {
+		pr_err("%s: wcd938x priv is null\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (priv->variant) {
+	case WCD9380:
+		len = snprintf(buffer, sizeof(buffer), "WCD9380\n");
+		break;
+	case WCD9385:
+		len = snprintf(buffer, sizeof(buffer), "WCD9385\n");
+		break;
+	default:
+		len = snprintf(buffer, sizeof(buffer), "VER_UNDEFINED\n");
+	}
+
+	return simple_read_from_buffer(buf, count, &pos, buffer, len);
+}
+
+static struct snd_info_entry_ops wcd938x_variant_ops = {
+	.read = wcd938x_variant_read,
+};
+
 /*
  * wcd938x_info_create_codec_entry - creates wcd938x module
  * @codec_root: The parent directory
  * @component: component instance
  *
- * Creates wcd938x module and version entry under the given
+ * Creates wcd938x module, variant and version entry under the given
  * parent directory.
  *
  * Return: 0 on success or negative error code on failure.
@@ -2496,6 +2531,7 @@ int wcd938x_info_create_codec_entry(struct snd_info_entry *codec_root,
 				   struct snd_soc_component *component)
 {
 	struct snd_info_entry *version_entry;
+	struct snd_info_entry *variant_entry;
 	struct wcd938x_priv *priv;
 	struct snd_soc_card *card;
 
@@ -2535,6 +2571,26 @@ int wcd938x_info_create_codec_entry(struct snd_info_entry *codec_root,
 		return -ENOMEM;
 	}
 	priv->version_entry = version_entry;
+
+	variant_entry = snd_info_create_card_entry(card->snd_card,
+						   "variant",
+						   priv->entry);
+	if (!variant_entry) {
+		dev_dbg(component->dev, "%s: failed to create wcd938x variant entry\n",
+			__func__);
+		return -ENOMEM;
+	}
+
+	variant_entry->private_data = priv;
+	variant_entry->size = WCD938X_VARIANT_ENTRY_SIZE;
+	variant_entry->content = SNDRV_INFO_CONTENT_DATA;
+	variant_entry->c.ops = &wcd938x_variant_ops;
+
+	if (snd_info_register(variant_entry) < 0) {
+		snd_info_free_entry(variant_entry);
+		return -ENOMEM;
+	}
+	priv->variant_entry = variant_entry;
 
 	return 0;
 }

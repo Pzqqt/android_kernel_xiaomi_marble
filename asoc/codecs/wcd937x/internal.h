@@ -82,6 +82,8 @@ struct wcd937x_priv {
 	/* Entry for version info */
 	struct snd_info_entry *entry;
 	struct snd_info_entry *version_entry;
+	/*Entry for Variant info*/
+	struct snd_info_entry *variant_entry;
 	int ear_rx_path;
 	int ana_clk_count;
 	struct mutex ana_tx_clk_lock;
