@@ -1783,6 +1783,8 @@ enum qca_wlan_vendor_attr_extscan_results {
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_MAX =
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_AFTER_LAST - 1,
 };
+#endif
+
 
 /**
  * enum qca_vendor_interop_issues_ap_type - interop issues type
@@ -1826,7 +1828,6 @@ enum qca_vendor_attr_interop_issues_ap {
 	QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_MAX =
 		QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_AFTER_LAST - 1
 };
-#endif
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 

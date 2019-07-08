@@ -246,6 +246,7 @@ struct pno_def_config {
 };
 #endif
 
+#ifdef FEATURE_WLAN_EXTSCAN
 /**
  * struct extscan_def_config - def configuration for EXTSCAN
  * @extscan_enabled: enable extscan
@@ -261,6 +262,7 @@ struct extscan_def_config {
 	uint32_t extscan_active_max_chn_time;
 	uint32_t extscan_active_min_chn_time;
 };
+#endif
 
 /**
  * struct scan_default_params - default scan parameters to be used
