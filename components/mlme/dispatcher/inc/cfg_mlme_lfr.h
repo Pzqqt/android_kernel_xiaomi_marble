@@ -1427,7 +1427,7 @@
  * gNeighborScanChannelMaxTime - Set neighbor scan channel max time
  * @Min: 3
  * @Max: 300
- * @Default: 30
+ * @Default: 40
  *
  * This ini is used to set the maximum time in secs spent on each
  * channel in LFR scan inside firmware.
@@ -1444,7 +1444,7 @@
 	"gNeighborScanChannelMaxTime", \
 	3, \
 	300, \
-	30, \
+	40, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Neighbor scan channel max time")
 
