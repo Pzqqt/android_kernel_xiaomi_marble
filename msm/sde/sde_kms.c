@@ -1060,7 +1060,7 @@ retry:
 
 	/* old_state actually contains updated crtc pointers */
 	for_each_old_crtc_in_state(old_state, crtc, old_crtc_state, i) {
-		if (crtc->state->active)
+		if (crtc->state->active || crtc->state->active_changed)
 			sde_crtc_prepare_commit(crtc, old_crtc_state);
 	}
 
