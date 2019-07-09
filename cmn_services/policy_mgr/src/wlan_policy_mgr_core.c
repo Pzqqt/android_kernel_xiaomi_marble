@@ -938,12 +938,8 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	if (PM_NOP != next_action)
 		policy_mgr_next_actions(context, session_id,
 			next_action, reason);
-	else {
+	else
 		policy_mgr_debug("No action needed right now");
-		goto set_done_event;
-	}
-
-	return;
 
 set_done_event:
 	ret = policy_mgr_set_opportunistic_update(context);
