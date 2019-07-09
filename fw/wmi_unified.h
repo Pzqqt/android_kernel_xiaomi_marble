@@ -1074,12 +1074,17 @@ typedef enum {
     WMI_BATCH_SCAN_DISABLE_CMDID,
     /*get batch scan result*/
     WMI_BATCH_SCAN_TRIGGER_RESULT_CMDID,
+
+
     /* OEM related cmd */
     WMI_OEM_REQ_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_OEM),
     WMI_OEM_REQUEST_CMDID, /* UNUSED */
     /* OEM related cmd used for Low Power ranging */
     WMI_LPI_OEM_REQ_CMDID,
     WMI_OEM_DMA_RING_CFG_REQ_CMDID,
+    /** Command to handle OEM's opaque data */
+    WMI_OEM_DATA_CMDID,
+
 
     /** Nan Request */
     WMI_NAN_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_NAN),
@@ -17517,6 +17522,27 @@ typedef struct {
 } wmi_oem_dma_buf_release_entry;
 
 typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_oem_data_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** Unique id identifying the VDEV */
+    A_UINT32 vdev_id;
+    /** Actual length in byte of data[]. */
+    A_UINT32 data_len;
+/** This structure is used to send OEM DATA binary blobs from
+ * application/service to firmware where Host driver is pass through.
+ * The OEM-specific commands from OEM-specific userspace applications
+ * are passed to OEM-specific feature handlers in firmware as OEM DATA
+ * binary blobs. The format of the data is per agreement between FW and
+ * userspace applications, with the binary blob beginning with a header
+ * that identifies to the FW the nature of the remaining data within the
+ * blob.
+ *
+ * Following this structure is the TLV:
+ *     A_UINT8 data[]; <-- actual length in byte given by field data_len.
+ */
+} wmi_oem_data_cmd_fixed_param;
+
+typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_cmd_param */
     A_UINT32 data_len; /** length in byte of data[]. */
 /* This structure is used to send REQ binary blobs
@@ -24243,6 +24269,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_DSM_FILTER_CMDID);
         WMI_RETURN_STRING(WMI_TWT_BTWT_INVITE_STA_CMDID);
         WMI_RETURN_STRING(WMI_TWT_BTWT_REMOVE_STA_CMDID);
+        WMI_RETURN_STRING(WMI_OEM_DATA_CMDID);
     }
 
     return "Invalid WMI cmd";
