@@ -155,7 +155,7 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 
 	cds_debug("num possible cpu %d", num_possible_cpus());
 
-	cpumask_clear(&new_mask);
+	qdf_cpumask_clear(&new_mask);
 
 	if (high_throughput) {
 		/* Get Online perf/pwr CPU count */
@@ -170,17 +170,17 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 			if (pSchedContext->conf_rx_thread_cpu_mask) {
 				if (pSchedContext->conf_rx_thread_cpu_mask &
 								(1 << cpus))
-					cpumask_set_cpu(cpus, &new_mask);
+					qdf_cpumask_set_cpu(cpus, &new_mask);
 			} else if (topology_physical_package_id(cpus) ==
 						 CDS_CPU_CLUSTER_TYPE_PERF) {
-				cpumask_set_cpu(cpus, &new_mask);
+				qdf_cpumask_set_cpu(cpus, &new_mask);
 			}
 
 			core_affine_count++;
 		}
 	} else {
 		/* Attach to all cores, let scheduler decide */
-		cpumask_setall(&new_mask);
+		qdf_cpumask_setall(&new_mask);
 	}
 
 	cds_rx_thread_log_cpu_affinity_change(core_affine_count,
