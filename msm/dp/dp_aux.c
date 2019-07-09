@@ -505,7 +505,7 @@ static ssize_t dp_aux_transfer_debug(struct drm_dp_aux *drm_aux,
 		if (aux->read) {
 			timeout = wait_for_completion_timeout(&aux->comp, HZ);
 			if (!timeout) {
-				pr_err("aux timeout for 0x%x\n", msg->address);
+				pr_err("read timeout: 0x%x\n", msg->address);
 				atomic_set(&aux->aborted, 1);
 				ret = -ETIMEDOUT;
 				goto end;
@@ -519,7 +519,7 @@ static ssize_t dp_aux_transfer_debug(struct drm_dp_aux *drm_aux,
 
 			timeout = wait_for_completion_timeout(&aux->comp, HZ);
 			if (!timeout) {
-				pr_err("aux timeout for 0x%x\n", msg->address);
+				pr_err("write timeout: 0x%x\n", msg->address);
 				atomic_set(&aux->aborted, 1);
 				ret = -ETIMEDOUT;
 				goto end;
@@ -556,6 +556,8 @@ address_error:
 	memset(msg->buffer, 0, msg->size);
 	ret = msg->size;
 end:
+	if (ret == -ETIMEDOUT)
+		aux->dp_aux.state |= DP_STATE_AUX_TIMEOUT;
 	aux->dp_aux.reg = 0xFFFF;
 	aux->dp_aux.read = true;
 	aux->dp_aux.size = 0;
