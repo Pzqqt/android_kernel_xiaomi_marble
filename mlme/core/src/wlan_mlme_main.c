@@ -47,16 +47,13 @@ struct wlan_mlme_psoc_obj *mlme_get_psoc_obj_fl(struct wlan_objmgr_psoc *psoc,
 struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
 				struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return NULL;
 	}
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	return &mlme_priv->dynamic_cfg;
 }
@@ -64,16 +61,13 @@ struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
 struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 				struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return NULL;
 	}
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	return &mlme_priv->ini_cfg;
 }
@@ -81,30 +75,26 @@ struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 struct mlme_roam_after_data_stall *
 mlme_get_roam_invoke_params(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme)
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return NULL;
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
+	}
 
 	return &mlme_priv->roam_invoke_params;
 }
 
 uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return NULL;
 	}
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	return &mlme_priv->sta_dynamic_oce_value;
 }
@@ -2366,7 +2356,6 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 void mlme_set_self_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_ies *ie)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
 	if (!ie || !ie->len || !ie->data) {
@@ -2374,13 +2363,11 @@ void mlme_set_self_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return;
 	}
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	if (mlme_priv->self_disconnect_ies.data) {
 		qdf_mem_free(mlme_priv->self_disconnect_ies.data);
@@ -2402,16 +2389,13 @@ void mlme_set_self_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 
 void mlme_free_self_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return;
 	}
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	if (mlme_priv->self_disconnect_ies.data) {
 		qdf_mem_free(mlme_priv->self_disconnect_ies.data);
@@ -2422,16 +2406,13 @@ void mlme_free_self_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 
 struct wlan_ies *mlme_get_self_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return NULL;
 	}
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	return &mlme_priv->self_disconnect_ies;
 }
@@ -2439,7 +2420,6 @@ struct wlan_ies *mlme_get_self_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 void mlme_set_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_ies *ie)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
 	if (!ie || !ie->len || !ie->data) {
@@ -2447,13 +2427,11 @@ void mlme_set_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return;
 	}
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	if (mlme_priv->peer_disconnect_ies.data) {
 		qdf_mem_free(mlme_priv->peer_disconnect_ies.data);
@@ -2475,16 +2453,13 @@ void mlme_set_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 
 void mlme_free_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return;
 	}
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	if (mlme_priv->peer_disconnect_ies.data) {
 		qdf_mem_free(mlme_priv->peer_disconnect_ies.data);
@@ -2495,16 +2470,13 @@ void mlme_free_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 
 struct wlan_ies *mlme_get_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return NULL;
 	}
-
-	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	return &mlme_priv->peer_disconnect_ies;
 }
