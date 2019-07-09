@@ -26,7 +26,7 @@
 #include <cdp_txrx_ops.h>
 
 static inline QDF_STATUS
-cdp_clear_stats(ol_txrx_soc_handle soc, uint8_t bitmap)
+cdp_clear_stats(ol_txrx_soc_handle soc, uint8_t pdev_id, uint8_t bitmap)
 {
 
 	if (!soc || !soc->ops) {
@@ -40,8 +40,7 @@ cdp_clear_stats(ol_txrx_soc_handle soc, uint8_t bitmap)
 	    !soc->ops->mob_stats_ops->clear_stats)
 		return QDF_STATUS_E_INVAL;
 
-	return soc->ops->mob_stats_ops->clear_stats((struct cdp_soc *)soc,
-						    bitmap);
+	return soc->ops->mob_stats_ops->clear_stats(soc, pdev_id, bitmap);
 }
 
 static inline int

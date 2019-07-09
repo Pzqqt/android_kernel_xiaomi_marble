@@ -1165,13 +1165,13 @@ struct cdp_peer_ops {
 };
 
 /**
- * struct cdp_ocb_ops - mcl ocb ops
- * @clear_stats:
- * @stats:
+ * struct cdp_mob_stats_ops - mcl mob stats ops
+ * @clear_stats: handler to clear ol txrx stats
+ * @stats: handler to update ol txrx stats
  */
 struct cdp_mob_stats_ops {
-	QDF_STATUS
-		(*clear_stats)(struct cdp_soc *soc, uint8_t bitmap);
+	QDF_STATUS(*clear_stats)(struct cdp_soc_t *soc_hdl,
+				 uint8_t pdev_id, uint8_t bitmap);
 	int (*stats)(uint8_t vdev_id, char *buffer, unsigned buf_len);
 };
 

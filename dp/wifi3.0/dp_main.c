@@ -8414,10 +8414,10 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value,
  * Return: 0 - Success, non-zero - failure
  */
 static
-QDF_STATUS dp_txrx_clear_dump_stats(struct cdp_soc *psoc, uint8_t value)
+QDF_STATUS dp_txrx_clear_dump_stats(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				    uint8_t value)
 {
-	struct dp_soc *soc =
-		(struct dp_soc *)psoc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!soc) {
