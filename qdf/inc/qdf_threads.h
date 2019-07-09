@@ -143,4 +143,29 @@ const char *qdf_get_current_comm(void);
  */
 void
 qdf_thread_set_cpus_allowed_mask(qdf_thread_t *thread, qdf_cpu_mask *new_mask);
+
+/**
+ * qdf_cpumask_clear() - clear all cpus in a cpumask
+ * @dstp: cpumask pointer
+ *
+ * Return: None
+ */
+void qdf_cpumask_clear(qdf_cpu_mask *dstp);
+
+/**
+ * qdf_cpumask_set_cpu() - set a cpu in a cpumask
+ * @cpu: cpu number
+ * @dstp: cpumask pointer
+ *
+ * Return: None
+ */
+void qdf_cpumask_set_cpu(unsigned int cpu, qdf_cpu_mask *dstp);
+
+/**
+ * qdf_cpumask_setall - set all cpus
+ * @dstp: cpumask pointer
+ *
+ * Return: None
+ */
+void qdf_cpumask_setall(qdf_cpu_mask *dstp);
 #endif /* __QDF_THREADS_H */

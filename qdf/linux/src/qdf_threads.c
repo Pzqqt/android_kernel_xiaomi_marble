@@ -236,3 +236,24 @@ qdf_thread_set_cpus_allowed_mask(qdf_thread_t *thread, qdf_cpu_mask *new_mask)
 }
 
 qdf_export_symbol(qdf_thread_set_cpus_allowed_mask);
+
+void qdf_cpumask_clear(qdf_cpu_mask *dstp)
+{
+	cpumask_clear(dstp);
+}
+
+qdf_export_symbol(qdf_cpumask_clear);
+
+void qdf_cpumask_set_cpu(unsigned int cpu, qdf_cpu_mask *dstp)
+{
+	cpumask_set_cpu(cpu, dstp);
+}
+
+qdf_export_symbol(qdf_cpumask_set_cpu);
+
+void qdf_cpumask_setall(qdf_cpu_mask *dstp)
+{
+	cpumask_setall(dstp);
+}
+
+qdf_export_symbol(qdf_cpumask_setall);
