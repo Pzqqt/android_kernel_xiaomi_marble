@@ -550,16 +550,13 @@ static QDF_STATUS ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
 					       bool val)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->chan_switch_in_progress = val;
 
@@ -568,16 +565,13 @@ QDF_STATUS mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
 
 bool mlme_is_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return false;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->chan_switch_in_progress;
 }
@@ -586,16 +580,13 @@ QDF_STATUS
 ap_mlme_set_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev,
 					    bool val)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->hidden_ssid_restart_in_progress = val;
 
@@ -604,32 +595,26 @@ ap_mlme_set_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev,
 
 bool ap_mlme_is_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return false;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->hidden_ssid_restart_in_progress;
 }
 
 QDF_STATUS mlme_set_connection_fail(struct wlan_objmgr_vdev *vdev, bool val)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->connection_fail = val;
 
@@ -638,16 +623,13 @@ QDF_STATUS mlme_set_connection_fail(struct wlan_objmgr_vdev *vdev, bool val)
 
 bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return false;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->connection_fail;
 }
@@ -655,16 +637,13 @@ bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
 			       enum vdev_assoc_type assoc_type)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->assoc_type = assoc_type;
 
@@ -673,16 +652,13 @@ QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
 
 enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return false;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->assoc_type;
 }
@@ -690,16 +666,13 @@ enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS
 mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->vdev_start_failed = val;
 
@@ -708,32 +681,26 @@ mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
 
 bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return false;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->vdev_start_failed;
 }
 
 QDF_STATUS mlme_set_cac_required(struct wlan_objmgr_vdev *vdev, bool val)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->cac_required_for_new_channel = val;
 
@@ -742,16 +709,13 @@ QDF_STATUS mlme_set_cac_required(struct wlan_objmgr_vdev *vdev, bool val)
 
 bool mlme_get_cac_required(struct wlan_objmgr_vdev *vdev)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return false;
 	}
-
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->cac_required_for_new_channel;
 }
