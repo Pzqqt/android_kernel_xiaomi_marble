@@ -249,10 +249,11 @@ struct sde_hw_ctl_ops {
 	/** update cwb  for ctl_path
 	 * @ctx       : ctl path ctx pointer
 	 * @cfg    : interface config structure pointer
+	 * @enable    : enable/disable the cwb hw block
 	 * @Return: error code
 	 */
 	int (*update_cwb_cfg)(struct sde_hw_ctl *ctx,
-		struct sde_hw_intf_cfg_v1 *cfg);
+		struct sde_hw_intf_cfg_v1 *cfg, bool enable);
 
 	/**
 	 * Setup ctl_path interface config for SDE_CTL_ACTIVE_CFG
