@@ -993,6 +993,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_delete_all_peer_resp_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_chan_rf_characterization_info_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_oem_data_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_enable_disable_trigger_reason_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1396,6 +1397,7 @@ typedef enum {
     OP(WMI_TWT_BTWT_REMOVE_STA_CMDID) \
     OP(WMI_VDEV_DELETE_ALL_PEER_CMDID) \
     OP(WMI_OEM_DATA_CMDID) \
+    OP(WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3078,6 +3080,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_IDLE_CONFIG_CMDID);
 #define WMITLV_TABLE_WMI_IDLE_TRIGGER_MONITOR_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_idle_trigger_monitor_cmd_fixed_param, wmi_idle_trigger_monitor_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_IDLE_TRIGGER_MONITOR_CMDID);
+
+/* Enable or disable roaming trigger reason */
+#define WMITLV_TABLE_WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_enable_disable_trigger_reason_fixed_param, wmi_roam_enable_disable_trigger_reason_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID);
 
 /* DSM filter parameters */
 #define WMITLV_TABLE_WMI_PDEV_DSM_FILTER_CMDID(id,op,buf,len) \
