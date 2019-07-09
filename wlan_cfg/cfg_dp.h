@@ -469,7 +469,7 @@
 	"DP peer flow ctrl Enable")
 
 #define CFG_DP_NAPI \
-	CFG_INI_BOOL("dp_napi_enabled", MCL_OR_WIN_VALUE(true, false), \
+	CFG_INI_BOOL("dp_napi_enabled", PLATFORM_VALUE(true, false), \
 	"DP Napi Enabled")
 
 #define CFG_DP_TCP_UDP_CKSUM_OFFLOAD \

@@ -63,7 +63,7 @@
  */
 #define CFG_ACTIVE_MAX_CHANNEL_TIME CFG_INI_UINT(\
 		"gActiveMaxChannelTime",\
-		0, 10000, MCL_OR_WIN_VALUE(40, 105),\
+		0, 10000, PLATFORM_VALUE(40, 105),\
 		CFG_VALUE_OR_DEFAULT, "active dwell time")
 
 /*
@@ -125,7 +125,7 @@
  */
 #define CFG_ACTIVE_MAX_2G_CHANNEL_TIME CFG_INI_UINT(\
 		"active_max_channel_time_2g",\
-		0, 10000, MCL_OR_WIN_VALUE(80, 0),\
+		0, 10000, PLATFORM_VALUE(80, 0),\
 		CFG_VALUE_OR_DEFAULT, "active dwell time for 2G channels")
 
 /*
@@ -146,7 +146,7 @@
  */
 #define CFG_PASSIVE_MAX_CHANNEL_TIME CFG_INI_UINT(\
 		"gPassiveMaxChannelTime",\
-		0, 10000, MCL_OR_WIN_VALUE(110, 300),\
+		0, 10000, PLATFORM_VALUE(110, 300),\
 		CFG_VALUE_OR_DEFAULT, "passive dwell time")
 
 /*
@@ -161,7 +161,7 @@
  */
 #define CFG_SCAN_NUM_PROBES CFG_INI_UINT(\
 			"gScanNumProbes",\
-			0, 20, MCL_OR_WIN_VALUE(0, 2),\
+			0, 20, PLATFORM_VALUE(0, 2),\
 			CFG_VALUE_OR_DEFAULT,\
 			"number of probes on each channel")
 
@@ -185,7 +185,7 @@
  */
 #define CFG_SCAN_PROBE_REPEAT_TIME CFG_INI_UINT(\
 			"gScanProbeRepeatTime",\
-			0, 30, MCL_OR_WIN_VALUE(20, 50),\
+			0, 30, PLATFORM_VALUE(20, 50),\
 			CFG_VALUE_OR_DEFAULT,\
 			"probe repeat time on each channel")
 
@@ -217,7 +217,7 @@
  */
 #define CFG_ADAPTIVE_SCAN_DWELL_MODE CFG_INI_UINT(\
 			"hostscan_adaptive_dwell_mode",\
-			0, 4, MCL_OR_WIN_VALUE(2, 0),\
+			0, 4, PLATFORM_VALUE(2, 0),\
 			CFG_VALUE_OR_DEFAULT,\
 			"Enable adaptive dwell mode")
 
@@ -249,7 +249,7 @@
  */
 #define CFG_ADAPTIVE_SCAN_DWELL_MODE_NC CFG_INI_UINT(\
 			"hostscan_adaptive_dwell_mode_no_conn",\
-			0, 4, MCL_OR_WIN_VALUE(4, 0),\
+			0, 4, PLATFORM_VALUE(4, 0),\
 			CFG_VALUE_OR_DEFAULT,\
 			"Enable adaptive dwell mode without connection")
 
@@ -763,7 +763,7 @@
  */
 #define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC CFG_INI_UINT(\
 				"gActiveMaxChannelTimeConc",\
-				0, 10000, MCL_OR_WIN_VALUE(40, 0),\
+				0, 10000, PLATFORM_VALUE(40, 0),\
 				CFG_VALUE_OR_DEFAULT, \
 				"active scan time in STA+SAP concurrent")
 
@@ -787,7 +787,7 @@
  */
 #define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC CFG_INI_UINT(\
 				"gPassiveMaxChannelTimeConc",\
-				0, 10000, MCL_OR_WIN_VALUE(110, 0),\
+				0, 10000, PLATFORM_VALUE(110, 0),\
 				CFG_VALUE_OR_DEFAULT, \
 				"Set priority for connection with bssid_hint")
 
@@ -810,7 +810,7 @@
  */
 #define CFG_MAX_REST_TIME_CONC CFG_INI_UINT(\
 				"nRestTimeConc",\
-				0, 10000, MCL_OR_WIN_VALUE(100, 0),\
+				0, 10000, PLATFORM_VALUE(100, 0),\
 				CFG_VALUE_OR_DEFAULT, \
 				"Rest time before moving to a new channel")
 
@@ -835,7 +835,7 @@
  */
 #define CFG_MIN_REST_TIME_CONC CFG_INI_UINT(\
 				"min_rest_time_conc",\
-				0, 50, MCL_OR_WIN_VALUE(50, 0),\
+				0, 50, PLATFORM_VALUE(50, 0),\
 				CFG_VALUE_OR_DEFAULT, \
 				"minimum time spent on home channel")
 
@@ -883,7 +883,7 @@
  */
 #define CFG_IDLE_TIME_CONC CFG_INI_UINT(\
 				"gIdleTimeConc",\
-				0, 25, MCL_OR_WIN_VALUE(25, 0),\
+				0, 25, PLATFORM_VALUE(25, 0),\
 				CFG_VALUE_OR_DEFAULT, \
 				"data inactivity time on bss channel")
 

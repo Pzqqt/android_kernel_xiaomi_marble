@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -85,10 +85,10 @@ enum cfg_fallback_behavior {
 	(NON_INI, IPV6, struct qdf_ipv6_addr, name, -1, -1, -1, desc, def)
 
 /* utility macros/functions */
-#ifdef CONFIG_MCL
-#define MCL_OR_WIN_VALUE(mcl_value, win_value) mcl_value
+#ifdef CONFIG_AP_PLATFORM
+#define PLATFORM_VALUE(non_ap_value, ap_value) ap_value
 #else
-#define MCL_OR_WIN_VALUE(mcl_value, win_value) win_value
+#define PLATFORM_VALUE(non_ap_value, ap_value) non_ap_value
 #endif
 
 #endif /* __CFG_DEFINE_H */
