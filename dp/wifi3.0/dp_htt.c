@@ -2225,6 +2225,10 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 	ppdu_user_desc->mpdu_success =
 	HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPDU_SUCCESS_GET(*tag_buf);
 
+	ppdu_user_desc->mpdu_failed =
+	HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPDU_TRIED_GET(*tag_buf) -
+						ppdu_user_desc->mpdu_success;
+
 	tag_buf++;
 
 	ppdu_user_desc->long_retries =
