@@ -1288,7 +1288,31 @@ typedef struct {
                      resp_ppdu_type:          2;
         };
     };
+
+    /* Note: This is for tracking a UL OFDMA packet */
+    union {
+        A_UINT32 trig_cookie_info;
+        struct {
+            A_UINT32 trig_cookie: 16,
+                     trig_cookie_rsvd: 15,
+                     trig_cookie_valid: 1;
+        };
+    };
 } htt_ppdu_stats_user_rate_tlv;
+
+#define HTT_PPDU_STATS_USR_RATE_COOKIE_M    0x0000ffff
+#define HTT_PPDU_STATS_USR_RATE_COOKIE_S    0
+
+#define HTT_PPDU_STATS_USR_RATE_VALID_M     0x80000000
+#define HTT_PPDU_STATS_USR_RATE_VALID_S     31
+
+#define HTT_PPDU_STATS_USR_RATE_COOKIE_GET(_val) \
+        (((_val) & HTT_PPDU_STATS_USR_RATE_COOKIE_M) >> \
+         HTT_PPDU_STATS_USR_RATE_COOKIE_S)
+
+#define HTT_PPDU_STATS_USR_RATE_VALID_GET(_val) \
+        (((_val) & HTT_PPDU_STATS_USR_RATE_VALID_M) >> \
+         HTT_PPDU_STATS_USR_RATE_VALID_S)
 
 #define HTT_PPDU_STATS_ENQ_MPDU_BITMAP_TLV_TID_NUM_M     0x000000ff
 #define HTT_PPDU_STATS_ENQ_MPDU_BITMAP_TLV_TID_NUM_S              0

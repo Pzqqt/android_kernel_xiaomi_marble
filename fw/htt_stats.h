@@ -226,7 +226,8 @@ enum htt_dbg_ext_stats_type {
     /* HTT_DBG_EXT_STATS_PDEV_CCA_STATS
      * PARAMS:
      *   - config_param0:
-     *      [Bit0] - 1 sec interval histogram
+     *      [Bit0] - Clear bit0 to read 1sec,100ms & cumulative CCA stats.
+     *               Set bit0 to 1 to read 1sec interval histogram.
      *      [Bit1] - 100ms interval histogram
      *      [Bit3] - Cumulative CCA stats
      * RESP MSG:
@@ -256,7 +257,8 @@ enum htt_dbg_ext_stats_type {
      * PARAMS:
      *   - config_param0:
      *      [Bit0]          vdev_id_set:1
-     *          set to 1 if vdev_id is set and vdev stats are requested
+     *          set to 1 if vdev_id is set and vdev stats are requested.
+     *          set to 0 if pdev_stats sounding stats are requested.
      *      [Bit8 : Bit1]   vdev_id:8
      *          note:0xFF to get all active vdevs based on pdev_mask.
      *      [Bit31 : Bit9]  rsvd:22
@@ -805,6 +807,11 @@ typedef struct {
     A_UINT32 wal_rx_recovery_rst_rx_busy_count;
     A_UINT32 wal_rx_recovery_rst_phy_mac_hang_count;
     A_UINT32 rx_flush_cnt; /* Num rx flush issued */
+    A_UINT32 phy_warm_reset_reason_tx_lifetime_expiry_cca_stuck;
+    A_UINT32 phy_warm_reset_reason_tx_consecutive_flush9_war;
+    A_UINT32 phy_warm_reset_reason_tx_hwsch_reset_war;
+    A_UINT32 phy_warm_reset_reason_hwsch_wdog_or_cca_wdog_war;
+    A_UINT32 fw_rx_rings_reset;
 } htt_hw_stats_pdev_errs_tlv;
 
 typedef struct {
@@ -1182,7 +1189,20 @@ typedef enum {
 #define HTT_TX_PEER_STATS_NUM_MCS_COUNTERS 12
 #define HTT_TX_PEER_STATS_NUM_GI_COUNTERS 4
 #define HTT_TX_PEER_STATS_NUM_DCM_COUNTERS 5
+ /* HTT_TX_PEER_STATS_NUM_BW_COUNTERS:
+  * bw index 0: rssi_pri20_chain0
+  * bw index 1: rssi_ext20_chain0
+  * bw index 2: rssi_ext40_low20_chain0
+  * bw index 3: rssi_ext40_high20_chain0
+  */
 #define HTT_TX_PEER_STATS_NUM_BW_COUNTERS 4
+/* HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS:
+ * bw index 4 (bw ext index 0): rssi_ext80_low20_chain0
+ * bw index 5 (bw ext index 1): rssi_ext80_low_high20_chain0
+ * bw index 6 (bw ext index 2): rssi_ext80_high_low20_chain0
+ * bw index 7 (bw ext index 3): rssi_ext80_high20_chain0
+ */
+#define HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS 4
 #define HTT_TX_PEER_STATS_NUM_SPATIAL_STREAMS 8
 #define HTT_TX_PEER_STATS_NUM_PREAMBLE_TYPES HTT_STATS_PREAM_COUNT
 
@@ -1261,6 +1281,8 @@ typedef struct _htt_rx_peer_rate_stats_tlv {
     A_UINT32 rx_ulmumimo_data_ppdu;       /* ppdu level */
     A_UINT32 rx_ulmumimo_mpdu_ok;         /* mpdu level */
     A_UINT32 rx_ulmumimo_mpdu_fail;       /* mpdu level */
+
+    A_UINT8  rssi_chain_ext[HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS]; /* units = dB above noise floor */
 } htt_rx_peer_rate_stats_tlv;
 
 typedef enum {
@@ -1748,6 +1770,10 @@ typedef struct {
     A_UINT32 ac_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
     A_UINT32 ax_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
     A_UINT32 ax_ofdma_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ul_ofdma_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ul_ofdma_bsr_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ul_ofdma_bar_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ul_ofdma_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
 } htt_tx_pdev_mu_mimo_sch_stats_tlv;
 
 typedef struct {
@@ -3140,6 +3166,8 @@ typedef struct {
     A_UINT32 rx_ulmumimo_data_ppdu[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];     /* ppdu level */
     A_UINT32 rx_ulmumimo_mpdu_ok[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];       /* mpdu level */
     A_UINT32 rx_ulmumimo_mpdu_fail[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];     /* mpdu level */
+    A_UINT32 rx_ulofdma_non_data_nusers[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    A_UINT32 rx_ulofdma_data_nusers[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
 } htt_rx_pdev_rate_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE
@@ -3839,6 +3867,17 @@ typedef struct {
 
     A_UINT32 num_obss_tx_ppdu_success;
     A_UINT32 num_obss_tx_ppdu_failure;
+    /* num_sr_tx_tranmissions:
+     * Counter of TX done by aborting other BSS RX with spatial reuse
+     * (for cases where rx RSSI from other BSS is below the packet-detection
+     * threshold for doing spatial reuse)
+     */
+    A_UINT32 num_sr_tx_tranmissions;
+    /* num_sr_rx_ge_pd_rssi_thr
+     * counter of rx from other BSS for which RSSI was above the
+     * packet-detection threshold specified for enabling spatial reuse
+     */
+    A_UINT32 num_sr_rx_ge_pd_rssi_thr;
 } htt_pdev_obss_pd_stats_tlv;
 
 /* NOTE:
