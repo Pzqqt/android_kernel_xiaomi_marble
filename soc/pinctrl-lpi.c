@@ -148,6 +148,7 @@ static int lpi_gpio_read(struct lpi_gpio_pad *pad, unsigned int addr)
 		return 0;
 	}
 	pm_runtime_get_sync(lpi_dev);
+	mutex_lock(&state->core_hw_vote_lock);
 	if (!state->core_hw_vote_status) {
 		pr_err_ratelimited("%s: core hw vote clk is not enabled\n",
 				__func__);
@@ -160,6 +161,7 @@ static int lpi_gpio_read(struct lpi_gpio_pad *pad, unsigned int addr)
 		pr_err("%s: read 0x%x failed\n", __func__, addr);
 
 err:
+	mutex_unlock(&state->core_hw_vote_lock);
 	pm_runtime_mark_last_busy(lpi_dev);
 	pm_runtime_put_autosuspend(lpi_dev);
 	return ret;
@@ -177,6 +179,7 @@ static int lpi_gpio_write(struct lpi_gpio_pad *pad, unsigned int addr,
 		return 0;
 	}
 	pm_runtime_get_sync(lpi_dev);
+	mutex_lock(&state->core_hw_vote_lock);
 	if (!state->core_hw_vote_status) {
 		pr_err_ratelimited("%s: core hw vote clk is not enabled\n",
 				__func__);
@@ -186,6 +189,7 @@ static int lpi_gpio_write(struct lpi_gpio_pad *pad, unsigned int addr,
 
 	iowrite32(val, pad->base + pad->offset + addr);
 err:
+	mutex_unlock(&state->core_hw_vote_lock);
 	pm_runtime_mark_last_busy(lpi_dev);
 	pm_runtime_put_autosuspend(lpi_dev);
 	return ret;
@@ -484,11 +488,8 @@ static struct notifier_block service_nb = {
 
 static void lpi_pinctrl_ssr_disable(struct device *dev, void *data)
 {
-	struct lpi_gpio_state *state = dev_get_drvdata(dev);
-
 	lpi_dev_up = false;
-	if (state->core_hw_vote_status)
-		lpi_pinctrl_runtime_suspend(dev);
+	lpi_pinctrl_runtime_suspend(dev);
 }
 
 static const struct snd_event_ops lpi_pinctrl_ssr_ops = {
