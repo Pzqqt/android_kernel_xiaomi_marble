@@ -1335,6 +1335,8 @@ static int dsi_set_max_return_size(struct dsi_ctrl *dsi_ctrl,
 	int rc = 0;
 	u8 tx[2] = { (u8)(size & 0xFF), (u8)(size >> 8) };
 	u32 flags = DSI_CTRL_CMD_FETCH_MEMORY;
+	u16 dflags = rx_msg->flags;
+
 	struct mipi_dsi_msg msg = {
 		.channel = rx_msg->channel,
 		.type = MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE,
@@ -1342,6 +1344,10 @@ static int dsi_set_max_return_size(struct dsi_ctrl *dsi_ctrl,
 		.tx_buf = tx,
 		.flags = rx_msg->flags,
 	};
+
+	/* remove last message flag to batch max packet cmd to read command */
+	dflags &= ~BIT(3);
+	msg.flags = dflags;
 
 	rc = dsi_message_tx(dsi_ctrl, &msg, flags);
 	if (rc)
