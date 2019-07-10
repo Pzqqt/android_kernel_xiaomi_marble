@@ -29,15 +29,17 @@
  * @num_entries: Total entries of all scatter bufs
  *
  */
-static void hal_setup_link_idle_list_generic(void *hal_soc,
-	qdf_dma_addr_t scatter_bufs_base_paddr[],
-	void *scatter_bufs_base_vaddr[], uint32_t num_scatter_bufs,
-	uint32_t scatter_buf_size, uint32_t last_buf_end_offset,
-	uint32_t num_entries)
+static void
+hal_setup_link_idle_list_generic(struct hal_soc *soc,
+				 qdf_dma_addr_t scatter_bufs_base_paddr[],
+				 void *scatter_bufs_base_vaddr[],
+				 uint32_t num_scatter_bufs,
+				 uint32_t scatter_buf_size,
+				 uint32_t last_buf_end_offset,
+				 uint32_t num_entries)
 {
 	int i;
 	uint32_t *prev_buf_link_ptr = NULL;
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 	uint32_t reg_scatter_buf_size, reg_tot_scatter_buf_size;
 	uint32_t val;
 

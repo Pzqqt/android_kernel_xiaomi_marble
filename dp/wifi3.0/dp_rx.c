@@ -46,8 +46,10 @@ static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 }
 
 #ifdef DUP_RX_DESC_WAR
-void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
-				void *ring_desc, struct dp_rx_desc *rx_desc)
+void dp_rx_dump_info_and_assert(struct dp_soc *soc,
+				hal_ring_handle_t hal_ring,
+				hal_ring_desc_t ring_desc,
+				struct dp_rx_desc *rx_desc)
 {
 	void *hal_soc = soc->hal_soc;
 
@@ -2136,7 +2138,8 @@ done:
 
 	if (dp_rx_enable_eol_data_check(soc)) {
 		if (quota &&
-		    hal_srng_dst_peek_sync_locked(soc, hal_ring_hdl)) {
+		    hal_srng_dst_peek_sync_locked(soc->hal_soc,
+						  hal_ring_hdl)) {
 			DP_STATS_INC(soc, rx.hp_oos2, 1);
 			if (!hif_exec_should_yield(scn, intr_id))
 				goto more_data;

@@ -59,8 +59,10 @@ static void *hal_rx_link_desc_msdu0_ptr_generic(void *link_desc)
  *
  * Return: none
  */
-static inline void hal_tx_comp_get_status_generic(void *desc,
-		void *ts1, void *hal)
+static inline
+void hal_tx_comp_get_status_generic(void *desc,
+				    void *ts1,
+				    struct hal_soc *hal)
 {
 	uint8_t rate_stats_valid = 0;
 	uint32_t rate_stats = 0;
@@ -109,7 +111,9 @@ static inline void hal_tx_comp_get_status_generic(void *desc,
 	}
 
 	ts->release_src = hal_tx_comp_get_buffer_source(desc);
-	ts->status = hal_tx_comp_get_release_reason(desc, hal);
+	ts->status = hal_tx_comp_get_release_reason(
+					desc,
+					hal_soc_to_hal_soc_handle(hal));
 
 	ts->tsf = HAL_TX_DESC_GET(desc, UNIFIED_WBM_RELEASE_RING_6,
 			TX_RATE_STATS_INFO_TX_RATE_STATS);
@@ -1456,10 +1460,9 @@ static void hal_reo_status_get_header_generic(uint32_t *d, int b, void *h1)
  * @hal_soc: Opaque HAL SOC handle
  * @reo_params: parameters needed by HAL for REO config
  */
-static void hal_reo_setup_generic(void *hal_soc,
-	 void *reoparams)
+static void hal_reo_setup_generic(struct hal_soc *soc,
+				  void *reoparams)
 {
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 	uint32_t reg_val;
 	struct hal_reo_params *reo_params = (struct hal_reo_params *)reoparams;
 
@@ -1563,12 +1566,11 @@ static void hal_reo_setup_generic(void *hal_soc,
  * Return: Update tail pointer and head pointer in arguments.
  */
 static inline
-void hal_get_hw_hptp_generic(hal_soc_handle_t hal_soc_hdl,
+void hal_get_hw_hptp_generic(struct hal_soc *hal_soc,
 			     hal_ring_handle_t hal_ring_hdl,
 			     uint32_t *headp, uint32_t *tailp,
 			     uint8_t ring)
 {
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	struct hal_hw_srng_config *ring_config;
 	enum hal_ring_type ring_type = (enum hal_ring_type)ring;
@@ -1597,10 +1599,10 @@ void hal_get_hw_hptp_generic(hal_soc_handle_t hal_soc_hdl,
  * @hal_soc: HAL SOC handle
  * @srng: SRNG ring pointer
  */
-static inline void hal_srng_src_hw_init_generic(void *halsoc,
-	struct hal_srng *srng)
+static inline
+void hal_srng_src_hw_init_generic(struct hal_soc *hal,
+				  struct hal_srng *srng)
 {
-	struct hal_soc *hal = (struct hal_soc *)halsoc;
 	uint32_t reg_val = 0;
 	uint64_t tp_addr = 0;
 
@@ -1710,10 +1712,10 @@ static inline void hal_srng_src_hw_init_generic(void *halsoc,
  * @hal_soc: HAL SOC handle
  * @srng: SRNG ring pointer
  */
-static inline void hal_srng_dst_hw_init_generic(void *halsoc,
-	struct hal_srng *srng)
+static inline
+void hal_srng_dst_hw_init_generic(struct hal_soc *hal,
+				  struct hal_srng *srng)
 {
-	struct hal_soc *hal = (struct hal_soc *)halsoc;
 	uint32_t reg_val = 0;
 	uint64_t hp_addr = 0;
 
@@ -2117,11 +2119,9 @@ static void hal_tx_desc_set_search_index_generic(void *desc,
  *
  * Return: none
  */
-static void hal_tx_set_pcp_tid_map_generic(void *hal_soc, uint8_t *map)
+static void hal_tx_set_pcp_tid_map_generic(struct hal_soc *soc, uint8_t *map)
 {
 	uint32_t addr, value;
-
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 
 	addr = HWIO_TCL_R0_PCP_TID_MAP_ADDR(
 				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
@@ -2148,11 +2148,10 @@ static void hal_tx_set_pcp_tid_map_generic(void *hal_soc, uint8_t *map)
  * Return: void
  */
 static
-void hal_tx_update_pcp_tid_generic(void *hal_soc, uint8_t pcp, uint8_t tid)
+void hal_tx_update_pcp_tid_generic(struct hal_soc *soc,
+				   uint8_t pcp, uint8_t tid)
 {
 	uint32_t addr, value, regval;
-
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 
 	addr = HWIO_TCL_R0_PCP_TID_MAP_ADDR(
 				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
@@ -2178,11 +2177,9 @@ void hal_tx_update_pcp_tid_generic(void *hal_soc, uint8_t pcp, uint8_t tid)
  * Return: void
  */
 static
-void hal_tx_update_tidmap_prty_generic(void *hal_soc, uint8_t value)
+void hal_tx_update_tidmap_prty_generic(struct hal_soc *soc, uint8_t value)
 {
 	uint32_t addr;
-
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 
 	addr = HWIO_TCL_R0_TID_MAP_PRTY_ADDR(
 				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);

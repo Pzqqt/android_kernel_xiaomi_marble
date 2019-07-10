@@ -1191,4 +1191,17 @@ uint8_t *hif_log_dump_ce(struct hif_softc *scn, uint8_t *buf_cur,
 			 uint8_t *buf_init, uint32_t buf_sz,
 			 uint32_t ce, uint32_t skb_sz);
 #endif /* OL_ATH_SMART_LOGGING */
+
+/*
+ * hif_softc_to_hif_opaque_softc - API to convert hif_softc handle
+ * to hif_opaque_softc handle
+ * @hif_handle - hif_softc type
+ *
+ * Return: hif_opaque_softc type
+ */
+static inline struct hif_opaque_softc *
+hif_softc_to_hif_opaque_softc(struct hif_softc *hif_handle)
+{
+	return (struct hif_opaque_softc *)hif_handle;
+}
 #endif /* _HIF_H_ */

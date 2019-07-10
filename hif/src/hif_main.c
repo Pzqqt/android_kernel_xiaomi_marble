@@ -492,7 +492,9 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
-		scn->hal_soc = hal_attach(scn, scn->qdf_dev);
+		scn->hal_soc = hal_attach(
+					hif_softc_to_hif_opaque_softc(scn),
+					scn->qdf_dev);
 		if (!scn->hal_soc)
 			return QDF_STATUS_E_FAILURE;
 	}

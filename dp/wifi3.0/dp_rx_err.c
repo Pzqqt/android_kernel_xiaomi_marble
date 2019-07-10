@@ -162,7 +162,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
  */
 QDF_STATUS
 dp_rx_link_desc_return_by_addr(struct dp_soc *soc,
-			       hal_ring_desc_t link_desc_addr,
+			       hal_link_desc_t link_desc_addr,
 			       uint8_t bm_action)
 {
 	struct dp_srng *wbm_desc_rel_ring = &soc->wbm_desc_rel_ring;
@@ -224,7 +224,9 @@ QDF_STATUS
 dp_rx_link_desc_return(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 		       uint8_t bm_action)
 {
-	return dp_rx_link_desc_return_by_addr(soc, ring_desc, bm_action);
+	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(ring_desc);
+
+	return dp_rx_link_desc_return_by_addr(soc, buf_addr_info, bm_action);
 }
 
 /**
@@ -1571,14 +1573,15 @@ done:
  * Return: void
  */
 static void dup_desc_dbg(struct dp_soc *soc,
-			 hal_ring_desc_t rxdma_dst_ring_desc,
+			 hal_rxdma_desc_t rxdma_dst_ring_desc,
 			 void *rx_desc)
 {
 	DP_STATS_INC(soc, rx.err.hal_rxdma_err_dup, 1);
-	dp_rx_dump_info_and_assert(soc,
-				   soc->rx_rel_ring.hal_srng,
-				   rxdma_dst_ring_desc,
-				   rx_desc);
+	dp_rx_dump_info_and_assert(
+			soc,
+			soc->rx_rel_ring.hal_srng,
+			hal_rxdma_desc_to_hal_ring_desc(rxdma_dst_ring_desc),
+			rx_desc);
 }
 
 /**
@@ -1594,7 +1597,7 @@ static void dup_desc_dbg(struct dp_soc *soc,
  */
 static inline uint32_t
 dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
-	hal_ring_desc_t rxdma_dst_ring_desc,
+	hal_rxdma_desc_t rxdma_dst_ring_desc,
 	union dp_rx_desc_list_elem_t **head,
 	union dp_rx_desc_list_elem_t **tail)
 {
@@ -1613,7 +1616,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t rxdma_error_code = 0;
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
-	hal_ring_desc_t ring_desc;
+	hal_rxdma_desc_t ring_desc;
 
 	msdu = 0;
 
@@ -1720,7 +1723,7 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
-	hal_ring_desc_t rxdma_dst_ring_desc;
+	hal_rxdma_desc_t rxdma_dst_ring_desc;
 	hal_soc_handle_t hal_soc;
 	void *err_dst_srng;
 	union dp_rx_desc_list_elem_t *head = NULL;

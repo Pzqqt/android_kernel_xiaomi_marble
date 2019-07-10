@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,14 +54,12 @@ static void hal_tx_desc_set_dscp_tid_table_id_8074(void *desc, uint8_t id)
  *
  * Return: none
  */
-static void hal_tx_set_dscp_tid_map_8074(void *hal_soc, uint8_t *map,
+static void hal_tx_set_dscp_tid_map_8074(struct hal_soc *soc, uint8_t *map,
 					 uint8_t id)
 {
 	int i;
 	uint32_t addr;
 	uint32_t value;
-
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 
 	if (id == HAL_TX_DSCP_TID_MAP_TABLE_DEFAULT) {
 		addr = HWIO_TCL_R0_DSCP_TID1_MAP_0_ADDR(
@@ -102,15 +100,13 @@ static void hal_tx_set_dscp_tid_map_8074(void *hal_soc, uint8_t *map,
  * Return: void
  */
 static
-void hal_tx_update_dscp_tid_8074(void *hal_soc, uint8_t tid,
+void hal_tx_update_dscp_tid_8074(struct hal_soc *soc, uint8_t tid,
 				 uint8_t id, uint8_t dscp)
 {
 	int index;
 	uint32_t addr;
 	uint32_t value;
 	uint32_t regval;
-
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 
 	if (id == HAL_TX_DSCP_TID_MAP_TABLE_DEFAULT)
 		addr = HWIO_TCL_R0_DSCP_TID1_MAP_0_ADDR(

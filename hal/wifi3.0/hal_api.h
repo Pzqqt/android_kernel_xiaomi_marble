@@ -43,6 +43,24 @@
 #define FORCE_WAKE_DELAY_TIMEOUT 50
 #define FORCE_WAKE_DELAY_MS 5
 
+/**
+ * hal_ring_desc - opaque handle for DP ring descriptor
+ */
+struct hal_ring_desc;
+typedef struct hal_ring_desc *hal_ring_desc_t;
+
+/**
+ * hal_link_desc - opaque handle for DP link descriptor
+ */
+struct hal_link_desc;
+typedef struct hal_link_desc *hal_link_desc_t;
+
+/**
+ * hal_rxdma_desc - opaque handle for DP rxdma dst ring descriptor
+ */
+struct hal_rxdma_desc;
+typedef struct hal_rxdma_desc *hal_rxdma_desc_t;
+
 #ifdef ENABLE_VERBOSE_DEBUG
 static inline void
 hal_set_verbose_debug(bool flag)
@@ -276,7 +294,7 @@ static inline uint32_t hal_read_address_32_mb(struct hal_soc *soc,
  * This function should be called as part of HIF initialization (for accessing
  * copy engines). DP layer will get hal_soc handle using hif_get_hal_handle()
  */
-extern void *hal_attach(void *hif_handle, qdf_device_t qdf_dev);
+void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev);
 
 /**
  * hal_detach - Detach HAL layer
@@ -542,7 +560,8 @@ static inline bool hal_srng_initialized(hal_ring_handle_t hal_ring_hdl)
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
 static inline
-void *hal_srng_dst_peek(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
+void *hal_srng_dst_peek(hal_soc_handle_t hal_soc_hdl,
+			hal_ring_handle_t hal_ring_hdl)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
@@ -673,7 +692,7 @@ void *hal_srng_dst_get_next(void *hal_soc,
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
 static inline void *
-hal_srng_dst_get_next_hp(void *hal_soc,
+hal_srng_dst_get_next_hp(hal_soc_handle_t hal_soc_hdl,
 			 hal_ring_handle_t hal_ring_hdl)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
@@ -707,7 +726,8 @@ hal_srng_dst_get_next_hp(void *hal_soc,
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
 static inline
-void *hal_srng_dst_peek_sync(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
+void *hal_srng_dst_peek_sync(hal_soc_handle_t hal_soc_hdl,
+			     hal_ring_handle_t hal_ring_hdl)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
@@ -731,7 +751,7 @@ void *hal_srng_dst_peek_sync(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
 static inline
-void *hal_srng_dst_peek_sync_locked(void *hal_soc,
+void *hal_srng_dst_peek_sync_locked(hal_soc_handle_t hal_soc_hdl,
 				    hal_ring_handle_t hal_ring_hdl)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
@@ -744,7 +764,7 @@ void *hal_srng_dst_peek_sync_locked(void *hal_soc,
 
 	SRNG_LOCK(&srng->lock);
 
-	ring_desc_ptr = hal_srng_dst_peek_sync(hal_soc, hal_ring_hdl);
+	ring_desc_ptr = hal_srng_dst_peek_sync(hal_soc_hdl, hal_ring_hdl);
 
 	SRNG_UNLOCK(&srng->lock);
 
@@ -989,8 +1009,9 @@ void *hal_srng_src_get_next(void *hal_soc,
  *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
-static inline void *
-hal_srng_src_peek(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
+static inline
+void *hal_srng_src_peek(hal_soc_handle_t hal_soc_hdl,
+			hal_ring_handle_t hal_ring_hdl)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t *desc;
@@ -1148,7 +1169,8 @@ hal_srng_access_end_reap(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
  * @hal_soc: Opaque HAL SOC handle
  *
  */
-static inline uint32_t hal_idle_list_scatter_buf_size(void *hal_soc)
+static inline
+uint32_t hal_idle_list_scatter_buf_size(hal_soc_handle_t hal_soc_hdl)
 {
 	return WBM_IDLE_SCATTER_BUF_SIZE;
 }
@@ -1183,7 +1205,8 @@ static inline uint32_t hal_get_link_desc_size(hal_soc_handle_t hal_soc_hdl)
  * @hal_soc: Opaque HAL SOC handle
  *
  */
-static inline uint32_t hal_get_link_desc_align(void *hal_soc)
+static inline
+uint32_t hal_get_link_desc_align(hal_soc_handle_t hal_soc_hdl)
 {
 	return LINK_DESC_ALIGN;
 }
@@ -1194,7 +1217,8 @@ static inline uint32_t hal_get_link_desc_align(void *hal_soc)
  * @hal_soc: Opaque HAL SOC handle
  *
  */
-static inline uint32_t hal_num_mpdus_per_link_desc(void *hal_soc)
+static inline
+uint32_t hal_num_mpdus_per_link_desc(hal_soc_handle_t hal_soc_hdl)
 {
 	return NUM_MPDUS_PER_LINK_DESC;
 }
@@ -1205,7 +1229,8 @@ static inline uint32_t hal_num_mpdus_per_link_desc(void *hal_soc)
  * @hal_soc: Opaque HAL SOC handle
  *
  */
-static inline uint32_t hal_num_msdus_per_link_desc(void *hal_soc)
+static inline
+uint32_t hal_num_msdus_per_link_desc(hal_soc_handle_t hal_soc_hdl)
 {
 	return NUM_MSDUS_PER_LINK_DESC;
 }
@@ -1217,7 +1242,8 @@ static inline uint32_t hal_num_msdus_per_link_desc(void *hal_soc)
  * @hal_soc: Opaque HAL SOC handle
  *
  */
-static inline uint32_t hal_num_mpdu_links_per_queue_desc(void *hal_soc)
+static inline
+uint32_t hal_num_mpdu_links_per_queue_desc(hal_soc_handle_t hal_soc_hdl)
 {
 	return NUM_MPDU_LINKS_PER_QUEUE_DESC;
 }
@@ -1230,11 +1256,12 @@ static inline uint32_t hal_num_mpdu_links_per_queue_desc(void *hal_soc)
  * @scatter_buf_size: Size of scatter buffer
  *
  */
-static inline uint32_t hal_idle_scatter_buf_num_entries(void *hal_soc,
-	uint32_t scatter_buf_size)
+static inline
+uint32_t hal_idle_scatter_buf_num_entries(hal_soc_handle_t hal_soc_hdl,
+					  uint32_t scatter_buf_size)
 {
 	return (scatter_buf_size - WBM_IDLE_SCATTER_BUF_NEXT_PTR_SIZE) /
-		hal_srng_get_entrysize(hal_soc, WBM_IDLE_LINK);
+		hal_srng_get_entrysize(hal_soc_hdl, WBM_IDLE_LINK);
 }
 
 /**
@@ -1246,8 +1273,10 @@ static inline uint32_t hal_idle_scatter_buf_num_entries(void *hal_soc,
  * @scatter_buf_size: Size of scatter buffer
  *
  */
-static inline uint32_t hal_idle_list_num_scatter_bufs(void *hal_soc,
-	uint32_t total_mem, uint32_t scatter_buf_size)
+static inline
+uint32_t hal_idle_list_num_scatter_bufs(hal_soc_handle_t hal_soc_hdl,
+					uint32_t total_mem,
+					uint32_t scatter_buf_size)
 {
 	uint8_t rem = (total_mem % (scatter_buf_size -
 			WBM_IDLE_SCATTER_BUF_NEXT_PTR_SIZE)) ? 1 : 0;
@@ -1289,7 +1318,8 @@ enum hal_pn_type {
  * @hal_soc: Opaque HAL SOC handle
  *
  */
-static inline uint32_t hal_get_reo_qdesc_align(void *hal_soc)
+static inline
+uint32_t hal_get_reo_qdesc_align(hal_soc_handle_t hal_soc_hdl)
 {
 	return REO_QUEUE_DESC_ALIGN;
 }
@@ -1305,9 +1335,11 @@ static inline uint32_t hal_get_reo_qdesc_align(void *hal_soc)
  * @pn_type: PN type (one of the types defined in 'enum hal_pn_type')
  *
  */
-extern void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
-	uint32_t start_seq, void *hw_qdesc_vaddr, qdf_dma_addr_t hw_qdesc_paddr,
-	int pn_type);
+void hal_reo_qdesc_setup(hal_soc_handle_t hal_soc_hdl,
+			 int tid, uint32_t ba_window_size,
+			 uint32_t start_seq, void *hw_qdesc_vaddr,
+			 qdf_dma_addr_t hw_qdesc_paddr,
+			 int pn_type);
 
 /**
  * hal_srng_get_hp_addr - Get head pointer physical address
@@ -1365,7 +1397,8 @@ hal_srng_get_tp_addr(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
  * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  * @ring_params: SRNG parameters will be returned through this structure
  */
-void hal_get_srng_params(void *hal_soc, hal_ring_handle_t hal_ring_hdl,
+void hal_get_srng_params(hal_soc_handle_t hal_soc_hdl,
+			 hal_ring_handle_t hal_ring_hdl,
 			 struct hal_srng_params *ring_params);
 
 /**
@@ -1374,7 +1407,7 @@ void hal_get_srng_params(void *hal_soc, hal_ring_handle_t hal_ring_hdl,
  * @hal_soc: Opaque HAL SOC handle
  * @mem: pointer to structure to be updated with hal mem info
  */
-extern void hal_get_meminfo(void *hal_soc,struct hal_mem_info *mem );
+void hal_get_meminfo(hal_soc_handle_t hal_soc_hdl, struct hal_mem_info *mem);
 
 /**
  * hal_get_target_type - Return target type
@@ -1390,7 +1423,7 @@ uint32_t hal_get_target_type(hal_soc_handle_t hal_soc_hdl);
  * @ac: Access category
  * @value: timeout duration in millisec
  */
-void hal_get_ba_aging_timeout(void *hal_soc, uint8_t ac,
+void hal_get_ba_aging_timeout(hal_soc_handle_t hal_soc_hdl, uint8_t ac,
 			      uint32_t *value);
 /**
  * hal_set_aging_timeout - Set BA aging timeout
@@ -1399,7 +1432,7 @@ void hal_get_ba_aging_timeout(void *hal_soc, uint8_t ac,
  * @ac: Access category in millisec
  * @value: timeout duration value
  */
-void hal_set_ba_aging_timeout(void *hal_soc, uint8_t ac,
+void hal_set_ba_aging_timeout(hal_soc_handle_t hal_soc_hdl, uint8_t ac,
 			      uint32_t value);
 /**
  * hal_srng_dst_hw_init - Private function to initialize SRNG
@@ -1443,7 +1476,7 @@ void hal_get_hw_hptp(hal_soc_handle_t hal_soc_hdl,
 {
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	hal_soc->ops->hal_get_hw_hptp(hal_soc_hdl, hal_ring_hdl,
+	hal_soc->ops->hal_get_hw_hptp(hal_soc, hal_ring_hdl,
 			headp, tailp, ring_type);
 }
 
@@ -1453,12 +1486,12 @@ void hal_get_hw_hptp(hal_soc_handle_t hal_soc_hdl,
  * @hal_soc: Opaque HAL SOC handle
  * @reo_params: parameters needed by HAL for REO config
  */
-static inline void hal_reo_setup(void *halsoc,
-	 void *reoparams)
+static inline void hal_reo_setup(hal_soc_handle_t hal_soc_hdl,
+				 void *reoparams)
 {
-	struct hal_soc *hal_soc = (struct hal_soc *)halsoc;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	hal_soc->ops->hal_reo_setup(halsoc, reoparams);
+	hal_soc->ops->hal_reo_setup(hal_soc, reoparams);
 }
 
 /**
@@ -1474,15 +1507,18 @@ static inline void hal_reo_setup(void *halsoc,
  * @num_entries: Total entries of all scatter bufs
  *
  */
-static inline void hal_setup_link_idle_list(void *halsoc,
-	qdf_dma_addr_t scatter_bufs_base_paddr[],
-	void *scatter_bufs_base_vaddr[], uint32_t num_scatter_bufs,
-	uint32_t scatter_buf_size, uint32_t last_buf_end_offset,
-	uint32_t num_entries)
+static inline
+void hal_setup_link_idle_list(hal_soc_handle_t hal_soc_hdl,
+			      qdf_dma_addr_t scatter_bufs_base_paddr[],
+			      void *scatter_bufs_base_vaddr[],
+			      uint32_t num_scatter_bufs,
+			      uint32_t scatter_buf_size,
+			      uint32_t last_buf_end_offset,
+			      uint32_t num_entries)
 {
-	struct hal_soc *hal_soc = (struct hal_soc *)halsoc;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	hal_soc->ops->hal_setup_link_idle_list(halsoc, scatter_bufs_base_paddr,
+	hal_soc->ops->hal_setup_link_idle_list(hal_soc, scatter_bufs_base_paddr,
 			scatter_bufs_base_vaddr, num_scatter_bufs,
 			scatter_buf_size, last_buf_end_offset,
 			num_entries);
@@ -1534,4 +1570,16 @@ static inline void hal_srng_dump_ring(hal_soc_handle_t hal_soc_hdl,
 	}
 }
 
+/*
+ * hal_rxdma_desc_to_hal_ring_desc - API to convert rxdma ring desc
+ * to opaque dp_ring desc type
+ * @ring_desc - rxdma ring desc
+ *
+ * Return: hal_rxdma_desc_t type
+ */
+static inline
+hal_ring_desc_t hal_rxdma_desc_to_hal_ring_desc(hal_rxdma_desc_t ring_desc)
+{
+	return (hal_ring_desc_t)ring_desc;
+}
 #endif /* _HAL_APIH_ */

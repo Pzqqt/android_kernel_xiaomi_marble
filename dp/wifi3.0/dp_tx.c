@@ -3461,7 +3461,8 @@ more_data:
 
 	if (dp_tx_comp_enable_eol_data_check(soc)) {
 		if (!force_break &&
-		    hal_srng_dst_peek_sync_locked(soc, hal_ring_hdl)) {
+		    hal_srng_dst_peek_sync_locked(soc->hal_soc,
+						  hal_ring_hdl)) {
 			DP_STATS_INC(soc, tx.hp_oos2, 1);
 			if (!hif_exec_should_yield(soc->hif_handle,
 						   int_ctx->dp_intr_id))

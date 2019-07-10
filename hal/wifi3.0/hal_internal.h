@@ -174,12 +174,6 @@ enum hal_srng_dir {
 struct hal_soc;
 
 /**
- * hal_ring_desc - opaque handle for DP ring descriptor
- */
-struct hal_ring_desc;
-typedef struct hal_ring_desc *hal_ring_desc_t;
-
-/**
  * dp_hal_ring - opaque handle for DP HAL SRNG
  */
 struct hal_ring_handle;
@@ -309,33 +303,38 @@ struct hal_hw_srng_config {
 struct hal_hw_txrx_ops {
 
 	/* init and setup */
-	void (*hal_srng_dst_hw_init)(void *hal,
-		struct hal_srng *srng);
-	void (*hal_srng_src_hw_init)(void *hal,
-	struct hal_srng *srng);
-	void (*hal_get_hw_hptp)(hal_soc_handle_t hal_soc_hdl,
+	void (*hal_srng_dst_hw_init)(struct hal_soc *hal,
+				     struct hal_srng *srng);
+	void (*hal_srng_src_hw_init)(struct hal_soc *hal,
+				     struct hal_srng *srng);
+	void (*hal_get_hw_hptp)(struct hal_soc *hal,
 				hal_ring_handle_t hal_ring_hdl,
 				uint32_t *headp, uint32_t *tailp,
 				uint8_t ring_type);
-	void (*hal_reo_setup)(void *hal_soc, void *reoparams);
-	void (*hal_setup_link_idle_list)(void *hal_soc,
-	qdf_dma_addr_t scatter_bufs_base_paddr[],
-	void *scatter_bufs_base_vaddr[], uint32_t num_scatter_bufs,
-	uint32_t scatter_buf_size, uint32_t last_buf_end_offset,
-	uint32_t num_entries);
+	void (*hal_reo_setup)(struct hal_soc *hal_soc, void *reoparams);
+	void (*hal_setup_link_idle_list)(
+				struct hal_soc *hal_soc,
+				qdf_dma_addr_t scatter_bufs_base_paddr[],
+				void *scatter_bufs_base_vaddr[],
+				uint32_t num_scatter_bufs,
+				uint32_t scatter_buf_size,
+				uint32_t last_buf_end_offset,
+				uint32_t num_entries);
 
 	/* tx */
 	void (*hal_tx_desc_set_dscp_tid_table_id)(void *desc, uint8_t id);
-	void (*hal_tx_set_dscp_tid_map)(void *hal_soc, uint8_t *map,
+	void (*hal_tx_set_dscp_tid_map)(struct hal_soc *hal_soc, uint8_t *map,
 					uint8_t id);
-	void (*hal_tx_update_dscp_tid)(void *hal_soc, uint8_t tid, uint8_t id,
+	void (*hal_tx_update_dscp_tid)(struct hal_soc *hal_soc, uint8_t tid,
+				       uint8_t id,
 				       uint8_t dscp);
 	void (*hal_tx_desc_set_lmac_id)(void *desc, uint8_t lmac_id);
 	 void (*hal_tx_desc_set_buf_addr)(void *desc, dma_addr_t paddr,
 			uint8_t pool_id, uint32_t desc_id, uint8_t type);
 	void (*hal_tx_desc_set_search_type)(void *desc, uint8_t search_type);
 	void (*hal_tx_desc_set_search_index)(void *desc, uint32_t search_index);
-	void (*hal_tx_comp_get_status)(void *desc, void *ts, void *hal);
+	void (*hal_tx_comp_get_status)(void *desc, void *ts,
+				       struct hal_soc *hal);
 	uint8_t (*hal_tx_comp_get_release_reason)(void *hal_desc);
 
 	/* rx */
@@ -364,10 +363,10 @@ struct hal_hw_txrx_ops {
 	void (*hal_rx_dump_mpdu_start_tlv)(void *mpdustart,
 						uint8_t dbg_level);
 
-	void (*hal_tx_set_pcp_tid_map)(void *hal_soc, uint8_t *map);
-	void (*hal_tx_update_pcp_tid_map)(void *hal_soc, uint8_t pcp,
+	void (*hal_tx_set_pcp_tid_map)(struct hal_soc *hal_soc, uint8_t *map);
+	void (*hal_tx_update_pcp_tid_map)(struct hal_soc *hal_soc, uint8_t pcp,
 					  uint8_t id);
-	void (*hal_tx_set_tidmap_prty)(void *hal_soc, uint8_t prio);
+	void (*hal_tx_set_tidmap_prty)(struct hal_soc *hal_soc, uint8_t prio);
 };
 
 /**
@@ -376,7 +375,7 @@ struct hal_hw_txrx_ops {
  */
 struct hal_soc {
 	/* HIF handle to access HW registers */
-	void *hif_handle;
+	struct hif_opaque_softc *hif_handle;
 
 	/* QDF device handle */
 	qdf_device_t qdf_dev;
@@ -443,5 +442,17 @@ static inline
 hal_ring_handle_t hal_srng_to_hal_ring_handle(struct hal_srng *hal_srng)
 {
 	return (hal_ring_handle_t)hal_srng;
+}
+
+/*
+ * hal_ring_handle_to_hal_srng - API to convert dp_hal_ring to hal_srng handle
+ * @hal_ring - hal_ring_handle_t type
+ *
+ * Return: hal_srng pointer type
+ */
+static inline
+struct hal_srng *hal_ring_handle_to_hal_srng(hal_ring_handle_t hal_ring)
+{
+	return (struct hal_srng *)hal_ring;
 }
 #endif /* _HAL_INTERNAL_H_ */

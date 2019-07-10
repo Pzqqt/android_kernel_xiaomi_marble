@@ -73,6 +73,7 @@
 #include "phyrx_rssi_legacy.h"
 #include "wcss_version.h"
 #include "rx_msdu_link.h"
+#include "hal_internal.h"
 
 #define HAL_SRNG_REO_EXCEPTION HAL_SRNG_REO2SW1
 #define HAL_SRNG_REO_ALTERNATE_SELECT 0x7
@@ -328,8 +329,9 @@ static inline void hal_set_link_desc_addr(void *desc, uint32_t cookie,
  * @tid: TID number
  *
  */
-static inline uint32_t hal_get_reo_qdesc_size(void *hal_soc,
-	uint32_t ba_window_size, int tid)
+static inline
+uint32_t hal_get_reo_qdesc_size(hal_soc_handle_t hal_soc_hdl,
+				uint32_t ba_window_size, int tid)
 {
 	/* Return descriptor size corresponding to window size of 2 since
 	 * we set ba_window_size to 2 while setting up REO descriptors as

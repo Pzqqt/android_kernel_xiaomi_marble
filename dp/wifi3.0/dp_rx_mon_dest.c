@@ -255,7 +255,7 @@ struct dp_rx_desc *dp_rx_get_mon_desc(struct dp_soc *soc,
  */
 static inline uint32_t
 dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
-	hal_ring_desc_t rxdma_dst_ring_desc, qdf_nbuf_t *head_msdu,
+	hal_rxdma_desc_t rxdma_dst_ring_desc, qdf_nbuf_t *head_msdu,
 	qdf_nbuf_t *tail_msdu, uint32_t *npackets, uint32_t *ppdu_id,
 	union dp_rx_desc_list_elem_t **head,
 	union dp_rx_desc_list_elem_t **tail)
@@ -1076,7 +1076,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	uint8_t pdev_id;
-	hal_ring_desc_t rxdma_dst_ring_desc;
+	hal_rxdma_desc_t rxdma_dst_ring_desc;
 	hal_soc_handle_t hal_soc;
 	void *mon_dst_srng;
 	union dp_rx_desc_list_elem_t *head = NULL;

@@ -74,9 +74,11 @@ static inline void hal_uniform_desc_hdr_setup(uint32_t *desc, uint32_t owner,
  * @tid: TID
  *
  */
-void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
-	uint32_t start_seq, void *hw_qdesc_vaddr, qdf_dma_addr_t hw_qdesc_paddr,
-	int pn_type)
+void hal_reo_qdesc_setup(hal_soc_handle_t hal_soc_hdl, int tid,
+			 uint32_t ba_window_size,
+			 uint32_t start_seq, void *hw_qdesc_vaddr,
+			 qdf_dma_addr_t hw_qdesc_paddr,
+			 int pn_type)
 {
 	uint32_t *reo_queue_desc = (uint32_t *)hw_qdesc_vaddr;
 	uint32_t *reo_queue_ext_desc;
@@ -255,10 +257,10 @@ qdf_export_symbol(hal_reo_qdesc_setup);
  * @ac: Access category
  * @value: window size to get
  */
-void hal_get_ba_aging_timeout(void *hal_soc, uint8_t ac,
+void hal_get_ba_aging_timeout(hal_soc_handle_t hal_soc_hdl, uint8_t ac,
 			      uint32_t *value)
 {
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+	struct hal_soc *soc = (struct hal_soc *)hal_soc_hdl;
 
 	switch (ac) {
 	case WME_AC_BE:
@@ -297,10 +299,10 @@ qdf_export_symbol(hal_get_ba_aging_timeout);
  * ac: 0 - Background, 1 - Best Effort, 2 - Video, 3 - Voice
  * @value: Input value to set
  */
-void hal_set_ba_aging_timeout(void *hal_soc, uint8_t ac,
+void hal_set_ba_aging_timeout(hal_soc_handle_t hal_soc_hdl, uint8_t ac,
 			      uint32_t value)
 {
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+	struct hal_soc *soc = (struct hal_soc *)hal_soc_hdl;
 
 	switch (ac) {
 	case WME_AC_BE:
@@ -395,19 +397,20 @@ inline void hal_reo_cmd_set_descr_addr(uint32_t *reo_desc,
 	}
 }
 
-inline int hal_reo_cmd_queue_stats(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
+inline int hal_reo_cmd_queue_stats(hal_ring_handle_t  hal_ring_hdl,
+				   hal_soc_handle_t hal_soc_hdl,
 				   struct hal_reo_cmd_params *cmd)
 
 {
 	uint32_t *reo_desc, val;
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	hal_srng_access_start(hal_soc_hdl, reo_ring);
-	reo_desc = hal_srng_src_get_next(hal_soc, reo_ring);
+	hal_srng_access_start(hal_soc_hdl, hal_ring_hdl);
+	reo_desc = hal_srng_src_get_next(hal_soc, hal_ring_hdl);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Out of cmd ring entries", __func__);
-		hal_srng_access_end(hal_soc, reo_ring);
+		hal_srng_access_end(hal_soc, hal_ring_hdl);
 		return -EBUSY;
 	}
 
@@ -417,7 +420,7 @@ inline int hal_reo_cmd_queue_stats(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+	qdf_mem_zero((reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
 		     sizeof(struct reo_get_queue_stats) -
 		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
@@ -431,7 +434,7 @@ inline int hal_reo_cmd_queue_stats(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 	HAL_DESC_SET_FIELD(reo_desc, REO_GET_QUEUE_STATS_2, CLEAR_STATS,
 			      cmd->u.stats_params.clear);
 
-	hal_srng_access_end(hal_soc, reo_ring);
+	hal_srng_access_end(hal_soc, hal_ring_hdl);
 
 	val = reo_desc[CMD_HEADER_DW_OFFSET];
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
@@ -439,18 +442,19 @@ inline int hal_reo_cmd_queue_stats(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 }
 qdf_export_symbol(hal_reo_cmd_queue_stats);
 
-inline int hal_reo_cmd_flush_queue(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
+inline int hal_reo_cmd_flush_queue(hal_ring_handle_t hal_ring_hdl,
+				   hal_soc_handle_t hal_soc_hdl,
 				   struct hal_reo_cmd_params *cmd)
 {
 	uint32_t *reo_desc, val;
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	hal_srng_access_start(hal_soc_hdl, reo_ring);
-	reo_desc = hal_srng_src_get_next(hal_soc, reo_ring);
+	hal_srng_access_start(hal_soc_hdl, hal_ring_hdl);
+	reo_desc = hal_srng_src_get_next(hal_soc, hal_ring_hdl);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Out of cmd ring entries", __func__);
-		hal_srng_access_end(hal_soc, reo_ring);
+		hal_srng_access_end(hal_soc, hal_ring_hdl);
 		return -EBUSY;
 	}
 
@@ -460,7 +464,7 @@ inline int hal_reo_cmd_flush_queue(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+	qdf_mem_zero((reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
 		     sizeof(struct reo_flush_queue) -
 		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
@@ -479,14 +483,15 @@ inline int hal_reo_cmd_flush_queue(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 			BLOCK_RESOURCE_INDEX, cmd->u.fl_queue_params.index);
 	}
 
-	hal_srng_access_end(hal_soc, reo_ring);
+	hal_srng_access_end(hal_soc, hal_ring_hdl);
 	val = reo_desc[CMD_HEADER_DW_OFFSET];
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
 qdf_export_symbol(hal_reo_cmd_flush_queue);
 
-inline int hal_reo_cmd_flush_cache(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
+inline int hal_reo_cmd_flush_cache(hal_ring_handle_t hal_ring_hdl,
+				   hal_soc_handle_t hal_soc_hdl,
 				   struct hal_reo_cmd_params *cmd)
 {
 	uint32_t *reo_desc, val;
@@ -496,7 +501,7 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 
 	cp = &cmd->u.fl_cache_params;
 
-	hal_srng_access_start(hal_soc_hdl, reo_ring);
+	hal_srng_access_start(hal_soc_hdl, hal_ring_hdl);
 
 	/* We need a cache block resource for this operation, and REO HW has
 	 * only 4 such blocking resources. These resources are managed using
@@ -507,18 +512,18 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 		if (index > 3) {
 			qdf_print("%s, No blocking resource available!",
 				  __func__);
-			hal_srng_access_end(hal_soc, reo_ring);
+			hal_srng_access_end(hal_soc, hal_ring_hdl);
 			return -EBUSY;
 		}
 		hal_soc->index = index;
 	}
 
-	reo_desc = hal_srng_src_get_next(hal_soc, reo_ring);
+	reo_desc = hal_srng_src_get_next(hal_soc, hal_ring_hdl);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Out of cmd ring entries", __func__);
-		hal_srng_access_end(hal_soc, reo_ring);
-		hal_srng_dump(reo_ring);
+		hal_srng_access_end(hal_soc, hal_ring_hdl);
+		hal_srng_dump(hal_ring_handle_to_hal_srng(hal_ring_hdl));
 		return -EBUSY;
 	}
 
@@ -528,7 +533,7 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+	qdf_mem_zero((reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
 		     sizeof(struct reo_flush_cache) -
 		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
@@ -560,14 +565,14 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 	HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_CACHE_2, FLUSH_ENTIRE_CACHE,
 		cp->flush_all);
 
-	hal_srng_access_end(hal_soc, reo_ring);
+	hal_srng_access_end(hal_soc, hal_ring_hdl);
 	val = reo_desc[CMD_HEADER_DW_OFFSET];
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
 qdf_export_symbol(hal_reo_cmd_flush_cache);
 
-inline int hal_reo_cmd_unblock_cache(void *reo_ring,
+inline int hal_reo_cmd_unblock_cache(hal_ring_handle_t hal_ring_hdl,
 				     hal_soc_handle_t hal_soc_hdl,
 				     struct hal_reo_cmd_params *cmd)
 
@@ -576,23 +581,23 @@ inline int hal_reo_cmd_unblock_cache(void *reo_ring,
 	uint32_t *reo_desc, val;
 	uint8_t index = 0;
 
-	hal_srng_access_start(hal_soc_hdl, reo_ring);
+	hal_srng_access_start(hal_soc_hdl, hal_ring_hdl);
 
 	if (cmd->u.unblk_cache_params.type == UNBLOCK_RES_INDEX) {
 		index = hal_find_one_bit(hal_soc->reo_res_bitmap);
 		if (index > 3) {
-			hal_srng_access_end(hal_soc, reo_ring);
+			hal_srng_access_end(hal_soc, hal_ring_hdl);
 			qdf_print("%s: No blocking resource to unblock!",
 				  __func__);
 			return -EBUSY;
 		}
 	}
 
-	reo_desc = hal_srng_src_get_next(hal_soc, reo_ring);
+	reo_desc = hal_srng_src_get_next(hal_soc, hal_ring_hdl);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Out of cmd ring entries", __func__);
-		hal_srng_access_end(hal_soc, reo_ring);
+		hal_srng_access_end(hal_soc, hal_ring_hdl);
 		return -EBUSY;
 	}
 
@@ -602,7 +607,7 @@ inline int hal_reo_cmd_unblock_cache(void *reo_ring,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+	qdf_mem_zero((reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
 		     sizeof(struct reo_unblock_cache) -
 		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
@@ -618,26 +623,26 @@ inline int hal_reo_cmd_unblock_cache(void *reo_ring,
 			cmd->u.unblk_cache_params.index);
 	}
 
-	hal_srng_access_end(hal_soc, reo_ring);
+	hal_srng_access_end(hal_soc, hal_ring_hdl);
 	val = reo_desc[CMD_HEADER_DW_OFFSET];
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
 qdf_export_symbol(hal_reo_cmd_unblock_cache);
 
-inline int hal_reo_cmd_flush_timeout_list(void *reo_ring,
+inline int hal_reo_cmd_flush_timeout_list(hal_ring_handle_t hal_ring_hdl,
 					  hal_soc_handle_t hal_soc_hdl,
 					  struct hal_reo_cmd_params *cmd)
 {
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 	uint32_t *reo_desc, val;
 
-	hal_srng_access_start(hal_soc_hdl, reo_ring);
-	reo_desc = hal_srng_src_get_next(hal_soc, reo_ring);
+	hal_srng_access_start(hal_soc_hdl, hal_ring_hdl);
+	reo_desc = hal_srng_src_get_next(hal_soc, hal_ring_hdl);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Out of cmd ring entries", __func__);
-		hal_srng_access_end(hal_soc, reo_ring);
+		hal_srng_access_end(hal_soc, hal_ring_hdl);
 		return -EBUSY;
 	}
 
@@ -647,7 +652,7 @@ inline int hal_reo_cmd_flush_timeout_list(void *reo_ring,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+	qdf_mem_zero((reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
 		     sizeof(struct reo_flush_timeout_list) -
 		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
@@ -665,14 +670,14 @@ inline int hal_reo_cmd_flush_timeout_list(void *reo_ring,
 		MINIMUM_FORWARD_BUF_COUNT,
 		cmd->u.fl_tim_list_params.min_fwd_buf);
 
-	hal_srng_access_end(hal_soc, reo_ring);
+	hal_srng_access_end(hal_soc, hal_ring_hdl);
 	val = reo_desc[CMD_HEADER_DW_OFFSET];
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
 qdf_export_symbol(hal_reo_cmd_flush_timeout_list);
 
-inline int hal_reo_cmd_update_rx_queue(void *reo_ring,
+inline int hal_reo_cmd_update_rx_queue(hal_ring_handle_t hal_ring_hdl,
 				       hal_soc_handle_t hal_soc_hdl,
 				       struct hal_reo_cmd_params *cmd)
 {
@@ -682,12 +687,12 @@ inline int hal_reo_cmd_update_rx_queue(void *reo_ring,
 
 	p = &cmd->u.upd_queue_params;
 
-	hal_srng_access_start(hal_soc_hdl, reo_ring);
-	reo_desc = hal_srng_src_get_next(hal_soc, reo_ring);
+	hal_srng_access_start(hal_soc_hdl, hal_ring_hdl);
+	reo_desc = hal_srng_src_get_next(hal_soc, hal_ring_hdl);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Out of cmd ring entries", __func__);
-		hal_srng_access_end(hal_soc, reo_ring);
+		hal_srng_access_end(hal_soc, hal_ring_hdl);
 		return -EBUSY;
 	}
 
@@ -697,7 +702,7 @@ inline int hal_reo_cmd_update_rx_queue(void *reo_ring,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+	qdf_mem_zero((reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
 		     sizeof(struct reo_update_rx_reo_queue) -
 		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
@@ -875,7 +880,7 @@ inline int hal_reo_cmd_update_rx_queue(void *reo_ring,
 	HAL_DESC_SET_FIELD(reo_desc, REO_UPDATE_RX_REO_QUEUE_8,
 		PN_127_96, p->pn_127_96);
 
-	hal_srng_access_end(hal_soc, reo_ring);
+	hal_srng_access_end(hal_soc, hal_ring_hdl);
 	val = reo_desc[CMD_HEADER_DW_OFFSET];
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
@@ -1329,7 +1334,7 @@ qdf_export_symbol(hal_reo_rx_update_queue_status);
  * Return: none
  */
 inline void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl,
-				  hal_ring_handle_t hal_srng_hdl)
+				  hal_ring_handle_t hal_ring_hdl)
 {
 	int cmd_num;
 	uint32_t *desc_addr;
@@ -1338,7 +1343,7 @@ inline void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl,
 	uint32_t num_desc;
 	struct hal_soc *soc = (struct hal_soc *)hal_soc_hdl;
 
-	hal_get_srng_params(soc, hal_srng_hdl, &srng_params);
+	hal_get_srng_params(hal_soc_hdl, hal_ring_hdl, &srng_params);
 
 	desc_addr = (uint32_t *)(srng_params.ring_base_vaddr);
 	desc_addr += (sizeof(struct tlv_32_hdr) >> 2);

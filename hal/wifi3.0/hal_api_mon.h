@@ -277,7 +277,7 @@ uint32_t HAL_RX_HW_DESC_GET_PPDUID_GET(void *hw_desc_addr)
  * Return: void
  */
 static inline
-void hal_rx_reo_ent_buf_paddr_get(hal_ring_desc_t rx_desc,
+void hal_rx_reo_ent_buf_paddr_get(hal_rxdma_desc_t rx_desc,
 				  struct hal_buf_info *buf_info,
 				  void **pp_buf_addr_info,
 				  uint32_t *msdu_cnt
@@ -552,7 +552,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, void *ppdu_info,
 }
 
 static inline
-uint32_t hal_get_rx_status_done_tlv_size(void *hal_soc)
+uint32_t hal_get_rx_status_done_tlv_size(hal_soc_handle_t hal_soc_hdl)
 {
 	return HAL_RX_TLV32_HDR_SIZE;
 }

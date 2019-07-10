@@ -240,7 +240,7 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	uint32_t tx_buffer_count;
 	uint32_t ring_base_align = 8;
 	qdf_dma_addr_t buffer_paddr;
-	struct hal_srng *wbm_srng =
+	struct hal_srng *wbm_srng = (struct hal_srng *)
 			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
 	struct hal_srng_params srng_params;
 	uint32_t paddr_lo;
@@ -319,7 +319,8 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 			__dp_ipa_handle_buf_smmu_mapping(soc, nbuf, true);
 	}
 
-	hal_srng_access_end_unlocked(soc->hal_soc, wbm_srng);
+	hal_srng_access_end_unlocked(soc->hal_soc,
+				     hal_srng_to_hal_ring_handle(wbm_srng));
 
 	soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt = tx_buffer_count;
 
@@ -405,8 +406,10 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		return QDF_STATUS_SUCCESS;
 
 	/* IPA TCL_DATA Ring - HAL_SRNG_SW2TCL3 */
-	hal_srng = soc->tcl_data_ring[IPA_TCL_DATA_RING_IDX].hal_srng;
-	hal_get_srng_params(hal_soc, hal_srng_to_hal_ring_handle(hal_srng),
+	hal_srng = (struct hal_srng *)
+			soc->tcl_data_ring[IPA_TCL_DATA_RING_IDX].hal_srng;
+	hal_get_srng_params(hal_soc_to_hal_soc_handle(hal_soc),
+			    hal_srng_to_hal_ring_handle(hal_srng),
 			    &srng_params);
 
 	soc->ipa_uc_tx_rsc.ipa_tcl_ring_base_paddr =
@@ -437,8 +440,10 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		soc->ipa_uc_tx_rsc.ipa_tcl_ring_size);
 
 	/* IPA TX COMP Ring - HAL_SRNG_WBM2SW2_RELEASE */
-	hal_srng = soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
-	hal_get_srng_params(hal_soc, hal_srng_to_hal_ring_handle(hal_srng),
+	hal_srng = (struct hal_srng *)
+			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
+	hal_get_srng_params(hal_soc_to_hal_soc_handle(hal_soc),
+			    hal_srng_to_hal_ring_handle(hal_srng),
 			    &srng_params);
 
 	soc->ipa_uc_tx_rsc.ipa_wbm_ring_base_paddr =
@@ -462,8 +467,10 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		soc->ipa_uc_tx_rsc.ipa_wbm_ring_size);
 
 	/* IPA REO_DEST Ring - HAL_SRNG_REO2SW4 */
-	hal_srng = soc->reo_dest_ring[IPA_REO_DEST_RING_IDX].hal_srng;
-	hal_get_srng_params(hal_soc, hal_srng_to_hal_ring_handle(hal_srng),
+	hal_srng = (struct hal_srng *)
+			soc->reo_dest_ring[IPA_REO_DEST_RING_IDX].hal_srng;
+	hal_get_srng_params(hal_soc_to_hal_soc_handle(hal_soc),
+			    hal_srng_to_hal_ring_handle(hal_srng),
 			    &srng_params);
 
 	soc->ipa_uc_rx_rsc.ipa_reo_ring_base_paddr =
@@ -486,8 +493,10 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		srng_params.num_entries,
 		soc->ipa_uc_rx_rsc.ipa_reo_ring_size);
 
-	hal_srng = pdev->rx_refill_buf_ring2.hal_srng;
-	hal_get_srng_params(hal_soc, hal_srng_to_hal_ring_handle(hal_srng),
+	hal_srng = (struct hal_srng *)
+			pdev->rx_refill_buf_ring2.hal_srng;
+	hal_get_srng_params(hal_soc_to_hal_soc_handle(hal_soc),
+			    hal_srng_to_hal_ring_handle(hal_srng),
 			    &srng_params);
 	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_paddr =
 		srng_params.ring_base_paddr;
@@ -495,7 +504,7 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		srng_params.ring_base_vaddr;
 	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_size =
 		(srng_params.num_entries * srng_params.entry_size) << 2;
-	hp_addr = hal_srng_get_hp_addr(hal_soc,
+	hp_addr = hal_srng_get_hp_addr(hal_soc_to_hal_soc_handle(hal_soc),
 				       hal_srng_to_hal_ring_handle(hal_srng));
 	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr =
 		qdf_mem_paddr_from_dmaaddr(soc->osdev, hp_addr);
@@ -603,9 +612,9 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_pdev *ppdev)
 	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_ipa_resources *ipa_res = &pdev->ipa_resource;
-	struct hal_srng *wbm_srng =
+	struct hal_srng *wbm_srng = (struct hal_srng *)
 			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
-	struct hal_srng *reo_srng =
+	struct hal_srng *reo_srng = (struct hal_srng *)
 			soc->reo_dest_ring[IPA_REO_DEST_RING_IDX].hal_srng;
 	uint32_t tx_comp_doorbell_dmaaddr;
 	uint32_t rx_ready_doorbell_dmaaddr;
