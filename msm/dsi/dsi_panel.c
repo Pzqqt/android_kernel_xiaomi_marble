@@ -3854,7 +3854,7 @@ static int dsi_panel_roi_prepare_dcs_cmds(struct dsi_panel_cmd_set *set,
 	int rc = 0;
 
 	/* DTYPE_DCS_LWRITE */
-	static char *caset, *paset;
+	char *caset, *paset;
 
 	set->cmds = NULL;
 
