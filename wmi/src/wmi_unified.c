@@ -2814,16 +2814,9 @@ static QDF_STATUS wmi_connect_pdev_htc_service(struct wmi_soc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wmi_unified_connect_htc_service() -  WMI API to get connect to HTC service
- *
- * @wmi_handle: handle to WMI.
- *
- * @Return: status.
- */
 QDF_STATUS
 wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
-				void *htc_handle)
+				HTC_HANDLE htc_handle)
 {
 	uint32_t i;
 	uint8_t wmi_ep_count;

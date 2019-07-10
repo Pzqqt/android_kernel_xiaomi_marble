@@ -111,7 +111,6 @@ struct host_fw_ver {
 
 struct common_dbglog_handle;
 struct common_hif_handle;
-struct common_htc_handle;
 struct common_accelerator_handle;
 
 /**
@@ -125,7 +124,7 @@ struct common_accelerator_handle;
  */
 struct comp_hdls {
 	struct common_hif_handle *hif_hdl;
-	struct common_htc_handle *htc_hdl;
+	HTC_HANDLE htc_hdl;
 	struct wmi_unified *wmi_hdl;
 	struct common_accelerator_handle *accelerator_hdl;
 	struct common_dbglog_handle *dbglog_hdl;
@@ -910,9 +909,9 @@ static inline struct common_hif_handle *target_psoc_get_hif_hdl
  *
  * Return: void
  */
-static inline void target_psoc_set_htc_hdl
-		(struct target_psoc_info *psoc_info,
-		 struct common_htc_handle *htc_hdl)
+static inline void target_psoc_set_htc_hdl(
+		struct target_psoc_info *psoc_info,
+		HTC_HANDLE htc_hdl)
 {
 	if (!psoc_info)
 		return;
@@ -928,7 +927,7 @@ static inline void target_psoc_set_htc_hdl
  *
  * Return: htc_hdl
  */
-static inline struct common_htc_handle *target_psoc_get_htc_hdl
+static inline HTC_HANDLE target_psoc_get_htc_hdl
 		(struct target_psoc_info *psoc_info)
 {
 	if (!psoc_info)

@@ -82,9 +82,10 @@ void *dp_soc_init_wifi3(void *soc, void *ctrl_psoc, void *hif_handle,
 }
 #endif /* QCA_WIFI_QCA8074 */
 
-static inline ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
-		void *hif_handle, void *psoc, void *htc_handle,
-		qdf_device_t qdf_dev, struct ol_if_ops *dp_ol_if_ops)
+static inline ol_txrx_soc_handle cdp_soc_attach(
+		u_int16_t devid, void *hif_handle, void *psoc,
+		HTC_HANDLE htc_handle, qdf_device_t qdf_dev,
+		struct ol_if_ops *dp_ol_if_ops)
 {
 	switch (devid) {
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */

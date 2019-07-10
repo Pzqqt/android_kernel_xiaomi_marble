@@ -2029,7 +2029,7 @@ struct wmi_unified {
 	uint32_t *event_id;
 	wmi_unified_event_handler *event_handler;
 	enum wmi_rx_exec_ctx *ctx;
-	void *htc_handle;
+	HTC_HANDLE htc_handle;
 	qdf_spinlock_t eventq_lock;
 	qdf_nbuf_queue_t event_queue;
 	qdf_work_t rx_event_work;
@@ -2081,7 +2081,7 @@ struct wmi_soc {
 	qdf_atomic_t num_pdevs;
 	enum wmi_target_type target_type;
 	bool is_async_ep;
-	void *htc_handle;
+	HTC_HANDLE htc_handle;
 	uint32_t event_id[WMI_UNIFIED_MAX_EVENT];
 	wmi_unified_event_handler event_handler[WMI_UNIFIED_MAX_EVENT];
 	uint32_t max_event_idx;

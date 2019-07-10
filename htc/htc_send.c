@@ -71,7 +71,7 @@ void htc_dump_counter_info(HTC_HANDLE HTCHandle)
 			 __func__, target->ce_send_cnt, target->TX_comp_cnt));
 }
 
-int htc_get_tx_queue_depth(HTC_HANDLE *htc_handle, HTC_ENDPOINT_ID endpoint_id)
+int htc_get_tx_queue_depth(HTC_HANDLE htc_handle, HTC_ENDPOINT_ID endpoint_id)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
 	HTC_ENDPOINT *endpoint = &target->endpoint[endpoint_id];
@@ -2263,7 +2263,7 @@ void htc_process_credit_rpt(HTC_TARGET *target, HTC_CREDIT_REPORT *pRpt,
 			htc_try_send(target, pEndpoint, NULL);
 #else
 			if (pEndpoint->service_id == HTT_DATA_MSG_SVC)
-				htc_send_data_pkt(target, NULL, 0);
+				htc_send_data_pkt((HTC_HANDLE)target, NULL, 0);
 			else
 				htc_try_send(target, pEndpoint, NULL);
 #endif

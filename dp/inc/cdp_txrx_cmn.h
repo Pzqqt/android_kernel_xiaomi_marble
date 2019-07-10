@@ -1243,7 +1243,7 @@ cdp_soc_detach(ol_txrx_soc_handle soc)
  */
 static inline ol_txrx_soc_handle
 cdp_soc_init(ol_txrx_soc_handle soc, u_int16_t devid, void *hif_handle,
-	     void *psoc, void *htc_handle, qdf_device_t qdf_dev,
+	     void *psoc, HTC_HANDLE htc_handle, qdf_device_t qdf_dev,
 	     struct ol_if_ops *dp_ol_if_ops)
 {
 	if (!soc || !soc->ops) {

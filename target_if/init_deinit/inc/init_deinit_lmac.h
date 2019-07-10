@@ -137,7 +137,7 @@ wmi_unified_t lmac_get_wmi_unified_hdl(struct wlan_objmgr_psoc *psoc);
  *
  * Return: htc handler
  */
-struct common_htc_handle *lmac_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
+HTC_HANDLE lmac_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
  * lmac_set_htc_hdl() - set htc handle
@@ -149,7 +149,7 @@ struct common_htc_handle *lmac_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
  * Return: void
  */
 void lmac_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
-		struct common_htc_handle *htc_hdl);
+		      HTC_HANDLE htc_hdl);
 
 /**
  * lmac_get_hif_hdl() - get hif handle

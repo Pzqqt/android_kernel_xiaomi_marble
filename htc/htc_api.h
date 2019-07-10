@@ -38,7 +38,13 @@ extern "C" {
 
 #define HTC_HTT_TRANSFER_HDRSIZE 24
 
-typedef void *HTC_HANDLE;
+/*
+ * NOTE WELL: struct opaque_htc_handle is not defined anywhere. This
+ * reference is used to help ensure that a HTC_HANDLE is never used
+ * where a different handle type is expected
+ */
+struct opaque_htc_handle;
+typedef struct opaque_htc_handle *HTC_HANDLE;
 
 typedef uint16_t HTC_SERVICE_ID;
 
@@ -691,7 +697,7 @@ struct ol_ath_htc_stats *ieee80211_ioctl_get_htc_stats(HTC_HANDLE
  *
  * Return: htc_handle tx queue depth
  */
-int htc_get_tx_queue_depth(HTC_HANDLE *htc_handle, HTC_ENDPOINT_ID endpoint_id);
+int htc_get_tx_queue_depth(HTC_HANDLE htc_handle, HTC_ENDPOINT_ID endpoint_id);
 
 #ifdef WLAN_FEATURE_FASTPATH
 void htc_ctrl_msg_cmpl(HTC_HANDLE htc_pdev, HTC_ENDPOINT_ID htc_ep_id);

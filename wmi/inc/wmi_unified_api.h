@@ -337,14 +337,15 @@ wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 					 wmi_conv_event_id event_id);
 
 /**
- * request wmi to connet its htc service.
- *  @param wmi_handle      : handle to WMI.
- *  @param htc_handle      : handle to HTC.
- *  @return void
+ * wmi_unified_connect_htc_service() -  WMI API to get connect to HTC service
+ * @wmi_handle: handle to WMI.
+ * @htc_handle: handle to HTC.
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAULT for failure
  */
 QDF_STATUS
 wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
-				void *htc_handle);
+				HTC_HANDLE htc_handle);
 
 /*
  * WMI API to verify the host has enough credits to suspend

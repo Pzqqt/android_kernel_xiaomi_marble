@@ -212,7 +212,7 @@ wmi_unified_t lmac_get_wmi_unified_hdl(struct wlan_objmgr_psoc *psoc)
 }
 qdf_export_symbol(lmac_get_wmi_unified_hdl);
 
-struct common_htc_handle *lmac_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
+HTC_HANDLE lmac_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -232,7 +232,7 @@ struct common_htc_handle *lmac_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
 qdf_export_symbol(lmac_get_htc_hdl);
 
 void lmac_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
-		struct common_htc_handle *htc_hdl)
+		      HTC_HANDLE htc_hdl)
 {
 	struct target_psoc_info *tgt_hdl;
 
