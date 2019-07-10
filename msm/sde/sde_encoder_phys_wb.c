@@ -368,6 +368,7 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 	/* cache framebuffer for cleanup in writeback done */
 	wb_enc->wb_fb = fb;
 	wb_enc->wb_aspace = aspace;
+	drm_framebuffer_get(fb);
 
 	format = msm_framebuffer_format(fb);
 	if (!format) {
@@ -1256,6 +1257,7 @@ static int _sde_encoder_phys_wb_wait_for_commit_done(
 	/* cleanup writeback framebuffer */
 	if (wb_enc->wb_fb && wb_enc->wb_aspace) {
 		msm_framebuffer_cleanup(wb_enc->wb_fb, wb_enc->wb_aspace);
+		drm_framebuffer_put(wb_enc->wb_fb);
 		wb_enc->wb_fb = NULL;
 		wb_enc->wb_aspace = NULL;
 	}
@@ -1274,6 +1276,7 @@ skip_wait:
 	/* cleanup previous buffer if pending */
 	if (wb_enc->cwb_old_fb && wb_enc->cwb_old_aspace) {
 		msm_framebuffer_cleanup(wb_enc->cwb_old_fb, wb_enc->cwb_old_aspace);
+		drm_framebuffer_put(wb_enc->cwb_old_fb);
 		wb_enc->cwb_old_fb = NULL;
 		wb_enc->cwb_old_aspace = NULL;
 	}
