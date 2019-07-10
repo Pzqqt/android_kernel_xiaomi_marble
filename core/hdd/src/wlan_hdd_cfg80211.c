@@ -15666,23 +15666,14 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 }
 
 void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
-				  tSirMacAddr bssid)
+				  tSirMacAddr bssid, uint8_t *ssid,
+				  uint8_t ssid_len)
 {
 	struct net_device *dev = adapter->dev;
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
 	struct wiphy *wiphy = wdev->wiphy;
-	struct cfg80211_bss *bss = NULL;
 
-	bss = wlan_cfg80211_get_bss(wiphy, NULL, bssid, NULL, 0);
-	if (!bss) {
-		hdd_err("BSS not present");
-	} else {
-		hdd_debug("cfg80211_unlink_bss called for BSSID "
-			QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(bssid));
-		cfg80211_unlink_bss(wiphy, bss);
-		/* cfg80211_get_bss get bss with ref count so release it */
-		cfg80211_put_bss(wiphy, bss);
-	}
+	__wlan_cfg80211_unlink_bss_list(wiphy, bssid, ssid, ssid_len);
 }
 
 #ifdef WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS
@@ -15844,11 +15835,12 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 	for (i = 0; i < WLAN_MGMT_TXRX_HOST_MAX_ANTENNA; i++)
 		bss_data.per_chain_rssi[i] = WLAN_INVALID_PER_CHAIN_RSSI;
 
-	hdd_debug("BSSID: " QDF_MAC_ADDR_STR " Channel:%d RSSI:%d TSF %u seq %d",
+	hdd_debug("BSSID: " QDF_MAC_ADDR_STR " Channel:%d RSSI:%d TSF %u seq %d is_prob_resp %d",
 		  QDF_MAC_ADDR_ARRAY(bss_data.mgmt->bssid),
 		  bss_data.chan->center_freq, (int)(bss_data.rssi / 100),
 		  bss_desc->timeStamp[0], ((bss_desc->seq_ctrl.seqNumHi <<
-		  HIGH_SEQ_NUM_OFFSET) | bss_desc->seq_ctrl.seqNumLo));
+		  HIGH_SEQ_NUM_OFFSET) | bss_desc->seq_ctrl.seqNumLo),
+		  bss_desc->fProbeRsp);
 
 	bss_status = wlan_cfg80211_inform_bss_frame_data(wiphy, &bss_data);
 	hdd_ctx->beacon_probe_rsp_cnt_per_scan++;

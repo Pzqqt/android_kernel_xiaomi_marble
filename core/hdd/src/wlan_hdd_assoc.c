@@ -1890,7 +1890,9 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		    eCSR_ROAM_RESULT_DISASSOC_IND == roam_result ||
 		    eCSR_ROAM_LOSTLINK == roam_status) {
 			wlan_hdd_cfg80211_unlink_bss(adapter,
-				sta_ctx->conn_info.bssid.bytes);
+				sta_ctx->conn_info.bssid.bytes,
+				sta_ctx->conn_info.ssid.SSID.ssId,
+				sta_ctx->conn_info.ssid.SSID.length);
 			sme_remove_bssid_from_scan_list(mac_handle,
 			sta_ctx->conn_info.bssid.bytes);
 		}
@@ -3389,10 +3391,24 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					roam_info->status_code) ||
 		   (eSIR_SME_ASSOC_TIMEOUT_RESULT_CODE ==
 					roam_info->status_code)))) {
+			uint8_t *ssid;
+			uint8_t ssid_len;
+
+			if (roam_info && roam_info->pProfile &&
+			    roam_info->pProfile->SSIDs.SSIDList) {
+				ssid_len =
+					roam_info->pProfile->SSIDs.
+						SSIDList[0].SSID.length;
+				ssid = roam_info->pProfile->SSIDs.
+						SSIDList[0].SSID.ssId;
+			} else {
+				ssid_len = sta_ctx->conn_info.ssid.SSID.length;
+				ssid = sta_ctx->conn_info.ssid.SSID.ssId;
+			}
 			wlan_hdd_cfg80211_unlink_bss(adapter,
 				roam_info ?
 				roam_info->bssid.bytes :
-				sta_ctx->requested_bssid.bytes);
+				sta_ctx->requested_bssid.bytes, ssid, ssid_len);
 			sme_remove_bssid_from_scan_list(mac_handle,
 				roam_info ?
 				roam_info->bssid.bytes :
