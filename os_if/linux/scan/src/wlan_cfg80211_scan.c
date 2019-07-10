@@ -1977,10 +1977,47 @@ struct cfg80211_bss *wlan_cfg80211_get_bss(struct wiphy *wiphy,
 }
 #endif
 
+void __wlan_cfg80211_unlink_bss_list(struct wiphy *wiphy, uint8_t *bssid,
+				     uint8_t *ssid, uint8_t ssid_len)
+{
+	struct cfg80211_bss *bss = NULL;
+
+	bss = wlan_cfg80211_get_bss(wiphy, NULL, bssid,
+				    ssid, ssid_len);
+	if (!bss) {
+		osif_info("BSS %pM not found", bssid);
+	} else {
+		osif_debug("unlink entry for ssid:%.*s and BSSID %pM",
+			   ssid_len, ssid, bssid);
+		cfg80211_unlink_bss(wiphy, bss);
+		wlan_cfg80211_put_bss(wiphy, bss);
+	}
+
+	/*
+	 * Kernel creates separate entries into it's bss list for probe resp
+	 * and beacon for hidden AP. Both have separate ref count and thus
+	 * deleting one will not delete other entry.
+	 * If beacon entry of the hidden AP is not deleted and AP switch to
+	 * broadcasting SSID from Hiding SSID, kernel will reject the beacon
+	 * entry. So unlink the hidden beacon entry (if present) as well from
+	 * kernel, to avoid such issue.
+	 */
+	bss = wlan_cfg80211_get_bss(wiphy, NULL, bssid, NULL, 0);
+	if (!bss) {
+		osif_debug("Hidden bss not found for Ssid:%.*s BSSID: %pM sid_len %d",
+			   ssid_len, ssid, bssid, ssid_len);
+	} else {
+		osif_debug("unlink entry for Hidden ssid:%.*s and BSSID %pM",
+			   ssid_len, ssid, bssid);
+
+		cfg80211_unlink_bss(wiphy, bss);
+		/* cfg80211_get_bss get bss with ref count so release it */
+		wlan_cfg80211_put_bss(wiphy, bss);
+	}
+}
 void wlan_cfg80211_unlink_bss_list(struct wlan_objmgr_pdev *pdev,
 				   struct scan_cache_entry *scan_entry)
 {
-	struct cfg80211_bss *bss = NULL;
 	struct pdev_osif_priv *pdev_ospriv = wlan_pdev_get_ospriv(pdev);
 	struct wiphy *wiphy;
 
@@ -1990,17 +2027,10 @@ void wlan_cfg80211_unlink_bss_list(struct wlan_objmgr_pdev *pdev,
 	}
 
 	wiphy = pdev_ospriv->wiphy;
-	bss = wlan_cfg80211_get_bss(wiphy, NULL, scan_entry->bssid.bytes,
-				    scan_entry->ssid.ssid,
-				    scan_entry->ssid.length);
-	if (!bss) {
-		osif_err("BSS %pM not found", scan_entry->bssid.bytes);
-	} else {
-		osif_debug("cfg80211_unlink_bss called for BSSID %pM",
-			   scan_entry->bssid.bytes);
-		cfg80211_unlink_bss(wiphy, bss);
-		wlan_cfg80211_put_bss(wiphy, bss);
-	}
+
+	__wlan_cfg80211_unlink_bss_list(wiphy, scan_entry->bssid.bytes,
+					scan_entry->ssid.ssid,
+					scan_entry->ssid.length);
 }
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0))

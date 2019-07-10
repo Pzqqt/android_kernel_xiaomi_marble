@@ -266,6 +266,18 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	struct scan_cache_entry *scan_params);
 
 /**
+ * __wlan_cfg80211_unlink_bss_list() - flush bss from the kernel cache
+ * @wiphy: wiphy
+ * @bssid: bssid of the BSS to find
+ * @ssid: ssid of the BSS to find
+ * @ssid_len: ssid len of of the BSS to find
+ *
+ * Return: None
+ */
+void __wlan_cfg80211_unlink_bss_list(struct wiphy *wiphy, uint8_t *bssid,
+				     uint8_t *ssid, uint8_t ssid_len);
+
+/**
  * wlan_cfg80211_get_bss() - Get the bss entry matching the chan, bssid and ssid
  * @wiphy: wiphy
  * @channel: channel of the BSS to find
