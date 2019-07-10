@@ -3760,7 +3760,7 @@ static const struct snd_kcontrol_new channel_mixer_controls[] = {
 			msm_pcm_put_channel_rule_index),
 
 	SOC_SINGLE_EXT("MultiMedia1 Channels", SND_SOC_NOPM,
-			MSM_FRONTEND_DAI_MULTIMEDIA1, 10, 0,
+			MSM_FRONTEND_DAI_MULTIMEDIA1, 14, 0,
 			msm_pcm_get_out_chs,
 			msm_pcm_put_out_chs),
 	SOC_SINGLE_EXT("MultiMedia2 Channels", SND_SOC_NOPM,
@@ -3918,6 +3918,46 @@ static const struct snd_kcontrol_new channel_mixer_controls[] = {
 	.put = msm_pcm_channel_weight_put,
 	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
 		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA1, .rshift = 9,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia1 Output Channel11",
+	.info = msm_pcm_channel_weight_info,
+	.get = msm_pcm_channel_weight_get,
+	.put = msm_pcm_channel_weight_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA1, .rshift = 10,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia1 Output Channel12",
+	.info = msm_pcm_channel_weight_info,
+	.get = msm_pcm_channel_weight_get,
+	.put = msm_pcm_channel_weight_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA1, .rshift = 11,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia1 Output Channel13",
+	.info = msm_pcm_channel_weight_info,
+	.get = msm_pcm_channel_weight_get,
+	.put = msm_pcm_channel_weight_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA1, .rshift = 12,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia1 Output Channel14",
+	.info = msm_pcm_channel_weight_info,
+	.get = msm_pcm_channel_weight_get,
+	.put = msm_pcm_channel_weight_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA1, .rshift = 13,}
 	},
 	{
 	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
