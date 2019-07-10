@@ -12577,18 +12577,18 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 		}
 		sme_debug("SME pre-auth state timeout");
 
+		status = sme_acquire_global_lock(&mac->sme);
 		if (csr_is_conn_state_connected_infra(mac, session_id)) {
 			csr_roam_link_up(mac,
 					 pSession->connectedProfile.bssid);
-			status = sme_acquire_global_lock(&mac->sme);
 			if (QDF_IS_STATUS_SUCCESS(status)) {
 				csr_roam_disconnect(mac, session_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED);
-				sme_release_global_lock(&mac->sme);
 			}
 		} else {
 			sme_err("session not found");
 		}
+		sme_release_global_lock(&mac->sme);
 	} else {
 		spin_unlock(&mac->roam.roam_state_lock);
 	}
