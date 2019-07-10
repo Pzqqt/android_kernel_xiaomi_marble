@@ -1937,11 +1937,11 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	qdf_spinlock_create(&spectral->noise_pwr_reports_lock);
 	target_if_spectral_clear_stats(spectral);
 
-	if (target_type == TARGET_TYPE_QCA8074V2 ||
-	    target_type == TARGET_TYPE_QCA6018)
+	if (target_type == TARGET_TYPE_QCA8074V2)
 		spectral->fftbin_size_war =
 			SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE;
-	else if (target_type == TARGET_TYPE_QCA8074)
+	else if (target_type == TARGET_TYPE_QCA8074 ||
+		 target_type == TARGET_TYPE_QCA6018)
 		spectral->fftbin_size_war =
 			SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE;
 	else
