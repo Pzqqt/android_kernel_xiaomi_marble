@@ -90,6 +90,16 @@ static inline int hal_force_wake_release(struct hal_soc *soc)
 }
 #endif
 
+#ifdef PCIE_REG_WINDOW_LOCAL_NO_CACHE
+static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
+{
+	uint32_t window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
+
+	qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_REG_ADDRESS,
+		      WINDOW_ENABLE_BIT | window);
+	hal_soc->register_window = window;
+}
+#else
 static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
 {
 	uint32_t window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
@@ -99,6 +109,7 @@ static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
 		hal_soc->register_window = window;
 	}
 }
+#endif
 
 /**
  * note1: WINDOW_RANGE_MASK = (1 << WINDOW_SHIFT) -1
