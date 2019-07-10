@@ -40,6 +40,9 @@
  *       <enum 1 bw_40_MHz>
  *       <enum 2 bw_80_MHz>
  *       <enum 3 bw_160_MHz>
+ * @ofdma_info_valid: RU info valid
+ * @ofdma_ru_start_index: RU index number(0-73)
+ * @ofdma_ru_width: size of RU in units of 1(26tone)RU
  * @nss: NSS 1,2, ...8
  * @mcs: MCS index
  * @preamble: preamble
