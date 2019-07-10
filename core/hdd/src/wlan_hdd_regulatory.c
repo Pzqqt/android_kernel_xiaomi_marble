@@ -756,7 +756,6 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	enum band_info current_band;
 	enum band_info connected_band;
 	long lrc;
-	uint8_t band_capability;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -776,24 +775,6 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	}
 
 	hdd_debug("change band to %u", band);
-
-	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
-	if (QDF_IS_STATUS_ERROR(status))
-		return -EIO;
-
-	if ((band == BAND_2G && band_capability == 2) ||
-	    (band == BAND_5G && band_capability == 1) ||
-	    (band == BAND_ALL && band_capability != 0)) {
-		hdd_err("band value %u violate INI settings %u",
-			  band, band_capability);
-		return -EIO;
-	}
-
-	if (band == BAND_ALL) {
-		hdd_debug("Auto band received. Setting band same as ini value %d",
-			band_capability);
-		band = band_capability;
-	}
 
 	if (ucfg_reg_get_curr_band(hdd_ctx->pdev, &current_band) !=
 	    QDF_STATUS_SUCCESS) {
