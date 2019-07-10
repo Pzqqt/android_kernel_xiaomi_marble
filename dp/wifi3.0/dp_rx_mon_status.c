@@ -686,6 +686,99 @@ dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
 	}
 }
 
+#if defined(HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_M)
+static inline void
+dp_rx_ul_ofdma_ru_size_to_width(
+	uint32_t ru_size,
+	uint32_t *ru_width)
+{
+	uint32_t width;
+
+	width = 0;
+	switch (ru_size) {
+	case HTT_UL_OFDMA_V0_RU_SIZE_RU_26:
+		width = 1;
+		break;
+	case HTT_UL_OFDMA_V0_RU_SIZE_RU_52:
+		width = 2;
+		break;
+	case HTT_UL_OFDMA_V0_RU_SIZE_RU_106:
+		width = 4;
+		break;
+	case HTT_UL_OFDMA_V0_RU_SIZE_RU_242:
+		width = 9;
+		break;
+	case HTT_UL_OFDMA_V0_RU_SIZE_RU_484:
+		width = 18;
+		break;
+	case HTT_UL_OFDMA_V0_RU_SIZE_RU_996:
+		width = 37;
+		break;
+	case HTT_UL_OFDMA_V0_RU_SIZE_RU_996x2:
+		width = 74;
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "RU size to width convert err");
+		break;
+	}
+	*ru_width = width;
+}
+
+static inline void
+dp_rx_mon_handle_ofdma_info(struct hal_rx_ppdu_info *ppdu_info)
+{
+	struct mon_rx_user_status *mon_rx_user_status;
+	uint32_t num_users;
+	uint32_t i;
+	uint32_t ul_ofdma_user_v0_word0;
+	uint32_t ul_ofdma_user_v0_word1;
+	uint32_t ru_width;
+
+	if (ppdu_info->rx_status.reception_type != HAL_RX_TYPE_MU_OFDMA)
+		return;
+
+	num_users = ppdu_info->com_info.num_users;
+	if (num_users > HAL_MAX_UL_MU_USERS)
+		num_users = HAL_MAX_UL_MU_USERS;
+	for (i = 0; i < num_users; i++) {
+		mon_rx_user_status = &ppdu_info->rx_user_status[i];
+		ul_ofdma_user_v0_word0 =
+			mon_rx_user_status->ul_ofdma_user_v0_word0;
+		ul_ofdma_user_v0_word1 =
+			mon_rx_user_status->ul_ofdma_user_v0_word1;
+
+		if (HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_GET(
+			ul_ofdma_user_v0_word0) &&
+			!HTT_UL_OFDMA_USER_INFO_V0_W0_VER_GET(
+			ul_ofdma_user_v0_word0)) {
+			mon_rx_user_status->mcs =
+				HTT_UL_OFDMA_USER_INFO_V0_W1_MCS_GET(
+				ul_ofdma_user_v0_word1);
+			mon_rx_user_status->nss =
+				HTT_UL_OFDMA_USER_INFO_V0_W1_NSS_GET(
+				ul_ofdma_user_v0_word1);
+
+			mon_rx_user_status->ofdma_info_valid = 1;
+			mon_rx_user_status->dl_ofdma_ru_start_index =
+				HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START_GET(
+				ul_ofdma_user_v0_word1);
+
+			dp_rx_ul_ofdma_ru_size_to_width(
+				HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE_GET(
+				ul_ofdma_user_v0_word1),
+				&ru_width);
+			mon_rx_user_status->dl_ofdma_ru_width = ru_width;
+		}
+	}
+}
+#else
+static inline void
+dp_rx_mon_handle_ofdma_info(struct hal_rx_ppdu_info *ppdu_info)
+{
+}
+#endif
+
 /**
 * dp_rx_mon_status_process_tlv() - Process status TLV in status
 *	buffer on Rx status Queue posted by status SRNG processing.
@@ -796,6 +889,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			dp_rx_mon_deliver_non_std(soc, mac_id);
 		} else if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
 			rx_mon_stats->status_ppdu_done++;
+			dp_rx_mon_handle_ofdma_info(ppdu_info);
 			if (pdev->enhanced_stats_en ||
 			    pdev->mcopy_mode || pdev->neighbour_peers_added)
 				dp_rx_handle_ppdu_stats(soc, pdev, ppdu_info);

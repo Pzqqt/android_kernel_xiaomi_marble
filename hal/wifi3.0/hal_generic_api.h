@@ -245,22 +245,23 @@ hal_rx_handle_other_tlvs(uint32_t tlv_tag, void *rx_tlv,
 }
 #endif /* QCA_WIFI_QCA6290_11AX_MU_UL && QCA_WIFI_QCA6290_11AX */
 
-#if defined(RX_PPDU_END_USER_STATS_1_OFDMA_INFO_VALID_OFFSET)
+#if defined(RX_PPDU_END_USER_STATS_1_OFDMA_INFO_VALID_OFFSET) && \
+defined(RX_PPDU_END_USER_STATS_22_SW_RESPONSE_REFERENCE_PTR_EXT_OFFSET)
+
 static inline void
 hal_rx_handle_ofdma_info(
 	void *rx_tlv,
 	struct mon_rx_user_status *mon_rx_user_status)
 {
-		mon_rx_user_status->ofdma_info_valid =
-			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
-				   OFDMA_INFO_VALID);
-		mon_rx_user_status->dl_ofdma_ru_start_index =
-			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
-				   DL_OFDMA_RU_START_INDEX);
-		mon_rx_user_status->dl_ofdma_ru_width =
-			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_2,
-				   DL_OFDMA_RU_WIDTH);
+	mon_rx_user_status->ul_ofdma_user_v0_word0 =
+		HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_11,
+			   SW_RESPONSE_REFERENCE_PTR);
+
+	mon_rx_user_status->ul_ofdma_user_v0_word1 =
+		HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_22,
+			   SW_RESPONSE_REFERENCE_PTR_EXT);
 }
+
 #else
 static inline void
 hal_rx_handle_ofdma_info(void *rx_tlv,
@@ -474,14 +475,9 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			mon_rx_user_status =
 				&ppdu_info->rx_user_status[user_id];
 
-			mon_rx_user_status->mcs =
-				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
-					   MCS);
-			mon_rx_user_status->nss =
-				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
-					   NSS);
-
 			hal_rx_handle_ofdma_info(rx_tlv, mon_rx_user_status);
+
+			ppdu_info->com_info.num_users++;
 		}
 
 		ppdu_info->com_info.mpdu_cnt_fcs_ok =
@@ -1176,11 +1172,15 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 					    RECEPTION_TYPE);
 		switch (reception_type) {
 		case QDF_RECEPTION_TYPE_ULOFMDA:
+			ppdu_info->rx_status.reception_type =
+				HAL_RX_TYPE_MU_OFDMA;
 			ppdu_info->rx_status.ulofdma_flag = 1;
 			ppdu_info->rx_status.he_data1 =
 				QDF_MON_STATUS_HE_TRIG_FORMAT_TYPE;
 			break;
 		case QDF_RECEPTION_TYPE_ULMIMO:
+			ppdu_info->rx_status.reception_type =
+				HAL_RX_TYPE_MU_MIMO;
 			ppdu_info->rx_status.he_data1 =
 				QDF_MON_STATUS_HE_MU_FORMAT_TYPE;
 			break;

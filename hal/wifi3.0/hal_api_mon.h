@@ -424,6 +424,7 @@ struct hal_rx_ppdu_common_info {
 	uint64_t mpdu_fcs_ok_bitmap;
 	uint32_t last_ppdu_id;
 	uint32_t mpdu_cnt;
+	uint8_t num_users;
 };
 
 /**
