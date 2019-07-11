@@ -200,7 +200,6 @@ static uint32_t dsc_test_driver_trans_blocks(void)
 	}
 
 	/* test */
-
 	/* a driver in transition should cause ... */
 	action_expect(driver, trans, QDF_STATUS_SUCCESS, errors);
 
@@ -210,13 +209,13 @@ static uint32_t dsc_test_driver_trans_blocks(void)
 
 	/* ... children psoc trans/ops to fail */
 	dsc_for_each_driver_psoc(driver, psoc) {
-		action_expect(psoc, trans, QDF_STATUS_E_AGAIN, errors);
-		action_expect(psoc, op, QDF_STATUS_E_AGAIN, errors);
+		action_expect(psoc, trans, QDF_STATUS_E_INVAL, errors);
+		action_expect(psoc, op, QDF_STATUS_E_INVAL, errors);
 
 		/* ... grandchildren vdev trans/ops to fail */
 		dsc_for_each_psoc_vdev(psoc, vdev) {
-			action_expect(vdev, trans, QDF_STATUS_E_AGAIN, errors);
-			action_expect(vdev, op, QDF_STATUS_E_AGAIN, errors);
+			action_expect(vdev, trans, QDF_STATUS_E_INVAL, errors);
+			action_expect(vdev, op, QDF_STATUS_E_INVAL, errors);
 		}
 	}
 
@@ -251,7 +250,6 @@ static uint32_t dsc_test_psoc_trans_blocks(void)
 	}
 
 	/* test */
-
 	/* a psoc in transition should cause ... */
 	psoc = nth_psoc(driver, 1);
 	action_expect(psoc, trans, QDF_STATUS_SUCCESS, errors);
