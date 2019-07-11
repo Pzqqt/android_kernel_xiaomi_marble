@@ -82,6 +82,7 @@ enum {
 	TX_MACRO_AIF_INVALID = 0,
 	TX_MACRO_AIF1_CAP,
 	TX_MACRO_AIF2_CAP,
+	TX_MACRO_AIF3_CAP,
 	TX_MACRO_MAX_DAIS
 };
 
@@ -869,6 +870,7 @@ static int tx_macro_get_channel_map(struct snd_soc_dai *dai,
 	switch (dai->id) {
 	case TX_MACRO_AIF1_CAP:
 	case TX_MACRO_AIF2_CAP:
+	case TX_MACRO_AIF3_CAP:
 		*tx_slot = tx_priv->active_ch_mask[dai->id];
 		*tx_num = tx_priv->active_ch_cnt[dai->id];
 		break;
@@ -904,6 +906,20 @@ static struct snd_soc_dai_driver tx_macro_dai[] = {
 		.id = TX_MACRO_AIF2_CAP,
 		.capture = {
 			.stream_name = "TX_AIF2 Capture",
+			.rates = TX_MACRO_RATES,
+			.formats = TX_MACRO_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 8,
+		},
+		.ops = &tx_macro_dai_ops,
+	},
+	{
+		.name = "tx_macro_tx3",
+		.id = TX_MACRO_AIF3_CAP,
+		.capture = {
+			.stream_name = "TX_AIF3 Capture",
 			.rates = TX_MACRO_RATES,
 			.formats = TX_MACRO_FORMATS,
 			.rate_max = 192000,
@@ -1064,6 +1080,25 @@ static const struct snd_kcontrol_new tx_aif2_cap_mixer[] = {
 			tx_macro_tx_mixer_get, tx_macro_tx_mixer_put),
 };
 
+static const struct snd_kcontrol_new tx_aif3_cap_mixer[] = {
+	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, TX_MACRO_DEC0, 1, 0,
+			tx_macro_tx_mixer_get, tx_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, TX_MACRO_DEC1, 1, 0,
+			tx_macro_tx_mixer_get, tx_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, TX_MACRO_DEC2, 1, 0,
+			tx_macro_tx_mixer_get, tx_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, TX_MACRO_DEC3, 1, 0,
+			tx_macro_tx_mixer_get, tx_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC4", SND_SOC_NOPM, TX_MACRO_DEC4, 1, 0,
+			tx_macro_tx_mixer_get, tx_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC5", SND_SOC_NOPM, TX_MACRO_DEC5, 1, 0,
+			tx_macro_tx_mixer_get, tx_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC6", SND_SOC_NOPM, TX_MACRO_DEC6, 1, 0,
+			tx_macro_tx_mixer_get, tx_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC7", SND_SOC_NOPM, TX_MACRO_DEC7, 1, 0,
+			tx_macro_tx_mixer_get, tx_macro_tx_mixer_put),
+};
+
 static const struct snd_soc_dapm_widget tx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT("TX_AIF1 CAP", "TX_AIF1 Capture", 0,
 		SND_SOC_NOPM, TX_MACRO_AIF1_CAP, 0),
@@ -1071,11 +1106,17 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT("TX_AIF2 CAP", "TX_AIF2 Capture", 0,
 		SND_SOC_NOPM, TX_MACRO_AIF2_CAP, 0),
 
+	SND_SOC_DAPM_AIF_OUT("TX_AIF3 CAP", "TX_AIF3 Capture", 0,
+		SND_SOC_NOPM, TX_MACRO_AIF3_CAP, 0),
+
 	SND_SOC_DAPM_MIXER("TX_AIF1_CAP Mixer", SND_SOC_NOPM, TX_MACRO_AIF1_CAP, 0,
 		tx_aif1_cap_mixer, ARRAY_SIZE(tx_aif1_cap_mixer)),
 
 	SND_SOC_DAPM_MIXER("TX_AIF2_CAP Mixer", SND_SOC_NOPM, TX_MACRO_AIF2_CAP, 0,
 		tx_aif2_cap_mixer, ARRAY_SIZE(tx_aif2_cap_mixer)),
+
+	SND_SOC_DAPM_MIXER("TX_AIF3_CAP Mixer", SND_SOC_NOPM, TX_MACRO_AIF3_CAP, 0,
+		tx_aif3_cap_mixer, ARRAY_SIZE(tx_aif3_cap_mixer)),
 
 
 	TX_MACRO_DAPM_MUX("TX DMIC MUX0", 0, tx_dmic0),
@@ -1207,9 +1248,11 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets[] = {
 static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX_AIF1 CAP", NULL, "TX_MCLK"},
 	{"TX_AIF2 CAP", NULL, "TX_MCLK"},
+	{"TX_AIF3 CAP", NULL, "TX_MCLK"},
 
 	{"TX_AIF1 CAP", NULL, "TX_AIF1_CAP Mixer"},
 	{"TX_AIF2 CAP", NULL, "TX_AIF2_CAP Mixer"},
+	{"TX_AIF3 CAP", NULL, "TX_AIF3_CAP Mixer"},
 
 	{"TX_AIF1_CAP Mixer", "DEC0", "TX DEC0 MUX"},
 	{"TX_AIF1_CAP Mixer", "DEC1", "TX DEC1 MUX"},
@@ -1228,6 +1271,15 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX_AIF2_CAP Mixer", "DEC5", "TX DEC5 MUX"},
 	{"TX_AIF2_CAP Mixer", "DEC6", "TX DEC6 MUX"},
 	{"TX_AIF2_CAP Mixer", "DEC7", "TX DEC7 MUX"},
+
+	{"TX_AIF3_CAP Mixer", "DEC0", "TX DEC0 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC1", "TX DEC1 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC2", "TX DEC2 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC3", "TX DEC3 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC4", "TX DEC4 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC5", "TX DEC5 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC6", "TX DEC6 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC7", "TX DEC7 MUX"},
 
 	{"TX DEC0 MUX", NULL, "TX_MCLK"},
 	{"TX DEC1 MUX", NULL, "TX_MCLK"},
@@ -1784,6 +1836,7 @@ static int tx_macro_init(struct snd_soc_component *component)
 
 	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF1 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF2 Capture");
+	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF3 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC0");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC1");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC2");
