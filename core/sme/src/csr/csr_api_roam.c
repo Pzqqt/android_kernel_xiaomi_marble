@@ -11574,10 +11574,11 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		return;
 	}
 	session->connectedProfile.operationChannel =
-			(uint8_t) pSwitchChnInd->newChannelId;
+		wlan_reg_freq_to_chan(mac_ctx->pdev, pSwitchChnInd->freq);
 	if (session->pConnectBssDesc) {
 		session->pConnectBssDesc->channelId =
-				(uint8_t) pSwitchChnInd->newChannelId;
+			wlan_reg_freq_to_chan(mac_ctx->pdev,
+					      pSwitchChnInd->freq);
 
 		ie_len = csr_get_ielen_from_bss_description(
 						session->pConnectBssDesc);
@@ -11587,7 +11588,8 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 				ie_len);
 		if (ds_params_ie)
 			ds_params_ie->channelNumber =
-				(uint8_t)pSwitchChnInd->newChannelId;
+				wlan_reg_freq_to_chan(mac_ctx->pdev,
+						      pSwitchChnInd->freq);
 
 		ht_info_ie = (tDot11fIEHTInfo *)wlan_get_ie_ptr_from_eid(
 				DOT11F_EID_HTINFO,
@@ -11595,7 +11597,8 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 				ie_len);
 		if (ht_info_ie) {
 			ht_info_ie->primaryChannel =
-				(uint8_t)pSwitchChnInd->newChannelId;
+				wlan_reg_freq_to_chan(mac_ctx->pdev,
+						      pSwitchChnInd->freq);
 			ht_info_ie->secondaryChannelOffset =
 				pSwitchChnInd->chan_params.sec_ch_offset;
 		}
@@ -11604,7 +11607,8 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (!roam_info)
 		return;
-	roam_info->chan_info.chan_id = pSwitchChnInd->newChannelId;
+	roam_info->chan_info.chan_id =
+		wlan_reg_freq_to_chan(mac_ctx->pdev, pSwitchChnInd->freq);
 	roam_info->chan_info.ch_width = pSwitchChnInd->chan_params.ch_width;
 	roam_info->chan_info.sec_ch_offset =
 				pSwitchChnInd->chan_params.sec_ch_offset;

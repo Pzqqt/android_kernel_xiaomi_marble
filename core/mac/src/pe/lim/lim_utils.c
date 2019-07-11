@@ -2203,8 +2203,10 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 
 	pSirSmeSwitchChInd->messageType = eWNI_SME_SWITCH_CHL_IND;
 	pSirSmeSwitchChInd->length = sizeof(*pSirSmeSwitchChInd);
-	pSirSmeSwitchChInd->newChannelId =
-		pe_session->gLimChannelSwitch.primaryChannel;
+	pSirSmeSwitchChInd->freq =
+		wlan_reg_chan_to_freq(mac->pdev,
+				      pe_session->
+				      gLimChannelSwitch.primaryChannel);
 	pSirSmeSwitchChInd->sessionId = pe_session->smeSessionId;
 	pSirSmeSwitchChInd->chan_params.ch_width =
 			pe_session->gLimChannelSwitch.ch_width;
@@ -2217,9 +2219,9 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 
 	pSirSmeSwitchChInd->status = status;
 	pe_debug(
-		"session: %d chan: %d width: %d sec offset: %d seg0: %d seg1: %d status %d",
+		"session: %d freq: %d width: %d sec offset: %d seg0: %d seg1: %d status %d",
 		pSirSmeSwitchChInd->sessionId,
-		pSirSmeSwitchChInd->newChannelId,
+		pSirSmeSwitchChInd->freq,
 		pSirSmeSwitchChInd->chan_params.ch_width,
 		pSirSmeSwitchChInd->chan_params.sec_ch_offset,
 		pSirSmeSwitchChInd->chan_params.center_freq_seg0,

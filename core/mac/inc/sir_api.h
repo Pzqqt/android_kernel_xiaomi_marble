@@ -1340,7 +1340,7 @@ struct switch_channel_ind {
 	uint16_t messageType;   /* eWNI_SME_SWITCH_CHL_IND */
 	uint16_t length;
 	uint8_t sessionId;
-	uint16_t newChannelId;
+	uint32_t freq;
 	struct ch_params chan_params;
 	struct qdf_mac_addr bssid;      /* BSSID */
 	QDF_STATUS status;
