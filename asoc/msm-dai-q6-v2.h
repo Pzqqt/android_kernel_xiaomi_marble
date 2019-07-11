@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2017, 2019 The Linux Foundation. All rights reserved.
  */
 
 #ifndef __MSM_DAI_Q6_PDATA_H__
@@ -34,6 +34,9 @@
 #define MSM_INT6_MI2S  13
 #define MSM_MI2S_MIN MSM_PRIM_MI2S
 #define MSM_MI2S_MAX MSM_INT6_MI2S
+
+#define MSM_DISPLAY_PORT	0
+#define MSM_DISPLAY_PORT1	1
 
 struct msm_dai_auxpcm_config {
 	u16 mode;

@@ -178,6 +178,7 @@ struct tdm_port {
 
 enum {
 	EXT_DISP_RX_IDX_DP = 0,
+	EXT_DISP_RX_IDX_DP1,
 	EXT_DISP_RX_IDX_MAX,
 };
 
@@ -210,6 +211,7 @@ static struct dev_config slim_tx_cfg[] = {
 /* Default configuration of external display BE */
 static struct dev_config ext_disp_rx_cfg[] = {
 	[EXT_DISP_RX_IDX_DP] =   {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[EXT_DISP_RX_IDX_DP1] =   {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 };
 
 static struct dev_config usb_rx_cfg = {
@@ -1135,6 +1137,9 @@ static int ext_disp_get_port_idx(struct snd_kcontrol *kcontrol)
 	if (strnstr(kcontrol->id.name, "Display Port RX",
 		    sizeof("Display Port RX"))) {
 		idx = EXT_DISP_RX_IDX_DP;
+	} else if (strnstr(kcontrol->id.name, "Display Port1 RX",
+		    sizeof("Display Port1 RX"))) {
+		idx = EXT_DISP_RX_IDX_DP1;
 	} else {
 		pr_err("%s: unsupported BE: %s\n",
 			__func__, kcontrol->id.name);
@@ -3658,6 +3663,13 @@ static const struct snd_kcontrol_new msm_common_snd_controls[] = {
 	SOC_ENUM_EXT("Display Port RX SampleRate", ext_disp_rx_sample_rate,
 			ext_disp_rx_sample_rate_get,
 			ext_disp_rx_sample_rate_put),
+	SOC_ENUM_EXT("Display Port1 RX Channels", ext_disp_rx_chs,
+			ext_disp_rx_ch_get, ext_disp_rx_ch_put),
+	SOC_ENUM_EXT("Display Port1 RX Bit Format", ext_disp_rx_format,
+			ext_disp_rx_format_get, ext_disp_rx_format_put),
+	SOC_ENUM_EXT("Display Port1 RX SampleRate", ext_disp_rx_sample_rate,
+			ext_disp_rx_sample_rate_get,
+			ext_disp_rx_sample_rate_put),
 	SOC_ENUM_EXT("BT SampleRate", bt_sample_rate,
 			msm_bt_sample_rate_get,
 			msm_bt_sample_rate_put),
@@ -3693,6 +3705,9 @@ static int msm_ext_disp_get_idx_from_beid(int32_t be_id)
 	switch (be_id) {
 	case MSM_BACKEND_DAI_DISPLAY_PORT_RX:
 		idx = EXT_DISP_RX_IDX_DP;
+		break;
+	case MSM_BACKEND_DAI_DISPLAY_PORT_RX_1:
+		idx = EXT_DISP_RX_IDX_DP1;
 		break;
 	default:
 		pr_err("%s: Incorrect ext_disp BE id %d\n", __func__, be_id);
@@ -3756,6 +3771,7 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		break;
 
 	case MSM_BACKEND_DAI_DISPLAY_PORT_RX:
+	case MSM_BACKEND_DAI_DISPLAY_PORT_RX_1:
 		idx = msm_ext_disp_get_idx_from_beid(dai_link->id);
 		if (idx < 0) {
 			pr_err("%s: Incorrect ext disp idx %d\n",
@@ -6106,7 +6122,7 @@ static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 	{
 		.name = LPASS_BE_DISPLAY_PORT,
 		.stream_name = "Display Port Playback",
-		.cpu_dai_name = "msm-dai-q6-dp.24608",
+		.cpu_dai_name = "msm-dai-q6-dp.0",
 		.platform_name = "msm-pcm-routing",
 		.codec_name = "msm-ext-disp-audio-codec-rx",
 		.codec_dai_name = "msm_dp_audio_codec_rx_dai",
@@ -6121,7 +6137,7 @@ static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 	{
 		.name = LPASS_BE_DISPLAY_PORT1,
 		.stream_name = "Display Port1 Playback",
-		.cpu_dai_name = "msm-dai-q6-dp.24608",
+		.cpu_dai_name = "msm-dai-q6-dp.1",
 		.platform_name = "msm-pcm-routing",
 		.codec_name = "msm-ext-disp-audio-codec-rx",
 		.codec_dai_name = "msm_dp_audio_codec_rx1_dai",
