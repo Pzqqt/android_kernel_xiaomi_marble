@@ -547,6 +547,12 @@ static void wcd938x_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 	regmap_update_bits(wcd938x->regmap,
 			   WCD938X_ANA_MBHC_MECH, 0x01, 0x00);
 
+	/* Disable surge protection before impedance detection.
+	 * This is done to give correct value for high impedance.
+	 */
+	regmap_update_bits(wcd938x->regmap,
+                          WCD938X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0x00);
+
 	/* First get impedance on Left */
 	d1 = d1_a[1];
 	zdet_param_ptr = &zdet_param[1];
@@ -656,6 +662,9 @@ right_ch_impedance:
 		mbhc->hph_type = WCD_MBHC_HPH_MONO;
 	}
 
+	/* Enable surge protection again after impedance detection */
+	regmap_update_bits(wcd938x->regmap,
+			   WCD938X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0xC0);
 zdet_complete:
 	snd_soc_component_write(component, WCD938X_ANA_MBHC_BTN5, reg0);
 	snd_soc_component_write(component, WCD938X_ANA_MBHC_BTN6, reg1);
