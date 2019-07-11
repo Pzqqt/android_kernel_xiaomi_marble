@@ -62,6 +62,11 @@
 	(((freq) >= channel_map[MIN_5GHZ_CHANNEL].center_freq) &&	\
 	 ((freq) <= channel_map[MAX_5GHZ_CHANNEL].center_freq))
 
+#ifdef CONFIG_BAND_6GHZ
+#define REG_MIN_6GHZ_CH_FREQ channel_map[MIN_6GHZ_CHANNEL].center_freq
+#define REG_MAX_6GHZ_CH_FREQ channel_map[MAX_6GHZ_CHANNEL].center_freq
+#endif /*CONFIG_BAND_6GHZ*/
+
 #define REG_CH_NUM(ch_enum) channel_map[ch_enum].chan_num
 #define REG_CH_TO_FREQ(ch_enum) channel_map[ch_enum].center_freq
 
@@ -424,7 +429,34 @@ bool reg_is_24ghz_ch_freq(uint32_t freq);
  *
  * Return: true if channel frequency is 5GHz, else false
  */
-bool reg_is_5ghz_ch_freq(uint32_t chan);
+bool reg_is_5ghz_ch_freq(uint32_t freq);
+
+#ifdef CONFIG_BAND_6GHZ
+/**
+ * reg_is_6ghz_chan_freq() - Check if the given channel frequency is 6GHz
+ * @freq: Channel frequency
+ *
+ * Return: true if channel frequency is 6GHz, else false
+ */
+bool reg_is_6ghz_chan_freq(uint16_t freq);
+
+/**
+ * REG_IS_6GHZ_FREQ() - Check if the given channel frequency is 6GHz
+ * @freq: Channel frequency
+ *
+ * Return: true if channel frequency is 6GHz, else false
+ */
+static inline bool REG_IS_6GHZ_FREQ(uint16_t freq)
+{
+	return ((freq >= REG_MIN_6GHZ_CH_FREQ) &&
+		(freq <= REG_MAX_6GHZ_CH_FREQ));
+}
+#else
+static inline bool reg_is_6ghz_chan_freq(uint16_t freq)
+{
+	return false;
+}
+#endif /* CONFIG_BAND_6GHZ */
 
 #ifndef CONFIG_LEGACY_CHAN_ENUM
 /**

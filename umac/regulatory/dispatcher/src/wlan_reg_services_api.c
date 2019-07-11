@@ -666,6 +666,12 @@ bool wlan_reg_is_5ghz_ch_freq(uint32_t freq)
 	return reg_is_5ghz_ch_freq(freq);
 }
 
+#ifdef CONFIG_BAND_6GHZ
+bool wlan_reg_is_6ghz_chan_freq(uint16_t freq)
+{
+	return reg_is_6ghz_chan_freq(freq);
+}
+#endif
 #ifndef CONFIG_LEGACY_CHAN_ENUM
 bool wlan_reg_is_49ghz_freq(uint32_t freq)
 {

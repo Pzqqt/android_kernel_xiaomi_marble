@@ -403,6 +403,65 @@ enum channel_enum {
  * @CHAN_ENUM_5910: channel with freq 5910
  * @CHAN_ENUM_5915: channel with freq 5915
  * @CHAN_ENUM_5920: channel with freq 5920
+ * @CHAN_ENUM_5945: channel with freq 5945
+ * @CHAN_ENUM_5965: channel with freq 5965
+ * @CHAN_ENUM_5985: channel with freq 5985
+ * @CHAN_ENUM_6005: channel with freq 6005
+ * @CHAN_ENUM_6025: channel with freq 6025
+ * @CHAN_ENUM_6045: channel with freq 6045
+ * @CHAN_ENUM_6065: channel with freq 6065
+ * @CHAN_ENUM_6085: channel with freq 6085
+ * @CHAN_ENUM_6105: channel with freq 6105
+ * @CHAN_ENUM_6125: channel with freq 6125
+ * @CHAN_ENUM_6145: channel with freq 6145
+ * @CHAN_ENUM_6165: channel with freq 6165
+ * @CHAN_ENUM_6185: channel with freq 6185
+ * @CHAN_ENUM_6205: channel with freq 6205
+ * @CHAN_ENUM_6225: channel with freq 6225
+ * @CHAN_ENUM_6245: channel with freq 6245
+ * @CHAN_ENUM_6265: channel with freq 6265
+ * @CHAN_ENUM_6285: channel with freq 6285
+ * @CHAN_ENUM_6305: channel with freq 6305
+ * @CHAN_ENUM_6325: channel with freq 6325
+ * @CHAN_ENUM_6345: channel with freq 6345
+ * @CHAN_ENUM_6365: channel with freq 6365
+ * @CHAN_ENUM_6385: channel with freq 6385
+ * @CHAN_ENUM_6405: channel with freq 6405
+ * @CHAN_ENUM_6425: channel with freq 6425
+ * @CHAN_ENUM_6445: channel with freq 6445
+ * @CHAN_ENUM_6465: channel with freq 6465
+ * @CHAN_ENUM_6485: channel with freq 6485
+ * @CHAN_ENUM_6505: channel with freq 6505
+ * @CHAN_ENUM_6525: channel with freq 6525
+ * @CHAN_ENUM_6545: channel with freq 6545
+ * @CHAN_ENUM_6565: channel with freq 6565
+ * @CHAN_ENUM_6585: channel with freq 6585
+ * @CHAN_ENUM_6605: channel with freq 6605
+ * @CHAN_ENUM_6625: channel with freq 6625
+ * @CHAN_ENUM_6645: channel with freq 6645
+ * @CHAN_ENUM_6665: channel with freq 6665
+ * @CHAN_ENUM_6685: channel with freq 6685
+ * @CHAN_ENUM_6705: channel with freq 6705
+ * @CHAN_ENUM_6725: channel with freq 6725
+ * @CHAN_ENUM_6745: channel with freq 6745
+ * @CHAN_ENUM_6765: channel with freq 6765
+ * @CHAN_ENUM_6785: channel with freq 6785
+ * @CHAN_ENUM_6805: channel with freq 6805
+ * @CHAN_ENUM_6825: channel with freq 6825
+ * @CHAN_ENUM_6845: channel with freq 6845
+ * @CHAN_ENUM_6865: channel with freq 6865
+ * @CHAN_ENUM_6885: channel with freq 6885
+ * @CHAN_ENUM_6905: channel with freq 6905
+ * @CHAN_ENUM_6925: channel with freq 6925
+ * @CHAN_ENUM_6945: channel with freq 6945
+ * @CHAN_ENUM_6965: channel with freq 6965
+ * @CHAN_ENUM_6985: channel with freq 6985
+ * @CHAN_ENUM_7005: channel with freq 7005
+ * @CHAN_ENUM_7025: channel with freq 7025
+ * @CHAN_ENUM_7045: channel with freq 7045
+ * @CHAN_ENUM_7065: channel with freq 7065
+ * @CHAN_ENUM_7085: channel with freq 7085
+ * @CHAN_ENUM_7105: channel with freq 7105
  */
 enum channel_enum {
 	CHAN_ENUM_2412,
@@ -505,6 +564,67 @@ enum channel_enum {
 	CHAN_ENUM_5910,
 	CHAN_ENUM_5915,
 	CHAN_ENUM_5920,
+#ifdef CONFIG_BAND_6GHZ
+	CHAN_ENUM_5945,
+	CHAN_ENUM_5965,
+	CHAN_ENUM_5985,
+	CHAN_ENUM_6005,
+	CHAN_ENUM_6025,
+	CHAN_ENUM_6045,
+	CHAN_ENUM_6065,
+	CHAN_ENUM_6085,
+	CHAN_ENUM_6105,
+	CHAN_ENUM_6125,
+	CHAN_ENUM_6145,
+	CHAN_ENUM_6165,
+	CHAN_ENUM_6185,
+	CHAN_ENUM_6205,
+	CHAN_ENUM_6225,
+	CHAN_ENUM_6245,
+	CHAN_ENUM_6265,
+	CHAN_ENUM_6285,
+	CHAN_ENUM_6305,
+	CHAN_ENUM_6325,
+	CHAN_ENUM_6345,
+	CHAN_ENUM_6365,
+	CHAN_ENUM_6385,
+	CHAN_ENUM_6405,
+	CHAN_ENUM_6425,
+	CHAN_ENUM_6445,
+	CHAN_ENUM_6465,
+	CHAN_ENUM_6485,
+	CHAN_ENUM_6505,
+	CHAN_ENUM_6525,
+	CHAN_ENUM_6545,
+	CHAN_ENUM_6565,
+	CHAN_ENUM_6585,
+	CHAN_ENUM_6605,
+	CHAN_ENUM_6625,
+	CHAN_ENUM_6645,
+	CHAN_ENUM_6665,
+	CHAN_ENUM_6685,
+	CHAN_ENUM_6705,
+	CHAN_ENUM_6725,
+	CHAN_ENUM_6745,
+	CHAN_ENUM_6765,
+	CHAN_ENUM_6785,
+	CHAN_ENUM_6805,
+	CHAN_ENUM_6825,
+	CHAN_ENUM_6845,
+	CHAN_ENUM_6865,
+	CHAN_ENUM_6885,
+	CHAN_ENUM_6905,
+	CHAN_ENUM_6925,
+	CHAN_ENUM_6945,
+	CHAN_ENUM_6965,
+	CHAN_ENUM_6985,
+	CHAN_ENUM_7005,
+	CHAN_ENUM_7025,
+	CHAN_ENUM_7045,
+	CHAN_ENUM_7065,
+	CHAN_ENUM_7085,
+	CHAN_ENUM_7105,
+#endif /* CONFIG_BAND_6GHZ */
 
 	NUM_CHANNELS,
 
@@ -519,6 +639,12 @@ enum channel_enum {
 	MIN_5GHZ_CHANNEL = CHAN_ENUM_5180,
 	MAX_5GHZ_CHANNEL = CHAN_ENUM_5920,
 	NUM_5GHZ_CHANNELS = (MAX_5GHZ_CHANNEL - MIN_5GHZ_CHANNEL + 1),
+
+#ifdef CONFIG_BAND_6GHZ
+	MIN_6GHZ_CHANNEL = CHAN_ENUM_5945,
+	MAX_6GHZ_CHANNEL = CHAN_ENUM_7105,
+	NUM_6GHZ_CHANNELS = (MAX_6GHZ_CHANNEL - MIN_6GHZ_CHANNEL + 1),
+#endif /* CONFIG_BAND_6GHZ */
 
 	MIN_DSRC_CHANNEL = CHAN_ENUM_5850,
 	MAX_DSRC_CHANNEL = CHAN_ENUM_5920,

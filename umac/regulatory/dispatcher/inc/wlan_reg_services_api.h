@@ -94,6 +94,24 @@ bool wlan_reg_is_24ghz_ch_freq(uint32_t freq);
 #define WLAN_REG_IS_5GHZ_CH_FREQ(freq) wlan_reg_is_5ghz_ch_freq(freq)
 bool wlan_reg_is_5ghz_ch_freq(uint32_t freq);
 
+#define WLAN_REG_IS_6GHZ_CHAN_FREQ(freq) wlan_reg_is_6ghz_chan_freq(freq)
+
+#ifdef CONFIG_BAND_6GHZ
+/**
+ * wlan_reg_is_6ghz_chan_freq() - Check if the given channel frequency is 6GHz
+ * @freq: Channel frequency
+ *
+ * Return: true if channel frequency is 6GHz, else false
+ */
+
+bool wlan_reg_is_6ghz_chan_freq(uint16_t freq);
+#else
+static inline bool wlan_reg_is_6ghz_chan_freq(uint16_t freq)
+{
+	return false;
+}
+#endif
+
 #ifndef CONFIG_LEGACY_CHAN_ENUM
 /**
  * wlan_reg_is_49ghz_freq() - Check if the given channel frequency is 4.9GHz
