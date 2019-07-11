@@ -302,10 +302,16 @@ void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		param.session = session;
 
 		mlme_set_connection_fail(session->vdev, true);
-		status = wlan_vdev_mlme_sm_deliver_evt(
-					session->vdev,
-					WLAN_VDEV_SM_EV_CONNECTION_FAIL,
-					sizeof(param), &param);
+
+		if (wlan_vdev_mlme_get_substate(session->vdev) ==
+		    WLAN_VDEV_SS_START_START_PROGRESS)
+			status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+						WLAN_VDEV_SM_EV_START_REQ_FAIL,
+						sizeof(param), &param);
+		else
+			status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+						WLAN_VDEV_SM_EV_CONNECTION_FAIL,
+						sizeof(param), &param);
 	}
 
 	if (session->pLimReAssocReq) {

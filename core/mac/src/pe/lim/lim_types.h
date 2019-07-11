@@ -739,7 +739,13 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac,
 /* Function to process WMA_SWITCH_CHANNEL_RSP message */
 void lim_process_switch_channel_rsp(struct mac_context *mac, void *);
 
-QDF_STATUS lim_sta_send_down_link(join_params *param);
+/**
+ * lim_sta_handle_connect_fail() - handle connect failure of STA
+ * @param - join params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_sta_handle_connect_fail(join_params *param);
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 QDF_STATUS lim_sta_reassoc_error_handler(struct reassoc_params *param);

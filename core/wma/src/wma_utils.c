@@ -4167,6 +4167,12 @@ wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 	tp_wma_handle wma;
 	struct wma_target_req *req = (struct wma_target_req *)data;
 
+	if (mlme_is_connection_fail(vdev_mlme->vdev)) {
+		WMA_LOGD("%s Vdev start req failed, no action required",
+			 __func__);
+		mlme_set_connection_fail(vdev_mlme->vdev, false);
+		return QDF_STATUS_SUCCESS;
+	}
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s wma handle is NULL", __func__);

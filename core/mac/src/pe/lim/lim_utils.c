@@ -7935,7 +7935,8 @@ QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 		assoc_type = mlme_get_assoc_type(vdev_mlme->vdev);
 		switch (assoc_type) {
 		case VDEV_ASSOC:
-			status = lim_sta_send_down_link((join_params *)data);
+			status =
+			    lim_sta_handle_connect_fail((join_params *)data);
 			break;
 		case VDEV_REASSOC:
 		case VDEV_FT_REASSOC:
@@ -7950,6 +7951,40 @@ QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 		mlme_set_connection_fail(vdev_mlme->vdev, false);
 	} else {
 		status = lim_sta_send_del_bss((struct pe_session *)data);
+	}
+
+	return status;
+}
+
+QDF_STATUS lim_sta_mlme_vdev_req_fail(struct vdev_mlme_obj *vdev_mlme,
+				      uint16_t data_len, void *data)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	enum vdev_assoc_type assoc_type;
+
+	if (!vdev_mlme) {
+		pe_err("vdev_mlme is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (!data) {
+		pe_err("event_data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	assoc_type = mlme_get_assoc_type(vdev_mlme->vdev);
+	switch (assoc_type) {
+	case VDEV_ASSOC:
+		status = lim_sta_handle_connect_fail((join_params *)data);
+		break;
+	case VDEV_REASSOC:
+	case VDEV_FT_REASSOC:
+		status = lim_sta_reassoc_error_handler(
+				(struct reassoc_params *)data);
+		break;
+	default:
+		pe_info("Invalid assoc_type %d", assoc_type);
+		status = QDF_STATUS_E_INVAL;
+		break;
 	}
 
 	return status;

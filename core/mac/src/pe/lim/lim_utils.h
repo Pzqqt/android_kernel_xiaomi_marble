@@ -1556,6 +1556,20 @@ QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data);
 
 /**
+ * lim_sta_mlme_vdev_req_fail() - send VDEV start req failure
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes vdev stop
+ *
+ * Return: SUCCESS on successful completion of req failure operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_sta_mlme_vdev_req_fail(struct vdev_mlme_obj *vdev_mlme,
+				      uint16_t data_len, void *data);
+
+/**
  * lim_sta_mlme_vdev_start_send() - send VDEV start
  * @vdev_mlme_obj:  VDEV MLME comp object
  * @data_len: data size
