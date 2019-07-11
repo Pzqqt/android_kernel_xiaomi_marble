@@ -818,6 +818,32 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_softap_tsf_timestamp_rx() - time stamp Rx netbuf
+ * @context: pointer to HDD context
+ * @netbuf: pointer to a Rx netbuf
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_TSF_PLUS
+static inline void hdd_softap_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
+					       qdf_nbuf_t netbuf)
+{
+	uint64_t target_time;
+
+	if (!hdd_tsf_is_rx_set(hdd_ctx))
+		return;
+
+	target_time = ktime_to_us(netbuf->tstamp);
+	hdd_rx_timestamp(netbuf, target_time);
+}
+#else
+static inline void hdd_softap_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
+					       qdf_nbuf_t netbuf)
+{
+}
+#endif
+
+/**
  * hdd_softap_notify_tx_compl_cbk() - callback to notify tx completion
  * @skb: pointer to skb data
  * @adapter: pointer to vdev apdapter
@@ -947,6 +973,8 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		 * it to stack
 		 */
 		qdf_net_buf_debug_release_skb(skb);
+
+		hdd_softap_tsf_timestamp_rx(hdd_ctx, skb);
 
 		qdf_status = hdd_rx_deliver_to_stack(adapter, skb);
 
