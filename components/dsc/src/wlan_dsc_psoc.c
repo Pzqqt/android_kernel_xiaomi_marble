@@ -126,11 +126,34 @@ static bool __dsc_psoc_trans_active_down_tree(struct dsc_psoc *psoc)
 
 #define __dsc_psoc_can_op(psoc) __dsc_psoc_can_trans(psoc)
 
-static bool __dsc_psoc_can_trans(struct dsc_psoc *psoc)
+/*
+ * __dsc_psoc_can_trans() - Returns if the psoc transition can occur or not
+ * @psoc: The DSC psoc
+ *
+ * This function checks if the psoc transition can occur or not by checking if
+ * any other down the tree/up the tree transition/operation is taking place.
+ *
+ * If there are any driver transition taking place, then the psoc trans/ops
+ * should be rejected and not queued in the DSC queue. Return QDF_STATUS_E_INVAL
+ * in this case.
+ *
+ * If there any psoc or vdev trans/ops is taking place, then the psoc trans/ops
+ * should be rejected and queued in the DSC queue so that it may be resumed
+ * after the current trans/ops is completed. Return QDF_STATUS_E_AGAIN in this
+ * case.
+ *
+ * Return: QDF_STATUS_SUCCESS if transition is allowed, error code if not.
+ */
+static QDF_STATUS __dsc_psoc_can_trans(struct dsc_psoc *psoc)
 {
-	return !__dsc_trans_active_or_queued(&psoc->driver->trans) &&
-		!__dsc_trans_active_or_queued(&psoc->trans) &&
-		!__dsc_psoc_trans_active_down_tree(psoc);
+	if (__dsc_trans_active_or_queued(&psoc->driver->trans))
+		return QDF_STATUS_E_INVAL;
+
+	if (__dsc_trans_active_or_queued(&psoc->trans) ||
+	    __dsc_psoc_trans_active_down_tree(psoc))
+		return QDF_STATUS_E_AGAIN;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static bool __dsc_psoc_can_trigger(struct dsc_psoc *psoc)
@@ -143,8 +166,11 @@ static bool __dsc_psoc_can_trigger(struct dsc_psoc *psoc)
 static QDF_STATUS
 __dsc_psoc_trans_start_nolock(struct dsc_psoc *psoc, const char *desc)
 {
-	if (!__dsc_psoc_can_trans(psoc))
-		return QDF_STATUS_E_AGAIN;
+	QDF_STATUS status;
+
+	status = __dsc_psoc_can_trans(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	return __dsc_trans_start(&psoc->trans, desc);
 }
@@ -194,7 +220,7 @@ __dsc_psoc_trans_start_wait(struct dsc_psoc *psoc, const char *desc)
 
 	/* try to start without waiting */
 	status = __dsc_psoc_trans_start_nolock(psoc, desc);
-	if (QDF_IS_STATUS_SUCCESS(status))
+	if (QDF_IS_STATUS_SUCCESS(status) || status == QDF_STATUS_E_INVAL)
 		goto unlock;
 
 	status = __dsc_trans_queue(&psoc->trans, &tran, desc);
@@ -298,10 +324,9 @@ static QDF_STATUS __dsc_psoc_op_start(struct dsc_psoc *psoc, const char *func)
 
 	__dsc_driver_lock(psoc);
 
-	if (!__dsc_psoc_can_op(psoc)) {
-		status = QDF_STATUS_E_AGAIN;
+	status = __dsc_psoc_can_op(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
 		goto unlock;
-	}
 
 	status = __dsc_ops_insert(&psoc->ops, func);
 
@@ -348,9 +373,6 @@ static void __dsc_psoc_wait_for_ops(struct dsc_psoc *psoc)
 		return;
 
 	__dsc_driver_lock(psoc);
-
-	/* flushing without preventing new ops is almost certainly a bug */
-	dsc_assert(!__dsc_psoc_can_op(psoc));
 
 	wait = psoc->ops.count > 0;
 	if (wait)

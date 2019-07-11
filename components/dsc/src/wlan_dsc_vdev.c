@@ -108,18 +108,44 @@ void dsc_vdev_destroy(struct dsc_vdev **out_vdev)
 
 #define __dsc_vdev_can_op(vdev) __dsc_vdev_can_trans(vdev)
 
-static bool __dsc_vdev_can_trans(struct dsc_vdev *vdev)
+/*
+ * __dsc_vdev_can_trans() - Returns if the vdev transition can occur or not
+ * @vdev: The DSC vdev
+ *
+ * This function checks if the vdev transition can occur or not by checking if
+ * any other down the tree/up the tree transition/operation is taking place.
+ *
+ * If there are any driver transition taking place, then the vdev trans/ops
+ * should be rejected and not queued in the DSC queue. Return QDF_STATUS_E_INVAL
+ * in this case.
+ *
+ * If there any psoc or vdev trans/ops is taking place, then the vdev trans/ops
+ * should be rejected and queued in the DSC queue so that it may be resumed
+ * after the current trans/ops is completed. Return QDF_STATUS_E_AGAIN in this
+ * case.
+ *
+ * Return: QDF_STATUS_SUCCESS if transition is allowed, error code if not.
+ */
+static QDF_STATUS __dsc_vdev_can_trans(struct dsc_vdev *vdev)
 {
-	return !__dsc_trans_active_or_queued(&vdev->psoc->driver->trans) &&
-		!__dsc_trans_active_or_queued(&vdev->psoc->trans) &&
-		!__dsc_trans_active_or_queued(&vdev->trans);
+	if (__dsc_trans_active_or_queued(&vdev->psoc->driver->trans))
+		return QDF_STATUS_E_INVAL;
+
+	if (__dsc_trans_active_or_queued(&vdev->psoc->trans) ||
+	    __dsc_trans_active_or_queued(&vdev->trans))
+		return QDF_STATUS_E_AGAIN;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS
 __dsc_vdev_trans_start_nolock(struct dsc_vdev *vdev, const char *desc)
 {
-	if (!__dsc_vdev_can_trans(vdev))
-		return QDF_STATUS_E_AGAIN;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = __dsc_vdev_can_trans(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	return __dsc_trans_start(&vdev->trans, desc);
 }
@@ -169,7 +195,7 @@ __dsc_vdev_trans_start_wait(struct dsc_vdev *vdev, const char *desc)
 
 	/* try to start without waiting */
 	status = __dsc_vdev_trans_start_nolock(vdev, desc);
-	if (QDF_IS_STATUS_SUCCESS(status))
+	if (QDF_IS_STATUS_SUCCESS(status) || status == QDF_STATUS_E_INVAL)
 		goto unlock;
 
 	status = __dsc_trans_queue(&vdev->trans, &tran, desc);
@@ -259,10 +285,9 @@ static QDF_STATUS __dsc_vdev_op_start(struct dsc_vdev *vdev, const char *func)
 
 	__dsc_driver_lock(vdev);
 
-	if (!__dsc_vdev_can_op(vdev)) {
-		status = QDF_STATUS_E_AGAIN;
+	status = __dsc_vdev_can_op(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
 		goto unlock;
-	}
 
 	status = __dsc_ops_insert(&vdev->ops, func);
 
@@ -315,9 +340,6 @@ static void __dsc_vdev_wait_for_ops(struct dsc_vdev *vdev)
 		return;
 
 	__dsc_driver_lock(vdev);
-
-	/* flushing without preventing new ops is almost certainly a bug */
-	dsc_assert(!__dsc_vdev_can_op(vdev));
 
 	wait = vdev->ops.count > 0;
 	if (wait)
