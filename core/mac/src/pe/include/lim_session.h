@@ -218,7 +218,7 @@ struct pe_session {
 	tSirMacRateSet extRateSet;
 	tSirMacHTOperatingMode htOperMode;
 	uint8_t currentOperChannel;
-	uint8_t currentReqChannel;
+	uint32_t curr_req_chan_freq;
 	uint8_t LimRxedBeaconCntDuringHB;
 
 	/* Time stamp of the last beacon received from the BSS to which STA is connected. */
