@@ -23,18 +23,6 @@
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 #include <linux/vmalloc.h>
-#ifdef CONFIG_MCL
-#include <cds_api.h>
-#include <host_diag_core_event.h>
-#include "cds_utils.h"
-#include "csr_api.h"
-#include "wma.h"
-#include "ol_txrx_api.h"
-#include <cdp_txrx_misc.h>
-#endif
-#if defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
-#include <pktlog_ac.h>
-#endif /* FEATURE_PKTLOG */
 #include <wlan_logging_sock_svc.h>
 #include <linux/kthread.h>
 #include <qdf_time.h>
@@ -49,6 +37,20 @@
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
+#endif
+
+#if defined(FEATURE_FW_LOG_PARSING) || defined(FEATURE_WLAN_DIAG_SUPPORT) || \
+	defined(FEATURE_PKTLOG)
+#include <cds_api.h>
+#include "ani_global.h"
+#endif
+
+#ifdef FEATURE_PKTLOG
+#ifndef REMOVE_PKT_LOG
+#include "wma.h"
+#include "pktlog_ac.h"
+#include <cdp_txrx_misc.h>
+#endif
 #endif
 
 #define MAX_NUM_PKT_LOG 32
