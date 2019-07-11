@@ -795,10 +795,9 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
  */
 static inline void dp_rx_desc_dump(struct dp_rx_desc *rx_desc)
 {
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-		  "rx_desc->nbuf: %pK, rx_desc->cookie: %d, rx_desc->pool_id: %d, rx_desc->in_use: %d, rx_desc->unmapped: %d",
-		  rx_desc->nbuf, rx_desc->cookie, rx_desc->pool_id,
-		  rx_desc->in_use, rx_desc->unmapped);
+	dp_info("rx_desc->nbuf: %pK, rx_desc->cookie: %d, rx_desc->pool_id: %d, rx_desc->in_use: %d, rx_desc->unmapped: %d",
+		rx_desc->nbuf, rx_desc->cookie, rx_desc->pool_id,
+		rx_desc->in_use, rx_desc->unmapped);
 }
 
 /*

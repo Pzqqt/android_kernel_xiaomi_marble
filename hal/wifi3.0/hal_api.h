@@ -1470,7 +1470,7 @@ static inline void hal_srng_dump_ring_desc(struct hal_soc *hal, void *hal_ring,
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 			   ring_desc, (srng->entry_size << 2));
 }
 
