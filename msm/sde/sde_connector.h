@@ -405,7 +405,6 @@ struct sde_connector {
 	int connector_type;
 
 	struct drm_encoder *encoder;
-	struct drm_panel *panel;
 	void *display;
 	void *drv_panel;
 	void *mst_port;
@@ -466,14 +465,6 @@ struct sde_connector {
  */
 #define sde_connector_get_display(C) \
 	((C) ? to_sde_connector((C))->display : NULL)
-
-/**
- * sde_connector_get_panel - get sde connector's private panel pointer
- * @C: Pointer to drm connector structure
- * Returns: Pointer to associated private display structure
- */
-#define sde_connector_get_panel(C) \
-	((C) ? to_sde_connector((C))->panel : NULL)
 
 /**
  * sde_connector_get_encoder - get sde connector's private encoder pointer

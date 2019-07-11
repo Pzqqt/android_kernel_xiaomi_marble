@@ -2375,7 +2375,6 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 
 	c_conn->connector_type = connector_type;
 	c_conn->encoder = encoder;
-	c_conn->panel = panel;
 	c_conn->display = display;
 
 	c_conn->dpms_mode = DRM_MODE_DPMS_ON;
