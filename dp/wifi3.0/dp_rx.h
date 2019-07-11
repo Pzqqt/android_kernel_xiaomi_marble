@@ -1157,6 +1157,16 @@ int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr, struct dp_vdev *vdev,
 qdf_nbuf_t
 dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev);
 
+/*
+ * dp_rx_dump_info_and_assert() - dump RX Ring info and Rx Desc info
+ *
+ * @soc: core txrx main context
+ * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
+ * @ring_desc: opaque pointer to the RX ring descriptor
+ * @rx_desc: host rs descriptor
+ *
+ * Return: void
+ */
 void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
 				void *ring_desc, struct dp_rx_desc *rx_desc);
 

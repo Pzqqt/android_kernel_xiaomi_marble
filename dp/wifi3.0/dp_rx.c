@@ -45,16 +45,16 @@ static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 	return vdev->ap_bridge_enabled;
 }
 
-/*
- * dp_rx_dump_info_and_assert() - dump RX Ring info and Rx Desc info
- *
- * @soc: core txrx main context
- * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
- * @ring_desc: opaque pointer to the RX ring descriptor
- * @rx_desc: host rs descriptor
- *
- * Return: void
- */
+#ifdef DUP_RX_DESC_WAR
+void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
+				void *ring_desc, struct dp_rx_desc *rx_desc)
+{
+	void *hal_soc = soc->hal_soc;
+
+	hal_srng_dump_ring_desc(hal_soc, hal_ring, ring_desc);
+	dp_rx_desc_dump(rx_desc);
+}
+#else
 void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
 				void *ring_desc, struct dp_rx_desc *rx_desc)
 {
@@ -65,6 +65,7 @@ void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
 	hal_srng_dump_ring(hal_soc, hal_ring);
 	qdf_assert_always(0);
 }
+#endif
 
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
@@ -1509,6 +1510,7 @@ static inline bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
 }
 
 #endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
+
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -1626,7 +1628,6 @@ more_data:
 		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
 		qdf_assert(rx_desc);
 
-		dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
 		/*
 		 * this is a unlikely scenario where the host is reaping
 		 * a descriptor which it already reaped just a while ago
@@ -1639,6 +1640,8 @@ more_data:
 			dp_err("Reaping rx_desc not in use!");
 			dp_rx_dump_info_and_assert(soc, hal_ring,
 						   ring_desc, rx_desc);
+			/* ignore duplicate RX desc and continue to process */
+			continue;
 		}
 
 		if (qdf_unlikely(!dp_rx_desc_check_magic(rx_desc))) {
@@ -1647,6 +1650,8 @@ more_data:
 			dp_rx_dump_info_and_assert(soc, hal_ring,
 						   ring_desc, rx_desc);
 		}
+
+		dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
 
 		/* TODO */
 		/*
