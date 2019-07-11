@@ -1844,6 +1844,7 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 		uint32_t *tag_buf, struct ppdu_info *ppdu_info)
 {
 	uint16_t frame_type;
+	uint16_t frame_ctrl;
 	uint16_t freq;
 	struct dp_soc *soc = NULL;
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
@@ -1858,6 +1859,8 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	tag_buf++;
 	frame_type = HTT_PPDU_STATS_COMMON_TLV_FRM_TYPE_GET(*tag_buf);
 
+	frame_ctrl = ppdu_desc->frame_ctrl;
+
 	switch (frame_type) {
 	case HTT_STATS_FTYPE_TIDQ_DATA_SU:
 	case HTT_STATS_FTYPE_TIDQ_DATA_MU:
@@ -1865,7 +1868,7 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 		 * for management packet, frame type come as DATA_SU
 		 * need to check frame_ctrl before setting frame_type
 		 */
-		if (HTT_GET_FRAME_CTRL_TYPE(frame_type) <= FRAME_CTRL_TYPE_CTRL)
+		if (HTT_GET_FRAME_CTRL_TYPE(frame_ctrl) <= FRAME_CTRL_TYPE_CTRL)
 			ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
 		else
 			ppdu_desc->frame_type = CDP_PPDU_FTYPE_DATA;
