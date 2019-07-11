@@ -9301,24 +9301,46 @@ static QDF_STATUS extract_pdev_utf_event_tlv(wmi_unified_t wmi_handle,
 }
 
 #ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+static QDF_STATUS extract_num_rf_characterization_entries_tlv(wmi_unified_t wmi_handle,
+	uint8_t *event,
+	uint32_t *num_rf_characterization_entries)
+{
+	WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID_param_tlvs *param_buf;
+
+	param_buf = (WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	*num_rf_characterization_entries =
+			param_buf->num_wmi_chan_rf_characterization_info;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS extract_rf_characterization_entries_tlv(wmi_unified_t wmi_handle,
 	uint8_t *event,
-	struct wlan_psoc_host_rf_characterization_entry *rf_characterization_entries)
+	uint32_t num_rf_characterization_entries,
+	struct wmi_host_rf_characterization_event_param *rf_characterization_entries)
 {
-	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID_param_tlvs *param_buf;
 	WMI_CHAN_RF_CHARACTERIZATION_INFO *wmi_rf_characterization_entry;
 	uint8_t ix;
 
-	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *)event;
+	param_buf = (WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID_param_tlvs *)event;
 	if (!param_buf)
 		return QDF_STATUS_E_INVAL;
 
 	wmi_rf_characterization_entry =
-				param_buf->wmi_chan_rf_characterization_info;
+			param_buf->wmi_chan_rf_characterization_info;
 	if (!wmi_rf_characterization_entry)
 		return QDF_STATUS_E_INVAL;
 
-	for (ix = 0; ix < param_buf->num_wmi_chan_rf_characterization_info; ix++) {
+	/*
+	 * Using num_wmi_chan_rf_characterization instead of param_buf value
+	 * since memory for rf_characterization_entries was allocated using
+	 * the former.
+	 */
+	for (ix = 0; ix < num_rf_characterization_entries; ix++) {
 		rf_characterization_entries[ix].freq =
 				WMI_CHAN_RF_CHARACTERIZATION_FREQ_GET(
 					&wmi_rf_characterization_entry[ix]);
@@ -9447,22 +9469,6 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
-static void populate_num_rf_characterization_entries(
-			struct wlan_psoc_host_service_ext_param *param,
-			WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf)
-{
-	param->num_rf_characterization_entries =
-			param_buf->num_wmi_chan_rf_characterization_info;
-}
-#else
-static void populate_num_rf_characterization_entries(
-			struct wlan_psoc_host_service_ext_param *param,
-			WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf)
-{
-}
-#endif
-
 /**
  * extract_service_ready_ext_tlv() - extract basic extended service ready params
  * from event
@@ -9501,7 +9507,6 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	param->num_dbr_ring_caps = param_buf->num_dma_ring_caps;
 	param->num_bin_scaling_params = param_buf->num_wmi_bin_scaling_params;
 	param->max_bssid_indicator = ev->max_bssid_indicator;
-	populate_num_rf_characterization_entries(param, param_buf);
 	qdf_mem_copy(&param->ppet, &ev->ppet, sizeof(param->ppet));
 
 	hw_caps = param_buf->soc_hw_mode_caps;
@@ -11864,6 +11869,8 @@ struct wmi_ops tlv_ops =  {
 	.extract_reg_chan_list_update_event =
 		extract_reg_chan_list_update_event_tlv,
 #ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+	.extract_num_rf_characterization_entries =
+		extract_num_rf_characterization_entries_tlv,
 	.extract_rf_characterization_entries =
 		extract_rf_characterization_entries_tlv,
 #endif
@@ -12266,6 +12273,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 				WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID;
 	event_ids[wmi_peer_ratecode_list_event_id] =
 				WMI_PEER_RATECODE_LIST_EVENTID;
+	event_ids[wmi_chan_rf_characterization_info_event_id] =
+				WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID;
 }
 
 /**
