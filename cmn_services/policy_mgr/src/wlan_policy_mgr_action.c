@@ -1407,6 +1407,8 @@ bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk(struct wlan_objmgr_psoc *psoc,
 	}
 	nan_ch_5g = wlan_nan_get_disc_5g_ch(psoc);
 
+	policy_mgr_debug("SAP Ch: %d NAN Ch: %d %d", sap_ch,
+			 nan_ch_2g, nan_ch_5g);
 	if (WLAN_REG_IS_SAME_BAND_CHANNELS(nan_ch_2g, sap_ch)) {
 		if (policy_mgr_is_force_scc(pm_ctx->psoc) &&
 		    policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(pm_ctx,
@@ -1417,8 +1419,14 @@ bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk(struct wlan_objmgr_psoc *psoc,
 		    policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(pm_ctx,
 								nan_ch_5g))
 			return true;
+	} else {
+		/*
+		 * NAN + SAP in different bands. Continue to check for
+		 * SAP in unsafe channel
+		 */
+		return false;
 	}
-	policy_mgr_debug("NAN+SAP unsafe ch SCC not allowed. Disabling NAN");
+	policy_mgr_info("NAN+SAP unsafe ch SCC not allowed. Disabling NAN");
 	/* change context to worker since this is executed in sched thread ctx*/
 	qdf_create_work(0, &pm_ctx->nan_sap_conc_work,
 			policy_mgr_nan_disable_work, psoc);
