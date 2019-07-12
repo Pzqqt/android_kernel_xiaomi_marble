@@ -552,6 +552,8 @@ int nl_srv_register(tWlanNlModTypes msg_type, nl_srv_msg_callback msg_handler)
 	return retcode;
 }
 
+qdf_export_symbol(nl_srv_register);
+
 /*
  * Unregister the message handler for a specified module.
  */
@@ -797,4 +799,6 @@ void nl_srv_ucast_oem(struct sk_buff *skb, int dst_pid, int flag)
 {
 	nl_srv_ucast(skb, dst_pid, flag);
 }
+
+qdf_export_symbol(nl_srv_ucast_oem);
 #endif

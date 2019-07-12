@@ -77,6 +77,17 @@ static bool wifi_pos_get_tlv_support(struct wlan_objmgr_psoc *psoc)
 	return true;
 }
 
+struct wlan_lmac_if_wifi_pos_tx_ops *
+	wifi_pos_get_tx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		wifi_pos_err("psoc is null");
+		return NULL;
+	}
+
+	return &psoc->soc_cb.tx_ops.wifi_pos_tx_ops;
+}
+
 static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
@@ -143,7 +154,7 @@ static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 		 * this is legacy MCL operation. pass whole msg to firmware as
 		 * it is.
 		 */
-		tx_ops = target_if_wifi_pos_get_txops(psoc);
+		tx_ops = wifi_pos_get_tx_ops(psoc);
 		if (!tx_ops) {
 			wifi_pos_err("tx ops null");
 			return QDF_STATUS_E_INVAL;
@@ -627,6 +638,14 @@ int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
 	}
 
 	return 0;
+}
+
+void wifi_pos_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	struct wlan_lmac_if_wifi_pos_rx_ops *wifi_pos_rx_ops;
+
+	wifi_pos_rx_ops = &rx_ops->wifi_pos_rx_ops;
+	wifi_pos_rx_ops->oem_rsp_event_rx = wifi_pos_oem_rsp_handler;
 }
 
 static void wifi_pos_pdev_iterator(struct wlan_objmgr_psoc *psoc,

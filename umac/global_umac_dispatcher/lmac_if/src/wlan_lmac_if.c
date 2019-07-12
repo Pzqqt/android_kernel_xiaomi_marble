@@ -73,6 +73,10 @@
 #include "wlan_cfr_tgt_api.h"
 #endif
 
+#ifdef WIFI_POS_CONVERGED
+#include "wifi_pos_api.h"
+#endif
+
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
  */
@@ -272,7 +276,7 @@ wlan_lmac_if_crypto_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 static void wlan_lmac_if_umac_rx_ops_register_wifi_pos(
 				struct wlan_lmac_if_rx_ops *rx_ops)
 {
-	target_if_wifi_pos_register_rx_ops(rx_ops);
+	wifi_pos_register_rx_ops(rx_ops);
 }
 #else
 static void wlan_lmac_if_umac_rx_ops_register_wifi_pos(

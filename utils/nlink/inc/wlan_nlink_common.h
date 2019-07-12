@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -94,7 +94,7 @@ typedef enum eAniNlModuleTypes {
 	ANI_NL_MSG_PUMAC = ANI_NL_MSG_BASE + 0x01,      /* PTT Socket App */
 	ANI_NL_MSG_PTT = ANI_NL_MSG_BASE + 0x07,        /* Quarky GUI */
 	WLAN_NL_MSG_OEM = ANI_NL_MSG_BASE + 0x09,
-	WLAN_NL_MSG_SVC,
+	WLAN_NL_MSG_SVC = ANI_NL_MSG_BASE + 0x0a,
 	WLAN_NL_MSG_CNSS_DIAG = ANI_NL_MSG_BASE + 0x0B, /* Value needs to be 27 */
 	ANI_NL_MSG_LOG,
 	WLAN_NL_MSG_SPECTRAL_SCAN,

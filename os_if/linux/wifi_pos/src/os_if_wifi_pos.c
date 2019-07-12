@@ -23,6 +23,7 @@
  */
 
 #include "qdf_platform.h"
+#include "qdf_module.h"
 #include "wlan_nlink_srv.h"
 #include "wlan_ptt_sock_svc.h"
 #include "wlan_nlink_common.h"
@@ -265,6 +266,7 @@ int os_if_wifi_pos_register_nl(void)
 	return nl_srv_register(WLAN_NL_MSG_OEM, os_if_wifi_pos_callback);
 }
 #endif /* CNSS_GENL */
+qdf_export_symbol(os_if_wifi_pos_register_nl);
 
 #ifdef CNSS_GENL
 int os_if_wifi_pos_deregister_nl(void)

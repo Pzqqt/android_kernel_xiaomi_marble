@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,15 +36,6 @@ struct wlan_lmac_if_rx_ops;
 #ifdef WIFI_POS_CONVERGED
 
 /**
- * target_if_wifi_pos_get_txops: api to get tx ops
- * @psoc: pointer to psoc object
- *
- * Return: tx ops
- */
-struct wlan_lmac_if_wifi_pos_tx_ops *target_if_wifi_pos_get_txops(
-						struct wlan_objmgr_psoc *psoc);
-
-/**
  * target_if_wifi_pos_get_rxops: api to get rx ops
  * @psoc: pointer to psoc object
  *
@@ -78,21 +69,7 @@ QDF_STATUS target_if_wifi_pos_deregister_events(struct wlan_objmgr_psoc *psoc);
  */
 void target_if_wifi_pos_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
 
-/**
- * target_if_wifi_pos_register_rx_ops: function to register with lmac rx ops
- * @rx_ops: lmac rx ops struct object
- *
- * Return: none
- */
-void target_if_wifi_pos_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
-
 #else
-static inline struct wlan_lmac_if_wifi_pos_tx_ops *target_if_wifi_pos_get_txops(
-						struct wlan_objmgr_psoc *psoc)
-{
-	return NULL;
-}
-
 static inline struct wlan_lmac_if_wifi_pos_rx_ops *target_if_wifi_pos_get_rxops(
 						struct wlan_objmgr_psoc *psoc)
 {
@@ -104,10 +81,6 @@ static inline void target_if_wifi_pos_register_tx_ops(
 {
 }
 
-static inline void target_if_wifi_pos_register_rx_ops(
-					struct wlan_lmac_if_rx_ops *rx_ops)
-{
-}
 #endif
 
 #if defined(WLAN_FEATURE_CIF_CFR) && defined(WIFI_POS_CONVERGED)

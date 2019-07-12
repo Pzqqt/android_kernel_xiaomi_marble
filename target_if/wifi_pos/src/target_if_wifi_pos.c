@@ -154,11 +154,12 @@ static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 	struct wmi_host_oem_indirect_data *indirect;
 	struct oem_data_rsp oem_rsp = {0};
 	struct wifi_pos_psoc_priv_obj *priv_obj;
-	struct wlan_objmgr_psoc *psoc = wifi_pos_get_psoc();
-	struct wlan_lmac_if_wifi_pos_rx_ops *wifi_pos_rx_ops = NULL;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_wifi_pos_rx_ops *wifi_pos_rx_ops;
 	struct wmi_oem_response_param oem_resp_param = {0};
 	wmi_unified_t wmi_handle;
 
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
 		target_if_err("psoc is null");
 		return QDF_STATUS_NOT_INITIALIZED;
@@ -270,17 +271,18 @@ static int wifi_pos_oem_err_rpt_ev_handler(ol_scn_t scn, uint8_t *buf,
 }
 
 /**
- * wifi_pos_oem_data_req() - start OEM data request to target
- * @psoc: the pointer to psoc object manager
+ * target_if_wifi_pos_oem_data_req() - start OEM data request to target
+ * @psoc: pointer to psoc object mgr
  * @req: start request params
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS wifi_pos_oem_data_req(struct wlan_objmgr_psoc *psoc,
-					struct oem_data_req *req)
+static QDF_STATUS
+target_if_wifi_pos_oem_data_req(struct wlan_objmgr_psoc *psoc,
+				struct oem_data_req *req)
 {
 	QDF_STATUS status;
-	wmi_unified_t wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_unified_t wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc);
 
 	target_if_debug("Send oem data req to target");
 
@@ -307,25 +309,11 @@ void target_if_wifi_pos_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	struct wlan_lmac_if_wifi_pos_tx_ops *wifi_pos_tx_ops;
 	wifi_pos_tx_ops = &tx_ops->wifi_pos_tx_ops;
-	wifi_pos_tx_ops->data_req_tx = wifi_pos_oem_data_req;
-}
-
-void target_if_wifi_pos_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
-{
-	struct wlan_lmac_if_wifi_pos_rx_ops *wifi_pos_rx_ops;
-	wifi_pos_rx_ops = &rx_ops->wifi_pos_rx_ops;
-	wifi_pos_rx_ops->oem_rsp_event_rx = wifi_pos_oem_rsp_handler;
-}
-
-inline struct wlan_lmac_if_wifi_pos_tx_ops *target_if_wifi_pos_get_txops(
-						struct wlan_objmgr_psoc *psoc)
-{
-	if (!psoc) {
-		target_if_err("passed psoc is NULL");
-		return NULL;
-	}
-
-	return &psoc->soc_cb.tx_ops.wifi_pos_tx_ops;
+	wifi_pos_tx_ops->data_req_tx = target_if_wifi_pos_oem_data_req;
+	wifi_pos_tx_ops->wifi_pos_register_events =
+		target_if_wifi_pos_register_events;
+	wifi_pos_tx_ops->wifi_pos_deregister_events =
+		target_if_wifi_pos_deregister_events;
 }
 
 inline struct wlan_lmac_if_wifi_pos_rx_ops *target_if_wifi_pos_get_rxops(

@@ -560,10 +560,14 @@ struct wlan_lmac_if_sptrl_tx_ops {
  * struct wlan_lmac_if_wifi_pos_tx_ops - structure of firmware tx function
  * pointers for wifi_pos component
  * @data_req_tx: function pointer to send wifi_pos req to firmware
+ * @wifi_pos_register_events: function pointer to register wifi_pos events
+ * @wifi_pos_deregister_events: function pointer to deregister wifi_pos events
  */
 struct wlan_lmac_if_wifi_pos_tx_ops {
 	QDF_STATUS (*data_req_tx)(struct wlan_objmgr_psoc *psoc,
 				  struct oem_data_req *req);
+	QDF_STATUS (*wifi_pos_register_events)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*wifi_pos_deregister_events)(struct wlan_objmgr_psoc *psoc);
 };
 #endif
 

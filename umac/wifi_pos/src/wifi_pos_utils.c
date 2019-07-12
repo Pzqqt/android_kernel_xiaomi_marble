@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,6 +59,8 @@ struct wlan_objmgr_psoc *wifi_pos_get_psoc(void)
 	return tmp;
 }
 
+qdf_export_symbol(wifi_pos_get_psoc);
+
 void wifi_pos_set_psoc(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_objmgr_psoc *tmp;
@@ -103,3 +105,5 @@ struct wifi_pos_psoc_priv_obj *wifi_pos_get_psoc_priv_obj(
 
 	return obj;
 }
+
+qdf_export_symbol(wifi_pos_get_psoc_priv_obj);
