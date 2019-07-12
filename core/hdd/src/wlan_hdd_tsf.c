@@ -709,20 +709,24 @@ static inline int32_t hdd_get_soctime_from_tsf64time(
 		qdf_spin_lock_bh(&adapter->host_target_sync_lock);
 
 	/* at present, target_time is 64bit (g_tsf64), us*/
-	if (tsf64_time > adapter->last_target_global_tsf_time)
+	if (tsf64_time > adapter->last_target_global_tsf_time) {
 		delta64_tsf64time = tsf64_time -
-				 adapter->last_target_global_tsf_time;
-	else {
-		if (in_cap_state)
-			qdf_spin_unlock_bh(&adapter->host_target_sync_lock);
-		return -EINVAL;
+				    adapter->last_target_global_tsf_time;
+		delta64_soctime = delta64_tsf64time * NSEC_PER_USEC;
+
+		/* soc_time (ns)*/
+		ret = hdd_uint64_plus(adapter->last_tsf_sync_soc_time,
+				      delta64_soctime, soc_time);
+	} else {
+		delta64_tsf64time = adapter->last_target_global_tsf_time -
+				    tsf64_time;
+		delta64_soctime = delta64_tsf64time * NSEC_PER_USEC;
+
+		/* soc_time (ns)*/
+		ret = hdd_uint64_minus(adapter->last_tsf_sync_soc_time,
+				       delta64_soctime, soc_time);
 	}
 
-	delta64_soctime = delta64_tsf64time * NSEC_PER_USEC;
-
-	/* soc_time (ns)*/
-	ret = hdd_uint64_plus(adapter->last_tsf_sync_soc_time,
-			      delta64_soctime, soc_time);
 	if (in_cap_state)
 		qdf_spin_unlock_bh(&adapter->host_target_sync_lock);
 
