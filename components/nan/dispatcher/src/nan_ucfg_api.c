@@ -30,9 +30,72 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_osif_request_manager.h"
 #include "wlan_policy_mgr_api.h"
+#include "cfg_ucfg_api.h"
+#include "cfg_nan.h"
 
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
+
+#ifdef WLAN_FEATURE_NAN
+/**
+ * nan_cfg_init() - Initialize NAN config params
+ * @psoc: Pointer to PSOC Object
+ * @nan_obj: Pointer to NAN private object
+ *
+ * This function initialize NAN config params
+ */
+static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
+			 struct nan_psoc_priv_obj *nan_obj)
+{
+	nan_obj->cfg_param.enable = cfg_get(psoc, CFG_NAN_ENABLE);
+}
+
+/**
+ * nan_cfg_dp_init() - Initialize NAN Datapath config params
+ * @psoc: Pointer to PSOC Object
+ * @nan_obj: Pointer to NAN private object
+ *
+ * This function initialize NAN config params
+ */
+static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
+			    struct nan_psoc_priv_obj *nan_obj)
+{
+	nan_obj->cfg_param.dp_enable = cfg_get(psoc,
+					       CFG_NAN_DATAPATH_ENABLE);
+	nan_obj->cfg_param.ndi_mac_randomize =
+				cfg_get(psoc, CFG_NAN_RANDOMIZE_NDI_MAC);
+}
+#else
+static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
+			 struct nan_psoc_priv_obj *nan_obj)
+{
+}
+
+static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
+			    struct nan_psoc_priv_obj *nan_obj)
+{
+}
+#endif
+
+QDF_STATUS ucfg_nan_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *nan_obj = nan_get_psoc_priv_obj(psoc);
+
+	if (!nan_obj) {
+		nan_err("nan psoc priv object is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	nan_cfg_init(psoc, nan_obj);
+	nan_cfg_dp_init(psoc, nan_obj);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void ucfg_nan_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	/* No cleanup required on psoc close for NAN */
+}
 
 inline QDF_STATUS ucfg_nan_set_ndi_state(struct wlan_objmgr_vdev *vdev,
 					 uint32_t state)

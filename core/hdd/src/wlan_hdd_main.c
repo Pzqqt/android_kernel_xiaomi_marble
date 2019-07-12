@@ -172,6 +172,7 @@
 #include <wlan_hdd_debugfs_coex.h>
 #include "wlan_blm_ucfg_api.h"
 #include "ol_txrx.h"
+#include "nan_ucfg_api.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -13661,8 +13662,14 @@ QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_tdls;
 
+	status = ucfg_nan_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_nan;
+
 	return status;
 
+err_nan:
+	ucfg_nan_psoc_close(psoc);
 err_tdls:
 	ucfg_tdls_psoc_close(psoc);
 err_p2p:

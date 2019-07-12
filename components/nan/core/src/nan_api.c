@@ -29,54 +29,6 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
-#include "cfg_nan.h"
-#include "cfg_ucfg_api.h"
-
-#ifdef WLAN_FEATURE_NAN
-/**
- * nan_cfg_init() - Initialize NAN config params
- * @psoc: Pointer to PSOC Object
- * @nan_obj: Pointer to NAN private object
- *
- * This function initialize NAN config params
- */
-static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
-			 struct nan_psoc_priv_obj *nan_obj)
-{
-	if (!psoc || !nan_obj)
-		return;
-
-	nan_obj->cfg_param.enable = cfg_get(psoc, CFG_NAN_ENABLE);
-}
-
-/**
- * nan_cfg_dp_init() - Initialize NAN Datapath config params
- * @psoc: Pointer to PSOC Object
- * @nan_obj: Pointer to NAN private object
- *
- * This function initialize NAN config params
- */
-static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
-			    struct nan_psoc_priv_obj *nan_obj)
-{
-	if (!psoc || !nan_obj)
-		return;
-	nan_obj->cfg_param.dp_enable = cfg_get(psoc,
-					       CFG_NAN_DATAPATH_ENABLE);
-	nan_obj->cfg_param.ndi_mac_randomize =
-				cfg_get(psoc, CFG_NAN_RANDOMIZE_NDI_MAC);
-}
-#else
-static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
-			 struct nan_psoc_priv_obj *nan_obj)
-{
-}
-
-static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
-			    struct nan_psoc_priv_obj *nan_obj)
-{
-}
-#endif
 
 static QDF_STATUS nan_psoc_obj_created_notification(
 		struct wlan_objmgr_psoc *psoc, void *arg_list)
@@ -100,8 +52,6 @@ static QDF_STATUS nan_psoc_obj_created_notification(
 		goto nan_psoc_notif_failed;
 	}
 
-	nan_cfg_init(psoc, nan_obj);
-	nan_cfg_dp_init(psoc, nan_obj);
 	target_if_nan_register_tx_ops(&nan_obj->tx_ops);
 	target_if_nan_register_rx_ops(&nan_obj->rx_ops);
 
