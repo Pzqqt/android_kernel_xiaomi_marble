@@ -549,6 +549,10 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 
 			pSirSmeRsp->bssDescription.channelId =
 				pe_session->currentOperChannel;
+			pSirSmeRsp->bssDescription.chan_freq =
+				wlan_reg_chan_to_freq(mac->pdev,
+						      pe_session->
+						      currentOperChannel);
 
 		if (!LIM_IS_NDI_ROLE(pe_session)) {
 			curLen = pe_session->schBeaconOffsetBegin - ieOffset;

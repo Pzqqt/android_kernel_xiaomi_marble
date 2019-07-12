@@ -1784,6 +1784,8 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 	qdf_mem_copy(pNewBssDescriptor->bssId, bssid.bytes,
 			sizeof(tSirMacAddr));
 	pNewBssDescriptor->channelId = channel;
+	pNewBssDescriptor->chan_freq = wlan_reg_chan_to_freq(mac->pdev,
+							     channel);
 	if (!csr_scan_append_bss_description(mac, pNewBssDescriptor)) {
 		sme_err("csr_scan_append_bss_description failed");
 		status = QDF_STATUS_E_FAILURE;
@@ -2640,6 +2642,9 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	/* channelId what peer sent in beacon/probersp. */
 	bss_desc->channelId =
 		scan_entry->channel.chan_idx;
+	bss_desc->chan_freq =
+		wlan_reg_chan_to_freq(mac_ctx->pdev,
+				      scan_entry->channel.chan_idx);
 	/* channelId on which we are parked at. */
 	/* used only in scan case. */
 	bss_desc->channelIdSelf =

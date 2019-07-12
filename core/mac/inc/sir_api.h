@@ -660,6 +660,7 @@ struct bss_description {
 	int8_t sinr;
 	/* channelId what peer sent in beacon/probersp. */
 	uint8_t channelId;
+	uint32_t chan_freq;
 	/* channelId on which we are parked at. */
 	/* used only in scan case. */
 	uint8_t channelIdSelf;

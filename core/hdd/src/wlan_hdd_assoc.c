@@ -1226,6 +1226,8 @@ hdd_send_new_ap_channel_info(struct net_device *dev,
 {
 	union iwreq_data wrqu;
 	struct bss_description *descriptor = roam_info->bss_desc;
+	mac_handle_t mac_hdl;
+	struct wlan_objmgr_pdev *pdev;
 
 	if (!descriptor) {
 		hdd_err("bss descriptor is null");
@@ -1235,10 +1237,20 @@ hdd_send_new_ap_channel_info(struct net_device *dev,
 	 * Send the Channel event, the supplicant needs this to generate
 	 * the Adjacent AP report.
 	 */
-	hdd_debug("Sending up an SIOCGIWFREQ, channelId: %d",
-		 descriptor->channelId);
+	hdd_debug("Sending up an SIOCGIWFREQ, channel freq: %d",
+		  descriptor->chan_freq);
 	memset(&wrqu, '\0', sizeof(wrqu));
-	wrqu.freq.m = descriptor->channelId;
+	mac_hdl = hdd_adapter_get_mac_handle(adapter);
+	if (!mac_hdl) {
+		hdd_err("MAC handle invalid, falling back!");
+		return;
+	}
+	pdev = MAC_CONTEXT(mac_hdl)->pdev;
+	if (!pdev) {
+		hdd_err("pdev invalid in MAC context, falling back!");
+		return;
+	}
+	wrqu.freq.m = wlan_reg_freq_to_chan(pdev, descriptor->chan_freq);
 	wrqu.freq.e = 0;
 	wrqu.freq.i = 0;
 	wireless_send_event(adapter->dev, SIOCGIWFREQ, &wrqu, NULL);

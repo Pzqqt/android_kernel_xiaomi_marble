@@ -2170,8 +2170,15 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	bss_desc_ptr->scansystimensec = qdf_get_monotonic_boottime_ns();
 	if (parsed_frm_ptr->dsParamsPresent) {
 		bss_desc_ptr->channelId = parsed_frm_ptr->channelNumber;
+		bss_desc_ptr->chan_freq =
+			wlan_reg_chan_to_freq(mac->pdev,
+					      parsed_frm_ptr->channelNumber);
 	} else if (parsed_frm_ptr->HTInfo.present) {
 		bss_desc_ptr->channelId = parsed_frm_ptr->HTInfo.primaryChannel;
+		bss_desc_ptr->chan_freq =
+			wlan_reg_chan_to_freq(mac->pdev,
+					      parsed_frm_ptr->HTInfo.
+					      primaryChannel);
 	} else {
 		/*
 		 * If DS Params or HTIE is not present in the probe resp or
@@ -2179,6 +2186,7 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 		 * to fill the channel in the BSS descriptor.*/
 		bss_desc_ptr->channelId =
 			cds_freq_to_chan(roam_synch_ind_ptr->chan_freq);
+		bss_desc_ptr->chan_freq = roam_synch_ind_ptr->chan_freq;
 	}
 	bss_desc_ptr->channelIdSelf = bss_desc_ptr->channelId;
 
