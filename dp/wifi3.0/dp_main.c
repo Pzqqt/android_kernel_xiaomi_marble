@@ -45,8 +45,8 @@
 #include "dp_peer.h"
 #include "dp_rx_mon.h"
 #include "htt_stats.h"
-#include "htt_ppdu_stats.h"
 #include "dp_htt.h"
+#include "htt_ppdu_stats.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 #include "cfg_ucfg_api.h"
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
@@ -9482,7 +9482,7 @@ dp_soc_attach(void *ctrl_psoc, HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 {
 	int int_ctx;
 	struct dp_soc *soc =  NULL;
-	struct htt_soc *htt_soc = NULL;
+	struct htt_soc *htt_soc;
 
 	soc = qdf_mem_malloc(sizeof(*soc));
 
@@ -9506,21 +9506,19 @@ dp_soc_attach(void *ctrl_psoc, HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 		dp_err("wlan_cfg_ctx failed\n");
 		goto fail1;
 	}
-	htt_soc = qdf_mem_malloc(sizeof(*htt_soc));
-	if (!htt_soc) {
-		dp_err("HTT attach failed");
+	htt_soc = htt_soc_attach(soc, htc_handle);
+
+	if (!htt_soc)
 		goto fail1;
-	}
+
 	soc->htt_handle = htt_soc;
-	htt_soc->dp_soc = soc;
-	htt_soc->htc_soc = htc_handle;
 
 	if (htt_soc_htc_prealloc(htt_soc) != QDF_STATUS_SUCCESS)
 		goto fail2;
 
 	return (void *)soc;
 fail2:
-	qdf_mem_free(htt_soc);
+	htt_soc_detach(htt_soc);
 fail1:
 	qdf_mem_free(soc);
 fail0:
@@ -9539,16 +9537,17 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle)
 {
 	int target_type;
 	struct dp_soc *soc = (struct dp_soc *)dpsoc;
-	struct htt_soc *htt_soc = (struct htt_soc *)soc->htt_handle;
+	struct htt_soc *htt_soc = soc->htt_handle;
 
-	htt_soc->htc_soc = htc_handle;
+	htt_set_htc_handle(htt_soc, htc_handle);
 	soc->hif_handle = hif_handle;
 
 	soc->hal_soc = hif_get_hal_handle(soc->hif_handle);
 	if (!soc->hal_soc)
 		return NULL;
 
-	htt_soc_initialize(soc->htt_handle, soc->ctrl_psoc, htt_soc->htc_soc,
+	htt_soc_initialize(soc->htt_handle, soc->ctrl_psoc,
+			   htt_get_htc_handle(htt_soc),
 			   soc->hal_soc, soc->osdev);
 	target_type = hal_get_target_type(soc->hal_soc);
 	switch (target_type) {

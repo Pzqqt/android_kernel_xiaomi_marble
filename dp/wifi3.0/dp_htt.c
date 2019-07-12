@@ -3130,6 +3130,31 @@ int htt_soc_attach_target(void *htt_soc)
 	return htt_h2t_ver_req_msg(soc);
 }
 
+void htt_set_htc_handle(struct htt_soc *htt_soc, HTC_HANDLE htc_soc)
+{
+	htt_soc->htc_soc = htc_soc;
+}
+
+HTC_HANDLE htt_get_htc_handle(struct htt_soc *htt_soc)
+{
+	return htt_soc->htc_soc;
+}
+
+struct htt_soc *htt_soc_attach(struct dp_soc *soc, HTC_HANDLE htc_handle)
+{
+	struct htt_soc *htt_soc = NULL;
+
+	htt_soc = qdf_mem_malloc(sizeof(*htt_soc));
+	if (!htt_soc) {
+		dp_err("HTT attach failed");
+		return NULL;
+	}
+	htt_soc->dp_soc = soc;
+	htt_soc->htc_soc = htc_handle;
+	HTT_TX_MUTEX_INIT(&htt_soc->htt_tx_mutex);
+
+	return htt_soc;
+}
 
 #if defined(WDI_EVENT_ENABLE) && !defined(REMOVE_PKT_LOG)
 /*
@@ -3591,8 +3616,6 @@ void htt_soc_htc_dealloc(struct htt_soc *htt_handle)
 QDF_STATUS htt_soc_htc_prealloc(struct htt_soc *soc)
 {
 	int i;
-
-	HTT_TX_MUTEX_INIT(&soc->htt_tx_mutex);
 
 	soc->htt_htc_pkt_freelist = NULL;
 	/* pre-allocate some HTC_PACKET objects */

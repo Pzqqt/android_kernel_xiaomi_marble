@@ -838,7 +838,7 @@ struct dp_soc {
 	struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx;
 
 	/* HTT handle for host-fw interaction */
-	void *htt_handle;
+	struct htt_soc *htt_handle;
 
 	/* Commint init done */
 	qdf_atomic_t cmn_init_done;

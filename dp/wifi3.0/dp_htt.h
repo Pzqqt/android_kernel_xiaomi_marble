@@ -222,6 +222,32 @@ htt_soc_initialize(void *htt_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
 		   void *hal_soc, qdf_device_t osdev);
 
 /*
+ * htt_soc_attach() - attach DP and HTT SOC
+ * @soc: DP SOC handle
+ * @htc_hdl: HTC handle
+ *
+ * Return: htt_soc handle on Success, NULL on Failure
+ */
+struct htt_soc *htt_soc_attach(struct dp_soc *soc, HTC_HANDLE htc_hdl);
+
+/*
+ * htt_set_htc_handle_() - set HTC handle
+ * @htt_hdl: HTT handle/SOC
+ * @htc_soc: HTC handle
+ *
+ * Return: None
+ */
+void htt_set_htc_handle(struct htt_soc *htt_hdl, HTC_HANDLE htc_soc);
+
+/*
+ * htt_get_htc_handle_() - set HTC handle
+ * @htt_hdl: HTT handle/SOC
+ *
+ * Return: HTC_HANDLE
+ */
+HTC_HANDLE htt_get_htc_handle(struct htt_soc *htt_hdl);
+
+/*
  * htt_soc_htc_dealloc() - HTC memory de-alloc
  * @htt_soc: SOC level HTT handle
  *
