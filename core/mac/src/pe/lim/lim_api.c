@@ -1337,8 +1337,9 @@ void
 lim_received_hb_handler(struct mac_context *mac, uint8_t channelId,
 			struct pe_session *pe_session)
 {
-	if ((channelId == 0)
-	    || (channelId == pe_session->currentOperChannel))
+	if (channelId == 0 ||
+	    channelId == wlan_reg_freq_to_chan(mac->pdev,
+					       pe_session->curr_op_freq))
 		pe_session->LimRxedBeaconCntDuringHB++;
 
 	pe_session->pmmOffloadInfo.bcnmiss = false;
@@ -1476,7 +1477,8 @@ lim_handle_ibss_coalescing(struct mac_context *mac,
 	 */
 	if ((!pBeacon->capabilityInfo.ibss) ||
 	    lim_cmp_ssid(&pBeacon->ssId, pe_session) ||
-	    (pe_session->currentOperChannel != pBeacon->channelNumber))
+	    (wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq)
+	     != pBeacon->channelNumber))
 		retCode = QDF_STATUS_E_INVAL;
 	else if (lim_ibss_enc_type_matched(pBeacon, pe_session) != true) {
 		pe_debug("peer privacy: %d peer wpa: %d peer rsn: %d self encType: %d",
@@ -1628,7 +1630,8 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 	       SIR_MAC_GET_PRIVACY(pe_session->limCurrentBssCaps)) ||
 	      (SIR_MAC_GET_QOS(apNewCaps.capabilityInfo) !=
 	       SIR_MAC_GET_QOS(pe_session->limCurrentBssCaps)) ||
-	      ((newChannel != pe_session->currentOperChannel) &&
+	      ((newChannel != wlan_reg_freq_to_chan(
+				mac->pdev, pe_session->curr_op_freq)) &&
 		(newChannel != 0)) ||
 	      (false == security_caps_matched)
 	     ))) {
@@ -1643,12 +1646,14 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 			pe_session->fWaitForProbeRsp = true;
 			pe_warn("AP capabilities are not matching, sending directed probe request");
 			status =
-				lim_send_probe_req_mgmt_frame(mac, &pe_session->ssId,
-					      pe_session->bssId,
-					      pe_session->currentOperChannel,
-					      pe_session->self_mac_addr,
-					      pe_session->dot11mode,
-					      NULL, NULL);
+				lim_send_probe_req_mgmt_frame(
+					mac, &pe_session->ssId,
+					pe_session->bssId,
+					wlan_reg_freq_to_chan(
+					mac->pdev, pe_session->curr_op_freq),
+					pe_session->self_mac_addr,
+					pe_session->dot11mode,
+					NULL, NULL);
 
 			if (QDF_STATUS_SUCCESS != status) {
 				pe_err("send ProbeReq failed");
@@ -1665,9 +1670,12 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 
 		qdf_mem_copy(apNewCaps.bssId.bytes,
 			     pe_session->bssId, QDF_MAC_ADDR_SIZE);
-		if (newChannel != pe_session->currentOperChannel) {
+		if (newChannel != wlan_reg_freq_to_chan(
+				mac->pdev, pe_session->curr_op_freq)) {
 			pe_err("Channel Change from %d --> %d Ignoring beacon!",
-				pe_session->currentOperChannel, newChannel);
+				wlan_reg_freq_to_chan(
+					mac->pdev, pe_session->curr_op_freq),
+					newChannel);
 			return;
 		}
 
@@ -1686,7 +1694,8 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 			pe_err("BSS Caps (Privacy) bit 0 in beacon, but WPA or RSN IE present, Ignore Beacon!");
 			return;
 		} else
-			apNewCaps.channelId = pe_session->currentOperChannel;
+			apNewCaps.channelId = wlan_reg_freq_to_chan(
+					mac->pdev, pe_session->curr_op_freq);
 		qdf_mem_copy((uint8_t *) &apNewCaps.ssId,
 			     (uint8_t *) &pBeacon->ssId,
 			     pBeacon->ssId.length + 1);

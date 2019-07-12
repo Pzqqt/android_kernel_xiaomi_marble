@@ -601,8 +601,8 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->currentOperChannel =
 		wlan_reg_freq_to_chan(mac->pdev, ft_session->curr_op_freq);
 
-	ft_session->limRFBand = lim_get_rf_band(
-				ft_session->currentOperChannel);
+	ft_session->limRFBand = lim_get_rf_band(wlan_reg_freq_to_chan(
+					mac->pdev, ft_session->curr_op_freq));
 
 	lim_fill_dot11mode(mac, ft_session, pe_session, pBeaconStruct);
 
@@ -615,7 +615,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 		 && pBeaconStruct->HTCaps.present);
 
 	/* Assign default configured nss value in the new session */
-	if (IS_5G_CH(ft_session->currentOperChannel))
+	if (wlan_reg_is_5ghz_ch_freq(ft_session->curr_op_freq))
 		ft_session->vdev_nss = mac->vdev_type_nss_5g.sta;
 	else
 		ft_session->vdev_nss = mac->vdev_type_nss_2g.sta;
@@ -697,9 +697,9 @@ void lim_fill_ft_session(struct mac_context *mac,
 		ft_session->shortSlotTimeSupported = true;
 	}
 
-	regMax = lim_get_regulatory_max_transmit_power(mac,
-						       ft_session->
-						       currentOperChannel);
+	regMax = lim_get_regulatory_max_transmit_power(
+		mac, wlan_reg_freq_to_chan(mac->pdev,
+					   ft_session->curr_op_freq));
 	localPowerConstraint = regMax;
 	lim_extract_ap_capability(mac, (uint8_t *) pbssDescription->ieFields,
 		lim_get_ielen_from_bss_description(pbssDescription),
@@ -725,9 +725,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 	tx_pwr_attr.reg_max = regMax;
 	tx_pwr_attr.ap_tx_power = localPowerConstraint;
 	tx_pwr_attr.ini_tx_power = mac->mlme_cfg->power.max_tx_power;
-	tx_pwr_attr.frequency =
-		wlan_reg_get_channel_freq(mac->pdev,
-					  ft_session->currentOperChannel);
+	tx_pwr_attr.frequency = ft_session->curr_op_freq;
 
 #ifdef FEATURE_WLAN_ESE
 	ft_session->maxTxPower = lim_get_max_tx_power(mac, &tx_pwr_attr);
