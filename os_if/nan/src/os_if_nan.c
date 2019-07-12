@@ -2676,7 +2676,8 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 	nla_memcpy(nan_req->params.request_data,
 		   tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA], buf_len);
 
-	osif_debug("Sending NAN Enable Req");
+	osif_debug("Sending NAN Enable Req. NAN Ch: %d %d",
+		   nan_req->social_chan_2g, nan_req->social_chan_5g);
 	status = ucfg_nan_discovery_req(nan_req, NAN_ENABLE_REQ);
 
 	if (QDF_IS_STATUS_SUCCESS(status))
