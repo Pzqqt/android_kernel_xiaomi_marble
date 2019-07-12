@@ -64,10 +64,12 @@ struct sde_connector_ops {
 	 * get_modes - add drm modes via drm_mode_probed_add()
 	 * @connector: Pointer to drm connector structure
 	 * @display: Pointer to private display handle
+	 * @avail_res: Pointer with current available resources
 	 * Returns: Number of modes added
 	 */
 	int (*get_modes)(struct drm_connector *connector,
-			void *display);
+			void *display,
+			const struct msm_resource_caps_info *avail_res);
 
 	/**
 	 * update_pps - update pps command for the display panel
@@ -84,11 +86,13 @@ struct sde_connector_ops {
 	 * @connector: Pointer to drm connector structure
 	 * @mode: Pointer to drm mode structure
 	 * @display: Pointer to private display handle
+	 * @avail_res: Pointer with curr available resources
 	 * Returns: Validity status for specified mode
 	 */
 	enum drm_mode_status (*mode_valid)(struct drm_connector *connector,
 			struct drm_display_mode *mode,
-			void *display);
+			void *display,
+			const struct msm_resource_caps_info *avail_res);
 
 	/**
 	 * set_property - set property value
@@ -135,14 +139,15 @@ struct sde_connector_ops {
 	 * @connector: Pointer to drm connector structure
 	 * @drm_mode: Display mode set for the display
 	 * @mode_info: Out parameter. information of the display mode
-	 * @max_mixer_width: max width supported by HW layer mixer
 	 * @display: Pointer to private display structure
+	 * @avail_res: Pointer with curr available resources
 	 * Returns: Zero on success
 	 */
 	int (*get_mode_info)(struct drm_connector *connector,
 			const struct drm_display_mode *drm_mode,
 			struct msm_mode_info *mode_info,
-			u32 max_mixer_width, void *display);
+			void *display,
+			const struct msm_resource_caps_info *avail_res);
 
 	/**
 	 * enable_event - notify display of event registration/unregistration
@@ -859,13 +864,24 @@ int sde_connector_helper_reset_custom_properties(
 		struct drm_connector_state *connector_state);
 
 /**
- * sde_connector_get_mode_info - get information of the current mode in the
- *                               given connector state.
+ * sde_connector_state_get_mode_info - get information of the current mode
+ *                               in the given connector state.
  * conn_state: Pointer to the DRM connector state object
  * mode_info: Pointer to the mode info structure
  */
-int sde_connector_get_mode_info(struct drm_connector_state *conn_state,
+int sde_connector_state_get_mode_info(struct drm_connector_state *conn_state,
 	struct msm_mode_info *mode_info);
+
+/**
+* sde_connector_get_mode_info - retrieve mode info for given mode
+* @connector: Pointer to drm connector structure
+* @drm_mode: Display mode set for the display
+* @mode_info: Out parameter. information of the display mode
+* Returns: Zero on success
+*/
+int sde_connector_get_mode_info(struct drm_connector *conn,
+		const struct drm_display_mode *drm_mode,
+		struct msm_mode_info *mode_info);
 
 /**
  * sde_conn_timeline_status - current buffer timeline status

@@ -365,7 +365,45 @@ int sde_connector_get_dither_cfg(struct drm_connector *conn,
 	return 0;
 }
 
-int sde_connector_get_mode_info(struct drm_connector_state *conn_state,
+static void sde_connector_get_avail_res_info(struct drm_connector *conn,
+		struct msm_resource_caps_info *avail_res)
+{
+	struct msm_drm_private *priv;
+	struct sde_kms *sde_kms;
+
+	if (!conn || !conn->dev || !conn->dev->dev_private)
+		return;
+
+	priv = conn->dev->dev_private;
+	sde_kms = to_sde_kms(priv->kms);
+
+	if (!sde_kms)
+		return;
+
+	avail_res->max_mixer_width = sde_kms->catalog->max_mixer_width;
+}
+
+int sde_connector_get_mode_info(struct drm_connector *conn,
+		const struct drm_display_mode *drm_mode,
+		struct msm_mode_info *mode_info)
+{
+	struct sde_connector *sde_conn;
+	struct msm_resource_caps_info avail_res;
+
+	memset(&avail_res, 0, sizeof(avail_res));
+
+	sde_conn = to_sde_connector(conn);
+
+	if (!sde_conn)
+		return -EINVAL;
+
+	sde_connector_get_avail_res_info(conn, &avail_res);
+
+	return sde_conn->ops.get_mode_info(conn, drm_mode,
+			mode_info, sde_conn->display, &avail_res);
+}
+
+int sde_connector_state_get_mode_info(struct drm_connector_state *conn_state,
 	struct msm_mode_info *mode_info)
 {
 	struct sde_connector_state *sde_conn_state = NULL;
@@ -1846,6 +1884,7 @@ static const struct drm_connector_funcs sde_connector_ops = {
 static int sde_connector_get_modes(struct drm_connector *connector)
 {
 	struct sde_connector *c_conn;
+	struct msm_resource_caps_info avail_res;
 	int mode_count = 0;
 
 	if (!connector) {
@@ -1859,7 +1898,11 @@ static int sde_connector_get_modes(struct drm_connector *connector)
 		return 0;
 	}
 
-	mode_count = c_conn->ops.get_modes(connector, c_conn->display);
+	memset(&avail_res, 0, sizeof(avail_res));
+	sde_connector_get_avail_res_info(connector, &avail_res);
+
+	mode_count = c_conn->ops.get_modes(connector, c_conn->display,
+			&avail_res);
 	if (!mode_count) {
 		SDE_ERROR_CONN(c_conn, "failed to get modes\n");
 		return 0;
@@ -1876,6 +1919,7 @@ sde_connector_mode_valid(struct drm_connector *connector,
 		struct drm_display_mode *mode)
 {
 	struct sde_connector *c_conn;
+	struct msm_resource_caps_info avail_res;
 
 	if (!connector || !mode) {
 		SDE_ERROR("invalid argument(s), conn %pK, mode %pK\n",
@@ -1885,8 +1929,12 @@ sde_connector_mode_valid(struct drm_connector *connector,
 
 	c_conn = to_sde_connector(connector);
 
+	memset(&avail_res, 0, sizeof(avail_res));
+	sde_connector_get_avail_res_info(connector, &avail_res);
+
 	if (c_conn->ops.mode_valid)
-		return c_conn->ops.mode_valid(connector, mode, c_conn->display);
+		return c_conn->ops.mode_valid(connector, mode, c_conn->display,
+				&avail_res);
 
 	/* assume all modes okay by default */
 	return MODE_OK;
@@ -2100,9 +2148,8 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 
 		memset(&mode_info, 0, sizeof(mode_info));
 
-		rc = c_conn->ops.get_mode_info(&c_conn->base, mode, &mode_info,
-			sde_kms->catalog->max_mixer_width,
-			c_conn->display);
+		rc = sde_connector_get_mode_info(&c_conn->base, mode,
+				&mode_info);
 		if (rc) {
 			SDE_ERROR_CONN(c_conn,
 				"failed to get mode info for mode %s\n",

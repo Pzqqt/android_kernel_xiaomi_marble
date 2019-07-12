@@ -1197,7 +1197,7 @@ dp_mst_connector_detect(struct drm_connector *connector, bool force,
 }
 
 static int dp_mst_connector_get_modes(struct drm_connector *connector,
-		void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	struct sde_connector *c_conn = to_sde_connector(connector);
 	struct dp_display *dp_display = display;
@@ -1224,7 +1224,7 @@ static int dp_mst_connector_get_modes(struct drm_connector *connector,
 enum drm_mode_status dp_mst_connector_mode_valid(
 		struct drm_connector *connector,
 		struct drm_display_mode *mode,
-		void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	struct dp_display *dp_display = display;
 	struct dp_mst_private *mst;
@@ -1275,7 +1275,7 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 		return MODE_BAD;
 	}
 
-	return dp_connector_mode_valid(connector, mode, display);
+	return dp_connector_mode_valid(connector, mode, display, avail_res);
 }
 
 int dp_mst_connector_get_info(struct drm_connector *connector,
@@ -1309,14 +1309,15 @@ int dp_mst_connector_get_info(struct drm_connector *connector,
 int dp_mst_connector_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
 		struct msm_mode_info *mode_info,
-		u32 max_mixer_width, void *display)
+		void *display,
+		const struct msm_resource_caps_info *avail_res)
 {
 	int rc;
 
 	DP_MST_DEBUG("enter:\n");
 
 	rc = dp_connector_get_mode_info(connector, drm_mode, mode_info,
-			max_mixer_width, display);
+			display, avail_res);
 
 	DP_MST_DEBUG("mst connector:%d get mode info. rc:%d\n",
 			connector->base.id, rc);

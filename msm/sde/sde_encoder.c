@@ -687,7 +687,7 @@ void sde_encoder_get_hw_resources(struct drm_encoder *drm_enc,
 	 * called from atomic_check phase. Use the below API to get mode
 	 * information of the temporary conn_state passed
 	 */
-	sde_connector_get_mode_info(conn_state, &mode_info);
+	sde_connector_state_get_mode_info(conn_state, &mode_info);
 	hw_res->topology = mode_info.topology;
 	hw_res->display_type = sde_enc->disp_info.display_type;
 }
@@ -985,10 +985,8 @@ static int _sde_encoder_atomic_check_reserve(struct drm_encoder *drm_enc,
 	if (sde_conn && drm_atomic_crtc_needs_modeset(crtc_state)) {
 		struct msm_display_topology *topology = NULL;
 
-		ret = sde_conn->ops.get_mode_info(&sde_conn->base, adj_mode,
-				&sde_conn_state->mode_info,
-				sde_kms->catalog->max_mixer_width,
-				sde_conn->display);
+		ret = sde_connector_get_mode_info(&sde_conn->base,
+				adj_mode, &sde_conn_state->mode_info);
 		if (ret) {
 			SDE_ERROR_ENC(sde_enc,
 				"failed to get mode info, rc = %d\n", ret);
@@ -2820,7 +2818,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	intf_mode = sde_encoder_get_intf_mode(drm_enc);
 
 	/* store the mode_info */
-	sde_connector_get_mode_info(conn->state, &sde_enc->mode_info);
+	sde_connector_state_get_mode_info(conn->state, &sde_enc->mode_info);
 
 	/* release resources before seamless mode change */
 	if (msm_is_mode_seamless_dms(adj_mode) ||
@@ -5846,11 +5844,9 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 		return -EINVAL;
 	}
 
-	ret = sde_conn->ops.get_mode_info(&sde_conn->base,
+	ret = sde_connector_get_mode_info(&sde_conn->base,
 			&encoder->crtc->state->adjusted_mode,
-			&sde_conn_state->mode_info,
-			sde_kms->catalog->max_mixer_width,
-			sde_conn->display);
+			&sde_conn_state->mode_info);
 	if (ret) {
 		SDE_ERROR_ENC(sde_enc,
 			"conn: ->get_mode_info failed. ret=%d\n", ret);

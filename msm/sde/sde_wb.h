@@ -158,12 +158,14 @@ sde_wb_connector_detect(struct drm_connector *connector,
  * sde_wb_connector_get_modes - get display modes of connector
  * @connector:	Pointer to connector
  * @display:	Pointer to writeback device
+ * @avail_res: Pointer with curr available resources
  * Returns:	Number of modes
  *
  * If display modes are not specified in writeback configuration IOCTL, this
  * function will install default EDID modes up to maximum resolution support.
  */
-int sde_wb_connector_get_modes(struct drm_connector *connector, void *display);
+int sde_wb_connector_get_modes(struct drm_connector *connector, void *display,
+		const struct msm_resource_caps_info *avail_res);
 
 /**
  * sde_wb_connector_set_property - set atomic connector property
@@ -195,14 +197,14 @@ int sde_wb_get_info(struct drm_connector *connector,
  * @connector: Pointer to drm connector structure
  * @drm_mode: Display mode set for the display
  * @mode_info: Out parameter. information of the mode.
- * @max_mixer_width: max width supported by HW layer mixer
  * @display: Pointer to private display structure
+ * @avail_res: Pointer with curr available resources
  * Returns: zero on success
  */
 int sde_wb_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
-		struct msm_mode_info *mode_info, u32 max_mixer_width,
-		void *display);
+		struct msm_mode_info *mode_info,
+		void *display, const struct msm_resource_caps_info *avail_res);
 
 /**
  * sde_wb_connector_get_wb - retrieve writeback device of the given connector
@@ -301,7 +303,8 @@ sde_wb_connector_detect(struct drm_connector *connector,
 	return connector_status_disconnected;
 }
 static inline
-int sde_wb_connector_get_modes(struct drm_connector *connector, void *display)
+int sde_wb_connector_get_modes(struct drm_connector *connector, void *display,
+		const struct msm_resource_caps_info *avail_res)
 {
 	return -EINVAL;
 }

@@ -459,7 +459,7 @@ u64 dsi_drm_find_bit_clk_rate(void *display,
 int dsi_conn_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
 		struct msm_mode_info *mode_info,
-		u32 max_mixer_width, void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	struct dsi_display_mode dsi_mode;
 	struct dsi_mode_info *timing;
@@ -790,7 +790,8 @@ static void dsi_drm_update_checksum(struct edid *edid)
 	edid->checksum = 0x100 - (sum & 0xFF);
 }
 
-int dsi_connector_get_modes(struct drm_connector *connector, void *data)
+int dsi_connector_get_modes(struct drm_connector *connector, void *data,
+		const struct msm_resource_caps_info *avail_res)
 {
 	int rc, i;
 	u32 count = 0, edid_size;
@@ -871,7 +872,7 @@ end:
 
 enum drm_mode_status dsi_conn_mode_valid(struct drm_connector *connector,
 		struct drm_display_mode *mode,
-		void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	struct dsi_display_mode dsi_mode;
 	int rc;

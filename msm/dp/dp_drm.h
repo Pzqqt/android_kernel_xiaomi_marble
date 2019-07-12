@@ -60,35 +60,37 @@ enum drm_connector_status dp_connector_detect(struct drm_connector *conn,
  * dp_connector_get_modes - callback to add drm modes via drm_mode_probed_add()
  * @connector: Pointer to drm connector structure
  * @display: Pointer to private display handle
+ * @avail_res: Pointer with curr available resources
  * Returns: Number of modes added
  */
 int dp_connector_get_modes(struct drm_connector *connector,
-		void *display);
+		void *display, const struct msm_resource_caps_info *avail_res);
 
 /**
  * dp_connector_mode_valid - callback to determine if specified mode is valid
  * @connector: Pointer to drm connector structure
  * @mode: Pointer to drm mode structure
  * @display: Pointer to private display handle
+ * @avail_res: Pointer with curr available resources
  * Returns: Validity status for specified mode
  */
 enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
 		struct drm_display_mode *mode,
-		void *display);
+		void *display, const struct msm_resource_caps_info *avail_res);
 
 /**
  * dp_connector_get_mode_info - retrieve information of the mode selected
  * @connector: Pointer to drm connector structure
  * @drm_mode: Display mode set for the display
  * @mode_info: Out parameter. Information of the mode
- * @max_mixer_width: max width supported by HW layer mixer
  * @display: Pointer to private display structure
+ * @avail_res: Pointer with curr available resources
  * Returns: zero on success
  */
 int dp_connector_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
 		struct msm_mode_info *mode_info,
-		u32 max_mixer_width, void *display);
+		void *display, const struct msm_resource_caps_info *avail_res);
 
 /**
  * dp_connector_get_info - retrieve connector display info
@@ -177,7 +179,7 @@ static inline enum drm_connector_status dp_connector_detect(
 
 
 static inline int dp_connector_get_modes(struct drm_connector *connector,
-		void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	return 0;
 }
@@ -185,7 +187,7 @@ static inline int dp_connector_get_modes(struct drm_connector *connector,
 static inline enum drm_mode_status dp_connector_mode_valid(
 		struct drm_connector *connector,
 		struct drm_display_mode *mode,
-		void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	return MODE_OK;
 }
@@ -193,7 +195,7 @@ static inline enum drm_mode_status dp_connector_mode_valid(
 static inline int dp_connector_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
 		struct msm_mode_info *mode_info,
-		u32 max_mixer_width, void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	return 0;
 }
