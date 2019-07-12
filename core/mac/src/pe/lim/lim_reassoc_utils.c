@@ -64,7 +64,10 @@ void lim_update_re_assoc_globals(struct mac_context *mac, tpSirAssocRsp pAssocRs
 	/* Update the current Bss Information */
 	qdf_mem_copy(pe_session->bssId,
 		     pe_session->limReAssocbssId, sizeof(tSirMacAddr));
-	pe_session->currentOperChannel = pe_session->limReassocChannelId;
+	pe_session->curr_op_freq = wlan_reg_chan_to_freq(
+				mac->pdev, pe_session->limReassocChannelId);
+	pe_session->currentOperChannel = wlan_reg_freq_to_chan(
+				mac->pdev, pe_session->curr_op_freq);
 	pe_session->htSecondaryChannelOffset =
 		pe_session->reAssocHtSupportedChannelWidthSet;
 	pe_session->htRecommendedTxWidthSet =

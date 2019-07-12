@@ -217,6 +217,7 @@ struct pe_session {
 	tSirMacRateSet rateSet;
 	tSirMacRateSet extRateSet;
 	tSirMacHTOperatingMode htOperMode;
+	uint32_t curr_op_freq;
 	uint8_t currentOperChannel;
 	uint32_t curr_req_chan_freq;
 	uint8_t LimRxedBeaconCntDuringHB;
