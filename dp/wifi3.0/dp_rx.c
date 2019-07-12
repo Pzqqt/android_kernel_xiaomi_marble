@@ -1727,10 +1727,12 @@ more_data:
 		 */
 		if (qdf_unlikely(!rx_desc->in_use)) {
 			DP_STATS_INC(soc, rx.err.hal_reo_dest_dup, 1);
-			dp_err("Reaping rx_desc not in use!");
+			dp_info_rl("Reaping rx_desc not in use!");
 			dp_rx_dump_info_and_assert(soc, hal_ring,
 						   ring_desc, rx_desc);
 			/* ignore duplicate RX desc and continue to process */
+			/* Pop out the descriptor */
+			hal_srng_dst_get_next(hal_soc, hal_ring);
 			continue;
 		}
 
