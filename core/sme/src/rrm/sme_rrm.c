@@ -849,10 +849,13 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 			sme_debug("Passive Max Dwell Time(%d)",
 				  req->scan_req.dwell_time_passive);
 		} else {
-			if (max_chan_time >= RRM_SCAN_MIN_DWELL_TIME)
+			if (max_chan_time >= RRM_SCAN_MIN_DWELL_TIME) {
 				req->scan_req.dwell_time_active = max_chan_time;
-			sme_debug("Active Max Dwell Time(%d)",
-				  req->scan_req.dwell_time_active);
+				req->scan_req.dwell_time_active_2g = max_chan_time;
+			}
+			sme_debug("Active Max Dwell Time(%d) 2G Dwell time %d",
+				  req->scan_req.dwell_time_active,
+				  req->scan_req.dwell_time_active_2g);
 		}
 
 		req->scan_req.adaptive_dwell_time_mode = SCAN_DWELL_MODE_STATIC;
@@ -885,10 +888,10 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 			   sme_rrm_ctx->currentIndex];
 		req->scan_req.chan_list.chan[0].freq =
 			wlan_chan_to_freq(chan_num);
-		sme_debug("Duration %d On channel %d freq %d",
-				req->scan_req.dwell_time_active,
-				chan_num,
-				req->scan_req.chan_list.chan[0].freq);
+		sme_debug("active duration %d passive %d On channel %d freq %d",
+			  req->scan_req.dwell_time_active,
+			  req->scan_req.dwell_time_passive,
+			  chan_num, req->scan_req.chan_list.chan[0].freq);
 		/*
 		 * Fill RRM scan type for these requests. This is done
 		 * because in scan concurrency update params we update the
