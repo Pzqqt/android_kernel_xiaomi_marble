@@ -823,29 +823,26 @@ QDF_STATUS wlan_objmgr_vdev_peer_detach(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((wlan_peer_get_peer_type(peer) == WLAN_PEER_AP) ||
-	    (wlan_peer_get_peer_type(peer) == WLAN_PEER_P2P_GO)) {
-		if (wlan_vdev_get_selfpeer(vdev) == peer) {
-			/*
-			 * There might be instances where new node is created
-			 * before deleting existing node, in which case selfpeer
-			 * will be pointing to the new node. So set selfpeer to
-			 * NULL only if vdev->vdev_objmgr.self_peer is pointing
-			 * to the peer processed for deletion
-			 */
-			wlan_vdev_set_selfpeer(vdev, NULL);
-		}
+	if (wlan_vdev_get_selfpeer(vdev) == peer) {
+		/*
+		 * There might be instances where new node is created
+		 * before deleting existing node, in which case selfpeer
+		 * will be pointing to the new node. So set selfpeer to
+		 * NULL only if vdev->vdev_objmgr.self_peer is pointing
+		 * to the peer processed for deletion
+		 */
+		wlan_vdev_set_selfpeer(vdev, NULL);
+	}
 
-		if (wlan_vdev_get_bsspeer(vdev) == peer) {
-			/*
-			 * There might be instances where new node is created
-			 * before deleting existing node, in which case bsspeer
-			 * in vdev will be pointing to the new node. So set
-			 * bsspeer to NULL only if vdev->vdev_objmgr.bss_peer is
-			 * pointing to the peer processed for deletion
-			 */
-			wlan_vdev_set_bsspeer(vdev, NULL);
-		}
+	if (wlan_vdev_get_bsspeer(vdev) == peer) {
+		/*
+		 * There might be instances where new node is created
+		 * before deleting existing node, in which case bsspeer
+		 * in vdev will be pointing to the new node. So set
+		 * bsspeer to NULL only if vdev->vdev_objmgr.bss_peer is
+		 * pointing to the peer processed for deletion
+		 */
+		wlan_vdev_set_bsspeer(vdev, NULL);
 	}
 
 	/* remove peer from vdev's peer list */
