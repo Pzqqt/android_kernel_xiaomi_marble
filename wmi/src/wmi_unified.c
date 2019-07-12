@@ -568,7 +568,7 @@ wmi_diag_rx_event_log_buffer[WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY];
 } while (0);
 
 #define WMI_DIAG_RX_EVENT_RECORD(h, a, b) do {                             \
-	if (wmi_mgmt_log_max_entry <=                                   \
+	if (wmi_diag_log_max_entry <=                                   \
 		*(h->log_info.wmi_diag_event_log_buf_info.p_buf_tail_idx))\
 		*(h->log_info.wmi_diag_event_log_buf_info.p_buf_tail_idx) = 0;\
 	((struct wmi_event_debug *)h->log_info.wmi_diag_event_log_buf_info.buf)\
