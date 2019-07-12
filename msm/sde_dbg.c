@@ -4517,7 +4517,8 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 	memset(&dbg->dbgbus_vbif_rt, 0, sizeof(dbg->dbgbus_vbif_rt));
 
 	if (IS_SM8150_TARGET(hwversion) || IS_SM6150_TARGET(hwversion) ||
-				IS_SDMMAGPIE_TARGET(hwversion)) {
+				IS_SDMMAGPIE_TARGET(hwversion) ||
+				IS_SDMTRINKET_TARGET(hwversion)) {
 		dbg->dbgbus_sde.entries = dbg_bus_sde_sm8150;
 		dbg->dbgbus_sde.cmn.entries_size =
 				ARRAY_SIZE(dbg_bus_sde_sm8150);

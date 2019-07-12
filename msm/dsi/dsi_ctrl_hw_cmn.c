@@ -19,12 +19,46 @@
 #define DSI_CTRL_DYNAMIC_FORCE_ON         (0x23F|BIT(8)|BIT(9)|BIT(11)|BIT(21))
 #define DSI_CTRL_CMD_MISR_ENABLE          BIT(28)
 #define DSI_CTRL_VIDEO_MISR_ENABLE        BIT(16)
+#define DSI_CTRL_DMA_LINK_SEL             (BIT(12)|BIT(13))
+#define DSI_CTRL_MDP0_LINK_SEL            (BIT(20)|BIT(22))
 
 /* Unsupported formats default to RGB888 */
 static const u8 cmd_mode_format_map[DSI_PIXEL_FORMAT_MAX] = {
 	0x6, 0x7, 0x8, 0x8, 0x0, 0x3, 0x4 };
 static const u8 video_mode_format_map[DSI_PIXEL_FORMAT_MAX] = {
 	0x0, 0x1, 0x2, 0x3, 0x3, 0x3, 0x3 };
+
+/**
+ * dsi_split_link_setup() - setup dsi split link configurations
+ * @ctrl:             Pointer to the controller host hardware.
+ * @cfg:              DSI host configuration that is common to both video and
+ *                    command modes.
+ */
+static void dsi_split_link_setup(struct dsi_ctrl_hw *ctrl,
+				struct dsi_host_common_cfg *cfg)
+{
+	u32 reg;
+
+	if (!cfg->split_link.split_link_enabled)
+		return;
+
+	reg = DSI_R32(ctrl, DSI_SPLIT_LINK);
+
+	/* DMA_LINK_SEL */
+	reg &= ~(0x7 << 12);
+	reg |= DSI_CTRL_DMA_LINK_SEL;
+
+	/* MDP0_LINK_SEL */
+	reg &= ~(0x7 << 20);
+	reg |= DSI_CTRL_MDP0_LINK_SEL;
+
+	/* EN */
+	reg |= 0x1;
+
+	/* DSI_SPLIT_LINK */
+	DSI_W32(ctrl, DSI_SPLIT_LINK, reg);
+	wmb(); /* make sure split link is asserted */
+}
 
 /**
  * dsi_setup_trigger_controls() - setup dsi trigger configurations
@@ -57,6 +91,7 @@ void dsi_ctrl_hw_cmn_host_setup(struct dsi_ctrl_hw *ctrl,
 	u32 reg_value = 0;
 
 	dsi_setup_trigger_controls(ctrl, cfg);
+	dsi_split_link_setup(ctrl, cfg);
 
 	/* Setup clocking timing controls */
 	reg_value = ((cfg->t_clk_post & 0x3F) << 8);
@@ -1531,6 +1566,19 @@ int dsi_ctrl_hw_cmn_wait_for_cmd_mode_mdp_idle(struct dsi_ctrl_hw *ctrl)
 		pr_err("%s: timed out waiting for idle\n", __func__);
 
 	return rc;
+}
+
+void dsi_ctrl_hw_cmn_hs_req_sel(struct dsi_ctrl_hw *ctrl, bool sel_phy)
+{
+	u32 reg = 0;
+
+	reg = DSI_R32(ctrl, DSI_LANE_CTRL);
+	if (sel_phy)
+		reg &= ~BIT(24);
+	else
+		reg |= BIT(24);
+	DSI_W32(ctrl, DSI_LANE_CTRL, reg);
+	wmb(); /* make sure request is set */
 }
 
 void dsi_ctrl_hw_cmn_set_continuous_clk(struct dsi_ctrl_hw *ctrl, bool enable)
