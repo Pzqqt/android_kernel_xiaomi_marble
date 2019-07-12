@@ -38,6 +38,22 @@ QDF_STATUS ucfg_nan_set_ndi_state(struct wlan_objmgr_vdev *vdev,
 				  uint32_t state);
 
 /**
+ * ucfg_nan_psoc_open: Setup NAN priv object params on PSOC open
+ * @psoc: Pointer to PSOC object
+ *
+ * Return: QDF Status of operation
+ */
+QDF_STATUS ucfg_nan_psoc_open(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_nan_psoc_close: Clean up NAN priv data on PSOC close
+ * @psoc: Pointer to PSOC object
+ *
+ * Return: None
+ */
+void ucfg_nan_psoc_close(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_nan_get_ndi_state: get ndi state from vdev obj
  * @vdev: pointer to vdev object
  *
@@ -321,5 +337,15 @@ ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline QDF_STATUS ucfg_nan_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void ucfg_nan_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+}
+
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */
