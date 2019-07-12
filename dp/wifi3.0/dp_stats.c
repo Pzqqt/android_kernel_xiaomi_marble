@@ -5098,6 +5098,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->stats.rx.err.invalid_sa_da_idx);
 		DP_PRINT_STATS("defrag peer uninit %u",
 			       pdev->soc->stats.rx.err.defrag_peer_uninit);
+		DP_PRINT_STATS("pkts delivered no peer %u",
+			       pdev->soc->stats.rx.err.pkt_delivered_no_peer);
 
 		DP_PRINT_STATS("Reo Statistics");
 		DP_PRINT_STATS("rbm error: %u msdus",
@@ -5560,6 +5562,8 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 		       soc->stats.rx.err.invalid_sa_da_idx);
 	DP_PRINT_STATS("Defrag peer uninit = %d",
 		       soc->stats.rx.err.defrag_peer_uninit);
+	DP_PRINT_STATS("Pkts delivered no peer = %d",
+		       soc->stats.rx.err.pkt_delivered_no_peer);
 	DP_PRINT_STATS("Invalid Pdev = %d",
 		       soc->stats.rx.err.invalid_pdev);
 	DP_PRINT_STATS("Invalid Peer = %d",

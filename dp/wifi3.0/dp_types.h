@@ -690,6 +690,8 @@ struct dp_soc_stats {
 			/* Invalid PDEV error count */
 			uint32_t invalid_pdev;
 
+			/* Packets delivered to stack that no related peer */
+			uint32_t pkt_delivered_no_peer;
 			/* Defrag peer uninit error count */
 			uint32_t defrag_peer_uninit;
 			/* Invalid sa_idx or da_idx*/

@@ -1512,6 +1512,96 @@ static inline bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
 #endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
 
 /**
+ * dp_is_special_data() - check is the pkt special like eapol, dhcp, etc
+ *
+ * @nbuf: pkt skb pointer
+ *
+ * Return: true if matched, false if not
+ */
+static inline
+bool dp_is_special_data(qdf_nbuf_t nbuf)
+{
+	if (qdf_nbuf_is_ipv4_arp_pkt(nbuf) ||
+	    qdf_nbuf_is_ipv4_dhcp_pkt(nbuf) ||
+	    qdf_nbuf_is_ipv4_eapol_pkt(nbuf) ||
+	    qdf_nbuf_is_ipv6_dhcp_pkt(nbuf))
+		return true;
+	else
+		return false;
+}
+
+#ifdef DP_RX_PKT_NO_PEER_DELIVER
+/**
+ * dp_rx_deliver_to_stack_no_peer() - try deliver rx data even if
+ *				      no corresbonding peer found
+ * @soc: core txrx main context
+ * @nbuf: pkt skb pointer
+ *
+ * This function will try to deliver some RX special frames to stack
+ * even there is no peer matched found. for instance, LFR case, some
+ * eapol data will be sent to host before peer_map done.
+ *
+ * Return: None
+ */
+static inline
+void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
+{
+	uint32_t peer_mdata;
+	uint16_t peer_id;
+	uint8_t vdev_id;
+	struct dp_vdev *vdev;
+	uint32_t l2_hdr_offset = 0;
+	uint16_t msdu_len = 0;
+	uint32_t pkt_len = 0;
+	uint8_t *rx_tlv_hdr;
+
+	peer_mdata =  QDF_NBUF_CB_RX_PEER_ID(nbuf);
+
+	peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
+	if (peer_id > soc->max_peers)
+		goto deliver_fail;
+
+	vdev_id = DP_PEER_METADATA_ID_GET(peer_mdata);
+	vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+	if (!vdev || !vdev->osif_rx)
+		goto deliver_fail;
+
+	rx_tlv_hdr = qdf_nbuf_data(nbuf);
+	l2_hdr_offset =
+		hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
+
+	msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
+	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
+
+	qdf_nbuf_set_pktlen(nbuf, pkt_len);
+	qdf_nbuf_pull_head(nbuf,
+			   RX_PKT_TLVS_LEN +
+			   l2_hdr_offset);
+
+	/* only allow special frames */
+	if (!dp_is_special_data(nbuf))
+		goto deliver_fail;
+
+	vdev->osif_rx(vdev->osif_vdev, nbuf);
+	DP_STATS_INC(soc, rx.err.pkt_delivered_no_peer, 1);
+	return;
+
+deliver_fail:
+	DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
+			 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
+	qdf_nbuf_free(nbuf);
+}
+#else
+static inline
+void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
+{
+	DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
+			 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
+	qdf_nbuf_free(nbuf);
+}
+#endif
+
+/**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
  * @soc: core txrx main context
@@ -1825,9 +1915,7 @@ done:
 		if (qdf_likely(peer)) {
 			vdev = peer->vdev;
 		} else {
-			DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
-					 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
-			qdf_nbuf_free(nbuf);
+			dp_rx_deliver_to_stack_no_peer(soc, nbuf);
 			nbuf = next;
 			continue;
 		}
