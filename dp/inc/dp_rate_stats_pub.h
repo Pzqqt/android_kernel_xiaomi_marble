@@ -48,6 +48,34 @@
 QDF_DECLARE_EWMA(rx_rssi, 1024, 8)
 #endif
 
+#define DP_PEER_STATS_RIX_MASK 0xffff
+#define DP_PEER_STATS_NSS_MASK 0xf
+#define DP_PEER_STATS_MCS_MASK 0xf
+#define DP_PEER_STATS_BW_MASK 0xf
+
+#define DP_PEER_STATS_RIX_OFFSET 0
+#define DP_PEER_STATS_NSS_OFFSET 16
+#define DP_PEER_STATS_MCS_OFFSET 20
+#define DP_PEER_STATS_BW_OFFSET 24
+
+#define ASSEMBLE_STATS_CODE(_rix, _nss, _mcs, _bw) \
+(((_rix & DP_PEER_STATS_RIX_MASK) << DP_PEER_STATS_RIX_OFFSET) | \
+((_nss & DP_PEER_STATS_NSS_MASK) << DP_PEER_STATS_NSS_OFFSET) | \
+((_mcs & DP_PEER_STATS_MCS_MASK) << DP_PEER_STATS_MCS_OFFSET) | \
+((_bw & DP_PEER_STATS_BW_MASK) << DP_PEER_STATS_BW_OFFSET))
+
+#define GET_DP_PEER_STATS_RIX(_val) \
+(((_val) >> DP_PEER_STATS_RIX_OFFSET) & DP_PEER_STATS_RIX_MASK)
+
+#define GET_DP_PEER_STATS_NSS(_val) \
+(((_val) >> DP_PEER_STATS_NSS_OFFSET) & DP_PEER_STATS_NSS_MASK)
+
+#define GET_DP_PEER_STATS_MCS(_val) \
+(((_val) >> DP_PEER_STATS_MCS_OFFSET) & DP_PEER_STATS_MCS_MASK)
+
+#define GET_DP_PEER_STATS_BW(_val) \
+(((_val) >> DP_PEER_STATS_BW_OFFSET) & DP_PEER_STATS_BW_MASK)
+
 /**
  * enum cdp_peer_rate_stats_cmd -
  * used by app to get specific stats

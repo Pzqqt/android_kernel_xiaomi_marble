@@ -167,7 +167,15 @@ __wlan_peer_update_rx_rate_stats(struct wlan_rx_rate_stats *__rx_stats,
 {
 	uint8_t ant, ht;
 
-	__rx_stats->rix = cdp_rx_ppdu->rix;
+	if (cdp_rx_ppdu->rix == -1) {
+		__rx_stats->rix = cdp_rx_ppdu->rix;
+	} else {
+		__rx_stats->rix = ASSEMBLE_STATS_CODE(cdp_rx_ppdu->rix,
+						      cdp_rx_ppdu->u.nss,
+						      cdp_rx_ppdu->u.mcs,
+						      cdp_rx_ppdu->u.bw);
+	}
+
 	__rx_stats->rate = cdp_rx_ppdu->rx_ratekbps;
 	__rx_stats->num_bytes += cdp_rx_ppdu->num_bytes;
 	__rx_stats->num_msdus += cdp_rx_ppdu->num_msdu;
@@ -267,8 +275,14 @@ __wlan_peer_update_tx_rate_stats(struct wlan_tx_rate_stats *__tx_stats,
 	num_ppdus = ppdu_user->long_retries + 1;
 	mpdu_attempts = num_ppdus * ppdu_user->mpdu_tried_ucast;
 	mpdu_success = ppdu_user->mpdu_tried_ucast - ppdu_user->mpdu_failed;
-
-	__tx_stats->rix = ppdu_user->rix;
+	if (ppdu_user->rix == -1) {
+		__tx_stats->rix = ppdu_user->rix;
+	} else {
+		__tx_stats->rix = ASSEMBLE_STATS_CODE(ppdu_user->rix,
+						      ppdu_user->nss,
+						      ppdu_user->mcs,
+						      ppdu_user->bw);
+	}
 	__tx_stats->rate = ppdu_user->tx_ratekbps;
 	__tx_stats->num_ppdus += num_ppdus;
 	__tx_stats->mpdu_attempts += mpdu_attempts;
