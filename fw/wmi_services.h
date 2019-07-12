@@ -402,6 +402,7 @@ typedef  enum  {
     WMI_SERVICE_WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENT= 217, /* target will send WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENT */
     WMI_SERVICE_RX_FSE_SUPPORT = 218, /* target supports flow search through RxOLE FSE hw block */
     WMI_SERVICE_FREQINFO_IN_METADATA = 219, /* FW provides freq_info during spectral scan */
+    WMI_SERVICE_EXT2_MSG = 220, /* WMI_SERVICE_READY_EXT2 msg is sent by target */
 
     /******* ADD NEW SERVICES HERE *******/
 

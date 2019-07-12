@@ -994,6 +994,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_chan_rf_characterization_info_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_oem_data_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_enable_disable_trigger_reason_fixed_param,
+    WMITLV_TAG_STRUC_wmi_service_ready_ext2_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1408,6 +1409,7 @@ typedef enum {
 #define WMITLV_ALL_EVT_LIST(OP) \
     OP(WMI_SERVICE_READY_EVENTID) \
     OP(WMI_SERVICE_READY_EXT_EVENTID) \
+    OP(WMI_SERVICE_READY_EXT2_EVENTID) \
     OP(WMI_READY_EVENTID) \
     OP(WMI_SCAN_EVENTID) \
     OP(WMI_PDEV_TPC_CONFIG_EVENTID) \
@@ -4058,6 +4060,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_AVAILABLE_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_spectral_bin_scaling_params, wmi_bin_scaling_params, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_CHAN_RF_CHARACTERIZATION_INFO, wmi_chan_rf_characterization_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
+
+/* SERVICE_READY_EXT2 event */
+#define WMITLV_TABLE_WMI_SERVICE_READY_EXT2_EVENTID(id,op,buf,len) \
+     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_service_ready_ext2_event_fixed_param, wmi_service_ready_ext2_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT2_EVENTID);
 
 #define WMITLV_TABLE_WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID(id,op,buf,len) \
      WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_chan_rf_characterization_info_event_fixed_param, wmi_chan_rf_characterization_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
