@@ -1869,7 +1869,8 @@ end:
 
 static enum drm_mode_status dp_display_validate_mode(
 		struct dp_display *dp_display,
-		void *panel, struct drm_display_mode *mode)
+		void *panel, struct drm_display_mode *mode,
+		const struct msm_resource_caps_info *avail_res)
 {
 	struct dp_display_private *dp;
 	struct drm_dp_link *link_info;
@@ -1882,8 +1883,10 @@ static enum drm_mode_status dp_display_validate_mode(
 	int hdis, vdis, vref, ar, _hdis, _vdis, _vref, _ar, rate;
 	struct dp_display_mode dp_mode;
 	bool dsc_en;
+	u32 num_lm = 0;
 
-	if (!dp_display || !mode || !panel) {
+	if (!dp_display || !mode || !panel ||
+			!avail_res || !avail_res->max_mixer_width) {
 		pr_err("invalid params\n");
 		return mode_status;
 	}
@@ -1923,6 +1926,15 @@ static enum drm_mode_status dp_display_validate_mode(
 	if (mode->clock > dp_display->max_pclk_khz) {
 		DP_MST_DEBUG("clk:%d, max:%d\n", mode->clock,
 				dp_display->max_pclk_khz);
+		goto end;
+	}
+
+	num_lm = (avail_res->max_mixer_width <= mode->hdisplay) ?
+			2 : 1;
+	if (num_lm > avail_res->num_lm ||
+			(num_lm == 2 && !avail_res->num_3dmux)) {
+		DP_MST_DEBUG("num_lm:%d, req lm:%d 3dmux:%d\n", num_lm,
+				avail_res->num_lm, avail_res->num_3dmux);
 		goto end;
 	}
 
