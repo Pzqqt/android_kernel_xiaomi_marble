@@ -708,6 +708,8 @@ typedef enum {
     DEPRECATED__WMI_ROAM_DSM_FILTER_CMDID,
     /** Enable or disable roaming triggers */
     WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID,
+    /** Pre-Authentication completion status command */
+    WMI_ROAM_PREAUTH_STATUS_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -1532,6 +1534,8 @@ typedef enum {
     WMI_ROAM_SCAN_STATS_EVENTID,
     /** Blacklisted AP information event */
     WMI_ROAM_BLACKLIST_EVENTID,
+    /** Roam Pre-Authentication start event */
+    WMI_ROAM_PREAUTH_START_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -12277,6 +12281,8 @@ enum {
     WMI_AUTH_FT_RSNA_SUITE_B_8021X_SHA384,
     WMI_AUTH_FT_RSNA_FILS_SHA256,
     WMI_AUTH_FT_RSNA_FILS_SHA384,
+    WMI_AUTH_WPA3_SAE,
+    WMI_AUTH_WPA3_OWE,
 };
 
 typedef enum {
@@ -24296,6 +24302,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_TWT_BTWT_INVITE_STA_CMDID);
         WMI_RETURN_STRING(WMI_TWT_BTWT_REMOVE_STA_CMDID);
         WMI_RETURN_STRING(WMI_OEM_DATA_CMDID);
+        WMI_RETURN_STRING(WMI_ROAM_PREAUTH_STATUS_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -25663,6 +25670,28 @@ typedef enum {
  * to firmware within the WMI_PDEV_DSM_FILTER_CMDID message.
  */
 #define WLAN_PDEV_MAX_NUM_BSSID_DISALLOW_LIST  28
+
+/** Roam Pre-Authentication completion status */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_preauth_status_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    /* preauth_status, 0 - Success, Non Zero - Failure */
+    A_UINT32 preauth_status;
+    /* AP BSSID for which pre-authentication is completed */
+    wmi_mac_addr candidate_ap_bssid;
+    /**
+     * PMKID computed after successful pre-authentication. This is valid only if preauth_status is success
+     * A_UINT8 pmkid[];
+     */
+} wmi_roam_preauth_status_cmd_fixed_param;
+
+/** Roam Pre-Authentication start event */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_preauth_start_event_fixed_param */
+    A_UINT32 vdev_id;
+    /* AP BSSID for which host needs to start pre-authentication */
+    wmi_mac_addr candidate_ap_bssid;
+} wmi_roam_preauth_start_event_fixed_param;
 
 typedef struct {
     /*
