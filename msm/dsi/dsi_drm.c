@@ -812,14 +812,6 @@ int dsi_connector_get_modes(struct drm_connector *connector, void *data,
 
 	memcpy(&edid, edid_buf, edid_size);
 
-	if (sde_connector_get_panel(connector)) {
-		/*
-		 * TODO: If drm_panel is attached, query modes from the panel.
-		 * This is complicated in split dsi cases because panel is not
-		 * attached to both connectors.
-		 */
-		goto end;
-	}
 	rc = dsi_display_get_mode_count(display, &count);
 	if (rc) {
 		pr_err("failed to get num of modes, rc=%d\n", rc);
