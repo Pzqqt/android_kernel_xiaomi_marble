@@ -6,6 +6,7 @@
 #define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
 
 #include "dp_panel.h"
+#include <linux/unistd.h>
 #include <drm/drm_fixed.h>
 
 #define DP_KHZ_TO_HZ 1000
@@ -2459,6 +2460,9 @@ static int dp_panel_init_panel_info(struct dp_panel *dp_panel)
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
 	pinfo = &dp_panel->pinfo;
 
+	drm_dp_dpcd_writeb(panel->aux->drm_aux, DP_SET_POWER, DP_SET_POWER_D3);
+	/* 200us propagation time for the power down to take effect */
+	usleep_range(200, 205);
 	drm_dp_dpcd_writeb(panel->aux->drm_aux, DP_SET_POWER, DP_SET_POWER_D0);
 
 	/*
