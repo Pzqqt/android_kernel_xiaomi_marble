@@ -1208,7 +1208,7 @@ struct wm_status_change_ntf {
 		uint16_t disassocReasonCode;
 		/* none for eSIR_SME_LOST_LINK_WITH_PEER */
 		/* eSIR_SME_CHANNEL_SWITCH */
-		uint8_t newChannelId;
+		uint32_t new_freq;
 		/* eSIR_SME_JOINED_NEW_BSS */
 		struct new_bss_info newBssInfo;
 		/* none for eSIR_SME_LEAVING_BSS */
