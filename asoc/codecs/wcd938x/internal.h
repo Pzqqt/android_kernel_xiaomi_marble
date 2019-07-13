@@ -67,7 +67,7 @@ struct wcd938x_priv {
 	u32 tx_mode[TX_ADC_MAX];
 	bool comp1_enable;
 	bool comp2_enable;
-
+	bool ldoh;
 	struct irq_domain *virq;
 	struct wcd_irq_info irq_info;
 	u32 rx_clk_cnt;
