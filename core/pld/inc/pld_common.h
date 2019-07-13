@@ -65,13 +65,15 @@ enum pld_bus_type {
  * @PLD_BUS_WIDTH_LOW: vote for low bus bandwidth
  * @PLD_BUS_WIDTH_MEDIUM: vote for medium bus bandwidth
  * @PLD_BUS_WIDTH_HIGH: vote for high bus bandwidth
+ * @PLD_BUS_WIDTH_VERY_HIGH: vote for very high bus bandwidth
  */
 enum pld_bus_width_type {
 	PLD_BUS_WIDTH_NONE,
 	PLD_BUS_WIDTH_IDLE,
 	PLD_BUS_WIDTH_LOW,
 	PLD_BUS_WIDTH_MEDIUM,
-	PLD_BUS_WIDTH_HIGH
+	PLD_BUS_WIDTH_HIGH,
+	PLD_BUS_WIDTH_VERY_HIGH,
 };
 
 #define PLD_MAX_FILE_NAME NAME_MAX

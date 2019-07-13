@@ -7871,6 +7871,12 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 					  const uint64_t tx_packets,
 					  const uint64_t rx_packets)
 {
+	uint16_t index = 0;
+	bool vote_level_change = false;
+	bool rx_level_change = false;
+	bool tx_level_change = false;
+	bool rxthread_high_tput_req = false;
+	bool dptrace_high_tput_req;
 	u64 total_pkts = tx_packets + rx_packets;
 	uint64_t temp_tx = 0, avg_rx = 0;
 	uint64_t no_rx_offload_pkts = 0, avg_no_rx_offload_pkts = 0;
@@ -7879,14 +7885,10 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	static enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
-	uint16_t index = 0;
-	bool vote_level_change = false;
-	bool rx_level_change = false;
-	bool tx_level_change = false;
-	bool rxthread_high_tput_req = false;
-	bool dptrace_high_tput_req;
 
-	if (total_pkts > hdd_ctx->config->bus_bw_high_threshold)
+	if (total_pkts > hdd_ctx->config->bus_bw_very_high_threshold)
+		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
+	else if (total_pkts > hdd_ctx->config->bus_bw_high_threshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
 	else if (total_pkts > hdd_ctx->config->bus_bw_medium_threshold)
 		next_vote_level = PLD_BUS_WIDTH_MEDIUM;
@@ -7899,11 +7901,13 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			next_vote_level > PLD_BUS_WIDTH_IDLE ? true : false;
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
-		hdd_debug("trigger level %d, tx_packets: %lld, rx_packets: %lld",
-			 next_vote_level, tx_packets, rx_packets);
+		hdd_debug("BW Vote level %d, tx_packets: %lld, rx_packets: %lld",
+			  next_vote_level, tx_packets, rx_packets);
 		hdd_ctx->cur_vote_level = next_vote_level;
 		vote_level_change = true;
+
 		pld_request_bus_bandwidth(hdd_ctx->parent_dev, next_vote_level);
+
 		if ((next_vote_level == PLD_BUS_WIDTH_LOW) ||
 		    (next_vote_level == PLD_BUS_WIDTH_IDLE)) {
 			if (hdd_ctx->hbw_requested) {
@@ -7981,8 +7985,6 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	if (hdd_ctx->cur_rx_level != next_rx_level) {
 		struct wlan_rx_tp_data rx_tp_data = {0};
 
-		hdd_debug("TCP DELACK trigger level %d, average_rx: %llu",
-			  next_rx_level, avg_rx);
 		hdd_ctx->cur_rx_level = next_rx_level;
 		rx_level_change = true;
 		/* Send throughput indication only if it is enabled.
@@ -7990,8 +7992,11 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		 * to default delayed ack. Note that this will disable the
 		 * dynamic delayed ack mechanism across the system
 		 */
-		if (hdd_ctx->en_tcp_delack_no_lro)
+		if (hdd_ctx->en_tcp_delack_no_lro) {
 			rx_tp_data.rx_tp_flags |= TCP_DEL_ACK_IND;
+			hdd_debug("TCP DELACK trigger level %d, average_rx: %llu",
+				  next_rx_level, avg_rx);
+		}
 
 		if (hdd_ctx->config->enable_tcp_adv_win_scale)
 			rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
@@ -8280,9 +8285,10 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 	int i;
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
-	hdd_nofl_info("BW compute Interval: %dms",
+	hdd_nofl_info("BW compute Interval: %d ms",
 		      hdd_ctx->config->bus_bw_compute_interval);
-	hdd_nofl_info("BW High TH: %d BW Med TH: %d BW Low TH: %d",
+	hdd_nofl_info("BW TH - Very High: %d High: %d Med: %d Low: %d",
+		      hdd_ctx->config->bus_bw_very_high_threshold,
 		      hdd_ctx->config->bus_bw_high_threshold,
 		      hdd_ctx->config->bus_bw_medium_threshold,
 		      hdd_ctx->config->bus_bw_low_threshold);

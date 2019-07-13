@@ -2915,6 +2915,8 @@ static void hdd_ini_tx_flow_control(struct hdd_config *config,
 static void hdd_ini_bus_bandwidth(struct hdd_config *config,
 				  struct wlan_objmgr_psoc *psoc)
 {
+	config->bus_bw_very_high_threshold =
+		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_VERY_HIGH_THRESHOLD);
 	config->bus_bw_high_threshold =
 		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_HIGH_THRESHOLD);
 	config->bus_bw_medium_threshold =
