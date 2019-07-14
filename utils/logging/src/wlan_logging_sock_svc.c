@@ -30,9 +30,11 @@
 #include "csr_api.h"
 #include "wma.h"
 #include "ol_txrx_api.h"
-#include "pktlog_ac.h"
 #include <cdp_txrx_misc.h>
 #endif
+#if defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
+#include <pktlog_ac.h>
+#endif /* FEATURE_PKTLOG */
 #include <wlan_logging_sock_svc.h>
 #include <linux/kthread.h>
 #include <qdf_time.h>
@@ -63,9 +65,32 @@
 #endif
 #define MAX_LOGMSG_LENGTH 2048
 #define MAX_SKBMSG_LENGTH 4096
-#define MAX_PKTSTATS_LENGTH 2048
-#define MAX_PKTSTATS_BUFF   16
 
+#define WLAN_LOG_BUFFER_SIZE 2048
+#if defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
+/**
+ * Buffer to accommodate -
+ * pktlog buffer (2048 bytes)
+ * ath_pktlog_hdr (16 bytes)
+ * pkt_dump (8 bytes)
+ * extra padding (40 bytes)
+ *
+ * Note: pktlog buffer size is dependent on RX_BUFFER_SIZE and
+ * HTT_T2H_MAX_MSG_SIZE. Adjust WLAN_LOG_BUFFER_SIZE
+ * based on the above mentioned macros.
+ */
+#define ATH_PKTLOG_HDR_SIZE (sizeof(struct ath_pktlog_hdr))
+#define PKT_DUMP_HDR_SIZE (sizeof(struct packet_dump))
+#define EXTRA_PADDING 40
+
+#define MAX_PKTSTATS_LENGTH \
+	((WLAN_LOG_BUFFER_SIZE) + (ATH_PKTLOG_HDR_SIZE) + \
+	 (PKT_DUMP_HDR_SIZE) + (EXTRA_PADDING))
+#else
+#define MAX_PKTSTATS_LENGTH WLAN_LOG_BUFFER_SIZE
+#endif /* FEATURE_PKTLOG */
+
+#define MAX_PKTSTATS_BUFF   16
 #define HOST_LOG_DRIVER_MSG        0x001
 #define HOST_LOG_PER_PKT_STATS     0x002
 #define HOST_LOG_FW_FLUSH_COMPLETE 0x003
