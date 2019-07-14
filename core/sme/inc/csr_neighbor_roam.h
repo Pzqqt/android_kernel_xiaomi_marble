@@ -308,10 +308,52 @@ QDF_STATUS csr_roam_read_tsf(struct mac_context *mac, uint8_t *pTimestamp,
 QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 	struct roam_offload_synch_ind *roam_synch_data,
 	struct bss_description *bss_desc_ptr, enum sir_roam_op_code reason);
+
+/**
+ * csr_roam_auth_offload_callback() - Registered CSR Callback function to handle
+ * WPA3 roam pre-auth event from firmware.
+ * @mac_ctx: Global mac context pointer
+ * @vdev_id: Vdev id
+ * @bssid: candidate AP bssid
+ */
+QDF_STATUS
+csr_roam_auth_offload_callback(struct mac_context *mac_ctx,
+			       uint8_t vdev_id,
+			       struct qdf_mac_addr bssid);
+
+/**
+ * csr_process_roam_auth_offload_callback() - API to trigger the
+ * WPA3 pre-auth event for candidate AP received from firmware.
+ * @vdev_id: vdev id
+ * @roam_bssid: Candidate BSSID to roam
+ *
+ * This function calls the hdd_sme_roam_callback with reason
+ * eCSR_ROAM_SAE_COMPUTE to trigger SAE auth to supplicant.
+ */
+QDF_STATUS
+csr_process_roam_auth_offload_callback(struct mac_context *mac_ctx,
+				       uint8_t vdev_id,
+				       struct qdf_mac_addr roam_bssid);
 #else
 static inline QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 	struct roam_offload_synch_ind *roam_synch_data,
 	struct bss_description *bss_desc_ptr, enum sir_roam_op_code reason)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+csr_roam_auth_offload_callback(struct mac_context *mac_ctx,
+			       uint8_t vdev_id,
+			       struct qdf_mac_addr bssid)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+csr_process_roam_auth_offload_callback(struct mac_context *mac_ctx,
+				       uint8_t vdev_id,
+				       struct qdf_mac_addr roam_bssid)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

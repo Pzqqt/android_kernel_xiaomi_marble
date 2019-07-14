@@ -3126,6 +3126,69 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	return 0;
 }
 
+int wma_roam_auth_offload_event_handler(WMA_HANDLE handle, uint8_t *event,
+					uint32_t len)
+{
+	QDF_STATUS status;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	struct mac_context *mac_ctx;
+	wmi_roam_preauth_start_event_fixed_param *rso_auth_start_ev;
+	WMI_ROAM_PREAUTH_START_EVENTID_param_tlvs *param_buf;
+	struct qdf_mac_addr ap_bssid;
+	uint8_t vdev_id;
+
+	if (!event) {
+		wma_err_rl("received null event from target");
+		return -EINVAL;
+	}
+
+	param_buf = (WMI_ROAM_PREAUTH_START_EVENTID_param_tlvs *) event;
+	if (!param_buf) {
+		wma_err_rl("received null buf from target");
+		return -EINVAL;
+	}
+
+	rso_auth_start_ev = param_buf->fixed_param;
+	if (!rso_auth_start_ev) {
+		wma_err_rl("received null event data from target");
+		return -EINVAL;
+	}
+
+	if (rso_auth_start_ev->vdev_id > wma->max_bssid) {
+		wma_err_rl("received invalid vdev_id %d",
+			   rso_auth_start_ev->vdev_id);
+		return -EINVAL;
+	}
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		wma_err("NULL mac ptr");
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
+
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&rso_auth_start_ev->candidate_ap_bssid,
+				   ap_bssid.bytes);
+	if (qdf_is_macaddr_zero(&ap_bssid) ||
+	    qdf_is_macaddr_broadcast(&ap_bssid) ||
+	    qdf_is_macaddr_group(&ap_bssid)) {
+		wma_err_rl("Invalid bssid");
+		return -EINVAL;
+	}
+
+	vdev_id = rso_auth_start_ev->vdev_id;
+	wma_debug("Received Roam auth offload event for bss:%pM vdev_id:%d",
+		  ap_bssid.bytes, vdev_id);
+
+	status = wma->csr_roam_auth_event_handle_cb(mac_ctx, vdev_id, ap_bssid);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err_rl("Trigger pre-auth failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 #define RSN_CAPS_SHIFT               16
 /**
  * wma_roam_scan_fill_self_caps() - fill capabilities

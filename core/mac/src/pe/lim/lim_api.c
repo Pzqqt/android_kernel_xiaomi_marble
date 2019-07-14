@@ -1316,6 +1316,7 @@ void pe_register_callbacks_with_wma(struct mac_context *mac,
 
 	status = wma_register_roaming_callbacks(
 			ready_req->csr_roam_synch_cb,
+			ready_req->csr_roam_auth_event_handle_cb,
 			ready_req->pe_roam_synch_cb,
 			ready_req->pe_disconnect_cb);
 	if (status != QDF_STATUS_SUCCESS)

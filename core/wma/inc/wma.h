@@ -998,6 +998,8 @@ struct wma_wlm_stats_data {
  *   event in the serialized MC thread context with a timer.
  * @csr_roam_synch_cb: CSR callback for firmware Roam Sync events
  * @pe_roam_synch_cb: pe callback for firmware Roam Sync events
+ * @csr_roam_auth_event_handle_cb: CSR callback for target authentication
+ * offload event.
  * @wmi_cmd_rsp_wake_lock: wmi command response wake lock
  * @wmi_cmd_rsp_runtime_lock: wmi command response bus lock
  * @active_uc_apf_mode: Setting that determines how APF is applied in
@@ -1123,6 +1125,9 @@ typedef struct {
 		struct roam_offload_synch_ind *roam_synch_data,
 		struct bss_description *bss_desc_ptr,
 		enum sir_roam_op_code reason);
+	QDF_STATUS (*csr_roam_auth_event_handle_cb)(struct mac_context *mac,
+						    uint8_t vdev_id,
+						    struct qdf_mac_addr bssid);
 	QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 		struct roam_offload_synch_ind *roam_synch_data,
 		struct bss_description *bss_desc_ptr,
