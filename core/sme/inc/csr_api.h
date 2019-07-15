@@ -197,6 +197,7 @@ typedef enum {
 typedef struct tagCsrChannelInfo {
 	uint8_t numOfChannels;
 	uint8_t *ChannelList;   /* it will be an array of channels */
+	uint32_t *freq_list;
 } tCsrChannelInfo, *tpCsrChannelInfo;
 
 typedef enum {
