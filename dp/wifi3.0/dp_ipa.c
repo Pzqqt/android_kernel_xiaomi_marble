@@ -403,6 +403,7 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 	struct hal_srng_params srng_params;
 	qdf_dma_addr_t hp_addr;
 	unsigned long addr_offset, dev_base_paddr;
+	uint32_t ix0;
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
@@ -517,6 +518,21 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		(void *)soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_vaddr,
 		srng_params.num_entries,
 		soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_size);
+
+	/*
+	 * Set DEST_RING_MAPPING_4 to SW2 as default value for
+	 * DESTINATION_RING_CTRL_IX_0.
+	 */
+	ix0 = HAL_REO_REMAP_IX0(REO_REMAP_TCL, 0) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW1, 1) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW2, 2) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW3, 3) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW2, 4) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_RELEASE, 5) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 6) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 7);
+
+	hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL, NULL, NULL);
 
 	return 0;
 }
@@ -776,10 +792,13 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *ppdev)
 		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 21) |
 		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 22) |
 		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 23);
-	}
 
-	hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
-				   &ix2, &ix2);
+		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
+					   &ix2, &ix2);
+	} else {
+		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
+					   NULL, NULL);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -818,6 +837,9 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_pdev *ppdev)
 
 		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
 					   &ix2, &ix3);
+	} else {
+		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
+					   NULL, NULL);
 	}
 
 	return QDF_STATUS_SUCCESS;
