@@ -333,6 +333,7 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 	uint32_t                frame_len;
 	uint32_t                status;
 	uint8_t                 target_channel;
+	uint32_t                target_freq;
 
 	hdr = WMA_GET_RX_MAC_HEADER(rx_packet_info);
 	body = WMA_GET_RX_MPDU_DATA(rx_packet_info);
@@ -361,7 +362,7 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 
 	target_channel =
 	 ext_channel_switch_frame->ext_chan_switch_ann_action.new_channel;
-
+	target_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, target_channel);
 	/* Free ext_channel_switch_frame here as its no longer needed */
 	qdf_mem_free(ext_channel_switch_frame);
 	/*
@@ -369,13 +370,13 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 	 * channel and if is valid in the current regulatory domain,
 	 * and no concurrent session is running.
 	 */
-	if (!((session_entry->currentOperChannel != target_channel) &&
-		((wlan_reg_get_channel_state(mac_ctx->pdev, target_channel) ==
+	if (!(session_entry->curr_op_freq != target_freq &&
+	      ((wlan_reg_get_channel_state(mac_ctx->pdev, target_channel) ==
 		  CHANNEL_STATE_ENABLE) ||
-		 (wlan_reg_get_channel_state(mac_ctx->pdev, target_channel) ==
+	       (wlan_reg_get_channel_state(mac_ctx->pdev, target_channel) ==
 		  CHANNEL_STATE_DFS &&
-		  !policy_mgr_concurrent_open_sessions_running(
-			  mac_ctx->psoc))))) {
+		!policy_mgr_concurrent_open_sessions_running(
+			mac_ctx->psoc))))) {
 		pe_err("Channel: %d is not valid", target_channel);
 		return;
 	}
@@ -469,7 +470,7 @@ static void __lim_process_operating_mode_action_frame(struct mac_context *mac_ct
 		goto end;
 	}
 
-	if (CHAN_ENUM_14 >= session->currentOperChannel)
+	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq))
 		cb_mode = mac_ctx->roam.configParam.channelBondingMode24GHz;
 	else
 		cb_mode = mac_ctx->roam.configParam.channelBondingMode5GHz;

@@ -235,9 +235,9 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *msg_buf)
 		if (send_bcon_ind) {
 			/* Configure beacon and send beacons to HAL */
 			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-					FL("Start Beacon with ssid %s Ch %d"),
+					"Start Beacon with ssid %s Ch freq %d",
 					pe_session->ssId.ssId,
-					pe_session->currentOperChannel);
+					pe_session->curr_op_freq);
 			lim_send_beacon(mac, pe_session);
 			lim_enable_obss_detection_config(mac, pe_session);
 			lim_send_obss_color_collision_cfg(mac, pe_session,
@@ -3018,10 +3018,12 @@ static void lim_process_switch_channel_join_req(
 				mac_ctx->lim.gLimHeartBeatApMac[apCount], sizeof(tSirMacAddr))) {
 
 				pe_err("Index %d Sessionid: %d Send deauth on "
-				"channel %d to BSSID: "QDF_MAC_ADDR_STR, apCount,
-				session_entry->peSessionId, session_entry->currentOperChannel,
-				QDF_MAC_ADDR_ARRAY(session_entry->pLimMlmJoinReq->bssDescription.
-											bssId));
+				"channel freq %d to BSSID: " QDF_MAC_ADDR_STR,
+				apCount,
+				session_entry->peSessionId,
+				session_entry->curr_op_freq,
+				QDF_MAC_ADDR_ARRAY(
+				session_entry->pLimMlmJoinReq->bssDescription.bssId));
 
 				lim_send_deauth_mgmt_frame(mac_ctx, eSIR_MAC_UNSPEC_FAILURE_REASON,
 					session_entry->pLimMlmJoinReq->bssDescription.bssId,
@@ -3060,9 +3062,9 @@ static void lim_process_switch_channel_join_req(
 	/* assign appropriate sessionId to the timer object */
 	mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer.sessionId =
 		session_entry->peSessionId;
-	pe_debug("Sessionid: %d Send Probe req on channel %d ssid:%.*s "
+	pe_debug("Sessionid: %d Send Probe req on channel freq %d ssid:%.*s "
 		"BSSID: " QDF_MAC_ADDR_STR, session_entry->peSessionId,
-		session_entry->currentOperChannel, ssId.length, ssId.ssId,
+		session_entry->curr_op_freq, ssId.length, ssId.ssId,
 		QDF_MAC_ADDR_ARRAY(
 		session_entry->pLimMlmJoinReq->bssDescription.bssId));
 
@@ -3086,7 +3088,9 @@ static void lim_process_switch_channel_join_req(
 	/* include additional IE if there is */
 	lim_send_probe_req_mgmt_frame(mac_ctx, &ssId,
 		session_entry->pLimMlmJoinReq->bssDescription.bssId,
-		session_entry->currentOperChannel, session_entry->self_mac_addr,
+		wlan_reg_freq_to_chan(mac_ctx->pdev,
+				      session_entry->curr_op_freq),
+		session_entry->self_mac_addr,
 		session_entry->dot11mode,
 		&session_entry->lim_join_req->addIEScan.length,
 		session_entry->lim_join_req->addIEScan.addIEdata);

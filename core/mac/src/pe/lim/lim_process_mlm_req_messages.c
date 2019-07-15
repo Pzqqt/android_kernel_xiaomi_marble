@@ -547,7 +547,6 @@ end:
 static void lim_post_join_set_link_state_callback(struct mac_context *mac,
 		void *callback_arg, bool status)
 {
-	uint8_t chan_num, sec_chan_offset;
 	struct session_params *session_cb_param =
 					(struct session_params *)callback_arg;
 	tLimMlmJoinCnf mlm_join_cnf;
@@ -572,8 +571,6 @@ static void lim_post_join_set_link_state_callback(struct mac_context *mac,
 		goto failure;
 	}
 
-	chan_num = session_entry->currentOperChannel;
-	sec_chan_offset = session_entry->htSecondaryChannelOffset;
 	/*
 	 * store the channel switch session_entry in the lim
 	 * global variable
@@ -582,12 +579,14 @@ static void lim_post_join_set_link_state_callback(struct mac_context *mac,
 			 LIM_SWITCH_CHANNEL_JOIN;
 	session_entry->pLimMlmReassocRetryReq = NULL;
 	pe_debug("[lim_process_mlm_join_req]: suspend link success(%d) "
-		"on sessionid: %d setting channel to: %d with ch_width :%d "
-		"and maxtxPower: %d", status, session_entry->peSessionId,
-		session_entry->currentOperChannel,
-		session_entry->ch_width,
-		session_entry->maxTxPower);
-	lim_set_channel(mac, session_entry->currentOperChannel,
+		 "on sessionid: %d setting channel to: freq %d with ch_width :%d "
+		 "and maxtxPower: %d", status, session_entry->peSessionId,
+		 session_entry->curr_op_freq,
+		 session_entry->ch_width,
+		 session_entry->maxTxPower);
+	lim_set_channel(
+		mac,
+		wlan_reg_freq_to_chan(mac->pdev, session_entry->curr_op_freq),
 		session_entry->ch_center_freq_seg0,
 		session_entry->ch_center_freq_seg1,
 		session_entry->ch_width,
@@ -2125,7 +2124,8 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 		ssid.length = session->ssId.length;
 		lim_send_probe_req_mgmt_frame(mac_ctx, &ssid,
 			session->pLimMlmJoinReq->bssDescription.bssId,
-			session->currentOperChannel /*chanNum */,
+			wlan_reg_freq_to_chan(mac_ctx->pdev,
+					      session->curr_op_freq),
 			session->self_mac_addr, session->dot11mode,
 			&session->lim_join_req->addIEScan.length,
 			session->lim_join_req->addIEScan.addIEdata);
@@ -2369,9 +2369,9 @@ void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 	 * when device has missed the assoc resp sent by peer.
 	 * By sending deauth try to clear the session created on peer device.
 	 */
-	pe_debug("Sessionid: %d try sending deauth on channel %d to BSSID: "
+	pe_debug("Sessionid: %d try sending deauth on channel freq %d to BSSID: "
 		QDF_MAC_ADDR_STR, session->peSessionId,
-		session->currentOperChannel,
+		session->curr_op_freq,
 		QDF_MAC_ADDR_ARRAY(session->bssId));
 	lim_send_deauth_mgmt_frame(mac_ctx, eSIR_MAC_UNSPEC_FAILURE_REASON,
 		session->bssId, session, false);

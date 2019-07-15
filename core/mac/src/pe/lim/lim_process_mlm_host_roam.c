@@ -595,7 +595,6 @@ end:
 void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 				    tLimMlmReassocReq *reassoc_req)
 {
-	uint8_t chanNum = 0;
 	struct pe_session *session;
 	uint16_t caps;
 	uint32_t val;
@@ -614,8 +613,6 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 		qdf_mem_free(reassoc_req);
 		return;
 	}
-
-	chanNum = session->currentOperChannel;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(mac, WLAN_PE_DIAG_REASSOCIATING,

@@ -636,7 +636,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 		session->maxTxPower =
 			lim_get_regulatory_max_transmit_power(mac_ctx,
-				session->currentOperChannel);
+				wlan_reg_freq_to_chan(
+				mac_ctx->pdev, session->curr_op_freq));
 		/* Store the dot 11 mode in to the session Table */
 		session->dot11mode = sme_start_bss_req->dot11mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -671,7 +672,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			     (void *)&sme_start_bss_req->extendedRateSet,
 			     sizeof(tSirMacRateSet));
 
-		if (IS_5G_CH(session->currentOperChannel))
+		if (wlan_reg_is_5ghz_ch_freq(session->curr_op_freq))
 			vdev_type_nss = &mac_ctx->vdev_type_nss_5g;
 		else
 			vdev_type_nss = &mac_ctx->vdev_type_nss_2g;
@@ -874,7 +875,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			}
 		}
 		/* store the channel num in mlmstart req structure */
-		mlm_start_req->channelNumber = session->currentOperChannel;
+		mlm_start_req->channelNumber = wlan_reg_freq_to_chan(
+				mac_ctx->pdev, session->curr_op_freq);
 		mlm_start_req->cbMode = sme_start_bss_req->cbMode;
 		mlm_start_req->beaconPeriod =
 			session->beaconParams.beaconInterval;
@@ -1466,12 +1468,14 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		if (PHY_DOUBLE_CHANNEL_HIGH_PRIMARY == sme_join_req->cbMode) {
 			session->ch_center_freq_seg0 =
-				session->currentOperChannel - 2;
+				wlan_reg_freq_to_chan(
+				mac_ctx->pdev, session->curr_op_freq) - 2;
 			session->ch_width = CH_WIDTH_40MHZ;
 		} else if (PHY_DOUBLE_CHANNEL_LOW_PRIMARY ==
 				sme_join_req->cbMode) {
 			session->ch_center_freq_seg0 =
-				session->currentOperChannel + 2;
+				wlan_reg_freq_to_chan(
+				mac_ctx->pdev, session->curr_op_freq) + 2;
 			session->ch_width = CH_WIDTH_40MHZ;
 		} else {
 			session->ch_center_freq_seg0 = 0;
@@ -1590,8 +1594,9 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		session->limCurrentBssCaps =
 			session->lim_join_req->bssDescription.capabilityInfo;
 
-		reg_max = lim_get_regulatory_max_transmit_power(mac_ctx,
-				session->currentOperChannel);
+		reg_max = lim_get_regulatory_max_transmit_power(
+			mac_ctx, wlan_reg_freq_to_chan(mac_ctx->pdev,
+						       session->curr_op_freq));
 		local_power_constraint = reg_max;
 
 		lim_extract_ap_capability(mac_ctx,
@@ -1607,9 +1612,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		tx_pwr_attr.ap_tx_power = local_power_constraint;
 		tx_pwr_attr.ini_tx_power =
 				mac_ctx->mlme_cfg->power.max_tx_power;
-		tx_pwr_attr.frequency =
-			wlan_reg_get_channel_freq(mac_ctx->pdev,
-						  session->currentOperChannel);
+		tx_pwr_attr.frequency = session->curr_op_freq;
 
 		session->maxTxPower = lim_get_max_tx_power(mac_ctx,
 							   &tx_pwr_attr);
@@ -1635,8 +1638,9 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			session->gUapsdPerAcTriggerEnableMask = 0;
 		}
 
-		session->limRFBand =
-			lim_get_rf_band(session->currentOperChannel);
+		session->limRFBand = lim_get_rf_band(
+			wlan_reg_freq_to_chan(mac_ctx->pdev,
+					      session->curr_op_freq));
 
 		/* Initialize 11h Enable Flag */
 		if (session->limRFBand == BAND_5G)
@@ -1664,8 +1668,10 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		/* Enable the spectrum management if this is a DFS channel */
 		if (session->country_info_present &&
-			lim_isconnected_on_dfs_channel(mac_ctx,
-					session->currentOperChannel))
+		    lim_isconnected_on_dfs_channel(
+				mac_ctx,
+				wlan_reg_freq_to_chan(
+				mac_ctx->pdev, session->curr_op_freq)))
 			session->spectrumMgtEnabled = true;
 
 		session->isOSENConnection = sme_join_req->isOSENConnection;
@@ -1918,8 +1924,9 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 
 	session_entry->limReassocBssCaps =
 		session_entry->pLimReAssocReq->bssDescription.capabilityInfo;
-	reg_max = lim_get_regulatory_max_transmit_power(mac_ctx,
-			session_entry->currentOperChannel);
+	reg_max = lim_get_regulatory_max_transmit_power(
+		mac_ctx, wlan_reg_freq_to_chan(
+		mac_ctx->pdev, session_entry->curr_op_freq));
 	local_pwr_constraint = reg_max;
 
 	lim_extract_ap_capability(mac_ctx,
@@ -1985,8 +1992,9 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 
 	/* Enable the spectrum management if this is a DFS channel */
 	if (session_entry->country_info_present &&
-			lim_isconnected_on_dfs_channel(mac_ctx,
-				session_entry->currentOperChannel))
+	    lim_isconnected_on_dfs_channel(
+		mac_ctx, wlan_reg_freq_to_chan(
+		mac_ctx->pdev, session_entry->curr_op_freq)))
 		session_entry->spectrumMgtEnabled = true;
 
 	session_entry->limPrevSmeState = session_entry->limSmeState;
@@ -4942,9 +4950,9 @@ static void lim_process_sme_start_beacon_req(struct mac_context *mac, uint32_t *
 		 */
 		lim_apply_configuration(mac, pe_session);
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			  FL("Start Beacon with ssid %s Ch %d"),
+			  FL("Start Beacon with ssid %s Ch freq %d"),
 			  pe_session->ssId.ssId,
-			  pe_session->currentOperChannel);
+			  pe_session->curr_op_freq);
 		lim_send_beacon(mac, pe_session);
 		lim_enable_obss_detection_config(mac, pe_session);
 		lim_send_obss_color_collision_cfg(mac, pe_session,
@@ -5015,12 +5023,16 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE session_id */
 	int8_t max_tx_pwr;
+	uint32_t target_freq;
 
 	if (!msg_buf) {
 		pe_err("msg_buf is NULL");
 		return;
 	}
 	ch_change_req = (tpSirChanChangeRequest)msg_buf;
+
+	target_freq = wlan_reg_chan_to_freq(
+		mac_ctx->pdev, ch_change_req->targetChannel);
 
 	max_tx_pwr = lim_get_regulatory_max_transmit_power(
 				mac_ctx, ch_change_req->targetChannel);
@@ -5039,11 +5051,10 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if ((session_entry->currentOperChannel ==
-			ch_change_req->targetChannel) &&
-	     (session_entry->ch_width == ch_change_req->ch_width)) {
-		pe_err("Target channel and mode is same as current channel and mode channel %d and mode %d",
-		       session_entry->currentOperChannel, session_entry->ch_width);
+	if (session_entry->curr_op_freq == target_freq &&
+	    session_entry->ch_width == ch_change_req->ch_width) {
+		pe_err("Target channel and mode is same as current channel and mode channel freq %d and mode %d",
+		       session_entry->curr_op_freq, session_entry->ch_width);
 		return;
 	}
 
@@ -5054,9 +5065,9 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 		session_entry->channelChangeReasonCode =
 			LIM_SWITCH_CHANNEL_MONITOR;
 
-	pe_debug("switch old chnl %d to new chnl %d, ch_bw %d, nw_type %d, dot11mode %d",
-		 session_entry->currentOperChannel,
-		 ch_change_req->targetChannel,
+	pe_debug("switch old chnl (freq) %d to new chnl %d, ch_bw %d, nw_type %d, dot11mode %d",
+		 session_entry->curr_op_freq,
+		 target_freq,
 		 ch_change_req->ch_width,
 		 ch_change_req->nw_type,
 		 ch_change_req->dot11mode);
@@ -5072,12 +5083,12 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 		(ch_change_req->ch_width ? 1 : 0);
 	session_entry->htRecommendedTxWidthSet =
 		session_entry->htSupportedChannelWidthSet;
-	session_entry->curr_op_freq = wlan_reg_chan_to_freq(
-				mac_ctx->pdev, ch_change_req->targetChannel);
+	session_entry->curr_op_freq = target_freq;
 	session_entry->currentOperChannel = wlan_reg_freq_to_chan(
 				mac_ctx->pdev, session_entry->curr_op_freq);
-	session_entry->limRFBand =
-		lim_get_rf_band(session_entry->currentOperChannel);
+	session_entry->limRFBand = lim_get_rf_band(
+		wlan_reg_freq_to_chan(
+		mac_ctx->pdev, session_entry->curr_op_freq));
 	session_entry->cac_duration_ms = ch_change_req->cac_duration_ms;
 	session_entry->dfs_regdomain = ch_change_req->dfs_regdomain;
 	session_entry->maxTxPower = max_tx_pwr;

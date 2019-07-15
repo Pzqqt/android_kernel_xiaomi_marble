@@ -503,7 +503,8 @@ void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 		 * DFS channel then only send the probe request otherwise tear
 		 * down the link
 		 */
-		curr_chan = session->currentOperChannel;
+		curr_chan = wlan_reg_freq_to_chan(
+					mac_ctx->pdev, session->curr_op_freq);
 		if (!lim_isconnected_on_dfs_channel(mac_ctx, curr_chan)) {
 			/* Detected continuous Beacon Misses */
 			session->LimHBFailureStatus = true;
