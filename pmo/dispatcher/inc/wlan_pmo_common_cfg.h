@@ -116,7 +116,7 @@
  * <ini>
  * gEnableDynamicDTIM - Enable Dynamic DTIM
  * @Min: 0
- * @Max: 5
+ * @Max: 9
  * @Default: 0
  *
  * This ini is used to enable/disable dynamic DTIM.
@@ -132,7 +132,7 @@
 #define CFG_PMO_ENABLE_DYNAMIC_DTIM CFG_INI_UINT( \
 	"gEnableDynamicDTIM", \
 	0, \
-	5, \
+	9, \
 	0, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Enable Dynamic DTIM")
