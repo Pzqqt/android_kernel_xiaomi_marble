@@ -254,7 +254,9 @@ populate_dot11_supp_operating_classes(struct mac_context *mac_ptr,
 					&dot_11_ptr->classes[1]);
 	dot_11_ptr->classes[0] = wlan_reg_dmn_get_opclass_from_channel(
 					mac_ptr->scan.countryCodeCurrent,
-					session_entry->currentOperChannel,
+					wlan_reg_freq_to_chan(
+					mac_ptr->pdev,
+					session_entry->curr_op_freq),
 					ch_bandwidth);
 	dot_11_ptr->num_classes++;
 	dot_11_ptr->present = 1;
@@ -374,7 +376,8 @@ populate_dot11f_avoid_channel_ie(struct mac_context *mac_ctx,
 
 	dot11f->present = true;
 	dot11f->type = QCOM_VENDOR_IE_MCC_AVOID_CH;
-	dot11f->channel = pe_session->currentOperChannel;
+	dot11f->channel = wlan_reg_freq_to_chan(
+		mac_ctx->pdev, pe_session->curr_op_freq);
 }
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
@@ -713,12 +716,13 @@ populate_dot11f_ht_caps(struct mac_context *mac,
 			 disable_high_ht_mcs_2x2);
 		if (pe_session->nss == NSS_1x1_MODE) {
 			pDot11f->supportedMCSSet[1] = 0;
-		} else if (IS_24G_CH(pe_session->currentOperChannel) &&
+		} else if (wlan_reg_is_24ghz_ch_freq(
+			   pe_session->curr_op_freq) &&
 			   disable_high_ht_mcs_2x2 &&
 			   (pe_session->opmode == QDF_STA_MODE)) {
-				pe_debug("Disabling high HT MCS [%d]",
-					 disable_high_ht_mcs_2x2);
-				pDot11f->supportedMCSSet[1] =
+			pe_debug("Disabling high HT MCS [%d]",
+				 disable_high_ht_mcs_2x2);
+			pDot11f->supportedMCSSet[1] =
 					(pDot11f->supportedMCSSet[1] >>
 						disable_high_ht_mcs_2x2);
 		}
@@ -1190,7 +1194,8 @@ populate_dot11f_ht_info(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pDot11f->primaryChannel = pe_session->currentOperChannel;
+	pDot11f->primaryChannel = wlan_reg_freq_to_chan(
+		mac->pdev, pe_session->curr_op_freq);
 
 	pDot11f->secondaryChannelOffset =
 		pe_session->htSecondaryChannelOffset;
@@ -1699,7 +1704,8 @@ populate_dot11f_tpc_report(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	tx_power = lim_get_regulatory_max_transmit_power(
-				mac, pe_session->currentOperChannel);
+				mac, wlan_reg_freq_to_chan(
+				mac->pdev, pe_session->curr_op_freq));
 	pDot11f->tx_power = tx_power;
 	pDot11f->link_margin = 0;
 	pDot11f->present = 1;
@@ -5942,14 +5948,14 @@ QDF_STATUS populate_dot11f_he_caps(struct mac_context *mac_ctx, struct pe_sessio
 	if (he_cap->ppet_present) {
 		value = WNI_CFG_HE_PPET_LEN;
 		/* if session is present, populate PPET based on band */
-		if (IS_5G_CH(session->currentOperChannel))
-		qdf_mem_copy(he_cap->ppet.ppe_threshold.ppe_th,
-			     mac_ctx->mlme_cfg->he_caps.he_ppet_5g,
-			     value);
+		if (wlan_reg_is_5ghz_ch_freq(session->curr_op_freq))
+			qdf_mem_copy(he_cap->ppet.ppe_threshold.ppe_th,
+				     mac_ctx->mlme_cfg->he_caps.he_ppet_5g,
+				     value);
 		else
-		qdf_mem_copy(he_cap->ppet.ppe_threshold.ppe_th,
-			     mac_ctx->mlme_cfg->he_caps.he_ppet_2g,
-			     value);
+			qdf_mem_copy(he_cap->ppet.ppe_threshold.ppe_th,
+				     mac_ctx->mlme_cfg->he_caps.he_ppet_2g,
+				     value);
 
 		ppet = he_cap->ppet.ppe_threshold.ppe_th;
 		he_cap->ppet.ppe_threshold.num_ppe_th =

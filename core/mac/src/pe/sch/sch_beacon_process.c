@@ -59,7 +59,8 @@ ap_beacon_process_5_ghz(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	if (!session->htCapability)
 		return;
 
-	if (bcn_struct->channelNumber != session->currentOperChannel)
+	if (bcn_struct->channelNumber != wlan_reg_freq_to_chan(
+		mac_ctx->pdev, session->curr_op_freq))
 		return;
 
 	/* 11a (non HT) AP  overlaps or */
@@ -102,7 +103,8 @@ ap_beacon_process_24_ghz(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	/* We are 11G AP. */
 	if ((phy_mode == WNI_CFG_PHY_MODE_11G) &&
 	    (false == session->htCapability)) {
-		if (bcn_struct->channelNumber != session->currentOperChannel)
+		if (bcn_struct->channelNumber != wlan_reg_freq_to_chan(
+			mac_ctx->pdev, session->curr_op_freq))
 			return;
 
 		tmp_exp = (!bcn_struct->erpPresent &&
@@ -131,7 +133,8 @@ ap_beacon_process_24_ghz(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	if (!session->htCapability)
 		return;
 
-	if (bcn_struct->channelNumber != session->currentOperChannel)
+	if (bcn_struct->channelNumber != wlan_reg_freq_to_chan(
+		mac_ctx->pdev, session->curr_op_freq))
 		return;
 
 	tmp_exp = (!bcn_struct->erpPresent && !bcn_struct->HTInfo.present) ||
@@ -353,10 +356,12 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 	 * This is the Beacon received from the AP  we're currently associated
 	 * with. Check if there are any changes in AP's capabilities
 	 */
-	if ((uint8_t) bcn->channelNumber != session->currentOperChannel) {
-		pe_err("Channel Change from %d --> %d - Ignoring beacon!",
-		       session->currentOperChannel,
-		       bcn->channelNumber);
+	if (bcn->channelNumber != wlan_reg_freq_to_chan(
+		mac_ctx->pdev, session->curr_op_freq)) {
+		pe_err("Channel Change freq from %d --> %d - Ignoring beacon!",
+		       session->curr_op_freq,
+		       wlan_reg_chan_to_freq(
+				mac_ctx->pdev, bcn->channelNumber));
 		return false;
 	}
 
@@ -724,7 +729,7 @@ sch_bcn_process_sta_ibss(struct mac_context *mac_ctx,
 	uint16_t aid;
 	uint8_t cb_mode;
 
-	if (CHAN_ENUM_14 >= session->currentOperChannel) {
+	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq)) {
 		if (session->force_24ghz_in_ht20)
 			cb_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 		else
@@ -869,7 +874,8 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 					&beaconParams, &sendProbeReq, pMh);
 	/* Obtain the Max Tx power for the current regulatory  */
 	regMax = lim_get_regulatory_max_transmit_power(
-				mac_ctx, session->currentOperChannel);
+				mac_ctx, wlan_reg_freq_to_chan(
+				mac_ctx->pdev, session->curr_op_freq));
 
 	local_constraint = regMax;
 
@@ -891,9 +897,7 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	tx_pwr_attr.reg_max = regMax;
 	tx_pwr_attr.ap_tx_power = local_constraint;
 	tx_pwr_attr.ini_tx_power = mac_ctx->mlme_cfg->power.max_tx_power;
-	tx_pwr_attr.frequency =
-			wlan_reg_get_channel_freq(mac_ctx->pdev,
-						  session->currentOperChannel);
+	tx_pwr_attr.frequency = session->curr_op_freq;
 
 	maxTxPower = lim_get_max_tx_power(mac_ctx, &tx_pwr_attr);
 
@@ -924,7 +928,8 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	 */
 	if (sendProbeReq)
 		lim_send_probe_req_mgmt_frame(mac_ctx, &session->ssId,
-			session->bssId, session->currentOperChannel,
+			session->bssId, wlan_reg_freq_to_chan(
+			mac_ctx->pdev, session->curr_op_freq),
 			session->self_mac_addr, session->dot11mode, NULL, NULL);
 
 	if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)

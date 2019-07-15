@@ -311,7 +311,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 		if (mac_ctx->roam.configParam.is_force_1x1 &&
 		    is_vendor_ap_1_present && (session_entry->nss == 2) &&
 		    (mac_ctx->lteCoexAntShare == 0 ||
-				IS_5G_CH(session_entry->currentOperChannel))) {
+		     wlan_reg_is_5ghz_ch_freq(session_entry->curr_op_freq))) {
 			/* SET vdev param */
 			pe_debug("sending SMPS intolrent vdev_param");
 			wma_cli_set_command(session_entry->smeSessionId,
@@ -548,11 +548,10 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 					 nwType, pe_session);
 
 			pSirSmeRsp->bssDescription.channelId =
-				pe_session->currentOperChannel;
+				wlan_reg_freq_to_chan(
+				mac->pdev, pe_session->curr_op_freq);
 			pSirSmeRsp->bssDescription.chan_freq =
-				wlan_reg_chan_to_freq(mac->pdev,
-						      pe_session->
-						      currentOperChannel);
+				pe_session->curr_op_freq;
 
 		if (!LIM_IS_NDI_ROLE(pe_session)) {
 			curLen = pe_session->schBeaconOffsetBegin - ieOffset;
@@ -1787,9 +1786,11 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	}
 	pe_debug("new ch width: %d space: %d",
 			session_entry->gLimChannelSwitch.ch_width, chan_space);
-	if ((session_entry->currentOperChannel == csa_params->channel) &&
-		(session_entry->ch_width ==
-		 session_entry->gLimChannelSwitch.ch_width)) {
+	if ((wlan_reg_freq_to_chan(mac_ctx->pdev,
+				   session_entry->curr_op_freq) ==
+		csa_params->channel) &&
+		session_entry->ch_width ==
+		session_entry->gLimChannelSwitch.ch_width) {
 		pe_debug("Ignore CSA, no change in ch and bw");
 		goto err;
 	}
@@ -1985,7 +1986,8 @@ lim_send_sme_ap_channel_switch_resp(struct mac_context *mac,
 	}
 
 	if (!is_ch_dfs) {
-		if (channelId == pe_session->currentOperChannel) {
+		if (channelId == wlan_reg_freq_to_chan(
+				mac->pdev, pe_session->curr_op_freq)) {
 			lim_apply_configuration(mac, pe_session);
 			lim_send_beacon(mac, pe_session);
 		} else {

@@ -2259,8 +2259,9 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 void lim_switch_primary_channel(struct mac_context *mac, uint8_t new_channel,
 				struct pe_session *pe_session)
 {
-	pe_debug("old chnl: %d --> new chnl: %d",
-		       pe_session->currentOperChannel, new_channel);
+	pe_debug("old chnl freq: %d --> new chnl freq: %d",
+		 pe_session->curr_op_freq,
+		 wlan_reg_chan_to_freq(mac->pdev, new_channel));
 
 	pe_session->curr_req_chan_freq = wlan_reg_chan_to_freq(mac->pdev,
 							       new_channel);
@@ -2319,9 +2320,11 @@ void lim_switch_primary_secondary_channel(struct mac_context *mac,
 					false, 0, 0);
 
 	/* Store the new primary and secondary channel in session entries if different */
-	if (pe_session->currentOperChannel != new_channel) {
-		pe_warn("switch old chnl: %d --> new chnl: %d",
-			pe_session->currentOperChannel, new_channel);
+	if (wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq) !=
+			new_channel) {
+		pe_warn("switch old chnl freq: %d --> new chnl freq: %d",
+			pe_session->curr_op_freq, wlan_reg_chan_to_freq(
+			mac->pdev, new_channel));
 		pe_session->curr_op_freq = wlan_reg_chan_to_freq(
 					mac->pdev, new_channel);
 		pe_session->currentOperChannel = wlan_reg_freq_to_chan(
@@ -3951,8 +3954,8 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 		    (mac, eHT_SUPPORTED_CHANNEL_WIDTH_SET, pe_session))
 		return;
 
-	if (WLAN_REG_IS_24GHZ_CH(pe_session->currentOperChannel) &&
-		pe_session->force_24ghz_in_ht20) {
+	if (wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) &&
+	    pe_session->force_24ghz_in_ht20) {
 		pe_debug("force_24ghz_in_ht20 is set and channel is 2.4 Ghz");
 		return;
 	}
@@ -3974,7 +3977,8 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 	}
 
 	/* If channel mismatch the CSA will take care of this change */
-	if (pHTInfo->primaryChannel != pe_session->currentOperChannel) {
+	if (pHTInfo->primaryChannel != wlan_reg_freq_to_chan(
+			mac->pdev, pe_session->curr_op_freq)) {
 		pe_debug("Current channel doesnt match HT info ignore");
 		return;
 	}
@@ -4945,7 +4949,8 @@ static void lim_diag_fill_mgmt_event_report(struct mac_context *mac_ctx,
 		length = WLAN_SSID_MAX_LEN;
 	qdf_mem_copy(mgmt_event->ssid, session->ssId.ssId, length);
 	mgmt_event->ssid_len = length;
-	mgmt_event->operating_channel = session->currentOperChannel;
+	mgmt_event->operating_channel = wlan_reg_freq_to_chan(
+		mac_ctx->pdev, session->curr_op_freq);
 	mgmt_event->result_code = result_code;
 	mgmt_event->reason_code = reason_code;
 }
@@ -7369,7 +7374,7 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 
 	if (session_entry && session_entry->nss == NSS_2x2_MODE) {
 		if (mac_ctx->lteCoexAntShare &&
-			IS_24G_CH(session_entry->currentOperChannel)) {
+		    wlan_reg_is_24ghz_ch_freq(session_entry->curr_op_freq)) {
 			if (IS_2X2_CHAIN(session_entry->chainMask))
 				support_2x2 = true;
 			else
@@ -8078,7 +8083,9 @@ QDF_STATUS lim_ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 		lim_send_vdev_restart(session->mac_ctx, session,
 				      session->smeSessionId);
 	else
-		lim_set_channel(session->mac_ctx, session->currentOperChannel,
+		lim_set_channel(session->mac_ctx,
+				wlan_reg_freq_to_chan(
+				session->mac_ctx->pdev, session->curr_op_freq),
 				session->ch_center_freq_seg0,
 				session->ch_center_freq_seg1,
 				session->ch_width, session->maxTxPower,
@@ -8123,7 +8130,9 @@ QDF_STATUS lim_mon_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	lim_set_channel(mac_ctx, session->currentOperChannel,
+	lim_set_channel(mac_ctx,
+			wlan_reg_freq_to_chan(
+			mac_ctx->pdev, session->curr_op_freq),
 			session->ch_center_freq_seg0,
 			session->ch_center_freq_seg1,
 			session->ch_width,

@@ -515,7 +515,8 @@ void lim_update_bcn_probe_filter(struct mac_context *mac_ctx,
 	filter = &mac_ctx->bcn_filter;
 
 	if (eSIR_INFRA_AP_MODE == bss_type) {
-		filter->sap_channel[session_id] = session->currentOperChannel;
+		filter->sap_channel[session_id] = wlan_reg_freq_to_chan(
+			mac_ctx->pdev, session->curr_op_freq);
 		pe_debug("Updated SAP Filter for session %d channel %d",
 			session_id, filter->sap_channel[session_id]);
 	} else {

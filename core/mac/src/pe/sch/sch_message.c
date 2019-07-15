@@ -212,11 +212,11 @@ broadcast_wmm_of_concurrent_sta_session(struct mac_context *mac_ctx,
 		 */
 		if (!((mac_ctx->lim.gpSession[i].valid == true) &&
 		    (mac_ctx->lim.gpSession[i].peSessionId !=
-		     session->peSessionId)
-		    && (mac_ctx->lim.gpSession[i].currentOperChannel ==
-			session->currentOperChannel)
-		    && (mac_ctx->lim.gpSession[i].limSystemRole
-			== eLIM_STA_ROLE)))
+			session->peSessionId) &&
+		    (mac_ctx->lim.gpSession[i].curr_op_freq ==
+			session->curr_op_freq) &&
+		    (mac_ctx->lim.gpSession[i].limSystemRole ==
+			eLIM_STA_ROLE)))
 			continue;
 
 		concurrent_session = &(mac_ctx->lim.gpSession[i]);
