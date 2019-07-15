@@ -14146,7 +14146,7 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 					struct bss_config_param *pBssConfig,
 					tDot11fBeaconIEs *pIes)
 {
-	uint8_t Channel;
+	uint8_t channel;
 	ePhyChanBondState cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 	bool skip_hostapd_rate = !pProfile->chan_switch_hostapd_rate_enabled;
@@ -14181,20 +14181,21 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 			qdf_mem_zero(&pSession->bssParams.bssid,
 				    sizeof(struct qdf_mac_addr));
 	}
-	Channel = pSession->bssParams.operationChn;
+	channel = pSession->bssParams.operationChn;
 	/* Set operating channel in pProfile which will be used */
 	/* in csr_roam_set_bss_config_cfg() to determine channel bonding */
 	/* mode and will be configured in CFG later */
-	pProfile->operationChannel = Channel;
+	pProfile->operationChannel = channel;
+	pProfile->op_freq = wlan_reg_chan_to_freq(mac->pdev, channel);
 
-	if (Channel == 0)
+	if (channel == 0)
 		sme_err("CSR cannot find a channel to start IBSS");
 	else {
 		csr_roam_determine_max_rate_for_ad_hoc(mac,
 						       &pSession->bssParams.
 						       operationalRateSet);
 		if (CSR_IS_INFRA_AP(pProfile) || CSR_IS_START_IBSS(pProfile)) {
-			if (WLAN_REG_IS_24GHZ_CH(Channel)) {
+			if (WLAN_REG_IS_24GHZ_CH(channel)) {
 				cbMode =
 					mac->roam.configParam.
 					channelBondingMode24GHz;

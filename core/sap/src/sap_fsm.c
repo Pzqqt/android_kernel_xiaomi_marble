@@ -2296,6 +2296,10 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 		&sap_ctx->csr_roamProfile.operationChannel;
 	sap_ctx->csr_roamProfile.operationChannel =
 		(uint8_t)sap_ctx->channel;
+	sap_ctx->csr_roamProfile.op_freq =
+			wlan_reg_chan_to_freq(mac_ctx->pdev,
+					      (uint8_t)sap_ctx->channel);
+
 	sap_ctx->csr_roamProfile.ch_params.ch_width =
 				sap_ctx->ch_params.ch_width;
 	sap_ctx->csr_roamProfile.ch_params.center_freq_seg0 =
