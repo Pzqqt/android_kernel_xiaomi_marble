@@ -681,7 +681,7 @@ struct bss_description {
 	/* whether it is from a probe rsp */
 	uint8_t fProbeRsp;
 	/* Actual channel the beacon/probe response was received on */
-	uint8_t rx_channel;
+	uint32_t rx_freq;
 	tSirMacSeqCtl seq_ctrl;
 	uint32_t WscIeLen;
 	uint8_t WscIeProbeRsp[WSCIE_PROBE_RSP_LEN];

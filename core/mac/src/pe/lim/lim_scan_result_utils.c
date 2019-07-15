@@ -70,7 +70,7 @@ lim_collect_bss_description(struct mac_context *mac,
 	uint32_t ieLen = 0;
 	tpSirMacMgmtHdr pHdr;
 	uint8_t channel_num;
-	uint8_t rxChannel;
+	uint8_t rx_channel;
 	uint8_t rfBand = 0;
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
@@ -82,7 +82,7 @@ lim_collect_bss_description(struct mac_context *mac,
 	}
 	ieLen =
 		WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo) - SIR_MAC_B_PR_SSID_OFFSET;
-	rxChannel = WMA_GET_RX_CH(pRxPacketInfo);
+	rx_channel = WMA_GET_RX_CH(pRxPacketInfo);
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	rfBand = WMA_GET_RX_RFBAND(pRxPacketInfo);
 
@@ -137,7 +137,7 @@ lim_collect_bss_description(struct mac_context *mac,
 	pBssDescr->chan_freq = wlan_reg_chan_to_freq(mac->pdev, channel_num);
 
 	pBssDescr->freq_self = pBssDescr->chan_freq;
-	pBssDescr->rx_channel = rxChannel;
+	pBssDescr->rx_freq = wlan_reg_chan_to_freq(mac->pdev, rx_channel);
 
 	/* set the network type in bss description */
 	pBssDescr->nwType =
