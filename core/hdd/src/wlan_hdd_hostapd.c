@@ -5701,6 +5701,17 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	hdd_enter();
 
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	/**
+	 * In case of SSR and other FW down cases, validate context will
+	 * fail. But return success to upper layer so that it can clean up
+	 * kernal variables like beacon interval. If the failure status
+	 * is returned then next set beacon command will fail as beacon
+	 * interval in not reset.
+	 */
+	if (ret)
+		return 0;
+
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
@@ -5731,10 +5742,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
 	hdd_debug("Device_mode %s(%d)",
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
 
 	/*
 	 * If a STA connection is in progress in another adapter, disconnect
