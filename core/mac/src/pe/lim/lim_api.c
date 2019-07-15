@@ -2197,9 +2197,12 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	}
 	bss_desc_ptr->freq_self = bss_desc_ptr->chan_freq;
 
-	bss_desc_ptr->nwType = lim_get_nw_type(mac, bss_desc_ptr->channelId,
-					       SIR_MAC_MGMT_FRAME,
-					       parsed_frm_ptr);
+	bss_desc_ptr->nwType = lim_get_nw_type(
+			mac,
+			wlan_reg_freq_to_chan(mac->pdev,
+					      bss_desc_ptr->chan_freq),
+			SIR_MAC_MGMT_FRAME,
+			parsed_frm_ptr);
 
 	bss_desc_ptr->sinr = 0;
 	bss_desc_ptr->beaconInterval = parsed_frm_ptr->beaconInterval;
@@ -2222,7 +2225,8 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	pe_debug("LFR3: BssDescr Info:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			bss_desc_ptr->bssId, sizeof(tSirMacAddr));
-	pe_debug("chan: %d rssi: %d ie_len %d", bss_desc_ptr->channelId,
+	pe_debug("chan: %d rssi: %d ie_len %d",
+		 bss_desc_ptr->chan_freq,
 		 bss_desc_ptr->rssi, ie_len);
 	if (ie_len) {
 		qdf_mem_copy(&bss_desc_ptr->ieFields,

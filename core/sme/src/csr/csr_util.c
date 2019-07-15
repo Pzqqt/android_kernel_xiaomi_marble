@@ -1227,10 +1227,12 @@ bool csr_is_valid_mc_concurrent_session(struct mac_context *mac_ctx,
 	pSession = CSR_GET_SESSION(mac_ctx, session_id);
 	if (!pSession->pCurRoamProfile)
 		return false;
-	if (QDF_STATUS_SUCCESS == csr_validate_mcc_beacon_interval(mac_ctx,
-					bss_descr->channelId,
-					&bss_descr->beaconInterval, session_id,
-					pSession->pCurRoamProfile->csrPersona))
+	if (QDF_STATUS_SUCCESS == csr_validate_mcc_beacon_interval(
+				mac_ctx,
+				wlan_reg_freq_to_chan(mac_ctx->pdev,
+						      bss_descr->chan_freq),
+				&bss_descr->beaconInterval, session_id,
+				pSession->pCurRoamProfile->csrPersona))
 		return true;
 	return false;
 }
@@ -1908,6 +1910,7 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 	eCsrPhyMode phyModeInBssDesc = eCSR_DOT11_MODE_AUTO, phyMode2;
 	enum csr_cfgdot11mode cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_AUTO;
 	uint32_t bitMask, loopCount;
+	uint8_t bss_chan_id;
 
 	if (!QDF_IS_STATUS_SUCCESS(csr_get_phy_mode_from_bss(mac, pSirBssDesc,
 					&phyModeInBssDesc, pIes)))
@@ -1931,6 +1934,7 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 		}
 	}
 
+	bss_chan_id = wlan_reg_freq_to_chan(mac->pdev, pSirBssDesc->chan_freq);
 	if ((0 == phyMode) || (eCSR_DOT11_MODE_AUTO & phyMode)) {
 		if (0 != phyMode) {
 			if (eCSR_DOT11_MODE_AUTO & phyMode) {
@@ -1943,7 +1947,7 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 		fMatch = csr_get_phy_mode_in_use(mac, phyMode2,
 						 phyModeInBssDesc,
 						 WLAN_REG_IS_5GHZ_CH(
-						 pSirBssDesc->channelId),
+						 bss_chan_id),
 						 &cfgDot11ModeToUse);
 	} else {
 		bitMask = 1;
@@ -1953,7 +1957,7 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 			if (0 != phyMode2 &&
 			    csr_get_phy_mode_in_use(mac, phyMode2,
 			    phyModeInBssDesc,
-			    WLAN_REG_IS_5GHZ_CH(pSirBssDesc->channelId),
+			    WLAN_REG_IS_5GHZ_CH(bss_chan_id),
 			    &cfgDot11ModeToUse)) {
 				fMatch = true;
 				break;
@@ -1978,8 +1982,7 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 					(eCSR_CFG_DOT11_MODE_11AX ==
 						cfgDot11ModeToUse))) {
 				/* We cannot do 11n here */
-				if (!WLAN_REG_IS_5GHZ_CH
-						(pSirBssDesc->channelId)) {
+				if (!WLAN_REG_IS_5GHZ_CH(bss_chan_id)) {
 					cfgDot11ModeToUse =
 						eCSR_CFG_DOT11_MODE_11G;
 				} else {

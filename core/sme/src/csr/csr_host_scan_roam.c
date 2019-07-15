@@ -133,6 +133,7 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 		&mac_ctx->roam.neighborRoamInfo[sessionid];
 	tpCsrNeighborRoamBSSInfo bss_info;
 	uint64_t age = 0;
+	uint8_t bss_chan_id;
 	uint8_t num_candidates = 0;
 	uint8_t num_dropped = 0;
 	/*
@@ -166,11 +167,13 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 			if (!scan_result)
 				break;
 			descr = &scan_result->BssDescriptor;
+			bss_chan_id = wlan_reg_freq_to_chan(mac_ctx->pdev,
+							    descr->chan_freq);
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Scan result: BSSID " QDF_MAC_ADDR_STR
 				     " (Rssi %d, Ch:%d)"),
 				  QDF_MAC_ADDR_ARRAY(descr->bssId),
-				  (int)abs(descr->rssi), descr->channelId);
+				  (int)abs(descr->rssi), descr->chan_freq);
 
 			if (!qdf_mem_cmp(descr->bssId,
 					n_roam_info->currAPbssid.bytes,
@@ -197,10 +200,9 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 				conc_channel =
 				  csr_get_concurrent_operation_channel(mac_ctx);
 				if (conc_channel &&
-				   (conc_channel !=
-				   scan_result->BssDescriptor.channelId)) {
+				   (conc_channel != bss_chan_id)) {
 					sme_debug("MCC not supported so Ignore AP on channel %d",
-					  scan_result->BssDescriptor.channelId);
+						  descr->chan_freq);
 					continue;
 				}
 			}
@@ -210,11 +212,12 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 			 * have duplicates
 			 */
 			if ((n_roam_info->uOsRequestedHandoff) &&
-			    ((qdf_mem_cmp(descr->bssId,
-					n_roam_info->handoffReqInfo.bssid.bytes,
-					sizeof(tSirMacAddr)))
-			     || (descr->channelId !=
-				 n_roam_info->handoffReqInfo.channel))) {
+			    ((qdf_mem_cmp(
+				descr->bssId,
+				n_roam_info->handoffReqInfo.bssid.bytes,
+				sizeof(tSirMacAddr))) ||
+			     (bss_chan_id !=
+			      n_roam_info->handoffReqInfo.channel))) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_DEBUG,
 					  "SKIP-not a candidate AP for OS requested roam");
@@ -564,7 +567,8 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 	qdf_mem_copy(neighbor_roam_info->csrNeighborRoamProfile.BSSIDs.bssid,
 		     handoff_node.pBssDescription->bssId, sizeof(tSirMacAddr));
 	neighbor_roam_info->csrNeighborRoamProfile.ChannelInfo.ChannelList[0] =
-		handoff_node.pBssDescription->channelId;
+		wlan_reg_freq_to_chan(mac_ctx->pdev,
+				      handoff_node.pBssDescription->chan_freq);
 
 	sme_debug("csr_roamHandoffRequested: disassociating with current AP");
 

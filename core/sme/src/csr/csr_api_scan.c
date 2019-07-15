@@ -387,7 +387,8 @@ static void csr_scan_add_result(struct mac_context *mac_ctx,
 		frm_type = MGMT_PROBE_RESP;
 
 	rx_param.pdev_id = 0;
-	rx_param.channel = bss_desc->channelId;
+	rx_param.channel = wlan_reg_freq_to_chan(mac_ctx->pdev,
+						 bss_desc->chan_freq);
 	rx_param.rssi = bss_desc->rssi;
 	rx_param.tsf_delta = bss_desc->tsf_delta;
 
@@ -1975,35 +1976,23 @@ csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 		scan_result = GET_BASE_ADDR(next_element,
 					    struct tag_csrscan_result,
 					    Link);
+		channel_id = wlan_reg_freq_to_chan(
+				mac_ctx->pdev,
+				scan_result->Result.BssDescriptor.chan_freq);
 		if (policy_mgr_is_hw_dbs_2x2_capable(mac_ctx->psoc)) {
-			if (WLAN_REG_IS_24GHZ_CH
-				(scan_result->Result.BssDescriptor.channelId)) {
-				channel_id =
-					scan_result->
-					Result.BssDescriptor.channelId;
+			if (WLAN_REG_IS_24GHZ_CH(channel_id))
 				break;
-			}
 		} else {
-			if (WLAN_REG_IS_24GHZ_CH
-				(scan_result->Result.BssDescriptor.channelId) &&
+			if (WLAN_REG_IS_24GHZ_CH(channel_id) &&
 			    policy_mgr_is_any_mode_active_on_band_along_with_session
 				(mac_ctx->psoc,
-				 session_id, POLICY_MGR_BAND_5)) {
-				channel_id =
-					scan_result->
-					Result.BssDescriptor.channelId;
+				 session_id, POLICY_MGR_BAND_5))
 				break;
-			}
-			if (WLAN_REG_IS_5GHZ_CH
-				(scan_result->Result.BssDescriptor.channelId) &&
+			if (WLAN_REG_IS_5GHZ_CH(channel_id) &&
 			    policy_mgr_is_any_mode_active_on_band_along_with_session
 				(mac_ctx->psoc,
-				 session_id, POLICY_MGR_BAND_24)) {
-				channel_id =
-					scan_result->
-					Result.BssDescriptor.channelId;
+				 session_id, POLICY_MGR_BAND_24))
 				break;
-			}
 		}
 		next_element = csr_ll_next(&bss_list->List, next_element,
 					   LL_ACCESS_NOLOCK);
