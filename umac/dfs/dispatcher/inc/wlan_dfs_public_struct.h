@@ -124,4 +124,18 @@ struct dfs_radar_found_params {
 	u_int32_t sidx_min;
 	u_int32_t sidx_max;
 };
+
+/**
+ * struct dfs_agile_cac_params - Agile DFS-CAC parameters.
+ * @precac_chan:        Agile preCAC channel.
+ * @precac_chwidth:     Agile preCAC channel width.
+ * @min_precac_timeout: Minimum agile preCAC timeout.
+ * @max_precac_timeout: Maximum agile preCAC timeout.
+ */
+struct dfs_agile_cac_params {
+	uint8_t precac_chan;
+	enum phy_ch_width precac_chwidth;
+	uint32_t min_precac_timeout;
+	uint32_t max_precac_timeout;
+};
 #endif

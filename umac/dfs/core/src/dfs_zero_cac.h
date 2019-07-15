@@ -54,6 +54,15 @@
 #define DFS_CHWIDTH_40_VAL               40
 #define DFS_CHWIDTH_80_VAL               80
 #define DFS_CHWIDTH_160_VAL             160
+
+#define WEATHER_CHAN_START              120
+#define WEATHER_CHAN_END                128
+
+/* PreCAC timeout durations in ms. */
+#define MIN_PRECAC_DURATION                   (6 * 60 * 1000) /* 6 mins */
+#define MIN_WEATHER_PRECAC_DURATION          (60 * 60 * 1000) /* 1 hour */
+#define MAX_PRECAC_DURATION              (4 * 60 * 60 * 1000) /* 4 hours */
+#define MAX_WEATHER_PRECAC_DURATION     (24 * 60 * 60 * 1000) /* 24 hours */
 /**
  * struct precac_tree_node - Individual tree node structure for every node in
  *                           the precac forest maintained.
@@ -434,14 +443,19 @@ void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
 void dfs_agile_precac_start(struct wlan_dfs *dfs);
 
 /**
- * dfs_start_agile_precac_timer() - Start precac timer.
- * @dfs: Pointer to wlan_dfs structure.
- * @precac_chan: Start thr precac timer in this channel.
+ * dfs_start_agile_precac_timer() - Start precac timer for the given channel.
+ * @dfs:         Pointer to wlan_dfs structure.
  * @ocac_status: Status of the off channel CAC.
+ * @adfs_param:  Agile DFS CAC parameters.
+ *
+ * Start the precac timer with proper timeout values based on the channel to
+ * be preCACed. The preCAC channel number and chwidth information is present
+ * in the adfs_param argument. Once the timer is started, update the timeout
+ * fields in adfs_param.
  */
 void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
-				  uint8_t precac_chan,
-				  uint8_t ocac_status);
+				  uint8_t ocac_status,
+				  struct dfs_agile_cac_params *adfs_param);
 #else
 static inline void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
 						  uint8_t *cur_precac_dfs_index)
@@ -470,9 +484,10 @@ static inline void dfs_agile_precac_start(struct wlan_dfs *dfs)
 {
 }
 
-static inline void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
-						uint8_t precac_chan,
-						uint8_t ocac_status)
+static inline void
+dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
+			     uint8_t ocac_status,
+			     struct dfs_agile_cac_params *adfs_param)
 {
 }
 #endif

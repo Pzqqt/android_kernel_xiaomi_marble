@@ -755,8 +755,9 @@ struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_process_emulate_bang_radar_cmd)(
 			struct wlan_objmgr_pdev *pdev,
 			struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
-	QDF_STATUS (*dfs_agile_ch_cfg_cmd)(struct wlan_objmgr_pdev *pdev,
-					   uint8_t *ch_freq);
+	QDF_STATUS (*dfs_agile_ch_cfg_cmd)(
+			struct wlan_objmgr_pdev *pdev,
+			struct dfs_agile_cac_params *adfs_params);
 	QDF_STATUS (*dfs_ocac_abort_cmd)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_is_pdev_5ghz)(struct wlan_objmgr_pdev *pdev,
 			bool *is_5ghz);
