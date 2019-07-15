@@ -2647,9 +2647,10 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 				      scan_entry->channel.chan_idx);
 	/* channelId on which we are parked at. */
 	/* used only in scan case. */
-	bss_desc->channelIdSelf =
-		scan_entry->channel.chan_idx;
-	bss_desc->rx_channel = bss_desc->channelIdSelf;
+	bss_desc->freq_self =
+		wlan_reg_chan_to_freq(mac_ctx->pdev,
+				      scan_entry->channel.chan_idx);
+	bss_desc->rx_channel = scan_entry->channel.chan_idx;
 	bss_desc->received_time =
 		scan_entry->scan_entry_time;
 	bss_desc->startTSF[0] =

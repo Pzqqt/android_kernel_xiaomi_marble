@@ -663,7 +663,7 @@ struct bss_description {
 	uint32_t chan_freq;
 	/* channelId on which we are parked at. */
 	/* used only in scan case. */
-	uint8_t channelIdSelf;
+	uint32_t freq_self;
 	uint8_t sSirBssDescriptionRsvd[3];
 	/* Based on system time, not a relative time. */
 	uint64_t received_time;
