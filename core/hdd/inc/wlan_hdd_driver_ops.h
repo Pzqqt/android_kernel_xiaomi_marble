@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -117,5 +117,23 @@ void hdd_hif_close(struct hdd_context *hdd_ctx, void *hif_ctx);
  */
 int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 		 enum qdf_bus_type bus_type, bool reinit);
+
+/**
+ * hdd_soc_idle_restart_lock() - Takes wakelock for idle restart
+ *
+ * This function takes wakelock to prevent suspend during idle restart
+ *
+ * Return: none
+ */
+void hdd_soc_idle_restart_lock(void);
+
+/**
+ * hdd_soc_idle_restart_unlock() - Releases wakelock for idle restart
+ *
+ * This function releases wakelock to allow suspend after idle restart
+ *
+ * Return: none
+ */
+void hdd_soc_idle_restart_unlock(void);
 
 #endif /* __WLAN_HDD_DRIVER_OPS_H__ */

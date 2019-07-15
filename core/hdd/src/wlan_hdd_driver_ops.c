@@ -375,6 +375,16 @@ static int check_for_probe_defer(int ret)
 }
 #endif
 
+void hdd_soc_idle_restart_lock(void)
+{
+	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART);
+}
+
+void hdd_soc_idle_restart_unlock(void)
+{
+	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART);
+}
+
 static void hdd_soc_load_lock(struct device *dev)
 {
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
