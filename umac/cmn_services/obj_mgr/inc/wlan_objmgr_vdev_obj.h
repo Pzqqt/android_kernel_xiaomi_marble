@@ -1294,6 +1294,16 @@ void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
 						wlan_objmgr_ref_dbgid id);
 
 /**
+ * wlan_objmgr_vdev_peer_freed_notify() - Notifies modules about peer freed
+ * @vdev: VDEV object
+ *
+ * API to invokes registered callbacks to notify about peer freed
+ *
+ * Return: void
+ */
+void wlan_objmgr_vdev_peer_freed_notify(struct wlan_objmgr_vdev *vdev);
+
+/**
  * wlan_vdev_set_max_peer_count() - set max peer count
  * @vdev: VDEV object
  * @count: Max peer count

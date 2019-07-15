@@ -174,6 +174,9 @@ typedef QDF_STATUS (*wlan_objmgr_vdev_destroy_handler)(
 typedef void (*wlan_objmgr_vdev_status_handler)(
 				struct wlan_objmgr_vdev *vdev, void *arg,
 						QDF_STATUS status);
+typedef void (*wlan_objmgr_vdev_peer_free_notify_handler)(
+				struct wlan_objmgr_vdev *vdev);
+
 
 typedef QDF_STATUS (*wlan_objmgr_peer_create_handler)(
 				struct wlan_objmgr_peer *peer, void *arg);

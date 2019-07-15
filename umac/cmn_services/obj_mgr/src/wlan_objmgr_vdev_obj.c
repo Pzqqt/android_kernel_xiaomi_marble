@@ -1154,3 +1154,14 @@ void wlan_print_vdev_info(struct wlan_objmgr_vdev *vdev)
 qdf_export_symbol(wlan_print_vdev_info);
 #endif
 
+void wlan_objmgr_vdev_peer_freed_notify(struct wlan_objmgr_vdev *vdev)
+{
+	wlan_objmgr_vdev_peer_free_notify_handler stat_handler;
+	uint8_t i;
+
+	for (i = 0; i < WLAN_UMAC_MAX_COMPONENTS; i++) {
+		stat_handler = g_umac_glb_obj->vdev_peer_free_notify_handler[i];
+		if (stat_handler)
+			stat_handler(vdev);
+	}
+}

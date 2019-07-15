@@ -375,6 +375,39 @@ QDF_STATUS wlan_objmgr_unregister_vdev_status_handler(
 		void *args);
 
 /**
+ * wlan_objmgr_register_vdev_peer_free_notify_handler() - register vdev peer
+ *                                                        free handler
+ * @id: component id
+ * @handler: function pointer of the component
+ *
+ * API, allows other UMAC components to register handler
+ * The registered handler would be invoked on VDEV Peer gets freed
+ *
+ * Return: SUCCESS,
+ *         Failure (if registration fails, each failure has different error
+ *         code)
+ */
+QDF_STATUS wlan_objmgr_register_vdev_peer_free_notify_handler(
+		enum wlan_umac_comp_id id,
+		wlan_objmgr_vdev_peer_free_notify_handler handler);
+
+/**
+ * wlan_objmgr_unregister_vdev_peer_free_notify_handler() - unregister vdev
+ *                                                          peer free handler
+ * @id: component id
+ * @handler: function pointer of the component
+ *
+ * API, allows other UMAC components to unregister handler
+ *
+ * Return: SUCCESS,
+ *         Failure (if handler is not present, each failure has different error
+ *         code)
+ */
+QDF_STATUS wlan_objmgr_unregister_vdev_peer_free_notify_handler(
+		enum wlan_umac_comp_id id,
+		wlan_objmgr_vdev_peer_free_notify_handler handler);
+
+/**
  * wlan_objmgr_register_peer_create_handler() - register peer create handler
  * @id: component id
  * @handler: function pointer of the component

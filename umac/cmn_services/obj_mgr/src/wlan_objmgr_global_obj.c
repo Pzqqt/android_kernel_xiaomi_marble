@@ -556,6 +556,55 @@ QDF_STATUS wlan_objmgr_unregister_vdev_status_handler(
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_objmgr_register_vdev_peer_free_notify_handler(
+		enum wlan_umac_comp_id id,
+		wlan_objmgr_vdev_peer_free_notify_handler handler)
+{
+	/* If id is not within valid range, return */
+	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
+		obj_mgr_err("Component %d is out of range", id);
+		WLAN_OBJMGR_BUG(0);
+		return QDF_STATUS_MAXCOMP_FAIL;
+	}
+	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
+	/* If there is a valid entry, return failure */
+	if (g_umac_glb_obj->vdev_peer_free_notify_handler[id]) {
+		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
+		obj_mgr_err("Callback for comp %d is already registered", id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	/* Store handler in Global object table */
+	g_umac_glb_obj->vdev_peer_free_notify_handler[id] = handler;
+
+	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_objmgr_unregister_vdev_peer_free_notify_handler(
+		enum wlan_umac_comp_id id,
+		wlan_objmgr_vdev_peer_free_notify_handler handler)
+{
+	/* If id is not within valid range, return */
+	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
+		obj_mgr_err("Component %d is out of range", id);
+		WLAN_OBJMGR_BUG(0);
+		return QDF_STATUS_MAXCOMP_FAIL;
+	}
+	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
+	/* If there is an invalid entry, return failure */
+	if (g_umac_glb_obj->vdev_peer_free_notify_handler[id] != handler) {
+		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
+		obj_mgr_err("Callback for Component %d is not registered", id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	/* Reset handlers to NULL */
+	g_umac_glb_obj->vdev_peer_free_notify_handler[id] = NULL;
+
+	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 QDF_STATUS wlan_objmgr_register_peer_create_handler(
 		enum wlan_umac_comp_id id,

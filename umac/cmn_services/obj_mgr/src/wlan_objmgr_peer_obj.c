@@ -109,12 +109,15 @@ static QDF_STATUS wlan_objmgr_peer_obj_free(struct wlan_objmgr_peer *peer)
 		wlan_objmgr_peer_release_ref(wlan_vdev_get_bsspeer(vdev),
 					     WLAN_OBJMGR_ID);
 
+	wlan_objmgr_vdev_get_ref(vdev, WLAN_OBJMGR_ID);
+
 	/* Detach peer from VDEV's peer list */
 	if (wlan_objmgr_vdev_peer_detach(vdev, peer) == QDF_STATUS_E_FAILURE) {
 		obj_mgr_err(
 		"Peer(%02x:%02x:%02x:%02x:%02x:%02x) VDEV detach fail, vdev id: %d",
 			macaddr[0], macaddr[1], macaddr[2],
 			macaddr[3], macaddr[4], macaddr[5], vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_OBJMGR_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Detach peer from PSOC's peer list */
@@ -123,10 +126,14 @@ static QDF_STATUS wlan_objmgr_peer_obj_free(struct wlan_objmgr_peer *peer)
 		"Peer(%02x:%02x:%02x:%02x:%02x:%02x) PSOC detach failure",
 			macaddr[0], macaddr[1], macaddr[2],
 			macaddr[3], macaddr[4], macaddr[5]);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_OBJMGR_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_spinlock_destroy(&peer->peer_lock);
 	qdf_mem_free(peer);
+
+	wlan_objmgr_vdev_peer_freed_notify(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OBJMGR_ID);
 
 	return QDF_STATUS_SUCCESS;
 

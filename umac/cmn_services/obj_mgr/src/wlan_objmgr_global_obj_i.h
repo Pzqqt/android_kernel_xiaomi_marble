@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,6 +44,7 @@ struct wlan_objmgr_debug_info;
  *  @vdev_create_handler_arg[]: VDEV create handler args array
  *  @vdev_destroy_handler[]:     VDEV destroy handler array
  *  @vdev_destroy_handler_arg[]: VDEV destroy handler args array
+ *  @vdev_peer_free_notify_handler[]: VDEV peer free notify handler array
  *  @vdev_status_handler[]:     VDEV status handler array
  *  @vdev_status_handler_arg[]: VDEV status handler args array
  *  @peer_create_handler[]:     PEER create handler array
@@ -81,6 +82,8 @@ struct wlan_objmgr_global {
 	wlan_objmgr_vdev_destroy_handler
 		vdev_destroy_handler[WLAN_UMAC_MAX_COMPONENTS];
 	void *vdev_destroy_handler_arg[WLAN_UMAC_MAX_COMPONENTS];
+	wlan_objmgr_vdev_peer_free_notify_handler
+		vdev_peer_free_notify_handler[WLAN_UMAC_MAX_COMPONENTS];
 	wlan_objmgr_vdev_status_handler
 		vdev_status_handler[WLAN_UMAC_MAX_COMPONENTS];
 	void *vdev_status_handler_arg[WLAN_UMAC_MAX_COMPONENTS];
