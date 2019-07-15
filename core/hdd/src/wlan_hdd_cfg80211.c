@@ -68,9 +68,6 @@
 #include "pld_common.h"
 #include "wmi_unified_param.h"
 
-#ifdef WLAN_UMAC_CONVERGENCE
-#include "wlan_cfg80211.h"
-#endif
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg80211_scan.h>
 #include <wlan_cfg80211_ftm.h>
@@ -1516,9 +1513,6 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 
 	BCN_RECV_FEATURE_VENDOR_EVENTS
 
-#ifdef WLAN_UMAC_CONVERGENCE
-	COMMON_VENDOR_EVENTS
-#endif
 };
 
 /**
@@ -12618,7 +12612,6 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			 WIPHY_VENDOR_CMD_NEED_NETDEV,
 		.doit = wlan_hdd_cfg80211_get_wifi_info
 	},
-#ifndef WLAN_UMAC_CONVERGENCE
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_WIFI_CONFIGURATION,
@@ -12627,7 +12620,6 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_wifi_configuration_set
 	},
-#endif
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd =
@@ -12996,9 +12988,6 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 
 	FEATURE_BSS_TRANSITION_VENDOR_COMMANDS
 	FEATURE_SPECTRAL_SCAN_VENDOR_COMMANDS
-#ifdef WLAN_UMAC_CONVERGENCE
-	COMMON_VENDOR_COMMANDS
-#endif
 	FEATURE_11AX_VENDOR_COMMANDS
 
 	{

@@ -42,9 +42,6 @@
 #include "wlan_p2p_ucfg_api.h"
 #include "cfg_ucfg_api.h"
 
-#ifdef WLAN_UMAC_CONVERGENCE
-#include "wlan_cfg80211.h"
-#endif
 #include <qca_vendor.h>
 #include <wlan_cfg80211_scan.h>
 #include "wlan_utility.h"
