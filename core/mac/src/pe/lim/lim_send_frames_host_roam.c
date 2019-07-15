@@ -408,12 +408,13 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 			   (uint8_t *) frame, (bytes + ft_ies_length));
 
 	if ((pe_session->ftPEContext.pFTPreAuthReq) &&
-	    (BAND_5G == lim_get_rf_band(
-	     pe_session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
+	    (lim_get_rf_band(
+	     pe_session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)) ==
+							BAND_5G)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	else if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-		 (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-		 (pe_session->opmode == QDF_P2P_GO_MODE))
+	else if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+		 pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+		 pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	if (pe_session->assocReq) {
@@ -761,9 +762,9 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 		pe_session->assocReqLen = nPayload;
 	}
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	if (pe_session->opmode == QDF_P2P_CLIENT_MODE ||

@@ -208,7 +208,7 @@ static void populate_dot11f_tdls_offchannel_params(
 	qdf_mem_copy(validChan, mac->mlme_cfg->reg.valid_channel_list,
 		     mac->mlme_cfg->reg.valid_channel_list_num);
 
-	if (IS_5G_CH(pe_session->currentOperChannel))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq))
 		band = BAND_5G;
 	else
 		band = BAND_2G;
@@ -266,14 +266,14 @@ static void populate_dot11f_tdls_offchannel_params(
 
 	op_class = wlan_reg_dmn_get_opclass_from_channel(
 		mac->scan.countryCodeCurrent,
-		pe_session->currentOperChannel,
+		wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq),
 		chanOffset);
 
-	pe_debug("countryCodeCurrent: %s, currentOperChannel: %d, htSecondaryChannelOffset: %d, chanOffset: %d op class: %d",
-			mac->scan.countryCodeCurrent,
-			pe_session->currentOperChannel,
-			pe_session->htSecondaryChannelOffset,
-			chanOffset, op_class);
+	pe_debug("countryCodeCurrent: %s, curr_op_freq: %d, htSecondaryChannelOffset: %d, chanOffset: %d op class: %d",
+		 mac->scan.countryCodeCurrent,
+		 pe_session->curr_op_freq,
+		 pe_session->htSecondaryChannelOffset,
+		 chanOffset, op_class);
 	suppOperClasses->present = 1;
 	suppOperClasses->classes[0] = op_class;
 
@@ -678,7 +678,7 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 
 	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;
 
-	if (IS_5G_CH(pe_session->currentOperChannel))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq))
 		nss = mac->vdev_type_nss_5g.tdls;
 	else
 		nss = mac->vdev_type_nss_2g.tdls;
@@ -716,9 +716,10 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 	}
 	pe_debug("HT present: %hu, Chan Width: %hu",
 		htCap->present, htCap->supportedChannelWidthSet);
-	if (((pe_session->currentOperChannel <= SIR_11B_CHANNEL_END) &&
-	     vht_cap_info->b24ghz_band) ||
-	    (pe_session->currentOperChannel >= SIR_11B_CHANNEL_END)) {
+	if (((wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq) <=
+		SIR_11B_CHANNEL_END) && vht_cap_info->b24ghz_band) ||
+	    (wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq) >=
+		SIR_11B_CHANNEL_END)) {
 		if (IS_DOT11_MODE_VHT(selfDot11Mode) &&
 		    IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
 			/* Include VHT Capability IE */
@@ -829,7 +830,8 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 	if (QDF_STATUS_E_FAILURE == populate_dot11f_rates_tdls(mac,
 					&tdlsDisRsp.SuppRates,
 					&tdlsDisRsp.ExtSuppRates,
-					pe_session->currentOperChannel))
+					wlan_reg_freq_to_chan(
+					mac->pdev, pe_session->curr_op_freq)))
 		pe_err("could not populate supported data rates");
 
 	/* populate extended capability IE */
@@ -980,9 +982,11 @@ static void populate_dotf_tdls_vht_aid(struct mac_context *mac, uint32_t selfDot
 				       tDot11fIEAID *Aid,
 				       struct pe_session *pe_session)
 {
-	if (((pe_session->currentOperChannel <= SIR_11B_CHANNEL_END) &&
+	if (((wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq) <=
+		SIR_11B_CHANNEL_END) &&
 	     mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band) ||
-	    (pe_session->currentOperChannel >= SIR_11B_CHANNEL_END)) {
+	    (wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq) >=
+		SIR_11B_CHANNEL_END)) {
 		if (IS_DOT11_MODE_VHT(selfDot11Mode) &&
 		    IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
 
@@ -1138,7 +1142,8 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 	if (QDF_STATUS_E_FAILURE == populate_dot11f_rates_tdls(mac,
 					&tdlsSetupReq.SuppRates,
 					&tdlsSetupReq.ExtSuppRates,
-					pe_session->currentOperChannel))
+					wlan_reg_freq_to_chan(
+					mac->pdev, pe_session->curr_op_freq)))
 		pe_err("could not populate supported data rates");
 
 	/* Populate extended capability IE */
@@ -1598,7 +1603,8 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 	if (QDF_STATUS_E_FAILURE == populate_dot11f_rates_tdls(mac,
 					&tdlsSetupRsp.SuppRates,
 					&tdlsSetupRsp.ExtSuppRates,
-					pe_session->currentOperChannel))
+					wlan_reg_freq_to_chan(
+					mac->pdev, pe_session->curr_op_freq)))
 		pe_err("could not populate supported data rates");
 
 	/* Populate extended capability IE */
@@ -2350,7 +2356,7 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx,
 		}
 	}
 
-	if (IS_5G_CH(session_entry->currentOperChannel))
+	if (wlan_reg_is_5ghz_ch_freq(session_entry->curr_op_freq))
 		nss = mac_ctx->vdev_type_nss_5g.tdls;
 	else
 		nss = mac_ctx->vdev_type_nss_2g.tdls;
@@ -2499,7 +2505,8 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 	 */
 	if (pe_session->htSupportedChannelWidthSet) {
 		cbMode = lim_select_cb_mode(sta, pe_session,
-				    pe_session->currentOperChannel,
+				    wlan_reg_freq_to_chan(
+				    mac->pdev, pe_session->curr_op_freq),
 				    sta->vhtSupportedChannelWidthSet);
 
 		if (sta->mlmStaContext.vhtCapability)

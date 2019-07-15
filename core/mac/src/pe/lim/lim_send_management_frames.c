@@ -556,8 +556,10 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	populate_dot11f_supp_rates(mac_ctx, POPULATE_DOT11F_RATES_OPERATIONAL,
 		&frm->SuppRates, pe_session);
 
-	populate_dot11f_ds_params(mac_ctx, &frm->DSParams,
-		pe_session->currentOperChannel);
+	populate_dot11f_ds_params(
+		mac_ctx, &frm->DSParams,
+		wlan_reg_freq_to_chan(mac_ctx->pdev,
+				      pe_session->curr_op_freq));
 	populate_dot11f_ibss_params(mac_ctx, &frm->IBSSParams, pe_session);
 
 	if (LIM_IS_AP_ROLE(pe_session)) {
@@ -773,9 +775,9 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 		}
 	}
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	/* Queue Probe Response frame in high priority WQ */
@@ -981,9 +983,9 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 	pe_debug("Sending an Add TS Request frame to");
 	lim_print_mac_addr(mac, peerMacAddr, LOGD);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -1353,10 +1355,9 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			     sta->mlmStaContext.owe_ie,
 			     sta->mlmStaContext.owe_ie_len);
 
-	if ((BAND_5G ==
-		lim_get_rf_band(pe_session->currentOperChannel)) ||
-			(pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-			(pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -1501,9 +1502,9 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 	pe_debug("Sending DELTS REQ (size %d) to ", nBytes);
 	lim_print_mac_addr(mac, pMacHdr->da, LOGD);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -2139,9 +2140,9 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		pe_session->assocReqLen = payload;
 	}
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	if (pe_session->opmode == QDF_P2P_CLIENT_MODE ||
@@ -2601,12 +2602,13 @@ alloc_packet:
 			   frame, frame_len);
 
 	if ((session->ftPEContext.pFTPreAuthReq) &&
-	    (BAND_5G == lim_get_rf_band(
-	     session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
+	    (lim_get_rf_band(
+	     session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)) ==
+				BAND_5G)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	else if ((BAND_5G == lim_get_rf_band(session->currentOperChannel)) ||
-		  (session->opmode == QDF_P2P_CLIENT_MODE) ||
-		  (session->opmode == QDF_P2P_GO_MODE))
+	else if (wlan_reg_is_5ghz_ch_freq(session->curr_op_freq) ||
+		 session->opmode == QDF_P2P_CLIENT_MODE ||
+		 session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	if (session->opmode == QDF_P2P_CLIENT_MODE ||
@@ -3042,9 +3044,9 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 		waitForAck, QDF_MAC_ADDR_ARRAY(pMacHdr->da),
 		QDF_MAC_ADDR_ARRAY(pe_session->self_mac_addr));
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
@@ -3232,9 +3234,9 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 		QDF_MAC_ADDR_ARRAY(pMacHdr->da),
 		QDF_MAC_ADDR_ARRAY(pe_session->self_mac_addr));
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
@@ -3662,9 +3664,9 @@ lim_send_channel_switch_mgmt_frame(struct mac_context *mac,
 			nStatus);
 	}
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -3802,9 +3804,9 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 		 status);
 	}
 
-	if ((BAND_5G == lim_get_rf_band(session_entry->currentOperChannel)) ||
-	    (session_entry->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (session_entry->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(session_entry->curr_op_freq) ||
+	    session_entry->opmode == QDF_P2P_CLIENT_MODE ||
+	    session_entry->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	pe_debug("Send Ext channel Switch to :"QDF_MAC_ADDR_STR" with swcount %d, swmode %d , newchannel %d newops %d",
@@ -3954,14 +3956,13 @@ lim_p2p_oper_chan_change_confirm_action_frame(struct mac_context *mac_ctx,
 		 status);
 	}
 
-	if ((BAND_5G ==
-		lim_get_rf_band(session_entry->currentOperChannel)) ||
-		(session_entry->opmode == QDF_P2P_CLIENT_MODE) ||
-		(session_entry->opmode == QDF_P2P_GO_MODE)) {
+	if (wlan_reg_is_5ghz_ch_freq(session_entry->curr_op_freq) ||
+	    session_entry->opmode == QDF_P2P_CLIENT_MODE ||
+	    session_entry->opmode == QDF_P2P_GO_MODE) {
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
-	pe_debug("Send frame on channel %d to mac "
-		QDF_MAC_ADDR_STR, session_entry->currentOperChannel,
+	pe_debug("Send frame on channel freq %d to mac "
+		QDF_MAC_ADDR_STR, session_entry->curr_op_freq,
 		QDF_MAC_ADDR_ARRAY(peer));
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -4090,9 +4091,9 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 	pe_debug("Sending a Neighbor Report Request to");
 	lim_print_mac_addr(mac, peer, LOGD);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -4234,9 +4235,9 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 	pe_warn("Sending a Link Report to");
 	lim_print_mac_addr(mac, peer, LOGW);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -4405,9 +4406,9 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 	pe_warn("Sending a Radio Measure Report to");
 	lim_print_mac_addr(mac, peer, LOGW);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
-	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE))
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -4538,12 +4539,9 @@ QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *tra
 	pe_debug("Sending an SA Query Request from ");
 	lim_print_mac_addr(mac, pe_session->self_mac_addr, LOGD);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-#ifdef WLAN_FEATURE_P2P
-	    || (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE)
-#endif
-	    )
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	smeSessionId = pe_session->smeSessionId;
@@ -4669,12 +4667,9 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 	pe_debug("Sending a SA Query Response to");
 	lim_print_mac_addr(mac, peer, LOGD);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-#ifdef WLAN_FEATURE_P2P
-	    || (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE)
-#endif
-	    )
+	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -4879,12 +4874,9 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	}
 
 
-	if ((BAND_5G == lim_get_rf_band(session->currentOperChannel))
-#ifdef WLAN_FEATURE_P2P
-	    || (session->opmode == QDF_P2P_CLIENT_MODE) ||
-	    (session->opmode == QDF_P2P_GO_MODE)
-#endif
-	    )
+	if (wlan_reg_is_5ghz_ch_freq(session->curr_op_freq) ||
+	    session->opmode == QDF_P2P_CLIENT_MODE ||
+	    session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,

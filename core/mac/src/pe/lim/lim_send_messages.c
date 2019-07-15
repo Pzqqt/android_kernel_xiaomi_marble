@@ -625,7 +625,8 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	ht40_obss_scanind->current_operatingclass =
 		wlan_reg_dmn_get_opclass_from_channel(
 			mac_ctx->scan.countryCodeCurrent,
-			session->currentOperChannel,
+			wlan_reg_freq_to_chan(
+			mac_ctx->pdev, session->curr_op_freq),
 			session->ch_width);
 	channelnum = mac_ctx->mlme_cfg->reg.valid_channel_list_num;
 	qdf_mem_copy(chan_list, mac_ctx->mlme_cfg->reg.valid_channel_list,

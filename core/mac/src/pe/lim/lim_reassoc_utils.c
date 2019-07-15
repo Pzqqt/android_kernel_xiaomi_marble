@@ -472,13 +472,15 @@ lim_restore_pre_reassoc_state(struct mac_context *mac,
 	/* 'Change' timer for future activations */
 	lim_deactivate_and_change_timer(mac, eLIM_REASSOC_FAIL_TIMER);
 
-	lim_set_channel(mac, pe_session->currentOperChannel,
-			pe_session->ch_center_freq_seg0,
-			pe_session->ch_center_freq_seg1,
-			pe_session->ch_width,
-			pe_session->maxTxPower,
-			pe_session->peSessionId,
-			0, 0);
+	lim_set_channel(
+		mac,
+		wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq),
+		pe_session->ch_center_freq_seg0,
+		pe_session->ch_center_freq_seg1,
+		pe_session->ch_width,
+		pe_session->maxTxPower,
+		pe_session->peSessionId,
+		0, 0);
 
 	/* @ToDo:Need to Integrate the STOP the Dataxfer to AP from 11H code */
 
