@@ -692,4 +692,15 @@ void wlan_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
 				    uint8_t *ch_list,
 				    uint8_t num_ch,
 				    bool nol_history_ch);
+
+/**
+ * wlan_reg_is_regdmn_en302502_applicable() - Find if ETSI EN302_502 radar
+ * pattern is applicable in the current regulatory domain.
+ * @pdev:    Pdev ptr.
+ *
+ * Return: Boolean.
+ * True:  If EN302_502 is applicable.
+ * False: otherwise.
+ */
+bool wlan_reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev);
 #endif

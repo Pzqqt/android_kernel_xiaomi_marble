@@ -2009,3 +2009,17 @@ QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev,
 
 	return status;
 }
+
+bool reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev)
+{
+	struct cur_regdmn_info cur_reg_dmn;
+	QDF_STATUS status;
+
+	status = reg_get_curr_regdomain(pdev, &cur_reg_dmn);
+	if (status != QDF_STATUS_SUCCESS) {
+		reg_err("Failed to get reg domain");
+		return false;
+	}
+
+	return reg_en302_502_regdmn(cur_reg_dmn.regdmn_pair_id);
+}

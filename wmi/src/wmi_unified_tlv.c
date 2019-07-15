@@ -465,6 +465,8 @@ static const uint32_t vdev_param_tlv[] = {
 	[wmi_vdev_param_ul_fixed_rate] = WMI_VDEV_PARAM_UL_FIXED_RATE,
 	[wmi_vdev_param_rawmode_open_war] = WMI_VDEV_PARAM_RAW_IS_ENCRYPTED,
 	[wmi_vdev_param_max_mtu_size] = WMI_VDEV_PARAM_MAX_MTU_SIZE,
+	[wmi_vdev_param_mcast_rc_stale_period] =
+					WMI_VDEV_PARAM_MCAST_RC_STALE_PERIOD,
 };
 #endif
 

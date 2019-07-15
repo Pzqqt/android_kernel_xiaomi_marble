@@ -436,7 +436,6 @@ bool dfs_is_en302_502_applicable(struct wlan_dfs *dfs)
 	int chan_freq;
 	int chan_width;
 	int overlap = 0;
-	uint16_t regdmn;
 	struct wlan_objmgr_vdev *vdev = NULL;
 	struct wlan_channel *bss_chan = NULL;
 
@@ -478,11 +477,6 @@ bool dfs_is_en302_502_applicable(struct wlan_dfs *dfs)
 				ETSI_RADAR_EN302_502_FREQ_UPPER);
 	}
 
-	regdmn = utils_dfs_get_cur_rd(dfs->dfs_pdev_obj);
-
-	return(((regdmn == ETSI11_WORLD_REGDMN_PAIR_ID) ||
-		(regdmn == ETSI12_WORLD_REGDMN_PAIR_ID) ||
-		(regdmn == ETSI13_WORLD_REGDMN_PAIR_ID) ||
-		(regdmn == ETSI14_WORLD_REGDMN_PAIR_ID)) &&
+	return(wlan_reg_is_regdmn_en302502_applicable(dfs->dfs_pdev_obj) &&
 	       overlap);
 }
