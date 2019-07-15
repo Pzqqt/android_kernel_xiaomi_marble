@@ -2938,8 +2938,10 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 		 */
 		if (tlv_type == HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV) {
 			pdev->mgmtctrl_frm_info.mgmt_buf = tlv_buf;
-			pdev->mgmtctrl_frm_info.mgmt_buf_len = tlv_length;
 			pdev->mgmtctrl_frm_info.ppdu_id = ppdu_id;
+			pdev->mgmtctrl_frm_info.mgmt_buf_len =
+				HTT_PPDU_STATS_TX_MGMTCTRL_TLV_FRAME_LENGTH_GET
+						(*(msg_word + 1));
 			msg_word =
 				(uint32_t *)((uint8_t *)tlv_buf + tlv_length);
 			length -= (tlv_length);
