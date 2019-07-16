@@ -5383,79 +5383,6 @@ send_pdev_fips_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_pdev_set_chan_cmd_non_tlv() - send pdev set chan cmd to fw
- * @wmi_handle: wmi handle
- * @param: pointer to hold set chan param
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS
-send_pdev_set_chan_cmd_non_tlv(wmi_unified_t wmi_handle,
-				struct channel_param *param)
-{
-	wmi_set_channel_cmd *cmd;
-	wmi_buf_t buf;
-	QDF_STATUS ret;
-	int len = sizeof(wmi_set_channel_cmd);
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	cmd = (wmi_set_channel_cmd *)wmi_buf_data(buf);
-
-	cmd->chan.mhz = param->mhz;
-
-	WMI_SET_CHANNEL_MODE(&cmd->chan, param->phy_mode);
-
-	cmd->chan.band_center_freq1 = param->cfreq1;
-	cmd->chan.band_center_freq2 = param->cfreq2;
-
-	WMI_SET_CHANNEL_MIN_POWER(&cmd->chan, param->minpower);
-	WMI_SET_CHANNEL_MAX_POWER(&cmd->chan, param->maxpower);
-	WMI_SET_CHANNEL_REG_POWER(&cmd->chan, param->maxregpower);
-	WMI_SET_CHANNEL_ANTENNA_MAX(&cmd->chan, param->antennamax);
-	WMI_SET_CHANNEL_REG_CLASSID(&cmd->chan, param->reg_class_id);
-
-	if (param->dfs_set)
-		WMI_SET_CHANNEL_FLAG(&cmd->chan, WMI_CHAN_FLAG_DFS);
-
-	if (param->dfs_set_cfreq2)
-		WMI_SET_CHANNEL_FLAG(&cmd->chan, WMI_CHAN_FLAG_DFS_CFREQ2);
-
-	if (param->half_rate)
-		WMI_SET_CHANNEL_FLAG(&cmd->chan, WMI_CHAN_FLAG_HALF);
-
-	if (param->quarter_rate)
-		WMI_SET_CHANNEL_FLAG(&cmd->chan, WMI_CHAN_FLAG_QUARTER);
-
-	if ((param->phy_mode == MODE_11AC_VHT80_80) ||
-			(param->phy_mode == MODE_11AC_VHT160)) {
-		WMI_LOGD(
-		"WMI channel freq=%d, mode=%x band_center_freq1=%d band_center_freq2=%d",
-		cmd->chan.mhz,
-		WMI_GET_CHANNEL_MODE(&cmd->chan), cmd->chan.band_center_freq1,
-		cmd->chan.band_center_freq2);
-	} else {
-		WMI_LOGD("WMI channel freq=%d, mode=%x band_center_freq1=%d\n"
-			, cmd->chan.mhz,
-			WMI_GET_CHANNEL_MODE(&cmd->chan),
-			cmd->chan.band_center_freq1);
-	}
-
-	ret =  wmi_unified_cmd_send(wmi_handle, buf, len,
-					WMI_PDEV_SET_CHANNEL_CMDID);
-	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_PDEV_SET_CHANNEL_CMDID");
-		wmi_buf_free(buf);
-	}
-
-	return ret;
-}
-
-/**
  * send_mcast_group_update_cmd_non_tlv() - send mcast group update cmd to fw
  * @wmi_handle: wmi handle
  * @param: pointer to hold mcast update param
@@ -9957,7 +9884,6 @@ struct wmi_ops non_tlv_ops =  {
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_non_tlv,
 	.send_wlan_profile_enable_cmd = send_wlan_profile_enable_cmd_non_tlv,
 	.send_wlan_profile_trigger_cmd = send_wlan_profile_trigger_cmd_non_tlv,
-	.send_pdev_set_chan_cmd = send_pdev_set_chan_cmd_non_tlv,
 	.send_set_ht_ie_cmd = send_set_ht_ie_cmd_non_tlv,
 	.send_set_vht_ie_cmd = send_set_vht_ie_cmd_non_tlv,
 	.send_wmm_update_cmd = send_wmm_update_cmd_non_tlv,
