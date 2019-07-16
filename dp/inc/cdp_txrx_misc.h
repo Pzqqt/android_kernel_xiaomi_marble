@@ -621,6 +621,31 @@ static inline void cdp_deregister_packetdump_cb(ol_txrx_soc_handle soc)
 		return soc->ops->misc_ops->unregister_pktdump_cb();
 }
 
+typedef void (*rx_mic_error_callback)(void *scn_handle,
+				struct cdp_rx_mic_err_info *info);
+
+/**
+ * cdp_register_rx_mic_error_ind_handler() - API to register mic error
+ *                                           indication handler
+ *
+ * @soc: soc handle
+ * @rx_mic_cb: rx mic error indication callback
+ *
+ * Return: void
+ */
+static inline void
+cdp_register_rx_mic_error_ind_handler(ol_txrx_soc_handle soc,
+				      rx_mic_error_callback rx_mic_cb)
+{
+	if (!soc || !soc->ol_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	soc->ol_ops->rx_mic_error = rx_mic_cb;
+}
+
 /**
  * cdp_pdev_reset_driver_del_ack() - reset driver TCP delayed ack flag
  * @soc - data path soc handle

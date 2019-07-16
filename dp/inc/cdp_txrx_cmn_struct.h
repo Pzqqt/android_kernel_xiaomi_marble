@@ -382,6 +382,39 @@ struct cdp_ast_entry_info {
 	uint16_t peer_id;
 };
 
+#define MIC_SEQ_CTR_SIZE 6
+
+enum cdp_rx_frame_type {
+	cdp_rx_frame_type_802_11,
+	cdp_rx_frame_type_802_3,
+};
+
+/**
+ *  struct cdp_rx_mic_err_info - rx mic error information
+ *  @frame_type: frame type - 0 - 802.11 frame
+ *                          - 1 - 802.3 frame
+ *  @data: 802.11 frame
+ *  @ta_mac_addr: transmitter mac address
+ *  @da_mac_addr: destination mac address
+ *  @tsc: sequence number
+ *  @key_id: Key ID
+ *  @multicast: flag for multicast
+ *  @vdev_id: vdev ID
+ *
+ *  This structure holds rx mic error information
+ *
+ */
+struct cdp_rx_mic_err_info {
+	uint8_t frame_type;
+	uint8_t *data;
+	struct qdf_mac_addr ta_mac_addr;
+	struct qdf_mac_addr da_mac_addr;
+	uint8_t tsc[MIC_SEQ_CTR_SIZE];
+	uint8_t key_id;
+	bool multicast;
+	uint16_t vdev_id;
+};
+
 /**
  * struct cdp_sec_type - security type information
  */

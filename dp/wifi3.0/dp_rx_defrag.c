@@ -868,13 +868,26 @@ static void dp_rx_defrag_err(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 	int rx_desc_len = sizeof(struct rx_pkt_tlvs);
 	uint8_t *orig_hdr;
 	struct ieee80211_frame *wh;
+	struct cdp_rx_mic_err_info mic_failure_info;
 
 	orig_hdr = (uint8_t *)(qdf_nbuf_data(nbuf) + rx_desc_len);
 	wh = (struct ieee80211_frame *)orig_hdr;
 
+	qdf_copy_macaddr((struct qdf_mac_addr *)&mic_failure_info.da_mac_addr,
+			 (struct qdf_mac_addr *)&wh->i_addr1);
+	qdf_copy_macaddr((struct qdf_mac_addr *)&mic_failure_info.ta_mac_addr,
+			 (struct qdf_mac_addr *)&wh->i_addr2);
+	mic_failure_info.key_id = 0;
+	mic_failure_info.multicast =
+		IEEE80211_IS_MULTICAST(wh->i_addr1);
+	qdf_mem_zero(mic_failure_info.tsc, MIC_SEQ_CTR_SIZE);
+	mic_failure_info.frame_type = cdp_rx_frame_type_802_11;
+	mic_failure_info.data = (uint8_t *)wh;
+	mic_failure_info.vdev_id = vdev->vdev_id;
+
 	tops = pdev->soc->cdp_soc.ol_ops;
 	if (tops->rx_mic_error)
-		tops->rx_mic_error(pdev->ctrl_pdev, vdev->vdev_id, wh);
+		tops->rx_mic_error(pdev->ctrl_pdev, &mic_failure_info);
 }
 
 
