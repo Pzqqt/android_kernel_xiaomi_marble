@@ -781,45 +781,6 @@ struct pe_session *pe_find_session_by_session_id(struct mac_context *mac,
 }
 
 /**
- * pe_find_session_by_sta_id() - looks up the PE session given staid.
- * @mac_ctx:       pointer to global adapter context
- * @staid:         StaId of the session
- * @session_id:    session ID is returned here, if session is found.
- *
- * This function returns the session context and the session ID if the session
- * corresponding to the given StaId is found in the PE session table.
- *
- * Return: session pointer
- */
-struct pe_session *
-pe_find_session_by_sta_id(struct mac_context *mac_ctx,
-			  uint8_t staid,
-			  uint8_t *session_id)
-{
-	uint8_t i, j;
-	struct pe_session *session_ptr;
-	struct dph_hash_table *dph_ptr;
-
-	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
-		if (!mac_ctx->lim.gpSession[i].valid)
-			continue;
-		session_ptr = &mac_ctx->lim.gpSession[i];
-		dph_ptr = &session_ptr->dph.dphHashTable;
-		for (j = 0; j < dph_ptr->size; j++) {
-			if (dph_ptr->pDphNodeArray[j].valid
-			    && dph_ptr->pDphNodeArray[j].added
-			    && staid == dph_ptr->pDphNodeArray[j].staIndex) {
-				*session_id = i;
-				return session_ptr;
-			}
-		}
-	}
-
-	pe_debug("Session lookup fails for StaId: %d", staid);
-	return NULL;
-}
-
-/**
  * pe_delete_session() - deletes the PE session given the session ID.
  * @mac_ctx: pointer to global adapter context
  * @session: session to be deleted.

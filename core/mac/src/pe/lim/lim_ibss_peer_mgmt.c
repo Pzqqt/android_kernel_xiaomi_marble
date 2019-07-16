@@ -459,7 +459,7 @@ ibss_dph_entry_add(struct mac_context *mac,
 /* send a status change notification */
 static void
 ibss_status_chg_notify(struct mac_context *mac, tSirMacAddr peerAddr,
-		       uint16_t staIndex, uint16_t status, uint8_t sessionId)
+		       uint16_t status, uint8_t sessionId)
 {
 
 	tLimIbssPeerNode *peerNode;
@@ -476,7 +476,7 @@ ibss_status_chg_notify(struct mac_context *mac, tSirMacAddr peerAddr,
 		peerNode->beaconLen = 0;
 	}
 
-	lim_send_sme_ibss_peer_ind(mac, peerAddr, staIndex,
+	lim_send_sme_ibss_peer_ind(mac, peerAddr,
 				   beacon, bcnLen, status, sessionId);
 
 	if (beacon) {
@@ -672,7 +672,6 @@ void lim_ibss_delete_all_peers(struct mac_context *mac,
 		if (sta) {
 
 			ibss_status_chg_notify(mac, pCurrNode->peerMacAddr,
-					       sta->staIndex,
 					       eWNI_SME_IBSS_PEER_DEPARTED_IND,
 					       pe_session->smeSessionId);
 			lim_del_sta(mac, sta, false, pe_session);
@@ -1009,6 +1008,7 @@ lim_ibss_search_and_delete_peer(struct mac_context *mac_ctx,
  * @mac_ptr: Pointer to Global MAC structure
  * @session_entry: Session entry
  * @mac_addr: Mac Address of the IBSS peer
+ * @del_sta: del sta sent to firmware if true
  *
  * This function is called delete IBSS peer.
  *
@@ -1017,7 +1017,8 @@ lim_ibss_search_and_delete_peer(struct mac_context *mac_ctx,
  */
 static void
 lim_ibss_delete_peer(struct mac_context *mac_ctx,
-			struct pe_session *session_entry, tSirMacAddr mac_addr)
+			struct pe_session *session_entry, tSirMacAddr mac_addr,
+			bool del_sta)
 {
 	tpDphHashNode sta = NULL;
 	uint16_t peer_idx = 0;
@@ -1036,7 +1037,7 @@ lim_ibss_delete_peer(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (STA_INVALID_IDX != sta->staIndex) {
+	if (del_sta) {
 		lim_del_sta(mac_ctx, sta,
 			  true, session_entry);
 	} else {
@@ -1098,7 +1099,6 @@ void lim_process_ibss_del_sta_rsp(struct mac_context *mac_ctx,
 
 	ibss_status_chg_notify(mac_ctx,
 		del_sta_params->staMac,
-		sta_ds->staIndex,
 		eWNI_SME_IBSS_PEER_DEPARTED_IND,
 		pe_session->smeSessionId);
 
@@ -1139,7 +1139,7 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 			pAddStaParams->status,
 			QDF_MAC_ADDR_ARRAY(pAddStaParams->staMac));
 		lim_ibss_delete_peer(mac,
-			pe_session, pAddStaParams->staMac);
+			pe_session, pAddStaParams->staMac, false);
 		qdf_mem_free(pAddStaParams);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1150,7 +1150,6 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 	pe_debug("IBSS: sending IBSS_NEW_PEER msg to SME!");
 
 	ibss_status_chg_notify(mac, pAddStaParams->staMac,
-			       sta->staIndex,
 			       eWNI_SME_IBSS_NEW_PEER_IND,
 			       pe_session->smeSessionId);
 
@@ -1335,7 +1334,7 @@ lim_ibss_coalesce(struct mac_context *mac,
 		pPeerNode = ibss_peer_find(mac, pHdr->sa);
 		if (pPeerNode) {
 			lim_ibss_delete_peer(mac, pe_session,
-							  pHdr->sa);
+							  pHdr->sa, true);
 			pe_warn("Peer attempting to reconnect before HB timeout, deleted");
 			return QDF_STATUS_E_INVAL;
 		}
@@ -1465,7 +1464,6 @@ void lim_ibss_heart_beat_handle(struct mac_context *mac_ctx, struct pe_session *
 	uint16_t peer_idx = 0;
 	tpDphHashNode stads = 0;
 	uint32_t threshold = 0;
-	uint16_t sta_idx = 0;
 
 	/*
 	 * MLM BSS is started and if PE in scanmode then MLM state will be
@@ -1504,8 +1502,6 @@ void lim_ibss_heart_beat_handle(struct mac_context *mac_ctx, struct pe_session *
 					tempnode->peerMacAddr, &peer_idx,
 					&session->dph.dphHashTable);
 			if (stads) {
-				sta_idx = stads->staIndex;
-
 				(void)lim_del_sta(mac_ctx, stads, false,
 						  session);
 				lim_delete_dph_hash_entry(mac_ctx,
@@ -1514,7 +1510,7 @@ void lim_ibss_heart_beat_handle(struct mac_context *mac_ctx, struct pe_session *
 						     session);
 				/* Send indication. */
 				ibss_status_chg_notify(mac_ctx,
-					tempnode->peerMacAddr, sta_idx,
+					tempnode->peerMacAddr,
 					eWNI_SME_IBSS_PEER_DEPARTED_IND,
 					session->smeSessionId);
 			}
@@ -1638,7 +1634,7 @@ __lim_ibss_peer_inactivity_handler(struct mac_context *mac,
 	}
 
 	/* delete the peer for which heartbeat is observed */
-	lim_ibss_delete_peer(mac, pe_session, ind->peer_addr.bytes);
+	lim_ibss_delete_peer(mac, pe_session, ind->peer_addr.bytes, true);
 }
 
 /** -------------------------------------------------------------

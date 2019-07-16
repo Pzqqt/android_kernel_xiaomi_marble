@@ -1587,7 +1587,6 @@ typedef struct sSmeIbssPeerInd {
 	uint8_t sessionId;
 
 	struct qdf_mac_addr peer_addr;
-	uint16_t staId;
 
 	/* Beacon will be appended for new Peer indication. */
 } tSmeIbssPeerInd, *tpSmeIbssPeerInd;

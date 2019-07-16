@@ -686,21 +686,6 @@ struct pe_session *pe_find_session_by_session_id(struct mac_context *mac,
 					  uint8_t sessionId);
 
 /**
- * pe_find_session_by_bssid() - looks up the PE session given staid.
- *
- * @mac:          pointer to global adapter context
- * @staid:         StaId of the session
- * @sessionId:     session ID is returned here, if session is found.
- *
- * This function returns the session context and the session ID if the session
- * corresponding to the given StaId is found in the PE session table.
- *
- * Return: pointer to the session context or NULL if session is not found.
- */
-struct pe_session *pe_find_session_by_sta_id(struct mac_context *mac, uint8_t staid,
-				      uint8_t *sessionId);
-
-/**
  * pe_delete_session() - deletes the PE session given the session ID.
  *
  * @mac:          pointer to global adapter context

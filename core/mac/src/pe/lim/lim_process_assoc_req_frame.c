@@ -1350,8 +1350,8 @@ static bool lim_process_assoc_req_sta_ctx(struct mac_context *mac_ctx,
 		}
 
 		*update_ctx = true;
-		if (dph_init_sta_state(mac_ctx, hdr->sa, peer_idx, true,
-			&session->dph.dphHashTable) == NULL) {
+		if (dph_init_sta_state(mac_ctx, hdr->sa, peer_idx,
+				       &session->dph.dphHashTable) == NULL) {
 			pe_err("could not Init STAid: %d", peer_idx);
 			return false;
 		}
@@ -2113,7 +2113,7 @@ send_ind_to_sme:
 		 * Update in the HAL Sta Table for the Update of the Protection
 		 * Mode
 		 */
-		lim_post_sm_state_update(mac_ctx, sta_ds->staIndex,
+		lim_post_sm_state_update(mac_ctx,
 					 sta_ds->htMIMOPSState, sta_ds->staAddr,
 					 session->smeSessionId);
 	}

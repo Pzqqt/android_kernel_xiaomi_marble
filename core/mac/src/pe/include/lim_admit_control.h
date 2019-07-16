@@ -74,20 +74,17 @@ lim_admit_control_delete_ts(struct mac_context *mac,
 QDF_STATUS lim_admit_control_init(struct mac_context *mac);
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS lim_send_hal_msg_add_ts(struct mac_context *mac,
-				      uint16_t staIdx,
 				      uint8_t tspecIdx,
 				      struct mac_tspec_ie tspecIE,
 				      uint8_t sessionId, uint16_t tsm_interval);
 #else
 QDF_STATUS lim_send_hal_msg_add_ts(struct mac_context *mac,
-				      uint16_t staIdx,
 				      uint8_t tspecIdx,
 				      struct mac_tspec_ie tspecIE,
 				      uint8_t sessionId);
 #endif
 
 QDF_STATUS lim_send_hal_msg_del_ts(struct mac_context *mac,
-				      uint16_t staIdx,
 				      uint8_t tspecIdx,
 				      struct delts_req_info delts,
 				      uint8_t sessionId, uint8_t *bssId);

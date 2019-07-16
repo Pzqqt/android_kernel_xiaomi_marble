@@ -483,7 +483,6 @@ static inline uint32_t utils_power_xy(uint16_t base, uint16_t power)
 }
 
 QDF_STATUS lim_post_sm_state_update(struct mac_context *mac,
-		uint16_t StaIdx,
 		tSirMacHTMIMOPowerSaveState MIMOPSState,
 		uint8_t *pPeerStaMac, uint8_t sessionId);
 

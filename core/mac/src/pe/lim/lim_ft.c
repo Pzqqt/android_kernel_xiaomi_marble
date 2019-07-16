@@ -845,18 +845,20 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 		if ((((1 << i) & pAggrQosRspMsg->tspecIdx)) &&
 		    (pAggrQosRspMsg->status[i] != QDF_STATUS_SUCCESS)) {
 			sir_copy_mac_addr(peerMacAddr, pe_session->bssId);
-			addTsParam.sta_idx = pAggrQosRspMsg->staIdx;
 			addTsParam.pe_session_id = pAggrQosRspMsg->sessionId;
 			addTsParam.tspec = pAggrQosRspMsg->tspec[i];
 			addTsParam.tspec_idx = pAggrQosRspMsg->tspecIdx;
-			lim_send_delts_req_action_frame(mac, peerMacAddr, rspReqd,
+			lim_send_delts_req_action_frame(mac, peerMacAddr,
+							rspReqd,
 							&addTsParam.tspec.tsinfo,
 							&addTsParam.tspec,
 							pe_session);
 			pSta =
-				dph_lookup_assoc_id(mac, addTsParam.sta_idx,
-						    &assocId,
-						    &pe_session->dph.dphHashTable);
+				dph_lookup_hash_entry(mac, peerMacAddr,
+						      &assocId,
+						      &pe_session->
+						      dph.dphHashTable);
+
 			if (pSta) {
 				lim_admit_control_delete_ts(mac, assocId,
 							    &addTsParam.tspec.

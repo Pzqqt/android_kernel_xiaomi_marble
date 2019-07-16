@@ -2492,7 +2492,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 	roam_sync_ind_ptr->join_rsp->vht_channel_width =
 					ft_session_ptr->ch_width;
-	roam_sync_ind_ptr->join_rsp->staId = curr_sta_ds->staIndex;
 	roam_sync_ind_ptr->join_rsp->timingMeasCap = curr_sta_ds->timingMeasCap;
 	roam_sync_ind_ptr->join_rsp->nss = curr_sta_ds->nss;
 	roam_sync_ind_ptr->join_rsp->max_rate_flags =

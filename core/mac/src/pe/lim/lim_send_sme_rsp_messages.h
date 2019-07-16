@@ -241,7 +241,7 @@ void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac, tAniGetTsmStatsRsp *pS
  * Return: none
  */
 void lim_send_sme_ibss_peer_ind(struct mac_context *mac, tSirMacAddr peerMacAddr,
-				uint16_t staIndex, uint8_t *beacon,
+				uint8_t *beacon,
 				uint16_t beaconLen, uint16_t msgType,
 				uint8_t sessionId);
 #else

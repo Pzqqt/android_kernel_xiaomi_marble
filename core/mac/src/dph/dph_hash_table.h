@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,9 +57,6 @@ struct dph_hash_table {
 tpDphHashNode dph_lookup_hash_entry(struct mac_context *mac, uint8_t staAddr[],
 				    uint16_t *pStaId,
 				    struct dph_hash_table *hash_table);
-tpDphHashNode dph_lookup_assoc_id(struct mac_context *mac, uint16_t staIdx,
-				  uint16_t *assocId,
-				  struct dph_hash_table *hash_table);
 
 /* Get a pointer to the hash node */
 tpDphHashNode dph_get_hash_entry(struct mac_context *mac, uint16_t staId,
@@ -87,7 +84,7 @@ void dph_hash_table_init(struct mac_context *mac,
 /* Initialize STA state */
 tpDphHashNode dph_init_sta_state(struct mac_context *mac,
 				 tSirMacAddr staAddr,
-				 uint16_t staId, uint8_t validStaIdx,
+				 uint16_t staId,
 				 struct dph_hash_table *hash_table);
 
 #endif

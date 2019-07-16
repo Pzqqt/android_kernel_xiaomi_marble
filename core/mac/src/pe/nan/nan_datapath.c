@@ -304,15 +304,10 @@ void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
 		pe_err("DEL STA failed!");
 		goto skip_event;
 	}
-	pe_info("Deleted STA AssocID %d staId %d MAC " QDF_MAC_ADDR_STR,
-		sta_ds->assocId, sta_ds->staIndex,
+	pe_info("Deleted STA AssocID %d MAC " QDF_MAC_ADDR_STR,
+		sta_ds->assocId,
 		QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
 
-	/*
-	 * Copy peer info in del peer indication before
-	 * lim_delete_dph_hash_entry is called as this will be lost.
-	 */
-	peer_ind.sta_id = sta_ds->staIndex;
 	qdf_mem_copy(&peer_ind.peer_mac_addr.bytes,
 		sta_ds->staAddr, sizeof(tSirMacAddr));
 	lim_release_peer_idx(mac_ctx, sta_ds->assocId, pe_session);

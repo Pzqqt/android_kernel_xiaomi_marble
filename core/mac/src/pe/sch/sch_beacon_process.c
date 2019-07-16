@@ -576,8 +576,8 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 			((oper_mode != bcn->OperatingMode.chanWidth) ||
 			(sta_ds->vhtSupportedRxNss !=
 			(bcn->OperatingMode.rxNSS + 1)))) {
-			pe_debug("received OpMode Chanwidth %d, staIdx = %d",
-			       bcn->OperatingMode.chanWidth, sta_ds->staIndex);
+			pe_debug("received OpMode Chanwidth %d",
+				 bcn->OperatingMode.chanWidth);
 			pe_debug("MAC - %0x:%0x:%0x:%0x:%0x:%0x",
 			       mac_hdr->sa[0], mac_hdr->sa[1],
 			       mac_hdr->sa[2], mac_hdr->sa[3],
@@ -645,8 +645,8 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 
 	if (!skip_opmode_update &&
 	    (oper_mode != bcn->VHTOperation.chanWidth)) {
-		pe_debug("received VHTOP CHWidth %d staIdx = %d",
-		       bcn->VHTOperation.chanWidth, sta_ds->staIndex);
+		pe_debug("received VHTOP CHWidth %d",
+			 bcn->VHTOperation.chanWidth);
 		pe_debug("MAC - %0x:%0x:%0x:%0x:%0x:%0x",
 		       mac_hdr->sa[0], mac_hdr->sa[1],
 		       mac_hdr->sa[2], mac_hdr->sa[3],

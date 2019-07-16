@@ -415,7 +415,6 @@ typedef enum eSmpsModeValue {
 /**
  * struct tDeleteStaContext - params required for delete sta request
  * @assocId: association id
- * @staId: station id
  * @bssId: mac address
  * @addr2: mac address
  * @reasonCode: reason code
@@ -425,7 +424,6 @@ typedef struct {
 	bool is_tdls;
 	uint8_t vdev_id;
 	uint16_t assocId;
-	uint16_t staId;
 	tSirMacAddr bssId;
 	tSirMacAddr addr2;
 	uint16_t reasonCode;
@@ -624,7 +622,6 @@ typedef struct {
 
 /**
  * struct tSetMIMOPS - MIMO power save related parameters
- * @staIdx: station index
  * @htMIMOPSState: MIMO Power Save State
  * @status: response status
  * @fsendRsp: send response flag
@@ -632,7 +629,6 @@ typedef struct {
  * @sessionId: session id
  */
 typedef struct sSet_MIMOPS {
-	uint16_t staIdx;
 	tSirMacHTMIMOPowerSaveState htMIMOPSState;
 	QDF_STATUS status;
 	uint8_t fsendRsp;

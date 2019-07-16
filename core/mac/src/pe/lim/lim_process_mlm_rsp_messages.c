@@ -786,7 +786,7 @@ void lim_process_mlm_assoc_ind(struct mac_context *mac, uint32_t *msg_buf)
 
 		return;
 	}
-	pSirSmeAssocInd->staId = sta->staIndex;
+
 	pSirSmeAssocInd->reassocReq = sta->mlmStaContext.subType;
 	pSirSmeAssocInd->timingMeasCap = sta->timingMeasCap;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
@@ -1755,20 +1755,20 @@ void lim_process_ap_mlm_del_sta_rsp(struct mac_context *mac_ctx,
 		goto end;
 	}
 
-	pe_warn("AP received the DEL_STA_RSP for assocID: %X",
-		del_sta_params->assocId);
+	pe_warn("AP received the DEL_STA_RSP for assocID: %X sta mac "
+		QDF_MAC_ADDR_STR, del_sta_params->assocId,
+		QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
 	if ((eLIM_MLM_WT_DEL_STA_RSP_STATE != sta_ds->mlmStaContext.mlmState) &&
 	    (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE !=
 	     sta_ds->mlmStaContext.mlmState)) {
-		pe_err("Received unexpected WMA_DEL_STA_RSP in state %s for staId %d assocId %d",
-			lim_mlm_state_str(sta_ds->mlmStaContext.mlmState),
-			sta_ds->staIndex, sta_ds->assocId);
+		pe_err("Received unexpected WMA_DEL_STA_RSP in state %s for assocId %d",
+		       lim_mlm_state_str(sta_ds->mlmStaContext.mlmState),
+			sta_ds->assocId);
 		status_code = eSIR_SME_REFUSED;
 		goto end;
 	}
 
-	pe_debug("Deleted STA AssocID %d staId %d MAC",
-		sta_ds->assocId, sta_ds->staIndex);
+	pe_debug("Deleted STA AssocID %d", sta_ds->assocId);
 	lim_print_mac_addr(mac_ctx, sta_ds->staAddr, LOGD);
 	if (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE ==
 	    sta_ds->mlmStaContext.mlmState) {
@@ -1909,8 +1909,8 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 	/* if the AssocRsp frame is not acknowledged, then keep alive timer will take care of the state */
 	sta->valid = 1;
 	sta->mlmStaContext.mlmState = eLIM_MLM_WT_ASSOC_CNF_STATE;
-	pe_debug("AddStaRsp Success.STA AssocID %d staId %d MAC",
-		sta->assocId, sta->staIndex);
+	pe_debug("AddStaRsp Success.STA AssocID %d sta mac" QDF_MAC_ADDR_STR,
+		 sta->assocId, QDF_MAC_ADDR_ARRAY(sta->staAddr));
 	lim_print_mac_addr(mac, sta->staAddr, LOGD);
 
 	/* For BTAMP-AP, the flow sequence shall be:

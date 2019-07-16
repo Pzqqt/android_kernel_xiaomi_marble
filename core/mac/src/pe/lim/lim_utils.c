@@ -4226,7 +4226,7 @@ lim_validate_delts_req(struct mac_context *mac_ctx, tpSirDeltsReq delts_req,
 	} else if (tsinfo->traffic.accessPolicy == SIR_MAC_ACCESSPOLICY_EDCA) {
 		/* send message to HAL to delete TS */
 		if (QDF_STATUS_SUCCESS !=
-			lim_send_hal_msg_del_ts(mac_ctx, sta->staIndex,
+			lim_send_hal_msg_del_ts(mac_ctx,
 						tspec_idx, delts_req->req,
 						session->peSessionId,
 						session->bssId)) {
@@ -4257,7 +4257,7 @@ lim_validate_delts_req(struct mac_context *mac_ctx, tpSirDeltsReq delts_req,
  */
 QDF_STATUS
 lim_post_sm_state_update(struct mac_context *mac,
-			 uint16_t staIdx, tSirMacHTMIMOPowerSaveState state,
+			 tSirMacHTMIMOPowerSaveState state,
 			 uint8_t *pPeerStaMac, uint8_t sessionId)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -4273,7 +4273,6 @@ lim_post_sm_state_update(struct mac_context *mac,
 		return QDF_STATUS_E_NOMEM;
 
 	pMIMO_PSParams->htMIMOPSState = state;
-	pMIMO_PSParams->staIdx = staIdx;
 	pMIMO_PSParams->fsendRsp = true;
 	pMIMO_PSParams->sessionId = sessionId;
 	qdf_mem_copy(pMIMO_PSParams->peerMac, pPeerStaMac, sizeof(tSirMacAddr));

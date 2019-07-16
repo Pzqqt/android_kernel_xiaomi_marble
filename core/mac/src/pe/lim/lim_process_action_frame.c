@@ -502,9 +502,8 @@ static void __lim_process_operating_mode_action_frame(struct mac_context *mac_ct
 		operating_mode_frm->OperatingMode.chanWidth)) {
 		uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
 
-		pe_debug("received Chanwidth: %d staIdx: %d",
-			(operating_mode_frm->OperatingMode.chanWidth),
-			sta_ptr->staIndex);
+		pe_debug("received Chanwidth: %d",
+			 operating_mode_frm->OperatingMode.chanWidth);
 
 		pe_debug(" MAC: %0x:%0x:%0x:%0x:%0x:%0x",
 			mac_hdr->sa[0], mac_hdr->sa[1], mac_hdr->sa[2],
@@ -568,10 +567,11 @@ end:
  *
  * Return: none
  */
-static void __lim_process_gid_management_action_frame(struct mac_context *mac_ctx,
-			uint8_t *rx_pkt_info, struct pe_session *session)
+static void
+__lim_process_gid_management_action_frame(struct mac_context *mac_ctx,
+					  uint8_t *rx_pkt_info,
+					  struct pe_session *session)
 {
-
 	uint8_t *body_ptr;
 	uint16_t aid;
 	uint32_t frame_len, status, membership = 0, usr_position = 0;
@@ -609,8 +609,6 @@ static void __lim_process_gid_management_action_frame(struct mac_context *mac_ct
 		pe_err("Failed to get STA entry from hash table");
 		goto out;
 	}
-	pe_debug("received Gid Management Action Frame staIdx: %d",
-		sta_ptr->staIndex);
 
 	pe_debug(" MAC: %0x:%0x:%0x:%0x:%0x:%0x",
 		mac_hdr->sa[0], mac_hdr->sa[1], mac_hdr->sa[2],
@@ -620,8 +618,7 @@ static void __lim_process_gid_management_action_frame(struct mac_context *mac_ct
 	mem_upper = (uint32_t *) &vht_member_status->membershipStatusArray[4];
 
 	if (*mem_lower && *mem_upper) {
-		pe_err("rcved frame with mult group ID set, staIdx = %d",
-			sta_ptr->staIndex);
+		pe_err("rcved frame with mult group ID set");
 		goto out;
 	}
 	if (*mem_lower) {
@@ -630,8 +627,7 @@ static void __lim_process_gid_management_action_frame(struct mac_context *mac_ct
 		mem_cur = mem_upper;
 		membership += sizeof(uint32_t);
 	} else {
-		pe_err("rcved Gid frame with no group ID set, staIdx: %d",
-			sta_ptr->staIndex);
+		pe_err("rcved Gid frame with no group ID set");
 		goto out;
 	}
 	while (!(*mem_cur & 1)) {
@@ -639,8 +635,7 @@ static void __lim_process_gid_management_action_frame(struct mac_context *mac_ct
 		++membership;
 	}
 	if (*mem_cur) {
-		pe_err("rcved frame with mult group ID set, staIdx: %d",
-			sta_ptr->staIndex);
+		pe_err("rcved frame with mult group ID set");
 		goto out;
 	}
 
@@ -855,12 +850,12 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 		((upToAc(addts.tspec.tsinfo.traffic.userPrio) < QCA_WLAN_AC_ALL))) {
 #ifdef FEATURE_WLAN_ESE
 		retval = lim_send_hal_msg_add_ts(mac_ctx,
-				sta_ptr->staIndex, tspec_info->idx,
+				tspec_info->idx,
 				addts.tspec, session->peSessionId,
 				addts.tsmIE.msmt_interval);
 #else
 		retval = lim_send_hal_msg_add_ts(mac_ctx,
-				sta_ptr->staIndex, tspec_info->idx,
+				tspec_info->idx,
 				addts.tspec, session->peSessionId);
 #endif
 		if (QDF_STATUS_SUCCESS != retval) {
@@ -979,7 +974,7 @@ static void __lim_process_del_ts_req(struct mac_context *mac_ctx,
 					SIR_MAC_ACCESSPOLICY_BOTH))){
 		/* send message to HAL to delete TS */
 		if (QDF_STATUS_SUCCESS != lim_send_hal_msg_del_ts(mac_ctx,
-						sta_ptr->staIndex, tspec_idx,
+						tspec_idx,
 						delts, session->peSessionId,
 						session->bssId)) {
 			pe_warn("DelTs with UP: %d failed ignoring request",
@@ -1253,7 +1248,7 @@ __lim_process_sm_power_save_update(struct mac_context *mac, uint8_t *pRxPacketIn
 
 	/** Update in the HAL Station Table for the Update of the Protection Mode */
 	pSta->htMIMOPSState = state;
-	lim_post_sm_state_update(mac, pSta->staIndex, pSta->htMIMOPSState,
+	lim_post_sm_state_update(mac, pSta->htMIMOPSState,
 				 pSta->staAddr, pe_session->smeSessionId);
 }
 

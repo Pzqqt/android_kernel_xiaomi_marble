@@ -61,15 +61,14 @@ static void lim_delete_sta_util(struct mac_context *mac_ctx, tpDeleteStaContext 
 {
 	tpDphHashNode stads;
 
-	pe_debug("Deleting station: staId: %d, reasonCode: %d",
-		msg->staId, msg->reasonCode);
+	pe_debug("Deleting station: reasonCode: %d", msg->reasonCode);
 
 	if (LIM_IS_IBSS_ROLE(session_entry)) {
 		return;
 	}
 
-	stads = dph_lookup_assoc_id(mac_ctx, msg->staId, &msg->assocId,
-				    &session_entry->dph.dphHashTable);
+	stads = dph_lookup_hash_entry(mac_ctx, msg->addr2, &msg->assocId,
+				      &session_entry->dph.dphHashTable);
 
 	if (!stads) {
 		pe_err("Invalid STA limSystemRole: %d",
@@ -78,17 +77,8 @@ static void lim_delete_sta_util(struct mac_context *mac_ctx, tpDeleteStaContext 
 	}
 	stads->del_sta_ctx_rssi = msg->rssi;
 
-	/* check and see if same staId. This is to avoid the scenario
-	 * where we're trying to delete a staId we just added.
-	 */
-	if (stads->staIndex != msg->staId) {
-		pe_err("staid mismatch: %d vs %d", stads->staIndex, msg->staId);
-		return;
-	}
-
 	if (LIM_IS_AP_ROLE(session_entry)) {
-		pe_debug("Delete Station staId: %d, assocId: %d",
-			msg->staId, msg->assocId);
+		pe_debug("Delete Station assocId: %d", msg->assocId);
 		/*
 		 * Check if Deauth/Disassoc is triggered from Host.
 		 * If mlmState is in some transient state then
@@ -102,8 +92,7 @@ static void lim_delete_sta_util(struct mac_context *mac_ctx, tpDeleteStaContext 
 			eLIM_MLM_WT_ASSOC_CNF_STATE) &&
 		      (stads->mlmStaContext.mlmState !=
 			eLIM_MLM_ASSOCIATED_STATE)))) {
-			pe_err("Inv Del STA staId: %d, assocId: %d",
-				msg->staId, msg->assocId);
+			pe_err("Inv Del STA assocId: %d", msg->assocId);
 			return;
 		} else {
 			lim_send_disassoc_mgmt_frame(mac_ctx,
@@ -128,8 +117,7 @@ static void lim_delete_sta_util(struct mac_context *mac_ctx, tpDeleteStaContext 
 		/* TearDownLink with AP */
 		tLimMlmDeauthInd mlm_deauth_ind;
 
-		pe_debug("Delete Station (staId: %d, assocId: %d)",
-			msg->staId, msg->assocId);
+		pe_debug("Delete Station (assocId: %d)", msg->assocId);
 
 		if ((stads &&
 			((stads->mlmStaContext.mlmState !=

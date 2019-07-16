@@ -743,7 +743,6 @@ csr_roam_chk_lnk_ibss_new_peer_ind(struct mac_context *mac_ctx,
 				     sizeof(tSmeIbssPeerInd),
 				     roam_info->nBeaconLength);
 		}
-		roam_info->staId = (uint8_t)pIbssPeerInd->staId;
 		roam_info->bss_desc = qdf_mem_malloc(
 					session->pConnectBssDesc->length);
 		if (!roam_info->bss_desc) {
@@ -812,7 +811,6 @@ csr_roam_chk_lnk_ibss_peer_departed_ind(struct mac_context *mac_ctx,
 		}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
 		sme_debug("CSR: Peer departed notification from LIM");
-		roam_info->staId = (uint8_t)pIbssPeerInd->staId;
 		qdf_copy_macaddr(&roam_info->peerMac, &pIbssPeerInd->peer_addr);
 		csr_roam_call_callback(mac_ctx, sessionId, roam_info, 0,
 				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
@@ -10327,7 +10325,6 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *msg_buf)
 		if (!roam_info)
 			break;
 
-		roam_info->staId = (uint8_t) pIbssPeerInd->staId;
 		qdf_copy_macaddr(&roam_info->peerMac, &pIbssPeerInd->peer_addr);
 		csr_roam_call_callback(mac, pSmeRsp->sessionId, roam_info, 0,
 				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
