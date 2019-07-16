@@ -689,6 +689,24 @@ struct wmi_disconnect_roam_params {
 };
 
 /**
+ * struct wmi_roam_auth_status_params - WPA3 roam auth response status
+ * parameters
+ * @vdev_id: Vdev on which roam preauth is happening
+ * @preauth_status: Status of the Auth response.
+ *      IEEE80211_STATUS_SUCCESS(0) for success. Corresponding
+ *      IEEE80211 failure status code for failure.
+ *
+ * @bssid: Candidate BSSID
+ * @pmkid: PMKID derived for the auth
+ */
+struct wmi_roam_auth_status_params {
+	uint32_t vdev_id;
+	uint32_t preauth_status;
+	struct qdf_mac_addr bssid;
+	uint8_t pmkid[PMKID_LEN];
+};
+
+/**
  * @time_offset: time offset after 11k offload command to trigger a neighbor
  *	report request (in seconds)
  * @low_rssi_offset: Offset from rssi threshold to trigger a neighbor

@@ -289,6 +289,16 @@ wmi_unified_send_idle_roam_params(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS
+wmi_unified_send_roam_preauth_status(wmi_unified_t wmi_handle,
+				     struct wmi_roam_auth_status_params *params)
+{
+	if (wmi_handle->ops->send_roam_preauth_status)
+		return wmi_handle->ops->send_roam_preauth_status(wmi_handle,
+								 params);
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_unified_offload_11k_cmd(wmi_unified_t wmi_handle,
 				       struct wmi_11k_offload_params *params)
 {

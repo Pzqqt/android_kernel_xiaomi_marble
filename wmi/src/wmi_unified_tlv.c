@@ -12349,6 +12349,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 				WMI_PEER_RATECODE_LIST_EVENTID;
 	event_ids[wmi_chan_rf_characterization_info_event_id] =
 				WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID;
+	event_ids[wmi_roam_auth_offload_event_id] =
+				WMI_ROAM_PREAUTH_START_EVENTID;
 }
 
 /**
@@ -12618,6 +12620,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_THREE_WAY_COEX_CONFIG_LEGACY;
 	wmi_service[wmi_service_rx_fse_support] =
 			WMI_SERVICE_RX_FSE_SUPPORT;
+	wmi_service[wmi_service_sae_roam_support] =
+			WMI_SERVICE_WPA3_SAE_ROAM_SUPPORT;
+	wmi_service[wmi_service_owe_roam_support] =
+			WMI_SERVICE_WPA3_OWE_ROAM_SUPPORT;
 }
 
 /**

@@ -343,6 +343,21 @@ wmi_unified_send_idle_roam_params(wmi_unified_t wmi_handle,
 				  struct wmi_idle_roam_params *req);
 
 /**
+ * wmi_unified_send_roam_preauth_status() - Send roam preauthentication status
+ * to target.
+ * @wmi_handle: wmi handle
+ * @param: Roam auth status params
+ *
+ * This function passes preauth status of WPA3 SAE auth to firmware. It is
+ * called when external_auth_status event is received from userspace.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_send_roam_preauth_status(wmi_unified_t wmi_handle,
+				     struct wmi_roam_auth_status_params *param);
+
+/**
  * wmi_unified_offload_11k_cmd() - send 11k offload command
  * @wmi_handle: wmi handle
  * @params: 11k offload params

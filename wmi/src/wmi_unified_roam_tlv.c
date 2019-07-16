@@ -1322,8 +1322,7 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				roam_offload_11i =
 				     (wmi_roam_11i_offload_tlv_param *) buf_ptr;
 
-				if (roam_req->roam_key_mgmt_offload_enabled &&
-				    roam_req->fw_okc) {
+				if (roam_req->fw_okc) {
 					WMI_SET_ROAM_OFFLOAD_OKC_ENABLED
 						(roam_offload_11i->flags);
 					WMI_LOGI("LFR3:OKC enabled");
@@ -1332,8 +1331,8 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 						(roam_offload_11i->flags);
 					WMI_LOGI("LFR3:OKC disabled");
 				}
-				if (roam_req->roam_key_mgmt_offload_enabled &&
-				    roam_req->fw_pmksa_cache) {
+
+				if (roam_req->fw_pmksa_cache) {
 					WMI_SET_ROAM_OFFLOAD_PMK_CACHE_ENABLED
 						(roam_offload_11i->flags);
 					WMI_LOGI("LFR3:PMKSA caching enabled");
@@ -2376,6 +2375,60 @@ send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * send_roam_preauth_status_tlv() - send roam pre-authentication status
+ * @wmi_handle: wmi handle
+ * @params: pre-auth status params
+ *
+ * This function sends the roam pre-authentication status for WPA3 SAE
+ * pre-auth to target.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+send_roam_preauth_status_tlv(wmi_unified_t wmi_handle,
+			     struct wmi_roam_auth_status_params *params)
+{
+	wmi_roam_preauth_status_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len;
+	uint8_t *buf_ptr;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + PMKID_LEN;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_roam_preauth_status_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(
+	    &cmd->tlv_header,
+	    WMITLV_TAG_STRUC_wmi_roam_preauth_status_cmd_fixed_param,
+	    WMITLV_GET_STRUCT_TLVLEN(wmi_roam_preauth_status_cmd_fixed_param));
+
+	cmd->vdev_id = params->vdev_id;
+	cmd->preauth_status = params->preauth_status;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->bssid.bytes,
+				   &cmd->candidate_ap_bssid);
+
+	buf_ptr += sizeof(wmi_roam_preauth_status_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, PMKID_LEN);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	qdf_mem_copy(buf_ptr, params->pmkid, PMKID_LEN);
+	WMI_LOGD("%s: vdev_id:%d status:%d bssid:%pM", __func__, cmd->vdev_id,
+		 cmd->preauth_status, params->bssid.bytes);
+
+	wmi_mtrace(WMI_ROAM_PREAUTH_STATUS_CMDID, cmd->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_ROAM_PREAUTH_STATUS_CMDID)) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 #else
 static inline QDF_STATUS
 send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
@@ -2387,6 +2440,13 @@ send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
 static inline QDF_STATUS
 send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
 			  struct wmi_idle_roam_params *idle_roam_params)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+send_roam_preauth_status_tlv(wmi_unified_t wmi_handle,
+			     struct wmi_roam_auth_status_params *params)
 {
 	return QDF_STATUS_E_FAILURE;
 }
@@ -2563,6 +2623,7 @@ void wmi_roam_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_roam_bss_load_config = send_roam_bss_load_config_tlv;
 	ops->send_idle_roam_params = send_idle_roam_params_tlv;
 	ops->send_disconnect_roam_params = send_disconnect_roam_params_tlv;
+	ops->send_roam_preauth_status = send_roam_preauth_status_tlv;
 
 	wmi_lfr_subnet_detection_attach_tlv(wmi_handle);
 	wmi_rssi_monitor_attach_tlv(wmi_handle);
