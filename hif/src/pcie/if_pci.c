@@ -1334,9 +1334,17 @@ void hif_pci_enable_power_management(struct hif_softc *hif_sc,
 				 bool is_packet_log_enabled)
 {
 	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_sc);
+	uint32_t mode;
 
 	if (!pci_ctx) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
+		return;
+	}
+
+	mode = hif_get_conparam(hif_sc);
+	if (mode == QDF_GLOBAL_FTM_MODE) {
+		HIF_INFO("%s: Enable power gating for FTM mode", __func__);
+		hif_enable_power_gating(pci_ctx);
 		return;
 	}
 
