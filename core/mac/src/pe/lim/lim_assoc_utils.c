@@ -3106,7 +3106,8 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 		return;
 	}
 
-	pe_debug("Deleting DPH Hash entry for STAID: %X", sta_id);
+	pe_debug("Deleting DPH Hash entry sta mac " QDF_MAC_ADDR_STR,
+		 QDF_MAC_ADDR_ARRAY(sta_addr));
 	/*
 	 * update the station count and perform associated actions
 	 * do this before deleting the dph hash entry
@@ -3155,8 +3156,9 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 
 #ifdef WLAN_FEATURE_11W
 		if (sta_ds->rmfEnabled) {
-			pe_debug("delete pmf timer sta-idx:%d assoc-id:%d",
-				 sta_ds->staIndex, sta_ds->assocId);
+			pe_debug("delete pmf timer assoc-id:%d sta mac "
+				 QDF_MAC_ADDR_STR, sta_ds->assocId,
+				 QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
 			tx_timer_delete(&sta_ds->pmfSaQueryTimer);
 		}
 #endif

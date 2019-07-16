@@ -2944,9 +2944,9 @@ int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 
 		/* peer assoc conf event means the cmd succeeds */
 		params->status = QDF_STATUS_SUCCESS;
-		WMA_LOGD(FL("Send ADD_STA_RSP: statype %d vdev_id %d aid %d bssid %pM staIdx %d status %d"),
+		WMA_LOGD(FL("Send ADD_STA_RSP: statype %d vdev_id %d aid %d bssid %pM status %d")
 			 params->staType, params->smesessionId,
-			 params->assocId, params->bssId, params->staIdx,
+			 params->assocId, params->bssId,
 			 params->status);
 		wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP,
 					   (void *)params, 0);
@@ -4119,8 +4119,8 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	bool peer_assoc_cnf = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	WMA_LOGD("%s: staType: %d, staIdx: %d, updateSta: %d, bssId: %pM, staMac: %pM",
-		 __func__, add_sta->staType, add_sta->staIdx,
+	WMA_LOGD("%s: staType: %d, updateSta: %d, bssId: %pM, staMac: %pM",
+		 __func__, add_sta->staType,
 		 add_sta->updateSta, add_sta->bssId, add_sta->staMac);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -4174,8 +4174,8 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		}
 
 		add_sta->staIdx = cdp_peer_get_local_peer_id(soc, peer);
-		WMA_LOGD("%s: addSta, after calling cdp_local_peer_id, staIdx: %d, staMac: %pM",
-			 __func__, add_sta->staIdx, add_sta->staMac);
+		WMA_LOGD("%s: addSta, after calling cdp_local_peer_id, staMac: %pM",
+			 __func__, add_sta->staMac);
 
 		peer_state = qdf_mem_malloc(sizeof(*peer_state));
 		if (!peer_state) {
@@ -4249,9 +4249,9 @@ send_rsp:
 	if (peer_assoc_cnf)
 		return;
 
-	WMA_LOGD(FL("statype %d vdev_id %d aid %d bssid %pM staIdx %d status %d"),
+	WMA_LOGD(FL("statype %d vdev_id %d aid %d bssid %pM status %d"),
 		 add_sta->staType, add_sta->smesessionId,
-		 add_sta->assocId, add_sta->bssId, add_sta->staIdx,
+		 add_sta->assocId, add_sta->bssId,
 		 add_sta->status);
 	wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP, (void *)add_sta, 0);
 }

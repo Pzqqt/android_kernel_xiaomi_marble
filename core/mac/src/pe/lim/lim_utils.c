@@ -6010,13 +6010,15 @@ void lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *
 		if (!sta_ds)
 			continue;
 		if (!sta_ds->rmfEnabled) {
-			pe_debug("no PMF timer for sta-idx:%d assoc-id:%d",
-				 sta_ds->staIndex, sta_ds->assocId);
+			pe_debug("no PMF timer for assoc-id:%d sta mac"
+				 QDF_MAC_ADDR_STR, sta_ds->assocId,
+				 QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
 			continue;
 		}
 
-		pe_debug("Deleting pmfSaQueryTimer for sta-idx:%d assoc-id:%d",
-			sta_ds->staIndex, sta_ds->assocId);
+		pe_debug("Deleting pmfSaQueryTimer for assoc-id:%d sta mac"
+			 QDF_MAC_ADDR_STR, sta_ds->assocId,
+			 QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
 		tx_timer_deactivate(&sta_ds->pmfSaQueryTimer);
 		tx_timer_delete(&sta_ds->pmfSaQueryTimer);
 	}

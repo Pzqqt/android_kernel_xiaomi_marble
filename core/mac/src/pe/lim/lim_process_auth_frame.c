@@ -483,9 +483,9 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 #endif
 		   ) {
 			pe_err("STA is already connected but received auth frame"
-					"Send the Deauth and lim Delete Station Context"
-					"(staId: %d, associd: %d) ",
-				sta_ds_ptr->staIndex, associd);
+			       "Send the Deauth and lim Delete Station Context"
+			       "(associd: %d) sta mac" QDF_MAC_ADDR_STR,
+			       associd, QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			lim_send_deauth_mgmt_frame(mac_ctx,
 				eSIR_MAC_UNSPEC_FAILURE_REASON,
 				(uint8_t *) mac_hdr->sa,
@@ -547,8 +547,9 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 			&& !sta_ds_ptr->rmfEnabled
 #endif
 		   ) {
-			pe_debug("lim Delete Station Context staId: %d associd: %d",
-				sta_ds_ptr->staIndex, associd);
+			pe_debug("lim Del Sta Ctx associd: %d sta mac"
+				 QDF_MAC_ADDR_STR, associd,
+				 QDF_MAC_ADDR_ARRAY(sta_ds_ptr->staAddr));
 			lim_send_deauth_mgmt_frame(mac_ctx,
 				eSIR_MAC_UNSPEC_FAILURE_REASON,
 				(uint8_t *)auth_node->peerMacAddr,

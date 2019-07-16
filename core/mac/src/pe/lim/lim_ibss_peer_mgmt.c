@@ -1087,8 +1087,8 @@ void lim_process_ibss_del_sta_rsp(struct mac_context *mac_ctx,
 		status = eSIR_SME_REFUSED;
 		goto skip_event;
 	}
-	pe_debug("Deleted STA associd %d staId %d MAC " QDF_MAC_ADDR_STR,
-		sta_ds->assocId, sta_ds->staIndex,
+	pe_debug("Deleted STA associd %d MAC " QDF_MAC_ADDR_STR,
+		sta_ds->assocId,
 		QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
 
 	lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr,
