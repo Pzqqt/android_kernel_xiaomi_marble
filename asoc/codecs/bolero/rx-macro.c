@@ -1810,14 +1810,23 @@ static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 			dev_err(rx_dev, "%s:AIF reset already\n", __func__);
 			return 0;
 		}
+		if (aif_rst > RX_MACRO_AIF4_PB) {
+			dev_err(rx_dev, "%s: Invalid AIF reset\n", __func__);
+			return 0;
+		}
 	}
 	rx_priv->rx_port_value[widget->shift] = rx_port_value;
 
+	dev_dbg(rx_dev, "%s: mux input: %d, mux output: %d, aif_rst: %d\n",
+		__func__, rx_port_value, widget->shift, aif_rst);
+
 	switch (rx_port_value) {
 	case 0:
-		clear_bit(widget->shift,
-			&rx_priv->active_ch_mask[aif_rst]);
-		rx_priv->active_ch_cnt[aif_rst]--;
+		if (rx_priv->active_ch_cnt[aif_rst]) {
+			clear_bit(widget->shift,
+				&rx_priv->active_ch_mask[aif_rst]);
+			rx_priv->active_ch_cnt[aif_rst]--;
+		}
 		break;
 	case 1:
 	case 2:
@@ -1829,7 +1838,8 @@ static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 		break;
 	default:
 		dev_err(component->dev,
-			"%s:Invalid AIF_ID for RX_MACRO MUX\n", __func__);
+			"%s:Invalid AIF_ID for RX_MACRO MUX %d\n",
+			__func__, rx_port_value);
 		goto err;
 	}
 
