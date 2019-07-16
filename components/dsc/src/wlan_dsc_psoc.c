@@ -315,9 +315,7 @@ QDF_STATUS _dsc_psoc_op_start(struct dsc_psoc *psoc, const char *func)
 {
 	QDF_STATUS status;
 
-	dsc_enter_str(func);
 	status = __dsc_psoc_op_start(psoc, func);
-	dsc_exit_status(status);
 
 	return status;
 }
@@ -338,9 +336,7 @@ static void __dsc_psoc_op_stop(struct dsc_psoc *psoc, const char *func)
 
 void _dsc_psoc_op_stop(struct dsc_psoc *psoc, const char *func)
 {
-	dsc_enter_str(func);
 	__dsc_psoc_op_stop(psoc, func);
-	dsc_exit();
 }
 
 static void __dsc_psoc_wait_for_ops(struct dsc_psoc *psoc)
