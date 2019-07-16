@@ -1044,18 +1044,6 @@ ucfg_mlme_get_first_scan_bucket_threshold(struct wlan_objmgr_psoc *psoc,
 					  uint8_t *val);
 
 /**
- * ucfg_mlme_set_fw_supported_roaming_akm() - update the supported roaming
- * akm suites advertised by the firmware via wmi service capability
- * @psoc: pointer to psoc object
- * @val:  bitmap value based on firmware capabilities
- *
- * Return: QDF Status
- */
-QDF_STATUS
-ucfg_mlme_set_fw_supported_roaming_akm(struct wlan_objmgr_psoc *psoc,
-				       uint32_t val);
-
-/**
  * ucfg_mlme_is_mawc_enabled() - MAWC enabled or not
  * @psoc: pointer to psoc object
  * @val:  Pointer to the value which will be filled for the caller
