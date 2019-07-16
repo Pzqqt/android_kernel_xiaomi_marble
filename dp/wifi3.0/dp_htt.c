@@ -391,9 +391,6 @@ htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
  * @pkt: pkt to be send
  * @cmd : command to be recorded in dp htt logger
  * @buf : Pointer to buffer needs to be recored for above cmd
- * Note: Changed from macro function to statis inline function
- *       due to error reported by checkpatch for multiple use
- *       of same variable.
  *
  * Return: None
  */
