@@ -585,7 +585,7 @@ tdls_ct_process_idle_handler(struct wlan_objmgr_vdev *vdev,
 		return;
 
 	if (INVALID_TDLS_PEER_ID == tdls_info->sta_id) {
-		tdls_err("peer (staidx %u) doesn't exists", tdls_info->sta_id);
+		tdls_err("peer doesn't exists");
 		return;
 	}
 
