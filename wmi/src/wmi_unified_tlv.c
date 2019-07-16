@@ -4117,6 +4117,10 @@ static QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
 			       (wmi_vdev_install_key_cmd_fixed_param));
 	cmd->vdev_id = key_params->vdev_id;
 	cmd->key_ix = key_params->key_idx;
+	if (key_params->group_key_idx) {
+		cmd->is_group_key_ix_valid = 1;
+		cmd->group_key_ix = key_params->group_key_idx;
+	}
 
 
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(key_params->peer_mac, &cmd->peer_macaddr);

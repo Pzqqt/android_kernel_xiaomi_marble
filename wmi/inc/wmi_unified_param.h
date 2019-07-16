@@ -1795,6 +1795,7 @@ struct wmi_probe_resp_params {
  * @vdev_id: vdev id
  * @key_len: key length
  * @key_idx: key index
+ * @group_key_idx: group key index for VLAN
  * @peer_mac: peer mac address
  * @key_flags: key flags, 0:pairwise key, 1:group key, 2:static key
  * @key_cipher: key cipher based on security mode
@@ -1812,6 +1813,7 @@ struct set_key_params {
 	uint8_t vdev_id;
 	uint16_t key_len;
 	uint32_t key_idx;
+	uint32_t group_key_idx;
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	uint32_t key_flags;
 	uint32_t key_cipher;

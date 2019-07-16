@@ -571,7 +571,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 						| WLAN_CRYPTO_KEY_RECV);
 		}
 	} else {
-		if ((req_key->keyix >= WLAN_CRYPTO_MAXKEYIDX)
+		if ((req_key->keyix >= WLAN_CRYPTO_MAX_VLANKEYIX)
 			&& (!IS_MGMT_CIPHER(req_key->type))) {
 			return QDF_STATUS_E_INVAL;
 		}
@@ -711,7 +711,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 			uint16_t kid = req_key->keyix;
 			if (kid == WLAN_CRYPTO_KEYIX_NONE)
 				kid = 0;
-			if (kid >= WLAN_CRYPTO_MAXKEYIDX) {
+			if (kid >= WLAN_CRYPTO_MAX_VLANKEYIX) {
 				crypto_err("invalid keyid %d", kid);
 				return QDF_STATUS_E_INVAL;
 			}
