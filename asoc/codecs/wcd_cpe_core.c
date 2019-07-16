@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -52,7 +52,7 @@
 	mutex_unlock(lock);			\
 }
 
-#define WCD_CPE_STATE_MAX_LEN 11
+#define WCD_CPE_STATE_MAX_LEN 32
 #define CPE_OFFLINE_WAIT_TIMEOUT (2 * HZ)
 #define CPE_READY_WAIT_TIMEOUT (3 * HZ)
 #define WCD_CPE_SYSFS_DIR_MAX_LENGTH 32
