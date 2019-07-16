@@ -5380,6 +5380,8 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 		       pdev->stats.dropped.wifi_parse);
 	DP_PRINT_STATS("        mon_rx_drop = %d",
 		       pdev->stats.dropped.mon_rx_drop);
+	DP_PRINT_STATS("        mon_radiotap_update_err = %d",
+		       pdev->stats.dropped.mon_radiotap_update_err);
 	DP_PRINT_STATS("        mec_drop = %d",
 		       pdev->stats.rx.mec_drop.num);
 	DP_PRINT_STATS("	Bytes = %llu",

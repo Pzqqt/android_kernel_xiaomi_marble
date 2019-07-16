@@ -1198,6 +1198,7 @@ struct cdp_htt_rx_pdev_stats {
  * @mesh_filter: Mesh Filtered packets
  * @mon_rx_drop: packets dropped on monitor vap
  * @wifi_parse: rxdma errors due to wifi parse error
+ * @mon_radiotap_update_err: not enough space to update radiotap
  * @pkts: total packets replenished
  * @rxdma_err: rxdma errors for replenished
  * @nbuf_alloc_fail: nbuf alloc failed
@@ -1227,8 +1228,10 @@ struct cdp_pdev_stats {
 		uint32_t msdu_not_done;
 		uint32_t mec;
 		uint32_t mesh_filter;
-		uint32_t mon_rx_drop;
 		uint32_t wifi_parse;
+		/* Monitor mode related */
+		uint32_t mon_rx_drop;
+		uint32_t mon_radiotap_update_err;
 	} dropped;
 
 	struct {

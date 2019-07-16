@@ -509,8 +509,12 @@ dp_rx_handle_smart_mesh_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 	/* Only retain RX MSDU payload in the skb */
 	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) -
 			   ppdu_info->msdu_info.payload_len);
-	qdf_nbuf_update_radiotap(&(pdev->ppdu_info.rx_status),
-				 nbuf, sizeof(struct rx_pkt_tlvs));
+	if (!qdf_nbuf_update_radiotap(&pdev->ppdu_info.rx_status, nbuf,
+				      qdf_nbuf_headroom(nbuf))) {
+		DP_STATS_INC(pdev, dropped.mon_radiotap_update_err, 1);
+		return 1;
+	}
+
 	pdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
 					nbuf, NULL);
 	pdev->ppdu_info.rx_status.monitor_direct_used = 0;
