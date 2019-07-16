@@ -390,7 +390,7 @@ free_vdevref:
 }
 #endif
 
-#if (defined(CONFIG_MCL) || defined(QCA_WIFI_QCA8074) || \
+#if (defined(WLAN_DFS_FULL_OFFLOAD) || defined(QCA_WIFI_QCA8074) || \
 	defined(QCA_WIFI_QCA6018))
 QDF_STATUS target_process_bang_radar_cmd(
 		struct wlan_objmgr_pdev *pdev,
