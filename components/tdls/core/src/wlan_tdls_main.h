@@ -94,13 +94,13 @@
 /**
  * struct tdls_conn_info - TDLS connection record
  * @session_id: session id
- * @sta_id: sta id
+ * @valid_entry: valid entry(set to true upon peer create resp from firmware)
  * @peer_mac: peer address
  * @index: index to store array offset.
  */
 struct tdls_conn_info {
 	uint8_t session_id;
-	uint8_t sta_id;
+	bool valid_entry;
 	uint8_t index;
 	struct qdf_mac_addr peer_mac;
 };
@@ -273,7 +273,8 @@ struct tdls_peer_mlme_info {
  * @node: node
  * @vdev_priv: tdls vdev priv obj
  * @peer_mac: peer mac address
- * @sta_id: station identifier
+ * @valid_entry: entry valid or not (set to true when peer create resp is
+ *               received from FW)
  * @rssi: rssi
  * @tdls_support: tdls support
  * @link_status: tdls link status
@@ -304,7 +305,7 @@ struct tdls_peer {
 	qdf_list_node_t node;
 	struct tdls_vdev_priv_obj *vdev_priv;
 	struct qdf_mac_addr peer_mac;
-	uint16_t sta_id;
+	bool valid_entry;
 	int8_t rssi;
 	enum tdls_peer_capab tdls_support;
 	enum tdls_link_state link_status;

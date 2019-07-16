@@ -1102,7 +1102,6 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 	msg.type = eWNI_SME_ASSOC_IND_UPPER_LAYER;
 	msg.bodyptr = sme_assoc_ind;
 	msg.bodyval = 0;
-	sme_assoc_ind->staId = sta_ds->staIndex;
 	sme_assoc_ind->reassocReq = sta_ds->mlmStaContext.subType;
 	sme_assoc_ind->timingMeasCap = sta_ds->timingMeasCap;
 	MTRACE(mac_trace_msg_tx(mac_ctx, session_entry->peSessionId, msg.type));

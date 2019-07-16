@@ -549,26 +549,29 @@ void tdls_indicate_teardown(struct tdls_vdev_priv_obj *tdls_vdev,
 /**
  * tdls_get_conn_info() - get the tdls connection information.
  * @tdls_soc: tdls soc object
- * @idx: sta id
+ * @peer_mac: peer MAC address
  *
  * Function to check tdls sta index
  *
  * Return: tdls connection information
  */
 static struct tdls_conn_info *
-tdls_get_conn_info(struct tdls_soc_priv_obj *tdls_soc, uint8_t idx)
+tdls_get_conn_info(struct tdls_soc_priv_obj *tdls_soc,
+		   struct qdf_mac_addr *peer_mac)
 {
 	uint8_t sta_idx;
 	/* check if there is available index for this new TDLS STA */
 	for (sta_idx = 0; sta_idx < WLAN_TDLS_STA_MAX_NUM; sta_idx++) {
-		if (idx == tdls_soc->tdls_conn_info[sta_idx].sta_id) {
-			tdls_debug("tdls peer with sta_idx %u exists", idx);
+		if (!qdf_mem_cmp(
+			    tdls_soc->tdls_conn_info[sta_idx].peer_mac.bytes,
+			    peer_mac->bytes, QDF_MAC_ADDR_SIZE)) {
+			tdls_debug("tdls peer exists %pM", peer_mac->bytes);
 			tdls_soc->tdls_conn_info[sta_idx].index = sta_idx;
 			return &tdls_soc->tdls_conn_info[sta_idx];
 		}
 	}
 
-	tdls_err("tdls peer with staIdx %u not exists", idx);
+	tdls_err("tdls peer does not exists");
 	return NULL;
 }
 
@@ -584,7 +587,7 @@ tdls_ct_process_idle_handler(struct wlan_objmgr_vdev *vdev,
 						   &tdls_soc_obj))
 		return;
 
-	if (INVALID_TDLS_PEER_ID == tdls_info->sta_id) {
+	if (!tdls_info->valid_entry) {
 		tdls_err("peer doesn't exists");
 		return;
 	}
@@ -715,9 +718,9 @@ static void tdls_ct_process_connected_link(
 	     (curr_peer->rx_pkt <
 	      tdls_vdev->threshold_config.idle_packet_n))) {
 		if (!curr_peer->is_peer_idle_timer_initialised) {
-			uint8_t sta_id = (uint8_t)curr_peer->sta_id;
 			struct tdls_conn_info *tdls_info;
-			tdls_info = tdls_get_conn_info(tdls_soc, sta_id);
+			tdls_info = tdls_get_conn_info(tdls_soc,
+						       &curr_peer->peer_mac);
 			qdf_mc_timer_init(&curr_peer->peer_idle_timer,
 					  QDF_TIMER_TYPE_SW,
 					  tdls_ct_idle_handler,
@@ -1258,8 +1261,7 @@ void tdls_disable_offchan_and_teardown_links(
 
 	for (staidx = 0; staidx < tdls_soc->max_num_tdls_sta;
 							staidx++) {
-		if (tdls_soc->tdls_conn_info[staidx].sta_id
-						== INVALID_TDLS_PEER_ID)
+		if (!tdls_soc->tdls_conn_info[staidx].valid_entry)
 			continue;
 
 		curr_peer = tdls_find_all_peer(tdls_soc,
@@ -1267,8 +1269,8 @@ void tdls_disable_offchan_and_teardown_links(
 		if (!curr_peer)
 			continue;
 
-		tdls_notice("indicate TDLS teardown (staId %d)",
-			   curr_peer->sta_id);
+		tdls_notice("indicate TDLS teardown %pM",
+			    curr_peer->peer_mac.bytes);
 
 		/* Indicate teardown to supplicant */
 		tdls_indicate_teardown(tdls_vdev,
@@ -1287,7 +1289,7 @@ void tdls_disable_offchan_and_teardown_links(
 					wlan_vdev_get_id(vdev),
 					&curr_peer->peer_mac);
 		tdls_decrement_peer_count(tdls_soc);
-		tdls_soc->tdls_conn_info[staidx].sta_id = INVALID_TDLS_PEER_ID;
+		tdls_soc->tdls_conn_info[staidx].valid_entry = false;
 		tdls_soc->tdls_conn_info[staidx].session_id = 255;
 		tdls_soc->tdls_conn_info[staidx].index =
 						INVALID_TDLS_PEER_INDEX;

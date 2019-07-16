@@ -86,11 +86,7 @@
 #define TDLS_TEARDOWN_PEER_UNREACHABLE   25
 #define TDLS_TEARDOWN_PEER_UNSPEC_REASON 26
 
-#define INVALID_TDLS_PEER_ID 0xFF
 #define INVALID_TDLS_PEER_INDEX 0xFF
-
-#define TDLS_STA_INDEX_CHECK(sta_id) \
-	(((sta_id) >= 0) && ((sta_id) < 0xFF))
 
 /**
  * enum tdls_add_oper - add peer type
@@ -599,7 +595,6 @@ typedef void (*tdls_evt_callback) (void *data,
 typedef QDF_STATUS (*tdls_register_peer_callback)(void *userdata,
 						  uint32_t vdev_id,
 						  const uint8_t *mac,
-						  uint16_t stat_id,
 						  uint8_t qos);
 
 /* This callback is used to deregister TDLS peer from the datapath */
@@ -1212,7 +1207,6 @@ struct tdls_mgmt_tx_completion_ind {
  * @status_code: status code as tSirResultCodes
  * @peermac: MAC address of the TDLS peer
  * @session_id: session id
- * @sta_id: sta id
  * @sta_type: sta type
  * @tdls_oper: add peer type
  * @psoc: soc object
@@ -1221,7 +1215,6 @@ struct tdls_add_sta_rsp {
 	QDF_STATUS status_code;
 	struct qdf_mac_addr peermac;
 	uint8_t session_id;
-	uint16_t sta_id;
 	uint16_t sta_type;
 	enum tdls_add_oper tdls_oper;
 	struct wlan_objmgr_psoc *psoc;
@@ -1232,14 +1225,12 @@ struct tdls_add_sta_rsp {
  * @session_id: session id
  * @status_code: status code as tSirResultCodes
  * @peermac: MAC address of the TDLS peer
- * @sta_id: sta id
  * @psoc: soc object
  */
 struct tdls_del_sta_rsp {
 	uint8_t session_id;
 	QDF_STATUS status_code;
 	struct qdf_mac_addr peermac;
-	uint16_t sta_id;
 	struct wlan_objmgr_psoc *psoc;
 };
 

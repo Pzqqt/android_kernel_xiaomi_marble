@@ -2416,7 +2416,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return status;
 	}
 
-	curr_sta_ds->staIndex = add_bss_params->staContext.staIdx;
 	mac_ctx->roam.reassocRespLen = roam_sync_ind_ptr->reassocRespLength;
 	mac_ctx->roam.pReassocResp =
 		qdf_mem_malloc(mac_ctx->roam.reassocRespLen);

@@ -2301,21 +2301,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 	pe_debug("Assoc ID: %d wmmEnabled: %d listenInterval: %d",
 		 add_sta_params->assocId, add_sta_params->wmmEnabled,
 		 add_sta_params->listenInterval);
-	/* This will indicate HAL to "allocate" a new STA index */
-#ifdef FEATURE_WLAN_TDLS
-	/*
-	 * As there is corner case in-between add_sta and change_sta,if del_sta
-	 * for other staIdx happened, firmware return wrong staIdx
-	 * (recently removed staIdx). Until we get a confirmation from the
-	 * firmware team it is now return correct staIdx for same sta_mac_addr
-	 * for update case, we want to get around it by passing valid staIdx
-	 * given by add_sta time.
-	 */
-	if ((STA_ENTRY_TDLS_PEER == sta_ds->staType) && (true == update_entry))
-		add_sta_params->staIdx = sta_ds->staIndex;
-	else
-#endif
-	add_sta_params->staIdx = STA_INVALID_IDX;
+
 	add_sta_params->staType = sta_ds->staType;
 
 	add_sta_params->updateSta = update_entry;

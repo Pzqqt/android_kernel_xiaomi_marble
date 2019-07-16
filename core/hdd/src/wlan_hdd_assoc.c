@@ -4023,8 +4023,7 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 
 #ifdef FEATURE_WLAN_TDLS
 QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
-				     const uint8_t *peerMac, uint16_t sta_id,
-				     uint8_t qos)
+				     const uint8_t *peerMac, uint8_t qos)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type txrx_desc = { 0 };

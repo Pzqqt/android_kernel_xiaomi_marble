@@ -1120,7 +1120,7 @@ QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle,
 				      void *cb_context,
 				      ibss_peer_info_cb peer_info_cb,
 				      bool allPeerInfoReqd,
-				      uint8_t *mac_addr);
+				      uint8_t *mac_addr)
 {
 	return QDF_STATUS_SUCCESS;
 }

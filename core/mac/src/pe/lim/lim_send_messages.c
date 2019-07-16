@@ -481,8 +481,8 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	if (!ht40_obss_scanind)
 		return QDF_STATUS_E_FAILURE;
 	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-		  "OBSS Scan Indication bss_idx- %d bssid " QDF_MAC_ADDR_STR,
-		  session->bss_idx, QDF_MAC_ADDR_ARRAY(session->bssId));
+		  "OBSS Scan Indication bssid " QDF_MAC_ADDR_STR,
+		  QDF_MAC_ADDR_ARRAY(session->bssId));
 
 	ht40_obss_scanind->cmd = HT40_OBSS_SCAN_PARAM_START;
 	ht40_obss_scanind->scan_type = eSIR_ACTIVE_SCAN;

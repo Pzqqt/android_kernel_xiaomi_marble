@@ -327,7 +327,6 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
  * hdd_roam_register_tdlssta() - register new TDLS station
  * @adapter: pointer to adapter
  * @peerMac: pointer to peer MAC address
- * @staId: station identifier
  * @qos: Quality of service
  *
  * Construct the txrx_desc and register the new STA with the Data Plane.
@@ -336,8 +335,7 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
-				     const uint8_t *peerMac, uint16_t staId,
-				     uint8_t qos);
+				     const uint8_t *peerMac, uint8_t qos);
 /**
  * hdd_roam_deregister_tdlssta() - deregister new TDLS station
  * @adapter: pointer to adapter

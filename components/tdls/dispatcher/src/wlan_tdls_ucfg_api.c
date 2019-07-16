@@ -340,7 +340,7 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 			soc_obj->max_num_tdls_sta = WLAN_TDLS_STA_MAX_NUM;
 
 	for (sta_idx = 0; sta_idx < soc_obj->max_num_tdls_sta; sta_idx++) {
-		soc_obj->tdls_conn_info[sta_idx].sta_id = INVALID_TDLS_PEER_ID;
+		soc_obj->tdls_conn_info[sta_idx].valid_entry = false;
 		soc_obj->tdls_conn_info[sta_idx].index =
 						INVALID_TDLS_PEER_INDEX;
 		soc_obj->tdls_conn_info[sta_idx].session_id = 255;
