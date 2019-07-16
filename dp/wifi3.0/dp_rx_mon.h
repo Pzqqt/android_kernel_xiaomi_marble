@@ -95,6 +95,13 @@ QDF_STATUS dp_rx_mon_deliver_non_std(struct dp_soc *soc, uint32_t mac_id);
 uint32_t dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 			      uint32_t mac_id, uint32_t quota);
 
+/**
+ * dp_mon_buf_delayed_replenish() - Helper routine to replenish monitor dest buf
+ * @pdev: DP pdev object
+ *
+ * Return: None
+ */
+void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev);
 #ifndef REMOVE_MON_DBG_STATS
 /*
  * dp_rx_mon_update_dbg_ppdu_stats() - Update status ring TLV count

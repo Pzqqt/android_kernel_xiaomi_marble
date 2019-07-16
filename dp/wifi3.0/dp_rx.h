@@ -1103,6 +1103,24 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 				 union dp_rx_desc_list_elem_t **desc_list,
 				 union dp_rx_desc_list_elem_t **tail);
 
+/*
+ * dp_pdev_rx_buffers_attach() - replenish rxdma ring with rx nbufs
+ *                               called during dp rx initialization
+ *
+ * @soc: core txrx main context
+ * @mac_id: mac_id which is one of 3 mac_ids
+ * @dp_rxdma_srng: dp rxdma circular ring
+ * @rx_desc_pool: Pointer to free Rx descriptor pool
+ * @num_req_buffers: number of buffer to be replenished
+ *
+ * Return: return success or failure
+ */
+QDF_STATUS
+dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
+			  struct dp_srng *dp_rxdma_srng,
+			  struct rx_desc_pool *rx_desc_pool,
+			  uint32_t num_req_buffers);
+
 /**
  * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
  *			      (WBM), following error handling

@@ -6321,6 +6321,8 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 
 	pdev->monitor_configured = true;
 
+	dp_mon_buf_delayed_replenish(pdev);
+
 	return dp_pdev_configure_monitor_rings(pdev);
 }
 
