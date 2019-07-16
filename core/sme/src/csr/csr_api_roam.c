@@ -19220,14 +19220,17 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		return QDF_STATUS_SUCCESS;
 	}
 
+	fw_akm_bitmap = mac_ctx->mlme_cfg->lfr.fw_akm_bitmap;
 	/* Roaming is not supported currently for OWE akm */
-	if (roam_profile_akm == eCSR_AUTH_TYPE_OWE) {
+	if (roam_profile_akm == eCSR_AUTH_TYPE_OWE &&
+	    !CSR_IS_FW_OWE_ROAM_SUPPORTED(fw_akm_bitmap)) {
 		sme_info("OWE Roaming not suppprted by fw");
 		return QDF_STATUS_SUCCESS;
 	}
 
 	/* Roaming is not supported for SAE authentication */
-	if (CSR_IS_AUTH_TYPE_SAE(roam_profile_akm)) {
+	if (CSR_IS_AUTH_TYPE_SAE(roam_profile_akm) &&
+	    !CSR_IS_FW_SAE_ROAM_SUPPORTED(fw_akm_bitmap)) {
 		sme_info("Roaming not suppprted for SAE connection");
 		return QDF_STATUS_SUCCESS;
 	}
@@ -19236,7 +19239,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	 * If fw doesn't advertise FT SAE, FT-FILS or FT-Suite-B capability,
 	 * don't support roaming to that profile
 	 */
-	fw_akm_bitmap = mac_ctx->mlme_cfg->lfr.fw_akm_bitmap;
 	if (CSR_IS_AKM_FT_SAE(roam_profile_akm)) {
 		if (!CSR_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap)) {
 			sme_info("Roaming not suppprted for FT SAE akm");

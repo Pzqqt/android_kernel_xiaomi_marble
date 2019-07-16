@@ -5630,16 +5630,6 @@ static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 
 	tgt_cfg.max_intf_count = wlan_res_cfg->num_vdevs;
 
-	if (wmi_service_enabled(wmi_handle, wmi_service_wpa3_ft_sae_support))
-		tgt_cfg.ft_akm_service_bitmap |= (1 << AKM_FT_SAE);
-
-	if (wmi_service_enabled(wmi_handle,
-				wmi_service_wpa3_ft_suite_b_support))
-		tgt_cfg.ft_akm_service_bitmap |= (1 << AKM_FT_SUITEB_SHA384);
-
-	if (wmi_service_enabled(wmi_handle, wmi_service_ft_fils))
-		tgt_cfg.ft_akm_service_bitmap |= (1 << AKM_FT_FILS);
-
 	qdf_mem_copy(tgt_cfg.hw_macaddr.bytes, wma_handle->hwaddr,
 		     ATH_MAC_LEN);
 
@@ -5811,6 +5801,7 @@ static void wma_set_mlme_caps(struct wlan_objmgr_psoc *psoc)
 {
 	tp_wma_handle wma;
 	bool tgt_cap;
+	uint32_t akm_bitmap = 0;
 	QDF_STATUS status;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -5825,6 +5816,36 @@ static void wma_set_mlme_caps(struct wlan_objmgr_psoc *psoc)
 	status = ucfg_mlme_set_tgt_adaptive_11r_cap(psoc, tgt_cap);
 	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("Failed to set adaptive 11r cap");
+
+	tgt_cap = wmi_service_enabled(wma->wmi_handle,
+				      wmi_service_wpa3_ft_sae_support);
+	if (tgt_cap)
+		 akm_bitmap |= (1 << AKM_FT_SAE);
+
+	tgt_cap = wmi_service_enabled(wma->wmi_handle,
+				      wmi_service_wpa3_ft_suite_b_support);
+	if (tgt_cap)
+		akm_bitmap |= (1 << AKM_FT_SUITEB_SHA384);
+
+	tgt_cap = wmi_service_enabled(wma->wmi_handle,
+				      wmi_service_ft_fils);
+	if (tgt_cap)
+		akm_bitmap |= (1 << AKM_FT_FILS);
+
+	tgt_cap = wmi_service_enabled(wma->wmi_handle,
+				      wmi_service_owe_roam_support);
+	if (tgt_cap)
+		akm_bitmap |= (1 << AKM_OWE);
+
+	tgt_cap = wmi_service_enabled(wma->wmi_handle,
+				      wmi_service_sae_roam_support);
+	if (tgt_cap)
+		akm_bitmap |= (1 << AKM_SAE);
+
+
+	status = mlme_set_tgt_wpa3_roam_cap(psoc, akm_bitmap);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("Failed to set sae roam support");
 }
 
 static void wma_set_component_caps(struct wlan_objmgr_psoc *psoc)

@@ -779,6 +779,10 @@ A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
 		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA256;
 	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA384:
 		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA384;
+	case eCSR_AUTH_TYPE_OWE:
+		return WMI_AUTH_WPA3_OWE;
+	case eCSR_AUTH_TYPE_SAE:
+		return WMI_AUTH_WPA3_SAE;
 	case eCSR_AUTH_TYPE_FT_SAE:
 		return WMI_AUTH_FT_RSNA_SAE;
 	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:

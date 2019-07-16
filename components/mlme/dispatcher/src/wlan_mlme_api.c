@@ -3449,3 +3449,17 @@ QDF_STATUS mlme_get_peer_phymode(struct wlan_objmgr_psoc *psoc, uint8_t *mac,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS mlme_set_tgt_wpa3_roam_cap(struct wlan_objmgr_psoc *psoc,
+				      uint32_t akm_bitmap)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_obj->cfg.lfr.fw_akm_bitmap |= akm_bitmap;
+
+	return QDF_STATUS_SUCCESS;
+}

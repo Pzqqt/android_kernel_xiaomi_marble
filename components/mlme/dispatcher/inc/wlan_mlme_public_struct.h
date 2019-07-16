@@ -1315,12 +1315,13 @@ struct bss_load_trigger {
 };
 
 /*
- * AKM suites supported by firmware for
- * roaming
+ * AKM suites supported by firmware for roaming
  */
 #define AKM_FT_SAE           0
 #define AKM_FT_SUITEB_SHA384 1
 #define AKM_FT_FILS          2
+#define AKM_SAE              3
+#define AKM_OWE              4
 
 /*
  * @mawc_roam_enabled:              Enable/Disable MAWC during roaming

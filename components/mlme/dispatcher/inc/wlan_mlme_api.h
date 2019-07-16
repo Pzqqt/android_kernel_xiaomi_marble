@@ -2236,4 +2236,15 @@ wlan_mlme_get_4way_hs_offload(struct wlan_objmgr_psoc *psoc, bool *value);
 QDF_STATUS
 mlme_get_peer_phymode(struct wlan_objmgr_psoc *psoc, uint8_t *mac,
 		      enum wlan_phymode *peer_phymode);
+
+/**
+ * mlme_set_tgt_wpa3_roam_cap() - Set the target WPA3 roam support
+ * to mlme
+ * @psoc: pointer to PSOC object
+ * @akm_bitmap: Bitmap of akm suites supported for roaming by the firmware
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS mlme_set_tgt_wpa3_roam_cap(struct wlan_objmgr_psoc *psoc,
+				      uint32_t akm_bitmap);
 #endif /* _WLAN_MLME_API_H_ */
