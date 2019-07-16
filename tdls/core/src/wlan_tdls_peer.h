@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -163,15 +163,14 @@ void tdls_set_peer_caps(struct tdls_vdev_priv_obj *vdev_obj,
 			struct tdls_update_peer_params  *req_info);
 
 /**
- * tdls_set_sta_id() - set station ID on a TDLS peer
+ * tdls_set_valid() - set station ID on a TDLS peer
  * @vdev_obj: TDLS vdev object
  * @macaddr: MAC address of the TDLS peer
- * @sta_id: station ID
  *
  * Return: QDF_STATUS_SUCCESS if success; other values if failed
  */
-QDF_STATUS tdls_set_sta_id(struct tdls_vdev_priv_obj *vdev_obj,
-			   const uint8_t *macaddr, uint8_t sta_id);
+QDF_STATUS tdls_set_valid(struct tdls_vdev_priv_obj *vdev_obj,
+			   const uint8_t *macaddr);
 
 /**
  * tdls_set_force_peer() - set/clear is_forced_peer flag on peer
