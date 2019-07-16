@@ -26,9 +26,6 @@
 #include "wmi_unified_api.h"
 #include "wmi_unified_param.h"
 #include "wlan_scan_ucfg_api.h"
-#ifdef CONFIG_MCL
-#include <wmi_unified.h>
-#endif
 #include "qdf_atomic.h"
 #include <wbuff.h>
 
