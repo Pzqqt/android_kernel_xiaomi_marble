@@ -598,8 +598,6 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 	pSirSmeRsp->length = size;
 	pSirSmeRsp->sessionId = smesessionId;
 	pSirSmeRsp->status_code = resultCode;
-	if (pe_session)
-		pSirSmeRsp->staId = pe_session->staId;       /* else it will be always zero smeRsp StaID = 0 */
 
 	mmhMsg.type = msgType;
 	mmhMsg.bodyptr = pSirSmeRsp;

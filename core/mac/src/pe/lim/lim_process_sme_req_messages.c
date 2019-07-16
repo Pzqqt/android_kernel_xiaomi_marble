@@ -3918,7 +3918,6 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 				(pe_session->htSecondaryChannelOffset ==
 				 PHY_SINGLE_CHANNEL_CENTERED) ?
 				eHT_CHANNEL_WIDTH_20MHZ : eHT_CHANNEL_WIDTH_40MHZ;
-			pHtOpMode->staId = staId;
 			qdf_mem_copy(pHtOpMode->peer_mac, &sta->staAddr,
 				     sizeof(tSirMacAddr));
 			pHtOpMode->smesessionId = sessionId;
@@ -3935,11 +3934,11 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 				qdf_mem_free(pHtOpMode);
 				return;
 			}
-			pe_debug("Notified FW about OP mode: %d for staId=%d",
-				pHtOpMode->opMode, staId);
+			pe_debug("Notified FW about OP mode: %d",
+				pHtOpMode->opMode);
 
 		} else
-			pe_debug("station %d does not support HT40", staId);
+			pe_debug("station does not support HT40");
 	}
 
 	return;

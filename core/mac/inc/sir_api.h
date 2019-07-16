@@ -2649,7 +2649,7 @@ typedef struct sSirDelPeriodicTxPtrn {
 *--------------------------------------------------------------------------*/
 typedef struct {
 	bool allPeerInfoReqd;   /* If set, all IBSS peers stats are reported */
-	uint8_t staIdx;         /* If allPeerInfoReqd is not set, only stats */
+	struct qdf_mac_addr peer_mac;
 	/* of peer with staIdx is reported */
 } tSirIbssGetPeerInfoReqParams, *tpSirIbssGetPeerInfoReqParams;
 

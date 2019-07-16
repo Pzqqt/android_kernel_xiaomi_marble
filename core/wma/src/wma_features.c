@@ -2986,11 +2986,12 @@ QDF_STATUS wma_process_get_peer_info_req
 	uint16_t len;
 	wmi_buf_t buf;
 	int32_t vdev_id;
+	/* Will be removed in cleanup */
+	uint8_t sta_id;
 	struct cdp_pdev *pdev;
 	void *peer;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
-	uint8_t *peer_mac_raw;
 	wmi_peer_info_req_cmd_fixed_param *p_get_peer_info_cmd;
 	uint8_t bcast_mac[QDF_MAC_ADDR_SIZE] = { 0xff, 0xff, 0xff,
 						  0xff, 0xff, 0xff };
@@ -3013,30 +3014,23 @@ QDF_STATUS wma_process_get_peer_info_req
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (0xFF == pReq->staIdx) {
+	if (qdf_is_macaddr_broadcast(&pReq->peer_mac)) {
 		/*get info for all peers */
 		qdf_mem_copy(peer_mac, bcast_mac, QDF_MAC_ADDR_SIZE);
 	} else {
 		/*get info for a single peer */
-		peer = cdp_peer_find_by_local_id(soc,
-				pdev, pReq->staIdx);
+		peer = cdp_peer_find_by_addr(soc, pdev,
+					     pReq->peer_mac.bytes, &sta_id);
 		if (!peer) {
-			WMA_LOGE("%s: Failed to get peer handle using peer id %d",
-				__func__, pReq->staIdx);
-			return QDF_STATUS_E_FAILURE;
-		}
-		peer_mac_raw = cdp_peer_get_peer_mac_addr(soc, peer);
-		if (!peer_mac_raw) {
-			WMA_LOGE("peer_mac_raw is NULL");
+			WMA_LOGE("%s: Failed to get peer handle using peer "
+				 QDF_MAC_ADDR_STR, __func__,
+				 QDF_MAC_ADDR_ARRAY(pReq->peer_mac.bytes));
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		WMA_LOGE("%s: staIdx %d peer mac: 0x%2x:0x%2x:0x%2x:0x%2x:0x%2x:0x%2x",
-			__func__, pReq->staIdx, peer_mac_raw[0],
-			peer_mac_raw[1], peer_mac_raw[2],
-			peer_mac_raw[3], peer_mac_raw[4],
-			peer_mac_raw[5]);
-		qdf_mem_copy(peer_mac, peer_mac_raw, QDF_MAC_ADDR_SIZE);
+		WMA_LOGE("%s: peer mac: " QDF_MAC_ADDR_STR, __func__,
+			 QDF_MAC_ADDR_ARRAY(pReq->peer_mac.bytes));
+		qdf_mem_copy(peer_mac, pReq->peer_mac.bytes, QDF_MAC_ADDR_SIZE);
 	}
 
 	len = sizeof(wmi_peer_info_req_cmd_fixed_param);

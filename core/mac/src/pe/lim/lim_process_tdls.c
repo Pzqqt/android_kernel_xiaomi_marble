@@ -2722,8 +2722,7 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg,
 	uint16_t aid = 0;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-	pe_debug("staIdx: %d, staMac: "QDF_MAC_ADDR_STR,
-	       pAddStaParams->staIdx,
+	pe_debug("staMac: "QDF_MAC_ADDR_STR,
 	       QDF_MAC_ADDR_ARRAY(pAddStaParams->staMac));
 
 	if (pAddStaParams->status != QDF_STATUS_SUCCESS) {
@@ -2741,7 +2740,6 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg,
 		goto add_sta_error;
 	}
 
-	sta->staIndex = pAddStaParams->staIdx;
 	sta->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	sta->valid = 1;
 add_sta_error:

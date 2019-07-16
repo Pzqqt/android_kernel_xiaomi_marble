@@ -458,8 +458,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		       pe_session->limMlmState, pe_session->peSessionId);
 
 	/* Success, handle below */
-	/* STA Index(genr by HAL) for the BSS entry is stored here */
-	sta->staIndex = wma_peer_get_peet_id(pe_session->bssId);
 
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (!pAddStaParams)
@@ -477,11 +475,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	pAddStaParams->sessionId = pe_session->peSessionId;
 	pAddStaParams->smesessionId = pe_session->smeSessionId;
 
-	/* This will indicate HAL to "allocate" a new STA index */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (pe_session->bRoamSynchInProgress != true)
-#endif
-		pAddStaParams->staIdx = STA_INVALID_IDX;
 	pAddStaParams->updateSta = false;
 
 	lim_populate_peer_rate_set(mac, &pAddStaParams->supportedRates, NULL,

@@ -124,7 +124,6 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	WMA_LOGD(FL("Moving peer %pM to state %d"), add_sta->staMac, state);
 	cdp_peer_state_update(soc, pdev, add_sta->staMac, state);
 
-	add_sta->staIdx = cdp_peer_get_local_peer_id(soc, peer);
 	add_sta->nss    = iface->nss;
 	add_sta->status = QDF_STATUS_SUCCESS;
 send_rsp:
@@ -148,6 +147,8 @@ void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 	struct cdp_pdev *pdev;
 	void *peer;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	/* Will be removed as a part of cleanup */
+	uint8_t sta_id;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
@@ -156,11 +157,12 @@ void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 		goto send_del_rsp;
 	}
 
-	peer = cdp_peer_find_by_local_id(cds_get_context(QDF_MODULE_ID_SOC),
-			pdev, del_sta->staIdx);
+	peer = cdp_peer_find_by_addr(cds_get_context(QDF_MODULE_ID_SOC),
+				     pdev, del_sta->staMac, &sta_id);
 	if (!peer) {
-		WMA_LOGE(FL("Failed to get peer handle using peer id %d"),
-			 del_sta->staIdx);
+		WMA_LOGE(FL("Failed to get peer handle using peer mac "
+			 QDF_MAC_ADDR_STR),
+			 QDF_MAC_ADDR_ARRAY(del_sta->staMac));
 		del_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_del_rsp;
 	}

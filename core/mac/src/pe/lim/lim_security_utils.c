@@ -873,7 +873,6 @@ end:
  */
 void lim_send_set_sta_key_req(struct mac_context *mac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
-			      uint16_t staIdx,
 			      uint8_t defWEPIdx,
 			      struct pe_session *pe_session, bool sendRsp)
 {
@@ -888,7 +887,6 @@ void lim_send_set_sta_key_req(struct mac_context *mac,
 		goto fail;
 
 	/* Update the WMA_SET_STAKEY_REQ parameters */
-	pSetStaKeyParams->staIdx = staIdx;
 	pSetStaKeyParams->encType = pMlmSetKeysReq->edType;
 
 	pSetStaKeyParams->singleTidRc =

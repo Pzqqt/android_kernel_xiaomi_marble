@@ -2719,7 +2719,6 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	add_sta_params->smesessionId = vdev_id;
 	qdf_mem_copy(&add_sta_params->bssId, &roam_synch_ind_ptr->bssid.bytes,
 		     QDF_MAC_ADDR_SIZE);
-	add_sta_params->staIdx = STA_INVALID_IDX;
 	add_sta_params->assocId = roam_synch_ind_ptr->aid;
 
 	bssid = wma_get_vdev_bssid(wma->interfaces[vdev_id].vdev);

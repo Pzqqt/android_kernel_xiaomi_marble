@@ -206,10 +206,6 @@ typedef struct {
 	 */
 	/* The return status of SIR_HAL_ADD_STA_REQ is reported here */
 	QDF_STATUS status;
-	/* Station index; valid only when 'status' field value is
-	 * QDF_STATUS_SUCCESS
-	 */
-	uint8_t staIdx;
 	uint8_t updateSta;
 	uint8_t rmfEnabled;
 	uint32_t encryptType;
@@ -297,7 +293,6 @@ typedef struct {
  * a new key descriptor is created based on the key field.
  */
 typedef struct {
-	uint16_t staIdx;
 	tAniEdType encType;
 	uint8_t defWEPIdx;
 	tSirKeys key[SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS];
@@ -566,7 +561,6 @@ typedef struct {
  */
 typedef struct {
 	uint16_t opMode;
-	uint16_t staId;
 	uint16_t smesessionId;
 	tSirMacAddr peer_mac;
 } tUpdateVHTOpMode, *tpUpdateVHTOpMode;
@@ -580,7 +574,6 @@ typedef struct {
  */
 typedef struct {
 	uint16_t rxNss;
-	uint16_t staId;
 	uint16_t smesessionId;
 	tSirMacAddr peer_mac;
 } tUpdateRxNss, *tpUpdateRxNss;
@@ -594,7 +587,6 @@ typedef struct {
  */
 typedef struct {
 	uint32_t membership;
-	uint16_t staId;
 	uint16_t smesessionId;
 	tSirMacAddr peer_mac;
 } tUpdateMembership, *tpUpdateMembership;
@@ -608,7 +600,6 @@ typedef struct {
  */
 typedef struct {
 	uint32_t userPos;
-	uint16_t staId;
 	uint16_t smesessionId;
 	tSirMacAddr peer_mac;
 } tUpdateUserPos, *tpUpdateUserPos;

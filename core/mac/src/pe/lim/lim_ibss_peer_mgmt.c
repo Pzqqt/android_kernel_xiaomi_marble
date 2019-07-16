@@ -1144,7 +1144,6 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sta->staIndex = pAddStaParams->staIdx;
 	sta->valid = 1;
 	sta->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 

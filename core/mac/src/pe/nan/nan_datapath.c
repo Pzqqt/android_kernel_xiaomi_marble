@@ -356,8 +356,6 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 		session_entry->vdev_id = add_bss_rsp->vdev_id;
 		session_entry->limSystemRole = eLIM_NDI_ROLE;
 		session_entry->statypeForBss = STA_ENTRY_SELF;
-		session_entry->staId =
-			wma_peer_get_peet_id(session_entry->self_mac_addr);
 		/* Apply previously set configuration at HW */
 		lim_apply_configuration(mac_ctx, session_entry);
 		mlm_start_cnf.resultCode = eSIR_SME_SUCCESS;
@@ -443,7 +441,6 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(struct mac_context *mac_ctx,
 
 	qdf_mem_copy(new_peer_ind->peer_mac_addr.bytes, add_sta_rsp->staMac,
 		     sizeof(tSirMacAddr));
-	new_peer_ind->sta_id = add_sta_rsp->staIdx;
 
 	ucfg_nan_datapath_event_handler(psoc, vdev, NDP_NEW_PEER, new_peer_ind);
 	qdf_mem_free(new_peer_ind);
@@ -491,7 +488,6 @@ void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session
 		qdf_mem_free(add_sta_rsp);
 		return;
 	}
-	sta_ds->staIndex = add_sta_rsp->staIdx;
 	sta_ds->valid = 1;
 	sta_ds->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	lim_send_sme_ndp_add_sta_rsp(mac_ctx, session, add_sta_rsp);

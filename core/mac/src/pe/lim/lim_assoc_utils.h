@@ -108,7 +108,7 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 QDF_STATUS lim_add_sta(struct mac_context *, tpDphHashNode, uint8_t, struct pe_session *);
 QDF_STATUS lim_del_bss(struct mac_context *, tpDphHashNode, uint16_t, struct pe_session *);
 QDF_STATUS lim_del_sta(struct mac_context *, tpDphHashNode, bool, struct pe_session *);
-QDF_STATUS lim_add_sta_self(struct mac_context *, uint16_t, uint8_t, struct pe_session *);
+QDF_STATUS lim_add_sta_self(struct mac_context *, uint8_t, struct pe_session *);
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 void lim_restore_pre_reassoc_state(struct mac_context *,

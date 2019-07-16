@@ -5154,14 +5154,13 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 }
 #endif
 
-bool lim_check_vht_op_mode_change(struct mac_context *mac, struct pe_session *pe_session,
-				  uint8_t chanWidth, uint8_t staId,
-				  uint8_t *peerMac)
+bool lim_check_vht_op_mode_change(struct mac_context *mac,
+				  struct pe_session *pe_session,
+				  uint8_t chanWidth, uint8_t *peerMac)
 {
 	tUpdateVHTOpMode tempParam;
 
 	tempParam.opMode = chanWidth;
-	tempParam.staId = staId;
 	tempParam.smesessionId = pe_session->smeSessionId;
 	qdf_mem_copy(tempParam.peer_mac, peerMac, sizeof(tSirMacAddr));
 
@@ -5186,7 +5185,7 @@ bool lim_send_he_ie_update(struct mac_context *mac_ctx, struct pe_session *pe_se
 #endif
 
 bool lim_set_nss_change(struct mac_context *mac, struct pe_session *pe_session,
-			uint8_t rxNss, uint8_t staId, uint8_t *peerMac)
+			uint8_t rxNss, uint8_t *peerMac)
 {
 	tUpdateRxNss tempParam;
 
@@ -5196,7 +5195,6 @@ bool lim_set_nss_change(struct mac_context *mac, struct pe_session *pe_session,
 	}
 
 	tempParam.rxNss = rxNss;
-	tempParam.staId = staId;
 	tempParam.smesessionId = pe_session->smeSessionId;
 	qdf_mem_copy(tempParam.peer_mac, peerMac, sizeof(tSirMacAddr));
 
@@ -5207,14 +5205,13 @@ bool lim_set_nss_change(struct mac_context *mac, struct pe_session *pe_session,
 
 bool lim_check_membership_user_position(struct mac_context *mac,
 					struct pe_session *pe_session,
-					uint32_t membership, uint32_t userPosition,
-					uint8_t staId)
+					uint32_t membership,
+					uint32_t userPosition)
 {
 	tUpdateMembership tempParamMembership;
 	tUpdateUserPos tempParamUserPosition;
 
 	tempParamMembership.membership = membership;
-	tempParamMembership.staId = staId;
 	tempParamMembership.smesessionId = pe_session->smeSessionId;
 	qdf_mem_copy(tempParamMembership.peer_mac, pe_session->bssId,
 		     sizeof(tSirMacAddr));
@@ -5222,7 +5219,6 @@ bool lim_check_membership_user_position(struct mac_context *mac,
 	lim_set_membership(mac, &tempParamMembership, pe_session);
 
 	tempParamUserPosition.userPos = userPosition;
-	tempParamUserPosition.staId = staId;
 	tempParamUserPosition.smesessionId = pe_session->smeSessionId;
 	qdf_mem_copy(tempParamUserPosition.peer_mac, pe_session->bssId,
 		     sizeof(tSirMacAddr));

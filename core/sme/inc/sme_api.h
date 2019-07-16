@@ -1113,14 +1113,14 @@ QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle,
 				      void *cb_context,
 				      ibss_peer_info_cb peer_info_cb,
 				      bool allPeerInfoReqd,
-				      uint8_t staIdx);
+				      uint8_t *mac_addr);
 #else
 static inline
 QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle,
 				      void *cb_context,
 				      ibss_peer_info_cb peer_info_cb,
 				      bool allPeerInfoReqd,
-				      uint8_t staIdx)
+				      uint8_t *mac_addr);
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1157,7 +1157,7 @@ int sme_update_ht_config(mac_handle_t mac_handle, uint8_t sessionId,
 int16_t sme_get_ht_config(mac_handle_t mac_handle, uint8_t session_id,
 			  uint16_t ht_capab);
 #ifdef QCA_HT_2040_COEX
-QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle, uint16_t staId,
+QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle,
 				  struct qdf_mac_addr macAddrSTA,
 				  uint8_t sessionId,
 				  uint8_t channel_type);

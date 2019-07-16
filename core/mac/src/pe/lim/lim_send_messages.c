@@ -291,8 +291,8 @@ QDF_STATUS lim_send_mode_update(struct mac_context *mac,
 	msgQ.reserved = 0;
 	msgQ.bodyptr = pVhtOpMode;
 	msgQ.bodyval = 0;
-	pe_debug("Sending WMA_UPDATE_OP_MODE, op_mode %d, sta_id %d",
-			pVhtOpMode->opMode, pVhtOpMode->staId);
+	pe_debug("Sending WMA_UPDATE_OP_MODE, op_mode %d",
+			pVhtOpMode->opMode);
 	if (!pe_session)
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
@@ -481,8 +481,8 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	if (!ht40_obss_scanind)
 		return QDF_STATUS_E_FAILURE;
 	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-		"OBSS Scan Indication bss_idx- %d staId %d",
-		session->vdev_id, session->staId);
+		  "OBSS Scan Indication bss_idx- %d bssid " QDF_MAC_ADDR_STR,
+		  session->bss_idx, QDF_MAC_ADDR_ARRAY(session->bssId));
 
 	ht40_obss_scanind->cmd = HT40_OBSS_SCAN_PARAM_START;
 	ht40_obss_scanind->scan_type = eSIR_ACTIVE_SCAN;
@@ -526,7 +526,6 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	}
 	ht40_obss_scanind->channel_count = channel24gnum;
 	/* FW API requests BSS IDX */
-	ht40_obss_scanind->self_sta_idx = session->staId;
 	ht40_obss_scanind->bss_id = session->vdev_id;
 	ht40_obss_scanind->fortymhz_intolerent = 0;
 	ht40_obss_scanind->iefield_len = 0;

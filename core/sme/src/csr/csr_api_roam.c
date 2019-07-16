@@ -21804,7 +21804,6 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	conn_profile->vht_channel_width =
 		roam_synch_data->join_rsp->vht_channel_width;
 	add_bss_params = (struct bss_params *)roam_synch_data->add_bss_params;
-	session->connectedInfo.staId = add_bss_params->staContext.staIdx;
 	roam_info->staId = session->connectedInfo.staId;
 	roam_info->timingMeasCap =
 		roam_synch_data->join_rsp->timingMeasCap;

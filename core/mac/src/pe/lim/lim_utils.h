@@ -595,17 +595,16 @@ uint32_t lim_get_max_rate_flags(struct mac_context *mac_ctx,
 
 bool lim_check_vht_op_mode_change(struct mac_context *mac,
 		struct pe_session *pe_session,
-		uint8_t chanWidth, uint8_t staId,
+		uint8_t chanWidth,
 		uint8_t *peerMac);
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 bool lim_send_he_ie_update(struct mac_context *mac_ctx, struct pe_session *pe_session);
 #endif
 bool lim_set_nss_change(struct mac_context *mac, struct pe_session *pe_session,
-		uint8_t rxNss, uint8_t staId, uint8_t *peerMac);
+		uint8_t rxNss, uint8_t *peerMac);
 bool lim_check_membership_user_position(struct mac_context *mac,
 		struct pe_session *pe_session,
-		uint32_t membership, uint32_t userPosition,
-		uint8_t staId);
+		uint32_t membership, uint32_t userPosition);
 
 /**
  * enum ack_status - Indicate TX status of ASSOC/AUTH

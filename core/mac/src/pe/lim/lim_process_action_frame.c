@@ -541,7 +541,7 @@ static void __lim_process_operating_mode_action_frame(struct mac_context *mac_ct
 			ch_bw = eHT_CHANNEL_WIDTH_20MHZ;
 		}
 		lim_check_vht_op_mode_change(mac_ctx, session, ch_bw,
-					     sta_ptr->staIndex, mac_hdr->sa);
+					     mac_hdr->sa);
 	}
 
 update_nss:
@@ -550,7 +550,7 @@ update_nss:
 		sta_ptr->vhtSupportedRxNss =
 			operating_mode_frm->OperatingMode.rxNSS + 1;
 		lim_set_nss_change(mac_ctx, session, sta_ptr->vhtSupportedRxNss,
-			sta_ptr->staIndex, mac_hdr->sa);
+			mac_hdr->sa);
 	}
 
 end:
@@ -648,7 +648,7 @@ static void __lim_process_gid_management_action_frame(struct mac_context *mac_ct
 	vht_user_position = &gid_mgmt_frame->VhtUserPositionArray;
 	usr_position = vht_user_position->userPositionArray[membership] & 0x3;
 	lim_check_membership_user_position(mac_ctx, session, membership,
-			usr_position, sta_ptr->staIndex);
+			usr_position);
 out:
 	qdf_mem_free(gid_mgmt_frame);
 	return;

@@ -1831,7 +1831,7 @@ QDF_STATUS sme_ibss_peer_info_response_handler(struct mac_context *mac,
 
 QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *cb_context,
 				      ibss_peer_info_cb peer_info_cb,
-				      bool allPeerInfoReqd, uint8_t staIdx)
+				      bool allPeerInfoReqd, uint8_t *mac_addr)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -1853,7 +1853,8 @@ QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *cb_context,
 			return QDF_STATUS_E_NOMEM;
 		}
 		pIbssInfoReqParams->allPeerInfoReqd = allPeerInfoReqd;
-		pIbssInfoReqParams->staIdx = staIdx;
+		qdf_mem_copy(pIbssInfoReqParams->peer_mac.bytes, mac_addr,
+			     QDF_MAC_ADDR_SIZE);
 
 		message.type = WMA_GET_IBSS_PEER_INFO_REQ;
 		message.bodyptr = pIbssInfoReqParams;
@@ -8215,7 +8216,7 @@ QDF_STATUS sme_notify_modem_power_state(mac_handle_t mac_handle, uint32_t value)
 }
 
 #ifdef QCA_HT_2040_COEX
-QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle, uint16_t staId,
+QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle,
 				  struct qdf_mac_addr macAddrSTA,
 				  uint8_t sessionId,
 				  uint8_t channel_type)
@@ -8248,7 +8249,6 @@ QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle, uint16_t staId,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHtOpMode->staId = staId,
 	qdf_mem_copy(pHtOpMode->peer_mac, macAddrSTA.bytes,
 		     sizeof(tSirMacAddr));
 	pHtOpMode->smesessionId = sessionId;
@@ -8268,8 +8268,8 @@ QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle, uint16_t staId,
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Notified FW about OP mode: %d for staId=%d",
-		  __func__, pHtOpMode->opMode, staId);
+		  "%s: Notified FW about OP mode: %d",
+		  __func__, pHtOpMode->opMode);
 
 	return QDF_STATUS_SUCCESS;
 }

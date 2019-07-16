@@ -302,13 +302,14 @@ QDF_STATUS hdd_cfg80211_get_ibss_peer_info_all(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 	unsigned long rc;
+	struct qdf_mac_addr bcast = QDF_MAC_ADDR_BCAST_INIT;
 
 	INIT_COMPLETION(adapter->ibss_peer_info_comp);
 
 	status = sme_request_ibss_peer_info(adapter->hdd_ctx->mac_handle,
 					    adapter,
 					    hdd_get_ibss_peer_info_cb,
-					    true, 0xFF);
+					    true, bcast.bytes);
 
 	if (QDF_STATUS_SUCCESS == status) {
 		rc = wait_for_completion_timeout

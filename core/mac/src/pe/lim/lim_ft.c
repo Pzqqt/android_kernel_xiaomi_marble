@@ -741,7 +741,7 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *msg_buf)
 
 		if (!pe_session->ftPEContext.pAddStaReq) {
 			pe_err("pAddStaReq is NULL");
-			lim_send_set_sta_key_req(mac, pMlmSetKeysReq, 0, 0,
+			lim_send_set_sta_key_req(mac, pMlmSetKeysReq, 0,
 						 pe_session, false);
 			pe_session->ftPEContext.PreAuthKeyInfo.
 			extSetStaKeyParamValid = false;
@@ -762,8 +762,6 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *msg_buf)
 		pe_debug("Key valid: %d keyLength: %d",
 			pAddBssParams->extSetStaKeyParamValid,
 			pAddBssParams->extSetStaKeyParam.key[0].keyLength);
-
-		pAddBssParams->extSetStaKeyParam.staIdx = 0;
 
 		pe_debug("BSSID: " QDF_MAC_ADDR_STR,
 			       QDF_MAC_ADDR_ARRAY(pKeyInfo->bssid.bytes));
@@ -919,7 +917,6 @@ QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pAggrAddTsParam->staIdx = pe_session->staId;
 	/* Fill in the sessionId specific to PE */
 	pAggrAddTsParam->sessionId = sessionId;
 	pAggrAddTsParam->tspecIdx = aggrQosReq->aggrInfo.tspecIdx;

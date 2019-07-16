@@ -3584,19 +3584,19 @@ static
 QDF_STATUS wma_save_bss_params(tp_wma_handle wma, struct bss_params *add_bss)
 {
 	QDF_STATUS status;
+	uint8_t sta_id;
 
 	wma_vdev_set_he_config(wma, add_bss->staContext.smesessionId, add_bss);
-	if (!wma_cdp_find_peer_by_addr(add_bss->bssId,
-				       &add_bss->staContext.staIdx))
+	if (!wma_cdp_find_peer_by_addr(add_bss->bssId, &sta_id))
 		status = QDF_STATUS_E_FAILURE;
 	else
 		status = QDF_STATUS_SUCCESS;
 	qdf_mem_copy(add_bss->staContext.staMac, add_bss->bssId,
 		     sizeof(add_bss->staContext.staMac));
 
-	WMA_LOGD("%s: update_bss %d nw_type %d bssid %pM staIdx %d status %d",
+	WMA_LOGD("%s: update_bss %d nw_type %d bssid %pM status %d",
 		 __func__, add_bss->updateBss, add_bss->nwType, add_bss->bssId,
-		 add_bss->staContext.staIdx, status);
+		 status);
 
 	return status;
 }
@@ -3637,9 +3637,7 @@ void wma_add_bss_lfr3(tp_wma_handle wma, struct bss_params *add_bss)
 			 add_bss->bssId);
 		return;
 	}
-	add_bss->staContext.staIdx = peer_id;
-	WMA_LOGD("LFR3:%s: bssid %pM staIdx %d", __func__, add_bss->bssId,
-		 add_bss->staContext.staIdx);
+	WMA_LOGD("LFR3:%s: bssid %pM", __func__, add_bss->bssId);
 }
 
 
@@ -3727,7 +3725,6 @@ QDF_STATUS wma_add_bss_lfr2_vdev_start(struct wlan_objmgr_vdev *vdev,
 		wma_err("failed, status: %d", status);
 		goto peer_cleanup;
 	}
-
 	status = wma_set_cdp_vdev_pause_reason(wma, vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto peer_cleanup;
@@ -3781,10 +3778,9 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 		goto send_resp;
 
 	peer = wma_cdp_find_peer_by_addr(add_bss->bssId, &peer_id);
-	if (add_bss->nonRoamReassoc && peer) {
-		add_bss->staContext.staIdx = peer_id;
+	if (add_bss->nonRoamReassoc && peer)
 		goto send_resp;
-	}
+
 	if (!add_bss->updateBss)
 		goto send_resp;
 
@@ -4080,7 +4076,6 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		 __func__, add_sta->staMac, state);
 	cdp_peer_state_update(soc, pdev, add_sta->staMac, state);
 
-	add_sta->staIdx = cdp_peer_get_local_peer_id(soc, peer);
 	add_sta->nss    = iface->nss;
 	add_sta->status = QDF_STATUS_SUCCESS;
 send_rsp:
@@ -4090,9 +4085,9 @@ send_rsp:
 		return;
 	}
 
-	WMA_LOGD(FL("statype %d vdev_id %d aid %d bssid %pM staIdx %d status %d"),
+	WMA_LOGD(FL("statype %d vdev_id %d aid %d bssid %pM status %d"),
 		 add_sta->staType, add_sta->smesessionId,
-		 add_sta->assocId, add_sta->bssId, add_sta->staIdx,
+		 add_sta->assocId, add_sta->bssId,
 		 add_sta->status);
 	wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP, (void *)add_sta, 0);
 }
@@ -4173,7 +4168,6 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			goto send_rsp;
 		}
 
-		add_sta->staIdx = cdp_peer_get_local_peer_id(soc, peer);
 		WMA_LOGD("%s: addSta, after calling cdp_local_peer_id, staMac: %pM",
 			 __func__, add_sta->staMac);
 
@@ -4316,6 +4310,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	bool peer_assoc_cnf = false;
 	int smps_param;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	/* Will be removed as a part of cleanup */
+	uint8_t sta_id;
 
 #ifdef FEATURE_WLAN_TDLS
 	if (STA_ENTRY_TDLS_PEER == params->staType) {
@@ -4337,9 +4333,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			 __func__, params->staType);
 		goto out;
 	}
-	peer = cdp_peer_find_by_addr(soc,
-			pdev,
-			params->bssId, &params->staIdx);
+	peer = cdp_peer_find_by_addr(soc, pdev, params->bssId, &sta_id);
 	if (!peer) {
 		WMA_LOGE("%s: Peer is not present vdev id %d for %pM", __func__,
 			params->smesessionId, params->bssId);
@@ -4554,9 +4548,9 @@ out:
 		return;
 
 	params->status = status;
-	WMA_LOGD(FL("statype %d vdev_id %d aid %d bssid %pM staIdx %d status %d"),
-		 params->staType, params->smesessionId,
-		 params->assocId, params->bssId, params->staIdx,
+	WMA_LOGD(FL("statype %d vdev_id %d aid %d sta mac " QDF_MAC_ADDR_STR
+		 " status %d"), params->staType, params->smesessionId,
+		 params->assocId, QDF_MAC_ADDR_ARRAY(params->bssId),
 		 params->status);
 	/* Don't send a response during roam sync operation */
 	if (!wma_is_roam_synch_in_progress(wma, params->smesessionId))
@@ -4577,9 +4571,10 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 	struct cdp_pdev *pdev;
 	void *peer;
 	struct wma_target_req *msg;
-	uint8_t *peer_mac_addr;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	QDF_STATUS qdf_status;
+	/* Will be removed as a part of cleanup */
+	uint8_t sta_id;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -4589,17 +4584,16 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 		goto send_del_rsp;
 	}
 
-	peer = cdp_peer_find_by_local_id(soc,
-			pdev, del_sta->staIdx);
+	peer = cdp_peer_find_by_addr(soc, pdev, del_sta->staMac, &sta_id);
 	if (!peer) {
 		WMA_LOGE("%s: Failed to get peer handle using peer id %d",
 			 __func__, del_sta->staIdx);
 		del_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_del_rsp;
 	}
-	peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 
-	qdf_status = wma_remove_peer(wma, peer_mac_addr, del_sta->smesessionId,
+	qdf_status = wma_remove_peer(wma, del_sta->staMac,
+				     del_sta->smesessionId,
 				     peer, false);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMA_LOGE(FL("wma_remove_peer failed"));

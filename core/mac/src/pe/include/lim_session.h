@@ -206,12 +206,6 @@ struct pe_session {
 
 	/** BSS Table parameters **/
 
-	/*
-	 * staId:  Start BSS: this is the  Sta Id for the BSS.
-	 * Join: this is the selfStaId
-	 * In both cases above, the peer STA ID wll be stored in dph hash table.
-	 */
-	uint16_t staId;
 	uint16_t statypeForBss; /* to know session is for PEER or SELF */
 	uint8_t shortSlotTimeSupported;
 	uint8_t dtimPeriod;

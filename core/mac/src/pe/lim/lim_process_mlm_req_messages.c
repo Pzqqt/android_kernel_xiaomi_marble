@@ -1573,7 +1573,6 @@ static void
 lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 {
 	uint16_t aid;
-	uint16_t sta_idx = 0;
 	uint32_t default_key_id = 0;
 	struct qdf_mac_addr curr_bssid;
 	tpDphHashNode sta_ds;
@@ -1671,7 +1670,6 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		case eSIR_ED_AES_GMAC_128:
 		case eSIR_ED_AES_GMAC_256:
 #endif
-			sta_idx = session->staId;
 			break;
 		default:
 			break;
@@ -1701,8 +1699,6 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 			mlm_set_keys_cnf.resultCode =
 				eSIR_SME_INVALID_PARAMETERS;
 			goto end;
-		} else {
-			sta_idx = sta_ds->staIndex;
 		}
 	}
 
@@ -1727,8 +1723,9 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 	} else {
 		default_key_id = 0;
 	}
-	pe_debug("Trying to set keys for STA Index [%d], using default_key_id [%d]",
-		sta_idx, default_key_id);
+	pe_debug("Trying to set keys using default_key_id [%d] sta mac "
+		 QDF_MAC_ADDR_STR, default_key_id,
+		 QDF_MAC_ADDR_ARRAY(mlm_set_keys_req->peer_macaddr.bytes));
 
 	if (qdf_is_macaddr_broadcast(&mlm_set_keys_req->peer_macaddr)) {
 		session->limPrevMlmState = session->limMlmState;
@@ -1746,7 +1743,7 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		 * Package WMA_SET_STAKEY_REQ / WMA_SET_STA_BCASTKEY_REQ message
 		 * parameters
 		 */
-		lim_send_set_sta_key_req(mac_ctx, mlm_set_keys_req, sta_idx,
+		lim_send_set_sta_key_req(mac_ctx, mlm_set_keys_req,
 					 (uint8_t) default_key_id, session,
 					 true);
 		return;

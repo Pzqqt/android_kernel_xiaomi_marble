@@ -483,7 +483,7 @@ static void update_nss(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 		sta_ds->vhtSupportedRxNss =
 			beacon->OperatingMode.rxNSS + 1;
 		lim_set_nss_change(mac_ctx, session_entry,
-			sta_ds->vhtSupportedRxNss, sta_ds->staIndex,
+			sta_ds->vhtSupportedRxNss,
 			mgmt_hdr->sa);
 	}
 }
@@ -618,7 +618,7 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 				ch_width = eHT_CHANNEL_WIDTH_20MHZ;
 			}
 			lim_check_vht_op_mode_change(mac_ctx, session,
-				ch_width, sta_ds->staIndex, mac_hdr->sa);
+				ch_width, mac_hdr->sa);
 			update_nss(mac_ctx, sta_ds, bcn, session, mac_hdr);
 		}
 		return;
@@ -686,7 +686,7 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 			}
 		}
 		lim_check_vht_op_mode_change(mac_ctx, session, ch_width,
-						sta_ds->staIndex, mac_hdr->sa);
+						mac_hdr->sa);
 	}
 }
 
@@ -728,8 +728,7 @@ sch_bcn_process_sta_ibss(struct mac_context *mac_ctx,
 	/* check for VHT capability */
 	sta = dph_lookup_hash_entry(mac_ctx, pMh->sa, &aid,
 			&session->dph.dphHashTable);
-	if ((!sta) || ((sta) &&
-					(STA_INVALID_IDX == sta->staIndex)))
+	if ((!sta))
 		return;
 	sch_bcn_update_opmode_change(mac_ctx, sta, session, bcn, pMh,
 				     cb_mode);

@@ -2342,9 +2342,10 @@ lim_add_sta(struct mac_context *mac_ctx,
 		add_sta_params->vhtCapable = session_entry->vhtCapability;
 	}
 
-	pe_debug("StaIdx: %d updateSta: %d htcapable: %d vhtCapable: %d",
-		add_sta_params->staIdx, add_sta_params->updateSta,
-		add_sta_params->htCapable, add_sta_params->vhtCapable);
+	pe_debug("updateSta: %d htcapable: %d vhtCapable: %d sta mac"
+		 QDF_MAC_ADDR_STR, add_sta_params->updateSta,
+		 add_sta_params->htCapable, add_sta_params->vhtCapable,
+		 QDF_MAC_ADDR_ARRAY(add_sta_params->staMac));
 
 	/*
 	 * If HT client is connected to SAP DUT and self cap is NSS = 2 then
@@ -2714,26 +2715,6 @@ lim_del_sta(struct mac_context *mac,
 				0, VDEV_CMD);
 		}
 	}
-	/* */
-	/* DPH contains the STA index only for "peer" STA entries. */
-	/* LIM global contains "self" STA index */
-	/* Thus, */
-	/*    if( STA role ) */
-	/*      get STA index from LIM global */
-	/*    else */
-	/*      get STA index from DPH */
-	/* */
-
-#ifdef FEATURE_WLAN_TDLS
-	if (LIM_IS_STA_ROLE(pe_session) &&
-	    (sta->staType != STA_ENTRY_TDLS_PEER))
-#else
-	if (LIM_IS_STA_ROLE(pe_session))
-#endif
-		pDelStaParams->staIdx = pe_session->staId;
-
-	else
-		pDelStaParams->staIdx = sta->staIndex;
 
 	pDelStaParams->assocId = sta->assocId;
 	sta->valid = 0;
@@ -2841,7 +2822,7 @@ static void lim_set_mbssid_info(struct pe_session *pe_session)
  */
 
 QDF_STATUS
-lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
+lim_add_sta_self(struct mac_context *mac, uint8_t updateSta,
 		 struct pe_session *pe_session)
 {
 	tpAddStaParams pAddStaParams = NULL;
@@ -2888,8 +2869,6 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 
 	pAddStaParams->maxTxPower = pe_session->maxTxPower;
 
-	/* This will indicate HAL to "allocate" a new STA index */
-	pAddStaParams->staIdx = staIdx;
 	pAddStaParams->updateSta = updateSta;
 
 	lim_set_mbssid_info(pe_session);
@@ -2965,8 +2944,8 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	if (QDF_P2P_CLIENT_MODE == pe_session->opmode)
 		pAddStaParams->p2pCapableSta = 1;
 
-	pe_debug(" StaIdx: %d updateSta = %d htcapable = %d ",
-		pAddStaParams->staIdx, pAddStaParams->updateSta,
+	pe_debug("updateSta = %d htcapable = %d ",
+		pAddStaParams->updateSta,
 		pAddStaParams->htCapable);
 
 	pe_debug("htLdpcCapable: %d vhtLdpcCapable: %d "
