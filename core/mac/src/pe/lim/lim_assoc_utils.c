@@ -3523,6 +3523,51 @@ static inline void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx,
 }
 #endif
 
+void lim_sta_add_bss_update_ht_parameter(uint8_t bss_chan_id,
+					 tDot11fIEHTCaps* ht_cap,
+					 tDot11fIEHTInfo* ht_inf,
+					 bool chan_width_support,
+					 tpAddBssParams add_bss)
+{
+	if (!ht_cap->present)
+		return;
+
+	add_bss->htCapable = ht_cap->present;
+	pe_debug("htCapable: %d", add_bss->htCapable);
+
+	if (!ht_inf->present)
+		return;
+
+	add_bss->htOperMode = ht_inf->opMode;
+	add_bss->dualCTSProtection = ht_inf->dualCTSProtection;
+	if (chan_width_support && ht_cap->supportedChannelWidthSet) {
+		add_bss->ch_width = ht_inf->recommendedTxWidthSet;
+		if (ht_inf->secondaryChannelOffset ==
+		    PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
+			add_bss->ch_center_freq_seg0 = bss_chan_id + 2;
+		else if (ht_inf->secondaryChannelOffset ==
+			 PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
+			add_bss->ch_center_freq_seg0 = bss_chan_id - 2;
+	} else {
+		add_bss->ch_width = CH_WIDTH_20MHZ;
+		add_bss->ch_center_freq_seg0 = 0;
+	}
+	add_bss->llnNonGFCoexist = ht_inf->nonGFDevicesPresent;
+	add_bss->fLsigTXOPProtectionFullSupport =
+		ht_inf->lsigTXOPProtectionFullSupport;
+	add_bss->fRIFSMode = ht_inf->rifsMode;
+	pe_debug("htOperMode: %d dualCTSProtection: %d txChannelWidth: %d",
+		 add_bss->htOperMode,
+		 add_bss->dualCTSProtection,
+		 add_bss->ch_width);
+	pe_debug("center_freq_0: %d llnNonGFCoexist: %d",
+		 add_bss->ch_center_freq_seg0,
+		 add_bss->llnNonGFCoexist);
+	pe_debug("fLsigTXOPProtectionFullSupport: %d fRIFSMode: %d",
+		 add_bss->fLsigTXOPProtectionFullSupport,
+		 add_bss->fRIFSMode);
+}
+
 /**
  * limSendAddBss()
  *
@@ -3559,7 +3604,8 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	tpAddBssParams pAddBssParams = NULL;
 	uint32_t retCode;
 	tpDphHashNode sta = NULL;
-	uint8_t chanWidthSupp = 0;
+	bool chan_width_support = false;
+	uint8_t bss_chan_id;
 	bool is_vht_cap_in_vendor_ie = false;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	tDot11fIEVHTOperation *vht_oper = NULL;
@@ -3652,60 +3698,22 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	pAddBssParams->dot11_mode = pe_session->dot11mode;
 	pe_debug("dot11_mode: %d", pAddBssParams->dot11_mode);
 
-	if (IS_DOT11_MODE_HT(pe_session->dot11mode))
-		chanWidthSupp = lim_get_ht_capability(mac,
-						eHT_SUPPORTED_CHANNEL_WIDTH_SET,
-						pe_session);
-
+	bss_chan_id = wlan_reg_freq_to_chan(mac->pdev,
+					    bssDescription->chan_freq);
 	/* Use the advertised capabilities from the received beacon/PR */
-	if (IS_DOT11_MODE_HT(pe_session->dot11mode)
-	    && (pAssocRsp->HTCaps.present)) {
-		pAddBssParams->htCapable = pAssocRsp->HTCaps.present;
-		pe_debug("htCapable: %d", pAddBssParams->htCapable);
-		if (pBeaconStruct->HTInfo.present) {
-			pAddBssParams->htOperMode =
-				(tSirMacHTOperatingMode) pAssocRsp->HTInfo.opMode;
-			pAddBssParams->dualCTSProtection =
-				(uint8_t) pAssocRsp->HTInfo.dualCTSProtection;
-
-			if ((pAssocRsp->HTCaps.supportedChannelWidthSet)
-			    && (chanWidthSupp)) {
-				pAddBssParams->ch_width = (uint8_t)
-					pAssocRsp->HTInfo.recommendedTxWidthSet;
-				if (pAssocRsp->HTInfo.secondaryChannelOffset ==
-						PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-					pAddBssParams->ch_center_freq_seg0 =
-						bssDescription->channelId + 2;
-				else if (pAssocRsp->HTInfo.secondaryChannelOffset ==
-						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
-					pAddBssParams->ch_center_freq_seg0 =
-						bssDescription->channelId - 2;
-			} else {
-				pAddBssParams->ch_width = CH_WIDTH_20MHZ;
-				pAddBssParams->ch_center_freq_seg0 = 0;
-			}
-			pAddBssParams->llnNonGFCoexist =
-				(uint8_t) pAssocRsp->HTInfo.nonGFDevicesPresent;
-			pAddBssParams->fLsigTXOPProtectionFullSupport =
-				(uint8_t) pAssocRsp->HTInfo.
-				lsigTXOPProtectionFullSupport;
-			pAddBssParams->fRIFSMode = pAssocRsp->HTInfo.rifsMode;
-
-			pe_debug("htOperMode: %d dualCTSProtection: %d txChannelWidth: %d center_freq_0: %d",
-				pAddBssParams->htOperMode,
-				pAddBssParams->dualCTSProtection,
-				pAddBssParams->ch_width,
-				pAddBssParams->ch_center_freq_seg0);
-
-			pe_debug("llnNonGFCoexist: %d "
-					"fLsigTXOPProtectionFullSupport: %d fRIFSMode %d",
-				pAddBssParams->llnNonGFCoexist,
-				pAddBssParams->fLsigTXOPProtectionFullSupport,
-				pAddBssParams->fRIFSMode);
-		}
+	if (IS_DOT11_MODE_HT(pe_session->dot11mode)) {
+		chan_width_support =
+			lim_get_ht_capability(mac,
+					      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
+					      pe_session);
+		lim_sta_add_bss_update_ht_parameter(bss_chan_id,
+						    &pAssocRsp->HTCaps,
+						    &pAssocRsp->HTInfo,
+						    chan_width_support,
+						    pAddBssParams);
 	}
 
-	pAddBssParams->currentOperChannel = bssDescription->channelId;
+	pAddBssParams->currentOperChannel = bss_chan_id;
 	pe_debug("currentOperChannel %d", pAddBssParams->currentOperChannel);
 	if (pe_session->vhtCapability && (pAssocRsp->VHTCaps.present)) {
 		pAddBssParams->vhtCapable = pAssocRsp->VHTCaps.present;
@@ -3843,7 +3851,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 		 * width has been taken into account for calculating
 		 * pe_session->ch_width
 		 */
-		if (chanWidthSupp &&
+		if (chan_width_support &&
 		    ((pAssocRsp->HTCaps.supportedChannelWidthSet) ||
 		    (pBeaconStruct->HTCaps.supportedChannelWidthSet))) {
 			pAddBssParams->staContext.ch_width =
@@ -4095,7 +4103,8 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	tpAddBssParams pAddBssParams = NULL;
 	uint32_t retCode;
 	tSchBeaconStruct *pBeaconStruct;
-	uint8_t chanWidthSupp = 0;
+	bool chan_width_support = false;
+	uint8_t bss_chan_id;
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	uint32_t listen_interval = MLME_CFG_LISTEN_INTERVAL;
@@ -4192,63 +4201,23 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 		pAddBssParams->nwType, pAddBssParams->shortSlotTimeSupported,
 		pAddBssParams->llaCoexist, pAddBssParams->llbCoexist,
 		pAddBssParams->llgCoexist, pAddBssParams->ht20Coexist);
+
+	bss_chan_id = wlan_reg_freq_to_chan(mac->pdev,
+					    bssDescription->chan_freq);
 	/* Use the advertised capabilities from the received beacon/PR */
-	if (IS_DOT11_MODE_HT(pe_session->dot11mode)
-	    && (pBeaconStruct->HTCaps.present)) {
-		pAddBssParams->htCapable = pBeaconStruct->HTCaps.present;
-		pe_debug("htCapable: %d", pAddBssParams->htCapable);
-		if (pBeaconStruct->HTInfo.present) {
-			pAddBssParams->htOperMode =
-				(tSirMacHTOperatingMode) pBeaconStruct->HTInfo.
-				opMode;
-			pAddBssParams->dualCTSProtection =
-				(uint8_t) pBeaconStruct->HTInfo.dualCTSProtection;
-
-			chanWidthSupp =
-				lim_get_ht_capability(mac,
-						      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
-						      pe_session);
-			if ((pBeaconStruct->HTCaps.supportedChannelWidthSet)
-			    && (chanWidthSupp)) {
-				pAddBssParams->ch_width =
-					(uint8_t) pBeaconStruct->HTInfo.
-					recommendedTxWidthSet;
-				if (pBeaconStruct->HTInfo.secondaryChannelOffset ==
-						PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-					pAddBssParams->ch_center_freq_seg0 =
-						bssDescription->channelId + 2;
-
-				if (pBeaconStruct->HTInfo.secondaryChannelOffset ==
-						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
-					pAddBssParams->ch_center_freq_seg0 =
-						bssDescription->channelId - 2;
-			} else {
-				pAddBssParams->ch_width = CH_WIDTH_20MHZ;
-				pAddBssParams->ch_center_freq_seg0 = 0;
-			}
-			pAddBssParams->llnNonGFCoexist =
-				(uint8_t) pBeaconStruct->HTInfo.nonGFDevicesPresent;
-			pAddBssParams->fLsigTXOPProtectionFullSupport =
-				(uint8_t) pBeaconStruct->HTInfo.
-				lsigTXOPProtectionFullSupport;
-			pAddBssParams->fRIFSMode =
-				pBeaconStruct->HTInfo.rifsMode;
-
-			pe_debug("htOperMode: %d dualCTSProtection: %d txChannelWidthSet: %d center_freq_seg0: %d",
-				pAddBssParams->htOperMode,
-				pAddBssParams->dualCTSProtection,
-				pAddBssParams->txChannelWidthSet,
-				pAddBssParams->ch_center_freq_seg0);
-
-			pe_debug("llnNonGFCoexist: %d "
-				"fLsigTXOPProtectionFullSupport: %d fRIFSMode %d",
-				pAddBssParams->llnNonGFCoexist,
-				pAddBssParams->fLsigTXOPProtectionFullSupport,
-				pAddBssParams->fRIFSMode);
-		}
+	if (IS_DOT11_MODE_HT(pe_session->dot11mode)) {
+		chan_width_support =
+			lim_get_ht_capability(mac,
+					      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
+					      pe_session);
+		lim_sta_add_bss_update_ht_parameter(bss_chan_id,
+						    &pBeaconStruct->HTCaps,
+						    &pBeaconStruct->HTInfo,
+						    chan_width_support,
+						    pAddBssParams);
 	}
 
-	pAddBssParams->currentOperChannel = bssDescription->channelId;
+	pAddBssParams->currentOperChannel = bss_chan_id;
 	pe_debug("currentOperChannel %d",
 		pAddBssParams->currentOperChannel);
 
@@ -4265,9 +4234,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 		}
 
 
-		if ((vht_oper) &&
-			vht_oper->chanWidth &&
-			chanWidthSupp) {
+		if (vht_oper && vht_oper->chanWidth && chan_width_support) {
 			pAddBssParams->ch_center_freq_seg0 =
 				vht_oper->chanCenterFreqSeg1;
 			pAddBssParams->ch_center_freq_seg1 =
@@ -4369,8 +4336,8 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 			lim_intersect_ap_he_caps(pe_session, pAddBssParams,
 					      pBeaconStruct, NULL);
 
-		if ((pBeaconStruct->HTCaps.supportedChannelWidthSet) &&
-				(chanWidthSupp)) {
+		if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
+		    chan_width_support) {
 			pAddBssParams->staContext.ch_width =
 				(uint8_t) pBeaconStruct->HTInfo.
 				recommendedTxWidthSet;

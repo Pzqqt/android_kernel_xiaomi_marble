@@ -1236,6 +1236,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
 	uint32_t val = 0;
 	uint8_t session_id;
+	uint8_t bss_chan_id;
 	struct pe_session *session = NULL;
 	uint8_t sme_session_id = 0;
 	int8_t local_power_constraint = 0, reg_max = 0;
@@ -1295,6 +1296,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		/* check for the existence of start BSS session  */
 		session = pe_find_session_by_bssid(mac_ctx, bss_desc->bssId,
 				&session_id);
+		bss_chan_id = wlan_reg_freq_to_chan(mac_ctx->pdev,
+						    bss_desc->chan_freq);
 
 		if (session) {
 			pe_err("Session(%d) Already exists for BSSID: "
@@ -1343,7 +1346,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			/* Update the beacon/probe filter in mac_ctx */
 			lim_set_bcn_probe_filter(mac_ctx, session,
 						 &sme_join_req->ssId,
-						 bss_desc->channelId);
+						 bss_chan_id);
 		}
 		session->max_amsdu_num = sme_join_req->max_amsdu_num;
 		session->enable_session_twt_support =
@@ -1908,8 +1911,9 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		     session_entry->pLimReAssocReq->bssDescription.bssId,
 		     sizeof(tSirMacAddr));
 
-	session_entry->limReassocChannelId =
-		session_entry->pLimReAssocReq->bssDescription.channelId;
+	session_entry->limReassocChannelId = wlan_reg_freq_to_chan(
+		mac_ctx->pdev,
+		session_entry->pLimReAssocReq->bssDescription.chan_freq);
 
 	session_entry->reAssocHtSupportedChannelWidthSet =
 		(session_entry->pLimReAssocReq->cbMode) ? 1 : 0;

@@ -6706,17 +6706,9 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 
 	if (WLAN_STATUS_SUCCESS == status) {
 		struct ieee80211_channel *chan;
-		int freq;
-		int chan_no = roam_info->bss_desc->channelId;
 
-		if (chan_no <= 14)
-			freq = ieee80211_channel_to_frequency(chan_no,
-				HDD_NL80211_BAND_2GHZ);
-		else
-			freq = ieee80211_channel_to_frequency(chan_no,
-				HDD_NL80211_BAND_5GHZ);
-
-		chan = ieee80211_get_channel(adapter->wdev.wiphy, freq);
+		chan = ieee80211_get_channel(adapter->wdev.wiphy,
+					     roam_info->bss_desc->chan_freq);
 		bss = wlan_cfg80211_get_bss(adapter->wdev.wiphy, chan, bssid,
 			roam_info->u.pConnectedProfile->SSID.ssId,
 			roam_info->u.pConnectedProfile->SSID.length);

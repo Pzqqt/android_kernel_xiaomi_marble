@@ -212,11 +212,11 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 			tmp_bss_desc[i] =
 				beacon_rep->pBssDescription[i];
 			sme_debug("RRM Result Bssid = " QDF_MAC_ADDR_STR
-				" chan= %d, rssi = -%d",
-				QDF_MAC_ADDR_ARRAY(
-				beacon_rep->pBssDescription[i]->bssId),
-				beacon_rep->pBssDescription[i]->channelId,
-				beacon_rep->pBssDescription[i]->rssi * (-1));
+				  " freq= %d, rssi = -%d",
+				  QDF_MAC_ADDR_ARRAY(
+				  beacon_rep->pBssDescription[i]->bssId),
+				  beacon_rep->pBssDescription[i]->chan_freq,
+				  beacon_rep->pBssDescription[i]->rssi * (-1));
 			beacon_rep->numBssDesc++;
 			if (++i >= SIR_BCN_REPORT_MAX_BSS_DESC)
 				break;
@@ -331,8 +331,9 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 			ie_len = GET_IE_LEN_IN_BSS(bss_desc->length);
 			bcn_rpt_fields =
 				&bcn_report->bcnRepBssInfo[j].bcnReportFields;
-			bcn_rpt_fields->ChanNum =
-				bss_desc->channelId;
+			bcn_rpt_fields->ChanNum = wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					bss_desc->chan_freq);
 			bcn_report->bcnRepBssInfo[j].bcnReportFields.Spare = 0;
 			if (cur_meas_req)
 				bcn_rpt_fields->MeasDuration =
@@ -359,9 +360,9 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 				continue;
 			bcn_report->bcnRepBssInfo[j].ieLen = out_ie_len;
 
-			sme_debug("Bssid"QDF_MAC_ADDR_STR" Channel: %d Rssi: %d",
-				QDF_MAC_ADDR_ARRAY(bss_desc->bssId),
-				bss_desc->channelId, (-1) * bss_desc->rssi);
+			sme_debug("Bssid"QDF_MAC_ADDR_STR" Freq:%d Rssi:%d",
+				  QDF_MAC_ADDR_ARRAY(bss_desc->bssId),
+				  bss_desc->chan_freq, (-1) * bss_desc->rssi);
 			bcn_report->numBss++;
 			if (++j >= SIR_BCN_REPORT_MAX_BSS_DESC)
 				break;

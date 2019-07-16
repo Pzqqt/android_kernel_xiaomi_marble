@@ -2570,6 +2570,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 	tCsrScanResultFilter *scan_filter = NULL;
 	tScanResultHandle filtered_scan_result = NULL;
 	struct bss_description first_ap_profile;
+	uint8_t bss_chan_id;
 
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -2617,12 +2618,15 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 			csr_get_bssdescr_from_scan_handle(filtered_scan_result,
 					&first_ap_profile);
 			*scan_cache = filtered_scan_result;
-			if (0 != first_ap_profile.channelId) {
-				*ap_chnl_id = first_ap_profile.channelId;
+			bss_chan_id = wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					first_ap_profile.chan_freq);
+			if (bss_chan_id) {
+				*ap_chnl_id = bss_chan_id;
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_DEBUG,
-					  FL("Found best AP & its on chnl[%d]"),
-					  first_ap_profile.channelId);
+					  FL("Found best AP & its on freq[%d]"),
+					  first_ap_profile.chan_freq);
 			} else {
 				/*
 				 * This means scan result is empty
@@ -13685,6 +13689,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	struct bss_description *bss_descp;
 	struct scan_result_list *bss_list;
 	uint32_t ie_len;
+	uint8_t bss_chan_id;
 
 	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
 	if (!scan_filter) {
@@ -13740,8 +13745,10 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	 */
 	ie_len = bss_descp->length + sizeof(bss_descp->length)
 		- (uint16_t)(offsetof(struct bss_description, ieFields[0]));
-	sme_debug("found bss_descriptor ie_len: %d channel %d",
-					ie_len, bss_descp->channelId);
+	bss_chan_id = wlan_reg_freq_to_chan(mac_ctx->pdev,
+					    bss_descp->chan_freq);
+	sme_debug("found bss_descriptor ie_len: %d frequency %d",
+		  ie_len, bss_descp->chan_freq);
 
 	/* include mac header and fixed params along with IEs in frame */
 	*frame_len = SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET + ie_len;
@@ -13754,7 +13761,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	sme_prepare_beacon_from_bss_descp(*frame_buf, bss_descp, bssid, ie_len);
 
 	if (!*channel)
-		*channel = bss_descp->channelId;
+		*channel = bss_chan_id;
 free_scan_flter:
 	/* free scan filter and exit */
 	if (scan_filter) {
@@ -14569,6 +14576,7 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct wlan_mlme_mbo *mbo_cfg;
 	int8_t current_rssi_mcc_thres;
+	uint8_t bss_chan_id, conn_bss_chan_id;
 
 	if (!(mac_ctx->mlme_cfg)) {
 		pe_err("mlme cfg is NULL");
@@ -14592,6 +14600,11 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 
 	if (trans_reason == MBO_TRANSITION_REASON_LOAD_BALANCING ||
 	    trans_reason == MBO_TRANSITION_REASON_TRANSITIONING_TO_PREMIUM_AP) {
+		bss_chan_id = wlan_reg_freq_to_chan(mac_ctx->pdev,
+						    bss_desc->chan_freq);
+		conn_bss_chan_id = wlan_reg_freq_to_chan(
+				mac_ctx->pdev,
+				conn_bss_desc->chan_freq);
 		/*
 		 * MCC rejection
 		 * If moving to candidate's channel will result in MCC scenario
@@ -14601,7 +14614,7 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		 */
 		current_rssi_mcc_thres = mbo_cfg->mbo_current_rssi_mcc_thres;
 		if ((conn_bss_desc->rssi > current_rssi_mcc_thres) &&
-		    csr_is_mcc_channel(mac_ctx, bss_desc->channelId)) {
+		    csr_is_mcc_channel(mac_ctx, bss_chan_id)) {
 			sme_err("Candidate BSS "QDF_MAC_ADDR_STR" causes MCC, hence reject",
 				QDF_MAC_ADDR_ARRAY(bss_desc->bssId));
 			info->status =
@@ -14616,8 +14629,8 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		 * less than mbo_candidate_rssi_btc_thres, then reject the
 		 * candidate with MBO reason code 2.
 		 */
-		if (WLAN_REG_IS_5GHZ_CH(conn_bss_desc->channelId) &&
-		    WLAN_REG_IS_24GHZ_CH(bss_desc->channelId) &&
+		if (WLAN_REG_IS_5GHZ_CH(conn_bss_chan_id) &&
+		    WLAN_REG_IS_24GHZ_CH(bss_chan_id) &&
 		    is_bt_in_progress &&
 		    (bss_desc->rssi < mbo_cfg->mbo_candidate_rssi_btc_thres)) {
 			sme_err("Candidate BSS "QDF_MAC_ADDR_STR" causes BT coex, hence reject",
@@ -14633,9 +14646,9 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		 * reject the candidate with MBO reason code 5.
 		 */
 		if (policy_mgr_is_safe_channel(mac_ctx->psoc,
-		    conn_bss_desc->channelId) &&
+		    conn_bss_chan_id) &&
 		    !(policy_mgr_is_safe_channel(mac_ctx->psoc,
-		    bss_desc->channelId))) {
+		    bss_chan_id))) {
 			sme_err("High interference expected if transitioned to BSS "
 				QDF_MAC_ADDR_STR" hence reject",
 				QDF_MAC_ADDR_ARRAY(bss_desc->bssId));

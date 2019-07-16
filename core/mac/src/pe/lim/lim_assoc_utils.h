@@ -185,6 +185,23 @@ void lim_update_assoc_sta_datas(struct mac_context *mac,
 				tpDphHashNode sta, tpSirAssocRsp pAssocRsp,
 				struct pe_session *pe_session);
 
+/**
+ * lim_sta_add_bss_update_ht_parameter() - function to update ht related
+ *                                         parameters when add bss request
+ * @bss_chan_id: channel number of bss
+ * @ht_cap: ht capability extract from beacon/assoc response
+ * @ht_inf: ht information extract from beacon/assoc response
+ * @chan_width_support: local wide bandwith support capability
+ * @add_bss: add bss request struct to be updated
+ *
+ * Return: none
+ */
+void lim_sta_add_bss_update_ht_parameter(uint8_t bss_chan_id,
+					 tDot11fIEHTCaps* ht_cap,
+					 tDot11fIEHTInfo* ht_inf,
+					 bool chan_width_support,
+					 tpAddBssParams add_bss);
+
 QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,
 				   struct bss_description *bssDescription,

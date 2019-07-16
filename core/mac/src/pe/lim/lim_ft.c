@@ -118,7 +118,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 {
 	tpAddBssParams pAddBssParams = NULL;
 	tAddStaParams *sta_ctx;
-	uint8_t chanWidthSupp = 0;
+	bool chan_width_support = false;
+	uint8_t bss_chan_id;
 	tSchBeaconStruct *pBeaconStruct;
 
 	/* Nothing to be done if the session is not in STA mode */
@@ -194,10 +195,20 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	pAddBssParams->rmfEnabled = ft_session->limRmfEnabled;
 #endif
 
+	bss_chan_id = wlan_reg_freq_to_chan(mac->pdev,
+					    bssDescription->chan_freq);
 	/* Use the advertised capabilities from the received beacon/PR */
 	if (IS_DOT11_MODE_HT(ft_session->dot11mode) &&
 	    (pBeaconStruct->HTCaps.present)) {
-		pAddBssParams->htCapable = pBeaconStruct->HTCaps.present;
+		chan_width_support =
+			lim_get_ht_capability(mac,
+					      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
+					      ft_session);
+		lim_sta_add_bss_update_ht_parameter(bss_chan_id,
+						    &pBeaconStruct->HTCaps,
+						    &pBeaconStruct->HTInfo,
+						    chan_width_support,
+						    pAddBssParams);
 		qdf_mem_copy(&pAddBssParams->staContext.capab_info,
 			     &pBeaconStruct->capabilityInfo,
 			     sizeof(pAddBssParams->staContext.capab_info));
@@ -205,44 +216,9 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 			     (uint8_t *) &pBeaconStruct->HTCaps +
 			     sizeof(uint8_t),
 			     sizeof(pAddBssParams->staContext.ht_caps));
-
-		if (pBeaconStruct->HTInfo.present) {
-			pAddBssParams->htOperMode =
-				(tSirMacHTOperatingMode) pBeaconStruct->HTInfo.
-				opMode;
-			pAddBssParams->dualCTSProtection =
-				(uint8_t) pBeaconStruct->HTInfo.dualCTSProtection;
-
-			chanWidthSupp = lim_get_ht_capability(mac,
-							      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
-							      ft_session);
-			if ((pBeaconStruct->HTCaps.supportedChannelWidthSet) &&
-			    (chanWidthSupp)) {
-				pAddBssParams->ch_width = (uint8_t)
-					pBeaconStruct->HTInfo.recommendedTxWidthSet;
-				if (pBeaconStruct->HTInfo.secondaryChannelOffset ==
-						PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-					pAddBssParams->ch_center_freq_seg0 =
-						bssDescription->channelId + 2;
-				else if (pBeaconStruct->HTInfo.secondaryChannelOffset ==
-						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
-					pAddBssParams->ch_center_freq_seg0 =
-						bssDescription->channelId - 2;
-			} else {
-				pAddBssParams->ch_width = CH_WIDTH_20MHZ;
-				pAddBssParams->ch_center_freq_seg0 = 0;
-			}
-			pAddBssParams->llnNonGFCoexist =
-				(uint8_t) pBeaconStruct->HTInfo.nonGFDevicesPresent;
-			pAddBssParams->fLsigTXOPProtectionFullSupport =
-				(uint8_t) pBeaconStruct->HTInfo.
-				lsigTXOPProtectionFullSupport;
-			pAddBssParams->fRIFSMode =
-				pBeaconStruct->HTInfo.rifsMode;
-		}
 	}
 
-	pAddBssParams->currentOperChannel = bssDescription->channelId;
+	pAddBssParams->currentOperChannel = bss_chan_id;
 	ft_session->htSecondaryChannelOffset =
 		pBeaconStruct->HTInfo.secondaryChannelOffset;
 	sta_ctx = &pAddBssParams->staContext;
@@ -250,7 +226,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	if (ft_session->vhtCapability &&
 	    ft_session->vhtCapabilityPresentInBeacon) {
 		pAddBssParams->vhtCapable = pBeaconStruct->VHTCaps.present;
-		if (pBeaconStruct->VHTOperation.chanWidth && chanWidthSupp) {
+		if (pBeaconStruct->VHTOperation.chanWidth &&
+		    chan_width_support) {
 			pAddBssParams->ch_width =
 				pBeaconStruct->VHTOperation.chanWidth + 1;
 			pAddBssParams->ch_center_freq_seg0 =
@@ -337,8 +314,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 				(uint8_t) pBeaconStruct->HTCaps.greenField;
 			pAddBssParams->staContext.lsigTxopProtection =
 				(uint8_t) pBeaconStruct->HTCaps.lsigTXOPProtection;
-			if ((pBeaconStruct->HTCaps.supportedChannelWidthSet) &&
-			    (chanWidthSupp)) {
+			if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
+			    chan_width_support) {
 				pAddBssParams->staContext.ch_width = (uint8_t)
 					pBeaconStruct->HTInfo.recommendedTxWidthSet;
 			} else {
@@ -362,8 +339,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 				lim_intersect_ap_he_caps(ft_session,
 					pAddBssParams, pBeaconStruct, NULL);
 
-			if ((pBeaconStruct->HTCaps.supportedChannelWidthSet) &&
-			    (chanWidthSupp)) {
+			if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
+			    chan_width_support) {
 				sta_ctx->ch_width = (uint8_t)
 					pBeaconStruct->HTInfo.recommendedTxWidthSet;
 				if (pAddBssParams->staContext.vhtCapable &&
@@ -554,6 +531,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 			 struct pe_session *ft_session, struct pe_session *pe_session)
 {
 	uint8_t currentBssUapsd;
+	uint8_t bss_chan_id;
 	int8_t localPowerConstraint;
 	int8_t regMax;
 	tSchBeaconStruct *pBeaconStruct;
@@ -596,7 +574,9 @@ void lim_fill_ft_session(struct mac_context *mac,
 	qdf_mem_copy(ft_session->ssId.ssId, pBeaconStruct->ssId.ssId,
 		     ft_session->ssId.length);
 	/* Copy The channel Id to the session Table */
-	ft_session->limReassocChannelId = pbssDescription->channelId;
+	bss_chan_id =
+		wlan_reg_freq_to_chan(mac->pdev, pbssDescription->chan_freq);
+	ft_session->limReassocChannelId = bss_chan_id;
 	ft_session->curr_op_freq = pbssDescription->chan_freq;
 	ft_session->limRFBand = lim_get_rf_band(wlan_reg_freq_to_chan(
 					mac->pdev, ft_session->curr_op_freq));
@@ -651,11 +631,11 @@ void lim_fill_ft_session(struct mac_context *mac,
 			if (pBeaconStruct->HTInfo.secondaryChannelOffset ==
 					PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
 				ft_session->ch_center_freq_seg0 =
-					pbssDescription->channelId + 2;
+					bss_chan_id + 2;
 			else if (pBeaconStruct->HTInfo.secondaryChannelOffset ==
 					PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
 				ft_session->ch_center_freq_seg0 =
-					pbssDescription->channelId - 2;
+					bss_chan_id - 2;
 			else
 				pe_warn("Invalid sec ch offset");
 		}

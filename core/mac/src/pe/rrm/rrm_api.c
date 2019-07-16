@@ -863,7 +863,10 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 				continue;
 			beacon_report->regClass = beacon_xmit_ind->regClass;
 			if (bss_desc) {
-				beacon_report->channel = bss_desc->channelId;
+				beacon_report->channel =
+					wlan_reg_freq_to_chan(
+						mac_ctx->pdev,
+						bss_desc->chan_freq);
 				qdf_mem_copy(beacon_report->measStartTime,
 					bss_desc->startTSF,
 					sizeof(bss_desc->startTSF));

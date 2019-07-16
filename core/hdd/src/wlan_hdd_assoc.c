@@ -2328,8 +2328,6 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	uint8_t *final_req_ie = NULL;
 	tCsrRoamConnectedProfile roam_profile;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	int chan_no;
-	int freq;
 
 	qdf_mem_zero(&roam_profile, sizeof(roam_profile));
 
@@ -2384,14 +2382,8 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	qdf_mem_copy(rsp_rsn_ie, assoc_rsp, len);
 	qdf_mem_zero(rsp_rsn_ie + len, IW_GENERIC_IE_MAX - len);
 
-	chan_no = roam_info->bss_desc->channelId;
-	if (chan_no <= 14)
-		freq = ieee80211_channel_to_frequency(chan_no,
-							NL80211_BAND_2GHZ);
-	else
-		freq = ieee80211_channel_to_frequency(chan_no,
-							NL80211_BAND_5GHZ);
-	chan = ieee80211_get_channel(adapter->wdev.wiphy, freq);
+	chan = ieee80211_get_channel(adapter->wdev.wiphy,
+				     roam_info->bss_desc->chan_freq);
 
 	sme_roam_get_connect_profile(hdd_ctx->mac_handle, adapter->vdev_id,
 				     &roam_profile);
@@ -3127,11 +3119,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						}
 						hdd_debug("ft_carrier_on is %d, sending roamed indication",
 							 ft_carrier_on);
-						chan =
-							ieee80211_get_channel
-								(adapter->wdev.wiphy,
-								(int)roam_info->bss_desc->
-								channelId);
+						chan = ieee80211_get_channel(
+							adapter->wdev.wiphy,
+							roam_info->bss_desc->chan_freq);
 
 						roam_bss =
 							wlan_cfg80211_get_bss(
@@ -3620,8 +3610,6 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 			struct cfg80211_bss *bss;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
 			struct ieee80211_channel *chan;
-			int chan_no;
-			unsigned int freq;
 #endif
 			/* we created the IBSS, notify supplicant */
 			hdd_debug("%s: created ibss " QDF_MAC_ADDR_STR,
@@ -3643,25 +3631,18 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 					WLAN_CONTROL_PATH);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
-			chan_no = roam_info->bss_desc->channelId;
-
-			if (chan_no <= 14)
-				freq = ieee80211_channel_to_frequency(chan_no,
-					  HDD_NL80211_BAND_2GHZ);
-			else
-				freq = ieee80211_channel_to_frequency(chan_no,
-					  HDD_NL80211_BAND_5GHZ);
-
-			chan = ieee80211_get_channel(adapter->wdev.wiphy, freq);
+			chan = ieee80211_get_channel(
+				adapter->wdev.wiphy,
+				roam_info->bss_desc->chan_freq);
 
 			if (chan)
 				cfg80211_ibss_joined(adapter->dev,
 						     bss->bssid, chan,
 						     GFP_KERNEL);
 			else
-				hdd_warn("%s: chanId: %d, can't find channel",
-				adapter->dev->name,
-				(int)roam_info->bss_desc->channelId);
+				hdd_warn("%s: freq: %d, can't find channel",
+					 adapter->dev->name,
+					 roam_info->bss_desc->chan_freq);
 #else
 			cfg80211_ibss_joined(adapter->dev, bss->bssid,
 					     GFP_KERNEL);

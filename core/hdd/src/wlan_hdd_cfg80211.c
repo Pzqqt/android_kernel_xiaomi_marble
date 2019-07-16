@@ -15731,7 +15731,7 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 	uint32_t ie_length = wlan_hdd_get_frame_len(bss_desc);
 	const char *ie =
 		((ie_length != 0) ? (const char *)&bss_desc->ieFields : NULL);
-	uint32_t freq, i;
+	uint32_t i;
 	struct cfg80211_bss *bss_status = NULL;
 	struct hdd_context *hdd_ctx;
 	struct timespec ts;
@@ -15790,26 +15790,10 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 			(u16) (IEEE80211_FTYPE_MGMT | IEEE80211_STYPE_BEACON);
 	}
 
-	if (bss_desc->channelId <= ARRAY_SIZE(hdd_channels_2_4_ghz) &&
-	    (wiphy->bands[HDD_NL80211_BAND_2GHZ])) {
-		freq =
-			ieee80211_channel_to_frequency(bss_desc->channelId,
-						       HDD_NL80211_BAND_2GHZ);
-	} else if ((bss_desc->channelId > ARRAY_SIZE(hdd_channels_2_4_ghz))
-		   && (wiphy->bands[HDD_NL80211_BAND_5GHZ])) {
-		freq =
-			ieee80211_channel_to_frequency(bss_desc->channelId,
-						       HDD_NL80211_BAND_5GHZ);
-	} else {
-		hdd_err("Invalid channel: %d", bss_desc->channelId);
-		qdf_mem_free(bss_data.mgmt);
-		return NULL;
-	}
-
-	bss_data.chan = ieee80211_get_channel(wiphy, freq);
+	bss_data.chan = ieee80211_get_channel(wiphy, bss_desc->chan_freq);
 	if (!bss_data.chan) {
-		hdd_err("chan pointer is NULL, chan_no: %d freq: %d",
-			bss_desc->channelId, freq);
+		hdd_err("chan pointer is NULL, chan freq: %d",
+			bss_desc->chan_freq);
 		qdf_mem_free(bss_data.mgmt);
 		return NULL;
 	}
