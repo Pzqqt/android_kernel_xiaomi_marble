@@ -2126,7 +2126,6 @@ struct mac_tspec_ie {
 /**
  * struct add_ts_param - ADDTS related parameters
  * @vdev_id: vdev id
- * @sta_idx: station index
  * @tspec_idx: TSPEC handle uniquely identifying a TSPEC for a STA in a BSS
  * @tspec: tspec value
  * @status: QDF status
@@ -2136,7 +2135,6 @@ struct mac_tspec_ie {
  */
 struct add_ts_param {
 	uint8_t vdev_id;
-	uint16_t sta_idx;
 	uint16_t tspec_idx;
 	struct mac_tspec_ie tspec;
 	QDF_STATUS status;
@@ -2167,7 +2165,6 @@ struct delts_req_info {
 
 /**
  * struct del_ts_params - DELTS related parameters
- * @staIdx: station index
  * @tspecIdx: TSPEC identifier uniquely identifying a TSPEC for a STA in a BSS
  * @bssId: BSSID
  * @sessionId: session id
@@ -2176,7 +2173,6 @@ struct delts_req_info {
  * @setRICparams: RIC parameters
  */
 struct del_ts_params {
-	uint16_t staIdx;
 	uint16_t tspecIdx;
 	uint8_t bssId[QDF_MAC_ADDR_SIZE];
 	uint8_t sessionId;

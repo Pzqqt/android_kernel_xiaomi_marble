@@ -225,7 +225,6 @@ struct wmi_unified_pmk_cache {
 
 /**
  * struct aggr_add_ts_param - ADDTS parameters
- * @staIdx: station index
  * @tspecIdx: TSPEC handler uniquely identifying a TSPEC for a STA in a BSS
  * @tspec: tspec value
  * @status: CDF status
@@ -233,7 +232,6 @@ struct wmi_unified_pmk_cache {
  * @vdev_id: vdev id
  */
 struct aggr_add_ts_param {
-	uint16_t staIdx;
 	uint16_t tspecIdx;
 	struct mac_tspec_ie tspec[WMI_QOS_NUM_AC_MAX];
 	QDF_STATUS status[WMI_QOS_NUM_AC_MAX];
