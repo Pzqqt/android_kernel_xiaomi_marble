@@ -2188,9 +2188,6 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 	struct switch_channel_ind *pSirSmeSwitchChInd;
 
 	pe_session->curr_op_freq = pe_session->curr_req_chan_freq;
-	pe_session->currentOperChannel = wlan_reg_freq_to_chan(
-				mac->pdev, pe_session->curr_op_freq);
-
 	/* We need to restore pre-channelSwitch state on the STA */
 	if (lim_restore_pre_channel_switch_state(mac, pe_session) !=
 	    QDF_STATUS_SUCCESS) {
@@ -2327,8 +2324,6 @@ void lim_switch_primary_secondary_channel(struct mac_context *mac,
 			mac->pdev, new_channel));
 		pe_session->curr_op_freq = wlan_reg_chan_to_freq(
 					mac->pdev, new_channel);
-		pe_session->currentOperChannel = wlan_reg_freq_to_chan(
-					mac->pdev, pe_session->curr_op_freq);
 	}
 	if (pe_session->htSecondaryChannelOffset !=
 			pe_session->gLimChannelSwitch.sec_ch_offset) {

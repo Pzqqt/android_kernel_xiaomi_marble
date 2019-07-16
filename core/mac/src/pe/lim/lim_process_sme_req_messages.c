@@ -623,8 +623,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		/* Store the oper freq in session Table */
 		session->curr_op_freq = wlan_reg_chan_to_freq(
 				mac_ctx->pdev, sme_start_bss_req->channelId);
-		session->currentOperChannel = wlan_reg_freq_to_chan(
-				mac_ctx->pdev, session->curr_op_freq);
 
 		/* Store Persona */
 		session->opmode = sme_start_bss_req->bssPersona;
@@ -1429,8 +1427,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		/* Copy oper freq to the session Table */
 		session->curr_op_freq = bss_desc->chan_freq;
-		session->currentOperChannel = wlan_reg_freq_to_chan(
-					mac_ctx->pdev, session->curr_op_freq);
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
 		if (session->vhtCapability) {
@@ -5084,8 +5080,6 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 	session_entry->htRecommendedTxWidthSet =
 		session_entry->htSupportedChannelWidthSet;
 	session_entry->curr_op_freq = target_freq;
-	session_entry->currentOperChannel = wlan_reg_freq_to_chan(
-				mac_ctx->pdev, session_entry->curr_op_freq);
 	session_entry->limRFBand = lim_get_rf_band(
 		wlan_reg_freq_to_chan(
 		mac_ctx->pdev, session_entry->curr_op_freq));
