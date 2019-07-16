@@ -3,8 +3,6 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
-
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
@@ -15,6 +13,7 @@
 #include <linux/sde_io_util.h>
 #include <linux/of_gpio.h>
 #include "dp_lphw_hpd.h"
+#include "dp_debug.h"
 
 struct dp_lphw_hpd_private {
 	struct device *dev;
@@ -38,7 +37,7 @@ static void dp_lphw_hpd_attention(struct work_struct *work)
 				struct dp_lphw_hpd_private, attention);
 
 	if (!lphw_hpd) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -54,7 +53,7 @@ static void dp_lphw_hpd_connect(struct work_struct *work)
 				struct dp_lphw_hpd_private, connect);
 
 	if (!lphw_hpd) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -72,7 +71,7 @@ static void dp_lphw_hpd_disconnect(struct work_struct *work)
 				struct dp_lphw_hpd_private, disconnect);
 
 	if (!lphw_hpd) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -100,7 +99,7 @@ static irqreturn_t dp_tlmm_isr(int unused, void *data)
 
 	hpd = gpio_get_value_cansleep(lphw_hpd->gpio_cfg.gpio);
 
-	pr_debug("lphw_hpd state = %d, new hpd state = %d\n",
+	DP_DEBUG("lphw_hpd state = %d, new hpd state = %d\n",
 			lphw_hpd->hpd, hpd);
 	if (!lphw_hpd->hpd && hpd) {
 		lphw_hpd->hpd = true;
@@ -116,7 +115,7 @@ static void dp_lphw_hpd_host_init(struct dp_hpd *dp_hpd,
 	struct dp_lphw_hpd_private *lphw_hpd;
 
 	if (!dp_hpd) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -138,7 +137,7 @@ static void dp_lphw_hpd_host_deinit(struct dp_hpd *dp_hpd,
 	struct dp_lphw_hpd_private *lphw_hpd;
 
 	if (!dp_hpd) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -157,7 +156,7 @@ static void dp_lphw_hpd_isr(struct dp_hpd *dp_hpd)
 	int rc = 0;
 
 	if (!dp_hpd) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -167,7 +166,7 @@ static void dp_lphw_hpd_isr(struct dp_hpd *dp_hpd)
 
 	if (isr & DP_HPD_UNPLUG_INT_STATUS) { /* disconnect interrupt */
 
-		pr_debug("disconnect interrupt, hpd isr state: 0x%x\n", isr);
+		DP_DEBUG("disconnect interrupt, hpd isr state: 0x%x\n", isr);
 
 		if (lphw_hpd->base.hpd_high) {
 			lphw_hpd->hpd = false;
@@ -178,18 +177,18 @@ static void dp_lphw_hpd_isr(struct dp_hpd *dp_hpd)
 			rc = queue_work(lphw_hpd->connect_wq,
 					&lphw_hpd->disconnect);
 			if (!rc)
-				pr_debug("disconnect not queued\n");
+				DP_DEBUG("disconnect not queued\n");
 		} else {
-			pr_err("already disconnected\n");
+			DP_ERR("already disconnected\n");
 		}
 
 	} else if (isr & DP_IRQ_HPD_INT_STATUS) { /* attention interrupt */
 
-		pr_debug("hpd_irq interrupt, hpd isr state: 0x%x\n", isr);
+		DP_DEBUG("hpd_irq interrupt, hpd isr state: 0x%x\n", isr);
 
 		rc = queue_work(lphw_hpd->connect_wq, &lphw_hpd->attention);
 		if (!rc)
-			pr_debug("attention not queued\n");
+			DP_DEBUG("attention not queued\n");
 	}
 }
 
@@ -198,7 +197,7 @@ static int dp_lphw_hpd_simulate_connect(struct dp_hpd *dp_hpd, bool hpd)
 	struct dp_lphw_hpd_private *lphw_hpd;
 
 	if (!dp_hpd) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return -EINVAL;
 	}
 
@@ -210,7 +209,7 @@ static int dp_lphw_hpd_simulate_connect(struct dp_hpd *dp_hpd, bool hpd)
 
 	if (!lphw_hpd->cb || !lphw_hpd->cb->configure ||
 			!lphw_hpd->cb->disconnect) {
-		pr_err("invalid callback\n");
+		DP_ERR("invalid callback\n");
 		return -EINVAL;
 	}
 
@@ -227,7 +226,7 @@ static int dp_lphw_hpd_simulate_attention(struct dp_hpd *dp_hpd, int vdo)
 	struct dp_lphw_hpd_private *lphw_hpd;
 
 	if (!dp_hpd) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return -EINVAL;
 	}
 
@@ -258,7 +257,7 @@ int dp_lphw_hpd_register(struct dp_hpd *dp_hpd)
 		IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 		"dp-gpio-intp", lphw_hpd);
 	if (rc) {
-		pr_err("Failed to request INTP threaded IRQ: %d\n", rc);
+		DP_ERR("Failed to request INTP threaded IRQ: %d\n", rc);
 		return rc;
 	}
 	enable_irq_wake(lphw_hpd->irq);
@@ -282,7 +281,7 @@ static void dp_lphw_hpd_deinit(struct dp_lphw_hpd_private *lphw_hpd)
 			if (msm_dss_enable_vreg(
 				&parser->mp[DP_PHY_PM].vreg_config[i], 1,
 				false))
-				pr_err("hpd-pwr vreg not disabled\n");
+				DP_ERR("hpd-pwr vreg not disabled\n");
 
 			break;
 		}
@@ -303,7 +302,7 @@ static void dp_lphw_hpd_init(struct dp_lphw_hpd_private *lphw_hpd)
 			if (msm_dss_enable_vreg(
 				&parser->mp[DP_PHY_PM].vreg_config[i], 1,
 				true))
-				pr_err("hpd-pwr vreg not enabled\n");
+				DP_ERR("hpd-pwr vreg not enabled\n");
 
 			break;
 		}
@@ -319,7 +318,7 @@ static void dp_lphw_hpd_init(struct dp_lphw_hpd_private *lphw_hpd)
 			rc = pinctrl_select_state(pinctrl.pin,
 					pinctrl.state_hpd_active);
 			if (rc)
-				pr_err("failed to set hpd_active state\n");
+				DP_ERR("failed to set hpd_active state\n");
 		}
 	}
 }
@@ -328,7 +327,7 @@ static int dp_lphw_hpd_create_workqueue(struct dp_lphw_hpd_private *lphw_hpd)
 {
 	lphw_hpd->connect_wq = create_singlethread_workqueue("dp_lphw_work");
 	if (IS_ERR_OR_NULL(lphw_hpd->connect_wq)) {
-		pr_err("Error creating connect_wq\n");
+		DP_ERR("Error creating connect_wq\n");
 		return -EPERM;
 	}
 
@@ -347,7 +346,7 @@ struct dp_hpd *dp_lphw_hpd_get(struct device *dev, struct dp_parser *parser,
 	struct dp_lphw_hpd_private *lphw_hpd;
 
 	if (!dev || !parser || !cb) {
-		pr_err("invalid device\n");
+		DP_ERR("invalid device\n");
 		rc = -EINVAL;
 		goto error;
 	}
@@ -361,7 +360,7 @@ struct dp_hpd *dp_lphw_hpd_get(struct device *dev, struct dp_parser *parser,
 	lphw_hpd->gpio_cfg.gpio = of_get_named_gpio(dev->of_node,
 		hpd_gpio_name, 0);
 	if (!gpio_is_valid(lphw_hpd->gpio_cfg.gpio)) {
-		pr_err("%s gpio not specified\n", hpd_gpio_name);
+		DP_ERR("%s gpio not specified\n", hpd_gpio_name);
 		rc = -EINVAL;
 		goto gpio_error;
 	}
@@ -373,7 +372,7 @@ struct dp_hpd *dp_lphw_hpd_get(struct device *dev, struct dp_parser *parser,
 	rc = gpio_request(lphw_hpd->gpio_cfg.gpio,
 		lphw_hpd->gpio_cfg.gpio_name);
 	if (rc) {
-		pr_err("%s: failed to request gpio\n", hpd_gpio_name);
+		DP_ERR("%s: failed to request gpio\n", hpd_gpio_name);
 		goto gpio_error;
 	}
 	gpio_direction_input(lphw_hpd->gpio_cfg.gpio);
@@ -384,7 +383,7 @@ struct dp_hpd *dp_lphw_hpd_get(struct device *dev, struct dp_parser *parser,
 
 	rc = dp_lphw_hpd_create_workqueue(lphw_hpd);
 	if (rc) {
-		pr_err("Failed to create a dp_hpd workqueue\n");
+		DP_ERR("Failed to create a dp_hpd workqueue\n");
 		goto gpio_error;
 	}
 

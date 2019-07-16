@@ -3,12 +3,11 @@
  * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
-
 #include <linux/delay.h>
 
 #include "dp_catalog.h"
 #include "dp_reg.h"
+#include "dp_debug.h"
 
 #define dp_catalog_get_priv_v200(x) ({ \
 	struct dp_catalog *dp_catalog; \
@@ -46,7 +45,7 @@ static void dp_catalog_aux_clear_hw_interrupts_v200(struct dp_catalog_aux *aux)
 	u32 data = 0;
 
 	if (!aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -75,7 +74,7 @@ static void dp_catalog_aux_setup_v200(struct dp_catalog_aux *aux,
 	int i = 0, sw_reset = 0;
 
 	if (!aux || !cfg) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -131,12 +130,12 @@ static void dp_catalog_panel_config_msa_v200(struct dp_catalog_panel *panel,
 	u32 mvid_reg_off = 0, nvid_reg_off = 0;
 
 	if (!panel) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
 	if (panel->stream_id >= DP_STREAM_MAX) {
-		pr_err("invalid stream_id:%d\n", panel->stream_id);
+		DP_ERR("invalid stream_id:%d\n", panel->stream_id);
 		return;
 	}
 
@@ -151,7 +150,7 @@ static void dp_catalog_panel_config_msa_v200(struct dp_catalog_panel *panel,
 			MMSS_DP_PIXEL_M_V200 + strm_reg_off);
 	pixel_n = dp_read(catalog->exe_mode, io_data,
 			MMSS_DP_PIXEL_N_V200 + strm_reg_off);
-	pr_debug("pixel_m=0x%x, pixel_n=0x%x\n", pixel_m, pixel_n);
+	DP_DEBUG("pixel_m=0x%x, pixel_n=0x%x\n", pixel_m, pixel_n);
 
 	mvid = (pixel_m & 0xFFFF) * 5;
 	nvid = (0xFFFF & (~pixel_n)) + (pixel_m & 0xFFFF);
@@ -164,7 +163,7 @@ static void dp_catalog_panel_config_msa_v200(struct dp_catalog_panel *panel,
 		nvid = temp;
 	}
 
-	pr_debug("rate = %d\n", rate);
+	DP_DEBUG("rate = %d\n", rate);
 
 	if (panel->widebus_en)
 		mvid <<= 1;
@@ -182,7 +181,7 @@ static void dp_catalog_panel_config_msa_v200(struct dp_catalog_panel *panel,
 		nvid_reg_off = DP1_SOFTWARE_NVID - DP_SOFTWARE_NVID;
 	}
 
-	pr_debug("mvid=0x%x, nvid=0x%x\n", mvid, nvid);
+	DP_DEBUG("mvid=0x%x, nvid=0x%x\n", mvid, nvid);
 	dp_write(catalog->exe_mode, io_data, DP_SOFTWARE_MVID + mvid_reg_off,
 			mvid);
 	dp_write(catalog->exe_mode, io_data, DP_SOFTWARE_NVID + nvid_reg_off,
@@ -198,7 +197,7 @@ static void dp_catalog_ctrl_lane_mapping_v200(struct dp_catalog_ctrl *ctrl,
 	u32 lane_map_reg = 0;
 
 	if (!ctrl) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -273,7 +272,7 @@ int dp_catalog_get_v200(struct device *dev, struct dp_catalog *catalog,
 	struct dp_catalog_private_v200 *catalog_priv;
 
 	if (!dev || !catalog) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return -EINVAL;
 	}
 

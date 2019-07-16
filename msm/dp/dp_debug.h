@@ -13,6 +13,14 @@
 #include "dp_aux.h"
 #include "dp_display.h"
 
+#define DP_WARN(fmt, ...)	DRM_WARN("[msm-dp-warn] "fmt, ##__VA_ARGS__)
+#define DP_ERR(fmt, ...)	DRM_DEV_ERROR(NULL, "[msm-dp-error]" fmt, \
+								##__VA_ARGS__)
+#define DP_INFO(fmt, ...)	DRM_DEV_INFO(NULL, "[msm-dp-info] "fmt, \
+								##__VA_ARGS__)
+#define DP_DEBUG(fmt, ...)	DRM_DEV_DEBUG_DP(NULL, "[msm-dp-debug] "fmt, \
+								##__VA_ARGS__)
+
 /**
  * struct dp_debug
  * @debug_en: specifies whether debug mode enabled
