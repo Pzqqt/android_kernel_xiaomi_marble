@@ -12526,6 +12526,14 @@ struct admx_sec_primary_mic_ch {
 	uint16_t reserved1;
 } __packed;
 
+#define FFECNS_MODULE_ID                                       0x00010952
+#define FLUENCE_CMN_GLOBAL_EFFECT_PARAM_ID                     0x00010EAF
+#define FFECNS_TOPOLOGY                                        0X10028003
+
+struct ffecns_effect {
+	uint32_t payload;
+};
+
 /** ID of the Voice Activity Detection (VAD) module, which is used to
  *   configure AFE VAD.
  */
