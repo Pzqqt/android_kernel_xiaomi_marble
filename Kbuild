@@ -1474,6 +1474,9 @@ CP_STATS_OBJS := $(CP_STATS_TGT_SRC)/target_if_mc_cp_stats.o                 \
 		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_mc_ucfg_api.o
 endif
 
+###### COMPONENT CP STATS ########
+COMP_CP_STATS_DISPATCHER_INC := -I$(WLAN_ROOT)/components/cp_stats/dispatcher/inc
+
 ###### INTEROP ISSUES AP ########
 INTEROP_ISSUES_AP_OS_IF_SRC      := os_if/interop_issues_ap/src
 INTEROP_ISSUES_AP_TGT_SRC        := components/target_if/interop_issues_ap/src
@@ -1829,6 +1832,7 @@ INCS +=		$(WIFI_POS_OS_IF_INC)
 INCS +=		$(CP_STATS_OS_IF_INC)
 INCS +=		$(CP_STATS_TGT_INC)
 INCS +=		$(CP_STATS_DISPATCHER_INC)
+INCS += 	$(COMP_CP_STATS_DISPATCHER_INC)
 ################ INTEROP ISSUES AP ################
 INCS +=		$(INTEROP_ISSUES_AP_OS_IF_INC)
 INCS +=		$(INTEROP_ISSUES_AP_TGT_INC)
