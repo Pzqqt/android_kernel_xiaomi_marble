@@ -22,6 +22,17 @@
 
 #include <qdf_timer.h>
 #include <include/wlan_vdev_mlme.h>
+
+/*
+ * struct pdev_restart_attr - Pdev restart attributes
+ * @vdev: vdev on which the pdev restart cmd was enqueued
+ * @restart_bmap: Bitmap for vdev requesting multivdev restart
+ */
+struct pdev_restart_attr {
+	struct wlan_objmgr_vdev *vdev;
+	unsigned long restart_bmap[2];
+};
+
 /**
  * struct pdev_mlme_obj -  PDEV MLME component object
  * @pdev:                  PDEV object
@@ -42,6 +53,7 @@ struct pdev_mlme_obj {
 	unsigned long restart_pend_vdev_bmap[2];
 	unsigned long restart_send_vdev_bmap[2];
 	unsigned long start_send_vdev_arr[2];
+	struct pdev_restart_attr pdev_restart;
 };
 
 #endif
