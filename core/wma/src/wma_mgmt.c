@@ -79,6 +79,10 @@
 #include <wlan_crypto_global_api.h>
 #include <wlan_mlme_main.h>
 
+#if !defined(REMOVE_PKT_LOG)
+#include <wlan_logging_sock_svc.h>
+#endif
+
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
  * @wma: wma handle
@@ -3213,6 +3217,38 @@ static inline void wma_mgmt_unmap_buf(tp_wma_handle wma_handle, qdf_nbuf_t buf)
 	qdf_nbuf_unmap_single(wma_handle->qdf_dev, buf, QDF_DMA_TO_DEVICE);
 }
 #endif
+
+#if !defined(REMOVE_PKT_LOG)
+/**
+ * wma_mgmt_pktdump_status_map() - map MGMT Tx completion status with
+ * packet dump Tx status
+ * @status: MGMT Tx completion status
+ *
+ * Return: packet dump tx_status enum
+ */
+static inline enum tx_status
+wma_mgmt_pktdump_status_map(WMI_MGMT_TX_COMP_STATUS_TYPE status)
+{
+	enum tx_status pktdump_status;
+
+	switch (status) {
+	case WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK:
+		pktdump_status = tx_status_ok;
+		break;
+	case WMI_MGMT_TX_COMP_TYPE_DISCARD:
+		pktdump_status = tx_status_discard;
+		break;
+	case WMI_MGMT_TX_COMP_TYPE_COMPLETE_NO_ACK:
+		pktdump_status = tx_status_no_ack;
+		break;
+	default:
+		pktdump_status = tx_status_discard;
+		break;
+	}
+	return pktdump_status;
+}
+#endif
+
 /**
  * wma_process_mgmt_tx_completion() - process mgmt completion
  * @wma_handle: wma handle
@@ -3232,6 +3268,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	struct cdp_vdev *txrx_vdev;
 	ol_txrx_pktdump_cb packetdump_cb;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	enum tx_status pktdump_status;
 #endif
 
 	if (!wma_handle) {
@@ -3258,9 +3295,10 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	vdev_id = mgmt_txrx_get_vdev_id(pdev, desc_id);
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, vdev_id);
 	packetdump_cb = wma_handle->wma_mgmt_tx_packetdump_cb;
+	pktdump_status = wma_mgmt_pktdump_status_map(status);
 	if (packetdump_cb)
 		packetdump_cb(soc, txrx_vdev,
-			      buf, QDF_STATUS_SUCCESS, TX_MGMT_PKT);
+			      buf, pktdump_status, TX_MGMT_PKT);
 #endif
 
 	ret = mgmt_txrx_tx_completion_handler(pdev, desc_id, status, NULL);
