@@ -5192,29 +5192,30 @@ static int wma_handle_hw_mode_transition(tp_wma_handle wma,
 					 WMI_ROAM_EVENTID_param_tlvs *param)
 {
 	struct sir_hw_mode_trans_ind *hw_mode_trans_ind;
-
-	hw_mode_trans_ind = qdf_mem_malloc(sizeof(*hw_mode_trans_ind));
-	if (!hw_mode_trans_ind)
-		return -ENOMEM;
+	struct scheduler_msg sme_msg = {0};
+	QDF_STATUS status;
 
 	if (param->hw_mode_transition_fixed_param) {
+		hw_mode_trans_ind = qdf_mem_malloc(sizeof(*hw_mode_trans_ind));
+		if (!hw_mode_trans_ind)
+			return -ENOMEM;
 		wma_process_pdev_hw_mode_trans_ind(wma,
 		    param->hw_mode_transition_fixed_param,
 		    param->wmi_pdev_set_hw_mode_response_vdev_mac_mapping,
 		    hw_mode_trans_ind);
 
 		WMA_LOGI(FL("Update HW mode"));
-		policy_mgr_hw_mode_transition_cb(
-			hw_mode_trans_ind->old_hw_mode_index,
-			hw_mode_trans_ind->new_hw_mode_index,
-			hw_mode_trans_ind->num_vdev_mac_entries,
-			hw_mode_trans_ind->vdev_mac_map,
-			wma->psoc);
+		sme_msg.type = eWNI_SME_HW_MODE_TRANS_IND;
+		sme_msg.bodyptr = hw_mode_trans_ind;
+
+		status = scheduler_post_message(QDF_MODULE_ID_WMA,
+						QDF_MODULE_ID_SME,
+						QDF_MODULE_ID_SME, &sme_msg);
+		if (QDF_IS_STATUS_ERROR(status))
+			qdf_mem_free(hw_mode_trans_ind);
 	} else {
 		WMA_LOGD(FL("hw_mode transition fixed param is NULL"));
 	}
-
-	qdf_mem_free(hw_mode_trans_ind);
 
 	return 0;
 }
@@ -5278,6 +5279,10 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 						   wmi_event->vdev_id);
 		break;
 	case WMI_ROAM_REASON_BMISS:
+		/*
+		 * WMI_ROAM_REASON_BMISS can get called in soft IRQ context, so
+		 * avoid using CSR/PE structure directly
+		 */
 		WMA_LOGD("Beacon Miss for vdevid %x", wmi_event->vdev_id);
 		wma_beacon_miss_handler(wma_handle, wmi_event->vdev_id,
 					wmi_event->rssi);
@@ -5285,12 +5290,20 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 						wmi_event->vdev_id, NULL);
 		break;
 	case WMI_ROAM_REASON_BETTER_AP:
+		/*
+		 * WMI_ROAM_REASON_BETTER_AP can get called in soft IRQ context,
+		 * so avoid using CSR/PE structure directly.
+		 */
 		WMA_LOGD("%s:Better AP found for vdevid %x, rssi %d", __func__,
 			 wmi_event->vdev_id, wmi_event->rssi);
 		wma_handle->suitable_ap_hb_failure = false;
 		wma_roam_better_ap_handler(wma_handle, wmi_event->vdev_id);
 		break;
 	case WMI_ROAM_REASON_SUITABLE_AP:
+		/*
+		 * WMI_ROAM_REASON_SUITABLE_AP can get called in soft IRQ
+		 * context, so avoid using CSR/PE structure directly.
+		 */
 		wma_handle->suitable_ap_hb_failure = true;
 		wma_handle->suitable_ap_hb_failure_rssi = wmi_event->rssi;
 		WMA_LOGD("%s:Bmiss scan AP found for vdevid %x, rssi %d",
@@ -5299,6 +5312,10 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		break;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	case WMI_ROAM_REASON_HO_FAILED:
+		/*
+		 * WMI_ROAM_REASON_HO_FAILED can get called in soft IRQ context,
+		 * so avoid using CSR/PE structure directly.
+		 */
 		WMA_LOGE("LFR3:Hand-Off Failed for vdevid %x",
 			 wmi_event->vdev_id);
 		wma_handle_hw_mode_transition(wma_handle, param_buf);
