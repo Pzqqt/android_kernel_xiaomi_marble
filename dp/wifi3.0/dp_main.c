@@ -1084,14 +1084,12 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 		DP_PRINT_STATS("    peer_mac_addr = %pM"
 			       " nawds_enabled = %d"
 			       " bss_peer = %d"
-			       " wapi = %d"
 			       " wds_enabled = %d"
 			       " delete in progress = %d"
 			       " peer id = %d",
 			       peer->mac_addr.raw,
 			       peer->nawds_enabled,
 			       peer->bss_peer,
-			       peer->wapi,
 			       peer->wds_enabled,
 			       peer->delete_in_progress,
 			       peer->peer_ids[0]);

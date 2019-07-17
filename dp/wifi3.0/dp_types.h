@@ -1890,21 +1890,13 @@ struct dp_peer {
 	void (*rx_opt_proc)(struct dp_vdev *vdev, struct dp_peer *peer,
 		unsigned tid, qdf_nbuf_t msdu_list);
 
-	/* set when node is authorized */
-	uint8_t authorize:1;
-
-	u_int8_t nac;
-
-	/* Band steering: Set when node is inactive */
-	uint8_t peer_bs_inact_flag:1;
-	u_int16_t peer_bs_inact; /* inactivity mark count */
-
 	/* NAWDS Flag and Bss Peer bit */
-	uint8_t nawds_enabled:1,
-		bss_peer:1,
-		wapi:1,
-		wds_enabled:1,
-		valid:1;
+	uint8_t nawds_enabled:1, /* NAWDS flag */
+		bss_peer:1, /* set for bss peer */
+		wds_enabled:1, /* WDS peer */
+		authorize:1, /* Set when authorized */
+		nac:1, /* NAC Peer*/
+		valid:1; /* valid bit */
 
 	/* MCL specific peer local id */
 	uint16_t local_id;
