@@ -301,12 +301,19 @@ struct msm_dai_q6_tdm_dai_data {
  *  1: non-linear PCM
  *  2: PCM data in IEC 60968 container
  *  3: compressed data in IEC 60958 container
+ *  9: DSD over PCM (DoP) with marker byte
  */
 static const char *const mi2s_format[] = {
 	"LPCM",
 	"Compr",
 	"LPCM-60958",
-	"Compr-60958"
+	"Compr-60958",
+	"NA4",
+	"NA5",
+	"NA6",
+	"NA7",
+	"NA8",
+	"DSD_DOP_W_MARKER"
 };
 
 static const char *const mi2s_vi_feed_mono[] = {
@@ -315,7 +322,7 @@ static const char *const mi2s_vi_feed_mono[] = {
 };
 
 static const struct soc_enum mi2s_config_enum[] = {
-	SOC_ENUM_SINGLE_EXT(4, mi2s_format),
+	SOC_ENUM_SINGLE_EXT(10, mi2s_format),
 	SOC_ENUM_SINGLE_EXT(2, mi2s_vi_feed_mono),
 };
 
