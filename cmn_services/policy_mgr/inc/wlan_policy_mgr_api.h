@@ -65,6 +65,31 @@ typedef const enum policy_mgr_conc_next_action
 	 PM_FW_MODE_STA_P2P_BIT_POS)
 
 /**
+ * enum sap_csa_reason_code - SAP channel switch reason code
+ * @CSA_REASON_UNKNOWN: Unknown reason
+ * @CSA_REASON_STA_CONNECT_DFS_TO_NON_DFS: STA connection from DFS to NON DFS.
+ * @CSA_REASON_USER_INITIATED: User initiated form north bound.
+ * @CSA_REASON_PEER_ACTION_FRAME: Action frame received on sta iface.
+ * @CSA_REASON_PRE_CAC_SUCCESS: Pre CAC success.
+ * @CSA_REASON_CONCURRENT_STA_CHANGED_CHANNEL: concurrent sta changed channel.
+ * @CSA_REASON_UNSAFE_CHANNEL: Unsafe channel.
+ * @CSA_REASON_LTE_COEX: LTE coex.
+ * @CSA_REASON_CONCURRENT_NAN_EVENT: NAN concurrency.
+ *
+ */
+enum sap_csa_reason_code {
+	CSA_REASON_UNKNOWN,
+	CSA_REASON_STA_CONNECT_DFS_TO_NON_DFS,
+	CSA_REASON_USER_INITIATED,
+	CSA_REASON_PEER_ACTION_FRAME,
+	CSA_REASON_PRE_CAC_SUCCESS,
+	CSA_REASON_CONCURRENT_STA_CHANGED_CHANNEL,
+	CSA_REASON_UNSAFE_CHANNEL,
+	CSA_REASON_LTE_COEX,
+	CSA_REASON_CONCURRENT_NAN_EVENT
+};
+
+/**
  * enum PM_AP_DFS_MASTER_MODE - AP dfs master mode
  * @PM_STA_SAP_ON_DFS_DEFAULT - Disallow STA+SAP SCC on DFS channel
  * @PM_STA_SAP_ON_DFS_MASTER_MODE_DISABLED - Allow STA+SAP SCC
@@ -693,6 +718,8 @@ policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
  * @mode:	connection mode
  * @channel:	target channel to switch
  * @vdev_id:	vdev id of channel switch interface
+ * @forced:	forced to chan switch.
+ * @reason:	request reason of CSA
  *
  * There is already existing SAP+GO combination but due to upper layer
  * notifying LTE-COEX event or sending command to move one of the connections
@@ -706,10 +733,12 @@ policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
  *
  * Return: True/False
  */
-bool policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
-				      enum policy_mgr_con_mode mode,
-				      uint8_t channel,
-				      uint32_t vdev_id);
+bool  policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
+				       enum policy_mgr_con_mode mode,
+				       uint8_t channel,
+				       uint32_t vdev_id,
+				       bool forced,
+				       enum sap_csa_reason_code reason);
 
 /**
  * policy_mgr_get_first_connection_pcl_table_index() - provides the

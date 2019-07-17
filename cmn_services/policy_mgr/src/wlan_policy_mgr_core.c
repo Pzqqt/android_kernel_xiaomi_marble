@@ -765,6 +765,56 @@ void policy_mgr_store_and_del_conn_info_by_vdev_id(
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 }
 
+void policy_mgr_store_and_del_conn_info_by_chan_and_mode(
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t chan,
+			enum policy_mgr_con_mode mode,
+			struct policy_mgr_conc_connection_info *info,
+			uint8_t *num_cxn_del)
+{
+	uint32_t conn_index = 0;
+	uint8_t found_index = 0;
+
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	if (!info || !num_cxn_del) {
+		policy_mgr_err("Invalid parameters");
+		return;
+	}
+	*num_cxn_del = 0;
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
+		if (chan != pm_conc_connection_list[conn_index].chan ||
+		    mode != pm_conc_connection_list[conn_index].mode) {
+			conn_index++;
+			continue;
+		}
+		info[found_index] = pm_conc_connection_list[conn_index];
+		policy_mgr_debug("Stored %d (%d), deleted STA entry with vdev id %d, index %d ch %d",
+				 info[found_index].vdev_id,
+				 info[found_index].mode,
+				 info[found_index].vdev_id, conn_index,
+				 chan);
+		found_index++;
+		conn_index++;
+	}
+	conn_index = 0;
+	while (conn_index < found_index) {
+		policy_mgr_decr_connection_count(
+			psoc, info[conn_index].vdev_id);
+
+		pm_ctx->no_of_active_sessions[info[conn_index].mode]--;
+		conn_index++;
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	*num_cxn_del = found_index;
+}
+
 /**
  * policy_mgr_restore_deleted_conn_info() - Restore connection info
  * @info: An array saving connection info that is to be restored
