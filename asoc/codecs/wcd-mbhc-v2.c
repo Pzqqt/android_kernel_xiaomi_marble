@@ -655,7 +655,6 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 						SND_JACK_LINEOUT |
 						SND_JACK_ANC_HEADPHONE |
 						SND_JACK_UNSUPPORTED);
-			mbhc->force_linein = false;
 		}
 
 		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET &&
@@ -711,6 +710,25 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 				}
 				pr_debug("%s: Marking jack type as SND_JACK_LINEOUT\n",
 				__func__);
+			}
+		}
+
+		/* Do not calculate impedance again for lineout
+		 * as during playback pa is on and impedance values
+		 * will not be correct resulting in lineout detected
+		 * as headphone.
+		 */
+		if ((is_pa_on) && mbhc->force_linein == true) {
+			jack_type = SND_JACK_LINEOUT;
+			mbhc->current_plug = MBHC_PLUG_TYPE_HIGH_HPH;
+			if (mbhc->hph_status) {
+				mbhc->hph_status &= ~(SND_JACK_HEADSET |
+						SND_JACK_LINEOUT |
+						SND_JACK_UNSUPPORTED);
+				wcd_mbhc_jack_report(mbhc,
+						&mbhc->headset_jack,
+						mbhc->hph_status,
+						WCD_MBHC_JACK_MASK);
 			}
 		}
 
