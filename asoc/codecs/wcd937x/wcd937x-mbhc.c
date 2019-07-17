@@ -1051,6 +1051,7 @@ int wcd937x_mbhc_init(struct wcd937x_mbhc **mbhc,
 {
 	struct wcd937x_mbhc *wcd937x_mbhc = NULL;
 	struct wcd_mbhc *wcd_mbhc = NULL;
+	struct wcd937x_pdata *pdata;
 	int ret = 0;
 
 	if (!component) {
@@ -1075,6 +1076,15 @@ int wcd937x_mbhc_init(struct wcd937x_mbhc **mbhc,
 
 	/* Setting default mbhc detection logic to ADC */
 	wcd_mbhc->mbhc_detection_logic = WCD_DETECTION_ADC;
+
+	pdata = dev_get_platdata(component->dev);
+	if (!pdata) {
+		dev_err(component->dev, "%s: pdata pointer is NULL\n",
+			__func__);
+		ret = -EINVAL;
+		goto err;
+	}
+	wcd_mbhc->micb_mv = pdata->micbias.micb2_mv;
 
 	ret = wcd_mbhc_init(wcd_mbhc, component, &mbhc_cb,
 				&intr_ids, wcd_mbhc_registers,
