@@ -2416,10 +2416,7 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	max_linewidth = psde->pipe_sblk->maxlinewidth;
 
 	crtc = state->crtc;
-	if (crtc)
-		rt_client = (sde_crtc_get_client_type(crtc) != NRT_CLIENT);
-	else
-		rt_client = true;
+	rt_client = sde_crtc_is_rt_client(crtc);
 
 	max_downscale_denom = 1;
 	/* inline rotation RT clients have a different max downscaling limit */
@@ -3196,8 +3193,7 @@ static int sde_plane_sspp_atomic_update(struct drm_plane *plane,
 		return 0;
 	pstate->pending = true;
 
-	psde->is_rt_pipe =
-		(sde_crtc_get_client_type_for_qos(crtc) != NRT_CLIENT);
+	psde->is_rt_pipe = sde_crtc_is_rt_client(crtc);
 	_sde_plane_set_qos_ctrl(plane, false, SDE_PLANE_QOS_PANIC_CTRL);
 
 	_sde_plane_update_properties(plane, crtc, fb);

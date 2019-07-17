@@ -620,21 +620,15 @@ static inline enum sde_crtc_client_type sde_crtc_get_client_type(
 }
 
 /**
- * sde_crtc_get_client_type_for_qos - check the crtc type- rt, nrt, rsc_rt, etc.
+ * sde_crtc_is_rt_client - check if real-time client or not
  * @crtc: Pointer to crtc
  */
-static inline enum sde_crtc_client_type sde_crtc_get_client_type_for_qos(
-						struct drm_crtc *crtc)
+static inline bool sde_crtc_is_rt_client(struct drm_crtc *crtc)
 {
-	struct sde_crtc_state *cstate =
-			crtc ? to_sde_crtc_state(crtc->state) : NULL;
+	if (!crtc || !crtc->state)
+		return true;
 
-	if (!cstate)
-		return NRT_CLIENT;
-
-	return sde_crtc_get_intf_mode(crtc) ==
-			INTF_MODE_WB_LINE ? NRT_CLIENT :
-			(cstate->rsc_client ? RT_RSC_CLIENT : RT_CLIENT);
+	return (sde_crtc_get_intf_mode(crtc) != INTF_MODE_WB_LINE);
 }
 
 /**
