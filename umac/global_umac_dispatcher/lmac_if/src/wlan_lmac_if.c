@@ -428,6 +428,10 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 		utils_dfs_bw_reduce;
 	dfs_rx_ops->dfs_is_bw_reduction_needed =
 		utils_dfs_is_bw_reduce;
+	dfs_rx_ops->dfs_allow_hw_pulses =
+		ucfg_dfs_allow_hw_pulses;
+	dfs_rx_ops->dfs_is_hw_pulses_allowed =
+		ucfg_dfs_is_hw_pulses_allowed;
 
 	register_precac_auto_chan_rx_ops(dfs_rx_ops);
 

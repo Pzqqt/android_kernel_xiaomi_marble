@@ -1267,6 +1267,9 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
  *                                    timeout.
  * @dfs_reset_spoof_test:             Checks if radar detection is enabled.
  * @dfs_is_disable_radar_marking_set: Check if dis_radar_marking param is set.
+ * @dfs_allow_hw_pulses:              Set or unset dfs_allow_hw_pulses which
+ *                                    allow or disallow HW pulses.
+ * @dfs_is_hw_pulses_allowed:         Check if HW pulses are allowed or not.
  */
 struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
@@ -1375,6 +1378,9 @@ struct wlan_lmac_if_dfs_rx_ops {
 			bool value);
 	QDF_STATUS (*dfs_is_bw_reduction_needed)(struct wlan_objmgr_pdev *pdev,
 			bool *bw_reduce);
+	void (*dfs_allow_hw_pulses)(struct wlan_objmgr_pdev *pdev,
+				    bool allow_hw_pulses);
+	bool (*dfs_is_hw_pulses_allowed)(struct wlan_objmgr_pdev *pdev);
 };
 
 /**
