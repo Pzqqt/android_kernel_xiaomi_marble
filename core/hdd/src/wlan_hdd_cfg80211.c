@@ -21618,11 +21618,34 @@ wlan_hdd_extauth_cache_pmkid(struct hdd_adapter *adapter,
 			hdd_debug("external_auth: Failed to cache PMKID");
 	}
 }
+
+/**
+ * wlan_hdd_extauth_copy_pmkid() - Copy the pmkid received from the
+ * external authentication command received from the userspace.
+ * @params: pointer to auth params
+ * @pmkid: Pointer to destination pmkid buffer to be filled
+ *
+ * The caller should ensure that destination pmkid buffer is not NULL.
+ *
+ * Return: None
+ */
+static void
+wlan_hdd_extauth_copy_pmkid(struct cfg80211_external_auth_params *params,
+			    uint8_t *pmkid)
+{
+	qdf_mem_copy(pmkid, params->pmkid, PMKID_LEN);
+}
+
 #else
 static void
 wlan_hdd_extauth_cache_pmkid(struct hdd_adapter *adapter,
 			     mac_handle_t mac_handle,
 			     struct cfg80211_external_auth_params *params)
+{}
+
+static void
+wlan_hdd_extauth_copy_pmkid(struct cfg80211_external_auth_params *params,
+			    uint8_t *pmkid)
 {}
 #endif
 /**
@@ -21649,6 +21672,7 @@ __wlan_hdd_cfg80211_external_auth(struct wiphy *wiphy,
 	int ret;
 	mac_handle_t mac_handle;
 	struct qdf_mac_addr peer_mac_addr;
+	uint8_t pmkid[PMKID_LEN] = {0};
 
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 		hdd_err("Command not allowed in FTM mode");
@@ -21669,8 +21693,9 @@ __wlan_hdd_cfg80211_external_auth(struct wiphy *wiphy,
 
 	wlan_hdd_extauth_cache_pmkid(adapter, mac_handle, params);
 
+	wlan_hdd_extauth_copy_pmkid(params, pmkid);
 	sme_handle_sae_msg(mac_handle, adapter->vdev_id, params->status,
-			   peer_mac_addr);
+			   peer_mac_addr, pmkid);
 
 	return ret;
 }

@@ -14847,42 +14847,95 @@ int sme_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
 			      uint8_t session_id,
 			      uint8_t sae_status,
-			      struct qdf_mac_addr peer_mac_addr)
+			      struct qdf_mac_addr peer_mac_addr,
+			      const uint8_t *pmkid)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct sir_sae_msg *sae_msg;
 	struct scheduler_msg sch_msg = {0};
+	struct wmi_roam_auth_status_params *params;
+
+	if (!CSR_IS_SESSION_VALID(mac, session_id)) {
+		sme_err("Invalid session id: %d", session_id);
+		return false;
+	}
 
 	qdf_status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		return qdf_status;
+
+	if (!CSR_IS_ROAM_JOINED(mac, session_id)) {
 		sae_msg = qdf_mem_malloc(sizeof(*sae_msg));
 		if (!sae_msg) {
 			qdf_status = QDF_STATUS_E_NOMEM;
-		} else {
-			sae_msg->message_type = eWNI_SME_SEND_SAE_MSG;
-			sae_msg->length = sizeof(*sae_msg);
-			sae_msg->session_id = session_id;
-			sae_msg->sae_status = sae_status;
-			qdf_mem_copy(sae_msg->peer_mac_addr,
-				     peer_mac_addr.bytes,
-				     QDF_MAC_ADDR_SIZE);
-			sme_debug("SAE: sae_status %d session_id %d Peer: "
-				  QDF_MAC_ADDR_STR, sae_msg->sae_status,
-				  sae_msg->session_id,
-				  QDF_MAC_ADDR_ARRAY(sae_msg->peer_mac_addr));
-
-			sch_msg.type = eWNI_SME_SEND_SAE_MSG;
-			sch_msg.bodyptr = sae_msg;
-
-			qdf_status =
-				scheduler_post_message(QDF_MODULE_ID_SME,
-						       QDF_MODULE_ID_PE,
-						       QDF_MODULE_ID_PE,
-						       &sch_msg);
+			goto error;
 		}
-		sme_release_global_lock(&mac->sme);
+
+		sae_msg->message_type = eWNI_SME_SEND_SAE_MSG;
+		sae_msg->length = sizeof(*sae_msg);
+		sae_msg->session_id = session_id;
+		sae_msg->sae_status = sae_status;
+		qdf_mem_copy(sae_msg->peer_mac_addr,
+			     peer_mac_addr.bytes,
+			     QDF_MAC_ADDR_SIZE);
+		sme_debug("SAE: sae_status %d session_id %d Peer: "
+			  QDF_MAC_ADDR_STR, sae_msg->sae_status,
+			  sae_msg->session_id,
+			  QDF_MAC_ADDR_ARRAY(sae_msg->peer_mac_addr));
+
+		sch_msg.type = eWNI_SME_SEND_SAE_MSG;
+		sch_msg.bodyptr = sae_msg;
+
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+						    QDF_MODULE_ID_PE,
+						    QDF_MODULE_ID_PE,
+						    &sch_msg);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			qdf_mem_free(sae_msg);
+			goto error;
+		}
+	} else {
+		/*
+		 * For WPA3 SAE roaming, external auth offload is enabled. The
+		 * firmware will send preauth start event after candidate
+		 * selection. The supplicant will perform the SAE authentication
+		 * and will send the auth status, PMKID in the external auth
+		 * cmd.
+		 *
+		 * csr roam state is CSR_ROAM_STATE_JOINED. So this SAE
+		 * external auth event is for wpa3 roam pre-auth offload.
+		 *
+		 * Post the preauth status to WMA.
+		 */
+		params = qdf_mem_malloc(sizeof(*params));
+		if (!params) {
+			qdf_status = QDF_STATUS_E_NOMEM;
+			goto error;
+		}
+
+		params->vdev_id = session_id;
+		params->preauth_status = sae_status;
+		qdf_copy_macaddr(&params->bssid, &peer_mac_addr);
+
+		qdf_mem_zero(params->pmkid, PMKID_LEN);
+		if (pmkid)
+			qdf_mem_copy(params->pmkid, pmkid, PMKID_LEN);
+
+		sch_msg.type = WMA_ROAM_PRE_AUTH_STATUS;
+		sch_msg.bodyptr = params;
+
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+						    QDF_MODULE_ID_WMA,
+						    QDF_MODULE_ID_WMA,
+						    &sch_msg);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			sme_err("WMA_ROAM_PRE_AUTH_STATUS cmd posting failed");
+			qdf_mem_free(params);
+		}
 	}
+error:
+	sme_release_global_lock(&mac->sme);
 
 	return qdf_status;
 }

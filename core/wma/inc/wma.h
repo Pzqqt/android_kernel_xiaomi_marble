@@ -2241,6 +2241,24 @@ void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 				     struct roam_offload_scan_req *roam_req);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * wma_send_roam_preauth_status() - Send the preauth status to wmi
+ * @handle: WMA handle
+ * @roam_req: Pointer to wmi_roam_auth_status_params from sae
+ *
+ * Return: None
+ */
+void
+wma_send_roam_preauth_status(tp_wma_handle wma_handle,
+			     struct wmi_roam_auth_status_params *params);
+#else
+static inline void
+wma_send_roam_preauth_status(tp_wma_handle wma_handle,
+			     struct wmi_roam_auth_status_params *params)
+{}
+#endif
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 static inline void wma_print_wmi_cmd_log(uint32_t count,
 					 qdf_abstract_print *print,

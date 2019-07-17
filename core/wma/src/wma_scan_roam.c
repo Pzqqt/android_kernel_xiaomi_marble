@@ -1629,6 +1629,23 @@ wma_send_idle_roam_params(tp_wma_handle wma_handle,
 		WMA_LOGE("failed to send idle roam parameters");
 }
 
+void
+wma_send_roam_preauth_status(tp_wma_handle wma_handle,
+			     struct wmi_roam_auth_status_params *params)
+{
+	QDF_STATUS status;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("WMA is closed, cannot send roam prauth status");
+		return;
+	}
+
+	status = wmi_unified_send_roam_preauth_status(wma_handle->wmi_handle,
+						      params);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("failed to send disconnect roam preauth status");
+}
+
 #else
 static inline void
 wma_send_disconnect_roam_params(tp_wma_handle wma_handle,
