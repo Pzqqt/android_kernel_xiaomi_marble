@@ -1408,12 +1408,12 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAULT;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-		"%s: sap chan:%d target:%d conn on 5GHz:%d, csa_reason:%s(%d)",
+		"%s: sap chan:%d target:%d conn on 5GHz:%d, csa_reason:%s(%d) strict %d vdev %d",
 		__func__, sap_ctx->channel, targetChannel,
 		policy_mgr_is_any_mode_active_on_band_along_with_session(
 			mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5),
 			sap_get_csa_reason_str(sap_ctx->csa_reason),
-			sap_ctx->csa_reason);
+			sap_ctx->csa_reason, strict, sap_ctx->sessionId);
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(mac->psoc);

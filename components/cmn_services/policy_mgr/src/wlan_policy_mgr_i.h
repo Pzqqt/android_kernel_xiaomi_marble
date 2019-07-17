@@ -449,7 +449,7 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
  * connection info by vdev id
  * @psoc: PSOC object information
  * @vdev_id: vdev id whose entry has to be deleted
- * @info: struture array pointer where the connection info will be saved
+ * @info: structure array pointer where the connection info will be saved
  * @num_cxn_del: number of connection which are going to be deleted
  *
  * Saves the connection info corresponding to the provided mode
@@ -461,6 +461,27 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 void policy_mgr_store_and_del_conn_info_by_vdev_id(
 			struct wlan_objmgr_psoc *psoc,
 			uint32_t vdev_id,
+			struct policy_mgr_conc_connection_info *info,
+			uint8_t *num_cxn_del);
+
+/**
+ * policy_mgr_store_and_del_conn_info_by_chan_and_mode() - Store and del a
+ * connection info by chan number and conn mode
+ * @psoc: PSOC object information
+ * @chan: channel number
+ * @mode: conn mode
+ * @info: structure array pointer where the connection info will be saved
+ * @num_cxn_del: number of connection which are going to be deleted
+ *
+ * Saves and deletes the entries if the active connection entry chan and mode
+ * matches the provided chan & mode from the function parameters.
+ *
+ * Return: None
+ */
+void policy_mgr_store_and_del_conn_info_by_chan_and_mode(
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t chan,
+			enum policy_mgr_con_mode mode,
 			struct policy_mgr_conc_connection_info *info,
 			uint8_t *num_cxn_del);
 

@@ -2345,28 +2345,60 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 bool  policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
 				       uint8_t channel,
-				       uint32_t vdev_id)
+				       uint32_t vdev_id,
+				       bool forced,
+				       enum sap_csa_reason_code reason)
 {
 	bool allow = false;
-	struct policy_mgr_conc_connection_info info;
+	struct policy_mgr_conc_connection_info
+			info[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t num_cxn_del = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t old_chan;
+	QDF_STATUS status;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return allow;
 	}
+	policy_mgr_debug("check concurrency_csa vdev:%d ch %d, forced %d, reason %d",
+			 vdev_id, channel, forced, reason);
+
+	status = policy_mgr_get_chan_by_session_id(psoc, vdev_id, &old_chan);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("Failed to get channel for vdev:%d",
+			       vdev_id);
+		return allow;
+	}
+	qdf_mem_zero(info, sizeof(info));
 
 	/*
 	 * Store the connection's parameter and temporarily delete it
 	 * from the concurrency table. This way the allow concurrency
 	 * check can be used as though a new connection is coming up,
 	 * after check, restore the connection to concurrency table.
+	 *
+	 * In SAP+SAP SCC case, when LTE unsafe event processing,
+	 * we should remove the all SAP conn entry on the same ch before
+	 * do the concurrency check. Otherwise the left SAP on old channel
+	 * will cause the concurrency check failure because of dual beacon
+	 * MCC not supported. for the CSA request reason code,
+	 * PM_CSA_REASON_UNSAFE_CHANNEL, we remove all the SAP
+	 * entry on old channel before do concurrency check.
+	 *
+	 * The assumption is both SAP should move to the new channel later for
+	 * the reason code.
 	 */
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, vdev_id,
-						      &info, &num_cxn_del);
+
+	if (forced && reason == CSA_REASON_UNSAFE_CHANNEL)
+		policy_mgr_store_and_del_conn_info_by_chan_and_mode(
+			psoc, old_chan, mode, info, &num_cxn_del);
+	else
+		policy_mgr_store_and_del_conn_info_by_vdev_id(
+			psoc, vdev_id, info, &num_cxn_del);
+
 	allow = policy_mgr_allow_concurrency(
 				psoc,
 				mode,
@@ -2374,7 +2406,7 @@ bool  policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
 				HW_MODE_20_MHZ);
 	/* Restore the connection entry */
 	if (num_cxn_del > 0)
-		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	if (!allow)
