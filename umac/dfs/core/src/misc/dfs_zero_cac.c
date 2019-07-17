@@ -2137,7 +2137,7 @@ dfs_find_agile_width(struct wlan_dfs *dfs, enum phy_ch_width chwidth)
 		return CH_WIDTH_80MHZ;
 	default:
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "Invalid chwidth enum!");
-		return 0;
+		return CH_WIDTH_INVALID;
 	}
 }
 
@@ -2159,7 +2159,7 @@ void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
 	 */
 	dfs_find_chwidth_and_center_chan(dfs, &chwidth, NULL, NULL);
 	dfs->dfs_precac_chwidth = dfs_find_agile_width(dfs, chwidth);
-	if (!dfs->dfs_precac_chwidth) {
+	if (dfs->dfs_precac_chwidth == CH_WIDTH_INVALID) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "cannot start agile CAC!");
 		return;
 	}
