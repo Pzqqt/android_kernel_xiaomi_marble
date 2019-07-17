@@ -1158,7 +1158,7 @@ typedef enum eSirSmeStatusChangeCode {
 
 struct new_bss_info {
 	struct qdf_mac_addr bssId;
-	uint8_t channelNumber;
+	uint32_t freq;
 	uint8_t reserved;
 	tSirMacSSid ssId;
 };

@@ -11802,7 +11802,9 @@ csr_roam_diag_joined_new_bss(struct mac_context *mac_ctx,
 			pNewBss->ssId.length = HOST_LOG_MAX_SSID_SIZE;
 		qdf_mem_copy(pIbssLog->ssid, pNewBss->ssId.ssId,
 			     pNewBss->ssId.length);
-		pIbssLog->operatingChannel = pNewBss->channelNumber;
+		pIbssLog->operatingChannel = wlan_reg_freq_to_chan
+						(mac_ctx->pdev,
+						 pNewBss->freq);
 	}
 	bi = mac_ctx->mlme_cfg->sap_cfg.beacon_interval;
 		/* U8 is not enough for beacon interval */
@@ -14280,7 +14282,7 @@ static void csr_roam_update_connected_profile_from_new_bss(struct mac_context *m
 	if (pNewBss) {
 		/* Set the operating channel. */
 		pSession->connectedProfile.operationChannel =
-			pNewBss->channelNumber;
+			wlan_reg_freq_to_chan(mac->pdev, pNewBss->freq);
 		/* move the BSSId from the BSS description into the connected
 		 * state information.
 		 */
