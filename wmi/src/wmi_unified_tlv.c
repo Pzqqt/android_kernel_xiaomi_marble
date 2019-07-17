@@ -1161,28 +1161,6 @@ static QDF_STATUS send_peer_delete_all_cmd_tlv(
 }
 
 /**
- * crash_on_send_peer_rx_reorder_queue_remove_cmd() - crash on reorder queue cmd
- *
- * On MCL side, we are suspecting this cmd to trigger drop of ARP
- * response frames from REO by the FW. This function causes a crash if this
- * command is sent out by the host, so we can track this issue. Ideally no one
- * should be calling this API from the MCL side
- *
- * Return: None
- */
-#ifdef CONFIG_MCL
-static void crash_on_send_peer_rx_reorder_queue_remove_cmd(void)
-{
-	QDF_BUG(0);
-}
-#else
-static void crash_on_send_peer_rx_reorder_queue_remove_cmd(void)
-{
-	/* No-OP */
-}
-#endif
-
-/**
  * convert_host_peer_param_id_to_target_id_tlv - convert host peer param_id
  * to target id.
  * @peer_param_id: host param id.
@@ -1402,8 +1380,6 @@ QDF_STATUS send_peer_rx_reorder_queue_remove_cmd_tlv(wmi_unified_t wmi,
 	wmi_peer_reorder_queue_remove_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	int32_t len = sizeof(*cmd);
-
-	crash_on_send_peer_rx_reorder_queue_remove_cmd();
 
 	buf = wmi_buf_alloc(wmi, len);
 	if (!buf)
