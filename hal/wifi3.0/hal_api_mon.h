@@ -155,6 +155,23 @@
 /* Max MPDUs per status buffer */
 #define HAL_RX_MAX_MPDU 64
 
+/* Max pilot count */
+#define HAL_RX_MAX_SU_EVM_COUNT 32
+
+/*
+ * Struct hal_rx_su_evm_info - SU evm info
+ * @number_of_symbols: number of symbols
+ * @nss_count:         nss count
+ * @pilot_count:       pilot count
+ * @pilot_evm:         Array of pilot evm values
+ */
+struct hal_rx_su_evm_info {
+	uint32_t number_of_symbols;
+	uint8_t  nss_count;
+	uint8_t  pilot_count;
+	uint32_t pilot_evm[HAL_RX_MAX_SU_EVM_COUNT];
+};
+
 enum {
 	DP_PPDU_STATUS_START,
 	DP_PPDU_STATUS_DONE,
@@ -463,6 +480,8 @@ struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_msdu_info rx_msdu_info[HAL_MAX_UL_MU_USERS];
 	/* first msdu payload for all mpdus in ppdu */
 	struct hal_rx_msdu_payload_info ppdu_msdu_info[HAL_RX_MAX_MPDU];
+	/* evm info */
+	struct hal_rx_su_evm_info evm_info;
 };
 
 static inline uint32_t

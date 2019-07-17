@@ -1560,6 +1560,8 @@ struct cdp_rx_indication_ppdu {
 	uint16_t frame_ctrl;
 	int8_t rssi_chain[SS_COUNT][MAX_BW];
 	struct cdp_stats_cookie *cookie;
+	struct cdp_rx_su_evm_info evm_info;
+	uint32_t rx_antenna;
 };
 
 /**

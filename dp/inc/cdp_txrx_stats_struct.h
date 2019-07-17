@@ -111,7 +111,22 @@
 
 #define INVALID_RSSI 255
 
+/*Max SU EVM count */
+#define DP_RX_MAX_SU_EVM_COUNT 32
+
 #define WDI_EVENT_BASE 0x100
+
+#define CDP_TXRX_RATECODE_MCS_MASK 0xF
+#define CDP_TXRX_RATECODE_NSS_MASK 0x3
+#define CDP_TXRX_RATECODE_NSS_LSB 4
+#define CDP_TXRX_RATECODE_PREM_MASK 0x3
+#define CDP_TXRX_RATECODE_PREM_LSB 6
+
+#define CDP_TXRX_RATECODE(mcsb, nssb, premb) \
+	(((mcsb) & CDP_TXRX_RATECODE_MCS_MASK) | \
+	(((nssb) & CDP_TXRX_RATECODE_NSS_MASK) << CDP_TXRX_RATECODE_NSS_LSB) | \
+	(((premb) & CDP_TXRX_RATECODE_PREM_MASK) << CDP_TXRX_RATECODE_PREM_LSB))
+
 /* Different Packet Types */
 enum cdp_packet_type {
 	DOT11_A = 0,
@@ -200,6 +215,19 @@ enum cdp_txrx_tidq_stats {
 
 struct cdp_tidq_stats {
 	uint32_t stats[TIDQ_STATS_MAX];
+};
+
+/*
+ * struct cdp_rx_su_evm_info: Rx evm info
+ * @number_of_symbols: number of symbols
+ * @nss_count: number of spatial streams
+ * @pilot_count: number of pilot count
+ */
+struct cdp_rx_su_evm_info {
+	uint16_t number_of_symbols;
+	uint8_t  nss_count;
+	uint8_t  pilot_count;
+	uint32_t pilot_evm[DP_RX_MAX_SU_EVM_COUNT];
 };
 
 /*

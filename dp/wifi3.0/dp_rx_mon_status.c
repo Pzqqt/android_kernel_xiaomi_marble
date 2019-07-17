@@ -70,6 +70,36 @@ dp_rx_populate_rx_rssi_chain(struct hal_rx_ppdu_info *ppdu_info,
 	}
 }
 
+/*
+ * dp_rx_populate_su_evm_details() - Populate su evm info
+ * @ppdu_info: ppdu info structure from ppdu ring
+ * @cdp_rx_ppdu: rx ppdu indication structure
+ */
+static inline void
+dp_rx_populate_su_evm_details(struct hal_rx_ppdu_info *ppdu_info,
+			      struct cdp_rx_indication_ppdu *cdp_rx_ppdu)
+{
+	uint8_t pilot_evm;
+	uint8_t nss_count;
+	uint8_t pilot_count;
+
+	nss_count = ppdu_info->evm_info.nss_count;
+	pilot_count = ppdu_info->evm_info.pilot_count;
+
+	if ((nss_count * pilot_count) > DP_RX_MAX_SU_EVM_COUNT) {
+		qdf_err("pilot evm count is more than expected");
+		return;
+	}
+	cdp_rx_ppdu->evm_info.pilot_count = pilot_count;
+	cdp_rx_ppdu->evm_info.nss_count = nss_count;
+
+	/* Populate evm for pilot_evm  = nss_count*pilot_count */
+	for (pilot_evm = 0; pilot_evm < nss_count * pilot_count; pilot_evm++) {
+		cdp_rx_ppdu->evm_info.pilot_evm[pilot_evm] =
+			ppdu_info->evm_info.pilot_evm[pilot_evm];
+	}
+}
+
 /**
 * dp_rx_populate_cdp_indication_ppdu() - Populate cdp rx indication structure
 * @pdev: pdev ctx
@@ -158,6 +188,8 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->u.ltf_size = ppdu_info->rx_status.ltf_size;
 
 	dp_rx_populate_rx_rssi_chain(ppdu_info, cdp_rx_ppdu);
+	dp_rx_populate_su_evm_details(ppdu_info, cdp_rx_ppdu);
+	cdp_rx_ppdu->rx_antenna = ppdu_info->rx_status.rx_antenna;
 }
 #else
 static inline void
@@ -208,6 +240,9 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	ppdu_rx_rate = dp_ath_rate_out(peer->stats.rx.avg_rx_rate);
 	DP_STATS_UPD(peer, rx.rnd_avg_rx_rate, ppdu_rx_rate);
 	ppdu->rx_ratekbps = ratekbps;
+	ppdu->rx_ratecode = CDP_TXRX_RATECODE(ppdu->u.mcs,
+					      nss,
+					      ppdu->u.preamble);
 
 	if (peer->vdev)
 		peer->vdev->stats.rx.last_rx_rate = ratekbps;

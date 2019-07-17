@@ -389,6 +389,8 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		break;
 
 	case WIFIRXPCU_PPDU_END_INFO_E:
+		ppdu_info->rx_status.rx_antenna =
+			HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_2, RX_ANTENNA);
 		ppdu_info->rx_status.tsft =
 			HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_1,
 				WB_TIMESTAMP_UPPER_32);

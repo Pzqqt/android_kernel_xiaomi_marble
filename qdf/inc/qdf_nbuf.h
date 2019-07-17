@@ -317,6 +317,7 @@ struct mon_rx_status {
 	uint8_t ltf_size;
 	uint8_t rxpcu_filter_pass;
 	int8_t rssi_chain[8][8];
+	uint32_t rx_antenna;
 };
 
 /**
