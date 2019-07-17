@@ -125,7 +125,6 @@ pmo_psoc_get_vdev(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
 
-	QDF_BUG(vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS);
 	if (vdev_id >= WLAN_UMAC_PSOC_MAX_VDEVS)
 		return NULL;
 
