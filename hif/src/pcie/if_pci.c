@@ -3867,6 +3867,45 @@ void hif_pci_irq_disable(struct hif_softc *scn, int ce_id)
 }
 
 #ifdef FEATURE_RUNTIME_PM
+/**
+ * hif_pm_runtime_get_sync() - do a get opperation with sync resume
+ *
+ * A get opperation will prevent a runtime suspend until a corresponding
+ * put is done. Unlike hif_pm_runtime_get(), this API will do a sync
+ * resume instead of requesting a resume if it is runtime PM suspended
+ * so it can only be called in non-atomic context.
+ *
+ * @hif_ctx: pointer of HIF context
+ *
+ * Return: 0 if it is runtime PM resumed otherwise an error code.
+ */
+int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+	int ret;
+
+	if (!sc)
+		return -EINVAL;
+
+	sc->pm_stats.runtime_get++;
+	ret = pm_runtime_get_sync(sc->dev);
+
+	/* Get can return 1 if the device is already active, just return
+	 * success in that case.
+	 */
+	if (ret > 0)
+		ret = 0;
+
+	if (ret) {
+		sc->pm_stats.runtime_get_err++;
+		HIF_ERROR("Runtime PM Get Sync error in pm_state: %d, ret: %d",
+			  qdf_atomic_read(&sc->pm_state), ret);
+		hif_pm_runtime_put(hif_ctx);
+	}
+
+	return ret;
+}
+
 int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);

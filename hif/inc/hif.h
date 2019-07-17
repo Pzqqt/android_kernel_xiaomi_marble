@@ -844,6 +844,7 @@ void hif_clear_stats(struct hif_opaque_softc *hif_ctx);
 #ifdef FEATURE_RUNTIME_PM
 struct hif_pm_runtime_lock;
 void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx);
+int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx);
 void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx);
@@ -867,6 +868,8 @@ struct hif_pm_runtime_lock {
 	const char *name;
 };
 static inline void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx) {}
+static inline int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx)
+{ return 0; }
 static inline int
 hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 { return 0; }
