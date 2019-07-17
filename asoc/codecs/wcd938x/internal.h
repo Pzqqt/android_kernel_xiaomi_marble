@@ -94,6 +94,7 @@ struct wcd938x_priv {
 	/* Entry for version info */
 	struct snd_info_entry *entry;
 	struct snd_info_entry *version_entry;
+	struct snd_info_entry *variant_entry;
 	int flyback_cur_det_disable;
 	int ear_rx_path;
 };
