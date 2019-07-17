@@ -121,6 +121,9 @@ struct dp_catalog_ctrl {
 			u32 ch, u32 ch_start_timeslot, u32 tot_ch_cnt);
 	void (*fec_config)(struct dp_catalog_ctrl *ctrl, bool enable);
 	void (*mainlink_levels)(struct dp_catalog_ctrl *ctrl, u8 lane_cnt);
+
+	int (*late_phy_init)(struct dp_catalog_ctrl *ctrl,
+					u8 lane_cnt, bool flipped);
 };
 
 struct dp_catalog_hpd {
