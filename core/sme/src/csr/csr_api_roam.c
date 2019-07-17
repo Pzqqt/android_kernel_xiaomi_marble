@@ -672,39 +672,40 @@ static void csr_roam_arrange_ch_list(struct mac_context *mac_ctx,
 
 	/* Fist copy Non-DFS 5g channels */
 	for (i = 0; i < num_channel; i++) {
-		if (WLAN_REG_IS_5GHZ_CH(chan_list[i].chanId) &&
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_list[i].freq) &&
 			!wlan_reg_is_dfs_ch(mac_ctx->pdev,
-				chan_list[i].chanId)) {
+				wlan_reg_freq_to_chan
+					(mac_ctx->pdev, chan_list[i].freq))) {
 			qdf_mem_copy(&tmp_list[j++],
 				&chan_list[i], sizeof(tSirUpdateChanParam));
-			chan_list[i].chanId = INVALID_CHANNEL_ID;
+			chan_list[i].freq = 0;
 		}
 	}
 	if (prefer_dfs) {
 		/* next copy DFS channels (remaining channels in 5G) */
 		for (i = 0; i < num_channel; i++) {
-			if (WLAN_REG_IS_5GHZ_CH(chan_list[i].chanId)) {
+			if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_list[i].freq)) {
 				qdf_mem_copy(&tmp_list[j++], &chan_list[i],
 					sizeof(tSirUpdateChanParam));
-				chan_list[i].chanId = INVALID_CHANNEL_ID;
+				chan_list[i].freq = 0;
 			}
 		}
 	} else {
 		/* next copy 2G channels */
 		for (i = 0; i < num_channel; i++) {
-			if (WLAN_REG_IS_24GHZ_CH(chan_list[i].chanId)) {
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_list[i].freq)) {
 				qdf_mem_copy(&tmp_list[j++], &chan_list[i],
 					sizeof(tSirUpdateChanParam));
-				chan_list[i].chanId = INVALID_CHANNEL_ID;
+				chan_list[i].freq = 0;
 			}
 		}
 	}
 	/* copy rest of the channels in same order to tmp list */
 	for (i = 0; i < num_channel; i++) {
-		if (chan_list[i].chanId != INVALID_CHANNEL_ID) {
+		if (chan_list[i].freq) {
 			qdf_mem_copy(&tmp_list[j++], &chan_list[i],
 				sizeof(tSirUpdateChanParam));
-			chan_list[i].chanId = INVALID_CHANNEL_ID;
+			chan_list[i].freq = 0;
 		}
 	}
 	/* copy tmp list to original channel list buffer */
@@ -767,8 +768,10 @@ static void csr_roam_sort_channel_for_early_stop(struct mac_context *mac_ctx,
 	 */
 	for (i = 0; i < num_channel; i++) {
 		for (j = 0; j < num_fixed_greedy_chan; j++) {
-			if (chan_list->chanParam[i].chanId ==
-					fixed_greedy_chan_list[j]) {
+			if (chan_list->chanParam[i].freq ==
+				wlan_reg_chan_to_freq
+					(mac_ctx->pdev,
+					 fixed_greedy_chan_list[j])) {
 				match_found = true;
 				break;
 			}
@@ -790,8 +793,9 @@ static void csr_roam_sort_channel_for_early_stop(struct mac_context *mac_ctx,
 	 */
 	for (i = 0; i < num_fixed_greedy_chan; i++) {
 		for (j = 0; j < num_channel; j++) {
-			if (fixed_greedy_chan_list[i] ==
-					chan_list->chanParam[j].chanId) {
+			if (wlan_reg_chan_to_freq(mac_ctx->pdev,
+						 fixed_greedy_chan_list[i]) ==
+				chan_list->chanParam[j].freq) {
 				qdf_mem_copy(
 				  &chan_list_greedy->chanParam[num_greedy_chan],
 				  &chan_list->chanParam[j],
@@ -903,8 +907,9 @@ static void csr_add_social_channels(struct mac_context *mac,
 			if (wlan_reg_get_channel_state(mac->pdev,
 				social_channel[i]) != CHANNEL_STATE_ENABLE)
 				continue;
-			chan_list->chanParam[no_chan].chanId =
-				social_channel[i];
+			chan_list->chanParam[no_chan].freq =
+				wlan_reg_chan_to_freq(mac->pdev,
+						      social_channel[i]);
 			chan_list->chanParam[no_chan].pwr =
 				csr_find_channel_pwr(pScan->defaultPowerTable,
 						social_channel[i]);
@@ -1021,15 +1026,18 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 					continue;
 				}
 			}
-			pChanList->chanParam[num_channel].chanId =
-				pScan->base_channels.channelList[i];
+			pChanList->chanParam[num_channel].freq =
+				wlan_reg_chan_to_freq
+					(mac->pdev,
+					 pScan->base_channels.channelList[i]);
 			pChanList->chanParam[num_channel].pwr =
-				csr_find_channel_pwr(pScan->defaultPowerTable,
-				  pChanList->chanParam[num_channel].chanId);
+				csr_find_channel_pwr
+					(pScan->defaultPowerTable,
+					 pScan->base_channels.channelList[i]);
 
 			if (pScan->fcc_constraint) {
-				if (12 == pChanList->chanParam[num_channel].
-								chanId) {
+				if (12 ==
+					pScan->base_channels.channelList[i]) {
 					pChanList->chanParam[num_channel].pwr =
 						MAX_PWR_FCC_CHAN_12;
 					QDF_TRACE(QDF_MODULE_ID_SME,
@@ -1037,8 +1045,8 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 						  "txpow for channel 12 is %d",
 						  MAX_PWR_FCC_CHAN_12);
 				}
-				if (13 == pChanList->chanParam[num_channel].
-								chanId) {
+				if (13 ==
+					pScan->base_channels.channelList[i]) {
 					pChanList->chanParam[num_channel].pwr =
 						MAX_PWR_FCC_CHAN_13;
 					QDF_TRACE(QDF_MODULE_ID_SME,
@@ -1061,8 +1069,8 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 			else if (cds_is_10_mhz_enabled())
 				pChanList->chanParam[num_channel].half_rate = 1;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				"channel:%d, pwr=%d, DFS=%d qrate %d hrate %d ",
-				pChanList->chanParam[num_channel].chanId,
+				"Freq:%d, pwr=%d, DFS=%d qrate %d hrate %d ",
+				pChanList->chanParam[num_channel].freq,
 				pChanList->chanParam[num_channel].pwr,
 				pChanList->chanParam[num_channel].dfsSet,
 				pChanList->chanParam[num_channel].quarter_rate,

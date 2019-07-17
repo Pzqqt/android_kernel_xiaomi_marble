@@ -121,16 +121,15 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 			chan_list->vht_en, chan_list->vht_24_en);
 
 	for (i = 0; i < chan_list->numChan; ++i) {
-		chan_p->mhz =
-			cds_chan_to_freq(chan_list->chanParam[i].chanId);
+		chan_p->mhz = chan_list->chanParam[i].freq;
 		chan_p->cfreq1 = chan_p->mhz;
 		chan_p->cfreq2 = 0;
 		wma_handle->saved_chan.channel_list[i] =
-				chan_list->chanParam[i].chanId;
+			wlan_reg_freq_to_chan(wma_handle->pdev,
+					      chan_list->chanParam[i].freq);
 
-		WMA_LOGD("chan[%d] = freq:%u chan:%d DFS:%d tx power:%d",
+		WMA_LOGD("chan[%d] = freq:%u DFS:%d tx power:%d",
 			 i, chan_p->mhz,
-			 chan_list->chanParam[i].chanId,
 			 chan_list->chanParam[i].dfsSet,
 			 chan_list->chanParam[i].pwr);
 

@@ -2493,14 +2493,14 @@ typedef struct sSirScanOffloadEvent {
 
 /**
  * struct sSirUpdateChanParam - channel parameters
- * @chanId: ID of the channel
+ * @freq: Frequency of the channel
  * @pwr: power level
  * @dfsSet: is dfs supported or not
  * @half_rate: is the channel operating at 10MHz
  * @quarter_rate: is the channel operating at 5MHz
  */
 typedef struct sSirUpdateChanParam {
-	uint8_t chanId;
+	uint32_t freq;
 	uint8_t pwr;
 	bool dfsSet;
 	bool half_rate;
