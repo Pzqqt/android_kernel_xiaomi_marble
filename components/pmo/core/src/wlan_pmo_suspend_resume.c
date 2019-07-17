@@ -761,11 +761,15 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		psoc_ctx->wow.wow_state = pmo_wow_state_unified_d0;
 	}
 
-	if (qdf_is_drv_connected()) {
-		pmo_info("drv wow is enabled");
-		param.flags |= WMI_WOW_FLAG_ENABLE_DRV_PCIE_L1SS_SLEEP;
+	if (htc_can_suspend_link(pmo_core_psoc_get_htc_handle(psoc))) {
+		if (qdf_is_drv_connected()) {
+			pmo_info("drv wow is enabled");
+			param.flags |= WMI_WOW_FLAG_ENABLE_DRV_PCIE_L1SS_SLEEP;
+		} else {
+			pmo_info("non-drv wow is enabled");
+		}
 	} else {
-		pmo_info("non-drv wow is enabled");
+		pmo_info("Prevent link down, non-drv wow is enabled");
 	}
 
 	status = pmo_tgt_psoc_send_wow_enable_req(psoc, &param);
