@@ -95,5 +95,24 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 }
 #endif
 
+/**
+ * enum tx_status - tx status
+ * @tx_status_ok: successfully sent + acked
+ * @tx_status_discard: discard - not sent (congestion control)
+ * @tx_status_no_ack: no_ack - sent, but no ack
+ * @tx_status_download_fail: download_fail -
+ * the host could not deliver the tx frame to the target
+ * @tx_status_peer_del: peer_del - tx completion for
+ * already deleted peer used for HL case
+ *
+ * This enum has tx status types
+ */
+enum tx_status {
+	tx_status_ok,
+	tx_status_discard,
+	tx_status_no_ack,
+	tx_status_download_fail,
+	tx_status_peer_del,
+};
 
 #endif /* WLAN_LOGGING_SOCK_SVC_H */
