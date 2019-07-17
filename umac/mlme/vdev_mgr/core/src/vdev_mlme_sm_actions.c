@@ -289,6 +289,10 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 		wlan_pdev_mlme_op_clear(pdev, WLAN_PDEV_OP_MBSSID_RESTART);
 		wlan_pdev_mlme_op_clear(pdev, WLAN_PDEV_OP_RESTART_INPROGRESS);
 
+		qdf_mem_copy(&pdev_mlme->pdev_restart.restart_bmap,
+			     &pdev_mlme->restart_send_vdev_bmap,
+			     sizeof(pdev_mlme->pdev_restart.restart_bmap));
+
 		if (!wlan_pdev_nif_feat_cap_get(pdev,
 						WLAN_PDEV_F_MULTIVDEV_RESTART))
 			wlan_objmgr_pdev_iterate_obj_list
