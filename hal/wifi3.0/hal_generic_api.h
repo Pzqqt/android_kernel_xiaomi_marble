@@ -1259,6 +1259,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 	case WIFIPHYRX_RSSI_LEGACY_E:
 	{
 		uint8_t reception_type;
+		int8_t rssi_value;
 		uint8_t *rssi_info_tlv = (uint8_t *)rx_tlv +
 			HAL_RX_OFFSET(UNIFIED_PHYRX_RSSI_LEGACY_19,
 				RECEIVE_RSSI_INFO_PREAMBLE_RSSI_INFO_DETAILS);
@@ -1291,53 +1292,56 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			break;
 		}
 		hal_rx_update_rssi_chain(ppdu_info, rssi_info_tlv);
-		value = HAL_RX_GET(rssi_info_tlv,
-			RECEIVE_RSSI_INFO_0, RSSI_PRI20_CHAIN0);
-		ppdu_info->rx_status.rssi[0] = value;
+		rssi_value = HAL_RX_GET(rssi_info_tlv,
+					RECEIVE_RSSI_INFO_0, RSSI_PRI20_CHAIN0);
+		ppdu_info->rx_status.rssi[0] = rssi_value;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_PRI20_CHAIN0: %d\n", value);
+			  "RSSI_PRI20_CHAIN0: %d\n", rssi_value);
 
-		value = HAL_RX_GET(rssi_info_tlv,
-			RECEIVE_RSSI_INFO_2, RSSI_PRI20_CHAIN1);
-		ppdu_info->rx_status.rssi[1] = value;
+		rssi_value = HAL_RX_GET(rssi_info_tlv,
+					RECEIVE_RSSI_INFO_2, RSSI_PRI20_CHAIN1);
+		ppdu_info->rx_status.rssi[1] = rssi_value;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_PRI20_CHAIN1: %d\n", value);
+			  "RSSI_PRI20_CHAIN1: %d\n", rssi_value);
 
-		value = HAL_RX_GET(rssi_info_tlv,
-			RECEIVE_RSSI_INFO_4, RSSI_PRI20_CHAIN2);
-		ppdu_info->rx_status.rssi[2] = value;
+		rssi_value = HAL_RX_GET(rssi_info_tlv,
+					RECEIVE_RSSI_INFO_4, RSSI_PRI20_CHAIN2);
+		ppdu_info->rx_status.rssi[2] = rssi_value;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_PRI20_CHAIN2: %d\n", value);
+			  "RSSI_PRI20_CHAIN2: %d\n", rssi_value);
 
-		value = HAL_RX_GET(rssi_info_tlv,
-			RECEIVE_RSSI_INFO_6, RSSI_PRI20_CHAIN3);
-		ppdu_info->rx_status.rssi[3] = value;
+		rssi_value = HAL_RX_GET(rssi_info_tlv,
+					RECEIVE_RSSI_INFO_6, RSSI_PRI20_CHAIN3);
+		ppdu_info->rx_status.rssi[3] = rssi_value;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_PRI20_CHAIN3: %d\n", value);
+			  "RSSI_PRI20_CHAIN3: %d\n", rssi_value);
 
-		value = HAL_RX_GET(rssi_info_tlv,
-			RECEIVE_RSSI_INFO_8, RSSI_PRI20_CHAIN4);
-		ppdu_info->rx_status.rssi[4] = value;
+		rssi_value = HAL_RX_GET(rssi_info_tlv,
+					RECEIVE_RSSI_INFO_8, RSSI_PRI20_CHAIN4);
+		ppdu_info->rx_status.rssi[4] = rssi_value;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_PRI20_CHAIN4: %d\n", value);
+			  "RSSI_PRI20_CHAIN4: %d\n", rssi_value);
 
-		value = HAL_RX_GET(rssi_info_tlv,
-			RECEIVE_RSSI_INFO_10, RSSI_PRI20_CHAIN5);
-		ppdu_info->rx_status.rssi[5] = value;
+		rssi_value = HAL_RX_GET(rssi_info_tlv,
+					RECEIVE_RSSI_INFO_10,
+					RSSI_PRI20_CHAIN5);
+		ppdu_info->rx_status.rssi[5] = rssi_value;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_PRI20_CHAIN5: %d\n", value);
+			  "RSSI_PRI20_CHAIN5: %d\n", rssi_value);
 
-		value = HAL_RX_GET(rssi_info_tlv,
-			RECEIVE_RSSI_INFO_12, RSSI_PRI20_CHAIN6);
-		ppdu_info->rx_status.rssi[6] = value;
+		rssi_value = HAL_RX_GET(rssi_info_tlv,
+					RECEIVE_RSSI_INFO_12,
+					RSSI_PRI20_CHAIN6);
+		ppdu_info->rx_status.rssi[6] = rssi_value;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_PRI20_CHAIN1: %d\n", value);
+			  "RSSI_PRI20_CHAIN6: %d\n", rssi_value);
 
-		value = HAL_RX_GET(rssi_info_tlv,
-			RECEIVE_RSSI_INFO_14, RSSI_PRI20_CHAIN7);
-		ppdu_info->rx_status.rssi[7] = value;
+		rssi_value = HAL_RX_GET(rssi_info_tlv,
+					RECEIVE_RSSI_INFO_14,
+					RSSI_PRI20_CHAIN7);
+		ppdu_info->rx_status.rssi[7] = rssi_value;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_PRI20_CHAIN7: %d\n", value);
+			  "RSSI_PRI20_CHAIN7: %d\n", rssi_value);
 		break;
 	}
 	case WIFIPHYRX_OTHER_RECEIVE_INFO_E:
