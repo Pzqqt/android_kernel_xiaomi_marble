@@ -539,15 +539,6 @@ static void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
  *
  * Return: None
  */
-#ifdef CONFIG_MCL
-static inline void copy_vdev_create_pdev_id(
-		struct wmi_unified *wmi_handle,
-		wmi_vdev_create_cmd_fixed_param * cmd,
-		struct vdev_create_params *param)
-{
-	cmd->pdev_id = WMI_PDEV_ID_SOC;
-}
-#else
 static inline void copy_vdev_create_pdev_id(
 		struct wmi_unified *wmi_handle,
 		wmi_vdev_create_cmd_fixed_param * cmd,
@@ -556,7 +547,6 @@ static inline void copy_vdev_create_pdev_id(
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
 							param->pdev_id);
 }
-#endif
 
 void wmi_mtrace(uint32_t message_id, uint16_t vdev_id, uint32_t data)
 {
