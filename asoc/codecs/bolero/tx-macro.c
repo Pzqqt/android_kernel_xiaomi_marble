@@ -470,6 +470,12 @@ static int tx_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 	unsigned int val = 0;
 	u16 mic_sel_reg = 0;
+	u16 dmic_clk_reg = 0;
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
 
 	val = ucontrol->value.enumerated.item[0];
 	if (val > e->items - 1)
@@ -510,14 +516,24 @@ static int tx_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	}
 	if (strnstr(widget->name, "SMIC", strlen(widget->name))) {
 		if (val != 0) {
-			if (val < 5)
+			if (val < 5) {
 				snd_soc_component_update_bits(component,
 							mic_sel_reg,
 							1 << 7, 0x0 << 7);
-			else
+			} else {
 				snd_soc_component_update_bits(component,
 							mic_sel_reg,
 							1 << 7, 0x1 << 7);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_VA_TOP_CSR_DMIC_CFG,
+					0x80, 0x00);
+				dmic_clk_reg =
+					BOLERO_CDC_TX_TOP_CSR_SWR_DMIC0_CTL +
+						((val - 5)/2) * 4;
+				snd_soc_component_update_bits(component,
+					dmic_clk_reg,
+					0x0E, tx_priv->dmic_clk_div << 0x1);
+			}
 		}
 	} else {
 		/* DMIC selected */
