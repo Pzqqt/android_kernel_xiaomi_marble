@@ -1166,8 +1166,6 @@ struct new_bss_info {
 struct ap_new_caps {
 	uint16_t capabilityInfo;
 	struct qdf_mac_addr bssId;
-	uint8_t channelId;
-	uint8_t reserved[3];
 	tSirMacSSid ssId;
 };
 

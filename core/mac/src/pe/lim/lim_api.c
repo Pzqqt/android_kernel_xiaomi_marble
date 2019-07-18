@@ -1693,9 +1693,7 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 			 (pBeacon->rsnPresent || pBeacon->wpaPresent)) {
 			pe_err("BSS Caps (Privacy) bit 0 in beacon, but WPA or RSN IE present, Ignore Beacon!");
 			return;
-		} else
-			apNewCaps.channelId = wlan_reg_freq_to_chan(
-					mac->pdev, pe_session->curr_op_freq);
+		}
 		qdf_mem_copy((uint8_t *) &apNewCaps.ssId,
 			     (uint8_t *) &pBeacon->ssId,
 			     pBeacon->ssId.length + 1);
