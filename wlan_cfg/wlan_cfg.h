@@ -35,7 +35,7 @@
 #define DP_TX_NAPI_BUDGET_DIV_MASK 0
 
 /* PPDU Stats Configuration - Configure bitmask for enabling tx ppdu tlv's */
-#define DP_PPDU_TXLITE_STATS_BITMASK_CFG 0x1FFF
+#define DP_PPDU_TXLITE_STATS_BITMASK_CFG 0x3FFF
 
 #define NUM_RXDMA_RINGS_PER_PDEV 2
 #else
