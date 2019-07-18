@@ -1634,6 +1634,35 @@ static QDF_STATUS dp_soc_attach_poll(void *txrx_soc)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_soc_set_interrupt_mode() - Set the interrupt mode in soc
+ * soc: DP soc handle
+ *
+ * Set the appropriate interrupt mode flag in the soc
+ */
+static void dp_soc_set_interrupt_mode(struct dp_soc *soc)
+{
+	uint32_t msi_base_data, msi_vector_start;
+	int msi_vector_count, ret;
+
+	soc->intr_mode = DP_INTR_LEGACY;
+
+	if (!(soc->wlan_cfg_ctx->napi_enabled) ||
+	    (soc->cdp_soc.ol_ops->get_con_mode &&
+	     soc->cdp_soc.ol_ops->get_con_mode() == QDF_GLOBAL_MONITOR_MODE)) {
+		soc->intr_mode = DP_INTR_POLL;
+	} else {
+		ret = pld_get_user_msi_assignment(soc->osdev->dev, "DP",
+						  &msi_vector_count,
+						  &msi_base_data,
+						  &msi_vector_start);
+		if (ret)
+			return;
+
+		soc->intr_mode = DP_INTR_MSI;
+	}
+}
+
 static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc);
 #if defined(DP_INTR_POLL_BOTH)
 /*
@@ -1703,6 +1732,8 @@ static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
 					soc->wlan_cfg_ctx, intr_ctx_num);
 	int host2rxdma_mon_ring_mask = wlan_cfg_get_host2rxdma_mon_ring_mask(
 					soc->wlan_cfg_ctx, intr_ctx_num);
+
+	soc->intr_mode = DP_INTR_LEGACY;
 
 	for (j = 0; j < HIF_MAX_GRP_IRQ; j++) {
 
@@ -9640,6 +9671,8 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc, HTC_HANDLE htc_handle,
 		dp_err("wlan_cfg_ctx failed\n");
 		goto fail1;
 	}
+
+	dp_soc_set_interrupt_mode(soc);
 	htt_soc = htt_soc_attach(soc, htc_handle);
 
 	if (!htt_soc)
