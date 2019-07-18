@@ -1036,6 +1036,9 @@ blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 				qdf_list_remove_node(&blm_ctx->reject_ap_list,
 						     &blm_entry->node);
 				qdf_mem_free(blm_entry);
+				blm_send_reject_ap_list_to_fw(pdev,
+					&blm_ctx->reject_ap_list,
+					&blm_psoc_obj->blm_cfg);
 			}
 		}
 		break;
