@@ -14019,16 +14019,20 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 		return 0;
 	}
 
+	hdd_psoc_idle_timer_stop(hdd_ctx);
+
 	/* ensure adapters are stopped */
 	hdd_stop_present_mode(hdd_ctx, curr_mode);
 
-	is_mode_change_psoc_idle_shutdown = true;
-	errno = pld_idle_shutdown(hdd_ctx->parent_dev,
-				  hdd_mode_change_psoc_idle_shutdown);
-	if (errno) {
-		is_mode_change_psoc_idle_shutdown = false;
-		hdd_err("Stop wlan modules failed");
-		return errno;
+	if (DRIVER_MODULES_CLOSED != hdd_ctx->driver_status) {
+		is_mode_change_psoc_idle_shutdown = true;
+		errno = pld_idle_shutdown(hdd_ctx->parent_dev,
+					  hdd_mode_change_psoc_idle_shutdown);
+		if (errno) {
+			is_mode_change_psoc_idle_shutdown = false;
+			hdd_err("Stop wlan modules failed");
+			return errno;
+		}
 	}
 
 	/* Cleanup present mode before switching to new mode */
