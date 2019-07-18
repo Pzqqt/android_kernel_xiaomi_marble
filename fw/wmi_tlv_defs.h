@@ -997,6 +997,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_service_ready_ext2_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_preauth_status_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_preauth_start_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_set_elna_bypass_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_get_elna_bypass_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_get_elna_bypass_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1402,6 +1405,8 @@ typedef enum {
     OP(WMI_OEM_DATA_CMDID) \
     OP(WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID) \
     OP(WMI_ROAM_PREAUTH_STATUS_CMDID) \
+    OP(WMI_SET_ELNA_BYPASS_CMDID) \
+    OP(WMI_GET_ELNA_BYPASS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1636,6 +1641,7 @@ typedef enum {
     OP(WMI_VDEV_DELETE_ALL_PEER_RESP_EVENTID) \
     OP(WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID) \
     OP(WMI_ROAM_PREAUTH_START_EVENTID) \
+    OP(WMI_GET_ELNA_BYPASS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4042,6 +4048,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_RAP_CONFIG_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, oem_data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_OEM_DATA_CMDID);
 
+/* Set ELNA BYPASS cmd */
+#define WMITLV_TABLE_WMI_SET_ELNA_BYPASS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_set_elna_bypass_cmd_fixed_param, wmi_set_elna_bypass_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SET_ELNA_BYPASS_CMDID);
+
+/* Get ELNA BYPASS cmd */
+#define WMITLV_TABLE_WMI_GET_ELNA_BYPASS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_get_elna_bypass_cmd_fixed_param, wmi_get_elna_bypass_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_GET_ELNA_BYPASS_CMDID);
+
 
 /************************** TLV definitions of WMI events *******************************/
 
@@ -5474,6 +5490,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_RAP_INFO_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_hdr, wmi_mgmt_hdr, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_MGMT_OFFLOAD_EVENTID);
+
+/* get ELNA BYPASS status event */
+#define WMITLV_TABLE_WMI_GET_ELNA_BYPASS_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_get_elna_bypass_event_fixed_param, wmi_get_elna_bypass_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_GET_ELNA_BYPASS_EVENTID);
+
 
 #ifdef __cplusplus
 }

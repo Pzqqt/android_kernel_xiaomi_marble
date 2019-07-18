@@ -987,6 +987,10 @@ typedef enum {
     WMI_GET_TPC_POWER_CMDID,
     /* Specify when to start monitoring for idle state */
     WMI_IDLE_TRIGGER_MONITOR_CMDID,
+    /** set ELNA BYPASS status */
+    WMI_SET_ELNA_BYPASS_CMDID,
+    /** get ELNA BYPASS status */
+    WMI_GET_ELNA_BYPASS_CMDID,
 
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
@@ -1737,6 +1741,9 @@ typedef enum {
 
     /** event to provide MU-EDCA Parameters (to update host's beacon config) */
     WMI_MUEDCA_PARAMS_CONFIG_EVENTID,
+
+    /** event to get ELNA BYPASS status */
+    WMI_GET_ELNA_BYPASS_EVENTID,
 
     /* GPIO Event */
     WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
@@ -24310,6 +24317,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_TWT_BTWT_REMOVE_STA_CMDID);
         WMI_RETURN_STRING(WMI_OEM_DATA_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_PREAUTH_STATUS_CMDID);
+        WMI_RETURN_STRING(WMI_SET_ELNA_BYPASS_CMDID);
+        WMI_RETURN_STRING(WMI_GET_ELNA_BYPASS_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -27325,6 +27334,32 @@ typedef struct {
      */
     A_UINT32 valid_fields;
 } wlanfw_iface_combination;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+    * WMITLV_TAG_STRUC_wmi_set_elna_bypass_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /** 1-Enable, 0-Disable */
+    A_UINT32 en_dis;
+} wmi_set_elna_bypass_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+    * WMITLV_TAG_STRUC_wmi_get_elna_bypass_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+} wmi_get_elna_bypass_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_get_elna_bypass_event_fixed_param */
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /** 1-Enable, 0-Disable */
+    A_UINT32 en_dis;
+} wmi_get_elna_bypass_event_fixed_param;
 
 
 
