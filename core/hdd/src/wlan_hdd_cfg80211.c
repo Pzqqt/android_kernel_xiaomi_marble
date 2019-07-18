@@ -8434,7 +8434,7 @@ static uint32_t wlan_hdd_populate_weigh_pcl(
 			w_pcl[i].flag = set | PCL_CHANNEL_SUPPORT_CLI;
 	}
 	chan_idx = pcl_len;
-	if (chan_weights->weight_list[pcl_len - 1] >
+	if (pcl_len && chan_weights->weight_list[pcl_len - 1] >
 	    PCL_GROUPS_WEIGHT_DIFFERENCE)
 	/* Set non-pcl channels weight 20 point less than the last PCL entry */
 		valid_weight = chan_weights->weight_list[pcl_len - 1] -
