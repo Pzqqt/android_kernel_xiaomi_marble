@@ -57,6 +57,7 @@ enum {
 	ALLOW_BUCK_DISABLE,
 	HPH_COMP_DELAY,
 	HPH_PA_DELAY,
+	AMIC2_BCS_ENABLE,
 };
 
 enum {
@@ -1406,10 +1407,21 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 			break;
 		}
 		set_bit(w->shift, &wcd938x->status_mask);
+		/* Enable BCS for Headset mic */
+		if (w->shift == 1 && !(snd_soc_component_read32(component,
+				WCD938X_TX_NEW_AMIC_MUX_CFG) & 0x80)) {
+			wcd938x_tx_connect_port(component, MBHC, true);
+			set_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask);
+		}
 		wcd938x_tx_connect_port(component, ADC1 + (w->shift), true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		wcd938x_tx_connect_port(component, ADC1 + (w->shift), false);
+		if (w->shift == 1 &&
+			test_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask)) {
+			wcd938x_tx_connect_port(component, MBHC, false);
+			clear_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask);
+		}
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x00);
 		clear_bit(w->shift, &wcd938x->status_mask);
