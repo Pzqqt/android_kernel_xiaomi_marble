@@ -1387,6 +1387,7 @@ QDF_STATUS csr_roam_copy_connect_profile(struct mac_context *mac,
 		pProfile->mcEncryptionType = connected_prof->mcEncryptionType;
 		pProfile->BSSType = connected_prof->BSSType;
 		pProfile->operationChannel = connected_prof->operationChannel;
+		pProfile->op_freq = connected_prof->op_freq;
 		qdf_mem_copy(&pProfile->bssid, &connected_prof->bssid,
 			sizeof(struct qdf_mac_addr));
 		qdf_mem_copy(&pProfile->SSID, &connected_prof->SSID,
@@ -3313,6 +3314,7 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 	struct csr_roam_session *pSession;
 	tDot11fBeaconIEs *beacon_ies = NULL;
 	uint8_t chan1, chan2;
+	uint8_t new_chan_num;
 
 	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
 		sme_err("Session ID: %d is not valid", sessionId);
@@ -3378,8 +3380,11 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 		pSession->bRefAssocStartCnt--;
 	} else if (roam_info && (u1 == eCSR_ROAM_SET_CHANNEL_RSP)
 		   && (u2 == eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS)) {
-		pSession->connectedProfile.operationChannel =
+		new_chan_num =
 			roam_info->channelChangeRespEvent->newChannelNumber;
+		pSession->connectedProfile.operationChannel = new_chan_num;
+		pSession->connectedProfile.op_freq =
+			wlan_reg_chan_to_freq(mac->pdev, new_chan_num);
 	} else if (u1 == eCSR_ROAM_SESSION_OPENED) {
 		ret = (u2 == eCSR_ROAM_RESULT_SUCCESS) ?
 		      QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
@@ -8567,6 +8572,7 @@ csr_roam_save_connected_information(struct mac_context *mac,
 	}
 	/* Save bssid */
 	pConnectProfile->operationChannel = pSirBssDesc->channelId;
+	pConnectProfile->op_freq = pSirBssDesc->chan_freq;
 	pConnectProfile->beaconInterval = pSirBssDesc->beaconInterval;
 	if (!pConnectProfile->beaconInterval)
 		sme_err("ERROR: Beacon interval is ZERO");
@@ -11583,6 +11589,7 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	}
 	session->connectedProfile.operationChannel =
 		wlan_reg_freq_to_chan(mac_ctx->pdev, pSwitchChnInd->freq);
+	session->connectedProfile.op_freq = pSwitchChnInd->freq;
 	if (session->pConnectBssDesc) {
 		session->pConnectBssDesc->channelId =
 			wlan_reg_freq_to_chan(mac_ctx->pdev,
@@ -14292,6 +14299,7 @@ static void csr_roam_update_connected_profile_from_new_bss(struct mac_context *m
 		/* Set the operating channel. */
 		pSession->connectedProfile.operationChannel =
 			wlan_reg_freq_to_chan(mac->pdev, pNewBss->freq);
+		pSession->connectedProfile.op_freq = pNewBss->freq;
 		/* move the BSSId from the BSS description into the connected
 		 * state information.
 		 */
