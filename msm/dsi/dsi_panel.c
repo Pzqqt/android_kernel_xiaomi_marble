@@ -283,6 +283,16 @@ static int dsi_panel_gpio_request(struct dsi_panel *panel)
 		}
 	}
 
+	if (gpio_is_valid(panel->panel_test_gpio)) {
+		rc = gpio_request(panel->panel_test_gpio, "panel_test_gpio");
+		if (rc) {
+			pr_warn("request for panel_test_gpio failed, rc=%d\n",
+				 rc);
+			panel->panel_test_gpio = -1;
+			rc = 0;
+		}
+	}
+
 	goto error;
 error_release_mode_sel:
 	if (gpio_is_valid(panel->bl_config.en_gpio))
@@ -313,6 +323,9 @@ static int dsi_panel_gpio_release(struct dsi_panel *panel)
 
 	if (gpio_is_valid(panel->reset_config.lcd_mode_sel_gpio))
 		gpio_free(panel->reset_config.lcd_mode_sel_gpio);
+
+	if (gpio_is_valid(panel->panel_test_gpio))
+		gpio_free(panel->panel_test_gpio);
 
 	return rc;
 }
@@ -398,6 +411,14 @@ static int dsi_panel_reset(struct dsi_panel *panel)
 		if (rc)
 			pr_err("unable to set dir for mode gpio rc=%d\n", rc);
 	}
+
+	if (gpio_is_valid(panel->panel_test_gpio)) {
+		rc = gpio_direction_input(panel->panel_test_gpio);
+		if (rc)
+			pr_warn("unable to set dir for panel test gpio rc=%d\n",
+			       rc);
+	}
+
 exit:
 	return rc;
 }
@@ -2134,6 +2155,13 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 		       panel->name, rc);
 		goto error;
 	}
+
+	panel->panel_test_gpio = utils->get_named_gpio(utils->data,
+					"qcom,mdss-dsi-panel-test-pin",
+					0);
+	if (!gpio_is_valid(panel->panel_test_gpio))
+		pr_debug("%s:%d panel test gpio not specified\n", __func__,
+			 __LINE__);
 
 error:
 	return rc;

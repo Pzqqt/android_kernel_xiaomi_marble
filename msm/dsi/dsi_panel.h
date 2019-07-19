@@ -195,6 +195,8 @@ struct dsi_panel {
 	enum dsi_dms_mode dms_mode;
 
 	bool sync_broadcast_en;
+
+	int panel_test_gpio;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
