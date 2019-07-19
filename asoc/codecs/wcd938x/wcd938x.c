@@ -23,6 +23,7 @@
 
 #include "internal.h"
 #include "wcd938x-registers.h"
+#include "wcd938x.h"
 
 #define WCD938X_DRV_NAME "wcd938x_codec"
 #define NUM_SWRS_DT_PARAMS 5
@@ -38,11 +39,6 @@
 #define ADC_MODE_VAL_LP       0x05
 #define ADC_MODE_VAL_ULP1     0x09
 #define ADC_MODE_VAL_ULP2     0x0B
-
-enum {
-	WCD9380 = 0,
-	WCD9385 = 5,
-};
 
 enum {
 	CODEC_TX = 0,
@@ -2679,6 +2675,30 @@ static ssize_t wcd938x_variant_read(struct snd_info_entry *entry,
 static struct snd_info_entry_ops wcd938x_variant_ops = {
 	.read = wcd938x_variant_read,
 };
+
+/*
+ * wcd938x_get_codec_variant
+ * @component: component instance
+ *
+ * Return: codec variant or -EINVAL in error.
+ */
+int wcd938x_get_codec_variant(struct snd_soc_component *component)
+{
+	struct wcd938x_priv *priv = NULL;
+
+	if (!component)
+		return -EINVAL;
+
+	priv = snd_soc_component_get_drvdata(component);
+	if (!priv) {
+		dev_err(component->dev,
+			"%s:wcd938x not probed\n", __func__);
+		return 0;
+	}
+
+	return priv->variant;
+}
+EXPORT_SYMBOL(wcd938x_get_codec_variant);
 
 /*
  * wcd938x_info_create_codec_entry - creates wcd938x module
