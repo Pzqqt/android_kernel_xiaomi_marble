@@ -1782,10 +1782,15 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			WMA_LOGE("Sending start for roam scan filter failed");
 			break;
 		}
-		qdf_status = wma_roam_scan_btm_offload(wma_handle, roam_req);
-		if (qdf_status != QDF_STATUS_SUCCESS) {
-			WMA_LOGE("Sending BTM config to fw failed");
-			break;
+
+		/* Send BTM config as disabled during RSO Stop */
+		if (roam_req->reason == REASON_CTX_INIT) {
+			qdf_status = wma_roam_scan_btm_offload(wma_handle,
+							       roam_req);
+			if (QDF_IS_STATUS_ERROR(qdf_status)) {
+				WMA_LOGE("Sending BTM config to fw failed");
+				break;
+			}
 		}
 
 		/*
