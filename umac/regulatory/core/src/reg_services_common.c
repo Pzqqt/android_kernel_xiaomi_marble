@@ -77,73 +77,6 @@ static const enum phy_ch_width get_next_lower_bw[] = {
 	[CH_WIDTH_5MHZ] = CH_WIDTH_INVALID
 };
 
-#ifdef CONFIG_LEGACY_CHAN_ENUM
-static const struct chan_map channel_map_old[NUM_CHANNELS] = {
-	[CHAN_ENUM_1] = {2412, 1, 2, 40},
-	[CHAN_ENUM_2] = {2417, 2, 2, 40},
-	[CHAN_ENUM_3] = {2422, 3, 2, 40},
-	[CHAN_ENUM_4] = {2427, 4, 2, 40},
-	[CHAN_ENUM_5] = {2432, 5, 2, 40},
-	[CHAN_ENUM_6] = {2437, 6, 2, 40},
-	[CHAN_ENUM_7] = {2442, 7, 2, 40},
-	[CHAN_ENUM_8] = {2447, 8, 2, 40},
-	[CHAN_ENUM_9] = {2452, 9, 2, 40},
-	[CHAN_ENUM_10] = {2457, 10, 2, 40},
-	[CHAN_ENUM_11] = {2462, 11, 2, 40},
-	[CHAN_ENUM_12] = {2467, 12, 2, 40},
-	[CHAN_ENUM_13] = {2472, 13, 2, 40},
-	[CHAN_ENUM_14] = {2484, 14, 2, 40},
-
-	[CHAN_ENUM_36] = {5180, 36, 2, 160},
-	[CHAN_ENUM_40] = {5200, 40, 2, 160},
-	[CHAN_ENUM_44] = {5220, 44, 2, 160},
-	[CHAN_ENUM_48] = {5240, 48, 2, 160},
-	[CHAN_ENUM_52] = {5260, 52, 2, 160},
-	[CHAN_ENUM_56] = {5280, 56, 2, 160},
-	[CHAN_ENUM_60] = {5300, 60, 2, 160},
-	[CHAN_ENUM_64] = {5320, 64, 2, 160},
-
-	[CHAN_ENUM_100] = {5500, 100, 2, 160},
-	[CHAN_ENUM_104] = {5520, 104, 2, 160},
-	[CHAN_ENUM_108] = {5540, 108, 2, 160},
-	[CHAN_ENUM_112] = {5560, 112, 2, 160},
-	[CHAN_ENUM_116] = {5580, 116, 2, 160},
-	[CHAN_ENUM_120] = {5600, 120, 2, 160},
-	[CHAN_ENUM_124] = {5620, 124, 2, 160},
-	[CHAN_ENUM_128] = {5640, 128, 2, 160},
-	[CHAN_ENUM_132] = {5660, 132, 2, 160},
-	[CHAN_ENUM_136] = {5680, 136, 2, 160},
-	[CHAN_ENUM_140] = {5700, 140, 2, 160},
-	[CHAN_ENUM_144] = {5720, 144, 2, 160},
-
-	[CHAN_ENUM_149] = {5745, 149, 2, 160},
-	[CHAN_ENUM_153] = {5765, 153, 2, 160},
-	[CHAN_ENUM_157] = {5785, 157, 2, 160},
-	[CHAN_ENUM_161] = {5805, 161, 2, 160},
-	[CHAN_ENUM_165] = {5825, 165, 2, 160},
-#ifndef WLAN_FEATURE_DSRC
-	[CHAN_ENUM_169] = {5845, 169, 2, 40},
-	[CHAN_ENUM_173] = {5865, 173, 2, 20},
-#else
-	[CHAN_ENUM_170] = {5852, 170, 2, 20},
-	[CHAN_ENUM_171] = {5855, 171, 2, 20},
-	[CHAN_ENUM_172] = {5860, 172, 2, 20},
-	[CHAN_ENUM_173] = {5865, 173, 2, 20},
-	[CHAN_ENUM_174] = {5870, 174, 2, 20},
-	[CHAN_ENUM_175] = {5875, 175, 2, 20},
-	[CHAN_ENUM_176] = {5880, 176, 2, 20},
-	[CHAN_ENUM_177] = {5885, 177, 2, 20},
-	[CHAN_ENUM_178] = {5890, 178, 2, 20},
-	[CHAN_ENUM_179] = {5895, 179, 2, 20},
-	[CHAN_ENUM_180] = {5900, 180, 2, 20},
-	[CHAN_ENUM_181] = {5905, 181, 2, 20},
-	[CHAN_ENUM_182] = {5910, 182, 2, 20},
-	[CHAN_ENUM_183] = {5915, 183, 2, 20},
-	[CHAN_ENUM_184] = {5920, 184, 2, 20},
-#endif
-};
-
-#else
 static const struct chan_map channel_map_us[NUM_CHANNELS] = {
 	[CHAN_ENUM_2412] = {2412, 1, 20, 40},
 	[CHAN_ENUM_2417] = {2417, 2, 20, 40},
@@ -958,14 +891,7 @@ static const struct chan_map channel_map_china[NUM_CHANNELS] = {
 	[CHAN_ENUM_7105] = {7105, 233, 2, 160}
 #endif /* CONFIG_BAND_6GHZ */
 };
-#endif
 
-#ifdef CONFIG_LEGACY_CHAN_ENUM
-void reg_init_channel_map(enum dfs_reg dfs_region)
-{
-	channel_map = channel_map_old;
-}
-#else
 void reg_init_channel_map(enum dfs_reg dfs_region)
 {
 	switch (dfs_region) {
@@ -990,7 +916,6 @@ void reg_init_channel_map(enum dfs_reg dfs_region)
 		break;
 	}
 }
-#endif
 
 uint16_t reg_get_bw_value(enum phy_ch_width bw)
 {
@@ -1670,7 +1595,6 @@ uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 	return 0;
 }
 
-#ifndef CONFIG_LEGACY_CHAN_ENUM
 bool reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev, uint8_t chan_num)
 {
 	uint32_t freq = 0;
@@ -1679,12 +1603,6 @@ bool reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev, uint8_t chan_num)
 
 	return REG_IS_49GHZ_FREQ(freq) ? true : false;
 }
-#else
-bool reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev, uint8_t chan_num)
-{
-	return false;
-}
-#endif
 
 enum band_info reg_chan_to_band(uint32_t chan_num)
 {
@@ -2222,12 +2140,10 @@ bool reg_is_6ghz_chan_freq(uint16_t freq)
 }
 #endif
 
-#ifndef CONFIG_LEGACY_CHAN_ENUM
 bool reg_is_49ghz_freq(uint32_t freq)
 {
 	return REG_IS_49GHZ_FREQ(freq);
 }
-#endif
 
 uint32_t reg_ch_num(uint32_t ch_enum)
 {

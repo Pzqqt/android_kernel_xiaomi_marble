@@ -112,7 +112,6 @@ static inline bool wlan_reg_is_6ghz_chan_freq(uint16_t freq)
 }
 #endif
 
-#ifndef CONFIG_LEGACY_CHAN_ENUM
 /**
  * wlan_reg_is_49ghz_freq() - Check if the given channel frequency is 4.9GHz
  * @freq: Channel frequency
@@ -121,7 +120,6 @@ static inline bool wlan_reg_is_6ghz_chan_freq(uint16_t freq)
  */
 #define WLAN_REG_IS_49GHZ_FREQ(freq) wlan_reg_is_49ghz_freq(freq)
 bool wlan_reg_is_49ghz_freq(uint32_t freq);
-#endif
 
 /**
  * wlan_reg_ch_num() - Get channel number from channel enum

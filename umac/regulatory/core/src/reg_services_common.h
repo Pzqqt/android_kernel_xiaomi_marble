@@ -45,14 +45,12 @@
 	(((freq) >= REG_MIN_24GHZ_CH_FREQ) &&   \
 	((freq) <= REG_MAX_24GHZ_CH_FREQ))
 
-#ifndef CONFIG_LEGACY_CHAN_ENUM
 #define REG_MIN_49GHZ_CH_FREQ channel_map[MIN_49GHZ_CHANNEL].center_freq
 #define REG_MAX_49GHZ_CH_FREQ channel_map[MAX_49GHZ_CHANNEL].center_freq
 
 #define REG_IS_49GHZ_FREQ(freq) \
 	(((freq) >= REG_MIN_49GHZ_CH_FREQ) &&   \
 	((freq) <= REG_MAX_49GHZ_CH_FREQ))
-#endif
 
 #define REG_IS_5GHZ_CH(chan_num) \
 	(((chan_num) >= REG_MIN_5GHZ_CH_NUM) &&	\
@@ -458,7 +456,6 @@ static inline bool reg_is_6ghz_chan_freq(uint16_t freq)
 }
 #endif /* CONFIG_BAND_6GHZ */
 
-#ifndef CONFIG_LEGACY_CHAN_ENUM
 /**
  * reg_is_49ghz_freq() - Check if the given channel frequency is 4.9GHz
  * @freq: Channel frequency
@@ -466,7 +463,6 @@ static inline bool reg_is_6ghz_chan_freq(uint16_t freq)
  * Return: true if channel frequency is 4.9GHz, else false
  */
 bool reg_is_49ghz_freq(uint32_t freq);
-#endif
 
 /**
  * reg_ch_num() - Get channel number from channel enum

@@ -672,12 +672,10 @@ bool wlan_reg_is_6ghz_chan_freq(uint16_t freq)
 	return reg_is_6ghz_chan_freq(freq);
 }
 #endif
-#ifndef CONFIG_LEGACY_CHAN_ENUM
 bool wlan_reg_is_49ghz_freq(uint32_t freq)
 {
 	return reg_is_49ghz_freq(freq);
 }
-#endif
 
 uint32_t wlan_reg_ch_num(uint32_t ch_enum)
 {

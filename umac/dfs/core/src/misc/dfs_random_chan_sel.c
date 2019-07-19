@@ -779,7 +779,7 @@ dfs_mark_leaking_ch(struct wlan_dfs *dfs,
 		uint8_t *temp_ch_lst)
 {
 	struct dfs_tx_leak_info *target_chan_matrix = NULL;
-	uint32_t         num_channel = (CHAN_ENUM_144 - CHAN_ENUM_36) + 1;
+	uint32_t         num_channel = (CHAN_ENUM_5720 - CHAN_ENUM_5180) + 1;
 	uint32_t         j = 0;
 	uint32_t         k = 0;
 	uint8_t          dfs_nol_channel;

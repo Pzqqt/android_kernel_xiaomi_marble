@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -164,7 +164,8 @@ struct dfs_tx_leak_info {
  */
 struct dfs_matrix_tx_leak_info {
 	uint8_t channel;
-	struct dfs_tx_leak_info chan_matrix[CHAN_ENUM_144 - CHAN_ENUM_36 + 1];
+	struct dfs_tx_leak_info chan_matrix[CHAN_ENUM_5720 -
+					    CHAN_ENUM_5180 + 1];
 };
 #endif
 
