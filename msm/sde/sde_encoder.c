@@ -3496,7 +3496,9 @@ void sde_encoder_perf_uidle_status(struct sde_kms *sde_kms,
 			status.uidle_idle_status_0,
 			status.uidle_idle_status_1,
 			status.uidle_fal_status_0,
-			status.uidle_fal_status_1);
+			status.uidle_fal_status_1,
+			status.uidle_status,
+			status.uidle_en_fal10);
 	}
 
 	if ((sde_kms->catalog->uidle_cfg.debugfs_perf & SDE_PERF_UIDLE_CNT)

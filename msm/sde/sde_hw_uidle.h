@@ -59,6 +59,8 @@ struct sde_uidle_status {
 	u32 uidle_idle_status_1;
 	u32 uidle_fal_status_0;
 	u32 uidle_fal_status_1;
+	u32 uidle_status;
+	u32 uidle_en_fal10;
 };
 
 struct sde_hw_uidle_ops {

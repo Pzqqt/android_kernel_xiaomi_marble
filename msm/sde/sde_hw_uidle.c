@@ -85,6 +85,11 @@ void sde_hw_uidle_get_status(struct sde_hw_uidle *uidle,
 		SDE_REG_READ(c, UIDLE_FAL_STATUS_0);
 	status->uidle_fal_status_1 =
 		SDE_REG_READ(c, UIDLE_FAL_STATUS_1);
+
+	status->uidle_status =
+		SDE_REG_READ(c, UIDLE_STATUS);
+	status->uidle_en_fal10 =
+		(status->uidle_status & BIT(2)) ? 1 : 0;
 }
 
 void sde_hw_uidle_get_cntr(struct sde_hw_uidle *uidle,

@@ -357,7 +357,9 @@ TRACE_EVENT(sde_perf_uidle_status,
 			u32 uidle_idle_status_0,
 			u32 uidle_idle_status_1,
 			u32 uidle_fal_status_0,
-			u32 uidle_fal_status_1),
+			u32 uidle_fal_status_1,
+			u32 uidle_status,
+			u32 uidle_en_fal10),
 	TP_ARGS(crtc,
 			uidle_danger_status_0,
 			uidle_danger_status_1,
@@ -366,7 +368,9 @@ TRACE_EVENT(sde_perf_uidle_status,
 			uidle_idle_status_0,
 			uidle_idle_status_1,
 			uidle_fal_status_0,
-			uidle_fal_status_1),
+			uidle_fal_status_1,
+			uidle_status,
+			uidle_en_fal10),
 	TP_STRUCT__entry(
 			__field(u32, crtc)
 			__field(u32, uidle_danger_status_0)
@@ -376,7 +380,9 @@ TRACE_EVENT(sde_perf_uidle_status,
 			__field(u32, uidle_idle_status_0)
 			__field(u32, uidle_idle_status_1)
 			__field(u32, uidle_fal_status_0)
-			__field(u32, uidle_fal_status_1)),
+			__field(u32, uidle_fal_status_1)
+			__field(u32, uidle_status)
+			__field(u32, uidle_en_fal10)),
 	TP_fast_assign(
 			__entry->crtc = crtc;
 			__entry->uidle_danger_status_0 = uidle_danger_status_0;
@@ -386,9 +392,11 @@ TRACE_EVENT(sde_perf_uidle_status,
 			__entry->uidle_idle_status_0 = uidle_idle_status_0;
 			__entry->uidle_idle_status_1 = uidle_idle_status_1;
 			__entry->uidle_fal_status_0 = uidle_fal_status_0;
-			__entry->uidle_fal_status_1 = uidle_fal_status_1;),
+			__entry->uidle_fal_status_1 = uidle_fal_status_1;
+			__entry->uidle_status = uidle_status;
+			__entry->uidle_en_fal10 = uidle_en_fal10;),
 	 TP_printk(
-		"crtc:%d danger[%d, %d] safe[%d, %d] idle[%d, %d] fal[%d, %d]",
+		"crtc:%d danger[%d, %d] safe[%d, %d] idle[%d, %d] fal[%d, %d] status:%d en_fal10:%d",
 			__entry->crtc,
 			__entry->uidle_danger_status_0,
 			__entry->uidle_danger_status_1,
@@ -397,7 +405,9 @@ TRACE_EVENT(sde_perf_uidle_status,
 			__entry->uidle_idle_status_0,
 			__entry->uidle_idle_status_1,
 			__entry->uidle_fal_status_0,
-			__entry->uidle_fal_status_1
+			__entry->uidle_fal_status_1,
+			__entry->uidle_status,
+			__entry->uidle_en_fal10
 			)
 );
 
