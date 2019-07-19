@@ -336,15 +336,14 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(
+	/* wmi_oem_response_event_id is not defined for legacy targets.
+	 * So do not check for error for this event.
+	 */
+	wmi_unified_register_event_handler(
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_oem_response_event_id,
 			target_if_wifi_pos_oem_rsp_ev_handler,
 			WMI_RX_WORK_CTX);
-	if (ret) {
-		target_if_err("register_event_handler failed: err %d", ret);
-		return QDF_STATUS_E_INVAL;
-	}
 
 	ret = wmi_unified_register_event_handler(
 			get_wmi_unified_hdl_from_psoc(psoc),
