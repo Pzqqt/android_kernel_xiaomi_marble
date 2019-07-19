@@ -9321,6 +9321,7 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 	}
 
 	hdd_debug("Starting psoc idle timer");
+	timeout_ms += HDD_PSOC_IDLE_SHUTDOWN_SUSPEND_DELAY;
 	qdf_delayed_work_start(&hdd_ctx->psoc_idle_timeout_work, timeout_ms);
 	hdd_prevent_suspend_timeout(timeout_ms, reason);
 }
@@ -9456,6 +9457,7 @@ int hdd_trigger_psoc_idle_restart(struct hdd_context *hdd_ctx)
  */
 static void hdd_psoc_idle_timeout_callback(void *priv)
 {
+	int ret;
 	struct hdd_context *hdd_ctx = priv;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
@@ -9463,7 +9465,11 @@ static void hdd_psoc_idle_timeout_callback(void *priv)
 
 	hdd_info("Psoc idle timeout elapsed; starting psoc shutdown");
 
-	pld_idle_shutdown(hdd_ctx->parent_dev, hdd_psoc_idle_shutdown);
+	ret = pld_idle_shutdown(hdd_ctx->parent_dev, hdd_psoc_idle_shutdown);
+	if (-EAGAIN == ret || hdd_ctx->is_wiphy_suspended) {
+		hdd_debug("System suspend in progress. Restart idle shutdown timer");
+		hdd_psoc_idle_timer_start(hdd_ctx);
+	}
 }
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
