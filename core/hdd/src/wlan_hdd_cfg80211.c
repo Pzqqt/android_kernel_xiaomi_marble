@@ -2840,6 +2840,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		hdd_err("get_external_acs_policy failed");
 
+	sap_config->acs_cfg.acs_mode = true;
+
 	if (is_external_acs_policy &&
 	    policy_mgr_is_force_scc(hdd_ctx->psoc) &&
 	    policy_mgr_get_connection_count(hdd_ctx->psoc)) {
@@ -2927,7 +2929,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			hdd_debug("%d ", sap_config->acs_cfg.ch_list[i]);
 	}
 
-	sap_config->acs_cfg.acs_mode = true;
 	if (test_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags)) {
 		/* ***Note*** Completion variable usage is not allowed
 		 * here since ACS scan operation may take max 2.2 sec
@@ -3012,14 +3013,19 @@ static int wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 
 void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
 {
+	struct sap_config *sap_cfg;
+
 	if (!adapter)
 		return;
-	if (adapter->session.ap.sap_config.acs_cfg.ch_list) {
+
+	sap_cfg = &adapter->session.ap.sap_config;
+	if (sap_cfg->acs_cfg.ch_list) {
 		hdd_debug("Clearing ACS cfg channel list");
-		qdf_mem_free(adapter->session.ap.sap_config.acs_cfg.ch_list);
-		adapter->session.ap.sap_config.acs_cfg.ch_list = NULL;
+		qdf_mem_free(sap_cfg->acs_cfg.ch_list);
+		sap_cfg->acs_cfg.ch_list = NULL;
 	}
-	adapter->session.ap.sap_config.acs_cfg.ch_list_count = 0;
+	sap_cfg->acs_cfg.ch_list_count = 0;
+	sap_cfg->acs_cfg.acs_mode = false;
 }
 
 /**
