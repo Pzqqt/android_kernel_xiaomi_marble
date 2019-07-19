@@ -453,7 +453,9 @@ static int dp_ctrl_link_training_2(struct dp_ctrl_private *ctrl)
 	/* Make sure to clear the current pattern before starting a new one */
 	wmb();
 
-	if (drm_dp_tps3_supported(ctrl->panel->dpcd))
+	if (drm_dp_tps4_supported(ctrl->panel->dpcd))
+		dpcd_pattern = DP_TRAINING_PATTERN_4;
+	else if (drm_dp_tps3_supported(ctrl->panel->dpcd))
 		dpcd_pattern = DP_TRAINING_PATTERN_3;
 	else
 		dpcd_pattern = DP_TRAINING_PATTERN_2;
