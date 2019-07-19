@@ -16329,6 +16329,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	uint8_t value = 0;
 	struct wlan_objmgr_vdev *vdev;
 	uint32_t channel_bonding_mode;
+	uint32_t oper_freq;
 
 	hdd_enter();
 
@@ -16505,11 +16506,15 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		roam_profile->csrPersona = adapter->device_mode;
 
 		if (operatingChannel) {
+			oper_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+							  operatingChannel);
 			roam_profile->ChannelInfo.ChannelList =
 				&operatingChannel;
+			roam_profile->ChannelInfo.freq_list = &oper_freq;
 			roam_profile->ChannelInfo.numOfChannels = 1;
 		} else {
 			roam_profile->ChannelInfo.ChannelList = NULL;
+			roam_profile->ChannelInfo.freq_list = NULL;
 			roam_profile->ChannelInfo.numOfChannels = 0;
 		}
 		if ((QDF_IBSS_MODE == adapter->device_mode)
@@ -16653,6 +16658,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		hdd_set_connection_in_progress(false);
 
 		roam_profile->ChannelInfo.ChannelList = NULL;
+		roam_profile->ChannelInfo.freq_list = NULL;
 		roam_profile->ChannelInfo.numOfChannels = 0;
 
 		if ((QDF_STA_MODE == adapter->device_mode)
@@ -19112,6 +19118,8 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 					      channelNum);
 		roam_profile->ChannelInfo.ChannelList =
 			&sta_ctx->conn_info.channel;
+		roam_profile->ChannelInfo.freq_list =
+			&sta_ctx->conn_info.freq;
 	}
 
 	/* Initialize security parameters */
@@ -21238,6 +21246,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	ch_info = &sta_ctx->ch_info;
 	roam_profile.ChannelInfo.ChannelList = &ch_info->channel;
+	roam_profile.ChannelInfo.freq_list = &ch_info->freq;
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
 	roam_profile.ch_params.ch_width = hdd_map_nl_chan_width(chandef->width);

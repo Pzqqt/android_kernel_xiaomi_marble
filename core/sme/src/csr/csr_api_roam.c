@@ -1604,6 +1604,9 @@ QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(struct mac_context *mac,
 		qdf_mem_free(pNeighborRoamInfo->cfgParams.channelInfo.
 			     ChannelList);
 		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
+		qdf_mem_free(pNeighborRoamInfo->cfgParams.channelInfo.
+			     freq_list);
+		pNeighborRoamInfo->cfgParams.channelInfo.freq_list = NULL;
 		pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels = 0;
 	}
 	return status;
@@ -1615,14 +1618,14 @@ QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(struct mac_context *mac,
  */
 QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
 						uint8_t sessionId,
-						const uint8_t *pChannelList,
-						const uint8_t numChannels)
+						const uint8_t *chan_list,
+						const uint8_t num_chan)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
 
-	pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels = numChannels;
+	pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels = num_chan;
 
 	pNeighborRoamInfo->cfgParams.channelInfo.ChannelList =
 		qdf_mem_malloc(pNeighborRoamInfo->cfgParams.channelInfo.
@@ -1633,10 +1636,23 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	pNeighborRoamInfo->cfgParams.channelInfo.freq_list =
+		qdf_mem_malloc(sizeof(uint32_t) * num_chan);
+	if (!pNeighborRoamInfo->cfgParams.channelInfo.freq_list) {
+		qdf_mem_free(pNeighborRoamInfo->cfgParams.channelInfo.
+			     ChannelList);
+		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
+		pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels = 0;
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	/* Update the roam global structure */
 	qdf_mem_copy(pNeighborRoamInfo->cfgParams.channelInfo.ChannelList,
-		     pChannelList,
+		     chan_list,
 		     pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels);
+	sme_chan_to_freq_list(mac->pdev,
+			      pNeighborRoamInfo->cfgParams.channelInfo.
+			      freq_list, chan_list, num_chan);
 	return status;
 }
 
@@ -1646,7 +1662,7 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
  * csr_create_roam_scan_channel_list() - create roam scan channel list
  * @mac: Global mac pointer
  * @sessionId: session id
- * @pChannelList: pointer to channel list
+ * @chan_list: pointer to channel list
  * @numChannels: number of channels
  * @band: band enumeration
  *
@@ -1662,7 +1678,7 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
  */
 QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 					     uint8_t sessionId,
-					     uint8_t *pChannelList,
+					     uint8_t *chan_list,
 					     uint8_t numChannels,
 					     const enum band_info band)
 {
@@ -1670,12 +1686,12 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo
 		= &mac->roam.neighborRoamInfo[sessionId];
-	uint8_t outNumChannels = 0;
+	uint8_t out_num_chan = 0;
 	uint8_t inNumChannels = numChannels;
-	uint8_t *inPtr = pChannelList;
+	uint8_t *in_ptr = chan_list;
 	uint8_t i = 0;
 	uint8_t ChannelList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint8_t tmpChannelList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t tmp_chan_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t mergedOutputNumOfChannels = 0;
 
 	tpCsrChannelInfo currChannelListInfo
@@ -1691,32 +1707,32 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 						occupiedChannels[sessionId].
 						channelList[0], mac->scan.
 						occupiedChannels[sessionId].
-						numChannels, inPtr,
+						numChannels, in_ptr,
 						inNumChannels,
 						&mergedOutputNumOfChannels);
 		inNumChannels = mergedOutputNumOfChannels;
 	}
 	if (BAND_2G == band) {
 		for (i = 0; i < inNumChannels; i++) {
-			if (WLAN_REG_IS_24GHZ_CH(inPtr[i])
-			    && csr_roam_is_channel_valid(mac, inPtr[i])) {
-				ChannelList[outNumChannels++] = inPtr[i];
+			if (WLAN_REG_IS_24GHZ_CH(in_ptr[i])
+			    && csr_roam_is_channel_valid(mac, in_ptr[i])) {
+				ChannelList[out_num_chan++] = in_ptr[i];
 			}
 		}
 	} else if (BAND_5G == band) {
 		for (i = 0; i < inNumChannels; i++) {
 			/* Add 5G Non-DFS channel */
-			if (WLAN_REG_IS_5GHZ_CH(inPtr[i]) &&
-			    csr_roam_is_channel_valid(mac, inPtr[i]) &&
-			    !wlan_reg_is_dfs_ch(mac->pdev, inPtr[i])) {
-				ChannelList[outNumChannels++] = inPtr[i];
+			if (WLAN_REG_IS_5GHZ_CH(in_ptr[i]) &&
+			    csr_roam_is_channel_valid(mac, in_ptr[i]) &&
+			    !wlan_reg_is_dfs_ch(mac->pdev, in_ptr[i])) {
+				ChannelList[out_num_chan++] = in_ptr[i];
 			}
 		}
 	} else if (BAND_ALL == band) {
 		for (i = 0; i < inNumChannels; i++) {
-			if (csr_roam_is_channel_valid(mac, inPtr[i]) &&
-			    !wlan_reg_is_dfs_ch(mac->pdev, inPtr[i])) {
-				ChannelList[outNumChannels++] = inPtr[i];
+			if (csr_roam_is_channel_valid(mac, in_ptr[i]) &&
+			    !wlan_reg_is_dfs_ch(mac->pdev, in_ptr[i])) {
+				ChannelList[out_num_chan++] = in_ptr[i];
 			}
 		}
 	} else {
@@ -1734,29 +1750,46 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 	 */
 	if ((BAND_ALL == band) && CSR_IS_ROAM_INTRA_BAND_ENABLED(mac)) {
 		csr_neighbor_roam_channels_filter_by_current_band(mac,
-								sessionId,
-								ChannelList,
-								outNumChannels,
-								tmpChannelList,
-							&outNumChannels);
-		qdf_mem_copy(ChannelList, tmpChannelList, outNumChannels);
+								  sessionId,
+								  ChannelList,
+								  out_num_chan,
+								  tmp_chan_list,
+							          &out_num_chan
+								  );
+		qdf_mem_copy(ChannelList, tmp_chan_list, out_num_chan);
 	}
 	/* Prepare final roam scan channel list */
-	if (outNumChannels) {
+	if (out_num_chan) {
 		/* Clear the channel list first */
 		if (currChannelListInfo->ChannelList) {
 			qdf_mem_free(currChannelListInfo->ChannelList);
 			currChannelListInfo->ChannelList = NULL;
 			currChannelListInfo->numOfChannels = 0;
 		}
+		if (currChannelListInfo->freq_list) {
+			qdf_mem_free(currChannelListInfo->freq_list);
+			currChannelListInfo->freq_list = NULL;
+			currChannelListInfo->numOfChannels = 0;
+		}
 		currChannelListInfo->ChannelList
-			= qdf_mem_malloc(outNumChannels * sizeof(uint8_t));
+			= qdf_mem_malloc(out_num_chan * sizeof(uint8_t));
 		if (!currChannelListInfo->ChannelList) {
 			currChannelListInfo->numOfChannels = 0;
 			return QDF_STATUS_E_NOMEM;
 		}
+		currChannelListInfo->freq_list =
+			qdf_mem_malloc(out_num_chan * sizeof(uint32_t));
+		if (!currChannelListInfo->freq_list) {
+			qdf_mem_free(currChannelListInfo->ChannelList);
+			currChannelListInfo->ChannelList = NULL;
+			currChannelListInfo->numOfChannels = 0;
+			return QDF_STATUS_E_NOMEM;
+		}
 		qdf_mem_copy(currChannelListInfo->ChannelList,
-			     ChannelList, outNumChannels);
+			     ChannelList, out_num_chan);
+		sme_chan_to_freq_list(mac->pdev,
+				      currChannelListInfo->freq_list,
+				      ChannelList, out_num_chan);
 	}
 	return status;
 }
@@ -7590,6 +7623,22 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 			pSrcProfile->ChannelInfo.ChannelList,
 			pSrcProfile->ChannelInfo.numOfChannels);
 	}
+	if (pSrcProfile->ChannelInfo.freq_list) {
+		pDstProfile->ChannelInfo.freq_list =
+			qdf_mem_malloc(pSrcProfile->ChannelInfo.numOfChannels);
+		if (!pDstProfile->ChannelInfo.freq_list) {
+			qdf_mem_free(pDstProfile->ChannelInfo.ChannelList);
+			pDstProfile->ChannelInfo.ChannelList = NULL;
+			pDstProfile->ChannelInfo.numOfChannels = 0;
+			status = QDF_STATUS_E_NOMEM;
+			goto end;
+		}
+		pDstProfile->ChannelInfo.numOfChannels =
+			pSrcProfile->ChannelInfo.numOfChannels;
+		qdf_mem_copy(pDstProfile->ChannelInfo.freq_list,
+			     pSrcProfile->ChannelInfo.freq_list,
+			     pSrcProfile->ChannelInfo.numOfChannels);
+	}
 	pDstProfile->AuthType = pSrcProfile->AuthType;
 	pDstProfile->akm_list = pSrcProfile->akm_list;
 	pDstProfile->EncryptionType = pSrcProfile->EncryptionType;
@@ -7731,9 +7780,17 @@ QDF_STATUS csr_roam_copy_connected_profile(struct mac_context *mac,
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
+	pDstProfile->ChannelInfo.freq_list = qdf_mem_malloc(sizeof(uint32_t));
+	if (!pDstProfile->ChannelInfo.freq_list) {
+		qdf_mem_free(pDstProfile->ChannelInfo.ChannelList);
+		pDstProfile->ChannelInfo.ChannelList = NULL;
+		status = QDF_STATUS_E_NOMEM;
+		goto end;
+	}
 	pDstProfile->ChannelInfo.numOfChannels = 1;
 	pDstProfile->ChannelInfo.ChannelList[0] =
 			wlan_reg_freq_to_chan(mac->pdev, pSrcProfile->op_freq);
+	pDstProfile->ChannelInfo.freq_list[0] = pSrcProfile->op_freq;
 	pDstProfile->AuthType.numEntries = 1;
 	pDstProfile->AuthType.authType[0] = pSrcProfile->AuthType;
 	pDstProfile->negotiatedAuthType = pSrcProfile->AuthType;
@@ -10754,12 +10811,22 @@ csr_roam_prepare_filter_from_profile(struct mac_context *mac_ctx,
 	    || (profile_ch_info->ChannelList[0] == 0)) {
 		fltr_ch_info->numOfChannels = 0;
 		fltr_ch_info->ChannelList = NULL;
+		fltr_ch_info->freq_list = NULL;
 	} else if (profile_ch_info->numOfChannels) {
 		fltr_ch_info->numOfChannels = 0;
 		fltr_ch_info->ChannelList =
 			qdf_mem_malloc(sizeof(*(fltr_ch_info->ChannelList)) *
 				       profile_ch_info->numOfChannels);
 		if (!fltr_ch_info->ChannelList) {
+			status = QDF_STATUS_E_NOMEM;
+			goto free_filter;
+		}
+		fltr_ch_info->freq_list =
+			qdf_mem_malloc(sizeof(*fltr_ch_info->freq_list) *
+				       profile_ch_info->numOfChannels);
+		if (!fltr_ch_info->freq_list) {
+			qdf_mem_free(fltr_ch_info->ChannelList);
+			fltr_ch_info->ChannelList = NULL;
 			status = QDF_STATUS_E_NOMEM;
 			goto free_filter;
 		}

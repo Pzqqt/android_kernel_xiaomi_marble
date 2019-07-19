@@ -3702,6 +3702,8 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 					      channel);
 		roam_profile->ChannelInfo.ChannelList =
 			&sta_ctx->conn_info.channel;
+		roam_profile->ChannelInfo.freq_list =
+			&sta_ctx->conn_info.freq;
 	} else if ((adapter->device_mode == QDF_SAP_MODE)
 		   || (adapter->device_mode == QDF_P2P_GO_MODE)
 		   ) {

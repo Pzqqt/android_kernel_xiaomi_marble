@@ -170,7 +170,7 @@ QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(struct mac_context *mac,
 		uint8_t sessionId);
 QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
 		uint8_t sessionId, const uint8_t *pChannelList,
-		const uint8_t numChannels);
+		const uint8_t num_chan);
 
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
