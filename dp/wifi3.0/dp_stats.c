@@ -4481,6 +4481,12 @@ void dp_print_soc_cfg_params(struct dp_soc *soc)
 		       soc_cfg_ctx->reo_status_ring);
 	DP_PRINT_STATS("RXDMA refill ring: %u ",
 		       soc_cfg_ctx->rxdma_refill_ring);
+	DP_PRINT_STATS("TX_desc limit_0: %u ",
+		       soc_cfg_ctx->tx_desc_limit_0);
+	DP_PRINT_STATS("TX_desc limit_1: %u ",
+		       soc_cfg_ctx->tx_desc_limit_1);
+	DP_PRINT_STATS("TX_desc limit_2: %u ",
+		       soc_cfg_ctx->tx_desc_limit_2);
 	DP_PRINT_STATS("RXDMA err dst ring: %u ",
 		       soc_cfg_ctx->rxdma_err_dst_ring);
 }
