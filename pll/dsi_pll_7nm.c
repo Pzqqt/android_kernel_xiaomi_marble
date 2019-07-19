@@ -734,8 +734,11 @@ static void dsi_pll_config_hzindep_reg(struct dsi_pll_7nm *pll,
 		break;
 	}
 
-	if (dsi_pll_7nm_is_hw_revision_v4_1(rsc))
+	if (dsi_pll_7nm_is_hw_revision_v4_1(rsc)) {
 		MDSS_PLL_REG_W(pll_base, PLL_PERF_OPTIMIZE, 0x22);
+		if (rsc->slave)
+			MDSS_PLL_REG_W(rsc->slave->pll_base, PLL_PERF_OPTIMIZE, 0x22);
+	}
 }
 
 static void dsi_pll_init_val(struct mdss_pll_resources *rsc)
