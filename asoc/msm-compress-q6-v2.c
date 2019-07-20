@@ -1534,9 +1534,16 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 					prtd->codec,
 					bits_per_sample, true, enc_cfg_id);
 		} else {
-			ret = q6asm_open_read_v4(prtd->audio_client,
-					prtd->codec,
-					bits_per_sample, false, enc_cfg_id);
+			if (q6core_get_avcs_api_version_per_service(
+					APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+					ADSP_ASM_API_VERSION_V2)
+				ret = q6asm_open_read_v5(prtd->audio_client,
+						prtd->codec, bits_per_sample,
+						false, enc_cfg_id);
+			else
+				ret = q6asm_open_read_v4(prtd->audio_client,
+						prtd->codec, bits_per_sample,
+						false, enc_cfg_id);
 		}
 		if (ret < 0) {
 			pr_err("%s: q6asm_open_read failed:%d\n",
@@ -1607,7 +1614,17 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 			prtd->num_channels, prtd->codec,
 			(void *)&prtd->codec_param.codec.options.generic);
 	} else if (prtd->compr_passthr == LEGACY_PCM) {
-		ret = q6asm_enc_cfg_blk_pcm_format_support_v4(prtd->audio_client,
+		if (q6core_get_avcs_api_version_per_service(
+				APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+				ADSP_ASM_API_VERSION_V2)
+			ret = q6asm_enc_cfg_blk_pcm_format_support_v5(
+					prtd->audio_client,
+					prtd->sample_rate, prtd->num_channels,
+					bits_per_sample, sample_word_size,
+					ASM_LITTLE_ENDIAN, DEFAULT_QF);
+		else
+			ret = q6asm_enc_cfg_blk_pcm_format_support_v4(
+					prtd->audio_client,
 					prtd->sample_rate, prtd->num_channels,
 					bits_per_sample, sample_word_size,
 					ASM_LITTLE_ENDIAN, DEFAULT_QF);
