@@ -1540,6 +1540,8 @@ typedef enum {
     WMI_ROAM_BLACKLIST_EVENTID,
     /** Roam Pre-Authentication start event */
     WMI_ROAM_PREAUTH_START_EVENTID,
+    /** Roaming PMKID request event */
+    WMI_ROAM_PMKID_REQUEST_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -12919,6 +12921,21 @@ typedef struct {
      *     wmi_roam_blacklist_with_timeout_tlv_param blacklist_with_timeout[]
      */
 } wmi_roam_blacklist_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    /** candidate AP mac address */
+    wmi_mac_addr bssid;
+} wmi_roam_pmkid_request_tlv_param;
+
+/** WMI_ROAM_PMKID_REQUEST_EVENT: generated whenever FW needs the PMKID while roaming **/
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_pmkid_request_event_fixed_param */
+    A_UINT32 vdev_id;
+    /* This TLV is followed by further TLVs:
+     *     wmi_roam_pmkid_request_tlv_param pmkid_request[]
+     */
+} wmi_roam_pmkid_request_event_fixed_param;
 
 /** WMI_ROAM_EVENT: roam event triggering the host roam logic.
  * generated when ever a better AP is found in the recent roam scan (or)

@@ -1000,6 +1000,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_set_elna_bypass_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_get_elna_bypass_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_get_elna_bypass_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_pmkid_request_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1642,6 +1643,7 @@ typedef enum {
     OP(WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID) \
     OP(WMI_ROAM_PREAUTH_START_EVENTID) \
     OP(WMI_GET_ELNA_BYPASS_EVENTID) \
+    OP(WMI_ROAM_PMKID_REQUEST_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3093,6 +3095,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_IDLE_CONFIG_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_preauth_status_cmd_fixed_param, wmi_roam_preauth_status_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, pmkid, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_PREAUTH_STATUS_CMDID);
+
+/** Roam PMKID request event */
+#define WMITLV_TABLE_WMI_ROAM_PMKID_REQUEST_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_pmkid_request_event_fixed_param, wmi_roam_pmkid_request_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_pmkid_request_tlv_param, pmkid_request, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_PMKID_REQUEST_EVENTID);
 
 /* Screen Status Command parameters */
 #define WMITLV_TABLE_WMI_IDLE_TRIGGER_MONITOR_CMDID(id,op,buf,len) \
