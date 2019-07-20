@@ -147,14 +147,6 @@ static int wcd938x_init_reg(struct snd_soc_component *component)
 	/* 10 msec delay as per HW requirement */
 	usleep_range(10000, 10010);
 	snd_soc_component_update_bits(component, WCD938X_ANA_BIAS, 0x40, 0x00);
-	snd_soc_component_update_bits(component, WCD938X_HPH_OCP_CTL,
-								0xFF, 0x3A);
-	snd_soc_component_update_bits(component, WCD938X_RX_OCP_CTL,
-								0x0F, 0x02);
-	snd_soc_component_update_bits(component, WCD938X_HPH_R_TEST,
-								0x01, 0x01);
-	snd_soc_component_update_bits(component, WCD938X_HPH_L_TEST,
-								0x01, 0x01);
 	snd_soc_component_update_bits(component,
 				      WCD938X_HPH_NEW_INT_RDAC_GAIN_CTL,
 				      0xF0, 0x00);
