@@ -56,22 +56,6 @@
 #define osif_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_OS_IF, params)
 
-#define COMMON_VENDOR_COMMANDS						\
-{ 									\
-	.info.vendor_id = OUI_QCA,					\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_WIFI_CONFIGURATION,\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
-		 WIPHY_VENDOR_CMD_NEED_NETDEV,				\
-	.doit = NULL							\
-},									\
-{									\
-	.info.vendor_id = OUI_QCA,					\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_WIFI_CONFIGURATION,\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
-		WIPHY_VENDOR_CMD_NEED_NETDEV,				\
-	.doit = NULL							\
-},
-
 #undef nla_parse
 #undef nla_parse_nested
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
