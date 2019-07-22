@@ -43,6 +43,7 @@
 #include <wlan_ptt_sock_svc.h>
 #include <host_diag_core_event.h>
 #include "host_diag_core_log.h"
+#include <qdf_event.h>
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -1021,12 +1022,10 @@ int wlan_logging_sock_deinit_svc(void)
 	if (!gwlan_logging.pcur_node)
 		return 0;
 
-#ifdef CONFIG_MCL
 	INIT_COMPLETION(gwlan_logging.shutdown_comp);
-#endif
 	gwlan_logging.exit = true;
 	gwlan_logging.is_active = false;
-#ifdef CONFIG_MCL
+#if defined(FEATURE_FW_LOG_PARSING) || defined(FEATURE_WLAN_DIAG_SUPPORT)
 	cds_set_multicast_logging(0);
 #endif
 	gwlan_logging.is_flush_complete = false;
