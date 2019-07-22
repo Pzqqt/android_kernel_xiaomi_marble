@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1881,6 +1881,12 @@ struct hdd_context {
 #if defined(CLD_PM_QOS) && \
 	(LINUX_VERSION_CODE <= KERNEL_VERSION(4, 19, 0))
 	struct pm_qos_request pm_qos_req;
+#endif
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+	/* enable packet capture support */
+	bool enable_pkt_capture_support;
+	/* value for packet capturte mode */
+	uint8_t val_pkt_capture_mode;
 #endif
 };
 
