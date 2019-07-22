@@ -788,8 +788,8 @@ int sde_power_resource_enable(struct sde_power_handle *phandle, bool enable)
 	}
 
 	SDE_EVT32_VERBOSE(enable, SDE_EVTLOG_FUNC_EXIT);
-	mutex_unlock(&phandle->phandle_lock);
 	SDE_ATRACE_END("sde_power_resource_enable");
+	mutex_unlock(&phandle->phandle_lock);
 	return rc;
 
 clk_err:
@@ -804,8 +804,8 @@ vreg_err:
 			&phandle->data_bus_handle[i],
 			SDE_POWER_HANDLE_DISABLE_BUS_AB_QUOTA,
 			SDE_POWER_HANDLE_DISABLE_BUS_IB_QUOTA);
-	mutex_unlock(&phandle->phandle_lock);
 	SDE_ATRACE_END("sde_power_resource_enable");
+	mutex_unlock(&phandle->phandle_lock);
 	return rc;
 }
 
