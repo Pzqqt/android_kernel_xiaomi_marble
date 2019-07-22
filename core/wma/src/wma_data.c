@@ -1733,7 +1733,8 @@ static QDF_STATUS wma_update_thermal_mitigation_to_fw(tp_wma_handle wma,
 		wma->thermal_mgmt_info.throttle_duty_cycle_tbl[thermal_level];
 	therm_data.levelconf[0].priority = 0;
 
-	return wmi_unified_thermal_mitigation_param_cmd_send(wma, &therm_data);
+	return wmi_unified_thermal_mitigation_param_cmd_send(wma->wmi_handle,
+							     &therm_data);
 }
 #else /* FW_THERMAL_THROTTLE_SUPPORT */
 /**
