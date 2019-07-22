@@ -462,6 +462,40 @@
 #define __CFG_SET_TSF_IRQ_HOST_GPIO_PIN
 #endif
 
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC
+/*
+ * <ini>
+ * gtsf_sync_host_gpio_pin
+ * @Min: 0
+ * @Max: 254
+ * @Default: 255
+ *
+ * TSF sync GPIO pin of host platform
+ *
+ * The driver will use this gpio on host platform
+ * to drive the TSF sync pin on wlan chip.
+ * Toggling this gpio  will generate a strobe to fw
+ * for latching TSF.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_TSF_SYNC_HOST_GPIO_PIN CFG_INI_UINT( \
+		"gtsf_sync_host_gpio_pin", \
+		0, \
+		254, \
+		255, \
+		CFG_VALUE_OR_DEFAULT, \
+		"TSF sync GPIO pin of host platform")
+
+#define __CFG_SET_TSF_SYNC_HOST_GPIO_PIN CFG(CFG_SET_TSF_SYNC_HOST_GPIO_PIN)
+#else
+#define __CFG_SET_TSF_SYNC_HOST_GPIO_PIN
+#endif
+
 #if defined(WLAN_FEATURE_TSF) && defined(WLAN_FEATURE_TSF_PLUS)
 /* <ini>
  * gtsf_ptp_options: TSF Plus feature options
@@ -687,6 +721,7 @@
 	CFG(CFG_RA_FILTER_ENABLE) \
 	CFG(CFG_SET_TSF_GPIO_PIN) \
 	__CFG_SET_TSF_IRQ_HOST_GPIO_PIN \
+	__CFG_SET_TSF_SYNC_HOST_GPIO_PIN \
 	__CFG_SET_TSF_PTP_OPT \
 	CFG(CFG_LPRX) \
 	__CFG_IS_SAE_ENABLED \
