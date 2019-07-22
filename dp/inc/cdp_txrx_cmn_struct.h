@@ -910,6 +910,18 @@ enum cdp_rx_enh_capture_mode {
 	CDP_RX_ENH_CAPTURE_MPDU_MSDU,
 };
 
+/**
+ * cdp_tx_enh_capture_mode - Tx enhanced capture modes
+ * @CDP_TX_ENH_CAPTURE_DISABLED: Disable Tx enhance capture for all peers
+ * @CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS: Enable tx capture for all peers
+ * @CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER: Enable/disable per peer as necessary
+ */
+enum cdp_tx_enh_capture_mode {
+	CDP_TX_ENH_CAPTURE_DISABLED = 0,
+	CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS,
+	CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER,
+};
+
 /*
  * enum cdp_pdev_bpr_param - different types of parameters
  *			     to set value in pdev

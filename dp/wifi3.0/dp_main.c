@@ -125,7 +125,7 @@ dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, int val)
+dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
 {
 	return QDF_STATUS_E_INVAL;
 }
@@ -1087,12 +1087,16 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 			       " nawds_enabled = %d"
 			       " bss_peer = %d"
 			       " wds_enabled = %d"
+			       " tx_cap_enabled = %d"
+			       " rx_cap_enabled = %d"
 			       " delete in progress = %d"
 			       " peer id = %d",
 			       peer->mac_addr.raw,
 			       peer->nawds_enabled,
 			       peer->bss_peer,
 			       peer->wds_enabled,
+			       peer->tx_cap_enabled,
+			       peer->rx_cap_enabled,
 			       peer->delete_in_progress,
 			       peer->peer_ids[0]);
 	}
@@ -7756,6 +7760,69 @@ static void dp_peer_set_nawds(struct cdp_peer *peer_handle, uint8_t value)
 	peer->nawds_enabled = value;
 }
 
+/**
+ * dp_peer_set_tx_capture_enabled: Set tx_cap_enabled bit in peer
+ * @peer_handle: Peer handle
+ * @value: Enable/disable setting for tx_cap_enabled
+ *
+ * Return: None
+ */
+static void
+dp_peer_set_tx_capture_enabled(struct cdp_peer *peer_handle, bool value)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+
+	peer->tx_cap_enabled = value;
+}
+
+/**
+ * dp_peer_set_rx_capture_enabled: Set rx_cap_enabled bit in peer
+ * @peer_handle: Peer handle
+ * @value: Enable/disable setting for rx_cap_enabled
+ *
+ * Return: None
+ */
+static void
+dp_peer_set_rx_capture_enabled(struct cdp_peer *peer_handle, bool value)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+
+	peer->rx_cap_enabled = value;
+}
+
+/**
+ * dp_peer_update_pkt_capture_params: Set Rx & Tx Capture flags for a peer
+ * @is_rx_pkt_cap_enable: enable/disable Rx packet capture in monitor mode
+ * @is_tx_pkt_cap_enable: enable/disable Tx packet capture in monitor mode
+ * @peer_mac: MAC address for which the above need to be enabled/disabled
+ *
+ * Return: Success if Rx & Tx capture is enabled for peer, false otherwise
+ */
+QDF_STATUS
+dp_peer_update_pkt_capture_params(struct cdp_pdev *pdev,
+				  bool is_rx_pkt_cap_enable,
+				  bool is_tx_pkt_cap_enable,
+				  uint8_t *peer_mac)
+
+{
+	struct dp_peer *peer;
+	uint8_t local_id;
+
+	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev,
+			peer_mac, &local_id);
+
+	if (!peer) {
+		dp_err("Invalid Peer");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dp_peer_set_rx_capture_enabled((struct cdp_peer *)peer,
+				       is_rx_pkt_cap_enable);
+	dp_peer_set_tx_capture_enabled((struct cdp_peer *)peer,
+				       is_tx_pkt_cap_enable);
+	return QDF_STATUS_SUCCESS;
+}
+
 /*
  * dp_set_vdev_dscp_tid_map_wifi3(): Update Map ID selected for particular vdev
  * @vdev_handle: DP_VDEV handle
@@ -9258,6 +9325,10 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 #ifdef QCA_MULTIPASS_SUPPORT
 	.txrx_peer_set_vlan_id = dp_peer_set_vlan_id,
 #endif /*QCA_MULTIPASS_SUPPORT*/
+#if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(WLAN_RX_PKT_CAPTURE_ENH)
+	.txrx_update_peer_pkt_capture_params =
+		 dp_peer_update_pkt_capture_params,
+#endif /* WLAN_TX_PKT_CAPTURE_ENH || WLAN_RX_PKT_CAPTURE_ENH */
 };
 
 static struct cdp_me_ops dp_ops_me = {

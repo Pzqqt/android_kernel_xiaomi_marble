@@ -723,6 +723,40 @@ cdp_get_pldev(ol_txrx_soc_handle soc,
 	return soc->ops->ctrl_ops->txrx_get_pldev(pdev);
 }
 
+#if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(WLAN_RX_PKT_CAPTURE_ENH)
+/**
+ * cdp_update_peer_pkt_capture_params() - Sets Rx & Tx Capture params for a peer
+ * @soc: SOC TXRX handle
+ * @pdev: CDP pdev pointer
+ * @is_rx_pkt_cap_enable: enable/disable rx pkt capture for this peer
+ * @is_tx_pkt_cap_enable: enable/disable tx pkt capture for this peer
+ * @peer_mac: MAC address of peer for which pkt_cap is to be enabled/disabled
+ *
+ * Return: Success when matching peer is found & flags are set, error otherwise
+ */
+static inline QDF_STATUS
+cdp_update_peer_pkt_capture_params(ol_txrx_soc_handle soc,
+				   struct cdp_pdev *pdev,
+				   bool is_rx_pkt_cap_enable,
+				   bool is_tx_pkt_cap_enable,
+				   uint8_t *peer_mac)
+{
+	if (!soc || !soc->ops) {
+		dp_err("Invalid SOC instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_update_peer_pkt_capture_params)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_update_peer_pkt_capture_params
+			(pdev, is_rx_pkt_cap_enable, is_tx_pkt_cap_enable,
+			 peer_mac);
+}
+#endif /* WLAN_TX_PKT_CAPTURE_ENH || WLAN_RX_PKT_CAPTURE_ENH */
+
 #ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 /**
  * cdp_update_pdev_rx_protocol_tag() - wrapper function to set the protocol
