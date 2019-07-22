@@ -178,6 +178,7 @@ struct wlan_fwol_neighbor_report_cfg {
  * @is_rate_limit_enabled: Enable/disable RA rate limited
  * @tsf_gpio_pin: TSF GPIO Pin config
  * @tsf_irq_host_gpio_pin: TSF GPIO Pin config
+ * @tsf_sync_host_gpio_pin: TSF Sync GPIO Pin config
  * @tsf_ptp_options: TSF Plus feature options config
  * @lprx_enable: LPRx feature enable config
  * @sae_enable: SAE feature enable config
@@ -218,6 +219,9 @@ struct wlan_fwol_cfg {
 	uint32_t tsf_ptp_options;
 #ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ
 	uint32_t tsf_irq_host_gpio_pin;
+#endif
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC
+	uint32_t tsf_sync_host_gpio_pin;
 #endif
 #endif
 #endif

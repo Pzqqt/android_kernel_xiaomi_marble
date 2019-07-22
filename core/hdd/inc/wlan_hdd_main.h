@@ -1153,6 +1153,7 @@ struct hdd_context;
  * @vdev_id: Unique identifier assigned to the vdev
  * @event_flags: a bitmap of hdd_adapter_flags
  * @mic_work: mic work information
+ * @gpio_tsf_sync_work: work to sync send TSF CAP WMI command
  *
  */
 struct hdd_adapter {
@@ -1293,6 +1294,9 @@ struct hdd_adapter {
 	int continuous_error_count;
 	/* to indicate whether tsf_sync has been initialized */
 	qdf_atomic_t tsf_sync_ready_flag;
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC
+	qdf_work_t gpio_tsf_sync_work;
+#endif
 #endif /* WLAN_FEATURE_TSF_PLUS */
 #endif
 

@@ -317,6 +317,19 @@ ucfg_fwol_get_tsf_irq_host_gpio_pin(struct wlan_objmgr_psoc *psoc,
 				    uint32_t *tsf_irq_host_gpio_pin);
 #endif
 
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC
+/**
+ * ucfg_fwol_get_tsf_sync_host_gpio_pin() - Assigns tsf_sync_host_gpio_pin value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+
+QDF_STATUS
+ucfg_fwol_get_tsf_sync_host_gpio_pin(struct wlan_objmgr_psoc *psoc,
+				     uint32_t *tsf_irq_host_gpio_pin);
+#endif
+
 #ifdef DHCP_SERVER_OFFLOAD
 /**
  * ucfg_fwol_get_enable_dhcp_server_offload()-Assign enable_dhcp_server_offload

@@ -162,15 +162,6 @@ static inline int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 
 #if defined(WLAN_FEATURE_TSF_PLUS) && defined(WLAN_FEATURE_TSF)
 /**
- * hdd_tsf_is_ptp_enabled() - check ini configuration
- * @hdd: pointer to hdd context
- *
- * This function checks tsf configuration for ptp
- *
- * Return: true on enable, false on disable
- */
-bool hdd_tsf_is_ptp_enabled(struct hdd_context *hdd);
-/**
  * hdd_tsf_is_tx_set() - check ini configuration
  * @hdd: pointer to hdd context
  *
