@@ -92,7 +92,8 @@ static struct ol_if_ops  dp_ol_if_ops = {
 	.is_hw_dbs_2x2_capable = policy_mgr_is_hw_dbs_2x2_capable,
 	.lro_hash_config = target_if_lro_hash_config,
 	.rx_invalid_peer = wma_rx_invalid_peer_ind,
-	.is_roam_inprogress = wma_is_roam_in_progress
+	.is_roam_inprogress = wma_is_roam_in_progress,
+	.get_con_mode = cds_get_conparam
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 #else
@@ -784,7 +785,9 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	}
 
 	dp_config.enable_rx_threads =
-		gp_cds_context->cds_cfg->enable_dp_rx_threads;
+		(cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE) ?
+		false : gp_cds_context->cds_cfg->enable_dp_rx_threads;
+
 	qdf_status = dp_txrx_init(cds_get_context(QDF_MODULE_ID_SOC),
 				  cds_get_context(QDF_MODULE_ID_TXRX),
 				  &dp_config);

@@ -1070,7 +1070,6 @@ static int con_mode;
 
 static int con_mode_ftm;
 int con_mode_epping;
-int con_mode_monitor;
 
 /* Variable to hold connection mode including module parameter con_mode */
 static int curr_con_mode;
@@ -14642,26 +14641,6 @@ static int con_mode_handler_epping(const char *kmessage,
 }
 #endif
 
-#ifdef FEATURE_MONITOR_MODE_SUPPORT
-static int con_mode_handler_monitor(const char *kmessage,
-				    const struct kernel_param *kp)
-{
-	int ret;
-
-	ret = param_set_int(kmessage, kp);
-
-	if (con_mode_monitor != QDF_GLOBAL_MONITOR_MODE) {
-		pr_err("Only Monitor mode supported!");
-		return -ENOTSUPP;
-	}
-
-	hdd_set_conparam(con_mode_monitor);
-	con_mode = con_mode_monitor;
-
-	return ret;
-}
-#endif
-
 /**
  * hdd_get_conparam() - driver exit point
  *
@@ -15710,13 +15689,6 @@ static const struct kernel_param_ops con_mode_epping_ops = {
 };
 #endif
 
-#ifdef FEATURE_MONITOR_MODE_SUPPORT
-static const struct kernel_param_ops con_mode_monitor_ops = {
-	.set = con_mode_handler_monitor,
-	.get = param_get_int,
-};
-#endif
-
 static const struct kernel_param_ops fwpath_ops = {
 	.set = fwpath_changed_handler,
 	.get = param_get_string,
@@ -15731,11 +15703,6 @@ module_param_cb(con_mode_ftm, &con_mode_ftm_ops, &con_mode_ftm,
 #ifdef WLAN_FEATURE_EPPING
 module_param_cb(con_mode_epping, &con_mode_epping_ops,
 		&con_mode_epping, 0644);
-#endif
-
-#ifdef FEATURE_MONITOR_MODE_SUPPORT
-module_param_cb(con_mode_monitor, &con_mode_monitor_ops, &con_mode_monitor,
-		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 #endif
 
 module_param_cb(fwpath, &fwpath_ops, &fwpath,
