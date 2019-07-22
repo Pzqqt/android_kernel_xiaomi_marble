@@ -22,6 +22,7 @@
 #include "wmi_unified_smart_ant_param.h"
 #include "wmi_unified_smart_ant_api.h"
 
+#ifdef UNIFIED_SMARTANTENNA
 /**
  *  send_smart_ant_enable_cmd_tlv() - WMI smart ant enable function
  *
@@ -563,3 +564,4 @@ void wmi_smart_ant_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_set_ant_switch_tbl_cmd = send_set_ant_switch_tbl_cmd_tlv;
 	ops->extract_peer_ratecode_list_ev = extract_peer_ratecode_list_ev_tlv;
 }
+#endif

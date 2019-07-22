@@ -20,6 +20,7 @@
 #include "wmi_unified_param.h"
 #include "qdf_module.h"
 
+#ifdef WMI_SMART_ANT_SUPPORT
 QDF_STATUS wmi_unified_set_ant_switch_tbl_cmd_send(
 		wmi_unified_t wmi_handle,
 		struct ant_switch_tbl_params *param)
@@ -88,3 +89,4 @@ QDF_STATUS wmi_unified_smart_ant_node_config_cmd_send(
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif
