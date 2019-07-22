@@ -66,6 +66,89 @@ static const uint8_t sec_type_map[MAX_CDP_SEC_TYPE] = {
 					HAL_TX_ENCRYPT_TYPE_AES_GCMP_256,
 					HAL_TX_ENCRYPT_TYPE_WAPI_GCM_SM4};
 
+#ifdef QCA_TX_LIMIT_CHECK
+/**
+ * dp_tx_limit_check - Check if allocated tx descriptors reached
+ * soc max limit and pdev max limit
+ * @vdev: DP vdev handle
+ *
+ * Return: true if allocated tx descriptors reached max configured value, else
+ * false
+ */
+static inline bool
+dp_tx_limit_check(struct dp_vdev *vdev)
+{
+	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_soc *soc = pdev->soc;
+
+	if (qdf_atomic_read(&soc->num_tx_outstanding) >=
+			soc->num_tx_allowed) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "%s: queued packets are more than max tx, drop the frame",
+			  __func__);
+		DP_STATS_INC(vdev, tx_i.dropped.desc_na.num, 1);
+		return true;
+	}
+
+	if (qdf_atomic_read(&pdev->num_tx_outstanding) >=
+			pdev->num_tx_allowed) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "%s: queued packets are more than max tx, drop the frame",
+			  __func__);
+		DP_STATS_INC(vdev, tx_i.dropped.desc_na.num, 1);
+		return true;
+	}
+	return false;
+}
+
+/**
+ * dp_tx_outstanding_inc - Increment outstanding tx desc values on pdev and soc
+ * @vdev: DP pdev handle
+ *
+ * Return: void
+ */
+static inline void
+dp_tx_outstanding_inc(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+
+	qdf_atomic_inc(&pdev->num_tx_outstanding);
+	qdf_atomic_inc(&soc->num_tx_outstanding);
+}
+
+/**
+ * dp_tx_outstanding__dec - Decrement outstanding tx desc values on pdev and soc
+ * @vdev: DP pdev handle
+ *
+ * Return: void
+ */
+static inline void
+dp_tx_outstanding_dec(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+
+	qdf_atomic_dec(&pdev->num_tx_outstanding);
+	qdf_atomic_dec(&soc->num_tx_outstanding);
+}
+
+#else //QCA_TX_LIMIT_CHECK
+static inline bool
+dp_tx_limit_check(struct dp_vdev *vdev)
+{
+	return false;
+}
+
+static inline void
+dp_tx_outstanding_inc(struct dp_pdev *pdev)
+{
+}
+
+static inline void
+dp_tx_outstanding_dec(struct dp_pdev *pdev)
+{
+}
+#endif //QCA_TX_LIMIT_CHECK
+
 #if defined(FEATURE_TSO)
 /**
  * dp_tx_tso_unmap_segment() - Unmap TSO segment
@@ -184,7 +267,7 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 	if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
 		dp_tx_me_free_buf(tx_desc->pdev, tx_desc->me_buffer);
 
-	qdf_atomic_dec(&pdev->num_tx_outstanding);
+	dp_tx_outstanding_dec(pdev);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		qdf_atomic_dec(&pdev->num_tx_exception);
@@ -612,39 +695,6 @@ static void dp_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
 				      msdu_id, QDF_TX));
 }
 
-#ifdef QCA_512M_CONFIG
-/**
- * dp_tx_pdev_pflow_control - Check if allocated tx descriptors reached max
- * tx descriptor configured value
- * @vdev: DP vdev handle
- *
- * Return: true if allocated tx descriptors reached max configured value, else
- * false.
- */
-static inline bool
-dp_tx_pdev_pflow_control(struct dp_vdev *vdev)
-{
-	struct dp_pdev *pdev = vdev->pdev;
-
-	if (qdf_atomic_read(&pdev->num_tx_outstanding) >=
-			pdev->num_tx_allowed) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "%s: queued packets are more than max tx, drop the frame",
-			  __func__);
-		DP_STATS_INC(vdev, tx_i.dropped.desc_na.num, 1);
-		return true;
-	}
-
-	return false;
-}
-#else
-static inline bool
-dp_tx_pdev_pflow_control(struct dp_vdev *vdev)
-{
-	return false;
-}
-#endif
-
 /**
  * dp_tx_desc_prepare_single - Allocate and prepare Tx descriptor
  * @vdev: DP vdev handle
@@ -671,7 +721,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 
-	if (dp_tx_pdev_pflow_control(vdev))
+	if (dp_tx_limit_check(vdev))
 		return NULL;
 
 	/* Allocate software Tx descriptor */
@@ -681,8 +731,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		return NULL;
 	}
 
-	/* Flow control/Congestion Control counters */
-	qdf_atomic_inc(&pdev->num_tx_outstanding);
+	dp_tx_outstanding_inc(pdev);
 
 	/* Initialize the SW tx descriptor */
 	tx_desc->nbuf = nbuf;
@@ -812,7 +861,7 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 
-	if (dp_tx_pdev_pflow_control(vdev))
+	if (dp_tx_limit_check(vdev))
 		return NULL;
 
 	/* Allocate software Tx descriptor */
@@ -822,8 +871,7 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 		return NULL;
 	}
 
-	/* Flow control/Congestion Control counters */
-	qdf_atomic_inc(&pdev->num_tx_outstanding);
+	dp_tx_outstanding_inc(pdev);
 
 	/* Initialize the SW tx descriptor */
 	tx_desc->nbuf = nbuf;

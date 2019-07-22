@@ -9626,6 +9626,10 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle,
 			     cfg_get(soc->ctrl_psoc, CFG_DP_RX_HASH));
 	soc->cce_disable = false;
 
+	qdf_atomic_init(&soc->num_tx_outstanding);
+	soc->num_tx_allowed =
+		wlan_cfg_get_dp_soc_tx_device_limit(soc->wlan_cfg_ctx);
+
 	if (soc->cdp_soc.ol_ops->get_dp_cfg_param) {
 		int ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc->ctrl_psoc,
 				CDP_CFG_MAX_PEER_ID);

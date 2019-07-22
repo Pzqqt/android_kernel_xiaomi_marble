@@ -1124,6 +1124,10 @@ struct dp_soc {
 	uint8_t tidmap_prty;
 	/* Pointer to global per ring type specific configuration table */
 	struct wlan_srng_cfg *wlan_srng_cfg;
+	/* Num Tx outstanding on device */
+	qdf_atomic_t num_tx_outstanding;
+	/* Num Tx allowed */
+	uint32_t num_tx_allowed;
 };
 
 #ifdef IPA_OFFLOAD
