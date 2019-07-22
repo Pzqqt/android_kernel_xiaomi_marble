@@ -1016,20 +1016,22 @@ static QDF_STATUS pe_drop_pending_rx_mgmt_frames(struct mac_context *mac_ctx,
 }
 
 /**
- * pe_is_ext_scan_bcn - Check if the beacon is from Ext or EPNO scan
+ * pe_is_ext_scan_bcn_probe_rsp - Check if the beacon or probe response
+ * is from Ext or EPNO scan
  *
  * @hdr: pointer to the 802.11 header of the frame
  * @rx_pkt_info: pointer to the rx packet meta
  *
- * Checks if the beacon is from Ext Scan or EPNO scan
+ * Checks if the beacon or probe response is from Ext Scan or EPNO scan
  *
  * Return: true or false
  */
 #ifdef FEATURE_WLAN_EXTSCAN
-static inline bool pe_is_ext_scan_bcn(tpSirMacMgmtHdr hdr,
+static inline bool pe_is_ext_scan_bcn_probe_rsp(tpSirMacMgmtHdr hdr,
 				uint8_t *rx_pkt_info)
 {
-	if ((hdr->fc.subType == SIR_MAC_MGMT_BEACON) &&
+	if ((hdr->fc.subType == SIR_MAC_MGMT_BEACON ||
+	     hdr->fc.subType == SIR_MAC_MGMT_PROBE_RSP) &&
 	    (WMA_IS_EXTSCAN_SCAN_SRC(rx_pkt_info) ||
 	    WMA_IS_EPNO_SCAN_SRC(rx_pkt_info)))
 		return true;
@@ -1037,7 +1039,7 @@ static inline bool pe_is_ext_scan_bcn(tpSirMacMgmtHdr hdr,
 	return false;
 }
 #else
-static inline bool pe_is_ext_scan_bcn(tpSirMacMgmtHdr hdr,
+static inline bool pe_is_ext_scan_bcn_probe_rsp(tpSirMacMgmtHdr hdr,
 				uint8_t *rx_pkt_info)
 {
 	return false;
@@ -1068,7 +1070,7 @@ static bool pe_filter_bcn_probe_frame(struct mac_context *mac_ctx,
 	tpSirMacCapabilityInfo bcn_caps;
 	tSirMacSSid bcn_ssid;
 
-	if (pe_is_ext_scan_bcn(hdr, rx_pkt_info))
+	if (pe_is_ext_scan_bcn_probe_rsp(hdr, rx_pkt_info))
 		return true;
 
 	filter = &mac_ctx->bcn_filter;
