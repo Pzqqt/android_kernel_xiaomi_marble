@@ -16053,6 +16053,9 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
+	if (wlan_hdd_check_mon_concurrency())
+		return -EINVAL;
+
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_CHANGE_IFACE,
 		   adapter->vdev_id, type);
