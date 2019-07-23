@@ -28,7 +28,7 @@
 #include "qdf_nbuf.h"
 #include "qdf_net_types.h"
 #include <wlan_cfg.h>
-#ifdef MESH_MODE_SUPPORT
+#if defined(MESH_MODE_SUPPORT) || defined(FEATURE_PERPKT_INFO)
 #include "if_meta_hdr.h"
 #endif
 #include "enet.h"
