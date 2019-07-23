@@ -704,31 +704,36 @@ static void dp_display_host_init(struct dp_display_private *dp)
 	dp->power->init(dp->power, flip);
 	dp->hpd->host_init(dp->hpd, &dp->catalog->hpd);
 	dp->ctrl->init(dp->ctrl, flip, reset);
-	dp->aux->init(dp->aux, dp->parser->aux_cfg);
 	enable_irq(dp->irq);
-	dp->panel->init(dp->panel);
-	dp->core_initialized = true;
 
 	/* log this as it results from user action of cable connection */
 	pr_info("[OK]\n");
 }
 
+static void dp_display_host_late_init(struct dp_display_private *dp)
+{
+	dp->aux->init(dp->aux, dp->parser->aux_cfg);
+	dp->panel->init(dp->panel);
+	dp->core_initialized = true;
+}
+
+static void dp_display_host_early_deinit(struct dp_display_private *dp)
+{
+	dp->core_initialized = false;
+	dp->aux->deinit(dp->aux);
+}
+
 static void dp_display_host_deinit(struct dp_display_private *dp)
 {
-	if (!dp->core_initialized)
-		return;
-
 	if (dp->active_stream_cnt) {
 		pr_debug("active stream present\n");
 		return;
 	}
 
-	dp->aux->deinit(dp->aux);
 	dp->ctrl->deinit(dp->ctrl);
 	dp->hpd->host_deinit(dp->hpd, &dp->catalog->hpd);
 	dp->power->deinit(dp->power);
 	disable_irq(dp->irq);
-	dp->core_initialized = false;
 	dp->aux->state = 0;
 
 	/* log this as it results from user action of cable dis-connection */
@@ -753,7 +758,7 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 	dp->dp_display.max_pclk_khz = min(dp->parser->max_pclk_khz,
 					dp->debug->max_pclk_khz);
 
-	dp_display_host_init(dp);
+	dp_display_host_late_init(dp);
 
 	dp->link->psm_config(dp->link, &dp->panel->link_info, false);
 	dp->debug->psm_enabled = false;
@@ -790,7 +795,7 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 end:
 	mutex_unlock(&dp->session_lock);
 
-	if (!rc)
+	if (!rc && !atomic_read(&dp->aborted))
 		dp_display_send_hpd_notification(dp);
 
 	return rc;
@@ -822,7 +827,8 @@ static int dp_display_process_hpd_low(struct dp_display_private *dp)
 
 	dp_display_process_mst_hpd_low(dp);
 
-	rc = dp_display_send_hpd_notification(dp);
+	if (dp->power_on && !dp->mst.mst_active)
+		rc = dp_display_send_hpd_notification(dp);
 
 	mutex_lock(&dp->session_lock);
 	if (!dp->active_stream_cnt)
@@ -860,6 +866,9 @@ static int dp_display_usbpd_configure_cb(struct device *dev)
 	}
 
 	mutex_lock(&dp->session_lock);
+
+	atomic_set(&dp->aborted, 0);
+
 	dp_display_host_init(dp);
 
 	/* check for hpd high */
@@ -946,7 +955,7 @@ static int dp_display_handle_disconnect(struct dp_display_private *dp)
 	if (rc && dp->power_on)
 		dp_display_clean(dp);
 
-	dp_display_host_deinit(dp);
+	dp_display_host_early_deinit(dp);
 
 	mutex_unlock(&dp->session_lock);
 
@@ -966,9 +975,6 @@ static void dp_display_disconnect_sync(struct dp_display_private *dp)
 	flush_workqueue(dp->wq);
 
 	dp_display_handle_disconnect(dp);
-
-	/* Reset abort value to allow future connections */
-	atomic_set(&dp->aborted, 0);
 }
 
 static int dp_display_usbpd_disconnect_cb(struct device *dev)
@@ -995,6 +1001,10 @@ static int dp_display_usbpd_disconnect_cb(struct device *dev)
 	mutex_unlock(&dp->session_lock);
 
 	dp_display_disconnect_sync(dp);
+
+	mutex_lock(&dp->session_lock);
+	dp_display_host_deinit(dp);
+	mutex_unlock(&dp->session_lock);
 
 	if (!dp->debug->sim_mode && !dp->parser->no_aux_switch
 	    && !dp->parser->gpio_aux_switch)
@@ -1120,15 +1130,17 @@ static int dp_display_usbpd_attention_cb(struct device *dev)
 			dp->hpd->hpd_irq, dp->hpd->hpd_high,
 			dp->power_on, dp->is_connected);
 
-	if (!dp->hpd->hpd_high)
+	if (!dp->hpd->hpd_high) {
 		dp_display_disconnect_sync(dp);
-	else if ((dp->hpd->hpd_irq && dp->core_initialized) ||
-			dp->debug->mst_hpd_sim)
+	} else if ((dp->hpd->hpd_irq && dp->core_initialized) ||
+			dp->debug->mst_hpd_sim) {
 		queue_work(dp->wq, &dp->attention_work);
-	else if (dp->process_hpd_connect || !dp->is_connected)
+	} else if (dp->process_hpd_connect || !dp->is_connected) {
+		atomic_set(&dp->aborted, 0);
 		queue_work(dp->wq, &dp->connect_work);
-	else
+	} else {
 		pr_debug("ignored\n");
+	}
 
 	return 0;
 }
@@ -1597,7 +1609,7 @@ static int dp_display_enable(struct dp_display *dp_display, void *panel)
 
 	mutex_lock(&dp->session_lock);
 
-	if (!dp->core_initialized) {
+	if (!dp->core_initialized || atomic_read(&dp->aborted)) {
 		pr_err("host not initialized\n");
 		goto end;
 	}
@@ -1850,6 +1862,7 @@ static int dp_display_unprepare(struct dp_display *dp_display, void *panel)
 		dp->debug->psm_enabled = true;
 
 		dp->ctrl->off(dp->ctrl);
+		dp_display_host_early_deinit(dp);
 		dp_display_host_deinit(dp);
 	}
 
