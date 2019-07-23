@@ -117,7 +117,7 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_start(
 							       rsp_pos);
 				target_if_vdev_mgr_rsp_timer_stop(vdev,
 								  vdev_rsp,
-								  set_bit);
+								  rsp_pos);
 			}
 		}
 	}
@@ -129,6 +129,8 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_start(
 		target_if_vdev_mgr_assert_mgmt(vdev, vdev_rsp,
 					       set_bit);
 		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, set_bit);
+
+		qdf_atomic_set_bit(set_bit, &vdev_rsp->rsp_status);
 	}
 
 	/* reference taken for timer start, will be released with stop */
