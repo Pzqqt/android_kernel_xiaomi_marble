@@ -584,6 +584,22 @@ uint16_t reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
 				   struct regulatory_channel *channel_list);
 
 /**
+ * reg_chan_band_to_freq - Return channel frequency based on the channel number
+ * and band.
+ * @pdev: pdev ptr
+ * @chan: Channel Number
+ * @band_mask: Bitmap for bands
+ *
+ * Return: Return channel frequency or return 0, if the channel is disabled or
+ * if the input channel number or band_mask is invalid. Composite bands are
+ * supported only for 2.4Ghz and 5Ghz bands. For other bands the following
+ * priority is given: 1) 6Ghz 2) 5Ghz 3) 2.4Ghz.
+ */
+uint16_t reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
+			       uint8_t chan,
+			       uint8_t band_mask);
+
+/**
  * reg_is_49ghz_freq() - Check if the given channel frequency is 4.9GHz
  * @freq: Channel frequency
  *
@@ -865,5 +881,13 @@ bool reg_is_same_band_freqs(uint16_t freq1, uint16_t freq2);
  * Return: true if the given center frequency is a valid 5G SBS
  */
 bool reg_is_frequency_valid_5g_sbs(uint16_t curfreq, uint16_t newfreq);
+
+/**
+ * reg_freq_to_band() - Get band from channel frequency
+ * @chan_num: channel frequency
+ *
+ * Return: wifi band
+ */
+enum reg_wifi_band reg_freq_to_band(uint16_t freq);
 #endif /* CONFIG_CHAN_FREQ_API */
 #endif

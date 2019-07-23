@@ -794,7 +794,7 @@ struct reg_rule_info {
 };
 
 /**
- * enum reg_wifi_band
+ * enum reg_reg_wifi_band
  * @REG_BAND_2G: 2G band
  * @REG_BAND_5G: 5G band
  * @REG_BAND_6G: 6G band

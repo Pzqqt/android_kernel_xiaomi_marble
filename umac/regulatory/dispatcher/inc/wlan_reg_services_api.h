@@ -169,6 +169,7 @@ uint16_t wlan_reg_min_6ghz_chan_freq(void);
  */
 #define WLAN_REG_MAX_6GHZ_CHAN_FREQ wlan_reg_max_6ghz_chan_freq()
 uint16_t wlan_reg_max_6ghz_chan_freq(void);
+
 #else
 
 #define WLAN_REG_IS_6GHZ_CHAN_FREQ(freq) (false)
@@ -211,6 +212,22 @@ uint16_t
 wlan_reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
 			       uint8_t band_mask,
 			       struct regulatory_channel *channel_list);
+
+/**
+ * wlan_reg_chan_band_to_freq - Return channel frequency based on the channel
+ * number and band.
+ * @pdev: pdev ptr
+ * @chan: Channel Number
+ * @band_mask: Bitmap for bands
+ *
+ * Return: Return channel frequency or return 0, if the channel is disabled or
+ * if the input channel number or band_mask is invalid. Composite bands are
+ * supported only for 2.4Ghz and 5Ghz bands. For other bands the following
+ * priority is given: 1) 6Ghz 2) 5Ghz 3) 2.4Ghz.
+ */
+uint16_t wlan_reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
+				    uint8_t chan,
+				    uint8_t band_mask);
 
 /**
  * wlan_reg_is_49ghz_freq() - Check if the given channel frequency is 4.9GHz
@@ -1062,5 +1079,13 @@ bool wlan_reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
  * Return: true or false
  */
 bool wlan_reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
+
+/**
+ * wlan_reg_chan_to_band() - Get band from channel number
+ * @chan_num: channel number
+ *
+ * Return: wifi band
+ */
+enum reg_wifi_band wlan_reg_freq_to_band(uint16_t freq);
 #endif /*CONFIG_CHAN_FREQ_API */
 #endif

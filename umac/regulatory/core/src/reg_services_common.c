@@ -2441,6 +2441,57 @@ reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
 	return num_channels;
 }
 
+uint16_t reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
+			       uint8_t chan_num,
+			       uint8_t band_mask)
+{
+	enum channel_enum min_chan, max_chan;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint16_t freq;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return 0;
+	}
+
+	if (BAND_6G_PRESENT(band_mask)) {
+		if (BAND_2G_PRESENT(band_mask) ||
+		    BAND_5G_PRESENT(band_mask)) {
+			reg_err("Incorrect band_mask %x", band_mask);
+				return 0;
+		}
+
+		min_chan = MIN_6GHZ_CHANNEL;
+		max_chan = MAX_6GHZ_CHANNEL;
+		return reg_compute_chan_to_freq(pdev, chan_num,
+						min_chan,
+						max_chan);
+	} else {
+		if (BAND_2G_PRESENT(band_mask)) {
+			min_chan = MIN_24GHZ_CHANNEL;
+			max_chan = MAX_24GHZ_CHANNEL;
+			freq = reg_compute_chan_to_freq(pdev, chan_num,
+							min_chan,
+							max_chan);
+			if (freq != 0)
+				return freq;
+		}
+
+		if (BAND_5G_PRESENT(band_mask)) {
+			min_chan = MIN_49GHZ_CHANNEL;
+			max_chan = MAX_5GHZ_CHANNEL;
+
+			return reg_compute_chan_to_freq(pdev, chan_num,
+							min_chan,
+							max_chan);
+		}
+
+		reg_err("Incorrect band_mask %x", band_mask);
+		return 0;
+	}
+}
+
 bool reg_is_49ghz_freq(uint32_t freq)
 {
 	return REG_IS_49GHZ_FREQ(freq);
@@ -3301,7 +3352,6 @@ bool reg_is_frequency_valid_5g_sbs(uint16_t curfreq, uint16_t newfreq)
 	return REG_IS_FREQUENCY_VALID_5G_SBS(curfreq, newfreq);
 }
 
-#ifdef CONFIG_BAND_6GHZ
 bool reg_is_same_band_freqs(uint16_t freq1, uint16_t freq2)
 {
 	return (freq1 && freq2 && ((REG_IS_6GHZ_FREQ(freq1) &&
@@ -3311,13 +3361,15 @@ bool reg_is_same_band_freqs(uint16_t freq1, uint16_t freq2)
 				   (REG_IS_24GHZ_CH_FREQ(freq1) &&
 				    REG_IS_24GHZ_CH_FREQ(freq2))));
 }
-#else
-bool reg_is_same_band_freqs(uint16_t freq1, uint16_t freq2)
+
+enum reg_wifi_band reg_freq_to_band(uint16_t freq)
 {
-	return (freq1 && freq2 && ((REG_IS_5GHZ_FREQ(freq1) &&
-				    REG_IS_5GHZ_FREQ(freq2)) ||
-				   (REG_IS_24GHZ_CH_FREQ(freq1) &&
-				    REG_IS_24GHZ_CH_FREQ(freq2))));
+	if (REG_IS_24GHZ_CH_FREQ(freq))
+		return REG_BAND_2G;
+	else if (REG_IS_5GHZ_FREQ(freq) || REG_IS_49GHZ_FREQ(freq))
+		return REG_BAND_5G;
+	else if (REG_IS_6GHZ_FREQ(freq))
+		return REG_BAND_6G;
+	return REG_BAND_UNKNOWN;
 }
-#endif /* CONFIG_BAND_6GHZ */
 #endif /* CONFIG_CHAN_FREQ_API */

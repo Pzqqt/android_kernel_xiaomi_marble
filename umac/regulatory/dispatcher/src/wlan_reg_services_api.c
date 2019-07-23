@@ -754,6 +754,7 @@ bool wlan_reg_is_6ghz_psc_chan_freq(uint16_t freq)
 {
 	return reg_is_6ghz_psc_chan_freq(freq);
 }
+
 #endif /* CONFIG_BAND_6GHZ */
 
 uint16_t
@@ -767,6 +768,12 @@ wlan_reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
 	}
 
 	return reg_get_band_channel_list(pdev, band_mask, channel_list);
+}
+
+uint16_t wlan_reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
+				    uint8_t chan, uint8_t band_mask)
+{
+	return reg_chan_band_to_freq(pdev, chan, band_mask);
 }
 
 bool wlan_reg_is_49ghz_freq(uint32_t freq)
@@ -946,5 +953,10 @@ uint32_t wlan_reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
 						 uint32_t freq)
 {
 	return reg_get_channel_reg_power_for_freq(pdev, freq);
+}
+
+enum reg_wifi_band wlan_reg_freq_to_band(uint16_t freq)
+{
+	return reg_freq_to_band(freq);
 }
 #endif /* CONFIG CHAN FREQ API */
