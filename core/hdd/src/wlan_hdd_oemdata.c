@@ -402,6 +402,7 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 	WLAN_PHY_MODE phy_mode;
 	uint32_t wni_dot11_mode;
 	struct hdd_channel_info *hdd_chan_info = chan_info;
+	uint32_t freq;
 
 	wni_dot11_mode = sme_get_wni_dot11_mode(hdd_ctx->mac_handle);
 
@@ -413,9 +414,11 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 		hdd_chan_info->band_center_freq1 =
 			cds_chan_to_freq(ch_params.center_freq_seg0);
 
-	if (ch_params.ch_width < CH_WIDTH_INVALID)
-		phy_mode = wma_chan_phy_mode(chan, ch_params.ch_width,
+	if (ch_params.ch_width < CH_WIDTH_INVALID) {
+		freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, chan);
+		phy_mode = wma_chan_phy_mode(freq, ch_params.ch_width,
 					     wni_dot11_mode);
+	}
 	else
 		/*
 		 * If channel width is CH_WIDTH_INVALID, It mean channel is

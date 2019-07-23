@@ -1251,7 +1251,7 @@ struct wma_target_req {
  * @chan_offset: channel offset
  * @is_dfs: is dfs supported or not
  * @vdev_id: vdev id
- * @chan: channel
+ * @op_freq: operating frequency
  * @oper_mode: operating mode
  * @ssid: ssid
  * @hidden_ssid: hidden ssid
@@ -1278,7 +1278,7 @@ struct wma_vdev_start_req {
 	enum phy_ch_width chan_width;
 	bool is_dfs;
 	uint8_t vdev_id;
-	uint8_t chan;
+	uint32_t op_freq;
 	uint8_t oper_mode;
 	tSirMacSSid ssid;
 	uint8_t hidden_ssid;
@@ -1865,7 +1865,7 @@ QDF_STATUS wma_get_cca_stats(tp_wma_handle wma_handle,
 				uint8_t vdev_id);
 
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
-WLAN_PHY_MODE wma_chan_phy_mode(uint8_t chan, enum phy_ch_width chan_width,
+WLAN_PHY_MODE wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 				uint8_t dot11_mode);
 
 #ifdef FEATURE_OEM_DATA_SUPPORT

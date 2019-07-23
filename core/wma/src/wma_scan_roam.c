@@ -3533,7 +3533,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
-	req.chan = params->channelNumber;
+	req.op_freq = wlan_reg_chan_to_freq(wma->pdev, params->channelNumber);
 	req.chan_width = params->ch_width;
 
 	if (params->ch_width == CH_WIDTH_10MHZ)
@@ -3631,7 +3631,9 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	 * indicate RX PPDU TLV with invalid channel number.
 	 */
 	if (intr[vdev_id].type == WMI_VDEV_TYPE_MONITOR)
-		cdp_record_monitor_chan_num(soc, pdev, req.chan);
+		cdp_record_monitor_chan_num(soc, pdev,
+					    wlan_reg_freq_to_chan(wma->pdev,
+								  req.op_freq));
 
 	return;
 send_resp:

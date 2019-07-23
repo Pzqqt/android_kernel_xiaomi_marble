@@ -50,9 +50,9 @@ static QDF_STATUS wma_start_ocb_vdev(struct ocb_config *config)
 
 		return QDF_STATUS_E_NOMEM;
 	}
-	req.chan = cds_freq_to_chan(config->channels[0].chan_freq);
+	req.op_freq = config->channels[0].chan_freq;
 	req.vdev_id = msg->vdev_id;
-	if (cds_chan_to_band(req.chan) == CDS_BAND_2GHZ)
+	if (wlan_reg_is_24ghz_ch_freq(req.op_freq))
 		req.dot11_mode = MLME_DOT11_MODE_11G;
 	else
 		req.dot11_mode = MLME_DOT11_MODE_11A;
