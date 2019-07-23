@@ -461,4 +461,14 @@ bool hdd_report_max_rate(mac_handle_t mac_handle,
 			 uint8_t mcs_index,
 			 uint16_t fw_rate, uint8_t nss);
 
+/**
+ * wlan_hdd_register_cp_stats_cb() - Register hdd stats specific
+ * callbacks to the cp stats component
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
+
+void wlan_hdd_register_cp_stats_cb(struct hdd_context *hdd_ctx);
+
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */

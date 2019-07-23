@@ -12646,6 +12646,9 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 
 	status = sme_set_lost_link_info_cb(mac_handle,
 					   hdd_lost_link_info_cb);
+
+	wlan_hdd_register_cp_stats_cb(hdd_ctx);
+
 	/* print error and not block the startup process */
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("set lost link info callback failed");
