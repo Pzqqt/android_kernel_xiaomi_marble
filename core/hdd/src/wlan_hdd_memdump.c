@@ -59,15 +59,7 @@ static void *memdump_get_file_data(struct file *file)
 	return hdd_ctx;
 }
 
-/**
- * hdd_driver_mem_cleanup() - Frees memory allocated for
- * driver dump
- *
- * This function unallocates driver dump memory.
- *
- * Return: None
- */
-static void hdd_driver_mem_cleanup(void)
+void hdd_driver_mem_cleanup(void)
 {
 	struct hdd_context *hdd_ctx;
 
@@ -310,6 +302,4 @@ int hdd_driver_memdump_init(void)
 void hdd_driver_memdump_deinit(void)
 {
 	hdd_driver_memdump_procfs_remove();
-
-	hdd_driver_mem_cleanup();
 }
