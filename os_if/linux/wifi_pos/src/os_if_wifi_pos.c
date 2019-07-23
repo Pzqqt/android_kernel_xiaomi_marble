@@ -155,6 +155,7 @@ static int wifi_pos_parse_req(struct sk_buff *skb, struct wifi_pos_req_msg *req)
 	/* NLMSG_DATA(nlh) contains ANI msg */
 	struct nlmsghdr *nlh;
 	tAniMsgHdr *msg_hdr;
+	size_t field_info_len;
 
 	nlh = (struct nlmsghdr *)skb->data;
 	if (!nlh) {
@@ -184,6 +185,15 @@ static int wifi_pos_parse_req(struct sk_buff *skb, struct wifi_pos_req_msg *req)
 	req->buf_len = msg_hdr->length;
 	req->buf = (uint8_t *)&msg_hdr[1];
 	req->pid = nlh->nlmsg_pid;
+	req->field_info_buf = NULL;
+
+	field_info_len = nlh->nlmsg_len -
+			(NLMSG_LENGTH(sizeof(*msg_hdr) + msg_hdr->length));
+	if (field_info_len) {
+		req->field_info_buf = (struct wifi_pos_field_info *)
+				      (req->buf + req->buf_len);
+		req->field_info_buf_len = field_info_len;
+	}
 
 	return 0;
 }

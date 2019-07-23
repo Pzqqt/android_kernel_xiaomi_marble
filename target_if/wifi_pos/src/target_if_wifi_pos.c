@@ -278,11 +278,11 @@ static int wifi_pos_oem_err_rpt_ev_handler(ol_scn_t scn, uint8_t *buf,
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-target_if_wifi_pos_oem_data_req(struct wlan_objmgr_psoc *psoc,
+target_if_wifi_pos_oem_data_req(struct wlan_objmgr_pdev *pdev,
 				struct oem_data_req *req)
 {
 	QDF_STATUS status;
-	wmi_unified_t wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc);
+	wmi_unified_t wmi_hdl = get_wmi_unified_hdl_from_pdev(pdev);
 
 	target_if_debug("Send oem data req to target");
 

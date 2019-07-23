@@ -94,10 +94,11 @@ static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 	uint8_t idx;
 	uint32_t sub_type = 0;
 	uint32_t channel_mhz = 0;
-	void *pdev_id = NULL;
+	uint32_t pdev_id = 0;
 	uint32_t offset;
 	struct oem_data_req data_req;
 	struct wlan_lmac_if_wifi_pos_tx_ops *tx_ops;
+	struct wlan_objmgr_pdev *pdev;
 
 	wifi_pos_debug("Received data req pid(%d), len(%d)",
 			req->pid, req->buf_len);
@@ -124,7 +125,14 @@ static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 
 			if (req->field_info_buf->fields[idx].id ==
 					WMIRTT_FIELD_ID_pdev) {
-				pdev_id = &req->buf[offset];
+				pdev_id = *((uint32_t *)&req->buf[offset]);
+				/* pdev_id in FW starts from 1. So convert it to
+				 * host id by decrementing it.
+				 * zero has special meaning due to backward
+				 * compatibility. Dont change it.
+				 */
+				if (pdev_id)
+					pdev_id -= 1;
 				continue;
 			}
 		}
@@ -150,18 +158,22 @@ static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 		break;
 	default:
 		wifi_pos_debug("invalid sub type or not passed");
-		/*
-		 * this is legacy MCL operation. pass whole msg to firmware as
-		 * it is.
-		 */
+
 		tx_ops = wifi_pos_get_tx_ops(psoc);
 		if (!tx_ops) {
 			wifi_pos_err("tx ops null");
 			return QDF_STATUS_E_INVAL;
 		}
-		data_req.data_len = req->buf_len;
-		data_req.data = req->buf;
-		tx_ops->data_req_tx(psoc, &data_req);
+
+		pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id,
+						  WLAN_WIFI_POS_CORE_ID);
+		if (pdev) {
+			data_req.data_len = req->buf_len;
+			data_req.data = req->buf;
+			tx_ops->data_req_tx(pdev, &data_req);
+			wlan_objmgr_pdev_release_ref(pdev,
+						     WLAN_WIFI_POS_CORE_ID);
+		}
 		break;
 	}
 

@@ -572,7 +572,7 @@ struct wlan_lmac_if_sptrl_tx_ops {
  * @wifi_pos_deregister_events: function pointer to deregister wifi_pos events
  */
 struct wlan_lmac_if_wifi_pos_tx_ops {
-	QDF_STATUS (*data_req_tx)(struct wlan_objmgr_psoc *psoc,
+	QDF_STATUS (*data_req_tx)(struct wlan_objmgr_pdev *pdev,
 				  struct oem_data_req *req);
 	QDF_STATUS (*wifi_pos_register_events)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*wifi_pos_deregister_events)(struct wlan_objmgr_psoc *psoc);
