@@ -649,6 +649,47 @@ mgmt_get_vht_action_subtype(uint8_t action_code)
 }
 
 /**
+ * mgmt_get_fst_action_subtype() - gets fst action subtype
+ * @action_code: action code
+ *
+ * This function returns the subtype for fst action
+ * category.
+ *
+ * Return: mgmt frame type
+ */
+static enum mgmt_frame_type
+mgmt_get_fst_action_subtype(uint8_t action_code)
+{
+	enum mgmt_frame_type frm_type;
+
+	switch (action_code) {
+	case FST_SETUP_REQ:
+		frm_type = MGMT_ACTION_FST_SETUP_REQ;
+		break;
+	case FST_SETUP_RSP:
+		frm_type = MGMT_ACTION_FST_SETUP_RSP;
+		break;
+	case FST_TEAR_DOWN:
+		frm_type = MGMT_ACTION_FST_TEAR_DOWN;
+		break;
+	case FST_ACK_REQ:
+		frm_type = MGMT_ACTION_FST_ACK_REQ;
+		break;
+	case FST_ACK_RSP:
+		frm_type = MGMT_ACTION_FST_ACK_RSP;
+		break;
+	case FST_ON_CHANNEL_TUNNEL:
+		frm_type = MGMT_ACTION_FST_ON_CHANNEL_TUNNEL;
+		break;
+	default:
+		frm_type = MGMT_FRM_UNSPECIFIED;
+		break;
+	}
+
+	return frm_type;
+}
+
+/**
  * mgmt_txrx_get_action_frm_subtype() - gets action frm subtype
  * @mpdu_data_ptr: pointer to mpdu data
  *
@@ -720,6 +761,9 @@ mgmt_txrx_get_action_frm_subtype(uint8_t *mpdu_data_ptr)
 		break;
 	case ACTION_CATEGORY_VENDOR_SPECIFIC:
 		frm_type = MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC;
+		break;
+	case ACTION_CATEGORY_FST:
+		frm_type = mgmt_get_fst_action_subtype(action_hdr->action_code);
 		break;
 	default:
 		frm_type = MGMT_FRM_UNSPECIFIED;

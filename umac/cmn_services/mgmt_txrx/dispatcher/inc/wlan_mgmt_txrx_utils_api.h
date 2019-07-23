@@ -414,6 +414,24 @@ enum wmm_actioncode {
 };
 
 /**
+ * enum fst_actioncode - fst action frames
+ * @FST_SETUP_REQ: fst setup request frame
+ * @FST_SETUP_RSP: fst setup response frame
+ * @FST_TEAR_DOWN: fst qos teardown frame
+ * @FST_ACK_REQ:  fst ack frame for request
+ * @FST_ACK_RSP:  fst ack frame for response
+ * @FST_ON_CHANNEL_TUNNEL:  fst on channel tunnel frame
+ */
+enum fst_actioncode {
+	FST_SETUP_REQ,
+	FST_SETUP_RSP,
+	FST_TEAR_DOWN,
+	FST_ACK_REQ,
+	FST_ACK_RSP,
+	FST_ON_CHANNEL_TUNNEL,
+};
+
+/**
  * enum vht_actioncode - vht action frames
  * @VHT_ACTION_COMPRESSED_BF: vht compressed bf action frame
  * @VHT_ACTION_GID_NOTIF: vht gid notification action frame
@@ -537,12 +555,18 @@ struct action_frm_hdr {
  * @MGMT_ACTION_VHT_COMPRESSED_BF: vht compressed bf action frame
  * @MGMT_ACTION_VHT_GID_NOTIF:   vht gid notification action frame
  * @MGMT_ACTION_VHT_OPMODE_NOTIF: vht opmode notification action frame
- * @MGMT_FRAME_TYPE_ALL:         mgmt frame type for all type of frames
- * @MGMT_MAX_FRAME_TYPE:         max. mgmt frame types
  * @MGMT_ACTION_GAS_INITIAL_REQUEST: GAS Initial request action frame
  * @MGMT_ACTION_GAS_INITIAL_RESPONSE: GAS Initial response action frame
  * @MGMT_ACTION_GAS_COMEBACK_REQUEST: GAS Comeback request action frame
  * @MGMT_ACTION_GAS_COMEBACK_RESPONSE: GAS Comeback response action frame
+ * @MGMT_ACTION_FST_SETUP_REQ: FST setup request frame
+ * @MGMT_ACTION_FST_SETUP_RSPA: FST setup response frame
+ * @MGMT_ACTION_FST_TEAR_DOWN: FST qos teardown frame
+ * @MGMT_ACTION_FST_ACK_REQ: FST ack frame for request
+ * @MGMT_ACTION_FST_ACK_RSP: FST ack frame for response
+ * @MGMT_ACTION_FST_ON_CHANNEL_TUNNEL: FST on channel tunnel frame
+ * @MGMT_FRAME_TYPE_ALL:         mgmt frame type for all type of frames
+ * @MGMT_MAX_FRAME_TYPE:         max. mgmt frame types
  */
 enum mgmt_frame_type {
 	MGMT_FRM_UNSPECIFIED = -1,
@@ -649,6 +673,12 @@ enum mgmt_frame_type {
 	MGMT_ACTION_GAS_INITIAL_RESPONSE,
 	MGMT_ACTION_GAS_COMEBACK_REQUEST,
 	MGMT_ACTION_GAS_COMEBACK_RESPONSE,
+	MGMT_ACTION_FST_SETUP_REQ,
+	MGMT_ACTION_FST_SETUP_RSP,
+	MGMT_ACTION_FST_TEAR_DOWN,
+	MGMT_ACTION_FST_ACK_REQ,
+	MGMT_ACTION_FST_ACK_RSP,
+	MGMT_ACTION_FST_ON_CHANNEL_TUNNEL,
 	MGMT_FRAME_TYPE_ALL,
 	MGMT_MAX_FRAME_TYPE,
 };
