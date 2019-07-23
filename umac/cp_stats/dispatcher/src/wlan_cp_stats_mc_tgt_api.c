@@ -848,6 +848,16 @@ static void tgt_mc_cp_stats_extract_station_stats(
 	}
 }
 
+static void tgt_mc_cp_send_lost_link_stats(struct wlan_objmgr_psoc *psoc,
+					   struct stats_event *ev)
+{
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (psoc_cp_stats_priv && psoc_cp_stats_priv->legacy_stats_cb)
+		psoc_cp_stats_priv->legacy_stats_cb(ev);
+}
+
 QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 					       struct stats_event *ev)
 {
@@ -862,6 +872,7 @@ QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 
 	tgt_mc_cp_stats_extract_cca_stats(psoc, ev);
 
+	tgt_mc_cp_send_lost_link_stats(psoc, ev);
 	return QDF_STATUS_SUCCESS;
 }
 
