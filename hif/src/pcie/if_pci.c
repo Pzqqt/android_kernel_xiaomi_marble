@@ -3870,9 +3870,18 @@ void hif_pci_irq_disable(struct hif_softc *scn, int ce_id)
 int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+	int pm_state;
 
 	if (!sc)
 		return -EINVAL;
+
+	pm_state = qdf_atomic_read(&sc->pm_state);
+	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED)
+		HIF_INFO("Runtime PM resume is requested by %ps",
+			 (void *)_RET_IP_);
+
+	sc->pm_stats.request_resume++;
+	sc->pm_stats.last_resume_caller = (void *)_RET_IP_;
 
 	return hif_pm_request_resume(sc->dev);
 }
@@ -3952,11 +3961,19 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 		return ret;
 	}
 
+	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED) {
+		HIF_INFO("Runtime PM resume is requested by %ps",
+			 (void *)_RET_IP_);
+		ret = -EAGAIN;
+	} else {
+		ret = -EBUSY;
+	}
+
 	sc->pm_stats.request_resume++;
 	sc->pm_stats.last_resume_caller = (void *)_RET_IP_;
-	ret = hif_pm_request_resume(sc->dev);
+	hif_pm_request_resume(sc->dev);
 
-	return -EAGAIN;
+	return ret;
 }
 
 /**

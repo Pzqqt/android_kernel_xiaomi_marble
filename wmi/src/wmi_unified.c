@@ -2764,6 +2764,33 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	qdf_atomic_dec(&wmi_handle->pending_cmds);
 }
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * wmi_htc_log_pkt() - Print information of WMI command from HTC packet
+ *
+ * @ctx: handle of WMI context
+ * @htc_pkt: handle of HTC packet
+ *
+ * @Return: none
+ */
+static void wmi_htc_log_pkt(void *ctx, HTC_PACKET *htc_pkt)
+{
+	wmi_buf_t wmi_cmd_buf = GET_HTC_PACKET_NET_BUF_CONTEXT(htc_pkt);
+	uint32_t cmd_id;
+
+	ASSERT(wmi_cmd_buf);
+	cmd_id = WMI_GET_FIELD(qdf_nbuf_data(wmi_cmd_buf), WMI_CMD_HDR,
+			       COMMANDID);
+
+	WMI_LOGI("WMI command from HTC packet: %s, ID: %d\n",
+		 wmi_id_to_name(cmd_id), cmd_id);
+}
+#else
+static void wmi_htc_log_pkt(void *ctx, HTC_PACKET *htc_pkt)
+{
+}
+#endif
+
 /**
  * wmi_connect_pdev_htc_service() -  WMI API to get connect to HTC service
  *
@@ -2794,6 +2821,7 @@ static QDF_STATUS wmi_connect_pdev_htc_service(struct wmi_soc *soc,
 	connect.EpCallbacks.EpSendFull = NULL /* ar6000_tx_queue_full */;
 	connect.EpCallbacks.EpTxComplete =
 		wmi_htc_tx_complete /* ar6000_tx_queue_full */;
+	connect.EpCallbacks.ep_log_pkt = wmi_htc_log_pkt;
 
 	/* connect to control service */
 	connect.service_id = soc->svc_ids[pdev_idx];

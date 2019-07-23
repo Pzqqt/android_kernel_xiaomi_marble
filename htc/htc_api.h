@@ -124,6 +124,10 @@ typedef HTC_PACKET *(*HTC_EP_RECV_ALLOC)(void *,
 					 HTC_ENDPOINT_ID Endpoint,
 					 int Length);
 
+/* Optional per service connection callback to log packet information.
+ */
+typedef void (*HTC_EP_LOG_PKT)(void *, HTC_PACKET *);
+
 enum htc_send_full_action {
 	/* packet that overflowed should be kept in the queue */
 	HTC_SEND_FULL_KEEP = 0,
@@ -183,6 +187,8 @@ struct htc_ep_callbacks {
 	 * are empty
 	 */
 	int RecvRefillWaterMark;
+	/* OPTIONAL callback to log packet information */
+	HTC_EP_LOG_PKT ep_log_pkt;
 };
 
 /* service connection information */
