@@ -109,6 +109,8 @@
 /* Mask for time stamp from descriptor */
 #define SPECTRAL_TSMASK              0xFFFFFFFF
 #define SPECTRAL_SIGNATURE           0xdeadbeef
+/* Signature to write onto spectral buffer and then later validate */
+#define MEM_POISON_SIGNATURE (htobe32(0xdeadbeef))
 
 /* START of spectral GEN II HW specific details */
 #define SPECTRAL_PHYERR_SIGNATURE_GEN2           0xbb
@@ -833,6 +835,8 @@ struct spectral_param_properties {
  * report a bin count of 0 to higher layers.
  * @last_fft_timestamp: last fft report timestamp
  * @timestamp_war_offset: Offset to be added to correct timestamp
+ * @dbr_ring_debug: Whether Spectral DBR ring debug is enabled
+ * @dbr_buff_debug: Whether Spectral DBR buffer debug is enabled
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -947,6 +951,8 @@ struct target_if_spectral {
 	uint32_t timestamp_war_offset[SPECTRAL_SCAN_MODE_MAX];
 	uint16_t fft_size_min;
 	uint16_t fft_size_max;
+	bool  dbr_ring_debug;
+	bool  dbr_buff_debug;
 };
 
 /**

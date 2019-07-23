@@ -1540,6 +1540,78 @@ target_if_get_spectral_mode(enum spectral_detector_id detector_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef DIRECT_BUF_RX_DEBUG
+static void target_if_spectral_check_buffer_poisoning(
+	struct target_if_spectral *spectral,
+	struct spectral_report *report,
+	int num_fft_bins, enum spectral_scan_mode smode)
+{
+	uint32_t *data;
+	size_t len;
+	size_t words_to_check =
+		sizeof(struct spectral_sscan_summary_report_gen3) >> 2;
+	bool poisoned_words_found = false;
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return;
+	}
+
+	if (!spectral->dbr_buff_debug)
+		return;
+
+	if (!report) {
+		spectral_err_rl("Spectral report is null");
+		return;
+	}
+
+	/* Add search FFT report */
+	if (spectral->params[smode].ss_rpt_mode > 0)
+		words_to_check +=
+			sizeof(struct spectral_phyerr_fft_report_gen3) >> 2;
+
+	/* Now add the number of FFT bins */
+	if (spectral->params[smode].ss_rpt_mode > 1) {
+		/* Caller should take care to pass correct number of FFT bins */
+		if (spectral->fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE)
+			words_to_check += num_fft_bins;
+		else if (spectral->fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE)
+			words_to_check += (num_fft_bins >> 1);
+	}
+
+	data = (uint32_t *)report->data;
+	for (len = 0; len < words_to_check; ++len) {
+		if (*data == MEM_POISON_SIGNATURE) {
+			spectral_err("Pattern(%x) found in Spectral search FFT report at position %zu in the buffer %pK",
+				     MEM_POISON_SIGNATURE,
+				     (len << 2), report->data);
+			poisoned_words_found = true;
+			break;
+		}
+		++data;
+	}
+
+	/* Crash the FW even if one word is poisoned */
+	if (poisoned_words_found) {
+		spectral_err("Pattern(%x) found in Spectral report, Hex dump of the sfft follows",
+			     MEM_POISON_SIGNATURE);
+		target_if_spectral_hexdump((unsigned char *)report->data,
+					   words_to_check << 2);
+		spectral_err("Asserting the FW");
+		target_if_spectral_fw_hang(spectral);
+	}
+}
+#else
+static void target_if_spectral_check_buffer_poisoning(
+	struct target_if_spectral *spectral,
+	struct spectral_report *report,
+	int num_fft_bins, enum spectral_scan_mode smode)
+{
+}
+#endif
+
 int
 target_if_consume_spectral_report_gen3(
 	 struct target_if_spectral *spectral,
@@ -1905,6 +1977,8 @@ target_if_consume_spectral_report_gen3(
 		goto fail;
 	}
 
+	target_if_spectral_check_buffer_poisoning(spectral, report,
+						  fft_bin_len, params.smode);
 	qdf_mem_copy(&params.classifier_params,
 		     &spectral->classifier_params,
 		     sizeof(struct spectral_classifier_params));
@@ -1913,7 +1987,6 @@ target_if_consume_spectral_report_gen3(
 	target_if_spectral_create_samp_msg(spectral, &params);
 
 	return 0;
-
  fail:
 	spectral_err_rl("Error while processing Spectral report");
 	reset_160mhz_delivery_state_machine(spectral,
