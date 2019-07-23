@@ -323,6 +323,9 @@ static void wlan_lmac_if_umac_reg_rx_ops_register(
 
 	rx_ops->reg_rx_ops.reg_enable_dfs_channels =
 		ucfg_reg_enable_dfs_channels;
+
+	rx_ops->reg_rx_ops.reg_modify_pdev_chan_range =
+		wlan_reg_modify_pdev_chan_range;
 }
 
 #ifdef CONVERGED_P2P_ENABLE
@@ -394,6 +397,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 		tgt_dfs_set_agile_precac_state;
 	dfs_rx_ops->dfs_start_precac_timer = utils_dfs_start_precac_timer;
 	dfs_rx_ops->dfs_cancel_precac_timer = utils_dfs_cancel_precac_timer;
+	dfs_rx_ops->dfs_reset_adfs_config = ucfg_dfs_reset_agile_config;
 	dfs_rx_ops->dfs_override_precac_timeout =
 		ucfg_dfs_override_precac_timeout;
 	dfs_rx_ops->dfs_set_precac_enable = ucfg_dfs_set_precac_enable;
@@ -405,6 +409,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	dfs_rx_ops->dfs_dfs_cac_complete_ind = tgt_dfs_cac_complete;
 	dfs_rx_ops->dfs_dfs_ocac_complete_ind = tgt_dfs_ocac_complete;
 	dfs_rx_ops->dfs_stop = tgt_dfs_stop;
+	dfs_rx_ops->dfs_reinit_timers = ucfg_dfs_reinit_timers;
 	dfs_rx_ops->dfs_enable_stadfs = tgt_dfs_enable_stadfs;
 	dfs_rx_ops->dfs_is_stadfs_enabled = tgt_dfs_is_stadfs_enabled;
 	dfs_rx_ops->dfs_process_phyerr_filter_offload =
