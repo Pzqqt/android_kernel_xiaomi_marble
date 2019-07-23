@@ -640,7 +640,8 @@ static enum policy_mgr_pcl_type policy_mgr_get_pcl_4_port(
 	/* Will be enhanced for other types of 4 port conc (NaN etc.)
 	 * in future.
 	 */
-	if (mode !=  PM_STA_MODE && mode != PM_SAP_MODE) {
+	if (mode != PM_STA_MODE && mode != PM_SAP_MODE &&
+	    mode != PM_P2P_GO_MODE) {
 		policy_mgr_err("Can't start 4th port if not STA, SAP");
 		return PM_MAX_PCL_TYPE;
 	}
@@ -1724,10 +1725,13 @@ enum policy_mgr_three_connection_mode
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 
 	/* For 4 port concurrency case,
-	 * 1st step: (SAP+STA) (2.4G MAC SCC)+(SAP+STA) (5G MAC SCC)
+	 * 1st step: (SAP+STA)(2.4G MAC SCC) + (SAP+STA)(5G MAC SCC)
+	 * 2nd step: (AGO+STA)(2.4G MAC SCC) + (AGO+STA)(5G MAC SCC)
 	 */
 	count_sap += policy_mgr_mode_specific_connection_count(
 				psoc, PM_SAP_MODE, &list_sap[count_sap]);
+	count_sap += policy_mgr_mode_specific_connection_count(
+				psoc, PM_P2P_GO_MODE, &list_sap[count_sap]);
 	count_sta = policy_mgr_mode_specific_connection_count(
 				psoc, PM_STA_MODE, list_sta);
 	policy_mgr_debug("sap/ago num: %d, sta num: %d", count_sap, count_sta);
