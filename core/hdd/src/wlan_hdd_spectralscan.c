@@ -394,15 +394,58 @@ int wlan_hdd_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 }
 
 #if defined(CNSS_GENL) && defined(WLAN_CONV_SPECTRAL_ENABLE)
+static void spectral_get_version(struct wlan_objmgr_pdev *pdev,
+				 uint32_t *version,
+				 uint32_t *sub_version)
+{
+	struct spectral_cp_request sscan_req;
+	QDF_STATUS status;
+
+	if (!pdev || !version || !sub_version) {
+		hdd_err("invalid param");
+		return;
+	}
+
+	sscan_req.ss_mode = SPECTRAL_SCAN_MODE_NORMAL;
+	sscan_req.req_id = SPECTRAL_GET_CAPABILITY_INFO;
+	status = ucfg_spectral_control(pdev, &sscan_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		*version = SPECTRAL_VERSION_2;
+		*sub_version = SPECTRAL_SUB_VERSION_0;
+		hdd_err("get spectral cap fail");
+		return;
+	}
+
+	switch (sscan_req.caps_req.sscan_caps.hw_gen) {
+	case 0:
+		*version = SPECTRAL_VERSION_1;
+		*sub_version = SPECTRAL_SUB_VERSION_0;
+		break;
+	case 1:
+		*version = SPECTRAL_VERSION_2;
+		*sub_version = SPECTRAL_SUB_VERSION_1;
+		break;
+	case 2:
+		*version = SPECTRAL_VERSION_3;
+		*sub_version = SPECTRAL_SUB_VERSION_0;
+		break;
+	default:
+		*version = SPECTRAL_VERSION_2;
+		*sub_version = SPECTRAL_SUB_VERSION_0;
+		hdd_err("invalid hw gen");
+		break;
+	}
+}
+
 static void send_spectral_scan_reg_rsp_msg(struct hdd_context *hdd_ctx)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
-	struct spectral_scan_msg *rsp_msg;
+	struct spectral_scan_msg_v *rsp_msg;
 	int err;
 
-	skb = alloc_skb(NLMSG_SPACE(sizeof(struct spectral_scan_msg)),
-				GFP_KERNEL);
+	skb = alloc_skb(NLMSG_SPACE(sizeof(struct spectral_scan_msg_v)),
+			GFP_KERNEL);
 	if (!skb) {
 		hdd_err("Skb allocation failed");
 		return;
@@ -417,9 +460,11 @@ static void send_spectral_scan_reg_rsp_msg(struct hdd_context *hdd_ctx)
 	rsp_msg = NLMSG_DATA(nlh);
 	rsp_msg->msg_type = SPECTRAL_SCAN_REGISTER_RSP;
 	rsp_msg->pid = hdd_ctx->sscan_pid;
+	spectral_get_version(hdd_ctx->pdev, &rsp_msg->version,
+			     &rsp_msg->sub_version);
 
-	nlh->nlmsg_len = NLMSG_LENGTH(sizeof(struct spectral_scan_msg));
-	skb_put(skb, NLMSG_SPACE(sizeof(struct spectral_scan_msg)));
+	nlh->nlmsg_len = NLMSG_LENGTH(sizeof(struct spectral_scan_msg_v));
+	skb_put(skb, NLMSG_SPACE(sizeof(struct spectral_scan_msg_v)));
 
 	hdd_info("sending App Reg Response to process pid %d",
 			hdd_ctx->sscan_pid);
