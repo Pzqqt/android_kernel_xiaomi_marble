@@ -2947,7 +2947,7 @@ static inline void dp_print_rx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 		       dp_stats_buf->rssi_data);
 	DP_PRINT_STATS("rssi_comb = %u",
 		       dp_stats_buf->rssi_comb);
-	DP_PRINT_STATS("rx_in_dbm = %u",
+	DP_PRINT_STATS("rssi_in_dbm = %d",
 		       dp_stats_buf->rssi_in_dbm);
 	DP_PRINT_STATS("rx_11ax_su_ext = %u",
 		       dp_stats_buf->rx_11ax_su_ext);
