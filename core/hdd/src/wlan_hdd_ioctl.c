@@ -747,7 +747,8 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	if (!memcmp(bssid, sta_ctx->conn_info.bssid.bytes,
 			QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
-		channel = sta_ctx->conn_info.channel;
+		channel = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+						sta_ctx->conn_info.freq);
 	}
 
 	/* Check channel number is a valid channel number */
@@ -915,6 +916,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 		    const int payload_len, const uint8_t *payload)
 {
 	struct ieee80211_channel chan;
+	uint8_t conn_info_channel;
 	int frame_len, ret = 0;
 	uint8_t *frame;
 	struct ieee80211_hdr_3addr *hdr;
@@ -962,17 +964,18 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 		static const uint8_t oui[] = { 0x00, 0x00, 0xf0 };
 
 		if (!qdf_mem_cmp(vendor->Oui, oui, 3)) {
+			conn_info_channel = wlan_reg_freq_to_chan(
+						hdd_ctx->pdev,
+						sta_ctx->conn_info.freq);
 			/*
 			 * if the channel number is different from operating
 			 * channel then no need to send action frame
 			 */
 			if (channel != 0) {
-				if (channel !=
-				    sta_ctx->conn_info.channel) {
-					hdd_warn("channel(%d) is different from operating channel(%d)",
-						  channel,
-						  sta_ctx->conn_info.
-						  channel);
+				if (channel != conn_info_channel) {
+					hdd_warn("channel(%u) is different from operating channel(%u)",
+						 channel,
+						 conn_info_channel);
 					ret = -EINVAL;
 					goto exit;
 				}
@@ -991,9 +994,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 				 * 0 is accepted as current home channel,
 				 * delayed transmission of action frame is ok.
 				 */
-				chan.center_freq =
-					sme_chn_to_freq(sta_ctx->conn_info.
-							channel);
+				chan.center_freq = sta_ctx->conn_info.freq;
 			}
 		}
 	}
@@ -4340,6 +4341,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	}
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* if not associated, no need to proceed with reassoc */
 	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
@@ -4365,7 +4367,9 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 			 QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {
-			channel = sta_ctx->conn_info.channel;
+			channel = wlan_reg_freq_to_chan(
+					hdd_ctx->pdev,
+					sta_ctx->conn_info.freq);
 			hdd_wma_send_fastreassoc_cmd(adapter, bssid,
 						     channel);
 		} else {

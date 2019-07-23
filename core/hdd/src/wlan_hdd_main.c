@@ -893,6 +893,13 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 uint8_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
 {
 	uint8_t home_channel = 0;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return 0;
+	}
 
 	if ((adapter->device_mode == QDF_SAP_MODE ||
 	     adapter->device_mode == QDF_P2P_GO_MODE) &&
@@ -903,7 +910,9 @@ uint8_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
 		   adapter->session.station.conn_info.conn_state ==
 		   eConnectionState_Associated) {
 		home_channel =
-			adapter->session.station.conn_info.channel;
+			wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				adapter->session.station.conn_info.freq);
 	}
 
 	return home_channel;
@@ -4584,6 +4593,10 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	/* Set the default operation channel */
 	sta_ctx->conn_info.channel =
 		hdd_ctx->config->operating_channel;
+	sta_ctx->conn_info.freq =
+		wlan_reg_chan_to_freq(
+			hdd_ctx->pdev,
+			hdd_ctx->config->operating_channel);
 
 	/* Make the default Auth Type as OPEN */
 	sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;

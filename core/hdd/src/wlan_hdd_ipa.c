@@ -76,8 +76,9 @@ void hdd_ipa_set_tx_flow_info(void)
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (eConnectionState_Associated ==
 			    sta_ctx->conn_info.conn_state) {
-				staChannel =
-					sta_ctx->conn_info.channel;
+				staChannel = wlan_reg_freq_to_chan(
+						hdd_ctx->pdev,
+						sta_ctx->conn_info.freq);
 				qdf_copy_macaddr(&staBssid,
 						 &sta_ctx->conn_info.bssid);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
@@ -89,8 +90,9 @@ void hdd_ipa_set_tx_flow_info(void)
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (eConnectionState_Associated ==
 			    sta_ctx->conn_info.conn_state) {
-				p2pChannel =
-					sta_ctx->conn_info.channel;
+				p2pChannel = wlan_reg_freq_to_chan(
+					hdd_ctx->pdev,
+					sta_ctx->conn_info.freq);
 				qdf_copy_macaddr(&p2pBssid,
 						&sta_ctx->conn_info.bssid);
 				p2pMode = "CLI";

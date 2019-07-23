@@ -4330,6 +4330,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 	struct hdd_adapter *adapter;
 	struct hdd_ap_ctx *ap_ctx;
 	struct hdd_station_ctx *sta_ctx;
+	uint8_t conn_info_channel;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if ((device_mode == adapter->device_mode) &&
@@ -4357,6 +4358,10 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 			sta_ctx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
+			conn_info_channel =
+				wlan_reg_freq_to_chan(
+					hdd_ctx->pdev,
+					sta_ctx->conn_info.freq);
 			/*
 			 *  if STA is already connected on DFS channel,
 			 *  do not disable scan on dfs channels
@@ -4364,7 +4369,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 			if (hdd_conn_is_connected(sta_ctx) &&
 				(CHANNEL_STATE_DFS ==
 				wlan_reg_get_channel_state(hdd_ctx->pdev,
-					sta_ctx->conn_info.channel))) {
+					conn_info_channel))) {
 				hdd_err("client connected on DFS channel");
 				return true;
 			}
@@ -8858,8 +8863,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		}
 
 		nss  = hdd_sta_ctx->conn_info.nss;
-		freq = cds_chan_to_freq(
-				hdd_sta_ctx->conn_info.channel);
+		freq = hdd_sta_ctx->conn_info.freq;
 		rate_flags = hdd_sta_ctx->conn_info.rate_flags;
 	} else if (adapter->device_mode == QDF_P2P_GO_MODE ||
 		   adapter->device_mode == QDF_SAP_MODE) {
@@ -18967,9 +18971,10 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct qdf_mac_addr bssid;
-	u8 channelNum = 0;
+	uint8_t channelNum = 0;
 	mac_handle_t mac_handle;
 	struct wlan_mlme_ibss_cfg ibss_cfg = {0};
+	uint8_t conn_info_channel;
 
 	hdd_enter();
 
@@ -19100,6 +19105,9 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		hdd_debug("set channel %d", channelNum);
 		roam_profile->ChannelInfo.numOfChannels = 1;
 		sta_ctx->conn_info.channel = channelNum;
+		sta_ctx->conn_info.freq =
+			wlan_reg_chan_to_freq(hdd_ctx->pdev,
+					      channelNum);
 		roam_profile->ChannelInfo.ChannelList =
 			&sta_ctx->conn_info.channel;
 	}
@@ -19111,12 +19119,15 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		return status;
 	}
 
+	conn_info_channel =
+		wlan_reg_freq_to_chan(
+			hdd_ctx->pdev,
+			sta_ctx->conn_info.freq);
 	/* Issue connect start */
 	status = wlan_hdd_cfg80211_connect_start(adapter, params->ssid,
 						 params->ssid_len,
 						 bssid.bytes, NULL,
-						 sta_ctx->conn_info.
-						 channel,
+						 conn_info_channel,
 						 params->chandef.width);
 
 	if (0 > status) {

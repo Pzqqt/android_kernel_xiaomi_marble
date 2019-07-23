@@ -140,8 +140,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 	if (sta_ctx) {
 		data->is_connected = is_connected;
 		data->rssi = adapter->rssi;
-		data->freq =
-			cds_chan_to_freq(sta_ctx->conn_info.channel);
+		data->freq = sta_ctx->conn_info.freq;
 		if (WLAN_SVC_MAX_SSID_LEN >=
 		    sta_ctx->conn_info.ssid.SSID.length) {
 			data->ssid_len = sta_ctx->conn_info.ssid.SSID.length;
