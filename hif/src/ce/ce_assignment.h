@@ -676,7 +676,11 @@ static struct CE_attr host_ce_config_wlan_qca8074[] = {
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
 	/* target -> host PKTLOG */
+#ifdef REMOVE_PKT_LOG
+	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
+#else
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
+#endif
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0, 0,
 		0, 0, NULL,},
@@ -710,7 +714,11 @@ static struct CE_pipe_config target_ce_config_wlan_qca8074[] = {
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
 	/* NB: 50% of src nentries, since tx has 2 frags */
 	/* Target -> host PKTLOG */
+#ifdef REMOVE_PKT_LOG
+	{ /* CE5 */ 5, PIPEDIR_NONE,  0, 0, 0, 0,},
+#else
 	{ /* CE5 */ 5, PIPEDIR_IN,  32, 2048, 0, 0,},
+#endif
 	/* Reserved for target autonomous HIF_memcpy */
 	{ /* CE6 */ 6, PIPEDIR_INOUT, 32, 65535, 64, 0,},
 	/* CE7 used only by Host */
@@ -738,7 +746,11 @@ static struct CE_attr host_ce_config_wlan_qca8074_pci[] = {
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
 	/* target -> host PKTLOG */
+#ifdef REMOVE_PKT_LOG
+	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
+#else
 	{ /* CE5 */ EPPING_CE_FLAGS_POLL, 0, 0, 2048, 512, NULL,},
+#endif
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* host->target WMI (mac1) */
