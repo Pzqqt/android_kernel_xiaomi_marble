@@ -109,10 +109,10 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_start(
 		if (rsp_pos != set_bit) {
 			if (qdf_atomic_test_bit(rsp_pos,
 						&vdev_rsp->rsp_status)) {
-				mlme_err("PSOC_%d VDEV_%d: Request bit %d, response bit %d",
+				mlme_err("PSOC_%d VDEV_%d: %s requested, waiting for %s response",
 					 wlan_psoc_get_id(psoc),
-					 vdev_id, set_bit,
-					 vdev_rsp->rsp_status);
+					 vdev_id, string_from_rsp_bit(set_bit),
+					 string_from_rsp_bit(rsp_pos));
 				target_if_vdev_mgr_assert_mgmt(vdev, vdev_rsp,
 							       rsp_pos);
 				target_if_vdev_mgr_rsp_timer_stop(vdev,
@@ -123,9 +123,10 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_start(
 	}
 
 	if (qdf_atomic_test_and_set_bit(set_bit, &vdev_rsp->rsp_status)) {
-		mlme_err("PSOC_%d VDEV_%d: Request bit: %d, response bit %d",
+		mlme_err("PSOC_%d VDEV_%d: %s requested, waiting for %s response",
 			 wlan_psoc_get_id(psoc),
-			 vdev_id, set_bit, vdev_rsp->rsp_status);
+			 vdev_id, string_from_rsp_bit(set_bit),
+			 string_from_rsp_bit(set_bit));
 		target_if_vdev_mgr_assert_mgmt(vdev, vdev_rsp,
 					       set_bit);
 		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, set_bit);

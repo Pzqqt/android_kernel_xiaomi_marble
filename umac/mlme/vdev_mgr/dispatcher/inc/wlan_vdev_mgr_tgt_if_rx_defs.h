@@ -28,12 +28,40 @@
 
 #include <qdf_timer.h>
 
-#define START_RESPONSE_BIT  0x1
-#define RESTART_RESPONSE_BIT  0x2
-#define STOP_RESPONSE_BIT   0x3
-#define DELETE_RESPONSE_BIT 0x4
-#define PEER_DELETE_ALL_RESPONSE_BIT 0x5
-#define RESPONSE_BIT_MAX PEER_DELETE_ALL_RESPONSE_BIT
+/**
+ * enum wlan_vdev_mgr_tgt_if_rsp_bit - response status bit
+ * START_RESPONSE_BIT: vdev start response bit
+ * RESTART_RESPONSE_BIT: vdev restart response bit
+ * STOP_RESPONSE_BIT: vdev stop response bit
+ * DELETE_RESPONSE_BIT:  vdev delete response bit
+ * PEER_DELETE_ALL_RESPONSE_BIT: vdev peer delete all response bit
+ */
+enum wlan_vdev_mgr_tgt_if_rsp_bit {
+	START_RESPONSE_BIT = 0,
+	RESTART_RESPONSE_BIT = 1,
+	STOP_RESPONSE_BIT = 2,
+	DELETE_RESPONSE_BIT = 3,
+	PEER_DELETE_ALL_RESPONSE_BIT = 4,
+	RESPONSE_BIT_MAX,
+};
+
+/**
+ * string_from_rsp_bit() - Convert response bit to string
+ * @bit - response bit as in wlan_vdev_mgr_tgt_if_rsp_bit
+ *
+ * Please note to add new string in the array at index equal to
+ * its enum value in wlan_vdev_mgr_tgt_if_rsp_bit.
+ */
+static inline char *string_from_rsp_bit(enum wlan_vdev_mgr_tgt_if_rsp_bit bit)
+{
+	static const char *strings[] = { "START",
+					"RESTART",
+					"STOP",
+					"DELETE",
+					"PEER DELETE ALL",
+					"RESPONE MAX"};
+	return (char *)strings[bit];
+}
 
 #define START_RESPONSE_TIMER 6000 /* 6 seconds */
 #define STOP_RESPONSE_TIMER  3000 /* 3 seconds */
