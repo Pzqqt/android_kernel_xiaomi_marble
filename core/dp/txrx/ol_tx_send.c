@@ -1036,7 +1036,8 @@ void ol_tx_dump_group_credit_stats(ol_txrx_pdev_handle pdev)
 {
 	uint16_t i, j, is_break = 0;
 	int16_t curr_index, old_index, wrap_around;
-	uint16_t curr_credit, old_credit, mem_vdevs;
+	uint16_t curr_credit, mem_vdevs;
+	uint16_t old_credit = 0;
 
 	txrx_nofl_info("Group credit stats:");
 	txrx_nofl_info("  No: GrpID: Credit: Change: vdev_map");
