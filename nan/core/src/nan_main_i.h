@@ -98,8 +98,8 @@ struct nan_cfg_params {
  * @tx_ops: Tx ops registered with Target IF interface
  * @rx_ops: Rx  ops registered with Target IF interface
  * @disc_state: Present NAN Discovery state
- * @nan_social_ch_2g: NAN 2G Social channel for discovery
- * @nan_social_ch_5g: NAN 5G Social channel for discovery
+ * @nan_social_ch_2g_freq: NAN 2G Social channel for discovery
+ * @nan_social_ch_5g_freq: NAN 5G Social channel for discovery
  * @nan_disc_mac_id: MAC id used for NAN Discovery
  * @is_explicit_disable: Flag to indicate that NAN is being explicitly
  * disabled by driver or user-space
@@ -113,8 +113,8 @@ struct nan_psoc_priv_obj {
 	struct wlan_nan_tx_ops tx_ops;
 	struct wlan_nan_rx_ops rx_ops;
 	enum nan_disc_state disc_state;
-	uint8_t nan_social_ch_2g;
-	uint8_t nan_social_ch_5g;
+	uint32_t nan_social_ch_2g_freq;
+	uint32_t nan_social_ch_5g_freq;
 	uint8_t nan_disc_mac_id;
 	bool is_explicit_disable;
 	void *request_context;
@@ -220,12 +220,12 @@ QDF_STATUS nan_set_discovery_state(struct wlan_objmgr_psoc *psoc,
 /*
  * nan_discovery_pre_enable: Takes steps before sending NAN Enable to Firmware
  * @psoc: PSOC object
- * @nan_social_channel: Primary social channel for NAN Discovery
+ * @nan_ch_freq: Primary social channel for NAN Discovery
  *
  * Return: status of operation
  */
 QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
-				    uint8_t nan_social_channel);
+				    uint32_t nan_ch_freq);
 
 /*
  * nan_get_discovery_state: Returns the current NAN Discovery state
@@ -238,11 +238,11 @@ enum nan_disc_state nan_get_discovery_state(struct wlan_objmgr_psoc *psoc);
 /*
  * nan_is_enable_allowed: Queries whether NAN Discovery is allowed
  * @psoc: PSOC object
- * @nan_chan: Possible primary social channel for NAN Discovery
+ * @nan_ch_freq: Possible primary social channel for NAN Discovery
  *
  * Return: True if NAN Enable is allowed on given channel, False otherwise
  */
-bool nan_is_enable_allowed(struct wlan_objmgr_psoc *psoc, uint8_t nan_chan);
+bool nan_is_enable_allowed(struct wlan_objmgr_psoc *psoc, uint32_t nan_ch_freq);
 
 /*
  * nan_is_disc_active: Queries whether NAN Discovery is active

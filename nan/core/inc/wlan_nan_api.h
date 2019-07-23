@@ -185,12 +185,12 @@ wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
 			     struct policy_mgr_vdev_entry_info *conn_info);
 
 /**
- * wlan_nan_get_disc_5g_ch: Get NAN Disc 5G channel
+ * wlan_nan_get_disc_5g_ch_freq: Get NAN Disc 5G channel frequency
  * @psoc: pointer to psoc object
  *
- * Return: NAN Disc 5G channel
+ * Return: NAN Disc 5G channel frequency
  */
-uint8_t wlan_nan_get_disc_5g_ch(struct wlan_objmgr_psoc *psoc);
+uint32_t wlan_nan_get_disc_5g_ch_freq(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_nan_get_sap_conc_support: Get NAN+SAP conc support
@@ -228,7 +228,8 @@ wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_FAILURE;
 }
 
-static inline uint8_t wlan_nan_get_disc_5g_ch(struct wlan_objmgr_psoc *psoc)
+static inline uint32_t
+wlan_nan_get_disc_5g_ch_freq(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
 }
