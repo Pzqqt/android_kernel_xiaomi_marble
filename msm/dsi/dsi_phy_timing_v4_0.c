@@ -3,7 +3,6 @@
  * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "dsi-phy-timing-v4: %s:" fmt, __func__
 #include "dsi_phy_timing_calc.h"
 
 void dsi_phy_hw_v4_0_get_default_phy_params(
@@ -93,12 +92,12 @@ void dsi_phy_hw_v4_0_update_timing_params(
 	timing->lane_v4[12] = desc->clk_pre.reg_value;
 	timing->lane_v4[13] = desc->clk_post.reg_value;
 
-	pr_debug("[%d %d %d %d]\n", timing->lane_v4[0],
+	DSI_DEBUG("[%d %d %d %d]\n", timing->lane_v4[0],
 		timing->lane_v4[1], timing->lane_v4[2], timing->lane_v4[3]);
-	pr_debug("[%d %d %d %d]\n", timing->lane_v4[4],
+	DSI_DEBUG("[%d %d %d %d]\n", timing->lane_v4[4],
 		timing->lane_v4[5], timing->lane_v4[6], timing->lane_v4[7]);
-	pr_debug("[%d %d %d %d]\n", timing->lane_v4[8],
+	DSI_DEBUG("[%d %d %d %d]\n", timing->lane_v4[8],
 		timing->lane_v4[9], timing->lane_v4[10], timing->lane_v4[11]);
-	pr_debug("[%d %d]\n", timing->lane_v4[12], timing->lane_v4[13]);
+	DSI_DEBUG("[%d %d]\n", timing->lane_v4[12], timing->lane_v4[13]);
 	timing->count_per_lane = 14;
 }

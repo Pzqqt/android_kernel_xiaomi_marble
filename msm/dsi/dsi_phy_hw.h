@@ -12,6 +12,15 @@
 #define DSI_PHY_TIMING_V3_SIZE 12
 #define DSI_PHY_TIMING_V4_SIZE 14
 
+#define DSI_PHY_DBG(p, fmt, ...)	DRM_DEV_DEBUG(NULL, "[msm-dsi-debug]: DSI_%d: "\
+		fmt, p ? p->index : -1, ##__VA_ARGS__)
+#define DSI_PHY_ERR(p, fmt, ...)	DRM_DEV_ERROR(NULL, "[msm-dsi-error]: DSI_%d: "\
+		fmt, p ? p->index : -1, ##__VA_ARGS__)
+#define DSI_PHY_INFO(p, fmt, ...)	DRM_DEV_INFO(NULL, "[msm-dsi-info]: DSI_%d: "\
+		fmt, p ? p->index : -1, ##__VA_ARGS__)
+#define DSI_PHY_WARN(p, fmt, ...)	DRM_WARN("[msm-dsi-warn]: DSI_%d: " fmt,\
+		p ? p->index : -1, ##__VA_ARGS__)
+
 /**
  * enum dsi_phy_version - DSI PHY version enumeration
  * @DSI_PHY_VERSION_UNKNOWN:    Unknown version.

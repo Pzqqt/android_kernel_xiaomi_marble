@@ -3,7 +3,6 @@
  * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "dsi-phy-hw-v4: %s:" fmt, __func__
 #include <linux/math64.h>
 #include <linux/delay.h>
 #include <linux/iopoll.h>
@@ -208,13 +207,13 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 	u32 glbl_rescode_bot_ctrl = 0;
 
 	if (dsi_phy_hw_v4_0_is_pll_on(phy))
-		pr_warn("PLL turned on before configuring PHY\n");
+		DSI_PHY_WARN(phy, "PLL turned on before configuring PHY\n");
 
 	/* wait for REFGEN READY */
 	rc = readl_poll_timeout_atomic(phy->base + DSIPHY_CMN_PHY_STATUS,
 		status, (status & BIT(0)), delay_us, timeout_us);
 	if (rc) {
-		pr_err("Ref gen not ready. Aborting\n");
+		DSI_PHY_ERR(phy, "Ref gen not ready. Aborting\n");
 		return;
 	}
 
@@ -309,7 +308,7 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 	/* DSI lane settings */
 	dsi_phy_hw_v4_0_lane_settings(phy, cfg);
 
-	pr_debug("[DSI_%d]Phy enabled\n", phy->index);
+	DSI_PHY_DBG(phy, "Phy enabled\n");
 }
 
 /**
@@ -322,7 +321,7 @@ void dsi_phy_hw_v4_0_disable(struct dsi_phy_hw *phy,
 	u32 data = 0;
 
 	if (dsi_phy_hw_v4_0_is_pll_on(phy))
-		pr_warn("Turning OFF PHY while PLL is on\n");
+		DSI_PHY_WARN(phy, "Turning OFF PHY while PLL is on\n");
 
 	dsi_phy_hw_v4_0_config_lpcdrx(phy, cfg, false);
 
@@ -336,7 +335,7 @@ void dsi_phy_hw_v4_0_disable(struct dsi_phy_hw *phy,
 	DSI_W32(phy, DSIPHY_CMN_CTRL_0, 0x00);
 	/* make sure phy is turned off */
 	wmb();
-	pr_debug("[DSI_%d]Phy disabled\n", phy->index);
+	DSI_PHY_DBG(phy, "Phy disabled\n");
 }
 
 void dsi_phy_hw_v4_0_toggle_resync_fifo(struct dsi_phy_hw *phy)
@@ -379,14 +378,14 @@ int dsi_phy_hw_v4_0_wait_for_lane_idle(
 	if (lanes & DSI_DATA_LANE_3)
 		stop_state_mask |= BIT(3);
 
-	pr_debug("%s: polling for lanes to be in stop state, mask=0x%08x\n",
-		__func__, stop_state_mask);
+	DSI_PHY_DBG(phy, "polling for lanes to be in stop state, mask=0x%08x\n",
+		stop_state_mask);
 	rc = readl_poll_timeout(phy->base + DSIPHY_CMN_LANE_STATUS1, val,
 				((val & stop_state_mask) == stop_state_mask),
 				sleep_us, timeout_us);
 	if (rc) {
-		pr_err("%s: lanes not in stop state, LANE_STATUS=0x%08x\n",
-			__func__, val);
+		DSI_PHY_ERR(phy, "lanes not in stop state, LANE_STATUS=0x%08x\n",
+			val);
 		return rc;
 	}
 
@@ -422,8 +421,7 @@ void dsi_phy_hw_v4_0_ulps_request(struct dsi_phy_hw *phy,
 	/* disable LPRX and CDRX */
 	dsi_phy_hw_v4_0_config_lpcdrx(phy, cfg, false);
 
-	pr_debug("[DSI_PHY%d] ULPS requested for lanes 0x%x\n", phy->index,
-		 lanes);
+	DSI_PHY_DBG(phy, "ULPS requested for lanes 0x%x\n", lanes);
 }
 
 int dsi_phy_hw_v4_0_lane_reset(struct dsi_phy_hw *phy)
@@ -437,11 +435,11 @@ int dsi_phy_hw_v4_0_lane_reset(struct dsi_phy_hw *phy)
 		loop--;
 		udelay(u_dly);
 		ln_status = DSI_R32(phy, DSIPHY_CMN_LANE_STATUS1);
-		pr_debug("trial no: %d\n", loop);
+		DSI_PHY_DBG(phy, "trial no: %d\n", loop);
 	}
 
 	if (!loop)
-		pr_debug("could not reset phy lanes\n");
+		DSI_PHY_DBG(phy, "could not reset phy lanes\n");
 
 	DSI_W32(phy, DSIPHY_CMN_LANE_CTRL3, 0x0);
 	wmb(); /* ensure register is committed */
@@ -498,7 +496,7 @@ u32 dsi_phy_hw_v4_0_get_lanes_in_ulps(struct dsi_phy_hw *phy)
 	u32 lanes = 0;
 
 	lanes = DSI_R32(phy, DSIPHY_CMN_LANE_STATUS0);
-	pr_debug("[DSI_PHY%d] lanes in ulps = 0x%x\n", phy->index, lanes);
+	DSI_PHY_DBG(phy, "lanes in ulps = 0x%x\n", lanes);
 	return lanes;
 }
 
@@ -516,7 +514,7 @@ int dsi_phy_hw_timing_val_v4_0(struct dsi_phy_per_lane_cfgs *timing_cfg,
 	int i = 0;
 
 	if (size != DSI_PHY_TIMING_V4_SIZE) {
-		pr_err("Unexpected timing array size %d\n", size);
+		DSI_ERR("Unexpected timing array size %d\n", size);
 		return -EINVAL;
 	}
 
@@ -677,7 +675,7 @@ int dsi_phy_hw_v4_0_cache_phy_timings(struct dsi_phy_per_lane_cfgs *timings,
 		return -EINVAL;
 
 	if (size != DSI_PHY_TIMING_V4_SIZE) {
-		pr_err("size mis-match\n");
+		DSI_ERR("size mis-match\n");
 		return -EINVAL;
 	}
 

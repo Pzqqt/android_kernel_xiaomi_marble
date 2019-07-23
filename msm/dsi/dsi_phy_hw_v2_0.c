@@ -3,7 +3,6 @@
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "dsi-phy-hw:" fmt
 #include <linux/math64.h>
 #include <linux/delay.h>
 #include "dsi_hw.h"
@@ -86,7 +85,7 @@ void dsi_phy_hw_v2_0_regulator_enable(struct dsi_phy_hw *phy,
 	/* make sure all values are written to hardware */
 	wmb();
 
-	pr_debug("[DSI_%d] Phy regulators enabled\n", phy->index);
+	DSI_PHY_DBG(phy, "Phy regulators enabled\n");
 }
 
 /**
@@ -95,7 +94,7 @@ void dsi_phy_hw_v2_0_regulator_enable(struct dsi_phy_hw *phy,
  */
 void dsi_phy_hw_v2_0_regulator_disable(struct dsi_phy_hw *phy)
 {
-	pr_debug("[DSI_%d] Phy regulators disabled\n", phy->index);
+	DSI_PHY_DBG(phy, "Phy regulators disabled\n");
 }
 
 /**
@@ -190,7 +189,7 @@ void dsi_phy_hw_v2_0_enable(struct dsi_phy_hw *phy,
 	if (cfg->pll_source == DSI_PLL_SOURCE_NON_NATIVE)
 		DSI_W32(phy, DSIPHY_PLL_PLL_BANDGAP, 0x3);
 
-	pr_debug("[DSI_%d]Phy enabled\n", phy->index);
+	DSI_PHY_DBG(phy, "Phy enabled\n");
 }
 
 /**
@@ -203,7 +202,7 @@ void dsi_phy_hw_v2_0_disable(struct dsi_phy_hw *phy,
 	DSI_W32(phy, DSIPHY_PLL_CLKBUFLR_EN, 0);
 	DSI_W32(phy, DSIPHY_CMN_GLBL_TEST_CTRL, 0);
 	DSI_W32(phy, DSIPHY_CMN_CTRL_0, 0);
-	pr_debug("[DSI_%d]Phy disabled\n", phy->index);
+	DSI_PHY_DBG(phy, "Phy disabled\n");
 }
 
 /**
@@ -228,7 +227,7 @@ void dsi_phy_hw_v2_0_idle_on(struct dsi_phy_hw *phy, struct dsi_phy_cfg *cfg)
 				strength->lane[i][j]);
 	}
 	wmb(); /* make sure write happens */
-	pr_debug("[DSI_%d]Phy enabled out of idle screen\n", phy->index);
+	DSI_PHY_DBG(phy, "Phy enabled out of idle screen\n");
 }
 
 
@@ -257,7 +256,7 @@ void dsi_phy_hw_v2_0_idle_off(struct dsi_phy_hw *phy)
 		DSIPHY_DLNX_STRENGTH_CTRL(DSI_LOGICAL_CLOCK_LANE+1, 1), 0x0);
 
 	wmb(); /* make sure write happens */
-	pr_debug("[DSI_%d]Phy disabled during idle screen\n", phy->index);
+	DSI_PHY_DBG(phy, "Phy disabled during idle screen\n");
 }
 
 int dsi_phy_hw_timing_val_v2_0(struct dsi_phy_per_lane_cfgs *timing_cfg,
@@ -266,7 +265,7 @@ int dsi_phy_hw_timing_val_v2_0(struct dsi_phy_per_lane_cfgs *timing_cfg,
 	int i = 0, j = 0;
 
 	if (size != (DSI_LANE_MAX * DSI_MAX_SETTINGS)) {
-		pr_err("Unexpected timing array size %d\n", size);
+		DSI_ERR("Unexpected timing array size %d\n", size);
 		return -EINVAL;
 	}
 
@@ -284,7 +283,7 @@ void dsi_phy_hw_v2_0_clamp_ctrl(struct dsi_phy_hw *phy, bool enable)
 	u32 clamp_reg = 0;
 
 	if (!phy->phy_clamp_base) {
-		pr_debug("phy_clamp_base NULL\n");
+		DSI_PHY_DBG(phy, "phy_clamp_base NULL\n");
 		return;
 	}
 
@@ -292,11 +291,11 @@ void dsi_phy_hw_v2_0_clamp_ctrl(struct dsi_phy_hw *phy, bool enable)
 		clamp_reg |= BIT(0);
 		DSI_MISC_W32(phy, DSI_MDP_ULPS_CLAMP_ENABLE_OFF,
 				clamp_reg);
-		pr_debug("clamp enabled\n");
+		DSI_PHY_DBG(phy, "clamp enabled\n");
 	} else {
 		clamp_reg &= ~BIT(0);
 		DSI_MISC_W32(phy, DSI_MDP_ULPS_CLAMP_ENABLE_OFF,
 				clamp_reg);
-		pr_debug("clamp disabled\n");
+		DSI_PHY_DBG(phy, "clamp disabled\n");
 	}
 }

@@ -3,7 +3,6 @@
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "msm-dsi-catalog:[%s] " fmt, __func__
 #include <linux/errno.h>
 
 #include "dsi_catalog.h"
@@ -143,7 +142,7 @@ int dsi_catalog_ctrl_setup(struct dsi_ctrl_hw *ctrl,
 
 	if (version == DSI_CTRL_VERSION_UNKNOWN ||
 	    version >= DSI_CTRL_VERSION_MAX) {
-		pr_err("Unsupported version: %d\n", version);
+		DSI_ERR("Unsupported version: %d\n", version);
 		return -ENOTSUPP;
 	}
 
@@ -283,7 +282,7 @@ int dsi_catalog_phy_setup(struct dsi_phy_hw *phy,
 
 	if (version == DSI_PHY_VERSION_UNKNOWN ||
 	    version >= DSI_PHY_VERSION_MAX) {
-		pr_err("Unsupported version: %d\n", version);
+		DSI_ERR("Unsupported version: %d\n", version);
 		return -ENOTSUPP;
 	}
 

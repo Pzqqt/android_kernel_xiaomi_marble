@@ -3,8 +3,6 @@
  * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "dsi-hw:" fmt
-
 #include "dsi_ctrl_hw.h"
 #include "dsi_ctrl_reg.h"
 #include "dsi_hw.h"

@@ -3,7 +3,6 @@
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "dsi-hw:" fmt
 #include <linux/delay.h>
 #include <linux/iopoll.h>
 
@@ -25,7 +24,7 @@ void dsi_ctrl_hw_14_setup_lane_map(struct dsi_ctrl_hw *ctrl,
 {
 	DSI_W32(ctrl, DSI_LANE_SWAP_CTRL, lane_map->lane_map_v1);
 
-	pr_debug("[DSI_%d] Lane swap setup complete\n", ctrl->index);
+	DSI_CTRL_HW_DBG(ctrl, "Lane swap setup complete\n");
 }
 
 /**
@@ -65,23 +64,23 @@ int dsi_ctrl_hw_14_wait_for_lane_idle(struct dsi_ctrl_hw *ctrl, u32 lanes)
 		fifo_empty_mask |= BIT(28);
 	}
 
-	pr_debug("%s: polling for fifo empty, mask=0x%08x\n", __func__,
-		fifo_empty_mask);
+	DSI_CTRL_HW_DBG(ctrl, "polling for fifo empty, mask=0x%08x\n",
+			fifo_empty_mask);
 	rc = readl_poll_timeout(ctrl->base + DSI_FIFO_STATUS, val,
 			(val & fifo_empty_mask), sleep_us, timeout_us);
 	if (rc) {
-		pr_err("%s: fifo not empty, FIFO_STATUS=0x%08x\n",
-				__func__, val);
+		DSI_CTRL_HW_ERR(ctrl, "fifo not empty, FIFO_STATUS=0x%08x\n",
+				val);
 		goto error;
 	}
 
-	pr_debug("%s: polling for lanes to be in stop state, mask=0x%08x\n",
-		__func__, stop_state_mask);
+	DSI_CTRL_HW_DBG(ctrl, "polling for lanes to be in stop state, mask=0x%08x\n",
+		stop_state_mask);
 	rc = readl_poll_timeout(ctrl->base + DSI_LANE_STATUS, val,
 			(val & stop_state_mask), sleep_us, timeout_us);
 	if (rc) {
-		pr_err("%s: lanes not in stop state, LANE_STATUS=0x%08x\n",
-			__func__, val);
+		DSI_CTRL_HW_ERR(ctrl, "lanes not in stop state, LANE_STATUS=0x%08x\n",
+			val);
 		goto error;
 	}
 
@@ -123,8 +122,7 @@ void dsi_ctrl_hw_cmn_ulps_request(struct dsi_ctrl_hw *ctrl, u32 lanes)
 	DSI_W32(ctrl, DSI_LANE_CTRL, reg);
 	usleep_range(100, 110);
 
-	pr_debug("[DSI_%d] ULPS requested for lanes 0x%x\n", ctrl->index,
-		 lanes);
+	DSI_CTRL_HW_DBG(ctrl, "ULPS requested for lanes 0x%x\n", lanes);
 }
 
 /**
@@ -172,8 +170,7 @@ void dsi_ctrl_hw_cmn_ulps_exit(struct dsi_ctrl_hw *ctrl, u32 lanes)
 	DSI_W32(ctrl, DSI_LANE_CTRL, 0x0 | prev_reg);
 	wmb(); /* ensure lanes are put to stop state */
 
-	pr_debug("[DSI_%d] ULPS exit request for lanes=0x%x\n",
-		 ctrl->index, lanes);
+	DSI_CTRL_HW_DBG(ctrl, "ULPS exit request for lanes=0x%x\n", lanes);
 }
 
 /**
@@ -202,7 +199,7 @@ u32 dsi_ctrl_hw_cmn_get_lanes_in_ulps(struct dsi_ctrl_hw *ctrl)
 	if (!(reg & BIT(12)))
 		lanes |= DSI_CLOCK_LANE;
 
-	pr_debug("[DSI_%d] lanes in ulps = 0x%x\n", ctrl->index, lanes);
+	DSI_CTRL_HW_DBG(ctrl, "lanes in ulps = 0x%x\n", lanes);
 	return lanes;
 }
 
@@ -261,8 +258,7 @@ void dsi_ctrl_hw_14_clamp_enable(struct dsi_ctrl_hw *ctrl,
 	reg |= (BIT(15) << bit_shift);	/* Enable clamp */
 	DSI_MMSS_MISC_W32(ctrl, MMSS_MISC_CLAMP_REG_OFF, reg);
 
-	pr_debug("[DSI_%d] Clamps enabled for lanes=0x%x\n", ctrl->index,
-		 lanes);
+	DSI_CTRL_HW_DBG(ctrl, "Clamps enabled for lanes=0x%x\n", lanes);
 }
 
 /**
@@ -319,7 +315,7 @@ void dsi_ctrl_hw_14_clamp_disable(struct dsi_ctrl_hw *ctrl,
 	reg &= ~(clamp_reg);
 	DSI_MMSS_MISC_W32(ctrl, MMSS_MISC_CLAMP_REG_OFF, reg);
 
-	pr_debug("[DSI_%d] Disable clamps for lanes=%d\n", ctrl->index, lanes);
+	DSI_CTRL_HW_DBG(ctrl, "Disable clamps for lanes=%d\n", lanes);
 }
 
 #define DUMP_REG_VALUE(off) "\t%-30s: 0x%08x\n", #off, DSI_R32(ctrl, off)
@@ -474,6 +470,6 @@ ssize_t dsi_ctrl_hw_14_reg_dump_to_buffer(struct dsi_ctrl_hw *ctrl,
 	len += snprintf((buf + len), (size - len),
 			DUMP_REG_VALUE(DSI_VERSION));
 
-	pr_err("LLENGTH = %d\n", len);
+	DSI_CTRL_HW_ERR(ctrl, "LLENGTH = %d\n", len);
 	return len;
 }
