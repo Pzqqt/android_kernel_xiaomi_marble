@@ -30,18 +30,6 @@
 #include "wlan_objmgr_cmn.h"
 #include "qdf_nbuf.h"
 
-#ifdef CONFIG_MCL
-#define MGMT_DESC_POOL_MAX 64
-#else
-#ifdef QCA_LOWMEM_CONFIG
-#define MGMT_DESC_POOL_MAX 256
-#elif defined QCA_512M_CONFIG
-#define MGMT_DESC_POOL_MAX 384
-#else
-#define MGMT_DESC_POOL_MAX 512
-#endif
-#endif
-
 #define mgmt_txrx_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_MGMT_TXRX, params)
 #define mgmt_txrx_err(params...) \
