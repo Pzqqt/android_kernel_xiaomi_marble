@@ -976,7 +976,9 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 				profile = &sap_context->csr_roamProfile;
 				if (!wlan_reg_is_passive_or_disable_ch(
 						mac_ctx->pdev,
-						profile->operationChannel))
+						wlan_reg_freq_to_chan(
+							mac_ctx->pdev,
+							profile->op_freq)))
 					continue;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,

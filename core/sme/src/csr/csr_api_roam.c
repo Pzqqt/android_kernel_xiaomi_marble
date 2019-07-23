@@ -4678,7 +4678,7 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	/* CB */
 
 	if (CSR_IS_INFRA_AP(pProfile) || CSR_IS_IBSS(pProfile))
-		channel = pProfile->operationChannel;
+		channel = wlan_reg_freq_to_chan(mac->pdev, pProfile->op_freq);
 	else if (bss_desc)
 		channel = wlan_reg_freq_to_chan(mac->pdev,
 						bss_desc->chan_freq);

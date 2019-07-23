@@ -2015,7 +2015,8 @@ static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 			/* Don't start CAC for non-dfs channel, its violation */
 			profile = &sap_context->csr_roamProfile;
 			if (!wlan_reg_is_dfs_ch(mac->pdev,
-						profile->operationChannel))
+				wlan_reg_freq_to_chan(mac->pdev,
+						      profile->op_freq)))
 				continue;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				  "sapdfs: Signaling eSAP_DFS_CAC_START to HDD for sapctx[%pK]",
@@ -2111,7 +2112,8 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 			/* Don't check CAC for non-dfs channel */
 			profile = &sap_context->csr_roamProfile;
 			if (!wlan_reg_is_dfs_ch(mac->pdev,
-						profile->operationChannel))
+				wlan_reg_freq_to_chan(mac->pdev,
+						      profile->op_freq)))
 				continue;
 
 			/* If this is an end notification of a pre cac, the
@@ -2474,7 +2476,8 @@ static QDF_STATUS sap_fsm_handle_radar_during_cac(struct sap_context *sap_ctx,
 			profile = &t_sap_ctx->csr_roamProfile;
 			if (!wlan_reg_is_passive_or_disable_ch(
 				mac_ctx->pdev,
-				profile->operationChannel))
+				wlan_reg_freq_to_chan(mac_ctx->pdev,
+						      profile->op_freq)))
 			continue;
 			t_sap_ctx->is_chan_change_inprogress = true;
 			/*
@@ -2747,7 +2750,9 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 				profile = &temp_sap_ctx->csr_roamProfile;
 				if (!wlan_reg_is_passive_or_disable_ch(
 						mac_ctx->pdev,
-						profile->operationChannel))
+						wlan_reg_freq_to_chan(
+							mac_ctx->pdev,
+							profile->op_freq)))
 					continue;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_MED,
@@ -3856,7 +3861,8 @@ bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 	 * what other persona's channel is
 	 */
 	if (!wlan_reg_is_dfs_ch(mac->pdev,
-			given_sapctx->csr_roamProfile.operationChannel)) {
+		wlan_reg_freq_to_chan(mac->pdev,
+				      given_sapctx->csr_roamProfile.op_freq))) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  FL("skip this loop as provided channel is non-dfs"));
 		return false;
@@ -3872,8 +3878,8 @@ bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 		/* if same SAP contexts then skip to next context */
 		if (sap_ctx == given_sapctx)
 			continue;
-		if (given_sapctx->csr_roamProfile.operationChannel ==
-				sap_ctx->csr_roamProfile.operationChannel)
+		if (given_sapctx->csr_roamProfile.op_freq ==
+					sap_ctx->csr_roamProfile.op_freq)
 			scc_dfs_counter++;
 	}
 
