@@ -14407,6 +14407,8 @@ QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx)
 {
 	int len_5g_ch, num_ch;
 	int num_dsrc_ch, len_dsrc_ch, num_srd_ch, len_srd_ch;
+	bool is_vht_for_24ghz = false;
+	QDF_STATUS status;
 	struct hdd_config *cfg = hdd_ctx->config;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 
@@ -14422,6 +14424,15 @@ QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx)
 		qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels,
 			     &hdd_channels_2_4_ghz[0],
 			     sizeof(hdd_channels_2_4_ghz));
+
+		status = ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc,
+						     &is_vht_for_24ghz);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_err("could not get VHT capability");
+
+		if (is_vht_for_24ghz &&
+		    sme_is_feature_supported_by_fw(DOT11AC))
+			wlan_hdd_band_2_4_ghz.vht_cap.vht_supported = 1;
 	}
 	if (!hdd_is_5g_supported(hdd_ctx) ||
 	    (eHDD_DOT11_MODE_11b == cfg->dot11Mode) ||
