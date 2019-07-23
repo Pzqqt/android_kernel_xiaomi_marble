@@ -1503,7 +1503,7 @@ bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("No NAN+SAP SCC");
 		return false;
 	}
-	nan_5g_freq = wlan_chan_to_freq(wlan_nan_get_disc_5g_ch(psoc));
+	nan_5g_freq = wlan_nan_get_disc_5g_ch_freq(psoc);
 
 	policy_mgr_debug("Freq SAP: %d NAN: %d %d", sap_freq,
 			 nan_2g_freq, nan_5g_freq);
@@ -1588,8 +1588,7 @@ policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
 		nan_2g_freq =
 			policy_mgr_mode_specific_get_channel(pm_ctx->psoc,
 							     PM_NAN_DISC_MODE);
-		nan_5g_freq = wlan_chan_to_freq(wlan_nan_get_disc_5g_ch(
-						pm_ctx->psoc));
+		nan_5g_freq = wlan_nan_get_disc_5g_ch_freq(pm_ctx->psoc);
 		policy_mgr_debug("SAP CH: %d NAN Ch: %d %d", ch_freq,
 				 nan_2g_freq, nan_5g_freq);
 		if (WLAN_REG_IS_SAME_BAND_FREQS(nan_2g_freq, ch_freq) ||
@@ -1644,7 +1643,7 @@ void policy_mgr_nan_sap_post_enable_conc_check(struct wlan_objmgr_psoc *psoc)
 		return;
 	nan_freq_2g = policy_mgr_mode_specific_get_channel(psoc,
 							   PM_NAN_DISC_MODE);
-	nan_freq_5g = wlan_chan_to_freq(wlan_nan_get_disc_5g_ch(psoc));
+	nan_freq_5g = wlan_nan_get_disc_5g_ch_freq(psoc);
 	if (sap_info->freq == nan_freq_2g || sap_info->freq == nan_freq_5g) {
 		policy_mgr_debug("NAN and SAP already in SCC");
 		return;

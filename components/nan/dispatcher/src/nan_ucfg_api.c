@@ -548,9 +548,10 @@ bool ucfg_is_ndi_dbs_supported(struct wlan_objmgr_psoc *psoc)
 	return (psoc_priv->nan_caps.ndi_dbs_supported == 1);
 }
 
-bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc, uint8_t nan_chan)
+bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc,
+				uint32_t nan_ch_freq)
 {
-	return nan_is_enable_allowed(psoc, nan_chan);
+	return nan_is_enable_allowed(psoc, nan_ch_freq);
 }
 
 bool ucfg_is_nan_disc_active(struct wlan_objmgr_psoc *psoc)
@@ -600,7 +601,7 @@ QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
 			}
 
 			status = nan_discovery_pre_enable(psoc,
-							  req->social_chan_2g);
+						  req->social_chan_2g_freq);
 			if (QDF_IS_STATUS_SUCCESS(status)) {
 				len = sizeof(struct nan_enable_req) +
 					req->params.request_data_len;
