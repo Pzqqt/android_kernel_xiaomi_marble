@@ -2023,3 +2023,87 @@ bool reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev)
 
 	return reg_en302_502_regdmn(cur_reg_dmn.regdmn_pair_id);
 }
+
+QDF_STATUS reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
+	struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap_ptr;
+	uint32_t cnt;
+	uint32_t pdev_id;
+	enum direction dir;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	reg_cap_ptr = psoc_priv_obj->reg_cap;
+
+	for (cnt = 0; cnt < PSOC_MAX_PHY_REG_CAP; cnt++) {
+		if (!reg_cap_ptr) {
+			qdf_mem_free(pdev_priv_obj);
+			reg_err("reg cap ptr is NULL");
+			return QDF_STATUS_E_FAULT;
+		}
+
+		if (reg_cap_ptr->phy_id == pdev_id)
+			break;
+		reg_cap_ptr++;
+	}
+
+	if (cnt == PSOC_MAX_PHY_REG_CAP) {
+		qdf_mem_free(pdev_priv_obj);
+		reg_err("extended capabilities not found for pdev");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	if (psoc_priv_obj->offload_enabled) {
+		dir = NORTHBOUND;
+	} else {
+		dir = SOUTHBOUND;
+	}
+
+	pdev_priv_obj->range_2g_low = reg_cap_ptr->low_2ghz_chan;
+	pdev_priv_obj->range_2g_high = reg_cap_ptr->high_2ghz_chan;
+	pdev_priv_obj->range_5g_low = reg_cap_ptr->low_5ghz_chan;
+	pdev_priv_obj->range_5g_high = reg_cap_ptr->high_5ghz_chan;
+	pdev_priv_obj->wireless_modes = reg_cap_ptr->wireless_modes;
+
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+
+	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
+
+	/* Fill the ic channel list with the updated current channel
+	 * chan list.
+	 */
+	if (reg_tx_ops->fill_umac_legacy_chanlist) {
+	    reg_tx_ops->fill_umac_legacy_chanlist(pdev,
+						  pdev_priv_obj->cur_chan_list);
+
+	} else {
+		if (dir == NORTHBOUND)
+			status = reg_send_scheduler_msg_nb(psoc, pdev);
+		else
+			status = reg_send_scheduler_msg_sb(psoc, pdev);
+	}
+
+	return status;
+}

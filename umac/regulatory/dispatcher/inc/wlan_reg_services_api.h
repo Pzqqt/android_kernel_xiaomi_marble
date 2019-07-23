@@ -703,4 +703,13 @@ void wlan_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
  * False: otherwise.
  */
 bool wlan_reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_reg_modify_pdev_chan_range() - Compute current channel list for the
+ * modified channel range in the regcap.
+ * @pdev: pointer to wlan_objmgr_pdev.
+ *
+ * Return : QDF_STATUS
+ */
+QDF_STATUS wlan_reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev);
 #endif

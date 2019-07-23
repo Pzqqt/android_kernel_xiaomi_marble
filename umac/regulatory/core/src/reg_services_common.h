@@ -514,4 +514,13 @@ QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev, bool enable);
  * Return: True if en302_502 is applicable, else false.
  */
 bool reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_modify_pdev_chan_range() - Compute current channel list
+ * in accordance with the modified reg caps.
+ * @pdev: The physical dev for which channel list must be built.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev);
 #endif
