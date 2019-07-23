@@ -132,6 +132,20 @@ QDF_STATUS wmi_unified_peer_update_wds_entry_cmd_send(
 		wmi_unified_t wmi_handle,
 		struct peer_update_wds_entry_params *param);
 
+
+/**
+ * wmi_unified_peer_ft_roam_send() - reset BA window in fw
+ * @wmi_handle: wmi handle
+ * @peer_addr: peer mac address
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_peer_ft_roam_send(wmi_unified_t wmi_handle,
+			      uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
+			      uint8_t vdev_id);
+
 /**
  *  wmi_unified_vdev_set_neighbour_rx_cmd_send() - WMI set neighbour rx function
  *  @wmi_handle: handle to WMI.
