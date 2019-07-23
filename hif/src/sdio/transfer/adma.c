@@ -259,8 +259,6 @@ int hif_get_send_address(struct hif_sdio_device *pdev,
 {
 	struct sdio_al_channel_handle *chan = NULL;
 
-	HIF_INFO("pipe: %u", pipe);
-
 	if (!addr)
 		return -EINVAL;
 
@@ -287,7 +285,6 @@ void hif_fixup_write_param(struct hif_sdio_dev *pdev, uint32_t req,
 			   uint32_t *length, uint32_t *addr)
 {
 	HIF_ENTER();
-	/* ADMA-TODO */
 	HIF_EXIT();
 }
 
@@ -376,9 +373,10 @@ QDF_STATUS hif_enable_func(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
  *
  * Return - NULL if out of buffers, else qdf_nbuf_t
  */
-#define HEAD_ROOM 256
-#define len_head_room(len) ((len) + HEAD_ROOM)
-#define is_pad_block(buf) (*((uint32_t *)buf) == 0xbabababa)
+#define HEAD_ROOM		256
+#define RESERVE_LEN		256
+#define is_pad_block(buf)	(*((uint32_t *)buf) == 0xbabababa)
+
 #if HIF_MAX_RX_Q_ALLOC
 qdf_nbuf_t hif_sdio_get_nbuf(struct hif_sdio_dev *dev)
 {
@@ -414,7 +412,7 @@ qdf_nbuf_t hif_sdio_get_nbuf(struct hif_sdio_dev *dev)
 {
 	qdf_nbuf_t nbuf;
 
-	nbuf = qdf_nbuf_alloc(NULL, HIF_SDIO_RX_BUFFER_SIZE + HEAD_ROOM,
+	nbuf = qdf_nbuf_alloc(NULL, HIF_SDIO_RX_BUFFER_SIZE + RESERVE_LEN,
 			      HEAD_ROOM, 4, 0);
 	return nbuf;
 }
@@ -443,7 +441,7 @@ void hif_sdio_rx_q_alloc(void *ctx)
 		}
 
 		rx_q_elem->nbuf = qdf_nbuf_alloc(NULL, HIF_SDIO_RX_BUFFER_SIZE +
-						 HEAD_ROOM, HEAD_ROOM, 4, 0);
+						 RESERVE_LEN, HEAD_ROOM, 4, 0);
 		if (!rx_q_elem->nbuf) {
 			HIF_ERROR("%s: failed to alloc nbuf for rx", __func__);
 			qdf_mem_free(rx_q_elem);
@@ -622,12 +620,6 @@ hif_read_write(struct hif_sdio_dev *dev,
 	/* Request SDIO AL to do transfer */
 	dir = (request & HIF_SDIO_WRITE) ? SDIO_AL_TX : SDIO_AL_RX;
 
-	if (request & HIF_SDIO_WRITE)
-		HIF_TRACE("%s: Tx len %d", __func__, length);
-
-	if (request & HIF_SDIO_READ)
-		HIF_TRACE("%s: Rx len %d", __func__, length);
-
 	if (request & HIF_SYNCHRONOUS) {
 		ret = sdio_al_queue_transfer(ch,
 					     dir,
@@ -673,7 +665,7 @@ hif_read_write(struct hif_sdio_dev *dev,
 }
 
 /**
- * ul_xfer_cb() - Completion call back for asyncronous transfer
+ * ul_xfer_cb() - Completion call back for asynchronous transfer
  * @ch_handle: The sdio al channel handle
  * @result: The result of the operation
  * @context: pointer to request context
@@ -719,7 +711,7 @@ void ul_xfer_cb(struct sdio_al_channel_handle *ch_handle,
  * completing READ in the transfer done callback later which
  * runs in sdio al thread context. If we do the syncronous
  * transfer here, the thread context won't be available and
- * perhaps a new thread may be reaquired here.
+ * perhaps a new thread may be required here.
  */
 void dl_data_avail_cb(struct sdio_al_channel_handle *ch_handle,
 		      unsigned int len)
@@ -747,7 +739,7 @@ void dl_data_avail_cb(struct sdio_al_channel_handle *ch_handle,
 	 * processed in the transfer done callback.
 	 */
 	/* TODO, use global buffer instead of runtime allocations */
-	nbuf = qdf_nbuf_alloc(NULL, len_head_room(len), HEAD_ROOM, 4, 0);
+	nbuf = qdf_nbuf_alloc(NULL, len + RESERVE_LEN, HEAD_ROOM, 4, 0);
 
 	if (!nbuf) {
 		HIF_ERROR("%s: Unable to alloc netbuf %u bytes", __func__, len);
@@ -772,19 +764,21 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 {
 	unsigned char *buf;
 	qdf_nbuf_t nbuf;
-	uint32_t len, nbuflen, payload_len = 0;
-	uint8_t *nbufdata;
+	uint32_t len, payload_len = 0;
 	struct hif_sdio_dev *dev;
 	struct hif_sdio_device *device;
 	struct bus_request *bus_req = (struct bus_request *)ctx;
-	bool last_htc_packet = false;
 	QDF_STATUS (*rx_completion)(void *, qdf_nbuf_t, uint8_t);
 
-	if (!ctx)
-		HIF_ERROR("%s: Net buf context NULL!!!", __func__);
+	if (!bus_req) {
+		HIF_ERROR("%s: Bus Req NULL!!!", __func__);
+		qdf_assert_always(0);
+		return;
+	}
 
-	if (!ctx || !ch_handle || !result) {
-		HIF_ERROR("%s: Invalid args", __func__);
+	if (!ch_handle || !result) {
+		HIF_ERROR("%s: Invalid args %pK %pK", __func__,
+			  ch_handle, result);
 		qdf_assert_always(0);
 		return;
 	}
@@ -793,10 +787,8 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 	if (result->xfer_status) {
 		HIF_ERROR("%s: ASYNC Rx failed %d", __func__,
 			  result->xfer_status);
-		/* TODO - Free nbuf if hif_sdio_get_nbuf is used, when bundling
-		 * is enabled
-		 */
-		hif_free_bus_request(dev, (struct bus_request *)ctx);
+		qdf_nbuf_free((qdf_nbuf_t)bus_req->context);
+		hif_free_bus_request(dev, bus_req);
 		return;
 	}
 
@@ -806,57 +798,45 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 	buf = (unsigned char *)result->buf_addr;
 	len = (unsigned int)result->xfer_len;
 
-	/* ADMA-TODO - Discard the padding data
-	 * Its still not decided that the padding is informed
-	 * via the hdr->flags or a padding magic inline in the
-	 * buffer. So, lets see.
-	 */
 	while (len > 0 && len >= sizeof(HTC_FRAME_HDR)) {
-		if (last_htc_packet) {
-			HIF_ERROR("ERRR last htc_packet processed already\n");
+		if (is_pad_block(buf)) {
+			/* End of Rx Buffer */
 			break;
 		}
+
 		if (HTC_GET_FIELD(buf, HTC_FRAME_HDR, ENDPOINTID) >=
 		    ENDPOINT_MAX) {
 			HIF_ERROR("%s: invalid endpoint id: %u", __func__,
 				  HTC_GET_FIELD(buf, HTC_FRAME_HDR,
 						ENDPOINTID));
-			hif_free_bus_request(dev, (struct bus_request *)ctx);
-			return;
+			break;
 		}
-		/* last_htc_packet is currently used to test non bundling case
-		 * on Rumi Emulation platform.
-		 * TODO - Remove last_htc_packet logic when bundling is
-		 * enabled and use is_pad_block for bundling
-		 */
-		last_htc_packet = 1;
-		/* TODO - get net buf using hif_sdio_get_nbuf, when bundling is
-		 * enabled
-		 */
-		nbuf = (qdf_nbuf_t)bus_req->context;
+
+		nbuf = hif_sdio_get_nbuf(dev);
 		if (!nbuf) {
 			HIF_ERROR("%s: failed to alloc rx buffer", __func__);
 			break;
 		}
-		nbufdata = qdf_nbuf_data(nbuf);
-		nbuflen = qdf_nbuf_len(nbuf);
 
 		/* Copy the HTC frame to the alloc'd packet buffer */
 		payload_len = HTC_GET_FIELD(buf, HTC_FRAME_HDR, PAYLOADLEN);
 		if (!payload_len) {
 			HIF_ERROR("%s:Invalid Payload len %d bytes", __func__,
 				  payload_len);
+			qdf_nbuf_free(nbuf);
 			break;
 		}
 
-		/* TODO - Check if payload fits in netbuf data */
-		if (0) { //nbuflen < payload_len) {
-			HIF_ERROR("%s: nbuf %d < payload %d bytes", __func__,
-				  nbuflen, payload_len);
+		/* Check if payload fits in skb */
+		if (qdf_nbuf_tailroom(nbuf) < payload_len + HTC_HEADER_LEN) {
+			HIF_ERROR("%s: Payload + HTC_HDR %d > skb tailroom %d",
+				  __func__, (payload_len + 8),
+				  qdf_nbuf_tailroom(nbuf));
+			qdf_nbuf_free(nbuf);
 			break;
 		}
 
-		qdf_mem_copy(nbufdata, buf,
+		qdf_mem_copy((uint8_t *)qdf_nbuf_data(nbuf), buf,
 			     payload_len + HTC_HEADER_LEN);
 
 		qdf_nbuf_set_pktlen(nbuf, payload_len + HTC_HDR_LENGTH);
@@ -864,19 +844,10 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 			      nbuf,
 			      0); /* don't care, not used */
 
-		if (len && last_htc_packet) {
-			unsigned int pad;
-
-			pad = DEV_CALC_RECV_PADDED_LEN(device, payload_len +
-						       HTC_HEADER_LEN);
-			/* Decrement the length to be processed yet */
-			len -= pad;
-			/* Move the data pointer */
-			buf += pad;
-		} else {
-			len -= payload_len + HTC_HDR_LENGTH;
-			buf += payload_len + HTC_HDR_LENGTH;
-		}
+		len -= payload_len + HTC_HDR_LENGTH;
+		buf += payload_len + HTC_HDR_LENGTH;
 	}
-	hif_free_bus_request(dev, (struct bus_request *)ctx);
+
+	qdf_nbuf_free((qdf_nbuf_t)bus_req->context);
+	hif_free_bus_request(dev, bus_req);
 }
