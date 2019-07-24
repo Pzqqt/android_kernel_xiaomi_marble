@@ -47,9 +47,6 @@ struct hdd_context;
 #define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (512)
 #define TX_SCHED_WRR_PARAMS_NUM            (5)
 
-/* Number of items that can be configured */
-#define MAX_CFG_INI_ITEMS   1024
-
 /* Defines for all of the things we read from the configuration (registry). */
 
 #ifdef CONFIG_DP_TRACE
@@ -103,9 +100,6 @@ struct hdd_context;
  */
 
 struct hdd_config {
-	/* Bitmap to track what is explicitly configured */
-	DECLARE_BITMAP(bExplicitCfg, MAX_CFG_INI_ITEMS);
-
 	/* Config parameters */
 	enum hdd_dot11_mode dot11Mode;
 
