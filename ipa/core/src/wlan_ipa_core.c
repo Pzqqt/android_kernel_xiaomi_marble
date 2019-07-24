@@ -616,6 +616,80 @@ int wlan_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 		return qdf_ipa_wdi_release_smmu_mapping(num_buf, buf_arr);
 }
 
+#ifdef MDM_PLATFORM
+/**
+ * is_rx_dest_bridge_dev() - is RX skb bridge device terminated
+ * @iface_ctx: pointer to WLAN IPA interface context
+ * @nbuf: skb buffer
+ *
+ * Check if skb is destined for bridge device, where SAP is a bridge
+ * port of it.
+ *
+ * FIXME: If there's a BH lockless API to check if destination MAC
+ * address is a valid peer, this check can be deleted. Currently
+ * dp_find_peer_by_addr() is used to check if destination MAC
+ * is a valid peer. Since WLAN IPA RX is in process context,
+ * qdf_spin_lock_bh in dp_find_peer_by_addr() turns to spin_lock_bh
+ * and this BH lock hurts netif_rx.
+ *
+ * Return: true/false
+ */
+static bool is_rx_dest_bridge_dev(struct wlan_ipa_iface_context *iface_ctx,
+				  qdf_nbuf_t nbuf)
+{
+	qdf_netdev_t master_ndev;
+	qdf_netdev_t ndev;
+	struct ethhdr *eh;
+	uint8_t da_is_bcmc;
+	bool ret;
+
+	if (iface_ctx->device_mode != QDF_SAP_MODE)
+		return false;
+
+	/*
+	 * WDI 3.0 skb->cb[] info from IPA driver
+	 * skb->cb[0] = vdev_id
+	 * skb->cb[1].bit#1 = da_is_bcmc
+	 */
+	da_is_bcmc = ((uint8_t)nbuf->cb[1]) & 0x2;
+	if (da_is_bcmc)
+		return false;
+
+	ndev = iface_ctx->dev;
+	if (!ndev)
+		return false;
+
+	if (!netif_is_bridge_port(ndev))
+		return false;
+
+	rcu_read_lock();
+
+	master_ndev = netdev_master_upper_dev_get_rcu(ndev);
+	if (!master_ndev) {
+		ret = false;
+		goto out;
+	}
+
+	eh = (struct ethhdr *)qdf_nbuf_data(nbuf);
+	if (qdf_mem_cmp(eh->h_dest, master_ndev->dev_addr, QDF_MAC_ADDR_SIZE)) {
+		ret = false;
+		goto out;
+	}
+
+	ret = true;
+
+out:
+	rcu_read_unlock();
+	return ret;
+}
+#else /* !MDM_PLATFORM */
+static bool is_rx_dest_bridge_dev(struct wlan_ipa_iface_context *iface_ctx,
+				  qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif /* MDM_PLATFORM */
+
 static enum wlan_ipa_forward_type
 wlan_ipa_rx_intrabss_fwd(struct wlan_ipa_priv *ipa_ctx,
 			 struct wlan_ipa_iface_context *iface_ctx,
@@ -632,6 +706,12 @@ wlan_ipa_rx_intrabss_fwd(struct wlan_ipa_priv *ipa_ctx,
 						 nbuf);
 	}
 
+	if (is_rx_dest_bridge_dev(iface_ctx, nbuf)) {
+		fwd_success = 0;
+		ret = WLAN_IPA_FORWARD_PKT_LOCAL_STACK;
+		goto exit;
+	}
+
 	if (cdp_ipa_rx_intrabss_fwd(ipa_ctx->dp_soc, iface_ctx->tl_context,
 				    nbuf, &fwd_success)) {
 		ipa_ctx->ipa_rx_internal_drop_count++;
@@ -642,6 +722,7 @@ wlan_ipa_rx_intrabss_fwd(struct wlan_ipa_priv *ipa_ctx,
 		ret = WLAN_IPA_FORWARD_PKT_LOCAL_STACK;
 	}
 
+exit:
 	if (fwd_success)
 		ipa_ctx->stats.num_tx_fwd_ok++;
 	else
