@@ -241,7 +241,7 @@ bool reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
  * @pdev: Pointer to pdev
  * @freq: Channel frequency
  *
- * Return: Channel number
+ * Return: Channel number if success, otherwise 0
  */
 uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev, uint32_t freq);
 
@@ -250,7 +250,7 @@ uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev, uint32_t freq);
  * @pdev: Pointer to pdev
  * @chan_num: Channel number
  *
- * Return: Channel frequency
+ * Return: Channel frequency if success, otherwise 0
  */
 uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev, uint32_t chan_num);
 

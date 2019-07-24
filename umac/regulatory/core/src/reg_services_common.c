@@ -1318,7 +1318,7 @@ uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 
 	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
 		reg_err("reg pdev priv obj is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return 0;
 	}
 
 	chan_list = pdev_priv_obj->cur_chan_list;
@@ -1343,7 +1343,7 @@ uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 
 	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
 		reg_err("reg pdev priv obj is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return 0;
 	}
 
 	chan_list = pdev_priv_obj->cur_chan_list;
