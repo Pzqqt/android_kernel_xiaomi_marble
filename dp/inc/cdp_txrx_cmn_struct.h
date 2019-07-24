@@ -1396,6 +1396,7 @@ struct cdp_tx_completion_ppdu {
  * @tx_dropped: Tx dropped is same as tx errors as above
  * @rx_packets: Rx total packets transmitted
  * @rx_bytes  : Rx total bytes transmitted
+ * @rx_errors : Rx erros
  */
 struct cdp_dev_stats {
 	uint32_t tx_packets;
@@ -1404,6 +1405,7 @@ struct cdp_dev_stats {
 	uint32_t tx_dropped;
 	uint32_t rx_packets;
 	uint32_t rx_bytes;
+	uint32_t rx_errors;
 };
 
 /**
