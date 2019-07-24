@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #define CONFIG_PINCTRL_LPI 1
@@ -40,4 +40,3 @@
 #define CONFIG_MSM_AVTIMER 1
 #define CONFIG_SND_SOC_MSM_HDMI_CODEC_RX 1
 #define CONFIG_SND_SOC_EP92 1
-#define CONFIG_USE_Q6_32CH_SUPPORT 1
