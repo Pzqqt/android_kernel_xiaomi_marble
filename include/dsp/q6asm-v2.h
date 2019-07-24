@@ -207,6 +207,12 @@ struct shared_io_config {
 	uint32_t bufcnt;
 };
 
+struct dsp_timestamp {
+	uint64_t time_stamp;
+	uint64_t abs_time_stamp;
+	uint64_t last_time_stamp;
+};
+
 struct audio_client {
 	int                    session;
 	app_cb		       cb;
@@ -218,7 +224,7 @@ struct audio_client {
 	atomic_t               mem_state;
 	void		       *priv;
 	uint32_t               io_mode;
-	uint64_t	       time_stamp;
+	struct dsp_timestamp   dsp_ts;
 	struct apr_svc         *apr;
 	struct apr_svc         *mmap_apr;
 	struct apr_svc         *apr2;
@@ -683,7 +689,8 @@ int q6asm_set_multich_gain(struct audio_client *ac, uint32_t channels,
 int q6asm_set_mute(struct audio_client *ac, int muteflag);
 
 int q6asm_get_session_time(struct audio_client *ac, uint64_t *tstamp);
-
+int q6asm_get_session_time_v2(struct audio_client *ac, uint64_t *ses_time,
+			      uint64_t *abs_time);
 int q6asm_get_session_time_legacy(struct audio_client *ac, uint64_t *tstamp);
 
 int q6asm_send_stream_cmd(struct audio_client *ac,

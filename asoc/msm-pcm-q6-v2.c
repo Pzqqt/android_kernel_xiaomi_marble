@@ -25,6 +25,7 @@
 #include <linux/of_device.h>
 #include <sound/tlv.h>
 #include <sound/pcm_params.h>
+#include <sound/devdep_params.h>
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6audio-v2.h>
 #include <dsp/q6core.h>
@@ -1156,12 +1157,106 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+static int msm_pcm_ioctl(struct snd_pcm_substream *substream,
+			 unsigned int cmd, void __user *arg)
+{
+	struct msm_audio *prtd = NULL;
+	struct snd_soc_pcm_runtime *rtd = NULL;
+	uint64_t ses_time = 0, abs_time = 0;
+	int64_t av_offset = 0;
+	int32_t clock_id = -EINVAL;
+	int rc = 0;
+	struct snd_pcm_prsnt_position userarg;
+
+	if (!substream || !substream->private_data) {
+		pr_err("%s: Invalid %s\n", __func__,
+			(!substream) ? "substream" : "private_data");
+		return -EINVAL;
+	}
+
+	if (!substream->runtime) {
+		pr_err("%s substream runtime not found\n", __func__);
+		return -EINVAL;
+	}
+
+	prtd = substream->runtime->private_data;
+	if (!prtd) {
+		pr_err("%s prtd is null.\n", __func__);
+		return -EINVAL;
+	}
+
+	rtd = substream->private_data;
+
+	switch (cmd) {
+	case SNDRV_PCM_IOCTL_DSP_POSITION:
+		dev_dbg(rtd->dev, "%s: SNDRV_PCM_DSP_POSITION", __func__);
+		if (!arg) {
+			dev_err(rtd->dev, "%s: Invalid params DSP_POSITION\n",
+				__func__);
+			rc = -EINVAL;
+			goto done;
+		}
+		memset(&userarg, 0, sizeof(userarg));
+		if (copy_from_user(&userarg, arg, sizeof(userarg))) {
+			dev_err(rtd->dev, "%s: err copyuser DSP_POSITION\n",
+				__func__);
+			rc = -EFAULT;
+			goto done;
+		}
+		clock_id = userarg.clock_id;
+		rc = q6asm_get_session_time_v2(prtd->audio_client, &ses_time,
+					       &abs_time);
+		if (rc) {
+			pr_err("%s: q6asm_get_session_time_v2 failed, rc=%d\n",
+				__func__, rc);
+			goto done;
+		}
+		userarg.frames = div64_u64((ses_time * prtd->samp_rate),
+					   1000000);
+
+		rc = avcs_core_query_timer_offset(&av_offset, clock_id);
+		if (rc) {
+			pr_err("%s: avcs offset query failed, rc=%d\n",
+				__func__, rc);
+			goto done;
+		}
+
+		userarg.timestamp = abs_time + av_offset;
+		if (copy_to_user(arg, &userarg, sizeof(userarg))) {
+			dev_err(rtd->dev, "%s: err copy to user DSP_POSITION\n",
+				__func__);
+			rc = -EFAULT;
+			goto done;
+		}
+		pr_debug("%s, vals f %lld, t %lld, avoff %lld, abst %lld, sess_time %llu sr %d\n",
+			 __func__, userarg.frames, userarg.timestamp,
+			 av_offset, abs_time, ses_time, prtd->samp_rate);
+		break;
+	default:
+		rc = snd_pcm_lib_ioctl(substream, cmd, arg);
+		break;
+	}
+done:
+	return rc;
+}
+
+#ifdef CONFIG_COMPAT
+static int msm_pcm_compat_ioctl(struct snd_pcm_substream *substream,
+			 unsigned int cmd, void __user *arg)
+{
+	return msm_pcm_ioctl(substream, cmd, arg);
+}
+#else
+#define msm_pcm_compat_ioctl NULL
+#endif
+
 static const struct snd_pcm_ops msm_pcm_ops = {
 	.open           = msm_pcm_open,
 	.copy_user	= msm_pcm_copy,
 	.hw_params	= msm_pcm_hw_params,
 	.close          = msm_pcm_close,
-	.ioctl          = snd_pcm_lib_ioctl,
+	.ioctl          = msm_pcm_ioctl,
+	.compat_ioctl   = msm_pcm_compat_ioctl,
 	.prepare        = msm_pcm_prepare,
 	.trigger        = msm_pcm_trigger,
 	.pointer        = msm_pcm_pointer,
