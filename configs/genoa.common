@@ -216,4 +216,5 @@ ifeq (y,$(findstring y,$(CONFIG_ARCH_MSM) $(CONFIG_ARCH_QCOM) $(CONFIG_QCA_SUPPO
 CONFIG_WLAN_FEATURE_DP_BUS_BANDWIDTH := y
 endif
 
+CONFIG_SAP_DHCP_FW_IND := n
 ###################################

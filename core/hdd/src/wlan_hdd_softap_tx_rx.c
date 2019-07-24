@@ -236,6 +236,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
+#ifdef SAP_DHCP_FW_IND
 /**
  * hdd_post_dhcp_ind() - Send DHCP START/STOP indication to FW
  * @adapter: pointer to hdd adapter
@@ -425,6 +426,11 @@ int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
 
 	return errno;
 }
+#else
+static void hdd_softap_notify_dhcp_ind(void *context, struct sk_buff *netbuf)
+{
+}
+#endif
 
 /**
  * __hdd_softap_hard_start_xmit() - Transmit a frame

@@ -229,6 +229,7 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
+#ifdef SAP_DHCP_FW_IND
 /**
  * hdd_post_dhcp_ind() - Send DHCP START/STOP indication to FW
  * @adapter: pointer to hdd adapter
@@ -253,5 +254,23 @@ int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
 			    uint8_t sta_id,
 			    struct sk_buff *skb,
 			    enum qdf_proto_dir dir);
+#else
+static inline
+int hdd_post_dhcp_ind(struct hdd_adapter *adapter,
+		      uint8_t sta_id, uint16_t type)
+{
+	return 0;
+}
+
+static inline
+int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
+			    uint8_t sta_id,
+			    struct sk_buff *skb,
+			    enum qdf_proto_dir dir)
+{
+	return 0;
+}
+
+#endif
 
 #endif /* end #if !defined(WLAN_HDD_SOFTAP_TX_RX_H) */
