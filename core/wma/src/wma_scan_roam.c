@@ -1784,33 +1784,28 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		}
 
 		/* Send BTM config as disabled during RSO Stop */
-		if (roam_req->reason == REASON_CTX_INIT) {
-			qdf_status = wma_roam_scan_btm_offload(wma_handle,
-							       roam_req);
-			if (QDF_IS_STATUS_ERROR(qdf_status)) {
-				WMA_LOGE("Sending BTM config to fw failed");
-				break;
-			}
+		qdf_status = wma_roam_scan_btm_offload(wma_handle,
+						       roam_req);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			WMA_LOGE("Sending BTM config to fw failed");
+			break;
 		}
 
 		/*
 		 * Send 11k offload enable and bss load trigger parameters
 		 * to FW as part of RSO Start
 		 */
-		if (roam_req->reason == REASON_CTX_INIT) {
-			qdf_status = wma_send_offload_11k_params(wma_handle,
-						&roam_req->offload_11k_params);
-			if (qdf_status != QDF_STATUS_SUCCESS) {
-				WMA_LOGE("11k offload enable not sent, status %d",
-					 qdf_status);
-				break;
-			}
+		qdf_status = wma_send_offload_11k_params(wma_handle,
+					&roam_req->offload_11k_params);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			WMA_LOGE("11k offload enable not sent, status %d",
+				 qdf_status);
+			break;
+		}
 
-			if (roam_req->bss_load_trig_enabled) {
-				bss_load_cfg = &roam_req->bss_load_config;
-				wma_send_roam_bss_load_config(wma_handle,
-							      bss_load_cfg);
-			}
+		if (roam_req->bss_load_trig_enabled) {
+			bss_load_cfg = &roam_req->bss_load_config;
+			wma_send_roam_bss_load_config(wma_handle, bss_load_cfg);
 		}
 
 		wma_send_disconnect_roam_params(wma_handle, roam_req);
