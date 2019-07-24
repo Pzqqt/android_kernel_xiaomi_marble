@@ -508,6 +508,7 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 	uint8_t cur_dfs_idx = 0;
 	uint8_t vhtop_ch_freq_seg1, vhtop_ch_freq_seg2;
 	int i;
+	struct dfs_agile_cac_params adfs_param;
 
 	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
 	dfs_soc_obj = dfs->dfs_soc_obj;
@@ -551,10 +552,15 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 	}
 
 	if (ch_freq) {
+		adfs_param.precac_chan = ch_freq;
+		adfs_param.precac_chwidth = dfs->dfs_precac_chwidth;
+		dfs_start_agile_precac_timer(temp_dfs,
+					     dfs->dfs_soc_obj->ocac_status,
+					     &adfs_param);
 		qdf_info("%s : %d ADFS channel set request sent for pdev: %pK ch_freq: %d",
 			 __func__, __LINE__, pdev, ch_freq);
 		if (dfs_tx_ops && dfs_tx_ops->dfs_agile_ch_cfg_cmd)
-			dfs_tx_ops->dfs_agile_ch_cfg_cmd(pdev, &ch_freq);
+			dfs_tx_ops->dfs_agile_ch_cfg_cmd(pdev, &adfs_param);
 		else
 			dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
 				"dfs_tx_ops=%pK", dfs_tx_ops);
@@ -930,6 +936,7 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 			       uint32_t center_freq)
 {
 	struct wlan_dfs *dfs = NULL;
+	struct dfs_agile_cac_params adfs_param;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 
@@ -950,7 +957,11 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 		 * TRIGGER agile precac timer with 0sec timeout
 		 * with ocac_status 0 for old pdev
 		 */
-		dfs_start_agile_precac_timer(dfs, center_freq, ocac_status);
+		adfs_param.precac_chan = center_freq;
+		adfs_param.precac_chwidth = dfs->dfs_precac_chwidth;
+		dfs_start_agile_precac_timer(dfs,
+					     ocac_status,
+					     &adfs_param);
 	} else {
 		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS, "Error Unknown");
 	}
@@ -1627,28 +1638,94 @@ void dfs_cancel_precac_timer(struct wlan_dfs *dfs)
 }
 
 #ifdef QCA_SUPPORT_AGILE_DFS
-#define DEFAULT_CAC_DURATION 62
-void dfs_start_agile_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan,
-				  uint8_t ocac_status)
+/* FIND_IF_OVERLAP_WITH_WEATHER_RANGE() - Find if the given channel range
+ * overlaps with the weather channel range.
+ * @first_ch: First subchannel of the channel range.
+ * @last_ch:  Last subchannel of the channel range.
+ *
+ * Algorithm:
+ * If the first channel of given range is left of last weather channel
+ * and if the last channel of given range is right of the first weather channel,
+ * return true, else false.
+ */
+#define FIND_IF_OVERLAP_WITH_WEATHER_RANGE(first_ch, last_ch) \
+((first_ch <= WEATHER_CHAN_START) && (WEATHER_CHAN_END <= last_ch))
+
+/* dfs_is_precac_on_weather_channel() - Given a channel number, find if
+ * it's a weather radar channel.
+ * @dfs: Pointer to WLAN_DFS structure.
+ * @chwidth: PreCAC channel width enum.
+ * @precac_chan: Channel for preCAC.
+ *
+ * Based on the precac_width, find the first and last subchannels of the given
+ * preCAC channel and check if this range overlaps with weather channel range.
+ *
+ * Return: True if weather channel, else false.
+ */
+static bool dfs_is_precac_on_weather_channel(struct wlan_dfs *dfs,
+					     enum phy_ch_width chwidth,
+					     uint8_t precac_chan)
 {
-	int agile_cac_timeout;
+	uint8_t first_subch, last_subch;
+
+	switch (chwidth) {
+	case CH_WIDTH_20MHZ:
+		first_subch = precac_chan;
+		last_subch = precac_chan;
+		break;
+	case CH_WIDTH_40MHZ:
+		first_subch = precac_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		last_subch = precac_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		break;
+	case CH_WIDTH_80MHZ:
+		first_subch = precac_chan - DFS_5GHZ_2ND_CHAN_OFFSET;
+		last_subch = precac_chan + DFS_5GHZ_2ND_CHAN_OFFSET;
+		break;
+	default:
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Precac channel width invalid!");
+		return false;
+	}
+	return FIND_IF_OVERLAP_WITH_WEATHER_RANGE(first_subch, last_subch);
+}
+
+void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
+				  uint8_t ocac_status,
+				  struct dfs_agile_cac_params *adfs_param)
+{
+	uint8_t precac_chan = adfs_param->precac_chan;
+	enum phy_ch_width chwidth = adfs_param->precac_chwidth;
+	uint32_t min_precac_timeout, max_precac_timeout;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
 	dfs_soc_obj->dfs_precac_timer_running = 1;
 
-	agile_cac_timeout = (dfs->dfs_precac_timeout_override != -1) ?
-				dfs->dfs_precac_timeout_override :
-				DEFAULT_CAC_DURATION;
 	if (ocac_status == OCAC_SUCCESS) {
 		dfs_soc_obj->ocac_status = OCAC_SUCCESS;
-		agile_cac_timeout = 0;
+		min_precac_timeout = 0;
+		max_precac_timeout = 0;
+	} else {
+		/* Find the minimum and maximum precac timeout. */
+		max_precac_timeout = MAX_PRECAC_DURATION;
+		if (dfs->dfs_precac_timeout_override != -1) {
+			min_precac_timeout =
+				dfs->dfs_precac_timeout_override * 1000;
+		} else if (dfs_is_precac_on_weather_channel(dfs,
+							    chwidth,
+							    precac_chan)) {
+			min_precac_timeout = MIN_WEATHER_PRECAC_DURATION;
+			max_precac_timeout = MAX_WEATHER_PRECAC_DURATION;
+		} else {
+			min_precac_timeout = MIN_PRECAC_DURATION;
+		}
 	}
 
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-		 "precactimeout = %d", (agile_cac_timeout) * 1000);
-	qdf_timer_mod(&dfs_soc_obj->dfs_precac_timer,
-		      (agile_cac_timeout) * 1000);
+		 "precactimeout = %d ms", (min_precac_timeout));
+	qdf_timer_mod(&dfs_soc_obj->dfs_precac_timer, min_precac_timeout);
+	adfs_param->min_precac_timeout = min_precac_timeout;
+	adfs_param->max_precac_timeout = max_precac_timeout;
 }
 #endif
 
@@ -2172,15 +2249,10 @@ void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
 						pri_ch_ieee,
 						sec_ch_ieee,
 						chwidth_val);
-	if (ieee_chan) {
+	if (ieee_chan)
 		dfs->dfs_agile_precac_freq = ieee_chan;
-		/* Start the pre_cac_timer */
-		dfs_start_agile_precac_timer(dfs,
-					     dfs->dfs_agile_precac_freq,
-					     dfs->dfs_soc_obj->ocac_status);
-	} else {
+	else
 		dfs->dfs_agile_precac_freq = 0;
-	}
 
 	*ch_ieee = dfs->dfs_agile_precac_freq;
 }
@@ -2374,16 +2446,12 @@ void dfs_set_precac_enable(struct wlan_dfs *dfs, uint32_t value)
 #ifdef QCA_SUPPORT_AGILE_DFS
 void dfs_agile_precac_start(struct wlan_dfs *dfs)
 {
-	uint8_t agile_freq = 0;
+	struct dfs_agile_cac_params adfs_param;
 	uint8_t ocac_status = 0;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 	uint8_t cur_dfs_idx;
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
-	/*
-	 * Initiate first call to start preCAC here, for agile_freq as 0,
-	 * and ocac_status as 0
-	 */
 
 	qdf_info("%s : %d agile_precac_started: %d",
 		 __func__, __LINE__,
@@ -2400,12 +2468,16 @@ void dfs_agile_precac_start(struct wlan_dfs *dfs)
 		 dfs->dfs_soc_obj->dfs_priv[cur_dfs_idx].dfs);
 
 	if (!dfs->dfs_soc_obj->precac_state_started) {
+		/*
+		 * Initiate first call to start preCAC here, for channel as 0,
+		 * and ocac_status as 0
+		 */
+		adfs_param.precac_chan = 0;
+		adfs_param.precac_chwidth = CH_WIDTH_INVALID;
 		qdf_info("%s : %d Initiated agile precac",
 			 __func__, __LINE__);
 		dfs->dfs_soc_obj->precac_state_started = true;
-		dfs_start_agile_precac_timer(dfs,
-					     agile_freq,
-					     ocac_status);
+		dfs_start_agile_precac_timer(dfs, ocac_status, &adfs_param);
 	}
 }
 #endif
