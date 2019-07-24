@@ -1217,7 +1217,7 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 	dp_debug("Mon RX Desc Pool[%d] entries=%u",
 		 pdev_id, num_entries);
 
-	rx_desc_pool_size = DP_RX_DESC_ALLOC_MULTIPLIER * num_entries;
+	rx_desc_pool_size = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc->wlan_cfg_ctx) * num_entries;
 	status = dp_rx_desc_pool_alloc(soc, mac_id, rx_desc_pool_size,
 				       rx_desc_pool);
 	if (!QDF_IS_STATUS_SUCCESS(status))

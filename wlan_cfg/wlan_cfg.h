@@ -159,6 +159,7 @@ struct wlan_srng_cfg {
  *                            dp_rx_process loop
  * tx_comp_enable_eol_data_check: flag to enable/disable checking for more data
  *                                at end of tx_comp_handler loop.
+ * @rx_sw_desc_weight: rx sw descriptor weight configuration
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -245,6 +246,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool rx_enable_eol_data_check;
 	bool tx_comp_enable_eol_data_check;
 #endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
+	int rx_sw_desc_weight;
 };
 
 /**
@@ -1063,6 +1065,15 @@ wlan_cfg_get_dp_soc_rxdma_refill_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
  */
 int
 wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_rx_sw_desc_weight - Get rx sw desc weight
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: rx_sw_desc_weight
+ */
+int
+wlan_cfg_get_dp_soc_rx_sw_desc_weight(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
  * wlan_cfg_get_dp_caps - Get dp capablities

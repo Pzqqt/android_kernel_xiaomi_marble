@@ -2368,6 +2368,7 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
 	uint32_t rxdma_entries;
+	uint32_t rx_sw_desc_weight;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 
@@ -2384,8 +2385,10 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	soc->process_rx_status = CONFIG_PROCESS_RX_STATUS;
 
 	rx_desc_pool = &soc->rx_desc_buf[pdev_id];
+	rx_sw_desc_weight = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc->wlan_cfg_ctx);
+
 	dp_rx_desc_pool_alloc(soc, pdev_id,
-			      DP_RX_DESC_ALLOC_MULTIPLIER * rxdma_entries,
+			      rx_sw_desc_weight * rxdma_entries,
 			      rx_desc_pool);
 
 	rx_desc_pool->owner = DP_WBM2SW_RBM;

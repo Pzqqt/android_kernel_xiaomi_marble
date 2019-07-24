@@ -277,6 +277,36 @@
 #define WLAN_CFG_RXDMA_ERR_DST_RING_SIZE_MIN 1024
 #define WLAN_CFG_RXDMA_ERR_DST_RING_SIZE_MAX 8192
 
+/**
+ * Allocate as many RX descriptors as buffers in the SW2RXDMA
+ * ring. This value may need to be tuned later.
+ */
+#if defined(QCA_HOST2FW_RXBUF_RING)
+#define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE 1
+#define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MIN 1
+#define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MAX 1
+
+/**
+ * For low memory AP cases using 1 will reduce the rx descriptors memory req
+ */
+#elif defined(QCA_LOWMEM_CONFIG) || defined(QCA_512M_CONFIG)
+#define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE 1
+#define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MIN 1
+#define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MAX 3
+
+/**
+ * AP use cases need to allocate more RX Descriptors than the number of
+ * entries avaialable in the SW2RXDMA buffer replenish ring. This is to account
+ * for frames sitting in REO queues, HW-HW DMA rings etc. Hence using a
+ * multiplication factor of 3, to allocate three times as many RX descriptors
+ * as RX buffers.
+ */
+#else
+#define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE 3
+#define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MIN 1
+#define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MAX 3
+#endif //QCA_HOST2FW_RXBUF_RING
+
 /* DP INI Declerations */
 #define CFG_DP_HTT_PACKET_TYPE \
 		CFG_INI_UINT("dp_htt_packet_type", \
@@ -683,6 +713,13 @@
 		CFG_INI_BOOL("gEnableDataStallDetection", \
 		true, "Enable/Disable Data stall detection")
 
+#define CFG_DP_RX_SW_DESC_WEIGHT \
+		CFG_INI_UINT("dp_rx_sw_desc_weight", \
+		WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MIN, \
+		WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MAX, \
+		WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE, \
+		CFG_VALUE_OR_DEFAULT, "DP RX SW DESC weight")
+
 #define CFG_DP \
 		CFG(CFG_DP_HTT_PACKET_TYPE) \
 		CFG(CFG_DP_INT_BATCH_THRESHOLD_OTHER) \
@@ -747,6 +784,8 @@
 		CFG(CFG_DP_IPA_UC_RX_IND_RING_COUNT) \
 		CFG(CFG_DP_REORDER_OFFLOAD_SUPPORT) \
 		CFG(CFG_DP_AP_STA_SECURITY_SEPERATION) \
-		CFG(CFG_DP_ENABLE_DATA_STALL_DETECTION)
+		CFG(CFG_DP_ENABLE_DATA_STALL_DETECTION) \
+		CFG(CFG_DP_RX_SW_DESC_WEIGHT)
+
 
 #endif /* _CFG_DP_H_ */

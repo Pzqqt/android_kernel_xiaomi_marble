@@ -420,7 +420,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_DP_TX_FLOW_STOP_QUEUE_TH);
 	wlan_cfg_ctx->disable_intra_bss_fwd =
 		cfg_get(psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
-
+	wlan_cfg_ctx->rx_sw_desc_weight = cfg_get(psoc,
+						   CFG_DP_RX_SW_DESC_WEIGHT);
 	return wlan_cfg_ctx;
 }
 
@@ -976,6 +977,12 @@ int
 wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->rxdma_err_dst_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_rx_sw_desc_weight(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rx_sw_desc_weight;
 }
 
 bool
