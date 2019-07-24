@@ -241,6 +241,8 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 		ret = -EINVAL;
 		goto fail;
 	}
+
+	apf_set_offload.session_id = adapter->vdev_id;
 	apf_set_offload.total_length = nla_get_u32(tb[APF_PACKET_SIZE]);
 
 	if (!apf_set_offload.total_length) {
@@ -265,7 +267,6 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 
 	apf_set_offload.current_length = prog_len;
 	nla_memcpy(apf_set_offload.program, tb[APF_PROGRAM], prog_len);
-	apf_set_offload.session_id = adapter->vdev_id;
 
 	hdd_debug("APF set instructions");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
