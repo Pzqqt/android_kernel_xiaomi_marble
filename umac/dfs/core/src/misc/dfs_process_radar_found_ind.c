@@ -193,8 +193,9 @@ static QDF_STATUS dfs_radar_add_channel_list_to_nol(struct wlan_dfs *dfs,
 					(uint16_t)
 					utils_dfs_chan_to_freq(channels[i]),
 					WLAN_EV_NOL_STARTED);
-		dfs_info(dfs, WLAN_DEBUG_DFS_NOL, "ch=%d Added to NOL",
-			 last_chan);
+		dfs_info(dfs, WLAN_DEBUG_DFS_NOL, "ch=%d Added to NOL, freq= %hu",
+			 last_chan,
+			 (uint16_t)utils_dfs_chan_to_freq(last_chan));
 	}
 
 	if (!num_ch) {
