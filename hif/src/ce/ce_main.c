@@ -2962,6 +2962,8 @@ int hif_wlan_enable(struct hif_softc *scn)
 		mode = PLD_FTM;
 	else if (QDF_GLOBAL_COLDBOOT_CALIB_MODE == con_mode)
 		mode = PLD_COLDBOOT_CALIBRATION;
+	else if (QDF_GLOBAL_FTM_COLDBOOT_CALIB_MODE == con_mode)
+		mode = PLD_FTM_COLDBOOT_CALIBRATION;
 	else if (QDF_IS_EPPING_ENABLED(con_mode))
 		mode = PLD_EPPING;
 	else

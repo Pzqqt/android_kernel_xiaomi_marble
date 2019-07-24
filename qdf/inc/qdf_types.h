@@ -587,11 +587,14 @@ const char *qdf_opmode_str(const enum QDF_OPMODE opmode);
  * enum QDF_GLOBAL_MODE - global mode when driver is loaded.
  *
  * @QDF_GLOBAL_MISSION_MODE: mission mode (STA, SAP...)
+ * @QDF_GLOBAL_WALTEST_MODE: WAL Test Mode
  * @QDF_GLOBAL_MONITOR_MODE: Monitor Mode
  * @QDF_GLOBAL_FTM_MODE: FTM mode
  * @QDF_GLOBAL_IBSS_MODE: IBSS mode
+ * @QDF_GLOBAL_COLDBOOT_CALIB_MODEL: Cold Boot Calibration Mode
  * @QDF_GLOBAL_EPPING_MODE: EPPING mode
  * @QDF_GLOBAL_QVIT_MODE: QVIT global mode
+ * @QDF_GLOBAL_FTM_COLDBOOT_CALIB_MODE: Cold Boot Calibration in FTM Mode
  * @QDF_GLOBAL_MAX_MODE: Max place holder
  */
 enum QDF_GLOBAL_MODE {
@@ -603,6 +606,7 @@ enum QDF_GLOBAL_MODE {
 	QDF_GLOBAL_COLDBOOT_CALIB_MODE = 7,
 	QDF_GLOBAL_EPPING_MODE = 8,
 	QDF_GLOBAL_QVIT_MODE = 9,
+	QDF_GLOBAL_FTM_COLDBOOT_CALIB_MODE = 10,
 	QDF_GLOBAL_MAX_MODE
 };
 
