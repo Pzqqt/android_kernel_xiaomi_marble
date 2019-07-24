@@ -441,14 +441,6 @@ static int _sde_core_perf_enable_uidle(struct sde_kms *kms,
 		goto exit;
 	}
 
-	/* if no status change, just return */
-	if ((enable && kms->perf.uidle_enabled) ||
-		(!enable && !kms->perf.uidle_enabled)) {
-		SDE_DEBUG("no status change enable:%d uidle:%d\n",
-			enable, kms->perf.uidle_enabled);
-		goto exit;
-	}
-
 	SDE_EVT32(enable);
 	_sde_core_uidle_setup_wd(kms, enable);
 	_sde_core_uidle_setup_cfg(kms, enable);
@@ -495,8 +487,7 @@ static void _sde_core_perf_uidle_setup_cntr(struct sde_kms *sde_kms,
 	uidle = sde_kms->hw_uidle;
 
 	SDE_EVT32(enable);
-	if (uidle->ops.uidle_setup_cntr && (enable !=
-			sde_kms->catalog->uidle_cfg.perf_cntr_en)) {
+	if (uidle->ops.uidle_setup_cntr) {
 		uidle->ops.uidle_setup_cntr(uidle, enable);
 		sde_kms->catalog->uidle_cfg.perf_cntr_en = enable;
 	}
