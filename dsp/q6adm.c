@@ -3069,8 +3069,7 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 
 		if ((q6core_get_avcs_api_version_per_service(
 				APRV2_IDS_SERVICE_ID_ADSP_ADM_V) >=
-					ADSP_ADM_API_VERSION_V3) &&
-					q6core_use_Q6_32ch_support()) {
+					ADSP_ADM_API_VERSION_V3)) {
 			memset(&open_v8, 0, sizeof(open_v8));
 			memset(&ep1_payload, 0, sizeof(ep1_payload));
 			memset(&ep2_payload, 0, sizeof(ep2_payload));
