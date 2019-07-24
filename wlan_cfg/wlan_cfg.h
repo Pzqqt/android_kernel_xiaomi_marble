@@ -151,6 +151,7 @@ struct wlan_srng_cfg {
  * @tx_desc_limit_1: tx_desc limit for 2G
  * @tx_desc_limit_2: tx_desc limit for 5G L
  * @tx_device_limit: tx device limit
+ * @tx_sw_internode_queue: tx sw internode queue
  * @tx_comp_loop_pkt_limit: Max # of packets to be processed in 1 tx comp loop
  * @rx_reap_loop_pkt_limit: Max # of packets to be processed in 1 rx reap loop
  * @rx_hp_oos_update_limit: Max # of HP OOS (out of sync) updates
@@ -236,6 +237,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int tx_desc_limit_1;
 	int tx_desc_limit_2;
 	int tx_device_limit;
+	int tx_sw_internode_queue;
 #ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
 	uint32_t tx_comp_loop_pkt_limit;
 	uint32_t rx_reap_loop_pkt_limit;
@@ -1034,6 +1036,15 @@ wlan_cfg_get_dp_soc_tx_desc_limit_2(struct wlan_cfg_dp_soc_ctxt *cfg);
  */
 int
 wlan_cfg_get_dp_soc_tx_device_limit(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_tx_sw_internode_queue - Get tx sw internode queue
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: tx sw internode queue
+ */
+int
+wlan_cfg_get_dp_soc_tx_sw_internode_queue(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
  * wlan_cfg_get_dp_soc_rxdma_refill_ring_size - Get rxdma refill ring size

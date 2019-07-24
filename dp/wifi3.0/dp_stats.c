@@ -4489,6 +4489,8 @@ void dp_print_soc_cfg_params(struct dp_soc *soc)
 		       soc_cfg_ctx->tx_desc_limit_2);
 	DP_PRINT_STATS("TX device limit: %u ",
 		       soc_cfg_ctx->tx_device_limit);
+	DP_PRINT_STATS("TX sw internode queue: %u ",
+		       soc_cfg_ctx->tx_sw_internode_queue);
 	DP_PRINT_STATS("RXDMA err dst ring: %u ",
 		       soc_cfg_ctx->rxdma_err_dst_ring);
 }

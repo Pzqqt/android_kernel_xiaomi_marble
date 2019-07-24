@@ -408,6 +408,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 						CFG_DP_TX_DESC_LIMIT_2);
 	wlan_cfg_ctx->tx_device_limit = cfg_get(psoc,
 						CFG_DP_TX_DEVICE_LIMIT);
+	wlan_cfg_ctx->tx_sw_internode_queue = cfg_get(psoc,
+						CFG_DP_TX_SW_INTERNODE_QUEUE);
 	wlan_cfg_ctx->rxdma_err_dst_ring = cfg_get(psoc,
 						   CFG_DP_RXDMA_ERR_DST_RING);
 	wlan_cfg_ctx->enable_data_stall_detection =
@@ -962,6 +964,12 @@ int
 wlan_cfg_get_dp_soc_tx_device_limit(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->tx_device_limit;
+}
+
+int
+wlan_cfg_get_dp_soc_tx_sw_internode_queue(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->tx_sw_internode_queue;
 }
 
 int
