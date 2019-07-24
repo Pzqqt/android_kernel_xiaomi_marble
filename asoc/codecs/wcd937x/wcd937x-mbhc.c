@@ -552,6 +552,8 @@ static void wcd937x_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 	 */
 	regmap_update_bits(wcd937x->regmap,
 			   WCD937X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0x00);
+	/* 1ms delay needed after disable surge protection */
+	usleep_range(1000, 1010);
 
 	/* First get impedance on Left */
 	d1 = d1_a[1];
