@@ -1249,12 +1249,18 @@ void hif_ramdump_handler(struct hif_opaque_softc *scn)
 		hif_usb_ramdump_handler(scn);
 }
 
-#ifdef WLAN_SUSPEND_RESUME_TEST
 irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 {
 	struct hif_softc *scn = context;
+	struct hif_opaque_softc *hif_ctx = GET_HIF_OPAQUE_HDL(scn);
 
 	HIF_INFO("wake interrupt received on irq %d", irq);
+
+	if (hif_pm_runtime_get_monitor_wake_intr(hif_ctx) &&
+	    hif_pm_runtime_is_suspended(hif_ctx)) {
+		hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
+		hif_pm_runtime_request_resume(hif_ctx);
+	}
 
 	if (scn->initial_wakeup_cb)
 		scn->initial_wakeup_cb(scn->initial_wakeup_priv);
@@ -1264,26 +1270,6 @@ irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 
 	return IRQ_HANDLED;
 }
-#else /* WLAN_SUSPEND_RESUME_TEST */
-irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
-{
-	struct hif_softc *scn = context;
-	struct hif_opaque_softc *hif_ctx = GET_HIF_OPAQUE_HDL(scn);
-
-	HIF_INFO("wake interrupt received on irq %d", irq);
-
-	if (scn->initial_wakeup_cb)
-		scn->initial_wakeup_cb(scn->initial_wakeup_priv);
-
-	if (hif_pm_runtime_get_monitor_wake_intr(hif_ctx) &&
-	    hif_pm_runtime_is_suspended(hif_ctx)) {
-		hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
-		hif_pm_runtime_request_resume(hif_ctx);
-	}
-
-	return IRQ_HANDLED;
-}
-#endif /* WLAN_SUSPEND_RESUME_TEST */
 
 void hif_set_initial_wakeup_cb(struct hif_opaque_softc *hif_ctx,
 			       void (*callback)(void *),
