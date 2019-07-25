@@ -133,7 +133,6 @@ lim_collect_bss_description(struct mac_context *mac,
 	 * So The problem of incorrect channel reporting in 5Ghz will still remain for 11a devices.
 	 */
 	channel_num = lim_get_channel_from_beacon(mac, pBPR);
-	pBssDescr->channelId = channel_num;
 	pBssDescr->chan_freq = wlan_reg_chan_to_freq(mac->pdev, channel_num);
 
 	/* set the network type in bss description */
@@ -192,7 +191,7 @@ lim_collect_bss_description(struct mac_context *mac,
 		     pBody + SIR_MAC_B_PR_SSID_OFFSET, ieLen);
 
 	/*set channel number in beacon in case it is not present */
-	pBPR->channelNumber = pBssDescr->channelId;
+	pBPR->channelNumber = channel_num;
 	mac->lim.beacon_probe_rsp_cnt_per_scan++;
 
 	return;

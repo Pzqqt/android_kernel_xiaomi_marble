@@ -547,9 +547,6 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 					 (uint32_t *) &pSirSmeRsp->bssDescription.
 					 nwType, pe_session);
 
-			pSirSmeRsp->bssDescription.channelId =
-				wlan_reg_freq_to_chan(
-				mac->pdev, pe_session->curr_op_freq);
 			pSirSmeRsp->bssDescription.chan_freq =
 				pe_session->curr_op_freq;
 

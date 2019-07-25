@@ -658,8 +658,7 @@ struct bss_description {
 	int8_t rssi;
 	int8_t rssi_raw;
 	int8_t sinr;
-	/* channelId what peer sent in beacon/probersp. */
-	uint8_t channelId;
+	/* channel frequency what peer sent in beacon/probersp. */
 	uint32_t chan_freq;
 	/* Based on system time, not a relative time. */
 	uint64_t received_time;

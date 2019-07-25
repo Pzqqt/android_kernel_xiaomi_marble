@@ -11675,9 +11675,6 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	}
 	session->connectedProfile.op_freq = pSwitchChnInd->freq;
 	if (session->pConnectBssDesc) {
-		session->pConnectBssDesc->channelId =
-			wlan_reg_freq_to_chan(mac_ctx->pdev,
-					      pSwitchChnInd->freq);
 		session->pConnectBssDesc->chan_freq = pSwitchChnInd->freq;
 
 		ie_len = csr_get_ielen_from_bss_description(
