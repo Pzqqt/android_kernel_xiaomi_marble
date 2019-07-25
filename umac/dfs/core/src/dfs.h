@@ -2669,4 +2669,18 @@ void dfs_reset_agile_config(struct dfs_soc_priv_obj *dfs_soc);
  * @dfs: Pointer to wlan_dfs.
  */
 int dfs_reinit_timers(struct wlan_dfs *dfs);
+
+/**
+ * dfs_skip_cac_after_vdev_restart() - Skip CAC if new channel is same
+ * as old channel after vdev restart.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#ifdef QCA_SKIP_CAC_AFTER_RESTART
+bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs);
+#else
+static inline bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs)
+{
+	return true;
+}
+#endif
 #endif  /* _DFS_H_ */
