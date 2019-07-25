@@ -162,6 +162,8 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 	qdf_spinlock_create(&pdev->tx_capture.ppdu_stats_lock);
 	pdev->tx_capture.ppdu_stats_queue_depth = 0;
 	pdev->tx_capture.ppdu_stats_next_sched = 0;
+	pdev->tx_capture.ppdu_stats_defer_queue_depth = 0;
+	pdev->tx_capture.ppdu_dropped = 0;
 }
 
 /**
@@ -855,22 +857,23 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 
 		wbm_tsf = ptr_msdu_info->tsf;
 
+		if (wbm_tsf < start_tsf) {
+			/* remove the aged packet */
+			nbuf = qdf_nbuf_queue_remove(
+					&tx_tid->msdu_comp_q);
+
+			qdf_nbuf_free(nbuf);
+
+			curr_msdu = qdf_nbuf_queue_first(
+					&tx_tid->msdu_comp_q);
+			prev_msdu = NULL;
+			continue;
+		}
 		if (msdu_ppdu_id == ppdu_id) {
 			matched = 1;
 
 			if (wbm_tsf > start_tsf && wbm_tsf < end_tsf) {
 				/*packet found */
-			} else if (wbm_tsf < start_tsf) {
-				/* remove the aged packet */
-				nbuf = qdf_nbuf_queue_remove(
-						&tx_tid->msdu_comp_q);
-
-				qdf_nbuf_free(nbuf);
-
-				curr_msdu = qdf_nbuf_queue_first(
-						&tx_tid->msdu_comp_q);
-				prev_msdu = NULL;
-				continue;
 			} else if (wbm_tsf > end_tsf) {
 				/*
 				 * Do we need delta in above case.
@@ -1258,7 +1261,7 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
  * which doesn't include BAR and other non data frame
  * ~50 is maximum scheduled ppdu count
  */
-#define SCHED_MAX_PPDU_CNT 50
+#define SCHED_MAX_PPDU_CNT 64
 /**
  * dp_tx_ppdu_stats_process - Deferred PPDU stats handler
  * @context: Opaque work context (PDEV)
@@ -1286,6 +1289,8 @@ void dp_tx_ppdu_stats_process(void *context)
 	qdf_spin_lock_bh(&ptr_tx_cap->ppdu_stats_lock);
 	STAILQ_CONCAT(&ptr_tx_cap->ppdu_stats_defer_queue,
 		      &ptr_tx_cap->ppdu_stats_queue);
+	ptr_tx_cap->ppdu_stats_defer_queue_depth +=
+		ptr_tx_cap->ppdu_stats_queue_depth;
 	ptr_tx_cap->ppdu_stats_queue_depth = 0;
 	qdf_spin_unlock_bh(&ptr_tx_cap->ppdu_stats_lock);
 
@@ -1300,8 +1305,9 @@ void dp_tx_ppdu_stats_process(void *context)
 				    ppdu_info_queue_elem, tmp_ppdu_info) {
 			if (curr_sched_cmdid != ppdu_info->sched_cmdid)
 				break;
-			sched_ppdu_list[ppdu_cnt++] = ppdu_info;
-			qdf_assert_always(ppdu_cnt <= SCHED_MAX_PPDU_CNT);
+			qdf_assert_always(ppdu_cnt < SCHED_MAX_PPDU_CNT);
+			sched_ppdu_list[ppdu_cnt] = ppdu_info;
+			ppdu_cnt++;
 		}
 		if (ppdu_info && (curr_sched_cmdid == ppdu_info->sched_cmdid) &&
 		    ptr_tx_cap->ppdu_stats_next_sched < now_ms)
@@ -1311,6 +1317,7 @@ void dp_tx_ppdu_stats_process(void *context)
 		STAILQ_REMOVE_HEAD_UNTIL(&ptr_tx_cap->ppdu_stats_defer_queue,
 					 sched_ppdu_list[ppdu_cnt - 1],
 					 ppdu_info_queue_elem);
+		ptr_tx_cap->ppdu_stats_defer_queue_depth -= ppdu_cnt;
 
 		ppdu_desc_cnt = 0;
 		/* Process tx buffer list based on last_ppdu_id stored above */
@@ -1549,14 +1556,24 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 			qdf_nbuf_data(ppdu_info->nbuf);
 
 	qdf_spin_lock_bh(&pdev->tx_capture.ppdu_stats_lock);
-	STAILQ_INSERT_TAIL(&pdev->tx_capture.ppdu_stats_queue,
-			   ppdu_info, ppdu_info_queue_elem);
-	pdev->tx_capture.ppdu_stats_queue_depth++;
+
+	if (qdf_unlikely(!pdev->tx_capture_enabled &&
+	    (pdev->tx_capture.ppdu_stats_queue_depth +
+	    pdev->tx_capture.ppdu_stats_defer_queue_depth) >
+	    DP_TX_PPDU_PROC_MAX_DEPTH)) {
+		qdf_nbuf_free(ppdu_info->nbuf);
+		qdf_mem_free(ppdu_info);
+		pdev->tx_capture.ppdu_dropped++;
+	} else {
+		STAILQ_INSERT_TAIL(&pdev->tx_capture.ppdu_stats_queue,
+				   ppdu_info, ppdu_info_queue_elem);
+		pdev->tx_capture.ppdu_stats_queue_depth++;
+	}
 	qdf_spin_unlock_bh(&pdev->tx_capture.ppdu_stats_lock);
 
 	if ((pdev->tx_capture.ppdu_stats_queue_depth >
 	    DP_TX_PPDU_PROC_THRESHOLD) ||
-	    (pdev->tx_capture.ppdu_stats_next_sched > now_ms)) {
+	    (pdev->tx_capture.ppdu_stats_next_sched <= now_ms)) {
 		qdf_queue_work(0, pdev->tx_capture.ppdu_stats_workqueue,
 			       &pdev->tx_capture.ppdu_stats_work);
 		pdev->tx_capture.ppdu_stats_next_sched =

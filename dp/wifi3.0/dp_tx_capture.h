@@ -21,6 +21,8 @@
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 
+#define DP_TX_PPDU_PROC_MAX_DEPTH 512
+
 struct dp_soc;
 struct dp_pdev;
 struct dp_vdev;
@@ -39,11 +41,13 @@ struct dp_pdev_tx_capture {
 	STAILQ_HEAD(, ppdu_info) ppdu_stats_defer_queue;
 
 	uint32_t ppdu_stats_queue_depth;
+	uint32_t ppdu_stats_defer_queue_depth;
 	uint32_t ppdu_stats_next_sched;
 	qdf_spinlock_t msdu_comp_q_list_lock;
 	uint32_t missed_ppdu_id;
 	uint32_t last_msdu_id;
 	qdf_event_t miss_ppdu_event;
+	uint32_t ppdu_dropped;
 };
 
 /* Tx TID */
