@@ -17,6 +17,6 @@ ifeq ($(CONFIG_ARCH_LITO), y)
 LINUXINCLUDE    += -include $(srctree)/techpack/display/config/saipdispconf.h
 endif
 
-obj-y += msm/
-obj-y += rotator/
-obj-y += pll/
+obj-$(CONFIG_DRM_MSM) += msm/
+obj-$(CONFIG_MSM_SDE_ROTATOR) += rotator/
+obj-$(CONFIG_QCOM_MDSS_PLL) += pll/

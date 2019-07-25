@@ -34,8 +34,19 @@ enum sde_rot_dbg_evtlog_flag {
 	sde_rot_evtlog_tout_handler(false, __func__, ##__VA_ARGS__, \
 		SDE_ROT_EVTLOG_TOUT_DATA_LIMITER)
 
+#if defined(CONFIG_MSM_SDE_ROTATOR_EVTLOG_DEBUG)
 void sde_rot_evtlog(const char *name, int line, int flag, ...);
 void sde_rot_evtlog_tout_handler(bool queue, const char *name, ...);
+#else
+static inline
+void sde_rot_evtlog(const char *name, int line, int flag, ...)
+{
+}
+static inline
+void sde_rot_evtlog_tout_handler(bool queue, const char *name, ...)
+{
+}
+#endif
 
 struct sde_rotator_device;
 
