@@ -125,7 +125,7 @@
  * gStaPrefer80MHzOver160MHz - set sta preference to connect in 80HZ/160HZ
  * @Min: 0
  * @Max: 1
- * @Default: 1
+ * @Default: 0
  *
  * This ini is used to set sta preference to connect in 80HZ/160HZ
  *
@@ -142,7 +142,7 @@
  */
 #define CFG_STA_PREFER_80MHZ_OVER_160MHZ CFG_INI_BOOL( \
 	"gStaPrefer80MHzOver160MHz", \
-	1, \
+	0, \
 	"Sta preference to connect in 80HZ/160HZ")
 
 /*

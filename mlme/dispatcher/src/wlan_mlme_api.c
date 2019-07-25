@@ -2640,6 +2640,11 @@ wlan_mlme_cfg_set_vht_chan_width(struct wlan_objmgr_psoc *psoc, uint8_t value)
 		return QDF_STATUS_E_FAILURE;
 
 	mlme_obj->cfg.vht_caps.vht_cap_info.supp_chan_width = value;
+	if (value == VHT_CAP_160_AND_80P80_SUPP ||
+	    value == VHT_CAP_160_SUPP) {
+		mlme_obj->cfg.vht_caps.vht_cap_info.vht_extended_nss_bw_cap = 1;
+		mlme_obj->cfg.vht_caps.vht_cap_info.extended_nss_bw_supp = 0;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
