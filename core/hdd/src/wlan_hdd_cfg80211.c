@@ -16040,11 +16040,12 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 static
 void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
-			   uint8_t operationChannel,
+			   uint8_t op_chan,
 			   struct ch_params *ch_params)
 {
 	struct hdd_station_ctx *station_ctx =
 			 WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_mon_set_ch_info *ch_info = &station_ctx->ch_info;
 	enum hdd_dot11_mode hdd_dot11_mode;
 	uint8_t ini_dot11_mode =
@@ -16080,16 +16081,17 @@ void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
 	ch_info->channel_width = ch_params->ch_width;
 	ch_info->phy_mode =
 		hdd_cfg_xlate_to_csr_phy_mode(hdd_dot11_mode);
-	ch_info->channel = operationChannel;
+	ch_info->channel = op_chan;
+	ch_info->freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, op_chan);
 	ch_info->cb_mode = ch_params->ch_width;
-	hdd_debug("ch_info width %d, phymode %d channel %d",
+	hdd_debug("ch_info width %d, phymode %d channel freq %d",
 		  ch_info->channel_width, ch_info->phy_mode,
-		  ch_info->channel);
+		  ch_info->freq);
 }
 #else
 static
 void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
-			   uint8_t operationChannel,
+			   uint8_t op_chan,
 			   struct ch_params *ch_params)
 {
 }
