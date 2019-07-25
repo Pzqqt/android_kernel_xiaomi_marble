@@ -3712,7 +3712,7 @@ typedef struct {
 /**
  * TLV (tag length value) parameters follow the scan_cmd
  * structure. The TLV's are:
- *     A_UINT32 channel_list[num_chan];
+ *     A_UINT32 channel_list[num_chan]; // in MHz
  *     wmi_ssid ssid_list[num_ssids];
  *     wmi_mac_addr bssid_list[num_bssid];
  *     A_UINT8 ie_data[ie_len];
@@ -4190,7 +4190,7 @@ typedef struct {
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_rx_hdr */
-    /** channel on which this frame is received. */
+    /** channel on which this frame is received (channel number) */
     A_UINT32 channel;
     /** snr information used to cal rssi */
     A_UINT32 snr;
@@ -4232,6 +4232,9 @@ typedef struct {
      * See macros starting with WMI_PDEV_ID_ for values.
      */
     A_UINT32 pdev_id;
+
+    /** freq in MHz of the channel on which this frame was received */
+    A_UINT32 chan_freq;
 
 /* This TLV is followed by array of bytes:
  *   A_UINT8 bufp[]; <-- management frame buffer
@@ -12264,7 +12267,7 @@ typedef struct {
 /**
  * TLV (tag length value) parameters follow the wmi_roam_chan_list
  * structure. The TLV's are:
- *     A_UINT32 channel_list[];
+ *     A_UINT32 channel_list[]; // in MHz
  **/
 } wmi_roam_chan_list_fixed_param;
 
@@ -13125,7 +13128,7 @@ typedef struct {
     /**
      * TLV (tag length value) parameters follows roam_invoke_req
      * The TLV's are:
-     *     A_UINT32 channel_list[];
+     *     A_UINT32 channel_list[]; // in MHz
      *     wmi_mac_addr bssid_list[];
      *     wmi_tlv_buf_len_param bcn_prb_buf_list[];
      *     A_UINT8 bcn_prb_frm[];
@@ -13381,13 +13384,13 @@ typedef struct {
     A_UINT32 disc_type;
     /* p2p find perodic */
     A_UINT32 perodic;
-    /* p2p find listen channel */
+    /* p2p find listen channel in MHz */
     A_UINT32 listen_channel;
     /* p2p find full channel number */
     A_UINT32 num_scan_chans;
 /**
  * TLV (tag length value)  paramerters follow the pattern structure.
- * TLV  contain channel list
+ * TLV  contain channel list in MHz
  */
 } wmi_p2p_disc_offload_config_cmd;
 
@@ -14655,7 +14658,7 @@ typedef struct wmi_nlo_config {
     A_UINT32 num_cnlo_band_pref;
 /* The TLVs will follow.
  * nlo_configured_parameters nlo_list[];
- * A_UINT32 channel_list[num_of_channels];
+ * A_UINT32 channel_list[num_of_channels]; // in MHz
  * nlo_channel_prediction_cfg ch_prediction_cfg;
  * enlo_candidate_score_params candidate_score_params;
  * wmi_vendor_oui vendor_oui[num_vendor_oui];
@@ -15170,6 +15173,10 @@ typedef struct {
     A_UINT32 off_duration;  /* uint in mill seconds, channel off duraiton for path loss frame sending */
     wmi_mac_addr dest_mac; /* multicast DA, for path loss frame */
     A_UINT32 num_chans;
+/*
+ * This fixed_param TLV is followed by other TLVs:
+ *     A_UINT32 channel_list[num_chans]; // in MHz
+ */
 } wmi_vdev_plmreq_start_cmd_fixed_param;
 
 typedef struct {
@@ -15739,6 +15746,8 @@ typedef struct {
     A_UINT32 pref_offchan_num;
     /* Preferred off channel bandwidth as configured by user */
     A_UINT32 pref_offchan_bw;
+    /* Preferred off channel frequency in MHz as configured by user */
+    A_UINT32 pref_offchan_freq;
 
     /** Followed by the variable length TLV peer_chan_list:
      *  wmi_channel peer_chan_list[].
@@ -15876,14 +15885,16 @@ typedef struct {
     A_UINT32 offchan_mode;
     /** peer MAC address */
     wmi_mac_addr   peer_macaddr;
-   /* Is peer initiator or responder of TDLS setup request */
+    /* Is peer initiator or responder of TDLS setup request */
     A_UINT32 is_peer_responder;
     /* off channel number*/
     A_UINT32 offchan_num;
     /* off channel bandwidth bitmap, e.g. WMI_OFFCHAN_20MHZ */
     A_UINT32 offchan_bw_bitmap;
-   /* operating class for offchan */
-   A_UINT32 offchan_oper_class;
+    /* operating class for offchan */
+    A_UINT32 offchan_oper_class;
+    /* off channel frequency in MHz */
+    A_UINT32 offchan_freq;
 } wmi_tdls_set_offchan_mode_cmd_fixed_param;
 
 
@@ -16344,10 +16355,11 @@ typedef struct
     A_UINT32 tlv_header;
     wmi_mac_addr   bssid;     /* BSSID */
     wmi_ssid   ssid;     /* SSID */
-    A_UINT32   ch;           /* Channel */
+    A_UINT32   ch;           /* Channel number */
     A_UINT32   rssi;         /* RSSI or Level */
     /* Timestamp when Network was found. Used to calculate age based on timestamp in GET_RSP msg header */
     A_UINT32  timestamp;
+    A_UINT32  ch_freq; /* Channel frequency in MHz */
 } wmi_batch_scan_result_network_info;
 
 typedef struct
@@ -16465,7 +16477,7 @@ typedef struct {
 /**
  * TLV (tag length value) parameters follow the scan_cmd
  * structure. The TLV's are:
- *     A_UINT32 channel_list[];
+ *     A_UINT32 channel_list[]; // in MHz
  *     wmi_ssid ssid_list[];
  *     wmi_mac_addr bssid_list[];
  *     A_UINT8 ie_data[];
@@ -18703,10 +18715,17 @@ typedef struct {
     /** following two parameters used by FW to fill IEs when sending 20/40 coexistence action frame to AP */
     A_UINT32 forty_mhz_intolerant; /** STA 40M bandwidth intolerant capability */
     A_UINT32 current_operating_class; /** STA current operating class */
-    /** length of 2.4GHz channel list to scan at, channel list in tlv->channels[] */
+    /** length of 2.4GHz channel list to scan at, channel number list in tlv->channels[] */
     A_UINT32 channel_len;
     /** length of optional ie data to append to probe reqest when active scan, ie data in tlv->ie_field[] */
     A_UINT32 ie_len;
+
+/**
+ * TLV (tag length value) parameters following the fixed param structure
+ *     A_UINT8 channels[channel_len]; // channel numbers
+ *     A_UINT8 ie_field[ie_len];
+ *     A_UINT32 chan_freqs[channel_len] // in MHz
+ */
 } wmi_obss_scan_enable_cmd_fixed_param;
 
 typedef struct {
@@ -18822,7 +18841,7 @@ typedef struct {
 
 typedef struct {
     A_UINT32    tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_ARRAY_STRUC */
-    /** channel number */
+    /** channel in MHz */
     A_UINT32    channel;
 
     /** dwell time in msec - use defaults if 0 */
@@ -19008,13 +19027,13 @@ typedef struct {
 
 typedef struct {
     A_UINT32        tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_ARRAY_STRUC */
-    /**bssid */
+    /** bssid */
     wmi_mac_addr    bssid;
-    /**channel number */
+    /** channel in MHz */
     A_UINT32        channel;
-    /**upper RSSI limit */
+    /** upper RSSI limit */
     A_UINT32        upper_rssi_limit;
-    /**lower RSSI limit */
+    /** lower RSSI limit */
     A_UINT32        lower_rssi_limit;
 } wmi_extscan_wlan_change_bssid_param;
 
@@ -19053,11 +19072,11 @@ typedef struct {
 
 typedef struct {
     A_UINT32        tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_ARRAY_STRUC */
-    /**bssid */
+    /** bssid */
     wmi_mac_addr    bssid;
-    /**RSSI min threshold for reporting */
+    /** RSSI min threshold for reporting */
     A_UINT32        min_rssi;
-    /**Deprecated entry - channel number */
+    /** Deprecated entry - channel in MHz */
     A_UINT32        channel;
     /** RSSI max threshold for reporting */
     A_UINT32        max_rssi;
@@ -19286,25 +19305,25 @@ typedef struct {
 
 typedef struct {
     A_UINT32        tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_ARRAY_STRUC */
-    /**bssid */
+    /** bssid */
     wmi_mac_addr    bssid;
-    /**ssid */
+    /** ssid */
     wmi_ssid        ssid;
-    /**channel number */
+    /** channel in MHz */
     A_UINT32        channel;
-    /* capabilities */
+    /** capabilities */
     A_UINT32        capabilities;
-    /* beacon interval in TUs */
+    /** beacon interval in TUs */
     A_UINT32        beacon_interval;
-    /**time stamp in milliseconds - time last seen */
+    /** time stamp in milliseconds - time last seen */
     A_UINT32        tstamp;
-    /**flags - _tExtScanEntryFlags */
+    /** flags - _tExtScanEntryFlags */
     A_UINT32        flags;
-    /**RTT in ns */
+    /** RTT in ns */
     A_UINT32        rtt;
-    /**rtt standard deviation */
+    /** rtt standard deviation */
     A_UINT32        rtt_sd;
-    /* rssi information */
+    /** rssi information */
     A_UINT32        number_rssi_samples;
     /** IE length */
     A_UINT32        ie_length; /* length of IE data */
@@ -23507,10 +23526,10 @@ typedef struct {
     A_UINT32 regcap2;
     /* REGDMN MODE, see REGDMN_MODE_ enum */
     A_UINT32 wireless_modes;
-    A_UINT32 low_2ghz_chan;
-    A_UINT32 high_2ghz_chan;
-    A_UINT32 low_5ghz_chan;
-    A_UINT32 high_5ghz_chan;
+    A_UINT32 low_2ghz_chan;  /* freq in MHz */
+    A_UINT32 high_2ghz_chan; /* freq in MHz */
+    A_UINT32 low_5ghz_chan;  /* freq in MHz */
+    A_UINT32 high_5ghz_chan; /* freq in MHz */
 } WMI_HAL_REG_CAPABILITIES_EXT;
 
 typedef struct {
