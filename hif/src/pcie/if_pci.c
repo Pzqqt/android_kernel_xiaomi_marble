@@ -2854,24 +2854,13 @@ int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 		return errno;
 	}
 
-	errno = hif_apps_irqs_disable(hif_ctx);
-	if (errno) {
-		HIF_ERROR("%s: failed disable irqs: %d", __func__, errno);
-		goto bus_resume;
-	}
-
 	errno = hif_bus_suspend_noirq(hif_ctx);
 	if (errno) {
 		HIF_ERROR("%s: failed bus suspend noirq: %d", __func__, errno);
-		goto irqs_enable;
+		goto bus_resume;
 	}
 
-	/* link should always be down; skip enable wake irq */
-
 	return 0;
-
-irqs_enable:
-	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
 
 bus_resume:
 	QDF_BUG(!hif_bus_resume(hif_ctx));
@@ -2918,10 +2907,7 @@ void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx)
  */
 int hif_runtime_resume(struct hif_opaque_softc *hif_ctx)
 {
-	/* link should always be down; skip disable wake irq */
-
 	QDF_BUG(!hif_bus_resume_noirq(hif_ctx));
-	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
 	QDF_BUG(!hif_bus_resume(hif_ctx));
 	return 0;
 }
