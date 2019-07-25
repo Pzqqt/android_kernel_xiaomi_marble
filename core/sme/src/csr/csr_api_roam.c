@@ -3186,7 +3186,8 @@ static void csr_dump_connection_stats(struct mac_context *mac_ctx,
 		diag_dot11_mode_from_csr_type(conn_profile->dot11Mode);
 	conn_stats.bss_type =
 	     diag_persona_from_csr_type(session->pCurRoamProfile->csrPersona);
-	conn_stats.operating_channel = conn_profile->operationChannel;
+	conn_stats.operating_channel = wlan_reg_freq_to_chan(mac_ctx->pdev,
+							conn_profile->op_freq);
 	conn_stats.qos_capability = conn_profile->qosConnection;
 	conn_stats.auth_type =
 	     diag_auth_type_from_csr_type(conn_profile->AuthType);
@@ -3234,7 +3235,7 @@ void csr_get_sta_cxn_info(struct mac_context *mac_ctx,
 
 	if (!session || !session->pCurRoamProfile || !conn_profile)
 		return;
-	if (!conn_profile->operationChannel)
+	if (!conn_profile->op_freq)
 		return;
 	qdf_mem_set(buf, buf_sz, '\0');
 	len += qdf_scnprintf(buf + len, buf_sz - len,
@@ -3259,7 +3260,7 @@ void csr_get_sta_cxn_info(struct mac_context *mac_ctx,
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tbss_type: %s", csr_get_persona(type));
 	len += qdf_scnprintf(buf + len, buf_sz - len,
-			     "\n\tchnl: %d", conn_profile->operationChannel);
+			     "\n\tch_freq: %d", conn_profile->op_freq);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tQoS: %d", conn_profile->qosConnection);
 	authtype = diag_auth_type_from_csr_type(conn_profile->AuthType);
@@ -3355,7 +3356,9 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 			roam_info->chan_info.info = 0;
 		}
 		roam_info->chan_info.chan_id =
-			roam_info->u.pConnectedProfile->operationChannel;
+			wlan_reg_freq_to_chan(
+				mac->pdev,
+				roam_info->u.pConnectedProfile->op_freq);
 		roam_info->chan_info.mhz =
 			cds_chan_to_freq(roam_info->chan_info.chan_id);
 		roam_info->chan_info.reg_info_1 =
@@ -6098,7 +6101,7 @@ void csr_update_scan_entry_associnfo(struct mac_context *mac_ctx,
 	}
 
 	qdf_copy_macaddr(&bss.bssid, &conn_profile->bssid);
-	bss.chan = conn_profile->operationChannel;
+	bss.chan = wlan_reg_freq_to_chan(mac_ctx->pdev, conn_profile->op_freq);
 	bss.ssid.length = conn_profile->SSID.length;
 	qdf_mem_copy(&bss.ssid.ssid, &conn_profile->SSID.ssId,
 		     bss.ssid.length);
@@ -7729,7 +7732,8 @@ QDF_STATUS csr_roam_copy_connected_profile(struct mac_context *mac,
 		goto end;
 	}
 	pDstProfile->ChannelInfo.numOfChannels = 1;
-	pDstProfile->ChannelInfo.ChannelList[0] = pSrcProfile->operationChannel;
+	pDstProfile->ChannelInfo.ChannelList[0] =
+			wlan_reg_freq_to_chan(mac->pdev, pSrcProfile->op_freq);
 	pDstProfile->AuthType.numEntries = 1;
 	pDstProfile->AuthType.authType[0] = pSrcProfile->AuthType;
 	pDstProfile->negotiatedAuthType = pSrcProfile->AuthType;
@@ -12233,7 +12237,9 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 			 */
 			if (mac_ctx->obss_scan_offload &&
 			    CSR_IS_CHANNEL_24GHZ(
-				session->connectedProfile.operationChannel)
+				wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					session->connectedProfile.op_freq))
 				&& (session->connectState ==
 					eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)
 				&& session->pCurRoamProfile
@@ -17795,6 +17801,7 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 	bool      is_unsafe_chan;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	enum band_info band = BAND_ALL;
+	uint8_t op_chan;
 
 	if (!qdf_ctx) {
 		cds_err("qdf_ctx is NULL");
@@ -17816,11 +17823,14 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 	}
 
 	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
-		band = csr_get_rf_band(mac_ctx->roam.roamSession[session_id].
-				connectedProfile.operationChannel);
-		sme_debug("updated band %d operational ch %d", band,
-				mac_ctx->roam.roamSession[session_id].
-				connectedProfile.operationChannel);
+		op_chan = wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					mac_ctx->roam.roamSession[session_id].
+					connectedProfile.op_freq);
+		band = csr_get_rf_band(op_chan);
+		sme_debug("updated band %d operational freq %d", band,
+			  mac_ctx->roam.roamSession[session_id].
+			  connectedProfile.op_freq);
 	}
 
 	ch_lst = mac_ctx->roam.validChannelList;
@@ -19321,7 +19331,8 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 			roam_params_dst->bssid_favored_factor[i]);
 	}
 
-	op_channel = session->connectedProfile.operationChannel;
+	op_channel = wlan_reg_freq_to_chan(mac_ctx->pdev,
+					   session->connectedProfile.op_freq);
 	req_buf->hi_rssi_scan_max_count =
 		roam_info->cfgParams.hi_rssi_scan_max_count;
 	req_buf->hi_rssi_scan_delay =

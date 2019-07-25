@@ -3041,7 +3041,8 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	mac_ctx->scan.roam_candidate_count[sessionId] = 0;
 
 	csr_add_to_occupied_channels(
-			mac_ctx, profile->operationChannel,
+			mac_ctx,
+			wlan_reg_freq_to_chan(mac_ctx->pdev, profile->op_freq),
 			sessionId,
 			&mac_ctx->scan.occupiedChannels[sessionId],
 			true);

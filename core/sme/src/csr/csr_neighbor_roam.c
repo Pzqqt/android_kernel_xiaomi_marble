@@ -856,7 +856,9 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 			qdf_copy_macaddr(&pSession->prevApBssid,
 					&pSession->connectedProfile.bssid);
 			pSession->prevOpChannel =
-				pSession->connectedProfile.operationChannel;
+				wlan_reg_freq_to_chan(
+					mac->pdev,
+					pSession->connectedProfile.op_freq);
 			pSession->isPrevApInfoValid = true;
 			pSession->roamTS1 = qdf_mc_timer_get_system_time();
 		}
@@ -963,7 +965,8 @@ static void csr_neighbor_roam_info_ctx_init(
 	qdf_copy_macaddr(&ngbr_roam_info->currAPbssid,
 			&session->connectedProfile.bssid);
 	ngbr_roam_info->currAPoperationChannel =
-		session->connectedProfile.operationChannel;
+		wlan_reg_freq_to_chan(mac->pdev,
+				      session->connectedProfile.op_freq);
 	ngbr_roam_info->currentNeighborLookupThreshold =
 		ngbr_roam_info->cfgParams.neighborLookupThreshold;
 	ngbr_roam_info->currentOpportunisticThresholdDiff =
