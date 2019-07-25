@@ -2880,7 +2880,6 @@ QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present)
 QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present)
 {
 	osdev->smmu_s1_enabled = false;
-	osdev->iommu_mapping = NULL;
 	return QDF_STATUS_SUCCESS;
 }
 #endif
