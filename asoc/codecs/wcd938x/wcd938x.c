@@ -669,28 +669,25 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 					WCD938X_IRQ_HPHR_PDM_WD_INT);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		wcd_disable_irq(&wcd938x->irq_info,
-					WCD938X_IRQ_HPHR_PDM_WD_INT);
 		if (wcd938x->update_wcd_event)
 			wcd938x->update_wcd_event(wcd938x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX2 << 0x10 | 0x1));
-		if (wcd938x->update_wcd_event)
+		wcd_disable_irq(&wcd938x->irq_info,
+					WCD938X_IRQ_HPHR_PDM_WD_INT);
+		if (wcd938x->update_wcd_event && wcd938x->comp2_enable)
 			wcd938x->update_wcd_event(wcd938x->handle,
 					WCD_BOLERO_EVT_RX_COMPANDER_SOFT_RST,
 					(WCD_RX2 << 0x10));
-		/* 7 msec delay as per HW requirement */
-		usleep_range(7000, 7100);
-		if (wcd938x->update_wcd_event)
-			wcd938x->update_wcd_event(wcd938x->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
-						(WCD_RX2 << 0x10 | 0x0));
-		/* 20 msec delay as per HW requirement */
-		usleep_range(21000, 21100);
-		if (wcd938x->update_wcd_event)
-			wcd938x->update_wcd_event(wcd938x->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
-						(WCD_RX2 << 0x10 | 0x1));
+		/*
+		 * 7ms sleep is required if compander is enabled as per
+		 * HW requirement. If compander is disabled, then
+		 * 20ms delay is required.
+		 */
+		if (!wcd938x->comp2_enable)
+			usleep_range(20000, 20100);
+		else
+			usleep_range(7000, 7100);
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
 						0x40, 0x00);
 		blocking_notifier_call_chain(&wcd938x->mbhc->notifier,
@@ -716,8 +713,6 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 					     &wcd938x->mbhc->wcd_mbhc);
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
 						0x10, 0x00);
-		/* 20 msec delay as per HW requirement */
-		usleep_range(20000, 20100);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_PDM_WD_CTL1, 0x17, 0x00);
 		wcd_cls_h_fsm(component, &wcd938x->clsh_info,
@@ -791,28 +786,25 @@ static int wcd938x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 					WCD938X_IRQ_HPHL_PDM_WD_INT);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		wcd_disable_irq(&wcd938x->irq_info,
-					WCD938X_IRQ_HPHL_PDM_WD_INT);
 		if (wcd938x->update_wcd_event)
 			wcd938x->update_wcd_event(wcd938x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10 | 0x1));
-		if (wcd938x->update_wcd_event)
+		wcd_disable_irq(&wcd938x->irq_info,
+					WCD938X_IRQ_HPHL_PDM_WD_INT);
+		if (wcd938x->update_wcd_event && wcd938x->comp1_enable)
 			wcd938x->update_wcd_event(wcd938x->handle,
 					WCD_BOLERO_EVT_RX_COMPANDER_SOFT_RST,
 					(WCD_RX1 << 0x10));
-		/* 7 msec delay as per HW requirement */
-		usleep_range(7000, 7100);
-		if (wcd938x->update_wcd_event)
-			wcd938x->update_wcd_event(wcd938x->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
-						(WCD_RX1 << 0x10 | 0x0));
-		/* 20 msec delay as per HW requirement */
-		usleep_range(21000, 21100);
-		if (wcd938x->update_wcd_event)
-			wcd938x->update_wcd_event(wcd938x->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
-						(WCD_RX1 << 0x10 | 0x1));
+		/*
+		 * 7ms sleep is required if compander is enabled as per
+		 * HW requirement. If compander is disabled, then
+		 * 20ms delay is required.
+		 */
+		if (!wcd938x->comp1_enable)
+			usleep_range(20000, 20100);
+		else
+			usleep_range(7000, 7100);
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
 						0x80, 0x00);
 		blocking_notifier_call_chain(&wcd938x->mbhc->notifier,
@@ -838,8 +830,6 @@ static int wcd938x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 					     &wcd938x->mbhc->wcd_mbhc);
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
 						0x20, 0x00);
-		/* 20 msec delay as per HW requirement */
-		usleep_range(21000, 21100);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_PDM_WD_CTL0, 0x17, 0x00);
 		wcd_cls_h_fsm(component, &wcd938x->clsh_info,
