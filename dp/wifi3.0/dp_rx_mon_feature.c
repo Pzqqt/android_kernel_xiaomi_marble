@@ -74,6 +74,7 @@ dp_rx_populate_cdp_indication_mpdu_info(
 	uint32_t user)
 {
 	int i;
+	struct mon_rx_user_status *rx_user_status;
 
 	cdp_mpdu_info->ppdu_id = ppdu_info->com_info.ppdu_id;
 	cdp_mpdu_info->channel = ppdu_info->rx_status.chan_num;
@@ -92,8 +93,16 @@ dp_rx_populate_cdp_indication_mpdu_info(
 	cdp_mpdu_info->nf = ppdu_info->rx_status.chan_noise_floor;
 
 	if (ppdu_info->rx_status.reception_type == HAL_RX_TYPE_MU_OFDMA) {
-		cdp_mpdu_info->nss = ppdu_info->rx_user_status[user].nss;
-		cdp_mpdu_info->mcs = ppdu_info->rx_user_status[user].mcs;
+		rx_user_status =  &ppdu_info->rx_user_status[user];
+		cdp_mpdu_info->nss = rx_user_status->nss;
+		cdp_mpdu_info->mcs = rx_user_status->mcs;
+		cdp_mpdu_info->ofdma_info_valid =
+				rx_user_status->ofdma_info_valid;
+		cdp_mpdu_info->ofdma_ru_start_index =
+				rx_user_status->dl_ofdma_ru_start_index;
+		cdp_mpdu_info->ofdma_ru_width =
+				rx_user_status->dl_ofdma_ru_width;
+
 	} else {
 		cdp_mpdu_info->nss = ppdu_info->rx_status.nss;
 		cdp_mpdu_info->mcs = ppdu_info->rx_status.mcs;
