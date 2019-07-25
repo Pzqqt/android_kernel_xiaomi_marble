@@ -832,6 +832,9 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 
 		chan_info->firstChanNum =
 			mac->scan.defaultPowerTable[idx].chan_num;
+		chan_info->first_freq =
+			wlan_reg_chan_to_freq(mac->pdev,
+					      chan_info->firstChanNum);
 		chan_info->numChannels = 1;
 		chan_info->maxTxPower =
 			QDF_MIN(mac->scan.defaultPowerTable[idx].tx_power,
@@ -1535,9 +1538,14 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 				ch_pwr_set->firstChanNum = (tSirMacChanNum)
 					(ch_set->firstChannel + (idx *
 						ch_set->interChannelOffset));
+				ch_pwr_set->first_freq =
+					wlan_reg_chan_to_freq(
+						mac->pdev,
+						ch_pwr_set->firstChanNum);
 				sme_debug(
-					"Setting Channel Number %d",
-					ch_pwr_set->firstChanNum);
+					"Setting Channel Num %d and freq %d",
+					ch_pwr_set->firstChanNum,
+					ch_pwr_set->first_freq);
 				ch_pwr_set->numChannels = 1;
 				ch_pwr_set->maxTxPower =
 					QDF_MIN(ch_set->txPower,
@@ -1560,8 +1568,13 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 				break;
 			}
 			ch_pwr_set->firstChanNum = ch_set->firstChannel;
-			sme_debug("Setting Channel Number %d",
-				ch_pwr_set->firstChanNum);
+			ch_pwr_set->first_freq =
+					wlan_reg_chan_to_freq(
+						mac->pdev,
+						ch_pwr_set->firstChanNum);
+			sme_debug("Setting Channel Num %d and Freq %d",
+				  ch_pwr_set->firstChanNum,
+				  ch_pwr_set->first_freq);
 			ch_pwr_set->numChannels = ch_set->numChannels;
 			ch_pwr_set->maxTxPower = QDF_MIN(ch_set->txPower,
 					mac->mlme_cfg->power.max_tx_power);
