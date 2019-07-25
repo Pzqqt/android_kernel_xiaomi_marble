@@ -831,13 +831,13 @@ QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hdd_debug("chan:%d width:%d sec_ch_offset:%d seg0:%d seg1:%d",
-		chan_change.chan, chan_change.chan_params.ch_width,
+	hdd_debug("chan_freq:%d width:%d sec_ch_offset:%d seg0:%d seg1:%d",
+		chan_change.chan_freq, chan_change.chan_params.ch_width,
 		chan_change.chan_params.sec_ch_offset,
 		chan_change.chan_params.center_freq_seg0,
 		chan_change.chan_params.center_freq_seg1);
 
-	freq = cds_chan_to_freq(chan_change.chan);
+	freq = chan_change.chan_freq;
 
 	chan = ieee80211_get_channel(adapter->wdev.wiphy, freq);
 
@@ -2557,8 +2557,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			break;
 		}
 
-		chan_change.chan =
-			sap_event->sapevt.sap_ch_selected.pri_ch;
+		chan_change.chan_freq =
+			wlan_reg_chan_to_freq(hdd_ctx->pdev,
+				sap_event->sapevt.sap_ch_selected.pri_ch);
 		chan_change.chan_params.ch_width =
 			sap_event->sapevt.sap_ch_selected.ch_width;
 		chan_change.chan_params.sec_ch_offset =

@@ -4682,7 +4682,9 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 		sme_start_roaming(mac_handle, adapter->vdev_id,
 				  REASON_DRIVER_ENABLED);
 
-	chan_change.chan = roam_info->chan_info.chan_id;
+	chan_change.chan_freq =
+		wlan_reg_chan_to_freq(hdd_ctx->pdev,
+				      roam_info->chan_info.chan_id);
 	chan_change.chan_params.ch_width =
 		roam_info->chan_info.ch_width;
 	chan_change.chan_params.sec_ch_offset =

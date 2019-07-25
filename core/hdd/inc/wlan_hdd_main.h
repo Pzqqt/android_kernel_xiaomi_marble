@@ -1093,11 +1093,11 @@ struct hdd_netif_queue_history {
 
 /**
  * struct hdd_chan_change_params - channel related information
- * @chan: operating channel
+ * @chan_freq: operating channel frequency
  * @chan_params: channel parameters
  */
 struct hdd_chan_change_params {
-	uint8_t chan;
+	uint32_t chan_freq;
 	struct ch_params chan_params;
 };
 
