@@ -1367,10 +1367,10 @@ struct hdd_adapter {
 	/* debugfs entry */
 	struct dentry *debugfs_phy;
 	/*
-	 * The pre cac channel is saved here and will be used when the SAP's
-	 * channel needs to be moved from the existing 2.4GHz channel.
+	 * The pre cac channel frequency is saved here and will be used when
+         * the SAP's channel needs to be moved from the existing 2.4GHz channel.
 	 */
-	uint8_t pre_cac_chan;
+	uint32_t pre_cac_freq;
 
 	/*
 	 * Indicate if HO fails during disconnect so that
@@ -1389,7 +1389,7 @@ struct hdd_adapter {
 	uint32_t track_src_port;
 	uint32_t track_dest_port;
 	uint32_t track_dest_ipv4;
-	uint32_t mon_chan;
+	uint32_t mon_chan_freq;
 	uint32_t mon_bandwidth;
 
 	/* rcpi information */

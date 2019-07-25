@@ -371,7 +371,8 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		goto stop_close_pre_cac_adapter;
 	}
 
-	ap_adapter->pre_cac_chan = pre_cac_chan;
+	ap_adapter->pre_cac_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+							 pre_cac_chan);
 
 	*out_adapter = pre_cac_adapter;
 

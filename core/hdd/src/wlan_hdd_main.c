@@ -6859,7 +6859,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 			status);
 	}
 
-	adapter->mon_chan = chan;
+	adapter->mon_chan_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, chan);
 	adapter->mon_bandwidth = bandwidth;
 	return qdf_status_to_os_return(status);
 }
@@ -6913,6 +6913,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 	struct hdd_adapter *adapter;
 	eConnectionState conn_state;
 	bool value;
+	uint8_t chan;
 
 	hdd_enter();
 
@@ -7000,9 +7001,11 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			hdd_delete_sta(adapter);
 			break;
 		case QDF_MONITOR_MODE:
+			chan = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+						     adapter->mon_chan_freq);
 			hdd_start_station_adapter(adapter);
 			hdd_set_mon_rx_cb(adapter->dev);
-			wlan_hdd_set_mon_chan(adapter, adapter->mon_chan,
+			wlan_hdd_set_mon_chan(adapter, chan,
 					      adapter->mon_bandwidth);
 			break;
 		default:

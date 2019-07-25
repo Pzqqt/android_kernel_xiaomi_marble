@@ -1144,7 +1144,8 @@ static void __wlan_hdd_sap_pre_cac_success(struct hdd_adapter *adapter)
 	wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, ap_adapter->vdev_id,
 				    CSA_REASON_PRE_CAC_SUCCESS);
 	i = hdd_softap_set_channel_change(ap_adapter->dev,
-			ap_adapter->pre_cac_chan,
+			wlan_reg_freq_to_chan(hdd_ctx->pdev,
+					      ap_adapter->pre_cac_freq),
 			CH_WIDTH_MAX, false);
 	if (0 != i) {
 		hdd_err("failed to change channel");
