@@ -187,7 +187,7 @@ typedef struct {
 	uint8_t uAPSD;
 	uint8_t maxSPLen;
 	uint8_t htCapable;
-	uint8_t ch_width;
+	enum phy_ch_width ch_width;
 	tSirMacHTMIMOPowerSaveState mimoPS;
 	uint8_t maxAmpduSize;
 	uint8_t maxAmpduDensity;
@@ -218,6 +218,9 @@ typedef struct {
 	uint8_t csaOffloadEnable;
 	uint8_t vhtCapable;
 	uint8_t vhtSupportedRxNss;
+	uint8_t vht_160mhz_nss;
+	uint8_t vht_80p80mhz_nss;
+	uint8_t vht_extended_nss_bw_cap;
 	uint8_t vhtTxBFCapable;
 	uint8_t enable_su_tx_bformer;
 	uint8_t vhtTxMUBformeeCapable;

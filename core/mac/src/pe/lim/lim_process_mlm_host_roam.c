@@ -485,7 +485,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	pAddStaParams->updateSta = false;
 
 	lim_populate_peer_rate_set(mac, &pAddStaParams->supportedRates, NULL,
-				   false, pe_session, NULL, NULL);
+				   false, pe_session, NULL, NULL, NULL);
 
 	if (pe_session->htCapability) {
 		pAddStaParams->htCapable = pe_session->htCapability;

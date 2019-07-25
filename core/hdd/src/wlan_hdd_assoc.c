@@ -855,15 +855,15 @@ static void hdd_copy_ht_operation(struct hdd_station_ctx *hdd_sta_ctx,
 static void hdd_copy_vht_center_freq(struct ieee80211_vht_operation *ieee_ops,
 				     tDot11fIEVHTOperation *roam_ops)
 {
-	ieee_ops->center_freq_seg0_idx = roam_ops->chanCenterFreqSeg1;
-	ieee_ops->center_freq_seg1_idx = roam_ops->chanCenterFreqSeg2;
+	ieee_ops->center_freq_seg0_idx = roam_ops->chan_center_freq_seg0;
+	ieee_ops->center_freq_seg1_idx = roam_ops->chan_center_freq_seg1;
 }
 #else
 static void hdd_copy_vht_center_freq(struct ieee80211_vht_operation *ieee_ops,
 				     tDot11fIEVHTOperation *roam_ops)
 {
-	ieee_ops->center_freq_seg1_idx = roam_ops->chanCenterFreqSeg1;
-	ieee_ops->center_freq_seg2_idx = roam_ops->chanCenterFreqSeg2;
+	ieee_ops->center_freq_seg1_idx = roam_ops->chan_center_freq_seg0;
+	ieee_ops->center_freq_seg2_idx = roam_ops->chan_center_freq_seg1;
 }
 #endif /* KERNEL_VERSION(4, 12, 0) */
 

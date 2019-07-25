@@ -5435,21 +5435,22 @@ void lim_set_vht_caps(struct mac_context *p_mac, struct pe_session *p_session_en
 		vht_cap->vhtLinkAdaptCap = dot11_vht_cap.vhtLinkAdaptCap;
 		vht_cap->rxAntPattern = dot11_vht_cap.rxAntPattern;
 		vht_cap->txAntPattern = dot11_vht_cap.txAntPattern;
-		vht_cap->reserved1 = dot11_vht_cap.reserved1;
+		vht_cap->extended_nss_bw_supp =
+			dot11_vht_cap.extended_nss_bw_supp;
 
 		/* Populate VHT MCS Information */
 		vht_mcs->rxMcsMap = dot11_vht_cap.rxMCSMap;
 		u_vht_data_rate_info.vht_rx_supp_rate.rxSupDataRate =
 					dot11_vht_cap.rxHighSupDataRate;
-		u_vht_data_rate_info.vht_rx_supp_rate.reserved =
-					dot11_vht_cap.reserved2;
+		u_vht_data_rate_info.vht_rx_supp_rate.max_nsts_total =
+					dot11_vht_cap.max_nsts_total;
 		vht_mcs->rxHighest = u_vht_data_rate_info.u_value;
 
 		vht_mcs->txMcsMap = dot11_vht_cap.txMCSMap;
 		u_vht_data_rate_info.vht_tx_supp_rate.txSupDataRate =
 					dot11_vht_cap.txSupDataRate;
-		u_vht_data_rate_info.vht_tx_supp_rate.reserved =
-					dot11_vht_cap.reserved3;
+		u_vht_data_rate_info.vht_tx_supp_rate.vht_extended_nss_bw_cap =
+					dot11_vht_cap.vht_extended_nss_bw_cap;
 		vht_mcs->txHighest = u_vht_data_rate_info.u_value;
 	}
 }

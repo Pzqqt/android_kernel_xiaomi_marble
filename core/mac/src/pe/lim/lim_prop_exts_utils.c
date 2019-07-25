@@ -214,10 +214,10 @@ static inline bool lim_extract_adaptive_11r_cap(uint8_t *ie, uint16_t ie_len)
 }
 #endif
 
-void
-lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
-			  uint16_t ie_len, uint8_t *qos_cap, uint8_t *uapsd,
-			  int8_t *local_constraint, struct pe_session *session)
+void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
+			       uint16_t ie_len, uint8_t *qos_cap,
+			       uint8_t *uapsd, int8_t *local_constraint,
+			       struct pe_session *session)
 {
 	tSirProbeRespBeacon *beacon_struct;
 	uint8_t ap_bcon_ch_width;
@@ -227,6 +227,8 @@ lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 	uint8_t vht_ch_wd;
 	uint8_t center_freq_diff;
 	struct s_ext_cap *ext_cap;
+	uint8_t chan_center_freq_seg1;
+	tDot11fIEVHTCaps *vht_caps;
 
 	beacon_struct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (!beacon_struct)
@@ -262,6 +264,7 @@ lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 		IS_BSS_VHT_CAPABLE(beacon_struct->VHTCaps));
 
 	vht_op = &beacon_struct->VHTOperation;
+	vht_caps = &beacon_struct->VHTCaps;
 	if (IS_BSS_VHT_CAPABLE(beacon_struct->VHTCaps) &&
 			vht_op->present &&
 			session->vhtCapability) {
@@ -286,16 +289,26 @@ lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 			vht_op->chanWidth) {
 		/* If VHT is supported min 80 MHz support is must */
 		ap_bcon_ch_width = vht_op->chanWidth;
-		if ((ap_bcon_ch_width == WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) &&
-		     vht_op->chanCenterFreqSeg2) {
-			new_ch_width_dfn = true;
-			if (vht_op->chanCenterFreqSeg2 >
-			    vht_op->chanCenterFreqSeg1)
-			    center_freq_diff = vht_op->chanCenterFreqSeg2 -
-				    vht_op->chanCenterFreqSeg1;
+		if (vht_caps->vht_extended_nss_bw_cap) {
+			if (!vht_caps->extended_nss_bw_supp)
+				chan_center_freq_seg1 =
+					vht_op->chan_center_freq_seg1;
 			else
-			    center_freq_diff = vht_op->chanCenterFreqSeg1 -
-				    vht_op->chanCenterFreqSeg2;
+				chan_center_freq_seg1 =
+				beacon_struct->HTInfo.chan_center_freq_seg2;
+		} else {
+			chan_center_freq_seg1 = vht_op->chan_center_freq_seg1;
+		}
+		if (chan_center_freq_seg1 &&
+		    (ap_bcon_ch_width == WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ)) {
+			new_ch_width_dfn = true;
+			if (chan_center_freq_seg1 >
+					vht_op->chan_center_freq_seg0)
+			    center_freq_diff = chan_center_freq_seg1 -
+						vht_op->chan_center_freq_seg0;
+			else
+			    center_freq_diff = vht_op->chan_center_freq_seg0 -
+						chan_center_freq_seg1;
 			if (center_freq_diff == 8)
 				ap_bcon_ch_width =
 					WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
@@ -320,22 +333,22 @@ lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 		}
 		/*
 		 * VHT OP IE old definition:
-		 * vht_op->chanCenterFreqSeg1: center freq of 80MHz/160MHz/
+		 * vht_op->chan_center_freq_seg0: center freq of 80MHz/160MHz/
 		 * primary 80 in 80+80MHz.
 		 *
-		 * vht_op->chanCenterFreqSeg2: center freq of secondary 80
+		 * vht_op->chan_center_freq_seg1: center freq of secondary 80
 		 * in 80+80MHz.
 		 *
 		 * VHT OP IE NEW definition:
-		 * vht_op->chanCenterFreqSeg1: center freq of 80MHz/primary
+		 * vht_op->chan_center_freq_seg0: center freq of 80MHz/primary
 		 * 80 in 80+80MHz/center freq of the 80 MHz channel segment
 		 * that contains the primary channel in 160MHz mode.
 		 *
-		 * vht_op->chanCenterFreqSeg2: center freq of secondary 80
+		 * vht_op->chan_center_freq_seg1: center freq of secondary 80
 		 * in 80+80MHz/center freq of 160MHz.
 		 */
-		session->ch_center_freq_seg0 = vht_op->chanCenterFreqSeg1;
-		session->ch_center_freq_seg1 = vht_op->chanCenterFreqSeg2;
+		session->ch_center_freq_seg0 = vht_op->chan_center_freq_seg0;
+		session->ch_center_freq_seg1 = chan_center_freq_seg1;
 		if (vht_ch_wd == WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ) {
 			/* DUT or AP supports only 160MHz */
 			if (ap_bcon_ch_width ==
@@ -343,7 +356,7 @@ lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 				/* AP is in 160MHz mode */
 				if (!new_ch_width_dfn) {
 					session->ch_center_freq_seg1 =
-						vht_op->chanCenterFreqSeg1;
+						vht_op->chan_center_freq_seg0;
 					session->ch_center_freq_seg0 =
 						lim_get_80Mhz_center_channel(
 						beacon_struct->channelNumber);
@@ -372,10 +385,6 @@ lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 				session->ch_center_freq_seg0,
 				session->ch_center_freq_seg1,
 				session->ch_width);
-		if (CH_WIDTH_80MHZ < session->ch_width) {
-			session->vht_config.su_beam_former = 0;
-			session->nss = 1;
-		}
 	}
 
 	if (session->vhtCapability &&

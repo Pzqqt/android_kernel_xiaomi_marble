@@ -1780,9 +1780,8 @@ static void hdd_update_tgt_vht_cap(struct hdd_context *hdd_ctx,
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	struct ieee80211_supported_band *band_5g =
 		wiphy->bands[HDD_NL80211_BAND_5GHZ];
-	uint32_t ch_width = eHT_CHANNEL_WIDTH_80MHZ;
+	uint32_t ch_width;
 	struct wma_caps_per_phy caps_per_phy;
-	uint8_t val = 0;
 
 	if (!band_5g) {
 		hdd_debug("5GHz band disabled, skipping capability population");
@@ -1802,32 +1801,22 @@ static void hdd_update_tgt_vht_cap(struct hdd_context *hdd_ctx,
 
 
 	if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_80P80MHZ)) {
-		status = ucfg_mlme_set_vht_ch_width(hdd_ctx->psoc,
-						    VHT_CAP_160_AND_80P80_SUPP);
-		if (QDF_IS_STATUS_ERROR(status))
-			hdd_err("could not set the VHT CAP 160");
 		band_5g->vht_cap.cap |=
 			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ;
-		ch_width = eHT_CHANNEL_WIDTH_80P80MHZ;
+		ch_width = VHT_CAP_160_AND_80P80_SUPP;
 	} else if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_160MHZ)) {
-		status = ucfg_mlme_set_vht_ch_width(hdd_ctx->psoc,
-						    VHT_CAP_160_SUPP);
-		if (QDF_IS_STATUS_ERROR(status))
-			hdd_err("could not set the VHT CAP 160");
 		band_5g->vht_cap.cap |=
 			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ;
-		ch_width = eHT_CHANNEL_WIDTH_160MHZ;
+		ch_width = VHT_CAP_160_SUPP;
+	} else {
+		ch_width = VHT_CAP_NO_160M_SUPP;
 	}
 
-	status =
-		ucfg_mlme_cfg_get_vht_chan_width(hdd_ctx->psoc, &val);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("could not get channel_width");
-
-	val = QDF_MIN(val, ch_width);
-	status = ucfg_mlme_set_vht_ch_width(hdd_ctx->psoc, val);
+	status = ucfg_mlme_set_vht_ch_width(hdd_ctx->psoc, ch_width);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not set the channel width");
+	else
+		hdd_debug("supported channel width %d", ch_width);
 
 	if (cfg->vht_rx_ldpc & WMI_VHT_CAP_RX_LDPC) {
 		band_5g->vht_cap.cap |= IEEE80211_VHT_CAP_RXLDPC;

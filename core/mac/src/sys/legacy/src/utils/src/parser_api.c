@@ -875,10 +875,10 @@ static void lim_log_vht_operation(struct mac_context *mac,
 {
 #ifdef DUMP_MGMT_CNTNTS
 	pe_debug("chanWidth: %d", pDot11f->chanWidth);
-	pe_debug("chanCenterFreqSeg1: %d",
-		pDot11f->chanCenterFreqSeg1);
-	pe_debug("chanCenterFreqSeg2: %d",
-		pDot11f->chanCenterFreqSeg2);
+	pe_debug("chan_center_freq_seg0: %d",
+		 pDot11f->chan_center_freq_seg0);
+	pe_debug("chan_center_freq_seg1: %d",
+		 pDot11f->chan_center_freq_seg1);
 	pe_debug("basicMCSSet: %d", pDot11f->basicMCSSet);
 #endif /* DUMP_MGMT_CNTNTS */
 }
@@ -994,6 +994,8 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 		pDot11f->rxAntPattern = pe_session->vht_config.rx_antpattern;
 
 		pDot11f->txAntPattern = pe_session->vht_config.tx_antpattern;
+		pDot11f->extended_nss_bw_supp =
+			pe_session->vht_config.extended_nss_bw_supp;
 
 		pDot11f->maxAMPDULenExp =
 				pe_session->vht_config.max_ampdu_lenexp;
@@ -1047,12 +1049,17 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 		nCfgValue = vht_cap_info->link_adap_cap;
 		pDot11f->vhtLinkAdaptCap = (nCfgValue & 0x0003);
 
+		pDot11f->extended_nss_bw_supp =
+			vht_cap_info->extended_nss_bw_supp;
 	}
+
+	pDot11f->max_nsts_total = vht_cap_info->max_nsts_total;
+	pDot11f->vht_extended_nss_bw_cap =
+		vht_cap_info->vht_extended_nss_bw_cap;
 
 	nCfgValue = vht_cap_info->mu_bformer;
 	pDot11f->muBeamformerCap = (nCfgValue & 0x0001);
 
-	pDot11f->reserved1 = 0;
 
 	nCfgValue = vht_cap_info->rx_mcs_map;
 	pDot11f->rxMCSMap = (nCfgValue & 0x0000FFFF);
@@ -1060,15 +1067,12 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 	nCfgValue = vht_cap_info->rx_supp_data_rate;
 	pDot11f->rxHighSupDataRate = (nCfgValue & 0x00001FFF);
 
-	pDot11f->reserved2 = 0;
-
 	nCfgValue = vht_cap_info->tx_mcs_map;
 	pDot11f->txMCSMap = (nCfgValue & 0x0000FFFF);
 
 	nCfgValue = vht_cap_info->tx_supp_data_rate;
 	pDot11f->txSupDataRate = (nCfgValue & 0x00001FFF);
 
-	pDot11f->reserved3 = 0;
 	if (pe_session) {
 		if (pe_session->nss == NSS_1x1_MODE) {
 			pDot11f->txMCSMap |= DISABLE_NSS2_MCS;
@@ -1114,18 +1118,18 @@ populate_dot11f_vht_operation(struct mac_context *mac,
 
 	if (pe_session->ch_width > CH_WIDTH_40MHZ) {
 		pDot11f->chanWidth = 1;
-		pDot11f->chanCenterFreqSeg1 =
+		pDot11f->chan_center_freq_seg0 =
 			pe_session->ch_center_freq_seg0;
 		if (pe_session->ch_width == CH_WIDTH_80P80MHZ ||
 				pe_session->ch_width == CH_WIDTH_160MHZ)
-			pDot11f->chanCenterFreqSeg2 =
+			pDot11f->chan_center_freq_seg1 =
 				pe_session->ch_center_freq_seg1;
 		else
-			pDot11f->chanCenterFreqSeg2 = 0;
+			pDot11f->chan_center_freq_seg1 = 0;
 	} else {
 		pDot11f->chanWidth = 0;
-		pDot11f->chanCenterFreqSeg1 = 0;
-		pDot11f->chanCenterFreqSeg2 = 0;
+		pDot11f->chan_center_freq_seg0 = 0;
+		pDot11f->chan_center_freq_seg1 = 0;
 	}
 
 	pDot11f->basicMCSSet =

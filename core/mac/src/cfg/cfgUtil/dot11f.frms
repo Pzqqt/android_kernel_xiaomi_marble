@@ -2398,26 +2398,27 @@ IE VHTCaps (EID_VHT_CAPABILITIES)
         vhtLinkAdaptCap:          2;
         rxAntPattern:             1;
         txAntPattern:             1;
-        reserved1:                2;
+        extended_nss_bw_supp:     2;
     }
     rxMCSMap,                     2;
     {
          rxHighSupDataRate:       13;
-         reserved2:               3;
+         max_nsts_total:          3;
     }
     txMCSMap,                     2;
     {
         txSupDataRate:            13;
-        reserved3:                3;
+        vht_extended_nss_bw_cap:  1;
+        reserved:                 2;
     }
 }
 
 IE VHTOperation (EID_VHT_OPERATION_ELEMENT)
 {
-    chanWidth,           1;
-    chanCenterFreqSeg1,  1;
-    chanCenterFreqSeg2,  1;
-    basicMCSSet,         2;
+    chanWidth,             1;
+    chan_center_freq_seg0, 1;
+    chan_center_freq_seg1, 1;
+    basicMCSSet,           2;
 }
 
 IE VHTExtBssLoad (EID_VHT_EXT_BSS_LOAD)
@@ -2550,7 +2551,8 @@ IE HTInfo (EID_HT_INFO)
         nonGFDevicesPresent: 1;
         transmitBurstLimit: 1;
         obssNonHTStaPresent:1;
-        reserved:           11;
+        chan_center_freq_seg2:8;
+        reserved:           3;
     }
 
 
@@ -2577,10 +2579,11 @@ IE HTInfo (EID_HT_INFO)
 IE OperatingMode (EID_OPERATING_MODE)
 {
     { //Operating Mode field
-        chanWidth:    2;
-        reserved:     2;
-        rxNSS:        3;
-        rxNSSType:    1;
+        chanWidth:          2;
+        vht_160_80p80_supp: 1;
+        no_ldpc:            1;
+        rxNSS:              3;
+        rxNSSType:          1;
     }
 }
 

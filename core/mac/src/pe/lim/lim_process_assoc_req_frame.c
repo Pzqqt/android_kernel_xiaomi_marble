@@ -1488,11 +1488,17 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		*assoc_req_copied = true;
 	}
 
-	sta_ds->mlmStaContext.htCapability = assoc_req->HTCaps.present;
-	if ((vht_caps) && vht_caps->present)
-		sta_ds->mlmStaContext.vhtCapability = vht_caps->present;
-	else
-		sta_ds->mlmStaContext.vhtCapability = false;
+	if (!assoc_req->wmeInfoPresent) {
+		sta_ds->mlmStaContext.htCapability = 0;
+		sta_ds->mlmStaContext.vhtCapability = 0;
+	} else {
+		sta_ds->mlmStaContext.htCapability = assoc_req->HTCaps.present;
+		if ((vht_caps) && vht_caps->present)
+			sta_ds->mlmStaContext.vhtCapability = vht_caps->present;
+		else
+			sta_ds->mlmStaContext.vhtCapability = false;
+	}
+
 	lim_update_stads_he_capable(sta_ds, assoc_req);
 	sta_ds->qos.addtsPresent =
 		(assoc_req->addtsPresent == 0) ? false : true;
@@ -1523,7 +1529,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	sta_ds->mlmStaContext.capabilityInfo = assoc_req->capabilityInfo;
 
 	if (IS_DOT11_MODE_HT(session->dot11mode) &&
-	    assoc_req->HTCaps.present && assoc_req->wmeInfoPresent) {
+	    sta_ds->mlmStaContext.htCapability) {
 		sta_ds->htGreenfield = (uint8_t) assoc_req->HTCaps.greenField;
 		sta_ds->htAMpduDensity = assoc_req->HTCaps.mpduDensity;
 		sta_ds->htDsssCckRate40MHzSupport =
@@ -1558,64 +1564,61 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 
 		sta_ds->htSupportedChannelWidthSet =
 			(uint8_t) assoc_req->HTCaps.supportedChannelWidthSet;
-		/*
-		 * peer just follows AP; so when we are softAP/GO,
-		 * we just store our session entry's secondary channel offset
-		 * here in peer INFRA STA. However, if peer's 40MHz channel
-		 * width support is disabled then secondary channel will be zero
-		 */
-		sta_ds->htSecondaryChannelOffset =
-			(sta_ds->htSupportedChannelWidthSet) ?
-				session->htSecondaryChannelOffset : 0;
-		if (assoc_req->operMode.present) {
-			enum phy_ch_width ch_width;
-
-			ch_width = assoc_req->operMode.chanWidth;
-			if (session->ch_width < ch_width)
-				ch_width = session->ch_width;
-
-			sta_ds->vhtSupportedChannelWidthSet =
-				(uint8_t) ((ch_width == CH_WIDTH_80MHZ) ?
-				WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ :
-				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ);
-			sta_ds->htSupportedChannelWidthSet =
-				(uint8_t) (ch_width ?
-				eHT_CHANNEL_WIDTH_40MHZ :
-				eHT_CHANNEL_WIDTH_20MHZ);
-		} else if ((vht_caps) && vht_caps->present) {
+		if (session->ch_width > CH_WIDTH_20MHZ &&
+		    session->ch_width <= CH_WIDTH_80P80MHZ &&
+		    sta_ds->htSupportedChannelWidthSet) {
 			/*
-			 * Check if STA has enabled it's channel bonding mode.
-			 * If channel bonding mode is enabled, we decide based
-			 * on SAP's current configuration. else, we set it to
-			 * VHT20.
+			 * peer just follows AP; so when we are softAP/GO,
+			 * we just store our session entry's secondary channel
+			 * offset here in peer INFRA STA. However, if peer's
+			 * 40MHz channel width support is disabled then
+			 * secondary channel will be zero
 			 */
-			sta_ds->vhtSupportedChannelWidthSet =
-				(uint8_t) ((sta_ds->htSupportedChannelWidthSet
-					== eHT_CHANNEL_WIDTH_20MHZ) ?
-					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ :
-					session->ch_width - 1);
-			sta_ds->htMaxRxAMpduFactor =
-				vht_caps->maxAMPDULenExp;
+			sta_ds->htSecondaryChannelOffset =
+				session->htSecondaryChannelOffset;
+			sta_ds->ch_width = CH_WIDTH_40MHZ;
+			if (sta_ds->mlmStaContext.vhtCapability) {
+				if (assoc_req->operMode.present) {
+					sta_ds->ch_width =
+						assoc_req->operMode.chanWidth;
+				} else if (vht_caps->supportedChannelWidthSet ==
+					   VHT_CAP_160_AND_80P80_SUPP) {
+					sta_ds->ch_width = CH_WIDTH_80P80MHZ;
+				} else if (vht_caps->supportedChannelWidthSet ==
+					   VHT_CAP_160_SUPP) {
+					if (vht_caps->vht_extended_nss_bw_cap &&
+					    vht_caps->extended_nss_bw_supp)
+						sta_ds->ch_width =
+							CH_WIDTH_80P80MHZ;
+					else
+						sta_ds->ch_width =
+							CH_WIDTH_160MHZ;
+				} else if (vht_caps->vht_extended_nss_bw_cap) {
+					if (vht_caps->extended_nss_bw_supp ==
+					    VHT_EXTD_NSS_80_HALF_NSS_160)
+						sta_ds->ch_width =
+								CH_WIDTH_160MHZ;
+					else if (vht_caps->extended_nss_bw_supp >
+						 VHT_EXTD_NSS_80_HALF_NSS_160)
+						sta_ds->ch_width =
+							CH_WIDTH_80P80MHZ;
+					else
+						sta_ds->ch_width =
+							CH_WIDTH_80MHZ;
+				} else {
+					sta_ds->ch_width = CH_WIDTH_80MHZ;
+				}
+
+				sta_ds->ch_width = QDF_MIN(sta_ds->ch_width,
+							   session->ch_width);
+			}
+		} else {
+			sta_ds->htSupportedChannelWidthSet = 0;
+			sta_ds->htSecondaryChannelOffset = 0;
+			sta_ds->ch_width = CH_WIDTH_20MHZ;
 		}
-		/* Lesser among the AP and STA bandwidth of operation. */
-		sta_ds->htSupportedChannelWidthSet =
-			(sta_ds->htSupportedChannelWidthSet <
-			session->htSupportedChannelWidthSet) ?
-			sta_ds->htSupportedChannelWidthSet :
-			session->htSupportedChannelWidthSet;
-
-		if (!sta_ds->htSupportedChannelWidthSet)
-			sta_ds->vhtSupportedChannelWidthSet =
-					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-
 		sta_ds->htLdpcCapable =
 			(uint8_t) assoc_req->HTCaps.advCodingCap;
-	}
-
-	if ((vht_caps) && vht_caps->present &&
-	    assoc_req->wmeInfoPresent) {
-		sta_ds->vhtLdpcCapable =
-			(uint8_t) vht_caps->ldpcCodingCap;
 	}
 
 	if (assoc_req->ExtCap.present)
@@ -1625,12 +1628,10 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	else
 		sta_ds->non_ecsa_capable = 1;
 
-	if (!assoc_req->wmeInfoPresent) {
-		sta_ds->mlmStaContext.htCapability = 0;
-		sta_ds->mlmStaContext.vhtCapability = 0;
-	}
-
-	if (sta_ds->mlmStaContext.vhtCapability && vht_caps) {
+	if (sta_ds->mlmStaContext.vhtCapability &&
+	    IS_DOT11_MODE_VHT(session->dot11mode)) {
+		sta_ds->vhtLdpcCapable =
+			(uint8_t)vht_caps->ldpcCodingCap;
 		if (session->vht_config.su_beam_formee &&
 				vht_caps->suBeamFormerCap)
 			sta_ds->vhtBeamFormerCapable = 1;

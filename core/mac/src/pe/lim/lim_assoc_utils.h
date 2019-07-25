@@ -62,7 +62,8 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 				      uint8_t basicOnly,
 				      struct pe_session *pe_session,
 				      tDot11fIEVHTCaps *pVHTCaps,
-				      tDot11fIEhe_cap *he_caps);
+				      tDot11fIEhe_cap *he_caps,
+				      struct sDphHashNode *sta_ds);
 
 /**
  * lim_populate_own_rate_set() - comprises the basic and extended rates read
@@ -311,6 +312,7 @@ void lim_send_sme_tsm_ie_ind(struct mac_context *mac,
  * @peer_vht_caps: pointer to peer vht capabilities
  * @session_entry: pe session entry
  * @nss: number of spatial streams
+ * @sta_ds: pointer to peer sta data structure
  *
  * Populates vht mcs rate set based on peer and self capabilities
  *
@@ -320,7 +322,8 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 				    struct supported_rates *rates,
 				    tDot11fIEVHTCaps *peer_vht_caps,
 				    struct pe_session *session_entry,
-				    uint8_t nss);
+				    uint8_t nss,
+				    struct sDphHashNode *sta_ds);
 
 /**
  * lim_extract_ies_from_deauth_disassoc() - Extract IEs from deauth/disassoc

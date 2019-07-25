@@ -2185,7 +2185,8 @@ lim_tdls_populate_dot11f_vht_caps(struct mac_context *mac,
 		uVHTCapabilityInfo.vhtCapInfo.vhtLinkAdaptCap;
 	pDot11f->rxAntPattern = uVHTCapabilityInfo.vhtCapInfo.rxAntPattern;
 	pDot11f->txAntPattern = uVHTCapabilityInfo.vhtCapInfo.txAntPattern;
-	pDot11f->reserved1 = uVHTCapabilityInfo.vhtCapInfo.reserved1;
+	pDot11f->extended_nss_bw_supp =
+		uVHTCapabilityInfo.vhtCapInfo.extended_nss_bw_supp;
 
 	pDot11f->rxMCSMap = add_sta_req->vht_cap.supp_mcs.rx_mcs_map;
 
@@ -2193,6 +2194,8 @@ lim_tdls_populate_dot11f_vht_caps(struct mac_context *mac,
 	uVHTSupDataRateInfo.nCfgValue16 = nCfgValue & 0xffff;
 	pDot11f->rxHighSupDataRate =
 		uVHTSupDataRateInfo.vhtRxsupDataRateInfo.rxSupDataRate;
+	pDot11f->max_nsts_total =
+		uVHTSupDataRateInfo.vhtRxsupDataRateInfo.max_nsts_total;
 
 	pDot11f->txMCSMap = add_sta_req->vht_cap.supp_mcs.tx_mcs_map;
 
@@ -2201,7 +2204,8 @@ lim_tdls_populate_dot11f_vht_caps(struct mac_context *mac,
 	pDot11f->txSupDataRate =
 		uVHTSupDataRateInfo.vhtTxSupDataRateInfo.txSupDataRate;
 
-	pDot11f->reserved3 = uVHTSupDataRateInfo.vhtTxSupDataRateInfo.reserved;
+	pDot11f->vht_extended_nss_bw_cap =
+	uVHTSupDataRateInfo.vhtTxSupDataRateInfo.vht_extended_nss_bw_cap;
 
 	lim_log_vht_cap(mac, pDot11f);
 
@@ -2396,7 +2400,7 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx,
 		}
 	}
 	lim_populate_vht_mcs_set(mac_ctx, &stads->supportedRates, vht_caps,
-				 session_entry, nss);
+				 session_entry, nss, NULL);
 	/**
 	 * Set the erpEnabled bit if the phy is in G mode and at least
 	 * one A rate is supported

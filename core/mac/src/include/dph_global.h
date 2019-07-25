@@ -148,10 +148,14 @@ typedef struct sDphHashNode {
 	uint8_t staType;
 
 	uint8_t vhtSupportedChannelWidthSet;
+	enum phy_ch_width ch_width;
 	uint8_t vhtSupportedRxNss;
 	uint8_t vhtBeamFormerCapable;
 	uint8_t vht_su_bfee_capable;
 	uint8_t vht_mcs_10_11_supp;
+	uint8_t vht_160mhz_nss;
+	uint8_t vht_80p80mhz_nss;
+	uint8_t vht_extended_nss_bw_cap;
 #ifdef WLAN_FEATURE_11W
 	TX_TIMER pmfSaQueryTimer;
 	uint16_t pmfSaQueryCurrentTransId;

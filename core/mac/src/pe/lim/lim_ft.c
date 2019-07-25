@@ -233,8 +233,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 			  SIR_MAC_VHT_CAP_RX_ANTENNA_PATTERN) |
 			 (pBeaconStruct->VHTCaps.txAntPattern <<
 			  SIR_MAC_VHT_CAP_TX_ANTENNA_PATTERN) |
-			 (pBeaconStruct->VHTCaps.reserved1 <<
-			  SIR_MAC_VHT_CAP_RESERVED2));
+			 (pBeaconStruct->VHTCaps.extended_nss_bw_supp <<
+			  SIR_MAC_VHT_CAP_EXTD_NSS_BW));
 	} else {
 		pAddBssParams->vhtCapable = 0;
 	}
@@ -343,7 +343,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 					   pBeaconStruct->HTCaps.supportedMCSSet,
 					   false, ft_session,
 					   &pBeaconStruct->VHTCaps,
-					   &pBeaconStruct->he_cap);
+					   &pBeaconStruct->he_cap, NULL);
 	}
 
 	pAddBssParams->maxTxPower = ft_session->maxTxPower;
@@ -561,9 +561,9 @@ void lim_fill_ft_session(struct mac_context *mac,
 			ft_session->ch_width =
 				pBeaconStruct->VHTOperation.chanWidth + 1;
 			ft_session->ch_center_freq_seg0 =
-				pBeaconStruct->VHTOperation.chanCenterFreqSeg1;
+			pBeaconStruct->VHTOperation.chan_center_freq_seg0;
 			ft_session->ch_center_freq_seg1 =
-				pBeaconStruct->VHTOperation.chanCenterFreqSeg2;
+			pBeaconStruct->VHTOperation.chan_center_freq_seg1;
 		} else {
 			if (pBeaconStruct->HTInfo.secondaryChannelOffset ==
 					PHY_DOUBLE_CHANNEL_LOW_PRIMARY)

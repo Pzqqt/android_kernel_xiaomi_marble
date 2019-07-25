@@ -539,7 +539,9 @@ struct sir_vht_config {
 	uint32_t        vht_link_adapt:2;
 	uint32_t         rx_antpattern:1;
 	uint32_t         tx_antpattern:1;
-	uint32_t            unused:2;
+	uint32_t  extended_nss_bw_supp:2;
+	uint8_t  max_nsts_total:2;
+	uint8_t  vht_extended_nss_bw_cap:1;
 };
 
 

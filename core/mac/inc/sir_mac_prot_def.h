@@ -168,8 +168,20 @@
 #define VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_2_2       780
 #define VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_2_2       780
 
+#define VHT_CAP_NO_160M_SUPP 0
 #define VHT_CAP_160_SUPP 1
 #define VHT_CAP_160_AND_80P80_SUPP 2
+
+#define VHT_NO_EXTD_NSS_BW_SUPP			0
+#define VHT_EXTD_NSS_80_HALF_NSS_160		1
+#define VHT_EXTD_NSS_80_HALF_NSS_80P80		2
+#define VHT_EXTD_NSS_80_3QUART_NSS_80P80	3
+#define VHT_EXTD_NSS_160_HALF_NSS_80P80		1
+#define VHT_EXTD_NSS_160_3QUART_NSS_80P80	2
+#define VHT_EXTD_NSS_2X_NSS_160_1X_NSS_80P80	3
+#define VHT_EXTD_NSS_2X_NSS_80_1X_NSS_80P80	3
+
+#define VHT_MAX_NSS 8
 
 #define VHT_MCS_1x1 0xFFFC
 #define VHT_MCS_2x2 0xFFF3
@@ -1022,7 +1034,7 @@ typedef struct sSirMacMeasReqIE {
 /* VHT Capabilities Info */
 typedef struct sSirMacVHTCapabilityInfo {
 #ifndef ANI_LITTLE_BIT_ENDIAN
-	uint32_t reserved1:2;
+	uint32_t extended_nss_bw_supp:2;
 	uint32_t txAntPattern:1;
 	uint32_t rxAntPattern:1;
 	uint32_t vhtLinkAdaptCap:2;
@@ -1062,27 +1074,29 @@ typedef struct sSirMacVHTCapabilityInfo {
 	uint32_t vhtLinkAdaptCap:2;
 	uint32_t rxAntPattern:1;
 	uint32_t txAntPattern:1;
-	uint32_t reserved1:2;
+	uint32_t extended_nss_bw_supp:2;
 #endif
 } qdf_packed tSirMacVHTCapabilityInfo;
 
 typedef struct sSirMacVHTTxSupDataRateInfo {
 #ifndef ANI_LITTLE_BIT_ENDIAN
-	uint16_t reserved:3;
+	uint16_t reserved:2;
+	uint16_t vht_extended_nss_bw_cap:1;
 	uint16_t txSupDataRate:13;
 #else
 	uint16_t txSupDataRate:13;
-	uint16_t reserved:3;
+	uint16_t vht_extended_nss_bw_cap:1;
+	uint16_t reserved:2;
 #endif
 } qdf_packed tSirMacVHTTxSupDataRateInfo;
 
 typedef struct sSirMacVHTRxSupDataRateInfo {
 #ifndef ANI_LITTLE_BIT_ENDIAN
-	uint16_t reserved:3;
+	uint16_t max_nsts_total:3;
 	uint16_t rxSupDataRate:13;
 #else
 	uint16_t rxSupDataRate:13;
-	uint16_t reserved:3;
+	uint16_t max_nsts_total:3;
 #endif
 } qdf_packed tSirMacVHTRxSupDataRateInfo;
 
@@ -1947,7 +1961,7 @@ struct he_capability_info {
 #define SIR_MAC_VHT_CAP_LINK_ADAPT_CAP            26
 #define SIR_MAC_VHT_CAP_RX_ANTENNA_PATTERN        28
 #define SIR_MAC_VHT_CAP_TX_ANTENNA_PATTERN        29
-#define SIR_MAC_VHT_CAP_RESERVED2                 30
+#define SIR_MAC_VHT_CAP_EXTD_NSS_BW               30
 
 #define SIR_MAC_HT_CAP_ADVCODING_S                 0
 #define SIR_MAC_HT_CAP_CHWIDTH40_S                 1

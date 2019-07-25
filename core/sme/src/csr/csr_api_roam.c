@@ -3477,8 +3477,8 @@ static void csr_roam_populate_channels(tDot11fBeaconIEs *beacon_ies,
 	ePhyChanBondState phy_state;
 
 	if (beacon_ies->VHTOperation.present) {
-		*chan1 = beacon_ies->VHTOperation.chanCenterFreqSeg1;
-		*chan2 = beacon_ies->VHTOperation.chanCenterFreqSeg2;
+		*chan1 = beacon_ies->VHTOperation.chan_center_freq_seg0;
+		*chan2 = beacon_ies->VHTOperation.chan_center_freq_seg1;
 		roam_info->chan_info.info = MODE_11AC_VHT80;
 	} else if (beacon_ies->HTInfo.present) {
 		if (beacon_ies->HTInfo.recommendedTxWidthSet ==

@@ -1170,9 +1170,9 @@ static void sap_upd_chan_spec_params(tSirProbeRespBeacon *pBeaconStruct,
 		*vhtSupport = pBeaconStruct->VHTOperation.present;
 		if (pBeaconStruct->VHTOperation.chanWidth) {
 			*centerFreq =
-				pBeaconStruct->VHTOperation.chanCenterFreqSeg1;
+			pBeaconStruct->VHTOperation.chan_center_freq_seg0;
 			*centerFreq_2 =
-				pBeaconStruct->VHTOperation.chanCenterFreqSeg2;
+			pBeaconStruct->VHTOperation.chan_center_freq_seg1;
 			 /*
 			  * LHS follows tSirMacHTChannelWidth, while RHS follows
 			  * WNI_CFG_VHT_CHANNEL_WIDTH_X format hence following
