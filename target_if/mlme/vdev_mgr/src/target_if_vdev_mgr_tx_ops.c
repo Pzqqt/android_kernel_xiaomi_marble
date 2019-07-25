@@ -306,6 +306,12 @@ target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 	case WLAN_MLME_CFG_LISTEN_INTERVAL:
 		wmi_id = wmi_vdev_param_listen_interval;
 		break;
+	case WLAN_MLME_CFG_ENABLE_MULTI_GROUP_KEY:
+		wmi_id = wmi_vdev_param_enable_multi_group_key;
+		break;
+	case WLAN_MLME_CFG_MAX_GROUP_KEYS:
+		wmi_id = wmi_vdev_param_max_group_keys;
+		break;
 	default:
 		wmi_id = cfg_id;
 		break;

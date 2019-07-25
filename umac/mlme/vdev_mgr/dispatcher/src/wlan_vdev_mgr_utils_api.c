@@ -112,7 +112,7 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	struct vdev_mlme_proto *mlme_proto;
 	struct vdev_mlme_mgmt *mlme_mgmt;
 	struct vdev_mlme_inactivity_params *inactivity_params;
-	int is_wmi_cmd = 0;
+	bool is_wmi_cmd = false;
 	int ret = QDF_STATUS_SUCCESS;
 	struct vdev_set_params param = {0};
 
@@ -128,27 +128,27 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	switch (param_id) {
 	case WLAN_MLME_CFG_DTIM_PERIOD:
 		mlme_proto->generic.dtim_period = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_SLOT_TIME:
 		mlme_proto->generic.slot_time = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_PROTECTION_MODE:
 		mlme_proto->generic.protection_mode = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_BEACON_INTERVAL:
 		mlme_proto->generic.beacon_interval = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_LDPC:
 		mlme_proto->generic.ldpc = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_NSS:
 		mlme_proto->generic.nss = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_TSF_ADJUST:
 		mlme_proto->generic.tsfadjust = mlme_cfg.tsf;
@@ -181,22 +181,22 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		mlme_proto->vht_info.bfee_sts_cap = mlme_cfg.value;
 		break;
 	case WLAN_MLME_CFG_TXBF_CAPS:
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_HT_CAPS:
 		mlme_proto->ht_info.ht_caps = mlme_cfg.value;
 		break;
 	case WLAN_MLME_CFG_HE_OPS:
 		mlme_proto->he_ops_info.he_ops = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_RTS_THRESHOLD:
 		mlme_mgmt->generic.rts_threshold = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_FRAG_THRESHOLD:
 		mlme_mgmt->generic.frag_threshold = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_PROBE_DELAY:
 		mlme_mgmt->generic.probe_delay = mlme_cfg.value;
@@ -206,19 +206,19 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		break;
 	case WLAN_MLME_CFG_DROP_UNENCRY:
 		mlme_mgmt->generic.drop_unencry = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_TX_PWR_LIMIT:
 		mlme_mgmt->generic.tx_pwrlimit = mlme_cfg.value;
 		break;
 	case WLAN_MLME_CFG_TX_POWER:
 		mlme_mgmt->generic.tx_power = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_AMPDU:
 		mlme_mgmt->generic.ampdu = mlme_cfg.value;
 		mlme_cfg.value = (mlme_cfg.value << 8) + 0xFF;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_AMPDU_SIZE:
 		mlme_mgmt->generic.ampdu = mlme_cfg.value;
@@ -226,7 +226,7 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_AMSDU:
 		mlme_mgmt->generic.amsdu = mlme_cfg.value;
 		mlme_cfg.value = (mlme_cfg.value << 8) + 0xFF;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_AMSDU_SIZE:
 		mlme_mgmt->generic.amsdu = mlme_cfg.value;
@@ -240,17 +240,17 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_MIN_IDLE_INACTIVE_TIME:
 		inactivity_params->keepalive_min_idle_inactive_time_secs =
 							mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_MAX_IDLE_INACTIVE_TIME:
 		inactivity_params->keepalive_max_idle_inactive_time_secs =
 							mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_MAX_UNRESPONSIVE_INACTIVE_TIME:
 		inactivity_params->keepalive_max_unresponsive_time_secs =
 							mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_RATE_FLAGS:
 		mlme_mgmt->rate_info.rate_flags = mlme_cfg.value;
@@ -281,7 +281,7 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		break;
 	case WLAN_MLME_CFG_LISTEN_INTERVAL:
 		mlme_mgmt->powersave_info.listen_interval = mlme_cfg.value;
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_MODDTIM_CNT:
 		mlme_mgmt->powersave_info.moddtim_cnt = mlme_cfg.value;
@@ -345,10 +345,16 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		mlme_mgmt->rate_info.bcn_tx_rate = mlme_cfg.value;
 		break;
 	case WLAN_MLME_CFG_BCN_TX_RATE_CODE:
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
 		break;
 	case WLAN_MLME_CFG_TX_MGMT_RATE_CODE:
-		is_wmi_cmd = 1;
+		is_wmi_cmd = true;
+		break;
+	case WLAN_MLME_CFG_ENABLE_MULTI_GROUP_KEY:
+		is_wmi_cmd = true;
+		break;
+	case WLAN_MLME_CFG_MAX_GROUP_KEYS:
+		is_wmi_cmd = true;
 		break;
 	default:
 		break;

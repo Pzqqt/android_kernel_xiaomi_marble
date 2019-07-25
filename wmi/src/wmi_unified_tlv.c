@@ -472,6 +472,9 @@ static const uint32_t vdev_param_tlv[] = {
 	[wmi_vdev_param_max_mtu_size] = WMI_VDEV_PARAM_MAX_MTU_SIZE,
 	[wmi_vdev_param_mcast_rc_stale_period] =
 					WMI_VDEV_PARAM_MCAST_RC_STALE_PERIOD,
+	[wmi_vdev_param_enable_multi_group_key] =
+				WMI_VDEV_PARAM_ENABLE_MULTI_GROUP_KEY,
+	[wmi_vdev_param_max_group_keys] = WMI_VDEV_PARAM_NUM_GROUP_KEYS,
 };
 #endif
 
@@ -6474,6 +6477,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	resource_cfg->num_packet_filters = tgt_res_cfg->num_packet_filters;
 	resource_cfg->num_max_sta_vdevs = tgt_res_cfg->num_max_sta_vdevs;
 	resource_cfg->max_bssid_indicator = tgt_res_cfg->max_bssid_indicator;
+	resource_cfg->max_num_group_keys = tgt_res_cfg->max_num_group_keys;
 	if (tgt_res_cfg->atf_config)
 		WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1, 1);
 	if (tgt_res_cfg->mgmt_comp_evt_bundle_support)

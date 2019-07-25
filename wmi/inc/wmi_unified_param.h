@@ -5157,6 +5157,8 @@ typedef enum {
 	wmi_vdev_param_rawmode_open_war,
 	wmi_vdev_param_max_mtu_size,
 	wmi_vdev_param_mcast_rc_stale_period,
+	wmi_vdev_param_enable_multi_group_key,
+	wmi_vdev_param_max_group_keys,
 } wmi_conv_vdev_param_id;
 
 /**
@@ -5474,6 +5476,7 @@ struct wmi_host_fw_abi_ver {
  *                    by the AP
  * @max_bssid_indicator: max number of MBSS VAPs
  * @three_way_coex_config_legacy_en: enable three way coex legacy feature
+ * @max_num_group_keys: max number of group keys supported for VLAN
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5557,6 +5560,7 @@ typedef struct {
 		 eapol_minrate_ac_set:2;
 	bool tstamp64_en;
 	bool three_way_coex_config_legacy_en;
+	uint32_t max_num_group_keys;
 } target_resource_config;
 
 /**
