@@ -2294,7 +2294,7 @@ pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 
 	lim_extract_ies_from_deauth_disassoc(session, deauth_disassoc_frame,
 					     deauth_disassoc_frame_len);
-	lim_tear_down_link_with_ap(mac, vdev_id,
+	lim_tear_down_link_with_ap(mac, session->peSessionId,
 				   eSIR_MAC_UNSPEC_FAILURE_REASON);
 
 	return QDF_STATUS_SUCCESS;

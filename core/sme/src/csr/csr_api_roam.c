@@ -11495,8 +11495,10 @@ csr_roam_chk_lnk_deauth_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	QDF_STATUS status;
 	struct deauth_ind *pDeauthInd;
 
-	sme_debug("DEAUTHENTICATION Indication from MAC");
 	pDeauthInd = (struct deauth_ind *)msg_ptr;
+	sme_debug("DEAUTH Indication from MAC for session %d bssid %pM",
+		  pDeauthInd->sessionId, pDeauthInd->bssid.bytes);
+
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 						   &pDeauthInd->bssid,
 						   &sessionId);

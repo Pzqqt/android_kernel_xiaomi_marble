@@ -373,7 +373,8 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 	 */
 	pe_session->pmmOffloadInfo.bcnmiss = false;
 
-	pe_info("No ProbeRsp from AP after HB failure. Tearing down link");
+	pe_info("No ProbeRsp from AP after HB failure for pe/sme id %d/%d",
+		pe_session->peSessionId, pe_session->smeSessionId);
 
 	/* Announce loss of link to Roaming algorithm */
 	/* and cleanup by sending SME_DISASSOC_REQ to SME */
@@ -405,28 +406,28 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 		qdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,
 			     sta->staAddr, sizeof(tSirMacAddr));
 
-	/*
-	* if deauth_before_connection is enabled and reasoncode is
-	* Beacon Missed Store the MAC of AP in the flip flop
-	* buffer. This MAC will be used to send Deauth before
-	* connection, if we connect to same AP after HB failure.
-	*/
-	if (mac->mlme_cfg->sta.deauth_before_connection &&
-	    eSIR_BEACON_MISSED == reasonCode) {
-		int apCount = mac->lim.gLimHeartBeatApMacIndex;
+		/*
+		 * if deauth_before_connection is enabled and reasoncode is
+		 * Beacon Missed Store the MAC of AP in the flip flop
+		 * buffer. This MAC will be used to send Deauth before
+		 * connection, if we connect to same AP after HB failure.
+		 */
+		if (mac->mlme_cfg->sta.deauth_before_connection &&
+		    eSIR_BEACON_MISSED == reasonCode) {
+			int apCount = mac->lim.gLimHeartBeatApMacIndex;
 
-		if (mac->lim.gLimHeartBeatApMacIndex)
-			mac->lim.gLimHeartBeatApMacIndex = 0;
-		else
-			mac->lim.gLimHeartBeatApMacIndex = 1;
+			if (mac->lim.gLimHeartBeatApMacIndex)
+				mac->lim.gLimHeartBeatApMacIndex = 0;
+			else
+				mac->lim.gLimHeartBeatApMacIndex = 1;
 
-		pe_debug("HB Failure on MAC "
-			QDF_MAC_ADDR_STR" Store it on Index %d",
-			QDF_MAC_ADDR_ARRAY(sta->staAddr), apCount);
+			pe_debug("HB Failure on MAC "
+				 QDF_MAC_ADDR_STR" Store it on Index %d",
+				 QDF_MAC_ADDR_ARRAY(sta->staAddr), apCount);
 
-		sir_copy_mac_addr(mac->lim.gLimHeartBeatApMac[apCount],
-							sta->staAddr);
-	}
+			sir_copy_mac_addr(mac->lim.gLimHeartBeatApMac[apCount],
+					  sta->staAddr);
+		}
 
 		mlmDeauthInd.reasonCode =
 			(uint8_t) sta->mlmStaContext.disassocReason;
