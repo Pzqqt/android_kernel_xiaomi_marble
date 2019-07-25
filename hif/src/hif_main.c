@@ -1256,8 +1256,7 @@ irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 
 	HIF_INFO("wake interrupt received on irq %d", irq);
 
-	if (hif_pm_runtime_get_monitor_wake_intr(hif_ctx) &&
-	    hif_pm_runtime_is_suspended(hif_ctx)) {
+	if (hif_pm_runtime_get_monitor_wake_intr(hif_ctx)) {
 		hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
 		hif_pm_runtime_request_resume(hif_ctx);
 	}

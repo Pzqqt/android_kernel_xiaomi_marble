@@ -2807,7 +2807,6 @@ void hif_process_runtime_suspend_success(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	hif_runtime_pm_set_state_suspended(scn);
-	hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 1);
 	hif_log_runtime_suspend_success(scn);
 }
 
@@ -2854,9 +2853,12 @@ int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 		return errno;
 	}
 
+	hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 1);
+
 	errno = hif_bus_suspend_noirq(hif_ctx);
 	if (errno) {
 		HIF_ERROR("%s: failed bus suspend noirq: %d", __func__, errno);
+		hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
 		goto bus_resume;
 	}
 
