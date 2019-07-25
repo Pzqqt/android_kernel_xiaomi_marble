@@ -63,7 +63,9 @@
 
 #ifdef CONFIG_ARM_SMMU
 #include <pld_common.h>
+#ifdef ENABLE_SMMU_S1_TRANSLATION
 #include <asm/dma-iommu.h>
+#endif
 #include <linux/iommu.h>
 #endif
 
@@ -210,7 +212,7 @@ static inline bool __qdf_mem_smmu_s1_enabled(qdf_device_t osdev)
 	return osdev->smmu_s1_enabled;
 }
 
-#ifdef CONFIG_ARM_SMMU
+#if defined(CONFIG_ARM_SMMU) && defined(ENABLE_SMMU_S1_TRANSLATION)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 /**
  * __qdf_dev_get_domain() - get iommu domain from osdev

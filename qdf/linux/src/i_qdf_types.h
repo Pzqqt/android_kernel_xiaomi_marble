@@ -265,7 +265,9 @@ struct __qdf_device {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 	struct iommu_domain *domain;
 #else
+#ifdef ENABLE_SMMU_S1_TRANSLATION
 	struct dma_iommu_mapping *iommu_mapping;
+#endif
 #endif
 };
 typedef struct __qdf_device *__qdf_device_t;
