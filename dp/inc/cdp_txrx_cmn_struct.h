@@ -1198,6 +1198,11 @@ struct cdp_tx_sojourn_stats {
  * @cookie: cookie to used by upper layer
  * @is_ppdu_cookie_valid : Indicates that ppdu_cookie is valid
  * @ppdu_cookie: 16-bit ppdu_cookie
+ * @sa_is_training: smart antenna training packets indication
+ * @rssi_chain: rssi chain per bandwidth
+ * @sa_tx_antenna: antenna in which packet is transmitted
+ * @sa_max_rates: smart antenna tx feedback info max rates
+ * @sa_goodput: smart antenna tx feedback info goodput
  */
 struct cdp_tx_completion_ppdu_user {
 	uint32_t completion_status:8,
@@ -1256,6 +1261,11 @@ struct cdp_tx_completion_ppdu_user {
 	struct cdp_stats_cookie *cookie;
 	uint8_t is_ppdu_cookie_valid;
 	uint16_t ppdu_cookie;
+	uint8_t sa_is_training;
+	uint32_t rssi_chain[CDP_RSSI_CHAIN_LEN];
+	uint32_t sa_tx_antenna;
+	uint32_t sa_max_rates;
+	uint32_t sa_goodput;
 };
 
 /**
