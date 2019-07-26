@@ -144,6 +144,35 @@ uint8_t tdls_find_opclass(struct wlan_objmgr_psoc *psoc, uint8_t channel,
 						     bw_offset);
 }
 
+static uint8_t
+tdls_get_opclass_from_bandwidth(struct tdls_soc_priv_obj *soc_obj,
+				struct tdls_peer *peer)
+{
+	uint8_t opclass;
+	uint8_t bw_offset = soc_obj->tdls_configs.tdls_pre_off_chan_bw;
+	uint8_t channel = peer->pref_off_chan_num;
+
+	if (bw_offset & (1 << BW_80_OFFSET_BIT)) {
+		opclass = tdls_find_opclass(soc_obj->soc,
+					    channel, BW80);
+	} else if (bw_offset & (1 << BW_40_OFFSET_BIT)) {
+		opclass = tdls_find_opclass(soc_obj->soc,
+					    channel, BW40_LOW_PRIMARY);
+		if (!opclass) {
+			opclass = tdls_find_opclass(soc_obj->soc,
+						    channel, BW40_HIGH_PRIMARY);
+		}
+	} else if (bw_offset & (1 << BW_20_OFFSET_BIT)) {
+		opclass = tdls_find_opclass(soc_obj->soc,
+					    channel, BW20);
+	} else {
+		opclass = tdls_find_opclass(soc_obj->soc,
+					    channel, BWALL);
+	}
+
+	return opclass;
+}
+
 /**
  * tdls_add_peer() - add TDLS peer in TDLS vdev object
  * @vdev_obj: TDLS vdev object
@@ -182,9 +211,8 @@ static struct tdls_peer *tdls_add_peer(struct tdls_vdev_priv_obj *vdev_obj,
 	peer->pref_off_chan_num =
 		soc_obj->tdls_configs.tdls_pre_off_chan_num;
 	peer->op_class_for_pref_off_chan =
-		tdls_find_opclass(soc_obj->soc,
-				  peer->pref_off_chan_num,
-				  soc_obj->tdls_configs.tdls_pre_off_chan_bw);
+		tdls_get_opclass_from_bandwidth(soc_obj, peer);
+
 	peer->sta_id = INVALID_TDLS_PEER_ID;
 
 	qdf_list_insert_back(head, &peer->node);
@@ -750,9 +778,7 @@ QDF_STATUS tdls_reset_peer(struct tdls_vdev_priv_obj *vdev_obj,
 		config = &soc_obj->tdls_configs;
 		curr_peer->pref_off_chan_num = config->tdls_pre_off_chan_num;
 		curr_peer->op_class_for_pref_off_chan =
-			tdls_find_opclass(soc_obj->soc,
-					  curr_peer->pref_off_chan_num,
-					  config->tdls_pre_off_chan_bw);
+			tdls_get_opclass_from_bandwidth(soc_obj, curr_peer);
 	}
 
 	tdls_set_peer_link_status(curr_peer, TDLS_LINK_IDLE,
