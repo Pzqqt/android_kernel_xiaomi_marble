@@ -12,6 +12,15 @@ ifeq ($(CONFIG_CNSS_QCA6390), y)
 	CONFIG_SCALE_INCLUDES := y
 endif
 
+ifeq ($(CONFIG_ENABLE_IPA), y)
+	CONFIG_IPA3 := y
+	CONFIG_WDI3_IPA_OVER_GSI := y
+else
+	ifeq ($(CONFIG_ENABLE_IPA), n)
+		CONFIG_IPA3 := n
+	endif
+endif
+
 ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
 	CONFIG_QCA_WIFI_SDIO := y
 ifndef CONFIG_SDIO_TRANSFER
@@ -502,6 +511,13 @@ endif
 endif
 
 ifeq ($(CONFIG_ARCH_SM8150), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
+endif
+endif
+
+#Flag to enable SMMU S1 support
+ifeq ($(CONFIG_ARCH_SDXPRAIRIE), y)
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
 CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
 endif
