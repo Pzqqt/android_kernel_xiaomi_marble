@@ -762,11 +762,6 @@ ifeq ($(CONFIG_UNIT_TEST), y)
 	CONFIG_FEATURE_WLM_STATS := y
 endif
 
-# enable unit-test suspend for napier builds
-ifeq ($(CONFIG_LITHIUM), y)
-	CONFIG_FEATURE_UNIT_TEST_SUSPEND := y
-endif
-
 ifeq ($(CONFIG_LITHIUM), y)
 	ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 		CONFIG_WLAN_FEATURE_DP_EVENT_HISTORY := y
