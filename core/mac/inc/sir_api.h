@@ -661,10 +661,6 @@ struct bss_description {
 	/* channelId what peer sent in beacon/probersp. */
 	uint8_t channelId;
 	uint32_t chan_freq;
-	/* channelId on which we are parked at. */
-	/* used only in scan case. */
-	uint32_t freq_self;
-	uint8_t sSirBssDescriptionRsvd[3];
 	/* Based on system time, not a relative time. */
 	uint64_t received_time;
 	uint32_t parentTSF;
@@ -675,17 +671,10 @@ struct bss_description {
 #ifdef FEATURE_WLAN_ESE
 	uint16_t QBSSLoad_present;
 	uint16_t QBSSLoad_avail;
-	/* To achieve 8-byte alignment with ESE enabled */
-	uint32_t reservedPadding5;
 #endif
 	/* whether it is from a probe rsp */
 	uint8_t fProbeRsp;
-	/* Actual channel the beacon/probe response was received on */
-	uint32_t rx_freq;
 	tSirMacSeqCtl seq_ctrl;
-	uint32_t WscIeLen;
-	uint8_t WscIeProbeRsp[WSCIE_PROBE_RSP_LEN];
-	uint8_t reservedPadding4;
 	uint32_t tsf_delta;
 	struct scan_mbssid_info mbssid_info;
 #ifdef WLAN_FEATURE_FILS_SK

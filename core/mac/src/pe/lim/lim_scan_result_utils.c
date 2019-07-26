@@ -136,9 +136,6 @@ lim_collect_bss_description(struct mac_context *mac,
 	pBssDescr->channelId = channel_num;
 	pBssDescr->chan_freq = wlan_reg_chan_to_freq(mac->pdev, channel_num);
 
-	pBssDescr->freq_self = pBssDescr->chan_freq;
-	pBssDescr->rx_freq = wlan_reg_chan_to_freq(mac->pdev, rx_channel);
-
 	/* set the network type in bss description */
 	pBssDescr->nwType =
 		lim_get_nw_type(mac, channel_num, SIR_MAC_MGMT_FRAME, pBPR);

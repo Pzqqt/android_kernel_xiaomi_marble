@@ -2197,7 +2197,6 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 			cds_freq_to_chan(roam_synch_ind_ptr->chan_freq);
 		bss_desc_ptr->chan_freq = roam_synch_ind_ptr->chan_freq;
 	}
-	bss_desc_ptr->freq_self = bss_desc_ptr->chan_freq;
 
 	bss_desc_ptr->nwType = lim_get_nw_type(
 			mac,

@@ -2634,12 +2634,6 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	bss_desc->chan_freq =
 		wlan_reg_chan_to_freq(mac_ctx->pdev,
 				      scan_entry->channel.chan_idx);
-	/* channelId on which we are parked at. */
-	/* used only in scan case. */
-	bss_desc->freq_self =
-		wlan_reg_chan_to_freq(mac_ctx->pdev,
-				      scan_entry->channel.chan_idx);
-	bss_desc->rx_freq = bss_desc->freq_self;
 	bss_desc->received_time =
 		scan_entry->scan_entry_time;
 	bss_desc->startTSF[0] =
@@ -2686,12 +2680,6 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	}
 #endif
 	csr_update_bss_with_fils_data(mac_ctx, scan_entry, bss_desc);
-	if (scan_entry->alt_wcn_ie.ptr) {
-		bss_desc->WscIeLen = scan_entry->alt_wcn_ie.len;
-		qdf_mem_copy(bss_desc->WscIeProbeRsp,
-			scan_entry->alt_wcn_ie.ptr,
-			scan_entry->alt_wcn_ie.len);
-	}
 
 	*p_result = bss;
 	return QDF_STATUS_SUCCESS;
