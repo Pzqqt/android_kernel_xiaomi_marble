@@ -2404,6 +2404,8 @@ int dsi_pll_clock_register_7nm(struct platform_device *pdev,
 		if (dsi_pll_7nm_is_hw_revision_v4_1(pll_res)) {
 			dsi0pll_vco_clk.min_rate = 600000000;
 			dsi0pll_vco_clk.max_rate = 5000000000;
+			dsi0pll_shadow_vco_clk.min_rate = 600000000;
+			dsi0pll_shadow_vco_clk.max_rate = 5000000000;
 		}
 
 		for (i = VCO_CLK_0; i <= SHADOW_PCLK_SRC_0_CLK; i++) {
@@ -2456,6 +2458,8 @@ int dsi_pll_clock_register_7nm(struct platform_device *pdev,
 		if (dsi_pll_7nm_is_hw_revision_v4_1(pll_res)) {
 			dsi1pll_vco_clk.min_rate = 600000000;
 			dsi1pll_vco_clk.max_rate = 5000000000;
+			dsi1pll_shadow_vco_clk.min_rate = 600000000;
+			dsi1pll_shadow_vco_clk.max_rate = 5000000000;
 		}
 
 		for (i = VCO_CLK_1; i <= SHADOW_PCLK_SRC_1_CLK; i++) {
