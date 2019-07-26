@@ -1505,6 +1505,9 @@ struct adm_cmd_connect_afe_port_v5 {
 /* ID of the senary auxiliary PCM Tx port. */
 #define AFE_PORT_ID_SENARY_PCM_TX                0x103F
 
+#define AFE_PORT_ID_PRIMARY_META_MI2S_RX         0x1300
+#define AFE_PORT_ID_SECONDARY_META_MI2S_RX       0x1302
+
 #define AFE_PORT_ID_PRIMARY_SPDIF_RX             0x5000
 #define AFE_PORT_ID_PRIMARY_SPDIF_TX             0x5001
 #define AFE_PORT_ID_SECONDARY_SPDIF_RX           0x5002
@@ -2647,6 +2650,98 @@ struct afe_param_id_i2s_cfg {
  * - #AFE_DSD_DOP_W_MARKER_DATA
  */
 		u16                  reserved;
+	/* This field must be set to zero. */
+} __packed;
+
+/* This param id is used to configure META I2S interface */
+#define AFE_PARAM_ID_META_I2S_CONFIG 0x000102C5
+#define AFE_API_VERSION_META_I2S_CONFIG 0x1
+#define MAX_NUM_I2S_META_PORT_MEMBER_PORTS 4
+
+/*  Payload of the #AFE_PARAM_ID_META_I2S_CONFIG
+ * command's (I2S configuration
+ * parameter).
+ */
+struct afe_param_id_meta_i2s_cfg {
+	u32     minor_version;
+/* Minor version used for tracking the version of the I2S
+ * configuration interface.
+ * Supported values: #AFE_API_VERSION_META_I2S_CONFIG
+ */
+
+	u16     bit_width;
+/* Bit width of the sample.
+ * Supported values: 16, 24
+ */
+
+	u16     ws_src;
+/* Word select source: internal or external.
+ * Supported values:
+ * - #AFE_PORT_CONFIG_I2S_WS_SRC_EXTERNAL
+ * - #AFE_PORT_CONFIG_I2S_WS_SRC_INTERNAL
+ */
+
+	u32     sample_rate;
+/* Sampling rate of the port.
+ * Supported values:
+ * - #AFE_PORT_SAMPLE_RATE_8K
+ * - #AFE_PORT_SAMPLE_RATE_16K
+ * - #AFE_PORT_SAMPLE_RATE_48K
+ * - #AFE_PORT_SAMPLE_RATE_96K
+ * - #AFE_PORT_SAMPLE_RATE_192K
+ */
+
+	u16     member_port_id[MAX_NUM_I2S_META_PORT_MEMBER_PORTS];
+/* Array of member port IDs in this meta device.
+ * Supported values:
+ * - #AFE_PORT_ID_PRIMARY_MI2S_RX
+ * - #AFE_PORT_ID_SECONDARY_MI2S_RX
+ * - #AFE_PORT_ID_TERTIARY_MI2S_RX
+ * - #AFE_PORT_ID_QUATERNY_MI2S_RX
+ * - #AFE_PORT_ID_INVALID
+ *
+ * Fill these values from index 0. Set unused index to AFE_PORT_ID_INVALID.
+ *
+ * Note:
+ * the first member port will act as WS master in case
+ * meta port ws_src is configured as AFE_PORT_CONFIG_I2S_WS_SRC_INTERNAL.
+ * In all other cases member ports will act as slave.
+ * This must be considered when HLOS enables the interface clocks
+ */
+
+	u16     member_port_channel_mode[MAX_NUM_I2S_META_PORT_MEMBER_PORTS];
+/* I2S lines and multichannel operation per member port.
+ * The sequence matches the sequence in member_port_id,
+ * value will be ignored if member port is set to AFE_PORT_ID_INVALID
+ *
+ * Supported values:
+ * - #AFE_PORT_I2S_SD0
+ * - #AFE_PORT_I2S_SD1
+ * - #AFE_PORT_I2S_SD2
+ * - #AFE_PORT_I2S_SD3
+ * - #AFE_PORT_I2S_QUAD01
+ * - #AFE_PORT_I2S_QUAD23
+ * - #AFE_PORT_I2S_6CHS
+ * - #AFE_PORT_I2S_8CHS
+ * - #AFE_PORT_I2S_10CHS
+ * - #AFE_PORT_I2S_12CHS
+ * - #AFE_PORT_I2S_14CHS
+ * - #AFE_PORT_I2S_16CHS
+ * - #AFE_PORT_I2S_SD4
+ * - #AFE_PORT_I2S_SD5
+ * - #AFE_PORT_I2S_SD6
+ * - #AFE_PORT_I2S_SD7
+ * - #AFE_PORT_I2S_QUAD45
+ * - #AFE_PORT_I2S_QUAD67
+ * - #AFE_PORT_I2S_8CHS_2
+ */
+
+	u16     data_format;
+/* data format
+ * Supported values:
+ * - #LINEAR_PCM_DATA
+ */
+	u16     reserved;
 	/* This field must be set to zero. */
 } __packed;
 
@@ -4846,6 +4941,7 @@ struct afe_param_id_cdc_dma_cfg_t {
 union afe_port_config {
 	struct afe_param_id_pcm_cfg               pcm;
 	struct afe_param_id_i2s_cfg               i2s;
+	struct afe_param_id_meta_i2s_cfg          meta_i2s;
 	struct afe_param_id_hdmi_multi_chan_audio_cfg hdmi_multi_ch;
 	struct afe_param_id_slimbus_cfg           slim_sch;
 	struct afe_param_id_rt_proxy_port_cfg     rtproxy;
@@ -5663,9 +5759,7 @@ struct asm_softvolume_params {
 /* Left side direct channel. */
 #define PCM_CHANNEL_LSD  33
 
-/* Right side direct channel. Update PCM_MAX_CHMAP_ID when
- * this list is extended.
- */
+/* Right side direct channel. */
 #define PCM_CHANNEL_RSD  34
 
 /* Mark unused channel. */
@@ -5690,7 +5784,7 @@ struct asm_softvolume_params {
 #define PCM_MAX_CHANNEL_MAP   63
 
 /* Max valid channel map index */
-#define PCM_MAX_CHMAP_ID PCM_CHANNEL_RSD
+#define PCM_MAX_CHMAP_ID PCM_MAX_CHANNEL_MAP
 
 #define PCM_FORMAT_MAX_NUM_CHANNEL  8
 #define PCM_FORMAT_MAX_CHANNELS_9   9
