@@ -166,7 +166,7 @@ struct sap_context {
 	uint32_t nStaWPARSnReqIeLength;
 	uint8_t pStaWpaRsnReqIE[MAX_ASSOC_IND_IE_LEN];
 
-	uint8_t *channelList;
+	uint32_t *freq_list;
 	uint8_t num_of_channel;
 	uint16_t ch_width_orig;
 	struct ch_params ch_params;

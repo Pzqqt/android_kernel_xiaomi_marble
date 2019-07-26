@@ -200,9 +200,9 @@ void wlansap_context_put(struct sap_context *ctx)
 	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
 		if (gp_sap_ctx[i] == ctx) {
 			if (qdf_atomic_dec_and_test(&sap_ctx_ref_count[i])) {
-				if (ctx->channelList) {
-					qdf_mem_free(ctx->channelList);
-					ctx->channelList = NULL;
+				if (ctx->freq_list) {
+					qdf_mem_free(ctx->freq_list);
+					ctx->freq_list = NULL;
 					ctx->num_of_channel = 0;
 				}
 				qdf_mem_free(ctx);
@@ -398,9 +398,9 @@ QDF_STATUS sap_deinit_ctx(struct sap_context *sap_ctx)
 	}
 	ucfg_scan_unregister_requester(mac->psoc, sap_ctx->req_id);
 
-	if (sap_ctx->channelList) {
-		qdf_mem_free(sap_ctx->channelList);
-		sap_ctx->channelList = NULL;
+	if (sap_ctx->freq_list) {
+		qdf_mem_free(sap_ctx->freq_list);
+		sap_ctx->freq_list = NULL;
 		sap_ctx->num_of_channel = 0;
 	}
 	sap_free_roam_profile(&sap_ctx->csr_roamProfile);

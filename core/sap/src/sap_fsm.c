@@ -85,9 +85,9 @@ extern sapSafeChannelType safe_channels[];
  * Static Function Declarations and Definitions
  * -------------------------------------------------------------------------*/
 #ifdef SOFTAP_CHANNEL_RANGE
-static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
-				       uint8_t **ch_list,
-				       uint8_t *num_ch);
+static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
+				    uint32_t **freq_list,
+				    uint8_t *num_ch);
 #endif
 
 /*==========================================================================
@@ -935,7 +935,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	uint8_t pdev_id;
 
 #ifdef SOFTAP_CHANNEL_RANGE
-	uint8_t *channel_list = NULL;
+	uint32_t *freq_list = NULL;
 	uint8_t num_of_channels = 0;
 #endif
 	mac_handle_t mac_handle;
@@ -1022,7 +1022,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	req->scan_req.scan_req_id = sap_context->req_id;
 	req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
 	req->scan_req.scan_f_bcast_probe = true;
-	sap_get_channel_list(sap_context, &channel_list, &num_of_channels);
+	sap_get_freq_list(sap_context, &freq_list, &num_of_channels);
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	if (num_of_channels != 0) {
@@ -1030,14 +1030,13 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 
 		req->scan_req.chan_list.num_chan = num_of_channels;
 		for (i = 0; i < num_of_channels; i++)
-			req->scan_req.chan_list.chan[i].freq =
-				wlan_chan_to_freq(channel_list[i]);
-		if (sap_context->channelList) {
-			qdf_mem_free(sap_context->channelList);
-			sap_context->channelList = NULL;
+			req->scan_req.chan_list.chan[i].freq = freq_list[i];
+		if (sap_context->freq_list) {
+			qdf_mem_free(sap_context->freq_list);
+			sap_context->freq_list = NULL;
 			sap_context->num_of_channel = 0;
 		}
-		sap_context->channelList = channel_list;
+		sap_context->freq_list = freq_list;
 		sap_context->num_of_channel = num_of_channels;
 		/* Set requestType to Full scan */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1056,12 +1055,12 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 					sap_context->acs_cfg);
 
 #ifdef SOFTAP_CHANNEL_RANGE
-			if (sap_context->channelList) {
+			if (sap_context->freq_list) {
 				sap_context->channel =
-					sap_context->channelList[0];
-				qdf_mem_free(sap_context->
-					channelList);
-				sap_context->channelList = NULL;
+					wlan_reg_freq_to_chan(mac_ctx->pdev,
+						     sap_context->freq_list[0]);
+				qdf_mem_free(sap_context->freq_list);
+				sap_context->freq_list = NULL;
 				sap_context->num_of_channel = 0;
 			}
 #endif
@@ -1344,8 +1343,8 @@ static void sap_handle_acs_scan_event(struct sap_context *sap_context,
 	sap_event->sapevt.sap_acs_scan_comp.status = status;
 	sap_event->sapevt.sap_acs_scan_comp.num_of_channels =
 			sap_context->num_of_channel;
-	sap_event->sapevt.sap_acs_scan_comp.channellist =
-			sap_context->channelList;
+	sap_event->sapevt.sap_acs_scan_comp.freq_list =
+			sap_context->freq_list;
 }
 #else
 static void sap_handle_acs_scan_event(struct sap_context *sap_context,
@@ -3311,21 +3310,21 @@ QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sap_ctx,
 
 #ifdef SOFTAP_CHANNEL_RANGE
 /**
- * sap_get_channel_list() - get the list of channels
+ * sap_get_freq_list() - get the list of channel frequency
  * @sap_ctx: sap context
- * @ch_list: pointer to channel list array
+ * @freq_list: pointer to channel list array
  * @num_ch: pointer to number of channels.
  *
- * This function populates the list of channels for scanning.
+ * This function populates the list of channel frequency for scanning.
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
-				       uint8_t **ch_list,
-				       uint8_t *num_ch)
+static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
+				    uint32_t **freq_list,
+				    uint8_t *num_ch)
 {
 	uint8_t loop_count;
-	uint8_t *list;
+	uint32_t *list;
 	uint8_t ch_count;
 	uint8_t dfs_master_enable;
 	uint8_t start_ch_num, band_start_ch;
@@ -3342,7 +3341,7 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 	if (!mac_ctx) {
 		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
 		*num_ch = 0;
-		*ch_list = NULL;
+		*freq_list = NULL;
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -3377,10 +3376,11 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 	}
 
 	/* Allocate the max number of channel supported */
-	list = qdf_mem_malloc(NUM_5GHZ_CHANNELS + NUM_24GHZ_CHANNELS);
+	list = qdf_mem_malloc((NUM_5GHZ_CHANNELS + NUM_24GHZ_CHANNELS) *
+			      sizeof(uint32_t));
 	if (!list) {
 		*num_ch = 0;
-		*ch_list = NULL;
+		*freq_list = NULL;
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -3473,8 +3473,8 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 			 ch <= sap_ctx->acs_cfg->skip_scan_range1_endch) ||
 			(ch >= sap_ctx->acs_cfg->skip_scan_range2_stch &&
 			 ch <= sap_ctx->acs_cfg->skip_scan_range2_endch)) {
-			list[ch_count] =
-				WLAN_REG_CH_NUM(loop_count);
+			list[ch_count] = wlan_reg_chan_to_freq(mac_ctx->pdev,
+				WLAN_REG_CH_NUM(loop_count));
 			ch_count++;
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_INFO,
@@ -3487,8 +3487,8 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 				ch_count, ch);
 		    }
 		} else {
-			list[ch_count] =
-				WLAN_REG_CH_NUM(loop_count);
+			list[ch_count] = wlan_reg_chan_to_freq(mac_ctx->pdev,
+				WLAN_REG_CH_NUM(loop_count));
 			ch_count++;
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_INFO,
@@ -3496,7 +3496,8 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 				ch_count, ch);
 		}
 #else
-		list[ch_count] = WLAN_REG_CH_NUM(loop_count);
+		list[ch_count] = wlan_reg_chan_to_freq(mac_ctx->pdev,
+						   WLAN_REG_CH_NUM(loop_count));
 		ch_count++;
 #endif
 #ifdef FEATURE_WLAN_CH_AVOID
@@ -3521,15 +3522,15 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 	/* return the channel list and number of channels to scan */
 	*num_ch = ch_count;
 	if (ch_count != 0) {
-		*ch_list = list;
+		*freq_list = list;
 	} else {
-		*ch_list = NULL;
+		*freq_list = NULL;
 		qdf_mem_free(list);
 	}
 
 	for (loop_count = 0; loop_count < ch_count; loop_count++) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-			FL("channel number: %d"), list[loop_count]);
+			FL("channel frequency: %d"), list[loop_count]);
 	}
 	return QDF_STATUS_SUCCESS;
 }

@@ -1192,7 +1192,7 @@ static QDF_STATUS hdd_handle_acs_scan_event(struct sap_event *sap_event,
 	struct hdd_context *hdd_ctx;
 	struct sap_acs_scan_complete_event *comp_evt;
 	QDF_STATUS qdf_status;
-	int chan_list_size;
+	int freq_list_size;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (!hdd_ctx) {
@@ -1202,22 +1202,22 @@ static QDF_STATUS hdd_handle_acs_scan_event(struct sap_event *sap_event,
 	comp_evt = &sap_event->sapevt.sap_acs_scan_comp;
 	hdd_ctx->skip_acs_scan_status = eSAP_SKIP_ACS_SCAN;
 	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
-	qdf_mem_free(hdd_ctx->last_acs_channel_list);
-	hdd_ctx->last_acs_channel_list = NULL;
+	qdf_mem_free(hdd_ctx->last_acs_freq_list);
+	hdd_ctx->last_acs_freq_list = NULL;
 	hdd_ctx->num_of_channels = 0;
 	/* cache the previous ACS scan channel list .
 	 * If the following OBSS scan chan list is covered by ACS chan list,
 	 * we can skip OBSS Scan to save SAP starting total time.
 	 */
-	if (comp_evt->num_of_channels && comp_evt->channellist) {
-		chan_list_size = comp_evt->num_of_channels *
-			sizeof(comp_evt->channellist[0]);
-		hdd_ctx->last_acs_channel_list = qdf_mem_malloc(
-			chan_list_size);
-		if (hdd_ctx->last_acs_channel_list) {
-			qdf_mem_copy(hdd_ctx->last_acs_channel_list,
-				comp_evt->channellist,
-				chan_list_size);
+	if (comp_evt->num_of_channels && comp_evt->freq_list) {
+		freq_list_size = comp_evt->num_of_channels *
+			sizeof(comp_evt->freq_list[0]);
+		hdd_ctx->last_acs_freq_list = qdf_mem_malloc(
+			freq_list_size);
+		if (hdd_ctx->last_acs_freq_list) {
+			qdf_mem_copy(hdd_ctx->last_acs_freq_list,
+				     comp_evt->freq_list,
+				     freq_list_size);
 			hdd_ctx->num_of_channels = comp_evt->num_of_channels;
 		}
 	}

@@ -282,14 +282,14 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 close_session:
 #ifdef SOFTAP_CHANNEL_RANGE
-	if (sap_ctx->channelList) {
+	if (sap_ctx->freq_list) {
 		/*
 		* Always free up the memory for
 		* channel selection whatever
 		* the result
 		*/
-		qdf_mem_free(sap_ctx->channelList);
-		sap_ctx->channelList = NULL;
+		qdf_mem_free(sap_ctx->freq_list);
+		sap_ctx->freq_list = NULL;
 		sap_ctx->num_of_channel = 0;
 	}
 #endif

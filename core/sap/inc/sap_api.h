@@ -355,12 +355,12 @@ struct sap_ch_selected_s {
 /**
  * struct sap_acs_scan_complete_event - acs scan complete event
  * @status: status of acs scan
- * @channellist: acs scan channels
+ * @freq_list: acs scan channel frequency list
  * @num_of_channels: number of channels
  */
 struct sap_acs_scan_complete_event {
 	uint8_t status;
-	uint8_t *channellist;
+	uint32_t *freq_list;
 	uint8_t num_of_channels;
 };
 

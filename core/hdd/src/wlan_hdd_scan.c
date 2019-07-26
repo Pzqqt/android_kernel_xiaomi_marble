@@ -231,9 +231,9 @@ static bool wlan_hdd_sap_skip_scan_check(struct hdd_context *hdd_ctx,
 	if (hdd_ctx->skip_acs_scan_status != eSAP_SKIP_ACS_SCAN)
 		return false;
 	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
-	if (!hdd_ctx->last_acs_channel_list ||
-	   hdd_ctx->num_of_channels == 0 ||
-	   request->n_channels == 0) {
+	if (!hdd_ctx->last_acs_freq_list ||
+	    hdd_ctx->num_of_channels == 0 ||
+	    request->n_channels == 0) {
 		qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
 		return false;
 	}
@@ -242,16 +242,16 @@ static bool wlan_hdd_sap_skip_scan_check(struct hdd_context *hdd_ctx,
 		bool find = false;
 
 		for (j = 0; j < hdd_ctx->num_of_channels; j++) {
-			if (hdd_ctx->last_acs_channel_list[j] ==
-			   request->channels[i]->hw_value) {
+			if (hdd_ctx->last_acs_freq_list[j] ==
+			    request->channels[i]->center_freq) {
 				find = true;
 				break;
 			}
 		}
 		if (!find) {
 			skip = false;
-			hdd_debug("Chan %d isn't in ACS chan list",
-				request->channels[i]->hw_value);
+			hdd_debug("Freq %d isn't in ACS freq list",
+				  request->channels[i]->center_freq);
 			break;
 		}
 	}

@@ -7684,8 +7684,8 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 		hdd_err("Cannot deallocate ACS Skip timer");
 	}
 	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
-	qdf_mem_free(hdd_ctx->last_acs_channel_list);
-	hdd_ctx->last_acs_channel_list = NULL;
+	qdf_mem_free(hdd_ctx->last_acs_freq_list);
+	hdd_ctx->last_acs_freq_list = NULL;
 	hdd_ctx->num_of_channels = 0;
 	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
 #endif
@@ -7785,8 +7785,8 @@ static void hdd_skip_acs_scan_timer_handler(void *data)
 	hdd_debug("ACS Scan result expired. Reset ACS scan skip");
 	hdd_ctx->skip_acs_scan_status = eSAP_DO_NEW_ACS_SCAN;
 	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
-	qdf_mem_free(hdd_ctx->last_acs_channel_list);
-	hdd_ctx->last_acs_channel_list = NULL;
+	qdf_mem_free(hdd_ctx->last_acs_freq_list);
+	hdd_ctx->last_acs_freq_list = NULL;
 	hdd_ctx->num_of_channels = 0;
 	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
 

@@ -695,7 +695,8 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 			for (chan_num = 0; chan_num < sap_ctx->num_of_channel;
 			     chan_num++) {
 				if (pSpectCh->chNum !=
-				    sap_ctx->channelList[chan_num])
+				    wlan_reg_freq_to_chan(mac->pdev,
+						  sap_ctx->freq_list[chan_num]))
 					continue;
 
 				/*
@@ -1698,7 +1699,8 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		 */
 		found = false;
 		for (i = 0; i < sap_ctx->num_of_channel; i++) {
-			if (pSpectCh->chNum == sap_ctx->channelList[i]) {
+			if (pSpectCh->chNum == wlan_reg_freq_to_chan(mac->pdev,
+						       sap_ctx->freq_list[i])) {
 			/* Scan channel was included in ACS scan list */
 				found = true;
 				break;
