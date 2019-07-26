@@ -3131,28 +3131,27 @@ ol_txrx_clear_peer_internal(struct ol_txrx_peer_t *peer)
 
 /**
  * ol_txrx_clear_peer() - clear peer
- * @sta_id: sta id
+ * peer_addr: peer mac address
  *
  * Return: QDF Status
  */
-static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
+static QDF_STATUS
+ol_txrx_clear_peer(struct cdp_pdev *ppdev,
+		   struct qdf_mac_addr peer_addr)
 {
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	QDF_STATUS status;
+	/* peer_id to be removed */
+	uint8_t peer_id;
 
 	if (!pdev) {
 		ol_txrx_err("Unable to find pdev!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		ol_txrx_err("Invalid sta id %d", sta_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	peer = ol_txrx_peer_get_ref_by_local_id(ppdev, sta_id,
-						PEER_DEBUG_ID_OL_INTERNAL);
+	peer = ol_txrx_peer_get_ref_by_addr(pdev, peer_addr.bytes, &peer_id,
+					    PEER_DEBUG_ID_OL_INTERNAL);
 
 	/* Return success, if the peer is already cleared by
 	 * data path via peer detach function.
