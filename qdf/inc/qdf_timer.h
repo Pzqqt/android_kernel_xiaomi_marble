@@ -51,18 +51,12 @@ qdf_timer_init(qdf_handle_t hdl, qdf_timer_t *timer, qdf_timer_func_t func,
 	return __qdf_timer_init(timer, func, arg, type);
 }
 
-#ifdef QDF_TIMER_MULTIPLIER_FRAC
-#define qdf_msecs_to_jiffies(msec) \
-	(QDF_TIMER_MULTIPLIER_FRAC * __qdf_msecs_to_jiffies(msec))
-#else
-#define qdf_msecs_to_jiffies(msec) \
-	(qdf_timer_get_multiplier() * __qdf_msecs_to_jiffies(msec))
-#endif
-
 /**
  * qdf_timer_start() - start a timer
  * @timer: timer to start
  * @msec: Expiration period in milliseconds
+ *
+ * If QDF timer multiplier is set, the timeout value may get scaled.
  *
  * Return: none
  */
@@ -77,6 +71,8 @@ static inline void qdf_timer_start(qdf_timer_t *timer, int msec)
  * @msec: Expiration period in milliseconds
  *
  * If @timer is not active, it will be activated.
+ *
+ * If QDF timer multiplier is set, the timeout value may get scaled.
  *
  * Return: none
  */
