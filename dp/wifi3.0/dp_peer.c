@@ -3110,28 +3110,28 @@ QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-struct cdp_vdev *dp_get_vdev_by_sta_id(struct cdp_pdev *pdev_handle,
-				       uint8_t sta_id)
+struct cdp_vdev *
+dp_get_vdev_by_peer_addr(struct cdp_pdev *pdev_handle,
+			 struct qdf_mac_addr peer_addr)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct dp_peer *peer = NULL;
-
-	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "Invalid sta id passed");
-		return NULL;
-	}
+	/* peer_id to be removed PEER_ID_CLEANUP */
+	uint8_t peer_id;
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "PDEV not found for sta_id [%d]", sta_id);
+			  "PDEV not found for peer_addr: ", QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_ARRAY(peer_addr.bytes));
 		return NULL;
 	}
 
-	peer = dp_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
+	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, peer_addr.bytes,
+				    &peer_id);
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "PEER [%d] not found", sta_id);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "PDEV not found for peer_addr:" QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_ARRAY(peer_addr.bytes));
 		return NULL;
 	}
 

@@ -414,7 +414,7 @@ cdp_peer_get_vdevid(ol_txrx_soc_handle soc, void *peer, uint8_t *vdev_id)
  * cdp_peer_get_vdev_by_sta_id() - Get vdev instance by local peer id
  * @soc - data path soc handle
  * @pdev - data path device instance
- * @sta_id - local peer id
+ * @peer_addr - peer mac address
  *
  * Get virtual interface id by local peer id
  *
@@ -422,8 +422,8 @@ cdp_peer_get_vdevid(ol_txrx_soc_handle soc, void *peer, uint8_t *vdev_id)
  *         NULL in case cannot find
  */
 static inline struct cdp_vdev
-*cdp_peer_get_vdev_by_sta_id(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-			     uint8_t sta_id)
+*cdp_peer_get_vdev_by_peer_addr(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+				struct qdf_mac_addr peer_addr)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -431,8 +431,9 @@ static inline struct cdp_vdev
 		return NULL;
 	}
 
-	if (soc->ops->peer_ops->get_vdev_by_sta_id)
-		return soc->ops->peer_ops->get_vdev_by_sta_id(pdev, sta_id);
+	if (soc->ops->peer_ops->get_vdev_by_peer_addr)
+		return soc->ops->peer_ops->get_vdev_by_peer_addr(pdev,
+								 peer_addr);
 
 	return NULL;
 }
