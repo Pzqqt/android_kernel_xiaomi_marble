@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -525,22 +525,26 @@ int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id)
 
 /**
  * ol_txrx_get_tx_resource() - if tx resource less than low_watermark
- * @sta_id: sta id
+ * @pdev: datapath pdev instance
+ * @peer_addr: peer mac address
  * @low_watermark: low watermark
  * @high_watermark_offset: high watermark offset value
  *
  * Return: true/false
  */
 bool
-ol_txrx_get_tx_resource(uint8_t sta_id,
+ol_txrx_get_tx_resource(struct cdp_pdev *pdev,
+			struct qdf_mac_addr peer_addr,
 			unsigned int low_watermark,
 			unsigned int high_watermark_offset)
 {
-	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_sta_id(sta_id);
+	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_by_peer_addr(pdev,
+								 peer_addr);
 
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Invalid sta_id %d", __func__, sta_id);
+			  "%s: Invalid peer address: " QDF_MAC_ADDR_STR,
+			  __func__, QDF_MAC_ADDR_ARRAY(peer_addr.bytes));
 		/* Return true so caller do not understand that resource
 		 * is less than low_watermark.
 		 * sta_id validation will be done in ol_tx_send_data_frame

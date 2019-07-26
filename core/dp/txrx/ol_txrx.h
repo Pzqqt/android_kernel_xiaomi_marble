@@ -177,7 +177,8 @@ int ol_txrx_register_tx_flow_control(uint8_t vdev_id,
 
 int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id);
 
-bool ol_txrx_get_tx_resource(uint8_t sta_id,
+bool ol_txrx_get_tx_resource(struct cdp_pdev *pdev,
+			     struct qdf_mac_addr peer_addr,
 			     unsigned int low_watermark,
 			     unsigned int high_watermark_offset);
 
