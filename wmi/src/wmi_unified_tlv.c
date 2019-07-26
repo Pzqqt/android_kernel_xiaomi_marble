@@ -9605,6 +9605,46 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_service_ready_ext2_tlv() - extract service ready ext2 params from
+ * event
+ * @wmi_handle: wmi handle
+ * @event: pointer to event buffer
+ * @param: Pointer to hold the params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
+			       struct wlan_psoc_host_service_ext2_param *param)
+{
+	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
+	wmi_service_ready_ext2_event_fixed_param *ev;
+
+	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	ev = param_buf->fixed_param;
+	if (!ev)
+		return QDF_STATUS_E_INVAL;
+
+	param->reg_db_version_major =
+			WMI_REG_DB_VERSION_MAJOR_GET(
+				ev->reg_db_version);
+	param->reg_db_version_minor =
+			WMI_REG_DB_VERSION_MINOR_GET(
+				ev->reg_db_version);
+	param->bdf_reg_db_version_major =
+			WMI_BDF_REG_DB_VERSION_MAJOR_GET(
+				ev->reg_db_version);
+	param->bdf_reg_db_version_minor =
+			WMI_BDF_REG_DB_VERSION_MINOR_GET(
+				ev->reg_db_version);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_sar_cap_service_ready_ext_tlv() -
  *       extract SAR cap from service ready event
  * @wmi_handle: wmi handle
@@ -11940,6 +11980,7 @@ struct wmi_ops tlv_ops =  {
 	.send_fw_test_cmd = send_fw_test_cmd_tlv,
 	.send_power_dbg_cmd = send_power_dbg_cmd_tlv,
 	.extract_service_ready_ext = extract_service_ready_ext_tlv,
+	.extract_service_ready_ext2 = extract_service_ready_ext2_tlv,
 	.extract_hw_mode_cap_service_ready_ext =
 				extract_hw_mode_cap_service_ready_ext_tlv,
 	.extract_mac_phy_cap_service_ready_ext =
@@ -12066,6 +12107,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_pdev_temperature_event_id] = WMI_PDEV_TEMPERATURE_EVENTID;
 	event_ids[wmi_service_ready_ext_event_id] =
 						WMI_SERVICE_READY_EXT_EVENTID;
+	event_ids[wmi_service_ready_ext2_event_id] =
+						WMI_SERVICE_READY_EXT2_EVENTID;
 	event_ids[wmi_vdev_start_resp_event_id] = WMI_VDEV_START_RESP_EVENTID;
 	event_ids[wmi_vdev_stopped_event_id] = WMI_VDEV_STOPPED_EVENTID;
 	event_ids[wmi_vdev_install_key_complete_event_id] =
@@ -12493,6 +12536,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_mgmt_tx_htt] = WMI_SERVICE_MGMT_TX_HTT;
 	wmi_service[wmi_service_mgmt_tx_wmi] = WMI_SERVICE_MGMT_TX_WMI;
 	wmi_service[wmi_service_ext_msg] = WMI_SERVICE_EXT_MSG;
+	wmi_service[wmi_service_ext2_msg] = WMI_SERVICE_EXT2_MSG;
 	wmi_service[wmi_service_mawc] = WMI_SERVICE_MAWC;
 	wmi_service[wmi_service_multiple_vdev_restart] =
 			WMI_SERVICE_MULTIPLE_VDEV_RESTART;

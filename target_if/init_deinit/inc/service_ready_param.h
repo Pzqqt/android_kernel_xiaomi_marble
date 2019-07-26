@@ -348,4 +348,19 @@ struct wlan_psoc_host_service_ext_param {
 	uint32_t sar_version;
 };
 
+/**
+ * struct wlan_psoc_host_service_ext2_param - EXT service base params in event
+ * reg_db_version_major: REG DB version major number
+ * reg_db_version_minor: REG DB version minor number
+ * bdf_reg_db_version_major: BDF REG DB version major number
+ * bdf_reg_db_version_minor: BDF REG DB version minor number
+ */
+struct wlan_psoc_host_service_ext2_param {
+	uint8_t reg_db_version_major;
+	uint8_t reg_db_version_minor;
+	uint8_t bdf_reg_db_version_major;
+	uint8_t bdf_reg_db_version_minor;
+
+};
+
 #endif /* _SERVICE_READY_PARAM_H_*/

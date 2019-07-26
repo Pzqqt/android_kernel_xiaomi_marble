@@ -33,6 +33,14 @@
 #include <init_cmd_api.h>
 #include <cdp_txrx_cmn.h>
 
+static void init_deinit_set_send_init_cmd(struct wlan_objmgr_psoc *psoc,
+					  struct target_psoc_info *tgt_hdl)
+{
+	tgt_hdl->info.wmi_service_ready = TRUE;
+	/* send init command */
+	init_deinit_prepare_send_init_cmd(psoc, tgt_hdl);
+}
+
 static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 							uint8_t *event,
 							uint32_t data_len)
@@ -178,15 +186,55 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 		goto exit;
 
 	target_if_reg_set_offloaded_info(psoc);
-	if (!wmi_service_enabled(wmi_handle, wmi_service_ext_msg)) {
-		target_if_debug("No EXT message, send init command");
-		tgt_hdl->info.wmi_service_ready = TRUE;
-		target_psoc_set_num_radios(tgt_hdl, 1);
-		/* send init command */
-		init_deinit_prepare_send_init_cmd(psoc, tgt_hdl);
-	} else {
+	if (wmi_service_enabled(wmi_handle, wmi_service_ext_msg)) {
 		target_if_debug("Wait for EXT message");
+	} else {
+		target_if_debug("No EXT message, send init command");
+		target_psoc_set_num_radios(tgt_hdl, 1);
+		init_deinit_set_send_init_cmd(psoc, tgt_hdl);
 	}
+
+exit:
+	return err_code;
+}
+
+static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
+							uint8_t *event,
+							uint32_t data_len)
+{
+	int err_code = 0;
+	struct wlan_objmgr_psoc *psoc;
+	struct target_psoc_info *tgt_hdl;
+	struct wmi_unified *wmi_handle;
+	struct tgt_info *info;
+
+	if (!scn_handle) {
+		target_if_err("scn handle NULL in service ready handler");
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn_handle);
+	if (!psoc) {
+		target_if_err("psoc is null in service ready handler");
+		return -EINVAL;
+	}
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		target_if_err("target_psoc_info is null in service ready ev");
+		return -EINVAL;
+	}
+
+	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);
+	info = (&tgt_hdl->info);
+
+	err_code = init_deinit_populate_service_ready_ext2_param(wmi_handle,
+								 event, info);
+	if (err_code)
+		goto exit;
+
+	/* send init command */
+	init_deinit_set_send_init_cmd(psoc, tgt_hdl);
 
 exit:
 	return err_code;
@@ -295,9 +343,12 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	info->wlan_res_cfg.max_bssid_indicator =
 				info->service_ext_param.max_bssid_indicator;
 
-	info->wmi_service_ready = TRUE;
-
-	init_deinit_prepare_send_init_cmd(psoc, tgt_hdl);
+	if (wmi_service_enabled(wmi_handle, wmi_service_ext2_msg)) {
+		target_if_debug("Wait for EXT2 message");
+	} else {
+		target_if_debug("No EXT2 message, send init command");
+		init_deinit_set_send_init_cmd(psoc, tgt_hdl);
+	}
 
 exit:
 	return err_code;
@@ -562,6 +613,12 @@ QDF_STATUS init_deinit_register_tgt_psoc_ev_handlers(
 				wmi_ready_event_id,
 				init_deinit_ready_event_handler,
 				WMI_RX_WORK_CTX);
+	retval = wmi_unified_register_event_handler(
+				wmi_handle,
+				wmi_service_ready_ext2_event_id,
+				init_deinit_service_ext2_ready_event_handler,
+				WMI_RX_WORK_CTX);
+
 
 	return retval;
 }

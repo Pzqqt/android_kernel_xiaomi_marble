@@ -141,6 +141,21 @@ struct target_supported_modes {
 };
 
 /**
+ * struct target_version_info - Target version information
+ *
+ * @reg_db_version_major: REG DB version major
+ * @reg_db_version_minor: REG DB version minor
+ * @bdf_reg_db_version_major: BDF REG DB version major
+ * @bdf_reg_db_version_minor: BDF REG DB version minor
+ */
+struct target_version_info {
+	uint8_t reg_db_version_major;
+	uint8_t reg_db_version_minor;
+	uint8_t bdf_reg_db_version_major;
+	uint8_t bdf_reg_db_version_minor;
+};
+
+/**
  * struct tgt_info - FW or lower layer related info(required by target_if),
  *                   it is a sub structure of taarget psoc information
  * @version: Host FW version struct
@@ -158,6 +173,7 @@ struct target_supported_modes {
  * @event: qdf_event for target events
  * @service_bitmap: WMI service bitmap
  * @target_cap: target capabilities
+ * @service_ext2_param: service ready ext2 event params
  * @service_ext_param: ext service params
  * @mac_phy_cap: phy caps array
  * @reg_cap: regulatory caps array
@@ -183,6 +199,7 @@ struct tgt_info {
 	uint32_t service_bitmap[PSOC_SERVICE_BM_SIZE];
 	struct wlan_psoc_target_capability_info target_caps;
 	struct wlan_psoc_host_service_ext_param service_ext_param;
+	struct wlan_psoc_host_service_ext2_param service_ext2_param;
 	struct wlan_psoc_host_mac_phy_caps
 			mac_phy_cap[PSOC_MAX_MAC_PHY_CAP];
 	struct wlan_psoc_host_dbr_ring_caps *dbr_ring_cap;
@@ -2236,5 +2253,33 @@ static inline void target_if_set_twt_ap_pdev_count
 {
 }
 #endif /* WLAN_SUPPORT_TWT */
+
+/**
+ * target_psoc_get_version_info() - Get version info from tgt info
+ * @psoc_info: pointer to structure target_psoc_info
+ * @reg_major: reg db version major
+ * @reg_minor: reg db version minor
+ * @bdf_major: bdf reg db version major
+ * @bdf_minor: bdf reg db version minor
+ *
+ * API to get target version information.
+ *
+ * Return: void
+ */
+static inline void target_psoc_get_version_info(
+					struct target_psoc_info *psoc_info,
+					uint8_t *reg_major, uint8_t *reg_minor,
+					uint8_t *bdf_major, uint8_t *bdf_minor)
+{
+	if (!psoc_info)
+		return;
+
+	*reg_major = psoc_info->info.service_ext2_param.reg_db_version_major;
+	*reg_minor = psoc_info->info.service_ext2_param.reg_db_version_minor;
+	*bdf_major =
+		psoc_info->info.service_ext2_param.bdf_reg_db_version_major;
+	*bdf_minor =
+		psoc_info->info.service_ext2_param.bdf_reg_db_version_minor;
+}
 #endif
 

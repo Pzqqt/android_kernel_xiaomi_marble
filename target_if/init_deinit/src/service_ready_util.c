@@ -140,6 +140,22 @@ int init_deinit_populate_service_ready_ext_param(
 	return 0;
 }
 
+int init_deinit_populate_service_ready_ext2_param(
+		wmi_unified_t handle, uint8_t *evt,
+		struct tgt_info *info)
+{
+	QDF_STATUS status;
+
+	status = wmi_extract_service_ready_ext2(handle, evt,
+						&info->service_ext2_param);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to parse wmi service ready ext param");
+		return qdf_status_to_os_return(status);
+	}
+
+	return 0;
+}
+
 int init_deinit_populate_chainmask_tables(
 		wmi_unified_t handle, uint8_t *evt,
 		struct wlan_psoc_host_chainmask_table *param)
