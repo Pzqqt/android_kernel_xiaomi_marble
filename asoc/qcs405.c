@@ -106,6 +106,12 @@ enum {
 };
 
 enum {
+	PRIM_META_MI2S = 0,
+	SEC_META_MI2S,
+	META_MI2S_MAX,
+};
+
+enum {
 	PRIM_AUX_PCM = 0,
 	SEC_AUX_PCM,
 	TERT_AUX_PCM,
@@ -155,6 +161,12 @@ static u32 mi2s_ebit_clk[MI2S_MAX] = {
 	Q6AFE_LPASS_CLK_ID_QUAD_MI2S_EBIT,
 	Q6AFE_LPASS_CLK_ID_QUI_MI2S_EBIT,
 	Q6AFE_LPASS_CLK_ID_SEN_MI2S_EBIT
+};
+
+struct meta_mi2s_conf {
+	u32 num_member_ports;
+	u32 member_port[MAX_NUM_I2S_META_PORT_MEMBER_PORTS];
+	bool clk_enable[MAX_NUM_I2S_META_PORT_MEMBER_PORTS];
 };
 
 struct dev_config {
@@ -402,6 +414,11 @@ static struct dev_config mi2s_rx_cfg[] = {
 	[SEN_MI2S]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 };
 
+static struct dev_config meta_mi2s_rx_cfg[] = {
+	[PRIM_META_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[SEC_META_MI2S]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+};
+
 /* Default configuration of SPDIF channels */
 static struct dev_config spdif_rx_cfg[] = {
 	[PRIM_SPDIF_RX] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
@@ -486,6 +503,14 @@ static const char *const mi2s_ch_text[] = {
 		"One", "Two", "Three", "Four", "Five", "Six", "Seven",
 		"Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen",
 		"Fourteen", "Fifteen", "Sixteen"
+};
+static const char *const meta_mi2s_ch_text[] = {
+		"One", "Two", "Three", "Four", "Five", "Six", "Seven",
+		"Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen",
+		"Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen",
+		"Nineteen", "Twenty", "TwentyOne", "TwentyTwo", "TwentyThree",
+		"TwentyFour", "TwentyFive", "TwentySix", "TwentySeven",
+		"TwentyEight", "TwentyNine", "Thirty", "ThirtyOne", "ThirtyTwo"
 };
 static const char *const qos_text[] = {"Disable", "Enable"};
 
@@ -576,6 +601,12 @@ static SOC_ENUM_SINGLE_EXT_DECL(mi2s_rx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(mi2s_tx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(aux_pcm_rx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(aux_pcm_tx_format, bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(prim_meta_mi2s_rx_sample_rate, mi2s_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(sec_meta_mi2s_rx_sample_rate, mi2s_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(prim_meta_mi2s_rx_chs, meta_mi2s_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(sec_meta_mi2s_rx_chs, meta_mi2s_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(prim_meta_mi2s_rx_format, bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(sec_meta_mi2s_rx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_0_chs, cdc_dma_rx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_1_chs, cdc_dma_rx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_0_chs, cdc_dma_tx_ch_text);
@@ -688,6 +719,8 @@ static struct afe_clk_set mi2s_clk[MI2S_MAX] = {
 };
 
 static struct mi2s_conf mi2s_intf_conf[MI2S_MAX];
+
+static struct meta_mi2s_conf meta_mi2s_intf_conf[META_MI2S_MAX];
 
 static int msm_island_vad_get_portid_from_beid(int32_t be_id, int *port_id)
 {
@@ -3070,6 +3103,143 @@ static int msm_mi2s_tx_format_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int msm_meta_mi2s_get_port_idx(struct snd_kcontrol *kcontrol)
+{
+	int idx = 0;
+
+	if (strnstr(kcontrol->id.name, "PRIM_META_MI2S_RX",
+	    sizeof("PRIM_META_MI2S_RX"))) {
+		idx = PRIM_META_MI2S;
+	} else if (strnstr(kcontrol->id.name, "SEC_META_MI2S_RX",
+		   sizeof("SEC_META_MI2S_RX"))) {
+		idx = SEC_META_MI2S;
+	} else {
+		pr_err("%s: unsupported port: %s",
+			__func__, kcontrol->id.name);
+		idx = -EINVAL;
+	}
+
+	return idx;
+}
+
+static int msm_meta_mi2s_rx_sample_rate_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = msm_meta_mi2s_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	ucontrol->value.enumerated.item[0] =
+		mi2s_get_sample_rate_val(meta_mi2s_rx_cfg[idx].sample_rate);
+
+	pr_debug("%s: idx[%d]_rx_sample_rate = %d, item = %d\n", __func__,
+		 idx, meta_mi2s_rx_cfg[idx].sample_rate,
+		 ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_meta_mi2s_rx_sample_rate_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = msm_meta_mi2s_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	meta_mi2s_rx_cfg[idx].sample_rate =
+		mi2s_get_sample_rate(ucontrol->value.enumerated.item[0]);
+
+	pr_debug("%s: idx[%d]_rx_sample_rate = %d, item = %d\n", __func__,
+		 idx, meta_mi2s_rx_cfg[idx].sample_rate,
+		 ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_meta_mi2s_rx_ch_get(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = msm_meta_mi2s_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	ucontrol->value.enumerated.item[0] = meta_mi2s_rx_cfg[idx].channels - 1;
+
+	pr_debug("%s: meta_mi2s_[%d]_rx_ch  = %d\n", __func__,
+		 idx, meta_mi2s_rx_cfg[idx].channels);
+
+	return 0;
+}
+
+static int msm_meta_mi2s_rx_ch_put(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = msm_meta_mi2s_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	meta_mi2s_rx_cfg[idx].channels = ucontrol->value.enumerated.item[0] + 1;
+
+	pr_debug("%s: meta_mi2s_[%d]_rx_ch  = %d\n", __func__,
+		 idx, meta_mi2s_rx_cfg[idx].channels);
+
+	return 1;
+}
+
+static int msm_meta_mi2s_rx_format_get(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = msm_meta_mi2s_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	ucontrol->value.enumerated.item[0] =
+		mi2s_auxpcm_get_format_value(meta_mi2s_rx_cfg[idx].bit_format);
+
+	pr_debug("%s: idx[%d]_rx_format = %d, item = %d\n", __func__,
+		idx, meta_mi2s_rx_cfg[idx].bit_format,
+		ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_meta_mi2s_rx_format_put(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_asoc_mach_data *pdata = NULL;
+	struct snd_soc_card *card = NULL;
+	int idx = msm_meta_mi2s_get_port_idx(kcontrol);
+
+	card = kcontrol->private_data;
+	pdata = snd_soc_card_get_drvdata(card);
+
+	if (idx < 0)
+		return idx;
+
+	/* check for PRIM_META_MI2S and CSRAx to allow 24bit BE config only */
+	if ((idx == PRIM_META_MI2S) && pdata->codec_is_csra) {
+		meta_mi2s_rx_cfg[idx].bit_format = SNDRV_PCM_FORMAT_S24_LE;
+		pr_debug("%s: Keeping default format idx[%d]_rx_format = %d, item = %d\n",
+			__func__, idx, meta_mi2s_rx_cfg[idx].bit_format,
+			ucontrol->value.enumerated.item[0]);
+	} else {
+		meta_mi2s_rx_cfg[idx].bit_format =
+			mi2s_auxpcm_get_format(
+			ucontrol->value.enumerated.item[0]);
+
+		pr_debug("%s: idx[%d]_rx_format = %d, item = %d\n", __func__,
+			idx, meta_mi2s_rx_cfg[idx].bit_format,
+			ucontrol->value.enumerated.item[0]);
+	}
+
+	return 0;
+}
+
 static int msm_aux_pcm_rx_format_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
@@ -3979,6 +4149,26 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			msm_mi2s_rx_format_get, msm_mi2s_rx_format_put),
 	SOC_ENUM_EXT("SEN_MI2S_TX Format", mi2s_tx_format,
 			msm_mi2s_tx_format_get, msm_mi2s_tx_format_put),
+	SOC_ENUM_EXT("PRIM_META_MI2S_RX SampleRate",
+			prim_meta_mi2s_rx_sample_rate,
+			msm_meta_mi2s_rx_sample_rate_get,
+			msm_meta_mi2s_rx_sample_rate_put),
+	SOC_ENUM_EXT("SEC_META_MI2S_RX SampleRate",
+			sec_meta_mi2s_rx_sample_rate,
+			msm_meta_mi2s_rx_sample_rate_get,
+			msm_meta_mi2s_rx_sample_rate_put),
+	SOC_ENUM_EXT("PRIM_META_MI2S_RX Channels", prim_meta_mi2s_rx_chs,
+			msm_meta_mi2s_rx_ch_get,
+			msm_meta_mi2s_rx_ch_put),
+	SOC_ENUM_EXT("SEC_META_MI2S_RX Channels", sec_meta_mi2s_rx_chs,
+			msm_meta_mi2s_rx_ch_get,
+			msm_meta_mi2s_rx_ch_put),
+	SOC_ENUM_EXT("PRIM_META_MI2S_RX Format", mi2s_rx_format,
+			msm_meta_mi2s_rx_format_get,
+			msm_meta_mi2s_rx_format_put),
+	SOC_ENUM_EXT("SEC_META_MI2S_RX Format", mi2s_rx_format,
+			msm_meta_mi2s_rx_format_get,
+			msm_meta_mi2s_rx_format_put),
 	SOC_ENUM_EXT("PRIM_AUX_PCM_RX Format", aux_pcm_rx_format,
 			msm_aux_pcm_rx_format_get, msm_aux_pcm_rx_format_put),
 	SOC_ENUM_EXT("PRIM_AUX_PCM_TX Format", aux_pcm_tx_format,
@@ -4761,6 +4951,25 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		channels->min = channels->max =
 			mi2s_tx_cfg[SEN_MI2S].channels;
 		break;
+
+	case MSM_BACKEND_DAI_PRI_META_MI2S_RX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+			meta_mi2s_rx_cfg[PRIM_META_MI2S].bit_format);
+		rate->min = rate->max =
+			meta_mi2s_rx_cfg[PRIM_META_MI2S].sample_rate;
+		channels->min = channels->max =
+			meta_mi2s_rx_cfg[PRIM_META_MI2S].channels;
+		break;
+
+	case MSM_BACKEND_DAI_SEC_META_MI2S_RX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+			meta_mi2s_rx_cfg[SEC_META_MI2S].bit_format);
+		rate->min = rate->max =
+			meta_mi2s_rx_cfg[SEC_META_MI2S].sample_rate;
+		channels->min = channels->max =
+			meta_mi2s_rx_cfg[SEC_META_MI2S].channels;
+		break;
+
 	case MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0:
 	case MSM_BACKEND_DAI_WSA_CDC_DMA_RX_1:
 		idx = msm_cdc_dma_get_idx_from_beid(dai_link->id);
@@ -5996,6 +6205,172 @@ static void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 	mutex_unlock(&mi2s_intf_conf[index].lock);
 }
 
+static int msm_meta_mi2s_set_sclk(struct snd_pcm_substream *substream,
+	int member_id, bool enable)
+{
+	int ret = 0;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
+	int be_id = 0;
+	int port_id = 0;
+	int index = cpu_dai->id;
+	u32 bit_per_sample = 0;
+
+	switch (member_id) {
+	case PRIM_MI2S:
+		be_id = MSM_BACKEND_DAI_PRI_MI2S_RX;
+		break;
+	case SEC_MI2S:
+		be_id = MSM_BACKEND_DAI_SECONDARY_MI2S_RX;
+		break;
+	case TERT_MI2S:
+		be_id = MSM_BACKEND_DAI_TERTIARY_MI2S_RX;
+		break;
+	case QUAT_MI2S:
+		be_id = MSM_BACKEND_DAI_QUATERNARY_MI2S_RX;
+		break;
+	default:
+		dev_err(rtd->card->dev, "%s: Invalid member_id\n", __func__);
+		ret = -EINVAL;
+		goto err;
+	}
+
+	port_id = msm_get_port_id(be_id);
+	if (port_id < 0) {
+		dev_err(rtd->card->dev, "%s: Invalid port_id\n", __func__);
+		ret = port_id;
+		goto err;
+	}
+
+	if (enable) {
+		bit_per_sample =
+			get_mi2s_bits_per_sample(
+				meta_mi2s_rx_cfg[index].bit_format);
+		mi2s_clk[member_id].clk_freq_in_hz =
+			meta_mi2s_rx_cfg[index].sample_rate * 2 *
+			bit_per_sample;
+
+		dev_dbg(rtd->card->dev, "%s: clock rate %ul\n", __func__,
+			mi2s_clk[member_id].clk_freq_in_hz);
+	}
+
+	mi2s_clk[member_id].enable = enable;
+	ret = afe_set_lpass_clock_v2(port_id, &mi2s_clk[member_id]);
+	if (ret < 0) {
+		dev_err(rtd->card->dev,
+			"%s: afe lpass clock failed for port 0x%x , err:%d\n",
+			__func__, port_id, ret);
+		goto err;
+	}
+
+err:
+	return ret;
+}
+
+static int msm_meta_mi2s_snd_startup(struct snd_pcm_substream *substream)
+{
+	int ret = 0;
+	int i = 0;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
+	int index = cpu_dai->id;
+	int member_port = 0;
+	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
+	struct snd_soc_card *card = rtd->card;
+	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+
+	dev_dbg(rtd->card->dev,
+		"%s: substream = %s  stream = %d, dai name %s, dai ID %d\n",
+		__func__, substream->name, substream->stream,
+		cpu_dai->name, cpu_dai->id);
+
+	if (index < PRIM_META_MI2S || index >= META_MI2S_MAX) {
+		ret = -EINVAL;
+		dev_err(rtd->card->dev,
+			"%s: CPU DAI id (%d) out of range\n",
+			__func__, cpu_dai->id);
+		goto err;
+	}
+
+	for (i = 0; i < meta_mi2s_intf_conf[index].num_member_ports; i++) {
+		member_port = meta_mi2s_intf_conf[index].member_port[i];
+
+		if (!mi2s_intf_conf[member_port].msm_is_mi2s_master) {
+			mi2s_clk[member_port].clk_id =
+				mi2s_ebit_clk[member_port];
+			fmt = SND_SOC_DAIFMT_CBM_CFM;
+		}
+
+		ret = msm_meta_mi2s_set_sclk(substream, member_port, true);
+		if (ret < 0) {
+			dev_err(rtd->card->dev,
+				"%s: afe lpass clock failed to enable MI2S clock, err:%d\n",
+				__func__, ret);
+			goto clk_off;
+		}
+		meta_mi2s_intf_conf[index].clk_enable[i] = true;
+
+		if (i == 0) {
+			ret = snd_soc_dai_set_fmt(cpu_dai, fmt);
+			if (ret < 0) {
+				pr_err("%s: set fmt cpu dai failed for META_MI2S (%d), err:%d\n",
+					__func__, index, ret);
+				goto clk_off;
+			}
+		}
+		if (pdata->mi2s_gpio_p[member_port])
+			msm_cdc_pinctrl_select_active_state(
+					pdata->mi2s_gpio_p[member_port]);
+	}
+	return 0;
+
+clk_off:
+	for (i = 0; i < meta_mi2s_intf_conf[index].num_member_ports; i++) {
+		member_port = meta_mi2s_intf_conf[index].member_port[i];
+		if (pdata->mi2s_gpio_p[member_port])
+			msm_cdc_pinctrl_select_sleep_state(
+					pdata->mi2s_gpio_p[member_port]);
+
+		if (meta_mi2s_intf_conf[index].clk_enable[i]) {
+			msm_meta_mi2s_set_sclk(substream, member_port, false);
+			meta_mi2s_intf_conf[index].clk_enable[i] = false;
+		}
+	}
+err:
+	return ret;
+}
+
+static void msm_meta_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
+{
+	int ret = 0;
+	int i = 0;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	int index = rtd->cpu_dai->id;
+	int member_port = 0;
+	struct snd_soc_card *card = rtd->card;
+	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+
+	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
+		 substream->name, substream->stream);
+	if (index < PRIM_MI2S || index >= MI2S_MAX) {
+		pr_err("%s:invalid MI2S DAI(%d)\n", __func__, index);
+		return;
+	}
+
+	for (i = 0; i < meta_mi2s_intf_conf[index].num_member_ports; i++) {
+		member_port = meta_mi2s_intf_conf[index].member_port[i];
+
+		if (pdata->mi2s_gpio_p[member_port])
+			msm_cdc_pinctrl_select_sleep_state(
+					pdata->mi2s_gpio_p[member_port]);
+
+		ret = msm_meta_mi2s_set_sclk(substream, member_port, false);
+		if (ret < 0)
+			pr_err("%s:clock disable failed for META MI2S (%d); ret=%d\n",
+				__func__, index, ret);
+	}
+}
+
 static int msm_spdif_set_clk(struct snd_pcm_substream *substream, bool enable)
 {
 	int ret = 0;
@@ -6129,6 +6504,11 @@ static void msm_spdif_snd_shutdown(struct snd_pcm_substream *substream)
 static struct snd_soc_ops msm_mi2s_be_ops = {
 	.startup = msm_mi2s_snd_startup,
 	.shutdown = msm_mi2s_snd_shutdown,
+};
+
+static struct snd_soc_ops msm_meta_mi2s_be_ops = {
+	.startup = msm_meta_mi2s_snd_startup,
+	.shutdown = msm_meta_mi2s_snd_shutdown,
 };
 
 static struct snd_soc_ops msm_auxpcm_be_ops = {
@@ -7567,6 +7947,39 @@ static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
 
 };
 
+static struct snd_soc_dai_link msm_meta_mi2s_be_dai_links[] = {
+	{
+		.name = LPASS_BE_PRI_META_MI2S_RX,
+		.stream_name = "Primary META MI2S Playback",
+		.cpu_dai_name = "msm-dai-q6-meta-mi2s.4864",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_PRI_META_MI2S_RX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_meta_mi2s_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+	},
+	{
+		.name = LPASS_BE_SEC_META_MI2S_RX,
+		.stream_name = "Secondary META MI2S Playback",
+		.cpu_dai_name = "msm-dai-q6-meta-mi2s.4866",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_SEC_META_MI2S_RX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_meta_mi2s_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+	},
+};
+
 static struct snd_soc_dai_link msm_auxpcm_be_dai_links[] = {
 	/* Primary AUX PCM Backend DAI Links */
 	{
@@ -7885,6 +8298,7 @@ static struct snd_soc_dai_link msm_qcs405_dai_links[
 			 ARRAY_SIZE(msm_tasha_be_dai_links) +
 			 ARRAY_SIZE(msm_wcn_be_dai_links) +
 			 ARRAY_SIZE(msm_mi2s_be_dai_links) +
+			 ARRAY_SIZE(msm_meta_mi2s_be_dai_links) +
 			 ARRAY_SIZE(msm_auxpcm_be_dai_links) +
 			 ARRAY_SIZE(msm_va_cdc_dma_be_dai_links) +
 			 ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links) +
@@ -8140,7 +8554,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	uint32_t tasha_codec = 0, auxpcm_audio_intf = 0;
 	uint32_t va_bolero_codec = 0, wsa_bolero_codec = 0, mi2s_audio_intf = 0;
 	uint32_t spdif_audio_intf = 0, wcn_audio_intf = 0;
-	uint32_t afe_loopback_intf = 0;
+	uint32_t afe_loopback_intf = 0, meta_mi2s_intf = 0;
 	const struct of_device_id *match;
 	char __iomem *spdif_cfg, *spdif_pin_ctl;
 	int rc = 0;
@@ -8248,6 +8662,22 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 				ARRAY_SIZE(msm_mi2s_be_dai_links);
 			}
 		}
+
+		rc = of_property_read_u32(dev->of_node, "qcom,meta-mi2s-intf",
+					  &meta_mi2s_intf);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match META-MI2S interface\n",
+				__func__);
+		} else {
+			if (meta_mi2s_intf) {
+				memcpy(msm_qcs405_dai_links + total_links,
+				msm_meta_mi2s_be_dai_links,
+				sizeof(msm_meta_mi2s_be_dai_links));
+				total_links +=
+				ARRAY_SIZE(msm_meta_mi2s_be_dai_links);
+			}
+		}
+
 		rc = of_property_read_u32(dev->of_node,
 					  "qcom,auxpcm-audio-intf",
 					  &auxpcm_audio_intf);
@@ -8807,6 +9237,81 @@ static void msm_i2s_auxpcm_deinit(void)
 	}
 }
 
+static void msm_meta_mi2s_init(struct platform_device *pdev)
+{
+	int rc = 0;
+	int i = 0;
+	int index = 0;
+	bool parse_of = false;
+	struct snd_soc_card *card = platform_get_drvdata(pdev);
+	struct snd_soc_dai_link *dai_link = card->dai_link;
+
+	dev_dbg(&pdev->dev, "%s: read from DT\n", __func__);
+
+	for (index = 0; index < META_MI2S_MAX; index++) {
+		meta_mi2s_intf_conf[index].num_member_ports = 0;
+		meta_mi2s_intf_conf[index].member_port[0] = 0;
+		meta_mi2s_intf_conf[index].member_port[1] = 0;
+		meta_mi2s_intf_conf[index].member_port[2] = 0;
+		meta_mi2s_intf_conf[index].member_port[3] = 0;
+		meta_mi2s_intf_conf[index].clk_enable[0] = false;
+		meta_mi2s_intf_conf[index].clk_enable[1] = false;
+		meta_mi2s_intf_conf[index].clk_enable[2] = false;
+		meta_mi2s_intf_conf[index].clk_enable[3] = false;
+	}
+
+	/* get member port info to set matching clocks for involved ports */
+	for (i = 0; i < card->num_links; i++) {
+		if (dai_link[i].id == MSM_BACKEND_DAI_PRI_META_MI2S_RX) {
+			parse_of = true;
+			index = PRIM_META_MI2S;
+		} else if (dai_link[i].id == MSM_BACKEND_DAI_SEC_META_MI2S_RX) {
+			parse_of = true;
+			index = SEC_META_MI2S;
+		} else {
+			parse_of = false;
+		}
+		if (parse_of && dai_link[i].cpu_of_node) {
+			rc = of_property_read_u32(dai_link[i].cpu_of_node,
+				"qcom,msm-mi2s-num-members",
+				&meta_mi2s_intf_conf[index].num_member_ports);
+			if (rc) {
+				dev_err(&pdev->dev, "%s: invalid num from DT file %s\n",
+					__func__, "qcom,msm-mi2s-num-members");
+			}
+
+			if (meta_mi2s_intf_conf[index].num_member_ports >
+				MAX_NUM_I2S_META_PORT_MEMBER_PORTS) {
+				dev_err(&pdev->dev, "%s: num-members %d too large from DT file\n",
+					__func__,
+					meta_mi2s_intf_conf[index].num_member_ports);
+			}
+
+			if (meta_mi2s_intf_conf[index].num_member_ports > 0) {
+				rc = of_property_read_u32_array(
+					dai_link[i].cpu_of_node,
+					"qcom,msm-mi2s-member-id",
+					meta_mi2s_intf_conf[index].member_port,
+					meta_mi2s_intf_conf[index].num_member_ports);
+				if (rc) {
+					dev_err(&pdev->dev, "%s: member-id from DT file %s\n",
+						__func__,
+						"qcom,msm-mi2s-member-id");
+				}
+			}
+
+			dev_dbg(&pdev->dev, "dev name %s num-members=%d\n",
+				dev_name(&pdev->dev),
+				meta_mi2s_intf_conf[index].num_member_ports);
+			dev_dbg(&pdev->dev, "member array (%d, %d, %d, %d)\n",
+				meta_mi2s_intf_conf[index].member_port[0],
+				meta_mi2s_intf_conf[index].member_port[1],
+				meta_mi2s_intf_conf[index].member_port[2],
+				meta_mi2s_intf_conf[index].member_port[3]);
+		}
+	}
+}
+
 static int msm_scan_i2c_addr(struct platform_device *pdev,
 		uint32_t busnum, uint32_t addr)
 {
@@ -8984,6 +9489,8 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	if (val) {
 		pdata->codec_is_csra = true;
 		mi2s_rx_cfg[PRIM_MI2S].bit_format = SNDRV_PCM_FORMAT_S24_LE;
+		meta_mi2s_rx_cfg[PRIM_META_MI2S].bit_format =
+			SNDRV_PCM_FORMAT_S24_LE;
 		ret = msm_init_csra_dev(pdev, card);
 		if (ret)
 			goto err;
@@ -9064,6 +9571,8 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			 ret);
 
 	msm_i2s_auxpcm_init(pdev);
+
+	msm_meta_mi2s_init(pdev);
 
 	is_initial_boot = true;
 	return 0;
