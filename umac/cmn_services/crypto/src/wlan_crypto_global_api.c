@@ -1724,6 +1724,36 @@ bool wlan_crypto_is_pmf_enabled(struct wlan_objmgr_vdev *vdev,
 	return false;
 }
 
+/**
+ * wlan_crypto_is_key_valid - called by mgmt txrx to check if key is valid
+ * @vdev: vdev
+ * @peer: peer
+ * @keyidx : key index
+ *
+ * This function gets called by mgmt txrx to check if key is valid
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_is_key_valid(struct wlan_objmgr_vdev *vdev,
+			      struct wlan_objmgr_peer *peer,
+			      uint16_t keyidx)
+{
+	struct wlan_crypto_key *key = NULL;
+
+	if (!vdev && !peer)
+		return false;
+
+	if (peer)
+		key = wlan_crypto_peer_getkey(peer, keyidx);
+	else if (vdev)
+		key = wlan_crypto_vdev_getkey(vdev, keyidx);
+
+	if ((key) && key->valid)
+		return true;
+
+	return false;
+}
+
 static void wlan_crypto_gmac_pn_swap(uint8_t *a, uint8_t *b)
 {
 	a[0] = b[5];

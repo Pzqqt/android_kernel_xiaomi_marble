@@ -245,6 +245,20 @@ bool wlan_crypto_is_pmf_enabled(struct wlan_objmgr_vdev *vdev,
 					struct wlan_objmgr_peer *peer);
 
 /**
+ * wlan_crypto_is_key_valid - called by mgmt txrx to check if key is valid
+ * @vdev: vdev
+ * @peer: peer
+ * @keyidx : key index
+ *
+ * This function gets called by mgmt txrx to check if key is valid
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_is_key_valid(struct wlan_objmgr_vdev *vdev,
+			      struct wlan_objmgr_peer *peer,
+			      uint16_t keyidx);
+
+/**
  * wlan_crypto_add_mmie - called by mgmt txrx to add mmie in frame
  * @vdev: vdev
  * @frm:  frame starting pointer
