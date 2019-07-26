@@ -2925,9 +2925,12 @@ QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
 {
 	struct dp_peer *peer;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	uint8_t peer_id;
 
-	peer = dp_peer_find_by_local_id((struct cdp_pdev *)pdev,
-			sta_desc->sta_id);
+	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev,
+				    sta_desc->peer_addr.bytes,
+				    &peer_id);
+
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 
