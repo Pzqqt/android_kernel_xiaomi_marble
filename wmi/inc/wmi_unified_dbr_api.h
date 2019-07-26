@@ -24,10 +24,6 @@
 
 #include "wmi_unified_dbr_param.h"
 
-/* Opaque handle of WMI structure */
-struct wmi_unified;
-typedef struct wmi_unified *wmi_unified_t;
-
 /**
  * wmi_unified_dbr_ring_cfg: Configure direct buffer rx rings
  * @wmi_handle: WMI handle
