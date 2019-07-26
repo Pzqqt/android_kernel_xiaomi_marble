@@ -4639,6 +4639,9 @@ typedef struct {
 #define WMI_TX_SEND_PARAM_FRAME_TYPE_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 20, 1)
 #define WMI_TX_SEND_PARAM_FRAME_TYPE_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 20, 1, value)
 
+#define WMI_TX_SEND_PARAM_CFR_CAPTURE_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 21, 1)
+#define WMI_TX_SEND_PARAM_CFR_CAPTURE_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 21, 1, value)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tx_send_params */
 
@@ -4739,7 +4742,7 @@ typedef struct {
                 /* chain_mask - specify which chains to transmit from
                  * If not set, target will choose what chain_mask to use.
                  */
-                 chain_mask: 8,
+                chain_mask: 8,
 
                 /* The bits in this mask correspond to the values as below
                  *     bit  0 -> 5MHz
@@ -4751,7 +4754,7 @@ typedef struct {
                  *     bit  6 -> 80_80MHz
                  * If no bits are set, target can choose what BW to use.
                  */
-                 bw_mask: 7,
+                bw_mask: 7,
 
                 /* preamble_type_mask -
                  * Specify which preamble types (CCK, OFDM, HT, VHT) the target
@@ -4764,15 +4767,19 @@ typedef struct {
                  *     bit 4: if set, HE
                  * If no bits are set, target can choose what preamble type to use.
                  */
-                 preamble_type: 5,
+                preamble_type: 5,
 
                 /* Data:1 Mgmt:0
                  */
-                 frame_type: 1,
+                frame_type: 1,
 
-                 reserved1_31_21: 11;
-       };
-       A_UINT32 tx_param_dword1;
+                /* Capture CFR when bit is set
+                 */
+                cfr_capture: 1,
+
+                reserved1_31_22: 10;
+        };
+        A_UINT32 tx_param_dword1;
     };
 } wmi_tx_send_params;
 
@@ -16962,6 +16969,8 @@ typedef enum {
 typedef enum {
     /* Send null frame on the requested bw and capture CFR on ACK */
     WMI_PEER_CFR_CAPTURE_METHOD_NULL_FRAME = 0,
+    WMI_PEER_CFR_CAPTURE_METHOD_NULL_FRAME_WITH_PHASE = 1,
+    WMI_PEER_CFR_CAPTURE_METHOD_PROBE_RESP = 2,
     /* New methods to be added here */
     WMI_PEER_CFR_CAPTURE_METHOD_MAX,
 } WMI_PEER_CFR_CAPTURE_METHOD;
@@ -27183,6 +27192,33 @@ typedef struct {
      */
     A_UINT32 chain_rssi[WMI_MAX_CHAINS];
 } wmi_peer_cfr_capture_event_fixed_param;
+
+#define WMI_UNIFIED_CHAIN_PHASE_MASK 0x0000ffff
+#define WMI_UNIFIED_CHAIN_PHASE_GET(tlv, chain_idx) \
+    ((A_UINT16) ((tlv)->chain_phase[chain_idx] & WMI_UNIFIED_CHAIN_PHASE_MASK))
+#define WMI_UNIFIED_CHAIN_PHASE_SET(tlv, chain_idx, value) \
+    (tlv)->chain_phase[chain_idx] = (WMI_UNIFIED_CHAIN_PHASE_MASK & (value))
+
+typedef struct {
+    /** TLV tag and len; tag equals
+    * WMITLV_TAG_STRUC_wmi_peer_cfr_capture_event_phase_fixed_param */
+    A_UINT32 tlv_header;
+
+    /* Per chain AoA phase data of the Peer, for up to WMI_MAX_CHAINS.
+     * USE WMI_UNIFIED_CHAIN_PHASE_GET to extract the phase value for
+     * a particular chain.
+     * Only lower 2 bytes will contain phase data for a particular chain.
+     * The values in phase data will be from 0  1023 as mapping of
+     * 0-359 degrees using the formula -
+     * phase data = phase in degrees * 1024 / 360
+     *
+     * Target will set 0xFFFF for all invalid chains.
+     *
+     * The WMI_UNIFIED_CHAIN_PHASE_GET/SET macros can be used to access
+     * the valid portion of the 4-byte word containing the chain phase data.
+     */
+    A_UINT32 chain_phase[WMI_MAX_CHAINS];
+} wmi_peer_cfr_capture_event_phase_fixed_param;
 
 #define WMI_PEER_CFR_CAPTURE_EVT_STATUS_OK      0x80000000
 #define WMI_PEER_CFR_CAPTURE_EVT_STATUS_OK_S    31

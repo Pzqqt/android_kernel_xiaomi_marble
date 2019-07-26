@@ -1001,6 +1001,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_get_elna_bypass_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_get_elna_bypass_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_pmkid_request_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_cfr_capture_event_phase_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -4012,7 +4013,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID);
 
 /* Peer CFR capture cmd */
 #define WMITLV_TABLE_WMI_PEER_CFR_CAPTURE_CMDID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_cfr_capture_cmd_fixed_param, wmi_peer_cfr_capture_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_cfr_capture_cmd_fixed_param, wmi_peer_cfr_capture_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_cfr_capture_event_phase_fixed_param, wmi_peer_cfr_capture_event_phase_fixed_param, phase_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_CFR_CAPTURE_CMDID);
 
 /* CHANNEL WIDTH SWITCH commands for peers. */
