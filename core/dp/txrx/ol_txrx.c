@@ -4770,20 +4770,17 @@ static QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	union ol_txrx_peer_update_param_t param;
 	struct privacy_exemption privacy_filter;
+	uint8_t peer_id;
 
 	if (!pdev) {
 		ol_txrx_err("Pdev is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (sta_desc->sta_id >= WLAN_MAX_STA_COUNT) {
-		ol_txrx_err("Invalid sta id :%d",
-			 sta_desc->sta_id);
-		return QDF_STATUS_E_INVAL;
-	}
+	peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
+					 sta_desc->peer_addr.bytes,
+					 &peer_id);
 
-	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev,
-					     sta_desc->sta_id);
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 
