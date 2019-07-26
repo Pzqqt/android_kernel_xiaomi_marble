@@ -2279,7 +2279,12 @@ static void dp_panel_handle_sink_request(struct dp_panel *dp_panel)
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
 
 	if (panel->link->sink_request & DP_TEST_LINK_EDID_READ) {
-		u8 checksum = sde_get_edid_checksum(dp_panel->edid_ctrl);
+		u8 checksum;
+
+		if (dp_panel->edid_ctrl->edid)
+			checksum = sde_get_edid_checksum(dp_panel->edid_ctrl);
+		else
+			checksum = dp_panel->connector->checksum;
 
 		panel->link->send_edid_checksum(panel->link, checksum);
 		panel->link->send_test_response(panel->link);
