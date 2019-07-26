@@ -2797,6 +2797,8 @@ uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 			      const size_t version_len, uint8_t *version)
 {
 	uint32_t size;
+	uint8_t reg_major = 0, reg_minor = 0, bdf_major = 0, bdf_minor = 0;
+	struct target_psoc_info *tgt_hdl;
 
 	if (!hdd_ctx) {
 		hdd_err("Invalid context, HDD context is null");
@@ -2807,9 +2809,13 @@ uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 		hdd_err("Invalid buffer pointr or buffer len\n");
 		return 0;
 	}
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(hdd_ctx->psoc);
+	if (tgt_hdl)
+		target_psoc_get_version_info(tgt_hdl, &reg_major, &reg_minor,
+					     &bdf_major, &bdf_minor);
 
 	size = scnprintf(version, version_len,
-			 "Host SW:%s, FW:%d.%d.%d.%d.%d.%d, HW:%s, Board ver: %x Ref design id: %x, Customer id: %x, Project id: %x, Board Data Rev: %x",
+			 "Host SW:%s, FW:%d.%d.%d.%d.%d.%d, HW:%s, Board ver: %x Ref design id: %x, Customer id: %x, Project id: %x, Board Data Rev: %x, REG DB: %u:%u, BDF REG DB: %u:%u",
 			 QWLAN_VERSIONSTR,
 			 hdd_ctx->fw_version_info.major_spid,
 			 hdd_ctx->fw_version_info.minor_spid,
@@ -2822,7 +2828,8 @@ uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 			 hdd_ctx->hw_bd_info.ref_design_id,
 			 hdd_ctx->hw_bd_info.customer_id,
 			 hdd_ctx->hw_bd_info.project_id,
-			 hdd_ctx->hw_bd_info.board_data_rev);
+			 hdd_ctx->hw_bd_info.board_data_rev,
+			 reg_major, reg_minor, bdf_major, bdf_minor);
 
 	return size;
 }
