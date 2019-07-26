@@ -1060,7 +1060,6 @@ struct ol_txrx_pdev_t {
 
 	void (*offld_flush_cb)(void *);
 	struct ol_txrx_peer_t *self_peer;
-	qdf_work_t peer_unmap_timer_work;
 
 	/* dp debug fs */
 	struct dentry *dpt_stats_log_dir;
