@@ -25,6 +25,9 @@
 #ifndef __REG_DB_H
 #define __REG_DB_H
 
+/* Alpha2 code for world reg domain */
+#define REG_WORLD_ALPHA2 "00"
+
 /**
  * struct regulatory_rule
  * @start_freq: start frequency

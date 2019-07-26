@@ -66,11 +66,7 @@ bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch)
 	return false;
 }
 
-/**
- * reg_is_world_ctry_code() - Check if the given country code is WORLD regdomain
- * @ctry_code: Country code value.
- */
-static bool reg_is_world_ctry_code(uint16_t ctry_code)
+bool reg_is_world_ctry_code(uint16_t ctry_code)
 {
 	if ((ctry_code & 0xFFF0) == DEFAULT_WORLD_REGDMN)
 		return true;

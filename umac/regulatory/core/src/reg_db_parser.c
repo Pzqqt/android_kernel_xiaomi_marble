@@ -260,6 +260,50 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_REG_CLIENT
+/**
+ * reg_update_alpha2_from_domain() - Get country alpha2 code from reg domain
+ * @reg_info: pointer to hold alpha2 code
+ *
+ * This function is used to populate alpha2 of @reg_info with:
+ *	(a) "00" (REG_WORLD_ALPHA2) for WORLD domain and
+ *	(b) alpha2 of first country matching with non WORLD domain.
+ *
+ * Return: None
+ */
+static void
+reg_update_alpha2_from_domain(struct cur_regulatory_info *reg_info)
+{
+	uint16_t i;
+	int num_countries;
+
+	if (reg_is_world_ctry_code(reg_info->reg_dmn_pair)) {
+		qdf_mem_copy(reg_info->alpha2, REG_WORLD_ALPHA2,
+			     sizeof(reg_info->alpha2));
+		return;
+	}
+
+	reg_get_num_countries(&num_countries);
+
+	for (i = 0; i < (uint16_t)num_countries; i++)
+		if (g_all_countries[i].reg_dmn_pair_id ==
+		    reg_info->reg_dmn_pair)
+			break;
+
+	if (i == (uint16_t)num_countries)
+		return;
+
+	qdf_mem_copy(reg_info->alpha2, g_all_countries[i].alpha2,
+		     sizeof(g_all_countries[i].alpha2));
+	reg_info->ctry_code = g_all_countries[i].country_code;
+}
+#else
+static inline void
+reg_update_alpha2_from_domain(struct cur_regulatory_info *reg_info)
+{
+}
+#endif
+
 static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 		struct cur_regulatory_info *reg_info,
 		uint16_t regdmn_pair)
@@ -284,6 +328,9 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 		reg_info->reg_dmn_pair =
 			g_reg_dmn_pairs[regdmn_pair].reg_dmn_pair_id;
 		reg_info->ctry_code = 0;
+
+		reg_update_alpha2_from_domain(reg_info);
+
 		reg_info->dfs_region = regdomains_5g[dmn_id_5g].dfs_region;
 		reg_info->phybitmap = 0;
 

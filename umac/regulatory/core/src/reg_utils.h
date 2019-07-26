@@ -42,6 +42,14 @@
 	 - REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	\
 	 > REG_SBS_SEPARATION_THRESHOLD)
 
+/**
+ * reg_is_world_ctry_code() - Check if the given country code is WORLD regdomain
+ * @ctry_code: Country code value.
+ *
+ * Return: If country code is WORLD regdomain return true else false
+ */
+bool reg_is_world_ctry_code(uint16_t ctry_code);
+
 #ifdef CONFIG_REG_CLIENT
 /**
  * reg_chan_has_dfs_attribute() - check channel has dfs attribue or not
