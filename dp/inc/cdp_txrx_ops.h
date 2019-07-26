@@ -1268,7 +1268,8 @@ struct cdp_lflowctl_ops {
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 	int (*deregister_tx_flow_control_cb)(uint8_t vdev_id);
 	void (*flow_control_cb)(struct cdp_vdev *vdev, bool tx_resume);
-	bool (*get_tx_resource)(uint8_t sta_id,
+	bool (*get_tx_resource)(struct cdp_pdev *pdev,
+			 struct qdf_mac_addr peer_addr,
 			 unsigned int low_watermark,
 			 unsigned int high_watermark_offset);
 	int (*ll_set_tx_pause_q_depth)(uint8_t vdev_id, int pause_q_depth);

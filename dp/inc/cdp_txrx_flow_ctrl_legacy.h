@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -166,7 +166,8 @@ cdp_fc_deregister(ol_txrx_soc_handle soc, uint8_t vdev_id)
 /**
  * cdp_fc_get_tx_resource() - get data path resource count
  * @soc - data path soc handle
- * @sta_id - local peer id
+ * @pdev - datapath pdev instance
+ * @peer_addr - peer mac address
  * @low_watermark - low resource threshold
  * @high_watermark_offset - high resource threshold
  *
@@ -176,8 +177,10 @@ cdp_fc_deregister(ol_txrx_soc_handle soc, uint8_t vdev_id)
  *        false resource is not avaialbe
  */
 static inline bool
-cdp_fc_get_tx_resource(ol_txrx_soc_handle soc, uint8_t sta_id,
-		unsigned int low_watermark, unsigned int high_watermark_offset)
+cdp_fc_get_tx_resource(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+		       struct qdf_mac_addr peer_addr,
+		       unsigned int low_watermark,
+		       unsigned int high_watermark_offset)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -190,7 +193,7 @@ cdp_fc_get_tx_resource(ol_txrx_soc_handle soc, uint8_t sta_id,
 	    !soc->ops->l_flowctl_ops->get_tx_resource)
 		return false;
 
-	return soc->ops->l_flowctl_ops->get_tx_resource(sta_id,
+	return soc->ops->l_flowctl_ops->get_tx_resource(pdev, peer_addr,
 			low_watermark, high_watermark_offset);
 }
 
