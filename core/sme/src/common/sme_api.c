@@ -4692,7 +4692,9 @@ QDF_STATUS sme_get_operation_channel(mac_handle_t mac_handle,
 			eCSR_BSS_TYPE_INFRA_AP)
 		    || (pSession->connectedProfile.BSSType ==
 			eCSR_BSS_TYPE_START_IBSS)) {
-			*pChannel = pSession->connectedProfile.operationChannel;
+			*pChannel = wlan_reg_freq_to_chan(
+					mac->pdev,
+					pSession->connectedProfile.op_freq);
 			return QDF_STATUS_SUCCESS;
 		}
 	}
@@ -11997,7 +11999,9 @@ static enum band_info sme_get_connected_roaming_vdev_band(void)
 	session_id = csr_get_roam_enabled_sta_sessionid(mac);
 	if (session_id != WLAN_UMAC_VDEV_ID_MAX) {
 		session = CSR_GET_SESSION(mac, session_id);
-		channel = session->connectedProfile.operationChannel;
+		channel = wlan_reg_freq_to_chan(
+					mac->pdev,
+					session->connectedProfile.op_freq);
 		band = csr_get_rf_band(channel);
 		return band;
 	}

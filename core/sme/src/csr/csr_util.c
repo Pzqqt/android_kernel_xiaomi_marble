@@ -684,9 +684,10 @@ uint8_t csr_get_infra_operation_channel(struct mac_context *mac, uint8_t session
 	uint8_t channel;
 
 	if (CSR_IS_SESSION_VALID(mac, sessionId)) {
-		channel =
-			mac->roam.roamSession[sessionId].connectedProfile.
-			operationChannel;
+		channel = wlan_reg_freq_to_chan(
+				mac->pdev,
+				mac->roam.roamSession[sessionId].
+				connectedProfile.op_freq);
 	} else {
 		channel = 0;
 	}
@@ -732,7 +733,9 @@ uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx)
 				(persona == QDF_SAP_MODE))
 				 && (session->connectState !=
 					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)))
-			return session->connectedProfile.operationChannel;
+			return wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					session->connectedProfile.op_freq);
 
 	}
 	return 0;
@@ -758,7 +761,9 @@ uint8_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
 		     (persona == QDF_SAP_MODE)) &&
 		     (session->connectState !=
 		      eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED))
-			return session->connectedProfile.operationChannel;
+			return wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					session->connectedProfile.op_freq);
 	}
 
 	return 0;
@@ -941,6 +946,10 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
 		uint16_t *sap_ch, uint16_t *sap_hbw, uint16_t *sap_cfreq,
 		uint16_t *intf_ch, uint16_t *intf_hbw, uint16_t *intf_cfreq)
 {
+	uint8_t op_chan;
+
+	op_chan = wlan_reg_freq_to_chan(mac_ctx->pdev,
+					session->connectedProfile.op_freq);
 	/*
 	 * if conc_custom_rule1 is defined then we don't
 	 * want p2pgo to follow SAP's channel or SAP to
@@ -949,13 +958,13 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
 	if (0 == mac_ctx->roam.configParam.conc_custom_rule1 &&
 		0 == mac_ctx->roam.configParam.conc_custom_rule2) {
 		if (*sap_ch == 0) {
-			*sap_ch = session->connectedProfile.operationChannel;
+			*sap_ch = op_chan;
 			csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.ht_profile,
 				*sap_ch, sap_cfreq, sap_hbw);
 		} else if (*sap_ch !=
 				session->connectedProfile.operationChannel) {
-			*intf_ch = session->connectedProfile.operationChannel;
+			*intf_ch = op_chan;
 			csr_get_ch_from_ht_profile(mac_ctx,
 					&session->connectedProfile.ht_profile,
 					*intf_ch, intf_cfreq, intf_hbw);
@@ -963,7 +972,7 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
 	} else if (*sap_ch == 0 &&
 			(session->pCurRoamProfile->csrPersona ==
 					QDF_SAP_MODE)) {
-		*sap_ch = session->connectedProfile.operationChannel;
+		*sap_ch = op_chan;
 		csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.ht_profile,
 				*sap_ch, sap_cfreq, sap_hbw);
@@ -1029,7 +1038,9 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 				QDF_P2P_CLIENT_MODE)) &&
 			(session->connectState ==
 				eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)) {
-			intf_ch = session->connectedProfile.operationChannel;
+			intf_ch = wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					session->connectedProfile.op_freq);
 			csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.ht_profile,
 				intf_ch, &intf_cfreq, &intf_hbw);
@@ -2336,12 +2347,14 @@ static bool csr_validate_p2pgo_bcn_intrvl(struct mac_context *mac_ctx,
 		(roamsession->pCurRoamProfile->csrPersona ==
 			  QDF_STA_MODE))) {
 		/* check for P2P_client scenario */
-		if ((conn_profile->operationChannel == 0) &&
-			(conn_profile->beaconInterval == 0))
+		if ((conn_profile->op_freq == 0) &&
+		    (conn_profile->beaconInterval == 0))
 			return false;
 
 		if (csr_is_conn_state_connected_infra(mac_ctx, session_id) &&
-			(conn_profile->operationChannel != chnl_id) &&
+			(wlan_reg_freq_to_chan(
+				mac_ctx->pdev,
+				conn_profile->op_freq) != chnl_id) &&
 			(conn_profile->beaconInterval != *bcn_interval)) {
 			/*
 			 * Updated beaconInterval should be used only when
@@ -6397,8 +6410,10 @@ bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint8_t channel)
 			    (oper_mode == QDF_SAP_MODE))
 			    && (session->connectState !=
 			    eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)))
-				oper_channel = session->connectedProfile.
-					operationChannel;
+				oper_channel =
+				wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					session->connectedProfile.op_freq);
 
 			if (oper_channel && channel != oper_channel &&
 			    (!policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) ||

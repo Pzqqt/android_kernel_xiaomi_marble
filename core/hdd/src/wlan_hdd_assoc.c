@@ -959,6 +959,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	eCsrEncryptionType encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	QDF_ASSERT(roam_info);
 
@@ -1012,7 +1013,10 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 				sta_ctx->conn_info.auth_type;
 
 			sta_ctx->conn_info.channel =
-			    roam_info->u.pConnectedProfile->operationChannel;
+			wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				roam_info->u.pConnectedProfile->op_freq);
+
 			sta_ctx->conn_info.freq =
 				roam_info->u.pConnectedProfile->op_freq;
 
