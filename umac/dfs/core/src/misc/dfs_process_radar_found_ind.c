@@ -858,20 +858,20 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		  dfs->is_radar_found_on_secondary_seg,
 		  dfs_is_precac_timer_running(dfs));
 	/*
-	 * Even if radar found on primary, we need to move the channel
-	 * from precac-required-list and precac-done-list to
-	 * precac-nol-list.
+	 * Even if radar found on primary, we need to mark the channel as NOL
+	 * in preCAC list. The preCAC list also maintains the current CAC
+	 * channels as part of pre-cleared DFS. Hence call the API
+	 * to mark channels as NOL irrespective of preCAC being enabled or not.
 	 */
 
-	if (dfs->dfs_precac_enable || dfs->dfs_agile_precac_enable) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			  "%s: %d Radar found on dfs detector:%d",
-			  __func__, __LINE__, radar_found->detector_id);
-		dfs_mark_precac_nol(dfs,
-				    dfs->is_radar_found_on_secondary_seg,
-				    radar_found->detector_id, channels,
-				    num_channels);
-	}
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		  "%s: %d Radar found on dfs detector:%d",
+		  __func__, __LINE__, radar_found->detector_id);
+	dfs_mark_precac_nol(dfs,
+			    dfs->is_radar_found_on_secondary_seg,
+			    radar_found->detector_id,
+			    channels,
+			    num_channels);
 
 	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN) {
 		/* Remove chan from ETSI Pre-CAC Cleared List*/
