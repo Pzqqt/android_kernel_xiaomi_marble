@@ -267,6 +267,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 			  FL("No suitable channel, so select default channel"));
 		sap_ctx->channel =
 			sap_select_default_oper_chan(sap_ctx->acs_cfg);
+		sap_ctx->acs_cfg->pri_ch = sap_ctx->channel;
 	} else {
 		/* Valid Channel Found from scan results. */
 		sap_ctx->acs_cfg->pri_ch = oper_channel;
