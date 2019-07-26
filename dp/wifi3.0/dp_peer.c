@@ -2949,19 +2949,23 @@ QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
 /**
  * dp_clear_peer() - remove peer from physical device
  * @pdev - data path device instance
- * @sta_id - local peer id
+ * @peer_addr - peer mac address
  *
  * remove peer from physical device
  *
  * Return: QDF_STATUS_SUCCESS registration success
  *         QDF_STATUS_E_FAULT peer not found
  */
-QDF_STATUS dp_clear_peer(struct cdp_pdev *pdev_handle, uint8_t local_id)
+QDF_STATUS
+dp_clear_peer(struct cdp_pdev *pdev_handle, struct qdf_mac_addr peer_addr)
 {
 	struct dp_peer *peer;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	/* peer_id to be removed */
+	uint8_t peer_id;
 
-	peer = dp_peer_find_by_local_id((struct cdp_pdev *)pdev, local_id);
+	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, peer_addr.bytes,
+				    &peer_id);
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 

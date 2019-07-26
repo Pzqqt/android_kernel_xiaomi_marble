@@ -1102,7 +1102,8 @@ struct cdp_ocb_ops {
 struct cdp_peer_ops {
 	QDF_STATUS (*register_peer)(struct cdp_pdev *pdev,
 			struct ol_txrx_desc_type *sta_desc);
-	QDF_STATUS (*clear_peer)(struct cdp_pdev *pdev, uint8_t sta_id);
+	QDF_STATUS (*clear_peer)(struct cdp_pdev *pdev,
+				 struct qdf_mac_addr peer_addr);
 	QDF_STATUS (*change_peer_state)(uint8_t sta_id,
 			enum ol_txrx_peer_state sta_state,
 			bool roam_synch_in_progress);

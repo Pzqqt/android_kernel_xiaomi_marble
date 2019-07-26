@@ -57,7 +57,7 @@ cdp_peer_register(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  * cdp_clear_peer() - remove peer from physical device
  * @soc - data path soc handle
  * @pdev - data path device instance
- * @sta_id - local peer id
+ * @peer_addr - peer mac address
  *
  * remove peer from physical device
  *
@@ -65,7 +65,8 @@ cdp_peer_register(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  *         QDF_STATUS_E_NOSUPPORT not support this feature
  */
 static inline QDF_STATUS
-cdp_clear_peer(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, uint8_t sta_id)
+cdp_clear_peer(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+	       struct qdf_mac_addr peer_addr)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -74,7 +75,7 @@ cdp_clear_peer(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, uint8_t sta_id)
 	}
 
 	if (soc->ops->peer_ops->clear_peer)
-		return soc->ops->peer_ops->clear_peer(pdev, sta_id);
+		return soc->ops->peer_ops->clear_peer(pdev, peer_addr);
 
 	return QDF_STATUS_E_NOSUPPORT;
 }

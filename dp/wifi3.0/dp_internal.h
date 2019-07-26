@@ -788,7 +788,8 @@ extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 #ifdef DP_PEER_EXTENDED_API
 QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
 		struct ol_txrx_desc_type *sta_desc);
-QDF_STATUS dp_clear_peer(struct cdp_pdev *pdev_handle, uint8_t local_id);
+QDF_STATUS dp_clear_peer(struct cdp_pdev *pdev_handle,
+			 struct qdf_mac_addr peer_addr);
 void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 		struct cdp_vdev *vdev,
 		uint8_t *peer_addr, uint8_t *local_id);
