@@ -212,4 +212,66 @@ void
 dp_peer_update_inactive_time(struct dp_pdev *pdev, uint32_t tag_type,
 			     uint32_t *tag_buf);
 
+#ifndef QCA_MULTIPASS_SUPPORT
+/**
+ * dp_peer_set_vlan_id: set vlan_id for this peer
+ * @cdp_soc: soc handle
+ * @peer_mac: mac address
+ * @vlan_id: vlan id for peer
+ *
+ * return: void
+ */
+static inline
+void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
+			 struct cdp_vdev *vdev_handle, uint8_t *peer_mac,
+			 uint16_t vlan_id)
+{
+}
+
+/**
+ * dp_set_vlan_groupkey: set vlan map for vdev
+ * @vdev_handle: pointer to vdev
+ * @vlan_id: vlan_id
+ * @group_key: group key for vlan
+ *
+ * return: set success/failure
+ */
+static inline
+QDF_STATUS dp_set_vlan_groupkey(struct cdp_vdev *vdev_handle,
+				uint16_t vlan_id, uint16_t group_key)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_peer_multipass_list_init: initialize multipass peer list
+ * @vdev: pointer to vdev
+ *
+ * return: void
+ */
+static inline
+void dp_peer_multipass_list_init(struct dp_vdev *vdev)
+{
+}
+
+/**
+ * dp_peer_multipass_list_remove: remove peer from special peer list
+ * @peer: peer handle
+ *
+ * return: void
+ */
+static inline
+void dp_peer_multipass_list_remove(struct dp_peer *peer)
+{
+}
+#else
+void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
+			 struct cdp_vdev *vdev_handle, uint8_t *peer_mac,
+			 uint16_t vlan_id);
+QDF_STATUS dp_set_vlan_groupkey(struct cdp_vdev *vdev_handle,
+				uint16_t vlan_id, uint16_t group_key);
+void dp_peer_multipass_list_init(struct dp_vdev *vdev);
+void dp_peer_multipass_list_remove(struct dp_peer *peer);
+#endif
+
 #endif /* _DP_PEER_H_ */

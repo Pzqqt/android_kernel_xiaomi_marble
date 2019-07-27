@@ -4663,6 +4663,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	 */
 
 	TAILQ_INIT(&vdev->peer_list);
+	dp_peer_multipass_list_init(vdev);
 
 	if ((soc->intr_mode == DP_INTR_POLL) &&
 	    wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx) != 0) {
@@ -5913,6 +5914,7 @@ static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 	dp_peer_rx_bufq_resources_deinit(peer);
 
 	qdf_spinlock_destroy(&peer->peer_info_lock);
+	dp_peer_multipass_list_remove(peer);
 
 	/*
 	 * Remove the reference added during peer_attach.
@@ -7654,6 +7656,9 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 	case CDP_ENABLE_QWRAP_ISOLATION:
 		vdev->isolation_vdev = val;
 		break;
+	case CDP_UPDATE_MULTIPASS:
+		vdev->multipass_en = val;
+		break;
 	default:
 		break;
 	}
@@ -9019,6 +9024,9 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_vdev_tidmap_tbl_id = dp_set_vdev_tidmap_tbl_id_wifi3,
 
 	.txrx_cp_peer_del_response = dp_cp_peer_del_resp_handler,
+#ifdef QCA_MULTIPASS_SUPPORT
+	.set_vlan_groupkey = dp_set_vlan_groupkey,
+#endif
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
@@ -9059,6 +9067,9 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 				dp_dump_pdev_rx_protocol_tag_stats,
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+#ifdef QCA_MULTIPASS_SUPPORT
+	.txrx_peer_set_vlan_id = dp_peer_set_vlan_id,
+#endif /*QCA_MULTIPASS_SUPPORT*/
 };
 
 static struct cdp_me_ops dp_ops_me = {

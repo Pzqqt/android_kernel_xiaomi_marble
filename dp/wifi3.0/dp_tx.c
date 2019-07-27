@@ -303,8 +303,8 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
  * Return: HTT metadata size
  *
  */
-static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		struct dp_tx_msdu_info_s *msdu_info)
+uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+				   struct dp_tx_msdu_info_s *msdu_info)
 {
 	uint32_t *meta_data = msdu_info->meta_data;
 	struct htt_tx_msdu_desc_ext2_t *desc_ext =
@@ -323,12 +323,26 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	htt_desc_size = sizeof(struct htt_tx_msdu_desc_ext2_t);
 	htt_desc_size_aligned = (htt_desc_size + 7) & ~0x7;
 
-	if (vdev->mesh_vdev || msdu_info->is_tx_sniffer) {
+	if (vdev->mesh_vdev || msdu_info->is_tx_sniffer ||
+	    HTT_TX_MSDU_EXT2_DESC_FLAG_VALID_KEY_FLAGS_GET(msdu_info->
+							   meta_data[0])) {
 		if (qdf_unlikely(qdf_nbuf_headroom(nbuf) <
-					htt_desc_size_aligned)) {
-			DP_STATS_INC(vdev,
-				     tx_i.dropped.headroom_insufficient, 1);
-			return 0;
+				 htt_desc_size_aligned)) {
+			nbuf = qdf_nbuf_realloc_headroom(nbuf,
+							 htt_desc_size_aligned);
+			if (!nbuf) {
+				/*
+				 * qdf_nbuf_realloc_headroom won't do skb_clone
+				 * as skb_realloc_headroom does. so, no free is
+				 * needed here.
+				 */
+				DP_STATS_INC(vdev,
+					     tx_i.dropped.headroom_insufficient,
+					     1);
+				qdf_print(" %s[%d] skb_realloc_headroom failed",
+					  __func__, __LINE__);
+				return 0;
+			}
 		}
 		/* Fill and add HTT metaheader */
 		hdr = qdf_nbuf_push_head(nbuf, htt_desc_size_aligned);
@@ -745,6 +759,11 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->pkt_offset = 0;
 
 	dp_tx_trace_pkt(nbuf, tx_desc->id, vdev->vdev_id);
+
+	if (qdf_unlikely(vdev->multipass_en)) {
+		if (!dp_tx_multipass_process(soc, vdev, nbuf, msdu_info))
+			goto failure;
+	}
 
 	/*
 	 * For special modes (vdev_type == ocb or mesh), data frames should be
@@ -3805,6 +3824,7 @@ QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev)
 
 	/* Reset TX desc associated to this Vdev as NULL */
 	dp_tx_desc_flush(pdev, vdev, false);
+	dp_tx_vdev_multipass_deinit(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }

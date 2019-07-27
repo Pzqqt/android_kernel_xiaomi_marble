@@ -2025,6 +2025,13 @@ done:
 					   l2_hdr_offset);
 		}
 
+		/*
+		 * process frame for mulitpass phrase processing
+		 */
+		if (qdf_unlikely(vdev->multipass_en)) {
+			dp_rx_multipass_process(peer, nbuf, tid);
+		}
+
 		if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer)) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,

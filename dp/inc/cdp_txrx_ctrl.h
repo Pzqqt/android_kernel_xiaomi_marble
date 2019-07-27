@@ -467,6 +467,26 @@ cdp_peer_set_nawds(ol_txrx_soc_handle soc,
 			(peer, value);
 }
 
+#ifdef QCA_MULTIPASS_SUPPORT
+static inline void
+cdp_peer_set_vlan_id(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+		     uint8_t *peer_mac, uint8_t vlan_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_peer_set_vlan_id)
+		return;
+
+	soc->ops->ctrl_ops->txrx_peer_set_vlan_id(soc, vdev, peer_mac, vlan_id);
+}
+#endif
+
 /**
  * cdp_txrx_set_pdev_param() - set pdev parameter
  * @soc: opaque soc handle

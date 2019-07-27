@@ -1817,6 +1817,14 @@ struct dp_vdev {
 	uint8_t tidmap_prty;
 	/* Self Peer in STA mode */
 	struct dp_peer *vap_self_peer;
+
+	bool multipass_en;
+#ifdef QCA_MULTIPASS_SUPPORT
+	uint16_t *iv_vlan_map;
+
+	/* dp_peer special list */
+	TAILQ_HEAD(, dp_peer) mpass_peer_list;
+#endif
 };
 
 
@@ -1939,6 +1947,13 @@ struct dp_peer {
 	struct cdp_peer_rate_stats_ctx *wlanstats_ctx;
 	/* average sojourn time */
 	qdf_ewma_tx_lag avg_sojourn_msdu[CDP_DATA_TID_MAX];
+
+#ifdef QCA_MULTIPASS_SUPPORT
+	/* node in the special peer list element */
+	TAILQ_ENTRY(dp_peer) mpass_peer_list_elem;
+	/* vlan id for key */
+	uint16_t vlan_id;
+#endif
 
 #ifdef PEER_CACHE_RX_PKTS
 	qdf_atomic_t flush_in_progress;

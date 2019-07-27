@@ -1500,6 +1500,7 @@ cdp_get_peer_mac_addr_frm_id(ol_txrx_soc_handle soc, uint16_t peer_id,
 
 /**
  * cdp_set_vdev_dscp_tid_map(): function to set DSCP-tid map in the vap
+ * @soc : soc handle
  * @vdev: vdev handle
  * @map_id: id of the tid map
  *
@@ -1522,6 +1523,36 @@ static inline void cdp_set_vdev_dscp_tid_map(ol_txrx_soc_handle soc,
 	soc->ops->cmn_drv_ops->set_vdev_dscp_tid_map(vdev,
 				map_id);
 }
+
+#ifdef QCA_MULTIPASS_SUPPORT
+/**
+ * cdp_set_vlan_groupkey(): function to set vlan ID - group key map in the vap
+ * @soc : soc handle
+ * @vdev: vdev handle
+ * @vlan_id: vlan id
+ * @group_key: corresponding group key to vlan ID
+ *
+ * Return: void
+ */
+static inline
+QDF_STATUS cdp_set_vlan_groupkey(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+				 uint16_t vlan_id, uint16_t group_key)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_vlan_groupkey)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->set_vlan_groupkey(vdev, vlan_id,
+							group_key);
+}
+#endif
 
 /**
  * cdp_ath_get_total_per(): function to get hw retries

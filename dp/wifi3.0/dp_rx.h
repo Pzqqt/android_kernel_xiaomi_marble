@@ -1255,4 +1255,16 @@ static inline void dp_rx_flush_rx_cached(struct dp_peer *peer, bool drop)
 {
 }
 #endif
+
+#ifndef QCA_MULTIPASS_SUPPORT
+static inline
+bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf, uint8_t tid)
+{
+	return false;
+}
+#else
+bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf,
+			     uint8_t tid);
+#endif
+
 #endif /* _DP_RX_H */

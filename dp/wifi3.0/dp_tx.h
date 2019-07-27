@@ -237,6 +237,29 @@ static inline void dp_tx_me_exit(struct dp_pdev *pdev)
 	return;
 }
 #endif
+
+#ifndef QCA_MULTIPASS_SUPPORT
+static inline
+bool dp_tx_multipass_process(struct dp_soc *soc, struct dp_vdev *vdev,
+			     qdf_nbuf_t nbuf,
+			     struct dp_tx_msdu_info_s *msdu_info)
+{
+	return true;
+}
+
+static inline
+void dp_tx_vdev_multipass_deinit(struct dp_vdev *vdev)
+{
+}
+
+#else
+bool dp_tx_multipass_process(struct dp_soc *soc, struct dp_vdev *vdev,
+			     qdf_nbuf_t nbuf,
+			     struct dp_tx_msdu_info_s *msdu_info);
+
+void dp_tx_vdev_multipass_deinit(struct dp_vdev *vdev);
+#endif
+
 /**
  * dp_tx_get_queue() - Returns Tx queue IDs to be used for this Tx frame
  * @vdev: DP Virtual device handle
@@ -310,3 +333,5 @@ static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 }
 /* TODO TX_FEATURE_NOT_YET */
 #endif
+uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+				   struct dp_tx_msdu_info_s *msdu_info);

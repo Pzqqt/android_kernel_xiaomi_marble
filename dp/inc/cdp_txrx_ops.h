@@ -466,6 +466,10 @@ struct cdp_cmn_ops {
 	QDF_STATUS (*set_vdev_tidmap_prty)(struct cdp_vdev *vdev, uint8_t prty);
 	QDF_STATUS (*set_vdev_tidmap_tbl_id)(struct cdp_vdev *vdev,
 					     uint8_t mapid);
+#ifdef QCA_MULTIPASS_SUPPORT
+	QDF_STATUS (*set_vlan_groupkey)(struct cdp_vdev *vdev_handle,
+					uint16_t vlan_id, uint16_t group_key);
+#endif
 };
 
 struct cdp_ctrl_ops {
@@ -664,6 +668,11 @@ struct cdp_ctrl_ops {
 				uint16_t protocol_type);
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+#ifdef QCA_MULTIPASS_SUPPORT
+	void (*txrx_peer_set_vlan_id)(ol_txrx_soc_handle soc,
+				      struct cdp_vdev *vdev, uint8_t *peer_mac,
+				      uint16_t vlan_id);
+#endif
 };
 
 struct cdp_me_ops {
