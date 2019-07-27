@@ -816,8 +816,9 @@ extern int dp_delba_process_wifi3(void *peer_handle,
  */
 int dp_delba_tx_completion_wifi3(void *peer_handle, uint8_t tid,
 				  int status);
-extern int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
-	uint32_t ba_window_size, uint32_t start_seq);
+extern QDF_STATUS dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
+					uint32_t ba_window_size,
+					uint32_t start_seq);
 
 extern QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc,
 	enum hal_reo_cmd_type type, struct hal_reo_cmd_params *params,
