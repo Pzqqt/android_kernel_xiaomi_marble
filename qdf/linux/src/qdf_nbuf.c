@@ -347,7 +347,23 @@ qdf_export_symbol(__qdf_nbuf_count_inc);
  */
 void __qdf_nbuf_count_dec(__qdf_nbuf_t nbuf)
 {
-	qdf_atomic_dec(&nbuf_count);
+	qdf_nbuf_t ext_list;
+	int num_nbuf;
+
+	if (qdf_nbuf_get_users(nbuf) > 1)
+		return;
+
+	num_nbuf = 1;
+
+	/* Take care to account for frag_list */
+	ext_list = qdf_nbuf_get_ext_list(nbuf);
+	while (ext_list) {
+		if (qdf_nbuf_get_users(ext_list) == 1)
+			++num_nbuf;
+		ext_list = qdf_nbuf_queue_next(ext_list);
+	}
+
+	qdf_atomic_sub(num_nbuf, &nbuf_count);
 }
 qdf_export_symbol(__qdf_nbuf_count_dec);
 #endif
