@@ -334,7 +334,16 @@ qdf_export_symbol(__qdf_nbuf_count_get);
  */
 void __qdf_nbuf_count_inc(qdf_nbuf_t nbuf)
 {
-	qdf_atomic_inc(&nbuf_count);
+	int num_nbuf = 1;
+	qdf_nbuf_t ext_list = qdf_nbuf_get_ext_list(nbuf);
+
+	/* Take care to account for frag_list */
+	while (ext_list) {
+		++num_nbuf;
+		ext_list = qdf_nbuf_queue_next(ext_list);
+	}
+
+	qdf_atomic_add(num_nbuf, &nbuf_count);
 }
 qdf_export_symbol(__qdf_nbuf_count_inc);
 
