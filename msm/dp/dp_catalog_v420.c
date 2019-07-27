@@ -3,10 +3,10 @@
  * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
 
 #include "dp_catalog.h"
 #include "dp_reg.h"
+#include "dp_debug.h"
 
 #define dp_catalog_get_priv_v420(x) ({ \
 	struct dp_catalog *dp_catalog; \
@@ -90,7 +90,7 @@ static void dp_catalog_aux_setup_v420(struct dp_catalog_aux *aux,
 	int i = 0;
 
 	if (!aux || !cfg) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -109,7 +109,7 @@ static void dp_catalog_aux_setup_v420(struct dp_catalog_aux *aux,
 	io_data = catalog->io->dp_phy;
 	/* DP AUX CFG register programming */
 	for (i = 0; i < PHY_AUX_CFG_MAX; i++) {
-		pr_debug("%s: offset=0x%08x, value=0x%08x\n",
+		DP_DEBUG("%s: offset=0x%08x, value=0x%08x\n",
 			dp_phy_aux_config_type_to_string(i),
 			cfg[i].offset, cfg[i].lut[cfg[i].current_index]);
 		dp_write(catalog->exe_mode, io_data, cfg[i].offset,
@@ -128,7 +128,7 @@ static void dp_catalog_aux_clear_hw_interrupts_v420(struct dp_catalog_aux *aux)
 	u32 data = 0;
 
 	if (!aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -161,12 +161,12 @@ static void dp_catalog_panel_config_msa_v420(struct dp_catalog_panel *panel,
 	struct dp_io_data *io_data;
 
 	if (!panel || !rate) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
 	if (panel->stream_id >= DP_STREAM_MAX) {
-		pr_err("invalid stream id:%d\n", panel->stream_id);
+		DP_ERR("invalid stream id:%d\n", panel->stream_id);
 		return;
 	}
 
@@ -180,7 +180,7 @@ static void dp_catalog_panel_config_msa_v420(struct dp_catalog_panel *panel,
 			MMSS_DP_PIXEL_M_V420 + reg_off);
 	pixel_n = dp_read(catalog->exe_mode, io_data,
 			MMSS_DP_PIXEL_N_V420 + reg_off);
-	pr_debug("pixel_m=0x%x, pixel_n=0x%x\n", pixel_m, pixel_n);
+	DP_DEBUG("pixel_m=0x%x, pixel_n=0x%x\n", pixel_m, pixel_n);
 
 	mvid = (pixel_m & 0xFFFF) * 5;
 	nvid = (0xFFFF & (~pixel_n)) + (pixel_m & 0xFFFF);
@@ -193,7 +193,7 @@ static void dp_catalog_panel_config_msa_v420(struct dp_catalog_panel *panel,
 		nvid = temp;
 	}
 
-	pr_debug("rate = %d\n", rate);
+	DP_DEBUG("rate = %d\n", rate);
 
 	if (panel->widebus_en)
 		mvid <<= 1;
@@ -211,7 +211,7 @@ static void dp_catalog_panel_config_msa_v420(struct dp_catalog_panel *panel,
 		nvid_off = DP1_SOFTWARE_NVID - DP_SOFTWARE_NVID;
 	}
 
-	pr_debug("mvid=0x%x, nvid=0x%x\n", mvid, nvid);
+	DP_DEBUG("mvid=0x%x, nvid=0x%x\n", mvid, nvid);
 	dp_write(catalog->exe_mode, io_data, DP_SOFTWARE_MVID + mvid_off, mvid);
 	dp_write(catalog->exe_mode, io_data, DP_SOFTWARE_NVID + nvid_off, nvid);
 }
@@ -225,7 +225,7 @@ static void dp_catalog_ctrl_phy_lane_cfg_v420(struct dp_catalog_ctrl *ctrl,
 	struct dp_io_data *io_data;
 
 	if (!ctrl) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -234,7 +234,7 @@ static void dp_catalog_ctrl_phy_lane_cfg_v420(struct dp_catalog_ctrl *ctrl,
 
 	info |= (ln_cnt & 0x0F);
 	info |= ((orientation & 0x0F) << 4);
-	pr_debug("Shared Info = 0x%x\n", info);
+	DP_DEBUG("Shared Info = 0x%x\n", info);
 
 	dp_write(catalog->exe_mode, io_data, DP_PHY_SPARE0_V420, info);
 }
@@ -249,11 +249,11 @@ static void dp_catalog_ctrl_update_vx_px_v420(struct dp_catalog_ctrl *ctrl,
 
 	if (!ctrl || !((v_level < MAX_VOLTAGE_LEVELS)
 		&& (p_level < MAX_PRE_EMP_LEVELS))) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
-	pr_debug("hw: v=%d p=%d, high=%d\n", v_level, p_level, high);
+	DP_DEBUG("hw: v=%d p=%d, high=%d\n", v_level, p_level, high);
 
 	catalog = dp_catalog_get_priv_v420(ctrl);
 
@@ -300,10 +300,10 @@ static void dp_catalog_ctrl_update_vx_px_v420(struct dp_catalog_ctrl *ctrl,
 		dp_write(catalog->exe_mode, io_data, TXn_TX_EMP_POST1_LVL,
 				value1);
 
-		pr_debug("hw: vx_value=0x%x px_value=0x%x\n",
+		DP_DEBUG("hw: vx_value=0x%x px_value=0x%x\n",
 			value0, value1);
 	} else {
-		pr_err("invalid vx (0x%x=0x%x), px (0x%x=0x%x\n",
+		DP_ERR("invalid vx (0x%x=0x%x), px (0x%x=0x%x\n",
 			v_level, value0, p_level, value1);
 	}
 }
@@ -361,7 +361,7 @@ int dp_catalog_get_v420(struct device *dev, struct dp_catalog *catalog,
 	struct dp_catalog_private_v420 *catalog_priv;
 
 	if (!dev || !catalog) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return -EINVAL;
 	}
 

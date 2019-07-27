@@ -3,8 +3,6 @@
  * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
-
 #include <linux/slab.h>
 #include <linux/device.h>
 #include <linux/delay.h>
@@ -14,12 +12,13 @@
 #include "dp_usbpd.h"
 #include "dp_gpio_hpd.h"
 #include "dp_lphw_hpd.h"
+#include "dp_debug.h"
 
 static void dp_hpd_host_init(struct dp_hpd *dp_hpd,
 		struct dp_catalog_hpd *catalog)
 {
 	if (!catalog) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 	catalog->config_hpd(catalog, true);
@@ -29,7 +28,7 @@ static void dp_hpd_host_deinit(struct dp_hpd *dp_hpd,
 		struct dp_catalog_hpd *catalog)
 {
 	if (!catalog) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 	catalog->config_hpd(catalog, false);
@@ -47,21 +46,21 @@ struct dp_hpd *dp_hpd_get(struct device *dev, struct dp_parser *parser,
 	if (parser->no_aux_switch && parser->lphw_hpd) {
 		dp_hpd = dp_lphw_hpd_get(dev, parser, catalog, cb);
 		if (IS_ERR(dp_hpd)) {
-			pr_err("failed to get lphw hpd\n");
+			DP_ERR("failed to get lphw hpd\n");
 			return dp_hpd;
 		}
 		dp_hpd->type = DP_HPD_LPHW;
 	} else if (parser->no_aux_switch) {
 		dp_hpd = dp_gpio_hpd_get(dev, cb);
 		if (IS_ERR(dp_hpd)) {
-			pr_err("failed to get gpio hpd\n");
+			DP_ERR("failed to get gpio hpd\n");
 			return dp_hpd;
 		}
 		dp_hpd->type = DP_HPD_GPIO;
 	} else {
 		dp_hpd = dp_usbpd_get(dev, cb);
 		if (IS_ERR(dp_hpd)) {
-			pr_err("failed to get usbpd\n");
+			DP_ERR("failed to get usbpd\n");
 			return dp_hpd;
 		}
 		dp_hpd->type = DP_HPD_USBPD;
@@ -93,7 +92,7 @@ void dp_hpd_put(struct dp_hpd *dp_hpd)
 		dp_lphw_hpd_put(dp_hpd);
 		break;
 	default:
-		pr_err("unknown hpd type %d\n", dp_hpd->type);
+		DP_ERR("unknown hpd type %d\n", dp_hpd->type);
 		break;
 	}
 }

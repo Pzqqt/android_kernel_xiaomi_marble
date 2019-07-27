@@ -3,13 +3,12 @@
  * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
-
 #include <linux/clk.h>
 #include <linux/pm_runtime.h>
 #include <drm/drmP.h>
 #include "dp_power.h"
 #include "dp_catalog.h"
+#include "dp_debug.h"
 
 #define DP_CLIENT_NAME_SIZE	20
 
@@ -43,7 +42,7 @@ static int dp_power_regulator_init(struct dp_power_private *power)
 			parser->mp[i].vreg_config,
 			parser->mp[i].num_vreg, 1);
 		if (rc) {
-			pr_err("failed to init vregs for %s\n",
+			DP_ERR("failed to init vregs for %s\n",
 				dp_parser_pm_name(i));
 			for (j = i - 1; j >= DP_CORE_PM; j--) {
 				msm_dss_config_vreg(&pdev->dev,
@@ -72,7 +71,7 @@ static void dp_power_regulator_deinit(struct dp_power_private *power)
 			parser->mp[i].vreg_config,
 			parser->mp[i].num_vreg, 0);
 		if (rc)
-			pr_err("failed to deinit vregs for %s\n",
+			DP_ERR("failed to deinit vregs for %s\n",
 				dp_parser_pm_name(i));
 	}
 }
@@ -89,7 +88,7 @@ static int dp_power_regulator_ctrl(struct dp_power_private *power, bool enable)
 			parser->mp[i].vreg_config,
 			parser->mp[i].num_vreg, enable);
 		if (rc) {
-			pr_err("failed to '%s' vregs for %s\n",
+			DP_ERR("failed to '%s' vregs for %s\n",
 					enable ? "enable" : "disable",
 					dp_parser_pm_name(i));
 			if (enable) {
@@ -124,7 +123,7 @@ static int dp_power_pinctrl_set(struct dp_power_private *power, bool active)
 			rc = pinctrl_select_state(parser->pinctrl.pin,
 				pin_state);
 			if (rc) {
-				pr_err("cannot direct hpd line to %s\n",
+				DP_ERR("cannot direct hpd line to %s\n",
 					active ? "ctrl" : "tlmm");
 				return rc;
 			}
@@ -140,11 +139,11 @@ static int dp_power_pinctrl_set(struct dp_power_private *power, bool active)
 		rc = pinctrl_select_state(parser->pinctrl.pin,
 				pin_state);
 		if (rc)
-			pr_err("can not set %s pins\n",
+			DP_ERR("can not set %s pins\n",
 			       active ? "dp_active"
 			       : "dp_sleep");
 	} else {
-		pr_err("invalid '%s' pinstate\n",
+		DP_ERR("invalid '%s' pinstate\n",
 		       active ? "dp_active"
 		       : "dp_sleep");
 	}
@@ -170,7 +169,7 @@ static int dp_power_clk_init(struct dp_power_private *power, bool enable)
 
 			rc = msm_dss_get_clk(dev, pm->clk_config, pm->num_clk);
 			if (rc) {
-				pr_err("failed to get %s clk. err=%d\n",
+				DP_ERR("failed to get %s clk. err=%d\n",
 					dp_parser_pm_name(module), rc);
 				goto exit;
 			}
@@ -178,25 +177,25 @@ static int dp_power_clk_init(struct dp_power_private *power, bool enable)
 
 		power->pixel_clk_rcg = devm_clk_get(dev, "pixel_clk_rcg");
 		if (IS_ERR(power->pixel_clk_rcg)) {
-			pr_debug("Unable to get DP pixel clk RCG\n");
+			DP_DEBUG("Unable to get DP pixel clk RCG\n");
 			power->pixel_clk_rcg = NULL;
 		}
 
 		power->pixel_parent = devm_clk_get(dev, "pixel_parent");
 		if (IS_ERR(power->pixel_parent)) {
-			pr_debug("Unable to get DP pixel RCG parent\n");
+			DP_DEBUG("Unable to get DP pixel RCG parent\n");
 			power->pixel_parent = NULL;
 		}
 
 		power->pixel1_clk_rcg = devm_clk_get(dev, "pixel1_clk_rcg");
 		if (IS_ERR(power->pixel1_clk_rcg)) {
-			pr_debug("Unable to get DP pixel1 clk RCG\n");
+			DP_DEBUG("Unable to get DP pixel1 clk RCG\n");
 			power->pixel1_clk_rcg = NULL;
 		}
 
 		power->pixel1_parent = devm_clk_get(dev, "pixel1_parent");
 		if (IS_ERR(power->pixel1_parent)) {
-			pr_debug("Unable to get DP pixel1 RCG parent\n");
+			DP_DEBUG("Unable to get DP pixel1 RCG parent\n");
 			power->pixel1_parent = NULL;
 		}
 	} else {
@@ -233,7 +232,7 @@ static int dp_power_clk_set_rate(struct dp_power_private *power,
 	struct dss_module_power *mp;
 
 	if (!power) {
-		pr_err("invalid power data\n");
+		DP_ERR("invalid power data\n");
 		rc = -EINVAL;
 		goto exit;
 	}
@@ -243,19 +242,19 @@ static int dp_power_clk_set_rate(struct dp_power_private *power,
 	if (enable) {
 		rc = msm_dss_clk_set_rate(mp->clk_config, mp->num_clk);
 		if (rc) {
-			pr_err("failed to set clks rate.\n");
+			DP_ERR("failed to set clks rate.\n");
 			goto exit;
 		}
 
 		rc = msm_dss_enable_clk(mp->clk_config, mp->num_clk, 1);
 		if (rc) {
-			pr_err("failed to enable clks\n");
+			DP_ERR("failed to enable clks\n");
 			goto exit;
 		}
 	} else {
 		rc = msm_dss_enable_clk(mp->clk_config, mp->num_clk, 0);
 		if (rc) {
-			pr_err("failed to disable clks\n");
+			DP_ERR("failed to disable clks\n");
 				goto exit;
 		}
 	}
@@ -271,7 +270,7 @@ static int dp_power_clk_enable(struct dp_power *dp_power,
 	struct dp_power_private *power;
 
 	if (!dp_power) {
-		pr_err("invalid power data\n");
+		DP_ERR("invalid power data\n");
 		rc = -EINVAL;
 		goto error;
 	}
@@ -281,33 +280,33 @@ static int dp_power_clk_enable(struct dp_power *dp_power,
 	mp = &power->parser->mp[pm_type];
 
 	if (pm_type >= DP_MAX_PM) {
-		pr_err("unsupported power module: %s\n",
+		DP_ERR("unsupported power module: %s\n",
 				dp_parser_pm_name(pm_type));
 		return -EINVAL;
 	}
 
 	if (enable) {
 		if (pm_type == DP_CORE_PM && power->core_clks_on) {
-			pr_debug("core clks already enabled\n");
+			DP_DEBUG("core clks already enabled\n");
 			return 0;
 		}
 
 		if ((pm_type == DP_STREAM0_PM) && (power->strm0_clks_on)) {
-			pr_debug("strm0 clks already enabled\n");
+			DP_DEBUG("strm0 clks already enabled\n");
 			return 0;
 		}
 
 		if ((pm_type == DP_STREAM1_PM) && (power->strm1_clks_on)) {
-			pr_debug("strm1 clks already enabled\n");
+			DP_DEBUG("strm1 clks already enabled\n");
 			return 0;
 		}
 
 		if ((pm_type == DP_CTRL_PM) && (!power->core_clks_on)) {
-			pr_debug("Need to enable core clks before link clks\n");
+			DP_DEBUG("Need to enable core clks before link clks\n");
 
 			rc = dp_power_clk_set_rate(power, pm_type, enable);
 			if (rc) {
-				pr_err("failed to enable clks: %s. err=%d\n",
+				DP_ERR("failed to enable clks: %s. err=%d\n",
 					dp_parser_pm_name(DP_CORE_PM), rc);
 				goto error;
 			} else {
@@ -316,14 +315,14 @@ static int dp_power_clk_enable(struct dp_power *dp_power,
 		}
 
 		if (pm_type == DP_LINK_PM && power->link_clks_on) {
-			pr_debug("links clks already enabled\n");
+			DP_DEBUG("links clks already enabled\n");
 			return 0;
 		}
 	}
 
 	rc = dp_power_clk_set_rate(power, pm_type, enable);
 	if (rc) {
-		pr_err("failed to '%s' clks for: %s. err=%d\n",
+		DP_ERR("failed to '%s' clks for: %s. err=%d\n",
 			enable ? "enable" : "disable",
 			dp_parser_pm_name(pm_type), rc);
 			goto error;
@@ -344,7 +343,7 @@ static int dp_power_clk_enable(struct dp_power *dp_power,
 	 * usecase, it is not going to flood the kernel logs. Also,
 	 * helpful in debugging the NOC issues.
 	 */
-	pr_info("core:%s link:%s strm0:%s strm1:%s\n",
+	DP_INFO("core:%s link:%s strm0:%s strm1:%s\n",
 		power->core_clks_on ? "on" : "off",
 		power->link_clks_on ? "on" : "off",
 		power->strm0_clks_on ? "on" : "off",
@@ -363,7 +362,7 @@ static int dp_power_request_gpios(struct dp_power_private *power)
 	};
 
 	if (!power) {
-		pr_err("invalid power data\n");
+		DP_ERR("invalid power data\n");
 		return -EINVAL;
 	}
 
@@ -376,7 +375,7 @@ static int dp_power_request_gpios(struct dp_power_private *power)
 		if (gpio_is_valid(gpio)) {
 			rc = devm_gpio_request(dev, gpio, gpio_names[i]);
 			if (rc) {
-				pr_err("request %s gpio failed, rc=%d\n",
+				DP_ERR("request %s gpio failed, rc=%d\n",
 					       gpio_names[i], rc);
 				goto error;
 			}
@@ -409,7 +408,7 @@ static void dp_power_set_gpio(struct dp_power_private *power, bool flip)
 			config->value = flip;
 
 		if (gpio_is_valid(config->gpio)) {
-			pr_debug("gpio %s, value %d\n", config->gpio_name,
+			DP_DEBUG("gpio %s, value %d\n", config->gpio_name,
 				config->value);
 
 			if (dp_power_find_gpio(config->gpio_name, "aux-en") ||
@@ -440,7 +439,7 @@ static int dp_power_config_gpios(struct dp_power_private *power, bool flip,
 	if (enable) {
 		rc = dp_power_request_gpios(power);
 		if (rc) {
-			pr_err("gpio request failed\n");
+			DP_ERR("gpio request failed\n");
 			return rc;
 		}
 
@@ -464,7 +463,7 @@ static int dp_power_client_init(struct dp_power *dp_power,
 	struct dp_power_private *power;
 
 	if (!drm_dev) {
-		pr_err("invalid drm_dev\n");
+		DP_ERR("invalid drm_dev\n");
 		return -EINVAL;
 	}
 
@@ -472,13 +471,13 @@ static int dp_power_client_init(struct dp_power *dp_power,
 
 	rc = dp_power_regulator_init(power);
 	if (rc) {
-		pr_err("failed to init regulators\n");
+		DP_ERR("failed to init regulators\n");
 		goto error_power;
 	}
 
 	rc = dp_power_clk_init(power, true);
 	if (rc) {
-		pr_err("failed to init clocks\n");
+		DP_ERR("failed to init clocks\n");
 		goto error_clk;
 	}
 	dp_power->phandle = phandle;
@@ -497,7 +496,7 @@ static void dp_power_client_deinit(struct dp_power *dp_power)
 	struct dp_power_private *power;
 
 	if (!dp_power) {
-		pr_err("invalid power data\n");
+		DP_ERR("invalid power data\n");
 		return;
 	}
 
@@ -513,7 +512,7 @@ static int dp_power_set_pixel_clk_parent(struct dp_power *dp_power, u32 strm_id)
 	struct dp_power_private *power;
 
 	if (!dp_power || strm_id >= DP_STREAM_MAX) {
-		pr_err("invalid power data. stream %d\n", strm_id);
+		DP_ERR("invalid power data. stream %d\n", strm_id);
 		rc = -EINVAL;
 		goto exit;
 	}
@@ -543,7 +542,7 @@ static u64 dp_power_clk_get_rate(struct dp_power *dp_power, char *clk_name)
 	u64 rate = 0;
 
 	if (!clk_name) {
-		pr_err("invalid pointer for clk_name\n");
+		DP_ERR("invalid pointer for clk_name\n");
 		return 0;
 	}
 
@@ -577,7 +576,7 @@ static int dp_power_init(struct dp_power *dp_power, bool flip)
 	struct dp_power_private *power;
 
 	if (!dp_power) {
-		pr_err("invalid power data\n");
+		DP_ERR("invalid power data\n");
 		rc = -EINVAL;
 		goto exit;
 	}
@@ -586,31 +585,31 @@ static int dp_power_init(struct dp_power *dp_power, bool flip)
 
 	rc = dp_power_regulator_ctrl(power, true);
 	if (rc) {
-		pr_err("failed to enable regulators\n");
+		DP_ERR("failed to enable regulators\n");
 		goto exit;
 	}
 
 	rc = dp_power_pinctrl_set(power, true);
 	if (rc) {
-		pr_err("failed to set pinctrl state\n");
+		DP_ERR("failed to set pinctrl state\n");
 		goto err_pinctrl;
 	}
 
 	rc = dp_power_config_gpios(power, flip, true);
 	if (rc) {
-		pr_err("failed to enable gpios\n");
+		DP_ERR("failed to enable gpios\n");
 		goto err_gpio;
 	}
 
 	rc = pm_runtime_get_sync(dp_power->drm_dev->dev);
 	if (rc < 0) {
-		pr_err("Power resource enable failed\n");
+		DP_ERR("Power resource enable failed\n");
 		goto err_sde_power;
 	}
 
 	rc = dp_power_clk_enable(dp_power, DP_CORE_PM, true);
 	if (rc) {
-		pr_err("failed to enable DP core clocks\n");
+		DP_ERR("failed to enable DP core clocks\n");
 		goto err_clk;
 	}
 
@@ -634,7 +633,7 @@ static int dp_power_deinit(struct dp_power *dp_power)
 	struct dp_power_private *power;
 
 	if (!dp_power) {
-		pr_err("invalid power data\n");
+		DP_ERR("invalid power data\n");
 		rc = -EINVAL;
 		goto exit;
 	}
@@ -661,7 +660,7 @@ struct dp_power *dp_power_get(struct dp_parser *parser)
 	struct dp_power *dp_power;
 
 	if (!parser) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		rc = -EINVAL;
 		goto error;
 	}

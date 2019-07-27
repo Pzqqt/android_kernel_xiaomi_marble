@@ -3,12 +3,11 @@
  * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
-
 #include <linux/of_gpio.h>
 #include <linux/of_platform.h>
 
 #include "dp_parser.h"
+#include "dp_debug.h"
 
 static void dp_parser_unmap_io_resources(struct dp_parser *parser)
 {
@@ -29,7 +28,7 @@ static int dp_parser_reg(struct dp_parser *parser)
 
 	reg_count = of_property_count_strings(dev->of_node, "reg-names");
 	if (reg_count <= 0) {
-		pr_err("no reg defined\n");
+		DP_ERR("no reg defined\n");
 		return -EINVAL;
 	}
 
@@ -45,7 +44,7 @@ static int dp_parser_reg(struct dp_parser *parser)
 		rc = msm_dss_ioremap_byname(pdev, &io->data[i].io,
 			io->data[i].name);
 		if (rc) {
-			pr_err("unable to remap %s resources\n",
+			DP_ERR("unable to remap %s resources\n",
 				io->data[i].name);
 			goto err;
 		}
@@ -105,27 +104,27 @@ static int dp_parser_aux(struct dp_parser *parser)
 
 		data = of_get_property(of_node, property, &len);
 		if (!data) {
-			pr_err("Unable to read %s\n", property);
+			DP_ERR("Unable to read %s\n", property);
 			goto error;
 		}
 
 		config_count = len - 1;
 		if ((config_count < minimum_config_count) ||
 			(config_count > DP_AUX_CFG_MAX_VALUE_CNT)) {
-			pr_err("Invalid config count (%d) configs for %s\n",
+			DP_ERR("Invalid config count (%d) configs for %s\n",
 					config_count, property);
 			goto error;
 		}
 
 		parser->aux_cfg[i].offset = data[0];
 		parser->aux_cfg[i].cfg_cnt = config_count;
-		pr_debug("%s offset=0x%x, cfg_cnt=%d\n",
+		DP_DEBUG("%s offset=0x%x, cfg_cnt=%d\n",
 				property,
 				parser->aux_cfg[i].offset,
 				parser->aux_cfg[i].cfg_cnt);
 		for (j = 1; j < len; j++) {
 			parser->aux_cfg[i].lut[j - 1] = data[j];
-			pr_debug("%s lut[%d]=0x%x\n",
+			DP_DEBUG("%s lut[%d]=0x%x\n",
 					property,
 					i,
 					parser->aux_cfg[i].lut[j - 1]);
@@ -178,14 +177,14 @@ static int dp_parser_msm_hdcp_dev(struct dp_parser *parser)
 	node = of_find_compatible_node(NULL, NULL, "qcom,msm-hdcp");
 	if (!node) {
 		// This is a non-fatal error, module initialization can proceed
-		pr_warn("couldn't find msm-hdcp node\n");
+		DP_WARN("couldn't find msm-hdcp node\n");
 		return 0;
 	}
 
 	pdev = of_find_device_by_node(node);
 	if (!pdev) {
 		// This is a non-fatal error, module initialization can proceed
-		pr_warn("couldn't find msm-hdcp pdev\n");
+		DP_WARN("couldn't find msm-hdcp pdev\n");
 		return 0;
 	}
 
@@ -202,7 +201,7 @@ static int dp_parser_pinctrl(struct dp_parser *parser)
 	pinctrl->pin = devm_pinctrl_get(&parser->pdev->dev);
 
 	if (IS_ERR_OR_NULL(pinctrl->pin)) {
-		pr_debug("failed to get pinctrl, rc=%d\n", rc);
+		DP_DEBUG("failed to get pinctrl, rc=%d\n", rc);
 		goto error;
 	}
 
@@ -219,7 +218,7 @@ static int dp_parser_pinctrl(struct dp_parser *parser)
 		if (!pinctrl->state_hpd_tlmm || !pinctrl->state_hpd_ctrl) {
 			pinctrl->state_hpd_tlmm = NULL;
 			pinctrl->state_hpd_ctrl = NULL;
-			pr_debug("tlmm or ctrl pinctrl state does not exist\n");
+			DP_DEBUG("tlmm or ctrl pinctrl state does not exist\n");
 		}
 	}
 
@@ -227,7 +226,7 @@ static int dp_parser_pinctrl(struct dp_parser *parser)
 					"mdss_dp_active");
 	if (IS_ERR_OR_NULL(pinctrl->state_active)) {
 		rc = PTR_ERR(pinctrl->state_active);
-		pr_err("failed to get pinctrl active state, rc=%d\n", rc);
+		DP_ERR("failed to get pinctrl active state, rc=%d\n", rc);
 		goto error;
 	}
 
@@ -235,7 +234,7 @@ static int dp_parser_pinctrl(struct dp_parser *parser)
 					"mdss_dp_sleep");
 	if (IS_ERR_OR_NULL(pinctrl->state_suspend)) {
 		rc = PTR_ERR(pinctrl->state_suspend);
-		pr_err("failed to get pinctrl suspend state, rc=%d\n", rc);
+		DP_ERR("failed to get pinctrl suspend state, rc=%d\n", rc);
 		goto error;
 	}
 error:
@@ -275,7 +274,7 @@ static int dp_parser_gpio(struct dp_parser *parser)
 			dp_gpios[i], 0);
 
 		if (!gpio_is_valid(mp->gpio_config[i].gpio)) {
-			pr_debug("%s gpio not specified\n", dp_gpios[i]);
+			DP_DEBUG("%s gpio not specified\n", dp_gpios[i]);
 			/* In case any gpio was not specified, we think gpio
 			 * aux switch also was not specified.
 			 */
@@ -317,17 +316,17 @@ static int dp_parser_get_vreg(struct dp_parser *parser,
 	pm_supply_name = dp_parser_supply_node_name(module);
 	supply_root_node = of_get_child_by_name(of_node, pm_supply_name);
 	if (!supply_root_node) {
-		pr_err("no supply entry present: %s\n", pm_supply_name);
+		DP_WARN("no supply entry present: %s\n", pm_supply_name);
 		goto novreg;
 	}
 
 	mp->num_vreg = of_get_available_child_count(supply_root_node);
 
 	if (mp->num_vreg == 0) {
-		pr_debug("no vreg\n");
+		DP_DEBUG("no vreg\n");
 		goto novreg;
 	} else {
-		pr_debug("vreg found. count=%d\n", mp->num_vreg);
+		DP_DEBUG("vreg found. count=%d\n", mp->num_vreg);
 	}
 
 	mp->vreg_config = devm_kzalloc(&parser->pdev->dev,
@@ -343,7 +342,7 @@ static int dp_parser_get_vreg(struct dp_parser *parser,
 		rc = of_property_read_string(supply_node,
 			"qcom,supply-name", &st);
 		if (rc) {
-			pr_err("error reading name. rc=%d\n",
+			DP_ERR("error reading name. rc=%d\n",
 				 rc);
 			goto error;
 		}
@@ -353,7 +352,7 @@ static int dp_parser_get_vreg(struct dp_parser *parser,
 		rc = of_property_read_u32(supply_node,
 			"qcom,supply-min-voltage", &tmp);
 		if (rc) {
-			pr_err("error reading min volt. rc=%d\n",
+			DP_ERR("error reading min volt. rc=%d\n",
 				rc);
 			goto error;
 		}
@@ -363,7 +362,7 @@ static int dp_parser_get_vreg(struct dp_parser *parser,
 		rc = of_property_read_u32(supply_node,
 			"qcom,supply-max-voltage", &tmp);
 		if (rc) {
-			pr_err("error reading max volt. rc=%d\n",
+			DP_ERR("error reading max volt. rc=%d\n",
 				rc);
 			goto error;
 		}
@@ -373,7 +372,7 @@ static int dp_parser_get_vreg(struct dp_parser *parser,
 		rc = of_property_read_u32(supply_node,
 			"qcom,supply-enable-load", &tmp);
 		if (rc) {
-			pr_err("error reading enable load. rc=%d\n",
+			DP_ERR("error reading enable load. rc=%d\n",
 				rc);
 			goto error;
 		}
@@ -383,13 +382,13 @@ static int dp_parser_get_vreg(struct dp_parser *parser,
 		rc = of_property_read_u32(supply_node,
 			"qcom,supply-disable-load", &tmp);
 		if (rc) {
-			pr_err("error reading disable load. rc=%d\n",
+			DP_ERR("error reading disable load. rc=%d\n",
 				rc);
 			goto error;
 		}
 		mp->vreg_config[i].disable_load = tmp;
 
-		pr_debug("%s min=%d, max=%d, enable=%d, disable=%d\n",
+		DP_DEBUG("%s min=%d, max=%d, enable=%d, disable=%d\n",
 			mp->vreg_config[i].vreg_name,
 			mp->vreg_config[i].min_voltage,
 			mp->vreg_config[i].max_voltage,
@@ -436,7 +435,7 @@ static int dp_parser_regulator(struct dp_parser *parser)
 	for (i = DP_CORE_PM; i < DP_MAX_PM; i++) {
 		rc = dp_parser_get_vreg(parser, i);
 		if (rc) {
-			pr_err("get_dt_vreg_data failed for %s. rc=%d\n",
+			DP_ERR("get_dt_vreg_data failed for %s. rc=%d\n",
 				dp_parser_pm_name(i), rc);
 			i--;
 			for (; i >= DP_CORE_PM; i--)
@@ -504,7 +503,7 @@ static int dp_parser_init_clk_data(struct dp_parser *parser)
 
 	num_clk = of_property_count_strings(dev->of_node, "clock-names");
 	if (num_clk <= 0) {
-		pr_err("no clocks are defined\n");
+		DP_ERR("no clocks are defined\n");
 		rc = -EINVAL;
 		goto exit;
 	}
@@ -528,7 +527,7 @@ static int dp_parser_init_clk_data(struct dp_parser *parser)
 
 	/* Initialize the CORE power module */
 	if (core_clk_count <= 0) {
-		pr_err("no core clocks are defined\n");
+		DP_ERR("no core clocks are defined\n");
 		rc = -EINVAL;
 		goto exit;
 	}
@@ -544,7 +543,7 @@ static int dp_parser_init_clk_data(struct dp_parser *parser)
 
 	/* Initialize the STREAM0 power module */
 	if (strm0_clk_count <= 0) {
-		pr_debug("no strm0 clocks are defined\n");
+		DP_DEBUG("no strm0 clocks are defined\n");
 	} else {
 		strm0_power->num_clk = strm0_clk_count;
 		strm0_power->clk_config = devm_kzalloc(dev,
@@ -559,7 +558,7 @@ static int dp_parser_init_clk_data(struct dp_parser *parser)
 
 	/* Initialize the STREAM1 power module */
 	if (strm1_clk_count <= 0) {
-		pr_debug("no strm1 clocks are defined\n");
+		DP_DEBUG("no strm1 clocks are defined\n");
 	} else {
 		strm1_power->num_clk = strm1_clk_count;
 		strm1_power->clk_config = devm_kzalloc(dev,
@@ -574,7 +573,7 @@ static int dp_parser_init_clk_data(struct dp_parser *parser)
 
 	/* Initialize the link power module */
 	if (link_clk_count <= 0) {
-		pr_err("no link clocks are defined\n");
+		DP_ERR("no link clocks are defined\n");
 		rc = -EINVAL;
 		goto link_clock_error;
 	}
@@ -627,7 +626,7 @@ static int dp_parser_clock(struct dp_parser *parser)
 
 	rc =  dp_parser_init_clk_data(parser);
 	if (rc) {
-		pr_err("failed to initialize power data\n");
+		DP_ERR("failed to initialize power data\n");
 		rc = -EINVAL;
 		goto exit;
 	}
@@ -680,7 +679,7 @@ static int dp_parser_clock(struct dp_parser *parser)
 		}
 	}
 
-	pr_debug("clock parsing successful\n");
+	DP_DEBUG("clock parsing successful\n");
 
 exit:
 	return rc;
@@ -709,7 +708,7 @@ static int dp_parser_mst(struct dp_parser *parser)
 			"qcom,mst-enable");
 	parser->has_mst_sideband = parser->has_mst;
 
-	pr_debug("mst parsing successful. mst:%d\n", parser->has_mst);
+	DP_DEBUG("mst parsing successful. mst:%d\n", parser->has_mst);
 
 	for (i = 0; i < MAX_DP_MST_STREAMS; i++) {
 		of_property_read_u32_index(dev->of_node,
@@ -739,7 +738,7 @@ static void dp_parser_dsc(struct dp_parser *parser)
 	if (rc || !parser->max_dp_dsc_input_width_pixs)
 		parser->dsc_feature_enable = false;
 
-	pr_debug("dsc parsing successful. dsc:%d, blks:%d, width:%d\n",
+	DP_DEBUG("dsc parsing successful. dsc:%d, blks:%d, width:%d\n",
 			parser->dsc_feature_enable,
 			parser->max_dp_dsc_blks,
 			parser->max_dp_dsc_input_width_pixs);
@@ -752,7 +751,7 @@ static void dp_parser_fec(struct dp_parser *parser)
 	parser->fec_feature_enable = of_property_read_bool(dev->of_node,
 			"qcom,fec-feature-enable");
 
-	pr_debug("fec parsing successful. fec:%d\n",
+	DP_DEBUG("fec parsing successful. fec:%d\n",
 			parser->fec_feature_enable);
 }
 
@@ -763,7 +762,7 @@ static void dp_parser_widebus(struct dp_parser *parser)
 	parser->has_widebus = of_property_read_bool(dev->of_node,
 			"qcom,widebus-enable");
 
-	pr_debug("widebus parsing successful. widebus:%d\n",
+	DP_DEBUG("widebus parsing successful. widebus:%d\n",
 			parser->has_widebus);
 }
 
@@ -772,7 +771,7 @@ static int dp_parser_parse(struct dp_parser *parser)
 	int rc = 0;
 
 	if (!parser) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		rc = -EINVAL;
 		goto err;
 	}
@@ -831,7 +830,7 @@ static struct dp_io_data *dp_parser_get_io(struct dp_parser *dp_parser,
 	struct dp_io *io;
 
 	if (!dp_parser) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		goto err;
 	}
 
@@ -853,7 +852,7 @@ static void dp_parser_get_io_buf(struct dp_parser *dp_parser, char *name)
 	struct dp_io *io;
 
 	if (!dp_parser) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -876,7 +875,7 @@ static void dp_parser_clear_io_buf(struct dp_parser *dp_parser)
 	struct dp_io *io;
 
 	if (!dp_parser) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -915,7 +914,7 @@ void dp_parser_put(struct dp_parser *parser)
 	struct dss_module_power *power = NULL;
 
 	if (!parser) {
-		pr_err("invalid parser module\n");
+		DP_ERR("invalid parser module\n");
 		return;
 	}
 

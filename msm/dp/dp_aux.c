@@ -3,13 +3,12 @@
  * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
-
 #include <linux/soc/qcom/fsa4480-i2c.h>
 #include <linux/usb/usbpd.h>
 #include <linux/delay.h>
 
 #include "dp_aux.h"
+#include "dp_debug.h"
 
 #define DP_AUX_ENUM_STR(x)		#x
 
@@ -68,7 +67,7 @@ static void dp_aux_hex_dump(struct drm_dp_aux *drm_aux,
 		hex_dump_to_buffer(msg->buffer + i, linelen, rowsize, 1,
 			linebuf, sizeof(linebuf), false);
 
-		pr_debug("%s%s\n", prefix, linebuf);
+		DP_DEBUG("%s%s\n", prefix, linebuf);
 	}
 }
 #else
@@ -116,7 +115,7 @@ static u32 dp_aux_write(struct dp_aux_private *aux,
 	 * limit buf length to 128 bytes here
 	 */
 	if (len > aux_cmd_fifo_len) {
-		pr_err("buf len error\n");
+		DP_ERR("buf len error\n");
 		return 0;
 	}
 
@@ -169,13 +168,13 @@ static int dp_aux_cmd_fifo_tx(struct dp_aux_private *aux,
 
 	len = dp_aux_write(aux, msg);
 	if (len == 0) {
-		pr_err("DP AUX write failed\n");
+		DP_ERR("DP AUX write failed\n");
 		return -EINVAL;
 	}
 
 	timeout = wait_for_completion_timeout(&aux->comp, aux_timeout_ms);
 	if (!timeout) {
-		pr_err("aux %s timeout\n", (aux->read ? "read" : "write"));
+		DP_ERR("aux %s timeout\n", (aux->read ? "read" : "write"));
 		return -ETIMEDOUT;
 	}
 
@@ -219,7 +218,7 @@ static void dp_aux_cmd_fifo_rx(struct dp_aux_private *aux,
 
 		actual_i = (data >> 16) & 0xFF;
 		if (i != actual_i)
-			pr_warn("Index mismatch: expected %d, found %d\n",
+			DP_WARN("Index mismatch: expected %d, found %d\n",
 				i, actual_i);
 	}
 }
@@ -278,7 +277,7 @@ static void dp_aux_isr(struct dp_aux *dp_aux)
 	struct dp_aux_private *aux;
 
 	if (!dp_aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -300,7 +299,7 @@ static void dp_aux_reconfig(struct dp_aux *dp_aux)
 	struct dp_aux_private *aux;
 
 	if (!dp_aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -316,7 +315,7 @@ static void dp_aux_abort_transaction(struct dp_aux *dp_aux)
 	struct dp_aux_private *aux;
 
 	if (!dp_aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -443,7 +442,7 @@ static int dp_aux_transfer_ready(struct dp_aux_private *aux,
 	/* msg sanity check */
 	if ((aux->native && (msg->size > aux_cmd_native_max)) ||
 		(msg->size > aux_cmd_i2c_max)) {
-		pr_err("%s: invalid msg: size(%zu), request(%x)\n",
+		DP_ERR("%s: invalid msg: size(%zu), request(%x)\n",
 			__func__, msg->size, msg->request);
 		ret = -EINVAL;
 		goto error;
@@ -485,12 +484,12 @@ static ssize_t dp_aux_transfer_debug(struct drm_dp_aux *drm_aux,
 	aux->aux_error_num = DP_AUX_ERR_NONE;
 
 	if (!aux->dpcd || !aux->edid) {
-		pr_err("invalid aux/dpcd structure\n");
+		DP_ERR("invalid aux/dpcd structure\n");
 		goto end;
 	}
 
 	if ((msg->address + msg->size) > SZ_4K) {
-		pr_debug("invalid dpcd access: addr=0x%x, size=0x%lx\n",
+		DP_DEBUG("invalid dpcd access: addr=0x%x, size=0x%lx\n",
 				msg->address, msg->size);
 		goto address_error;
 	}
@@ -505,7 +504,7 @@ static ssize_t dp_aux_transfer_debug(struct drm_dp_aux *drm_aux,
 		if (aux->read) {
 			timeout = wait_for_completion_timeout(&aux->comp, HZ);
 			if (!timeout) {
-				pr_err("read timeout: 0x%x\n", msg->address);
+				DP_ERR("read timeout: 0x%x\n", msg->address);
 				atomic_set(&aux->aborted, 1);
 				ret = -ETIMEDOUT;
 				goto end;
@@ -519,7 +518,7 @@ static ssize_t dp_aux_transfer_debug(struct drm_dp_aux *drm_aux,
 
 			timeout = wait_for_completion_timeout(&aux->comp, HZ);
 			if (!timeout) {
-				pr_err("write timeout: 0x%x\n", msg->address);
+				DP_ERR("write timeout: 0x%x\n", msg->address);
 				atomic_set(&aux->aborted, 1);
 				ret = -ETIMEDOUT;
 				goto end;
@@ -639,7 +638,7 @@ static void dp_aux_init(struct dp_aux *dp_aux, struct dp_aux_cfg *aux_cfg)
 	struct dp_aux_private *aux;
 
 	if (!dp_aux || !aux_cfg) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -662,7 +661,7 @@ static void dp_aux_deinit(struct dp_aux *dp_aux)
 	struct dp_aux_private *aux;
 
 	if (!dp_aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -682,7 +681,7 @@ static int dp_aux_register(struct dp_aux *dp_aux)
 	int ret = 0;
 
 	if (!dp_aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -694,7 +693,7 @@ static int dp_aux_register(struct dp_aux *dp_aux)
 	aux->drm_aux.transfer = dp_aux_transfer;
 	ret = drm_dp_aux_register(&aux->drm_aux);
 	if (ret) {
-		pr_err("%s: failed to register drm aux: %d\n", __func__, ret);
+		DP_ERR("%s: failed to register drm aux: %d\n", __func__, ret);
 		goto exit;
 	}
 	dp_aux->drm_aux = &aux->drm_aux;
@@ -707,7 +706,7 @@ static void dp_aux_deregister(struct dp_aux *dp_aux)
 	struct dp_aux_private *aux;
 
 	if (!dp_aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -720,7 +719,7 @@ static void dp_aux_dpcd_updated(struct dp_aux *dp_aux)
 	struct dp_aux_private *aux;
 
 	if (!dp_aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -735,7 +734,7 @@ static void dp_aux_set_sim_mode(struct dp_aux *dp_aux, bool en,
 	struct dp_aux_private *aux;
 
 	if (!dp_aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		return;
 	}
 
@@ -764,7 +763,7 @@ static int dp_aux_configure_aux_switch(struct dp_aux *dp_aux,
 	enum fsa_function event = FSA_USBC_DISPLAYPORT_DISCONNECTED;
 
 	if (!dp_aux) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		rc = -EINVAL;
 		goto end;
 	}
@@ -772,7 +771,7 @@ static int dp_aux_configure_aux_switch(struct dp_aux *dp_aux,
 	aux = container_of(dp_aux, struct dp_aux_private, dp_aux);
 
 	if (!aux->aux_switch_node) {
-		pr_debug("undefined fsa4480 handle\n");
+		DP_DEBUG("undefined fsa4480 handle\n");
 		rc = -EINVAL;
 		goto end;
 	}
@@ -786,18 +785,18 @@ static int dp_aux_configure_aux_switch(struct dp_aux *dp_aux,
 			event = FSA_USBC_ORIENTATION_CC2;
 			break;
 		default:
-			pr_err("invalid orientation\n");
+			DP_ERR("invalid orientation\n");
 			rc = -EINVAL;
 			goto end;
 		}
 	}
 
-	pr_debug("enable=%d, orientation=%d, event=%d\n",
+	DP_DEBUG("enable=%d, orientation=%d, event=%d\n",
 			enable, orientation, event);
 
 	rc = fsa4480_switch_event(aux->aux_switch_node, event);
 	if (rc)
-		pr_err("failed to configure fsa4480 i2c device (%d)\n", rc);
+		DP_ERR("failed to configure fsa4480 i2c device (%d)\n", rc);
 end:
 	return rc;
 }
@@ -813,7 +812,7 @@ struct dp_aux *dp_aux_get(struct device *dev, struct dp_catalog_aux *catalog,
 			(!parser->no_aux_switch &&
 				!aux_switch &&
 				!parser->gpio_aux_switch)) {
-		pr_err("invalid input\n");
+		DP_ERR("invalid input\n");
 		rc = -ENODEV;
 		goto error;
 	}
