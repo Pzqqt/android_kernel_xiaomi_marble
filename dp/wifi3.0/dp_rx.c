@@ -1926,6 +1926,7 @@ done:
 		if (qdf_likely(peer)) {
 			vdev = peer->vdev;
 		} else {
+			nbuf->next = NULL;
 			dp_rx_deliver_to_stack_no_peer(soc, nbuf);
 			nbuf = next;
 			continue;
