@@ -64,6 +64,7 @@ struct dp_display_private {
 	bool core_initialized;
 	bool power_on;
 	bool is_connected;
+	enum drm_connector_status cached_connector_status;
 
 	atomic_t aborted;
 
@@ -568,6 +569,13 @@ static void dp_display_send_hpd_event(struct dp_display_private *dp)
 	}
 
 	connector->status = connector->funcs->detect(connector, false);
+	if (dp->cached_connector_status == connector->status) {
+		DP_DEBUG("connector status (%d) unchanged, skipping uevent\n",
+				dp->cached_connector_status);
+		return;
+	}
+
+	dp->cached_connector_status = connector->status;
 
 	dev = connector->dev;
 
@@ -1368,6 +1376,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 		goto error_debug;
 	}
 
+	dp->cached_connector_status = connector_status_disconnected;
 	dp->tot_dsc_blks_in_use = 0;
 
 	dp->debug->hdcp_disabled = hdcp_disabled;
