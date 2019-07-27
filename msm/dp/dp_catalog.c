@@ -1212,6 +1212,7 @@ static void dp_catalog_ctrl_set_pattern(struct dp_catalog_ctrl *ctrl,
 {
 	int bit, cnt = 10;
 	u32 data;
+	const u32 link_training_offset = 3;
 	struct dp_catalog_private *catalog;
 	struct dp_io_data *io_data;
 
@@ -1223,17 +1224,28 @@ static void dp_catalog_ctrl_set_pattern(struct dp_catalog_ctrl *ctrl,
 	catalog = dp_catalog_get_priv(ctrl);
 	io_data = catalog->io.dp_link;
 
-	bit = 1;
-	bit <<= (pattern - 1);
-	DP_DEBUG("hw: bit=%d train=%d\n", bit, pattern);
-	dp_write(catalog->exe_mode, io_data, DP_STATE_CTRL, bit);
+	switch (pattern) {
+	case DP_TRAINING_PATTERN_4:
+		bit = 3;
+		break;
+	case DP_TRAINING_PATTERN_3:
+	case DP_TRAINING_PATTERN_2:
+	case DP_TRAINING_PATTERN_1:
+		bit = pattern - 1;
+		break;
+	default:
+		DP_ERR("invalid pattern\n");
+		return;
+	}
 
-	bit = 8;
-	bit <<= (pattern - 1);
+	DP_DEBUG("hw: bit=%d train=%d\n", bit, pattern);
+	dp_write(catalog->exe_mode, io_data, DP_STATE_CTRL, BIT(bit));
+
+	bit += link_training_offset;
 
 	while (cnt--) {
 		data = dp_read(catalog->exe_mode, io_data, DP_MAINLINK_READY);
-		if (data & bit)
+		if (data & BIT(bit))
 			break;
 	}
 
