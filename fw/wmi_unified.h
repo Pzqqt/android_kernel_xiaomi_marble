@@ -1907,7 +1907,7 @@ typedef struct {
     A_UINT32 info;
     /** contains min power, max power, reg power and reg class id.  */
     A_UINT32 reg_info_1;
-    /** contains antennamax */
+    /** contains antennamax, max bandwidth */
     A_UINT32 reg_info_2;
 } wmi_channel;
 
@@ -1981,6 +1981,12 @@ typedef enum {
      } while (0)
 #define WMI_GET_CHANNEL_MAX_TX_POWER(pwmi_channel) ((((pwmi_channel)->reg_info_2)>>8) & 0xff)
 
+/* max bw supported for each channel, enum wmi_channel_width as value */
+#define WMI_SET_CHANNEL_MAX_BANDWIDTH(pwmi_channel,val) do { \
+     (pwmi_channel)->reg_info_2 &= 0xff00ffff;              \
+     (pwmi_channel)->reg_info_2 |= ((val & 0xff) << 16);     \
+     } while (0)
+#define WMI_GET_CHANNEL_MAX_BANDWIDTH(pwmi_channel) ((((pwmi_channel)->reg_info_2) >> 16) & 0xff)
 
 /** HT Capabilities*/
 #define WMI_HT_CAP_ENABLED                0x0001   /* HT Enabled/ disabled */
@@ -3849,6 +3855,7 @@ typedef struct {
 
 #define MAX_NUM_CHAN_PER_WMI_CMD     58    /* each WMI cmd can hold 58 channel entries at most */
 #define APPEND_TO_EXISTING_CHAN_LIST 1
+#define CHANNEL_MAX_BANDWIDTH_VALID  2
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_chan_list_cmd_fixed_param */
