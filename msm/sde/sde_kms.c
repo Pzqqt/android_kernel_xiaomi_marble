@@ -1280,7 +1280,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 
 		connector = sde_connector_init(dev,
 					encoder,
-					0,
+					dsi_display_get_drm_panel(display),
 					display,
 					&dsi_ops,
 					DRM_CONNECTOR_POLL_HPD,

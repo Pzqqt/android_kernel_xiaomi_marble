@@ -5540,6 +5540,16 @@ static struct mipi_dsi_host_ops dsi_host_ext_ops = {
 	.transfer = dsi_host_transfer,
 };
 
+struct drm_panel *dsi_display_get_drm_panel(struct dsi_display * display)
+{
+	if (!display || !display->panel) {
+		pr_err("invalid param(s)\n");
+		return NULL;
+	}
+
+	return &display->panel->drm_panel;
+}
+
 int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 		struct drm_encoder *encoder, struct drm_connector *connector)
 {
