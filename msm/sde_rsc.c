@@ -59,7 +59,6 @@
 #define PRIMARY_VBLANK_WORST_CASE_MS 34
 
 #define DEFAULT_PANEL_MIN_V_PREFILL	35
-#define DEFAULT_PANEL_MAX_V_PREFILL	108
 
 static struct sde_rsc_priv *rsc_prv_list[MAX_RSC_COUNT];
 static struct device *rpmh_dev[MAX_RSC_COUNT];
@@ -294,6 +293,7 @@ static u32 sde_rsc_timer_calculate(struct sde_rsc_priv *rsc,
 	u64 pdc_backoff_time_ns;
 	s64 total;
 	int ret = 0;
+	u32 default_prefill_lines;
 
 	if (cmd_config)
 		memcpy(&rsc->cmd_config, cmd_config, sizeof(*cmd_config));
@@ -307,12 +307,13 @@ static u32 sde_rsc_timer_calculate(struct sde_rsc_priv *rsc,
 		rsc->cmd_config.jitter_denom = DEFAULT_PANEL_JITTER_DENOMINATOR;
 	if (!rsc->cmd_config.vtotal)
 		rsc->cmd_config.vtotal = DEFAULT_PANEL_VTOTAL;
-	if (!rsc->cmd_config.prefill_lines)
-		rsc->cmd_config.prefill_lines = DEFAULT_PANEL_PREFILL_LINES;
-	if (rsc->cmd_config.prefill_lines > DEFAULT_PANEL_MAX_V_PREFILL)
-		rsc->cmd_config.prefill_lines = DEFAULT_PANEL_MAX_V_PREFILL;
-	if (rsc->cmd_config.prefill_lines < DEFAULT_PANEL_MIN_V_PREFILL)
-		rsc->cmd_config.prefill_lines = DEFAULT_PANEL_MIN_V_PREFILL;
+
+	default_prefill_lines = (rsc->cmd_config.fps *
+		DEFAULT_PANEL_MIN_V_PREFILL) / DEFAULT_PANEL_FPS;
+	if ((state == SDE_RSC_CMD_STATE) ||
+	    (rsc->cmd_config.prefill_lines < default_prefill_lines))
+		rsc->cmd_config.prefill_lines = default_prefill_lines;
+
 	pr_debug("frame fps:%d jitter_numer:%d jitter_denom:%d vtotal:%d prefill lines:%d\n",
 		rsc->cmd_config.fps, rsc->cmd_config.jitter_numer,
 		rsc->cmd_config.jitter_denom, rsc->cmd_config.vtotal,
