@@ -1771,6 +1771,9 @@ struct dp_vdev {
 	/* VDEV operating mode */
 	enum wlan_op_mode opmode;
 
+	/* VDEV subtype */
+	enum wlan_op_subtype subtype;
+
 	/* Tx encapsulation type for this VAP */
 	enum htt_cmn_pkt_type tx_encap_type;
 	/* Rx Decapsulation type for this VAP */

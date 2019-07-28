@@ -69,7 +69,8 @@ struct cdp_cmn_ops {
 
 	struct cdp_vdev *(*txrx_vdev_attach)
 		(struct cdp_pdev *pdev, uint8_t *vdev_mac_addr,
-		 uint8_t vdev_id, enum wlan_op_mode op_mode);
+		 uint8_t vdev_id, enum wlan_op_mode op_mode,
+		 enum wlan_op_subtype subtype);
 
 	void (*txrx_vdev_detach)
 		(struct cdp_vdev *vdev, ol_txrx_vdev_delete_cb callback,

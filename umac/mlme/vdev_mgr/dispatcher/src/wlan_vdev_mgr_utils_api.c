@@ -45,6 +45,30 @@ static QDF_STATUS vdev_mgr_config_ratemask_update(
 	return QDF_STATUS_SUCCESS;
 }
 
+enum wlan_op_subtype
+wlan_util_vdev_get_cdp_txrx_subtype(struct wlan_objmgr_vdev *vdev)
+{
+	enum QDF_OPMODE qdf_opmode;
+	enum wlan_op_subtype cdp_txrx_subtype;
+
+	qdf_opmode = wlan_vdev_mlme_get_opmode(vdev);
+	switch (qdf_opmode) {
+	case QDF_P2P_DEVICE_MODE:
+		cdp_txrx_subtype = wlan_op_subtype_p2p_device;
+		break;
+	case QDF_P2P_CLIENT_MODE:
+		cdp_txrx_subtype = wlan_op_subtype_p2p_cli;
+		break;
+	case QDF_P2P_GO_MODE:
+		cdp_txrx_subtype = wlan_op_subtype_p2p_go;
+		break;
+	default:
+		cdp_txrx_subtype = wlan_op_subtype_none;
+	};
+
+	return cdp_txrx_subtype;
+}
+
 enum wlan_op_mode
 wlan_util_vdev_get_cdp_txrx_opmode(struct wlan_objmgr_vdev *vdev)
 {

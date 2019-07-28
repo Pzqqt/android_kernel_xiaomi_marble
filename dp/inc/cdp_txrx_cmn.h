@@ -153,7 +153,8 @@ cdp_soc_set_nss_cfg(ol_txrx_soc_handle soc, uint32_t config)
 
 static inline struct cdp_vdev *
 cdp_vdev_attach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-	uint8_t *vdev_mac_addr, uint8_t vdev_id, enum wlan_op_mode op_mode)
+		uint8_t *vdev_mac_addr, uint8_t vdev_id,
+		enum wlan_op_mode op_mode, enum wlan_op_subtype subtype)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -167,7 +168,7 @@ cdp_vdev_attach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		return NULL;
 
 	return soc->ops->cmn_drv_ops->txrx_vdev_attach(pdev,
-			vdev_mac_addr, vdev_id, op_mode);
+			vdev_mac_addr, vdev_id, op_mode, subtype);
 }
 
 #ifdef DP_FLOW_CTL

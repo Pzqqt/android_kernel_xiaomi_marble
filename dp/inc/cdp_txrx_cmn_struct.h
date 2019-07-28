@@ -562,6 +562,23 @@ enum wlan_op_mode {
 };
 
 /**
+ * enum wlan_op_subtype - Virtual device subtype
+ * @wlan_op_subtype_none: Subtype not applicable
+ * @wlan_op_subtype_p2p_device: P2P device
+ * @wlan_op_subtye_p2p_cli: P2P Client
+ * @wlan_op_subtype_p2p_go: P2P GO
+ *
+ * This enum lists the subtypes of a particular virtual
+ * device.
+ */
+enum wlan_op_subtype {
+	wlan_op_subtype_none,
+	wlan_op_subtype_p2p_device,
+	wlan_op_subtype_p2p_cli,
+	wlan_op_subtype_p2p_go,
+};
+
+/**
  * connectivity_stats_pkt_status - data pkt type
  * @PKT_TYPE_REQ: Request packet
  * @PKT_TYPE_RSP: Response packet

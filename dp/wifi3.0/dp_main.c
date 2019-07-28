@@ -4626,11 +4626,13 @@ static void dp_soc_set_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc, int config)
 * @vdev_mac_addr: MAC address of the virtual interface
 * @vdev_id: VDEV Id
 * @wlan_op_mode: VDEV operating mode
+* @subtype: VDEV operating subtype
 *
 * Return: DP VDEV handle on success, NULL on failure
 */
 static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
-	uint8_t *vdev_mac_addr, uint8_t vdev_id, enum wlan_op_mode op_mode)
+	uint8_t *vdev_mac_addr, uint8_t vdev_id, enum wlan_op_mode op_mode,
+	enum wlan_op_subtype subtype)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -4645,6 +4647,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	vdev->pdev = pdev;
 	vdev->vdev_id = vdev_id;
 	vdev->opmode = op_mode;
+	vdev->subtype = subtype;
 	vdev->osdev = soc->osdev;
 
 	vdev->osif_rx = NULL;
@@ -5264,6 +5267,23 @@ void dp_vdev_get_default_reo_hash(struct dp_vdev *vdev,
 }
 
 #ifdef IPA_OFFLOAD
+/**
+ * dp_is_vdev_subtype_p2p() - Check if the subtype for vdev is P2P
+ * @vdev: Virtual device
+ *
+ * Return: true if the vdev is of subtype P2P
+ *	   false if the vdev is of any other subtype
+ */
+static inline bool dp_is_vdev_subtype_p2p(struct dp_vdev *vdev)
+{
+	if (vdev->subtype == wlan_op_subtype_p2p_device ||
+	    vdev->subtype == wlan_op_subtype_p2p_cli ||
+	    vdev->subtype == wlan_op_subtype_p2p_go)
+		return true;
+
+	return false;
+}
+
 /*
  * dp_peer_setup_get_reo_hash() - get reo dest ring and hash values for a peer
  * @vdev: Datapath VDEV handle
@@ -5285,6 +5305,12 @@ static void dp_peer_setup_get_reo_hash(struct dp_vdev *vdev,
 	soc = pdev->soc;
 
 	dp_vdev_get_default_reo_hash(vdev, reo_dest, hash_based);
+
+	/* For P2P-GO interfaces we do not need to change the REO
+	 * configuration even if IPA config is enabled
+	 */
+	if (dp_is_vdev_subtype_p2p(vdev))
+		return;
 
 	/*
 	 * If IPA is enabled, disable hash-based flow steering and set

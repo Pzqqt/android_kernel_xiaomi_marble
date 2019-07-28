@@ -60,6 +60,7 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 	struct cdp_pdev *pdev_txrx_handle;
 	struct cdp_vdev *vdev_txrx_handle;
 	enum wlan_op_mode cdp_txrx_opmode;
+	enum wlan_op_subtype cdp_txrx_subtype;
 	uint32_t vdev_id;
 	uint8_t *vdev_addr;
 	struct vdev_response_timer *vdev_rsp;
@@ -88,6 +89,7 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 	}
 
 	cdp_txrx_opmode = wlan_util_vdev_get_cdp_txrx_opmode(vdev);
+	cdp_txrx_subtype = wlan_util_vdev_get_cdp_txrx_subtype(vdev);
 	vdev_addr = wlan_vdev_mlme_get_macaddr(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
@@ -99,7 +101,8 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 	vdev_txrx_handle = cdp_vdev_attach(soc_txrx_handle,
 					   pdev_txrx_handle,
 					   vdev_addr, vdev_id,
-					   cdp_txrx_opmode);
+					   cdp_txrx_opmode,
+					   cdp_txrx_subtype);
 	if (!vdev_txrx_handle)
 		return QDF_STATUS_E_FAILURE;
 

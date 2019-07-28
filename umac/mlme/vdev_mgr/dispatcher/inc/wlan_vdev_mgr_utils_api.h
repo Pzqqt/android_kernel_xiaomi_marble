@@ -40,6 +40,15 @@ enum wlan_op_mode
 wlan_util_vdev_get_cdp_txrx_opmode(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * wlan_util_vdev_get_cdp_txrx_subtype - get cdp txrx subtype from qdf mode
+ * @vdev: pointer to vdev object
+ *
+ * Return: wlan_opmode
+ */
+enum wlan_op_subtype
+wlan_util_vdev_get_cdp_txrx_subtype(struct wlan_objmgr_vdev *vdev);
+
+/**
  * wlan_util_vdev_mlme_set_ratemask_config) – common MLME API to set
  * ratemask configuration and send it to FW
  * @vdev_mlme: pointer to vdev_mlme object
