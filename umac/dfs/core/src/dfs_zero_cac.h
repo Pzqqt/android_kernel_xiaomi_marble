@@ -63,6 +63,10 @@
 #define MIN_WEATHER_PRECAC_DURATION          (60 * 60 * 1000) /* 1 hour */
 #define MAX_PRECAC_DURATION              (4 * 60 * 60 * 1000) /* 4 hours */
 #define MAX_WEATHER_PRECAC_DURATION     (24 * 60 * 60 * 1000) /* 24 hours */
+
+#define PCAC_DFS_INDEX_ZERO               0
+#define PCAC_TIMER_NOT_RUNNING            0
+#define PRECAC_NOT_STARTED                0
 /**
  * struct precac_tree_node - Individual tree node structure for every node in
  *                           the precac forest maintained.
