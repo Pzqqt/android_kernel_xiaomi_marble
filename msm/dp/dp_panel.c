@@ -1763,8 +1763,13 @@ static int dp_panel_read_dpcd(struct dp_panel *dp_panel, bool multi_func)
 		DPRX_FEATURE_ENUMERATION_LIST, &rx_feature, 1);
 	if (rlen != 1) {
 		DP_DEBUG("failed to read DPRX_FEATURE_ENUMERATION_LIST\n");
-		goto skip_dpcd_read;
+		rx_feature = 0;
 	}
+
+skip_dpcd_read:
+	if (panel->custom_dpcd)
+		rx_feature = dp_panel->dpcd[DP_RECEIVER_CAP_SIZE + 1];
+
 	panel->vsc_supported = !!(rx_feature &
 		VSC_SDP_EXTENSION_FOR_COLORIMETRY_SUPPORTED);
 	panel->vscext_supported = !!(rx_feature & VSC_EXT_VESA_SDP_SUPPORTED);
@@ -1775,7 +1780,6 @@ static int dp_panel_read_dpcd(struct dp_panel *dp_panel, bool multi_func)
 		panel->vsc_supported, panel->vscext_supported,
 		panel->vscext_chaining_supported);
 
-skip_dpcd_read:
 	link_info->revision = dpcd[DP_DPCD_REV];
 	panel->major = (link_info->revision >> 4) & 0x0f;
 	panel->minor = link_info->revision & 0x0f;
@@ -1876,7 +1880,8 @@ static int dp_panel_set_dpcd(struct dp_panel *dp_panel, u8 *dpcd)
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
 
 	if (dpcd) {
-		memcpy(dp_dpcd, dpcd, DP_RECEIVER_CAP_SIZE + 1);
+		memcpy(dp_dpcd, dpcd, DP_RECEIVER_CAP_SIZE +
+				DP_RECEIVER_EXT_CAP_SIZE + 1);
 		panel->custom_dpcd = true;
 	} else {
 		panel->custom_dpcd = false;

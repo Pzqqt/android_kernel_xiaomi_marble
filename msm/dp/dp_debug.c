@@ -178,6 +178,7 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 	ssize_t rc = count;
 	char offset_ch[5];
 	u32 offset, data_len;
+	u32 extended_capability_bytes = 0;
 	const u32 dp_receiver_cap_size = 16;
 
 	if (!debug)
@@ -250,10 +251,22 @@ bail:
 	kfree(buf);
 
 	/*
+	 * If extension bit is set then increase the length
+	 * of user input to account for the extra bytes
+	 */
+	if (dpcd && (dpcd_buf_index > DP_RECEIVER_CAP_SIZE) &&
+			(dpcd[DP_TRAINING_AUX_RD_INTERVAL] &
+			 DP_EXT_REC_CAP_FIELD))
+		extended_capability_bytes = 4;
+
+	/*
 	 * Reset panel's dpcd in case of any failure. Also, set the
 	 * panel's dpcd only if a full dpcd is provided with offset as 0.
 	 */
-	if (!dpcd || (!offset && (data_len == dp_receiver_cap_size))) {
+	if (!dpcd || (!offset &&
+			(data_len == (dp_receiver_cap_size +
+			extended_capability_bytes))) ||
+			(offset == 0xffff)) {
 		debug->panel->set_dpcd(debug->panel, dpcd);
 
 		/*
@@ -261,7 +274,10 @@ bail:
 		 * only while running in debug mode which is manually
 		 * triggered by a tester or a script.
 		 */
-		DP_INFO("[%s]\n", dpcd ? "SET" : "CLEAR");
+		if (!dpcd || (offset == 0xffff))
+			DP_INFO("[%s]\n", "CLEAR");
+		else
+			DP_INFO("[%s]\n", "SET");
 	} else
 		debug->aux->dpcd_updated(debug->aux);
 
