@@ -189,6 +189,98 @@ struct tu_algo_data {
 	s64 ratio;
 };
 
+/**
+ * Mapper function which outputs colorimetry and dynamic range
+ * to be used for a given colorspace value when the vsc sdp
+ * packets are used to change the colorimetry.
+ */
+static void get_sdp_colorimetry_range(struct dp_panel_private *panel,
+	u32 colorspace, u32 *colorimetry, u32 *dynamic_range)
+{
+
+	u32 cc;
+
+	/*
+	 * Some rules being used for assignment of dynamic
+	 * range for colorimetry using SDP:
+	 *
+	 * 1) If compliance test is ongoing return sRGB with
+	 *    CEA primaries
+	 * 2) For BT2020 cases, dynamic range shall be CEA
+	 * 3) For DCI-P3 cases, as per HW team dynamic range
+	 *    shall be VESA for RGB and CEA for YUV content
+	 *    Hence defaulting to RGB and picking VESA
+	 * 4) Default shall be sRGB with VESA
+	 */
+
+	cc = panel->link->get_colorimetry_config(panel->link);
+
+	if (cc) {
+		*colorimetry = sRGB;
+		*dynamic_range = CEA;
+		return;
+	}
+
+	switch (colorspace) {
+	case DRM_MODE_COLORIMETRY_BT2020_RGB:
+		*colorimetry = ITU_R_BT_2020_RGB;
+		*dynamic_range = CEA;
+		break;
+	case DRM_MODE_COLORIMETRY_DCI_P3_RGB_D65:
+	case DRM_MODE_COLORIMETRY_DCI_P3_RGB_THEATER:
+		*colorimetry = DCI_P3;
+		*dynamic_range = VESA;
+		break;
+	default:
+		*colorimetry = sRGB;
+		*dynamic_range = VESA;
+	}
+}
+
+/**
+ * Mapper function which outputs colorimetry to be used for a
+ * given colorspace value when misc field of MSA is used to
+ * change the colorimetry. Currently only RGB formats have been
+ * added. This API will be extended to YUV once its supported on DP.
+ */
+static u8 get_misc_colorimetry_val(struct dp_panel_private *panel,
+	u32 colorspace)
+{
+	u8 colorimetry;
+	u32 cc;
+
+	cc = panel->link->get_colorimetry_config(panel->link);
+	/*
+	 * If there is a non-zero value then compliance test-case
+	 * is going on, otherwise we can honor the colorspace setting
+	 */
+	if (cc)
+		return cc;
+
+	switch (colorspace) {
+	case DRM_MODE_COLORIMETRY_DCI_P3_RGB_D65:
+	case DRM_MODE_COLORIMETRY_DCI_P3_RGB_THEATER:
+		colorimetry = 0x7;
+		break;
+	case DRM_MODE_DP_COLORIMETRY_SRGB:
+		colorimetry = 0x4;
+		break;
+	case DRM_MODE_DP_COLORIMETRY_RGB_WIDE_GAMUT:
+		colorimetry = 0x3;
+		break;
+	case DRM_MODE_DP_COLORIMETRY_SCRGB:
+		colorimetry = 0xb;
+		break;
+	case DRM_MODE_COLORIMETRY_OPRGB:
+		colorimetry = 0xc;
+		break;
+	default:
+		colorimetry = 0;
+	}
+
+	return colorimetry;
+}
+
 static int _tu_param_compare(s64 a, s64 b)
 {
 	u32 a_int, a_frac, a_sign;
@@ -2485,7 +2577,11 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 {
 	int rc = 0;
 	struct dp_panel_private *panel;
-	struct dp_catalog_hdr_data *hdr;
+	struct drm_msm_ext_hdr_metadata *hdr_meta;
+	struct dp_sdp_header *dhdr_vsif_sdp;
+	struct sde_connector *sde_conn;
+	struct dp_sdp_header *shdr_if_sdp;
+	struct dp_catalog_vsc_sdp_colorimetry *vsc_colorimetry;
 	struct drm_connector *connector;
 	struct sde_connector_state *c_state;
 
@@ -2500,17 +2596,26 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 	}
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
-	hdr = &panel->catalog->hdr_data;
+	hdr_meta = &panel->catalog->hdr_meta;
+	dhdr_vsif_sdp = &panel->catalog->dhdr_vsif_sdp;
+	shdr_if_sdp = &panel->catalog->shdr_if_sdp;
+	vsc_colorimetry = &panel->catalog->vsc_colorimetry;
 
 	if (!panel->custom_edid && dp_panel->edid_ctrl->edid)
 		sde_free_edid((void **)&dp_panel->edid_ctrl);
 
 	dp_panel_set_stream_info(dp_panel, DP_STREAM_MAX, 0, 0, 0, 0);
 	memset(&dp_panel->pinfo, 0, sizeof(dp_panel->pinfo));
-	memset(&hdr->hdr_meta, 0, sizeof(hdr->hdr_meta));
+	memset(hdr_meta, 0, sizeof(struct drm_msm_ext_hdr_metadata));
+	memset(dhdr_vsif_sdp, 0, sizeof(struct dp_sdp_header));
+	memset(shdr_if_sdp, 0, sizeof(struct dp_sdp_header));
+	memset(vsc_colorimetry, 0,
+		sizeof(struct dp_catalog_vsc_sdp_colorimetry));
+
 	panel->panel_on = false;
 
 	connector = dp_panel->connector;
+	sde_conn = to_sde_connector(connector);
 	c_state = to_sde_connector_state(connector->state);
 
 	connector->hdr_eotf = 0;
@@ -2520,6 +2625,8 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 	connector->hdr_min_luminance = 0;
 	connector->hdr_supported = false;
 	connector->hdr_plus_app_ver = 0;
+
+	sde_conn->colorspace_updated = false;
 
 	memset(&c_state->hdr_meta, 0, sizeof(c_state->hdr_meta));
 	memset(&c_state->dyn_hdr_meta, 0, sizeof(c_state->dyn_hdr_meta));
@@ -2651,14 +2758,133 @@ static u32 dp_panel_calc_dhdr_pkt_limit(struct dp_panel *dp_panel,
 	return calc_pkt_limit;
 }
 
+static void dp_panel_setup_colorimetry_sdp(struct dp_panel *dp_panel,
+	u32 cspace)
+{
+	struct dp_panel_private *panel;
+	struct dp_catalog_vsc_sdp_colorimetry *hdr_colorimetry;
+	u8 bpc;
+	u32 colorimetry = 0;
+	u32 dynamic_range = 0;
+
+	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
+	hdr_colorimetry = &panel->catalog->vsc_colorimetry;
+
+	hdr_colorimetry->header.HB0 = 0x00;
+	hdr_colorimetry->header.HB1 = 0x07;
+	hdr_colorimetry->header.HB2 = 0x05;
+	hdr_colorimetry->header.HB3 = 0x13;
+
+	get_sdp_colorimetry_range(panel, cspace, &colorimetry,
+		&dynamic_range);
+
+	/* VSC SDP Payload for DB16 */
+	hdr_colorimetry->data[16] = (RGB << 4) | colorimetry;
+
+	/* VSC SDP Payload for DB17 */
+	hdr_colorimetry->data[17] = (dynamic_range << 7);
+	bpc = (dp_panel->pinfo.bpp / 3);
+
+	switch (bpc) {
+	default:
+	case 10:
+		hdr_colorimetry->data[17] |= BIT(1);
+		break;
+	case 8:
+		hdr_colorimetry->data[17] |= BIT(0);
+		break;
+	case 6:
+		hdr_colorimetry->data[17] |= 0;
+		break;
+	}
+
+	/* VSC SDP Payload for DB18 */
+	hdr_colorimetry->data[18] = GRAPHICS;
+}
+
+static void dp_panel_setup_hdr_if(struct dp_panel_private *panel)
+{
+	struct dp_sdp_header *shdr_if;
+
+	shdr_if = &panel->catalog->shdr_if_sdp;
+
+	shdr_if->HB0 = 0x00;
+	shdr_if->HB1 = 0x87;
+	shdr_if->HB2 = 0x1D;
+	shdr_if->HB3 = 0x13 << 2;
+}
+
+static void dp_panel_setup_dhdr_vsif(struct dp_panel_private *panel)
+{
+	struct dp_sdp_header *dhdr_vsif;
+
+	dhdr_vsif = &panel->catalog->dhdr_vsif_sdp;
+
+	dhdr_vsif->HB0 = 0x00;
+	dhdr_vsif->HB1 = 0x81;
+	dhdr_vsif->HB2 = 0x1D;
+	dhdr_vsif->HB3 = 0x13 << 2;
+}
+
+static void dp_panel_setup_misc_colorimetry(struct dp_panel *dp_panel,
+	u32 colorspace)
+{
+	struct dp_panel_private *panel;
+	struct dp_catalog_panel *catalog;
+
+	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
+	catalog = panel->catalog;
+
+	catalog->misc_val &= ~0x1e;
+
+	catalog->misc_val |= (get_misc_colorimetry_val(panel,
+		colorspace) << 1);
+}
+
+static int dp_panel_set_colorspace(struct dp_panel *dp_panel,
+	u32 colorspace)
+{
+	int rc = 0;
+	struct dp_panel_private *panel;
+
+	if (!dp_panel) {
+		pr_err("invalid input\n");
+		rc = -EINVAL;
+		goto end;
+	}
+
+	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
+
+	if (panel->vsc_supported)
+		dp_panel_setup_colorimetry_sdp(dp_panel,
+			colorspace);
+	else
+		dp_panel_setup_misc_colorimetry(dp_panel,
+			colorspace);
+
+	/*
+	 * During the first frame update panel_on will be false and
+	 * the colorspace will be cached in the connector's state which
+	 * shall be used in the dp_panel_hw_cfg
+	 */
+	if (panel->panel_on) {
+		DP_DEBUG("panel is ON programming colorspace\n");
+		rc =  panel->catalog->set_colorspace(panel->catalog,
+			  panel->vsc_supported);
+	}
+
+end:
+	return rc;
+}
+
 static int dp_panel_setup_hdr(struct dp_panel *dp_panel,
 		struct drm_msm_ext_hdr_metadata *hdr_meta,
-		bool dhdr_update, u64 core_clk_rate)
+		bool dhdr_update, u64 core_clk_rate, bool flush)
 {
 	int rc = 0, max_pkts = 0;
 	struct dp_panel_private *panel;
-	struct dp_catalog_hdr_data *hdr;
 	struct dp_dhdr_maxpkt_calc_input input;
+	struct drm_msm_ext_hdr_metadata *catalog_hdr_meta;
 
 	if (!dp_panel) {
 		DP_ERR("invalid input\n");
@@ -2667,11 +2893,12 @@ static int dp_panel_setup_hdr(struct dp_panel *dp_panel,
 	}
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
-	hdr = &panel->catalog->hdr_data;
+
+	catalog_hdr_meta = &panel->catalog->hdr_meta;
 
 	/* use cached meta data in case meta data not provided */
 	if (!hdr_meta) {
-		if (hdr->hdr_meta.hdr_state)
+		if (catalog_hdr_meta->hdr_state)
 			goto cached;
 		else
 			goto end;
@@ -2679,41 +2906,18 @@ static int dp_panel_setup_hdr(struct dp_panel *dp_panel,
 
 	panel->hdr_state = hdr_meta->hdr_state;
 
-	hdr->vsc_header_byte0 = 0x00;
-	hdr->vsc_header_byte1 = 0x07;
-	hdr->vsc_header_byte2 = 0x05;
-	hdr->vsc_header_byte3 = 0x13;
+	dp_panel_setup_hdr_if(panel);
 
-	hdr->shdr_header_byte0 = 0x00;
-	hdr->shdr_header_byte1 = 0x87;
-	hdr->shdr_header_byte2 = 0x1D;
-	hdr->shdr_header_byte3 = 0x13 << 2;
-
-	/* VSC SDP Payload for DB16 */
-	hdr->pixel_encoding = RGB;
-	hdr->colorimetry = ITU_R_BT_2020_RGB;
-
-	/* VSC SDP Payload for DB17 */
-	hdr->dynamic_range = CEA;
-
-	/* VSC SDP Payload for DB18 */
-	hdr->content_type = GRAPHICS;
-
-	hdr->bpc = dp_panel->pinfo.bpp / 3;
-
-	hdr->version = 0x01;
-	hdr->length = 0x1A;
-
-	if (panel->hdr_state)
-		memcpy(&hdr->hdr_meta, hdr_meta, sizeof(hdr->hdr_meta));
-	else
-		memset(&hdr->hdr_meta, 0, sizeof(hdr->hdr_meta));
+	if (panel->hdr_state) {
+		memcpy(catalog_hdr_meta, hdr_meta,
+			   sizeof(struct drm_msm_ext_hdr_metadata));
+	} else {
+		memset(catalog_hdr_meta, 0,
+			sizeof(struct drm_msm_ext_hdr_metadata));
+	}
 cached:
 	if (dhdr_update) {
-		hdr->vscext_header_byte0 = 0x00;
-		hdr->vscext_header_byte1 = 0x81;
-		hdr->vscext_header_byte2 = 0x1D;
-		hdr->vscext_header_byte3 = 0x13 << 2;
+		dp_panel_setup_dhdr_vsif(panel);
 
 		input.mdp_clk = core_clk_rate;
 		input.lclk = dp_panel->link_info.rate;
@@ -2729,7 +2933,7 @@ cached:
 	if (panel->panel_on) {
 		panel->catalog->stream_id = dp_panel->stream_id;
 		panel->catalog->config_hdr(panel->catalog, panel->hdr_state,
-				max_pkts);
+			max_pkts, flush);
 		if (dhdr_update)
 			panel->catalog->dhdr_flush(panel->catalog);
 	}
@@ -2808,18 +3012,28 @@ static void dp_panel_config_misc(struct dp_panel *dp_panel)
 {
 	struct dp_panel_private *panel;
 	struct dp_catalog_panel *catalog;
+	struct drm_connector *connector;
 	u32 misc_val;
-	u32 tb, cc;
+	u32 tb, cc, colorspace;
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
 	catalog = panel->catalog;
+	connector = dp_panel->connector;
+	cc = 0;
 
 	tb = panel->link->get_test_bits_depth(panel->link, dp_panel->pinfo.bpp);
-	cc = panel->link->get_colorimetry_config(panel->link);
+	colorspace = connector->state->colorspace;
+
+
+	cc = (get_misc_colorimetry_val(panel, colorspace) << 1);
 
 	misc_val = cc;
 	misc_val |= (tb << 5);
 	misc_val |= BIT(0); /* Configure clock to synchronous mode */
+
+	/* if VSC is supported then set bit 6 of MISC1 */
+	if (panel->vsc_supported)
+		misc_val |= BIT(14);
 
 	catalog->misc_val = misc_val;
 	catalog->config_misc(catalog);
@@ -2862,9 +3076,21 @@ static void dp_panel_resolution_info(struct dp_panel_private *panel)
 		panel->link->link_params.lane_count);
 }
 
+static void dp_panel_config_sdp(struct dp_panel *dp_panel,
+	bool en)
+{
+	struct dp_panel_private *panel;
+
+	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
+	panel->catalog->stream_id = dp_panel->stream_id;
+
+	panel->catalog->config_sdp(panel->catalog, en);
+}
+
 static int dp_panel_hw_cfg(struct dp_panel *dp_panel, bool enable)
 {
 	struct dp_panel_private *panel;
+	struct drm_connector *connector;
 
 	if (!dp_panel) {
 		DP_ERR("invalid input\n");
@@ -2878,15 +3104,23 @@ static int dp_panel_hw_cfg(struct dp_panel *dp_panel, bool enable)
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
 	panel->catalog->stream_id = dp_panel->stream_id;
+	connector = dp_panel->connector;
 
 	if (enable) {
 		dp_panel_config_ctrl(dp_panel);
 		dp_panel_config_misc(dp_panel);
 		dp_panel_config_msa(dp_panel);
+		if (panel->vsc_supported) {
+			dp_panel_setup_colorimetry_sdp(dp_panel,
+				connector->state->colorspace);
+			dp_panel_config_sdp(dp_panel, true);
+		}
 		dp_panel_config_dsc(dp_panel, enable);
 		dp_panel_config_tr_unit(dp_panel);
 		dp_panel_config_timing(dp_panel);
 		dp_panel_resolution_info(panel);
+	} else {
+		dp_panel_config_sdp(dp_panel, false);
 	}
 
 	panel->catalog->config_dto(panel->catalog, !enable);
@@ -3100,6 +3334,7 @@ struct dp_panel *dp_panel_get(struct dp_panel_in *in)
 	dp_panel->tpg_config = dp_panel_tpg_config;
 	dp_panel->spd_config = dp_panel_spd_config;
 	dp_panel->setup_hdr = dp_panel_setup_hdr;
+	dp_panel->set_colorspace = dp_panel_set_colorspace;
 	dp_panel->hdr_supported = dp_panel_hdr_supported;
 	dp_panel->set_stream_info = dp_panel_set_stream_info;
 	dp_panel->read_sink_status = dp_panel_read_sink_sts;

@@ -38,6 +38,27 @@ int dp_connector_config_hdr(struct drm_connector *connector,
 		struct sde_connector_state *c_state);
 
 /**
+ * dp_connector_atomic_check - callback to perform atomic
+ * check for DP
+ * @connector: Pointer to drm connector structure
+ * @display: Pointer to private display handle
+ * @c_state: connect state data
+ * Returns: Zero on success
+ */
+int dp_connector_atomic_check(struct drm_connector *connector,
+	void *display,
+	struct drm_connector_state *c_state);
+
+/**
+ * dp_connector_set_colorspace - callback to set new colorspace
+ * @connector: Pointer to drm connector structure
+ * @display: Pointer to private display handle
+ * Returns: Zero on success
+ */
+int dp_connector_set_colorspace(struct drm_connector *connector,
+	void *display);
+
+/**
  * dp_connector_post_init - callback to perform additional initialization steps
  * @connector: Pointer to drm connector structure
  * @display: Pointer to private display handle

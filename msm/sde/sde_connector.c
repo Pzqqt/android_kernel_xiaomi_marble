@@ -606,6 +606,19 @@ static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 	return rc;
 }
 
+void sde_connector_set_colorspace(struct sde_connector *c_conn)
+{
+	int rc = 0;
+
+	if (c_conn->ops.set_colorspace)
+		rc = c_conn->ops.set_colorspace(&c_conn->base,
+			c_conn->display);
+
+	if (rc)
+		SDE_ERROR_CONN(c_conn, "cannot apply new colorspace %d\n", rc);
+
+}
+
 void sde_connector_set_qsync_params(struct drm_connector *connector)
 {
 	struct sde_connector *c_conn = to_sde_connector(connector);
@@ -678,6 +691,12 @@ static int _sde_connector_update_dirty_properties(
 			/* nothing to do for most properties */
 			break;
 		}
+	}
+
+	/* if colorspace needs to be updated do it first */
+	if (c_conn->colorspace_updated) {
+		c_conn->colorspace_updated = false;
+		sde_connector_set_colorspace(c_conn);
 	}
 
 	/*
@@ -1480,6 +1499,20 @@ static void sde_connector_update_hdr_props(struct drm_connector *connector)
 			&hdr, sizeof(hdr), CONNECTOR_PROP_EXT_HDR_INFO);
 }
 
+static void sde_connector_update_colorspace(struct drm_connector *connector)
+{
+	int ret;
+
+	ret = msm_property_set_property(
+			sde_connector_get_propinfo(connector),
+			sde_connector_get_property_state(connector->state),
+			CONNECTOR_PROP_SUPPORTED_COLORSPACES,
+				connector->color_enc_fmt);
+
+	if (ret)
+		SDE_ERROR("failed to set colorspace property for connector\n");
+}
+
 static enum drm_connector_status
 sde_connector_detect(struct drm_connector *connector, bool force)
 {
@@ -1920,6 +1953,9 @@ static int sde_connector_get_modes(struct drm_connector *connector)
 	if (c_conn->hdr_capable)
 		sde_connector_update_hdr_props(connector);
 
+	if (c_conn->connector_type == DRM_MODE_CONNECTOR_DisplayPort)
+		sde_connector_update_colorspace(connector);
+
 	return mode_count;
 }
 
@@ -2118,6 +2154,7 @@ static const struct drm_connector_helper_funcs sde_connector_helper_ops = {
 	.get_modes =    sde_connector_get_modes,
 	.mode_valid =   sde_connector_mode_valid,
 	.best_encoder = sde_connector_best_encoder,
+	.atomic_check = sde_connector_atomic_check,
 };
 
 static const struct drm_connector_helper_funcs sde_connector_helper_ops_v2 = {
@@ -2295,6 +2332,7 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 {
 	struct dsi_display *dsi_display;
 	int rc;
+	struct drm_connector *connector;
 
 	msm_property_install_blob(&c_conn->property_info, "capabilities",
 			DRM_MODE_PROP_IMMUTABLE, CONNECTOR_PROP_SDE_INFO);
@@ -2306,6 +2344,8 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			"failed to setup connector info, rc = %d\n", rc);
 		return rc;
 	}
+
+	connector = &c_conn->base;
 
 	msm_property_install_blob(&c_conn->property_info, "mode_properties",
 			DRM_MODE_PROP_IMMUTABLE, CONNECTOR_PROP_MODE_INFO);
@@ -2350,6 +2390,11 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			      &hdr,
 			      sizeof(hdr),
 			      CONNECTOR_PROP_EXT_HDR_INFO);
+
+		/* create and attach colorspace property for DP */
+		if (!drm_mode_create_colorspace_property(connector))
+			drm_object_attach_property(&connector->base,
+				connector->colorspace_property, 0);
 	}
 
 	msm_property_install_volatile_range(&c_conn->property_info,
@@ -2388,6 +2433,12 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 	c_conn->bl_scale_dirty = false;
 	c_conn->bl_scale = MAX_BL_SCALE_LEVEL;
 	c_conn->bl_scale_sv = MAX_SV_BL_SCALE_LEVEL;
+
+	if (connector_type == DRM_MODE_CONNECTOR_DisplayPort)
+		msm_property_install_range(&c_conn->property_info,
+			"supported_colorspaces",
+			DRM_MODE_PROP_IMMUTABLE, 0, 0xffff, 0,
+			CONNECTOR_PROP_SUPPORTED_COLORSPACES);
 
 	/* enum/bitmask properties */
 	msm_property_install_enum(&c_conn->property_info, "topology_name",

@@ -150,7 +150,9 @@ struct dp_panel {
 	int (*set_dpcd)(struct dp_panel *dp_panel, u8 *dpcd);
 	int (*setup_hdr)(struct dp_panel *dp_panel,
 		struct drm_msm_ext_hdr_metadata *hdr_meta,
-		bool dhdr_update, u64 core_clk_rate);
+			bool dhdr_update, u64 core_clk_rate, bool flush);
+	int (*set_colorspace)(struct dp_panel *dp_panel,
+		u32 colorspace);
 	void (*tpg_config)(struct dp_panel *dp_panel, bool enable);
 	int (*spd_config)(struct dp_panel *dp_panel);
 	bool (*hdr_supported)(struct dp_panel *dp_panel);

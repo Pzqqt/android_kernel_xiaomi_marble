@@ -6,6 +6,7 @@
 #ifndef _DP_CATALOG_H_
 #define _DP_CATALOG_H_
 
+#include <drm/drm_dp_helper.h>
 #include <drm/msm_drm.h>
 
 #include "dp_parser.h"
@@ -39,32 +40,9 @@ enum dp_stream_id {
 	DP_STREAM_MAX,
 };
 
-struct dp_catalog_hdr_data {
-	u32 vsc_header_byte0;
-	u32 vsc_header_byte1;
-	u32 vsc_header_byte2;
-	u32 vsc_header_byte3;
-
-	u32 vscext_header_byte0;
-	u32 vscext_header_byte1;
-	u32 vscext_header_byte2;
-	u32 vscext_header_byte3;
-
-	u32 shdr_header_byte0;
-	u32 shdr_header_byte1;
-	u32 shdr_header_byte2;
-	u32 shdr_header_byte3;
-
-	u32 bpc;
-
-	u32 version;
-	u32 length;
-	u32 pixel_encoding;
-	u32 colorimetry;
-	u32 dynamic_range;
-	u32 content_type;
-
-	struct drm_msm_ext_hdr_metadata hdr_meta;
+struct dp_catalog_vsc_sdp_colorimetry {
+	struct dp_sdp_header header;
+	u8 data[32];
 };
 
 struct dp_catalog_aux {
@@ -197,7 +175,10 @@ struct dp_catalog_panel {
 	u8 *spd_vendor_name;
 	u8 *spd_product_description;
 
-	struct dp_catalog_hdr_data hdr_data;
+	struct dp_catalog_vsc_sdp_colorimetry vsc_colorimetry;
+	struct dp_sdp_header dhdr_vsif_sdp;
+	struct dp_sdp_header shdr_if_sdp;
+	struct drm_msm_ext_hdr_metadata hdr_meta;
 
 	/* TPG */
 	u32 hsync_period;
@@ -222,7 +203,10 @@ struct dp_catalog_panel {
 
 	int (*timing_cfg)(struct dp_catalog_panel *panel);
 	void (*config_hdr)(struct dp_catalog_panel *panel, bool en,
-			u32 dhdr_max_pkts);
+		u32 dhdr_max_pkts, bool flush);
+	void (*config_sdp)(struct dp_catalog_panel *panel, bool en);
+	int (*set_colorspace)(struct dp_catalog_panel *panel,
+		 bool vsc_supported);
 	void (*tpg_config)(struct dp_catalog_panel *panel, bool enable);
 	void (*config_spd)(struct dp_catalog_panel *panel);
 	void (*config_misc)(struct dp_catalog_panel *panel);
