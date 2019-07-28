@@ -47,6 +47,9 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <net/cfg80211.h>
+#ifdef CLD_PM_QOS
+#include <linux/pm_qos.h>
+#endif
 #include <linux/ieee80211.h>
 #include <qdf_delayed_work.h>
 #include <qdf_list.h>
@@ -1966,6 +1969,9 @@ struct hdd_context {
 
 	qdf_time_t runtime_resume_start_time_stamp;
 	qdf_time_t runtime_suspend_done_time_stamp;
+#ifdef CLD_PM_QOS
+	struct pm_qos_request pm_qos_req;
+#endif
 };
 
 /**

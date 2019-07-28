@@ -388,6 +388,7 @@ CONFIG_HTT_PADDR64 := y
 CONFIG_RX_OL := y
 CONFIG_TX_TID_OVERRIDE := y
 CONFIG_DP_TXRX_SOC_ATTACH := y
+CONFIG_WLAN_CLD_PM_QOS := y
 endif
 
 # As per target team, build is done as follows:

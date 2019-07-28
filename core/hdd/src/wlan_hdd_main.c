@@ -8107,6 +8107,97 @@ static void hdd_clear_rps_cpu_mask(struct hdd_context *hdd_ctx)
 		hdd_send_rps_disable_ind(adapter);
 }
 
+#ifdef CLD_PM_QOS
+#define PLD_REMOVE_PM_QOS(x)
+#define PLD_REQUEST_PM_QOS(x, y)
+/**
+ * hdd_pm_qos_update_cpu_mask() - Prepare CPU mask for PM_qos voting
+ * @mask: return variable of cpumask for the TPUT
+ * @high_throughput: only update high cores mask for high TPUT
+ *
+ * Return: none
+ */
+static inline void hdd_pm_qos_update_cpu_mask(cpumask_t *mask,
+					      bool high_throughput)
+{
+	cpumask_set_cpu(0, mask);
+	cpumask_set_cpu(1, mask);
+	cpumask_set_cpu(2, mask);
+	cpumask_set_cpu(3, mask);
+
+	if (high_throughput) {
+		/* For high TPUT include GOLD mask also */
+		cpumask_set_cpu(4, mask);
+		cpumask_set_cpu(5, mask);
+		cpumask_set_cpu(6, mask);
+	}
+}
+
+/**
+ * hdd_pm_qos_update_request() - API to request for pm_qos
+ * @hdd_ctx: handle to hdd context
+ * @pm_qos_cpu_mask: cpu_mask to apply
+ *
+ * Return: none
+ */
+static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
+					     cpumask_t *pm_qos_cpu_mask)
+{
+	cpumask_copy(&hdd_ctx->pm_qos_req.cpus_affine, pm_qos_cpu_mask);
+	/* Latency value to be read from INI */
+	pm_qos_update_request(&hdd_ctx->pm_qos_req, 1);
+}
+
+#ifdef CONFIG_SMP
+/**
+ * hdd_update_pm_qos_affine_cores() - Update PM_qos request for AFFINE_CORES
+ * @hdd_ctx: handle to hdd context
+ *
+ * Return: none
+ */
+static inline void hdd_update_pm_qos_affine_cores(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->pm_qos_req.type = PM_QOS_REQ_AFFINE_CORES;
+}
+#else
+static inline void hdd_update_pm_qos_affine_cores(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+static inline void hdd_pm_qos_add_request(struct hdd_context *hdd_ctx)
+{
+	hdd_update_pm_qos_affine_cores(hdd_ctx);
+	pm_qos_add_request(&hdd_ctx->pm_qos_req, PM_QOS_CPU_DMA_LATENCY,
+			   PM_QOS_DEFAULT_VALUE);
+}
+
+static inline void hdd_pm_qos_remove_request(struct hdd_context *hdd_ctx)
+{
+	pm_qos_remove_request(&hdd_ctx->pm_qos_req);
+}
+#else
+#define PLD_REMOVE_PM_QOS(x) pld_remove_pm_qos(x)
+#define PLD_REQUEST_PM_QOS(x, y) pld_request_pm_qos(x, y)
+
+static inline void hdd_pm_qos_add_request(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void hdd_pm_qos_remove_request(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void hdd_pm_qos_update_cpu_mask(cpumask_t *mask,
+					      bool high_throughput)
+{
+}
+
+static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
+					     cpumask_t *pm_qos_cpu_mask)
+{
+}
+#endif
+
 /**
  * hdd_pld_request_bus_bandwidth() - Function to control bus bandwidth
  * @hdd_ctx - handle to hdd context
@@ -8138,6 +8229,10 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
 	uint32_t bus_low_cnt_threshold = hdd_ctx->config->bus_low_cnt_threshold;
+	cpumask_t pm_qos_cpu_mask;
+	bool enable_pm_qos_high = false;
+
+	cpumask_clear(&pm_qos_cpu_mask);
 
 	if (total_pkts > hdd_ctx->config->bus_bw_very_high_threshold)
 		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
@@ -8172,14 +8267,14 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		if ((next_vote_level == PLD_BUS_WIDTH_LOW) ||
 		    (next_vote_level == PLD_BUS_WIDTH_IDLE)) {
 			if (hdd_ctx->hbw_requested) {
-				pld_remove_pm_qos(hdd_ctx->parent_dev);
+				PLD_REMOVE_PM_QOS(hdd_ctx->parent_dev);
 				hdd_ctx->hbw_requested = false;
 			}
 			if (hdd_ctx->dynamic_rps)
 				hdd_clear_rps_cpu_mask(hdd_ctx);
 		} else {
 			if (!hdd_ctx->hbw_requested) {
-				pld_request_pm_qos(hdd_ctx->parent_dev, 1);
+				PLD_REQUEST_PM_QOS(hdd_ctx->parent_dev, 1);
 				hdd_ctx->hbw_requested = true;
 			}
 			if (hdd_ctx->dynamic_rps)
@@ -8222,11 +8317,15 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	 * 2)when rx_ol is disabled in cases like concurrency etc
 	 * 3)For UDP cases
 	 */
-	if (avg_no_rx_offload_pkts >
-			hdd_ctx->config->bus_bw_high_threshold)
+	if (avg_no_rx_offload_pkts > hdd_ctx->config->bus_bw_high_threshold) {
 		rxthread_high_tput_req = true;
-	else
+		enable_pm_qos_high = true;
+	} else {
 		rxthread_high_tput_req = false;
+		enable_pm_qos_high = false;
+	}
+
+	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask, enable_pm_qos_high);
 
 	if (cds_sched_handle_throughput_req(rxthread_high_tput_req))
 		hdd_warn("Rx thread high_tput(%d) affinity request failed",
@@ -8269,6 +8368,14 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	/* fine-tuning parameters for TX Flows */
 	temp_tx = (tx_packets + hdd_ctx->prev_tx) / 2;
 	hdd_ctx->prev_tx = tx_packets;
+
+	if (temp_tx > hdd_ctx->config->bus_bw_high_threshold)
+		enable_pm_qos_high = true;
+	else
+		enable_pm_qos_high = false;
+
+	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask, enable_pm_qos_high);
+
 	if (temp_tx > hdd_ctx->config->tcp_tx_high_tput_thres)
 		next_tx_level = WLAN_SVC_TP_HIGH;
 	else
@@ -8297,6 +8404,12 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		hdd_ctx->hdd_txrx_hist[index].qtime = qdf_get_log_timestamp();
 		hdd_ctx->hdd_txrx_hist_idx++;
 		hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
+
+		/* Clear all the mask if no silver/gold vote is required */
+		if (next_vote_level < PLD_BUS_WIDTH_MEDIUM)
+			cpumask_clear(&pm_qos_cpu_mask);
+
+		hdd_pm_qos_update_request(hdd_ctx, &pm_qos_cpu_mask);
 	}
 
 	hdd_display_periodic_stats(hdd_ctx, (total_pkts > 0) ? true : false);
@@ -8468,6 +8581,9 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 	hdd_enter();
 
 	qdf_spinlock_create(&hdd_ctx->bus_bw_lock);
+
+	hdd_pm_qos_add_request(hdd_ctx);
+
 	status = qdf_periodic_work_create(&hdd_ctx->bus_bw_work,
 					  hdd_bus_bw_work_handler,
 					  hdd_ctx);
@@ -8484,6 +8600,7 @@ void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
 	QDF_BUG(!qdf_periodic_work_stop_sync(&hdd_ctx->bus_bw_work));
 	qdf_periodic_work_destroy(&hdd_ctx->bus_bw_work);
 	qdf_spinlock_destroy(&hdd_ctx->bus_bw_lock);
+	hdd_pm_qos_remove_request(hdd_ctx);
 
 	hdd_exit();
 }
