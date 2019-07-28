@@ -1259,6 +1259,7 @@ static ssize_t debugfs_esd_trigger_check(struct file *file,
 	struct dsi_display *display = file->private_data;
 	char *buf;
 	int rc = 0;
+	struct drm_panel_esd_config *esd_config = &display->panel->esd_config;
 	u32 esd_trigger;
 	size_t len;
 
@@ -1277,6 +1278,11 @@ static ssize_t debugfs_esd_trigger_check(struct file *file,
 	if (!display->panel ||
 		atomic_read(&display->panel->esd_recovery_pending))
 		return user_len;
+
+	if (!esd_config->esd_enabled) {
+		DSI_ERR("ESD feature is not enabled\n");
+		return -EINVAL;
+	}
 
 	buf = kzalloc(ESD_TRIGGER_STRING_MAX_LEN, GFP_KERNEL);
 	if (!buf)
