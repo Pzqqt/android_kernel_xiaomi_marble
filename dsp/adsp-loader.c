@@ -13,13 +13,16 @@
 #include <linux/of_device.h>
 #include <linux/sysfs.h>
 #include <linux/workqueue.h>
-
+#include <linux/nvmem-consumer.h>
+#include <linux/slab.h>
 #include <soc/qcom/subsystem_restart.h>
 
 #define Q6_PIL_GET_DELAY_MS 100
 #define BOOT_CMD 1
 #define SSR_RESET_CMD 1
 #define IMAGE_UNLOAD_CMD 0
+#define MAX_FW_IMAGES 4
+#define ADSP_FW_NAME_MAX_LENGTH 5
 
 static ssize_t adsp_boot_store(struct kobject *kobj,
 	struct kobj_attribute *attr,
@@ -33,6 +36,7 @@ struct adsp_loader_private {
 	void *pil_h;
 	struct kobject *boot_adsp_obj;
 	struct attribute_group *attr_group;
+	char *adsp_fw_name;
 };
 
 static struct kobj_attribute adsp_boot_attribute =
@@ -55,7 +59,6 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 {
 	struct platform_device *pdev = adsp_private;
 	struct adsp_loader_private *priv = NULL;
-
 	const char *adsp_dt = "qcom,adsp-state";
 	int rc = 0;
 	u32 adsp_state;
@@ -118,6 +121,7 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 		dev_dbg(&pdev->dev, "%s: Q6/MDSP image is loaded\n", __func__);
 		return;
 	}
+
 load_adsp:
 	{
 		adsp_state = apr_get_q6_state();
@@ -128,8 +132,16 @@ load_adsp:
 				" %s: Private data get failed\n", __func__);
 				goto fail;
 			}
+			if (!priv->adsp_fw_name) {
+				dev_dbg(&pdev->dev, "%s: Load default ADSP\n",
+					__func__);
+				priv->pil_h = subsystem_get("adsp");
+			} else {
+				dev_dbg(&pdev->dev, "%s: Load ADSP with fw name %s\n",
+					__func__, priv->adsp_fw_name);
+				priv->pil_h = subsystem_get_with_fwname("adsp", priv->adsp_fw_name);
+			}
 
-			priv->pil_h = subsystem_get("adsp");
 			if (IS_ERR(priv->pil_h)) {
 				dev_err(&pdev->dev, "%s: pil get failed,\n",
 					__func__);
@@ -310,16 +322,99 @@ static int adsp_loader_remove(struct platform_device *pdev)
 
 static int adsp_loader_probe(struct platform_device *pdev)
 {
-	int ret = adsp_loader_init_sysfs(pdev);
+	struct adsp_loader_private *priv = NULL;
+	struct nvmem_cell *cell;
+	ssize_t len;
+	u32 *buf;
+	const char **adsp_fw_name_array = NULL;
+	int adsp_fw_cnt;
+	u32* adsp_fw_bit_values = NULL;
+	int i;
+	u32 adsp_var_idx;
+	int ret = 0;
 
+	ret = adsp_loader_init_sysfs(pdev);
 	if (ret != 0) {
 		dev_err(&pdev->dev, "%s: Error in initing sysfs\n", __func__);
 		return ret;
 	}
 
-	INIT_WORK(&adsp_ldr_work, adsp_load_fw);
+	priv = platform_get_drvdata(pdev);
+	/* get adsp variant idx */
+	cell = nvmem_cell_get(&pdev->dev, "adsp_variant");
+	if (IS_ERR_OR_NULL(cell)) {
+		dev_dbg(&pdev->dev, "%s: FAILED to get nvmem cell \n", __func__);
+		goto wqueue;
+	}
+	buf = nvmem_cell_read(cell, &len);
+	nvmem_cell_put(cell);
+	if (IS_ERR_OR_NULL(buf)) {
+		dev_dbg(&pdev->dev, "%s: FAILED to read nvmem cell \n", __func__);
+		goto wqueue;
+	}
+	adsp_var_idx = (*buf);
+	kfree(buf);
 
+	/* Get count of fw images */
+	adsp_fw_cnt = of_property_count_strings(pdev->dev.of_node,
+						"adsp-fw-names");
+	if (adsp_fw_cnt <= 0 || adsp_fw_cnt > MAX_FW_IMAGES) {
+		dev_dbg(&pdev->dev, "%s: Invalid number of fw images %d",
+			__func__, adsp_fw_cnt);
+		goto wqueue;
+	}
+
+	adsp_fw_bit_values = devm_kzalloc(&pdev->dev,
+				adsp_fw_cnt * sizeof(u32), GFP_KERNEL);
+	if (!adsp_fw_bit_values)
+		goto wqueue;
+
+	/* Read bit values corresponding to each firmware image entry */
+	ret = of_property_read_u32_array(pdev->dev.of_node,
+					 "adsp-fw-bit-values",
+					 adsp_fw_bit_values,
+					 adsp_fw_cnt);
+	if (ret) {
+		dev_dbg(&pdev->dev, "%s: unable to read fw-bit-values\n",
+			__func__);
+		goto wqueue;
+	}
+
+	adsp_fw_name_array = devm_kzalloc(&pdev->dev,
+				adsp_fw_cnt * sizeof(char *), GFP_KERNEL);
+	if (!adsp_fw_name_array)
+		goto wqueue;
+
+	/* Read ADSP firmware image names */
+	ret = of_property_read_string_array(pdev->dev.of_node,
+					 "adsp-fw-names",
+					 adsp_fw_name_array,
+					 adsp_fw_cnt);
+	if (ret < 0) {
+		dev_dbg(&pdev->dev, "%s: unable to read fw-names\n",
+			__func__);
+		goto wqueue;
+	}
+
+	for (i = 0; i < adsp_fw_cnt; i++) {
+		if (adsp_fw_bit_values[i] == adsp_var_idx) {
+			priv->adsp_fw_name = devm_kzalloc(&pdev->dev,
+					ADSP_FW_NAME_MAX_LENGTH, GFP_KERNEL);
+			if (!priv->adsp_fw_name)
+				goto wqueue;
+			strlcpy(priv->adsp_fw_name, adsp_fw_name_array[i],
+				sizeof(priv->adsp_fw_name));
+			break;
+		}
+	}
+wqueue:
+	INIT_WORK(&adsp_ldr_work, adsp_load_fw);
+	if (adsp_fw_bit_values)
+		devm_kfree(&pdev->dev, adsp_fw_bit_values);
+	if (adsp_fw_name_array)
+		devm_kfree(&pdev->dev, adsp_fw_name_array);
 	return 0;
+
 }
 
 static const struct of_device_id adsp_loader_dt_match[] = {
