@@ -370,13 +370,13 @@ void sde_fence_signal(struct sde_fence_context *ctx, ktime_t ts,
 	spin_lock_irqsave(&ctx->lock, flags);
 	if (fence_event == SDE_FENCE_RESET_TIMELINE) {
 		if ((int)(ctx->done_count - ctx->commit_count) < 0) {
-			SDE_ERROR(
-				"timeline reset attempt! done count:%d commit:%d\n",
+			SDE_DEBUG(
+			  "timeline reset attempt! done count:%d commit:%d\n",
 				ctx->done_count, ctx->commit_count);
 			ctx->done_count = ctx->commit_count;
 			SDE_EVT32(ctx->drm_id, ctx->done_count,
 				ctx->commit_count, ktime_to_us(ts),
-				fence_event, SDE_EVTLOG_FATAL);
+				fence_event, SDE_EVTLOG_FUNC_CASE1);
 		} else {
 			spin_unlock_irqrestore(&ctx->lock, flags);
 			return;
