@@ -283,8 +283,14 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					"%s: lpass audio hw enable failed\n",
 					__func__);
 		}
+		if (!ret)
+			if (bolero_tx_clk_switch(component))
+				dev_dbg(va_dev, "%s: clock switch failed\n",
+					__func__);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		if (bolero_tx_clk_switch(component))
+			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		if (va_priv->lpass_audio_hw_vote)
 			clk_disable_unprepare(va_priv->lpass_audio_hw_vote);
 		break;
@@ -311,18 +317,18 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 	dev_dbg(va_dev, "%s: event = %d\n", __func__, event);
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		ret = va_macro_mclk_enable(va_priv, 1, true);
 		ret = bolero_clk_rsc_request_clock(va_priv->dev,
 						   va_priv->default_clk_id,
 						   TX_CORE_CLK,
 						   true);
+		ret = va_macro_mclk_enable(va_priv, 1, true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		va_macro_mclk_enable(va_priv, 0, true);
 		bolero_clk_rsc_request_clock(va_priv->dev,
 					   va_priv->default_clk_id,
 					   TX_CORE_CLK,
 					   false);
-		va_macro_mclk_enable(va_priv, 0, true);
 		break;
 	default:
 		dev_err(va_priv->dev,
