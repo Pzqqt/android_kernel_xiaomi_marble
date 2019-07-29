@@ -1308,6 +1308,26 @@ static int swrm_find_alert_slave(struct swr_mstr_ctrl *swrm,
 		return -EINVAL;
 }
 
+static void swrm_enable_slave_irq(struct swr_mstr_ctrl *swrm)
+{
+	int i;
+	int status = 0;
+
+	status = swr_master_read(swrm, SWRM_MCP_SLV_STATUS);
+	if (!status) {
+		dev_dbg_ratelimited(swrm->dev, "%s: slaves status is 0x%x\n",
+					__func__, status);
+		return;
+	}
+	dev_dbg(swrm->dev, "%s: slave status: 0x%x\n", __func__, status);
+	for (i = 0; i < (swrm->master.num_dev + 1); i++) {
+		if (status & SWRM_MCP_SLV_STATUS_MASK)
+			swrm_cmd_fifo_wr_cmd(swrm, 0x4, i, 0x0,
+						SWRS_SCP_INT_STATUS_MASK_1);
+		status >>= 2;
+	}
+}
+
 static int swrm_check_slave_change_status(struct swr_mstr_ctrl *swrm,
 					int status, u8 *devnum)
 {
@@ -1674,6 +1694,12 @@ handle_irq:
 				dev_err_ratelimited(swrm->dev,
 					"%s: SWR wokeup during clock stop\n",
 					__func__);
+			/* It might be possible the slave device gets reset
+			 * and slave interrupt gets missed. So re-enable
+			 * Host IRQ and process slave pending
+			 * interrupts, if any.
+			 */
+			swrm_enable_slave_irq(swrm);
 			break;
 		default:
 			dev_err_ratelimited(swrm->dev,
@@ -1690,7 +1716,8 @@ handle_irq:
 	intr_sts_masked = intr_sts & swrm->intr_mask;
 
 	if (intr_sts_masked) {
-		dev_dbg(swrm->dev, "%s: new interrupt received\n", __func__);
+		dev_dbg(swrm->dev, "%s: new interrupt received 0x%x\n",
+			__func__, intr_sts_masked);
 		goto handle_irq;
 	}
 
