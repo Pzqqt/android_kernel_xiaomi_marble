@@ -621,6 +621,10 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		if (wcd938x->ldoh)
+			snd_soc_component_update_bits(component,
+						WCD938X_LDOH_MODE,
+						0x80, 0x80);
 		if (wcd938x->update_wcd_event)
 			wcd938x->update_wcd_event(wcd938x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -724,6 +728,10 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_EVENT_POST_PA,
 			     WCD_CLSH_STATE_HPHR,
 			     hph_mode);
+		if (wcd938x->ldoh)
+			snd_soc_component_update_bits(component,
+						WCD938X_LDOH_MODE,
+						0x80, 0x00);
 		break;
 	};
 	return ret;
@@ -743,6 +751,10 @@ static int wcd938x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		if (wcd938x->ldoh)
+			snd_soc_component_update_bits(component,
+						WCD938X_LDOH_MODE,
+						0x80, 0x80);
 		if (wcd938x->update_wcd_event)
 			wcd938x->update_wcd_event(wcd938x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -846,6 +858,10 @@ static int wcd938x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_EVENT_POST_PA,
 			     WCD_CLSH_STATE_HPHL,
 			     hph_mode);
+		if (wcd938x->ldoh)
+			snd_soc_component_update_bits(component,
+						WCD938X_LDOH_MODE,
+						0x80, 0x00);
 		break;
 	};
 	return ret;
@@ -1991,6 +2007,30 @@ static int wcd938x_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wcd938x_ldoh_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	ucontrol->value.integer.value[0] = wcd938x->ldoh;
+
+	return 0;
+}
+
+static int wcd938x_ldoh_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	wcd938x->ldoh = ucontrol->value.integer.value[0];
+
+	return 0;
+}
+
 static const char * const tx_mode_mux_text_wcd9380[] = {
 	"ADC_INVALID", "ADC_HIFI", "ADC_LO_HIF", "ADC_NORMAL", "ADC_LP",
 };
@@ -2060,6 +2100,9 @@ static const struct snd_kcontrol_new wcd938x_snd_controls[] = {
 		wcd938x_get_compander, wcd938x_set_compander),
 	SOC_SINGLE_EXT("HPHR_COMP Switch", SND_SOC_NOPM, 1, 1, 0,
 		wcd938x_get_compander, wcd938x_set_compander),
+
+	SOC_SINGLE_EXT("LDOH Enable", SND_SOC_NOPM, 0, 1, 0,
+		wcd938x_ldoh_get, wcd938x_ldoh_put),
 
 	SOC_SINGLE_TLV("HPHL Volume", WCD938X_HPH_L_EN, 0, 20, 1, line_gain),
 	SOC_SINGLE_TLV("HPHR Volume", WCD938X_HPH_R_EN, 0, 20, 1, line_gain),
