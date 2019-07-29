@@ -1704,6 +1704,8 @@ struct dp_vdev {
 	/* dp_peer list */
 	TAILQ_HEAD(, dp_peer) peer_list;
 
+	/* RX call back function to flush GRO packets*/
+	ol_txrx_rx_gro_flush_ind_fp osif_gro_flush;
 	/* default RX call back function called by dp */
 	ol_txrx_rx_fp osif_rx;
 	/* callback to deliver rx frames to the OS */

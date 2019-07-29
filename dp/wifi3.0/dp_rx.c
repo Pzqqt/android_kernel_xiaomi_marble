@@ -911,12 +911,13 @@ static void dp_rx_print_offload_info(uint8_t *rx_tlv)
  * @soc: DP SOC handle
  * @rx_tlv: RX TLV received for the msdu
  * @msdu: msdu for which GRO info needs to be filled
+ * @rx_ol_pkt_cnt: counter to be incremented for GRO eligible packets
  *
  * Return: None
  */
 static
 void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
-			 qdf_nbuf_t msdu)
+			 qdf_nbuf_t msdu, uint32_t *rx_ol_pkt_cnt)
 {
 	if (!wlan_cfg_is_gro_enabled(soc->wlan_cfg_ctx))
 		return;
@@ -924,6 +925,8 @@ void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
 	/* Filling up RX offload info only for TCP packets */
 	if (!HAL_RX_TLV_GET_TCP_PROTO(rx_tlv))
 		return;
+
+	*rx_ol_pkt_cnt = *rx_ol_pkt_cnt + 1;
 
 	QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) =
 		 HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv);
@@ -950,7 +953,7 @@ void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
 }
 #else
 static void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
-				qdf_nbuf_t msdu)
+				qdf_nbuf_t msdu, uint32_t *rx_ol_pkt_cnt)
 {
 }
 #endif /* RECEIVE_OFFLOAD */
@@ -1661,6 +1664,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	int32_t tid = 0;
 	bool is_prev_msdu_last = true;
 	uint32_t num_entries_avail = 0;
+	uint32_t rx_ol_pkt_cnt = 0;
 
 	DP_HIST_INIT();
 
@@ -1861,9 +1865,6 @@ more_data:
 	}
 done:
 	dp_srng_access_end(int_ctx, soc, hal_ring_hdl);
-
-	if (nbuf_tail)
-		QDF_NBUF_CB_RX_FLUSH_IND(nbuf_tail) = 1;
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		/*
@@ -2129,7 +2130,8 @@ done:
 				}
 		}
 
-		dp_rx_fill_gro_info(soc, rx_tlv_hdr, nbuf);
+		dp_rx_fill_gro_info(soc, rx_tlv_hdr, nbuf, &rx_ol_pkt_cnt);
+
 		qdf_nbuf_cb_update_peer_local_id(nbuf, peer->local_id);
 
 		DP_RX_LIST_APPEND(deliver_list_head,
@@ -2147,7 +2149,7 @@ done:
 		dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
 				       deliver_list_tail);
 
-	if (dp_rx_enable_eol_data_check(soc)) {
+	if (dp_rx_enable_eol_data_check(soc) && rx_bufs_used) {
 		if (quota &&
 		    hal_srng_dst_peek_sync_locked(soc->hal_soc,
 						  hal_ring_hdl)) {
@@ -2155,7 +2157,13 @@ done:
 			if (!hif_exec_should_yield(scn, intr_id))
 				goto more_data;
 		}
+
+		if (vdev->osif_gro_flush && rx_ol_pkt_cnt) {
+			vdev->osif_gro_flush(vdev->osif_vdev,
+					     reo_ring_num);
+		}
 	}
+
 	/* Update histogram statistics by looping through pdev's */
 	DP_RX_HIST_STATS_PER_PDEV();
 
