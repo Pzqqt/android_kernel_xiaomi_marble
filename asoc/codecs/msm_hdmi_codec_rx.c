@@ -33,6 +33,11 @@
 				&codec_info)
 
 enum {
+        DP_CONTROLLER0 = 0,
+        DP_CONTROLLER_MAX,
+};
+
+enum {
 	DP_STREAM0 = 0,
 	DP_STREAM1,
 	DP_STREAM_MAX,
@@ -295,6 +300,38 @@ done:
 	return rc;
 }
 
+static int msm_ext_disp_audio_device_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct msm_ext_disp_audio_codec_rx_data *codec_data;
+	int rc = 0;
+	int dai_id = ((struct soc_multi_mixer_control *)
+				kcontrol->private_value)->shift;
+
+	if (dai_id < 0 || dai_id > DP_DAI2) {
+		dev_err(component->dev,
+			"%s: invalid dai id: %d\n", __func__, dai_id);
+		rc = -EINVAL;
+		goto done;
+	}
+
+	codec_data = snd_soc_component_get_drvdata(component);
+	if (!codec_data) {
+		dev_err(component->dev,
+			"%s: codec_data or ops acknowledge() is NULL\n",
+			__func__);
+		rc = -EINVAL;
+		goto done;
+	}
+	ucontrol->value.integer.value[0] = codec_data->ctl[dai_id];
+	ucontrol->value.integer.value[1] = codec_data->stream[dai_id];
+
+done:
+	return rc;
+}
+
 static int msm_ext_disp_audio_device_set(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
@@ -302,7 +339,15 @@ static int msm_ext_disp_audio_device_set(struct snd_kcontrol *kcontrol,
 			snd_soc_kcontrol_component(kcontrol);
 	struct msm_ext_disp_audio_codec_rx_data *codec_data;
 	int rc = 0;
-	int dai_id = ((struct soc_enum *) kcontrol->private_value)->shift_l;
+	int dai_id = ((struct soc_multi_mixer_control *)
+				kcontrol->private_value)->shift;
+
+	if (dai_id < 0 || dai_id > DP_DAI2) {
+		dev_err(component->dev,
+			"%s: invalid dai id: %d\n", __func__, dai_id);
+		rc = -EINVAL;
+		goto done;
+	}
 
 	codec_data = snd_soc_component_get_drvdata(component);
 	if (!codec_data) {
@@ -313,9 +358,20 @@ static int msm_ext_disp_audio_device_set(struct snd_kcontrol *kcontrol,
 		goto done;
 	}
 
+	if ((ucontrol->value.integer.value[0] > (DP_CONTROLLER_MAX - 1)) ||
+		(ucontrol->value.integer.value[1] > (DP_STREAM_MAX - 1)) ||
+		(ucontrol->value.integer.value[0] < 0) ||
+		(ucontrol->value.integer.value[1] < 0)) {
+		dev_err(component->dev,
+			"%s: DP audio control index invalid\n",
+			__func__);
+		rc = -EINVAL;
+		goto done;
+	}
+
 	mutex_lock(&codec_data->dp_ops_lock);
-	codec_data->ctl[dai_id] = ucontrol->value.enumerated.item[0];
-	codec_data->stream[dai_id] = ucontrol->value.enumerated.item[1];
+	codec_data->ctl[dai_id] = ucontrol->value.integer.value[0];
+	codec_data->stream[dai_id] = ucontrol->value.integer.value[1];
 	mutex_unlock(&codec_data->dp_ops_lock);
 
 done:
@@ -363,12 +419,14 @@ static const struct snd_kcontrol_new msm_ext_disp_codec_rx_controls[] = {
 		     ext_disp_audio_ack_state1,
 		     NULL, msm_ext_disp_audio_ack_set),
 
-	SOC_SINGLE_EXT("External Display Audio Device",
-		       SND_SOC_NOPM, DP_DAI1, DP_STREAM_MAX, 0,
-		       NULL, msm_ext_disp_audio_device_set),
-	SOC_SINGLE_EXT("External Display1 Audio Device",
-		       SND_SOC_NOPM, DP_DAI2, DP_STREAM_MAX, 0,
-		       NULL, msm_ext_disp_audio_device_set),
+	SOC_SINGLE_MULTI_EXT("External Display Audio Device",
+			SND_SOC_NOPM, DP_DAI1, DP_STREAM_MAX - 1, 0, 2,
+			msm_ext_disp_audio_device_get,
+			msm_ext_disp_audio_device_set),
+	SOC_SINGLE_MULTI_EXT("External Display1 Audio Device",
+			SND_SOC_NOPM, DP_DAI2, DP_STREAM_MAX - 1, 0, 2,
+			msm_ext_disp_audio_device_get,
+			msm_ext_disp_audio_device_set),
 };
 
 static int msm_ext_disp_audio_codec_rx_dai_startup(
