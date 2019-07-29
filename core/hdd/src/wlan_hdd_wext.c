@@ -4788,6 +4788,8 @@ static int hdd_we_set_amsdu(struct hdd_adapter *adapter, int amsdu)
 
 static int hdd_we_clear_stats(struct hdd_adapter *adapter, int option)
 {
+	QDF_STATUS status;
+
 	hdd_debug("option %d", option);
 
 	switch (option) {
@@ -4808,8 +4810,12 @@ static int hdd_we_clear_stats(struct hdd_adapter *adapter, int option)
 		hdd_clear_napi_stats();
 		break;
 	default:
-		cdp_clear_stats(cds_get_context(QDF_MODULE_ID_SOC),
-				option);
+		status = cdp_clear_stats(cds_get_context(QDF_MODULE_ID_SOC),
+					 option);
+		if (status != QDF_STATUS_SUCCESS)
+			hdd_debug("Failed to dump stats for option: %d",
+				  option);
+		break;
 	}
 
 	return 0;

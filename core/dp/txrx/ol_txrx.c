@@ -4517,11 +4517,13 @@ ol_txrx_display_stats(void *soc, uint16_t value,
 
 /**
  * ol_txrx_clear_stats() - Clear OL TXRX stats
- * @value: Module id for which stats needs to be cleared
+ * @soc - ol soc handle
+ * @value - Module id for which stats needs to be cleared
  *
- * Return: None
+ * Return: 0 - success/ non-zero failure
  */
-static void ol_txrx_clear_stats(uint16_t value)
+static QDF_STATUS ol_txrx_clear_stats(struct cdp_soc *soc,
+				      uint8_t value)
 {
 	ol_txrx_pdev_handle pdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -4530,7 +4532,7 @@ static void ol_txrx_clear_stats(uint16_t value)
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: pdev is NULL", __func__);
-		return;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	switch (value) {
@@ -4567,6 +4569,7 @@ static void ol_txrx_clear_stats(uint16_t value)
 		break;
 	}
 
+	return status;
 }
 
 /**
