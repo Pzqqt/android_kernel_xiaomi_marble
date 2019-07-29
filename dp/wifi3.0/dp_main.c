@@ -8546,7 +8546,7 @@ static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
 	if (soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi)
 		soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi
 			((void *)vdev->pdev->ctrl_pdev,
-			 vdev->vdev_id, cmd, bssid);
+			 vdev->vdev_id, cmd, bssid, client_macaddr);
 
 	return QDF_STATUS_SUCCESS;
 }

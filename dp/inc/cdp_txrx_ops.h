@@ -980,7 +980,9 @@ struct ol_if_ops {
 		u_int8_t vdev_id, enum cdp_nac_param_cmd cmd, char *bssid,
 		char *client_macaddr, uint8_t chan_num);
 	int (*config_bssid_in_fw_for_nac_rssi)(struct wlan_objmgr_pdev *pdev,
-		u_int8_t vdev_id, enum cdp_nac_param_cmd cmd, char *bssid);
+					       u_int8_t vdev_id,
+					       enum cdp_nac_param_cmd cmd,
+					       char *bssid, char *client_mac);
 #endif
 	int (*peer_sta_kickout)(void *ctrl_pdev, uint8_t *peer_macaddr);
 
