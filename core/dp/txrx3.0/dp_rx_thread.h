@@ -50,6 +50,7 @@ struct dp_rx_tm_handle_cmn;
  * @nbuf_dequeued: packets de-queued from the thread
  * @nbuf_sent_to_stack: packets sent to the stack. some dequeued packets may be
  *			dropped due to no peer or vdev, hence this stat.
+ * @gro_flushes: number of GRO flushes
  * @nbufq_max_len: maximum number of nbuf_lists queued for the thread
  * @dropped_invalid_vdev: packets(nbuf_list) dropped due to no vdev
  * @dropped_invalid_peer: packets(nbuf_list) dropped due to no peer
@@ -60,6 +61,7 @@ struct dp_rx_thread_stats {
 	unsigned int nbuf_queued[DP_RX_TM_MAX_REO_RINGS];
 	unsigned int nbuf_dequeued;
 	unsigned int nbuf_sent_to_stack;
+	unsigned int gro_flushes;
 	unsigned int nbufq_max_len;
 	unsigned int dropped_invalid_vdev;
 	unsigned int dropped_invalid_peer;
@@ -92,6 +94,7 @@ struct dp_rx_thread {
 	qdf_event_t suspend_event;
 	qdf_event_t resume_event;
 	qdf_event_t shutdown_event;
+	qdf_atomic_t gro_flush_ind;
 	unsigned long event_flag;
 	qdf_nbuf_queue_head_t nbuf_queue;
 	unsigned long aff_mask;
@@ -159,6 +162,16 @@ QDF_STATUS dp_rx_tm_deinit(struct dp_rx_tm_handle *rx_tm_hdl);
  */
 QDF_STATUS dp_rx_tm_enqueue_pkt(struct dp_rx_tm_handle *rx_tm_hdl,
 				qdf_nbuf_t nbuf_list);
+
+/**
+ * dp_rx_tm_gro_flush_ind() - flush GRO packets for a RX Context Id
+ * @rx_tm_hdl: dp_rx_tm_handle containing the overall thread infrastructure
+ * @rx_ctx_id: RX Thread Contex Id for which GRO flush needs to be done
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+QDF_STATUS dp_rx_tm_gro_flush_ind(struct dp_rx_tm_handle *rx_tm_handle,
+				  int rx_ctx_id);
 
 /**
  * dp_rx_tm_suspend() - suspend all threads in RXTI

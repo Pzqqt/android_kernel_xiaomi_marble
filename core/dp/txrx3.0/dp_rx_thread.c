@@ -102,13 +102,14 @@ static void dp_rx_tm_thread_dump_stats(struct dp_rx_thread *rx_thread)
 	if (!total_queued)
 		return;
 
-	dp_info("thread:%u - qlen:%u queued:(total:%u %s) dequeued:%u stack:%u max_len:%u invalid(peer:%u vdev:%u rx-handle:%u others:%u)",
+	dp_info("thread:%u - qlen:%u queued:(total:%u %s) dequeued:%u stack:%u gro_flushes: %u max_len:%u invalid(peer:%u vdev:%u rx-handle:%u others:%u)",
 		rx_thread->id,
 		qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue),
 		total_queued,
 		nbuf_queued_string,
 		rx_thread->stats.nbuf_dequeued,
 		rx_thread->stats.nbuf_sent_to_stack,
+		rx_thread->stats.gro_flushes,
 		rx_thread->stats.nbufq_max_len,
 		rx_thread->stats.dropped_invalid_peer,
 		rx_thread->stats.dropped_invalid_vdev,
@@ -209,9 +210,30 @@ enq_done:
 	if (temp_qlen > rx_thread->stats.nbufq_max_len)
 		rx_thread->stats.nbufq_max_len = temp_qlen;
 
+	dp_debug("enqueue packet thread %pK wait queue %pK qlen %u",
+		 rx_thread, wait_q_ptr,
+		 qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue));
+
 	qdf_set_bit(RX_POST_EVENT, &rx_thread->event_flag);
 	qdf_wake_up_interruptible(wait_q_ptr);
 
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dp_rx_tm_thread_gro_flush_ind(struct dp_rx_thread *rx_thread)
+{
+	struct dp_rx_tm_handle_cmn *tm_handle_cmn;
+	qdf_wait_queue_head_t *wait_q_ptr;
+
+	tm_handle_cmn = rx_thread->rtm_handle_cmn;
+	wait_q_ptr = dp_rx_thread_get_wait_queue(tm_handle_cmn);
+
+	qdf_atomic_set(&rx_thread->gro_flush_ind, 1);
+
+	dp_debug("Flush indication received");
+
+	qdf_set_bit(RX_POST_EVENT, &rx_thread->event_flag);
+	qdf_wake_up_interruptible(wait_q_ptr);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -234,6 +256,8 @@ static qdf_nbuf_t dp_rx_tm_thread_dequeue(struct dp_rx_thread *rx_thread)
 		qdf_nbuf_set_next(nbuf_list, next_ptr_list);
 		dp_rx_tm_walk_skb_list(nbuf_list);
 	}
+
+	dp_debug("Dequeued %pK nbuf_list", nbuf_list);
 	return nbuf_list;
 }
 
@@ -268,6 +292,9 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 		QDF_BUG(0);
 		return -EFAULT;
 	}
+
+	dp_debug("enter: qlen  %u",
+		 qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue));
 
 	nbuf_list = dp_rx_tm_thread_dequeue(rx_thread);
 	while (nbuf_list) {
@@ -305,6 +332,8 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 			qdf_nbuf_list_free(nbuf_list);
 			goto dequeue_rx_thread;
 		}
+		dp_debug("rx_thread %pK sending packet %pK to stack", rx_thread,
+			 nbuf_list);
 		stack_fn(osif_vdev, nbuf_list);
 		rx_thread->stats.nbuf_sent_to_stack += num_list_elements;
 
@@ -312,7 +341,27 @@ dequeue_rx_thread:
 		nbuf_list = dp_rx_tm_thread_dequeue(rx_thread);
 	}
 
+	dp_debug("exit: qlen  %u",
+		 qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue));
+
 	return 0;
+}
+
+/**
+ * dp_rx_thread_gro_flush() - flush GRO packets for the RX thread
+ * @rx_thread - rx_thread to be processed
+ *
+ * Returns: void
+ */
+static void dp_rx_thread_gro_flush(struct dp_rx_thread *rx_thread)
+{
+	dp_debug("flushing packets for thread %u", rx_thread->id);
+
+	local_bh_disable();
+	napi_gro_flush(&rx_thread->napi, false);
+	local_bh_enable();
+
+	rx_thread->stats.gro_flushes++;
 }
 
 /**
@@ -344,6 +393,11 @@ static int dp_rx_thread_sub_loop(struct dp_rx_thread *rx_thread, bool *shutdown)
 		}
 
 		dp_rx_thread_process_nbufq(rx_thread);
+
+		if (qdf_atomic_read(&rx_thread->gro_flush_ind)) {
+			dp_rx_thread_gro_flush(rx_thread);
+			qdf_atomic_set(&rx_thread->gro_flush_ind, 0);
+		}
 
 		if (qdf_atomic_test_and_clear_bit(RX_SUSPEND_EVENT,
 						  &rx_thread->event_flag)) {
@@ -484,6 +538,7 @@ static QDF_STATUS dp_rx_tm_thread_init(struct dp_rx_thread *rx_thread,
 	qdf_event_create(&rx_thread->suspend_event);
 	qdf_event_create(&rx_thread->resume_event);
 	qdf_event_create(&rx_thread->shutdown_event);
+	qdf_atomic_init(&rx_thread->gro_flush_ind);
 	qdf_scnprintf(thread_name, sizeof(thread_name), "dp_rx_thread_%u", id);
 	dp_info("%s %u", thread_name, id);
 
@@ -714,20 +769,19 @@ QDF_STATUS dp_rx_tm_deinit(struct dp_rx_tm_handle *rx_tm_hdl)
  * dp_rx_tm_select_thread() - select a DP RX thread for a nbuf
  * @rx_tm_hdl: dp_rx_tm_handle containing the overall thread
  *            infrastructure
- * @nbuf_list: list of nbufs to be enqueued in to the thread
+ * @reo_ring_num: REO ring number corresponding to the thread
  *
- * The function relies on the presence of QDF_NBUF_CB_RX_CTX_ID
- * in the nbuf list. Depending on the RX_CTX (copy engine or reo
+ * The function relies on the presence of QDF_NBUF_CB_RX_CTX_ID passed to it
+ * from the nbuf list. Depending on the RX_CTX (copy engine or reo
  * ring) on which the packet was received, the function selects
  * a corresponding rx_thread.
  *
  * Return: rx thread ID selected for the nbuf
  */
 static uint8_t dp_rx_tm_select_thread(struct dp_rx_tm_handle *rx_tm_hdl,
-				      qdf_nbuf_t nbuf_list)
+				      uint8_t reo_ring_num)
 {
 	uint8_t selected_rx_thread;
-	uint8_t reo_ring_num = QDF_NBUF_CB_RX_CTX_ID(nbuf_list);
 
 	if (reo_ring_num >= rx_tm_hdl->num_dp_rx_threads) {
 		dp_err_rl("unexpected ring number");
@@ -736,6 +790,7 @@ static uint8_t dp_rx_tm_select_thread(struct dp_rx_tm_handle *rx_tm_hdl,
 	}
 
 	selected_rx_thread = reo_ring_num;
+	dp_debug("selected thread %u", selected_rx_thread);
 	return selected_rx_thread;
 }
 
@@ -744,9 +799,22 @@ QDF_STATUS dp_rx_tm_enqueue_pkt(struct dp_rx_tm_handle *rx_tm_hdl,
 {
 	uint8_t selected_thread_id;
 
-	selected_thread_id = dp_rx_tm_select_thread(rx_tm_hdl, nbuf_list);
+	selected_thread_id =
+		dp_rx_tm_select_thread(rx_tm_hdl,
+				       QDF_NBUF_CB_RX_CTX_ID(nbuf_list));
 	dp_rx_tm_thread_enqueue(rx_tm_hdl->rx_thread[selected_thread_id],
 				nbuf_list);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+dp_rx_tm_gro_flush_ind(struct dp_rx_tm_handle *rx_tm_hdl, int rx_ctx_id)
+{
+	uint8_t selected_thread_id;
+
+	selected_thread_id = dp_rx_tm_select_thread(rx_tm_hdl, rx_ctx_id);
+	dp_rx_tm_thread_gro_flush_ind(rx_tm_hdl->rx_thread[selected_thread_id]);
+
 	return QDF_STATUS_SUCCESS;
 }
 

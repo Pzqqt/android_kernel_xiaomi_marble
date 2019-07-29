@@ -117,12 +117,26 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 				   struct sk_buff *skb);
 
 /**
+ * hdd_rx_thread_gro_flush_ind_cbk() - receive handler to flush GRO packets
+ * @adapter: pointer to HDD adapter
+ * @rx_ctx_id: RX CTX Id for which flush should happen
+ *
+ * Receive callback registered with DP layer which flushes GRO packets
+ * for a given RX CTX ID (RX Thread)
+ *
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered,
+ *	   QDF_STATUS_SUCCESS otherwise
+ */
+QDF_STATUS hdd_rx_thread_gro_flush_ind_cbk(void *adapter, int rx_ctx_id);
+
+/**
  * hdd_rx_pkt_thread_enqueue_cbk() - receive pkt handler to enqueue into thread
  * @adapter: pointer to HDD adapter
  * @nbuf_list: pointer to qdf_nbuf list
  *
  * Receive callback registered with DP layer which enqueues packets into dp rx
  * thread
+ *
  * Return: QDF_STATUS_E_FAILURE if any errors encountered,
  *	   QDF_STATUS_SUCCESS otherwise
  */

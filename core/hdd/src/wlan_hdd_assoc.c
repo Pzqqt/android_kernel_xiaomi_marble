@@ -2135,6 +2135,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	if (adapter->hdd_ctx->enable_dp_rx_threads) {
 		txrx_ops.rx.rx = hdd_rx_pkt_thread_enqueue_cbk;
 		txrx_ops.rx.rx_stack = hdd_rx_packet_cbk;
+		txrx_ops.rx.rx_gro_flush = hdd_rx_thread_gro_flush_ind_cbk;
 	} else {
 		txrx_ops.rx.rx = hdd_rx_packet_cbk;
 		txrx_ops.rx.rx_stack = NULL;
@@ -4085,6 +4086,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	if (adapter->hdd_ctx->enable_dp_rx_threads) {
 		txrx_ops.rx.rx = hdd_rx_pkt_thread_enqueue_cbk;
 		txrx_ops.rx.rx_stack = hdd_rx_packet_cbk;
+		txrx_ops.rx.rx_gro_flush = hdd_rx_thread_gro_flush_ind_cbk;
 	} else {
 		txrx_ops.rx.rx = hdd_rx_packet_cbk;
 		txrx_ops.rx.rx_stack = NULL;

@@ -199,6 +199,36 @@ ret:
 }
 
 /**
+ * dp_rx_gro_flush_ind() - Flush GRO packets for a given RX CTX Id
+ * @soc: ol_txrx_soc_handle object
+ * @rx_ctx_id: Context Id (Thread for which GRO packets need to be flushed)
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
+ */
+static inline
+QDF_STATUS dp_rx_gro_flush_ind(ol_txrx_soc_handle soc, int rx_ctx_id)
+{
+	struct dp_txrx_handle *dp_ext_hdl;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	if (!soc) {
+		qdf_status = QDF_STATUS_E_INVAL;
+		dp_err("invalid input param soc %pK", soc);
+		goto ret;
+	}
+
+	dp_ext_hdl = cdp_soc_get_dp_txrx_handle(soc);
+	if (!dp_ext_hdl) {
+		qdf_status = QDF_STATUS_E_FAULT;
+		goto ret;
+	}
+
+	qdf_status = dp_rx_tm_gro_flush_ind(&dp_ext_hdl->rx_tm_hdl, rx_ctx_id);
+ret:
+	return qdf_status;
+}
+
+/**
  * dp_txrx_ext_dump_stats() - dump txrx external module stats
  * @soc: ol_txrx_soc_handle object
  * @stats_id: id  for the module whose stats are needed
@@ -313,6 +343,12 @@ static inline QDF_STATUS dp_txrx_suspend(ol_txrx_soc_handle soc)
 
 static inline
 QDF_STATUS dp_rx_enqueue_pkt(ol_txrx_soc_handle soc, qdf_nbuf_t nbuf_list)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS dp_rx_gro_flush_ind(ol_txrx_soc_handle soc, int rx_ctx_id)
 {
 	return QDF_STATUS_SUCCESS;
 }

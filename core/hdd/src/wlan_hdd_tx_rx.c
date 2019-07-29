@@ -1554,21 +1554,15 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	gro_result_t gro_res;
-	bool flush_ind = QDF_NBUF_CB_RX_FLUSH_IND(skb);
 
 	skb_set_hash(skb, QDF_NBUF_CB_RX_FLOW_ID(skb), PKT_HASH_TYPE_L4);
 
 	local_bh_disable();
 	gro_res = napi_gro_receive(napi_to_use, skb);
-	if (flush_ind)
-		napi_gro_flush(napi_to_use, false);
 	local_bh_enable();
 
 	if (gro_res == GRO_DROP)
 		status = QDF_STATUS_E_GRO_DROP;
-
-	if (flush_ind)
-		adapter->hdd_stats.tx_rx_stats.rx_gro_flushes++;
 
 	return status;
 }
@@ -1897,10 +1891,20 @@ static inline void hdd_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
 }
 #endif
 
+QDF_STATUS hdd_rx_thread_gro_flush_ind_cbk(void *adapter, int rx_ctx_id)
+{
+	if (qdf_unlikely(!adapter)) {
+		hdd_err("Null params being passed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	return dp_rx_gro_flush_ind(cds_get_context(QDF_MODULE_ID_SOC),
+				   rx_ctx_id);
+}
+
 QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter,
 					 qdf_nbuf_t nbuf_list)
 {
-	if (unlikely((!adapter) || (!nbuf_list))) {
+	if (qdf_unlikely(!adapter || !nbuf_list)) {
 		hdd_err("Null params being passed");
 		return QDF_STATUS_E_FAILURE;
 	}
