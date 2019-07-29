@@ -44,6 +44,7 @@
 #include "wlan_ipa_ucfg_api.h"
 #include "wlan_policy_mgr_ucfg.h"
 #include <wma_types.h>
+#include <sap_internal.h>
 
 /* Preprocessor definitions and constants */
 #undef QCA_HDD_SAP_DUMP_SK_BUFF
@@ -1058,15 +1059,20 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 				   bool wmm_enabled)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct ol_txrx_desc_type txrx_desc = { 0 };
+	struct ol_txrx_desc_type txrx_desc = {0};
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct cdp_vdev *txrx_vdev = NULL;
+	struct hdd_ap_ctx *ap_ctx;
 
 	hdd_info("STA:%u, Auth:%u, Priv:%u, WMM:%u",
 		 sta_id, auth_required, privacy_required, wmm_enabled);
+
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	if (!ap_ctx)
+		hdd_err("Invalid AP context");
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
 		hdd_err("Error: Invalid sta_id: %u", sta_id);
@@ -1083,6 +1089,16 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 
 	/* Get the Station ID from the one saved during the association. */
 	txrx_desc.sta_id = sta_id;
+
+	/*
+	 * If the address is a broadcast address, then provide the self mac addr
+	 * to the data path. Else provide the mac address of the connected peer.
+	 */
+	if (qdf_is_macaddr_broadcast(sta_mac) && ap_ctx)
+		qdf_copy_macaddr(&txrx_desc.peer_addr,
+				 &ap_ctx->sap_context->bssid);
+	else
+		qdf_copy_macaddr(&txrx_desc.peer_addr, sta_mac);
 
 	/* Save the adapter Pointer for this sta_id */
 	hdd_ctx->sta_to_adapter[sta_id] = adapter;
@@ -1185,7 +1201,6 @@ QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
 	struct qdf_mac_addr broadcast_macaddr = QDF_MAC_ADDR_BCAST_INIT;
 	struct hdd_ap_ctx *ap_ctx;
 	uint8_t sta_id;
-
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	sta_id = ap_ctx->broadcast_sta_id;
 

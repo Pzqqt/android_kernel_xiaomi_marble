@@ -2102,7 +2102,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 					struct bss_description *bss_desc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct ol_txrx_desc_type txrx_desc = { 0 };
+	struct ol_txrx_desc_type txrx_desc = {0};
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -2113,6 +2113,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 
 	/* Get the Station ID from the one saved during the association */
 	txrx_desc.sta_id = sta_id;
+	WLAN_ADDR_COPY(txrx_desc.peer_addr.bytes, roam_info->bssid.bytes);
 
 	/* set the QoS field appropriately */
 	if (hdd_wmm_is_active(adapter))
@@ -4075,7 +4076,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	 * TDLS sta in BSS should be set as STA type TDLS and STA MAC should
 	 * be peer MAC, here we are working on direct Link
 	 */
-	txrx_desc.sta_id = sta_id;
+	WLAN_ADDR_COPY(txrx_desc.peer_addr.bytes, peerMac);
 
 	/* set the QoS field appropriately .. */
 	txrx_desc.is_qos_enabled = qos;

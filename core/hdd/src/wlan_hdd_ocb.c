@@ -218,6 +218,7 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	struct ol_txrx_desc_type sta_desc = {0};
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	/* To be cleaned up */
 	uint8_t peer_id;
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -239,7 +240,9 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 
 	hdd_ctx->sta_to_adapter[peer_id] = adapter;
 
+	/* To be cleaned up */
 	sta_desc.sta_id = peer_id;
+	WLAN_ADDR_COPY(sta_desc.peer_addr.bytes, adapter->mac_addr.bytes);
 	sta_desc.is_qos_enabled = 1;
 
 	/* Register the vdev transmit and receive functions */
