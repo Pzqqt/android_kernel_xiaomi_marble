@@ -5775,6 +5775,39 @@ int q6asm_map_channels(u8 *channel_mapping, uint32_t channels,
 		lchannel_mapping[13] = PCM_CHANNEL_FRC;
 		lchannel_mapping[14] = PCM_CHANNEL_RLC;
 		lchannel_mapping[15] = PCM_CHANNEL_RRC;
+	} else if (channels == 32) {
+		lchannel_mapping[0] = PCM_CHANNEL_FL;
+		lchannel_mapping[1] = PCM_CHANNEL_FR;
+		lchannel_mapping[2] = PCM_CHANNEL_LFE;
+		lchannel_mapping[3] = PCM_CHANNEL_FC;
+		lchannel_mapping[4] = PCM_CHANNEL_LS;
+		lchannel_mapping[5] = PCM_CHANNEL_RS;
+		lchannel_mapping[6] = PCM_CHANNEL_LB;
+		lchannel_mapping[7] = PCM_CHANNEL_RB;
+		lchannel_mapping[8] = PCM_CHANNEL_CS;
+		lchannel_mapping[9] = PCM_CHANNEL_TS;
+		lchannel_mapping[10] = PCM_CHANNEL_CVH;
+		lchannel_mapping[11] = PCM_CHANNEL_MS;
+		lchannel_mapping[12] = PCM_CHANNEL_FLC;
+		lchannel_mapping[13] = PCM_CHANNEL_FRC;
+		lchannel_mapping[14] = PCM_CHANNEL_RLC;
+		lchannel_mapping[15] = PCM_CHANNEL_RRC;
+		lchannel_mapping[16] = PCM_CHANNEL_LFE2;
+		lchannel_mapping[17] = PCM_CHANNEL_SL;
+		lchannel_mapping[18] = PCM_CHANNEL_SR;
+		lchannel_mapping[19] = PCM_CHANNEL_TFL;
+		lchannel_mapping[20] = PCM_CHANNEL_TFR;
+		lchannel_mapping[21] = PCM_CHANNEL_TC;
+		lchannel_mapping[22] = PCM_CHANNEL_TBL;
+		lchannel_mapping[23] = PCM_CHANNEL_TBR;
+		lchannel_mapping[24] = PCM_CHANNEL_TSL;
+		lchannel_mapping[25] = PCM_CHANNEL_TSR;
+		lchannel_mapping[26] = PCM_CHANNEL_TBC;
+		lchannel_mapping[27] = PCM_CHANNEL_BFC;
+		lchannel_mapping[28] = PCM_CHANNEL_BFL;
+		lchannel_mapping[29] = PCM_CHANNEL_BFR;
+		lchannel_mapping[30] = PCM_CHANNEL_LW;
+		lchannel_mapping[31] = PCM_CHANNEL_RW;
 	} else {
 		pr_err("%s: ERROR.unsupported num_ch = %u\n",
 		 __func__, channels);
