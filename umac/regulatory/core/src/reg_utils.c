@@ -146,7 +146,7 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 	struct wlan_regulatory_psoc_priv_obj *psoc_reg;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
-	struct set_country country_code;
+	struct set_country cc;
 	struct wlan_objmgr_psoc *psoc;
 	struct cc_regdmn_s rd;
 	uint8_t pdev_id;
@@ -176,12 +176,25 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	reg_debug("programming new country:%s to firmware", country);
+	reg_debug("programming new country: %s to firmware", country);
 
-	qdf_mem_copy(country_code.country, country, REG_ALPHA2_LEN + 1);
-	country_code.pdev_id = pdev_id;
+	qdf_mem_copy(cc.country, country, REG_ALPHA2_LEN + 1);
+	cc.pdev_id = pdev_id;
 
-	if (reg_is_world_alpha2(country))
+	if (!psoc_reg->offload_enabled && !reg_is_world_alpha2(country)) {
+		QDF_STATUS status;
+
+		status = reg_is_country_code_valid(country);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			reg_err("Unable to set country code: %s\n", country);
+			reg_err("Restoring to world domain");
+			qdf_mem_copy(cc.country, REG_WORLD_ALPHA2,
+				     REG_ALPHA2_LEN + 1);
+		}
+	}
+
+
+	if (reg_is_world_alpha2(cc.country))
 		psoc_reg->world_country_pending[pdev_id] = true;
 	else
 		psoc_reg->new_user_ctry_pending[pdev_id] = true;
@@ -189,18 +202,18 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 	if (psoc_reg->offload_enabled) {
 		tx_ops = reg_get_psoc_tx_ops(psoc);
 		if (tx_ops->set_country_code) {
-			tx_ops->set_country_code(psoc, &country_code);
+			tx_ops->set_country_code(psoc, &cc);
 		} else {
 			reg_err("country set fw handler not present");
 			psoc_reg->new_user_ctry_pending[pdev_id] = false;
 			return QDF_STATUS_E_FAULT;
 		}
 	} else {
-		if (reg_is_world_alpha2(country)) {
+		if (reg_is_world_alpha2(cc.country)) {
 			pdev_priv_obj = reg_get_pdev_obj(pdev);
 			if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
 				reg_err("reg component pdev priv is NULL");
-				psoc_reg->new_user_ctry_pending[pdev_id] =
+				psoc_reg->world_country_pending[pdev_id] =
 									false;
 				return QDF_STATUS_E_INVAL;
 			}
@@ -212,7 +225,8 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 				rd.cc.regdmn_id = DEFAULT_WORLD_REGDMN;
 			rd.flags = REGDMN_IS_SET;
 		} else {
-			qdf_mem_copy(rd.cc.alpha, country, REG_ALPHA2_LEN + 1);
+			qdf_mem_copy(rd.cc.alpha, cc.country,
+				     REG_ALPHA2_LEN + 1);
 			rd.flags = ALPHA_IS_SET;
 		}
 
