@@ -1135,6 +1135,7 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	u8 dmic_ctl_shift = 0;
 	u8 dmic_clk_shift = 0;
 	u8 dmic_clk_mask = 0;
+	u16 dmic2_left_en = 0;
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -1150,6 +1151,7 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 		dmic_ctl_shift = 0x00;
 		break;
 	case 2:
+		dmic2_left_en = WCD938X_DIGITAL_CDC_DMIC2_CTL;
 	case 3:
 		dmic_clk_cnt = &(wcd938x->dmic_2_3_clk_cnt);
 		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC_RATE_1_2;
@@ -1191,6 +1193,9 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 				(0x01 << dmic_ctl_shift), 0x00);
 		/* 250us sleep as per HW requirement */
 		usleep_range(250, 260);
+		if (dmic2_left_en)
+			snd_soc_component_update_bits(component,
+				dmic2_left_en, 0x80, 0x80);
 		/* Setting DMIC clock rate to 2.4MHz */
 		snd_soc_component_update_bits(component,
 					      dmic_clk_reg, dmic_clk_mask,
@@ -1208,6 +1213,9 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 				WCD938X_DIGITAL_CDC_AMIC_CTL,
 				(0x01 << dmic_ctl_shift),
 				(0x01 << dmic_ctl_shift));
+		if (dmic2_left_en)
+			snd_soc_component_update_bits(component,
+				dmic2_left_en, 0x80, 0x00);
 		snd_soc_component_update_bits(component,
 					      dmic_clk_en_reg, 0x08, 0x00);
 		break;
