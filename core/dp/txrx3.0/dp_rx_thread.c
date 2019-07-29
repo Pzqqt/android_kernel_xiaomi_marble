@@ -161,7 +161,7 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	wait_q_ptr = dp_rx_thread_get_wait_queue(tm_handle_cmn);
+	wait_q_ptr = &rx_thread->wait_q;
 
 	if (reo_ring_num >= DP_RX_TM_MAX_REO_RINGS) {
 		dp_alert("incorrect ring %u", reo_ring_num);
@@ -226,7 +226,7 @@ static QDF_STATUS dp_rx_tm_thread_gro_flush_ind(struct dp_rx_thread *rx_thread)
 	qdf_wait_queue_head_t *wait_q_ptr;
 
 	tm_handle_cmn = rx_thread->rtm_handle_cmn;
-	wait_q_ptr = dp_rx_thread_get_wait_queue(tm_handle_cmn);
+	wait_q_ptr = &rx_thread->wait_q;
 
 	qdf_atomic_set(&rx_thread->gro_flush_ind, 1);
 
@@ -447,7 +447,7 @@ static int dp_rx_thread_loop(void *arg)
 		dp_debug("sleeping");
 		status =
 		    qdf_wait_queue_interruptible
-				(DP_RX_THREAD_GET_WAIT_QUEUE_OBJ(tm_handle_cmn),
+				(rx_thread->wait_q,
 				 qdf_atomic_test_bit(RX_POST_EVENT,
 						     &rx_thread->event_flag) ||
 				 qdf_atomic_test_bit(RX_SUSPEND_EVENT,
@@ -539,6 +539,7 @@ static QDF_STATUS dp_rx_tm_thread_init(struct dp_rx_thread *rx_thread,
 	qdf_event_create(&rx_thread->resume_event);
 	qdf_event_create(&rx_thread->shutdown_event);
 	qdf_atomic_init(&rx_thread->gro_flush_ind);
+	qdf_init_waitqueue_head(&rx_thread->wait_q);
 	qdf_scnprintf(thread_name, sizeof(thread_name), "dp_rx_thread_%u", id);
 	dp_info("%s %u", thread_name, id);
 
@@ -609,8 +610,6 @@ QDF_STATUS dp_rx_tm_init(struct dp_rx_tm_handle *rx_tm_hdl,
 		goto ret;
 	}
 
-	qdf_init_waitqueue_head(&rx_tm_hdl->wait_q);
-
 	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		rx_tm_hdl->rx_thread[i] =
 			(struct dp_rx_thread *)
@@ -652,9 +651,8 @@ QDF_STATUS dp_rx_tm_suspend(struct dp_rx_tm_handle *rx_tm_hdl)
 			continue;
 		qdf_set_bit(RX_SUSPEND_EVENT,
 			    &rx_tm_hdl->rx_thread[i]->event_flag);
+		qdf_wake_up_interruptible(&rx_tm_hdl->rx_thread[i]->wait_q);
 	}
-
-	qdf_wake_up_interruptible(&rx_tm_hdl->wait_q);
 
 	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		rx_thread = rx_tm_hdl->rx_thread[i];
@@ -720,9 +718,9 @@ static QDF_STATUS dp_rx_tm_shutdown(struct dp_rx_tm_handle *rx_tm_hdl)
 			    &rx_tm_hdl->rx_thread[i]->event_flag);
 		qdf_set_bit(RX_POST_EVENT,
 			    &rx_tm_hdl->rx_thread[i]->event_flag);
+		qdf_wake_up_interruptible(&rx_tm_hdl->rx_thread[i]->wait_q);
 	}
 
-	qdf_wake_up_interruptible(&rx_tm_hdl->wait_q);
 
 	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		if (!rx_tm_hdl->rx_thread[i])

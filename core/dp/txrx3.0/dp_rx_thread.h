@@ -30,13 +30,6 @@
 #define DP_MAX_RX_THREADS DP_RX_TM_MAX_REO_RINGS
 
 /*
- * Macro to get to wait_queue structure. Needed since wait_q is an object.
- * API qdf_wait_queue_interruptible needs the object be passed to it and not a
- * pointer
- */
-#define DP_RX_THREAD_GET_WAIT_QUEUE_OBJ(rx_tm_handle_cmn) \
-		(((struct dp_rx_tm_handle *)rx_tm_handle_cmn)->wait_q)
-/*
  * struct dp_rx_tm_handle_cmn - Opaque handle for rx_threads to store
  * rx_tm_handle. This handle will be common for all the threads.
  * Individual threads should not be accessing
@@ -101,6 +94,7 @@ struct dp_rx_thread {
 	struct dp_rx_thread_stats stats;
 	struct dp_rx_tm_handle_cmn *rtm_handle_cmn;
 	struct napi_struct napi;
+	qdf_wait_queue_head_t wait_q;
 	struct net_device netdev;
 };
 
@@ -123,14 +117,12 @@ enum dp_rx_thread_state {
  * struct dp_rx_tm_handle - DP RX thread infrastructure handle
  * @num_dp_rx_threads: number of DP RX threads initialized
  * @txrx_handle_cmn: opaque txrx handle to get to pdev and soc
- * wait_q: wait_queue for the rx_threads to wait on and expect an event
  * @state: state of the rx_threads. All of them should be in the same state.
  * @rx_thread: array of pointers of type struct dp_rx_thread
  */
 struct dp_rx_tm_handle {
 	uint8_t num_dp_rx_threads;
 	struct dp_txrx_handle_cmn *txrx_handle_cmn;
-	qdf_wait_queue_head_t wait_q;
 	enum dp_rx_thread_state state;
 	struct dp_rx_thread **rx_thread;
 };
@@ -207,24 +199,6 @@ static inline struct dp_txrx_handle_cmn*
 dp_rx_thread_get_txrx_handle(struct dp_rx_tm_handle_cmn *rx_tm_handle_cmn)
 {
 	return (((struct dp_rx_tm_handle *)rx_tm_handle_cmn)->txrx_handle_cmn);
-}
-
-/**
- * dp_rx_thread_get_wait_queue() - get wait_q from dp_rx_tm_handle
- * @rx_tm_handle_cmn: opaque pointer to dp_rx_tm_handle_cmn struct
- *
- * The function is needed since dp_rx_thread does not have access to the real
- * dp_rx_tm_handle structure, but only an opaque dp_rx_tm_handle_cmn handle
- *
- * Return: pointer to dp_txrx_handle_cmn handle
- */
-static inline qdf_wait_queue_head_t*
-dp_rx_thread_get_wait_queue(struct dp_rx_tm_handle_cmn *rx_tm_handle_cmn)
-{
-	struct dp_rx_tm_handle *rx_tm_handle;
-
-	rx_tm_handle = (struct dp_rx_tm_handle *)rx_tm_handle_cmn;
-	return &rx_tm_handle->wait_q;
 }
 
 /**
