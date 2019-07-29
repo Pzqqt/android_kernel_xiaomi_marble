@@ -14,7 +14,11 @@ endif
 
 ifeq ($(call is-board-platform,$(MSMSTEPPE)),true)
 TARGET := talos
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), sm6150_au))
+AUDIO_SELECT  := CONFIG_SND_SOC_SA6155=m
+else
 AUDIO_SELECT  := CONFIG_SND_SOC_SM6150=m
+endif
 endif
 
 ifeq ($(call is-board-platform,$(TRINKET)),true)

@@ -7156,6 +7156,9 @@ void sa6155_exit(void)
 	audio_notifier_deregister("sa6155");
 }
 
+module_init(sa6155_init);
+module_exit(sa6155_exit);
+
 MODULE_DESCRIPTION("ALSA SoC msm");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:" DRV_NAME);
