@@ -5700,6 +5700,19 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
 	},
+	{/* hw:x,39 */
+		.name = LPASS_BE_TX_CDC_DMA_TX_5,
+		.stream_name = "TX CDC DMA5 Capture",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45115",
+		.platform_name = "msm-pcm-hostless",
+		.codec_name = "bolero_codec",
+		.codec_dai_name = "tx_macro_tx3",
+		.id = MSM_BACKEND_DAI_TX_CDC_DMA_TX_5,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_suspend = 1,
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ops = &msm_cdc_dma_be_ops,
+	},
 };
 
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {
