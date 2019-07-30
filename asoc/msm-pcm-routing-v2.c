@@ -11981,6 +11981,10 @@ static const struct snd_kcontrol_new mmul2_mixer_controls[] = {
 	MSM_BACKEND_DAI_AFE_LOOPBACK_TX,
 	MSM_FRONTEND_DAI_MULTIMEDIA2, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("SEC_AUX_PCM_TX", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_SEC_AUXPCM_TX,
+	MSM_FRONTEND_DAI_MULTIMEDIA2, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
 };
 
 static const struct snd_kcontrol_new mmul3_mixer_controls[] = {
@@ -25114,6 +25118,7 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"MultiMedia5 Mixer", "AUX_PCM_UL_TX", "AUX_PCM_TX"},
 	{"MultiMedia10 Mixer", "AUX_PCM_TX", "AUX_PCM_TX"},
 	{"MultiMedia1 Mixer", "SEC_AUX_PCM_UL_TX", "SEC_AUX_PCM_TX"},
+	{"MultiMedia2 Mixer", "SEC_AUX_PCM_TX", "SEC_AUX_PCM_TX"},
 	{"MultiMedia3 Mixer", "SEC_AUX_PCM_TX", "SEC_AUX_PCM_TX"},
 	{"MultiMedia5 Mixer", "SEC_AUX_PCM_TX", "SEC_AUX_PCM_TX"},
 	{"MultiMedia10 Mixer", "SEC_AUX_PCM_TX", "SEC_AUX_PCM_TX"},
