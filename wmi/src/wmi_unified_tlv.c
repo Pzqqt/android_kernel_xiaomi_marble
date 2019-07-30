@@ -6723,6 +6723,9 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	if (tgt_res_cfg->three_way_coex_config_legacy_en)
 		WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT_SET(
 						resource_cfg->flag1, 1);
+	if (tgt_res_cfg->pktcapture_support)
+		WMI_RSRC_CFG_FLAG_PACKET_CAPTURE_SUPPORT_SET(
+				resource_cfg->flag1, 1);
 
 	/*
 	 * Control padding using config param/ini of iphdr_pad_config
@@ -13523,6 +13526,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_PEER_TX_PN_RESPONSE_EVENTID;
 	event_ids[wmi_roam_stats_event_id] = WMI_ROAM_STATS_EVENTID;
 	event_ids[wmi_oem_data_event_id] = WMI_OEM_DATA_EVENTID;
+	event_ids[wmi_mgmt_offload_data_event_id] =
+				WMI_VDEV_MGMT_OFFLOAD_EVENTID;
 }
 
 /**
@@ -13801,6 +13806,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_6GHZ_SUPPORT;
 	wmi_service[wmi_service_bw_165mhz_support] =
 			WMI_SERVICE_BW_165MHZ_SUPPORT;
+	wmi_service[wmi_service_packet_capture_support] =
+			WMI_SERVICE_PACKET_CAPTURE_SUPPORT;
 }
 
 /**

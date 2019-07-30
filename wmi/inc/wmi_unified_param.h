@@ -4553,6 +4553,7 @@ typedef enum {
 	wmi_peer_tx_pn_response_event_id,
 	wmi_roam_stats_event_id,
 	wmi_oem_data_event_id,
+	wmi_mgmt_offload_data_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5054,6 +5055,7 @@ typedef enum {
 	wmi_service_ext2_msg,
 	wmi_service_6ghz_support,
 	wmi_service_bw_165mhz_support,
+	wmi_service_packet_capture_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -5224,7 +5226,8 @@ typedef struct {
 		 mgmt_comp_evt_bundle_support:1,
 		 tx_msdu_new_partition_id_support:1,
 		 new_htt_msg_format:1,
-		 peer_unmap_conf_support:1;
+		 peer_unmap_conf_support:1,
+		 pktcapture_support:1;
 	uint32_t iphdr_pad_config;
 	uint32_t
 		qwrap_config:16,
