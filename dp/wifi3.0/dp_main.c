@@ -6845,9 +6845,16 @@ static void dp_pdev_getstats(void *pdev_handle,
 	stats->rx_errors = pdev->stats.err.desc_alloc_fail +
 		pdev->stats.err.ip_csum_err +
 		pdev->stats.err.tcp_udp_csum_err +
-		pdev->stats.rx.err. mic_err +
-		pdev->stats.rx.err. decrypt_err +
-		pdev->stats.rx.err. fcserr;
+		pdev->stats.rx.err.mic_err +
+		pdev->stats.rx.err.decrypt_err +
+		pdev->stats.err.rxdma_error +
+		pdev->stats.err.reo_error;
+	stats->rx_dropped = pdev->stats.dropped.msdu_not_done +
+		pdev->stats.dropped.mec +
+		pdev->stats.dropped.mesh_filter +
+		pdev->stats.dropped.wifi_parse +
+		pdev->stats.dropped.mon_rx_drop +
+		pdev->stats.dropped.mon_radiotap_update_err;
 }
 
 /**

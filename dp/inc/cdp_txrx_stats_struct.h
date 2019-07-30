@@ -1282,6 +1282,8 @@ struct cdp_pdev_stats {
 		uint32_t desc_alloc_fail;
 		uint32_t ip_csum_err;
 		uint32_t tcp_udp_csum_err;
+		uint32_t rxdma_error;
+		uint32_t reo_error;
 	} err;
 
 	uint32_t buf_freelist;

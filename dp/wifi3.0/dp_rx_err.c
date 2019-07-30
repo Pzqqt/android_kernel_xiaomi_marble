@@ -1223,6 +1223,10 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 				rx.err.
 				reo_error[HAL_REO_ERR_PN_CHECK_FAILED],
 				1);
+			/* increment @pdev level */
+			dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+			if (dp_pdev)
+				DP_STATS_INC(dp_pdev, err.reo_error, 1);
 			count = dp_rx_pn_error_handle(soc,
 						      ring_desc,
 						      &mpdu_desc_info, &mac_id,
@@ -1238,6 +1242,10 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 				rx.err.
 				reo_error[HAL_REO_ERR_REGULAR_FRAME_2K_JUMP],
 				1);
+			/* increment @pdev level */
+			dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+			if (dp_pdev)
+				DP_STATS_INC(dp_pdev, err.reo_error, 1);
 
 			count = dp_rx_2k_jump_handle(soc,
 						     ring_desc, &mpdu_desc_info,
@@ -1442,6 +1450,12 @@ done:
 				DP_STATS_INC(soc,
 					rx.err.reo_error
 					[wbm_err_info.reo_err_code], 1);
+				/* increment @pdev level */
+				pool_id = wbm_err_info.pool_id;
+				dp_pdev = dp_get_pdev_for_mac_id(soc, pool_id);
+				if (dp_pdev)
+					DP_STATS_INC(dp_pdev, err.reo_error,
+						     1);
 
 				switch (wbm_err_info.reo_err_code) {
 				/*
@@ -1489,6 +1503,12 @@ done:
 				DP_STATS_INC(soc,
 					rx.err.rxdma_error
 					[wbm_err_info.rxdma_err_code], 1);
+				/* increment @pdev level */
+				pool_id = wbm_err_info.pool_id;
+				dp_pdev = dp_get_pdev_for_mac_id(soc, pool_id);
+				if (dp_pdev)
+					DP_STATS_INC(dp_pdev,
+						     err.rxdma_error, 1);
 
 				switch (wbm_err_info.rxdma_err_code) {
 				case HAL_RXDMA_ERR_UNENCRYPTED:
@@ -1708,6 +1728,8 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	} while (buf_info.paddr);
 
 	DP_STATS_INC(soc, rx.err.rxdma_error[rxdma_error_code], 1);
+	if (pdev)
+		DP_STATS_INC(pdev, err.rxdma_error, 1);
 
 	if (rxdma_error_code == HAL_RXDMA_ERR_DECRYPT) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
