@@ -63,7 +63,6 @@
 #include "cfg_ucfg_api.h"
 #include "target_type.h"
 #include "wlan_hdd_object_manager.h"
-#include "sme_api.h"
 
 #if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
 /*
@@ -2665,13 +2664,6 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	struct hdd_context *hdd_ctx =  WLAN_HDD_GET_CTX(adapter);
-
-	if (!hdd_ctx || !soc || !pdev) {
-		hdd_err("Context is NULL");
-		return -EINVAL;
-	}
-
 
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_mon_rx_packet_cbk;
@@ -2689,13 +2681,6 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 			qdf_status, qdf_status);
 		goto exit;
 	}
-
-	qdf_status = sme_create_mon_session(hdd_ctx->mac_handle,
-					    adapter->mac_addr.bytes,
-					    adapter->vdev_id);
-	if (QDF_STATUS_SUCCESS != qdf_status)
-		hdd_err("sme_create_mon_session() failed to register. Status= %d [0x%08X]",
-			qdf_status, qdf_status);
 
 exit:
 	ret = qdf_status_to_os_return(qdf_status);

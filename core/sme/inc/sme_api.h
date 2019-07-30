@@ -1739,18 +1739,8 @@ sme_apf_read_work_memory(mac_handle_t mac_handle,
 #endif /* FEATURE_WLAN_APF */
 
 uint32_t sme_get_wni_dot11_mode(mac_handle_t mac_handle);
-
-#if !defined(QCA_WIFI_QCA6290) || !defined(QCA_WIFI_QCA6390)
 QDF_STATUS sme_create_mon_session(mac_handle_t mac_handle, uint8_t *bssid,
 				  uint8_t vdev_id);
-#else
-inline QDF_STATUS sme_create_mon_session(mac_handle_t mac_handle,
-					 uint8_t *bssid,
-					 uint8_t vdev_id) {
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 
 /**
  * sme_delete_mon_session() - post message to delete PE session for mon_mode
