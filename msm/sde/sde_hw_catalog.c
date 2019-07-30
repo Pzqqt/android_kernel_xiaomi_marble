@@ -297,6 +297,7 @@ enum {
 enum {
 	DSC_OFF,
 	DSC_LEN,
+	DSC_PAIR_MASK,
 	DSC_PROP_MAX,
 };
 
@@ -684,6 +685,7 @@ static struct sde_prop_type pp_prop[] = {
 static struct sde_prop_type dsc_prop[] = {
 	{DSC_OFF, "qcom,sde-dsc-off", false, PROP_TYPE_U32_ARRAY},
 	{DSC_LEN, "qcom,sde-dsc-size", false, PROP_TYPE_U32},
+	{DSC_PAIR_MASK, "qcom,sde-dsc-pair-mask", false, PROP_TYPE_U32_ARRAY},
 };
 
 static struct sde_prop_type cdm_prop[] = {
@@ -2559,7 +2561,7 @@ static int sde_dsc_parse_dt(struct device_node *np,
 	int rc, prop_count[MAX_BLOCKS], i;
 	struct sde_prop_value *prop_value = NULL;
 	bool prop_exists[DSC_PROP_MAX];
-	u32 off_count;
+	u32 off_count, dsc_pair_mask;
 	struct sde_dsc_cfg *dsc;
 
 	if (!sde_cfg) {
@@ -2600,6 +2602,11 @@ static int sde_dsc_parse_dt(struct device_node *np,
 
 		if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 			set_bit(SDE_DSC_OUTPUT_CTRL, &dsc->features);
+
+		dsc_pair_mask = PROP_VALUE_ACCESS(prop_value,
+				DSC_PAIR_MASK, i);
+		if (dsc_pair_mask)
+			set_bit(dsc_pair_mask, dsc->dsc_pair_mask);
 	}
 
 end:
