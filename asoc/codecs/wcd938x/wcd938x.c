@@ -1359,7 +1359,6 @@ static int wcd938x_get_adc_mode(int val)
 static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 				    struct snd_kcontrol *kcontrol,
 				    int event){
-	int mode;
 	struct snd_soc_component *component =
 					snd_soc_dapm_to_component(w->dapm);
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
@@ -1369,43 +1368,10 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		mode = wcd938x_get_adc_mode(wcd938x->tx_mode[w->shift]);
-		if (mode < 0) {
-			dev_info(component->dev,
-				 "%s: invalid mode, setting to normal mode\n",
-				 __func__);
-			mode = ADC_MODE_VAL_NORMAL;
-		}
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x80);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x08);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
-		switch (w->shift) {
-		case 0:
-			snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_TX_ANA_MODE_0_1, 0x0F,
-				mode);
-			break;
-		case 1:
-			snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_TX_ANA_MODE_0_1, 0xF0,
-				mode << 4);
-			break;
-		case 2:
-			snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_TX_ANA_MODE_2_3, 0x0F,
-				mode);
-			break;
-		case 3:
-			snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_TX_ANA_MODE_2_3, 0xF0,
-				mode << 4);
-			break;
-		default:
-			break;
-		}
 		set_bit(w->shift, &wcd938x->status_mask);
 		/* Enable BCS for Headset mic */
 		if (w->shift == 1 && !(snd_soc_component_read32(component,
@@ -1476,7 +1442,9 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 {
 	struct snd_soc_component *component =
 					snd_soc_dapm_to_component(w->dapm);
+	int mode;
 	int ret = 0;
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -1488,25 +1456,70 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_REQ_CTL, 0x01, 0x00);
 		ret = wcd938x_tx_channel_config(component, w->shift, 1);
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x30, 0x30);
-		snd_soc_component_update_bits(component,
-				WCD938X_ANA_TX_CH1, 0x80, 0x80);
-		snd_soc_component_update_bits(component,
-				WCD938X_ANA_TX_CH2, 0x80, 0x80);
+		mode = wcd938x_get_adc_mode(wcd938x->tx_mode[w->shift]);
+		if (mode < 0) {
+			dev_info(component->dev,
+				 "%s: invalid mode, setting to normal mode\n",
+				 __func__);
+			mode = ADC_MODE_VAL_NORMAL;
+		}
+		switch (w->shift) {
+		case 0:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_0_1, 0x0F,
+				mode);
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x10, 0x10);
+			break;
+		case 1:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_0_1, 0xF0,
+				mode << 4);
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x20, 0x20);
+			break;
+		case 2:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_2_3, 0x0F,
+				mode);
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x40, 0x40);
+			break;
+		case 3:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_2_3, 0xF0,
+				mode << 4);
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x80);
+			break;
+		default:
+			break;
+		}
 		ret |= wcd938x_tx_channel_config(component, w->shift, 0);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		snd_soc_component_update_bits(component,
-				WCD938X_ANA_TX_CH1, 0x80, 0x00);
-		snd_soc_component_update_bits(component,
-				WCD938X_ANA_TX_CH2, 0x80, 0x00);
-		snd_soc_component_update_bits(component,
+		switch (w->shift) {
+		case 0:
+			snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x10, 0x00);
+			break;
+		case 1:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x20, 0x00);
+			break;
+		case 2:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x40, 0x00);
+			break;
+		case 3:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x00);
+			break;
+		default:
+			break;
+		}
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x00);
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x00);
 		break;
 	};
 	return ret;
