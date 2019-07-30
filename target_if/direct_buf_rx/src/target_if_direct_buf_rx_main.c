@@ -371,7 +371,6 @@ static QDF_STATUS target_if_dbr_fill_ring(struct wlan_objmgr_pdev *pdev,
 			  struct direct_buf_rx_module_param *mod_param)
 {
 	uint32_t idx;
-	void *buf, *buf_aligned;
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
 	struct direct_buf_rx_buf_info *dbr_buf_pool;
@@ -384,23 +383,28 @@ static QDF_STATUS target_if_dbr_fill_ring(struct wlan_objmgr_pdev *pdev,
 	dbr_buf_pool = mod_param->dbr_buf_pool;
 
 	for (idx = 0; idx < dbr_ring_cfg->num_ptr - 1; idx++) {
-		buf_aligned = qdf_aligned_malloc(dbr_ring_cap->min_buf_size,
-						 dbr_ring_cap->min_buf_align,
-						 &buf);
-		if (!buf_aligned) {
-			direct_buf_rx_err(
-					"dir buf rx ring buf_aligned alloc failed");
+		void *buf_vaddr_unaligned, *buf_vaddr_aligned;
+		dma_addr_t buf_paddr_aligned, buf_paddr_unaligned;
+
+		buf_vaddr_aligned = qdf_aligned_malloc(
+			&dbr_ring_cap->min_buf_size, &buf_vaddr_unaligned,
+			&buf_paddr_unaligned, &buf_paddr_aligned,
+			dbr_ring_cap->min_buf_align);
+
+		if (!buf_vaddr_aligned) {
+			direct_buf_rx_err("dir buf rx ring alloc failed");
 			return QDF_STATUS_E_NOMEM;
 		}
-		dbr_buf_pool[idx].vaddr = buf;
-		dbr_buf_pool[idx].offset = buf_aligned - buf;
+		dbr_buf_pool[idx].vaddr = buf_vaddr_unaligned;
+		dbr_buf_pool[idx].offset = buf_vaddr_aligned -
+		    buf_vaddr_unaligned;
 		dbr_buf_pool[idx].cookie = idx;
 		status = target_if_dbr_replenish_ring(pdev, mod_param,
-						      buf_aligned, idx);
+						      buf_vaddr_aligned, idx);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			direct_buf_rx_err("replenish failed with status : %d",
 					  status);
-			qdf_mem_free(buf);
+			qdf_mem_free(buf_vaddr_unaligned);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
