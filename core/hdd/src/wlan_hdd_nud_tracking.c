@@ -23,6 +23,7 @@
 #include "osif_sync.h"
 #include "wlan_hdd_main.h"
 #include "wlan_blm_ucfg_api.h"
+#include "hdd_dp_cfg.h"
 
 void hdd_nud_set_gateway_addr(struct hdd_adapter *adapter,
 			      struct qdf_mac_addr gw_mac_addr)
@@ -277,6 +278,23 @@ hdd_handle_nud_fail_non_sta(struct hdd_adapter *adapter)
 	}
 }
 
+#ifdef WLAN_NUD_TRACKING
+static bool
+hdd_is_roam_after_nud_enabled(struct hdd_config *config)
+{
+	if (config->enable_nud_tracking == CFG_DP_ROAM_AFTER_NUD_FAIL)
+		return true;
+
+	return false;
+}
+#else
+static bool
+hdd_is_roam_after_nud_enabled(struct hdd_config *config)
+{
+	return false;
+}
+#endif
+
 /**
  * __hdd_nud_failure_work() - work for nud event
  * @adapter: Pointer to hdd_adapter
@@ -312,7 +330,8 @@ static void __hdd_nud_failure_work(struct hdd_adapter *adapter)
 		return;
 	}
 
-	if (adapter->device_mode == QDF_STA_MODE) {
+	if (adapter->device_mode == QDF_STA_MODE &&
+	    hdd_is_roam_after_nud_enabled(hdd_ctx->config)) {
 		hdd_handle_nud_fail_sta(hdd_ctx, adapter);
 		return;
 	}

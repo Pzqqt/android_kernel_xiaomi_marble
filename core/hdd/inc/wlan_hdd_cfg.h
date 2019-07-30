@@ -203,7 +203,7 @@ struct hdd_config {
 	uint8_t dp_trace_config[DP_TRACE_CONFIG_STRING_LENGTH];
 #endif
 #ifdef WLAN_NUD_TRACKING
-	bool enable_nud_tracking;
+	uint8_t enable_nud_tracking;
 #endif
 	uint8_t operating_channel;
 	uint8_t num_vdevs;
