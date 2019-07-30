@@ -29,7 +29,6 @@
 #include <wmi_unified_param.h>
 #include <wlan_mlme_dbg.h>
 #include <target_if.h>
-#include <qdf_platform.h>
 #include <wlan_vdev_mlme_main.h>
 #include <wmi_unified_vdev_api.h>
 
@@ -128,25 +127,29 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 		return;
 	}
 
-	if (target_if_vdev_mgr_is_driver_unloading() || qdf_is_recovering() ||
-	    qdf_is_fw_down()) {
+	if (!target_if_vdev_mgr_is_panic_allowed()) {
+		mlme_debug("PSOC_%d VDEV_%d: Panic not allowed",
+			   wlan_psoc_get_id(psoc), vdev_id);
 		return;
 	}
 
+	/* Trigger fw recovery to collect fw dump */
+	wmi_handle = target_if_vdev_mgr_wmi_handle_get(vdev);
+	if (wmi_handle) {
+		mlme_err("PSOC_%d VDEV_%d: Self recovery, %s rsp timeout",
+			 wlan_psoc_get_id(psoc), vdev_id,
+			 string_from_rsp_bit(rsp_pos));
+		qdf_mem_set(&param, sizeof(param), 0);
+		/* RECOVERY_SIM_SELF_RECOVERY */
+		param.type = 0x08;
+		wmi_crash_inject(wmi_handle, &param);
+	}
+
+	/* Host panic to collect host stacktrace */
 	if (target_if_vdev_mgr_is_panic_on_bug()) {
 		QDF_DEBUG_PANIC("PSOC_%d VDEV_%d: Panic, %s response timeout",
 				wlan_psoc_get_id(psoc),
 				vdev_id, string_from_rsp_bit(rsp_pos));
-	} else {
-		mlme_err("PSOC_%d VDEV_%d: Self recovery, %s response timeout",
-			 wlan_psoc_get_id(psoc),
-			 vdev_id, string_from_rsp_bit(rsp_pos));
-		wmi_handle = target_if_vdev_mgr_wmi_handle_get(vdev);
-
-		qdf_mem_set(&param, sizeof(param), 0);
-		/* RECOVERY_SIM_SELF_RECOVERY*/
-		param.type = 0x08;
-		wmi_crash_inject(wmi_handle, &param);
 	}
 }
 

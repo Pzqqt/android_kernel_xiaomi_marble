@@ -28,16 +28,28 @@
 #include <wmi_unified_param.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_lmac_if_def.h>
+#include <qdf_platform.h>
 
 /**
- * target_if_vdev_mgr_is_driver_unloading: API to driver unload status
+ * target_if_vdev_mgr_is_panic_allowed: API to get if panic is allowed on
+ * timeout
  *
- * Return: TRUE or FALSE
+ * Return: TRUE or FALSE when VDEV_ASSERT_MANAGEMENT is disabled else FALSE
  */
-static inline bool target_if_vdev_mgr_is_driver_unloading(void)
+#ifdef VDEV_ASSERT_MANAGEMENT
+static inline bool target_if_vdev_mgr_is_panic_allowed(void)
 {
 	return false;
 }
+#else
+static inline bool target_if_vdev_mgr_is_panic_allowed(void)
+{
+	if (qdf_is_recovering() || qdf_is_fw_down())
+		return false;
+
+	return true;
+}
+#endif
 
 /**
  * target_if_vdev_mgr_delete_response_handler() - API to handle vdev delete
