@@ -847,7 +847,6 @@ typedef struct tagCsrRoamConnectedProfile {
 	tSirMacSSid SSID;
 	bool handoffPermitted;
 	bool ssidHidden;
-	uint8_t operationChannel;
 	uint32_t op_freq;
 	struct qdf_mac_addr bssid;
 	uint16_t beaconInterval;

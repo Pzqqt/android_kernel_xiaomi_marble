@@ -962,8 +962,7 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
 			csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.ht_profile,
 				*sap_ch, sap_cfreq, sap_hbw);
-		} else if (*sap_ch !=
-				session->connectedProfile.operationChannel) {
+		} else if (*sap_ch != op_chan) {
 			*intf_ch = op_chan;
 			csr_get_ch_from_ht_profile(mac_ctx,
 					&session->connectedProfile.ht_profile,

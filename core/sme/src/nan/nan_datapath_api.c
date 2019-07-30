@@ -104,9 +104,6 @@ void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
 	connect_profile->modifyProfileFields.uapsd_mask =
 		roam_profile->uapsd_mask;
 	connect_profile->op_freq = bssdesc->chan_freq;
-	connect_profile->operationChannel =
-		wlan_reg_freq_to_chan(mac_ctx->pdev,
-				      bssdesc->chan_freq);
 	connect_profile->beaconInterval = 0;
 	qdf_mem_copy(&connect_profile->Keys, &roam_profile->Keys,
 		     sizeof(roam_profile->Keys));

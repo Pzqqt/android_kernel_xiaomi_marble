@@ -1386,7 +1386,6 @@ QDF_STATUS csr_roam_copy_connect_profile(struct mac_context *mac,
 		pProfile->EncryptionType = connected_prof->EncryptionType;
 		pProfile->mcEncryptionType = connected_prof->mcEncryptionType;
 		pProfile->BSSType = connected_prof->BSSType;
-		pProfile->operationChannel = connected_prof->operationChannel;
 		pProfile->op_freq = connected_prof->op_freq;
 		qdf_mem_copy(&pProfile->bssid, &connected_prof->bssid,
 			sizeof(struct qdf_mac_addr));
@@ -3418,7 +3417,6 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 		   && (u2 == eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS)) {
 		new_chan_num =
 			roam_info->channelChangeRespEvent->newChannelNumber;
-		pSession->connectedProfile.operationChannel = new_chan_num;
 		pSession->connectedProfile.op_freq =
 			wlan_reg_chan_to_freq(mac->pdev, new_chan_num);
 	} else if (u1 == eCSR_ROAM_SESSION_OPENED) {
@@ -8646,8 +8644,6 @@ csr_roam_save_connected_information(struct mac_context *mac,
 	}
 	/* Save bssid */
 	pConnectProfile->op_freq = pSirBssDesc->chan_freq;
-	pConnectProfile->operationChannel =
-		wlan_reg_freq_to_chan(mac->pdev, pSirBssDesc->chan_freq);
 	pConnectProfile->beaconInterval = pSirBssDesc->beaconInterval;
 	if (!pConnectProfile->beaconInterval)
 		sme_err("ERROR: Beacon interval is ZERO");
@@ -11677,8 +11673,6 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 					     eCSR_DISCONNECT_REASON_DEAUTH);
 		return;
 	}
-	session->connectedProfile.operationChannel =
-		wlan_reg_freq_to_chan(mac_ctx->pdev, pSwitchChnInd->freq);
 	session->connectedProfile.op_freq = pSwitchChnInd->freq;
 	if (session->pConnectBssDesc) {
 		session->pConnectBssDesc->channelId =
@@ -14389,9 +14383,7 @@ static void csr_roam_update_connected_profile_from_new_bss(struct mac_context *m
 	}
 
 	if (pNewBss) {
-		/* Set the operating channel. */
-		pSession->connectedProfile.operationChannel =
-			wlan_reg_freq_to_chan(mac->pdev, pNewBss->freq);
+		/* Set the operating frequency. */
 		pSession->connectedProfile.op_freq = pNewBss->freq;
 		/* move the BSSId from the BSS description into the connected
 		 * state information.
