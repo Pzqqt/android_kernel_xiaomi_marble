@@ -189,8 +189,6 @@ void hal_rx_proc_phyrx_other_receive_info_tlv_8074v2(void *rx_tlv_hdr,
 				SU_EVM_DETAILS_0_NSS_COUNT);
 		hal_rx_update_su_evm_info(rx_tlv, ppdu_info_hdl);
 	break;
-	default:
-		qdf_err("TLV tag not found");
 	}
 }
 #else
