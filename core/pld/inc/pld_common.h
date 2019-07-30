@@ -258,6 +258,8 @@ struct pld_wlan_enable_cfg {
  * @PLD_EPPING: EPPING mode
  * @PLD_WALTEST: WAL test mode, FW standalone test mode
  * @PLD_OFF: OFF mode
+ * @PLD_COLDBOOT_CALIBRATION: Cold Boot Calibration Mode
+ * @PLD_FTM_COLDBOOT_CALIBRATION: Cold Boot Calibration for FTM Mode
  */
 enum pld_driver_mode {
 	PLD_MISSION,
@@ -265,7 +267,8 @@ enum pld_driver_mode {
 	PLD_EPPING,
 	PLD_WALTEST,
 	PLD_OFF,
-	PLD_COLDBOOT_CALIBRATION = 7
+	PLD_COLDBOOT_CALIBRATION = 7,
+	PLD_FTM_COLDBOOT_CALIBRATION = 10
 };
 
 /**
