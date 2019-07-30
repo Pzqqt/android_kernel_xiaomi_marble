@@ -397,6 +397,9 @@ static void dp_tx_prepare_tso_ext_desc(struct qdf_tso_seg_t *tso_seg,
 		uint32_t lo = 0;
 		uint32_t hi = 0;
 
+		qdf_assert_always((tso_seg->tso_frags[num_frag].paddr) &&
+				  (tso_seg->tso_frags[num_frag].length));
+
 		qdf_dmaaddr_to_32s(
 			tso_seg->tso_frags[num_frag].paddr, &lo, &hi);
 		hal_tx_ext_desc_set_buffer(ext_desc, num_frag, lo, hi,
@@ -1081,6 +1084,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		type = HAL_TX_BUF_TYPE_BUFFER;
 		dma_addr = qdf_nbuf_mapped_paddr_get(tx_desc->nbuf);
 	}
+
+	qdf_assert_always(dma_addr);
 
 	hal_tx_desc_set_fw_metadata(hal_tx_desc_cached, fw_metadata);
 	hal_tx_desc_set_buf_addr(hal_tx_desc_cached,
