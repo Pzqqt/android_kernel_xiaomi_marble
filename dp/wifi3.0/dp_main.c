@@ -1101,84 +1101,6 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 	}
 }
 
-/*
- * dp_srng_mem_alloc() - Allocate memory for SRNG
- * @soc  : Data path soc handle
- * @srng : SRNG pointer
- * @align : Align size
- *
- * return: QDF_STATUS_SUCCESS on successful allocation
- *         QDF_STATUS_E_NOMEM on failure
- */
-static QDF_STATUS
-dp_srng_mem_alloc(struct dp_soc *soc, struct dp_srng *srng, uint32_t align,
-		  bool cached)
-{
-	uint32_t align_alloc_size;
-
-	if (!cached) {
-		srng->base_vaddr_unaligned =
-			qdf_mem_alloc_consistent(soc->osdev,
-						 soc->osdev->dev,
-						 srng->alloc_size,
-						 &srng->base_paddr_unaligned);
-	} else {
-		srng->base_vaddr_unaligned = qdf_mem_malloc(srng->alloc_size);
-		srng->base_paddr_unaligned =
-			qdf_mem_virt_to_phys(srng->base_vaddr_unaligned);
-	}
-
-	if (!srng->base_vaddr_unaligned) {
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	/* Re-allocate additional bytes to align base address only if
-	 * above allocation returns unaligned address. Reason for
-	 * trying exact size allocation above is, OS tries to allocate
-	 * blocks of size power-of-2 pages and then free extra pages.
-	 * e.g., of a ring size of 1MB, the allocation below will
-	 * request 1MB plus 7 bytes for alignment, which will cause a
-	 * 2MB block allocation,and that is failing sometimes due to
-	 * memory fragmentation.
-	 * dp_srng_mem_alloc should be replaced with
-	 * qdf_aligned_mem_alloc_consistent after fixing some known
-	 * shortcomings with this QDF function
-	 */
-	if ((unsigned long)(srng->base_paddr_unaligned) &
-	    (align - 1)) {
-		align_alloc_size = srng->alloc_size + align - 1;
-
-		if (!cached) {
-			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-						srng->alloc_size,
-						srng->base_vaddr_unaligned,
-						srng->base_paddr_unaligned, 0);
-
-			srng->base_vaddr_unaligned =
-				qdf_mem_alloc_consistent(soc->osdev,
-							 soc->osdev->dev,
-							 align_alloc_size,
-							 &srng->base_paddr_unaligned);
-
-		} else {
-			qdf_mem_free(srng->base_vaddr_unaligned);
-			srng->base_vaddr_unaligned =
-				qdf_mem_malloc(align_alloc_size);
-
-			srng->base_paddr_unaligned =
-				qdf_mem_virt_to_phys(srng->base_vaddr_unaligned);
-		}
-
-		srng->alloc_size = align_alloc_size;
-
-		if (!srng->base_vaddr_unaligned) {
-			return QDF_STATUS_E_NOMEM;
-		}
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef WLAN_DP_PER_RING_TYPE_CONFIG
 /**
  * dp_srng_configure_interrupt_thresholds() - Retrieve interrupt
@@ -1291,24 +1213,40 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	srng->num_entries = num_entries;
 
 	if (!dp_is_soc_reinit(soc)) {
-		if (dp_srng_mem_alloc(soc, srng, ring_base_align, cached) !=
-		    QDF_STATUS_SUCCESS) {
-			dp_err("alloc failed - ring_type: %d, ring_num %d",
-			       ring_type, ring_num);
-			return QDF_STATUS_E_NOMEM;
+		if (!cached) {
+			ring_params.ring_base_vaddr =
+			    qdf_aligned_mem_alloc_consistent(
+						soc->osdev, &srng->alloc_size,
+						&srng->base_vaddr_unaligned,
+						&srng->base_paddr_unaligned,
+						&ring_params.ring_base_paddr,
+						ring_base_align);
+		} else {
+			ring_params.ring_base_vaddr = qdf_aligned_malloc(
+					&srng->alloc_size,
+					&srng->base_vaddr_unaligned,
+					&srng->base_paddr_unaligned,
+					&ring_params.ring_base_paddr,
+					ring_base_align);
 		}
 
+		if (!ring_params.ring_base_vaddr) {
+			dp_err("alloc failed - ring_type: %d, ring_num %d",
+					ring_type, ring_num);
+			return QDF_STATUS_E_NOMEM;
+		}
 	}
 
-	ring_params.ring_base_paddr =
-		(qdf_dma_addr_t)qdf_align(
+	ring_params.ring_base_paddr = (qdf_dma_addr_t)qdf_align(
 			(unsigned long)(srng->base_paddr_unaligned),
 			ring_base_align);
 
-	ring_params.ring_base_vaddr =
-		(void *)((unsigned long)(srng->base_vaddr_unaligned) +
+	ring_params.ring_base_vaddr = (void *)(
+			(unsigned long)(srng->base_vaddr_unaligned) +
 			((unsigned long)(ring_params.ring_base_paddr) -
-			(unsigned long)(srng->base_paddr_unaligned)));
+			 (unsigned long)(srng->base_paddr_unaligned)));
+
+	qdf_assert_always(ring_params.ring_base_vaddr);
 
 	ring_params.num_entries = num_entries;
 
