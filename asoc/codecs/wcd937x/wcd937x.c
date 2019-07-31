@@ -688,8 +688,12 @@ static int wcd937x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX2 << 0x10));
+		wcd_enable_irq(&wcd937x->irq_info,
+				WCD937X_IRQ_HPHR_PDM_WD_INT);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		wcd_disable_irq(&wcd937x->irq_info,
+				WCD937X_IRQ_HPHR_PDM_WD_INT);
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -783,8 +787,12 @@ static int wcd937x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10));
+		wcd_enable_irq(&wcd937x->irq_info,
+				WCD937X_IRQ_HPHL_PDM_WD_INT);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		wcd_disable_irq(&wcd937x->irq_info,
+				WCD937X_IRQ_HPHL_PDM_WD_INT);
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -855,8 +863,10 @@ static int wcd937x_codec_enable_aux_pa(struct snd_soc_dapm_widget *w,
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX3 << 0x10));
+		wcd_enable_irq(&wcd937x->irq_info, WCD937X_IRQ_AUX_PDM_WD_INT);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		wcd_disable_irq(&wcd937x->irq_info, WCD937X_IRQ_AUX_PDM_WD_INT);
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -923,8 +933,20 @@ static int wcd937x_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10));
+		if (wcd937x->ear_rx_path & EAR_RX_PATH_AUX)
+			wcd_enable_irq(&wcd937x->irq_info,
+					WCD937X_IRQ_AUX_PDM_WD_INT);
+		else
+			wcd_enable_irq(&wcd937x->irq_info,
+					WCD937X_IRQ_HPHL_PDM_WD_INT);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		if (wcd937x->ear_rx_path & EAR_RX_PATH_AUX)
+			wcd_disable_irq(&wcd937x->irq_info,
+					WCD937X_IRQ_AUX_PDM_WD_INT);
+		else
+			wcd_disable_irq(&wcd937x->irq_info,
+					WCD937X_IRQ_HPHL_PDM_WD_INT);
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -2849,10 +2871,10 @@ static int wcd937x_bind(struct device *dev)
 			"HPHL PDM WD INT", wcd937x_wd_handle_irq, NULL);
 	wcd_request_irq(&wcd937x->irq_info, WCD937X_IRQ_AUX_PDM_WD_INT,
 			"AUX PDM WD INT", wcd937x_wd_handle_irq, NULL);
-	/* Enable watchdog interrupt for HPH and AUX */
-	wcd_enable_irq(&wcd937x->irq_info, WCD937X_IRQ_HPHR_PDM_WD_INT);
-	wcd_enable_irq(&wcd937x->irq_info, WCD937X_IRQ_HPHL_PDM_WD_INT);
-	wcd_enable_irq(&wcd937x->irq_info, WCD937X_IRQ_AUX_PDM_WD_INT);
+	/* Disable watchdog interrupt for HPH and AUX */
+	wcd_disable_irq(&wcd937x->irq_info, WCD937X_IRQ_HPHR_PDM_WD_INT);
+	wcd_disable_irq(&wcd937x->irq_info, WCD937X_IRQ_HPHL_PDM_WD_INT);
+	wcd_disable_irq(&wcd937x->irq_info, WCD937X_IRQ_AUX_PDM_WD_INT);
 
 	ret = snd_soc_register_component(dev, &soc_codec_dev_wcd937x,
 				     NULL, 0);
