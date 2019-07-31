@@ -5735,6 +5735,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	hdd_nud_flush_work(adapter);
 	hdd_mic_flush_work(adapter);
 	hdd_stop_tsf_sync(adapter);
+	cds_flush_work(&adapter->scan_block_work);
+	wlan_hdd_cfg80211_scan_block(adapter);
 
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
