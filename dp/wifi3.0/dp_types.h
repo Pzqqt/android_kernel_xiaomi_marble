@@ -1824,6 +1824,7 @@ struct dp_vdev {
 
 	/* dp_peer special list */
 	TAILQ_HEAD(, dp_peer) mpass_peer_list;
+	DP_MUTEX_TYPE mpass_peer_mutex;
 #endif
 };
 

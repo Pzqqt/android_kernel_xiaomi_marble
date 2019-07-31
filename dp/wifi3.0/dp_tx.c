@@ -303,8 +303,8 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
  * Return: HTT metadata size
  *
  */
-uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-				   struct dp_tx_msdu_info_s *msdu_info)
+static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+					  struct dp_tx_msdu_info_s *msdu_info)
 {
 	uint32_t *meta_data = msdu_info->meta_data;
 	struct htt_tx_msdu_desc_ext2_t *desc_ext =
