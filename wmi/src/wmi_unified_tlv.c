@@ -3131,6 +3131,8 @@ static inline QDF_STATUS populate_tx_send_params(uint8_t *bufp,
 				       param.preamble_type);
 	WMI_TX_SEND_PARAM_FRAME_TYPE_SET(tx_param->tx_param_dword1,
 					 param.frame_type);
+	WMI_TX_SEND_PARAM_CFR_CAPTURE_SET(tx_param->tx_param_dword1,
+					  param.cfr_enable);
 
 	return status;
 }

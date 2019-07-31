@@ -1296,6 +1296,8 @@ struct seg_hdr_info {
  *	     bit 4: if set, HE
  * @frame_type: Data or Management frame
  *	        Data:1 Mgmt:0
+ * @cfr_enable: flag to enable CFR capture
+ *              0:disable 1:enable
  */
 struct tx_send_params {
 	uint32_t pwr:8,
@@ -1306,7 +1308,8 @@ struct tx_send_params {
 		 bw_mask:7,
 		 preamble_type:5,
 		 frame_type:1,
-		 reserved:11;
+		 cfr_enable:1,
+		 reserved:10;
 };
 
 /**
