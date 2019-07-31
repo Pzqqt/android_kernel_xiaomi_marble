@@ -350,3 +350,31 @@ QDF_STATUS wifi_pos_register_get_phy_mode_cb(
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wifi_pos_register_send_action(
+				struct wlan_objmgr_psoc *psoc,
+				void (*handler)(struct wlan_objmgr_psoc *psoc,
+						uint32_t sub_type,
+						uint8_t *buf,
+						uint32_t buf_len))
+{
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc;
+
+	if (!psoc) {
+		wifi_pos_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!handler) {
+		wifi_pos_err("Null callback");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	wifi_pos_psoc = wifi_pos_get_psoc_priv_obj(psoc);
+	if (!wifi_pos_psoc) {
+		wifi_pos_err("wifi_pos priv obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wifi_pos_psoc->wifi_pos_send_action = handler;
+
+	return QDF_STATUS_SUCCESS;
+}

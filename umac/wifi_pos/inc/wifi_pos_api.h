@@ -412,4 +412,33 @@ QDF_STATUS wifi_pos_register_get_phy_mode_cb(
 			struct wlan_objmgr_psoc *psoc,
 			void (*handler)(uint8_t, uint32_t, uint32_t *));
 
+/**
+ * wifi_pos_register_send_action: API to register callback to send
+ * action frames
+ * @psoc: pointer to psoc object
+ * @handler: callback to be registered
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, error codes in
+ * case of failure
+ */
+QDF_STATUS wifi_pos_register_send_action(
+				struct wlan_objmgr_psoc *psoc,
+				void (*handler)(struct wlan_objmgr_psoc *psoc,
+						uint32_t sub_type,
+						uint8_t *buf,
+						uint32_t buf_len));
+
+/**
+ * wifi_pos_send_report_resp: Send report to osif
+ * @psoc: pointer to psoc object
+ * @req_id: Request id
+ * @dest_mac: destination mac address
+ * @err_code: Error code to be sent
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, error codes in
+ * case of failure
+ */
+QDF_STATUS wifi_pos_send_report_resp(struct wlan_objmgr_psoc *psoc,
+				     int req_id, uint8_t *dest_mac,
+				     int err_code);
 #endif
