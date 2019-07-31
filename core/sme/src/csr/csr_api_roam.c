@@ -7631,7 +7631,8 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 	}
 	if (pSrcProfile->ChannelInfo.freq_list) {
 		pDstProfile->ChannelInfo.freq_list =
-			qdf_mem_malloc(pSrcProfile->ChannelInfo.numOfChannels);
+			qdf_mem_malloc(sizeof(uint32_t) *
+				       pSrcProfile->ChannelInfo.numOfChannels);
 		if (!pDstProfile->ChannelInfo.freq_list) {
 			qdf_mem_free(pDstProfile->ChannelInfo.ChannelList);
 			pDstProfile->ChannelInfo.ChannelList = NULL;
@@ -7643,6 +7644,7 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 			pSrcProfile->ChannelInfo.numOfChannels;
 		qdf_mem_copy(pDstProfile->ChannelInfo.freq_list,
 			     pSrcProfile->ChannelInfo.freq_list,
+			     sizeof(uint32_t) *
 			     pSrcProfile->ChannelInfo.numOfChannels);
 	}
 	pDstProfile->AuthType = pSrcProfile->AuthType;
@@ -10751,6 +10753,9 @@ csr_roam_prepare_filter_from_profile(struct mac_context *mac_ctx,
 	tCsrChannelInfo *profile_ch_info = &profile->ChannelInfo;
 	struct roam_ext_params *roam_params;
 	uint8_t i;
+	uint8_t *flt_ch_lst, *prof_ch_lst;
+	uint32_t *flt_freq_lst, *prof_freq_lst;
+	uint32_t num_ch;
 
 	roam_params = &mac_ctx->roam.configParam.roam_params;
 
@@ -10835,19 +10840,26 @@ csr_roam_prepare_filter_from_profile(struct mac_context *mac_ctx,
 			goto free_filter;
 		}
 
+		flt_ch_lst = fltr_ch_info->ChannelList;
+		flt_freq_lst = fltr_ch_info->freq_list;
+		prof_ch_lst = profile_ch_info->ChannelList;
+		prof_freq_lst = profile_ch_info->freq_list;
+		num_ch = 0;
+
 		for (idx = 0; idx < profile_ch_info->numOfChannels; idx++) {
 			if (csr_roam_is_channel_valid(mac_ctx,
-				profile_ch_info->ChannelList[idx])) {
-				fltr_ch_info->
-				ChannelList[fltr_ch_info->numOfChannels]
-					= profile_ch_info->ChannelList[idx];
-				fltr_ch_info->numOfChannels++;
+						      prof_ch_lst[idx])) {
+				flt_ch_lst[num_ch] = prof_ch_lst[idx];
+				flt_freq_lst[num_ch] = prof_freq_lst[idx];
+				num_ch++;
 			} else {
 				sme_debug(
 					"Channel (%d) is invalid",
 					profile_ch_info->ChannelList[idx]);
 			}
 		}
+
+		fltr_ch_info->numOfChannels = num_ch;
 	} else {
 		sme_err("Channel list empty");
 		status = QDF_STATUS_E_FAILURE;

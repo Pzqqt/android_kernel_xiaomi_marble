@@ -970,18 +970,24 @@ static QDF_STATUS sme_rrm_fill_scan_channels(uint8_t *country,
 {
 	uint32_t num_chan = 0;
 	uint32_t i;
+	uint8_t *chan_list;
+	uint32_t *freq_list;
+	uint16_t op_class;
 
 	/* List all the channels in the requested RC */
 	wlan_reg_dmn_print_channels_in_opclass(country, reg_class);
 
+	chan_list = sme_rrm_context->channelList.ChannelList;
+	freq_list = sme_rrm_context->channelList.freq_list;
+
 	for (i = 0; i < num_channels; i++) {
-		if (wlan_reg_dmn_get_opclass_from_channel(country,
-			sme_rrm_context->channelList.ChannelList[i],
-			BWALL) ==
-			reg_class) {
-			sme_rrm_context->channelList.
-			ChannelList[num_chan] =
-			sme_rrm_context->channelList.ChannelList[i];
+		op_class = wlan_reg_dmn_get_opclass_from_channel(country,
+								 chan_list[i],
+								 BWALL);
+
+		if (op_class == reg_class) {
+			chan_list[num_chan] = chan_list[i];
+			freq_list[num_chan] = freq_list[i];
 			num_chan++;
 		}
 	}
@@ -1011,7 +1017,7 @@ static QDF_STATUS sme_rrm_fill_scan_channels(uint8_t *country,
  * Return : QDF_STATUS_SUCCESS - Validation is successful.
  */
 QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
-						void *msg_buf)
+						 void *msg_buf)
 {
 	tpSirBeaconReportReqInd pBeaconReq = (tpSirBeaconReportReqInd)msg_buf;
 	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
@@ -1020,6 +1026,11 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 	uint32_t session_id;
 	struct csr_roam_session *session;
 	QDF_STATUS status;
+	uint32_t num_chan;
+	bool chan_valid;
+	uint8_t *rrm_chan_list;
+	uint32_t *rrm_freq_list;
+	uint8_t bcn_chan;
 
 	status = csr_roam_get_session_id_from_bssid(mac, (struct qdf_mac_addr *)
 						    pBeaconReq->bssId,
@@ -1089,6 +1100,10 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 
 		csr_get_cfg_valid_channels(mac, pSmeRrmContext->channelList.
 					ChannelList, &len);
+		sme_chan_to_freq_list(mac->pdev,
+				      pSmeRrmContext->channelList.freq_list,
+				      pSmeRrmContext->channelList.ChannelList,
+				      len);
 
 		if (pBeaconReq->channelInfo.regulatoryClass) {
 			if (sme_rrm_fill_scan_channels(country, pSmeRrmContext,
@@ -1102,6 +1117,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 	} else {
 		len = 0;
 		pSmeRrmContext->channelList.numOfChannels = 0;
+		num_chan = 0;
 
 		/* If valid channel is present. We first Measure on the given
 		 * channel and if there are additional channels present in
@@ -1135,28 +1151,39 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 			goto cleanup;
 		}
 
-		if (pBeaconReq->channelInfo.channelNum != 255) {
-			if (csr_roam_is_channel_valid
-				    (mac, pBeaconReq->channelInfo.channelNum))
-				pSmeRrmContext->channelList.
-				ChannelList[pSmeRrmContext->channelList.
-					    numOfChannels++] =
-					pBeaconReq->channelInfo.channelNum;
-			else
+		rrm_chan_list = pSmeRrmContext->channelList.ChannelList;
+		rrm_freq_list = pSmeRrmContext->channelList.freq_list;
+		bcn_chan = pBeaconReq->channelInfo.channelNum;
+
+		if (bcn_chan != 255) {
+			chan_valid = csr_roam_is_channel_valid(mac, bcn_chan);
+
+			if (chan_valid) {
+				rrm_chan_list[num_chan] = bcn_chan;
+				rrm_freq_list[num_chan] =
+					wlan_reg_chan_to_freq(mac->pdev,
+							      bcn_chan);
+				num_chan++;
+			} else {
 				sme_err("Invalid channel: %d",
 					pBeaconReq->channelInfo.channelNum);
+			}
 		}
 
 		for (i = 0; i < pBeaconReq->channelList.numChannels; i++) {
-			if (csr_roam_is_channel_valid(mac, pBeaconReq->
-					channelList.channelNumber[i])) {
-				pSmeRrmContext->channelList.
-					ChannelList[pSmeRrmContext->channelList.
-				numOfChannels] = pBeaconReq->channelList.
-					channelNumber[i];
-				pSmeRrmContext->channelList.numOfChannels++;
+			bcn_chan = pBeaconReq->channelList.channelNumber[i];
+			chan_valid = csr_roam_is_channel_valid(mac, bcn_chan);
+
+			if (chan_valid) {
+				rrm_chan_list[num_chan] = bcn_chan;
+				rrm_freq_list[num_chan] =
+					wlan_reg_chan_to_freq(mac->pdev,
+							      bcn_chan);
+				num_chan++;
 			}
 		}
+
+		pSmeRrmContext->channelList.numOfChannels = num_chan;
 	}
 
 	/* Copy session bssid */

@@ -1549,8 +1549,6 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 			goto end;
 		}
 	}
-	profile->ChannelInfo.ChannelList[0] =
-		roam_ctrl_info->handoffReqInfo.channel;
 
 	if (!profile->ChannelInfo.freq_list) {
 		profile->ChannelInfo.freq_list =
@@ -1564,6 +1562,9 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 			goto end;
 		}
 	}
+
+	profile->ChannelInfo.ChannelList[0] =
+		roam_ctrl_info->handoffReqInfo.channel;
 	profile->ChannelInfo.freq_list[0] =
 		wlan_reg_chan_to_freq(mac_ctx->pdev,
 				      roam_ctrl_info->handoffReqInfo.channel);
