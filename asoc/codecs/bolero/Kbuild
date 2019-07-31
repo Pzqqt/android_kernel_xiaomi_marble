@@ -35,6 +35,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/litoautoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_BENGAL), y)
+		include $(AUDIO_ROOT)/config/litoauto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/litoautoconf.h
+	endif
 	ifeq ($(CONFIG_ARCH_QCS405), y)
 		include $(AUDIO_ROOT)/config/qcs405auto.conf
 		export
