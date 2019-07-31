@@ -148,12 +148,9 @@
 #define HAL_RX_GET_MSDU_AGGREGATION(rx_desc, rs)
 #endif
 
-#define HAL_RX_MPDU_FCS_BITMAP_0_31_OFFSET 0x00000000FFFFFFFF
-#define HAL_RX_MPDU_FCS_BITMAP_LSB 32
-#define HAL_RX_MPDU_FCS_BITMAP_32_63_OFFSET 0xFFFFFFFF00000000
-
 /* Max MPDUs per status buffer */
-#define HAL_RX_MAX_MPDU 64
+#define HAL_RX_MAX_MPDU 256
+#define HAL_RX_NUM_WORDS_PER_PPDU_BITMAP (HAL_RX_MAX_MPDU >> 5)
 
 /* Max pilot count */
 #define HAL_RX_MAX_SU_EVM_COUNT 32
@@ -431,7 +428,7 @@ struct hal_rx_ppdu_common_info {
 	uint32_t ppdu_timestamp;
 	uint32_t mpdu_cnt_fcs_ok;
 	uint32_t mpdu_cnt_fcs_err;
-	uint64_t mpdu_fcs_ok_bitmap;
+	uint32_t mpdu_fcs_ok_bitmap[HAL_RX_NUM_WORDS_PER_PPDU_BITMAP];
 	uint32_t last_ppdu_id;
 	uint32_t mpdu_cnt;
 	uint8_t num_users;

@@ -163,6 +163,7 @@
 #endif
 
 #define MAX_CHAIN 8
+#define QDF_MON_STATUS_MPDU_FCS_BMAP_NWORDS 8
 
 /**
  * struct mon_rx_status - This will have monitor mode rx_status extracted from
@@ -375,7 +376,7 @@ struct mon_rx_user_status {
 	uint8_t rs_flags;
 	uint32_t mpdu_cnt_fcs_ok;
 	uint32_t mpdu_cnt_fcs_err;
-	uint64_t mpdu_fcs_ok_bitmap;
+	uint32_t mpdu_fcs_ok_bitmap[QDF_MON_STATUS_MPDU_FCS_BMAP_NWORDS];
 	uint32_t mpdu_ok_byte_count;
 	uint32_t mpdu_err_byte_count;
 };

@@ -297,9 +297,10 @@ hal_rx_populate_mu_user_info(void *rx_tlv, void *ppduinfo,
 		ppdu_info->com_info.mpdu_cnt_fcs_ok;
 	mon_rx_user_status->mpdu_cnt_fcs_err =
 		ppdu_info->com_info.mpdu_cnt_fcs_err;
-	mon_rx_user_status->mpdu_fcs_ok_bitmap =
-		ppdu_info->com_info.mpdu_fcs_ok_bitmap;
-
+	qdf_mem_copy(&mon_rx_user_status->mpdu_fcs_ok_bitmap,
+		     &ppdu_info->com_info.mpdu_fcs_ok_bitmap,
+		     HAL_RX_NUM_WORDS_PER_PPDU_BITMAP *
+		     sizeof(ppdu_info->com_info.mpdu_fcs_ok_bitmap[0]));
 	mpdu_ok_byte_count = HAL_RX_GET(rx_tlv,
 					RX_PPDU_END_USER_STATS_17,
 					MPDU_OK_BYTE_COUNT);
@@ -545,18 +546,13 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			ppdu_info->rx_status.rs_flags &=
 				(~IEEE80211_AMPDU_FLAG);
 
-		ppdu_info->com_info.mpdu_fcs_ok_bitmap =
-			(((ppdu_info->com_info.mpdu_fcs_ok_bitmap |
-			 HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_8,
-				    FCS_OK_BITMAP_63_32)) <<
-				    HAL_RX_MPDU_FCS_BITMAP_LSB) &
-				    HAL_RX_MPDU_FCS_BITMAP_32_63_OFFSET);
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap[0] =
+				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_7,
+					   FCS_OK_BITMAP_31_0);
 
-		ppdu_info->com_info.mpdu_fcs_ok_bitmap =
-			((ppdu_info->com_info.mpdu_fcs_ok_bitmap |
-			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_7,
-				   FCS_OK_BITMAP_31_0)) &
-				   HAL_RX_MPDU_FCS_BITMAP_0_31_OFFSET);
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap[1] =
+				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_8,
+					   FCS_OK_BITMAP_63_32);
 
 		if (user_id < HAL_MAX_UL_MU_USERS) {
 			mon_rx_user_status =
@@ -573,6 +569,29 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 	}
 
 	case WIFIRX_PPDU_END_USER_STATS_EXT_E:
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap[2] =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_EXT_1,
+				   FCS_OK_BITMAP_95_64);
+
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap[3] =
+			 HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_EXT_2,
+				    FCS_OK_BITMAP_127_96);
+
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap[4] =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_EXT_3,
+				   FCS_OK_BITMAP_159_128);
+
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap[5] =
+			 HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_EXT_4,
+				    FCS_OK_BITMAP_191_160);
+
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap[6] =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_EXT_5,
+				   FCS_OK_BITMAP_223_192);
+
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap[7] =
+			 HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_EXT_6,
+				    FCS_OK_BITMAP_255_224);
 		break;
 
 	case WIFIRX_PPDU_END_STATUS_DONE_E:
@@ -1311,6 +1330,10 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		struct hal_rx_ppdu_common_info *com_info = &ppdu_info->com_info;
 		uint16_t mpdu_cnt = com_info->mpdu_cnt;
 
+		if (mpdu_cnt >= HAL_RX_MAX_MPDU) {
+			hal_alert("Number of MPDUs per PPDU exceeded");
+			break;
+		}
 		/* Update first_msdu_payload for every mpdu and increment
 		 * com_info->mpdu_cnt for every WIFIRX_HEADER_E TLV
 		 */
