@@ -914,6 +914,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	uint8_t pkt_type = 0;
 	bool is_arp = false;
 	struct wlan_objmgr_vdev *vdev;
+	struct hdd_context *hdd_ctx;
 
 #ifdef QCA_WIFI_FTM
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
@@ -930,6 +931,13 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	    cds_is_load_or_unload_in_progress()) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "Recovery/(Un)load in progress, dropping the packet");
+		goto drop_pkt;
+	}
+
+	hdd_ctx = adapter->hdd_ctx;
+	if (wlan_hdd_validate_context(hdd_ctx)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "Invalid HDD context");
 		goto drop_pkt;
 	}
 
@@ -1066,10 +1074,12 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		hdd_objmgr_put_vdev(vdev);
 	}
 
-	if (qdf_nbuf_is_tso(skb))
+	if (qdf_nbuf_is_tso(skb)) {
 		adapter->stats.tx_packets += qdf_nbuf_get_tso_num_seg(skb);
-	else
+	} else {
 		++adapter->stats.tx_packets;
+		hdd_ctx->no_tx_offload_pkt_cnt++;
+	}
 
 	hdd_event_eapol_log(skb, QDF_TX);
 	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;

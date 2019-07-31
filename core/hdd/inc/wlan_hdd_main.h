@@ -425,6 +425,8 @@ enum hdd_auth_key_mgmt {
  * @next_tx_level:	pld_bus_width_type voting level (high or low)
  *			determined on the basis of tx packets received in the
  *			last 100ms interval
+ * @is_rx_pm_qos_high	Capture rx_pm_qos voting
+ * @is_tx_pm_qos_high	Capture tx_pm_qos voting
  * @qtime		timestamp when the record is added
  *
  * The structure keeps track of throughput requirements of wlan driver.
@@ -437,6 +439,8 @@ struct hdd_tx_rx_histogram {
 	uint32_t next_vote_level;
 	uint32_t next_rx_level;
 	uint32_t next_tx_level;
+	bool is_rx_pm_qos_high;
+	bool is_tx_pm_qos_high;
 	uint64_t qtime;
 };
 
@@ -1761,6 +1765,10 @@ struct hdd_context {
 	int cur_rx_level;
 	uint64_t prev_no_rx_offload_pkts;
 	uint64_t prev_rx_offload_pkts;
+	/* Count of non TSO packets in previous bus bw delta time */
+	uint64_t prev_no_tx_offload_pkts;
+	/* Count of TSO packets in previous bus bw delta time */
+	uint64_t prev_tx_offload_pkts;
 	int cur_tx_level;
 	uint64_t prev_tx;
 	qdf_atomic_t low_tput_gro_enable;
@@ -1858,6 +1866,7 @@ struct hdd_context {
 	uint32_t rx_high_ind_cnt;
 	/* For Rx thread non GRO/LRO packet accounting */
 	uint64_t no_rx_offload_pkt_cnt;
+	uint64_t no_tx_offload_pkt_cnt;
 	/* Current number of TX X RX chains being used */
 	enum antenna_mode current_antenna_mode;
 

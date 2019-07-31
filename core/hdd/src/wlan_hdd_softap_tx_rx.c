@@ -452,6 +452,7 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	sme_ac_enum_type ac = SME_AC_BE;
 	struct hdd_adapter *adapter = (struct hdd_adapter *) netdev_priv(dev);
 	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 	struct qdf_mac_addr *dest_mac_addr;
 	uint8_t sta_id;
 	uint32_t num_seg;
@@ -608,6 +609,7 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	} else {
 		++adapter->stats.tx_packets;
 		adapter->sta_info[sta_id].tx_packets++;
+		hdd_ctx->no_tx_offload_pkt_cnt++;
 	}
 	adapter->sta_info[sta_id].last_tx_rx_ts = qdf_system_ticks();
 

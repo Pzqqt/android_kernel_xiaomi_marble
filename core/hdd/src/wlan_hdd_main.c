@@ -8221,16 +8221,19 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	bool rxthread_high_tput_req = false;
 	bool dptrace_high_tput_req;
 	u64 total_pkts = tx_packets + rx_packets;
-	uint64_t temp_tx = 0, avg_rx = 0;
+	uint64_t avg_tx = 0, avg_rx = 0;
 	uint64_t no_rx_offload_pkts = 0, avg_no_rx_offload_pkts = 0;
 	uint64_t rx_offload_pkts = 0, avg_rx_offload_pkts = 0;
+	uint64_t no_tx_offload_pkts = 0, avg_no_tx_offload_pkts = 0;
+	uint64_t tx_offload_pkts = 0, avg_tx_offload_pkts = 0;
 	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_IDLE;
 	static enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
 	uint32_t bus_low_cnt_threshold = hdd_ctx->config->bus_low_cnt_threshold;
 	cpumask_t pm_qos_cpu_mask;
-	bool enable_pm_qos_high = false;
+	bool is_rx_pm_qos_high = false;
+	bool is_tx_pm_qos_high = false;
 
 	cpumask_clear(&pm_qos_cpu_mask);
 
@@ -8319,13 +8322,13 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	 */
 	if (avg_no_rx_offload_pkts > hdd_ctx->config->bus_bw_high_threshold) {
 		rxthread_high_tput_req = true;
-		enable_pm_qos_high = true;
+		is_rx_pm_qos_high = true;
 	} else {
 		rxthread_high_tput_req = false;
-		enable_pm_qos_high = false;
+		is_rx_pm_qos_high = false;
 	}
 
-	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask, enable_pm_qos_high);
+	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask, is_rx_pm_qos_high);
 
 	if (cds_sched_handle_throughput_req(rxthread_high_tput_req))
 		hdd_warn("Rx thread high_tput(%d) affinity request failed",
@@ -8365,18 +8368,31 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
 	}
 
+	no_tx_offload_pkts = hdd_ctx->no_tx_offload_pkt_cnt;
+	hdd_ctx->no_tx_offload_pkt_cnt = 0;
+	tx_offload_pkts = tx_packets - no_tx_offload_pkts;
+
+	avg_no_tx_offload_pkts = (no_tx_offload_pkts +
+				  hdd_ctx->prev_no_tx_offload_pkts) / 2;
+	hdd_ctx->prev_no_tx_offload_pkts = no_tx_offload_pkts;
+
+	avg_tx_offload_pkts = (tx_offload_pkts +
+			       hdd_ctx->prev_tx_offload_pkts) / 2;
+	hdd_ctx->prev_tx_offload_pkts = tx_offload_pkts;
+
+	avg_tx = avg_no_tx_offload_pkts + avg_tx_offload_pkts;
+
 	/* fine-tuning parameters for TX Flows */
-	temp_tx = (tx_packets + hdd_ctx->prev_tx) / 2;
 	hdd_ctx->prev_tx = tx_packets;
 
-	if (temp_tx > hdd_ctx->config->bus_bw_high_threshold)
-		enable_pm_qos_high = true;
+	if (avg_no_tx_offload_pkts > hdd_ctx->config->bus_bw_high_threshold)
+		is_tx_pm_qos_high = true;
 	else
-		enable_pm_qos_high = false;
+		is_tx_pm_qos_high = false;
 
-	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask, enable_pm_qos_high);
+	hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask, is_tx_pm_qos_high);
 
-	if (temp_tx > hdd_ctx->config->tcp_tx_high_tput_thres)
+	if (avg_tx > hdd_ctx->config->tcp_tx_high_tput_thres)
 		next_tx_level = WLAN_SVC_TP_HIGH;
 	else
 		next_tx_level = WLAN_SVC_TP_LOW;
@@ -8386,7 +8402,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		struct wlan_tx_tp_data tx_tp_data = {0};
 
 		hdd_debug("change TCP TX trigger level %d, average_tx: %llu",
-				next_tx_level, temp_tx);
+				next_tx_level, avg_tx);
 		hdd_ctx->cur_tx_level = next_tx_level;
 		tx_level_change = true;
 		tx_tp_data.level = next_tx_level;
@@ -8396,8 +8412,19 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	index = hdd_ctx->hdd_txrx_hist_idx;
 	if (vote_level_change || tx_level_change || rx_level_change) {
+		/* Clear all the mask if no silver/gold vote is required */
+		if (next_vote_level < PLD_BUS_WIDTH_MEDIUM) {
+			is_rx_pm_qos_high = false;
+			is_tx_pm_qos_high = false;
+			cpumask_clear(&pm_qos_cpu_mask);
+		}
+
 		hdd_ctx->hdd_txrx_hist[index].next_tx_level = next_tx_level;
 		hdd_ctx->hdd_txrx_hist[index].next_rx_level = next_rx_level;
+		hdd_ctx->hdd_txrx_hist[index].is_rx_pm_qos_high =
+							is_rx_pm_qos_high;
+		hdd_ctx->hdd_txrx_hist[index].is_tx_pm_qos_high =
+							is_tx_pm_qos_high;
 		hdd_ctx->hdd_txrx_hist[index].next_vote_level = next_vote_level;
 		hdd_ctx->hdd_txrx_hist[index].interval_rx = rx_packets;
 		hdd_ctx->hdd_txrx_hist[index].interval_tx = tx_packets;
@@ -8684,12 +8711,12 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 	hdd_nofl_debug("Total entries: %d Current index: %d",
 		       NUM_TX_RX_HISTOGRAM, hdd_ctx->hdd_txrx_hist_idx);
 
-	hdd_nofl_debug("[index][timestamp]: interval_rx, interval_tx, bus_bw_level, RX TP Level, TX TP Level");
+	hdd_nofl_debug("[index][timestamp]: interval_rx, interval_tx, bus_bw_level, RX TP Level, TX TP Level, Rx:Tx pm_qos");
 
 	for (i = 0; i < NUM_TX_RX_HISTOGRAM; i++) {
 		/* using hdd_log to avoid printing function name */
 		if (hdd_ctx->hdd_txrx_hist[i].qtime > 0)
-			hdd_nofl_debug("[%3d][%15llu]: %6llu, %6llu, %s, %s, %s",
+			hdd_nofl_debug("[%3d][%15llu]: %6llu, %6llu, %s, %s, %s, %s:%s",
 				       i, hdd_ctx->hdd_txrx_hist[i].qtime,
 				       hdd_ctx->hdd_txrx_hist[i].interval_rx,
 				       hdd_ctx->hdd_txrx_hist[i].interval_tx,
@@ -8701,7 +8728,11 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 						next_rx_level),
 				       convert_level_to_string(
 					hdd_ctx->hdd_txrx_hist[i].
-						next_tx_level));
+						next_tx_level),
+				hdd_ctx->hdd_txrx_hist[i].is_rx_pm_qos_high ?
+				"HIGH" : "LOW",
+				hdd_ctx->hdd_txrx_hist[i].is_tx_pm_qos_high ?
+				"HIGH" : "LOW");
 	}
 }
 
