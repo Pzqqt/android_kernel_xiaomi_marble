@@ -856,7 +856,7 @@ QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
 }
 
 QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
-				    uint8_t sta_id)
+				    struct qdf_mac_addr *peer_mac)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_context *hddctx;
@@ -872,7 +872,7 @@ QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return hdd_roam_deregister_tdlssta(adapter, sta_id);
+	return hdd_roam_deregister_tdlssta(adapter, peer_mac);
 }
 
 void hdd_init_tdls_config(struct tdls_start_params *tdls_cfg)

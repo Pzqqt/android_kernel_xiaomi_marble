@@ -342,10 +342,24 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 				     const uint8_t *peerMac, uint16_t staId,
 				     uint8_t qos);
+/**
+ * hdd_roam_deregister_tdlssta() - deregister new TDLS station
+ * @adapter: pointer to adapter
+ * @peer_mac: peer mac address
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
+				       struct qdf_mac_addr *peer_mac);
+
+#else
+inline QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
+					      struct qdf_mac_addr *peer_mac)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
-QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
-				       uint8_t staId);
 
 /**
  * hdd_perform_roam_set_key_complete() - perform set key complete
@@ -401,7 +415,17 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 bool hdd_save_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id,
 		   struct qdf_mac_addr *peer_mac_addr);
 void hdd_delete_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id);
-QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t sta_id);
+
+/**
+ * hdd_roam_deregister_sta() - deregister station
+ * @adapter: pointer to adapter
+ * @sta_id: station identifier
+ * @mac_addr: peer mac address
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter,
+				   struct qdf_mac_addr mac_addr);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS

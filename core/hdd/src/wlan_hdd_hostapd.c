@@ -2362,7 +2362,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						  WMA_DHCP_STOP_IND);
 			stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
 		}
-		hdd_softap_deregister_sta(adapter, sta_id);
+		/* STA id will be removed as a part of Phase 2 cleanup */
+		hdd_softap_deregister_sta(adapter, sta_id,
+					  disassoc_comp->staMac);
 
 		ap_ctx->ap_active = false;
 		spin_lock_bh(&adapter->sta_info_lock);

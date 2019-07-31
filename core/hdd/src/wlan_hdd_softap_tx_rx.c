@@ -995,7 +995,8 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 }
 
 QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
-				     uint8_t sta_id)
+				     uint8_t sta_id,
+				     struct qdf_mac_addr mac_addr)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct hdd_context *hdd_ctx;
@@ -1023,7 +1024,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	 */
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
-			sta_id);
+			mac_addr);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_clear_peer failed for staID %d, Status=%d [0x%08X]",
 			sta_id, qdf_status, qdf_status);
@@ -1084,7 +1085,8 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	 */
 	if (adapter->sta_info[sta_id].in_use) {
 		hdd_info("clean up old entry for STA %d", sta_id);
-		hdd_softap_deregister_sta(adapter, sta_id);
+		hdd_softap_deregister_sta(adapter, sta_id,
+					  adapter->sta_info[sta_id].sta_mac);
 	}
 
 	/* Get the Station ID from the one saved during the association. */
@@ -1228,7 +1230,9 @@ static QDF_STATUS hdd_softap_deregister_bc_sta(struct hdd_adapter *adapter)
 	struct hdd_ap_ctx *ap_ctx;
 
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-	return hdd_softap_deregister_sta(adapter, ap_ctx->broadcast_sta_id);
+
+	return hdd_softap_deregister_sta(adapter, ap_ctx->broadcast_sta_id,
+					 adapter->mac_addr);
 }
 
 QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
@@ -1258,7 +1262,9 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
 		/* This excludes BC sta as it is already deregistered */
 		if (adapter->sta_info[sta_id].in_use) {
-			status = hdd_softap_deregister_sta(adapter, sta_id);
+			status = hdd_softap_deregister_sta(
+					adapter, sta_id,
+					adapter->sta_info[sta_id].sta_mac);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				hdd_err("Failed to deregister sta Id %d",
 					sta_id);

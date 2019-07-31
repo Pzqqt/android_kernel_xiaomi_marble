@@ -164,7 +164,7 @@ QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
 				  uint8_t qos);
 
 QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
-				    uint8_t sta_id);
+				    struct qdf_mac_addr *peer_mac);
 
 /**
  * hdd_init_tdls_config() - initialize tdls config
@@ -201,7 +201,7 @@ QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
 
 static inline
 QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
-				    uint8_t sta_id)
+				    struct qdf_mac_addr *peer_mac)
 {
 	return QDF_STATUS_SUCCESS;
 }

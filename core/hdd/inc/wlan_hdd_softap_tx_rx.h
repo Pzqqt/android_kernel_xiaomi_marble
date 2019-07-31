@@ -126,11 +126,13 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf);
  * hdd_softap_deregister_sta() - Deregister a STA with the Data Path
  * @adapter: pointer to adapter context
  * @sta_id: Station ID to deregister
+ * @mac_addr: Peer mac address
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
-				     uint8_t sta_id);
+				     uint8_t sta_id,
+				     struct qdf_mac_addr mac_addr);
 
 /**
  * hdd_softap_register_sta() - Register a SoftAP STA

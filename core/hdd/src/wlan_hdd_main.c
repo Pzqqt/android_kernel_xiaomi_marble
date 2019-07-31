@@ -6044,7 +6044,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			       cds_get_context(QDF_MODULE_ID_TXRX),
-			       sta_ctx->conn_info.sta_id[0]);
+			       sta_ctx->conn_info.peer_macaddr[0]);
 		hdd_deregister_hl_netdev_fc_timer(adapter);
 		hdd_deregister_tx_flow_control(adapter);
 		hdd_vdev_destroy(adapter);
@@ -6261,13 +6261,18 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 		} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
 			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
-			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-				if (adapter->sta_info[sta_id].in_use) {
+			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT;
+			     sta_id++) {
+				struct hdd_station_info sta =
+					adapter->sta_info[sta_id];
+				if (sta.in_use) {
 					hdd_debug("[SSR] deregister STA with ID %d",
 						  sta_id);
+					/* STA id will be removed */
 					hdd_softap_deregister_sta(adapter,
-								  sta_id);
-					adapter->sta_info[sta_id].in_use = 0;
+								  sta_id,
+								  sta.sta_mac);
+					sta.in_use = 0;
 				}
 			}
 		}
