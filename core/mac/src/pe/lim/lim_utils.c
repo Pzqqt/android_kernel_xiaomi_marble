@@ -5753,6 +5753,19 @@ QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
 	tSirMacVHTCapabilityInfo *p_vht_cap =
 			(tSirMacVHTCapabilityInfo *)(&vht_caps[2]);
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE device_mode;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+			mac_ctx->psoc, vdev_id,
+			WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		pe_err("vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	device_mode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
 
 	/*
 	 * Note: Do not use Dot11f VHT structure, since 1 byte present flag in
@@ -5773,8 +5786,15 @@ QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
 		p_ht_cap->supportedChannelWidthSet = 0;
 		p_ht_cap->shortGI40MHz = 0;
 	}
+
 	lim_populate_mcs_set_ht_per_vdev(mac_ctx, p_ht_cap, vdev_id,
 					 NSS_CHAINS_BAND_2GHZ);
+	if(device_mode == QDF_NDI_MODE) {
+		p_ht_cap->txBF = 0;
+		p_ht_cap->implicitTxBF = 0;
+		p_ht_cap->explicitCSITxBF = 0;
+	}
+
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
 		CDS_BAND_2GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
 	/*
@@ -5807,6 +5827,12 @@ QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
 	lim_populate_mcs_set_vht_per_vdev(mac_ctx, vht_caps,
 					  vdev_id, NSS_CHAINS_BAND_5GHZ);
 
+	if(device_mode == QDF_NDI_MODE) {
+		p_vht_cap->muBeamformeeCap = 0;
+		p_vht_cap->muBeamformerCap = 0;
+		p_vht_cap->suBeamformeeCap = 0;
+		p_vht_cap->suBeamFormerCap = 0;
+	}
 	/* Self VHT channel width for 5G is already negotiated with FW */
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
 			CDS_BAND_5GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
@@ -7266,6 +7292,18 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx, struct pe_session *s
 	uint8_t he_caps[SIR_MAC_HE_CAP_MIN_LEN + 3];
 	struct he_capability_info *he_cap;
 	QDF_STATUS status_5g, status_2g;
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE device_mode;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+			mac_ctx->psoc, vdev_id,
+			WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		pe_err("vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	device_mode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
 	/* Sending only minimal info(no PPET) to FW now, update if required */
 	qdf_mem_zero(he_caps, SIR_MAC_HE_CAP_MIN_LEN + 3);
@@ -7276,7 +7314,17 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx, struct pe_session *s
 			SIR_MAC_HE_CAP_MIN_LEN + 3);
 	he_cap = (struct he_capability_info *) (&he_caps[2 + HE_CAP_OUI_SIZE]);
 	he_cap->ppet_present = 0;
-
+	if(device_mode == QDF_NDI_MODE) {
+		he_cap->su_beamformee = 0;
+		he_cap->su_beamformer = 0;
+		he_cap->mu_beamformer = 0;
+		he_cap->bfee_sts_gt_80 = 0;
+		he_cap->bfee_sts_lt_80 = 0;
+		he_cap->num_sounding_gt_80 = 0;
+		he_cap->num_sounding_lt_80 = 0;
+		he_cap->su_feedback_tone16 = 0;
+		he_cap->mu_feedback_tone16 = 0;
+	}
 	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HE_CAP,
 			CDS_BAND_5GHZ, &he_caps[2],
 			SIR_MAC_HE_CAP_MIN_LEN + 1);
