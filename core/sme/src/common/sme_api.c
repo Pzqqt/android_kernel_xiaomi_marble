@@ -1757,11 +1757,11 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
 
-	if (curchnl_list_info->ChannelList) {
+	if (curchnl_list_info->freq_list) {
 		for (i = 0; i < curchnl_list_info->numOfChannels; i++) {
 			j += snprintf(oldChannelList + j,
 				sizeof(oldChannelList) - j, "%d",
-				curchnl_list_info->ChannelList[i]);
+				curchnl_list_info->freq_list[i]);
 		}
 	}
         ucfg_reg_get_band(mac->pdev, &band);
@@ -1769,12 +1769,12 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 				pChannelList, numChannels,
 				band);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (curchnl_list_info->ChannelList) {
+		if (curchnl_list_info->freq_list) {
 			j = 0;
 			for (i = 0; i < curchnl_list_info->numOfChannels; i++) {
 				j += snprintf(newChannelList + j,
 					sizeof(newChannelList) - j, "%d",
-					curchnl_list_info->ChannelList[i]);
+					curchnl_list_info->freq_list[i]);
 			}
 		}
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -7200,13 +7200,13 @@ QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 	}
 	chan_info = &pNeighborRoamInfo->cfgParams.channelInfo;
 
-	if (chan_info->ChannelList) {
+	if (chan_info->freq_list) {
 		for (i = 0; i < chan_info->numOfChannels; i++) {
 			if (j < sizeof(oldChannelList))
 				j += snprintf(oldChannelList + j,
 					sizeof(oldChannelList) -
 					j, "%d",
-					chan_info->ChannelList[i]);
+					chan_info->freq_list[i]);
 			else
 				break;
 		}
@@ -7215,14 +7215,13 @@ QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 	csr_create_bg_scan_roam_channel_list(mac, sessionId, pChannelList,
 			numChannels);
 	sme_set_roam_scan_control(mac_handle, sessionId, 1);
-	if (chan_info->ChannelList) {
+	if (chan_info->freq_list) {
 		j = 0;
 		for (i = 0; i < chan_info->numOfChannels; i++) {
 			if (j < sizeof(newChannelList))
 				j += snprintf(newChannelList + j,
 					sizeof(newChannelList) -
-					j, " %d",
-					chan_info->ChannelList[i]);
+					j, " %d", chan_info->freq_list[i]);
 			else
 				break;
 		}
@@ -7272,7 +7271,7 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
-	if (!pNeighborRoamInfo->cfgParams.channelInfo.ChannelList) {
+	if (!pNeighborRoamInfo->cfgParams.channelInfo.freq_list) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
 			FL("Roam Scan channel list is NOT yet initialized"));
 		*pNumChannels = 0;
@@ -7283,7 +7282,9 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 	*pNumChannels = pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels;
 	for (i = 0; i < (*pNumChannels); i++)
 		pOutPtr[i] =
-			pNeighborRoamInfo->cfgParams.channelInfo.ChannelList[i];
+		wlan_reg_freq_to_chan(
+			mac->pdev,
+			pNeighborRoamInfo->cfgParams.channelInfo.freq_list[i]);
 
 	pOutPtr[i] = '\0';
 	sme_release_global_lock(&mac->sme);

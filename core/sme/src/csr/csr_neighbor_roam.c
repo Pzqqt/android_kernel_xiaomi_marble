@@ -1388,6 +1388,8 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
  */
 void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 {
+	tCsrChannelInfo *current_channel_list_info;
+	tCsrNeighborRoamCfgParams *cfg_params;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
 
@@ -1396,10 +1398,12 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 		sme_warn("Neighbor Roam Algorithm Already Closed");
 		return;
 	}
+	cfg_params = &pNeighborRoamInfo->cfgParams;
 
-	if (pNeighborRoamInfo->cfgParams.channelInfo.ChannelList)
-		qdf_mem_free(pNeighborRoamInfo->cfgParams.channelInfo.
-			     ChannelList);
+	if (cfg_params->channelInfo.ChannelList)
+		qdf_mem_free(cfg_params->channelInfo.ChannelList);
+	if (cfg_params->channelInfo.freq_list)
+		qdf_mem_free(cfg_params->channelInfo.freq_list);
 
 	pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
 	pNeighborRoamInfo->cfgParams.channelInfo.freq_list = NULL;
@@ -1411,20 +1415,18 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 					&pNeighborRoamInfo->roamableAPList);
 	csr_ll_close(&pNeighborRoamInfo->roamableAPList);
 
-	if (pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
-	    ChannelList) {
-		qdf_mem_free(pNeighborRoamInfo->roamChannelInfo.
-			     currentChannelListInfo.ChannelList);
-	}
+	current_channel_list_info =
+		&pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo;
+	if (current_channel_list_info->ChannelList)
+		qdf_mem_free(current_channel_list_info->ChannelList);
+	if (current_channel_list_info->freq_list)
+		qdf_mem_free(current_channel_list_info->freq_list);
 
-	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList =
-		NULL;
-	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.freq_list =
-		NULL;
+	current_channel_list_info->ChannelList = NULL;
+	current_channel_list_info->freq_list = NULL;
 	pNeighborRoamInfo->roamChannelInfo.currentChanIndex =
 		CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX;
-	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
-	numOfChannels = 0;
+	current_channel_list_info->numOfChannels = 0;
 	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
 
 	/* Free the profile.. */

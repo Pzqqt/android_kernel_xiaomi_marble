@@ -1324,7 +1324,7 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 	uint32_t num_ssid = profile->SSIDs.numOfSSIDs;
 	struct scan_start_request *req;
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t i, chan, num_chan = 0;
+	uint8_t i, num_chan = 0;
 	uint8_t pdev_id;
 	wlan_scan_id scan_id;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -1411,10 +1411,11 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 	if (profile->ChannelInfo.numOfChannels) {
 		for (i = 0; i < profile->ChannelInfo.numOfChannels; i++) {
 			if (csr_roam_is_valid_channel(mac_ctx,
-				profile->ChannelInfo.ChannelList[i])) {
-				chan = profile->ChannelInfo.ChannelList[i];
+				wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					profile->ChannelInfo.freq_list[i]))) {
 				req->scan_req.chan_list.chan[num_chan].freq =
-						wlan_chan_to_freq(chan);
+					profile->ChannelInfo.freq_list[i];
 				num_chan++;
 			}
 		}
@@ -2393,10 +2394,9 @@ static QDF_STATUS csr_prepare_scan_filter(struct mac_context *mac_ctx,
 		pFilter->ChannelInfo.numOfChannels;
 	if (filter->num_of_channels > QDF_MAX_NUM_CHAN)
 		filter->num_of_channels = QDF_MAX_NUM_CHAN;
-	qdf_mem_copy(filter->channel_list,
-			pFilter->ChannelInfo.ChannelList,
-			filter->num_of_channels);
-
+	sme_freq_to_chan_list(mac_ctx->pdev, filter->channel_list,
+			      pFilter->ChannelInfo.freq_list,
+			      filter->num_of_channels);
 	if (pFilter->realm_check) {
 		filter->fils_scan_filter.realm_check = true;
 		qdf_mem_copy(filter->fils_scan_filter.fils_realm,
