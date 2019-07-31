@@ -1329,6 +1329,36 @@ target_if_spectral_get_macaddr(void *arg, char *addr)
 }
 
 /**
+ * target_if_init_spectral_param_properties() - Initialize Spectral parameter
+ *                                              properties
+ * @spectral: Pointer to Spectral target_if internal private data
+ *
+ * Initialize Spectral parameter properties
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_init_spectral_param_properties(struct target_if_spectral *spectral)
+{
+	enum spectral_scan_mode smode = SPECTRAL_SCAN_MODE_NORMAL;
+	int param;
+
+	/* Initialize default values for properties.
+	 * Default values are supported for all the parameters for all modes
+	 * and allows different values for each mode for all the parameters .
+	 */
+	for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++) {
+		for (param = 0; param < SPECTRAL_PARAM_MAX; param++) {
+			spectral->properties[smode][param].supported = true;
+			spectral->properties[smode][param].common_all_modes =
+									false;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * target_if_init_spectral_capability() - Initialize Spectral capability
  * @spectral: Pointer to Spectral target_if internal private data
  *
@@ -2038,6 +2068,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->fft_size_max = SPECTRAL_PARAM_FFT_SIZE_MAX_GEN2;
 	}
 
+	target_if_init_spectral_param_properties(spectral);
 	/* Init spectral capability */
 	if (target_if_init_spectral_capability(spectral) !=
 					QDF_STATUS_SUCCESS) {
@@ -2120,8 +2151,8 @@ target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
 }
 
 /**
- * target_if_set_spectral_config() - Set spectral config
- * @pdev:       Pointer to pdev object
+ * _target_if_set_spectral_config() - Set spectral config
+ * @spectral:       Pointer to spectral object
  * @threshtype: config type
  * @value:      config value
  * @smode: Spectral scan mode
@@ -2131,15 +2162,14 @@ target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
  */
-QDF_STATUS
-target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
-			      const uint32_t threshtype, const uint32_t value,
-			      const enum spectral_scan_mode smode,
-			      enum spectral_cp_error_code *err)
+static QDF_STATUS
+_target_if_set_spectral_config(struct target_if_spectral *spectral,
+			       const uint32_t threshtype, const uint32_t value,
+			       const enum spectral_scan_mode smode,
+			       enum spectral_cp_error_code *err)
 {
 	struct spectral_config params;
 	struct target_if_spectral_ops *p_sops;
-	struct target_if_spectral *spectral;
 	struct spectral_config *sparams;
 
 	if (!err) {
@@ -2148,22 +2178,17 @@ target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 	}
 	*err = SPECTRAL_SCAN_ERR_INVALID;
 
-	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
-		spectral_err("Invalid Spectral mode %u", smode);
-		*err = SPECTRAL_SCAN_ERR_MODE_UNSUPPORTED;
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!pdev) {
-		spectral_err("pdev object is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	if (!spectral) {
 		spectral_err("spectral object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err("Invalid Spectral mode %u", smode);
+		*err = SPECTRAL_SCAN_ERR_MODE_UNSUPPORTED;
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	sparams = &spectral->params[smode];
 
@@ -2256,6 +2281,62 @@ target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 	/* only to validate the writes */
 	p_sops->get_spectral_config(spectral, &params, smode);
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
+			      const uint32_t threshtype, const uint32_t value,
+			      const enum spectral_scan_mode smode,
+			      enum spectral_cp_error_code *err)
+{
+	enum spectral_scan_mode mode = SPECTRAL_SCAN_MODE_NORMAL;
+	struct target_if_spectral *spectral;
+	QDF_STATUS status;
+
+	if (!err) {
+		spectral_err("Error code argument is null");
+		QDF_ASSERT(0);
+	}
+	*err = SPECTRAL_SCAN_ERR_INVALID;
+
+	if (!pdev) {
+		spectral_err("pdev object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("spectral object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err("Invalid Spectral mode %u", smode);
+		*err = SPECTRAL_SCAN_ERR_MODE_UNSUPPORTED;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!spectral->properties[smode][threshtype].supported) {
+		spectral_err("Spectral parameter(%u) unsupported for mode %u",
+			     threshtype, smode);
+		*err = SPECTRAL_SCAN_ERR_PARAM_UNSUPPORTED;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (spectral->properties[smode][threshtype].common_all_modes) {
+		spectral_warn("Setting Spectral parameter %u for all modes",
+			      threshtype);
+		for (; mode < SPECTRAL_SCAN_MODE_MAX; mode++) {
+			status = _target_if_set_spectral_config
+						(spectral, threshtype, value,
+						 mode, err);
+			if (QDF_IS_STATUS_ERROR(status))
+				return QDF_STATUS_E_FAILURE;
+		}
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return _target_if_set_spectral_config(spectral, threshtype,
+					      value, smode, err);
 }
 
 /**

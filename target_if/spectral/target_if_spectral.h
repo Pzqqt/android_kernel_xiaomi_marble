@@ -704,10 +704,22 @@ struct wmi_spectral_cmd_ops {
 };
 
 /**
+ * struct spectral_param_properties - structure holding Spectral
+ *                                    parameter properties
+ * @supported: Parameter is supported or not
+ * @common_all_modes: Parameter should be common for all modes or not
+ */
+struct spectral_param_properties {
+	bool supported;
+	bool common_all_modes;
+};
+
+/**
  * struct target_if_spectral - main spectral structure
  * @pdev: Pointer to pdev
  * @spectral_ops: Target if internal Spectral low level operations table
  * @capability: Spectral capabilities structure
+ * @properties: Spectral parameter properties per mode
  * @spectral_lock: Lock used for internal Spectral operations
  * @spectral_curchan_radindex: Current channel spectral index
  * @spectral_extchan_radindex: Extension channel spectral index
@@ -811,6 +823,8 @@ struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
 	struct target_if_spectral_ops                 spectral_ops;
 	struct spectral_caps                    capability;
+	struct spectral_param_properties
+			properties[SPECTRAL_SCAN_MODE_MAX][SPECTRAL_PARAM_MAX];
 	qdf_spinlock_t                          spectral_lock;
 	int16_t                                 spectral_curchan_radindex;
 	int16_t                                 spectral_extchan_radindex;
