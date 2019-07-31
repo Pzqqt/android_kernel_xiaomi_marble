@@ -162,6 +162,7 @@ struct tx_macro_priv {
 	int va_swr_clk_cnt;
 	int va_clk_status;
 	int tx_clk_status;
+	bool bcs_enable;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -600,6 +601,38 @@ static int tx_macro_tx_mixer_put(struct snd_kcontrol *kcontrol,
 
 	return 0;
 }
+static int tx_macro_get_bcs(struct snd_kcontrol *kcontrol,
+                            struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+	return -EINVAL;
+
+	ucontrol->value.integer.value[0] = tx_priv->bcs_enable;
+
+	return 0;
+}
+
+static int tx_macro_set_bcs(struct snd_kcontrol *kcontrol,
+			    struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+	int value = ucontrol->value.integer.value[0];
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	tx_priv->bcs_enable = value;
+
+	return 0;
+}
 
 static int tx_macro_enable_dmic(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
@@ -761,6 +794,12 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		snd_soc_component_write(component, tx_gain_ctl_reg,
 			      snd_soc_component_read32(component,
 					tx_gain_ctl_reg));
+		if (tx_priv->bcs_enable) {
+			snd_soc_component_update_bits(component, dec_cfg_reg,
+					0x01, 0x01);
+			snd_soc_component_update_bits(component,
+				BOLERO_CDC_TX0_TX_PATH_SEC7, 0x40, 0x40);
+		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
@@ -795,6 +834,12 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 						0x20, 0x00);
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
 						0x10, 0x00);
+		if (tx_priv->bcs_enable) {
+			snd_soc_component_update_bits(component, dec_cfg_reg,
+					0x01, 0x00);
+			snd_soc_component_update_bits(component,
+				BOLERO_CDC_TX0_TX_PATH_SEC7, 0x40, 0x00);
+		}
 		break;
 	}
 	return 0;
@@ -1532,6 +1577,9 @@ static const struct snd_kcontrol_new tx_macro_snd_controls[] = {
 	SOC_SINGLE_SX_TLV("TX_DEC7 Volume",
 			  BOLERO_CDC_TX7_TX_VOL_CTL,
 			  0, -84, 40, digital_gain),
+
+	SOC_SINGLE_EXT("DEC0_BCS Switch", SND_SOC_NOPM, 0, 1, 0,
+		       tx_macro_get_bcs, tx_macro_set_bcs),
 };
 
 static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
@@ -1912,6 +1960,8 @@ static int tx_macro_init(struct snd_soc_component *component)
 	}
 	tx_priv->component = component;
 
+	snd_soc_component_update_bits(component,
+		BOLERO_CDC_TX0_TX_PATH_SEC7, 0x3F, 0x0E);
 	return 0;
 }
 
