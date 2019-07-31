@@ -23052,6 +23052,10 @@ typedef enum wmi_coex_config_type {
      * allow WLAN scan on 2.4G channel when BT SCO connectivity is alive
      */
     WMI_COEX_CONFIG_BT_SCO_ALLOW_WLAN_2G_SCAN   = 42,
+    /* WMI_COEX_CONFIG_ENABLE_2ND_HARMONIC_WAR
+     * config to enable(1)/disable(0) WAR of BT 2nd harmonic issue function
+     */
+    WMI_COEX_CONFIG_ENABLE_2ND_HARMONIC_WAR     = 43,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
