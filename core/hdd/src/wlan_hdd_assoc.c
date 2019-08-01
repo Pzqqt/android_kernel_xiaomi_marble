@@ -2040,17 +2040,8 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_update_dp_vdev_flags() - update datapath vdev flags
- * @cbk_data: callback data
- * @sta_id: station id
- * @vdev_param: vdev parameter
- * @is_link_up: link state up or down
- *
- * Return: QDF status
- */
 QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
-				    uint8_t sta_id,
+				    struct qdf_mac_addr *mac_addr,
 				    uint32_t vdev_param,
 				    bool is_link_up)
 {
@@ -2075,7 +2066,7 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 	if (!hdd_ctx->tdls_nap_active)
 		return status;
 
-	data_vdev = cdp_peer_get_vdev_by_sta_id(soc, pdev, sta_id);
+	data_vdev = cdp_peer_get_vdev_by_peer_addr(soc, pdev, *mac_addr);
 	if (!data_vdev) {
 		status = QDF_STATUS_E_FAILURE;
 		return status;

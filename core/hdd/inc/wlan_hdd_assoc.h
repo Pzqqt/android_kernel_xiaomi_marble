@@ -402,8 +402,17 @@ static inline bool hdd_is_roam_sync_in_progress(struct csr_roam_info *roaminfo)
 }
 #endif
 
+/**
+ * hdd_update_dp_vdev_flags() - update datapath vdev flags
+ * @cbk_data: callback data
+ * @mac_addr: mac address of the station
+ * @vdev_param: vdev parameter
+ * @is_link_up: link state up or down
+ *
+ * Return: QDF status
+ */
 QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
-				    uint8_t sta_id,
+				    struct qdf_mac_addr *mac_addr,
 				    uint32_t vdev_param,
 				    bool is_link_up);
 
