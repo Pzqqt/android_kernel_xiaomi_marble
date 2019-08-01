@@ -11,6 +11,7 @@
 #include <linux/platform_device.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
+#include <linux/pinctrl/qcom-pinctrl.h>
 #include <asoc/msm-cdc-pinctrl.h>
 
 struct msm_cdc_pinctrl_info {
@@ -19,6 +20,8 @@ struct msm_cdc_pinctrl_info {
 	struct pinctrl_state *pinctrl_sleep;
 	int gpio;
 	bool state;
+	u32 tlmm_gpio;
+	bool wakeup_capable;
 };
 
 static struct msm_cdc_pinctrl_info *msm_cdc_pinctrl_get_gpiodata(
@@ -137,10 +140,34 @@ int msm_cdc_pinctrl_get_state(struct device_node *np)
 }
 EXPORT_SYMBOL(msm_cdc_pinctrl_get_state);
 
+/*
+ * msm_cdc_pinctrl_set_wakeup_capable: Set a pinctrl to wakeup capable
+ * @np: pointer to struct device_node
+ * @enable: wakeup capable when set to true
+ *
+ * Returns 0 for success and error code for failure
+ */
+int msm_cdc_pinctrl_set_wakeup_capable(struct device_node *np, bool enable)
+{
+	struct msm_cdc_pinctrl_info *gpio_data;
+	int ret = 0;
+
+	gpio_data = msm_cdc_pinctrl_get_gpiodata(np);
+	if (!gpio_data)
+		return -EINVAL;
+
+	if (gpio_data->wakeup_capable)
+		ret = msm_gpio_mpm_wake_set(gpio_data->tlmm_gpio, enable);
+
+	return ret;
+}
+EXPORT_SYMBOL(msm_cdc_pinctrl_set_wakeup_capable);
+
 static int msm_cdc_pinctrl_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	struct msm_cdc_pinctrl_info *gpio_data;
+	u32 tlmm_gpio = 0;
 
 	gpio_data = devm_kzalloc(&pdev->dev,
 				 sizeof(struct msm_cdc_pinctrl_info),
@@ -181,6 +208,12 @@ static int msm_cdc_pinctrl_probe(struct platform_device *pdev)
 		if (ret)
 			dev_err(&pdev->dev, "%s: set cdc gpio sleep state fail: %d\n",
 				__func__, ret);
+	}
+
+	if (!of_property_read_u32(pdev->dev.of_node, "qcom,tlmm-gpio",
+				&tlmm_gpio)) {
+		gpio_data->wakeup_capable = true;
+		gpio_data->tlmm_gpio = tlmm_gpio;
 	}
 
 	gpio_data->gpio = of_get_named_gpio(pdev->dev.of_node,
