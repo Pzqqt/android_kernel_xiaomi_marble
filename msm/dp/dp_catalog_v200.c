@@ -10,35 +10,28 @@
 #include "dp_debug.h"
 
 #define dp_catalog_get_priv_v200(x) ({ \
-	struct dp_catalog *dp_catalog; \
-	dp_catalog = container_of(x, struct dp_catalog, x); \
-	dp_catalog->priv.data; \
+	struct dp_catalog *catalog; \
+	catalog = container_of(x, struct dp_catalog, x); \
+	container_of(catalog->sub, \
+		struct dp_catalog_private_v200, sub); \
 })
 
-struct dp_catalog_io {
-	struct dp_io_data *dp_ahb;
-	struct dp_io_data *dp_aux;
-	struct dp_io_data *dp_link;
-	struct dp_io_data *dp_p0;
-	struct dp_io_data *dp_phy;
-	struct dp_io_data *dp_ln_tx0;
-	struct dp_io_data *dp_ln_tx1;
-	struct dp_io_data *dp_mmss_cc;
-	struct dp_io_data *dp_pll;
-	struct dp_io_data *usb3_dp_com;
-	struct dp_io_data *hdcp_physical;
-	struct dp_io_data *dp_p1;
-	struct dp_io_data *dp_tcsr;
-};
+#define dp_read(x) ({ \
+	catalog->sub.read(catalog->dpc, io_data, x); \
+})
+
+#define dp_write(x, y) ({ \
+	catalog->sub.write(catalog->dpc, io_data, x, y); \
+})
 
 struct dp_catalog_private_v200 {
 	struct device *dev;
 	struct dp_catalog_io *io;
-
-	char exe_mode[SZ_4];
+	struct dp_catalog *dpc;
+	struct dp_catalog_sub sub;
 };
 
-static void dp_catalog_aux_clear_hw_interrupts_v200(struct dp_catalog_aux *aux)
+static void dp_catalog_aux_clear_hw_int_v200(struct dp_catalog_aux *aux)
 {
 	struct dp_catalog_private_v200 *catalog;
 	struct dp_io_data *io_data;
@@ -52,17 +45,15 @@ static void dp_catalog_aux_clear_hw_interrupts_v200(struct dp_catalog_aux *aux)
 	catalog = dp_catalog_get_priv_v200(aux);
 	io_data = catalog->io->dp_phy;
 
-	data = dp_read(catalog->exe_mode, io_data,
-				DP_PHY_AUX_INTERRUPT_STATUS_V200);
+	data = dp_read(DP_PHY_AUX_INTERRUPT_STATUS_V200);
 
-	dp_write(catalog->exe_mode, io_data, DP_PHY_AUX_INTERRUPT_CLEAR_V200,
-			0x1f);
+	dp_write(DP_PHY_AUX_INTERRUPT_CLEAR_V200, 0x1f);
 	wmb(); /* make sure 0x1f is written before next write */
-	dp_write(catalog->exe_mode, io_data, DP_PHY_AUX_INTERRUPT_CLEAR_V200,
-			0x9f);
+
+	dp_write(DP_PHY_AUX_INTERRUPT_CLEAR_V200, 0x9f);
 	wmb(); /* make sure 0x9f is written before next write */
-	dp_write(catalog->exe_mode, io_data, DP_PHY_AUX_INTERRUPT_CLEAR_V200,
-			0);
+
+	dp_write(DP_PHY_AUX_INTERRUPT_CLEAR_V200, 0);
 	wmb(); /* make sure register is cleared */
 }
 
@@ -79,40 +70,38 @@ static void dp_catalog_aux_setup_v200(struct dp_catalog_aux *aux,
 	}
 
 	catalog = dp_catalog_get_priv_v200(aux);
-
 	io_data = catalog->io->dp_ahb;
-	sw_reset = dp_read(catalog->exe_mode, io_data, DP_SW_RESET);
+
+	sw_reset = dp_read(DP_SW_RESET);
 
 	sw_reset |= BIT(0);
-	dp_write(catalog->exe_mode, io_data, DP_SW_RESET, sw_reset);
+	dp_write(DP_SW_RESET, sw_reset);
 	usleep_range(1000, 1010); /* h/w recommended delay */
 
 	sw_reset &= ~BIT(0);
-	dp_write(catalog->exe_mode, io_data, DP_SW_RESET, sw_reset);
+	dp_write(DP_SW_RESET, sw_reset);
 
-	dp_write(catalog->exe_mode, io_data, DP_PHY_CTRL, 0x4); /* bit 2 */
+	dp_write(DP_PHY_CTRL, 0x4); /* bit 2 */
 	udelay(1000);
-	dp_write(catalog->exe_mode, io_data, DP_PHY_CTRL, 0x0); /* bit 2 */
+	dp_write(DP_PHY_CTRL, 0x0); /* bit 2 */
 	wmb(); /* make sure programming happened */
 
 	io_data = catalog->io->dp_tcsr;
-	dp_write(catalog->exe_mode, io_data, 0x4c, 0x1); /* bit 0 & 2 */
+	dp_write(0x4c, 0x1); /* bit 0 & 2 */
 	wmb(); /* make sure programming happened */
 
 	io_data = catalog->io->dp_phy;
-	dp_write(catalog->exe_mode, io_data, DP_PHY_PD_CTL, 0x3c);
+	dp_write(DP_PHY_PD_CTL, 0x3c);
 	wmb(); /* make sure PD programming happened */
-	dp_write(catalog->exe_mode, io_data, DP_PHY_PD_CTL, 0x3d);
+	dp_write(DP_PHY_PD_CTL, 0x3d);
 	wmb(); /* make sure PD programming happened */
 
 	/* DP AUX CFG register programming */
 	io_data = catalog->io->dp_phy;
 	for (i = 0; i < PHY_AUX_CFG_MAX; i++)
-		dp_write(catalog->exe_mode, io_data, cfg[i].offset,
-				cfg[i].lut[cfg[i].current_index]);
+		dp_write(cfg[i].offset, cfg[i].lut[cfg[i].current_index]);
 
-	dp_write(catalog->exe_mode, io_data, DP_PHY_AUX_INTERRUPT_MASK_V200,
-			0x1F);
+	dp_write(DP_PHY_AUX_INTERRUPT_MASK_V200, 0x1F);
 	wmb(); /* make sure AUX configuration is done before enabling it */
 }
 
@@ -146,10 +135,8 @@ static void dp_catalog_panel_config_msa_v200(struct dp_catalog_panel *panel,
 		strm_reg_off = MMSS_DP_PIXEL1_M_V200 -
 					MMSS_DP_PIXEL_M_V200;
 
-	pixel_m = dp_read(catalog->exe_mode, io_data,
-			MMSS_DP_PIXEL_M_V200 + strm_reg_off);
-	pixel_n = dp_read(catalog->exe_mode, io_data,
-			MMSS_DP_PIXEL_N_V200 + strm_reg_off);
+	pixel_m = dp_read(MMSS_DP_PIXEL_M_V200 + strm_reg_off);
+	pixel_n = dp_read(MMSS_DP_PIXEL_N_V200 + strm_reg_off);
 	DP_DEBUG("pixel_m=0x%x, pixel_n=0x%x\n", pixel_m, pixel_n);
 
 	mvid = (pixel_m & 0xFFFF) * 5;
@@ -182,10 +169,8 @@ static void dp_catalog_panel_config_msa_v200(struct dp_catalog_panel *panel,
 	}
 
 	DP_DEBUG("mvid=0x%x, nvid=0x%x\n", mvid, nvid);
-	dp_write(catalog->exe_mode, io_data, DP_SOFTWARE_MVID + mvid_reg_off,
-			mvid);
-	dp_write(catalog->exe_mode, io_data, DP_SOFTWARE_NVID + nvid_reg_off,
-			nvid);
+	dp_write(DP_SOFTWARE_MVID + mvid_reg_off, mvid);
+	dp_write(DP_SOFTWARE_NVID + nvid_reg_off, nvid);
 }
 
 static void dp_catalog_ctrl_lane_mapping_v200(struct dp_catalog_ctrl *ctrl,
@@ -234,8 +219,7 @@ static void dp_catalog_ctrl_lane_mapping_v200(struct dp_catalog_ctrl *ctrl,
 	lane_map_reg = ((l_map[3]&3)<<6)|((l_map[2]&3)<<4)|((l_map[1]&3)<<2)
 			|(l_map[0]&3);
 
-	dp_write(catalog->exe_mode, io_data, DP_LOGICAL2PHYSICAL_LANE_MAPPING,
-			lane_map_reg);
+	dp_write(DP_LOGICAL2PHYSICAL_LANE_MAPPING, lane_map_reg);
 }
 
 static void dp_catalog_ctrl_usb_reset_v200(struct dp_catalog_ctrl *ctrl,
@@ -247,48 +231,36 @@ static void dp_catalog_put_v200(struct dp_catalog *catalog)
 {
 	struct dp_catalog_private_v200 *catalog_priv;
 
-	if (!catalog || !catalog->priv.data)
+	if (!catalog)
 		return;
 
-	catalog_priv = catalog->priv.data;
+	catalog_priv = container_of(catalog->sub,
+			struct dp_catalog_private_v200, sub);
+
 	devm_kfree(catalog_priv->dev, catalog_priv);
 }
 
-static void dp_catalog_set_exe_mode_v200(struct dp_catalog *catalog, char *mode)
-{
-	struct dp_catalog_private_v200 *catalog_priv;
-
-	if (!catalog || !catalog->priv.data)
-		return;
-
-	catalog_priv = catalog->priv.data;
-
-	strlcpy(catalog_priv->exe_mode, mode, sizeof(catalog_priv->exe_mode));
-}
-
-int dp_catalog_get_v200(struct device *dev, struct dp_catalog *catalog,
-				void *io)
+struct dp_catalog_sub *dp_catalog_get_v200(struct device *dev,
+		struct dp_catalog *catalog, struct dp_catalog_io *io)
 {
 	struct dp_catalog_private_v200 *catalog_priv;
 
 	if (!dev || !catalog) {
 		DP_ERR("invalid input\n");
-		return -EINVAL;
+		return ERR_PTR(-EINVAL);
 	}
 
 	catalog_priv = devm_kzalloc(dev, sizeof(*catalog_priv), GFP_KERNEL);
 	if (!catalog_priv)
-		return -ENOMEM;
+		return ERR_PTR(-ENOMEM);
 
 	catalog_priv->dev = dev;
 	catalog_priv->io = io;
-	catalog->priv.data = catalog_priv;
+	catalog_priv->dpc = catalog;
 
-	catalog->priv.put                = dp_catalog_put_v200;
-	catalog->priv.set_exe_mode       = dp_catalog_set_exe_mode_v200;
+	catalog_priv->sub.put = dp_catalog_put_v200;
 
-	catalog->aux.clear_hw_interrupts =
-				dp_catalog_aux_clear_hw_interrupts_v200;
+	catalog->aux.clear_hw_interrupts = dp_catalog_aux_clear_hw_int_v200;
 	catalog->aux.setup               = dp_catalog_aux_setup_v200;
 
 	catalog->panel.config_msa        = dp_catalog_panel_config_msa_v200;
@@ -296,8 +268,5 @@ int dp_catalog_get_v200(struct device *dev, struct dp_catalog *catalog,
 	catalog->ctrl.lane_mapping       = dp_catalog_ctrl_lane_mapping_v200;
 	catalog->ctrl.usb_reset          = dp_catalog_ctrl_usb_reset_v200;
 
-	/* Set the default execution mode to hardware mode */
-	dp_catalog_set_exe_mode_v200(catalog, "hw");
-
-	return 0;
+	return &catalog_priv->sub;
 }
