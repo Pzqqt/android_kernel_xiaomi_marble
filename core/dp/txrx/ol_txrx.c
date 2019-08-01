@@ -2047,20 +2047,18 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 
 static void ol_txrx_flush_cache_rx_queue(void)
 {
-	uint8_t sta_id;
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev;
+	struct ol_txrx_vdev_t *vdev;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev)
 		return;
 
-	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-		peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev,
-						    sta_id);
-		if (!peer)
-			continue;
-		ol_txrx_flush_rx_frames(peer, 1);
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+			ol_txrx_flush_rx_frames(peer, 1);
+		}
 	}
 }
 
