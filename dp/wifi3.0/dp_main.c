@@ -9167,6 +9167,25 @@ static QDF_STATUS dp_runtime_suspend(struct cdp_pdev *opaque_pdev)
 }
 
 /**
+ * dp_flush_ring_hptp() - Update ring shadow
+ *			  register HP/TP address when runtime
+ *                        resume
+ * @opaque_soc: DP soc context
+ *
+ * Return: None
+ */
+static
+void dp_flush_ring_hptp(struct dp_soc *soc, hal_ring_handle_t hal_srng)
+{
+	if (hal_srng) {
+		/* Acquire the lock */
+		hal_srng_access_start(soc->hal_soc, hal_srng);
+
+		hal_srng_access_end(soc->hal_soc, hal_srng);
+	}
+}
+
+/**
  * dp_runtime_resume() - ensure DP is ready to runtime resume
  * @opaque_pdev: DP pdev context
  *
@@ -9178,22 +9197,16 @@ static QDF_STATUS dp_runtime_resume(struct cdp_pdev *opaque_pdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
 	struct dp_soc *soc = pdev->soc;
-	hal_ring_handle_t hal_srng;
 	int i;
 
 	if (soc->intr_mode == DP_INTR_POLL)
 		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 
 	for (i = 0; i < MAX_TCL_DATA_RINGS; i++) {
-		hal_srng = soc->tcl_data_ring[i].hal_srng;
-		if (hal_srng) {
-			/* We actually only need to acquire the lock */
-			hal_srng_access_start(soc->hal_soc, hal_srng);
-			/* Update SRC ring head pointer for HW to send
-			   all pending packets */
-			hal_srng_access_end(soc->hal_soc, hal_srng);
-		}
+		dp_flush_ring_hptp(soc, soc->tcl_data_ring[i].hal_srng);
 	}
+
+	dp_flush_ring_hptp(soc, soc->reo_cmd_ring.hal_srng);
 
 	return QDF_STATUS_SUCCESS;
 }

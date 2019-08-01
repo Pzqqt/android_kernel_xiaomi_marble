@@ -284,6 +284,9 @@ struct hal_srng {
 	} u;
 
 	struct hal_soc *hal_soc;
+
+	/* Number of times hp/tp updated in runtime resume */
+	uint32_t needs_flush;
 };
 
 /* HW SRNG configuration table */
