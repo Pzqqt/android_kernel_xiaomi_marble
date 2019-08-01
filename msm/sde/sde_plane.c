@@ -1512,6 +1512,10 @@ static void _sde_plane_setup_scaler(struct sde_plane *psde,
 				pe->btm_ftch[i] = pe->num_ext_pxls_btm[i];
 		}
 	}
+
+	if (psde->pipe_hw->ops.setup_pre_downscale)
+		psde->pipe_hw->ops.setup_pre_downscale(psde->pipe_hw,
+				&pstate->pre_down);
 }
 
 /**
@@ -1652,7 +1656,7 @@ static int sde_plane_rot_atomic_check(struct drm_plane *plane,
 			!psde->pipe_sblk->in_rot_maxdwnscale_nrt ||
 			!psde->pipe_sblk->in_rot_maxheight ||
 			!psde->pipe_sblk->in_rot_format_list ||
-			!(psde->features & BIT(SDE_SSPP_TRUE_INLINE_ROT_V1))) {
+			!(psde->features & BIT(SDE_SSPP_TRUE_INLINE_ROT))) {
 			SDE_ERROR_PLANE(psde,
 			    "wrong config rt:%d/%d nrt:%d fmt:%d h:%d 0x%x\n",
 				!psde->pipe_sblk->in_rot_maxdwnscale_rt_num,
@@ -1787,7 +1791,7 @@ static void sde_plane_rot_install_properties(struct drm_plane *plane,
 		return;
 	}
 
-	if (psde->features & BIT(SDE_SSPP_TRUE_INLINE_ROT_V1))
+	if (psde->features & BIT(SDE_SSPP_TRUE_INLINE_ROT))
 		supported_rotations |= DRM_MODE_ROTATE_0 | DRM_MODE_ROTATE_90 |
 			DRM_MODE_ROTATE_180 | DRM_MODE_ROTATE_270;
 
@@ -2269,6 +2273,12 @@ int sde_plane_validate_src_addr(struct drm_plane *plane,
 	return ret;
 }
 
+static inline bool _sde_plane_is_pre_downscale_enabled(
+		struct sde_hw_inline_pre_downscale_cfg *pre_down)
+{
+	return pre_down->pre_downscale_x_0 || pre_down->pre_downscale_y_0;
+}
+
 static int _sde_plane_validate_scaler_v2(struct sde_plane *psde,
 		struct sde_plane_state *pstate,
 		const struct sde_format *fmt,
@@ -2276,6 +2286,8 @@ static int _sde_plane_validate_scaler_v2(struct sde_plane *psde,
 		uint32_t src_w, uint32_t src_h,
 		uint32_t deci_w, uint32_t deci_h)
 {
+	struct sde_hw_inline_pre_downscale_cfg *pd_cfg;
+	bool pre_down_en;
 	int i;
 
 	if (!psde || !pstate || !fmt) {
@@ -2288,6 +2300,9 @@ static int _sde_plane_validate_scaler_v2(struct sde_plane *psde,
 	    pstate->scaler_check_state != SDE_PLANE_SCLCHECK_SCALER_V2_CHECK))
 		return 0;
 
+	pd_cfg = &pstate->pre_down;
+	pre_down_en = _sde_plane_is_pre_downscale_enabled(pd_cfg);
+
 	pstate->scaler_check_state = SDE_PLANE_SCLCHECK_INVALID;
 
 	for (i = 0; i < SDE_MAX_PLANES; i++) {
@@ -2295,11 +2310,25 @@ static int _sde_plane_validate_scaler_v2(struct sde_plane *psde,
 		uint32_t vert_req_pixels, vert_fetch_pixels;
 		uint32_t src_w_tmp, src_h_tmp;
 		uint32_t scaler_w, scaler_h;
+		uint32_t pre_down_ratio_x = 1, pre_down_ratio_y = 1;
 		bool rot;
 
 		/* re-use color plane 1's config for plane 2 */
 		if (i == 2)
 			continue;
+
+		if (pre_down_en) {
+			if (i == 0 && pd_cfg->pre_downscale_x_0)
+				pre_down_ratio_x = pd_cfg->pre_downscale_x_0;
+			if (i == 0 && pd_cfg->pre_downscale_y_0)
+				pre_down_ratio_y = pd_cfg->pre_downscale_y_0;
+			if ((i == 1 || i == 2) && pd_cfg->pre_downscale_x_1)
+				pre_down_ratio_x = pd_cfg->pre_downscale_x_1;
+			if ((i == 1 || i == 2) && pd_cfg->pre_downscale_y_1)
+				pre_down_ratio_y = pd_cfg->pre_downscale_y_1;
+			SDE_DEBUG_PLANE(psde, "pre_down[%d]: x:%d, y:%d\n",
+					i, pre_down_ratio_x, pre_down_ratio_y);
+		}
 
 		src_w_tmp = src_w;
 		src_h_tmp = src_h;
@@ -2359,13 +2388,14 @@ static int _sde_plane_validate_scaler_v2(struct sde_plane *psde,
 		 * repeat/drop, src_width and src_height are only specified
 		 * for Y and UV plane
 		 */
-		if (i != 3 && (hor_req_pixels != scaler_w ||
-					vert_req_pixels != scaler_h)) {
+		if (i != 3 && (hor_req_pixels / pre_down_ratio_x != scaler_w ||
+					vert_req_pixels / pre_down_ratio_y !=
+					scaler_h)) {
 			SDE_ERROR_PLANE(psde,
-			    "roi[%d] roi:%dx%d scaler:%dx%d src:%dx%d rot:%d\n",
+			"roi[%d] roi:%dx%d scaler:%dx%d src:%dx%d rot:%d pd:%d/%d\n",
 				i, pstate->pixel_ext.roi_w[i],
-				pstate->pixel_ext.roi_h[i],
-				scaler_w, scaler_h, src_w, src_h, rot);
+				pstate->pixel_ext.roi_h[i], scaler_w, scaler_h,
+				src_w, src_h, rot, pre_down_ratio_x, pre_down_ratio_y);
 			return -EINVAL;
 		}
 
@@ -2393,6 +2423,39 @@ static int _sde_plane_validate_scaler_v2(struct sde_plane *psde,
 	return 0;
 }
 
+static int _sde_atomic_check_pre_downscale(struct sde_plane *psde,
+		struct sde_plane_state *pstate, struct sde_rect *dst,
+		u32 scaler_src_w, u32 scaler_src_h)
+{
+	int ret = 0;
+	u32 min_ratio_numer, min_ratio_denom;
+
+	min_ratio_numer = psde->pipe_sblk->in_rot_minpredwnscale_num;
+	min_ratio_denom = psde->pipe_sblk->in_rot_minpredwnscale_denom;
+
+	if (!(psde->features & BIT(SDE_SSPP_PREDOWNSCALE))) {
+		SDE_ERROR_PLANE(psde,
+			"hw does not support pre-downscaler: 0x%x\n",
+			psde->features);
+		ret = -EINVAL;
+	} else if (!min_ratio_numer || !min_ratio_denom) {
+		SDE_ERROR_PLANE(psde,
+			"min downscale ratio not set! %u / %u\n",
+			min_ratio_numer, min_ratio_denom);
+		ret = -EINVAL;
+	} else if ((scaler_src_w < mult_frac(dst->w, min_ratio_numer,
+			min_ratio_denom)) || (scaler_src_h < mult_frac(
+			dst->h, min_ratio_numer, min_ratio_denom))) {
+		SDE_ERROR_PLANE(psde,
+			"failed min downscale check %ux%u->%ux%u, %u/%u\n",
+			scaler_src_w, scaler_src_h, dst->w, dst->h,
+			min_ratio_numer, min_ratio_denom);
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
+
 static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	struct sde_plane *psde, const struct sde_format *fmt,
 	struct sde_plane_state *pstate, struct sde_rect *src,
@@ -2403,7 +2466,7 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	uint32_t scaler_src_w, scaler_src_h;
 	uint32_t max_downscale_num, max_downscale_denom;
 	uint32_t max_upscale, max_linewidth;
-	bool inline_rotation, rt_client;
+	bool inline_rotation, rt_client, pre_down_en = false;
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *new_cstate;
 
@@ -2430,16 +2493,25 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 
 	max_upscale = psde->pipe_sblk->maxupscale;
 	max_linewidth = psde->pipe_sblk->maxlinewidth;
+	if (psde->features & BIT(SDE_SSPP_PREDOWNSCALE))
+		pre_down_en = _sde_plane_is_pre_downscale_enabled(
+				&pstate->pre_down);
 
 	crtc = state->crtc;
 	new_cstate = drm_atomic_get_new_crtc_state(state->state, crtc);
 
 	rt_client = sde_crtc_is_rt_client(crtc, new_cstate);
 
+	max_downscale_num = psde->pipe_sblk->maxdwnscale;
 	max_downscale_denom = 1;
 	/* inline rotation RT clients have a different max downscaling limit */
 	if (inline_rotation) {
-		if (rt_client) {
+		if (rt_client && !pre_down_en) {
+			max_downscale_num =
+				psde->pipe_sblk->in_rot_minpredwnscale_num;
+			max_downscale_denom =
+				psde->pipe_sblk->in_rot_minpredwnscale_denom;
+		} else if (rt_client) {
 			max_downscale_num =
 				psde->pipe_sblk->in_rot_maxdwnscale_rt_num;
 			max_downscale_denom =
@@ -2448,8 +2520,6 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 			max_downscale_num =
 				psde->pipe_sblk->in_rot_maxdwnscale_nrt;
 		}
-	} else {
-		max_downscale_num = psde->pipe_sblk->maxdwnscale;
 	}
 
 	/* decimation validation */
@@ -2477,23 +2547,31 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 				"invalid src w:%u, deci w:%u, line w:%u\n",
 				src->w, src_deci_w, max_linewidth);
 		ret = -E2BIG;
-	}
 
 	/* check max scaler capability */
-	else if (((scaler_src_w * max_upscale) < dst->w) ||
+	} else if (((scaler_src_w * max_upscale) < dst->w) ||
 		((scaler_src_h * max_upscale) < dst->h) ||
 		(((dst->w * max_downscale_num) / max_downscale_denom)
 			< scaler_src_w) ||
 		(((dst->h * max_downscale_num) / max_downscale_denom)
 			< scaler_src_h)) {
 		SDE_ERROR_PLANE(psde,
-			"too much scaling requested %ux%u->%ux%u rot:%d\n",
+			"too much scaling %ux%u->%ux%u rot:%d dwn:%d/%d\n",
 			scaler_src_w, scaler_src_h, dst->w, dst->h,
-			inline_rotation);
+			inline_rotation, max_downscale_num,
+			max_downscale_denom);
 		ret = -E2BIG;
+
+	/* check inline pre-downscale support */
+	} else if (inline_rotation && pre_down_en &&
+			_sde_atomic_check_pre_downscale(psde, pstate, dst,
+			scaler_src_w, scaler_src_h)) {
+		ret = -EINVAL;
+
+	/* QSEED validation */
 	} else if (_sde_plane_validate_scaler_v2(psde, pstate, fmt,
-				width, height,
-				src->w, src->h, deci_w, deci_h)) {
+				width, height, src->w, src->h,
+				deci_w, deci_h)) {
 		ret = -EINVAL;
 	}
 
@@ -3571,10 +3649,11 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	if (psde->features & BIT(SDE_SSPP_BLOCK_SEC_UI))
 		sde_kms_info_add_keyint(info, "block_sec_ui", 1);
 
-	if (psde->features & BIT(SDE_SSPP_TRUE_INLINE_ROT_V1)) {
+	if (psde->features & BIT(SDE_SSPP_TRUE_INLINE_ROT)) {
 		const struct sde_format_extended *inline_rot_fmt_list;
 
-		sde_kms_info_add_keyint(info, "true_inline_rot_rev", 1);
+		sde_kms_info_add_keyint(info, "true_inline_rot_rev",
+				catalog->true_inline_rot_rev);
 		sde_kms_info_add_keyint(info,
 			"true_inline_dwnscale_rt",
 			(int) (psde->pipe_sblk->in_rot_maxdwnscale_rt_num /
@@ -3769,6 +3848,15 @@ static inline void _sde_plane_set_scaler_v1(struct sde_plane *psde,
 	SDE_DEBUG_PLANE(psde, "user property data copied\n");
 }
 
+static void _sde_plane_clear_predownscale_settings(
+		struct sde_plane_state *pstate)
+{
+	pstate->pre_down.pre_downscale_x_0 = 0;
+	pstate->pre_down.pre_downscale_x_1 = 0;
+	pstate->pre_down.pre_downscale_y_0 = 0;
+	pstate->pre_down.pre_downscale_y_1 = 0;
+}
+
 static inline void _sde_plane_set_scaler_v2(struct sde_plane *psde,
 		struct sde_plane_state *pstate, void __user *usr)
 {
@@ -3776,6 +3864,7 @@ static inline void _sde_plane_set_scaler_v2(struct sde_plane *psde,
 	struct sde_hw_pixel_ext *pe;
 	int i;
 	struct sde_hw_scaler3_cfg *cfg;
+	struct sde_hw_inline_pre_downscale_cfg *pd_cfg;
 
 	if (!psde || !pstate) {
 		SDE_ERROR("invalid argument(s)\n");
@@ -3783,10 +3872,12 @@ static inline void _sde_plane_set_scaler_v2(struct sde_plane *psde,
 	}
 
 	cfg = &pstate->scaler3_cfg;
+	pd_cfg = &pstate->pre_down;
 	pstate->scaler_check_state = SDE_PLANE_SCLCHECK_NONE;
 	if (!usr) {
 		SDE_DEBUG_PLANE(psde, "scale data removed\n");
 		cfg->enable = 0;
+		_sde_plane_clear_predownscale_settings(pstate);
 		goto end;
 	}
 
@@ -3799,11 +3890,19 @@ static inline void _sde_plane_set_scaler_v2(struct sde_plane *psde,
 	if (!scale_v2.enable) {
 		SDE_DEBUG_PLANE(psde, "scale data removed\n");
 		cfg->enable = 0;
+		_sde_plane_clear_predownscale_settings(pstate);
 		goto end;
 	}
 
 	/* populate from user space */
 	sde_set_scaler_v2(cfg, &scale_v2);
+
+	if (psde->features & BIT(SDE_SSPP_PREDOWNSCALE)) {
+		pd_cfg->pre_downscale_x_0 = scale_v2.pre_downscale_x_0;
+		pd_cfg->pre_downscale_x_1 = scale_v2.pre_downscale_x_1;
+		pd_cfg->pre_downscale_y_0 = scale_v2.pre_downscale_y_0;
+		pd_cfg->pre_downscale_y_1 = scale_v2.pre_downscale_y_1;
+	}
 
 	pe = &pstate->pixel_ext;
 	memset(pe, 0, sizeof(struct sde_hw_pixel_ext));
@@ -4311,7 +4410,7 @@ static int _sde_plane_init_debugfs(struct drm_plane *plane)
 				psde->debugfs_root,
 				&psde->debugfs_default_scale);
 
-	if (cfg->features & BIT(SDE_SSPP_TRUE_INLINE_ROT_V1)) {
+	if (cfg->features & BIT(SDE_SSPP_TRUE_INLINE_ROT)) {
 		debugfs_create_u32("in_rot_max_downscale_rt_num",
 			0600,
 			psde->debugfs_root,

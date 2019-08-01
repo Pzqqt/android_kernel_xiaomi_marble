@@ -102,6 +102,7 @@ struct sde_plane_state {
 	struct sde_hw_scaler3_cfg scaler3_cfg;
 	struct sde_hw_pixel_ext pixel_ext;
 	enum sde_plane_sclcheck_state scaler_check_state;
+	struct sde_hw_inline_pre_downscale_cfg pre_down;
 
 	/* @sc_cfg: system_cache configuration */
 	struct sde_hw_pipe_sc_cfg sc_cfg;

@@ -517,6 +517,14 @@ struct sde_hw_sspp_ops {
 			u32 offset);
 
 	/**
+	 * setup_pre_downscale - setup pre-downscaler for inline rotation
+	 * @ctx: Pointer to pipe context
+	 * @pre_down: Pointer to pre-downscaler configuration
+	 */
+	void (*setup_pre_downscale)(struct sde_hw_pipe *ctx,
+		struct sde_hw_inline_pre_downscale_cfg *pre_down);
+
+	/**
 	 * get_scaler_ver - get scaler h/w version
 	 * @ctx: Pointer to pipe context
 	 */

@@ -216,7 +216,8 @@ enum {
  * @SDE_SSPP_SEC_UI_ALLOWED   Allows secure-ui layers
  * @SDE_SSPP_BLOCK_SEC_UI    Blocks secure-ui layers
  * @SDE_SSPP_SCALER_QSEED3LITE Qseed3lite algorithm support
- * @SDE_SSPP_TRUE_INLINE_ROT_V1, Support of SSPP true inline rotation v1
+ * @SDE_SSPP_TRUE_INLINE_ROT Support of SSPP true inline rotation v1
+ * @SDE_SSPP_PREDOWNSCALE    Support pre-downscale X-direction by 2 for inline
  * @SDE_SSPP_INLINE_CONST_CLR Inline rotation requires const clr disabled
  * @SDE_SSPP_MAX             maximum value
  */
@@ -245,7 +246,8 @@ enum {
 	SDE_SSPP_SEC_UI_ALLOWED,
 	SDE_SSPP_BLOCK_SEC_UI,
 	SDE_SSPP_SCALER_QSEED3LITE,
-	SDE_SSPP_TRUE_INLINE_ROT_V1,
+	SDE_SSPP_TRUE_INLINE_ROT,
+	SDE_SSPP_PREDOWNSCALE,
 	SDE_SSPP_INLINE_CONST_CLR,
 	SDE_SSPP_MAX
 };
@@ -622,6 +624,8 @@ struct sde_qos_lut_tbl {
  * @in_rot_maxdwnscale_rt_denom: max downscale ratio for inline rotation
  *                                 rt clients - denominator
  * @in_rot_maxdwnscale_nrt: max downscale ratio for inline rotation nrt clients
+ * @in_rot_minpredwnscale_num: min downscale ratio to enable pre-downscale
+ * @in_rot_minpredwnscale_denom: min downscale ratio to enable pre-downscale
  * @in_rot_maxheight: max pre rotated height for inline rotation
  * @in_rot_prefill_fudge_lines: prefill fudge lines for inline rotation
  * @in_rot_prefill_lines_mv12: prefill lines for nv12 format inline rotation
@@ -661,6 +665,8 @@ struct sde_sspp_sub_blks {
 	u32 in_rot_maxdwnscale_rt_num;
 	u32 in_rot_maxdwnscale_rt_denom;
 	u32 in_rot_maxdwnscale_nrt;
+	u32 in_rot_minpredwnscale_num;
+	u32 in_rot_minpredwnscale_denom;
 	u32 in_rot_maxheight;
 	u32 in_rot_prefill_fudge_lines;
 	u32 in_rot_prefill_lines_nv12;
