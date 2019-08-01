@@ -905,7 +905,6 @@ struct ol_txrx_pdev_t {
 	struct {
 		enum ol_tx_scheduler_status tx_sched_status;
 		struct ol_tx_sched_t *scheduler;
-		struct ol_tx_frms_queue_t *last_used_txq;
 	} tx_sched;
 	/*
 	 * tx_queue only applies for HL, but is defined unconditionally to avoid

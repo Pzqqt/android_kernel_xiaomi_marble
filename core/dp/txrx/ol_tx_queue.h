@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -456,11 +456,12 @@ static inline void ol_tx_throttle_init_period(struct cdp_pdev *ppdev,
 #endif
 
 #ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
+
 static inline bool
-ol_tx_is_txq_last_serviced_queue(struct ol_txrx_pdev_t *pdev,
-				 struct ol_tx_frms_queue_t *txq)
+ol_tx_if_iterate_next_txq(struct ol_tx_frms_queue_t *first,
+			  struct ol_tx_frms_queue_t *txq)
 {
-	return txq == pdev->tx_sched.last_used_txq;
+	return (first != txq);
 }
 
 /**
@@ -540,8 +541,8 @@ ol_tx_set_peer_group_ptr(
 #else
 
 static inline bool
-ol_tx_is_txq_last_serviced_queue(struct ol_txrx_pdev_t *pdev,
-				 struct ol_tx_frms_queue_t *txq)
+ol_tx_if_iterate_next_txq(struct ol_tx_frms_queue_t *first,
+			  struct ol_tx_frms_queue_t *txq)
 {
 	return 0;
 }

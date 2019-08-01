@@ -686,7 +686,6 @@ ol_tx_sched_select_init_wrr_adv(struct ol_txrx_pdev_t *pdev)
 	struct ol_tx_sched_wrr_adv_t *scheduler = pdev->tx_sched.scheduler;
 	/* start selection from the front of the ordered list */
 	scheduler->index = 0;
-	pdev->tx_sched.last_used_txq = NULL;
 }
 
 static void
@@ -738,11 +737,12 @@ ol_tx_sched_select_batch_wrr_adv(
 	static int first = 1;
 	int category_index = 0;
 	struct ol_tx_sched_wrr_adv_t *scheduler = pdev->tx_sched.scheduler;
-	struct ol_tx_frms_queue_t *txq;
+	struct ol_tx_frms_queue_t *txq, *first_txq = NULL;
 	int index;
 	struct ol_tx_sched_wrr_adv_category_info_t *category = NULL;
 	int frames, bytes, used_credits = 0, tx_limit;
 	u_int16_t tx_limit_flag;
+	u32 credit_rem = credit;
 
 	/*
 	 * Just for good measure, do a sanity check that the initial credit
@@ -813,17 +813,11 @@ ol_tx_sched_select_batch_wrr_adv(
 	 */
 	txq = TAILQ_FIRST(&category->state.head);
 
-	if (txq) {
+	while (txq) {
 		TAILQ_REMOVE(&category->state.head, txq, list_elem);
 		credit = ol_tx_txq_group_credit_limit(pdev, txq, credit);
 		if (credit > category->specs.credit_reserve) {
 			credit -= category->specs.credit_reserve;
-			/*
-			 * this tx queue will download some frames,
-			 * so update last_used_txq
-			 */
-			pdev->tx_sched.last_used_txq = txq;
-
 			tx_limit = ol_tx_bad_peer_dequeue_check(txq,
 					category->specs.send_limit,
 					&tx_limit_flag);
@@ -852,33 +846,31 @@ ol_tx_sched_select_batch_wrr_adv(
 			}
 			sctx->frms += frames;
 			ol_tx_txq_group_credit_update(pdev, txq, -credit, 0);
+			break;
 		} else {
-			if (ol_tx_is_txq_last_serviced_queue(pdev, txq)) {
-				/*
-				 * The scheduler has looked at all the active
-				 * tx queues but none were able to download any
-				 * of their tx frames.
-				 * Nothing is changed, so if none were able
-				 * to download before,
-				 * they wont be able to download now.
-				 * Return that no credit has been used, which
-				 * will cause the scheduler to stop.
-				 */
+			/*
+			 * Current txq belongs to a group which does not have
+			 * enough credits,
+			 * Iterate over to next txq and see if we can download
+			 * packets from that queue.
+			 */
+			if (ol_tx_if_iterate_next_txq(first_txq, txq)) {
+				credit = credit_rem;
+				if (!first_txq)
+					first_txq = txq;
+
+				TAILQ_INSERT_TAIL(&category->state.head,
+						  txq, list_elem);
+
+				txq = TAILQ_FIRST(&category->state.head);
+			} else {
 				TAILQ_INSERT_HEAD(&category->state.head, txq,
-						  list_elem);
-				return 0;
-			}
-			TAILQ_INSERT_TAIL(&category->state.head, txq,
 					  list_elem);
-			if (!pdev->tx_sched.last_used_txq)
-				pdev->tx_sched.last_used_txq = txq;
+				break;
+			}
 		}
-		TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
-	} else {
-		used_credits = 0;
-		/* TODO: find its reason */
-		ol_txrx_err("Error, no TXQ can be popped");
-	}
+	} /* while(txq) */
+
 	return used_credits;
 }
 
