@@ -317,6 +317,8 @@ static const uint32_t pdev_param_tlv[] = {
 			WMI_PDEV_PARAM_SET_TBTT_CTRL,
 	[wmi_pdev_param_set_cmd_obss_pd_threshold] =
 			WMI_PDEV_PARAM_SET_CMD_OBSS_PD_THRESHOLD,
+	[wmi_pdev_param_set_cmd_obss_pd_per_ac] =
+			WMI_PDEV_PARAM_SET_CMD_OBSS_PD_PER_AC,
 };
 
 /**
