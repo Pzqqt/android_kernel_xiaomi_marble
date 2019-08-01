@@ -2752,6 +2752,23 @@ typedef struct {
      * A 0x0 value for max_ast_index means the target has not specified a limit.
      */
     A_UINT32 max_ast_index;
+    /* pktlog_defs_checksum:
+     * checksum computed from the definitions of the enums and structs
+     * used within pktlog traces.
+     * This pktlog defs checksum needs to be embedded into pktlog trace files
+     * (specifically in ath_pktlog_bufhdr.version).
+     *
+     * If pktlog_defs_checksum is zero then it is invalid; it should be ignored
+     * and ath_pktlog_bufhdr.magic_num needs to be PKTLOG_MAGIC_NUM_LEGACY
+     * (i.e. 7735225).
+     *
+     * If pktlog_defs_checksum is non-zero then it is valid, and the host
+     * should put it into the pktlog trace file header and set
+     * ath_pktlog_bufhdr.magic_num as PKTLOG_MAGIC_NUM_VERSION_IS_CHECKSUM
+     * (i.e. 2453506), to indicate that the file header version field contains
+     * a checksum.
+     */
+    A_UINT32 pktlog_defs_checksum;
 
 /*
  * This fixed_param TLV is followed by these additional TLVs:
