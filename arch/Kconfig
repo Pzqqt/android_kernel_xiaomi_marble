@@ -730,6 +730,14 @@ config CFI_PERMISSIVE
 	  warning instead of a kernel panic. This option is useful for finding
 	  CFI violations during development.
 
+config LLVM_POLLY
+	bool "Enable LLVM's polyhedral loop optimizer (Polly)"
+	help
+	  This option enables LLVM's polyhedral loop optimizer known as Polly.
+	  Polly is able to optimize various loops throughout the kernel for
+	  maximum cache locality. This requires an LLVM toolchain explicitly
+	  compiled with Polly support.
+
 config HAVE_ARCH_WITHIN_STACK_FRAMES
 	bool
 	help
