@@ -40,6 +40,7 @@
 #include "cfg_nan_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "qdf_util.h"
+#include <cdp_txrx_misc.h>
 
 /**
  * hdd_nan_datapath_target_config() - Configure NAN datapath features
@@ -854,6 +855,8 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	/* perform following steps for first new peer ind */
 	if (fist_peer) {
 		hdd_info("Set ctx connection state to connected");
+		hdd_bus_bw_compute_prev_txrx_stats(adapter);
+		hdd_bus_bw_compute_timer_start(hdd_ctx);
 		sta_ctx->conn_info.conn_state = eConnectionState_NdiConnected;
 		hdd_wmm_connect(adapter, roam_info, eCSR_BSS_TYPE_NDI);
 		wlan_hdd_netif_queue_control(adapter,
@@ -863,7 +866,6 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	hdd_exit();
 	return 0;
 }
-
 
 /**
  * hdd_ndp_peer_departed_handler() - Handle NDP peer departed indication
@@ -916,6 +918,8 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 		hdd_info("Stop netif tx queues.");
 		wlan_hdd_netif_queue_control(adapter, WLAN_STOP_ALL_NETIF_QUEUE,
 					     WLAN_CONTROL_PATH);
+		hdd_bus_bw_compute_reset_prev_txrx_stats(adapter);
+		hdd_bus_bw_compute_timer_try_stop(hdd_ctx);
 	}
 
 	hdd_exit();

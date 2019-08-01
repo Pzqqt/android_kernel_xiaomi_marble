@@ -1742,7 +1742,7 @@ struct hdd_context {
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 	struct qdf_periodic_work bus_bw_work;
 	int cur_vote_level;
-	spinlock_t bus_bw_lock;
+	qdf_spinlock_t bus_bw_lock;
 	int cur_rx_level;
 	uint64_t prev_no_rx_offload_pkts;
 	uint64_t prev_rx_offload_pkts;
@@ -2279,6 +2279,27 @@ QDF_STATUS __wlan_hdd_validate_mac_address(struct qdf_mac_addr *mac_addr,
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /**
+ * hdd_bus_bw_compute_prev_txrx_stats() - get tx and rx stats
+ * @adapter: hdd adapter reference
+ *
+ * This function get the collected tx and rx stats before starting
+ * the bus bandwidth timer.
+ *
+ * Return: None
+ */
+void hdd_bus_bw_compute_prev_txrx_stats(struct hdd_adapter *adapter);
+
+/**
+ * hdd_bus_bw_compute_reset_prev_txrx_stats() - reset previous tx and rx stats
+ * @adapter: hdd adapter reference
+ *
+ * This function resets the adapter previous tx rx stats.
+ *
+ * Return: None
+ */
+void hdd_bus_bw_compute_reset_prev_txrx_stats(struct hdd_adapter *adapter);
+
+/**
  * hdd_bus_bw_compute_timer_start() - start the bandwidth timer
  * @hdd_ctx: the global hdd context
  *
@@ -2339,6 +2360,16 @@ void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx);
 #define GET_CUR_RX_LVL(config) ((config)->cur_rx_level)
 #define GET_BW_COMPUTE_INTV(config) ((config)->bus_bw_compute_interval)
 #else
+
+static inline
+void hdd_bus_bw_compute_prev_txrx_stats(struct hdd_adapter *adapter)
+{
+}
+
+static inline
+void hdd_bus_bw_compute_reset_prev_txrx_stats(struct hdd_adapter *adapter)
+{
+}
 
 static inline
 void hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
