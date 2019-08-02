@@ -677,7 +677,7 @@ QDF_STATUS qdf_mc_timer_start(qdf_mc_timer_t *timer, uint32_t expiration_time)
 
 	/* start the timer */
 	mod_timer(&(timer->platform_info.timer),
-		  jiffies + qdf_msecs_to_jiffies(expiration_time));
+		  jiffies + __qdf_scaled_msecs_to_jiffies(expiration_time));
 
 	timer->state = QDF_TIMER_STATE_RUNNING;
 

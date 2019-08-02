@@ -214,7 +214,7 @@ QDF_STATUS qdf_wait_single_event(qdf_event_t *event, uint32_t timeout)
 
 		ret = wait_for_completion_timeout(
 				&event->complete,
-				qdf_msecs_to_jiffies(timeout));
+				__qdf_scaled_msecs_to_jiffies(timeout));
 
 		if (ret <= 0)
 			return QDF_STATUS_E_TIMEOUT;
