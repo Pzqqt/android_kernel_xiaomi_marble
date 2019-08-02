@@ -75,70 +75,63 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 		return;
 	}
 
-	if (target_if_vdev_mgr_is_driver_unloading() || qdf_is_recovering() ||
-	    qdf_is_fw_down()) {
-		/* this ensures stop timer will not be done in target_if */
-		vdev_rsp->timer_status = QDF_STATUS_E_TIMEOUT;
-	}
-
+	vdev_rsp->timer_status = QDF_STATUS_E_TIMEOUT;
 	if (qdf_atomic_test_bit(START_RESPONSE_BIT,
 				&vdev_rsp->rsp_status) ||
 	    qdf_atomic_test_bit(RESTART_RESPONSE_BIT,
 				&vdev_rsp->rsp_status)) {
-		if (vdev_rsp->timer_status == QDF_STATUS_E_TIMEOUT) {
-			start_rsp.vdev_id = wlan_vdev_get_id(vdev);
-			start_rsp.status = WLAN_MLME_HOST_VDEV_START_TIMEOUT;
-			if (qdf_atomic_test_bit(START_RESPONSE_BIT,
-						&vdev_rsp->rsp_status))
-				start_rsp.resp_type =
-					WMI_HOST_VDEV_START_RESP_EVENT;
-			else
-				start_rsp.resp_type =
-					WMI_HOST_VDEV_RESTART_RESP_EVENT;
-
-			rx_ops->vdev_mgr_start_response(psoc, &start_rsp);
+		start_rsp.vdev_id = wlan_vdev_get_id(vdev);
+		start_rsp.status = WLAN_MLME_HOST_VDEV_START_TIMEOUT;
+		if (qdf_atomic_test_bit(START_RESPONSE_BIT,
+					&vdev_rsp->rsp_status)) {
+			start_rsp.resp_type =
+				WMI_HOST_VDEV_START_RESP_EVENT;
+			rsp_pos = START_RESPONSE_BIT;
 		} else {
-			if (qdf_atomic_test_bit(START_RESPONSE_BIT,
-						&vdev_rsp->rsp_status))
-				rsp_pos = START_RESPONSE_BIT;
-			else
-				rsp_pos = RESTART_RESPONSE_BIT;
+			start_rsp.resp_type =
+				WMI_HOST_VDEV_RESTART_RESP_EVENT;
+			rsp_pos = RESTART_RESPONSE_BIT;
 		}
+
+		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, rsp_pos);
+
+		rx_ops->vdev_mgr_start_response(psoc, &start_rsp);
 	} else if (qdf_atomic_test_bit(STOP_RESPONSE_BIT,
 				       &vdev_rsp->rsp_status)) {
-		if (vdev_rsp->timer_status == QDF_STATUS_E_TIMEOUT) {
-			stop_rsp.vdev_id = wlan_vdev_get_id(vdev);
-			rx_ops->vdev_mgr_stop_response(psoc, &stop_rsp);
-		} else {
-			rsp_pos = STOP_RESPONSE_BIT;
-		}
+		rsp_pos = STOP_RESPONSE_BIT;
+		stop_rsp.vdev_id = wlan_vdev_get_id(vdev);
+
+		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, rsp_pos);
+
+		rx_ops->vdev_mgr_stop_response(psoc, &stop_rsp);
 	} else if (qdf_atomic_test_bit(DELETE_RESPONSE_BIT,
 				       &vdev_rsp->rsp_status)) {
-		if (vdev_rsp->timer_status == QDF_STATUS_E_TIMEOUT) {
-			del_rsp.vdev_id = wlan_vdev_get_id(vdev);
-			rx_ops->vdev_mgr_delete_response(psoc, &del_rsp);
-		} else {
-			rsp_pos = DELETE_RESPONSE_BIT;
-		}
+		del_rsp.vdev_id = wlan_vdev_get_id(vdev);
+		rsp_pos = DELETE_RESPONSE_BIT;
 
+		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, rsp_pos);
+
+		rx_ops->vdev_mgr_delete_response(psoc, &del_rsp);
 	} else if (qdf_atomic_test_bit(PEER_DELETE_ALL_RESPONSE_BIT,
 				&vdev_rsp->rsp_status)) {
-		if (vdev_rsp->timer_status == QDF_STATUS_E_TIMEOUT) {
-			peer_del_all_rsp.vdev_id = wlan_vdev_get_id(vdev);
-			rx_ops->vdev_mgr_peer_delete_all_response(
-					psoc,
-					&peer_del_all_rsp);
-		} else {
-			rsp_pos = PEER_DELETE_ALL_RESPONSE_BIT;
-		}
+		peer_del_all_rsp.vdev_id = wlan_vdev_get_id(vdev);
+		rsp_pos = PEER_DELETE_ALL_RESPONSE_BIT;
+
+		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, rsp_pos);
+
+		rx_ops->vdev_mgr_peer_delete_all_response(
+				psoc,
+				&peer_del_all_rsp);
 	} else {
 		mlme_err("PSOC_%d VDEV_%d: Unknown error",
 			 wlan_psoc_get_id(psoc), vdev_id);
 		return;
 	}
 
-	if (vdev_rsp->timer_status == QDF_STATUS_E_TIMEOUT)
+	if (target_if_vdev_mgr_is_driver_unloading() || qdf_is_recovering() ||
+	    qdf_is_fw_down()) {
 		return;
+	}
 
 	if (target_if_vdev_mgr_is_panic_on_bug()) {
 		QDF_DEBUG_PANIC("PSOC_%d VDEV_%d: Panic, %s response timeout",
