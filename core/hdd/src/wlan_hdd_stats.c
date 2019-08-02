@@ -4655,6 +4655,38 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 }
 
 /**
+ * _wlan_hdd_cfg80211_get_station() - get station statistics
+ *
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @mac: Pointer to mac
+ * @sinfo: Pointer to station info
+ *
+ * This API tries runtime PM suspend right away after getting station
+ * statistics.
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int _wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
+					  struct net_device *dev,
+					  const uint8_t *mac,
+					  struct station_info *sinfo)
+{
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	int errno;
+
+	errno = hif_pm_runtime_get_sync(hif_ctx);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
+
+	hif_pm_runtime_put_sync_suspend(hif_ctx);
+
+	return errno;
+}
+
+/**
  * wlan_hdd_cfg80211_get_station() - get station statistics
  * @wiphy: Pointer to wiphy
  * @dev: Pointer to network device
@@ -4674,7 +4706,7 @@ int wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	errno = __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
+	errno = _wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
