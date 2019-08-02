@@ -595,9 +595,10 @@ typedef QDF_STATUS (*tdls_register_peer_callback)(void *userdata,
 						  uint8_t qos);
 
 /* This callback is used to deregister TDLS peer from the datapath */
-typedef QDF_STATUS (*tdls_deregister_peer_callback)(void *userdata,
-						    uint32_t vdev_id,
-						    uint8_t sta_id);
+typedef QDF_STATUS
+(*tdls_deregister_peer_callback)(void *userdata,
+				 uint32_t vdev_id,
+				 struct qdf_mac_addr *peer_mac);
 
 /* This callback is used to update datapath vdev flags */
 typedef QDF_STATUS
