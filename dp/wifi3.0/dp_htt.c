@@ -238,7 +238,7 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 
 /*
  * dp_tx_stats_update() - Update per-peer statistics
- * @soc: Datapath soc handle
+ * @pdev: Datapath pdev handle
  * @peer: Datapath peer handle
  * @ppdu: PPDU Descriptor
  * @ack_rssi: RSSI of last ack received
@@ -246,11 +246,10 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
  * Return: None
  */
 static void
-dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
+dp_tx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 		   struct cdp_tx_completion_ppdu_user *ppdu,
 		   uint32_t ack_rssi)
 {
-	struct dp_pdev *pdev = peer->vdev->pdev;
 	uint8_t preamble, mcs;
 	uint16_t num_msdu;
 	uint16_t num_mpdu;
@@ -265,7 +264,7 @@ dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	/* If the peer statistics are already processed as part of
 	 * per-MSDU completion handler, do not process these again in per-PPDU
 	 * indications */
-	if (soc->process_tx_status)
+	if (pdev->soc->process_tx_status)
 		return;
 
 	if (ppdu->completion_status != HTT_PPDU_STATS_USER_STATUS_OK) {
@@ -399,7 +398,7 @@ dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INCC(peer, tx.ampdu_cnt, num_msdu, ppdu->is_ampdu);
 	DP_STATS_INCC(peer, tx.non_ampdu_cnt, num_msdu, !(ppdu->is_ampdu));
 
-	dp_peer_stats_notify(peer);
+	dp_peer_stats_notify(pdev, peer);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, pdev->soc,
@@ -2970,7 +2969,7 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 		     (ppdu_desc->user[i].tid == CDP_DATA_NON_QOS_TID)) &&
 		      (ppdu_desc->frame_type != CDP_PPDU_FTYPE_CTRL)) {
 
-			dp_tx_stats_update(pdev->soc, peer,
+			dp_tx_stats_update(pdev, peer,
 					   &ppdu_desc->user[i],
 					   ppdu_desc->ack_rssi);
 			dp_tx_rate_stats_update(peer, &ppdu_desc->user[i]);

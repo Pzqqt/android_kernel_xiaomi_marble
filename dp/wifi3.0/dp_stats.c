@@ -3985,16 +3985,15 @@ void dp_htt_stats_copy_tag(struct dp_pdev *pdev, uint8_t tag_type, uint32_t *tag
 	if (dest_ptr)
 		qdf_mem_copy(dest_ptr, tag_buf, size);
 }
-QDF_STATUS dp_peer_stats_notify(struct dp_peer *peer)
+
+QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
 {
-	struct dp_pdev *dp_pdev;
 	struct cdp_interface_peer_stats peer_stats_intf;
 	struct cdp_peer_stats *peer_stats = &peer->stats;
 
 	if (!peer->vdev)
 		return QDF_STATUS_E_FAULT;
 
-	dp_pdev = peer->vdev->pdev;
 	qdf_mem_zero(&peer_stats_intf, sizeof(peer_stats_intf));
 	if (peer_stats->rx.last_rssi != peer_stats->rx.rssi)
 		peer_stats_intf.rssi_changed = true;

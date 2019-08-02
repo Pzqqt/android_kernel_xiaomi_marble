@@ -1163,7 +1163,7 @@ dp_hif_update_pipe_callback(struct dp_soc *dp_soc,
 		DP_HTT_T2H_HP_PIPE, &hif_pipe_callbacks);
 }
 
-QDF_STATUS dp_peer_stats_notify(struct dp_peer *peer);
+QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev, struct dp_peer *peer);
 
 #else
 static inline int dp_wdi_event_unsub(struct cdp_pdev *txrx_pdev_handle,
@@ -1216,7 +1216,8 @@ dp_hif_update_pipe_callback(struct dp_soc *dp_soc, void *cb_context,
 {
 }
 
-static inline QDF_STATUS dp_peer_stats_notify(struct dp_peer *peer)
+static inline QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev,
+					      struct dp_peer *peer)
 {
 	return QDF_STATUS_SUCCESS;
 }
