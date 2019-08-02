@@ -2490,33 +2490,12 @@ void dfs_agile_precac_start(struct wlan_dfs *dfs)
 
 uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs)
 {
-	struct wlan_objmgr_psoc *psoc;
-	struct target_psoc_info *tgt_hdl;
-	uint32_t retval = 0;
-	struct tgt_info *info;
+	return dfs->dfs_precac_enable;
+}
 
-	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
-	if (!psoc) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "psoc is NULL");
-		dfs->dfs_agile_precac_enable = 0;
-		retval = 0;
-	}
-
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
-
-	info = (struct tgt_info *)(&tgt_hdl->info);
-	if (!tgt_hdl) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "target_psoc_info is null");
-		dfs->dfs_agile_precac_enable = 0;
-		retval = 0;
-	}
-
-	if (info->wlan_res_cfg.agile_capability == 0)
-		retval = dfs->dfs_precac_enable;
-	else
-		retval = dfs->dfs_agile_precac_enable;
-
-	return retval;
+bool dfs_get_agile_precac_enable(struct wlan_dfs *dfs)
+{
+	return dfs->dfs_agile_precac_enable;
 }
 
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
