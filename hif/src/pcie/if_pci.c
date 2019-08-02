@@ -3868,9 +3868,9 @@ void hif_pci_irq_disable(struct hif_softc *scn, int ce_id)
 
 #ifdef FEATURE_RUNTIME_PM
 /**
- * hif_pm_runtime_get_sync() - do a get opperation with sync resume
+ * hif_pm_runtime_get_sync() - do a get operation with sync resume
  *
- * A get opperation will prevent a runtime suspend until a corresponding
+ * A get operation will prevent a runtime suspend until a corresponding
  * put is done. Unlike hif_pm_runtime_get(), this API will do a sync
  * resume instead of requesting a resume if it is runtime PM suspended
  * so it can only be called in non-atomic context.
@@ -3882,10 +3882,16 @@ void hif_pci_irq_disable(struct hif_softc *scn, int ce_id)
 int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+	int pm_state;
 	int ret;
 
 	if (!sc)
 		return -EINVAL;
+
+	pm_state = qdf_atomic_read(&sc->pm_state);
+	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED)
+		HIF_INFO("Runtime PM resume is requested by %ps",
+			 (void *)_RET_IP_);
 
 	sc->pm_stats.runtime_get++;
 	ret = pm_runtime_get_sync(sc->dev);
@@ -3904,6 +3910,43 @@ int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx)
 	}
 
 	return ret;
+}
+
+/**
+ * hif_pm_runtime_put_sync_suspend() - do a put operation with sync suspend
+ *
+ * This API will do a runtime put operation followed by a sync suspend if usage
+ * count is 0 so it can only be called in non-atomic context.
+ *
+ * @hif_ctx: pointer of HIF context
+ *
+ * Return: 0 for success otherwise an error code
+ */
+int hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+	int usage_count, pm_state;
+	char *err = NULL;
+
+	if (!sc)
+		return -EINVAL;
+
+	usage_count = atomic_read(&sc->dev->power.usage_count);
+	if (usage_count == 1) {
+		pm_state = qdf_atomic_read(&sc->pm_state);
+		if (pm_state == HIF_PM_RUNTIME_STATE_NONE)
+			err = "Ignore unexpected Put as runtime PM is disabled";
+	} else if (usage_count == 0) {
+		err = "Put without a Get Operation";
+	}
+
+	if (err) {
+		hif_pci_runtime_pm_warn(sc, err);
+		return -EINVAL;
+	}
+
+	sc->pm_stats.runtime_put++;
+	return pm_runtime_put_sync_suspend(sc->dev);
 }
 
 int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
