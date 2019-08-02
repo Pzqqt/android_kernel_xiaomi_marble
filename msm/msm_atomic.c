@@ -297,6 +297,7 @@ msm_crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
 		DRM_DEBUG_ATOMIC("modeset on [ENCODER:%d:%s]\n",
 				 encoder->base.id, encoder->name);
 
+		SDE_ATRACE_BEGIN("msm_set_mode");
 		/*
 		 * Each encoder has at most one connector (since we always steal
 		 * it away), so we won't call mode_set hooks twice.
@@ -305,6 +306,7 @@ msm_crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
 			funcs->mode_set(encoder, mode, adjusted_mode);
 
 		drm_bridge_mode_set(encoder->bridge, mode, adjusted_mode);
+		SDE_ATRACE_END("msm_set_mode");
 	}
 }
 
