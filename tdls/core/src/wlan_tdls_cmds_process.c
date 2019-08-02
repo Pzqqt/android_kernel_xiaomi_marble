@@ -1506,13 +1506,13 @@ QDF_STATUS tdls_process_del_peer_rsp(struct tdls_del_sta_rsp *rsp)
 			if (TDLS_IS_LINK_CONNECTED(curr_peer)) {
 				soc_obj->tdls_dereg_peer(
 					soc_obj->tdls_peer_context,
-					id, curr_peer->sta_id);
+					id, &curr_peer->peer_mac);
 				tdls_decrement_peer_count(soc_obj);
 			} else if (TDLS_LINK_CONNECTING ==
 				   curr_peer->link_status) {
 				soc_obj->tdls_dereg_peer(
 					soc_obj->tdls_peer_context,
-					id, curr_peer->sta_id);
+					id, &curr_peer->peer_mac);
 			}
 		}
 		tdls_reset_peer(vdev_obj, macaddr);
