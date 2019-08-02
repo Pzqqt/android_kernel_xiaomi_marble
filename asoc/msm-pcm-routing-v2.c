@@ -20235,6 +20235,14 @@ static const struct snd_kcontrol_new sen_tdm_rx_3_port_mixer_controls[] = {
 		msm_routing_put_port_mixer),
 };
 
+static const struct snd_kcontrol_new quin_tdm_rx_7_port_mixer_controls[] = {
+	SOC_DOUBLE_EXT("QUIN_TDM_TX_7", SND_SOC_NOPM,
+		MSM_BACKEND_DAI_QUIN_TDM_RX_7,
+		MSM_BACKEND_DAI_QUIN_TDM_TX_7, 1, 0,
+		msm_routing_get_port_mixer,
+		msm_routing_put_port_mixer),
+};
+
 static const struct snd_kcontrol_new tert_mi2s_rx_port_mixer_controls[] = {
 	SOC_DOUBLE_EXT("PRI_MI2S_TX", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_TERTIARY_MI2S_RX,
@@ -23662,6 +23670,9 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_MIXER("QUIN_TDM_RX_3 Port Mixer", SND_SOC_NOPM, 0, 0,
 	quin_tdm_rx_3_port_mixer_controls,
 	ARRAY_SIZE(quin_tdm_rx_3_port_mixer_controls)),
+	SND_SOC_DAPM_MIXER("QUIN_TDM_RX_7 Port Mixer", SND_SOC_NOPM, 0, 0,
+	quin_tdm_rx_7_port_mixer_controls,
+	ARRAY_SIZE(quin_tdm_rx_7_port_mixer_controls)),
 	SND_SOC_DAPM_MIXER("SEN_TDM_RX_0 Port Mixer", SND_SOC_NOPM, 0, 0,
 	sen_tdm_rx_0_port_mixer_controls,
 	ARRAY_SIZE(sen_tdm_rx_0_port_mixer_controls)),
@@ -26638,10 +26649,12 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"QUIN_TDM_TX_1_UL_HL", NULL, "QUIN_TDM_TX_1"},
 	{"QUIN_TDM_TX_2_UL_HL", NULL, "QUIN_TDM_TX_2"},
 	{"QUIN_TDM_TX_3_UL_HL", NULL, "QUIN_TDM_TX_3"},
+	{"QUIN_TDM_TX_7_UL_HL", NULL, "QUIN_TDM_TX_7"},
 	{"QUIN_TDM_RX_0", NULL, "QUIN_TDM_RX_0_DL_HL"},
 	{"QUIN_TDM_RX_1", NULL, "QUIN_TDM_RX_1_DL_HL"},
 	{"QUIN_TDM_RX_2", NULL, "QUIN_TDM_RX_2_DL_HL"},
 	{"QUIN_TDM_RX_3", NULL, "QUIN_TDM_RX_3_DL_HL"},
+	{"QUIN_TDM_RX_7", NULL, "QUIN_TDM_RX_7_DL_HL"},
 	{"SEN_TDM_TX_0_UL_HL", NULL, "SEN_TDM_TX_0"},
 	{"SEN_TDM_TX_1_UL_HL", NULL, "SEN_TDM_TX_1"},
 	{"SEN_TDM_TX_2_UL_HL", NULL, "SEN_TDM_TX_2"},
@@ -27176,6 +27189,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"QUIN_TDM_RX_3 Port Mixer", "SEN_TDM_TX_2", "SEN_TDM_TX_2"},
 	{"QUIN_TDM_RX_3 Port Mixer", "SEN_TDM_TX_3", "SEN_TDM_TX_3"},
 	{"QUIN_TDM_RX_3", NULL, "QUIN_TDM_RX_3 Port Mixer"},
+	{"QUIN_TDM_RX_7 Port Mixer", "QUIN_TDM_TX_7", "QUIN_TDM_TX_7"},
+	{"QUIN_TDM_RX_7", NULL, "QUIN_TDM_RX_7 Port Mixer"},
 
 	{"SEN_TDM_RX_0 Port Mixer", "PRI_MI2S_TX", "PRI_MI2S_TX"},
 	{"SEN_TDM_RX_0 Port Mixer", "SEC_MI2S_TX", "SEC_MI2S_TX"},
@@ -27624,6 +27639,7 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"BE_OUT", NULL, "QUIN_TDM_RX_1"},
 	{"BE_OUT", NULL, "QUIN_TDM_RX_2"},
 	{"BE_OUT", NULL, "QUIN_TDM_RX_3"},
+	{"BE_OUT", NULL, "QUIN_TDM_RX_7"},
 	{"BE_OUT", NULL, "SEN_TDM_RX_0"},
 	{"BE_OUT", NULL, "SEN_TDM_RX_1"},
 	{"BE_OUT", NULL, "SEN_TDM_RX_2"},
@@ -27715,6 +27731,7 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"QUIN_TDM_TX_1", NULL, "BE_IN"},
 	{"QUIN_TDM_TX_2", NULL, "BE_IN"},
 	{"QUIN_TDM_TX_3", NULL, "BE_IN"},
+	{"QUIN_TDM_TX_7", NULL, "BE_IN"},
 	{"SEN_TDM_TX_0", NULL, "BE_IN"},
 	{"SEN_TDM_TX_1", NULL, "BE_IN"},
 	{"SEN_TDM_TX_2", NULL, "BE_IN"},
