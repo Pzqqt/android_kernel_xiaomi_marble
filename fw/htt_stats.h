@@ -294,6 +294,13 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_LATENCY_PROF_STATS = 25,
 
+    /* HTT_DBG_EXT_STATS_PDEV_UL_TRIGGER
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_rx_pdev_ul_trig_stats_t
+     */
+    HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS = 26,
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -411,6 +418,9 @@ typedef enum {
     HTT_STATS_LATENCY_PROF_STATS_TAG               = 91, /* htt_latency_prof_stats_tlv */
     HTT_STATS_LATENCY_CTX_TAG                      = 92, /* htt_latency_prof_ctx_tlv */
     HTT_STATS_LATENCY_CNT_TAG                      = 93, /* htt_latency_prof_cnt_tlv */
+    HTT_STATS_RX_PDEV_UL_TRIG_STATS_TAG            = 94, /* htt_rx_pdev_ul_trigger_stats_tlv */
+    HTT_STATS_RX_PDEV_UL_OFDMA_USER_STATS_TAG      = 95, /* htt_rx_pdev_ul_ofdma_user_stats_tlv */
+    HTT_STATS_RX_PDEV_UL_MIMO_USER_STATS_TAG       = 96, /* htt_rx_pdev_ul_mimo_user_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -1187,6 +1197,12 @@ typedef enum {
 } HTT_STATS_PREAM_TYPE;
 
 #define HTT_TX_PEER_STATS_NUM_MCS_COUNTERS 12
+/* HTT_TX_PEER_STATS_NUM_GI_COUNTERS:
+ * GI Index 0:  WHAL_GI_800
+ * GI Index 1:  WHAL_GI_400
+ * GI Index 2:  WHAL_GI_1600
+ * GI Index 3:  WHAL_GI_3200
+ */
 #define HTT_TX_PEER_STATS_NUM_GI_COUNTERS 4
 #define HTT_TX_PEER_STATS_NUM_DCM_COUNTERS 5
  /* HTT_TX_PEER_STATS_NUM_BW_COUNTERS:
@@ -3065,7 +3081,25 @@ typedef struct {
 #define HTT_RX_PDEV_MAX_OFDMA_NUM_USER 8
 #define HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER 8
 #define HTT_RX_PDEV_STATS_RXEVM_MAX_PILOTS_PER_NSS 16
+/*HTT_RX_PDEV_STATS_NUM_RU_SIZE_COUNTERS:
+ * RU size index 0: HTT_UL_OFDMA_V0_RU_SIZE_RU_26
+ * RU size index 1: HTT_UL_OFDMA_V0_RU_SIZE_RU_52
+ * RU size index 2: HTT_UL_OFDMA_V0_RU_SIZE_RU_106
+ * RU size index 3: HTT_UL_OFDMA_V0_RU_SIZE_RU_242
+ * RU size index 4: HTT_UL_OFDMA_V0_RU_SIZE_RU_484
+ * RU size index 5: HTT_UL_OFDMA_V0_RU_SIZE_RU_996
+ */
 #define HTT_RX_PDEV_STATS_NUM_RU_SIZE_COUNTERS 6
+/* HTT_RX_PDEV_STATS_NUM_RU_SIZE_160MHZ_CNTRS:
+ * RU size index 0: HTT_UL_OFDMA_V0_RU_SIZE_RU_26
+ * RU size index 1: HTT_UL_OFDMA_V0_RU_SIZE_RU_52
+ * RU size index 2: HTT_UL_OFDMA_V0_RU_SIZE_RU_106
+ * RU size index 3: HTT_UL_OFDMA_V0_RU_SIZE_RU_242
+ * RU size index 4: HTT_UL_OFDMA_V0_RU_SIZE_RU_484
+ * RU size index 5: HTT_UL_OFDMA_V0_RU_SIZE_RU_996
+ * RU size index 6: HTT_UL_OFDMA_V0_RU_SIZE_RU_996x2
+ */
+#define HTT_RX_PDEV_STATS_NUM_RU_SIZE_160MHZ_CNTRS 7 /* includes 996x2 */
 
 #define HTT_RX_PDEV_RATE_STATS_MAC_ID_M 0x000000ff
 #define HTT_RX_PDEV_RATE_STATS_MAC_ID_S 0
@@ -3181,6 +3215,79 @@ typedef struct {
 typedef struct {
     htt_rx_pdev_rate_stats_tlv rate_tlv;
 } htt_rx_pdev_rate_stats_t;
+
+#define HTT_STATS_CMN_MAC_ID_M 0x000000ff
+#define HTT_STATS_CMN_MAC_ID_S 0
+
+#define HTT_STATS_CMN_MAC_ID_GET(_var) \
+    (((_var) & HTT_STATS_CMN_MAC_ID_M) >> \
+     HTT_STATS_CMN_MAC_ID_S)
+
+#define HTT_STATS_CMN_MAC_ID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_STATS_CMN_MAC_ID, _val); \
+        ((_var) |= ((_val) << HTT_STATS_CMN_MAC_ID_S)); \
+    } while (0)
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    A_UINT32 mac_id__word;
+
+    A_UINT32 rx_11ax_ul_ofdma;
+
+    A_UINT32 ul_ofdma_rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_ofdma_rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_ofdma_rx_nss[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ul_ofdma_rx_bw[HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ul_ofdma_rx_stbc;
+    A_UINT32 ul_ofdma_rx_ldpc;
+
+    /*
+     * These are arrays to hold the number of PPDUs that we received per RU.
+     * E.g. PPDUs (data or non data) received in RU26 will be incremented in
+     * array offset 0 and similarly RU52 will be incremented in array offset 1
+     */
+    A_UINT32 rx_ulofdma_data_ru_size_ppdu[HTT_RX_PDEV_STATS_NUM_RU_SIZE_160MHZ_CNTRS];      /* ppdu level */
+    A_UINT32 rx_ulofdma_non_data_ru_size_ppdu[HTT_RX_PDEV_STATS_NUM_RU_SIZE_160MHZ_CNTRS];  /* ppdu level */
+
+} htt_rx_pdev_ul_trigger_stats_tlv;
+
+/* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS
+ * TLV_TAGS:
+ *      - HTT_STATS_RX_PDEV_UL_TRIG_STATS_TAG
+ * NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_rx_pdev_ul_trigger_stats_tlv ul_trigger_tlv;
+} htt_rx_pdev_ul_trigger_stats_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 user_index;
+    A_UINT32 rx_ulofdma_non_data_ppdu; /* ppdu level */
+    A_UINT32 rx_ulofdma_data_ppdu;     /* ppdu level */
+    A_UINT32 rx_ulofdma_mpdu_ok;       /* mpdu level */
+    A_UINT32 rx_ulofdma_mpdu_fail;     /* mpdu level */
+    A_UINT32 rx_ulofdma_non_data_nusers;
+    A_UINT32 rx_ulofdma_data_nusers;
+} htt_rx_pdev_ul_ofdma_user_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 user_index;
+    A_UINT32 rx_ulmumimo_non_data_ppdu; /* ppdu level */
+    A_UINT32 rx_ulmumimo_data_ppdu;     /* ppdu level */
+    A_UINT32 rx_ulmumimo_mpdu_ok;       /* mpdu level */
+    A_UINT32 rx_ulmumimo_mpdu_fail;     /* mpdu level */
+} htt_rx_pdev_ul_mimo_user_stats_tlv;
 
 /* == RX PDEV/SOC STATS == */
 
