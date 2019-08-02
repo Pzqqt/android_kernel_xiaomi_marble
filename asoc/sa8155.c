@@ -423,7 +423,7 @@ static unsigned int tdm_rx_slot_offset
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
-		{0xFFFF}, /* not used */
+		{28, 0xFFFF},
 	}
 };
 
@@ -478,7 +478,7 @@ static unsigned int tdm_tx_slot_offset
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
-		{0xFFFF}, /* not used */
+		{20, 0xFFFF},
 	}
 };
 
@@ -539,7 +539,7 @@ static unsigned int tdm_rx_slot_offset_custom
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
-		{0xFFFF}, /* not used */
+		{0, 0xFFFF},
 	}
 };
 
@@ -593,7 +593,7 @@ static unsigned int tdm_tx_slot_offset_custom
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
-		{0xFFFF}, /* not used */
+		{0, 0xFFFF},
 	}
 };
 
@@ -4327,6 +4327,14 @@ static int msm_tdm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		rate->min = rate->max =
 				tdm_rx_cfg[TDM_QUIN][TDM_3].sample_rate;
 		break;
+	case AFE_PORT_ID_QUINARY_TDM_RX_7:
+		channels->min = channels->max =
+				tdm_rx_cfg[TDM_QUIN][TDM_7].channels;
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				tdm_rx_cfg[TDM_QUIN][TDM_7].bit_format);
+		rate->min = rate->max =
+				tdm_rx_cfg[TDM_QUIN][TDM_7].sample_rate;
+		break;
 	case AFE_PORT_ID_QUINARY_TDM_TX:
 		channels->min = channels->max =
 				tdm_tx_cfg[TDM_QUIN][TDM_0].channels;
@@ -4358,6 +4366,14 @@ static int msm_tdm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 				tdm_tx_cfg[TDM_QUIN][TDM_3].bit_format);
 		rate->min = rate->max =
 				tdm_tx_cfg[TDM_QUIN][TDM_3].sample_rate;
+		break;
+	case AFE_PORT_ID_QUINARY_TDM_TX_7:
+		channels->min = channels->max =
+				tdm_tx_cfg[TDM_QUIN][TDM_7].channels;
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				tdm_tx_cfg[TDM_QUIN][TDM_7].bit_format);
+		rate->min = rate->max =
+				tdm_tx_cfg[TDM_QUIN][TDM_7].sample_rate;
 		break;
 	default:
 		pr_err("%s: dai id 0x%x not supported\n",
@@ -4629,6 +4645,11 @@ static int sa8155_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 		slot_width = tdm_slot[TDM_QUIN].width;
 		slot_offset = tdm_rx_slot_offset[TDM_QUIN][TDM_3];
 		break;
+	case AFE_PORT_ID_QUINARY_TDM_RX_7:
+		slots = tdm_slot[TDM_QUIN].num;
+		slot_width = tdm_slot[TDM_QUIN].width;
+		slot_offset = tdm_rx_slot_offset[TDM_QUIN][TDM_7];
+		break;
 	case AFE_PORT_ID_QUINARY_TDM_TX:
 		slots = tdm_slot[TDM_QUIN].num;
 		slot_width = tdm_slot[TDM_QUIN].width;
@@ -4648,6 +4669,11 @@ static int sa8155_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 		slots = tdm_slot[TDM_QUIN].num;
 		slot_width = tdm_slot[TDM_QUIN].width;
 		slot_offset = tdm_tx_slot_offset[TDM_QUIN][TDM_3];
+		break;
+	case AFE_PORT_ID_QUINARY_TDM_TX_7:
+		slots = tdm_slot[TDM_QUIN].num;
+		slot_width = tdm_slot[TDM_QUIN].width;
+		slot_offset = tdm_tx_slot_offset[TDM_QUIN][TDM_7];
 		break;
 	default:
 		pr_err("%s: dai id 0x%x not supported\n",
@@ -5797,6 +5823,36 @@ static struct snd_soc_dai_link msm_auto_fe_dai_links[] = {
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
 	},
+	{
+		.name = "Quinary TDM RX 7 Hostless",
+		.stream_name = "Quinary TDM RX 7 Hostless",
+		.cpu_dai_name = "QUIN_TDM_RX_7_HOSTLESS",
+		.platform_name = "msm-pcm-hostless",
+		.dynamic = 1,
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+	},
+	{
+		.name = "Quinary TDM TX 7 Hostless",
+		.stream_name = "Quinary TDM TX 7 Hostless",
+		.cpu_dai_name = "QUIN_TDM_TX_7_HOSTLESS",
+		.platform_name = "msm-pcm-hostless",
+		.dynamic = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+	},
 };
 
 static struct snd_soc_dai_link msm_custom_fe_dai_links[] = {
@@ -6654,6 +6710,34 @@ static struct snd_soc_dai_link msm_auto_be_dai_links[] = {
 		.no_pcm = 1,
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_QUAT_TDM_TX_7,
+		.be_hw_params_fixup = msm_tdm_be_hw_params_fixup,
+		.ops = &sa8155_tdm_be_ops,
+		.ignore_suspend = 1,
+	},
+	{
+		.name = LPASS_BE_QUIN_TDM_RX_7,
+		.stream_name = "Quinary TDM7 Playback",
+		.cpu_dai_name = "msm-dai-q6-tdm.36942",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_QUIN_TDM_RX_7,
+		.be_hw_params_fixup = msm_tdm_be_hw_params_fixup,
+		.ops = &sa8155_tdm_be_ops,
+		.ignore_suspend = 1,
+	},
+	{
+		.name = LPASS_BE_QUIN_TDM_TX_7,
+		.stream_name = "Quinary TDM7 Capture",
+		.cpu_dai_name = "msm-dai-q6-tdm.36943",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_QUIN_TDM_TX_7,
 		.be_hw_params_fixup = msm_tdm_be_hw_params_fixup,
 		.ops = &sa8155_tdm_be_ops,
 		.ignore_suspend = 1,
