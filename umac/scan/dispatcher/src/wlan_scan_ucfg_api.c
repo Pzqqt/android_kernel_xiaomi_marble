@@ -971,6 +971,10 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_ENABLE_WAKE_LOCK_IN_SCAN);
 	scan_obj->scan_def.active_dwell_2g =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_2G_CHANNEL_TIME);
+	scan_obj->scan_def.active_dwell_6g =
+			 cfg_get(psoc, CFG_ACTIVE_MAX_6G_CHANNEL_TIME);
+	scan_obj->scan_def.passive_dwell_6g =
+			 cfg_get(psoc, CFG_PASSIVE_MAX_6G_CHANNEL_TIME);
 	scan_obj->scan_def.passive_dwell =
 			 cfg_get(psoc, CFG_PASSIVE_MAX_CHANNEL_TIME);
 	scan_obj->scan_def.max_rest_time = SCAN_MAX_REST_TIME;
@@ -1159,6 +1163,8 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 	req->scan_req.scan_priority = def->scan_priority;
 	req->scan_req.dwell_time_active = def->active_dwell;
 	req->scan_req.dwell_time_active_2g = def->active_dwell_2g;
+	req->scan_req.dwell_time_active_6g = def->active_dwell_6g;
+	req->scan_req.dwell_time_passive_6g = def->passive_dwell_6g;
 	req->scan_req.dwell_time_passive = def->passive_dwell;
 	req->scan_req.min_rest_time = def->min_rest_time;
 	req->scan_req.max_rest_time = def->max_rest_time;

@@ -130,6 +130,48 @@
 
 /*
  * <ini>
+ * active_max_channel_time_6g - Set max time for active 6G channel scan
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 40
+ *
+ * This ini is used to set maximum time in msecs spent in active 6G channel scan
+ *
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ACTIVE_MAX_6G_CHANNEL_TIME CFG_INI_UINT(\
+		"active_max_channel_time_6g",\
+		0, 10000, 40,\
+		CFG_VALUE_OR_DEFAULT, "active dwell time for 6G channels")
+
+/*
+ * <ini>
+ * passive_max_channel_time_6g - Set max time for passive 6G channel scan
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 30
+ *
+ * This ini is used to set maximum time in msecs spent in passive 6G chan scan
+ *
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PASSIVE_MAX_6G_CHANNEL_TIME CFG_INI_UINT(\
+		"passive_max_channel_time_6g",\
+		0, 10000, 30,\
+		CFG_VALUE_OR_DEFAULT, "passive dwell time for 6G channels")
+
+/*
+ * <ini>
  * gPassiveMaxChannelTime - Set max channel time for passive scan
  * @Min: 0
  * @Max: 10000
@@ -1156,6 +1198,8 @@
 	CFG(CFG_INITIAL_NO_DFS_SCAN) \
 	CFG(CFG_ACTIVE_MAX_2G_CHANNEL_TIME) \
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME) \
+	CFG(CFG_ACTIVE_MAX_6G_CHANNEL_TIME) \
+	CFG(CFG_PASSIVE_MAX_6G_CHANNEL_TIME) \
 	CFG(CFG_SCAN_NUM_PROBES) \
 	CFG(CFG_SCAN_PROBE_REPEAT_TIME) \
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE) \
