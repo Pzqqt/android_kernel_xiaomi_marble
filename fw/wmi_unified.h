@@ -13744,6 +13744,7 @@ typedef enum event_type_e {
     WOW_SAP_OBSS_DETECTION_EVENT,
     WOW_BSS_COLOR_COLLISION_DETECT_EVENT,
     WOW_TKIP_MIC_ERR_FRAME_RECVD_EVENT,
+    WOW_ROAM_PREAUTH_START_EVENT,
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -13808,6 +13809,7 @@ typedef enum wake_reason_e {
     WOW_REASON_NTH_BCN_OFLD, /* nth beacon forward to host */
     WOW_REASON_PKT_CAPTURE_MODE_WAKE,
     WOW_REASON_PAGE_FAULT, /* Host wake up due to page fault */
+    WOW_REASON_ROAM_PREAUTH_START,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
@@ -25819,8 +25821,13 @@ typedef struct {
     /* AP BSSID for which pre-authentication is completed */
     wmi_mac_addr candidate_ap_bssid;
     /**
+     * This fixed_param TLV is followed by the below TLVs:
+     *
      * PMKID computed after successful pre-authentication. This is valid only if preauth_status is success
      * A_UINT8 pmkid[];
+     *
+     * PMK computed after successful pre-authentication. This is valid only if preauth_status is success
+     * A_UINT8 pmk[];
      */
 } wmi_roam_preauth_status_cmd_fixed_param;
 
