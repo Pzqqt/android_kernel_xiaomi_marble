@@ -603,7 +603,7 @@ typedef QDF_STATUS
 /* This callback is used to update datapath vdev flags */
 typedef QDF_STATUS
 (*tdls_dp_vdev_update_flags_callback)(void *cbk_data,
-				      uint8_t sta_id,
+				      struct qdf_mac_addr *peer_mac,
 				      uint32_t vdev_param,
 				      bool is_link_up);
 

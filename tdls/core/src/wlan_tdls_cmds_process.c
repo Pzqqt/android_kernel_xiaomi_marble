@@ -1171,7 +1171,7 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 
 	if (soc_obj->tdls_dp_vdev_update)
 		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
-					peer->sta_id,
+					&peer->peer_mac,
 					soc_obj->tdls_update_dp_vdev_flags,
 					false);
 
@@ -1718,7 +1718,7 @@ QDF_STATUS tdls_process_enable_link(struct tdls_oper_request *req)
 
 	if (soc_obj->tdls_dp_vdev_update)
 		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
-					peer->sta_id,
+					&peer->peer_mac,
 					soc_obj->tdls_update_dp_vdev_flags,
 					((peer->link_status ==
 					TDLS_LINK_CONNECTED) ? true : false));
@@ -1939,7 +1939,7 @@ QDF_STATUS tdls_process_remove_force_peer(struct tdls_oper_request *req)
 
 	if (soc_obj->tdls_dp_vdev_update)
 		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
-				peer->sta_id,
+				&peer->peer_mac,
 				soc_obj->tdls_update_dp_vdev_flags,
 				false);
 
