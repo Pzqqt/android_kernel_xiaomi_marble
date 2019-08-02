@@ -7393,7 +7393,7 @@ static int sa8155_ssr_enable(struct device *dev, void *data)
 		goto err;
 	}
 
-	dev_dbg(dev, "%s: setting snd_card to ONLINE\n", __func__);
+	dev_info(dev, "%s: setting snd_card to ONLINE\n", __func__);
 	snd_soc_card_change_online_state(card, 1);
 
 err:
@@ -7410,7 +7410,7 @@ static void sa8155_ssr_disable(struct device *dev, void *data)
 		return;
 	}
 
-	dev_dbg(dev, "%s: setting snd_card to OFFLINE\n", __func__);
+	dev_info(dev, "%s: setting snd_card to OFFLINE\n", __func__);
 	snd_soc_card_change_online_state(card, 0);
 }
 
