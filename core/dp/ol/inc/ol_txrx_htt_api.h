@@ -36,11 +36,26 @@ static inline uint16_t *ol_tx_msdu_id_storage(qdf_nbuf_t msdu)
 	return (uint16_t *) (&QDF_NBUF_CB_TX_DESC_ID(msdu));
 
 }
+
+/**
+ * @brief Deduct one credit from target_tx and one from any of the groups
+ * @details
+ * Deduct one credit from target_tx credit and one credit from any of the
+ * groups, whichever has more number of credits.
+ *
+ * @param pdev - the data physical device
+ */
+int ol_tx_deduct_one_credit(struct ol_txrx_pdev_t *pdev);
 #else
 static inline uint16_t *ol_tx_msdu_id_storage(qdf_nbuf_t msdu)
 {
 	qdf_assert(qdf_nbuf_headroom(msdu) >= (sizeof(uint16_t) * 2 - 1));
 	return (uint16_t *) (((qdf_size_t) (qdf_nbuf_head(msdu) + 1)) & ~0x1);
+}
+
+static inline int ol_tx_deduct_one_credit(struct ol_txrx_pdev_t *pdev)
+{
+	return 0;
 }
 #endif
 /**
@@ -236,6 +251,8 @@ ol_tx_desc_update_group_credit(
 	u_int16_t tx_desc_id,
 	int credit, u_int8_t absolute, enum htt_tx_status status);
 
+void ol_tx_deduct_one_any_group_credit(ol_txrx_pdev_handle pdev);
+
 #ifdef DEBUG_HL_LOGGING
 
 /**
@@ -287,6 +304,9 @@ ol_tx_desc_update_group_credit(
 	int credit, u_int8_t absolute, enum htt_tx_status status)
 {
 }
+
+static inline void ol_tx_deduct_one_any_group_credit(ol_txrx_pdev_handle pdev)
+{}
 #endif
 
 /**

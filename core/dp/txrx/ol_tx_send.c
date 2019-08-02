@@ -384,6 +384,19 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 }
 #endif /* QCA_COMPUTE_TX_DELAY */
 
+#if defined(CONFIG_HL_SUPPORT)
+int ol_tx_deduct_one_credit(struct ol_txrx_pdev_t *pdev)
+{
+	/* TODO: Check if enough credits */
+
+	if (!pdev->cfg.default_tx_comp_req) {
+		ol_tx_target_credit_update(pdev, -1);
+		ol_tx_deduct_one_any_group_credit(pdev);
+	}
+	return 0;
+}
+#endif /* CONFIG_HL_SUPPORT */
+
 #ifndef OL_TX_RESTORE_HDR
 #define OL_TX_RESTORE_HDR(__tx_desc, __msdu)
 #endif
@@ -1003,6 +1016,22 @@ void ol_tx_desc_update_group_credit(ol_txrx_pdev_handle pdev,
 		}
 	}
 	ol_tx_update_group_credit_stats(pdev);
+}
+
+void ol_tx_deduct_one_any_group_credit(ol_txrx_pdev_handle pdev)
+{
+	int credits_group_0, credits_group_1;
+
+	qdf_spin_lock_bh(&pdev->tx_queue_spinlock);
+	credits_group_0 = qdf_atomic_read(&pdev->txq_grps[0].credit);
+	credits_group_1 = qdf_atomic_read(&pdev->txq_grps[1].credit);
+
+	if (credits_group_0 > credits_group_1)
+		ol_txrx_update_group_credit(&pdev->txq_grps[0], -1, 0);
+	else if (credits_group_1 != 0)
+		ol_txrx_update_group_credit(&pdev->txq_grps[1], -1, 0);
+
+	qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);
 }
 
 #ifdef DEBUG_HL_LOGGING
