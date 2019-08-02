@@ -540,6 +540,21 @@ static inline uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs)
 }
 #endif
 
+/**
+ * dfs_get_agile_precac_enable() - Get agile precac enable flag.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * Return: Value of flag dfs_agile_precac_enable
+ */
+#ifdef QCA_SUPPORT_AGILE_DFS
+bool dfs_get_agile_precac_enable(struct wlan_dfs *dfs);
+#else
+static inline bool dfs_get_agile_precac_enable(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
+
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 /**
  * dfs_set_precac_intermediate_chan() - Set intermediate chan to be used while

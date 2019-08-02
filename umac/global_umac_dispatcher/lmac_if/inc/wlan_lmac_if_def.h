@@ -1321,6 +1321,8 @@ struct wlan_lmac_if_dfs_rx_ops {
 			uint32_t value);
 	QDF_STATUS (*dfs_get_precac_enable)(struct wlan_objmgr_pdev *pdev,
 			int *buff);
+	QDF_STATUS (*dfs_get_agile_precac_enable)(struct wlan_objmgr_pdev *pdev,
+						  bool *buff);
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 	QDF_STATUS (*dfs_set_precac_intermediate_chan)(struct wlan_objmgr_pdev *pdev,
 						       uint32_t value);

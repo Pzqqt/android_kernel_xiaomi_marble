@@ -392,6 +392,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 		ucfg_dfs_override_precac_timeout;
 	dfs_rx_ops->dfs_set_precac_enable = ucfg_dfs_set_precac_enable;
 	dfs_rx_ops->dfs_get_precac_enable = ucfg_dfs_get_precac_enable;
+	dfs_rx_ops->dfs_get_agile_precac_enable = ucfg_dfs_get_agile_precac_enable;
 	dfs_rx_ops->dfs_get_override_precac_timeout =
 		ucfg_dfs_get_override_precac_timeout;
 	dfs_rx_ops->dfs_set_current_channel = tgt_dfs_set_current_channel;

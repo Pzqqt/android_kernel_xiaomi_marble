@@ -258,6 +258,21 @@ QDF_STATUS ucfg_dfs_set_precac_enable(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev, int *buff);
 
+/**
+ * ucfg_dfs_get_agile_precac_enable() - Get agile precac enable flag.
+ * @pdev: Pointer to DFS pdev object.
+ * @buff: Pointer to save dfs_agile_precac_enable value.
+ *
+ * Wrapper function for dfs_get_agile_precac_enable().
+ * This function called from outside of dfs component.
+ *
+ * Return:
+ * * QDF_STATUS_SUCCESS: Successfully able to get agile precac flag.
+ * * QDF_STATUS_E_FAILURE: Failed to get agile precac flag.
+ */
+QDF_STATUS ucfg_dfs_get_agile_precac_enable(struct wlan_objmgr_pdev *pdev,
+					    bool *buff);
+
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 /**
  * ucfg_dfs_set_precac_intermediate_chan() - Set intermediate channel

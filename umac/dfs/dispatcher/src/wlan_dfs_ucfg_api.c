@@ -159,6 +159,32 @@ QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev,
 }
 qdf_export_symbol(ucfg_dfs_get_precac_enable);
 
+QDF_STATUS ucfg_dfs_get_agile_precac_enable(struct wlan_objmgr_pdev *pdev,
+					    bool *buff)
+{
+	struct wlan_dfs *dfs;
+
+	if (!pdev || !buff)
+		return QDF_STATUS_E_FAILURE;
+
+	if (!tgt_dfs_is_pdev_5ghz(pdev)) {
+		*buff = false;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*buff = dfs_get_agile_precac_enable(dfs);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(ucfg_dfs_get_agile_precac_enable);
+
 QDF_STATUS
 ucfg_dfs_set_nol_subchannel_marking(struct wlan_objmgr_pdev *pdev,
 				    bool nol_subchannel_marking)
