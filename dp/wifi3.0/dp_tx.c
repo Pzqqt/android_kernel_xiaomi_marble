@@ -2837,6 +2837,21 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 	DP_STATS_INCC(peer, tx.dropped.fw_reason3, 1,
 		     (ts->status == HAL_TX_TQM_RR_FW_REASON3));
 
+	/*
+	 * tx_failed is ideally supposed to be updated from HTT ppdu completion
+	 * stats. But in IPQ807X/IPQ6018 chipsets owing to hw limitation there
+	 * are no completions for failed cases. Hence updating tx_failed from
+	 * data path. Please note that if tx_failed is fixed to be from ppdu,
+	 * then this has to be removed
+	 */
+	peer->stats.tx.tx_failed = peer->stats.tx.dropped.fw_rem.num +
+				peer->stats.tx.dropped.fw_rem_notx +
+				peer->stats.tx.dropped.fw_rem_tx +
+				peer->stats.tx.dropped.age_out +
+				peer->stats.tx.dropped.fw_reason1 +
+				peer->stats.tx.dropped.fw_reason2 +
+				peer->stats.tx.dropped.fw_reason3;
+
 	if (ts->status != HAL_TX_TQM_RR_FRAME_ACKED) {
 		tid_stats->comp_fail_cnt++;
 		return;
