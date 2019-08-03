@@ -33,13 +33,13 @@
 #define TICKS_IN_MICRO_SECOND    1000000
 
 #define DSI_CTRL_DEBUG(c, fmt, ...)	DRM_DEV_DEBUG(NULL, "[msm-dsi-debug]: %s: "\
-		fmt, c->name, ##__VA_ARGS__)
+		fmt, c ? c->name : "inv", ##__VA_ARGS__)
 #define DSI_CTRL_ERR(c, fmt, ...)	DRM_DEV_ERROR(NULL, "[msm-dsi-error]: %s: "\
-		fmt, c->name, ##__VA_ARGS__)
+		fmt, c ? c->name : "inv", ##__VA_ARGS__)
 #define DSI_CTRL_INFO(c, fmt, ...)	DRM_DEV_INFO(NULL, "[msm-dsi-info]: %s: "\
 		fmt, c->name, ##__VA_ARGS__)
 #define DSI_CTRL_WARN(c, fmt, ...)	DRM_WARN("[msm-dsi-warn]: %s: " fmt,\
-		c->name, ##__VA_ARGS__)
+		c ? c->name : "inv", ##__VA_ARGS__)
 
 struct dsi_ctrl_list_item {
 	struct dsi_ctrl *ctrl;
