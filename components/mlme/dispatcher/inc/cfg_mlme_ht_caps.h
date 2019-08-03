@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -290,10 +290,14 @@
  * <ini>
  * gMaxAmsduNum - Max number of MSDU's in aggregate
  * @Min: 0
- * @Max: 3
- * @Default: 1
- * gMaxAmsduNum is the number of MSDU's transmitted in the 11n aggregate
+ * @Max: 15
+ * @Default: 0
+ *
+ * gMaxAmsduNum is the number of MSDU's transmitted in the aggregated
  * frame. Setting it to a value larger than 1 enables transmit aggregation.
+ * Set the value to 0 to enable FW automode selection where it decides
+ * the maximum number of MSDUs in AMSDU based on connection mode.
+ *
  * It is a PHY parameter that applies to all vdev's in firmware.
  *
  * Supported Feature: 11n aggregation
@@ -305,8 +309,8 @@
 #define CFG_MAX_AMSDU_NUM CFG_INI_UINT( \
 	"gMaxAmsduNum", \
 	0, \
-	3, \
-	1, \
+	15, \
+	0, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Max AMSDU Number")
 

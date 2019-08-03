@@ -4802,6 +4802,13 @@ static int hdd_we_set_amsdu(struct hdd_adapter *adapter, int amsdu)
 		return -EINVAL;
 	}
 
+	status = ucfg_mlme_set_max_amsdu_num(hdd_ctx->psoc,
+					     amsdu);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to set Max AMSDU Num to cfg");
+		return -EINVAL;
+	}
+
 	if (amsdu > 1)
 		sme_set_amsdu(mac_handle, true);
 	else
@@ -4814,11 +4821,6 @@ static int hdd_we_set_amsdu(struct hdd_adapter *adapter, int amsdu)
 		hdd_err("Failed to set firmware, errno %d", errno);
 		return errno;
 	}
-
-	status = ucfg_mlme_set_max_amsdu_num(hdd_ctx->psoc,
-					     amsdu);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("Failed to set Max AMSDU Num to cfg");
 
 	return 0;
 }
