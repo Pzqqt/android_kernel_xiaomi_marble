@@ -2553,3 +2553,13 @@ uint32_t dfs_get_precac_intermediate_chan(struct wlan_dfs *dfs)
 	return dfs->dfs_precac_inter_chan;
 }
 #endif
+
+#ifdef QCA_SUPPORT_AGILE_DFS
+void dfs_reset_agile_config(struct dfs_soc_priv_obj *dfs_soc)
+{
+	dfs_soc->cur_precac_dfs_index = PCAC_DFS_INDEX_ZERO;
+	dfs_soc->dfs_precac_timer_running = PCAC_TIMER_NOT_RUNNING;
+	dfs_soc->precac_state_started = PRECAC_NOT_STARTED;
+	dfs_soc->ocac_status = OCAC_SUCCESS;
+}
+#endif
