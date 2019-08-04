@@ -434,4 +434,32 @@ QDF_STATUS ucfg_dfs_set_nol_subchannel_marking(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS ucfg_dfs_get_nol_subchannel_marking(struct wlan_objmgr_pdev *pdev,
 					       bool *nol_subchannel_marking);
+/**
+ * ucfg_dfs_reinit_timers() - Init DFS timers.
+ * @pdev: Pointer to wlan_objmgr_pdev structure.
+ *
+ * Wrapper function to reset CAC, NOL, DFS Test Timer and ZeroCAC Timer.
+ * This is invoked per pdev to reinitialize timers after HW Mode Switch is
+ * triggered.
+ */
+QDF_STATUS ucfg_dfs_reinit_timers(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_dfs_reset_agile_config() - Reset ADFS config.
+ * @pdev: Pointer to wlan_objmgr_pdev structure.
+ *
+ * Wrapper function to reset Agile DFS config such as the variables which hold
+ * information about the state of the preCAC timer, active precac
+ * dfs index and OCAC status. It is invoked before HW Mode switch is triggered
+ * to ensure ADFS config is in a well known consistent state.
+ */
+#ifdef QCA_SUPPORT_AGILE_DFS
+QDF_STATUS ucfg_dfs_reset_agile_config(struct wlan_objmgr_psoc *psoc);
+#else
+static inline QDF_STATUS ucfg_dfs_reset_agile_config(struct wlan_objmgr_psoc
+						    *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* _WLAN_DFS_UCFG_API_H_ */

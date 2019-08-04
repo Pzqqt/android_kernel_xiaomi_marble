@@ -64,6 +64,7 @@ static void hif_target_dump_access_log(void);
 /* Maximum number of Copy Engine's supported */
 #define CE_HTT_H2T_MSG_SRC_NENTRIES 2048
 #define CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B 4096
+#define CE_HTT_H2T_MSG_SRC_NENTRIES_QCN7605 4096
 
 #define EPPING_CE_FLAGS_POLL \
 	(CE_ATTR_DISABLE_INTR|CE_ATTR_ENABLE_POLL|CE_ATTR_FLAGS)
@@ -85,7 +86,7 @@ static struct CE_attr host_ce_config_wlan_qcn7605[] = {
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
 	/* host->target HTT */
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
-		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
+		CE_HTT_H2T_MSG_SRC_NENTRIES_QCN7605, 256, 0, NULL,},
 #ifdef IPA_OFFLOAD
 	/* ipa_uc->target HTC control */
 	{ /* CE5 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,

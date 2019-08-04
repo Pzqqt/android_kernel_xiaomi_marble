@@ -4860,6 +4860,7 @@ typedef enum {
 	wmi_pdev_interop_issues_ap_event_id,
 #endif
 	wmi_coex_report_antenna_isolation_event_id,
+	wmi_chan_rf_characterization_info_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -7165,6 +7166,18 @@ struct wmi_host_vdev_peer_delete_all_response_event {
 struct wmi_host_dcs_interference_param {
 	uint32_t interference_type;
 	uint32_t pdev_id;
+};
+
+/**
+ * struct wmi_host_rf_characterization_event_param - rf characterization table
+ * @freq: center frequency of primary channel (in MHz)
+ * @bw: bandwidth of primary channel (in MHz)
+ * @chan_metric: primary channel-specific metric
+ */
+struct wmi_host_rf_characterization_event_param {
+	uint16_t freq;
+	wmi_host_channel_width bw;
+	uint8_t chan_metric;
 };
 
 /*

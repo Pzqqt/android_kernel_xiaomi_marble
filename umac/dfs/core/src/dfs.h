@@ -2655,4 +2655,18 @@ static inline int dfs_is_disable_radar_marking_set(struct wlan_dfs *dfs,
 #if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 bool dfs_get_disable_radar_marking(struct wlan_dfs *dfs);
 #endif
+
+/**
+ * dfs_reset_agile_config() - Reset the ADFS config variables.
+ * @dfs: Pointer to dfs_soc_priv_obj.
+ */
+#ifdef QCA_SUPPORT_AGILE_DFS
+void dfs_reset_agile_config(struct dfs_soc_priv_obj *dfs_soc);
+#endif
+
+/**
+ * dfs_reinit_timers() - Reinit timers in DFS.
+ * @dfs: Pointer to wlan_dfs.
+ */
+int dfs_reinit_timers(struct wlan_dfs *dfs);
 #endif  /* _DFS_H_ */

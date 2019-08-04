@@ -2969,17 +2969,32 @@ QDF_STATUS wmi_extract_pdev_qvit_event(wmi_unified_t wmi_handle,
 
 #ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
 /**
- * wmi_extract_rf_characterziation_entries - Extract RF characterization metrics
- * received through extended service ready event.
+ * wmi_extract_num_rf_characterziation_entries - Extract number of RF
+ * characterization metrics received from the RF characterization event.
  * @wmi_hdl: WMI handle
  * @evt_buf: Event buffer
+ * @num_rf_characterization_entries: Number of RF characterization metrics
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS wmi_extract_num_rf_characterization_entries(wmi_unified_t wmi_hdl,
+				uint8_t *evt_buf,
+				uint32_t *num_rf_characterization_entries);
+
+/**
+ * wmi_extract_rf_characterziation_entries - Extract RF characterization metrics
+ * received from the RF characterization event.
+ * @wmi_hdl: WMI handle
+ * @evt_buf: Event buffer
+ * @num_rf_characterization_entries: Number of RF characterization metrics
  * @rf_characterization_entries: Pointer to RF characterization metrics
  *
  * Return: QDF status of operation
  */
 QDF_STATUS wmi_extract_rf_characterization_entries(wmi_unified_t wmi_hdl,
 	uint8_t *evt_buf,
-	struct wlan_psoc_host_rf_characterization_entry *rf_characterization_entries);
+	uint32_t num_rf_characterization_entries,
+	struct wmi_host_rf_characterization_event_param *rf_characterization_entries);
 #endif
 
 /*

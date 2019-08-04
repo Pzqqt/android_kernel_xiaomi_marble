@@ -341,7 +341,7 @@ bool ucfg_dfs_is_hw_pulses_allowed(struct wlan_objmgr_pdev *pdev)
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
-		return  false;
+		return;
 	}
 
 	return dfs_is_hw_pulses_allowed(dfs);
@@ -349,3 +349,49 @@ bool ucfg_dfs_is_hw_pulses_allowed(struct wlan_objmgr_pdev *pdev)
 
 qdf_export_symbol(ucfg_dfs_is_hw_pulses_allowed);
 #endif
+
+#ifdef QCA_SUPPORT_AGILE_DFS
+QDF_STATUS ucfg_dfs_reset_agile_config(struct wlan_objmgr_psoc *psoc)
+{
+	struct dfs_soc_priv_obj *soc_obj;
+
+	if (!psoc) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							WLAN_UMAC_COMP_DFS);
+	if (!soc_obj) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to get dfs psoc component");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_reset_agile_config(soc_obj);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(ucfg_dfs_reset_agile_config);
+#endif
+
+QDF_STATUS ucfg_dfs_reinit_timers(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	if (!tgt_dfs_is_pdev_5ghz(pdev))
+		return QDF_STATUS_SUCCESS;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_reinit_timers(dfs);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(ucfg_dfs_reinit_timers);

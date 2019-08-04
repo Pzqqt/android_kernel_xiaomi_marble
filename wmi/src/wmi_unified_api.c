@@ -2471,13 +2471,26 @@ wmi_unified_dfs_phyerr_offload_dis_cmd(wmi_unified_t wmi_handle,
 }
 
 #ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+QDF_STATUS wmi_extract_num_rf_characterization_entries(wmi_unified_t wmi_hdl,
+				uint8_t *evt_buf,
+				uint32_t *num_rf_characterization_entries)
+{
+	if (wmi_hdl->ops->extract_num_rf_characterization_entries)
+		return wmi_hdl->ops->extract_num_rf_characterization_entries(wmi_hdl,
+				evt_buf, num_rf_characterization_entries);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_extract_rf_characterization_entries(wmi_unified_t wmi_hdl,
 	uint8_t *evt_buf,
-	struct wlan_psoc_host_rf_characterization_entry *rf_characterization_entries)
+	uint32_t num_rf_characterization_entries,
+	struct wmi_host_rf_characterization_event_param *rf_characterization_entries)
 {
 	if (wmi_hdl->ops->extract_rf_characterization_entries)
 		return wmi_hdl->ops->extract_rf_characterization_entries(wmi_hdl,
-					evt_buf, rf_characterization_entries);
+				evt_buf, num_rf_characterization_entries,
+				rf_characterization_entries);
 
 	return QDF_STATUS_E_FAILURE;
 }

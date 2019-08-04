@@ -755,3 +755,12 @@ void dfs_update_cur_chan_flags(struct wlan_dfs *dfs,
 	dfs->dfs_curchan->dfs_ch_flags = flags;
 	dfs->dfs_curchan->dfs_ch_flagext = flagext;
 }
+
+int dfs_reinit_timers(struct wlan_dfs *dfs)
+{
+	dfs_cac_attach(dfs);
+	dfs_zero_cac_timer_init(dfs->dfs_soc_obj);
+	dfs_nol_timer_init(dfs);
+	dfs_main_task_testtimer_init(dfs);
+	return 0;
+}

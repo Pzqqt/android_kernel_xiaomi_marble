@@ -333,5 +333,3 @@ static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 }
 /* TODO TX_FEATURE_NOT_YET */
 #endif
-uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-				   struct dp_tx_msdu_info_s *msdu_info);
