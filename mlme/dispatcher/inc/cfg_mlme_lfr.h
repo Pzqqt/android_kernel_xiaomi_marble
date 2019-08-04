@@ -1476,6 +1476,35 @@
 
 /*
  * <ini>
+ * gFullRoamScanPeriod - Set full roam scan refresh period
+ * @Min: 0
+ * @Max: 600
+ * @Default: 0
+ *
+ * This ini is used by firmware to set full roam scan period in secs.
+ * Full roam scan period is the minimum idle period in seconds between two
+ * successive full channel roam scans. If this is configured as a non-zero,
+ * full roam scan will be triggered for every configured interval.
+ * If this configured as 0, full roam scan will not be triggered at all.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_FULL_ROAM_SCAN_REFRESH_PERIOD CFG_INI_UINT( \
+	"gFullRoamScanPeriod", \
+	0, \
+	600, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Full roam scan refresh period")
+
+/*
+ * <ini>
  * gEmptyScanRefreshPeriod - Set empty scan refresh period
  * @Min: 0
  * @Max: 60000
@@ -2625,6 +2654,7 @@
 	CFG(CFG_POST_INACTIVITY_ROAM_SCAN_PERIOD) \
 	CFG(CFG_BSS_LOAD_TRIG_5G_RSSI_THRES) \
 	CFG(CFG_BSS_LOAD_TRIG_2G_RSSI_THRES) \
+	CFG(CFG_LFR_FULL_ROAM_SCAN_REFRESH_PERIOD) \
 	ADAPTIVE_11R_ALL \
 	ROAM_OFFLOAD_ALL \
 	LFR_ESE_ALL \
