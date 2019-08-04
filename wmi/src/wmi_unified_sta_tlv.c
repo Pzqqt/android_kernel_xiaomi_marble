@@ -1581,7 +1581,8 @@ static QDF_STATUS send_set_del_pmkid_cache_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_pmk_cache *pmksa;
 	uint32_t len = sizeof(*cmd);
 
-	if (pmk_info->pmk_len)
+	if (pmk_info &&
+	    !pmk_info->is_flush_all)
 		len += WMI_TLV_HDR_SIZE + sizeof(*pmksa);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -1599,8 +1600,8 @@ static QDF_STATUS send_set_del_pmkid_cache_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->vdev_id = pmk_info->vdev_id;
 
-	/* If pmk_info->pmk_len is 0, this is a flush request */
-	if (!pmk_info->pmk_len) {
+	/* If pmk_info->is_flush_all is true, this is a flush request */
+	if (pmk_info->is_flush_all) {
 		cmd->op_flag = WMI_PMK_CACHE_OP_FLAG_FLUSH_ALL;
 		cmd->num_cache = 0;
 		goto send_cmd;
