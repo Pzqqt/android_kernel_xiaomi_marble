@@ -35,30 +35,82 @@ extern int spectral_debug_level;
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 
+#define SPECTRAL_HEXDUMP_OCTET_PRINT_SIZE           (3)
+#define SPECTRAL_HEXDUMP_NUM_OCTETS_PER_LINE        (16)
+#define SPECTRAL_HEXDUMP_EXTRA_BUFFER_PER_LINE      (16)
+
+/*
+ * Provision for the expected hexdump line size as follows:
+ *
+ * Size per octet multiplied by number of octets per line
+ * +
+ * ASCII representation which is equivalent in print size to number of octets
+ * per line
+ * +
+ * Some extra buffer
+ */
+#define SPECTRAL_HEXDUMP_LINESIZE                           \
+		((SPECTRAL_HEXDUMP_OCTET_PRINT_SIZE *       \
+		  SPECTRAL_HEXDUMP_NUM_OCTETS_PER_LINE) +   \
+		 SPECTRAL_HEXDUMP_NUM_OCTETS_PER_LINE +     \
+		 SPECTRAL_HEXDUMP_EXTRA_BUFFER_PER_LINE)
+
+/**
+ * target_if_spectral_hexdump() - Print hexdump of the given buffer
+ * @_buf: Pointer to buffer
+ * @_len: Length of the buffer
+ *
+ * Print the hexdump of buffer upto given length. Print upto
+ * SPECTRAL_HEXDUMP_NUM_OCTETS_PER_LINE per line, followed by the ASCII
+ * representation of these octets.
+ */
 static inline void target_if_spectral_hexdump(unsigned char *_buf, int _len)
 {
 	int i, mod;
-	unsigned char ascii[17];
+	unsigned char ascii[SPECTRAL_HEXDUMP_NUM_OCTETS_PER_LINE + 1];
 	unsigned char *pc = (_buf);
+	char hexdump_line[SPECTRAL_HEXDUMP_LINESIZE + 1];
+	int loc = 0;
+
+	qdf_mem_zero(hexdump_line, sizeof(hexdump_line));
 
 	for (i = 0; i < _len; i++) {
-		mod = i % 16;
+		mod = i % SPECTRAL_HEXDUMP_NUM_OCTETS_PER_LINE;
+
 		if (!mod) {
-			if (i)
-				spectral_debug("  %s\n", ascii);
+			if (i) {
+				qdf_assert_always(loc < sizeof(hexdump_line));
+				loc += snprintf(&hexdump_line[loc],
+						sizeof(hexdump_line) - loc,
+						"  %s", ascii);
+				spectral_debug("%s", hexdump_line);
+				qdf_mem_zero(hexdump_line,
+					     sizeof(hexdump_line));
+				loc = 0;
+			}
 		}
-		spectral_debug(" %02x", pc[i]);
+
+		qdf_assert_always(loc < sizeof(hexdump_line));
+		loc += snprintf(&hexdump_line[loc], sizeof(hexdump_line) - loc,
+				" %02x", pc[i]);
+
 		if ((pc[i] < 0x20) || (pc[i] > 0x7e))
 			ascii[mod] = '.';
 		else
 			ascii[mod] = pc[i];
 		ascii[(mod) + 1] = '\0';
 	}
-	while ((i % 16) != 0) {
-		spectral_debug("   ");
+
+	while ((i % SPECTRAL_HEXDUMP_NUM_OCTETS_PER_LINE) != 0) {
+		qdf_assert_always(loc < sizeof(hexdump_line));
+		loc += snprintf(&hexdump_line[loc], sizeof(hexdump_line) - loc,
+				"   ");
 		i++;
 	}
-	spectral_debug("  %s\n", ascii);
+
+	qdf_assert_always(loc < sizeof(hexdump_line));
+	snprintf(&hexdump_line[loc], sizeof(hexdump_line) - loc, "  %s", ascii);
+	spectral_debug("%s", hexdump_line);
 }
 
 /**
