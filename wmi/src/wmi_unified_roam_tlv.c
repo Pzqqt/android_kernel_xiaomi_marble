@@ -1823,7 +1823,7 @@ send_roam_scan_offload_scan_period_cmd_tlv(
 			       (wmi_roam_scan_period_fixed_param));
 	/* fill in scan period values */
 	scan_period_fp->vdev_id = param->vdev_id;
-	scan_period_fp->roam_scan_period = param->scan_period; /* 20 seconds */
+	scan_period_fp->roam_scan_period = param->scan_period;
 	scan_period_fp->roam_scan_age = param->scan_age;
 	scan_period_fp->inactivity_time_period =
 			param->roam_scan_inactivity_time;
@@ -1831,10 +1831,16 @@ send_roam_scan_offload_scan_period_cmd_tlv(
 			param->roam_inactive_data_packet_count;
 	scan_period_fp->roam_scan_period_after_inactivity =
 			param->roam_scan_period_after_inactivity;
+	/* Firmware expects the full scan preriod in msec whereas host
+	 * provides the same in seconds.
+	 * Convert it to msec and send to firmware
+	 */
+	scan_period_fp->roam_full_scan_period = param->full_scan_period * 1000;
 
-	WMI_LOGD("%s: roam_scan_period=%d, roam_scan_age=%d", __func__,
-		 scan_period_fp->roam_scan_period,
-		 scan_period_fp->roam_scan_age);
+	WMI_LOGD("%s: roam_scan_period=%d, roam_scan_age=%d, full_scan_period= %u",
+		 __func__, scan_period_fp->roam_scan_period,
+		 scan_period_fp->roam_scan_age,
+		 scan_period_fp->roam_full_scan_period);
 	WMI_LOGD("%s: inactiviy period:%d inactive count:%d period after inactivity:%d",
 		 __func__, scan_period_fp->inactivity_time_period,
 		 scan_period_fp->roam_inactive_count,

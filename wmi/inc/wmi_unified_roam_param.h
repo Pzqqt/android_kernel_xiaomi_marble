@@ -139,6 +139,8 @@ struct roam_offload_scan_rssi_params {
  * roam_scan_inactivity_time.
  * @roam_scan_period_after_inactivity: Roam scan period in ms after device is
  * in inactive state.
+ * @full_scan_period: Full scan period is the idle period in seconds
+ * between two successive full channel roam scans.
  */
 struct roam_scan_period_params {
 	uint32_t vdev_id;
@@ -147,6 +149,7 @@ struct roam_scan_period_params {
 	uint32_t roam_scan_inactivity_time;
 	uint32_t roam_inactive_data_packet_count;
 	uint32_t roam_scan_period_after_inactivity;
+	uint32_t full_scan_period;
 };
 
 /**
