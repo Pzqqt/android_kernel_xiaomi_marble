@@ -189,6 +189,42 @@ struct qdf_packed wifi_pos_oem_get_cap_rsp {
 };
 
 /**
+ * struct wifi_pos_err_rpt - Error report response for userspace.
+ * @tag_len: tlv header of the message.
+ * @info: Report info. Reserved for error report.
+ * @dest_mac: Mac address of the sta in the request.
+ * @reserved: Reserved in error report.
+ */
+struct qdf_packed wifi_pos_err_rpt {
+	uint32_t tag_len;
+	uint32_t info;
+	uint8_t  dest_mac[QDF_MAC_ADDR_SIZE + 2];
+	uint32_t reserved;
+};
+
+#define OEM_MSG_RSP_HEAD_TAG_ID 33
+#define OEM_MEAS_RSP_HEAD_TAG_ID 41
+/**
+ * struct wifi_pos_err_msg_report - Error report message
+ * @msg_tag_len: Message tlv header
+ * @msg_subtype: Message subtype
+ * @req_id: id corresponding to the request.
+ * @fragment_info: Valid only for fragments.
+ * @pdev_id: pdev_id of radion.
+ * @time_left: time left in the measurment req.
+ * @err_rpt: Error report data.
+ */
+struct qdf_packed wifi_pos_err_msg_report {
+	uint32_t msg_tag_len;
+	uint32_t msg_subtype;
+	uint32_t req_id;
+	uint32_t fragment_info;
+	uint32_t pdev_id;
+	uint32_t time_left;
+	struct wifi_pos_err_rpt err_rpt;
+};
+
+/**
  * struct wifi_pos_dma_rings_cap - capabilities requested by firmware.
  * @pdev_id: pdev_id or mac_id of ring
  * @min_num_ptr: minimum depth of ring required
@@ -306,6 +342,9 @@ struct wifi_pos_psoc_priv_obj {
 				    struct wifi_pos_req_msg *req);
 	void (*wifi_pos_send_rsp)(uint32_t, uint32_t, uint32_t, uint8_t *);
 	void (*wifi_pos_get_phy_mode)(uint8_t, uint32_t, uint32_t *);
+	void (*wifi_pos_send_action)(struct wlan_objmgr_psoc *psoc,
+				     uint32_t oem_subtype, uint8_t *buf,
+				     uint32_t len);
 };
 
 /**

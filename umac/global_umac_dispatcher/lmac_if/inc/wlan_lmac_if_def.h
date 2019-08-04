@@ -982,6 +982,8 @@ struct wlan_lmac_if_reg_rx_ops {
 			struct cur_regdmn_info *cur_regdmn);
 	QDF_STATUS (*reg_enable_dfs_channels)(struct wlan_objmgr_pdev *pdev,
 					      bool dfs_enable);
+	QDF_STATUS (*reg_modify_pdev_chan_range)(struct
+						 wlan_objmgr_pdev *pdev);
 };
 
 #ifdef CONVERGED_P2P_ENABLE
@@ -1253,8 +1255,10 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
  * @dfs_dfs_cac_complete_ind:         Process cac complete indication.
  * @dfs_agile_precac_start:           Initiate Agile PreCAC run.
  * @dfs_set_agile_precac_state:       Set agile precac state.
+ * @dfs_reset_adfs_config:            Reset agile dfs variables.
  * @dfs_dfs_ocac_complete_ind:        Process offchan cac complete indication.
  * @dfs_stop:                         Clear dfs timers.
+ * @dfs_reinit_timers:                Reinitialize DFS timers.
  * @dfs_enable_stadfs:                Enable/Disable STADFS capability.
  * @dfs_is_stadfs_enabled:            Get STADFS capability value.
  * @dfs_process_phyerr_filter_offload:Process radar event.
@@ -1308,6 +1312,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_agile_precac_start)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_set_agile_precac_state)(struct wlan_objmgr_pdev *pdev,
 						 int agile_precac_state);
+	QDF_STATUS (*dfs_reset_adfs_config)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS
 	(*dfs_dfs_ocac_complete_ind)(struct wlan_objmgr_pdev *pdev,
 				     struct vdev_adfs_complete_status *ocac_st);
@@ -1348,6 +1353,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 			uint32_t vdev_id);
 #endif
 	QDF_STATUS (*dfs_stop)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_reinit_timers)(struct wlan_objmgr_pdev *pdev);
 	void (*dfs_enable_stadfs)(struct wlan_objmgr_pdev *pdev, bool val);
 	bool (*dfs_is_stadfs_enabled)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_process_phyerr_filter_offload)(

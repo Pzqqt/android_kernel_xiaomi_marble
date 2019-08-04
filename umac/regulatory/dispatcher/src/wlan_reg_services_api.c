@@ -713,3 +713,14 @@ bool wlan_reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev)
 {
 	return reg_is_regdmn_en302502_applicable(pdev);
 }
+
+/**
+ * wlan_reg_modify_pdev_chan_range() - Compute current channel list for the
+ * modified regcap.
+ * @pdev: pointer to struct wlan_objmgr_pdev
+ *
+ */
+QDF_STATUS wlan_reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_modify_pdev_chan_range(pdev);
+}

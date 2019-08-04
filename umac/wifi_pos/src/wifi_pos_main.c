@@ -99,6 +99,13 @@ static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 	struct oem_data_req data_req;
 	struct wlan_lmac_if_wifi_pos_tx_ops *tx_ops;
 	struct wlan_objmgr_pdev *pdev;
+	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
+				wifi_pos_get_psoc_priv_obj(psoc);
+
+	if (!wifi_pos_obj) {
+		wifi_pos_err("wifi_pos priv obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	wifi_pos_debug("Received data req pid(%d), len(%d)",
 			req->pid, req->buf_len);
@@ -151,10 +158,18 @@ static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 		/* TBD */
 		break;
 	case TARGET_OEM_CONFIGURE_FTMRR:
-		/* TBD */
+		wifi_pos_debug("FTMRR request");
+		if (wifi_pos_obj->wifi_pos_send_action)
+			wifi_pos_obj->wifi_pos_send_action(psoc, sub_type,
+							   req->buf,
+							   req->buf_len);
 		break;
 	case TARGET_OEM_CONFIGURE_WRU:
-		/* TBD */
+		wifi_pos_debug("WRU request");
+		if (wifi_pos_obj->wifi_pos_send_action)
+			wifi_pos_obj->wifi_pos_send_action(psoc, sub_type,
+							   req->buf,
+							   req->buf_len);
 		break;
 	default:
 		wifi_pos_debug("invalid sub type or not passed");
@@ -230,6 +245,40 @@ static QDF_STATUS wifi_pos_process_get_cap_req(struct wlan_objmgr_psoc *psoc,
 					ANI_MSG_GET_OEM_CAP_RSP,
 					sizeof(cap_rsp),
 					(uint8_t *)&cap_rsp);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wifi_pos_send_report_resp(struct wlan_objmgr_psoc *psoc,
+				     int req_id, uint8_t *dest_mac,
+				     int err_code)
+{
+	struct wifi_pos_err_msg_report err_report = {0};
+	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
+					wifi_pos_get_psoc_priv_obj(psoc);
+
+	if (!wifi_pos_obj) {
+		wifi_pos_err("wifi_pos priv obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	err_report.msg_tag_len = OEM_MSG_RSP_HEAD_TAG_ID << 16;
+	err_report.msg_tag_len |= (sizeof(err_report) -
+				   sizeof(err_report.err_rpt)) & 0x0000FFFF;
+	err_report.msg_subtype = TARGET_OEM_ERROR_REPORT_RSP;
+	err_report.req_id = req_id & 0xFFFF;
+	err_report.req_id |= ((err_code & 0xFF) << 16);
+	err_report.req_id |= (0x1 << 24);
+	err_report.time_left = 0xFFFFFFFF;
+	err_report.err_rpt.tag_len = OEM_MEAS_RSP_HEAD_TAG_ID << 16;
+	err_report.err_rpt.tag_len |=
+				(sizeof(struct wifi_pos_err_rpt)) & 0x0000FFFF;
+	memcpy(&err_report.err_rpt.dest_mac, dest_mac, QDF_MAC_ADDR_SIZE);
+
+	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,
+			ANI_MSG_OEM_DATA_RSP,
+			sizeof(err_report),
+			(uint8_t *)&err_report);
 
 	return QDF_STATUS_SUCCESS;
 }
