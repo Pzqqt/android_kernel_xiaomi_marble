@@ -1531,6 +1531,14 @@ void lim_send_beacon(struct mac_context *mac_ctx, struct pe_session *session);
 void lim_ndi_mlme_vdev_up_transition(struct pe_session *session);
 
 /**
+ * lim_sap_move_to_cac_wait_state() - move to cac wait state
+ * @sap_ctx: SAP context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_sap_move_to_cac_wait_state(struct pe_session *session);
+
+/**
  * lim_disconnect_complete - Deliver vdev disconnect complete event or
  * STA send deleting bss
  * @session: PE session pointer

@@ -8013,6 +8013,17 @@ void lim_ndi_mlme_vdev_up_transition(struct pe_session *session)
 				      sizeof(*session), session);
 }
 
+QDF_STATUS lim_sap_move_to_cac_wait_state(struct pe_session *session)
+{
+	QDF_STATUS status;
+
+	status =
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_DFS_CAC_WAIT,
+					      sizeof(*session), session);
+	return status;
+}
+
 QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {

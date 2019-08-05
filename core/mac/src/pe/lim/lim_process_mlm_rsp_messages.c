@@ -242,6 +242,8 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *msg_buf)
 			lim_enable_obss_detection_config(mac, pe_session);
 			lim_send_obss_color_collision_cfg(mac, pe_session,
 					OBSS_COLOR_COLLISION_DETECTION);
+		} else {
+			lim_sap_move_to_cac_wait_state(pe_session);
 		}
 	}
 }

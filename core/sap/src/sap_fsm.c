@@ -2322,23 +2322,6 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 }
 
 /**
- * sap_move_to_cac_wait_state() - move to cac wait state
- * @sap_ctx: SAP context
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS sap_move_to_cac_wait_state(struct sap_context *sap_ctx)
-{
-	QDF_STATUS status;
-
-	status =
-	     wlan_vdev_mlme_sm_deliver_evt(sap_ctx->vdev,
-					   WLAN_VDEV_SM_EV_DFS_CAC_WAIT,
-					   0, NULL);
-	return status;
-}
-
-/**
  * sap_fsm_cac_start() - start cac wait timer
  * @sap_ctx: SAP context
  * @mac_ctx: global MAC context
@@ -2359,8 +2342,6 @@ static QDF_STATUS sap_fsm_cac_start(struct sap_context *sap_ctx,
 			  FL("sapdfs: starting dfs cac timer on sapctx[%pK]"),
 			  sap_ctx);
 		sap_start_dfs_cac_timer(sap_ctx);
-	} else {
-		sap_move_to_cac_wait_state(sap_ctx);
 	}
 
 	return sap_cac_start_notify(mac_handle);
@@ -3690,8 +3671,6 @@ static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx)
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: cac timer offloaded to firmware", __func__);
 		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
-		sap_move_to_cac_wait_state(sap_ctx);
-
 		return 1;
 	}
 
@@ -3720,11 +3699,7 @@ static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx)
 	}
 
 	mac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
-	status = sap_move_to_cac_wait_state(sap_ctx);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mc_timer_stop(&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
-		goto destroy_timer;
-	}
+
 	return 0;
 
 destroy_timer:

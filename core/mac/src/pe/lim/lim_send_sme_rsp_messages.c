@@ -1962,6 +1962,11 @@ lim_send_sme_ap_channel_switch_resp(struct mac_context *mac,
 	mmhMsg.bodyval = 0;
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
+	if (QDF_IS_STATUS_ERROR(pChnlParams->status)) {
+		pe_err("failed to change sap channel to %u", channelId);
+		return;
+	}
+
 	/*
 	 * We should start beacon transmission only if the new
 	 * channel after channel change is Non-DFS. For a DFS
@@ -1985,7 +1990,10 @@ lim_send_sme_ap_channel_switch_resp(struct mac_context *mac,
 			is_ch_dfs = true;
 	}
 
-	if (!is_ch_dfs) {
+	if (is_ch_dfs) {
+		lim_sap_move_to_cac_wait_state(pe_session);
+
+	} else {
 		if (channelId == wlan_reg_freq_to_chan(
 				mac->pdev, pe_session->curr_op_freq)) {
 			lim_apply_configuration(mac, pe_session);
