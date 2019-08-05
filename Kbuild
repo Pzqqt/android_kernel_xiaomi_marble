@@ -1248,12 +1248,15 @@ TXRX_OBJS := $(TXRX_DIR)/ol_txrx.o \
                 $(TXRX_DIR)/ol_rx_defrag.o \
                 $(TXRX_DIR)/ol_tx_desc.o \
                 $(TXRX_DIR)/ol_tx.o \
-                $(TXRX_DIR)/ol_rx_reorder_timeout.o \
-                $(TXRX_DIR)/ol_rx_reorder.o \
                 $(TXRX_DIR)/ol_rx_pn.o \
                 $(TXRX_DIR)/ol_txrx_peer_find.o \
                 $(TXRX_DIR)/ol_txrx_encap.o \
                 $(TXRX_DIR)/ol_tx_send.o
+
+ifeq ($(CONFIG_HL_DP_SUPPORT), y)
+TXRX_OBJS += $(TXRX_DIR)/ol_rx_reorder_timeout.o
+TXRX_OBJS += $(TXRX_DIR)/ol_rx_reorder.o
+endif
 
 ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_event.o

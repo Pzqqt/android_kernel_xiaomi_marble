@@ -340,6 +340,130 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
  */
 void ol_tx_target_credit_update(struct ol_txrx_pdev_t *pdev, int credit_delta);
 
+enum htt_rx_flush_action {
+	htt_rx_flush_release,
+	htt_rx_flush_discard,
+};
+
+#ifdef WLAN_PARTIAL_REORDER_OFFLOAD
+/**
+ * @brief Process a rx reorder flush message sent by the target.
+ * @details
+ *  The target's rx reorder logic can send a flush indication to the
+ *  host's rx reorder buffering either as a flush IE within a rx
+ *  indication message, or as a standalone rx reorder flush message.
+ *  This ol_rx_flush_handler function processes the standalone rx
+ *  reorder flush message from the target.
+ *  The flush message specifies a range of sequence numbers whose
+ *  rx frames are flushed.
+ *  Some sequence numbers within the specified range may not have
+ *  rx frames; the host needs to check for each sequence number in
+ *  the specified range whether there are rx frames held for that
+ *  sequence number.
+ *
+ * @param pdev - data physical device handle
+ *      (registered with HTT as a context pointer during attach time)
+ * @param peer_id - which peer's rx data is being flushed
+ * @param tid - which traffic ID within the peer has the rx data being flushed
+ * @param seq_num_start - Which sequence number within the rx reordering
+ *      buffer the flushing should start with.
+ *      This is the LSBs of the 802.11 sequence number.
+ *      This sequence number is masked with the rounded-to-power-of-two
+ *      window size to generate a reorder buffer index.
+ *      The flush includes this initial sequence number.
+ * @param seq_num_end - Which sequence number within the rx reordering
+ *      buffer the flushing should stop at.
+ *      This is the LSBs of the 802.11 sequence number.
+ *      This sequence number is masked with the rounded-to-power-of-two
+ *      window size to generate a reorder buffer index.
+ *      The flush excludes this final sequence number.
+ * @param action - whether to release or discard the rx frames
+ */
+void
+ol_rx_flush_handler(ol_txrx_pdev_handle pdev,
+		    uint16_t peer_id,
+		    uint8_t tid,
+		    uint16_t seq_num_start,
+		    uint16_t seq_num_end, enum htt_rx_flush_action action);
+
+/**
+ * @brief Process a rx pn indication message
+ * @details
+ *      When the peer is configured to get PN checking done in target,
+ *      the target instead of sending reorder flush/release messages
+ *      sends PN indication messages which contain the start and end
+ *      sequence numbers to be flushed/released along with the sequence
+ *      numbers of MPDUs that failed the PN check in target.
+ *
+ * @param pdev - data physical device handle
+ *      (registered with HTT as a context pointer during attach time)
+ * @param peer_id - which peer's rx data is being flushed
+ * @param tid - which traffic ID within the peer
+ * @param seq_num_start - Which sequence number within the rx reordering
+ *      buffer to start with.
+ *      This is the LSBs of the 802.11 sequence number.
+ *      This sequence number is masked with the rounded-to-power-of-two
+ *      window size to generate a reorder buffer index.
+ *      This is the initial sequence number.
+ * @param seq_num_end - Which sequence number within the rx reordering
+ *      buffer to stop at.
+ *      This is the LSBs of the 802.11 sequence number.
+ *      This sequence number is masked with the rounded-to-power-of-two
+ *      window size to generate a reorder buffer index.
+ *      The processing stops right before this sequence number
+ * @param pn_ie_cnt - Indicates the number of PN information elements.
+ * @param pn_ie - Pointer to the array of PN information elements. Each
+ *      PN information element contains the LSBs of the 802.11 sequence number
+ *      of the MPDU that failed the PN checking in target.
+ */
+void
+ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
+		     uint16_t peer_id,
+		     uint8_t tid,
+		     uint16_t seq_num_start,
+		     uint16_t seq_num_end, uint8_t pn_ie_cnt, uint8_t *pn_ie);
+
+/**
+ * @brief Process an ADDBA message sent by the target.
+ * @details
+ *  When the target notifies the host of an ADDBA event for a specified
+ *  peer-TID, the host will set up the rx reordering state for the peer-TID.
+ *  Specifically, the host will create a rx reordering array whose length
+ *  is based on the window size specified in the ADDBA.
+ *
+ * @param pdev - data physical device handle
+ *      (registered with HTT as a context pointer during attach time)
+ * @param peer_id - which peer the ADDBA event is for
+ * @param tid - which traffic ID within the peer the ADDBA event is for
+ * @param win_sz - how many sequence numbers are in the ARQ block ack window
+ *      set up by the ADDBA event
+ * @param start_seq_num - the initial value of the sequence number during the
+ *      block ack agreement, as specified by the ADDBA request.
+ * @param failed - indicate whether the target's ADDBA setup succeeded:
+ *      0 -> success, 1 -> fail
+ */
+void
+ol_rx_addba_handler(ol_txrx_pdev_handle pdev,
+		    uint16_t peer_id,
+		    uint8_t tid,
+		    uint8_t win_sz, uint16_t start_seq_num, uint8_t failed);
+
+/**
+ * @brief Process a DELBA message sent by the target.
+ * @details
+ *  When the target notifies the host of a DELBA event for a specified
+ *  peer-TID, the host will clean up the rx reordering state for the peer-TID.
+ *  Specifically, the host will remove the rx reordering array, and will
+ *  set the reorder window size to be 1 (stop and go ARQ).
+ *
+ * @param pdev - data physical device handle
+ *      (registered with HTT as a context pointer during attach time)
+ * @param peer_id - which peer the ADDBA event is for
+ * @param tid - which traffic ID within the peer the ADDBA event is for
+ */
+void
+ol_rx_delba_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id, uint8_t tid);
+
 /**
  * @brief Process an rx indication message sent by the target.
  * @details
@@ -367,7 +491,6 @@ void ol_tx_target_credit_update(struct ol_txrx_pdev_t *pdev, int credit_delta);
  * @param num_mpdu_ranges - how many ranges of MPDUs does the message describe.
  *      Each MPDU within the range has the same rx status.
  */
-#ifdef WLAN_PARTIAL_REORDER_OFFLOAD
 void
 ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 			 qdf_nbuf_t rx_ind_msg,
@@ -377,6 +500,37 @@ static inline void
 ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 			 qdf_nbuf_t rx_ind_msg,
 			 uint16_t peer_id, uint8_t tid, int num_mpdu_ranges)
+{
+}
+
+static inline void
+ol_rx_addba_handler(ol_txrx_pdev_handle pdev,
+		    uint16_t peer_id,
+		    uint8_t tid,
+		    uint8_t win_sz, uint16_t start_seq_num, uint8_t failed)
+{
+}
+
+static inline void
+ol_rx_delba_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id, uint8_t tid)
+{
+}
+
+static inline void
+ol_rx_flush_handler(ol_txrx_pdev_handle pdev,
+		    uint16_t peer_id,
+		    uint8_t tid,
+		    uint16_t seq_num_start,
+		    uint16_t seq_num_end, enum htt_rx_flush_action action)
+{
+}
+
+static inline void
+ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
+		     uint16_t peer_id,
+		     uint8_t tid,
+		     uint16_t seq_num_start,
+		     uint16_t seq_num_end, uint8_t pn_ie_cnt, uint8_t *pn_ie)
 {
 }
 #endif
@@ -505,129 +659,6 @@ ol_rx_sec_ind_handler(ol_txrx_pdev_handle pdev,
 		      uint16_t peer_id,
 		      enum htt_sec_type sec_type,
 		      int is_unicast, uint32_t *michael_key, uint32_t *rx_pn);
-
-/**
- * @brief Process an ADDBA message sent by the target.
- * @details
- *  When the target notifies the host of an ADDBA event for a specified
- *  peer-TID, the host will set up the rx reordering state for the peer-TID.
- *  Specifically, the host will create a rx reordering array whose length
- *  is based on the window size specified in the ADDBA.
- *
- * @param pdev - data physical device handle
- *      (registered with HTT as a context pointer during attach time)
- * @param peer_id - which peer the ADDBA event is for
- * @param tid - which traffic ID within the peer the ADDBA event is for
- * @param win_sz - how many sequence numbers are in the ARQ block ack window
- *      set up by the ADDBA event
- * @param start_seq_num - the initial value of the sequence number during the
- *      block ack agreement, as specified by the ADDBA request.
- * @param failed - indicate whether the target's ADDBA setup succeeded:
- *      0 -> success, 1 -> fail
- */
-void
-ol_rx_addba_handler(ol_txrx_pdev_handle pdev,
-		    uint16_t peer_id,
-		    uint8_t tid,
-		    uint8_t win_sz, uint16_t start_seq_num, uint8_t failed);
-
-/**
- * @brief Process a DELBA message sent by the target.
- * @details
- *  When the target notifies the host of a DELBA event for a specified
- *  peer-TID, the host will clean up the rx reordering state for the peer-TID.
- *  Specifically, the host will remove the rx reordering array, and will
- *  set the reorder window size to be 1 (stop and go ARQ).
- *
- * @param pdev - data physical device handle
- *      (registered with HTT as a context pointer during attach time)
- * @param peer_id - which peer the ADDBA event is for
- * @param tid - which traffic ID within the peer the ADDBA event is for
- */
-void
-ol_rx_delba_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id, uint8_t tid);
-
-enum htt_rx_flush_action {
-	htt_rx_flush_release,
-	htt_rx_flush_discard,
-};
-
-/**
- * @brief Process a rx reorder flush message sent by the target.
- * @details
- *  The target's rx reorder logic can send a flush indication to the
- *  host's rx reorder buffering either as a flush IE within a rx
- *  indication message, or as a standalone rx reorder flush message.
- *  This ol_rx_flush_handler function processes the standalone rx
- *  reorder flush message from the target.
- *  The flush message specifies a range of sequence numbers whose
- *  rx frames are flushed.
- *  Some sequence numbers within the specified range may not have
- *  rx frames; the host needs to check for each sequence number in
- *  the specified range whether there are rx frames held for that
- *  sequence number.
- *
- * @param pdev - data physical device handle
- *      (registered with HTT as a context pointer during attach time)
- * @param peer_id - which peer's rx data is being flushed
- * @param tid - which traffic ID within the peer has the rx data being flushed
- * @param seq_num_start - Which sequence number within the rx reordering
- *      buffer the flushing should start with.
- *      This is the LSBs of the 802.11 sequence number.
- *      This sequence number is masked with the rounded-to-power-of-two
- *      window size to generate a reorder buffer index.
- *      The flush includes this initial sequence number.
- * @param seq_num_end - Which sequence number within the rx reordering
- *      buffer the flushing should stop at.
- *      This is the LSBs of the 802.11 sequence number.
- *      This sequence number is masked with the rounded-to-power-of-two
- *      window size to generate a reorder buffer index.
- *      The flush excludes this final sequence number.
- * @param action - whether to release or discard the rx frames
- */
-void
-ol_rx_flush_handler(ol_txrx_pdev_handle pdev,
-		    uint16_t peer_id,
-		    uint8_t tid,
-		    uint16_t seq_num_start,
-		    uint16_t seq_num_end, enum htt_rx_flush_action action);
-
-/**
- * @brief Process a rx pn indication message
- * @details
- *      When the peer is configured to get PN checking done in target,
- *      the target instead of sending reorder flush/release messages
- *      sends PN indication messages which contain the start and end
- *      sequence numbers to be flushed/released along with the sequence
- *      numbers of MPDUs that failed the PN check in target.
- *
- * @param pdev - data physical device handle
- *      (registered with HTT as a context pointer during attach time)
- * @param peer_id - which peer's rx data is being flushed
- * @param tid - which traffic ID within the peer
- * @param seq_num_start - Which sequence number within the rx reordering
- *      buffer to start with.
- *      This is the LSBs of the 802.11 sequence number.
- *      This sequence number is masked with the rounded-to-power-of-two
- *      window size to generate a reorder buffer index.
- *      This is the initial sequence number.
- * @param seq_num_end - Which sequence number within the rx reordering
- *      buffer to stop at.
- *      This is the LSBs of the 802.11 sequence number.
- *      This sequence number is masked with the rounded-to-power-of-two
- *      window size to generate a reorder buffer index.
- *      The processing stops right before this sequence number
- * @param pn_ie_cnt - Indicates the number of PN information elements.
- * @param pn_ie - Pointer to the array of PN information elements. Each
- *      PN information element contains the LSBs of the 802.11 sequence number
- *      of the MPDU that failed the PN checking in target.
- */
-void
-ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
-		     uint16_t peer_id,
-		     uint8_t tid,
-		     uint16_t seq_num_start,
-		     uint16_t seq_num_end, uint8_t pn_ie_cnt, uint8_t *pn_ie);
 
 /**
  * @brief Process a stats message sent by the target.
