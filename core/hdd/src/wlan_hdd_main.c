@@ -15090,6 +15090,8 @@ int hdd_update_config(struct hdd_context *hdd_ctx)
 		ret = hdd_update_cds_config(hdd_ctx);
 	ret = hdd_update_user_config(hdd_ctx);
 
+	hdd_update_regdb_offload_config(hdd_ctx);
+
 	return ret;
 }
 

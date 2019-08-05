@@ -1492,3 +1492,20 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 	return 0;
 }
 #endif
+
+void hdd_update_regdb_offload_config(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+	bool ignore_fw_reg_offload_ind = false;
+
+	status = ucfg_mlme_get_ignore_fw_reg_offload_ind(
+						hdd_ctx->psoc,
+						&ignore_fw_reg_offload_ind);
+	if (!ignore_fw_reg_offload_ind) {
+		hdd_debug("regdb offload is based on firmware capability");
+		return;
+	}
+
+	hdd_debug("Ignore regdb offload Indication from FW");
+	ucfg_set_ignore_fw_reg_offload_ind(hdd_ctx->psoc);
+}
