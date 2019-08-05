@@ -70,6 +70,8 @@
 
 #define CDP_MAX_RX_RINGS 4  /* max rx rings */
 #define CDP_MAX_TX_COMP_RINGS 3  /* max tx completion rings */
+#define CDP_MAX_TX_TQM_STATUS 9  /* max tx tqm completion status */
+#define CDP_MAX_TX_HTT_STATUS 7  /* max tx htt completion status */
 
 /* TID level VoW stats macros
  * to add and get stats
@@ -347,6 +349,8 @@ struct cdp_delay_stats {
  * @success_cnt: total successful transmit count
  * @comp_fail_cnt: firmware drop found in tx completion path
  * @swdrop_cnt: software drop in tx path
+ * @tqm_status_cnt: TQM completion status count
+ * @htt_status_cnt: HTT completion status count
  */
 struct cdp_tid_tx_stats {
 	struct cdp_delay_stats swq_delay;
@@ -355,6 +359,8 @@ struct cdp_tid_tx_stats {
 	uint64_t success_cnt;
 	uint64_t comp_fail_cnt;
 	uint64_t swdrop_cnt[TX_MAX_DROP];
+	uint64_t tqm_status_cnt[CDP_MAX_TX_TQM_STATUS];
+	uint64_t htt_status_cnt[CDP_MAX_TX_HTT_STATUS];
 };
 
 /*

@@ -256,6 +256,8 @@ enum hal_tx_encap_type {
  *				remove reason is fw_reason2
  * @HAL_TX_TQM_RR_FW_REASON3 : Remove command where fw indicated that
  *				remove reason is fw_reason3
+ * @HAL_TX_TQM_RR_REM_CMD_DISABLE_QUEUE : Remove command where fw indicated that
+ *				remove reason is remove disable queue
  */
 enum hal_tx_tqm_release_reason {
 	HAL_TX_TQM_RR_FRAME_ACKED,
@@ -266,6 +268,7 @@ enum hal_tx_tqm_release_reason {
 	HAL_TX_TQM_RR_FW_REASON1,
 	HAL_TX_TQM_RR_FW_REASON2,
 	HAL_TX_TQM_RR_FW_REASON3,
+	HAL_TX_TQM_RR_REM_CMD_DISABLE_QUEUE,
 };
 
 /* enum - Table IDs for 2 DSCP-TID mapping Tables that TCL H/W supports

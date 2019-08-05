@@ -2852,12 +2852,13 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 				peer->stats.tx.dropped.fw_reason2 +
 				peer->stats.tx.dropped.fw_reason3;
 
-	if (ts->status != HAL_TX_TQM_RR_FRAME_ACKED) {
-		tid_stats->comp_fail_cnt++;
-		return;
+	if (ts->status < CDP_MAX_TX_TQM_STATUS) {
+		tid_stats->tqm_status_cnt[ts->status]++;
 	}
 
-	tid_stats->success_cnt++;
+	if (ts->status != HAL_TX_TQM_RR_FRAME_ACKED) {
+		return;
+	}
 
 	DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
 
@@ -3327,11 +3328,8 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status,
 
 		if (qdf_unlikely(pdev->delay_stats_flag))
 			dp_tx_compute_delay(vdev, tx_desc, tid, ring_id);
-		if (qdf_unlikely(tx_status != HTT_TX_FW2WBM_TX_STATUS_OK)) {
-			ts.status = HAL_TX_TQM_RR_REM_CMD_REM;
-			tid_stats->comp_fail_cnt++;
-		} else {
-			tid_stats->success_cnt++;
+		if (tx_status < CDP_MAX_TX_HTT_STATUS) {
+			tid_stats->htt_status_cnt[tx_status]++;
 		}
 
 		peer = dp_peer_find_by_id(soc, ts.peer_id);

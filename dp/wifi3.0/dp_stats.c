@@ -4097,7 +4097,7 @@ dp_accumulate_tid_stats(struct dp_pdev *pdev, uint8_t tid,
 			struct cdp_tid_tx_stats *total_tx,
 			struct cdp_tid_rx_stats *total_rx, uint8_t type)
 {
-	uint8_t ring_id = 0, drop = 0;
+	uint8_t ring_id = 0, drop = 0, tqm_status_idx = 0, htt_status_idx = 0;
 	struct cdp_tid_stats *tid_stats = &pdev->stats.tid_stats;
 	struct cdp_tid_tx_stats *per_ring_tx = NULL;
 	struct cdp_tid_rx_stats *per_ring_rx = NULL;
@@ -4119,7 +4119,16 @@ dp_accumulate_tid_stats(struct dp_pdev *pdev, uint8_t tid,
 		for (ring_id = 0; ring_id < CDP_MAX_TX_COMP_RINGS; ring_id++) {
 			per_ring_tx = &tid_stats->tid_tx_stats[ring_id][tid];
 			total_tx->success_cnt += per_ring_tx->success_cnt;
-			total_tx->comp_fail_cnt += per_ring_tx->comp_fail_cnt;
+			for (tqm_status_idx = 0; tqm_status_idx < CDP_MAX_TX_TQM_STATUS; tqm_status_idx++) {
+				total_tx->tqm_status_cnt[tqm_status_idx] +=
+					per_ring_tx->tqm_status_cnt[tqm_status_idx];
+			}
+
+			for (htt_status_idx = 0; htt_status_idx < CDP_MAX_TX_HTT_STATUS; htt_status_idx++) {
+				total_tx->htt_status_cnt[htt_status_idx] +=
+					per_ring_tx->htt_status_cnt[htt_status_idx];
+			}
+
 			for (drop = 0; drop < TX_MAX_DROP; drop++)
 				total_tx->swdrop_cnt[drop] +=
 					per_ring_tx->swdrop_cnt[drop];
@@ -4170,7 +4179,7 @@ void dp_pdev_print_tid_stats(struct dp_pdev *pdev)
 {
 	struct cdp_tid_tx_stats total_tx;
 	struct cdp_tid_rx_stats total_rx;
-	uint8_t tid;
+	uint8_t tid, tqm_status_idx, htt_status_idx;
 
 	DP_PRINT_STATS("Packets received in hardstart: %llu ",
 			pdev->stats.tid_stats.ingress_stack);
@@ -4182,9 +4191,24 @@ void dp_pdev_print_tid_stats(struct dp_pdev *pdev)
 		dp_accumulate_tid_stats(pdev, tid, &total_tx, &total_rx,
 					TID_COUNTER_STATS);
 		DP_PRINT_STATS("----TID: %d----", tid);
-		DP_PRINT_STATS("Tx Success Count: %llu", total_tx.success_cnt);
-		DP_PRINT_STATS("Tx Firmware Drop Count: %llu",
-				total_tx.comp_fail_cnt);
+		DP_PRINT_STATS("Tx TQM Success Count: %llu",
+				total_tx.tqm_status_cnt[HAL_TX_TQM_RR_FRAME_ACKED]);
+		DP_PRINT_STATS("Tx HTT Success Count: %llu",
+				total_tx.htt_status_cnt[HTT_TX_FW2WBM_TX_STATUS_OK]);
+		for (tqm_status_idx = 1; tqm_status_idx < CDP_MAX_TX_TQM_STATUS; tqm_status_idx++) {
+			if (total_tx.tqm_status_cnt[tqm_status_idx]) {
+				DP_PRINT_STATS("Tx TQM Drop Count[%d]: %llu",
+						tqm_status_idx, total_tx.tqm_status_cnt[tqm_status_idx]);
+			}
+		}
+
+		for (htt_status_idx = 1; htt_status_idx < CDP_MAX_TX_HTT_STATUS; htt_status_idx++) {
+			if (total_tx.htt_status_cnt[htt_status_idx]) {
+				DP_PRINT_STATS("Tx HTT Drop Count[%d]: %llu",
+						htt_status_idx, total_tx.htt_status_cnt[htt_status_idx]);
+			}
+		}
+
 		DP_PRINT_STATS("Tx Hardware Drop Count: %llu",
 			       total_tx.swdrop_cnt[TX_HW_ENQUEUE]);
 		DP_PRINT_STATS("Tx Software Drop Count: %llu",
