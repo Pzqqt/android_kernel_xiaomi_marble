@@ -244,18 +244,16 @@ int hdd_post_dhcp_ind(struct hdd_adapter *adapter,
 		      uint8_t sta_id, uint16_t type);
 
 /**
- * hdd_inspect_dhcp_packet() -  Inspect DHCP packet
+ * hdd_softap_inspect_dhcp_packet() -  Inspect DHCP packet
  * @adapter: pointer to hdd adapter
- * @sta_id: peer station ID
  * @skb: pointer to OS packet (sk_buff)
  * @dir: direction
  *
  * Return: error number
  */
-int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
-			    uint8_t sta_id,
-			    struct sk_buff *skb,
-			    enum qdf_proto_dir dir);
+int hdd_softap_inspect_dhcp_packet(struct hdd_adapter *adapter,
+				   struct sk_buff *skb,
+				   enum qdf_proto_dir dir);
 #else
 static inline
 int hdd_post_dhcp_ind(struct hdd_adapter *adapter,
@@ -265,14 +263,12 @@ int hdd_post_dhcp_ind(struct hdd_adapter *adapter,
 }
 
 static inline
-int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
-			    uint8_t sta_id,
-			    struct sk_buff *skb,
-			    enum qdf_proto_dir dir)
+int hdd_softap_inspect_dhcp_packet(struct hdd_adapter *adapter,
+				   struct sk_buff *skb,
+				   enum qdf_proto_dir dir)
 {
 	return 0;
 }
-
 #endif
 
 #endif /* end #if !defined(WLAN_HDD_SOFTAP_TX_RX_H) */
