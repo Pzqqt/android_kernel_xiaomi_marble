@@ -8238,7 +8238,11 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 					status);
 				fCallCallback = true;
 			}
-		} else if (status != QDF_STATUS_E_EXISTS) {
+		} else if (status == QDF_STATUS_E_EXISTS &&
+			   pProfile->BSSIDs.numOfBSSIDs) {
+			sme_debug("Scan entries removed either due to rssi reject or assoc disallowed");
+			fCallCallback = true;
+		} else {
 			/* scan for this SSID */
 			status = csr_scan_for_ssid(mac, sessionId, pProfile,
 						roamId, true);
@@ -8249,9 +8253,6 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 			} else {
 				sme_debug("SSID scan requested");
 			}
-		} else {
-			sme_debug("Scan entries removed either due to rssi reject or assoc disallowed");
-			fCallCallback = true;
 		}
 	} else {
 		fCallCallback = true;

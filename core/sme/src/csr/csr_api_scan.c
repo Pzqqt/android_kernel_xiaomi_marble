@@ -2772,7 +2772,7 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 	qdf_list_t *list = NULL;
 	struct scan_filter *filter = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
-	uint32_t num_bss;
+	uint32_t num_bss = 0;
 
 	if (results)
 		*results = CSR_INVALID_SCANRESULT_HANDLE;
@@ -2800,16 +2800,20 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 
 	list = ucfg_scan_get_result(pdev,
 		    pFilter ? filter : NULL);
-	if (list)
-		sme_debug("num_entries %d", qdf_list_size(list));
-
+	if (list) {
+		num_bss = qdf_list_size(list);
+		sme_debug("num_entries %d", num_bss);
+	}
 	/* Filter the scan list with the blacklist, rssi reject, avoided APs */
 	if (pFilter && pFilter->csrPersona == QDF_STA_MODE)
 		wlan_blm_filter_bssid(pdev, list);
 
 	if (!list || (list && !qdf_list_size(list))) {
 		sme_debug("scan list empty");
-		status = QDF_STATUS_E_NULL_VALUE;
+		if (num_bss)
+			status = QDF_STATUS_E_EXISTS;
+		else
+			status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
 	}
 
@@ -2823,9 +2827,6 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 	ret_list->pCurEntry = NULL;
 	status = csr_parse_scan_list(mac_ctx,
 		ret_list, list);
-	num_bss = csr_ll_count(&ret_list->List);
-	sme_debug("status: %d No of BSS: %d",
-		  status, num_bss);
 	if (QDF_IS_STATUS_ERROR(status) || !results)
 		/* Fail or No one wants the result. */
 		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
