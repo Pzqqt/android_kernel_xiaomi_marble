@@ -582,7 +582,15 @@ ol_tx_hl_base(
 			tx_msdu_info.htt.info.vdev_id = vdev->vdev_id;
 			tx_msdu_info.htt.info.frame_type = htt_frm_type_data;
 			tx_msdu_info.htt.info.l2_hdr_type = pdev->htt_pkt_type;
-			tx_msdu_info.htt.action.tx_comp_req = tx_comp_req;
+
+			if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(msdu)
+									== 1) {
+				tx_msdu_info.htt.action.tx_comp_req = 1;
+				tx_desc->pkt_type = OL_TX_FRM_NO_FREE;
+			} else {
+				tx_msdu_info.htt.action.tx_comp_req =
+								tx_comp_req;
+			}
 
 			/* If the vdev is in OCB mode,
 			 * parse the tx control header.
