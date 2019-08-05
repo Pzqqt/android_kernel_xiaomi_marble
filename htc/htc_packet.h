@@ -78,6 +78,7 @@ struct htc_tx_packet_info {
 
 
 #define HTC_TX_PACKET_FLAG_FIXUP_NETBUF (1 << 0)
+#define HTC_TX_PACKET_FLAG_HTC_HEADER_IN_NETBUF_DATA (1 << 1)
 
 /**
  * struct htc_rx_packet_info - HTC RX Packet information

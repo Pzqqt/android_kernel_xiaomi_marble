@@ -112,8 +112,10 @@ static inline void restore_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 		qdf_nbuf_unmap(target->osdev, netbuf, QDF_DMA_TO_DEVICE);
 		pPacket->PktInfo.AsTx.Flags &= ~HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
 	}
-
-	qdf_nbuf_pull_head(netbuf, sizeof(HTC_FRAME_HDR));
+	if (pPacket->PktInfo.AsTx.Flags &
+		HTC_TX_PACKET_FLAG_HTC_HEADER_IN_NETBUF_DATA) {
+		qdf_nbuf_pull_head(netbuf, sizeof(HTC_FRAME_HDR));
+	}
 }
 
 static void send_packet_completion(HTC_TARGET *target, HTC_PACKET *pPacket)
@@ -1484,6 +1486,8 @@ static inline QDF_STATUS __htc_send_pkt(HTC_HANDLE HTCHandle,
 		return QDF_STATUS_E_INVAL;
 
 	qdf_nbuf_push_head(netbuf, sizeof(HTC_FRAME_HDR));
+	pPacket->PktInfo.AsTx.Flags |=
+		HTC_TX_PACKET_FLAG_HTC_HEADER_IN_NETBUF_DATA;
 	/* setup HTC frame header */
 	htc_hdr = (HTC_FRAME_HDR *)qdf_nbuf_get_frag_vaddr(netbuf, 0);
 	AR_DEBUG_ASSERT(htc_hdr);
