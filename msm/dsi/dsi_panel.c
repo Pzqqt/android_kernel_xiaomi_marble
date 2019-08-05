@@ -2628,7 +2628,7 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 	rc = utils->read_u32(utils->data, "qcom,mdss-pps-delay-ms", &data);
 	if (rc) {
 		DSI_DEBUG("pps-delay-ms not specified, defaulting to 0\n");
-		priv_info->dsc.pps_delay_ms = 0;
+		data = 0;
 	}
 	priv_info->dsc.pps_delay_ms = data;
 
