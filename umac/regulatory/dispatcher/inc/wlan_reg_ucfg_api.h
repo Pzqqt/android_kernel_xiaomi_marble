@@ -371,4 +371,13 @@ struct wlan_psoc_host_hal_reg_capabilities_ext *ucfg_reg_get_hal_reg_cap(
 QDF_STATUS ucfg_reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
 			struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap,
 			uint16_t phy_cnt);
+
+/**
+ * ucfg_set_ignore_fw_reg_offload_ind() - API to set ignore regdb offload ind
+ * @psoc: psoc ptr
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_set_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc);
+
 #endif

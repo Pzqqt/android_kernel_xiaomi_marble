@@ -328,3 +328,8 @@ void ucfg_reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
 	reg_restore_cached_channels(pdev);
 }
 #endif
+
+QDF_STATUS ucfg_set_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc)
+{
+	return reg_set_ignore_fw_reg_offload_ind(psoc);
+}

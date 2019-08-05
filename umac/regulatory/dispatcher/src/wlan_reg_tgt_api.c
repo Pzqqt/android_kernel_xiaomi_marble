@@ -70,3 +70,8 @@ QDF_STATUS tgt_reg_process_ch_avoid_event(struct wlan_objmgr_psoc *psoc,
 {
 	return reg_process_ch_avoid_event(psoc, ch_avoid_evnt);
 }
+
+bool tgt_reg_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc)
+{
+	return reg_get_ignore_fw_reg_offload_ind(psoc);
+}

@@ -28,9 +28,18 @@
 bool tgt_if_regulatory_is_11d_offloaded(struct wlan_objmgr_psoc *psoc)
 {
 	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
+
+	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
 
 	if (!wmi_handle)
 		return false;
+
+	if (reg_rx_ops->reg_ignore_fw_reg_offload_ind &&
+		reg_rx_ops->reg_ignore_fw_reg_offload_ind(psoc)) {
+		target_if_debug("Ignore fw reg 11d offload indication");
+		return 0;
+	}
 
 	return wmi_service_enabled(wmi_handle, wmi_service_11d_offload);
 }
