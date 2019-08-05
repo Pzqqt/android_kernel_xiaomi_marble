@@ -251,11 +251,12 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 #ifdef FEATURE_WLAN_ESE
 /**
  * sme_ese_send_beacon_req_scan_results () - Send beacon report
- * @mac_ctx  Pointer to mac context
- * @session_id - session id
- * @result_arr scan results
- * @msrmnt_status flag to indicate that the measurement is done.
- * @bss_count  number of bss found
+ * @mac_ctx: Pointer to mac context
+ * @session_id: session id
+ * @freq: channel frequency
+ * @result_arr: scan results
+ * @msrmnt_status: flag to indicate that the measurement is done.
+ * @bss_count:  number of bss found
  *
  * This function sends up the scan results received as a part of
  * beacon request scanning.
@@ -267,7 +268,7 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
  */
 static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 	struct mac_context *mac_ctx, uint32_t session_id,
-	uint8_t channel, tCsrScanResultInfo **result_arr,
+	uint32_t freq, tCsrScanResultInfo **result_arr,
 	uint8_t msrmnt_status, uint8_t bss_count)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -309,7 +310,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 
 		for (i = 0; i < rrm_ctx->eseBcnReqInfo.numBcnReqIe; i++) {
 			if (rrm_ctx->eseBcnReqInfo.bcnReq[i].channel ==
-				channel) {
+				wlan_reg_freq_to_chan(mac_ctx->pdev, freq)) {
 				cur_meas_req =
 					&rrm_ctx->eseBcnReqInfo.bcnReq[i];
 				break;
@@ -318,8 +319,8 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 		if (cur_meas_req)
 			bcn_report->measurementToken =
 				cur_meas_req->measurementToken;
-		sme_debug("Channel: %d MeasToken: %d", channel,
-			bcn_report->measurementToken);
+		sme_debug("freq: %d MeasToken: %d", freq,
+			  bcn_report->measurementToken);
 
 		j = 0;
 		while (cur_result) {
@@ -507,7 +508,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 #ifdef FEATURE_WLAN_ESE
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource)
 			status = sme_ese_send_beacon_req_scan_results(mac_ctx,
-					session_id, chan_list[0],
+					session_id, freq_list[0],
 					NULL, measurementdone, 0);
 		else
 #endif /* FEATURE_WLAN_ESE */
@@ -521,7 +522,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource) {
 			status = sme_ese_send_beacon_req_scan_results(mac_ctx,
 					session_id,
-					chan_list[0],
+					freq_list[0],
 					NULL,
 					measurementdone,
 					0);
@@ -617,7 +618,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 #ifdef FEATURE_WLAN_ESE
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource)
 			status = sme_ese_send_beacon_req_scan_results(mac_ctx,
-					session_id, chan_list[0],
+					session_id, freq_list[0],
 					scanresults_arr, measurementdone,
 					counter);
 		else
@@ -799,7 +800,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 		uint64_t current_time;
 		struct scan_start_request *req;
 		struct wlan_objmgr_vdev *vdev;
-		uint32_t chan_num;
+		uint32_t freq;
 
 		req = qdf_mem_malloc(sizeof(*req));
 		if (!req) {
@@ -891,14 +892,13 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 
 		/* set requestType to full scan */
 		req->scan_req.chan_list.num_chan = 1;
-		chan_num = sme_rrm_ctx->channelList.ChannelList[
+		freq = sme_rrm_ctx->channelList.freq_list[
 			   sme_rrm_ctx->currentIndex];
-		req->scan_req.chan_list.chan[0].freq =
-			wlan_chan_to_freq(chan_num);
-		sme_debug("active duration %d passive %d On channel %d freq %d",
+		req->scan_req.chan_list.chan[0].freq = freq;
+		sme_debug("active duration %d passive %d On freq %d",
 			  req->scan_req.dwell_time_active,
 			  req->scan_req.dwell_time_passive,
-			  chan_num, req->scan_req.chan_list.chan[0].freq);
+			  req->scan_req.chan_list.chan[0].freq);
 		/*
 		 * Fill RRM scan type for these requests. This is done
 		 * because in scan concurrency update params we update the
@@ -963,7 +963,8 @@ free_ch_lst:
 	return status;
 }
 
-static QDF_STATUS sme_rrm_fill_scan_channels(uint8_t *country,
+static QDF_STATUS sme_rrm_fill_scan_channels(struct mac_context *mac,
+					     uint8_t *country,
 					     tpRrmSMEContext sme_rrm_context,
 					     uint8_t reg_class,
 					     uint32_t num_channels)
@@ -981,8 +982,10 @@ static QDF_STATUS sme_rrm_fill_scan_channels(uint8_t *country,
 	freq_list = sme_rrm_context->channelList.freq_list;
 
 	for (i = 0; i < num_channels; i++) {
+		uint8_t chan = (uint8_t)wlan_reg_freq_to_chan(mac->pdev,
+							      freq_list[i]);
 		op_class = wlan_reg_dmn_get_opclass_from_channel(country,
-								 chan_list[i],
+								 chan,
 								 BWALL);
 
 		if (op_class == reg_class) {
@@ -1100,13 +1103,13 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 
 		csr_get_cfg_valid_channels(mac, pSmeRrmContext->channelList.
 					ChannelList, &len);
-		sme_chan_to_freq_list(mac->pdev,
-				      pSmeRrmContext->channelList.freq_list,
-				      pSmeRrmContext->channelList.ChannelList,
-				      len);
+		csr_get_cfg_valid_freqs(mac,
+					pSmeRrmContext->channelList.freq_list,
+					&len);
 
 		if (pBeaconReq->channelInfo.regulatoryClass) {
-			if (sme_rrm_fill_scan_channels(country, pSmeRrmContext,
+			if (sme_rrm_fill_scan_channels(mac, country,
+						       pSmeRrmContext,
 						       pBeaconReq->channelInfo.
 						       regulatoryClass, len) !=
 			    QDF_STATUS_SUCCESS)
@@ -1144,7 +1147,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 		}
 		pSmeRrmContext->channelList.freq_list =
 			qdf_mem_malloc(sizeof(uint32_t) * len);
-		if (!pSmeRrmContext->channelList.ChannelList) {
+		if (!pSmeRrmContext->channelList.freq_list) {
 			qdf_mem_free(pSmeRrmContext->channelList.ChannelList);
 			pSmeRrmContext->channelList.ChannelList = NULL;
 			status = QDF_STATUS_E_NOMEM;

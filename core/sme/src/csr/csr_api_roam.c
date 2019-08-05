@@ -13406,6 +13406,27 @@ QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac, uint8_t *pChannel
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS csr_get_cfg_valid_freqs(struct mac_context *mac,
+				   uint32_t *freq_list,
+				   uint32_t *num_of_freq)
+{
+	uint8_t num_chan_temp = 0;
+	int i;
+	uint8_t chan;
+
+	for (i = 0; i < mac->mlme_cfg->reg.valid_channel_list_num; i++) {
+		chan = mac->mlme_cfg->reg.valid_channel_list[i];
+		if (!wlan_reg_is_dsrc_chan(mac->pdev, chan)) {
+			freq_list[num_chan_temp] =
+				wlan_reg_chan_to_freq(mac->pdev, chan);
+			num_chan_temp++;
+		}
+	}
+
+	*num_of_freq = num_chan_temp;
+	return QDF_STATUS_SUCCESS;
+}
+
 int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint8_t channel)
 {
 	uint32_t cfg_length = 0;
