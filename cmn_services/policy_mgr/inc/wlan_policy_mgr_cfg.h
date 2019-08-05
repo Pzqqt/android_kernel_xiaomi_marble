@@ -415,11 +415,15 @@ CFG_INI_UINT("g_sta_sap_scc_on_dfs_chan", 0, 2, 0, CFG_VALUE_OR_DEFAULT, \
  * <ini>
  * gForce1x1Exception - force 1x1 when connecting to certain peer
  * @Min: 0
- * @Max: 1
- * @Default: 0
+ * @Max: 2
+ * @Default: 2
  *
  * This INI when enabled will force 1x1 connection with certain peer.
- *
+ * The implementation for this ini would be as follows:-
+ * Value 0: Even if the AP is present in OUI, 1x1 will not be forced
+ * Value 1: If antenna sharing supported, then only do 1x1.
+ * Value 2: If AP present in OUI, force 1x1 connection.
+
  *
  * Related: None
  *
@@ -431,7 +435,7 @@ CFG_INI_UINT("g_sta_sap_scc_on_dfs_chan", 0, 2, 0, CFG_VALUE_OR_DEFAULT, \
  */
 
 #define CFG_FORCE_1X1_FEATURE \
-CFG_INI_UINT("gForce1x1Exception", 0, 1, 1, CFG_VALUE_OR_DEFAULT, \
+CFG_INI_UINT("gForce1x1Exception", 0, 1, 2, CFG_VALUE_OR_DEFAULT, \
 	     "force 1x1 when connecting to certain peer")
 
 /*

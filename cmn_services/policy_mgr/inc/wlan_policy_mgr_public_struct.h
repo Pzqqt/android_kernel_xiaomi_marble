@@ -139,6 +139,18 @@ enum hw_mode_mac_band_cap {
 };
 
 /**
+ * enum force_1x1_type - enum to specify the type of forced 1x1 ini provided.
+ * @FORCE_1X1_DISABLED: even if the AP is present in OUI, 1x1 will not be forced
+ * @FORCE_1X1_ENABLED_FOR_AS: If antenna sharing supported, then only do 1x1.
+ * @FORCE_1X1_ENABLED_FORCED: If AP present in OUI, force 1x1 connection.
+ */
+enum force_1x1_type {
+	FORCE_1X1_DISABLED,
+	FORCE_1X1_ENABLED_FOR_AS,
+	FORCE_1X1_ENABLED_FORCED,
+};
+
+/**
  * enum policy_mgr_pcl_group_id - Identifies the pcl groups to be used
  * @POLICY_MGR_PCL_GROUP_ID1_ID2: Use weights of group1 and group2
  * @POLICY_MGR_PCL_GROUP_ID2_ID3: Use weights of group2 and group3
