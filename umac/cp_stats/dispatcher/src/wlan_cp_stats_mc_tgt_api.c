@@ -110,14 +110,15 @@ static void tgt_mc_cp_stats_extract_tx_power(struct wlan_objmgr_psoc *psoc,
 	pdev_mc_stats = pdev_cp_stats_priv->pdev_stats;
 	max_pwr = pdev_mc_stats->max_pwr = ev->pdev_stats[pdev_id].max_pwr;
 	wlan_cp_stats_pdev_obj_unlock(pdev_cp_stats_priv);
-
 	if (is_station_stats)
 		goto end;
 
-	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_CONNECTION_TX_POWER);
-	if (last_req.u.get_tx_power_cb)
-		last_req.u.get_tx_power_cb(max_pwr, last_req.cookie);
-
+	if (tgt_mc_cp_stats_is_last_event(ev)) {
+		ucfg_mc_cp_stats_reset_pending_req(psoc,
+						   TYPE_CONNECTION_TX_POWER);
+		if (last_req.u.get_tx_power_cb)
+			last_req.u.get_tx_power_cb(max_pwr, last_req.cookie);
+	}
 end:
 	if (vdev)
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);

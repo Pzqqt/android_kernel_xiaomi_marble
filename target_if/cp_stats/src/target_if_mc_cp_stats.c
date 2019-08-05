@@ -34,9 +34,6 @@
 #include <wlan_cp_stats_utils_api.h>
 #include <wlan_cp_stats_mc_tgt_api.h>
 #include "../../../umac/cmn_services/utils/inc/wlan_utility.h"
-#ifdef WLAN_POLICY_MGR_ENABLE
-#include <wlan_policy_mgr_api.h>
-#endif
 
 static void target_if_cp_stats_free_stats_event(struct stats_event *ev)
 {
@@ -598,30 +595,6 @@ static uint32_t get_stats_id(enum stats_req_type type)
 	return 0;
 }
 
-#ifdef WLAN_POLICY_MGR_ENABLE
-static void
-target_if_cp_stats_update_pdev_id(struct stats_request_params *param,
-				  struct wlan_objmgr_psoc *psoc,
-				  uint32_t vdev_id)
-{
-	uint8_t pdev_id;
-	QDF_STATUS status;
-
-	status = policy_mgr_get_mac_id_by_session_id(psoc, vdev_id, &pdev_id);
-	if (!QDF_IS_STATUS_ERROR(status))
-		param->pdev_id = pdev_id + 1;
-
-	cp_stats_debug("pdev id is %d", param->pdev_id);
-}
-#else
-static void
-target_if_cp_stats_update_pdev_id(struct stats_request_params *data,
-				  struct wlan_objmgr_psoc *psoc,
-				  uint32_t vdev_id)
-{
-}
-#endif
-
 /**
  * target_if_cp_stats_send_stats_req() - API to send stats request to wmi
  * @psoc: pointer to psoc object
@@ -647,7 +620,6 @@ static QDF_STATUS target_if_cp_stats_send_stats_req(
 	param.stats_id = get_stats_id(type);
 	param.vdev_id = req->vdev_id;
 	param.pdev_id = req->pdev_id;
-	target_if_cp_stats_update_pdev_id(&param, psoc, req->vdev_id);
 
 	return wmi_unified_stats_request_send(wmi_handle, req->peer_mac_addr,
 					      &param);

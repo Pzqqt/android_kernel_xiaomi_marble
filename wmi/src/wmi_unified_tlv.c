@@ -2040,8 +2040,9 @@ static QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 			       (wmi_request_stats_cmd_fixed_param));
 	cmd->stats_id = param->stats_id;
 	cmd->vdev_id = param->vdev_id;
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+	cmd->pdev_id = wmi_handle->ops->convert_host_pdev_id_to_target(
 							param->pdev_id);
+
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
 
 	WMI_LOGD("STATS REQ STATS_ID:%d VDEV_ID:%d PDEV_ID:%d-->",
