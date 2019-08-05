@@ -2257,4 +2257,15 @@ mlme_get_peer_phymode(struct wlan_objmgr_psoc *psoc, uint8_t *mac,
  */
 QDF_STATUS mlme_set_tgt_wpa3_roam_cap(struct wlan_objmgr_psoc *psoc,
 				      uint32_t akm_bitmap);
+/**
+ * wlan_mlme_get_ignore_fw_reg_offload_ind() - Get the
+ * ignore_fw_reg_offload_ind ini
+ * @psoc: pointer to psoc object
+ * @disabled: output pointer to hold user config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc,
+					bool *disabled);
 #endif /* _WLAN_MLME_API_H_ */

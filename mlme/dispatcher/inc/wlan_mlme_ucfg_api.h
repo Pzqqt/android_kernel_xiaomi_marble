@@ -3920,4 +3920,19 @@ bool ucfg_mlme_validate_full_roam_scan_period(uint32_t full_roam_scan_period);
  * Return: True if roam_scan_period is in expected range, false otherwise.
  */
 bool ucfg_mlme_validate_scan_period(uint32_t roam_scan_period);
+/**
+ * ucfg_mlme_get_ignore_fw_reg_offload_ind() - Get the
+ * ignore_fw_reg_offload_ind ini
+ * @psoc: pointer to psoc object
+ * @disabled: output pointer to hold user config
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc,
+					bool *disabled)
+{
+	return wlan_mlme_get_ignore_fw_reg_offload_ind(psoc, disabled);
+}
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */

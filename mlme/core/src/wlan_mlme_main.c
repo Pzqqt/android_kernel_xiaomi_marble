@@ -2283,6 +2283,10 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 	reg->enable_11d_in_world_mode = cfg_get(psoc,
 						CFG_ENABLE_11D_IN_WORLD_MODE);
 	reg->scan_11d_interval = cfg_get(psoc, CFG_SCAN_11D_INTERVAL);
+	reg->ignore_fw_reg_offload_ind = cfg_get(
+						psoc,
+						CFG_IGNORE_FW_REG_OFFLOAD_IND);
+
 	qdf_uint8_array_parse(cfg_default(CFG_VALID_CHANNEL_LIST),
 			      channel_list,
 			      CFG_VALID_CHANNEL_LIST_LEN,

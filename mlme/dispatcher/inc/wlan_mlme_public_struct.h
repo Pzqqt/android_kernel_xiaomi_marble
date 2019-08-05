@@ -2107,6 +2107,7 @@ struct wlan_mlme_mwc {
  * @avoid_acs_freq_list: List of the frequencies which need to be avoided
  * during acs
  * @avoid_acs_freq_list_num: Number of the frequencies to be avoided during acs
+ * @ignore_fw_reg_offload_ind: Ignore fw regulatory offload indication
  */
 struct wlan_mlme_reg {
 	uint32_t self_gen_frm_pwr;
@@ -2124,6 +2125,7 @@ struct wlan_mlme_reg {
 	uint16_t avoid_acs_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t avoid_acs_freq_list_num;
 #endif
+	bool ignore_fw_reg_offload_ind;
 };
 
 /**
