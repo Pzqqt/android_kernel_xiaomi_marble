@@ -1769,6 +1769,7 @@ typedef struct {
 #define HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS 4
 #define HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS 8
 #define HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS 74
+#define HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS 8
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1790,6 +1791,18 @@ typedef struct {
     A_UINT32 ax_ul_ofdma_bsr_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
     A_UINT32 ax_ul_ofdma_bar_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
     A_UINT32 ax_ul_ofdma_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+
+    /* UL MUMIMO */
+    /*
+     * ax_ul_mumimo_basic_sch_nusers[i] is the number of basic triggers sent
+     * for (i+1) users
+     */
+    A_UINT32 ax_ul_mumimo_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
+    /*
+     * ax_ul_mumimo_brp_sch_nusers[i] is the number of brp triggers sent
+     * for (i+1) users
+     */
+    A_UINT32 ax_ul_mumimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
 } htt_tx_pdev_mu_mimo_sch_stats_tlv;
 
 typedef struct {
