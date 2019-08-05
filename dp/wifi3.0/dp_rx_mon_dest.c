@@ -1522,6 +1522,15 @@ void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev)
 		mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
 						      pdev->pdev_id);
 
+		/*
+		 * Map mac_for_pdev appropriately for both MCL & WIN,
+		 * since MCL have multiple mon buf rings and WIN just
+		 * has one mon buffer ring, below API helps identify
+		 * accurate buffer_ring for both cases
+		 *
+		 */
+		mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_for_pdev);
+
 		dp_rx_buffers_replenish(soc, mac_for_pdev,
 					dp_rxdma_get_mon_buf_ring(pdev,
 								  mac_for_pdev),
