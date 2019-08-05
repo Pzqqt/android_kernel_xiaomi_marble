@@ -15502,14 +15502,19 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 				sme_debug("1x1 with 1 Chain AP");
 		}
 
-		if (mac->roam.configParam.is_force_1x1 &&
-		    mac->lteCoexAntShare &&
-		    is_vendor_ap_present) {
+		if (is_vendor_ap_present &&
+		    !policy_mgr_is_hw_dbs_2x2_capable(mac->psoc) &&
+		    ((mac->roam.configParam.is_force_1x1 ==
+		    FORCE_1X1_ENABLED_FOR_AS && mac->lteCoexAntShare) ||
+		    mac->roam.configParam.is_force_1x1 ==
+		    FORCE_1X1_ENABLED_FORCED)) {
 			pSession->supported_nss_1x1 = true;
 			pSession->vdev_nss = 1;
 			pSession->nss = 1;
 			pSession->nss_forced_1x1 = true;
-			sme_debug("For special ap, NSS: %d", pSession->nss);
+			sme_debug("For special ap, NSS: %d force 1x1 %d",
+				  pSession->nss,
+				  mac->roam.configParam.is_force_1x1);
 		}
 
 		csr_update_he_caps_mcs(mac->mlme_cfg, pSession);

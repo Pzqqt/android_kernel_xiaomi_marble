@@ -256,7 +256,7 @@ struct policy_mgr_cfg {
 	uint8_t allow_mcc_go_diff_bi;
 	uint8_t enable_overlap_chnl;
 	uint8_t dual_mac_feature;
-	uint8_t is_force_1x1_enable;
+	enum force_1x1_type is_force_1x1_enable;
 	uint8_t sta_sap_scc_on_dfs_chnl;
 	uint8_t sta_sap_scc_on_lte_coex_chnl;
 	uint8_t nan_sap_scc_on_lte_coex_chnl;
