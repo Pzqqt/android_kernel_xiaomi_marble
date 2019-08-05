@@ -1437,6 +1437,9 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	if (tchan_info->dfs_set)
 		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_DFS);
 
+	if (tchan_info->dfs_set_cfreq2)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_DFS_CFREQ2);
+
 	if (tchan_info->allow_vht)
 		WMI_SET_CHANNEL_FLAG(chan_info,
 				     WMI_CHAN_FLAG_ALLOW_VHT);
