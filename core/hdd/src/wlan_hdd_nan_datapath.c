@@ -196,7 +196,6 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	oper_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, operating_channel);
 
 	roam_profile->ChannelInfo.numOfChannels = 1;
-	roam_profile->ChannelInfo.ChannelList = &operating_channel;
 	roam_profile->ChannelInfo.freq_list = &oper_freq;
 
 	roam_profile->SSIDs.numOfSSIDs = 1;
@@ -227,7 +226,6 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 		hdd_info("sme_RoamConnect issued successfully for NDI");
 	}
 
-	roam_profile->ChannelInfo.ChannelList = NULL;
 	roam_profile->ChannelInfo.freq_list = NULL;
 	roam_profile->ChannelInfo.numOfChannels = 0;
 

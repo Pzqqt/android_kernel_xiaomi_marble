@@ -566,9 +566,6 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 	}
 	qdf_mem_copy(neighbor_roam_info->csrNeighborRoamProfile.BSSIDs.bssid,
 		     handoff_node.pBssDescription->bssId, sizeof(tSirMacAddr));
-	neighbor_roam_info->csrNeighborRoamProfile.ChannelInfo.ChannelList[0] =
-		wlan_reg_freq_to_chan(mac_ctx->pdev,
-				      handoff_node.pBssDescription->chan_freq);
 	neighbor_roam_info->csrNeighborRoamProfile.ChannelInfo.freq_list[0] =
 		handoff_node.pBssDescription->chan_freq;
 

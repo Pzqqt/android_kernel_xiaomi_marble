@@ -1902,7 +1902,6 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 			FL("Invalid channel list"));
 		return QDF_STATUS_E_FAULT;
 	}
-	sap_ctx->csr_roamProfile.ChannelInfo.ChannelList[0] = target_channel;
 	sap_ctx->csr_roamProfile.ChannelInfo.freq_list[0] =
 		wlan_reg_chan_to_freq(mac_ctx->pdev, target_channel);
 	/*

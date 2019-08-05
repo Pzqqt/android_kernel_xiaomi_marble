@@ -5935,10 +5935,6 @@ void csr_release_profile(struct mac_context *mac, struct csr_roam_profile *pProf
 			qdf_mem_free(pProfile->pAddIEAssoc);
 			pProfile->pAddIEAssoc = NULL;
 		}
-		if (pProfile->ChannelInfo.ChannelList) {
-			qdf_mem_free(pProfile->ChannelInfo.ChannelList);
-			pProfile->ChannelInfo.ChannelList = NULL;
-		}
 		if (pProfile->ChannelInfo.freq_list) {
 			qdf_mem_free(pProfile->ChannelInfo.freq_list);
 			pProfile->ChannelInfo.freq_list = NULL;
@@ -5954,10 +5950,6 @@ void csr_free_scan_filter(struct mac_context *mac, tCsrScanResultFilter
 	if (pScanFilter->BSSIDs.bssid) {
 		qdf_mem_free(pScanFilter->BSSIDs.bssid);
 		pScanFilter->BSSIDs.bssid = NULL;
-	}
-	if (pScanFilter->ChannelInfo.ChannelList) {
-		qdf_mem_free(pScanFilter->ChannelInfo.ChannelList);
-		pScanFilter->ChannelInfo.ChannelList = NULL;
 	}
 	if (pScanFilter->ChannelInfo.freq_list) {
 		qdf_mem_free(pScanFilter->ChannelInfo.freq_list);

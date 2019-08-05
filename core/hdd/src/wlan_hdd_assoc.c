@@ -5843,7 +5843,6 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 
 	/* Set the numOfChannels to zero to scan all the channels */
 	roam_profile->ChannelInfo.numOfChannels = 0;
-	roam_profile->ChannelInfo.ChannelList = NULL;
 	roam_profile->ChannelInfo.freq_list = NULL;
 
 	roam_profile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;

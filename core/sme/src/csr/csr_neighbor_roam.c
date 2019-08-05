@@ -237,12 +237,6 @@ static void csr_neighbor_roam_reset_channel_info(tpCsrNeighborRoamChannelInfo
 		rChInfo->currentChanIndex =
 			CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX;
 		rChInfo->currentChannelListInfo.numOfChannels = 0;
-
-		if (rChInfo->currentChannelListInfo.ChannelList)
-			qdf_mem_free(rChInfo->currentChannelListInfo.
-				     ChannelList);
-
-		rChInfo->currentChannelListInfo.ChannelList = NULL;
 		if (rChInfo->currentChannelListInfo.freq_list)
 			qdf_mem_free(rChInfo->currentChannelListInfo.freq_list);
 		rChInfo->currentChannelListInfo.freq_list = NULL;
@@ -448,20 +442,9 @@ csr_neighbor_roam_prepare_scan_profile_filter(struct mac_context *mac,
 		 * scanned
 		 */
 		pScanFilter->ChannelInfo.numOfChannels = num_ch;
-		pScanFilter->ChannelInfo.ChannelList =
-			qdf_mem_malloc(num_ch * sizeof(uint8_t));
-		if (!pScanFilter->ChannelInfo.ChannelList) {
-			qdf_mem_free(pScanFilter->BSSIDs.bssid);
-			pScanFilter->BSSIDs.bssid = NULL;
-			qdf_mem_free(pScanFilter->SSIDs.SSIDList);
-			pScanFilter->SSIDs.SSIDList = NULL;
-			return QDF_STATUS_E_NOMEM;
-		}
 		pScanFilter->ChannelInfo.freq_list =
 			qdf_mem_malloc(num_ch * sizeof(uint32_t));
 		if (!pScanFilter->ChannelInfo.freq_list) {
-			qdf_mem_free(pScanFilter->ChannelInfo.ChannelList);
-			pScanFilter->ChannelInfo.ChannelList = NULL;
 			pScanFilter->ChannelInfo.numOfChannels = 0;
 			qdf_mem_free(pScanFilter->BSSIDs.bssid);
 			pScanFilter->BSSIDs.bssid = NULL;
@@ -470,16 +453,12 @@ csr_neighbor_roam_prepare_scan_profile_filter(struct mac_context *mac,
 			return QDF_STATUS_E_NOMEM;
 		}
 		for (i = 0; i < pScanFilter->ChannelInfo.numOfChannels; i++) {
-			pScanFilter->ChannelInfo.ChannelList[i] =
-			  nbr_roam_info->roamChannelInfo.currentChannelListInfo.
-			  ChannelList[i];
 			pScanFilter->ChannelInfo.freq_list[i] =
 				nbr_roam_info->roamChannelInfo.
 				currentChannelListInfo.freq_list[i];
 		}
 	} else {
 		pScanFilter->ChannelInfo.numOfChannels = 0;
-		pScanFilter->ChannelInfo.ChannelList = NULL;
 		pScanFilter->ChannelInfo.freq_list = NULL;
 	}
 
@@ -1273,35 +1252,21 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 			FL("number of channels: %u"),
 			pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels);
 	if (pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels != 0) {
-		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList =
-		qdf_mem_malloc(mac->mlme_cfg->lfr.
-			       neighbor_scan_channel_list_num);
-
-		if (!pNeighborRoamInfo->cfgParams.channelInfo.ChannelList)
-			return QDF_STATUS_E_NOMEM;
 		pNeighborRoamInfo->cfgParams.channelInfo.freq_list =
 			qdf_mem_malloc(sizeof(uint32_t) *
 				       mac->mlme_cfg->lfr.
 				       neighbor_scan_channel_list_num);
 		if (!pNeighborRoamInfo->cfgParams.channelInfo.freq_list) {
-			qdf_mem_free(pNeighborRoamInfo->cfgParams.channelInfo.
-				     ChannelList);
-			pNeighborRoamInfo->cfgParams.channelInfo.ChannelList =
-				NULL;
 			pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels =
 				0;
 			return QDF_STATUS_E_NOMEM;
 		}
 
 	} else {
-		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
 		pNeighborRoamInfo->cfgParams.channelInfo.freq_list = NULL;
 	}
 
 	/* Update the roam global structure from CFG */
-	qdf_mem_copy(pNeighborRoamInfo->cfgParams.channelInfo.ChannelList,
-		     mac->mlme_cfg->lfr.neighbor_scan_channel_list,
-		     mac->mlme_cfg->lfr.neighbor_scan_channel_list_num);
 	sme_chan_to_freq_list(mac->pdev,
 			      pNeighborRoamInfo->cfgParams.channelInfo.
 			      freq_list,
@@ -1338,9 +1303,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("LL Open of roam able AP List failed");
 		qdf_mem_free(pNeighborRoamInfo->cfgParams.channelInfo.
-			     ChannelList);
-		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
-		qdf_mem_free(pNeighborRoamInfo->cfgParams.channelInfo.
 			     freq_list);
 		pNeighborRoamInfo->cfgParams.channelInfo.freq_list = NULL;
 		pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels = 0;
@@ -1351,8 +1313,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 		CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX;
 	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
 	numOfChannels = 0;
-	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList =
-		NULL;
 	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.freq_list =
 		NULL;
 	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
@@ -1360,10 +1320,8 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 	status = csr_neighbor_roam_init11r_assoc_info(mac);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("LL Open of roam able AP List failed");
-		qdf_mem_free(pNeighborRoamInfo->cfgParams.channelInfo.
-			     ChannelList);
-		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
 		pNeighborRoamInfo->cfgParams.channelInfo.freq_list = NULL;
+		pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels = 0;
 		csr_ll_close(&pNeighborRoamInfo->roamableAPList);
 		return QDF_STATUS_E_RESOURCES;
 	}
@@ -1399,14 +1357,10 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 		return;
 	}
 	cfg_params = &pNeighborRoamInfo->cfgParams;
-
-	if (cfg_params->channelInfo.ChannelList)
-		qdf_mem_free(cfg_params->channelInfo.ChannelList);
 	if (cfg_params->channelInfo.freq_list)
 		qdf_mem_free(cfg_params->channelInfo.freq_list);
-
-	pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
 	pNeighborRoamInfo->cfgParams.channelInfo.freq_list = NULL;
+	pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels = 0;
 
 	/* Should free up the nodes in the list before closing the
 	 * double Linked list
@@ -1417,12 +1371,9 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 
 	current_channel_list_info =
 		&pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo;
-	if (current_channel_list_info->ChannelList)
-		qdf_mem_free(current_channel_list_info->ChannelList);
 	if (current_channel_list_info->freq_list)
 		qdf_mem_free(current_channel_list_info->freq_list);
 
-	current_channel_list_info->ChannelList = NULL;
 	current_channel_list_info->freq_list = NULL;
 	pNeighborRoamInfo->roamChannelInfo.currentChanIndex =
 		CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX;
@@ -1541,32 +1492,17 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	}
 
 	profile->ChannelInfo.numOfChannels = 1;
-	if (!profile->ChannelInfo.ChannelList) {
-		profile->ChannelInfo.ChannelList =
-			qdf_mem_malloc(sizeof(*profile->
-				ChannelInfo.ChannelList) *
-				profile->ChannelInfo.numOfChannels);
-		if (!profile->ChannelInfo.ChannelList) {
-			status = QDF_STATUS_E_NOMEM;
-			goto end;
-		}
-	}
-
 	if (!profile->ChannelInfo.freq_list) {
 		profile->ChannelInfo.freq_list =
 			qdf_mem_malloc(sizeof(*profile->ChannelInfo.freq_list) *
 				       profile->ChannelInfo.numOfChannels);
 		if (!profile->ChannelInfo.freq_list) {
-			qdf_mem_free(profile->ChannelInfo.ChannelList);
-			profile->ChannelInfo.ChannelList = NULL;
 			profile->ChannelInfo.numOfChannels = 0;
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}
 	}
 
-	profile->ChannelInfo.ChannelList[0] =
-		roam_ctrl_info->handoffReqInfo.channel;
 	profile->ChannelInfo.freq_list[0] =
 		wlan_reg_chan_to_freq(mac_ctx->pdev,
 				      roam_ctrl_info->handoffReqInfo.channel);

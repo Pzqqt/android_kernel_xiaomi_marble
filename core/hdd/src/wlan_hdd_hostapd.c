@@ -3683,8 +3683,6 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		sta_ctx->conn_info.freq =
 			wlan_reg_chan_to_freq(hdd_ctx->pdev,
 					      channel);
-		roam_profile->ChannelInfo.ChannelList =
-			&sta_ctx->conn_info.channel;
 		roam_profile->ChannelInfo.freq_list =
 			&sta_ctx->conn_info.freq;
 	} else if ((adapter->device_mode == QDF_SAP_MODE)

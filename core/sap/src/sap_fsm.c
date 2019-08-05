@@ -2277,8 +2277,6 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 	/* Specify the channel */
 	sap_ctx->csr_roamProfile.ChannelInfo.numOfChannels =
 					1;
-	sap_ctx->csr_roamProfile.ChannelInfo.ChannelList =
-		&sap_ctx->csr_roamProfile.operationChannel;
 	sap_ctx->csr_roamProfile.ChannelInfo.freq_list =
 		&sap_ctx->csr_roamProfile.op_freq;
 	sap_ctx->csr_roamProfile.operationChannel =
