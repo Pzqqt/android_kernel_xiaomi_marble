@@ -664,6 +664,9 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 		else
 			session_ptr->is_obss_reset_timer_initialized = true;
 
+		qdf_wake_lock_create(&session_ptr->ap_ecsa_wakelock,
+				     "ap_ecsa_wakelock");
+		qdf_runtime_lock_init(&session_ptr->ap_ecsa_runtime_lock);
 		status = qdf_mc_timer_init(&session_ptr->ap_ecsa_timer,
 					   QDF_TIMER_TYPE_WAKE_APPS,
 					   lim_process_ap_ecsa_timeout,
@@ -873,6 +876,8 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 	}
 
 	if (LIM_IS_AP_ROLE(session)) {
+		qdf_runtime_lock_deinit(&session->ap_ecsa_runtime_lock);
+		qdf_wake_lock_destroy(&session->ap_ecsa_wakelock);
 		qdf_mc_timer_stop(&session->protection_fields_reset_timer);
 		qdf_mc_timer_destroy(&session->protection_fields_reset_timer);
 		session->dfsIncludeChanSwIe = 0;

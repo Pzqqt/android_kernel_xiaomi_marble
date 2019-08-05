@@ -102,6 +102,7 @@ typedef enum {
 #define OBSS_DETECTION_IS_HT_20MHZ(_m) ((_m) & OBSS_DETECTION_HT_20MHZ_BIT_MASK)
 
 #define MAX_WAIT_FOR_BCN_TX_COMPLETE 4000
+#define MAX_WAKELOCK_FOR_CSA         5000
 
 #ifdef WLAN_FEATURE_11W
 typedef union uPmfSaQueryTimerId {

@@ -132,6 +132,8 @@ struct obss_detection_cfg {
  * @vdev: the actual vdev for which this entry is applicable
  * @connected_akm: AKM of current connection
  * @is_adaptive_11R_connection: flag to check if we are connecting
+ * @ap_ecsa_wakelock: wakelock to complete CSA operation.
+ * @ap_ecsa_runtime_lock: runtime lock to complete SAP CSA operation.
  * to Adaptive 11R network
  */
 struct pe_session {
@@ -492,6 +494,8 @@ struct pe_session {
 	qdf_mc_timer_t protection_fields_reset_timer;
 	/* timer to decrement CSA/ECSA count */
 	qdf_mc_timer_t ap_ecsa_timer;
+	qdf_wake_lock_t ap_ecsa_wakelock;
+	qdf_runtime_lock_t ap_ecsa_runtime_lock;
 	struct mac_context *mac_ctx;
 	/*
 	 * variable to store state of various protection struct like
