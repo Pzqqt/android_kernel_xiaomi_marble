@@ -444,12 +444,16 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		/* If last ppdu_id doesn't match new ppdu_id,
 		 * 1. reset mpdu_cnt
 		 * 2. update last_ppdu_id with new
+		 * 3. reset mpdu fcs bitmap
 		 */
 		if (com_info->ppdu_id != com_info->last_ppdu_id) {
 			com_info->mpdu_cnt = 0;
 			com_info->last_ppdu_id =
 				com_info->ppdu_id;
 			com_info->num_users = 0;
+			qdf_mem_zero(&com_info->mpdu_fcs_ok_bitmap,
+				     HAL_RX_NUM_WORDS_PER_PPDU_BITMAP *
+				     sizeof(com_info->mpdu_fcs_ok_bitmap[0]));
 		}
 		break;
 	}

@@ -548,6 +548,9 @@ dp_rx_get_fcs_ok_msdu(struct dp_pdev *pdev,
 	qdf_nbuf_t status_nbuf = NULL;
 	unsigned long *fcs_ok_bitmap;
 
+	if (qdf_unlikely(qdf_nbuf_is_queue_empty(&pdev->rx_ppdu_buf_q)))
+		return NULL;
+
 	/* Obtain fcs_ok passed index from bitmap
 	 * this index is used to get fcs passed first msdu payload
 	 */
@@ -557,7 +560,10 @@ dp_rx_get_fcs_ok_msdu(struct dp_pdev *pdev,
 	mpdu_fcs_ok = qdf_find_first_bit(fcs_ok_bitmap,
 					 HAL_RX_MAX_MPDU);
 
-	if (mpdu_fcs_ok >= HAL_RX_MAX_MPDU)
+	if (qdf_unlikely(mpdu_fcs_ok >= HAL_RX_MAX_MPDU))
+		goto end;
+
+	if (qdf_unlikely(!ppdu_info->ppdu_msdu_info[mpdu_fcs_ok].nbuf))
 		goto end;
 
 	/* Get status buffer by indexing mpdu_fcs_ok index
@@ -565,15 +571,26 @@ dp_rx_get_fcs_ok_msdu(struct dp_pdev *pdev,
 	 * and clone the buffer
 	 */
 	status_nbuf = ppdu_info->ppdu_msdu_info[mpdu_fcs_ok].nbuf;
+	ppdu_info->ppdu_msdu_info[mpdu_fcs_ok].nbuf = NULL;
+
 	/* Take ref of status nbuf as this nbuf is to be
 	 * freeed by upper layer.
 	 */
 	qdf_nbuf_ref(status_nbuf);
+	ppdu_info->fcs_ok_msdu_info.first_msdu_payload =
+		ppdu_info->ppdu_msdu_info[mpdu_fcs_ok].first_msdu_payload;
+	ppdu_info->fcs_ok_msdu_info.payload_len =
+		ppdu_info->ppdu_msdu_info[mpdu_fcs_ok].payload_len;
+
 
 end:
 	/* Free the ppdu status buffer queue */
 	qdf_nbuf_queue_free(&pdev->rx_ppdu_buf_q);
 
+	qdf_mem_zero(&ppdu_info->ppdu_msdu_info,
+		     (ppdu_info->com_info.mpdu_cnt_fcs_ok +
+		      ppdu_info->com_info.mpdu_cnt_fcs_err)
+		     * sizeof(struct hal_rx_msdu_payload_info));
 	return status_nbuf;
 }
 
@@ -582,6 +599,13 @@ dp_rx_handle_ppdu_status_buf(struct dp_pdev *pdev,
 			     struct hal_rx_ppdu_info *ppdu_info,
 			     qdf_nbuf_t status_nbuf)
 {
+	qdf_nbuf_t dropnbuf;
+
+	if (qdf_nbuf_queue_len(&pdev->rx_ppdu_buf_q) >
+			       HAL_RX_MAX_MPDU) {
+		dropnbuf = qdf_nbuf_queue_remove(&pdev->rx_ppdu_buf_q);
+		qdf_nbuf_free(dropnbuf);
+	}
 	qdf_nbuf_queue_add(&pdev->rx_ppdu_buf_q, status_nbuf);
 }
 /**
@@ -615,7 +639,6 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 
 	size = (ppdu_info->fcs_ok_msdu_info.first_msdu_payload -
 				qdf_nbuf_data(nbuf));
-	ppdu_info->fcs_ok_msdu_info.first_msdu_payload = NULL;
 
 	if (qdf_nbuf_pull_head(nbuf, size) == NULL)
 		return QDF_STATUS_SUCCESS;
@@ -627,6 +650,7 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 		return QDF_STATUS_SUCCESS;
 	}
 
+	ppdu_info->fcs_ok_msdu_info.first_msdu_payload = NULL;
 	nbuf_data = (uint32_t *)qdf_nbuf_data(nbuf);
 	*nbuf_data = pdev->ppdu_info.com_info.ppdu_id;
 	/* only retain RX MSDU payload in the skb */
@@ -667,6 +691,12 @@ dp_rx_process_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 	 * and devliver fcs_ok msdu buffer
 	 */
 	if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
+		if (qdf_unlikely(ppdu_info->com_info.mpdu_cnt !=
+			(ppdu_info->com_info.mpdu_cnt_fcs_ok +
+			 ppdu_info->com_info.mpdu_cnt_fcs_err))) {
+			qdf_nbuf_queue_free(&pdev->rx_ppdu_buf_q);
+			return;
+		}
 		/* Get rx ppdu status buffer having fcs ok msdu */
 		status_nbuf = dp_rx_get_fcs_ok_msdu(pdev, ppdu_info);
 		if (status_nbuf) {

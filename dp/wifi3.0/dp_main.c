@@ -3881,6 +3881,7 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 	dp_tx_ppdu_stats_detach(pdev);
 
 	qdf_nbuf_free(pdev->sojourn_buf);
+	qdf_nbuf_queue_free(&pdev->rx_ppdu_buf_q);
 
 	dp_cal_client_detach(&pdev->cal_client_ctx);
 
@@ -7360,6 +7361,13 @@ dp_pdev_tid_stats_osif_drop(struct cdp_pdev *pdev, uint32_t val)
 	dp_pdev->stats.tid_stats.osif_drop += val;
 }
 
+static inline void
+dp_pdev_disable_mcopy_code(struct dp_pdev *pdev)
+{
+	pdev->mcopy_mode = 0;
+	qdf_nbuf_queue_free(&pdev->rx_ppdu_buf_q);
+}
+
 /*
  * dp_config_debug_sniffer()- API to enable/disable debug sniffer
  * @pdev_handle: DP_PDEV handle
@@ -7379,7 +7387,9 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 	switch (val) {
 	case 0:
 		pdev->tx_sniffer_enable = 0;
-		pdev->mcopy_mode = 0;
+		if (pdev->mcopy_mode)
+			dp_pdev_disable_mcopy_code(pdev);
+
 		pdev->monitor_configured = false;
 
 		if (!pdev->pktlog_ppdu_stats && !pdev->enhanced_stats_en &&
@@ -7402,7 +7412,8 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 
 	case 1:
 		pdev->tx_sniffer_enable = 1;
-		pdev->mcopy_mode = 0;
+		if (pdev->mcopy_mode)
+			dp_pdev_disable_mcopy_code(pdev);
 		pdev->monitor_configured = false;
 
 		if (!pdev->pktlog_ppdu_stats)
