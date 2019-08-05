@@ -239,8 +239,17 @@ void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 		ol_txrx_tx_flow_control_fp flow_control_fp,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause);
 void hdd_deregister_tx_flow_control(struct hdd_adapter *adapter);
+
+/**
+ * hdd_get_tx_resource() - check tx resources and take action
+ * @adapter: adapter handle
+ * @mac_addr: mac address
+ * @timer_value: timer value
+ *
+ * Return: none
+ */
 void hdd_get_tx_resource(struct hdd_adapter *adapter,
-			uint8_t STAId, uint16_t timer_value);
+			 struct qdf_mac_addr *mac_addr, uint16_t timer_value);
 
 #else
 static inline void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
@@ -259,8 +268,19 @@ static inline void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 static inline void hdd_deregister_tx_flow_control(struct hdd_adapter *adapter)
 {
 }
-static inline void hdd_get_tx_resource(struct hdd_adapter *adapter,
-			uint8_t STAId, uint16_t timer_value)
+
+
+/**
+ * hdd_get_tx_resource() - check tx resources and take action
+ * @adapter: adapter handle
+ * @mac_addr: mac address
+ * @timer_value: timer value
+ *
+ * Return: none
+ */
+static inline
+void hdd_get_tx_resource(struct hdd_adapter *adapter,
+			 struct qdf_mac_addr *mac_addr, uint16_t timer_value)
 {
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */

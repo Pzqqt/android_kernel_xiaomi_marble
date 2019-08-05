@@ -346,19 +346,12 @@ void hdd_deregister_tx_flow_control(struct hdd_adapter *adapter)
 	}
 }
 
-/**
- * hdd_get_tx_resource() - check tx resources and take action
- * @adapter: adapter handle
- * @STAId: station id
- * @timer_value: timer value
- *
- * Return: none
- */
 void hdd_get_tx_resource(struct hdd_adapter *adapter,
-			uint8_t STAId, uint16_t timer_value)
+			 struct qdf_mac_addr *mac_addr, uint16_t timer_value)
 {
 	if (false ==
-	    cdp_fc_get_tx_resource(cds_get_context(QDF_MODULE_ID_SOC), STAId,
+	    cdp_fc_get_tx_resource(cds_get_context(QDF_MODULE_ID_SOC),
+				   *mac_addr,
 				   adapter->tx_flow_low_watermark,
 				   adapter->tx_flow_hi_watermark_offset)) {
 		hdd_debug("Disabling queues lwm %d hwm offset %d",
@@ -931,6 +924,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 
 	++adapter->hdd_stats.tx_rx_stats.tx_called;
 	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
+	mac_addr = (struct qdf_mac_addr *)skb->data;
 
 	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state() ||
 	    cds_is_load_or_unload_in_progress()) {
@@ -970,8 +964,8 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		goto drop_pkt;
 	}
 
-	hdd_get_tx_resource(adapter, STAId,
-				WLAN_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
+	hdd_get_tx_resource(adapter, mac_addr,
+			    WLAN_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
 
 	/* Get TL AC corresponding to Qdisc queue index/AC. */
 	ac = hdd_qdisc_ac_to_tl_ac[skb->queue_mapping];
@@ -1065,8 +1059,6 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	}
 
 	adapter->stats.tx_bytes += skb->len;
-
-	mac_addr = (struct qdf_mac_addr *)skb->data;
 
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (vdev) {

@@ -561,8 +561,14 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		}
 	}
 
-	hdd_get_tx_resource(adapter, sta_id,
-			    WLAN_SAP_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
+	if (QDF_NBUF_CB_GET_IS_BCAST(skb) || QDF_NBUF_CB_GET_IS_MCAST(skb))
+		hdd_get_tx_resource(
+				adapter, &adapter->mac_addr,
+				WLAN_SAP_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
+	else
+		hdd_get_tx_resource(
+				adapter, dest_mac_addr,
+				WLAN_SAP_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
 
 	/* Get TL AC corresponding to Qdisc queue index/AC. */
 	ac = hdd_qdisc_ac_to_tl_ac[skb->queue_mapping];
