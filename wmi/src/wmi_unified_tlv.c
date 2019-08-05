@@ -60,6 +60,7 @@
 #ifdef WMI_AP_SUPPORT
 #include "wmi_unified_ap_api.h"
 #endif
+#include <wmi_unified_vdev_api.h>
 
 /* HTC service ids for WMI for multi-radio */
 static const uint32_t multi_svc_ids[] = {WMI_CONTROL_SVC,
@@ -316,6 +317,8 @@ static const uint32_t pdev_param_tlv[] = {
 			WMI_PDEV_PARAM_SET_TBTT_CTRL,
 	[wmi_pdev_param_set_cmd_obss_pd_threshold] =
 			WMI_PDEV_PARAM_SET_CMD_OBSS_PD_THRESHOLD,
+	[wmi_pdev_param_set_cmd_obss_pd_per_ac] =
+			WMI_PDEV_PARAM_SET_CMD_OBSS_PD_PER_AC,
 };
 
 /**
@@ -6501,6 +6504,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		WMI_RSRC_CFG_FLAG_TX_COMPLETION_TX_TSF64_ENABLE_SET(
 						resource_cfg->flag1, 1);
 
+	if (tgt_res_cfg->three_way_coex_config_legacy_en)
+		WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT_SET(
+						resource_cfg->flag1, 1);
+
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 	resource_cfg->peer_map_unmap_v2_support =
 		tgt_res_cfg->peer_map_unmap_v2;
@@ -11938,6 +11945,9 @@ struct wmi_ops tlv_ops =  {
 #ifdef WLAN_MWS_INFO_DEBUGFS
 	.send_mws_coex_status_req_cmd = send_mws_coex_status_req_cmd_tlv,
 #endif
+#ifdef TGT_IF_VDEV_MGR_CONV
+	.extract_vdev_delete_resp = extract_vdev_delete_resp_tlv,
+#endif
 };
 
 /**
@@ -12540,6 +12550,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_DSM_ROAM_FILTER;
 	wmi_service[wmi_service_vdev_delete_all_peer] =
 			WMI_SERVICE_DELETE_ALL_PEER_SUPPORT;
+	wmi_service[wmi_service_three_way_coex_config_legacy] =
+			WMI_SERVICE_THREE_WAY_COEX_CONFIG_LEGACY;
 }
 
 /**

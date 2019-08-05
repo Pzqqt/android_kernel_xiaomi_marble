@@ -1677,6 +1677,29 @@ void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 	return peer;
 }
 
+static bool dp_get_peer_vdev_roaming_in_progress(struct dp_peer *peer)
+{
+	struct ol_if_ops *ol_ops = NULL;
+	bool is_roaming = false;
+	uint8_t vdev_id = -1;
+
+	if (!peer) {
+		dp_info("Peer is NULL. No roaming possible");
+		return false;
+	}
+	ol_ops = peer->vdev->pdev->soc->cdp_soc.ol_ops;
+
+	if (ol_ops && ol_ops->is_roam_inprogress) {
+		dp_get_vdevid(peer, &vdev_id);
+		is_roaming = ol_ops->is_roam_inprogress(vdev_id);
+	}
+
+	dp_info("peer: %pM, vdev_id: %d, is_roaming: %d",
+		peer->mac_addr.raw, vdev_id, is_roaming);
+
+	return is_roaming;
+}
+
 /*
  * dp_rx_tid_update_wifi3() – Update receive TID state
  * @peer: Datapath peer handle
@@ -1684,10 +1707,10 @@ void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
  * @ba_window_size: BlockAck window size
  * @start_seq: Starting sequence number
  *
- * Return: 0 on success, error code on failure
+ * Return: QDF_STATUS code
  */
-static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
-				  ba_window_size, uint32_t start_seq)
+static QDF_STATUS dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
+					 ba_window_size, uint32_t start_seq)
 {
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 	struct dp_soc *soc = peer->vdev->pdev->soc;
@@ -1712,14 +1735,16 @@ static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 
 	rx_tid->ba_win_size = ba_window_size;
 
-	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
+	if (dp_get_peer_vdev_roaming_in_progress(peer))
+		return QDF_STATUS_E_PERM;
+
+	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup)
 		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
 			peer->vdev->pdev->ctrl_pdev,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			rx_tid->hw_qdesc_paddr, tid, tid, 1, ba_window_size);
-	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -1782,10 +1807,10 @@ static inline int dp_reo_desc_addr_chk(qdf_dma_addr_t dma_addr)
  * @ba_window_size: BlockAck window size
  * @start_seq: Starting sequence number
  *
- * Return: 0 on success, error code on failure
+ * Return: QDF_STATUS code
  */
-int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
-	uint32_t ba_window_size, uint32_t start_seq)
+QDF_STATUS dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
+				 uint32_t ba_window_size, uint32_t start_seq)
 {
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 	struct dp_vdev *vdev = peer->vdev;
@@ -1795,7 +1820,7 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	int hal_pn_type;
 	void *hw_qdesc_vaddr;
 	uint32_t alloc_tries = 0;
-	int err = QDF_STATUS_SUCCESS;
+	QDF_STATUS err = QDF_STATUS_SUCCESS;
 
 	if (peer->delete_in_progress ||
 	    !qdf_atomic_read(&peer->is_default_route_set))
@@ -1921,6 +1946,11 @@ try_desc_alloc:
 			err = QDF_STATUS_E_NOMEM;
 			goto error;
 		}
+	}
+
+	if (dp_get_peer_vdev_roaming_in_progress(peer)) {
+		err = QDF_STATUS_E_PERM;
+		goto error;
 	}
 
 	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
@@ -2352,6 +2382,7 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_rx_tid *rx_tid = NULL;
+	QDF_STATUS qdf_status;
 
 	if (!peer || peer->delete_in_progress) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -2361,26 +2392,13 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 	rx_tid = &peer->rx_tid[tid];
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	if (status) {
-		struct ol_if_ops *ol_ops = NULL;
-		bool is_roaming = false;
-		uint8_t vdev_id = -1;
-
 		rx_tid->num_addba_rsp_failed++;
-		ol_ops = peer->vdev->pdev->soc->cdp_soc.ol_ops;
-
-		if (ol_ops && ol_ops->is_roam_inprogress) {
-			dp_get_vdevid(peer, &vdev_id);
-			is_roaming = ol_ops->is_roam_inprogress(vdev_id);
-		}
-
-		if (!is_roaming) {
-			dp_rx_tid_update_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
+		qdf_status = dp_rx_tid_update_wifi3(peer, tid, 1,
+						    IEEE80211_SEQ_MAX);
+		if (qdf_status == QDF_STATUS_SUCCESS)
 			rx_tid->ba_status = DP_RX_BA_INACTIVE;
-		}
-
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
-		dp_err("RxTid- %d addba rsp tx completion failed, is_roaming %d",
-		       tid, is_roaming);
+		dp_err("RxTid- %d addba rsp tx completion failed", tid);
 		return QDF_STATUS_SUCCESS;
 	}
 

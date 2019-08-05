@@ -28,6 +28,7 @@
 #include <wlan_mlme_dbg.h>
 #include <wlan_vdev_mgr_utils_api.h>
 #include <wlan_vdev_mlme_api.h>
+#include <qdf_module.h>
 
 void ucfg_wlan_vdev_mgr_get_param_bssid(
 				struct wlan_objmgr_vdev *vdev,

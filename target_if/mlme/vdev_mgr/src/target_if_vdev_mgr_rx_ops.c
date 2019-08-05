@@ -31,6 +31,7 @@
 #include <target_if.h>
 #include <qdf_platform.h>
 #include <wlan_vdev_mlme_main.h>
+#include <wmi_unified_vdev_api.h>
 
 void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 {
@@ -322,7 +323,7 @@ release_vdev_target_if_ref:
 	return qdf_status_to_os_return(status);
 }
 
-static int target_if_vdev_mgr_delete_response_handler(
+int target_if_vdev_mgr_delete_response_handler(
 						ol_scn_t scn,
 						uint8_t *data,
 						uint32_t datalen)
@@ -482,10 +483,10 @@ release_vdev_target_if_ref:
 	return qdf_status_to_os_return(status);
 }
 
-static int target_if_vdev_mgr_offload_bcn_tx_status_handler(
-							ol_scn_t scn,
-							uint8_t *data,
-							uint32_t datalen)
+int target_if_vdev_mgr_offload_bcn_tx_status_handler(
+					ol_scn_t scn,
+					uint8_t *data,
+					uint32_t datalen)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;
@@ -528,9 +529,8 @@ static int target_if_vdev_mgr_offload_bcn_tx_status_handler(
 	return qdf_status_to_os_return(status);
 }
 
-static int target_if_vdev_mgr_tbttoffset_update_handler(
-						ol_scn_t scn,
-						uint8_t *data,
+int target_if_vdev_mgr_tbttoffset_update_handler(
+						ol_scn_t scn, uint8_t *data,
 						uint32_t datalen)
 {
 	QDF_STATUS status;
@@ -572,7 +572,7 @@ static int target_if_vdev_mgr_tbttoffset_update_handler(
 	return qdf_status_to_os_return(status);
 }
 
-static int target_if_vdev_mgr_ext_tbttoffset_update_handler(
+int target_if_vdev_mgr_ext_tbttoffset_update_handler(
 						ol_scn_t scn,
 						uint8_t *data,
 						uint32_t datalen)

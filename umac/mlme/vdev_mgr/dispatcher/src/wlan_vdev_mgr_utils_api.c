@@ -26,6 +26,7 @@
 #include <wlan_vdev_mgr_tgt_if_tx_api.h>
 #include <cdp_txrx_cmn_struct.h>
 #include <wlan_mlme_dbg.h>
+#include <qdf_module.h>
 
 static QDF_STATUS vdev_mgr_config_ratemask_update(
 				struct vdev_mlme_obj *mlme_obj,
@@ -59,6 +60,24 @@ wlan_util_vdev_get_cdp_txrx_opmode(struct wlan_objmgr_vdev *vdev)
 		break;
 	case QDF_MONITOR_MODE:
 		cdp_txrx_opmode = wlan_op_mode_monitor;
+		break;
+	case QDF_P2P_DEVICE_MODE:
+		cdp_txrx_opmode = wlan_op_mode_ap;
+		break;
+	case QDF_P2P_CLIENT_MODE:
+		cdp_txrx_opmode = wlan_op_mode_sta;
+		break;
+	case QDF_P2P_GO_MODE:
+		cdp_txrx_opmode = wlan_op_mode_ap;
+		break;
+	case QDF_OCB_MODE:
+		cdp_txrx_opmode = wlan_op_mode_ocb;
+		break;
+	case QDF_IBSS_MODE:
+		cdp_txrx_opmode = wlan_op_mode_ibss;
+		break;
+	case QDF_NDI_MODE:
+		cdp_txrx_opmode = wlan_op_mode_ndi;
 		break;
 	default:
 		cdp_txrx_opmode = wlan_op_mode_unknown;

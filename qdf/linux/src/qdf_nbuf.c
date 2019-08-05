@@ -334,7 +334,16 @@ qdf_export_symbol(__qdf_nbuf_count_get);
  */
 void __qdf_nbuf_count_inc(qdf_nbuf_t nbuf)
 {
-	qdf_atomic_inc(&nbuf_count);
+	int num_nbuf = 1;
+	qdf_nbuf_t ext_list = qdf_nbuf_get_ext_list(nbuf);
+
+	/* Take care to account for frag_list */
+	while (ext_list) {
+		++num_nbuf;
+		ext_list = qdf_nbuf_queue_next(ext_list);
+	}
+
+	qdf_atomic_add(num_nbuf, &nbuf_count);
 }
 qdf_export_symbol(__qdf_nbuf_count_inc);
 
@@ -347,7 +356,23 @@ qdf_export_symbol(__qdf_nbuf_count_inc);
  */
 void __qdf_nbuf_count_dec(__qdf_nbuf_t nbuf)
 {
-	qdf_atomic_dec(&nbuf_count);
+	qdf_nbuf_t ext_list;
+	int num_nbuf;
+
+	if (qdf_nbuf_get_users(nbuf) > 1)
+		return;
+
+	num_nbuf = 1;
+
+	/* Take care to account for frag_list */
+	ext_list = qdf_nbuf_get_ext_list(nbuf);
+	while (ext_list) {
+		if (qdf_nbuf_get_users(ext_list) == 1)
+			++num_nbuf;
+		ext_list = qdf_nbuf_queue_next(ext_list);
+	}
+
+	qdf_atomic_sub(num_nbuf, &nbuf_count);
 }
 qdf_export_symbol(__qdf_nbuf_count_dec);
 #endif
@@ -2567,6 +2592,8 @@ qdf_export_symbol(qdf_nbuf_alloc_debug);
 
 void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 {
+	qdf_nbuf_t ext_list;
+
 	if (qdf_unlikely(!nbuf))
 		return;
 
@@ -2577,6 +2604,17 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 	qdf_nbuf_panic_on_free_if_mapped(nbuf, func, line);
 	qdf_net_buf_debug_delete_node(nbuf);
 	qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_FREE);
+
+	/* Take care to delete the debug entries for frag_list */
+	ext_list = qdf_nbuf_get_ext_list(nbuf);
+	while (ext_list) {
+		if (qdf_nbuf_get_users(ext_list) == 1) {
+			qdf_nbuf_panic_on_free_if_mapped(ext_list, func, line);
+			qdf_net_buf_debug_delete_node(ext_list);
+		}
+
+		ext_list = qdf_nbuf_queue_next(ext_list);
+	}
 
 free_buf:
 	__qdf_nbuf_free(nbuf);

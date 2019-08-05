@@ -34,6 +34,7 @@
 #include <wlan_dfs_tgt_api.h>
 #include <wlan_dfs_utils_api.h>
 #include <wlan_vdev_mgr_ucfg_api.h>
+#include <qdf_module.h>
 
 static QDF_STATUS vdev_mgr_create_param_update(
 					struct vdev_mlme_obj *mlme_obj,
