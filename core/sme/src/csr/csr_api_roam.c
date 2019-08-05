@@ -14264,10 +14264,9 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 				    sizeof(struct qdf_mac_addr));
 	}
 	channel = pSession->bssParams.operationChn;
-	/* Set operating channel in pProfile which will be used */
+	/* Set operating frequency in pProfile which will be used */
 	/* in csr_roam_set_bss_config_cfg() to determine channel bonding */
 	/* mode and will be configured in CFG later */
-	pProfile->operationChannel = channel;
 	pProfile->op_freq = wlan_reg_chan_to_freq(mac->pdev, channel);
 
 	if (channel == 0)

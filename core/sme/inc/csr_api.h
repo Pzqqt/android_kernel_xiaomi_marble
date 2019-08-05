@@ -761,7 +761,6 @@ struct csr_roam_profile {
 	tAniEdType mgmt_encryption_type;
 	tCsrKeys Keys;
 	tCsrChannelInfo ChannelInfo;
-	uint8_t operationChannel;
 	uint32_t op_freq;
 	struct ch_params ch_params;
 	/* If this is 0, SME will fill in for caller. */
