@@ -1426,7 +1426,7 @@ static void _sde_plane_setup_scaler(struct sde_plane *psde,
 				_sde_plane_setup_scaler3_lut(psde, pstate);
 		if (rc || pstate->scaler_check_state !=
 					SDE_PLANE_SCLCHECK_SCALER_V2) {
-			SDE_EVT32(DRMID(&psde->base), color_fill,
+			SDE_EVT32_VERBOSE(DRMID(&psde->base), color_fill,
 					pstate->scaler_check_state,
 					psde->debugfs_default_scale, rc,
 					psde->pipe_cfg.src_rect.w,
@@ -2830,7 +2830,8 @@ static void _sde_plane_setup_uidle(struct drm_crtc *crtc,
 			line_time, fal1_target_idle_time_ns,
 			fal10_target_idle_time_ns,
 			psde->catalog->uidle_cfg.max_dwnscale);
-	SDE_EVT32(cfg.enable, cfg.fal10_threshold, cfg.fal10_exit_threshold,
+	SDE_EVT32_VERBOSE(cfg.enable,
+		cfg.fal10_threshold, cfg.fal10_exit_threshold,
 		cfg.fal1_threshold, cfg.fal_allowed_threshold,
 		psde->catalog->uidle_cfg.max_dwnscale);
 
