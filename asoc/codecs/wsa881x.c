@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -16,6 +16,7 @@
 #include <linux/kernel.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
+#include <linux/of_platform.h>
 #include <linux/regmap.h>
 #include <linux/debugfs.h>
 #include <soc/soundwire.h>
@@ -101,6 +102,29 @@ struct wsa881x_priv {
 	struct delayed_work ocp_ctl_work;
 	struct device_node *wsa_rst_np;
 	int pa_mute;
+	struct device_node *bolero_np;
+	struct platform_device* bolero_dev;
+	struct notifier_block bolero_nblock;
+	void *handle;
+	int (*register_notifier)(void *handle,
+				 struct notifier_block *nblock,
+				 bool enable);
+};
+
+/* from bolero to WSA events */
+enum {
+	BOLERO_WSA_EVT_TX_CH_HOLD_CLEAR = 1,
+	BOLERO_WSA_EVT_PA_OFF_PRE_SSR,
+	BOLERO_WSA_EVT_SSR_DOWN,
+	BOLERO_WSA_EVT_SSR_UP,
+};
+
+struct wsa_ctrl_platform_data {
+	void *handle;
+	int (*update_wsa_event)(void *handle, u16 event, u32 data);
+	int (*register_notifier)(void *handle,
+				 struct notifier_block *nblock,
+				 bool enable);
 };
 
 #define SWR_SLV_MAX_REG_ADDR	0x390
@@ -1338,12 +1362,39 @@ static int wsa881x_gpio_init(struct swr_device *pdev)
 	return ret;
 }
 
+static int wsa881x_event_notify(struct notifier_block *nb,
+				unsigned long val, void *ptr)
+{
+	u16 event = (val & 0xffff);
+	struct wsa881x_priv *wsa881x = container_of(nb, struct wsa881x_priv,
+						    bolero_nblock);
+
+	if (!wsa881x)
+		return -EINVAL;
+
+	switch (event) {
+	case BOLERO_WSA_EVT_PA_OFF_PRE_SSR:
+		snd_soc_component_update_bits(wsa881x->component,
+					      WSA881X_SPKR_DRV_GAIN,
+					      0xF0, 0xC0);
+		snd_soc_component_update_bits(wsa881x->component,
+					      WSA881X_SPKR_DRV_EN,
+					      0x80, 0x00);
+		break;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 static int wsa881x_swr_probe(struct swr_device *pdev)
 {
 	int ret = 0;
 	struct wsa881x_priv *wsa881x;
 	u8 devnum = 0;
 	bool pin_state_current = false;
+	struct wsa_ctrl_platform_data *plat_data = NULL;
 
 	wsa881x = devm_kzalloc(&pdev->dev, sizeof(struct wsa881x_priv),
 			    GFP_KERNEL);
@@ -1435,6 +1486,37 @@ static int wsa881x_swr_probe(struct swr_device *pdev)
 			__func__);
 		goto dev_err;
 	}
+
+	wsa881x->bolero_np = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,bolero-handle", 0);
+	if (wsa881x->bolero_np) {
+		wsa881x->bolero_dev =
+				of_find_device_by_node(wsa881x->bolero_np);
+		if (wsa881x->bolero_dev) {
+			plat_data = dev_get_platdata(&wsa881x->bolero_dev->dev);
+			if (plat_data) {
+				wsa881x->bolero_nblock.notifier_call =
+							wsa881x_event_notify;
+				if (plat_data->register_notifier)
+					plat_data->register_notifier(
+						plat_data->handle,
+						&wsa881x->bolero_nblock,
+						true);
+				wsa881x->register_notifier =
+						plat_data->register_notifier;
+				wsa881x->handle = plat_data->handle;
+			} else {
+				dev_err(&pdev->dev, "%s: plat data not found\n",
+					__func__);
+			}
+		} else {
+			dev_err(&pdev->dev, "%s: bolero dev not found\n",
+				__func__);
+		}
+	} else {
+		dev_info(&pdev->dev, "%s: bolero node not found\n", __func__);
+	}
+
 	mutex_init(&wsa881x->res_lock);
 	mutex_init(&wsa881x->temp_lock);
 
@@ -1457,6 +1539,10 @@ static int wsa881x_swr_remove(struct swr_device *pdev)
 		dev_err(&pdev->dev, "%s: wsa881x is NULL\n", __func__);
 		return -EINVAL;
 	}
+
+	if (wsa881x->register_notifier)
+		wsa881x->register_notifier(wsa881x->handle,
+					   &wsa881x->bolero_nblock, false);
 	debugfs_remove_recursive(debugfs_wsa881x_dent);
 	debugfs_wsa881x_dent = NULL;
 	mutex_destroy(&wsa881x->res_lock);
