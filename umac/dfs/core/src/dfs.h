@@ -1138,10 +1138,6 @@ struct wlan_dfs {
 #endif
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_list;
 	enum phy_ch_width dfs_precac_chwidth;
-#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
-	TAILQ_HEAD(, dfs_etsi_precac_entry) dfs_etsiprecac_required_list;
-	TAILQ_HEAD(, dfs_etsi_precac_entry) dfs_etsiprecac_done_list;
-#endif
 
 	struct dfs_channel *dfs_curchan;
 	struct dfs_channel dfs_cac_started_chan;

@@ -31,7 +31,6 @@
 #include "../dfs_full_offload.h"
 #include <wlan_objmgr_vdev_obj.h>
 #include "wlan_dfs_utils_api.h"
-#include "../dfs_etsi_precac.h"
 #include "../dfs_partial_offload_radar.h"
 
 /* Disable NOL in FW. */
@@ -187,7 +186,6 @@ int dfs_attach(struct wlan_dfs *dfs)
 	}
 	dfs_cac_timer_attach(dfs);
 	dfs_zero_cac_attach(dfs);
-	dfs_etsi_precac_attach(dfs);
 	dfs_nol_attach(dfs);
 
 	/*
@@ -257,7 +255,6 @@ void dfs_detach(struct wlan_dfs *dfs)
 		dfs_main_detach(dfs);
 	dfs_zero_cac_detach(dfs);
 	dfs_nol_detach(dfs);
-	dfs_etsi_precac_detach(dfs);
 }
 
 #ifndef WLAN_DFS_STATIC_MEM_ALLOC
@@ -703,7 +700,6 @@ int dfs_control(struct wlan_dfs *dfs,
 		break;
 	case DFS_RESET_PRECAC_LISTS:
 		dfs_reset_precac_lists(dfs);
-		dfs_reset_etsi_precac_lists(dfs);
 		break;
 	case DFS_INJECT_SEQUENCE:
 		error = dfs_inject_synthetic_pulse_sequence(dfs, indata);

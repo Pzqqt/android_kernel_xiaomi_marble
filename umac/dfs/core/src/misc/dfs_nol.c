@@ -254,8 +254,6 @@ static os_timer_func(dfs_remove_from_nol)
 	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
 		    "remove channel %d from nol", chan);
 	utils_dfs_unmark_precac_nol(dfs->dfs_pdev_obj, chan);
-	utils_dfs_add_to_etsi_precac_required_list(dfs->dfs_pdev_obj,
-						   &chan);
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
 				    &chan, 1, DFS_NOL_RESET);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);

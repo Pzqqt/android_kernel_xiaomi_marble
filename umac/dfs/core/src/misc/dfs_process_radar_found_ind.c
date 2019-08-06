@@ -23,7 +23,6 @@
 
 #include "../dfs.h"
 #include "../dfs_zero_cac.h"
-#include "../dfs_etsi_precac.h"
 #include "../dfs_process_radar_found_ind.h"
 #include <wlan_reg_services_api.h>
 #include <wlan_objmgr_vdev_obj.h>
@@ -899,13 +898,6 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 			    channels,
 			    num_channels);
 
-	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN) {
-		/* Remove chan from ETSI Pre-CAC Cleared List*/
-		dfs_info(dfs, WLAN_DEBUG_DFS_NOL,
-			 "%s : %d remove channel from ETSI PreCAC List\n",
-			 __func__, __LINE__);
-		dfs_mark_etsi_precac_dfs(dfs, channels, num_channels);
-	}
 	/*
 	 * This calls into the umac DFS code, which sets the umac
 	 * related radar flags and begins the channel change

@@ -134,43 +134,6 @@ QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev);
 void utils_dfs_unmark_precac_nol(struct wlan_objmgr_pdev *pdev, uint8_t chan);
 
 /**
- * utils_dfs_reset_etsi_precaclists() - Clears and initializes etsi
- *                                      precac_required_list,
- *                                      etsi precac_done_list and
- *                                      etsi precac_nol_list.
- * @pdev: Pointer to DFS pdev object.
- *
- * Wrapper function for dfs_reset_etsiprecaclists(). This function called from
- * outside of DFS component.
- */
-#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
-QDF_STATUS utils_dfs_reset_etsi_precaclists(struct wlan_objmgr_pdev *pdev);
-#else
-static inline QDF_STATUS utils_dfs_reset_etsi_precaclists(
-		struct wlan_objmgr_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
-/** utils_dfs_add_to_etsi_precac_required_list() - Add channel to ETSI PreCAC
- * Required list.
- * @pdev: Pointer to DFS pdev object.
- * @chan: Pointer to channel to be added to ETSI PreCAC Required List.
- *
- * Return: void
- */
-#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
-void utils_dfs_add_to_etsi_precac_required_list(struct wlan_objmgr_pdev *pdev,
-						uint8_t *chan);
-#else
-static inline void
-utils_dfs_add_to_etsi_precac_required_list(struct wlan_objmgr_pdev *pdev,
-					   uint8_t *chan)
-{
-}
-#endif
-/**
  * utils_dfs_cancel_precac_timer() - Cancel the precac timer.
  * @pdev: Pointer to DFS pdev object.
  *
