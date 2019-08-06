@@ -7744,7 +7744,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
-	hdd_bus_bw_compute_timer_stop(hdd_ctx);
 	hdd_bus_bandwidth_deinit(hdd_ctx);
 	hdd_driver_memdump_deinit();
 
@@ -11978,6 +11977,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			hdd_psoc_idle_timer_start(hdd_ctx);
 			cds_set_module_stop_in_progress(false);
 
+			hdd_bus_bw_compute_timer_stop(hdd_ctx);
 			return -EAGAIN;
 		}
 	}
@@ -12127,6 +12127,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	hdd_info("Wlan transitioned (now CLOSED)");
 
 	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_NONE);
+	hdd_bus_bw_compute_timer_stop(hdd_ctx);
 
 done:
 	cds_set_module_stop_in_progress(false);
