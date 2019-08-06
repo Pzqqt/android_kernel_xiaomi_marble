@@ -254,7 +254,6 @@
 #include "wlan_dfs_mlme_api.h"
 #include "wlan_dfs_utils_api.h"
 #include "dfs_internal.h"
-#include "dfs_etsi_precac.h"
 #include "dfs_process_radar_found_ind.h"
 #include "target_if.h"
 #include "wlan_dfs_init_deinit_api.h"
@@ -1868,10 +1867,9 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs,
 	 * For example: If primary's CAC is 600 seconds and secondary's CAC
 	 * is 60 seconds then maximum gives 600 seconds which is not needed
 	 * if CAC/preCAC was already completed on primary. It is to be noted
-	 * that etsi_precac/cac is done on primary segment.
+	 * that precac/cac is done on primary segment.
 	 */
 	if (WLAN_IS_CHAN_DFS(dfs->dfs_curchan) &&
-	    !dfs_is_etsi_precac_done(dfs, dfs->dfs_curchan) &&
 	    !dfs_is_precac_done(dfs, dfs->dfs_curchan))
 		precac_timeout = QDF_MAX(primary_cac_timeout,
 					 secondary_cac_timeout) +
