@@ -1296,16 +1296,17 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 			sde_encoder_destroy(encoder);
 			continue;
 		}
+
+		rc = dsi_display_drm_ext_bridge_init(display,
+					encoder, connector);
+		if (rc) {
+			SDE_ERROR("dsi %d ext bridge init failed\n", rc);
+			dsi_display_drm_bridge_deinit(display);
+			sde_connector_destroy(connector);
+			sde_encoder_destroy(encoder);
+		}
 	}
 
-	rc = dsi_display_drm_ext_bridge_init(display,
-					encoder, connector);
-	if (rc) {
-		SDE_ERROR("dsi %d ext bridge init failed\n", rc);
-		dsi_display_drm_bridge_deinit(display);
-		sde_encoder_destroy(encoder);
-		sde_connector_destroy(connector);
-	}
 
 	/* wb */
 	for (i = 0; i < sde_kms->wb_display_count &&
