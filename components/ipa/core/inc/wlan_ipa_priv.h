@@ -301,7 +301,6 @@ struct wlan_ipa_priv;
  * @iface_id: IPA interface ID
  * @dev: Net device structure
  * @device_mode: Interface device mode
- * @sta_id: Interface station ID
  * @session_id: Session ID
  * @interface_lock: Interface lock
  * @ifa_address: Interface address
@@ -317,7 +316,6 @@ struct wlan_ipa_iface_context {
 	uint8_t iface_id;       /* This iface ID */
 	qdf_netdev_t dev;
 	enum QDF_OPMODE device_mode;
-	uint8_t sta_id;         /* This iface station ID */
 	uint8_t session_id;
 	qdf_spinlock_t interface_lock;
 	uint32_t ifa_address;
@@ -368,12 +366,10 @@ struct wlan_ipa_stats {
 /**
  * struct ipa_uc_stas_map - IPA UC assoc station map
  * @is_reserved: STA reserved flag
- * @sta_id: Station ID
  * @mac_addr: Station mac address
  */
 struct ipa_uc_stas_map {
 	bool is_reserved;
-	uint8_t sta_id;
 	struct qdf_mac_addr mac_addr;
 };
 
@@ -449,7 +445,6 @@ struct ipa_uc_fw_stats {
  * @node: Pending event list node
  * @type: WLAN IPA event type
  * @device_mode: Device mode
- * @sta_id: Station ID
  * @session_id: Session ID
  * @mac_addr: Mac address
  * @is_loading: Driver loading flag
@@ -459,7 +454,6 @@ struct wlan_ipa_uc_pending_event {
 	qdf_ipa_wlan_event type;
 	qdf_netdev_t net_dev;
 	uint8_t device_mode;
-	uint8_t sta_id;
 	uint8_t session_id;
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 	bool is_loading;

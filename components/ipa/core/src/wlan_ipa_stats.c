@@ -335,9 +335,10 @@ static void wlan_ipa_dump_ipa_ctx(struct wlan_ipa_priv *ipa_ctx)
 	QDF_TRACE(QDF_MODULE_ID_IPA, QDF_TRACE_LEVEL_INFO,
 		"\nassoc_stas_map ----");
 	for (i = 0; i < WLAN_IPA_MAX_STA_COUNT; i++) {
-		ipa_info("\n\t[%d]: is_reserved=%d, sta_id=%d", i,
-			ipa_ctx->assoc_stas_map[i].is_reserved,
-			ipa_ctx->assoc_stas_map[i].sta_id);
+		ipa_info("\n\t[%d]: is_reserved=%d mac: " QDF_MAC_ADDR_STR, i,
+			 ipa_ctx->assoc_stas_map[i].is_reserved,
+			 QDF_MAC_ADDR_ARRAY(
+				ipa_ctx->assoc_stas_map[i].mac_addr.bytes));
 	}
 }
 
@@ -426,7 +427,6 @@ static void wlan_ipa_dump_iface_context(struct wlan_ipa_priv *ipa_ctx)
 			"\tcons_client: %d\n"
 			"\tprod_client: %d\n"
 			"\tiface_id: %d\n"
-			"\tsta_id: %d\n"
 			"\tinterface_lock: %pK\n"
 			"\tifa_address: 0x%x\n",
 			i,
@@ -435,7 +435,6 @@ static void wlan_ipa_dump_iface_context(struct wlan_ipa_priv *ipa_ctx)
 			iface_context->cons_client,
 			iface_context->prod_client,
 			iface_context->iface_id,
-			iface_context->sta_id,
 			&iface_context->interface_lock,
 			iface_context->ifa_address);
 	}
@@ -524,9 +523,8 @@ static void wlan_ipa_print_session_info(struct wlan_ipa_priv *ipa_ctx)
 		if (!iface_context->tl_context)
 			continue;
 
-		ipa_info("\nIFACE[%d]: sta_id:%d, mode:%d, offload:%d",
-			 i, iface_context->sta_id,
-			 iface_context->device_mode,
+		ipa_info("\nIFACE[%d]: mode:%d, offload:%d",
+			 i, iface_context->device_mode,
 			 ipa_ctx->vdev_offload_enabled[iface_context->
 						       session_id]);
 	}
@@ -539,9 +537,9 @@ static void wlan_ipa_print_session_info(struct wlan_ipa_priv *ipa_ctx)
 	qdf_list_peek_front(&ipa_ctx->pending_event,
 			(qdf_list_node_t **)&event);
 	while (event) {
-		ipa_info("PENDING EVENT[%d]: EVT:%s, sta_id:%d, MAC:%pM",
+		ipa_info("PENDING EVENT[%d]: EVT:%s, MAC:%pM",
 			 i, wlan_ipa_wlan_event_to_str(event->type),
-			 event->sta_id, event->mac_addr);
+			 event->mac_addr);
 
 		qdf_list_peek_next(&ipa_ctx->pending_event,
 				   (qdf_list_node_t *)event,

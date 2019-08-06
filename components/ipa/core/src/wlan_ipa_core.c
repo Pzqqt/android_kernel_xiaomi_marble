@@ -1251,12 +1251,12 @@ end:
  * wlan_ipa_uc_find_add_assoc_sta() - Find associated station
  * @ipa_ctx: Global IPA IPA context
  * @sta_add: Should station be added
- * @sta_id: ID of the station being queried
+ * @mac_addr: mac address of station being queried
  *
  * Return: true if the station was found
  */
 static bool wlan_ipa_uc_find_add_assoc_sta(struct wlan_ipa_priv *ipa_ctx,
-					   bool sta_add, uint8_t sta_id,
+					   bool sta_add,
 					   uint8_t *mac_addr)
 {
 	bool sta_found = false;
@@ -1264,20 +1264,22 @@ static bool wlan_ipa_uc_find_add_assoc_sta(struct wlan_ipa_priv *ipa_ctx,
 
 	for (idx = 0; idx < WLAN_IPA_MAX_STA_COUNT; idx++) {
 		if ((ipa_ctx->assoc_stas_map[idx].is_reserved) &&
-		    (ipa_ctx->assoc_stas_map[idx].sta_id == sta_id)) {
+		    (qdf_is_macaddr_equal(
+			&ipa_ctx->assoc_stas_map[idx].mac_addr,
+			(struct qdf_mac_addr *)mac_addr))) {
 			sta_found = true;
 			break;
 		}
 	}
 	if (sta_add && sta_found) {
-		ipa_err("STA ID %d already exist, cannot add", sta_id);
+		ipa_err("STA already exist, cannot add: " QDF_MAC_ADDR_STR,
+			QDF_MAC_ADDR_ARRAY(mac_addr));
 		return sta_found;
 	}
 	if (sta_add) {
 		for (idx = 0; idx < WLAN_IPA_MAX_STA_COUNT; idx++) {
 			if (!ipa_ctx->assoc_stas_map[idx].is_reserved) {
 				ipa_ctx->assoc_stas_map[idx].is_reserved = true;
-				ipa_ctx->assoc_stas_map[idx].sta_id = sta_id;
 				qdf_mem_copy(&ipa_ctx->assoc_stas_map[idx].
 					     mac_addr, mac_addr,
 					     QDF_NET_ETH_LEN);
@@ -1286,16 +1288,18 @@ static bool wlan_ipa_uc_find_add_assoc_sta(struct wlan_ipa_priv *ipa_ctx,
 		}
 	}
 	if (!sta_add && !sta_found) {
-		ipa_err("STA ID %d does not exist, cannot delete", sta_id);
+		ipa_err("STA does not exist, cannot delete: " QDF_MAC_ADDR_STR,
+			QDF_MAC_ADDR_ARRAY(mac_addr));
 		return sta_found;
 	}
 	if (!sta_add) {
 		for (idx = 0; idx < WLAN_IPA_MAX_STA_COUNT; idx++) {
 			if ((ipa_ctx->assoc_stas_map[idx].is_reserved) &&
-			    (ipa_ctx->assoc_stas_map[idx].sta_id == sta_id)) {
+			    (qdf_is_macaddr_equal(
+				&ipa_ctx->assoc_stas_map[idx].mac_addr,
+				(struct qdf_mac_addr *)mac_addr))) {
 				ipa_ctx->assoc_stas_map[idx].is_reserved =
 					false;
-				ipa_ctx->assoc_stas_map[idx].sta_id = 0xFF;
 				qdf_mem_zero(
 					&ipa_ctx->assoc_stas_map[idx].mac_addr,
 					QDF_NET_ETH_LEN);
@@ -1353,7 +1357,6 @@ static void wlan_ipa_cleanup_iface(struct wlan_ipa_iface_context *iface_context)
 	iface_context->dev = NULL;
 	iface_context->device_mode = QDF_MAX_NO_OF_MODE;
 	iface_context->session_id = WLAN_IPA_MAX_SESSION;
-	iface_context->sta_id = WLAN_IPA_MAX_STA_COUNT;
 	qdf_spin_unlock_bh(&iface_context->interface_lock);
 	iface_context->ifa_address = 0;
 	if (!iface_context->ipa_ctx->num_iface) {
@@ -1410,14 +1413,13 @@ static void wlan_ipa_nbuf_cb(qdf_nbuf_t skb)
  * @net_dev: Interface net device
  * @device_mode: Net interface device mode
  * @adapter: Interface upon which IPA is being setup
- * @sta_id: Station ID of the API instance
  * @session_id: Station ID of the API instance
  *
  * Return: QDF STATUS
  */
 static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 				       qdf_netdev_t net_dev,
-				       uint8_t device_mode, uint8_t sta_id,
+				       uint8_t device_mode,
 				       uint8_t session_id)
 {
 	struct wlan_ipa_iface_context *iface_context = NULL;
@@ -1462,12 +1464,12 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 		goto end;
 	}
 
-	iface_context->sta_id = sta_id;
-	tl_context = (void *)cdp_peer_get_vdev_by_sta_id(ipa_ctx->dp_soc,
-							 ipa_ctx->dp_pdev,
-							 sta_id);
+	tl_context = (void *)cdp_get_vdev_from_vdev_id(ipa_ctx->dp_soc,
+						       ipa_ctx->dp_pdev,
+						       session_id);
 	if (!tl_context) {
-		ipa_err("Not able to get TL context sta_id: %d", sta_id);
+		ipa_err("Not able to get TL context session_id: %d",
+			session_id);
 		status = QDF_STATUS_E_INVAL;
 		goto end;
 	}
@@ -1684,7 +1686,6 @@ static void wlan_ipa_uc_offload_enable_disable(struct wlan_ipa_priv *ipa_ctx,
  * __wlan_ipa_wlan_evt() - IPA event handler
  * @net_dev: Interface net device
  * @device_mode: Net interface device mode
- * @sta_id: station id for the event
  * @session_id: session id for the event
  * @type: event enum of type ipa_wlan_event
  * @mac_address: MAC address associated with the event
@@ -1694,7 +1695,7 @@ static void wlan_ipa_uc_offload_enable_disable(struct wlan_ipa_priv *ipa_ctx,
  * Return: QDF STATUS
  */
 static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
-				      uint8_t sta_id, uint8_t session_id,
+				      uint8_t session_id,
 				      qdf_ipa_wlan_event type,
 				      uint8_t *mac_addr)
 {
@@ -1710,8 +1711,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev;
 
-	ipa_debug("%s: EVT: %d, MAC: %pM, sta_id: %d session_id: %u",
-		 net_dev->name, type, mac_addr, sta_id, session_id);
+	ipa_debug("%s: EVT: %d, MAC: %pM, session_id: %u",
+		  net_dev->name, type, mac_addr, session_id);
 
 	if (type >= QDF_IPA_WLAN_EVENT_MAX)
 		return QDF_STATUS_E_INVAL;
@@ -1809,7 +1810,6 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 
 			pending_event->net_dev = net_dev;
 			pending_event->device_mode = device_mode;
-			pending_event->sta_id = sta_id;
 			pending_event->session_id = session_id;
 			pending_event->type = type;
 			pending_event->is_loading = ipa_ctx->resource_loading;
@@ -1857,7 +1857,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		}
 
 		status = wlan_ipa_setup_iface(ipa_ctx, net_dev, device_mode,
-					   sta_id, session_id);
+					   session_id);
 		if (status != QDF_STATUS_SUCCESS) {
 			ipa_err("wlan_ipa_setup_iface failed %u", status);
 			qdf_mutex_release(&ipa_ctx->event_lock);
@@ -1922,7 +1922,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		}
 
 		status = wlan_ipa_setup_iface(ipa_ctx, net_dev, device_mode,
-					   sta_id, session_id);
+					   session_id);
 		if (status != QDF_STATUS_SUCCESS) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
 			ipa_err("%s: Evt: %d, Interface setup failed",
@@ -2080,10 +2080,12 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		}
 
 		qdf_mutex_acquire(&ipa_ctx->event_lock);
-		if (wlan_ipa_uc_find_add_assoc_sta(ipa_ctx, true, sta_id,
+		if (wlan_ipa_uc_find_add_assoc_sta(ipa_ctx, true,
 						   mac_addr)) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
-			ipa_err("%s: STA ID %d found", net_dev->name, sta_id);
+			ipa_err("%s: STA found, addr: " QDF_MAC_ADDR_STR,
+				net_dev->name,
+				QDF_MAC_ADDR_ARRAY(mac_addr));
 			return QDF_STATUS_SUCCESS;
 		}
 
@@ -2187,10 +2189,11 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			return QDF_STATUS_SUCCESS;
 		}
 		if (!wlan_ipa_uc_find_add_assoc_sta(ipa_ctx, false,
-						    sta_id, mac_addr)) {
+						    mac_addr)) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
-			ipa_err("%s: STA ID %d NOT found, not valid",
-				 msg_ex->name, sta_id);
+			ipa_err("%s: STA NOT found, not valid: "
+				QDF_MAC_ADDR_STR,
+				msg_ex->name, QDF_MAC_ADDR_ARRAY(mac_addr));
 
 			return QDF_STATUS_SUCCESS;
 		}
@@ -2320,7 +2323,6 @@ wlan_host_to_ipa_wlan_event(enum wlan_ipa_wlan_event wlan_ipa_event_type)
  * wlan_ipa_wlan_evt() - SSR wrapper for __wlan_ipa_wlan_evt
  * @net_dev: Interface net device
  * @device_mode: Net interface device mode
- * @sta_id: station id for the event
  * @session_id: session id for the event
  * @ipa_event_type: event enum of type wlan_ipa_wlan_event
  * @mac_address: MAC address associated with the event
@@ -2328,7 +2330,7 @@ wlan_host_to_ipa_wlan_event(enum wlan_ipa_wlan_event wlan_ipa_event_type)
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
-		      uint8_t sta_id, uint8_t session_id,
+		      uint8_t session_id,
 		      enum wlan_ipa_wlan_event ipa_event_type,
 		      uint8_t *mac_addr)
 {
@@ -2338,7 +2340,7 @@ QDF_STATUS wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 	/* Data path offload only support for STA and SAP mode */
 	if ((device_mode == QDF_STA_MODE) ||
 	    (device_mode == QDF_SAP_MODE))
-		status  = __wlan_ipa_wlan_evt(net_dev, device_mode, sta_id,
+		status  = __wlan_ipa_wlan_evt(net_dev, device_mode,
 					      session_id, type, mac_addr);
 
 	return status;
@@ -2376,7 +2378,6 @@ wlan_ipa_uc_proc_pending_event(struct wlan_ipa_priv *ipa_ctx, bool is_loading)
 		if (pending_event->is_loading == is_loading && vdev) {
 			__wlan_ipa_wlan_evt(pending_event->net_dev,
 					   pending_event->device_mode,
-					   pending_event->sta_id,
 					   pending_event->session_id,
 					   pending_event->type,
 					   pending_event->mac_addr);
