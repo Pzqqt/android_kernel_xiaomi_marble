@@ -2840,7 +2840,7 @@ void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
  */
 bool hdd_is_current_high_throughput(struct hdd_context *hdd_ctx)
 {
-	if (hdd_ctx->cur_vote_level < PLD_BUS_WIDTH_HIGH)
+	if (hdd_ctx->cur_vote_level < PLD_BUS_WIDTH_MEDIUM)
 		return false;
 	else
 		return true;
