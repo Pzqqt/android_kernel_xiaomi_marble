@@ -5537,6 +5537,8 @@ dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
 	}
 	qdf_mem_free(stat_ring_ppdu_ids);
 	qdf_mem_free(dest_ring_ppdu_ids);
+	DP_PRINT_STATS("mon_rx_dest_stuck = %d",
+		       rx_mon_stats->mon_rx_dest_stuck);
 }
 
 void

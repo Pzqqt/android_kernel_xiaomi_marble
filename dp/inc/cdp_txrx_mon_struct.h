@@ -235,5 +235,6 @@ struct cdp_pdev_mon_stats {
 	uint32_t stat_ring_ppdu_id_hist[MAX_PPDU_ID_HIST];
 	uint32_t dest_ring_ppdu_id_hist[MAX_PPDU_ID_HIST];
 	uint32_t ppdu_id_hist_idx;
+	uint32_t mon_rx_dest_stuck;
 };
 #endif
