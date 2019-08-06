@@ -493,10 +493,15 @@ int dp_connector_atomic_check(struct drm_connector *connector,
 	struct drm_connector_state *c_state)
 {
 	struct sde_connector *sde_conn;
-	struct drm_connector_state *old_state =
-		drm_atomic_get_old_connector_state(c_state->state, connector);
+	struct drm_connector_state *old_state;
 
 	if (!connector || !display)
+		return -EINVAL;
+
+	old_state =
+		drm_atomic_get_old_connector_state(c_state->state, connector);
+
+	if (!old_state)
 		return -EINVAL;
 
 	sde_conn = to_sde_connector(connector);
