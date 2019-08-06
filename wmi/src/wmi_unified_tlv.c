@@ -3034,6 +3034,11 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 		if (tchan_info->dfs_set)
 			WMI_SET_CHANNEL_FLAG(chan_info,
 					     WMI_CHAN_FLAG_DFS);
+
+		if (tchan_info->dfs_set_cfreq2)
+			WMI_SET_CHANNEL_FLAG(chan_info,
+					     WMI_CHAN_FLAG_DFS_CFREQ2);
+
 		if (tchan_info->allow_he)
 			WMI_SET_CHANNEL_FLAG(chan_info,
 					     WMI_CHAN_FLAG_ALLOW_HE);
