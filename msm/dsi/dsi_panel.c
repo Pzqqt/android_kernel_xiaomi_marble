@@ -30,6 +30,7 @@
 #define DEFAULT_PANEL_JITTER_ARRAY_SIZE		2
 #define MAX_PANEL_JITTER		10
 #define DEFAULT_PANEL_PREFILL_LINES	25
+#define MIN_PREFILL_LINES      35
 
 enum dsi_dsc_ratio_type {
 	DSC_8BPC_8BPP,
@@ -3535,6 +3536,8 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	struct msm_display_dsc_info *dsc = mode->timing.dsc;
 	struct dsi_mode_info *timing = &mode->timing;
 	struct dsi_display_mode *display_mode;
+	u32 jitter_numer, jitter_denom, prefill_lines;
+	u32 min_threshold_us, prefill_time_us;
 
 	/* Packet overlead in bits,2 bytes header + 2 bytes checksum
 	 * + 1 byte dcs data command.
@@ -3542,6 +3545,9 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	const u32 packet_overhead = 56;
 
 	display_mode = container_of(timing, struct dsi_display_mode, timing);
+
+	jitter_numer = display_mode->priv_info->panel_jitter_numer;
+	jitter_denom = display_mode->priv_info->panel_jitter_denom;
 
 	frame_time_us = mult_frac(1000, 1000, (timing->refresh_rate));
 
@@ -3574,6 +3580,30 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 		timing->dsi_transfer_time_us =
 			mode->priv_info->mdp_transfer_time_us;
 	} else {
+
+		min_threshold_us = mult_frac(frame_time_us,
+				jitter_numer, (jitter_denom * 100));
+		/*
+		 * Increase the prefill_lines proportionately as recommended
+		 * 35lines for 60fps, 52 for 90fps, 70lines for 120fps.
+		 */
+		prefill_lines = mult_frac(MIN_PREFILL_LINES,
+				timing->refresh_rate, 60);
+
+		prefill_time_us = mult_frac(frame_time_us, prefill_lines,
+				(timing->v_active));
+
+		/*
+		 * Threshold is sum of panel jitter time, prefill line time
+		 * plus 100usec buffer time.
+		 */
+		min_threshold_us = min_threshold_us + 100 + prefill_time_us;
+
+		DSI_DEBUG("min threshold time=%d\n", min_threshold_us);
+
+		if (min_threshold_us > frame_threshold_us)
+			frame_threshold_us = min_threshold_us;
+
 		timing->dsi_transfer_time_us = frame_time_us -
 			frame_threshold_us;
 	}
