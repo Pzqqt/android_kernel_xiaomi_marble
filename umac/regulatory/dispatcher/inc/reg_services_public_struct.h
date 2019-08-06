@@ -423,17 +423,21 @@ enum channel_enum {
 	MAX_5GHZ_CHANNEL = CHAN_ENUM_5920,
 	NUM_5GHZ_CHANNELS = (MAX_5GHZ_CHANNEL - MIN_5GHZ_CHANNEL + 1),
 
-#ifdef CONFIG_BAND_6GHZ
-	MIN_6GHZ_CHANNEL = CHAN_ENUM_5945,
-	MAX_6GHZ_CHANNEL = CHAN_ENUM_7105,
-	NUM_6GHZ_CHANNELS = (MAX_6GHZ_CHANNEL - MIN_6GHZ_CHANNEL + 1),
-#endif /* CONFIG_BAND_6GHZ */
-
 	MIN_DSRC_CHANNEL = CHAN_ENUM_5850,
 	MAX_DSRC_CHANNEL = CHAN_ENUM_5920,
 	NUM_DSRC_CHANNELS = (MAX_DSRC_CHANNEL - MIN_DSRC_CHANNEL + 1),
 
 	INVALID_CHANNEL = 0xBAD,
+
+#ifdef CONFIG_BAND_6GHZ
+	MIN_6GHZ_CHANNEL = CHAN_ENUM_5945,
+	MAX_6GHZ_CHANNEL = CHAN_ENUM_7105,
+	NUM_6GHZ_CHANNELS = (MAX_6GHZ_CHANNEL - MIN_6GHZ_CHANNEL + 1),
+#else
+	MIN_6GHZ_CHANNEL = INVALID_CHANNEL,
+	MAX_6GHZ_CHANNEL = INVALID_CHANNEL,
+	NUM_6GHZ_CHANNELS = 0,
+#endif /* CONFIG_BAND_6GHZ */
 };
 
 /**
@@ -789,6 +793,23 @@ struct reg_rule_info {
 	struct cur_reg_rule reg_rules[MAX_REG_RULES];
 };
 
+/**
+ * enum reg_wifi_band
+ * @REG_BAND_2G: 2G band
+ * @REG_BAND_5G: 5G band
+ * @REG_BAND_6G: 6G band
+ * @REG_BAND_UNKNOWN: Unsupported band
+ */
+enum reg_wifi_band {
+	REG_BAND_2G,
+	REG_BAND_5G,
+	REG_BAND_6G,
+	REG_BAND_UNKNOWN
+};
+
+/* Avoid the use of band_info as it does not support 6GHz band. Use
+ * reg_wifi_band, as it supports the 6GHz band
+ */
 /**
  * enum band_info
  * @BAND_ALL:all bands

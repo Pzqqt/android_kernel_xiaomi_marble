@@ -197,6 +197,22 @@ static inline uint16_t wlan_reg_max_6ghz_chan_freq(void)
 #endif /* CONFIG_BAND_6GHZ */
 
 /**
+ * wlan_reg_get_band_channel_list() - Get channel list based on the band_mask
+ * @pdev: pdev ptr
+ * @band_mask: Input bitmap with band set
+ * @channel_list: Pointer to Channel List
+ *
+ * Get the given channel list and number of channels from the current channel
+ * list based on input band bitmap.
+ *
+ * Return: Number of channels, else 0 to indicate error
+ */
+uint16_t
+wlan_reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
+			       uint8_t band_mask,
+			       struct regulatory_channel *channel_list);
+
+/**
  * wlan_reg_is_49ghz_freq() - Check if the given channel frequency is 4.9GHz
  * @freq: Channel frequency
  *

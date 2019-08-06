@@ -748,6 +748,19 @@ bool wlan_reg_is_6ghz_psc_chan_freq(uint16_t freq)
 }
 #endif /* CONFIG_BAND_6GHZ */
 
+uint16_t
+wlan_reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
+			       uint8_t band_mask,
+			       struct regulatory_channel *channel_list)
+{
+	if (!pdev) {
+		reg_err("pdev object is NULL");
+		return 0;
+	}
+
+	return reg_get_band_channel_list(pdev, band_mask, channel_list);
+}
+
 bool wlan_reg_is_49ghz_freq(uint32_t freq)
 {
 	return reg_is_49ghz_freq(freq);

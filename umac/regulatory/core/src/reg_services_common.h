@@ -29,6 +29,8 @@
 #define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (psoc_priv_obj)
 #define IS_VALID_PDEV_REG_OBJ(pdev_priv_obj) (pdev_priv_obj)
 #define FREQ_TO_CHAN_SCALE     5
+/* The distance between the 80Mhz center and the nearest 20Mhz channel */
+#define NEAREST_20MHZ_CHAN_FREQ_OFFSET     10
 
 #ifdef CONFIG_CHAN_NUM_API
 #define REG_MIN_24GHZ_CH_NUM channel_map[MIN_24GHZ_CHANNEL].chan_num
@@ -555,6 +557,21 @@ static inline uint16_t reg_max_6ghz_chan_freq(void)
 	return 0;
 }
 #endif /* CONFIG_BAND_6GHZ */
+
+/**
+ * reg_get_band_channel_list() - Get the channel list and number of channels
+ * @pdev: pdev ptr
+ * @band_mask: Input bitmap with band set
+ * @channel_list: Pointer to Channel List
+ *
+ * Get the given channel list and number of channels from the current channel
+ * list based on input band bitmap.
+ *
+ * Return: Number of channels, else 0 to indicate error
+ */
+uint16_t reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
+				   uint8_t band_mask,
+				   struct regulatory_channel *channel_list);
 
 /**
  * reg_is_49ghz_freq() - Check if the given channel frequency is 4.9GHz
