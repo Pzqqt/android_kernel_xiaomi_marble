@@ -1724,7 +1724,6 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	    (sta_ctx->conn_info.sta_id[0] != HDD_WLAN_INVALID_STA_ID))
 		ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
 				  adapter->device_mode,
-				  sta_ctx->conn_info.sta_id[0],
 				  adapter->vdev_id,
 				  WLAN_IPA_STA_DISCONNECT,
 				  sta_ctx->conn_info.bssid.bytes);
@@ -2920,7 +2919,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		if (ucfg_ipa_is_enabled())
 			ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
 					  adapter->device_mode,
-					  roam_info->staId,
 					  adapter->vdev_id,
 					  WLAN_IPA_STA_CONNECT,
 					  roam_info->bssid.bytes);

@@ -1032,7 +1032,6 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 		if (ucfg_ipa_is_enabled()) {
 			if (ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
 					  adapter->device_mode,
-					  adapter->sta_info[sta_id].sta_id,
 					  adapter->vdev_id,
 					  WLAN_IPA_CLIENT_DISCONNECT,
 					  adapter->sta_info[sta_id].sta_mac.
@@ -1265,7 +1264,6 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 		if (ucfg_ipa_wlan_evt(hdd_ctx->pdev,
 				      adapter->dev,
 				      adapter->device_mode,
-				      ap_ctx->broadcast_sta_id,
 				      adapter->vdev_id,
 				      WLAN_IPA_AP_DISCONNECT,
 				      adapter->dev->dev_addr) !=
