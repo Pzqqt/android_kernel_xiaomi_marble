@@ -222,7 +222,6 @@ QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req)
 		return QDF_STATUS_E_NOMEM;
 
 	qdf_mem_zero(psnr_req_bkp, sizeof(tAniGetSnrReq));
-	psnr_req_bkp->staId = psnr_req->staId;
 	psnr_req_bkp->pDevContext = psnr_req->pDevContext;
 	psnr_req_bkp->snrCallback = psnr_req->snrCallback;
 	intr->psnr_req = (void *)psnr_req_bkp;

@@ -1376,7 +1376,6 @@ typedef struct sAniGetSnrReq {
 	uint16_t msgType;       /* message type is same as the request type */
 	uint16_t msgLen;        /* length of the entire request */
 	uint8_t sessionId;
-	uint8_t staId;
 	void *snrCallback;
 	void *pDevContext;      /* device context */
 	int8_t snr;

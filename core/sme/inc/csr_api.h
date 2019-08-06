@@ -1425,7 +1425,7 @@ const char *csr_phy_mode_str(eCsrPhyMode phy_mode);
 typedef void (*tCsrTsmStatsCallback)(tAniTrafStrmMetrics tsmMetrics,
 				     uint32_t staId, void *pContext);
 #endif /* FEATURE_WLAN_ESE */
-typedef void (*tCsrSnrCallback)(int8_t snr, uint32_t staId, void *pContext);
+typedef void (*tCsrSnrCallback)(int8_t snr, void *pContext);
 
 /**
  * csr_roam_issue_ft_preauth_req() - Initiate Preauthentication request

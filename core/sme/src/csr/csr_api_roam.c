@@ -17394,7 +17394,7 @@ static void csr_roam_link_down(struct mac_context *mac, uint32_t sessionId)
 
 QDF_STATUS csr_get_snr(struct mac_context *mac,
 		       tCsrSnrCallback callback,
-		       uint8_t staId, struct qdf_mac_addr bssId, void *pContext)
+		       struct qdf_mac_addr bssId, void *pContext)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg msg = {0};
@@ -17415,7 +17415,6 @@ QDF_STATUS csr_get_snr(struct mac_context *mac,
 	pMsg->msgType = eWNI_SME_GET_SNR_REQ;
 	pMsg->msgLen = (uint16_t) sizeof(tAniGetSnrReq);
 	pMsg->sessionId = sessionId;
-	pMsg->staId = staId;
 	pMsg->snrCallback = callback;
 	pMsg->pDevContext = pContext;
 	msg.type = eWNI_SME_GET_SNR_REQ;

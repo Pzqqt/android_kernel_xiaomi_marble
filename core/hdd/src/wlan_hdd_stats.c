@@ -5293,7 +5293,7 @@ struct snr_priv {
  *
  * Return: None
  */
-static void hdd_get_snr_cb(int8_t snr, uint32_t sta_id, void *context)
+static void hdd_get_snr_cb(int8_t snr, void *context)
 {
 	struct osif_request *request;
 	struct snr_priv *priv;
@@ -5348,7 +5348,6 @@ QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr)
 	cookie = osif_request_cookie(request);
 
 	status = sme_get_snr(hdd_ctx->mac_handle, hdd_get_snr_cb,
-			     sta_ctx->conn_info.sta_id[0],
 			     sta_ctx->conn_info.bssid, cookie);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Unable to retrieve RSSI");

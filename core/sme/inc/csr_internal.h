@@ -898,7 +898,7 @@ bool csr_is_valid_mc_concurrent_session(struct mac_context *mac,
 bool csr_is_conn_state_connected_infra_ap(struct mac_context *mac,
 		uint32_t sessionId);
 QDF_STATUS csr_get_snr(struct mac_context *mac, tCsrSnrCallback callback,
-		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
+			  struct qdf_mac_addr bssId, void *pContext);
 QDF_STATUS csr_get_config_param(struct mac_context *mac,
 					  struct csr_config_params *pParam);
 QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
