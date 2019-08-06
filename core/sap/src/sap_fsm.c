@@ -703,34 +703,12 @@ sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
 
 uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg)
 {
-	uint8_t channel;
-
-	if (!acs_cfg) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"ACS config invalid!");
-		QDF_BUG(0);
+	if (!acs_cfg || !acs_cfg->ch_list)
 		return 0;
-	}
 
-	if (acs_cfg->hw_mode == eCSR_DOT11_MODE_11a) {
-		channel = SAP_DEFAULT_5GHZ_CHANNEL;
-	} else if ((acs_cfg->hw_mode == eCSR_DOT11_MODE_11n) ||
-		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11n_ONLY) ||
-		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11ac) ||
-		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11ac_ONLY) ||
-		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11ax) ||
-		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11ax_ONLY)) {
-		if (WLAN_REG_IS_5GHZ_CH(acs_cfg->start_ch))
-			channel = SAP_DEFAULT_5GHZ_CHANNEL;
-		else
-			channel = SAP_DEFAULT_24GHZ_CHANNEL;
-	} else {
-		channel = SAP_DEFAULT_24GHZ_CHANNEL;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			FL("channel selected to start bss %d"), channel);
-	return channel;
+	sap_debug("default channel chosen as %d", acs_cfg->ch_list[0]);
+	/* Return the default channel as first channel in list */
+	return acs_cfg->ch_list[0];
 }
 
 QDF_STATUS
