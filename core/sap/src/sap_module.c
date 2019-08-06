@@ -1254,7 +1254,7 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
  */
 static QDF_STATUS
 wlansap_update_csa_channel_params(struct sap_context *sap_context,
-				  uint32_t channel)
+				  enum channel_enum channel)
 {
 	struct mac_context *mac_ctx;
 	uint8_t bw;
@@ -1265,7 +1265,7 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	if (channel <= CHAN_ENUM_14) {
+	if (channel <= CHAN_ENUM_2484) {
 		/*
 		 * currently OBSS scan is done in hostapd, so to avoid
 		 * SAP coming up in HT40 on channel switch we are
@@ -2347,15 +2347,15 @@ void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
 		return;
 	}
 	if (*startChannelNum <= 14 && *endChannelNum <= 14) {
-		*bandStartChannel = CHAN_ENUM_1;
-		*bandEndChannel = CHAN_ENUM_14;
+		*bandStartChannel = CHAN_ENUM_2412;
+		*bandEndChannel = CHAN_ENUM_2484;
 		tmp_startChannelNum = *startChannelNum > 5 ?
 				   (*startChannelNum - ACS_2G_EXTEND) : 1;
 		tmp_endChannelNum = (*endChannelNum + ACS_2G_EXTEND) <= 14 ?
 				 (*endChannelNum + ACS_2G_EXTEND) : 14;
 	} else if (*startChannelNum >= 36 && *endChannelNum >= 36) {
-		*bandStartChannel = CHAN_ENUM_36;
-		*bandEndChannel = CHAN_ENUM_173;
+		*bandStartChannel = CHAN_ENUM_5180;
+		*bandEndChannel = CHAN_ENUM_5865;
 		tmp_startChannelNum = (*startChannelNum - ACS_5G_EXTEND) > 36 ?
 				   (*startChannelNum - ACS_5G_EXTEND) : 36;
 		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <=
@@ -2363,8 +2363,8 @@ void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
 				     (*endChannelNum + ACS_5G_EXTEND) :
 				     WNI_CFG_CURRENT_CHANNEL_STAMAX;
 	} else {
-		*bandStartChannel = CHAN_ENUM_1;
-		*bandEndChannel = CHAN_ENUM_173;
+		*bandStartChannel = CHAN_ENUM_2412;
+		*bandEndChannel = CHAN_ENUM_5865;
 		tmp_startChannelNum = *startChannelNum > 5 ?
 			(*startChannelNum - ACS_2G_EXTEND) : 1;
 		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <=

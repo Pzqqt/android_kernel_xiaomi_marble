@@ -659,7 +659,7 @@ void hdd_update_indoor_channel(struct hdd_context *hdd_ctx,
 {
 	int band_num;
 	int chan_num;
-	enum channel_enum chan_enum = CHAN_ENUM_1;
+	enum channel_enum chan_enum = CHAN_ENUM_2412;
 	struct ieee80211_channel *wiphy_chan, *wiphy_chan_144 = NULL;
 	struct regulatory_channel *cds_chan;
 	uint8_t band_capability;
@@ -682,7 +682,7 @@ void hdd_update_indoor_channel(struct hdd_context *hdd_ctx,
 			wiphy_chan =
 				&(wiphy->bands[band_num]->channels[chan_num]);
 			cds_chan = &(reg_channels[chan_enum]);
-			if (chan_enum == CHAN_ENUM_144)
+			if (chan_enum == CHAN_ENUM_5720)
 				wiphy_chan_144 = wiphy_chan;
 
 			chan_enum++;
@@ -1381,9 +1381,14 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 {
 	bool offload_enabled;
 	struct reg_config_vars config_vars;
-	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
+	struct regulatory_channel *cur_chan_list;
 	enum country_src cc_src;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
+
+	cur_chan_list = qdf_mem_malloc(sizeof(*cur_chan_list) * NUM_CHANNELS);
+	if (!cur_chan_list) {
+		return -ENOMEM;
+	}
 
 	reg_program_config_vars(hdd_ctx, &config_vars);
 	ucfg_reg_register_chan_change_callback(hdd_ctx->psoc,
@@ -1420,6 +1425,7 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 		hdd_ctx->reg_offload = false;
 	}
 
+	qdf_mem_free(cur_chan_list);
 	return 0;
 }
 

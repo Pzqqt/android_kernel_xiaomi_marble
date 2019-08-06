@@ -1059,7 +1059,7 @@ int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper)
 
 	if (upper && (ch_idx < (NUM_CHANNELS - 1)))
 		ch_idx++;
-	else if (!upper && (ch_idx > CHAN_ENUM_1))
+	else if (!upper && (ch_idx > CHAN_ENUM_2412))
 		ch_idx--;
 	else
 		return -EINVAL;
@@ -1721,20 +1721,20 @@ static int wlan_hdd_set_acs_ch_range(
 
 	if (hw_mode == QCA_ACS_MODE_IEEE80211B) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11b;
-		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
-		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_14);
+		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_2412);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_2484);
 	} else if (hw_mode == QCA_ACS_MODE_IEEE80211G) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11g;
-		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
-		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_13);
+		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_2412);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_2472);
 	} else if (hw_mode == QCA_ACS_MODE_IEEE80211A) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11a;
-		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_36);
-		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_173);
+		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_5180);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_5865);
 	} else if (hw_mode == QCA_ACS_MODE_IEEE80211ANY) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_abg;
-		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
-		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_173);
+		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_2412);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_5865);
 	}
 
 	if (ht_enabled)
@@ -2903,7 +2903,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	ucfg_mlme_is_sap_11ac_override(hdd_ctx->psoc, &sap_11ac_override);
 	/* ACS override for android */
 	if (ht_enabled &&
-	    sap_config->acs_cfg.end_ch >= WLAN_REG_CH_NUM(CHAN_ENUM_36) &&
+	    sap_config->acs_cfg.end_ch >= WLAN_REG_CH_NUM(CHAN_ENUM_5180) &&
 	    ((adapter->device_mode == QDF_SAP_MODE &&
 	      !sap_force_11n_for_11ac &&
 	      sap_11ac_override) ||
@@ -14722,7 +14722,7 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 		hdd_err("Unable to fetch sap allow all channels");
 	if (value) {
 		/* Validate the channel */
-		for (count = CHAN_ENUM_1; count <= CHAN_ENUM_173; count++) {
+		for (count = CHAN_ENUM_2412; count <= CHAN_ENUM_5865; count++) {
 			if (channel == WLAN_REG_CH_NUM(count)) {
 				is_valid_channel = true;
 				break;

@@ -3274,10 +3274,10 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	en_lte_coex = mac_ctx->mlme_cfg->sap_cfg.enable_lte_coex;
 
 	/* Check if LTE coex is enabled and 2.4GHz is selected */
-	if (en_lte_coex && (band_start_ch == CHAN_ENUM_1) &&
-	    (band_end_ch == CHAN_ENUM_14)) {
+	if (en_lte_coex && (band_start_ch == CHAN_ENUM_2412) &&
+	    (band_end_ch == CHAN_ENUM_2484)) {
 		/* Set 2.4GHz upper limit to channel 9 for LTE COEX */
-		band_end_ch = CHAN_ENUM_9;
+		band_end_ch = CHAN_ENUM_2452;
 	}
 
 	/* Allocate the max number of channel supported */
@@ -3353,15 +3353,15 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		 * band. So, don't even scan on 2.4Ghz channels if bw is
 		 * 40/80/160Mhz and channel list has any 5Ghz channel.
 		 */
-		if (end_ch_num >= WLAN_REG_CH_NUM(CHAN_ENUM_36) &&
+		if (end_ch_num >= WLAN_REG_CH_NUM(CHAN_ENUM_5180) &&
 		    ((ch_width == CH_WIDTH_40MHZ) ||
 		     (ch_width == CH_WIDTH_80MHZ) ||
 		     (ch_width == CH_WIDTH_80P80MHZ) ||
 		     (ch_width == CH_WIDTH_160MHZ))) {
 			if (WLAN_REG_CH_NUM(loop_count) >=
-			    WLAN_REG_CH_NUM(CHAN_ENUM_1) &&
+			    WLAN_REG_CH_NUM(CHAN_ENUM_2412) &&
 			    WLAN_REG_CH_NUM(loop_count) <=
-			    WLAN_REG_CH_NUM(CHAN_ENUM_14))
+			    WLAN_REG_CH_NUM(CHAN_ENUM_2484))
 				continue;
 		}
 

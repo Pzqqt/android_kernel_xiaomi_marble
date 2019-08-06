@@ -1995,7 +1995,7 @@ static int iw_get_channel_list(struct net_device *dev,
 {
 	uint32_t num_channels = 0;
 	uint8_t i = 0;
-	uint8_t band_start_channel = CHAN_ENUM_1;
+	uint8_t band_start_channel = MIN_24GHZ_CHANNEL;
 	uint8_t band_end_channel = MAX_5GHZ_CHANNEL;
 	struct hdd_adapter *hostapd_adapter = (netdev_priv(dev));
 	struct channel_list_info *channel_list =
@@ -2023,10 +2023,10 @@ static int iw_get_channel_list(struct net_device *dev,
 	}
 
 	if (BAND_2G == cur_band) {
-		band_start_channel = CHAN_ENUM_1;
-		band_end_channel = CHAN_ENUM_14;
+		band_start_channel = MIN_24GHZ_CHANNEL;
+		band_end_channel = MAX_24GHZ_CHANNEL;
 	} else if (BAND_5G == cur_band) {
-		band_start_channel = CHAN_ENUM_36;
+		band_start_channel = MIN_5GHZ_CHANNEL;
 		band_end_channel = MAX_5GHZ_CHANNEL;
 	}
 
