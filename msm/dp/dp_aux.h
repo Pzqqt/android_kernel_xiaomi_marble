@@ -40,6 +40,8 @@ struct dp_aux {
 
 	bool read;
 
+	struct mutex *access_lock;
+
 	struct drm_dp_aux *drm_aux;
 	int (*drm_aux_register)(struct dp_aux *aux);
 	void (*drm_aux_deregister)(struct dp_aux *aux);

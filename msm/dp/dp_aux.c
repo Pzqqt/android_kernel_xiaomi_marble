@@ -495,35 +495,33 @@ static ssize_t dp_aux_transfer_debug(struct drm_dp_aux *drm_aux,
 	}
 
 	if (aux->native) {
+		mutex_lock(aux->dp_aux.access_lock);
 		aux->dp_aux.reg = msg->address;
 		aux->dp_aux.read = aux->read;
 		aux->dp_aux.size = msg->size;
 
+		if (!aux->read)
+			memcpy(aux->dpcd + msg->address,
+				msg->buffer, msg->size);
+
 		reinit_completion(&aux->comp);
+		mutex_unlock(aux->dp_aux.access_lock);
 
-		if (aux->read) {
-			timeout = wait_for_completion_timeout(&aux->comp, HZ);
-			if (!timeout) {
-				DP_ERR("read timeout: 0x%x\n", msg->address);
-				atomic_set(&aux->aborted, 1);
-				ret = -ETIMEDOUT;
-				goto end;
-			}
+		timeout = wait_for_completion_timeout(&aux->comp, HZ * 2);
+		if (!timeout) {
+			DP_ERR("%s timeout: 0x%x\n",
+				aux->read ? "read" : "write",
+				msg->address);
+			atomic_set(&aux->aborted, 1);
+			ret = -ETIMEDOUT;
+			goto end;
+		}
 
+		mutex_lock(aux->dp_aux.access_lock);
+		if (aux->read)
 			memcpy(msg->buffer, aux->dpcd + msg->address,
 				msg->size);
-		} else {
-			memcpy(aux->dpcd + msg->address, msg->buffer,
-				msg->size);
-
-			timeout = wait_for_completion_timeout(&aux->comp, HZ);
-			if (!timeout) {
-				DP_ERR("write timeout: 0x%x\n", msg->address);
-				atomic_set(&aux->aborted, 1);
-				ret = -ETIMEDOUT;
-				goto end;
-			}
-		}
+		mutex_unlock(aux->dp_aux.access_lock);
 
 		aux->aux_error_num = DP_AUX_ERR_NONE;
 	} else {
@@ -725,6 +723,8 @@ static void dp_aux_dpcd_updated(struct dp_aux *dp_aux)
 
 	aux = container_of(dp_aux, struct dp_aux_private, dp_aux);
 
+	/* make sure wait has started */
+	usleep_range(20, 30);
 	complete(&aux->comp);
 }
 
