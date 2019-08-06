@@ -1085,8 +1085,8 @@ QDF_STATUS p2p_event_flush_callback(struct scheduler_msg *msg)
 		break;
 	case P2P_EVENT_MGMT_TX_ACK_CNF:
 		tx_conf_event = (struct p2p_tx_conf_event *)msg->bodyptr;
-		qdf_mem_free(tx_conf_event);
 		qdf_nbuf_free(tx_conf_event->nbuf);
+		qdf_mem_free(tx_conf_event);
 		break;
 	case P2P_EVENT_LO_STOPPED:
 		lo_stop_event = (struct p2p_lo_stop_event *)msg->bodyptr;
