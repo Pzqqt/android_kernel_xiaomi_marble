@@ -961,6 +961,18 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	if (sap_context->channel)
 		return sap_validate_chan(sap_context, true, false);
 
+	if (sap_context->freq_list) {
+		qdf_mem_free(sap_context->freq_list);
+		sap_context->freq_list = NULL;
+		sap_context->num_of_channel = 0;
+	}
+
+	sap_get_freq_list(sap_context, &freq_list, &num_of_channels);
+	if (!num_of_channels) {
+		sap_err("No freq sutiable for SAP in current list, SAP failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (policy_mgr_concurrent_beaconing_sessions_running(mac_ctx->psoc) ||
 	    ((sap_context->cc_switch_mode ==
 	      QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) &&
@@ -1022,7 +1034,6 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	req->scan_req.scan_req_id = sap_context->req_id;
 	req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
 	req->scan_req.scan_f_bcast_probe = true;
-	sap_get_freq_list(sap_context, &freq_list, &num_of_channels);
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	if (num_of_channels != 0) {
@@ -1031,11 +1042,6 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 		req->scan_req.chan_list.num_chan = num_of_channels;
 		for (i = 0; i < num_of_channels; i++)
 			req->scan_req.chan_list.chan[i].freq = freq_list[i];
-		if (sap_context->freq_list) {
-			qdf_mem_free(sap_context->freq_list);
-			sap_context->freq_list = NULL;
-			sap_context->num_of_channel = 0;
-		}
 		sap_context->freq_list = freq_list;
 		sap_context->num_of_channel = num_of_channels;
 		/* Set requestType to Full scan */
