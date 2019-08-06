@@ -1051,7 +1051,6 @@ static inline QDF_STATUS mlme_vdev_is_newchan_no_cac(
 	return ret;
 }
 
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * wlan_vdev_mlme_set_ssid() - set ssid
  * @vdev: VDEV object
@@ -1380,5 +1379,4 @@ static inline uint32_t wlan_vdev_mlme_get_txmgmtrate(
 
 	return vdev_mlme->mgmt.rate_info.tx_mgmt_rate;
 }
-#endif /* CMN_VDEV_MGR_TGT_IF_ENABLE */
 #endif

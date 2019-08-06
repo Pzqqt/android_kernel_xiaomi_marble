@@ -105,7 +105,6 @@ init_failed:
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 static void mlme_vdev_obj_timer_deinit(
 				struct vdev_mlme_obj *vdev_mlme)
 {
@@ -114,12 +113,7 @@ static void mlme_vdev_obj_timer_deinit(
 	vdev_rsp = &vdev_mlme->vdev_rt;
 	qdf_timer_free(&vdev_rsp->rsp_timer);
 }
-#else
-static void mlme_vdev_obj_timer_deinit(
-				struct vdev_mlme_obj *vdev_mlme)
-{
-}
-#endif
+
 static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 						void *arg)
 {

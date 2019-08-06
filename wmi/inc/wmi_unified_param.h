@@ -461,16 +461,6 @@ typedef enum {
 	WMI_HOST_MODE_MAX = 24
 } WMI_HOST_WLAN_PHY_MODE;
 
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-typedef enum {
-	WMI_HOST_VDEV_START_OK = 0,
-	WMI_HOST_VDEV_START_CHAN_INVALID,
-	WMI_HOST_VDEV_START_CHAN_BLOCKED,
-	WMI_HOST_VDEV_START_CHAN_DFS_VIOLATION,
-	WMI_HOST_VDEV_START_TIMEOUT,
-} WMI_HOST_VDEV_START_STATUS;
-#endif
-
 /*
  * Needs to be removed and use channel_param based
  * on how it is processed
@@ -680,148 +670,6 @@ struct mac_ssid {
 	uint8_t mac_ssid[WMI_MAC_MAX_SSID_LENGTH];
 } qdf_packed;
 
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct vdev_create_params - vdev create cmd parameter
- * @if_id: interface id
- * @type: interface type
- * @subtype: interface subtype
- * @nss_2g: NSS for 2G
- * @nss_5g: NSS for 5G
- * @pdev_id: pdev id on pdev for this vdev
- * @mbssid-flags: MBSS IE flags indicating vdev type
- * @vdevid_trans: id of transmitting vdev for MBSS IE
- */
-struct vdev_create_params {
-	uint8_t if_id;
-	uint32_t type;
-	uint32_t subtype;
-	uint8_t nss_2g;
-	uint8_t nss_5g;
-	uint32_t pdev_id;
-	uint32_t mbssid_flags;
-	uint8_t vdevid_trans;
-};
-
-/**
- * struct vdev_delete_params - vdev delete cmd parameter
- * @if_id: interface id
- */
-struct vdev_delete_params {
-	uint8_t if_id;
-};
-
-/**
- * struct vdev_stop_params - vdev stop cmd parameter
- * @vdev_id: vdev id
- */
-struct vdev_stop_params {
-	uint8_t vdev_id;
-};
-
-/**
- * struct vdev_up_params - vdev up cmd parameter
- * @vdev_id: vdev id
- * @assoc_id: association id
- * @profile_idx: profile index of the connected non-trans ap (mbssid case).
- *		0  means invalid.
- * @profile_num: the total profile numbers of non-trans aps (mbssid case).
- *		0 means non-MBSS AP.
- * @trans_bssid: bssid of transmitted AP (MBSS IE case)
- */
-struct vdev_up_params {
-	uint8_t vdev_id;
-	uint16_t assoc_id;
-	uint32_t profile_idx;
-	uint32_t profile_num;
-	uint8_t trans_bssid[QDF_MAC_ADDR_SIZE];
-};
-
-/**
- * struct vdev_down_params - vdev down cmd parameter
- * @vdev_id: vdev id
- */
-struct vdev_down_params {
-	uint8_t vdev_id;
-};
-
-/**
- * enum wmi_bcn_tx_rate_code - beacon tx rate code
- */
-enum wmi_bcn_tx_rate_code {
-	WMI_BCN_TX_RATE_CODE_1_M = 0x43,
-	WMI_BCN_TX_RATE_CODE_2_M = 0x42,
-	WMI_BCN_TX_RATE_CODE_5_5_M = 0x41,
-	WMI_BCN_TX_RATE_CODE_6_M = 0x03,
-	WMI_BCN_TX_RATE_CODE_9_M = 0x07,
-	WMI_BCN_TX_RATE_CODE_11M = 0x40,
-	WMI_BCN_TX_RATE_CODE_12_M = 0x02,
-	WMI_BCN_TX_RATE_CODE_18_M = 0x06,
-	WMI_BCN_TX_RATE_CODE_24_M = 0x01,
-	WMI_BCN_TX_RATE_CODE_36_M = 0x05,
-	WMI_BCN_TX_RATE_CODE_48_M = 0x00,
-	WMI_BCN_TX_RATE_CODE_54_M = 0x04,
-};
-
-/**
- * struct vdev_start_params - vdev start cmd parameter
- * @vdev_id: vdev id
- * @flags: flags to set like pmf_enabled etc.
- * @beacon_intval: beacon interval
- * @dtim_period: dtim period
- * @is_restart: flag to check if it is vdev
- * @disable_hw_ack: to update disable hw ack flag
- * @hidden_ssid: hidden ssid
- * @pmf_enabled: pmf enabled
- * @ssid: ssid MAC
- * @num_noa_descriptors: number of noa descriptors
- * @preferred_tx_streams: preferred tx streams
- * @preferred_rx_streams: preferred rx streams
- * @cac_duration_ms: cac duration in milliseconds
- * @regdomain: Regulatory domain
- * @he_ops: HE ops
- * @channel_param: Channel params required by target.
- * @bcn_tx_rate_code: Beacon tx rate code.
- * @ldpc_rx_enabled: Enable/Disable LDPC RX for this vdev
- */
-struct vdev_start_params {
-	uint8_t vdev_id;
-	uint32_t flags;
-	uint32_t beacon_intval;
-	uint32_t dtim_period;
-	bool is_restart;
-	uint32_t disable_hw_ack;
-	uint8_t hidden_ssid;
-	uint8_t pmf_enabled;
-	struct mac_ssid ssid;
-	uint32_t num_noa_descriptors;
-	uint32_t preferred_rx_streams;
-	uint32_t preferred_tx_streams;
-	uint32_t cac_duration_ms;
-	uint32_t regdomain;
-	uint32_t he_ops;
-	struct channel_param channel;
-	enum wmi_bcn_tx_rate_code bcn_tx_rate_code;
-	bool ldpc_rx_enabled;
-};
-
-/**
- * struct vdev_scan_nac_rssi_params - NAC_RSSI cmd parameter
- * @vdev_id: vdev id
- * @bssid_addr: BSSID address
- * @client_addr: client address
- * @chan_num: channel number
- * @action:NAC_RSSI action,
- */
-struct vdev_scan_nac_rssi_params {
-	uint32_t vdev_id;
-	uint8_t bssid_addr[QDF_MAC_ADDR_SIZE];
-	uint8_t client_addr[QDF_MAC_ADDR_SIZE];
-	uint32_t chan_num;
-	uint32_t action; /* WMI_FILTER_NAC_RSSI_ACTION */
-};
-#endif /* CMN_VDEV_MGR_TGT_IF_ENABLE */
-
 /**
  * enum nss_chains_band_info - Band info for dynamic nss, chains change feature
  * @NSS_CHAINS_BAND_2GHZ: 2.4Ghz band
@@ -917,30 +765,6 @@ struct peer_cfr_params {
 
 #endif /* WLAN_CFR_ENABLE */
 
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct vdev_set_params - vdev set cmd parameter
- * @if_id: vdev id
- * @param_id: parameter id
- * @param_value: parameter value
- */
-struct vdev_set_params {
-	uint32_t if_id;
-	uint32_t param_id;
-	uint32_t param_value;
-};
-
-/**
- * struct sifs_trigger_param - sifs_trigger cmd parameter
- * @if_id: vdev id
- * @param_value: parameter value
- */
-struct sifs_trigger_param {
-	uint32_t if_id;
-	uint32_t param_value;
-};
-#endif
-
 /**
  * struct peer_delete_params - peer delete cmd parameter
  * @vdev_id: vdev id
@@ -948,27 +772,6 @@ struct sifs_trigger_param {
 struct peer_delete_params {
 	uint8_t vdev_id;
 };
-
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct peer_flush_params - peer flush cmd parameter
- * @peer_tid_bitmap: peer tid bitmap
- * @vdev_id: vdev id
- */
-struct peer_flush_params {
-	uint32_t peer_tid_bitmap;
-	uint8_t vdev_id;
-};
-
-/**
- * struct peer_delete_all_params - peer delete all request parameter
- * @vdev_id: vdev id
- */
-struct peer_delete_all_params {
-	uint8_t vdev_id;
-};
-
-#endif
 
 /**
  * struct peer_set_params - peer set cmd parameter
@@ -1128,54 +931,6 @@ struct pdev_params {
 	uint32_t param_id;
 	uint32_t param_value;
 };
-
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct beacon_tmpl_params - beacon template cmd parameter
- * @vdev_id: vdev id
- * @tim_ie_offset: tim ie offset
- * @mbssid_ie_offset: mbssid ie offset
- * @tmpl_len: beacon template length
- * @tmpl_len_aligned: beacon template alignment
- * @csa_switch_count_offset: CSA swith count offset in beacon frame
- * @ext_csa_switch_count_offset: ECSA switch count offset in beacon frame
- * @esp_ie_offset: ESP IE offset in beacon frame
- * @frm: beacon template parameter
- */
-struct beacon_tmpl_params {
-	uint8_t vdev_id;
-	uint32_t tim_ie_offset;
-	uint32_t mbssid_ie_offset;
-	uint32_t tmpl_len;
-	uint32_t tmpl_len_aligned;
-	uint32_t csa_switch_count_offset;
-	uint32_t ext_csa_switch_count_offset;
-	uint32_t esp_ie_offset;
-	uint8_t *frm;
-};
-
-/**
- * struct beacon_params - beacon cmd parameter
- * @vdev_id: vdev id
- * @beaconInterval: Beacon interval
- * @wbuf: beacon buffer
- * @frame_ctrl: frame control field
- * @bcn_txant: beacon antenna
- * @is_dtim_count_zero: is it dtim beacon
- * @is_bitctl_reqd: is Bit control required
- * @is_high_latency: Is this high latency target
- */
-struct beacon_params {
-	uint8_t vdev_id;
-	uint16_t beaconInterval;
-	qdf_nbuf_t wbuf;
-	uint16_t frame_ctrl;
-	uint32_t bcn_txant;
-	bool is_dtim_count_zero;
-	bool is_bitctl_reqd;
-	bool is_high_latency;
-};
-#endif
 
 /**
  * struct fd_params - FD cmd parameter
@@ -1360,20 +1115,6 @@ struct peer_assoc_params {
 	struct wmi_host_ppe_threshold peer_ppet;
 };
 
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct sta_ps_params - sta ps cmd parameter
- * @vdev_id: vdev id
- * @param: sta ps parameter
- * @value: sta ps parameter value
- */
-struct sta_ps_params {
-	uint32_t vdev_id;
-	uint32_t param;
-	uint32_t value;
-};
-#endif
-
 /**
  * struct ap_ps_params - ap ps cmd parameter
  * @vdev_id: vdev id
@@ -1407,28 +1148,6 @@ struct scan_chan_list_params {
 	bool append;
 	struct channel_param ch_param[1];
 };
-
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct multiple_vdev_restart_params - Multiple vdev restart cmd parameter
- * @pdev_id: Pdev identifier
- * @requestor_id: Unique id identifying the module
- * @disable_hw_ack: Flag to indicate disabling HW ACK during CAC
- * @cac_duration_ms: CAC duration on the given channel
- * @num_vdevs: No. of vdevs that need to be restarted
- * @ch_param: Pointer to channel_param
- * @vdev_ids: Pointer to array of vdev_ids
- */
-struct multiple_vdev_restart_params {
-	uint32_t pdev_id;
-	uint32_t requestor_id;
-	uint32_t disable_hw_ack;
-	uint32_t cac_duration_ms;
-	uint32_t num_vdevs;
-	struct channel_param ch_param;
-	uint32_t vdev_ids[WMI_HOST_PDEV_MAX_VDEVS];
-};
-#endif
 
 #ifdef QCA_SUPPORT_AGILE_DFS
 /**
@@ -3028,22 +2747,6 @@ typedef struct {
 	/* add new members here */
 } wmi_host_ext_resource_config;
 
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct set_neighbour_rx_params - Neighbour RX params
- * @vdev_id: vdev id
- * @idx: index of param
- * @action: action
- * @type: Type of param
- */
-struct set_neighbour_rx_params {
-	uint8_t vdev_id;
-	uint32_t idx;
-	uint32_t action;
-	uint32_t type;
-};
-#endif
-
 /**
  * struct set_fwtest_params - FW test params
  * @arg: FW param id
@@ -3053,41 +2756,6 @@ struct set_fwtest_params {
 	uint32_t arg;
 	uint32_t value;
 };
-
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct set_custom_aggr_size_params - custom aggr size params
- * @vdev_id      : vdev id
- * @tx_aggr_size : TX aggr size
- * @rx_aggr_size : RX aggr size
- * @enable_bitmap: Bitmap for aggr size check
- */
-struct set_custom_aggr_size_params {
-	uint32_t  vdev_id;
-	uint32_t tx_aggr_size;
-	uint32_t rx_aggr_size;
-	uint32_t ac:2,
-		 aggr_type:1,
-		 tx_aggr_size_disable:1,
-		 rx_aggr_size_disable:1,
-		 tx_ac_enable:1,
-		 reserved:26;
-};
-#endif
-
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * enum wmi_host_custom_aggr_type: custon aggregate type
- * @WMI_HOST_CUSTOM_AGGR_TYPE_AMPDU: A-MPDU aggregation
- * @WMI_HOST_CUSTOM_AGGR_TYPE_AMSDU: A-MSDU aggregation
- * @WMI_HOST_CUSTOM_AGGR_TYPE_MAX: Max type
- */
-enum wmi_host_custom_aggr_type {
-	WMI_HOST_CUSTOM_AGGR_TYPE_AMPDU = 0,
-	WMI_HOST_CUSTOM_AGGR_TYPE_AMSDU = 1,
-	WMI_HOST_CUSTOM_AGGR_TYPE_MAX,
-};
-#endif
 
 /*
  * msduq_update_params - MSDUQ update param structure
@@ -3142,24 +2810,6 @@ struct peer_chan_width_switch_params {
 	uint32_t num_peers;
 	struct peer_chan_width_switch_info *chan_width_peer_list;
 };
-
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct config_ratemask_params - ratemask config parameters
- * @vdev_id: vdev id
- * @type: Type
- * @lower32: Lower 32 bits in the 1st 64-bit value
- * @higher32: Higher 32 bits in the 1st 64-bit value
- * @lower32_2: Lower 32 bits in the 2nd 64-bit value
- */
-struct config_ratemask_params {
-	uint8_t vdev_id;
-	uint8_t type;
-	uint32_t lower32;
-	uint32_t higher32;
-	uint32_t lower32_2;
-};
-#endif
 
 /**
  * struct config_fils_params - FILS config params
@@ -6039,13 +5689,6 @@ typedef enum {
 
 #define WMI_HOST_FIXED_RATE_NONE	(0xff)
 
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/** slot time long */
-#define WMI_HOST_VDEV_SLOT_TIME_LONG	0x1
-/** slot time short */
-#define WMI_HOST_VDEV_SLOT_TIME_SHORT	0x2
-#endif
-
 /** preablbe long */
 #define WMI_HOST_VDEV_PREAMBLE_LONG	0x1
 /** preablbe short */
@@ -6375,19 +6018,6 @@ enum wmi_host_ap_ps_peer_param {
 #define WMI_HOST_RXERR_DECRYPT	0x08 /* non-Michael decrypt error */
 #define WMI_HOST_RXERR_MIC	0x10 /* Michael MIC decrypt error */
 #define WMI_HOST_RXERR_KEY_CACHE_MISS 0x20 /* No/incorrect key matter in h/w */
-
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-enum wmi_host_sta_ps_param_uapsd {
-	WMI_HOST_STA_PS_UAPSD_AC0_DELIVERY_EN = (1 << 0),
-	WMI_HOST_STA_PS_UAPSD_AC0_TRIGGER_EN  = (1 << 1),
-	WMI_HOST_STA_PS_UAPSD_AC1_DELIVERY_EN = (1 << 2),
-	WMI_HOST_STA_PS_UAPSD_AC1_TRIGGER_EN  = (1 << 3),
-	WMI_HOST_STA_PS_UAPSD_AC2_DELIVERY_EN = (1 << 4),
-	WMI_HOST_STA_PS_UAPSD_AC2_TRIGGER_EN  = (1 << 5),
-	WMI_HOST_STA_PS_UAPSD_AC3_DELIVERY_EN = (1 << 6),
-	WMI_HOST_STA_PS_UAPSD_AC3_TRIGGER_EN  = (1 << 7),
-};
-#endif
 
 enum wmi_host_sta_ps_param_rx_wake_policy {
 	/* Wake up when ever there is an  RX activity on the VDEV. In this mode
@@ -7443,18 +7073,6 @@ struct coex_config_params {
 #define WMI_HOST_PDEV_ID_1   1
 #define WMI_HOST_PDEV_ID_2   2
 #define WMI_HOST_PDEV_ID_INVALID 0xFFFFFFFF
-
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-/**
- * struct tbttoffset_params - Tbttoffset event params
- * @vdev_id: Virtual AP device identifier
- * @tbttoffset : Tbttoffset for the virtual AP device
- */
-struct tbttoffset_params {
-	uint32_t vdev_id;
-	uint32_t tbttoffset;
-};
-#endif
 
 /**
  * struct wmi_host_ready_ev_param - Data revieved in ready event

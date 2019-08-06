@@ -599,11 +599,7 @@ static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_vdev_create_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_vdev_create_cmd_fixed_param));
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	cmd->vdev_id = param->vdev_id;
-#else
-	cmd->vdev_id = param->if_id;
-#endif
 	cmd->vdev_type = param->type;
 	cmd->vdev_subtype = param->subtype;
 	cmd->flags = param->mbssid_flags;
@@ -612,11 +608,7 @@ static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	copy_vdev_create_pdev_id(wmi_handle, cmd, param);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->vdev_macaddr);
 	WMI_LOGD("%s: ID = %d[pdev:%d] VAP Addr = %02x:%02x:%02x:%02x:%02x:%02x",
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 		 __func__, param->vdev_id, cmd->pdev_id,
-#else
-		 __func__, param->if_id, cmd->pdev_id,
-#endif
 		 macaddr[0], macaddr[1], macaddr[2],
 		 macaddr[3], macaddr[4], macaddr[5]);
 	buf_ptr = (uint8_t *)cmd + sizeof(*cmd);
@@ -884,11 +876,7 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	/* Fill channel info */
 	copy_channel_info(cmd, chan, req);
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	cmd->beacon_interval = req->beacon_interval;
-#else
-	cmd->beacon_interval = req->beacon_intval;
-#endif
 	cmd->dtim_period = req->dtim_period;
 
 	cmd->bcn_tx_rate = req->bcn_tx_rate_code;
@@ -896,11 +884,7 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->flags |= WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT;
 
 	if (!req->is_restart) {
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 		cmd->beacon_interval = req->beacon_interval;
-#else
-		cmd->beacon_interval = req->beacon_intval;
-#endif
 		cmd->dtim_period = req->dtim_period;
 
 		/* Copy the SSID */
@@ -939,11 +923,7 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 		"Tx SS %d, Rx SS %d, ldpc_rx: %d, cac %d, regd %d, HE ops: %d"
 		"req->dis_hw_ack: %d ", __func__, req->vdev_id,
 		chan->mhz, req->channel.phy_mode, chan->info,
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 		req->channel.dfs_set, req->beacon_interval, cmd->dtim_period,
-#else
-		req->channel.dfs_set, req->beacon_intval, cmd->dtim_period,
-#endif
 		chan->band_center_freq1, chan->band_center_freq2,
 		chan->reg_info_1, chan->reg_info_2, req->channel.maxregpower,
 		req->preferred_tx_streams, req->preferred_rx_streams,
@@ -1849,23 +1829,14 @@ static QDF_STATUS send_set_sta_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_sta_powersave_param_cmd_fixed_param));
 	cmd->vdev_id = param->vdev_id;
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	cmd->param = param->param_id;
-#else
-	cmd->param = param->param;
-#endif
 	cmd->value = param->value;
 
 	wmi_mtrace(WMI_STA_POWERSAVE_PARAM_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_STA_POWERSAVE_PARAM_CMDID)) {
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 		WMI_LOGE("Set Sta Ps param Failed vdevId %d Param %d val %d",
 			 param->vdev_id, param->param_id, param->value);
-#else
-		WMI_LOGE("Set Sta Ps param Failed vdevId %d Param %d val %d",
-			 param->vdev_id, param->param, param->value);
-#endif
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2025,11 +1996,7 @@ static QDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_vdev_set_param_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_vdev_set_param_cmd_fixed_param));
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	cmd->vdev_id = param->vdev_id;
-#else
-	cmd->vdev_id = param->if_id;
-#endif
 	cmd->param_id = vdev_param;
 	cmd->param_value = param->param_value;
 	WMI_LOGD("Setting vdev %d param = %x, value = %u",

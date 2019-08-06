@@ -25,7 +25,6 @@
 #ifndef __WLAN_VDEV_MGR_RX_OPS_H__
 #define __WLAN_VDEV_MGR_RX_OPS_H__
 
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
 
@@ -47,16 +46,5 @@ void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
  */
 QDF_STATUS
 tgt_vdev_mgr_ext_tbttoffset_update_handle(uint32_t num_vdevs, bool is_ext);
-
-#else
-/**
- * tgt_vdev_mgr_register_rx_ops() - API to register rx ops with lmac
- * @rx_ops: rx ops struct
- *
- * Return: none
- */
-static inline void
-tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops) {}
-#endif /* CMN_VDEV_MGR_TGT_IF_ENABLE */
 
 #endif /* __WLAN_VDEV_MGR_RX_OPS_H__ */

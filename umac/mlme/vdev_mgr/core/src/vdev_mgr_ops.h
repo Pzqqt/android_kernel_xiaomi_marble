@@ -26,7 +26,6 @@
 #ifndef __VDEV_MGR_OPS_H__
 #define __VDEV_MGR_OPS_H__
 
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_vdev_mgr_tgt_if_tx_defs.h>
 #include <wlan_mlme_dbg.h>
@@ -237,5 +236,4 @@ QDF_STATUS vdev_mgr_multiple_restart_send(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS vdev_mgr_peer_delete_all_send(struct vdev_mlme_obj *mlme_obj);
 
-#endif /* CMN_VDEV_MGR_TGT_IF_ENABLE */
 #endif /* __VDEV_MGR_OPS_H__ */

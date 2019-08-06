@@ -25,7 +25,6 @@
 #ifndef __WLAN_VDEV_MGR_TX_OPS_DEFS_H__
 #define __WLAN_VDEV_MGR_TX_OPS_DEFS_H__
 
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 #include <qdf_nbuf.h>
 
 /**
@@ -450,5 +449,4 @@ struct peer_delete_all_params {
 	uint8_t vdev_id;
 };
 
-#endif
 #endif /* __WLAN_VDEV_MGR_TX_OPS_DEFS_H__ */

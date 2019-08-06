@@ -78,10 +78,7 @@
 #ifdef CRYPTO_SET_KEY_CONVERGED
 #include <target_if_crypto.h>
 #endif
-
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 #include <target_if_vdev_mgr_tx_ops.h>
-#endif
 
 static struct target_if_ctx *g_target_if_ctx;
 
@@ -381,19 +378,11 @@ target_if_cp_stats_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 	return target_if_cp_stats_register_tx_ops(tx_ops);
 }
 
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 static QDF_STATUS
 target_if_vdev_mgr_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	return target_if_vdev_mgr_register_tx_ops(tx_ops);
 }
-#else
-static QDF_STATUS
-target_if_vdev_mgr_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #ifdef QCA_WIFI_FTM
 static

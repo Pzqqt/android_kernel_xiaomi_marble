@@ -80,10 +80,8 @@ struct dbr_module_config;
 #include <wlan_cp_stats_mc_defs.h>
 #endif /* QCA_SUPPORT_CP_STATS */
 
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 #include <wlan_vdev_mgr_tgt_if_tx_defs.h>
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
-#endif /* CMN_VDEV_MGR_TGT_IF_ENABLE */
 
 #ifdef QCA_SUPPORT_CP_STATS
 /**
@@ -221,7 +219,6 @@ struct wlan_lmac_if_mlme_tx_ops {
 	uint32_t (*get_wifi_iface_id) (struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*vdev_mlme_attach)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*vdev_mlme_detach)(struct wlan_objmgr_psoc *psoc);
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	QDF_STATUS (*vdev_mgr_rsp_timer_init)(
 					struct wlan_objmgr_vdev *vdev,
 					qdf_timer_t *rsp_timer);
@@ -275,7 +272,6 @@ struct wlan_lmac_if_mlme_tx_ops {
 	QDF_STATUS (*peer_delete_all_send)(
 					struct wlan_objmgr_vdev *vdev,
 					struct peer_delete_all_params *param);
-#endif
 };
 
 /**
@@ -1485,8 +1481,6 @@ struct wlan_lmac_if_mlme_rx_ops {
 	int (*wlan_mlme_get_acs_in_progress)(struct wlan_objmgr_pdev *pdev,
 			uint8_t vdev_id);
 	void (*wlan_mlme_end_scan)(struct wlan_objmgr_pdev *pdev);
-
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	struct vdev_response_timer *(*vdev_mgr_get_response_timer_info)(
 					struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*vdev_mgr_start_response)(
@@ -1510,7 +1504,6 @@ struct wlan_lmac_if_mlme_rx_ops {
 #ifdef FEATURE_VDEV_RSP_WAKELOCK
 	struct vdev_mlme_wakelock *(*vdev_mgr_get_wakelock_info)(
 					struct wlan_objmgr_vdev *vdev);
-#endif
 #endif
 };
 

@@ -25,7 +25,6 @@
 #ifndef __TARGET_IF_VDEV_MGR_TX_OPS_H__
 #define __TARGET_IF_VDEV_MGR_TX_OPS_H__
 
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 #include <wlan_vdev_mgr_tgt_if_tx_defs.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_psoc_obj.h>
@@ -100,20 +99,4 @@ QDF_STATUS target_if_vdev_mgr_rsp_timer_stop(
 					struct wlan_objmgr_vdev *vdev,
 					struct vdev_response_timer *vdev_rsp,
 					uint8_t clear_bit);
-#else
-static inline QDF_STATUS
-target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS target_if_vdev_mgr_rsp_timer_stop(
-					struct wlan_objmgr_vdev *vdev,
-					struct vdev_response_timer *vdev_rsp,
-					uint8_t clear_bit)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* CMN_VDEV_MGR_TGT_IF_ENABLE */
 #endif /* __TARGET_IF_VDEV_MGR_TX_OPS_H__ */

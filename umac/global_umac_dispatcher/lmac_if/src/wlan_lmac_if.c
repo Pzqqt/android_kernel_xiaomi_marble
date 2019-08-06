@@ -64,10 +64,7 @@
 #ifdef QCA_SUPPORT_CP_STATS
 #include <wlan_cp_stats_tgt_api.h>
 #endif /* QCA_SUPPORT_CP_STATS */
-
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 #include <wlan_vdev_mgr_tgt_if_rx_api.h>
-#endif
 
 #ifdef WLAN_CFR_ENABLE
 #include "wlan_cfr_tgt_api.h"
@@ -84,18 +81,11 @@ QDF_STATUS (*wlan_lmac_if_umac_tx_ops_register)
 				(struct wlan_lmac_if_tx_ops *tx_ops);
 qdf_export_symbol(wlan_lmac_if_umac_tx_ops_register);
 
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 static void
 tgt_vdev_mgr_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	tgt_vdev_mgr_register_rx_ops(rx_ops);
 }
-#else
-static void
-tgt_vdev_mgr_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
-{
-}
-#endif
 
 #ifdef QCA_SUPPORT_CP_STATS
 /**
