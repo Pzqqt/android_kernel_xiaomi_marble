@@ -713,21 +713,31 @@ static void wifi_pos_pdev_iterator(struct wlan_objmgr_psoc *psoc,
 				   void *obj, void *arg)
 {
 	QDF_STATUS status;
-	uint8_t i, num_channels;
+	uint8_t i, num_channels, size;
 	struct wlan_objmgr_pdev *pdev = obj;
 	struct wifi_pos_driver_caps *caps = arg;
-	struct channel_power ch_list[NUM_CHANNELS];
+	struct channel_power *ch_list;
+
+	size = QDF_MAX(OEM_CAP_MAX_NUM_CHANNELS, NUM_CHANNELS);
+	ch_list = qdf_mem_malloc(size * sizeof(*ch_list));
+	if (!ch_list)
+		return;
 
 	status = wlan_reg_get_channel_list_with_power(pdev, ch_list,
 						      &num_channels);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wifi_pos_err("Failed to get valid channel list");
+		qdf_mem_free(ch_list);
 		return;
 	}
+	if (num_channels > OEM_CAP_MAX_NUM_CHANNELS)
+		num_channels = OEM_CAP_MAX_NUM_CHANNELS;
+
 	for (i = 0; i < num_channels; i++)
 		caps->channel_list[i] = ch_list[i].chan_num;
 	caps->num_channels = num_channels;
+	qdf_mem_free(ch_list);
 }
 
 static void wifi_pos_get_ch_info(struct wlan_objmgr_psoc *psoc,
