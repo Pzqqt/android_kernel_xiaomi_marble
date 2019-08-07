@@ -2871,6 +2871,14 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 			mutex_unlock(&swrm->mlock);
 		}
 		break;
+	case SWR_REGISTER_WAKEUP:
+		msm_aud_evt_blocking_notifier_call_chain(
+					SWR_WAKE_IRQ_REGISTER, (void *)swrm);
+		break;
+	case SWR_DEREGISTER_WAKEUP:
+		msm_aud_evt_blocking_notifier_call_chain(
+					SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
+		break;
 	case SWR_SET_PORT_MAP:
 		if (!data) {
 			dev_err(swrm->dev, "%s: data is NULL for id=%d\n",
