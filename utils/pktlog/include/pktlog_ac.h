@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -102,6 +102,7 @@ struct pktlog_dev_t {
 	void *htc_pdev;
 	bool vendor_cmd_send;
 	uint8_t callback_type;
+	uint32_t invalid_packets;
 };
 
 #define PKTLOG_SYSCTL_SIZE      14

@@ -685,6 +685,11 @@ process_offload_pktlog(struct cdp_pdev *pdev, void *data)
 	pl_hdr.type_specific_data = *(pl_tgt_hdr
 			+ ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET);
 
+	if (pl_hdr.size > MAX_PKTLOG_RECV_BUF_SIZE) {
+		pl_dev->invalid_packets++;
+		return A_ERROR;
+	}
+
 	/*
 	 *  Must include to process different types
 	 *  TX_CTL, TX_STATUS, TX_MSDU_ID, TX_FRM_HDR
