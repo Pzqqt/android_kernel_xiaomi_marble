@@ -8452,11 +8452,11 @@ static uint8_t *extract_dbglog_data_len_tlv(wmi_unified_t wmi_handle,
 }
 
 
-#ifdef CONFIG_MCL
+#ifdef MGMT_FRAME_RX_DECRYPT_ERROR
+#define IS_WMI_RX_MGMT_FRAME_STATUS_INVALID(_status) false
+#else
 #define IS_WMI_RX_MGMT_FRAME_STATUS_INVALID(_status) \
 			((_status) & WMI_RXERR_DECRYPT)
-#else
-#define IS_WMI_RX_MGMT_FRAME_STATUS_INVALID(_status) false
 #endif
 
 /**
