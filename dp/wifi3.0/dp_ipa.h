@@ -113,6 +113,8 @@ bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap1,
 			 uint32_t *remap2);
 bool dp_ipa_is_mdm_platform(void);
 
+qdf_nbuf_t dp_ipa_handle_rx_reo_reinject(struct dp_soc *soc, qdf_nbuf_t nbuf);
+
 #else
 static inline int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
@@ -136,5 +138,12 @@ static inline QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline qdf_nbuf_t dp_ipa_handle_rx_reo_reinject(struct dp_soc *soc,
+						       qdf_nbuf_t nbuf)
+{
+	return nbuf;
+}
+
 #endif
 #endif /* _DP_IPA_H_ */

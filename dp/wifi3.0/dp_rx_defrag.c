@@ -1006,8 +1006,8 @@ dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc,
  *
  * Returns: QDF_STATUS
  */
- static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
-					unsigned tid, qdf_nbuf_t head)
+static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
+					    unsigned int tid, qdf_nbuf_t head)
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -1024,6 +1024,12 @@ dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc,
 		peer->rx_tid[tid].dst_ring_desc;
 	hal_ring_handle_t hal_srng = soc->reo_reinject_ring.hal_srng;
 	struct dp_rx_desc *rx_desc = peer->rx_tid[tid].head_frag_desc;
+
+	head = dp_ipa_handle_rx_reo_reinject(soc, head);
+	if (qdf_unlikely(!head)) {
+		dp_err_rl("IPA RX REO reinject failed");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	ent_ring_desc = hal_srng_src_get_next(soc->hal_soc, hal_srng);
 	if (!ent_ring_desc) {

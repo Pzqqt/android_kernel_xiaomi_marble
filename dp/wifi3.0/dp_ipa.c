@@ -1759,4 +1759,56 @@ bool dp_ipa_is_mdm_platform(void)
 }
 #endif
 
+/**
+ * dp_ipa_handle_rx_reo_reinject - Handle RX REO reinject skb buffer
+ * @soc: soc
+ * @nbuf: skb
+ *
+ * Return: nbuf if success and otherwise NULL
+ */
+qdf_nbuf_t dp_ipa_handle_rx_reo_reinject(struct dp_soc *soc, qdf_nbuf_t nbuf)
+{
+	uint8_t *rx_pkt_tlvs;
+	bool reo_remapped;
+
+	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
+		return nbuf;
+
+	qdf_spin_lock_bh(&soc->remap_lock);
+	reo_remapped = soc->reo_remapped;
+	qdf_spin_unlock_bh(&soc->remap_lock);
+
+	/* WLAN IPA is run-time disabled */
+	if (!reo_remapped)
+		return nbuf;
+
+	/* Linearize the skb since IPA assumes linear buffer */
+	if (qdf_likely(qdf_nbuf_is_frag(nbuf))) {
+		if (qdf_nbuf_linearize(nbuf)) {
+			dp_err_rl("nbuf linearize failed");
+			return NULL;
+		}
+	}
+
+	rx_pkt_tlvs = qdf_mem_malloc(RX_PKT_TLVS_LEN);
+	if (!rx_pkt_tlvs) {
+		dp_err_rl("rx_pkt_tlvs alloc failed");
+		return NULL;
+	}
+
+	qdf_mem_copy(rx_pkt_tlvs, qdf_nbuf_data(nbuf), RX_PKT_TLVS_LEN);
+
+	/* Pad L3_HEADER_PADDING before ethhdr and after rx_pkt_tlvs */
+	qdf_nbuf_push_head(nbuf, L3_HEADER_PADDING);
+
+	qdf_mem_copy(qdf_nbuf_data(nbuf), rx_pkt_tlvs, RX_PKT_TLVS_LEN);
+
+	/* L3_HEADDING_PADDING is not accounted for real skb length */
+	qdf_nbuf_set_len(nbuf, qdf_nbuf_len(nbuf) - L3_HEADER_PADDING);
+
+	qdf_mem_free(rx_pkt_tlvs);
+
+	return nbuf;
+}
+
 #endif
