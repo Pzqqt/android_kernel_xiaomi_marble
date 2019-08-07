@@ -3730,6 +3730,16 @@ wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_ALERT_ROAM_RSSI_TRIGGER
 #define PARAM_ROAM_ENABLE \
 	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_ENABLE
+#define PARAM_ROAM_CONTROL_CONFIG \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_CONTROL
+#define PARAM_FREQ_LIST_SCHEME \
+	QCA_ATTR_ROAM_CONTROL_FREQ_LIST_SCHEME
+#define PARAM_FREQ_LIST_SCHEME_MAX \
+	QCA_ATTR_ROAM_CONTROL_SCAN_FREQ_LIST_SCHEME_MAX
+#define PARAM_SCAN_FREQ_LIST \
+	QCA_ATTR_ROAM_CONTROL_SCAN_FREQ_LIST
+#define PARAM_SCAN_FREQ_LIST_TYPE \
+	QCA_ATTR_ROAM_CONTROL_SCAN_FREQ_LIST_TYPE
 
 
 static const struct nla_policy
@@ -3751,6 +3761,7 @@ wlan_hdd_set_roam_param_policy[MAX_ROAMING_PARAM + 1] = {
 	[PARAM_ROAM_BSSID] = {.type = NLA_UNSPEC, .len = QDF_MAC_ADDR_SIZE},
 	[PARAM_SET_BSSID] = {.type = NLA_UNSPEC, .len = QDF_MAC_ADDR_SIZE},
 	[PARAM_SET_BSSID_HINT] = {.type = NLA_FLAG},
+	[PARAM_ROAM_CONTROL_CONFIG] = {.type = NLA_NESTED},
 };
 
 /**
@@ -4029,6 +4040,129 @@ fail:
 	return -EINVAL;
 }
 
+static const struct nla_policy
+roam_scan_freq_list_scheme_policy[PARAM_FREQ_LIST_SCHEME_MAX + 1] = {
+	[PARAM_SCAN_FREQ_LIST_TYPE] = {.type = NLA_U32},
+	[PARAM_SCAN_FREQ_LIST] = {.type = NLA_NESTED},
+};
+
+/**
+ * hdd_send_roam_scan_channel_freq_list_to_sme() - Send control roam scan freqs
+ * @hdd_ctx: HDD context
+ * @vdev_id: vdev id
+ * @tb: Nested attribute carrying frequency list scheme
+ *
+ * Extracts the frequency list and frequency list type from the frequency
+ * list scheme and send the frequencies to SME.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+hdd_send_roam_scan_channel_freq_list_to_sme(struct hdd_context *hdd_ctx,
+					    uint8_t vdev_id, struct nlattr *tb)
+{
+	QDF_STATUS status;
+	struct nlattr *tb2[PARAM_FREQ_LIST_SCHEME_MAX + 1], *curr_attr;
+	uint8_t num_chan = 0;
+	uint32_t freq_list[SIR_MAX_SUPPORTED_CHANNEL_LIST] = {0};
+	uint32_t list_type;
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	int rem;
+
+	if (wlan_cfg80211_nla_parse_nested(tb2, PARAM_FREQ_LIST_SCHEME_MAX,
+					   tb,
+					   roam_scan_freq_list_scheme_policy)) {
+		hdd_err("nla_parse failed");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!tb2[PARAM_SCAN_FREQ_LIST] || !tb2[PARAM_SCAN_FREQ_LIST_TYPE]) {
+		hdd_err("ROAM_CONTROL_SCAN_FREQ_LIST or type are not present");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	list_type = nla_get_u32(tb2[PARAM_SCAN_FREQ_LIST_TYPE]);
+	if (list_type != QCA_PREFERRED_SCAN_FREQ_LIST &&
+	    list_type != QCA_SPECIFIC_SCAN_FREQ_LIST) {
+		hdd_err("Invalid freq list type received: %u", list_type);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	nla_for_each_nested(curr_attr, tb2[PARAM_SCAN_FREQ_LIST], rem)
+		num_chan++;
+	if (num_chan > SIR_MAX_SUPPORTED_CHANNEL_LIST) {
+		hdd_err("number of channels (%d) supported exceeded max (%d)",
+			num_chan, SIR_MAX_SUPPORTED_CHANNEL_LIST);
+		return QDF_STATUS_E_INVAL;
+	}
+	num_chan = 0;
+
+	nla_for_each_nested(curr_attr, tb2[PARAM_SCAN_FREQ_LIST], rem)
+		freq_list[num_chan++] = nla_get_u32(curr_attr);
+
+	status = sme_update_roam_scan_freq_list(mac_handle, vdev_id, freq_list,
+						num_chan, list_type);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to update channel list information");
+
+	return status;
+}
+
+static const struct nla_policy
+roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
+	[PARAM_FREQ_LIST_SCHEME] = {.type = NLA_NESTED},
+};
+
+/**
+ * hdd_set_roam_with_control_config() - Set roam control configuration
+ * @hdd_ctx: HDD context
+ * @tb: List of attributes carrying roam subcmd data
+ * @vdev_id: vdev id
+ *
+ * Extracts the attribute PARAM_ROAM_CONTROL_CONFIG from the attributes list tb
+ * and sends the corresponding roam control configuration to driver/firmware.
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int
+hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
+				 struct nlattr **tb,
+				 uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct nlattr *tb2[QCA_ATTR_ROAM_CONTROL_MAX + 1], *attr;
+
+	/* The command must carry PARAM_ROAM_CONTROL_CONFIG */
+	if (!tb[PARAM_ROAM_CONTROL_CONFIG]) {
+		hdd_err("Attribute CONTROL_CONFIG is not present");
+		return -EINVAL;
+	}
+
+	if (wlan_cfg80211_nla_parse_nested(tb2, QCA_ATTR_ROAM_CONTROL_MAX,
+					   tb[PARAM_ROAM_CONTROL_CONFIG],
+					   roam_control_policy)) {
+		hdd_err("nla_parse failed");
+		return -EINVAL;
+	}
+
+	attr = tb2[PARAM_FREQ_LIST_SCHEME];
+	if (attr) {
+		status = hdd_send_roam_scan_channel_freq_list_to_sme(hdd_ctx,
+								     vdev_id,
+								     attr);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_err("failed to config roam control");
+	}
+
+	return qdf_status_to_os_return(status);
+}
+
+#undef PARAM_ROAM_CONTROL_CONFIG
+#undef PARAM_FREQ_LIST_SCHEME_MAX
+#undef PARAM_FREQ_LIST_SCHEME
+#undef PARAM_SCAN_FREQ_LIST
+#undef PARAM_SCAN_FREQ_LIST_TYPE
+
 /**
  * hdd_set_ext_roam_params() - parse ext roam params
  * @hdd_ctx:        HDD context
@@ -4165,6 +4299,11 @@ static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 	case QCA_WLAN_VENDOR_ROAMING_SUBCMD_SET_BLACKLIST_BSSID:
 		ret = hdd_set_blacklist_bssid(hdd_ctx, roam_params,
 					      tb, vdev_id);
+		if (ret)
+			goto fail;
+		break;
+	case QCA_WLAN_VENDOR_ROAMING_SUBCMD_CONTROL_SET:
+		ret = hdd_set_roam_with_control_config(hdd_ctx, tb, vdev_id);
 		if (ret)
 			goto fail;
 		break;

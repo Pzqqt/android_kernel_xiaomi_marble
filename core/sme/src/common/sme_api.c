@@ -7168,6 +7168,114 @@ uint8_t sme_get_roam_rssi_diff(mac_handle_t mac_handle)
 	return mac->mlme_cfg->lfr.roam_rssi_diff;
 }
 
+void sme_dump_freq_list(tCsrChannelInfo *chan_info)
+{
+	uint8_t *channel_list;
+	uint8_t i = 0, j = 0;
+	uint32_t buflen = CFG_VALID_CHANNEL_LIST_LEN * 4;
+
+	channel_list = qdf_mem_malloc(buflen);
+	if (!channel_list)
+		return;
+
+	if (chan_info->freq_list) {
+		for (i = 0; i < chan_info->numOfChannels; i++) {
+			if (j < buflen)
+				j += snprintf(channel_list + j, buflen - j,
+					      "%d ", chan_info->freq_list[i]);
+			else
+				break;
+		}
+	}
+
+	sme_debug("No.of frequencies: %u, frequency list: %s", i, channel_list);
+	qdf_mem_free(channel_list);
+}
+
+static bool sme_validate_freq_list(mac_handle_t mac_handle,
+				   uint32_t *freq_list,
+				   uint8_t num_channels)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	uint8_t i = 0, j;
+	bool found;
+	struct csr_channel *ch_lst_info = &mac_ctx->scan.base_channels;
+
+	if (!freq_list || !num_channels) {
+		sme_err("Freq list empty %pK or num_channels is 0", freq_list);
+		return false;
+	}
+
+	while (i < num_channels) {
+		found = false;
+		for (j = 0; j < ch_lst_info->numChannels; j++) {
+			if (wlan_reg_chan_to_freq(mac_ctx->pdev,
+						  ch_lst_info->channelList[j])
+			    == freq_list[i]) {
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) {
+			sme_debug("Invalid frequency %u", freq_list[i]);
+			return false;
+		}
+
+		i++;
+	}
+
+	return true;
+}
+
+/**
+ * sme_update_roam_scan_channel_list() - to update scan channel list
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: vdev identifier
+ * @chan_info: Channel information to be updated to.
+ * @freq_list: Frequency list to be updated from.
+ * @num_chan: Number of channels
+ *
+ * Updates the chan_info by flushing the current frequency list and update
+ * the same with freq_list.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+sme_update_roam_scan_channel_list(mac_handle_t mac_handle, uint8_t vdev_id,
+				  tCsrChannelInfo *chan_info,
+				  uint32_t *freq_list, uint8_t num_chan)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	uint8_t *channel_list;
+
+	channel_list = qdf_mem_malloc(SIR_MAX_SUPPORTED_CHANNEL_LIST);
+	if (!channel_list)
+		return QDF_STATUS_E_NOMEM;
+
+	if (chan_info->numOfChannels) {
+		sme_debug("Current channels:");
+		sme_dump_freq_list(chan_info);
+	}
+	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
+	sme_freq_to_chan_list(mac->pdev, channel_list, freq_list, num_chan);
+	csr_create_bg_scan_roam_channel_list(mac, chan_info, channel_list,
+					     num_chan);
+	sme_debug("New channels:");
+	sme_dump_freq_list(chan_info);
+	sme_debug("Updated roam scan channels - roam state is %d",
+		  mac->roam.neighborRoamInfo[vdev_id].neighborRoamState);
+
+	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
+		status = csr_roam_offload_scan(mac, vdev_id,
+					       ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+					       REASON_CHANNEL_LIST_CHANGED);
+	qdf_mem_free(channel_list);
+
+	return status;
+}
+
 /**
  * sme_change_roam_scan_channel_list() - to change scan channel list
  * @mac_handle: Opaque handle to the global MAC context
@@ -7244,6 +7352,49 @@ QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 				REASON_CHANNEL_LIST_CHANGED);
 
 	sme_release_global_lock(&mac->sme);
+	return status;
+}
+
+QDF_STATUS
+sme_update_roam_scan_freq_list(mac_handle_t mac_handle, uint8_t vdev_id,
+			       uint32_t *freq_list, uint8_t num_chan,
+			       uint32_t freq_list_type)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS status;
+	tpCsrNeighborRoamControlInfo neighbor_roam_info;
+	tCsrChannelInfo *channel_info;
+
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		sme_err("Invalid vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!sme_validate_freq_list(mac_handle, freq_list, num_chan)) {
+		sme_err("List contains invalid channel(s)");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to acquire SME lock");
+		return status;
+	}
+
+	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
+	if (freq_list_type == QCA_PREFERRED_SCAN_FREQ_LIST) {
+		sme_debug("Preferred frequency list: ");
+		channel_info = &neighbor_roam_info->cfgParams.pref_chan_info;
+	} else {
+		goto out;
+	}
+
+	status = sme_update_roam_scan_channel_list(mac_handle, vdev_id,
+						   channel_info, freq_list,
+						   num_chan);
+out:
+	sme_release_global_lock(&mac->sme);
+
 	return status;
 }
 

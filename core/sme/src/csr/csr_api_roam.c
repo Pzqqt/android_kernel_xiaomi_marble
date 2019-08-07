@@ -1599,6 +1599,29 @@ void csr_flush_cfg_bg_scan_roam_channel_list(tCsrChannelInfo *channel_info)
 	}
 }
 
+/**
+ * csr_flush_roam_scan_chan_lists() - Flush the roam channel lists
+ * @mac: Global MAC context
+ * @vdev_id: vdev id
+ *
+ * Flush the roam channel lists pref_chan_info and specific_chan_info.
+ *
+ * Return: None
+ */
+static void
+csr_flush_roam_scan_chan_lists(struct mac_context *mac, uint8_t vdev_id)
+{
+	tCsrChannelInfo *chan_info;
+
+	chan_info =
+	&mac->roam.neighborRoamInfo[vdev_id].cfgParams.pref_chan_info;
+	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
+
+	chan_info =
+	&mac->roam.neighborRoamInfo[vdev_id].cfgParams.specific_chan_info;
+	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
+}
+
 QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
 						tCsrChannelInfo *channel_info,
 						const uint8_t *chan_list,
@@ -17156,6 +17179,7 @@ void csr_cleanup_session(struct mac_context *mac, uint8_t vdev_id)
 		csr_free_connect_bss_desc(mac, vdev_id);
 		sme_reset_key(MAC_HANDLE(mac), vdev_id);
 		csr_reset_cfg_privacy(mac);
+		csr_flush_roam_scan_chan_lists(mac, vdev_id);
 		csr_roam_free_connect_profile(&pSession->connectedProfile);
 		csr_roam_free_connected_info(mac, &pSession->connectedInfo);
 		csr_roam_free_connected_info(mac,
@@ -17972,6 +17996,40 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 }
 
 /**
+ * csr_add_ch_lst_from_roam_scan_list() - channel from roam scan chan list
+ * parameters
+ * @mac_ctx: Global mac ctx
+ * @req_buf: out param, roam offload scan request packet
+ * @roam_info: roam info struct
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+csr_add_ch_lst_from_roam_scan_list(struct mac_context *mac_ctx,
+				   struct roam_offload_scan_req *req_buf,
+				   tpCsrNeighborRoamControlInfo roam_info)
+{
+	QDF_STATUS status;
+	tCsrChannelInfo *pref_chan_info = &roam_info->cfgParams.pref_chan_info;
+
+	if (!pref_chan_info->numOfChannels)
+		return QDF_STATUS_SUCCESS;
+
+	status = csr_populate_roam_chan_list(mac_ctx,
+					     &req_buf->ConnectedNetwork,
+					     pref_chan_info);
+	if (status != QDF_STATUS_SUCCESS) {
+		sme_err("Failed to copy channels to roam list");
+		return status;
+	}
+	sme_debug("Added to roam chan list:");
+	sme_dump_freq_list(pref_chan_info);
+	req_buf->ChannelCacheType = CHANNEL_LIST_DYNAMIC;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * csr_create_roam_scan_offload_request() - init roam offload scan request
  *
  * parameters
@@ -18136,7 +18194,8 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		    curr_ch_lst_info->numOfChannels == 0) {
 			/*
 			 * Retrieve the Channel Cache either from ini or from
-			 * the occupied channels list.
+			 * the occupied channels list along with preferred
+			 * channel list configured by the client.
 			 * Give Preference to INI Channels
 			 */
 			if (specific_chan_info->numOfChannels) {
@@ -18154,6 +18213,13 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 				csr_fetch_ch_lst_from_occupied_lst(mac_ctx,
 						session_id, reason, req_buf,
 						roam_info);
+				/* Add the preferred channel list configured by
+				 * client to the roam channel list along with
+				 * occupied channel list.
+				 */
+				csr_add_ch_lst_from_roam_scan_list(mac_ctx,
+								   req_buf,
+								   roam_info);
 			}
 		}
 #ifdef FEATURE_WLAN_ESE
