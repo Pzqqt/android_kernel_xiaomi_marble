@@ -22104,12 +22104,24 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_smart_ant_set_train_antenna_param */
     /* rate array */
-    A_UINT32  train_rate_series;
+    union {
+        /* train_rate_series:
+         * original name, used for 8-bit rate-code implementations
+         */
+        A_UINT32  train_rate_series;
+        /* train_rate_series_lo:
+         * Contains the lower 32 bits of rate array, for larger rate-code
+         * implementations.  This field is paired with train_rate_series_hi.
+         */
+        A_UINT32  train_rate_series_lo;
+    };
     /* antenna array */
     A_UINT32 train_antenna_series;
     /* Rate flags */
     /* TODO: For future use? */
     A_UINT32 rc_flags;
+    /* rate array -- continued */
+    A_UINT32 train_rate_series_hi; /* Higher 32 bits of rate array */
 } wmi_peer_smart_ant_set_train_antenna_param;
 
 typedef struct {
