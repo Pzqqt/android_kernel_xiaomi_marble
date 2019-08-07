@@ -6772,7 +6772,7 @@ static void wma_populate_soc_caps(t_wma_handle *wma_handle,
 #ifdef DIRECT_BUF_RX_ENABLE
 static void wma_init_dbr_params(t_wma_handle *wma_handle)
 {
-	struct hif_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	void *hal_soc;
 
 	if (!hif_ctx) {
