@@ -26,6 +26,9 @@
 #include <htt.h>
 #include <htt_stats.h>
 
+#define HTT_STATS_MAX_CHAINS 8
+#define HTT_STATS_NUM_SUPPORTED_BW_SMART_ANTENNA 4 /* 20, 40, 80, 160 MHz */
+
 #define HTT_BA_64_BIT_MAP_SIZE_DWORDS 2
 #define HTT_BA_256_BIT_MAP_SIZE_DWORDS 8
 enum htt_ppdu_stats_tlv_tag {
@@ -1510,6 +1513,84 @@ typedef enum HTT_PPDU_STATS_RESP_TYPE HTT_PPDU_STATS_RESP_TYPE;
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RESP_TYPE_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_M     0xffffffff
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_S              0
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TX_ANTENNA_MASK_M     0xffffffff
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TX_ANTENNA_MASK_S              0
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TX_ANTENNA_MASK_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TX_ANTENNA_MASK_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TX_ANTENNA_MASK_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TX_ANTENNA_MASK_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TX_ANTENNA_MASK, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TX_ANTENNA_MASK_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_TRAINING_M     0x00010000
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_TRAINING_S             16
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_TRAINING_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_TRAINING_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_TRAINING_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_TRAINING_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_TRAINING, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_TRAINING_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PENDING_TRAINING_PKTS_M     0x0000ffff
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PENDING_TRAINING_PKTS_S              0
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PENDING_TRAINING_PKTS_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PENDING_TRAINING_PKTS_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PENDING_TRAINING_PKTS_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PENDING_TRAINING_PKTS_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PENDING_TRAINING_PKTS, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PENDING_TRAINING_PKTS_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MAX_RATES_M     0xffffffff
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MAX_RATES_S              0
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MAX_RATES_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MAX_RATES_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MAX_RATES_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MAX_RATES_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MAX_RATES, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MAX_RATES_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CURRENT_RATE_PER_M     0xffffffff
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CURRENT_RATE_PER_S              0
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CURRENT_RATE_PER_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CURRENT_RATE_PER_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CURRENT_RATE_PER_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CURRENT_RATE_PER_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CURRENT_RATE_PER, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CURRENT_RATE_PER_S)); \
+     } while (0)
+
 enum  HTT_PPDU_STATS_USER_COMPLETION_STATUS {
     HTT_PPDU_STATS_USER_STATUS_OK,
     HTT_PPDU_STATS_USER_STATUS_FILTERED,
@@ -1564,6 +1645,36 @@ typedef struct {
                      reserved0:                 19;
         };
     };
+
+    /*
+     * ack RSSI per chain for last transmission to the peer-TID
+     * (value in dB w.r.t noise floor)
+     */
+    A_UINT32 chain_rssi[HTT_STATS_MAX_CHAINS];
+
+    /* Tx Antenna mask for last packet transmission */
+    A_UINT32 tx_antenna_mask;
+
+    /* For SmartAntenna
+     * BIT [15:0]  :- pending_training_pkts
+     *                Holds number of pending training packets during training.
+     * BIT [16]    :- is_training
+     *                This flag indicates if peer is under training.
+     * BIT [31:17] :- reserved1
+     */
+    A_UINT32 pending_training_pkts:16,
+             is_training:1,
+             reserved1:15;
+
+    /*
+     * Max rates configured per BW:
+     * for BW supported by Smart Antenna - 20MHZ, 40MHZ and 80MHZ and 160MHZ
+     * (Note: 160 MHz is currently not supported by Smart Antenna)
+     */
+    A_UINT32 max_rates[HTT_STATS_NUM_SUPPORTED_BW_SMART_ANTENNA];
+
+    /* PER of the last transmission to the peer-TID (in percent) */
+    A_UINT32 current_rate_per;
 } htt_ppdu_stats_user_cmpltn_common_tlv;
 
 #define HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_TID_NUM_M     0x000000ff
