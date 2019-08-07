@@ -462,6 +462,8 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 						 wlan_reg_freq_to_chan(
 						 mac_ctx->pdev,
 						 session->curr_op_freq));
+		populate_dot11f_qcn_ie(mac_ctx, &bcn_2->qcn_ie,
+				       QCN_IE_ATTR_ID_ALL);
 	}
 
 	if (lim_is_session_he_capable(session)) {

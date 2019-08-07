@@ -2653,6 +2653,18 @@ QDF_STATUS sme_get_bss_transition_status(mac_handle_t mac_handle,
 uint32_t sme_unpack_rsn_ie(mac_handle_t mac_handle, uint8_t *buf,
 			   uint8_t buf_len, tDot11fIERSN *rsn_ie,
 			   bool append_ie);
+
+/**
+ * sme_add_qcn_ie: Adds QCN IE data to IE buffer
+ * @mac_handle: handle returned by mac_open
+ * @ie_data: ie buffer pointer
+ * @ie_len: ie length pointer
+ *
+ * Return: none
+ */
+void sme_add_qcn_ie(mac_handle_t mac_handle, uint8_t *ie_data,
+		    uint16_t *ie_len);
+
 /**
  * sme_get_oper_chan_freq - gets the operating channel freq
  * @vdev: vdev handle

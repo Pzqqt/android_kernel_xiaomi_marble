@@ -69,6 +69,10 @@
 #define QCN_IE_VERSION_SUPPORTED    1
 #define QCN_IE_SUBVERSION_SUPPORTED 0
 
+#define QCN_IE_ATTR_ID_VERSION 1
+#define QCN_IE_ATTR_ID_VHT_MCS11 2
+#define QCN_IE_ATTR_ID_ALL 0xFF
+
 #define SIZE_OF_FIXED_PARAM 12
 #define SIZE_OF_TAG_PARAM_NUM 1
 #define SIZE_OF_TAG_PARAM_LEN 1
@@ -103,12 +107,6 @@ typedef struct sSirCountryInformation {
 		uint8_t maxTransmitPower;
 	} channelTransmitPower[COUNTRY_INFO_MAX_CHANNEL];
 } tSirCountryInformation, *tpSirCountryInformation;
-
-typedef struct sSirQCNIE {
-	bool    is_present;
-	uint8_t version;
-	uint8_t sub_version;
-} tSirQCNIE, *tpSirQCNIE;
 
 #ifdef WLAN_FEATURE_FILS_SK
 #define SIR_MAX_IDENTIFIER_CNT 7
@@ -281,7 +279,7 @@ typedef struct sSirProbeRespBeacon {
 	uint8_t MBO_capability;
 	bool assoc_disallowed;
 	uint8_t assoc_disallowed_reason;
-	tSirQCNIE QCN_IE;
+	tDot11fIEqcn_ie qcn_ie;
 	tDot11fIEhe_cap he_cap;
 	tDot11fIEhe_op he_op;
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
@@ -359,6 +357,7 @@ typedef struct sSirAssocReq {
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	tDot11fIEhe_cap he_cap;
+	tDot11fIEqcn_ie qcn_ie;
 	bool is_sae_authenticated;
 } tSirAssocReq, *tpSirAssocReq;
 
@@ -457,7 +456,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEOBSSScanParameters obss_scanparams;
 	tDot11fTLVrssi_assoc_rej rssi_assoc_rej;
-	tSirQCNIE QCN_IE;
+	tDot11fIEqcn_ie qcn_ie;
 	tDot11fIEhe_cap he_cap;
 	tDot11fIEhe_op he_op;
 	bool mu_edca_present;
@@ -1065,7 +1064,9 @@ QDF_STATUS
 populate_dot11f_ext_cap(struct mac_context *mac, bool isVHTEnabled,
 			tDot11fIEExtCap *pDot11f, struct pe_session *pe_session);
 
-void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f);
+void populate_dot11f_qcn_ie(struct mac_context *mac,
+			    tDot11fIEqcn_ie *qcn_ie,
+			    uint8_t attr_id);
 
 #ifdef WLAN_FEATURE_FILS_SK
 /**

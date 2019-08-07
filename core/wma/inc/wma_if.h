@@ -166,6 +166,7 @@ struct sAniProbeRspStruct {
  * @htSmpsconfig: HT SMPS config
  * @htLdpcCapable: HT LDPC capable
  * @vhtLdpcCapable: VHT LDPC capable
+ * @vht_mcs_10_11_supp: VHT MCS 10 & 11 support
  * @smesessionId: sme session id
  * @wpa_rsn: RSN capable
  * @capab_info: capabality info
@@ -265,6 +266,7 @@ typedef struct {
 	bool send_smps_action;
 	uint8_t htLdpcCapable;
 	uint8_t vhtLdpcCapable;
+	uint8_t vht_mcs_10_11_supp;
 	uint8_t smesessionId;
 	uint8_t wpa_rsn;
 	uint16_t capab_info;

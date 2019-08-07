@@ -112,6 +112,7 @@ struct wma_tgt_ht_cap {
  * @vht_mu_bformee: vht mu bformee
  * @vht_max_ampdu_len_exp: vht max ampdu len exp
  * @vht_txop_ps: vht txop ps
+ * @vht_mcs_10_11_supp: VHT MCS 10 & 11 support
  */
 struct wma_tgt_vht_cap {
 	uint32_t vht_max_mpdu;
@@ -127,6 +128,7 @@ struct wma_tgt_vht_cap {
 	uint32_t vht_mu_bformee;
 	uint32_t vht_max_ampdu_len_exp;
 	uint32_t vht_txop_ps;
+	uint32_t vht_mcs_10_11_supp;
 };
 
 /**

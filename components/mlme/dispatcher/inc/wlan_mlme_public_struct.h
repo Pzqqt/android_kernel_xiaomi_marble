@@ -756,6 +756,7 @@ struct wlan_mlme_powersave {
  * @tx_bf_cap: Transmit bf capability
  * @as_cap: Antenna sharing capability info
  * @disable_ldpc_with_txbf_ap: Disable ldpc capability
+ * @vht_mcs_10_11_supp: VHT MCS 10 & 11 support
  */
 struct mlme_vht_capabilities_info {
 	uint8_t supp_chan_width;
@@ -799,6 +800,7 @@ struct mlme_vht_capabilities_info {
 	uint8_t tx_bf_cap;
 	uint8_t as_cap;
 	bool disable_ldpc_with_txbf_ap;
+	bool vht_mcs_10_11_supp;
 };
 
 /**

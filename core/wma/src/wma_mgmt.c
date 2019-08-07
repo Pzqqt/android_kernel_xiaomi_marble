@@ -1549,6 +1549,12 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 			cmd->peer_nss = ((cmd->rx_mcs_set & VHT2x2MCSMASK)
 					 == VHT2x2MCSMASK) ? 1 : 2;
 		}
+
+		if (params->vht_mcs_10_11_supp) {
+			WMI_SET_BITS(cmd->tx_mcs_set, 16, cmd->peer_nss,
+				     ((1 << cmd->peer_nss) - 1));
+			WMI_VHT_MCS_NOTIFY_EXT_SS_SET(cmd->tx_mcs_set, 1);
+		}
 	}
 
 	WMA_LOGD(FL("rx_max_rate: %d, rx_mcs: %x, tx_max_rate: %d, tx_mcs: %x"),

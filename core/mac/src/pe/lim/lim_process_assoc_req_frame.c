@@ -1644,6 +1644,17 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			 sta_ds->vht_su_bfee_capable);
 	}
 
+	sta_ds->vht_mcs_10_11_supp = 0;
+	if (IS_DOT11_MODE_HT(session->dot11mode) &&
+	    sta_ds->mlmStaContext.vhtCapability) {
+		if (mac_ctx->mlme_cfg->vht_caps.vht_cap_info.
+		    vht_mcs_10_11_supp &&
+		    assoc_req->qcn_ie.present &&
+		    assoc_req->qcn_ie.vht_mcs11_attr.present)
+			sta_ds->vht_mcs_10_11_supp =
+				assoc_req->qcn_ie.vht_mcs11_attr.
+				vht_mcs_10_11_supp;
+	}
 	lim_intersect_sta_he_caps(assoc_req, session, sta_ds);
 
 	if (lim_populate_matching_rate_set(mac_ctx, sta_ds,

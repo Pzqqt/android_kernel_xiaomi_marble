@@ -1159,13 +1159,24 @@ populate_dot11f_ext_cap(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f)
+void populate_dot11f_qcn_ie(struct mac_context *mac,
+			    tDot11fIEqcn_ie *qcn_ie,
+			    uint8_t attr_id)
 {
-	pDot11f->present = 1;
-	pDot11f->version[0] = QCN_IE_VERSION_SUBATTR_ID;
-	pDot11f->version[1] = QCN_IE_VERSION_SUBATTR_DATA_LEN;
-	pDot11f->version[2] = QCN_IE_VERSION_SUPPORTED;
-	pDot11f->version[3] = QCN_IE_SUBVERSION_SUPPORTED;
+	qcn_ie->present = 0;
+	if (mac->mlme_cfg->sta.qcn_ie_support &&
+	    ((attr_id == QCN_IE_ATTR_ID_ALL) ||
+	    (attr_id == QCN_IE_ATTR_ID_VERSION))) {
+		qcn_ie->present = 1;
+		qcn_ie->version_attr.present = 1;
+		qcn_ie->version_attr.version = QCN_IE_VERSION_SUPPORTED;
+		qcn_ie->version_attr.sub_version = QCN_IE_SUBVERSION_SUPPORTED;
+	}
+	if (mac->mlme_cfg->vht_caps.vht_cap_info.vht_mcs_10_11_supp) {
+		qcn_ie->present = 1;
+		qcn_ie->vht_mcs11_attr.present = 1;
+		qcn_ie->vht_mcs11_attr.vht_mcs_10_11_supp = 1;
+	}
 }
 
 QDF_STATUS
@@ -2507,16 +2518,9 @@ QDF_STATUS sir_convert_probe_frame2_struct(struct mac_context *mac,
 		}
 	}
 
-	if (pr->QCN_IE.present) {
-		pProbeResp->QCN_IE.is_present = true;
-
-		if (pr->QCN_IE.version[0] == QCN_IE_VERSION_SUBATTR_ID) {
-			pProbeResp->QCN_IE.version
-					= pr->QCN_IE.version[2];
-			pProbeResp->QCN_IE.sub_version
-					= pr->QCN_IE.version[3];
-		}
-	}
+	if (pr->qcn_ie.present)
+		qdf_mem_copy(&pProbeResp->qcn_ie, &pr->qcn_ie,
+			     sizeof(tDot11fIEqcn_ie));
 
 	if (pr->he_cap.present) {
 		pe_debug("11AX: HE cap IE present");
@@ -2721,6 +2725,9 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 			lim_log_vht_cap(mac, &pAssocReq->VHTCaps);
 		}
 	}
+	if (ar->qcn_ie.present)
+		qdf_mem_copy(&pAssocReq->qcn_ie, &ar->qcn_ie,
+			     sizeof(tDot11fIEqcn_ie));
 	if (ar->he_cap.present) {
 		qdf_mem_copy(&pAssocReq->he_cap, &ar->he_cap,
 			     sizeof(tDot11fIEhe_cap));
@@ -3173,6 +3180,9 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 		lim_log_vht_operation(mac, &pAssocRsp->VHTOperation);
 	}
 
+	if (ar->qcn_ie.present)
+		qdf_mem_copy(&pAssocRsp->qcn_ie, &ar->qcn_ie,
+			     sizeof(tDot11fIEqcn_ie));
 	if (ar->he_cap.present) {
 		pe_debug("11AX: HE cap IE present");
 		qdf_mem_copy(&pAssocRsp->he_cap, &ar->he_cap,
@@ -3951,15 +3961,9 @@ sir_parse_beacon_ie(struct mac_context *mac,
 		}
 	}
 
-	if (pBies->QCN_IE.present) {
-		pBeaconStruct->QCN_IE.is_present = true;
-		if (pBies->QCN_IE.version[0] == QCN_IE_VERSION_SUBATTR_ID) {
-			pBeaconStruct->QCN_IE.version
-					= pBies->QCN_IE.version[2];
-			pBeaconStruct->QCN_IE.sub_version
-					= pBies->QCN_IE.version[3];
-		}
-	}
+	if (pBies->qcn_ie.present)
+		qdf_mem_copy(&pBeaconStruct->qcn_ie, &pBies->qcn_ie,
+			     sizeof(tDot11fIEqcn_ie));
 
 	if (pBies->he_cap.present) {
 		qdf_mem_copy(&pBeaconStruct->he_cap, &pBies->he_cap,
@@ -4324,16 +4328,9 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
 		}
 	}
 
-	if (pBeacon->QCN_IE.present) {
-		pBeaconStruct->QCN_IE.is_present = true;
-		if (pBeacon->QCN_IE.version[0]
-					== QCN_IE_VERSION_SUBATTR_ID) {
-			pBeaconStruct->QCN_IE.version
-					= pBeacon->QCN_IE.version[2];
-			pBeaconStruct->QCN_IE.sub_version
-					= pBeacon->QCN_IE.version[3];
-		}
-	}
+	if (pBeacon->qcn_ie.present)
+		qdf_mem_copy(&pBeaconStruct->qcn_ie, &pBeacon->qcn_ie,
+			     sizeof(tDot11fIEqcn_ie));
 
 	if (pBeacon->he_cap.present) {
 		pe_debug("11AX: HE cap IE present");

@@ -2303,11 +2303,14 @@ lim_add_sta(struct mac_context *mac_ctx,
 #endif
 		add_sta_params->enable_su_tx_bformer =
 			sta_ds->vht_su_bfee_capable;
+		add_sta_params->vht_mcs_10_11_supp =
+			sta_ds->vht_mcs_10_11_supp;
 	}
 
-	pe_debug("TxChWidth %d vhtTxBFCap %d, su_bfer %d",
-		add_sta_params->ch_width, add_sta_params->vhtTxBFCapable,
-		add_sta_params->enable_su_tx_bformer);
+	pe_debug("TxChWidth %d vhtTxBFCap %d, su_bfer %d, vht_mcs11 %d",
+		 add_sta_params->ch_width, add_sta_params->vhtTxBFCapable,
+		 add_sta_params->enable_su_tx_bformer,
+		 add_sta_params->vht_mcs_10_11_supp);
 #ifdef FEATURE_WLAN_TDLS
 	if ((STA_ENTRY_PEER == sta_ds->staType) ||
 		(STA_ENTRY_TDLS_PEER == sta_ds->staType))
@@ -3804,6 +3807,9 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 				 IS_BSS_VHT_CAPABLE(pBeaconStruct->
 						    vendor_vht_ie.VHTCaps))) {
 			pAddBssParams->staContext.vhtCapable = 1;
+			pAddBssParams->staContext.vht_mcs_10_11_supp =
+				sta->vht_mcs_10_11_supp;
+
 			pAddBssParams->staContext.vhtSupportedRxNss =
 				sta->vhtSupportedRxNss;
 			if (pAssocRsp->VHTCaps.present)
@@ -3861,8 +3867,9 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			 pAddBssParams->staContext.vhtCapable,
 			 pAddBssParams->staContext.ch_width,
 			 sta_context->vhtTxBFCapable);
-		pe_debug("StaContext su_tx_bfer %d",
-			 sta_context->enable_su_tx_bformer);
+		pe_debug("StaContext su_tx_bfer %d, vht_mcs11 %d",
+			 sta_context->enable_su_tx_bformer,
+			 pAddBssParams->staContext.vht_mcs_10_11_supp);
 
 		pAddBssParams->staContext.mimoPS =
 			(tSirMacHTMIMOPowerSaveState)

@@ -152,6 +152,7 @@ typedef struct sDphHashNode {
 	uint8_t vhtSupportedRxNss;
 	uint8_t vhtBeamFormerCapable;
 	uint8_t vht_su_bfee_capable;
+	uint8_t vht_mcs_10_11_supp;
 #ifdef WLAN_FEATURE_11W
 	TX_TIMER pmfSaQueryTimer;
 	uint16_t pmfSaQueryCurrentTransId;

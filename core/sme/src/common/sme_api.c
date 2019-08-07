@@ -14843,6 +14843,30 @@ uint32_t sme_unpack_rsn_ie(mac_handle_t mac_handle, uint8_t *buf,
 	return dot11f_unpack_ie_rsn(mac_ctx, buf, buf_len, rsn_ie, append_ie);
 }
 
+void sme_add_qcn_ie(mac_handle_t mac_handle, uint8_t *ie_data,
+		    uint16_t *ie_len)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	uint8_t qcn_ie[] = {WLAN_ELEMID_VENDOR, DOT11F_IE_QCN_IE_MAX_LEN,
+			    0x8C, 0xFD, 0xF0, 0x1, QCN_IE_VERSION_SUBATTR_ID,
+			    QCN_IE_VERSION_SUBATTR_DATA_LEN,
+			    QCN_IE_VERSION_SUPPORTED,
+			    QCN_IE_SUBVERSION_SUPPORTED};
+
+	if (!mac_ctx->mlme_cfg->sta.qcn_ie_support) {
+		sme_debug("QCN IE is not supported");
+		return;
+	}
+
+	if (((*ie_len) + sizeof(qcn_ie)) > MAX_DEFAULT_SCAN_IE_LEN) {
+		sme_err("IE buffer not enough for QCN IE");
+		return;
+	}
+
+	qdf_mem_copy(ie_data + (*ie_len), qcn_ie, sizeof(qcn_ie));
+	(*ie_len) += sizeof(qcn_ie);
+}
+
 #ifdef FEATURE_BSS_TRANSITION
 /**
  * sme_get_status_for_candidate() - Get bss transition status for candidate
