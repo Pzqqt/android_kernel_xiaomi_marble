@@ -582,10 +582,6 @@ struct pe_session {
 	uint32_t dfs_regdomain;
 };
 
-struct session_params {
-	uint16_t session_id;
-};
-
 /*-------------------------------------------------------------------------
    Function declarations and documenation
    ------------------------------------------------------------------------*/

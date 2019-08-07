@@ -36,6 +36,7 @@
 #include "host_diag_core_log.h"
 #endif
 #include "wma_if.h"
+#include "wma.h"
 #include "wlan_reg_services_api.h"
 #include "lim_process_fils.h"
 #include "wlan_mlme_public_struct.h"
@@ -544,28 +545,22 @@ end:
  *
  * Return: none
  */
-static void lim_post_join_set_link_state_callback(struct mac_context *mac,
-		void *callback_arg, bool status)
+static void lim_post_join_set_link_state_callback(
+		struct mac_context *mac,
+		struct pe_session *session_entry, QDF_STATUS status)
 {
-	struct session_params *session_cb_param =
-					(struct session_params *)callback_arg;
 	tLimMlmJoinCnf mlm_join_cnf;
 
-	struct pe_session *session_entry = pe_find_session_by_session_id(mac,
-					session_cb_param->session_id);
 	if (!session_entry) {
-		pe_err("sessionId:%d does not exist",
-		       session_cb_param->session_id);
-		qdf_mem_free(session_cb_param);
+		pe_err("sessionId is NULL");
 		return;
 	}
 
-	qdf_mem_free(session_cb_param);
 	pe_debug("Sessionid %d set link state(%d) cb status: %d",
-			session_entry->peSessionId, session_entry->limMlmState,
+		session_entry->peSessionId, session_entry->limMlmState,
 			status);
 
-	if (!status) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("failed to find pe session for session id:%d",
 			session_entry->peSessionId);
 		goto failure;
@@ -626,10 +621,7 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 				       QDF_STATUS status,
 				       uint32_t *ctx)
 {
-	tLimMlmJoinCnf mlm_join_cnf;
 	struct pe_session *session = (struct pe_session *) ctx;
-	tSirLinkState lnk_state;
-	struct session_params *pe_session_param = NULL;
 
 	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("Sessionid %d Suspend link(NOTIFY_BSS) failed. Still proceeding with join",
@@ -641,39 +633,10 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 	mac_ctx->lim.limTimers.gLimJoinFailureTimer.sessionId =
 		session->peSessionId;
 
-	lnk_state = eSIR_LINK_PREASSOC_STATE;
-	pe_debug("[lim_process_mlm_join_req]: lnk_state: %d",
-		lnk_state);
-
-	pe_session_param = qdf_mem_malloc(sizeof(struct session_params));
-	if (!pe_session_param)
-		goto error;
-
-	pe_session_param->session_id = session->peSessionId;
-	if (lim_set_link_state(mac_ctx, lnk_state,
-			session->pLimMlmJoinReq->bssDescription.bssId,
-			session->self_mac_addr,
-			lim_post_join_set_link_state_callback,
-			pe_session_param) != QDF_STATUS_SUCCESS) {
-		pe_err("SessionId:%d lim_set_link_state to eSIR_LINK_PREASSOC_STATE Failed!!",
-			session->peSessionId);
-		lim_print_mac_addr(mac_ctx,
-			session->pLimMlmJoinReq->bssDescription.bssId, LOGE);
-		mlm_join_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
-		session->limMlmState = eLIM_MLM_IDLE_STATE;
-		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
-				 session->peSessionId, session->limMlmState));
-		qdf_mem_free(pe_session_param);
-		goto error;
-	}
+	status = wma_add_bss_peer_sta(session->self_mac_addr, session->bssId);
+	lim_post_join_set_link_state_callback(mac_ctx, session, status);
 
 	return;
-error:
-	mlm_join_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
-	mlm_join_cnf.sessionId = session->peSessionId;
-	mlm_join_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
-	lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
-			     (uint32_t *) &mlm_join_cnf);
 }
 
 /**

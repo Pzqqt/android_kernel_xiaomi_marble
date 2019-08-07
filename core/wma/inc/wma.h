@@ -2537,4 +2537,13 @@ int wma_motion_det_base_line_host_event_handler(void *handle, u_int8_t *event,
 						u_int32_t len);
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 
+/**
+ * wma_add_bss_peer_sta() - creat bss peer when sta connect
+ * @self_mac: self mac address
+ * @bssid: AP bssid
+ *
+ * Return: 0 on success, else error on failure
+ */
+QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid);
+
 #endif

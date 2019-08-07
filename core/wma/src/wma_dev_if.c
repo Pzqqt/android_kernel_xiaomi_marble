@@ -6102,3 +6102,29 @@ QDF_STATUS wma_set_wlm_latency_level(void *wma_ptr,
 
 	return ret;
 }
+
+QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid)
+{
+	struct cdp_pdev *pdev;
+	struct cdp_vdev *vdev;
+	uint8_t vdev_id;
+	tp_wma_handle wma;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!pdev || !wma) {
+		pe_err("Invalid pdev or wma");
+		goto err;
+	}
+	vdev = wma_find_vdev_by_addr(wma, self_mac, &vdev_id);
+	if (!vdev) {
+		pe_err("vdev not found for addr: %pM", self_mac);
+		goto err;
+	}
+	status = wma_create_peer(
+			wma, pdev, vdev, bssid,
+			WMI_PEER_TYPE_DEFAULT, vdev_id, false);
+err:
+	return status;
+}
