@@ -5140,7 +5140,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	if (peer) {
 		qdf_atomic_init(&peer->is_default_route_set);
-		dp_peer_cleanup(vdev, peer);
+		dp_peer_cleanup(vdev, peer, true);
 
 		qdf_spin_lock_bh(&soc->ast_lock);
 		dp_peer_delete_ast_entries(soc, peer);
@@ -5896,7 +5896,7 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 		peer->wlanstats_ctx = NULL;
 
 		/* cleanup the peer data */
-		dp_peer_cleanup(vdev, peer);
+		dp_peer_cleanup(vdev, peer, false);
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 		dp_reset_and_release_peer_mem(soc, pdev, peer, vdev);
 		qdf_spin_lock_bh(&soc->peer_ref_mutex);

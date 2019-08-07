@@ -773,8 +773,10 @@ void dp_peer_ppdu_delayed_ba_cleanup(struct dp_peer *peer);
 
 extern void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_peer_tx_init(struct dp_pdev *pdev, struct dp_peer *peer);
-extern void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
-extern void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
+void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer,
+		     bool reuse);
+void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer,
+			bool reuse);
 void dp_peer_unref_delete(struct dp_peer *peer);
 extern void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer,
 	unsigned tid, qdf_nbuf_t msdu_list);
