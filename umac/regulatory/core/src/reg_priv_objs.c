@@ -93,7 +93,6 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	soc_reg_obj->restart_beaconing = CH_AVOID_RULE_RESTART;
 	soc_reg_obj->enable_srd_chan_in_master_mode = true;
 	soc_reg_obj->enable_11d_in_world_mode = false;
-	soc_reg_obj->def_pdev_id = -1;
 
 	for (i = 0; i < MAX_STA_VDEV_CNT; i++)
 		soc_reg_obj->vdev_ids_11d[i] = INVALID_VDEV_ID;
@@ -183,13 +182,6 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 		reg_err("reg psoc private obj is NULL");
 		qdf_mem_free(pdev_priv_obj);
 		return QDF_STATUS_E_FAULT;
-	}
-
-	if (psoc_priv_obj->def_pdev_id == -1) {
-		reg_debug("marking pdev with id %d", pdev_id);
-		psoc_priv_obj->def_pdev_id = pdev_id;
-	} else {
-		reg_debug("not marking this pdev");
 	}
 
 	pdev_priv_obj->pdev_ptr = pdev;
@@ -287,13 +279,6 @@ QDF_STATUS wlan_regulatory_pdev_obj_destroyed_notification(
 		reg_11d_host_scan_deinit(wlan_pdev_get_psoc(pdev));
 
 	pdev_priv_obj->pdev_ptr = NULL;
-
-	if (psoc_priv_obj->def_pdev_id == pdev_id) {
-		reg_debug("deleting marked pdev");
-		psoc_priv_obj->def_pdev_id = -1;
-	} else {
-		reg_debug("deleting unmarked pdev");
-	}
 
 	status = wlan_objmgr_pdev_component_obj_detach(
 			pdev, WLAN_UMAC_COMP_REGULATORY, pdev_priv_obj);
