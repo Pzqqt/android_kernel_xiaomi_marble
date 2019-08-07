@@ -45,14 +45,6 @@ struct vdev_mlme_obj;
 #define WLAN_VDEV_MLME_SUBTYPE_P2P_GO 0x3
 #define WLAN_VDEV_MLME_SUBTYPE_PROXY_STA 0x4
 #define WLAN_VDEV_MLME_SUBTYPE_MESH 0x5
-
-/* new subtype for 11S mesh is required as 11S functionality differs
- * in many ways from proprietary mesh
- * 11S uses 6-addr frame format and supports peering between mesh
- * stations and dynamic best path selection between mesh stations.
- * While in proprietary mesh, neighboring mesh station MAC is manually
- * added to AST table for traffic flow between mesh stations
- */
 #define WLAN_VDEV_MLME_SUBTYPE_MESH_11S   0x6
 #define WLAN_VDEV_MLME_SUBTYPE_SMART_MONITOR 0x7
 
