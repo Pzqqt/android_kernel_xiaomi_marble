@@ -675,14 +675,12 @@ struct hdd_beacon_data {
 
 /**
  * struct hdd_mon_set_ch_info - Holds monitor mode channel switch params
- * @channel: Channel number.
  * @freq: Channel frequency.
  * @cb_mode: Channel bonding
  * @channel_width: Channel width 0/1/2 for 20/40/80MHz respectively.
  * @phy_mode: PHY mode
  */
 struct hdd_mon_set_ch_info {
-	uint8_t channel;
 	uint32_t freq;
 	uint8_t cb_mode;
 	uint32_t channel_width;
