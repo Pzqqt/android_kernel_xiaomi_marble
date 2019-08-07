@@ -2535,96 +2535,6 @@ static bool sap_is_ch_non_overlap(struct sap_context *sap_ctx, uint16_t ch)
 	return false;
 }
 
-#ifdef FEATURE_WLAN_CH_AVOID
-static uint8_t get_channel_from_safe_channels(mac_handle_t mac_handle,
-					      struct sap_context *sap_ctx)
-{
-	uint8_t i, first_safe_ch_in_range = SAP_CHANNEL_NOT_SELECTED;
-	enum channel_state ch_type;
-	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
-	uint32_t end_ch_num = sap_ctx->acs_cfg->end_ch;
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-
-
-	for (i = 0; i < NUM_CHANNELS; i++) {
-		if ((safe_channels[i].channelNumber < start_ch_num) ||
-		    (safe_channels[i].channelNumber > end_ch_num))
-			continue;
-
-		ch_type = wlan_reg_get_channel_state(mac_ctx->pdev,
-				safe_channels[i].channelNumber);
-
-		if ((ch_type == CHANNEL_STATE_DISABLE) ||
-			(ch_type == CHANNEL_STATE_INVALID))
-			continue;
-		if ((!mac_ctx->mlme_cfg->dfs_cfg.dfs_master_capable) &&
-		    (CHANNEL_STATE_DFS == ch_type)) {
-			sap_debug("DFS master mode disabled. Skip DFS channel %d",
-				  safe_channels[i].channelNumber);
-			continue;
-		}
-		if ((sap_ctx->dfs_mode == ACS_DFS_MODE_DISABLE) &&
-		    (CHANNEL_STATE_DFS == ch_type))
-			continue;
-
-		if (safe_channels[i].isSafe == true) {
-			sap_debug("channel %d in the configuration is safe",
-				  safe_channels[i].channelNumber);
-			first_safe_ch_in_range = safe_channels[i].channelNumber;
-			break;
-		}
-
-		sap_debug("channel %d in the configuration is unsafe",
-			  safe_channels[i].channelNumber);
-	}
-
-	/* if no channel selected return SAP_CHANNEL_NOT_SELECTED */
-	return first_safe_ch_in_range;
-}
-#else
-static uint8_t get_channel_from_safe_channels(mac_handle_t mac_handle,
-					      struct sap_context *sap_ctx)
-{
-	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
-
-	sap_ctx->acs_cfg->pri_ch = start_ch_num;
-	sap_ctx->acs_cfg->ht_sec_ch = 0;
-
-	/* pick the first channel in configured range */
-	return start_ch_num;
-}
-#endif /* FEATURE_WLAN_CH_AVOID */
-/**
- * sap_select_channel_no_scan_result() - select SAP channel when no scan results
- * are available.
- * @sap_ctx: Sap context
- *
- * Returns: channel number if success, 0 otherwise
- */
-static uint8_t sap_select_channel_no_scan_result(mac_handle_t mac_handle,
-						 struct sap_context *sap_ctx)
-{
-	uint8_t i, channel = SAP_CHANNEL_NOT_SELECTED;
-	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
-	uint32_t end_ch_num = sap_ctx->acs_cfg->end_ch;
-
-	sap_debug("start - end: %d - %d", start_ch_num, end_ch_num);
-	/* get a channel in PCL and within the range */
-	for (i = 0; i < sap_ctx->acs_cfg->pcl_ch_count; i++) {
-		if ((sap_ctx->acs_cfg->pcl_channels[i] < start_ch_num) ||
-		    (sap_ctx->acs_cfg->pcl_channels[i] > end_ch_num))
-			continue;
-
-		channel = sap_ctx->acs_cfg->pcl_channels[i];
-		break;
-	}
-
-	if (channel == SAP_CHANNEL_NOT_SELECTED)
-		channel = get_channel_from_safe_channels(mac_handle, sap_ctx);
-
-	return channel;
-}
-
 uint8_t sap_select_channel(mac_handle_t mac_handle,
 			   struct sap_context *sap_ctx,
 			   qdf_list_t *scan_list)
@@ -2661,7 +2571,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 #ifndef SOFTAP_CHANNEL_RANGE
 		return SAP_CHANNEL_NOT_SELECTED;
 #else
-		return sap_select_channel_no_scan_result(mac_handle, sap_ctx);
+		return sap_select_default_oper_chan(sap_ctx->acs_cfg);
 #endif
 	}
 
