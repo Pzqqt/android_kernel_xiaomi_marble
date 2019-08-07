@@ -56,6 +56,7 @@ struct macro_ops {
 	int (*set_port_map)(struct snd_soc_component *component, u32 uc,
 			    u32 size, void *data);
 	int (*clk_switch)(struct snd_soc_component *component);
+	int (*reg_evt_listener)(struct snd_soc_component *component, bool en);
 	char __iomem *io_base;
 	u16 clk_id_req;
 	u16 default_clk_id;
@@ -80,6 +81,8 @@ int bolero_runtime_resume(struct device *dev);
 int bolero_runtime_suspend(struct device *dev);
 int bolero_set_port_map(struct snd_soc_component *component, u32 size, void *data);
 int bolero_tx_clk_switch(struct snd_soc_component *component);
+int bolero_register_event_listener(struct snd_soc_component *component,
+				   bool enable);
 #else
 static inline int bolero_register_res_clk(struct device *dev, rsc_clk_cb_t cb)
 {
@@ -140,6 +143,13 @@ static inline int bolero_set_port_map(struct snd_soc_component *component,
 }
 
 static inline int bolero_tx_clk_switch(struct snd_soc_component *component)
+{
+	return 0;
+}
+
+static inline int bolero_register_event_listener(
+					struct snd_soc_component *component,
+					bool enable)
 {
 	return 0;
 }

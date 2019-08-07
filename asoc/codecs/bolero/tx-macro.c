@@ -1582,6 +1582,42 @@ static const struct snd_kcontrol_new tx_macro_snd_controls[] = {
 		       tx_macro_get_bcs, tx_macro_set_bcs),
 };
 
+static int tx_macro_register_event_listener(struct snd_soc_component *component,
+					    bool enable)
+{
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+	int ret = 0;
+
+	if (!component)
+		return -EINVAL;
+
+	tx_dev = bolero_get_device_ptr(component->dev, TX_MACRO);
+	if (!tx_dev) {
+		dev_err(component->dev,
+			"%s: null device for macro!\n", __func__);
+		return -EINVAL;
+	}
+	tx_priv = dev_get_drvdata(tx_dev);
+	if (!tx_priv) {
+		dev_err(component->dev,
+			"%s: priv is null for macro!\n", __func__);
+		return -EINVAL;
+	}
+	if (tx_priv->swr_ctrl_data) {
+		if (enable)
+			ret = swrm_wcd_notify(
+				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+				SWR_REGISTER_WAKEUP, NULL);
+		else
+			ret = swrm_wcd_notify(
+				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+				SWR_DEREGISTER_WAKEUP, NULL);
+	}
+
+	return ret;
+}
+
 static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 				      struct regmap *regmap, int clk_type,
 				      bool enable)
@@ -2121,6 +2157,7 @@ static void tx_macro_init_ops(struct macro_ops *ops,
 	ops->reg_wake_irq = tx_macro_reg_wake_irq;
 	ops->set_port_map = tx_macro_set_port_map;
 	ops->clk_switch = tx_macro_clk_switch;
+	ops->reg_evt_listener = tx_macro_register_event_listener;
 }
 
 static int tx_macro_probe(struct platform_device *pdev)
