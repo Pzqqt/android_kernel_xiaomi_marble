@@ -3275,7 +3275,10 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 					&vdev_id[cc_count],
 					PM_SAP_MODE);
 	policy_mgr_debug("Number of SAP modes: %d", cc_count);
-	cc_count = cc_count + policy_mgr_get_mode_specific_conn_info(psoc,
+
+	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
+		cc_count = cc_count + policy_mgr_get_mode_specific_conn_info(
+					psoc,
 					&operating_channel[cc_count],
 					&vdev_id[cc_count],
 					PM_P2P_GO_MODE);
@@ -3291,54 +3294,64 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	for (i = 0; i < cc_count; i++) {
-		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+	if (cc_count <= MAX_NUMBER_OF_CONC_CONNECTIONS) {
+		for (i = 0; i < cc_count; i++) {
+			vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+							psoc,
 							vdev_id[i],
-						WLAN_POLICY_MGR_ID);
-		if (!vdev) {
-			policy_mgr_err("vdev for vdev_id:%d is NULL",
-							vdev_id[i]);
-			return QDF_STATUS_E_INVAL;
-		}
-
-	/**
-	 * If channel passed is same as AP/GO operating channel, then
-	 *   return true.
-	 * If channel is different from operating channel but in same band.
-	 *   return false.
-	 * If operating channel in different band (DBS capable).
-	 *   return true.
-	 * If operating channel in different band (not DBS capable).
-	 *   return false.
-	 */
-	/* TODO: To be enhanced for SBS */
-		if (policy_mgr_is_dnsc_set(vdev)) {
-			if (operating_channel[i] == channel) {
-				*ok = true;
-				wlan_objmgr_vdev_release_ref(vdev,
-						WLAN_POLICY_MGR_ID);
-				break;
-			} else if (WLAN_REG_IS_SAME_BAND_CHANNELS(
-				operating_channel[i], channel)) {
-				*ok = false;
-				wlan_objmgr_vdev_release_ref(vdev,
-						WLAN_POLICY_MGR_ID);
-				break;
-			} else if (policy_mgr_is_hw_dbs_capable(psoc)) {
-				*ok = true;
-				wlan_objmgr_vdev_release_ref(vdev,
-						WLAN_POLICY_MGR_ID);
-				break;
-			} else {
-				*ok = false;
-				wlan_objmgr_vdev_release_ref(vdev,
-						WLAN_POLICY_MGR_ID);
-				break;
+							WLAN_POLICY_MGR_ID);
+			if (!vdev) {
+				policy_mgr_err("vdev for vdev_id:%d is NULL",
+					       vdev_id[i]);
+				return QDF_STATUS_E_INVAL;
 			}
-		} else {
-			*ok = true;
+
+			/**
+			 * If channel passed is same as AP/GO operating
+			 * channel, return true.
+			 *
+			 * If channel is different from operating channel but
+			 * in same band, return false.
+			 *
+			 * If operating channel in different band
+			 * (DBS capable), return true.
+			 *
+			 * If operating channel in different band
+			 * (not DBS capable), return false.
+			 */
+			/* TODO: To be enhanced for SBS */
+			if (policy_mgr_is_dnsc_set(vdev)) {
+				if (operating_channel[i] == channel) {
+					*ok = true;
+					wlan_objmgr_vdev_release_ref(
+							vdev,
+							WLAN_POLICY_MGR_ID);
+					break;
+				} else if (WLAN_REG_IS_SAME_BAND_CHANNELS(
+					operating_channel[i], channel)) {
+					*ok = false;
+					wlan_objmgr_vdev_release_ref(
+							vdev,
+							WLAN_POLICY_MGR_ID);
+					break;
+				} else if (policy_mgr_is_hw_dbs_capable(psoc)) {
+					*ok = true;
+					wlan_objmgr_vdev_release_ref(
+							vdev,
+							WLAN_POLICY_MGR_ID);
+					break;
+				} else {
+					*ok = false;
+					wlan_objmgr_vdev_release_ref(
+							vdev,
+							WLAN_POLICY_MGR_ID);
+					break;
+				}
+			} else {
+				*ok = true;
+			}
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 		}
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 	}
 	policy_mgr_debug("chan: %d ok %d", channel, *ok);
 
