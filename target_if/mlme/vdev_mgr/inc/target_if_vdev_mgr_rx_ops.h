@@ -60,10 +60,22 @@ static inline bool target_if_vdev_mgr_is_panic_allowed(void)
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
-int target_if_vdev_mgr_delete_response_handler(
-						ol_scn_t scn,
-						uint8_t *data,
-						uint32_t datalen);
+int target_if_vdev_mgr_delete_response_handler(ol_scn_t scn,
+					       uint8_t *data,
+					       uint32_t datalen);
+
+/**
+ * target_if_vdev_mgr_stop_response_handler() - API to handle vdev stop
+ * response
+ * @scn: pointer to scan object
+ * @data: pointer to data
+ * @datalen: length of data
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+int target_if_vdev_mgr_stop_response_handler(ol_scn_t scn,
+					     uint8_t *data,
+					     uint32_t datalen);
 
 /**
  * target_if_vdev_mgr_offload_bcn_tx_status_handler() - API to handle beacon

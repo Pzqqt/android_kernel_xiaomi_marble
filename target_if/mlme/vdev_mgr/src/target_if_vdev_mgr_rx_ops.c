@@ -243,10 +243,9 @@ release_vdev_target_if_ref:
 	return qdf_status_to_os_return(status);
 }
 
-static int target_if_vdev_mgr_stop_response_handler(
-						ol_scn_t scn,
-						uint8_t *data,
-						uint32_t datalen)
+int target_if_vdev_mgr_stop_response_handler(ol_scn_t scn,
+					     uint8_t *data,
+					     uint32_t datalen)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct wlan_objmgr_psoc *psoc;
@@ -319,10 +318,9 @@ release_vdev_target_if_ref:
 	return qdf_status_to_os_return(status);
 }
 
-int target_if_vdev_mgr_delete_response_handler(
-						ol_scn_t scn,
-						uint8_t *data,
-						uint32_t datalen)
+int target_if_vdev_mgr_delete_response_handler(ol_scn_t scn,
+					       uint8_t *data,
+					       uint32_t datalen)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct wlan_objmgr_psoc *psoc;

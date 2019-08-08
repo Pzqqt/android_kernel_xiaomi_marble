@@ -12009,6 +12009,7 @@ struct wmi_ops tlv_ops =  {
 #endif
 #ifdef TGT_IF_VDEV_MGR_CONV
 	.extract_vdev_delete_resp = extract_vdev_delete_resp_tlv,
+	.extract_vdev_stopped_param = extract_vdev_stopped_param_tlv,
 #endif
 	.extract_hw_mode_resp_event = extract_hw_mode_resp_event_status_tlv,
 };
