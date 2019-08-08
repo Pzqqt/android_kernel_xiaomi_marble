@@ -378,6 +378,37 @@ int sde_connector_state_get_mode_info(struct drm_connector_state *conn_state,
 	return 0;
 }
 
+static int sde_connector_handle_panel_id(uint32_t event_idx,
+			uint32_t instance_idx, void *usr,
+			uint32_t data0, uint32_t data1,
+			uint32_t data2, uint32_t data3)
+{
+	struct sde_connector *c_conn = usr;
+	int i;
+	u64 panel_id;
+	u8 arr[8], shift;
+	u64 mask = 0xff;
+
+	if (!c_conn)
+		return -EINVAL;
+
+	panel_id = (((u64)data0) << 31) | data1;
+	if (panel_id == ~0x0)
+		return 0;
+
+	for (i = 0; i < 8; i++) {
+		shift = 8 * i;
+		arr[7 - i] = (u8)((panel_id & (mask << shift)) >> shift);
+	}
+	/* update the panel id */
+	msm_property_set_blob(&c_conn->property_info,
+		  &c_conn->blob_panel_id, arr, sizeof(arr),
+		  CONNECTOR_PROP_DEMURA_PANEL_ID);
+	sde_connector_register_event(&c_conn->base,
+			SDE_CONN_EVENT_PANEL_ID, NULL, c_conn);
+	return 0;
+}
+
 static int sde_connector_handle_disp_recovery(uint32_t event_idx,
 			uint32_t instance_idx, void *usr,
 			uint32_t data0, uint32_t data1,
@@ -2397,6 +2428,7 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 	struct dsi_display *dsi_display;
 	int rc;
 	struct drm_connector *connector;
+	u64 panel_id = ~0x0;
 
 	msm_property_install_blob(&c_conn->property_info, "capabilities",
 			DRM_MODE_PROP_IMMUTABLE, CONNECTOR_PROP_SDE_INFO);
@@ -2484,6 +2516,17 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 				e_frame_trigger_mode,
 				ARRAY_SIZE(e_frame_trigger_mode),
 				CONNECTOR_PROP_CMD_FRAME_TRIGGER_MODE);
+
+		if (sde_kms->catalog->has_demura) {
+			msm_property_install_blob(&c_conn->property_info,
+				"DEMURA_PANEL_ID", DRM_MODE_PROP_IMMUTABLE,
+				CONNECTOR_PROP_DEMURA_PANEL_ID);
+			msm_property_set_blob(&c_conn->property_info,
+			      &c_conn->blob_panel_id,
+			      &panel_id,
+			      sizeof(panel_id),
+			      CONNECTOR_PROP_DEMURA_PANEL_ID);
+		}
 	}
 
 	msm_property_install_range(&c_conn->property_info, "bl_scale",
@@ -2651,6 +2694,15 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 		connector_type, display, &display_info);
 	if (rc)
 		goto error_cleanup_fence;
+
+	if (connector_type == DRM_MODE_CONNECTOR_DSI &&
+			sde_kms->catalog->has_demura) {
+		rc = sde_connector_register_event(&c_conn->base,
+			SDE_CONN_EVENT_PANEL_ID,
+			sde_connector_handle_panel_id, c_conn);
+		if (rc)
+			SDE_ERROR("register panel id event err %d\n", rc);
+	}
 
 	rc = msm_property_install_get_status(&c_conn->property_info);
 	if (rc) {

@@ -1480,6 +1480,7 @@ struct sde_mdss_cfg {
 	bool inline_disable_const_clr;
 	bool dither_luma_mode_support;
 	bool has_base_layer;
+	bool has_demura;
 
 	struct sde_sc_cfg sc_cfg;
 

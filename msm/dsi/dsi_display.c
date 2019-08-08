@@ -2044,6 +2044,12 @@ void dsi_display_enable_event(struct drm_connector *connector,
 							*event_info;
 		}
 		break;
+	case SDE_CONN_EVENT_PANEL_ID:
+		if (event_info)
+			display_for_each_ctrl(i, display)
+				display->ctrl[i].ctrl->panel_id_cb
+				    = *event_info;
+		break;
 	default:
 		/* nothing to do */
 		DSI_DEBUG("[%s] unhandled event %d\n", display->name, event_idx);
@@ -2151,6 +2157,7 @@ static void dsi_display_parse_cmdline_topology(struct dsi_display *display,
 	char *sw_te = NULL;
 	unsigned long cmdline_topology = NO_OVERRIDE;
 	unsigned long cmdline_timing = NO_OVERRIDE;
+	unsigned long panel_id = NO_OVERRIDE;
 
 	if (display_type >= MAX_DSI_ACTIVE_DISPLAY) {
 		DSI_ERR("display_type=%d not supported\n", display_type);
@@ -2165,6 +2172,17 @@ static void dsi_display_parse_cmdline_topology(struct dsi_display *display,
 	sw_te = strnstr(boot_str, ":sim-swte", strlen(boot_str));
 	if (sw_te)
 		display->sw_te_using_wd = true;
+
+	str = strnstr(boot_str, ":panelid", strlen(boot_str));
+	if (str) {
+		if (kstrtol(str + strlen(":panelid"), INT_BASE_10,
+				(unsigned long *)&panel_id)) {
+			DSI_INFO("panel id not found: %s\n", boot_str);
+		} else {
+			DSI_INFO("panel id found: %lx\n", panel_id);
+			display->panel_id = panel_id;
+		}
+	}
 
 	str = strnstr(boot_str, ":config", strlen(boot_str));
 	if (!str)
@@ -5193,6 +5211,8 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 		rc =  -EINVAL;
 		goto end;
 	}
+	/* initialize panel id to UINT64_MAX */
+	display->panel_id = ~0x0;
 
 	display->display_type = of_get_property(pdev->dev.of_node,
 				"label", NULL);
@@ -7314,6 +7334,18 @@ int dsi_display_pre_commit(void *display,
 	return rc;
 }
 
+static void dsi_display_panel_id_notification(struct dsi_display *display)
+{
+	if (display->panel_id != ~0x0 &&
+		display->ctrl[0].ctrl->panel_id_cb.event_cb) {
+		display->ctrl[0].ctrl->panel_id_cb.event_cb(
+			display->ctrl[0].ctrl->panel_id_cb.event_usr_ptr,
+			display->ctrl[0].ctrl->panel_id_cb.event_idx,
+			0, ((display->panel_id & 0xffffffff00000000) >> 31),
+			(display->panel_id & 0xffffffff), 0, 0);
+	}
+}
+
 int dsi_display_enable(struct dsi_display *display)
 {
 	int rc = 0;
@@ -7346,6 +7378,8 @@ int dsi_display_enable(struct dsi_display *display)
 
 		display->panel->panel_initialized = true;
 		DSI_DEBUG("cont splash enabled, display enable not required\n");
+		dsi_display_panel_id_notification(display);
+
 		return 0;
 	}
 
@@ -7369,7 +7403,7 @@ int dsi_display_enable(struct dsi_display *display)
 			goto error;
 		}
 	}
-
+	dsi_display_panel_id_notification(display);
 	/* Block sending pps command if modeset is due to fps difference */
 	if ((mode->priv_info->dsc_enabled ||
 			mode->priv_info->vdc_enabled) &&
