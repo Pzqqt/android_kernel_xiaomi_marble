@@ -22,7 +22,7 @@
 #include <qdf_mem.h>         /* qdf_mem_malloc, etc. */
 #include <qdf_types.h>          /* qdf_device_t, qdf_print */
 /* header files for utilities */
-#include <cds_queue.h>          /* TAILQ */
+#include "queue.h"         /* TAILQ */
 
 /* header files for configuration API */
 #include <ol_cfg.h>             /* ol_cfg_max_peer_id */

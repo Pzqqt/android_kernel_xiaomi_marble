@@ -26,7 +26,7 @@
 #include <qdf_debugfs.h>
 
 /* header files for utilities */
-#include <cds_queue.h>          /* TAILQ */
+#include "queue.h"          /* TAILQ */
 
 /* header files for configuration API */
 #include <ol_cfg.h>             /* ol_cfg_is_high_latency */

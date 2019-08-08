@@ -22,7 +22,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_net_types.h>      /* QDF_NBUF_TX_EXT_TID_INVALID */
 
-#include <cds_queue.h>          /* TAILQ */
+#include "queue.h"          /* TAILQ */
 #ifdef QCA_COMPUTE_TX_DELAY
 #include <enet.h>               /* ethernet_hdr_t, etc. */
 #include <ipv6_defs.h>          /* ipv6_traffic_class */

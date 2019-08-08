@@ -328,6 +328,11 @@ EPPING_OBJS := $(EPPING_SRC_DIR)/epping_main.o \
 		$(EPPING_SRC_DIR)/epping_rx.o \
 		$(EPPING_SRC_DIR)/epping_helper.o
 
+############ SYS ############
+CMN_SYS_DIR :=	$(WLAN_COMMON_ROOT)/utils/sys
+CMN_SYS_INC_DIR := 	$(CMN_SYS_DIR)
+CMN_SYS_INC :=	-I$(WLAN_ROOT)/$(CMN_SYS_INC_DIR)
+
 ############ MAC ############
 MAC_DIR :=	core/mac
 MAC_INC_DIR :=	$(MAC_DIR)/inc
@@ -1892,7 +1897,8 @@ INCS +=		$(WMA_INC) \
 		$(TXRX3.0_INC)
 
 INCS +=		$(HIF_INC) \
-		$(BMI_INC)
+		$(BMI_INC) \
+		$(CMN_SYS_INC)
 
 ifeq ($(CONFIG_LITHIUM), y)
 INCS += 	$(HAL_INC) \

@@ -25,7 +25,7 @@
 
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_mem.h>
-#include <cds_queue.h>          /* TAILQ */
+#include "queue.h"          /* TAILQ */
 #include <a_types.h>            /* A_UINT8 */
 #include <htt.h>                /* htt_sec_type, htt_pkt_type, etc. */
 #include <qdf_atomic.h>         /* qdf_atomic_t */

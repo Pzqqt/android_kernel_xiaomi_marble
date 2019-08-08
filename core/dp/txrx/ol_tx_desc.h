@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,7 +23,7 @@
 #ifndef _OL_TX_DESC__H_
 #define _OL_TX_DESC__H_
 
-#include <cds_queue.h>          /* TAILQ_HEAD */
+#include "queue.h"          /* TAILQ_HEAD */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 #include <ol_txrx_internal.h>   /*TXRX_ASSERT2 */
