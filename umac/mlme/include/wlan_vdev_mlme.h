@@ -231,9 +231,12 @@ struct vdev_mlme_mgmt_generic {
 
 /**
  * struct vdev_mlme_mgmt_ap - ap specific vdev mlme mgmt cfg
- * @.
+ * @hidden_ssid: flag to indicate whether it is hidden ssid
+ * @cac_duration_ms: cac duration in millseconds
  */
 struct vdev_mlme_mgmt_ap {
+	bool hidden_ssid;
+	uint32_t cac_duration_ms;
 };
 
 /**
