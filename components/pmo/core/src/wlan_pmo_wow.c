@@ -462,20 +462,15 @@ uint8_t pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	bool apf = false;
-	bool arp_ns = false;
 	bool pkt_filter = false;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
 		apf = pmo_intersect_apf(psoc_ctx);
-		arp_ns = pmo_intersect_arp_ns_offload(psoc_ctx);
 		pkt_filter = pmo_intersect_packet_filter(psoc_ctx);
 	}
 
 	if (!apf && !pkt_filter)
 		return PMO_WOW_FILTERS_MAX;
-
-	if (arp_ns)
-		return PMO_WOW_FILTERS_ARP_NS;
 
 	return PMO_WOW_FILTERS_PKT_OR_APF;
 }
