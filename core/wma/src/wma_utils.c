@@ -63,6 +63,7 @@
 #include <wlan_mlme_main.h>
 #include "host_diag_core_log.h"
 #include <wlan_mlme_api.h>
+#include <../../core/src/vdev_mgr_ops.h>
 
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
@@ -3470,12 +3471,18 @@ wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params)
 
 QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
+	struct vdev_mlme_obj *vdev_mlme = NULL;
 
 	if (!wma_is_vdev_valid(vdev_id)) {
 		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
-		status = QDF_STATUS_E_FAILURE;
+		return status;
+	}
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+	if (!vdev_mlme) {
+		WMA_LOGE("Failed to get vdev mlme obj for vdev id %d", vdev_id);
 		return status;
 	}
 
@@ -3488,16 +3495,8 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 	qdf_mem_copy(mlme_get_dynamic_vdev_config(iface->vdev),
 		     mlme_get_ini_vdev_config(iface->vdev),
 		     sizeof(struct wlan_mlme_nss_chains));
-	wma_acquire_wakelock(&iface->vdev_stop_wakelock,
-			     WMA_VDEV_STOP_REQUEST_TIMEOUT);
-	qdf_runtime_pm_prevent_suspend(
-			&iface->vdev_stop_runtime_wakelock);
-	status = wmi_unified_vdev_stop_send(wma->wmi_handle, vdev_id);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_runtime_pm_allow_suspend(
-				&iface->vdev_stop_runtime_wakelock);
-		wma_release_wakelock(&iface->vdev_stop_wakelock);
-	}
+
+	status = vdev_mgr_stop_send(vdev_mlme);
 
 	return status;
 }
@@ -3731,20 +3730,27 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 
 QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
-	QDF_STATUS status;
-	struct wma_txrx_node *vdev;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
+	struct vdev_mlme_obj *vdev_mlme;
 
 	if (!wma_is_vdev_valid(vdev_id)) {
 		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
-		return QDF_STATUS_E_FAILURE;
+		return status;
+	}
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+	if (!vdev_mlme) {
+		WMA_LOGE("Failed to get vdev mlme obj for vdev id %d", vdev_id);
+		return status;
 	}
 
 	wma_update_roam_offload_flag(wma, vdev_id, false);
-	vdev = &wma->interfaces[vdev_id];
 	wma->interfaces[vdev_id].roaming_in_progress = false;
-	status = wmi_unified_vdev_down_send(wma->wmi_handle, vdev_id);
-	qdf_runtime_pm_allow_suspend(&vdev->vdev_start_runtime_wakelock);
-	wma_release_wakelock(&vdev->vdev_start_wakelock);
+
+	status = vdev_mgr_down_send(vdev_mlme);
+	qdf_runtime_pm_allow_suspend(&iface->vdev_start_runtime_wakelock);
+	wma_release_wakelock(&iface->vdev_start_wakelock);
 
 	return status;
 }
@@ -4153,7 +4159,7 @@ QDF_STATUS wma_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {
 	return __wma_handle_vdev_stop_rsp(
-			(wmi_vdev_stopped_event_fixed_param *)data);
+			(struct vdev_stop_response *)data);
 }
 
 QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,

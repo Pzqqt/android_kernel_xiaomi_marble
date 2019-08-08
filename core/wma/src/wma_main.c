@@ -2864,8 +2864,6 @@ void wma_vdev_init(struct wma_txrx_node *vdev)
 {
 	qdf_wake_lock_create(&vdev->vdev_start_wakelock, "vdev_start");
 	qdf_runtime_lock_init(&vdev->vdev_start_runtime_wakelock);
-	qdf_wake_lock_create(&vdev->vdev_stop_wakelock, "vdev_stop");
-	qdf_runtime_lock_init(&vdev->vdev_stop_runtime_wakelock);
 	qdf_wake_lock_create(&vdev->vdev_set_key_wakelock, "vdev_set_key");
 	qdf_runtime_lock_init(&vdev->vdev_set_key_runtime_wakelock);
 	vdev->is_waiting_for_key = false;
@@ -2948,8 +2946,6 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 
 	qdf_runtime_lock_deinit(&vdev->vdev_set_key_runtime_wakelock);
 	qdf_wake_lock_destroy(&vdev->vdev_set_key_wakelock);
-	qdf_runtime_lock_deinit(&vdev->vdev_stop_runtime_wakelock);
-	qdf_wake_lock_destroy(&vdev->vdev_stop_wakelock);
 	qdf_runtime_lock_deinit(&vdev->vdev_start_runtime_wakelock);
 	qdf_wake_lock_destroy(&vdev->vdev_start_wakelock);
 	vdev->is_waiting_for_key = false;
@@ -3406,10 +3402,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   WMA_RX_SERIALIZER_CTX);
 
 	/* Register vdev stop response event handler */
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_vdev_stopped_event_id,
-					   wma_vdev_stop_resp_handler,
-					   WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(
+				wma_handle->wmi_handle,
+				wmi_vdev_stopped_event_id,
+				target_if_vdev_mgr_stop_response_handler,
+				WMA_RX_SERIALIZER_CTX);
 
 	/* register for STA kickout function */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,

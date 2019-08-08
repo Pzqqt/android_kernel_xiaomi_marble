@@ -970,6 +970,25 @@ vdevmgr_vdev_delete_rsp_handle(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
+ * vdevmgr_vdev_stop_rsp_handle() - callback to handle vdev stop response
+ * @vdev_mlme: vdev mlme object
+ * @rsp: pointer to vdev stop response
+ *
+ * This function is called to handle vdev stop response and send result to
+ * upper layer
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+vdevmgr_vdev_stop_rsp_handle(struct vdev_mlme_obj *vdev_mlme,
+			     struct vdev_stop_response *rsp)
+{
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	return wma_vdev_stop_resp_handler(vdev_mlme, rsp);
+}
+
+/**
  * struct sta_mlme_ops - VDEV MLME operation callbacks strucutre for sta
  * @mlme_vdev_start_send:               callback to initiate actions of VDEV
  *                                      MLME start operation
@@ -1011,6 +1030,7 @@ static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
 	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
+	.mlme_vdev_ext_stop_rsp = vdevmgr_vdev_stop_rsp_handle,
 };
 
 /**
@@ -1060,6 +1080,7 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
 	.mlme_vdev_is_newchan_no_cac = ap_mlme_vdev_is_newchan_no_cac,
 	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
+	.mlme_vdev_ext_stop_rsp = vdevmgr_vdev_stop_rsp_handle,
 };
 
 static struct vdev_mlme_ops mon_mlme_ops = {
@@ -1070,6 +1091,7 @@ static struct vdev_mlme_ops mon_mlme_ops = {
 	.mlme_vdev_disconnect_peers = mon_mlme_vdev_disconnect_peers,
 	.mlme_vdev_stop_send = mon_mlme_vdev_stop_send,
 	.mlme_vdev_down_send = mon_mlme_vdev_down_send,
+	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
 };
 
 /**

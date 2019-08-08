@@ -640,25 +640,12 @@ void wma_send_set_link_response(tp_wma_handle wma, struct wma_target_req *req);
 
 /**
  * __wma_handle_vdev_stop_rsp() - vdev stop response handler
- * @handle: wma handle
- * @cmd_param_info: event buffer
- * @len: buffer length
+ * @resp_event: pointer to response received
  *
  * Return: QDF_STATUS_SUCCESS for success or QDF_ERROR code
  */
 QDF_STATUS
-__wma_handle_vdev_stop_rsp(wmi_vdev_stopped_event_fixed_param *resp_event);
-
-/**
- * wma_vdev_stop_resp_handler() - vdev stop response handler
- * @handle: wma handle
- * @cmd_param_info: event buffer
- * @len: buffer length
- *
- * Return: 0 for success or error code
- */
-int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
-				      uint32_t len);
+__wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event);
 
 QDF_STATUS wma_vdev_start(tp_wma_handle wma, struct wma_vdev_start_req *req,
 			  bool isRestart);
