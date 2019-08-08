@@ -33,6 +33,18 @@ endif
 
 include $(WLAN_ROOT)/configs/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig
 
+# add configurations in WLAN_CFG_OVERRIDE
+ifneq ($(WLAN_CFG_OVERRIDE),)
+WLAN_CFG_OVERRIDE_FILE := $(WLAN_ROOT)/.wlan_cfg_override
+$(shell echo > $(WLAN_CFG_OVERRIDE_FILE))
+
+$(foreach cfg, $(WLAN_CFG_OVERRIDE), \
+	$(shell echo $(cfg) >> $(WLAN_CFG_OVERRIDE_FILE)))
+
+include $(WLAN_CFG_OVERRIDE_FILE)
+$(warning "Overriding WLAN config with: $(shell cat $(WLAN_CFG_OVERRIDE_FILE))")
+endif
+
 ############ UAPI ############
 UAPI_DIR :=	uapi
 UAPI_INC :=	-I$(WLAN_ROOT)/$(UAPI_DIR)/linux
