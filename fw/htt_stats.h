@@ -302,6 +302,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_PDEV_UL_TRIG_STATS = 26,
 
+    /* HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS = 27
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_rx_pdev_ul_mumimo_trig_stats_t
+     */
+    HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS = 27,
+
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
 };
@@ -421,6 +429,7 @@ typedef enum {
     HTT_STATS_RX_PDEV_UL_TRIG_STATS_TAG            = 94, /* htt_rx_pdev_ul_trigger_stats_tlv */
     HTT_STATS_RX_PDEV_UL_OFDMA_USER_STATS_TAG      = 95, /* htt_rx_pdev_ul_ofdma_user_stats_tlv */
     HTT_STATS_RX_PDEV_UL_MIMO_USER_STATS_TAG       = 96, /* htt_rx_pdev_ul_mimo_user_stats_tlv */
+    HTT_STATS_RX_PDEV_UL_MUMIMO_TRIG_STATS_TAG     = 97, /* htt_rx_pdev_ul_mumimo_trig_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -3090,6 +3099,7 @@ typedef struct {
 #define HTT_RX_PDEV_STATS_NUM_DCM_COUNTERS 5
 #define HTT_RX_PDEV_STATS_NUM_BW_COUNTERS 4
 #define HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS 8
+#define HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS 8
 #define HTT_RX_PDEV_STATS_NUM_PREAMBLE_TYPES HTT_STATS_PREAM_COUNT
 #define HTT_RX_PDEV_MAX_OFDMA_NUM_USER 8
 #define HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER 8
@@ -3303,6 +3313,35 @@ typedef struct {
 } htt_rx_pdev_ul_mimo_user_stats_tlv;
 
 /* == RX PDEV/SOC STATS == */
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /*
+     * BIT [7:0]  :- mac_id
+     * BIT [31:8] :- reserved
+     *
+     * Refer to HTT_STATS_CMN_MAC_ID_GET/SET macros.
+     */
+    A_UINT32 mac_id__word;
+
+    A_UINT32 rx_11ax_ul_mumimo;
+
+    A_UINT32 ul_mumimo_rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_mumimo_rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_mumimo_rx_nss[HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
+    A_UINT32 ul_mumimo_rx_bw[HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ul_mumimo_rx_stbc;
+    A_UINT32 ul_mumimo_rx_ldpc;
+} htt_rx_pdev_ul_mumimo_trig_stats_tlv;
+
+/* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS
+ * TLV_TAGS:
+ *    - HTT_STATS_RX_PDEV_UL_MUMIMO_TRIG_STATS_TAG
+ */
+typedef struct {
+    htt_rx_pdev_ul_mumimo_trig_stats_tlv ul_mumimo_trig_tlv;
+} htt_rx_pdev_ul_mumimo_trig_stats_t;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
