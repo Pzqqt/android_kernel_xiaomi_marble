@@ -178,7 +178,6 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 	ssize_t rc = count;
 	char offset_ch[5];
 	u32 offset, data_len;
-	u32 extended_capability_bytes = 0;
 	const u32 dp_receiver_cap_size = 16;
 
 	if (!debug)
@@ -252,25 +251,9 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 bail:
 	kfree(buf);
 
-	/*
-	 * If extension bit is set then increase the length
-	 * of user input to account for the extra bytes
-	 */
-	if (dpcd && (dpcd_buf_index > DP_RECEIVER_CAP_SIZE) &&
-			(dpcd[DP_TRAINING_AUX_RD_INTERVAL] &
-			 DP_EXT_REC_CAP_FIELD))
-		extended_capability_bytes = 4;
-
-	/*
-	 * Reset panel's dpcd in case of any failure. Also, set the
-	 * panel's dpcd only if a full dpcd is provided with offset as 0.
-	 */
-	if (!dpcd || (!offset &&
-			(data_len == (dp_receiver_cap_size +
-			extended_capability_bytes))) ||
-			(offset == 0xffff)) {
+	if (!dpcd || (size / char_to_nib) >= dp_receiver_cap_size ||
+	    offset == 0xffff) {
 		debug->panel->set_dpcd(debug->panel, dpcd);
-
 		/*
 		 * print dpcd status as this code is executed
 		 * only while running in debug mode which is manually
@@ -280,10 +263,11 @@ bail:
 			DP_INFO("[%s]\n", "CLEAR");
 		else
 			DP_INFO("[%s]\n", "SET");
-	} else
-		debug->aux->dpcd_updated(debug->aux);
+	}
 
 	mutex_unlock(&debug->lock);
+
+	debug->aux->dpcd_updated(debug->aux);
 	return rc;
 }
 
@@ -295,16 +279,18 @@ static ssize_t dp_debug_read_dpcd(struct file *file,
 	int const buf_size = SZ_4K;
 	u32 offset = 0;
 	u32 len = 0;
+	bool notify = false;
 
 	if (!debug || !debug->aux || !debug->dpcd)
 		return -ENODEV;
 
+	mutex_lock(&debug->lock);
 	if (*ppos)
-		return 0;
+		goto end;
 
 	buf = kzalloc(buf_size, GFP_KERNEL);
 	if (!buf)
-		return -ENOMEM;
+		goto end;
 
 	len += snprintf(buf, buf_size, "0x%x", debug->aux->reg);
 
@@ -318,8 +304,7 @@ static ssize_t dp_debug_read_dpcd(struct file *file,
 				debug->dpcd[debug->aux->reg + offset++]);
 		}
 
-		if (debug->dp_debug.sim_mode && debug->aux->dpcd_updated)
-			debug->aux->dpcd_updated(debug->aux);
+		notify = true;
 	}
 
 	len = min_t(size_t, count, len);
@@ -327,6 +312,12 @@ static ssize_t dp_debug_read_dpcd(struct file *file,
 		*ppos += len;
 
 	kfree(buf);
+end:
+	mutex_unlock(&debug->lock);
+
+	if (notify)
+		debug->aux->dpcd_updated(debug->aux);
+
 	return len;
 }
 
@@ -2274,6 +2265,7 @@ struct dp_debug *dp_debug_get(struct dp_debug_in *in)
 		goto error;
 	}
 
+	debug->aux->access_lock = &debug->lock;
 	dp_debug->get_edid = dp_debug_get_edid;
 	dp_debug->abort = dp_debug_abort;
 
