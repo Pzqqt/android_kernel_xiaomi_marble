@@ -222,11 +222,29 @@ struct dp_catalog_panel {
 };
 
 struct dp_catalog;
-struct dp_catalog_priv {
-	void *data;
+struct dp_catalog_sub {
+	u32 (*read)(struct dp_catalog *dp_catalog,
+		struct dp_io_data *io_data, u32 offset);
+	void (*write)(struct dp_catalog *dp_catalog,
+		struct dp_io_data *io_data, u32 offset, u32 data);
 
 	void (*put)(struct dp_catalog *catalog);
-	void (*set_exe_mode)(struct dp_catalog *dp_catalog, char *mode);
+};
+
+struct dp_catalog_io {
+	struct dp_io_data *dp_ahb;
+	struct dp_io_data *dp_aux;
+	struct dp_io_data *dp_link;
+	struct dp_io_data *dp_p0;
+	struct dp_io_data *dp_phy;
+	struct dp_io_data *dp_ln_tx0;
+	struct dp_io_data *dp_ln_tx1;
+	struct dp_io_data *dp_mmss_cc;
+	struct dp_io_data *dp_pll;
+	struct dp_io_data *usb3_dp_com;
+	struct dp_io_data *hdcp_physical;
+	struct dp_io_data *dp_p1;
+	struct dp_io_data *dp_tcsr;
 };
 
 struct dp_catalog {
@@ -234,8 +252,9 @@ struct dp_catalog {
 	struct dp_catalog_ctrl ctrl;
 	struct dp_catalog_audio audio;
 	struct dp_catalog_panel panel;
-	struct dp_catalog_priv priv;
 	struct dp_catalog_hpd hpd;
+
+	struct dp_catalog_sub *sub;
 
 	void (*set_exe_mode)(struct dp_catalog *dp_catalog, char *mode);
 	int (*get_reg_dump)(struct dp_catalog *dp_catalog,
@@ -307,40 +326,13 @@ static inline u8 dp_header_get_parity(u32 data)
 	return parity_byte;
 }
 
-static inline u32 dp_read(char *exe_mode, struct dp_io_data *io_data,
-				u32 offset)
-{
-	u32 data = 0;
-
-	if (!strcmp(exe_mode, "hw") || !strcmp(exe_mode, "all")) {
-		data = readl_relaxed(io_data->io.base + offset);
-	} else if (!strcmp(exe_mode, "sw")) {
-		if (io_data->buf)
-			memcpy(&data, io_data->buf + offset, sizeof(offset));
-	}
-
-	return data;
-}
-
-static inline void dp_write(char *exe_mode, struct dp_io_data *io_data,
-				u32 offset, u32 data)
-{
-	if (!strcmp(exe_mode, "hw") || !strcmp(exe_mode, "all"))
-		writel_relaxed(data, io_data->io.base + offset);
-
-	if (!strcmp(exe_mode, "sw") || !strcmp(exe_mode, "all")) {
-		if (io_data->buf)
-			memcpy(io_data->buf + offset, &data, sizeof(data));
-	}
-}
-
 struct dp_catalog *dp_catalog_get(struct device *dev, struct dp_parser *parser);
 void dp_catalog_put(struct dp_catalog *catalog);
 
-int dp_catalog_get_v420(struct device *dev, struct dp_catalog *catalog,
-		void *io);
+struct dp_catalog_sub *dp_catalog_get_v420(struct device *dev,
+			struct dp_catalog *catalog, struct dp_catalog_io *io);
 
-int dp_catalog_get_v200(struct device *dev, struct dp_catalog *catalog,
-		void *io);
+struct dp_catalog_sub *dp_catalog_get_v200(struct device *dev,
+			struct dp_catalog *catalog, struct dp_catalog_io *io);
 
 #endif /* _DP_CATALOG_H_ */
