@@ -36,7 +36,7 @@
 #include "dfs_channel.h"
 #include "dfs_ioctl_private.h"
 #include <i_qdf_types.h>     /* For qdf_packed*/
-#include <queue.h>           /* For STAILQ_ENTRY */
+#include "queue.h"           /* For STAILQ_ENTRY */
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <osdep.h>

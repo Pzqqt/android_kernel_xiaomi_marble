@@ -24,11 +24,7 @@
 #ifndef _I_OSDEP_H
 #define _I_OSDEP_H
 
-#ifdef CONFIG_MCL
-#include <cds_queue.h>
-#else
-#include <sys/queue.h>
-#endif
+#include "queue.h"
 
 /*
  * Byte Order stuff

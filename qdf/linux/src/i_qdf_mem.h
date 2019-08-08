@@ -39,11 +39,8 @@
 #include <linux/cache.h> /* L1_CACHE_BYTES */
 
 #define __qdf_cache_line_sz L1_CACHE_BYTES
-#if defined(CONFIG_MCL)
-#include <cds_queue.h>
-#else
-#include <sys/queue.h>
-#endif
+#include "queue.h"
+
 #else
 /*
  * Provide dummy defs for kernel data types, functions, and enums
