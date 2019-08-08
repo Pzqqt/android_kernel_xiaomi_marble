@@ -116,7 +116,7 @@ struct CE_state;
 #define HIF_MAX_GRP_IRQ 16
 
 #ifndef HIF_MAX_GROUP
-#define HIF_MAX_GROUP 8
+#define HIF_MAX_GROUP 7
 #endif
 
 #ifndef NAPI_YIELD_BUDGET_BASED
@@ -328,7 +328,7 @@ enum hif_event_type {
 
 /* HIF_EVENT_HIST_MAX should always be power of 2 */
 #define HIF_EVENT_HIST_MAX		512
-#define HIF_NUM_INT_CONTEXTS		7
+#define HIF_NUM_INT_CONTEXTS		HIF_MAX_GROUP
 #define HIF_EVENT_HIST_DISABLE_MASK	0
 
 /**
