@@ -451,8 +451,6 @@ static int dp_display_initialize_hdcp(struct dp_display_private *dp)
 	hdcp_init_data.dp_aux        = &parser->get_io(parser, "dp_aux")->io;
 	hdcp_init_data.dp_link       = &parser->get_io(parser, "dp_link")->io;
 	hdcp_init_data.dp_p0         = &parser->get_io(parser, "dp_p0")->io;
-	hdcp_init_data.qfprom_io     = &parser->get_io(parser,
-						"qfprom_physical")->io;
 	hdcp_init_data.hdcp_io       = &parser->get_io(parser,
 						"hdcp_physical")->io;
 	hdcp_init_data.revision      = &dp->panel->link_info.revision;
