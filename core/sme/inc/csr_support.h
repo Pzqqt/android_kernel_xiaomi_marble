@@ -201,11 +201,11 @@ typedef struct tagCsrWapiIe {
 /**
  * struct csr_timer_info - CSR-specific timer context
  * @mac: Global MAC context associated with the timer
- * @session_id: Session associated with the timer
+ * @vdev_id: Session associated with the timer
  */
 struct csr_timer_info {
 	struct mac_context *mac;
-	uint8_t session_id;
+	uint8_t vdev_id;
 };
 
 #define CSR_IS_11A_BSS(bss_desc)    (eSIR_11A_NW_TYPE == (bss_desc)->nwType)

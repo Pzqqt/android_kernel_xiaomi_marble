@@ -4561,7 +4561,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	uint32_t i, j;
 	uint16_t mcs_limit;
 	uint8_t *rate_pos;
-	struct mac_context *mac = (struct mac_context *)wma->mac_context;
+	struct mac_context *mac = wma->mac_context;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 

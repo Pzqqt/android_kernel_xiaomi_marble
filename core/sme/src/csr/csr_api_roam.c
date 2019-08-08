@@ -406,7 +406,7 @@ static bool csr_roam_is_same_profile_keys(struct mac_context *mac,
 				   struct csr_roam_profile *pProfile2);
 
 static QDF_STATUS csr_roam_start_roaming_timer(struct mac_context *mac,
-					       uint32_t sessionId,
+					       uint32_t vdev_id,
 					       uint32_t interval);
 static QDF_STATUS csr_roam_stop_roaming_timer(struct mac_context *mac,
 					      uint32_t sessionId);
@@ -1291,12 +1291,12 @@ static QDF_STATUS csr_roam_open(struct mac_context *mac)
 		for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 			pSession = CSR_GET_SESSION(mac, i);
 			pSession->roamingTimerInfo.mac = mac;
-			pSession->roamingTimerInfo.session_id =
-				WLAN_UMAC_VDEV_ID_MAX;
+			pSession->roamingTimerInfo.vdev_id =
+						WLAN_UMAC_VDEV_ID_MAX;
 		}
 		mac->roam.WaitForKeyTimerInfo.mac = mac;
-		mac->roam.WaitForKeyTimerInfo.session_id =
-			WLAN_UMAC_VDEV_ID_MAX;
+		mac->roam.WaitForKeyTimerInfo.vdev_id =
+						WLAN_UMAC_VDEV_ID_MAX;
 		status = qdf_mc_timer_init(&mac->roam.hTimerWaitForKey,
 					  QDF_TIMER_TYPE_SW,
 					 csr_roam_wait_for_key_time_out_handler,
@@ -7065,7 +7065,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 					CSR_WAIT_FOR_KEY_TIMEOUT_PERIOD;
 
 			/* Save session_id in case of timeout */
-			mac_ctx->roam.WaitForKeyTimerInfo.session_id =
+			mac_ctx->roam.WaitForKeyTimerInfo.vdev_id =
 				(uint8_t) session_id;
 			/*
 			 * This time should be long enough for the rest
@@ -12536,11 +12536,11 @@ void csr_roam_roaming_timer_handler(void *pv)
 {
 	struct csr_timer_info *info = pv;
 	struct mac_context *mac = info->mac;
-	uint32_t sessionId = info->session_id;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+	uint32_t vdev_id = info->vdev_id;
+	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, vdev_id);
 
 	if (!pSession) {
-		sme_err("  session %d not found ", sessionId);
+		sme_err("  session %d not found ", vdev_id);
 		return;
 	}
 
@@ -12565,33 +12565,72 @@ void csr_roam_roaming_timer_handler(void *pv)
 void csr_roam_roaming_offload_timeout_handler(void *timer_data)
 {
 	struct csr_timer_info *timer_info = timer_data;
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_roam_after_data_stall *vdev_roam_params;
+	struct scheduler_msg wma_msg = {0};
+	struct roam_sync_timeout_timer_info *req;
+	QDF_STATUS status;
 
 	if (timer_info) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			 "LFR3:roaming offload timer expired, session: %d",
-			  timer_info->session_id);
+		sme_debug("LFR3:roaming offload timer expired, session: %d",
+			  timer_info->vdev_id);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			 "Invalid Session");
+		sme_err("Invalid Session");
 		return;
 	}
-	csr_roam_disconnect(timer_info->mac, timer_info->session_id,
-			    eCSR_DISCONNECT_REASON_UNSPECIFIED);
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(timer_info->mac->psoc,
+						    timer_info->vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev is NULL, aborting roam start");
+		return;
+	}
+
+	vdev_roam_params = mlme_get_roam_invoke_params(vdev);
+	if (!vdev_roam_params) {
+		sme_err("Invalid vdev roam params, aborting timeout handler");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto rel;
+	}
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		goto rel;
+
+	req->vdev_id = timer_info->vdev_id;
+	wma_msg.type = WMA_ROAM_SYNC_TIMEOUT;
+	wma_msg.bodyptr = req;
+
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &wma_msg);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("Post roam offload timer fails, session id: %d",
+			timer_info->vdev_id);
+		qdf_mem_free(req);
+		goto rel;
+	}
+
+	vdev_roam_params->roam_invoke_in_progress = false;
+
+rel:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 
-QDF_STATUS csr_roam_start_roaming_timer(struct mac_context *mac, uint32_t sessionId,
+QDF_STATUS csr_roam_start_roaming_timer(struct mac_context *mac,
+					uint32_t vdev_id,
 					uint32_t interval)
 {
 	QDF_STATUS status;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, vdev_id);
 
 	if (!pSession) {
-		sme_err("session %d not found", sessionId);
+		sme_err("session %d not found", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	sme_debug("csrScanStartRoamingTimer");
-	pSession->roamingTimerInfo.session_id = (uint8_t) sessionId;
+	pSession->roamingTimerInfo.vdev_id = (uint8_t) vdev_id;
 	status = qdf_mc_timer_start(&pSession->hTimerRoaming,
 				    interval / QDF_MC_TIMER_TO_MS_UNIT);
 
@@ -12609,8 +12648,8 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 {
 	struct csr_timer_info *info = pv;
 	struct mac_context *mac = info->mac;
-	uint8_t session_id = info->session_id;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, session_id);
+	uint8_t vdev_id = info->vdev_id;
+	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, vdev_id);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (!pSession) {
@@ -12620,20 +12659,19 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 
 	sme_debug("WaitForKey timer expired in state: %s sub-state: %s",
 		mac_trace_get_neighbour_roam_state(mac->roam.
-					neighborRoamInfo[session_id].
+					neighborRoamInfo[vdev_id].
 						   neighborRoamState),
 		mac_trace_getcsr_roam_sub_state(mac->roam.
-						curSubState[session_id]));
+						curSubState[vdev_id]));
 	spin_lock(&mac->roam.roam_state_lock);
-	if (CSR_IS_WAIT_FOR_KEY(mac, session_id)) {
+	if (CSR_IS_WAIT_FOR_KEY(mac, vdev_id)) {
 		/* Change the substate so command queue is unblocked. */
-		if (session_id < WLAN_MAX_VDEVS)
-			mac->roam.curSubState[session_id] =
+		if (vdev_id < WLAN_MAX_VDEVS)
+			mac->roam.curSubState[vdev_id] =
 						eCSR_ROAM_SUBSTATE_NONE;
 		spin_unlock(&mac->roam.roam_state_lock);
 
-		if (csr_neighbor_roam_is_handoff_in_progress(mac,
-							     session_id)) {
+		if (csr_neighbor_roam_is_handoff_in_progress(mac, vdev_id)) {
 			/*
 			 * Enable heartbeat timer when hand-off is in progress
 			 * and Key Wait timer expired.
@@ -12652,11 +12690,11 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 		sme_debug("SME pre-auth state timeout");
 
 		status = sme_acquire_global_lock(&mac->sme);
-		if (csr_is_conn_state_connected_infra(mac, session_id)) {
+		if (csr_is_conn_state_connected_infra(mac, vdev_id)) {
 			csr_roam_link_up(mac,
 					 pSession->connectedProfile.bssid);
 			if (QDF_IS_STATUS_SUCCESS(status)) {
-				csr_roam_disconnect(mac, session_id,
+				csr_roam_disconnect(mac, vdev_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED);
 			}
 		} else {
@@ -12674,7 +12712,7 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
  * csr_roam_roaming_offload_timer_action() - API to start/stop the timer
  * @mac_ctx: MAC Context
  * @interval: Value to be set for the timer
- * @session_id: Session on which the timer should be operated
+ * @vdev_id: Session on which the timer should be operated
  * @action: Start/Stop action for the timer
  *
  * API to start/stop the roaming offload timer
@@ -12682,17 +12720,18 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
  * Return: None
  */
 void csr_roam_roaming_offload_timer_action(
-		struct mac_context *mac_ctx, uint32_t interval, uint8_t session_id,
+		struct mac_context *mac_ctx, uint32_t interval, uint8_t vdev_id,
 		uint8_t action)
 {
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
-				session_id);
+				vdev_id);
+	QDF_TIMER_STATE tstate;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			("LFR3: timer action %d, session %d, intvl %d"),
-			action, session_id, interval);
+			action, vdev_id, interval);
 	if (mac_ctx) {
-		csr_session = CSR_GET_SESSION(mac_ctx, session_id);
+		csr_session = CSR_GET_SESSION(mac_ctx, vdev_id);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				("LFR3: Invalid MAC Context"));
@@ -12700,13 +12739,24 @@ void csr_roam_roaming_offload_timer_action(
 	}
 	if (!csr_session) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				("LFR3: session %d not found"), session_id);
+				("LFR3: session %d not found"), vdev_id);
 		return;
 	}
-	csr_session->roamingTimerInfo.session_id = (uint8_t) session_id;
-	if (action == ROAMING_OFFLOAD_TIMER_START)
+	csr_session->roamingTimerInfo.vdev_id = (uint8_t) vdev_id;
+
+	tstate =
+	   qdf_mc_timer_get_current_state(&csr_session->roaming_offload_timer);
+
+	if (action == ROAMING_OFFLOAD_TIMER_START) {
+		/*
+		 * If timer is already running then re-start timer in order to
+		 * process new ROAM_START with fresh timer.
+		 */
+		if (tstate == QDF_TIMER_STATE_RUNNING)
+			qdf_mc_timer_stop(&csr_session->roaming_offload_timer);
 		qdf_mc_timer_start(&csr_session->roaming_offload_timer,
-				interval / QDF_MC_TIMER_TO_MS_UNIT);
+				   interval / QDF_MC_TIMER_TO_MS_UNIT);
+	}
 	if (action == ROAMING_OFFLOAD_TIMER_STOP)
 		qdf_mc_timer_stop(&csr_session->roaming_offload_timer);
 
@@ -12717,7 +12767,7 @@ static QDF_STATUS csr_roam_start_wait_for_key_timer(
 		struct mac_context *mac, uint32_t interval)
 {
 	QDF_STATUS status;
-	uint8_t session_id = mac->roam.WaitForKeyTimerInfo.session_id;
+	uint8_t session_id = mac->roam.WaitForKeyTimerInfo.vdev_id;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[session_id];
 
@@ -12739,16 +12789,16 @@ static QDF_STATUS csr_roam_start_wait_for_key_timer(
 
 QDF_STATUS csr_roam_stop_wait_for_key_timer(struct mac_context *mac)
 {
-	uint8_t session_id = mac->roam.WaitForKeyTimerInfo.session_id;
+	uint8_t vdev_id = mac->roam.WaitForKeyTimerInfo.vdev_id;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-		&mac->roam.neighborRoamInfo[session_id];
+		&mac->roam.neighborRoamInfo[vdev_id];
 
 	sme_debug("WaitForKey timer stopped in state: %s sub-state: %s",
 		mac_trace_get_neighbour_roam_state(pNeighborRoamInfo->
 						   neighborRoamState),
 		mac_trace_getcsr_roam_sub_state(mac->roam.
-						curSubState[session_id]));
-	if (csr_neighbor_roam_is_handoff_in_progress(mac, session_id)) {
+						curSubState[vdev_id]));
+	if (csr_neighbor_roam_is_handoff_in_progress(mac, vdev_id)) {
 		/*
 		 * Enable heartbeat timer when hand-off is in progress
 		 * and Key Wait timer got stopped for some reason
@@ -21341,7 +21391,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 				session_id);
 
 		ps_global_info->remain_in_power_active_till_dhcp = true;
-		mac_ctx->roam.WaitForKeyTimerInfo.session_id = session_id;
+		mac_ctx->roam.WaitForKeyTimerInfo.vdev_id = session_id;
 		if (!QDF_IS_STATUS_SUCCESS(csr_roam_start_wait_for_key_timer(
 				mac_ctx, CSR_WAIT_FOR_KEY_TIMEOUT_PERIOD))
 		   ) {

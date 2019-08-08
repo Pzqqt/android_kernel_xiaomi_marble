@@ -1022,7 +1022,7 @@ static void wma_mask_tx_ht_rate(tp_wma_handle wma, uint8_t *mcs_set)
 	uint32_t i, j;
 	uint16_t mcs_limit;
 	uint8_t *rate_pos = mcs_set;
-	struct mac_context *mac = (struct mac_context *)wma->mac_context;
+	struct mac_context *mac = wma->mac_context;
 
 	/*
 	 * Get MCS limit from ini configure, and map it to rate parameters
@@ -1255,7 +1255,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	struct wma_txrx_node *intr = NULL;
 	bool is_he;
 	QDF_STATUS status;
-	struct mac_context *mac = (struct mac_context *)wma->mac_context;
+	struct mac_context *mac = wma->mac_context;
 
 	cmd = qdf_mem_malloc(sizeof(struct peer_assoc_params));
 	if (!cmd) {

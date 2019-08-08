@@ -1040,7 +1040,7 @@ struct wma_wlm_stats_data {
 typedef struct {
 	void *wmi_handle;
 	void *cds_context;
-	void *mac_context;
+	struct mac_context *mac_context;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	qdf_event_t target_suspend;
@@ -2262,6 +2262,18 @@ wma_send_roam_preauth_status(tp_wma_handle wma_handle,
 			     struct wmi_roam_auth_status_params *params)
 {}
 #endif
+
+/**
+ * wma_handle_roam_sync_timeout() - Update roaming status at wma layer
+ * @wma_handle: wma handle
+ * @info: Info for roaming start timer
+ *
+ * This function gets called in case of roaming offload timer get expired
+ *
+ * Return: None
+ */
+void wma_handle_roam_sync_timeout(tp_wma_handle wma_handle,
+				  struct roam_sync_timeout_timer_info *info);
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 static inline void wma_print_wmi_cmd_log(uint32_t count,

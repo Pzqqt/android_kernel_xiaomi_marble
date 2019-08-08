@@ -2367,8 +2367,8 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		roam_synch_ind_ptr->rssi, roam_synch_ind_ptr->isBeacon);
 
 	if (!QDF_IS_STATUS_SUCCESS(
-		wma->csr_roam_synch_cb((struct mac_context *)wma->mac_context,
-		roam_synch_ind_ptr, NULL, SIR_ROAMING_DEREGISTER_STA))) {
+		wma->csr_roam_synch_cb(wma->mac_context, roam_synch_ind_ptr,
+				       NULL, SIR_ROAMING_DEREGISTER_STA))) {
 		WMA_LOGE("LFR3: CSR Roam synch cb failed");
 		wma_free_roam_synch_frame_ind(iface);
 		return status;
@@ -2865,8 +2865,7 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 		goto cleanup_label;
 	}
 	qdf_mem_zero(bss_desc_ptr, sizeof(struct bss_description) + ie_len);
-	if (QDF_IS_STATUS_ERROR(wma->pe_roam_synch_cb(
-			(struct mac_context *)wma->mac_context,
+	if (QDF_IS_STATUS_ERROR(wma->pe_roam_synch_cb(wma->mac_context,
 			roam_synch_ind_ptr, bss_desc_ptr,
 			SIR_ROAM_SYNCH_PROPAGATION))) {
 		WMA_LOGE("LFR3: PE roam synch cb failed");
@@ -2875,8 +2874,8 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 	}
 
 	wma_roam_update_vdev(wma, roam_synch_ind_ptr);
-	wma->csr_roam_synch_cb((struct mac_context *)wma->mac_context,
-		roam_synch_ind_ptr, bss_desc_ptr, SIR_ROAM_SYNCH_PROPAGATION);
+	wma->csr_roam_synch_cb(wma->mac_context, roam_synch_ind_ptr,
+			       bss_desc_ptr, SIR_ROAM_SYNCH_PROPAGATION);
 	wma_process_roam_synch_complete(wma, synch_event->vdev_id);
 
 	/* update freq and channel width */
@@ -2905,22 +2904,23 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 				    chanmode);
 	}
 
-	wma->csr_roam_synch_cb((struct mac_context *)wma->mac_context,
-		roam_synch_ind_ptr, bss_desc_ptr, SIR_ROAM_SYNCH_COMPLETE);
+	wma->csr_roam_synch_cb(wma->mac_context, roam_synch_ind_ptr,
+			       bss_desc_ptr, SIR_ROAM_SYNCH_COMPLETE);
 	wma->interfaces[synch_event->vdev_id].roam_synch_delay =
 		qdf_get_system_timestamp() - roam_synch_received;
 	WMA_LOGD("LFR3: roam_synch_delay:%d",
 		wma->interfaces[synch_event->vdev_id].roam_synch_delay);
-	wma->csr_roam_synch_cb((struct mac_context *)wma->mac_context,
-		roam_synch_ind_ptr, bss_desc_ptr, SIR_ROAM_SYNCH_NAPI_OFF);
+	wma->csr_roam_synch_cb(wma->mac_context, roam_synch_ind_ptr,
+			       bss_desc_ptr, SIR_ROAM_SYNCH_NAPI_OFF);
 
 	status = 0;
 
 cleanup_label:
 	if (status != 0) {
 		if (roam_synch_ind_ptr)
-			wma->csr_roam_synch_cb((struct mac_context *)wma->mac_context,
-				roam_synch_ind_ptr, NULL, SIR_ROAMING_ABORT);
+			wma->csr_roam_synch_cb(wma->mac_context,
+					       roam_synch_ind_ptr, NULL,
+					       SIR_ROAMING_ABORT);
 		roam_req = qdf_mem_malloc(sizeof(struct roam_offload_scan_req));
 		if (roam_req && synch_event) {
 			roam_req->Command = ROAM_SCAN_OFFLOAD_STOP;
@@ -5298,6 +5298,54 @@ static int wma_handle_hw_mode_transition(tp_wma_handle wma,
 }
 
 /**
+ * wma_invalid_roam_reason_handler() - Handle Invalid roam notification
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @op_code: Operation to be done by the callback
+ *
+ * This function calls pe and csr callbacks with proper op_code
+ *
+ * Return: None
+ */
+static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
+					    uint32_t vdev_id,
+					    uint32_t notif)
+{
+	struct roam_offload_synch_ind *roam_synch_data;
+	enum sir_roam_op_code op_code;
+
+	if (notif == WMI_ROAM_NOTIF_ROAM_START) {
+		wma_handle->interfaces[vdev_id].roaming_in_progress = true;
+		op_code = SIR_ROAMING_START;
+	} else if (notif == WMI_ROAM_NOTIF_ROAM_ABORT) {
+		wma_handle->interfaces[vdev_id].roaming_in_progress = false;
+		op_code = SIR_ROAMING_ABORT;
+	} else {
+		WMA_LOGE(FL("Invalid notif %d"), notif);
+		return;
+	}
+
+	roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
+	if (!roam_synch_data)
+		return;
+
+	roam_synch_data->roamed_vdev_id = vdev_id;
+	wma_handle->pe_roam_synch_cb(wma_handle->mac_context, roam_synch_data,
+				     NULL, op_code);
+	wma_handle->csr_roam_synch_cb(wma_handle->mac_context, roam_synch_data,
+				      NULL, op_code);
+
+	qdf_mem_free(roam_synch_data);
+}
+
+void wma_handle_roam_sync_timeout(tp_wma_handle wma_handle,
+				  struct roam_sync_timeout_timer_info *info)
+{
+	wma_invalid_roam_reason_handler(wma_handle, info->vdev_id,
+					WMI_ROAM_NOTIF_ROAM_ABORT);
+}
+
+/**
  * wma_roam_event_callback() - roam event callback
  * @handle: wma handle
  * @event_buf: event buffer
@@ -5314,7 +5362,6 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	WMI_ROAM_EVENTID_param_tlvs *param_buf;
 	wmi_roam_event_fixed_param *wmi_event;
 	struct roam_offload_synch_ind *roam_synch_data;
-	enum sir_roam_op_code op_code = {0};
 	uint8_t *frame = NULL;
 
 	param_buf = (WMI_ROAM_EVENTID_param_tlvs *) event_buf;
@@ -5402,28 +5449,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		break;
 #endif
 	case WMI_ROAM_REASON_INVALID:
-		roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
-		if (!roam_synch_data)
-			return -ENOMEM;
-
-		if (wmi_event->notif == WMI_ROAM_NOTIF_ROAM_START) {
-			op_code = SIR_ROAMING_START;
-			wma_handle->interfaces[wmi_event->vdev_id].
-				roaming_in_progress = true;
-		}
-		if (wmi_event->notif == WMI_ROAM_NOTIF_ROAM_ABORT) {
-			op_code = SIR_ROAMING_ABORT;
-			wma_handle->interfaces[wmi_event->vdev_id].
-				roaming_in_progress = false;
-		}
-		roam_synch_data->roamed_vdev_id = wmi_event->vdev_id;
-		wma_handle->pe_roam_synch_cb(
-				(struct mac_context *)wma_handle->mac_context,
-				roam_synch_data, NULL, op_code);
-		wma_handle->csr_roam_synch_cb(
-				(struct mac_context *)wma_handle->mac_context,
-				roam_synch_data, NULL, op_code);
-		qdf_mem_free(roam_synch_data);
+		wma_invalid_roam_reason_handler(wma_handle, wmi_event->vdev_id,
+						wmi_event->notif);
 		break;
 	case WMI_ROAM_REASON_RSO_STATUS:
 		wma_rso_cmd_status_event_handler(wmi_event);
@@ -5435,9 +5462,9 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 			return -ENOMEM;
 
 		roam_synch_data->roamed_vdev_id = wmi_event->vdev_id;
-		wma_handle->csr_roam_synch_cb(
-				(struct mac_context *)wma_handle->mac_context,
-				roam_synch_data, NULL, SIR_ROAMING_INVOKE_FAIL);
+		wma_handle->csr_roam_synch_cb(wma_handle->mac_context,
+					      roam_synch_data, NULL,
+					      SIR_ROAMING_INVOKE_FAIL);
 		qdf_mem_free(roam_synch_data);
 		break;
 	case WMI_ROAM_REASON_DEAUTH:
