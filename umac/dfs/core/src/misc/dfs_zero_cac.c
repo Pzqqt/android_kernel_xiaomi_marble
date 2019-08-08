@@ -1288,6 +1288,12 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	int nchans = 0;
 	QDF_STATUS status;
 
+	/* Right now, only ETSI domain supports preCAC. Check if current
+	 * DFS domain is ETSI and only then build the preCAC list.
+	 */
+	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) != DFS_ETSI_DOMAIN)
+		return;
+
 	/*
 	 * We need to prepare list of uniq VHT80 center frequencies. But at the
 	 * beginning we do not know how many uniq frequencies are present.
