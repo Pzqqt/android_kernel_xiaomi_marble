@@ -7696,19 +7696,19 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 	switch (param) {
 	case CDP_ENABLE_WDS:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "wds_enable %d for vdev(%p) id(%d)\n",
+			  "wds_enable %d for vdev(%pK) id(%d)\n",
 			  val, vdev, vdev->vdev_id);
 		vdev->wds_enabled = val;
 		break;
 	case CDP_ENABLE_MEC:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "mec_enable %d for vdev(%p) id(%d)\n",
+			  "mec_enable %d for vdev(%pK) id(%d)\n",
 			  val, vdev, vdev->vdev_id);
 		vdev->mec_enabled = val;
 		break;
 	case CDP_ENABLE_DA_WAR:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "da_war_enable %d for vdev(%p) id(%d)\n",
+			  "da_war_enable %d for vdev(%pK) id(%d)\n",
 			  val, vdev, vdev->vdev_id);
 		vdev->pdev->soc->da_war_enabled = val;
 		dp_wds_flush_ast_table_wifi3(((struct cdp_soc_t *)
