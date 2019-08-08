@@ -3016,6 +3016,70 @@ static inline void hdd_check_for_leaks(struct hdd_context *hdd_ctx, bool is_ssr)
 #define hdd_debug_domain_set(domain)
 #endif /* CONFIG_LEAK_DETECTION */
 
+#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
+/**
+ * hdd_skip_acs_scan_timer_handler() - skip ACS scan timer timeout handler
+ * @data: pointer to struct hdd_context
+ *
+ * This function will reset acs_scan_status to eSAP_DO_NEW_ACS_SCAN.
+ * Then new ACS request will do a fresh scan without reusing the cached
+ * scan information.
+ *
+ * Return: void
+ */
+static void hdd_skip_acs_scan_timer_handler(void *data)
+{
+	struct hdd_context *hdd_ctx = data;
+	mac_handle_t mac_handle;
+
+	hdd_debug("ACS Scan result expired. Reset ACS scan skip");
+	hdd_ctx->skip_acs_scan_status = eSAP_DO_NEW_ACS_SCAN;
+	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
+	qdf_mem_free(hdd_ctx->last_acs_channel_list);
+	hdd_ctx->last_acs_channel_list = NULL;
+	hdd_ctx->num_of_channels = 0;
+	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
+
+	mac_handle = hdd_ctx->mac_handle;
+	if (!mac_handle)
+		return;
+}
+
+static void hdd_skip_acs_scan_timer_init(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	status = qdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
+				   QDF_TIMER_TYPE_SW,
+				   hdd_skip_acs_scan_timer_handler,
+				   hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to init ACS Skip timer");
+	qdf_spinlock_create(&hdd_ctx->acs_skip_lock);
+}
+
+static void hdd_skip_acs_scan_timer_deinit(struct hdd_context *hdd_ctx)
+{
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&hdd_ctx->skip_acs_scan_timer)) {
+		qdf_mc_timer_stop(&hdd_ctx->skip_acs_scan_timer);
+	}
+
+	if (!QDF_IS_STATUS_SUCCESS
+		    (qdf_mc_timer_destroy(&hdd_ctx->skip_acs_scan_timer))) {
+		hdd_err("Cannot deallocate ACS Skip timer");
+	}
+	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
+	qdf_mem_free(hdd_ctx->last_acs_channel_list);
+	hdd_ctx->last_acs_channel_list = NULL;
+	hdd_ctx->num_of_channels = 0;
+	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
+}
+#else
+static void hdd_skip_acs_scan_timer_init(struct hdd_context *hdd_ctx) {}
+static void hdd_skip_acs_scan_timer_deinit(struct hdd_context *hdd_ctx) {}
+#endif
+
 /**
  * hdd_update_country_code - Update country code
  * @hdd_ctx: HDD context
@@ -3215,6 +3279,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		}
 
 		hdd_enable_power_management();
+
+		hdd_skip_acs_scan_timer_init(hdd_ctx);
 
 		break;
 
@@ -7669,23 +7735,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_unregister_notifiers(hdd_ctx);
 
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-	if (QDF_TIMER_STATE_RUNNING ==
-	    qdf_mc_timer_get_current_state(&hdd_ctx->skip_acs_scan_timer)) {
-		qdf_mc_timer_stop(&hdd_ctx->skip_acs_scan_timer);
-	}
-
-	if (!QDF_IS_STATUS_SUCCESS
-		    (qdf_mc_timer_destroy(&hdd_ctx->skip_acs_scan_timer))) {
-		hdd_err("Cannot deallocate ACS Skip timer");
-	}
-	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
-	qdf_mem_free(hdd_ctx->last_acs_freq_list);
-	hdd_ctx->last_acs_freq_list = NULL;
-	hdd_ctx->num_of_channels = 0;
-	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
-#endif
-
 	/*
 	 * Powersave Offload Case
 	 * Disable Idle Power Save Mode
@@ -7761,36 +7810,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	mutex_destroy(&hdd_ctx->avoid_freq_lock);
 #endif
 }
-
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-/**
- * hdd_skip_acs_scan_timer_handler() - skip ACS scan timer timeout handler
- * @data: pointer to struct hdd_context
- *
- * This function will reset acs_scan_status to eSAP_DO_NEW_ACS_SCAN.
- * Then new ACS request will do a fresh scan without reusing the cached
- * scan information.
- *
- * Return: void
- */
-static void hdd_skip_acs_scan_timer_handler(void *data)
-{
-	struct hdd_context *hdd_ctx = (struct hdd_context *) data;
-	mac_handle_t mac_handle;
-
-	hdd_debug("ACS Scan result expired. Reset ACS scan skip");
-	hdd_ctx->skip_acs_scan_status = eSAP_DO_NEW_ACS_SCAN;
-	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
-	qdf_mem_free(hdd_ctx->last_acs_freq_list);
-	hdd_ctx->last_acs_freq_list = NULL;
-	hdd_ctx->num_of_channels = 0;
-	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
-
-	mac_handle = hdd_ctx->mac_handle;
-	if (!mac_handle)
-		return;
-}
-#endif
 
 /**
  * hdd_wlan_notify_modem_power_state() - notify FW with modem power status
@@ -11792,6 +11811,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		    hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE)
 			break;
 
+		hdd_skip_acs_scan_timer_deinit(hdd_ctx);
+
 		hdd_disable_power_management();
 		if (hdd_deconfigure_cds(hdd_ctx)) {
 			hdd_err("Failed to de-configure CDS");
@@ -12338,16 +12359,6 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	osif_request_manager_init();
 	hdd_driver_memdump_init();
 	hdd_bus_bandwidth_init(hdd_ctx);
-
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-		status = qdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
-					   QDF_TIMER_TYPE_SW,
-					   hdd_skip_acs_scan_timer_handler,
-					   hdd_ctx);
-		if (QDF_IS_STATUS_ERROR(status))
-			hdd_err("Failed to init ACS Skip timer");
-		qdf_spinlock_create(&hdd_ctx->acs_skip_lock);
-#endif
 
 	errno = hdd_wlan_start_modules(hdd_ctx, false);
 	if (errno) {
