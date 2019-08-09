@@ -448,8 +448,14 @@ static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc,
 	if (pmo_core_is_wow_applicable(psoc)) {
 		pmo_debug("WOW Suspend");
 		pmo_core_apply_lphb(psoc);
-
-		pmo_core_configure_dynamic_wake_events(psoc);
+		/*
+		 * Dynamic wake events should not be needed for runtime PM.
+		 * Any wake events can be configed by default if they are
+		 * really needed for runtime PM. In fact, most of them are
+		 * only needed for system suspend.
+		 */
+		if (!is_runtime_pm)
+			pmo_core_configure_dynamic_wake_events(psoc);
 		pmo_core_update_wow_enable(psoc_ctx, true);
 		pmo_core_update_wow_enable_cmd_sent(psoc_ctx, false);
 	} else {
