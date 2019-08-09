@@ -32,7 +32,7 @@
 #include <wlan_vdev_mlme_main.h>
 #include <wmi_unified_vdev_api.h>
 
-void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
+static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 {
 	struct wlan_objmgr_vdev *vdev = arg;
 	struct wlan_objmgr_psoc *psoc;
@@ -152,6 +152,52 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 				vdev_id, string_from_rsp_bit(rsp_pos));
 	}
 }
+
+#ifdef SERIALIZE_VDEV_RESP_TIMER
+static QDF_STATUS target_if_vdev_mgr_rsp_flush_cb(struct scheduler_msg *msg)
+{
+	struct wlan_objmgr_vdev *vdev = msg->bodyptr;
+
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+target_if_vdev_mgr_rsp_cb_mc_ctx(void *arg)
+{
+	struct scheduler_msg msg = {0};
+	struct wlan_objmgr_vdev *vdev = arg;
+
+	msg.type = SYS_MSG_ID_MC_TIMER;
+	msg.reserved = SYS_MSG_COOKIE;
+	msg.callback = target_if_vdev_mgr_rsp_timer_cb;
+	msg.bodyptr = arg;
+	msg.bodyval = 0;
+	msg.flush_callback = target_if_vdev_mgr_rsp_flush_cb;
+
+	if (scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+				   QDF_MODULE_ID_TARGET_IF,
+				   QDF_MODULE_ID_SYS, &msg) ==
+				   QDF_STATUS_SUCCESS)
+		return;
+
+	mlme_err("Could not enqueue timer to timer queue");
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+}
+
+void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
+{
+	target_if_vdev_mgr_rsp_cb_mc_ctx(arg);
+}
+#else
+void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
+{
+	target_if_vdev_mgr_rsp_timer_cb(arg);
+}
+#endif
 
 static int target_if_vdev_mgr_start_response_handler(
 					ol_scn_t scn,
