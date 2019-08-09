@@ -1785,7 +1785,6 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	QDF_STATUS status;
 	qdf_runtime_lock_t rtl;
 	qdf_device_t qdf;
-	int ret = 0;
 
 	/* NOTE! This code path is delicate! Think very carefully before
 	 * modifying the content or order of the following. Please review any
@@ -1811,12 +1810,6 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	if (!qdf) {
 		cds_err("Qdf context is null");
 		return;
-	}
-
-	if (!in_interrupt() && !irqs_disabled()) {
-		ret = pld_collect_rddm(qdf->dev);
-		if (ret < 0 && ret != -EOPNOTSUPP)
-			QDF_DEBUG_PANIC("Fail to collect FW ramdump %d", ret);
 	}
 
 	/* if *wlan* recovery is disabled, crash here for debugging */
