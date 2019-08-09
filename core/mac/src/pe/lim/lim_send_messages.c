@@ -176,6 +176,8 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 	pChnlParams->reduced_beacon_interval =
 		mac->sap.SapDfsInfo.reduced_beacon_interval;
 
+	pChnlParams->ssid_hidden = pe_session->ssidHidden;
+	pChnlParams->ssid = pe_session->ssId;
 	if (cds_is_5_mhz_enabled())
 		pChnlParams->ch_width = CH_WIDTH_5MHZ;
 	else if (cds_is_10_mhz_enabled())

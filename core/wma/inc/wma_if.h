@@ -740,6 +740,9 @@ typedef struct {
  * @dot11_mode: 802.11 mode
  * @cac_duration_ms: cac duration in milliseconds
  * @dfs_regdomain: dfs region
+ * @reduced_beacon_interval: reduced beacon interval value
+ * @ssid_hidden: the sap ssid is hidden
+ * @ssid: sap ssid
  */
 typedef struct {
 	uint8_t channelNumber;
@@ -776,6 +779,8 @@ typedef struct {
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 	uint16_t reduced_beacon_interval;
+	uint8_t ssid_hidden;
+	tSirMacSSid ssid;
 } tSwitchChannelParams, *tpSwitchChannelParams;
 
 typedef void (*tpSetLinkStateCallback)(struct mac_context *mac, void *msgParam,

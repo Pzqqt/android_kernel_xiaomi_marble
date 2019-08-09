@@ -3110,23 +3110,20 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 	/* TODO: Handle regulatory class, max antenna */
 	if (!isRestart) {
-		params.beacon_interval = req->beacon_intval;
-		params.dtim_period = req->dtim_period;
-
-		/* Copy the SSID */
-		if (req->ssid.length) {
-			params.ssid.length = req->ssid.length;
-			if (req->ssid.length < sizeof(cmd->ssid.ssid))
-				temp_ssid_len = req->ssid.length;
-			else
-				temp_ssid_len = sizeof(cmd->ssid.ssid);
-			qdf_mem_copy(params.ssid.mac_ssid, req->ssid.ssId,
-				     temp_ssid_len);
-		}
-
 		params.pmf_enabled = req->pmf_enabled;
 		if (req->pmf_enabled)
 			temp_flags |= WMI_UNIFIED_VDEV_START_PMF_ENABLED;
+	}
+
+	/* Copy the SSID */
+	if (req->ssid.length) {
+		params.ssid.length = req->ssid.length;
+		if (req->ssid.length < sizeof(cmd->ssid.ssid))
+			temp_ssid_len = req->ssid.length;
+		else
+			temp_ssid_len = sizeof(cmd->ssid.ssid);
+		qdf_mem_copy(params.ssid.mac_ssid, req->ssid.ssId,
+			     temp_ssid_len);
 	}
 
 	params.hidden_ssid = req->hidden_ssid;

@@ -3564,6 +3564,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	req.is_dfs = params->isDfsChannel;
 	req.cac_duration_ms = params->cac_duration_ms;
 	req.dfs_regdomain = params->dfs_regdomain;
+	req.ssid = params->ssid;
 
 	/* In case of AP mode, once radar is detected, we need to
 	 * issuse VDEV RESTART, so we making is_channel_switch as
@@ -3571,7 +3572,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	 */
 	if ((wma_is_vdev_in_ap_mode(wma, req.vdev_id) == true) ||
 	    (params->restart_on_chan_switch == true)) {
-		req.hidden_ssid = intr[vdev_id].vdev_restart_params.ssidHidden;
+		req.hidden_ssid = params->ssid_hidden;
 	}
 
 	if (params->restart_on_chan_switch == true &&
