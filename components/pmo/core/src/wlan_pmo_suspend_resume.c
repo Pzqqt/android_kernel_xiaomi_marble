@@ -25,6 +25,7 @@
 #include "wlan_pmo_main.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 #include "wlan_pmo_lphb.h"
+#include "wlan_pmo_hw_filter.h"
 #include "wlan_pmo_suspend_resume.h"
 #include "cdp_txrx_ops.h"
 #include "cdp_txrx_misc.h"
@@ -427,6 +428,34 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 
 }
 
+static void pmo_core_enable_runtime_pm_offloads(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t vdev_id;
+	struct wlan_objmgr_vdev *vdev;
+
+	/* Iterate through VDEV list */
+	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
+		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
+		if (!vdev)
+			continue;
+		pmo_core_enable_hw_filter_in_fwr(vdev);
+	}
+}
+
+static void pmo_core_disable_runtime_pm_offloads(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t vdev_id;
+	struct wlan_objmgr_vdev *vdev;
+
+	/* Iterate through VDEV list */
+	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
+		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
+		if (!vdev)
+			continue;
+		pmo_core_disable_hw_filter_in_fwr(vdev);
+	}
+}
+
 /**
  * pmo_core_psoc_configure_suspend(): configure suspend req events
  * @psoc: objmgr psoc
@@ -444,6 +473,9 @@ static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc,
 	pmo_enter();
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	if (is_runtime_pm)
+		pmo_core_enable_runtime_pm_offloads(psoc);
 
 	if (pmo_core_is_wow_applicable(psoc)) {
 		pmo_debug("WOW Suspend");
@@ -651,6 +683,8 @@ static QDF_STATUS pmo_core_psoc_configure_resume(struct wlan_objmgr_psoc *psoc,
 	pmo_enter();
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
+	if (is_runtime_pm)
+		pmo_core_disable_runtime_pm_offloads(psoc);
 
 	/*
 	 * For runtime PM, since system is awake, DTIM related commands
