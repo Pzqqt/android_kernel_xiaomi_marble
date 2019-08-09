@@ -1357,6 +1357,22 @@ void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
+	(KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
+static void
+fill_wiphy_6ghz_band_channels(struct wiphy *wiphy,
+			      struct regulatory_channel *chan_list)
+{
+	fill_wiphy_band_channels(wiphy, chan_list, NL80211_BAND_6GHZ);
+}
+#else
+static void
+fill_wiphy_6ghz_band_channels(struct wiphy *wiphy,
+			      struct regulatory_channel *chan_list)
+{
+}
+#endif
+
 static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_objmgr_pdev *pdev,
 				   struct regulatory_channel *chan_list,
@@ -1377,7 +1393,7 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 
 	fill_wiphy_band_channels(wiphy, chan_list, NL80211_BAND_2GHZ);
 	fill_wiphy_band_channels(wiphy, chan_list, NL80211_BAND_5GHZ);
-
+	fill_wiphy_6ghz_band_channels(wiphy, chan_list);
 	cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->psoc, alpha2);
 	qdf_mem_copy(hdd_ctx->reg.alpha2, alpha2, REG_ALPHA2_LEN + 1);
 	sme_set_cc_src(hdd_ctx->mac_handle, cc_src);
@@ -1440,7 +1456,7 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 					 NL80211_BAND_2GHZ);
 		fill_wiphy_band_channels(wiphy, cur_chan_list,
 					 NL80211_BAND_5GHZ);
-
+		fill_wiphy_6ghz_band_channels(wiphy, cur_chan_list);
 		cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->psoc, alpha2);
 		qdf_mem_copy(hdd_ctx->reg.alpha2, alpha2, REG_ALPHA2_LEN + 1);
 		sme_set_cc_src(hdd_ctx->mac_handle, cc_src);

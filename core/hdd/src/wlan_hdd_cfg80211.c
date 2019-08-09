@@ -372,6 +372,62 @@ static struct ieee80211_supported_band wlan_hdd_band_5_ghz = {
 	.vht_cap.vht_supported = 1,
 };
 
+#if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
+	(KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
+
+static struct ieee80211_channel hdd_channels_6_ghz[NUM_6GHZ_CHANNELS];
+
+static struct ieee80211_supported_band wlan_hdd_band_6_ghz = {
+	.channels = NULL,
+	.n_channels = 0,
+	.band = HDD_NL80211_BAND_6GHZ,
+	.bitrates = a_mode_rates,
+	.n_bitrates = a_mode_rates_size,
+	.ht_cap.ht_supported = 1,
+	.ht_cap.cap = IEEE80211_HT_CAP_SGI_20
+		      | IEEE80211_HT_CAP_GRN_FLD
+		      | IEEE80211_HT_CAP_DSSSCCK40
+		      | IEEE80211_HT_CAP_LSIG_TXOP_PROT
+		      | IEEE80211_HT_CAP_SGI_40
+		      | IEEE80211_HT_CAP_SUP_WIDTH_20_40,
+	.ht_cap.ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K,
+	.ht_cap.ampdu_density = IEEE80211_HT_MPDU_DENSITY_16,
+	.ht_cap.mcs.rx_mask = {0xff, 0, 0, 0, 0, 0, 0, 0, 0, 0,},
+	.ht_cap.mcs.rx_highest = cpu_to_le16(72),
+	.ht_cap.mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED,
+	.vht_cap.vht_supported = 1,
+};
+
+#define HDD_SET_6GHZCHAN(ch, freq, chan, flag)   {     \
+		(ch).band =  HDD_NL80211_BAND_6GHZ; \
+		(ch).center_freq = (freq); \
+		(ch).hw_value = (chan); \
+		(ch).flags = (flag); \
+		(ch).max_antenna_gain = 0; \
+		(ch).max_power = 0; \
+}
+
+static void hdd_init_6ghz(struct hdd_context *hdd_ctx)
+{
+	uint32_t i;
+	struct wiphy *wiphy = hdd_ctx->wiphy;
+	struct ieee80211_channel *chlist = hdd_channels_6_ghz;
+	uint32_t num = ARRAY_SIZE(hdd_channels_6_ghz);
+
+	qdf_mem_zero(chlist, sizeof(*chlist) * num);
+	for (i = 0; i < num; i++)
+		HDD_SET_6GHZCHAN(chlist[i], 5945 + i * 20, 1 + i * 4, \
+				 IEEE80211_CHAN_DISABLED);
+	wiphy->bands[HDD_NL80211_BAND_6GHZ] = &wlan_hdd_band_6_ghz;
+	wiphy->bands[HDD_NL80211_BAND_6GHZ]->channels = chlist;
+	wiphy->bands[HDD_NL80211_BAND_6GHZ]->n_channels = num;
+}
+#else
+static void hdd_init_6ghz(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 /* This structure contain information what kind of frame are expected in
  * TX/RX direction for each kind of interface
  */
@@ -15066,6 +15122,8 @@ QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx)
 		wlan_hdd_copy_srd_ch((char *)wiphy->bands[
 				     HDD_NL80211_BAND_5GHZ]->channels +
 				     len_5g_ch, len_srd_ch);
+
+	hdd_init_6ghz(hdd_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }

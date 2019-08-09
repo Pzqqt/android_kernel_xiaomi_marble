@@ -168,6 +168,11 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define HDD_NUM_NL80211_BANDS   ((enum nl80211_band)IEEE80211_NUM_BANDS)
 #endif
 
+#if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
+	(KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
+#define HDD_NL80211_BAND_6GHZ   NL80211_BAND_6GHZ
+#endif
+
 #define TSF_GPIO_PIN_INVALID 255
 
 /** Length of the TX queue for the netdev */
