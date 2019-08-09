@@ -200,7 +200,7 @@ void lim_sta_add_bss_update_ht_parameter(uint8_t bss_chan_id,
 					 tDot11fIEHTCaps* ht_cap,
 					 tDot11fIEHTInfo* ht_inf,
 					 bool chan_width_support,
-					 tpAddBssParams add_bss);
+					 struct bss_params *add_bss);
 
 QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,

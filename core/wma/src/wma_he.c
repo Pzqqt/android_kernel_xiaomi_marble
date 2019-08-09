@@ -1280,7 +1280,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 }
 
 void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
-		tpAddBssParams add_bss)
+		struct bss_params *add_bss)
 {
 	uint32_t he_ops = 0;
 	tDot11fIEhe_op *he_op = &add_bss->he_op;
@@ -1319,7 +1319,7 @@ void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 }
 
 void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
-				tpAddBssParams add_bss)
+				struct bss_params *add_bss)
 {
 	QDF_STATUS ret;
 	int8_t pd_min, pd_max, sec_ch_ed, tx_pwr;

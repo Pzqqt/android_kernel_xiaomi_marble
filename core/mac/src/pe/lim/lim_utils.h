@@ -922,7 +922,7 @@ QDF_STATUS lim_strip_ie(struct mac_context *mac_ctx,
  *
  * Return: None
  */
-void lim_intersect_ap_he_caps(struct pe_session *session, tpAddBssParams add_bss,
+void lim_intersect_ap_he_caps(struct pe_session *session, struct bss_params *add_bss,
 		tSchBeaconStruct *pBeaconStruct, tpSirAssocRsp assoc_rsp);
 
 /**
@@ -961,7 +961,7 @@ void lim_add_self_he_cap(tpAddStaParams add_sta_params, struct pe_session *sessi
  *
  * Return: None
  */
-void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp);
+void lim_add_bss_he_cap(struct bss_params *add_bss, tpSirAssocRsp assoc_rsp);
 
 /**
  * lim_add_bss_he_cfg() - Set HE config to BSS params
@@ -970,7 +970,7 @@ void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp);
  *
  * Return: None
  */
-void lim_add_bss_he_cfg(tpAddBssParams add_bss, struct pe_session *session);
+void lim_add_bss_he_cfg(struct bss_params *add_bss, struct pe_session *session);
 
 /**
  * lim_copy_bss_he_cap() - Copy HE capability into PE session from start bss
@@ -1061,7 +1061,7 @@ void lim_update_usr_he_cap(struct mac_context *mac_ctx, struct pe_session *sessi
  * Parse the HE Operation IE and populate the fields to be
  * sent to FW as part of add bss.
  */
-void lim_decide_he_op(struct mac_context *mac_ctx, tpAddBssParams add_bss,
+void lim_decide_he_op(struct mac_context *mac_ctx, struct bss_params *add_bss,
 		struct pe_session *session);
 
 /**
@@ -1105,7 +1105,7 @@ static inline bool lim_is_sta_he_capable(tpDphHashNode sta_ds)
  *
  * Return: None
  */
-void lim_update_bss_he_capable(struct mac_context *mac, tpAddBssParams add_bss);
+void lim_update_bss_he_capable(struct mac_context *mac, struct bss_params *add_bss);
 
 /**
  * lim_update_stads_he_capable() - Update he_capable in sta ds context
@@ -1188,19 +1188,19 @@ static inline void lim_add_self_he_cap(tpAddStaParams add_sta_params,
 {
 }
 
-static inline void lim_add_bss_he_cap(tpAddBssParams add_bss,
+static inline void lim_add_bss_he_cap(struct bss_params *add_bss,
 				      tpSirAssocRsp assoc_rsp)
 {
 	return;
 }
 
-static inline void lim_add_bss_he_cfg(tpAddBssParams add_bss,
+static inline void lim_add_bss_he_cfg(struct bss_params *add_bss,
 					 struct pe_session *session)
 {
 }
 
 static inline void lim_intersect_ap_he_caps(struct pe_session *session,
-		tpAddBssParams add_bss,	tSchBeaconStruct *pBeaconStruct,
+		struct bss_params *add_bss,	tSchBeaconStruct *pBeaconStruct,
 		tpSirAssocRsp assoc_rsp)
 {
 	return;
@@ -1223,7 +1223,7 @@ static inline void lim_update_usr_he_cap(struct mac_context *mac_ctx,
 }
 
 static inline void lim_decide_he_op(struct mac_context *mac_ctx,
-			tpAddBssParams add_bss, struct pe_session *session)
+			struct bss_params *add_bss, struct pe_session *session)
 {
 }
 
@@ -1270,7 +1270,7 @@ static inline bool lim_is_sta_he_capable(tpDphHashNode sta_ds)
 }
 
 static inline void lim_update_bss_he_capable(struct mac_context *mac,
-			tpAddBssParams add_bss)
+			struct bss_params *add_bss)
 {
 }
 

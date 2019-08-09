@@ -299,21 +299,21 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 		tLimMlmStartReq *mlm_start_req, struct pe_session *session)
 {
 	struct scheduler_msg msg_buf = {0};
-	tpAddBssParams addbss_param = NULL;
+	struct bss_params *addbss_param = NULL;
 	struct wlan_mlme_qos *qos_aggr = &mac_ctx->mlme_cfg->qos_mlme_params;
 	uint32_t retcode;
 	bool is_ch_dfs = false;
 
 	/* Package WMA_ADD_BSS_REQ message parameters */
-	addbss_param = qdf_mem_malloc(sizeof(tAddBssParams));
+	addbss_param = qdf_mem_malloc(sizeof(struct bss_params));
 	if (!addbss_param)
 		return eSIR_SME_RESOURCES_UNAVAILABLE;
 
-	/* Fill in tAddBssParams members */
+	/* Fill in struct bss_params members */
 	qdf_mem_copy(addbss_param->bssId, mlm_start_req->bssId,
 		     sizeof(tSirMacAddr));
 
-	/* Fill in tAddBssParams self_mac_addr */
+	/* Fill in struct bss_params self_mac_addr */
 	qdf_mem_copy(addbss_param->self_mac_addr,
 		     session->self_mac_addr, sizeof(tSirMacAddr));
 

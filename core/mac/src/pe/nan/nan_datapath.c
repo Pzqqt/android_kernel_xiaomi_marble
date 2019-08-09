@@ -350,7 +350,7 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 				     struct pe_session *session_entry)
 {
 	tLimMlmStartCnf mlm_start_cnf;
-	tpAddBssParams add_bss_params = (tpAddBssParams) lim_msgq->bodyptr;
+	struct bss_params *add_bss_params = (struct bss_params *) lim_msgq->bodyptr;
 
 	if (!add_bss_params) {
 		pe_err("Invalid body pointer in message");

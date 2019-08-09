@@ -21001,7 +21001,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	struct csr_roam_info *roam_info;
 	tCsrRoamConnectedProfile *conn_profile = NULL;
 	sme_QosAssocInfo assoc_info;
-	tpAddBssParams add_bss_params;
+	struct bss_params *add_bss_params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tPmkidCacheInfo pmkid_cache;
 	uint32_t pmkid_index;
@@ -21320,7 +21320,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	}
 	conn_profile->vht_channel_width =
 		roam_synch_data->join_rsp->vht_channel_width;
-	add_bss_params = (tpAddBssParams)roam_synch_data->add_bss_params;
+	add_bss_params = (struct bss_params *)roam_synch_data->add_bss_params;
 	session->connectedInfo.staId = add_bss_params->staContext.staIdx;
 	roam_info->staId = session->connectedInfo.staId;
 	roam_info->timingMeasCap =

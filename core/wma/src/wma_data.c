@@ -764,7 +764,7 @@ static void wma_cp_stats_set_rate_flag(tp_wma_handle wma, uint8_t vdev_id)
  * Return: none
  */
 void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
-			    tpAddBssParams add_bss)
+			    struct bss_params *add_bss)
 {
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 

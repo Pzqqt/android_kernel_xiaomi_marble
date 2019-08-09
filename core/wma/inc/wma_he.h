@@ -133,7 +133,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
  * Return: None
  */
 void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
-		tpAddBssParams add_bss);
+		struct bss_params *add_bss);
 
 /**
  * wma_copy_vdev_start_he_ops() - copy HE ops from vdev start req to vdev start
@@ -165,7 +165,7 @@ void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
  * Return: None
  */
 void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
-				tpAddBssParams add_bss);
+				struct bss_params *add_bss);
 
 static inline bool wma_is_peer_he_capable(tpAddStaParams params)
 {
@@ -274,7 +274,7 @@ static inline void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 }
 
 static inline void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
-			tpAddBssParams add_bss)
+			struct bss_params *add_bss)
 {
 }
 
@@ -295,7 +295,7 @@ static inline void wma_vdev_set_he_bss_params(tp_wma_handle wma,
 }
 
 static inline void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
-					tpAddBssParams add_bss)
+					struct bss_params *add_bss)
 {
 }
 

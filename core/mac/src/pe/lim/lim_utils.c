@@ -6736,7 +6736,7 @@ void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, struct pe_session *sessi
 		lim_intersect_he_caps(rcvd_he, session_he, peer_he);
 }
 
-void lim_intersect_ap_he_caps(struct pe_session *session, tpAddBssParams add_bss,
+void lim_intersect_ap_he_caps(struct pe_session *session, struct bss_params *add_bss,
 		tSchBeaconStruct *beacon, tpSirAssocRsp assoc_rsp)
 {
 	tDot11fIEhe_cap *rcvd_he;
@@ -6752,7 +6752,7 @@ void lim_intersect_ap_he_caps(struct pe_session *session, tpAddBssParams add_bss
 	add_bss->staContext.he_capable = true;
 }
 
-void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp)
+void lim_add_bss_he_cap(struct bss_params *add_bss, tpSirAssocRsp assoc_rsp)
 {
 	tDot11fIEhe_cap *he_cap;
 	tDot11fIEhe_op *he_op;
@@ -6768,7 +6768,7 @@ void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp)
 			     he_op, sizeof(*he_op));
 }
 
-void lim_add_bss_he_cfg(tpAddBssParams add_bss, struct pe_session *session)
+void lim_add_bss_he_cfg(struct bss_params *add_bss, struct pe_session *session)
 {
 	add_bss->he_sta_obsspd = session->he_sta_obsspd;
 }
@@ -6823,7 +6823,7 @@ void lim_update_usr_he_cap(struct mac_context *mac_ctx, struct pe_session *sessi
 		he_cap->su_beamformer, he_cap->su_beamformee, he_cap->mu_beamformer);
 }
 
-void lim_decide_he_op(struct mac_context *mac_ctx, tpAddBssParams add_bss,
+void lim_decide_he_op(struct mac_context *mac_ctx, struct bss_params *add_bss,
 		      struct pe_session *session)
 {
 	uint32_t val;
@@ -7144,7 +7144,7 @@ void lim_update_sta_he_capable(struct mac_context *mac,
 	pe_debug("he_capable: %d", add_sta_params->he_capable);
 }
 
-void lim_update_bss_he_capable(struct mac_context *mac, tpAddBssParams add_bss)
+void lim_update_bss_he_capable(struct mac_context *mac, struct bss_params *add_bss)
 {
 	add_bss->he_capable = true;
 	pe_debug("he_capable: %d", add_bss->he_capable);

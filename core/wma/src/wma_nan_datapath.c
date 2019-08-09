@@ -43,7 +43,7 @@
  * Sends VDEV_START command to firmware
  * Return: None
  */
-void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
+void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 {
 	struct cdp_pdev *pdev;
 	struct cdp_vdev *vdev;

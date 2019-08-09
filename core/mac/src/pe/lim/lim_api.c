@@ -2309,7 +2309,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	uint8_t session_id;
 	tpDphHashNode curr_sta_ds;
 	uint16_t aid;
-	tpAddBssParams add_bss_params;
+	struct bss_params *add_bss_params;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint16_t join_rsp_len;
 
@@ -2420,7 +2420,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	}
 
 	roam_sync_ind_ptr->add_bss_params =
-		(tpAddBssParams) ft_session_ptr->ftPEContext.pAddBssReq;
+		(struct bss_params *) ft_session_ptr->ftPEContext.pAddBssReq;
 	add_bss_params = ft_session_ptr->ftPEContext.pAddBssReq;
 	lim_delete_tdls_peers(mac_ctx, session_ptr);
 	curr_sta_ds = dph_lookup_hash_entry(mac_ctx, session_ptr->bssId, &aid,

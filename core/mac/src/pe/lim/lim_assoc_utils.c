@@ -3425,7 +3425,7 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
  * Return : void
  */
 static void lim_update_vhtcaps_assoc_resp(struct mac_context *mac_ctx,
-		tpAddBssParams pAddBssParams,
+		struct bss_params *pAddBssParams,
 		tDot11fIEVHTCaps *vht_caps, struct pe_session *pe_session)
 {
 	pAddBssParams->staContext.vht_caps =
@@ -3487,7 +3487,7 @@ static void lim_update_vhtcaps_assoc_resp(struct mac_context *mac_ctx,
  * Return : void
  */
 static void lim_update_vht_oper_assoc_resp(struct mac_context *mac_ctx,
-		tpAddBssParams pAddBssParams,
+		struct bss_params *pAddBssParams,
 		tDot11fIEVHTOperation *vht_oper, struct pe_session *pe_session)
 {
 	if (vht_oper->chanWidth &&
@@ -3527,7 +3527,7 @@ void lim_sta_add_bss_update_ht_parameter(uint8_t bss_chan_id,
 					 tDot11fIEHTCaps* ht_cap,
 					 tDot11fIEHTInfo* ht_inf,
 					 bool chan_width_support,
-					 tpAddBssParams add_bss)
+					 struct bss_params *add_bss)
 {
 	if (!ht_cap->present)
 		return;
@@ -3601,7 +3601,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 				   uint8_t updateEntry, struct pe_session *pe_session)
 {
 	struct scheduler_msg msgQ = {0};
-	tpAddBssParams pAddBssParams = NULL;
+	struct bss_params *pAddBssParams = NULL;
 	uint32_t retCode;
 	tpDphHashNode sta = NULL;
 	bool chan_width_support = false;
@@ -3616,7 +3616,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;
 
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
-	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
+	pAddBssParams = qdf_mem_malloc(sizeof(struct bss_params));
 	if (!pAddBssParams) {
 		retCode = QDF_STATUS_E_NOMEM;
 		goto returnFailure;
@@ -3624,7 +3624,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
 		     sizeof(tSirMacAddr));
-	/* Fill in tAddBssParams self_mac_addr */
+	/* Fill in struct bss_params self_mac_addr */
 	qdf_mem_copy(pAddBssParams->self_mac_addr,
 		     pe_session->self_mac_addr, sizeof(tSirMacAddr));
 
@@ -4100,7 +4100,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 					     struct pe_session *pe_session)
 {
 	struct scheduler_msg msgQ = {0};
-	tpAddBssParams pAddBssParams = NULL;
+	struct bss_params *pAddBssParams = NULL;
 	uint32_t retCode;
 	tSchBeaconStruct *pBeaconStruct;
 	bool chan_width_support = false;
@@ -4119,7 +4119,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 		return QDF_STATUS_E_NOMEM;
 
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
-	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
+	pAddBssParams = qdf_mem_malloc(sizeof(struct bss_params));
 	if (!pAddBssParams) {
 		retCode = QDF_STATUS_E_NOMEM;
 		goto returnFailure;
@@ -4136,7 +4136,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
 		     sizeof(tSirMacAddr));
 
-	/* Fill in tAddBssParams self_mac_addr */
+	/* Fill in struct bss_params self_mac_addr */
 	qdf_mem_copy(pAddBssParams->self_mac_addr,
 		     pe_session->self_mac_addr, sizeof(tSirMacAddr));
 	pe_debug("sessionid: %d updateEntry = %d limsystemrole = %d",

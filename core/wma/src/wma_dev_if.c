@@ -978,7 +978,7 @@ send_rsp:
  * Return: none
  */
 static void wma_send_start_resp(tp_wma_handle wma,
-				tpAddBssParams add_bss,
+				struct bss_params *add_bss,
 				wmi_vdev_start_response_event_fixed_param *
 				resp_event)
 {
@@ -1018,7 +1018,7 @@ static void wma_send_start_resp(tp_wma_handle wma,
  * Return: none
  */
 static void wma_vdev_start_rsp(tp_wma_handle wma,
-			       tpAddBssParams add_bss,
+			       struct bss_params *add_bss,
 			       wmi_vdev_start_response_event_fixed_param *
 			       resp_event)
 {
@@ -1368,7 +1368,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		if (QDF_IS_STATUS_ERROR(status))
 			return -EINVAL;
 	} else if (req_msg->msg_type == WMA_ADD_BSS_REQ) {
-		tpAddBssParams bssParams = (tpAddBssParams) req_msg->user_data;
+		struct bss_params *bssParams = (struct bss_params *) req_msg->user_data;
 
 		qdf_mem_copy(iface->bssid, bssParams->bssId,
 				QDF_MAC_ADDR_SIZE);
@@ -3271,7 +3271,7 @@ int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 		wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP,
 					   (void *)params, 0);
 	} else if (req_msg->msg_type == WMA_ADD_BSS_REQ) {
-		tpAddBssParams  params = (tpAddBssParams) req_msg->user_data;
+		struct bss_params * params = (struct bss_params *) req_msg->user_data;
 
 		if (!params) {
 			WMA_LOGE(FL("add BSS params is NULL for vdev %d"),
@@ -3442,7 +3442,7 @@ void wma_hold_req_timer(void *data)
 		wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP,
 					   (void *)params, 0);
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
-		tpAddBssParams  params = (tpAddBssParams) tgt_req->user_data;
+		struct bss_params * params = (struct bss_params *) tgt_req->user_data;
 
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA(FL("WMA_ADD_BSS_REQ timed out"));
@@ -3662,7 +3662,7 @@ static void
 wma_handle_add_bss_req_timeout(tp_wma_handle wma, struct wma_target_req *req)
 {
 	struct wma_txrx_node *iface;
-	tpAddBssParams params = (tpAddBssParams)req->user_data;
+	struct bss_params *params = (struct bss_params *)req->user_data;
 
 	params->status = QDF_STATUS_E_TIMEOUT;
 	WMA_LOGA("%s: WMA_ADD_BSS_REQ timedout", __func__);
@@ -4030,7 +4030,7 @@ static inline void wma_set_mgmt_frame_protection(tp_wma_handle wma)
  *
  * Return: none
  */
-static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
+static void wma_add_bss_ap_mode(tp_wma_handle wma, struct bss_params *add_bss)
 {
 	struct cdp_pdev *pdev;
 	struct cdp_vdev *vdev;
@@ -4159,7 +4159,7 @@ send_fail_resp:
  *
  * Return: none
  */
-static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
+static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
 {
 	struct cdp_pdev *pdev;
 	struct cdp_vdev *vdev;
@@ -4310,7 +4310,7 @@ send_fail_resp:
  *
  * Return: none
  */
-static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
+static void wma_add_bss_sta_mode(tp_wma_handle wma, struct bss_params *add_bss)
 {
 	struct cdp_pdev *pdev;
 	struct wma_vdev_start_req req;
@@ -4608,7 +4608,7 @@ send_fail_resp:
  *
  * Return: none
  */
-void wma_add_bss(tp_wma_handle wma, tpAddBssParams params)
+void wma_add_bss(tp_wma_handle wma, struct bss_params *params)
 {
 	WMA_LOGD("%s: add_bss_param.halPersona = %d",
 		 __func__, params->halPersona);

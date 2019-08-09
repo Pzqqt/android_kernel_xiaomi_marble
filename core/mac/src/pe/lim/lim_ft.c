@@ -116,7 +116,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		uint8_t updateEntry, struct pe_session *ft_session,
 		struct bss_description *bssDescription)
 {
-	tpAddBssParams pAddBssParams = NULL;
+	struct bss_params *pAddBssParams = NULL;
 	tAddStaParams *sta_ctx;
 	bool chan_width_support = false;
 	uint8_t bss_chan_id;
@@ -133,7 +133,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		return;
 
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
-	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
+	pAddBssParams = qdf_mem_malloc(sizeof(struct bss_params));
 	if (!pAddBssParams) {
 		qdf_mem_free(pBeaconStruct);
 		return;
@@ -151,7 +151,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
 		     sizeof(tSirMacAddr));
 
-	/* Fill in tAddBssParams self_mac_addr */
+	/* Fill in struct bss_params self_mac_addr */
 	qdf_mem_copy(pAddBssParams->self_mac_addr, ft_session->self_mac_addr,
 		     sizeof(tSirMacAddr));
 
@@ -756,7 +756,7 @@ void lim_fill_ft_session(struct mac_context *mac,
  *------------------------------------------------------------------*/
 bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *msg_buf)
 {
-	tAddBssParams *pAddBssParams;
+	struct bss_params *pAddBssParams;
 	tSirFTUpdateKeyInfo *pKeyInfo;
 	struct pe_session *pe_session;
 	uint8_t sessionId;

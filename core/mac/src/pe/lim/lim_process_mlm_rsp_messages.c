@@ -2040,7 +2040,7 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 	tLimMlmStartCnf mlmStartCnf;
 	struct pe_session *pe_session;
 	uint8_t isWepEnabled = false;
-	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
+	struct bss_params *pAddBssParams = (struct bss_params *) limMsgQ->bodyptr;
 
 	if (!pAddBssParams) {
 		pe_err("Encountered NULL Pointer");
@@ -2186,7 +2186,7 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 				 struct pe_session *pe_session)
 {
 	tLimMlmStartCnf mlmStartCnf;
-	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
+	struct bss_params *pAddBssParams = (struct bss_params *) limMsgQ->bodyptr;
 
 	if (!pAddBssParams) {
 		pe_err("Invalid body pointer in message");
@@ -2283,7 +2283,7 @@ static void
 lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg, struct pe_session *session_entry)
 {
-	tpAddBssParams pAddBssParams = (tpAddBssParams) msg->bodyptr;
+	struct bss_params *pAddBssParams = (struct bss_params *) msg->bodyptr;
 	tAniAuthType cfgAuthType, authMode;
 	tLimMlmAuthReq *pMlmAuthReq;
 	tpDphHashNode sta = NULL;
@@ -2387,7 +2387,7 @@ static void
 lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg, struct pe_session *session_entry)
 {
-	tpAddBssParams add_bss_params = (tpAddBssParams) msg->bodyptr;
+	struct bss_params *add_bss_params = (struct bss_params *) msg->bodyptr;
 	tLimMlmAssocCnf mlm_assoc_cnf;
 	uint32_t msg_type = LIM_MLM_ASSOC_CNF;
 	uint32_t sub_type = LIM_ASSOC;
@@ -2545,7 +2545,7 @@ void lim_process_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 {
 	tLimMlmStartCnf mlm_start_cnf;
 	struct pe_session *session_entry;
-	tpAddBssParams add_bss_param = (tpAddBssParams) (msg->bodyptr);
+	struct bss_params *add_bss_param = (struct bss_params *) (msg->bodyptr);
 	enum bss_type bss_type;
 
 	if (!add_bss_param) {

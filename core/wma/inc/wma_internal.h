@@ -679,7 +679,7 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 void wma_remove_vdev_req(tp_wma_handle wma, uint8_t vdev_id,
 				uint8_t type);
 
-void wma_add_bss(tp_wma_handle wma, tpAddBssParams params);
+void wma_add_bss(tp_wma_handle wma, struct bss_params *params);
 
 void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta);
 
@@ -881,7 +881,7 @@ QDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
  */
 
 void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
-			    tpAddBssParams add_bss);
+			    struct bss_params *add_bss);
 
 int32_t wmi_unified_send_txbf(tp_wma_handle wma, tpAddStaParams params);
 
@@ -1586,7 +1586,7 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
  *
  * Return: None;
  */
-void wma_remove_peer_on_add_bss_failure(tpAddBssParams add_bss_params);
+void wma_remove_peer_on_add_bss_failure(struct bss_params *add_bss_params);
 
 /**
  * wma_roam_scan_stats_event_handler() - roam scan stats event handler

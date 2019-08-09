@@ -61,7 +61,7 @@ static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 	tgt_cfg->nan_datapath_enabled = wma_handle->nan_datapath_enabled;
 }
 
-void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss);
+void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss);
 
 void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 					tpDeleteStaParams del_sta);
@@ -92,7 +92,7 @@ static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 }
 
 static inline void wma_add_bss_ndi_mode(tp_wma_handle wma,
-					tpAddBssParams add_bss)
+					struct bss_params *add_bss)
 {
 	return;
 }

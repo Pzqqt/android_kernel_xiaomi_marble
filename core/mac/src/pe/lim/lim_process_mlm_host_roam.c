@@ -388,7 +388,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	tpDphHashNode sta = NULL;
 	tpAddStaParams pAddStaParams = NULL;
 	uint32_t listenInterval = MLME_CFG_LISTEN_INTERVAL;
-	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
+	struct bss_params *pAddBssParams = (struct bss_params *) limMsgQ->bodyptr;
 	uint32_t selfStaDot11Mode = 0;
 
 	/* Sanity Checks */

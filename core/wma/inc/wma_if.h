@@ -367,7 +367,7 @@ typedef struct sLimMlmSetKeysReq {
 } tLimMlmSetKeysReq, *tpLimMlmSetKeysReq;
 
 /**
- * struct tAddBssParams - parameters required for add bss params
+ * struct struct bss_params - parameters required for add bss params
  * @bssId: MAC Address/BSSID
  * @self_mac_addr: Self Mac Address
  * @bssType: BSS type
@@ -418,7 +418,7 @@ typedef struct sLimMlmSetKeysReq {
  * @dfs_regdomain: dfs region
  * @no_ptk_4_way: Do not need 4-way handshake
  */
-typedef struct {
+struct bss_params {
 	tSirMacAddr bssId;
 	tSirMacAddr self_mac_addr;
 	enum bss_type bssType;
@@ -493,7 +493,7 @@ typedef struct {
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 	bool no_ptk_4_way;
-} tAddBssParams, *tpAddBssParams;
+};
 
 /**
  * struct tDeleteBssParams - params required for del bss request

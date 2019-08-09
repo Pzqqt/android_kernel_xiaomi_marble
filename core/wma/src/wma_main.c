@@ -8468,7 +8468,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 				(tpSwitchChannelParams) msg->bodyptr);
 		break;
 	case WMA_ADD_BSS_REQ:
-		wma_add_bss(wma_handle, (tpAddBssParams) msg->bodyptr);
+		wma_add_bss(wma_handle, (struct bss_params *) msg->bodyptr);
 		break;
 	case WMA_ADD_STA_REQ:
 		wma_add_sta(wma_handle, (tpAddStaParams) msg->bodyptr);

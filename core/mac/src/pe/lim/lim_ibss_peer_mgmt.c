@@ -1235,7 +1235,7 @@ void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 {
 	uint8_t infoLen;
 	struct new_bss_info newBssInfo;
-	tpAddBssParams pAddBss = msg;
+	struct bss_params *pAddBss = msg;
 	tpSirMacMgmtHdr pHdr = mac->lim.ibss_info.mac_hdr;
 	tpSchBeaconStruct pBeacon = mac->lim.ibss_info.beacon;
 
