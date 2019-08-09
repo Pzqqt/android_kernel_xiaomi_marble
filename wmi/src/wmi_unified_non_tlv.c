@@ -10367,6 +10367,7 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 		WMI_SERVICE_VDEV_DELETE_ALL_PEER;
 	wmi_service[wmi_service_cfr_capture_support] =
 		WMI_SERVICE_CFR_CAPTURE_SUPPORT;
+	wmi_service[wmi_service_rx_fse_support] = WMI_SERVICE_UNAVAILABLE;
 }
 
 /**
