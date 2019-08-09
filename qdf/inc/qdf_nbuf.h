@@ -81,6 +81,8 @@
 #define QDF_NBUF_TRAC_ICMPV6_TYPE       0x3a
 #define QDF_NBUF_TRAC_DHCP6_SRV_PORT		547
 #define QDF_NBUF_TRAC_DHCP6_CLI_PORT		546
+#define QDF_NBUF_TRAC_MDNS_SRC_N_DST_PORT	5353
+
 
 /* EAPOL Related MASK */
 #define EAPOL_PACKET_TYPE_OFFSET		15
@@ -2487,6 +2489,20 @@ static inline
 bool qdf_nbuf_data_is_ipv4_dhcp_pkt(uint8_t *data)
 {
 	return __qdf_nbuf_data_is_ipv4_dhcp_pkt(data);
+}
+
+/**
+ * qdf_nbuf_data_is_ipv6_mdsn_pkt() - check if it is MDNS packet.
+ * @data: Pointer to packet data buffer
+ *
+ * This func. checks whether it is a MDNS packet or not.
+ *
+ * Return: true if it is a MDNS packet, false if not
+ */
+static inline
+bool qdf_nbuf_is_ipv6_mdns_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_ipv6_mdns_pkt(qdf_nbuf_data(buf));
 }
 
 /**

@@ -777,6 +777,7 @@ bool __qdf_nbuf_data_is_ipv6_udp_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv6_tcp_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv4_dhcp_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv6_dhcp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv6_mdns_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv4_eapol_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv4_arp_pkt(uint8_t *data);
 bool __qdf_nbuf_is_bcast_pkt(__qdf_nbuf_t nbuf);

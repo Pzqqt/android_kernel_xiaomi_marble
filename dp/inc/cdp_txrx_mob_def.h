@@ -23,6 +23,7 @@
 
 #define TX_WMM_AC_NUM	4
 #define ENABLE_DP_HIST_STATS
+#define DP_RX_DISABLE_NDI_MDNS_FORWARDING
 
 #define OL_TXQ_PAUSE_REASON_FW                (1 << 0)
 #define OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED (1 << 1)

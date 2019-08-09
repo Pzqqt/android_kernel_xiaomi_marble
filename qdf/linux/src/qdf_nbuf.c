@@ -1791,6 +1791,35 @@ bool __qdf_nbuf_data_is_ipv6_dhcp_pkt(uint8_t *data)
 qdf_export_symbol(__qdf_nbuf_data_is_ipv6_dhcp_pkt);
 
 /**
+ * __qdf_nbuf_data_is_ipv6_mdns_pkt() - check if skb data is a mdns packet
+ * @data: Pointer to network data buffer
+ *
+ * This api is for ipv6 packet.
+ *
+ * Return: true if packet is MDNS packet
+ *	   false otherwise
+ */
+bool __qdf_nbuf_data_is_ipv6_mdns_pkt(uint8_t *data)
+{
+	uint16_t sport;
+	uint16_t dport;
+
+	sport = *(uint16_t *)(data + QDF_NBUF_TRAC_IPV6_OFFSET +
+				QDF_NBUF_TRAC_IPV6_HEADER_SIZE);
+	dport = *(uint16_t *)(data + QDF_NBUF_TRAC_IPV6_OFFSET +
+					QDF_NBUF_TRAC_IPV6_HEADER_SIZE +
+					sizeof(uint16_t));
+
+	if (sport == QDF_SWAP_U16(QDF_NBUF_TRAC_MDNS_SRC_N_DST_PORT) &&
+	    dport == sport)
+		return true;
+	else
+		return false;
+}
+
+qdf_export_symbol(__qdf_nbuf_data_is_ipv6_mdns_pkt);
+
+/**
  * __qdf_nbuf_data_is_ipv4_mcast_pkt() - check if it is IPV4 multicast packet.
  * @data: Pointer to IPV4 packet data buffer
  *

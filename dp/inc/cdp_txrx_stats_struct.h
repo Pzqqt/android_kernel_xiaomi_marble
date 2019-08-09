@@ -599,6 +599,7 @@ struct cdp_tx_stats {
  * @mec_drop: Total MEC packets dropped
  * @pkts: Intra BSS packets received
  * @fail: Intra BSS packets failed
+ * @mdns_no_fwd: Intra BSS MDNS packets not forwarded
  * @mic_err: Rx MIC errors CCMP
  * @decrypt_err: Rx Decryption Errors CRC
  * @fcserr: rx MIC check failed (CCMP)
@@ -653,6 +654,7 @@ struct cdp_rx_stats {
 	struct {
 		struct cdp_pkt_info pkts;
 		struct cdp_pkt_info fail;
+		uint32_t mdns_no_fwd;
 	} intra_bss;
 
 	struct {

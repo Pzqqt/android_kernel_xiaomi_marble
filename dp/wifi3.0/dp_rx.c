@@ -40,6 +40,24 @@
 #define DP_RX_TID_SAVE(_nbuf, _tid)
 #endif
 
+#ifdef DP_RX_DISABLE_NDI_MDNS_FORWARDING
+static inline
+bool dp_rx_check_ndi_mdns_fwding(struct dp_peer *ta_peer, qdf_nbuf_t nbuf)
+{
+	if (ta_peer->vdev->opmode == wlan_op_mode_ndi &&
+	    qdf_nbuf_is_ipv6_mdns_pkt(nbuf)) {
+		DP_STATS_INC(ta_peer, rx.intra_bss.mdns_no_fwd, 1);
+		return false;
+	}
+		return true;
+}
+#else
+static inline
+bool dp_rx_check_ndi_mdns_fwding(struct dp_peer *ta_peer, qdf_nbuf_t nbuf)
+{
+	return true;
+}
+#endif
 static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 {
 	return vdev->ap_bridge_enabled;
@@ -471,9 +489,12 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	 */
 	else if (qdf_unlikely((qdf_nbuf_is_da_mcbc(nbuf) &&
 			       !ta_peer->bss_peer))) {
+		if (!dp_rx_check_ndi_mdns_fwding(ta_peer, nbuf))
+			goto end;
+
 		nbuf_copy = qdf_nbuf_copy(nbuf);
 		if (!nbuf_copy)
-			return false;
+			goto end;
 
 		len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 		memset(nbuf_copy->cb, 0x0, sizeof(nbuf_copy->cb));
@@ -487,6 +508,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			tid_stats->intrabss_cnt++;
 		}
 	}
+
+end:
 	/* return false as we have to still send the original pkt
 	 * up the stack
 	 */
