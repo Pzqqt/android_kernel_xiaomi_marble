@@ -1485,9 +1485,10 @@ static inline void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
  * Return: NULL on success,
  *         nbuf when it fails to send
  */
-static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		struct dp_tx_msdu_info_s *msdu_info, uint16_t peer_id,
-		struct cdp_tx_exception_metadata *tx_exc_metadata)
+qdf_nbuf_t
+dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+		       struct dp_tx_msdu_info_s *msdu_info, uint16_t peer_id,
+		       struct cdp_tx_exception_metadata *tx_exc_metadata)
 {
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;

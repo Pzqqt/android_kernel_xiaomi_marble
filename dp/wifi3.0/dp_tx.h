@@ -189,6 +189,10 @@ qdf_nbuf_t dp_tx_send(struct cdp_vdev *data_vdev, qdf_nbuf_t nbuf);
 qdf_nbuf_t dp_tx_send_exception(struct cdp_vdev *data_vdev, qdf_nbuf_t nbuf,
 				struct cdp_tx_exception_metadata *tx_exc);
 qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *data_vdev, qdf_nbuf_t nbuf);
+qdf_nbuf_t
+dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+		       struct dp_tx_msdu_info_s *msdu_info, uint16_t peer_id,
+		       struct cdp_tx_exception_metadata *tx_exc_metadata);
 
 #if QDF_LOCK_STATS
 noinline qdf_nbuf_t
