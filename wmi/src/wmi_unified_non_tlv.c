@@ -3230,6 +3230,7 @@ static QDF_STATUS send_smart_ant_set_training_info_cmd_non_tlv(
 	wmi_buf_t buf;
 	int len = 0;
 	int ret;
+	uint8_t rs = 0, irs = 0;
 
 	len = sizeof(wmi_peer_sant_set_train_antenna_cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -3241,10 +3242,16 @@ static QDF_STATUS send_smart_ant_set_training_info_cmd_non_tlv(
 	cmd = (wmi_peer_sant_set_train_antenna_cmd *)wmi_buf_data(buf);
 	cmd->vdev_id = param->vdev_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
-	qdf_mem_copy(&cmd->train_rate_series[0], &param->rate_array[0],
-			(sizeof(uint32_t)*SMART_ANT_MAX_RATE_SERIES));
 	qdf_mem_copy(&cmd->train_antenna_series[0], &param->antenna_array[0],
 			(sizeof(uint32_t)*SMART_ANT_MAX_RATE_SERIES));
+	for (rs = 0; rs < SMART_ANT_MAX_RATE_SERIES; rs++) {
+		cmd->train_rate_series[rs] =
+		((param->rate_array[irs] & SA_MASK_BYTE) |
+		((param->rate_array[irs] & SA_MASK_BYTE3) >> 8) |
+		((param->rate_array[irs + 1] & SA_MASK_BYTE) << 16) |
+		(param->rate_array[irs + 1] & SA_MASK_BYTE3));
+		irs += 2;
+	}
 	cmd->num_pkts = param->numpkts;
 	ret = wmi_unified_cmd_send(wmi_handle,
 				   buf,
