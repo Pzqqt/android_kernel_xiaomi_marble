@@ -898,8 +898,10 @@ static const char *hif_pm_runtime_state_to_string(uint32_t state)
 		return "INIT_STATE";
 	case HIF_PM_RUNTIME_STATE_ON:
 		return "ON";
-	case HIF_PM_RUNTIME_STATE_INPROGRESS:
-		return "INPROGRESS";
+	case HIF_PM_RUNTIME_STATE_RESUMING:
+		return "RESUMING";
+	case HIF_PM_RUNTIME_STATE_SUSPENDING:
+		return "SUSPENDING";
 	case HIF_PM_RUNTIME_STATE_SUSPENDED:
 		return "SUSPENDED";
 	default:
@@ -975,8 +977,8 @@ static void hif_pci_runtime_pm_warn(struct hif_pci_softc *sc, const char *msg)
 static int hif_pci_pm_runtime_debugfs_show(struct seq_file *s, void *data)
 {
 	struct hif_pci_softc *sc = s->private;
-	static const char * const autopm_state[] = {"NONE", "ON", "INPROGRESS",
-		"SUSPENDED"};
+	static const char * const autopm_state[] = {"NONE", "ON", "RESUMING",
+		"SUSPENDING", "SUSPENDED"};
 	unsigned int msecs_age;
 	qdf_time_t usecs_age;
 	int pm_state = atomic_read(&sc->pm_state);
@@ -2681,16 +2683,6 @@ static void __hif_runtime_pm_set_state(struct hif_softc *scn,
 }
 
 /**
- * hif_runtime_pm_set_state_inprogress(): adjust runtime pm state
- *
- * Notify hif that a runtime pm opperation has started
- */
-static void hif_runtime_pm_set_state_inprogress(struct hif_softc *scn)
-{
-	__hif_runtime_pm_set_state(scn, HIF_PM_RUNTIME_STATE_INPROGRESS);
-}
-
-/**
  * hif_runtime_pm_set_state_on():  adjust runtime pm state
  *
  * Notify hif that a the runtime pm state should be on
@@ -2698,6 +2690,26 @@ static void hif_runtime_pm_set_state_inprogress(struct hif_softc *scn)
 static void hif_runtime_pm_set_state_on(struct hif_softc *scn)
 {
 	__hif_runtime_pm_set_state(scn, HIF_PM_RUNTIME_STATE_ON);
+}
+
+/**
+ * hif_runtime_pm_set_state_resuming(): adjust runtime pm state
+ *
+ * Notify hif that a runtime pm resuming has started
+ */
+static void hif_runtime_pm_set_state_resuming(struct hif_softc *scn)
+{
+	__hif_runtime_pm_set_state(scn, HIF_PM_RUNTIME_STATE_RESUMING);
+}
+
+/**
+ * hif_runtime_pm_set_state_suspending(): adjust runtime pm state
+ *
+ * Notify hif that a runtime pm suspend has started
+ */
+static void hif_runtime_pm_set_state_suspending(struct hif_softc *scn)
+{
+	__hif_runtime_pm_set_state(scn, HIF_PM_RUNTIME_STATE_SUSPENDING);
 }
 
 /**
@@ -2792,7 +2804,7 @@ int hif_pre_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 		return -EINVAL;
 	}
 
-	hif_runtime_pm_set_state_inprogress(scn);
+	hif_runtime_pm_set_state_suspending(scn);
 	return 0;
 }
 
@@ -2820,7 +2832,7 @@ void hif_pre_runtime_resume(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
-	hif_runtime_pm_set_state_inprogress(scn);
+	hif_runtime_pm_set_state_resuming(scn);
 }
 
 /**
@@ -3890,7 +3902,8 @@ int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx)
 		return -EINVAL;
 
 	pm_state = qdf_atomic_read(&sc->pm_state);
-	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED)
+	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
+	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING)
 		HIF_INFO("Runtime PM resume is requested by %ps",
 			 (void *)_RET_IP_);
 
@@ -3959,7 +3972,8 @@ int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 		return -EINVAL;
 
 	pm_state = qdf_atomic_read(&sc->pm_state);
-	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED)
+	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
+	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING)
 		HIF_INFO("Runtime PM resume is requested by %ps",
 			 (void *)_RET_IP_);
 
@@ -4044,7 +4058,8 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 		return ret;
 	}
 
-	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED) {
+	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
+	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING) {
 		HIF_INFO("Runtime PM resume is requested by %ps",
 			 (void *)_RET_IP_);
 		ret = -EAGAIN;

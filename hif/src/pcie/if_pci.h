@@ -45,13 +45,15 @@ struct hif_tasklet_entry {
  * enum hif_pm_runtime_state - Driver States for Runtime Power Management
  * HIF_PM_RUNTIME_STATE_NONE: runtime pm is off
  * HIF_PM_RUNTIME_STATE_ON: runtime pm is active and link is active
- * HIF_PM_RUNTIME_STATE_INPROGRESS: a runtime suspend or resume is in progress
+ * HIF_PM_RUNTIME_STATE_RESUMING: a runtime resume is in progress
+ * HIF_PM_RUNTIME_STATE_SUSPENDING: a runtime suspend is in progress
  * HIF_PM_RUNTIME_STATE_SUSPENDED: the driver is runtime suspended
  */
 enum hif_pm_runtime_state {
 	HIF_PM_RUNTIME_STATE_NONE,
 	HIF_PM_RUNTIME_STATE_ON,
-	HIF_PM_RUNTIME_STATE_INPROGRESS,
+	HIF_PM_RUNTIME_STATE_RESUMING,
+	HIF_PM_RUNTIME_STATE_SUSPENDING,
 	HIF_PM_RUNTIME_STATE_SUSPENDED,
 };
 
