@@ -8645,35 +8645,7 @@ dp_enable_peer_based_pktlog(
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
-#ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
-/**
- * dp_summarize_tag_stats - sums up the given protocol type's counters
- * across all the rings and dumps the same
- * @pdev_handle: cdp_pdev handle
- * @protocol_type: protocol type for which stats should be displayed
- *
- * Return: none
- */
-static uint64_t dp_summarize_tag_stats(struct cdp_pdev *pdev_handle,
-				       uint16_t protocol_type)
-{
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	uint8_t ring_idx;
-	uint64_t total_tag_cnt = 0;
-
-	for (ring_idx = 0; ring_idx < MAX_REO_DEST_RINGS; ring_idx++) {
-		total_tag_cnt +=
-		pdev->reo_proto_tag_stats[ring_idx][protocol_type].tag_ctr;
-	}
-	total_tag_cnt += pdev->rx_err_proto_tag_stats[protocol_type].tag_ctr;
-	DP_PRINT_STATS("ProtoID: %d, Tag: %u Tagged MSDU cnt: %llu",
-		       protocol_type,
-		       pdev->rx_proto_tag_map[protocol_type].tag,
-		       total_tag_cnt);
-	return total_tag_cnt;
-}
-
+#ifndef WLAN_SUPPORT_RX_TAG_STATISTICS
 /**
  * dp_dump_pdev_rx_protocol_tag_stats - dump the number of packets tagged for
  * given protocol type (RX_PROTOCOL_TAG_ALL indicates for all protocol)
@@ -8682,59 +8654,14 @@ static uint64_t dp_summarize_tag_stats(struct cdp_pdev *pdev_handle,
  *
  * Return: none
  */
-static void
+static inline void
 dp_dump_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
 				   uint16_t protocol_type)
 {
-	uint16_t proto_idx;
-
-	if (protocol_type != RX_PROTOCOL_TAG_ALL &&
-	    protocol_type >= RX_PROTOCOL_TAG_MAX) {
-		DP_PRINT_STATS("Invalid protocol type : %u", protocol_type);
-		return;
-	}
-
-	/* protocol_type in [0 ... RX_PROTOCOL_TAG_MAX] */
-	if (protocol_type != RX_PROTOCOL_TAG_ALL) {
-		dp_summarize_tag_stats(pdev_handle, protocol_type);
-		return;
-	}
-
-	/* protocol_type == RX_PROTOCOL_TAG_ALL */
-	for (proto_idx = 0; proto_idx < RX_PROTOCOL_TAG_MAX; proto_idx++)
-		dp_summarize_tag_stats(pdev_handle, proto_idx);
 }
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 
-/**
- * dp_reset_pdev_rx_protocol_tag_stats - resets the stats counters for
- * given protocol type
- * @pdev_handle: cdp_pdev handle
- * @protocol_type: protocol type for which stats should be reset
- *
- * Return: none
- */
-#ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
-static void
-dp_reset_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
-				    uint16_t protocol_type)
-{
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	uint8_t ring_idx;
-
-	for (ring_idx = 0; ring_idx < MAX_REO_DEST_RINGS; ring_idx++)
-		pdev->reo_proto_tag_stats[ring_idx][protocol_type].tag_ctr = 0;
-	pdev->rx_err_proto_tag_stats[protocol_type].tag_ctr = 0;
-}
-#else
-static void
-dp_reset_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
-				    uint16_t protocol_type)
-{
-	/** Stub API  */
-}
-#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
-
+#ifndef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 /**
  * dp_update_pdev_rx_protocol_tag - Add/remove a protocol tag that should be
  * applied to the desired protocol type packets
@@ -8745,65 +8672,31 @@ dp_reset_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
  * @protocol_type: new protocol type for which the tag is being added
  * @tag: user configured tag for the new protocol
  *
- * Return: QDF_STATUS
+ * Return: Success
  */
-static QDF_STATUS
+static inline QDF_STATUS
 dp_update_pdev_rx_protocol_tag(struct cdp_pdev *pdev_handle,
 			       uint32_t enable_rx_protocol_tag,
 			       uint16_t protocol_type,
 			       uint16_t tag)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	/*
-	 * dynamically enable/disable tagging based on enable_rx_protocol_tag
-	 * flag.
-	 */
-	if (enable_rx_protocol_tag) {
-		/* Tagging for one or more protocols has been set by user */
-		pdev->is_rx_protocol_tagging_enabled = true;
-	} else {
-		/*
-		 * No protocols being tagged, disable feature till next add
-		 * operation
-		 */
-		pdev->is_rx_protocol_tagging_enabled = false;
-	}
-
-	/** Reset stats counter across all rings for given protocol */
-	dp_reset_pdev_rx_protocol_tag_stats(pdev_handle, protocol_type);
-
-	pdev->rx_proto_tag_map[protocol_type].tag = tag;
-
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
-#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+#ifndef WLAN_SUPPORT_RX_FLOW_TAG
 /**
  * dp_set_rx_flow_tag - add/delete a flow
  * @pdev_handle: cdp_pdev handle
  * @flow_info: flow tuple that is to be added to/deleted from flow search table
  *
- * Return: 0 for success, nonzero for failure
+ * Return: Success
  */
 static inline QDF_STATUS
 dp_set_rx_flow_tag(struct cdp_pdev *pdev_handle,
 		   struct cdp_rx_flow_info *flow_info)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	struct wlan_cfg_dp_soc_ctxt *cfg = pdev->soc->wlan_cfg_ctx;
-
-	if (qdf_unlikely(!wlan_cfg_is_rx_flow_tag_enabled(cfg))) {
-		dp_err("RX Flow tag feature disabled");
-		return QDF_STATUS_E_NOSUPPORT;
-	}
-
-	if (flow_info->op_code == CDP_FLOW_FST_ENTRY_ADD)
-		return dp_rx_flow_add_entry(pdev, flow_info);
-	if (flow_info->op_code == CDP_FLOW_FST_ENTRY_DEL)
-		return dp_rx_flow_delete_entry(pdev, flow_info);
-
-	return QDF_STATUS_E_INVAL;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -8812,60 +8705,13 @@ dp_set_rx_flow_tag(struct cdp_pdev *pdev_handle,
  * @pdev_handle: cdp_pdev handle
  * @flow_info: flow 5-tuple for which stats should be displayed
  *
- * Return: 0 for success, nonzero for failure
+ * Return: Success
  */
 static inline QDF_STATUS
 dp_dump_rx_flow_tag_stats(struct cdp_pdev *pdev_handle,
 			  struct cdp_rx_flow_info *flow_info)
 {
-	QDF_STATUS status;
-	struct cdp_flow_stats stats;
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	struct wlan_cfg_dp_soc_ctxt *cfg = pdev->soc->wlan_cfg_ctx;
-
-	if (qdf_unlikely(!wlan_cfg_is_rx_flow_tag_enabled(cfg))) {
-		dp_err("RX Flow tag feature disabled");
-		return QDF_STATUS_E_NOSUPPORT;
-	}
-
-	status = dp_rx_flow_get_fse_stats(pdev, flow_info, &stats);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		dp_err("Unable to get flow stats, error: %u", status);
-		return status;
-	}
-
-	DP_PRINT_STATS("Dest IP address %x:%x:%x:%x",
-		       flow_info->flow_tuple_info.dest_ip_127_96,
-		       flow_info->flow_tuple_info.dest_ip_95_64,
-		       flow_info->flow_tuple_info.dest_ip_63_32,
-		       flow_info->flow_tuple_info.dest_ip_31_0);
-	DP_PRINT_STATS("Source IP address %x:%x:%x:%x",
-		       flow_info->flow_tuple_info.src_ip_127_96,
-		       flow_info->flow_tuple_info.src_ip_95_64,
-		       flow_info->flow_tuple_info.src_ip_63_32,
-		       flow_info->flow_tuple_info.src_ip_31_0);
-	DP_PRINT_STATS("Dest port %u, Src Port %u, Protocol %u",
-		       flow_info->flow_tuple_info.dest_port,
-		       flow_info->flow_tuple_info.src_port,
-		       flow_info->flow_tuple_info.l4_protocol);
-	DP_PRINT_STATS("MSDU Count: %u", stats.msdu_count);
-
-	return status;
-}
-#else
-static inline QDF_STATUS
-dp_set_rx_flow_tag(struct cdp_pdev *pdev,
-		   struct cdp_rx_flow_info *flow_info)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-
-static inline QDF_STATUS
-dp_dump_rx_flow_tag_stats(struct cdp_pdev *pdev,
-			  struct cdp_rx_flow_info *flow_info)
-{
-	return QDF_STATUS_E_FAILURE;
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG */
 
