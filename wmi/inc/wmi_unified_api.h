@@ -466,9 +466,12 @@ wmi_flush_endpoint(wmi_unified_t wmi_handle);
  *                     By default pdev_id conversion is not done in WMI.
  *                     This API can be used enable conversion in WMI.
  * @param wmi_handle   : handle to WMI
+ * @param *pdev_id_map : pdev conversion map
+ * @param size         : size of pdev_id_map
  * Return none
  */
-void wmi_pdev_id_conversion_enable(wmi_unified_t wmi_handle);
+void wmi_pdev_id_conversion_enable(wmi_unified_t wmi_handle,
+				   uint32_t *pdev_id_map, uint8_t size);
 
 /**
  * API to handle wmi rx event after UMAC has taken care of execution

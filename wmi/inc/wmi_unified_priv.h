@@ -78,6 +78,7 @@
 #define WMI_EXT_DBG_DUMP_ROW_SIZE	16
 #define WMI_EXT_DBG_DUMP_GROUP_SIZE	1
 
+
 /**
  * enum WMI_MSG_TYPE - WMI message types
  * @ WMI_MSG_TYPE_CMD - Message is of type WMI command
@@ -1821,8 +1822,10 @@ QDF_STATUS (*extract_wlan_radar_event_info)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_country_cmd)(wmi_unified_t wmi_handle,
 				struct set_country *param);
 
-uint32_t (*convert_pdev_id_host_to_target)(uint32_t pdev_id);
-uint32_t (*convert_pdev_id_target_to_host)(uint32_t pdev_id);
+uint32_t (*convert_pdev_id_host_to_target)(wmi_unified_t wmi_handle,
+					   uint32_t pdev_id);
+uint32_t (*convert_pdev_id_target_to_host)(wmi_unified_t wmi_handle,
+					   uint32_t pdev_id);
 
 /*
  * For MCL, convert_pdev_id_host_to_target returns legacy pdev id value.
@@ -1834,8 +1837,10 @@ uint32_t (*convert_pdev_id_target_to_host)(uint32_t pdev_id);
  * convert_target_pdev_id_to_host should be used for any WMI
  * command/event where FW expects target/host mapping of pdev_id respectively.
  */
-uint32_t (*convert_host_pdev_id_to_target)(uint32_t pdev_id);
-uint32_t (*convert_target_pdev_id_to_host)(uint32_t pdev_id);
+uint32_t (*convert_host_pdev_id_to_target)(wmi_unified_t wmi_handle,
+					   uint32_t pdev_id);
+uint32_t (*convert_target_pdev_id_to_host)(wmi_unified_t wmi_handle,
+					   uint32_t pdev_id);
 
 QDF_STATUS (*send_user_country_code_cmd)(wmi_unified_t wmi_handle,
 		uint8_t pdev_id, struct cc_regdmn_s *rd);
@@ -1902,7 +1907,8 @@ QDF_STATUS
 				     void *evt_buf, uint32_t *vdev_id,
 				     uint32_t *tx_status);
 
-void (*wmi_pdev_id_conversion_enable)(wmi_unified_t wmi_handle);
+void (*wmi_pdev_id_conversion_enable)(wmi_unified_t wmi_handle,
+				      uint32_t *pdev_map, uint8_t size);
 void (*send_time_stamp_sync_cmd)(wmi_unified_t wmi_handle);
 void (*wmi_free_allocated_event)(uint32_t cmd_event_id,
 				void **wmi_cmd_struct_ptr);
@@ -2124,6 +2130,8 @@ struct wmi_unified {
 	qdf_spinlock_t wmi_ext_dbg_msg_queue_lock;
 	qdf_dentry_t wmi_ext_dbg_dentry;
 #endif /*WMI_EXT_DBG*/
+	uint32_t *cmd_pdev_id_map;
+	uint32_t *evt_pdev_id_map;
 };
 
 #define WMI_MAX_RADIOS 3
@@ -2151,6 +2159,9 @@ struct wmi_soc {
 	uint32_t services[wmi_services_max];
 	uint16_t wmi_max_cmds;
 	uint32_t soc_idx;
+	uint32_t cmd_pdev_id_map[WMI_MAX_RADIOS];
+	uint32_t evt_pdev_id_map[WMI_MAX_RADIOS];
+	bool is_pdev_is_map_enable;
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	uint32_t buf_offset_command;
 	uint32_t buf_offset_event;

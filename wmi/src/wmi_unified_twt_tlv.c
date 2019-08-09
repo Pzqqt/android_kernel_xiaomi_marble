@@ -43,6 +43,7 @@ static QDF_STATUS send_twt_enable_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->pdev_id =
 		wmi_handle->ops->convert_pdev_id_host_to_target(
+						wmi_handle,
 						params->pdev_id);
 	cmd->sta_cong_timer_ms =            params->sta_cong_timer_ms;
 	cmd->mbss_support =                 params->mbss_support;
@@ -95,6 +96,7 @@ static QDF_STATUS send_twt_disable_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->pdev_id =
 		wmi_handle->ops->convert_pdev_id_host_to_target(
+						wmi_handle,
 						params->pdev_id);
 
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
@@ -266,7 +268,8 @@ static QDF_STATUS extract_twt_enable_comp_event_tlv(wmi_unified_t wmi_handle,
 	ev = param_buf->fixed_param;
 
 	params->pdev_id =
-		wmi_handle->ops->convert_pdev_id_target_to_host(ev->pdev_id);
+		wmi_handle->ops->convert_pdev_id_target_to_host(wmi_handle,
+								ev->pdev_id);
 	params->status = ev->status;
 
 	return QDF_STATUS_SUCCESS;

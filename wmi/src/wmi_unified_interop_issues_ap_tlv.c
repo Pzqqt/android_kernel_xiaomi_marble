@@ -92,7 +92,8 @@ send_set_rap_ps_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_set_rap_config_fixed_param));
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
-						      WMI_HOST_PDEV_ID_SOC);
+						     wmi_handle,
+						     WMI_HOST_PDEV_ID_SOC);
 
 	cmd->type = WMI_ROGUE_AP_ON_STA_PS;
 	if (count)

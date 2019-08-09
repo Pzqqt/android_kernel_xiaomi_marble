@@ -484,20 +484,28 @@ static const uint32_t vdev_param_tlv[] = {
 /**
  * convert_host_pdev_id_to_target_pdev_id() - Convert pdev_id from
  *	   host to target defines.
+ * @wmi_handle: pointer to wmi_handle
  * @param pdev_id: host pdev_id to be converted.
  * Return: target pdev_id after conversion.
  */
-static uint32_t convert_host_pdev_id_to_target_pdev_id(uint32_t pdev_id)
+static uint32_t convert_host_pdev_id_to_target_pdev_id(wmi_unified_t wmi_handle,
+						       uint32_t pdev_id)
 {
-	switch (pdev_id) {
-	case WMI_HOST_PDEV_ID_SOC:
+	if (pdev_id <= WMI_HOST_PDEV_ID_2 && pdev_id >= WMI_HOST_PDEV_ID_0) {
+		if (!wmi_handle->soc->is_pdev_is_map_enable) {
+			switch (pdev_id) {
+			case WMI_HOST_PDEV_ID_0:
+				return WMI_PDEV_ID_1ST;
+			case WMI_HOST_PDEV_ID_1:
+				return WMI_PDEV_ID_2ND;
+			case WMI_HOST_PDEV_ID_2:
+				return WMI_PDEV_ID_3RD;
+			}
+		} else {
+			return wmi_handle->cmd_pdev_id_map[pdev_id];
+		}
+	} else {
 		return WMI_PDEV_ID_SOC;
-	case WMI_HOST_PDEV_ID_0:
-		return WMI_PDEV_ID_1ST;
-	case WMI_HOST_PDEV_ID_1:
-		return WMI_PDEV_ID_2ND;
-	case WMI_HOST_PDEV_ID_2:
-		return WMI_PDEV_ID_3RD;
 	}
 
 	QDF_ASSERT(0);
@@ -508,23 +516,32 @@ static uint32_t convert_host_pdev_id_to_target_pdev_id(uint32_t pdev_id)
 /**
  * convert_target_pdev_id_to_host_pdev_id() - Convert pdev_id from
  *	   target to host defines.
+ * @wmi_handle: pointer to wmi_handle
  * @param pdev_id: target pdev_id to be converted.
  * Return: host pdev_id after conversion.
  */
-static uint32_t convert_target_pdev_id_to_host_pdev_id(uint32_t pdev_id)
+static uint32_t convert_target_pdev_id_to_host_pdev_id(wmi_unified_t wmi_handle,
+						       uint32_t pdev_id)
 {
-	switch (pdev_id) {
-	case WMI_PDEV_ID_SOC:
-		return WMI_HOST_PDEV_ID_SOC;
-	case WMI_PDEV_ID_1ST:
-		return WMI_HOST_PDEV_ID_0;
-	case WMI_PDEV_ID_2ND:
-		return WMI_HOST_PDEV_ID_1;
-	case WMI_PDEV_ID_3RD:
-		return WMI_HOST_PDEV_ID_2;
-	}
 
-	WMI_LOGE("Invalid pdev_id");
+	if (pdev_id <= WMI_PDEV_ID_3RD && pdev_id >= WMI_PDEV_ID_1ST) {
+		if (!wmi_handle->soc->is_pdev_is_map_enable) {
+			switch (pdev_id) {
+			case WMI_PDEV_ID_1ST:
+				return WMI_HOST_PDEV_ID_0;
+			case WMI_PDEV_ID_2ND:
+				return WMI_HOST_PDEV_ID_1;
+			case WMI_PDEV_ID_3RD:
+				return WMI_HOST_PDEV_ID_2;
+			}
+		} else {
+			return wmi_handle->evt_pdev_id_map[pdev_id - 1];
+		}
+	} else if (pdev_id == WMI_PDEV_ID_SOC) {
+		return WMI_HOST_PDEV_ID_SOC;
+	} else {
+		WMI_LOGE("Invalid pdev_id");
+	}
 
 	return WMI_HOST_PDEV_ID_INVALID;
 }
@@ -534,8 +551,31 @@ static uint32_t convert_target_pdev_id_to_host_pdev_id(uint32_t pdev_id)
  *
  * Return None.
  */
-static void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
+static void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle,
+					      uint32_t *pdev_id_map,
+					      uint8_t size)
 {
+	int i = 0;
+
+	if (pdev_id_map && (size <= WMI_MAX_RADIOS)) {
+		for (i = 0; i < size; i++) {
+			wmi_handle->cmd_pdev_id_map[i] = pdev_id_map[i];
+			wmi_handle->evt_pdev_id_map[i] =
+				WMI_HOST_PDEV_ID_INVALID;
+		}
+
+		for (i = 0; i < size; i++) {
+			if (wmi_handle->cmd_pdev_id_map[i] !=
+					WMI_HOST_PDEV_ID_INVALID) {
+				wmi_handle->evt_pdev_id_map
+					[wmi_handle->cmd_pdev_id_map[i] - 1] = i;
+			}
+		}
+		wmi_handle->soc->is_pdev_is_map_enable = true;
+	} else {
+		wmi_handle->soc->is_pdev_is_map_enable = false;
+	}
+
 	wmi_handle->ops->convert_pdev_id_host_to_target =
 		convert_host_pdev_id_to_target_pdev_id;
 	wmi_handle->ops->convert_pdev_id_target_to_host =
@@ -556,6 +596,7 @@ static inline void copy_vdev_create_pdev_id(
 		struct vdev_create_params *param)
 {
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
 							param->pdev_id);
 }
 
@@ -1366,7 +1407,9 @@ static QDF_STATUS send_green_ap_ps_cmd_tlv(wmi_unified_t wmi_handle,
 		   WMITLV_TAG_STRUC_wmi_pdev_green_ap_ps_enable_cmd_fixed_param,
 		   WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_green_ap_ps_enable_cmd_fixed_param));
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(pdev_id);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								pdev_id);
 	cmd->enable = value;
 
 	wmi_mtrace(WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID, NO_SESSION, 0);
@@ -1520,7 +1563,9 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_pdev_set_param_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_set_param_cmd_fixed_param));
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(mac_id);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								mac_id);
 	cmd->param_id = pdev_param;
 	cmd->param_value = param->param_value;
 	WMI_LOGD("Setting pdev param = %x, value = %u", param->param_id,
@@ -1568,6 +1613,7 @@ static QDF_STATUS send_pdev_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				wmi_pdev_set_hw_mode_cmd_fixed_param));
 
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
 							WMI_HOST_PDEV_ID_SOC);
 	cmd->hw_mode_index = hw_mode_index;
 	WMI_LOGD("%s: HW mode index:%d", __func__, cmd->hw_mode_index);
@@ -1620,7 +1666,9 @@ static QDF_STATUS send_suspend_cmd_tlv(wmi_unified_t wmi_handle,
 	else
 		cmd->suspend_opt = WMI_PDEV_SUSPEND;
 
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(mac_id);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								mac_id);
 
 	wmi_mtrace(WMI_PDEV_SUSPEND_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, wmibuf, len,
@@ -1655,7 +1703,9 @@ static QDF_STATUS send_resume_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_pdev_resume_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_resume_cmd_fixed_param));
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(mac_id);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								mac_id);
 	wmi_mtrace(WMI_PDEV_RESUME_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, wmibuf, sizeof(*cmd),
 				   WMI_PDEV_RESUME_CMDID);
@@ -1992,7 +2042,8 @@ static QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 			       (wmi_request_stats_cmd_fixed_param));
 	cmd->stats_id = param->stats_id;
 	cmd->vdev_id = param->vdev_id;
-	cmd->pdev_id = wmi_handle->ops->convert_host_pdev_id_to_target(
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
 							param->pdev_id);
 
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
@@ -2906,6 +2957,7 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->requestor = param->requester;
 	cmd->scan_id = param->scan_id;
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
 								param->pdev_id);
 	/* stop the scan with the corresponding scan_id */
 	if (param->req_type == WLAN_SCAN_CANCEL_PDEV_ALL) {
@@ -2977,7 +3029,8 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 			cmd->flags |= APPEND_TO_EXISTING_CHAN_LIST;
 
 		cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
-			chan_list->pdev_id);
+						wmi_handle,
+						chan_list->pdev_id);
 
 		wmi_mtrace(WMI_SCAN_CHAN_LIST_CMDID, cmd->pdev_id, 0);
 
@@ -3835,7 +3888,9 @@ static QDF_STATUS send_lro_config_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->toeplitz_hash_ipv6_40 =
 		 wmi_lro_cmd->toeplitz_hash_ipv6[10];
 
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(pdev_id);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								pdev_id);
 	WMI_LOGD("WMI_LRO_CONFIG: lro_enable %d, tcp_flag 0x%x, pdev_id: %d",
 		 cmd->lro_enable, cmd->tcp_flag_u32, cmd->pdev_id);
 
@@ -5506,6 +5561,7 @@ static QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->enable = user_triggered ? WMI_PKTLOG_ENABLE_FORCE
 					: WMI_PKTLOG_ENABLE_AUTO;
 		cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
 							WMI_HOST_PDEV_ID_SOC);
 		wmi_mtrace(WMI_PDEV_PKTLOG_ENABLE_CMDID, NO_SESSION, 0);
 		if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -5528,6 +5584,7 @@ static QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 		     (wmi_pdev_pktlog_disable_cmd_fixed_param));
 		disable_cmd->pdev_id =
 			wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
 							WMI_HOST_PDEV_ID_SOC);
 		wmi_mtrace(WMI_PDEV_PKTLOG_DISABLE_CMDID, NO_SESSION, 0);
 		if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -5679,6 +5736,7 @@ send_pdev_set_regdomain_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->conformance_test_limit_5G = param->ctl_5G;
 	cmd->dfs_domain = param->dfsDomain;
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
 							param->pdev_id);
 
 	wmi_mtrace(WMI_PDEV_SET_REGDOMAIN_CMDID, NO_SESSION, 0);
@@ -5853,7 +5911,9 @@ static QDF_STATUS send_vdev_set_qdepth_thresh_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param));
 
 	cmd->pdev_id =
-		wmi_handle->ops->convert_pdev_id_host_to_target(param->pdev_id);
+		wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
+							param->pdev_id);
 	cmd->vdev_id = param->vdev_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->mac_addr, &cmd->peer_mac_address);
 	cmd->num_of_msduq_updates = param->num_of_msduq_updates;
@@ -6001,6 +6061,7 @@ static QDF_STATUS send_phyerr_disable_cmd_tlv(wmi_unified_t wmi_handle)
 				wmi_pdev_dfs_disable_cmd_fixed_param));
 	/* Filling it with WMI_PDEV_ID_SOC for now */
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
 							WMI_HOST_PDEV_ID_SOC);
 
 	wmi_mtrace(WMI_PDEV_DFS_DISABLE_CMDID, NO_SESSION, 0);
@@ -6086,6 +6147,7 @@ send_periodic_chan_stats_config_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->enable = param->enable;
 	cmd->stats_period = param->stats_period;
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+						wmi_handle,
 						param->pdev_id);
 
 	wmi_mtrace(WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID, NO_SESSION, 0);
@@ -6302,6 +6364,7 @@ static QDF_STATUS send_thermal_mitigation_param_cmd_tlv(
 		(WMITLV_GET_STRUCT_TLVLEN(wmi_therm_throt_config_request_fixed_param)));
 
 	tt_conf->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
 								param->pdev_id);
 	tt_conf->enable = param->enable;
 	tt_conf->dc = param->dc;
@@ -6568,6 +6631,7 @@ static inline uint8_t *copy_hw_mode_in_init_cmd(struct wmi_unified *wmi_handle,
 					(wmi_pdev_band_to_mac));
 			band_to_mac[idx].pdev_id =
 				wmi_handle->ops->convert_pdev_id_host_to_target(
+					wmi_handle,
 					param->band_to_mac[idx].pdev_id);
 			band_to_mac[idx].start_freq =
 				param->band_to_mac[idx].start_freq;
@@ -7263,6 +7327,7 @@ send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
 		(wmi_pdev_fips_cmd_fixed_param));
 
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
 								param->pdev_id);
 	if (param->key && param->data) {
 		cmd->key_len = param->key_len;
@@ -7448,6 +7513,7 @@ static QDF_STATUS send_power_dbg_cmd_tlv(wmi_unified_t wmi_handle,
 		  (wmi_pdev_wal_power_debug_cmd_fixed_param));
 
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
 								param->pdev_id);
 	cmd->module_id = param->module_id;
 	cmd->num_args = param->num_args;
@@ -7510,7 +7576,9 @@ static QDF_STATUS send_dfs_phyerr_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_GET_STRUCT_TLVLEN(
 		wmi_pdev_dfs_phyerr_offload_enable_cmd_fixed_param));
 
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(pdev_id);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								pdev_id);
 	wmi_mtrace(WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMDID);
@@ -7557,7 +7625,9 @@ static QDF_STATUS send_dfs_phyerr_offload_dis_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_GET_STRUCT_TLVLEN(
 		wmi_pdev_dfs_phyerr_offload_disable_cmd_fixed_param));
 
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(pdev_id);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								pdev_id);
 	wmi_mtrace(WMI_PDEV_DFS_PHYERR_OFFLOAD_DISABLE_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_PDEV_DFS_PHYERR_OFFLOAD_DISABLE_CMDID);
@@ -8584,6 +8654,7 @@ static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
 	}
 
 	hdr->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+							wmi_handle,
 							ev_hdr->pdev_id);
 	hdr->chan_freq = ev_hdr->chan_freq;
 	hdr->channel = ev_hdr->channel;
@@ -8830,6 +8901,7 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	stats_param->num_chan_stats = ev->num_chan_stats;
 	stats_param->num_bcn_stats = ev->num_bcn_stats;
 	stats_param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+							wmi_handle,
 							ev->pdev_id);
 
 	/* if chain_stats is not populated */
@@ -9398,6 +9470,7 @@ static QDF_STATUS extract_pdev_utf_event_tlv(wmi_unified_t wmi_handle,
 	seg_hdr = (struct wmi_host_utf_seg_header_info *)param_buf->data;
 	/* Set pdev_id=1 until FW adds support to include pdev_id */
 	event->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+							wmi_handle,
 							seg_hdr->pdev_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -9836,6 +9909,7 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 
 	param->hw_mode_id = mac_phy_caps->hw_mode_id;
 	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+							wmi_handle,
 							mac_phy_caps->pdev_id);
 	param->phy_id = mac_phy_caps->phy_id;
 	param->supports_11b =
@@ -9972,6 +10046,7 @@ populate_dbr_ring_cap_elems(wmi_unified_t wmi_handle,
 			    WMI_DMA_RING_CAPABILITIES *dbr_ring_caps)
 {
 	param->pdev_id = wmi_handle->ops->convert_target_pdev_id_to_host(
+				wmi_handle,
 				dbr_ring_caps->pdev_id);
 	param->mod_id = dbr_ring_caps->mod_id;
 	param->ring_elems_min = dbr_ring_caps->ring_elems_min;
@@ -10045,6 +10120,7 @@ extract_thermal_stats_tlv(wmi_unified_t wmi_handle,
 	tt_stats_event = param_buf->fixed_param;
 
 	*pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+						wmi_handle,
 						tt_stats_event->pdev_id);
 	*temp = tt_stats_event->temp;
 	*level = tt_stats_event->level;
@@ -10173,6 +10249,7 @@ static QDF_STATUS extract_fips_event_data_tlv(wmi_unified_t wmi_handle,
 	param->data_len = event->data_len;
 	param->error_status = event->error_status;
 	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+								wmi_handle,
 								event->pdev_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -10610,6 +10687,7 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 	radar_event = param_tlv->fixed_param;
 
 	radar_found->pdev_id = convert_target_pdev_id_to_host_pdev_id(
+						wmi_handle,
 						radar_event->pdev_id);
 
 	if (radar_found->pdev_id == WMI_HOST_PDEV_ID_INVALID)
@@ -10832,7 +10910,8 @@ extract_rcpi_response_event_tlv(wmi_unified_t wmi_handle,
  * Return: target pdev_id after conversion.
  */
 static uint32_t convert_host_pdev_id_to_target_pdev_id_legacy(
-							uint32_t pdev_id)
+						       wmi_unified_t wmi_handle,
+						       uint32_t pdev_id)
 {
 	if (pdev_id == WMI_HOST_PDEV_ID_SOC)
 		return WMI_PDEV_ID_SOC;
@@ -10849,7 +10928,8 @@ static uint32_t convert_host_pdev_id_to_target_pdev_id_legacy(
  * Return: host pdev_id after conversion.
  */
 static uint32_t convert_target_pdev_id_to_host_pdev_id_legacy(
-							uint32_t pdev_id)
+						       wmi_unified_t wmi_handle,
+						       uint32_t pdev_id)
 {
 	/*No conversion required*/
 	return pdev_id;
@@ -10883,7 +10963,9 @@ static QDF_STATUS send_set_country_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_set_current_country_cmd_fixed_param));
 
-	cmd->pdev_id = wmi_handle->ops->convert_host_pdev_id_to_target(pdev_id);
+	cmd->pdev_id = wmi_handle->ops->convert_host_pdev_id_to_target(
+							wmi_handle,
+							pdev_id);
 	WMI_LOGD("setting current country to  %s and target pdev_id = %u",
 		 params->country, cmd->pdev_id);
 
@@ -10927,7 +11009,9 @@ static QDF_STATUS send_user_country_code_cmd_tlv(wmi_unified_t wmi_handle,
 			WMITLV_GET_STRUCT_TLVLEN
 			(wmi_set_init_country_cmd_fixed_param));
 
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(pdev_id);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								pdev_id);
 
 	if (rd->flags == CC_IS_SET) {
 		cmd->countrycode_type = WMI_COUNTRYCODE_COUNTRY_ID;
@@ -11407,7 +11491,7 @@ static QDF_STATUS extract_comb_phyerr_tlv(wmi_unified_t wmi_handle,
 	}
 
 	phyerr->pdev_id = wmi_handle->ops->
-		convert_pdev_id_target_to_host(pe_hdr->pdev_id);
+		convert_pdev_id_target_to_host(wmi_handle, pe_hdr->pdev_id);
 	phyerr->tsf64 = pe_hdr->tsf_l32;
 	phyerr->tsf64 |= (((uint64_t)pe_hdr->tsf_u32) << 32);
 	phyerr->bufp = param_tlvs->bufp;
@@ -11572,6 +11656,7 @@ extract_esp_estimation_ev_param_tlv(wmi_unified_t wmi_handle,
 	param->ac_airtime_percentage = esp_event->ac_airtime_percentage;
 
 	param->pdev_id = convert_target_pdev_id_to_host_pdev_id(
+						wmi_handle,
 						esp_event->pdev_id);
 
 	if (param->pdev_id == WMI_HOST_PDEV_ID_INVALID)

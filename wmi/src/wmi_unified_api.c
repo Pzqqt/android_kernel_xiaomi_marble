@@ -2860,6 +2860,7 @@ QDF_STATUS wmi_convert_pdev_id_host_to_target(wmi_unified_t wmi_handle,
 	if (wmi_handle->ops->convert_pdev_id_host_to_target) {
 		*target_pdev_id =
 			wmi_handle->ops->convert_pdev_id_host_to_target(
+					wmi_handle,
 					host_pdev_id);
 		return QDF_STATUS_SUCCESS;
 	}
