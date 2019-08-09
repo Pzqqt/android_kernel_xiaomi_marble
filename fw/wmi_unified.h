@@ -10901,8 +10901,18 @@ typedef enum {
     WMI_AP_PS_EGAP_FLAG_MAX = 0x8000
 } wmi_ap_ps_egap_flag_type;
 
+#define WMI_EGAP_GET_REDUCED_2G_TX_CHM(txrx_chm)  WMI_GET_BITS(txrx_chm, 0, 8)
+#define WMI_EGAP_GET_REDUCED_2G_RX_CHM(txrx_chm)  WMI_GET_BITS(txrx_chm, 8, 8)
+#define WMI_EGAP_GET_REDUCED_5G_TX_CHM(txrx_chm)  WMI_GET_BITS(txrx_chm, 16, 8)
+#define WMI_EGAP_GET_REDUCED_5G_RX_CHM(txrx_chm)  WMI_GET_BITS(txrx_chm, 24, 8)
+
+#define WMI_EGAP_SET_REDUCED_2G_TX_CHM(txrx_chm, val)  WMI_SET_BITS(txrx_chm, 0, 8, val)
+#define WMI_EGAP_SET_REDUCED_2G_RX_CHM(txrx_chm, val)  WMI_SET_BITS(txrx_chm, 8, 8, val)
+#define WMI_EGAP_SET_REDUCED_5G_TX_CHM(txrx_chm, val)  WMI_SET_BITS(txrx_chm, 16, 8, val)
+#define WMI_EGAP_SET_REDUCED_5G_RX_CHM(txrx_chm, val)  WMI_SET_BITS(txrx_chm, 24, 8, val)
+
 /**
- * configure ehanced green ap parameters
+ * configure enhanced green ap parameters
  */
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals wmi_ap_powersave_egap_param_cmd_fixed_param  */
@@ -10922,6 +10932,13 @@ typedef struct {
     /** The param is used to turn on/off some functions within E-GAP.
      */
     A_UINT32 flags; /* wmi_ap_ps_egap_flag_type bitmap */
+    /** Reduced_txrx_chainmask
+     *    [7:0]   - 2G band tx chain mask
+     *    [15:8]  - 2G band rx chain mask
+     *    [23:16] - 5G band tx chain mask
+     *    [31:24] - 5G band rx chain mask
+     */
+    A_UINT32 reduced_txrx_chainmask;
 } wmi_ap_ps_egap_param_cmd_fixed_param;
 
 typedef enum {
