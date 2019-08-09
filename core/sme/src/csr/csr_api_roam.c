@@ -17524,12 +17524,18 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 				     struct roam_offload_scan_req *req_buf,
 				     struct csr_roam_session *session)
 {
+	uint32_t pmkid_modes = mac_ctx->mlme_cfg->sta.pmkid_modes;
+
 	req_buf->roam_offload_enabled = csr_is_roam_offload_enabled(mac_ctx);
 	if (!req_buf->roam_offload_enabled)
 		return;
 
 	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;
-	req_buf->pmkid_modes = session->pmkid_modes;
+	req_buf->pmkid_modes.fw_okc =
+		(pmkid_modes & CFG_PMKID_MODES_OKC) ? 1 : 0;
+	req_buf->pmkid_modes.fw_pmksa_cache =
+		(pmkid_modes & CFG_PMKID_MODES_PMKSA_CACHING) ? 1 : 0;
+
 	qdf_mem_copy(&req_buf->roam_params,
 		     &mac_ctx->roam.configParam.roam_params,
 		     sizeof(req_buf->roam_params));
