@@ -920,8 +920,15 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 				wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
 				SWR_DEVICE_SSR_DOWN, NULL);
 		}
-		if (!pm_runtime_status_suspended(wsa_dev))
-			bolero_runtime_suspend(wsa_dev);
+		if ((!pm_runtime_enabled(wsa_dev) ||
+		     !pm_runtime_suspended(wsa_dev))) {
+			ret = bolero_runtime_suspend(wsa_dev);
+			if (!ret) {
+				pm_runtime_disable(wsa_dev);
+				pm_runtime_set_suspended(wsa_dev);
+				pm_runtime_enable(wsa_dev);
+			}
+		}
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
 		/* reset swr after ssr/pdr */

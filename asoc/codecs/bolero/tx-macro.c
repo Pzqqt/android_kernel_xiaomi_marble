@@ -342,6 +342,7 @@ static int tx_macro_event_handler(struct snd_soc_component *component,
 {
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
+	int ret = 0;
 
 	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
 		return -EINVAL;
@@ -356,8 +357,15 @@ static int tx_macro_event_handler(struct snd_soc_component *component,
 				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
 				SWR_DEVICE_SSR_DOWN, NULL);
 		}
-		if (!pm_runtime_status_suspended(tx_dev))
-			bolero_runtime_suspend(tx_dev);
+		if ((!pm_runtime_enabled(tx_dev) ||
+		     !pm_runtime_suspended(tx_dev))) {
+			ret = bolero_runtime_suspend(tx_dev);
+			if (!ret) {
+				pm_runtime_disable(tx_dev);
+				pm_runtime_set_suspended(tx_dev);
+				pm_runtime_enable(tx_dev);
+			}
+		}
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
 		/* reset swr after ssr/pdr */

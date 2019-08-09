@@ -481,6 +481,39 @@ static int lpi_notifier_service_cb(struct notifier_block *this,
 	return NOTIFY_OK;
 }
 
+int lpi_pinctrl_suspend(struct device *dev)
+{
+	int ret = 0;
+
+	dev_dbg(dev, "%s: system suspend\n", __func__);
+
+	if ((!pm_runtime_enabled(dev) || !pm_runtime_suspended(dev))) {
+		ret = lpi_pinctrl_runtime_suspend(dev);
+		if (!ret) {
+			/*
+			 * Synchronize runtime-pm and system-pm states:
+			 * At this point, we are already suspended. If
+			 * runtime-pm still thinks its active, then
+			 * make sure its status is in sync with HW
+			 * status. The three below calls let the
+			 * runtime-pm know that we are suspended
+			 * already without re-invoking the suspend
+			 * callback
+			 */
+			pm_runtime_disable(dev);
+			pm_runtime_set_suspended(dev);
+			pm_runtime_enable(dev);
+		}
+	}
+
+	return ret;
+}
+
+int lpi_pinctrl_resume(struct device *dev)
+{
+	return 0;
+}
+
 static struct notifier_block service_nb = {
 	.notifier_call  = lpi_notifier_service_cb,
 	.priority = -INT_MAX,
@@ -489,7 +522,7 @@ static struct notifier_block service_nb = {
 static void lpi_pinctrl_ssr_disable(struct device *dev, void *data)
 {
 	lpi_dev_up = false;
-	lpi_pinctrl_runtime_suspend(dev);
+	lpi_pinctrl_suspend(dev);
 }
 
 static const struct snd_event_ops lpi_pinctrl_ssr_ops = {
@@ -817,39 +850,6 @@ int lpi_pinctrl_runtime_suspend(struct device *dev)
 		state->core_hw_vote_status = false;
 	}
 	mutex_unlock(&state->core_hw_vote_lock);
-	return 0;
-}
-
-int lpi_pinctrl_suspend(struct device *dev)
-{
-	int ret = 0;
-
-	dev_dbg(dev, "%s: system suspend\n", __func__);
-
-	if ((!pm_runtime_enabled(dev) || !pm_runtime_suspended(dev))) {
-		ret = lpi_pinctrl_runtime_suspend(dev);
-		if (!ret) {
-			/*
-			 * Synchronize runtime-pm and system-pm states:
-			 * At this point, we are already suspended. If
-			 * runtime-pm still thinks its active, then
-			 * make sure its status is in sync with HW
-			 * status. The three below calls let the
-			 * runtime-pm know that we are suspended
-			 * already without re-invoking the suspend
-			 * callback
-			 */
-			pm_runtime_disable(dev);
-			pm_runtime_set_suspended(dev);
-			pm_runtime_enable(dev);
-		}
-	}
-
-	return ret;
-}
-
-int lpi_pinctrl_resume(struct device *dev)
-{
 	return 0;
 }
 

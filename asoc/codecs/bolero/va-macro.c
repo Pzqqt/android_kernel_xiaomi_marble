@@ -252,8 +252,15 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 		bolero_rsc_clk_reset(va_dev, VA_CORE_CLK);
 		break;
 	case BOLERO_MACRO_EVT_SSR_DOWN:
-		if (!pm_runtime_status_suspended(va_dev))
-			bolero_runtime_suspend(va_dev);
+		if ((!pm_runtime_enabled(va_dev) ||
+		     !pm_runtime_suspended(va_dev))) {
+			ret = bolero_runtime_suspend(va_dev);
+			if (!ret) {
+				pm_runtime_disable(va_dev);
+				pm_runtime_set_suspended(va_dev);
+				pm_runtime_enable(va_dev);
+			}
+		}
 		break;
 	default:
 		break;
