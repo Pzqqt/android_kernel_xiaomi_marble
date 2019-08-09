@@ -11568,8 +11568,10 @@ static QDF_STATUS
 extract_cfr_peer_tx_event_param_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 				    wmi_cfr_peer_tx_event_param *peer_tx_event)
 {
+	int idx;
 	WMI_PEER_CFR_CAPTURE_EVENTID_param_tlvs *param_buf;
 	wmi_peer_cfr_capture_event_fixed_param *peer_tx_event_ev;
+	wmi_peer_cfr_capture_event_phase_fixed_param *chain_phase_ev;
 
 	param_buf = (WMI_PEER_CFR_CAPTURE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
@@ -11603,6 +11605,20 @@ extract_cfr_peer_tx_event_param_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	peer_tx_event->counter = peer_tx_event_ev->counter;
 	qdf_mem_copy(peer_tx_event->chain_rssi, peer_tx_event_ev->chain_rssi,
 		     sizeof(peer_tx_event->chain_rssi));
+
+	chain_phase_ev = param_buf->phase_param;
+	if (chain_phase_ev) {
+		for (idx = 0; idx < WMI_HOST_MAX_CHAINS; idx++) {
+			/* Due to FW's alignment rules, phase information being
+			 * passed is 32-bit, out of which only 16 bits is valid.
+			 * Remaining bits are all zeroed. So direct mem copy
+			 * will not work as it will copy extra zeroes into host
+			 * structures.
+			 */
+			peer_tx_event->chain_phase[idx] =
+				(0xffff & chain_phase_ev->chain_phase[idx]);
+		}
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

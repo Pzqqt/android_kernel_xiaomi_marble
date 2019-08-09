@@ -7501,6 +7501,7 @@ struct vap_tidmap_prec_params {
  *     Each of these 8-bit RSSI reports is in dBm units. 0x80 means invalid.
  *     Unused bytes within used chain_rssi indices will be 0x80.
  *     Unused rssi_chain indices will be set to 0x80808080.
+ * @chain_phase: Per chain phase of peer for upto WMI_HOST_MAX_CHAINS.
  */
 typedef struct {
 	uint32_t capture_method;
@@ -7518,6 +7519,7 @@ typedef struct {
 	uint32_t timestamp_us;
 	uint32_t counter;
 	uint32_t chain_rssi[WMI_HOST_MAX_CHAINS];
+	uint16_t chain_phase[WMI_HOST_MAX_CHAINS];
 } wmi_cfr_peer_tx_event_param;
 
 /**
