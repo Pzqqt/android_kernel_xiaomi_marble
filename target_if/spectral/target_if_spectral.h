@@ -911,8 +911,8 @@ struct target_if_spectral {
 	u_int8_t                               null_fftbin_adj;
 	enum spectral_160mhz_report_delivery_state state_160mhz_delivery;
 	void *spectral_report_cache;
-	uint32_t last_fft_timestamp;
-	uint32_t timestamp_war_offset;
+	uint32_t last_fft_timestamp[SPECTRAL_SCAN_MODE_MAX];
+	uint32_t timestamp_war_offset[SPECTRAL_SCAN_MODE_MAX];
 	uint16_t fft_size_min;
 	uint16_t fft_size_max;
 };

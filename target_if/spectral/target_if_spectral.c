@@ -2013,8 +2013,6 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->inband_fftbin_size_adj = 0;
 		spectral->null_fftbin_adj = 0;
 	}
-	spectral->last_fft_timestamp = 0;
-	spectral->timestamp_war_offset = 0;
 
 	if ((target_type == TARGET_TYPE_QCA8074) ||
 	    (target_type == TARGET_TYPE_QCA8074V2) ||
@@ -2053,6 +2051,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 
 	/* Spectral mode specific init */
 	for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++) {
+		spectral->last_fft_timestamp[smode] = 0;
+		spectral->timestamp_war_offset[smode] = 0;
 		spectral->params_valid[smode] = false;
 		qdf_spinlock_create(&spectral->param_info[smode].osps_lock);
 		spectral->param_info[smode].osps_cache.osc_is_valid = 0;
@@ -2655,9 +2655,8 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 	if (!p_sops->is_spectral_active(spectral, smode)) {
 		p_sops->configure_spectral(spectral, spectral_params, smode);
 		p_sops->start_spectral_scan(spectral, smode, err);
-		spectral->timestamp_war_offset = 0;
-		spectral->last_fft_timestamp = 0;
-	} else {
+		spectral->timestamp_war_offset[smode] = 0;
+		spectral->last_fft_timestamp[smode] = 0;
 	}
 
 	/* get current spectral configuration */

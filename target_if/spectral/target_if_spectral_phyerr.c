@@ -1654,12 +1654,22 @@ target_if_consume_spectral_report_gen3(
 		}
 
 		if (report->reset_delay) {
-			spectral->timestamp_war_offset += (report->reset_delay +
-					spectral->last_fft_timestamp);
+			enum spectral_scan_mode mode =
+						SPECTRAL_SCAN_MODE_NORMAL;
+
+			/* Adjust the offset for all the Spectral modes.
+			 * Target will be sending the non zero reset delay for
+			 * the first Spectral report after reset. This delay is
+			 * common for all the Spectral modes.
+			 */
+			for (; mode < SPECTRAL_SCAN_MODE_MAX; mode++)
+				spectral->timestamp_war_offset[mode] +=
+					(report->reset_delay +
+					 spectral->last_fft_timestamp[mode]);
 		}
 		tsf64 = p_sfft->timestamp;
-		spectral->last_fft_timestamp = p_sfft->timestamp;
-		tsf64 += spectral->timestamp_war_offset;
+		spectral->last_fft_timestamp[params.smode] = p_sfft->timestamp;
+		tsf64 += spectral->timestamp_war_offset[params.smode];
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
 		if (spectral->ch_width == CH_WIDTH_160MHZ) {
