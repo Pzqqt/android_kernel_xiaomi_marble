@@ -5654,7 +5654,8 @@ typedef struct {
 /* Maximum CCK, OFDM rates supported */
 #define WMI_SA_MAX_CCK_OFDM_RATES 12
 /* Maximum MCS rates supported; 4 rates in each dword */
-#define WMI_SA_MAX_MCS_RATES 40
+/* Maximum MCS ratecodes with 11ax */
+#define WMI_SA_MAX_MCS_RATES 96
 #define WMI_SA_MAX_RATE_COUNTERS 4
 /* Maximum rate series used for transmission */
 #define SA_MAX_RATE_SERIES 2
@@ -5663,6 +5664,15 @@ typedef struct {
 #define SA_MAX_HT_RATE_DWORDS 10
 #define SA_BYTES_IN_DWORD 4
 #define SA_MASK_BYTE 0xff
+#define SA_MASK_BYTE3 0xff0000
+
+/* Support 11ax 11bit ratecode */
+#define SA_MASK_RCODE 0x7ff
+#define SA_WORD_BITS_LEN 16
+#define SA_WORDS_IN_DWORD 2
+#define SA_MAX_LEGACY_RATE_WORDS 6
+#define SA_MAX_HT_RATE_WORDS 48
+
 /* TODO: ratecode_160 needs to add for future chips */
 /**
  * struct wmi_sa_rate_cap - smart antenna rat capabilities
@@ -5674,10 +5684,10 @@ typedef struct {
  * @ratecount: Max Rate count for each mode
  */
 typedef struct {
-	uint8_t ratecode_legacy[WMI_SA_MAX_CCK_OFDM_RATES];
-	uint8_t ratecode_20[WMI_SA_MAX_MCS_RATES];
-	uint8_t ratecode_40[WMI_SA_MAX_MCS_RATES];
-	uint8_t ratecode_80[WMI_SA_MAX_MCS_RATES];
+	uint16_t ratecode_legacy[WMI_SA_MAX_CCK_OFDM_RATES];
+	uint16_t ratecode_20[WMI_SA_MAX_MCS_RATES];
+	uint16_t ratecode_40[WMI_SA_MAX_MCS_RATES];
+	uint16_t ratecode_80[WMI_SA_MAX_MCS_RATES];
 	uint8_t ratecount[WMI_SA_MAX_RATE_COUNTERS];
 } wmi_sa_rate_cap;
 
