@@ -375,8 +375,20 @@ static int check_for_probe_defer(int ret)
 }
 #endif
 
-void hdd_soc_idle_restart_lock(void)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
+static void hdd_abort_system_suspend(struct device *dev)
 {
+	pm_wakeup_hard_event(dev);
+}
+#else
+static void hdd_abort_system_suspend(struct device *dev)
+{
+}
+#endif
+
+void hdd_soc_idle_restart_lock(struct device *dev)
+{
+	hdd_abort_system_suspend(dev);
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART);
 }
 

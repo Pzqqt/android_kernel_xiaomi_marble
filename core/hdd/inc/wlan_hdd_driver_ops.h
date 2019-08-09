@@ -120,12 +120,13 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 
 /**
  * hdd_soc_idle_restart_lock() - Takes wakelock for idle restart
+ * @dev: wlan device structure
  *
  * This function takes wakelock to prevent suspend during idle restart
  *
  * Return: none
  */
-void hdd_soc_idle_restart_lock(void);
+void hdd_soc_idle_restart_lock(struct device *dev);
 
 /**
  * hdd_soc_idle_restart_unlock() - Releases wakelock for idle restart
