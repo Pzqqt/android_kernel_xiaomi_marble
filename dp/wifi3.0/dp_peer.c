@@ -34,7 +34,6 @@
 #include "dp_tx_capture.h"
 #endif
 
-#ifdef DP_LFR
 static inline void
 dp_set_ssn_valid_flag(struct hal_reo_cmd_params *params,
 					uint8_t valid)
@@ -45,11 +44,6 @@ dp_set_ssn_valid_flag(struct hal_reo_cmd_params *params,
 		  "%s: Setting SSN valid bit to %d",
 		  __func__, valid);
 }
-#else
-static inline void
-dp_set_ssn_valid_flag(struct hal_reo_cmd_params *params,
-					uint8_t valid) {};
-#endif
 
 static inline int dp_peer_find_mac_addr_cmp(
 	union dp_align_mac_addr *mac_addr1,
@@ -1761,9 +1755,9 @@ static QDF_STATUS dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 	if (start_seq < IEEE80211_SEQ_MAX) {
 		params.u.upd_queue_params.update_ssn = 1;
 		params.u.upd_queue_params.ssn = start_seq;
+	} else {
+	    dp_set_ssn_valid_flag(&params, 0);
 	}
-
-	dp_set_ssn_valid_flag(&params, 0);
 	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
 			dp_rx_tid_update_cb, rx_tid);
 
