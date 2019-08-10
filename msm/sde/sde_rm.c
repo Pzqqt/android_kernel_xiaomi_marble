@@ -1736,8 +1736,8 @@ int sde_rm_cont_splash_res_init(struct msm_drm_private *priv,
 			splash_display->cont_splash_enabled = true;
 			splash_display->ctl_ids[splash_display->ctl_cnt++] =
 				iter_c.blk->id;
+			index++;
 		}
-		index++;
 	}
 
 	return 0;
