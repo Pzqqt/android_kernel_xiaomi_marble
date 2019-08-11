@@ -3123,14 +3123,20 @@ static int msm_dai_q6_tws_channel_mode_put(struct snd_kcontrol *kcontrol,
 	struct snd_soc_dai *dai = kcontrol->private_data;
 	struct msm_dai_q6_dai_data *dai_data = NULL;
 	int ret = 0;
+	u32 format = 0;
 
 	if (dai)
 		dai_data = dev_get_drvdata(dai->dev);
 
-	if (dai_data && (dai_data->enc_config.format == ENC_FMT_APTX)) {
+	if (dai_data)
+		format = dai_data->enc_config.format;
+	else
+		goto exit;
+
+	if (format == ENC_FMT_APTX || format == ENC_FMT_APTX_ADAPTIVE) {
 		if (test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
-			ret = afe_set_tws_channel_mode(dai->id,
-					ucontrol->value.integer.value[0]);
+			ret = afe_set_tws_channel_mode(format,
+				dai->id, ucontrol->value.integer.value[0]);
 			if (ret < 0) {
 				pr_err("%s: channel mode setting failed for TWS\n",
 				__func__);

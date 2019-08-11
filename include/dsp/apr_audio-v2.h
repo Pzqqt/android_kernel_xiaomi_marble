@@ -4035,6 +4035,8 @@ struct afe_id_aptx_adaptive_enc_init
 
 #define CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO    0x0001332A
 
+#define CAPI_V2_PARAM_ID_APTX_AD_ENC_SWITCH_TO_MONO    0x00013354
+
 struct aptx_channel_mode_param_t {
 	u32 channel_mode;
 } __packed;

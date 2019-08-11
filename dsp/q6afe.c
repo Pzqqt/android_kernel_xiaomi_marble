@@ -4330,18 +4330,28 @@ exit:
 	return ret;
 }
 
-int afe_set_tws_channel_mode(u16 port_id, u32 channel_mode)
+int afe_set_tws_channel_mode(u32 format, u16 port_id, u32 channel_mode)
 {
 	struct aptx_channel_mode_param_t channel_mode_param;
 	struct param_hdr_v3 param_info;
 	int ret = 0;
+	u32 param_id = 0;
+
+	if (format == ASM_MEDIA_FMT_APTX) {
+		param_id = CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO;
+	} else if (format == ASM_MEDIA_FMT_APTX_ADAPTIVE) {
+		param_id = CAPI_V2_PARAM_ID_APTX_AD_ENC_SWITCH_TO_MONO;
+	} else {
+		pr_err("%s: Not supported format 0x%x\n", __func__, format);
+		return -EINVAL;
+	}
 
 	memset(&param_info, 0, sizeof(param_info));
 	memset(&channel_mode_param, 0, sizeof(channel_mode_param));
 
 	param_info.module_id = AFE_MODULE_ID_ENCODER;
 	param_info.instance_id = INSTANCE_ID_0;
-	param_info.param_id = CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO;
+	param_info.param_id = param_id;
 	param_info.param_size = sizeof(channel_mode_param);
 
 	channel_mode_param.channel_mode = channel_mode;
