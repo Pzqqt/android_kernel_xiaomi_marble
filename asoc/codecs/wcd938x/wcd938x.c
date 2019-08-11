@@ -177,6 +177,14 @@ static int wcd938x_init_reg(struct snd_soc_component *component)
 				WCD938X_DIGITAL_TX_REQ_FB_CTL_3, 0xFF, 0x00);
 	snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_TX_REQ_FB_CTL_4, 0xFF, 0x00);
+	snd_soc_component_update_bits(component,
+				WCD938X_MICB1_TEST_CTL_1, 0xE0, 0xE0);
+	snd_soc_component_update_bits(component,
+				WCD938X_MICB2_TEST_CTL_1, 0xE0, 0xE0);
+	snd_soc_component_update_bits(component,
+				WCD938X_MICB3_TEST_CTL_1, 0xE0, 0xE0);
+	snd_soc_component_update_bits(component,
+				WCD938X_MICB4_TEST_CTL_1, 0xE0, 0xE0);
 
 	return 0;
 }
