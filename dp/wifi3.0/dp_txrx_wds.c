@@ -477,7 +477,7 @@ uint8_t dp_tx_need_multipass_process(struct dp_soc *soc, struct dp_vdev *vdev,
 	peer = dp_peer_find_hash_find(soc, eh->ether_dhost, 0, DP_VDEV_ALL);
 
 	if (qdf_unlikely(peer == NULL))
-		goto unref_and_return;
+		return DP_VLAN_UNTAGGED;
 
 	/*
 	 * Do not drop the frame when vlan_id doesn't match.
@@ -488,8 +488,6 @@ uint8_t dp_tx_need_multipass_process(struct dp_soc *soc, struct dp_vdev *vdev,
 		return DP_VLAN_TAGGED_UNICAST;
 	}
 
-unref_and_return:
-	dp_peer_unref_delete(peer);
 	return DP_VLAN_UNTAGGED;
 }
 
@@ -506,10 +504,14 @@ bool dp_tx_multipass_process(struct dp_soc *soc, struct dp_vdev *vdev,
 			     qdf_nbuf_t nbuf,
 			     struct dp_tx_msdu_info_s *msdu_info)
 {
-	uint16_t vlan_id;
-	qdf_nbuf_t nbuf_copy;
-	uint16_t group_key;
+	uint16_t vlan_id = 0;
+	uint16_t group_key = 0;
 	uint8_t is_spcl_peer = DP_VLAN_UNTAGGED;
+	qdf_nbuf_t nbuf_copy = NULL;
+
+	if (HTT_TX_MSDU_EXT2_DESC_FLAG_VALID_KEY_FLAGS_GET(msdu_info->meta_data[0])) {
+		return true;
+	}
 
 	is_spcl_peer = dp_tx_need_multipass_process(soc, vdev, nbuf, &vlan_id);
 
@@ -540,8 +542,16 @@ bool dp_tx_multipass_process(struct dp_soc *soc, struct dp_vdev *vdev,
 	 * Send multicast frame to special peers even
 	 * if pass through to classic repeater fails.
 	 */
-	if (nbuf_copy && dp_tx_send((struct cdp_vdev *)vdev, nbuf_copy)) {
-		qdf_nbuf_free(nbuf_copy);
+	if (nbuf_copy) {
+		struct dp_tx_msdu_info_s msdu_info_copy;
+		qdf_mem_zero(&msdu_info_copy, sizeof(msdu_info_copy));
+		msdu_info_copy.tid = HTT_TX_EXT_TID_INVALID;
+		HTT_TX_MSDU_EXT2_DESC_FLAG_VALID_KEY_FLAGS_SET(msdu_info_copy.meta_data[0], 1);
+		nbuf_copy = dp_tx_send_msdu_single(vdev, nbuf_copy, &msdu_info_copy, HTT_INVALID_PEER, NULL);
+		if (nbuf_copy) {
+			qdf_nbuf_free(nbuf_copy);
+			qdf_err("nbuf_copy send failed");
+		}
 	}
 
 	group_key = vdev->iv_vlan_map[vlan_id];
