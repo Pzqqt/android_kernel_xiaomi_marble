@@ -2840,7 +2840,6 @@ cppflags-y += -DPEER_CACHE_RX_PKTS
 cppflags-y += -DPCIE_REG_WINDOW_LOCAL_NO_CACHE
 
 cppflags-y += -DTGT_IF_VDEV_MGR_CONV
-cppflags-y += -DCMN_VDEV_MGR_TGT_IF_ENABLE
 
 ccflags-$(CONFIG_HASTINGS_BT_WAR) += -DHASTINGS_BT_WAR
 
