@@ -2863,8 +2863,11 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 void wma_vdev_init(struct wma_txrx_node *vdev)
 {
 	qdf_wake_lock_create(&vdev->vdev_start_wakelock, "vdev_start");
+	qdf_runtime_lock_init(&vdev->vdev_start_runtime_wakelock);
 	qdf_wake_lock_create(&vdev->vdev_stop_wakelock, "vdev_stop");
+	qdf_runtime_lock_init(&vdev->vdev_stop_runtime_wakelock);
 	qdf_wake_lock_create(&vdev->vdev_set_key_wakelock, "vdev_set_key");
+	qdf_runtime_lock_init(&vdev->vdev_set_key_runtime_wakelock);
 	vdev->is_waiting_for_key = false;
 }
 
@@ -2943,9 +2946,12 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 		vdev->roam_synch_frame_ind.reassoc_rsp = NULL;
 	}
 
-	qdf_wake_lock_destroy(&vdev->vdev_start_wakelock);
-	qdf_wake_lock_destroy(&vdev->vdev_stop_wakelock);
+	qdf_runtime_lock_deinit(&vdev->vdev_set_key_runtime_wakelock);
 	qdf_wake_lock_destroy(&vdev->vdev_set_key_wakelock);
+	qdf_runtime_lock_deinit(&vdev->vdev_stop_runtime_wakelock);
+	qdf_wake_lock_destroy(&vdev->vdev_stop_wakelock);
+	qdf_runtime_lock_deinit(&vdev->vdev_start_runtime_wakelock);
+	qdf_wake_lock_destroy(&vdev->vdev_start_wakelock);
 	vdev->is_waiting_for_key = false;
 }
 

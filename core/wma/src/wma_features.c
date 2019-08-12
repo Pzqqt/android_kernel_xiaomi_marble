@@ -5399,6 +5399,8 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
 	if (!pairwise && iface) {
 		/* Its GTK release the wake lock */
 		wma_debug("Release set key wake lock");
+		qdf_runtime_pm_allow_suspend(
+				&iface->vdev_set_key_runtime_wakelock);
 		wma_release_wakelock(&iface->vdev_set_key_wakelock);
 	}
 

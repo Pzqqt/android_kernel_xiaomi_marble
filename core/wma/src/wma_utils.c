@@ -3457,9 +3457,13 @@ wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params)
 	}
 	wma_acquire_wakelock(&vdev->vdev_start_wakelock,
 			     WMA_VDEV_START_REQUEST_TIMEOUT);
+	qdf_runtime_pm_prevent_suspend(&vdev->vdev_start_runtime_wakelock);
 	status = wmi_unified_vdev_start_send(wma->wmi_handle, params);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_runtime_pm_allow_suspend(
+				&vdev->vdev_start_runtime_wakelock);
 		wma_release_wakelock(&vdev->vdev_start_wakelock);
+	}
 
 	return status;
 }
@@ -3486,9 +3490,14 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 		     sizeof(struct wlan_mlme_nss_chains));
 	wma_acquire_wakelock(&iface->vdev_stop_wakelock,
 			     WMA_VDEV_STOP_REQUEST_TIMEOUT);
+	qdf_runtime_pm_prevent_suspend(
+			&iface->vdev_stop_runtime_wakelock);
 	status = wmi_unified_vdev_stop_send(wma->wmi_handle, vdev_id);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_runtime_pm_allow_suspend(
+				&iface->vdev_stop_runtime_wakelock);
 		wma_release_wakelock(&iface->vdev_stop_wakelock);
+	}
 
 	return status;
 }
@@ -3714,6 +3723,7 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 	vdev = &wma->interfaces[params->vdev_id];
 
 	status = wmi_unified_vdev_up_send(wma->wmi_handle, bssid, params);
+	qdf_runtime_pm_allow_suspend(&vdev->vdev_start_runtime_wakelock);
 	wma_release_wakelock(&vdev->vdev_start_wakelock);
 
 	return status;
@@ -3733,6 +3743,7 @@ QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 	vdev = &wma->interfaces[vdev_id];
 	wma->interfaces[vdev_id].roaming_in_progress = false;
 	status = wmi_unified_vdev_down_send(wma->wmi_handle, vdev_id);
+	qdf_runtime_pm_allow_suspend(&vdev->vdev_start_runtime_wakelock);
 	wma_release_wakelock(&vdev->vdev_start_wakelock);
 
 	return status;

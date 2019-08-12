@@ -2396,6 +2396,8 @@ __wma_handle_vdev_stop_rsp(wmi_vdev_stopped_event_fixed_param *resp_event)
 
 	/* Clear key information */
 	wma_clear_iface_key(iface);
+	qdf_runtime_pm_allow_suspend(
+			&iface->vdev_stop_runtime_wakelock);
 	wma_release_wakelock(&iface->vdev_stop_wakelock);
 
 	req_msg = wma_find_vdev_req(wma, resp_event->vdev_id,

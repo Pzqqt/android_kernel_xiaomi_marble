@@ -757,6 +757,9 @@ struct roam_synch_frame_ind {
  * @vdev_start_wakelock: wakelock to protect vdev start op with firmware
  * @vdev_stop_wakelock: wakelock to protect vdev stop op with firmware
  * @vdev_set_key_wakelock: wakelock to protect vdev set key op with firmware
+ * @vdev_start_runtime_wakelock: runtime pm wakelock for vdev start
+ * @vdev_stop_runtime_wakelock: runtime pm wakelock for vdev stop
+ * @vdev_set_key_runtime_wakelock: runtime pm wakelock for set key
  * @channel: channel
  * @roam_offload_enabled: is roam offload enable/disable
  * @roam_scan_stats_req: cached roam scan stats request
@@ -826,6 +829,9 @@ struct wma_txrx_node {
 	qdf_wake_lock_t vdev_start_wakelock;
 	qdf_wake_lock_t vdev_stop_wakelock;
 	qdf_wake_lock_t vdev_set_key_wakelock;
+	qdf_runtime_lock_t vdev_start_runtime_wakelock;
+	qdf_runtime_lock_t vdev_stop_runtime_wakelock;
+	qdf_runtime_lock_t vdev_set_key_runtime_wakelock;
 	struct roam_synch_frame_ind roam_synch_frame_ind;
 	bool is_waiting_for_key;
 	bool roam_offload_enabled;
