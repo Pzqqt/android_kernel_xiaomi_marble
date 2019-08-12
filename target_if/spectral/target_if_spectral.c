@@ -2886,13 +2886,14 @@ void
 target_if_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
 					struct wmi_spectral_cmd_ops *cmd_ops)
 {
-	struct target_if_spectral *spectral = NULL;
+	struct target_if_spectral *spectral =
+		get_target_if_spectral_handle_from_pdev(pdev);
 
-	spectral = get_target_if_spectral_handle_from_pdev(pdev);
-	spectral->param_wmi_cmd_ops.wmi_spectral_configure_cmd_send =
-	    cmd_ops->wmi_spectral_configure_cmd_send;
-	spectral->param_wmi_cmd_ops.wmi_spectral_enable_cmd_send =
-	    cmd_ops->wmi_spectral_enable_cmd_send;
+	if (!spectral) {
+		spectral_err("Spectral LMAC object is null");
+		return;
+	}
+	spectral->param_wmi_cmd_ops = *cmd_ops;
 }
 
 /**

@@ -688,8 +688,9 @@ struct vdev_spectral_enable_params;
 /**
  * struct wmi_spectral_cmd_ops - structure used holding the operations
  * related to wmi commands on spectral parameters.
- * @wmi_spectral_configure_cmd_send:
- * @wmi_spectral_enable_cmd_send:
+ * @wmi_spectral_configure_cmd_send: Configure Spectral parameters
+ * @wmi_spectral_enable_cmd_send: Enable/Disable Spectral
+ * @wmi_spectral_crash_inject: Inject FW crash
  */
 struct wmi_spectral_cmd_ops {
 	QDF_STATUS (*wmi_spectral_configure_cmd_send)(
@@ -698,6 +699,8 @@ struct wmi_spectral_cmd_ops {
 	QDF_STATUS (*wmi_spectral_enable_cmd_send)(
 		    wmi_unified_t wmi_hdl,
 		    struct vdev_spectral_enable_params *param);
+	QDF_STATUS(*wmi_spectral_crash_inject)(
+		wmi_unified_t wmi_handle, struct crash_inject *param);
 };
 
 /**
@@ -1893,6 +1896,14 @@ target_if_consume_spectral_report_gen3(
 	 struct target_if_spectral *spectral,
 	 struct spectral_report *report);
 #endif
+
+/**
+ * target_if_spectral_fw_hang() - Crash the FW from Spectral module
+ * @spectral: Pointer to Spectral LMAC object
+ *
+ * Return: QDF_STATUS of operation
+ */
+QDF_STATUS target_if_spectral_fw_hang(struct target_if_spectral *spectral);
 
 #ifdef WIN32
 #pragma pack(pop, target_if_spectral)

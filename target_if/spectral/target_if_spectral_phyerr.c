@@ -28,6 +28,7 @@
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
 #include <reg_services_public_struct.h>
+#include <target_if.h>
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
 #endif
@@ -150,6 +151,21 @@ target_if_spectral_dump_fft(uint8_t *pfft, int fftlen)
 		spectral_debug("%d ", pfft[i]);
 	spectral_debug("\n");
 	return 0;
+}
+
+QDF_STATUS target_if_spectral_fw_hang(struct target_if_spectral *spectral)
+{
+	struct crash_inject param;
+
+	if (!spectral) {
+		spectral_err("Spectral LMAC object is null");
+		return QDF_STATUS_E_INVAL;
+	}
+	qdf_mem_set(&param, sizeof(param), 0);
+	param.type = 1; //RECOVERY_SIM_ASSERT
+
+	return spectral->param_wmi_cmd_ops.wmi_spectral_crash_inject(
+		GET_WMI_HDL_FROM_PDEV(spectral->pdev_obj), &param);
 }
 
 void
