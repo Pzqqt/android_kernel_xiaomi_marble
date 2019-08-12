@@ -916,6 +916,7 @@ static enum mac_status_code lim_check_wpa_ie(struct pe_session *session,
   * lim_check_sae_pmf_cap() - check pmf capability for SAE STA
   * @session: pointer to pe session entry
   * @rsn: pointer to RSN
+  * @akm_type: AKM type
   *
   * This function checks if SAE STA is pmf capable when SAE SAP is pmf
   * capable. Reject with eSIR_MAC_ROBUST_MGMT_FRAMES_POLICY_VIOLATION
@@ -925,19 +926,22 @@ static enum mac_status_code lim_check_wpa_ie(struct pe_session *session,
   */
 #ifdef WLAN_FEATURE_SAE
 static enum mac_status_code lim_check_sae_pmf_cap(struct pe_session *session,
-						  tDot11fIERSN *rsn)
+						  tDot11fIERSN *rsn,
+						  enum ani_akm_type akm_type)
 {
 	enum mac_status_code status = eSIR_MAC_SUCCESS_STATUS;
 
 	if (session->pLimStartBssReq->pmfCapable &&
-	    (rsn->RSN_Cap[0] & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED) == 0)
+	    (rsn->RSN_Cap[0] & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED) == 0 &&
+	    akm_type == ANI_AKM_TYPE_SAE)
 		status = eSIR_MAC_ROBUST_MGMT_FRAMES_POLICY_VIOLATION_STATUS;
 
 	return status;
 }
 #else
 static enum mac_status_code lim_check_sae_pmf_cap(struct pe_session *session,
-						  tDot11fIERSN *rsn)
+						  tDot11fIERSN *rsn,
+						  enum ani_akm_type akm_type)
 {
 	return eSIR_MAC_SUCCESS_STATUS;
 }
@@ -1037,8 +1041,8 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 		*akm_type = lim_translate_rsn_oui_to_akm_type(
 						    dot11f_ie_rsn.akm_suite[0]);
 
-		if (*akm_type == ANI_AKM_TYPE_SAE)
-			status = lim_check_sae_pmf_cap(session, &dot11f_ie_rsn);
+		status = lim_check_sae_pmf_cap(session, &dot11f_ie_rsn,
+					       *akm_type);
 		if (eSIR_MAC_SUCCESS_STATUS != status) {
 			/* Reject pmf disable SAE STA */
 			pe_warn("Re/Assoc rejected from: " QDF_MAC_ADDR_STR,
