@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -77,6 +77,12 @@ struct ol_txrx_stats_tx_dropped {
 	 * couldn't get an ack for
 	 */
 	struct ol_txrx_stats_elem no_ack;
+
+	/*
+	 * MSDUs which the target drop
+	 * (lack of tx descriptor)
+	 */
+	struct ol_txrx_stats_elem target_drop;
 
 	/* MSDU which were dropped for other reasons */
 	struct ol_txrx_stats_elem others;

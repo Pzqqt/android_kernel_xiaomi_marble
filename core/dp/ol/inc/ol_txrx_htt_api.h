@@ -117,6 +117,9 @@ enum htt_tx_status {
 	/* no_ack - sent, but no ack */
 	htt_tx_status_no_ack = HTT_TX_COMPL_IND_STAT_NO_ACK,
 
+	/* drop may due to tx descriptor not enough*/
+	htt_tx_status_drop = HTT_TX_COMPL_IND_STAT_DROP,
+
 	/* download_fail - host could not deliver the tx frame to target */
 	htt_tx_status_download_fail = HTT_HOST_ONLY_STATUS_CODE_START,
 };

@@ -214,6 +214,9 @@ ol_rx_mpdu_list_next(struct ol_txrx_pdev_t *pdev,
 					     netbuf);			\
 		else if (status == htt_tx_status_no_ack)		\
 			TXRX_STATS_MSDU_INCR(pdev, tx.dropped.no_ack, netbuf); \
+		else if (status == htt_tx_status_drop)		\
+			TXRX_STATS_MSDU_INCR(pdev, tx.dropped.target_drop, \
+					     netbuf);			\
 		else if (status == htt_tx_status_download_fail)		\
 			TXRX_STATS_MSDU_INCR(pdev, tx.dropped.download_fail, \
 					     netbuf);			\
@@ -269,6 +272,12 @@ ol_rx_mpdu_list_next(struct ol_txrx_pdev_t *pdev,
 				 _p_cntrs);				       \
 			TXRX_STATS_ADD(_pdev, pub.tx.dropped.no_ack.bytes,     \
 				 _b_cntrs);				       \
+			break;                                                 \
+		case htt_tx_status_drop:                                    \
+			TXRX_STATS_ADD(_pdev,				       \
+				 pub.tx.dropped.target_drop.pkts, _p_cntrs);\
+			TXRX_STATS_ADD(_pdev,				       \
+				pub.tx.dropped.target_drop.bytes, _b_cntrs);\
 			break;                                                 \
 		case htt_tx_status_download_fail:                              \
 			TXRX_STATS_ADD(_pdev,				       \

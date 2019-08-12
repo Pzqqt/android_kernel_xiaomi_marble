@@ -4179,10 +4179,11 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev,
 		pdev->stats.pub.tx.dropped.download_fail.pkts
 		  + pdev->stats.pub.tx.dropped.target_discard.pkts
 		  + pdev->stats.pub.tx.dropped.no_ack.pkts
+		  + pdev->stats.pub.tx.dropped.target_drop.pkts
 		  + pdev->stats.pub.tx.dropped.others.pkts;
 
 	if (level == QDF_STATS_VERBOSITY_LEVEL_LOW) {
-		txrx_nofl_dbg("STATS |%u %u|TX: %lld tso %lld ok %lld drops(%u-%lld %u-%lld %u-%lld ?-%lld hR-%lld)|RX: %lld drops(E %lld PI %lld ME %lld) fwd(S %d F %d SF %d)|",
+		txrx_nofl_dbg("STATS |%u %u|TX: %lld tso %lld ok %lld drops(%u-%lld %u-%lld %u-%lld %u-%lld ?-%lld hR-%lld)|RX: %lld drops(E %lld PI %lld ME %lld) fwd(S %d F %d SF %d)|",
 			      pdev->tx_desc.num_free,
 			      pdev->tx_desc.pool_size,
 			      pdev->stats.pub.tx.from_stack.pkts,
@@ -4195,6 +4196,8 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev,
 					target_discard.pkts,
 			      htt_tx_status_no_ack,
 			      pdev->stats.pub.tx.dropped.no_ack.pkts,
+			      htt_tx_status_drop,
+			      pdev->stats.pub.tx.dropped.target_drop.pkts,
 			      pdev->stats.pub.tx.dropped.others.pkts,
 			      pdev->stats.pub.tx.dropped.host_reject.pkts,
 			      pdev->stats.pub.rx.delivered.pkts,
@@ -4219,8 +4222,9 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev,
 			  tx_dropped,
 		       pdev->stats.pub.tx.dropped.download_fail.bytes
 			  + pdev->stats.pub.tx.dropped.target_discard.bytes
+			  + pdev->stats.pub.tx.dropped.target_drop.bytes
 			  + pdev->stats.pub.tx.dropped.no_ack.bytes);
-	txrx_nofl_info("successfully delivered: %lld (%lld B), download fail: %lld (%lld B), target discard: %lld (%lld B), no ack: %lld (%lld B) others: %lld (%lld B)",
+	txrx_nofl_info("successfully delivered: %lld (%lld B), download fail: %lld (%lld B), target discard: %lld (%lld B), no ack: %lld (%lld B),target drop: %lld (%lld B), others: %lld (%lld B)",
 		       pdev->stats.pub.tx.delivered.pkts,
 		       pdev->stats.pub.tx.delivered.bytes,
 		       pdev->stats.pub.tx.dropped.download_fail.pkts,
@@ -4229,6 +4233,8 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev,
 		       pdev->stats.pub.tx.dropped.target_discard.bytes,
 		       pdev->stats.pub.tx.dropped.no_ack.pkts,
 		       pdev->stats.pub.tx.dropped.no_ack.bytes,
+		       pdev->stats.pub.tx.dropped.target_drop.pkts,
+		       pdev->stats.pub.tx.dropped.target_drop.bytes,
 		       pdev->stats.pub.tx.dropped.others.pkts,
 		       pdev->stats.pub.tx.dropped.others.bytes);
 	txrx_nofl_info("Tx completions per HTT message:\n"
