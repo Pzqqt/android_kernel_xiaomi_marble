@@ -1491,10 +1491,11 @@ static void hif_sleep_entry(void *arg)
 		return;
 
 	qdf_spin_lock_irqsave(&hif_state->keep_awake_lock);
-	if (hif_state->verified_awake == false) {
+	if (hif_state->fake_sleep) {
 		idle_ms = qdf_system_ticks_to_msecs(qdf_system_ticks()
 						    - hif_state->sleep_ticks);
-		if (idle_ms >= HIF_MIN_SLEEP_INACTIVITY_TIME_MS) {
+		if (!hif_state->verified_awake &&
+		    idle_ms >= HIF_MIN_SLEEP_INACTIVITY_TIME_MS) {
 			if (!qdf_atomic_read(&scn->link_suspended)) {
 				soc_wake_reset(scn);
 				hif_state->fake_sleep = false;
@@ -1502,12 +1503,8 @@ static void hif_sleep_entry(void *arg)
 		} else {
 			qdf_timer_stop(&hif_state->sleep_timer);
 			qdf_timer_start(&hif_state->sleep_timer,
-				    HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS);
-		}
-	} else {
-		qdf_timer_stop(&hif_state->sleep_timer);
-		qdf_timer_start(&hif_state->sleep_timer,
 					HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS);
+		}
 	}
 	qdf_spin_unlock_irqrestore(&hif_state->keep_awake_lock);
 }
