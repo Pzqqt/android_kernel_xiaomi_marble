@@ -17,6 +17,7 @@
  */
 
 #include "wmi_unified_apf_tlv.h"
+#include "wmi.h"
 
 QDF_STATUS wmi_send_set_active_apf_mode_cmd_tlv(wmi_unified_t wmi_handle,
 					    uint8_t vdev_id,

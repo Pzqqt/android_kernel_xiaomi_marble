@@ -21,6 +21,7 @@
 
 #include <wmi_unified_priv.h>
 #include <wmi_unified_roam_api.h>
+#include "wmi.h"
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /**

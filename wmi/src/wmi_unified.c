@@ -305,7 +305,6 @@ error in MCL. Error is caused due to inclusion of wmi.h in wmi_unified_api.h
 which gets included here through ol_if_athvar.h. Eventually it is expected that
 wmi.h will be removed from wmi_unified_api.h after cleanup, which will need
 WMI_CMD_HDR to be defined here. */
-#ifdef CONFIG_WIN
 /* Copied from wmi.h */
 #undef MS
 #define MS(_v, _f) (((_v) & _f##_MASK) >> _f##_LSB)
@@ -349,7 +348,6 @@ typedef PREPACK struct {
 #define WMI_CMD_HDR_PLT_PRIV_MASK              0xff000000
 #define WMI_CMD_HDR_PLT_PRIV_OFFSET            0x00000000
 /* end of copy wmi.h */
-#endif /* CONFIG_WIN */
 
 #define WMI_MIN_HEAD_ROOM 64
 

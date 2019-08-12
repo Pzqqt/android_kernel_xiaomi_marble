@@ -25,9 +25,6 @@
 #define _WMI_UNIFIED_API_H_
 
 #include <osdep.h>
-#ifdef CONFIG_MCL
-#include "wmi.h"
-#endif
 #include "htc_api.h"
 #include "wmi_unified_param.h"
 #include "service_ready_param.h"

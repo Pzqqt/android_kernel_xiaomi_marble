@@ -24,6 +24,7 @@
 #include <htc_api.h>
 #include <wmi_unified_priv.h>
 #include <wmi_unified_api.h>
+#include <wmi.h>
 #include <qdf_module.h>
 #include <qdf_list.h>
 #include <qdf_platform.h>

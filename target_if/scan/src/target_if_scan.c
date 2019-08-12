@@ -28,7 +28,9 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_scan_tgt_api.h>
 #include <target_if.h>
-
+#ifdef FEATURE_WLAN_SCAN_PNO
+#include "wmi.h"
+#endif
 
 static inline struct wlan_lmac_if_scan_rx_ops *
 target_if_scan_get_rx_ops(struct wlan_objmgr_psoc *psoc)
