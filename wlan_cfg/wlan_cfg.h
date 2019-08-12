@@ -252,6 +252,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int tx_desc_limit_2;
 	int tx_device_limit;
 	int tx_sw_internode_queue;
+	int mon_drop_thresh;
 #ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
 	uint32_t tx_comp_loop_pkt_limit;
 	uint32_t rx_reap_loop_pkt_limit;
@@ -344,6 +345,7 @@ void wlan_cfg_set_rxbuf_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context,
 void wlan_cfg_set_max_peer_id(struct wlan_cfg_dp_soc_ctxt *cfg, uint32_t val);
 void wlan_cfg_set_max_ast_idx(struct wlan_cfg_dp_soc_ctxt *cfg, uint32_t val);
 int wlan_cfg_get_max_ast_idx(struct wlan_cfg_dp_soc_ctxt *cfg);
+int wlan_cfg_get_mon_drop_thresh(struct wlan_cfg_dp_soc_ctxt *cfg);
 int wlan_cfg_set_rx_err_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 				int context, int mask);
 int wlan_cfg_set_rx_wbm_rel_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,

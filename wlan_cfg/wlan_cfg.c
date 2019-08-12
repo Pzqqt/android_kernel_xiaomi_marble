@@ -440,7 +440,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 			cfg_get(psoc, CFG_DP_RX_FLOW_SEARCH_TABLE_SIZE);
 	wlan_cfg_ctx->is_rx_mon_protocol_flow_tag_enabled =
 			cfg_get(psoc, CFG_DP_RX_MON_PROTOCOL_FLOW_TAG_ENABLE);
-
+	wlan_cfg_ctx->mon_drop_thresh =
+		cfg_get(psoc, CFG_DP_RXDMA_MONITOR_RX_DROP_THRESHOLD);
 	return wlan_cfg_ctx;
 }
 
@@ -477,6 +478,11 @@ void wlan_cfg_pdev_detach(struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx)
 {
 	if (wlan_cfg_ctx)
 		qdf_mem_free(wlan_cfg_ctx);
+}
+
+int wlan_cfg_get_mon_drop_thresh(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->mon_drop_thresh;
 }
 
 void wlan_cfg_set_num_contexts(struct wlan_cfg_dp_soc_ctxt *cfg, int num)

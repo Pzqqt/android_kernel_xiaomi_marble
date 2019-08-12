@@ -1013,6 +1013,8 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 	uint32_t htt_ring_type, htt_ring_id;
 	uint32_t tlv_filter;
 	uint8_t *htt_logger_bufp;
+	struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx = soc->dp_soc->wlan_cfg_ctx;
+	uint32_t mon_drop_th = wlan_cfg_get_mon_drop_thresh(wlan_cfg_ctx);
 
 	htt_msg = qdf_nbuf_alloc(soc->osdev,
 		HTT_MSG_BUF_SIZE(HTT_RX_RING_SELECTION_CFG_SZ),
@@ -1100,6 +1102,13 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 
 	HTT_RX_RING_SELECTION_CFG_RX_OFFSETS_VALID_SET(*msg_word,
 						htt_tlv_filter->offset_valid);
+
+	if (mon_drop_th > 0)
+		HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_SET(*msg_word,
+								   1);
+	else
+		HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_SET(*msg_word,
+								   0);
 
 	/* word 1 */
 	msg_word++;
@@ -1664,7 +1673,16 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 		*msg_word = 0;
 		HTT_RX_RING_SELECTION_CFG_RX_ATTENTION_OFFSET_SET(*msg_word,
 					htt_tlv_filter->rx_attn_offset);
+		msg_word++;
+		*msg_word = 0;
+	} else {
+		msg_word += 4;
+		*msg_word = 0;
 	}
+
+	if (mon_drop_th > 0)
+		HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_SET(*msg_word,
+								mon_drop_th);
 
 	/* "response_required" field should be set if a HTT response message is
 	 * required after setting up the ring.
