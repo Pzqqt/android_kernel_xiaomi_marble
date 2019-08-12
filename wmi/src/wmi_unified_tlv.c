@@ -884,21 +884,18 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->flags |= WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT;
 
 	if (!req->is_restart) {
-		cmd->beacon_interval = req->beacon_interval;
-		cmd->dtim_period = req->dtim_period;
-
-		/* Copy the SSID */
-		if (req->ssid.length) {
-			if (req->ssid.length < sizeof(cmd->ssid.ssid))
-				cmd->ssid.ssid_len = req->ssid.length;
-			else
-				cmd->ssid.ssid_len = sizeof(cmd->ssid.ssid);
-			qdf_mem_copy(cmd->ssid.ssid, req->ssid.mac_ssid,
-				     cmd->ssid.ssid_len);
-		}
-
 		if (req->pmf_enabled)
 			cmd->flags |= WMI_UNIFIED_VDEV_START_PMF_ENABLED;
+	}
+
+	/* Copy the SSID */
+	if (req->ssid.length) {
+		if (req->ssid.length < sizeof(cmd->ssid.ssid))
+			cmd->ssid.ssid_len = req->ssid.length;
+		else
+			cmd->ssid.ssid_len = sizeof(cmd->ssid.ssid);
+		qdf_mem_copy(cmd->ssid.ssid, req->ssid.mac_ssid,
+			     cmd->ssid.ssid_len);
 	}
 
 	if (req->hidden_ssid)
