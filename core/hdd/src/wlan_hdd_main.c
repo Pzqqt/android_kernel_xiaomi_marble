@@ -5857,14 +5857,21 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 					mac_handle,
 					adapter->vdev_id,
 					eCSR_DISCONNECT_REASON_IBSS_LEAVE);
-			else if (adapter->device_mode == QDF_STA_MODE)
-				wlan_hdd_disconnect(adapter,
-					eCSR_DISCONNECT_REASON_DEAUTH);
-			else
+			else if (adapter->device_mode == QDF_STA_MODE) {
+				rc = wlan_hdd_disconnect(
+						adapter,
+						eCSR_DISCONNECT_REASON_DEAUTH);
+				if (rc != 0 && ucfg_ipa_is_enabled()) {
+					hdd_err("STA disconnect failed");
+					ucfg_ipa_uc_cleanup_sta(hdd_ctx->pdev,
+								adapter->dev);
+				}
+			} else {
 				status = sme_roam_disconnect(
 					mac_handle,
 					adapter->vdev_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED);
+			}
 			/* success implies disconnect is queued */
 			if (QDF_IS_STATUS_SUCCESS(status) &&
 			    adapter->device_mode != QDF_STA_MODE) {

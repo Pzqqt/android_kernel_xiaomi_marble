@@ -286,6 +286,19 @@ int ucfg_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
 bool ucfg_ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * ucfg_ipa_uc_cleanup_sta() - disconnect and cleanup sta iface
+ * @pdev: pdev obj
+ * @net_dev: Interface net device
+ *
+ * Send disconnect sta event to IPA driver and cleanup IPA iface,
+ * if not yet done
+ *
+ * Return: void
+ */
+void ucfg_ipa_uc_cleanup_sta(struct wlan_objmgr_pdev *pdev,
+			     qdf_netdev_t net_dev);
+
+/**
  * ucfg_ipa_uc_disconnect_ap() - send ap disconnect event
  * @pdev: pdev obj
  * @net_dev: Interface net device
@@ -505,6 +518,12 @@ static inline
 bool ucfg_ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev)
 {
 	return false;
+}
+
+static inline
+void ucfg_ipa_uc_cleanup_sta(struct wlan_objmgr_pdev *pdev,
+			     qdf_netdev_t net_dev)
+{
 }
 
 static inline

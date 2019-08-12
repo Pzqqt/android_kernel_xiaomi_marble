@@ -174,6 +174,12 @@ bool ucfg_ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev)
 	return ipa_is_fw_wdi_activated(pdev);
 }
 
+void ucfg_ipa_uc_cleanup_sta(struct wlan_objmgr_pdev *pdev,
+			     qdf_netdev_t net_dev)
+{
+	return ipa_uc_cleanup_sta(pdev, net_dev);
+}
+
 QDF_STATUS ucfg_ipa_uc_disconnect_ap(struct wlan_objmgr_pdev *pdev,
 				     qdf_netdev_t net_dev)
 {
