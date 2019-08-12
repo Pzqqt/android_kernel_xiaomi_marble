@@ -3198,6 +3198,82 @@ target_if_is_aspectral_prohibited_by_adfs(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+/**
+ * target_if_get_curr_band() - Get current operating band of pdev
+ *
+ * @spectral: pointer to spectral object
+ *
+ * API to get current operating band of a given pdev.
+ *
+ * Return: if success enum band_info, BAND_UNKNOWN in case of failure
+ */
+static enum band_info
+target_if_get_curr_band(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_vdev *vdev;
+	int16_t chan_freq;
+	enum band_info cur_band;
+	uint32_t chan_num;
+
+	if (!pdev) {
+		spectral_err("pdev is NULL");
+		return BAND_UNKNOWN;
+	}
+
+	vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_SPECTRAL_ID);
+	if (!vdev) {
+		spectral_debug("vdev is NULL");
+		return BAND_UNKNOWN;
+	}
+	chan_freq = target_if_vdev_get_chan_freq(vdev);
+	chan_num = wlan_reg_freq_to_chan(pdev, chan_freq);
+	cur_band = wlan_reg_chan_to_band(chan_num);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
+
+	return cur_band;
+}
+
+/**
+ * target_if_is_agile_scan_active_in_5g() - Is Agile Spectral scan active on
+ * any of the 5G pdevs
+ * @psoc: Pointer to psoc
+ * @object: Pointer to pdev
+ * @arg: Pointer to flag which indicates whether Agile Spectral scan is in
+ *       progress in any 5G pdevs
+ *
+ * Return: void
+ */
+static void
+target_if_is_agile_scan_active_in_5g(struct wlan_objmgr_psoc *psoc,
+				     void *object, void *arg)
+{
+	enum band_info band;
+	bool *is_agile_scan_inprog_5g_pdev = arg;
+	struct target_if_spectral *spectral;
+	struct wlan_objmgr_pdev *cur_pdev = object;
+	struct target_if_spectral_ops *p_sops;
+
+	if (*is_agile_scan_inprog_5g_pdev)
+		return;
+
+	spectral = get_target_if_spectral_handle_from_pdev(cur_pdev);
+	if (!spectral) {
+		spectral_err("target if spectral handle is NULL");
+		return;
+	}
+	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+
+	band = target_if_get_curr_band(cur_pdev);
+	if (band == BAND_UNKNOWN) {
+		spectral_debug("Failed to get current band");
+		return;
+	}
+
+	if (band == BAND_5G &&
+	    p_sops->is_spectral_active(spectral, SPECTRAL_SCAN_MODE_AGILE))
+		*is_agile_scan_inprog_5g_pdev = true;
+}
+
 QDF_STATUS
 target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 			      const enum spectral_scan_mode smode,
@@ -3206,6 +3282,7 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 	struct target_if_spectral_ops *p_sops;
 	struct target_if_spectral *spectral;
 	struct wlan_objmgr_psoc *psoc;
+	enum band_info band;
 
 	if (!err) {
 		spectral_err("Error code argument is null");
@@ -3236,6 +3313,53 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 	}
 
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+
+	band = target_if_get_curr_band(spectral->pdev_obj);
+	if (band == BAND_UNKNOWN) {
+		spectral_err("Failed to get current band");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if ((band == BAND_5G) && (smode == SPECTRAL_SCAN_MODE_AGILE)) {
+		struct target_psoc_info *tgt_hdl;
+		enum wmi_host_hw_mode_config_type mode;
+		bool is_agile_scan_inprog_5g_pdev;
+
+		if (p_sops->is_spectral_active(spectral,
+					       SPECTRAL_SCAN_MODE_AGILE)) {
+			spectral_err("Agile Scan in progress in current pdev");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+		if (!tgt_hdl) {
+			target_if_err("target_psoc_info is null");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		mode = target_psoc_get_preferred_hw_mode(tgt_hdl);
+		switch (mode) {
+		case WMI_HOST_HW_MODE_SBS_PASSIVE:
+		case WMI_HOST_HW_MODE_SBS:
+		case WMI_HOST_HW_MODE_DBS_SBS:
+		case WMI_HOST_HW_MODE_DBS_OR_SBS:
+			is_agile_scan_inprog_5g_pdev = false;
+			wlan_objmgr_iterate_obj_list
+				(psoc, WLAN_PDEV_OP,
+				 target_if_is_agile_scan_active_in_5g,
+				 &is_agile_scan_inprog_5g_pdev, 0,
+				 WLAN_SPECTRAL_ID);
+			break;
+		default:
+			is_agile_scan_inprog_5g_pdev = false;
+			break;
+		}
+
+		if (is_agile_scan_inprog_5g_pdev) {
+			spectral_err("Agile Scan in progress in one of the SBS 5G pdev");
+			*err = SPECTRAL_SCAN_ERR_MODE_UNSUPPORTED;
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
 
 	if (smode == SPECTRAL_SCAN_MODE_AGILE) {
 		bool is_aspectral_prohibited = false;
