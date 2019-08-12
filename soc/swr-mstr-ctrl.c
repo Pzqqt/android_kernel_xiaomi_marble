@@ -2453,8 +2453,14 @@ static int swrm_runtime_resume(struct device *dev)
 					SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
 		}
 
-		if (swrm_clk_request(swrm, true))
+		if (swrm_clk_request(swrm, true)) {
+			/*
+			 * Set autosuspend timer to 1 for
+			 * master to enter into suspend.
+			 */
+			auto_suspend_timer = 1;
 			goto exit;
+		}
 		if (!swrm->clk_stop_mode0_supp || swrm->state == SWR_MSTR_SSR) {
 			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
 				ret = swr_device_up(swr_dev);
@@ -2494,6 +2500,7 @@ exit:
 	if (!hw_core_err)
 		swrm_request_hw_vote(swrm, LPASS_HW_CORE, false);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, auto_suspend_timer);
+	auto_suspend_timer = SWR_AUTO_SUSPEND_DELAY * 1000;
 	mutex_unlock(&swrm->reslock);
 
 	return ret;
