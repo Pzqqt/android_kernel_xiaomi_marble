@@ -541,6 +541,20 @@ bool ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev)
 	return wlan_ipa_is_fw_wdi_activated(ipa_obj);
 }
 
+void ipa_uc_cleanup_sta(struct wlan_objmgr_pdev *pdev,
+			qdf_netdev_t net_dev)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	return wlan_ipa_uc_cleanup_sta(ipa_obj, net_dev);
+}
+
 QDF_STATUS ipa_uc_disconnect_ap(struct wlan_objmgr_pdev *pdev,
 				qdf_netdev_t net_dev)
 {

@@ -638,6 +638,19 @@ int wlan_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
 bool wlan_ipa_is_fw_wdi_activated(struct wlan_ipa_priv *ipa_ctx);
 
 /**
+ * wlan_ipa_uc_cleanup_sta - disconnect and cleanup sta iface
+ * @ipa_ctx: IPA context
+ * @net_dev: Interface net device
+ *
+ * Send disconnect sta event to IPA driver and cleanup IPA iface
+ * if not yet done
+ *
+ * Return: void
+ */
+void wlan_ipa_uc_cleanup_sta(struct wlan_ipa_priv *ipa_ctx,
+			     qdf_netdev_t net_dev);
+
+/**
  * wlan_ipa_uc_disconnect_ap() - send ap disconnect event
  * @ipa_ctx: IPA context
  * @net_dev: Interface net device
