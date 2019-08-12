@@ -263,13 +263,48 @@ hal_rx_handle_ofdma_info(
 }
 
 static inline void
+hal_rx_populate_byte_count(void *rx_tlv, void *ppduinfo,
+			   struct mon_rx_user_status *mon_rx_user_status)
+{
+	uint32_t mpdu_ok_byte_count;
+	uint32_t mpdu_err_byte_count;
+
+	mpdu_ok_byte_count = HAL_RX_GET(rx_tlv,
+					RX_PPDU_END_USER_STATS_17,
+					MPDU_OK_BYTE_COUNT);
+	mpdu_err_byte_count = HAL_RX_GET(rx_tlv,
+					 RX_PPDU_END_USER_STATS_19,
+					 MPDU_ERR_BYTE_COUNT);
+
+	mon_rx_user_status->mpdu_ok_byte_count = mpdu_ok_byte_count;
+	mon_rx_user_status->mpdu_err_byte_count = mpdu_err_byte_count;
+}
+#else
+static inline void
+hal_rx_handle_ofdma_info(void *rx_tlv,
+			 struct mon_rx_user_status *mon_rx_user_status)
+{
+}
+
+static inline void
+hal_rx_populate_byte_count(void *rx_tlv, void *ppduinfo,
+			   struct mon_rx_user_status *mon_rx_user_status)
+{
+	struct hal_rx_ppdu_info *ppdu_info =
+			(struct hal_rx_ppdu_info *)ppduinfo;
+
+	/* HKV1: doesn't support mpdu byte count */
+	mon_rx_user_status->mpdu_ok_byte_count = ppdu_info->rx_status.ppdu_len;
+	mon_rx_user_status->mpdu_err_byte_count = 0;
+}
+#endif
+
+static inline void
 hal_rx_populate_mu_user_info(void *rx_tlv, void *ppduinfo,
 			     struct mon_rx_user_status *mon_rx_user_status)
 {
 	struct hal_rx_ppdu_info *ppdu_info =
 			(struct hal_rx_ppdu_info *)ppduinfo;
-	uint32_t mpdu_ok_byte_count;
-	uint32_t mpdu_err_byte_count;
 
 	mon_rx_user_status->ast_index = ppdu_info->rx_status.ast_index;
 	mon_rx_user_status->tid = ppdu_info->rx_status.tid;
@@ -301,30 +336,9 @@ hal_rx_populate_mu_user_info(void *rx_tlv, void *ppduinfo,
 		     &ppdu_info->com_info.mpdu_fcs_ok_bitmap,
 		     HAL_RX_NUM_WORDS_PER_PPDU_BITMAP *
 		     sizeof(ppdu_info->com_info.mpdu_fcs_ok_bitmap[0]));
-	mpdu_ok_byte_count = HAL_RX_GET(rx_tlv,
-					RX_PPDU_END_USER_STATS_17,
-					MPDU_OK_BYTE_COUNT);
-	mpdu_err_byte_count = HAL_RX_GET(rx_tlv,
-					 RX_PPDU_END_USER_STATS_19,
-					 MPDU_ERR_BYTE_COUNT);
 
-	mon_rx_user_status->mpdu_ok_byte_count = mpdu_ok_byte_count;
-	mon_rx_user_status->mpdu_err_byte_count = mpdu_err_byte_count;
+	hal_rx_populate_byte_count(rx_tlv, ppdu_info, mon_rx_user_status);
 }
-
-#else
-static inline void
-hal_rx_handle_ofdma_info(void *rx_tlv,
-			 struct mon_rx_user_status *mon_rx_user_status)
-{
-}
-
-static inline void
-hal_rx_populate_mu_user_info(void *rx_tlv, void *ppduinfo,
-			     struct mon_rx_user_status *mon_rx_user_status)
-{
-}
-#endif
 
 #define HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(chain, word_1, word_2, \
 					ppdu_info, rssi_info_tlv) \
