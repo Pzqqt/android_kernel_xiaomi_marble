@@ -1630,7 +1630,7 @@ static enum policy_mgr_two_connection_mode
 	/* SCC */
 	if (pm_conc_connection_list[0].freq ==
 		pm_conc_connection_list[1].freq) {
-		/* NAN Discovery can only be on 2.4GHz */
+		/* Policy mgr only considers NAN Disc ch in 2.4GHz */
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_NAN_DISC_NDI_SCC_24_1x1;
 		else
@@ -1638,7 +1638,7 @@ static enum policy_mgr_two_connection_mode
 	/* MCC */
 	} else if (pm_conc_connection_list[0].mac ==
 		pm_conc_connection_list[1].mac) {
-		/* NAN Discovery can only be on 2.4GHz */
+		/* Policy mgr only considers NAN Disc ch in 2.4GHz */
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_NAN_DISC_NDI_MCC_24_1x1;
 		else
@@ -1661,7 +1661,7 @@ static enum policy_mgr_two_connection_mode
 	/* SCC */
 	if (pm_conc_connection_list[0].freq ==
 		pm_conc_connection_list[1].freq) {
-		/* NAN Discovery can only be on 2.4GHz */
+		/* Policy mgr only considers NAN Disc ch in 2.4GHz */
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_STA_NAN_DISC_SCC_24_1x1;
 		else
@@ -1669,7 +1669,7 @@ static enum policy_mgr_two_connection_mode
 	/* MCC */
 	} else if (pm_conc_connection_list[0].mac ==
 		pm_conc_connection_list[1].mac) {
-		/* NAN Discovery can only be on 2.4GHz */
+		/* Policy mgr only considers NAN Disc ch in 2.4 GHz */
 		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
 			index = PM_STA_NAN_DISC_MCC_24_1x1;
 		else
@@ -1681,6 +1681,37 @@ static enum policy_mgr_two_connection_mode
 			index = PM_STA_NAN_DISC_DBS_1x1;
 		else
 			index = PM_STA_NAN_DISC_DBS_2x2;
+	}
+	return index;
+}
+
+static enum policy_mgr_two_connection_mode
+		policy_mgr_get_third_connection_pcl_table_index_sap_nan(void)
+{
+	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
+	/* SCC */
+	if (pm_conc_connection_list[0].freq ==
+		pm_conc_connection_list[1].freq) {
+		/* Policy mgr only considers NAN Disc ch in 2.4 GHz */
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_SAP_NAN_DISC_SCC_24_1x1;
+		else
+			index = PM_SAP_NAN_DISC_SCC_24_2x2;
+	/* MCC */
+	} else if (pm_conc_connection_list[0].mac ==
+		pm_conc_connection_list[1].mac) {
+		/* Policy mgr only considers NAN Disc ch in 2.4GHz */
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_SAP_NAN_DISC_MCC_24_1x1;
+		else
+			index = PM_SAP_NAN_DISC_MCC_24_2x2;
+	/* DBS */
+	} else if (pm_conc_connection_list[0].mac !=
+			pm_conc_connection_list[1].mac) {
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_SAP_NAN_DISC_DBS_1x1;
+		else
+			index = PM_SAP_NAN_DISC_DBS_2x2;
 	}
 	return index;
 }
@@ -1757,6 +1788,12 @@ enum policy_mgr_two_connection_mode
 		(PM_NAN_DISC_MODE == pm_conc_connection_list[1].mode)))
 		index =
 		policy_mgr_get_third_connection_pcl_table_index_nan_ndi();
+	else if (((PM_SAP_MODE == pm_conc_connection_list[0].mode) &&
+		  (PM_NAN_DISC_MODE == pm_conc_connection_list[1].mode)) ||
+		((PM_NAN_DISC_MODE == pm_conc_connection_list[0].mode) &&
+		 (PM_SAP_MODE == pm_conc_connection_list[1].mode)))
+		index =
+		policy_mgr_get_third_connection_pcl_table_index_sap_nan();
 	else if ((pm_conc_connection_list[0].mode == PM_P2P_GO_MODE) &&
 		 (pm_conc_connection_list[1].mode == PM_P2P_GO_MODE))
 		index =
@@ -1784,8 +1821,12 @@ enum policy_mgr_three_connection_mode
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t count_sap = 0;
 	uint32_t count_sta = 0;
+	uint32_t count_ndi = 0;
+	uint32_t count_nan_disc = 0;
 	uint32_t list_sap[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t list_sta[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t list_ndi[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t list_nan_disc[MAX_NUMBER_OF_CONC_CONNECTIONS];
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1805,7 +1846,12 @@ enum policy_mgr_three_connection_mode
 				psoc, PM_P2P_GO_MODE, &list_sap[count_sap]);
 	count_sta = policy_mgr_mode_specific_connection_count(
 				psoc, PM_STA_MODE, list_sta);
-	policy_mgr_debug("sap/ago num: %d, sta num: %d", count_sap, count_sta);
+	count_ndi = policy_mgr_mode_specific_connection_count(
+				psoc, PM_NDI_MODE, list_ndi);
+	count_nan_disc = policy_mgr_mode_specific_connection_count(
+				psoc, PM_NAN_DISC_MODE, list_nan_disc);
+	policy_mgr_debug("sap/ago %d, sta %d, ndi %d nan disc %d",
+			 count_sap, count_sta, count_ndi, count_nan_disc);
 	if (count_sap == 2 && count_sta == 1) {
 		policy_mgr_debug(
 			"channel: sap0: %d, sap1: %d, sta0: %d",
@@ -1879,6 +1925,26 @@ enum policy_mgr_three_connection_mode
 			index = PM_STA_SAP_SCC_5_STA_24_DBS;
 		} else {
 			index =  PM_MAX_THREE_CONNECTION_MODE;
+		}
+	} else if (count_nan_disc == 1 && count_ndi == 1 && count_sap == 1) {
+		/* Policy mgr only considers NAN Disc ch in 2.4GHz */
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(
+			pm_conc_connection_list[list_sap[0]].freq) &&
+		    WLAN_REG_IS_5GHZ_CH_FREQ(
+			pm_conc_connection_list[list_ndi[0]].freq)) {
+			index = PM_NAN_DISC_SAP_SCC_24_NDI_5_DBS;
+		} else if (WLAN_REG_IS_5GHZ_CH_FREQ(
+			pm_conc_connection_list[list_sap[0]].freq) &&
+			   WLAN_REG_IS_24GHZ_CH_FREQ(
+			pm_conc_connection_list[list_ndi[0]].freq)) {
+			index = PM_NAN_DISC_NDI_SCC_24_SAP_5_DBS;
+		} else if (WLAN_REG_IS_5GHZ_CH_FREQ(
+			pm_conc_connection_list[list_sap[0]].freq) &&
+			  WLAN_REG_IS_5GHZ_CH_FREQ(
+			pm_conc_connection_list[list_ndi[0]].freq)) {
+			index = PM_SAP_NDI_SCC_5_NAN_DISC_24_DBS;
+		} else {
+			index = PM_MAX_THREE_CONNECTION_MODE;
 		}
 	}
 
