@@ -1249,8 +1249,7 @@ void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac,
 
 	qdf_mem_zero((void *)&newBssInfo, sizeof(newBssInfo));
 	qdf_mem_copy(newBssInfo.bssId.bytes, pHdr->bssId, QDF_MAC_ADDR_SIZE);
-	newBssInfo.freq = wlan_reg_chan_to_freq(mac->pdev,
-						bss_param->currentOperChannel);
+	newBssInfo.freq = bss_param->op_chan_freq;
 	qdf_mem_copy((uint8_t *) &newBssInfo.ssId,
 		     (uint8_t *) &pBeacon->ssId, pBeacon->ssId.length + 1);
 

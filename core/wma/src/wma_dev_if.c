@@ -2948,31 +2948,30 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (req->op_freq == 0) {
-		WMA_LOGE("invalid operating frequency");
+	if (req->op_chan_freq == 0) {
+		WMA_LOGE("%s: Invalid operating frequency: %d", __func__,
+			 req->op_chan_freq);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	params.channel.cfreq1 = req->op_freq;
+	params.channel.cfreq1 = req->op_chan_freq;
 	ch_width = req->chan_width;
 	bw_val = wlan_reg_get_bw_value(req->chan_width);
 	if (bw_val > 20) {
-		if (req->ch_center_freq_seg0) {
-			params.channel.cfreq1 =
-				cds_chan_to_freq(req->ch_center_freq_seg0);
+		if (req->chan_freq_seg0) {
+			params.channel.cfreq1 = req->chan_freq_seg0;
 		} else {
 			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 20",
 					__func__, bw_val);
-			params.channel.cfreq1 = req->op_freq;
+			params.channel.cfreq1 = req->op_chan_freq;
 			ch_width = CH_WIDTH_20MHZ;
 			bw_val = 20;
 		}
 	}
 	if (bw_val > 80) {
-		if (req->ch_center_freq_seg1) {
-			params.channel.cfreq2 =
-				cds_chan_to_freq(req->ch_center_freq_seg1);
+		if (req->chan_freq_seg1) {
+			params.channel.cfreq2 = req->chan_freq_seg1;
 		} else {
 			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 80",
 					__func__, bw_val);
@@ -2982,7 +2981,8 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	} else {
 		params.channel.cfreq2 = 0;
 	}
-	chan_mode = wma_chan_phy_mode(req->op_freq, ch_width, req->dot11_mode);
+	chan_mode = wma_chan_phy_mode(req->op_chan_freq, ch_width,
+				      req->dot11_mode);
 
 	if (chan_mode == MODE_UNKNOWN) {
 		WMA_LOGE("%s: invalid phy mode!", __func__);
@@ -3000,7 +3000,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Fill channel info */
-	params.channel.mhz = req->op_freq;
+	params.channel.mhz = req->op_chan_freq;
 	params.channel.phy_mode = chan_mode;
 
 	/* For Rome, only supports LFR2, not LFR3, for reassoc, need send vdev
@@ -3046,7 +3046,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	intr[params.vdev_id].mhz = params.channel.mhz;
 	intr[params.vdev_id].chan_width = ch_width;
 	intr[params.vdev_id].channel = wlan_reg_freq_to_chan(wma->pdev,
-							     req->op_freq);
+							     req->op_chan_freq);
 
 	temp_chan_info &= 0xffffffc0;
 	temp_chan_info |= params.channel.phy_mode;
@@ -4059,8 +4059,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, struct bss_params *add_bss)
 
 	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
-	req.op_freq = wlan_reg_chan_to_freq(wma->pdev,
-					    add_bss->currentOperChannel);
+	req.op_chan_freq = add_bss->op_chan_freq;
 	req.chan_width = add_bss->ch_width;
 	req.dot11_mode = add_bss->dot11_mode;
 
@@ -4069,8 +4068,8 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	else if (add_bss->ch_width == CH_WIDTH_5MHZ)
 		req.is_quarter_rate = 1;
 
-	req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
-	req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
+	req.chan_freq_seg0 = add_bss->chan_freq_seg0;
+	req.chan_freq_seg1 = add_bss->chan_freq_seg1;
 	req.vht_capable = add_bss->vhtCapable;
 	wma_update_vdev_he_ops(&req, add_bss);
 
@@ -4218,11 +4217,10 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
 
 	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
-	req.op_freq = wlan_reg_chan_to_freq(wma->pdev,
-					    add_bss->currentOperChannel);
+	req.op_chan_freq = add_bss->op_chan_freq;
 	req.chan_width = add_bss->ch_width;
-	req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
-	req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
+	req.chan_freq_seg0 = add_bss->chan_freq_seg0;
+	req.chan_freq_seg1 = add_bss->chan_freq_seg1;
 	req.vht_capable = add_bss->vhtCapable;
 #if defined WLAN_FEATURE_VOWIF
 	req.max_txpow = add_bss->maxTxPower;
@@ -4247,8 +4245,8 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
 		req.preferred_tx_streams = 1;
 	}
 
-	WMA_LOGD("%s: op_freq %d chan_width %d", __func__, req.op_freq,
-		 req.chan_width);
+	WMA_LOGD("%s: op_chan_freq %d chan_width %d", __func__,
+		 req.op_chan_freq, req.chan_width);
 	WMA_LOGD("%s: ssid = %s", __func__, req.ssid.ssId);
 
 	status = wma_vdev_start(wma, &req, false);
@@ -4395,9 +4393,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, struct bss_params *add_bss)
 
 			qdf_mem_zero(&req, sizeof(req));
 			req.vdev_id = vdev_id;
-			req.op_freq =
-			  wlan_reg_chan_to_freq(wma->pdev,
-						add_bss->currentOperChannel);
+			req.op_chan_freq = add_bss->op_chan_freq;
 			req.chan_width = add_bss->ch_width;
 
 			if (add_bss->ch_width == CH_WIDTH_10MHZ)
@@ -4405,8 +4401,8 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, struct bss_params *add_bss)
 			else if (add_bss->ch_width == CH_WIDTH_5MHZ)
 				req.is_quarter_rate = 1;
 
-			req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
-			req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
+			req.chan_freq_seg0 = add_bss->chan_freq_seg0;
+			req.chan_freq_seg1 = add_bss->chan_freq_seg1;
 			req.max_txpow = add_bss->maxTxPower;
 			req.beacon_intval = add_bss->beaconInterval;
 			req.dtim_period = add_bss->dtimPeriod;

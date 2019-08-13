@@ -357,15 +357,19 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	}
 
 	addbss_param->ch_width = session->ch_width;
-	addbss_param->ch_center_freq_seg0 =
-		session->ch_center_freq_seg0;
-	addbss_param->ch_center_freq_seg1 =
-		session->ch_center_freq_seg1;
+	addbss_param->chan_freq_seg0 =
+		wlan_reg_chan_to_freq(mac_ctx->pdev,
+				      session->ch_center_freq_seg0);
+	addbss_param->chan_freq_seg1 =
+		wlan_reg_chan_to_freq(mac_ctx->pdev,
+				      session->ch_center_freq_seg1);
 	addbss_param->htOperMode = mlm_start_req->htOperMode;
 	addbss_param->dualCTSProtection = mlm_start_req->dualCTSProtection;
 	addbss_param->txChannelWidthSet = mlm_start_req->txChannelWidthSet;
 
-	addbss_param->currentOperChannel = mlm_start_req->channelNumber;
+	addbss_param->op_chan_freq =
+		wlan_reg_chan_to_freq(mac_ctx->pdev,
+				      mlm_start_req->channelNumber);
 #ifdef WLAN_FEATURE_11W
 	addbss_param->rmfEnabled = session->limRmfEnabled;
 #endif

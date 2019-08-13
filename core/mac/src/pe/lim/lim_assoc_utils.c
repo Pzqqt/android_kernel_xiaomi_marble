@@ -3489,11 +3489,13 @@ static void lim_update_vht_oper_assoc_resp(struct mac_context *mac_ctx,
 			pe_session->ch_width) {
 		pAddBssParams->ch_width = vht_oper->chanWidth + 1;
 
-		pAddBssParams->ch_center_freq_seg0 =
-			vht_oper->chanCenterFreqSeg1;
+		pAddBssParams->chan_freq_seg0 =
+			wlan_reg_chan_to_freq(mac_ctx->pdev,
+					      vht_oper->chanCenterFreqSeg1);
 
-		pAddBssParams->ch_center_freq_seg1 =
-			vht_oper->chanCenterFreqSeg2;
+		pAddBssParams->chan_freq_seg1 =
+			wlan_reg_chan_to_freq(mac_ctx->pdev,
+					      vht_oper->chanCenterFreqSeg2);
 	}
 	pe_debug("Updating VHT Operation in assoc Response");
 }
@@ -3518,7 +3520,7 @@ static inline void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx,
 }
 #endif
 
-void lim_sta_add_bss_update_ht_parameter(uint8_t bss_chan_id,
+void lim_sta_add_bss_update_ht_parameter(uint32_t bss_chan_freq,
 					 tDot11fIEHTCaps* ht_cap,
 					 tDot11fIEHTInfo* ht_inf,
 					 bool chan_width_support,
@@ -3539,13 +3541,13 @@ void lim_sta_add_bss_update_ht_parameter(uint8_t bss_chan_id,
 		add_bss->ch_width = ht_inf->recommendedTxWidthSet;
 		if (ht_inf->secondaryChannelOffset ==
 		    PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-			add_bss->ch_center_freq_seg0 = bss_chan_id + 2;
+			add_bss->chan_freq_seg0 = bss_chan_freq + 10;
 		else if (ht_inf->secondaryChannelOffset ==
 			 PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
-			add_bss->ch_center_freq_seg0 = bss_chan_id - 2;
+			add_bss->chan_freq_seg0 = bss_chan_freq - 10;
 	} else {
 		add_bss->ch_width = CH_WIDTH_20MHZ;
-		add_bss->ch_center_freq_seg0 = 0;
+		add_bss->chan_freq_seg0 = 0;
 	}
 	add_bss->llnNonGFCoexist = ht_inf->nonGFDevicesPresent;
 	add_bss->fLsigTXOPProtectionFullSupport =
@@ -3556,7 +3558,7 @@ void lim_sta_add_bss_update_ht_parameter(uint8_t bss_chan_id,
 		 add_bss->dualCTSProtection,
 		 add_bss->ch_width);
 	pe_debug("center_freq_0: %d llnNonGFCoexist: %d",
-		 add_bss->ch_center_freq_seg0,
+		 add_bss->chan_freq_seg0,
 		 add_bss->llnNonGFCoexist);
 	pe_debug("fLsigTXOPProtectionFullSupport: %d fRIFSMode: %d",
 		 add_bss->fLsigTXOPProtectionFullSupport,
@@ -3600,7 +3602,6 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	uint32_t retCode;
 	tpDphHashNode sta = NULL;
 	bool chan_width_support = false;
-	uint8_t bss_chan_id;
 	bool is_vht_cap_in_vendor_ie = false;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	tDot11fIEVHTOperation *vht_oper = NULL;
@@ -3694,23 +3695,21 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	pAddBssParams->dot11_mode = pe_session->dot11mode;
 	pe_debug("dot11_mode: %d", pAddBssParams->dot11_mode);
 
-	bss_chan_id = wlan_reg_freq_to_chan(mac->pdev,
-					    bssDescription->chan_freq);
 	/* Use the advertised capabilities from the received beacon/PR */
 	if (IS_DOT11_MODE_HT(pe_session->dot11mode)) {
 		chan_width_support =
 			lim_get_ht_capability(mac,
 					      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
 					      pe_session);
-		lim_sta_add_bss_update_ht_parameter(bss_chan_id,
+		lim_sta_add_bss_update_ht_parameter(bssDescription->chan_freq,
 						    &pAssocRsp->HTCaps,
 						    &pAssocRsp->HTInfo,
 						    chan_width_support,
 						    pAddBssParams);
 	}
 
-	pAddBssParams->currentOperChannel = bss_chan_id;
-	pe_debug("currentOperChannel %d", pAddBssParams->currentOperChannel);
+	pAddBssParams->op_chan_freq = bssDescription->chan_freq;
+	pe_debug("current op frequency %d", pAddBssParams->op_chan_freq);
 	if (pe_session->vhtCapability && (pAssocRsp->VHTCaps.present)) {
 		pAddBssParams->vhtCapable = pAssocRsp->VHTCaps.present;
 		vht_caps =  &pAssocRsp->VHTCaps;
@@ -3736,8 +3735,8 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 
 	pe_debug("vhtCapable %d TxChannelWidth %d center_freq_0 %d center_freq_1 %d",
 			pAddBssParams->vhtCapable, pAddBssParams->ch_width,
-			pAddBssParams->ch_center_freq_seg0,
-			pAddBssParams->ch_center_freq_seg1);
+			pAddBssParams->chan_freq_seg0,
+			pAddBssParams->chan_freq_seg1);
 
 	if (lim_is_session_he_capable(pe_session) &&
 			(pAssocRsp->he_cap.present)) {
@@ -4100,7 +4099,6 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	uint32_t retCode;
 	tSchBeaconStruct *pBeaconStruct;
 	bool chan_width_support = false;
-	uint8_t bss_chan_id;
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	uint32_t listen_interval = MLME_CFG_LISTEN_INTERVAL;
@@ -4198,24 +4196,21 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 		pAddBssParams->llaCoexist, pAddBssParams->llbCoexist,
 		pAddBssParams->llgCoexist, pAddBssParams->ht20Coexist);
 
-	bss_chan_id = wlan_reg_freq_to_chan(mac->pdev,
-					    bssDescription->chan_freq);
 	/* Use the advertised capabilities from the received beacon/PR */
 	if (IS_DOT11_MODE_HT(pe_session->dot11mode)) {
 		chan_width_support =
 			lim_get_ht_capability(mac,
 					      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
 					      pe_session);
-		lim_sta_add_bss_update_ht_parameter(bss_chan_id,
+		lim_sta_add_bss_update_ht_parameter(bssDescription->chan_freq,
 						    &pBeaconStruct->HTCaps,
 						    &pBeaconStruct->HTInfo,
 						    chan_width_support,
 						    pAddBssParams);
 	}
 
-	pAddBssParams->currentOperChannel = bss_chan_id;
-	pe_debug("currentOperChannel %d",
-		pAddBssParams->currentOperChannel);
+	pAddBssParams->op_chan_freq = bssDescription->chan_freq;
+	pe_debug("current Oper freq %d", pAddBssParams->op_chan_freq);
 
 	if (pe_session->vhtCapability &&
 		(IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps) ||
@@ -4231,10 +4226,12 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 
 
 		if (vht_oper && vht_oper->chanWidth && chan_width_support) {
-			pAddBssParams->ch_center_freq_seg0 =
-				vht_oper->chanCenterFreqSeg1;
-			pAddBssParams->ch_center_freq_seg1 =
-				vht_oper->chanCenterFreqSeg2;
+			pAddBssParams->chan_freq_seg0 =
+				wlan_reg_chan_to_freq(mac->pdev,
+						vht_oper->chanCenterFreqSeg1);
+			pAddBssParams->chan_freq_seg1 =
+				wlan_reg_chan_to_freq(mac->pdev,
+						vht_oper->chanCenterFreqSeg2);
 		}
 		/*
 		 * in limExtractApCapability function intersection of FW
@@ -4258,8 +4255,8 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	}
 	pe_debug("vhtCapable %d vhtTxChannelWidthSet %d center_freq_seg0 - %d, center_freq_seg1 - %d",
 		pAddBssParams->vhtCapable, pAddBssParams->ch_width,
-		pAddBssParams->ch_center_freq_seg0,
-		pAddBssParams->ch_center_freq_seg1);
+		pAddBssParams->chan_freq_seg0,
+		pAddBssParams->chan_freq_seg1);
 	/*
 	 * Populate the STA-related parameters here
 	 * Note that the STA here refers to the AP

@@ -390,8 +390,7 @@ typedef struct sLimMlmSetKeysReq {
  * @htOperMode: HT Operating Mode
  * @HT Operating Mode: Dual CTS Protection: 0 - Unused, 1 - Used
  * @txChannelWidthSet: TX Width Set: 0 - 20 MHz only, 1 - 20/40 MHz
- * @currentOperChannel: Current Operating Channel
- * @currentExtChannel: Current Extension Channel, if applicable
+ * @op_chan_freq: Current Operating frequency
  * @staContext: sta context
  * @status: status
  * @bss_idx: BSS index allocated by HAL
@@ -409,6 +408,8 @@ typedef struct sLimMlmSetKeysReq {
  * @bSpectrumMgtEnabled: Spectrum Management Capability, 1:Enabled, 0:Disabled.
  * @vhtCapable: VHT capablity
  * @vhtTxChannelWidthSet: VHT tx channel width
+ * @chan_freq_seg0: center freq seq 0
+ * @chan_freq_seg1: center freq seq 1
  * @reassocReq: Set only during roaming reassociation
  * @chainMask: chain mask
  * @smpsMode: SMPS mode
@@ -442,7 +443,7 @@ struct bss_params {
 	tSirMacHTOperatingMode htOperMode;
 	uint8_t dualCTSProtection;
 	uint8_t txChannelWidthSet;
-	uint8_t currentOperChannel;
+	uint32_t op_chan_freq;
 	tAddStaParams staContext;
 	QDF_STATUS status;
 	uint16_t bss_idx;
@@ -466,8 +467,8 @@ struct bss_params {
 	uint8_t bSpectrumMgtEnabled;
 	uint8_t vhtCapable;
 	enum phy_ch_width ch_width;
-	uint8_t ch_center_freq_seg0;
-	uint8_t ch_center_freq_seg1;
+	uint32_t chan_freq_seg0;
+	uint32_t chan_freq_seg1;
 	uint8_t reassocReq;     /* Set only during roaming reassociation */
 	uint16_t chainMask;
 	uint16_t smpsMode;

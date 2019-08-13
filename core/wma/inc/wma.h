@@ -1253,12 +1253,14 @@ struct wma_target_req {
  * @chan_offset: channel offset
  * @is_dfs: is dfs supported or not
  * @vdev_id: vdev id
- * @op_freq: operating frequency
+ * @op_chan_freq: operating frequency
  * @oper_mode: operating mode
  * @ssid: ssid
  * @hidden_ssid: hidden ssid
  * @pmf_enabled: is pmf enabled or not
  * @vht_capable: VHT capabality
+ * @chan_freq_seg0: center freq seq 0
+ * @chan_freq_seg1: center freq seq 1
  * @ht_capable: HT capabality
  * @dot11_mode: 802.11 mode
  * @is_half_rate: is the channel operating at 10MHz
@@ -1280,14 +1282,14 @@ struct wma_vdev_start_req {
 	enum phy_ch_width chan_width;
 	bool is_dfs;
 	uint8_t vdev_id;
-	uint32_t op_freq;
+	uint32_t op_chan_freq;
 	uint8_t oper_mode;
 	tSirMacSSid ssid;
 	uint8_t hidden_ssid;
 	uint8_t pmf_enabled;
 	uint8_t vht_capable;
-	uint8_t ch_center_freq_seg0;
-	uint8_t ch_center_freq_seg1;
+	uint32_t chan_freq_seg0;
+	uint32_t chan_freq_seg1;
 	uint8_t ht_capable;
 	uint8_t dot11_mode;
 	bool is_half_rate;

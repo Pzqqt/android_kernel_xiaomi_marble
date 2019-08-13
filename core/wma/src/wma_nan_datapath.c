@@ -101,10 +101,9 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	 */
 	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
-	req.op_freq = wlan_reg_chan_to_freq(wma->pdev,
-					    add_bss->currentOperChannel);
-	req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
-	req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
+	req.op_chan_freq = add_bss->op_chan_freq;
+	req.chan_freq_seg0 = add_bss->chan_freq_seg0;
+	req.chan_freq_seg1 = add_bss->chan_freq_seg1;
 	req.vht_capable = add_bss->vhtCapable;
 	req.max_txpow = add_bss->maxTxPower;
 	req.oper_mode = add_bss->operMode;

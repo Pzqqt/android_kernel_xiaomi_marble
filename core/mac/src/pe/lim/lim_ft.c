@@ -119,7 +119,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	struct bss_params *pAddBssParams = NULL;
 	tAddStaParams *sta_ctx;
 	bool chan_width_support = false;
-	uint8_t bss_chan_id;
 	tSchBeaconStruct *pBeaconStruct;
 
 	/* Nothing to be done if the session is not in STA mode */
@@ -194,9 +193,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 #ifdef WLAN_FEATURE_11W
 	pAddBssParams->rmfEnabled = ft_session->limRmfEnabled;
 #endif
-
-	bss_chan_id = wlan_reg_freq_to_chan(mac->pdev,
-					    bssDescription->chan_freq);
 	/* Use the advertised capabilities from the received beacon/PR */
 	if (IS_DOT11_MODE_HT(ft_session->dot11mode) &&
 	    (pBeaconStruct->HTCaps.present)) {
@@ -204,7 +200,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 			lim_get_ht_capability(mac,
 					      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
 					      ft_session);
-		lim_sta_add_bss_update_ht_parameter(bss_chan_id,
+		lim_sta_add_bss_update_ht_parameter(bssDescription->chan_freq,
 						    &pBeaconStruct->HTCaps,
 						    &pBeaconStruct->HTInfo,
 						    chan_width_support,
@@ -218,7 +214,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 			     sizeof(pAddBssParams->staContext.ht_caps));
 	}
 
-	pAddBssParams->currentOperChannel = bss_chan_id;
+	pAddBssParams->op_chan_freq = bssDescription->chan_freq;
 	ft_session->htSecondaryChannelOffset =
 		pBeaconStruct->HTInfo.secondaryChannelOffset;
 	sta_ctx = &pAddBssParams->staContext;
@@ -230,10 +226,12 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		    chan_width_support) {
 			pAddBssParams->ch_width =
 				pBeaconStruct->VHTOperation.chanWidth + 1;
-			pAddBssParams->ch_center_freq_seg0 =
-				pBeaconStruct->VHTOperation.chanCenterFreqSeg1;
-			pAddBssParams->ch_center_freq_seg1 =
-				pBeaconStruct->VHTOperation.chanCenterFreqSeg2;
+			pAddBssParams->chan_freq_seg0 =
+			    wlan_reg_chan_to_freq(mac->pdev,
+				pBeaconStruct->VHTOperation.chanCenterFreqSeg1);
+			pAddBssParams->chan_freq_seg1 =
+			    wlan_reg_chan_to_freq(mac->pdev,
+				pBeaconStruct->VHTOperation.chanCenterFreqSeg2);
 		}
 		pAddBssParams->staContext.vht_caps =
 			((pBeaconStruct->VHTCaps.maxMPDULen <<
@@ -280,8 +278,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		pAddBssParams->vhtCapable = 0;
 	}
 
-	pe_debug("SIR_HAL_ADD_BSS_REQ with channel: %d",
-		pAddBssParams->currentOperChannel);
+	pe_debug("SIR_HAL_ADD_BSS_REQ with frequency: %d",
+		bssDescription->chan_freq);
 
 	/* Populate the STA-related parameters here */
 	/* Note that the STA here refers to the AP */

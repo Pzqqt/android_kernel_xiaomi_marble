@@ -188,7 +188,7 @@ void lim_update_assoc_sta_datas(struct mac_context *mac,
 /**
  * lim_sta_add_bss_update_ht_parameter() - function to update ht related
  *                                         parameters when add bss request
- * @bss_chan_id: channel number of bss
+ * @bss_chan_freq: operating frequency of bss
  * @ht_cap: ht capability extract from beacon/assoc response
  * @ht_inf: ht information extract from beacon/assoc response
  * @chan_width_support: local wide bandwith support capability
@@ -196,7 +196,7 @@ void lim_update_assoc_sta_datas(struct mac_context *mac,
  *
  * Return: none
  */
-void lim_sta_add_bss_update_ht_parameter(uint8_t bss_chan_id,
+void lim_sta_add_bss_update_ht_parameter(uint32_t bss_chan_freq,
 					 tDot11fIEHTCaps* ht_cap,
 					 tDot11fIEHTInfo* ht_inf,
 					 bool chan_width_support,

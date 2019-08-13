@@ -3513,6 +3513,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	struct wma_txrx_node *intr = wma->interfaces;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint16_t beacon_interval_ori;
+	uint8_t chan;
 
 	WMA_LOGD("%s: Enter", __func__);
 	if (!wma_find_vdev_by_addr(wma, params->selfStaMacAddr, &vdev_id)) {
@@ -3534,7 +3535,8 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
-	req.op_freq = wlan_reg_chan_to_freq(wma->pdev, params->channelNumber);
+	req.op_chan_freq = wlan_reg_chan_to_freq(wma->pdev,
+						 params->channelNumber);
 	req.chan_width = params->ch_width;
 
 	if (params->ch_width == CH_WIDTH_10MHZ)
@@ -3543,8 +3545,10 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		req.is_quarter_rate = 1;
 
 	req.vht_capable = params->vhtCapable;
-	req.ch_center_freq_seg0 = params->ch_center_freq_seg0;
-	req.ch_center_freq_seg1 = params->ch_center_freq_seg1;
+	req.chan_freq_seg0 = wlan_reg_chan_to_freq(wma->pdev,
+						   params->ch_center_freq_seg0);
+	req.chan_freq_seg1 = wlan_reg_chan_to_freq(wma->pdev,
+						   params->ch_center_freq_seg1);
 	req.dot11_mode = params->dot11_mode;
 	wma_update_vdev_he_capable(&req, params);
 
@@ -3632,10 +3636,10 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	 * Record monitor mode channel here in case HW
 	 * indicate RX PPDU TLV with invalid channel number.
 	 */
-	if (intr[vdev_id].type == WMI_VDEV_TYPE_MONITOR)
-		cdp_record_monitor_chan_num(soc, pdev,
-					    wlan_reg_freq_to_chan(wma->pdev,
-								  req.op_freq));
+	if (intr[vdev_id].type == WMI_VDEV_TYPE_MONITOR) {
+		chan = wlan_reg_freq_to_chan(wma->pdev, req.op_chan_freq);
+		cdp_record_monitor_chan_num(soc, pdev, chan);
+	}
 
 	return;
 send_resp:
