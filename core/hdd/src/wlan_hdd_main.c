@@ -9713,6 +9713,7 @@ static int __hdd_mode_change_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
 
 int hdd_psoc_idle_shutdown(struct device *dev)
 {
+	int ret;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (!hdd_ctx) {
@@ -9721,9 +9722,13 @@ int hdd_psoc_idle_shutdown(struct device *dev)
 	}
 
 	if (is_mode_change_psoc_idle_shutdown)
-		return __hdd_mode_change_psoc_idle_shutdown(hdd_ctx);
+		ret = __hdd_mode_change_psoc_idle_shutdown(hdd_ctx);
 	else
-		return __hdd_psoc_idle_shutdown(hdd_ctx);
+		ret =  __hdd_psoc_idle_shutdown(hdd_ctx);
+
+	cds_set_recovery_in_progress(false);
+
+	return ret;
 }
 
 static int __hdd_psoc_idle_restart(struct hdd_context *hdd_ctx)
