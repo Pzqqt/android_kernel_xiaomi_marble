@@ -6532,6 +6532,13 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT_SET(
 						resource_cfg->flag1, 1);
 
+	/*
+	 * Control padding using config param/ini of iphdr_pad_config
+	 */
+	if (tgt_res_cfg->iphdr_pad_config)
+		WMI_RSRC_CFG_FLAG_IPHR_PAD_CONFIG_ENABLE_SET(
+			resource_cfg->flag1, 1);
+
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 	resource_cfg->peer_map_unmap_v2_support =
 		tgt_res_cfg->peer_map_unmap_v2;
