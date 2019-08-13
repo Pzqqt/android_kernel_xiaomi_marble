@@ -184,7 +184,7 @@ typedef QDF_STATUS (*wlan_ser_umac_cmd_cb)(void *umac_cmd);
  * @WLAN_SER_CMD_NSS_UPDATE: Cmd to update NSS config
  * @WLAN_SER_CMD_SET_DUAL_MAC_CONFIG: Cmd to set dual mac
  * @WLAN_SER_CMD_SET_ANTENNA_MODE: Set antenna mode
- * @WLAN_SER_CMD_DEL_STA_SESSION: Cmd to del STA session
+ * @WLAN_SER_CMD_VDEV_DELETE: Cmd to del vdev
  * @WLAN_SER_CMD_VDEV_START_BSS: Cmd to start a AP VDEV
  * @WLAN_SER_CMD_VDEV_STOP_BSS: Cmd to stop a AP VDEV
  * @WLAN_SER_CMD_VDEV_CONNECT: Cmd to start a STA VDEV
@@ -220,7 +220,7 @@ enum wlan_serialization_cmd_type {
 	WLAN_SER_CMD_NSS_UPDATE,
 	WLAN_SER_CMD_SET_DUAL_MAC_CONFIG,
 	WLAN_SER_CMD_SET_ANTENNA_MODE,
-	WLAN_SER_CMD_DEL_STA_SESSION,
+	WLAN_SER_CMD_VDEV_DELETE,
 	WLAN_SER_CMD_VDEV_START_BSS,
 	WLAN_SER_CMD_VDEV_STOP_BSS,
 	WLAN_SER_CMD_VDEV_CONNECT,
