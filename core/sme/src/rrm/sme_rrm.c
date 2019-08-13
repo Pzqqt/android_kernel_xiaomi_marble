@@ -992,6 +992,18 @@ static QDF_STATUS sme_rrm_fill_scan_channels(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
+static uint8_t *sme_rrm_get_meas_mode_string(uint8_t meas_mode)
+{
+	switch (meas_mode) {
+		CASE_RETURN_STRING(eSIR_PASSIVE_SCAN);
+		CASE_RETURN_STRING(eSIR_ACTIVE_SCAN);
+		CASE_RETURN_STRING(eSIR_BEACON_TABLE);
+	default:
+		return (uint8_t *)"UNKNOWN";
+		break;
+	}
+}
+
 /**
  * sme_rrm_process_beacon_report_req_ind() -Process beacon report request
  * @mac:- Global Mac structure
@@ -1171,11 +1183,12 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 		     (uint8_t *) &pBeaconReq->measurementDuration,
 		     SIR_ESE_MAX_MEAS_IE_REQS);
 
-	sme_debug("token: %d regClass: %d randnIntvl: %d msgSource: %d measurementduration %d, rrm_ctx duration %d",
+	sme_debug("token: %d regClass: %d randnIntvl: %d msgSource: %d measurementduration %d, rrm_ctx duration %d Meas_mode: %s",
 		pSmeRrmContext->token, pSmeRrmContext->regClass,
 		pSmeRrmContext->randnIntvl, pSmeRrmContext->msgSource,
 		pBeaconReq->measurementDuration[0],
-		pSmeRrmContext->duration[0]);
+		pSmeRrmContext->duration[0],
+		sme_rrm_get_meas_mode_string(pSmeRrmContext->measMode[0]));
 
 	return sme_rrm_issue_scan_req(mac);
 
