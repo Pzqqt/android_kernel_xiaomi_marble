@@ -1993,6 +1993,43 @@ static void hdd_extract_fw_version_info(struct hdd_context *hdd_ctx)
 			HDD_FW_VER_REL_ID(hdd_ctx->target_fw_vers_ext);
 }
 
+#if defined(WLAN_FEATURE_11AX) && \
+	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)
+{
+	tDot11fIEhe_cap he_cap_cfg;
+	struct ieee80211_supported_band *band_2g =
+			hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ];
+	struct ieee80211_supported_band *band_5g =
+			hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ];
+	QDF_STATUS status;
+
+	status = ucfg_mlme_cfg_get_he_caps(hdd_ctx->psoc, &he_cap_cfg);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	if (band_2g) {
+		hdd_ctx->iftype_data_2g->types_mask =
+			(BIT(NL80211_IFTYPE_STATION) | BIT(NL80211_IFTYPE_AP));
+		hdd_ctx->iftype_data_2g->he_cap.has_he = he_cap_cfg.present;
+		band_2g->n_iftype_data = 1;
+		band_2g->iftype_data = hdd_ctx->iftype_data_2g;
+	}
+	if (band_5g) {
+		hdd_ctx->iftype_data_5g->types_mask =
+			(BIT(NL80211_IFTYPE_STATION) | BIT(NL80211_IFTYPE_AP));
+		hdd_ctx->iftype_data_5g->he_cap.has_he = he_cap_cfg.present;
+		band_5g->n_iftype_data = 1;
+		band_5g->iftype_data = hdd_ctx->iftype_data_5g;
+	}
+}
+#else
+static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 {
 	int ret;
@@ -2161,6 +2198,7 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	if (cfg->services.en_11ax) {
 		hdd_info("11AX: 11ax is enabled - update HDD config");
 		hdd_update_tgt_he_cap(hdd_ctx, cfg);
+		hdd_update_wiphy_he_cap(hdd_ctx);
 	}
 	hdd_update_tgt_twt_cap(hdd_ctx, cfg);
 

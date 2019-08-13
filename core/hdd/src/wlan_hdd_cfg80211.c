@@ -13294,6 +13294,53 @@ wlan_hdd_populate_srd_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
 
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+static QDF_STATUS
+wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->iftype_data_2g =
+			qdf_mem_malloc(sizeof(*hdd_ctx->iftype_data_2g));
+
+	if (!hdd_ctx->iftype_data_2g) {
+		hdd_err("mem alloc failed for 2g iftype data");
+		return QDF_STATUS_E_NOMEM;
+	}
+	hdd_ctx->iftype_data_5g =
+			qdf_mem_malloc(sizeof(*hdd_ctx->iftype_data_5g));
+
+	if (!hdd_ctx->iftype_data_5g) {
+		hdd_err("mem alloc failed for 5g iftype data");
+		qdf_mem_free(hdd_ctx->iftype_data_2g);
+		hdd_ctx->iftype_data_2g = NULL;
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+static void
+wlan_hdd_iftype_data_mem_free(struct hdd_context *hdd_ctx)
+{
+	qdf_mem_free(hdd_ctx->iftype_data_5g);
+	qdf_mem_free(hdd_ctx->iftype_data_2g);
+	hdd_ctx->iftype_data_5g = NULL;
+	hdd_ctx->iftype_data_2g = NULL;
+}
+#else
+static inline void
+wlan_hdd_iftype_data_mem_free(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 /*
  * FUNCTION: wlan_hdd_cfg80211_init
  * This function is called by hdd_wlan_startup()
@@ -13377,14 +13424,17 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	}
 	hdd_ctx->channels_5ghz = qdf_mem_malloc(band_5_ghz_chanenls_size);
 	if (!hdd_ctx->channels_5ghz)
-		goto mem_fail;
+		goto mem_fail_5g;
+
+	if (QDF_IS_STATUS_ERROR(wlan_hdd_iftype_data_alloc(hdd_ctx)))
+		goto mem_fail_iftype_data;
 
 	/*Initialise the supported cipher suite details */
 	if (ucfg_fwol_get_gcmp_enable(hdd_ctx->psoc)) {
 		cipher_suites = qdf_mem_malloc(sizeof(hdd_cipher_suites) +
 					       sizeof(hdd_gcmp_cipher_suits));
 		if (!cipher_suites)
-			return -ENOMEM;
+			goto mem_fail_cipher_suites;
 		wiphy->n_cipher_suites = QDF_ARRAY_SIZE(hdd_cipher_suites) +
 			 QDF_ARRAY_SIZE(hdd_gcmp_cipher_suits);
 		qdf_mem_copy(cipher_suites, &hdd_cipher_suites,
@@ -13395,7 +13445,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	} else {
 		cipher_suites = qdf_mem_malloc(sizeof(hdd_cipher_suites));
 		if (!cipher_suites)
-			return -ENOMEM;
+			goto mem_fail_cipher_suites;
 		wiphy->n_cipher_suites = QDF_ARRAY_SIZE(hdd_cipher_suites);
 		qdf_mem_copy(cipher_suites, &hdd_cipher_suites,
 			     sizeof(hdd_cipher_suites));
@@ -13436,12 +13486,16 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	hdd_exit();
 	return 0;
 
-mem_fail:
+mem_fail_cipher_suites:
+	wlan_hdd_iftype_data_mem_free(hdd_ctx);
+mem_fail_iftype_data:
+	qdf_mem_free(hdd_ctx->channels_5ghz);
+	hdd_ctx->channels_5ghz = NULL;
+mem_fail_5g:
 	hdd_err("Not enough memory to allocate channels");
-	if (hdd_ctx->channels_2ghz) {
-		qdf_mem_free(hdd_ctx->channels_2ghz);
-		hdd_ctx->channels_2ghz = NULL;
-	}
+	qdf_mem_free(hdd_ctx->channels_2ghz);
+	hdd_ctx->channels_2ghz = NULL;
+
 	return -ENOMEM;
 }
 
@@ -13466,8 +13520,9 @@ void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy)
 		   (wiphy->bands[i]->channels))
 			wiphy->bands[i]->channels = NULL;
 	}
-	qdf_mem_free(hdd_ctx->channels_2ghz);
+	wlan_hdd_iftype_data_mem_free(hdd_ctx);
 	qdf_mem_free(hdd_ctx->channels_5ghz);
+	qdf_mem_free(hdd_ctx->channels_2ghz);
 	hdd_ctx->channels_2ghz = NULL;
 	hdd_ctx->channels_5ghz = NULL;
 

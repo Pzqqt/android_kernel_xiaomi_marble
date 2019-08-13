@@ -3150,6 +3150,20 @@ ucfg_mlme_update_tgt_he_cap(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_cfg_get_he_caps() - Get the HE capability info
+ * @psoc: pointer to psoc object
+ * @he_cap: Caps that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_get_he_caps(struct wlan_objmgr_psoc *psoc,
+				     tDot11fIEhe_cap *he_cap)
+{
+	return mlme_cfg_get_he_caps(psoc, he_cap);
+}
+
+/**
  * ucfg_mlme_cfg_get_he_ul_mumimo() - Get the HE Ul Mumio
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller

@@ -823,6 +823,16 @@ QDF_STATUS wlan_mlme_cfg_set_he_ul_mumimo(struct wlan_objmgr_psoc *psoc,
 					  uint32_t value);
 
 /**
+ * mlme_cfg_get_he_caps() - Get the HE capability info
+ * @psoc: pointer to psoc object
+ * @he_cap: Caps that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS mlme_cfg_get_he_caps(struct wlan_objmgr_psoc *psoc,
+				tDot11fIEhe_cap *he_cap);
+
+/**
  * wlan_mlme_cfg_get_enable_ul_mimo() - Get the HE Ul mimo
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller
