@@ -76,15 +76,19 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 		uint8_t vhtop_ch_freq_seg2,
 		uint64_t flags)
 {
+	struct wlan_objmgr_vdev *vdev;
+
 	if (!pdev) {
 		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "null pdev");
 		return;
 	}
 
-	wlan_objmgr_pdev_iterate_obj_list(pdev,
-				WLAN_VDEV_OP,
-				dfs_send_radar_ind,
-				NULL, 0, WLAN_DFS_ID);
+	vdev = wlan_pdev_peek_active_first_vdev(pdev, WLAN_DFS_ID);
+
+	if (vdev) {
+		dfs_send_radar_ind(pdev, vdev, NULL);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_DFS_ID);
+	}
 }
 #endif
 
@@ -102,15 +106,19 @@ void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee_chan, uint16_t freq,
 			uint8_t cfreq2, uint64_t flags)
 {
+	struct wlan_objmgr_vdev *vdev;
+
 	if (!pdev) {
 		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "null pdev");
 		return;
 	}
 
-	wlan_objmgr_pdev_iterate_obj_list(pdev,
-				WLAN_VDEV_OP,
-				dfs_send_radar_ind,
-				NULL, 0, WLAN_DFS_ID);
+	vdev = wlan_pdev_peek_active_first_vdev(pdev, WLAN_DFS_ID);
+
+	if (vdev) {
+		dfs_send_radar_ind(pdev, vdev, NULL);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_DFS_ID);
+	}
 }
 #endif
 
