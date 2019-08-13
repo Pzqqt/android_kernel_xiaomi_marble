@@ -915,7 +915,7 @@ uint8_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
 		home_channel =
 			wlan_reg_freq_to_chan(
 				hdd_ctx->pdev,
-				adapter->session.station.conn_info.freq);
+				adapter->session.station.conn_info.chan_freq);
 	}
 
 	return home_channel;
@@ -4683,9 +4683,7 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	status = sme_config_fast_roaming(mac_handle, adapter->vdev_id,
 					 true);
 	/* Set the default operation channel */
-	sta_ctx->conn_info.channel =
-		hdd_ctx->config->operating_channel;
-	sta_ctx->conn_info.freq =
+	sta_ctx->conn_info.chan_freq =
 		wlan_reg_chan_to_freq(
 			hdd_ctx->pdev,
 			hdd_ctx->config->operating_channel);
@@ -7346,33 +7344,8 @@ uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (mode == adapter->device_mode) {
-			switch (adapter->device_mode) {
-			case QDF_STA_MODE:
-			case QDF_P2P_CLIENT_MODE:
-				if (hdd_conn_is_connected
-					    (WLAN_HDD_GET_STATION_CTX_PTR
-						(adapter))) {
-					operatingChannel =
-						(WLAN_HDD_GET_STATION_CTX_PTR
-						(adapter))->conn_info.
-							channel;
-				}
-				break;
-			case QDF_SAP_MODE:
-			case QDF_P2P_GO_MODE:
-				/* softap connection info */
-				if (test_bit
-					    (SOFTAP_BSS_STARTED,
-					    &adapter->event_flags))
-					operatingChannel =
-						(WLAN_HDD_GET_AP_CTX_PTR
-						(adapter))->operating_channel;
-				break;
-			default:
-				break;
-			}
-
-			/* Found the device of interest. break the loop */
+			operatingChannel =
+				hdd_get_adapter_home_channel(adapter);
 			break;
 		}
 	}

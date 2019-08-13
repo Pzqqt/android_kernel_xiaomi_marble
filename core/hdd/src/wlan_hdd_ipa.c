@@ -78,7 +78,7 @@ void hdd_ipa_set_tx_flow_info(void)
 			    sta_ctx->conn_info.conn_state) {
 				staChannel = wlan_reg_freq_to_chan(
 						hdd_ctx->pdev,
-						sta_ctx->conn_info.freq);
+						sta_ctx->conn_info.chan_freq);
 				qdf_copy_macaddr(&staBssid,
 						 &sta_ctx->conn_info.bssid);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
@@ -92,7 +92,7 @@ void hdd_ipa_set_tx_flow_info(void)
 			    sta_ctx->conn_info.conn_state) {
 				p2pChannel = wlan_reg_freq_to_chan(
 					hdd_ctx->pdev,
-					sta_ctx->conn_info.freq);
+					sta_ctx->conn_info.chan_freq);
 				qdf_copy_macaddr(&p2pBssid,
 						&sta_ctx->conn_info.bssid);
 				p2pMode = "CLI";

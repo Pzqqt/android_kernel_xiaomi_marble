@@ -340,7 +340,7 @@ enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx)
 	uint32_t sta_freq = 0;
 
 	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state)
-		sta_freq = sta_ctx->conn_info.freq;
+		sta_freq = sta_ctx->conn_info.chan_freq;
 
 	if (wlan_reg_is_24ghz_ch_freq(sta_freq))
 		return BAND_2G;
@@ -959,7 +959,6 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	eCsrEncryptionType encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	QDF_ASSERT(roam_info);
 
@@ -1012,12 +1011,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 			sta_ctx->conn_info.last_auth_type =
 				sta_ctx->conn_info.auth_type;
 
-			sta_ctx->conn_info.channel =
-			wlan_reg_freq_to_chan(
-				hdd_ctx->pdev,
-				roam_info->u.pConnectedProfile->op_freq);
-
-			sta_ctx->conn_info.freq =
+			sta_ctx->conn_info.chan_freq =
 				roam_info->u.pConnectedProfile->op_freq;
 
 			/* Save the ssid for the connection */
@@ -1641,8 +1635,8 @@ static void hdd_print_bss_info(struct hdd_station_ctx *hdd_sta_ctx)
 	uint32_t *cap_info;
 
 	hdd_debug("WIFI DATA LOGGER");
-	hdd_debug("channel: %d",
-		 hdd_sta_ctx->conn_info.freq);
+	hdd_debug("chan_freq: %d",
+		  hdd_sta_ctx->conn_info.chan_freq);
 	hdd_debug("dot11mode: %d",
 		 hdd_sta_ctx->conn_info.dot11mode);
 	hdd_debug("AKM: %d",
@@ -2921,20 +2915,20 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 
 		conn_info_channel =
 			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-					      sta_ctx->conn_info.freq);
+					      sta_ctx->conn_info.chan_freq);
 
 		hdd_debug("check if STA chan ok for DNBS");
 		if (policy_mgr_is_chan_ok_for_dnbs(hdd_ctx->psoc,
 					conn_info_channel,
 					&ok)) {
 			hdd_err("Unable to check DNBS eligibility for chan(freq):%u",
-				sta_ctx->conn_info.freq);
+				sta_ctx->conn_info.chan_freq);
 			return QDF_STATUS_E_FAILURE;
 		}
 
 		if (!ok) {
 			hdd_err("Chan(freq):%u not suitable for DNBS",
-				sta_ctx->conn_info.freq);
+				sta_ctx->conn_info.chan_freq);
 			wlan_hdd_netif_queue_control(adapter,
 				WLAN_NETIF_CARRIER_OFF,
 				WLAN_CONTROL_PATH);

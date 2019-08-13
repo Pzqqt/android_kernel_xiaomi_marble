@@ -747,7 +747,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 			QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
 		channel = wlan_reg_freq_to_chan(hdd_ctx->pdev,
-						sta_ctx->conn_info.freq);
+						sta_ctx->conn_info.chan_freq);
 	}
 
 	/* Check channel number is a valid channel number */
@@ -965,7 +965,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 		if (!qdf_mem_cmp(vendor->Oui, oui, 3)) {
 			conn_info_channel = wlan_reg_freq_to_chan(
 						hdd_ctx->pdev,
-						sta_ctx->conn_info.freq);
+						sta_ctx->conn_info.chan_freq);
 			/*
 			 * if the channel number is different from operating
 			 * channel then no need to send action frame
@@ -993,7 +993,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 				 * 0 is accepted as current home channel,
 				 * delayed transmission of action frame is ok.
 				 */
-				chan.center_freq = sta_ctx->conn_info.freq;
+				chan.center_freq = sta_ctx->conn_info.chan_freq;
 			}
 		}
 	}
@@ -4368,7 +4368,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 		if (roaming_offload_enabled(hdd_ctx)) {
 			channel = wlan_reg_freq_to_chan(
 					hdd_ctx->pdev,
-					sta_ctx->conn_info.freq);
+					sta_ctx->conn_info.chan_freq);
 			hdd_wma_send_fastreassoc_cmd(adapter, bssid,
 						     channel);
 		} else {

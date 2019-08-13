@@ -469,7 +469,7 @@ static int32_t hdd_add_survey_info(struct sk_buff *skb,
 	if (!nla_attr)
 		goto fail;
 	if (nla_put_u32(skb, NL80211_SURVEY_INFO_FREQUENCY,
-			hdd_sta_ctx->cache_conn_info.freq) ||
+			hdd_sta_ctx->cache_conn_info.chan_freq) ||
 	    nla_put_u8(skb, NL80211_SURVEY_INFO_NOISE,
 		       (hdd_sta_ctx->cache_conn_info.noise + 100))) {
 		hdd_err("put fail");
@@ -594,7 +594,7 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 	nl_buf_len += sizeof(hdd_sta_ctx->
 				cache_conn_info.last_ssid.SSID.length) +
 		      QDF_MAC_ADDR_SIZE +
-		      sizeof(hdd_sta_ctx->cache_conn_info.freq) +
+		      sizeof(hdd_sta_ctx->cache_conn_info.chan_freq) +
 		      sizeof(hdd_sta_ctx->cache_conn_info.noise) +
 		      sizeof(hdd_sta_ctx->cache_conn_info.signal) +
 		      (sizeof(uint32_t) * 2) +

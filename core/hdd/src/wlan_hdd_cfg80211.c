@@ -4381,7 +4381,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 			conn_info_channel =
 				wlan_reg_freq_to_chan(
 					hdd_ctx->pdev,
-					sta_ctx->conn_info.freq);
+					sta_ctx->conn_info.chan_freq);
 			/*
 			 *  if STA is already connected on DFS channel,
 			 *  do not disable scan on dfs channels
@@ -8878,7 +8878,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		}
 
 		nss  = hdd_sta_ctx->conn_info.nss;
-		freq = hdd_sta_ctx->conn_info.freq;
+		freq = hdd_sta_ctx->conn_info.chan_freq;
 		rate_flags = hdd_sta_ctx->conn_info.rate_flags;
 	} else if (adapter->device_mode == QDF_P2P_GO_MODE ||
 		   adapter->device_mode == QDF_SAP_MODE) {
@@ -19186,12 +19186,11 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		/* Set the Operational Channel */
 		hdd_debug("set channel %d", channelNum);
 		roam_profile->ChannelInfo.numOfChannels = 1;
-		sta_ctx->conn_info.channel = channelNum;
-		sta_ctx->conn_info.freq =
+		sta_ctx->conn_info.chan_freq =
 			wlan_reg_chan_to_freq(hdd_ctx->pdev,
 					      channelNum);
 		roam_profile->ChannelInfo.freq_list =
-			&sta_ctx->conn_info.freq;
+			&sta_ctx->conn_info.chan_freq;
 	}
 
 	/* Initialize security parameters */
@@ -19204,7 +19203,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	conn_info_channel =
 		wlan_reg_freq_to_chan(
 			hdd_ctx->pdev,
-			sta_ctx->conn_info.freq);
+			sta_ctx->conn_info.chan_freq);
 	/* Issue connect start */
 	status = wlan_hdd_cfg80211_connect_start(adapter, params->ssid,
 						 params->ssid_len,

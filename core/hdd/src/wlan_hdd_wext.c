@@ -7442,7 +7442,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 		uint8_t operating_ch =
 			wlan_reg_freq_to_chan(
 				hdd_ctx->pdev,
-				adapter->session.station.conn_info.freq);
+				adapter->session.station.conn_info.chan_freq);
 		tCsrRoamModifyProfileFields mod_fields;
 
 		sme_get_modify_profile_fields(mac_handle, adapter->vdev_id,
