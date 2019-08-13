@@ -577,6 +577,19 @@ static inline struct wlan_objmgr_vdev *wlan_pdev_vdev_list_peek_head(
 }
 
 /**
+ * wlan_pdev_peek_active_first_vdev() - get first active vdev from pdev list
+ * @pdev: PDEV object
+ * @dbg_id: id of the caller
+ *
+ * API to get the head active vdev of given pdev (of pdev's vdev list)
+ *
+ * Return:
+ */
+struct wlan_objmgr_vdev *wlan_pdev_peek_active_first_vdev(
+		struct wlan_objmgr_pdev *pdev,
+		wlan_objmgr_ref_dbgid dbg_id);
+
+/**
  * wlan_pdev_vdev_list_peek_active_head() - get first active vdev from pdev list
  * @vdev: VDEV object
  * @vdev_list: qdf_list_t

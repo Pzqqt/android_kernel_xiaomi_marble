@@ -1034,6 +1034,20 @@ struct wlan_objmgr_vdev *wlan_pdev_vdev_list_peek_active_head(
 	return NULL;
 }
 
+struct wlan_objmgr_vdev *wlan_pdev_peek_active_first_vdev(
+		struct wlan_objmgr_pdev *pdev,
+		wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_pdev_objmgr *objmgr = &pdev->pdev_objmgr;
+	qdf_list_t *vdev_list;
+
+	/* VDEV list */
+	vdev_list = &objmgr->wlan_vdev_list;
+
+	return wlan_pdev_vdev_list_peek_active_head(pdev, vdev_list,
+						    dbg_id);
+}
+
 struct wlan_objmgr_vdev *wlan_vdev_get_next_active_vdev_of_pdev(
 			struct wlan_objmgr_pdev *pdev,
 			qdf_list_t *vdev_list,
