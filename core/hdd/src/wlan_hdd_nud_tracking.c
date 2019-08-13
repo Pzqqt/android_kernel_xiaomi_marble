@@ -64,8 +64,15 @@ void hdd_nud_flush_work(struct hdd_adapter *adapter)
 
 void hdd_nud_deinit_tracking(struct hdd_adapter *adapter)
 {
-	hdd_debug("DeInitialize the NUD tracking");
-	qdf_destroy_work(NULL, &adapter->nud_tracking.nud_event_work);
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (adapter->device_mode == QDF_STA_MODE &&
+	    hdd_ctx->config->enable_nud_tracking) {
+		hdd_debug("DeInitialize the NUD tracking");
+		qdf_destroy_work(NULL, &adapter->nud_tracking.nud_event_work);
+	}
 }
 
 void hdd_nud_ignore_tracking(struct hdd_adapter *adapter, bool ignoring)
