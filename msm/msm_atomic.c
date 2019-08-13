@@ -28,6 +28,7 @@ struct msm_commit {
 	struct drm_device *dev;
 	struct drm_atomic_state *state;
 	uint32_t crtc_mask;
+	uint32_t plane_mask;
 	bool nonblock;
 	struct kthread_work commit_work;
 };
@@ -104,11 +105,13 @@ static void commit_destroy(struct msm_commit *c)
 {
 	struct msm_drm_private *priv = c->dev->dev_private;
 	uint32_t crtc_mask = c->crtc_mask;
+	uint32_t plane_mask = c->plane_mask;
 
 	/* End_atomic */
 	spin_lock(&priv->pending_crtcs_event.lock);
 	DBG("end: %08x", crtc_mask);
 	priv->pending_crtcs &= ~crtc_mask;
+	priv->pending_planes &= ~plane_mask;
 	wake_up_all_locked(&priv->pending_crtcs_event);
 	spin_unlock(&priv->pending_crtcs_event.lock);
 
@@ -715,6 +718,7 @@ int msm_atomic_commit(struct drm_device *dev,
 
 			drm_atomic_set_fence_for_plane(new_plane_state, fence);
 		}
+		c->plane_mask |= (1 << drm_plane_index(plane));
 	}
 
 	/*
@@ -725,10 +729,12 @@ int msm_atomic_commit(struct drm_device *dev,
 	/* Start Atomic */
 	spin_lock(&priv->pending_crtcs_event.lock);
 	ret = wait_event_interruptible_locked(priv->pending_crtcs_event,
-			!(priv->pending_crtcs & c->crtc_mask));
+			!(priv->pending_crtcs & c->crtc_mask) &&
+			!(priv->pending_planes & c->plane_mask));
 	if (ret == 0) {
 		DBG("start: %08x", c->crtc_mask);
 		priv->pending_crtcs |= c->crtc_mask;
+		priv->pending_planes |= c->plane_mask;
 	}
 	spin_unlock(&priv->pending_crtcs_event.lock);
 
