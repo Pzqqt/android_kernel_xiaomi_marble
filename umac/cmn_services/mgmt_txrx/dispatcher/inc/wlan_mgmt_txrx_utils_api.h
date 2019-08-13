@@ -683,6 +683,7 @@ enum mgmt_frame_type {
 #define WLAN_NOISE_FLOOR_DBM_DEFAULT            -96
 /**
  * struct mgmt_rx_event_params - host mgmt header params
+ * @chan_freq: channel frequency on which this frame is received
  * @channel: channel on which this frame is received
  * @snr: snr information used to call rssi
  * @rssi_ctl[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA]: RSSI of PRI 20MHz for each chain
@@ -699,6 +700,7 @@ enum mgmt_frame_type {
  *             (win specific, will be removed in phase 4)
  */
 struct mgmt_rx_event_params {
+	uint32_t    chan_freq;
 	uint32_t    channel;
 	uint32_t    snr;
 	uint8_t     rssi_ctl[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA];

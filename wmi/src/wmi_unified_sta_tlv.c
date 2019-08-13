@@ -591,6 +591,7 @@ static QDF_STATUS send_set_tdls_offchan_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->offchan_mode =
 		tdls_get_wmi_offchannel_mode(chan_switch_params->tdls_sw_mode);
 	cmd->is_peer_responder = chan_switch_params->is_responder;
+	cmd->offchan_freq = chan_switch_params->tdls_off_chan_freq;
 	cmd->offchan_num = chan_switch_params->tdls_off_ch;
 	cmd->offchan_bw_bitmap =
 		tdls_get_wmi_offchannel_bw(
@@ -603,11 +604,12 @@ static QDF_STATUS send_set_tdls_offchan_mode_cmd_tlv(wmi_unified_t wmi_handle,
 
 	WMI_LOGD(FL(
 		 "vdev_id: %d, off channel mode: %d, off channel Num: %d, "
-		 "off channel offset: 0x%x, is_peer_responder: %d, operating class: %d"
-		  ),
+		 "off channel frequency: %u off channel offset: 0x%x, "
+		 " is_peer_responder: %d, operating class: %d"),
 		 cmd->vdev_id,
 		 cmd->offchan_mode,
 		 cmd->offchan_num,
+		 cmd->offchan_freq,
 		 cmd->offchan_bw_bitmap,
 		 cmd->is_peer_responder,
 		 cmd->offchan_oper_class);
@@ -802,6 +804,7 @@ send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 
 	peer_cap->is_peer_responder = in_peer_cap->is_peer_responder;
+	peer_cap->pref_offchan_freq = in_peer_cap->pref_offchan_freq;
 	peer_cap->pref_offchan_num = in_peer_cap->pref_off_channum;
 	peer_cap->pref_offchan_bw = in_peer_cap->pref_off_chan_bandwidth;
 
@@ -809,12 +812,13 @@ send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
 		("%s: peer_qos: 0x%x, buff_sta_support: %d, off_chan_support: %d, "
 		 "peer_curr_operclass: %d, self_curr_operclass: %d, peer_chan_len: "
 		 "%d, peer_operclass_len: %d, is_peer_responder: %d, pref_offchan_num:"
-		 " %d, pref_offchan_bw: %d",
+		 " %d, pref_offchan_bw: %d, pref_offchan_freq: %u",
 		 __func__, peer_cap->peer_qos, peer_cap->buff_sta_support,
 		 peer_cap->off_chan_support, peer_cap->peer_curr_operclass,
 		 peer_cap->self_curr_operclass, peer_cap->peer_chan_len,
 		 peer_cap->peer_operclass_len, peer_cap->is_peer_responder,
-		 peer_cap->pref_offchan_num, peer_cap->pref_offchan_bw);
+		 peer_cap->pref_offchan_num, peer_cap->pref_offchan_bw,
+		 peer_cap->pref_offchan_freq);
 
 	/* next fill variable size array of peer chan info */
 	buf_ptr += sizeof(wmi_tdls_peer_capabilities);

@@ -8538,7 +8538,7 @@ static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
 
 	hdr->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
 							ev_hdr->pdev_id);
-
+	hdr->chan_freq = ev_hdr->chan_freq;
 	hdr->channel = ev_hdr->channel;
 	hdr->snr = ev_hdr->snr;
 	hdr->rate = ev_hdr->rate;
