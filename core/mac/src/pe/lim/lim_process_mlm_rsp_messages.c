@@ -2001,6 +2001,8 @@ end:
 
 /**
  * lim_process_ap_mlm_add_bss_rsp()
+ * @mac: Pointer to Global MAC structure
+ * @pAddBssParams: Bss params including rsp data
  *
  ***FUNCTION:
  * This function is called to process a WMA_ADD_BSS_RSP from HAL.
@@ -2026,35 +2028,24 @@ end:
  * lim_process_mlm_start_req
  * struct scheduler_msg.body will now be freed by this routine
  *
- ***NOTE:
- *
- * @param  mac      Pointer to Global MAC structure
- * @param  struct scheduler_msg  The MsgQ header, which contains
- *  the response buffer
- *
  * @return None
  */
 static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
-					   struct scheduler_msg *limMsgQ)
+					   struct bss_params *pAddBssParams)
 {
 	tLimMlmStartCnf mlmStartCnf;
 	struct pe_session *pe_session;
 	uint8_t isWepEnabled = false;
-	struct bss_params *pAddBssParams = (struct bss_params *) limMsgQ->bodyptr;
 
 	if (!pAddBssParams) {
 		pe_err("Encountered NULL Pointer");
-		goto end;
+		return;
 	}
 	/* TBD: free the memory before returning, do it for all places where lookup fails. */
 	pe_session = pe_find_session_by_session_id(mac,
 					   pAddBssParams->sessionId);
 	if (!pe_session) {
 		pe_err("session does not exist for given sessionId");
-		if (pAddBssParams) {
-			qdf_mem_free(pAddBssParams);
-			limMsgQ->bodyptr = NULL;
-		}
 		return;
 	}
 	/* Update PE session Id */
@@ -2065,7 +2056,7 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 			    (mac, eSIR_LINK_AP_STATE, pe_session->bssId,
 			    pe_session->self_mac_addr, NULL,
 			    NULL) != QDF_STATUS_SUCCESS)
-			goto end;
+			return;
 		/* Set MLME state */
 		pe_session->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
 		pe_session->chainMask = pAddBssParams->chainMask;
@@ -2138,15 +2129,12 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 	}
 
 	lim_send_start_bss_confirm(mac, &mlmStartCnf);
-end:
-	if (0 != limMsgQ->bodyptr) {
-		qdf_mem_free(pAddBssParams);
-		limMsgQ->bodyptr = NULL;
-	}
 }
 
 /**
  * lim_process_ibss_mlm_add_bss_rsp()
+ * @mac: Pointer to Global MAC structure
+ * @pAddBssParams: Bss params including rsp data
  *
  ***FUNCTION:
  * This function is called to process a WMA_ADD_BSS_RSP from HAL.
@@ -2167,30 +2155,18 @@ end:
  * MLME responds with LIM_MLM_START_CNF to LIM
  * LIM responds with eWNI_SME_START_BSS_RSP to SME
  *
- ***ASSUMPTIONS:
- * struct scheduler_msg.body is allocated by MLME during
- * lim_process_mlm_start_req
- * struct scheduler_msg.body will now be freed by this routine
- *
- ***NOTE:
- *
- * @param  mac      Pointer to Global MAC structure
- * @param  struct scheduler_msg  The MsgQ header, which contains
- *  the response buffer
- *
  * @return None
  */
 static void
 lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
-				 struct scheduler_msg *limMsgQ,
+				 struct bss_params *pAddBssParams,
 				 struct pe_session *pe_session)
 {
 	tLimMlmStartCnf mlmStartCnf;
-	struct bss_params *pAddBssParams = (struct bss_params *) limMsgQ->bodyptr;
 
 	if (!pAddBssParams) {
 		pe_err("Invalid body pointer in message");
-		goto end;
+		return;
 	}
 	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
 		pe_debug("WMA_ADD_BSS_RSP returned with QDF_STATUS_SUCCESS");
@@ -2199,7 +2175,7 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 			    (mac, eSIR_LINK_IBSS_STATE, pe_session->bssId,
 			    pe_session->self_mac_addr, NULL,
 			    NULL) != QDF_STATUS_SUCCESS)
-			goto end;
+			return;
 		/* Set MLME state */
 		pe_session->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
 		MTRACE(mac_trace
@@ -2224,9 +2200,9 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 		mlmStartCnf.resultCode = eSIR_SME_SUCCESS;
 		/* If ADD BSS was issued as part of IBSS coalescing, don't send the message to SME, as that is internal to LIM */
 		if (true == mac->lim.gLimIbssCoalescingHappened) {
-			lim_ibss_add_bss_rsp_when_coalescing(mac, limMsgQ->bodyptr,
+			lim_ibss_add_bss_rsp_when_coalescing(mac, pAddBssParams,
 							     pe_session);
-			goto end;
+			return;
 		}
 	} else {
 		pe_err("WMA_ADD_BSS_REQ failed with status %d",
@@ -2238,11 +2214,6 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 	/* Update PE session Id */
 	mlmStartCnf.sessionId = pe_session->peSessionId;
 	lim_send_start_bss_confirm(mac, &mlmStartCnf);
-end:
-	if (0 != limMsgQ->bodyptr) {
-		qdf_mem_free(pAddBssParams);
-		limMsgQ->bodyptr = NULL;
-	}
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
@@ -2271,7 +2242,7 @@ static void lim_update_fils_auth_mode(struct pe_session *session_entry,
 /**
  * csr_neighbor_roam_handoff_req_hdlr - Processes handoff request
  * @mac_ctx:  Pointer to mac context
- * @msg:  message sent to HDD
+ * @pAddBssParams: Bss params including rsp data
  * @session_entry: PE session handle
  *
  * This function is called to process a WMA_ADD_BSS_RSP from HAL.
@@ -2281,9 +2252,9 @@ static void lim_update_fils_auth_mode(struct pe_session *session_entry,
  */
 static void
 lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
-	struct scheduler_msg *msg, struct pe_session *session_entry)
+	struct bss_params *add_bss_params, struct pe_session *session_entry)
 {
-	struct bss_params *pAddBssParams = (struct bss_params *) msg->bodyptr;
+	struct bss_params *pAddBssParams = add_bss_params;
 	tAniAuthType cfgAuthType, authMode;
 	tLimMlmAuthReq *pMlmAuthReq;
 	tpDphHashNode sta = NULL;
@@ -2366,7 +2337,7 @@ joinFailure:
 /**
  * lim_process_sta_mlm_add_bss_rsp() - Process ADD BSS response
  * @mac_ctx: Pointer to Global MAC structure
- * @msg: The MsgQ header, which contains the response buffer
+ * @add_bss_params: Bss params including rsp data
  *
  * This function is called to process a WMA_ADD_BSS_RSP from HAL.
  * Upon receipt of this message from HAL, MLME -
@@ -2376,18 +2347,13 @@ joinFailure:
  * MLME had sent WMA_ADD_BSS_REQ to HAL
  * HAL responded with WMA_ADD_BSS_RSP to MLME
  * MLME now sends WMA_ADD_STA_REQ to HAL
- * ASSUMPTIONS:
- * struct scheduler_msg.body is allocated by MLME during
- * lim_process_mlm_join_req
- * struct scheduler_msg.body will now be freed by this routine
  *
  * Return: None
  */
-static void
-lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
-	struct scheduler_msg *msg, struct pe_session *session_entry)
+static void lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
+					    struct bss_params *add_bss_params,
+					    struct pe_session *session_entry)
 {
-	struct bss_params *add_bss_params = (struct bss_params *) msg->bodyptr;
 	tLimMlmAssocCnf mlm_assoc_cnf;
 	uint32_t msg_type = LIM_MLM_ASSOC_CNF;
 	uint32_t sub_type = LIM_ASSOC;
@@ -2401,9 +2367,10 @@ lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 		session_entry->limMlmState) {
 		pe_debug("SessionId: %d lim_process_sta_add_bss_rsp_pre_assoc",
 			session_entry->peSessionId);
-		lim_process_sta_add_bss_rsp_pre_assoc(mac_ctx, msg,
-			session_entry);
-		goto end;
+		lim_process_sta_add_bss_rsp_pre_assoc(mac_ctx,
+						      add_bss_params,
+						      session_entry);
+		return;
 	}
 	if (eLIM_MLM_WT_ADD_BSS_RSP_REASSOC_STATE == session_entry->limMlmState
 		|| (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==
@@ -2427,16 +2394,17 @@ lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	}
 
 	if (add_bss_params == 0)
-		goto end;
+		return;
 
 	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
 		if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==
 			session_entry->limMlmState) {
 			pe_debug("Mlm=%d %d", session_entry->limMlmState,
 				eLIM_MLM_WT_ADD_BSS_RSP_REASSOC_STATE);
-			lim_process_sta_mlm_add_bss_rsp_ft(mac_ctx, msg,
-				session_entry);
-			goto end;
+			lim_process_sta_mlm_add_bss_rsp_ft(mac_ctx,
+							   add_bss_params,
+							   session_entry);
+			return;
 		}
 
 		/* Set MLME state */
@@ -2512,40 +2480,32 @@ lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 		lim_post_sme_message(mac_ctx, msg_type,
 			(uint32_t *) &mlm_assoc_cnf);
 	}
-end:
-	if (0 != msg->bodyptr) {
-		qdf_mem_free(add_bss_params);
-		msg->bodyptr = NULL;
-	}
 }
 
-/**
- * lim_process_mlm_add_bss_rsp() - Processes ADD BSS Response
- *
- * @mac_ctx - Pointer to Global MAC structure
- * @msg - The MsgQ header, which contains the response buffer
- *
- * This function is called to process a WMA_ADD_BSS_RSP from HAL.
- * Upon receipt of this message from HAL, MLME -
- *  Determines the "state" in which this message was received
- *  Forwards it to the appropriate callback
- *
- *LOGIC:
- * WMA_ADD_BSS_RSP can be received by MLME while the LIM is
- * in the following two states:
- * 1) As AP, LIM state = eLIM_SME_WT_START_BSS_STATE
- * 2) As STA, LIM state = eLIM_SME_WT_JOIN_STATE
- * Based on these two states, this API will determine where to
- * route the message to
- *
- * Return None
- */
 void lim_process_mlm_add_bss_rsp(struct mac_context *mac_ctx,
-	struct scheduler_msg *msg)
+				 struct scheduler_msg *msg)
+{
+	if (!msg) {
+		pe_err("Encountered NULL Pointer");
+		return;
+	}
+	lim_handle_mlm_add_bss_rsp(mac_ctx, msg->bodyptr);
+	msg->bodyptr = NULL;
+}
+
+/*
+ *LOGIC: Based on bss type and state, this API will route the message to
+ *different functions.
+ * 1) eSIR_IBSS_MODE: handled in lim_process_ibss_mlm_add_bss_rsp.
+ * 2) eSIR_NDI_MODE: handled in lim_process_ndi_mlm_add_bss_rsp.
+ * 3) SAP mode: handled in lim_process_ap_mlm_add_bss_rsp.
+ * 4) STA mode: handled in lim_process_sta_mlm_add_bss_rsp.
+ */
+void lim_handle_mlm_add_bss_rsp(struct mac_context *mac_ctx,
+				struct bss_params *add_bss_param)
 {
 	tLimMlmStartCnf mlm_start_cnf;
 	struct pe_session *session_entry;
-	struct bss_params *add_bss_param = (struct bss_params *) (msg->bodyptr);
 	enum bss_type bss_type;
 
 	if (!add_bss_param) {
@@ -2567,20 +2527,20 @@ void lim_process_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	if (!session_entry) {
 		pe_err("SessionId:%d Session Doesn't exist",
 			add_bss_param->sessionId);
-		if (add_bss_param) {
-			qdf_mem_free(add_bss_param);
-			msg->bodyptr = NULL;
-		}
-		return;
+		goto err;
 	}
 
 	bss_type = session_entry->bssType;
 	/* update PE session Id */
 	mlm_start_cnf.sessionId = session_entry->peSessionId;
 	if (eSIR_IBSS_MODE == bss_type) {
-		lim_process_ibss_mlm_add_bss_rsp(mac_ctx, msg, session_entry);
+		lim_process_ibss_mlm_add_bss_rsp(mac_ctx,
+						 add_bss_param,
+						 session_entry);
 	} else if (eSIR_NDI_MODE == session_entry->bssType) {
-		lim_process_ndi_mlm_add_bss_rsp(mac_ctx, msg, session_entry);
+		lim_process_ndi_mlm_add_bss_rsp(mac_ctx,
+						add_bss_param,
+						session_entry);
 	} else {
 		if (eLIM_SME_WT_START_BSS_STATE == session_entry->limSmeState) {
 			if (eLIM_MLM_WT_ADD_BSS_RSP_STATE !=
@@ -2591,18 +2551,16 @@ void lim_process_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 					session_entry->limMlmState);
 				mlm_start_cnf.resultCode =
 					eSIR_SME_BSS_ALREADY_STARTED_OR_JOINED;
-				if (0 != msg->bodyptr) {
-					qdf_mem_free(add_bss_param);
-					msg->bodyptr = NULL;
-				}
 
 				lim_send_start_bss_confirm(mac_ctx, &mlm_start_cnf);
-			} else
-				lim_process_ap_mlm_add_bss_rsp(mac_ctx, msg);
+			}
+				lim_process_ap_mlm_add_bss_rsp(mac_ctx,
+							       add_bss_param);
 		} else {
 			/* Called while processing assoc response */
-			lim_process_sta_mlm_add_bss_rsp(mac_ctx, msg,
-				session_entry);
+			lim_process_sta_mlm_add_bss_rsp(mac_ctx,
+							add_bss_param,
+							session_entry);
 		}
 	}
 
@@ -2615,6 +2573,12 @@ void lim_process_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 		}
 	}
 #endif
+err:
+	/*
+	 * lim_handle_mlm_add_bss_rsp is entry to handle all types of add
+	 * bss response, only need free bss params buffer here
+	 */
+	qdf_mem_free(add_bss_param);
 }
 
 void lim_process_mlm_update_hidden_ssid_rsp(struct mac_context *mac_ctx,

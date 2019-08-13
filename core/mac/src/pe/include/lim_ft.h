@@ -64,8 +64,20 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 QDF_STATUS lim_ft_setup_auth_session(struct mac_context *mac,
 		struct pe_session *pe_session);
 void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg);
+/**
+ * lim_process_sta_mlm_add_bss_rsp_ft() - Handle ft add bss response
+ * @mac: Global MAC context
+ * @add_bss_params: Bss params including rsp data
+ * @pe_session: PE Session
+ *
+ * Function to handle fast roaming add bss response in FT reassoc state,
+ * send reassociation Request.
+ *
+ * Return: None
+ */
 void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
-		struct scheduler_msg *limMsgQ, struct pe_session *pe_session);
+					struct bss_params *add_bss_params,
+					struct pe_session *pe_session);
 void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 				 tLimMlmReassocReq *reassoc_req);
 void lim_preauth_scan_event_handler(struct mac_context *mac_ctx,
@@ -91,8 +103,10 @@ static inline void lim_handle_ft_pre_auth_rsp(struct mac_context *mac,
 static inline void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx,
 		uint32_t *msg)
 {}
-static inline void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
-		struct scheduler_msg *limMsgQ, struct pe_session *pe_session)
+static inline
+void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
+					struct bss_params *add_bss_params,
+					struct pe_session *pe_session)
 {}
 static inline void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 					       tLimMlmReassocReq *reassoc_req)

@@ -92,7 +92,17 @@ void lim_process_ibss_del_sta_rsp(struct mac_context *mac_ctx,
 tLimIbssPeerNode *lim_ibss_peer_find(struct mac_context *mac, tSirMacAddr macAddr);
 void lim_ibss_del_bss_rsp(struct mac_context *, void *, struct pe_session *);
 void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *, void *, struct pe_session *);
-void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
+
+/**
+ * lim_ibss_add_bss_rsp_when_coalescing()- Handle ADD BSS rsp of IBSS coalescing
+ * @mac_ptr: Pointer to Global MAC structure
+ * @bss_params: Bss params including rsp data
+ * @pe_session: PE session pointer
+ *
+ * Return: None
+ */
+void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac,
+					  struct bss_params *bss_param,
 					  struct pe_session *pe_session);
 void lim_ibss_decide_protection_on_delete(struct mac_context *mac, tpDphHashNode sta,
 					  tpUpdateBeaconParams pBeaconParams,

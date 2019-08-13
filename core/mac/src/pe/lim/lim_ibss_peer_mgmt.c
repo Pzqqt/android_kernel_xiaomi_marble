@@ -1230,12 +1230,12 @@ end:
 		qdf_mem_free(pDelBss);
 }
 
-void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
+void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac,
+					  struct bss_params *bss_param,
 					  struct pe_session *pe_session)
 {
 	uint8_t infoLen;
 	struct new_bss_info newBssInfo;
-	struct bss_params *pAddBss = msg;
 	tpSirMacMgmtHdr pHdr = mac->lim.ibss_info.mac_hdr;
 	tpSchBeaconStruct pBeacon = mac->lim.ibss_info.beacon;
 
@@ -1250,7 +1250,7 @@ void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 	qdf_mem_zero((void *)&newBssInfo, sizeof(newBssInfo));
 	qdf_mem_copy(newBssInfo.bssId.bytes, pHdr->bssId, QDF_MAC_ADDR_SIZE);
 	newBssInfo.freq = wlan_reg_chan_to_freq(mac->pdev,
-						pAddBss->currentOperChannel);
+						bss_param->currentOperChannel);
 	qdf_mem_copy((uint8_t *) &newBssInfo.ssId,
 		     (uint8_t *) &pBeacon->ssId, pBeacon->ssId.length + 1);
 

@@ -370,30 +370,19 @@ QDF_STATUS lim_sta_reassoc_error_handler(struct reassoc_params *param)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * lim_process_sta_mlm_add_bss_rsp_ft() - Handle the ADD BSS response
- * @mac: Global MAC context
- * @limMsgQ: ADD BSS Parameters
- * @pe_session: PE Session
- *
- * Function to handle WMA_ADD_BSS_RSP, in FT reassoc state.
- * Send ReAssociation Request.
- *
- *Return: None
- */
 void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
-		struct scheduler_msg *limMsgQ, struct pe_session *pe_session)
+					struct bss_params *add_bss_params,
+					struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf; /* keep sme */
 	tpDphHashNode sta = NULL;
 	tpAddStaParams pAddStaParams = NULL;
 	uint32_t listenInterval = MLME_CFG_LISTEN_INTERVAL;
-	struct bss_params *pAddBssParams = (struct bss_params *) limMsgQ->bodyptr;
 	uint32_t selfStaDot11Mode = 0;
 
 	/* Sanity Checks */
 
-	if (!pAddBssParams) {
+	if (!add_bss_params) {
 		pe_err("Invalid parameters");
 		goto end;
 	}
@@ -402,13 +391,13 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		goto end;
 	}
 
-	sta = dph_add_hash_entry(mac, pAddBssParams->bssId,
-					DPH_STA_HASH_INDEX_PEER,
-					&pe_session->dph.dphHashTable);
+	sta = dph_add_hash_entry(mac, add_bss_params->bssId,
+				 DPH_STA_HASH_INDEX_PEER,
+				 &pe_session->dph.dphHashTable);
 	if (!sta) {
 		/* Could not add hash table entry */
 		pe_err("could not add hash entry at DPH for");
-		lim_print_mac_addr(mac, pAddBssParams->staContext.staMac,
+		lim_print_mac_addr(mac, add_bss_params->staContext.staMac,
 				   LOGE);
 		goto end;
 	}
@@ -467,15 +456,15 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	pe_debug("Set the mlm state: %d session: %d",
 		       pe_session->limMlmState, pe_session->peSessionId);
 
-	pe_session->bss_idx = (uint8_t)pAddBssParams->bss_idx;
+	pe_session->bss_idx = (uint8_t)add_bss_params->bss_idx;
 
 	/* Success, handle below */
-	sta->bssId = pAddBssParams->bss_idx;
+	sta->bssId = add_bss_params->bss_idx;
 	/* STA Index(genr by HAL) for the BSS entry is stored here */
-	sta->staIndex = pAddBssParams->staContext.staIdx;
+	sta->staIndex = add_bss_params->staContext.staIdx;
 
-	rrm_cache_mgmt_tx_power(mac, pAddBssParams->txMgmtPower,
-			pe_session);
+	rrm_cache_mgmt_tx_power(mac, add_bss_params->txMgmtPower,
+				pe_session);
 
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (!pAddStaParams)
@@ -558,11 +547,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	/* Lets save this for when we receive the Reassoc Rsp */
 	pe_session->ftPEContext.pAddStaReq = pAddStaParams;
 
-	if (pAddBssParams) {
-		qdf_mem_free(pAddBssParams);
-		pAddBssParams = NULL;
-		limMsgQ->bodyptr = NULL;
-	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (pe_session->bRoamSynchInProgress) {
 		pe_debug("LFR3:Prep and save AddStaReq for post-assoc-rsp");
@@ -579,12 +563,6 @@ end:
 			qdf_mem_free(pe_session->pLimMlmReassocReq);
 			pe_session->pLimMlmReassocReq = NULL;
 		}
-
-	if (pAddBssParams) {
-		qdf_mem_free(pAddBssParams);
-		pAddBssParams = NULL;
-		limMsgQ->bodyptr = NULL;
-	}
 
 	mlmReassocCnf.resultCode = eSIR_SME_FT_REASSOC_FAILURE;
 	mlmReassocCnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;

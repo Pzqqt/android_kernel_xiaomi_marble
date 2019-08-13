@@ -723,9 +723,32 @@ QDF_STATUS lim_send_tpc_report_frame(struct mac_context *, tpSirMacTpcReqActionF
 					tSirMacAddr, struct pe_session *pe_session);
 #endif
 
-/* Function(s) to handle responses received from HAL */
+/**
+ * lim_process_mlm_add_bss_rsp() - Processes ADD BSS Response
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg: The MsgQ header, which contains the response buffer
+ *
+ * This function is called to process a WMA_ADD_BSS_RSP from HAL.
+ * Upon receipt of this message from HAL.
+ *
+ * Return None
+ */
 void lim_process_mlm_add_bss_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsgQ);
+
+/**
+ * lim_handle_mlm_add_bss_rsp() - Handle add bss response
+ * @mac_ctx: mac context
+ * @add_bss_param: add bss parameters
+ *
+ * This function is called to handle all types of add bss rsp from HAL.
+ * It will free memory of add_bss_param in the end after rsp is handled.
+ *
+ * Return: None
+ */
+void lim_handle_mlm_add_bss_rsp(struct mac_context *mac_ctx,
+				struct bss_params *add_bss_param);
+
 void lim_process_mlm_add_sta_rsp(struct mac_context *mac,
 				struct scheduler_msg *limMsgQt,
 				 struct pe_session *pe_session);

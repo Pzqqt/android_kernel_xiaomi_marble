@@ -337,24 +337,15 @@ skip_event:
 	lim_msg->bodyptr = NULL;
 }
 
-/**
- * lim_process_ndi_mlm_add_bss_rsp() - Process ADD_BSS response for NDI
- * @mac_ctx: Pointer to Global MAC structure
- * @lim_msgq: The MsgQ header, which contains the response buffer
- * @session_entry: PE session
- *
- * Return: None
- */
 void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
-				     struct scheduler_msg *lim_msgq,
+				     struct bss_params *add_bss_params,
 				     struct pe_session *session_entry)
 {
 	tLimMlmStartCnf mlm_start_cnf;
-	struct bss_params *add_bss_params = (struct bss_params *) lim_msgq->bodyptr;
 
 	if (!add_bss_params) {
 		pe_err("Invalid body pointer in message");
-		goto end;
+		return;
 	}
 	pe_debug("Status %d", add_bss_params->status);
 	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
@@ -380,9 +371,6 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	}
 	mlm_start_cnf.sessionId = session_entry->peSessionId;
 	lim_send_start_bss_confirm(mac_ctx, &mlm_start_cnf);
-end:
-	qdf_mem_free(lim_msgq->bodyptr);
-	lim_msgq->bodyptr = NULL;
 }
 
 /**
