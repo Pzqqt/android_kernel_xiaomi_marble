@@ -119,6 +119,34 @@ static int hdd_close_ndi(struct hdd_adapter *adapter)
  *
  * Return:  true if allowed, false otherwise
  */
+#ifdef NDP_SAP_CONCURRENCY_ENABLE
+static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter;
+	struct hdd_station_ctx *sta_ctx;
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		switch (adapter->device_mode) {
+		case QDF_P2P_GO_MODE:
+			if (test_bit(SOFTAP_BSS_STARTED,
+				     &adapter->event_flags))
+				return false;
+			break;
+		case QDF_P2P_CLIENT_MODE:
+		case QDF_IBSS_MODE:
+			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+			if (hdd_conn_is_connected(sta_ctx) ||
+			    hdd_is_connecting(sta_ctx))
+				return false;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return true;
+}
+#else
 static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
@@ -129,14 +157,14 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 		case QDF_P2P_GO_MODE:
 		case QDF_SAP_MODE:
 			if (test_bit(SOFTAP_BSS_STARTED,
-					&adapter->event_flags))
+				     &adapter->event_flags))
 				return false;
 			break;
 		case QDF_P2P_CLIENT_MODE:
 		case QDF_IBSS_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (hdd_conn_is_connected(sta_ctx) ||
-					hdd_is_connecting(sta_ctx))
+			    hdd_is_connecting(sta_ctx))
 				return false;
 			break;
 		default:
@@ -146,6 +174,7 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 
 	return true;
 }
+#endif /* NDP_SAP_CONCURRENCY_ENABLE */
 
 /**
  * hdd_ndi_start_bss() - Start BSS on NAN data interface
@@ -382,12 +411,6 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		hdd_err_rl("NAN datapath is not enabled");
 		return -EPERM;
 	}
-	/* NAN data path coexists only with STA interface */
-	if (false == hdd_is_ndp_allowed(hdd_ctx)) {
-		hdd_err_rl("Unsupported concurrency for NAN datapath");
-		return -EPERM;
-	}
-
 	/* NAN data path coexists only with STA interface */
 	if (false == hdd_is_ndp_allowed(hdd_ctx)) {
 		hdd_err_rl("Unsupported concurrency for NAN datapath");

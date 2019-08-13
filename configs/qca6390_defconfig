@@ -178,6 +178,7 @@ endif
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
 	#Flag to enable NAN
 	CONFIG_QCACLD_FEATURE_NAN := y
+	CONFIG_NDP_SAP_CONCURRENCY_ENABLE := y
 endif
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
