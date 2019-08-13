@@ -446,6 +446,22 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 		}
 
 	num_radios = target_psoc_get_num_radios(tgt_hdl);
+
+	if (ready_ev.pktlog_defs_checksum) {
+		for (i = 0; i < num_radios; i++) {
+			pdev = wlan_objmgr_get_pdev_by_id(psoc, i,
+							  WLAN_INIT_DEINIT_ID);
+			if (!pdev) {
+				target_if_err(" PDEV %d is NULL", i);
+				return -EINVAL;
+			}
+			target_if_set_pktlog_checksum(pdev, tgt_hdl,
+						      ready_ev.
+						      pktlog_defs_checksum);
+			wlan_objmgr_pdev_release_ref(pdev, WLAN_INIT_DEINIT_ID);
+		}
+	}
+
 	/*
 	 * For non-legacy HW, MAC addr list is extracted.
 	 */

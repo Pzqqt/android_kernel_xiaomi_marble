@@ -215,6 +215,7 @@ struct tgt_info {
  * @sw_version_check: Checks the SW version
  * @smart_log_enable: Enable Smart Logs feature
  * @cfr_support_enable: CFR support enable
+ * @set_pktlog_checksum: Set the pktlog checksum from FW ready event to pl_dev
  */
 struct target_ops {
 	QDF_STATUS (*ext_resource_config_enable)
@@ -275,6 +276,8 @@ struct target_ops {
 	void (*cfr_support_enable)
 		(struct wlan_objmgr_psoc *psoc,
 		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*set_pktlog_checksum)
+		(struct wlan_objmgr_pdev *pdev, uint32_t checksum);
 };
 
 
@@ -1768,6 +1771,24 @@ static inline void target_if_cfr_support_enable(struct wlan_objmgr_psoc *psoc,
 	if ((tgt_hdl->tif_ops) &&
 	    (tgt_hdl->tif_ops->cfr_support_enable))
 		tgt_hdl->tif_ops->cfr_support_enable(psoc, tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_set_pktlog_checksum - Set pktlog checksum
+ * @pdev: pdev object
+ * @tgt_hdl: target_psoc_info pointer
+ * @checksum: checksum received from FW
+ *
+ * API to set pktlog checksum
+ *
+ * Return: none
+ */
+static inline void target_if_set_pktlog_checksum(struct wlan_objmgr_pdev *pdev,
+			struct target_psoc_info *tgt_hdl, uint32_t checksum)
+{
+	if ((tgt_hdl->tif_ops) &&
+	    (tgt_hdl->tif_ops->set_pktlog_checksum))
+		tgt_hdl->tif_ops->set_pktlog_checksum(pdev, checksum);
 }
 
 /**

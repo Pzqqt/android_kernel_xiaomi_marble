@@ -7108,6 +7108,10 @@ struct coex_config_params {
  *                  radar detection, concurrently with using another radio
  *                  chain for non-160 MHz regular operation.
  * @max_ast_index: Max number of AST entries that FW could allocate.
+ * @pktlog_defs_checksum: checksum computed from the definitions of the enums
+ *                        and structs used within pktlog traces. This is sent
+ *                        from the FW as part of FW ready event and needs
+ *                        to be embedded in the pktlog buffer header as version.
  */
 struct wmi_host_ready_ev_param {
 	uint32_t status;
@@ -7117,6 +7121,7 @@ struct wmi_host_ready_ev_param {
 	uint32_t num_extra_peer;
 	bool agile_capability;
 	uint32_t max_ast_index;
+	uint32_t pktlog_defs_checksum;
 };
 
 enum bcn_offload_control_param {

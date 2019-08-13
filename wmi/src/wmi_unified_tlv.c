@@ -8443,6 +8443,7 @@ static QDF_STATUS extract_ready_event_params_tlv(wmi_unified_t wmi_handle,
 	 * as per aDFS FR
 	 */
 	ev_param->max_ast_index = ev->max_ast_index;
+	ev_param->pktlog_defs_checksum = ev->pktlog_defs_checksum;
 	ev_param->agile_capability = 1;
 
 	return QDF_STATUS_SUCCESS;
