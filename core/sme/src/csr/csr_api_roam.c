@@ -19666,7 +19666,7 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
 		cmd_type = WLAN_SER_CMD_WM_STATUS_CHANGE;
 		break;
 	case e_sme_command_del_vdev:
-		cmd_type = WLAN_SER_CMD_DEL_STA_SESSION;
+		cmd_type = WLAN_SER_CMD_VDEV_DELETE;
 		break;
 	case eSmeCommandAddTs:
 		cmd_type = WLAN_SER_CMD_ADDTS;
@@ -19723,7 +19723,7 @@ static void csr_fill_cmd_timeout(struct wlan_serialization_command *cmd)
 	case WLAN_SER_CMD_FORCE_DEAUTH_STA:
 		cmd->cmd_timeout_duration = SME_CMD_PEER_DISCONNECT_TIMEOUT;
 		break;
-	case WLAN_SER_CMD_DEL_STA_SESSION:
+	case WLAN_SER_CMD_VDEV_DELETE:
 		cmd->cmd_timeout_duration = SME_VDEV_DELETE_CMD_TIMEOUT;
 		break;
 	case WLAN_SER_CMD_HDD_ISSUE_REASSOC_SAME_AP:
