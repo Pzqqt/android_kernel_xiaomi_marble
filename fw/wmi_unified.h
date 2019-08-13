@@ -750,7 +750,7 @@ typedef enum {
     /** AP power save specific config */
     /** set AP power save specific param */
     WMI_AP_PS_PEER_PARAM_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_AP_PS),
-    /** set AP UAPSD coex pecific param */
+    /** set AP UAPSD coex specific param */
     WMI_AP_PS_PEER_UAPSD_COEX_CMDID,
     /** set Enhanced Green AP param */
     WMI_AP_PS_EGAP_PARAM_CMDID,
@@ -13762,6 +13762,7 @@ typedef enum event_type_e {
     WOW_BSS_COLOR_COLLISION_DETECT_EVENT,
     WOW_TKIP_MIC_ERR_FRAME_RECVD_EVENT,
     WOW_ROAM_PREAUTH_START_EVENT,
+    WOW_ROAM_PMKID_REQUEST_EVENT,
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -13827,6 +13828,7 @@ typedef enum wake_reason_e {
     WOW_REASON_PKT_CAPTURE_MODE_WAKE,
     WOW_REASON_PAGE_FAULT, /* Host wake up due to page fault */
     WOW_REASON_ROAM_PREAUTH_START,
+    WOW_REASON_ROAM_PMKID_REQUEST,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
@@ -24032,7 +24034,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         /* AP power save specific config
          * set AP power save specific param */
         WMI_RETURN_STRING(WMI_AP_PS_PEER_PARAM_CMDID);
-        /* set AP UAPSD coex pecific param */
+        /* set AP UAPSD coex specific param */
         WMI_RETURN_STRING(WMI_AP_PS_PEER_UAPSD_COEX_CMDID);
 
         /* Rate-control specific commands */
