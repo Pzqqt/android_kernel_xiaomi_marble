@@ -3801,6 +3801,8 @@ struct rx_reorder_queue_remove_params {
  * @num_bcn_stats: number of beacon stats
  * @num_rssi_stats: number of rssi stats
  * @num_peer_adv_stats: number of peer adv stats
+ * @num_mib_stats: number of mib stats
+ * @num_mib_extd_stats: number of extended mib stats
  * @last_event: specify if the current event is the last event
  */
 typedef struct {
@@ -3816,6 +3818,8 @@ typedef struct {
 	uint32_t num_bcn_stats;
 	uint32_t num_rssi_stats;
 	uint32_t num_peer_adv_stats;
+	uint32_t num_mib_stats;
+	uint32_t num_mib_extd_stats;
 	uint32_t last_event;
 } wmi_host_stats_event;
 

@@ -2178,6 +2178,19 @@ wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_MIB_STATS
+QDF_STATUS wmi_extract_mib_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				 struct mib_stats_metrics *mib_stats)
+{
+	if (wmi_handle->ops->extract_mib_stats)
+		return wmi_handle->ops->extract_mib_stats(wmi_handle,
+							  evt_buf,
+							  mib_stats);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 QDF_STATUS wmi_extract_thermal_stats(wmi_unified_t wmi_handle, void *evt_buf,
 				     uint32_t *temp, uint32_t *level,
 				     uint32_t *pdev_id)

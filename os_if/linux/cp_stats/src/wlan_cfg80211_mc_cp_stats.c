@@ -32,6 +32,24 @@
 /* max time in ms, caller may wait for stats request get serviced */
 #define CP_STATS_WAIT_TIME_STAT 800
 
+#ifdef WLAN_FEATURE_MIB_STATS
+/**
+ * wlan_free_mib_stats() - free allocations for mib stats
+ * @stats: Pointer to stats event statucture
+ *
+ * Return: None
+ */
+static void wlan_free_mib_stats(struct stats_event *stats)
+{
+	qdf_mem_free(stats->mib_stats);
+	stats->mib_stats = NULL;
+}
+#else
+static void wlan_free_mib_stats(struct stats_event *stats)
+{
+}
+#endif
+
 /**
  * wlan_cfg80211_mc_cp_stats_dealloc() - callback to free priv
  * allocations for stats
@@ -56,6 +74,7 @@ static void wlan_cfg80211_mc_cp_stats_dealloc(void *priv)
 	qdf_mem_free(stats->vdev_summary_stats);
 	qdf_mem_free(stats->vdev_chain_rssi);
 	qdf_mem_free(stats->peer_adv_stats);
+	wlan_free_mib_stats(stats);
 	osif_debug("Exit");
 }
 
@@ -581,6 +600,125 @@ get_station_stats_fail:
 	return NULL;
 }
 
+#ifdef WLAN_FEATURE_MIB_STATS
+/**
+ * get_mib_stats_cb() - get mib stats from fw callback function
+ * @ev: mib stats buffer
+ * @cookie: a cookie for the request context
+ *
+ * Return: None
+ */
+static void get_mib_stats_cb(struct stats_event *ev, void *cookie)
+{
+	struct stats_event *priv;
+	struct osif_request *request;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		osif_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+
+	priv->mib_stats = qdf_mem_malloc(sizeof(*ev->mib_stats));
+	if (!priv->mib_stats)
+		goto get_mib_stats_cb_fail;
+
+	priv->num_mib_stats = ev->num_mib_stats;
+	qdf_mem_copy(priv->mib_stats, ev->mib_stats, sizeof(*ev->mib_stats));
+
+get_mib_stats_cb_fail:
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+struct stats_event *
+wlan_cfg80211_mc_cp_stats_get_mib_stats(struct wlan_objmgr_vdev *vdev,
+					int *errno)
+{
+	void *cookie;
+	QDF_STATUS status;
+	struct stats_event *priv, *out;
+	struct wlan_objmgr_peer *peer;
+	struct osif_request *request;
+	struct request_info info = {0};
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = 2 * CP_STATS_WAIT_TIME_STAT,
+		.dealloc = wlan_cfg80211_mc_cp_stats_dealloc,
+	};
+
+	out = qdf_mem_malloc(sizeof(*out));
+	if (!out) {
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		qdf_mem_free(out);
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	cookie = osif_request_cookie(request);
+	priv = osif_request_priv(request);
+	info.cookie = cookie;
+	info.u.get_mib_stats_cb = get_mib_stats_cb;
+	info.vdev_id = wlan_vdev_get_id(vdev);
+	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_CP_STATS_ID);
+	if (!peer) {
+		osif_err("peer is null");
+		*errno = -EINVAL;
+		goto get_mib_stats_fail;
+	}
+	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, QDF_MAC_ADDR_SIZE);
+
+	osif_debug("vdev id %d, pdev id %d, peer " QDF_MAC_ADDR_STR,
+		   info.vdev_id, info.pdev_id,
+		   QDF_MAC_ADDR_ARRAY(info.peer_mac_addr));
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
+
+	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_MIB_STATS,
+						     &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send stats request status: %d", status);
+		*errno = qdf_status_to_os_return(status);
+		goto get_mib_stats_fail;
+	}
+
+	*errno = osif_request_wait_for_response(request);
+	if (*errno) {
+		osif_err("wait failed or timed out ret: %d", *errno);
+		goto get_mib_stats_fail;
+	}
+
+	if (!priv->mib_stats || priv->num_mib_stats == 0 ) {
+		osif_err("Invalid mib stats %d:%pK",
+			 priv->num_mib_stats, priv->mib_stats);
+		*errno = -EINVAL;
+		goto get_mib_stats_fail;
+	}
+
+	out->num_mib_stats = priv->num_mib_stats;
+	out->mib_stats = priv->mib_stats;
+	priv->mib_stats = NULL;
+
+	osif_request_put(request);
+
+	return out;
+
+get_mib_stats_fail:
+	osif_request_put(request);
+	wlan_cfg80211_mc_cp_stats_free_stats_event(out);
+
+	return NULL;
+}
+#endif
+
 void wlan_cfg80211_mc_cp_stats_free_stats_event(struct stats_event *stats)
 {
 	if (!stats)
@@ -592,5 +730,6 @@ void wlan_cfg80211_mc_cp_stats_free_stats_event(struct stats_event *stats)
 	qdf_mem_free(stats->vdev_summary_stats);
 	qdf_mem_free(stats->vdev_chain_rssi);
 	qdf_mem_free(stats->peer_adv_stats);
+	wlan_free_mib_stats(stats);
 	qdf_mem_free(stats);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -52,6 +52,21 @@ int wlan_cfg80211_mc_cp_stats_get_wakelock_stats(struct wlan_objmgr_psoc *psoc,
  */
 int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 					   int *dbm);
+#ifdef WLAN_FEATURE_MIB_STATS
+/**
+ * wlan_cfg80211_mc_cp_stats_get_mib_stats() - API to get mib stats
+ * statistics from firmware
+ * @vdev:    Pointer to vdev
+ * @errno:   error type in case of failure
+ *
+ * Callers of this API must call wlan_cfg80211_mc_cp_stats_free_stats_event
+ * API.
+ * Return: stats buffer on success, Null on failure
+ */
+struct stats_event *
+wlan_cfg80211_mc_cp_stats_get_mib_stats(struct wlan_objmgr_vdev *vdev,
+					int *errno);
+#endif
 
 /**
  * wlan_cfg80211_mc_cp_stats_get_station_stats() - API to get station

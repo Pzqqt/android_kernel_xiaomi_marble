@@ -9019,7 +9019,9 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 		(((uint64_t)ev->num_mib_stats) * sizeof(wmi_mib_stats)) +
 		(((uint64_t)ev->num_bcn_stats) * sizeof(wmi_bcn_stats)) +
 		(((uint64_t)ev->num_peer_extd_stats) *
-		 sizeof(wmi_peer_extd_stats));
+		 sizeof(wmi_peer_extd_stats)) +
+		(((uint64_t)ev->num_mib_extd_stats) *
+		 sizeof(wmi_mib_extd_stats));
 	if (param_buf->num_data != min_data_len) {
 		WMI_LOGE("data len: %u isn't same as calculated: %llu",
 			 param_buf->num_data, min_data_len);
@@ -9034,6 +9036,8 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	stats_param->num_peer_extd_stats = ev->num_peer_extd_stats;
 	stats_param->num_bcnflt_stats = ev->num_bcnflt_stats;
 	stats_param->num_chan_stats = ev->num_chan_stats;
+	stats_param->num_mib_stats = ev->num_mib_stats;
+	stats_param->num_mib_extd_stats = ev->num_mib_extd_stats;
 	stats_param->num_bcn_stats = ev->num_bcn_stats;
 	stats_param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
 							wmi_handle,
@@ -9548,6 +9552,144 @@ static QDF_STATUS extract_chan_stats_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_MIB_STATS
+/**
+ * extract_mib_stats_tlv() - extract mib stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param mib_stats: pointer to hold mib stats
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_mib_stats_tlv(wmi_unified_t wmi_handle,
+					void *evt_buf,
+					struct mib_stats_metrics
+					*mib_stats)
+{
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_stats_event_fixed_param *ev_param;
+	uint8_t *data;
+	wmi_mib_stats *ev;
+	wmi_mib_extd_stats *ev_extd;
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *)evt_buf;
+	ev_param = (wmi_stats_event_fixed_param *)param_buf->fixed_param;
+	data = (uint8_t *)param_buf->data;
+
+	ev = (wmi_mib_stats *)(data +
+	      ev_param->num_pdev_stats * sizeof(wmi_pdev_stats) +
+	      ev_param->num_vdev_stats * sizeof(wmi_vdev_stats) +
+	      ev_param->num_peer_stats * sizeof(wmi_peer_stats) +
+	      ev_param->num_bcnflt_stats *
+	      sizeof(wmi_bcnfilter_stats_t) +
+	      ev_param->num_chan_stats * sizeof(wmi_chan_stats));
+
+	qdf_mem_zero(mib_stats, sizeof(*mib_stats));
+
+	mib_stats->mib_counters.tx_frags =
+		ev->tx_mpdu_grp_frag_cnt;
+	mib_stats->mib_counters.group_tx_frames =
+		ev->tx_msdu_grp_frm_cnt;
+	mib_stats->mib_counters.failed_cnt = ev->tx_msdu_fail_cnt;
+	mib_stats->mib_counters.rx_frags = ev->rx_mpdu_frag_cnt;
+	mib_stats->mib_counters.group_rx_frames =
+		ev->rx_msdu_grp_frm_cnt;
+	mib_stats->mib_counters.fcs_error_cnt =
+		ev->rx_mpdu_fcs_err;
+	mib_stats->mib_counters.tx_frames =
+		ev->tx_msdu_frm_cnt;
+	mib_stats->mib_mac_statistics.retry_cnt =
+		ev->tx_msdu_retry_cnt;
+	mib_stats->mib_mac_statistics.frame_dup_cnt =
+		ev->rx_frm_dup_cnt;
+	mib_stats->mib_mac_statistics.rts_success_cnt =
+		ev->tx_rts_success_cnt;
+	mib_stats->mib_mac_statistics.rts_fail_cnt =
+		ev->tx_rts_fail_cnt;
+
+	mib_stats->mib_qos_counters.qos_tx_frag_cnt =
+		 ev->tx_Qos_mpdu_grp_frag_cnt;
+	mib_stats->mib_qos_counters.qos_retry_cnt =
+		ev->tx_Qos_msdu_retry_UP;
+	mib_stats->mib_qos_counters.qos_failed_cnt =
+		ev->tx_Qos_msdu_fail_UP;
+	mib_stats->mib_qos_counters.qos_frame_dup_cnt =
+		ev->rx_Qos_frm_dup_cnt_UP;
+	mib_stats->mib_qos_counters.qos_rts_success_cnt =
+		ev->tx_Qos_rts_success_cnt_UP;
+	mib_stats->mib_qos_counters.qos_rts_fail_cnt =
+		ev->tx_Qos_rts_fail_cnt_UP;
+	mib_stats->mib_qos_counters.qos_rx_frag_cnt =
+		ev->rx_Qos_mpdu_frag_cnt_UP;
+	mib_stats->mib_qos_counters.qos_tx_frame_cnt =
+		ev->tx_Qos_msdu_frm_cnt_UP;
+	mib_stats->mib_qos_counters.qos_discarded_frame_cnt =
+		ev->rx_Qos_msdu_discard_cnt_UP;
+	mib_stats->mib_qos_counters.qos_mpdu_rx_cnt =
+		ev->rx_Qos_mpdu_cnt;
+	mib_stats->mib_qos_counters.qos_retries_rx_cnt =
+		ev->rx_Qos_mpdu_retryBit_cnt;
+
+	mib_stats->mib_rsna_stats.tkip_icv_err =
+		ev->rsna_TKIP_icv_err_cnt;
+	mib_stats->mib_rsna_stats.tkip_replays =
+		ev->rsna_TKIP_replay_err_cnt;
+	mib_stats->mib_rsna_stats.ccmp_decrypt_err =
+		ev->rsna_CCMP_decrypt_err_cnt;
+	mib_stats->mib_rsna_stats.ccmp_replays =
+		ev->rsna_CCMP_replay_err_cnt;
+
+	mib_stats->mib_counters_group3.tx_ampdu_cnt =
+		ev->tx_ampdu_cnt;
+	mib_stats->mib_counters_group3.tx_mpdus_in_ampdu_cnt =
+		ev->tx_mpdu_cnt_in_ampdu;
+	mib_stats->mib_counters_group3.tx_octets_in_ampdu_cnt =
+		ev->tx_octets_in_ampdu.upload.high;
+	mib_stats->mib_counters_group3.tx_octets_in_ampdu_cnt =
+		mib_stats->mib_counters_group3.tx_octets_in_ampdu_cnt << 32;
+	mib_stats->mib_counters_group3.tx_octets_in_ampdu_cnt +=
+		ev->tx_octets_in_ampdu.upload.low;
+
+	mib_stats->mib_counters_group3.ampdu_rx_cnt =
+		ev->rx_ampdu_cnt;
+	mib_stats->mib_counters_group3.mpdu_in_rx_ampdu_cnt =
+		ev->rx_mpdu_cnt_in_ampdu;
+	mib_stats->mib_counters_group3.rx_octets_in_ampdu_cnt =
+		ev->rx_octets_in_ampdu.upload.rx_octets_in_ampdu_high;
+	mib_stats->mib_counters_group3.rx_octets_in_ampdu_cnt =
+		mib_stats->mib_counters_group3.rx_octets_in_ampdu_cnt << 32;
+	mib_stats->mib_counters_group3.rx_octets_in_ampdu_cnt +=
+		ev->rx_octets_in_ampdu.upload.rx_octets_in_ampdu_low;
+
+	if (ev_param->num_mib_extd_stats) {
+		ev_extd = (wmi_mib_extd_stats *)((uint8_t *)ev +
+			   ev_param->num_mib_stats * sizeof(wmi_mib_stats) +
+			   ev_param->num_bcn_stats * sizeof(wmi_bcn_stats) +
+			   ev_param->num_peer_extd_stats *
+			   sizeof(wmi_peer_extd_stats));
+		mib_stats->mib_mac_statistics.multi_retry_cnt =
+			ev_extd->tx_msdu_multi_retry_cnt;
+		mib_stats->mib_mac_statistics.tx_ack_fail_cnt =
+			ev_extd->tx_ack_fail_cnt;
+
+		mib_stats->mib_qos_counters.qos_multi_retry_cnt =
+			ev_extd->tx_qos_msdu_multi_retry_up;
+		mib_stats->mib_qos_counters.tx_qos_ack_fail_cnt_up =
+			ev_extd->tx_qos_ack_fail_cnt_up;
+
+		mib_stats->mib_rsna_stats.cmac_icv_err =
+			ev_extd->rsna_cmac_icv_err_cnt;
+		mib_stats->mib_rsna_stats.cmac_replays =
+			ev_extd->rsna_cmac_replay_err_cnt;
+
+		mib_stats->mib_counters_group3.rx_ampdu_deli_crc_err_cnt =
+			ev_extd->rx_ampdu_deli_crc_err_cnt;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * extract_profile_ctx_tlv() - extract profile context from event
@@ -12453,6 +12595,9 @@ struct wmi_ops tlv_ops =  {
 	.extract_peer_extd_stats = extract_peer_extd_stats_tlv,
 	.extract_peer_adv_stats = extract_peer_adv_stats_tlv,
 	.extract_chan_stats = extract_chan_stats_tlv,
+#ifdef WLAN_FEATURE_MIB_STATS
+	.extract_mib_stats = extract_mib_stats_tlv,
+#endif
 	.extract_profile_ctx = extract_profile_ctx_tlv,
 	.extract_profile_data = extract_profile_data_tlv,
 	.send_fw_test_cmd = send_fw_test_cmd_tlv,

@@ -2828,6 +2828,19 @@ QDF_STATUS wmi_extract_per_chain_rssi_stats(
 		uint32_t index,
 		struct wmi_host_per_chain_rssi_stats *rssi_stats);
 
+#ifdef WLAN_FEATURE_MIB_STATS
+/**
+ * wmi_extract_mib_stats() - extract mib stats from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @mib_stats: pointer to hold mib stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_mib_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				 struct mib_stats_metrics *mib_stats);
+#endif
+
 /**
  * wmi_extract_vdev_extd_stats() - extract extended vdev stats from event
  * @wmi_handle: wmi handle

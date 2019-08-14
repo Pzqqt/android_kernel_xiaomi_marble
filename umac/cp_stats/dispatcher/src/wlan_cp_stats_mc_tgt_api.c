@@ -549,6 +549,39 @@ complete:
 	}
 }
 
+#ifdef WLAN_FEATURE_MIB_STATS
+static void tgt_mc_cp_stats_extract_mib_stats(struct wlan_objmgr_psoc *psoc,
+					      struct stats_event *ev)
+{
+	QDF_STATUS status;
+	struct request_info last_req = {0};
+
+	if (!ev->mib_stats) {
+		cp_stats_debug("no mib stats");
+		return;
+	}
+
+	status = ucfg_mc_cp_stats_get_pending_req(psoc,
+						  TYPE_MIB_STATS, &last_req);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_get_pending_req failed");
+		return;
+	}
+
+	if (tgt_mc_cp_stats_is_last_event(ev, TYPE_MIB_STATS)) {
+		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_MIB_STATS);
+		if (last_req.u.get_mib_stats_cb)
+			last_req.u.get_mib_stats_cb(ev, last_req.cookie);
+	}
+}
+#else
+static void tgt_mc_cp_stats_extract_mib_stats(struct wlan_objmgr_psoc *psoc,
+					      struct stats_event *ev)
+{
+}
+#endif
+
 static void tgt_mc_cp_stats_extract_cca_stats(struct wlan_objmgr_psoc *psoc,
 						  struct stats_event *ev)
 {
@@ -876,6 +909,9 @@ QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 
 	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_STATION_STATS))
 		tgt_mc_cp_stats_extract_station_stats(psoc, ev);
+
+	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_MIB_STATS))
+		tgt_mc_cp_stats_extract_mib_stats(psoc, ev);
 
 	tgt_mc_cp_stats_extract_cca_stats(psoc, ev);
 

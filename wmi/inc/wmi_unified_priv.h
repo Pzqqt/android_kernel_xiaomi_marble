@@ -1592,6 +1592,11 @@ QDF_STATUS (*extract_peer_adv_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*extract_chan_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 			 uint32_t index, wmi_host_chan_stats *chan_stats);
 
+#ifdef WLAN_FEATURE_MIB_STATS
+QDF_STATUS (*extract_mib_stats)(wmi_unified_t wmi_handle, void *evt_buf,
+				struct mib_stats_metrics *mib_stats);
+#endif
+
 QDF_STATUS (*extract_thermal_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 	uint32_t *temp, uint32_t *level, uint32_t *pdev_id);
 
