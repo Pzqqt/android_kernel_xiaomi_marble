@@ -310,6 +310,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_PDEV_UL_MUMIMO_TRIG_STATS = 27,
 
+    /* HTT_DBG_EXT_STATS_FSE_RX
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_rx_fse_stats_t
+     */
+    HTT_DBG_EXT_STATS_FSE_RX = 28,
+
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
 };
@@ -430,6 +438,7 @@ typedef enum {
     HTT_STATS_RX_PDEV_UL_OFDMA_USER_STATS_TAG      = 95, /* htt_rx_pdev_ul_ofdma_user_stats_tlv */
     HTT_STATS_RX_PDEV_UL_MIMO_USER_STATS_TAG       = 96, /* htt_rx_pdev_ul_mimo_user_stats_tlv */
     HTT_STATS_RX_PDEV_UL_MUMIMO_TRIG_STATS_TAG     = 97, /* htt_rx_pdev_ul_mumimo_trig_stats_tlv */
+    HTT_STATS_RX_FSE_STATS_TAG                     = 98, /* htt_rx_fse_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -4155,6 +4164,131 @@ typedef struct {
     htt_latency_prof_ctx_tlv latency_ctx_stat;
     htt_latency_prof_cnt_tlv latency_cnt_stat;
 } htt_soc_latency_stats_t;
+
+#define HTT_RX_MAX_PEAK_OCCUPANCY_INDEX 10
+#define HTT_RX_MAX_CURRENT_OCCUPANCY_INDEX 10
+#define HTT_RX_SQUARE_INDEX 6
+#define HTT_RX_MAX_PEAK_SEARCH_INDEX 4
+#define HTT_RX_MAX_PENDING_SEARCH_INDEX 4
+
+/* STATS_TYPE : HTT_DBG_EXT_RX_FSE_STATS
+ * TLV_TAGS:
+ *    - HTT_STATS_RX_FSE_STATS_TAG
+ */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /*
+     * Number of times host requested for fse enable/disable
+     */
+    A_UINT32 fse_enable_cnt;
+    A_UINT32 fse_disable_cnt;
+    /*
+     * Number of times host requested for fse cache invalidation
+     * individual entries or full cache
+     */
+    A_UINT32 fse_cache_invalidate_entry_cnt;
+    A_UINT32 fse_full_cache_invalidate_cnt;
+
+    /*
+     * Cache hits count will increase if there is a matching flow in the cache
+     * There is no register for cache miss but the number of cache misses can
+     * be calculated as
+     *    cache miss = (num_searches - cache_hits)
+     * Thus, there is no need to have a separate variable for cache misses.
+     * Num searches is flow search times done in the cache.
+     */
+    A_UINT32 fse_num_cache_hits_cnt;
+    A_UINT32 fse_num_searches_cnt;
+    /**
+     * Cache Occupancy holds 2 types of values: Peak and Current.
+     * 10 bins are used to keep track of peak occupancy.
+     * 8 of these bins represent ranges of values, while the first and last
+     * bins represent the extreme cases of the cache being completely empty
+     * or completely full.
+     * For the non-extreme bins, the number of cache occupancy values per
+     * bin is the maximum cache occupancy (128), divided by the number of
+     * non-extreme bins (8), so 128/8 = 16 values per bin.
+     * The range of values for each histogram bins is specified below:
+     * Bin0 = Counter increments when cache occupancy is empty
+     * Bin1 = Counter increments when cache occupancy is within [1 to 16]
+     * Bin2 = Counter increments when cache occupancy is within [17 to 32]
+     * Bin3 = Counter increments when cache occupancy is within [33 to 48]
+     * Bin4 = Counter increments when cache occupancy is within [49 to 64]
+     * Bin5 = Counter increments when cache occupancy is within [65 to 80]
+     * Bin6 = Counter increments when cache occupancy is within [81 to 96]
+     * Bin7 = Counter increments when cache occupancy is within [97 to 112]
+     * Bin8 = Counter increments when cache occupancy is within [113 to 127]
+     * Bin9 = Counter increments when cache occupancy is equal to 128
+     * The above histogram bin definitions apply to both the peak-occupancy
+     * histogram and the current-occupancy histogram.
+     *
+     * @fse_cache_occupancy_peak_cnt:
+     * Array records periodically PEAK cache occupancy values.
+     * Peak Occupancy will increment only if it is greater than current
+     * occupancy value.
+     *
+     * @fse_cache_occupancy_curr_cnt:
+     * Array records periodically current cache occupancy value.
+     * Current Cache occupancy always holds instant snapshot of
+     * current number of cache entries.
+     **/
+    A_UINT32 fse_cache_occupancy_peak_cnt[HTT_RX_MAX_PEAK_OCCUPANCY_INDEX];
+    A_UINT32 fse_cache_occupancy_curr_cnt[HTT_RX_MAX_CURRENT_OCCUPANCY_INDEX];
+    /*
+     * Square stat is sum of squares of cache occupancy to better understand
+     * any variation/deviation within each cache set, over a given time-window.
+     *
+     * Square stat is calculated this way:
+     *     Square =  SUM(Squares of all Occupancy in a Set) / 8
+     * The cache has 16-way set associativity, so the occupancy of a
+     * set can vary from 0 to 16.  There are 8 sets within the cache.
+     * Therefore, the minimum possible square value is 0, and the maximum
+     * possible square value is (8*16^2) / 8 = 256.
+     *
+     * 6 bins are used to keep track of square stats:
+     * Bin0 = increments when square of current cache occupancy is zero
+     * Bin1 = increments when square of current cache occupancy is within
+     *        [1 to 50]
+     * Bin2 = increments when square of current cache occupancy is within
+     *        [51 to 100]
+     * Bin3 = increments when square of current cache occupancy is within
+     *        [101 to 200]
+     * Bin4 = increments when square of current cache occupancy is within
+     *        [201 to 255]
+     * Bin5 = increments when square of current cache occupancy is 256
+     */
+    A_UINT32 fse_search_stat_square_cnt[HTT_RX_SQUARE_INDEX];
+    /**
+     * Search stats has 2 types of values: Peak Pending and Number of
+     * Search Pending.
+     * GSE command ring for FSE can hold maximum of 5 Pending searches
+     * at any given time.
+     *
+     * 4 bins are used to keep track of search stats:
+     * Bin0 = Counter increments when there are NO pending searches
+     *        (For peak, it will be number of pending searches greater
+     *        than GSE command ring FIFO outstanding requests.
+     *        For Search Pending, it will be number of pending search
+     *        inside GSE command ring FIFO.)
+     * Bin1 = Counter increments when number of pending searches are within
+     *        [1 to 2]
+     * Bin2 = Counter increments when number of pending searches are within
+     *        [3 to 4]
+     * Bin3 = Counter increments when number of pending searches are
+     *        greater/equal to [ >= 5]
+     */
+    A_UINT32 fse_search_stat_peak_cnt[HTT_RX_MAX_PEAK_SEARCH_INDEX];
+    A_UINT32 fse_search_stat_search_pending_cnt[HTT_RX_MAX_PENDING_SEARCH_INDEX];
+} htt_rx_fse_stats_tlv;
+
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_rx_fse_stats_tlv rx_fse_stats;
+} htt_rx_fse_stats_t;
 
 
 #endif /* __HTT_STATS_H__ */
