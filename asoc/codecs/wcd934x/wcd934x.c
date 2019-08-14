@@ -2377,9 +2377,10 @@ static int tavil_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		tavil_ocp_control(component, false);
-		blocking_notifier_call_chain(&tavil->mbhc->notifier,
-					     WCD_EVENT_PRE_HPHR_PA_OFF,
-					     &tavil->mbhc->wcd_mbhc);
+		if (tavil->mbhc)
+			blocking_notifier_call_chain(&tavil->mbhc->notifier,
+						     WCD_EVENT_PRE_HPHR_PA_OFF,
+						     &tavil->mbhc->wcd_mbhc);
 		/* Enable DSD Mute before PA disable */
 		if (dsd_conf &&
 		    (snd_soc_component_read32(component,
@@ -2409,9 +2410,10 @@ static int tavil_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 		else
 			usleep_range(5000, 5100);
 		tavil_codec_override(component, tavil->hph_mode, event);
-		blocking_notifier_call_chain(&tavil->mbhc->notifier,
-					     WCD_EVENT_POST_HPHR_PA_OFF,
-					     &tavil->mbhc->wcd_mbhc);
+		if (tavil->mbhc)
+			blocking_notifier_call_chain(&tavil->mbhc->notifier,
+					WCD_EVENT_POST_HPHR_PA_OFF,
+					&tavil->mbhc->wcd_mbhc);
 		if (TAVIL_IS_1_0(tavil->wcd9xxx))
 			snd_soc_component_update_bits(component,
 					WCD934X_HPH_REFBUFF_LP_CTL,
@@ -2554,9 +2556,10 @@ static int tavil_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		tavil_ocp_control(component, false);
-		blocking_notifier_call_chain(&tavil->mbhc->notifier,
-					     WCD_EVENT_PRE_HPHL_PA_OFF,
-					     &tavil->mbhc->wcd_mbhc);
+		if (tavil->mbhc)
+			blocking_notifier_call_chain(&tavil->mbhc->notifier,
+						     WCD_EVENT_PRE_HPHL_PA_OFF,
+						     &tavil->mbhc->wcd_mbhc);
 		/* Enable DSD Mute before PA disable */
 		if (dsd_conf &&
 		    (snd_soc_component_read32(component,
@@ -2588,9 +2591,10 @@ static int tavil_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 		else
 			usleep_range(5000, 5100);
 		tavil_codec_override(component, tavil->hph_mode, event);
-		blocking_notifier_call_chain(&tavil->mbhc->notifier,
-					     WCD_EVENT_POST_HPHL_PA_OFF,
-					     &tavil->mbhc->wcd_mbhc);
+		if (tavil->mbhc)
+			blocking_notifier_call_chain(&tavil->mbhc->notifier,
+						WCD_EVENT_POST_HPHL_PA_OFF,
+						&tavil->mbhc->wcd_mbhc);
 		if (TAVIL_IS_1_0(tavil->wcd9xxx))
 			snd_soc_component_update_bits(component,
 					WCD934X_HPH_REFBUFF_LP_CTL,
@@ -5436,9 +5440,10 @@ static void tavil_codec_hph_reg_recover(struct tavil_priv *tavil,
 	int i;
 	unsigned int reg;
 
-	blocking_notifier_call_chain(&tavil->mbhc->notifier,
-				     WCD_EVENT_OCP_OFF,
-				     &tavil->mbhc->wcd_mbhc);
+	if (tavil->mbhc)
+		blocking_notifier_call_chain(&tavil->mbhc->notifier,
+					     WCD_EVENT_OCP_OFF,
+					     &tavil->mbhc->wcd_mbhc);
 
 	if (pa_status & 0xC0)
 		goto pa_en_restore;
@@ -5548,11 +5553,13 @@ pa_en_restore:
 	}
 
 end:
-	tavil->mbhc->is_hph_recover = true;
-	blocking_notifier_call_chain(
-			&tavil->mbhc->notifier,
-			WCD_EVENT_OCP_ON,
-			&tavil->mbhc->wcd_mbhc);
+	if (tavil->mbhc) {
+		tavil->mbhc->is_hph_recover = true;
+		blocking_notifier_call_chain(
+				&tavil->mbhc->notifier,
+				WCD_EVENT_OCP_ON,
+				&tavil->mbhc->wcd_mbhc);
+	}
 }
 
 static int tavil_codec_reset_hph_registers(struct snd_soc_dapm_widget *w,
@@ -5596,7 +5603,8 @@ static int tavil_codec_reset_hph_registers(struct snd_soc_dapm_widget *w,
 		} else {
 			dev_dbg(component->dev, "%s: cache and hw reg are same\n",
 				__func__);
-			tavil->mbhc->is_hph_recover = false;
+			if (tavil->mbhc)
+				tavil->mbhc->is_hph_recover = false;
 		}
 		break;
 	default:
@@ -10292,7 +10300,8 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 		priv->dai[count].bus_down_in_recovery = true;
 	snd_event_notify(priv->dev->parent, SND_EVENT_DOWN);
 
-	priv->mbhc->wcd_mbhc.deinit_in_progress = true;
+	if (priv->mbhc)
+		priv->mbhc->wcd_mbhc.deinit_in_progress = true;
 	if (delayed_work_pending(&priv->spk_anc_dwork.dwork))
 		cancel_delayed_work(&priv->spk_anc_dwork.dwork);
 	for (decimator = 0; decimator < WCD934X_NUM_DECIMATORS; decimator++) {
@@ -10307,11 +10316,14 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 	}
 	if (delayed_work_pending(&priv->power_gate_work))
 		cancel_delayed_work_sync(&priv->power_gate_work);
-	if (delayed_work_pending(&priv->mbhc->wcd_mbhc.mbhc_btn_dwork)) {
-		ret = cancel_delayed_work(&priv->mbhc->wcd_mbhc.mbhc_btn_dwork);
-		if (ret)
-			priv->mbhc->wcd_mbhc.mbhc_cb->lock_sleep
-					(&priv->mbhc->wcd_mbhc, false);
+	if (priv->mbhc) {
+		if (delayed_work_pending(&priv->mbhc->wcd_mbhc.mbhc_btn_dwork)) {
+			ret = cancel_delayed_work(
+					&priv->mbhc->wcd_mbhc.mbhc_btn_dwork);
+			if (ret)
+				priv->mbhc->wcd_mbhc.mbhc_cb->lock_sleep
+						(&priv->mbhc->wcd_mbhc, false);
+		}
 	}
 
 	if (priv->swr.ctrl_data) {
@@ -10397,16 +10409,17 @@ static int tavil_post_reset_cb(struct wcd9xxx *wcd9xxx)
 		dev_err(component->dev, "%s: invalid pdata\n", __func__);
 
 	/* Initialize MBHC module */
-	mbhc = &tavil->mbhc->wcd_mbhc;
-	ret = tavil_mbhc_post_ssr_init(tavil->mbhc, component);
-	if (ret) {
-		dev_err(component->dev, "%s: mbhc initialization failed\n",
-			__func__);
-		goto done;
-	} else {
-		tavil_mbhc_hs_detect(component, mbhc->mbhc_cfg);
+	if (tavil->mbhc) {
+		mbhc = &tavil->mbhc->wcd_mbhc;
+		ret = tavil_mbhc_post_ssr_init(tavil->mbhc, component);
+		if (ret) {
+			dev_err(component->dev, "%s: mbhc initialization failed\n",
+				__func__);
+			goto done;
+		} else {
+			tavil_mbhc_hs_detect(component, mbhc->mbhc_cfg);
+		}
 	}
-
 	/* DSD initialization */
 	ret = tavil_dsd_post_ssr_init(tavil->dsd_config);
 	if (ret)
