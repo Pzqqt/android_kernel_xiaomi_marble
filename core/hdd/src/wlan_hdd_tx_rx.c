@@ -1580,7 +1580,6 @@ QDF_STATUS hdd_gro_rx_dp_thread(struct hdd_adapter *adapter,
 {
 	struct napi_struct *napi_to_use = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 
 	if (!adapter->hdd_ctx->enable_dp_rx_threads) {
 		hdd_dp_err_rl("gro not supported without DP RX thread!");
@@ -1595,9 +1594,6 @@ QDF_STATUS hdd_gro_rx_dp_thread(struct hdd_adapter *adapter,
 		hdd_dp_err_rl("no napi to use for GRO!");
 		return status;
 	}
-
-	if (qdf_atomic_read(&hdd_ctx->disable_rx_ol_in_low_tput))
-		return status;
 
 	status = hdd_gro_rx_bh_disable(adapter, napi_to_use, skb);
 
@@ -1893,10 +1889,19 @@ static inline void hdd_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
 
 QDF_STATUS hdd_rx_thread_gro_flush_ind_cbk(void *adapter, int rx_ctx_id)
 {
-	if (qdf_unlikely(!adapter)) {
+	struct hdd_adapter *hdd_adapter = adapter;
+
+	if (qdf_unlikely((!hdd_adapter) || (!hdd_adapter->hdd_ctx))) {
 		hdd_err("Null params being passed");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (hdd_get_current_throughput_level(hdd_adapter->hdd_ctx) ==
+	    PLD_BUS_WIDTH_LOW) {
+		hdd_adapter->hdd_stats.tx_rx_stats.rx_gro_flush_skip++;
+		return QDF_STATUS_SUCCESS;
+	}
+
 	return dp_rx_gro_flush_ind(cds_get_context(QDF_MODULE_ID_SOC),
 				   rx_ctx_id);
 }

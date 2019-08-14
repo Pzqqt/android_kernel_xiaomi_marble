@@ -103,6 +103,7 @@
 #include "wlan_hdd_twt.h"
 #include "wma_sar_public_structs.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "pld_common.h"
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 #include "qdf_periodic_work.h"
@@ -451,6 +452,7 @@ struct hdd_tx_rx_stats {
 	__u32 rx_aggregated;
 	__u32 rx_gro_dropped;
 	__u32 rx_non_aggregated;
+	__u32 rx_gro_flush_skip;
 
 	/* txflow stats */
 	bool     is_txflow_paused;
@@ -2360,6 +2362,12 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx);
  */
 void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx);
 
+static inline enum pld_bus_width_type
+hdd_get_current_throughput_level(struct hdd_context *hdd_ctx)
+{
+	return hdd_ctx->cur_vote_level;
+}
+
 #define GET_CUR_RX_LVL(config) ((config)->cur_rx_level)
 #define GET_BW_COMPUTE_INTV(config) ((config)->bus_bw_compute_interval)
 #else
@@ -2403,6 +2411,12 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 static inline
 void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
 {
+}
+
+static inline enum pld_bus_width_type
+hdd_get_current_throughput_level(struct hdd_context *hdd_ctx)
+{
+	return PLD_BUS_WIDTH_NONE;
 }
 
 #define GET_CUR_RX_LVL(config) 0
