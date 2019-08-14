@@ -1103,7 +1103,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			status =
 				policy_mgr_get_sap_mandatory_channel(
 				mac_ctx->psoc,
-				(uint32_t *)&intf_ch);
+				&intf_ch);
 			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
 		}
@@ -1112,7 +1112,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 		if (cds_chan_to_band(intf_ch) == CDS_BAND_2GHZ) {
 			status =
 				policy_mgr_get_sap_mandatory_channel(
-					mac_ctx->psoc, (uint32_t *)&intf_ch);
+					mac_ctx->psoc, &intf_ch);
 			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
 		}
