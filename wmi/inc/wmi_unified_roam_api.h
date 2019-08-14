@@ -381,4 +381,17 @@ QDF_STATUS wmi_unified_invoke_neighbor_report_cmd(
 			wmi_unified_t wmi_handle,
 			struct wmi_invoke_neighbor_report_params *params);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * wmi_unified_set_roam_triggers() - send roam trigger bitmap
+ * @wmi_handle: wmi handle
+ * @triggers: Roam trigger bitmap params as defined @roam_control_trigger_reason
+ *
+ * This function passes the roam trigger bitmap to fw
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_roam_triggers(wmi_unified_t wmi_handle,
+					 struct roam_triggers *triggers);
+#endif
 #endif /* _WMI_UNIFIED_ROAM_API_H_ */

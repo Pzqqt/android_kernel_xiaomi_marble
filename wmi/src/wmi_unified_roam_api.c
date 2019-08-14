@@ -320,3 +320,14 @@ QDF_STATUS wmi_unified_invoke_neighbor_report_cmd(
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS wmi_unified_set_roam_triggers(wmi_unified_t wmi_handle,
+					 struct roam_triggers *triggers)
+{
+	if (wmi_handle->ops->send_set_roam_trigger_cmd)
+		return wmi_handle->ops->send_set_roam_trigger_cmd(wmi_handle,
+				triggers->vdev_id, triggers->trigger_bitmap);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif

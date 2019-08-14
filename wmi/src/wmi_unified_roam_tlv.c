@@ -2435,6 +2435,121 @@ send_roam_preauth_status_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * convert_control_roam_trigger_reason_bitmap() - Convert roam trigger bitmap
+ *
+ * @trigger_reason_bitmap: Roam trigger reason bitmap received from upper layers
+ *
+ * Converts the controlled roam trigger reason bitmap of
+ * type @roam_control_trigger_reason to firmware trigger
+ * reason bitmap as defined in
+ * trigger_reason_bitmask @wmi_roam_enable_disable_trigger_reason_fixed_param
+ *
+ * Return: trigger_reason_bitmask as defined in
+ *	   wmi_roam_enable_disable_trigger_reason_fixed_param
+ */
+static uint32_t
+convert_control_roam_trigger_reason_bitmap(uint32_t trigger_reason_bitmap)
+{
+	uint32_t fw_trigger_bitmap = 0, all_bitmap;
+
+	/* Enable the complete trigger bitmap when all bits are set in
+	 * the control config bitmap
+	 */
+	all_bitmap = (ROAM_CONTROL_TRIGGER_REASON_BSS_LOAD << 1) - 1;
+	if (trigger_reason_bitmap == all_bitmap)
+		return (BIT(WMI_ROAM_TRIGGER_REASON_MAX) - 1);
+
+	if (trigger_reason_bitmap & ROAM_CONTROL_TRIGGER_REASON_PER)
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_PER);
+
+	if (trigger_reason_bitmap & ROAM_CONTROL_TRIGGER_REASON_BEACON_MISS)
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_BMISS);
+
+	if (trigger_reason_bitmap & ROAM_CONTROL_TRIGGER_REASON_POOR_RSSI)
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_LOW_RSSI);
+
+	if (trigger_reason_bitmap & ROAM_CONTROL_TRIGGER_REASON_BETTER_RSSI)
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_HIGH_RSSI);
+
+	if (trigger_reason_bitmap & ROAM_CONTROL_TRIGGER_REASON_PERIODIC)
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_PERIODIC);
+
+	if (trigger_reason_bitmap & ROAM_CONTROL_TRIGGER_REASON_DENSE)
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_DENSE);
+
+	if (trigger_reason_bitmap & ROAM_CONTROL_TRIGGER_REASON_BTM)
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_BTM);
+
+	if (trigger_reason_bitmap & ROAM_CONTROL_TRIGGER_REASON_BSS_LOAD)
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_BSS_LOAD);
+
+	return fw_trigger_bitmap;
+}
+
+/**
+ * get_internal_mandatory_roam_triggers() - Internal triggers to be added
+ *
+ * Return: the bitmap of mandatory triggers to be sent to firmware but not given
+ * by user.
+ */
+static uint32_t
+get_internal_mandatory_roam_triggers(void)
+{
+	return BIT(WMI_ROAM_TRIGGER_REASON_FORCED);
+}
+
+/**
+ * send_set_roam_trigger_cmd_tlv() - send set roam triggers to fw
+ *
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @trigger_bitmap: roam trigger bitmap to be enabled
+ *
+ * Send WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
+						uint32_t vdev_id,
+						uint32_t trigger_bitmap)
+{
+	wmi_buf_t buf;
+	wmi_roam_enable_disable_trigger_reason_fixed_param *cmd;
+	uint16_t len = sizeof(*cmd);
+	int ret;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_roam_enable_disable_trigger_reason_fixed_param *)
+					wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_roam_enable_disable_trigger_reason_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		      (wmi_roam_enable_disable_trigger_reason_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->trigger_reason_bitmask =
+		convert_control_roam_trigger_reason_bitmap(trigger_bitmap);
+	WMI_LOGD("Received trigger bitmap: 0x%x converted trigger_bitmap: 0x%x",
+		 trigger_bitmap, cmd->trigger_reason_bitmask);
+	cmd->trigger_reason_bitmask |= get_internal_mandatory_roam_triggers();
+	WMI_LOGD("WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID vdev id: %d final trigger_bitmap: 0x%x",
+		 cmd->vdev_id, cmd->trigger_reason_bitmask);
+	wmi_mtrace(WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID, vdev_id, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+			   WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send set roam triggers command ret = %d",
+			 ret);
+		wmi_buf_free(buf);
+	}
+	return ret;
+}
 #else
 static inline QDF_STATUS
 send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
@@ -2453,6 +2568,14 @@ send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
 static inline QDF_STATUS
 send_roam_preauth_status_tlv(wmi_unified_t wmi_handle,
 			     struct wmi_roam_auth_status_params *params)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static QDF_STATUS
+send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
+			      uint32_t vdev_id,
+			      uint32_t trigger_bitmap)
 {
 	return QDF_STATUS_E_FAILURE;
 }
@@ -2630,6 +2753,7 @@ void wmi_roam_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_idle_roam_params = send_idle_roam_params_tlv;
 	ops->send_disconnect_roam_params = send_disconnect_roam_params_tlv;
 	ops->send_roam_preauth_status = send_roam_preauth_status_tlv;
+	ops->send_set_roam_trigger_cmd = send_set_roam_trigger_cmd_tlv,
 
 	wmi_lfr_subnet_detection_attach_tlv(wmi_handle);
 	wmi_rssi_monitor_attach_tlv(wmi_handle);

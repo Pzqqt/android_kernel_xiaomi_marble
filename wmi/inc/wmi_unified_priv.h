@@ -1999,6 +1999,9 @@ QDF_STATUS (*extract_oem_response_param)
 QDF_STATUS (*extract_hw_mode_resp_event)(wmi_unified_t wmi_handle,
 					 void *evt_buf, uint32_t *cmd_status);
 
+QDF_STATUS (*send_set_roam_trigger_cmd)(wmi_unified_t wmi_handle,
+					uint32_t vdev_id,
+					uint32_t trigger_bitmap);
 };
 
 /* Forward declartion for psoc*/
