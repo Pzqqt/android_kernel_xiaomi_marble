@@ -481,8 +481,8 @@ bool policy_mgr_is_dbs_allowed_for_concurrency(
 	return ret;
 }
 
-bool policy_mgr_is_chnl_in_diff_band_int(struct wlan_objmgr_psoc *psoc,
-					 uint32_t ch_freq)
+bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
+				     uint32_t ch_freq)
 {
 	uint8_t i;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1211,13 +1211,13 @@ QDF_STATUS policy_mgr_next_actions(
 }
 
 QDF_STATUS
-policy_mgr_handle_conc_multiport_int(struct wlan_objmgr_psoc *psoc,
-				     uint8_t session_id, uint32_t ch_freq,
-				     enum policy_mgr_conn_update_reason reason)
+policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
+				 uint8_t session_id, uint32_t ch_freq,
+				 enum policy_mgr_conn_update_reason reason)
 {
 	QDF_STATUS status;
 
-	if (!policy_mgr_check_for_session_conc_int(psoc, session_id, ch_freq)) {
+	if (!policy_mgr_check_for_session_conc(psoc, session_id, ch_freq)) {
 		policy_mgr_err("Conc not allowed for the session %d",
 			session_id);
 		return QDF_STATUS_E_FAILURE;
@@ -1663,15 +1663,13 @@ void policy_mgr_nan_sap_post_enable_conc_check(struct wlan_objmgr_psoc *psoc)
 					CSA_REASON_CONCURRENT_NAN_EVENT);
 
 	if (WLAN_REG_IS_5GHZ_CH_FREQ(sap_info->freq)) {
-		policy_mgr_change_sap_channel_with_csa_int(
-						       psoc, sap_info->vdev_id,
+		policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
 						       nan_freq_5g,
 						       policy_mgr_get_ch_width(
 						       sap_info->bw),
 						       true);
 	} else {
-		policy_mgr_change_sap_channel_with_csa_int(
-						       psoc, sap_info->vdev_id,
+		policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
 						       nan_freq_2g,
 						       policy_mgr_get_ch_width(
 						       sap_info->bw),
@@ -1703,9 +1701,8 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc)
 	if (sap_freq == 0 || policy_mgr_is_safe_channel_int(psoc, sap_freq))
 		return;
 
-	sap_freq = policy_mgr_get_nondfs_preferred_channel_int(psoc,
-							       PM_SAP_MODE,
-							       false);
+	sap_freq = policy_mgr_get_nondfs_preferred_channel(psoc, PM_SAP_MODE,
+							   false);
 	policy_mgr_debug("User/ACS orig Freq: %d New SAP Freq: %d",
 			 pm_ctx->user_config_sap_ch_freq, sap_freq);
 	if (pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress &&
@@ -1723,10 +1720,10 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc)
 				psoc, sap_info->vdev_id,
 				CSA_REASON_CONCURRENT_NAN_EVENT);
 
-	policy_mgr_change_sap_channel_with_csa_int(psoc, sap_info->vdev_id,
-						   sap_freq,
-						   policy_mgr_get_ch_width(
-						   sap_info->bw), true);
+	policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
+					       sap_freq,
+					       policy_mgr_get_ch_width(
+					       sap_info->bw), true);
 }
 
 static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
@@ -2066,11 +2063,9 @@ sap_restart:
  *
  * Return: None
  */
-void policy_mgr_change_sap_channel_with_csa_int(struct wlan_objmgr_psoc *psoc,
-						uint8_t vdev_id,
-						uint32_t ch_freq,
-						uint32_t ch_width,
-						bool forced)
+void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
+					    uint8_t vdev_id, uint32_t ch_freq,
+					    uint32_t ch_width, bool forced)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 

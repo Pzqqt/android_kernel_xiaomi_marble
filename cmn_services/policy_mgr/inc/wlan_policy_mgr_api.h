@@ -414,17 +414,8 @@ uint32_t policy_mgr_search_and_check_for_session_conc(
  *
  * Return: true if channel is in diff band
  */
-bool policy_mgr_is_chnl_in_diff_band_int(struct wlan_objmgr_psoc *psoc,
-					 uint32_t ch_freq);
-
-static inline
 bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
-				     uint8_t channel)
-{
-	return policy_mgr_is_chnl_in_diff_band_int(psoc,
-						   wlan_chan_to_freq(
-						   channel));
-}
+				     uint32_t ch_freq);
 
 /**
  * policy_mgr_check_for_session_conc() - Check if concurrency is
@@ -437,17 +428,9 @@ bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
  *
  * True if the concurrency is allowed, false otherwise
  */
-bool policy_mgr_check_for_session_conc_int(struct wlan_objmgr_psoc *psoc,
-					   uint8_t session_id,
-					   uint32_t ch_freq);
-static inline
 bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
-				       uint8_t session_id, uint8_t channel)
-{
-	return policy_mgr_check_for_session_conc_int(psoc, session_id,
-						     wlan_chan_to_freq(
-						     channel));
-}
+				       uint8_t session_id, uint32_t ch_freq);
+
 /**
  * policy_mgr_handle_conc_multiport() - to handle multiport concurrency
  * @session_id: Session ID
@@ -459,21 +442,11 @@ bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_handle_conc_multiport_int(struct wlan_objmgr_psoc *psoc,
-						uint8_t session_id,
-						uint32_t ch_freq,
-				enum policy_mgr_conn_update_reason reason);
+QDF_STATUS
+policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
+				 uint8_t session_id, uint32_t ch_freq,
+				 enum policy_mgr_conn_update_reason reason);
 
-static inline
-QDF_STATUS policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
-					    uint8_t session_id, uint8_t channel,
-					    enum policy_mgr_conn_update_reason
-					    reason)
-{
-	return policy_mgr_handle_conc_multiport_int(psoc, session_id,
-						    wlan_chan_to_freq(channel),
-						    reason);
-}
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /**
  * policy_mgr_check_concurrent_intf_and_restart_sap() - Check
@@ -535,27 +508,15 @@ QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
  *
  * Return: None
  */
-void policy_mgr_change_sap_channel_with_csa_int(struct wlan_objmgr_psoc *psoc,
-						uint8_t vdev_id,
-						uint32_t ch_freq,
-						uint32_t ch_width,
-						bool forced);
-
-static inline
 void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
-					    uint8_t vdev_id, uint8_t channel,
-					    uint32_t ch_width, bool forced)
-{
-	policy_mgr_change_sap_channel_with_csa_int(psoc, vdev_id,
-						   wlan_chan_to_freq(channel),
-						   ch_width, forced);
-}
+					    uint8_t vdev_id, uint32_t ch_freq,
+					    uint32_t ch_width, bool forced);
+
 #else
 static inline void policy_mgr_change_sap_channel_with_csa(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id, uint32_t ch_freq,
-		uint32_t ch_width,
-		bool forced)
+		uint32_t ch_width, bool forced)
 {
 
 }
@@ -626,17 +587,9 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
  *
  * Return: channel frequency value
  */
-uint32_t policy_mgr_get_channel_int(struct wlan_objmgr_psoc *psoc,
-				    enum policy_mgr_con_mode mode,
-				    uint32_t *vdev_id);
-
-static inline uint8_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
-					     enum policy_mgr_con_mode mode,
-					     uint32_t *vdev_id)
-{
-	return wlan_freq_to_chan(policy_mgr_get_channel_int(psoc, mode,
-							    vdev_id));
-}
+uint32_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
+				enum policy_mgr_con_mode mode,
+				uint32_t *vdev_id);
 
 /**
  * policy_mgr_get_pcl() - provides the preferred channel list for
@@ -709,18 +662,9 @@ void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
  * Return: uint32_t non-dfs channel frequency
  */
 uint32_t
-policy_mgr_get_nondfs_preferred_channel_int(struct wlan_objmgr_psoc *psoc,
-					    enum policy_mgr_con_mode mode,
-					    bool for_existing_conn);
-
-static inline
-uint8_t policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
-						enum policy_mgr_con_mode mode,
-						bool for_existing_conn)
-{
-	return wlan_freq_to_chan(policy_mgr_get_nondfs_preferred_channel_int(
-				 psoc, mode, for_existing_conn));
-}
+policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
+					enum policy_mgr_con_mode mode,
+					bool for_existing_conn);
 
 /**
  * policy_mgr_is_any_nondfs_chnl_present() - Find any non-dfs

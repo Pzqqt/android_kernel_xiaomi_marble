@@ -2698,8 +2698,8 @@ bool policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc)
 	return is_24G_mcc;
 }
 
-bool policy_mgr_check_for_session_conc_int(struct wlan_objmgr_psoc *psoc,
-					   uint8_t session_id, uint32_t ch_freq)
+bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
+				       uint8_t session_id, uint32_t ch_freq)
 {
 	enum policy_mgr_con_mode mode;
 	bool ret;
