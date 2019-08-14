@@ -350,11 +350,21 @@ void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn)
 			hif_ext_group->irq_requested = false;
 			for (j = 0; j < hif_ext_group->numirq; j++) {
 				irq = hif_ext_group->os_irq[j];
+				hif_ext_group->irq_enabled = false;
 				irq_clear_status_flags(irq,
 						       IRQ_DISABLE_UNLAZY);
-				free_irq(irq, hif_ext_group);
 			}
 			qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
+
+			/* Avoid holding the irq_lock while freeing the irq
+			 * as the same lock is being held by the irq handler
+			 * while disabling the irq. This causes a deadlock
+			 * between free_irq and irq_handler.
+			 */
+			for (j = 0; j < hif_ext_group->numirq; j++) {
+				irq = hif_ext_group->os_irq[j];
+				free_irq(irq, hif_ext_group);
+			}
 		}
 	}
 }
@@ -771,7 +781,7 @@ void hif_ahb_exec_grp_irq_enable(struct hif_exec_context *hif_ext_group)
 	int i;
 
 	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
-	if (!hif_ext_group->irq_enabled) {
+	if (hif_ext_group->irq_requested && !hif_ext_group->irq_enabled) {
 		for (i = 0; i < hif_ext_group->numirq; i++) {
 			enable_irq(hif_ext_group->os_irq[i]);
 		}
