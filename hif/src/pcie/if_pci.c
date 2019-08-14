@@ -3410,7 +3410,7 @@ free_irq:
 		unsigned int msi_data;
 
 		ce_id--;
-		msi_data = (ce_id % msi_data_count) + msi_data_start;
+		msi_data = (ce_id % msi_data_count) + msi_irq_start;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
 		free_irq(irq, &ce_sc->tasklets[ce_id]);
 	}
