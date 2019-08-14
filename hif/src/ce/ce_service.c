@@ -557,7 +557,7 @@ void ce_update_tx_ring(struct CE_handle *ce_tx_hdl, uint32_t num_htt_cmpls)
  * 1. Send one msdu
  * 2. Increment write index of src ring accordinlgy.
  *
- * Return: int: CE sent status
+ * Return: QDF_STATUS: CE sent status
  */
 QDF_STATUS ce_send_single(struct CE_handle *ce_tx_hdl, qdf_nbuf_t msdu,
 			  uint32_t transfer_id, u_int32_t len)
@@ -587,7 +587,7 @@ QDF_STATUS ce_send_single(struct CE_handle *ce_tx_hdl, qdf_nbuf_t msdu,
 		/* ol_tx_stats_inc_ring_error(sc->scn->pdev_txrx_handle, 1); */
 		HIF_ERROR("%s: ce send fail %d %d %d", __func__, nentries_mask,
 			  write_index, sw_index);
-		return 1;
+		return QDF_STATUS_E_RESOURCES;
 	}
 
 	src_desc = (uint32_t *)CE_SRC_RING_TO_DESC(src_desc_base, write_index);
