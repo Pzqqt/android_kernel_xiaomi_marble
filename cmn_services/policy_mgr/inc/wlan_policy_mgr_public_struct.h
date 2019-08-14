@@ -981,7 +981,7 @@ enum dbs_support {
  * connections in the wlan system
  *
  * @mode: connection type
- * @chan: channel of the connection
+ * @freq: Channel frequency
  * @bw: channel bandwidth used for the connection
  * @mac: The HW mac it is running
  * @chain_mask: The original capability advertised by HW
@@ -991,7 +991,7 @@ enum dbs_support {
  */
 struct policy_mgr_conc_connection_info {
 	enum policy_mgr_con_mode mode;
-	uint8_t       chan;
+	uint32_t      freq;
 	enum hw_mode_bandwidth bw;
 	uint8_t       mac;
 	enum policy_mgr_chain_mode chain_mask;
@@ -1075,7 +1075,7 @@ struct policy_mgr_hw_mode {
  * @pcl_len: Number of channels in the PCL
  */
 struct policy_mgr_pcl_list {
-	uint8_t pcl_list[POLICY_MGR_MAX_CHANNEL_LIST];
+	uint32_t pcl_list[POLICY_MGR_MAX_CHANNEL_LIST];
 	uint8_t weight_list[POLICY_MGR_MAX_CHANNEL_LIST];
 	uint32_t pcl_len;
 };
@@ -1093,9 +1093,9 @@ struct policy_mgr_pcl_list {
  * @weight_list: Weights assigned by policy manager
  */
 struct policy_mgr_pcl_chan_weights {
-	uint8_t pcl_list[POLICY_MGR_MAX_CHANNEL_LIST];
+	uint32_t pcl_list[POLICY_MGR_MAX_CHANNEL_LIST];
 	uint32_t pcl_len;
-	uint8_t saved_chan_list[POLICY_MGR_MAX_CHANNEL_LIST];
+	uint32_t saved_chan_list[POLICY_MGR_MAX_CHANNEL_LIST];
 	uint32_t saved_num_chan;
 	uint8_t weighed_valid_list[POLICY_MGR_MAX_CHANNEL_LIST];
 	uint8_t weight_list[POLICY_MGR_MAX_CHANNEL_LIST];

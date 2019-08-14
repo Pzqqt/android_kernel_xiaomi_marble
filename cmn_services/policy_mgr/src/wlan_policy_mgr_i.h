@@ -36,8 +36,8 @@
 #define CONNECTION_UPDATE_TIMEOUT (POLICY_MGR_SER_CMD_TIMEOUT + 2000)
 #endif
 
-#define PM_24_GHZ_CHANNEL_6   (6)
-#define PM_5_GHZ_CHANNEL_36   (36)
+#define PM_24_GHZ_CH_FREQ_6   (2437)
+#define PM_5_GHZ_CH_FREQ_36   (5180)
 #define CHANNEL_SWITCH_COMPLETE_TIMEOUT   (2000)
 
 /**
@@ -291,7 +291,7 @@ struct policy_mgr_cfg {
  * interaction with Policy Manager
  * @sap_mandatory_channels: The user preferred master list on
  *                        which SAP can be brought up. This
- *                        mandatory channel list would be as per
+ *                        mandatory channel freq list would be as per
  *                        OEMs preference & conforming to the
  *                        regulatory/other considerations
  * @sap_mandatory_channels_len: Length of the SAP mandatory
@@ -313,12 +313,16 @@ struct policy_mgr_cfg {
  *                            change is in progress
  * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
  *      value from INI
- * @unsafe_channel_list: LTE coex channel avoidance list
+ * @unsafe_channel_list: LTE coex channel freq avoidance list
  * @unsafe_channel_count: LTE coex channel avoidance list count
  * @sta_ap_intf_check_work_info: Info related to sta_ap_intf_check_work
  * @nan_sap_conc_work: Info related to nan sap conc work
  * @opportunistic_update_done_evt: qdf event to synchronize host
  *                               & FW HW mode
+ * @channel_switch_complete_evt: qdf event for channel switch completion check
+ * @mode_change_cb: Mode change callback
+ * @user_config_sap_ch_freq: SAP channel freq configured by user application
+ * @cfg: Policy manager config data
  */
 struct policy_mgr_psoc_priv_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -332,7 +336,7 @@ struct policy_mgr_psoc_priv_obj {
 	struct policy_mgr_tdls_cbacks tdls_cbacks;
 	struct policy_mgr_cdp_cbacks cdp_cbacks;
 	struct policy_mgr_dp_cbacks dp_cbacks;
-	uint8_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
+	uint32_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
 	uint32_t sap_mandatory_channels_len;
 	bool do_hw_mode_change;
 	bool do_sap_unsafe_ch_check;
@@ -348,14 +352,14 @@ struct policy_mgr_psoc_priv_obj {
 	struct dual_mac_config dual_mac_cfg;
 	uint32_t hw_mode_change_in_progress;
 	struct policy_mgr_user_cfg user_cfg;
-	uint16_t unsafe_channel_list[QDF_MAX_NUM_CHAN];
+	uint32_t unsafe_channel_list[QDF_MAX_NUM_CHAN];
 	uint16_t unsafe_channel_count;
 	struct sta_ap_intf_check_work_ctx *sta_ap_intf_check_work_info;
 	uint8_t cur_conc_system_pref;
 	qdf_event_t opportunistic_update_done_evt;
 	qdf_event_t channel_switch_complete_evt;
 	send_mode_change_event_cb mode_change_cb;
-	uint32_t user_config_sap_channel;
+	uint32_t user_config_sap_ch_freq;
 	struct policy_mgr_cfg cfg;
 };
 
@@ -433,7 +437,7 @@ QDF_STATUS policy_mgr_get_old_and_new_hw_index(
 void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		uint32_t conn_index,
 		enum policy_mgr_con_mode mode,
-		uint8_t chan,
+		uint32_t freq,
 		enum hw_mode_bandwidth bw,
 		uint8_t mac,
 		enum policy_mgr_chain_mode chain_mask,
@@ -471,7 +475,7 @@ void policy_mgr_store_and_del_conn_info_by_vdev_id(
  * policy_mgr_store_and_del_conn_info_by_chan_and_mode() - Store and del a
  * connection info by chan number and conn mode
  * @psoc: PSOC object information
- * @chan: channel number
+ * @ch_freq: channel frequency value
  * @mode: conn mode
  * @info: structure array pointer where the connection info will be saved
  * @num_cxn_del: number of connection which are going to be deleted
@@ -483,7 +487,7 @@ void policy_mgr_store_and_del_conn_info_by_vdev_id(
  */
 void policy_mgr_store_and_del_conn_info_by_chan_and_mode(
 			struct wlan_objmgr_psoc *psoc,
-			uint32_t chan,
+			uint32_t ch_freq,
 			enum policy_mgr_con_mode mode,
 			struct policy_mgr_conc_connection_info *info,
 			uint8_t *num_cxn_del);
@@ -532,15 +536,46 @@ enum phy_ch_width policy_mgr_get_ch_width(enum hw_mode_bandwidth bw);
 
 QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 			enum policy_mgr_pcl_type pcl,
-			uint8_t *pcl_channels, uint32_t *len,
+			uint32_t *pcl_channels, uint32_t *len,
 			enum policy_mgr_con_mode mode,
 			uint8_t *pcl_weights, uint32_t weight_len);
+
+/**
+ * policy_mgr_allow_new_home_channel() - Check for allowed number of
+ * home channels
+ * @psoc: PSOC Pointer
+ * @mode: Connection mode
+ * @ch_freq: channel frequency on which new connection is coming up
+ * @num_connections: number of current connections
+ *
+ * When a new connection is about to come up check if current
+ * concurrency combination including the new connection is
+ * allowed or not based on the HW capability
+ *
+ * Return: True/False
+ */
 bool policy_mgr_allow_new_home_channel(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode,
-	uint8_t channel, uint32_t num_connections);
+	uint32_t ch_freq, uint32_t num_connections);
+
+/**
+ * policy_mgr_is_5g_channel_allowed() - check if 5g channel is allowed
+ * @ch_freq: channel frequency which needs to be validated
+ * @list: list of existing connections.
+ * @mode: mode against which channel needs to be validated
+ *
+ * This API takes the channel frequency as input and compares with existing
+ * connection channels. If existing connection's channel is DFS channel
+ * and provided channel is 5G channel then don't allow concurrency to
+ * happen as MCC with DFS channel is not yet supported
+ *
+ * Return: true if 5G channel is allowed, false if not allowed
+ *
+ */
 bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
-				uint8_t channel, uint32_t *list,
+				uint32_t ch_freq, uint32_t *list,
 				enum policy_mgr_con_mode mode);
+
 QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 				uint8_t  new_nss, uint8_t next_action,
 				enum policy_mgr_conn_update_reason reason,
@@ -617,7 +652,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
  * concurrency combination
  * @psoc: PSOC object information
  * @mode: new connection mode
- * @channel: channel on which new connection is coming up
+ * @ch_freq: channel frequency on which new connection is coming up
  * @bw: Bandwidth requested by the connection (optional)
  *
  * When a new connection is about to come up check if current
@@ -629,6 +664,6 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
  */
 bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
-				       uint8_t channel,
+				       uint32_t ch_freq,
 				       enum hw_mode_bandwidth bw);
 #endif
