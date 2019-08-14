@@ -287,6 +287,9 @@ __wlan_peer_update_tx_rate_stats(struct wlan_tx_rate_stats *__tx_stats,
 	__tx_stats->num_ppdus += num_ppdus;
 	__tx_stats->mpdu_attempts += mpdu_attempts;
 	__tx_stats->mpdu_success += mpdu_success;
+	__tx_stats->num_msdus += ppdu_user->success_msdus;
+	__tx_stats->num_bytes += ppdu_user->success_bytes;
+	__tx_stats->num_retries += ppdu_user->long_retries + ppdu_user->short_retries;
 }
 
 static void
