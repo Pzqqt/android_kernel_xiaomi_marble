@@ -931,17 +931,16 @@ dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		uint8_t *pkt_type;
 
 		pkt_type = qdf_nbuf_data(nbuf) + (2 * QDF_MAC_ADDR_SIZE);
-		if (*(uint16_t *)pkt_type == htons(QDF_ETH_TYPE_8021Q) &&
-		    *(uint16_t *)(pkt_type + DP_SKIP_VLAN) == htons(QDF_LLC_STP)) {
-			DP_STATS_INC(vdev->pdev, vlan_tag_stp_cnt, 1);
-			goto process_mesh;
-		} else {
-			DP_STATS_INC(vdev->pdev, dropped.wifi_parse, 1);
-			qdf_nbuf_free(nbuf);
-			return;
+		if (*(uint16_t *)pkt_type == htons(QDF_ETH_TYPE_8021Q)) {
+			if (*(uint16_t *)(pkt_type + DP_SKIP_VLAN) ==
+							htons(QDF_LLC_STP)) {
+				DP_STATS_INC(vdev->pdev, vlan_tag_stp_cnt, 1);
+				goto process_mesh;
+			} else {
+				goto process_rx;
+			}
 		}
 	}
-
 	if (vdev->rx_decap_type == htt_cmn_pkt_type_raw)
 		goto process_mesh;
 
