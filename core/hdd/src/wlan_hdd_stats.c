@@ -35,6 +35,7 @@
 #include "wlan_hdd_hostapd.h"
 #include "wlan_osif_request_manager.h"
 #include "wlan_hdd_debugfs_llstat.h"
+#include "wlan_hdd_debugfs_mibstat.h"
 #include "wlan_reg_services_api.h"
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include "wlan_cp_stats_mc_ucfg_api.h"
@@ -5265,6 +5266,32 @@ out:
 	hdd_exit();
 	return status;
 }
+
+#ifdef WLAN_FEATURE_MIB_STATS
+QDF_STATUS wlan_hdd_get_mib_stats(struct hdd_adapter *adapter)
+{
+	int ret = 0;
+	struct stats_event *stats;
+
+	if (!adapter) {
+		hdd_err("Invalid context, adapter");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	stats = wlan_cfg80211_mc_cp_stats_get_mib_stats(
+			adapter->vdev,
+			&ret);
+	if (ret || !stats) {
+		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
+		return ret;
+	}
+
+	hdd_debugfs_process_mib_stats(adapter, stats);
+
+	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
+	return ret;
+}
+#endif
 
 QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 {

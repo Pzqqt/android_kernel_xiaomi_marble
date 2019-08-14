@@ -352,6 +352,16 @@ int wlan_hdd_get_rcpi(struct hdd_adapter *adapter, uint8_t *mac,
 		      int32_t *rcpi_value,
 		      enum rcpi_measurement_type measurement_type);
 
+#ifdef WLAN_FEATURE_MIB_STATS
+/**
+ * wlan_hdd_get_mib_stats() - Get the mib statistics
+ * @adapter: adapter upon which the measurement is requested
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wlan_hdd_get_mib_stats(struct hdd_adapter *adapter);
+#endif
+
 /**
  * wlan_hdd_get_rssi() - Get the current RSSI
  * @adapter: adapter upon which the measurement is requested

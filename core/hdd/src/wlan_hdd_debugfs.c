@@ -33,6 +33,7 @@
 #include <wlan_hdd_wowl.h>
 #include <cds_sched.h>
 #include <wlan_hdd_debugfs_llstat.h>
+#include <wlan_hdd_debugfs_mibstat.h>
 
 #define MAX_USER_COMMAND_SIZE_WOWL_ENABLE 8
 #define MAX_USER_COMMAND_SIZE_WOWL_PATTERN 512
@@ -527,6 +528,9 @@ QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 					&fops_patterngen))
 		return QDF_STATUS_E_FAILURE;
 
+	if (wlan_hdd_create_mib_stats_file(adapter))
+		return QDF_STATUS_E_FAILURE;
+
 	if (wlan_hdd_create_ll_stats_file(adapter))
 		return QDF_STATUS_E_FAILURE;
 
@@ -544,5 +548,6 @@ QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 void hdd_debugfs_exit(struct hdd_adapter *adapter)
 {
 	debugfs_remove_recursive(adapter->debugfs_phy);
+	wlan_hdd_destroy_mib_stats_lock();
 }
 #endif /* #ifdef WLAN_OPEN_SOURCE */
