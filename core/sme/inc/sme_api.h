@@ -491,9 +491,25 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 		struct csr_roam_profile *profile,
 		tScanResultHandle *scan_cache,
 		uint8_t *ap_chnl_id);
+/**
+ * sme_get_ap_channel_from_scan() - a wrapper function to get
+ *				  AP's channel id from
+ *				  CSR by filtering the
+ *				  result which matches
+ *				  our roam profile.
+ * @profile: SAP profile
+ * @ap_ch_freq: pointer to channel id of SAP. Fill the value after finding the
+ *              best ap from scan cache.
+ *
+ * This function is written to get AP's channel id from CSR by filtering
+ * the result which matches our roam profile. This is a synchronous call.
+ *
+ * Return: QDF_STATUS.
+ */
 QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
-		tScanResultHandle *scan_cache,
-		uint8_t *ap_chnl_id);
+					tScanResultHandle *scan_cache,
+					uint32_t *ap_ch_freq);
+
 tCsrScanResultInfo *sme_scan_result_get_first(mac_handle_t,
 		tScanResultHandle hScanResult);
 tCsrScanResultInfo *sme_scan_result_get_next(mac_handle_t,
@@ -2536,7 +2552,7 @@ QDF_STATUS sme_get_fw_state(mac_handle_t mac_handle,
 /**
  * sme_get_valid_channels() - sme api to get valid channels for
  * current regulatory domain
- * @chan_list: list of the valid channels
+ * @ch_freq_list: list of the valid channel frequencies
  * @list_len: length of the channel list
  *
  * This function will get valid channels for current regulatory
@@ -2544,7 +2560,7 @@ QDF_STATUS sme_get_fw_state(mac_handle_t mac_handle,
  *
  * Return: QDF_STATUS_SUCCESS or non-zero on failure
  */
-QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len);
+QDF_STATUS sme_get_valid_channels(uint32_t *ch_freq_list, uint32_t *list_len);
 
 /**
  * sme_get_mac_context() - sme api to get the pmac context

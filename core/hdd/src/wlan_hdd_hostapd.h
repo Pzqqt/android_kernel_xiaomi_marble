@@ -58,7 +58,7 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *adapter,
  * a different channel
  * @psoc: PSOC object information
  * @vdev_id: vdev id
- * @channel: channel to switch
+ * @ch_freq: channel to switch
  * @forced: Force to switch channel, ignore SCC/MCC check
  *
  * This function restarts SAP with a different channel
@@ -67,7 +67,7 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *adapter,
  *
  */
 void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
-				    uint8_t vdev_id, uint32_t channel,
+				    uint8_t vdev_id, uint32_t ch_freq,
 				    uint32_t channel_bw,
 				    bool forced);
 /**
@@ -75,7 +75,7 @@ void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
  * suitable channel and restart SAP
  * @psoc: PSOC object information
  * @vdev_id: vdev id
- * @channel: channel to be returned
+ * @ch_freq: channel to be returned
  *
  * This function gets the channel parameters to restart SAP
  *
@@ -84,7 +84,7 @@ void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id, uint8_t *channel);
+				uint8_t vdev_id, uint32_t *ch_freq);
 #endif
 
 /**

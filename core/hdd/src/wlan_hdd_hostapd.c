@@ -3096,7 +3096,7 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
 }
 
 void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
-				    uint8_t vdev_id, uint32_t channel,
+				    uint8_t vdev_id, uint32_t ch_freq,
 				    uint32_t channel_bw,
 				    bool forced)
 {
@@ -3107,7 +3107,8 @@ void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
 		hdd_err("Adapter is NULL");
 		return;
 	}
-	hdd_sap_restart_with_channel_switch(ap_adapter, channel,
+	hdd_sap_restart_with_channel_switch(ap_adapter,
+					    wlan_freq_to_chan(ch_freq),
 					    channel_bw, forced);
 }
 
@@ -3128,7 +3129,7 @@ void wlan_hdd_set_sap_csa_reason(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id, uint8_t *channel)
+				uint8_t vdev_id, uint32_t *ch_freq)
 {
 	mac_handle_t mac_handle;
 	struct hdd_ap_ctx *hdd_ap_ctx;
@@ -3159,7 +3160,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!channel) {
+	if (!ch_freq) {
 		hdd_err("Null parameters");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3231,12 +3232,10 @@ sap_restart:
 				    0,
 				    &ch_params);
 
-	*channel = intf_ch;
-
+	*ch_freq = wlan_chan_to_freq(intf_ch);
 	hdd_info("SAP channel change with CSA/ECSA");
-	hdd_sap_restart_chan_switch_cb(psoc, vdev_id,
-		intf_ch,
-		ch_params.ch_width, false);
+	hdd_sap_restart_chan_switch_cb(psoc, vdev_id, *ch_freq,
+				       ch_params.ch_width, false);
 
 	return QDF_STATUS_SUCCESS;
 }

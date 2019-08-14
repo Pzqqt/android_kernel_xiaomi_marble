@@ -2642,6 +2642,44 @@ static void hdd_avoid_acs_channels(struct hdd_context *hdd_ctx,
 #endif
 
 /**
+ * wlan_hdd_trim_acs_channel_list() - Trims ACS channel list with
+ * intersection of PCL
+ * @pcl: preferred channel list
+ * @pcl_count: Preferred channel list count
+ * @org_ch_list: ACS channel list from user space
+ * @org_ch_list_count: ACS channel count from user space
+ *
+ * Return: None
+ */
+static void wlan_hdd_trim_acs_channel_list(uint8_t *pcl, uint8_t pcl_count,
+					   uint8_t *org_ch_list,
+					   uint8_t *org_ch_list_count)
+{
+	uint16_t i, j, ch_list_count = 0;
+
+	if (*org_ch_list_count >= QDF_MAX_NUM_CHAN) {
+		hdd_err("org_ch_list_count too big %d",
+			*org_ch_list_count);
+		return;
+	}
+
+	if (pcl_count >= QDF_MAX_NUM_CHAN) {
+		hdd_err("pcl_count is too big %d", pcl_count);
+		return;
+	}
+
+	hdd_debug("Update ACS channels with PCL");
+	for (j = 0; j < *org_ch_list_count; j++)
+		for (i = 0; i < pcl_count; i++)
+			if (pcl[i] == org_ch_list[j]) {
+				org_ch_list[ch_list_count++] = pcl[i];
+				break;
+			}
+
+	*org_ch_list_count = ch_list_count;
+}
+
+/**
  * __wlan_hdd_cfg80211_do_acs(): CFG80211 handler function for DO_ACS Vendor CMD
  * @wiphy:  Linux wiphy struct pointer
  * @wdev:   Linux wireless device struct pointer
@@ -2927,7 +2965,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	if (is_external_acs_policy &&
 	    policy_mgr_is_force_scc(hdd_ctx->psoc) &&
 	    policy_mgr_get_connection_count(hdd_ctx->psoc)) {
-		policy_mgr_trim_acs_channel_list(
+		wlan_hdd_trim_acs_channel_list(
 					sap_config->acs_cfg.pcl_channels,
 					sap_config->acs_cfg.pcl_ch_count,
 					sap_config->acs_cfg.ch_list,
@@ -9479,13 +9517,7 @@ static uint32_t wlan_hdd_populate_weigh_pcl(
 	for (i = 0; i < chan_weights->pcl_len; i++) {
 		if (chan_weights->pcl_list[i] <=
 		    ARRAY_SIZE(hdd_channels_2_4_ghz))
-			w_pcl[i].freq = ieee80211_channel_to_frequency(
-						chan_weights->pcl_list[i],
-						HDD_NL80211_BAND_2GHZ);
-		else
-			w_pcl[i].freq = ieee80211_channel_to_frequency(
-						chan_weights->pcl_list[i],
-						HDD_NL80211_BAND_5GHZ);
+			w_pcl[i].freq = chan_weights->pcl_list[i];
 		w_pcl[i].weight = chan_weights->weight_list[i];
 
 		if (intf_mode == PM_SAP_MODE || intf_mode == PM_P2P_GO_MODE)
@@ -9513,14 +9545,7 @@ static uint32_t wlan_hdd_populate_weigh_pcl(
 			if (chan_weights->saved_chan_list[i] <=
 				ARRAY_SIZE(hdd_channels_2_4_ghz))
 				w_pcl[chan_idx].freq =
-					ieee80211_channel_to_frequency(
-					      chan_weights->saved_chan_list[i],
-					      HDD_NL80211_BAND_2GHZ);
-			else
-				w_pcl[chan_idx].freq =
-					ieee80211_channel_to_frequency(
-					      chan_weights->saved_chan_list[i],
-					      HDD_NL80211_BAND_5GHZ);
+					chan_weights->saved_chan_list[i];
 
 			if (!chan_weights->weighed_valid_list[i]) {
 				w_pcl[chan_idx].flag =
@@ -9604,11 +9629,10 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	if (!chan_weights)
 		return -ENOMEM;
 
-	status = policy_mgr_get_pcl(hdd_ctx->psoc,
-				intf_mode, chan_weights->pcl_list,
-				&chan_weights->pcl_len,
-				chan_weights->weight_list,
-				QDF_ARRAY_SIZE(chan_weights->weight_list));
+	status = policy_mgr_get_pcl_int(
+			hdd_ctx->psoc, intf_mode, chan_weights->pcl_list,
+			&chan_weights->pcl_len, chan_weights->weight_list,
+			QDF_ARRAY_SIZE(chan_weights->weight_list));
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Get pcl failed");
 		qdf_mem_free(chan_weights);

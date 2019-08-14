@@ -30,6 +30,7 @@
 #include "qdf_status.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_policy_mgr_public_struct.h"
+#include "wlan_utility.h"
 
 struct target_psoc_info;
 
@@ -396,9 +397,9 @@ uint32_t policy_mgr_get_concurrency_mode(struct wlan_objmgr_psoc *psoc);
  * Searches and gets the channel number from the scan results and checks if
  * concurrency is allowed for the given session ID
  *
- * Non zero channel number if concurrency is allowed, zero otherwise
+ * Return: Non zero channel frequency value if concurrency is allowed else  0
  */
-uint8_t policy_mgr_search_and_check_for_session_conc(
+uint32_t policy_mgr_search_and_check_for_session_conc(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t session_id, void *roam_profile);
 
@@ -406,34 +407,51 @@ uint8_t policy_mgr_search_and_check_for_session_conc(
  * policy_mgr_is_chnl_in_diff_band() - to check that given channel
  * is in diff band from existing channel or not
  * @psoc: pointer to psoc
- * @channel: given channel
+ * @ch_freq: given channel frequency
  *
  * This API will check that if the passed channel is in diff band than the
  * already existing connections or not.
  *
  * Return: true if channel is in diff band
  */
+bool policy_mgr_is_chnl_in_diff_band_int(struct wlan_objmgr_psoc *psoc,
+					 uint32_t ch_freq);
+
+static inline
 bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
-					    uint8_t channel);
+				     uint8_t channel)
+{
+	return policy_mgr_is_chnl_in_diff_band_int(psoc,
+						   wlan_chan_to_freq(
+						   channel));
+}
 
 /**
  * policy_mgr_check_for_session_conc() - Check if concurrency is
  * allowed for a session
  * @psoc: PSOC object information
  * @session_id: Session ID
- * @channel: Channel number
+ * @ch_freq: Channel frequency
  *
  * Checks if connection is allowed for a given session_id
  *
  * True if the concurrency is allowed, false otherwise
  */
-bool policy_mgr_check_for_session_conc(
-	struct wlan_objmgr_psoc *psoc, uint8_t session_id, uint8_t channel);
-
+bool policy_mgr_check_for_session_conc_int(struct wlan_objmgr_psoc *psoc,
+					   uint8_t session_id,
+					   uint32_t ch_freq);
+static inline
+bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
+				       uint8_t session_id, uint8_t channel)
+{
+	return policy_mgr_check_for_session_conc_int(psoc, session_id,
+						     wlan_chan_to_freq(
+						     channel));
+}
 /**
  * policy_mgr_handle_conc_multiport() - to handle multiport concurrency
  * @session_id: Session ID
- * @channel: Channel number
+ * @ch_freq: Channel frequency
  * @reason: reason for connection update
  *
  * This routine will handle STA side concurrency when policy manager
@@ -441,10 +459,21 @@ bool policy_mgr_check_for_session_conc(
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_handle_conc_multiport(
-	struct wlan_objmgr_psoc *psoc, uint8_t session_id, uint8_t channel,
-	enum policy_mgr_conn_update_reason reason);
+QDF_STATUS policy_mgr_handle_conc_multiport_int(struct wlan_objmgr_psoc *psoc,
+						uint8_t session_id,
+						uint32_t ch_freq,
+				enum policy_mgr_conn_update_reason reason);
 
+static inline
+QDF_STATUS policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
+					    uint8_t session_id, uint8_t channel,
+					    enum policy_mgr_conn_update_reason
+					    reason)
+{
+	return policy_mgr_handle_conc_multiport_int(psoc, session_id,
+						    wlan_chan_to_freq(channel),
+						    reason);
+}
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /**
  * policy_mgr_check_concurrent_intf_and_restart_sap() - Check
@@ -498,7 +527,7 @@ QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
  * policy_mgr_change_sap_channel_with_csa() - Move SAP channel using (E)CSA
  * @psoc: PSOC object information
  * @vdev_id: Vdev id
- * @channel: Channel to change
+ * @ch_freq: Channel frequency to change
  * @ch_width: channel width to change
  * @forced: Force to switch channel, ignore SCC/MCC check
  *
@@ -506,15 +535,25 @@ QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
  *
  * Return: None
  */
-void policy_mgr_change_sap_channel_with_csa(
-		struct wlan_objmgr_psoc *psoc,
-		uint8_t vdev_id, uint32_t channel,
-		uint32_t ch_width,
-		bool forced);
+void policy_mgr_change_sap_channel_with_csa_int(struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id,
+						uint32_t ch_freq,
+						uint32_t ch_width,
+						bool forced);
+
+static inline
+void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
+					    uint8_t vdev_id, uint8_t channel,
+					    uint32_t ch_width, bool forced)
+{
+	policy_mgr_change_sap_channel_with_csa_int(psoc, vdev_id,
+						   wlan_chan_to_freq(channel),
+						   ch_width, forced);
+}
 #else
 static inline void policy_mgr_change_sap_channel_with_csa(
 		struct wlan_objmgr_psoc *psoc,
-		uint8_t vdev_id, uint32_t channel,
+		uint8_t vdev_id, uint32_t ch_freq,
 		uint32_t ch_width,
 		bool forced)
 {
@@ -581,21 +620,30 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
  * @mode: given  mode
  * @vdev_id: pointer to vdev_id
  *
- * This API will provide channel number of matching mode and vdevid.
+ * This API will provide channel frequency value of matching mode and vdevid.
  * If vdev_id is NULL then it will match only mode
  * If vdev_id is not NULL the it will match both mode and vdev_id
  *
- * Return: channel number
+ * Return: channel frequency value
  */
-uint8_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
-		enum policy_mgr_con_mode mode, uint32_t *vdev_id);
+uint32_t policy_mgr_get_channel_int(struct wlan_objmgr_psoc *psoc,
+				    enum policy_mgr_con_mode mode,
+				    uint32_t *vdev_id);
+
+static inline uint8_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
+					     enum policy_mgr_con_mode mode,
+					     uint32_t *vdev_id)
+{
+	return wlan_freq_to_chan(policy_mgr_get_channel_int(psoc, mode,
+							    vdev_id));
+}
 
 /**
  * policy_mgr_get_pcl() - provides the preferred channel list for
  * new connection
  * @psoc: PSOC object information
- * @mode:	Device mode
- * @pcl_channels: PCL channels
+ * @mode: Device mode
+ * @pcl_channels: Preferred channel freq list
  * @len: length of the PCL
  * @pcl_weight: Weights of the PCL
  * @weight_len: Max length of the weights list
@@ -607,16 +655,20 @@ uint8_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
+QDF_STATUS policy_mgr_get_pcl_int(struct wlan_objmgr_psoc *psoc,
+				  enum policy_mgr_con_mode mode,
+				  uint32_t *pcl_channels, uint32_t *len,
+				  uint8_t *pcl_weight, uint32_t weight_len);
 QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
-		enum policy_mgr_con_mode mode,
-		uint8_t *pcl_channels, uint32_t *len,
-		uint8_t *pcl_weight, uint32_t weight_len);
+			      enum policy_mgr_con_mode mode,
+			      uint8_t *pcl_channels, uint32_t *len,
+			      uint8_t *pcl_weight, uint32_t weight_len);
 
 /**
  * policy_mgr_update_with_safe_channel_list() - provides the safe
  * channel list
  * @psoc: PSOC object information
- * @pcl_channels: channel list
+ * @pcl_channels: channel freq list
  * @len: length of the list
  * @weight_list: Weights of the PCL
  * @weight_len: Max length of the weights list
@@ -626,9 +678,17 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
  *
  * Return: None
  */
+void policy_mgr_update_with_safe_channel_list_int(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *pcl_channels,
+						  uint32_t *len,
+						  uint8_t *weight_list,
+						  uint32_t weight_len);
+
 void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
-		uint8_t *pcl_channels, uint32_t *len,
-		uint8_t *weight_list, uint32_t weight_len);
+					      uint8_t *pcl_channels,
+					      uint32_t *len,
+					      uint8_t *weight_list,
+					      uint32_t weight_len);
 
 /**
  * policy_mgr_get_nondfs_preferred_channel() - to get non-dfs preferred channel
@@ -646,16 +706,27 @@ void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
  *    to give preferred channel list. once we get preferred channel list, loop
  *    through list to find first non-dfs channel from ascending order.
  *
- * Return: uint8_t non-dfs channel
+ * Return: uint32_t non-dfs channel frequency
  */
+uint32_t
+policy_mgr_get_nondfs_preferred_channel_int(struct wlan_objmgr_psoc *psoc,
+					    enum policy_mgr_con_mode mode,
+					    bool for_existing_conn);
+
+static inline
 uint8_t policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
-		enum policy_mgr_con_mode mode, bool for_existing_conn);
+						enum policy_mgr_con_mode mode,
+						bool for_existing_conn)
+{
+	return wlan_freq_to_chan(policy_mgr_get_nondfs_preferred_channel_int(
+				 psoc, mode, for_existing_conn));
+}
 
 /**
  * policy_mgr_is_any_nondfs_chnl_present() - Find any non-dfs
  * channel from conc table
  * @psoc: PSOC object information
- * @channel: pointer to channel which needs to be filled
+ * @ch_freq: pointer to channel frequency which needs to be filled
  *
  * In-case if any connection is already present whose channel is none dfs then
  * return that channel
@@ -663,7 +734,7 @@ uint8_t policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
  * Return: true up-on finding non-dfs channel else false
  */
 bool policy_mgr_is_any_nondfs_chnl_present(struct wlan_objmgr_psoc *psoc,
-		uint8_t *channel);
+					   uint32_t *ch_freq);
 
 /**
  * policy_mgr_get_dfs_beaconing_session_id() - to find the
@@ -681,7 +752,7 @@ uint32_t policy_mgr_get_dfs_beaconing_session_id(
  * policy_mgr_is_any_dfs_beaconing_session_present() - to find
  * if any DFS session
  * @psoc: PSOC object information
- * @channel: pointer to channel number that needs to filled
+ * @ch_freq: pointer to channel frequency that needs to filled
  *
  * If any beaconing session such as SAP or GO present and it is on DFS channel
  * then this function will return true
@@ -689,14 +760,13 @@ uint32_t policy_mgr_get_dfs_beaconing_session_id(
  * Return: true if session is on DFS or false if session is on non-dfs channel
  */
 bool policy_mgr_is_any_dfs_beaconing_session_present(
-		struct wlan_objmgr_psoc *psoc, uint8_t *channel);
-
+		struct wlan_objmgr_psoc *psoc, uint32_t *ch_freq);
 /**
  * policy_mgr_allow_concurrency() - Check for allowed concurrency
  * combination consulting the PCL
  * @psoc: PSOC object information
  * @mode:	new connection mode
- * @channel: channel on which new connection is coming up
+ * @ch_freq: channel frequency on which new connection is coming up
  * @bw: Bandwidth requested by the connection (optional)
  *
  * When a new connection is about to come up check if current
@@ -705,30 +775,49 @@ bool policy_mgr_is_any_dfs_beaconing_session_present(
  *
  * Return: True/False
  */
+bool policy_mgr_allow_concurrency_int(struct wlan_objmgr_psoc *psoc,
+				      enum policy_mgr_con_mode mode,
+				      uint32_t ch_freq,
+				      enum hw_mode_bandwidth bw);
+
+static inline
 bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
-		enum policy_mgr_con_mode mode,
-		uint8_t channel, enum hw_mode_bandwidth bw);
+				  enum policy_mgr_con_mode mode,
+				  uint8_t channel, enum hw_mode_bandwidth bw)
+{
+	return policy_mgr_allow_concurrency_int(psoc, mode,
+						wlan_chan_to_freq(channel), bw);
+}
 
 /**
  * policy_mgr_nan_sap_pre_enable_conc_check() - Check if NAN+SAP SCC is
  *                                              allowed in given ch
  * @psoc: PSOC object information
  * @mode: Connection mode
- * @ch: channel to check
+ * @ch_freq: channel frequency to check
  *
  * Return: True if allowed else false
  */
 bool
+policy_mgr_nan_sap_pre_enable_conc_check_int(struct wlan_objmgr_psoc *psoc,
+					     enum policy_mgr_con_mode mode,
+					     uint32_t ch_freq);
+static inline bool
 policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
 					 enum policy_mgr_con_mode mode,
-					 uint8_t ch);
+					 uint8_t ch)
+{
+	return policy_mgr_nan_sap_pre_enable_conc_check_int(psoc, mode,
+							    wlan_chan_to_freq(
+							    ch));
+}
 
 /**
  * policy_mgr_allow_concurrency_csa() - Check for allowed concurrency
  * combination when channel switch
  * @psoc:	PSOC object information
  * @mode:	connection mode
- * @channel:	target channel to switch
+ * @ch_freq:	target channel frequency to switch
  * @vdev_id:	vdev id of channel switch interface
  * @forced:	forced to chan switch.
  * @reason:	request reason of CSA
@@ -745,12 +834,25 @@ policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
  *
  * Return: True/False
  */
-bool  policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
-				       enum policy_mgr_con_mode mode,
-				       uint8_t channel,
-				       uint32_t vdev_id,
-				       bool forced,
-				       enum sap_csa_reason_code reason);
+bool policy_mgr_allow_concurrency_csa_int(struct wlan_objmgr_psoc *psoc,
+					  enum policy_mgr_con_mode mode,
+					  uint32_t ch_freq,
+					  uint32_t vdev_id,
+					  bool forced,
+					  enum sap_csa_reason_code reason);
+
+static inline
+bool policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
+				      enum policy_mgr_con_mode mode,
+				      uint8_t channel,
+				      uint32_t vdev_id,
+				      bool forced,
+				      enum sap_csa_reason_code reason)
+{
+	return policy_mgr_allow_concurrency_csa_int(psoc, mode,
+						    wlan_chan_to_freq(channel),
+						    vdev_id, forced, reason);
+}
 
 /**
  * policy_mgr_get_first_connection_pcl_table_index() - provides the
@@ -871,7 +973,7 @@ QDF_STATUS policy_mgr_decr_connection_count(struct wlan_objmgr_psoc *psoc,
  * for the new connection
  * @psoc: PSOC object information
  * @session_id: Session id
- * @channel: Channel on which new connection will be
+ * @ch_freq: Channel frequency on which new connection will be
  * @reason: Reason for which connection update is required
  *
  * This function initiates initiates actions
@@ -880,10 +982,21 @@ QDF_STATUS policy_mgr_decr_connection_count(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS enum
  */
-QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
-		uint32_t session_id, uint8_t channel,
-		enum policy_mgr_conn_update_reason);
+QDF_STATUS
+policy_mgr_current_connections_update_int(struct wlan_objmgr_psoc *psoc,
+					  uint32_t session_id,
+					  uint32_t ch_freq,
+					  enum policy_mgr_conn_update_reason);
 
+static inline QDF_STATUS
+policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
+				      uint32_t session_id, uint8_t channel,
+				      enum policy_mgr_conn_update_reason reason)
+{
+	return policy_mgr_current_connections_update_int(psoc, session_id,
+							 wlan_chan_to_freq(
+							 channel), reason);
+}
 /**
  * policy_mgr_is_dbs_allowed_for_concurrency() - If dbs is allowed for current
  * concurreny
@@ -901,7 +1014,7 @@ bool policy_mgr_is_dbs_allowed_for_concurrency(
  * policy_mgr_get_preferred_dbs_action_table() - get dbs action table type
  * @psoc: Pointer to psoc
  * @vdev_id: vdev Id
- * @channel: channel of vdev.
+ * @ch_freq: channel frequency of vdev.
  * @reason: reason of request
  *
  * 1. Based on band preferred and vdev priority setting to choose the preferred
@@ -921,13 +1034,13 @@ enum policy_mgr_conc_next_action
 policy_mgr_get_preferred_dbs_action_table(
 	struct wlan_objmgr_psoc *psoc,
 	uint32_t vdev_id,
-	uint8_t channel,
+	uint32_t ch_freq,
 	enum policy_mgr_conn_update_reason reason);
 
 /**
  * policy_mgr_is_ibss_conn_exist() - to check if IBSS connection already present
  * @psoc: PSOC object information
- * @ibss_channel: pointer to ibss channel which needs to be filled
+ * @ibss_ch_freq: pointer to ibss channel which needs to be filled
  *
  * this routine will check if IBSS connection already exist or no. If it
  * exist then this routine will return true and fill the ibss_channel value.
@@ -935,7 +1048,7 @@ policy_mgr_get_preferred_dbs_action_table(
  * Return: true if ibss connection exist else false
  */
 bool policy_mgr_is_ibss_conn_exist(struct wlan_objmgr_psoc *psoc,
-		uint8_t *ibss_channel);
+				   uint32_t *ibss_ch_freq);
 
 /**
  * policy_mgr_get_conn_info() - get the current connections list
@@ -959,7 +1072,7 @@ struct policy_mgr_conc_connection_info *policy_mgr_get_conn_info(
  * @chain_mask: chain mask
  * @type: connection type
  * @sub_type: connection subtype
- * @channelid: channel number
+ * @ch_freq: channel frequency value
  * @mac_id: mac id
  *
  * This function adds the new connection to the current
@@ -967,11 +1080,28 @@ struct policy_mgr_conc_connection_info *policy_mgr_get_conn_info(
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_incr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
-		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
-		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
-		uint32_t channelid, uint32_t mac_id);
+QDF_STATUS
+policy_mgr_incr_connection_count_utfw_int(struct wlan_objmgr_psoc *psoc,
+					  uint32_t vdev_id, uint32_t tx_streams,
+					  uint32_t rx_streams,
+					  uint32_t chain_mask, uint32_t type,
+					  uint32_t sub_type,
+					  uint32_t ch_freq, uint32_t mac_id);
 
+static inline QDF_STATUS
+policy_mgr_incr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
+				      uint32_t vdev_id, uint32_t tx_streams,
+				      uint32_t rx_streams, uint32_t chain_mask,
+				      uint32_t type, uint32_t sub_type,
+				      uint32_t channelid, uint32_t mac_id)
+{
+	return policy_mgr_incr_connection_count_utfw_int(psoc, vdev_id,
+							 tx_streams, rx_streams,
+							 chain_mask, type,
+							 sub_type,
+							 wlan_chan_to_freq(
+							 channelid), mac_id);
+}
 /**
  * policy_mgr_update_connection_info_utfw() - updates the
  * existing connection in the current connections list
@@ -982,7 +1112,7 @@ QDF_STATUS policy_mgr_incr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
  * @chain_mask: chain mask
  * @type: connection type
  * @sub_type: connection subtype
- * @channelid: channel number
+ * @ch_freq: channel frequency value
  * @mac_id: mac id
  *
  * This function updates the connection to the current
@@ -990,10 +1120,31 @@ QDF_STATUS policy_mgr_incr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_update_connection_info_utfw(struct wlan_objmgr_psoc *psoc,
-		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
-		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
-		uint32_t channelid, uint32_t mac_id);
+QDF_STATUS
+policy_mgr_update_connection_info_utfw_int(struct wlan_objmgr_psoc *psoc,
+					   uint32_t vdev_id,
+					   uint32_t tx_streams,
+					   uint32_t rx_streams,
+					   uint32_t chain_mask, uint32_t type,
+					   uint32_t sub_type,
+					   uint32_t ch_freq, uint32_t mac_id);
+
+static inline QDF_STATUS
+policy_mgr_update_connection_info_utfw(struct wlan_objmgr_psoc *psoc,
+				       uint32_t vdev_id, uint32_t tx_streams,
+				       uint32_t rx_streams,
+				       uint32_t chain_mask, uint32_t type,
+				       uint32_t sub_type,
+				       uint32_t channelid, uint32_t mac_id)
+{
+	return policy_mgr_update_connection_info_utfw_int(psoc, vdev_id,
+							  tx_streams,
+							  rx_streams,
+							  chain_mask, type,
+							  sub_type,
+							  wlan_chan_to_freq(
+							  channelid), mac_id);
+}
 
 /**
  * policy_mgr_decr_connection_count_utfw() - remove the old
@@ -1060,7 +1211,7 @@ static inline QDF_STATUS policy_mgr_incr_connection_count_utfw(
 		struct wlan_objmgr_psoc *psoc, uint32_t vdev_id,
 		uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
-		uint32_t channelid, uint32_t mac_id)
+		uint32_t ch_freq, uint32_t mac_id)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1068,7 +1219,7 @@ static inline QDF_STATUS policy_mgr_update_connection_info_utfw(
 		struct wlan_objmgr_psoc *psoc, uint32_t vdev_id,
 		uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
-		uint32_t channelid, uint32_t mac_id)
+		uint32_t ch_freq, uint32_t mac_id)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1247,7 +1398,7 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
  * @sme_change_mcc_beacon_interval: Set MCC beacon interval to FW
  */
 struct policy_mgr_sme_cbacks {
-	QDF_STATUS (*sme_get_valid_channels)(uint8_t *chan_list,
+	QDF_STATUS (*sme_get_valid_channels)(uint32_t *ch_freq_list,
 					     uint32_t *list_len);
 	void (*sme_get_nss_for_vdev)(enum QDF_OPMODE,
 				     uint8_t *nss_2g, uint8_t *nss_5g);
@@ -1264,7 +1415,7 @@ struct policy_mgr_sme_cbacks {
 	QDF_STATUS (*sme_get_ap_channel_from_scan)(
 		void *roam_profile,
 		void **scan_cache,
-		uint8_t *channel);
+		uint32_t *ch_freq);
 	QDF_STATUS (*sme_scan_result_purge)(
 				void *scan_result);
 };
@@ -1287,12 +1438,12 @@ struct policy_mgr_sme_cbacks {
  */
 struct policy_mgr_hdd_cbacks {
 	void (*sap_restart_chan_switch_cb)(struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id, uint32_t channel,
+				uint8_t vdev_id, uint32_t ch_freq,
 				uint32_t channel_bw,
 				bool forced);
 	QDF_STATUS (*wlan_hdd_get_channel_for_sap_restart)(
 				struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id, uint8_t *channel);
+				uint8_t vdev_id, uint32_t *ch_freq);
 	enum policy_mgr_con_mode (*get_mode_for_non_connected_vdev)(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id);
@@ -1460,17 +1611,30 @@ bool policy_mgr_map_concurrency_mode(enum QDF_OPMODE *old_mode,
  * policy_mgr_get_channel_from_scan_result() - to get channel from scan result
  * @psoc: PSOC object information
  * @roam_profile: pointer to roam profile
- * @channel: channel to be filled
+ * @ch_freq: channel frequency to be filled
  *
  * This routine gets channel which most likely a candidate to which STA
  * will make connection.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_get_channel_from_scan_result(
-		struct wlan_objmgr_psoc *psoc,
-		void *roam_profile, uint8_t *channel);
+QDF_STATUS
+policy_mgr_get_channel_from_scan_result_int(struct wlan_objmgr_psoc *psoc,
+					    void *roam_profile,
+					    uint32_t *ch_freq);
 
+static inline QDF_STATUS
+policy_mgr_get_channel_from_scan_result(struct wlan_objmgr_psoc *psoc,
+					void *roam_profile, uint8_t *channel)
+{
+	uint32_t ch_freq;
+	QDF_STATUS status;
+
+	status = policy_mgr_get_channel_from_scan_result_int(psoc, roam_profile,
+							     &ch_freq);
+	*channel = wlan_freq_to_chan(ch_freq);
+	return status;
+}
 /**
  * policy_mgr_mode_specific_num_open_sessions() - to get number of open sessions
  *                                                for a specific mode
@@ -1665,7 +1829,7 @@ QDF_STATUS policy_mgr_restart_opportunistic_timer(
  * policy_mgr_modify_sap_pcl_based_on_mandatory_channel() -
  * Modify SAPs PCL based on mandatory channel list
  * @psoc: PSOC object information
- * @pcl_list_org: Pointer to the preferred channel list to be trimmed
+ * @pcl_list_org: Pointer to the preferred channel freq list to be trimmed
  * @weight_list_org: Pointer to the weights of the preferred channel list
  * @pcl_len_org: Pointer to the length of the preferred chanel list
  *
@@ -1674,7 +1838,7 @@ QDF_STATUS policy_mgr_restart_opportunistic_timer(
  * Return: QDF_STATUS
  */
 QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
-		struct wlan_objmgr_psoc *psoc, uint8_t *pcl_list_org,
+		struct wlan_objmgr_psoc *psoc, uint32_t *pcl_list_org,
 		uint8_t *weight_list_org, uint32_t *pcl_len_org);
 
 /**
@@ -1682,7 +1846,7 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
  * connection update
  * @psoc: PSOC object information
  * @session_id: Session id
- * @channel: Channel number
+ * @ch_freq: Channel frequency
  * @reason: Reason for connection update
  *
  * Update the connection to either single MAC or dual MAC and wait for the
@@ -1690,9 +1854,19 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_update_and_wait_for_connection_update(
+QDF_STATUS policy_mgr_update_and_wait_for_connection_update_int(
 		struct wlan_objmgr_psoc *psoc, uint8_t session_id,
-		uint8_t channel, enum policy_mgr_conn_update_reason reason);
+		uint32_t ch_freq, enum policy_mgr_conn_update_reason reason);
+
+static inline QDF_STATUS policy_mgr_update_and_wait_for_connection_update(
+		struct wlan_objmgr_psoc *psoc, uint8_t session_id,
+		uint8_t channel, enum policy_mgr_conn_update_reason reason)
+{
+	return
+	policy_mgr_update_and_wait_for_connection_update_int(psoc, session_id,
+							     wlan_chan_to_freq(
+							     channel), reason);
+}
 
 /**
  * policy_mgr_is_sap_mandatory_channel_set() - Checks if SAP
@@ -1706,42 +1880,49 @@ bool policy_mgr_is_sap_mandatory_channel_set(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_list_has_24GHz_channel() - Check if list contains 2.4GHz channels
- * @channel_list: Channel list
+ * @channel_list: Channel frequency list
  * @list_len: Length of the channel list
  *
  * Checks if the channel list contains atleast one 2.4GHz channel
  *
  * Return: True if 2.4GHz channel is present, false otherwise
  */
-bool policy_mgr_list_has_24GHz_channel(uint8_t *channel_list,
-		uint32_t list_len);
+bool policy_mgr_list_has_24GHz_channel(uint32_t *ch_freq_list,
+				       uint32_t list_len);
 
 /**
  * policy_mgr_get_valid_chans_from_range() - get valid channel from given range
  * @psoc: PSOC object information
- * @ch_list: Pointer to the channel list
+ * @ch_freq_list: Pointer to the channel frequency list
  * @ch_cnt: Pointer to the length of the channel list
  * @mode: Device mode
  *
  * Return: QDF_STATUS
  */
+QDF_STATUS policy_mgr_get_valid_chans_from_range_int(
+						 struct wlan_objmgr_psoc *psoc,
+						 uint32_t *ch_freq_list,
+						 uint32_t *ch_cnt,
+						 enum policy_mgr_con_mode mode);
 QDF_STATUS policy_mgr_get_valid_chans_from_range(struct wlan_objmgr_psoc *psoc,
 						 uint8_t *ch_list,
 						 uint32_t *ch_cnt,
 						 enum policy_mgr_con_mode mode);
-
 /**
  * policy_mgr_get_valid_chans() - Get the valid channel list
  * @psoc: PSOC object information
- * @chan_list: Pointer to the valid channel list
+ * @ch_freq_list: Pointer to the valid channel frequency list
  * @list_len: Pointer to the length of the valid channel list
  *
  * Gets the valid channel list filtered by band
  *
  * Return: QDF_STATUS
  */
+QDF_STATUS policy_mgr_get_valid_chans_int(struct wlan_objmgr_psoc *psoc,
+					  uint32_t *ch_freq_list,
+					  uint32_t *list_len);
 QDF_STATUS policy_mgr_get_valid_chans(struct wlan_objmgr_psoc *psoc,
-		uint8_t *chan_list, uint32_t *list_len);
+				      uint8_t *chan_list, uint32_t *list_len);
 
 /**
  * policy_mgr_get_nss_for_vdev() - Get the allowed nss value for the
@@ -1762,19 +1943,32 @@ QDF_STATUS policy_mgr_get_nss_for_vdev(struct wlan_objmgr_psoc *psoc,
 /**
  * policy_mgr_get_sap_mandatory_channel() - Get the mandatory channel for SAP
  * @psoc: PSOC object information
- * @chan: Pointer to the SAP mandatory channel
+ * @ch_freq: Pointer to the SAP mandatory channel frequency
  *
  * Gets the mandatory channel for SAP operation
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
-						uint16_t *chan);
+QDF_STATUS
+policy_mgr_get_sap_mandatory_channel_int(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *ch_freq);
+static inline QDF_STATUS
+policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
+				     uint16_t *chan)
+{
+	uint32_t ch_freq;
+	QDF_STATUS status;
+
+	status = policy_mgr_get_sap_mandatory_channel_int(psoc, &ch_freq);
+	*chan = wlan_freq_to_chan(ch_freq);
+
+	return status;
+}
 
 /**
  * policy_mgr_set_sap_mandatory_channels() - Set the mandatory channel for SAP
  * @psoc: PSOC object information
- * @channels: Channel list to be set
+ * @ch_freq_list: Channel frequency list to be set
  * @len: Length of the channel list
  *
  * Sets the channels for the mandatory channel list along with the length of
@@ -1782,8 +1976,13 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
+QDF_STATUS policy_mgr_set_sap_mandatory_channels_int(
+						 struct wlan_objmgr_psoc *psoc,
+						 uint32_t *ch_freq_list,
+						 uint32_t len);
 QDF_STATUS policy_mgr_set_sap_mandatory_channels(struct wlan_objmgr_psoc *psoc,
-		uint8_t *channels, uint32_t len);
+						 uint8_t *ch_list,
+						 uint32_t len);
 
 /**
  * policy_mgr_is_any_mode_active_on_band_along_with_session() -
@@ -1807,14 +2006,27 @@ bool policy_mgr_is_any_mode_active_on_band_along_with_session(
  * policy_mgr_get_chan_by_session_id() - Get channel for a given session ID
  * @psoc: PSOC object information
  * @session_id: Session ID
- * @chan: Pointer to the channel
+ * @ch_freq: Pointer to the channel frequency
  *
  * Gets the channel for a given session ID
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_get_chan_by_session_id(struct wlan_objmgr_psoc *psoc,
-		uint8_t session_id, uint8_t *chan);
+QDF_STATUS policy_mgr_get_chan_by_session_id_int(struct wlan_objmgr_psoc *psoc,
+						 uint8_t session_id,
+						 uint32_t *ch_freq);
+static inline QDF_STATUS
+policy_mgr_get_chan_by_session_id(struct wlan_objmgr_psoc *psoc,
+				  uint8_t session_id, uint8_t *chan)
+{
+	uint32_t ch_freq;
+	QDF_STATUS status;
+
+	status = policy_mgr_get_chan_by_session_id_int(psoc,
+						       session_id, &ch_freq);
+	*chan = wlan_freq_to_chan(ch_freq);
+	return status;
+}
 
 /**
  * policy_mgr_get_mac_id_by_session_id() - Get MAC ID for a given session ID
@@ -1851,11 +2063,17 @@ QDF_STATUS policy_mgr_get_mcc_session_id_on_mac(struct wlan_objmgr_psoc *psoc,
  *
  * Gets the MCC channel for a given session ID.
  *
- * Return: '0' (INVALID_CHANNEL_ID) or valid channel number
+ * Return: '0' (INVALID_CHANNEL_ID) or valid channel frequency
  */
-uint8_t policy_mgr_get_mcc_operating_channel(struct wlan_objmgr_psoc *psoc,
-		uint8_t session_id);
-
+uint32_t policy_mgr_get_mcc_operating_channel_int(struct wlan_objmgr_psoc *psoc,
+						  uint8_t session_id);
+static inline uint8_t
+policy_mgr_get_mcc_operating_channel(struct wlan_objmgr_psoc *psoc,
+				     uint8_t session_id)
+{
+	return wlan_freq_to_chan(policy_mgr_get_mcc_operating_channel_int(psoc,
+				 session_id));
+}
 /**
  * policy_mgr_get_pcl_for_existing_conn() - Get PCL for existing connection
  * @psoc: PSOC object information
@@ -1870,12 +2088,18 @@ uint8_t policy_mgr_get_mcc_operating_channel(struct wlan_objmgr_psoc *psoc,
  *
  * Return: None
  */
+QDF_STATUS policy_mgr_get_pcl_for_existing_conn_int(
+		struct wlan_objmgr_psoc *psoc,
+		enum policy_mgr_con_mode mode,
+		uint32_t *pcl_ch, uint32_t *len,
+		uint8_t *pcl_weight, uint32_t weight_len,
+		bool all_matching_cxn_to_del);
+
 QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_con_mode mode,
 		uint8_t *pcl_ch, uint32_t *len,
 		uint8_t *weight_list, uint32_t weight_len,
 		bool all_matching_cxn_to_del);
-
 /**
  * policy_mgr_get_valid_chan_weights() - Get the weightage for
  * all valid channels
@@ -1911,14 +2135,23 @@ QDF_STATUS policy_mgr_set_hw_mode_on_channel_switch(
  * this is required if DBS mode is 2x2
  * @psoc: PSOC object information
  * @vdev_id: vdev id on which channel switch is required
- * @chan: New channel to which channel switch is requested
+ * @ch_freq: New channel frequency to which channel switch is requested
  * @reason: reason for hw mode change
  *
  * Return: QDF_STATUS, success if HW mode change is required else Failure
  */
+QDF_STATUS policy_mgr_check_and_set_hw_mode_for_channel_switch_int(
+		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		uint32_t ch_freq, enum policy_mgr_conn_update_reason reason);
+
+static inline
 QDF_STATUS policy_mgr_check_and_set_hw_mode_for_channel_switch(
 		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan,
-		enum policy_mgr_conn_update_reason reason);
+		enum policy_mgr_conn_update_reason reason)
+{
+	return policy_mgr_check_and_set_hw_mode_for_channel_switch_int(
+			psoc, vdev_id, wlan_chan_to_freq(chan), reason);
+}
 
 /**
  * policy_mgr_set_do_hw_mode_change_flag() - Set flag to indicate hw mode change
@@ -1949,7 +2182,7 @@ bool policy_mgr_is_hw_mode_change_after_vdev_up(struct wlan_objmgr_psoc *psoc);
  * policy_mgr_checkn_update_hw_mode_single_mac_mode() - Set hw_mode to SMM
  * if required
  * @psoc: PSOC object information
- * @channel: channel number for the new STA connection
+ * @ch_freq: channel frequency for the new STA connection
  *
  * After the STA disconnection, if the hw_mode is in DBS and the new STA
  * connection is coming in the band in which existing connections are
@@ -1958,8 +2191,15 @@ bool policy_mgr_is_hw_mode_change_after_vdev_up(struct wlan_objmgr_psoc *psoc);
  *
  * Return: None
  */
+void policy_mgr_checkn_update_hw_mode_single_mac_mode_int(
+		struct wlan_objmgr_psoc *psoc, uint32_t ch_freq);
+static inline
 void policy_mgr_checkn_update_hw_mode_single_mac_mode(
-		struct wlan_objmgr_psoc *psoc, uint8_t channel);
+		struct wlan_objmgr_psoc *psoc, uint8_t channel)
+{
+	policy_mgr_checkn_update_hw_mode_single_mac_mode_int(
+			psoc, wlan_chan_to_freq(channel));
+}
 
 /**
  * policy_mgr_dump_connection_status_info() - Dump the concurrency information
@@ -2599,14 +2839,22 @@ void policy_mgr_update_new_hw_mode_index(struct wlan_objmgr_psoc *psoc,
  * policy_mgr_is_chan_ok_for_dnbs() - Function to check if a channel
  * is OK for "Do Not Break Stream"
  * @psoc: PSOC object information
- * @channel: Channel to check.
+ * @ch_freq: Channel frequency to check.
  * @ok: Pointer to flag in which status will be stored
  * This function checks if a channel is OK for
  * "Do Not Break Stream"
  * Return: SUCCESS or FAILURE
  */
-QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
-			uint8_t channel, bool *ok);
+QDF_STATUS policy_mgr_is_chan_ok_for_dnbs_int(struct wlan_objmgr_psoc *psoc,
+					      uint32_t ch_freq, bool *ok);
+static inline QDF_STATUS
+policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
+			       uint8_t channel, bool *ok)
+{
+	return policy_mgr_is_chan_ok_for_dnbs_int(psoc,
+						  wlan_chan_to_freq(channel),
+						  ok);
+}
 
 /**
  * policy_mgr_get_hw_dbs_nss() - Computes DBS NSS
@@ -2650,15 +2898,19 @@ QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
  * policy_mgr_is_safe_channel - Check if the channel is in LTE
  * coex channel avoidance list
  * @psoc: PSOC object information
- * @channel: channel to be checked
+ * @ch_freq: channel frequency to be checked
  *
  * Check if the channel is in LTE coex channel avoidance list.
  *
  * Return: true for success, else false
  */
-bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
-		uint8_t channel);
-
+bool policy_mgr_is_safe_channel_int(struct wlan_objmgr_psoc *psoc,
+				    uint32_t ch_freq);
+static inline bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
+					      uint8_t channel)
+{
+	return policy_mgr_is_safe_channel_int(psoc, wlan_chan_to_freq(channel));
+}
 /**
  * policy_mgr_is_force_scc() - checks if SCC needs to be
  * mandated
@@ -2684,37 +2936,52 @@ bool policy_mgr_go_scc_enforced(struct wlan_objmgr_psoc *psoc);
  * policy_mgr_valid_sap_conc_channel_check() - checks & updates
  * the channel SAP to come up on in case of STA+SAP concurrency
  * @psoc: PSOC object information
- * @con_ch: pointer to the channel on which sap will come up
- * @sap_ch: initial channel for SAP
+ * @con_ch_freq: pointer to the chan freq on which sap will come up
+ * @sap_ch_freq: initial channel frequency for SAP
  * @sap_vdev_id: sap vdev id.
  *
  * This function checks & updates the channel SAP to come up on in
  * case of STA+SAP concurrency
  * Return: Success if SAP can come up on a channel
  */
-QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
+QDF_STATUS policy_mgr_valid_sap_conc_channel_check_int(
+	struct wlan_objmgr_psoc *psoc, uint32_t *con_ch_freq,
+	uint32_t sap_ch_freq, uint8_t sap_vdev_id);
+
+static inline QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	struct wlan_objmgr_psoc *psoc, uint8_t *con_ch, uint8_t sap_ch,
-	uint8_t sap_vdev_id);
+	uint8_t sap_vdev_id)
+{
+	uint32_t con_ch_freq;
+	QDF_STATUS status;
+
+	con_ch_freq = wlan_chan_to_freq(*con_ch);
+	status = policy_mgr_valid_sap_conc_channel_check_int(
+			psoc, &con_ch_freq,
+			wlan_chan_to_freq(sap_ch), sap_vdev_id);
+	*con_ch = wlan_freq_to_chan(con_ch_freq);
+	return status;
+}
 
 /**
  * policy_mgr_get_alternate_channel_for_sap() - Get an alternate
  * channel to move the SAP to
  * @psoc: PSOC object information
  * @sap_vdev_id: sap vdev id.
- * @sap_channel: sap channel.
+ * @sap_ch_freq: sap channel frequency.
  *
  * This function returns an alternate channel for SAP to move to
  * Return: The new channel for SAP
  */
-uint8_t policy_mgr_get_alternate_channel_for_sap(
+uint32_t policy_mgr_get_alternate_channel_for_sap(
 	struct wlan_objmgr_psoc *psoc, uint8_t sap_vdev_id,
-	uint8_t sap_channel);
+	uint32_t sap_ch_freq);
 
 /**
  * policy_mgr_disallow_mcc() - Check for mcc
  *
  * @psoc: PSOC object information
- * @channel: channel on which new connection is coming up
+ * @ch_freq: channel frequency on which new connection is coming up
  *
  * When a new connection is about to come up check if current
  * concurrency combination including the new connection is
@@ -2722,8 +2989,13 @@ uint8_t policy_mgr_get_alternate_channel_for_sap(
  *
  * Return: True if it is causing MCC
  */
-bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
-		uint8_t channel);
+bool policy_mgr_disallow_mcc_int(struct wlan_objmgr_psoc *psoc,
+				 uint32_t ch_freq);
+static inline bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
+					   uint8_t channel)
+{
+	return policy_mgr_disallow_mcc_int(psoc, wlan_chan_to_freq(channel));
+}
 
 /**
  * policy_mgr_mode_specific_get_channel() - Get channel for a
@@ -2731,26 +3003,31 @@ bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
  * @psoc: PSOC object information
  * @chan_list: Connection type
  *
- * Get channel for a connection type
+ * Get channel frequency for a connection type
  *
- * Return: channel number
+ * Return: channel frequency
  */
-uint8_t policy_mgr_mode_specific_get_channel(
-	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
+uint32_t policy_mgr_mode_specific_get_channel(struct wlan_objmgr_psoc *psoc,
+					      enum policy_mgr_con_mode mode);
 
 /**
  * policy_mgr_add_sap_mandatory_chan() - Add chan to SAP mandatory channel
  * list
  * @psoc: Pointer to soc
- * @chan: Channel to be added
+ * @ch_freq: Channel frequency to be added
  *
  * Add chan to SAP mandatory channel list
  *
  * Return: None
  */
+void policy_mgr_add_sap_mandatory_chan_int(struct wlan_objmgr_psoc *psoc,
+					   uint32_t ch_freq);
+static inline
 void policy_mgr_add_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
-		uint8_t chan);
-
+				       uint8_t chan)
+{
+	policy_mgr_add_sap_mandatory_chan_int(psoc, wlan_chan_to_freq(chan));
+}
 /**
  * policy_mgr_get_sap_mandatory_chan_list_len() - Return the SAP mandatory
  * channel list len
@@ -2778,14 +3055,21 @@ void  policy_mgr_init_sap_mandatory_2g_chan(struct wlan_objmgr_psoc *psoc);
  * policy_mgr_remove_sap_mandatory_chan() - Remove channel from SAP mandatory
  * channel list
  * @psoc: Pointer to soc
- * @chan: channel to be removed from mandatory channel list
+ * @ch_freq: channel frequency to be removed from mandatory list
  *
  * Remove channel from SAP mandatory channel list
  *
  * Return: None
  */
-void policy_mgr_remove_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
-		uint8_t chan);
+void policy_mgr_remove_sap_mandatory_chan_int(struct wlan_objmgr_psoc *psoc,
+					      uint32_t ch_freq);
+static inline void
+policy_mgr_remove_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
+				     uint8_t chan)
+{
+	policy_mgr_remove_sap_mandatory_chan_int(psoc, wlan_chan_to_freq(chan));
+}
+
 /*
  * policy_set_cur_conc_system_pref - set current conc_system_pref
  * @psoc: soc pointer
@@ -2824,7 +3108,7 @@ void policy_mgr_check_and_stop_opportunistic_timer(
  * policy_mgr_set_weight_of_dfs_passive_channels_to_zero() - set weight of dfs
  * and passive channels to 0
  * @psoc: pointer to soc
- * @pcl_channels: preferred channel list
+ * @pcl: preferred channel freq list
  * @len: length of preferred channel list
  * @weight_list: preferred channel weight list
  * @weight_len: length of weight list
@@ -2833,7 +3117,7 @@ void policy_mgr_check_and_stop_opportunistic_timer(
  * Return: None
  */
 void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
-		struct wlan_objmgr_psoc *psoc, uint8_t *pcl_channels,
+		struct wlan_objmgr_psoc *psoc, uint32_t *pcl,
 		uint32_t *len, uint8_t *weight_list, uint32_t weight_len);
 
 /**
@@ -2855,20 +3139,6 @@ bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_trim_acs_channel_list() - Trims ACS channel list with
- * intersection of PCL
- * @pcl: preferred channel list
- * @pcl_count: Preferred channel list count
- * @org_ch_list: ACS channel list from user space
- * @org_ch_list_count: ACS channel count from user space
- *
- * Return: None
- */
-void policy_mgr_trim_acs_channel_list(uint8_t *pcl, uint8_t pcl_count,
-				      uint8_t *org_ch_list,
-				      uint8_t *org_ch_list_count);
-
-/**
  * policy_mgr_scan_trim_5g_chnls_for_dfs_ap() - check if sta scan should skip
  * 5g channel when dfs ap is present.
  *
@@ -2882,7 +3152,7 @@ bool policy_mgr_scan_trim_5g_chnls_for_dfs_ap(struct wlan_objmgr_psoc *psoc);
  * policy_mgr_is_hwmode_set_for_given_chnl() - to check for given channel
  * if the hw mode is properly set.
  * @psoc: pointer to psoc
- * @channel: given channel
+ * @ch_freq: given channel frequency
  *
  * If HW mode is properly set for given channel then it returns true else
  * it returns false.
@@ -2893,9 +3163,18 @@ bool policy_mgr_scan_trim_5g_chnls_for_dfs_ap(struct wlan_objmgr_psoc *psoc);
  *
  * Return: true if HW mode is set properly else false
  */
-bool policy_mgr_is_hwmode_set_for_given_chnl(struct wlan_objmgr_psoc *psoc,
-					     uint8_t channel);
-/*
+bool policy_mgr_is_hwmode_set_for_given_chnl_int(struct wlan_objmgr_psoc *psoc,
+						 uint32_t ch_freq);
+
+static inline bool
+policy_mgr_is_hwmode_set_for_given_chnl(struct wlan_objmgr_psoc *psoc,
+					uint8_t channel)
+{
+	return policy_mgr_is_hwmode_set_for_given_chnl_int(
+			psoc, wlan_chan_to_freq(channel));
+}
+
+/**
  * policy_mgr_get_connection_info() - Get info of all active connections
  * @info: Pointer to connection info
  *
@@ -2926,7 +3205,7 @@ QDF_STATUS policy_mgr_deregister_mode_change_cb(struct wlan_objmgr_psoc *psoc);
  * allowed.
  * @psoc: pointer to soc
  * @policy_mgr_con_mode: operating mode of interface to be checked
- * @channel: new operating channel of the interface to be checked
+ * @ch_freq: new operating channel of the interface to be checked
  * @vdev_id: vdev id of the connection to be checked, 0xff for new connection
  *
  * Checks whether new channel SAP/GO can co-exist with the channel of existing
@@ -2951,21 +3230,8 @@ QDF_STATUS policy_mgr_deregister_mode_change_cb(struct wlan_objmgr_psoc *psoc);
  */
 bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
 					 enum policy_mgr_con_mode mode,
-					 uint8_t channel,
+					 uint32_t ch_freq,
 					 uint32_t vdev_id);
-
-/**
- * policy_mgr_allow_multiple_sta_connections() - check whether multiple STA
- * concurrency is allowed and F/W supported
- * @psoc: Pointer to soc
- * @second_sta_chan: 2nd STA channel
- * @first_sta_chan: 2nd STA channel
- *
- *  Return: true if supports else false.
- */
-bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *psoc,
-					       uint8_t second_sta_chan,
-					       uint8_t first_sta_chan);
 
 /**
  * policy_mgr_dual_beacon_on_single_mac_scc_capable() - get capability that
@@ -3001,25 +3267,38 @@ bool policy_mgr_sta_sap_scc_on_lte_coex_chan(
  * policy_mgr_valid_channel_for_channel_switch() - check for valid channel for
  * channel switch.
  * @psoc: poniter to psoc
- * @channel: channel to be validated.
+ * @ch_freq: channel frequency to be validated.
  * This function validates whether the given channel is valid for channel
  * switch.
  *
  * Return: true or false
  */
+bool policy_mgr_is_valid_for_channel_switch_int(struct wlan_objmgr_psoc *psoc,
+						uint32_t ch_freq);
+static inline
 bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
-					    uint8_t channel);
-
+					    uint8_t channel)
+{
+	return policy_mgr_is_valid_for_channel_switch_int(psoc,
+							  wlan_chan_to_freq(
+							  channel));
+}
 /**
  * policy_mgr_update_user_config_sap_chan() - Update user configured channel
  * @psoc: poniter to psoc
- * @channel: channel to be upated
+ * @ch_freq: channel frequency to be upated
  *
  * Return: void
  **/
-void policy_mgr_update_user_config_sap_chan(
-			struct wlan_objmgr_psoc *psoc, uint32_t channel);
-
+void policy_mgr_update_user_config_sap_chan_int(struct wlan_objmgr_psoc *psoc,
+						uint32_t ch_freq);
+static inline
+void policy_mgr_update_user_config_sap_chan(struct wlan_objmgr_psoc *psoc,
+					    uint32_t channel)
+{
+	policy_mgr_update_user_config_sap_chan_int(psoc,
+						   wlan_chan_to_freq(channel));
+}
 /**
  * policy_mgr_nan_sap_post_enable_conc_check() - Do concurrency operations
  *                                               post nan/sap enable
@@ -3044,7 +3323,7 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc);
  * after sta disconnection
  * @psoc: psoc object data
  * @sap_vdev_id: sap vdev id
- * @intf_ch: sap channel
+ * @intf_ch_freq: sap channel frequency
  *
  * Check if SAP should be moved to a non dfs channel after STA disconnection.
  * This API applicable only for STA+SAP SCC and ini 'sta_sap_scc_on_dfs_chan'
@@ -3052,32 +3331,57 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc);
  *
  * Return: true if sap restart is required, otherwise false
  */
-bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
-				struct wlan_objmgr_psoc *psoc,
-				uint32_t sap_vdev_id, uint8_t *intf_ch);
+bool policy_mgr_is_sap_restart_required_after_sta_disconnect_int(
+			struct wlan_objmgr_psoc *psoc, uint32_t sap_vdev_id,
+			uint32_t *intf_ch_freq);
 
+static inline bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
+				struct wlan_objmgr_psoc *psoc,
+				uint32_t sap_vdev_id, uint8_t *intf_ch)
+{
+	uint32_t intf_ch_freq;
+	bool ret;
+
+	ret = policy_mgr_is_sap_restart_required_after_sta_disconnect_int(
+					psoc, sap_vdev_id, &intf_ch_freq);
+	*intf_ch = wlan_freq_to_chan(intf_ch_freq);
+	return ret;
+}
 /**
  * policy_mgr_is_sta_sap_scc() - check whether SAP is doing SCC with
  * STA
  * @psoc: poniter to psoc
- * @sap_ch: operating channel of SAP interface
+ * @sap_ch_freq: operating channel frequency of SAP interface
  * This function checks whether SAP is doing SCC with STA
  *
  * Return: true or false
  */
-bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc, uint8_t sap_ch);
+bool policy_mgr_is_sta_sap_scc_int(struct wlan_objmgr_psoc *psoc,
+				   uint32_t sap_ch_freq);
+static inline bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc,
+					     uint8_t sap_ch)
+{
+	return policy_mgr_is_sta_sap_scc_int(psoc, wlan_chan_to_freq(sap_ch));
+}
 
 /**
  * policy_mgr_nan_sap_scc_on_unsafe_ch_chk() - check whether SAP is doing SCC
  *                                             with NAN
  * @psoc: poniter to psoc
- * @sap_ch: operating channel of SAP interface
+ * @sap_freq: operating channel frequency of SAP interface
  *
  * Return: true or false
  */
+bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk_int(struct wlan_objmgr_psoc *psoc,
+						 uint32_t sap_freq);
+static inline
 bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk(struct wlan_objmgr_psoc *psoc,
-					     uint8_t sap_ch);
-
+					     uint8_t sap_ch)
+{
+	return policy_mgr_nan_sap_scc_on_unsafe_ch_chk_int(psoc,
+							   wlan_chan_to_freq(
+							   sap_ch));
+}
 /**
  * policy_mgr_get_hw_mode_from_idx() - Get HW mode based on index
  * @psoc: psoc object
@@ -3112,7 +3416,7 @@ QDF_STATUS policy_mgr_update_nan_vdev_mac_info(struct wlan_objmgr_psoc *psoc,
  * policy_mgr_get_mode_specific_conn_info() - Get active mode specific
  * channel and vdev id
  * @psoc: PSOC object information
- * @channel: Mode specific channel (list)
+ * @ch_freq_list: Mode specific channel freq list
  * @vdev_id: Mode specific vdev id (list)
  * @mode: Connection Mode
  *
@@ -3120,8 +3424,12 @@ QDF_STATUS policy_mgr_update_nan_vdev_mac_info(struct wlan_objmgr_psoc *psoc,
  *
  * Return: number of connection found as per given mode
  */
+uint32_t policy_mgr_get_mode_specific_conn_info_int(
+		struct wlan_objmgr_psoc *psoc,
+		uint32_t *ch_freq_list, uint8_t *vdev_id,
+		enum policy_mgr_con_mode mode);
 uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
-						uint8_t *channel,
+						uint8_t *ch_list,
 						uint8_t *vdev_id,
 						enum policy_mgr_con_mode mode);
 #endif /* __WLAN_POLICY_MGR_API_H */

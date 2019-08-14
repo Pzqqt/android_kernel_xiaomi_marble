@@ -1123,7 +1123,7 @@ sme_register_bcn_report_pe_cb(mac_handle_t mac_handle, beacon_report_cb cb)
 }
 #endif
 
-QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
+QDF_STATUS sme_get_valid_channels(uint32_t *ch_freq_list, uint32_t *list_len)
 {
 	struct mac_context *mac_ctx = sme_get_mac_context();
 	uint32_t num_valid_chan;
@@ -1145,8 +1145,8 @@ QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
 	}
 	*list_len = num_valid_chan;
 	for (i = 0; i < *list_len; i++) {
-		chan_list[i] = wlan_reg_freq_to_chan(mac_ctx->pdev,
-						     mac_ctx->mlme_cfg->reg.valid_channel_freq_list[i]);
+		ch_freq_list[i] =
+			mac_ctx->mlme_cfg->reg.valid_channel_freq_list[i];
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -2579,29 +2579,19 @@ QDF_STATUS sme_scan_get_result_for_bssid(mac_handle_t mac_handle,
 	return status;
 }
 
-/**
- * sme_get_ap_channel_from_scan() - a wrapper function to get
- *				  AP's channel id from
- *				  CSR by filtering the
- *				  result which matches
- *				  our roam profile.
- * @profile: SAP profile
- * @ap_chnl_id: pointer to channel id of SAP. Fill the value after finding the
- *              best ap from scan cache.
- *
- * This function is written to get AP's channel id from CSR by filtering
- * the result which matches our roam profile. This is a synchronous call.
- *
- * Return: QDF_STATUS.
- */
 QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
 					tScanResultHandle *scan_cache,
-					uint8_t *ap_chnl_id)
+					uint32_t *ap_ch_freq)
 {
-	return sme_get_ap_channel_from_scan_cache((struct csr_roam_profile *)
+	uint8_t ap_ch;
+	QDF_STATUS status;
+
+	status = sme_get_ap_channel_from_scan_cache((struct csr_roam_profile *)
 						  profile,
 						  scan_cache,
-						  ap_chnl_id);
+						  &ap_ch);
+	*ap_ch_freq = wlan_chan_to_freq(ap_ch);
+	return status;
 }
 
 /**
@@ -12306,7 +12296,8 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
 		sme_debug("Connected STA band %d", req_msg->band);
 	}
 	for (i = 0; i < msg->pcl_len; i++) {
-		req_msg->chan_weights.pcl_list[i] =  msg->pcl_list[i];
+		req_msg->chan_weights.pcl_list[i] =  wlan_freq_to_chan(
+							msg->pcl_list[i]);
 		req_msg->chan_weights.weight_list[i] =  msg->weight_list[i];
 	}
 
