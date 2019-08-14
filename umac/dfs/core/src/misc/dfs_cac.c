@@ -95,6 +95,16 @@ static os_timer_func(dfs_cac_valid_timeout)
 }
 
 /**
+ * dfs_clear_cac_started_chan() - Clear dfs cac started channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+static void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
+{
+	qdf_mem_zero(&dfs->dfs_cac_started_chan,
+		     sizeof(dfs->dfs_cac_started_chan));
+}
+
+/**
  * dfs_cac_timeout() - DFS cactimeout function.
  *
  * Sets dfs_cac_timer_running to 0  and dfs_cac_valid_timer.
@@ -156,6 +166,7 @@ static os_timer_func(dfs_cac_timeout)
 				     secondary_chan_ieee, ch_width);
 	}
 
+	dfs_clear_cac_started_chan(dfs);
 	/* Iterate over the nodes, processing the CAC completion event. */
 	dfs_mlme_proc_cac(dfs->dfs_pdev_obj, 0);
 
@@ -190,9 +201,7 @@ void dfs_cac_timer_reset(struct wlan_dfs *dfs)
 	qdf_timer_stop(&dfs->dfs_cac_timer);
 	dfs_get_override_cac_timeout(dfs,
 			&(dfs->dfs_cac_timeout_override));
-	qdf_mem_zero(&dfs->dfs_cac_started_chan,
-		     sizeof(dfs->dfs_cac_started_chan));
-
+	dfs_clear_cac_started_chan(dfs);
 }
 
 void dfs_cac_timer_detach(struct wlan_dfs *dfs)
@@ -233,6 +242,7 @@ void dfs_start_cac_timer(struct wlan_dfs *dfs)
 void dfs_cancel_cac_timer(struct wlan_dfs *dfs)
 {
 	qdf_timer_stop(&dfs->dfs_cac_timer);
+	dfs_clear_cac_started_chan(dfs);
 }
 
 void dfs_cac_stop(struct wlan_dfs *dfs)
@@ -246,6 +256,7 @@ void dfs_cac_stop(struct wlan_dfs *dfs)
 	qdf_timer_stop(&dfs->dfs_cac_timer);
 	if (dfs->dfs_cac_timer_running)
 		dfs->dfs_cac_aborted = 1;
+	dfs_clear_cac_started_chan(dfs);
 	dfs->dfs_cac_timer_running = 0;
 }
 
@@ -257,51 +268,20 @@ void dfs_stacac_stop(struct wlan_dfs *dfs)
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		"Stopping STA CAC Timer %d procphyerr 0x%08x",
 		 dfs->dfs_curchan->dfs_ch_freq, phyerr);
+	dfs_clear_cac_started_chan(dfs);
 }
 
-bool dfs_is_subset_channel(struct wlan_dfs *dfs,
-			   struct dfs_channel *old_chan,
-			   struct dfs_channel *new_chan)
+static bool
+dfs_is_subset_channel(uint8_t *old_subchans,
+		      uint8_t old_n_chans,
+		      uint8_t *new_subchans,
+		      uint8_t new_n_chans)
 {
-	uint8_t old_subchans[NUM_CHANNELS_160MHZ];
-	uint8_t new_subchans[NUM_CHANNELS_160MHZ];
-	uint8_t old_n_chans;
-	uint8_t new_n_chans;
-	int i = 0, j = 0;
-	bool is_found = false;
+	bool is_found;
+	int i, j;
 
-	if (WLAN_IS_CHAN_11AC_VHT160(old_chan) ||
-	    WLAN_IS_CHAN_11AC_VHT80_80(old_chan)) {
-		/* If primary segment is NON-DFS */
-		if (!WLAN_IS_CHAN_DFS(old_chan))
-			old_n_chans = dfs_get_bonding_channels(dfs,
-							       old_chan,
-							       SEG_ID_SECONDARY,
-							       DETECTOR_ID_0,
-							       old_subchans);
-		else
-			old_n_chans = dfs_get_bonding_channels_without_seg_info(
-					old_chan, old_subchans);
-	} else {
-		old_n_chans = dfs_get_bonding_channels_without_seg_info(
-				old_chan, old_subchans);
-	}
-
-	if (WLAN_IS_CHAN_11AC_VHT160(new_chan) ||
-	    WLAN_IS_CHAN_11AC_VHT80_80(new_chan)) {
-		/* If primary segment is NON-DFS */
-		if (WLAN_IS_CHAN_DFS(new_chan))
-			new_n_chans = dfs_get_bonding_channels(
-					dfs, new_chan, SEG_ID_SECONDARY,
-					DETECTOR_ID_0,
-					new_subchans);
-		else
-			new_n_chans = dfs_get_bonding_channels_without_seg_info(
-					new_chan, new_subchans);
-	} else {
-		new_n_chans = dfs_get_bonding_channels_without_seg_info(
-				new_chan, new_subchans);
-	}
+	if (!new_n_chans)
+		return true;
 
 	if (new_n_chans > old_n_chans)
 		return false;
@@ -325,22 +305,79 @@ bool dfs_is_subset_channel(struct wlan_dfs *dfs,
 	return is_found;
 }
 
-bool dfs_is_curchan_subset_of_cac_started_chan(struct wlan_dfs *dfs)
+static uint8_t
+dfs_find_dfs_sub_channels(struct wlan_dfs *dfs,
+			  struct dfs_channel *channel,
+			  uint8_t *subchan_arr)
 {
-	return dfs_is_subset_channel(dfs, &dfs->dfs_cac_started_chan,
-				     dfs->dfs_curchan);
+	if (WLAN_IS_CHAN_MODE_160(channel) ||
+	    WLAN_IS_CHAN_MODE_80_80(channel)) {
+		if (WLAN_IS_CHAN_DFS(channel) &&
+		    WLAN_IS_CHAN_DFS_CFREQ2(channel))
+			return
+			dfs_get_bonding_channels_without_seg_info(channel,
+								  subchan_arr);
+		if (WLAN_IS_CHAN_DFS(channel))
+			return dfs_get_bonding_channels(dfs,
+							channel,
+							SEG_ID_PRIMARY,
+							DETECTOR_ID_0,
+							subchan_arr);
+		if (WLAN_IS_CHAN_DFS_CFREQ2(channel))
+			return dfs_get_bonding_channels(dfs,
+							channel,
+							SEG_ID_SECONDARY,
+							DETECTOR_ID_0,
+							subchan_arr);
+		/* All channels in 160/80_80 BW are non DFS, return 0
+		 * as number of subchannels
+		 */
+		return 0;
+	} else if (WLAN_IS_CHAN_DFS(channel)) {
+		return dfs_get_bonding_channels_without_seg_info(channel,
+								 subchan_arr);
+	}
+	/* All channels are non DFS, return 0 as number of subchannels*/
+	return 0;
 }
 
-void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
+/* dfs_is_new_chan_subset_of_old_chan() - Find if new channel is subset of
+ * old channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @new_chan: Pointer to new channel of dfs_channel structure.
+ * @old_chan: Pointer to old channel of dfs_channel structure.
+ *
+ * Return: True if new channel is subset of old channel, else false.
+ */
+static bool
+dfs_is_new_chan_subset_of_old_chan(struct wlan_dfs *dfs,
+				   struct dfs_channel *new_chan,
+				   struct dfs_channel *old_chan)
 {
-	qdf_mem_zero(&dfs->dfs_cac_started_chan,
-		     sizeof(dfs->dfs_cac_started_chan));
+	uint8_t new_subchans[NUM_CHANNELS_160MHZ];
+	uint8_t old_subchans[NUM_CHANNELS_160MHZ];
+	uint8_t n_new_subchans = 0;
+	uint8_t n_old_subchans = 0;
+
+	/* Given channel is the old channel. i.e. The channel which
+	 * should have the new channel as subset.
+	 */
+	n_old_subchans = dfs_find_dfs_sub_channels(dfs, old_chan, old_subchans);
+	/* cur_chan is the new channel to be check if subset of old channel */
+	n_new_subchans = dfs_find_dfs_sub_channels(dfs, new_chan, new_subchans);
+
+	return dfs_is_subset_channel(old_subchans,
+				     n_old_subchans,
+				     new_subchans,
+				     n_new_subchans);
 }
 
 #ifdef QCA_SKIP_CAC_AFTER_RESTART
-bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs)
+bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs,
+				     struct dfs_channel *cur_chan,
+				     struct dfs_channel *prev_chan)
 {
-	if (dfs_is_curchan_subset_of_cac_started_chan(dfs)) {
+	if (dfs_is_new_chan_subset_of_old_chan(dfs, cur_chan, prev_chan)) {
 		/* AP bandwidth reduce case:
 		 * When AP detects the RADAR in in-service monitoring
 		 * mode in channel A, it cancels the running CAC and
@@ -354,14 +391,17 @@ bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs)
 			return false;
 		}
 	}
-
 	return true;
 }
 #endif
 
-bool dfs_check_for_cac_start(struct wlan_dfs *dfs,
-			     bool *continue_current_cac)
+bool dfs_is_cac_required(struct wlan_dfs *dfs,
+			 struct dfs_channel *cur_chan,
+			 struct dfs_channel *prev_chan,
+			 bool *continue_current_cac)
 {
+	struct dfs_channel *cac_started_chan = &dfs->dfs_cac_started_chan;
+
 	if (dfs->dfs_ignore_dfs || dfs->dfs_cac_valid || dfs->dfs_ignore_cac) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "Skip CAC, ignore_dfs = %d cac_valid = %d ignore_cac = %d",
@@ -378,10 +418,10 @@ bool dfs_check_for_cac_start(struct wlan_dfs *dfs,
 	}
 
 	/* If the channel has completed PRE-CAC then CAC can be skipped here. */
-	if (dfs_is_precac_done(dfs, dfs->dfs_curchan)) {
+	if (dfs_is_precac_done(dfs, cur_chan)) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "PRE-CAC alreay done on this channel %d",
-			  dfs->dfs_curchan->dfs_ch_ieee);
+			  cur_chan->dfs_ch_ieee);
 		return false;
 	}
 
@@ -394,7 +434,9 @@ bool dfs_check_for_cac_start(struct wlan_dfs *dfs,
 		 * VAP(1) comes up in the same channel then instead of
 		 * cancelling the CAC we can let the CAC continue.
 		 */
-		if (dfs_is_curchan_subset_of_cac_started_chan(dfs)) {
+		if (dfs_is_new_chan_subset_of_old_chan(dfs,
+						       cur_chan,
+						       cac_started_chan)) {
 			*continue_current_cac = true;
 		} else {
 			/* New CAC is needed, cancel the running CAC
@@ -414,7 +456,9 @@ bool dfs_check_for_cac_start(struct wlan_dfs *dfs,
 			dfs_cancel_cac_timer(dfs);
 		}
 	} else { /* CAC timer is not running. */
-		return dfs_skip_cac_after_vdev_restart(dfs);
+		return dfs_skip_cac_after_vdev_restart(dfs,
+						       cur_chan,
+						       prev_chan);
 	}
 
 	return true;

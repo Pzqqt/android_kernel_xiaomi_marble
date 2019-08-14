@@ -1984,19 +1984,6 @@ void dfs_cancel_cac_timer(struct wlan_dfs *dfs);
 void dfs_start_cac_timer(struct wlan_dfs *dfs);
 
 /**
- * dfs_is_subset_channel() - Check if the new_chan is subset of the old_chan.
- * @dfs: Pointer to wlan_dfs structure.
- * @old_chan: Pointer to old channel.
- * @new_chan: Pointer to new channel.
- *
- * Return: true if the new channel is subset of or same as the old channel,
- * else false.
- */
-bool dfs_is_subset_channel(struct wlan_dfs *dfs,
-			   struct dfs_channel *old_chan,
-			   struct dfs_channel *new_chan);
-
-/**
  * dfs_is_curchan_subset_of_cac_started_chan() - Check if the dfs current
  * channel is subset of cac started channel.
  * @dfs: Pointer to wlan_dfs structure.
@@ -2009,12 +1996,6 @@ bool dfs_is_subset_channel(struct wlan_dfs *dfs,
  * else false.
  */
 bool dfs_is_curchan_subset_of_cac_started_chan(struct wlan_dfs *dfs);
-
-/**
- * dfs_clear_cac_started_chan() - Clear dfs cac started channel.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_clear_cac_started_chan(struct wlan_dfs *dfs);
 
 /**
  * dfs_set_update_nol_flag() - Sets update_nol flag.
@@ -2591,16 +2572,20 @@ bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
 			       uint8_t nol_ie_bitmap);
 
 /**
- * dfs_check_for_cac_start() - Check for DFS CAC start conditions.
+ * dfs_is_cac_required() - Check if DFS CAC is required for the current channel.
  * @dfs: Pointer to wlan_dfs structure.
+ * @cur_chan: Pointer to current channel of dfs_channel structure.
+ * @prev_chan: Pointer to previous channel of dfs_channel structure.
  * @continue_current_cac: If AP can start CAC then this variable indicates
  * whether to continue with the current CAC or restart the CAC. This variable
  * is valid only if this function returns true.
  *
- * Return: true if AP can start or continue the current CAC, else false.
+ * Return: true if AP requires CAC or can continue current CAC, else false.
  */
-bool dfs_check_for_cac_start(struct wlan_dfs *dfs,
-			     bool *continue_current_cac);
+bool dfs_is_cac_required(struct wlan_dfs *dfs,
+			 struct dfs_channel *cur_chan,
+			 struct dfs_channel *prev_chan,
+			 bool *continue_current_cac);
 
 /**
  * dfs_task_testtimer_reset() - stop dfs test timer.
@@ -2672,11 +2657,20 @@ int dfs_reinit_timers(struct wlan_dfs *dfs);
  * dfs_skip_cac_after_vdev_restart() - Skip CAC if new channel is same
  * as old channel after vdev restart.
  * @dfs: Pointer to wlan_dfs structure.
+ * @cur_chan: Pointer to current channel of the pdev.
+ * @prev_chan: Pointer to previous channel of the pdev.
+ *
+ * Return: False if CAC can be skipped, else true.
  */
 #ifdef QCA_SKIP_CAC_AFTER_RESTART
-bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs);
+bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs,
+				     struct dfs_channel *cur_chan,
+				     struct dfs_channel *prev_chan);
 #else
-static inline bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs)
+static inline bool
+dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs,
+				struct dfs_channel *cur_chan,
+				struct dfs_channel *prev_chan)
 {
 	return true;
 }

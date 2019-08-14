@@ -233,17 +233,6 @@ QDF_STATUS utils_dfs_cac_stop(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(utils_dfs_cac_stop);
 
-void utils_dfs_clear_cac_started_chan(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = wlan_pdev_get_dfs_obj(pdev);
-	if (!dfs)
-		return;
-
-	dfs_clear_cac_started_chan(dfs);
-}
-
 /** dfs_fill_chan_info() - Fill the dfs channel structure with wlan
  * channel.
  * @chan: Pointer to DFS channel structure.
@@ -277,16 +266,26 @@ bool utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
 	return dfs_is_precac_done(dfs, &chan);
 }
 
-bool utils_dfs_check_for_cac_start(struct wlan_objmgr_pdev *pdev,
-				   bool *continue_current_cac)
+bool utils_dfs_is_cac_required(struct wlan_objmgr_pdev *pdev,
+			       struct wlan_channel *cur_chan,
+			       struct wlan_channel *prev_chan,
+			       bool *continue_current_cac)
 {
 	struct wlan_dfs *dfs;
+	struct dfs_channel cur_channel;
+	struct dfs_channel prev_channel;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs)
 		return false;
 
-	return dfs_check_for_cac_start(dfs, continue_current_cac);
+	dfs_fill_chan_info(&cur_channel, cur_chan);
+	dfs_fill_chan_info(&prev_channel, prev_chan);
+
+	return dfs_is_cac_required(dfs,
+				   &cur_channel,
+				   &prev_channel,
+				   continue_current_cac);
 }
 
 QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev)

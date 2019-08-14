@@ -729,16 +729,20 @@ void utils_dfs_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
 					 bool nol_history_ch);
 
 /**
- * utils_dfs_check_for_cac_start() - Check for DFS CAC start conditions.
+ * utils_dfs_is_cac_required() - Check if CAC is required on the cur_chan.
  * @pdev: pdev ptr
+ * @cur_chan: Pointer to current channel of wlan_channel structure.
+ * @prev_chan: Pointer to previous channel of wlan_channel structure.
  * @continue_current_cac: If AP can start CAC then this variable indicates
  * whether to continue with the current CAC or restart the CAC. This variable
  * is valid only if this function returns true.
  *
- * Return: true if AP can start or continue the current CAC, else false.
+ * Return: true if AP requires CAC or can continue current CAC, else false.
  */
-bool utils_dfs_check_for_cac_start(struct wlan_objmgr_pdev *pdev,
-				   bool *continue_current_cac);
+bool utils_dfs_is_cac_required(struct wlan_objmgr_pdev *pdev,
+			       struct wlan_channel *cur_chan,
+			       struct wlan_channel *prev_chan,
+			       bool *continue_current_cac);
 
 /** utils_dfs_is_precac_done() - Check if precac has been done in chosen channel
  * @pdev: Pointer to DFS pdev object.
@@ -779,10 +783,4 @@ QDF_STATUS utils_dfs_get_disable_radar_marking(struct wlan_objmgr_pdev *pdev,
  */
 void utils_dfs_deliver_event(struct wlan_objmgr_pdev *pdev, uint16_t freq,
 			     enum WLAN_DFS_EVENTS event);
-
-/**
- * utils_dfs_clear_cac_started_chan() - Clear dfs cac started channel.
- * @pdev: pdev ptr
- */
-void utils_dfs_clear_cac_started_chan(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_UTILS_API_H_ */
