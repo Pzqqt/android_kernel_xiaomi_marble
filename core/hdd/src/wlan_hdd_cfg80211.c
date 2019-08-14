@@ -2751,15 +2751,21 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 					tb[QCA_WLAN_VENDOR_ATTR_ACS_CH_LIST]);
 		if (sap_config->acs_cfg.ch_list_count) {
 			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
-					sizeof(uint8_t) *
 					sap_config->acs_cfg.ch_list_count);
-			if (!sap_config->acs_cfg.ch_list) {
+			sap_config->acs_cfg.master_ch_list = qdf_mem_malloc(
+					sap_config->acs_cfg.ch_list_count);
+			if (!sap_config->acs_cfg.ch_list ||
+			    !sap_config->acs_cfg.master_ch_list) {
 				ret = -ENOMEM;
 				goto out;
 			}
 
 			qdf_mem_copy(sap_config->acs_cfg.ch_list, tmp,
-					sap_config->acs_cfg.ch_list_count);
+				     sap_config->acs_cfg.ch_list_count);
+			qdf_mem_copy(sap_config->acs_cfg.master_ch_list, tmp,
+				     sap_config->acs_cfg.ch_list_count);
+			sap_config->acs_cfg.master_ch_list_count =
+					sap_config->acs_cfg.ch_list_count;
 		}
 	} else if (tb[QCA_WLAN_VENDOR_ATTR_ACS_FREQ_LIST]) {
 		uint32_t *freq =
@@ -2770,7 +2776,10 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		if (sap_config->acs_cfg.ch_list_count) {
 			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 				sap_config->acs_cfg.ch_list_count);
-			if (!sap_config->acs_cfg.ch_list) {
+			sap_config->acs_cfg.master_ch_list = qdf_mem_malloc(
+					sap_config->acs_cfg.ch_list_count);
+			if (!sap_config->acs_cfg.ch_list ||
+			    !sap_config->acs_cfg.master_ch_list) {
 				ret = -ENOMEM;
 				goto out;
 			}
@@ -2779,6 +2788,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++)
 				sap_config->acs_cfg.ch_list[i] =
 					ieee80211_frequency_to_channel(freq[i]);
+			qdf_mem_copy(sap_config->acs_cfg.master_ch_list,
+				     sap_config->acs_cfg.ch_list,
+				     sap_config->acs_cfg.ch_list_count);
+			sap_config->acs_cfg.master_ch_list_count =
+					sap_config->acs_cfg.ch_list_count;
 		}
 	}
 
@@ -3024,7 +3038,13 @@ void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
 		qdf_mem_free(sap_cfg->acs_cfg.ch_list);
 		sap_cfg->acs_cfg.ch_list = NULL;
 	}
+	if (sap_cfg->acs_cfg.master_ch_list) {
+		hdd_debug("Clearing master ACS cfg channel list");
+		qdf_mem_free(sap_cfg->acs_cfg.master_ch_list);
+		sap_cfg->acs_cfg.master_ch_list = NULL;
+	}
 	sap_cfg->acs_cfg.ch_list_count = 0;
+	sap_cfg->acs_cfg.master_ch_list_count = 0;
 	sap_cfg->acs_cfg.acs_mode = false;
 }
 

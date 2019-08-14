@@ -503,13 +503,14 @@ uint8_t sap_channel_in_acs_channel_list(uint8_t channel_num,
 {
 	uint8_t i = 0;
 
-	if ((!sap_ctx->acs_cfg->ch_list) ||
+	if ((!sap_ctx->acs_cfg->master_ch_list) ||
 	    (!spect_info_params))
 		return channel_num;
 
 	if (channel_num > 0 && channel_num <= 252) {
-		for (i = 0; i < sap_ctx->acs_cfg->ch_list_count; i++) {
-			if ((sap_ctx->acs_cfg->ch_list[i]) == channel_num)
+		for (i = 0; i < sap_ctx->acs_cfg->master_ch_list_count; i++) {
+			if ((sap_ctx->acs_cfg->master_ch_list[i]) ==
+			     channel_num)
 				return channel_num;
 		}
 		return SAP_CHANNEL_NOT_SELECTED;
