@@ -352,6 +352,24 @@ static void _sde_encoder_pm_qos_remove_request(struct drm_encoder *drm_enc,
 	pm_qos_remove_request(&sde_enc->pm_qos_cpu_req);
 }
 
+static bool _sde_encoder_is_autorefresh_enabled(
+		struct sde_encoder_virt *sde_enc)
+{
+	struct drm_connector *drm_conn;
+
+	if (!sde_enc->cur_master ||
+		!(sde_enc->disp_info.capabilities & MSM_DISPLAY_CAP_CMD_MODE))
+		return false;
+
+	drm_conn = sde_enc->cur_master->connector;
+
+	if (!drm_conn || !drm_conn->state)
+		return false;
+
+	return sde_connector_get_property(drm_conn->state,
+			CONNECTOR_PROP_AUTOREFRESH) ? true : false;
+}
+
 static bool _sde_encoder_is_dsc_enabled(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc;
@@ -3946,8 +3964,8 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 	u32 pending_kickoff_cnt;
 	struct msm_drm_private *priv = NULL;
 	struct sde_kms *sde_kms = NULL;
-	bool is_vid_mode = false;
 	struct sde_crtc_misr_info crtc_misr_info = {false, 0};
+	bool is_regdma_blocking = false, is_vid_mode = false;
 
 	if (!sde_enc) {
 		SDE_ERROR("invalid encoder\n");
@@ -3956,6 +3974,9 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 
 	if (sde_encoder_check_curr_mode(&sde_enc->base, MSM_DISPLAY_VIDEO_MODE))
 		is_vid_mode = true;
+
+	is_regdma_blocking = (is_vid_mode ||
+			_sde_encoder_is_autorefresh_enabled(sde_enc));
 
 	/* don't perform flush/start operations for slave encoders */
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
@@ -3976,7 +3997,7 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 		if (!phys->ops.needs_single_flush ||
 				!phys->ops.needs_single_flush(phys)) {
 			if (ctl->ops.reg_dma_flush)
-				ctl->ops.reg_dma_flush(ctl, is_vid_mode);
+				ctl->ops.reg_dma_flush(ctl, is_regdma_blocking);
 			_sde_encoder_trigger_flush(&sde_enc->base, phys, 0x0);
 		} else if (ctl->ops.get_pending_flush) {
 			ctl->ops.get_pending_flush(ctl, &pending_flush);
@@ -3987,7 +4008,7 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 	if (pending_flush.pending_flush_mask && sde_enc->cur_master) {
 		ctl = sde_enc->cur_master->hw_ctl;
 		if (ctl->ops.reg_dma_flush)
-			ctl->ops.reg_dma_flush(ctl, is_vid_mode);
+			ctl->ops.reg_dma_flush(ctl, is_regdma_blocking);
 		_sde_encoder_trigger_flush(&sde_enc->base, sde_enc->cur_master,
 						&pending_flush);
 	}
