@@ -5559,13 +5559,21 @@ struct drm_panel *dsi_display_get_drm_panel(struct dsi_display * display)
 int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 		struct drm_encoder *encoder, struct drm_connector *connector)
 {
-	struct drm_device *drm = encoder->dev;
-	struct drm_bridge *bridge = encoder->bridge;
+	struct drm_device *drm;
+	struct drm_bridge *bridge;
 	struct drm_bridge *ext_bridge;
 	struct drm_connector *ext_conn;
-	struct sde_connector *sde_conn = to_sde_connector(connector);
-	struct drm_bridge *prev_bridge = bridge;
+	struct sde_connector *sde_conn;
+	struct drm_bridge *prev_bridge;
 	int rc = 0, i;
+
+	if (!display || !encoder || !connector)
+		return -EINVAL;
+
+	drm = encoder->dev;
+	bridge = encoder->bridge;
+	sde_conn = to_sde_connector(connector);
+	prev_bridge = bridge;
 
 	if (display->panel && !display->panel->host_config.ext_bridge_mode)
 		return 0;

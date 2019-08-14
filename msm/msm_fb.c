@@ -395,7 +395,7 @@ struct drm_framebuffer *msm_framebuffer_init(struct drm_device *dev,
 				 + width * cpp
 				 + mode_cmd->offsets[i];
 
-			if (bos[i]->size < min_size) {
+			if (!bos[i] || bos[i]->size < min_size) {
 				ret = -EINVAL;
 				goto fail;
 			}
