@@ -257,7 +257,6 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 	if (!vdev) {
 		hdd_err("Failed to create vdev object");
 		errno = -ENOMEM;
-		qdf_mem_free(osif_priv);
 		return errno;
 	}
 
