@@ -4566,7 +4566,9 @@ dp_rx_target_fst_config(struct dp_soc *soc)
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		struct dp_pdev *pdev = soc->pdev_list[i];
 
-		if (pdev) {
+		/* Flow search is not enabled if NSS offload is enabled */
+		if (pdev &&
+		    !wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx)) {
 			status = dp_rx_flow_send_fst_fw_setup(pdev->soc, pdev);
 			if (status != QDF_STATUS_SUCCESS)
 				break;
