@@ -21708,7 +21708,8 @@ static void
 wlan_hdd_extauth_copy_pmkid(struct cfg80211_external_auth_params *params,
 			    uint8_t *pmkid)
 {
-	qdf_mem_copy(pmkid, params->pmkid, PMKID_LEN);
+	if (params->pmkid)
+		qdf_mem_copy(pmkid, params->pmkid, PMKID_LEN);
 }
 
 #else
