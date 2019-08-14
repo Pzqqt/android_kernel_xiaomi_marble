@@ -8555,8 +8555,9 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 			if (!channel_id)
 				channel_id = first_ap_chan_id;
 
-			status = policy_mgr_handle_conc_multiport(mac->psoc,
-					sessionId, channel_id,
+			status = policy_mgr_handle_conc_multiport(
+					mac->psoc, sessionId,
+					wlan_chan_to_freq(channel_id),
 					POLICY_MGR_UPDATE_REASON_NORMAL_STA);
 			if ((QDF_IS_STATUS_SUCCESS(status)) &&
 				(!csr_wait_for_connection_update(mac, true))) {
@@ -10017,8 +10018,7 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 
 	status = policy_mgr_handle_conc_multiport(
 			mac->psoc, session_id,
-			wlan_reg_freq_to_chan(
-				mac->pdev,bss_node->pBssDescription->chan_freq),
+			mac->pdev, bss_node->pBssDescription->chan_freq,
 			POLICY_MGR_UPDATE_REASON_LFR2_ROAM);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		mac->roam.neighborRoamInfo[session_id].scan_res_lfr2_roam_ap =

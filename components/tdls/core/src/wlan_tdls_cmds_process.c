@@ -2238,9 +2238,11 @@ QDF_STATUS tdls_process_antenna_switch(struct tdls_antenna_switch_request *req)
 
 	vdev_id = wlan_vdev_get_id(vdev);
 	opmode = wlan_vdev_mlme_get_opmode(vdev);
-	channel = policy_mgr_get_channel(soc_obj->soc,
+	channel = wlan_freq_to_chan(
+			policy_mgr_get_channel(
+			soc_obj->soc,
 			policy_mgr_convert_device_mode_to_qdf_type(opmode),
-			&vdev_id);
+			&vdev_id));
 
 	/* Check supported nss for TDLS, if is 1x1, no need to teardown links */
 	if (WLAN_REG_IS_24GHZ_CH(channel))

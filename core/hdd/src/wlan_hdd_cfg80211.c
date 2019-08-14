@@ -6496,8 +6496,8 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 		wlan_vdev_obj_lock(vdev);
 		wlan_vdev_mlme_cap_set(vdev, WLAN_VDEV_C_RESTRICT_OFFCHAN);
 		wlan_vdev_obj_unlock(vdev);
-		chan = policy_mgr_get_channel(hdd_ctx->psoc, pmode,
-					      &vdev_id);
+		chan = wlan_freq_to_chan(
+			policy_mgr_get_channel(hdd_ctx->psoc, pmode, &vdev_id));
 		if (!chan ||
 		    wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, chan)) {
 			hdd_err("unable to send avoid_freq");
@@ -17678,8 +17678,9 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	 */
 	if (!channel || wlan_reg_is_dfs_ch(hdd_ctx->pdev, channel) ||
 	    !policy_mgr_is_safe_channel(hdd_ctx->psoc, channel))
-		channel = policy_mgr_get_nondfs_preferred_channel(
-			hdd_ctx->psoc, PM_SAP_MODE, true);
+		channel = wlan_freq_to_chan(
+			policy_mgr_get_nondfs_preferred_channel(
+			hdd_ctx->psoc, PM_SAP_MODE, true));
 
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 	qdf_event_reset(&hostapd_state->qdf_event);

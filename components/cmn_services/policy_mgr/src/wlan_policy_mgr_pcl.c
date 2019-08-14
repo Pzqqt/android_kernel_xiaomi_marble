@@ -381,9 +381,9 @@ static QDF_STATUS policy_mgr_modify_pcl_based_on_dnbs(
 	return QDF_STATUS_SUCCESS;
 }
 
-uint32_t policy_mgr_get_channel_int(struct wlan_objmgr_psoc *psoc,
-				    enum policy_mgr_con_mode mode,
-				    uint32_t *vdev_id)
+uint32_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
+				enum policy_mgr_con_mode mode,
+				uint32_t *vdev_id)
 {
 	uint32_t idx = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1954,9 +1954,9 @@ enum policy_mgr_three_connection_mode
 #endif
 
 uint32_t
-policy_mgr_get_nondfs_preferred_channel_int(struct wlan_objmgr_psoc *psoc,
-					    enum policy_mgr_con_mode mode,
-					    bool for_existing_conn)
+policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
+					enum policy_mgr_con_mode mode,
+					bool for_existing_conn)
 {
 	uint32_t pcl_channels[QDF_MAX_NUM_CHAN];
 	uint8_t pcl_weight[QDF_MAX_NUM_CHAN];

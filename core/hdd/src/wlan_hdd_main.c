@@ -9200,8 +9200,9 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
 	hdd_debug("chan:%d width:%d",
 		channel, hdd_ap_ctx->sap_config.ch_width_orig);
 
-	policy_mgr_change_sap_channel_with_csa(hdd_ctx->psoc,
-		adapter->vdev_id, channel,
+	policy_mgr_change_sap_channel_with_csa(
+		hdd_ctx->psoc, adapter->vdev_id,
+		wlan_chan_to_freq(channel),
 		hdd_ap_ctx->sap_config.ch_width_orig, forced);
 }
 

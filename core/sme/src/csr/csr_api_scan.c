@@ -2044,8 +2044,8 @@ csr_scan_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 			status, first_ap_ch);
 		return 0;
 	}
-	if (!policy_mgr_check_for_session_conc(mac_ctx->psoc, session_id,
-					       first_ap_ch)) {
+	if (!policy_mgr_check_for_session_conc(
+	    mac_ctx->psoc, session_id, wlan_chan_to_freq(first_ap_ch))) {
 		sme_scan_result_purge(result_handle);
 		sme_err("Conc not allowed for the session %d ch %d",
 			session_id, first_ap_ch);
