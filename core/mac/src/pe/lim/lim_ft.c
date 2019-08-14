@@ -113,7 +113,7 @@ void lim_ft_cleanup(struct mac_context *mac, struct pe_session *pe_session)
  *
  *------------------------------------------------------------------*/
 void lim_ft_prepare_add_bss_req(struct mac_context *mac,
-		uint8_t updateEntry, struct pe_session *ft_session,
+		struct pe_session *ft_session,
 		struct bss_description *bssDescription)
 {
 	struct bss_params *pAddBssParams = NULL;
@@ -160,7 +160,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	pAddBssParams->beaconInterval = bssDescription->beaconInterval;
 
 	pAddBssParams->dtimPeriod = pBeaconStruct->tim.dtimPeriod;
-	pAddBssParams->updateBss = updateEntry;
+	pAddBssParams->updateBss = false;
 
 	pAddBssParams->reassocReq = true;
 
@@ -296,7 +296,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		pAddBssParams->staContext.maxSPLen = 0;
 		pAddBssParams->staContext.shortPreambleSupported =
 			(uint8_t) pBeaconStruct->capabilityInfo.shortPreamble;
-		pAddBssParams->staContext.updateSta = updateEntry;
+		pAddBssParams->staContext.updateSta = false;
 		pAddBssParams->staContext.encryptType =
 			ft_session->encryptType;
 #ifdef WLAN_FEATURE_11W

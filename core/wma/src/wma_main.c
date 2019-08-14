@@ -1665,9 +1665,6 @@ static void wma_discard_fw_event(struct scheduler_msg *msg)
 		qdf_nbuf_free(((wma_process_fw_event_params *)msg->bodyptr)
 				->evt_buf);
 		break;
-	case WMA_SET_LINK_STATE:
-		qdf_mem_free(((tpLinkStateParams) msg->bodyptr)->callbackArg);
-		break;
 	}
 
 	qdf_mem_free(msg->bodyptr);
@@ -8445,9 +8442,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_update_channel_list(wma_handle,
 					(tSirUpdateChanList *) msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_SET_LINK_STATE:
-		wma_set_linkstate(wma_handle, (tpLinkStateParams) msg->bodyptr);
 		break;
 	case WMA_CHNL_SWITCH_REQ:
 		wma_set_channel(wma_handle,

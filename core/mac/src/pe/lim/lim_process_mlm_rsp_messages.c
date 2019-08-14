@@ -288,8 +288,9 @@ void lim_process_mlm_join_cnf(struct mac_context *mac_ctx,
 		pe_debug("***SessionId:%d Joined ESS ***",
 			join_cnf->sessionId);
 		/* Setup hardware upfront */
-		if (lim_sta_send_add_bss_pre_assoc(mac_ctx, false,
-			session_entry) == QDF_STATUS_SUCCESS)
+		if (lim_sta_send_add_bss_pre_assoc(mac_ctx,
+						   session_entry) ==
+		    QDF_STATUS_SUCCESS)
 			return;
 		else
 			result_code = eSIR_SME_REFUSED;
@@ -2172,47 +2173,35 @@ static void lim_update_fils_auth_mode(struct pe_session *session_entry,
 { }
 #endif
 
-/**
- * csr_neighbor_roam_handoff_req_hdlr - Processes handoff request
- * @mac_ctx:  Pointer to mac context
- * @pAddBssParams: Bss params including rsp data
- * @session_entry: PE session handle
- *
- * This function is called to process a WMA_ADD_BSS_RSP from HAL.
- * Upon receipt of this message from HAL if the state is pre assoc.
- *
- * Return: Null
- */
-static void
-lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
-	struct bss_params *add_bss_params, struct pe_session *session_entry)
+void lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
+					   struct bss_params *add_bss_params,
+					   struct pe_session *session_entry)
 {
-	struct bss_params *pAddBssParams = add_bss_params;
 	tAniAuthType cfgAuthType, authMode;
 	tLimMlmAuthReq *pMlmAuthReq;
 	tpDphHashNode sta = NULL;
 
-	if (!pAddBssParams) {
+	if (!add_bss_params) {
 		pe_err("Invalid body pointer in message");
 		goto joinFailure;
 	}
-	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
+	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
 		sta = dph_add_hash_entry(mac_ctx,
-				pAddBssParams->staContext.staMac,
+				add_bss_params->staContext.staMac,
 				DPH_STA_HASH_INDEX_PEER,
 				&session_entry->dph.dphHashTable);
 		if (!sta) {
 			/* Could not add hash table entry */
 			pe_err("could not add hash entry at DPH for");
 			lim_print_mac_addr(mac_ctx,
-				pAddBssParams->staContext.staMac, LOGE);
+				add_bss_params->staContext.staMac, LOGE);
 			goto joinFailure;
 		}
-		session_entry->bss_idx = (uint8_t)pAddBssParams->bss_idx;
+		session_entry->bss_idx = (uint8_t)add_bss_params->bss_idx;
 		/* Success, handle below */
-		sta->bssId = pAddBssParams->bss_idx;
+		sta->bssId = add_bss_params->bss_idx;
 		/* STA Index(genr by HAL) for the BSS entry is stored here */
-		sta->staIndex = pAddBssParams->staContext.staIdx;
+		sta->staIndex = add_bss_params->staContext.staIdx;
 		/* Trigger Authentication with AP */
 		cfgAuthType = mac_ctx->mlme_cfg->wep_params.auth_type;
 
@@ -2240,7 +2229,7 @@ lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 		session_entry->limPrevSmeState = session_entry->limSmeState;
 		session_entry->limSmeState = eLIM_SME_WT_AUTH_STATE;
 		/* remember staId in case of assoc timeout/failure handling */
-		session_entry->staId = pAddBssParams->staContext.staIdx;
+		session_entry->staId = add_bss_params->staContext.staIdx;
 
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_SME_STATE,
 			session_entry->peSessionId,
@@ -2295,16 +2284,6 @@ static void lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	uint8_t update_sta = false;
 
 	mlm_assoc_cnf.resultCode = eSIR_SME_SUCCESS;
-
-	if (eLIM_MLM_WT_ADD_BSS_RSP_PREASSOC_STATE ==
-		session_entry->limMlmState) {
-		pe_debug("SessionId: %d lim_process_sta_add_bss_rsp_pre_assoc",
-			session_entry->peSessionId);
-		lim_process_sta_add_bss_rsp_pre_assoc(mac_ctx,
-						      add_bss_params,
-						      session_entry);
-		return;
-	}
 	if (eLIM_MLM_WT_ADD_BSS_RSP_REASSOC_STATE == session_entry->limMlmState
 		|| (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==
 		session_entry->limMlmState)) {
@@ -2325,9 +2304,6 @@ static void lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 			update_sta = true;
 		}
 	}
-
-	if (add_bss_params == 0)
-		return;
 
 	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
 		if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==

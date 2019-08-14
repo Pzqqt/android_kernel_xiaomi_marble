@@ -66,11 +66,6 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 QDF_STATUS lim_send_edca_params(struct mac_context *mac,
 				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
 				   uint16_t bss_idx, bool mu_edca);
-QDF_STATUS lim_set_link_state(struct mac_context *mac, tSirLinkState state,
-				 tSirMacAddr bssId, tSirMacAddr selfMac,
-				 tpSetLinkStateCallback callback,
-				 void *callbackArg);
-
 /**
  * lim_set_active_edca_params() - Choose best EDCA parameters
  * @mac_ctx:  pointer to Global Mac structure.

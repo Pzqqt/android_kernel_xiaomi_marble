@@ -318,6 +318,7 @@ QDF_STATUS lim_ft_setup_auth_session(struct mac_context *mac,
 {
 	struct pe_session *ft_session = NULL;
 	uint8_t sessionId = 0;
+	struct sSirFTPreAuthReq *req;
 
 	ft_session =
 		pe_find_session_by_bssid(mac, pe_session->limReAssocbssId,
@@ -334,15 +335,13 @@ QDF_STATUS lim_ft_setup_auth_session(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (pe_session->ftPEContext.pFTPreAuthReq &&
-	    pe_session->ftPEContext.pFTPreAuthReq->pbssDescription) {
+	req = pe_session->ftPEContext.pFTPreAuthReq;
+	if (req && req->pbssDescription) {
 		lim_fill_ft_session(mac,
-				    pe_session->ftPEContext.pFTPreAuthReq->
-				    pbssDescription, ft_session,
+				    req->pbssDescription, ft_session,
 				    pe_session);
-
-		lim_ft_prepare_add_bss_req(mac, false, ft_session,
-		     pe_session->ftPEContext.pFTPreAuthReq->pbssDescription);
+		lim_ft_prepare_add_bss_req(mac, ft_session,
+					   req->pbssDescription);
 	}
 
 	return QDF_STATUS_SUCCESS;

@@ -2687,7 +2687,7 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	/* Update new peer's uc cipher */
 	wma_update_roamed_peer_unicast_cipher(wma, uc_cipher, cipher_cap,
 					      roam_synch_ind_ptr->bssid.bytes);
-	wma_add_bss(wma, (struct bss_params *)roam_synch_ind_ptr->add_bss_params);
+	wma_add_bss_lfr3(wma, roam_synch_ind_ptr->add_bss_params);
 	wma_add_sta(wma, add_sta_params);
 	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
 			roam_synch_ind_ptr->bssid.bytes, QDF_MAC_ADDR_SIZE);

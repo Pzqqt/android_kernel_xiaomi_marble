@@ -896,10 +896,6 @@ void pe_stop(struct mac_context *mac)
 static void pe_free_nested_messages(struct scheduler_msg *msg)
 {
 	switch (msg->type) {
-	case WMA_SET_LINK_STATE_RSP:
-		pe_debug("WMA_SET_LINK_STATE_RSP");
-		qdf_mem_free(((tpLinkStateParams) msg->bodyptr)->callbackArg);
-		break;
 	default:
 		break;
 	}
@@ -2406,7 +2402,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	lim_fill_ft_session(mac_ctx, bss_desc, ft_session_ptr, session_ptr);
 
 	/* Next routine may update nss based on dot11Mode */
-	lim_ft_prepare_add_bss_req(mac_ctx, false, ft_session_ptr, bss_desc);
+	lim_ft_prepare_add_bss_req(mac_ctx, ft_session_ptr, bss_desc);
 	if (session_ptr->is11Rconnection) {
 		ft_session_ptr->is11Rconnection = session_ptr->is11Rconnection;
 		if (session_ptr->fils_info &&

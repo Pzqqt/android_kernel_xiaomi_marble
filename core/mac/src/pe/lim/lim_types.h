@@ -1274,4 +1274,19 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 			       bool pmf_connection,
 			       bool *assoc_req_copied,
 			       bool dup_entry, bool force_1x1);
+
+/**
+ * lim_process_sta_add_bss_rsp_pre_assoc - Processes handoff request
+ * @mac_ctx:  Pointer to mac context
+ * @pAddBssParams: Bss params including rsp data
+ * @session_entry: PE session handle
+ *
+ * This function is called to process a WMA_ADD_BSS_RSP from HAL.
+ * Upon receipt of this message from HAL if the state is pre assoc.
+ *
+ * Return: Null
+ */
+void lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
+					   struct bss_params *add_bss_params,
+					   struct pe_session *session_entry);
 #endif /* __LIM_TYPES_H */

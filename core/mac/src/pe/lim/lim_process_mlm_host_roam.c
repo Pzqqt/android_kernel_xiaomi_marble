@@ -42,6 +42,8 @@
 #endif
 #include "wma_if.h"
 #include "rrm_api.h"
+#include "wma.h"
+
 static void lim_handle_sme_reaasoc_result(struct mac_context *, tSirResultCodes,
 		uint16_t, struct pe_session *);
 /**
@@ -582,8 +584,7 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 	struct pe_session *session;
 	uint16_t caps;
 	uint32_t val;
-	struct scheduler_msg msgQ = {0};
-	QDF_STATUS retCode;
+	QDF_STATUS status;
 	uint32_t teleBcnEn = 0;
 
 	if (!reassoc_req) {
@@ -644,31 +645,25 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 	else
 		val = mac->mlme_cfg->sap_cfg.listen_interval;
 
-	if (lim_set_link_state
-		    (mac, eSIR_LINK_PREASSOC_STATE, session->bssId,
-		    session->self_mac_addr, NULL, NULL) != QDF_STATUS_SUCCESS) {
+	status = wma_add_bss_peer_sta(session->self_mac_addr, session->bssId,
+				      false);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(reassoc_req);
 		return;
 	}
 
 	reassoc_req->listenInterval = (uint16_t) val;
 	session->pLimMlmReassocReq = reassoc_req;
-
 	/* we need to defer the message until we get response back from HAL */
 	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
 
-	msgQ.type = SIR_HAL_ADD_BSS_REQ;
-	msgQ.reserved = 0;
-	msgQ.bodyptr = session->ftPEContext.pAddBssReq;
-	msgQ.bodyval = 0;
-
-	pe_debug("Sending SIR_HAL_ADD_BSS_REQ");
-	MTRACE(mac_trace_msg_tx(mac, session->peSessionId, msgQ.type));
-	retCode = wma_post_ctrl_msg(mac, &msgQ);
-	if (QDF_STATUS_SUCCESS != retCode) {
+	status = wma_add_bss_lfr2_vdev_start(session->ftPEContext.pAddBssReq);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 		qdf_mem_free(session->ftPEContext.pAddBssReq);
-		pe_err("Posting ADD_BSS_REQ to HAL failed, reason: %X",
-			retCode);
+		pe_err("wma_add_bss_lfr2_vdev_start, reason: %X",
+		       status);
 	}
 
 	session->ftPEContext.pAddBssReq = NULL;

@@ -893,8 +893,6 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 	uint32_t adapter_1_chan_number,
 	uint32_t adapter_1_quota, uint32_t adapter_2_chan_number);
 
-void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params);
-
 QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 					    tSirRateUpdateInd *
 					    pRateUpdateParams);

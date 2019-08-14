@@ -137,11 +137,6 @@ enum cap_bitmap {
 	/* MAX_FEATURE_SUPPORTED = 32 */
 };
 
-typedef enum eSriLinkState {
-	eSIR_LINK_IDLE_STATE = 0,
-	eSIR_LINK_PREASSOC_STATE = 1,
-} tSirLinkState;
-
 /* / Mailbox Message Structure Define */
 typedef struct sSirMbMsg {
 	uint16_t type;
@@ -309,8 +304,6 @@ struct sir_cfg_action_frm_tb_ppdu {
 /* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 111) is unused */
 #define SIR_HAL_P2P_NOA_ATTR_IND           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 112)
 /* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 113) is unused */
-
-#define SIR_HAL_SET_LINK_STATE_RSP         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 114)
 
 #define SIR_HAL_WLAN_SUSPEND_IND           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 115)
 #define SIR_HAL_WLAN_RESUME_REQ            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 116)

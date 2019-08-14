@@ -1169,66 +1169,6 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 }
 
 /**
- * wma_set_linkstate() - set wma linkstate
- * @wma: wma handle
- * @params: link state params
- *
- * Return: none
- */
-void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
-{
-	struct cdp_pdev *pdev;
-	struct cdp_vdev *vdev;
-	uint8_t vdev_id;
-	bool roam_synch_in_progress = false;
-	QDF_STATUS status;
-
-	params->status = true;
-	WMA_LOGD("%s: state %d selfmac %pM", __func__,
-		 params->state, params->self_mac_addr);
-	if (params->state != eSIR_LINK_PREASSOC_STATE) {
-		WMA_LOGD("%s: unsupported link state %d",
-			 __func__, params->state);
-		params->status = false;
-		goto out;
-	}
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		params->status = false;
-		goto out;
-	}
-
-	vdev = wma_find_vdev_by_addr(wma, params->self_mac_addr, &vdev_id);
-	if (!vdev) {
-		WMA_LOGP("%s: vdev not found for addr: %pM",
-			 __func__, params->self_mac_addr);
-		params->status = false;
-		goto out;
-	}
-
-	if (wma_is_vdev_in_ap_mode(wma, vdev_id)) {
-		WMA_LOGD("%s: Ignoring set link req in ap mode", __func__);
-		params->status = false;
-		goto out;
-	}
-
-	if (wma_is_roam_synch_in_progress(wma, vdev_id))
-		roam_synch_in_progress = true;
-	status = wma_create_peer(wma, pdev, vdev, params->bssid,
-				 WMI_PEER_TYPE_DEFAULT, vdev_id,
-				 roam_synch_in_progress);
-	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Unable to create peer", __func__);
-		params->status = false;
-	}
-	if (roam_synch_in_progress)
-		return;
-out:
-	wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, (void *)params, 0);
-}
-
-/**
  * wma_process_rate_update_indate() - rate update indication
  * @wma: wma handle
  * @pRateUpdateParams: Rate update params

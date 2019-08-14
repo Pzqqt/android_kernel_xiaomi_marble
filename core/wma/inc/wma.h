@@ -754,7 +754,7 @@ struct wma_txrx_node {
 	enum phy_ch_width chan_width;
 	bool vdev_active;
 	uint64_t tsfadjust;
-	void *addBssStaContext;
+	tAddStaParams *addBssStaContext;
 	uint8_t aid;
 	uint8_t rmfEnabled;
 #ifdef WLAN_FEATURE_11W
@@ -770,7 +770,7 @@ struct wma_txrx_node {
 	int8_t tx_power;
 	int8_t max_tx_power;
 	uint32_t nwType;
-	void *staKeyParams;
+	tSetStaKeyParams *staKeyParams;
 	uint32_t peer_count;
 	bool roam_synch_in_progress;
 	void *plink_status_req;
@@ -2546,4 +2546,38 @@ QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid,
  */
 QDF_STATUS wma_send_vdev_stop(uint8_t vdev_id);
 
+/**
+ * wma_pre_assoc_req() - wma pre assoc req when sta connect
+ * @add_bss: add bss param
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_pre_assoc_req(struct bss_params *add_bss);
+
+/**
+ * wma_add_bss_lfr3() - add bss during LFR3 offload roaming
+ * @wma: wma handler
+ * @add_bss: add bss param
+ *
+ * Return: None
+ */
+void wma_add_bss_lfr3(tp_wma_handle wma, struct bss_params *add_bss);
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * wma_add_bss_lfr2_vdev_start() - add bss and start vdev during host roaming
+ * @add_bss: add bss param
+ *
+ * Return: None
+ */
+QDF_STATUS wma_add_bss_lfr2_vdev_start(struct bss_params *add_bss);
+#endif
+
+/**
+ * wma_send_peer_assoc_req() - wma send peer assoc req when sta connect
+ * @add_bss: add bss param
+ *
+ * Return: None
+ */
+QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss);
 #endif

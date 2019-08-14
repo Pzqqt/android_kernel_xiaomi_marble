@@ -354,49 +354,6 @@ void lim_set_active_edca_params(struct mac_context *mac_ctx,
 	return;
 }
 
-/** ---------------------------------------------------------
-   \fn      lim_set_link_state
-   \brief   LIM sends a message to WMA to set the link state
-   \param   struct mac_context * mac
-   \param   tSirLinkState      state
-   \return  None
-   -----------------------------------------------------------*/
-QDF_STATUS lim_set_link_state(struct mac_context *mac, tSirLinkState state,
-				 tSirMacAddr bssId, tSirMacAddr self_mac_addr,
-				 tpSetLinkStateCallback callback,
-				 void *callbackArg)
-{
-	struct scheduler_msg msgQ = {0};
-	QDF_STATUS retCode;
-	tpLinkStateParams pLinkStateParams = NULL;
-	/* Allocate memory. */
-	pLinkStateParams = qdf_mem_malloc(sizeof(tLinkStateParams));
-	if (!pLinkStateParams)
-		return QDF_STATUS_E_NOMEM;
-	pLinkStateParams->state = state;
-	pLinkStateParams->callback = callback;
-	pLinkStateParams->callbackArg = callbackArg;
-
-	/* Copy Mac address */
-	sir_copy_mac_addr(pLinkStateParams->bssid, bssId);
-	sir_copy_mac_addr(pLinkStateParams->self_mac_addr, self_mac_addr);
-
-	msgQ.type = WMA_SET_LINK_STATE;
-	msgQ.reserved = 0;
-	msgQ.bodyptr = pLinkStateParams;
-	msgQ.bodyval = 0;
-
-	MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
-
-	retCode = (uint32_t) wma_post_ctrl_msg(mac, &msgQ);
-	if (retCode != QDF_STATUS_SUCCESS) {
-		qdf_mem_free(pLinkStateParams);
-		pe_err("Posting link state %d failed, reason = %x", state,
-			retCode);
-	}
-	return retCode;
-}
-
 QDF_STATUS lim_send_mode_update(struct mac_context *mac,
 				   tUpdateVHTOpMode *pTempParam,
 				   struct pe_session *pe_session)

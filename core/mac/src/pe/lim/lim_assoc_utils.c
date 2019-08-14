@@ -55,6 +55,7 @@
 #include "lim_types.h"
 #include "wlan_utility.h"
 #include "wlan_mlme_api.h"
+#include "wma.h"
 
 #ifdef FEATURE_WLAN_TDLS
 #define IS_TDLS_PEER(type)  ((type) == STA_ENTRY_TDLS_PEER)
@@ -3558,39 +3559,11 @@ void lim_sta_add_bss_update_ht_parameter(uint32_t bss_chan_freq,
 		 add_bss->fRIFSMode);
 }
 
-/**
- * limSendAddBss()
- *
- ***FUNCTION:
- *
- ***LOGIC:
- * 1) LIM receives eWNI_SME_JOIN_REQ
- * 2) For a valid eWNI_SME_JOIN_REQ, LIM sends
- * SIR_HAL_ADD_BSS_REQ to HAL
- *
- ***ASSUMPTIONS:
- * JOIN REQ parameters are saved in mac->lim.gLimMlmJoinReq
- * ADD BSS parameters can be obtained from two sources:
- * 1) mac->lim.gLimMlmJoinReq
- * 2) beaconStruct, passed as parameter
- * So, if a reqd parameter is found in bssDescriptions
- * then it is given preference over beaconStruct
- *
- ***NOTE:
- *
- * @param  mac Pointer to Global MAC structure
- *              pAssocRsp    contains the structured assoc/reassoc Response got from AP
- *              beaconstruct        Has the ProbeRsp/Beacon structured details
- *              bssDescription      bssDescription passed to PE from the SME
- * @return None
- */
-
 QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,
 				   struct bss_description *bssDescription,
 				   uint8_t updateEntry, struct pe_session *pe_session)
 {
-	struct scheduler_msg msgQ = {0};
 	struct bss_params *pAddBssParams = NULL;
 	uint32_t retCode;
 	tpDphHashNode sta = NULL;
@@ -4062,36 +4035,22 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	if (lim_is_fils_connection(pe_session))
 		pAddBssParams->no_ptk_4_way = true;
 
-	msgQ.type = WMA_ADD_BSS_REQ;
-	/** @ToDo : Update the Global counter to keeptrack of the PE <--> HAL messages*/
-	msgQ.reserved = 0;
-	msgQ.bodyptr = pAddBssParams;
-	msgQ.bodyval = 0;
-
-	pe_debug("SessionId: %d Sending WMA_ADD_BSS_REQ",
-		pe_session->peSessionId);
-	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
-
-	retCode = wma_post_ctrl_msg(mac, &msgQ);
-	if (QDF_STATUS_SUCCESS != retCode) {
+	retCode = wma_send_peer_assoc_req(pAddBssParams);
+	if (QDF_IS_STATUS_ERROR(retCode)) {
 		SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 		qdf_mem_free(pAddBssParams);
-		pe_err("Posting ADD_BSS_REQ to HAL failed, reason=%X",
-			retCode);
-		goto returnFailure;
-
-	} else
-		return retCode;
+		pe_err("wma_send_peer_assoc_req failed=%X",
+		       retCode);
+	}
 
 returnFailure:
 	/* Clean-up will be done by the caller... */
 	return retCode;
 }
 
-QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updateEntry,
-					     struct pe_session *pe_session)
+QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
+					  struct pe_session *pe_session)
 {
-	struct scheduler_msg msgQ = {0};
 	struct bss_params *pAddBssParams = NULL;
 	uint32_t retCode;
 	tSchBeaconStruct *pBeaconStruct;
@@ -4130,8 +4089,8 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	/* Fill in struct bss_params self_mac_addr */
 	qdf_mem_copy(pAddBssParams->self_mac_addr,
 		     pe_session->self_mac_addr, sizeof(tSirMacAddr));
-	pe_debug("sessionid: %d updateEntry = %d limsystemrole = %d",
-		pe_session->smeSessionId, updateEntry,
+	pe_debug("sessionid: %d limsystemrole = %d",
+		 pe_session->smeSessionId,
 		GET_LIM_SYSTEM_ROLE(pe_session));
 
 	pe_debug("BSSID: " QDF_MAC_ADDR_STR,
@@ -4147,7 +4106,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	pAddBssParams->beaconInterval = bssDescription->beaconInterval;
 
 	pAddBssParams->dtimPeriod = pBeaconStruct->tim.dtimPeriod;
-	pAddBssParams->updateBss = updateEntry;
+	pAddBssParams->updateBss = false;
 
 	pAddBssParams->cfParamSet.cfpCount = pBeaconStruct->cfParamSet.cfpCount;
 	pAddBssParams->cfParamSet.cfpPeriod =
@@ -4271,7 +4230,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	pAddBssParams->staContext.maxSPLen = 0;
 	pAddBssParams->staContext.shortPreambleSupported =
 		(uint8_t) pBeaconStruct->capabilityInfo.shortPreamble;
-	pAddBssParams->staContext.updateSta = updateEntry;
+	pAddBssParams->staContext.updateSta = false;
 
 	pe_debug("StaCtx: " QDF_MAC_ADDR_STR " shortPreamble: %d",
 			QDF_MAC_ADDR_ARRAY(pAddBssParams->staContext.staMac),
@@ -4490,9 +4449,6 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 		pAddBssParams->bSpectrumMgtEnabled, pAddBssParams->halPersona,
 		pe_session->limMlmState);
 
-	/* we need to defer the message until we get the response back from HAL. */
-	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
-
 	if (cds_is_5_mhz_enabled()) {
 		pAddBssParams->ch_width = CH_WIDTH_5MHZ;
 		pAddBssParams->staContext.ch_width = CH_WIDTH_5MHZ;
@@ -4504,28 +4460,10 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	if (lim_is_fils_connection(pe_session))
 		pAddBssParams->no_ptk_4_way = true;
 
-	msgQ.type = WMA_ADD_BSS_REQ;
-	/** @ToDo : Update the Global counter to keeptrack of the PE <--> HAL messages*/
-	msgQ.reserved = 0;
-	msgQ.bodyptr = pAddBssParams;
-	msgQ.bodyval = 0;
-
-	pe_debug("SessionId:%d Sending WMA_ADD_BSS_REQ",
-		pe_session->peSessionId);
-	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
-
-	retCode = wma_post_ctrl_msg(mac, &msgQ);
-	if (QDF_STATUS_SUCCESS != retCode) {
-		SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-		qdf_mem_free(pAddBssParams);
-		pe_err("Posting ADD_BSS_REQ to HAL failed, reason=%X",
-			retCode);
-		goto returnFailure;
-
-	} else {
-		qdf_mem_free(pBeaconStruct);
-		return retCode;
-	}
+	pAddBssParams->status = wma_pre_assoc_req(pAddBssParams);
+	lim_process_sta_add_bss_rsp_pre_assoc(mac, pAddBssParams, pe_session);
+	qdf_mem_free(pAddBssParams);
+	retCode = QDF_STATUS_SUCCESS;
 
 returnFailure:
 	/* Clean-up will be done by the caller... */

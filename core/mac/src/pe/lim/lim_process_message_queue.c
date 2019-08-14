@@ -1630,7 +1630,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	uint8_t i;
 	struct pe_session *session_entry = NULL;
 	uint8_t defer_msg = false;
-	tLinkStateParams *link_state_param;
 	uint16_t pkt_len = 0;
 	cds_pkt_t *body_ptr = NULL;
 	QDF_STATUS qdf_status;
@@ -1966,24 +1965,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		break;
 	case WMA_AGGR_QOS_RSP:
 		lim_process_ft_aggr_qos_rsp(mac_ctx, msg);
-		break;
-	case WMA_SET_LINK_STATE_RSP:
-		link_state_param = (tLinkStateParams *) msg->bodyptr;
-		session_entry = link_state_param->session;
-		if (link_state_param->ft
-#if defined WLAN_FEATURE_ROAM_OFFLOAD
-			&& !session_entry->bRoamSynchInProgress
-#endif
-		)
-			lim_send_reassoc_req_with_ft_ies_mgmt_frame(mac_ctx,
-				session_entry->pLimMlmReassocReq,
-				session_entry);
-		if (link_state_param->callback)
-			link_state_param->callback(mac_ctx,
-				link_state_param->callbackArg,
-				link_state_param->status);
-		qdf_mem_free((void *)(msg->bodyptr));
-		msg->bodyptr = NULL;
 		break;
 	case WMA_RX_CHN_STATUS_EVENT:
 		lim_process_rx_channel_status_event(mac_ctx, msg->bodyptr);

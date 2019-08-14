@@ -770,30 +770,6 @@ typedef struct {
 	tSirMacSSid ssid;
 } tSwitchChannelParams, *tpSwitchChannelParams;
 
-typedef void (*tpSetLinkStateCallback)(struct mac_context *mac, void *msgParam,
-		bool status);
-
-/**
- * struct tLinkStateParams - link state parameters
- * @bssid: BSSID
- * @self_mac_addr: self mac address
- * @state: link state
- * @callback: callback function pointer
- * @callbackArg: callback argument
- * @session: session context
- */
-typedef struct sLinkStateParams {
-	/* SIR_HAL_SET_LINK_STATE */
-	tSirMacAddr bssid;
-	tSirMacAddr self_mac_addr;
-	tSirLinkState state;
-	tpSetLinkStateCallback callback;
-	void *callbackArg;
-	int ft;
-	void *session;
-	bool status;
-} tLinkStateParams, *tpLinkStateParams;
-
 /**
  * struct tEdcaParams - EDCA parameters
  * @bss_idx: BSSID index
