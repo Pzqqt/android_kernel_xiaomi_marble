@@ -584,9 +584,9 @@ static QDF_STATUS nan_handle_confirm(
 				return status;
 			}
 
-			status = policy_mgr_current_connections_update(psoc,
-					   vdev_id, channel,
-					   POLICY_MGR_UPDATE_REASON_NDP_UPDATE);
+			status = policy_mgr_current_connections_update(
+				psoc, vdev_id, wlan_chan_to_freq(channel),
+				POLICY_MGR_UPDATE_REASON_NDP_UPDATE);
 			if (QDF_STATUS_E_FAILURE == status) {
 				nan_err("connections update failed!!");
 				return status;
@@ -1042,7 +1042,8 @@ bool nan_is_enable_allowed(struct wlan_objmgr_psoc *psoc, uint8_t nan_chan)
 	}
 
 	return (NAN_DISC_DISABLED == nan_get_discovery_state(psoc) &&
-		policy_mgr_allow_concurrency(psoc, PM_NAN_DISC_MODE, nan_chan,
+		policy_mgr_allow_concurrency(psoc, PM_NAN_DISC_MODE,
+					     wlan_chan_to_freq(nan_chan),
 					     HW_MODE_20_MHZ));
 }
 
@@ -1089,8 +1090,8 @@ QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
 		goto pre_enable_failure;
 	}
 
-	if (!policy_mgr_nan_sap_pre_enable_conc_check(psoc, PM_NAN_DISC_MODE,
-						      nan_social_channel)) {
+	if (!policy_mgr_nan_sap_pre_enable_conc_check(
+	    psoc, PM_NAN_DISC_MODE, wlan_chan_to_freq(nan_social_channel))) {
 		nan_debug("NAN not enabled due to concurrency constraints");
 		status = QDF_STATUS_E_INVAL;
 		goto pre_enable_failure;
@@ -1106,9 +1107,9 @@ QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
 	vdev_id = wlan_vdev_get_id(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 
-	status = policy_mgr_update_and_wait_for_connection_update(psoc,	vdev_id,
-					nan_social_channel,
-					POLICY_MGR_UPDATE_REASON_NAN_DISCOVERY);
+	status = policy_mgr_update_and_wait_for_connection_update(
+			psoc, vdev_id, wlan_chan_to_freq(nan_social_channel),
+			POLICY_MGR_UPDATE_REASON_NAN_DISCOVERY);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_err("Failed to set or wait for HW mode change");
 		goto pre_enable_failure;

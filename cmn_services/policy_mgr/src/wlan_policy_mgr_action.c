@@ -369,7 +369,7 @@ QDF_STATUS policy_mgr_update_connection_info(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS policy_mgr_update_and_wait_for_connection_update_int(
+QDF_STATUS policy_mgr_update_and_wait_for_connection_update(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t session_id,
 		uint32_t ch_freq,
@@ -384,7 +384,7 @@ QDF_STATUS policy_mgr_update_and_wait_for_connection_update_int(
 	if (QDF_IS_STATUS_ERROR(status))
 		policy_mgr_err("clearing event failed");
 
-	status = policy_mgr_current_connections_update_int(
+	status = policy_mgr_current_connections_update(
 			psoc, session_id, ch_freq, reason);
 	if (QDF_STATUS_E_FAILURE == status) {
 		policy_mgr_err("connections update failed");
@@ -888,11 +888,10 @@ policy_mgr_get_next_action(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
-policy_mgr_current_connections_update_int(struct wlan_objmgr_psoc *psoc,
-					  uint32_t session_id,
-					  uint32_t ch_freq,
-					  enum policy_mgr_conn_update_reason
-					  reason)
+policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
+				      uint32_t session_id, uint32_t ch_freq,
+				      enum policy_mgr_conn_update_reason
+				      reason)
 {
 	enum policy_mgr_conc_next_action next_action = PM_NOP;
 	QDF_STATUS status;
@@ -1227,8 +1226,8 @@ policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		policy_mgr_err("clearing event failed");
 
-	status = policy_mgr_current_connections_update_int(psoc, session_id,
-							   ch_freq, reason);
+	status = policy_mgr_current_connections_update(psoc, session_id,
+						       ch_freq, reason);
 	if (QDF_STATUS_E_FAILURE == status) {
 		policy_mgr_err("connections update failed");
 		return status;
@@ -1526,9 +1525,9 @@ bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk_int(struct wlan_objmgr_psoc *psoc,
 }
 
 bool
-policy_mgr_nan_sap_pre_enable_conc_check_int(struct wlan_objmgr_psoc *psoc,
-					     enum policy_mgr_con_mode mode,
-					     uint32_t ch_freq)
+policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
+					 enum policy_mgr_con_mode mode,
+					 uint32_t ch_freq)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t sap_freq, nan_2g_freq, nan_5g_freq;
@@ -2402,7 +2401,7 @@ chk_opportunistic_timer:
 	return status;
 }
 
-void policy_mgr_checkn_update_hw_mode_single_mac_mode_int(
+void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 		struct wlan_objmgr_psoc *psoc, uint32_t ch_freq)
 {
 	uint8_t i;
@@ -2559,7 +2558,7 @@ ret_value:
 }
 
 #ifdef MPC_UT_FRAMEWORK
-QDF_STATUS policy_mgr_update_connection_info_utfw_int(
+QDF_STATUS policy_mgr_update_connection_info_utfw(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
@@ -2601,7 +2600,7 @@ QDF_STATUS policy_mgr_update_connection_info_utfw_int(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS policy_mgr_incr_connection_count_utfw_int(
+QDF_STATUS policy_mgr_incr_connection_count_utfw(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
