@@ -1026,6 +1026,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	uint16_t sap_cfreq = 0;
 	uint16_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq, sap_cch = 0;
 	QDF_STATUS status;
+	uint32_t intf_ch_freq;
 
 	sme_debug("sap_ch: %d sap_phymode: %d", sap_ch, sap_phymode);
 
@@ -1125,22 +1126,23 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			    QDF_MCC_TO_SCC_WITH_PREFERRED_BAND)
 				intf_ch = 0;
 		} else if (cc_switch_mode ==
-			QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
-			status =
-				policy_mgr_get_sap_mandatory_channel(
-				mac_ctx->psoc,
-				&intf_ch);
+			   QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
+			status = policy_mgr_get_sap_mandatory_channel(
+					mac_ctx->psoc,
+					&intf_ch_freq);
 			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
+			intf_ch = wlan_freq_to_chan(intf_ch_freq);
 		}
 	} else if ((intf_ch == sap_ch) && (cc_switch_mode ==
 				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)) {
 		if (cds_chan_to_band(intf_ch) == CDS_BAND_2GHZ) {
 			status =
 				policy_mgr_get_sap_mandatory_channel(
-					mac_ctx->psoc, &intf_ch);
+					mac_ctx->psoc, &intf_ch_freq);
 			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
+			intf_ch = wlan_freq_to_chan(intf_ch_freq);
 		}
 	}
 

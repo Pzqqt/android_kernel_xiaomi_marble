@@ -330,10 +330,9 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	 * connection update should result in DBS mode
 	 */
 	status = policy_mgr_update_and_wait_for_connection_update(
-					hdd_ctx->psoc,
-					ap_adapter->vdev_id,
-					pre_cac_chan,
-					POLICY_MGR_UPDATE_REASON_PRE_CAC);
+			hdd_ctx->psoc, ap_adapter->vdev_id,
+			wlan_chan_to_freq(pre_cac_chan),
+			POLICY_MGR_UPDATE_REASON_PRE_CAC);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("error in moving to DBS mode");
 		goto stop_close_pre_cac_adapter;

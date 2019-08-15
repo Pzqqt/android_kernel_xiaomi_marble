@@ -814,10 +814,9 @@ validation_done:
 		 */
 		qdf_status =
 		policy_mgr_update_and_wait_for_connection_update(
-				mac_ctx->psoc,
-				sap_context->sessionId,
-				sap_ch,
-				POLICY_MGR_UPDATE_REASON_START_AP);
+			mac_ctx->psoc, sap_context->sessionId,
+			sap_context->chan_freq,
+			POLICY_MGR_UPDATE_REASON_START_AP);
 		if (QDF_IS_STATUS_ERROR(qdf_status))
 			return qdf_status;
 	}

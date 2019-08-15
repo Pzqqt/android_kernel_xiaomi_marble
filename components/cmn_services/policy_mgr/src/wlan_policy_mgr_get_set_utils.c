@@ -2380,10 +2380,10 @@ done:
 	return status;
 }
 
-bool policy_mgr_allow_concurrency_int(struct wlan_objmgr_psoc *psoc,
-				      enum policy_mgr_con_mode mode,
-				      uint32_t ch_freq,
-				      enum hw_mode_bandwidth bw)
+bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
+				  enum policy_mgr_con_mode mode,
+				  uint32_t ch_freq,
+				  enum hw_mode_bandwidth bw)
 {
 	QDF_STATUS status;
 	struct policy_mgr_pcl_list pcl;
@@ -2410,12 +2410,11 @@ bool policy_mgr_allow_concurrency_int(struct wlan_objmgr_psoc *psoc,
 	return allowed;
 }
 
-bool  policy_mgr_allow_concurrency_csa_int(struct wlan_objmgr_psoc *psoc,
-					   enum policy_mgr_con_mode mode,
-					   uint32_t ch_freq,
-					   uint32_t vdev_id,
-					   bool forced,
-					   enum sap_csa_reason_code reason)
+bool
+policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
+				 enum policy_mgr_con_mode mode,
+				 uint32_t ch_freq, uint32_t vdev_id,
+				 bool forced, enum sap_csa_reason_code reason)
 {
 	bool allow = false;
 	struct policy_mgr_conc_connection_info
@@ -2468,8 +2467,8 @@ bool  policy_mgr_allow_concurrency_csa_int(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_store_and_del_conn_info_by_vdev_id(
 			psoc, vdev_id, info, &num_cxn_del);
 
-	allow = policy_mgr_allow_concurrency_int(psoc, mode, ch_freq,
-						 HW_MODE_20_MHZ);
+	allow = policy_mgr_allow_concurrency(psoc, mode, ch_freq,
+					     HW_MODE_20_MHZ);
 	/* Restore the connection entry */
 	if (num_cxn_del > 0)
 		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
@@ -2516,7 +2515,7 @@ uint32_t policy_mgr_get_concurrency_mode(struct wlan_objmgr_psoc *psoc)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_get_channel_from_scan_result_int(
+QDF_STATUS policy_mgr_get_channel_from_scan_result(
 		struct wlan_objmgr_psoc *psoc,
 		void *roam_profile, uint32_t *ch_freq)
 {
@@ -2608,7 +2607,7 @@ uint32_t policy_mgr_search_and_check_for_session_conc(
 	} else
 		return ch_freq;
 
-	status = policy_mgr_get_channel_from_scan_result_int(
+	status = policy_mgr_get_channel_from_scan_result(
 			psoc, roam_profile, &ch_freq);
 	if (QDF_STATUS_SUCCESS != status || ch_freq == 0) {
 		policy_mgr_err("%s error %d %d",
@@ -2617,8 +2616,8 @@ uint32_t policy_mgr_search_and_check_for_session_conc(
 	}
 
 	/* Take care of 160MHz and 80+80Mhz later */
-	ret = policy_mgr_allow_concurrency_int(psoc, mode, ch_freq,
-					       HW_MODE_20_MHZ);
+	ret = policy_mgr_allow_concurrency(psoc, mode, ch_freq,
+					   HW_MODE_20_MHZ);
 	if (false == ret) {
 		policy_mgr_err("Connection failed due to conc check fail");
 		return 0;
@@ -2727,8 +2726,7 @@ bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* Take care of 160MHz and 80+80Mhz later */
-	ret = policy_mgr_allow_concurrency_int(psoc, mode, ch_freq,
-					       HW_MODE_20_MHZ);
+	ret = policy_mgr_allow_concurrency(psoc, mode, ch_freq, HW_MODE_20_MHZ);
 	if (false == ret) {
 		policy_mgr_err("Connection failed due to conc check fail");
 		return 0;

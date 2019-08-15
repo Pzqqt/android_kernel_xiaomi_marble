@@ -9775,7 +9775,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	int ret = 0;
 	enum policy_mgr_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_MAX + 1];
-	uint32_t channel_hint;
+	uint32_t ch_freq, channel_hint;
 
 	hdd_enter_dev(ndev);
 
@@ -9809,12 +9809,12 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	channel_hint = cds_freq_to_chan(nla_get_u32(tb
-			[QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_FREQ]));
-
+	ch_freq = nla_get_u32(tb[
+			      QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_FREQ]);
+	channel_hint = cds_freq_to_chan(ch_freq);
 	/* check pcl table */
 	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc, intf_mode,
-					channel_hint, HW_MODE_20_MHZ)) {
+					  ch_freq, HW_MODE_20_MHZ)) {
 		hdd_err("Set channel hint failed due to concurrency check");
 		return -EINVAL;
 	}
@@ -17613,6 +17613,7 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	struct hdd_hostapd_state *hostapd_state;
 	uint8_t channel = 0;
 	QDF_STATUS status;
+	uint32_t ch_freq;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -17658,8 +17659,9 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	 * find out by looking in to scan cache where sta is going to
 	 * connect by passing its roam_profile.
 	 */
-	status = policy_mgr_get_channel_from_scan_result(hdd_ctx->psoc,
-			roam_profile, &channel);
+	status = policy_mgr_get_channel_from_scan_result(
+			hdd_ctx->psoc, roam_profile, &ch_freq);
+	channel = wlan_freq_to_chan(ch_freq);
 
 	/*
 	 * If the STA's channel is 2.4 GHz, then set pcl with only 2.4 GHz
@@ -19507,8 +19509,10 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	/* Disable NAN Discovery if enabled */
 	ucfg_nan_disable_concurrency(hdd_ctx->psoc);
 
-	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
-		PM_IBSS_MODE, channelNum, HW_MODE_20_MHZ)) {
+	if (!policy_mgr_allow_concurrency(
+	    hdd_ctx->psoc, PM_IBSS_MODE,
+	    wlan_reg_chan_to_freq(hdd_ctx->pdev, channelNum),
+	    HW_MODE_20_MHZ)) {
 		hdd_err("This concurrency combination is not allowed");
 		return -ECONNREFUSED;
 	}
@@ -19517,9 +19521,10 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("qdf_reset_connection_update failed status: %d", status);
 
-	status = policy_mgr_current_connections_update(hdd_ctx->psoc,
-					adapter->vdev_id, channelNum,
-					POLICY_MGR_UPDATE_REASON_JOIN_IBSS);
+	status = policy_mgr_current_connections_update(
+			hdd_ctx->psoc, adapter->vdev_id,
+			wlan_reg_chan_to_freq(hdd_ctx->pdev, channelNum),
+			POLICY_MGR_UPDATE_REASON_JOIN_IBSS);
 	if (QDF_STATUS_E_FAILURE == status) {
 		hdd_err("connections update failed!!");
 		return -EINVAL;
@@ -20396,7 +20401,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 		if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 				adapter->device_mode),
-				req->channel->hw_value, HW_MODE_20_MHZ)) {
+				req->channel->center_freq, HW_MODE_20_MHZ)) {
 			hdd_warn("This concurrency combination is not allowed");
 			status = -ECONNREFUSED;
 			goto con_chk_failed;
@@ -22680,8 +22685,9 @@ int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("clearing event failed");
 
-	status = policy_mgr_current_connections_update(hdd_ctx->psoc,
-			adapter->vdev_id, channel, reason);
+	status = policy_mgr_current_connections_update(
+			hdd_ctx->psoc, adapter->vdev_id,
+			wlan_chan_to_freq(channel), reason);
 	switch (status) {
 	case QDF_STATUS_E_FAILURE:
 		/*

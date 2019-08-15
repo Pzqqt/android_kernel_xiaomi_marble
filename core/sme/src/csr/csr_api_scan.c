@@ -1170,9 +1170,10 @@ static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 		csr_scan_handle_search_for_ssid_failure(mac_ctx, session_id);
 		break;
 	case eCsrNextCheckAllowConc:
-		ret = policy_mgr_current_connections_update(mac_ctx->psoc,
-					session_id, chan,
-					POLICY_MGR_UPDATE_REASON_HIDDEN_STA);
+		ret = policy_mgr_current_connections_update(
+				mac_ctx->psoc, session_id,
+				wlan_chan_to_freq(chan),
+				POLICY_MGR_UPDATE_REASON_HIDDEN_STA);
 		sme_debug("chan: %d session: %d status: %d",
 					chan, session_id, ret);
 

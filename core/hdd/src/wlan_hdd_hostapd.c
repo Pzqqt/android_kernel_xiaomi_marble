@@ -2987,7 +2987,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 				hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
-				target_channel,
+				wlan_chan_to_freq(target_channel),
 				adapter->vdev_id,
 				forced,
 				sap_ctx->csa_reason)) {
@@ -6323,15 +6323,15 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 
 	/* NDI + SAP not supported */
 	ucfg_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc, true);
-	if (!policy_mgr_nan_sap_pre_enable_conc_check(hdd_ctx->psoc,
-						      PM_SAP_MODE, channel))
+	if (!policy_mgr_nan_sap_pre_enable_conc_check(
+	    hdd_ctx->psoc, PM_SAP_MODE, wlan_chan_to_freq(channel)))
 		hdd_debug("NAN disabled due to concurrency constraints");
 
 	/* check if concurrency is allowed */
 	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 				adapter->device_mode),
-				channel,
+				wlan_chan_to_freq(channel),
 				channel_width)) {
 		hdd_err("Connection failed due to concurrency check failure");
 		return -EINVAL;
@@ -6354,15 +6354,16 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	 * back to single MAC 2x2 (if initial was 2x2).
 	 */
 
-	policy_mgr_checkn_update_hw_mode_single_mac_mode(hdd_ctx->psoc,
-							 channel);
+	policy_mgr_checkn_update_hw_mode_single_mac_mode(
+		hdd_ctx->psoc, wlan_chan_to_freq(channel));
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to stop DBS opportunistic timer");
 		return -EINVAL;
 	}
 
-	status = policy_mgr_current_connections_update(hdd_ctx->psoc,
-			adapter->vdev_id, channel,
+	status = policy_mgr_current_connections_update(
+			hdd_ctx->psoc, adapter->vdev_id,
+			wlan_chan_to_freq(channel),
 			POLICY_MGR_UPDATE_REASON_START_AP);
 	if (status == QDF_STATUS_E_FAILURE) {
 		hdd_err("ERROR: connections update failed!!");

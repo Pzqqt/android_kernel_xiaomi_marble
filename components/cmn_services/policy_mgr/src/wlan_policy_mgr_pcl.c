@@ -2265,8 +2265,7 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS policy_mgr_get_sap_mandatory_channel_int(
-						struct wlan_objmgr_psoc *psoc,
+QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 						uint32_t *ch_freq)
 {
 	QDF_STATUS status;
