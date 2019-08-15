@@ -2461,8 +2461,8 @@ end:
 	return status;
 }
 
-bool policy_mgr_disallow_mcc_int(struct wlan_objmgr_psoc *psoc,
-				 uint32_t ch_freq)
+bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
+			     uint32_t ch_freq)
 {
 	uint32_t index = 0;
 	bool match = false;
@@ -3181,8 +3181,8 @@ QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
 	return QDF_STATUS_SUCCESS;
 }
 
-void policy_mgr_add_sap_mandatory_chan_int(struct wlan_objmgr_psoc *psoc,
-					   uint32_t ch_freq)
+void policy_mgr_add_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
+				       uint32_t ch_freq)
 {
 	int i;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -3249,8 +3249,8 @@ void  policy_mgr_init_sap_mandatory_2g_chan(struct wlan_objmgr_psoc *psoc)
 	}
 }
 
-void policy_mgr_remove_sap_mandatory_chan_int(struct wlan_objmgr_psoc *psoc,
-					      uint32_t ch_freq)
+void policy_mgr_remove_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
+					  uint32_t ch_freq)
 {
 	uint32_t ch_freq_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t num_chan = 0;

@@ -512,8 +512,8 @@ bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
 	return false;
 }
 
-bool policy_mgr_is_hwmode_set_for_given_chnl_int(struct wlan_objmgr_psoc *psoc,
-						 uint32_t ch_freq)
+bool policy_mgr_is_hwmode_set_for_given_chnl(struct wlan_objmgr_psoc *psoc,
+					     uint32_t ch_freq)
 {
 	enum policy_mgr_band band;
 	bool is_hwmode_dbs, is_2x2_dbs;
@@ -1237,7 +1237,7 @@ policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void policy_mgr_update_user_config_sap_chan_int(
+void policy_mgr_update_user_config_sap_chan(
 			struct wlan_objmgr_psoc *psoc, uint32_t ch_freq)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1292,8 +1292,8 @@ static bool policy_mgr_is_restart_sap_allowed(
 	return false;
 }
 
-bool policy_mgr_is_safe_channel_int(struct wlan_objmgr_psoc *psoc,
-				    uint32_t ch_freq)
+bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
+				uint32_t ch_freq)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	bool is_safe = true;
@@ -1322,7 +1322,7 @@ bool policy_mgr_is_safe_channel_int(struct wlan_objmgr_psoc *psoc,
 	return is_safe;
 }
 
-bool policy_mgr_is_sap_restart_required_after_sta_disconnect_int(
+bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 			struct wlan_objmgr_psoc *psoc,
 			uint32_t sap_vdev_id, uint32_t *intf_ch_freq)
 {
@@ -1389,7 +1389,7 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect_int(
 			break;
 		}
 		if (sta_sap_scc_on_lte_coex_chan &&
-		    !policy_mgr_is_safe_channel_int(psoc, op_ch_freq_list[i])) {
+		    !policy_mgr_is_safe_channel(psoc, op_ch_freq_list[i])) {
 			sap_vdev_id = vdev_id[i];
 			curr_sap_freq = op_ch_freq_list[i];
 			policy_mgr_debug("sta_sap_scc_on_lte_coex_chan %u unsafe sap_ch_freq %u",
@@ -1421,7 +1421,7 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect_int(
 		if (!wlan_reg_is_same_band_freqs(
 				curr_sap_freq, pcl_channels[i]))
 			continue;
-		if (!policy_mgr_is_safe_channel_int(psoc, pcl_channels[i]) ||
+		if (!policy_mgr_is_safe_channel(psoc, pcl_channels[i]) ||
 		    wlan_reg_is_dfs_for_freq(pm_ctx->pdev, pcl_channels[i]))
 			continue;
 		new_sap_freq = pcl_channels[i];
@@ -1456,7 +1456,7 @@ static bool
 policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(struct policy_mgr_psoc_priv_obj
 					    *pm_ctx, uint32_t ch_freq)
 {
-	if (policy_mgr_is_safe_channel_int(pm_ctx->psoc, ch_freq) ||
+	if (policy_mgr_is_safe_channel(pm_ctx->psoc, ch_freq) ||
 	    pm_ctx->cfg.nan_sap_scc_on_lte_coex_chnl)
 		return true;
 
@@ -1476,8 +1476,8 @@ static void policy_mgr_nan_disable_work(void *data)
 	ucfg_nan_disable_concurrency(psoc);
 }
 
-bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk_int(struct wlan_objmgr_psoc *psoc,
-						 uint32_t sap_freq)
+bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk(struct wlan_objmgr_psoc *psoc,
+					     uint32_t sap_freq)
 {
 	uint32_t nan_2g_freq, nan_5g_freq;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1697,7 +1697,7 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc)
 			break;
 		}
 	}
-	if (sap_freq == 0 || policy_mgr_is_safe_channel_int(psoc, sap_freq))
+	if (sap_freq == 0 || policy_mgr_is_safe_channel(psoc, sap_freq))
 		return;
 
 	sap_freq = policy_mgr_get_nondfs_preferred_channel(psoc, PM_SAP_MODE,
@@ -1853,7 +1853,7 @@ static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
 	     !sta_sap_scc_on_dfs_chan) ||
 	    wlan_reg_is_passive_or_disable_for_freq(
 	    pm_ctx->pdev, sta_ch_freq) ||
-	    !policy_mgr_is_safe_channel_int(psoc, sta_ch_freq)) {
+	    !policy_mgr_is_safe_channel(psoc, sta_ch_freq)) {
 		if (policy_mgr_is_hw_dbs_capable(psoc))
 			return true;
 		else
@@ -1863,7 +1863,7 @@ static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
 		return true;
 }
 
-QDF_STATUS policy_mgr_valid_sap_conc_channel_check_int(
+QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	struct wlan_objmgr_psoc *psoc, uint32_t *con_ch_freq,
 	uint32_t sap_ch_freq, uint8_t sap_vdev_id)
 {
@@ -1907,7 +1907,7 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check_int(
 		    wlan_reg_is_passive_or_disable_for_freq(pm_ctx->pdev,
 							    ch_freq) ||
 		    !(policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc) ||
-		      policy_mgr_is_safe_channel_int(psoc, ch_freq)) ||
+		      policy_mgr_is_safe_channel(psoc, ch_freq)) ||
 		    (!wlan_reg_is_etsi13_srd_chan_allowed_master_mode(
 								pm_ctx->pdev) &&
 		     wlan_reg_is_etsi13_srd_chan_for_freq(pm_ctx->pdev,
@@ -1932,7 +1932,7 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check_int(
 					else
 						ch_freq = PM_5_GHZ_CH_FREQ_36;
 				}
-				if (!policy_mgr_is_safe_channel_int(
+				if (!policy_mgr_is_safe_channel(
 					psoc, ch_freq)) {
 					policy_mgr_warn("Can't have concurrency on %d as it is not safe",
 							*con_ch_freq);
@@ -1988,7 +1988,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	 * enabled on unsafe channel then move the SAP to safe channel
 	 * as soon as STA disconnected.
 	 */
-	if (policy_mgr_is_sap_restart_required_after_sta_disconnect_int(
+	if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
 					psoc, INVALID_VDEV_ID, &sap_freq)) {
 		policy_mgr_debug("move the SAP to configured channel %u",
 				 sap_freq);
@@ -2323,7 +2323,7 @@ done:
 	return status;
 }
 
-QDF_STATUS policy_mgr_check_and_set_hw_mode_for_channel_switch_int(
+QDF_STATUS policy_mgr_check_and_set_hw_mode_for_channel_switch(
 		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		uint32_t ch_freq, enum policy_mgr_conn_update_reason reason)
 {
