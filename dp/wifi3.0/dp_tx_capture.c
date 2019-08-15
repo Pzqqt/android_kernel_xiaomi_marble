@@ -32,6 +32,27 @@
 #include "dp_tx_capture.h"
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
+/**
+ * dp_peer_or_pdev_tx_cap_enabled - Returns status of tx_cap_enabled
+ * based on global per-pdev setting or per-peer setting
+ * @pdev: Datapath pdev handle
+ * @peer: Datapath peer
+ *
+ * Return: true if feature is enabled on a per-pdev basis or if
+ * enabled for the given peer when per-peer mode is set, false otherwise
+ */
+inline bool
+dp_peer_or_pdev_tx_cap_enabled(struct dp_pdev *pdev,
+			       struct dp_peer *peer)
+{
+	if ((pdev->tx_capture_enabled ==
+	     CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS) ||
+	    ((pdev->tx_capture_enabled ==
+	      CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER) &&
+	     peer->tx_cap_enabled))
+		return true;
+	return false;
+}
 
 /*
  * dp_peer_tid_queue_init() – Initialize ppdu stats queue per TID
@@ -120,11 +141,14 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 		dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
 				     nbuf, HTT_INVALID_PEER,
 				     WDI_NO_VAL, pdev->pdev_id);
-	} else if (pdev->tx_capture_enabled) {
+		return;
+	}
+	if (pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS ||
+	    pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER) {
 		/* invoke WDI event handler here send mgmt pkt here */
+
 		/* pull ppdu_id from the packet */
 		qdf_nbuf_pull_head(nbuf, sizeof(uint32_t));
-
 		tx_capture_info.frame_payload = 1;
 		tx_capture_info.mpdu_nbuf = nbuf;
 
@@ -300,7 +324,7 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 {
 	int ret = QDF_STATUS_E_FAILURE;
 
-	if (desc->pdev->tx_capture_enabled == 1 &&
+	if (desc->pdev->tx_capture_enabled != CDP_TX_ENH_CAPTURE_DISABLED &&
 	    ts->status == HAL_TX_TQM_RR_FRAME_ACKED) {
 		ret = dp_update_msdu_to_list(soc, desc->pdev,
 					     peer, ts, desc->nbuf);
@@ -451,13 +475,14 @@ static void  dp_iterate_free_peer_msdu_q(void *pdev_hdl)
  * Return: QDF_STATUS
  */
 QDF_STATUS
-dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, int val)
+dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
 	pdev->tx_capture_enabled = val;
 
-	if (pdev->tx_capture_enabled) {
+	if (pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS ||
+	    pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER) {
 		dp_soc_set_txrx_ring_map_single(pdev->soc);
 		if (!pdev->pktlog_ppdu_stats)
 			dp_h2t_cfg_stats_msg_send(pdev,
@@ -567,13 +592,15 @@ QDF_STATUS dp_tx_print_bitmap(struct dp_pdev *pdev,
 static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 				       struct dp_peer *peer,
 				       void *data,
-				       qdf_nbuf_t nbuf)
+				       qdf_nbuf_t nbuf,
+				       uint16_t ether_type)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct ieee80211_frame *ptr_wh;
 	struct ieee80211_qoscntl *ptr_qoscntl;
 	uint32_t mpdu_buf_len;
 	uint8_t *ptr_hdr;
+	uint16_t eth_type = qdf_htons(ether_type);
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)data;
 	ptr_wh = &peer->tx_capture.tx_wifi_hdr;
@@ -627,9 +654,9 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 	*(ptr_hdr + 3) = 0x00;
 	*(ptr_hdr + 4) = 0x00;
 	*(ptr_hdr + 5) = 0x00;
-	/* TYPE: IPV4 ?? */
-	*(ptr_hdr + 6) = (ETHERTYPE_IPV4 & 0xFF00) >> 8;
-	*(ptr_hdr + 7) = (ETHERTYPE_IPV4 & 0xFF);
+	*(ptr_hdr + 6) = (eth_type & 0xFF00) >> 8;
+	*(ptr_hdr + 7) = (eth_type & 0xFF);
+
 
 	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) - mpdu_buf_len);
 	return 0;
@@ -665,6 +692,8 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 	uint8_t last_msdu = 0;
 	uint32_t frag_list_sum_len = 0;
 	uint8_t first_msdu_not_seen = 1;
+	uint16_t ether_type = 0;
+	qdf_ether_header_t *eh = NULL;
 
 	num_mpdu = ppdu_desc->num_mpdu;
 	mpdu = &ppdu_desc->mpdu_q;
@@ -677,6 +706,10 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 
 		first_msdu = ptr_msdu_info->first_msdu;
 		last_msdu = ptr_msdu_info->last_msdu;
+
+		eh = (qdf_ether_header_t *)(curr_nbuf->data +
+					   sizeof(struct msdu_completion_info));
+		ether_type = eh->ether_type;
 
 		/* pull msdu_completion_info added in pre header */
 		/* pull ethernet header from header */
@@ -702,7 +735,8 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 			}
 
 			dp_tx_update_80211_hdr(pdev, peer,
-					       ppdu_desc, mpdu_nbuf);
+					       ppdu_desc, mpdu_nbuf,
+					       ether_type);
 
 			/* update first buffer to previous buffer */
 			prev_nbuf = curr_nbuf;
@@ -1280,10 +1314,7 @@ void dp_tx_ppdu_stats_process(void *context)
 	uint32_t now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	struct ppdu_info *sched_ppdu_list[SCHED_MAX_PPDU_CNT];
 	qdf_nbuf_t nbuf_ppdu_desc_list[SCHED_MAX_PPDU_CNT];
-	struct dp_pdev_tx_capture *ptr_tx_cap;
-	uint32_t tx_capture = pdev->tx_capture_enabled;
-
-	ptr_tx_cap = &pdev->tx_capture;
+	struct dp_pdev_tx_capture *ptr_tx_cap = &pdev->tx_capture;
 
 	/* Move the PPDU entries to defer list */
 	qdf_spin_lock_bh(&ptr_tx_cap->ppdu_stats_lock);
@@ -1356,7 +1387,8 @@ void dp_tx_ppdu_stats_process(void *context)
 				qdf_nbuf_data(nbuf);
 
 			/* send WDI event */
-			if (!tx_capture) {
+			if (pdev->tx_capture_enabled ==
+			    CDP_TX_ENH_CAPTURE_DISABLED) {
 				/**
 				 * Deliver PPDU stats only for valid (acked)
 				 * data frames if sniffer mode is not enabled.
@@ -1396,7 +1428,7 @@ void dp_tx_ppdu_stats_process(void *context)
 
 			peer = dp_peer_find_by_id(pdev->soc,
 						  ppdu_desc->user[0].peer_id);
-			/*
+			/**
 			 * peer can be NULL
 			 */
 			if (!peer) {
@@ -1404,13 +1436,27 @@ void dp_tx_ppdu_stats_process(void *context)
 				continue;
 			}
 
-			/*
+			/**
 			 * check whether it is bss peer,
 			 * if bss_peer no need to process further
 			 */
-			if (!peer->bss_peer &&
-			    tx_capture &&
-			    (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA) &&
+			if (peer->bss_peer) {
+				dp_peer_unref_del_find_by_id(peer);
+				qdf_nbuf_free(nbuf);
+				continue;
+			}
+
+			/**
+			 * check whether tx_capture feature is enabled
+			 * for this peer or globally for all peers
+			 */
+			if (!dp_peer_or_pdev_tx_cap_enabled(pdev, peer)) {
+				dp_peer_unref_del_find_by_id(peer);
+				qdf_nbuf_free(nbuf);
+				continue;
+			}
+
+			if ((ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA) &&
 			    (!ppdu_desc->user[0].completion_status)) {
 				/* print the bit map */
 				dp_tx_print_bitmap(pdev, ppdu_desc,
@@ -1437,7 +1483,7 @@ dequeue_msdu_again:
 				/*
 				 * retrieve msdu buffer based on ppdu_id & tid
 				 * based msdu queue and store it in local queue
-				 * sometimes, wbm comes late than per ppdu
+				 * sometimes, wbm comes later than per ppdu
 				 * stats. Assumption: all packets are SU,
 				 * and packets comes in order
 				 */
@@ -1508,15 +1554,12 @@ dequeue_msdu_again:
 				nbuf->next =
 				qdf_nbuf_queue_first(&ppdu_desc->mpdu_q);
 			} else if (ppdu_desc->frame_type ==
-				   CDP_PPDU_FTYPE_CTRL &&
-				   tx_capture) {
+				   CDP_PPDU_FTYPE_CTRL) {
 				nbuf->next =
 				qdf_nbuf_queue_first(&ppdu_desc->mpdu_q);
-
 				nbuf_ppdu_desc_list[ppdu_desc_cnt++] = nbuf;
 			} else {
 				qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
-
 				qdf_nbuf_free(nbuf);
 			}
 

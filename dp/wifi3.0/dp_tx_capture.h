@@ -165,7 +165,7 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, int val);
+dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, uint8_t val);
 
 /*
  * dp_deliver_mgmt_frm: Process
