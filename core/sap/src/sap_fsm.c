@@ -764,16 +764,19 @@ sap_validate_chan(struct sap_context *sap_context,
 				  con_ch);
 			if (sap_context->cc_switch_mode !=
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) {
+				uint32_t con_ch_freq;
+
 				if (QDF_IS_STATUS_ERROR(
 					policy_mgr_valid_sap_conc_channel_check(
-						mac_ctx->psoc, &con_ch,
-						sap_ch,
+						mac_ctx->psoc, &con_ch_freq,
+						sap_context->chan_freq,
 						sap_context->sessionId))) {
 					QDF_TRACE(QDF_MODULE_ID_SAP,
 						QDF_TRACE_LEVEL_WARN,
 						FL("SAP can't start (no MCC)"));
 					return QDF_STATUS_E_ABORTED;
 				}
+				con_ch = wlan_freq_to_chan(con_ch_freq);
 			}
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("After check concurrency: con_ch:%d"),
@@ -783,11 +786,11 @@ sap_validate_chan(struct sap_context *sap_context,
 						mac_ctx->psoc);
 			if (con_ch &&
 			    (policy_mgr_sta_sap_scc_on_lte_coex_chan(
-						mac_ctx->psoc) ||
-			     policy_mgr_is_safe_channel(mac_ctx->psoc,
-							con_ch)) &&
-			     (!wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch) ||
-			      sta_sap_scc_on_dfs_chan)) {
+			    mac_ctx->psoc) ||
+			    policy_mgr_is_safe_channel(
+			    mac_ctx->psoc, wlan_chan_to_freq(con_ch))) &&
+			    (!wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch) ||
+			    sta_sap_scc_on_dfs_chan)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_ERROR,
 					"%s: Override ch freq %d to %d due to CC Intf",
@@ -3349,7 +3352,7 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		if (wlan_reg_is_dfs_ch(mac_ctx->pdev,
 		    WLAN_REG_CH_NUM(loop_count)) &&
 		    (policy_mgr_disallow_mcc(mac_ctx->psoc,
-		    WLAN_REG_CH_NUM(loop_count)) ||
+		    WLAN_REG_CH_TO_FREQ(loop_count)) ||
 		    !dfs_master_enable))
 			continue;
 

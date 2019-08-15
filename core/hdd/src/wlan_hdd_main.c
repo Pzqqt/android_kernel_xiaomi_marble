@@ -9311,10 +9311,12 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 		 * is set, no need to move SAP.
 		 */
 		if ((policy_mgr_is_sta_sap_scc(
-		     hdd_ctxt->psoc, ap_chan) &&
-		     scc_on_lte_coex) ||
-		     policy_mgr_nan_sap_scc_on_unsafe_ch_chk(
-		     hdd_ctxt->psoc, ap_chan)) {
+		    hdd_ctxt->psoc,
+		    adapter->session.ap.operating_chan_freq) &&
+		    scc_on_lte_coex) ||
+		    policy_mgr_nan_sap_scc_on_unsafe_ch_chk(
+		    hdd_ctxt->psoc,
+		    adapter->session.ap.operating_chan_freq)) {
 			hdd_debug("SAP allowed in unsafe SCC channel");
 		} else {
 			for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {

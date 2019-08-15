@@ -1308,8 +1308,9 @@ static uint32_t set_second_connection_operating_channel(
 {
 	uint8_t operating_channel;
 
-	operating_channel = policy_mgr_get_mcc_operating_channel(
-		hdd_ctx->psoc, vdev_id);
+	operating_channel = wlan_freq_to_chan(
+				policy_mgr_get_mcc_operating_channel(
+				hdd_ctx->psoc, vdev_id));
 
 	if (operating_channel == 0) {
 		hdd_err("Second adapter operating channel is invalid");

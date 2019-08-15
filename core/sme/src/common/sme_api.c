@@ -14906,9 +14906,9 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		 * reject the candidate with MBO reason code 5.
 		 */
 		if (policy_mgr_is_safe_channel(mac_ctx->psoc,
-		    conn_bss_chan_id) &&
+		    wlan_chan_to_freq(conn_bss_chan_id)) &&
 		    !(policy_mgr_is_safe_channel(mac_ctx->psoc,
-		    bss_chan_id))) {
+		    wlan_chan_to_freq(bss_chan_id)))) {
 			sme_err("High interference expected if transitioned to BSS "
 				QDF_MAC_ADDR_STR" hence reject",
 				QDF_MAC_ADDR_ARRAY(bss_desc->bssId));

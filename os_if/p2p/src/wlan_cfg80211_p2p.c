@@ -372,7 +372,7 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 	roc_req.duration = duration;
 	roc_req.vdev_id = (uint32_t)vdev_id;
 
-	ret = policy_mgr_is_chan_ok_for_dnbs(psoc, roc_req.chan, &ok);
+	ret = policy_mgr_is_chan_ok_for_dnbs(psoc, chan->center_freq, &ok);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		osif_err("policy_mgr_is_chan_ok_for_dnbs():ret:%d",
 			 ret);
@@ -444,7 +444,8 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 		int ret;
 		bool ok;
 
-		ret = policy_mgr_is_chan_ok_for_dnbs(psoc, channel, &ok);
+		ret = policy_mgr_is_chan_ok_for_dnbs(
+				psoc, wlan_chan_to_freq(channel), &ok);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			osif_err("policy_mgr_is_chan_ok_for_dnbs():ret:%d",
 				 ret);

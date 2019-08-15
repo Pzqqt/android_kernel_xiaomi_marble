@@ -3143,6 +3143,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	struct ch_params ch_params;
 	struct hdd_adapter *ap_adapter = wlan_hdd_get_adapter_from_vdev(
 					psoc, vdev_id);
+	uint32_t sap_ch_freq, intf_ch_freq;
 
 	if (!ap_adapter) {
 		hdd_err("ap_adapter is NULL");
@@ -3187,7 +3188,8 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	 * as soon as STA gets disconnect.
 	 */
 	if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
-		psoc, vdev_id, &intf_ch)) {
+	    psoc, vdev_id, &intf_ch_freq)) {
+		intf_ch = wlan_freq_to_chan(intf_ch_freq);
 		hdd_debug("Move the sap (vdev %d) to user configured channel %u",
 			  vdev_id, intf_ch);
 		goto sap_restart;
@@ -3205,14 +3207,16 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	hdd_info("sap_vdev %d intf_ch: %d", vdev_id, intf_ch);
 	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
 		mcc_to_scc_switch) {
-		policy_mgr_get_chan_by_session_id(psoc, vdev_id, &sap_ch);
+		policy_mgr_get_chan_by_session_id(psoc, vdev_id, &sap_ch_freq);
 		if (QDF_IS_STATUS_ERROR(
-			policy_mgr_valid_sap_conc_channel_check(
-				hdd_ctx->psoc, &intf_ch, sap_ch, vdev_id))) {
+		    policy_mgr_valid_sap_conc_channel_check(
+		    hdd_ctx->psoc, &intf_ch_freq, sap_ch_freq, vdev_id))) {
 			hdd_debug("can't move sap to chan(freq): %u",
 				  hdd_sta_ctx->conn_info.chan_freq);
 			return QDF_STATUS_E_FAILURE;
 		}
+		sap_ch = wlan_freq_to_chan(sap_ch_freq);
+		intf_ch = wlan_freq_to_chan(intf_ch_freq);
 	}
 
 sap_restart:
@@ -5142,9 +5146,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		config->acs_dfs_mode = wlan_hdd_get_dfs_mode(mode);
 	}
 
-	policy_mgr_update_user_config_sap_chan(
-		hdd_ctx->psoc,
-		wlan_reg_freq_to_chan(hdd_ctx->pdev, config->chan_freq));
+	policy_mgr_update_user_config_sap_chan(hdd_ctx->psoc,
+					       config->chan_freq);
 	hdd_debug("config->chan_freq %d, config->acs_dfs_mode %d",
 		  config->chan_freq, config->acs_dfs_mode);
 
@@ -6240,8 +6243,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				policy_mgr_init_sap_mandatory_2g_chan(
 							hdd_ctx->psoc);
 
-			policy_mgr_add_sap_mandatory_chan(hdd_ctx->psoc,
-							  channel);
+			policy_mgr_add_sap_mandatory_chan(
+				hdd_ctx->psoc, wlan_chan_to_freq(channel));
 		} else {
 			policy_mgr_init_sap_mandatory_2g_chan(
 							hdd_ctx->psoc);

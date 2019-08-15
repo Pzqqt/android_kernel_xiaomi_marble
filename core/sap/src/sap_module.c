@@ -1402,7 +1402,8 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 	}
 	mac_handle = MAC_HANDLE(mac);
 
-	if (strict && !policy_mgr_is_safe_channel(mac->psoc, targetChannel)) {
+	if (strict && !policy_mgr_is_safe_channel(
+	    mac->psoc, wlan_chan_to_freq(targetChannel))) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%u is unsafe channel", targetChannel);
 		return QDF_STATUS_E_FAULT;
@@ -1461,7 +1462,8 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 
 			hw_mode_status =
 			  policy_mgr_check_and_set_hw_mode_for_channel_switch(
-				   mac->psoc, sap_ctx->sessionId, targetChannel,
+				   mac->psoc, sap_ctx->sessionId,
+				   wlan_chan_to_freq(targetChannel),
 				   POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH);
 
 			/*

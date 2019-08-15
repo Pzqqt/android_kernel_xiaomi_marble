@@ -4407,7 +4407,8 @@ bool lim_is_channel_valid_for_channel_switch(struct mac_context *mac, uint8_t ch
 	uint8_t index;
 	bool ok = false;
 
-	if (policy_mgr_is_chan_ok_for_dnbs(mac->psoc, channel, &ok)) {
+	if (policy_mgr_is_chan_ok_for_dnbs(mac->psoc,
+					   wlan_chan_to_freq(channel), &ok)) {
 		pe_err("policy_mgr_is_chan_ok_for_dnbs() returned error");
 		return false;
 	}
@@ -4422,8 +4423,8 @@ bool lim_is_channel_valid_for_channel_switch(struct mac_context *mac, uint8_t ch
 		    wlan_reg_chan_to_freq(mac->pdev, channel))
 			continue;
 
-		ok = policy_mgr_is_valid_for_channel_switch(mac->psoc,
-							    channel);
+		ok = policy_mgr_is_valid_for_channel_switch(
+				mac->psoc, wlan_chan_to_freq(channel));
 		return ok;
 	}
 

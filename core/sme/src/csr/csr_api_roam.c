@@ -5465,8 +5465,8 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		 * check if channel is allowed for current hw mode, if not fetch
 		 * next BSS.
 		 */
-		if (!policy_mgr_is_hwmode_set_for_given_chnl(mac_ctx->psoc,
-							     chan_id)) {
+		if (!policy_mgr_is_hwmode_set_for_given_chnl(
+		    mac_ctx->psoc, result->BssDescriptor.chan_freq)) {
 			sme_err("HW mode isn't properly set, freq %d BSSID %pM",
 				result->BssDescriptor.chan_freq,
 				result->BssDescriptor.bssId);
@@ -8533,7 +8533,7 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 					first_ap_profile->chan_freq);
 			status = policy_mgr_is_chan_ok_for_dnbs(
 					mac->psoc,
-					first_ap_chan_id, &ok);
+					first_ap_profile->chan_freq, &ok);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				sme_debug("policy_mgr_is_chan_ok_for_dnbs():error:%d",
 					  status);

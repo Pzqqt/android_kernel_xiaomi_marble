@@ -2221,8 +2221,8 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		if (!sta_sap_scc_on_dfs_chan && ((mode == PM_P2P_GO_MODE) ||
 		    (mode == PM_SAP_MODE))) {
 			if (wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq))
-				match = policy_mgr_disallow_mcc_int(psoc,
-								    ch_freq);
+				match = policy_mgr_disallow_mcc(psoc,
+								ch_freq);
 		}
 		if (true == match) {
 			policy_mgr_err("No MCC, SAP/GO about to come up on DFS channel");
@@ -2432,8 +2432,8 @@ policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
 	policy_mgr_debug("check concurrency_csa vdev:%d ch %d, forced %d, reason %d",
 			 vdev_id, ch_freq, forced, reason);
 
-	status = policy_mgr_get_chan_by_session_id_int(psoc, vdev_id,
-						       &old_ch_freq);
+	status = policy_mgr_get_chan_by_session_id(psoc, vdev_id,
+						   &old_ch_freq);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("Failed to get channel for vdev:%d",
 			       vdev_id);
@@ -3202,9 +3202,9 @@ send_status:
 	return status;
 }
 
-QDF_STATUS policy_mgr_get_chan_by_session_id_int(struct wlan_objmgr_psoc *psoc,
-						 uint8_t session_id,
-						 uint32_t *ch_freq)
+QDF_STATUS policy_mgr_get_chan_by_session_id(struct wlan_objmgr_psoc *psoc,
+					     uint8_t session_id,
+					     uint32_t *ch_freq)
 {
 	uint32_t i;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -3270,8 +3270,7 @@ QDF_STATUS policy_mgr_get_mcc_session_id_on_mac(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = policy_mgr_get_chan_by_session_id_int(psoc, session_id,
-						       &ch_freq);
+	status = policy_mgr_get_chan_by_session_id(psoc, session_id, &ch_freq);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("Failed to get channel for session id:%d",
 			       session_id);
@@ -3297,8 +3296,8 @@ QDF_STATUS policy_mgr_get_mcc_session_id_on_mac(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_FAILURE;
 }
 
-uint32_t policy_mgr_get_mcc_operating_channel_int(struct wlan_objmgr_psoc *psoc,
-						  uint8_t session_id)
+uint32_t policy_mgr_get_mcc_operating_channel(struct wlan_objmgr_psoc *psoc,
+					      uint8_t session_id)
 {
 	uint8_t mac_id, mcc_session_id;
 	QDF_STATUS status;
@@ -3324,8 +3323,8 @@ uint32_t policy_mgr_get_mcc_operating_channel_int(struct wlan_objmgr_psoc *psoc,
 		return INVALID_CHANNEL_ID;
 	}
 
-	status = policy_mgr_get_chan_by_session_id_int(psoc, mcc_session_id,
-						       &ch_freq);
+	status = policy_mgr_get_chan_by_session_id(psoc, mcc_session_id,
+						   &ch_freq);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("Failed to get channel for MCC session ID:%d",
 			       mcc_session_id);
@@ -3388,8 +3387,8 @@ bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev)
 	return roffchan;
 }
 
-QDF_STATUS policy_mgr_is_chan_ok_for_dnbs_int(struct wlan_objmgr_psoc *psoc,
-					      uint32_t ch_freq, bool *ok)
+QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
+					  uint32_t ch_freq, bool *ok)
 {
 	uint32_t cc_count = 0, i;
 	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
@@ -3836,8 +3835,8 @@ bool policy_mgr_sta_sap_scc_on_lte_coex_chan(
 	return scc_lte_coex;
 }
 
-bool policy_mgr_is_valid_for_channel_switch_int(struct wlan_objmgr_psoc *psoc,
-						uint32_t ch_freq)
+bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
+					    uint32_t ch_freq)
 {
 	uint32_t sta_sap_scc_on_dfs_chan;
 	uint32_t sap_count;
@@ -3870,8 +3869,8 @@ bool policy_mgr_is_valid_for_channel_switch_int(struct wlan_objmgr_psoc *psoc,
 	return false;
 }
 
-bool policy_mgr_is_sta_sap_scc_int(struct wlan_objmgr_psoc *psoc,
-				   uint32_t sap_freq)
+bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc,
+			       uint32_t sap_freq)
 {
 	uint32_t conn_index;
 	bool is_scc = false;

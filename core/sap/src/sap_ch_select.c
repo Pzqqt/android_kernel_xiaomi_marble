@@ -427,8 +427,9 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 	/* Select the best channel from allowed list */
 	for (i = 0; i < sap_ctx->acs_cfg->ch_list_count; i++) {
 		if ((sap_ctx->acs_cfg->ch_list[i] == best_chnl) &&
-			!(wlan_reg_is_dfs_ch(mac_ctx->pdev, best_chnl) &&
-			policy_mgr_disallow_mcc(mac_ctx->psoc, best_chnl))) {
+		    !(wlan_reg_is_dfs_ch(mac_ctx->pdev, best_chnl) &&
+		    policy_mgr_disallow_mcc(
+		    mac_ctx->psoc, wlan_chan_to_freq(best_chnl)))) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_INFO,
 				"Best channel so far is: %d",
@@ -530,7 +531,8 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 			}
 		}
 
-		if (!policy_mgr_is_safe_channel(mac->psoc, channel))
+		if (!policy_mgr_is_safe_channel(mac->psoc,
+						wlan_chan_to_freq(channel)))
 			chSafe = false;
 
 		/* OFDM rates are not supported on channel 14 */
@@ -2555,9 +2557,10 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 		}
 
 		if (wlan_reg_is_dfs_ch(mac_ctx->pdev,
-				spect_info->pSpectCh[count].chNum) &&
-			policy_mgr_disallow_mcc(mac_ctx->psoc,
-				spect_info->pSpectCh[count].chNum)) {
+		    spect_info->pSpectCh[count].chNum) &&
+		    policy_mgr_disallow_mcc(
+		    mac_ctx->psoc, wlan_chan_to_freq(
+		    spect_info->pSpectCh[count].chNum))) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_INFO_HIGH,
 				"No DFS MCC");

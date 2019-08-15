@@ -253,8 +253,9 @@ wlansap_filter_unsafe_ch(struct wlan_objmgr_psoc *psoc,
 	 * the acs channel list before chosing one of them as a default channel
 	 */
 	for (i = 0; i < sap_ctx->acs_cfg->ch_list_count; i++) {
-		if (!policy_mgr_is_safe_channel(psoc,
-					        sap_ctx->acs_cfg->ch_list[i])) {
+		if (!policy_mgr_is_safe_channel(
+				psoc, wlan_chan_to_freq(
+				sap_ctx->acs_cfg->ch_list[i]))) {
 			sap_debug("unsafe ch %d removed from acs list",
 				  sap_ctx->acs_cfg->ch_list[i]);
 			continue;

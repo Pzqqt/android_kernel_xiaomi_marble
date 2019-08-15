@@ -17679,7 +17679,8 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	 * for 3port MCC scenario.
 	 */
 	if (!channel || wlan_reg_is_dfs_ch(hdd_ctx->pdev, channel) ||
-	    !policy_mgr_is_safe_channel(hdd_ctx->psoc, channel))
+	    !policy_mgr_is_safe_channel(hdd_ctx->psoc,
+					wlan_chan_to_freq(channel)))
 		channel = wlan_freq_to_chan(
 			policy_mgr_get_nondfs_preferred_channel(
 			hdd_ctx->psoc, PM_SAP_MODE, true));
@@ -20367,7 +20368,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 		if (req->channel->hw_value && policy_mgr_is_chan_ok_for_dnbs(
 						hdd_ctx->psoc,
-						req->channel->hw_value,
+						req->channel->center_freq,
 						&ok)) {
 			hdd_warn("Unable to get channel:%d eligibility for DNBS",
 					req->channel->hw_value);

@@ -85,7 +85,8 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 	mac->lim.lim_timers.gLimChannelSwitchTimer.sessionId = sessionId;
 	status = policy_mgr_check_and_set_hw_mode_for_channel_switch(mac->psoc,
 				pe_session->smeSessionId,
-				pe_session->gLimChannelSwitch.primaryChannel,
+				wlan_chan_to_freq(
+				pe_session->gLimChannelSwitch.primaryChannel),
 				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA);
 
 	/*

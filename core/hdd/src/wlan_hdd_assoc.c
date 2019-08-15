@@ -3056,8 +3056,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					      sta_ctx->conn_info.chan_freq);
 
 		hdd_debug("check if STA chan ok for DNBS");
-		if (policy_mgr_is_chan_ok_for_dnbs(hdd_ctx->psoc,
-					conn_info_channel,
+		if (policy_mgr_is_chan_ok_for_dnbs(
+					hdd_ctx->psoc,
+					wlan_chan_to_freq(conn_info_channel),
 					&ok)) {
 			hdd_err("Unable to check DNBS eligibility for chan(freq):%u",
 				sta_ctx->conn_info.chan_freq);
