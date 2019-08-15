@@ -1671,6 +1671,17 @@ exit_with_code:
 	return exit_code;
 }
 
+static int _wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
+{
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	int errno;
+
+	errno = __wlan_hdd_cfg80211_resume_wlan(wiphy);
+	hif_pm_runtime_put(hif_ctx);
+
+	return errno;
+}
+
 int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 {
 	struct osif_psoc_sync *psoc_sync;
@@ -1680,7 +1691,7 @@ int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	if (errno)
 		return errno;
 
-	errno = __wlan_hdd_cfg80211_resume_wlan(wiphy);
+	errno = _wlan_hdd_cfg80211_resume_wlan(wiphy);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 
@@ -1870,6 +1881,25 @@ resume_tx:
 
 }
 
+static int _wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
+					   struct cfg80211_wowlan *wow)
+{
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	int errno;
+
+	errno = hif_pm_runtime_get_sync(hif_ctx);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_suspend_wlan(wiphy, wow);
+	if (errno) {
+		hif_pm_runtime_put(hif_ctx);
+		return errno;
+	}
+
+	return errno;
+}
+
 int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				   struct cfg80211_wowlan *wow)
 {
@@ -1880,7 +1910,7 @@ int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	errno = __wlan_hdd_cfg80211_suspend_wlan(wiphy, wow);
+	errno = _wlan_hdd_cfg80211_suspend_wlan(wiphy, wow);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 
