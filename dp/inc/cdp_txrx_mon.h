@@ -190,4 +190,144 @@ cdp_deliver_tx_mgmt(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 
 	soc->ops->mon_ops->txrx_deliver_tx_mgmt(pdev, nbuf);
 }
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+static inline void
+cdp_pktcapture_record_channel(
+			ol_txrx_soc_handle soc,
+			uint8_t pdev_id,
+			int chan_num)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->pktcapture_ops ||
+	    !soc->ops->pktcapture_ops->txrx_pktcapture_record_channel)
+		return;
+
+	soc->ops->pktcapture_ops->txrx_pktcapture_record_channel(soc,
+								 pdev_id,
+								 chan_num);
+}
+
+static inline void
+cdp_set_packet_capture_mode(ol_txrx_soc_handle soc,
+			    uint8_t pdev_id,
+			    uint8_t val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->pktcapture_ops ||
+	    !soc->ops->pktcapture_ops->txrx_pktcapture_set_mode)
+		return;
+
+	soc->ops->pktcapture_ops->txrx_pktcapture_set_mode(soc, pdev_id, val);
+}
+
+static inline uint8_t
+cdp_get_packet_capture_mode(ol_txrx_soc_handle soc, uint8_t pdev_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->pktcapture_ops ||
+	    !soc->ops->pktcapture_ops->txrx_pktcapture_get_mode)
+		return 0;
+
+	return soc->ops->pktcapture_ops->txrx_pktcapture_get_mode(soc,
+								  pdev_id);
+}
+
+static inline QDF_STATUS
+cdp_register_pktcapture_cb(
+		ol_txrx_soc_handle soc, uint8_t pdev_id, void *ctx,
+		QDF_STATUS(txrx_pktcapture_cb)(void *, qdf_nbuf_t))
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!soc->ops->pktcapture_ops ||
+	    !soc->ops->pktcapture_ops->txrx_pktcapture_cb_register)
+		return QDF_STATUS_E_INVAL;
+
+	return soc->ops->pktcapture_ops->txrx_pktcapture_cb_register(
+							soc,
+							pdev_id,
+							ctx,
+							txrx_pktcapture_cb);
+}
+
+static inline QDF_STATUS
+cdp_deregister_pktcapture_cb(ol_txrx_soc_handle soc, uint8_t pdev_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!soc->ops->pktcapture_ops ||
+	    !soc->ops->pktcapture_ops->txrx_pktcapture_cb_deregister)
+		return QDF_STATUS_E_INVAL;
+
+	return soc->ops->pktcapture_ops->txrx_pktcapture_cb_deregister(soc,
+					pdev_id);
+}
+
+static inline QDF_STATUS
+cdp_pktcapture_mgmtpkt_process(
+			ol_txrx_soc_handle soc,
+			uint8_t pdev_id,
+			struct mon_rx_status *txrx_status,
+			qdf_nbuf_t nbuf,
+			uint8_t status)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!soc->ops->pktcapture_ops ||
+	    !soc->ops->pktcapture_ops->txrx_pktcapture_mgmtpkt_process)
+		return QDF_STATUS_E_INVAL;
+
+	return soc->ops->pktcapture_ops->txrx_pktcapture_mgmtpkt_process(
+							soc,
+							pdev_id,
+							txrx_status,
+							nbuf,
+							status);
+}
+#else
+static inline uint8_t
+cdp_get_packet_capture_mode(ol_txrx_soc_handle soc, uint8_t pdev_id)
+{
+	return 0;
+}
+
+static inline void
+cdp_pktcapture_record_channel(ol_txrx_soc_handle soc,
+			      uint8_t pdev_id,
+			      int chan_num)
+{
+}
+#endif /* WLAN_FEATURE_PKT_CAPTURE */
+
 #endif
