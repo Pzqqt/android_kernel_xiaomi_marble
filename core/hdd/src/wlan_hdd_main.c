@@ -13603,22 +13603,22 @@ static QDF_STATUS hdd_component_init(void)
 	QDF_STATUS status;
 
 	/* initialize converged components */
-	status = target_if_init(wma_get_psoc_from_scn_handle);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
 	status = ucfg_mlme_global_init();
 	if (QDF_IS_STATUS_ERROR(status))
-		goto target_if_deinit;
+		return status;
 
 	status = dispatcher_init();
 	if (QDF_IS_STATUS_ERROR(status))
 		goto mlme_global_deinit;
 
+	status = target_if_init(wma_get_psoc_from_scn_handle);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto dispatcher_deinit;
+
 	/* initialize non-converged components */
 	status = ucfg_mlme_init();
 	if (QDF_IS_STATUS_ERROR(status))
-		goto dispatcher_deinit;
+		goto target_if_deinit;
 
 	status = ucfg_fwol_init();
 	if (QDF_IS_STATUS_ERROR(status))
@@ -13695,12 +13695,12 @@ fwol_deinit:
 	ucfg_fwol_deinit();
 mlme_deinit:
 	ucfg_mlme_deinit();
+target_if_deinit:
+	target_if_deinit();
 dispatcher_deinit:
 	dispatcher_deinit();
 mlme_global_deinit:
 	ucfg_mlme_global_deinit();
-target_if_deinit:
-	target_if_deinit();
 
 	return status;
 }
@@ -13728,9 +13728,9 @@ static void hdd_component_deinit(void)
 	ucfg_mlme_deinit();
 
 	/* deinitialize converged components */
+	target_if_deinit();
 	dispatcher_deinit();
 	ucfg_mlme_global_deinit();
-	target_if_deinit();
 }
 
 QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
