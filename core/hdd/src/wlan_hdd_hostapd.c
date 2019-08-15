@@ -6038,6 +6038,7 @@ wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint32_t cc_count, i;
 	uint8_t op_ch[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t op_freq[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	struct ch_params ch_params;
 	enum nl80211_channel_type channel_type;
@@ -6065,17 +6066,19 @@ wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
 	    (mcc_to_scc_switch != QDF_MCC_TO_SCC_WITH_PREFERRED_BAND))
 		return false;
 	cc_count = policy_mgr_get_mode_specific_conn_info(hdd_ctx->psoc,
-							  &op_ch[0],
+							  &op_freq[0],
 							  &vdev_id[0],
 							  PM_SAP_MODE);
 	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
 		cc_count = cc_count +
 				policy_mgr_get_mode_specific_conn_info(
 					hdd_ctx->psoc,
-					&op_ch[cc_count],
+					&op_freq[cc_count],
 					&vdev_id[cc_count],
 					PM_P2P_GO_MODE);
 	for (i = 0 ; i < cc_count; i++) {
+		op_ch[i] = wlan_freq_to_chan(op_freq[i]);
+
 		if (channel == op_ch[i])
 			continue;
 		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc))

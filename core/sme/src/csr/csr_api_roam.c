@@ -11140,7 +11140,7 @@ void csr_update_connect_n_roam_cmn_filter(struct mac_context *mac_ctx,
 					  enum QDF_OPMODE opmode)
 {
 	enum policy_mgr_con_mode pm_mode;
-	uint32_t len = 0;
+	uint32_t len = 0, i, pcl_freq_list[NUM_CHANNELS] = {0};
 	QDF_STATUS status;
 
 	/* enable bss scoring for only STA mode */
@@ -11154,11 +11154,16 @@ void csr_update_connect_n_roam_cmn_filter(struct mac_context *mac_ctx,
 
 	if (policy_mgr_map_concurrency_mode(&opmode, &pm_mode)) {
 		status = policy_mgr_get_pcl(mac_ctx->psoc, pm_mode,
-					    filter->pcl_channel_list, &len,
+					    pcl_freq_list, &len,
 					    filter->pcl_weight_list,
 					    QDF_MAX_NUM_CHAN);
 		if (QDF_IS_STATUS_ERROR(status))
 			return;
+		for (i = 0; i < len; i++) {
+			filter->pcl_channel_list[i] =
+				wlan_reg_freq_to_chan(mac_ctx->pdev,
+						      pcl_freq_list[i]);
+		}
 		filter->num_of_pcl_channels = len;
 	}
 }
@@ -22093,7 +22098,7 @@ csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)
 QDF_STATUS
 csr_enable_roaming_on_connected_sta(struct mac_context *mac, uint8_t vdev_id)
 {
-	uint8_t op_ch[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t sta_vdev_id = WLAN_INVALID_VDEV_ID;
 	struct csr_roam_session *session;
@@ -22104,7 +22109,8 @@ csr_enable_roaming_on_connected_sta(struct mac_context *mac, uint8_t vdev_id)
 	if (sta_vdev_id != WLAN_UMAC_VDEV_ID_MAX)
 		return QDF_STATUS_E_FAILURE;
 
-	count = policy_mgr_get_mode_specific_conn_info(mac->psoc, op_ch,
+	count = policy_mgr_get_mode_specific_conn_info(mac->psoc,
+						       op_ch_freq_list,
 						       vdev_id_list,
 						       PM_STA_MODE);
 

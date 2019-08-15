@@ -624,7 +624,7 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 	enum policy_mgr_con_mode sub_type;
 	uint8_t pcl[QDF_MAX_NUM_CHAN] = {0},
 		weight_list[QDF_MAX_NUM_CHAN] = {0};
-	uint32_t pcl_len = 0;
+	uint32_t pcl_len = 0, i, pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
 	bool status = false;
 	enum policy_mgr_pcl_type pcl_type;
 	char reason[20] = {0};
@@ -654,8 +654,11 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 			sub_type, system_pref);
 
 		/* check PCL value for second connection is correct or no */
-		policy_mgr_get_pcl(hdd_ctx->psoc, sub_type, pcl, &pcl_len,
-				weight_list, QDF_ARRAY_SIZE(weight_list));
+		policy_mgr_get_pcl(hdd_ctx->psoc, sub_type, pcl_freqs, &pcl_len,
+				   weight_list, QDF_ARRAY_SIZE(weight_list));
+		for (i = 0; i < pcl_len; i++)
+			pcl[i] = wlan_freq_to_chan(pcl_freqs[i]);
+
 		status = wlan_hdd_validate_pcl(hdd_ctx,
 				pcl_type, pcl, pcl_len, 0, 0,
 				reason, sizeof(reason));
@@ -677,7 +680,7 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 	uint8_t type = WMI_VDEV_TYPE_STA, channel_id = first_chnl, mac_id = 1;
 	uint8_t pcl[QDF_MAX_NUM_CHAN] = {0},
 			weight_list[QDF_MAX_NUM_CHAN] = {0};
-	uint32_t pcl_len = 0;
+	uint32_t pcl_len = 0, i, pcl_freqs[QDF_MAX_NUM_CHAN];
 	enum policy_mgr_chain_mode chain_mask = first_chain_mask;
 	enum policy_mgr_con_mode sub_type, next_sub_type, dummy_type;
 	enum policy_mgr_pcl_type pcl_type;
@@ -734,8 +737,11 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 					hdd_ctx->psoc));
 			/* check PCL for second connection is correct or no */
 			policy_mgr_get_pcl(hdd_ctx->psoc,
-				next_sub_type, pcl, &pcl_len,
-				weight_list, QDF_ARRAY_SIZE(weight_list));
+					   next_sub_type, pcl_freqs, &pcl_len,
+					   weight_list,
+					   QDF_ARRAY_SIZE(weight_list));
+			for (i = 0; i < pcl_len; i++)
+				pcl[i] = wlan_freq_to_chan(pcl_freqs[i]);
 			status = wlan_hdd_validate_pcl(hdd_ctx,
 					pcl_type, pcl, pcl_len, channel_id, 0,
 					reason, sizeof(reason));
@@ -762,7 +768,7 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 	uint8_t mac_id_1, mac_id_2;
 	uint8_t type_1 = WMI_VDEV_TYPE_STA, type_2 = WMI_VDEV_TYPE_STA;
 	uint8_t pcl[MAX_NUM_CHAN] = {0}, weight_list[MAX_NUM_CHAN] = {0};
-	uint32_t pcl_len = 0;
+	uint32_t pcl_len = 0, i, pcl_freqs[QDF_MAX_NUM_CHAN];
 	enum policy_mgr_chain_mode chain_mask_1;
 	enum policy_mgr_chain_mode chain_mask_2;
 	enum policy_mgr_con_mode sub_type_1, sub_type_2, next_sub_type;
@@ -857,11 +863,13 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 					system_pref,
 					policy_mgr_is_hw_dbs_capable(
 					hdd_ctx->psoc));
-				policy_mgr_get_pcl(hdd_ctx->psoc,
-					next_sub_type,
-					pcl, &pcl_len,
-					weight_list,
+				policy_mgr_get_pcl(
+					hdd_ctx->psoc, next_sub_type,
+					pcl_freqs, &pcl_len, weight_list,
 					QDF_ARRAY_SIZE(weight_list));
+				for (i = 0; i < pcl_len; i++)
+					pcl[i] =
+						wlan_freq_to_chan(pcl_freqs[i]);
 				status = wlan_hdd_validate_pcl(hdd_ctx,
 					pcl_type, pcl, pcl_len,
 					channel_id_1, channel_id_2,

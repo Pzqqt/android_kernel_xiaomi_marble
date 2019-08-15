@@ -7591,7 +7591,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 
 	case WE_POLICY_MANAGER_PCL_CMD:
 	{
-		uint8_t pcl[QDF_MAX_NUM_CHAN] = {0};
+		uint32_t pcl[QDF_MAX_NUM_CHAN] = {0};
 		uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
 		uint32_t pcl_len = 0, i = 0;
 
@@ -7602,9 +7602,9 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			return 0;
 		}
 		policy_mgr_get_pcl(hdd_ctx->psoc, apps_args[0],
-				pcl, &pcl_len,
-				weight_list, QDF_ARRAY_SIZE(weight_list));
-		hdd_debug("PCL list for role[%d] is {", apps_args[0]);
+				   pcl, &pcl_len,
+				   weight_list, QDF_ARRAY_SIZE(weight_list));
+		hdd_debug("PCL Freq list for role[%d] is {", apps_args[0]);
 		for (i = 0 ; i < pcl_len; i++)
 			hdd_debug(" %d, ", pcl[i]);
 		hdd_debug("}--------->\n");

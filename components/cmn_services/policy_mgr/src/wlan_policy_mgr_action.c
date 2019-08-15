@@ -654,7 +654,7 @@ policy_mgr_get_preferred_dbs_action_table(
 					 vdev_pri_id);
 			goto NEXT;
 		}
-		vdev_count = policy_mgr_get_mode_specific_conn_info_int(
+		vdev_count = policy_mgr_get_mode_specific_conn_info(
 				psoc, ch_freq_list, vdev_list, pri_conn_mode);
 		/**
 		 * Take care of duplication case, the vdev id may
@@ -1357,17 +1357,15 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		if (policy_mgr_get_connection_count(psoc) > 1)
 			return false;
 
-	cc_count = policy_mgr_get_mode_specific_conn_info_int(
-					psoc,
-					&op_ch_freq_list[0],
-					&vdev_id[0],
-					PM_SAP_MODE);
+	cc_count = policy_mgr_get_mode_specific_conn_info(psoc,
+							  &op_ch_freq_list[0],
+							  &vdev_id[0],
+							  PM_SAP_MODE);
 	go_index_start = cc_count;
 	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
-		cc_count += policy_mgr_get_mode_specific_conn_info_int(psoc,
-					&op_ch_freq_list[cc_count],
-					&vdev_id[cc_count],
-					PM_P2P_GO_MODE);
+		cc_count += policy_mgr_get_mode_specific_conn_info(
+					psoc, &op_ch_freq_list[cc_count],
+					&vdev_id[cc_count], PM_P2P_GO_MODE);
 
 	for (i = 0 ; i < cc_count; i++) {
 		if (sap_vdev_id != INVALID_VDEV_ID &&
@@ -1408,9 +1406,9 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	/* Add the user config ch as first condidate */
 	pcl_channels[0] = pm_ctx->user_config_sap_ch_freq;
 	pcl_weight[0] = 0;
-	status = policy_mgr_get_pcl_int(psoc, mode, &pcl_channels[1], &pcl_len,
-					&pcl_weight[1],
-					QDF_ARRAY_SIZE(pcl_weight) - 1);
+	status = policy_mgr_get_pcl(psoc, mode, &pcl_channels[1], &pcl_len,
+				    &pcl_weight[1],
+				    QDF_ARRAY_SIZE(pcl_weight) - 1);
 	if (status == QDF_STATUS_SUCCESS)
 		pcl_len++;
 	else
@@ -1762,14 +1760,14 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	if (!policy_mgr_is_restart_sap_allowed(psoc, mcc_to_scc_switch))
 		goto end;
 
-	cc_count = policy_mgr_get_mode_specific_conn_info_int(
+	cc_count = policy_mgr_get_mode_specific_conn_info(
 				psoc, &op_ch_freq_list[cc_count],
 				&vdev_id[cc_count], PM_SAP_MODE);
 	policy_mgr_debug("Number of concurrent SAP: %d", cc_count);
 	go_index_start = cc_count;
 	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
 		cc_count = cc_count +
-				policy_mgr_get_mode_specific_conn_info_int(
+				policy_mgr_get_mode_specific_conn_info(
 					psoc, &op_ch_freq_list[cc_count],
 					&vdev_id[cc_count], PM_P2P_GO_MODE);
 	policy_mgr_debug("Number of beaconing entities (SAP + GO):%d",
@@ -1999,7 +1997,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	/*
 	 * force SCC with STA+STA+SAP will need some additional logic
 	 */
-	cc_count = policy_mgr_get_mode_specific_conn_info_int(
+	cc_count = policy_mgr_get_mode_specific_conn_info(
 				psoc, &op_ch_freq_list[cc_count],
 				&vdev_id[cc_count], PM_STA_MODE);
 	if (!cc_count) {

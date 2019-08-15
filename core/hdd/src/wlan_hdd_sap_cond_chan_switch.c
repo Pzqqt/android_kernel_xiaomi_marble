@@ -100,8 +100,8 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	uint32_t weight_len = 0;
 	uint32_t len = CFG_VALID_CHANNEL_LIST_LEN;
-	uint8_t channel_list[QDF_MAX_NUM_CHAN] = {0};
-	uint8_t pcl_weights[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t freq_list[NUM_CHANNELS] = {0};
+	uint8_t pcl_weights[NUM_CHANNELS] = {0};
 	mac_handle_t mac_handle;
 
 	if (channel == 0) {
@@ -113,19 +113,20 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 		 * first channel from the valid channel list.
 		 */
 		status = policy_mgr_get_valid_chans(hdd_ctx->psoc,
-						    channel_list, &len);
+						    freq_list, &len);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("Failed to get channel list");
 			return -EINVAL;
 		}
 		policy_mgr_update_with_safe_channel_list(hdd_ctx->psoc,
-							 channel_list, &len,
+							 freq_list, &len,
 							 pcl_weights,
 							 weight_len);
 		for (i = 0; i < len; i++) {
-			if (wlan_reg_is_dfs_ch(hdd_ctx->pdev,
-					       channel_list[i])) {
-				*pre_cac_chan = channel_list[i];
+			if (wlan_reg_is_dfs_for_freq(hdd_ctx->pdev,
+						     freq_list[i])) {
+				*pre_cac_chan =
+					wlan_freq_to_chan(freq_list[i]);
 				break;
 			}
 		}

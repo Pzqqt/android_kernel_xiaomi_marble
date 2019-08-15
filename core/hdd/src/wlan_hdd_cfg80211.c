@@ -2279,6 +2279,7 @@ static int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 	struct sap_config *sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t tmp_chan_list[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t chan_count;
 	uint8_t i;
 	QDF_STATUS status;
@@ -2287,14 +2288,15 @@ static int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 
 	sap_config = &adapter->session.ap.sap_config;
 
-	status =
-		policy_mgr_get_valid_chans(hdd_ctx->psoc,
-					   tmp_chan_list,
-					   &chan_count);
+	status = policy_mgr_get_valid_chans(hdd_ctx->psoc,
+					    pcl_freqs,
+					    &chan_count);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get channel list");
 		return -EINVAL;
 	}
+	for (i = 0; i < chan_count; i++)
+		tmp_chan_list[i] = wlan_freq_to_chan(pcl_freqs[i]);
 
 	for (i = 0; i < chan_count; i++) {
 		tmp_chan = tmp_chan_list[i];
@@ -2717,6 +2719,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	bool etsi13_srd_chan;
 	bool go_11ac_override = 0;
 	bool sap_11ac_override = 0;
+	uint32_t pcl_freq_list[QDF_MAX_NUM_CHAN] = {0};
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -2936,14 +2939,18 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	      policy_mgr_convert_device_mode_to_qdf_type(adapter->device_mode);
 	/* consult policy manager to get PCL */
 	qdf_status = policy_mgr_get_pcl(hdd_ctx->psoc, pm_mode,
-					sap_config->acs_cfg.pcl_channels,
+					pcl_freq_list,
 					&sap_config->acs_cfg.pcl_ch_count,
 					sap_config->acs_cfg.
 					pcl_channels_weight_list,
 					QDF_MAX_NUM_CHAN);
-	if (qdf_status != QDF_STATUS_SUCCESS)
+	if (qdf_status != QDF_STATUS_SUCCESS) {
 		hdd_err("Get PCL failed");
-
+	} else {
+		for (i = 0; i < sap_config->acs_cfg.pcl_ch_count; i++)
+			sap_config->acs_cfg.pcl_channels[i] =
+				 wlan_freq_to_chan(pcl_freq_list[i]);
+	}
 	if (sap_config->acs_cfg.pcl_ch_count) {
 		hdd_debug("ACS config PCL: len: %d",
 			  sap_config->acs_cfg.pcl_ch_count);
@@ -9630,7 +9637,7 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	if (!chan_weights)
 		return -ENOMEM;
 
-	status = policy_mgr_get_pcl_int(
+	status = policy_mgr_get_pcl(
 			hdd_ctx->psoc, intf_mode, chan_weights->pcl_list,
 			&chan_weights->pcl_len, chan_weights->weight_list,
 			QDF_ARRAY_SIZE(chan_weights->weight_list));
@@ -10635,7 +10642,6 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST]) {
 		uint32_t freq_len, i;
 		uint32_t *freq;
-		uint8_t chans[QDF_MAX_NUM_CHAN];
 
 		hdd_debug("setting mandatory freq/chan list");
 
@@ -10654,12 +10660,11 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 		hdd_debug("freq_len=%d", freq_len);
 
 		for (i = 0; i < freq_len; i++) {
-			chans[i] = ieee80211_frequency_to_channel(freq[i]);
 			hdd_debug("freq[%d]=%d", i, freq[i]);
 		}
 
 		status = policy_mgr_set_sap_mandatory_channels(
-			hdd_ctx->psoc, chans, freq_len);
+			hdd_ctx->psoc, freq, freq_len);
 		if (QDF_IS_STATUS_ERROR(status))
 			return -EINVAL;
 	}

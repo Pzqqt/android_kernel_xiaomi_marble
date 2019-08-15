@@ -2917,6 +2917,7 @@ wlansap_get_safe_channel(struct sap_context *sap_ctx)
 {
 	struct mac_context *mac;
 	struct sir_pcl_list pcl = {0};
+	uint32_t i, pcl_freqs[QDF_MAX_NUM_CHAN];
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 
@@ -2934,13 +2935,14 @@ wlansap_get_safe_channel(struct sap_context *sap_ctx)
 
 	/* get the channel list for current domain */
 	status = policy_mgr_get_valid_chans(mac->psoc,
-					    pcl.pcl_list,
+					    pcl_freqs,
 					    &pcl.pcl_len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sap_err("Error in getting valid channels");
 		return INVALID_CHANNEL_ID;
 	}
-
+	for (i = 0; i < pcl.pcl_len; i++)
+		pcl.pcl_list[i] = wlan_freq_to_chan(pcl_freqs[i]);
 	status = wlansap_filter_ch_based_acs(sap_ctx,
 					     pcl.pcl_list,
 					     &pcl.pcl_len);
@@ -2948,10 +2950,12 @@ wlansap_get_safe_channel(struct sap_context *sap_ctx)
 		sap_err("failed to filter ch from acs %d", status);
 		return INVALID_CHANNEL_ID;
 	}
+	for (i = 0; i < pcl.pcl_len; i++)
+		pcl_freqs[i] = wlan_chan_to_freq(pcl.pcl_list[i]);
 
 	if (pcl.pcl_len) {
 		status = policy_mgr_get_valid_chans_from_range(mac->psoc,
-							       pcl.pcl_list,
+							       pcl_freqs,
 							       &pcl.pcl_len,
 							       PM_SAP_MODE);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -2961,8 +2965,8 @@ wlansap_get_safe_channel(struct sap_context *sap_ctx)
 
 		if (pcl.pcl_len) {
 			sap_debug("select %d from valid channel list",
-				  pcl.pcl_list[0]);
-			return pcl.pcl_list[0];
+				  pcl_freqs[0]);
+			return wlan_freq_to_chan(pcl_freqs[0]);
 		}
 	}
 
@@ -2991,6 +2995,7 @@ wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx)
 {
 	struct mac_context *mac;
 	struct sir_pcl_list pcl = {0};
+	uint32_t i, pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 
@@ -3007,13 +3012,15 @@ wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx)
 	mac_handle = MAC_HANDLE(mac);
 
 	status = policy_mgr_get_pcl_for_existing_conn(
-			mac->psoc, PM_SAP_MODE, pcl.pcl_list, &pcl.pcl_len,
+			mac->psoc, PM_SAP_MODE, pcl_freqs, &pcl.pcl_len,
 			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list),
 			false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sap_err("Get PCL failed");
 		return INVALID_CHANNEL_ID;
 	}
+	for (i = 0; i < pcl.pcl_len; i++)
+		pcl.pcl_list[i] = wlan_freq_to_chan(pcl_freqs[i]);
 
 	if (pcl.pcl_len) {
 		status = wlansap_filter_ch_based_acs(sap_ctx,
