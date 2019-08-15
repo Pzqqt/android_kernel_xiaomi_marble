@@ -1361,10 +1361,10 @@ QDF_STATUS policy_mgr_pdev_get_pcl(struct wlan_objmgr_psoc *psoc,
 
 	policy_mgr_debug("get pcl to set it to the FW");
 
-	status = policy_mgr_get_pcl_int(psoc, con_mode,
-					pcl->pcl_list, &pcl->pcl_len,
-					pcl->weight_list,
-					QDF_ARRAY_SIZE(pcl->weight_list));
+	status = policy_mgr_get_pcl(psoc, con_mode,
+				    pcl->pcl_list, &pcl->pcl_len,
+				    pcl->weight_list,
+				    QDF_ARRAY_SIZE(pcl->weight_list));
 	if (status != QDF_STATUS_SUCCESS)
 		policy_mgr_err("Unable to set PCL to FW, Get PCL failed");
 
@@ -2050,8 +2050,8 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* get the channel list for current domain */
-	status = policy_mgr_get_valid_chans_int(psoc, channel_list,
-						&num_channels);
+	status = policy_mgr_get_valid_chans(psoc, channel_list,
+					    &num_channels);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("Error in getting valid channels");
 		goto end;
@@ -2447,9 +2447,9 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 
 	/* check the channel avoidance list for beaconing entities */
 	if ((mode == PM_SAP_MODE) || (mode == PM_P2P_GO_MODE))
-		policy_mgr_update_with_safe_channel_list_int(psoc, pcl_channels,
-							     len, pcl_weights,
-							     weight_len);
+		policy_mgr_update_with_safe_channel_list(psoc, pcl_channels,
+							 len, pcl_weights,
+							 weight_len);
 
 	policy_mgr_set_weight_of_dfs_passive_channels_to_zero(psoc,
 			pcl_channels, len, pcl_weights, weight_len);
@@ -3231,7 +3231,7 @@ void  policy_mgr_init_sap_mandatory_2g_chan(struct wlan_objmgr_psoc *psoc)
 		return;
 	}
 
-	status = policy_mgr_get_valid_chans_int(psoc, ch_freq_list, &len);
+	status = policy_mgr_get_valid_chans(psoc, ch_freq_list, &len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("Error in getting valid channels");
 		return;

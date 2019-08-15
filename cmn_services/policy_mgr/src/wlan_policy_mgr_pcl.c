@@ -62,7 +62,7 @@ policy_mgr_next_action_two_connection_table_type
 policy_mgr_next_action_three_connection_table_type
 		*next_action_three_connection_2x2_2g_1x1_5g_table;
 
-QDF_STATUS policy_mgr_get_pcl_for_existing_conn_int(
+QDF_STATUS policy_mgr_get_pcl_for_existing_conn(
 		struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_con_mode mode,
 		uint32_t *pcl_ch, uint32_t *len,
@@ -89,33 +89,14 @@ QDF_STATUS policy_mgr_get_pcl_for_existing_conn_int(
 		policy_mgr_store_and_del_conn_info(psoc, mode,
 				all_matching_cxn_to_del, info, &num_cxn_del);
 		/* Get the PCL */
-		status = policy_mgr_get_pcl_int(psoc, mode, pcl_ch, len,
-						pcl_weight, weight_len);
+		status = policy_mgr_get_pcl(psoc, mode, pcl_ch, len,
+					    pcl_weight, weight_len);
 		policy_mgr_debug("Get PCL to FW for mode:%d", mode);
 		/* Restore the connection info */
 		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
-	return status;
-}
-
-QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
-						enum policy_mgr_con_mode mode,
-						uint8_t *pcl_ch, uint32_t *len,
-						uint8_t *pcl_weight,
-						uint32_t weight_len,
-						bool all_matching_cxn_to_del)
-{
-	uint32_t i, pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
-	QDF_STATUS status;
-
-	status = policy_mgr_get_pcl_for_existing_conn_int(psoc, mode, pcl_freqs,
-							  len, pcl_weight,
-							  weight_len,
-						  all_matching_cxn_to_del);
-	for (i = 0; i < *len; i++)
-		pcl_ch[i] = wlan_freq_to_chan(pcl_freqs[i]);
 	return status;
 }
 
@@ -230,11 +211,11 @@ policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 			 pm_ctx->unsafe_channel_count);
 }
 
-void policy_mgr_update_with_safe_channel_list_int(struct wlan_objmgr_psoc *psoc,
-						  uint32_t *pcl_channels,
-						  uint32_t *len,
-						  uint8_t *weight_list,
-						  uint32_t weight_len)
+void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
+					      uint32_t *pcl_channels,
+					      uint32_t *len,
+					      uint8_t *weight_list,
+					      uint32_t weight_len)
 {
 	uint32_t current_channel_list[QDF_MAX_NUM_CHAN];
 	uint8_t org_weight_list[QDF_MAX_NUM_CHAN];
@@ -302,24 +283,6 @@ void policy_mgr_update_with_safe_channel_list_int(struct wlan_objmgr_psoc *psoc,
 	*len = safe_channel_count;
 
 	return;
-}
-
-void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
-					      uint8_t *pcl_channels,
-					      uint32_t *len,
-					      uint8_t *weight_list,
-					      uint32_t weight_len)
-{
-	uint32_t i, pcl_freqs[QDF_MAX_NUM_CHAN];
-
-	for (i = 0; i < *len; i++)
-		pcl_freqs[i] = wlan_chan_to_freq(pcl_channels[i]);
-
-	policy_mgr_update_with_safe_channel_list_int(psoc, pcl_freqs, len,
-						     weight_list, weight_len);
-
-	for (i = 0; i < *len; i++)
-		pcl_channels[i] = wlan_freq_to_chan(pcl_freqs[i]);
 }
 
 static QDF_STATUS policy_mgr_modify_pcl_based_on_enabled_channels(
@@ -757,10 +720,10 @@ static inline enum policy_mgr_pcl_type policy_mgr_get_pcl_4_port(
 {return PM_MAX_PCL_TYPE; }
 #endif
 
-QDF_STATUS policy_mgr_get_pcl_int(struct wlan_objmgr_psoc *psoc,
-				  enum policy_mgr_con_mode mode,
-				  uint32_t *pcl_channels, uint32_t *len,
-				  uint8_t *pcl_weight, uint32_t weight_len)
+QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
+			      enum policy_mgr_con_mode mode,
+			      uint32_t *pcl_channels, uint32_t *len,
+			      uint8_t *pcl_weight, uint32_t weight_len)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t num_connections = 0, i;
@@ -887,23 +850,6 @@ QDF_STATUS policy_mgr_get_pcl_int(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
-			      enum policy_mgr_con_mode mode,
-			      uint8_t *pcl_channels, uint32_t *len,
-			      uint8_t *pcl_weight, uint32_t weight_len)
-{
-	uint32_t i, pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
-	QDF_STATUS status;
-
-	status = policy_mgr_get_pcl_int(psoc, mode, pcl_freqs, len, pcl_weight,
-					weight_len);
-
-	for (i = 0; i < *len; i++)
-		pcl_channels[i] = wlan_freq_to_chan(pcl_freqs[i]);
-
-	return status;
 }
 
 enum policy_mgr_conc_priority_mode
@@ -1987,14 +1933,14 @@ policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
 			return non_dfs_freq;
 
 		if (QDF_STATUS_SUCCESS !=
-				policy_mgr_get_pcl_for_existing_conn_int(
+				policy_mgr_get_pcl_for_existing_conn(
 					psoc, mode,
 					pcl_channels, &pcl_len,
 					pcl_weight, QDF_ARRAY_SIZE(pcl_weight),
 					false))
 			return freq;
 	} else {
-		if (QDF_STATUS_SUCCESS != policy_mgr_get_pcl_int(
+		if (QDF_STATUS_SUCCESS != policy_mgr_get_pcl(
 		    psoc, mode, pcl_channels, &pcl_len, pcl_weight,
 		    QDF_ARRAY_SIZE(pcl_weight)))
 			return freq;
@@ -2030,7 +1976,7 @@ static void policy_mgr_remove_dsrc_channels(uint32_t *ch_freq_list,
 	*num_channels = num_chan_temp;
 }
 
-QDF_STATUS policy_mgr_get_valid_chans_from_range_int(
+QDF_STATUS policy_mgr_get_valid_chans_from_range(
 		struct wlan_objmgr_psoc *psoc, uint32_t *ch_freq_list,
 		uint32_t *ch_cnt, enum policy_mgr_con_mode mode)
 {
@@ -2051,7 +1997,7 @@ QDF_STATUS policy_mgr_get_valid_chans_from_range_int(
 
 	/* check the channel avoidance list for beaconing entities */
 	if (mode == PM_SAP_MODE || mode == PM_P2P_GO_MODE)
-		policy_mgr_update_with_safe_channel_list_int(
+		policy_mgr_update_with_safe_channel_list(
 			psoc, ch_freq_list, ch_cnt, ch_weight_list,
 			ch_weight_len);
 
@@ -2074,28 +2020,9 @@ QDF_STATUS policy_mgr_get_valid_chans_from_range_int(
 	return status;
 }
 
-QDF_STATUS policy_mgr_get_valid_chans_from_range(struct wlan_objmgr_psoc *psoc,
-						 uint8_t *ch_list,
-						 uint32_t *ch_cnt,
-						 enum policy_mgr_con_mode mode)
-{
-	uint32_t i, ch_freq_list[QDF_MAX_NUM_CHAN];
-	QDF_STATUS status;
-
-	for (i = 0; i < *ch_cnt; i++)
-		ch_freq_list[i] = wlan_chan_to_freq(ch_list[i]);
-
-	status = policy_mgr_get_valid_chans_from_range_int(psoc, ch_freq_list,
-							   ch_cnt, mode);
-
-	for (i = 0; i < *ch_cnt; i++)
-		ch_list[i] = wlan_freq_to_chan(ch_freq_list[i]);
-	return status;
-}
-
-QDF_STATUS policy_mgr_get_valid_chans_int(struct wlan_objmgr_psoc *psoc,
-					  uint32_t *ch_freq_list,
-					  uint32_t *list_len)
+QDF_STATUS policy_mgr_get_valid_chans(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *ch_freq_list,
+				      uint32_t *list_len)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
@@ -2121,19 +2048,6 @@ QDF_STATUS policy_mgr_get_valid_chans_int(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS policy_mgr_get_valid_chans(struct wlan_objmgr_psoc *psoc,
-				      uint8_t *ch_list, uint32_t *list_len)
-{
-	uint32_t i, ch_freq_list[QDF_MAX_NUM_CHAN] = {0};
-	QDF_STATUS status;
-
-	status = policy_mgr_get_valid_chans_int(psoc, ch_freq_list, list_len);
-	for (i = 0; i < *list_len; i++)
-		ch_list[i] = wlan_freq_to_chan(ch_freq_list[i]);
-
-	return status;
-}
-
 bool policy_mgr_list_has_24GHz_channel(uint32_t *ch_freq_list,
 				       uint32_t list_len)
 {
@@ -2148,8 +2062,8 @@ bool policy_mgr_list_has_24GHz_channel(uint32_t *ch_freq_list,
 }
 
 QDF_STATUS
-policy_mgr_set_sap_mandatory_channels_int(struct wlan_objmgr_psoc *psoc,
-					  uint32_t *ch_freq_list, uint32_t len)
+policy_mgr_set_sap_mandatory_channels(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *ch_freq_list, uint32_t len)
 {
 	uint32_t i;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -2181,22 +2095,6 @@ policy_mgr_set_sap_mandatory_channels_int(struct wlan_objmgr_psoc *psoc,
 	pm_ctx->sap_mandatory_channels_len = len;
 
 	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS policy_mgr_set_sap_mandatory_channels(struct wlan_objmgr_psoc *psoc,
-						 uint8_t *ch_list,
-						 uint32_t len)
-{
-	uint32_t i, ch_freq_list[QDF_MAX_NUM_CHAN] = {0};
-	QDF_STATUS status;
-
-	for (i = 0; i < len; i++)
-		ch_freq_list[i] = wlan_chan_to_freq(ch_list[i]);
-
-	status = policy_mgr_set_sap_mandatory_channels_int(psoc, ch_freq_list,
-							   len);
-
-	return status;
 }
 
 bool policy_mgr_is_sap_mandatory_channel_set(struct wlan_objmgr_psoc *psoc)
@@ -2273,7 +2171,7 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 
 	qdf_mem_zero(&pcl, sizeof(pcl));
 
-	status = policy_mgr_get_pcl_for_existing_conn_int(
+	status = policy_mgr_get_pcl_for_existing_conn(
 			psoc, PM_SAP_MODE, pcl.pcl_list, &pcl.pcl_len,
 			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list),
 			false);
@@ -2290,7 +2188,7 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 	if (!pcl.pcl_len && !policy_mgr_mode_specific_connection_count(psoc,
 	    PM_SAP_MODE, NULL)) {
 		policy_mgr_debug("policy_mgr_get_pcl_for_existing_conn returned no pcl");
-		status = policy_mgr_get_pcl_int(
+		status = policy_mgr_get_pcl(
 				psoc, PM_SAP_MODE,
 				pcl.pcl_list, &pcl.pcl_len,
 				pcl.weight_list,
@@ -2436,7 +2334,7 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, sap_vdev_id,
 						      &info, &num_cxn_del);
 
-	if (QDF_STATUS_SUCCESS == policy_mgr_get_pcl_int(
+	if (QDF_STATUS_SUCCESS == policy_mgr_get_pcl(
 	    psoc, PM_SAP_MODE, pcl_channels, &pcl_len,
 	    pcl_weight, QDF_ARRAY_SIZE(pcl_weight))) {
 		for (i = 0; i < pcl_len; i++) {

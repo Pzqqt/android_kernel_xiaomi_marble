@@ -1959,7 +1959,7 @@ bool policy_mgr_is_ibss_conn_exist(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-uint32_t policy_mgr_get_mode_specific_conn_info_int(
+uint32_t policy_mgr_get_mode_specific_conn_info(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t *ch_freq_list, uint8_t *vdev_id,
 		enum policy_mgr_con_mode mode)
@@ -1999,21 +1999,6 @@ uint32_t policy_mgr_get_mode_specific_conn_info_int(
 		policy_mgr_debug("Multiple mode:[%d] connections", mode);
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
-	return count;
-}
-
-uint32_t
-policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
-				       uint8_t *channels, uint8_t *vdev_id,
-				       enum policy_mgr_con_mode mode)
-{
-	uint32_t count, i, ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-
-	count = policy_mgr_get_mode_specific_conn_info_int(psoc, ch_freq_list,
-							   vdev_id, mode);
-	for (i = 0; i < count; i++)
-		channels[i] = wlan_freq_to_chan(ch_freq_list[i]);
 
 	return count;
 }
@@ -2390,9 +2375,9 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 	bool allowed;
 
 	qdf_mem_zero(&pcl, sizeof(pcl));
-	status = policy_mgr_get_pcl_int(psoc, mode, pcl.pcl_list, &pcl.pcl_len,
-					pcl.weight_list,
-					QDF_ARRAY_SIZE(pcl.weight_list));
+	status = policy_mgr_get_pcl(psoc, mode, pcl.pcl_list, &pcl.pcl_len,
+				    pcl.weight_list,
+				    QDF_ARRAY_SIZE(pcl.weight_list));
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("disallow connection:%d", status);
 		return false;
@@ -3400,14 +3385,14 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	cc_count = policy_mgr_get_mode_specific_conn_info_int(
+	cc_count = policy_mgr_get_mode_specific_conn_info(
 			psoc, &op_ch_freq_list[cc_count],
 			&vdev_id[cc_count], PM_SAP_MODE);
 	policy_mgr_debug("Number of SAP modes: %d", cc_count);
 
 	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
 		cc_count = cc_count +
-			   policy_mgr_get_mode_specific_conn_info_int(
+			   policy_mgr_get_mode_specific_conn_info(
 					psoc, &op_ch_freq_list[cc_count],
 					&vdev_id[cc_count], PM_P2P_GO_MODE);
 	policy_mgr_debug("Number of beaconing entities (SAP + GO):%d",

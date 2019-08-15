@@ -608,13 +608,9 @@ uint32_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_get_pcl_int(struct wlan_objmgr_psoc *psoc,
-				  enum policy_mgr_con_mode mode,
-				  uint32_t *pcl_channels, uint32_t *len,
-				  uint8_t *pcl_weight, uint32_t weight_len);
 QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 			      enum policy_mgr_con_mode mode,
-			      uint8_t *pcl_channels, uint32_t *len,
+			      uint32_t *pcl_channels, uint32_t *len,
 			      uint8_t *pcl_weight, uint32_t weight_len);
 
 /**
@@ -631,14 +627,8 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
  *
  * Return: None
  */
-void policy_mgr_update_with_safe_channel_list_int(struct wlan_objmgr_psoc *psoc,
-						  uint32_t *pcl_channels,
-						  uint32_t *len,
-						  uint8_t *weight_list,
-						  uint32_t weight_len);
-
 void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
-					      uint8_t *pcl_channels,
+					      uint32_t *pcl_channels,
 					      uint32_t *len,
 					      uint8_t *weight_list,
 					      uint32_t weight_len);
@@ -1746,13 +1736,8 @@ bool policy_mgr_list_has_24GHz_channel(uint32_t *ch_freq_list,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_get_valid_chans_from_range_int(
-						 struct wlan_objmgr_psoc *psoc,
-						 uint32_t *ch_freq_list,
-						 uint32_t *ch_cnt,
-						 enum policy_mgr_con_mode mode);
 QDF_STATUS policy_mgr_get_valid_chans_from_range(struct wlan_objmgr_psoc *psoc,
-						 uint8_t *ch_list,
+						 uint32_t *ch_list,
 						 uint32_t *ch_cnt,
 						 enum policy_mgr_con_mode mode);
 /**
@@ -1765,11 +1750,9 @@ QDF_STATUS policy_mgr_get_valid_chans_from_range(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_get_valid_chans_int(struct wlan_objmgr_psoc *psoc,
-					  uint32_t *ch_freq_list,
-					  uint32_t *list_len);
 QDF_STATUS policy_mgr_get_valid_chans(struct wlan_objmgr_psoc *psoc,
-				      uint8_t *chan_list, uint32_t *list_len);
+				      uint32_t *ch_freq_list,
+				      uint32_t *list_len);
 
 /**
  * policy_mgr_get_nss_for_vdev() - Get the allowed nss value for the
@@ -1811,12 +1794,8 @@ policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS policy_mgr_set_sap_mandatory_channels_int(
-						 struct wlan_objmgr_psoc *psoc,
-						 uint32_t *ch_freq_list,
-						 uint32_t len);
 QDF_STATUS policy_mgr_set_sap_mandatory_channels(struct wlan_objmgr_psoc *psoc,
-						 uint8_t *ch_list,
+						 uint32_t *ch_freq_list,
 						 uint32_t len);
 
 /**
@@ -1905,18 +1884,13 @@ uint32_t policy_mgr_get_mcc_operating_channel(struct wlan_objmgr_psoc *psoc,
  *
  * Return: None
  */
-QDF_STATUS policy_mgr_get_pcl_for_existing_conn_int(
+QDF_STATUS policy_mgr_get_pcl_for_existing_conn(
 		struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_con_mode mode,
 		uint32_t *pcl_ch, uint32_t *len,
 		uint8_t *pcl_weight, uint32_t weight_len,
 		bool all_matching_cxn_to_del);
 
-QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
-		enum policy_mgr_con_mode mode,
-		uint8_t *pcl_ch, uint32_t *len,
-		uint8_t *weight_list, uint32_t weight_len,
-		bool all_matching_cxn_to_del);
 /**
  * policy_mgr_get_valid_chan_weights() - Get the weightage for
  * all valid channels
@@ -3137,12 +3111,8 @@ QDF_STATUS policy_mgr_update_nan_vdev_mac_info(struct wlan_objmgr_psoc *psoc,
  *
  * Return: number of connection found as per given mode
  */
-uint32_t policy_mgr_get_mode_specific_conn_info_int(
-		struct wlan_objmgr_psoc *psoc,
-		uint32_t *ch_freq_list, uint8_t *vdev_id,
-		enum policy_mgr_con_mode mode);
 uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
-						uint8_t *ch_list,
+						uint32_t *ch_freq_list,
 						uint8_t *vdev_id,
 						enum policy_mgr_con_mode mode);
 #endif /* __WLAN_POLICY_MGR_API_H */
