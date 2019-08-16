@@ -14,6 +14,7 @@
 #include "dsi_ctrl_hw.h"
 #include "dsi_parser.h"
 #include "sde_dsc_helper.h"
+#include "sde_vdc_helper.h"
 
 /**
  * topology is currently defined by a set of following 3 values:
@@ -2366,12 +2367,13 @@ error:
 }
 
 static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
-				struct dsi_parser_utils *utils)
+	struct dsi_parser_utils *utils, int traffic_mode, int panel_mode)
 {
 	u32 data;
 	int rc = -EINVAL;
 	const char *compression;
 	struct dsi_display_mode_priv_info *priv_info;
+	int intf_width;
 
 	if (!mode || !mode->priv_info)
 		return -EINVAL;
@@ -2388,6 +2390,9 @@ static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
 		DSI_DEBUG("vdc compression is not enabled for the mode\n");
 		return 0;
 	}
+
+	priv_info->vdc.panel_mode = panel_mode;
+	priv_info->vdc.traffic_mode = traffic_mode;
 
 	rc = utils->read_u32(utils->data, "qcom,vdc-version", &data);
 	if (rc) {
@@ -2477,6 +2482,8 @@ static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
 		rc = -EINVAL;
 		goto error;
 	}
+
+	intf_width = mode->timing.h_active;
 	priv_info->vdc.slice_per_pkt = data;
 
 	priv_info->vdc.frame_width = mode->timing.h_active;
@@ -2522,6 +2529,14 @@ static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
 		data = MSM_RGB;
 	}
 	priv_info->vdc.source_color_space = data;
+
+	rc = sde_vdc_populate_config(&priv_info->vdc,
+		intf_width, traffic_mode);
+	if (rc) {
+		DSI_DEBUG("failed populating vdc config\n");
+		rc = -EINVAL;
+		goto error;
+	}
 
 	mode->timing.vdc_enabled = true;
 	mode->timing.vdc = &priv_info->vdc;
@@ -3555,6 +3570,8 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 	struct dsi_display_mode_priv_info *prv_info;
 	u32 child_idx = 0;
 	int rc = 0, num_timings;
+	int traffic_mode;
+	int panel_mode;
 	void *utils_data = NULL;
 
 	if (!panel || !mode) {
@@ -3589,6 +3606,8 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 	}
 
 	utils_data = utils->data;
+	traffic_mode = panel->video_config.traffic_mode;
+	panel_mode = panel->panel_mode;
 
 	dsi_for_each_child_node(timings_np, child_np) {
 		if (index != child_idx++)
@@ -3608,7 +3627,8 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 			goto parse_fail;
 		}
 
-		rc = dsi_panel_parse_vdc_params(mode, utils);
+		rc = dsi_panel_parse_vdc_params(mode, utils, traffic_mode,
+			panel_mode);
 		if (rc) {
 			DSI_ERR("failed to parse vdc params, rc=%d\n", rc);
 			goto parse_fail;
