@@ -3295,6 +3295,10 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		if ((start_ch_num > WLAN_REG_CH_NUM(loop_count)) ||
 		    (end_ch_num < WLAN_REG_CH_NUM(loop_count)))
 			continue;
+		/* Skip channel 12, and 13 for IOT issues for now */
+		if (WLAN_REG_CH_NUM(loop_count) == 12 ||
+		    WLAN_REG_CH_NUM(loop_count) == 13)
+			continue;
 		/*
 		 * go to next channel if none of these condition pass
 		 * - DFS scan enabled and chan not in CHANNEL_STATE_DISABLE
