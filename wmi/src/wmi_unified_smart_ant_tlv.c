@@ -334,7 +334,7 @@ static QDF_STATUS send_smart_ant_set_training_info_cmd_tlv(
 	uint8_t *buf_ptr;
 	int32_t len = 0;
 	QDF_STATUS ret;
-	int loop;
+	uint8_t loop = 0, itr = 0;
 
 	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
 	len += (WMI_SMART_ANT_MAX_RATE_SERIES) *
@@ -372,7 +372,13 @@ static QDF_STATUS send_smart_ant_set_training_info_cmd_tlv(
 		WMITLV_TAG_STRUC_wmi_peer_smart_ant_set_train_antenna_param,
 			    WMITLV_GET_STRUCT_TLVLEN(
 				wmi_peer_smart_ant_set_train_antenna_param));
-		train_param->train_rate_series = param->rate_array[loop];
+		train_param->train_rate_series_lo =
+			((param->rate_array[itr] & SA_MASK_RCODE) |
+			(param->rate_array[itr] & (SA_MASK_RCODE << 16)));
+		train_param->train_rate_series_hi =
+			((param->rate_array[itr + 1] & SA_MASK_RCODE) |
+			(param->rate_array[itr + 1] & (SA_MASK_RCODE << 16)));
+		itr += 2;
 		train_param->train_antenna_series = param->antenna_array[loop];
 		train_param->rc_flags = 0;
 		WMI_LOGI(FL("Series number:%d\n"), loop);
@@ -509,17 +515,18 @@ static QDF_STATUS extract_peer_ratecode_list_ev_tlv(
 	htindex = 0;
 	if (rate_cap->ratecount[0]) {
 		if (param_buf->num_ratecode_legacy >
-				SA_MAX_LEGACY_RATE_DWORDS) {
+				SA_MAX_LEGACY_RATE_WORDS) {
 			WMI_LOGE("Invalid Number of ratecode_legacy %d",
 					param_buf->num_ratecode_legacy);
 			return QDF_STATUS_E_FAILURE;
 		}
+		ofdm_rate = param_buf->ratecode_legacy;
 		for (i = 0; i < param_buf->num_ratecode_legacy; i++) {
-			ofdm_rate = param_buf->ratecode_legacy;
-			for (j = 0; j < SA_BYTES_IN_DWORD; j++) {
+			for (j = 0; j < SA_WORDS_IN_DWORD; j++) {
+				shift = (SA_WORD_BITS_LEN * j);
 				rate_cap->ratecode_legacy[htindex] =
-					((ofdm_rate->ratecode_legacy >> (8*j)) &
-					SA_MASK_BYTE);
+					((ofdm_rate->ratecode_legacy >> shift) &
+						SA_MASK_RCODE);
 				htindex++;
 			}
 			ofdm_rate++;
@@ -527,21 +534,21 @@ static QDF_STATUS extract_peer_ratecode_list_ev_tlv(
 	}
 
 	htindex = 0;
-	if (param_buf->num_ratecode_mcs > SA_MAX_HT_RATE_DWORDS) {
+	if (param_buf->num_ratecode_mcs > SA_MAX_HT_RATE_WORDS) {
 		WMI_LOGE("Invalid Number of ratecode_mcs %d",
 				param_buf->num_ratecode_mcs);
 		return QDF_STATUS_E_FAILURE;
 	}
+	mcs_rate = param_buf->ratecode_mcs;
 	for (i = 0; i < param_buf->num_ratecode_mcs; i++) {
-		mcs_rate = param_buf->ratecode_mcs;
-		for (j = 0; j < SA_BYTES_IN_DWORD; j++) {
-			shift = (8*j);
+		for (j = 0; j < SA_WORDS_IN_DWORD; j++) {
+			shift = (SA_WORD_BITS_LEN * j);
 			rate_cap->ratecode_20[htindex] =
-			    ((mcs_rate->ratecode_20 >> (shift)) & SA_MASK_BYTE);
+			((mcs_rate->ratecode_20 >> (shift)) & SA_MASK_RCODE);
 			rate_cap->ratecode_40[htindex] =
-			    ((mcs_rate->ratecode_40 >> (shift)) & SA_MASK_BYTE);
+			((mcs_rate->ratecode_40 >> (shift)) & SA_MASK_RCODE);
 			rate_cap->ratecode_80[htindex] =
-			    ((mcs_rate->ratecode_80 >> (shift)) & SA_MASK_BYTE);
+			((mcs_rate->ratecode_80 >> (shift)) & SA_MASK_RCODE);
 			htindex++;
 		}
 		mcs_rate++;
