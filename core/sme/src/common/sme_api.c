@@ -6379,6 +6379,14 @@ QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
 
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 
+	/* In case of disconnect/try disconnect, set discon_in_progress flag
+	 * before posting ROAM_SCAN_OFFLOAD_STOP cmd to WMA. It will allow
+	 * host to not process roam sync indication in
+	 * csr_process_roam_sync_callback where "session->discon_in_progress"
+	 * is checked and will return failure.
+	 */
+	if (reason == eCsrForcedDisassoc)
+		session->discon_in_progress = true;
 	/*
 	 * set the driver_disabled_roaming flag to true even if roaming
 	 * is not enabled on this session so that roam start requests for
