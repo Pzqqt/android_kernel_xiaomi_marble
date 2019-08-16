@@ -9195,9 +9195,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 						CSA_REASON_UNSAFE_CHANNEL);
 				hdd_switch_sap_channel(adapter, restart_chan,
 						       true);
-				hdd_store_sap_restart_channel(
-							restart_chan,
-							restart_chan_store);
+				return;
 			}
 			else {
 				hdd_debug("sending coex indication");

@@ -2611,6 +2611,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 		policy_mgr_set_chan_switch_complete_evt(hdd_ctx->psoc);
 		wlan_hdd_enable_roaming(adapter);
+
+		/* Check any other sap need restart */
+		if (ap_ctx->sap_context->csa_reason ==
+		    CSA_REASON_UNSAFE_CHANNEL)
+			hdd_unsafe_channel_restart_sap(hdd_ctx);
 		return QDF_STATUS_SUCCESS;
 
 	default:
