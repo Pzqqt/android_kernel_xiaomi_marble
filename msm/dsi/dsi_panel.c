@@ -2317,6 +2317,26 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 	}
 	priv_info->dsc.config.bits_per_pixel = data << 4;
 
+	rc = utils->read_u32(utils->data, "qcom,src-chroma-format",
+			&data);
+	if (rc) {
+		DSI_DEBUG("failed to parse qcom,src-chroma-format\n");
+		rc = 0;
+		data = MSM_CHROMA_444;
+	}
+
+	priv_info->dsc.chroma_format = data;
+
+	rc = utils->read_u32(utils->data, "qcom,src-color-space",
+			&data);
+	if (rc) {
+		DSI_DEBUG("failed to parse qcom,src-color-space\n");
+		rc = 0;
+		data = MSM_RGB;
+	}
+
+	priv_info->dsc.source_color_space = data;
+
 	priv_info->dsc.config.block_pred_enable = utils->read_bool(utils->data,
 		"qcom,mdss-dsc-block-prediction-enable");
 
@@ -2340,6 +2360,171 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 
 	mode->timing.dsc_enabled = true;
 	mode->timing.dsc = &priv_info->dsc;
+
+error:
+	return rc;
+}
+
+static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
+				struct dsi_parser_utils *utils)
+{
+	u32 data;
+	int rc = -EINVAL;
+	const char *compression;
+	struct dsi_display_mode_priv_info *priv_info;
+
+	if (!mode || !mode->priv_info)
+		return -EINVAL;
+
+	priv_info = mode->priv_info;
+
+	priv_info->vdc_enabled = false;
+	compression = utils->get_property(utils->data,
+			"qcom,compression-mode", NULL);
+	if (compression && !strcmp(compression, "vdc"))
+		priv_info->vdc_enabled = true;
+
+	if (!priv_info->vdc_enabled) {
+		DSI_DEBUG("vdc compression is not enabled for the mode\n");
+		return 0;
+	}
+
+	rc = utils->read_u32(utils->data, "qcom,vdc-version", &data);
+	if (rc) {
+		priv_info->vdc.version_major = 0x1;
+		priv_info->vdc.version_minor = 0x1;
+		priv_info->vdc.version_release = 0x0;
+		rc = 0;
+	} else {
+		/* BITS[0..3] provides minor version and BITS[4..7] provide
+		 * major version information
+		 */
+		priv_info->vdc.version_major = (data >> 4) & 0x0F;
+		priv_info->vdc.version_minor = data & 0x0F;
+		if ((priv_info->vdc.version_major != 0x1) &&
+				((priv_info->vdc.version_minor
+				  != 0x1))) {
+			DSI_ERR("%s:unsupported major:%d minor:%d version\n",
+					__func__,
+					priv_info->vdc.version_major,
+					priv_info->vdc.version_minor
+					);
+			rc = -EINVAL;
+			goto error;
+		}
+	}
+
+	rc = utils->read_u32(utils->data, "qcom,vdc-version-release", &data);
+	if (rc) {
+		priv_info->vdc.version_release = 0x0;
+		rc = 0;
+	} else {
+		priv_info->vdc.version_release = data & 0xff;
+		/* only one release version is supported */
+		if (priv_info->vdc.version_release != 0x0) {
+			DSI_ERR("unsupported vdc release version %d\n",
+					priv_info->vdc.version_release);
+			rc = -EINVAL;
+			goto error;
+		}
+	}
+
+	DSI_INFO("vdc major: 0x%x minor : 0x%x release : 0x%x\n",
+			priv_info->vdc.version_major,
+			priv_info->vdc.version_minor,
+			priv_info->vdc.version_release);
+
+	rc = utils->read_u32(utils->data, "qcom,vdc-slice-height", &data);
+	if (rc) {
+		DSI_ERR("failed to parse qcom,vdc-slice-height\n");
+		goto error;
+	}
+	priv_info->vdc.slice_height = data;
+
+	/* slice height should be atleast 16 lines */
+	if (priv_info->vdc.slice_height < 16) {
+		DSI_ERR("invalid slice height %d\n",
+			priv_info->vdc.slice_height);
+		rc = -EINVAL;
+		goto error;
+	}
+
+	rc = utils->read_u32(utils->data, "qcom,vdc-slice-width", &data);
+	if (rc) {
+		DSI_ERR("failed to parse qcom,vdc-slice-width\n");
+		goto error;
+	}
+
+	priv_info->vdc.slice_width = data;
+
+	/*
+	 * slide-width should be multiple of 8
+	 * slice-width should be atlease 64 pixels
+	 */
+	if ((priv_info->vdc.slice_width & 7) ||
+		(priv_info->vdc.slice_width < 64)) {
+		DSI_ERR("invalid slice width:%d\n", priv_info->vdc.slice_width);
+		rc = -EINVAL;
+		goto error;
+	}
+
+	rc = utils->read_u32(utils->data, "qcom,vdc-slice-per-pkt", &data);
+	if (rc) {
+		DSI_ERR("failed to parse qcom,vdc-slice-per-pkt\n");
+		goto error;
+	} else if (!data || (data > 2)) {
+		DSI_ERR("invalid vdc slice-per-pkt:%d\n", data);
+		rc = -EINVAL;
+		goto error;
+	}
+	priv_info->vdc.slice_per_pkt = data;
+
+	priv_info->vdc.frame_width = mode->timing.h_active;
+	priv_info->vdc.frame_height = mode->timing.v_active;
+
+	rc = utils->read_u32(utils->data, "qcom,vdc-bit-per-component",
+		&data);
+	if (rc) {
+		DSI_ERR("failed to parse qcom,vdc-bit-per-component\n");
+		goto error;
+	}
+	priv_info->vdc.bits_per_component = data;
+
+	rc = utils->read_u32(utils->data, "qcom,mdss-pps-delay-ms", &data);
+	if (rc) {
+		DSI_DEBUG("pps-delay-ms not specified, defaulting to 0\n");
+		data = 0;
+	}
+	priv_info->vdc.pps_delay_ms = data;
+
+	rc = utils->read_u32(utils->data, "qcom,vdc-bit-per-pixel",
+			&data);
+	if (rc) {
+		DSI_ERR("failed to parse qcom,vdc-bit-per-pixel\n");
+		goto error;
+	}
+	priv_info->vdc.bits_per_pixel = data << 4;
+
+	rc = utils->read_u32(utils->data, "qcom,src-chroma-format",
+			&data);
+	if (rc) {
+		DSI_DEBUG("failed to parse qcom,src-chroma-format\n");
+		rc = 0;
+		data = MSM_CHROMA_444;
+	}
+	priv_info->vdc.chroma_format = data;
+
+	rc = utils->read_u32(utils->data, "qcom,src-color-space",
+			&data);
+	if (rc) {
+		DSI_DEBUG("failed to parse qcom,src-color-space\n");
+		rc = 0;
+		data = MSM_RGB;
+	}
+	priv_info->vdc.source_color_space = data;
+
+	mode->timing.vdc_enabled = true;
+	mode->timing.vdc = &priv_info->vdc;
 
 error:
 	return rc;
@@ -3420,6 +3605,12 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 		rc = dsi_panel_parse_dsc_params(mode, utils);
 		if (rc) {
 			DSI_ERR("failed to parse dsc params, rc=%d\n", rc);
+			goto parse_fail;
+		}
+
+		rc = dsi_panel_parse_vdc_params(mode, utils);
+		if (rc) {
+			DSI_ERR("failed to parse vdc params, rc=%d\n", rc);
 			goto parse_fail;
 		}
 

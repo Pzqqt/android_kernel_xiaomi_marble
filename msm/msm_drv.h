@@ -72,6 +72,13 @@ struct msm_gem_vma;
 #define MAX_BRIDGES    16
 #define MAX_CONNECTORS 16
 
+#define MSM_RGB 0x0
+#define MSM_YUV 0x1
+
+#define MSM_CHROMA_444 0x0
+#define MSM_CHROMA_422 0x1
+#define MSM_CHROMA_420 0x2
+
 #define TEARDOWN_DEADLOCK_RETRY_MAX 5
 
 struct msm_file_private {
@@ -322,6 +329,8 @@ struct msm_roi_caps {
  * @pclk_per_line:           Compressed width.
  * @slice_last_group_size:   Size of last group in pixels.
  * @slice_per_pkt:           Number of slices per packet.
+ * @source_color_space:      Source color space of DSC encoder
+ * @chroma_format:           Chroma_format of DSC encoder.
  * @det_thresh_flatness:     Flatness threshold.
  * @extra_width:             Extra width required in timing calculations.
  * @pps_delay_ms:            Post PPS command delay in milliseconds.
@@ -338,11 +347,49 @@ struct msm_display_dsc_info {
 	int pclk_per_line;
 	int slice_last_group_size;
 	int slice_per_pkt;
+	int source_color_space;
+	int chroma_format;
 	int det_thresh_flatness;
 	u32 extra_width;
 	u32 pps_delay_ms;
 };
 
+
+/**
+ * struct msm_display_vdc_info - defines vdc configuration
+ * @version_major:           major version number of VDC encoder.
+ * @version_minor:           minor version number of VDC encoder.
+ * @source_color_space:      source color space of VDC encoder
+ * @chroma_format:           chroma_format of VDC encoder.
+ * @slice_height:            slice height configuration of encoder.
+ * @slice_width:             slice width configuration of encoder.
+ * @bytes_in_slice:          number of bytes per slice .
+ * @slice_per_pkt:           number of slices per packet.
+ * @bits_per_component:      number of bits per component.
+ * @bits_per_pixel:          number of bits per pixel.
+ * @frame_width:             frame width configuration of encoder
+ * @frame_height:            frame height configuration of encoder
+ * @pps_delay_ms:            Post PPS command delay in milliseconds.
+ * @version_release:		 release version of VDC encoder.
+ */
+struct msm_display_vdc_info {
+	u8 version_major;
+	u8 version_minor;
+	u8 chroma_format;
+	u8 source_color_space;
+
+	int slice_height;
+	int slice_width;
+	int bytes_in_slice;
+	int slice_per_pkt;
+	int bits_per_component;
+	int bits_per_pixel;
+	int frame_width;
+	int frame_height;
+
+	u32 pps_delay_ms;
+	u32 version_release;
+};
 
 /**
  * Bits/pixel target >> 4  (removing the fractional bits)

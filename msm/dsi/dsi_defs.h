@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_DEFS_H_
@@ -402,7 +402,9 @@ struct dsi_panel_cmd_set {
  *                    panels in microseconds.
  * @dsi_transfer_time_us:   Specifies dsi transfer time for command mode.
  * @dsc_enabled:      DSC compression enabled.
+ * @vdc_enabled:      VDC compression enabled.
  * @dsc:              DSC compression configuration.
+ * @vdc:              VDC compression configuration.
  * @roi_caps:         Panel ROI capabilities.
  */
 struct dsi_mode_info {
@@ -425,7 +427,9 @@ struct dsi_mode_info {
 	u32 mdp_transfer_time_us;
 	u32 dsi_transfer_time_us;
 	bool dsc_enabled;
+	bool vdc_enabled;
 	struct msm_display_dsc_info *dsc;
+	struct msm_display_vdc_info *vdc;
 	struct msm_roi_caps roi_caps;
 };
 
@@ -583,7 +587,9 @@ struct dsi_host_config {
  * @min_dsi_clk_hz:       Min dsi clk per lane to transfer frame in vsync time.
  * @topology:             Topology selected for the panel
  * @dsc:                  DSC compression info
+ * @vdc:                  VDC compression info
  * @dsc_enabled:          DSC compression enabled
+ * @vdc_enabled:          VDC compression enabled
  * @roi_caps:		  Panel ROI capabilities
  */
 struct dsi_display_mode_priv_info {
@@ -602,7 +608,9 @@ struct dsi_display_mode_priv_info {
 
 	struct msm_display_topology topology;
 	struct msm_display_dsc_info dsc;
+	struct msm_display_vdc_info vdc;
 	bool dsc_enabled;
+	bool vdc_enabled;
 	struct msm_roi_caps roi_caps;
 };
 
