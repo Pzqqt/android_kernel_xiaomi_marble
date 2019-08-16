@@ -621,6 +621,7 @@ typedef enum {
  * @maxreqpower: Max regulatory power
  * @antennamac: Max antenna
  * @reg_class_id: Regulatory class id.
+ * @max_bw_supported: max BW supported
  */
 
 struct channel_param {
@@ -644,6 +645,7 @@ struct channel_param {
 	int8_t   maxregpower;
 	uint8_t  antennamax;
 	uint8_t  reg_class_id;
+	wmi_host_channel_width max_bw_supported;
 };
 
 #ifdef FEATURE_OEM_DATA

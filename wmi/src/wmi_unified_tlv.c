@@ -3073,7 +3073,8 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 					    tchan_info->reg_class_id);
 		WMI_SET_CHANNEL_MAX_TX_POWER(chan_info,
 					     tchan_info->maxregpower);
-
+		WMI_SET_CHANNEL_MAX_BANDWIDTH(chan_info,
+					      tchan_info->max_bw_supported);
 		WMI_LOGD("chan[%d] = %u", i, chan_info->mhz);
 
 		tchan_info++;
