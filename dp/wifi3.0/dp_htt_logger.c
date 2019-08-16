@@ -31,7 +31,7 @@
  * HTT_DISPLAY_SIZE   : Supported Number of command/event/wbm_event to be
  * read at one shot through wdf debugfs framework
  */
-#define HTT_DISPLAY_SIZE 29
+#define HTT_DISPLAY_SIZE 25
 
 /**
  * Used for stop_seq
