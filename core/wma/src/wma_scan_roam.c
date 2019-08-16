@@ -1985,18 +1985,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
 		wma_handle->suitable_ap_hb_failure = false;
 
-		if (roam_req->RoamScanOffloadEnabled) {
-			wma_roam_scan_fill_scan_params(wma_handle, mac,
-						       roam_req, &scan_params);
-			qdf_status =
-				wma_roam_scan_offload_mode(
-					wma_handle, &scan_params, roam_req,
-					WMI_ROAM_SCAN_MODE_NONE,
-					roam_req->sessionId);
-			if (qdf_status != QDF_STATUS_SUCCESS)
-				break;
-		}
-
 		qdf_status = wma_roam_scan_bmiss_cnt(wma_handle,
 					     roam_req->RoamBmissFirstBcnt,
 					     roam_req->RoamBmissFinalBcnt,
