@@ -555,7 +555,7 @@ QDF_STATUS wlan_mlme_set_sap_get_peer_info(struct wlan_objmgr_psoc *psoc,
 					   bool value);
 
 /**
- * wlan_mlme_is_sap_bcast_deauth_enabled() - get the enable/disable value
+ * wlan_mlme_get_sap_bcast_deauth_enabled() - get the enable/disable value
  *                                           for broadcast deauth in sap
  * @psoc: pointer to psoc object
  * @value: Value that needs to get from the caller
@@ -563,8 +563,8 @@ QDF_STATUS wlan_mlme_set_sap_get_peer_info(struct wlan_objmgr_psoc *psoc,
  * Return: QDF Status
  */
 QDF_STATUS
-wlan_mlme_is_sap_bcast_deauth_enabled(struct wlan_objmgr_psoc *psoc,
-				      bool *value);
+wlan_mlme_get_sap_bcast_deauth_enabled(struct wlan_objmgr_psoc *psoc,
+				       bool *value);
 
 /**
  * wlan_mlme_get_sap_allow_all_channels() - get the value of sap allow all
