@@ -173,6 +173,7 @@
 #include "wlan_blm_ucfg_api.h"
 #include "ol_txrx.h"
 #include "nan_ucfg_api.h"
+#include "wlan_hdd_sta_info.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -4854,6 +4855,10 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 	hdd_apf_context_destroy(adapter);
 	qdf_spinlock_destroy(&adapter->vdev_lock);
 
+	if (adapter->device_mode == QDF_SAP_MODE ||
+	    adapter->device_mode == QDF_P2P_GO_MODE)
+		hdd_sta_info_deinit(&adapter->sta_info_list);
+
 	wlan_hdd_debugfs_csr_deinit(adapter);
 	if (adapter->device_mode == QDF_STA_MODE)
 		hdd_sysfs_destroy_adapter_root_obj(adapter);
@@ -6182,9 +6187,10 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	struct qdf_mac_addr peer_macaddr;
-	int sta_id;
 	bool value;
 	struct wlan_objmgr_vdev *vdev;
+	uint8_t index = 0;
+	struct hdd_station_info *sta_info;
 
 	hdd_enter();
 
@@ -6287,19 +6293,17 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 		} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
 			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
-			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT;
-			     sta_id++) {
-				struct hdd_station_info sta =
-					adapter->sta_info[sta_id];
-				if (sta.in_use) {
-					hdd_debug("[SSR] deregister STA with ID %d",
-						  sta_id);
-					/* STA id will be removed */
-					hdd_softap_deregister_sta(adapter,
-								  sta_id,
-								  sta.sta_mac);
-					sta.in_use = 0;
-				}
+
+			hdd_for_each_station(adapter->sta_info_list, sta_info,
+					     index) {
+				hdd_debug(
+				    "[SSR] deregister STA MAC:"
+				    QDF_MAC_ADDR_STR,
+				    QDF_MAC_ADDR_ARRAY(
+				    sta_info->sta_mac.bytes));
+				hdd_softap_deregister_sta(
+						adapter,
+						sta_info);
 			}
 		}
 
@@ -6316,6 +6320,10 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		hdd_stop_tsf_sync(adapter);
 
 		hdd_softap_deinit_tx_rx(adapter);
+		if (adapter->device_mode == QDF_SAP_MODE ||
+		    adapter->device_mode == QDF_P2P_GO_MODE)
+			hdd_sta_info_deinit(&adapter->sta_info_list);
+
 		hdd_deregister_hl_netdev_fc_timer(adapter);
 		hdd_deregister_tx_flow_control(adapter);
 
@@ -15433,10 +15441,11 @@ bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
 {
 	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 	struct hdd_adapter *adapter = NULL;
-	uint8_t sta_id = 0;
+	uint8_t index = 0;
 	uint8_t *sta_mac = NULL;
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
+	struct hdd_station_info *sta_info = NULL;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -15483,6 +15492,7 @@ bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
 			}
 			return true;
 		}
+
 		if ((QDF_STA_MODE == adapter->device_mode) ||
 			(QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
 			(QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
@@ -15505,23 +15515,22 @@ bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
 			}
 		} else if ((QDF_SAP_MODE == adapter->device_mode) ||
 				(QDF_P2P_GO_MODE == adapter->device_mode)) {
-			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT;
-				sta_id++) {
-				if (!((adapter->sta_info[sta_id].in_use)
-				    && (OL_TXRX_PEER_STATE_CONN ==
-				    adapter->sta_info[sta_id].peer_state)))
+			hdd_for_each_station(adapter->sta_info_list, sta_info,
+					     index) {
+				if (sta_info->peer_state !=
+					OL_TXRX_PEER_STATE_CONN)
 					continue;
 
-				sta_mac = (uint8_t *)
-						&(adapter->sta_info[sta_id].
-							sta_mac.bytes[0]);
+				sta_mac = sta_info->sta_mac.bytes;
 				hdd_debug("client " QDF_MAC_ADDR_STR
-				" of SAP/GO is in middle of WPS/EAPOL exchange",
-				QDF_MAC_ADDR_ARRAY(sta_mac));
+					  " of SAP/GO is in middle of WPS/EAPOL exchange",
+					  QDF_MAC_ADDR_ARRAY(sta_mac));
 				if (out_vdev_id && out_reason) {
 					*out_vdev_id = adapter->vdev_id;
-					*out_reason = SAP_EAPOL_IN_PROGRESS;
+					*out_reason =
+						SAP_EAPOL_IN_PROGRESS;
 				}
+
 				return true;
 			}
 			if (hdd_ctx->connection_in_progress) {

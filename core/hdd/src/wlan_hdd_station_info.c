@@ -34,6 +34,7 @@
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_station_info.h>
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_hdd_sta_info.h"
 
 /*
  * define short names for the global vendor params
@@ -1225,10 +1226,11 @@ static int hdd_get_station_remote(struct hdd_context *hdd_ctx,
 				  struct hdd_adapter *adapter,
 				  struct qdf_mac_addr mac_addr)
 {
-	struct hdd_station_info *stainfo = hdd_get_stainfo(adapter->sta_info,
-							   mac_addr);
 	int status = 0;
 	bool is_associated = false;
+	struct hdd_station_info *stainfo =
+			hdd_get_sta_info_by_mac(&adapter->sta_info_list,
+						mac_addr.bytes);
 
 	if (!stainfo) {
 		status = hdd_get_cached_station_remote(hdd_ctx, adapter,

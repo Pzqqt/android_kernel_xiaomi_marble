@@ -40,6 +40,7 @@
 #include "wlan_cp_stats_mc_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_hdd_sta_info.h"
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 #define HDD_INFO_SIGNAL                 STATION_INFO_SIGNAL
@@ -3908,7 +3909,6 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	struct sir_peer_info_ext peer_info;
 	struct hdd_fw_txrx_stats txrx_stats;
 	int status;
-	int i;
 
 	status = wlan_hdd_validate_context(hddctx);
 	if (status != 0)
@@ -3916,15 +3916,7 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 
 	hdd_debug("get peer %pM info", mac);
 
-	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-		if (!qdf_mem_cmp(adapter->sta_info[i].sta_mac.bytes,
-				 mac,
-				 QDF_MAC_ADDR_SIZE)) {
-			stainfo = &adapter->sta_info[i];
-			break;
-		}
-	}
-
+	stainfo = hdd_get_sta_info_by_mac(&adapter->sta_info_list, mac);
 	if (!stainfo) {
 		hdd_err("peer %pM not found", mac);
 		return -EINVAL;

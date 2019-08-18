@@ -112,6 +112,8 @@
 #include "qdf_periodic_work.h"
 #endif
 
+#include "wlan_hdd_sta_info.h"
+
 /*
  * Preprocessor definitions and constants
  */
@@ -881,135 +883,6 @@ struct hdd_fw_txrx_stats {
 };
 
 /**
- * struct dhcp_phase - Per Peer DHCP Phases
- * @DHCP_PHASE_ACK: upon receiving DHCP_ACK/NAK message in REQUEST phase or
- *         DHCP_DELINE message in OFFER phase
- * @DHCP_PHASE_DISCOVER: upon receiving DHCP_DISCOVER message in ACK phase
- * @DHCP_PHASE_OFFER: upon receiving DHCP_OFFER message in DISCOVER phase
- * @DHCP_PHASE_REQUEST: upon receiving DHCP_REQUEST message in OFFER phase or
- *         ACK phase (Renewal process)
- */
-enum dhcp_phase {
-	DHCP_PHASE_ACK,
-	DHCP_PHASE_DISCOVER,
-	DHCP_PHASE_OFFER,
-	DHCP_PHASE_REQUEST
-};
-
-/**
- * struct dhcp_nego_status - Per Peer DHCP Negotiation Status
- * @DHCP_NEGO_STOP: when the peer is in ACK phase or client disassociated
- * @DHCP_NEGO_IN_PROGRESS: when the peer is in DISCOVER or REQUEST
- *         (Renewal process) phase
- */
-enum dhcp_nego_status {
-	DHCP_NEGO_STOP,
-	DHCP_NEGO_IN_PROGRESS
-};
-
-/**
- * struct hdd_station_info - Per station structure kept in HDD for
- *                                     multiple station support for SoftAP
- * @in_use: Is the station entry in use?
- * @sta_id: Station ID reported back from HAL (through SAP).
- *           Broadcast uses station ID zero by default.
- * @sta_type: Type of station i.e. p2p client or infrastructure station
- * @sta_mac: MAC address of the station
- * @peer_state: Current Station state so HDD knows how to deal with packet
- *              queue. Most recent states used to change TLSHIM STA state.
- * @is_qos_enabled: Track QoS status of station
- * @is_deauth_in_progress: The station entry for which Deauth is in progress
- * @nss: Number of spatial streams supported
- * @rate_flags: Rate Flags for this connection
- * @ecsa_capable: Extended CSA capabilities
- * @max_phy_rate: Calcuated maximum phy rate based on mode, nss, mcs etc.
- * @tx_packets: Packets send to current station
- * @tx_bytes: Bytes send to current station
- * @rx_packets: Packets received from current station
- * @rx_bytes: Bytes received from current station
- * @last_tx_rx_ts: Last tx/rx timestamp with current station
- * @assoc_ts: Current station association timestamp
- * @tx_rate: Tx rate with current station reported from F/W
- * @rx_rate: Rx rate with current station reported from F/W
- * @ampdu: Ampdu enable or not of the station
- * @sgi_enable: Short GI enable or not of the station
- * @tx_stbc: Tx Space-time block coding enable/disable
- * @rx_stbc: Rx Space-time block coding enable/disable
- * @ch_width: Channel Width of the connection
- * @mode: Mode of the connection
- * @max_supp_idx: Max supported rate index of the station
- * @max_ext_idx: Max extended supported rate index of the station
- * @max_mcs_idx: Max supported mcs index of the station
- * @rx_mcs_map: VHT Rx mcs map
- * @tx_mcs_map: VHT Tx mcs map
- * @freq : Frequency of the current station
- * @dot11_mode: 802.11 Mode of the connection
- * @ht_present: HT caps present or not in the current station
- * @vht_present: VHT caps present or not in the current station
- * @ht_caps: HT capabilities of current station
- * @vht_caps: VHT capabilities of current station
- * @reason_code: Disconnection reason code for current station
- * @rssi: RSSI of the current station reported from F/W
- * @capability: Capability information of current station
- * @support_mode: Max supported mode of a station currently
- * connected to sap
- * @rx_retry_cnt: Number of rx retries received from current station
- *                Currently this feature is not supported from FW
- * @rx_mc_bc_cnt: Multicast broadcast packet count received from
- *                current station
- * MSB of rx_mc_bc_cnt indicates whether FW supports rx_mc_bc_cnt
- * feature or not, if first bit is 1 it indicates that FW supports this
- * feature, if it is 0 it indicates FW doesn't support this feature
- */
-struct hdd_station_info {
-	bool in_use;
-	uint8_t sta_id;
-	eStationType sta_type;
-	struct qdf_mac_addr sta_mac;
-	enum ol_txrx_peer_state peer_state;
-	bool is_qos_enabled;
-	bool is_deauth_in_progress;
-	uint8_t   nss;
-	uint32_t  rate_flags;
-	uint8_t   ecsa_capable;
-	uint32_t max_phy_rate;
-	uint32_t tx_packets;
-	uint64_t tx_bytes;
-	uint32_t rx_packets;
-	uint64_t rx_bytes;
-	qdf_time_t last_tx_rx_ts;
-	qdf_time_t assoc_ts;
-	qdf_time_t disassoc_ts;
-	uint32_t tx_rate;
-	uint32_t rx_rate;
-	bool ampdu;
-	bool sgi_enable;
-	bool tx_stbc;
-	bool rx_stbc;
-	tSirMacHTChannelWidth ch_width;
-	uint8_t mode;
-	uint8_t max_supp_idx;
-	uint8_t max_ext_idx;
-	uint8_t max_mcs_idx;
-	uint8_t rx_mcs_map;
-	uint8_t tx_mcs_map;
-	uint32_t freq;
-	uint8_t dot11_mode;
-	bool ht_present;
-	bool vht_present;
-	struct ieee80211_ht_cap ht_caps;
-	struct ieee80211_vht_cap vht_caps;
-	uint32_t reason_code;
-	int8_t rssi;
-	enum dhcp_phase dhcp_phase;
-	enum dhcp_nego_status dhcp_nego_status;
-	uint16_t capability;
-	uint8_t support_mode;
-	uint32_t rx_retry_cnt;
-	uint32_t rx_mc_bc_cnt;
-};
-
-/**
  * struct hdd_ap_ctx - SAP/P2PGO specific information
  * @hostapd_state: state control information
  * @dfs_cac_block_tx: Is data tramsmission blocked due to DFS CAC?
@@ -1264,10 +1137,14 @@ struct hdd_adapter {
 
 	/** Multiple station supports */
 	/** Per-station structure */
-	spinlock_t sta_info_lock;        /* To protect access to station Info */
+
+	/* TODO: Will be removed as a part of next phase of clean up */
 	struct hdd_station_info sta_info[WLAN_MAX_STA_COUNT];
 	struct hdd_station_info cache_sta_info[WLAN_MAX_STA_COUNT];
 
+	/* TODO: _list from name will be removed after clean up */
+	struct hdd_sta_info_obj sta_info_list;
+	struct hdd_sta_info_obj cache_sta_info_list;
 
 #ifdef FEATURE_WLAN_WAPI
 	struct hdd_wapi_info wapi_info;

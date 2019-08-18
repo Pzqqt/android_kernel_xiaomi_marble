@@ -91,6 +91,7 @@
 #include "wlan_fwol_ucfg_api.h"
 #include "nan_ucfg_api.h"
 #include <wlan_reg_services_api.h>
+#include "wlan_hdd_sta_info.h"
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -740,19 +741,15 @@ static int hdd_hostapd_set_mac_address(struct net_device *net_dev, void *addr)
 	return errno;
 }
 
-static void hdd_clear_sta(struct hdd_adapter *adapter, uint8_t sta_id)
+static void hdd_clear_sta(struct hdd_adapter *adapter,
+			  struct hdd_station_info *sta_info)
 {
 	struct hdd_ap_ctx *ap_ctx;
-	struct hdd_station_info *sta_info;
 	struct csr_del_sta_params del_sta_params;
 
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
-	if (sta_id == ap_ctx->broadcast_sta_id)
-		return;
-
-	sta_info = &adapter->sta_info[sta_id];
-	if (!sta_info->in_use)
+	if (qdf_is_macaddr_broadcast(&sta_info->sta_mac))
 		return;
 
 	wlansap_populate_del_sta_params(sta_info->sta_mac.bytes,
@@ -765,11 +762,14 @@ static void hdd_clear_sta(struct hdd_adapter *adapter, uint8_t sta_id)
 
 static void hdd_clear_all_sta(struct hdd_adapter *adapter)
 {
-	uint8_t sta_id;
+	uint8_t index = 0;
+	struct hdd_station_info *sta_info;
 
 	hdd_enter_dev(adapter->dev);
-	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++)
-		hdd_clear_sta(adapter, sta_id);
+
+	hdd_for_each_station(adapter->sta_info_list, sta_info, index) {
+		hdd_clear_sta(adapter, sta_info);
+	}
 }
 
 static int hdd_stop_bss_link(struct hdd_adapter *adapter)
@@ -1452,7 +1452,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		return;
 	}
 
-	stainfo = &adapter->sta_info[event->staId];
+	stainfo = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
+					  event->staMac.bytes);
 
 	if (!stainfo) {
 		hdd_err("invalid stainfo");
@@ -1748,6 +1749,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	bool legacy_phymode;
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
 	struct hdd_station_info *stainfo, *cache_stainfo;
+	uint8_t index = 0;
 	mac_handle_t mac_handle;
 	struct sap_config *sap_config;
 
@@ -2228,7 +2230,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_fill_station_info(adapter, event);
 
-		adapter->sta_info[sta_id].ecsa_capable = event->ecsa_capable;
+		stainfo = hdd_get_sta_info_by_mac(
+					&adapter->sta_info_list,
+					(uint8_t *)&wrqu.addr.sa_data);
+
+		if (stainfo)
+			stainfo->ecsa_capable = event->ecsa_capable;
+		else
+			hdd_err("Station not found");
 
 		if (ucfg_ipa_is_enabled()) {
 			status = ucfg_ipa_wlan_evt(hdd_ctx->pdev,
@@ -2339,48 +2348,40 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		else
 			hdd_debug(" MAC initiated disassociation");
 		we_event = IWEVEXPIRED;
-		qdf_status =
-			hdd_softap_get_sta_id(adapter,
-					      &sap_event->sapevt.
-					      sapStationDisassocCompleteEvent.staMac,
-					      &sta_id);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_err("Failed to find sta id status: %d", qdf_status);
-			return QDF_STATUS_E_FAILURE;
-		}
 
 		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
 			adapter->vdev_id,
 			QDF_TRACE_DEFAULT_PDEV_ID,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
 
-		stainfo = hdd_get_stainfo(adapter->sta_info,
-					  disassoc_comp->staMac);
-		if (stainfo) {
-			/* Send DHCP STOP indication to FW */
-			stainfo->dhcp_phase = DHCP_PHASE_ACK;
-			if (stainfo->dhcp_nego_status ==
-						DHCP_NEGO_IN_PROGRESS)
-				hdd_post_dhcp_ind(adapter, sta_id,
-						  WMA_DHCP_STOP_IND);
-			stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
+		stainfo = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
+						  disassoc_comp->staMac.bytes);
+		if (!stainfo) {
+			hdd_err("Failed to find the right station");
+			return QDF_STATUS_E_INVAL;
 		}
-		/* STA id will be removed as a part of Phase 2 cleanup */
-		hdd_softap_deregister_sta(adapter, sta_id,
-					  disassoc_comp->staMac);
+
+		/* Send DHCP STOP indication to FW */
+		stainfo->dhcp_phase = DHCP_PHASE_ACK;
+		if (stainfo->dhcp_nego_status ==
+					DHCP_NEGO_IN_PROGRESS)
+			hdd_post_dhcp_ind(adapter,
+					  disassoc_comp->staMac.bytes,
+					  WMA_DHCP_STOP_IND);
+		stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
+
+		hdd_softap_deregister_sta(adapter, stainfo);
 
 		ap_ctx->ap_active = false;
-		spin_lock_bh(&adapter->sta_info_lock);
-		for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-			if (adapter->sta_info[i].in_use
-			    && i !=
-			    (WLAN_HDD_GET_AP_CTX_PTR(adapter))->
-			    broadcast_sta_id) {
+
+		hdd_for_each_station(adapter->sta_info_list, stainfo,
+				     index) {
+			if (!qdf_is_macaddr_broadcast(
+			    &stainfo->sta_mac)) {
 				ap_ctx->ap_active = true;
 				break;
 			}
 		}
-		spin_unlock_bh(&adapter->sta_info_lock);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
@@ -3353,10 +3354,12 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	hdd_register_hostapd_wext(adapter->dev);
 
 	/* Initialize the data path module */
-	status = hdd_softap_init_tx_rx(adapter);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("hdd_softap_init_tx_rx failed");
-		goto error_release_sap_session;
+	hdd_softap_init_tx_rx(adapter);
+
+	status = hdd_sta_info_init(&adapter->sta_info_list);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("sta info init failed");
+		goto error_release_softap_tx_rx;
 	}
 
 	status = hdd_wmm_adapter_init(adapter);
@@ -3394,12 +3397,13 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	/* rcpi info initialization */
 	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
-
 	hdd_exit();
 
 	return status;
 
 error_release_wmm:
+	hdd_sta_info_deinit(&adapter->sta_info_list);
+error_release_softap_tx_rx:
 	hdd_softap_deinit_tx_rx(adapter);
 error_release_sap_session:
 	hdd_unregister_wext(adapter->dev);
@@ -6590,8 +6594,9 @@ int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 {
 	struct sap_event sap_event;
-	int sta_id;
+	uint8_t index = 0;
 	struct sap_context *sap_ctx;
+	struct hdd_station_info *sta_info;
 
 	hdd_enter();
 
@@ -6601,31 +6606,24 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 		return;
 	}
 
-	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-		if (adapter->sta_info[sta_id].in_use) {
-			hdd_debug("sta_id: %d in_use: %d %pK",
-				 sta_id, adapter->sta_info[sta_id].in_use,
-				 adapter);
+	hdd_for_each_station(adapter->sta_info_list, sta_info, index) {
+		hdd_debug("sta_mac: " QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
 
-			if (qdf_is_macaddr_broadcast(
-				&adapter->sta_info[sta_id].sta_mac))
-				continue;
+		if (qdf_is_macaddr_broadcast(&sta_info->sta_mac))
+			continue;
 
-			sap_event.sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
-			qdf_mem_copy(
-				&sap_event.sapevt.
-				sapStationDisassocCompleteEvent.staMac,
-				&adapter->sta_info[sta_id].sta_mac,
-				sizeof(struct qdf_mac_addr));
-			sap_event.sapevt.sapStationDisassocCompleteEvent.
-			reason =
+		sap_event.sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
+
+		qdf_mem_copy(
+		     &sap_event.sapevt.sapStationDisassocCompleteEvent.staMac,
+		     &sta_info->sta_mac, sizeof(struct qdf_mac_addr));
+
+		sap_event.sapevt.sapStationDisassocCompleteEvent.reason =
 				eSAP_MAC_INITATED_DISASSOC;
-			sap_event.sapevt.sapStationDisassocCompleteEvent.
-			status_code =
+		sap_event.sapevt.sapStationDisassocCompleteEvent.status_code =
 				QDF_STATUS_E_RESOURCES;
-			hdd_hostapd_sap_event_cb(&sap_event,
-					sap_ctx->user_context);
-		}
+		hdd_hostapd_sap_event_cb(&sap_event, sap_ctx->user_context);
 	}
 
 	hdd_exit();
@@ -6634,7 +6632,8 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 bool hdd_is_peer_associated(struct hdd_adapter *adapter,
 			    struct qdf_mac_addr *mac_addr)
 {
-	uint32_t cnt;
+	uint8_t index = 0;
+	bool is_associated = false;
 	struct hdd_station_info *sta_info;
 
 	if (!adapter || !mac_addr) {
@@ -6642,17 +6641,13 @@ bool hdd_is_peer_associated(struct hdd_adapter *adapter,
 		return false;
 	}
 
-	sta_info = adapter->sta_info;
-	spin_lock_bh(&adapter->sta_info_lock);
-	for (cnt = 0; cnt < WLAN_MAX_STA_COUNT; cnt++) {
-		if ((sta_info[cnt].in_use) &&
-		    !qdf_mem_cmp(&(sta_info[cnt].sta_mac), mac_addr,
-		    QDF_MAC_ADDR_SIZE))
+	hdd_for_each_station(adapter->sta_info_list, sta_info, index) {
+		if (!qdf_mem_cmp(&sta_info->sta_mac, mac_addr,
+				 QDF_MAC_ADDR_SIZE)) {
+			is_associated = true;
 			break;
+		}
 	}
-	spin_unlock_bh(&adapter->sta_info_lock);
-	if (cnt != WLAN_MAX_STA_COUNT)
-		return true;
 
-	return false;
+	return is_associated;
 }

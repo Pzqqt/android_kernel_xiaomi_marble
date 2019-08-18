@@ -142,6 +142,7 @@
 #include "wlan_hdd_hw_capability.h"
 #include "wlan_hdd_oemdata.h"
 #include "os_if_fwol.h"
+#include "wlan_hdd_sta_info.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -9865,9 +9866,9 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_station_ctx *hdd_sta_ctx;
+	struct hdd_station_info *sta_info;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX+1];
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
-	uint32_t sta_id;
 	struct sk_buff *reply_skb;
 	uint32_t rate_flags = 0;
 	uint8_t nss;
@@ -9925,26 +9926,24 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	} else if (adapter->device_mode == QDF_P2P_GO_MODE ||
 		   adapter->device_mode == QDF_SAP_MODE) {
 
-		for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-			if (adapter->sta_info[sta_id].in_use &&
-			    !qdf_is_macaddr_broadcast(
-				&adapter->sta_info[sta_id].sta_mac) &&
-			    !qdf_mem_cmp(
-				&adapter->sta_info[sta_id].sta_mac.bytes,
-				peer_mac, QDF_MAC_ADDR_SIZE))
-				break;
-		}
-
-		if (WLAN_MAX_STA_COUNT == sta_id) {
-			hdd_err("No active peer with mac="QDF_MAC_ADDR_STR,
-			       QDF_MAC_ADDR_ARRAY(peer_mac));
+		if (QDF_IS_ADDR_BROADCAST(peer_mac)) {
+			hdd_err("Ignore bcast/self sta");
 			return -EINVAL;
 		}
 
-		nss = adapter->sta_info[sta_id].nss;
+		sta_info = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
+						   peer_mac);
+
+		if (!sta_info) {
+			hdd_err("No active peer with mac = " QDF_MAC_ADDR_STR,
+				QDF_MAC_ADDR_ARRAY(peer_mac));
+			return -EINVAL;
+		}
+
+		nss = sta_info->nss;
 		freq = cds_chan_to_freq(
 			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->operating_channel);
-		rate_flags = adapter->sta_info[sta_id].rate_flags;
+		rate_flags = sta_info->rate_flags;
 	} else {
 		hdd_err("Not Associated! with mac "QDF_MAC_ADDR_STR,
 		       QDF_MAC_ADDR_ARRAY(peer_mac));
@@ -20961,6 +20960,110 @@ static int wlan_hdd_set_txq_params(struct wiphy *wiphy,
 }
 
 /**
+ * hdd_softap_deauth_current_sta() - Deauth current sta
+ * @sta_info: pointer to the current station info structure
+ * @adapter: pointer to adapter structure
+ * @hdd_ctx: pointer to hdd context
+ * @hapd_state: pointer to hostapd state structure
+ * @param: pointer to del sta params
+ *
+ * Return: QDF_STATUS on success, corresponding QDF failure status on failure
+ */
+static
+QDF_STATUS hdd_softap_deauth_current_sta(struct hdd_adapter *adapter,
+					 struct hdd_station_info *sta_info,
+					 struct hdd_hostapd_state *hapd_state,
+					 struct csr_del_sta_params *param)
+{
+	qdf_event_t *disassoc_event = &hapd_state->qdf_sta_disassoc_event;
+	struct hdd_context *hdd_ctx;
+	QDF_STATUS qdf_status;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (hdd_ctx->dev_dfs_cac_status == DFS_CAC_IN_PROGRESS)
+		return QDF_STATUS_E_INVAL;
+
+	qdf_event_reset(&hapd_state->qdf_sta_disassoc_event);
+
+	if (!qdf_is_macaddr_broadcast(&sta_info->sta_mac))
+		sme_send_disassoc_req_frame(hdd_ctx->mac_handle,
+					    adapter->vdev_id,
+					    (uint8_t *)&param->peerMacAddr,
+					    param->reason_code, 0);
+
+	qdf_status = hdd_softap_sta_deauth(adapter, param);
+
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		sta_info->is_deauth_in_progress = true;
+		qdf_status = qdf_wait_for_event_completion(
+						disassoc_event,
+						SME_PEER_DISCONNECT_TIMEOUT);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			hdd_warn("Deauth time expired");
+	} else {
+		sta_info->is_deauth_in_progress = false;
+		hdd_debug("STA removal failed for ::" QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
+		return QDF_STATUS_E_NOENT;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_softap_deauth_all_sta() - Deauth all sta in the sta list
+ * @hdd_ctx: pointer to hdd context
+ * @adapter: pointer to adapter structure
+ * @hapd_state: pointer to hostapd state structure
+ * @param: pointer to del sta params
+ *
+ * Return: QDF_STATUS on success, corresponding QDF failure status on failure
+ */
+static
+QDF_STATUS hdd_softap_deauth_all_sta(struct hdd_adapter *adapter,
+				     struct hdd_hostapd_state *hapd_state,
+				     struct csr_del_sta_params *param)
+{
+	uint8_t index = 0;
+	QDF_STATUS status;
+	bool is_sap_bcast_deauth_enabled = false;
+	struct hdd_context *hdd_ctx;
+	struct hdd_station_info *sta_info;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ucfg_mlme_get_sap_bcast_deauth_enabled(hdd_ctx->psoc,
+					       &is_sap_bcast_deauth_enabled);
+
+	hdd_debug("sap_bcast_deauth_enabled %d", is_sap_bcast_deauth_enabled);
+
+	if (is_sap_bcast_deauth_enabled)
+		return QDF_STATUS_E_INVAL;
+
+	hdd_for_each_station(adapter->sta_info_list, sta_info, index) {
+		if (!sta_info->is_deauth_in_progress) {
+			hdd_debug("Delete STA with MAC:" QDF_MAC_ADDR_STR,
+				  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
+			status =
+			    hdd_softap_deauth_current_sta(adapter, sta_info,
+							  hapd_state, param);
+			if (QDF_IS_STATUS_ERROR(status))
+				return status;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * __wlan_hdd_cfg80211_del_station() - delete station v2
  * @wiphy: Pointer to wiphy
  * @dev: Underlying net device
@@ -20975,11 +21078,10 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct hdd_hostapd_state *hapd_state;
-	uint8_t sta_id;
 	uint8_t *mac;
 	mac_handle_t mac_handle;
+	struct hdd_station_info *sta_info;
 
 	hdd_enter();
 
@@ -21004,123 +21106,43 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 	mac = (uint8_t *) param->peerMacAddr.bytes;
 	mac_handle = hdd_ctx->mac_handle;
 
-	if ((QDF_SAP_MODE == adapter->device_mode) ||
-	    (QDF_P2P_GO_MODE == adapter->device_mode)) {
+	if (QDF_SAP_MODE != adapter->device_mode &&
+	    QDF_P2P_GO_MODE != adapter->device_mode)
+		goto fn_end;
 
-		hapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-		if (!hapd_state) {
-			hdd_err("Hostapd State is Null");
-			return 0;
-		}
+	hapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+	if (!hapd_state) {
+		hdd_err("Hostapd State is Null");
+		return 0;
+	}
 
-		if (qdf_is_macaddr_broadcast((struct qdf_mac_addr *) mac)) {
-			uint16_t i;
+	if (qdf_is_macaddr_broadcast((struct qdf_mac_addr *)mac)) {
+		if (!QDF_IS_STATUS_SUCCESS(hdd_softap_deauth_all_sta(adapter,
+								     hapd_state,
+								     param)))
+			goto fn_end;
+	} else {
+		sta_info = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
+						   mac);
 
-			bool is_sap_bcast_deauth_enabled = false;
-
-			ucfg_mlme_is_sap_bcast_deauth_enabled(
-					hdd_ctx->psoc,
-					&is_sap_bcast_deauth_enabled);
-			hdd_debug("is_sap_bcast_deauth_enabled %d",
-				  is_sap_bcast_deauth_enabled);
-
-			if (is_sap_bcast_deauth_enabled)
-				goto fn_end;
-
-			for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-				if ((adapter->sta_info[i].in_use) &&
-				    (!adapter->sta_info[i].
-				     is_deauth_in_progress)) {
-					qdf_mem_copy(
-						mac,
-						adapter->sta_info[i].
-							sta_mac.bytes,
-						QDF_MAC_ADDR_SIZE);
-
-					hdd_debug("Delete STA with MAC::"
-						  QDF_MAC_ADDR_STR,
-					       QDF_MAC_ADDR_ARRAY(mac));
-
-					if (hdd_ctx->dev_dfs_cac_status ==
-							DFS_CAC_IN_PROGRESS)
-						goto fn_end;
-
-					qdf_event_reset(&hapd_state->qdf_sta_disassoc_event);
-					qdf_status =
-						hdd_softap_sta_deauth(adapter,
-							param);
-					if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-						adapter->sta_info[i].
-						is_deauth_in_progress = true;
-						qdf_status =
-							qdf_wait_for_event_completion(
-							 &hapd_state->
-							 qdf_sta_disassoc_event,
-							 SME_PEER_DISCONNECT_TIMEOUT);
-						if (!QDF_IS_STATUS_SUCCESS(
-								qdf_status))
-							hdd_warn("Deauth wait time expired");
-					}
-				}
-			}
-		} else {
-			qdf_status =
-				hdd_softap_get_sta_id(adapter,
-					      (struct qdf_mac_addr *) mac,
-					      &sta_id);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				hdd_debug("Skip DEL STA as this is not used::"
-					  QDF_MAC_ADDR_STR,
-				       QDF_MAC_ADDR_ARRAY(mac));
-				return -ENOENT;
-			}
-
-			if (adapter->sta_info[sta_id].is_deauth_in_progress ==
-			    true) {
-				hdd_debug("Skip DEL STA as deauth is in progress::"
-					  QDF_MAC_ADDR_STR,
-					  QDF_MAC_ADDR_ARRAY(mac));
-				return -ENOENT;
-			}
-
-			adapter->sta_info[sta_id].is_deauth_in_progress = true;
-
-			hdd_debug("ucast, Delete STA with MAC:" QDF_MAC_ADDR_STR,
+		if (!sta_info) {
+			hdd_debug("Skip DEL STA as this is not used::"
+				  QDF_MAC_ADDR_STR,
 				  QDF_MAC_ADDR_ARRAY(mac));
-
-			/* Case: SAP in ACS selected DFS ch and client connected
-			 * Now Radar detected. Then if random channel is another
-			 * DFS ch then new CAC is initiated and no TX allowed.
-			 * So do not send any mgmt frames as it will timeout
-			 * during CAC.
-			 */
-
-			if (hdd_ctx->dev_dfs_cac_status == DFS_CAC_IN_PROGRESS)
-				goto fn_end;
-
-			qdf_event_reset(&hapd_state->qdf_sta_disassoc_event);
-			sme_send_disassoc_req_frame(mac_handle,
-					adapter->vdev_id,
-					(uint8_t *)&param->peerMacAddr,
-					param->reason_code, 0);
-			qdf_status = hdd_softap_sta_deauth(adapter,
-							   param);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				adapter->sta_info[sta_id].is_deauth_in_progress =
-					false;
-				hdd_debug("STA removal failed for ::"
-					  QDF_MAC_ADDR_STR,
-				       QDF_MAC_ADDR_ARRAY(mac));
-				return -ENOENT;
-			}
-			qdf_status = qdf_wait_for_event_completion(
-					&hapd_state->
-					qdf_sta_disassoc_event,
-					SME_PEER_DISCONNECT_TIMEOUT);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-				hdd_warn("Deauth wait time expired");
-
+			return -ENOENT;
 		}
+
+		if (sta_info->is_deauth_in_progress) {
+			hdd_debug("Skip DEL STA as deauth is in progress::"
+				  QDF_MAC_ADDR_STR,
+				  QDF_MAC_ADDR_ARRAY(mac));
+			return -ENOENT;
+		}
+
+		hdd_debug("ucast, Delete STA with MAC:" QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_ARRAY(mac));
+		hdd_softap_deauth_current_sta(adapter, sta_info, hapd_state,
+					      param);
 	}
 
 fn_end:
