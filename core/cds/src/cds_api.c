@@ -1134,6 +1134,12 @@ QDF_STATUS cds_post_disable(void)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	qdf_status = cds_close_mon_thread();
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		cds_err("Failed to close MON thread!");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	cdp_pdev_pre_detach(cds_get_context(QDF_MODULE_ID_SOC),
 			    OL_TXRX_PDEV_ID, 1);
 

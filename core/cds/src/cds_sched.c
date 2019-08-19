@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,6 +56,17 @@ enum notifier_state {
 } notifier_state;
 
 static p_cds_sched_context gp_cds_sched_context;
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+static int cds_ol_mon_thread(void *arg);
+static QDF_STATUS cds_alloc_ol_mon_pkt_freeq(p_cds_sched_context pschedcontext);
+static inline
+int cds_set_mon_cpus_allowed_ptr(struct task_struct *task, unsigned long cpu)
+{
+	return set_cpus_allowed_ptr(task, cpumask_of(cpu));
+}
+#endif /* WLAN_FEATURE_PKT_CAPTURE */
+
 #ifdef QCA_CONFIG_SMP
 static int cds_ol_rx_thread(void *arg);
 static uint32_t affine_cpu;
@@ -507,6 +518,10 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	pSchedContext->high_throughput_required = false;
 	pSchedContext->rx_affinity_required = false;
 #endif
+
+	if (QDF_STATUS_SUCCESS != cds_alloc_mon_thread(pSchedContext))
+		goto mon_freeqalloc_failure;
+
 	gp_cds_sched_context = pSchedContext;
 
 #ifdef QCA_CONFIG_SMP
@@ -524,14 +539,29 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	wait_for_completion_interruptible(&pSchedContext->ol_rx_start_event);
 	cds_debug("CDS OL Rx Thread has started");
 #endif
+
+	if (QDF_STATUS_SUCCESS != cds_open_mon_thread(pSchedContext))
+		goto OL_MON_THREAD_START_FAILURE;
+
 	/* We're good now: Let's get the ball rolling!!! */
 	cds_debug("CDS Scheduler successfully Opened");
 	return QDF_STATUS_SUCCESS;
 
+OL_MON_THREAD_START_FAILURE:
+#ifdef QCA_CONFIG_SMP
+	/* Try and force the Main thread controller to exit */
+	set_bit(RX_SHUTDOWN_EVENT, &pSchedContext->ol_rx_event_flag);
+	set_bit(RX_POST_EVENT, &pSchedContext->ol_rx_event_flag);
+	wake_up_interruptible(&pSchedContext->ol_rx_wait_queue);
+	/* Wait for RX Thread to exit */
+	wait_for_completion(&pSchedContext->ol_rx_shutdown);
+#endif
+
 #ifdef QCA_CONFIG_SMP
 OL_RX_THREAD_START_FAILURE:
 #endif
-
+	cds_free_ol_mon_pkt_freeq(gp_cds_sched_context);
+mon_freeqalloc_failure:
 #ifdef QCA_CONFIG_SMP
 	qdf_cpuhp_unregister(&pSchedContext->cpuhp_event_handle);
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
@@ -887,6 +917,9 @@ QDF_STATUS cds_sched_close(void)
 	}
 
 	cds_close_rx_thread();
+
+	cds_close_mon_thread();
+
 	gp_cds_sched_context = NULL;
 	return QDF_STATUS_SUCCESS;
 } /* cds_sched_close() */
@@ -1040,3 +1073,462 @@ int cds_get_gfp_flags(void)
 	return flags;
 }
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+/**
+ * cds_free_ol_mon_pkt_freeq() - free cds buffer free queue
+ * @pSchedContext - pointer to the global CDS Sched Context
+ *
+ * This API does mem free of the buffers available in free cds buffer
+ * queue which is used for mon Data processing.
+ *
+ * Return: none
+ */
+void cds_free_ol_mon_pkt_freeq(p_cds_sched_context pschedcontext)
+{
+	struct cds_ol_mon_pkt *pkt;
+
+	if (!cds_is_pktcapture_enabled())
+		return;
+
+	spin_lock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	while (!list_empty(&pschedcontext->
+	       sched_mon_ctx.cds_ol_mon_pkt_freeq)) {
+		pkt = list_entry((&pschedcontext->
+				 sched_mon_ctx.cds_ol_mon_pkt_freeq)->next,
+				 typeof(*pkt), list);
+		list_del(&pkt->list);
+		spin_unlock_bh(&pschedcontext->
+			       sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+		qdf_mem_free(pkt);
+		spin_lock_bh(&pschedcontext->
+			     sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	}
+	spin_unlock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+}
+
+/**
+ * cds_alloc_ol_mon_pkt_freeq() - Function to allocate free buffer queue
+ * @pSchedContext - pointer to the global CDS Sched Context
+ *
+ * This API allocates CDS_MAX_OL_MON_PKT number of cds message buffers
+ * which are used for mon data processing.
+ *
+ * Return: status of memory allocation
+ */
+static QDF_STATUS cds_alloc_ol_mon_pkt_freeq(p_cds_sched_context pschedcontext)
+{
+	struct cds_ol_mon_pkt *pkt, *tmp;
+	int i;
+
+	for (i = 0; i < CDS_MAX_OL_MON_PKT; i++) {
+		pkt = qdf_mem_malloc(sizeof(*pkt));
+		if (!pkt) {
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				  "%s Vos packet allocation for ol mon thread failed",
+				  __func__);
+			goto free;
+		}
+		spin_lock_bh(&pschedcontext->
+			     sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+		list_add_tail(&pkt->list, &pschedcontext->
+			      sched_mon_ctx.cds_ol_mon_pkt_freeq);
+		spin_unlock_bh(&pschedcontext->
+			       sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+free:
+	spin_lock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	list_for_each_entry_safe(pkt, tmp,
+				 &pschedcontext->
+				 sched_mon_ctx.cds_ol_mon_pkt_freeq,
+				 list) {
+		list_del(&pkt->list);
+		spin_unlock_bh(&pschedcontext->
+			       sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+		qdf_mem_free(pkt);
+		spin_lock_bh(&pschedcontext->
+			     sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	}
+	spin_unlock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	return QDF_STATUS_E_NOMEM;
+}
+
+/**
+ * cds_free_ol_mon_pkt() - api to release cds message to the freeq
+ * This api returns the cds message used for mon data to the free queue
+ * @pSchedContext: Pointer to the global CDS Sched Context
+ * @pkt: CDS message buffer to be returned to free queue.
+ *
+ * Return: none
+ */
+void
+cds_free_ol_mon_pkt(p_cds_sched_context pschedcontext,
+		    struct cds_ol_mon_pkt *pkt)
+{
+	memset(pkt, 0, sizeof(*pkt));
+	spin_lock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	list_add_tail(&pkt->list,
+		      &pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq);
+	spin_unlock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+}
+
+/**
+ * cds_alloc_ol_mon_pkt() - API to return next available cds message
+ * @pSchedContext: Pointer to the global CDS Sched Context
+ *
+ * This api returns next available cds message buffer used for mon data
+ * processing
+ *
+ * Return: Pointer to cds message buffer
+ */
+struct cds_ol_mon_pkt *cds_alloc_ol_mon_pkt(p_cds_sched_context pschedcontext)
+{
+	struct cds_ol_mon_pkt *pkt;
+
+	spin_lock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	if (list_empty(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq)) {
+		spin_unlock_bh(&pschedcontext->
+			       sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+		return NULL;
+	}
+	pkt = list_first_entry(&pschedcontext->
+			       sched_mon_ctx.cds_ol_mon_pkt_freeq,
+			       struct cds_ol_mon_pkt, list);
+	list_del(&pkt->list);
+	spin_unlock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	return pkt;
+}
+
+/**
+ * cds_indicate_monpkt() - indicate mon data packet
+ * @Arg: Pointer to the global CDS Sched Context
+ * @pkt: CDS data message buffer
+ *
+ * This api enqueues the mon packet into ol_mon_thread_queue and notifies
+ * cds_ol_mon_thread()
+ *
+ * Return: none
+ */
+void
+cds_indicate_monpkt(p_cds_sched_context pschedcontext,
+		    struct cds_ol_mon_pkt *pkt)
+{
+	spin_lock_bh(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+	list_add_tail(&pkt->list, &pschedcontext->
+		      sched_mon_ctx.ol_mon_thread_queue);
+	spin_unlock_bh(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+	set_bit(RX_POST_EVENT, &pschedcontext->sched_mon_ctx.ol_mon_event_flag);
+	wake_up_interruptible(&pschedcontext->sched_mon_ctx.ol_mon_wait_queue);
+}
+
+/**
+ * cds_wakeup_mon_thread() - wakeup mon thread
+ * @Arg: Pointer to the global CDS Sched Context
+ *
+ * This api wake up cds_ol_mon_thread() to process pkt
+ *
+ * Return: none
+ */
+void
+cds_wakeup_mon_thread(p_cds_sched_context pschedcontext)
+{
+	set_bit(RX_POST_EVENT, &pschedcontext->sched_mon_ctx.ol_mon_event_flag);
+	wake_up_interruptible(&pschedcontext->sched_mon_ctx.ol_mon_wait_queue);
+}
+
+/**
+ * cds_close_mon_thread() - close the Tlshim Rx thread
+ *
+ * This api closes the Tlshim Rx thread:
+ *
+ * Return: qdf status
+ */
+QDF_STATUS cds_close_mon_thread(void)
+{
+	if (!cds_is_pktcapture_enabled())
+		return QDF_STATUS_SUCCESS;
+
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "%s: invoked", __func__);
+
+	if (!gp_cds_sched_context) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: gp_cds_sched_context == NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!gp_cds_sched_context->sched_mon_ctx.ol_mon_thread)
+		return QDF_STATUS_SUCCESS;
+
+	/* Shut down Tlshim Rx thread */
+	set_bit(RX_SHUTDOWN_EVENT,
+		&gp_cds_sched_context->sched_mon_ctx.ol_mon_event_flag);
+	set_bit(RX_POST_EVENT,
+		&gp_cds_sched_context->sched_mon_ctx.ol_mon_event_flag);
+	wake_up_interruptible(&gp_cds_sched_context->
+			      sched_mon_ctx.ol_mon_wait_queue);
+	wait_for_completion(&gp_cds_sched_context->
+			    sched_mon_ctx.ol_mon_shutdown);
+	gp_cds_sched_context->sched_mon_ctx.ol_mon_thread = NULL;
+	cds_drop_monpkt(gp_cds_sched_context);
+	cds_free_ol_mon_pkt_freeq(gp_cds_sched_context);
+
+	return QDF_STATUS_SUCCESS;
+} /* cds_close_mon_thread */
+
+/**
+ * cds_open_mon_thread() - open the Tlshim Rx thread
+ *
+ * This api open the Tlshim Rx thread:
+ *
+ * Return: qdf status
+ */
+QDF_STATUS cds_open_mon_thread(p_cds_sched_context pschedcontext)
+{
+	if (!cds_is_pktcapture_enabled())
+		return QDF_STATUS_SUCCESS;
+
+	pschedcontext->sched_mon_ctx.ol_mon_thread = kthread_create(
+						cds_ol_mon_thread,
+						pschedcontext,
+						"cds_ol_mon_thread");
+	if (IS_ERR(pschedcontext->sched_mon_ctx.ol_mon_thread)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: Could not Create CDS OL MON Thread",
+			  __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	wake_up_process(pschedcontext->sched_mon_ctx.ol_mon_thread);
+	cds_debug("CDS OL MON thread Created");
+
+	wait_for_completion_interruptible(
+			&pschedcontext->sched_mon_ctx.ol_mon_start_event);
+	cds_debug("CDS OL MON Thread has started");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_drop_monpkt() - api to drop pending mon packets for a sta
+ * @pschedcontext: Pointer to the global CDS Sched Context
+ *
+ * This api drops all queued packets for a station.
+ *
+ * Return: none
+ */
+void cds_drop_monpkt(p_cds_sched_context pschedcontext)
+{
+	struct list_head local_list;
+	struct cds_ol_mon_pkt *pkt, *tmp;
+	qdf_nbuf_t buf, next_buf;
+
+	INIT_LIST_HEAD(&local_list);
+	spin_lock_bh(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+	if (list_empty(&pschedcontext->sched_mon_ctx.ol_mon_thread_queue)) {
+		spin_unlock_bh(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+		return;
+	}
+	list_for_each_entry_safe(pkt, tmp,
+				 &pschedcontext->
+				 sched_mon_ctx.ol_mon_thread_queue,
+				 list)
+		list_move_tail(&pkt->list, &local_list);
+
+	spin_unlock_bh(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+
+	list_for_each_entry_safe(pkt, tmp, &local_list, list) {
+		list_del(&pkt->list);
+		buf = pkt->monpkt;
+		while (buf) {
+			next_buf = qdf_nbuf_queue_next(buf);
+			qdf_nbuf_free(buf);
+			buf = next_buf;
+		}
+		cds_free_ol_mon_pkt(pschedcontext, pkt);
+	}
+}
+
+/**
+ * cds_mon_from_queue() - function to process pending mon packets
+ * @pschedcontext: Pointer to the global CDS Sched Context
+ *
+ * This api traverses the pending buffer list and calling the callback.
+ * This callback would essentially send the packet to HDD.
+ *
+ * Return: none
+ */
+static void cds_mon_from_queue(p_cds_sched_context pschedcontext)
+{
+	struct cds_ol_mon_pkt *pkt;
+	uint8_t vdev_id;
+	uint8_t tid;
+
+	spin_lock_bh(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+	while (!list_empty(&pschedcontext->sched_mon_ctx.ol_mon_thread_queue)) {
+		pkt = list_first_entry(&pschedcontext->
+				       sched_mon_ctx.ol_mon_thread_queue,
+				       struct cds_ol_mon_pkt, list);
+		list_del(&pkt->list);
+		spin_unlock_bh(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+		vdev_id = pkt->vdev_id;
+		tid = pkt->tid;
+		pkt->callback(pkt->context, pkt->monpkt, vdev_id,
+			      tid, pkt->status, pkt->pkt_format);
+		cds_free_ol_mon_pkt(pschedcontext, pkt);
+		spin_lock_bh(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+	}
+	spin_unlock_bh(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+}
+
+/**
+ * cds_ol_mon_thread() - cds main tlshim mon thread
+ * @Arg: pointer to the global CDS Sched Context
+ *
+ * This api is the thread handler for mon Data packet processing.
+ *
+ * Return: thread exit code
+ */
+static int cds_ol_mon_thread(void *arg)
+{
+	p_cds_sched_context pschedcontext = (p_cds_sched_context)arg;
+	unsigned long pref_cpu = 0;
+	bool shutdown = false;
+	int status, i;
+
+	if (!arg) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Bad Args passed", __func__);
+		return 0;
+	}
+
+	set_user_nice(current, -1);
+#ifdef MSM_PLATFORM
+	set_wake_up_idle(true);
+#endif
+
+	/**
+	 * Find the available cpu core other than cpu 0 and
+	 * bind the thread
+	 */
+	for_each_online_cpu(i) {
+		if (i == 0)
+			continue;
+		pref_cpu = i;
+			break;
+	}
+
+	cds_set_mon_cpus_allowed_ptr(current, pref_cpu);
+
+	complete(&pschedcontext->sched_mon_ctx.ol_mon_start_event);
+
+	while (!shutdown) {
+		status =
+		wait_event_interruptible(
+				pschedcontext->sched_mon_ctx.ol_mon_wait_queue,
+				test_bit(RX_POST_EVENT,
+					 &pschedcontext->
+					 sched_mon_ctx.ol_mon_event_flag) ||
+				test_bit(RX_SUSPEND_EVENT,
+					 &pschedcontext->
+					 sched_mon_ctx.ol_mon_event_flag));
+		if (status == -ERESTARTSYS)
+			break;
+
+		clear_bit(RX_POST_EVENT,
+			  &pschedcontext->sched_mon_ctx.ol_mon_event_flag);
+		while (true) {
+			if (test_bit(RX_SHUTDOWN_EVENT,
+				     &pschedcontext->
+				     sched_mon_ctx.ol_mon_event_flag)) {
+				clear_bit(RX_SHUTDOWN_EVENT,
+					  &pschedcontext->
+					  sched_mon_ctx.ol_mon_event_flag);
+				if (test_bit(
+					RX_SUSPEND_EVENT,
+					&pschedcontext->
+					sched_mon_ctx.ol_mon_event_flag)) {
+					clear_bit(
+					RX_SUSPEND_EVENT,
+					&pschedcontext->
+					sched_mon_ctx.ol_mon_event_flag);
+					complete
+					(&pschedcontext->
+					sched_mon_ctx.ol_suspend_mon_event);
+				}
+				QDF_TRACE(QDF_MODULE_ID_QDF,
+					  QDF_TRACE_LEVEL_INFO,
+					  "%s: Shutting down OL MON Thread",
+					  __func__);
+				shutdown = true;
+				break;
+			}
+			cds_mon_from_queue(pschedcontext);
+
+			if (test_bit(RX_SUSPEND_EVENT,
+				     &pschedcontext->
+				     sched_mon_ctx.ol_mon_event_flag)) {
+				clear_bit(RX_SUSPEND_EVENT,
+					  &pschedcontext->
+					  sched_mon_ctx.ol_mon_event_flag);
+				spin_lock(&pschedcontext->
+					  sched_mon_ctx.ol_mon_thread_lock);
+				INIT_COMPLETION
+					(pschedcontext->
+					 sched_mon_ctx.ol_resume_mon_event);
+				complete(&pschedcontext->
+					 sched_mon_ctx.ol_suspend_mon_event);
+				spin_unlock(&pschedcontext->
+					    sched_mon_ctx.ol_mon_thread_lock);
+				wait_for_completion_interruptible
+					(&pschedcontext->
+					 sched_mon_ctx.ol_resume_mon_event);
+			}
+			break;
+		}
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: Exiting CDS OL mon thread", __func__);
+	complete_and_exit(&pschedcontext->sched_mon_ctx.ol_mon_shutdown, 0);
+
+	return 0;
+}
+
+void cds_resume_mon_thread(void)
+{
+	p_cds_sched_context cds_sched_context;
+
+	cds_sched_context = get_cds_sched_ctxt();
+	if (!cds_sched_context) {
+		cds_err("cds_sched_context is NULL");
+		return;
+	}
+
+	complete(&cds_sched_context->sched_mon_ctx.ol_resume_mon_event);
+}
+
+QDF_STATUS
+cds_alloc_mon_thread(p_cds_sched_context pschedcontext)
+{
+	if (!cds_is_pktcapture_enabled())
+		return QDF_STATUS_SUCCESS;
+
+	spin_lock_init(&pschedcontext->sched_mon_ctx.ol_mon_thread_lock);
+	init_waitqueue_head(&pschedcontext->sched_mon_ctx.ol_mon_wait_queue);
+	init_completion(&pschedcontext->sched_mon_ctx.ol_mon_start_event);
+	init_completion(&pschedcontext->sched_mon_ctx.ol_suspend_mon_event);
+	init_completion(&pschedcontext->sched_mon_ctx.ol_resume_mon_event);
+	init_completion(&pschedcontext->sched_mon_ctx.ol_mon_shutdown);
+	pschedcontext->sched_mon_ctx.ol_mon_event_flag = 0;
+	spin_lock_init(&pschedcontext->sched_mon_ctx.ol_mon_queue_lock);
+	spin_lock_init(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	INIT_LIST_HEAD(&pschedcontext->sched_mon_ctx.ol_mon_thread_queue);
+	spin_lock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+	INIT_LIST_HEAD(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq);
+	spin_unlock_bh(&pschedcontext->sched_mon_ctx.cds_ol_mon_pkt_freeq_lock);
+
+	return cds_alloc_ol_mon_pkt_freeq(pschedcontext);
+}
+#endif /* WLAN_FEATURE_PKT_CAPTURE */

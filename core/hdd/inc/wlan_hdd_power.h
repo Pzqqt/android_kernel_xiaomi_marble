@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -533,6 +533,36 @@ hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 	return 0;
 }
 #endif /* WLAN_SUSPEND_RESUME_TEST */
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+/**
+ * wlan_hdd_mon_thread_resume() - Resume MON thread
+ * @hdd_ctx: HDD context
+ *
+ * Check if MON thread is suspended, and resume if yes.
+ *
+ * Return: None
+ */
+void wlan_hdd_mon_thread_resume(struct hdd_context *hdd_ctx);
+
+/**
+ * wlan_hdd_mon_thread_suspend() - Suspend MON thread
+ * @hdd_ctx: HDD context
+ *
+ * To suspend MON thread
+ *
+ * Return: 0 for success
+ */
+int wlan_hdd_mon_thread_suspend(struct hdd_context *hdd_ctx);
+
+#else
+static inline void wlan_hdd_mon_thread_resume(struct hdd_context *hdd_ctx) {}
+static inline int wlan_hdd_mon_thread_suspend(struct hdd_context *hdd_ctx)
+{
+	return 0;
+}
+
+#endif /* WLAN_FEATURE_PKT_CAPTURE */
 
 #ifdef QCA_CONFIG_SMP
 /**

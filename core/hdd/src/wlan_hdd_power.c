@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -120,6 +120,46 @@ void hdd_wlan_offload_event(uint8_t type, uint8_t state)
 	host_offload.state = state;
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&host_offload, EVENT_WLAN_OFFLOAD_REQ);
+}
+#endif
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+
+/* timeout in msec to wait for RX_THREAD to suspend */
+#define HDD_MONTHREAD_SUSPEND_TIMEOUT 200
+
+void wlan_hdd_mon_thread_resume(struct hdd_context *hdd_ctx)
+{
+	if (hdd_ctx->is_ol_mon_thread_suspended) {
+		cds_resume_mon_thread();
+		hdd_ctx->is_ol_mon_thread_suspended = false;
+	}
+}
+
+int wlan_hdd_mon_thread_suspend(struct hdd_context *hdd_ctx)
+{
+	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
+	int rc;
+
+	if (!cds_sched_context)
+		return -EINVAL;
+
+	set_bit(RX_SUSPEND_EVENT,
+		&cds_sched_context->sched_mon_ctx.ol_mon_event_flag);
+	wake_up_interruptible(&cds_sched_context->
+			      sched_mon_ctx.ol_mon_wait_queue);
+	rc = wait_for_completion_timeout(
+			&cds_sched_context->sched_mon_ctx.ol_suspend_mon_event,
+			msecs_to_jiffies(HDD_MONTHREAD_SUSPEND_TIMEOUT));
+	if (!rc) {
+		clear_bit(RX_SUSPEND_EVENT,
+			  &cds_sched_context->sched_mon_ctx.ol_mon_event_flag);
+		hdd_err("Failed to stop tl_shim mon thread");
+		return -EINVAL;
+	}
+	hdd_ctx->is_ol_mon_thread_suspended = true;
+
+	return 0;
 }
 #endif
 
@@ -1313,6 +1353,9 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
 
+	if (cds_is_pktcapture_enabled())
+		wlan_hdd_mon_thread_resume(hdd_ctx);
+
 	/*
 	 * After SSR, FW clear its txrx stats. In host,
 	 * as adapter is intact so those counts are still
@@ -1718,6 +1761,9 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
 
+	if (cds_is_pktcapture_enabled())
+		wlan_hdd_mon_thread_resume(hdd_ctx);
+
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
 		   NO_SESSION, hdd_ctx->is_wiphy_suspended);
@@ -1914,6 +1960,11 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_suspend(cds_get_context(QDF_MODULE_ID_SOC));
 
+	if (cds_is_pktcapture_enabled()) {
+		if (wlan_hdd_mon_thread_suspend(hdd_ctx))
+			goto resume_ol_mon;
+	}
+
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_SUSPEND_WLAN,
 		   NO_SESSION, hdd_ctx->is_wiphy_suspended);
@@ -1933,6 +1984,11 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 resume_dp_thread:
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
+
+resume_ol_mon:
+	/* Resume tlshim MON thread */
+	if (cds_is_pktcapture_enabled())
+		wlan_hdd_mon_thread_resume(hdd_ctx);
 
 resume_ol_rx:
 	/* Resume tlshim Rx thread */

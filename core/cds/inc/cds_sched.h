@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -77,6 +77,88 @@ struct cds_ol_rx_pkt {
 
 };
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+/*
+ * Maximum number of cds messages to be allocated for
+ * OL MON thread.
+ */
+#define CDS_MAX_OL_MON_PKT 4000
+
+struct cds_sched_mon_context {
+	/* MON thread lock */
+	spinlock_t ol_mon_thread_lock;
+
+	/* OL MON thread handle */
+	struct task_struct *ol_mon_thread;
+
+	/* Handle of Event for MON thread to signal startup */
+	struct completion ol_mon_start_event;
+
+	/* Completion object to suspend OL MON thread */
+	struct completion ol_suspend_mon_event;
+
+	/* Completion objext to resume OL MON thread */
+	struct completion ol_resume_mon_event;
+
+	/* Completion object for OL MON thread shutdown */
+	struct completion ol_mon_shutdown;
+
+	/* Waitq for OL MON thread */
+	wait_queue_head_t ol_mon_wait_queue;
+
+	unsigned long ol_mon_event_flag;
+
+	/* MON buffer queue */
+	struct list_head ol_mon_thread_queue;
+
+	/* Spinlock to synchronize between tasklet and thread */
+	spinlock_t ol_mon_queue_lock;
+
+	/* MON queue length */
+	unsigned int ol_mon_queue_len;
+
+	/* Lock to synchronize free buffer queue access */
+	spinlock_t cds_ol_mon_pkt_freeq_lock;
+
+	/* Free message queue for OL MON processing */
+	struct list_head cds_ol_mon_pkt_freeq;
+
+	/* MON thread affinity cpu */
+	unsigned long mon_thread_cpu;
+
+};
+
+#endif /* WLAN_FEATURE_PKT_CAPTURE */
+typedef void (*cds_ol_mon_thread_cb)(
+			void *context, void *monpkt,
+			uint8_t vdev_id, uint8_t tid,
+			uint8_t status, bool pkt_format);
+
+/*
+ * CDS message wrapper for mon data from TXRX
+ */
+struct cds_ol_mon_pkt {
+	struct list_head list;
+	void *context;
+
+	/* mon skb */
+	void *monpkt;
+
+	/* vdev id to which this packet is destined */
+	uint8_t vdev_id;
+
+	uint8_t tid;
+
+	/* Tx packet status */
+	uint8_t status;
+
+	/* 0 = 802.3 format , 1 = 802.11 format */
+	bool pkt_format;
+
+	/* Call back to further send this packet to txrx layer */
+	cds_ol_mon_thread_cb callback;
+};
+
 /*
 ** CDS Scheduler context
 ** The scheduler context contains the following:
@@ -140,6 +222,10 @@ typedef struct _cds_sched_context {
 	bool rx_affinity_required;
 	uint8_t conf_rx_thread_ul_affinity;
 #endif
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+	struct cds_sched_mon_context sched_mon_ctx;
+#endif /* WLAN_FEATURE_PKT_CAPTURE */
 } cds_sched_context, *p_cds_sched_context;
 
 /**
@@ -551,4 +637,162 @@ void cds_shutdown_notifier_call(void);
  */
 void cds_resume_rx_thread(void);
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+/**
+ * cds_resume_mon_thread() - resume mon thread by completing its resume event
+ *
+ * Resume MON thread by completing RX thread resume event
+ *
+ * Return: None
+ */
+void cds_resume_mon_thread(void);
+
+/**
+ * cds_drop_monpkt() - API to drop pending mon packets
+ * @pschedcontext: Pointer to the global CDS Sched Context
+ *
+ * This api drops all the pending packets in the queue.
+ *
+ * Return: none
+ */
+void cds_drop_monpkt(p_cds_sched_context pschedcontext);
+
+/**
+ * cds_indicate_monpkt() - API to Indicate rx data packet
+ * @pschedcontext: pointer to  CDS Sched Context
+ * @pkt: CDS OL MON pkt pointer containing to mon data message buffer
+ *
+ * Return: none
+ */
+void cds_indicate_monpkt(p_cds_sched_context pschedcontext,
+			 struct cds_ol_mon_pkt *pkt);
+
+/**
+ * cds_wakeup_mon_thread() - wakeup mon thread
+ * @Arg: Pointer to the global CDS Sched Context
+ *
+ * This api wake up cds_ol_mon_thread() to process pkt
+ *
+ * Return: none
+ */
+void cds_wakeup_mon_thread(p_cds_sched_context pschedcontext);
+
+/**
+ * cds_close_mon_thread() - close the Tlshim MON thread
+ *
+ * This api closes the Tlshim MON thread:
+ *
+ * Return: qdf status
+ */
+QDF_STATUS cds_close_mon_thread(void);
+
+/**
+ * cds_open_mon_thread() - open the Tlshim MON thread
+ * @pSchedContext: Pointer to the global CDS Sched Context
+ *
+ * This api opens the Tlshim MON thread:
+ *
+ * Return: qdf status
+ */
+QDF_STATUS cds_open_mon_thread(p_cds_sched_context pschedcontext);
+
+/**
+ * cds_alloc_mon_thread() - alloc resources for MON thread
+ * @pSchedContext: Pointer to the global CDS Sched Context
+ *
+ * This api alloc resources for MON thread:
+ *
+ * Return: qdf status
+ */
+QDF_STATUS cds_alloc_mon_thread(p_cds_sched_context pschedcontext);
+
+/**
+ * cds_alloc_ol_mon_pkt() - API to return next available cds message
+ * @pSchedContext: Pointer to the global CDS Sched Context
+ *
+ * This api returns next available cds message buffer used for mon data
+ * processing
+ *
+ * Return: Pointer to cds message buffer
+ */
+struct cds_ol_mon_pkt *cds_alloc_ol_mon_pkt(p_cds_sched_context pschedcontext);
+
+/**
+ * cds_free_ol_mon_pkt() - api to release cds message to the freeq
+ * This api returns the cds message used for mon data to the free queue
+ * @pSchedContext: Pointer to the global CDS Sched Context
+ * @pkt: CDS message buffer to be returned to free queue.
+ *
+ * Return: none
+ */
+void cds_free_ol_mon_pkt(p_cds_sched_context pschedcontext,
+			 struct cds_ol_mon_pkt *pkt);
+
+/**
+ * cds_free_ol_mon_pkt_freeq() - free cds buffer free queue
+ * @pSchedContext - pointer to the global CDS Sched Context
+ *
+ * This API does mem free of the buffers available in free cds buffer
+ * queue which is used for mon Data processing.
+ *
+ * Return: none
+ */
+void cds_free_ol_mon_pkt_freeq(p_cds_sched_context pschedcontext);
+#else
+static inline
+void cds_resume_mon_thread(void)
+{
+}
+
+static inline
+void cds_drop_monpkt(p_cds_sched_context pschedcontext)
+{
+}
+
+static inline
+void cds_indicate_monpkt(p_cds_sched_context pschedcontext,
+			 struct cds_ol_mon_pkt *pkt)
+{
+}
+
+static inline
+void cds_wakeup_mon_thread(p_cds_sched_context pschedcontext)
+{
+}
+
+static inline
+QDF_STATUS cds_close_mon_thread(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS cds_open_mon_thread(p_cds_sched_context pschedcontext)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS cds_alloc_mon_thread(p_cds_sched_context pschedcontext)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+struct cds_ol_mon_pkt *cds_alloc_ol_mon_pkt(p_cds_sched_context pschedcontext)
+{
+	return NULL;
+}
+
+static inline
+void cds_free_ol_mon_pkt(p_cds_sched_context pschedcontext,
+			 struct cds_ol_mon_pkt *pkt)
+{
+}
+
+static inline
+void cds_free_ol_mon_pkt_freeq(p_cds_sched_context pschedcontext)
+{
+}
+#endif /* WLAN_FEATURE_PKT_CAPTURE */
 #endif /* #ifndef __CDS_SCHED_H */
