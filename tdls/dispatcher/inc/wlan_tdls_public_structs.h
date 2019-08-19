@@ -29,8 +29,9 @@
 #include <qdf_mc_timer.h>
 #include <wlan_cmn.h>
 #include <wlan_cmn_ieee80211.h>
-
-struct wlan_objmgr_psoc;
+#ifdef FEATURE_RUNTIME_PM
+#include <wlan_pmo_common_public_struct.h>
+#endif
 
 #define WLAN_TDLS_STA_MAX_NUM                        8
 #define WLAN_TDLS_STA_P_UAPSD_OFFCHAN_MAX_NUM        1
@@ -51,14 +52,21 @@ struct wlan_objmgr_psoc;
 
 #define AC_PRIORITY_NUM                 4
 
-/* default tdls serialize timeout is set to 4 secs */
-#define TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT 4000
+/* Default tdls serialize timeout is set to 4 (peer delete) + 1 secs */
+#ifdef FEATURE_RUNTIME_PM
+/* Add extra PMO_RESUME_TIMEOUT for runtime PM resume timeout */
+#define TDLS_DELETE_PEER_CMD_TIMEOUT (4000 + 1000 + PMO_RESUME_TIMEOUT)
+#else
+#define TDLS_DELETE_PEER_CMD_TIMEOUT (4000 + 1000)
+#endif
+
+/** Maximum time(ms) to wait for tdls del sta to complete **/
+#define WAIT_TIME_TDLS_DEL_STA  (TDLS_DELETE_PEER_CMD_TIMEOUT + 1000)
+
+#define TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT (4000)
 
 /** Maximum time(ms) to wait for tdls add sta to complete **/
 #define WAIT_TIME_TDLS_ADD_STA  (TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT + 1000)
-
-/** Maximum time(ms) to wait for tdls del sta to complete **/
-#define WAIT_TIME_TDLS_DEL_STA  (TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT + 1000)
 
 /** Maximum time(ms) to wait for Link Establish Req to complete **/
 #define WAIT_TIME_TDLS_LINK_ESTABLISH_REQ      1500
