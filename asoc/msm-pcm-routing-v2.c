@@ -5410,6 +5410,10 @@ static int get_ec_ref_port_id(int value, int *index)
 		*index = 36;
 		port_id = AFE_PORT_ID_SECONDARY_TDM_TX;
 		break;
+	case 37:
+		*index = 37;
+		port_id = AFE_PORT_ID_HDMI_OVER_DP_RX;
+		break;
 	default:
 		*index = 0; /* NONE */
 		pr_err("%s: Invalid value %d\n", __func__, value);
@@ -5450,9 +5454,10 @@ static const char *const ec_ref_rate_text[] = {"0", "8000", "16000",
 	"32000", "44100", "48000", "96000", "192000", "384000"};
 
 static const struct soc_enum msm_route_ec_ref_params_enum[] = {
-	SOC_ENUM_SINGLE_EXT(17, ec_ref_ch_text),
-	SOC_ENUM_SINGLE_EXT(3, ec_ref_bit_format_text),
-	SOC_ENUM_SINGLE_EXT(9, ec_ref_rate_text),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(ec_ref_ch_text), ec_ref_ch_text),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(ec_ref_bit_format_text),
+				ec_ref_bit_format_text),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(ec_ref_rate_text), ec_ref_rate_text),
 };
 
 static const char *const ec_ref_rx[] = { "None", "SLIM_RX", "I2S_RX",
@@ -5462,11 +5467,11 @@ static const char *const ec_ref_rx[] = { "None", "SLIM_RX", "I2S_RX",
 	"QUAT_TDM_RX_0", "QUAT_TDM_RX_1", "QUAT_TDM_RX_2", "SLIM_6_RX",
 	"TERT_MI2S_RX", "QUAT_MI2S_RX", "TERT_TDM_TX_0", "USB_AUDIO_RX",
 	"INT0_MI2S_RX", "INT4_MI2S_RX", "INT3_MI2S_TX", "DISPLAY_PORT",
-	"DISPLAY_PORT1",
 	"WSA_CDC_DMA_RX_0", "WSA_CDC_DMA_RX_1",
 	"WSA_CDC_DMA_TX_0", "WSA_CDC_DMA_TX_1", "WSA_CDC_DMA_TX_2",
 	"SLIM_7_RX", "RX_CDC_DMA_RX_0", "RX_CDC_DMA_RX_1", "RX_CDC_DMA_RX_2",
 	"RX_CDC_DMA_RX_3", "TX_CDC_DMA_TX_0", "TERT_TDM_RX_2", "SEC_TDM_TX_0",
+	"DISPLAY_PORT1",
 };
 
 static const struct soc_enum msm_route_ec_ref_rx_enum[] = {
