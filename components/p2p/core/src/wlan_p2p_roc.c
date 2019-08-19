@@ -537,12 +537,10 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 	/* allow runtime suspend */
 	qdf_runtime_pm_allow_suspend(&p2p_soc_obj->roc_runtime_lock);
 
-	if (QDF_TIMER_STATE_RUNNING ==
-		qdf_mc_timer_get_current_state(&roc_ctx->roc_timer)) {
-		status = qdf_mc_timer_stop_sync(&roc_ctx->roc_timer);
-		if (status != QDF_STATUS_SUCCESS)
-			p2p_err("Failed to stop roc timer");
-	}
+
+	status = qdf_mc_timer_stop_sync(&roc_ctx->roc_timer);
+	if (QDF_IS_STATUS_ERROR(status))
+		p2p_err("Failed to stop roc timer");
 
 	status = qdf_mc_timer_destroy(&roc_ctx->roc_timer);
 	if (status != QDF_STATUS_SUCCESS)
