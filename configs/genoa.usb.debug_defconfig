@@ -60,4 +60,6 @@ endif
 CONFIG_LINUX_QCMBR :=y
 CONFIG_QCN7605_SUPPORT := y
 CONFIG_TGT_NUM_MSDU_DESC := 0
+# For OOB wakeup
+CONFIG_WLAN_FEATURE_WOW_PULSE := y
 ###################################

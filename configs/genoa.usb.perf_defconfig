@@ -65,4 +65,6 @@ QCA_WIFI_FTM_NL80211 := n
 CONFIG_LINUX_QCMBR := n
 CONFIG_QCN7605_SUPPORT := y
 CONFIG_TGT_NUM_MSDU_DESC := 0
+# For OOB wakeup
+CONFIG_WLAN_FEATURE_WOW_PULSE := y
 ###################################
