@@ -706,7 +706,6 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 	struct bss_description tmp_bss_descp = {0};
 	uint16_t ndp_inactivity_timeout = 0;
 	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BCAST_INIT;
-	uint8_t sta_id;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -723,12 +722,6 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (!sta_ctx) {
 		hdd_err("sta_ctx is null");
-		return;
-	}
-
-	sta_id = ndi_rsp->sta_id;
-	if (sta_id >= HDD_MAX_ADAPTERS) {
-		hdd_err("Error: Invalid sta id %u", sta_id);
 		return;
 	}
 
@@ -757,10 +750,9 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 			ndi_rsp->reason /* create_reason */);
 	}
 
-	sta_ctx->broadcast_sta_id = sta_id;
-	hdd_save_peer(sta_ctx, sta_id, &bc_mac_addr);
+	hdd_save_peer(sta_ctx, &bc_mac_addr);
 	qdf_copy_macaddr(&roam_info->bssid, &bc_mac_addr);
-	hdd_roam_register_sta(adapter, roam_info, sta_id, &tmp_bss_descp);
+	hdd_roam_register_sta(adapter, roam_info, &tmp_bss_descp);
 
 	qdf_mem_free(roam_info);
 }
@@ -790,7 +782,6 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
-	uint8_t sta_id;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -810,12 +801,7 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 		return;
 	}
 
-	sta_id = sta_ctx->broadcast_sta_id;
-	if (sta_id < HDD_MAX_ADAPTERS) {
-		hdd_roam_deregister_sta(adapter, adapter->mac_addr);
-		hdd_delete_peer(sta_ctx, sta_id);
-		sta_ctx->broadcast_sta_id = HDD_WLAN_INVALID_STA_ID;
-	}
+	hdd_roam_deregister_sta(adapter, adapter->mac_addr);
 
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
@@ -871,7 +857,7 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	}
 
 	/* save peer in ndp ctx */
-	if (false == hdd_save_peer(sta_ctx, sta_id, peer_mac_addr)) {
+	if (!hdd_save_peer(sta_ctx, peer_mac_addr)) {
 		hdd_err("Ndp peer table full. cannot save new peer");
 		return -EPERM;
 	}
@@ -881,7 +867,10 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 		return -ENOMEM;
 
 	/* this function is called for each new peer */
-	hdd_roam_register_sta(adapter, roam_info, sta_id, &tmp_bss_descp);
+	hdd_roam_register_sta(adapter, roam_info, &tmp_bss_descp);
+
+	qdf_copy_macaddr(&roam_info->bssid, peer_mac_addr);
+
 	/* perform following steps for first new peer ind */
 	if (fist_peer) {
 		hdd_info("Set ctx connection state to connected");
@@ -937,7 +926,6 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 	}
 
 	hdd_roam_deregister_sta(adapter, *peer_mac_addr);
-	hdd_delete_peer(sta_ctx, sta_id);
 
 	if (last_peer) {
 		hdd_info("No more ndp peers.");

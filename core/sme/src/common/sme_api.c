@@ -11250,8 +11250,7 @@ QDF_STATUS sme_send_flush_logs_cmd_to_fw(void)
 	return status;
 }
 
-QDF_STATUS sme_enable_uapsd_for_ac(uint8_t sta_id,
-				   sme_ac_enum_type ac, uint8_t tid,
+QDF_STATUS sme_enable_uapsd_for_ac(sme_ac_enum_type ac, uint8_t tid,
 				   uint8_t pri, uint32_t srvc_int,
 				   uint32_t sus_int,
 				   enum sme_qos_wmm_dir_type dir,
@@ -11308,9 +11307,7 @@ QDF_STATUS sme_enable_uapsd_for_ac(uint8_t sta_id,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sme_disable_uapsd_for_ac(uint8_t sta_id,
-				       sme_ac_enum_type ac,
-				       uint32_t sessionId)
+QDF_STATUS sme_disable_uapsd_for_ac(sme_ac_enum_type ac, uint32_t sessionId)
 {
 	void *wma_handle;
 	enum uapsd_ac access_category;

@@ -1625,7 +1625,6 @@ QDF_STATUS sme_send_flush_logs_cmd_to_fw(void);
 
 /**
  * sme_enable_uapsd_for_ac() - enable uapsd for access category request to WMA
- * @sta_id: station id
  * @ac: access category
  * @tid: tid value
  * @pri: user priority
@@ -1638,8 +1637,7 @@ QDF_STATUS sme_send_flush_logs_cmd_to_fw(void);
  *
  * Return: QDF status
  */
-QDF_STATUS sme_enable_uapsd_for_ac(uint8_t sta_id,
-				   sme_ac_enum_type ac, uint8_t tid,
+QDF_STATUS sme_enable_uapsd_for_ac(sme_ac_enum_type ac, uint8_t tid,
 				   uint8_t pri, uint32_t srvc_int,
 				   uint32_t sus_int,
 				   enum sme_qos_wmm_dir_type dir,
@@ -1648,15 +1646,12 @@ QDF_STATUS sme_enable_uapsd_for_ac(uint8_t sta_id,
 
 /**
  * sme_disable_uapsd_for_ac() - disable uapsd access category request to WMA
- * @sta_id: station id
  * @ac: access category
  * @sessionId: session id
  *
  * Return: QDF status
  */
-QDF_STATUS sme_disable_uapsd_for_ac(uint8_t sta_id,
-				    sme_ac_enum_type ac,
-				    uint32_t sessionId);
+QDF_STATUS sme_disable_uapsd_for_ac(sme_ac_enum_type ac, uint32_t sessionId);
 
 #ifdef FEATURE_RSSI_MONITOR
 QDF_STATUS sme_set_rssi_monitoring(mac_handle_t mac_handle,

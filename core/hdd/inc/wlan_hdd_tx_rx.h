@@ -169,18 +169,6 @@ void hdd_disable_rx_ol_in_concurrency(bool disable);
 void hdd_disable_rx_ol_for_low_tput(struct hdd_context *hdd_ctx, bool disable);
 
 /**
- * hdd_get_peer_sta_id() - Get the StationID using the Peer Mac address
- * @sta_ctx: pointer to HDD Station Context
- * @mac_address: pointer to Peer Mac address
- * @sta_id: pointer to returned Station Index
- *
- * Return: QDF_STATUS_SUCCESS/QDF_STATUS_E_FAILURE
- */
-QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
-			       struct qdf_mac_addr *mac_address,
-			       uint8_t *sta_id);
-
-/**
  * hdd_reset_all_adapters_connectivity_stats() - reset connectivity stats
  * @hdd_ctx: pointer to HDD Station Context
  *

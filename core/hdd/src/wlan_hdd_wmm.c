@@ -162,13 +162,11 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 					      &delayed_trgr_frm_int);
 	/* everything is in place to notify TL */
 	status =
-		sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
-					   conn_info.sta_id[0], ac_type,
-					   ac->tspec.ts_info.tid,
-					   ac->tspec.ts_info.up,
-					   service_interval, suspension_interval,
-					   direction, psb, adapter->vdev_id,
-					   delayed_trgr_frm_int);
+		sme_enable_uapsd_for_ac(ac_type, ac->tspec.ts_info.tid,
+					ac->tspec.ts_info.up,
+					service_interval, suspension_interval,
+					direction, psb, adapter->vdev_id,
+					delayed_trgr_frm_int);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Failed to enable U-APSD for AC=%d", ac_type);
@@ -203,10 +201,7 @@ static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 
 	/* have we previously enabled UAPSD? */
 	if (ac->is_uapsd_info_valid == true) {
-		status =
-			sme_disable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
-							     (adapter))->conn_info.sta_id[0],
-						    ac_type, adapter->vdev_id);
+		status = sme_disable_uapsd_for_ac(ac_type, adapter->vdev_id);
 
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to disable U-APSD for AC=%d", ac_type);
@@ -2063,8 +2058,6 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 		}
 
 		status = sme_enable_uapsd_for_ac(
-				(WLAN_HDD_GET_STATION_CTX_PTR(
-				adapter))->conn_info.sta_id[0],
 				SME_AC_VO, 7, 7, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
@@ -2088,8 +2081,6 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 		}
 
 		status = sme_enable_uapsd_for_ac(
-				(WLAN_HDD_GET_STATION_CTX_PTR(
-				adapter))->conn_info.sta_id[0],
 				SME_AC_VI, 5, 5, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
@@ -2113,8 +2104,6 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 		}
 
 		status = sme_enable_uapsd_for_ac(
-				(WLAN_HDD_GET_STATION_CTX_PTR(
-				adapter))->conn_info.sta_id[0],
 				SME_AC_BK, 2, 2, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
@@ -2138,8 +2127,6 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 		}
 
 		status = sme_enable_uapsd_for_ac(
-				(WLAN_HDD_GET_STATION_CTX_PTR(
-				adapter))->conn_info.sta_id[0],
 				SME_AC_BE, 3, 3, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,

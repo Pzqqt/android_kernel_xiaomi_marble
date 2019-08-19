@@ -141,7 +141,6 @@ struct hdd_conn_flag {
  * @conn_state: connection state of the NIC
  * @bssid: BSSID
  * @SSID: SSID Info
- * @sta_id: Station ID
  * @peer_macaddr:Peer Mac Address of the IBSS Stations
  * @auth_type: Auth Type
  * @uc_encrypt_type: Unicast Encryption Type
@@ -177,7 +176,6 @@ struct hdd_connection_info {
 	eConnectionState conn_state;
 	struct qdf_mac_addr bssid;
 	tCsrSSIDInfo ssid;
-	uint8_t sta_id[MAX_PEERS];
 	struct qdf_mac_addr peer_macaddr[MAX_PEERS];
 	enum csr_akm_type auth_type;
 	eCsrEncryptionType uc_encrypt_type;
@@ -426,12 +424,10 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 
 QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 				 struct csr_roam_info *roam_info,
-				 uint8_t sta_id,
 				 struct bss_description *bss_desc);
 
-bool hdd_save_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id,
+bool hdd_save_peer(struct hdd_station_ctx *sta_ctx,
 		   struct qdf_mac_addr *peer_mac_addr);
-void hdd_delete_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id);
 
 /**
  * hdd_roam_deregister_sta() - deregister station

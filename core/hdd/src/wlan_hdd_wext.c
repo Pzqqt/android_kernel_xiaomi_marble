@@ -7199,28 +7199,28 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		int length = 0, buf = 0;
 
 		for (idx = 0; idx < MAX_PEERS; idx++) {
-			if (HDD_WLAN_INVALID_STA_ID !=
-					sta_ctx->conn_info.sta_id[idx]) {
-				buf = snprintf
-					      ((extra + length),
-					      WE_MAX_STR_LEN - length,
-					      "\n%d ."QDF_MAC_ADDR_STR"\n",
-					      sta_ctx->conn_info.sta_id[idx],
-					      sta_ctx->conn_info.
-					      peer_macaddr[idx].bytes[0],
-					      sta_ctx->conn_info.
-					      peer_macaddr[idx].bytes[1],
-					      sta_ctx->conn_info.
-					      peer_macaddr[idx].bytes[2],
-					      sta_ctx->conn_info.
-					      peer_macaddr[idx].bytes[3],
-					      sta_ctx->conn_info.
-					      peer_macaddr[idx].bytes[4],
-					      sta_ctx->conn_info.
-					      peer_macaddr[idx].bytes[5]
-					      );
-				length += buf;
-			}
+			if (!hdd_is_valid_mac_address(
+			    sta_ctx->conn_info.peer_macaddr[idx].bytes))
+				continue;
+
+			buf = snprintf
+				      ((extra + length),
+				      WE_MAX_STR_LEN - length,
+				      "\n" QDF_MAC_ADDR_STR "\n",
+				      sta_ctx->conn_info.
+				      peer_macaddr[idx].bytes[0],
+				      sta_ctx->conn_info.
+				      peer_macaddr[idx].bytes[1],
+				      sta_ctx->conn_info.
+				      peer_macaddr[idx].bytes[2],
+				      sta_ctx->conn_info.
+				      peer_macaddr[idx].bytes[3],
+				      sta_ctx->conn_info.
+				      peer_macaddr[idx].bytes[4],
+				      sta_ctx->conn_info.
+				      peer_macaddr[idx].bytes[5]
+				      );
+			length += buf;
 		}
 		wrqu->data.length = strlen(extra) + 1;
 		break;

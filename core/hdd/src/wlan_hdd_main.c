@@ -4214,9 +4214,8 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 
 	qdf_mem_zero(adapter, sizeof(*adapter));
 	sta_ctx = &adapter->session.station;
-	qdf_mem_set(sta_ctx->conn_info.sta_id,
-		    sizeof(sta_ctx->conn_info.sta_id),
-		    HDD_WLAN_INVALID_STA_ID);
+	qdf_mem_zero(sta_ctx->conn_info.peer_macaddr,
+		     sizeof(sta_ctx->conn_info.peer_macaddr));
 	adapter->dev = dev;
 	adapter->hdd_ctx = hdd_ctx;
 	adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
@@ -4690,10 +4689,6 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	hdd_register_wext(adapter->dev);
 
 	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
-
-	qdf_mem_set(sta_ctx->conn_info.sta_id,
-		    sizeof(sta_ctx->conn_info.sta_id),
-		    HDD_WLAN_INVALID_STA_ID);
 
 	/* set fast roaming capability in sme session */
 	status = sme_config_fast_roaming(mac_handle, adapter->vdev_id,
