@@ -282,11 +282,11 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 
 void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 {
-	cfr_debug("CFR capture method: %d vdev_id: %d mac: %s",
+	cfr_debug("CFR capture method: %u vdev_id: %u mac: %s",
 		  event->capture_method, event->vdev_id,
 		  ether_sprintf(&event->peer_mac_addr.bytes[0]));
 
-	cfr_debug("Chan: %d bw: %d phymode: %d cfreq1: %d cfrq2: %d nss: %d",
+	cfr_debug("Chan: %u bw: %u phymode: %u cfreq1: %u cfrq2: %u nss: %u",
 		  event->primary_20mhz_chan, event->bandwidth,
 		  event->phy_mode, event->band_center_freq1,
 		  event->band_center_freq2, event->spatial_streams);
@@ -294,9 +294,16 @@ void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 	cfr_debug("Correlation_info1: 0x%08x Correlation_info2: 0x%08x",
 		  event->correlation_info_1, event->correlation_info_2);
 
-	cfr_debug("status: 0x%x ts: %d counter: %d rssi0: 0x%08x",
+	cfr_debug("status: 0x%x ts: %u counter: %u rssi0: 0x%08x",
 		  event->status, event->timestamp_us, event->counter,
 		  event->chain_rssi[0]);
+
+	cfr_debug("phase0: 0x%04x phase1: 0x%04x phase2: 0x%04x phase3: 0x%04x\n"
+		  "phase4: 0x%04x phase5: 0x%04x phase6: 0x%04x phase7: 0x%04x",
+		  event->chain_phase[0], event->chain_phase[1],
+		  event->chain_phase[2], event->chain_phase[3],
+		  event->chain_phase[4], event->chain_phase[5],
+		  event->chain_phase[6], event->chain_phase[7]);
 }
 
 static int
@@ -381,6 +388,15 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		return -EINVAL;
 	}
 
+	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) == 1) {
+		cfr_debug("CFR capture failed as peer is in powersave : %s",
+			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+		return -EINVAL;
+	}
+
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_STATUS_MASK) == 0) {
 		cfr_debug("CFR capture failed for peer : %s",
 			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
@@ -447,6 +463,12 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	qdf_mem_copy(&header->u.meta_v1.peer_addr[0],
 		     &tx_evt_param.peer_mac_addr.bytes[0], QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(&header->u.meta_v2.chain_rssi[0],
+		     &tx_evt_param.chain_rssi[0],
+		     HOST_MAX_CHAINS * sizeof(tx_evt_param.chain_rssi[0]));
+	qdf_mem_copy(&header->u.meta_v2.chain_phase[0],
+		     &tx_evt_param.chain_phase[0],
+		     HOST_MAX_CHAINS * sizeof(tx_evt_param.chain_phase[0]));
 
 	status = correlate_and_relay(pdev, cookie, lut,
 				     CORRELATE_TX_EV_MODULE_ID);
