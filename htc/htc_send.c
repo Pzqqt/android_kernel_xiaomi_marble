@@ -490,7 +490,15 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 				SM(pPacket->ActualLength,
 				HTC_FRAME_HDR_PAYLOADLEN) |
 				SM(pPacket->PktInfo.AsTx.SendFlags |
+#ifdef QCA_TX_PADDING_CREDIT_SUPPORT
+				/*
+				 * This is a WAR to avoid FW Crash,
+				 * to be removed once fixed in FW
+				 */
+				0,
+#else
 				HTC_FLAGS_SEND_BUNDLE,
+#endif
 				HTC_FRAME_HDR_FLAGS) |
 				SM(pPacket->Endpoint,
 				HTC_FRAME_HDR_ENDPOINTID));
