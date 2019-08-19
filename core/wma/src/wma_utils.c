@@ -4069,7 +4069,7 @@ static QDF_STATUS wma_vdev_send_start_resp(tp_wma_handle wma,
 {
 	WMA_LOGD(FL("Sending add bss rsp to umac(vdev %d status %d)"),
 		 add_bss->bss_idx, add_bss->status);
-	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+	lim_handle_mlm_add_bss_rsp(wma->mac_context, add_bss);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4081,9 +4081,8 @@ QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	enum vdev_assoc_type assoc_type;
 
 	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev)) {
-		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
-					   data, 0);
 		mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
+		lim_process_switch_channel_rsp(wma->mac_context, data);
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -4091,8 +4090,7 @@ QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	switch (assoc_type) {
 	case VDEV_ASSOC:
 	case VDEV_REASSOC:
-		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
-					   data, 0);
+		lim_process_switch_channel_rsp(wma->mac_context, data);
 		break;
 	case VDEV_FT_REASSOC:
 		wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP,
@@ -4133,6 +4131,7 @@ QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	tp_wma_handle wma;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
+	uint8_t vdev_id;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
@@ -4141,11 +4140,12 @@ QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	}
 
 	if (mlme_is_chan_switch_in_progress(vdev)) {
-		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
-					   data, 0);
 		mlme_set_chan_switch_in_progress(vdev, false);
+		lim_process_switch_channel_rsp(wma->mac_context, data);
 	} else if (ap_mlme_is_hidden_ssid_restart_in_progress(vdev)) {
-		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP, data, 0);
+		vdev_id = vdev->vdev_objmgr.vdev_id;
+		lim_process_mlm_update_hidden_ssid_rsp(wma->mac_context,
+						       vdev_id);
 		ap_mlme_set_hidden_ssid_restart_in_progress(vdev, false);
 	} else {
 		status = wma_vdev_send_start_resp(wma, (struct bss_params *)data);
@@ -4267,7 +4267,7 @@ QDF_STATUS wma_mon_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev))
 		mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
 
-	wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP, data, 0);
+	lim_process_switch_channel_rsp(wma->mac_context, data);
 
 	return QDF_STATUS_SUCCESS;
 }

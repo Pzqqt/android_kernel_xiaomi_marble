@@ -601,9 +601,6 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 void wma_release_vdev_and_peer_ref(tp_wma_handle wma,
 				   struct wma_txrx_node *iface);
 
-int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
-				       uint32_t len);
-
 QDF_STATUS wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value);
 

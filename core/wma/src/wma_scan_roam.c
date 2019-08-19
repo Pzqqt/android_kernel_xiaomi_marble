@@ -3510,6 +3510,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint16_t beacon_interval_ori;
 	uint8_t chan;
+	struct vdev_start_response rsp = {0};
 
 	WMA_LOGD("%s: Enter", __func__);
 	if (!wma_find_vdev_by_addr(wma, params->selfStaMacAddr, &vdev_id)) {
@@ -3643,11 +3644,11 @@ send_resp:
 		 params->channelNumber, params->ch_width,
 		 params->maxTxPower,
 		 status);
-	params->status = status;
-	WMA_LOGI("%s: sending WMA_SWITCH_CHANNEL_RSP, status = 0x%x",
+	WMA_LOGI("%s: wma switch channel rsp,, status = 0x%x",
 		 __func__, status);
-	wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
-				   (void *)params, 0);
+	rsp.status = status;
+	rsp.vdev_id = vdev_id;
+	lim_process_switch_channel_rsp(wma->mac_context, &rsp);
 }
 
 #ifdef FEATURE_WLAN_ESE

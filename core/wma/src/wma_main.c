@@ -3398,7 +3398,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	/* Register vdev start response event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_vdev_start_resp_event_id,
-					   wma_vdev_start_resp_handler,
+					   target_if_vdev_mgr_start_response_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 	/* Register vdev stop response event handler */
@@ -8503,6 +8503,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WMA_CHNL_SWITCH_REQ:
 		wma_set_channel(wma_handle,
 				(tpSwitchChannelParams) msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_ADD_BSS_REQ:
 		wma_add_bss(wma_handle, (struct bss_params *) msg->bodyptr);

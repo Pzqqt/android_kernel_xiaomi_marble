@@ -748,23 +748,9 @@ typedef struct {
 typedef struct {
 	uint8_t channelNumber;
 	uint8_t peSessionId;
-	int8_t txMgmtPower;
 	int8_t maxTxPower;
 	tSirMacAddr selfStaMacAddr;
-	/* the request has power constraints, this should be applied only to
-	 * that session
-	 * VO Wifi comment: BSSID is needed to identify which session issued
-	 * this request. As the request has power constraints, this should be
-	 * applied only to that session
-	 * V IMP: Keep bssId field at the end of this msg.
-	 * It is used to mantain backward compatbility by way of ignoring if
-	 * using new host/old FW or old host/new FW since it is at the end of
-	 * this struct
-	 */
-	tSirMacAddr bssId;
 	QDF_STATUS status;
-	uint16_t chainMask;
-	uint16_t smpsMode;
 	uint8_t isDfsChannel;
 	uint8_t vhtCapable;
 	enum phy_ch_width ch_width;

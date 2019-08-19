@@ -689,7 +689,17 @@ QDF_STATUS wma_vdev_detach_callback(
  * Return: 0 for success or error code
  */
 QDF_STATUS wma_vdev_stop_resp_handler(struct vdev_mlme_obj *vdev_mlme,
-				      struct vdev_stop_response *rsp);
+				struct vdev_stop_response *rsp);
+
+/**
+ * wma_vdev_start_resp_handler() - vdev start response handler
+ * @vdev_mlme: vdev mlme obj
+ * @rsp: vdev start response
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
+				       struct vdev_start_response *rsp);
 
 #ifdef FEATURE_WLM_STATS
 /**
