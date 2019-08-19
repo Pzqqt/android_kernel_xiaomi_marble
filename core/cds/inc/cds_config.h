@@ -29,6 +29,8 @@
 
 #include "osdep.h"
 #include "cdp_txrx_mob_def.h"
+#include "wlan_cmn.h"
+#include "wlan_cmn_ieee80211.h"
 #include "wlan_pmo_common_public_struct.h"
 #include "qca_vendor.h"
 

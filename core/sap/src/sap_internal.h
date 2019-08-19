@@ -34,6 +34,7 @@
 #include "sap_ch_select.h"
 #include <wlan_scan_public_structs.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include "wlan_vdev_mlme_main.h"
 #include "wlan_vdev_mlme_api.h"
 
 /* DFS Non Occupancy Period =30 minutes, in microseconds */

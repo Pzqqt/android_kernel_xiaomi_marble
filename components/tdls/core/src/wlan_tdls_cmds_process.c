@@ -1181,7 +1181,7 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 	cmd.umac_cmd = req;
 	cmd.source = WLAN_UMAC_COMP_TDLS;
 	cmd.is_high_priority = false;
-	cmd.cmd_timeout_duration = TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT;
+	cmd.cmd_timeout_duration = TDLS_DELETE_PEER_CMD_TIMEOUT;
 	cmd.vdev = vdev;
 	cmd.is_blocking = true;
 

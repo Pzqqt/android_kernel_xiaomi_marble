@@ -25,6 +25,7 @@
 #include "qdf_str.h"
 #include "sir_api.h"
 #include "host_diag_core_event.h"
+#include "wlan_objmgr_vdev_obj.h"
 
 static struct wlan_ipa_priv *gp_ipa;
 
