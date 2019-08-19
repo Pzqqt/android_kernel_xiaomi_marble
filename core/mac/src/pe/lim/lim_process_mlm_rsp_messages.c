@@ -2510,46 +2510,31 @@ err:
 }
 
 void lim_process_mlm_update_hidden_ssid_rsp(struct mac_context *mac_ctx,
-	struct scheduler_msg *msg)
+	uint8_t vdev_id)
 {
 	struct pe_session *session_entry;
-	tpHalHiddenSsidVdevRestart hidden_ssid_vdev_restart;
 	struct scheduler_msg message = {0};
 	QDF_STATUS status;
 
-	hidden_ssid_vdev_restart = (tpHalHiddenSsidVdevRestart)(msg->bodyptr);
-
-	if (!hidden_ssid_vdev_restart) {
-		pe_err("NULL msg pointer");
-		return;
-	}
-
-	session_entry = pe_find_session_by_session_id(mac_ctx,
-			hidden_ssid_vdev_restart->pe_session_id);
+	session_entry = pe_find_session_by_sme_session_id(mac_ctx, vdev_id);
 
 	if (!session_entry) {
-		pe_err("SessionId:%d Session Doesn't exist",
-			hidden_ssid_vdev_restart->pe_session_id);
-		goto free_req;
+		pe_err("vdev_id:%d Session Doesn't exist",
+		       vdev_id);
+		return;
 	}
 	/* Update beacon */
 	sch_set_fixed_beacon_fields(mac_ctx, session_entry);
 	lim_send_beacon(mac_ctx, session_entry);
 
 	message.type = eWNI_SME_HIDDEN_SSID_RESTART_RSP;
-	message.bodyval = hidden_ssid_vdev_restart->sessionId;
+	message.bodyval = vdev_id;
 	status = scheduler_post_message(QDF_MODULE_ID_PE,
 					QDF_MODULE_ID_SME,
 					QDF_MODULE_ID_SME, &message);
 
 	if (status != QDF_STATUS_SUCCESS)
 		pe_err("Failed to post message %u", status);
-
-free_req:
-	if (hidden_ssid_vdev_restart) {
-		qdf_mem_free(hidden_ssid_vdev_restart);
-		msg->bodyptr = NULL;
-	}
 }
 
 /**
@@ -3067,34 +3052,28 @@ static void lim_handle_mon_switch_channel_rsp(struct pe_session *session,
  *
  * @return None
  */
-void lim_process_switch_channel_rsp(struct mac_context *mac, void *body)
+void lim_process_switch_channel_rsp(struct mac_context *mac,
+				    struct vdev_start_response *rsp)
 {
-	tpSwitchChannelParams pChnlParams = NULL;
 	QDF_STATUS status;
 	uint16_t channelChangeReasonCode;
-	uint8_t peSessionId;
 	struct pe_session *pe_session;
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
 	/* in the case of nested request the new request initiated from the response will take care of resetting */
 	/* the deffered flag. */
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-	pChnlParams = (tpSwitchChannelParams) body;
-	status = pChnlParams->status;
-	peSessionId = pChnlParams->peSessionId;
+	status = rsp->status;
 
-	pe_session = pe_find_session_by_session_id(mac, peSessionId);
+	pe_session = pe_find_session_by_sme_session_id(mac, rsp->vdev_id);
 	if (!pe_session) {
 		pe_err("session does not exist for given sessionId");
-		goto free;
+		return;
 	}
 	pe_session->ch_switch_in_progress = false;
-	/* HAL fills in the tx power used for mgmt frames in this field. */
-	/* Store this value to use in TPC report IE. */
-	rrm_cache_mgmt_tx_power(mac, pChnlParams->txMgmtPower, pe_session);
 	channelChangeReasonCode = pe_session->channelChangeReasonCode;
 	/* initialize it back to invalid id */
-	pe_session->chainMask = pChnlParams->chainMask;
-	pe_session->smpsMode = pChnlParams->smpsMode;
+	pe_session->chainMask = rsp->chain_mask;
+	pe_session->smpsMode = rsp->smps_mode;
 	pe_session->channelChangeReasonCode = 0xBAD;
 	pe_debug("channelChangeReasonCode %d", channelChangeReasonCode);
 	switch (channelChangeReasonCode) {
@@ -3139,8 +3118,7 @@ void lim_process_switch_channel_rsp(struct mac_context *mac, void *body)
 		 * require completely different information for P2P unlike
 		 * SAP.
 		 */
-		lim_send_sme_ap_channel_switch_resp(mac, pe_session,
-						pChnlParams);
+		lim_send_sme_ap_channel_switch_resp(mac, pe_session, rsp);
 		/* If MCC upgrade/DBS downgrade happended during channel switch,
 		 * the policy manager connection table needs to be updated.
 		 */
@@ -3160,8 +3138,6 @@ void lim_process_switch_channel_rsp(struct mac_context *mac, void *body)
 	default:
 		break;
 	}
-free:
-	qdf_mem_free(body);
 }
 
 QDF_STATUS lim_send_beacon_ind(struct mac_context *mac,

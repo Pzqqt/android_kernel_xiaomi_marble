@@ -1679,10 +1679,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case SIR_LIM_UPDATE_BEACON:
 		lim_update_beacon(mac_ctx);
 		break;
-	case WMA_SWITCH_CHANNEL_RSP:
-		lim_process_switch_channel_rsp(mac_ctx, msg->bodyptr);
-		msg->bodyptr = NULL;
-		break;
 #ifdef ANI_SIR_IBSS_PEER_CACHING
 	case WMA_IBSS_STA_ADD:
 		lim_ibss_sta_add(mac_ctx, msg->bodyptr);
@@ -1926,9 +1922,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		break;
 	case WMA_ADD_BSS_RSP:
 		lim_process_mlm_add_bss_rsp(mac_ctx, msg);
-		break;
-	case WMA_HIDDEN_SSID_RESTART_RSP:
-		lim_process_mlm_update_hidden_ssid_rsp(mac_ctx, msg);
 		break;
 	case WMA_ADD_STA_RSP:
 		lim_process_add_sta_rsp(mac_ctx, msg);

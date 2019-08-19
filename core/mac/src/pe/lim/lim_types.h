@@ -573,8 +573,15 @@ void lim_send_disassoc_mgmt_frame(struct mac_context *, uint16_t, tSirMacAddr,
 void lim_send_deauth_mgmt_frame(struct mac_context *, uint16_t, tSirMacAddr, struct pe_session *,
 				bool waitForAck);
 
+/**
+ * lim_process_mlm_update_hidden_ssid_rsp() - process hidden ssid response
+ * @mac_ctx: global mac context
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
 void lim_process_mlm_update_hidden_ssid_rsp(struct mac_context *mac_ctx,
-					    struct scheduler_msg *msg);
+					    uint8_t vdev_id);
 
 tSirResultCodes lim_mlm_add_bss(struct mac_context *, tLimMlmStartReq *,
 				struct pe_session *pe_session);
@@ -793,7 +800,8 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ);
 
 /* Function to process WMA_SWITCH_CHANNEL_RSP message */
-void lim_process_switch_channel_rsp(struct mac_context *mac, void *);
+void lim_process_switch_channel_rsp(struct mac_context *mac,
+				    struct vdev_start_response *rsp);
 
 /**
  * lim_sta_handle_connect_fail() - handle connect failure of STA

@@ -138,8 +138,6 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 	qdf_mem_copy(pChnlParams->selfStaMacAddr, pe_session->self_mac_addr,
 		     sizeof(tSirMacAddr));
 	pChnlParams->maxTxPower = maxTxPower;
-	qdf_mem_copy(pChnlParams->bssId, pe_session->bssId,
-		     sizeof(tSirMacAddr));
 	pChnlParams->peSessionId = peSessionId;
 	pChnlParams->vhtCapable = pe_session->vhtCapability;
 	if (lim_is_session_he_capable(pe_session))
