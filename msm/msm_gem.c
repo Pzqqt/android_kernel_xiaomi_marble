@@ -527,8 +527,11 @@ void msm_gem_aspace_domain_attach_detach_update(
 		 */
 		list_for_each_entry(msm_obj, &aspace->active_list, iova_list) {
 			obj = &msm_obj->base;
-			if (obj->import_attach)
+			if (obj->import_attach) {
+				mutex_lock(&msm_obj->lock);
 				put_iova(obj);
+				mutex_unlock(&msm_obj->lock);
+			}
 		}
 	} else {
 		/* map active buffers */
