@@ -27,6 +27,9 @@
 #define __WLAN_VDEV_MGR_TGT_IF_RX_DEFS_H__
 
 #include <qdf_timer.h>
+#ifdef FEATURE_RUNTIME_PM
+#include <wlan_pmo_common_public_struct.h>
+#endif
 
 /**
  * enum wlan_vdev_mgr_tgt_if_rsp_bit - response status bit
@@ -63,10 +66,18 @@ static inline char *string_from_rsp_bit(enum wlan_vdev_mgr_tgt_if_rsp_bit bit)
 	return (char *)strings[bit];
 }
 
-#define START_RESPONSE_TIMER 6000 /* 6 seconds */
-#define STOP_RESPONSE_TIMER  3000 /* 3 seconds */
-#define DELETE_RESPONSE_TIMER  3000 /* 3 seconds */
-#define PEER_DELETE_ALL_RESPONSE_TIMER 6000 /* 6 seconds */
+#ifdef FEATURE_RUNTIME_PM
+/* Add extra PMO_RESUME_TIMEOUT for runtime PM resume timeout */
+#define START_RESPONSE_TIMER           (6000 + PMO_RESUME_TIMEOUT)
+#define STOP_RESPONSE_TIMER            (4000 + PMO_RESUME_TIMEOUT)
+#define DELETE_RESPONSE_TIMER          (4000 + PMO_RESUME_TIMEOUT)
+#define PEER_DELETE_ALL_RESPONSE_TIMER (6000 + PMO_RESUME_TIMEOUT)
+#else
+#define START_RESPONSE_TIMER           6000
+#define STOP_RESPONSE_TIMER            4000
+#define DELETE_RESPONSE_TIMER          4000
+#define PEER_DELETE_ALL_RESPONSE_TIMER 6000
+#endif
 
 /**
  * struct vdev_response_timer - vdev mgmt response ops timer
