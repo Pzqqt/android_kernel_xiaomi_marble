@@ -103,6 +103,13 @@ struct cfr_metadata_version_1 {
 	u_int32_t   length;
 } __attribute__ ((__packed__));
 
+#define HOST_MAX_CHAINS 8
+
+struct cfr_metadata_version_2 {
+	u_int32_t chain_rssi[HOST_MAX_CHAINS];
+	u_int16_t chain_phase[HOST_MAX_CHAINS];
+} __attribute__ ((__packed__));
+
 struct csi_cfr_header {
 	u_int32_t   start_magic_num;
 	u_int32_t   vendorid;
@@ -114,6 +121,7 @@ struct csi_cfr_header {
 
 	union {
 		struct cfr_metadata_version_1 meta_v1;
+		struct cfr_metadata_version_2 meta_v2;
 	} u;
 } __attribute__ ((__packed__));
 
