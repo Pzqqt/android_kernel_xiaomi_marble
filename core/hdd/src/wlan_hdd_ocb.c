@@ -238,8 +238,6 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 
-	hdd_ctx->sta_to_adapter[peer_id] = adapter;
-
 	/* To be cleaned up */
 	sta_desc.sta_id = peer_id;
 	WLAN_ADDR_COPY(sta_desc.peer_addr.bytes, adapter->mac_addr.bytes);

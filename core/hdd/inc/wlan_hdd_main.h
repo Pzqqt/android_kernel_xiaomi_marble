@@ -1681,8 +1681,6 @@ struct hdd_context {
 	qdf_spinlock_t hdd_adapter_lock;
 	qdf_list_t hdd_adapters; /* List of adapters */
 
-	struct hdd_adapter *sta_to_adapter[HDD_MAX_ADAPTERS];
-
 	/** Pointer for firmware image data */
 	const struct firmware *fw;
 

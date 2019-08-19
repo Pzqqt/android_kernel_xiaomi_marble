@@ -654,7 +654,6 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 	}
 
 	/* Since, the interface is being deleted, remove the broadcast id. */
-	hdd_ctx->sta_to_adapter[sta_id] = NULL;
 	sta_ctx->broadcast_sta_id = HDD_WLAN_INVALID_STA_ID;
 
 	os_if_nan_set_ndp_delete_transaction_id(adapter->vdev,
@@ -726,7 +725,6 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 	sta_ctx->broadcast_sta_id = sta_id;
 	hdd_save_peer(sta_ctx, sta_id, &bc_mac_addr);
 	hdd_roam_register_sta(adapter, roam_info, sta_id, &tmp_bss_descp);
-	hdd_ctx->sta_to_adapter[sta_id] = adapter;
 
 	qdf_mem_free(roam_info);
 }
@@ -778,7 +776,6 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 
 	sta_id = sta_ctx->broadcast_sta_id;
 	if (sta_id < HDD_MAX_ADAPTERS) {
-		hdd_ctx->sta_to_adapter[sta_id] = NULL;
 		hdd_roam_deregister_sta(adapter, sta_ctx->requested_bssid);
 		hdd_delete_peer(sta_ctx, sta_id);
 		sta_ctx->broadcast_sta_id = HDD_WLAN_INVALID_STA_ID;
@@ -849,7 +846,6 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 
 	/* this function is called for each new peer */
 	hdd_roam_register_sta(adapter, roam_info, sta_id, &tmp_bss_descp);
-	hdd_ctx->sta_to_adapter[sta_id] = adapter;
 	/* perform following steps for first new peer ind */
 	if (fist_peer) {
 		hdd_info("Set ctx connection state to connected");
@@ -906,7 +902,6 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 
 	hdd_roam_deregister_sta(adapter, *peer_mac_addr);
 	hdd_delete_peer(sta_ctx, sta_id);
-	hdd_ctx->sta_to_adapter[sta_id] = NULL;
 
 	if (last_peer) {
 		hdd_info("No more ndp peers.");
