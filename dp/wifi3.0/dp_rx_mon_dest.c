@@ -1514,13 +1514,13 @@ void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev)
 	union dp_rx_desc_list_elem_t *tail = NULL;
 	union dp_rx_desc_list_elem_t *desc_list = NULL;
 	uint32_t num_entries;
-	uint32_t mac_id;
+	uint32_t mac_id, id;
 
 	soc = pdev->soc;
 	num_entries = wlan_cfg_get_dma_mon_buf_ring_size(pdev->wlan_cfg_ctx);
 
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+	for (id = 0; id < NUM_RXDMA_RINGS_PER_PDEV; id++) {
+		mac_for_pdev = dp_get_mac_id_for_pdev(id,
 						      pdev->pdev_id);
 
 		/*
@@ -1530,11 +1530,11 @@ void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev)
 		 * accurate buffer_ring for both cases
 		 *
 		 */
-		mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_for_pdev);
+		mac_id = dp_get_mac_id_for_mac(soc, mac_for_pdev);
 
 		dp_rx_buffers_replenish(soc, mac_for_pdev,
 					dp_rxdma_get_mon_buf_ring(pdev,
-								  mac_for_pdev),
+								  mac_id),
 					dp_rx_get_mon_desc_pool(soc,
 								mac_for_pdev,
 								pdev->pdev_id),
