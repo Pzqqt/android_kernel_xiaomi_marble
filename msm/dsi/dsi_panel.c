@@ -3729,6 +3729,9 @@ int dsi_panel_get_host_cfg_for_mode(struct dsi_panel *panel,
 	config->video_timing.dsc_enabled = mode->priv_info->dsc_enabled;
 	config->video_timing.dsc = &mode->priv_info->dsc;
 
+	config->video_timing.vdc_enabled = mode->priv_info->vdc_enabled;
+	config->video_timing.vdc = &mode->priv_info->vdc;
+
 	if (dyn_clk_caps->dyn_clk_support)
 		config->bit_clk_rate_hz_override = mode->timing.clk_rate_hz;
 	else

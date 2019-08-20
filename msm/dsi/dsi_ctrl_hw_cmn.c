@@ -14,6 +14,7 @@
 #include "dsi_catalog.h"
 #include "sde_dbg.h"
 #include "sde_dsc_helper.h"
+#include "sde_vdc_helper.h"
 
 #define MMSS_MISC_CLAMP_REG_OFF           0x0014
 #define DSI_CTRL_DYNAMIC_FORCE_ON         (0x23F|BIT(8)|BIT(9)|BIT(11)|BIT(21))
@@ -21,6 +22,22 @@
 #define DSI_CTRL_VIDEO_MISR_ENABLE        BIT(16)
 #define DSI_CTRL_DMA_LINK_SEL             (BIT(12)|BIT(13))
 #define DSI_CTRL_MDP0_LINK_SEL            (BIT(20)|BIT(22))
+
+static bool dsi_dsc_compression_enabled(struct dsi_mode_info *mode)
+{
+	return (mode->dsc_enabled && mode->dsc);
+}
+
+static bool dsi_vdc_compression_enabled(struct dsi_mode_info *mode)
+{
+	return (mode->vdc_enabled && mode->vdc);
+}
+
+static bool dsi_compression_enabled(struct dsi_mode_info *mode)
+{
+	return (dsi_dsc_compression_enabled(mode) ||
+			dsi_vdc_compression_enabled(mode));
+}
 
 /* Unsupported formats default to RGB888 */
 static const u8 cmd_mode_format_map[DSI_PIXEL_FORMAT_MAX] = {
@@ -264,6 +281,33 @@ void dsi_ctrl_hw_cmn_set_timing_db(struct dsi_ctrl_hw *ctrl,
 }
 
 /**
+ * get_dce_params() - get the dce params
+ * @mode:          mode information.
+ * @width:         width to be filled up
+ * @bytes_per_pkt: Bytes per packet to be filled up
+ * @pkt_per_line: Packet per line parameter
+ * @eol_byte_num: End-of-line byte number
+ *
+ * Get the compression parameters based on compression type.
+ */
+static void dsi_ctrl_hw_cmn_get_vid_dce_params(struct dsi_mode_info *mode,
+	u32 *width, u32 *bytes_per_pkt, u32 *pkt_per_line,
+	u32 *eol_byte_num)
+{
+	if (dsi_dsc_compression_enabled(mode)) {
+		*width = mode->dsc->pclk_per_line;
+		*bytes_per_pkt = mode->dsc->bytes_per_pkt;
+		*pkt_per_line = mode->dsc->pkt_per_line;
+		*eol_byte_num = mode->dsc->eol_byte_num;
+	} else if (dsi_vdc_compression_enabled(mode)) {
+		*width = mode->vdc->pclk_per_line;
+		*bytes_per_pkt = mode->vdc->bytes_per_pkt;
+		*pkt_per_line = mode->vdc->pkt_per_line;
+		*eol_byte_num = mode->vdc->eol_byte_num;
+	}
+}
+
+/**
  * set_video_timing() - set up the timing for video frame
  * @ctrl:          Pointer to controller host hardware.
  * @mode:          Video mode information.
@@ -276,25 +320,26 @@ void dsi_ctrl_hw_cmn_set_video_timing(struct dsi_ctrl_hw *ctrl,
 	u32 reg = 0;
 	u32 hs_start = 0;
 	u32 hs_end, active_h_start, active_h_end, h_total, width = 0;
+	u32 bytes_per_pkt, pkt_per_line, eol_byte_num;
 	u32 vs_start = 0, vs_end = 0;
 	u32 vpos_start = 0, vpos_end, active_v_start, active_v_end, v_total;
 
-	if (mode->dsc_enabled && mode->dsc) {
-		width = mode->dsc->pclk_per_line;
-		reg = mode->dsc->bytes_per_pkt << 16;
-		reg |= (0x0b << 8);    /* dtype of compressed image */
+	if (dsi_compression_enabled(mode)) {
+		dsi_ctrl_hw_cmn_get_vid_dce_params(mode,
+				&width, &bytes_per_pkt,
+				&pkt_per_line, &eol_byte_num);
+		reg = bytes_per_pkt << 16;
+		/* data type of compressed image */
+		reg |= (0x0b << 8);
 		/*
 		 * pkt_per_line:
 		 * 0 == 1 pkt
 		 * 1 == 2 pkt
 		 * 2 == 4 pkt
-		 * 3 pkt is not support
+		 * 3 pkt is not supported
 		 */
-		if (mode->dsc->pkt_per_line == 4)
-			reg |= (mode->dsc->pkt_per_line - 2) << 6;
-		else
-			reg |= (mode->dsc->pkt_per_line - 1) << 6;
-		reg |= mode->dsc->eol_byte_num << 4;
+		reg |= (pkt_per_line >> 1) << 6;
+		reg |= eol_byte_num << 4;
 		reg |= 1;
 		DSI_W32(ctrl, DSI_VIDEO_COMPRESSION_MODE_CTRL, reg);
 	} else {
@@ -358,52 +403,44 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 	u32 height_final;
 	u32 stream_total = 0, stream_ctrl = 0;
 	u32 reg_ctrl = 0, reg_ctrl2 = 0, data = 0;
+	u32 reg = 0, offset = 0;
+	int pic_width, this_frame_slices, intf_ip_w;
+	u32 pkt_per_line, eol_byte_num, bytes_in_slice;
 
 	if (roi && (!roi->w || !roi->h))
 		return;
 
-	if (mode->dsc_enabled && mode->dsc) {
-		u32 reg = 0;
-		u32 offset = 0;
-		int pic_width, this_frame_slices, intf_ip_w;
+	if (dsi_dsc_compression_enabled(mode)) {
 		struct msm_display_dsc_info dsc;
 
-		memcpy(&dsc, mode->dsc, sizeof(dsc));
 		pic_width = roi ? roi->w : mode->h_active;
+		memcpy(&dsc, mode->dsc, sizeof(dsc));
+
 		this_frame_slices = pic_width / dsc.config.slice_width;
 		intf_ip_w = this_frame_slices * dsc.config.slice_width;
+
 		sde_dsc_populate_dsc_private_params(&dsc, intf_ip_w);
 
-		if (vc_id != 0)
-			offset = 16;
-		reg_ctrl = DSI_R32(ctrl, DSI_COMMAND_COMPRESSION_MODE_CTRL);
-		reg_ctrl2 = DSI_R32(ctrl, DSI_COMMAND_COMPRESSION_MODE_CTRL2);
 		width_final = dsc.pclk_per_line;
 		stride_final = dsc.bytes_per_pkt;
-		height_final = roi ? roi->h : mode->v_active;
+		pkt_per_line = dsc.pkt_per_line;
+		eol_byte_num = dsc.eol_byte_num;
+		bytes_in_slice = dsc.bytes_in_slice;
+	} else if (dsi_vdc_compression_enabled(mode)) {
+		struct msm_display_vdc_info vdc;
 
-		reg = 0x39 << 8;
-		/*
-		 * pkt_per_line:
-		 * 0 == 1 pkt
-		 * 1 == 2 pkt
-		 * 2 == 4 pkt
-		 * 3 pkt is not support
-		 */
-		if (dsc.pkt_per_line == 4)
-			reg |= (dsc.pkt_per_line - 2) << 6;
-		else
-			reg |= (dsc.pkt_per_line - 1) << 6;
-		reg |= dsc.eol_byte_num << 4;
-		reg |= 1;
+		pic_width = roi ? roi->w : mode->h_active;
+		memcpy(&vdc, mode->vdc, sizeof(vdc));
+		this_frame_slices = pic_width / vdc.slice_width;
+		intf_ip_w = this_frame_slices * vdc.slice_width;
 
-		reg_ctrl &= ~(0xFFFF << offset);
-		reg_ctrl |= (reg << offset);
-		reg_ctrl2 &= ~(0xFFFF << offset);
-		reg_ctrl2 |= (dsc.bytes_in_slice << offset);
+		sde_vdc_intf_prog_params(&vdc, intf_ip_w);
 
-		DSI_CTRL_HW_DBG(ctrl, "reg_ctrl 0x%x reg_ctrl2 0x%x\n",
-				reg_ctrl, reg_ctrl2);
+		width_final = vdc.pclk_per_line;
+		stride_final = vdc.bytes_per_pkt;
+		pkt_per_line = vdc.pkt_per_line;
+		eol_byte_num = vdc.eol_byte_num;
+		bytes_in_slice = vdc.bytes_in_slice;
 	} else if (roi) {
 		width_final = roi->w;
 		stride_final = roi->w * 3;
@@ -412,6 +449,36 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 		width_final = mode->h_active;
 		stride_final = h_stride;
 		height_final = mode->v_active;
+	}
+
+	if (dsi_compression_enabled(mode)) {
+		pic_width = roi ? roi->w : mode->h_active;
+		height_final = roi ? roi->h : mode->v_active;
+		reg_ctrl = DSI_R32(ctrl, DSI_COMMAND_COMPRESSION_MODE_CTRL);
+		reg_ctrl2 = DSI_R32(ctrl, DSI_COMMAND_COMPRESSION_MODE_CTRL2);
+
+		if (vc_id != 0)
+			offset = 16;
+
+		reg = 0x39 << 8;
+		/*
+		 * pkt_per_line:
+		 * 0 == 1 pkt
+		 * 1 == 2 pkt
+		 * 2 == 4 pkt
+		 * 3 pkt is not supported
+		 */
+		reg |= (pkt_per_line >> 1) << 6;
+		reg |= eol_byte_num << 4;
+		reg |= 1;
+
+		reg_ctrl &= ~(0xFFFF << offset);
+		reg_ctrl |= (reg << offset);
+		reg_ctrl2 &= ~(0xFFFF << offset);
+		reg_ctrl2 |= (bytes_in_slice << offset);
+
+		DSI_CTRL_HW_DBG(ctrl, "reg_ctrl 0x%x reg_ctrl2 0x%x\n",
+				reg_ctrl, reg_ctrl2);
 	}
 
 	/* HS Timer value */

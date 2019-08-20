@@ -57,5 +57,7 @@ int sde_vdc_populate_config(struct msm_display_vdc_info *vdc_info,
  */
 int sde_vdc_create_pps_buf_cmd(struct msm_display_vdc_info *vdc_info,
 	char *buf, int pps_id, u32 size);
+void sde_vdc_intf_prog_params(struct msm_display_vdc_info *vdc_info,
+	int intf_width);
 
 #endif /* __SDE_VDC_HELPER_H__ */

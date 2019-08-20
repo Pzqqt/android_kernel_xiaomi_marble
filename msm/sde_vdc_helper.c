@@ -582,7 +582,7 @@ static int sde_vdc_populate_core_params(struct msm_display_vdc_info *vdc_info,
 	return 0;
 }
 
-static void sde_vdc_intf_prog_params(struct msm_display_vdc_info *vdc_info,
+void sde_vdc_intf_prog_params(struct msm_display_vdc_info *vdc_info,
 	int intf_width)
 {
 	int slice_per_pkt, slice_per_intf;
