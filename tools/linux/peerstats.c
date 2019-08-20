@@ -305,6 +305,10 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 	      "attempts",
 	      "success",
 	      "ppdus");
+	PRINT(" %10s | %10s | %10s |",
+	      "msdus",
+	      "bytes",
+	      "retries\n");
 
 	for (i = 0; i < WLANSTATS_CACHE_SIZE; i++) {
 		if (tx_stats->rix != INVALID_CACHE_IDX) {
@@ -314,6 +318,10 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 			      tx_stats->mpdu_attempts,
 			      tx_stats->mpdu_success,
 			      tx_stats->num_ppdus);
+			PRINT(" %10u | %10u | %10lu |\n",
+			      tx_stats->num_msdus,
+			      tx_stats->num_bytes,
+			      tx_stats->num_retries);
 		}
 		tx_stats = tx_stats + 1;
 	}
