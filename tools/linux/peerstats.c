@@ -92,7 +92,7 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 		if (rx_stats->rix != INVALID_CACHE_IDX) {
 			PRINT(" %10u | %10u | %10u | %10u | %10u | %10u |",
 			      rx_stats->rate,
-			      rx_stats->rix,
+			      GET_DP_PEER_STATS_RIX(rx_stats->rix),
 			      rx_stats->num_bytes,
 			      rx_stats->num_msdus,
 			      rx_stats->num_mpdus,
@@ -310,7 +310,7 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 		if (tx_stats->rix != INVALID_CACHE_IDX) {
 			PRINT("\t\t%10u | %10u | %10u | %10u | %10u\n",
 			      tx_stats->rate,
-			      tx_stats->rix,
+			      GET_DP_PEER_STATS_RIX(tx_stats->rix),
 			      tx_stats->mpdu_attempts,
 			      tx_stats->mpdu_success,
 			      tx_stats->num_ppdus);
