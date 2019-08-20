@@ -1512,7 +1512,10 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 	},
 
 	BCN_RECV_FEATURE_VENDOR_EVENTS
-
+	[QCA_NL80211_VENDOR_SUBCMD_ROAM_INDEX] = {
+		.vendor_id = QCA_NL80211_VENDOR_ID,
+		.subcmd = QCA_NL80211_VENDOR_SUBCMD_ROAM,
+	},
 };
 
 /**
@@ -4115,6 +4118,7 @@ hdd_send_roam_scan_channel_freq_list_to_sme(struct hdd_context *hdd_ctx,
 static const struct nla_policy
 roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
 	[QCA_ATTR_ROAM_CONTROL_ENABLE] = {.type = NLA_U8},
+	[QCA_ATTR_ROAM_CONTROL_STATUS] = {.type = NLA_U8},
 	[PARAM_FREQ_LIST_SCHEME] = {.type = NLA_NESTED},
 	[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD] = {.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_CLEAR_ALL] = {.type = NLA_FLAG},
@@ -4304,6 +4308,7 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 	struct nlattr *tb2[QCA_ATTR_ROAM_CONTROL_MAX + 1], *attr;
 	uint32_t value;
 
+	hdd_enter();
 	/* The command must carry PARAM_ROAM_CONTROL_CONFIG */
 	if (!tb[PARAM_ROAM_CONTROL_CONFIG]) {
 		hdd_err("Attribute CONTROL_CONFIG is not present");
@@ -4431,6 +4436,157 @@ hdd_clear_roam_control_config(struct hdd_context *hdd_ctx,
 	}
 
 	return 0;
+}
+
+/**
+ * hdd_roam_control_config_buf_size() - Calculate the skb size to be allocated
+ * @hdd_ctx: HDD context
+ * @tb: List of attributes to be populated
+ *
+ * Calculate the buffer size to be allocated based on the attributes
+ * mentioned in tb.
+ *
+ * Return: buffer size to be allocated
+ */
+static uint16_t
+hdd_roam_control_config_buf_size(struct hdd_context *hdd_ctx,
+				 struct nlattr **tb)
+{
+	uint16_t skb_len = 0;
+
+	if (tb[QCA_ATTR_ROAM_CONTROL_STATUS])
+		skb_len += NLA_HDRLEN + sizeof(uint8_t);
+
+	return skb_len;
+}
+
+/**
+ * hdd_roam_control_config_fill_data() - Fill the data requested by userspace
+ * @hdd_ctx: HDD context
+ * @vdev_id: vdev id
+ * @skb: SK buffer
+ * @tb: List of attributes
+ *
+ * Get the data corresponding to the attribute list specified in tb and
+ * update the same to skb by populating the same attributes.
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int
+hdd_roam_control_config_fill_data(struct hdd_context *hdd_ctx, uint8_t vdev_id,
+				  struct sk_buff *skb, struct nlattr **tb)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t roam_control;
+	struct nlattr *config;
+
+	config = nla_nest_start(skb, PARAM_ROAM_CONTROL_CONFIG);
+	if (!config)
+		return -EINVAL;
+
+	if (tb[QCA_ATTR_ROAM_CONTROL_STATUS]) {
+		status = sme_get_roam_config_status(hdd_ctx->mac_handle,
+						    vdev_id,
+						    &roam_control);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto out;
+		hdd_debug("Roam control: %s",
+			  roam_control ? "Enabled" : "Disabled");
+		if (nla_put_u8(skb, QCA_ATTR_ROAM_CONTROL_STATUS,
+			       roam_control)) {
+			hdd_info("failed to put vendor_roam_control");
+			return -ENOMEM;
+		}
+	}
+	nla_nest_end(skb, config);
+
+out:
+	return qdf_status_to_os_return(status);
+}
+
+/**
+ * hdd_send_roam_control_config() - Send the roam config as vendor cmd reply
+ * @mac_handle: Opaque handle to the MAC context
+ * @vdev_id: vdev id
+ * @tb: List of attributes
+ *
+ * Parse the attributes list tb and  get the data corresponding to the
+ * attributes specified in tb. Send them as a vendor response.
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int
+hdd_send_roam_control_config(struct hdd_context *hdd_ctx,
+			     uint8_t vdev_id,
+			     struct nlattr **tb)
+{
+	struct sk_buff *skb;
+	uint16_t skb_len;
+	int status;
+
+	hdd_enter();
+	skb_len = hdd_roam_control_config_buf_size(hdd_ctx, tb);
+	if (!skb_len) {
+		hdd_err("No data requested");
+		return -EINVAL;
+	}
+
+	skb_len += NLMSG_HDRLEN;
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, skb_len);
+	if (!skb) {
+		hdd_info("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	status = hdd_roam_control_config_fill_data(hdd_ctx, vdev_id, skb, tb);
+	if (status)
+		goto fail;
+
+	hdd_exit();
+	return cfg80211_vendor_cmd_reply(skb);
+
+fail:
+	hdd_err("nla put fail");
+	kfree_skb(skb);
+	return status;
+}
+
+/**
+ * hdd_get_roam_control_config() - Send requested roam config to userspace
+ * @hdd_ctx: HDD context
+ * @tb: list of attributes
+ * @vdev_id: vdev id
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int hdd_get_roam_control_config(struct hdd_context *hdd_ctx,
+				       struct nlattr **tb,
+				       uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	struct nlattr *tb2[QCA_ATTR_ROAM_CONTROL_MAX + 1];
+
+	hdd_enter();
+	/* The command must carry PARAM_ROAM_CONTROL_CONFIG */
+	if (!tb[PARAM_ROAM_CONTROL_CONFIG]) {
+		hdd_err("Attribute CONTROL_CONFIG is not present");
+		return -EINVAL;
+	}
+
+	if (wlan_cfg80211_nla_parse_nested(tb2, QCA_ATTR_ROAM_CONTROL_MAX,
+					   tb[PARAM_ROAM_CONTROL_CONFIG],
+					   roam_control_policy)) {
+		hdd_err("nla_parse failed");
+		return -EINVAL;
+	}
+
+	status = hdd_send_roam_control_config(hdd_ctx, vdev_id, tb2);
+	if (status) {
+		hdd_err("failed to enable/disable roam control");
+		return status;
+	}
+
+	return qdf_status_to_os_return(status);
 }
 
 #undef PARAM_ROAM_CONTROL_CONFIG
@@ -4587,6 +4743,11 @@ static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 		break;
 	case QCA_WLAN_VENDOR_ROAMING_SUBCMD_CONTROL_CLEAR:
 		ret = hdd_clear_roam_control_config(hdd_ctx, tb, vdev_id);
+		if (ret)
+			goto fail;
+		break;
+	case QCA_WLAN_VENDOR_ROAMING_SUBCMD_CONTROL_GET:
+		ret = hdd_get_roam_control_config(hdd_ctx, tb, vdev_id);
 		if (ret)
 			goto fail;
 		break;

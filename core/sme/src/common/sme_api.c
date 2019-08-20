@@ -16137,3 +16137,27 @@ QDF_STATUS sme_set_roam_config_enable(mac_handle_t mac_handle,
 
 	return status;
 }
+
+QDF_STATUS sme_get_roam_config_status(mac_handle_t mac_handle,
+				      uint8_t vdev_id,
+				      uint8_t *config_status)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS status;
+
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		sme_err("Invalid vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to acquire sme lock; status: %d", status);
+		return status;
+	}
+	*config_status =
+		mac->roam.neighborRoamInfo[vdev_id].roam_control_enable;
+	sme_release_global_lock(&mac->sme);
+
+	return status;
+}

@@ -3697,4 +3697,17 @@ QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 QDF_STATUS sme_set_roam_config_enable(mac_handle_t mac_handle,
 				      uint8_t vdev_id,
 				      uint8_t roam_control_enable);
+
+/**
+ * sme_get_roam_config_status() - Get roam config status from SME
+ * @mac_handle: Opaque handle to the MAC context
+ * @vdev_id: vdev id
+ * @config_status: Pointer of a buffer to fill the status
+ *
+ * Get the cached control roam config status in SME and copy to status.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_get_roam_config_status(mac_handle_t mac_handle, uint8_t vdev_id,
+				      uint8_t *config_status);
 #endif /* #if !defined( __SME_API_H ) */
