@@ -1108,6 +1108,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 					  vdev->dscp_tid_map_id);
 	hal_tx_desc_set_encrypt_type(hal_tx_desc_cached,
 			sec_type_map[sec_type]);
+	hal_tx_desc_set_cache_set_num(soc->hal_soc, hal_tx_desc_cached,
+				      (vdev->bss_ast_hash & 0xF));
 
 	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
 			 length, type, (uint64_t)dma_addr,

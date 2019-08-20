@@ -999,6 +999,28 @@ static inline void hal_tx_desc_set_search_index(hal_soc_handle_t hal_soc_hdl,
 }
 
 /**
+ * hal_tx_desc_set_cache_set_num - Set the cache-set-num value
+ * @desc: Handle to Tx Descriptor
+ * @cache_num: Cache set number that should be used to cache the index
+ *                based search results, for address and flow search.
+ *                This value should be equal to LSB four bits of the hash value
+ *                of match data, in case of search index points to an entry
+ *                which may be used in content based search also. The value can
+ *                be anything when the entry pointed by search index will not be
+ *                used for content based search.
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_cache_set_num(hal_soc_handle_t hal_soc_hdl,
+						 void *desc,
+						 uint8_t cache_num)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	hal_soc->ops->hal_tx_desc_set_cache_set_num(desc, cache_num);
+}
+
+/**
  * hal_tx_comp_get_status() - TQM Release reason
  * @hal_desc: completion ring Tx status
  *

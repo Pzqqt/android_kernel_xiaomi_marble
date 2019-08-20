@@ -336,6 +336,7 @@ struct hal_hw_txrx_ops {
 			uint8_t pool_id, uint32_t desc_id, uint8_t type);
 	void (*hal_tx_desc_set_search_type)(void *desc, uint8_t search_type);
 	void (*hal_tx_desc_set_search_index)(void *desc, uint32_t search_index);
+	void (*hal_tx_desc_set_cache_set_num)(void *desc, uint8_t search_index);
 	void (*hal_tx_comp_get_status)(void *desc, void *ts,
 				       struct hal_soc *hal);
 	uint8_t (*hal_tx_comp_get_release_reason)(void *hal_desc);

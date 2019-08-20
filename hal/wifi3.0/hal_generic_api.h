@@ -2232,6 +2232,33 @@ static void hal_tx_desc_set_search_index_generic(void *desc,
 #endif
 
 /**
+ * hal_tx_desc_set_cache_set_num_generic - Set the cache-set-num value
+ * @desc: Handle to Tx Descriptor
+ * @cache_num: Cache set number that should be used to cache the index
+ *                based search results, for address and flow search.
+ *                This value should be equal to LSB four bits of the hash value
+ *                of match data, in case of search index points to an entry
+ *                which may be used in content based search also. The value can
+ *                be anything when the entry pointed by search index will not be
+ *                used for content based search.
+ *
+ * Return: void
+ */
+#ifdef TCL_DATA_CMD_5_CACHE_SET_NUM_OFFSET
+static void hal_tx_desc_set_cache_set_num_generic(void *desc,
+						  uint8_t cache_num)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_5, CACHE_SET_NUM) |=
+		HAL_TX_SM(TCL_DATA_CMD_5, CACHE_SET_NUM, cache_num);
+}
+#else
+static void hal_tx_desc_set_cache_set_num_generic(void *desc,
+						  uint8_t cache_num)
+{
+}
+#endif
+
+/**
  * hal_tx_set_pcp_tid_map_generic() - Configure default PCP to TID map table
  * @soc: HAL SoC context
  * @map: PCP-TID mapping table
