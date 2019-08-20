@@ -297,7 +297,6 @@ bool pmo_core_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev)
 	switch (opmode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
-	case QDF_NDI_MODE:
 		val = true;
 		break;
 	default:
