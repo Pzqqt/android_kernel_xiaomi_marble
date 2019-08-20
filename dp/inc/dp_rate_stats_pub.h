@@ -92,6 +92,9 @@ enum wlan_peer_rate_stats_cmd {
  * @mpdu_success: success mpdus count
  * @mpdu_attempts: attempt mpdus count
  * @num_ppdus: ppdu count
+ * @num_msdus: success msdu count
+ * @num_bytes: success bytes count
+ * @num_retries: retires count
  */
 struct wlan_tx_rate_stats {
 	uint32_t rix;
@@ -99,6 +102,9 @@ struct wlan_tx_rate_stats {
 	uint32_t mpdu_success;
 	uint32_t mpdu_attempts;
 	uint32_t num_ppdus;
+	uint32_t num_msdus;
+	uint32_t num_bytes;
+	uint32_t num_retries;
 };
 
 /** struct wlan_rx_rate_stats - Rx rate packet info
