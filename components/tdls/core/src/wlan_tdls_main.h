@@ -743,4 +743,18 @@ QDF_STATUS tdls_set_offchan_mode(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS tdls_delete_all_peers_indication(struct wlan_objmgr_psoc *psoc,
 					    uint8_t vdev_id);
+
+/**
+ * tdls_get_opclass_from_bandwidth() - Return opclass for corresponding BW and
+ * channel.
+ * @soc_obj: tdls soc object.
+ * @channel: Channel number.
+ * @bw_offset: Bandwidth offset.
+ *
+ * To return the opclas.
+ *
+ * Return: opclass
+ */
+uint8_t tdls_get_opclass_from_bandwidth(struct tdls_soc_priv_obj *soc_obj,
+					uint8_t channel, uint8_t bw_offset);
 #endif
