@@ -4171,8 +4171,8 @@ static int msm_compr_channel_map_info(struct snd_kcontrol *kcontrol,
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = PCM_FORMAT_MAX_NUM_CHANNEL_V8;
 	uinfo->value.integer.min = 0;
-	/* See PCM_CHANNEL_UNUSED=47 in apr_audio-v2.h */
-	uinfo->value.integer.max = 47;
+	/* See PCM_MAX_CHANNEL_MAP in apr_audio-v2.h */
+	uinfo->value.integer.max = PCM_MAX_CHANNEL_MAP;
 	return 0;
 }
 
