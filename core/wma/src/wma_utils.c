@@ -3750,7 +3750,6 @@ QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 
 	status = vdev_mgr_down_send(vdev_mlme);
 	qdf_runtime_pm_allow_suspend(&iface->vdev_start_runtime_wakelock);
-	wma_release_wakelock(&iface->vdev_start_wakelock);
 
 	return status;
 }
