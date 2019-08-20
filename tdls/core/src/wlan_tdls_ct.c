@@ -973,7 +973,7 @@ int tdls_set_tdls_secoffchanneloffset(struct tdls_soc_priv_obj *tdls_soc,
 		tdls_soc->tdls_channel_offset = BW20;
 		break;
 	case TDLS_SEC_OFFCHAN_OFFSET_40PLUS:
-		tdls_soc->tdls_channel_offset = BW40_LOW_PRIMARY;
+		tdls_soc->tdls_channel_offset = BW40_HIGH_PRIMARY;
 		break;
 	case TDLS_SEC_OFFCHAN_OFFSET_40MINUS:
 		tdls_soc->tdls_channel_offset = BW40_LOW_PRIMARY;
@@ -1054,6 +1054,23 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 			   tdls_find_opclass(tdls_soc->soc,
 				chan_switch_params.tdls_off_ch,
 				chan_switch_params.tdls_off_ch_bw_offset);
+			if (!chan_switch_params.oper_class) {
+				if (chan_switch_params.tdls_off_ch_bw_offset ==
+				    BW40_HIGH_PRIMARY)
+					chan_switch_params.oper_class =
+					tdls_find_opclass(tdls_soc->soc,
+						chan_switch_params.tdls_off_ch,
+						BW40_LOW_PRIMARY);
+				else if (chan_switch_params.
+					 tdls_off_ch_bw_offset ==
+					 BW40_LOW_PRIMARY)
+					chan_switch_params.oper_class =
+					tdls_find_opclass(tdls_soc->soc,
+						chan_switch_params.tdls_off_ch,
+						BW40_HIGH_PRIMARY);
+				tdls_debug("oper_class:%d",
+					    chan_switch_params.oper_class);
+			}
 		} else {
 			tdls_err("TDLS off-channel parameters are not set yet!!!");
 			return -EINVAL;
