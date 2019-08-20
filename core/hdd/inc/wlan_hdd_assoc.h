@@ -351,6 +351,7 @@ QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
 				       struct qdf_mac_addr *peer_mac);
 
 #else
+static
 inline QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
 					      struct qdf_mac_addr *peer_mac)
 {
