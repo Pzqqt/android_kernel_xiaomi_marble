@@ -9855,18 +9855,6 @@ void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx)
 	hdd_debug("Stopped psoc idle timer");
 }
 
-/*
- * enum hdd_block_shutdown - Control if driver allows modem shutdown
- * @HDD_UNBLOCK_MODEM_SHUTDOWN: Unblock shutdown
- * @HDD_BLOCK_MODEM_SHUTDOWN: Block shutdown
- *
- * On calling pld_block_shutdown API with the given values, modem
- * graceful shutdown is blocked/unblocked.
- */
-enum hdd_block_shutdown {
-	HDD_UNBLOCK_MODEM_SHUTDOWN,
-	HDD_BLOCK_MODEM_SHUTDOWN,
-};
 
 /**
  * __hdd_psoc_idle_shutdown() - perform an idle shutdown on the given psoc
@@ -9891,16 +9879,12 @@ static int __hdd_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
 		hdd_info("psoc busy, abort idle shutdown; errno:%d", errno);
 		goto exit;
 	}
-	/* Block the modem graceful shutdown till stop modules is completed */
-	pld_block_shutdown(hdd_ctx->parent_dev, HDD_BLOCK_MODEM_SHUTDOWN);
 
 	osif_psoc_sync_wait_for_ops(psoc_sync);
 
 	errno = hdd_wlan_stop_modules(hdd_ctx, false);
 
 	osif_psoc_sync_trans_stop(psoc_sync);
-
-	pld_block_shutdown(hdd_ctx->parent_dev, HDD_UNBLOCK_MODEM_SHUTDOWN);
 
 exit:
 	hdd_exit();
