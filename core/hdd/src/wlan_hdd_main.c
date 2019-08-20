@@ -14350,6 +14350,7 @@ pld_deinit:
 	hdd_driver_mode_change_unregister();
 	pld_deinit();
 
+	hdd_start_complete(errno);
 param_destroy:
 	wlan_hdd_state_ctrl_param_destroy();
 wakelock_destroy:
