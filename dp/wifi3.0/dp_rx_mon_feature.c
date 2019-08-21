@@ -367,6 +367,34 @@ uint16_t dp_rx_mon_enh_capture_update_trailer(struct dp_pdev *pdev,
 	return sizeof(trailer);
 }
 
+/**
+ * dp_rx_enh_capture_is_peer_enabled() - Is peer based enh capture enabled.
+ * @soc: core txrx main context
+ * @ppdu_info: Structure for rx ppdu info
+ * @user_id: user id for MU Rx packet
+ *
+ * Return: none
+ */
+static inline bool
+dp_rx_enh_capture_is_peer_enabled(struct dp_soc *soc,
+				  struct hal_rx_ppdu_info *ppdu_info,
+				  uint32_t user_id)
+{
+	struct dp_peer *peer;
+	struct dp_ast_entry *ast_entry;
+	uint32_t ast_index;
+
+	ast_index = ppdu_info->rx_user_status[user_id].ast_index;
+	if (ast_index < wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
+		ast_entry = soc->ast_table[ast_index];
+		if (ast_entry) {
+			peer = ast_entry->peer;
+			if (peer && (peer->peer_ids[0] != HTT_INVALID_PEER))
+				return peer->rx_cap_enabled;
+		}
+	}
+	return false;
+}
 /*
  * dp_rx_handle_enh_capture() - Deliver Rx enhanced capture data
  * @pdev: pdev ctx
@@ -391,22 +419,31 @@ dp_rx_handle_enh_capture(struct dp_soc *soc, struct dp_pdev *pdev,
 	while (!qdf_nbuf_is_queue_empty(mpdu_q) && user < MAX_MU_USERS) {
 		msdu_list = &pdev->msdu_list[user];
 		dp_rx_free_msdu_list(msdu_list);
-		mpdu_ind = &pdev->mpdu_ind[user];
-		mpdu_info = &mpdu_ind->mpdu_info;
 		pdev->is_mpdu_hdr[user] = true;
 
-		dp_rx_populate_cdp_indication_mpdu_info(
-			pdev, &pdev->ppdu_info, mpdu_info, user);
 
-		while ((mpdu_head = qdf_nbuf_queue_remove(mpdu_q))) {
+		if (pdev->rx_enh_capture_peer &&
+		    !dp_rx_enh_capture_is_peer_enabled(
+				soc, ppdu_info, user)) {
+			qdf_nbuf_queue_free(mpdu_q);
+		} else {
+			mpdu_ind = &pdev->mpdu_ind;
+			mpdu_info = &mpdu_ind->mpdu_info;
+			dp_rx_populate_cdp_indication_mpdu_info(
+				pdev, &pdev->ppdu_info, mpdu_info, user);
 
-			mpdu_ind->nbuf = mpdu_head;
-			mpdu_info->fcs_err =
-				QDF_NBUF_CB_RX_FCS_ERR(mpdu_head);
+			while ((mpdu_head = qdf_nbuf_queue_remove(mpdu_q))) {
 
-			dp_wdi_event_handler(WDI_EVENT_RX_MPDU,
-					     soc, mpdu_ind, HTT_INVALID_PEER,
-					     WDI_NO_VAL, pdev->pdev_id);
+				mpdu_ind->nbuf = mpdu_head;
+				mpdu_info->fcs_err =
+					QDF_NBUF_CB_RX_FCS_ERR(mpdu_head);
+
+				dp_wdi_event_handler(WDI_EVENT_RX_MPDU,
+						     soc, mpdu_ind,
+						     HTT_INVALID_PEER,
+						     WDI_NO_VAL,
+						     pdev->pdev_id);
+			}
 		}
 		user++;
 		mpdu_q = &pdev->mpdu_q[user];
@@ -560,12 +597,17 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
  * Return: 0 for success. nonzero for failure.
  */
 QDF_STATUS
-dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
+dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint32_t val)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	uint8_t rx_cap_mode = (val & RX_ENH_CAPTURE_MODE_MASK);
+	uint8_t rx_cap_mode = (val & CDP_RX_ENH_CAPTURE_MODE_MASK);
+	uint32_t rx_enh_capture_peer;
 	bool is_mpdu_hdr = false;
 	uint8_t user_id;
+
+	rx_enh_capture_peer =
+		(val & CDP_RX_ENH_CAPTURE_PEER_MASK)
+		>> CDP_RX_ENH_CAPTURE_PEER_LSB;
 
 	if (pdev->mcopy_mode || (rx_cap_mode < CDP_RX_ENH_CAPTURE_DISABLED) ||
 	    (rx_cap_mode > CDP_RX_ENH_CAPTURE_MPDU_MSDU)) {
@@ -573,9 +615,24 @@ dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (rx_enh_capture_peer > CDP_RX_ENH_CAPTURE_PEER_ENABLED) {
+		dp_err("Invalid peer filter %d", rx_enh_capture_peer);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (pdev->rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_DISABLED &&
+	    rx_cap_mode != CDP_RX_ENH_CAPTURE_DISABLED) {
+		pdev->rx_enh_monitor_vdev = pdev->monitor_vdev;
+	}
+
 	dp_reset_monitor_mode(pdev_handle);
 
+	if (pdev->rx_enh_capture_mode != CDP_RX_ENH_CAPTURE_DISABLED &&
+	    rx_cap_mode == CDP_RX_ENH_CAPTURE_DISABLED) {
+		pdev->monitor_vdev = pdev->rx_enh_monitor_vdev;
+	}
 	pdev->rx_enh_capture_mode = rx_cap_mode;
+	pdev->rx_enh_capture_peer = rx_enh_capture_peer;
 
 	if (rx_cap_mode != CDP_RX_ENH_CAPTURE_DISABLED)
 		is_mpdu_hdr = true;
