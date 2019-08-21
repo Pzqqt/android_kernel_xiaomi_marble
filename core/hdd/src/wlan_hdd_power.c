@@ -542,6 +542,33 @@ static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
 	hdd_exit();
 }
 
+static void hdd_enable_action_frame_patterns(struct hdd_adapter *adapter)
+{
+	QDF_STATUS status;
+
+	hdd_enter();
+
+	status = ucfg_pmo_enable_action_frame_patterns(adapter->vdev,
+						       QDF_SYSTEM_SUSPEND);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_info("Failed to enable action frame patterns");
+
+	hdd_exit();
+}
+
+static void hdd_disable_action_frame_patterns(struct hdd_adapter *adapter)
+{
+	QDF_STATUS status;
+
+	hdd_enter();
+
+	status = ucfg_pmo_disable_action_frame_patterns(adapter->vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_info("Failed to disable action frame patterns");
+
+	hdd_exit();
+}
+
 void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 	enum pmo_offload_trigger trigger)
 {
@@ -564,6 +591,7 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 	hdd_enable_ns_offload(adapter, trigger);
 	hdd_enable_mc_addr_filtering(adapter, trigger);
 	hdd_enable_hw_filter(adapter);
+	hdd_enable_action_frame_patterns(adapter);
 out:
 	hdd_exit();
 
@@ -591,6 +619,7 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 	hdd_disable_ns_offload(adapter, trigger);
 	hdd_disable_mc_addr_filtering(adapter, trigger);
 	hdd_disable_hw_filter(adapter);
+	hdd_disable_action_frame_patterns(adapter);
 out:
 	hdd_exit();
 

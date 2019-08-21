@@ -280,7 +280,6 @@ QDF_STATUS pmo_vdev_ready(struct wlan_objmgr_vdev *vdev)
 
 	/* Register static configuration with firmware */
 	pmo_register_wow_wakeup_events(vdev);
-	pmo_register_action_frame_patterns(vdev);
 
 	/* Register default wow patterns with firmware */
 	pmo_register_wow_default_patterns(vdev);

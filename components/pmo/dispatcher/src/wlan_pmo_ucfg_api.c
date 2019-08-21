@@ -32,6 +32,7 @@
 #include "wlan_pmo_pkt_filter.h"
 #include "wlan_pmo_hw_filter.h"
 #include "wlan_pmo_cfg.h"
+#include "wlan_pmo_static_config.h"
 #include "cfg_ucfg_api.h"
 
 QDF_STATUS ucfg_pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
@@ -465,6 +466,18 @@ void ucfg_pmo_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS ucfg_pmo_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	return pmo_core_enable_hw_filter_in_fwr(vdev);
+}
+
+QDF_STATUS
+ucfg_pmo_enable_action_frame_patterns(struct wlan_objmgr_vdev *vdev,
+				      enum qdf_suspend_type suspend_type)
+{
+	return pmo_register_action_frame_patterns(vdev, suspend_type);
+}
+
+QDF_STATUS ucfg_pmo_disable_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
+{
+	return pmo_clear_action_frame_patterns(vdev);
 }
 
 QDF_STATUS ucfg_pmo_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)

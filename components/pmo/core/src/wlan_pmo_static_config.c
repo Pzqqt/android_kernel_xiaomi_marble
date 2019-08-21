@@ -398,17 +398,25 @@ static void set_action_id_drop_pattern_for_public_action(
 				= DROP_PUBLIC_ACTION_FRAME_BITMAP;
 }
 
-void pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
+QDF_STATUS
+pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev,
+				   enum qdf_suspend_type suspend_type)
 {
 
 	struct pmo_action_wakeup_set_params cmd = {0};
 	int i = 0;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	cmd.vdev_id = pmo_vdev_get_id(vdev);
 	cmd.operation = pmo_action_wakeup_set;
 
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP0;
+	if (suspend_type == QDF_SYSTEM_SUSPEND)
+		cmd.action_category_map[i++] =
+			SYSTEM_SUSPEND_ALLOWED_ACTION_FRAMES_BITMAP0;
+	else
+		cmd.action_category_map[i++] =
+				RUNTIME_PM_ALLOWED_ACTION_FRAMES_BITMAP0;
+
 	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP1;
 	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP2;
 	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP3;
@@ -438,5 +446,24 @@ void pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to config wow action frame map, ret %d",
 			status);
+
+	return status;
 }
 
+QDF_STATUS
+pmo_clear_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
+{
+	struct pmo_action_wakeup_set_params cmd = {0};
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	cmd.vdev_id = pmo_vdev_get_id(vdev);
+	cmd.operation = pmo_action_wakeup_reset;
+
+	/*  clear action frame pattern */
+	status = pmo_tgt_send_action_frame_pattern_req(vdev, &cmd);
+	if (QDF_IS_STATUS_ERROR(status))
+		pmo_err("Failed to clear wow action frame map, ret %d",
+			status);
+
+	return status;
+}
