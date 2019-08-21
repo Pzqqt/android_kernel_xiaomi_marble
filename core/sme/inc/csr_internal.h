@@ -933,7 +933,7 @@ uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx);
 
 /**
  * csr_get_beaconing_concurrent_channel() - To get concurrent operating channel
- * of beaconing interface
+ * frequency of beaconing interface
  * @mac_ctx: Pointer to mac context
  * @vdev_id_to_skip: channel of which vdev id to skip
  *
@@ -941,10 +941,10 @@ uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx);
  * and will skip the channel of vdev_id_to_skip.
  * If other no reqested mode is active it will return 0
  *
- * Return: uint8_t
+ * Return: uint32_t
  */
-uint8_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
-						 uint8_t vdev_id_to_skip);
+uint32_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
+					      uint8_t vdev_id_to_skip);
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t csr_check_concurrent_channel_overlap(

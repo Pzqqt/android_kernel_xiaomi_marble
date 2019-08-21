@@ -1629,6 +1629,7 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 	struct sap_config *sap_config, *con_sap_config;
 	int con_ch;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t con_ch_freq;
 
 	if (!hdd_ctx) {
 		hdd_err("hdd context is NULL");
@@ -1650,14 +1651,15 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 	sap_config = &adapter->session.ap.sap_config;
 	con_sap_config = &con_sap_adapter->session.ap.sap_config;
 	con_ch = con_sap_adapter->session.ap.operating_channel;
+	con_ch_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, con_ch);
 
 	if (!wlan_reg_is_dfs_ch(hdd_ctx->pdev, con_ch))
 		return 0;
 
-	hdd_debug("Only SCC AP-AP DFS Permitted (ch=%d, con_ch=%d)",
-						sap_config->channel, con_ch);
+	hdd_debug("Only SCC AP-AP DFS Permitted (ch_freq=%d, con_ch_freq=%d)",
+		  sap_config->chan_freq, con_ch_freq);
 	hdd_debug("Overriding guest AP's channel");
-	sap_config->channel = con_ch;
+	sap_config->chan_freq = con_ch_freq;
 
 	if (con_sap_config->acs_cfg.acs_mode == true) {
 		if (con_ch != con_sap_config->acs_cfg.pri_ch &&
@@ -1694,7 +1696,9 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 	} else {
 		sap_config->acs_cfg.pri_ch = con_ch;
 		if (sap_config->acs_cfg.ch_width > eHT_CHANNEL_WIDTH_20MHZ)
-			sap_config->acs_cfg.ht_sec_ch = con_sap_config->sec_ch;
+			sap_config->acs_cfg.ht_sec_ch = wlan_reg_freq_to_chan(
+						hdd_ctx->pdev,
+						con_sap_config->sec_ch_freq);
 	}
 
 	return con_ch;
@@ -1826,9 +1830,10 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 	if (hdd_ctx->acs_policy.acs_channel)
-		sap_config->channel = hdd_ctx->acs_policy.acs_channel;
+		sap_config->chan_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+					hdd_ctx->acs_policy.acs_channel);
 	else
-		sap_config->channel = AUTO_CHANNEL_SELECT;
+		sap_config->chan_freq = AUTO_CHANNEL_SELECT;
 	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
 					   &mcc_to_scc_switch);
 	/*
@@ -10151,14 +10156,16 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 		}
 
 		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(hostapd_adapter);
-		ap_ctx->sap_config.channel = config_channel;
+		ap_ctx->sap_config.chan_freq = wlan_reg_chan_to_freq(
+						hdd_ctx->pdev, config_channel);
 		ap_ctx->sap_config.ch_params.ch_width =
 					ap_ctx->sap_config.ch_width_orig;
 		ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_VENDOR_CONFIG_CHAN;
 
 		wlan_reg_set_channel_params(hdd_ctx->pdev,
-					    ap_ctx->sap_config.channel,
-					    ap_ctx->sap_config.sec_ch,
+					    config_channel,
+					    wlan_reg_freq_to_chan(hdd_ctx->pdev,
+						ap_ctx->sap_config.sec_ch_freq),
 					    &ap_ctx->sap_config.ch_params);
 
 		hdd_restart_sap(hostapd_adapter);
@@ -10486,7 +10493,8 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	uint32_t channel_bonding_mode;
 
-	sap_config->channel = channel_list->pri_ch;
+	sap_config->chan_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+						      channel_list->pri_ch);
 
 	sap_config->ch_params.center_freq_seg0 =
 				channel_list->vht_seg0_center_ch;
@@ -10495,7 +10503,7 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 
 	sap_config->ch_params.sec_ch_offset = channel_list->ht_sec_ch;
 	sap_config->ch_params.ch_width = channel_list->chan_width;
-	if (sap_config->channel >= 36) {
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(sap_config->chan_freq)) {
 		status =
 			ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc,
 							&ch_width);

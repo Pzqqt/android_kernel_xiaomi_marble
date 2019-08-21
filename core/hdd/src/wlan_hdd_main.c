@@ -2839,8 +2839,8 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int set_value,
 		}
 	} else if (sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax &&
 		   sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax_ONLY) {
-		hdd_err("Invalid hw mode, SAP hw_mode= 0x%x, ch = %d",
-			sap_config->SapHw_mode, sap_config->channel);
+		hdd_err("Invalid hw mode, SAP hw_mode= 0x%x, ch_freq = %d",
+			sap_config->SapHw_mode, sap_config->chan_freq);
 		return -EIO;
 	}
 
@@ -13335,7 +13335,9 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 		goto end;
 	}
 	wlan_reg_set_channel_params(hdd_ctx->pdev,
-				    hdd_ap_ctx->sap_config.channel, 0,
+				    wlan_reg_freq_to_chan(hdd_ctx->pdev,
+					    hdd_ap_ctx->sap_config.chan_freq),
+				    0,
 				    &hdd_ap_ctx->sap_config.ch_params);
 
 	qdf_event_reset(&hostapd_state->qdf_event);

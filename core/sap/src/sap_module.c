@@ -495,7 +495,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 	}
 	phy_mode = sap_ctx->csr_roamProfile.phyMode;
 	intf_ch = sme_check_concurrent_channel_overlap(MAC_HANDLE(mac),
-						       sap_ctx->channel,
+						       sap_ctx->chan_freq,
 						       phy_mode,
 						       sap_ctx->cc_switch_mode);
 	return intf_ch;
@@ -543,7 +543,7 @@ wlansap_set_scan_acs_channel_params(struct sap_config *config,
 	}
 
 	/* Channel selection is auto or configured */
-	psap_ctx->channel = config->channel;
+	psap_ctx->chan_freq = config->chan_freq;
 	psap_ctx->dfs_mode = config->acs_dfs_mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	psap_ctx->cc_switch_mode = config->cc_switch_mode;
@@ -563,7 +563,7 @@ wlansap_set_scan_acs_channel_params(struct sap_config *config,
 	psap_ctx->enableOverLapCh = config->enOverLapCh;
 	psap_ctx->acs_cfg = &config->acs_cfg;
 	psap_ctx->ch_width_orig = config->acs_cfg.ch_width;
-	psap_ctx->secondary_ch = config->sec_ch;
+	psap_ctx->sec_ch_freq = config->sec_ch_freq;
 
 	/*
 	 * Set the BSSID to your "self MAC Addr" read
@@ -721,7 +721,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	sap_ctx->fsm_state = SAP_INIT;
 
 	/* Channel selection is auto or configured */
-	sap_ctx->channel = config->channel;
+	sap_ctx->chan_freq = config->chan_freq;
 	sap_ctx->dfs_mode = config->acs_dfs_mode;
 	sap_ctx->ch_params.ch_width = config->ch_params.ch_width;
 	sap_ctx->ch_params.center_freq_seg0 =
@@ -748,7 +748,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	sap_ctx->user_context = user_context;
 	sap_ctx->enableOverLapCh = config->enOverLapCh;
 	sap_ctx->acs_cfg = &config->acs_cfg;
-	sap_ctx->secondary_ch = config->sec_ch;
+	sap_ctx->sec_ch_freq = config->sec_ch_freq;
 	sap_ctx->dfs_cac_offload = config->dfs_cac_offload;
 	sap_ctx->isCacEndNotified = false;
 	sap_ctx->is_chan_change_inprogress = false;
@@ -1409,7 +1409,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		"%s: sap chan:%d target:%d conn on 5GHz:%d, csa_reason:%s(%d) strict %d vdev %d",
-		__func__, sap_ctx->channel, targetChannel,
+		__func__, sap_ctx->chan_freq, targetChannel,
 		policy_mgr_is_any_mode_active_on_band_along_with_session(
 			mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5),
 			sap_get_csa_reason_str(sap_ctx->csa_reason),
@@ -1421,7 +1421,8 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 	 * Now, validate if the passed channel is valid in the
 	 * current regulatory domain.
 	 */
-	if (sap_ctx->channel != targetChannel &&
+	if (wlan_reg_freq_to_chan(mac->pdev, sap_ctx->chan_freq) !=
+			targetChannel &&
 		((wlan_reg_get_channel_state(mac->pdev, targetChannel) ==
 			CHANNEL_STATE_ENABLE) ||
 		(wlan_reg_get_channel_state(mac->pdev, targetChannel) ==
@@ -1796,22 +1797,22 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(mac_handle_t handle, uint8_t *vdev_id)
 }
 
 void wlansap_get_sec_channel(uint8_t sec_ch_offset,
-			     uint8_t op_channel,
-			     uint8_t *sec_channel)
+			     uint32_t op_chan_freq,
+			     uint32_t *sec_chan_freq)
 {
 	switch (sec_ch_offset) {
 	case LOW_PRIMARY_CH:
-		*sec_channel = op_channel + 4;
+		*sec_chan_freq = op_chan_freq + 20;
 		break;
 	case HIGH_PRIMARY_CH:
-		*sec_channel = op_channel - 4;
+		*sec_chan_freq = op_chan_freq - 20;
 		break;
 	default:
-		*sec_channel = 0;
+		*sec_chan_freq = 0;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: sec channel offset %d, sec channel %d",
-		  __func__, sec_ch_offset, *sec_channel);
+		  __func__, sec_ch_offset, *sec_chan_freq);
 }
 
 static void
@@ -1820,26 +1821,27 @@ wlansap_set_cac_required_for_chan(struct mac_context *mac_ctx,
 {
 	bool is_ch_dfs = false;
 	bool cac_required;
+	uint32_t channel;
+
+	channel = wlan_reg_freq_to_chan(mac_ctx->pdev, sap_ctx->chan_freq);
 
 	if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
 		is_ch_dfs = true;
 	} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
-		if ((wlan_reg_get_channel_state(mac_ctx->pdev,
-						sap_ctx->channel) ==
+		if ((wlan_reg_get_channel_state(mac_ctx->pdev, channel) ==
 						CHANNEL_STATE_DFS) ||
 		    (wlan_reg_get_channel_state(mac_ctx->pdev,
 					sap_ctx->ch_params.center_freq_seg1 -
 					SIR_80MHZ_START_CENTER_CH_DIFF) ==
 					CHANNEL_STATE_DFS))
 			is_ch_dfs = true;
-	} else if (wlan_reg_get_channel_state(mac_ctx->pdev,
-					      sap_ctx->channel) ==
+	} else if (wlan_reg_get_channel_state(mac_ctx->pdev, channel) ==
 					      CHANNEL_STATE_DFS) {
 		is_ch_dfs = true;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: vdev id %d chan %d is_ch_dfs %d pre_cac_complete %d ignore_cac %d cac_state %d",
-		  __func__, sap_ctx->sessionId, sap_ctx->channel, is_ch_dfs,
+		  __func__, sap_ctx->sessionId, channel, is_ch_dfs,
 		  sap_ctx->pre_cac_complete, mac_ctx->sap.SapDfsInfo.ignore_cac,
 		  mac_ctx->sap.SapDfsInfo.cac_state);
 
@@ -1916,9 +1918,10 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 	/* Update the channel as this will be used to
 	 * send event to supplicant
 	 */
-	sap_ctx->channel = target_channel;
-	wlansap_get_sec_channel(ch_params->sec_ch_offset, target_channel,
-				(uint8_t *)(&sap_ctx->secondary_ch));
+	sap_ctx->chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
+						   target_channel);
+	wlansap_get_sec_channel(ch_params->sec_ch_offset, sap_ctx->chan_freq,
+				&sap_ctx->sec_ch_freq);
 	sap_ctx->csr_roamProfile.ch_params.ch_width = ch_params->ch_width;
 	sap_ctx->csr_roamProfile.ch_params.sec_ch_offset =
 						ch_params->sec_ch_offset;
@@ -1935,8 +1938,8 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 					     &sap_ctx->csr_roamProfile);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-		"%s: chan:%d phy_mode %d width:%d offset:%d seg0:%d seg1:%d",
-		__func__, sap_ctx->channel, phy_mode, ch_params->ch_width,
+		"%s: chan_freq:%d phy_mode %d width:%d offset:%d seg0:%d seg1:%d",
+		__func__, sap_ctx->chan_freq, phy_mode, ch_params->ch_width,
 		ch_params->sec_ch_offset, ch_params->center_freq_seg0,
 		ch_params->center_freq_seg1);
 
@@ -2057,7 +2060,7 @@ bool sap_is_auto_channel_select(struct sap_context *sapcontext)
 			"%s: Invalid SAP pointer", __func__);
 		return false;
 	}
-	return sapcontext->channel == AUTO_CHANNEL_SELECT;
+	return sapcontext->chan_freq == AUTO_CHANNEL_SELECT;
 }
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
@@ -2585,8 +2588,8 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("Scan Req Failed/ACS Overridden"));
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			FL("Selected channel = %d"),
-			sap_context->channel);
+			FL("Selected channel frequency = %d"),
+			sap_context->chan_freq);
 
 		return sap_signal_hdd_event(sap_context, NULL,
 				eSAP_ACS_CHANNEL_SELECTED,

@@ -1728,7 +1728,7 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	struct sta_ap_intf_check_work_ctx *work_info = NULL;
 	uint32_t mcc_to_scc_switch, cc_count = 0, i, go_index_start;
 	QDF_STATUS status;
-	uint8_t channel, sec_ch;
+	uint8_t channel;
 	uint8_t operating_channel[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
 
@@ -1799,8 +1799,7 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 				continue;
 			status = pm_ctx->hdd_cbacks.
 				wlan_hdd_get_channel_for_sap_restart
-					(psoc,
-					vdev_id[i], &channel, &sec_ch);
+					(psoc, vdev_id[i], &channel);
 			if (status == QDF_STATUS_SUCCESS) {
 				policy_mgr_info("SAP restarts due to MCC->SCC switch, old chan :%d new chan: %d"
 					, operating_channel[i], channel);

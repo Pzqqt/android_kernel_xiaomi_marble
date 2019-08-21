@@ -2749,7 +2749,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 	} else if (best_ch_num == 14) {
 		sap_ctx->acs_cfg->ht_sec_ch = 0;
 	}
-	sap_ctx->secondary_ch = sap_ctx->acs_cfg->ht_sec_ch;
+	sap_ctx->sec_ch_freq = wlan_reg_ch_to_freq(sap_ctx->acs_cfg->ht_sec_ch);
 
 sap_ch_sel_end:
 	/* Free all the allocated memory */

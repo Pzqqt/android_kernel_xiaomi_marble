@@ -476,8 +476,8 @@ struct sap_config {
 	bool ieee80211d;      /* Specify if 11D is enabled or disabled */
 	struct qdf_mac_addr deny_mac[MAX_ACL_MAC_ADDRESS];  /* MAC filtering */
 	struct qdf_mac_addr self_macaddr;       /* self macaddress or BSSID */
-	uint8_t channel;          /* Operation channel */
-	uint8_t sec_ch;
+	uint32_t chan_freq;          /* Operation channel frequency */
+	uint32_t sec_ch_freq;
 	struct ch_params ch_params;
 	uint32_t ch_width_orig;
 	uint8_t max_num_sta;      /* maximum number of STAs in station table */
@@ -1062,8 +1062,8 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 /**
  * wlansap_get_sec_channel() - get the secondary sap channel
  * @sec_ch_offset: secondary channel offset.
- * @op_channel: Operating sap channel.
- * @sec_channel: channel to be filled.
+ * @op_chan_freq: Operating sap channel frequency.
+ * @sec_chan_freq: channel frequency to be filled.
  *
  * This API will get the secondary sap channel from the offset, and
  * operating channel.
@@ -1072,8 +1072,8 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
  *
  */
 void wlansap_get_sec_channel(uint8_t sec_ch_offset,
-			     uint8_t op_channel,
-			     uint8_t *sec_channel);
+			     uint32_t op_chan_freq,
+			     uint32_t *sec_chan_freq);
 
 /**
  * wlansap_start_beacon_req() - Send Start Beaconing Request

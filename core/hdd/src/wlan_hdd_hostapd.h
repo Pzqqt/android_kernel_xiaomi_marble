@@ -76,7 +76,6 @@ void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
  * @psoc: PSOC object information
  * @vdev_id: vdev id
  * @channel: channel to be returned
- * @sec_ch: secondary channel to be returned
  *
  * This function gets the channel parameters to restart SAP
  *
@@ -85,8 +84,7 @@ void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id, uint8_t *channel,
-				uint8_t *sec_ch);
+				uint8_t vdev_id, uint8_t *channel);
 #endif
 
 /**

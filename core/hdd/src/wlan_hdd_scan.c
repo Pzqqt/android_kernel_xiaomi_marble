@@ -454,7 +454,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	int status;
 	struct hdd_scan_info *scan_info = NULL;
 	struct hdd_adapter *con_sap_adapter;
-	uint16_t con_dfs_ch;
+	uint8_t con_dfs_ch;
 	uint8_t curr_vdev_id;
 	enum scan_reject_states curr_reason;
 	static uint32_t scan_ebusy_cnt;
@@ -534,7 +534,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	/* Block All Scan during DFS operation and send null scan result */
 	con_sap_adapter = hdd_get_con_sap_adapter(adapter, true);
 	if (con_sap_adapter) {
-		con_dfs_ch = con_sap_adapter->session.ap.sap_config.channel;
+		con_dfs_ch = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+			con_sap_adapter->session.ap.sap_config.chan_freq);
 		if (con_dfs_ch == AUTO_CHANNEL_SELECT)
 			con_dfs_ch =
 				con_sap_adapter->session.ap.operating_channel;

@@ -5063,29 +5063,29 @@ QDF_STATUS sme_configure_app_type2_params(mac_handle_t mac_handle,
 }
 #endif
 
-uint8_t sme_get_beaconing_concurrent_operation_channel(mac_handle_t mac_handle,
-						       uint8_t vdev_id_to_skip)
+uint32_t sme_get_beaconing_concurrent_operation_channel(mac_handle_t mac_handle,
+							uint8_t vdev_id_to_skip)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	uint8_t channel = 0;
+	uint32_t chan_freq = 0;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 
-		channel = csr_get_beaconing_concurrent_channel(mac,
+		chan_freq = csr_get_beaconing_concurrent_channel(mac,
 							       vdev_id_to_skip);
-		sme_info("Other Concurrent Channel: %d skipped vdev_id %d",
-			 channel, vdev_id_to_skip);
+		sme_info("Other Concurrent Chan_freq: %d skipped vdev_id %d",
+			 chan_freq, vdev_id_to_skip);
 		sme_release_global_lock(&mac->sme);
 	}
 
-	return channel;
+	return chan_freq;
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
-					      uint16_t sap_ch,
+					      uint16_t sap_ch_freq,
 					      eCsrPhyMode sapPhyMode,
 					      uint8_t cc_switch_mode)
 {
@@ -5095,10 +5095,12 @@ uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		channel =
-			csr_check_concurrent_channel_overlap(mac, sap_ch,
-								sapPhyMode,
-							     cc_switch_mode);
+		channel = csr_check_concurrent_channel_overlap(mac,
+							wlan_reg_freq_to_chan(
+								mac->pdev,
+								sap_ch_freq),
+							sapPhyMode,
+							cc_switch_mode);
 		sme_release_global_lock(&mac->sme);
 	}
 

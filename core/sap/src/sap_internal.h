@@ -122,9 +122,9 @@ struct sap_avoid_channels_info {
 
 struct sap_context {
 
-	/* Include the current channel of AP */
-	uint32_t channel;
-	uint32_t secondary_ch;
+	/* Include the current channel frequency of AP */
+	uint32_t chan_freq;
+	uint32_t sec_ch_freq;
 
 	/* Include the SME(CSR) sessionId here */
 	uint8_t sessionId;

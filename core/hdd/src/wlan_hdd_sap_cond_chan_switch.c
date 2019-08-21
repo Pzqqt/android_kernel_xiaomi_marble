@@ -299,8 +299,8 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		channel_type = NL80211_CHAN_HT20;
 		break;
 	case CH_WIDTH_40MHZ:
-		if (ap_adapter->session.ap.sap_config.sec_ch >
-				ap_adapter->session.ap.sap_config.channel)
+		if (ap_adapter->session.ap.sap_config.sec_ch_freq >
+				ap_adapter->session.ap.sap_config.chan_freq)
 			channel_type = NL80211_CHAN_HT40PLUS;
 		else
 			channel_type = NL80211_CHAN_HT40MINUS;

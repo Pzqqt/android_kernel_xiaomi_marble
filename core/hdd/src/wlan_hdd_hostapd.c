@@ -1810,14 +1810,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		adapter->vdev_id =
 			sap_event->sapevt.sapStartBssCompleteEvent.sessionId;
 
-		sap_config->channel =
+		sap_config->chan_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
 			sap_event->sapevt.sapStartBssCompleteEvent.
-			operatingChannel;
+			operatingChannel);
 		sap_config->ch_params.ch_width =
 			sap_event->sapevt.sapStartBssCompleteEvent.ch_width;
 
 		sap_config->ch_params = ap_ctx->sap_context->ch_params;
-		sap_config->sec_ch = ap_ctx->sap_context->secondary_ch;
+		sap_config->sec_ch_freq = ap_ctx->sap_context->sec_ch_freq;
 
 		hostapd_state->qdf_status =
 			sap_event->sapevt.sapStartBssCompleteEvent.status;
@@ -3099,8 +3099,7 @@ void wlan_hdd_set_sap_csa_reason(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id, uint8_t *channel,
-				uint8_t *sec_ch)
+				uint8_t vdev_id, uint8_t *channel)
 {
 	mac_handle_t mac_handle;
 	struct hdd_ap_ctx *hdd_ap_ctx;
@@ -3131,7 +3130,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!channel || !sec_ch) {
+	if (!channel) {
 		hdd_err("Null parameters");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3190,8 +3189,8 @@ sap_restart:
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hdd_info("SAP restart orig chan: %d, new chan: %d",
-		 hdd_ap_ctx->sap_config.channel, intf_ch);
+	hdd_info("SAP restart orig chan freq: %d, new chan: %d",
+		 hdd_ap_ctx->sap_config.chan_freq, intf_ch);
 	ch_params.ch_width = CH_WIDTH_MAX;
 	hdd_ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_MCC_SCC_SWITCH;
 	if (hdd_ap_ctx->sap_context)
@@ -3202,8 +3201,6 @@ sap_restart:
 				    intf_ch,
 				    0,
 				    &ch_params);
-
-	wlansap_get_sec_channel(ch_params.sec_ch_offset, intf_ch, sec_ch);
 
 	*channel = intf_ch;
 
@@ -3306,8 +3303,9 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	}
 
 	if (!reinit) {
-		adapter->session.ap.sap_config.channel =
-			hdd_ctx->acs_policy.acs_channel;
+		adapter->session.ap.sap_config.chan_freq =
+			wlan_reg_chan_to_freq(hdd_ctx->pdev,
+					      hdd_ctx->acs_policy.acs_channel);
 		acs_dfs_mode = hdd_ctx->acs_policy.acs_dfs_mode;
 		adapter->session.ap.sap_config.acs_dfs_mode =
 			wlan_hdd_get_dfs_mode(acs_dfs_mode);
@@ -3718,7 +3716,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 				hdd_err("Invalid Channel: %d", channel);
 				return -EINVAL;
 			}
-			sap_config->channel = channel;
+			sap_config->chan_freq = chandef->chan->center_freq;
 			sap_config->ch_params.center_freq_seg1 = channel_seg2;
 		} else {
 			/* set channel to what hostapd configured */
@@ -3729,7 +3727,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 				return -EINVAL;
 			}
 
-			sap_config->channel = channel;
+			sap_config->chan_freq = chandef->chan->center_freq;
 			sap_config->ch_params.center_freq_seg1 = channel_seg2;
 
 			sme_config = qdf_mem_malloc(sizeof(*sme_config));
@@ -3743,13 +3741,15 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 			case NL80211_CHAN_HT20:
 			case NL80211_CHAN_NO_HT:
 				sme_config->csr_config.obssEnabled = false;
-				sap_config->sec_ch = 0;
+				sap_config->sec_ch_freq = 0;
 				break;
 			case NL80211_CHAN_HT40MINUS:
-				sap_config->sec_ch = sap_config->channel - 4;
+				sap_config->sec_ch_freq =
+					sap_config->chan_freq - 20;
 				break;
 			case NL80211_CHAN_HT40PLUS:
-				sap_config->sec_ch = sap_config->channel + 4;
+				sap_config->sec_ch_freq =
+					sap_config->chan_freq + 20;
 				break;
 			default:
 				hdd_err("Error!!! Invalid HT20/40 mode !");
@@ -4308,7 +4308,7 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 			&checkRatesfor11g, &config->SapHw_mode);
 	}
 
-	if (config->channel > 14)
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(config->chan_freq))
 		config->SapHw_mode = eCSR_DOT11_MODE_11a;
 
 	ie = wlan_get_ie_ptr_from_eid(WLAN_EID_HT_CAPABILITY,
@@ -4540,7 +4540,7 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 		if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n)
 			sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11ac;
 
-		if (sap_cfg->channel >= 36) {
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(sap_cfg->chan_freq)) {
 			status =
 			    ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc,
 							    &ch_width);
@@ -4984,6 +4984,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool go_force_11n_for_11ac = 0;
 	bool bval = false;
 	bool enable_dfs_scan = true;
+	uint16_t channel;
 
 	hdd_enter();
 
@@ -5050,7 +5051,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 
 	config = &adapter->session.ap.sap_config;
-	if (!config->channel) {
+	if (!config->chan_freq) {
 		hdd_err("Invalid channel");
 		ret = -EINVAL;
 		goto free;
@@ -5115,15 +5116,16 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			hdd_ctx->acs_policy.acs_dfs_mode);
 
 		if (hdd_ctx->acs_policy.acs_channel)
-			config->channel = hdd_ctx->acs_policy.acs_channel;
+			config->chan_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+					    hdd_ctx->acs_policy.acs_channel);
 		mode = hdd_ctx->acs_policy.acs_dfs_mode;
 		config->acs_dfs_mode = wlan_hdd_get_dfs_mode(mode);
 	}
 
-	policy_mgr_update_user_config_sap_chan(hdd_ctx->psoc,
-					       config->channel);
+	channel = wlan_reg_freq_to_chan(hdd_ctx->pdev, config->chan_freq);
+	policy_mgr_update_user_config_sap_chan(hdd_ctx->psoc, channel);
 	hdd_debug("config->channel %d, config->acs_dfs_mode %d",
-		config->channel, config->acs_dfs_mode);
+		  channel, config->acs_dfs_mode);
 
 	hdd_debug("****config->dtim_period=%d***",
 		config->dtim_period);
@@ -5158,18 +5160,17 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		 */
 		ret = 0;
 		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc) ||
-		    WLAN_REG_IS_5GHZ_CH(config->channel)) {
+		    WLAN_REG_IS_5GHZ_CH_FREQ(config->chan_freq)) {
 			ret = wlan_hdd_sap_cfg_dfs_override(adapter);
 			if (ret < 0)
 				goto error;
 		}
-		if (!ret && wlan_reg_is_dfs_ch(hdd_ctx->pdev, config->channel))
+		if (!ret && wlan_reg_is_dfs_ch(hdd_ctx->pdev, channel))
 			hdd_ctx->dev_dfs_cac_status = DFS_CAC_NEVER_DONE;
 
 		if (QDF_STATUS_SUCCESS !=
-		    wlan_hdd_validate_operation_channel(adapter,
-							config->channel)) {
-			hdd_err("Invalid Channel: %d", config->channel);
+		    wlan_hdd_validate_operation_channel(adapter, channel)) {
+			hdd_err("Invalid Channel: %d", channel);
 			ret = -EINVAL;
 			goto error;
 		}
@@ -5179,8 +5180,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		/* reject SAP if DFS channel scan is not allowed */
 		if (!(enable_dfs_scan) &&
 		    (CHANNEL_STATE_DFS ==
-		     wlan_reg_get_channel_state(hdd_ctx->pdev,
-						config->channel))) {
+		     wlan_reg_get_channel_state(hdd_ctx->pdev, channel))) {
 			hdd_err("No SAP start on DFS channel");
 			ret = -EOPNOTSUPP;
 			goto error;
@@ -5466,7 +5466,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		hdd_err("Failed to get vht_for_24ghz");
 
-	if (IS_24G_CH(config->channel) && bval &&
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(config->chan_freq) && bval &&
 	    (config->SapHw_mode == eCSR_DOT11_MODE_11n ||
 	    config->SapHw_mode == eCSR_DOT11_MODE_11n_ONLY))
 		config->SapHw_mode = eCSR_DOT11_MODE_11ac;
@@ -5515,8 +5515,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	config->ch_params.ch_width = config->ch_width_orig;
-	wlan_reg_set_channel_params(hdd_ctx->pdev, config->channel,
-				    config->sec_ch, &config->ch_params);
+	wlan_reg_set_channel_params(hdd_ctx->pdev, channel,
+				    wlan_reg_freq_to_chan(hdd_ctx->pdev,
+							  config->sec_ch_freq),
+				    &config->ch_params);
 
 	if (0 != wlan_hdd_cfg80211_update_apies(adapter)) {
 		hdd_err("SAP Not able to set AP IEs");
@@ -5535,7 +5537,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		  QDF_MAC_ADDR_ARRAY(adapter->mac_addr.bytes));
 	hdd_debug("ssid =%s, beaconint=%d, channel=%d",
 	       config->SSIDinfo.ssid.ssId, (int)config->beacon_int,
-	       (int)config->channel);
+	       channel);
 	hdd_debug("hw_mode=%x, privacy=%d, authType=%d",
 	       config->SapHw_mode, config->privacy, config->authType);
 	hdd_debug("RSN/WPALen=%d", (int)config->RSNWPAReqIELength);
@@ -5565,7 +5567,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
-					config->channel, HW_MODE_20_MHZ)) {
+					channel, HW_MODE_20_MHZ)) {
 			mutex_unlock(&hdd_ctx->sap_lock);
 
 			hdd_err("This concurrency combination is not allowed");
@@ -6145,6 +6147,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
 	struct cfg80211_chan_def new_chandef;
 	struct cfg80211_chan_def *chandef;
+	uint16_t sap_ch;
 
 	hdd_enter();
 
@@ -6436,11 +6439,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		 * If Do_Not_Break_Stream enabled send avoid channel list
 		 * to application.
 		 */
-		if (policy_mgr_is_dnsc_set(adapter->vdev) &&
-		    sap_config->channel) {
-			wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx,
-							  sap_config->channel);
-		}
+		sap_ch = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+					       sap_config->chan_freq);
+		if (sap_ch && policy_mgr_is_dnsc_set(adapter->vdev))
+			wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, sap_ch);
 
 		ucfg_mlme_get_sap_inactivity_override(hdd_ctx->psoc, &val);
 		if (val) {
