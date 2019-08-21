@@ -2087,7 +2087,12 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 
 	/* Get the Station ID from the one saved during the association */
 	txrx_desc.sta_id = sta_id;
-	WLAN_ADDR_COPY(txrx_desc.peer_addr.bytes, roam_info->bssid.bytes);
+	if (!QDF_IS_ADDR_BROADCAST(roam_info->bssid.bytes))
+		WLAN_ADDR_COPY(txrx_desc.peer_addr.bytes,
+			       roam_info->bssid.bytes);
+	else
+		WLAN_ADDR_COPY(txrx_desc.peer_addr.bytes,
+			       adapter->mac_addr.bytes);
 
 	/* set the QoS field appropriately */
 	if (hdd_wmm_is_active(adapter))
