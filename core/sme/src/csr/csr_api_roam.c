@@ -19077,7 +19077,8 @@ void csr_update_fils_params_rso(struct mac_context *mac,
  * Return: None
  */
 static void csr_update_score_params(struct mac_context *mac_ctx,
-				    struct roam_offload_scan_req *req_buffer)
+				    struct roam_offload_scan_req *req_buffer,
+				    tpCsrNeighborRoamControlInfo roam_info)
 {
 	struct scoring_param *req_score_params;
 	struct rssi_scoring *req_rssi_score;
@@ -19092,9 +19093,9 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 	weight_config = &bss_score_params->weight_cfg;
 	rssi_score = &bss_score_params->rssi_score;
 
-	if (!bss_score_params->enable_scoring_for_roam)
-			req_score_params->disable_bitmap =
-				WLAN_ROAM_SCORING_DISABLE_ALL;
+	if (!roam_info->cfgParams.enable_scoring_for_roam)
+		req_score_params->disable_bitmap =
+			WLAN_ROAM_SCORING_DISABLE_ALL;
 
 	req_score_params->rssi_weightage = weight_config->rssi_weightage;
 	req_score_params->ht_weightage = weight_config->ht_caps_weightage;
@@ -19524,7 +19525,7 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 				session->pAddIEAssoc,
 				session->nAddIEAssocLength);
 		csr_update_driver_assoc_ies(mac_ctx, session, req_buf);
-		csr_update_score_params(mac_ctx, req_buf);
+		csr_update_score_params(mac_ctx, req_buf, roam_info);
 		csr_update_fils_params_rso(mac_ctx, session, req_buf);
 	}
 

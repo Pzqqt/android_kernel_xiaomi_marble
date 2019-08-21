@@ -831,6 +831,25 @@ QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
 QDF_STATUS sme_update_full_roam_scan_period(mac_handle_t mac_handle,
 					    uint8_t vdev_id,
 					    uint32_t full_roam_scan_period);
+
+/**
+ * sme_modify_roam_cand_sel_criteria() - Modify candidate selection criteria
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: vdev Identifier
+ * @enable_scoring_for_roam: Carries enable/disable indication
+ *
+ * Enable/disable scoring for roam candidate selection based on the value of
+ * enable_scoring_for_roam. Below is the description of enable/disable,
+ * Disable-0: Disable scoring for roam candidate selection. Roaming
+ *	      shall fallback to legacy selection criteria, only RSSI.
+ * Enable-1 : Enable scoring for roam candidate selection.
+ *
+ * Return: Success or failure
+ */
+QDF_STATUS
+sme_modify_roam_cand_sel_criteria(mac_handle_t mac_handle,
+				  uint8_t vdev_id,
+				  bool enable_scoring_for_roam);
 QDF_STATUS sme_set_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
 		const uint16_t nNeighborScanMinChanTime,
 		uint8_t sessionId);
