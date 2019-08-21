@@ -6783,8 +6783,6 @@ QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
-		mac->mlme_cfg->lfr.empty_scan_refresh_period =
-			empty_scan_refresh_period;
 		pNeighborRoamInfo->cfgParams.emptyScanRefreshPeriod =
 			empty_scan_refresh_period;
 
@@ -6863,6 +6861,56 @@ sme_modify_roam_cand_sel_criteria(mac_handle_t mac_handle,
 	status = csr_roam_offload_scan(mac, vdev_id,
 				       ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				       REASON_SCORING_CRITERIA_CHANGED);
+out:
+	sme_release_global_lock(&mac->sme);
+
+	return status;
+}
+
+QDF_STATUS sme_roam_control_restore_default_config(mac_handle_t mac_handle,
+						   uint8_t vdev_id)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS status;
+	tpCsrNeighborRoamControlInfo neighbor_roam_info;
+
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		sme_err("Invalid vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	if (!mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
+		sme_err("roam_scan_offload_enabled is not supported");
+		status = QDF_STATUS_E_INVAL;
+		goto out;
+	}
+
+	sme_debug("%s default roam scoring",
+		  mac->mlme_cfg->scoring.enable_scoring_for_roam ?
+		  "Enable" : "Disable");
+
+	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
+
+	neighbor_roam_info->cfgParams.enable_scoring_for_roam =
+			mac->mlme_cfg->scoring.enable_scoring_for_roam;
+
+	neighbor_roam_info->cfgParams.emptyScanRefreshPeriod =
+			mac->mlme_cfg->lfr.empty_scan_refresh_period;
+
+	neighbor_roam_info->cfgParams.full_roam_scan_period =
+			mac->mlme_cfg->lfr.roam_full_scan_period;
+
+	sme_debug("Restore scan period to: %u and full scan period to: %u",
+		  neighbor_roam_info->cfgParams.emptyScanRefreshPeriod,
+		  neighbor_roam_info->cfgParams.full_roam_scan_period);
+
+	csr_roam_offload_scan(mac, vdev_id,
+			      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+			      REASON_SCORING_CRITERIA_CHANGED);
 out:
 	sme_release_global_lock(&mac->sme);
 

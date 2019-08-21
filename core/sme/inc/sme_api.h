@@ -850,6 +850,20 @@ QDF_STATUS
 sme_modify_roam_cand_sel_criteria(mac_handle_t mac_handle,
 				  uint8_t vdev_id,
 				  bool enable_scoring_for_roam);
+
+/**
+ * sme_roam_control_restore_default_config - Restore roam config to default
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: vdev Identifier
+ *
+ * Restore enable_scoring_for_roam, emptyScanRefreshPeriod,
+ * full_roam_scan_period to their default values and send RSO command to
+ * firmware with the updated values.
+ *
+ * Return: Success or failure
+ */
+QDF_STATUS sme_roam_control_restore_default_config(mac_handle_t mac_handle,
+						   uint8_t vdev_id);
 QDF_STATUS sme_set_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
 		const uint16_t nNeighborScanMinChanTime,
 		uint8_t sessionId);
