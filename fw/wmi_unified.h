@@ -23125,6 +23125,10 @@ typedef enum wmi_coex_config_type {
      * config to enable(1)/disable(0) WAR of BT 2nd harmonic issue function
      */
     WMI_COEX_CONFIG_ENABLE_2ND_HARMONIC_WAR     = 43,
+    /* WMI_COEX_CONFIG_BTCOEX_SEPARATE_CHAIN_MODE
+     * config BTC separate chain mode or shared mode
+     */
+    WMI_COEX_CONFIG_BTCOEX_SEPARATE_CHAIN_MODE  = 44,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
