@@ -1666,3 +1666,19 @@ ucfg_mlme_set_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool ucfg_mlme_validate_full_roam_scan_period(uint32_t full_roam_scan_period)
+{
+	bool is_valid = true;
+	uint32_t min, max;
+
+	if (!cfg_in_range(CFG_LFR_FULL_ROAM_SCAN_REFRESH_PERIOD,
+			  full_roam_scan_period)) {
+		min = (cfg_min(CFG_LFR_FULL_ROAM_SCAN_REFRESH_PERIOD));
+		max = (cfg_max(CFG_LFR_FULL_ROAM_SCAN_REFRESH_PERIOD));
+		mlme_legacy_err("Full roam scan period value %d is out of range (Min: %d Max: %d)",
+				full_roam_scan_period, min, max);
+		is_valid = false;
+	}
+
+	return is_valid;
+}

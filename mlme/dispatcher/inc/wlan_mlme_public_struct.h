@@ -1422,6 +1422,8 @@ struct bss_load_trigger {
  * @roam_scan_period_after_inactivity: Roam scan period after device was in
  * inactive state
  * @fw_akm_bitmap:                  Supported Akm suites of firmware
+ * @roam_full_scan_period: Idle period in seconds between two successive
+ * full channel roam scans
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -1524,6 +1526,7 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t roam_inactive_data_packet_count;
 	uint32_t roam_scan_period_after_inactivity;
 	uint32_t fw_akm_bitmap;
+	uint32_t roam_full_scan_period;
 };
 
 /**
