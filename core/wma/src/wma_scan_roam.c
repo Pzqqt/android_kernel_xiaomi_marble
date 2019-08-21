@@ -5679,3 +5679,24 @@ int wma_handle_btm_blacklist_event(void *handle, uint8_t *cmd_param_info,
 	wma_send_msg(wma, WMA_ROAM_BLACKLIST_MSG, (void *)dst_list, 0);
 	return 0;
 }
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS wma_set_roam_triggers(tp_wma_handle wma,
+				 struct roam_triggers *triggers)
+{
+	if (!wma_is_vdev_valid(triggers->vdev_id)) {
+		WMA_LOGE("%s: vdev_id: %d is not active", __func__,
+			 triggers->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_set_roam_triggers(wma->wmi_handle, triggers);
+}
+
+#else
+inline QDF_STATUS
+wma_set_roam_triggers(tp_wma_handle wma, struct roam_triggers *triggers)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif

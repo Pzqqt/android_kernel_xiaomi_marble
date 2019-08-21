@@ -4112,6 +4112,7 @@ static const struct nla_policy
 roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
 	[PARAM_FREQ_LIST_SCHEME] = {.type = NLA_NESTED},
 	[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD] = {.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_TRIGGERS] = {.type = NLA_U32},
 };
 
 /**
@@ -4142,6 +4143,35 @@ hdd_send_roam_full_scan_period_to_sme(struct hdd_context *hdd_ctx,
 						  full_roam_scan_period);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to set full scan period");
+
+	return status;
+}
+
+/**
+ * hdd_send_roam_triggers_to_sme() - Send roam trigger bitmap to SME
+ * @hdd_ctx: HDD context
+ * @vdev_id: vdev id
+ * @roam_trigger_bitmap: Vendor configured roam trigger bitmap to be configured
+ *			 to firmware
+ *
+ * Send the roam trigger bitmap received to SME
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+hdd_send_roam_triggers_to_sme(struct hdd_context *hdd_ctx,
+			      uint8_t vdev_id,
+			      uint32_t roam_trigger_bitmap)
+{
+	QDF_STATUS status;
+	struct roam_triggers triggers;
+
+	triggers.vdev_id = vdev_id;
+	triggers.trigger_bitmap = roam_trigger_bitmap;
+
+	status = sme_set_roam_triggers(hdd_ctx->mac_handle, &triggers);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set roam control trigger bitmap");
 
 	return status;
 }
@@ -4197,6 +4227,17 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 							       value);
 		if (status)
 			hdd_err("failed to config full scan period");
+	}
+
+	if (tb2[QCA_ATTR_ROAM_CONTROL_TRIGGERS]) {
+		hdd_debug("Parse and send roam triggers to firmware");
+		value = nla_get_u32(tb2[QCA_ATTR_ROAM_CONTROL_TRIGGERS]);
+		hdd_debug("Received roam trigger bitmap: 0x%x", value);
+		status = hdd_send_roam_triggers_to_sme(hdd_ctx,
+						       vdev_id,
+						       value);
+		if (status)
+			hdd_err("failed to config roam triggers");
 	}
 
 	return qdf_status_to_os_return(status);
