@@ -1395,20 +1395,6 @@ void wma_acquire_wakelock(qdf_wake_lock_t *wl, uint32_t msec);
 void wma_release_wakelock(qdf_wake_lock_t *wl);
 
 /**
- * wma_send_vdev_start_to_fw() - send the vdev start command to firmware
- * @wma: a reference to the global WMA handle
- * @params: the vdev start params to send to firmware
- *
- * Consumers should call wma_release_wakelock() upon receipt of the vdev start
- * response from firmware to avoid power penalties. Alternatively, calling the
- * matching vdev_up or vdev_down APIs will also release this lock.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params);
-
-/**
  * wma_send_vdev_stop_to_fw() - send the vdev stop command to firmware
  * @wma: a reference to the global WMA handle
  * @vdev_id: the Id of the vdev to stop

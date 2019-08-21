@@ -108,7 +108,7 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 
 	status = wma_vdev_start(wma, &req, false);
 	if (status != QDF_STATUS_SUCCESS) {
-		mlme_clear_bss_params(vdev_obj, add_bss);
+		mlme_clear_bss_params(vdev_obj);
 		goto send_fail_resp;
 	}
 

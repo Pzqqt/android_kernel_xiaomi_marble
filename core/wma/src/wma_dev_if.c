@@ -978,15 +978,18 @@ static void wma_send_start_resp(tp_wma_handle wma,
 				struct vdev_start_response *rsp)
 {
 	struct wma_txrx_node *iface = &wma->interfaces[rsp->vdev_id];
+	QDF_STATUS status;
 
 	if (QDF_IS_STATUS_SUCCESS(rsp->status) &&
 	    QDF_IS_STATUS_SUCCESS(add_bss->status)) {
-		add_bss->status =
+		status =
 		  wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
 						WLAN_VDEV_SM_EV_START_RESP,
 						sizeof(*add_bss), add_bss);
-		if (QDF_IS_STATUS_SUCCESS(add_bss->status))
+		if (QDF_IS_STATUS_SUCCESS(status))
 			return;
+
+		add_bss->status = status;
 	}
 
 	/* Send vdev stop if vdev start was success */
@@ -2821,6 +2824,68 @@ enum mlme_bcn_tx_rate_code wma_get_bcn_rate_code(uint16_t rate)
 	}
 }
 
+static QDF_STATUS vdev_mgr_start_param_populate(struct vdev_mlme_obj *mlme_obj,
+						struct vdev_start_params *param)
+{
+	struct wlan_channel *des_chan;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+
+	vdev = mlme_obj->vdev;
+	if (!vdev) {
+		mlme_err("VDEV is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err("PDEV is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (wlan_objmgr_pdev_try_get_ref(pdev, WLAN_MLME_SB_ID) !=
+							QDF_STATUS_SUCCESS) {
+		mlme_err("Failed to get pdev reference");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
+
+	mlme_obj->proto.generic.beacon_interval = param->beacon_interval;
+	mlme_obj->proto.generic.dtim_period = param->dtim_period;
+	mlme_obj->mgmt.generic.disable_hw_ack = param->disable_hw_ack;
+	mlme_obj->mgmt.chainmask_info.num_rx_chain =
+				param->preferred_rx_streams;
+	mlme_obj->mgmt.chainmask_info.num_tx_chain =
+				param->preferred_tx_streams;
+
+	mlme_obj->proto.he_ops_info.he_ops = param->he_ops;
+	des_chan->ch_ieee = param->channel.chan_id;
+	mlme_obj->mgmt.generic.tx_power = param->channel.pwr;
+	des_chan->ch_freq = param->channel.mhz;
+	mlme_obj->mgmt.rate_info.half_rate = param->channel.half_rate;
+	mlme_obj->mgmt.rate_info.quarter_rate = param->channel.quarter_rate;
+	mlme_obj->proto.ht_info.allow_ht = param->channel.allow_ht;
+	mlme_obj->proto.vht_info.allow_vht = param->channel.allow_vht;
+	mlme_obj->mgmt.generic.phy_mode = param->channel.phy_mode;
+	des_chan->ch_cfreq1 = param->channel.cfreq1;
+	des_chan->ch_cfreq2 = param->channel.cfreq2;
+	mlme_obj->mgmt.generic.maxpower = param->channel.maxpower;
+	mlme_obj->mgmt.generic.minpower = param->channel.minpower;
+	mlme_obj->mgmt.generic.maxregpower = param->channel.maxregpower;
+	mlme_obj->mgmt.generic.antennamax = param->channel.antennamax;
+	mlme_obj->mgmt.generic.reg_class_id = param->channel.reg_class_id;
+	mlme_obj->mgmt.rate_info.bcn_tx_rate = param->bcn_tx_rate_code;
+	mlme_obj->proto.generic.ldpc = param->ldpc_rx_enabled;
+	if (mlme_obj->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_AP) {
+		mlme_obj->mgmt.ap.hidden_ssid = param->hidden_ssid;
+		mlme_obj->mgmt.ap.cac_duration_ms  = param->cac_duration_ms;
+	}
+	wlan_vdev_mlme_set_ssid(vdev, param->ssid.mac_ssid,
+				param->ssid.length);
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_SB_ID);
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wma_vdev_start() - send vdev start request to fw
  * @wma: wma handle
@@ -2848,6 +2913,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	struct wlan_mlme_nss_chains *ini_cfg;
 	QDF_STATUS status;
 	uint32_t vdev_stop_type;
+	struct vdev_mlme_obj *mlme_obj;
 
 	ini_cfg = mlme_get_ini_vdev_config(iface->vdev);
 	if (!ini_cfg) {
@@ -3092,7 +3158,14 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	if (wma->dynamic_nss_chains_support)
 		wma_vdev_nss_chain_params_send(params.vdev_id, ini_cfg);
 
-	return wma_send_vdev_start_to_fw(wma, &params);
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(intr[req->vdev_id].vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	vdev_mgr_start_param_populate(mlme_obj, &params);
+
+	return vdev_mgr_start_send(mlme_obj,  isRestart);
 }
 
 /**

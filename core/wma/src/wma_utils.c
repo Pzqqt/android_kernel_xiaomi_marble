@@ -3445,30 +3445,6 @@ void wma_release_wakelock(qdf_wake_lock_t *wl)
 	qdf_runtime_pm_allow_suspend(&wma->wmi_cmd_rsp_runtime_lock);
 }
 
-QDF_STATUS
-wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params)
-{
-	QDF_STATUS status;
-	struct wma_txrx_node *vdev = &wma->interfaces[params->vdev_id];
-
-	if (!wma_is_vdev_valid(params->vdev_id)) {
-		WMA_LOGE("%s: Invalid vdev id:%d", __func__, params->vdev_id);
-		status = QDF_STATUS_E_FAILURE;
-		return status;
-	}
-	wma_acquire_wakelock(&vdev->vdev_start_wakelock,
-			     WMA_VDEV_START_REQUEST_TIMEOUT);
-	qdf_runtime_pm_prevent_suspend(&vdev->vdev_start_runtime_wakelock);
-	status = wmi_unified_vdev_start_send(wma->wmi_handle, params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_runtime_pm_allow_suspend(
-				&vdev->vdev_start_runtime_wakelock);
-		wma_release_wakelock(&vdev->vdev_start_wakelock);
-	}
-
-	return status;
-}
-
 QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
