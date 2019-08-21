@@ -110,7 +110,15 @@ typedef struct sCsr11rAssocNeighborInfo {
 	tDblLinkList preAuthDoneList;   /* llist which consists/preauth nodes */
 } tCsr11rAssocNeighborInfo, *tpCsr11rAssocNeighborInfo;
 
-/* Complete control information for neighbor roam algorithm */
+/**
+ * struct sCsr11rAssocNeighborInfo - Control info for neighbor roam algorithm
+ * @roam_control_enable: Flag used to cache the status of roam control
+ *			 configuration. This will be set only if the
+ *			 corresponding vendor command data is configured to
+ *			 driver/firmware successfully. The same shall be
+ *			 returned to userspace whenever queried for roam
+ *			 control config status.
+ */
 typedef struct sCsrNeighborRoamControlInfo {
 	eCsrNeighborRoamState neighborRoamState;
 	eCsrNeighborRoamState prevNeighborRoamState;
@@ -146,6 +154,7 @@ typedef struct sCsrNeighborRoamControlInfo {
 	uint8_t last_sent_cmd;
 	bool b_roam_scan_offload_started;
 	struct scan_result_list *scan_res_lfr2_roam_ap;
+	bool roam_control_enable;
 } tCsrNeighborRoamControlInfo, *tpCsrNeighborRoamControlInfo;
 
 /* All the necessary Function declarations are here */

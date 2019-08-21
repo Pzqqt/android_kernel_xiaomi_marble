@@ -3648,4 +3648,20 @@ void sme_chan_to_freq_list(
  */
 QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 				 struct roam_triggers *triggers);
+
+/**
+ * sme_set_roam_config_enable() - Cache roam config status in SME
+ * @mac_handle: Opaque handle to the MAC context
+ * @vdev_id: vdev id
+ * @roam_control_enable: Carries a non-zero value if the current set request is
+ *			 for enable, otherwise carries a 0.
+ *
+ * Cache control roam config enable/disable status in SME so that the
+ * userspace can query for the status based on a vdev/session at any time.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_roam_config_enable(mac_handle_t mac_handle,
+				      uint8_t vdev_id,
+				      uint8_t roam_control_enable);
 #endif /* #if !defined( __SME_API_H ) */

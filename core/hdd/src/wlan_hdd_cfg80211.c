@@ -4110,6 +4110,7 @@ hdd_send_roam_scan_channel_freq_list_to_sme(struct hdd_context *hdd_ctx,
 
 static const struct nla_policy
 roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
+	[QCA_ATTR_ROAM_CONTROL_ENABLE] = {.type = NLA_U8},
 	[PARAM_FREQ_LIST_SCHEME] = {.type = NLA_NESTED},
 	[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD] = {.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_TRIGGERS] = {.type = NLA_U32},
@@ -4238,6 +4239,16 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 						       value);
 		if (status)
 			hdd_err("failed to config roam triggers");
+	}
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_ENABLE];
+	if (attr) {
+		hdd_debug("Parse and send roam control enable/disable");
+		status = sme_set_roam_config_enable(hdd_ctx->mac_handle,
+						    vdev_id,
+						    nla_get_u8(attr));
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_err("failed to enable/disable roam control config");
 	}
 
 	return qdf_status_to_os_return(status);
