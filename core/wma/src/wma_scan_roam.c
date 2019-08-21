@@ -2621,7 +2621,7 @@ static void
 wma_roam_update_vdev(tp_wma_handle wma,
 		     struct roam_offload_synch_ind *roam_synch_ind_ptr)
 {
-	tDeleteBssParams *del_bss_params;
+	struct del_bss_param *del_bss_params;
 	tDeleteStaParams *del_sta_params;
 	tLinkStateParams *set_link_params;
 	tAddStaParams *add_sta_params;
@@ -2659,7 +2659,7 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	qdf_mem_zero(set_link_params, sizeof(*set_link_params));
 	qdf_mem_zero(add_sta_params, sizeof(*add_sta_params));
 
-	del_bss_params->smesessionId = vdev_id;
+	del_bss_params->vdev_id = vdev_id;
 	del_sta_params->smesessionId = vdev_id;
 	qdf_mem_copy(del_bss_params->bssid, wma->interfaces[vdev_id].bssid,
 			QDF_MAC_ADDR_SIZE);

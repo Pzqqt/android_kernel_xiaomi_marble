@@ -2068,7 +2068,7 @@ static void wma_cleanup_target_req_param(struct wma_target_req *tgt_req)
  * Return: 0 on success, ERROR code on failure
  */
 static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev, uint32_t vdev_id,
-			       tpDeleteBssParams params)
+			       struct del_bss_param *params)
 {
 	void *peer, *vdev;
 	uint8_t peer_id;
@@ -2221,7 +2221,7 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req)
 {
 	struct wma_txrx_node *iface;
 	struct beacon_info *bcn;
-	tpDeleteBssParams params;
+	struct del_bss_param *params;
 	uint8_t vdev_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -2241,7 +2241,7 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req)
 		return;
 	}
 
-	params = (tpDeleteBssParams)req->user_data;
+	params = (struct del_bss_param *)req->user_data;
 
 	cdp_fc_vdev_flush(soc, iface->handle);
 	WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
@@ -2398,8 +2398,8 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 
 	qdf_mc_timer_stop(&req_msg->event_timeout);
 	if (req_msg->msg_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
-		tpDeleteBssParams params =
-			(tpDeleteBssParams)req_msg->user_data;
+		struct del_bss_param *params =
+			(struct del_bss_param *)req_msg->user_data;
 
 		peer = cdp_peer_find_by_addr(soc, pdev,
 					     params->bssid, &peer_id);
@@ -2412,7 +2412,7 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 
 		if (!iface->peer_count) {
 			WMA_LOGE("%s: Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
-				 __func__, params->bssid, params->smesessionId,
+				 __func__, params->bssid, resp_event->vdev_id,
 				 iface->peer_count);
 			goto free_req_msg;
 		}
@@ -2420,7 +2420,7 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 		if (peer) {
 			WMA_LOGD("%s: vdev %pK is peer_addr %pM to vdev_id %d, peer_count - %d",
 				 __func__, peer, params->bssid,
-				 params->smesessionId, iface->peer_count);
+				 resp_event->vdev_id, iface->peer_count);
 			if (cdp_cfg_get_peer_unmap_conf_support(soc))
 				cdp_peer_delete_sync(soc, peer,
 						     wma_peer_unmap_conf_cb,
@@ -2428,18 +2428,18 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 			else
 				cdp_peer_delete(soc, peer,
 						1 << CDP_PEER_DELETE_NO_SPECIAL);
-			wma_remove_objmgr_peer(wma, params->smesessionId,
+			wma_remove_objmgr_peer(wma, resp_event->vdev_id,
 					       params->bssid);
 		}
 		iface->peer_count--;
 
 		WMA_LOGI("%s: Removed peer %pK with peer_addr %pM vdevid %d peer_count %d",
-			 __func__, peer, params->bssid,  params->smesessionId,
+			 __func__, peer, params->bssid,  resp_event->vdev_id,
 			 iface->peer_count);
 		wma_send_vdev_down_req(wma, req_msg);
 	} else if (req_msg->msg_type == WMA_DELETE_BSS_REQ) {
-		tpDeleteBssParams params =
-			(tpDeleteBssParams) req_msg->user_data;
+		struct del_bss_param *params =
+			(struct del_bss_param *)req_msg->user_data;
 
 		if (!iface->handle) {
 			WMA_LOGE("%s vdev id %d is already deleted",
@@ -3469,8 +3469,8 @@ void wma_hold_req_timer(void *data)
 		wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, params, 0);
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
 			(tgt_req->type == WMA_DELETE_PEER_RSP)) {
-		tpDeleteBssParams params =
-			(tpDeleteBssParams) tgt_req->user_data;
+		struct del_bss_param *params =
+			(struct del_bss_param *)tgt_req->user_data;
 
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGE(FL("wma delete peer for del bss req timed out"));
@@ -3718,8 +3718,8 @@ void wma_vdev_resp_timer(void *data)
 
 		wma_handle_channel_switch_req_timeout(wma, tgt_req);
 	} else if (tgt_req->msg_type == WMA_DELETE_BSS_REQ) {
-		tpDeleteBssParams params =
-			(tpDeleteBssParams) tgt_req->user_data;
+		struct del_bss_param *params =
+			(struct del_bss_param *)tgt_req->user_data;
 		struct beacon_info *bcn;
 
 		if (tgt_req->vdev_id >= wma->max_bssid) {
@@ -5677,7 +5677,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
  *
  * Return: none
  */
-void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
+void wma_delete_bss_ho_fail(tp_wma_handle wma, struct del_bss_param *params)
 {
 	struct cdp_pdev *pdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -5694,15 +5694,15 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 		goto fail_del_bss_ho_fail;
 	}
 
-	iface = &wma->interfaces[params->smesessionId];
+	iface = &wma->interfaces[params->vdev_id];
 	if (!iface || !iface->handle) {
 		WMA_LOGE("%s vdev id %d is already deleted",
-				__func__, params->smesessionId);
+				__func__, params->vdev_id);
 		goto fail_del_bss_ho_fail;
 	}
 	qdf_mem_zero(iface->bssid, QDF_MAC_ADDR_SIZE);
 
-	txrx_vdev = wma_find_vdev_by_id(wma, params->smesessionId);
+	txrx_vdev = wma_find_vdev_by_id(wma, params->vdev_id);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
 		status = QDF_STATUS_E_FAILURE;
@@ -5730,39 +5730,39 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 	}
 
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP (del_bss)",
-		 __func__, params->smesessionId);
+		 __func__, params->vdev_id);
 	cdp_fc_vdev_pause(soc, iface->handle,
 			   OL_TXQ_PAUSE_REASON_VDEV_STOP);
-	wma_vdev_set_pause_bit(params->smesessionId, PAUSE_TYPE_HOST);
+	wma_vdev_set_pause_bit(params->vdev_id, PAUSE_TYPE_HOST);
 
 	cdp_fc_vdev_flush(soc, iface->handle);
 	WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
-			__func__, params->smesessionId);
+			__func__, params->vdev_id);
 	cdp_fc_vdev_unpause(soc, iface->handle,
 			OL_TXQ_PAUSE_REASON_VDEV_STOP);
-	wma_vdev_clear_pause_bit(params->smesessionId, PAUSE_TYPE_HOST);
+	wma_vdev_clear_pause_bit(params->vdev_id, PAUSE_TYPE_HOST);
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 	WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
 			__func__, iface->type, iface->sub_type);
 	params->status = QDF_STATUS_SUCCESS;
 
-	msg = wma_fill_vdev_req(wma, params->smesessionId,
+	msg = wma_fill_vdev_req(wma, params->vdev_id,
 				WMA_DELETE_BSS_HO_FAIL_REQ,
 				WMA_TARGET_REQ_TYPE_VDEV_STOP, params,
 				WMA_VDEV_STOP_REQUEST_TIMEOUT);
 	if (!msg) {
 		WMA_LOGE("%s: Failed to fill vdev request for vdev_id %d",
-			 __func__, params->smesessionId);
+			 __func__, params->vdev_id);
 		status = QDF_STATUS_E_NOMEM;
 		goto fail_del_bss_ho_fail;
 	}
 
 	/* Try to use the vdev stop response path */
-	resp_event.vdev_id = params->smesessionId;
+	resp_event.vdev_id = params->vdev_id;
 	status = wma_handle_vdev_stop_rsp(wma, &resp_event);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s: Failed to handle vdev stop rsp for vdev_id %d",
-			 __func__, params->smesessionId);
+			 __func__, params->vdev_id);
 		goto fail_del_bss_ho_fail;
 	}
 
@@ -5818,7 +5818,7 @@ static void wma_wait_tx_complete(tp_wma_handle wma,
  *
  * Return: none
  */
-void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
+void wma_delete_bss(tp_wma_handle wma, struct del_bss_param *params)
 {
 	struct cdp_pdev *pdev;
 	void *peer = NULL;
@@ -5836,17 +5836,17 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		WMA_LOGE("%s:Unable to get TXRX context", __func__);
 		goto out;
 	}
-	if (wma_is_vdev_in_ibss_mode(wma, params->smesessionId))
+	if (wma_is_vdev_in_ibss_mode(wma, params->vdev_id))
 		/* in rome ibss case, self mac is used to create the bss peer */
 		peer = cdp_peer_find_by_addr(soc,
 			pdev,
-			wma->interfaces[params->smesessionId].addr,
+			wma->interfaces[params->vdev_id].addr,
 			&peer_id);
 	else if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces,
-			params->smesessionId))
+			params->vdev_id))
 		/* In ndi case, self mac is used to create the self peer */
 		peer = cdp_peer_find_by_addr(soc, pdev,
-				wma->interfaces[params->smesessionId].addr,
+				wma->interfaces[params->vdev_id].addr,
 				&peer_id);
 	else
 		peer = cdp_peer_find_by_addr(soc, pdev,
@@ -5860,20 +5860,20 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		goto out;
 	}
 
-	qdf_mem_zero(wma->interfaces[params->smesessionId].bssid,
-			QDF_MAC_ADDR_SIZE);
+	qdf_mem_zero(wma->interfaces[params->vdev_id].bssid,
+		     QDF_MAC_ADDR_SIZE);
 
-	txrx_vdev = wma_find_vdev_by_id(wma, params->smesessionId);
+	txrx_vdev = wma_find_vdev_by_id(wma, params->vdev_id);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
 		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
 
-	iface = &wma->interfaces[params->smesessionId];
+	iface = &wma->interfaces[params->vdev_id];
 	if (!iface || !iface->handle) {
 		WMA_LOGE("%s vdev id %d is already deleted",
-				__func__, params->smesessionId);
+				__func__, params->vdev_id);
 		goto out;
 	}
 
@@ -5900,26 +5900,26 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 	if (wlan_op_mode_ibss == cdp_get_opmode(soc, txrx_vdev))
 		wma->ibss_started = 0;
 
-	if (wma_is_roam_synch_in_progress(wma, params->smesessionId)) {
+	if (wma_is_roam_synch_in_progress(wma, params->vdev_id)) {
 		roam_synch_in_progress = true;
 		WMA_LOGD("LFR3:%s: Setting vdev_up to FALSE for session %d",
-			__func__, params->smesessionId);
+			__func__, params->vdev_id);
 
 		goto detach_peer;
 	}
-	msg = wma_fill_vdev_req(wma, params->smesessionId, WMA_DELETE_BSS_REQ,
+	msg = wma_fill_vdev_req(wma, params->vdev_id, WMA_DELETE_BSS_REQ,
 				WMA_TARGET_REQ_TYPE_VDEV_STOP, params,
 				WMA_VDEV_STOP_REQUEST_TIMEOUT);
 	if (!msg) {
 		WMA_LOGE("%s: Failed to fill vdev request for vdev_id %d",
-			 __func__, params->smesessionId);
+			 __func__, params->vdev_id);
 		status = QDF_STATUS_E_NOMEM;
 		goto detach_peer;
 	}
 
 	WMA_LOGD(FL("Outstanding msdu packets: %d"),
 		 cdp_get_tx_pending(soc, pdev));
-	wma_wait_tx_complete(wma, params->smesessionId);
+	wma_wait_tx_complete(wma, params->vdev_id);
 
 	if (cdp_get_tx_pending(soc, pdev)) {
 		WMA_LOGW(FL("Outstanding msdu packets before VDEV_STOP : %d"),
@@ -5927,26 +5927,26 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 	}
 
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP (del_bss)",
-		 __func__, params->smesessionId);
-	wma_vdev_set_pause_bit(params->smesessionId, PAUSE_TYPE_HOST);
+		 __func__, params->vdev_id);
+	wma_vdev_set_pause_bit(params->vdev_id, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_pause(soc,
-		wma->interfaces[params->smesessionId].handle,
+		wma->interfaces[params->vdev_id].handle,
 		OL_TXQ_PAUSE_REASON_VDEV_STOP);
 
-	if (wma_send_vdev_stop_to_fw(wma, params->smesessionId)) {
+	if (wma_send_vdev_stop_to_fw(wma, params->vdev_id)) {
 		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
-		wma_remove_vdev_req(wma, params->smesessionId,
-				WMA_TARGET_REQ_TYPE_VDEV_STOP);
+		wma_remove_vdev_req(wma, params->vdev_id,
+				    WMA_TARGET_REQ_TYPE_VDEV_STOP);
 		status = QDF_STATUS_E_FAILURE;
 		goto detach_peer;
 		}
 	WMA_LOGD("%s: bssid %pM vdev_id %d",
-		 __func__, params->bssid, params->smesessionId);
+		 __func__, params->bssid, params->vdev_id);
 	return;
 detach_peer:
-	wma_remove_peer(wma, params->bssid, params->smesessionId, peer,
+	wma_remove_peer(wma, params->bssid, params->vdev_id, peer,
 			roam_synch_in_progress);
-	if (wma_is_roam_synch_in_progress(wma, params->smesessionId))
+	if (wma_is_roam_synch_in_progress(wma, params->vdev_id))
 		return;
 
 out:

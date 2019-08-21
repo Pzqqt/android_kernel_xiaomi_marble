@@ -533,8 +533,8 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				    struct scheduler_msg *limMsgQ,
 				    struct pe_session *pe_session);
 void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
-		struct scheduler_msg *limMsgQ,
-		struct pe_session *pe_session);
+				    struct del_bss_param *pDelBss,
+				    struct pe_session *pe_session);
 
 void lim_process_ap_mlm_del_sta_rsp(struct mac_context *mac,
 		struct scheduler_msg *limMsgQ,

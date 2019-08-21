@@ -180,7 +180,7 @@ void lim_send_sme_set_context_rsp(struct mac_context *mac,
 				  uint8_t smesessionId);
 
 void lim_handle_delete_bss_rsp(struct mac_context *mac,
-			       struct scheduler_msg *MsgQ);
+				struct del_bss_param *pDelBss);
 
 void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				struct scheduler_msg *msg);

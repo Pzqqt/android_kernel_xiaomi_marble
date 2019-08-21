@@ -1829,18 +1829,17 @@ err:
    \sa
    --------------------------------------------------------------------------*/
 
-void lim_handle_delete_bss_rsp(struct mac_context *mac, struct scheduler_msg *MsgQ)
+void lim_handle_delete_bss_rsp(struct mac_context *mac,
+			       struct del_bss_param *pDelBss)
 {
 	struct pe_session *pe_session;
-	tpDeleteBssParams pDelBss = (tpDeleteBssParams) (MsgQ->bodyptr);
 
 	pe_session =
-		pe_find_session_by_session_id(mac, pDelBss->sessionId);
+		pe_find_session_by_sme_session_id(mac, pDelBss->vdev_id);
 	if (!pe_session) {
-		pe_err("Session Does not exist for given sessionID: %d",
-			pDelBss->sessionId);
-		qdf_mem_free(MsgQ->bodyptr);
-		MsgQ->bodyptr = NULL;
+		pe_err("Session Does not exist for vdev id: %d",
+		       pDelBss->vdev_id);
+		qdf_mem_free(pDelBss);
 		return;
 	}
 
@@ -1852,13 +1851,13 @@ void lim_handle_delete_bss_rsp(struct mac_context *mac, struct scheduler_msg *Ms
 	 */
 	pe_session->process_ho_fail = false;
 	if (LIM_IS_IBSS_ROLE(pe_session))
-		lim_ibss_del_bss_rsp(mac, MsgQ->bodyptr, pe_session);
+		lim_ibss_del_bss_rsp(mac, pDelBss, pe_session);
 	else if (LIM_IS_UNKNOWN_ROLE(pe_session))
-		lim_process_sme_del_bss_rsp(mac, MsgQ->bodyval, pe_session);
+		lim_process_sme_del_bss_rsp(mac, pe_session);
 	else if (LIM_IS_NDI_ROLE(pe_session))
-		lim_ndi_del_bss_rsp(mac, MsgQ->bodyptr, pe_session);
+		lim_ndi_del_bss_rsp(mac, pDelBss, pe_session);
 	else
-		lim_process_mlm_del_bss_rsp(mac, MsgQ, pe_session);
+		lim_process_mlm_del_bss_rsp(mac, pDelBss, pe_session);
 
 }
 

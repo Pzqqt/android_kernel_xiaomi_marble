@@ -382,10 +382,10 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
  * Return: None
  */
 void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
-			void *msg, struct pe_session *session_entry)
+			 struct del_bss_param *del_bss,
+			 struct pe_session *session_entry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
-	tpDeleteBssParams del_bss = (tpDeleteBssParams) msg;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 	if (!del_bss) {
@@ -394,15 +394,14 @@ void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
 		goto end;
 	}
 	session_entry =
-		pe_find_session_by_session_id(mac_ctx, del_bss->sessionId);
+		pe_find_session_by_sme_session_id(mac_ctx, del_bss->vdev_id);
 	if (!session_entry) {
 		pe_err("Session Does not exist for given sessionID");
 		goto end;
 	}
 
 	if (del_bss->status != QDF_STATUS_SUCCESS) {
-		pe_err("NDI: DEL_BSS_RSP error (%x) Bss %d",
-			del_bss->status, del_bss->bss_idx);
+		pe_err("NDI: DEL_BSS_RSP error (%x)", del_bss->status);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}

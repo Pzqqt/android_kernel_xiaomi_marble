@@ -4196,8 +4196,8 @@ wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 	}
 
 	if (req->msg_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
-		tpDeleteBssParams params =
-			(tpDeleteBssParams)req->user_data;
+		struct del_bss_param *params =
+			(struct del_bss_param *)req->user_data;
 		params->status = QDF_STATUS_SUCCESS;
 		wma_send_msg_high_priority(wma, WMA_DELETE_BSS_HO_FAIL_RSP,
 					   (void *)params, 0);

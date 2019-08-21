@@ -1938,7 +1938,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		break;
 	case WMA_DELETE_BSS_RSP:
 	case WMA_DELETE_BSS_HO_FAIL_RSP:
-		lim_handle_delete_bss_rsp(mac_ctx, msg);
+		lim_handle_delete_bss_rsp(mac_ctx, msg->bodyptr);
 		break;
 	case WMA_CSA_OFFLOAD_EVENT:
 		lim_handle_csa_offload_msg(mac_ctx, msg);

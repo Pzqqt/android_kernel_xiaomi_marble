@@ -3000,10 +3000,8 @@ static bool __lim_process_sme_stop_bss_req(struct mac_context *mac,
 } /*** end __lim_process_sme_stop_bss_req() ***/
 
 void lim_process_sme_del_bss_rsp(struct mac_context *mac,
-				 uint32_t body, struct pe_session *pe_session)
+				 struct pe_session *pe_session)
 {
-
-	(void)body;
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 	lim_ibss_delete(mac, pe_session);
 	dph_hash_table_init(mac, &pe_session->dph.dphHashTable);

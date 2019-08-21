@@ -1207,7 +1207,7 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 					  struct pe_session *pe_session)
 {
-	tpDeleteBssParams pDelBss = (tpDeleteBssParams) msg;
+	struct del_bss_param *pDelBss = (struct del_bss_param *)msg;
 
 	pe_debug("IBSS: DEL_BSS_RSP Rcvd during coalescing!");
 
@@ -1217,8 +1217,8 @@ void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 	}
 
 	if (pDelBss->status != QDF_STATUS_SUCCESS) {
-		pe_err("IBSS: DEL_BSS_RSP(coalesce) error: %x Bss: %d",
-			pDelBss->status, pDelBss->bss_idx);
+		pe_err("IBSS: DEL_BSS_RSP(coalesce) error: %x",
+		       pDelBss->status);
 		goto end;
 	}
 
@@ -1271,7 +1271,7 @@ end:
 void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_session)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
-	tpDeleteBssParams pDelBss = (tpDeleteBssParams) msg;
+	struct del_bss_param *pDelBss = (struct del_bss_param *)msg;
 	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
@@ -1281,7 +1281,7 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 		goto end;
 	}
 
-	pe_session = pe_find_session_by_session_id(mac, pDelBss->sessionId);
+	pe_session = pe_find_session_by_sme_session_id(mac, pDelBss->vdev_id);
 	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");
 		goto end;
@@ -1300,8 +1300,7 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 	}
 
 	if (pDelBss->status != QDF_STATUS_SUCCESS) {
-		pe_err("IBSS: DEL_BSS_RSP error: %x Bss: %d",
-			       pDelBss->status, pDelBss->bss_idx);
+		pe_err("IBSS: DEL_BSS_RSP error: %x", pDelBss->status);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}

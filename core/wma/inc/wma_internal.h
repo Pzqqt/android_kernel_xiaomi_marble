@@ -672,14 +672,14 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta);
 
 void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta);
 
-void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params);
+void wma_delete_bss(tp_wma_handle wma, struct del_bss_param *params);
 
 int32_t wma_find_vdev_by_type(tp_wma_handle wma, int32_t type);
 
 void wma_set_vdev_intrabss_fwd(tp_wma_handle wma_handle,
 				      tpDisableIntraBssFwd pdis_intra_fwd);
 
-void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params);
+void wma_delete_bss_ho_fail(tp_wma_handle wma, struct del_bss_param *params);
 
 uint32_t wma_get_bcn_rate_code(uint16_t rate);
 

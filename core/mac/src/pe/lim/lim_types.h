@@ -340,7 +340,8 @@ typedef struct sLimMlmSetKeysCnf {
 bool lim_process_sme_req_messages(struct mac_context *, struct scheduler_msg *);
 void lim_process_mlm_req_messages(struct mac_context *, struct scheduler_msg *);
 void lim_process_mlm_rsp_messages(struct mac_context *, uint32_t, uint32_t *);
-void lim_process_sme_del_bss_rsp(struct mac_context *, uint32_t, struct pe_session *);
+void lim_process_sme_del_bss_rsp(struct mac_context *mac,
+				 struct pe_session *pe_session);
 
 /**
  * lim_process_mlm_start_cnf(): called to processes MLM_START_CNF message from
@@ -755,8 +756,8 @@ void lim_process_mlm_add_sta_rsp(struct mac_context *mac,
 void lim_process_mlm_del_sta_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsgQ);
 void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
-				 struct scheduler_msg *limMsgQ,
-				 struct pe_session *);
+				 struct del_bss_param *pDelBss,
+				 struct pe_session *pe_session);
 void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ,
 				     struct pe_session *pe_session);
@@ -764,7 +765,7 @@ void lim_process_sta_mlm_del_sta_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ,
 				     struct pe_session *pe_session);
 void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
-				     struct scheduler_msg *limMsgQ,
+				     struct del_bss_param *pDelBssParams,
 				     struct pe_session *pe_session);
 void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ);

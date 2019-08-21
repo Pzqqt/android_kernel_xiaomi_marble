@@ -496,22 +496,16 @@ struct bss_params {
 };
 
 /**
- * struct tDeleteBssParams - params required for del bss request
- * @bss_idx: BSSID
+ * struct struct del_bss_param - params required for del bss request
  * @status: QDF status
- * @respReqd: response message to LIM only when this flag is set
- * @sessionId: PE session id
  * @bssid: BSSID mac address
- * @smesessionId: sme session id
+ * @vdev_id: vdev_id
  */
-typedef struct {
-	uint8_t bss_idx;
+struct del_bss_param {
 	QDF_STATUS status;
-	uint8_t respReqd;
-	uint8_t sessionId;
 	tSirMacAddr bssid;
-	uint8_t smesessionId;
-} tDeleteBssParams, *tpDeleteBssParams;
+	uint8_t vdev_id;
+};
 
 typedef enum eDelStaReasonCode {
 	HAL_DEL_STA_REASON_CODE_KEEP_ALIVE = 0x1,

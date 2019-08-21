@@ -1567,7 +1567,7 @@ end:
 }
 
 void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
-				 struct scheduler_msg *limMsgQ,
+				 struct del_bss_param *pDelBss,
 				 struct pe_session *pe_session)
 {
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
@@ -1578,10 +1578,10 @@ void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
 
 	if (LIM_IS_AP_ROLE(pe_session) &&
 	    (pe_session->statypeForBss == STA_ENTRY_SELF)) {
-		lim_process_ap_mlm_del_bss_rsp(mac, limMsgQ, pe_session);
+		lim_process_ap_mlm_del_bss_rsp(mac, pDelBss, pe_session);
 		return;
 	}
-	lim_process_sta_mlm_del_bss_rsp(mac, limMsgQ, pe_session);
+	lim_process_sta_mlm_del_bss_rsp(mac, pDelBss, pe_session);
 
 #ifdef WLAN_FEATURE_11W
 	if (pe_session->limRmfEnabled) {
@@ -1594,10 +1594,9 @@ void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
 }
 
 void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
-				     struct scheduler_msg *limMsgQ,
+				     struct del_bss_param *pDelBssParams,
 				     struct pe_session *pe_session)
 {
-	tpDeleteBssParams pDelBssParams = (tpDeleteBssParams) limMsgQ->bodyptr;
 	tpDphHashNode sta =
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &pe_session->dph.dphHashTable);
@@ -1608,8 +1607,7 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 		goto end;
 	}
 	if (QDF_STATUS_SUCCESS == pDelBssParams->status) {
-		pe_debug("STA received the DEL_BSS_RSP for BSSID: %X",
-			       pDelBssParams->bss_idx);
+		pe_debug("STA received the DEL_BSS_RSP");
 		if (lim_set_link_state
 			    (mac, eSIR_LINK_IDLE_STATE, pe_session->bssId,
 			    pe_session->self_mac_addr, NULL,
@@ -1637,10 +1635,9 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 		status_code = eSIR_SME_STOP_BSS_FAILURE;
 	}
 end:
-	if (0 != limMsgQ->bodyptr) {
+	if (pDelBssParams)
 		qdf_mem_free(pDelBssParams);
-		limMsgQ->bodyptr = NULL;
-	}
+
 	if (!sta)
 		return;
 	if ((LIM_IS_STA_ROLE(pe_session)) &&
@@ -1662,19 +1659,17 @@ end:
 }
 
 void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
-				    struct scheduler_msg *limMsgQ,
+				    struct del_bss_param *pDelBss,
 				    struct pe_session *pe_session)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
 	QDF_STATUS status;
-	tpDeleteBssParams pDelBss = (tpDeleteBssParams) limMsgQ->bodyptr;
 	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	if (!pe_session) {
 		pe_err("Session entry passed is NULL");
 		if (pDelBss) {
 			qdf_mem_free(pDelBss);
-			limMsgQ->bodyptr = NULL;
 		}
 		return;
 	}
@@ -1696,8 +1691,7 @@ void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 		goto end;
 	}
 	if (pDelBss->status != QDF_STATUS_SUCCESS) {
-		pe_err("BSS: DEL_BSS_RSP error (%x) Bss %d",
-			pDelBss->status, pDelBss->bss_idx);
+		pe_err("BSS: DEL_BSS_RSP error (%x)", pDelBss->status);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}
@@ -1722,7 +1716,6 @@ end:
 
 	if (pDelBss) {
 		qdf_mem_free(pDelBss);
-		limMsgQ->bodyptr = NULL;
 	}
 }
 

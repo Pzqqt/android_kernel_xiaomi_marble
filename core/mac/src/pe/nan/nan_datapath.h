@@ -46,9 +46,11 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 				     struct pe_session *session_entry);
 /* Handler for DEL BSS resp for NDI interface */
 void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
-			void *msg, struct pe_session *session_entry);
+			 struct del_bss_param *del_bss,
+			 struct pe_session *session_entry);
 
-void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session_entry,
+void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx,
+			 struct pe_session *session_entry,
 			 tAddStaParams *add_sta_rsp);
 
 void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
@@ -71,19 +73,25 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 				     struct pe_session *session_entry)
 {
 }
-static inline void lim_ndi_del_bss_rsp(struct mac_context *mac_ctx,
-					void *msg, struct pe_session *session_entry)
-{
-}
-static inline void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
-				struct scheduler_msg *lim_msg,
-				struct pe_session *pe_session)
+
+static inline
+void lim_ndi_del_bss_rsp(struct mac_context *mac_ctx,
+			 struct del_bss_param *del_bss,
+			 struct pe_session *session_entry)
 {
 }
 
-static inline void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx,
-					struct pe_session *session_entry,
-					tAddStaParams *add_sta_rsp)
+static inline
+void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
+				 struct scheduler_msg *lim_msg,
+				 struct pe_session *pe_session)
+{
+}
+
+static inline
+void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx,
+			 struct pe_session *session_entry,
+			 tAddStaParams *add_sta_rsp)
 {
 }
 
