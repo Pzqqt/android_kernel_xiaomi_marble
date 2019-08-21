@@ -666,6 +666,18 @@ bool policy_mgr_is_any_nondfs_chnl_present(struct wlan_objmgr_psoc *psoc,
 		uint8_t *channel);
 
 /**
+ * policy_mgr_get_dfs_beaconing_session_id() - to find the
+ * first DFS session id
+ * @psoc: PSOC object information
+ *
+ * Return: If any beaconing session such as SAP or GO present and it is on
+ * DFS channel then this function will return its session id
+ *
+ */
+uint32_t policy_mgr_get_dfs_beaconing_session_id(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_is_any_dfs_beaconing_session_present() - to find
  * if any DFS session
  * @psoc: PSOC object information

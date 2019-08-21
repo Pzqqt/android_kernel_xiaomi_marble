@@ -1241,7 +1241,12 @@ static QDF_STATUS dfs_msg_processor(struct mac_context *mac,
 	switch (msg->type) {
 	case eWNI_SME_DFS_RADAR_FOUND:
 	{
-		session_id = msg->bodyval;
+		session_id = policy_mgr_get_dfs_beaconing_session_id(mac->psoc);
+		if (!CSR_IS_SESSION_VALID(mac, session_id)) {
+			sme_err("CSR session not valid: %d", session_id);
+			qdf_mem_free(roam_info);
+			return QDF_STATUS_E_FAILURE;
+		}
 		roam_status = eCSR_ROAM_DFS_RADAR_IND;
 		roam_result = eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

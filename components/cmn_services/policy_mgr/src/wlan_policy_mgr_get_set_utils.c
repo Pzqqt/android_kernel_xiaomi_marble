@@ -2948,6 +2948,38 @@ bool policy_mgr_is_any_nondfs_chnl_present(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
+uint32_t policy_mgr_get_dfs_beaconing_session_id(
+		struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t session_id = WLAN_UMAC_VDEV_ID_MAX;
+	struct policy_mgr_conc_connection_info *conn_info;
+	uint32_t conn_index = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return session_id;
+	}
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++) {
+		conn_info = &pm_conc_connection_list[conn_index];
+		if (conn_info->in_use &&
+		    wlan_reg_chan_has_dfs_attribute(pm_ctx->pdev,
+						    conn_info->chan) &&
+		    (conn_info->mode == PM_SAP_MODE ||
+		    conn_info->mode == PM_P2P_GO_MODE)) {
+			session_id =
+				pm_conc_connection_list[conn_index].vdev_id;
+			break;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return session_id;
+}
+
 bool policy_mgr_is_any_dfs_beaconing_session_present(
 		struct wlan_objmgr_psoc *psoc, uint8_t *channel)
 {
