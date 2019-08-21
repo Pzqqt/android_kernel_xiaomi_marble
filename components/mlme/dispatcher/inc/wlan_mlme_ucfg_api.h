@@ -3869,4 +3869,13 @@ ucfg_mlme_get_peer_phymode(struct wlan_objmgr_psoc *psoc, uint8_t *mac,
 {
 	return mlme_get_peer_phymode(psoc, mac, peer_phymode);
 }
+
+/**
+ * ucfg_mlme_validate_full_roam_scan_period() - Validate full roam scan period
+ * @full_roam_scan_period: Idle period in seconds between two successive
+ * full channel roam scans
+ *
+ * Return: True if full_roam_scan_period is in expected range, false otherwise.
+ */
+bool ucfg_mlme_validate_full_roam_scan_period(uint32_t full_roam_scan_period);
 #endif /* _WLAN_MLME_UCFG_API_H_ */

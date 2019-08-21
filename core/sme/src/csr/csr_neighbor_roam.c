@@ -1246,6 +1246,8 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 		mac->mlme_cfg->lfr.neighbor_scan_results_refresh_period;
 	pNeighborRoamInfo->cfgParams.emptyScanRefreshPeriod =
 		mac->mlme_cfg->lfr.empty_scan_refresh_period;
+	pNeighborRoamInfo->cfgParams.full_roam_scan_period =
+		mac->mlme_cfg->lfr.roam_full_scan_period;
 
 	specific_chan_info = &pNeighborRoamInfo->cfgParams.specific_chan_info;
 	specific_chan_info->numOfChannels =

@@ -4111,7 +4111,40 @@ hdd_send_roam_scan_channel_freq_list_to_sme(struct hdd_context *hdd_ctx,
 static const struct nla_policy
 roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
 	[PARAM_FREQ_LIST_SCHEME] = {.type = NLA_NESTED},
+	[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD] = {.type = NLA_U32},
 };
+
+/**
+ * hdd_send_roam_full_scan_period_to_sme() - Send full roam scan period to SME
+ * @hdd_ctx: HDD context
+ * @vdev_id: vdev id
+ * @full_roam_scan_period: Idle period in seconds between two successive
+ * full channel roam scans
+ *
+ * Validate the full roam scan period and send it to firmware
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+hdd_send_roam_full_scan_period_to_sme(struct hdd_context *hdd_ctx,
+				      uint8_t vdev_id,
+				      uint32_t full_roam_scan_period)
+{
+	QDF_STATUS status;
+
+	if (!ucfg_mlme_validate_full_roam_scan_period(full_roam_scan_period))
+		return QDF_STATUS_E_INVAL;
+
+	hdd_debug("Received Command to Set full roam scan period = %u",
+		  full_roam_scan_period);
+
+	status = sme_update_full_roam_scan_period(hdd_ctx->mac_handle, vdev_id,
+						  full_roam_scan_period);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set full scan period");
+
+	return status;
+}
 
 /**
  * hdd_set_roam_with_control_config() - Set roam control configuration
@@ -4131,6 +4164,7 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct nlattr *tb2[QCA_ATTR_ROAM_CONTROL_MAX + 1], *attr;
+	uint32_t value;
 
 	/* The command must carry PARAM_ROAM_CONTROL_CONFIG */
 	if (!tb[PARAM_ROAM_CONTROL_CONFIG]) {
@@ -4152,6 +4186,17 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 								     attr);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("failed to config roam control");
+	}
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD];
+	if (attr) {
+		hdd_debug("Parse and send full scan period to firmware");
+		value = nla_get_u32(attr);
+		status = hdd_send_roam_full_scan_period_to_sme(hdd_ctx,
+							       vdev_id,
+							       value);
+		if (status)
+			hdd_err("failed to config full scan period");
 	}
 
 	return qdf_status_to_os_return(status);

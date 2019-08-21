@@ -624,6 +624,7 @@ wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 			roam_req->roam_inactive_data_packet_count;
 	scan_period_params.roam_scan_period_after_inactivity =
 			roam_req->roam_scan_period_after_inactivity;
+	scan_period_params.full_scan_period = roam_req->full_roam_scan_period;
 
 	return wmi_unified_roam_scan_offload_scan_period(wma_handle->wmi_handle,
 							 &scan_period_params);

@@ -2471,6 +2471,8 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			  mac->mlme_cfg->lfr.roam_bmiss_final_bcnt);
 		sme_debug("roam_beacon_rssi_weight: %d",
 			  mac->mlme_cfg->lfr.roam_beacon_rssi_weight);
+		sme_debug("full_scan_period: %u",
+			  mac->mlme_cfg->lfr.roam_full_scan_period);
 		mac->scan.fEnableDFSChnlScan = pParam->fEnableDFSChnlScan;
 		mac->roam.configParam.fScanTwice = pParam->fScanTwice;
 		/* This parameter is not available in cfg and not passed from
@@ -18142,6 +18144,8 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		roam_info->cfgParams.maxChannelScanTime;
 	req_buf->EmptyRefreshScanPeriod =
 		roam_info->cfgParams.emptyScanRefreshPeriod;
+	req_buf->full_roam_scan_period =
+		roam_info->cfgParams.full_roam_scan_period;
 	req_buf->roam_scan_inactivity_time =
 		mac_ctx->mlme_cfg->lfr.roam_scan_inactivity_time;
 	req_buf->roam_inactive_data_packet_count =
