@@ -4457,6 +4457,9 @@ hdd_roam_control_config_buf_size(struct hdd_context *hdd_ctx,
 	if (tb[QCA_ATTR_ROAM_CONTROL_STATUS])
 		skb_len += NLA_HDRLEN + sizeof(uint8_t);
 
+	if (tb[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD])
+		skb_len += NLA_HDRLEN + sizeof(uint32_t);
+
 	return skb_len;
 }
 
@@ -4479,6 +4482,7 @@ hdd_roam_control_config_fill_data(struct hdd_context *hdd_ctx, uint8_t vdev_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t roam_control;
 	struct nlattr *config;
+	uint32_t full_roam_scan_period;
 
 	config = nla_nest_start(skb, PARAM_ROAM_CONTROL_CONFIG);
 	if (!config)
@@ -4498,8 +4502,23 @@ hdd_roam_control_config_fill_data(struct hdd_context *hdd_ctx, uint8_t vdev_id,
 			return -ENOMEM;
 		}
 	}
-	nla_nest_end(skb, config);
 
+	if (tb[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD]) {
+		status = sme_get_full_roam_scan_period(hdd_ctx->mac_handle,
+						       vdev_id,
+						       &full_roam_scan_period);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto out;
+		hdd_debug("full_roam_scan_period: %u", full_roam_scan_period);
+
+		if (nla_put_u32(skb, QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD,
+				full_roam_scan_period)) {
+			hdd_info("failed to put full_roam_scan_period");
+			return -EINVAL;
+		}
+	}
+
+	nla_nest_end(skb, config);
 out:
 	return qdf_status_to_os_return(status);
 }

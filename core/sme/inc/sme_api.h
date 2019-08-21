@@ -3710,4 +3710,19 @@ QDF_STATUS sme_set_roam_config_enable(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_get_roam_config_status(mac_handle_t mac_handle, uint8_t vdev_id,
 				      uint8_t *config_status);
+
+/**
+ * sme_get_full_roam_scan_period() - Get full roam scan period
+ * @mac_handle: Opaque handle to the MAC context
+ * @vdev_id: vdev id
+ * @full_roam_scan_period: Pointer of a buffer to fill the full roam scan period
+ *
+ * Get the full scan period cached in neighborRoamInfo and fill in the given
+ * buffer full_roam_scan_period.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_get_full_roam_scan_period(mac_handle_t mac_handle,
+					 uint8_t vdev_id,
+					 uint32_t *full_roam_scan_period);
 #endif /* #if !defined( __SME_API_H ) */

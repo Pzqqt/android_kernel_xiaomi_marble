@@ -16161,3 +16161,29 @@ QDF_STATUS sme_get_roam_config_status(mac_handle_t mac_handle,
 
 	return status;
 }
+
+QDF_STATUS
+sme_get_full_roam_scan_period(mac_handle_t mac_handle, uint8_t vdev_id,
+			      uint32_t *full_roam_scan_period)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS status;
+	tpCsrNeighborRoamControlInfo neighbor_roam_info;
+
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		sme_err("Invalid vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to acquire sme lock; status: %d", status);
+		return status;
+	}
+	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
+	*full_roam_scan_period =
+		neighbor_roam_info->cfgParams.full_roam_scan_period;
+	sme_release_global_lock(&mac->sme);
+
+	return status;
+}
