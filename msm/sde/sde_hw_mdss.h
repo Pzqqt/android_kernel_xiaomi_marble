@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_MDSS_H
@@ -228,6 +228,13 @@ enum sde_dsc {
 	DSC_4,
 	DSC_5,
 	DSC_MAX
+};
+
+enum sde_vdc {
+	VDC_NONE = 0,
+	VDC_0,
+	VDC_1,
+	VDC_MAX
 };
 
 enum sde_intf {

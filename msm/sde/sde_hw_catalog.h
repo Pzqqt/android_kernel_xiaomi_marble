@@ -404,6 +404,19 @@ enum {
 	SDE_DSC_MAX
 };
 
+/** VDC sub-blocks/features
+ * @SDE_VDC_HW_REV_1_1         vdc block supports vdc 1.1 only
+ * @SDE_VDC_ENC                vdc encoder sub block
+ * @SDE_VDC_CTL                 vdc ctl sub block
+ * @SDE_VDC_MAX
+ */
+enum {
+	SDE_VDC_HW_REV_1_1,
+	SDE_VDC_ENC,
+	SDE_VDC_CTL,
+	SDE_VDC_MAX
+};
+
 /**
  * CTL sub-blocks
  * @SDE_CTL_SPLIT_DISPLAY       CTL supports video mode split display
@@ -595,6 +608,14 @@ struct sde_dsc_blk {
 };
 
 /**
+ * struct sde_vdc_blk : VDC Encoder sub-blk information
+ * @info:   HW register and features supported by this sub-blk
+ */
+struct sde_vdc_blk {
+	SDE_HW_SUBBLK_INFO;
+};
+
+/**
  * struct sde_format_extended - define sde specific pixel format+modifier
  * @fourcc_format: Base FOURCC pixel format code
  * @modifier: 64-bit drm format modifier, same modifier must be applied to all
@@ -758,6 +779,15 @@ struct sde_pingpong_sub_blks {
 struct sde_dsc_sub_blks {
 	struct sde_dsc_blk enc;
 	struct sde_dsc_blk ctl;
+};
+
+/**
+ * struct sde_vdc_sub_blks : VDC sub-blks
+ *
+ */
+struct sde_vdc_sub_blks {
+	struct sde_vdc_blk enc;
+	struct sde_vdc_blk ctl;
 };
 
 struct sde_wb_sub_blocks {
@@ -991,6 +1021,20 @@ struct sde_dsc_cfg {
 	SDE_HW_BLK_INFO;
 	DECLARE_BITMAP(dsc_pair_mask, DSC_MAX);
 	struct sde_dsc_sub_blks *sblk;
+};
+
+/**
+ * struct sde_vdc_cfg - information of VDC blocks
+ * @id                 enum identifying this block
+ * @base               register offset of this block
+ * @len:               length of hardware block
+ * @features           bit mask identifying sub-blocks/features
+ * @enc                VDC encoder register offset(relative to VDC base)
+ * @ctl                VDC Control register offset(relative to VDC base)
+ */
+struct sde_vdc_cfg {
+	SDE_HW_BLK_INFO;
+	struct sde_vdc_sub_blks *sblk;
 };
 
 /**
@@ -1441,6 +1485,9 @@ struct sde_mdss_cfg {
 
 	u32 dsc_count;
 	struct sde_dsc_cfg dsc[MAX_BLOCKS];
+
+	u32 vdc_count;
+	struct sde_vdc_cfg vdc[MAX_BLOCKS];
 
 	u32 cdm_count;
 	struct sde_cdm_cfg cdm[MAX_BLOCKS];
