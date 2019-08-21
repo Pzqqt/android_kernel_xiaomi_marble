@@ -93,14 +93,14 @@
 		(QDF_NBUF_CB_RX_FLOW_TAG((skb)))
 
 /**
- * qdf_nbuf_cb_update_peer_local_id() - update peer local id in skb cb
- * @skb: skb pointer whose cb is updated with peer local id information
- * @peer_local_id: peer local id to be update in cb
+ * qdf_nbuf_cb_update_vdev_id() - update vdev id in skb cb
+ * @skb: skb pointer whose cb is updated with vdev id information
+ * @vdev_id: vdev id to be updated in cb
  *
  * Return: void
  */
-static inline void qdf_nbuf_cb_update_peer_local_id(struct sk_buff *skb,
-						    uint16_t peer_local_id)
+static inline void
+qdf_nbuf_cb_update_vdev_id(struct sk_buff *skb, uint8_t vdev_id)
 {
 	/* Does not apply to WIN */
 }
