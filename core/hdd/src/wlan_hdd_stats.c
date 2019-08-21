@@ -4672,8 +4672,13 @@ static int _wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 					  const uint8_t *mac,
 					  struct station_info *sinfo)
 {
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	int errno;
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
 	errno = hif_pm_runtime_get_sync(hif_ctx);
 	if (errno)
@@ -4681,7 +4686,10 @@ static int _wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	errno = __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
 
-	hif_pm_runtime_put_sync_suspend(hif_ctx);
+	if (wlan_hdd_rx_rpm_mark_last_busy(hdd_ctx, hif_ctx))
+		hif_pm_runtime_put(hif_ctx);
+	else
+		hif_pm_runtime_put_sync_suspend(hif_ctx);
 
 	return errno;
 }
