@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,9 +39,15 @@ extern "C" {
 #define HTC_TARGET_DEBUG_INTR_MASK          0x01
 #define HTC_TARGET_CREDIT_INTR_MASK         0xF0
 #define HTC_MIN_MSG_PER_BUNDLE              2
+
 #if defined(HIF_USB)
+
 #define HTC_MAX_MSG_PER_BUNDLE_RX           11
-#define HTC_MAX_MSG_PER_BUNDLE_TX           8
+#if defined(CFG_HTC_MAX_MSG_PER_BUNDLE_TX)
+#define HTC_MAX_MSG_PER_BUNDLE_TX	 CFG_HTC_MAX_MSG_PER_BUNDLE_TX
+#else
+#define HTC_MAX_MSG_PER_BUNDLE_TX	8
+#endif /* CFG_HTC_MAX_MSG_PER_BUNDLE_TX */
 #else
 #define HTC_MAX_MSG_PER_BUNDLE_RX           64
 #define HTC_MAX_MSG_PER_BUNDLE              16
