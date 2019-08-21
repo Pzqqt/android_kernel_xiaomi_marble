@@ -3065,12 +3065,7 @@ static int drv_cmd_set_roam_scan_period(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	if (!cfg_in_range(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD,
-			  roam_scan_period)) {
-		hdd_err("Roam scan period value %d is out of range (Min: %d Max: %d)",
-			roam_scan_period,
-			(cfg_min(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD) / 1000),
-			(cfg_max(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD) / 1000));
+	if (!ucfg_mlme_validate_scan_period(roam_scan_period * 1000)) {
 		ret = -EINVAL;
 		goto exit;
 	}

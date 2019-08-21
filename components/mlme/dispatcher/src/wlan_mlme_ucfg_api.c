@@ -1682,3 +1682,19 @@ bool ucfg_mlme_validate_full_roam_scan_period(uint32_t full_roam_scan_period)
 
 	return is_valid;
 }
+
+bool ucfg_mlme_validate_scan_period(uint32_t roam_scan_period)
+{
+	bool is_valid = true;
+
+	if (!cfg_in_range(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD,
+			  roam_scan_period)) {
+		mlme_legacy_err("Roam scan period value %d msec is out of range (Min: %d msec Max: %d msec)",
+				roam_scan_period,
+				cfg_min(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD),
+				cfg_max(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD));
+		is_valid = false;
+	}
+
+	return is_valid;
+}
