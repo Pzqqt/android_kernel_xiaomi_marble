@@ -952,7 +952,6 @@ dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	 * rekey frame to stack.
 	 */
 	if (qdf_nbuf_is_ipv4_wapi_pkt(nbuf)) {
-		qdf_nbuf_cb_update_peer_local_id(nbuf, peer->local_id);
 		goto process_rx;
 	}
 	/*

@@ -2159,8 +2159,6 @@ done:
 
 		dp_rx_fill_gro_info(soc, rx_tlv_hdr, nbuf, &rx_ol_pkt_cnt);
 
-		qdf_nbuf_cb_update_peer_local_id(nbuf, peer->local_id);
-
 		DP_RX_LIST_APPEND(deliver_list_head,
 				  deliver_list_tail,
 				  nbuf);
