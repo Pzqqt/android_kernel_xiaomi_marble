@@ -3878,4 +3878,12 @@ ucfg_mlme_get_peer_phymode(struct wlan_objmgr_psoc *psoc, uint8_t *mac,
  * Return: True if full_roam_scan_period is in expected range, false otherwise.
  */
 bool ucfg_mlme_validate_full_roam_scan_period(uint32_t full_roam_scan_period);
+
+/**
+ * ucfg_mlme_validate_scan_period() - Validate if scan period is in valid range
+ * @value: Scan period in msec
+ *
+ * Return: True if roam_scan_period is in expected range, false otherwise.
+ */
+bool ucfg_mlme_validate_scan_period(uint32_t roam_scan_period);
 #endif /* _WLAN_MLME_UCFG_API_H_ */
