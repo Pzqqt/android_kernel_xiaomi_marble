@@ -915,6 +915,16 @@ enum cdp_rx_enh_capture_mode {
 };
 
 /**
+ * cdp_rx_enh_capture_peer - Rx enhanced capture peer filtering
+ * @CDP_RX_ENH_CAPTURE_PEER_DISABLED: Disable Rx ENH capture peer filtering
+ * @CDP_RX_ENH_CAPTURE_PEER_ENABLED: Enable Rx ENH capture peer filtering
+ */
+enum cdp_rx_enh_capture_peer {
+	CDP_RX_ENH_CAPTURE_PEER_DISABLED = 0,
+	CDP_RX_ENH_CAPTURE_PEER_ENABLED,
+};
+
+/**
  * cdp_tx_enh_capture_mode - Tx enhanced capture modes
  * @CDP_TX_ENH_CAPTURE_DISABLED: Disable Tx enhance capture for all peers
  * @CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS: Enable tx capture for all peers

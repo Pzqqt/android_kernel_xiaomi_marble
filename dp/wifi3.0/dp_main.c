@@ -7541,7 +7541,7 @@ dp_get_htt_stats(struct cdp_pdev *pdev_handle, void *data, uint32_t data_len)
  */
 static QDF_STATUS dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 				    enum cdp_pdev_param_type param,
-				    uint8_t val)
+				    uint32_t val)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	switch (param) {

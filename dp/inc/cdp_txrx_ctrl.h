@@ -499,7 +499,7 @@ cdp_peer_set_vlan_id(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 static inline QDF_STATUS cdp_txrx_set_pdev_param(ol_txrx_soc_handle soc,
 						 struct cdp_pdev *pdev,
 						 enum cdp_pdev_param_type type,
-						 uint8_t val)
+						 uint32_t val)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,

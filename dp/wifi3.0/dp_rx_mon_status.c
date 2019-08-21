@@ -908,7 +908,7 @@ dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
 	uint32_t ast_index;
 
 	ast_index = ppdu_info->rx_status.ast_index;
-	if (ast_index < (WLAN_UMAC_PSOC_MAX_PEERS * 2)) {
+	if (ast_index < wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
 		ast_entry = soc->ast_table[ast_index];
 		if (ast_entry) {
 			peer = ast_entry->peer;

@@ -639,7 +639,7 @@ struct cdp_ctrl_ops {
 	 */
 	QDF_STATUS (*txrx_set_pdev_param)(struct cdp_pdev *pdev,
 					  enum cdp_pdev_param_type type,
-					  uint8_t val);
+					  uint32_t val);
 	void * (*txrx_get_pldev)(struct cdp_pdev *pdev);
 
 #ifdef ATH_SUPPORT_NAC_RSSI

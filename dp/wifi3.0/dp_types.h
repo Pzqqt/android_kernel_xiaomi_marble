@@ -1503,11 +1503,14 @@ struct dp_pdev {
 	struct msdu_list msdu_list[MAX_MU_USERS];
 	/* RX enhanced capture mode */
 	uint8_t rx_enh_capture_mode;
+	/* Rx per peer enhanced capture mode */
+	bool rx_enh_capture_peer;
+	struct dp_vdev *rx_enh_monitor_vdev;
 	/* RX enhanced capture trailer enable/disable flag */
 	bool is_rx_enh_capture_trailer_enabled;
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
 	/* RX per MPDU/PPDU information */
-	struct cdp_rx_indication_mpdu mpdu_ind[MAX_MU_USERS];
+	struct cdp_rx_indication_mpdu mpdu_ind;
 #endif
 	/* pool addr for mcast enhance buff */
 	struct {
