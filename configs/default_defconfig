@@ -384,6 +384,7 @@ CONFIG_DUP_RX_DESC_WAR := y
 CONFIG_HTT_PADDR64 := y
 CONFIG_RX_OL := y
 CONFIG_TX_TID_OVERRIDE := y
+CONFIG_DP_TXRX_SOC_ATTACH := y
 endif
 
 # As per target team, build is done as follows:

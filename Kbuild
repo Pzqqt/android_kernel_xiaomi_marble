@@ -1255,8 +1255,9 @@ FWLOG_OBJS := $(FWLOG_DIR)/dbglog_host.o
 TXRX_DIR :=     core/dp/txrx
 TXRX_INC :=     -I$(WLAN_ROOT)/$(TXRX_DIR)
 
+ifneq ($(CONFIG_LITHIUM), y)
 TXRX_OBJS := $(TXRX_DIR)/ol_txrx.o \
-                $(TXRX_DIR)/ol_cfg.o \
+		$(TXRX_DIR)/ol_cfg.o \
                 $(TXRX_DIR)/ol_rx.o \
                 $(TXRX_DIR)/ol_rx_fwd.o \
                 $(TXRX_DIR)/ol_txrx.o \
@@ -1274,7 +1275,7 @@ TXRX_OBJS += $(TXRX_DIR)/ol_rx_reorder.o
 endif
 
 ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
-TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_event.o
+TXRX_OBJS +=	$(TXRX_DIR)/ol_txrx_event.o
 endif
 
 ifeq ($(CONFIG_LL_DP_SUPPORT), y)
@@ -1311,6 +1312,7 @@ endif
 ifeq ($(CONFIG_QCA_SUPPORT_TX_THROTTLE), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_throttle.o
 endif
+endif #LITHIUM
 
 ############ TXRX 3.0 ############
 TXRX3.0_DIR :=     core/dp/txrx3.0
@@ -1934,14 +1936,18 @@ OBJS +=		$(WMA_OBJS) \
 
 OBJS +=		$(HIF_OBJS) \
 		$(BMI_OBJS) \
-		$(HTT_OBJS) \
 		$(OS_IF_OBJ) \
 		$(TARGET_IF_OBJ) \
 		$(CLD_TARGET_IF_OBJ) \
 		$(GLOBAL_LMAC_IF_OBJ)
 
+ifneq ($(CONFIG_LITHIUM), y)
+OBJS += 	$(HTT_OBJS)
+endif
+
 ifeq ($(CONFIG_LITHIUM), y)
 OBJS += 	$(HAL_OBJS)
+OBJS += 	$(TXRX_DIR)/ol_txrx_event.o
 endif
 
 ifeq ($(CONFIG_FEATURE_FW_LOG_PARSING), y)
@@ -2567,6 +2573,7 @@ cppflags-$(CONFIG_FEATURE_TSO) += -DFEATURE_TSO
 cppflags-$(CONFIG_TSO_DEBUG_LOG_ENABLE) += -DTSO_DEBUG_LOG_ENABLE
 cppflags-$(CONFIG_DP_LFR) += -DDP_LFR
 cppflags-$(CONFIG_DUP_RX_DESC_WAR) += -DDUP_RX_DESC_WAR
+cppflags-$(CONFIG_DP_TXRX_SOC_ATTACH) += -DDP_TXRX_SOC_ATTACH
 cppflags-$(CONFIG_HTT_PADDR64) += -DHTT_PADDR64
 cppflags-$(CONFIG_WLAN_FEATURE_BMI) += -DWLAN_FEATURE_BMI
 cppflags-$(CONFIG_QCA_TX_PADDING_CREDIT_SUPPORT) += -DQCA_TX_PADDING_CREDIT_SUPPORT
