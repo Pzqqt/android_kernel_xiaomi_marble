@@ -1674,7 +1674,17 @@ exit_with_code:
 static int _wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 {
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int errno;
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != errno)
+		return errno;
+
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		hdd_debug("Driver Modules not Enabled ");
+		return 0;
+	}
 
 	errno = __wlan_hdd_cfg80211_resume_wlan(wiphy);
 	hif_pm_runtime_put(hif_ctx);
@@ -1885,7 +1895,17 @@ static int _wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 					   struct cfg80211_wowlan *wow)
 {
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int errno;
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != errno)
+		return errno;
+
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		hdd_debug("Driver Modules not Enabled ");
+		return 0;
+	}
 
 	errno = hif_pm_runtime_get_sync(hif_ctx);
 	if (errno)
