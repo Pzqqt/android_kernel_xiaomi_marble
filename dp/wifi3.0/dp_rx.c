@@ -1697,7 +1697,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	qdf_assert_always(hal_soc);
 
 	scn = soc->hif_handle;
-	hif_pm_runtime_mark_last_busy(scn);
+	hif_pm_runtime_mark_dp_rx_busy(scn);
 	intr_id = int_ctx->dp_intr_id;
 
 more_data:
