@@ -1069,8 +1069,10 @@ sap_find_valid_concurrent_session(mac_handle_t mac_handle)
 static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct sap_context *sap_ctx;
 
-	if (sap_find_valid_concurrent_session(mac_handle)) {
+	sap_ctx = sap_find_valid_concurrent_session(mac_handle);
+	if (sap_ctx && WLAN_REG_IS_5GHZ_CH(sap_ctx->channel)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "conc session exists, no need to clear dfs struct");
 		return QDF_STATUS_SUCCESS;
