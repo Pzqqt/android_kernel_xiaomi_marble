@@ -2573,4 +2573,12 @@ int wma_motion_det_base_line_host_event_handler(void *handle, u_int8_t *event,
  */
 QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid);
 
+/**
+ * wma_send_vdev_stop() - WMA api to send vdev stop to fw
+ * @params: del bss params
+ *
+ * Return: 0 on success, else error on failure
+ */
+QDF_STATUS wma_send_vdev_stop(struct del_bss_param *params);
+
 #endif

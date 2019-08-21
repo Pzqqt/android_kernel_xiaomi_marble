@@ -41,6 +41,7 @@
 #include "wlan_policy_mgr_api.h"
 #include "nan_datapath.h"
 #include "wlan_reg_services_api.h"
+#include "wma.h"
 
 #define MAX_SUPPORTED_PEERS_WEP 16
 
@@ -1190,41 +1191,20 @@ void lim_process_mlm_set_keys_cnf(struct mac_context *mac, uint32_t *msg_buf)
 				     pe_session, pe_session->smeSessionId);
 } /*** end lim_process_mlm_set_keys_cnf() ***/
 
-/**
- * lim_join_result_callback() - Callback to handle join rsp
- * @mac: Pointer to Global MAC structure
- * @param: callback argument
- * @status: status
- *
- * This callback function is used to delete PE session
- * entry and send join response to sme.
- *
- * Return: None
- */
-static void lim_join_result_callback(struct mac_context *mac, void *param,
-				     bool status)
+void lim_join_result_callback(struct mac_context *mac,
+			      uint8_t vdev_id)
 {
-	join_params *link_state_params = (join_params *) param;
 	struct pe_session *session;
-	uint8_t sme_session_id;
 
-	if (!link_state_params) {
-		pe_err("Link state params is NULL");
-		return;
-	}
-	session = pe_find_session_by_session_id(mac, link_state_params->
-						pe_session_id);
+	session = pe_find_session_by_sme_session_id(mac, vdev_id);
 	if (!session) {
-		qdf_mem_free(link_state_params);
 		return;
 	}
-	sme_session_id = session->smeSessionId;
 	lim_send_sme_join_reassoc_rsp(mac, eWNI_SME_JOIN_RSP,
-				      link_state_params->result_code,
-				      link_state_params->prot_status_code,
-				      session, sme_session_id);
+				      session->result_code,
+				      session->prot_status_code,
+				      session, vdev_id);
 	pe_delete_session(mac, session);
-	qdf_mem_free(link_state_params);
 }
 
 QDF_STATUS lim_sta_handle_connect_fail(join_params *param)
@@ -1287,24 +1267,30 @@ error:
 	 * failure should be sent to the upper layers.
 	 */
 	if (param->result_code != eSIR_SME_PEER_CREATE_FAILED) {
-		join_params *link_state_arg;
+		struct del_bss_param *params;
+		QDF_STATUS status;
 
-		link_state_arg = qdf_mem_malloc(sizeof(*link_state_arg));
-		if (link_state_arg) {
-			link_state_arg->result_code = param->result_code;
-			link_state_arg->prot_status_code =
-							param->prot_status_code;
-			link_state_arg->pe_session_id = session->peSessionId;
+		session->prot_status_code = param->prot_status_code;
+		session->result_code = param->result_code;
+
+		params = qdf_mem_malloc(sizeof(*params));
+		if (!params) {
+			lim_join_result_callback(mac_ctx,
+						 session->smeSessionId);
+			return QDF_STATUS_E_NOMEM;
 		}
-		if (lim_set_link_state(mac_ctx, eSIR_LINK_DOWN_STATE,
-				       session->bssId,
-				       session->self_mac_addr,
-				       lim_join_result_callback,
-				       link_state_arg) != QDF_STATUS_SUCCESS) {
-			qdf_mem_free(link_state_arg);
-			pe_err("Failed to set the LinkState");
+		params->vdev_id = session->smeSessionId;
+		qdf_mem_copy(params->bssid, session->bssId,
+			     sizeof(tSirMacAddr));
+
+		status = wma_send_vdev_stop(params);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			lim_join_result_callback(mac_ctx,
+						 session->smeSessionId);
+			qdf_mem_free(params);
 		}
-		return QDF_STATUS_SUCCESS;
+
+		return status;
 	}
 
 

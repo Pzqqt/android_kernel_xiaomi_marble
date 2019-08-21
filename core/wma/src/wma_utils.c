@@ -4206,8 +4206,12 @@ wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 
 	if (!mlme_get_vdev_start_failed(vdev_mlme->vdev))
 		if (req->msg_type == WMA_SET_LINK_STATE ||
-			req->type == WMA_SET_LINK_PEER_RSP)
-			wma_send_set_link_response(wma, req);
+		    req->type == WMA_SET_LINK_PEER_RSP) {
+			lim_join_result_callback(
+					wma->mac_context,
+					wlan_vdev_get_id(vdev_mlme->vdev));
+			qdf_mem_free(req->user_data);
+		}
 		else
 			wma_send_del_bss_response(wma, req);
 	else

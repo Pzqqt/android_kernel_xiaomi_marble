@@ -783,6 +783,19 @@ void lim_process_switch_channel_rsp(struct mac_context *mac, void *);
  */
 QDF_STATUS lim_sta_handle_connect_fail(join_params *param);
 
+/**
+ * lim_join_result_callback() - Callback to handle join rsp
+ * @mac: Pointer to Global MAC structure
+ * @vdev_id: vdev id
+ *
+ * This callback function is used to delete PE session
+ * entry and send join response to sme.
+ *
+ * Return: None
+ */
+void lim_join_result_callback(struct mac_context *mac,
+			      uint8_t vdev_id);
+
 #ifdef WLAN_FEATURE_HOST_ROAM
 QDF_STATUS lim_sta_reassoc_error_handler(struct reassoc_params *param);
 #else

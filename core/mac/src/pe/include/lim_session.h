@@ -579,6 +579,8 @@ struct pe_session {
 	bool enable_session_twt_support;
 	uint32_t cac_duration_ms;
 	tSirResultCodes stop_bss_reason;
+	uint16_t prot_status_code;
+	tSirResultCodes result_code;
 	uint32_t dfs_regdomain;
 };
 

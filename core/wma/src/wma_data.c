@@ -1180,17 +1180,14 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 {
 	struct cdp_pdev *pdev;
 	struct cdp_vdev *vdev;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t vdev_id;
 	bool roam_synch_in_progress = false;
 	QDF_STATUS status;
-	struct wma_target_req *msg;
 
 	params->status = true;
 	WMA_LOGD("%s: state %d selfmac %pM", __func__,
 		 params->state, params->self_mac_addr);
-	if ((params->state != eSIR_LINK_PREASSOC_STATE) &&
-	    (params->state != eSIR_LINK_DOWN_STATE)) {
+	if (params->state != eSIR_LINK_PREASSOC_STATE) {
 		WMA_LOGD("%s: unsupported link state %d",
 			 __func__, params->state);
 		params->status = false;
@@ -1217,53 +1214,17 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 		goto out;
 	}
 
-	if (params->state == eSIR_LINK_PREASSOC_STATE) {
-		if (wma_is_roam_synch_in_progress(wma, vdev_id))
-			roam_synch_in_progress = true;
-		status = wma_create_peer(wma, pdev, vdev, params->bssid,
-				WMI_PEER_TYPE_DEFAULT, vdev_id,
-				roam_synch_in_progress);
-		if (status != QDF_STATUS_SUCCESS) {
-			WMA_LOGE("%s: Unable to create peer", __func__);
-			params->status = false;
-		}
-		if (roam_synch_in_progress)
-			return;
-	} else {
-		WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP",
-			 __func__, vdev_id);
-		cdp_fc_vdev_pause(soc,
-			wma->interfaces[vdev_id].handle,
-			OL_TXQ_PAUSE_REASON_VDEV_STOP);
-		msg = wma_fill_vdev_req(wma, vdev_id,
-				WMA_SET_LINK_STATE,
-				WMA_TARGET_REQ_TYPE_VDEV_STOP, params,
-				WMA_VDEV_STOP_REQUEST_TIMEOUT);
-		if (!msg) {
-			WMA_LOGP(FL("Failed to fill vdev request for vdev_id %d"),
-				 vdev_id);
-			params->status = false;
-			status = QDF_STATUS_E_NOMEM;
-			goto out;
-		}
-		wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
-		if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
-			WMA_LOGP("%s: %d Failed to send vdev stop",
-				 __func__, __LINE__);
-			params->status = false;
-			wma_remove_vdev_req(wma, vdev_id,
-				WMA_TARGET_REQ_TYPE_VDEV_STOP);
-		} else {
-			WMA_LOGP("%s: %d vdev stop sent vdev %d",
-				 __func__, __LINE__, vdev_id);
-			/*
-			 * Remove peer, Vdev down and sending set link
-			 * response will be handled in vdev stop response
-			 * handler
-			 */
-			return;
-		}
+	if (wma_is_roam_synch_in_progress(wma, vdev_id))
+		roam_synch_in_progress = true;
+	status = wma_create_peer(wma, pdev, vdev, params->bssid,
+				 WMI_PEER_TYPE_DEFAULT, vdev_id,
+				 roam_synch_in_progress);
+	if (status != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: Unable to create peer", __func__);
+		params->status = false;
 	}
+	if (roam_synch_in_progress)
+		return;
 out:
 	wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, (void *)params, 0);
 }
