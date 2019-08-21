@@ -55,14 +55,25 @@ void pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev);
 /**
  * pmo_register_action_frame_patterns() - register action frame map to fw
  * @vdev: objmgr vdev
+ * @suspend_type: suspend mode runtime pm suspend or normal suspend.
  *
  * This is called to push action frames wow patterns from local
  * cache to firmware.
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void pmo_register_action_frame_patterns(
-		struct wlan_objmgr_vdev *vdev);
+QDF_STATUS
+pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev,
+				   enum qdf_suspend_type suspend_type);
+
+/**
+ * pmo_clear_action_frame_patterns() - clear the action frame
+ * pattern bitmap in firmware
+ * @vdev: objmgr vdev
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS pmo_clear_action_frame_patterns(struct wlan_objmgr_vdev *vdev);
 
 /**
  * pmo_set_wow_event_bitmap() - Assign bitmask with wow event

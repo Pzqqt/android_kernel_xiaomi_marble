@@ -406,6 +406,28 @@ ucfg_pmo_ns_addr_scope(uint32_t ipv6_scope);
 QDF_STATUS ucfg_pmo_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * ucfg_pmo_enable_action_frame_patterns() - enable the action frame wake up
+ * patterns as part of the enable host offloads.
+ * @vdev: objmgr vdev to configure
+ * @suspend_type: Suspend type. Runtime PM or System Suspend mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_pmo_enable_action_frame_patterns(struct wlan_objmgr_vdev *vdev,
+				      enum qdf_suspend_type suspend_type);
+
+/**
+ * ucfg_pmo_disable_action_frame_patterns() - Reset the action frame wake up
+ * patterns as a part of suspend resume.
+ * @vdev: objmgr vdev to configure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_pmo_disable_action_frame_patterns(struct wlan_objmgr_vdev *vdev);
+
+/**
  * ucfg_pmo_disable_hw_filter_in_fwr() - disable previously configured hw filter
  * @vdev: objmgr vdev to configure
  *
