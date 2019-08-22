@@ -231,4 +231,31 @@ QDF_STATUS mlme_set_vdev_stop_type(struct wlan_objmgr_vdev *vdev,
  * Return: associate type
  */
 enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_set_bss_params() - set bss params
+ * @vdev: vdev pointer
+ * @bss_params: bss params address to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_set_bss_params(struct wlan_objmgr_vdev *vdev,
+			       struct bss_params *bss_params);
+
+/**
+ * mlme_get_bss_params() - get bss params and clear it from vdev mlme
+ * @vdev: vdev pointer
+ *
+ * Return: bss_params
+ */
+struct bss_params *mlme_get_bss_params(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_clear_bss_params() - clear bss params from vdev mlme
+ * @vdev: vdev pointer
+ *
+ * Return: None
+ */
+void mlme_clear_bss_params(struct wlan_objmgr_vdev *vdev);
+
 #endif
