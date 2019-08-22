@@ -377,7 +377,7 @@ static struct dp_audio_private *dp_audio_get_data(struct platform_device *pdev)
 	}
 
 	dp_audio = ext_data->intf_data;
-	if (!ext_data) {
+	if (!dp_audio) {
 		DP_ERR("invalid intf data\n");
 		return ERR_PTR(-EINVAL);
 	}
@@ -423,6 +423,11 @@ static int dp_audio_get_edid_blk(struct platform_device *pdev,
 	int rc = 0;
 	struct dp_audio_private *audio;
 	struct sde_edid_ctrl *edid;
+
+	if (!blk) {
+		DP_ERR("invalid input\n");
+		return -EINVAL;
+	}
 
 	audio = dp_audio_get_data(pdev);
 	if (IS_ERR(audio)) {
