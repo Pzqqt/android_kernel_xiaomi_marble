@@ -1451,7 +1451,7 @@ mode_set:
 
 	crtc_state = drm_atomic_get_new_crtc_state(state, new_conn_state->crtc);
 
-	if (drm_atomic_crtc_needs_modeset(crtc_state)) {
+	if (drm_atomic_crtc_needs_modeset(crtc_state) && crtc_state->active) {
 		c_conn = to_sde_connector(connector);
 
 		dp_display->convert_to_dp_mode(dp_display, c_conn->drv_panel,
