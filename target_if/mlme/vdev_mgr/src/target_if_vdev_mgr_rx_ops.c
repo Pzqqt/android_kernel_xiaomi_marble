@@ -199,10 +199,9 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 }
 #endif
 
-static int target_if_vdev_mgr_start_response_handler(
-					ol_scn_t scn,
-					uint8_t *data,
-					uint32_t datalen)
+int target_if_vdev_mgr_start_response_handler(ol_scn_t scn,
+					      uint8_t *data,
+					      uint32_t datalen)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct wlan_objmgr_psoc *psoc;
