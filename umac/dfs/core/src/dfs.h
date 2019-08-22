@@ -2166,16 +2166,10 @@ int dfs_get_debug_info(struct wlan_dfs *dfs,
 		void *data);
 
 /**
- * dfs_cac_timer_init() - Initialize cac timers.
+ * dfs_cac_timer_attach() - Initialize cac timers.
  * @dfs: Pointer to wlan_dfs structure.
  */
-void dfs_cac_timer_init(struct wlan_dfs *dfs);
-
-/**
- * dfs_cac_attach() - Initialize dfs cac variables.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_cac_attach(struct wlan_dfs *dfs);
+void dfs_cac_timer_attach(struct wlan_dfs *dfs);
 
 /**
  * dfs_cac_timer_reset() - Cancel dfs cac timers.

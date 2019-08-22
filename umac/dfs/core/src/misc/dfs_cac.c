@@ -168,8 +168,10 @@ static os_timer_func(dfs_cac_timeout)
 	}
 }
 
-void dfs_cac_timer_init(struct wlan_dfs *dfs)
+void dfs_cac_timer_attach(struct wlan_dfs *dfs)
 {
+	dfs->dfs_cac_timeout_override = -1;
+	dfs->wlan_dfs_cac_time = WLAN_DFS_WAIT_MS;
 	qdf_timer_init(NULL,
 			&(dfs->dfs_cac_timer),
 			dfs_cac_timeout,
@@ -181,13 +183,6 @@ void dfs_cac_timer_init(struct wlan_dfs *dfs)
 			dfs_cac_valid_timeout,
 			(void *)(dfs),
 			QDF_TIMER_TYPE_WAKE_APPS);
-}
-
-void dfs_cac_attach(struct wlan_dfs *dfs)
-{
-	dfs->dfs_cac_timeout_override = -1;
-	dfs->wlan_dfs_cac_time = WLAN_DFS_WAIT_MS;
-	dfs_cac_timer_init(dfs);
 }
 
 void dfs_cac_timer_reset(struct wlan_dfs *dfs)

@@ -185,7 +185,7 @@ int dfs_attach(struct wlan_dfs *dfs)
 			return ret;
 		}
 	}
-	dfs_cac_attach(dfs);
+	dfs_cac_timer_attach(dfs);
 	dfs_zero_cac_attach(dfs);
 	dfs_etsi_precac_attach(dfs);
 	dfs_nol_attach(dfs);
@@ -758,7 +758,7 @@ void dfs_update_cur_chan_flags(struct wlan_dfs *dfs,
 
 int dfs_reinit_timers(struct wlan_dfs *dfs)
 {
-	dfs_cac_attach(dfs);
+	dfs_cac_timer_attach(dfs);
 	dfs_zero_cac_timer_init(dfs->dfs_soc_obj);
 	dfs_nol_timer_init(dfs);
 	dfs_main_task_testtimer_init(dfs);
