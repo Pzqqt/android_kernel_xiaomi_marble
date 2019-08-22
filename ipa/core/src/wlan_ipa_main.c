@@ -125,7 +125,7 @@ void ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc, void *dp_soc)
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_IPA_ID);
 }
 
-void ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc, void *txrx_handle)
+void ipa_set_pdev_id(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id)
 {
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_ipa_priv *ipa_obj;
@@ -150,7 +150,7 @@ void ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc, void *txrx_handle)
 		return;
 	}
 
-	ipa_obj->dp_pdev = txrx_handle;
+	ipa_obj->dp_pdev_id = pdev_id;
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_IPA_ID);
 }
 

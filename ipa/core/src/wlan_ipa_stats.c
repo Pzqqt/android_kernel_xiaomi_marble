@@ -423,7 +423,7 @@ static void wlan_ipa_dump_iface_context(struct wlan_ipa_priv *ipa_ctx)
 
 		ipa_info("\niface_context[%d]----\n"
 			"\tipa_ctx: %pK\n"
-			"\ttl_context: %pK\n"
+			"\tsession_id: %d\n"
 			"\tcons_client: %d\n"
 			"\tprod_client: %d\n"
 			"\tiface_id: %d\n"
@@ -431,7 +431,7 @@ static void wlan_ipa_dump_iface_context(struct wlan_ipa_priv *ipa_ctx)
 			"\tifa_address: 0x%x\n",
 			i,
 			iface_context->ipa_ctx,
-			iface_context->tl_context,
+			iface_context->session_id,
 			iface_context->cons_client,
 			iface_context->prod_client,
 			iface_context->iface_id,
@@ -468,7 +468,7 @@ void wlan_ipa_uc_stat_request(struct wlan_ipa_priv *ipa_ctx, uint8_t reason)
 	if (wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
 	    (false == ipa_ctx->resource_loading)) {
 		ipa_ctx->stat_req_reason = reason;
-		cdp_ipa_get_stat(ipa_ctx->dp_soc, ipa_ctx->dp_pdev);
+		cdp_ipa_get_stat(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id);
 		qdf_mutex_release(&ipa_ctx->ipa_lock);
 	} else {
 		qdf_mutex_release(&ipa_ctx->ipa_lock);
@@ -520,7 +520,7 @@ static void wlan_ipa_print_session_info(struct wlan_ipa_priv *ipa_ctx)
 	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 		iface_context = &ipa_ctx->iface_context[i];
 
-		if (!iface_context->tl_context)
+		if (iface_context->session_id == WLAN_IPA_MAX_SESSION)
 			continue;
 
 		ipa_info("\nIFACE[%d]: mode:%d, offload:%d",
@@ -604,7 +604,7 @@ static void wlan_ipa_print_txrx_stats(struct wlan_ipa_priv *ipa_ctx)
 	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 
 		iface_context = &ipa_ctx->iface_context[i];
-		if (!iface_context->tl_context)
+		if (iface_context->session_id == WLAN_IPA_MAX_SESSION)
 			continue;
 
 		ipa_info("IFACE[%d]: TX:%llu, TX DROP:%llu, TX ERR:%llu,"
@@ -828,7 +828,7 @@ static void wlan_ipa_uc_sharing_stats_request(struct wlan_ipa_priv *ipa_ctx,
 	qdf_mutex_acquire(&ipa_ctx->ipa_lock);
 	if (false == ipa_ctx->resource_loading) {
 		qdf_mutex_release(&ipa_ctx->ipa_lock);
-		cdp_ipa_uc_get_share_stats(ipa_ctx->dp_soc, ipa_ctx->dp_pdev,
+		cdp_ipa_uc_get_share_stats(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id,
 					   reset_stats);
 	} else {
 		qdf_mutex_release(&ipa_ctx->ipa_lock);
@@ -854,7 +854,7 @@ static void wlan_ipa_uc_set_quota(struct wlan_ipa_priv *ipa_ctx,
 	if (false == ipa_ctx->resource_loading) {
 		qdf_mutex_release(&ipa_ctx->ipa_lock);
 	} else {
-		cdp_ipa_uc_set_quota(ipa_ctx->dp_soc, ipa_ctx->dp_pdev,
+		cdp_ipa_uc_set_quota(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id,
 				     quota_bytes);
 		qdf_mutex_release(&ipa_ctx->ipa_lock);
 	}
