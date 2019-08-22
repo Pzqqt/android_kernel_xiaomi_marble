@@ -220,10 +220,12 @@ enum msm_mdp_conn_property {
  * enum msm_display_compression_type - compression method used for pixel stream
  * @MSM_DISPLAY_COMPRESSION_NONE:     Pixel data is not compressed
  * @MSM_DISPLAY_COMPRESSION_DSC:      DSC compresison is used
+ * @MSM_DISPLAY_COMPRESSION_VDC:      VDC compresison is used
  */
 enum msm_display_compression_type {
 	MSM_DISPLAY_COMPRESSION_NONE,
 	MSM_DISPLAY_COMPRESSION_DSC,
+	MSM_DISPLAY_COMPRESSION_VDC
 };
 
 /**
@@ -652,6 +654,7 @@ struct msm_mode_info {
  * struct msm_resource_caps_info - defines hw resources
  * @num_lm              number of layer mixers available
  * @num_dsc             number of dsc available
+ * @num_vdc             number of vdc available
  * @num_ctl             number of ctl available
  * @num_3dmux           number of 3d mux available
  * @max_mixer_width:    max width supported by layer mixer
@@ -659,6 +662,7 @@ struct msm_mode_info {
 struct msm_resource_caps_info {
 	uint32_t num_lm;
 	uint32_t num_dsc;
+	uint32_t num_vdc;
 	uint32_t num_ctl;
 	uint32_t num_3dmux;
 	uint32_t max_mixer_width;
