@@ -441,9 +441,15 @@ void ipa_component_config_update(struct wlan_objmgr_psoc *psoc);
  *
  * Return: IPA config tx buffer count
  */
-
 uint32_t ipa_get_tx_buf_count(void);
 
+/**
+ * ipa_update_tx_stats() - Update embedded tx traffic in bytes to IPA
+ *
+ * Return: IPA config tx buffer count
+ */
+void ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
+			 uint64_t ap_tx);
 #else /* Not IPA_OFFLOAD */
 typedef QDF_STATUS (*wlan_ipa_softap_xmit)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
 typedef void (*wlan_ipa_send_to_nw)(qdf_nbuf_t nbuf, qdf_netdev_t dev);

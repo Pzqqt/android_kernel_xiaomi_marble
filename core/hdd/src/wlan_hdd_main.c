@@ -8552,6 +8552,7 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 	A_STATUS ret;
 	bool connected = false;
 	uint32_t ipa_tx_packets = 0, ipa_rx_packets = 0;
+	uint64_t sta_tx_bytes, sap_tx_bytes;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		goto stop_work;
@@ -8606,8 +8607,13 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 			}
 		}
 
-		if (adapter->device_mode == QDF_SAP_MODE)
+		if (adapter->device_mode == QDF_SAP_MODE) {
 			con_sap_adapter = adapter;
+			sap_tx_bytes = adapter->stats.tx_bytes;
+		}
+
+		if (adapter->device_mode == QDF_STA_MODE)
+			sta_tx_bytes = adapter->stats.tx_bytes;
 
 		hdd_set_driver_del_ack_enable(adapter->vdev_id, hdd_ctx,
 					      rx_packets);
@@ -8633,9 +8639,12 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 	tx_packets += fwd_tx_packets_diff;
 	rx_packets += fwd_rx_packets_diff;
 
+	/* Send embedded Tx packet bytes on STA & SAP interface to IPA driver */
+	ucfg_ipa_update_tx_stats(hdd_ctx->pdev, sta_tx_bytes, sap_tx_bytes);
+
 	if (ucfg_ipa_is_fw_wdi_activated(hdd_ctx->pdev)) {
 		ucfg_ipa_uc_stat_query(hdd_ctx->pdev, &ipa_tx_packets,
-				       &ipa_rx_packets);
+				&ipa_rx_packets);
 		tx_packets += (uint64_t)ipa_tx_packets;
 		rx_packets += (uint64_t)ipa_rx_packets;
 

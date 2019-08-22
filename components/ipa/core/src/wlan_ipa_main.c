@@ -643,3 +643,20 @@ uint32_t ipa_get_tx_buf_count(void)
 {
 	return g_ipa_config ? g_ipa_config->txbuf_count : 0;
 }
+
+void ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
+			 uint64_t ap_tx)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!ipa_config_is_enabled())
+		return;
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	wlan_ipa_update_tx_stats(ipa_obj, sta_tx, ap_tx);
+}

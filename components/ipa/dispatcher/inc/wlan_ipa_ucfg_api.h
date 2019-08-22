@@ -355,6 +355,17 @@ void ucfg_ipa_component_config_update(struct wlan_objmgr_psoc *psoc);
  */
 uint32_t ucfg_ipa_get_tx_buf_count(void);
 
+/**
+ * ucfg_ipa_update_tx_stats() - send embedded tx traffic in bytes to IPA
+ * @pdev: pdev obj
+ * @sta_tx: tx in bytes on sta vdev
+ * @ap_tx: tx in bytes on sap vdev
+ *
+ * Return: void
+ */
+void ucfg_ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
+			      uint64_t ap_tx);
+
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -558,6 +569,12 @@ static inline
 uint32_t ucfg_ipa_get_tx_buf_count(void)
 {
 	return 0;
+}
+
+static inline
+void ucfg_ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
+			      uint64_t ap_tx)
+{
 }
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_UCFG_API_H_ */
