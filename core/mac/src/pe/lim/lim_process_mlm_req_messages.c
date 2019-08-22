@@ -372,6 +372,8 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 
 	/* Update PE sessionId */
 	addbss_param->sessionId = mlm_start_req->sessionId;
+	addbss_param->bss_idx = session->smeSessionId;
+
 
 	/* Send the SSID to HAL to enable SSID matching for IBSS */
 	addbss_param->ssId.length = mlm_start_req->ssId.length;

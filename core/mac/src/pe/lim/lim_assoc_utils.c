@@ -3636,6 +3636,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 
 	/* Update PE session ID */
 	pAddBssParams->sessionId = pe_session->peSessionId;
+	pAddBssParams->bss_idx = pe_session->smeSessionId;
 
 	pAddBssParams->beaconInterval = bssDescription->beaconInterval;
 
@@ -4457,6 +4458,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	pAddBssParams->staContext.smesessionId = pe_session->smeSessionId;
 	pAddBssParams->staContext.sessionId = pe_session->peSessionId;
 	pAddBssParams->sessionId = pe_session->peSessionId;
+	pAddBssParams->bss_idx = pe_session->smeSessionId;
 
 	pAddBssParams->halPersona = (uint8_t)pe_session->opmode;
 

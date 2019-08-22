@@ -417,6 +417,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	pAddBssParams->staContext.sessionId = ft_session->peSessionId;
 	pAddBssParams->staContext.smesessionId = ft_session->smeSessionId;
 	pAddBssParams->sessionId = ft_session->peSessionId;
+	pAddBssParams->bss_idx = ft_session->smeSessionId;
 
 	/* Set a new state for MLME */
 	if (!lim_is_roam_synch_in_progress(ft_session)) {
