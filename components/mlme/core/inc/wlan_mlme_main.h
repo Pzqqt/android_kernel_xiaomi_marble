@@ -91,6 +91,7 @@ enum vdev_assoc_type {
  * @peer_disconnect_ies: Disconnect IEs received in deauth/disassoc frames
  *			 from peer
  * @vdev_stop_type: vdev stop type request
+ * @bss_params: Bss params to be used in add bss resp handler
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -106,6 +107,7 @@ struct mlme_legacy_priv {
 	struct wlan_ies self_disconnect_ies;
 	struct wlan_ies peer_disconnect_ies;
 	uint32_t vdev_stop_type;
+	struct bss_params *bss_params;
 };
 
 #ifndef CRYPTO_SET_KEY_CONVERGED

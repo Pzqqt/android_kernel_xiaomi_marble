@@ -740,6 +740,51 @@ enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev)
 	return mlme_priv->assoc_type;
 }
 
+QDF_STATUS mlme_set_bss_params(struct wlan_objmgr_vdev *vdev,
+			       struct bss_params *bss_params)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_free(mlme_priv->bss_params);
+	mlme_priv->bss_params = bss_params;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+struct bss_params *mlme_get_bss_params(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+	struct bss_params *bss_params;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return NULL;
+	}
+	bss_params = mlme_priv->bss_params;
+	mlme_priv->bss_params = NULL;
+
+	return bss_params;
+}
+
+void mlme_clear_bss_params(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return;
+	}
+	mlme_priv->bss_params = NULL;
+}
+
 QDF_STATUS
 mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
 {
@@ -870,6 +915,8 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 
 	mlme_free_self_disconnect_ies(vdev_mlme->vdev);
 	mlme_free_peer_disconnect_ies(vdev_mlme->vdev);
+	qdf_mem_free(vdev_mlme->ext_vdev_ptr->bss_params);
+	vdev_mlme->ext_vdev_ptr->bss_params = NULL;
 	qdf_mem_free(vdev_mlme->ext_vdev_ptr);
 	vdev_mlme->ext_vdev_ptr = NULL;
 
@@ -1047,6 +1094,29 @@ vdevmgr_vdev_stop_rsp_handle(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
+ * vdevmgr_vdev_delete_rsp_handle() - callback to handle vdev delete response
+ * @vdev_mlme: vdev mlme object
+ * @rsp: pointer to vdev delete response
+ *
+ * This function is called to handle vdev delete response and send result to
+ * upper layer
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+vdevmgr_vdev_start_rsp_handle(struct vdev_mlme_obj *vdev_mlme,
+			      struct vdev_start_response *rsp)
+{
+	QDF_STATUS status;
+
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	status =  wma_vdev_start_resp_handler(vdev_mlme, rsp);
+
+	return status;
+}
+
+/**
  * struct sta_mlme_ops - VDEV MLME operation callbacks strucutre for sta
  * @mlme_vdev_start_send:               callback to initiate actions of VDEV
  *                                      MLME start operation
@@ -1089,6 +1159,7 @@ static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
 	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
 	.mlme_vdev_ext_stop_rsp = vdevmgr_vdev_stop_rsp_handle,
+	.mlme_vdev_ext_start_rsp = vdevmgr_vdev_start_rsp_handle,
 };
 
 /**
@@ -1139,6 +1210,7 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_is_newchan_no_cac = ap_mlme_vdev_is_newchan_no_cac,
 	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
 	.mlme_vdev_ext_stop_rsp = vdevmgr_vdev_stop_rsp_handle,
+	.mlme_vdev_ext_start_rsp = vdevmgr_vdev_start_rsp_handle,
 };
 
 static struct vdev_mlme_ops mon_mlme_ops = {
@@ -1150,6 +1222,7 @@ static struct vdev_mlme_ops mon_mlme_ops = {
 	.mlme_vdev_stop_send = mon_mlme_vdev_stop_send,
 	.mlme_vdev_down_send = mon_mlme_vdev_down_send,
 	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
+	.mlme_vdev_ext_start_rsp = vdevmgr_vdev_start_rsp_handle,
 };
 
 /**
