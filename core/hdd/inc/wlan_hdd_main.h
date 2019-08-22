@@ -453,6 +453,7 @@ struct hdd_tx_rx_stats {
 	__u32 rx_gro_dropped;
 	__u32 rx_non_aggregated;
 	__u32 rx_gro_flush_skip;
+	__u32 rx_gro_low_tput_flush;
 
 	/* txflow stats */
 	bool     is_txflow_paused;
@@ -1755,6 +1756,8 @@ struct hdd_context {
 	uint64_t prev_rx_offload_pkts;
 	int cur_tx_level;
 	uint64_t prev_tx;
+	qdf_atomic_t low_tput_gro_enable;
+	uint32_t bus_low_vote_cnt;
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 	struct completion ready_to_suspend;
@@ -2370,6 +2373,12 @@ hdd_get_current_throughput_level(struct hdd_context *hdd_ctx)
 	return hdd_ctx->cur_vote_level;
 }
 
+static inline bool
+hdd_is_low_tput_gro_enable(struct hdd_context *hdd_ctx)
+{
+	return (qdf_atomic_read(&hdd_ctx->low_tput_gro_enable)) ? true : false;
+}
+
 #define GET_CUR_RX_LVL(config) ((config)->cur_rx_level)
 #define GET_BW_COMPUTE_INTV(config) ((config)->bus_bw_compute_interval)
 #else
@@ -2419,6 +2428,12 @@ static inline enum pld_bus_width_type
 hdd_get_current_throughput_level(struct hdd_context *hdd_ctx)
 {
 	return PLD_BUS_WIDTH_NONE;
+}
+
+static inline bool
+hdd_is_low_tput_gro_enable(struct hdd_context *hdd_ctx)
+{
+	return false;
 }
 
 #define GET_CUR_RX_LVL(config) 0

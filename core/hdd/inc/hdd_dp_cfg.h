@@ -640,6 +640,35 @@
 		500, \
 		CFG_VALUE_OR_DEFAULT, \
 		"High Threshold inorder to trigger High Tx Tp")
+
+/*
+ * <ini>
+ * gBusLowTputCntThreshold - Threshold count to trigger low Tput
+ *			     GRO flush skip
+ * @Min: 0
+ * @Max: 200
+ * @Default: 10
+ *
+ * This ini is a threshold that if count of times for bus Tput level
+ * PLD_BUS_WIDTH_LOW in bus_bw_timer() >= this threshold, will enable skipping
+ * GRO flush, current default threshold is 10, then will delay GRO flush-skip
+ * 1 second for low Tput level.
+ *
+ * Supported Feature: GRO flush skip when low T-put
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_BUS_LOW_BW_CNT_THRESHOLD \
+		CFG_INI_UINT( \
+		"gBusLowTputCntThreshold", \
+		0, \
+		200, \
+		10, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Threshold to trigger GRO flush skip for low T-put")
+
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 #ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
@@ -1225,7 +1254,8 @@
 	CFG(CFG_DP_TCP_DELACK_THRESHOLD_HIGH) \
 	CFG(CFG_DP_TCP_DELACK_THRESHOLD_LOW) \
 	CFG(CFG_DP_TCP_DELACK_TIMER_COUNT) \
-	CFG(CFG_DP_TCP_TX_HIGH_TPUT_THRESHOLD)
+	CFG(CFG_DP_TCP_TX_HIGH_TPUT_THRESHOLD) \
+	CFG(CFG_DP_BUS_LOW_BW_CNT_THRESHOLD)
 #else
 #define CFG_HDD_DP_BUS_BANDWIDTH
 #endif

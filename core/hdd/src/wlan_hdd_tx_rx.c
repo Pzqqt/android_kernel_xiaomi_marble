@@ -1545,12 +1545,18 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 					struct sk_buff *skb)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 	gro_result_t gro_res;
 
 	skb_set_hash(skb, QDF_NBUF_CB_RX_FLOW_ID(skb), PKT_HASH_TYPE_L4);
 
 	local_bh_disable();
 	gro_res = napi_gro_receive(napi_to_use, skb);
+
+	if (hdd_get_current_throughput_level(hdd_ctx) == PLD_BUS_WIDTH_IDLE) {
+		adapter->hdd_stats.tx_rx_stats.rx_gro_low_tput_flush++;
+		napi_gro_flush(napi_to_use, false);
+	}
 	local_bh_enable();
 
 	if (gro_res == GRO_DROP)
@@ -1888,8 +1894,7 @@ QDF_STATUS hdd_rx_thread_gro_flush_ind_cbk(void *adapter, int rx_ctx_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (hdd_get_current_throughput_level(hdd_adapter->hdd_ctx) ==
-	    PLD_BUS_WIDTH_LOW) {
+	if (hdd_is_low_tput_gro_enable(hdd_adapter->hdd_ctx)) {
 		hdd_adapter->hdd_stats.tx_rx_stats.rx_gro_flush_skip++;
 		return QDF_STATUS_SUCCESS;
 	}
@@ -2902,6 +2907,8 @@ static void hdd_ini_bus_bandwidth(struct hdd_config *config,
 		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_LOW_THRESHOLD);
 	config->bus_bw_compute_interval =
 		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_COMPUTE_INTERVAL);
+	config->bus_low_cnt_threshold =
+		cfg_get(psoc, CFG_DP_BUS_LOW_BW_CNT_THRESHOLD);
 }
 
 /**
