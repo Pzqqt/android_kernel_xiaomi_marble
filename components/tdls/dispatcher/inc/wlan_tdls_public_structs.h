@@ -878,9 +878,10 @@ struct tdls_ch_params {
  * @peer_chan: peer channel list
  * @peer_oper_classlen: peer operating class length
  * @peer_oper_class: peer operating class
- * @pref_off_channum: peer offchannel number
+ * @pref_off_channum: preferred offchannel number
  * @pref_off_chan_bandwidth: peer offchannel bandwidth
  * @opclass_for_prefoffchan: operating class for offchannel
+ * @pref_offchan_freq: preferred offchannel frequency
  */
 struct tdls_peer_params {
 	uint8_t is_peer_responder;
@@ -897,6 +898,7 @@ struct tdls_peer_params {
 	uint8_t pref_off_channum;
 	uint8_t pref_off_chan_bandwidth;
 	uint8_t opclass_for_prefoffchan;
+	uint32_t pref_offchan_freq;
 };
 
 /**
@@ -922,6 +924,7 @@ struct tdls_peer_update_state {
  * @tdls_off_ch: Target Off Channel
  * @oper_class: Operating class for target channel
  * @is_responder: Responder or initiator
+ * @tdls_off_chan_freq: Target Off Channel frequency
  */
 struct tdls_channel_switch_params {
 	uint32_t    vdev_id;
@@ -931,6 +934,7 @@ struct tdls_channel_switch_params {
 	uint8_t     tdls_sw_mode;
 	uint8_t     oper_class;
 	uint8_t     is_responder;
+	uint32_t    tdls_off_chan_freq;
 };
 
 /**
