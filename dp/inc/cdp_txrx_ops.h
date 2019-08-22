@@ -1378,38 +1378,51 @@ struct cdp_throttle_ops {
  * @ipa_tx_data_frame:
  */
 struct cdp_ipa_ops {
-	QDF_STATUS (*ipa_get_resource)(struct cdp_pdev *pdev);
-	QDF_STATUS (*ipa_set_doorbell_paddr)(struct cdp_pdev *pdev);
-	QDF_STATUS (*ipa_set_active)(struct cdp_pdev *pdev, bool uc_active,
-		bool is_tx);
-	QDF_STATUS (*ipa_op_response)(struct cdp_pdev *pdev, uint8_t *op_msg);
-	QDF_STATUS (*ipa_register_op_cb)(struct cdp_pdev *pdev,
-		void (*ipa_uc_op_cb_type)(uint8_t *op_msg, void *osif_ctxt),
-		void *usr_ctxt);
-	QDF_STATUS (*ipa_get_stat)(struct cdp_pdev *pdev);
-	qdf_nbuf_t (*ipa_tx_data_frame)(struct cdp_vdev *vdev, qdf_nbuf_t skb);
+	QDF_STATUS (*ipa_get_resource)(struct cdp_soc_t *soc_hdl,
+				       uint8_t pdev_id);
+	QDF_STATUS (*ipa_set_doorbell_paddr)(struct cdp_soc_t *soc_hdl,
+					     uint8_t pdev_id);
+	QDF_STATUS (*ipa_set_active)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				     bool uc_active, bool is_tx);
+	QDF_STATUS (*ipa_op_response)(struct cdp_soc_t *soc_hdl,
+				      uint8_t pdev_id, uint8_t *op_msg);
+	QDF_STATUS (*ipa_register_op_cb)(struct cdp_soc_t *soc_hdl,
+					 uint8_t pdev_id,
+					 void (*ipa_uc_op_cb_type)
+					 (uint8_t *op_msg, void *osif_ctxt),
+					 void *usr_ctxt);
+	QDF_STATUS (*ipa_get_stat)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
+	qdf_nbuf_t (*ipa_tx_data_frame)(struct cdp_soc_t *soc_hdl,
+					uint8_t vdev_id, qdf_nbuf_t skb);
 	void (*ipa_set_uc_tx_partition_base)(struct cdp_cfg *pdev,
 		uint32_t value);
 #ifdef FEATURE_METERING
-	QDF_STATUS (*ipa_uc_get_share_stats)(struct cdp_pdev *pdev,
-		uint8_t reset_stats);
-	QDF_STATUS (*ipa_uc_set_quota)(struct cdp_pdev *pdev,
-		uint64_t quota_bytes);
+	QDF_STATUS (*ipa_uc_get_share_stats)(struct cdp_soc_t *soc_hdl,
+					     uint8_t pdev_id,
+					     uint8_t reset_stats);
+	QDF_STATUS (*ipa_uc_set_quota)(struct cdp_soc_t *soc_hdl,
+				       uint8_t pdev_id, uint64_t quota_bytes);
 #endif
-	QDF_STATUS (*ipa_enable_autonomy)(struct cdp_pdev *pdev);
-	QDF_STATUS (*ipa_disable_autonomy)(struct cdp_pdev *pdev);
+	QDF_STATUS (*ipa_enable_autonomy)(struct cdp_soc_t *soc_hdl,
+					  uint8_t pdev_id);
+	QDF_STATUS (*ipa_disable_autonomy)(struct cdp_soc_t *soc_hdl,
+					   uint8_t pdev_id);
 #ifdef CONFIG_IPA_WDI_UNIFIED_API
-	QDF_STATUS (*ipa_setup)(struct cdp_pdev *pdev, void *ipa_i2w_cb,
-		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
-		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
-		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle,
-		bool is_smmu_enabled, qdf_ipa_sys_connect_params_t *sys_in,
-		bool over_gsi);
+	QDF_STATUS (*ipa_setup)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				void *ipa_i2w_cb, void *ipa_w2i_cb,
+				void *ipa_wdi_meter_notifier_cb,
+				uint32_t ipa_desc_size, void *ipa_priv,
+				bool is_rm_enabled, uint32_t *tx_pipe_handle,
+				uint32_t *rx_pipe_handle, bool is_smmu_enabled,
+				qdf_ipa_sys_connect_params_t *sys_in,
+				bool over_gsi);
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
-	QDF_STATUS (*ipa_setup)(struct cdp_pdev *pdev, void *ipa_i2w_cb,
-		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
-		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
-		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle);
+	QDF_STATUS (*ipa_setup)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				void *ipa_i2w_cb, void *ipa_w2i_cb,
+				void *ipa_wdi_meter_notifier_cb,
+				uint32_t ipa_desc_size, void *ipa_priv,
+				bool is_rm_enabled, uint32_t *tx_pipe_handle,
+				uint32_t *rx_pipe_handle);
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
 	QDF_STATUS (*ipa_cleanup)(uint32_t tx_pipe_handle,
 		uint32_t rx_pipe_handle);
@@ -1418,12 +1431,14 @@ struct cdp_ipa_ops {
 		qdf_ipa_client_type_t cons_client,
 		uint8_t session_id, bool is_ipv6_enabled);
 	QDF_STATUS (*ipa_cleanup_iface)(char *ifname, bool is_ipv6_enabled);
-	QDF_STATUS (*ipa_enable_pipes)(struct cdp_pdev *pdev);
-	QDF_STATUS (*ipa_disable_pipes)(struct cdp_pdev *pdev);
+	QDF_STATUS (*ipa_enable_pipes)(struct cdp_soc_t *soc_hdl,
+				       uint8_t pdev_id);
+	QDF_STATUS (*ipa_disable_pipes)(struct cdp_soc_t *soc_hdl,
+					uint8_t pdev_id);
 	QDF_STATUS (*ipa_set_perf_level)(int client,
 		uint32_t max_supported_bw_mbps);
-	bool (*ipa_rx_intrabss_fwd)(struct cdp_vdev *vdev, qdf_nbuf_t nbuf,
-				    bool *fwd_success);
+	bool (*ipa_rx_intrabss_fwd)(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+				    qdf_nbuf_t nbuf, bool *fwd_success);
 };
 #endif
 

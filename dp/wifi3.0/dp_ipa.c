@@ -565,22 +565,19 @@ static QDF_STATUS dp_ipa_get_shared_mem_info(qdf_device_t osdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_ipa_uc_get_resource() - Client request resource information
- * @ppdev - handle to the device instance
- *
- *  IPA client will request IPA UC related resource information
- *  Resource information will be distributed to IPA module
- *  All of the required resources should be pre-allocated
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS dp_ipa_get_resource(struct cdp_pdev *ppdev)
+QDF_STATUS dp_ipa_get_resource(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-	struct dp_soc *soc = pdev->soc;
-	struct dp_ipa_resources *ipa_res = &pdev->ipa_resource;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct dp_ipa_resources *ipa_res;
 
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_res = &pdev->ipa_resource;
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
@@ -616,20 +613,12 @@ QDF_STATUS dp_ipa_get_resource(struct cdp_pdev *ppdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_ipa_set_doorbell_paddr () - Set doorbell register physical address to SRNG
- * @ppdev - handle to the device instance
- *
- * Set TX_COMP_DOORBELL register physical address to WBM Head_Ptr_MemAddr_LSB
- * Set RX_READ_DOORBELL register physical address to REO Head_Ptr_MemAddr_LSB
- *
- * Return: none
- */
-QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_pdev *ppdev)
+QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-	struct dp_soc *soc = pdev->soc;
-	struct dp_ipa_resources *ipa_res = &pdev->ipa_resource;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct dp_ipa_resources *ipa_res;
 	struct hal_srng *wbm_srng = (struct hal_srng *)
 			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
 	struct hal_srng *reo_srng = (struct hal_srng *)
@@ -637,6 +626,12 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_pdev *ppdev)
 	uint32_t tx_comp_doorbell_dmaaddr;
 	uint32_t rx_ready_doorbell_dmaaddr;
 
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_res = &pdev->ipa_resource;
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
@@ -672,16 +667,17 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_pdev *ppdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_ipa_op_response() - Handle OP command response from firmware
- * @ppdev - handle to the device instance
- * @op_msg: op response message from firmware
- *
- * Return: none
- */
-QDF_STATUS dp_ipa_op_response(struct cdp_pdev *ppdev, uint8_t *op_msg)
+QDF_STATUS dp_ipa_op_response(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			      uint8_t *op_msg)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!wlan_cfg_is_ipa_enabled(pdev->soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
@@ -698,18 +694,18 @@ QDF_STATUS dp_ipa_op_response(struct cdp_pdev *ppdev, uint8_t *op_msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_ipa_register_op_cb() - Register OP handler function
- * @ppdev - handle to the device instance
- * @op_cb: handler function pointer
- *
- * Return: none
- */
-QDF_STATUS dp_ipa_register_op_cb(struct cdp_pdev *ppdev,
+QDF_STATUS dp_ipa_register_op_cb(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 				 ipa_uc_op_cb_type op_cb,
 				 void *usr_ctxt)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!wlan_cfg_is_ipa_enabled(pdev->soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
@@ -720,32 +716,28 @@ QDF_STATUS dp_ipa_register_op_cb(struct cdp_pdev *ppdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_ipa_get_stat() - Get firmware wdi status
- * @ppdev - handle to the device instance
- *
- * Return: none
- */
-QDF_STATUS dp_ipa_get_stat(struct cdp_pdev *ppdev)
+QDF_STATUS dp_ipa_get_stat(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	/* TBD */
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_tx_send_ipa_data_frame() - send IPA data frame
- * @vdev: vdev
- * @skb: skb
- *
- * Return: skb/ NULL is for success
- */
-qdf_nbuf_t dp_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
+qdf_nbuf_t dp_tx_send_ipa_data_frame(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+				     qdf_nbuf_t skb)
 {
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 	qdf_nbuf_t ret;
+
+	if (!vdev) {
+		dp_err("%s invalid instance", __func__);
+		return skb;
+	}
 
 	/* Terminate the (single-element) list of tx frames */
 	qdf_nbuf_set_next(skb, NULL);
-	ret = dp_tx_send(vdev, skb);
+	ret = dp_tx_send(dp_vdev_to_cdp_vdev(vdev), skb);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to tx", __func__);
@@ -755,20 +747,18 @@ qdf_nbuf_t dp_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
 	return NULL;
 }
 
-/**
- * dp_ipa_enable_autonomy() – Enable autonomy RX path
- * @pdev - handle to the device instance
- *
- * Set all RX packet route to IPA REO ring
- * Program Destination_Ring_Ctrl_IX_0 REO register to point IPA REO ring
- * Return: none
- */
-QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *ppdev)
+QDF_STATUS dp_ipa_enable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	uint32_t ix0;
 	uint32_t ix2;
+
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
@@ -803,21 +793,19 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *ppdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_ipa_disable_autonomy() – Disable autonomy RX path
- * @ppdev - handle to the device instance
- *
- * Disable RX packet routing to IPA REO
- * Program Destination_Ring_Ctrl_IX_0 REO register to disable
- * Return: none
- */
-QDF_STATUS dp_ipa_disable_autonomy(struct cdp_pdev *ppdev)
+QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	uint32_t ix0;
 	uint32_t ix2;
 	uint32_t ix3;
+
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
@@ -1065,32 +1053,18 @@ dp_ipa_wdi_rx_smmu_params(struct dp_soc *soc,
 		RX_PKT_TLVS_LEN + L3_HEADER_PADDING;
 }
 
-/**
- * dp_ipa_setup() - Setup and connect IPA pipes
- * @ppdev - handle to the device instance
- * @ipa_i2w_cb: IPA to WLAN callback
- * @ipa_w2i_cb: WLAN to IPA callback
- * @ipa_wdi_meter_notifier_cb: IPA WDI metering callback
- * @ipa_desc_size: IPA descriptor size
- * @ipa_priv: handle to the HTT instance
- * @is_rm_enabled: Is IPA RM enabled or not
- * @tx_pipe_handle: pointer to Tx pipe handle
- * @rx_pipe_handle: pointer to Rx pipe handle
- * @is_smmu_enabled: Is SMMU enabled or not
- * @sys_in: parameters to setup sys pipe in mcc mode
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
-			void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
+QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			void *ipa_i2w_cb, void *ipa_w2i_cb,
+			void *ipa_wdi_meter_notifier_cb,
 			uint32_t ipa_desc_size, void *ipa_priv,
 			bool is_rm_enabled, uint32_t *tx_pipe_handle,
 			uint32_t *rx_pipe_handle, bool is_smmu_enabled,
 			qdf_ipa_sys_connect_params_t *sys_in, bool over_gsi)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-	struct dp_soc *soc = pdev->soc;
-	struct dp_ipa_resources *ipa_res = &pdev->ipa_resource;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct dp_ipa_resources *ipa_res;
 	qdf_ipa_ep_cfg_t *tx_cfg;
 	qdf_ipa_ep_cfg_t *rx_cfg;
 	qdf_ipa_wdi_pipe_setup_info_t *tx = NULL;
@@ -1101,6 +1075,12 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	qdf_ipa_wdi_conn_out_params_t pipe_out;
 	int ret;
 
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_res = &pdev->ipa_resource;
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
@@ -1267,30 +1247,17 @@ QDF_STATUS dp_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
 }
 
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
-
-/**
- * dp_ipa_setup() - Setup and connect IPA pipes
- * @ppdev - handle to the device instance
- * @ipa_i2w_cb: IPA to WLAN callback
- * @ipa_w2i_cb: WLAN to IPA callback
- * @ipa_wdi_meter_notifier_cb: IPA WDI metering callback
- * @ipa_desc_size: IPA descriptor size
- * @ipa_priv: handle to the HTT instance
- * @is_rm_enabled: Is IPA RM enabled or not
- * @tx_pipe_handle: pointer to Tx pipe handle
- * @rx_pipe_handle: pointer to Rx pipe handle
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
-			void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
+QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			void *ipa_i2w_cb, void *ipa_w2i_cb,
+			void *ipa_wdi_meter_notifier_cb,
 			uint32_t ipa_desc_size, void *ipa_priv,
 			bool is_rm_enabled, uint32_t *tx_pipe_handle,
 			uint32_t *rx_pipe_handle)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-	struct dp_soc *soc = pdev->soc;
-	struct dp_ipa_resources *ipa_res = &pdev->ipa_resource;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct dp_ipa_resources *ipa_res;
 	qdf_ipa_wdi_pipe_setup_info_t *tx;
 	qdf_ipa_wdi_pipe_setup_info_t *rx;
 	qdf_ipa_wdi_conn_in_params_t pipe_in;
@@ -1300,6 +1267,12 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	uint32_t desc_size;
 	int ret;
 
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_res = &pdev->ipa_resource;
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
@@ -1568,17 +1541,17 @@ QDF_STATUS dp_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_ipa_uc_enable_pipes() - Enable and resume traffic on Tx/Rx pipes
- * @ppdev - handle to the device instance
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *ppdev)
+QDF_STATUS dp_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	QDF_STATUS result;
+
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	qdf_atomic_set(&soc->ipa_pipes_enabled, 1);
 	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, true);
@@ -1596,17 +1569,17 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *ppdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_ipa_uc_disable_pipes() – Suspend traffic and disable Tx/Rx pipes
- * @ppdev - handle to the device instance
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS dp_ipa_disable_pipes(struct cdp_pdev *ppdev)
+QDF_STATUS dp_ipa_disable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	QDF_STATUS result;
+
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	result = qdf_ipa_wdi_disable_pipes();
 	if (result)
@@ -1677,10 +1650,12 @@ static qdf_nbuf_t dp_ipa_intrabss_send(struct dp_pdev *pdev,
 	return NULL;
 }
 
-bool dp_ipa_rx_intrabss_fwd(struct cdp_vdev *pvdev, qdf_nbuf_t nbuf,
-			    bool *fwd_success)
+bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			    qdf_nbuf_t nbuf, bool *fwd_success)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)pvdev;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 	struct dp_pdev *pdev;
 	struct dp_peer *da_peer;
 	struct dp_peer *sa_peer;

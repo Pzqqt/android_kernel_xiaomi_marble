@@ -35,23 +35,23 @@
 /**
  * cdp_ipa_get_resource() - Get allocated WLAN resources for IPA data path
  * @soc - data path soc handle
- * @pdev - device instance pointer
+ * @pdev_id - device instance id
  *
  * Get allocated WLAN resources for IPA data path
  *
  * return QDF_STATUS_SUCCESS
  */
 static inline QDF_STATUS
-cdp_ipa_get_resource(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+cdp_ipa_get_resource(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_get_resource)
-		return soc->ops->ipa_ops->ipa_get_resource(pdev);
+		return soc->ops->ipa_ops->ipa_get_resource(soc, pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -59,23 +59,23 @@ cdp_ipa_get_resource(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 /**
  * cdp_ipa_set_doorbell_paddr() - give IPA db paddr to FW
  * @soc - data path soc handle
- * @pdev - device instance pointer
+ * @pdev_id - device instance id
  *
  * give IPA db paddr to FW
  *
  * return QDF_STATUS_SUCCESS
  */
 static inline QDF_STATUS
-cdp_ipa_set_doorbell_paddr(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+cdp_ipa_set_doorbell_paddr(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_set_doorbell_paddr)
-		return soc->ops->ipa_ops->ipa_set_doorbell_paddr(pdev);
+		return soc->ops->ipa_ops->ipa_set_doorbell_paddr(soc, pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -83,7 +83,7 @@ cdp_ipa_set_doorbell_paddr(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 /**
  * cdp_ipa_set_active() - activate/de-ctivate IPA offload path
  * @soc - data path soc handle
- * @pdev - device instance pointer
+ * @pdev_id - device instance id
  * @uc_active - activate or de-activate
  * @is_tx - toggle tx or rx data path
  *
@@ -92,18 +92,18 @@ cdp_ipa_set_doorbell_paddr(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
  * return QDF_STATUS_SUCCESS
  */
 static inline QDF_STATUS
-cdp_ipa_set_active(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-		 bool uc_active, bool is_tx)
+cdp_ipa_set_active(ol_txrx_soc_handle soc, uint8_t pdev_id, bool uc_active,
+		   bool is_tx)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_set_active)
-		return soc->ops->ipa_ops->ipa_set_active(pdev, uc_active,
-				is_tx);
+		return soc->ops->ipa_ops->ipa_set_active(soc, pdev_id,
+				uc_active, is_tx);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -111,7 +111,7 @@ cdp_ipa_set_active(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 /**
  * cdp_ipa_op_response() - event handler from FW
  * @soc - data path soc handle
- * @pdev - device instance pointer
+ * @pdev_id - device instance id
  * @op_msg - event contents from firmware
  *
  * event handler from FW
@@ -119,17 +119,16 @@ cdp_ipa_set_active(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  * return QDF_STATUS_SUCCESS
  */
 static inline QDF_STATUS
-cdp_ipa_op_response(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-		uint8_t *op_msg)
+cdp_ipa_op_response(ol_txrx_soc_handle soc, uint8_t pdev_id, uint8_t *op_msg)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_op_response)
-		return soc->ops->ipa_ops->ipa_op_response(pdev, op_msg);
+		return soc->ops->ipa_ops->ipa_op_response(soc, pdev_id, op_msg);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -137,7 +136,7 @@ cdp_ipa_op_response(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 /**
  * cdp_ipa_register_op_cb() - register event handler function pointer
  * @soc - data path soc handle
- * @pdev - device instance pointer
+ * @pdev_id - device instance id
  * @op_cb - event handler callback function pointer
  * @usr_ctxt - user context to registered
  *
@@ -146,18 +145,18 @@ cdp_ipa_op_response(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  * return QDF_STATUS_SUCCESS
  */
 static inline QDF_STATUS
-cdp_ipa_register_op_cb(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-		 ipa_uc_op_cb_type op_cb, void *usr_ctxt)
+cdp_ipa_register_op_cb(ol_txrx_soc_handle soc, uint8_t pdev_id,
+		       ipa_uc_op_cb_type op_cb, void *usr_ctxt)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_register_op_cb)
-		return soc->ops->ipa_ops->ipa_register_op_cb(pdev, op_cb,
-							     usr_ctxt);
+		return soc->ops->ipa_ops->ipa_register_op_cb(soc, pdev_id,
+							     op_cb, usr_ctxt);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -165,52 +164,55 @@ cdp_ipa_register_op_cb(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 /**
  * cdp_ipa_get_stat() - get IPA data path stats from FW
  * @soc - data path soc handle
- * @pdev - device instance pointer
+ * @pdev_id - device instance id
  *
  * get IPA data path stats from FW async
  *
  * return QDF_STATUS_SUCCESS
  */
 static inline QDF_STATUS
-cdp_ipa_get_stat(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+cdp_ipa_get_stat(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_get_stat)
-		return soc->ops->ipa_ops->ipa_get_stat(pdev);
+		return soc->ops->ipa_ops->ipa_get_stat(soc, pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * cdp_tx_send_ipa_data_frame() - send IPA data frame
- * @vdev: vdev
+ * @soc - data path soc handle
+ * @vdev_id: vdev id
  * @skb: skb
  *
  * Return: skb/ NULL is for success
  */
 static inline qdf_nbuf_t cdp_ipa_tx_send_data_frame(ol_txrx_soc_handle soc,
-				struct cdp_vdev *vdev, qdf_nbuf_t skb)
+						    uint8_t vdev_id,
+						    qdf_nbuf_t skb)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !vdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return skb;
 	}
 
 	if (soc->ops->ipa_ops->ipa_tx_data_frame)
-		return soc->ops->ipa_ops->ipa_tx_data_frame(vdev, skb);
+		return soc->ops->ipa_ops->ipa_tx_data_frame(soc, vdev_id, skb);
 
 	return skb;
 }
 
 /**
  * cdp_ipa_set_uc_tx_partition_base() - set tx packet partition base
- * @pdev: physical device instance
+ * @soc - data path soc handle
+ * @cfg_pdev: physical device instance config
  * @value: partition base value
  *
  * Return: QDF_STATUS
@@ -235,23 +237,24 @@ cdp_ipa_set_uc_tx_partition_base(ol_txrx_soc_handle soc,
 #ifdef FEATURE_METERING
 /**
  * cdp_ipa_uc_get_share_stats() - get Tx/Rx byte stats from FW
- * @pdev: physical device instance
+ * @soc - data path soc handle
+ * @pdev_id: physical device instance number
  * @value: reset stats
  *
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-cdp_ipa_uc_get_share_stats(ol_txrx_soc_handle soc,
-			struct cdp_pdev *pdev, uint8_t value)
+cdp_ipa_uc_get_share_stats(ol_txrx_soc_handle soc, uint8_t pdev_id,
+			   uint8_t value)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_uc_get_share_stats)
-		return soc->ops->ipa_ops->ipa_uc_get_share_stats(pdev,
+		return soc->ops->ipa_ops->ipa_uc_get_share_stats(soc, pdev_id,
 								 value);
 
 	return QDF_STATUS_SUCCESS;
@@ -259,24 +262,23 @@ cdp_ipa_uc_get_share_stats(ol_txrx_soc_handle soc,
 
 /**
  * cdp_ipa_uc_set_quota() - set quota limit to FW
- * @pdev: physical device instance
+ * @soc - data path soc handle
+ * @pdev_id: physical device instance number
  * @value: quota limit bytes
  *
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-cdp_ipa_uc_set_quota(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev, uint64_t value)
+cdp_ipa_uc_set_quota(ol_txrx_soc_handle soc, uint8_t pdev_id, uint64_t value)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_uc_set_quota)
-		return soc->ops->ipa_ops->ipa_uc_set_quota(pdev,
-							   value);
+		return soc->ops->ipa_ops->ipa_uc_set_quota(soc, pdev_id, value);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -285,7 +287,7 @@ cdp_ipa_uc_set_quota(ol_txrx_soc_handle soc,
 /**
  * cdp_ipa_enable_autonomy() - Enable autonomy RX data path
  * @soc: data path soc handle
- * @pdev: handle to the device instance
+ * @pdev_id: physical device instance number
  *
  * IPA Data path is enabled and resumed.
  * All autonomy data path elements are ready to deliver packet
@@ -295,16 +297,16 @@ cdp_ipa_uc_set_quota(ol_txrx_soc_handle soc,
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-cdp_ipa_enable_autonomy(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+cdp_ipa_enable_autonomy(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_enable_autonomy)
-		return soc->ops->ipa_ops->ipa_enable_autonomy(pdev);
+		return soc->ops->ipa_ops->ipa_enable_autonomy(soc, pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -312,7 +314,7 @@ cdp_ipa_enable_autonomy(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 /**
  * cdp_ipa_disable_autonomy() - Disable autonomy RX data path
  * @soc: data path soc handle
- * @pdev: handle to the device instance
+ * @pdev_id: physical device instance number
  *
  * IPA Data path is enabled and resumed.
  * All autonomy datapath elements are ready to deliver packet
@@ -322,15 +324,15 @@ cdp_ipa_enable_autonomy(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-cdp_ipa_disable_autonomy(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+cdp_ipa_disable_autonomy(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (soc->ops->ipa_ops->ipa_enable_autonomy)
-		return soc->ops->ipa_ops->ipa_disable_autonomy(pdev);
+	if (soc->ops->ipa_ops->ipa_disable_autonomy)
+		return soc->ops->ipa_ops->ipa_disable_autonomy(soc, pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -339,7 +341,7 @@ cdp_ipa_disable_autonomy(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 /**
  * cdp_ipa_setup() - Setup and connect IPA pipes
  * @soc: data path soc handle
- * @pdev: handle to the device instance
+ * @pdev_id: handle to the device instance number
  * @ipa_i2w_cb: IPA to WLAN callback
  * @ipa_w2i_cb: WLAN to IPA callback
  * @ipa_wdi_meter_notifier_cb: IPA WDI metering callback
@@ -355,21 +357,21 @@ cdp_ipa_disable_autonomy(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-cdp_ipa_setup(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, void *ipa_i2w_cb,
+cdp_ipa_setup(ol_txrx_soc_handle soc, uint8_t pdev_id, void *ipa_i2w_cb,
 	      void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
 	      uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
 	      uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle,
 	      bool is_smmu_enabled, qdf_ipa_sys_connect_params_t *sys_in,
 	      bool over_gsi)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_setup)
-		return soc->ops->ipa_ops->ipa_setup(pdev, ipa_i2w_cb,
+		return soc->ops->ipa_ops->ipa_setup(soc, pdev_id, ipa_i2w_cb,
 						    ipa_w2i_cb,
 						    ipa_wdi_meter_notifier_cb,
 						    ipa_desc_size, ipa_priv,
@@ -385,7 +387,7 @@ cdp_ipa_setup(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, void *ipa_i2w_cb,
 /**
  * cdp_ipa_setup() - Setup and connect IPA pipes
  * @soc: data path soc handle
- * @pdev: handle to the device instance
+ * @pdev_id: handle to the device instance number
  * @ipa_i2w_cb: IPA to WLAN callback
  * @ipa_w2i_cb: WLAN to IPA callback
  * @ipa_wdi_meter_notifier_cb: IPA WDI metering callback
@@ -398,19 +400,19 @@ cdp_ipa_setup(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, void *ipa_i2w_cb,
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-cdp_ipa_setup(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, void *ipa_i2w_cb,
+cdp_ipa_setup(ol_txrx_soc_handle soc, uint8_t pdev_id, void *ipa_i2w_cb,
 	      void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
 	      uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
 	      uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_setup)
-		return soc->ops->ipa_ops->ipa_setup(pdev, ipa_i2w_cb,
+		return soc->ops->ipa_ops->ipa_setup(soc, pdev_id, ipa_i2w_cb,
 						    ipa_w2i_cb,
 						    ipa_wdi_meter_notifier_cb,
 						    ipa_desc_size, ipa_priv,
@@ -508,22 +510,22 @@ cdp_ipa_cleanup_iface(ol_txrx_soc_handle soc, char *ifname,
 
  /**
  * cdp_ipa_uc_enable_pipes() - Enable and resume traffic on Tx/Rx pipes
- * @soc: data path soc handle
- * @pdev: handle to the device instance
+ * @soc - data path soc handle
+ * @pdev_id - device instance id
  *
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-cdp_ipa_enable_pipes(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+cdp_ipa_enable_pipes(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_enable_pipes)
-		return soc->ops->ipa_ops->ipa_enable_pipes(pdev);
+		return soc->ops->ipa_ops->ipa_enable_pipes(soc, pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -531,21 +533,21 @@ cdp_ipa_enable_pipes(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 /**
  * cdp_ipa_uc_disable_pipes() - Suspend traffic and disable Tx/Rx pipes
  * @soc: data path soc handle
- * @pdev: handle to the device instance
+ * @pdev_id - device instance id
  *
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-cdp_ipa_disable_pipes(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+cdp_ipa_disable_pipes(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !pdev) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_disable_pipes)
-		return soc->ops->ipa_ops->ipa_disable_pipes(pdev);
+		return soc->ops->ipa_ops->ipa_disable_pipes(soc, pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -579,7 +581,7 @@ cdp_ipa_set_perf_level(ol_txrx_soc_handle soc, int client,
  * cdp_ipa_rx_intrabss_fwd() - Perform intra-bss fwd for IPA RX path
  *
  * @soc: data path soc handle
- * @vdev: vdev handle
+ * @vdev_id: vdev id
  * @nbuf: pointer to skb of ethernet packet received from IPA RX path
  * @fwd_success: pointer to indicate if skb succeeded in intra-bss TX
  *
@@ -589,17 +591,18 @@ cdp_ipa_set_perf_level(ol_txrx_soc_handle soc, int client,
  *	   network stack. false if packet needs to be passed to network stack.
  */
 static inline bool
-cdp_ipa_rx_intrabss_fwd(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+cdp_ipa_rx_intrabss_fwd(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			qdf_nbuf_t nbuf, bool *fwd_success)
 {
-	if (!soc || !soc->ops || !soc->ops->ipa_ops || !vdev || !fwd_success) {
+	if (!soc || !soc->ops || !soc->ops->ipa_ops || !fwd_success) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			  "%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->ipa_ops->ipa_rx_intrabss_fwd)
-		return soc->ops->ipa_ops->ipa_rx_intrabss_fwd(vdev, nbuf,
+		return soc->ops->ipa_ops->ipa_rx_intrabss_fwd(soc, vdev_id,
+							      nbuf,
 							      fwd_success);
 
 	/* Fall back to pass up to stack */
