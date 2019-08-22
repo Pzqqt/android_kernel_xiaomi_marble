@@ -326,6 +326,7 @@ bool wlan_ipa_is_rm_released(struct wlan_ipa_priv *ipa_ctx)
 
 #ifdef FEATURE_METERING
 
+#ifndef WDI3_STATS_UPDATE
 /**
  * wlan_ipa_uc_op_metering() - IPA uC operation for stats and quota limit
  * @ipa_ctx: IPA context
@@ -334,7 +335,15 @@ bool wlan_ipa_is_rm_released(struct wlan_ipa_priv *ipa_ctx)
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
-				  struct op_msg_type *op_msg);
+				   struct op_msg_type *op_msg);
+#else
+static inline
+QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
+				   struct op_msg_type *op_msg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * wlan_ipa_wdi_meter_notifier_cb() - SSR wrapper for
@@ -356,6 +365,25 @@ void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
  * Return: QDF_STATUS enumeration
  */
 void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx);
+
+#ifdef WDI3_STATS_UPDATE
+/**
+ * wlan_ipa_update_tx_stats() - send embedded tx traffic in bytes to IPA
+ * @ipa_ctx: IPA context
+ * @sta_tx: tx in bytes on sta interface
+ * @sap_tx: tx in bytes on sap interface
+ *
+ * Return: void
+ */
+void wlan_ipa_update_tx_stats(struct wlan_ipa_priv *ipa_ctx, uint64_t sta_tx,
+			      uint64_t sap_tx);
+#else
+static inline void wlan_ipa_update_tx_stats(struct wlan_ipa_priv *ipa_ctx,
+					    uint64_t sta_tx, uint64_t sap_tx)
+{
+}
+#endif /* WDI3_STATS_UPDATE */
+
 #else
 
 static inline
@@ -370,6 +398,11 @@ static inline void wlan_ipa_wdi_meter_notifier_cb(void)
 }
 
 static inline void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx)
+{
+}
+
+static inline void wlan_ipa_update_tx_stats(struct wlan_ipa_priv *ipa_ctx,
+					    uint64_t sta_tx, uint64_t sap_tx)
 {
 }
 #endif /* FEATURE_METERING */

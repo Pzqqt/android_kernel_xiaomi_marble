@@ -211,3 +211,9 @@ uint32_t ucfg_ipa_get_tx_buf_count(void)
 {
 	return ipa_get_tx_buf_count();
 }
+
+void ucfg_ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
+			      uint64_t ap_tx)
+{
+	ipa_update_tx_stats(pdev, sta_tx, ap_tx);
+}
