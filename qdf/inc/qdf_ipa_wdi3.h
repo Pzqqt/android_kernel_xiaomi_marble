@@ -398,5 +398,19 @@ static inline int qdf_ipa_wdi_release_smmu_mapping(uint32_t num_buffers,
 	return __qdf_ipa_wdi_release_smmu_mapping(num_buffers, info);
 }
 
+#ifdef WDI3_STATS_UPDATE
+/**
+ * qdf_ipa_wdi_wlan_stats() - Client should call this function to
+ *		send Tx byte counts to IPA driver
+ * @tx_count: number of Tx bytes
+ *
+ * Returns: 0 on success, negative on failure
+ */
+static inline int qdf_ipa_wdi_wlan_stats(qdf_ipa_wdi_tx_info_t *tx_stats)
+{
+	return __qdf_ipa_wdi_wlan_stats(tx_stats);
+}
+#endif
+
 #endif /* IPA_OFFLOAD */
 #endif /* _QDF_IPA_WDI3_H */
