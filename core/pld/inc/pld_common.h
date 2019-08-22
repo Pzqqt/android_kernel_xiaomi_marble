@@ -643,6 +643,11 @@ int pld_is_fw_down(struct device *dev);
 void pld_block_shutdown(struct device *dev, bool status);
 int pld_force_assert_target(struct device *dev);
 int pld_collect_rddm(struct device *dev);
+int pld_qmi_send_get(struct device *dev);
+int pld_qmi_send_put(struct device *dev);
+int pld_qmi_send(struct device *dev, int type, void *cmd,
+		 int cmd_len, void *cb_ctx,
+		 int (*cb)(void *ctx, void *event, int event_len));
 bool pld_is_fw_dump_skipped(struct device *dev);
 
 /**

@@ -312,6 +312,24 @@ static inline int pld_pcie_collect_rddm(struct device *dev)
 	return 0;
 }
 
+static inline int pld_pcie_qmi_send_get(struct device *dev)
+{
+	return 0;
+}
+
+static inline int pld_pcie_qmi_send_put(struct device *dev)
+{
+	return 0;
+}
+
+static inline int
+pld_pcie_qmi_send(struct device *dev, int type, void *cmd,
+		  int cmd_len, void *cb_ctx,
+		  int (*cb)(void *ctx, void *event, int event_len))
+{
+	return -EINVAL;
+}
+
 static inline int pld_pcie_get_user_msi_assignment(struct device *dev,
 						   char *user_name,
 						   int *num_vectors,
@@ -355,6 +373,24 @@ void pld_pcie_device_self_recovery(struct device *dev,
 static inline int pld_pcie_collect_rddm(struct device *dev)
 {
 	return cnss_force_collect_rddm(dev);
+}
+
+static inline int pld_pcie_qmi_send_get(struct device *dev)
+{
+	return cnss_qmi_send_get(dev);
+}
+
+static inline int pld_pcie_qmi_send_put(struct device *dev)
+{
+	return cnss_qmi_send_put(dev);
+}
+
+static inline int
+pld_pcie_qmi_send(struct device *dev, int type, void *cmd,
+		  int cmd_len, void *cb_ctx,
+		  int (*cb)(void *ctx, void *event, int event_len))
+{
+	return cnss_qmi_send(dev, type, cmd, cmd_len, cb_ctx, cb);
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))

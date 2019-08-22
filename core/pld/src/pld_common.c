@@ -1769,6 +1769,93 @@ int pld_collect_rddm(struct device *dev)
 }
 
 /**
+ * pld_qmi_send_get() - Indicate certain data to be sent over QMI
+ * @dev: device pointer
+ *
+ * This API can be used to indicate certain data to be sent over QMI.
+ * pld_qmi_send() is expected to be called later.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_qmi_send_get(struct device *dev)
+{
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		return pld_pcie_qmi_send_get(dev);
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		return 0;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		return -EINVAL;
+	}
+}
+
+/**
+ * pld_qmi_send_put() - Indicate response sent over QMI has been processed
+ * @dev: device pointer
+ *
+ * This API can be used to indicate response of the data sent over QMI has
+ * been processed.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_qmi_send_put(struct device *dev)
+{
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		return pld_pcie_qmi_send_put(dev);
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		return 0;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		return -EINVAL;
+	}
+}
+
+/**
+ * pld_qmi_send() - Send data request over QMI
+ * @dev: device pointer
+ * @type: type of the send data operation
+ * @cmd: buffer pointer of send data request command
+ * @cmd_len: size of the command buffer
+ * @cb_ctx: context pointer if any to pass back in callback
+ * @cb: callback pointer to pass response back
+ *
+ * This API can be used to send data request over QMI.
+ *
+ * Return: 0 if data request sends successfully
+ *         Non zero failure code for errors
+ */
+int pld_qmi_send(struct device *dev, int type, void *cmd,
+		 int cmd_len, void *cb_ctx,
+		 int (*cb)(void *ctx, void *event, int event_len))
+{
+	enum pld_bus_type bus_type = pld_get_bus_type(dev);
+
+	switch (bus_type) {
+	case PLD_BUS_TYPE_PCIE:
+		return pld_pcie_qmi_send(dev, type, cmd, cmd_len, cb_ctx, cb);
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		return -EINVAL;
+	default:
+		pr_err("Invalid device type %d\n", bus_type);
+		return -EINVAL;
+	}
+}
+
+/**
  * pld_is_fw_dump_skipped() - get fw dump skipped status.
  *  The subsys ssr status help the driver to decide whether to skip
  *  the FW memory dump when FW assert.
