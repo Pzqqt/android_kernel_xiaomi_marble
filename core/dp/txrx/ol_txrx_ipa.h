@@ -113,28 +113,153 @@ struct ol_txrx_ipa_uc_rx_hdr {
 #define OL_TXRX_IPA_WDI2_SET(pipe_in, ipa_res, osdev)
 #endif /* IPA3 */
 
-QDF_STATUS ol_txrx_ipa_uc_get_resource(struct cdp_pdev *pdev);
-QDF_STATUS ol_txrx_ipa_uc_set_doorbell_paddr(struct cdp_pdev *pdev);
-QDF_STATUS ol_txrx_ipa_uc_set_active(struct cdp_pdev *pdev, bool uc_active,
-		bool is_tx);
-QDF_STATUS ol_txrx_ipa_uc_op_response(struct cdp_pdev *pdev, uint8_t *op_msg);
-QDF_STATUS ol_txrx_ipa_uc_register_op_cb(struct cdp_pdev *pdev,
-		ipa_uc_op_cb_type op_cb, void *usr_ctxt);
-QDF_STATUS ol_txrx_ipa_uc_get_stat(struct cdp_pdev *pdev);
-QDF_STATUS ol_txrx_ipa_enable_autonomy(struct cdp_pdev *pdev);
-QDF_STATUS ol_txrx_ipa_disable_autonomy(struct cdp_pdev *pdev);
+/**
+ * ol_txrx_ipa_uc_get_resource() - Client request resource information
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ *
+ *  OL client will request IPA UC related resource information
+ *  Resource information will be distributted to IPA module
+ *  All of the required resources should be pre-allocated
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_uc_get_resource(struct cdp_soc_t *soc_hdl,
+				       uint8_t pdev_id);
+
+/**
+ * ol_txrx_ipa_uc_set_doorbell_paddr() - Client set IPA UC doorbell register
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ *
+ *  IPA UC let know doorbell register physical address
+ *  WLAN firmware will use this physical address to notify IPA UC
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_uc_set_doorbell_paddr(struct cdp_soc_t *soc_hdl,
+					     uint8_t pdev_id);
+
+/**
+ * ol_txrx_ipa_uc_set_active() - Client notify IPA UC data path active or not
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ * @uc_active: WDI UC path enable or not
+ * @is_tx: TX path or RX path
+ *
+ *  IPA UC let know doorbell register physical address
+ *  WLAN firmware will use this physical address to notify IPA UC
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_uc_set_active(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				     bool uc_active, bool is_tx);
+
+/**
+ * ol_txrx_ipa_uc_op_response() - Handle OP command response from firmware
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ * @op_msg: op response message from firmware
+ *
+ * Return: none
+ */
+QDF_STATUS ol_txrx_ipa_uc_op_response(struct cdp_soc_t *soc_hdl,
+				      uint8_t pdev_id, uint8_t *op_msg);
+
+/**
+ * ol_txrx_ipa_uc_register_op_cb() - Register OP handler function
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ * @op_cb: handler function pointer
+ *
+ * Return: none
+ */
+QDF_STATUS ol_txrx_ipa_uc_register_op_cb(struct cdp_soc_t *soc_hdl,
+					 uint8_t pdev_id,
+					 ipa_uc_op_cb_type op_cb,
+					 void *usr_ctxt);
+
+/**
+ * ol_txrx_ipa_uc_get_stat() - Get firmware wdi status
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ *
+ * Return: none
+ */
+QDF_STATUS ol_txrx_ipa_uc_get_stat(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
+
+/**
+ * ol_txrx_ipa_enable_autonomy() - Enable autonomy RX path
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ *
+ * Set all RX packet route to IPA
+ * Return: none
+ */
+QDF_STATUS ol_txrx_ipa_enable_autonomy(struct cdp_soc_t *soc_hdl,
+				       uint8_t pdev_id);
+
+/**
+ * ol_txrx_ipa_disable_autonomy() - Disable autonomy RX path
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ *
+ * Disable RX packet route to host
+ * Return: none
+ */
+QDF_STATUS ol_txrx_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl,
+					uint8_t pdev_id);
+
 #ifdef CONFIG_IPA_WDI_UNIFIED_API
-QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
-		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
-		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
-		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle,
-		bool is_smmu_enabled, qdf_ipa_sys_connect_params_t *sys_in,
-		bool over_gsi);
+/**
+ * ol_txrx_ipa_setup() - Setup and connect IPA pipes
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ * @ipa_i2w_cb: IPA to WLAN callback
+ * @ipa_w2i_cb: WLAN to IPA callback
+ * @ipa_wdi_meter_notifier_cb: IPA WDI metering callback
+ * @ipa_desc_size: IPA descriptor size
+ * @ipa_priv: handle to the HTT instance
+ * @is_rm_enabled: Is IPA RM enabled or not
+ * @p_tx_pipe_handle: pointer to Tx pipe handle
+ * @p_rx_pipe_handle: pointer to Rx pipe handle
+ * @is_smmu_enabled: Is SMMU enabled or not
+ * @sys_in: parameters to setup sys pipe in mcc mode
+ * @over_gsi: is ipa ver gsi fw
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			     void *ipa_i2w_cb, void *ipa_w2i_cb,
+			     void *ipa_wdi_meter_notifier_cb,
+			     uint32_t ipa_desc_size,
+			     void *ipa_priv, bool is_rm_enabled,
+			     uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle,
+			     bool is_smmu_enabled,
+			     qdf_ipa_sys_connect_params_t *sys_in,
+			     bool over_gsi);
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
-QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
-		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
-		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
-		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle);
+/**
+ * ol_txrx_ipa_setup() - Setup and connect IPA pipes
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ * @ipa_i2w_cb: IPA to WLAN callback
+ * @ipa_w2i_cb: WLAN to IPA callback
+ * @ipa_wdi_meter_notifier_cb: IPA WDI metering callback
+ * @ipa_desc_size: IPA descriptor size
+ * @ipa_priv: handle to the HTT instance
+ * @is_rm_enabled: Is IPA RM enabled or not
+ * @p_tx_pipe_handle: pointer to Tx pipe handle
+ * @p_rx_pipe_handle: pointer to Rx pipe handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			     void *ipa_i2w_cb, void *ipa_w2i_cb,
+			     void *ipa_wdi_meter_notifier_cb,
+			     uint32_t ipa_desc_size, void *ipa_priv,
+			     bool is_rm_enabled, uint32_t *tx_pipe_handle,
+			     uint32_t *rx_pipe_handle);
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
 QDF_STATUS ol_txrx_ipa_cleanup(uint32_t tx_pipe_handle,
 		uint32_t rx_pipe_handle);
@@ -143,15 +268,48 @@ QDF_STATUS ol_txrx_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
 		qdf_ipa_client_type_t cons_client,
 		uint8_t session_id, bool is_ipv6_enabled);
 QDF_STATUS ol_txrx_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled);
-QDF_STATUS ol_txrx_ipa_enable_pipes(struct cdp_pdev *pdev);
-QDF_STATUS ol_txrx_ipa_disable_pipes(struct cdp_pdev *pdev);
+
+/**
+ * ol_txrx_ipa_enable_pipes() - Enable and resume traffic on Tx/Rx pipes
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
+
+/**
+ * ol_txrx_ipa_disable_pipes() – Suspend traffic and disable Tx/Rx pipes
+ * @soc_hdl: data path soc handle
+ * @pdev_id: device instance id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_disable_pipes(struct cdp_soc_t *soc_hdl,
+				     uint8_t pdev_id);
 QDF_STATUS ol_txrx_ipa_set_perf_level(int client,
 		uint32_t max_supported_bw_mbps);
 #ifdef FEATURE_METERING
-QDF_STATUS ol_txrx_ipa_uc_get_share_stats(struct cdp_pdev *pdev,
-		uint8_t reset_stats);
-QDF_STATUS ol_txrx_ipa_uc_set_quota(struct cdp_pdev *pdev,
-		uint64_t quota_bytes);
+/**
+ * ol_txrx_ipa_uc_get_share_stats() - get Tx/Rx byte stats from FW
+ * @soc_hdl: data path soc handle
+ * @pdev_id: physical device instance id
+ * @value: reset stats
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_uc_get_share_stats(struct cdp_soc_t *soc_hdl,
+					  uint8_t pdev_id, uint8_t reset_stats);
+/**
+ * ol_txrx_ipa_uc_set_quota() - set quota limit to FW
+ * @soc_hdl: data path soc handle
+ * @pdev_id: physical device instance number
+ * @value: quota limit bytes
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_uc_set_quota(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				    uint64_t quota_bytes);
 #endif
 #endif
 #endif /* _OL_TXRX_IPA_H_*/

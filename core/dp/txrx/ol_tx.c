@@ -85,15 +85,22 @@ qdf_nbuf_t ol_tx_data(struct cdp_vdev *data_vdev, qdf_nbuf_t skb)
 }
 
 #ifdef IPA_OFFLOAD
-qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
+qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+				     qdf_nbuf_t skb)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	struct ol_txrx_pdev_t *pdev = ol_txrx_get_pdev_from_pdev_id(
+							soc, OL_TXRX_PDEV_ID);
+	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_soc_vdev_id(soc,
+								     vdev_id);
 	qdf_nbuf_t ret;
 
 	if (qdf_unlikely(!pdev)) {
-		qdf_net_buf_debug_acquire_skb(skb, __FILE__, __LINE__);
-
-		ol_txrx_err("pdev is NULL");
+		ol_txrx_err("%s: invalid pdev", __func__);
+		return skb;
+	}
+	if (qdf_unlikely(!vdev)) {
+		ol_txrx_err("%s: invalid vdev, vdev_id:%d", __func__, vdev_id);
 		return skb;
 	}
 

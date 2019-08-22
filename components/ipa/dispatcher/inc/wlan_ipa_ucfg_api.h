@@ -69,15 +69,14 @@ void ucfg_ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc,
 			       void *dp_soc);
 
 /**
- * ucfg_ipa_set_txrx_handle() - register pdev txrx handler
+ * ucfg_ipa_set_pdev_id() - register pdev id
  * @psoc: psoc handle
- * @psoc: psoc obj
- * @txrx_handle: data path pdev txrx handle
+ * @pdev_id: data path txrx pdev id
  *
  * Return: None
  */
-void ucfg_ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
-			      void *txrx_handle);
+void ucfg_ipa_set_pdev_id(struct wlan_objmgr_psoc *psoc,
+			  uint8_t pdev_id);
 
 /**
  * ucfg_ipa_set_perf_level() - Set IPA perf level
@@ -403,8 +402,8 @@ QDF_STATUS ucfg_ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc,
 }
 
 static inline
-QDF_STATUS ucfg_ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
-				    void *txrx_handle)
+QDF_STATUS ucfg_ipa_set_pdev_id(struct wlan_objmgr_psoc *psoc,
+				uint8_t pdev_id)
 {
 	return QDF_STATUS_SUCCESS;
 }

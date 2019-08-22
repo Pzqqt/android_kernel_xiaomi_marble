@@ -310,7 +310,6 @@ struct wlan_ipa_priv;
 /**
  * struct wlan_ipa_iface_context - IPA interface context
  * @ipa_ctx: IPA private context
- * @tl_context: TL context
  * @cons_client: IPA consumer pipe
  * @prod_client: IPA producer pipe
  * @prod_client: IPA producer pipe
@@ -324,7 +323,6 @@ struct wlan_ipa_priv;
  */
 struct wlan_ipa_iface_context {
 	struct wlan_ipa_priv *ipa_ctx;
-	void *tl_context;
 
 	qdf_ipa_client_type_t cons_client;
 	qdf_ipa_client_type_t prod_client;
@@ -588,6 +586,7 @@ struct wlan_ipa_priv {
 	uint8_t num_iface;
 	void *dp_soc;
 	void *dp_pdev;
+	uint8_t dp_pdev_id;
 	struct wlan_ipa_config *config;
 	enum wlan_ipa_rm_state rm_state;
 	/*

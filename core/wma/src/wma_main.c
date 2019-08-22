@@ -655,99 +655,6 @@ static void wma_process_send_addba_req(tp_wma_handle wma_handle,
 }
 
 /**
- * wma_ipa_get_stat() - get IPA data path stats from FW
- *
- * Return: 0 on success, errno on failure
- */
-#ifdef IPA_OFFLOAD
-static int wma_ipa_get_stat(void)
-{
-	struct cdp_pdev *pdev;
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE("pdev NULL for uc stat");
-		return -EINVAL;
-	}
-	cdp_ipa_get_stat(cds_get_context(QDF_MODULE_ID_SOC), pdev);
-
-	return 0;
-}
-#else
-static int wma_ipa_get_stat(void)
-{
-	return 0;
-}
-#endif
-
-/**
- * wma_ipa_uc_get_share_stats() - get Tx/Rx byte stats from FW
- * @privcmd: private command
- *
- * Return: 0 on success, errno on failure
- */
-#if defined(IPA_OFFLOAD) && defined(FEATURE_METERING)
-static int wma_ipa_uc_get_share_stats(wma_cli_set_cmd_t *privcmd)
-{
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct cdp_pdev *pdev;
-	uint8_t reset_stats = privcmd->param_value;
-
-	WMA_LOGD("%s: reset_stats=%d",
-			"WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID",
-			reset_stats);
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE("pdev NULL for uc get share stats");
-		return -EINVAL;
-	}
-	cdp_ipa_uc_get_share_stats(soc, pdev, reset_stats);
-
-	return 0;
-}
-#else
-static int wma_ipa_uc_get_share_stats(wma_cli_set_cmd_t *privcmd)
-{
-	return 0;
-}
-#endif
-
-/**
- * wma_ipa_uc_set_quota() - set quota limit to FW
- * @privcmd: private command
- *
- * Return: 0 on success, errno on failure
- */
-#if defined(IPA_OFFLOAD) && defined(FEATURE_METERING)
-static int wma_ipa_uc_set_quota(wma_cli_set_cmd_t *privcmd)
-{
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct cdp_pdev *pdev;
-	uint64_t quota_bytes = privcmd->param_sec_value;
-
-	quota_bytes <<= 32;
-	quota_bytes |= privcmd->param_value;
-
-	WMA_LOGD("%s: quota_bytes=%llu",
-			"WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID",
-			quota_bytes);
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE("pdev NULL for uc set quota");
-		return -EINVAL;
-	}
-	cdp_ipa_uc_set_quota(soc, pdev, quota_bytes);
-
-	return 0;
-}
-#else
-static int wma_ipa_uc_set_quota(wma_cli_set_cmd_t *privcmd)
-{
-	return 0;
-}
-#endif
-
-/**
  * wma_set_priv_cfg() - set private config parameters
  * @wma_handle: wma handle
  * @privcmd: private command
@@ -888,25 +795,6 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 		WMA_LOGD("%s: IBSS Power Save single RX Chain Enable In ATIM  = %d",
 			__func__, wma_handle->wma_ibss_power_save_params.
 			ibssPs1RxChainInAtimEnable);
-	}
-		break;
-
-	case WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID:
-	{
-		wma_ipa_get_stat();
-	}
-		break;
-
-	case WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID:
-	{
-		wma_ipa_uc_get_share_stats(privcmd);
-	}
-		break;
-
-	case WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID:
-	{
-		wma_ipa_uc_set_quota(privcmd);
-
 	}
 		break;
 

@@ -164,13 +164,13 @@ QDF_STATUS ipa_send_uc_offload_enable_disable(struct wlan_objmgr_pdev *pdev,
 void ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc, void *dp_soc);
 
 /**
- * ipa_set_txrx_handle() - set dp txrx handle
+ * ipa_set_pdev_id() - set dp pdev id
  * @psoc: psoc handle
- * @txrx_handle: dp txrx handle
+ * @pdev_id: dp txrx physical device id
  *
  * Return: None
  */
-void ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc, void *txrx_handle);
+void ipa_set_pdev_id(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id);
 
 /**
  * ipa_rm_set_perf_level() - set ipa rm perf level

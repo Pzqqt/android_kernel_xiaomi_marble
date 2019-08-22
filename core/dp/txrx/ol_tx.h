@@ -35,12 +35,14 @@
 #ifdef IPA_OFFLOAD
 /**
  * ol_tx_send_ipa_data_frame() - send IPA data frame
- * @vdev: vdev
+ * @soc_hdl: datapath soc handle
+ * @vdev: virtual interface id
  * @skb: skb
  *
  * Return: skb/ NULL is for success
  */
-qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb);
+qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+				     qdf_nbuf_t skb);
 #endif
 
 #ifdef CONFIG_LL_DP_SUPPORT

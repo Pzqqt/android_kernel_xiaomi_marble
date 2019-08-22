@@ -177,8 +177,7 @@ static void htt_ipa_op_response(struct htt_pdev_t *pdev, uint32_t *msg_word)
 			sizeof(struct htt_wdi_ipa_op_response_t) +
 			len);
 	cdp_ipa_op_response(cds_get_context(QDF_MODULE_ID_SOC),
-			(struct cdp_pdev *)pdev->txrx_pdev,
-			op_msg_buffer);
+			    OL_TXRX_PDEV_ID, op_msg_buffer);
 }
 #else
 static void htt_ipa_op_response(struct htt_pdev_t *pdev, uint32_t *msg_word)
