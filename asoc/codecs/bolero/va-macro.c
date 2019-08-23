@@ -1685,9 +1685,9 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets_common[] = {
 	SND_SOC_DAPM_INPUT("VA SWR_MIC10"),
 	SND_SOC_DAPM_INPUT("VA SWR_MIC11"),
 
-	SND_SOC_DAPM_MICBIAS_E("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
-			       va_macro_enable_micbias,
-			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_SUPPLY("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
+		va_macro_enable_micbias,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_ADC_E("VA DMIC0", NULL, SND_SOC_NOPM, 0, 0,
 		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
@@ -1838,9 +1838,9 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
 	VA_MACRO_DAPM_MUX("VA SMIC MUX6", 0, va_smic6),
 	VA_MACRO_DAPM_MUX("VA SMIC MUX7", 0, va_smic7),
 
-	SND_SOC_DAPM_MICBIAS_E("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
-			       va_macro_enable_micbias,
-			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_SUPPLY("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
+		va_macro_enable_micbias,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_ADC_E("VA DMIC0", NULL, SND_SOC_NOPM, 0, 0,
 		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
