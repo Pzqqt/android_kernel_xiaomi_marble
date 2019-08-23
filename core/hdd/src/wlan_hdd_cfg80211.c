@@ -4104,8 +4104,14 @@ hdd_send_roam_scan_channel_freq_list_to_sme(struct hdd_context *hdd_ctx,
 	}
 	num_chan = 0;
 
-	nla_for_each_nested(curr_attr, tb2[PARAM_SCAN_FREQ_LIST], rem)
+	nla_for_each_nested(curr_attr, tb2[PARAM_SCAN_FREQ_LIST], rem) {
+		if (nla_len(curr_attr) != sizeof(uint32_t)) {
+			hdd_err("len is not correct for frequency %d",
+				num_chan);
+			return QDF_STATUS_E_INVAL;
+		}
 		freq_list[num_chan++] = nla_get_u32(curr_attr);
+	}
 
 	status = sme_update_roam_scan_freq_list(mac_handle, vdev_id, freq_list,
 						num_chan, list_type);
