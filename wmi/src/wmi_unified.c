@@ -1682,6 +1682,70 @@ static inline void wmi_unified_debug_dump(wmi_unified_t wmi_handle)
 						"WMI_NON_TLV_TARGET"));
 }
 
+#ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
+QDF_STATUS wmi_unified_cmd_send_over_qmi(struct wmi_unified *wmi_handle,
+				    wmi_buf_t buf, uint32_t buflen,
+				    uint32_t cmd_id)
+{
+	QDF_STATUS status;
+
+	if (!qdf_nbuf_push_head(buf, sizeof(WMI_CMD_HDR))) {
+		wmi_err("Failed to send cmd %x, no memory", cmd_id);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_mem_zero(qdf_nbuf_data(buf), sizeof(WMI_CMD_HDR));
+	WMI_SET_FIELD(qdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID, cmd_id);
+	wmi_debug("Sending WMI_CMD_ID: %d over qmi", cmd_id);
+	status = qdf_wmi_send_recv_qmi(qdf_nbuf_data(buf),
+				       buflen + sizeof(WMI_CMD_HDR),
+				       wmi_handle,
+				       wmi_process_qmi_fw_event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_nbuf_pull_head(buf, sizeof(WMI_CMD_HDR));
+		wmi_warn("WMI send on QMI failed. Retrying WMI on HTC");
+	} else {
+		wmi_buf_free(buf);
+	}
+
+	return status;
+}
+
+static int __wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
+{
+	struct wmi_unified *wmi_handle = wmi_cb_ctx;
+	wmi_buf_t evt_buf;
+	uint32_t evt_id;
+
+	if (!wmi_handle || !buf)
+		return -EINVAL;
+
+	evt_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!evt_buf)
+		return -ENOMEM;
+
+	qdf_mem_copy(qdf_nbuf_data(evt_buf), buf, len);
+	evt_id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
+	wmi_debug("Received WMI_EVT_ID: %d over qmi", evt_id);
+	wmi_process_fw_event(wmi_handle, evt_buf);
+
+	return 0;
+}
+
+int wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
+{
+	struct qdf_op_sync *op_sync;
+	int ret;
+
+	if (qdf_op_protect(&op_sync))
+		return -EINVAL;
+	ret = __wmi_process_qmi_fw_event(wmi_cb_ctx, buf, len);
+	qdf_op_unprotect(op_sync);
+
+	return ret;
+}
+#endif
+
 QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 				   uint32_t len, uint32_t cmd_id,
 				   const char *func, uint32_t line)

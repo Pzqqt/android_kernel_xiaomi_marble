@@ -62,6 +62,51 @@ void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down);
 bool qdf_is_fw_down(void);
 
 /**
+ * qdf_wmi_recv_qmi_cb() - callback to receive WMI over QMI
+ * @cb_ctx: WMI event recv callback context(wmi_handle)
+ * @buf: WMI buffer
+ * @len: WMI buffer len
+ *
+ * Return: 0 if success otherwise -EINVAL
+ */
+typedef int (*qdf_wmi_recv_qmi_cb)(void *cb_ctx, void *buf, int len);
+
+/**
+ * qdf_wmi_send_over_qmi_callback() - callback to send WMI over QMI
+ * @buf: WMI buffer
+ * @len: WMI buffer len
+ * @cb_ctx: WMI event recv callback context(wmi_handle)
+ * @wmi_rx_cb: WMI event receive call back
+ *
+ * Return: QDF_STATUS_SUCCESS if success otherwise QDF error code
+ */
+typedef QDF_STATUS (*qdf_wmi_send_over_qmi_callback)(void *buf, uint32_t len,
+						     void *cb_ctx,
+						     qdf_wmi_recv_qmi_cb
+						     wmi_rx_cb);
+
+/**
+ * qdf_register_wmi_send_recv_qmi_callback() - Register WMI over QMI callback
+ * @qdf_wmi_send_over_qmi_callback: callback to send recv WMI data over QMI
+ *
+ * Return: none
+ */
+void qdf_register_wmi_send_recv_qmi_callback(qdf_wmi_send_over_qmi_callback
+					     wmi_send_recv_qmi_cb);
+
+/**
+ * qdf_wmi_send_recv_qmi() - API to send receive WMI data over QMI
+ * @buf: WMI buffer
+ * @len: WMI buffer len
+ * @cb_ctx: WMI event recv callback context(wmi_handle)
+ * @wmi_rx_cb: WMI event receive call back
+ *
+ * Return: QDF STATUS of operation
+ */
+QDF_STATUS qdf_wmi_send_recv_qmi(void *buf, uint32_t len, void *cb_ctx,
+				 qdf_wmi_recv_qmi_cb wmi_rx_cb);
+
+/**
  * qdf_register_self_recovery_callback() - register self recovery callback
  * @callback:  self recovery callback
  *

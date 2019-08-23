@@ -566,8 +566,31 @@ void wmi_mtrace(uint32_t message_id, uint16_t vdev_id, uint32_t data)
 	qdf_mtrace(QDF_MODULE_ID_WMI, QDF_MODULE_ID_TARGET,
 		   mtrace_message_id, vdev_id, data);
 }
-
 qdf_export_symbol(wmi_mtrace);
+
+#ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
+static QDF_STATUS wmi_unified_cmd_send_pm_chk(struct wmi_unified *wmi_handle,
+					      wmi_buf_t buf,
+					      uint32_t buflen, uint32_t cmd_id)
+{
+	if (wmi_is_target_suspended(wmi_handle)) {
+		if (QDF_IS_STATUS_SUCCESS(
+		    wmi_unified_cmd_send_over_qmi(wmi_handle, buf,
+					     buflen, cmd_id)))
+			return QDF_STATUS_SUCCESS;
+	}
+
+	return wmi_unified_cmd_send(wmi_handle, buf, buflen, cmd_id);
+}
+#else
+static inline
+QDF_STATUS wmi_unified_cmd_send_pm_chk(struct wmi_unified *wmi_handle,
+				       wmi_buf_t buf,
+				       uint32_t buflen, uint32_t cmd_id)
+{
+	return wmi_unified_cmd_send(wmi_handle, buf, buflen, cmd_id);
+}
+#endif
 
 /**
  * send_vdev_create_cmd_tlv() - send VDEV create command to fw
@@ -1975,8 +1998,8 @@ static QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 				cmd->stats_id, cmd->vdev_id, cmd->pdev_id);
 
 	wmi_mtrace(WMI_REQUEST_STATS_CMDID, cmd->vdev_id, 0);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-					 WMI_REQUEST_STATS_CMDID);
+	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,
+					  WMI_REQUEST_STATS_CMDID);
 
 	if (ret) {
 		WMI_LOGE("Failed to send status request to fw =%d", ret);
@@ -4842,8 +4865,8 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGD("Peer MAC Addr: %pM", get_req->peer_macaddr.bytes);
 
 	wmi_mtrace(WMI_REQUEST_LINK_STATS_CMDID, cmd->vdev_id, 0);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				   WMI_REQUEST_LINK_STATS_CMDID);
+	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,
+					  WMI_REQUEST_LINK_STATS_CMDID);
 	if (ret) {
 		WMI_LOGE("%s: Failed to send get link stats request", __func__);
 		wmi_buf_free(buf);
@@ -4922,8 +4945,8 @@ static QDF_STATUS send_snr_request_cmd_tlv(wmi_unified_t wmi_handle)
 			       (wmi_request_stats_cmd_fixed_param));
 	cmd->stats_id = WMI_REQUEST_VDEV_STAT;
 	wmi_mtrace(WMI_REQUEST_STATS_CMDID, cmd->vdev_id, 0);
-	if (wmi_unified_cmd_send
-		    (wmi_handle, buf, len, WMI_REQUEST_STATS_CMDID)) {
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_REQUEST_STATS_CMDID)) {
 		WMI_LOGE("Failed to send host stats request to fw");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
