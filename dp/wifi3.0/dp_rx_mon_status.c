@@ -187,6 +187,8 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 		rx_stats_peruser->first_data_seq_ctrl =
 			rx_user_status->first_data_seq_ctrl;
 
+		rx_stats_peruser->frame_control_info_valid =
+			rx_user_status->frame_control_info_valid;
 		rx_stats_peruser->frame_control =
 			rx_user_status->frame_control;
 
@@ -232,6 +234,7 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 		rx_stats_peruser->peer_id = peer->peer_ids[0];
 		cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
 		rx_stats_peruser->vdev_id = peer->vdev->vdev_id;
+		rx_stats_peruser->ofdma_info_valid = 0;
 
 		if (cdp_rx_ppdu->u.ppdu_type == HAL_RX_TYPE_MU_OFDMA) {
 			if (rx_user_status->ofdma_info_valid) {
@@ -256,8 +259,6 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 				}
 				is_data = dp_rx_inc_rusize_cnt(pdev,
 							       rx_user_status);
-			} else {
-				rx_stats_peruser->ofdma_info_valid = 0;
 			}
 			if (is_data) {
 				/* counter to get number of MU OFDMA */
@@ -974,6 +975,7 @@ dp_rx_mon_handle_ofdma_info(struct hal_rx_ppdu_info *ppdu_info)
 	uint32_t ul_ofdma_user_v0_word0;
 	uint32_t ul_ofdma_user_v0_word1;
 	uint32_t ru_width;
+	uint32_t ru_size;
 
 	if (ppdu_info->rx_status.reception_type != HAL_RX_TYPE_MU_OFDMA)
 		return;
@@ -997,18 +999,19 @@ dp_rx_mon_handle_ofdma_info(struct hal_rx_ppdu_info *ppdu_info)
 				ul_ofdma_user_v0_word1);
 			mon_rx_user_status->nss =
 				HTT_UL_OFDMA_USER_INFO_V0_W1_NSS_GET(
-				ul_ofdma_user_v0_word1);
+				ul_ofdma_user_v0_word1) + 1;
 
 			mon_rx_user_status->ofdma_info_valid = 1;
 			mon_rx_user_status->dl_ofdma_ru_start_index =
 				HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START_GET(
 				ul_ofdma_user_v0_word1);
 
-			dp_rx_ul_ofdma_ru_size_to_width(
+			ru_size =
 				HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE_GET(
-				ul_ofdma_user_v0_word1),
-				&ru_width);
+				ul_ofdma_user_v0_word1);
+			dp_rx_ul_ofdma_ru_size_to_width(ru_size, &ru_width);
 			mon_rx_user_status->dl_ofdma_ru_width = ru_width;
+			mon_rx_user_status->dl_ofdma_ru_size = ru_size;
 		}
 	}
 }
