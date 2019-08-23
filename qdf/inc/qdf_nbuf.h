@@ -1272,6 +1272,29 @@ static inline int qdf_nbuf_is_sa_valid(qdf_nbuf_t buf)
 }
 
 /**
+ * qdf_nbuf_set_rx_retry_flag() - set rx retry flag bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_set_rx_retry_flag(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_rx_retry_flag(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_rx_retry_flag() - get rx retry flag bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_rx_retry_flag(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_rx_retry_flag(buf);
+}
+
+/**
  * qdf_nbuf_set_raw_frame() - set  raw_frame bit
  * @buf: Network buffer
  * @val: 0/1

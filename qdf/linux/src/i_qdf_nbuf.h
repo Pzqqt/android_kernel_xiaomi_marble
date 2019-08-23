@@ -150,6 +150,7 @@ typedef union {
  * @rx.is_raw_frame: RAW frame
  * @rx.fcs_err: FCS error
  * @rx.tid_val: tid value
+ * @rx.flag_retry: flag to indicate MSDU is retried
  * @rx.reserved: reserved
  *
  * @tx.dev.priv_cb_w.fctx: ctx to handle special pkts defined by ftype
@@ -265,7 +266,8 @@ struct qdf_nbuf_cb {
 			uint8_t is_raw_frame:1,
 				fcs_err:1,
 				tid_val:4,
-				reserved:2;
+				flag_retry:1,
+				reserved:1;
 		} rx;
 
 		/* Note: MAX: 40 bytes */
@@ -403,6 +405,10 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 #define QDF_NBUF_CB_RX_SA_VALID(skb) \
 	(((struct qdf_nbuf_cb *) \
 	((skb)->cb))->u.rx.flag_sa_valid)
+
+#define QDF_NBUF_CB_RX_RETRY_FLAG(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.rx.flag_retry)
 
 #define QDF_NBUF_CB_RX_RAW_FRAME(skb) \
 	(((struct qdf_nbuf_cb *) \
@@ -642,6 +648,12 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 
 #define __qdf_nbuf_is_sa_valid(skb) \
 	(QDF_NBUF_CB_RX_SA_VALID((skb)))
+
+#define __qdf_nbuf_set_rx_retry_flag(skb, val) \
+	((QDF_NBUF_CB_RX_RETRY_FLAG((skb))) = val)
+
+#define __qdf_nbuf_is_rx_retry_flag(skb) \
+	(QDF_NBUF_CB_RX_RETRY_FLAG((skb)))
 
 #define __qdf_nbuf_set_raw_frame(skb, val) \
 	((QDF_NBUF_CB_RX_RAW_FRAME((skb))) = val)

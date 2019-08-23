@@ -24,7 +24,6 @@
 #ifndef _CDP_TXRX_HOST_STATS_H_
 #define _CDP_TXRX_HOST_STATS_H_
 #include "cdp_txrx_handle.h"
-#include "cdp_txrx_extd_struct.h"
 /**
  * cdp_host_stats_get: cdp call to get host stats
  * @soc: SOC handle

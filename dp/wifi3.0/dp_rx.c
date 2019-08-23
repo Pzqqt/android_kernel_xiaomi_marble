@@ -1366,6 +1366,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	DP_STATS_INC_PKT(peer, rx.rcvd_reo[ring_id], 1, msdu_len);
 	DP_STATS_INCC(peer, rx.non_amsdu_cnt, 1, is_not_amsdu);
 	DP_STATS_INCC(peer, rx.amsdu_cnt, 1, !is_not_amsdu);
+	DP_STATS_INCC(peer, rx.rx_retries, 1, qdf_nbuf_is_rx_retry_flag(nbuf));
 
 	tid_stats->msdu_cnt++;
 	if (qdf_unlikely(qdf_nbuf_is_da_mcbc(nbuf) &&
@@ -1797,6 +1798,9 @@ more_data:
 
 		/* Get MSDU DESC info */
 		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);
+
+		if (mpdu_desc_info.mpdu_flags & HAL_MPDU_F_RETRY_BIT)
+			qdf_nbuf_set_rx_retry_flag(rx_desc->nbuf, 1);
 
 		if (qdf_unlikely(mpdu_desc_info.mpdu_flags &
 				HAL_MPDU_F_RAW_AMPDU)) {
