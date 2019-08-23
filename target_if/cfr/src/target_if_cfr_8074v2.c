@@ -625,7 +625,7 @@ int cfr_8074v2_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 
-	pdev_cfrobj->cfr_max_sta_count = MAX_PEERS_HKV2;
+	pdev_cfrobj->cfr_max_sta_count = MAX_CFR_ENABLED_CLIENTS;
 	pdev_cfrobj->subbuf_size = STREAMFS_MAX_SUBBUF_8S;
 	pdev_cfrobj->num_subbufs = STREAMFS_NUM_SUBBUF_8S;
 

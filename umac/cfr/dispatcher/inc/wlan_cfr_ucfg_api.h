@@ -25,7 +25,7 @@
 #define MAX_CFR_PRD        (10*60*1000)        /* 10 minutes */
 
 /**
- * ucfg_cfr_start_capture() - function to start cfr capture
+ * ucfg_cfr_start_capture() - function to start cfr capture for connected client
  * @pdev: pointer to pdev object
  * @peer: pointer to peer object
  * @cfr_params: config params to cfr capture
@@ -37,7 +37,7 @@ int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 			   struct cfr_capture_params *cfr_params);
 
 /**
- * ucfg_cfr_stop_capture() - function to stop cfr capture
+ * ucfg_cfr_stop_capture() - function to stop cfr capture for connected client
  * @pdev: pointer to pdev object
  * @peer: pointer to peer object
  *
@@ -45,6 +45,30 @@ int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
  */
 int ucfg_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 			  struct wlan_objmgr_peer *peer);
+
+/**
+ * ucfg_cfr_start_capture_probe_req() - function to start cfr capture for
+ *					unassociated clients
+ * @pdev: pointer to pdev object
+ * @unassoc_mac: mac address of un-associated client
+ * @cfr_params: config params to cfr capture
+ *
+ * Return: status of start capture.
+ */
+int ucfg_cfr_start_capture_probe_req(struct wlan_objmgr_pdev *pdev,
+				     struct qdf_mac_addr *unassoc_mac,
+				     struct cfr_capture_params *params);
+
+/**
+ * ucfg_cfr_stop_capture_probe_req() - function to stop cfr capture for
+ *				       unassociated cleints
+ * @pdev: pointer to pdev object
+ * @unassoc_mac: mac address of un-associated client
+ *
+ * Return: status of stop capture.
+ */
+int ucfg_cfr_stop_capture_probe_req(struct wlan_objmgr_pdev *pdev,
+				    struct qdf_mac_addr *unassoc_mac);
 
 /**
  * ucfg_cfr_list_peers() - Lists total number of peers with cfr capture enabled

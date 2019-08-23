@@ -39,6 +39,7 @@
 
 #define DBR_EVENT_TIMEOUT_IN_MS_CFR 1
 #define DBR_NUM_RESP_PER_EVENT_CFR 1
+#define MAX_CFR_ENABLED_CLIENTS 10
 
 enum cfrmetaversion {
 	CFR_META_VERSION_NONE,
@@ -196,6 +197,12 @@ struct look_up_table {
 	struct whal_cfir_dma_hdr dma_hdr;
 };
 
+struct unassoc_pool_entry {
+	struct qdf_mac_addr mac;
+	struct cfr_capture_params cfr_params;
+	bool is_valid;
+};
+
 /**
  * struct pdev_cfr - private pdev object for cfr
  * pdev_obj: pointer to pdev object
@@ -223,6 +230,7 @@ struct pdev_cfr {
 	uint32_t tx_evt_cnt;
 	uint32_t dbr_evt_cnt;
 	uint32_t release_cnt;
+	struct unassoc_pool_entry unassoc_pool[MAX_CFR_ENABLED_CLIENTS];
 };
 
 #define PEER_CFR_CAPTURE_ENABLE   1
