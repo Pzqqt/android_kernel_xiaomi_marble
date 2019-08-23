@@ -360,7 +360,7 @@ hdd_mic_flush_work(struct hdd_adapter *adapter)
 	hdd_debug("Flush the MIC error work");
 
 	qdf_spin_lock_bh(&adapter->mic_work.lock);
-	if (adapter->mic_work.status == MIC_UNINITIALIZED) {
+	if (adapter->mic_work.status != MIC_SCHEDULED) {
 		qdf_spin_unlock_bh(&adapter->mic_work.lock);
 		return;
 	}
