@@ -1290,12 +1290,6 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-/*
- * number of data PPDU scheduled in a burst is 10
- * which doesn't include BAR and other non data frame
- * ~50 is maximum scheduled ppdu count
- */
-#define SCHED_MAX_PPDU_CNT 64
 /**
  * dp_tx_ppdu_stats_process - Deferred PPDU stats handler
  * @context: Opaque work context (PDEV)
@@ -1308,14 +1302,19 @@ void dp_tx_ppdu_stats_process(void *context)
 	uint32_t last_ppdu_id;
 	uint32_t ppdu_cnt;
 	uint32_t ppdu_desc_cnt = 0;
-	uint32_t j;
 	struct dp_pdev *pdev = (struct dp_pdev *)context;
-	struct ppdu_info *ppdu_info, *tmp_ppdu_info;
+	struct ppdu_info *ppdu_info, *tmp_ppdu_info = NULL;
 	uint32_t now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
-	struct ppdu_info *sched_ppdu_list[SCHED_MAX_PPDU_CNT];
-	qdf_nbuf_t nbuf_ppdu_desc_list[SCHED_MAX_PPDU_CNT];
+	struct ppdu_info *sched_ppdu_info = NULL;
+
+	STAILQ_HEAD(, ppdu_info) sched_ppdu_queue;
+
+	struct ppdu_info *sched_ppdu_list_last_ptr;
+	qdf_nbuf_t *nbuf_ppdu_desc_list;
+	qdf_nbuf_t tmp_nbuf;
 	struct dp_pdev_tx_capture *ptr_tx_cap = &pdev->tx_capture;
 
+	STAILQ_INIT(&sched_ppdu_queue);
 	/* Move the PPDU entries to defer list */
 	qdf_spin_lock_bh(&ptr_tx_cap->ppdu_stats_lock);
 	STAILQ_CONCAT(&ptr_tx_cap->ppdu_stats_defer_queue,
@@ -1336,23 +1335,49 @@ void dp_tx_ppdu_stats_process(void *context)
 				    ppdu_info_queue_elem, tmp_ppdu_info) {
 			if (curr_sched_cmdid != ppdu_info->sched_cmdid)
 				break;
-			qdf_assert_always(ppdu_cnt < SCHED_MAX_PPDU_CNT);
-			sched_ppdu_list[ppdu_cnt] = ppdu_info;
+			sched_ppdu_list_last_ptr = ppdu_info;
 			ppdu_cnt++;
 		}
 		if (ppdu_info && (curr_sched_cmdid == ppdu_info->sched_cmdid) &&
 		    ptr_tx_cap->ppdu_stats_next_sched < now_ms)
 			break;
 
-		last_ppdu_id = sched_ppdu_list[ppdu_cnt - 1]->ppdu_id;
+		last_ppdu_id = sched_ppdu_list_last_ptr->ppdu_id;
+
+		STAILQ_FIRST(&sched_ppdu_queue) =
+			STAILQ_FIRST(&ptr_tx_cap->ppdu_stats_defer_queue);
 		STAILQ_REMOVE_HEAD_UNTIL(&ptr_tx_cap->ppdu_stats_defer_queue,
-					 sched_ppdu_list[ppdu_cnt - 1],
+					 sched_ppdu_list_last_ptr,
 					 ppdu_info_queue_elem);
+		STAILQ_NEXT(sched_ppdu_list_last_ptr,
+			    ppdu_info_queue_elem) = NULL;
+
 		ptr_tx_cap->ppdu_stats_defer_queue_depth -= ppdu_cnt;
 
+		nbuf_ppdu_desc_list =
+			(qdf_nbuf_t *) qdf_mem_malloc(sizeof(qdf_nbuf_t) *
+						      ppdu_cnt);
+		/*
+		 * if there is no memory allocated we need to free sched ppdu
+		 * list, no ppdu stats will be updated.
+		 */
+		if (!nbuf_ppdu_desc_list) {
+			STAILQ_FOREACH_SAFE(sched_ppdu_info,
+					    &sched_ppdu_queue,
+					    ppdu_info_queue_elem,
+					    tmp_ppdu_info) {
+				ppdu_info = sched_ppdu_info;
+				tmp_nbuf = ppdu_info->nbuf;
+				qdf_mem_free(ppdu_info);
+				qdf_nbuf_free(tmp_nbuf);
+			}
+			continue;
+		}
+
 		ppdu_desc_cnt = 0;
-		/* Process tx buffer list based on last_ppdu_id stored above */
-		for (j = 0; j < ppdu_cnt; j++) {
+		STAILQ_FOREACH_SAFE(sched_ppdu_info,
+				    &sched_ppdu_queue,
+				    ppdu_info_queue_elem, tmp_ppdu_info) {
 			struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
 			struct dp_peer *peer = NULL;
 			qdf_nbuf_t nbuf;
@@ -1367,7 +1392,7 @@ void dp_tx_ppdu_stats_process(void *context)
 
 			qdf_nbuf_queue_init(&head_msdu);
 
-			ppdu_info = sched_ppdu_list[j];
+			ppdu_info = sched_ppdu_info;
 			ppdu_desc = (struct cdp_tx_completion_ppdu *)
 				qdf_nbuf_data(ppdu_info->nbuf);
 			pdev->tx_ppdu_proc++;
@@ -1575,6 +1600,8 @@ dequeue_msdu_again:
 						   nbuf_ppdu_desc_list,
 						   ppdu_desc_cnt);
 		}
+
+		qdf_mem_free(nbuf_ppdu_desc_list);
 	}
 }
 
