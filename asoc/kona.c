@@ -7749,6 +7749,8 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	pdata->dmic45_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,cdc-dmic45-gpios",
 					       0);
+	if (pdata->dmic45_gpio_p)
+		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic45_gpio_p, false);
 
 	pdata->mi2s_gpio_p[PRIM_MI2S] = of_parse_phandle(pdev->dev.of_node,
 					"qcom,pri-mi2s-gpios", 0);
