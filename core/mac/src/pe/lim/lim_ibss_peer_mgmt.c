@@ -1271,7 +1271,6 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
 	struct del_bss_param *pDelBss = (struct del_bss_param *)msg;
-	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 	if (!pDelBss) {
@@ -1301,14 +1300,6 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 	if (pDelBss->status != QDF_STATUS_SUCCESS) {
 		pe_err("IBSS: DEL_BSS_RSP error: %x", pDelBss->status);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
-		goto end;
-	}
-
-	if (lim_set_link_state(mac, eSIR_LINK_IDLE_STATE, nullBssid,
-			       pe_session->self_mac_addr, NULL,
-			       NULL) != QDF_STATUS_SUCCESS) {
-		pe_err("IBSS: DEL_BSS_RSP setLinkState failed");
-		rc = eSIR_SME_REFUSED;
 		goto end;
 	}
 

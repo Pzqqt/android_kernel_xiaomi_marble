@@ -2624,7 +2624,6 @@ wma_roam_update_vdev(tp_wma_handle wma,
 {
 	struct del_bss_param *del_bss_params;
 	tDeleteStaParams *del_sta_params;
-	tLinkStateParams *set_link_params;
 	tAddStaParams *add_sta_params;
 	uint32_t uc_cipher = 0, cipher_cap = 0;
 	uint8_t vdev_id;
@@ -2641,33 +2640,20 @@ wma_roam_update_vdev(tp_wma_handle wma,
 		return;
 	}
 
-	set_link_params = qdf_mem_malloc(sizeof(*set_link_params));
-	if (!set_link_params) {
-		qdf_mem_free(del_bss_params);
-		qdf_mem_free(del_sta_params);
-		return;
-	}
 	add_sta_params = qdf_mem_malloc(sizeof(*add_sta_params));
 	if (!add_sta_params) {
 		qdf_mem_free(del_bss_params);
 		qdf_mem_free(del_sta_params);
-		qdf_mem_free(set_link_params);
 		return;
 	}
 
 	qdf_mem_zero(del_bss_params, sizeof(*del_bss_params));
 	qdf_mem_zero(del_sta_params, sizeof(*del_sta_params));
-	qdf_mem_zero(set_link_params, sizeof(*set_link_params));
 	qdf_mem_zero(add_sta_params, sizeof(*add_sta_params));
 
 	del_bss_params->vdev_id = vdev_id;
 	del_sta_params->smesessionId = vdev_id;
 	qdf_mem_copy(del_bss_params->bssid, wma->interfaces[vdev_id].bssid,
-			QDF_MAC_ADDR_SIZE);
-	set_link_params->state = eSIR_LINK_PREASSOC_STATE;
-	qdf_mem_copy(set_link_params->self_mac_addr,
-		     roam_synch_ind_ptr->self_mac.bytes, QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(set_link_params->bssid, roam_synch_ind_ptr->bssid.bytes,
 			QDF_MAC_ADDR_SIZE);
 	add_sta_params->staType = STA_ENTRY_SELF;
 	add_sta_params->smesessionId = vdev_id;
@@ -2685,7 +2671,8 @@ wma_roam_update_vdev(tp_wma_handle wma,
 
 	wma_delete_sta(wma, del_sta_params);
 	wma_delete_bss(wma, del_bss_params);
-	wma_set_linkstate(wma, set_link_params);
+	wma_add_bss_peer_sta(roam_synch_ind_ptr->self_mac.bytes,
+			     roam_synch_ind_ptr->bssid.bytes, true);
 	/* Update new peer's uc cipher */
 	wma_update_roamed_peer_unicast_cipher(wma, uc_cipher, cipher_cap,
 					      roam_synch_ind_ptr->bssid.bytes);
@@ -2694,7 +2681,6 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
 			roam_synch_ind_ptr->bssid.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_free(del_bss_params);
-	qdf_mem_free(set_link_params);
 	qdf_mem_free(add_sta_params);
 }
 

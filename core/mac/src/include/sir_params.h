@@ -140,10 +140,6 @@ enum cap_bitmap {
 typedef enum eSriLinkState {
 	eSIR_LINK_IDLE_STATE = 0,
 	eSIR_LINK_PREASSOC_STATE = 1,
-	eSIR_LINK_POSTASSOC_STATE = 2,
-	eSIR_LINK_AP_STATE = 3,
-	eSIR_LINK_IBSS_STATE = 4,
-	eSIR_LINK_DOWN_STATE = 5,
 } tSirLinkState;
 
 /* / Mailbox Message Structure Define */

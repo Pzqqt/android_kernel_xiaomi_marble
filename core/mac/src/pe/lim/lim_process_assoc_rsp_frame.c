@@ -834,26 +834,6 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		goto assocReject;
 	}
 
-	/*
-	 * Association Response received with success code
-	 * Set the link state to POSTASSOC now that we have received
-	 * assoc/reassoc response
-	 * NOTE: for BTAMP case, it is being handled in
-	 * lim_process_mlm_assoc_req
-	 */
-	if (!lim_is_roam_synch_in_progress(session_entry)) {
-		if (lim_set_link_state
-			(mac_ctx, eSIR_LINK_POSTASSOC_STATE,
-			session_entry->bssId,
-			session_entry->self_mac_addr, NULL,
-			NULL) != QDF_STATUS_SUCCESS) {
-			pe_err("Set link state to POSTASSOC failed");
-			qdf_mem_free(beacon);
-			qdf_mem_free(assoc_rsp);
-			return;
-		}
-	}
-
 	if (assoc_rsp->QosMapSet.present)
 		qdf_mem_copy(&session_entry->QosMapSet,
 			     &assoc_rsp->QosMapSet,

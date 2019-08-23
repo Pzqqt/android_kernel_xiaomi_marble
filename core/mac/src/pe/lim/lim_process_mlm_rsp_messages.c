@@ -1594,14 +1594,6 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 	}
 	if (QDF_STATUS_SUCCESS == pDelBssParams->status) {
 		pe_debug("STA received the DEL_BSS_RSP");
-		if (lim_set_link_state
-			    (mac, eSIR_LINK_IDLE_STATE, pe_session->bssId,
-			    pe_session->self_mac_addr, NULL,
-			    NULL) != QDF_STATUS_SUCCESS) {
-			pe_err("Failure in setting link state to IDLE");
-			status_code = eSIR_SME_REFUSED;
-			goto end;
-		}
 		if (!sta) {
 			pe_err("DPH Entry for STA 1 missing");
 			status_code = eSIR_SME_REFUSED;
@@ -1649,8 +1641,6 @@ void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 				    struct pe_session *pe_session)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
-	QDF_STATUS status;
-	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	if (!pe_session) {
 		pe_err("Session entry passed is NULL");
@@ -1679,12 +1669,6 @@ void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 	if (pDelBss->status != QDF_STATUS_SUCCESS) {
 		pe_err("BSS: DEL_BSS_RSP error (%x)", pDelBss->status);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
-		goto end;
-	}
-	status = lim_set_link_state(mac, eSIR_LINK_IDLE_STATE, nullBssid,
-				    pe_session->self_mac_addr, NULL, NULL);
-	if (status != QDF_STATUS_SUCCESS) {
-		rc = eSIR_SME_REFUSED;
 		goto end;
 	}
 	/** Softmac may send all the buffered packets right after resuming the transmission hence
@@ -2031,11 +2015,6 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 	mlmStartCnf.sessionId = pAddBssParams->sessionId;
 	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
 		pe_debug("WMA_ADD_BSS_RSP returned with QDF_STATUS_SUCCESS");
-		if (lim_set_link_state
-			    (mac, eSIR_LINK_AP_STATE, pe_session->bssId,
-			    pe_session->self_mac_addr, NULL,
-			    NULL) != QDF_STATUS_SUCCESS)
-			return;
 		/* Set MLME state */
 		pe_session->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
 		pe_session->chainMask = pAddBssParams->chainMask;
@@ -2150,11 +2129,6 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
 		pe_debug("WMA_ADD_BSS_RSP returned with QDF_STATUS_SUCCESS");
 
-		if (lim_set_link_state
-			    (mac, eSIR_LINK_IBSS_STATE, pe_session->bssId,
-			    pe_session->self_mac_addr, NULL,
-			    NULL) != QDF_STATUS_SUCCESS)
-			return;
 		/* Set MLME state */
 		pe_session->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
 		MTRACE(mac_trace
@@ -2449,11 +2423,6 @@ static void lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 
 	if (mlm_assoc_cnf.resultCode != eSIR_SME_SUCCESS) {
 		session_entry->limMlmState = eLIM_MLM_IDLE_STATE;
-		if (lim_set_link_state(mac_ctx, eSIR_LINK_IDLE_STATE,
-					session_entry->bssId,
-					session_entry->self_mac_addr,
-					NULL, NULL) != QDF_STATUS_SUCCESS)
-			pe_err("Failed to set the LinkState");
 		/* Update PE session Id */
 		mlm_assoc_cnf.sessionId = session_entry->peSessionId;
 		lim_post_sme_message(mac_ctx, msg_type,

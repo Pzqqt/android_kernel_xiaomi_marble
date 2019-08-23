@@ -6002,7 +6002,8 @@ QDF_STATUS wma_set_wlm_latency_level(void *wma_ptr,
 	return ret;
 }
 
-QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid)
+QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid,
+				bool roam_synch)
 {
 	struct cdp_pdev *pdev;
 	struct cdp_vdev *vdev;
@@ -6021,9 +6022,8 @@ QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid)
 		WMA_LOGE("vdev not found for addr: %pM", self_mac);
 		goto err;
 	}
-	status = wma_create_peer(
-			wma, pdev, vdev, bssid,
-			WMI_PEER_TYPE_DEFAULT, vdev_id, false);
+	status = wma_create_peer(wma, pdev, vdev, bssid, WMI_PEER_TYPE_DEFAULT,
+				 vdev_id, roam_synch);
 err:
 	return status;
 }
