@@ -438,7 +438,6 @@ static void pmo_core_enable_runtime_pm_offloads(struct wlan_objmgr_psoc *psoc)
 		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 		if (!vdev)
 			continue;
-		pmo_core_enable_hw_filter_in_fwr(vdev);
 	}
 }
 
@@ -452,7 +451,6 @@ static void pmo_core_disable_runtime_pm_offloads(struct wlan_objmgr_psoc *psoc)
 		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 		if (!vdev)
 			continue;
-		pmo_core_disable_hw_filter_in_fwr(vdev);
 	}
 }
 
