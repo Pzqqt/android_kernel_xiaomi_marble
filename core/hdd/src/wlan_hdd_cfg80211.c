@@ -4441,6 +4441,7 @@ hdd_clear_roam_control_config(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	struct nlattr *tb2[QCA_ATTR_ROAM_CONTROL_MAX + 1];
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	uint32_t value;
 
 	/* The command must carry PARAM_ROAM_CONTROL_CONFIG */
 	if (!tb[PARAM_ROAM_CONTROL_CONFIG]) {
@@ -4465,11 +4466,9 @@ hdd_clear_roam_control_config(struct hdd_context *hdd_ctx,
 			return qdf_status_to_os_return(status);
 		}
 
-		hdd_debug("Reset roam trigger bitmap to 0x%x",
-			  ENABLE_ROAM_TRIGGERS_ALL);
-		status = hdd_send_roam_triggers_to_sme(hdd_ctx,
-						       ENABLE_ROAM_TRIGGERS_ALL,
-						       vdev_id);
+		value = ENABLE_ROAM_TRIGGERS_ALL;
+		hdd_debug("Reset roam trigger bitmap to 0x%x", value);
+		status = hdd_send_roam_triggers_to_sme(hdd_ctx, vdev_id, value);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("failed to restore roam trigger bitmap");
 			return qdf_status_to_os_return(status);
