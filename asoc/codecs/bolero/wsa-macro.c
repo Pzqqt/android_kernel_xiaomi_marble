@@ -2057,6 +2057,10 @@ static int wsa_macro_rx_mux_put(struct snd_kcontrol *kcontrol,
 			dev_err(wsa_dev, "%s: AIF reset already\n", __func__);
 			return 0;
 		}
+		if (aif_rst >= WSA_MACRO_RX_MAX) {
+			dev_err(wsa_dev, "%s: Invalid AIF reset\n", __func__);
+			return 0;
+		}
 	}
 	wsa_priv->rx_port_value[widget->shift] = rx_port_value;
 
@@ -2064,11 +2068,17 @@ static int wsa_macro_rx_mux_put(struct snd_kcontrol *kcontrol,
 	if (widget->shift >= WSA_MACRO_RX_MIX)
 		bit_input %= WSA_MACRO_RX_MIX;
 
+	dev_dbg(wsa_dev,
+		"%s: mux input: %d, mux output: %d, bit: %d\n",
+		__func__, rx_port_value, widget->shift, bit_input);
+
 	switch (rx_port_value) {
 	case 0:
-		clear_bit(bit_input,
-			  &wsa_priv->active_ch_mask[aif_rst]);
-		wsa_priv->active_ch_cnt[aif_rst]--;
+		if (wsa_priv->active_ch_cnt[aif_rst]) {
+			clear_bit(bit_input,
+				  &wsa_priv->active_ch_mask[aif_rst]);
+			wsa_priv->active_ch_cnt[aif_rst]--;
+		}
 		break;
 	case 1:
 	case 2:
@@ -2078,7 +2088,8 @@ static int wsa_macro_rx_mux_put(struct snd_kcontrol *kcontrol,
 		break;
 	default:
 		dev_err(wsa_dev,
-			"%s: Invalid AIF_ID for WSA RX MUX\n", __func__);
+			"%s: Invalid AIF_ID for WSA RX MUX %d\n",
+			__func__, rx_port_value);
 		return -EINVAL;
 	}
 
