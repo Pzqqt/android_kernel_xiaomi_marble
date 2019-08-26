@@ -34,6 +34,7 @@
 #include "sys_entry_func.h"
 #include "mac_init_api.h"
 #include "wlan_mlme_main.h"
+#include "wlan_psoc_mlme_api.h"
 
 #ifdef TRACE_RECORD
 #include "mac_trace.h"
@@ -101,7 +102,7 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, mac_handle_t *mac_handle,
 {
 	struct mac_context *mac;
 	QDF_STATUS status;
-	struct wlan_mlme_psoc_obj *mlme_obj;
+	struct wlan_mlme_psoc_ext_obj *mlme_ext_obj;
 
 	QDF_BUG(mac_handle);
 	if (!mac_handle)
@@ -125,13 +126,13 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, mac_handle_t *mac_handle,
 	}
 
 	mac->psoc = psoc;
-	mlme_obj = mlme_get_psoc_obj(psoc);
-	if (!mlme_obj) {
+	mlme_ext_obj = wlan_psoc_mlme_get_ext_hdl(psoc);
+	if (!mlme_ext_obj) {
 		pe_err("Failed to get MLME Obj");
 		status = QDF_STATUS_E_FAILURE;
 		goto release_psoc_ref;
 	}
-	mac->mlme_cfg = &mlme_obj->cfg;
+	mac->mlme_cfg = &mlme_ext_obj->cfg;
 
 	*mac_handle = MAC_HANDLE(mac);
 

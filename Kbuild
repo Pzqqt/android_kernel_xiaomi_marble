@@ -963,7 +963,8 @@ endif
 UMAC_MLME_INC := -I$(WLAN_COMMON_INC)/umac/mlme \
 		-I$(WLAN_COMMON_INC)/umac/mlme/mlme_objmgr/dispatcher/inc \
 		-I$(WLAN_COMMON_INC)/umac/mlme/vdev_mgr/dispatcher/inc \
-		-I$(WLAN_COMMON_INC)/umac/mlme/pdev_mgr/dispatcher/inc
+		-I$(WLAN_COMMON_INC)/umac/mlme/pdev_mgr/dispatcher/inc \
+		-I$(WLAN_COMMON_INC)/umac/mlme/psoc_mgr/dispatcher/inc
 
 UMAC_MLME_OBJS := $(WLAN_COMMON_ROOT)/umac/mlme/mlme_objmgr/dispatcher/src/wlan_vdev_mlme_main.o \
 		$(WLAN_COMMON_ROOT)/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.o \
@@ -975,7 +976,9 @@ UMAC_MLME_OBJS := $(WLAN_COMMON_ROOT)/umac/mlme/mlme_objmgr/dispatcher/src/wlan_
 		$(WLAN_COMMON_ROOT)/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mgr_utils_api.o \
 		$(WLAN_COMMON_ROOT)/umac/mlme/mlme_objmgr/dispatcher/src/wlan_cmn_mlme_main.o \
 		$(WLAN_COMMON_ROOT)/umac/mlme/mlme_objmgr/dispatcher/src/wlan_pdev_mlme_main.o \
-		$(WLAN_COMMON_ROOT)/umac/mlme/pdev_mgr/dispatcher/src/wlan_pdev_mlme_api.o
+		$(WLAN_COMMON_ROOT)/umac/mlme/pdev_mgr/dispatcher/src/wlan_pdev_mlme_api.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/mlme_objmgr/dispatcher/src/wlan_psoc_mlme_main.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/psoc_mgr/dispatcher/src/wlan_psoc_mlme_api.o
 
 ######## MLME ##############
 MLME_DIR := components/mlme
