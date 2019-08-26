@@ -1655,7 +1655,7 @@ void dfs_cancel_precac_timer(struct wlan_dfs *dfs)
  * return true, else false.
  */
 #define FIND_IF_OVERLAP_WITH_WEATHER_RANGE(first_ch, last_ch) \
-((first_ch <= WEATHER_CHAN_START) && (WEATHER_CHAN_END <= last_ch))
+((first_ch <= WEATHER_CHAN_END) && (WEATHER_CHAN_START <= last_ch))
 
 /* dfs_is_precac_on_weather_channel() - Given a channel number, find if
  * it's a weather radar channel.
