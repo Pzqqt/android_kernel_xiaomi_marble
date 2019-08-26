@@ -5506,6 +5506,8 @@ dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
 		       rx_mon_stats->dest_ppdu_done);
 	DP_PRINT_STATS("dest_mpdu_done_cnt = %d",
 		       rx_mon_stats->dest_mpdu_done);
+	DP_PRINT_STATS("tlv_tag_status_err_cnt = %u",
+		       rx_mon_stats->tlv_tag_status_err);
 	DP_PRINT_STATS("dest_mpdu_drop_cnt = %d",
 		       rx_mon_stats->dest_mpdu_drop);
 	DP_PRINT_STATS("dup_mon_linkdesc_cnt = %d",
