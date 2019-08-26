@@ -1738,6 +1738,8 @@ static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 {
 	uint32_t total_weight;
 
+	scoring_cfg->vendor_roam_score_algorithm =
+		cfg_get(psoc, CFG_VENDOR_ROAM_SCORE_ALGORITHM);
 	scoring_cfg->enable_scoring_for_roam =
 		cfg_get(psoc, CFG_ENABLE_SCORING_FOR_ROAM);
 	scoring_cfg->weight_cfg.rssi_weightage =

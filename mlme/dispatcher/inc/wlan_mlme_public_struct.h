@@ -1823,6 +1823,7 @@ struct wlan_mlme_per_slot_scoring {
  * @roam_trigger_bitmap: bitmap for various roam triggers
  * @roam_score_delta: percentage delta in roam score
  * @apsd_enabled: Enable automatic power save delivery
+ * @vendor_roam_score_algorithm: Preferred vendor roam score algorithm
  */
 struct wlan_mlme_scoring_cfg {
 	bool enable_scoring_for_roam;
@@ -1836,6 +1837,7 @@ struct wlan_mlme_scoring_cfg {
 	uint32_t roam_trigger_bitmap;
 	uint32_t roam_score_delta;
 	bool apsd_enabled;
+	uint32_t vendor_roam_score_algorithm;
 };
 
 /* struct wlan_mlme_threshold - Threshold related config items
