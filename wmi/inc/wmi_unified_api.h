@@ -2457,13 +2457,15 @@ QDF_STATUS wmi_extract_pdev_generic_buffer_ev_param(
  * @wmi_handle: wmi handle
  * @evt_buf: pointer to event buffer
  * @peer_mac: Pointer to hold peer mac address
+ * @pdev_id: Pointer to hold pdev_id
  * @rate_cap: Pointer to hold ratecode
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_peer_ratecode_list_ev(
 		wmi_unified_t wmi_handle, void *evt_buf,
-		uint8_t *peer_mac, wmi_sa_rate_cap *rate_cap);
+		uint8_t *peer_mac, uint32_t *pdev_id,
+		wmi_sa_rate_cap *rate_cap);
 
 /**
  * wmi_extract_bcnflt_stats() - extract bcn fault stats from event

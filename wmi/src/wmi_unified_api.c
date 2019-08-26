@@ -1951,12 +1951,12 @@ QDF_STATUS wmi_extract_pdev_generic_buffer_ev_param(
 
 QDF_STATUS wmi_extract_peer_ratecode_list_ev(
 		wmi_unified_t wmi_handle, void *evt_buf,
-		uint8_t *peer_mac, wmi_sa_rate_cap *rate_cap)
+		uint8_t *peer_mac, uint32_t *pdev_id, wmi_sa_rate_cap *rate_cap)
 {
 	if (wmi_handle->ops->extract_peer_ratecode_list_ev)
 		return wmi_handle->ops->extract_peer_ratecode_list_ev(
 						wmi_handle, evt_buf,
-						peer_mac, rate_cap);
+						peer_mac, pdev_id, rate_cap);
 
 	return QDF_STATUS_E_FAILURE;
 

@@ -1521,7 +1521,9 @@ QDF_STATUS (*extract_peer_sta_kickout_ev)(wmi_unified_t wmi_handle,
 		void *evt_buf, wmi_host_peer_sta_kickout_event *ev);
 
 QDF_STATUS (*extract_peer_ratecode_list_ev)(wmi_unified_t wmi_handle,
-		void *evt_buf, uint8_t *peer_mac, wmi_sa_rate_cap *rate_cap);
+					    void *evt_buf, uint8_t *peer_mac,
+					    uint32_t *pdev_id,
+					    wmi_sa_rate_cap *rate_cap);
 
 QDF_STATUS (*extract_comb_phyerr)(wmi_unified_t wmi_handle, void *evt_buf,
 	uint16_t datalen, uint16_t *buf_offset, wmi_host_phyerr_t *phyerr);
