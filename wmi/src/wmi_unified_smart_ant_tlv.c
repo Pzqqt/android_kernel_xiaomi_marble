@@ -486,6 +486,7 @@ static QDF_STATUS send_smart_ant_set_node_config_cmd_tlv(
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
  * @param peer_mac: Pointer to hold peer mac address
+ * @param pdev_id: Pointer to pdev_id
  * @param rate_cap: Pointer to hold ratecode
  *
  * @return QDF_STATUS_SUCCESS on success or error code
@@ -494,6 +495,7 @@ static QDF_STATUS extract_peer_ratecode_list_ev_tlv(
 				wmi_unified_t wmi_handle,
 				void *evt_buf,
 				uint8_t *peer_mac,
+				uint32_t *pdev_id,
 				wmi_sa_rate_cap *rate_cap)
 {
 	WMI_PEER_RATECODE_LIST_EVENTID_param_tlvs *param_buf;
@@ -506,6 +508,7 @@ static QDF_STATUS extract_peer_ratecode_list_ev_tlv(
 	param_buf = (WMI_PEER_RATECODE_LIST_EVENTID_param_tlvs *)evt_buf;
 	ev = (wmi_peer_ratecode_list_event_fixed_param *)param_buf->fixed_param;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, peer_mac);
+	*pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(ev->pdev_id);
 
 	for (i = 0; i < SA_BYTES_IN_DWORD; i++) {
 		rate_cap->ratecount[i] = ((ev->ratecount >> (i*8)) &

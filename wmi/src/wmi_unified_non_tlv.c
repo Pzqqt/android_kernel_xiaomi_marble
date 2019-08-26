@@ -8036,13 +8036,14 @@ static QDF_STATUS extract_peer_sta_kickout_ev_non_tlv(wmi_unified_t wmi_handle,
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
  * @param peer_mac: Pointer to hold peer mac address
+ * @param pdev_id: Pointer to hold pdev_id
  * @param rate_cap: Pointer to hold ratecode
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS extract_peer_ratecode_list_ev_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
-		uint8_t *peer_mac, wmi_sa_rate_cap *rate_cap)
+		uint8_t *peer_mac, uint32_t *pdev_id, wmi_sa_rate_cap *rate_cap)
 {
 	wmi_peer_ratecode_list_event_t *rate_event =
 	    (wmi_peer_ratecode_list_event_t *)evt_buf;
@@ -8050,6 +8051,7 @@ static QDF_STATUS extract_peer_ratecode_list_ev_non_tlv(wmi_unified_t wmi_handle
 	uint8_t shift = 0;
 
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&rate_event->peer_macaddr, peer_mac);
+	*pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 
 	htindex = 0;
 	rate_cap->ratecount[0] =
