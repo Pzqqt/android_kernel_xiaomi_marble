@@ -140,13 +140,10 @@ static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 			 wlan_psoc_get_id(psoc), vdev_id,
 			 string_from_rsp_bit(rsp_pos));
 		qdf_mem_set(&param, sizeof(param), 0);
-		/* RECOVERY_SIM_SELF_RECOVERY */
-		param.type = 0x08;
+		/* RECOVERY_SIM_ASSERT */
+		param.type = 0x01;
 		wmi_crash_inject(wmi_handle, &param);
-	}
-
-	/* Host panic to collect host stacktrace */
-	if (target_if_vdev_mgr_is_panic_on_bug()) {
+	} else if (target_if_vdev_mgr_is_panic_on_bug()) {
 		QDF_DEBUG_PANIC("PSOC_%d VDEV_%d: Panic, %s response timeout",
 				wlan_psoc_get_id(psoc),
 				vdev_id, string_from_rsp_bit(rsp_pos));
