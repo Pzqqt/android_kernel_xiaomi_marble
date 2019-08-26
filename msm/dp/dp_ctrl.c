@@ -77,6 +77,7 @@ struct dp_ctrl_private {
 
 	u32 vic;
 	u32 stream_count;
+	u32 training_2_pattern;
 	struct dp_mst_channel_info mst_ch_info;
 };
 
@@ -453,12 +454,7 @@ static int dp_ctrl_link_training_2(struct dp_ctrl_private *ctrl)
 	/* Make sure to clear the current pattern before starting a new one */
 	wmb();
 
-	if (drm_dp_tps4_supported(ctrl->panel->dpcd))
-		dpcd_pattern = DP_TRAINING_PATTERN_4;
-	else if (drm_dp_tps3_supported(ctrl->panel->dpcd))
-		dpcd_pattern = DP_TRAINING_PATTERN_3;
-	else
-		dpcd_pattern = DP_TRAINING_PATTERN_2;
+	dpcd_pattern = ctrl->training_2_pattern;
 
 	while (!atomic_read(&ctrl->aborted)) {
 		/* update hardware with current swing/pre-emp values */
@@ -643,9 +639,39 @@ static void dp_ctrl_disable_link_clock(struct dp_ctrl_private *ctrl)
 	ctrl->power->clk_enable(ctrl->power, DP_LINK_PM, false);
 }
 
+static void dp_ctrl_select_training_pattern(struct dp_ctrl_private *ctrl,
+						bool downgrade)
+{
+	u32 pattern;
+
+	if (drm_dp_tps4_supported(ctrl->panel->dpcd))
+		pattern = DP_TRAINING_PATTERN_4;
+	else if (drm_dp_tps3_supported(ctrl->panel->dpcd))
+		pattern = DP_TRAINING_PATTERN_3;
+	else
+		pattern = DP_TRAINING_PATTERN_2;
+
+	if (!downgrade)
+		goto end;
+
+	switch (pattern) {
+	case DP_TRAINING_PATTERN_4:
+		pattern = DP_TRAINING_PATTERN_3;
+		break;
+	case DP_TRAINING_PATTERN_3:
+		pattern = DP_TRAINING_PATTERN_2;
+		break;
+	default:
+		break;
+	}
+end:
+	ctrl->training_2_pattern = pattern;
+}
+
 static int dp_ctrl_link_setup(struct dp_ctrl_private *ctrl, bool shallow)
 {
 	int rc = -EINVAL;
+	bool downgrade = false;
 	u32 link_train_max_retries = 100;
 	struct dp_catalog_ctrl *catalog;
 	struct dp_link_params *link_params;
@@ -670,6 +696,16 @@ static int dp_ctrl_link_setup(struct dp_ctrl_private *ctrl, bool shallow)
 
 		dp_ctrl_configure_source_link_params(ctrl, true);
 
+		if (!(--link_train_max_retries % 10)) {
+			struct dp_link_params *link = &ctrl->link->link_params;
+
+			link->lane_count = ctrl->initial_lane_count;
+			link->bw_code = ctrl->initial_bw_code;
+			downgrade = true;
+		}
+
+		dp_ctrl_select_training_pattern(ctrl, downgrade);
+
 		rc = dp_ctrl_setup_main_link(ctrl);
 		if (!rc)
 			break;
@@ -686,7 +722,7 @@ static int dp_ctrl_link_setup(struct dp_ctrl_private *ctrl, bool shallow)
 			break;
 		}
 
-		if (!link_train_max_retries-- || atomic_read(&ctrl->aborted))
+		if (!link_train_max_retries || atomic_read(&ctrl->aborted))
 			break;
 
 		if (rc != -EAGAIN)
