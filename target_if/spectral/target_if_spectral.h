@@ -1103,13 +1103,15 @@ void target_if_spectral_send_intf_found_msg(
  * target_if_stop_spectral_scan() - Stop spectral scan
  * @pdev: Pointer to pdev object
  * @smode: Spectral scan mode
+ * @err: Pointer to error code
  *
  * API to stop the current on-going spectral scan
  *
  * Return: QDF_STATUS_SUCCESS in case of success, else QDF_STATUS_E_FAILURE
  */
 QDF_STATUS target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
-					const enum spectral_scan_mode smode);
+					const enum spectral_scan_mode smode,
+					enum spectral_cp_error_code *err);
 
 /**
  * target_if_spectral_get_vdev() - Get pointer to vdev to be used for Spectral

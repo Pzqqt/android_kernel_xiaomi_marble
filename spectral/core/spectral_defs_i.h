@@ -143,8 +143,10 @@ struct spectral_context {
 					(struct wlan_objmgr_pdev *pdev,
 					 const enum spectral_scan_mode smode,
 					 enum spectral_cp_error_code *err);
-	QDF_STATUS (*sptrlc_stop_spectral_scan)(struct wlan_objmgr_pdev *pdev,
-						enum spectral_scan_mode smode);
+	QDF_STATUS (*sptrlc_stop_spectral_scan)
+					(struct wlan_objmgr_pdev *pdev,
+					 enum spectral_scan_mode smode,
+					 enum spectral_cp_error_code *err);
 	bool (*sptrlc_is_spectral_active)(struct wlan_objmgr_pdev *pdev,
 					  enum spectral_scan_mode smode);
 	bool (*sptrlc_is_spectral_enabled)(struct wlan_objmgr_pdev *pdev,

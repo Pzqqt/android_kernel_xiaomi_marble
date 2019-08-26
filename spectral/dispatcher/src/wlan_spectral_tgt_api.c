@@ -125,13 +125,14 @@ tgt_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 
 QDF_STATUS
 tgt_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
-		       enum spectral_scan_mode smode)
+		       enum spectral_scan_mode smode,
+		       enum spectral_cp_error_code *err)
 {
-	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_objmgr_psoc *psoc;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_stop_spectral_scan(
-							pdev, smode);
+							pdev, smode, err);
 }
 
 bool

@@ -218,12 +218,14 @@ enum spectral_capability_type {
 
 /**
  * enum spectral_cp_error_code - Spectral control path response code
+ * @SPECTRAL_SCAN_RESP_ERR_INVALID: Invalid error identifier
  * @SPECTRAL_SCAN_RESP_ERR_PARAM_UNSUPPORTED: parameter unsupported
  * @SPECTRAL_SCAN_RESP_ERR_MODE_UNSUPPORTED: mode unsupported
  * @SPECTRAL_SCAN_RESP_ERR_PARAM_INVALID_VALUE: invalid parameter value
  * @SPECTRAL_SCAN_RESP_ERR_PARAM_NOT_INITIALIZED: parameter uninitialized
  */
 enum spectral_cp_error_code {
+	SPECTRAL_SCAN_ERR_INVALID,
 	SPECTRAL_SCAN_ERR_PARAM_UNSUPPORTED,
 	SPECTRAL_SCAN_ERR_MODE_UNSUPPORTED,
 	SPECTRAL_SCAN_ERR_PARAM_INVALID_VALUE,
