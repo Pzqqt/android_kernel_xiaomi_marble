@@ -1193,6 +1193,34 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"Roam score delta for BTM roam trigger")
 
+/*
+ * <ini>
+ * vendor_roam_score_algorithm - Algorithm to calculate AP score
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * By default the value is 0 and QCOM roam algorithm will be used.
+ * When the value is 1, the V2 roaming algorithm will be used:
+ * For this V2 algo, AP score calculation is based on below equation:
+ * AP Score = (RSSIfactor * rssiweight(0.65)) + (CUfactor *cuweight(0.35))
+ *
+ * Related: None
+ *
+ * Supported Feature: roam score algorithm
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_VENDOR_ROAM_SCORE_ALGORITHM CFG_INI_UINT( \
+	"vendor_roam_score_algorithm", \
+	0, \
+	1, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Roam candidate selection score algorithm")
+
 #define CFG_SCORING_ALL \
 	CFG(CFG_SCORING_RSSI_WEIGHTAGE) \
 	CFG(CFG_SCORING_HT_CAPS_WEIGHTAGE) \
@@ -1234,5 +1262,6 @@
 	CFG(CFG_BMISS_ROAM_MIN_RSSI) \
 	CFG(CFG_IDLE_ROAM_SCORE_DELTA) \
 	CFG(CFG_BTM_ROAM_SCORE_DELTA) \
+	CFG(CFG_VENDOR_ROAM_SCORE_ALGORITHM) \
 
 #endif /* __CFG_MLME_SCORING_H */

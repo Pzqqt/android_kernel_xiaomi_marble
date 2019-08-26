@@ -19152,6 +19152,9 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 	req_score_params->nss_index_score =
 		bss_score_params->nss_weight_per_index;
 
+	req_score_params->vendor_roam_score_algorithm =
+			bss_score_params->vendor_roam_score_algorithm;
+
 	req_score_params->roam_score_delta = bss_score_params->roam_score_delta;
 	req_score_params->roam_trigger_bitmap =
 				bss_score_params->roam_trigger_bitmap;
