@@ -61,14 +61,13 @@ __wlan_hdd_cfg80211_mpta_helper_config(struct wiphy *wiphy,
 				       const void *data,
 				       int data_len)
 {
-	struct net_device *netdev = wdev->netdev;
 	struct hdd_context *hdd_ctx  = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_MPTA_HELPER_VENDOR_ATTR_MAX + 1];
 	struct coex_config_params coex_cfg_params = {0};
 	int errno;
 	QDF_STATUS status;
 
-	hdd_enter_dev(netdev);
+	hdd_enter_dev(wdev->netdev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
