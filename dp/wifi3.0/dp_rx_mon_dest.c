@@ -1738,4 +1738,7 @@ QDF_STATUS
 dp_mon_link_free(struct dp_pdev *pdev) {
 	return QDF_STATUS_SUCCESS;
 }
+
+void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev)
+{}
 #endif /* DISABLE_MON_CONFIG */
