@@ -3152,7 +3152,7 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NULL_VALUE;
 
 	if (!peer) {
-		crypto_err("peer NULL");
+		crypto_debug("peer NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -4004,7 +4004,7 @@ QDF_STATUS wlan_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
 		wlan_crypto_merge_prarams(vdev_crypto_params, &crypto_params);
 		send_fail = false;
 	} else {
-		crypto_err("get crypto prarams from WPA IE failed");
+		crypto_debug("get crypto prarams from WPA IE failed");
 	}
 
 	return send_fail ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
