@@ -2482,6 +2482,38 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 		  QDF_MAC_ADDR_ARRAY(params->peerMacAddr.bytes));
 }
 
+void sap_undo_acs(struct sap_context *sap_ctx)
+{
+	struct sap_acs_cfg *acs_cfg;
+
+	if (!sap_ctx)
+		return;
+
+	acs_cfg = sap_ctx->acs_cfg;
+	if (!acs_cfg)
+		return;
+
+	if (acs_cfg->ch_list) {
+		sap_debug("Clearing ACS cfg channel list");
+		qdf_mem_free(acs_cfg->ch_list);
+		acs_cfg->ch_list = NULL;
+	}
+	if (acs_cfg->master_ch_list) {
+		sap_debug("Clearing master ACS cfg channel list");
+		qdf_mem_free(acs_cfg->master_ch_list);
+		acs_cfg->master_ch_list = NULL;
+	}
+	if (sap_ctx->freq_list) {
+		sap_debug("Clearing sap context ch freq list");
+		qdf_mem_free(sap_ctx->freq_list);
+		sap_ctx->freq_list = NULL;
+	}
+	acs_cfg->ch_list_count = 0;
+	acs_cfg->master_ch_list_count = 0;
+	acs_cfg->acs_mode = false;
+	sap_ctx->num_of_channel = 0;
+}
+
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 				sap_event_cb acs_event_callback,
 				struct sap_config *config,

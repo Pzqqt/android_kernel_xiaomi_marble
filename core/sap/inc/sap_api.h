@@ -1323,6 +1323,17 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 				void *pusr_context);
 
 /**
+ * sap_undo_acs() - Undo acs i.e free the allocated ch lists
+ * @sap_ctx: pointer to the SAP context
+ *
+ * This function will free the memory allocated to the sap ctx channel list, acs
+ * cfg ch list and master ch list.
+ *
+ * Return: None
+ */
+void sap_undo_acs(struct sap_context *sap_context);
+
+/**
  * wlansap_get_chan_width() - get sap channel width.
  * @sap_ctx: pointer to the SAP context
  *

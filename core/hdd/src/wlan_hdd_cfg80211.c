@@ -3027,28 +3027,9 @@ static int wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
  *
  * Return: void
  */
-
 void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
 {
-	struct sap_config *sap_cfg;
-
-	if (!adapter)
-		return;
-
-	sap_cfg = &adapter->session.ap.sap_config;
-	if (sap_cfg->acs_cfg.ch_list) {
-		hdd_debug("Clearing ACS cfg channel list");
-		qdf_mem_free(sap_cfg->acs_cfg.ch_list);
-		sap_cfg->acs_cfg.ch_list = NULL;
-	}
-	if (sap_cfg->acs_cfg.master_ch_list) {
-		hdd_debug("Clearing master ACS cfg channel list");
-		qdf_mem_free(sap_cfg->acs_cfg.master_ch_list);
-		sap_cfg->acs_cfg.master_ch_list = NULL;
-	}
-	sap_cfg->acs_cfg.ch_list_count = 0;
-	sap_cfg->acs_cfg.master_ch_list_count = 0;
-	sap_cfg->acs_cfg.acs_mode = false;
+	sap_undo_acs(WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 }
 
 /**
