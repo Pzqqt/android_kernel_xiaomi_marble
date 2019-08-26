@@ -1042,7 +1042,7 @@ flush_mc_list:
 	status = ucfg_pmo_flush_mc_addr_list(hdd_ctx->psoc,
 					     adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("failed to flush mc list; status:%d", status);
+		hdd_debug("failed to flush mc list; status:%d", status);
 
 	hdd_exit();
 }

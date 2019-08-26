@@ -334,7 +334,7 @@ static void lim_process_set_hw_mode_resp(struct mac_context *mac, void *body)
 	msg.type = eWNI_SME_SET_HW_MODE_RESP;
 	msg.bodyptr = param;
 	msg.bodyval = 0;
-	pe_err("Send eWNI_SME_SET_HW_MODE_RESP to SME");
+	pe_debug("Send eWNI_SME_SET_HW_MODE_RESP to SME");
 	lim_sys_process_mmh_msg_api(mac, &msg);
 	return;
 }

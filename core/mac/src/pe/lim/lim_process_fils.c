@@ -2276,7 +2276,7 @@ void lim_update_fils_rik(struct pe_session *pe_session,
 	}
 	if ((pe_fils_info->fils_rik_len > FILS_MAX_RIK_LENGTH) ||
 	    !pe_fils_info->fils_rik) {
-		pe_err("Fils rik len(%d) max %d", pe_fils_info->fils_rik_len,
+		pe_debug("Fils rik len(%d) max %d", pe_fils_info->fils_rik_len,
 				FILS_MAX_RIK_LENGTH);
 		return;
 	}

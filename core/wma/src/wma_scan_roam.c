@@ -232,7 +232,7 @@ static void wma_roam_scan_fill_fils_params(tp_wma_handle wma_handle,
 	struct roam_fils_params *dst_fils_params, *src_fils_params;
 
 	if (!params || !roam_req || !roam_req->is_fils_connection) {
-		wma_err("Invalid input");
+		wma_debug("Invalid input");
 		return;
 	}
 

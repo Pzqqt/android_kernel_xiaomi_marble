@@ -794,7 +794,7 @@ QDF_STATUS sme_ps_disable_auto_ps_timer(mac_handle_t mac_handle,
 	if (QDF_TIMER_STATE_RUNNING ==
 			qdf_mc_timer_get_current_state(
 				&ps_param->auto_ps_enable_timer)) {
-		sme_info("Stop auto_ps_enable_timer Timer for session ID: %d",
+		sme_debug("Stop auto_ps_enable_timer Timer for session ID: %d",
 				session_id);
 		qdf_mc_timer_stop(&ps_param->auto_ps_enable_timer);
 	}
