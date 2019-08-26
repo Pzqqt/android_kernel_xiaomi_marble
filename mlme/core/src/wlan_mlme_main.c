@@ -24,24 +24,19 @@
 #include "cfg_ucfg_api.h"
 #include "wmi_unified.h"
 #include "wlan_scan_public_structs.h"
+#include "wlan_psoc_mlme_api.h"
 #include "wlan_vdev_mlme_api.h"
 #include "wlan_mlme_api.h"
 #include <wlan_crypto_global_api.h>
 
 #define NUM_OF_SOUNDING_DIMENSIONS     1 /*Nss - 1, (Nss = 2 for 2x2)*/
 
-struct wlan_mlme_psoc_obj *mlme_get_psoc_obj_fl(struct wlan_objmgr_psoc *psoc,
-						const char *func, uint32_t line)
+struct wlan_mlme_psoc_ext_obj *mlme_get_psoc_ext_obj_fl(
+			       struct wlan_objmgr_psoc *psoc,
+			       const char *func, uint32_t line)
 {
-	struct wlan_mlme_psoc_obj *mlme_obj;
 
-	mlme_obj = (struct wlan_mlme_psoc_obj *)
-		wlan_objmgr_psoc_get_comp_private_obj(psoc,
-						      WLAN_UMAC_COMP_MLME);
-	if (!mlme_obj)
-		mlme_legacy_err("mlme obj is null, %s:%d", func, line);
-
-	return mlme_obj;
+	return wlan_psoc_mlme_get_ext_hdl(psoc);
 }
 
 struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
@@ -97,55 +92,6 @@ uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
 	}
 
 	return &mlme_priv->sta_dynamic_oce_value;
-}
-
-QDF_STATUS
-mlme_psoc_object_created_notification(struct wlan_objmgr_psoc *psoc,
-				      void *arg)
-{
-	QDF_STATUS status;
-	struct wlan_mlme_psoc_obj *mlme_obj;
-
-	mlme_obj = qdf_mem_malloc(sizeof(struct wlan_mlme_psoc_obj));
-	if (!mlme_obj) {
-		mlme_legacy_err("Failed to allocate memory");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	status = wlan_objmgr_psoc_component_obj_attach(psoc,
-						       WLAN_UMAC_COMP_MLME,
-						       mlme_obj,
-						       QDF_STATUS_SUCCESS);
-	if (status != QDF_STATUS_SUCCESS) {
-		mlme_legacy_err("Failed to attach psoc_ctx with psoc");
-		qdf_mem_free(mlme_obj);
-	}
-
-	return status;
-}
-
-QDF_STATUS
-mlme_psoc_object_destroyed_notification(struct wlan_objmgr_psoc *psoc,
-					void *arg)
-{
-	struct wlan_mlme_psoc_obj *mlme_obj = NULL;
-	QDF_STATUS status;
-
-	mlme_obj = mlme_get_psoc_obj(psoc);
-
-	status = wlan_objmgr_psoc_component_obj_detach(psoc,
-						       WLAN_UMAC_COMP_MLME,
-						       mlme_obj);
-	if (status != QDF_STATUS_SUCCESS) {
-		mlme_legacy_err("Failed to detach psoc_ctx from psoc");
-		status = QDF_STATUS_E_FAILURE;
-		goto out;
-	}
-
-	qdf_mem_free(mlme_obj);
-
-out:
-	return status;
 }
 
 #ifdef CRYPTO_SET_KEY_CONVERGED
@@ -2405,11 +2351,11 @@ mlme_init_dot11_mode_cfg(struct wlan_mlme_dot11_mode *dot11_mode)
 
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
-	struct wlan_mlme_psoc_obj *mlme_obj;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	struct wlan_mlme_cfg *mlme_cfg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	mlme_obj = mlme_get_psoc_obj(psoc);
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj) {
 		mlme_legacy_err("Failed to get MLME Obj");
 		return QDF_STATUS_E_FAILURE;

@@ -40,4 +40,10 @@ typedef struct opaque_mlme_pdev_ext mlme_pdev_ext_t;
  */
 typedef struct mlme_legacy_priv mlme_vdev_ext_t;
 
+/**
+ * typedef mlme_psoc_ext_t - Definition of psoc mlme pointer
+ * Define ext_psoc_ptr from external umac/mlme component point to this type
+ */
+typedef struct wlan_mlme_psoc_ext_obj mlme_psoc_ext_t;
+
 #endif

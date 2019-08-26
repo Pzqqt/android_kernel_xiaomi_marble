@@ -25,6 +25,7 @@
 #include "lim_types.h"
 #include <include/wlan_mlme_cmn.h>
 #include <../../core/src/vdev_mgr_ops.h>
+#include "wlan_psoc_mlme_api.h"
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
@@ -1048,6 +1049,47 @@ vdevmgr_vdev_stop_rsp_handle(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
+ * psoc_mlme_ext_hdl_create() - Create mlme legacy priv object
+ * @psoc_mlme: psoc mlme object
+ *
+ * Return: QDF_STATUS
+ */
+static
+QDF_STATUS psoc_mlme_ext_hdl_create(struct psoc_mlme_obj *psoc_mlme)
+{
+	psoc_mlme->ext_psoc_ptr =
+		qdf_mem_malloc(sizeof(struct wlan_mlme_psoc_ext_obj));
+	if (!psoc_mlme->ext_psoc_ptr) {
+		mlme_legacy_err("Failed to allocate memory");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * psoc_mlme_ext_hdl_destroy() - Destroy mlme legacy priv object
+ * @psoc_mlme: psoc mlme object
+ *
+ * Return: QDF_STATUS
+ */
+static
+QDF_STATUS psoc_mlme_ext_hdl_destroy(struct psoc_mlme_obj *psoc_mlme)
+{
+	if (!psoc_mlme) {
+		mlme_err("PSOC MLME is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (psoc_mlme->ext_psoc_ptr) {
+		qdf_mem_free(psoc_mlme->ext_psoc_ptr);
+		psoc_mlme->ext_psoc_ptr = NULL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * vdevmgr_vdev_delete_rsp_handle() - callback to handle vdev delete response
  * @vdev_mlme: vdev mlme object
  * @rsp: pointer to vdev delete response
@@ -1209,13 +1251,19 @@ static struct vdev_mlme_ops mon_mlme_ops = {
 };
 
 /**
- * struct mlme_ext_ops - VDEV MLME legacy global callbacks structure
+ * struct mlme_ext_ops - MLME legacy global callbacks structure
+ * @mlme_psoc_ext_hdl_create:           callback to invoke creation of legacy
+ *                                      psoc object
+ * @mlme_psoc_ext_hdl_destroy:          callback to invoke destroy of legacy
+ *                                      psoc object
  * @mlme_vdev_ext_hdl_create:           callback to invoke creation of legacy
  *                                      vdev object
  * @mlme_vdev_ext_hdl_destroy:          callback to invoke destroy of legacy
  *                                      vdev object
  */
 static struct mlme_ext_ops ext_ops = {
+	.mlme_psoc_ext_hdl_create = psoc_mlme_ext_hdl_create,
+	.mlme_psoc_ext_hdl_destroy = psoc_mlme_ext_hdl_destroy,
 	.mlme_vdev_ext_hdl_create = vdevmgr_mlme_ext_hdl_create,
 	.mlme_vdev_ext_hdl_destroy = vdevmgr_mlme_ext_hdl_destroy,
 };

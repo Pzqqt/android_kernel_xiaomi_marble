@@ -36,10 +36,10 @@
 #define mlme_legacy_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MLME, params)
 
 /**
- * struct wlan_mlme_psoc_obj -MLME psoc priv object
+ * struct wlan_mlme_psoc_ext_obj -MLME ext psoc priv object
  * @cfg:     cfg items
  */
-struct wlan_mlme_psoc_obj {
+struct wlan_mlme_psoc_ext_obj {
 	struct wlan_mlme_cfg cfg;
 };
 
@@ -271,32 +271,6 @@ struct mlme_roam_after_data_stall *
 mlme_get_roam_invoke_params(struct wlan_objmgr_vdev *vdev);
 
 /**
- * mlme_psoc_object_created_notification(): mlme psoc create handler
- * @psoc: psoc which is going to created by objmgr
- * @arg: argument for vdev create handler
- *
- * Register this api with objmgr to detect psoc is created
- *
- * Return: QDF_STATUS status in case of success else return error
- */
-QDF_STATUS
-mlme_psoc_object_created_notification(struct wlan_objmgr_psoc *psoc,
-				      void *arg);
-
-/**
- * mlme_psoc_object_destroyed_notification(): mlme psoc delete handler
- * @psoc: psoc which is going to delete by objmgr
- * @arg: argument for vdev delete handler
- *
- * Register this api with objmgr to detect psoc is deleted
- *
- * Return: QDF_STATUS status in case of success else return error
- */
-QDF_STATUS
-mlme_psoc_object_destroyed_notification(struct wlan_objmgr_psoc *psoc,
-					void *arg);
-
-/**
  * mlme_cfg_on_psoc_enable() - Populate MLME structure from CFG and INI
  * @psoc: pointer to the psoc object
  *
@@ -307,17 +281,19 @@ mlme_psoc_object_destroyed_notification(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc);
 
 /**
- * mlme_get_psoc_obj() - Get MLME object from psoc
+ * mlme_get_psoc_ext_obj() - Get MLME object from psoc
  * @psoc: pointer to the psoc object
  *
  * Get the MLME object pointer from the psoc
  *
  * Return: pointer to MLME object
  */
-#define mlme_get_psoc_obj(psoc) mlme_get_psoc_obj_fl(psoc, __func__, __LINE__)
-struct wlan_mlme_psoc_obj *mlme_get_psoc_obj_fl(struct wlan_objmgr_psoc *psoc,
-						const char *func,
-						uint32_t line);
+#define mlme_get_psoc_ext_obj(psoc) \
+			mlme_get_psoc_ext_obj_fl(psoc, __func__, __LINE__)
+struct wlan_mlme_psoc_ext_obj *mlme_get_psoc_ext_obj_fl(struct wlan_objmgr_psoc
+							*psoc,
+							const char *func,
+							uint32_t line);
 
 /**
  * mlme_init_ibss_cfg() - Init IBSS config data structure with default CFG value
