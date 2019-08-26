@@ -1554,8 +1554,11 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 	gro_res = napi_gro_receive(napi_to_use, skb);
 
 	if (hdd_get_current_throughput_level(hdd_ctx) == PLD_BUS_WIDTH_IDLE) {
-		adapter->hdd_stats.tx_rx_stats.rx_gro_low_tput_flush++;
-		napi_gro_flush(napi_to_use, false);
+		if (gro_res != GRO_DROP && gro_res != GRO_NORMAL) {
+			adapter->hdd_stats.tx_rx_stats.
+					rx_gro_low_tput_flush++;
+			napi_gro_flush(napi_to_use, false);
+		}
 	}
 	local_bh_enable();
 
