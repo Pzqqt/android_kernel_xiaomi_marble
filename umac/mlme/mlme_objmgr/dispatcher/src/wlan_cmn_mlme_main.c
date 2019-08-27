@@ -18,13 +18,14 @@
  * DOC: Implements MLME global APIs
  */
 
-#include "wlan_objmgr_cmn.h"
-#include "include/wlan_mlme_cmn.h"
-#include "include/wlan_pdev_mlme.h"
-#include "include/wlan_vdev_mlme.h"
-#include "include/wlan_mlme_cmn.h"
-#include "wlan_pdev_mlme_main.h"
-#include "wlan_vdev_mlme_main.h"
+#include <wlan_objmgr_cmn.h>
+#include <include/wlan_mlme_cmn.h>
+#include <include/wlan_pdev_mlme.h>
+#include <include/wlan_vdev_mlme.h>
+#include <include/wlan_mlme_cmn.h>
+#include <wlan_psoc_mlme_main.h>
+#include <wlan_pdev_mlme_main.h>
+#include <wlan_vdev_mlme_main.h>
 
 struct mlme_ext_ops *glbl_ops;
 mlme_get_global_ops_cb glbl_ops_cb;
@@ -32,6 +33,10 @@ mlme_get_global_ops_cb glbl_ops_cb;
 QDF_STATUS wlan_cmn_mlme_init(void)
 {
 	QDF_STATUS status;
+
+	status = wlan_psoc_mlme_init();
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
 
 	status = wlan_pdev_mlme_init();
 	if (status != QDF_STATUS_SUCCESS)
@@ -59,14 +64,38 @@ QDF_STATUS wlan_cmn_mlme_deinit(void)
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
+	status = wlan_psoc_mlme_deinit();
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS mlme_psoc_ops_ext_hdl_create(struct psoc_mlme_obj *psoc_mlme)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_ops && glbl_ops->mlme_psoc_ext_hdl_create)
+		ret = glbl_ops->mlme_psoc_ext_hdl_create(psoc_mlme);
+
+	return ret;
+}
+
+QDF_STATUS mlme_psoc_ops_ext_hdl_destroy(struct psoc_mlme_obj *psoc_mlme)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_ops && glbl_ops->mlme_psoc_ext_hdl_destroy)
+		ret = glbl_ops->mlme_psoc_ext_hdl_destroy(psoc_mlme);
+
+	return ret;
 }
 
 QDF_STATUS mlme_pdev_ops_ext_hdl_create(struct pdev_mlme_obj *pdev_mlme)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((glbl_ops) && glbl_ops->mlme_pdev_ext_hdl_create)
+	if (glbl_ops && glbl_ops->mlme_pdev_ext_hdl_create)
 		ret = glbl_ops->mlme_pdev_ext_hdl_create(pdev_mlme);
 
 	return ret;
@@ -76,7 +105,7 @@ QDF_STATUS mlme_pdev_ops_ext_hdl_destroy(struct pdev_mlme_obj *pdev_mlme)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((glbl_ops) && glbl_ops->mlme_pdev_ext_hdl_destroy)
+	if (glbl_ops && glbl_ops->mlme_pdev_ext_hdl_destroy)
 		ret = glbl_ops->mlme_pdev_ext_hdl_destroy(pdev_mlme);
 
 	return ret;
@@ -86,7 +115,7 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((glbl_ops) && glbl_ops->mlme_vdev_ext_hdl_create)
+	if (glbl_ops && glbl_ops->mlme_vdev_ext_hdl_create)
 		ret = glbl_ops->mlme_vdev_ext_hdl_create(vdev_mlme);
 
 	return ret;
@@ -96,7 +125,7 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_post_create(struct vdev_mlme_obj *vdev_mlme)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((glbl_ops) && glbl_ops->mlme_vdev_ext_hdl_post_create)
+	if (glbl_ops && glbl_ops->mlme_vdev_ext_hdl_post_create)
 		ret = glbl_ops->mlme_vdev_ext_hdl_post_create(vdev_mlme);
 
 	return ret;
@@ -106,7 +135,7 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((glbl_ops) && glbl_ops->mlme_vdev_ext_hdl_destroy)
+	if (glbl_ops && glbl_ops->mlme_vdev_ext_hdl_destroy)
 		ret = glbl_ops->mlme_vdev_ext_hdl_destroy(vdev_mlme);
 
 	return ret;
@@ -128,7 +157,7 @@ QDF_STATUS mlme_vdev_ops_multivdev_restart_fw_cmd_send(
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((glbl_ops) && glbl_ops->mlme_multivdev_restart_fw_send)
+	if (glbl_ops && glbl_ops->mlme_multivdev_restart_fw_send)
 		glbl_ops->mlme_multivdev_restart_fw_send(pdev);
 
 	return ret;

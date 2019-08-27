@@ -20,11 +20,16 @@
 #ifndef _WLAN_MLME_CMN_H_
 #define _WLAN_MLME_CMN_H_
 
+#include <include/wlan_psoc_mlme.h>
 #include <include/wlan_pdev_mlme.h>
 #include <include/wlan_vdev_mlme.h>
 
 /**
  * struct vdev_mlme_ext_ops - VDEV MLME legacy callbacks structure
+ * @mlme_psoc_ext_hdl_create:        callback to invoke creation of legacy
+ *                                   psoc object
+ * @mlme_psoc_ext_hdl_destroy:       callback to invoke destroy of legacy
+ *                                   psoc object
  * @mlme_pdev_ext_hdl_create:        callback to invoke creation of legacy
  *                                   pdev object
  * @mlme_pdev_ext_hdl_destroy:       callback to invoke destroy of legacy
@@ -44,6 +49,10 @@
  *                                   required by serialization
  */
 struct mlme_ext_ops {
+	QDF_STATUS (*mlme_psoc_ext_hdl_create)(
+				struct psoc_mlme_obj *psoc_mlme);
+	QDF_STATUS (*mlme_psoc_ext_hdl_destroy)(
+				struct psoc_mlme_obj *pdev_mlme);
 	QDF_STATUS (*mlme_pdev_ext_hdl_create)(
 				struct pdev_mlme_obj *pdev_mlme);
 	QDF_STATUS (*mlme_pdev_ext_hdl_destroy)(
@@ -64,6 +73,28 @@ struct mlme_ext_ops {
 				struct vdev_mlme_obj *vdev_mlme,
 				uint8_t cmd_type);
 };
+
+/**
+ * mlme_psoc_ops_ext_hdl_create() - Alloc PSOC mlme ext handle
+ * @psoc_mlme:  PSOC MLME comp object
+ *
+ * API to allocate PSOC MLME ext handle
+ *
+ * Return: SUCCESS on successful allocation
+ *         Else FAILURE
+ */
+QDF_STATUS mlme_psoc_ops_ext_hdl_create(struct psoc_mlme_obj *psoc_mlme);
+
+/**
+ * mlme_psoc_ops_ext_hdl_destroy() - Destroy PSOC mlme ext handle
+ * @psoc_mlme:  PSOC MLME comp object
+ *
+ * API to free psoc MLME ext handle
+ *
+ * Return: SUCCESS on successful free
+ *         Else FAILURE
+ */
+QDF_STATUS mlme_psoc_ops_ext_hdl_destroy(struct psoc_mlme_obj *psoc_mlme);
 
 /**
  * mlme_pdev_ops_ext_hdl_create - Alloc PDEV mlme ext handle
