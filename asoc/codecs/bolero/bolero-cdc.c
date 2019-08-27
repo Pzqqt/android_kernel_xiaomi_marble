@@ -1050,12 +1050,12 @@ int bolero_runtime_resume(struct device *dev)
 	struct bolero_priv *priv = dev_get_drvdata(dev->parent);
 	int ret = 0;
 
+	mutex_lock(&priv->vote_lock);
 	if (priv->lpass_core_hw_vote == NULL) {
 		dev_dbg(dev, "%s: Invalid lpass core hw node\n", __func__);
-		return 0;
+		goto audio_vote;
 	}
 
-	mutex_lock(&priv->vote_lock);
 	if (priv->core_hw_vote_count == 0) {
 		ret = clk_prepare_enable(priv->lpass_core_hw_vote);
 		if (ret < 0) {
