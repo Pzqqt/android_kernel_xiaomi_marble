@@ -1310,6 +1310,9 @@ void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
 	struct hal_reo_queue_status *queue_status = &(reo_status->queue_status);
 
+	if (queue_status->header.status == HAL_REO_CMD_DRAIN)
+		return;
+
 	if (queue_status->header.status != HAL_REO_CMD_SUCCESS) {
 		DP_PRINT_STATS("REO stats failure %d for TID %d\n",
 			       queue_status->header.status, rx_tid->tid);
