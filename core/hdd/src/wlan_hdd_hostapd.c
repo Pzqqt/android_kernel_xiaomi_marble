@@ -3292,6 +3292,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	int ret;
 	enum dfs_mode acs_dfs_mode;
 	bool acs_with_more_param = 0;
+	uint8_t enable_sifs_burst = 0;
 
 	hdd_enter();
 
@@ -3364,11 +3365,14 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	set_bit(WMM_INIT_DONE, &adapter->event_flags);
 
+	status = ucfg_get_enable_sifs_burst(hdd_ctx->psoc, &enable_sifs_burst);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Failed to get sifs burst value, use default");
+
 	ret = wma_cli_set_command(adapter->vdev_id,
 				  WMI_PDEV_PARAM_BURST_ENABLE,
-				  HDD_ENABLE_SIFS_BURST_DEFAULT,
+				  enable_sifs_burst,
 				  PDEV_CMD);
-
 	if (0 != ret)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed: %d", ret);
 

@@ -344,7 +344,6 @@ enum hdd_driver_flags {
 #define HDD_MIN_TX_POWER (-100) /* minimum tx power */
 #define HDD_MAX_TX_POWER (+100) /* maximum tx power */
 
-#define HDD_ENABLE_SIFS_BURST_DEFAULT	(1)
 /* If IPA UC data path is enabled, target should reserve extra tx descriptors
  * for IPA data path.
  * Then host data path should allow less TX packet pumping in case

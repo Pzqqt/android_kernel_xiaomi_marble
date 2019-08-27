@@ -41,6 +41,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "qdf_util.h"
 #include <cdp_txrx_misc.h>
+#include "wlan_fwol_ucfg_api.h"
 
 /**
  * hdd_nan_datapath_target_config() - Configure NAN datapath features
@@ -439,6 +440,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 	int32_t ret_val;
 	mac_handle_t mac_handle;
 	bool bval = false;
+	uint8_t enable_sifs_burst = 0;
 
 	ret_val = hdd_vdev_create(adapter, hdd_sme_roam_callback, adapter);
 	if (ret_val) {
@@ -479,10 +481,14 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 
 	set_bit(WMM_INIT_DONE, &adapter->event_flags);
 
+	status = ucfg_get_enable_sifs_burst(hdd_ctx->psoc, &enable_sifs_burst);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Failed to get sifs burst value, use default");
+
 	ret_val = wma_cli_set_command((int)adapter->vdev_id,
-			(int)WMI_PDEV_PARAM_BURST_ENABLE,
-			(int)HDD_ENABLE_SIFS_BURST_DEFAULT,
-			PDEV_CMD);
+				      (int)WMI_PDEV_PARAM_BURST_ENABLE,
+				      enable_sifs_burst,
+				      PDEV_CMD);
 	if (0 != ret_val)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);
 

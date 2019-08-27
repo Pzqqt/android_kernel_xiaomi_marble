@@ -159,6 +159,16 @@ QDF_STATUS ucfg_get_enable_rts_sifsbursting(struct wlan_objmgr_psoc *psoc,
 					    bool *enable_rts_sifsbursting);
 
 /**
+ * ucfg_get_enable_sifs_burst() - Get the enable_sifs_burst value
+ * @psoc: pointer to the psoc object
+ * @enable_sifs_burst: pointer to return enable_sifs_burst value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_get_enable_sifs_burst(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *enable_sifs_burst);
+
+/**
  * ucfg_get_max_mpdus_inampdu() - Assigns the max_mpdus_inampdu value
  * @psoc: pointer to the psoc object
  *
