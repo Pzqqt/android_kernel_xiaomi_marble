@@ -251,6 +251,12 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		uint16_t seq_num_start, seq_num_end;
 		enum htt_rx_flush_action action;
 
+		if (qdf_nbuf_len(htt_t2h_msg) < HTT_RX_FLUSH_BYTES) {
+			qdf_print("invalid nbuff len");
+			WARN_ON(1);
+			break;
+		}
+
 		peer_id = HTT_RX_FLUSH_PEER_ID_GET(*msg_word);
 		tid = HTT_RX_FLUSH_TID_GET(*msg_word);
 		seq_num_start =
@@ -293,7 +299,13 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	{
 		uint16_t peer_id;
 		uint8_t tid;
+		int msg_len = qdf_nbuf_len(htt_t2h_msg);
 
+		if (msg_len < HTT_RX_FRAG_IND_BYTES) {
+			qdf_print("invalid nbuff len");
+			WARN_ON(1);
+			break;
+		}
 		peer_id = HTT_RX_FRAG_IND_PEER_ID_GET(*msg_word);
 		tid = HTT_RX_FRAG_IND_EXT_TID_GET(*msg_word);
 		htt_rx_frag_set_last_msdu(pdev, htt_t2h_msg);
@@ -373,6 +385,12 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		uint16_t peer_id;
 		uint8_t vdev_id;
 
+		if (qdf_nbuf_len(htt_t2h_msg) < HTT_RX_PEER_MAP_BYTES) {
+			qdf_print("invalid nbuff len");
+			WARN_ON(1);
+			break;
+		}
+
 		peer_id = HTT_RX_PEER_MAP_PEER_ID_GET(*msg_word);
 		vdev_id = HTT_RX_PEER_MAP_VDEV_ID_GET(*msg_word);
 		peer_mac_addr = htt_t2h_mac_addr_deswizzle(
@@ -396,6 +414,12 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	{
 		uint16_t peer_id;
 
+		if (qdf_nbuf_len(htt_t2h_msg) < HTT_RX_PEER_UNMAP_BYTES) {
+			qdf_print("invalid nbuff len");
+			WARN_ON(1);
+			break;
+		}
+
 		peer_id = HTT_RX_PEER_UNMAP_PEER_ID_GET(*msg_word);
 		if (peer_id > ol_cfg_max_peer_id(pdev->ctrl_pdev)) {
 			qdf_print("%s: HTT_T2H_MSG_TYPE_PEER_UNMAP,"
@@ -413,6 +437,12 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		uint16_t peer_id;
 		enum htt_sec_type sec_type;
 		int is_unicast;
+
+		if (qdf_nbuf_len(htt_t2h_msg) < HTT_SEC_IND_BYTES) {
+			qdf_print("invalid nbuff len");
+			WARN_ON(1);
+			break;
+		}
 
 		peer_id = HTT_SEC_IND_PEER_ID_GET(*msg_word);
 		sec_type = HTT_SEC_IND_SEC_TYPE_GET(*msg_word);
@@ -501,6 +531,13 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		uint32_t htt_credit_delta_abs;
 		int32_t htt_credit_delta;
 		int sign, old_credit;
+		int msg_len = qdf_nbuf_len(htt_t2h_msg);
+
+		if (msg_len < HTT_TX_CREDIT_MSG_BYTES) {
+			qdf_print("invalid nbuff len");
+			WARN_ON(1);
+			break;
+		}
 
 		htt_credit_delta_abs =
 			HTT_TX_CREDIT_DELTA_ABS_GET(*msg_word);
@@ -617,8 +654,16 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 			struct ol_txrx_peer_t *peer;
 			uint64_t pn;
 			uint32_t key_id;
-			uint16_t peer_id =
-				 HTT_RX_OFLD_PKT_ERR_MIC_ERR_PEER_ID_GET
+			uint16_t peer_id;
+			int msg_len = qdf_nbuf_len(htt_t2h_msg);
+
+			if (msg_len < HTT_RX_OFLD_PKT_ERR_MIC_ERR_BYTES) {
+				qdf_print("invalid nbuff len");
+				WARN_ON(1);
+				break;
+			}
+
+			peer_id = HTT_RX_OFLD_PKT_ERR_MIC_ERR_PEER_ID_GET
 				(*(msg_word + 1));
 
 			peer = ol_txrx_peer_find_by_id(pdev->txrx_pdev,
@@ -875,6 +920,13 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		uint16_t peer_id;
 		uint8_t tid, pn_ie_cnt, *pn_ie = NULL;
 		uint16_t seq_num_start, seq_num_end;
+		int msg_len = qdf_nbuf_len(htt_t2h_msg);
+
+		if (msg_len < HTT_RX_PN_IND_BYTES) {
+			qdf_print("invalid nbuff len");
+			WARN_ON(1);
+			break;
+		}
 
 		/*First dword */
 		peer_id = HTT_RX_PN_IND_PEER_ID_GET(*msg_word);
@@ -886,6 +938,13 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			HTT_RX_PN_IND_SEQ_NUM_START_GET(*msg_word);
 		seq_num_end = HTT_RX_PN_IND_SEQ_NUM_END_GET(*msg_word);
 		pn_ie_cnt = HTT_RX_PN_IND_PN_IE_CNT_GET(*msg_word);
+
+		if (msg_len - HTT_RX_PN_IND_BYTES <
+		    pn_ie_cnt * sizeof(uint8_t)) {
+			qdf_print("invalid pn_ie count");
+			WARN_ON(1);
+			break;
+		}
 
 		msg_word++;
 		/*Third dword */
@@ -1174,6 +1233,13 @@ void htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 			u_int16_t peer_id;
 			u_int8_t tid, pn_ie_cnt, *pn_ie = NULL;
 			int seq_num_start, seq_num_end;
+			int msg_len = qdf_nbuf_len(htt_t2h_msg);
+
+			if (msg_len < HTT_RX_PN_IND_BYTES) {
+				qdf_print("invalid nbuff len");
+				WARN_ON(1);
+				break;
+			}
 
 			/*First dword */
 			peer_id = HTT_RX_PN_IND_PEER_ID_GET(*msg_word);
@@ -1187,6 +1253,13 @@ void htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 				HTT_RX_PN_IND_SEQ_NUM_END_GET(*msg_word);
 			pn_ie_cnt =
 				HTT_RX_PN_IND_PN_IE_CNT_GET(*msg_word);
+
+			if (msg_len - HTT_RX_PN_IND_BYTES <
+				pn_ie_cnt * sizeof(uint8_t)) {
+				qdf_print("invalid pn_ie len");
+				WARN_ON(1);
+				break;
+			}
 
 			msg_word++;
 			/*Third dword*/
