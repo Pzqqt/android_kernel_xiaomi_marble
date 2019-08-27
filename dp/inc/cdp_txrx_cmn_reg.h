@@ -30,7 +30,16 @@
 #define LITHIUM_DP		0xfffd/*FIXME Add Litium device ID */
 /* Use these device IDs for attach in future */
 
-ol_txrx_soc_handle ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops);
+#if defined(DP_TXRX_SOC_ATTACH)
+static inline ol_txrx_soc_handle
+ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops)
+{
+	return NULL;
+}
+#else
+ol_txrx_soc_handle
+ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops);
+#endif
 
 /**
  * dp_soc_attach_wifi3() - Attach txrx SOC
