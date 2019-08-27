@@ -106,8 +106,22 @@ struct cfr_metadata_version_1 {
 #define HOST_MAX_CHAINS 8
 
 struct cfr_metadata_version_2 {
-	u_int32_t chain_rssi[HOST_MAX_CHAINS];
-	u_int16_t chain_phase[HOST_MAX_CHAINS];
+	u_int8_t    peer_addr[QDF_MAC_ADDR_SIZE];
+	u_int8_t    status;
+	u_int8_t    capture_bw;
+	u_int8_t    channel_bw;
+	u_int8_t    phy_mode;
+	u_int16_t   prim20_chan;
+	u_int16_t   center_freq1;
+	u_int16_t   center_freq2;
+	u_int8_t    capture_mode;
+	u_int8_t    capture_type;
+	u_int8_t    sts_count;
+	u_int8_t    num_rx_chain;
+	u_int32_t   timestamp;
+	u_int32_t   length;
+	u_int32_t   chain_rssi[HOST_MAX_CHAINS];
+	u_int16_t   chain_phase[HOST_MAX_CHAINS];
 } __attribute__ ((__packed__));
 
 struct csi_cfr_header {
