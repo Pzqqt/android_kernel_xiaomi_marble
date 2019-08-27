@@ -695,7 +695,7 @@ static void wma_handle_monitor_mode_vdev_detach(tp_wma_handle wma,
 static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 			struct del_vdev_params *del_vdev_req_param)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint8_t vdev_id = del_vdev_req_param->vdev_id;
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -703,7 +703,6 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 
 	if (!soc) {
 		WMA_LOGE("%s:SOC context is NULL", __func__);
-		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
 
@@ -711,36 +710,29 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	if (!vdev_mlme) {
 		wma_err("Failed to get vdev mlme obj for vdev id %d",
 			del_vdev_req_param->vdev_id);
-		qdf_mem_free(del_vdev_req_param);
-		return QDF_STATUS_E_INVAL;
+		wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
+		goto out;
 	}
 
 	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
 		wma_handle_monitor_mode_vdev_detach(wma_handle, vdev_id);
+
+	iface->del_staself_req = del_vdev_req_param;
+	wlan_vdev_set_dp_handle(iface->vdev, NULL);
+	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 
 	status = vdev_mgr_delete_send(vdev_mlme);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Unable to remove an interface");
 		goto out;
 	}
-
-	WMA_LOGD("vdev_id:%hu", vdev_id);
-
-	del_vdev_req_param->status = status;
-	iface->del_staself_req = del_vdev_req_param;
-	WMA_LOGD("Call txrx detach with callback for vdev %d", vdev_id);
-	wlan_vdev_set_dp_handle(iface->vdev, NULL);
-	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 	wma_release_vdev_ref(iface);
 
 	return status;
 
 out:
-	WMA_LOGE("Call txrx detach callback for vdev %d", vdev_id);
 	wlan_vdev_set_dp_handle(iface->vdev, NULL);
-	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 	wma_release_vdev_ref(iface);
-
 	wma_vdev_deinit(iface);
 	qdf_mem_zero(iface, sizeof(*iface));
 	wma_vdev_init(iface);
