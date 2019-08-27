@@ -162,6 +162,7 @@ struct wlan_fwol_neighbor_report_cfg {
  * @neighbor_report_cfg: 11K neighbor report config
  * @ani_enabled: ANI enable/disable
  * @enable_rts_sifsbursting: Enable RTS SIFS Bursting
+ * @enable_sifs_burst: Enable SIFS burst
  * @max_mpdus_inampdu: Max number of MPDUS
  * @arp_ac_category: ARP AC category
  * @enable_phy_reg_retention: Enable PHY reg retention
@@ -197,6 +198,7 @@ struct wlan_fwol_cfg {
 	struct wlan_fwol_neighbor_report_cfg neighbor_report_cfg;
 	bool ani_enabled;
 	bool enable_rts_sifsbursting;
+	uint8_t enable_sifs_burst;
 	uint8_t max_mpdus_inampdu;
 	uint32_t arp_ac_category;
 	uint8_t enable_phy_reg_retention;

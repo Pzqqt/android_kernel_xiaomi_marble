@@ -67,6 +67,38 @@
 
 /*
  * <ini>
+ * sifs_burst_mask - Set sifs burst mask
+ * @Min: 0
+ * @Max: 3
+ * @Default: 1
+ *
+ * This ini is used to set 11n and legacy(non 11n/wmm)
+ * sifs burst. Especially under running multi stream
+ * traffic test case, it can be useful to let the low
+ * priority AC, or legacy mode device, or the specified
+ * AC to aggressively contend air medium, then have a
+ * obvious improvement of throughput. Bit0 is the switch
+ * of sifs burst, it must be set if want to enable sifs
+ * burst, Bit1 is for legacy mode.
+ * Supported configuration:
+ * 0: disabled
+ * 1: enabled, but disabled for legacy mode
+ * 3: all enabled
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_SIFS_BURST CFG_INI_UINT( \
+		"sifs_burst_mask", \
+		0, \
+		3, \
+		1, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Set SIFS burst mask")
+
+/*
+ * <ini>
  * gMaxMPDUsInAMPDU - max mpdus in ampdu
  * @Min: 0
  * @Max: 64
@@ -706,6 +738,7 @@
 	CFG_FWOL_DHCP \
 	CFG(CFG_ENABLE_ANI) \
 	CFG(CFG_SET_RTS_FOR_SIFS_BURSTING) \
+	CFG(CFG_SET_SIFS_BURST) \
 	CFG(CFG_MAX_MPDUS_IN_AMPDU) \
 	CFG(CFG_ARP_AC_CATEGORY) \
 	CFG(CFG_ENABLE_PHY_REG) \

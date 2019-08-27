@@ -500,6 +500,7 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	fwol_cfg->ani_enabled = cfg_get(psoc, CFG_ENABLE_ANI);
 	fwol_cfg->enable_rts_sifsbursting =
 				cfg_get(psoc, CFG_SET_RTS_FOR_SIFS_BURSTING);
+	fwol_cfg->enable_sifs_burst = cfg_get(psoc, CFG_SET_SIFS_BURST);
 	fwol_cfg->max_mpdus_inampdu = cfg_get(psoc, CFG_MAX_MPDUS_IN_AMPDU);
 	fwol_cfg->arp_ac_category = cfg_get(psoc, CFG_ARP_AC_CATEGORY);
 	fwol_cfg->enable_phy_reg_retention = cfg_get(psoc, CFG_ENABLE_PHY_REG);
