@@ -1830,16 +1830,16 @@ err:
    --------------------------------------------------------------------------*/
 
 void lim_handle_delete_bss_rsp(struct mac_context *mac,
-			       struct del_bss_param *pDelBss)
+			       struct del_bss_resp *del_bss_rsp)
 {
 	struct pe_session *pe_session;
 
 	pe_session =
-		pe_find_session_by_sme_session_id(mac, pDelBss->vdev_id);
+		pe_find_session_by_sme_session_id(mac, del_bss_rsp->vdev_id);
 	if (!pe_session) {
 		pe_err("Session Does not exist for vdev id: %d",
-		       pDelBss->vdev_id);
-		qdf_mem_free(pDelBss);
+		       del_bss_rsp->vdev_id);
+		qdf_mem_free(del_bss_rsp);
 		return;
 	}
 
@@ -1851,14 +1851,15 @@ void lim_handle_delete_bss_rsp(struct mac_context *mac,
 	 */
 	pe_session->process_ho_fail = false;
 	if (LIM_IS_IBSS_ROLE(pe_session))
-		lim_ibss_del_bss_rsp(mac, pDelBss, pe_session);
+		lim_ibss_del_bss_rsp(mac, del_bss_rsp, pe_session);
 	else if (LIM_IS_UNKNOWN_ROLE(pe_session))
 		lim_process_sme_del_bss_rsp(mac, pe_session);
 	else if (LIM_IS_NDI_ROLE(pe_session))
-		lim_ndi_del_bss_rsp(mac, pDelBss, pe_session);
+		lim_ndi_del_bss_rsp(mac, del_bss_rsp, pe_session);
 	else
-		lim_process_mlm_del_bss_rsp(mac, pDelBss, pe_session);
+		lim_process_mlm_del_bss_rsp(mac, del_bss_rsp, pe_session);
 
+	qdf_mem_free(del_bss_rsp);
 }
 
 /** -----------------------------------------------------------------

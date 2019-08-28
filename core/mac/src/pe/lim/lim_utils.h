@@ -532,8 +532,17 @@ void lim_update_beacon(struct mac_context *mac);
 void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				    struct scheduler_msg *limMsgQ,
 				    struct pe_session *pe_session);
+
+/**
+ * lim_process_ap_mlm_del_bss_rsp() - handle del bss response of AP
+ * @mac: Pointer to Global MAC structure
+ * @vdev_stop_rsp: pointer to vdev stop response
+ * @pe_session: pointer to pe_session
+ *
+ * Return: none
+ */
 void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
-				    struct del_bss_param *pDelBss,
+				    struct del_bss_resp *vdev_stop_rsp,
 				    struct pe_session *pe_session);
 
 void lim_process_ap_mlm_del_sta_rsp(struct mac_context *mac,

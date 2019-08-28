@@ -173,7 +173,6 @@
 #define WMA_BSS_STATUS_STOPPED 0x2
 
 #define WMA_TARGET_REQ_TYPE_VDEV_START 0x1
-#define WMA_TARGET_REQ_TYPE_VDEV_STOP  0x2
 
 #define WMA_PEER_ASSOC_CNF_START 0x01
 #define WMA_PEER_ASSOC_TIMEOUT SIR_PEER_ASSOC_TIMEOUT
@@ -190,7 +189,6 @@
 
 /* FW response timeout values in milli seconds */
 #define WMA_VDEV_START_REQUEST_TIMEOUT   START_RESPONSE_TIMER
-#define WMA_VDEV_STOP_REQUEST_TIMEOUT    STOP_RESPONSE_TIMER
 #define WMA_VDEV_PLCY_MGR_TIMEOUT        SIR_VDEV_PLCY_MGR_TIMEOUT
 #define WMA_VDEV_HW_MODE_REQUEST_TIMEOUT WMA_VDEV_PLCY_MGR_TIMEOUT
 #define WMA_VDEV_DUAL_MAC_CFG_TIMEOUT    WMA_VDEV_PLCY_MGR_TIMEOUT
@@ -2590,10 +2588,10 @@ QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid,
 
 /**
  * wma_send_vdev_stop() - WMA api to send vdev stop to fw
- * @params: del bss params
+ * @vdev_id: vdev id
  *
  * Return: 0 on success, else error on failure
  */
-QDF_STATUS wma_send_vdev_stop(struct del_bss_param *params);
+QDF_STATUS wma_send_vdev_stop(uint8_t vdev_id);
 
 #endif

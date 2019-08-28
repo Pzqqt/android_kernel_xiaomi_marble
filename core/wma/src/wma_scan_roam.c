@@ -2643,7 +2643,6 @@ static void
 wma_roam_update_vdev(tp_wma_handle wma,
 		     struct roam_offload_synch_ind *roam_synch_ind_ptr)
 {
-	struct del_bss_param *del_bss_params;
 	tDeleteStaParams *del_sta_params;
 	tAddStaParams *add_sta_params;
 	uint32_t uc_cipher = 0, cipher_cap = 0;
@@ -2651,35 +2650,26 @@ wma_roam_update_vdev(tp_wma_handle wma,
 
 	vdev_id = roam_synch_ind_ptr->roamed_vdev_id;
 	wma->interfaces[vdev_id].nss = roam_synch_ind_ptr->nss;
-	del_bss_params = qdf_mem_malloc(sizeof(*del_bss_params));
-	if (!del_bss_params)
-		return;
 
 	del_sta_params = qdf_mem_malloc(sizeof(*del_sta_params));
 	if (!del_sta_params) {
-		qdf_mem_free(del_bss_params);
 		return;
 	}
 
 	add_sta_params = qdf_mem_malloc(sizeof(*add_sta_params));
 	if (!add_sta_params) {
-		qdf_mem_free(del_bss_params);
 		qdf_mem_free(del_sta_params);
 		return;
 	}
 
-	qdf_mem_zero(del_bss_params, sizeof(*del_bss_params));
 	qdf_mem_zero(del_sta_params, sizeof(*del_sta_params));
 	qdf_mem_zero(add_sta_params, sizeof(*add_sta_params));
 
-	del_bss_params->vdev_id = vdev_id;
 	del_sta_params->smesessionId = vdev_id;
-	qdf_mem_copy(del_bss_params->bssid, wma->interfaces[vdev_id].bssid,
-			QDF_MAC_ADDR_SIZE);
 	add_sta_params->staType = STA_ENTRY_SELF;
 	add_sta_params->smesessionId = vdev_id;
 	qdf_mem_copy(&add_sta_params->bssId, &roam_synch_ind_ptr->bssid.bytes,
-			QDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 	add_sta_params->staIdx = STA_INVALID_IDX;
 	add_sta_params->assocId = roam_synch_ind_ptr->aid;
 
@@ -2687,11 +2677,11 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	 * Get uc cipher of old peer to update new peer as it doesnt
 	 * change in roaming
 	 */
-	wma_get_peer_uc_cipher(wma, del_bss_params->bssid, &uc_cipher,
-			       &cipher_cap);
+	wma_get_peer_uc_cipher(wma, wma->interfaces[vdev_id].bssid,
+			       &uc_cipher, &cipher_cap);
 
 	wma_delete_sta(wma, del_sta_params);
-	wma_delete_bss(wma, del_bss_params);
+	wma_delete_bss(wma, vdev_id);
 	wma_add_bss_peer_sta(roam_synch_ind_ptr->self_mac.bytes,
 			     roam_synch_ind_ptr->bssid.bytes, true);
 	/* Update new peer's uc cipher */
@@ -2701,7 +2691,6 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	wma_add_sta(wma, add_sta_params);
 	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
 			roam_synch_ind_ptr->bssid.bytes, QDF_MAC_ADDR_SIZE);
-	qdf_mem_free(del_bss_params);
 	qdf_mem_free(add_sta_params);
 }
 

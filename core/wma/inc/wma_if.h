@@ -499,14 +499,12 @@ struct bss_params {
 };
 
 /**
- * struct struct del_bss_param - params required for del bss request
+ * struct struct del_bss_resp - params required for del bss response
  * @status: QDF status
- * @bssid: BSSID mac address
  * @vdev_id: vdev_id
  */
-struct del_bss_param {
+struct del_bss_resp {
 	QDF_STATUS status;
-	tSirMacAddr bssid;
 	uint8_t vdev_id;
 };
 

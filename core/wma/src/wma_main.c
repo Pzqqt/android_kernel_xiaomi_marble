@@ -8526,10 +8526,10 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_delete_sta(wma_handle, (tpDeleteStaParams) msg->bodyptr);
 		break;
 	case WMA_DELETE_BSS_HO_FAIL_REQ:
-		wma_delete_bss_ho_fail(wma_handle, msg->bodyptr);
+		wma_delete_bss_ho_fail(wma_handle, msg->bodyval);
 		break;
 	case WMA_DELETE_BSS_REQ:
-		wma_delete_bss(wma_handle, msg->bodyptr);
+		wma_delete_bss(wma_handle, msg->bodyval);
 		break;
 	case WMA_UPDATE_EDCA_PROFILE_IND:
 		wma_process_update_edca_param_req(wma_handle,

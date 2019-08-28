@@ -623,11 +623,11 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 /**
  * wma_send_del_bss_response() - send delete bss resp
  * @wma: wma handle
- * @req: target request
+ * @resp: pointer to del bss response
  *
  * Return: none
  */
-void wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req);
+void wma_send_del_bss_response(tp_wma_handle wma, struct del_bss_resp *resp);
 
 /**
  * __wma_handle_vdev_stop_rsp() - vdev stop response handler
@@ -663,14 +663,35 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta);
 
 void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta);
 
-void wma_delete_bss(tp_wma_handle wma, struct del_bss_param *params);
+/**
+ * wma_delete_bss() - process delete bss request from upper layer
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id);
 
 int32_t wma_find_vdev_by_type(tp_wma_handle wma, int32_t type);
 
 void wma_set_vdev_intrabss_fwd(tp_wma_handle wma_handle,
 				      tpDisableIntraBssFwd pdis_intra_fwd);
 
-void wma_delete_bss_ho_fail(tp_wma_handle wma, struct del_bss_param *params);
+/**
+ * wma_delete_bss_ho_fail() - process delete bss request for handoff failure
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Delete BSS in case of ROAM_HO_FAIL processing is handled separately in
+ * this routine. It needs to be done without sending any commands to firmware
+ * because firmware has already stopped and deleted peer and vdev is down.
+ * Relevant logic is aggregated from other routines. It changes the host
+ * data structures without sending VDEV_STOP, PEER_FLUSH_TIDS, PEER_DELETE
+ * and VDEV_DOWN commands to firmware.
+ *
+ * Return: none
+ */
+void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id);
 
 uint32_t wma_get_bcn_rate_code(uint16_t rate);
 
@@ -1580,13 +1601,13 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
 /**
  * wma_send_vdev_down() - send del bss req to firmware
  * @wma: wma handle.
- * @vdev_id: vdev ID of device for which MCC has to be checked
+ * @req: pointer to del bss response
  *
  * This function sends del bss resp to upper layer
  *
  * Return: none
  */
-void wma_send_vdev_down(tp_wma_handle wma, struct wma_target_req *req);
+void wma_send_vdev_down(tp_wma_handle wma, struct del_bss_resp *req);
 
 /**
  * wma_cold_boot_cal_event_handler() - Cold boot cal event handler

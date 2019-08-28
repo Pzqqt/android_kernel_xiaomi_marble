@@ -179,8 +179,15 @@ void lim_send_sme_set_context_rsp(struct mac_context *mac,
 				  struct pe_session *pe_session,
 				  uint8_t smesessionId);
 
+/**
+ * lim_handle_delete_bss_rsp () - API to handle delete bss response
+ * @mac: global mac structure
+ * @del_bss_rsp: pointer to del bss response
+ *
+ * Return: None
+ */
 void lim_handle_delete_bss_rsp(struct mac_context *mac,
-				struct del_bss_param *pDelBss);
+				struct del_bss_resp *del_bss_rsp);
 
 void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				struct scheduler_msg *msg);

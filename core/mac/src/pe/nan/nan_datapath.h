@@ -45,8 +45,17 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 				     struct bss_params *add_bss_params,
 				     struct pe_session *session_entry);
 /* Handler for DEL BSS resp for NDI interface */
+
+/**
+ * lim_ndi_del_bss_rsp() - Handler for DEL BSS resp for NDI interface
+ * @mac_ctx: handle to mac structure
+ * @del_bss: pointer to del bss response
+ * @session_entry: session entry
+ *
+ * Return: None
+ */
 void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
-			 struct del_bss_param *del_bss,
+			 struct del_bss_resp *del_bss,
 			 struct pe_session *session_entry);
 
 void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx,
@@ -74,9 +83,17 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 {
 }
 
+/**
+ * lim_ndi_del_bss_rsp() - Handler for DEL BSS resp for NDI interface
+ * @mac_ctx: handle to mac structure
+ * @del_bss: pointer to del bss response
+ * @session_entry: session entry
+ *
+ * Return: None
+ */
 static inline
 void lim_ndi_del_bss_rsp(struct mac_context *mac_ctx,
-			 struct del_bss_param *del_bss,
+			 struct del_bss_resp *del_bss,
 			 struct pe_session *session_entry)
 {
 }

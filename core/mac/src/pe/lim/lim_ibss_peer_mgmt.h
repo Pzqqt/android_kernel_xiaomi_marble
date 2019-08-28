@@ -89,9 +89,38 @@ QDF_STATUS lim_ibss_add_sta_rsp(struct mac_context *, void *, struct pe_session 
 void lim_process_ibss_del_sta_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg *lim_msg,
 	struct pe_session *pe_session);
+
 tLimIbssPeerNode *lim_ibss_peer_find(struct mac_context *mac, tSirMacAddr macAddr);
-void lim_ibss_del_bss_rsp(struct mac_context *, void *, struct pe_session *);
-void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *, void *, struct pe_session *);
+
+/**
+ * lim_ibss_del_bss_rsp() - Handle ibss delete
+ * response
+ *
+ * @mac: Pointer to Global MAC structure
+ * @vdev_stop_rsp: pointer to del bss response
+ * @pe_session: pointer to pe session
+ *
+ * Return: None
+ *
+ */
+void lim_ibss_del_bss_rsp(struct mac_context *mac,
+			  struct del_bss_resp *vdev_stop_rsp,
+			  struct pe_session *pe_session);
+
+/**
+ * lim_ibss_del_bss_rsp_when_coalescing() - Handle ibss delete
+ * response when coalescing
+ *
+ * @mac: Pointer to Global MAC structure
+ * @vdev_stop_rsp: pointer to del bss response
+ * @pe_session: pointer to pe session
+ *
+ * Return: None
+ *
+ */
+void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac,
+					  struct del_bss_resp *vdev_stop_rsp,
+					  struct pe_session *pe_session);
 
 /**
  * lim_ibss_add_bss_rsp_when_coalescing()- Handle ADD BSS rsp of IBSS coalescing

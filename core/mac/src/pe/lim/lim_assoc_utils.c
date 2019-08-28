@@ -3354,13 +3354,8 @@ QDF_STATUS
 lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
 	    struct pe_session *pe_session)
 {
-	struct del_bss_param *pDelBssParams = NULL;
 	struct scheduler_msg msgQ = {0};
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
-
-	pDelBssParams = qdf_mem_malloc(sizeof(*pDelBssParams));
-	if (!pDelBssParams)
-		return QDF_STATUS_E_NOMEM;
 
 	/* DPH was storing the AssocID in staID field, */
 	/* staID is actually assigned by HAL when AddSTA message is sent. */
@@ -3380,10 +3375,6 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
 		lim_deactivate_and_change_timer(mac, eLIM_JOIN_FAIL_TIMER);
 	}
 
-	pDelBssParams->status = QDF_STATUS_SUCCESS;
-	qdf_mem_copy(pDelBssParams->bssid, pe_session->bssId,
-		     sizeof(tSirMacAddr));
-	pDelBssParams->vdev_id = pe_session->smeSessionId;
 	pe_debug("Sessionid %d : Sending HAL_DELETE_BSS_REQ BSSID:"
 		 QDF_MAC_ADDR_STR,
 		 pe_session->peSessionId,
@@ -3397,8 +3388,8 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
 	else
 		msgQ.type = WMA_DELETE_BSS_REQ;
 	msgQ.reserved = 0;
-	msgQ.bodyptr = pDelBssParams;
-	msgQ.bodyval = 0;
+	msgQ.bodyptr = NULL;
+	msgQ.bodyval = pe_session->smeSessionId;
 
 	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
 
@@ -3407,7 +3398,6 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
 		SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 		pe_err("Posting DELETE_BSS_REQ to HAL failed, reason=%X",
 			retCode);
-		qdf_mem_free(pDelBssParams);
 	}
 
 	return retCode;

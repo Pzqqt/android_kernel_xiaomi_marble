@@ -1204,30 +1204,26 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 	return QDF_STATUS_SUCCESS;
 }
 
-void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
+void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac,
+					  struct del_bss_resp *vdev_stop_rsp,
 					  struct pe_session *pe_session)
 {
-	struct del_bss_param *pDelBss = (struct del_bss_param *)msg;
-
 	pe_debug("IBSS: DEL_BSS_RSP Rcvd during coalescing!");
 
-	if (!pDelBss) {
+	if (!vdev_stop_rsp) {
 		pe_err("IBSS: DEL_BSS_RSP(coalesce) with no body!");
-		goto end;
+		return;
 	}
 
-	if (pDelBss->status != QDF_STATUS_SUCCESS) {
+	if (vdev_stop_rsp->status != QDF_STATUS_SUCCESS) {
 		pe_err("IBSS: DEL_BSS_RSP(coalesce) error: %x",
-		       pDelBss->status);
-		goto end;
+		       vdev_stop_rsp->status);
+		return;
 	}
 
 	/* Delete peer entries. */
 	/* add the new bss */
 	ibss_bss_add(mac, pe_session);
-end:
-	if (pDelBss)
-		qdf_mem_free(pDelBss);
 }
 
 void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac,
@@ -1267,19 +1263,21 @@ end:
 	ibss_coalesce_free(mac);
 }
 
-void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_session)
+void lim_ibss_del_bss_rsp(struct mac_context *mac,
+			  struct del_bss_resp *vdev_stop_rsp,
+			  struct pe_session *pe_session)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
-	struct del_bss_param *pDelBss = (struct del_bss_param *)msg;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-	if (!pDelBss) {
+	if (!vdev_stop_rsp) {
 		pe_err("IBSS: DEL_BSS_RSP with no body!");
 		rc = eSIR_SME_REFUSED;
 		goto end;
 	}
 
-	pe_session = pe_find_session_by_sme_session_id(mac, pDelBss->vdev_id);
+	pe_session = pe_find_session_by_sme_session_id(mac,
+						       vdev_stop_rsp->vdev_id);
 	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");
 		goto end;
@@ -1292,13 +1290,13 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 	 * 'IDLE' and gLimIbssCoalescingHappened flag will be false. In this case STOP BSS RSP has to be sent to SME.
 	 */
 	if (true == mac->lim.gLimIbssCoalescingHappened) {
-
-		lim_ibss_del_bss_rsp_when_coalescing(mac, msg, pe_session);
+		lim_ibss_del_bss_rsp_when_coalescing(mac, vdev_stop_rsp,
+						     pe_session);
 		return;
 	}
 
-	if (pDelBss->status != QDF_STATUS_SUCCESS) {
-		pe_err("IBSS: DEL_BSS_RSP error: %x", pDelBss->status);
+	if (vdev_stop_rsp->status != QDF_STATUS_SUCCESS) {
+		pe_err("IBSS: DEL_BSS_RSP error: %x", vdev_stop_rsp->status);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}
@@ -1323,8 +1321,6 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 		cfg_default(CFG_SHORT_SLOT_TIME_ENABLED);
 
 end:
-	if (pDelBss)
-		qdf_mem_free(pDelBss);
 	/* Delete PE session once BSS is deleted */
 	if (pe_session) {
 		lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP, rc,

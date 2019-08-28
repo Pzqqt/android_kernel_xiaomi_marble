@@ -755,18 +755,38 @@ void lim_process_mlm_add_sta_rsp(struct mac_context *mac,
 				 struct pe_session *pe_session);
 void lim_process_mlm_del_sta_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsgQ);
+
+/**
+ * lim_process_mlm_del_bss_rsp () - API to process delete bss response
+ * @mac: Pointer to Global MAC structure
+ * @vdev_stop_rsp: pointer to vdev stop response
+ * @pe_session: pointer to pe_session
+ *
+ * Return: None
+ */
 void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
-				 struct del_bss_param *pDelBss,
+				 struct del_bss_resp *vdev_stop_rsp,
 				 struct pe_session *pe_session);
+
 void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ,
 				     struct pe_session *pe_session);
 void lim_process_sta_mlm_del_sta_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ,
 				     struct pe_session *pe_session);
+
+/**
+ * lim_process_sta_mlm_del_bss_rsp() - handle del bss response of STA
+ * @mac: Pointer to Global MAC structure
+ * @vdev_stop_rsp: pointer to vdev stop response
+ * @pe_session: pointer to pe_session
+ *
+ * Return: none
+ */
 void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
-				     struct del_bss_param *pDelBssParams,
+				     struct del_bss_resp *vdev_stop_rsp,
 				     struct pe_session *pe_session);
+
 void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ);
 void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac,

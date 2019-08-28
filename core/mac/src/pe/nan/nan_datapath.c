@@ -373,16 +373,8 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	lim_send_start_bss_confirm(mac_ctx, &mlm_start_cnf);
 }
 
-/**
- * lim_ndi_del_bss_rsp() - Handler for DEL BSS resp for NDI interface
- * @mac_ctx: handle to mac structure
- * @msg: pointer to message
- * @session_entry: session entry
- *
- * Return: None
- */
 void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
-			 struct del_bss_param *del_bss,
+			 struct del_bss_resp *del_bss,
 			 struct pe_session *session_entry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
@@ -409,8 +401,6 @@ void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
 	session_entry->limMlmState = eLIM_MLM_IDLE_STATE;
 
 end:
-	if (del_bss)
-		qdf_mem_free(del_bss);
 	/* Delete PE session once BSS is deleted */
 	if (session_entry) {
 		lim_send_sme_rsp(mac_ctx, eWNI_SME_STOP_BSS_RSP,

@@ -4171,7 +4171,7 @@ QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wma_send_vdev_down(wma, (struct wma_target_req *)data);
+	wma_send_vdev_down(wma, data);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4181,7 +4181,9 @@ wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 				   uint16_t data_len, void *data)
 {
 	tp_wma_handle wma;
-	struct wma_target_req *req = (struct wma_target_req *)data;
+	QDF_STATUS status;
+	uint32_t vdev_stop_type;
+	struct del_bss_resp *resp = (struct del_bss_resp *)data;
 
 	if (mlme_is_connection_fail(vdev_mlme->vdev)) {
 		WMA_LOGD("%s Vdev start req failed, no action required",
@@ -4192,32 +4194,42 @@ wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s wma handle is NULL", __func__);
-		return QDF_STATUS_E_INVAL;
+		status = QDF_STATUS_E_INVAL;
+		goto end;
 	}
 
-	if (req->msg_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
-		struct del_bss_param *params =
-			(struct del_bss_param *)req->user_data;
-		params->status = QDF_STATUS_SUCCESS;
+	status = mlme_get_vdev_stop_type(wma->interfaces[resp->vdev_id].vdev,
+					 &vdev_stop_type);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to get msg_type", __func__);
+		status = QDF_STATUS_E_INVAL;
+		goto end;
+	}
+
+	if (vdev_stop_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
+		resp->status = QDF_STATUS_SUCCESS;
 		wma_send_msg_high_priority(wma, WMA_DELETE_BSS_HO_FAIL_RSP,
-					   (void *)params, 0);
+					   (void *)resp, 0);
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (!mlme_get_vdev_start_failed(vdev_mlme->vdev))
-		if (req->msg_type == WMA_SET_LINK_STATE ||
-		    req->type == WMA_SET_LINK_PEER_RSP) {
+	if (!mlme_get_vdev_start_failed(vdev_mlme->vdev)) {
+		if (vdev_stop_type == WMA_SET_LINK_STATE) {
 			lim_join_result_callback(
 					wma->mac_context,
 					wlan_vdev_get_id(vdev_mlme->vdev));
-			qdf_mem_free(req->user_data);
+		} else {
+			wma_send_del_bss_response(wma, resp);
+			return QDF_STATUS_SUCCESS;
 		}
-		else
-			wma_send_del_bss_response(wma, req);
-	else
+	} else {
 		mlme_set_vdev_start_failed(vdev_mlme->vdev, false);
+	}
 
-	return QDF_STATUS_SUCCESS;
+end:
+	qdf_mem_free(resp);
+
+	return status;
 }
 
 QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,

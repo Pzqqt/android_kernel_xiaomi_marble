@@ -1267,27 +1267,15 @@ error:
 	 * failure should be sent to the upper layers.
 	 */
 	if (param->result_code != eSIR_SME_PEER_CREATE_FAILED) {
-		struct del_bss_param *params;
 		QDF_STATUS status;
 
 		session->prot_status_code = param->prot_status_code;
 		session->result_code = param->result_code;
 
-		params = qdf_mem_malloc(sizeof(*params));
-		if (!params) {
-			lim_join_result_callback(mac_ctx,
-						 session->smeSessionId);
-			return QDF_STATUS_E_NOMEM;
-		}
-		params->vdev_id = session->smeSessionId;
-		qdf_mem_copy(params->bssid, session->bssId,
-			     sizeof(tSirMacAddr));
-
-		status = wma_send_vdev_stop(params);
+		status = wma_send_vdev_stop(session->smeSessionId);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			lim_join_result_callback(mac_ctx,
 						 session->smeSessionId);
-			qdf_mem_free(params);
 		}
 
 		return status;
@@ -1553,7 +1541,7 @@ end:
 }
 
 void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
-				 struct del_bss_param *pDelBss,
+				 struct del_bss_resp *vdev_stop_rsp,
 				 struct pe_session *pe_session)
 {
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
@@ -1564,10 +1552,10 @@ void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
 
 	if (LIM_IS_AP_ROLE(pe_session) &&
 	    (pe_session->statypeForBss == STA_ENTRY_SELF)) {
-		lim_process_ap_mlm_del_bss_rsp(mac, pDelBss, pe_session);
+		lim_process_ap_mlm_del_bss_rsp(mac, vdev_stop_rsp, pe_session);
 		return;
 	}
-	lim_process_sta_mlm_del_bss_rsp(mac, pDelBss, pe_session);
+	lim_process_sta_mlm_del_bss_rsp(mac, vdev_stop_rsp, pe_session);
 
 #ifdef WLAN_FEATURE_11W
 	if (pe_session->limRmfEnabled) {
@@ -1580,7 +1568,7 @@ void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
 }
 
 void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
-				     struct del_bss_param *pDelBssParams,
+				     struct del_bss_resp *vdev_stop_rsp,
 				     struct pe_session *pe_session)
 {
 	tpDphHashNode sta =
@@ -1588,11 +1576,11 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 				   &pe_session->dph.dphHashTable);
 	tSirResultCodes status_code = eSIR_SME_SUCCESS;
 
-	if (!pDelBssParams) {
+	if (!vdev_stop_rsp) {
 		pe_err("Invalid body pointer in message");
 		goto end;
 	}
-	if (QDF_STATUS_SUCCESS == pDelBssParams->status) {
+	if (vdev_stop_rsp->status == QDF_STATUS_SUCCESS) {
 		pe_debug("STA received the DEL_BSS_RSP");
 		if (!sta) {
 			pe_err("DPH Entry for STA 1 missing");
@@ -1613,9 +1601,6 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 		status_code = eSIR_SME_STOP_BSS_FAILURE;
 	}
 end:
-	if (pDelBssParams)
-		qdf_mem_free(pDelBssParams);
-
 	if (!sta)
 		return;
 	if ((LIM_IS_STA_ROLE(pe_session)) &&
@@ -1637,20 +1622,19 @@ end:
 }
 
 void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
-				    struct del_bss_param *pDelBss,
+				    struct del_bss_resp *vdev_stop_rsp,
 				    struct pe_session *pe_session)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
 
 	if (!pe_session) {
 		pe_err("Session entry passed is NULL");
-		if (pDelBss) {
-			qdf_mem_free(pDelBss);
-		}
+		if (vdev_stop_rsp)
+			qdf_mem_free(vdev_stop_rsp);
 		return;
 	}
 
-	if (!pDelBss) {
+	if (!vdev_stop_rsp) {
 		pe_err("BSS: DEL_BSS_RSP with no body!");
 		rc = eSIR_SME_REFUSED;
 		goto end;
@@ -1666,8 +1650,8 @@ void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 		rc = eSIR_SME_REFUSED;
 		goto end;
 	}
-	if (pDelBss->status != QDF_STATUS_SUCCESS) {
-		pe_err("BSS: DEL_BSS_RSP error (%x)", pDelBss->status);
+	if (vdev_stop_rsp->status != QDF_STATUS_SUCCESS) {
+		pe_err("BSS: DEL_BSS_RSP error (%x)", vdev_stop_rsp->status);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}
@@ -1683,10 +1667,6 @@ end:
 	lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP, rc,
 			 pe_session->smeSessionId);
 	pe_delete_session(mac, pe_session);
-
-	if (pDelBss) {
-		qdf_mem_free(pDelBss);
-	}
 }
 
 /**
