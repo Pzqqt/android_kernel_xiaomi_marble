@@ -5831,6 +5831,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 	}
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
 /**
  * hdd_lost_link_cp_stats_info_cb() - callback function to get lost
  * link information
@@ -5880,4 +5881,5 @@ void wlan_hdd_register_cp_stats_cb(struct hdd_context *hdd_ctx)
 					hdd_ctx->psoc,
 					hdd_lost_link_cp_stats_info_cb);
 }
+#endif
 
