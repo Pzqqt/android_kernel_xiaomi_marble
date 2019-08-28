@@ -60,6 +60,8 @@
 #define MAX_VENDOR_IES_LEN 1532
 
 #define CFG_VALID_CHANNEL_LIST_STRING_LEN (CFG_VALID_CHANNEL_LIST_LEN * 4)
+
+#define DEFAULT_ROAM_TRIGGER_BITMAP 0xFFFFFFFF
 /**
  * struct mlme_cfg_str - generic structure for all mlme CFG string items
  *
@@ -258,6 +260,42 @@ enum mlme_ts_info_ack_policy {
 	TS_INFO_ACK_POLICY_NORMAL_ACK = 0,
 	TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK = 1,
 };
+
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * enum roam_control_requestor - Driver disabled roaming requestor that will
+ *  request the roam module to disable roaming based on the mlme operation
+ * @RSO_INVALID_REQUESTOR: invalid requestor
+ * @RSO_START_BSS: disable roaming temporarily due to start bss
+ * @RSO_CHANNEL_SWITCH: disable roaming due to STA channel switch
+ * @RSO_CONNECT_START: disable roaming temporarily due to connect
+ * @RSO_SAP_CHANNEL_CHANGE: disable roaming due to SAP channel change
+ */
+enum roam_control_requestor {
+	RSO_INVALID_REQUESTOR,
+	RSO_START_BSS          = BIT(0),
+	RSO_CHANNEL_SWITCH     = BIT(1),
+	RSO_CONNECT_START      = BIT(2),
+	RSO_SAP_CHANNEL_CHANGE = BIT(3),
+};
+
+/**
+ * enum roam_offload_state - Roaming module state for each STA vdev.
+ * @ROAM_DEINIT: Roaming module is not initialized at the
+ *  firmware.
+ * @ROAM_INIT: Roaming module initialized at the firmware.
+ * @ROAM_RSO_STARTED: RSO started, firmware can roam to different AP.
+ * @ROAM_RSO_STOPPED: RSO stopped - roaming module is initialized at firmware,
+ *  but firmware cannot do roaming due to supplicant disabled roaming/driver
+ * disabled roaming.
+ */
+enum roam_offload_state {
+	ROAM_DEINIT,
+	ROAM_INIT,
+	ROAM_RSO_STARTED,
+	ROAM_RSO_STOPPED
+};
+#endif
 
 /**
  * struct mlme_edca_params - EDCA pramaters related config items

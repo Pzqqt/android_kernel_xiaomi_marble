@@ -2509,3 +2509,250 @@ bool mlme_get_peer_pmf_status(struct wlan_objmgr_peer *peer)
 
 	return peer_priv->is_pmf_enabled;
 }
+
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+static
+const char *mlme_roam_state_to_string(enum roam_offload_state state)
+{
+	switch (state) {
+	case ROAM_INIT:
+		return "ROAM_INIT";
+	case ROAM_DEINIT:
+		return "ROAM_DEINIT";
+	case ROAM_RSO_STARTED:
+		return "ROAM_RSO_STARTED";
+	case ROAM_RSO_STOPPED:
+		return "ROAM_RSO_STOPPED";
+	default:
+		return "";
+	}
+}
+
+static void
+mlme_print_roaming_state(uint8_t vdev_id, enum roam_offload_state cur_state,
+			 enum roam_offload_state new_state)
+{
+	mlme_info("ROAM: vdev[%d] ROAM State Changed from [%s] to [%s]",
+		  vdev_id, mlme_roam_state_to_string(cur_state),
+		  mlme_roam_state_to_string(new_state));
+
+	/* TODO: Try to print the state change requestor also */
+}
+
+bool
+mlme_get_supplicant_disabled_roaming(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	bool value;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+
+	if (!vdev) {
+		mlme_legacy_err("vdev object is NULL");
+		return 0;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+		return 0;
+	}
+
+	value = mlme_priv->mlme_roam.roam_cfg.supplicant_disabled_roaming;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+	return value;
+}
+
+void mlme_set_supplicant_disabled_roaming(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id, bool val)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+
+	if (!vdev) {
+		mlme_legacy_err("vdev object is NULL");
+		return;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+		return;
+	}
+
+	mlme_priv->mlme_roam.roam_cfg.supplicant_disabled_roaming = val;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+}
+
+uint32_t
+mlme_get_roam_trigger_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	uint32_t roam_bitmap;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+
+	if (!vdev) {
+		mlme_legacy_err("vdev object is NULL");
+		return 0;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+		return 0;
+	}
+
+	roam_bitmap = mlme_priv->mlme_roam.roam_cfg.roam_trigger_bitmap;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+	return roam_bitmap;
+}
+
+void mlme_set_roam_trigger_bitmap(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id, uint32_t val)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+	if (!vdev) {
+		mlme_legacy_err("vdev object is NULL");
+		return;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+		return;
+	}
+
+	mlme_priv->mlme_roam.roam_cfg.roam_trigger_bitmap = val;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+}
+
+uint8_t
+mlme_get_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	uint8_t bitmap;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+
+	if (!vdev) {
+		mlme_legacy_err("vdev object is NULL");
+		return 0xFF;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+		return 0xFF;
+	}
+
+	bitmap = mlme_priv->mlme_roam.roam_sm.mlme_operations_bitmap;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+	return bitmap;
+}
+
+void
+mlme_set_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   enum roam_control_requestor reqs, bool clear)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+	if (!vdev) {
+		mlme_legacy_err("vdev object is NULL");
+		return;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+		return;
+	}
+
+	if (clear)
+		mlme_priv->mlme_roam.roam_sm.mlme_operations_bitmap &= ~reqs;
+	else
+		mlme_priv->mlme_roam.roam_sm.mlme_operations_bitmap |= reqs;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+}
+
+enum roam_offload_state
+mlme_get_roam_state(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	enum roam_offload_state roam_state;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+
+	if (!vdev) {
+		mlme_legacy_err("vdev object is NULL");
+		return ROAM_DEINIT;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+		return ROAM_DEINIT;
+	}
+
+	roam_state = mlme_priv->mlme_roam.roam_sm.state;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+
+	return roam_state;
+}
+
+void mlme_set_roam_state(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			 enum roam_offload_state new_state)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+
+	if (!vdev) {
+		mlme_legacy_err("vdev object is NULL");
+		return;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+		return;
+	}
+
+	mlme_print_roaming_state(vdev_id, mlme_priv->mlme_roam.roam_sm.state,
+				 new_state);
+	mlme_priv->mlme_roam.roam_sm.state = new_state;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+}
+#endif
