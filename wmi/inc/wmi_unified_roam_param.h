@@ -397,7 +397,8 @@ struct param_slot_scoring {
  * @rssi_scoring: RSSI scoring information.
  * @esp_qbss_scoring: ESP/QBSS scoring percentage information
  * @oce_wan_scoring: OCE WAN metrics percentage information
-*/
+ * @vendor_roam_score_algorithm: Prefered algorithm for roam candidate selection
+ */
 struct scoring_param {
 	uint32_t disable_bitmap;
 	int32_t rssi_weightage;
@@ -416,6 +417,7 @@ struct scoring_param {
 	uint32_t nss_index_score;
 	uint32_t roam_score_delta;
 	uint32_t roam_trigger_bitmap;
+	uint32_t vendor_roam_score_algorithm;
 	struct rssi_scoring rssi_scoring;
 	struct param_slot_scoring esp_qbss_scoring;
 	struct param_slot_scoring oce_wan_scoring;
