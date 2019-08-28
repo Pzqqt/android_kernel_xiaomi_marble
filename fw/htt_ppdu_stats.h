@@ -1513,6 +1513,45 @@ typedef enum HTT_PPDU_STATS_RESP_TYPE HTT_PPDU_STATS_RESP_TYPE;
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RESP_TYPE_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPROT_TYPE_M  0x0000e000
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPROT_TYPE_S          13
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPROT_TYPE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPROT_TYPE_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPROT_TYPE_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPROT_TYPE_SET (_var , _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPROT_TYPE, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPROT_TYPE_S)); \
+    } while (0)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS_M  0x00010000
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS_S          16
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS_SET (_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS_S)); \
+    } while (0)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_M  0x00020000
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_S          17
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_SET (_var , _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_S)); \
+    } while (0)
+
 #define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_M     0xffffffff
 #define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_S              0
 
@@ -1633,16 +1672,23 @@ typedef struct {
      * BIT [ 7 :   4]   :- short_retries
      * BIT [ 8 :   8]   :- is_ampdu
      * BIT [ 12:   9]   :- resp_type
-     * BIT [ 31:  13]   :- reserved0
+     * BIT [ 15:  13]   :- medium protection type
+     * BIT [ 16:  16]   :- rts_success
+     * BIT [ 17:  17]   :- rts_failure
+     * BIT [ 31:  18]   :- reserved
      */
     union {
-        A_UINT32 resp_type_is_ampdu__short_retry__long_retry;
-        struct {
+        A_UINT32 resp_type_is_ampdu__short_retry__long_retry; /* older name */
+        A_UINT32 resp_type__is_ampdu__short_retry__long_retry__mprot_type__rts_success__rts_failure; /* newer name */
+        struct { /* bitfield names */
             A_UINT32 long_retries:               4,
                      short_retries:              4,
                      is_ampdu:                   1,
                      resp_type:                  4,
-                     reserved0:                 19;
+                     mprot_type:                 3,
+                     rts_success:                1,
+                     rts_failure:                1,
+                     reserved0:                 14;
         };
     };
 
