@@ -90,6 +90,7 @@ enum vdev_assoc_type {
  *			 originated from driver
  * @peer_disconnect_ies: Disconnect IEs received in deauth/disassoc frames
  *			 from peer
+ * @vdev_stop_type: vdev stop type request
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -104,6 +105,7 @@ struct mlme_legacy_priv {
 	struct mlme_roam_after_data_stall roam_invoke_params;
 	struct wlan_ies self_disconnect_ies;
 	struct wlan_ies peer_disconnect_ies;
+	uint32_t vdev_stop_type;
 };
 
 #ifndef CRYPTO_SET_KEY_CONVERGED

@@ -188,6 +188,43 @@ QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
 			       enum vdev_assoc_type assoc_type);
 
 /**
+ * mlme_get_vdev_bss_peer_mac_addr() - to get peer mac address
+ * @vdev: pointer to vdev
+ * @bss_peer_mac_address: pointer to bss_peer_mac_address
+ *
+ * This API is used to get mac address of peer.
+ *
+ * Return: QDF_STATUS based on overall success
+ */
+QDF_STATUS mlme_get_vdev_bss_peer_mac_addr(
+		struct wlan_objmgr_vdev *vdev,
+		struct qdf_mac_addr *bss_peer_mac_address);
+
+/**
+ * mlme_get_vdev_stop_type() - to get vdev stop type
+ * @vdev: vdev pointer
+ * @vdev_stop_type: vdev stop type
+ *
+ * This API will get vdev stop type from mlme legacy priv.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_get_vdev_stop_type(struct wlan_objmgr_vdev *vdev,
+				   uint32_t *vdev_stop_type);
+
+/**
+ * mlme_set_vdev_stop_type() - to set vdev stop type
+ * @vdev: vdev pointer
+ * @vdev_stop_type: vdev stop type
+ *
+ * This API will set vdev stop type from mlme legacy priv.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_set_vdev_stop_type(struct wlan_objmgr_vdev *vdev,
+				   uint32_t vdev_stop_type);
+
+/**
  * mlme_get_assoc_type() - get associate type
  * @vdev: vdev pointer
  *
