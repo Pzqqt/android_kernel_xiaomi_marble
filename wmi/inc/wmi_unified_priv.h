@@ -1406,16 +1406,19 @@ QDF_STATUS (*extract_vdev_start_resp)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*extract_vdev_delete_resp)(wmi_unified_t wmi_handle, void *evt_buf,
 	struct wmi_host_vdev_delete_resp *delete_rsp);
 
-QDF_STATUS (*extract_tbttoffset_update_params)(void *wmi_hdl, void *evt_buf,
-	uint8_t idx, struct tbttoffset_params *tbtt_param);
+QDF_STATUS (*extract_tbttoffset_update_params)(wmi_unified_t wmi_hdl,
+					void *evt_buf, uint8_t idx,
+					struct tbttoffset_params *tbtt_param);
 
-QDF_STATUS (*extract_ext_tbttoffset_update_params)(void *wmi_hdl, void *evt_buf,
-	uint8_t idx, struct tbttoffset_params *tbtt_param);
+QDF_STATUS (*extract_ext_tbttoffset_update_params)(wmi_unified_t wmi_hdl,
+					void *evt_buf, uint8_t idx,
+					struct tbttoffset_params *tbtt_param);
 
-QDF_STATUS (*extract_tbttoffset_num_vdevs)(void *wmi_hdl, void *evt_buf,
+QDF_STATUS (*extract_tbttoffset_num_vdevs)(wmi_unified_t wmi_hdl, void *evt_buf,
 					   uint32_t *num_vdevs);
 
-QDF_STATUS (*extract_ext_tbttoffset_num_vdevs)(void *wmi_hdl, void *evt_buf,
+QDF_STATUS (*extract_ext_tbttoffset_num_vdevs)(wmi_unified_t wmi_hdl,
+					       void *evt_buf,
 					       uint32_t *num_vdevs);
 
 QDF_STATUS (*extract_mgmt_rx_params)(wmi_unified_t wmi_handle, void *evt_buf,

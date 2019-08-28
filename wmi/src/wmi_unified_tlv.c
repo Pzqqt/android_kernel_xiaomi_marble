@@ -61,6 +61,7 @@
 #include "wmi_unified_ap_api.h"
 #endif
 #include <wmi_unified_vdev_api.h>
+#include <wmi_unified_vdev_tlv.h>
 
 /* HTC service ids for WMI for multi-radio */
 static const uint32_t multi_svc_ids[] = {WMI_CONTROL_SVC,
@@ -12214,11 +12215,6 @@ struct wmi_ops tlv_ops =  {
 #ifdef WLAN_MWS_INFO_DEBUGFS
 	.send_mws_coex_status_req_cmd = send_mws_coex_status_req_cmd_tlv,
 #endif
-#ifdef TGT_IF_VDEV_MGR_CONV
-	.extract_vdev_delete_resp = extract_vdev_delete_resp_tlv,
-	.extract_vdev_stopped_param = extract_vdev_stopped_param_tlv,
-	.extract_vdev_start_resp = extract_vdev_start_resp_tlv,
-#endif
 	.extract_hw_mode_resp_event = extract_hw_mode_resp_event_status_tlv,
 };
 
@@ -12890,6 +12886,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_sta_attach_tlv(wmi_handle);
 	wmi_11ax_bss_color_attach_tlv(wmi_handle);
 	wmi_fwol_attach_tlv(wmi_handle);
+	wmi_vdev_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 
