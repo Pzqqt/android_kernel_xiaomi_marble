@@ -1222,7 +1222,7 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 #endif
 	QDF_STATUS status;
-	enum vdev_assoc_type assoc_type;
+	enum vdev_assoc_type assoc_type = VDEV_ASSOC;
 	struct bss_params *bss_params;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -3808,7 +3808,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	struct cdp_vdev *vdev;
 	struct wma_vdev_start_req req;
 	void *peer;
-	struct wma_target_req *msg;
+	struct wlan_objmgr_vdev *vdev_obj;
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	int8_t maxTxPower;
@@ -3847,16 +3847,14 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, struct bss_params *add_bss)
 			 add_bss->bssId);
 		goto send_fail_resp;
 	}
-	msg = wma_fill_vdev_req(wma, vdev_id, WMA_ADD_BSS_REQ,
-				WMA_TARGET_REQ_TYPE_VDEV_START, add_bss,
-				WMA_VDEV_START_REQUEST_TIMEOUT);
-	if (!msg) {
-		WMA_LOGE("%s Failed to allocate vdev request vdev_id %d",
-			 __func__, vdev_id);
-		goto peer_cleanup;
-	}
 
 	iface = &wma->interfaces[vdev_id];
+	vdev_obj = iface->vdev;
+	if (!vdev_obj) {
+		wma_err("vdev not found for id: %d", vdev_id);
+		goto send_fail_resp;
+	}
+	mlme_set_bss_params(vdev_obj, add_bss);
 
 	add_bss->staContext.staIdx = cdp_peer_get_local_peer_id(soc, peer);
 
@@ -3906,8 +3904,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, struct bss_params *add_bss)
 
 	status = wma_vdev_start(wma, &req, false);
 	if (status != QDF_STATUS_SUCCESS) {
-		wma_remove_vdev_req(wma, vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_START);
+		mlme_clear_bss_params(vdev_obj);
 		goto peer_cleanup;
 	}
 
@@ -3940,7 +3937,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	struct cdp_vdev *vdev;
 	struct wma_vdev_start_req req;
 	void *peer = NULL;
-	struct wma_target_req *msg;
+	struct wlan_objmgr_vdev *vdev_obj;
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	tSetBssKeyParams key_info;
@@ -3991,16 +3988,12 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	/* start ibss vdev */
 
 	add_bss->operMode = BSS_OPERATIONAL_MODE_IBSS;
-
-	msg = wma_fill_vdev_req(wma, vdev_id, WMA_ADD_BSS_REQ,
-				WMA_TARGET_REQ_TYPE_VDEV_START, add_bss,
-				WMA_VDEV_START_REQUEST_TIMEOUT);
-	if (!msg) {
-		WMA_LOGE("%s Failed to allocate vdev request vdev_id %d",
-			 __func__, vdev_id);
-		goto peer_cleanup;
+	vdev_obj = wma->interfaces[vdev_id].vdev;
+	if (!vdev_obj) {
+		wma_err("vdev not found for id: %d", vdev_id);
+		goto send_fail_resp;
 	}
-	WMA_LOGD("%s: vdev start request for IBSS enqueued", __func__);
+	mlme_set_bss_params(vdev_obj, add_bss);
 
 	add_bss->staContext.staIdx = cdp_peer_get_local_peer_id(soc, peer);
 
@@ -4054,11 +4047,9 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
 
 	status = wma_vdev_start(wma, &req, false);
 	if (status != QDF_STATUS_SUCCESS) {
-		wma_remove_vdev_req(wma, vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_START);
+		mlme_clear_bss_params(vdev_obj);
 		goto peer_cleanup;
 	}
-	WMA_LOGD("%s: vdev start request for IBSS sent to target", __func__);
 
 	/* Initialize protection mode to no protection */
 	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
@@ -4090,6 +4081,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	struct cdp_pdev *pdev;
 	struct wma_vdev_start_req req;
 	struct wma_target_req *msg;
+	struct wlan_objmgr_vdev *vdev_obj;
 	uint8_t vdev_id = 0, peer_id;
 	void *peer = NULL;
 	QDF_STATUS status;
@@ -4181,15 +4173,13 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, struct bss_params *add_bss)
 					add_bss->staContext.staIdx);
 				return;
 			}
-			msg = wma_fill_vdev_req(wma, vdev_id, WMA_ADD_BSS_REQ,
-						WMA_TARGET_REQ_TYPE_VDEV_START,
-						add_bss,
-						WMA_VDEV_START_REQUEST_TIMEOUT);
-			if (!msg) {
-				WMA_LOGE("%s Failed to allocate vdev request vdev_id %d",
-					__func__, vdev_id);
-				goto peer_cleanup;
+
+			vdev_obj = iface->vdev;
+			if (!vdev_obj) {
+				wma_err("vdev not found for id: %d", vdev_id);
+				goto send_fail_resp;
 			}
+			mlme_set_bss_params(vdev_obj, add_bss);
 
 			add_bss->staContext.staIdx =
 				cdp_peer_get_local_peer_id(soc, peer);
@@ -4227,10 +4217,11 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, struct bss_params *add_bss)
 
 			status = wma_vdev_start(wma, &req, false);
 			if (status != QDF_STATUS_SUCCESS) {
-				wma_remove_vdev_req(wma, vdev_id,
-					    WMA_TARGET_REQ_TYPE_VDEV_START);
+				wma_err("failed, status: %d", status);
+				mlme_clear_bss_params(vdev_obj);
 				goto peer_cleanup;
 			}
+
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 			vdev = wma_find_vdev_by_id(wma, vdev_id);
 			if (!vdev) {

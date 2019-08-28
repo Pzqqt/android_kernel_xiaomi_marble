@@ -3613,7 +3613,6 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 				  tHalHiddenSsidVdevRestart *pReq)
 {
 	struct wma_txrx_node *intr = wma->interfaces;
-	struct wma_target_req *msg;
 	struct hidden_ssid_vdev_restart_params params;
 	QDF_STATUS status;
 	uint8_t vdev_id;
@@ -3629,18 +3628,6 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 	intr[vdev_id].vdev_restart_params.ssidHidden = pReq->ssidHidden;
 	WMA_LOGD(FL("hidden ssid set using IOCTL for vdev %d ssid_hidden %d"),
 		 vdev_id, pReq->ssidHidden);
-
-	msg = wma_fill_vdev_req(wma, vdev_id,
-			WMA_HIDDEN_SSID_VDEV_RESTART,
-			WMA_TARGET_REQ_TYPE_VDEV_START,
-			pReq,
-			WMA_VDEV_START_REQUEST_TIMEOUT);
-	if (!msg) {
-		WMA_LOGE(FL("Failed to fill vdev request, vdev_id %d"),
-			 vdev_id);
-		qdf_mem_free(pReq);
-		return;
-	}
 
 	params.vdev_id = vdev_id;
 	params.ssid_len = intr[vdev_id].vdev_restart_params.ssid.ssid_len;
@@ -3669,9 +3656,6 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 							   &params);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE(FL("Failed to send vdev restart command"));
-		wma_remove_vdev_req(wma, vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_START);
-		qdf_mem_free(pReq);
 	}
 }
 

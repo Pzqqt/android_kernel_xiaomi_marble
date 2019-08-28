@@ -3501,7 +3501,6 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 {
 	struct wma_vdev_start_req req;
-	struct wma_target_req *msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t vdev_id, peer_id;
 	void *peer;
@@ -3609,21 +3608,9 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		}
 	}
 
-	msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
-			WMA_TARGET_REQ_TYPE_VDEV_START, params,
-			WMA_VDEV_START_REQUEST_TIMEOUT);
-	if (!msg) {
-		WMA_LOGP("%s: Failed to fill channel switch request for vdev %d",
-			__func__, req.vdev_id);
-		status = QDF_STATUS_E_NOMEM;
-		goto send_resp;
-	}
-
 	status = wma_vdev_start(wma, &req, wma_get_channel_switch_in_progress(
 						&wma->interfaces[req.vdev_id]));
 	if (status != QDF_STATUS_SUCCESS) {
-		wma_remove_vdev_req(wma, req.vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_START);
 		WMA_LOGP("%s: vdev start failed status = %d", __func__,
 			status);
 		goto send_resp;

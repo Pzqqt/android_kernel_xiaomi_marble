@@ -35,23 +35,13 @@
  */
 static QDF_STATUS wma_start_ocb_vdev(struct ocb_config *config)
 {
-	struct wma_target_req *msg;
 	struct wma_vdev_start_req req;
 	QDF_STATUS status;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	qdf_mem_zero(&req, sizeof(req));
-	msg = wma_fill_vdev_req(wma, config->vdev_id,
-				WMA_OCB_SET_CONFIG_CMD,
-				WMA_TARGET_REQ_TYPE_VDEV_START,
-				(void *)config, 1000);
-	if (!msg) {
-		WMA_LOGE(FL("Failed to fill vdev req %d"), config->vdev_id);
-
-		return QDF_STATUS_E_NOMEM;
-	}
 	req.op_chan_freq = config->channels[0].chan_freq;
-	req.vdev_id = msg->vdev_id;
+	req.vdev_id = config->vdev_id;
 	if (wlan_reg_is_24ghz_ch_freq(req.op_chan_freq))
 		req.dot11_mode = MLME_DOT11_MODE_11G;
 	else
@@ -61,11 +51,8 @@ static QDF_STATUS wma_start_ocb_vdev(struct ocb_config *config)
 	req.preferred_tx_streams = 2;
 
 	status = wma_vdev_start(wma, &req, false);
-	if (status != QDF_STATUS_SUCCESS) {
-		wma_remove_vdev_req(wma, req.vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_START);
+	if (status != QDF_STATUS_SUCCESS)
 		WMA_LOGE(FL("vdev_start failed, status = %d"), status);
-	}
 
 	return status;
 }

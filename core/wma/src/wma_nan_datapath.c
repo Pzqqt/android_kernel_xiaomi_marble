@@ -49,7 +49,7 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	struct cdp_vdev *vdev;
 	struct wma_vdev_start_req req;
 	void *peer = NULL;
-	struct wma_target_req *msg;
+	struct wlan_objmgr_vdev *vdev_obj;
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -84,14 +84,12 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 		goto send_fail_resp;
 	}
 
-	msg = wma_fill_vdev_req(wma, vdev_id, WMA_ADD_BSS_REQ,
-			WMA_TARGET_REQ_TYPE_VDEV_START, add_bss,
-			WMA_VDEV_START_REQUEST_TIMEOUT);
-	if (!msg) {
-		WMA_LOGE("%s Failed to allocate vdev request vdev_id %d",
-			 __func__, vdev_id);
+	vdev_obj = wma->interfaces[vdev_id].vdev;
+	if (!vdev_obj) {
+		wma_err("vdev not found for id: %d", vdev_id);
 		goto send_fail_resp;
 	}
+	mlme_set_bss_params(vdev_obj, add_bss);
 
 	add_bss->staContext.staIdx = cdp_peer_get_local_peer_id(soc, peer);
 
@@ -110,11 +108,9 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 
 	status = wma_vdev_start(wma, &req, false);
 	if (status != QDF_STATUS_SUCCESS) {
-		wma_remove_vdev_req(wma, vdev_id,
-			WMA_TARGET_REQ_TYPE_VDEV_START);
+		mlme_clear_bss_params(vdev_obj, add_bss);
 		goto send_fail_resp;
 	}
-	WMA_LOGD("%s: vdev start request for NDI sent to target", __func__);
 
 	/* Initialize protection mode to no protection */
 	wma_vdev_set_param(wma->wmi_handle, vdev_id,
