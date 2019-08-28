@@ -383,7 +383,7 @@ static QDF_STATUS target_if_dbr_fill_ring(struct wlan_objmgr_pdev *pdev,
 	dbr_buf_pool = mod_param->dbr_buf_pool;
 
 	for (idx = 0; idx < dbr_ring_cfg->num_ptr - 1; idx++) {
-		void *buf_vaddr_unaligned, *buf_vaddr_aligned;
+		void *buf_vaddr_unaligned = NULL, *buf_vaddr_aligned;
 		dma_addr_t buf_paddr_aligned, buf_paddr_unaligned;
 
 		buf_vaddr_aligned = qdf_aligned_malloc(
@@ -582,7 +582,7 @@ static QDF_STATUS target_if_dbr_cfg_tgt(struct wlan_objmgr_pdev *pdev,
 	dbr_ring_cfg = mod_param->dbr_ring_cfg;
 	dbr_ring_cap = mod_param->dbr_ring_cap;
 	dbr_config = &mod_param->dbr_config;
-	wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc);
+	wmi_hdl = lmac_get_pdev_wmi_handle(pdev);
 	if (!wmi_hdl) {
 		direct_buf_rx_err("WMI handle null. Can't send WMI CMD");
 		return QDF_STATUS_E_INVAL;
