@@ -472,6 +472,8 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 					&bcn_2->he_cap);
 		populate_dot11f_he_operation(mac_ctx, session,
 					&bcn_2->he_op);
+		populate_dot11f_he_6ghz_cap(mac_ctx, session,
+					    &bcn_2->he_6ghz_band_cap);
 		populate_dot11f_he_bss_color_change(mac_ctx, session,
 					&bcn_2->bss_color_change);
 	}

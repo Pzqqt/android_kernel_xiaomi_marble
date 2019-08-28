@@ -540,6 +540,7 @@ struct pe_session {
 	tDot11fIEhe_cap he_config;
 	tDot11fIEhe_op he_op;
 	uint32_t he_sta_obsspd;
+	bool he_6ghz_band;
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 	tDot11fIEbss_color_change he_bss_color_change;
 	struct bss_color_info bss_color_info[MAX_BSS_COLOR_VALUE];

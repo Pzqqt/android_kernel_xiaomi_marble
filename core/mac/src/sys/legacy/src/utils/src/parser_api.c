@@ -914,6 +914,11 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 	nCfgValue = 0;
 	/* With VHT it suffices if we just examine HT */
 	if (pe_session) {
+		if (!pe_session->vhtCapability) {
+			pDot11f->present = 0;
+			return QDF_STATUS_SUCCESS;
+		}
+
 		if (pe_session->ht_config.ht_rx_ldpc)
 			pDot11f->ldpcCodingCap =
 				pe_session->vht_config.ldpc_coding;
@@ -1074,6 +1079,9 @@ populate_dot11f_vht_operation(struct mac_context *mac,
 			      struct pe_session *pe_session,
 			      tDot11fIEVHTOperation *pDot11f)
 {
+	if (!pe_session || !pe_session->vhtCapability)
+		return QDF_STATUS_SUCCESS;
+
 	pDot11f->present = 1;
 
 	if (pe_session->ch_width > CH_WIDTH_40MHZ) {
@@ -5987,24 +5995,78 @@ populate_dot11f_he_operation(struct mac_context *mac_ctx,
 {
 	qdf_mem_copy(he_op, &session->he_op, sizeof(*he_op));
 
-	he_op->vht_oper_present = 1;
 	he_op->present = 1;
-	if (session->ch_width > CH_WIDTH_40MHZ) {
-		he_op->vht_oper.info.chan_width = 1;
-		he_op->vht_oper.info.center_freq_seg0 =
-			session->ch_center_freq_seg0;
-		if (session->ch_width == CH_WIDTH_80P80MHZ ||
-				session->ch_width == CH_WIDTH_160MHZ)
-			he_op->vht_oper.info.center_freq_seg1 =
-				session->ch_center_freq_seg1;
-		else
+	if (!session->he_6ghz_band) {
+		he_op->vht_oper_present = 1;
+		if (session->ch_width > CH_WIDTH_40MHZ) {
+			he_op->vht_oper.info.chan_width = 1;
+			he_op->vht_oper.info.center_freq_seg0 =
+				session->ch_center_freq_seg0;
+			if (session->ch_width == CH_WIDTH_80P80MHZ ||
+			    session->ch_width == CH_WIDTH_160MHZ)
+				he_op->vht_oper.info.center_freq_seg1 =
+					session->ch_center_freq_seg1;
+			else
+				he_op->vht_oper.info.center_freq_seg1 = 0;
+		} else {
+			he_op->vht_oper.info.chan_width = 0;
+			he_op->vht_oper.info.center_freq_seg0 = 0;
 			he_op->vht_oper.info.center_freq_seg1 = 0;
+		}
 	} else {
-		he_op->vht_oper.info.chan_width = 0;
-		he_op->vht_oper.info.center_freq_seg0 = 0;
-		he_op->vht_oper.info.center_freq_seg1 = 0;
+		he_op->oper_info_6g_present = 1;
+		if (session->ch_width > CH_WIDTH_40MHZ) {
+			he_op->oper_info_6g.info.ch_width = 1;
+			he_op->oper_info_6g.info.center_freq_seg0 =
+				session->ch_center_freq_seg0;
+			if (session->ch_width == CH_WIDTH_80P80MHZ ||
+			    session->ch_width == CH_WIDTH_160MHZ)
+				he_op->oper_info_6g.info.center_freq_seg1 =
+					session->ch_center_freq_seg1;
+			else
+				he_op->oper_info_6g.info.center_freq_seg1 = 0;
+		} else {
+			he_op->oper_info_6g.info.ch_width = 0;
+			he_op->oper_info_6g.info.center_freq_seg0 = 0;
+			he_op->oper_info_6g.info.center_freq_seg1 = 0;
+		}
+		he_op->oper_info_6g.info.primary_ch =
+			wlan_reg_freq_to_chan(mac_ctx->pdev,
+					      session->curr_op_freq);
+		he_op->oper_info_6g.info.dup_bcon = 0;
+		he_op->oper_info_6g.info.min_rate = 0;
 	}
 	lim_log_he_op(mac_ctx, he_op);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+populate_dot11f_he_6ghz_cap(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    tDot11fIEhe_6ghz_band_cap *he_6g_cap)
+{
+	struct mlme_ht_capabilities_info *ht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
+
+	if (!session || !session->he_6ghz_band)
+		return QDF_STATUS_SUCCESS;
+
+	ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
+	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
+
+	he_6g_cap->present = 1;
+	he_6g_cap->min_mpdu_start_spacing =
+		mac_ctx->mlme_cfg->ht_caps.ampdu_params.mpdu_density;
+	he_6g_cap->max_ampdu_len_exp =
+		session->vht_config.max_ampdu_lenexp;
+	he_6g_cap->max_mpdu_len = vht_cap_info->ampdu_len;
+	he_6g_cap->sm_pow_save = ht_cap_info->mimo_power_save;
+	he_6g_cap->rd_responder = 0;
+	he_6g_cap->rx_ant_pattern_consistency = 0;
+	he_6g_cap->tx_ant_pattern_consistency = 0;
+
+	lim_log_he_6g_cap(mac_ctx, he_6g_cap);
 
 	return QDF_STATUS_SUCCESS;
 }

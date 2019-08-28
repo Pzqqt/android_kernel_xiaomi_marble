@@ -1146,6 +1146,18 @@ QDF_STATUS populate_dot11f_he_caps(struct mac_context *, struct pe_session *,
 				   tDot11fIEhe_cap *);
 QDF_STATUS populate_dot11f_he_operation(struct mac_context *, struct pe_session *,
 					tDot11fIEhe_op *);
+/**
+ * populate_dot11f_he_6ghz_cap() - pouldate HE 6GHz caps IE
+ * @mac_ctx: Global MAC context
+ * @session: PE session
+ * @he_6g_cap: pointer to HE 6GHz IE
+ *
+ * Populdate the HE 6GHz IE based on the session.
+ */
+QDF_STATUS
+populate_dot11f_he_6ghz_cap(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    tDot11fIEhe_6ghz_band_cap *he_6g_cap);
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 QDF_STATUS populate_dot11f_he_bss_color_change(struct mac_context *mac_ctx,
 				struct pe_session *session,
@@ -1168,6 +1180,14 @@ static inline QDF_STATUS populate_dot11f_he_caps(struct mac_context *mac_ctx,
 
 static inline QDF_STATUS populate_dot11f_he_operation(struct mac_context *mac_ctx,
 			struct pe_session *session, tDot11fIEhe_op *he_op)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+populate_dot11f_he_6ghz_cap(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    tDot11fIEhe_6ghz_band_cap *he_6g_cap)
 {
 	return QDF_STATUS_SUCCESS;
 }

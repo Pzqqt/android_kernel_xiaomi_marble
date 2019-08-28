@@ -1203,6 +1203,8 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 						&frm.he_cap);
 			populate_dot11f_he_operation(mac_ctx, pe_session,
 						     &frm.he_op);
+			populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
+						    &frm.he_6ghz_band_cap);
 		}
 #ifdef WLAN_FEATURE_11W
 		if (eSIR_MAC_TRY_AGAIN_LATER == status_code) {

@@ -7106,13 +7106,34 @@ void lim_log_he_op(struct mac_context *mac, tDot11fIEhe_op *he_ops)
 	pe_debug("he basic mcs nss: 0x%04x",
 		*((uint16_t *)he_ops->basic_mcs_nss));
 
-	if (he_ops->vht_oper_present)
+	if (!he_ops->vht_oper_present)
 		pe_debug("VHT Info not present in HE Operation");
 	else
 		pe_debug("VHT Info: chan_width: %d, center_freq0: %d, center_freq1: %d",
-			he_ops->vht_oper.info.chan_width,
-			he_ops->vht_oper.info.center_freq_seg0,
-			he_ops->vht_oper.info.center_freq_seg1);
+			 he_ops->vht_oper.info.chan_width,
+			 he_ops->vht_oper.info.center_freq_seg0,
+			 he_ops->vht_oper.info.center_freq_seg1);
+
+	if (!he_ops->oper_info_6g_present)
+		pe_err("6G op_info not present in HE Operation");
+	else
+		pe_err("6G_oper_info: chan_width: %d, center_freq0: %d, center_freq1: %d dup_bcon %d, min_rate %d",
+			he_ops->oper_info_6g.info.ch_width,
+			he_ops->oper_info_6g.info.center_freq_seg0,
+			he_ops->oper_info_6g.info.center_freq_seg1,
+			he_ops->oper_info_6g.info.dup_bcon,
+			he_ops->oper_info_6g.info.min_rate);
+}
+
+void lim_log_he_6g_cap(struct mac_context *mac,
+		       tDot11fIEhe_6ghz_band_cap *he_6g_cap)
+{
+	pe_debug("min_mpdu_space: %0d, max_mpdu_len_exp: %0x, max_mpdu_len %0x, smps %0x, rd %0x rx_ant_ptn %d tx_ant_ptn %d",
+		 he_6g_cap->min_mpdu_start_spacing,
+		 he_6g_cap->max_ampdu_len_exp, he_6g_cap->max_mpdu_len,
+		 he_6g_cap->sm_pow_save, he_6g_cap->rd_responder,
+		 he_6g_cap->rx_ant_pattern_consistency,
+		 he_6g_cap->tx_ant_pattern_consistency);
 }
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
@@ -7154,6 +7175,11 @@ void lim_update_stads_he_capable(tpDphHashNode sta_ds, tpSirAssocReq assoc_req)
 void lim_update_session_he_capable(struct mac_context *mac, struct pe_session *session)
 {
 	session->he_capable = true;
+	if (wlan_reg_is_6ghz_chan_freq(session->curr_op_freq)) {
+		session->htCapability = 0;
+		session->vhtCapability = 0;
+		session->he_6ghz_band = 1;
+	}
 	pe_debug("he_capable: %d", session->he_capable);
 }
 

@@ -1003,6 +1003,18 @@ void lim_copy_join_req_he_cap(struct pe_session *session,
 			      struct join_req *sme_join_req);
 
 /**
+ * lim_log_he_6g_cap() - Print HE 6G cap IE
+ * @mac: pointer to MAC context
+ * @he_6g_cap: pointer to HE 6G cap IE
+ *
+ * Print HE 6G caps stored as dot11f structure
+ *
+ * Return: None
+ */
+void lim_log_he_6g_cap(struct mac_context *mac,
+		       tDot11fIEhe_6ghz_band_cap *he_6g_cap);
+
+/**
  * lim_log_he_op() - Print HE Operation
  * @mac: pointer to MAC context
  * @he_op: pointer to HE Operation
