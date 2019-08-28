@@ -407,6 +407,13 @@ typedef  enum  {
     WMI_SERVICE_WPA3_OWE_ROAM_SUPPORT = 222, /* Indicates FW supports WPA3 OWE roaming */
     WMI_SERVICE_AUDIO_AGGR = 223, /* Indicates FW supports audio frame aggregation */
     WMI_SERVICE_6GHZ_SUPPORT = 224, /* Indicates FW supports 6GHZ (scan, connection and so on) */
+    /* WMI_SERVICE_QMI_STATS_SUPPORT
+     * Indicates FW supports stat request command WMI_REQUEST_LINK_STATS_CMDID
+     * and WMI_REQUEST_STATS_CMDID coming from QMI which will be used in
+     * runtime PM suspend.
+     */
+    WMI_SERVICE_QMI_STATS_SUPPORT = 225,
+
 
     /******* ADD NEW SERVICES HERE *******/
 
