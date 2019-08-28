@@ -958,7 +958,7 @@ csr_scan_get_next_command_state(struct mac_context *mac_ctx,
 				mac_ctx,
 				session_id,
 				session->scan_info.profile);
-		if ((!channel) || scan_status) {
+		if ((!channel) && scan_status) {
 			NextCommand = eCsrNexteScanForSsidFailure;
 			sme_err("next Scan For Ssid Failure %d %d",
 				channel, scan_status);
