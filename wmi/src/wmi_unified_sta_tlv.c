@@ -1958,7 +1958,7 @@ static QDF_STATUS send_pdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
 	for (i = 0; i < chan_len ; i++) {
 		cmd_args[i] = msg->weighed_valid_list[i];
-		WMI_LOGD("%s: chan:%d weight:%d", __func__,
+		WMI_LOGD("%s: freq:%d weight:%d", __func__,
 			 msg->saved_chan_list[i], cmd_args[i]);
 	}
 	wmi_mtrace(WMI_PDEV_SET_PCL_CMDID, NO_SESSION, 0);
