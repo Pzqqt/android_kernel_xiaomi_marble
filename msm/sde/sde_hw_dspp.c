@@ -390,6 +390,16 @@ struct sde_hw_dspp *sde_hw_dspp_init(enum sde_dspp idx,
 				c->hw.blk_off + cfg->sblk->spr.base +
 				cfg->sblk->spr.len, c->hw.xin_id);
 	}
+
+	if ((cfg->sblk->demura.id == SDE_DSPP_DEMURA) &&
+			cfg->sblk->demura.base) {
+		snprintf(buf, ARRAY_SIZE(buf), "%s_%d", "demura",
+				c->idx - DSPP_0);
+		sde_dbg_reg_register_dump_range(SDE_DBG_NAME, buf,
+				c->hw.blk_off + cfg->sblk->demura.base,
+				c->hw.blk_off + cfg->sblk->demura.base +
+				cfg->sblk->demura.len, c->hw.xin_id);
+	}
 	return c;
 
 blk_init_error:

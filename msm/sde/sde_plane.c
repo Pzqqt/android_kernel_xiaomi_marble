@@ -3444,6 +3444,7 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	int zpos_max = 255;
 	int zpos_def = 0;
 	char feature_name[256];
+	uint32_t index;
 
 	if (!plane || !psde) {
 		SDE_ERROR("invalid plane\n");
@@ -3562,6 +3563,10 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 			psde->pipe_sblk->max_per_pipe_bw * 1000LL);
 	sde_kms_info_add_keyint(info, "max_per_pipe_bw_high",
 			psde->pipe_sblk->max_per_pipe_bw_high * 1000LL);
+	index = (master_plane_id == 0) ? 0 : 1;
+	if (catalog->has_demura &&
+	    catalog->demura_supported[psde->pipe][index] != ~0x0)
+		sde_kms_info_add_keyint(info, "demura_block", index);
 
 	if ((is_master &&
 		(psde->features & BIT(SDE_SSPP_INVERSE_PMA))) ||

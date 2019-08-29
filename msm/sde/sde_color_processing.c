@@ -72,13 +72,14 @@ static void dspp_hist_install_property(struct drm_crtc *crtc);
 
 static void dspp_dither_install_property(struct drm_crtc *crtc);
 
+static void dspp_demura_install_property(struct drm_crtc *crtc);
+
 typedef void (*dspp_prop_install_func_t)(struct drm_crtc *crtc);
 
 static dspp_prop_install_func_t dspp_prop_install_func[SDE_DSPP_MAX];
 
 static void sde_cp_update_list(struct sde_cp_node *prop_node,
 		struct sde_crtc *crtc, bool dirty_list);
-
 static int sde_cp_ad_validate_prop(struct sde_cp_node *prop_node,
 		struct sde_crtc *crtc);
 
@@ -118,6 +119,7 @@ do { \
 	func[SDE_DSPP_HIST] = dspp_hist_install_property; \
 	func[SDE_DSPP_DITHER] = dspp_dither_install_property; \
 	func[SDE_DSPP_RC] = dspp_rc_install_property; \
+	func[SDE_DSPP_DEMURA] = dspp_demura_install_property; \
 } while (0)
 
 typedef void (*lm_prop_install_func_t)(struct drm_crtc *crtc);
@@ -168,6 +170,8 @@ enum sde_cp_crtc_features {
 	SDE_CP_CRTC_DSPP_SB,
 	SDE_CP_CRTC_DSPP_RC_MASK,
 	SDE_CP_CRTC_DSPP_SPR_INIT,
+	SDE_CP_CRTC_DSPP_DEMURA_INIT,
+	SDE_CP_CRTC_DSPP_DEMURA_BACKLIGHT,
 	SDE_CP_CRTC_DSPP_MAX,
 	/* DSPP features end */
 
@@ -2734,6 +2738,31 @@ static void dspp_dither_install_property(struct drm_crtc *crtc)
 		sde_cp_crtc_install_blob_property(crtc, feature_name,
 			SDE_CP_CRTC_DSPP_DITHER,
 			sizeof(struct drm_msm_pa_dither));
+		break;
+	default:
+		DRM_ERROR("version %d not supported\n", version);
+		break;
+	}
+}
+
+static  void dspp_demura_install_property(struct drm_crtc *crtc)
+{
+	struct sde_kms *kms = NULL;
+	struct sde_mdss_cfg *catalog = NULL;
+	u32 version;
+
+	kms = get_kms(crtc);
+	catalog = kms->catalog;
+
+	version = catalog->dspp[0].sblk->demura.version >> 28;
+	switch (version) {
+	case 1:
+		sde_cp_crtc_install_blob_property(crtc, "DEMURA_INIT_V1",
+			SDE_CP_CRTC_DSPP_DEMURA_INIT,
+			sizeof(struct drm_msm_dem_cfg));
+		sde_cp_crtc_install_range_property(crtc, "DEMURA_BACKLIGHT",
+				SDE_CP_CRTC_DSPP_DEMURA_BACKLIGHT,
+				0, 1024, 0);
 		break;
 	default:
 		DRM_ERROR("version %d not supported\n", version);
