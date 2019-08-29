@@ -30,6 +30,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_scan_public_structs.h>
 #include<wlan_mgmt_txrx_utils_api.h>
+#include <wlan_reg_services_api.h>
 
 #define ASCII_SPACE_CHARACTER 32
 
@@ -741,17 +742,17 @@ util_scan_entry_channel(struct scan_cache_entry *scan_entry)
 }
 
 /**
- * util_scan_entry_channel_num() - function to read channel number
+ * util_scan_entry_channel_frequency() - function to read channel number
  * @scan_entry: scan entry
  *
  * API, function to read channel number
  *
  * Return: channel number
  */
-static inline uint8_t
-util_scan_entry_channel_num(struct scan_cache_entry *scan_entry)
+static inline uint32_t
+util_scan_entry_channel_frequency(struct scan_cache_entry *scan_entry)
 {
-	return scan_entry->channel.chan_idx;
+	return scan_entry->channel.chan_freq;
 }
 
 /**

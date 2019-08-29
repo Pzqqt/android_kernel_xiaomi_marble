@@ -89,15 +89,15 @@ struct wlan_objmgr_psoc;
 
 /**
  * struct channel_info - BSS channel information
- * @chan_idx: current operating channel index
+ * @chan_freq: channel frequency
  * @cfreq0: channel frequency index0
  * @cfreq1: channel frequency index1
  * @priv: channel private information
  */
 struct channel_info {
-	uint8_t chan_idx;
-	uint8_t cfreq0;
-	uint8_t cfreq1;
+	uint32_t chan_freq;
+	uint32_t cfreq0;
+	uint32_t cfreq1;
 	void *priv;
 };
 
@@ -317,6 +317,7 @@ struct scan_mbssid_info {
  * @alt_wcn_ie: alternate WCN IE
  * @ie_list: IE list pointers
  * @raw_frame: contain raw frame and the length of the raw frame
+ * @pdev_id: pdev id
  */
 struct scan_cache_entry {
 	uint8_t frm_subtype;
@@ -357,6 +358,12 @@ struct scan_cache_entry {
 	struct element_info alt_wcn_ie;
 	struct ie_list ie_list;
 	struct element_info raw_frame;
+	/*
+	 * This is added temporarily for 6GHz channel to freq conversion
+	 * to get pdev wherever it requores to convert frequency to
+	 * channel as regulatory apis requires pdev as argument
+	 */
+	uint8_t pdev_id;
 };
 
 #define MAX_FAVORED_BSSID 16

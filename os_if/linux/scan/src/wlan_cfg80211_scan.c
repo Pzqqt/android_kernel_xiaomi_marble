@@ -1745,15 +1745,13 @@ int wlan_vendor_abort_scan(struct wlan_objmgr_pdev *pdev,
 static inline struct ieee80211_channel *
 wlan_get_ieee80211_channel(struct wiphy *wiphy,
 		struct wlan_objmgr_pdev *pdev,
-		int chan_no)
+		int chan_freq)
 {
-	unsigned int freq;
 	struct ieee80211_channel *chan;
 
-	freq = wlan_reg_chan_to_freq(pdev, chan_no);
-	chan = ieee80211_get_channel(wiphy, freq);
+	chan = ieee80211_get_channel(wiphy, chan_freq);
 	if (!chan)
-		osif_err("chan is NULL, chan_no: %d freq: %d", chan_no, freq);
+		osif_err("chan is NULL, freq: %d", chan_freq);
 
 	return chan;
 }
@@ -1925,11 +1923,11 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	bss_data.rssi = scan_params->rssi_raw;
 
 	bss_data.chan = wlan_get_ieee80211_channel(wiphy, pdev,
-		scan_params->channel.chan_idx);
+		scan_params->channel.chan_freq);
 	if (!bss_data.chan) {
-		osif_err("Channel not found for bss %pM seq %d chan %d",
+		osif_err("Channel not found for bss %pM seq %d chan_freq %d",
 			 bss_data.mgmt->bssid, scan_params->seq_num,
-			 scan_params->channel.chan_idx);
+			 scan_params->channel.chan_freq);
 		qdf_mem_free(bss_data.mgmt);
 		return;
 	}
