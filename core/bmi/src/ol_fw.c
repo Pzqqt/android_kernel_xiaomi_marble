@@ -308,10 +308,9 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, enum ATH_BIN_FILE file,
 			if (bd_id_filename[i]) {
 				BMI_DBG("%s: Trying to load %s",
 					 __func__, bd_id_filename[i]);
-				status = request_firmware_direct(
-						&fw_entry,
-						bd_id_filename[i],
-						qdf_dev->dev);
+				status = request_firmware(&fw_entry,
+							  bd_id_filename[i],
+							  qdf_dev->dev);
 				if (!status)
 					break;
 				BMI_ERR("%s: Failed to get %s:%d",
