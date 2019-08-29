@@ -1401,47 +1401,67 @@ target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,
 
 #ifdef DIRECT_BUF_RX_ENABLE
 /**
- * target_if_get_detector_id_sscan_report_gen3() - Get Spectral detector id
- * @data: Pointer to Spectral summary report / Spectral
- *        search FFT report
+ * target_if_get_detector_id_sscan_summary_report_gen3() - Get Spectral detector
+ * ID from Spectral summary report
+ * @data: Pointer to Spectral summary report
  *
- * Get Spectral detector id from Spectral summary report / Spectral
- * search FFT report
- *
- * Return: detector id
+ * Return: Detector ID
  */
 static uint8_t
-target_if_get_detector_id_sscan_report_gen3(uint8_t *data) {
-	struct spectral_sscan_report_gen3 *psscan_report;
+target_if_get_detector_id_sscan_summary_report_gen3(uint8_t *data) {
+	struct spectral_sscan_summary_report_gen3 *psscan_summary_report;
 	uint8_t detector_id;
 
-	psscan_report = (struct spectral_sscan_report_gen3 *)data;
-	detector_id = get_bitfield(psscan_report->hdr_a,
-				   SSCAN_REPORT_DETECTOR_ID_SIZE_GEN3,
-				   SSCAN_REPORT_DETECTOR_ID_POS_GEN3);
+	qdf_assert_always(data);
+
+	psscan_summary_report =
+		(struct spectral_sscan_summary_report_gen3 *)data;
+
+	detector_id = get_bitfield(
+			psscan_summary_report->hdr_a,
+			SSCAN_SUMMARY_REPORT_HDR_A_DETECTOR_ID_SIZE_GEN3,
+			SSCAN_SUMMARY_REPORT_HDR_A_DETECTOR_ID_POS_GEN3);
 
 	return detector_id;
 }
 
 /**
- * target_if_consume_sscan_report_gen3() - Consume spectral summary report
- * @spectral: Pointer to spectral object
- * @data: Pointer to spectral summary
+ * target_if_consume_sscan_summary_report_gen3() - Consume Spectral summary
+ * report
+ * @spectral: Pointer to Spectral object
+ * @data: Pointer to Spectral summary report
+ * @fields: Pointer to structure to be populated with extracted fields
  *
- * Consume spectral summary report for gen3
+ * Consume Spectral summary report for gen3
  *
  * Return: void
  */
 static void
-target_if_consume_sscan_report_gen3(struct target_if_spectral *spectral,
-				    uint8_t *data,
-				    struct sscan_report_fields_gen3 *fields) {
-	struct spectral_sscan_report_gen3 *psscan_report;
+target_if_consume_sscan_summary_report_gen3(struct target_if_spectral *spectral,
+					    uint8_t *data,
+					    struct sscan_report_fields_gen3
+						*fields) {
+	struct spectral_sscan_summary_report_gen3 *psscan_summary_report;
 
-	psscan_report = (struct spectral_sscan_report_gen3 *)data;
-	fields->sscan_agc_total_gain = get_bitfield(psscan_report->hdr_a, 8, 0);
-	fields->inband_pwr_db = get_bitfield(psscan_report->hdr_a, 10, 18);
-	fields->sscan_gainchange = get_bitfield(psscan_report->hdr_b, 1, 30);
+	qdf_assert_always(spectral);
+	qdf_assert_always(data);
+	qdf_assert_always(fields);
+
+	psscan_summary_report =
+		(struct spectral_sscan_summary_report_gen3 *)data;
+
+	fields->sscan_agc_total_gain = get_bitfield(
+			psscan_summary_report->hdr_a,
+			SSCAN_SUMMARY_REPORT_HDR_A_AGC_TOTAL_GAIN_SIZE_GEN3,
+			SSCAN_SUMMARY_REPORT_HDR_A_AGC_TOTAL_GAIN_POS_GEN3);
+	fields->inband_pwr_db = get_bitfield(
+			psscan_summary_report->hdr_a,
+			SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_SIZE_GEN3,
+			SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_POS_GEN3);
+	fields->sscan_gainchange = get_bitfield(
+			psscan_summary_report->hdr_b,
+			SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3,
+			SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_POS_GEN3);
 }
 
 /**
@@ -1575,17 +1595,17 @@ target_if_consume_spectral_report_gen3(
 		goto fail;
 	}
 
-	detector_id = target_if_get_detector_id_sscan_report_gen3(data);
+	detector_id = target_if_get_detector_id_sscan_summary_report_gen3(data);
 	if (detector_id > SPECTRAL_DETECTOR_AGILE) {
 		spectral->diag_stats.spectral_invalid_detector_id++;
 		spectral_err("Invalid detector id %u, expected is 0/1/2",
 			     detector_id);
 		goto fail;
 	}
-	target_if_consume_sscan_report_gen3(spectral, data,
-					    &sscan_report_fields);
+	target_if_consume_sscan_summary_report_gen3(spectral, data,
+						    &sscan_report_fields);
 	/* Advance buf pointer to the search fft report */
-	data += sizeof(struct spectral_sscan_report_gen3);
+	data += sizeof(struct spectral_sscan_summary_report_gen3);
 
 	if ((detector_id == SPECTRAL_DETECTOR_AGILE) ||
 	    is_primaryseg_expected(spectral)) {

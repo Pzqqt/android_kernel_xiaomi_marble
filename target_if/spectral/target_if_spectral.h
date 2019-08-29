@@ -238,12 +238,19 @@ struct spectral_phyerr_fft_gen2 {
 	(((value) >= (1 << ((width) - 1))) ? \
 		(value - (1 << (width))) : (value))
 
-#define SSCAN_REPORT_DETECTOR_ID_POS_GEN3        (29)
-#define SSCAN_REPORT_DETECTOR_ID_SIZE_GEN3       (2)
-#define SPECTRAL_PHYERR_SIGNATURE_GEN3           (0xFA)
-#define TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3     (0x02)
-#define TLV_TAG_SEARCH_FFT_REPORT_GEN3           (0x03)
-#define SPECTRAL_PHYERR_TLVSIZE_GEN3             (4)
+#define SSCAN_SUMMARY_REPORT_HDR_A_DETECTOR_ID_POS_GEN3         (29)
+#define SSCAN_SUMMARY_REPORT_HDR_A_DETECTOR_ID_SIZE_GEN3        (2)
+#define SSCAN_SUMMARY_REPORT_HDR_A_AGC_TOTAL_GAIN_POS_GEN3      (0)
+#define SSCAN_SUMMARY_REPORT_HDR_A_AGC_TOTAL_GAIN_SIZE_GEN3     (8)
+#define SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_POS_GEN3       (18)
+#define SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_SIZE_GEN3      (10)
+#define SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_POS_GEN3          (30)
+#define SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3         (1)
+
+#define SPECTRAL_PHYERR_SIGNATURE_GEN3                          (0xFA)
+#define TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3                    (0x02)
+#define TLV_TAG_SEARCH_FFT_REPORT_GEN3                          (0x03)
+#define SPECTRAL_PHYERR_TLVSIZE_GEN3                            (4)
 
 #define PHYERR_HDR_SIG_POS    \
 	(offsetof(struct spectral_phyerr_fft_report_gen3, fft_hdr_sig))
@@ -345,7 +352,8 @@ struct sscan_report_fields_gen3 {
 };
 
 /**
- * struct spectral_sscan_report_gen3 - spectral report in phyerr event
+ * struct spectral_sscan_summary_report_gen3 - Spectral summary report
+ * event
  * @sscan_timestamp:  Timestamp at which fft report was generated
  * @sscan_hdr_sig:    signature
  * @sscan_hdr_tag:    tag
@@ -355,7 +363,7 @@ struct sscan_report_fields_gen3 {
  * @hdr_b:          Header[64:95]
  * @resv:           Header[96:127]
  */
-struct spectral_sscan_report_gen3 {
+struct spectral_sscan_summary_report_gen3 {
 	u_int32_t sscan_timestamp;
 #ifdef BIG_ENDIAN_HOST
 	u_int8_t  sscan_hdr_sig;
