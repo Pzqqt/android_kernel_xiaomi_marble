@@ -69,6 +69,8 @@
 #define DFS_CHIRP_OFFSET  10
 /* second segment freq offset */
 #define DFS_160MHZ_SECOND_SEG_OFFSET  40
+/*Primary segment id is 0 */
+#define PRIMARY_SEG 0
 
 /* Frequency offset indices */
 #define CENTER_CH 0

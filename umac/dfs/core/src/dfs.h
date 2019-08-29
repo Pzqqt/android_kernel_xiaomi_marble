@@ -932,9 +932,13 @@ struct dfs_event_log {
  *                                   received.
  * @is_radar_during_precac:          Radar found during precac.
  * @dfs_precac_lock:                 Lock to protect precac lists.
- * @dfs_precac_enable:               Enable the precac.
+ * @dfs_precac_enable:               Enable the precac for legacy chips.
+ * @dfs_agile_precac_enable:         Enable preCAC for chips that supports agile
+ *                                   detector engine.
  * @dfs_precac_secondary_freq:       Second segment freq for precac.
- * @dfs_precac_primary_freq:         Primary freq.
+ *                                   Applicable to only legacy chips.
+ * @dfs_precac_primary_freq:         PreCAC Primary freq applicable only to
+ *                                   legacy chips.
  * @dfs_defer_precac_channel_change: Defer precac channel change.
  * @dfs_precac_inter_chan:           Intermediate non-DFS channel used while
  *                                   doing precac.

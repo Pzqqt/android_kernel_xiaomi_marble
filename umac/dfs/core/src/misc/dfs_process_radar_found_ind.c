@@ -330,20 +330,33 @@ dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
 			      uint32_t *freq_center)
 {
 	struct dfs_channel *curchan = dfs->dfs_curchan;
-
+	/* Radar found on agile detector ID.
+	 * Applicable to chips that have a separate agile radar detector
+	 * engine.
+	 */
 	if (radar_found->detector_id == AGILE_DETECTOR_ID) {
 		*freq_center = utils_dfs_chan_to_freq(
 				dfs->dfs_agile_precac_freq);
-	} else if (!radar_found->segment_id) {
+       /* Radar found on primary segment by the HW. */
+	} else if (radar_found->segment_id == PRIMARY_SEG) {
 		*freq_center = utils_dfs_chan_to_freq(
 				curchan->dfs_ch_vhtop_ch_freq_seg1);
 	} else {
-		if (dfs_is_precac_timer_running(dfs)) {
+	    /* Radar found on secondary segment by the HW when
+	     * preCAC was running. It (dfs_precac_enable) is specific to
+	     * legacy chips.
+	     */
+		if (dfs_is_precac_timer_running(dfs) &&
+		    (dfs->dfs_precac_enable)) {
 			*freq_center = utils_dfs_chan_to_freq(
 					dfs->dfs_precac_secondary_freq);
 		} else {
-			*freq_center = utils_dfs_chan_to_freq(
-					curchan->dfs_ch_vhtop_ch_freq_seg2);
+		    /* Radar found on secondary segment by the HW, when preCAC
+		     * was not running in legacy chips or preCAC was running
+		     * in Lithium chips.
+		     */
+		    *freq_center = utils_dfs_chan_to_freq(
+				  curchan->dfs_ch_vhtop_ch_freq_seg2);
 			if (WLAN_IS_CHAN_MODE_160(curchan)) {
 				/* If center frequency of entire 160 band
 				 * is less than center frequency of primary
@@ -352,7 +365,7 @@ dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
 				 * frequency of entire 160 segment.
 				 */
 				if (curchan->dfs_ch_vhtop_ch_freq_seg2 <
-				    curchan->dfs_ch_vhtop_ch_freq_seg1)
+					curchan->dfs_ch_vhtop_ch_freq_seg1)
 					*freq_center -=
 						DFS_160MHZ_SECOND_SEG_OFFSET;
 				else
