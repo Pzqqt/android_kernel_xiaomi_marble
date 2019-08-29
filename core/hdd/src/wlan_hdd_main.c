@@ -9563,7 +9563,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 						frame_ind->frame_len,
 						frame_ind->frameBuf,
 						frame_ind->frameType,
-						frame_ind->rxChan,
+						frame_ind->rx_freq,
 						frame_ind->rxRssi,
 						frame_ind->rx_flags);
 			}
@@ -9580,7 +9580,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 						frame_ind->frame_len,
 						frame_ind->frameBuf,
 						frame_ind->frameType,
-						frame_ind->rxChan,
+						frame_ind->rx_freq,
 						frame_ind->rxRssi,
 						frame_ind->rx_flags);
 }

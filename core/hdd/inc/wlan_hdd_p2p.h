@@ -66,13 +66,13 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command);
  * @frm_len: frame length
  * @pb_frames: frame bytes
  * @frame_type: frame type
- * @rx_chan: channel on which frame was received
+ * @rx_freq: frequency on which frame was received
  * @rx_rssi: rssi
  * @rx_flags: rx flags of the frame
  */
 void hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
 				     uint32_t frm_len, uint8_t *pb_frames,
-				     uint8_t frame_type, uint32_t rx_chan,
+				     uint8_t frame_type, uint32_t rx_freq,
 				     int8_t rx_rssi,
 				     enum rxmgmt_flags rx_flags);
 

@@ -4303,7 +4303,7 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	 * Fill in meta information needed by pe/lim
 	 * TODO: Try to maintain rx metainfo as part of skb->data.
 	 */
-	rx_pkt->pkt_meta.channel = mgmt_rx_params->channel;
+	rx_pkt->pkt_meta.frequency = mgmt_rx_params->chan_freq;
 	rx_pkt->pkt_meta.scan_src = mgmt_rx_params->flags;
 
 	/*

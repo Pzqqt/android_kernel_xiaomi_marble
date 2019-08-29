@@ -631,7 +631,9 @@ __lim_pno_match_fwd_bcn_probepsp(struct mac_context *pmac, uint8_t *rx_pkt_info,
 		result->ap[i].beaconPeriod = frame->beaconInterval;
 		result->ap[i].capability =
 			lim_get_u16((uint8_t *) &frame->capabilityInfo);
-		result->ap[i].channel = WMA_GET_RX_CH(rx_pkt_info);
+		result->ap[i].channel = wlan_reg_freq_to_chan(
+						pmac->pdev,
+						WMA_GET_RX_FREQ(rx_pkt_info));
 		result->ap[i].rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 		result->ap[i].rtt = 0;
 		result->ap[i].rtt_sd = 0;
@@ -682,7 +684,9 @@ __lim_ext_scan_forward_bcn_probe_rsp(struct mac_context *pmac, uint8_t *rx_pkt_i
 	result->ap.beaconPeriod = frame->beaconInterval;
 	result->ap.capability =
 			lim_get_u16((uint8_t *) &frame->capabilityInfo);
-	result->ap.channel = WMA_GET_RX_CH(rx_pkt_info);
+	result->ap.channel = wlan_reg_freq_to_chan(
+						pmac->pdev,
+						WMA_GET_RX_FREQ(rx_pkt_info));
 	result->ap.rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 	result->ap.rtt = 0;
 	result->ap.rtt_sd = 0;
@@ -821,8 +825,8 @@ __lim_handle_beacon(struct mac_context *mac, struct scheduler_msg *pMsg,
 static void lim_fill_sap_bcn_pkt_meta(struct scan_cache_entry *scan_entry,
 					cds_pkt_t *rx_pkt)
 {
-	rx_pkt->pkt_meta.channel = scan_entry->channel.chan_idx;
-
+	rx_pkt->pkt_meta.frequency = scan_entry->channel.chan_freq;
+	pe_debug("rx pkt meta freq %d", rx_pkt->pkt_meta.frequency);
 	rx_pkt->pkt_meta.mpdu_hdr_len = sizeof(struct ieee80211_frame);
 	rx_pkt->pkt_meta.mpdu_len = scan_entry->raw_frame.len;
 	rx_pkt->pkt_meta.mpdu_data_len = rx_pkt->pkt_meta.mpdu_len -
@@ -947,7 +951,8 @@ void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
 	for (session_id = 0; session_id < mac_ctx->lim.maxBssId; session_id++) {
 		if (filter->sap_channel[session_id] &&
 		    (filter->sap_channel[session_id] ==
-		    scan_entry->channel.chan_idx)) {
+		    wlan_reg_freq_to_chan(pdev,
+					  scan_entry->channel.chan_freq))) {
 			if (!pkt) {
 				status = lim_allocate_and_get_bcn(
 					mac_ctx, &pkt, &rx_pkt_info,
@@ -1142,7 +1147,7 @@ lim_check_mgmt_registered_frames(struct mac_context *mac_ctx, uint8_t *buff_desc
 			(uint8_t *) hdr,
 			WMA_GET_RX_PAYLOAD_LEN(buff_desc) +
 			sizeof(tSirMacMgmtHdr), mgmt_frame->sessionId,
-			WMA_GET_RX_CH(buff_desc), session_entry,
+			WMA_GET_RX_FREQ(buff_desc), session_entry,
 			WMA_GET_RX_RSSI_NORMALIZED(buff_desc),
 			RXMGMT_FLAG_NONE);
 
@@ -1226,7 +1231,7 @@ lim_handle80211_frames(struct mac_context *mac, struct scheduler_msg *limMsg,
 	struct pe_session *pe_session = NULL;
 	uint8_t sessionId;
 	bool isFrmFt = false;
-	uint8_t channel;
+	uint32_t frequency;
 	bool is_hw_sbs_capable = false;
 
 	*pDeferMsg = false;
@@ -1235,14 +1240,15 @@ lim_handle80211_frames(struct mac_context *mac, struct scheduler_msg *limMsg,
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	isFrmFt = WMA_GET_RX_FT_DONE(pRxPacketInfo);
-	channel = WMA_GET_RX_CH(pRxPacketInfo);
+	frequency = WMA_GET_RX_FREQ(pRxPacketInfo);
 	fc = pHdr->fc;
 
 	is_hw_sbs_capable =
 		policy_mgr_is_hw_sbs_capable(mac->psoc);
-	if (IS_5G_CH(channel) &&
-	   (!is_hw_sbs_capable ||
-	   (is_hw_sbs_capable && wlan_reg_is_dfs_ch(mac->pdev, channel))) &&
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(frequency) &&
+	    (!is_hw_sbs_capable ||
+	    (is_hw_sbs_capable &&
+	    wlan_reg_is_dfs_for_freq(mac->pdev, frequency))) &&
 	    mac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
 		pe_session = pe_find_session_by_bssid(mac,
 					pHdr->bssId, &sessionId);

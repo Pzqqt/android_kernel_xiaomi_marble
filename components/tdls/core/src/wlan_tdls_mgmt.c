@@ -104,10 +104,10 @@ static QDF_STATUS tdls_process_rx_mgmt(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	tdls_debug("soc:%pK, frame_len:%d, rx_chan:%d, vdev_id:%d, frm_type:%d, rx_rssi:%d, buf:%pK",
-		tdls_soc_obj->soc, rx_mgmt->frame_len,
-		rx_mgmt->rx_chan, rx_mgmt->vdev_id, rx_mgmt->frm_type,
-		rx_mgmt->rx_rssi, rx_mgmt->buf);
+	tdls_debug("soc:%pK, frame_len:%d, rx_freq:%d, vdev_id:%d, frm_type:%d, rx_rssi:%d, buf:%pK",
+		   tdls_soc_obj->soc, rx_mgmt->frame_len,
+		   rx_mgmt->rx_freq, rx_mgmt->vdev_id, rx_mgmt->frm_type,
+		   rx_mgmt->rx_rssi, rx_mgmt->buf);
 
 	if (rx_mgmt->buf[TDLS_PUBLIC_ACTION_FRAME_OFFSET + 1] ==
 						TDLS_PUBLIC_ACTION_DISC_RESP) {
