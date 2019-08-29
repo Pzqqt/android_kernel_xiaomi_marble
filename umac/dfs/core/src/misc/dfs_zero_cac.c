@@ -553,7 +553,7 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 
 	if (ch_freq) {
 		adfs_param.precac_chan = ch_freq;
-		adfs_param.precac_chwidth = dfs->dfs_precac_chwidth;
+		adfs_param.precac_chwidth = temp_dfs->dfs_precac_chwidth;
 		dfs_start_agile_precac_timer(temp_dfs,
 					     dfs->dfs_soc_obj->ocac_status,
 					     &adfs_param);
@@ -894,24 +894,25 @@ void dfs_mark_precac_nol(struct wlan_dfs *dfs,
 	}
 	PRECAC_LIST_UNLOCK(dfs);
 
-	/* TO BE DONE  xxx:- Need to lock the channel change */
-	/*
-	 * If radar Found on Primary no need to do restart VAP's channels since
-	 * channel change will happen after RANDOM channel selection anyway.
-	 */
+	/* PreCAC timer is not running, no need to restart preCAC */
+	if (!dfs_soc_obj->dfs_precac_timer_running)
+		return;
 
-	if (dfs_soc_obj->dfs_precac_timer_running) {
-		/* Cancel the PreCAC timer */
+	if (dfs->dfs_precac_enable) {
 		qdf_timer_sync_cancel(&dfs_soc_obj->dfs_precac_timer);
 		dfs_soc_obj->dfs_precac_timer_running = 0;
-
 		/*
-		 * Change the channel
-		 * case 1:-  No  VHT80 channel for precac is available so bring
-		 * it back to VHT80
-		 * case 2:-  pick a new VHT80 channel for precac
+		 * If radar is found on primary channel, no need to
+		 * restart VAP's channels since channel change will happen
+		 * after RANDOM channel selection anyway.
 		 */
 		if (is_radar_found_on_secondary_seg) {
+			/*
+			 * Change the channel
+			 * case 1:-  No  VHT80 channel for precac is available
+			 * so bring it back to VHT80.
+			 * case 2:-  pick a new VHT80 channel for precac.
+			 */
 			if (dfs_is_ap_cac_timer_running(dfs)) {
 				dfs->dfs_defer_precac_channel_change = 1;
 				dfs_debug(dfs, WLAN_DEBUG_DFS,
@@ -921,12 +922,33 @@ void dfs_mark_precac_nol(struct wlan_dfs *dfs,
 				dfs_mlme_channel_change_by_precac(
 						dfs->dfs_pdev_obj);
 			}
-		} else {
-			dfs_debug(dfs, WLAN_DEBUG_DFS,
-				  "PreCAC timer interrupted due to RADAR, Sending Agile channel set command"
-				  );
-			dfs_prepare_agile_precac_chan(dfs);
 		}
+	} else if (dfs->dfs_agile_precac_enable) {
+		/* If preCAC is not running on the DFS where radar is detected,
+		 * no need to configure agile channel.
+		 * Return from this function.
+		 */
+		if (!(dfs_soc_obj->cur_precac_dfs_index == dfs->dfs_psoc_idx)) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS,
+				  "preCAC not running on radarfound DFS idx=%d",
+				  dfs->dfs_psoc_idx);
+			return;
+		}
+
+		qdf_timer_sync_cancel(&dfs_soc_obj->dfs_precac_timer);
+		dfs_soc_obj->dfs_precac_timer_running = 0;
+		/*
+		 * If radar is found on agile engine, change the channel here
+		 * since primary channel change will not be triggered.
+		 * If radar is found on primary detector, let agile
+		 * channel change be triggered after start response.
+		 * Set precac_state_started to false to indicate preCAC is not
+		 * running.
+		 */
+		if (detector_id == AGILE_DETECTOR_ID)
+			dfs_prepare_agile_precac_chan(dfs);
+		else
+			dfs_soc_obj->precac_state_started = false;
 	}
 }
 
