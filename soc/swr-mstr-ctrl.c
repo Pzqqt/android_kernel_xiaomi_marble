@@ -18,8 +18,6 @@
 #include <linux/of_gpio.h>
 #include <linux/pm_runtime.h>
 #include <linux/of.h>
-#include <linux/debugfs.h>
-#include <linux/uaccess.h>
 #include <soc/soundwire.h>
 #include <soc/swr-common.h>
 #include <linux/regmap.h>
@@ -77,30 +75,19 @@ enum {
 #define SWRM_MAX_PORT_REG    120
 #define SWRM_MAX_INIT_REG    11
 
-#define SWR_MSTR_MAX_REG_ADDR	0x1740
-#define SWR_MSTR_START_REG_ADDR	0x00
-#define SWR_MSTR_MAX_BUF_LEN     32
-#define BYTES_PER_LINE          12
-#define SWR_MSTR_RD_BUF_LEN      8
-#define SWR_MSTR_WR_BUF_LEN      32
-
 #define MAX_FIFO_RD_FAIL_RETRY 3
-
-static struct swr_mstr_ctrl *dbgswrm;
-static struct dentry *debugfs_swrm_dent;
-static struct dentry *debugfs_peek;
-static struct dentry *debugfs_poke;
-static struct dentry *debugfs_reg_dump;
-static unsigned int read_data;
 
 static bool swrm_lock_sleep(struct swr_mstr_ctrl *swrm);
 static void swrm_unlock_sleep(struct swr_mstr_ctrl *swrm);
+static u32 swr_master_read(struct swr_mstr_ctrl *swrm, unsigned int reg_addr);
+static void swr_master_write(struct swr_mstr_ctrl *swrm, u16 reg_addr, u32 val);
 
 static bool swrm_is_msm_variant(int val)
 {
 	return (val == SWRM_VERSION_1_3);
 }
 
+#ifdef CONFIG_DEBUG_FS
 static int swrm_debug_open(struct inode *inode, struct file *file)
 {
 	file->private_data = inode->i_private;
@@ -130,19 +117,26 @@ static int get_parameters(char *buf, u32 *param1, int num_of_par)
 	return 0;
 }
 
-static ssize_t swrm_reg_show(char __user *ubuf, size_t count,
-					  loff_t *ppos)
+static ssize_t swrm_reg_show(struct swr_mstr_ctrl *swrm, char __user *ubuf,
+			     size_t count, loff_t *ppos)
 {
 	int i, reg_val, len;
 	ssize_t total = 0;
 	char tmp_buf[SWR_MSTR_MAX_BUF_LEN];
+	int rem = 0;
 
 	if (!ubuf || !ppos)
 		return 0;
 
-	for (i = (((int) *ppos / BYTES_PER_LINE) + SWR_MSTR_START_REG_ADDR);
-		i <= SWR_MSTR_MAX_REG_ADDR; i += 4) {
-		reg_val = dbgswrm->read(dbgswrm->handle, i);
+	i = ((int) *ppos + SWR_MSTR_START_REG_ADDR);
+	rem = i%4;
+
+	if (rem)
+		i = (i - rem);
+
+	for (; i <= SWR_MSTR_MAX_REG_ADDR; i += 4) {
+		usleep_range(100, 150);
+		reg_val = swr_master_read(swrm, i);
 		len = snprintf(tmp_buf, 25, "0x%.3x: 0x%.2x\n", i, reg_val);
 		if ((total + len) >= count - 1)
 			break;
@@ -159,84 +153,141 @@ copy_err:
 	return total;
 }
 
-static ssize_t swrm_debug_read(struct file *file, char __user *ubuf,
+static ssize_t swrm_debug_reg_dump(struct file *file, char __user *ubuf,
 				size_t count, loff_t *ppos)
 {
-	char lbuf[SWR_MSTR_RD_BUF_LEN];
-	char *access_str;
-	ssize_t ret_cnt;
+	struct swr_mstr_ctrl *swrm;
 
 	if (!count || !file || !ppos || !ubuf)
 		return -EINVAL;
 
-	access_str = file->private_data;
+	swrm = file->private_data;
+	if (!swrm)
+		return -EINVAL;
+
 	if (*ppos < 0)
 		return -EINVAL;
 
-	if (!strcmp(access_str, "swrm_peek")) {
-		snprintf(lbuf, sizeof(lbuf), "0x%x\n", read_data);
-		ret_cnt = simple_read_from_buffer(ubuf, count, ppos, lbuf,
-					       strnlen(lbuf, 7));
-	} else if (!strcmp(access_str, "swrm_reg_dump")) {
-		ret_cnt = swrm_reg_show(ubuf, count, ppos);
-	} else {
-		pr_err("%s: %s not permitted to read\n", __func__, access_str);
-		ret_cnt = -EPERM;
-	}
-	return ret_cnt;
+	return swrm_reg_show(swrm, ubuf, count, ppos);
 }
 
-static ssize_t swrm_debug_write(struct file *filp,
-	const char __user *ubuf, size_t cnt, loff_t *ppos)
+static ssize_t swrm_debug_read(struct file *file, char __user *ubuf,
+				size_t count, loff_t *ppos)
+{
+	char lbuf[SWR_MSTR_RD_BUF_LEN];
+	struct swr_mstr_ctrl *swrm = NULL;
+
+	if (!count || !file || !ppos || !ubuf)
+		return -EINVAL;
+
+	swrm = file->private_data;
+	if (!swrm)
+		return -EINVAL;
+
+	if (*ppos < 0)
+		return -EINVAL;
+
+	snprintf(lbuf, sizeof(lbuf), "0x%x\n", swrm->read_data);
+
+	return simple_read_from_buffer(ubuf, count, ppos, lbuf,
+					       strnlen(lbuf, 7));
+}
+
+static ssize_t swrm_debug_peek_write(struct file *file, const char __user *ubuf,
+				     size_t count, loff_t *ppos)
+{
+	char lbuf[SWR_MSTR_RD_BUF_LEN];
+	int rc;
+	u32 param[5];
+	struct swr_mstr_ctrl *swrm = NULL;
+
+	if (!count || !file || !ppos || !ubuf)
+		return -EINVAL;
+
+	swrm = file->private_data;
+	if (!swrm)
+		return -EINVAL;
+
+	if (*ppos < 0)
+		return -EINVAL;
+
+	if (count > sizeof(lbuf) - 1)
+		return -EINVAL;
+
+	rc = copy_from_user(lbuf, ubuf, count);
+	if (rc)
+		return -EFAULT;
+
+	lbuf[count] = '\0';
+	rc = get_parameters(lbuf, param, 1);
+	if ((param[0] <= SWR_MSTR_MAX_REG_ADDR) && (rc == 0))
+		swrm->read_data = swr_master_read(swrm, param[0]);
+	else
+		rc = -EINVAL;
+
+	if (rc == 0)
+		rc = count;
+	else
+		dev_err(swrm->dev, "%s: rc = %d\n", __func__, rc);
+
+	return rc;
+}
+
+static ssize_t swrm_debug_write(struct file *file,
+	const char __user *ubuf, size_t count, loff_t *ppos)
 {
 	char lbuf[SWR_MSTR_WR_BUF_LEN];
 	int rc;
 	u32 param[5];
-	char *access_str;
+	struct swr_mstr_ctrl *swrm;
 
-	if (!filp || !ppos || !ubuf)
+	if (!file || !ppos || !ubuf)
 		return -EINVAL;
 
-	access_str = filp->private_data;
-	if (cnt > sizeof(lbuf) - 1)
+	swrm = file->private_data;
+	if (!swrm)
 		return -EINVAL;
 
-	rc = copy_from_user(lbuf, ubuf, cnt);
+	if (count > sizeof(lbuf) - 1)
+		return -EINVAL;
+
+	rc = copy_from_user(lbuf, ubuf, count);
 	if (rc)
 		return -EFAULT;
 
-	lbuf[cnt] = '\0';
-	if (!strcmp(access_str, "swrm_poke")) {
-		/* write */
-		rc = get_parameters(lbuf, param, 2);
-		if ((param[0] <= SWR_MSTR_MAX_REG_ADDR) &&
-			(param[1] <= 0xFFFFFFFF) &&
-			(rc == 0))
-			rc = dbgswrm->write(dbgswrm->handle, param[0],
-					    param[1]);
-		else
-			rc = -EINVAL;
-	} else if (!strcmp(access_str, "swrm_peek")) {
-		/* read */
-		rc = get_parameters(lbuf, param, 1);
-		if ((param[0] <= SWR_MSTR_MAX_REG_ADDR) && (rc == 0))
-			read_data = dbgswrm->read(dbgswrm->handle, param[0]);
-		else
-			rc = -EINVAL;
-	}
+	lbuf[count] = '\0';
+	rc = get_parameters(lbuf, param, 2);
+	if ((param[0] <= SWR_MSTR_MAX_REG_ADDR) &&
+		(param[1] <= 0xFFFFFFFF) &&
+		(rc == 0))
+		swr_master_write(swrm, param[0], param[1]);
+	else
+		rc = -EINVAL;
+
 	if (rc == 0)
-		rc = cnt;
+		rc = count;
 	else
 		pr_err("%s: rc = %d\n", __func__, rc);
 
 	return rc;
 }
 
-static const struct file_operations swrm_debug_ops = {
+static const struct file_operations swrm_debug_read_ops = {
 	.open = swrm_debug_open,
-	.write = swrm_debug_write,
+	.write = swrm_debug_peek_write,
 	.read = swrm_debug_read,
 };
+
+static const struct file_operations swrm_debug_write_ops = {
+	.open = swrm_debug_open,
+	.write = swrm_debug_write,
+};
+
+static const struct file_operations swrm_debug_dump_ops = {
+	.open = swrm_debug_open,
+	.read = swrm_debug_reg_dump,
+};
+#endif
 
 static void swrm_reg_dump(struct swr_mstr_ctrl *swrm,
 			  u32 *reg, u32 *val, int len, const char* func)
@@ -2320,23 +2371,23 @@ static int swrm_probe(struct platform_device *pdev)
 	if (pdev->dev.of_node)
 		of_register_swr_devices(&swrm->master);
 
-	dbgswrm = swrm;
-	debugfs_swrm_dent = debugfs_create_dir(dev_name(&pdev->dev), 0);
-	if (!IS_ERR(debugfs_swrm_dent)) {
-		debugfs_peek = debugfs_create_file("swrm_peek",
-				S_IFREG | 0444, debugfs_swrm_dent,
-				(void *) "swrm_peek", &swrm_debug_ops);
+#ifdef CONFIG_DEBUG_FS
+	swrm->debugfs_swrm_dent = debugfs_create_dir(dev_name(&pdev->dev), 0);
+	if (!IS_ERR(swrm->debugfs_swrm_dent)) {
+		swrm->debugfs_peek = debugfs_create_file("swrm_peek",
+				S_IFREG | 0444, swrm->debugfs_swrm_dent,
+				(void *) swrm, &swrm_debug_read_ops);
 
-		debugfs_poke = debugfs_create_file("swrm_poke",
-				S_IFREG | 0444, debugfs_swrm_dent,
-				(void *) "swrm_poke", &swrm_debug_ops);
+		swrm->debugfs_poke = debugfs_create_file("swrm_poke",
+				S_IFREG | 0444, swrm->debugfs_swrm_dent,
+				(void *) swrm, &swrm_debug_write_ops);
 
-		debugfs_reg_dump = debugfs_create_file("swrm_reg_dump",
-				   S_IFREG | 0444, debugfs_swrm_dent,
-				   (void *) "swrm_reg_dump",
-				   &swrm_debug_ops);
+		swrm->debugfs_reg_dump = debugfs_create_file("swrm_reg_dump",
+				   S_IFREG | 0444, swrm->debugfs_swrm_dent,
+				   (void *) swrm,
+				   &swrm_debug_dump_ops);
 	}
-
+#endif
 	ret = device_init_wakeup(swrm->dev, true);
 	if (ret) {
 		dev_err(swrm->dev, "Device wakeup init failed: %d\n", ret);

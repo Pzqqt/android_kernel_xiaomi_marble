@@ -11,6 +11,18 @@
 #include <soc/qcom/pm.h>
 #include <soc/swr-common.h>
 
+#ifdef CONFIG_DEBUG_FS
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
+
+#define SWR_MSTR_MAX_REG_ADDR	0x1740
+#define SWR_MSTR_START_REG_ADDR	0x00
+#define SWR_MSTR_MAX_BUF_LEN     32
+#define BYTES_PER_LINE          12
+#define SWR_MSTR_RD_BUF_LEN      8
+#define SWR_MSTR_WR_BUF_LEN      32
+#endif
+
 #define SWR_ROW_48		0
 #define SWR_ROW_50		1
 #define SWR_ROW_64		2
@@ -160,6 +172,13 @@ struct swr_mstr_ctrl {
 	u32 swr_irq_wakeup_capable;
 	int hw_core_clk_en;
 	int aud_core_clk_en;
+#ifdef CONFIG_DEBUG_FS
+	struct dentry *debugfs_swrm_dent;
+	struct dentry *debugfs_peek;
+	struct dentry *debugfs_poke;
+	struct dentry *debugfs_reg_dump;
+	unsigned int read_data;
+#endif
 };
 
 #endif /* _SWR_WCD_CTRL_H */
