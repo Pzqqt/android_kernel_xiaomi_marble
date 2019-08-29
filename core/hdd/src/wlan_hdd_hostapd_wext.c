@@ -854,7 +854,6 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SET_RADAR_CMD:
 	{
 		struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-		uint8_t ch = ap_ctx->operating_channel;
 		struct wlan_objmgr_pdev *pdev;
 		struct radar_found_info radar;
 
@@ -867,10 +866,11 @@ static __iw_softap_setparam(struct net_device *dev,
 		}
 
 		qdf_mem_zero(&radar, sizeof(radar));
-		if (wlan_reg_is_dfs_ch(pdev, ch))
+		if (wlan_reg_is_dfs_for_freq(pdev, ap_ctx->operating_chan_freq))
 			tgt_dfs_process_radar_ind(pdev, &radar);
 		else
-			hdd_err("Ignore set radar, op ch(%d) is not dfs", ch);
+			hdd_err("Ignore set radar, op ch_freq(%d) is not dfs",
+				ap_ctx->operating_chan_freq);
 
 		break;
 	}
@@ -1462,6 +1462,7 @@ static __iw_softap_getchannel(struct net_device *dev,
 {
 	struct hdd_adapter *adapter = (netdev_priv(dev));
 	struct hdd_context *hdd_ctx;
+	struct hdd_ap_ctx *ap_ctx;
 	int *value = (int *)extra;
 	int ret;
 
@@ -1477,9 +1478,11 @@ static __iw_softap_getchannel(struct net_device *dev,
 		return ret;
 
 	*value = 0;
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags))
-		*value = (WLAN_HDD_GET_AP_CTX_PTR(
-					adapter))->operating_channel;
+		*value = wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				ap_ctx->operating_chan_freq);
 	hdd_exit();
 	return 0;
 }

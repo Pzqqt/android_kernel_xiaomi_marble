@@ -1708,8 +1708,10 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 
 	sap_config = &adapter->session.ap.sap_config;
 	con_sap_config = &con_sap_adapter->session.ap.sap_config;
-	con_ch = con_sap_adapter->session.ap.operating_channel;
-	con_ch_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, con_ch);
+	con_ch_freq = con_sap_adapter->session.ap.operating_chan_freq;
+	con_ch = wlan_reg_freq_to_chan(
+			hdd_ctx->pdev,
+			con_sap_adapter->session.ap.operating_chan_freq);
 
 	if (!wlan_reg_is_dfs_ch(hdd_ctx->pdev, con_ch))
 		return 0;
@@ -5147,14 +5149,12 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 	struct hdd_adapter *adapter;
 	struct hdd_ap_ctx *ap_ctx;
 	struct hdd_station_ctx *sta_ctx;
-	uint8_t conn_info_channel;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if ((device_mode == adapter->device_mode) &&
 		    (device_mode == QDF_SAP_MODE)) {
 			ap_ctx =
 				WLAN_HDD_GET_AP_CTX_PTR(adapter);
-
 			/*
 			 *  if there is SAP already running on DFS channel,
 			 *  do not disable scan on dfs channels. Note that
@@ -5162,9 +5162,10 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 			 *  single radio. But then we can have multiple
 			 *  radios !!
 			 */
-			if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
-						hdd_ctx->pdev,
-						ap_ctx->operating_channel)) {
+			if (CHANNEL_STATE_DFS ==
+			    wlan_reg_get_channel_state_for_freq(
+				hdd_ctx->pdev,
+				ap_ctx->operating_chan_freq)) {
 				hdd_err("SAP running on DFS channel");
 				return true;
 			}
@@ -5174,19 +5175,15 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 		    (device_mode == QDF_STA_MODE)) {
 			sta_ctx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-			conn_info_channel =
-				wlan_reg_freq_to_chan(
-					hdd_ctx->pdev,
-					sta_ctx->conn_info.chan_freq);
 			/*
 			 *  if STA is already connected on DFS channel,
 			 *  do not disable scan on dfs channels
 			 */
 			if (hdd_conn_is_connected(sta_ctx) &&
-				(CHANNEL_STATE_DFS ==
-				wlan_reg_get_channel_state(hdd_ctx->pdev,
-					conn_info_channel))) {
+			    (CHANNEL_STATE_DFS ==
+			     wlan_reg_get_channel_state_for_freq(
+				hdd_ctx->pdev,
+				sta_ctx->conn_info.chan_freq))) {
 				hdd_err("client connected on DFS channel");
 				return true;
 			}
@@ -9941,8 +9938,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		}
 
 		nss = sta_info->nss;
-		freq = cds_chan_to_freq(
-			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->operating_channel);
+		freq = (WLAN_HDD_GET_AP_CTX_PTR(adapter))->operating_chan_freq;
 		rate_flags = sta_info->rate_flags;
 	} else {
 		hdd_err("Not Associated! with mac "QDF_MAC_ADDR_STR,
@@ -10191,17 +10187,17 @@ static enum sta_roam_policy_dfs_mode wlan_hdd_get_sta_roam_dfs_mode(
 uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
-	uint8_t  operating_channel = 0;
+	uint32_t  operating_chan_freq;
 	uint8_t sap_operating_band = 0;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->device_mode != QDF_SAP_MODE)
 			continue;
 
-		operating_channel = adapter->session.ap.operating_channel;
-		if (IS_24G_CH(operating_channel))
+		operating_chan_freq = adapter->session.ap.operating_chan_freq;
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(operating_chan_freq))
 			sap_operating_band = BAND_2G;
-		else if (IS_5G_CH(operating_channel))
+		else if (WLAN_REG_IS_5GHZ_CH_FREQ(operating_chan_freq))
 			sap_operating_band = BAND_5G;
 		else
 			sap_operating_band = BAND_ALL;
@@ -17633,8 +17629,8 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	}
 
 	/* sap is on non-dfs channel, nothing to handle */
-	if (!wlan_reg_is_dfs_ch(hdd_ctx->pdev,
-				hdd_ap_ctx->operating_channel)) {
+	if (!wlan_reg_is_dfs_for_freq(hdd_ctx->pdev,
+				      hdd_ap_ctx->operating_chan_freq)) {
 		hdd_info("sap is on non-dfs channel, sta is allowed");
 		return true;
 	}

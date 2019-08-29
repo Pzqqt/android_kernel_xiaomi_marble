@@ -1797,7 +1797,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
-	dfs_info.channel = ap_ctx->operating_channel;
+	dfs_info.channel = wlan_reg_freq_to_chan(
+			hdd_ctx->pdev, ap_ctx->operating_chan_freq);
 	sme_get_country_code(mac_handle, dfs_info.country_code, &cc_len);
 	sta_id = sap_event->sapevt.sapStartBssCompleteEvent.staId;
 	sap_config = &adapter->session.ap.sap_config;
@@ -1808,18 +1809,18 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		       sap_event->sapevt.sapStartBssCompleteEvent.
 		       status ? "eSAP_STATUS_FAILURE" : "eSAP_STATUS_SUCCESS",
 		       sap_event->sapevt.sapStartBssCompleteEvent.
-		       operatingChannel,
+		       operating_chan_freq,
 		       sap_event->sapevt.sapStartBssCompleteEvent.staId);
-		ap_ctx->operating_channel =
+		ap_ctx->operating_chan_freq =
 			sap_event->sapevt.sapStartBssCompleteEvent
-			.operatingChannel;
+			.operating_chan_freq;
 
 		adapter->vdev_id =
 			sap_event->sapevt.sapStartBssCompleteEvent.sessionId;
 
-		sap_config->chan_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+		sap_config->chan_freq =
 			sap_event->sapevt.sapStartBssCompleteEvent.
-			operatingChannel);
+			operating_chan_freq;
 		sap_config->ch_params.ch_width =
 			sap_event->sapevt.sapStartBssCompleteEvent.ch_width;
 
@@ -1837,8 +1838,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 		/* DFS requirement: DO NOT transmit during CAC. */
 		if (CHANNEL_STATE_DFS !=
-			wlan_reg_get_channel_state(hdd_ctx->pdev,
-						   ap_ctx->operating_channel)
+		    wlan_reg_get_channel_state_for_freq(
+			hdd_ctx->pdev, ap_ctx->operating_chan_freq)
 			|| ignoreCAC
 			|| hdd_ctx->dev_dfs_cac_status == DFS_CAC_ALREADY_DONE)
 			ap_ctx->dfs_cac_block_tx = false;
@@ -1872,7 +1873,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			cdp_hl_fc_set_td_limit(
 				cds_get_context(QDF_MODULE_ID_SOC),
 				adapter->vdev_id,
-				ap_ctx->operating_channel);
+				wlan_reg_freq_to_chan(hdd_ctx->pdev,
+				ap_ctx->operating_chan_freq));
 
 			hdd_register_tx_flow_control(adapter,
 				hdd_softap_tx_resume_timer_expired_handler,
@@ -1909,7 +1911,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
 #endif
 		hdd_hostapd_channel_prevent_suspend(adapter,
-						    ap_ctx->operating_channel);
+						    wlan_reg_freq_to_chan(
+						    hdd_ctx->pdev,
+						    ap_ctx->operating_chan_freq));
 
 		hostapd_state->bss_state = BSS_START;
 		hdd_start_tsf_sync(adapter);
@@ -1974,10 +1978,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		       status ? "eSAP_STATUS_FAILURE" : "eSAP_STATUS_SUCCESS");
 
 		hdd_hostapd_channel_allow_suspend(adapter,
-						  ap_ctx->operating_channel);
+						  wlan_reg_freq_to_chan(
+						  hdd_ctx->pdev,
+						  ap_ctx->operating_chan_freq));
 
 		/* Invalidate the channel info. */
-		ap_ctx->operating_channel = 0;
+		ap_ctx->operating_chan_freq = 0;
 
 		/* reset the dfs_cac_status and dfs_cac_block_tx flag only when
 		 * the last BSS is stopped
@@ -2493,10 +2499,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		if (hostapd_state->bss_state != BSS_STOP) {
 			/* Prevent suspend for new channel */
 			hdd_hostapd_channel_prevent_suspend(adapter,
-				sap_event->sapevt.sap_ch_selected.pri_ch);
+				wlan_reg_freq_to_chan(hdd_ctx->pdev,
+				sap_event->sapevt.sap_ch_selected.pri_ch_freq));
 			/* Allow suspend for old channel */
 			hdd_hostapd_channel_allow_suspend(adapter,
-				ap_ctx->operating_channel);
+				wlan_reg_freq_to_chan(hdd_ctx->pdev,
+				ap_ctx->operating_chan_freq));
 		}
 		/* SME/PE is already updated for new operation
 		 * channel. So update HDD layer also here. This
@@ -2506,12 +2514,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		 * this case if AP2 is started it needs current
 		 * operation channel for MCC DFS restriction
 		 */
-		ap_ctx->operating_channel =
-			sap_event->sapevt.sap_ch_selected.pri_ch;
+		ap_ctx->operating_chan_freq =
+			sap_event->sapevt.sap_ch_selected.pri_ch_freq;
 		ap_ctx->sap_config.acs_cfg.pri_ch =
-			sap_event->sapevt.sap_ch_selected.pri_ch;
+			wlan_reg_freq_to_chan(hdd_ctx->pdev,
+			sap_event->sapevt.sap_ch_selected.pri_ch_freq);
 		ap_ctx->sap_config.acs_cfg.ht_sec_ch =
-			sap_event->sapevt.sap_ch_selected.ht_sec_ch;
+			wlan_reg_freq_to_chan(hdd_ctx->pdev,
+			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq);
 		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
 			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =
@@ -2526,13 +2536,16 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		sap_ch_param.center_freq_seg1 =
 			sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch;
 		wlan_reg_set_channel_params(hdd_ctx->pdev,
-			sap_event->sapevt.sap_ch_selected.pri_ch,
-			sap_event->sapevt.sap_ch_selected.ht_sec_ch,
+			wlan_reg_freq_to_chan(hdd_ctx->pdev,
+			sap_event->sapevt.sap_ch_selected.pri_ch_freq),
+			wlan_reg_freq_to_chan(hdd_ctx->pdev,
+			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq),
 			&sap_ch_param);
 
 		cdp_hl_fc_set_td_limit(cds_get_context(QDF_MODULE_ID_SOC),
 				       adapter->vdev_id,
-				       ap_ctx->operating_channel);
+				       wlan_reg_freq_to_chan(hdd_ctx->pdev,
+				       ap_ctx->operating_chan_freq));
 
 		phy_mode = wlan_sap_get_phymode(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
@@ -2553,8 +2566,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		}
 
 		chan_change.chan_freq =
-			wlan_reg_chan_to_freq(hdd_ctx->pdev,
-				sap_event->sapevt.sap_ch_selected.pri_ch);
+			sap_event->sapevt.sap_ch_selected.pri_ch_freq;
 		chan_change.chan_params.ch_width =
 			sap_event->sapevt.sap_ch_selected.ch_width;
 		chan_change.chan_params.sec_ch_offset =
@@ -2575,9 +2587,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		clear_bit(ACS_PENDING, &adapter->event_flags);
 		clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 		ap_ctx->sap_config.acs_cfg.pri_ch =
-			sap_event->sapevt.sap_ch_selected.pri_ch;
+			wlan_reg_freq_to_chan(hdd_ctx->pdev,
+			sap_event->sapevt.sap_ch_selected.pri_ch_freq);
 		ap_ctx->sap_config.acs_cfg.ht_sec_ch =
-			sap_event->sapevt.sap_ch_selected.ht_sec_ch;
+			wlan_reg_freq_to_chan(hdd_ctx->pdev,
+			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq);
 		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
 			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =

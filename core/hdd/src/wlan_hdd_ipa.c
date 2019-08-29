@@ -107,7 +107,9 @@ void hdd_ipa_set_tx_flow_info(void)
 			if (hostapd_state->bss_state == BSS_START
 			    && hostapd_state->qdf_status ==
 			    QDF_STATUS_SUCCESS) {
-				p2pChannel = hdd_ap_ctx->operating_channel;
+				p2pChannel = wlan_reg_freq_to_chan(
+					hdd_ctx->pdev,
+					hdd_ap_ctx->operating_chan_freq);
 				qdf_copy_macaddr(&p2pBssid,
 						 &adapter->mac_addr);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
@@ -122,7 +124,9 @@ void hdd_ipa_set_tx_flow_info(void)
 			if (hostapd_state->bss_state == BSS_START
 			    && hostapd_state->qdf_status ==
 			    QDF_STATUS_SUCCESS) {
-				apChannel = hdd_ap_ctx->operating_channel;
+				apChannel = wlan_reg_freq_to_chan(
+					hdd_ctx->pdev,
+					hdd_ap_ctx->operating_chan_freq);
 				qdf_copy_macaddr(&apBssid,
 						&adapter->mac_addr);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL

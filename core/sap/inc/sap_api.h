@@ -229,7 +229,7 @@ typedef enum {
  * -------------------------------------------------------------------------*/
 typedef struct sap_StartBssCompleteEvent_s {
 	uint8_t status;
-	uint8_t operatingChannel;
+	uint32_t operating_chan_freq;
 	enum phy_ch_width ch_width;
 	uint16_t staId;         /* self StaID */
 	uint8_t sessionId;      /* SoftAP SME session ID */
@@ -338,15 +338,18 @@ typedef struct sap_MaxAssocExceededEvent_s {
 
 /**
  * sap_acs_ch_selected_s - the structure to hold the selected channels
- * @pri_channel:	   Holds the ACS selected primary channel
- * @sec_channel:	   Holds the ACS selected secondary channel
+ * @pri_chan_freq: Holds the ACS selected primary channel frequency
+ * @ht_sec_ch_freq: Holds the ACS selected secondary ht channel frequency
+ * @vht_seg0_center_ch: Holds the ACS selected center channel of vht seg0
+ * @vht_seg1_center_ch: Holds the ACS selected center channel of vht seg1
+ * @ch_width: Holds the ACS selected channel bandwidth
  *
  * Holds the primary and secondary channel selected by ACS and is
  * used to send it to the HDD.
  */
 struct sap_ch_selected_s {
-	uint16_t pri_ch;
-	uint16_t ht_sec_ch;
+	uint32_t pri_ch_freq;
+	uint32_t ht_sec_ch_freq;
 	uint16_t vht_seg0_center_ch;
 	uint16_t vht_seg1_center_ch;
 	uint16_t ch_width;

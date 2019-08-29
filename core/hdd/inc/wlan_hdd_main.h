@@ -896,7 +896,7 @@ struct hdd_fw_txrx_stats {
  * @wep_def_key_idx: WEP default key index
  * @sap_context: Pointer to context maintained by SAP (opaque to HDD)
  * @sap_config: SAP configuration
- * @operating_channel: channel upon which the SAP is operating
+ * @operating_chan_freq: channel upon which the SAP is operating
  * @beacon: Beacon information
  * @vendor_acs_timer: Timer for ACS
  * @vendor_acs_timer_initialized: Is @vendor_acs_timer initialized?
@@ -916,7 +916,7 @@ struct hdd_ap_ctx {
 	uint8_t wep_def_key_idx;
 	struct sap_context *sap_context;
 	struct sap_config sap_config;
-	uint8_t operating_channel;
+	uint32_t operating_chan_freq;
 	struct hdd_beacon_data *beacon;
 	qdf_mc_timer_t vendor_acs_timer;
 	bool vendor_acs_timer_initialized;

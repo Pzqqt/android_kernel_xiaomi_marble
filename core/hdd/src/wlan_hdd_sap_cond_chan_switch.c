@@ -203,16 +203,16 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		return -EINVAL;
 	}
 
-	if (wlan_reg_is_dfs_ch(hdd_ctx->pdev,
-			       hdd_ap_ctx->operating_channel)) {
+	if (wlan_reg_is_dfs_for_freq(hdd_ctx->pdev,
+				     hdd_ap_ctx->operating_chan_freq)) {
 		hdd_err("SAP is already on DFS channel:%d",
-			hdd_ap_ctx->operating_channel);
+			hdd_ap_ctx->operating_chan_freq);
 		return -EINVAL;
 	}
 
-	if (!WLAN_REG_IS_24GHZ_CH(hdd_ap_ctx->operating_channel)) {
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(hdd_ap_ctx->operating_chan_freq)) {
 		hdd_err("pre CAC alllowed only when SAP is in 2.4GHz:%d",
-			hdd_ap_ctx->operating_channel);
+			hdd_ap_ctx->operating_chan_freq);
 		return -EINVAL;
 	}
 
@@ -364,8 +364,11 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		goto stop_close_pre_cac_adapter;
 	}
 
-	ret = wlan_hdd_set_chan_before_pre_cac(ap_adapter,
-					       hdd_ap_ctx->operating_channel);
+	ret = wlan_hdd_set_chan_before_pre_cac(
+			ap_adapter,
+			wlan_reg_freq_to_chan(
+			hdd_ctx->pdev,
+			hdd_ap_ctx->operating_chan_freq));
 	if (ret != 0) {
 		hdd_err("failed to set channel before pre cac");
 		goto stop_close_pre_cac_adapter;

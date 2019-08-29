@@ -1487,9 +1487,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 			  FL("(eSAP_START_BSS_EVENT): staId = %d"),
 			  bss_complete->staId);
 
-		bss_complete->operatingChannel = wlan_reg_freq_to_chan(
-							mac_ctx->pdev,
-							sap_ctx->chan_freq);
+		bss_complete->operating_chan_freq = sap_ctx->chan_freq;
 		bss_complete->ch_width = sap_ctx->ch_params.ch_width;
 		break;
 	case eSAP_DFS_CAC_START:
@@ -1511,15 +1509,17 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		sap_ap_event.sapHddEventCode = sap_hddevent;
 		acs_selected = &sap_ap_event.sapevt.sap_ch_selected;
 		if (eSAP_STATUS_SUCCESS == (eSapStatus)context) {
-			acs_selected->pri_ch = sap_ctx->acs_cfg->pri_ch;
-			acs_selected->ht_sec_ch = sap_ctx->acs_cfg->ht_sec_ch;
+			acs_selected->pri_ch_freq = wlan_reg_chan_to_freq(
+				mac_ctx->pdev, sap_ctx->acs_cfg->pri_ch);
+			acs_selected->ht_sec_ch_freq = wlan_reg_chan_to_freq(
+				mac_ctx->pdev, sap_ctx->acs_cfg->ht_sec_ch);
 			acs_selected->ch_width = sap_ctx->acs_cfg->ch_width;
 			acs_selected->vht_seg0_center_ch =
 				sap_ctx->acs_cfg->vht_seg0_center_ch;
 			acs_selected->vht_seg1_center_ch =
 				sap_ctx->acs_cfg->vht_seg1_center_ch;
 		} else if (eSAP_STATUS_FAILURE == (eSapStatus)context) {
-			acs_selected->pri_ch = 0;
+			acs_selected->pri_ch_freq = 0;
 		}
 		break;
 
@@ -1757,10 +1757,8 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		sap_ap_event.sapHddEventCode = eSAP_CHANNEL_CHANGE_EVENT;
 
 		acs_selected = &sap_ap_event.sapevt.sap_ch_selected;
-		acs_selected->pri_ch = wlan_reg_freq_to_chan(mac_ctx->pdev,
-							sap_ctx->chan_freq);
-		acs_selected->ht_sec_ch = wlan_reg_freq_to_chan(mac_ctx->pdev,
-							sap_ctx->sec_ch_freq);
+		acs_selected->pri_ch_freq = sap_ctx->chan_freq;
+		acs_selected->ht_sec_ch_freq = sap_ctx->sec_ch_freq;
 		acs_selected->ch_width =
 			sap_ctx->csr_roamProfile.ch_params.ch_width;
 		acs_selected->vht_seg0_center_ch =

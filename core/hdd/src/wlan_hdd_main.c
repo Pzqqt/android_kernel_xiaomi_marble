@@ -908,7 +908,9 @@ uint8_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
 	if ((adapter->device_mode == QDF_SAP_MODE ||
 	     adapter->device_mode == QDF_P2P_GO_MODE) &&
 	    test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		home_channel = adapter->session.ap.operating_channel;
+		home_channel = wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				adapter->session.ap.operating_chan_freq);
 	} else if ((adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
 		   adapter->session.station.conn_info.conn_state ==
@@ -2340,8 +2342,8 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 
 		if ((QDF_SAP_MODE == adapter->device_mode ||
 		    QDF_P2P_GO_MODE == adapter->device_mode) &&
-		    (wlan_reg_is_passive_or_disable_ch(hdd_ctx->pdev,
-		     ap_ctx->operating_channel))) {
+		    (wlan_reg_is_passive_or_disable_for_freq(hdd_ctx->pdev,
+		     ap_ctx->operating_chan_freq))) {
 			WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx =
 				true;
 			hdd_info("tx blocked for vdev: %d",
@@ -9260,7 +9262,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 	uint32_t i;
 	bool found = false;
 	uint8_t restart_chan_store[SAP_MAX_NUM_SESSION] = {0};
-	uint8_t restart_chan;
+	uint8_t restart_chan, ap_chan;
 	uint8_t scc_on_lte_coex = 0;
 	bool value;
 	QDF_STATUS status;
@@ -9278,6 +9280,9 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			continue;
 		}
 
+		ap_chan = wlan_reg_freq_to_chan(
+				hdd_ctxt->pdev,
+				adapter->session.ap.operating_chan_freq);
 		found = false;
 		status =
 		ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(hdd_ctxt->psoc,
@@ -9289,30 +9294,28 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 		 * is set, no need to move SAP.
 		 */
 		if ((policy_mgr_is_sta_sap_scc(
-		     hdd_ctxt->psoc,
-		     adapter->session.ap.operating_channel) &&
+		     hdd_ctxt->psoc, ap_chan) &&
 		     scc_on_lte_coex) ||
 		     policy_mgr_nan_sap_scc_on_unsafe_ch_chk(
-		     hdd_ctxt->psoc,
-		     adapter->session.ap.operating_channel)) {
+		     hdd_ctxt->psoc, ap_chan)) {
 			hdd_debug("SAP allowed in unsafe SCC channel");
 		} else {
 			for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
-				if (adapter->session.ap.operating_channel ==
-					hdd_ctxt->unsafe_channel_list[i]) {
+				if (ap_chan ==
+				    hdd_ctxt->unsafe_channel_list[i]) {
 					found = true;
 					hdd_debug("operating ch:%d is unsafe",
-					adapter->session.ap.operating_channel);
+						  ap_chan);
 					break;
 				}
 			}
 		}
 		if (!found) {
 			hdd_store_sap_restart_channel(
-				adapter->session.ap.operating_channel,
+				ap_chan,
 				restart_chan_store);
 			hdd_debug("ch:%d is safe. no need to change channel",
-				  adapter->session.ap.operating_channel);
+				  ap_chan);
 			continue;
 		}
 
@@ -9341,9 +9344,8 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 
 			if (policy_mgr_is_force_scc(hdd_ctxt->psoc) &&
 			    WLAN_REG_IS_SAME_BAND_CHANNELS(
-							restart_chan_store[i],
-							adapter->session.ap.
-							operating_channel)) {
+					restart_chan_store[i],
+					ap_chan)) {
 				restart_chan = restart_chan_store[i];
 				break;
 			}
@@ -15656,8 +15658,9 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	if (ap_adapter &&
 	    test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags) &&
-	    wlan_reg_is_dfs_ch(hdd_ctx->pdev,
-			       ap_adapter->session.ap.operating_channel)) {
+	    wlan_reg_is_dfs_for_freq(
+			hdd_ctx->pdev,
+			ap_adapter->session.ap.operating_chan_freq)) {
 		if (policy_mgr_get_dfs_master_dynamic_enabled(
 				hdd_ctx->psoc, ap_adapter->vdev_id))
 			return;

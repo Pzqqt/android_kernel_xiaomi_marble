@@ -7244,6 +7244,7 @@ static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter, *next = NULL;
 	QDF_STATUS status;
+	uint8_t ap_ch;
 
 	if (!hdd_ctx)
 		return;
@@ -7253,10 +7254,13 @@ static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx)
 	status = hdd_get_front_adapter(hdd_ctx, &adapter);
 	while (adapter && (status == QDF_STATUS_SUCCESS)) {
 		if (!hdd_validate_adapter(adapter) &&
-		    (adapter->device_mode == QDF_SAP_MODE) &&
-		    (check_disable_channels(hdd_ctx,
-		     adapter->session.ap.operating_channel)))
-			wlan_hdd_stop_sap(adapter);
+		    adapter->device_mode == QDF_SAP_MODE) {
+			ap_ch = wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				adapter->session.ap.operating_chan_freq);
+			if (check_disable_channels(hdd_ctx, ap_ch))
+				wlan_hdd_stop_sap(adapter);
+		}
 
 		status = hdd_get_next_adapter(hdd_ctx, adapter, &next);
 		adapter = next;
