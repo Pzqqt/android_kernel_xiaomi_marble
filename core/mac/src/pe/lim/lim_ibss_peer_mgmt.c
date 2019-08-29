@@ -568,8 +568,7 @@ void ibss_bss_add(struct mac_context *mac, struct pe_session *pe_session)
 	mlmStartReq.txChannelWidthSet = pe_session->htRecommendedTxWidthSet;
 
 	/* reading the channel num from session Table */
-	mlmStartReq.channelNumber = wlan_reg_freq_to_chan(
-					mac->pdev, pe_session->curr_op_freq);
+	mlmStartReq.oper_ch_freq = pe_session->curr_op_freq;
 
 	mlmStartReq.cbMode = pe_session->pLimStartBssReq->cbMode;
 

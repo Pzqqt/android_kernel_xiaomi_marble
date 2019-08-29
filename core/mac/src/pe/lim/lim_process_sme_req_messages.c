@@ -544,7 +544,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			ret_code = eSIR_SME_INVALID_PARAMETERS;
 			goto free;
 		}
-
+		channel_number = wlan_reg_freq_to_chan(mac_ctx->pdev,
+					sme_start_bss_req->oper_ch_freq);
 		/*
 		 * This is the place where PE is going to create a session.
 		 * If session is not existed, then create a new session
@@ -571,7 +572,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			/* Update the beacon/probe filter in mac_ctx */
 			lim_set_bcn_probe_filter(mac_ctx, session,
 						 &sme_start_bss_req->ssId,
-						 sme_start_bss_req->channelId);
+						 channel_number);
 		}
 
 		if (QDF_NDI_MODE != sme_start_bss_req->bssPersona) {
@@ -623,8 +624,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			sme_start_bss_req->beaconInterval;
 
 		/* Store the oper freq in session Table */
-		session->curr_op_freq = wlan_reg_chan_to_freq(
-				mac_ctx->pdev, sme_start_bss_req->channelId);
+		session->curr_op_freq = sme_start_bss_req->oper_ch_freq;
 
 		/* Store Persona */
 		session->opmode = sme_start_bss_req->bssPersona;
@@ -741,13 +741,12 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			}
 		}
 
-		if (!sme_start_bss_req->channelId &&
+		if (!sme_start_bss_req->oper_ch_freq &&
 		    sme_start_bss_req->bssType != eSIR_NDI_MODE) {
 			pe_err("Received invalid eWNI_SME_START_BSS_REQ");
 			ret_code = eSIR_SME_INVALID_PARAMETERS;
 			goto free;
 		}
-		channel_number = sme_start_bss_req->channelId;
 #ifdef QCA_HT_2040_COEX
 		if (sme_start_bss_req->obssEnabled)
 			session->htSupportedChannelWidthSet =
@@ -880,8 +879,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			}
 		}
 		/* store the channel num in mlmstart req structure */
-		mlm_start_req->channelNumber = wlan_reg_freq_to_chan(
-				mac_ctx->pdev, session->curr_op_freq);
+		mlm_start_req->oper_ch_freq = session->curr_op_freq;
 		mlm_start_req->cbMode = sme_start_bss_req->cbMode;
 		mlm_start_req->beaconPeriod =
 			session->beaconParams.beaconInterval;

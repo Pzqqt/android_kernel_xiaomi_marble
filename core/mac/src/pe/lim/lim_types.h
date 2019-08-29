@@ -157,7 +157,7 @@ typedef struct sLimMlmStartReq {
 	tSirMacBeaconInterval beaconPeriod;
 	uint8_t dtimPeriod;
 	tSirMacCfParamSet cfParamSet;
-	tSirMacChanNum channelNumber;
+	uint32_t oper_ch_freq;
 	ePhyChanBondState cbMode;
 	tSirMacRateSet rateSet;
 	uint8_t sessionId;      /* Added For BT-AMP Support */

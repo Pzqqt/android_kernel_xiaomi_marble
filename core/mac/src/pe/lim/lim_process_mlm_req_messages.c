@@ -302,6 +302,7 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	struct bss_params *addbss_param = NULL;
 	uint32_t retcode;
 	bool is_ch_dfs = false;
+	uint32_t chan_num;
 
 	/* Package WMA_ADD_BSS_REQ message parameters */
 	addbss_param = qdf_mem_malloc(sizeof(struct bss_params));
@@ -338,9 +339,9 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 		wlan_reg_chan_to_freq(mac_ctx->pdev,
 				      session->ch_center_freq_seg1);
 
-	addbss_param->op_chan_freq =
-		wlan_reg_chan_to_freq(mac_ctx->pdev,
-				      mlm_start_req->channelNumber);
+	addbss_param->op_chan_freq = mlm_start_req->oper_ch_freq;
+	chan_num = wlan_reg_freq_to_chan(mac_ctx->pdev,
+					 addbss_param->op_chan_freq);
 #ifdef WLAN_FEATURE_11W
 	addbss_param->rmfEnabled = session->limRmfEnabled;
 #endif
@@ -376,8 +377,7 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	if (session->ch_width == CH_WIDTH_160MHZ) {
 		is_ch_dfs = true;
 	} else if (session->ch_width == CH_WIDTH_80P80MHZ) {
-		if (wlan_reg_get_channel_state(mac_ctx->pdev,
-					mlm_start_req->channelNumber) ==
+		if (wlan_reg_get_channel_state(mac_ctx->pdev, chan_num) ==
 				CHANNEL_STATE_DFS ||
 				wlan_reg_get_channel_state(mac_ctx->pdev,
 					session->ch_center_freq_seg1 -
@@ -385,8 +385,7 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 				CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	} else {
-		if (wlan_reg_get_channel_state(mac_ctx->pdev,
-					mlm_start_req->channelNumber) ==
+		if (wlan_reg_get_channel_state(mac_ctx->pdev, chan_num) ==
 				CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	}

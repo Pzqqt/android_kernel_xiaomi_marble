@@ -207,7 +207,8 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *msg_buf)
 				pe_session, smesessionId);
 	if (pe_session &&
 	    (((tLimMlmStartCnf *)msg_buf)->resultCode == eSIR_SME_SUCCESS)) {
-		channelId = pe_session->pLimStartBssReq->channelId;
+		channelId = wlan_reg_freq_to_chan(mac->pdev,
+				pe_session->pLimStartBssReq->oper_ch_freq);
 		lim_ndi_mlme_vdev_up_transition(pe_session);
 
 		/* We should start beacon transmission only if the channel

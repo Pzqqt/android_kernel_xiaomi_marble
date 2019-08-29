@@ -580,7 +580,7 @@ struct start_bss_req {
 #endif
 	enum bss_type bssType;
 	tSirMacSSid ssId;
-	uint8_t channelId;
+	uint32_t oper_ch_freq;
 	ePhyChanBondState cbMode;
 	uint8_t vht_channel_width;
 	uint8_t center_freq_seg0;
