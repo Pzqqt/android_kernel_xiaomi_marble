@@ -2304,7 +2304,8 @@ static bool csr_validate_p2pcli_bcn_intrvl(struct mac_context *mac_ctx,
 		sme_debug("Ignore Beacon Interval Validation...");
 	} else if (roamsession->bssParams.bssPersona == QDF_P2P_GO_MODE) {
 		/* Check for P2P go scenario */
-		if ((roamsession->bssParams.operationChn != chnl_id)
+		if ((roamsession->bssParams.operation_chan_freq !=
+		     wlan_reg_chan_to_freq(mac_ctx->pdev, chnl_id))
 			&& (roamsession->bssParams.beaconInterval !=
 				*bcn_interval)) {
 			sme_err("BcnIntrvl is diff can't connect to P2P_GO network");
@@ -2413,7 +2414,8 @@ static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 		return false;
 	}
 	if ((roamsession->bssParams.bssPersona == QDF_SAP_MODE) &&
-		   (roamsession->bssParams.operationChn != chnl_id)) {
+		   (roamsession->bssParams.operation_chan_freq !=
+		    wlan_reg_chan_to_freq(mac_ctx->pdev, chnl_id))) {
 		/*
 		 * IF SAP has started and STA wants to connect
 		 * on different channel MCC should
@@ -2431,7 +2433,8 @@ static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 	 * change the BI of the P2P-GO
 	 */
 	if ((roamsession->bssParams.bssPersona == QDF_P2P_GO_MODE) &&
-		(roamsession->bssParams.operationChn != chnl_id) &&
+		(roamsession->bssParams.operation_chan_freq !=
+		 wlan_reg_chan_to_freq(mac_ctx->pdev, chnl_id)) &&
 		(roamsession->bssParams.beaconInterval != *bcn_interval)) {
 		/* if GO in MCC support diff beacon interval, return success */
 		if (cfg_param->fAllowMCCGODiffBI == 0x01) {

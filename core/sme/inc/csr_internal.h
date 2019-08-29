@@ -231,7 +231,7 @@ struct csr_roamstart_bssparams {
 	ePhyChanBondState cbMode;
 	tSirMacRateSet operationalRateSet;
 	tSirMacRateSet extendedRateSet;
-	uint8_t operationChn;
+	uint32_t operation_chan_freq;
 	struct ch_params ch_params;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	uint8_t privacy;
