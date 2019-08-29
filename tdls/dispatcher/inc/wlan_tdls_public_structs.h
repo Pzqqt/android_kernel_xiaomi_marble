@@ -545,7 +545,7 @@ struct tdls_tx_cnf {
 /**
  * struct tdls_rx_mgmt_frame - rx mgmt frame structure
  * @frame_len: frame length
- * @rx_chan: rx channel
+ * @rx_freq: rx freq
  * @vdev_id: vdev id
  * @frm_type: frame type
  * @rx_rssi: rx rssi
@@ -553,7 +553,7 @@ struct tdls_tx_cnf {
  */
 struct tdls_rx_mgmt_frame {
 	uint32_t frame_len;
-	uint32_t rx_chan;
+	uint32_t rx_freq;
 	uint32_t vdev_id;
 	uint32_t frm_type;
 	uint32_t rx_rssi;
