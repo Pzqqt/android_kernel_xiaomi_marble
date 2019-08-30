@@ -4528,11 +4528,11 @@ struct sme_obss_ht40_scanind_msg {
  * @obss_active_total_per_channel: total active scan time per channel
  * @bsswidth_ch_trans_delay: OBSS transition delay time
  * @obss_activity_threshold: OBSS activity threshold
- * @self_sta_id: self sta identification
+ * @self_sta_idx: self sta identification
  * @bss_id: BSS index
  * @fortymhz_intolerent: Ht40mhz intolerance
  * @channel_count: channel count
- * @channels: channel information
+ * @chan_freq_list: List of channel frequencies in MHz
  * @current_operatingclass: operating class
  * @iefield_len: ie's length
  * @iefiled: ie's information
@@ -4554,7 +4554,7 @@ struct obss_ht40_scanind {
 	uint8_t bss_id;
 	uint8_t fortymhz_intolerent;
 	uint8_t channel_count;
-	uint8_t channels[SIR_ROAM_MAX_CHANNELS];
+	uint32_t chan_freq_list[SIR_ROAM_MAX_CHANNELS];
 	uint8_t current_operatingclass;
 	uint16_t iefield_len;
 	uint8_t  iefield[SIR_ROAM_SCAN_MAX_PB_REQ_SIZE];

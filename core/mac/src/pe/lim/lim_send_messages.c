@@ -596,7 +596,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	struct obss_ht40_scanind *ht40_obss_scanind;
-	uint32_t channelnum;
+	uint32_t channelnum, chan_freq;
 	struct scheduler_msg msg = {0};
 	uint8_t chan_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t channel24gnum, count;
@@ -637,10 +637,11 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	channel24gnum = 0;
 	for (count = 0; count < channelnum &&
 		(channel24gnum < SIR_ROAM_MAX_CHANNELS); count++) {
-		if ((chan_list[count] > CHAN_ENUM_1) &&
-			(chan_list[count] < CHAN_ENUM_14)) {
-			ht40_obss_scanind->channels[channel24gnum] =
-				chan_list[count];
+		chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
+						  chan_list[count]);
+		if (wlan_reg_is_24ghz_ch_freq(chan_freq)) {
+			ht40_obss_scanind->chan_freq_list[channel24gnum] =
+				chan_freq;
 			channel24gnum++;
 		}
 	}

@@ -5570,6 +5570,7 @@ QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 	int len = 0;
 	uint8_t *buf_ptr, i;
 	uint8_t *channel_list;
+	uint32_t *chan_freq_list;
 
 	len += sizeof(wmi_obss_scan_enable_cmd_fixed_param);
 
@@ -5579,6 +5580,10 @@ QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 
 	len += WMI_TLV_HDR_SIZE;
 	len += qdf_roundup(sizeof(uint8_t) * 1, sizeof(uint32_t));
+
+	/* length calculation for chan_freqs */
+	len += WMI_TLV_HDR_SIZE;
+	len += sizeof(uint32_t) * req->channel_count;
 
 	WMA_LOGE("cmdlen %d vdev_id %d channel count %d iefield_len %d",
 			len, req->bss_id, req->channel_count, req->iefield_len);
@@ -5629,7 +5634,8 @@ QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 	channel_list = (uint8_t *) buf_ptr;
 
 	for (i = 0; i < req->channel_count; i++) {
-		channel_list[i] = req->channels[i];
+		channel_list[i] =
+		  wlan_reg_freq_to_chan(wma->pdev, req->chan_freq_list[i]);
 		WMA_LOGD("Ch[%d]: %d ", i, channel_list[i]);
 	}
 
@@ -5637,7 +5643,20 @@ QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 				sizeof(uint32_t));
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
 			qdf_roundup(1, sizeof(uint32_t)));
+
+	buf_ptr += qdf_roundup(sizeof(uint8_t) * 1, sizeof(uint32_t));
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+		       sizeof(uint32_t) * req->channel_count);
 	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	chan_freq_list = (uint32_t *)buf_ptr;
+	for (i = 0; i < req->channel_count; i++) {
+		chan_freq_list[i] = req->chan_freq_list[i];
+		WMA_LOGD("freq[%u]: %u ", i, chan_freq_list[i]);
+	}
+
+	buf_ptr += sizeof(uint32_t) * req->channel_count;
 
 	status = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				      WMI_OBSS_SCAN_ENABLE_CMDID);
