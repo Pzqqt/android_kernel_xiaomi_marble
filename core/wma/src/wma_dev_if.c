@@ -720,13 +720,13 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	iface->del_staself_req = del_vdev_req_param;
 	wlan_vdev_set_dp_handle(iface->vdev, NULL);
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
+	wma_release_vdev_ref(iface);
 
 	status = vdev_mgr_delete_send(vdev_mlme);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Unable to remove an interface");
 		goto out;
 	}
-	wma_release_vdev_ref(iface);
 
 	return status;
 
