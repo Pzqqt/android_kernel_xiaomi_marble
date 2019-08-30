@@ -45,7 +45,11 @@ static struct completion tsf_sync_get_completion_evt;
 #define WLAN_TSF_SYNC_GET_TIMEOUT 2000
 #define WLAN_HDD_CAPTURE_TSF_REQ_TIMEOUT_MS 500
 #define WLAN_HDD_CAPTURE_TSF_INIT_INTERVAL_MS 100
-#define WLAN_HDD_SOFTAP_INTERVEL_TIMES 100
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC
+#define WLAN_HDD_SOFTAP_INTERVAL_TIMES 1
+#else
+#define WLAN_HDD_SOFTAP_INTERVAL_TIMES 100
+#endif
 #define OUTPUT_HIGH 1
 #define OUTPUT_LOW 0
 
@@ -1062,7 +1066,7 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter)
 			    CAP_TSF_TIMER_FIX_SEC) * MSEC_PER_SEC;
 		if (adapter->device_mode == QDF_SAP_MODE ||
 		    adapter->device_mode == QDF_P2P_GO_MODE) {
-			interval *= WLAN_HDD_SOFTAP_INTERVEL_TIMES;
+			interval *= WLAN_HDD_SOFTAP_INTERVAL_TIMES;
 		}
 
 		adapter->continuous_error_count = 0;
@@ -1216,7 +1220,7 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter,
 			    CAP_TSF_TIMER_FIX_SEC) * MSEC_PER_SEC;
 		if (adapter->device_mode == QDF_SAP_MODE ||
 		    adapter->device_mode == QDF_P2P_GO_MODE) {
-			interval *= WLAN_HDD_SOFTAP_INTERVEL_TIMES;
+			interval *= WLAN_HDD_SOFTAP_INTERVAL_TIMES;
 		}
 
 		adapter->continuous_error_count = 0;
