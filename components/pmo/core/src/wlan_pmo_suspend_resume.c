@@ -903,6 +903,7 @@ QDF_STATUS pmo_core_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	QDF_STATUS status;
 	bool wow_mode_selected = false;
+	qdf_time_t begin, end;
 
 	pmo_enter();
 	if (!psoc) {
@@ -928,10 +929,13 @@ QDF_STATUS pmo_core_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
 	wow_mode_selected = pmo_core_is_wow_enabled(psoc_ctx);
 	pmo_debug("wow mode selected %d", wow_mode_selected);
 
+	begin = qdf_get_system_timestamp();
 	if (wow_mode_selected)
 		status = pmo_core_enable_wow_in_fw(psoc, psoc_ctx, wow_params);
 	else
 		status = pmo_core_psoc_suspend_target(psoc, 0);
+	end = qdf_get_system_timestamp();
+	pmo_debug("fw took total time %lu ms to enable wow", end - begin);
 
 	pmo_psoc_put_ref(psoc);
 out:
@@ -951,6 +955,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	int ret;
 	struct pmo_wow_enable_params wow_params = {0};
+	qdf_time_t begin, end;
 
 	pmo_enter();
 
@@ -1016,7 +1021,12 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (pld_cb) {
+		begin = qdf_get_system_timestamp();
 		ret = pld_cb();
+		end = qdf_get_system_timestamp();
+		pmo_debug("runtime pci bus suspend took total time %lu ms",
+			  end - begin);
+
 		if (ret) {
 			status = qdf_status_from_os_return(ret);
 			goto resume_hif;
@@ -1063,11 +1073,13 @@ out:
 QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 					    pmo_pld_auto_resume_cb pld_cb)
 {
+	int ret;
 	void *hif_ctx;
 	void *dp_soc;
 	void *txrx_pdev;
 	void *htc_ctx;
 	QDF_STATUS status;
+	qdf_time_t begin, end;
 
 	pmo_enter();
 
@@ -1095,9 +1107,12 @@ QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 	}
 
 	hif_pre_runtime_resume(hif_ctx);
-
 	if (pld_cb) {
-		if (pld_cb()) {
+		begin = qdf_get_system_timestamp();
+		ret = pld_cb();
+		end = qdf_get_system_timestamp();
+		pmo_debug("pci bus resume took total time %lu ms", end - begin);
+		if (ret) {
 			status = QDF_STATUS_E_FAILURE;
 			goto fail;
 		}
@@ -1270,6 +1285,7 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	bool wow_mode;
 	QDF_STATUS status;
+	qdf_time_t begin, end;
 
 	pmo_enter();
 	if (!psoc) {
@@ -1296,10 +1312,13 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
+	begin = qdf_get_system_timestamp();
 	if (wow_mode)
 		status = pmo_core_psoc_disable_wow_in_fw(psoc, psoc_ctx);
 	else
 		status = pmo_core_psoc_resume_target(psoc, psoc_ctx);
+	end = qdf_get_system_timestamp();
+	pmo_debug("fw took total time %lu ms to disable wow", end - begin);
 
 	pmo_psoc_put_ref(psoc);
 

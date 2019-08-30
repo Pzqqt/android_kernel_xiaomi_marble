@@ -1959,6 +1959,9 @@ struct hdd_context {
 	unsigned long derived_intf_addr_mask;
 
 	struct sar_limit_cmd_params *sar_cmd_params;
+
+	qdf_time_t runtime_resume_start_time_stamp;
+	qdf_time_t runtime_suspend_done_time_stamp;
 };
 
 /**
