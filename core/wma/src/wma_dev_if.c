@@ -2815,8 +2815,8 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		CFG_TGT_DEFAULT_GTX_BW_MASK;
 	intr[vdev_id].mhz = des_chan->ch_freq;
 	intr[vdev_id].chan_width = ch_width;
-	intr[vdev_id].channel = wlan_reg_freq_to_chan(wma->pdev,
-						      req->op_chan_freq);
+	intr[vdev_id].ch_freq = des_chan->ch_freq;
+
 	/* Set half or quarter rate flags */
 	mlme_obj->mgmt.rate_info.half_rate = req->is_half_rate;
 	mlme_obj->mgmt.rate_info.quarter_rate = req->is_quarter_rate;

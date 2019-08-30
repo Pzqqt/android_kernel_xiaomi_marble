@@ -154,7 +154,8 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 		chan_p->cfreq2 = 0;
 		channel = wlan_reg_freq_to_chan(wma_handle->pdev,
 						chan_list->chanParam[i].freq);
-		wma_handle->saved_chan.channel_list[i] = channel;
+		wma_handle->saved_chan.ch_freq_list[i] =
+					chan_list->chanParam[i].freq;
 
 		WMA_LOGD("chan[%d] = freq:%u DFS:%d tx power:%d",
 			 i, chan_p->mhz,
@@ -2159,7 +2160,7 @@ void wma_process_roam_invoke(WMA_HANDLE handle,
 			 roaminvoke->vdev_id);
 		goto free_frame_buf;
 	}
-	ch_hz = (A_UINT32)cds_chan_to_freq(roaminvoke->channel);
+	ch_hz = roaminvoke->ch_freq;
 	wmi_unified_roam_invoke_cmd(wma_handle->wmi_handle,
 				(struct wmi_roam_invoke_cmd *)roaminvoke,
 				ch_hz);
@@ -3535,8 +3536,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
-	req.op_chan_freq = wlan_reg_chan_to_freq(wma->pdev,
-						 params->channelNumber);
+	req.op_chan_freq = params->ch_freq;
 	req.chan_width = params->ch_width;
 
 	if (params->ch_width == CH_WIDTH_10MHZ)
@@ -3545,10 +3545,8 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		req.is_quarter_rate = 1;
 
 	req.vht_capable = params->vhtCapable;
-	req.chan_freq_seg0 = wlan_reg_chan_to_freq(wma->pdev,
-						   params->ch_center_freq_seg0);
-	req.chan_freq_seg1 = wlan_reg_chan_to_freq(wma->pdev,
-						   params->ch_center_freq_seg1);
+	req.chan_freq_seg0 = params->ch_center_freq_seg0;
+	req.chan_freq_seg1 = params->ch_center_freq_seg1;
 	req.dot11_mode = params->dot11_mode;
 	wma_update_vdev_he_capable(&req, params);
 
@@ -3631,8 +3629,8 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	return;
 send_resp:
-	WMA_LOGD("%s: channel %d ch_width %d txpower %d status %d", __func__,
-		 params->channelNumber, params->ch_width,
+	WMA_LOGD("%s: ch_freq %d ch_width %d txpower %d status %d", __func__,
+		 params->ch_freq, params->ch_width,
 		 params->maxTxPower,
 		 status);
 	WMA_LOGI("%s: wma switch channel rsp,, status = 0x%x",

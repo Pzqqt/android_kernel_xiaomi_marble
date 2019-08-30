@@ -727,7 +727,7 @@ struct roam_synch_frame_ind {
  * @in_bmps: Whether bmps for this interface has been enabled
  * @vdev_set_key_wakelock: wakelock to protect vdev set key op with firmware
  * @vdev_set_key_runtime_wakelock: runtime pm wakelock for set key
- * @channel: channel
+ * @ch_freq: channel frequency
  * @roam_offload_enabled: is roam offload enable/disable
  * @roam_scan_stats_req: cached roam scan stats request
  *
@@ -793,7 +793,7 @@ struct wma_txrx_node {
 	struct roam_synch_frame_ind roam_synch_frame_ind;
 	bool is_waiting_for_key;
 	bool roam_offload_enabled;
-	uint8_t channel;
+	uint32_t ch_freq;
 	struct sir_roam_scan_stats *roam_scan_stats_req;
 };
 
@@ -842,13 +842,13 @@ struct wma_ini_config {
 };
 
 /**
- * struct wmi_valid_channels - Channel details part of WMI_SCAN_CHAN_LIST_CMDID
+ * struct wma_valid_channels - Channel details part of WMI_SCAN_CHAN_LIST_CMDID
  * @num_channels: Number of channels
- * @channel_list: Channel list
+ * @ch_freq_list: Channel Frequency list
  */
 struct wma_valid_channels {
 	uint8_t num_channels;
-	uint8_t channel_list[MAX_NUM_CHAN];
+	uint32_t ch_freq_list[MAX_NUM_CHAN];
 };
 
 #ifdef FEATURE_WLM_STATS
@@ -1556,7 +1556,7 @@ enum uapsd_up {
  * struct wma_roam_invoke_cmd - roam invoke command
  * @vdev_id: vdev id
  * @bssid: mac address
- * @channel: channel
+ * @ch_freq: channel frequency
  * @frame_len: frame length, includs mac header, fixed params and ies
  * @frame_buf: buffer contaning probe response or beacon
  * @is_same_bssid: flag to indicate if roaming is requested for same bssid
@@ -1565,7 +1565,7 @@ enum uapsd_up {
 struct wma_roam_invoke_cmd {
 	uint32_t vdev_id;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	uint32_t channel;
+	uint32_t ch_freq;
 	uint32_t frame_len;
 	uint8_t *frame_buf;
 	uint8_t is_same_bssid;

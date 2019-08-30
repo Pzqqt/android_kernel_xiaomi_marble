@@ -725,7 +725,7 @@ typedef struct {
 
 /**
  * struct tSwitchChannelParams - switch channel request parameter
- * @channelNumber: channel number
+ * @ch_freq: channel frequency ID
  * @localPowerConstraint: local power constraint
  * @secondaryChannelOffset: scondary channel offset
  * @peSessionId: PE session id
@@ -738,6 +738,8 @@ typedef struct {
  * @smpsMode: SMPS mode
  * @isDfsChannel: is DFS channel
  * @vhtCapable: VHT capable
+ * @ch_center_freq_seg0: ch freq segment for primary channel(center frequency)
+ * @ch_center_freq_seg1: ch freq segment for secondary channel(center frequency)
  * @dot11_mode: 802.11 mode
  * @cac_duration_ms: cac duration in milliseconds
  * @dfs_regdomain: dfs region
@@ -746,7 +748,7 @@ typedef struct {
  * @ssid: sap ssid
  */
 typedef struct {
-	uint8_t channelNumber;
+	uint32_t ch_freq;
 	uint8_t peSessionId;
 	int8_t maxTxPower;
 	tSirMacAddr selfStaMacAddr;
@@ -754,8 +756,8 @@ typedef struct {
 	uint8_t isDfsChannel;
 	uint8_t vhtCapable;
 	enum phy_ch_width ch_width;
-	uint8_t ch_center_freq_seg0;
-	uint8_t ch_center_freq_seg1;
+	uint32_t ch_center_freq_seg0;
+	uint32_t ch_center_freq_seg1;
 	uint8_t dot11_mode;
 
 	uint8_t restart_on_chan_switch;

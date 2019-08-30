@@ -131,9 +131,11 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 	pChnlParams = qdf_mem_malloc(sizeof(tSwitchChannelParams));
 	if (!pChnlParams)
 		return QDF_STATUS_E_NOMEM;
-	pChnlParams->channelNumber = chnlNumber;
-	pChnlParams->ch_center_freq_seg0 = ch_center_freq_seg0;
-	pChnlParams->ch_center_freq_seg1 = ch_center_freq_seg1;
+	pChnlParams->ch_freq = wlan_reg_chan_to_freq(mac->pdev, chnlNumber);
+	pChnlParams->ch_center_freq_seg0 =
+		wlan_reg_chan_to_freq(mac->pdev, ch_center_freq_seg0);
+	pChnlParams->ch_center_freq_seg1 =
+		wlan_reg_chan_to_freq(mac->pdev, ch_center_freq_seg1);
 	pChnlParams->ch_width = ch_width;
 	qdf_mem_copy(pChnlParams->selfStaMacAddr, pe_session->self_mac_addr,
 		     sizeof(tSirMacAddr));
@@ -189,9 +191,9 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 	msgQ.reserved = 0;
 	msgQ.bodyptr = pChnlParams;
 	msgQ.bodyval = 0;
-	pe_debug("Sending CH_SWITCH_REQ, ch_width %d, ch_num %d, maxTxPower %d",
+	pe_debug("Sending CH_SWITCH_REQ, ch_width %d, ch_freq %d, maxTxPower %d",
 		       pChnlParams->ch_width,
-		       pChnlParams->channelNumber, pChnlParams->maxTxPower);
+		       pChnlParams->ch_freq, pChnlParams->maxTxPower);
 	MTRACE(mac_trace_msg_tx(mac, peSessionId, msgQ.type));
 	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(mac, &msgQ)) {
 		qdf_mem_free(pChnlParams);

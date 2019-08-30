@@ -9108,7 +9108,7 @@ static QDF_STATUS sme_process_channel_change_resp(struct mac_context *mac,
 	if (msg_type == eWNI_SME_CHANNEL_CHANGE_RSP) {
 		roam_info->channelChangeRespEvent->sessionId = SessionId;
 		roam_info->channelChangeRespEvent->newChannelNumber =
-			pChnlParams->channelNumber;
+			wlan_reg_freq_to_chan(mac->pdev, pChnlParams->ch_freq);
 
 		if (pChnlParams->status == QDF_STATUS_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -14240,7 +14240,7 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	fastreassoc->channel = channel;
+	fastreassoc->ch_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, channel);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_warn("sme_get_beacon_frm failed");
 		qdf_mem_free(fastreassoc->frame_buf);

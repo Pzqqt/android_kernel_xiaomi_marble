@@ -1944,12 +1944,12 @@ lim_send_sme_ap_channel_switch_resp(struct mac_context *mac,
 	if (!pSmeSwithChnlParams)
 		return;
 
-
 	channelId = wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq);
-	pSmeSwithChnlParams->channelNumber = channelId;
+	pSmeSwithChnlParams->ch_freq = pe_session->curr_op_freq;
 	pSmeSwithChnlParams->status = rsp->status;
-	ch_width = pSmeSwithChnlParams->ch_width;
-	ch_center_freq_seg1 = pSmeSwithChnlParams->ch_center_freq_seg1;
+
+	ch_width = pe_session->ch_width;
+	ch_center_freq_seg1 = pe_session->ch_center_freq_seg1;
 
 	/*
 	 * Pass the sme sessionID to SME instead
