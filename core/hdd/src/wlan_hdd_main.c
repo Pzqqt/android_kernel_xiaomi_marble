@@ -9735,7 +9735,7 @@ static int __hdd_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
 
 	osif_psoc_sync_wait_for_ops(psoc_sync);
 
-	QDF_BUG(!hdd_wlan_stop_modules(hdd_ctx, false));
+	errno = hdd_wlan_stop_modules(hdd_ctx, false);
 
 	osif_psoc_sync_trans_stop(psoc_sync);
 
@@ -11872,7 +11872,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			hdd_psoc_idle_timer_start(hdd_ctx);
 			cds_set_module_stop_in_progress(false);
 
-			return 0;
+			return -EAGAIN;
 		}
 	}
 
