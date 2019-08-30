@@ -59,5 +59,4 @@ void dl_data_avail_cb(struct sdio_al_channel_handle *ch_handle,
 		      unsigned int len);
 
 void hif_sdio_rx_q_alloc(void *ctx);
-qdf_nbuf_t hif_sdio_get_nbuf(struct hif_sdio_dev *dev);
 #endif

@@ -373,18 +373,15 @@ QDF_STATUS hif_enable_func(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
  *
  * Return - NULL if out of buffers, else qdf_nbuf_t
  */
-#define HEAD_ROOM		256
-#define RESERVE_LEN		256
-#define is_pad_block(buf)	(*((uint32_t *)buf) == 0xbabababa)
-
 #if HIF_MAX_RX_Q_ALLOC
-qdf_nbuf_t hif_sdio_get_nbuf(struct hif_sdio_dev *dev)
+static qdf_nbuf_t hif_sdio_get_nbuf(struct hif_sdio_dev *dev, uint16_t buf_len)
 {
 	qdf_list_node_t *node;
 	qdf_nbuf_t nbuf = NULL;
 	qdf_list_t *q = &dev->rx_q;
 	struct rx_q_entry *elem = NULL;
 
+	/* TODO - Alloc nbuf based on buf_len */
 	qdf_spin_lock_irqsave(&dev->rx_q_lock);
 
 	if (q->count) {
@@ -408,12 +405,15 @@ qdf_nbuf_t hif_sdio_get_nbuf(struct hif_sdio_dev *dev)
 	return nbuf;
 }
 #else
-qdf_nbuf_t hif_sdio_get_nbuf(struct hif_sdio_dev *dev)
+static qdf_nbuf_t hif_sdio_get_nbuf(struct hif_sdio_dev *dev, uint16_t buf_len)
 {
 	qdf_nbuf_t nbuf;
 
-	nbuf = qdf_nbuf_alloc(NULL, HIF_SDIO_RX_BUFFER_SIZE + RESERVE_LEN,
-			      HEAD_ROOM, 4, 0);
+	if (!buf_len)
+		buf_len = HIF_SDIO_RX_BUFFER_SIZE;
+
+	nbuf = qdf_nbuf_alloc(NULL, buf_len, 0, 4, false);
+
 	return nbuf;
 }
 #endif
@@ -440,8 +440,9 @@ void hif_sdio_rx_q_alloc(void *ctx)
 			break;
 		}
 
-		rx_q_elem->nbuf = qdf_nbuf_alloc(NULL, HIF_SDIO_RX_BUFFER_SIZE +
-						 RESERVE_LEN, HEAD_ROOM, 4, 0);
+		/* TODO - Alloc nbuf based on payload_len in HTC Header */
+		rx_q_elem->nbuf = qdf_nbuf_alloc(NULL, HIF_SDIO_RX_BUFFER_SIZE,
+						 0, 4, false);
 		if (!rx_q_elem->nbuf) {
 			HIF_ERROR("%s: failed to alloc nbuf for rx", __func__);
 			qdf_mem_free(rx_q_elem);
@@ -739,7 +740,7 @@ void dl_data_avail_cb(struct sdio_al_channel_handle *ch_handle,
 	 * processed in the transfer done callback.
 	 */
 	/* TODO, use global buffer instead of runtime allocations */
-	nbuf = qdf_nbuf_alloc(NULL, len + RESERVE_LEN, HEAD_ROOM, 4, 0);
+	nbuf = qdf_nbuf_alloc(NULL, len, 0, 4, false);
 
 	if (!nbuf) {
 		HIF_ERROR("%s: Unable to alloc netbuf %u bytes", __func__, len);
@@ -749,6 +750,9 @@ void dl_data_avail_cb(struct sdio_al_channel_handle *ch_handle,
 	hif_read_write(dev, (unsigned long)ch_handle, nbuf->data, len,
 		       HIF_RD_ASYNC_BLOCK_FIX, nbuf);
 }
+
+#define is_pad_block(buf)	(*((uint32_t *)buf) == 0xbabababa)
+uint16_t g_dbg_payload_len;
 
 /**
  * dl_xfer_cb() - Call from lower layer after transfer is completed
@@ -764,7 +768,8 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 {
 	unsigned char *buf;
 	qdf_nbuf_t nbuf;
-	uint32_t len, payload_len = 0;
+	uint32_t len;
+	uint16_t payload_len = 0;
 	struct hif_sdio_dev *dev;
 	struct hif_sdio_device *device;
 	struct bus_request *bus_req = (struct bus_request *)ctx;
@@ -798,7 +803,7 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 	buf = (unsigned char *)result->buf_addr;
 	len = (unsigned int)result->xfer_len;
 
-	while (len > 0 && len >= sizeof(HTC_FRAME_HDR)) {
+	while (len >= sizeof(HTC_FRAME_HDR)) {
 		if (is_pad_block(buf)) {
 			/* End of Rx Buffer */
 			break;
@@ -812,18 +817,22 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 			break;
 		}
 
-		nbuf = hif_sdio_get_nbuf(dev);
-		if (!nbuf) {
-			HIF_ERROR("%s: failed to alloc rx buffer", __func__);
-			break;
-		}
-
 		/* Copy the HTC frame to the alloc'd packet buffer */
 		payload_len = HTC_GET_FIELD(buf, HTC_FRAME_HDR, PAYLOADLEN);
+		payload_len = qdf_le16_to_cpu(payload_len);
 		if (!payload_len) {
 			HIF_ERROR("%s:Invalid Payload len %d bytes", __func__,
 				  payload_len);
-			qdf_nbuf_free(nbuf);
+			break;
+		}
+		if (payload_len > g_dbg_payload_len) {
+			g_dbg_payload_len = payload_len;
+			HIF_ERROR("Max Rx HTC Payload = %d", g_dbg_payload_len);
+		}
+
+		nbuf = hif_sdio_get_nbuf(dev, payload_len + HTC_HEADER_LEN);
+		if (!nbuf) {
+			HIF_ERROR("%s: failed to alloc rx buffer", __func__);
 			break;
 		}
 
@@ -839,9 +848,9 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 		qdf_mem_copy((uint8_t *)qdf_nbuf_data(nbuf), buf,
 			     payload_len + HTC_HEADER_LEN);
 
-		qdf_nbuf_set_pktlen(nbuf, payload_len + HTC_HDR_LENGTH);
-		rx_completion(device->hif_callbacks.Context,
-			      nbuf,
+		qdf_nbuf_put_tail(nbuf, payload_len + HTC_HDR_LENGTH);
+
+		rx_completion(device->hif_callbacks.Context, nbuf,
 			      0); /* don't care, not used */
 
 		len -= payload_len + HTC_HDR_LENGTH;
