@@ -2780,7 +2780,7 @@ static void wmi_htc_log_pkt(void *ctx, HTC_PACKET *htc_pkt)
 	cmd_id = WMI_GET_FIELD(qdf_nbuf_data(wmi_cmd_buf), WMI_CMD_HDR,
 			       COMMANDID);
 
-	WMI_LOGI("WMI command from HTC packet: %s, ID: %d\n",
+	WMI_LOGD("WMI command from HTC packet: %s, ID: %d\n",
 		 wmi_id_to_name(cmd_id), cmd_id);
 }
 #else

@@ -4059,8 +4059,8 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
 	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING) {
-		HIF_INFO("Runtime PM resume is requested by %ps",
-			 (void *)_RET_IP_);
+		HIF_DBG("Runtime PM resume is requested by %ps",
+			(void *)_RET_IP_);
 		ret = -EAGAIN;
 	} else {
 		ret = -EBUSY;
