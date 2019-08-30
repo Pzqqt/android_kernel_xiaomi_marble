@@ -191,7 +191,7 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 	if (!cpumask_equal(&pSchedContext->rx_thread_cpu_mask, &new_mask)) {
 		cds_cfg = cds_get_ini_config();
 		cpumask_copy(&pSchedContext->rx_thread_cpu_mask, &new_mask);
-		if (cds_cfg->enable_dp_rx_threads)
+		if (cds_cfg && cds_cfg->enable_dp_rx_threads)
 			dp_txrx_set_cpu_mask(cds_get_context(QDF_MODULE_ID_SOC),
 					     &new_mask);
 		else
