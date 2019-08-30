@@ -27,6 +27,7 @@
 /* Include Files */
 #include <qdf_types.h>
 #include <i_qdf_mem.h>
+#include <i_qdf_trace.h>
 
 #define QDF_CACHE_LINE_SZ __qdf_cache_line_sz
 
@@ -621,7 +622,7 @@ static inline void qdf_update_mem_map_table(qdf_device_t osdev,
 					    uint32_t mem_size)
 {
 	if (!mem_info) {
-		__qdf_print("%s: NULL mem_info\n", __func__);
+		qdf_nofl_err("%s: NULL mem_info", __func__);
 		return;
 	}
 
@@ -818,8 +819,8 @@ static inline void qdf_mem_shared_mem_free(qdf_device_t osdev,
 					   qdf_shared_mem_t *shared_mem)
 {
 	if (!shared_mem) {
-		__qdf_print("%s: NULL shared mem struct passed\n",
-			    __func__);
+		qdf_nofl_err("%s: NULL shared mem struct passed",
+			     __func__);
 		return;
 	}
 

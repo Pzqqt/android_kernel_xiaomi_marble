@@ -329,7 +329,6 @@ enum __qdf_net_wireless_evcode {
 	__QDF_CUSTOM_PUSH_BUTTON = IWEVCUSTOM,
 };
 
-#define __qdf_print               printk
 #define __qdf_vprint              vprintk
 #define __qdf_snprint             snprintf
 #define __qdf_vsnprint            vsnprintf
