@@ -607,7 +607,8 @@ void sde_vdc_intf_prog_params(struct msm_display_vdc_info *vdc_info,
 	total_bytes_per_intf = bytes_in_slice * slice_per_intf;
 
 	vdc_info->eol_byte_num = total_bytes_per_intf % 3;
-	vdc_info->pclk_per_line =  DIV_ROUND_UP(total_bytes_per_intf, 3);
+	vdc_info->pclk_per_line =  DIV_ROUND_UP(total_bytes_per_intf,
+			3);
 	vdc_info->bytes_in_slice = bytes_in_slice;
 	vdc_info->bytes_per_pkt = bytes_in_slice * slice_per_pkt;
 	vdc_info->pkt_per_line = slice_per_intf / slice_per_pkt;

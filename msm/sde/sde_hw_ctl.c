@@ -65,6 +65,8 @@
 
 #define CTL_INVALID_BIT                0xffff
 
+#define VDC_IDX(i) ((i) +  16)
+
 #define UPDATE_ACTIVE(r, idx, en)  UPDATE_MASK((r), (idx), (en))
 
 /**
@@ -137,6 +139,11 @@ static const u32 intf_flush_tbl[INTF_MAX] = {SDE_NONE, 0, 1, 2, 3, 4, 5};
  * list of DSC bits in CTL_DSC_FLUSH
  */
 static const u32 dsc_flush_tbl[DSC_MAX] = {SDE_NONE, 0, 1, 2, 3, 4, 5};
+
+/**
+ * list of VDC bits in CTL_DSC_FLUSH
+ */
+static const u32 vdc_flush_tbl[DSC_MAX] = {SDE_NONE, 16, 17};
 
 /**
  * list of MERGE_3D bits in CTL_MERGE_3D_FLUSH
@@ -549,6 +556,26 @@ static inline int sde_hw_ctl_update_bitmask_dsc_v1(struct sde_hw_ctl *ctx,
 	}
 
 	UPDATE_MASK(ctx->flush.pending_dsc_flush_mask, dsc_flush_tbl[dsc],
+			enable);
+	if (ctx->flush.pending_dsc_flush_mask)
+		UPDATE_MASK(ctx->flush.pending_flush_mask, DSC_IDX, 1);
+	else
+		UPDATE_MASK(ctx->flush.pending_flush_mask, DSC_IDX, 0);
+	return 0;
+}
+
+static inline int sde_hw_ctl_update_bitmask_vdc(struct sde_hw_ctl *ctx,
+		enum sde_vdc vdc, bool enable)
+{
+	if (!ctx)
+		return -EINVAL;
+
+	if (!(vdc > SDE_NONE) || !(vdc < VDC_MAX)) {
+		SDE_ERROR("Unsupported vdc %d\n", vdc);
+		return -EINVAL;
+	}
+
+	UPDATE_MASK(ctx->flush.pending_dsc_flush_mask, vdc_flush_tbl[vdc],
 			enable);
 	if (ctx->flush.pending_dsc_flush_mask)
 		UPDATE_MASK(ctx->flush.pending_flush_mask, DSC_IDX, 1);
@@ -1169,6 +1196,7 @@ static int sde_hw_ctl_update_intf_cfg(struct sde_hw_ctl *ctx,
 	u32 merge_3d_active = 0;
 	u32 wb_active = 0;
 	u32 dsc_active = 0;
+	u32 vdc_active = 0;
 	struct sde_hw_blk_reg_map *c;
 
 	if (!ctx)
@@ -1213,6 +1241,16 @@ static int sde_hw_ctl_update_intf_cfg(struct sde_hw_ctl *ctx,
 		SDE_REG_WRITE(c, CTL_DSC_ACTIVE, dsc_active);
 	}
 
+	if (cfg->vdc_count) {
+		vdc_active = SDE_REG_READ(c, CTL_DSC_ACTIVE);
+		for (i = 0; i < cfg->vdc_count; i++) {
+			if (cfg->vdc[i])
+				UPDATE_ACTIVE(vdc_active,
+					VDC_IDX(cfg->vdc[i] - VDC_0), enable);
+		}
+
+		SDE_REG_WRITE(c, CTL_DSC_ACTIVE, vdc_active);
+	}
 	return 0;
 }
 
@@ -1367,6 +1405,7 @@ static void _setup_ctl_ops(struct sde_hw_ctl_ops *ops,
 		ops->update_bitmask_wb = sde_hw_ctl_update_bitmask_wb_v1;
 		ops->update_bitmask_intf = sde_hw_ctl_update_bitmask_intf_v1;
 		ops->update_bitmask_dsc = sde_hw_ctl_update_bitmask_dsc_v1;
+		ops->update_bitmask_vdc = sde_hw_ctl_update_bitmask_vdc;
 		ops->update_bitmask_merge3d =
 			sde_hw_ctl_update_bitmask_merge3d_v1;
 		ops->update_bitmask_cwb = sde_hw_ctl_update_bitmask_cwb_v1;

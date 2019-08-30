@@ -233,11 +233,13 @@ enum msm_display_compression_type {
  * @MSM_DISPLAY_COMPRESSION_NONE: no compression
  * @MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1: 2 to 1 compression
  * @MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1: 3 to 1 compression
+ * @MSM_DISPLAY_COMPRESSION_RATIO_4_TO_1: 4 to 1 compression
  */
 enum msm_display_compression_ratio {
 	MSM_DISPLAY_COMPRESSION_RATIO_NONE,
 	MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1,
 	MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1,
+	MSM_DISPLAY_COMPRESSION_RATIO_4_TO_1,
 	MSM_DISPLAY_COMPRESSION_RATIO_MAX,
 };
 
@@ -599,6 +601,8 @@ struct msm_display_vdc_info {
  * @comp_ratio:       compression ratio
  * @dsc_info:         dsc configuration if the compression
  *                    supported is DSC
+ * @vdc_info:         vdc configuration if the compression
+ *                    supported is VDC
  */
 struct msm_compression_info {
 	enum msm_display_compression_type comp_type;
@@ -606,6 +610,7 @@ struct msm_compression_info {
 
 	union{
 		struct msm_display_dsc_info dsc_info;
+		struct msm_display_vdc_info vdc_info;
 	};
 };
 

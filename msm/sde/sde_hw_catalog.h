@@ -87,6 +87,7 @@
 #define MAX_MERGE_3D_PER_CTL_V1             2
 #define MAX_WB_PER_CTL_V1                   1
 #define MAX_CDM_PER_CTL_V1                  1
+#define MAX_VDC_PER_CTL_V1                  1
 #define IS_SDE_CTL_REV_100(rev) \
 	((rev) == SDE_CTL_CFG_VERSION_1_0_0)
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -89,6 +89,10 @@ static void drm_mode_to_intf_timing_params(
 			timing->width = DIV_ROUND_UP(timing->width, 2);
 		else
 			timing->width = DIV_ROUND_UP(timing->width, 3);
+	} else if (phys_enc->hw_intf->cap->type != INTF_DP &&
+		vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_VDC) {
+		comp_ratio = vid_enc->base.comp_ratio;
+		timing->width = DIV_ROUND_UP(timing->width, comp_ratio);
 	}
 
 	timing->height = mode->vdisplay;	/* active height */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -503,6 +503,12 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 			sizeof(dsi_mode.priv_info->dsc));
 		mode_info->comp_info.comp_ratio =
 			MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1;
+	} else if (dsi_mode.priv_info->vdc_enabled) {
+		mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_VDC;
+		memcpy(&mode_info->comp_info.vdc_info, &dsi_mode.priv_info->vdc,
+			sizeof(dsi_mode.priv_info->vdc));
+		mode_info->comp_info.comp_ratio =
+			MSM_DISPLAY_COMPRESSION_RATIO_4_TO_1;
 	}
 
 	if (dsi_mode.priv_info->roi_caps.enabled) {
