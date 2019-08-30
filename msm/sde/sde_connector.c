@@ -759,6 +759,7 @@ int sde_connector_pre_kickoff(struct drm_connector *connector)
 	struct sde_connector *c_conn;
 	struct sde_connector_state *c_state;
 	struct msm_display_kickoff_params params;
+	struct dsi_display *display;
 	int rc;
 
 	if (!connector) {
@@ -772,6 +773,15 @@ int sde_connector_pre_kickoff(struct drm_connector *connector)
 		SDE_ERROR("invalid connector display\n");
 		return -EINVAL;
 	}
+
+	/*
+	 * During pre kickoff DCS commands have to have an
+	 * asynchronous wait to avoid an unnecessary stall
+	 * in pre-kickoff. This flag must be reset at the
+	 * end of display pre-kickoff.
+	 */
+	display = (struct dsi_display *)c_conn->display;
+	display->queue_cmd_waits = true;
 
 	rc = _sde_connector_update_dirty_properties(connector);
 	if (rc) {
@@ -789,6 +799,7 @@ int sde_connector_pre_kickoff(struct drm_connector *connector)
 
 	rc = c_conn->ops.pre_kickoff(connector, c_conn->display, &params);
 
+	display->queue_cmd_waits = false;
 end:
 	return rc;
 }

@@ -2699,6 +2699,12 @@ static int dsi_display_broadcast_cmd(struct dsi_display *display,
 		flags |= DSI_CTRL_CMD_LAST_COMMAND;
 		m_flags |= DSI_CTRL_CMD_LAST_COMMAND;
 	}
+
+	if (display->queue_cmd_waits) {
+		flags |= DSI_CTRL_CMD_ASYNC_WAIT;
+		m_flags |= DSI_CTRL_CMD_ASYNC_WAIT;
+	}
+
 	/*
 	 * 1. Setup commands in FIFO
 	 * 2. Trigger commands
@@ -2852,9 +2858,13 @@ static ssize_t dsi_host_transfer(struct mipi_dsi_host *host,
 	} else {
 		int ctrl_idx = (msg->flags & MIPI_DSI_MSG_UNICAST) ?
 				msg->ctrl : 0;
+		u32 cmd_flags = DSI_CTRL_CMD_FETCH_MEMORY;
+
+		if (display->queue_cmd_waits)
+			cmd_flags |= DSI_CTRL_CMD_ASYNC_WAIT;
 
 		rc = dsi_ctrl_cmd_transfer(display->ctrl[ctrl_idx].ctrl, msg,
-					  DSI_CTRL_CMD_FETCH_MEMORY);
+				cmd_flags);
 		if (rc) {
 			DSI_ERR("[%s] cmd transfer failed, rc=%d\n",
 			       display->name, rc);
@@ -3151,6 +3161,22 @@ int dsi_pre_clkoff_cb(void *priv,
 	struct dsi_display *display = priv;
 	struct dsi_display_ctrl *ctrl;
 
+
+	/*
+	 * If Idle Power Collapse occurs immediately after a CMD
+	 * transfer with an asynchronous wait for DMA done, ensure
+	 * that the work queued is scheduled and completed before turning
+	 * off the clocks and disabling interrupts to validate the command
+	 * transfer.
+	 */
+	display_for_each_ctrl(i, display) {
+		ctrl = &display->ctrl[i];
+		if (!ctrl->ctrl || !ctrl->ctrl->dma_wait_queued)
+			continue;
+		flush_workqueue(display->dma_cmd_workq);
+		cancel_work_sync(&ctrl->ctrl->dma_cmd_wait);
+		ctrl->ctrl->dma_wait_queued = false;
+	}
 	if ((clk & DSI_LINK_CLK) && (new_state == DSI_CLK_OFF) &&
 		(l_type & DSI_LINK_LP_CLK)) {
 		/*
@@ -4836,6 +4862,7 @@ static int dsi_display_bind(struct device *dev,
 			goto error_ctrl_deinit;
 		}
 
+		display_ctrl->ctrl->dma_cmd_workq = display->dma_cmd_workq;
 		memcpy(&info.c_clks[i],
 				(&display_ctrl->ctrl->clk_info.core_clks),
 				sizeof(struct dsi_core_clk_info));
@@ -5013,6 +5040,7 @@ static void dsi_display_unbind(struct device *dev,
 			DSI_ERR("[%s] failed to deinit phy%d driver, rc=%d\n",
 			       display->name, i, rc);
 
+		display->ctrl->ctrl->dma_cmd_workq = NULL;
 		rc = dsi_ctrl_drv_deinit(display_ctrl->ctrl);
 		if (rc)
 			DSI_ERR("[%s] failed to deinit ctrl%d driver, rc=%d\n",
@@ -5101,6 +5129,14 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 		goto end;
 	}
 
+	display->dma_cmd_workq = create_singlethread_workqueue(
+			"dsi_dma_cmd_workq");
+	if (!display->dma_cmd_workq)  {
+		DSI_ERR("failed to create work queue\n");
+		rc =  -EINVAL;
+		goto end;
+	}
+
 	display->display_type = of_get_property(pdev->dev.of_node,
 				"label", NULL);
 	if (!display->display_type)
@@ -5164,8 +5200,9 @@ end:
 
 int dsi_display_dev_remove(struct platform_device *pdev)
 {
-	int rc = 0;
+	int rc = 0i, i = 0;
 	struct dsi_display *display;
+	struct dsi_display_ctrl *ctrl;
 
 	if (!pdev) {
 		DSI_ERR("Invalid device\n");
@@ -5176,6 +5213,18 @@ int dsi_display_dev_remove(struct platform_device *pdev)
 
 	/* decrement ref count */
 	of_node_put(display->panel_node);
+
+	if (display->dma_cmd_workq) {
+		flush_workqueue(display->dma_cmd_workq);
+		destroy_workqueue(display->dma_cmd_workq);
+		display->dma_cmd_workq = NULL;
+		display_for_each_ctrl(i, display) {
+			ctrl = &display->ctrl[i];
+			if (!ctrl->ctrl)
+				continue;
+			ctrl->ctrl->dma_cmd_workq = NULL;
+		}
+	}
 
 	(void)_dsi_display_dev_deinit(display);
 
@@ -7003,7 +7052,7 @@ static int dsi_display_set_roi(struct dsi_display *display,
 		}
 
 		/* re-program the ctrl with the timing based on the new roi */
-		rc = dsi_ctrl_setup(ctrl->ctrl);
+		rc = dsi_ctrl_timing_setup(ctrl->ctrl);
 		if (rc) {
 			DSI_ERR("dsi_ctrl_setup failed rc %d\n", rc);
 			return rc;

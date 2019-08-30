@@ -182,6 +182,9 @@ struct dsi_display_ext_bridge {
  * @esd_trigger       field indicating ESD trigger through debugfs
  * @te_source         vsync source pin information
  * @clk_gating_config Clocks for which clock gating needs to be enabled
+ * @queue_cmd_waits   Indicates if wait for dma commands done has to be queued.
+ * @dma_cmd_workq:	Pointer to the workqueue of DMA command transfer done
+ *				wait sequence.
  */
 struct dsi_display {
 	struct platform_device *pdev;
@@ -266,6 +269,8 @@ struct dsi_display {
 
 	u32 te_source;
 	u32 clk_gating_config;
+	bool queue_cmd_waits;
+	struct workqueue_struct *dma_cmd_workq;
 };
 
 int dsi_display_dev_probe(struct platform_device *pdev);
