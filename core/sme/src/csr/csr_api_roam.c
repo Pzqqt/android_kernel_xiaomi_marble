@@ -441,7 +441,7 @@ static void csr_roam_link_down(struct mac_context *mac, uint32_t sessionId);
 static enum csr_cfgdot11mode
 csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac,
 				   struct csr_roam_profile *pProfile,
-				   uint8_t operationChn,
+				   uint32_t bss_op_ch_freq,
 				   enum band_info *pBand);
 static QDF_STATUS csr_roam_get_qos_info_from_bss(
 struct mac_context *mac, struct bss_description *bss_desc);
@@ -3955,7 +3955,7 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 					struct bss_description *bss_desc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t operationChannel = 0;
+	uint32_t bss_op_ch_freq = 0;
 	uint8_t qAPisEnabled = false;
 	/* SSID */
 	pBssConfig->SSID.length = 0;
@@ -3981,11 +3981,10 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	pBssConfig->band = mac->mlme_cfg->gen.band;
 	/* phymode */
 	if (pProfile->ChannelInfo.freq_list)
-		operationChannel = wlan_reg_freq_to_chan(
-			mac->pdev, pProfile->ChannelInfo.freq_list[0]);
-	pBssConfig->uCfgDot11Mode = csr_roam_get_phy_mode_band_for_bss(mac,
-						pProfile, operationChannel,
-						   &pBssConfig->band);
+		bss_op_ch_freq = pProfile->ChannelInfo.freq_list[0];
+	pBssConfig->uCfgDot11Mode = csr_roam_get_phy_mode_band_for_bss(
+						mac, pProfile, bss_op_ch_freq,
+						&pBssConfig->band);
 	/* QOS */
 	/* Is this correct to always set to this // *** */
 	if (pBssConfig->BssCap.ess == 1) {
@@ -4535,14 +4534,13 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 	uint8_t ExtendedOperationalRates
 				[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
 	qdf_size_t ExtendedOperationalRatesLength = 0;
-	uint8_t operationChannel = 0;
+	uint32_t bss_op_ch_freq = 0;
 
 	if (pProfile->ChannelInfo.freq_list)
-		operationChannel = wlan_reg_freq_to_chan(
-			mac->pdev, pProfile->ChannelInfo.freq_list[0]);
+		bss_op_ch_freq = pProfile->ChannelInfo.freq_list[0];
 	cfgDot11Mode = csr_roam_get_phy_mode_band_for_bss(mac, pProfile,
-							operationChannel,
-							&band);
+							  bss_op_ch_freq,
+							  &band);
 	/* For 11a networks, the 11a rates go into the Operational Rate set.
 	 * For 11b and 11g networks, the 11b rates appear in the Operational
 	 * Rate set. In either case, we can blindly put the rates we support
@@ -13077,10 +13075,10 @@ QDF_STATUS csr_process_del_vdev_command(struct mac_context *mac_ctx,
 
 /**
  * csr_compute_mode_and_band() - computes dot11mode
- * @mac:          mac global context
- * @dot11_mode:    out param, do11 mode calculated
- * @band:          out param, band caclculated
- * @opr_ch:        operating channels
+ * @mac: mac global context
+ * @dot11_mode: out param, do11 mode calculated
+ * @band: out param, band caclculated
+ * @opr_ch_freq: operating channel freq in MHz
  *
  * This function finds dot11 mode based on current mode, operating channel and
  * fw supported modes.
@@ -13091,7 +13089,7 @@ static void
 csr_compute_mode_and_band(struct mac_context *mac_ctx,
 			  enum csr_cfgdot11mode *dot11_mode,
 			  enum band_info *band,
-			  uint8_t opr_ch)
+			  uint32_t opr_ch_freq)
 {
 	bool vht_24_ghz = mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band;
 
@@ -13110,7 +13108,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		break;
 	case eCSR_CFG_DOT11_MODE_11N:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
-		*band = CSR_GET_BAND(opr_ch);
+		*band = CSR_GET_BAND(opr_ch_freq);
 		break;
 	case eCSR_CFG_DOT11_MODE_11AC:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
@@ -13118,7 +13116,8 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 			 * If the operating channel is in 2.4 GHz band, check
 			 * for INI item to disable VHT operation in 2.4 GHz band
 			 */
-			if (WLAN_REG_IS_24GHZ_CH(opr_ch) && !vht_24_ghz)
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(opr_ch_freq) &&
+			    !vht_24_ghz)
 				/* Disable 11AC operation */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 			else
@@ -13126,7 +13125,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		} else {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		}
-		*band = CSR_GET_BAND(opr_ch);
+		*band = CSR_GET_BAND(opr_ch_freq);
 		break;
 	case eCSR_CFG_DOT11_MODE_11AC_ONLY:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
@@ -13134,7 +13133,8 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 			 * If the operating channel is in 2.4 GHz band, check
 			 * for INI item to disable VHT operation in 2.4 GHz band
 			 */
-			if (WLAN_REG_IS_24GHZ_CH(opr_ch) && !vht_24_ghz)
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(opr_ch_freq) &&
+			    !vht_24_ghz)
 				/* Disable 11AC operation */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 			else
@@ -13142,7 +13142,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		} else {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		}
-		*band = CSR_GET_BAND(opr_ch);
+		*band = CSR_GET_BAND(opr_ch_freq);
 		break;
 	case eCSR_CFG_DOT11_MODE_11AX:
 	case eCSR_CFG_DOT11_MODE_11AX_ONLY:
@@ -13153,7 +13153,8 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 			 * If the operating channel is in 2.4 GHz band, check
 			 * for INI item to disable VHT operation in 2.4 GHz band
 			 */
-			if (WLAN_REG_IS_24GHZ_CH(opr_ch) && !vht_24_ghz)
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(opr_ch_freq) &&
+			    !vht_24_ghz)
 				/* Disable 11AC operation */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 			else
@@ -13161,7 +13162,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		} else {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		}
-		*band = CSR_GET_BAND(opr_ch);
+		*band = CSR_GET_BAND(opr_ch_freq);
 		break;
 	case eCSR_CFG_DOT11_MODE_AUTO:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
@@ -13172,8 +13173,8 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 			 * check for INI item to disable VHT operation
 			 * in 2.4 GHz band
 			 */
-			if (WLAN_REG_IS_24GHZ_CH(opr_ch)
-				&& !vht_24_ghz)
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(opr_ch_freq) &&
+			    !vht_24_ghz)
 				/* Disable 11AC operation */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 			else
@@ -13181,14 +13182,14 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		} else {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		}
-		*band = CSR_GET_BAND(opr_ch);
+		*band = CSR_GET_BAND(opr_ch_freq);
 		break;
 	default:
 		/*
 		 * Global dot11 Mode setting is 11a/b/g. use the channel number
 		 * to determine the Mode setting.
 		 */
-		if (eCSR_OPERATING_CHANNEL_AUTO == opr_ch) {
+		if (eCSR_OPERATING_CHANNEL_AUTO == opr_ch_freq) {
 			*band = mac_ctx->mlme_cfg->gen.band;
 			if (BAND_2G == *band) {
 				/*
@@ -13201,7 +13202,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 				*band = BAND_5G;
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 			}
-		} else if (WLAN_REG_IS_24GHZ_CH(opr_ch)) {
+		} else if (WLAN_REG_IS_24GHZ_CH_FREQ(opr_ch_freq)) {
 			/*
 			 * WiFi tests require IBSS networks to start in 11b mode
 			 * without any change to the default parameter settings
@@ -13235,8 +13236,8 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
  * information.
  * @mac_ctx:       mac global context
  * @profile:       bss profile
+ * @bss_op_ch_freq:operating channel freq in MHz
  * @band:          out param, band caclculated
- * @opr_ch:        operating channels
  *
  * This function finds dot11 mode based on current mode, operating channel and
  * fw supported modes. The only tricky part is that if phyMode is set to 11abg,
@@ -13248,16 +13249,21 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 static enum csr_cfgdot11mode
 csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 				   struct csr_roam_profile *profile,
-				   uint8_t opr_chn,
+				   uint32_t bss_op_ch_freq,
 				   enum band_info *p_band)
 {
 	enum band_info band;
-enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
+	uint8_t opr_chn = eCSR_OPERATING_CHANNEL_AUTO;
+	enum csr_cfgdot11mode curr_mode =
+		mac_ctx->roam.configParam.uCfgDot11Mode;
 	enum csr_cfgdot11mode cfg_dot11_mode =
-		csr_get_cfg_dot11_mode_from_csr_phy_mode(profile,
+		csr_get_cfg_dot11_mode_from_csr_phy_mode(
+			profile,
 			(eCsrPhyMode) profile->phyMode,
 			mac_ctx->roam.configParam.ProprietaryRatesEnabled);
 
+	if (bss_op_ch_freq)
+		opr_chn = wlan_reg_freq_to_chan(mac_ctx->pdev, bss_op_ch_freq);
 	/*
 	 * If the global setting for dot11Mode is set to auto/abg, we overwrite
 	 * the setting in the profile.
@@ -13268,7 +13274,7 @@ enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 	    || (eCSR_CFG_DOT11_MODE_AUTO == cfg_dot11_mode)
 	    || (eCSR_CFG_DOT11_MODE_ABG == cfg_dot11_mode)) {
 		csr_compute_mode_and_band(mac_ctx, &cfg_dot11_mode,
-					  &band, opr_chn);
+					  &band, bss_op_ch_freq);
 	} /* if( eCSR_CFG_DOT11_MODE_ABG == cfg_dot11_mode ) */
 	else {
 		/* dot11 mode is set, lets pick the band */
@@ -13280,18 +13286,18 @@ enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 				band = BAND_5G;
 			}
 		} else{
-			band = CSR_GET_BAND(opr_chn);
+			band = CSR_GET_BAND(bss_op_ch_freq);
 		}
 	}
 	if (p_band)
 		*p_band = band;
 
-	if (opr_chn == 14) {
+	if (opr_chn == 14 && wlan_reg_is_24ghz_ch_freq(bss_op_ch_freq)) {
 		sme_err("Switching to Dot11B mode");
 		cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11B;
 	}
 
-	if (IS_24G_CH(opr_chn) &&
+	if (wlan_reg_is_24ghz_ch_freq(bss_op_ch_freq) &&
 	    !mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
 	    (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode ||
 	    eCSR_CFG_DOT11_MODE_11AC_ONLY == cfg_dot11_mode))
@@ -13308,12 +13314,13 @@ enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 		    (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode) ||
 		    (eCSR_CFG_DOT11_MODE_11AX == cfg_dot11_mode))) {
 		/* We cannot do 11n here */
-		if (WLAN_REG_IS_24GHZ_CH(opr_chn))
+		if (wlan_reg_is_24ghz_ch_freq(bss_op_ch_freq))
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11G;
 		else
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 	}
-	sme_debug("dot11mode: %d", cfg_dot11_mode);
+	sme_debug("dot11mode: %d phyMode %d fw sup AX %d", cfg_dot11_mode,
+		  profile->phyMode, IS_FEATURE_SUPPORTED_BY_FW(DOT11AX));
 	return cfg_dot11_mode;
 }
 
@@ -13963,7 +13970,7 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 
 	pParam->uCfgDot11Mode =
 		csr_roam_get_phy_mode_band_for_bss(mac, pProfile,
-						   wlan_reg_freq_to_chan(mac->pdev, tmp_opr_ch_freq),
+						   tmp_opr_ch_freq,
 						   &band);
 
 	if (((pProfile->csrPersona == QDF_P2P_CLIENT_MODE)
@@ -14223,7 +14230,7 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 
 	pParam->uCfgDot11Mode =
 		csr_roam_get_phy_mode_band_for_bss(mac, pProfile,
-						   wlan_reg_freq_to_chan(mac->pdev, pParam->operation_chan_freq),
+						   pParam->operation_chan_freq,
 						   &band);
 	pParam->bssPersona = pProfile->csrPersona;
 

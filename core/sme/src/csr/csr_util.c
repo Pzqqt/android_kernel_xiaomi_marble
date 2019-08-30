@@ -1675,7 +1675,14 @@ QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 				phyMode = eCSR_DOT11_MODE_11ac;
 			if (pIes->he_cap.present)
 				phyMode = eCSR_DOT11_MODE_11ax;
+		} else if (WLAN_REG_IS_6GHZ_CHAN_FREQ(
+					pBSSDescription->chan_freq)) {
+			if (pIes->he_cap.present)
+				phyMode = eCSR_DOT11_MODE_11ax;
+			else
+				sme_debug("Warning - 6Ghz AP no he cap");
 		}
+
 		*pPhyMode = phyMode;
 	}
 
