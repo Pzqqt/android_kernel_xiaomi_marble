@@ -2040,7 +2040,7 @@ struct wlan_mlme_mwc {
  * @restart_beaconing_on_ch_avoid: restart beaconing on ch avoid
  * @indoor_channel_support: indoor channel support
  * @scan_11d_interval: scan 11d interval
- * @valid_channel_list: array for valid channel list
+ * @valid_channel_freq_list: array for valid channel list
  * @valid_channel_list_num: valid channel list number
  * @country_code: country code
  * @country_code_len: country code length
@@ -2056,7 +2056,7 @@ struct wlan_mlme_reg {
 		restart_beaconing_on_ch_avoid;
 	bool indoor_channel_support;
 	uint32_t scan_11d_interval;
-	uint8_t valid_channel_list[CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t valid_channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t valid_channel_list_num;
 	uint8_t country_code[CFG_COUNTRY_CODE_LEN + 1];
 	uint8_t country_code_len;

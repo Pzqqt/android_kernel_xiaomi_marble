@@ -3732,7 +3732,8 @@ ucfg_mlme_get_scan_11d_interval(struct wlan_objmgr_psoc *psoc,
 				uint32_t *value);
 
 /**
- * ucfg_mlme_get_valid_channel_list() - get valid channel list
+ * ucfg_mlme_get_valid_channel_freq_list() - get valid channel
+ * list
  * @psoc: pointer to psoc object
  * @channel_list: pointer to return channel list
  * @channel_list_num: pointer to return channel list number
@@ -3740,9 +3741,9 @@ ucfg_mlme_get_scan_11d_interval(struct wlan_objmgr_psoc *psoc,
  * Return: QDF Status
  */
 QDF_STATUS
-ucfg_mlme_get_valid_channel_list(struct wlan_objmgr_psoc *psoc,
-				 uint8_t *channel_list,
-				 uint32_t *channel_list_num);
+ucfg_mlme_get_valid_channel_freq_list(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *channel_list,
+				      uint32_t *channel_list_num);
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /**
