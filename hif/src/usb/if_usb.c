@@ -194,8 +194,6 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 	u32 hif_type;
 	u32 target_type;
 
-	usb_get_dev(usbdev);
-
 	if (!scn) {
 		HIF_ERROR("%s: hif_ctx is NULL", __func__);
 		goto err_usb;
@@ -229,6 +227,7 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 	 * by CNSS driver.
 	 */
 	if (target_type != TARGET_TYPE_QCN7605) {
+		usb_get_dev(usbdev);
 		if ((usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
 				     USB_REQ_SET_CONFIGURATION, 0, 1, 0,
 				     NULL, 0, HZ)) < 0) {
@@ -271,7 +270,8 @@ err_reset:
 		unregister_reboot_notifier(&sc->reboot_notifier);
 err_usb:
 	ret = QDF_STATUS_E_FAILURE;
-	usb_put_dev(usbdev);
+	if (target_type != TARGET_TYPE_QCN7605)
+		usb_put_dev(usbdev);
 	return ret;
 }
 
@@ -305,7 +305,8 @@ void hif_usb_disable_bus(struct hif_softc *hif_ctx)
 	/* disable lpm to avoid following cold reset will
 	 * cause xHCI U1/U2 timeout
 	 */
-	usb_disable_lpm(udev);
+	if (tgt_info->target_type != TARGET_TYPE_QCN7605)
+		usb_disable_lpm(udev);
 
 	/* wait for disable lpm */
 	set_current_state(TASK_INTERRUPTIBLE);
@@ -318,10 +319,10 @@ void hif_usb_disable_bus(struct hif_softc *hif_ctx)
 	if (g_usb_sc->suspend_state)
 		hif_bus_resume(GET_HIF_OPAQUE_HDL(hif_ctx));
 
-	if (tgt_info->target_type != TARGET_TYPE_QCN7605)
+	if (tgt_info->target_type != TARGET_TYPE_QCN7605) {
 		unregister_reboot_notifier(&sc->reboot_notifier);
-
-	usb_put_dev(interface_to_usbdev(interface));
+		usb_put_dev(udev);
+	}
 
 	hif_usb_device_deinit(sc);
 
