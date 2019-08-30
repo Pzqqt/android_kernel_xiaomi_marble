@@ -1771,7 +1771,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 			 * to ICS UI.
 			 */
 			if (eCSR_ROAM_LOSTLINK == roam_status) {
-				if (roam_info->reasonCode ==
+				if (roam_info && roam_info->reasonCode ==
 				    eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON)
 					pr_info("wlan: disconnected due to poor signal, rssi is %d dB\n",
 						roam_info->rxRssi);
