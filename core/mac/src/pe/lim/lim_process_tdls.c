@@ -205,8 +205,11 @@ static void populate_dot11f_tdls_offchannel_params(
 	uint8_t nss_5g;
 
 	numChans = mac->mlme_cfg->reg.valid_channel_list_num;
-	qdf_mem_copy(validChan, mac->mlme_cfg->reg.valid_channel_list,
-		     mac->mlme_cfg->reg.valid_channel_list_num);
+
+	for (i = 0; i < mac->mlme_cfg->reg.valid_channel_list_num; i++) {
+		validChan[i] = wlan_reg_freq_to_chan(mac->pdev,
+						     mac->mlme_cfg->reg.valid_channel_freq_list[i]);
+	}
 
 	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq))
 		band = BAND_5G;

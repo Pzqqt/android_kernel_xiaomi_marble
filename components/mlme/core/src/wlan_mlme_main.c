@@ -2270,6 +2270,9 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_reg *reg)
 {
 	qdf_size_t valid_channel_list_num = 0;
+	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t i;
+	struct wlan_objmgr_pdev *pdev = NULL;
 
 	reg->self_gen_frm_pwr = cfg_get(psoc, CFG_SELF_GEN_FRM_PWR);
 	reg->etsi13_srd_chan_in_master_mode =
@@ -2281,10 +2284,23 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 						CFG_ENABLE_11D_IN_WORLD_MODE);
 	reg->scan_11d_interval = cfg_get(psoc, CFG_SCAN_11D_INTERVAL);
 	qdf_uint8_array_parse(cfg_default(CFG_VALID_CHANNEL_LIST),
-			      reg->valid_channel_list,
+			      channel_list,
 			      CFG_VALID_CHANNEL_LIST_LEN,
 			      &valid_channel_list_num);
 	reg->valid_channel_list_num = (uint8_t)valid_channel_list_num;
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_MLME_NB_ID);
+	if (!pdev) {
+		mlme_legacy_err("null pdev");
+		return;
+	}
+
+	for (i = 0; i < valid_channel_list_num; i++)
+		reg->valid_channel_freq_list[i] =
+			wlan_reg_chan_to_freq(pdev, channel_list[i]);
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_NB_ID);
+
 	qdf_str_lcopy(reg->country_code, cfg_default(CFG_COUNTRY_CODE),
 		      sizeof(reg->country_code));
 	reg->country_code_len = (uint8_t)sizeof(reg->country_code);

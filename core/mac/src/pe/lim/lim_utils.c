@@ -4427,8 +4427,6 @@ void lim_add_channel_status_info(struct mac_context *p_mac,
 bool lim_is_channel_valid_for_channel_switch(struct mac_context *mac, uint8_t channel)
 {
 	uint8_t index;
-	uint32_t validChannelListLen = CFG_VALID_CHANNEL_LIST_LEN;
-	tSirMacChanNum validChannelList[CFG_VALID_CHANNEL_LIST_LEN];
 	bool ok = false;
 
 	if (policy_mgr_is_chan_ok_for_dnbs(mac->psoc, channel, &ok)) {
@@ -4441,11 +4439,9 @@ bool lim_is_channel_valid_for_channel_switch(struct mac_context *mac, uint8_t ch
 		return false;
 	}
 
-	validChannelListLen = mac->mlme_cfg->reg.valid_channel_list_num;
-	qdf_mem_copy(validChannelList, mac->mlme_cfg->reg.valid_channel_list,
-		     mac->mlme_cfg->reg.valid_channel_list_num);
-	for (index = 0; index < validChannelListLen; index++) {
-		if (validChannelList[index] != channel)
+	for (index = 0; index < mac->mlme_cfg->reg.valid_channel_list_num; index++) {
+		if (mac->mlme_cfg->reg.valid_channel_freq_list[index] !=
+		    wlan_reg_chan_to_freq(mac->pdev, channel))
 			continue;
 
 		ok = policy_mgr_is_valid_for_channel_switch(mac->psoc,

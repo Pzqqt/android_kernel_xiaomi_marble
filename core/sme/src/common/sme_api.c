@@ -1130,6 +1130,7 @@ QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
 {
 	struct mac_context *mac_ctx = sme_get_mac_context();
 	uint32_t num_valid_chan;
+	uint8_t i;
 
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -1146,8 +1147,10 @@ QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
 		num_valid_chan = *list_len;
 	}
 	*list_len = num_valid_chan;
-	qdf_mem_copy(chan_list, mac_ctx->mlme_cfg->reg.valid_channel_list,
-		     *list_len);
+	for (i = 0; i < *list_len; i++) {
+		chan_list[i] = wlan_reg_freq_to_chan(mac_ctx->pdev,
+						     mac_ctx->mlme_cfg->reg.valid_channel_freq_list[i]);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -14695,7 +14695,7 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 					       int channel)
 {
 	uint32_t num_ch = 0;
-	u8 valid_ch[CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t valid_ch[CFG_VALID_CHANNEL_LIST_LEN];
 	u32 indx = 0;
 	bool is_valid_channel = false;
 	uint8_t count;
@@ -14721,10 +14721,11 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
-		ucfg_mlme_get_valid_channel_list(hdd_ctx->psoc, valid_ch,
-						 &num_ch);
+		ucfg_mlme_get_valid_channel_freq_list(hdd_ctx->psoc, valid_ch,
+						      &num_ch);
 		for (indx = 0; indx < num_ch; indx++) {
-			if (channel == valid_ch[indx])
+			if (channel ==
+				wlan_reg_freq_to_chan(hdd_ctx->pdev, valid_ch[indx]))
 				break;
 		}
 
@@ -19685,7 +19686,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	if (NULL !=
 		params->chandef.chan) {
 		uint32_t numChans = CFG_VALID_CHANNEL_LIST_LEN;
-		uint8_t validChan[CFG_VALID_CHANNEL_LIST_LEN];
+		uint32_t validChan[CFG_VALID_CHANNEL_LIST_LEN];
 		int indx;
 
 		/* Get channel number */
@@ -19694,11 +19695,12 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 			chandef.
 			chan->
 			center_freq);
-		ucfg_mlme_get_valid_channel_list(hdd_ctx->psoc, validChan,
-						 &numChans);
+		ucfg_mlme_get_valid_channel_freq_list(hdd_ctx->psoc, validChan,
+						      &numChans);
 
 		for (indx = 0; indx < numChans; indx++) {
-			if (channelNum == validChan[indx])
+			if (channelNum ==
+				wlan_reg_freq_to_chan(hdd_ctx->pdev, validChan[indx]))
 				break;
 		}
 		if (indx >= numChans) {

@@ -1460,14 +1460,18 @@ static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
 					   uint8_t NumChannels)
 {
 	QDF_STATUS status;
+	uint8_t i;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: dump valid channel list(NumChannels(%d))",
 		  __func__, NumChannels);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			   pChannelList, NumChannels);
-	qdf_mem_copy(mac->mlme_cfg->reg.valid_channel_list, pChannelList,
-		     NumChannels);
+	for (i = 0; i < NumChannels; i++) {
+		mac->mlme_cfg->reg.valid_channel_freq_list[i] =
+			wlan_reg_chan_to_freq(mac->pdev, pChannelList[i]);
+	}
+
 	mac->mlme_cfg->reg.valid_channel_list_num = NumChannels;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

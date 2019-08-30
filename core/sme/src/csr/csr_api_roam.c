@@ -13370,14 +13370,15 @@ QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac, uint8_t *pChannel
 {
 	uint8_t num_chan_temp = 0;
 	int i;
+	uint8_t chan;
 
 	*pNumChan = (uint32_t)mac->mlme_cfg->reg.valid_channel_list_num;
-	qdf_mem_copy(pChannels, mac->mlme_cfg->reg.valid_channel_list,
-		     *pNumChan);
 
 	for (i = 0; i < *pNumChan; i++) {
-		if (!wlan_reg_is_dsrc_chan(mac->pdev, pChannels[i])) {
-			pChannels[num_chan_temp] = pChannels[i];
+		chan = wlan_reg_freq_to_chan(mac->pdev,
+					     mac->mlme_cfg->reg.valid_channel_freq_list[i]);
+		if (!wlan_reg_is_dsrc_chan(mac->pdev, chan)) {
+			pChannels[num_chan_temp] = chan;
 			num_chan_temp++;
 		}
 	}
@@ -13392,13 +13393,12 @@ QDF_STATUS csr_get_cfg_valid_freqs(struct mac_context *mac,
 {
 	uint8_t num_chan_temp = 0;
 	int i;
-	uint8_t chan;
+	uint32_t chan;
 
 	for (i = 0; i < mac->mlme_cfg->reg.valid_channel_list_num; i++) {
-		chan = mac->mlme_cfg->reg.valid_channel_list[i];
-		if (!wlan_reg_is_dsrc_chan(mac->pdev, chan)) {
-			freq_list[num_chan_temp] =
-				wlan_reg_chan_to_freq(mac->pdev, chan);
+		chan = mac->mlme_cfg->reg.valid_channel_freq_list[i];
+		if (!wlan_reg_is_dsrc_chan(mac->pdev, wlan_reg_freq_to_chan(mac->pdev, chan))) {
+			freq_list[num_chan_temp] = chan;
 			num_chan_temp++;
 		}
 	}
