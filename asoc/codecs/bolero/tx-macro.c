@@ -119,6 +119,12 @@ enum {
 	VA_MCLK,
 };
 
+struct tx_macro_reg_mask_val {
+	u16 reg;
+	u8 mask;
+	u8 val;
+};
+
 struct tx_mute_work {
 	struct tx_macro_priv *tx_priv;
 	u32 decimator;
@@ -2013,6 +2019,10 @@ undefined_rate:
 	return dmic_sample_rate;
 }
 
+static const struct tx_macro_reg_mask_val tx_macro_reg_init[] = {
+	{BOLERO_CDC_TX0_TX_PATH_SEC7, 0x3F, 0x0E},
+};
+
 static int tx_macro_init(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm =
@@ -2092,8 +2102,12 @@ static int tx_macro_init(struct snd_soc_component *component)
 	}
 	tx_priv->component = component;
 
-	snd_soc_component_update_bits(component,
-		BOLERO_CDC_TX0_TX_PATH_SEC7, 0x3F, 0x0E);
+	for (i = 0; i < ARRAY_SIZE(tx_macro_reg_init); i++)
+		snd_soc_component_update_bits(component,
+				tx_macro_reg_init[i].reg,
+				tx_macro_reg_init[i].mask,
+				tx_macro_reg_init[i].val);
+
 	return 0;
 }
 
