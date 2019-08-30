@@ -1804,7 +1804,8 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	if (mac_ctx->lim.stop_roaming_callback)
 		mac_ctx->lim.stop_roaming_callback(mac_ctx,
 						   session_entry->smeSessionId,
-						   ecsr_driver_disabled);
+						   REASON_DRIVER_DISABLED,
+						   RSO_CHANNEL_SWITCH);
 
 	lim_prepare_for11h_channel_switch(mac_ctx, session_entry);
 

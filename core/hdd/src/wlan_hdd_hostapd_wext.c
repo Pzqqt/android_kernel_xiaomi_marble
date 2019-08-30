@@ -527,14 +527,14 @@ static __iw_softap_setparam(struct net_device *dev,
 		 * Disable Roaming on all adapters before start of
 		 * start of Hidden ssid connection
 		 */
-		wlan_hdd_disable_roaming(adapter);
+		wlan_hdd_disable_roaming(adapter, RSO_START_BSS);
 
 		status = sme_update_session_param(mac_handle,
 				adapter->vdev_id,
 				SIR_PARAM_SSID_HIDDEN, set_value);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("QCSAP_PARAM_HIDE_SSID failed");
-			wlan_hdd_enable_roaming(adapter);
+			wlan_hdd_enable_roaming(adapter, RSO_START_BSS);
 			return -EIO;
 		}
 		break;

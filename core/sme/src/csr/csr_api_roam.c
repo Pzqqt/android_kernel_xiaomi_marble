@@ -7232,6 +7232,11 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 	} else {
 		sme_warn("Roam command doesn't have a BSS desc");
 	}
+
+	if (csr_roam_is_sta_mode(mac_ctx, session_id))
+		csr_post_roam_state_change(mac_ctx, session_id, ROAM_INIT,
+					   REASON_CONNECT);
+
 	/* Not to signal link up because keys are yet to be set.
 	 * The linkup function will overwrite the sub-state that
 	 * we need to keep at this point.
@@ -7643,8 +7648,6 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 	pDstProfile->cfg_protection = pSrcProfile->cfg_protection;
 	pDstProfile->wps_state = pSrcProfile->wps_state;
 	pDstProfile->ieee80211d = pSrcProfile->ieee80211d;
-	pDstProfile->supplicant_disabled_roaming =
-		pSrcProfile->supplicant_disabled_roaming;
 	qdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
 		sizeof(pDstProfile->Keys));
 #ifdef WLAN_FEATURE_11W
@@ -10389,9 +10392,8 @@ csr_update_key_cmd(struct mac_context *mac_ctx, struct csr_roam_session *session
 		 * KRK and BTK are updated by upper layer back to back. Send
 		 * updated KRK and BTK together to FW here.
 		 */
-		csr_roam_offload_scan(mac_ctx, session->sessionId,
-				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				      REASON_ROAM_PSK_PMK_CHANGED);
+		csr_roam_update_cfg(mac_ctx, session->sessionId,
+				    REASON_ROAM_PSK_PMK_CHANGED);
 		break;
 #endif
 #endif /* FEATURE_WLAN_ESE */
@@ -14465,9 +14467,8 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint32_t sessionId,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	csr_roam_offload_scan(mac, sessionId,
-			      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-			      REASON_ROAM_PSK_PMK_CHANGED);
+	csr_roam_update_cfg(mac, sessionId, REASON_ROAM_PSK_PMK_CHANGED);
+
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
@@ -18122,10 +18123,12 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 			req_buf->middle_of_roaming = 1;
 		else
 			csr_roam_reset_roam_params(mac_ctx);
+
 		req_buf->RoamScanOffloadEnabled = 0;
 	} else if (command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) {
-		req_buf->RoamScanOffloadEnabled =
-			roam_info->b_roam_scan_offload_started;
+		if (mlme_get_roam_state(mac_ctx->psoc, session_id) ==
+		    ROAM_RSO_STARTED)
+			req_buf->RoamScanOffloadEnabled = 1;
 	} else {
 		req_buf->RoamScanOffloadEnabled =
 			mac_ctx->mlme_cfg->lfr.roam_scan_offload_enabled;
@@ -18609,69 +18612,6 @@ csr_add_rssi_reject_ap_list(struct mac_context *mac_ctx,
 	}
 
 	qdf_mem_free(reject_list);
-}
-
-/*
- * Below Table describe whether RSO command can be send down to fimrware or not.
- * Host check it on the basis of previous RSO command sent down to firmware.
- * ||=========================================================================||
- * || New cmd        |            LAST SENT COMMAND --->                      ||
- * ||====|====================================================================||
- * ||    V           | START | STOP | RESTART | UPDATE_CFG| ABORT_SCAN        ||
- * || ------------------------------------------------------------------------||
- * || RSO_START      | NO    | YES  |  NO     | YES       | NO                ||
- * || RSO_STOP       | YES   | YES  |  YES    | YES       | YES               ||
- * || RSO_RESTART    | YES   | YES  |  NO     | YES       | YES               ||
- * || RSO_UPDATE_CFG | YES   | NO   |  YES    | YES       | YES               ||
- * || RSO_ABORT_SCAN | YES   | NO   |  YES    | YES       | YES               ||
- * ||=========================================================================||
- **/
-#define RSO_START_BIT       (1<<ROAM_SCAN_OFFLOAD_START)
-#define RSO_STOP_BIT        (1<<ROAM_SCAN_OFFLOAD_STOP)
-#define RSO_RESTART_BIT     (1<<ROAM_SCAN_OFFLOAD_RESTART)
-#define RSO_UPDATE_CFG_BIT  (1<<ROAM_SCAN_OFFLOAD_UPDATE_CFG)
-#define RSO_ABORT_SCAN_BIT  (1<<ROAM_SCAN_OFFLOAD_ABORT_SCAN)
-#define RSO_START_ALLOW_MASK   (RSO_STOP_BIT | RSO_UPDATE_CFG_BIT)
-#define RSO_STOP_ALLOW_MASK    (RSO_UPDATE_CFG_BIT | RSO_RESTART_BIT | \
-		RSO_STOP_BIT | RSO_START_BIT | RSO_ABORT_SCAN_BIT)
-#define RSO_RESTART_ALLOW_MASK (RSO_UPDATE_CFG_BIT | RSO_START_BIT | \
-		RSO_ABORT_SCAN_BIT | RSO_RESTART_BIT)
-#define RSO_UPDATE_CFG_ALLOW_MASK  (RSO_UPDATE_CFG_BIT | RSO_STOP_BIT | \
-		RSO_START_BIT | RSO_ABORT_SCAN_BIT)
-#define RSO_ABORT_SCAN_ALLOW_MASK (RSO_START_BIT | RSO_RESTART_BIT | \
-		RSO_UPDATE_CFG_BIT | RSO_ABORT_SCAN_BIT)
-
-static bool csr_is_RSO_cmd_allowed(struct mac_context *mac_ctx,
-	uint8_t command, uint8_t session_id)
-{
-	tpCsrNeighborRoamControlInfo neigh_roam_info =
-		&mac_ctx->roam.neighborRoamInfo[session_id];
-	uint8_t desiredMask = 0;
-	bool ret_val;
-
-	switch (command) {
-	case ROAM_SCAN_OFFLOAD_START:
-		desiredMask = RSO_START_ALLOW_MASK;
-		break;
-	case ROAM_SCAN_OFFLOAD_STOP:
-		desiredMask = RSO_STOP_ALLOW_MASK;
-		break;
-	case ROAM_SCAN_OFFLOAD_RESTART:
-		desiredMask = RSO_RESTART_ALLOW_MASK;
-		break;
-	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
-		desiredMask = RSO_UPDATE_CFG_ALLOW_MASK;
-		break;
-	case ROAM_SCAN_OFFLOAD_ABORT_SCAN:
-		desiredMask = RSO_ABORT_SCAN_ALLOW_MASK;
-		break;
-	default:
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			("Wrong RSO command %d, not allowed"), command);
-		return 0;/*Cmd Not allowed*/
-	}
-	ret_val = desiredMask & (1 << neigh_roam_info->last_sent_cmd);
-	return ret_val;
 }
 
 /*
@@ -19260,7 +19200,7 @@ csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 		csr_roam_reset_roam_params(mac);
 
 	/*
-	 * Disable offload_11k_params and btm_offload_config for current
+	 * Disable offload_11k_params for current
 	 * vdev
 	 */
 	req->offload_11k_params.vdev_id = vdev_id;
@@ -19579,47 +19519,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((command == ROAM_SCAN_OFFLOAD_START ||
-	    command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) &&
-	    (session->pCurRoamProfile &&
-	    session->pCurRoamProfile->driver_disabled_roaming)) {
-		if (reason == REASON_DRIVER_ENABLED) {
-			session->pCurRoamProfile->driver_disabled_roaming =
-									false;
-			sme_debug("driver_disabled_roaming reset for session %d",
-				  session_id);
-		} else {
-			sme_debug("Roam start received for session %d on which driver has disabled roaming",
-				  session_id);
-			return QDF_STATUS_E_FAILURE;
-		}
-	}
-
-	if ((ROAM_SCAN_OFFLOAD_START == command &&
-	    REASON_CTX_INIT != reason) &&
-	    (session->pCurRoamProfile &&
-	    session->pCurRoamProfile->supplicant_disabled_roaming)) {
-		sme_debug("Supplicant disabled driver roaming");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (0 == csr_roam_is_roam_offload_scan_enabled(mac_ctx)) {
-		sme_err("isRoamOffloadScanEnabled not set");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (!csr_is_RSO_cmd_allowed(mac_ctx, command, session_id)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			("RSO out-of-sync command %d lastSentCmd %d"),
-			command, roam_info->last_sent_cmd);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if ((true == roam_info->b_roam_scan_offload_started)
-	    && (ROAM_SCAN_OFFLOAD_START == command)) {
-		sme_err("Roam Scan Offload is already started");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	if (session->pCurRoamProfile)
 		roam_profile_akm =
 			session->pCurRoamProfile->AuthType.authType[0];
@@ -19688,9 +19587,7 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	 *    because we need to inform firmware of blacklisted AP for PNO in
 	 *    all states.
 	 */
-
-	if ((roam_info->neighborRoamState ==
-	     eCSR_NEIGHBOR_ROAM_STATE_INIT) &&
+	if ((roam_info->neighborRoamState == eCSR_NEIGHBOR_ROAM_STATE_INIT) &&
 	    (command != ROAM_SCAN_OFFLOAD_STOP) &&
 	    (reason != REASON_ROAM_SET_BLACKLIST_BSSID)) {
 		state = mac_trace_get_neighbour_roam_state(
@@ -19840,12 +19737,12 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	else
 		req_buf->hi_rssi_scan_rssi_delta =
 			roam_info->cfgParams.hi_rssi_scan_rssi_delta;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		"hi_rssi:delta=%d, max_count=%d, delay=%d, ub=%d",
-			req_buf->hi_rssi_scan_rssi_delta,
-			req_buf->hi_rssi_scan_max_count,
-			req_buf->hi_rssi_scan_delay,
-			req_buf->hi_rssi_scan_rssi_ub);
+
+	sme_debug("hi_rssi:delta=%d, max_count=%d, delay=%d, ub=%d",
+		  req_buf->hi_rssi_scan_rssi_delta,
+		  req_buf->hi_rssi_scan_max_count,
+		  req_buf->hi_rssi_scan_delay,
+		  req_buf->hi_rssi_scan_rssi_ub);
 
 	if (command != ROAM_SCAN_OFFLOAD_STOP) {
 		req_buf->assoc_ie.length = session->nAddIEAssocLength;
@@ -19871,11 +19768,7 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			req_buf->assoc_ie.addIEdata, req_buf->assoc_ie.length);
 
-	prev_roaming_state = roam_info->b_roam_scan_offload_started;
-	if (ROAM_SCAN_OFFLOAD_START == command)
-		roam_info->b_roam_scan_offload_started = true;
-	else if (ROAM_SCAN_OFFLOAD_STOP == command)
-		roam_info->b_roam_scan_offload_started = false;
+	prev_roaming_state = mlme_get_roam_state(mac_ctx->psoc, session_id);
 	policy_mgr_set_pcl_for_existing_combo(mac_ctx->psoc, PM_STA_MODE);
 
 	if (!QDF_IS_STATUS_SUCCESS(
@@ -19883,7 +19776,8 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post message to PE",
 			  __func__);
-		roam_info->b_roam_scan_offload_started = prev_roaming_state;
+		mlme_set_roam_state(mac_ctx->psoc, session_id,
+				    prev_roaming_state);
 		policy_mgr_set_pcl_for_existing_combo(mac_ctx->psoc,
 						      PM_STA_MODE);
 		return QDF_STATUS_E_FAILURE;
@@ -21546,9 +21440,8 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		policy_mgr_check_concurrent_intf_and_restart_sap(mac_ctx->psoc);
 		if (roam_synch_data->authStatus ==
 		    CSR_ROAM_AUTH_STATUS_AUTHENTICATED)
-			csr_roam_offload_scan(mac_ctx, session_id,
-					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-					      REASON_CONNECT);
+			csr_roam_update_cfg(mac_ctx, session_id,
+					    REASON_CONNECT);
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				       eCSR_ROAM_SYNCH_COMPLETE,
 				       eCSR_ROAM_RESULT_SUCCESS);

@@ -5492,9 +5492,8 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 	csr_session = CSR_GET_SESSION(mac, sessionId);
 	if ((csr_session) && (csr_session->pCurRoamProfile) &&
 	    (csr_session->pCurRoamProfile->csrPersona == QDF_STA_MODE))
-		csr_roam_offload_scan(mac, sessionId,
-				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				      REASON_CONNECT_IES_CHANGED);
+		csr_roam_update_cfg(mac, sessionId,
+				    REASON_CONNECT_IES_CHANGED);
 
 	(void)sme_qos_process_buffered_cmd(sessionId);
 	return QDF_STATUS_SUCCESS;

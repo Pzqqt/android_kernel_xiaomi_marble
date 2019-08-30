@@ -208,6 +208,7 @@ QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(struct mac_context *mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS preauth_processed = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamBSSInfo preauth_rsp_node = NULL;
+	uint8_t reason;
 
 	if (false == neighbor_roam_info->FTRoamInfo.preauthRspPending) {
 		/*
@@ -337,15 +338,22 @@ NEXT_PREAUTH:
 			goto DEQ_PREAUTH;
 ABORT_PREAUTH:
 		if (csr_roam_is_roam_offload_scan_enabled(mac_ctx)) {
+			reason = REASON_PREAUTH_FAILED_FOR_ALL;
 			if (neighbor_roam_info->uOsRequestedHandoff) {
 				neighbor_roam_info->uOsRequestedHandoff = 0;
-				csr_roam_offload_scan(mac_ctx, session_id,
-					ROAM_SCAN_OFFLOAD_START,
-					REASON_PREAUTH_FAILED_FOR_ALL);
+				csr_post_roam_state_change(mac_ctx, session_id,
+							   ROAM_RSO_STARTED,
+							   reason);
 			} else {
+				/* ROAM_SCAN_OFFLOAD_RESTART is a
+				 * special command to trigger bmiss
+				 * handler internally for LFR2 all candidate
+				 * preauth failure.
+				 * This should be decoupled from RSO.
+				 */
 				csr_roam_offload_scan(mac_ctx, session_id,
-					ROAM_SCAN_OFFLOAD_RESTART,
-					REASON_PREAUTH_FAILED_FOR_ALL);
+						      ROAM_SCAN_OFFLOAD_RESTART,
+						      reason);
 			}
 			csr_neighbor_roam_state_transition(mac_ctx,
 				eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);

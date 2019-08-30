@@ -4190,6 +4190,34 @@ hdd_send_roam_triggers_to_sme(struct hdd_context *hdd_ctx,
 {
 	QDF_STATUS status;
 	struct roam_triggers triggers;
+	struct hdd_adapter *adapter;
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("adapter NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_err("Roam trigger bitmap supported only in STA mode");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/*
+	 * In standalone STA, if this vendor command is received between
+	 * ROAM_START and roam synch indication, it is better to reject
+	 * roam disable since driver would send vdev_params command to
+	 * de-initialize roaming structures in fw.
+	 * In STA+STA mode, if this vendor command to enable roaming is
+	 * received for one STA vdev and ROAM_START was received for other
+	 * STA vdev, then also driver would be send vdev_params command to
+	 * de-initialize roaming structures in fw on the roaming enabled
+	 * vdev.
+	 */
+	if (hdd_ctx->roaming_in_progress) {
+		hdd_err("Reject set roam trigger as roaming is in progress");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	triggers.vdev_id = vdev_id;
 	triggers.trigger_bitmap = roam_trigger_bitmap;
@@ -17654,7 +17682,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	}
 
 	/* Disable roaming on all other adapters before connect start */
-	wlan_hdd_disable_roaming(adapter);
+	wlan_hdd_disable_roaming(adapter, RSO_CONNECT_START);
 
 	hdd_notify_teardown_tdls_links(hdd_ctx->psoc);
 
@@ -17987,7 +18015,7 @@ ret_status:
 	 * For success case, it is enabled in assoc completion handler
 	 */
 	if (status)
-		wlan_hdd_enable_roaming(adapter);
+		wlan_hdd_enable_roaming(adapter, RSO_CONNECT_START);
 
 	hdd_exit();
 	return status;
@@ -19871,8 +19899,8 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 	if (adapter->device_mode ==  QDF_STA_MODE) {
 		hdd_debug("Stop firmware roaming");
 		sme_stop_roaming(mac_handle, adapter->vdev_id,
-				 eCsrForcedDisassoc);
-
+				 REASON_DRIVER_DISABLED,
+				 RSO_INVALID_REQUESTOR);
 		/*
 		 * If firmware has already started roaming process, driver
 		 * needs to wait for processing of this disconnect request.
@@ -20312,7 +20340,8 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 	if (adapter->device_mode ==  QDF_STA_MODE) {
 		hdd_debug("Stop firmware roaming");
 		status = sme_stop_roaming(mac_handle, adapter->vdev_id,
-					  eCsrForcedDisassoc);
+					  REASON_DRIVER_DISABLED,
+					  RSO_INVALID_REQUESTOR);
 		/*
 		 * If firmware has already started roaming process, driver
 		 * needs to wait for processing of this disconnect request.

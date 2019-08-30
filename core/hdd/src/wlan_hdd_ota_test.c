@@ -97,7 +97,7 @@ static int __wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
 	current_roam_state =
 		sme_get_current_roam_state(mac_handle, adapter->vdev_id);
 	status = sme_stop_roaming(mac_handle, adapter->vdev_id,
-				  eCsrHddIssued);
+				  eCsrHddIssued, RSO_INVALID_REQUESTOR);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Enable/Disable roaming failed");
 		return -EINVAL;
@@ -111,13 +111,15 @@ static int __wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
 		if (current_roam_state == eCSR_ROAMING_STATE_JOINING ||
 		    current_roam_state == eCSR_ROAMING_STATE_JOINED)
 			status = sme_start_roaming(mac_handle,
-						   adapter->vdev_id,
-						   eCsrHddIssued);
+						 adapter->vdev_id,
+						 eCsrHddIssued,
+						 RSO_INVALID_REQUESTOR);
 		else if (current_roam_state == eCSR_ROAMING_STATE_STOP ||
 			 current_roam_state == eCSR_ROAMING_STATE_IDLE)
 			status = sme_stop_roaming(mac_handle,
-						  adapter->vdev_id,
-						  eCsrHddIssued);
+						 adapter->vdev_id,
+						 eCsrHddIssued,
+						 RSO_INVALID_REQUESTOR);
 
 		if (status != QDF_STATUS_SUCCESS)
 			hdd_err("Restoring roaming state failed");
