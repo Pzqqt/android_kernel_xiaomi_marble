@@ -3754,6 +3754,9 @@ static ssize_t sde_dbg_ctrl_read(struct file *file, char __user *buff,
 	pr_debug("%s: ctrl:0x%x len:0x%zx\n",
 		__func__, sde_dbg_base.debugfs_ctrl, len);
 
+	if (len < 0 || len >= sizeof(buf))
+		return 0;
+
 	if ((count < sizeof(buf)) || copy_to_user(buff, buf, len)) {
 		pr_err("error copying the buffer! count:0x%zx\n", count);
 		return -EFAULT;
