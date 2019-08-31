@@ -396,7 +396,7 @@ struct csr_config {
 
 struct csr_channel_powerinfo {
 	tListElem link;
-	uint8_t firstChannel;
+	uint32_t first_chan_freq;
 	uint8_t numChannels;
 	uint8_t txPower;
 	uint8_t interChannelOffset;

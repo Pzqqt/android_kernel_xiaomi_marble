@@ -980,7 +980,6 @@ typedef struct sSirMacCfParamSetIE {
 } qdf_packed tSirMacCfParamSetIE;
 
 typedef struct sSirMacChanInfo {
-	tSirMacChanNum firstChanNum;
 	uint32_t first_freq;
 	uint8_t numChannels;
 	int8_t maxTxPower;

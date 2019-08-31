@@ -2833,12 +2833,9 @@ static QDF_STATUS csr_init11d_info(struct mac_context *mac, tCsr11dinfo *ps11din
 		pChanInfoStart = pChanInfo;
 		for (index = 0; index < ps11dinfo->Channels.numChannels;
 		     index++) {
-			pChanInfo->firstChanNum =
-				ps11dinfo->ChnPower[index].firstChannel;
 			pChanInfo->first_freq =
-					wlan_reg_chan_to_freq(
-						mac->pdev,
-						pChanInfo->firstChanNum);
+					wlan_reg_chan_to_freq(mac->pdev,
+							      ps11dinfo->ChnPower[index].firstChannel);
 			pChanInfo->numChannels =
 				ps11dinfo->ChnPower[index].numChannels;
 			pChanInfo->maxTxPower =
@@ -2900,12 +2897,9 @@ QDF_STATUS csr_init_channel_power_list(struct mac_context *mac,
 
 		for (index = 0; index < ps11dinfo->Channels.numChannels;
 		     index++) {
-			pChanInfo->firstChanNum =
-				ps11dinfo->ChnPower[index].firstChannel;
 			pChanInfo->first_freq =
-					wlan_reg_chan_to_freq(
-						mac->pdev,
-						pChanInfo->firstChanNum);
+					wlan_reg_chan_to_freq(mac->pdev,
+							      ps11dinfo->ChnPower[index].firstChannel);
 			pChanInfo->numChannels =
 				ps11dinfo->ChnPower[index].numChannels;
 			pChanInfo->maxTxPower =

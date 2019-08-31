@@ -511,27 +511,27 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 			pChannelInfo++;
 			continue;
 		}
-		pChannelSet->firstChannel = pChannelInfo->firstChanNum;
+		pChannelSet->first_chan_freq = pChannelInfo->first_freq;
 		pChannelSet->numChannels = pChannelInfo->numChannels;
 		/*
 		 * Now set the inter-channel offset based on the frequency band
 		 * the channel set lies in
 		 */
-		if ((WLAN_REG_IS_24GHZ_CH(pChannelSet->firstChannel)) &&
-		    ((pChannelSet->firstChannel +
+		if ((WLAN_REG_IS_24GHZ_CH_FREQ(pChannelSet->first_chan_freq)) &&
+		    ((wlan_reg_freq_to_chan(mac->pdev, pChannelSet->first_chan_freq) +
 		      (pChannelSet->numChannels - 1)) <=
 		     WLAN_REG_MAX_24GHZ_CH_NUM)) {
 			pChannelSet->interChannelOffset = 1;
 			f2GHzInfoFound = true;
-		} else if ((WLAN_REG_IS_5GHZ_CH(pChannelSet->firstChannel))
-		    && ((pChannelSet->firstChannel +
-		      ((pChannelSet->numChannels - 1) * 4)) <=
-		     WLAN_REG_MAX_5GHZ_CH_NUM)) {
+		} else if ((WLAN_REG_IS_5GHZ_CH_FREQ(pChannelSet->first_chan_freq)) &&
+			   ((wlan_reg_freq_to_chan(mac->pdev, pChannelSet->first_chan_freq) +
+			   ((pChannelSet->numChannels - 1) * 4)) <=
+			   WLAN_REG_MAX_5GHZ_CH_NUM)) {
 			pChannelSet->interChannelOffset = 4;
 			f2GHzInfoFound = false;
 		} else {
-			sme_warn("Invalid Channel %d Present in Country IE",
-				pChannelSet->firstChannel);
+			sme_warn("Invalid Channel freq %d Present in Country IE",
+				 pChannelSet->first_chan_freq);
 			qdf_mem_free(pChannelSet);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -553,8 +553,8 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 						   LL_ACCESS_LOCK);
 			} else {
 				sme_debug(
-					"Adding 11B/G ch in 11A. 1st ch %d",
-					pChannelSet->firstChannel);
+					"Adding 11B/G ch in 11A. 1st ch freq %d",
+					pChannelSet->first_chan_freq);
 				qdf_mem_free(pChannelSet);
 			}
 		} else {
@@ -574,8 +574,8 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 						   LL_ACCESS_LOCK);
 			} else {
 				sme_debug(
-					"Adding 11A ch in B/G. 1st ch %d",
-					pChannelSet->firstChannel);
+					"Adding 11A ch in B/G. 1st ch freq %d",
+					pChannelSet->first_chan_freq);
 				qdf_mem_free(pChannelSet);
 			}
 		}
@@ -701,7 +701,7 @@ static void csr_get_channel_power_info(struct mac_context *mac,
 		for (idx = 0; (idx < ch_set->numChannels)
 				&& (chn_idx < *num_ch); idx++) {
 			chn_pwr_info[chn_idx].chan_num =
-				(uint8_t) (ch_set->firstChannel
+				(uint8_t)(wlan_reg_freq_to_chan(mac->pdev, ch_set->first_chan_freq)
 				 + (idx * ch_set->interChannelOffset));
 			chn_pwr_info[chn_idx++].tx_power = ch_set->txPower;
 		}
@@ -830,11 +830,9 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 			break;
 		}
 
-		chan_info->firstChanNum =
-			mac->scan.defaultPowerTable[idx].chan_num;
 		chan_info->first_freq =
 			wlan_reg_chan_to_freq(mac->pdev,
-					      chan_info->firstChanNum);
+					      mac->scan.defaultPowerTable[idx].chan_num);
 		chan_info->numChannels = 1;
 		chan_info->maxTxPower =
 			QDF_MIN(mac->scan.defaultPowerTable[idx].tx_power,
@@ -1501,6 +1499,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	uint32_t idx, count = 0;
 	tSirMacChanInfo *ch_pwr_set;
 	uint8_t *p_buf = NULL;
+	uint8_t chan;
 
 	/* allocate maximum space for all channels */
 	dataLen = CFG_VALID_CHANNEL_LIST_LEN * sizeof(tSirMacChanInfo);
@@ -1532,24 +1531,20 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 				 * allocation
 				 */
 				sme_err(
-					"Buffer overflow, start %d, num %d, offset %d",
-					ch_set->firstChannel,
+					"Buffer overflow, start freq %d, num %d, offset %d",
+					ch_set->first_chan_freq,
 					ch_set->numChannels,
 					ch_set->interChannelOffset);
 				break;
 			}
 
 			for (idx = 0; idx < ch_set->numChannels; idx++) {
-				ch_pwr_set->firstChanNum = (tSirMacChanNum)
-					(ch_set->firstChannel + (idx *
-						ch_set->interChannelOffset));
+				chan = (wlan_reg_freq_to_chan(mac->pdev, ch_set->first_chan_freq)
+						+ (idx * ch_set->interChannelOffset));
 				ch_pwr_set->first_freq =
-					wlan_reg_chan_to_freq(
-						mac->pdev,
-						ch_pwr_set->firstChanNum);
+					wlan_reg_chan_to_freq(mac->pdev, chan);
 				sme_debug(
-					"Setting Channel Num %d and freq %d",
-					ch_pwr_set->firstChanNum,
+					"Setting Channel freq %d",
 					ch_pwr_set->first_freq);
 				ch_pwr_set->numChannels = 1;
 				ch_pwr_set->maxTxPower =
@@ -1566,20 +1561,14 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 			if (cbLen >= dataLen) {
 				/* this entry will overflow our allocation */
 				sme_err(
-					"Buffer overflow, start %d, num %d, offset %d",
-					ch_set->firstChannel,
+					"Buffer overflow, start freq %d, num %d, offset %d",
+					ch_set->first_chan_freq,
 					ch_set->numChannels,
 					ch_set->interChannelOffset);
 				break;
 			}
-			ch_pwr_set->firstChanNum = ch_set->firstChannel;
-			ch_pwr_set->first_freq =
-					wlan_reg_chan_to_freq(
-						mac->pdev,
-						ch_pwr_set->firstChanNum);
-			sme_debug("Setting Channel Num %d and Freq %d",
-				  ch_pwr_set->firstChanNum,
-				  ch_pwr_set->first_freq);
+			ch_pwr_set->first_freq = ch_set->first_chan_freq;
+			sme_debug("Setting Channel Freq %d", ch_pwr_set->first_freq);
 			ch_pwr_set->numChannels = ch_set->numChannels;
 			ch_pwr_set->maxTxPower = QDF_MIN(ch_set->txPower,
 					mac->mlme_cfg->power.max_tx_power);
