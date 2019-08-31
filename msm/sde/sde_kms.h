@@ -187,12 +187,14 @@ enum frame_trigger_mode_type {
 /**
  * struct sde_kms_smmu_state_data: stores the smmu state and transition type
  * @state: current state of smmu context banks
+ * @prev_state: previous state of smmu context banks
  * @secure_level: secure level cached from crtc
  * @transition_type: transition request type
  * @transition_error: whether there is error while transitioning the state
  */
 struct sde_kms_smmu_state_data {
 	uint32_t state;
+	uint32_t prev_state;
 	uint32_t secure_level;
 	uint32_t transition_type;
 	uint32_t transition_error;
