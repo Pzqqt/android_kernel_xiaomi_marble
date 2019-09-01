@@ -413,6 +413,7 @@ typedef  enum  {
      * runtime PM suspend.
      */
     WMI_SERVICE_QMI_STATS_SUPPORT = 225,
+    WMI_SERVICE_CFR_CAPTURE_FILTER_SUPPORT = 226, /* Indicate FW Supports Channel Frequency Response (CFR) via WMI_CFR_CAPTURE_FILTER_CMDID */
 
 
     /******* ADD NEW SERVICES HERE *******/
