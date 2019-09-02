@@ -2578,4 +2578,17 @@ QDF_STATUS wma_add_bss_lfr2_vdev_start(struct bss_params *add_bss);
  * Return: None
  */
 QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss);
+
+/**
+ * wma_get_rx_chainmask() - API to get rx chainmask from mac phy capability
+ * @pdev_id: pdev id
+ * @chainmask_2g: pointer to return 2g chainmask
+ * @chainmask_5g: pointer to return 5g chainmask
+ *
+ * API to get rx chainmask from mac phy capability directly.
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS wma_get_rx_chainmask(uint8_t pdev_id, uint32_t *chainmask_2g,
+				uint32_t *chainmask_5g);
 #endif

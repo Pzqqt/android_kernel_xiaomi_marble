@@ -232,6 +232,17 @@ void spectral_scan_activate_service(struct hdd_context *hdd_ctx);
  * Return: None
  */
 void spectral_scan_deactivate_service(void);
+
+/**
+ * wlan_spectral_update_rx_chainmask() - API to update rx chainmask before
+ * start spectral gen3
+ * @adapter: pointer to adapter
+ *
+ * API to update rx chainmask before start spectral gen3.
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS wlan_spectral_update_rx_chainmask(struct hdd_adapter *adapter);
 #else
 static inline void spectral_scan_activate_service(struct hdd_context *hdd_ctx)
 {
@@ -240,5 +251,13 @@ static inline void spectral_scan_activate_service(struct hdd_context *hdd_ctx)
 static inline void spectral_scan_deactivate_service(void)
 {
 }
+
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+static inline QDF_STATUS
+wlan_spectral_update_rx_chainmask(struct hdd_adapter *adapter)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
 #endif
 #endif
