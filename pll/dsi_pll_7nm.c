@@ -1046,7 +1046,7 @@ static void shadow_dsi_pll_dynamic_refresh_7nm(struct dsi_pll_7nm *pll,
 	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL4,
 			   (PLL_SYSTEM_MUXES + offset),
 			   (PLL_PLL_LOCKDET_RATE_1 + offset),
-			   0xc0, 0x40);
+			   0xc0, 0x10);
 	upper_addr |= (upper_8_bit(PLL_SYSTEM_MUXES + offset) << 8);
 	upper_addr |= (upper_8_bit(PLL_PLL_LOCKDET_RATE_1 + offset) << 9);
 
@@ -1077,92 +1077,88 @@ static void shadow_dsi_pll_dynamic_refresh_7nm(struct dsi_pll_7nm *pll,
 
 	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL8,
 			   (PLL_ANALOG_CONTROLS_FIVE + offset),
-			   (PLL_DSM_DIVIDER + offset), 0x01, 0);
+			   (PLL_ANALOG_CONTROLS_TWO + offset), 0x01, 0x03);
 	upper_addr |= (upper_8_bit(PLL_ANALOG_CONTROLS_FIVE + offset) << 16);
-	upper_addr |= (upper_8_bit(PLL_DSM_DIVIDER + offset) << 17);
+	upper_addr |= (upper_8_bit(PLL_ANALOG_CONTROLS_TWO + offset) << 17);
 
 	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL9,
-			   (PLL_FEEDBACK_DIVIDER + offset),
-			   (PLL_CALIBRATION_SETTINGS + offset), 0x4E, 0x40);
-	upper_addr |= (upper_8_bit(PLL_FEEDBACK_DIVIDER + offset) << 18);
-	upper_addr |= (upper_8_bit(PLL_CALIBRATION_SETTINGS + offset) << 19);
+			   (PLL_ANALOG_CONTROLS_THREE + offset),
+			   (PLL_DSM_DIVIDER + offset),
+			   rsc->cache_pll_trim_codes[2], 0x00);
+	upper_addr |= (upper_8_bit(PLL_ANALOG_CONTROLS_THREE + offset) << 18);
+	upper_addr |= (upper_8_bit(PLL_DSM_DIVIDER + offset) << 19);
 
 	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL10,
+			   (PLL_FEEDBACK_DIVIDER + offset),
+			   (PLL_CALIBRATION_SETTINGS + offset), 0x4E, 0x40);
+	upper_addr |= (upper_8_bit(PLL_FEEDBACK_DIVIDER + offset) << 20);
+	upper_addr |= (upper_8_bit(PLL_CALIBRATION_SETTINGS + offset) << 21);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL11,
 			   (PLL_BAND_SEL_CAL_SETTINGS_THREE + offset),
 			   (PLL_FREQ_DETECT_SETTINGS_ONE + offset), 0xBA, 0x0C);
 	upper_addr |= (upper_8_bit(PLL_BAND_SEL_CAL_SETTINGS_THREE + offset)
-		       << 20);
+		       << 22);
 	upper_addr |= (upper_8_bit(PLL_FREQ_DETECT_SETTINGS_ONE + offset)
-		       << 21);
-
-	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL11,
-			   (PLL_OUTDIV + offset),
-			   (PLL_CORE_OVERRIDE + offset), 0, 0);
-	upper_addr |= (upper_8_bit(PLL_OUTDIV + offset) << 22);
-	upper_addr |= (upper_8_bit(PLL_CORE_OVERRIDE + offset) << 23);
+		       << 23);
 
 	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL12,
+			   (PLL_OUTDIV + offset),
+			   (PLL_CORE_OVERRIDE + offset), 0, 0);
+	upper_addr |= (upper_8_bit(PLL_OUTDIV + offset) << 24);
+	upper_addr |= (upper_8_bit(PLL_CORE_OVERRIDE + offset) << 25);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL13,
 			   (PLL_PLL_DIGITAL_TIMERS_TWO + offset),
 			   (PLL_PLL_PROP_GAIN_RATE_1 + offset),
 			    0x08, reg->pll_prop_gain_rate);
-	upper_addr |= (upper_8_bit(PLL_PLL_DIGITAL_TIMERS_TWO + offset) << 24);
-	upper_addr |= (upper_8_bit(PLL_PLL_PROP_GAIN_RATE_1 + offset) << 25);
+	upper_addr |= (upper_8_bit(PLL_PLL_DIGITAL_TIMERS_TWO + offset) << 26);
+	upper_addr |= (upper_8_bit(PLL_PLL_PROP_GAIN_RATE_1 + offset) << 27);
 
-	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL13,
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL14,
 			   (PLL_PLL_BAND_SEL_RATE_1 + offset),
 			   (PLL_PLL_INT_GAIN_IFILT_BAND_1 + offset),
 			    0xC0, 0x82);
-	upper_addr |= (upper_8_bit(PLL_PLL_BAND_SEL_RATE_1 + offset) << 26);
+	upper_addr |= (upper_8_bit(PLL_PLL_BAND_SEL_RATE_1 + offset) << 28);
 	upper_addr |= (upper_8_bit(PLL_PLL_INT_GAIN_IFILT_BAND_1 + offset)
-		       << 27);
+		       << 29);
 
-	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL14,
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL15,
 			   (PLL_PLL_FL_INT_GAIN_PFILT_BAND_1 + offset),
 			   (PLL_PLL_LOCK_OVERRIDE + offset),
 			    0x4c, 0x80);
 	upper_addr |= (upper_8_bit(PLL_PLL_FL_INT_GAIN_PFILT_BAND_1 + offset)
-		       << 28);
-	upper_addr |= (upper_8_bit(PLL_PLL_LOCK_OVERRIDE + offset) << 29);
-
-	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL15,
-			   (PLL_PFILT + offset),
-			   (PLL_IFILT + offset),
-			    0x2f, 0x3f);
-	upper_addr |= (upper_8_bit(PLL_PFILT + offset) << 30);
-	upper_addr |= (upper_8_bit(PLL_IFILT + offset) << 31);
+		       << 30);
+	upper_addr |= (upper_8_bit(PLL_PLL_LOCK_OVERRIDE + offset) << 31);
 
 	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL16,
-			   (PLL_FREQ_TUNE_ACCUM_INIT_HIGH + offset),
-			   (PLL_FREQ_TUNE_ACCUM_INIT_MID + offset),
-			   rsc->cache_pll_trim_codes[0], rsc->cache_pll_trim_codes[1] );
-	upper_addr2 |= (upper_8_bit(PLL_FREQ_TUNE_ACCUM_INIT_HIGH + offset) << 0);
-	upper_addr2 |= (upper_8_bit(PLL_FREQ_TUNE_ACCUM_INIT_MID + offset) << 1);
+			   (PLL_PFILT + offset),
+			   (PLL_IFILT + offset),
+			    0x29, 0x3f);
+	upper_addr2 |= (upper_8_bit(PLL_PFILT + offset) << 0);
+	upper_addr2 |= (upper_8_bit(PLL_IFILT + offset) << 1);
 
 	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL17,
-			   (PLL_PLL_BAND_SEL_RATE_1 + offset),
-			   ( PLL_PLL_BAND_SEL_RATE_1+ offset),
-			   rsc->cache_pll_trim_codes[2], rsc->cache_pll_trim_codes[2]);
-	upper_addr2 |= (upper_8_bit(PLL_PLL_BAND_SEL_RATE_1 + offset) << 0);
-	upper_addr2 |= (upper_8_bit(PLL_PLL_BAND_SEL_RATE_1 + offset) << 1);
-
-	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL18,
 			   (PLL_SYSTEM_MUXES + offset),
 			   (PLL_CALIBRATION_SETTINGS + offset),
-			    0xc0, 0x40);
+			    0xe0, 0x44);
 	upper_addr2 |= (upper_8_bit(PLL_BAND_SEL_CAL + offset) << 2);
 	upper_addr2 |= (upper_8_bit(PLL_CALIBRATION_SETTINGS + offset) << 3);
+
 	data = MDSS_PLL_REG_R(rsc->phy_base, PHY_CMN_CLK_CFG0);
-	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL27,
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL18,
 			   PHY_CMN_CTRL_2, PHY_CMN_CLK_CFG0, 0x40, data);
+
 	if (rsc->slave)
 		MDSS_DYN_PLL_REG_W(rsc->slave->dyn_pll_base,
 				   DSI_DYNAMIC_REFRESH_PLL_CTRL10,
 				   PHY_CMN_CLK_CFG0, PHY_CMN_CTRL_0,
 				   data, 0x7f);
 
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL27,
+			   PHY_CMN_PLL_CNTRL, PHY_CMN_PLL_CNTRL, 0x01, 0x01);
 	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL28,
 			   PHY_CMN_PLL_CNTRL, PHY_CMN_PLL_CNTRL, 0x01, 0x01);
-
 	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL29,
 			   PHY_CMN_PLL_CNTRL, PHY_CMN_PLL_CNTRL, 0x01, 0x01);
 
