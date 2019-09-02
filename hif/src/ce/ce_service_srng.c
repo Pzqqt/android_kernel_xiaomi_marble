@@ -340,8 +340,10 @@ ce_recv_buf_enqueue_srng(struct CE_handle *copyeng,
 								write_index);
 			status = QDF_STATUS_SUCCESS;
 		}
-	} else
+	} else {
+		dest_desc = NULL;
 		status = QDF_STATUS_E_FAILURE;
+	}
 
 	dest_ring->write_index = write_index;
 	hal_srng_access_end(scn->hal_soc, dest_ring->srng_ctx);
