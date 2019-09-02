@@ -43,7 +43,7 @@ enum wlan_frm_fmt {
 };
 
 /* Max throughput */
-#ifdef QCS403_MEM_OPTIMIZE
+#ifdef SLUB_MEM_OPTIMIZE
 #define MAX_THROUGHPUT 400
 #else
 #define MAX_THROUGHPUT 800

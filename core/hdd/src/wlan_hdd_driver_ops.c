@@ -156,7 +156,7 @@ static void hdd_hif_init_driver_state_callbacks(void *data,
  *
  * Return: None
  */
-#ifdef QCS403_MEM_OPTIMIZE
+#ifdef SLUB_MEM_OPTIMIZE
 static void hdd_hif_set_attribute(struct hif_opaque_softc *hif_ctx)
 {
 	hif_set_attribute(hif_ctx, HIF_LOWDESC_CE_NO_PKTLOG_CFG);
