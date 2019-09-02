@@ -552,9 +552,8 @@ QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(struct mac_context 
  * csr_neighbor_roam_channels_filter_by_current_band()
  *
  * @mac_ctx: Pointer to Global MAC structure
- * @session_id: Session ID
- * @input_ch_list: The additional channels to merge in to the
- *			"merged" channels list.
+ * @pinput_chan_freq_list: The additional channels to merge in
+ *          to the "merged" channels list.
  * @input_num_of_ch: The number of additional channels.
  * @output_ch_list: The place to put the "merged" channel list.
  * @output_num_of_ch: The original number of channels in the
@@ -570,7 +569,7 @@ QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(struct mac_context 
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
  */
 QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
-						 uint8_t *pInputChannelList,
+						 uint32_t *pinput_chan_freq_list,
 						 uint8_t inputNumOfChannels,
 						 uint8_t *pOutputChannelList,
 						 uint8_t outputNumOfChannels,
@@ -582,7 +581,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
 	uint8_t numChannels = outputNumOfChannels;
 
 	/* Check for NULL pointer */
-	if (!pInputChannelList)
+	if (!pinput_chan_freq_list)
 		return QDF_STATUS_E_INVAL;
 
 	/* Check for NULL pointer */
@@ -606,17 +605,18 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
 	 */
 	for (i = 0; i < inputNumOfChannels; i++) {
 		for (j = 0; j < outputNumOfChannels; j++) {
-			if (pInputChannelList[i] == pOutputChannelList[j])
+			if (wlan_reg_freq_to_chan(mac->pdev, pinput_chan_freq_list[i])
+				== pOutputChannelList[j])
 				break;
 		}
 		if (j == outputNumOfChannels) {
-			if (pInputChannelList[i]) {
+			if (pinput_chan_freq_list[i]) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_DEBUG,
 					  "%s: [INFOLOG] Adding extra %d to Neighbor channel list",
-					  __func__, pInputChannelList[i]);
+					  __func__, pinput_chan_freq_list[i]);
 				pOutputChannelList[numChannels] =
-					pInputChannelList[i];
+					wlan_reg_freq_to_chan(mac->pdev, pinput_chan_freq_list[i]);
 				numChannels++;
 			}
 		}

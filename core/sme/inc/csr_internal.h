@@ -199,7 +199,7 @@ enum csr_diagwlan_status_eventreason {
 
 struct csr_channel {
 	uint8_t numChannels;
-	uint8_t channelList[CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 };
 
 struct bss_config_param {
@@ -980,12 +980,10 @@ bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,
 						uint32_t sessionId);
 bool csr_roam_is_roam_offload_scan_enabled(
 	struct mac_context *mac);
-bool csr_is_channel_present_in_list(uint8_t *pChannelList,
-						   int numChannels,
-						   uint8_t channel);
-QDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
-							int numChannels,
-		uint8_t channel);
+bool csr_is_channel_present_in_list(uint32_t *pChannelList,
+				    int numChannels, uint32_t chan_freq);
+QDF_STATUS csr_add_to_channel_list_front(uint32_t *pChannelList,
+					 int numChannels, uint32_t chan_freq);
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan_rsp_hdlr(struct mac_context *mac,
 		struct roam_offload_scan_rsp *scanOffloadRsp);

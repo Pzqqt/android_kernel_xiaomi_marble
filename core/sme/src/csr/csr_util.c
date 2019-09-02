@@ -6253,8 +6253,8 @@ void csr_clear_channel_status(struct mac_context *mac)
 	return;
 }
 
-bool csr_is_channel_present_in_list(uint8_t *pChannelList,
-				    int numChannels, uint8_t channel)
+bool csr_is_channel_present_in_list(uint32_t *pChannelList,
+				    int numChannels, uint32_t chan_freq)
 {
 	int i = 0;
 
@@ -6265,7 +6265,7 @@ bool csr_is_channel_present_in_list(uint8_t *pChannelList,
 	/* Look for the channel in the list */
 	for (i = 0; (i < numChannels) &&
 	     (i < CFG_VALID_CHANNEL_LIST_LEN); i++) {
-		if (pChannelList[i] == channel)
+		if (pChannelList[i] == chan_freq)
 			return true;
 	}
 
@@ -6291,8 +6291,8 @@ const char *sme_bss_type_to_string(const uint8_t bss_type)
 	}
 }
 
-QDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
-					 int numChannels, uint8_t channel)
+QDF_STATUS csr_add_to_channel_list_front(uint32_t *pChannelList,
+					 int numChannels, uint32_t chan_freq)
 {
 	int i = 0;
 
@@ -6305,7 +6305,7 @@ QDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
 		pChannelList[i] = pChannelList[i - 1];
 
 	/* Now add the NEW channel...at the front */
-	pChannelList[0] = channel;
+	pChannelList[0] = chan_freq;
 
 	return QDF_STATUS_SUCCESS;
 }

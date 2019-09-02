@@ -589,7 +589,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 			      struct sap_context *sap_ctx)
 {
 	tSapSpectChInfo *pSpectCh = NULL;
-	uint8_t *pChans = NULL;
+	uint32_t *pChans = NULL;
 	uint16_t channelnum = 0;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	bool chSafe = true;
@@ -616,7 +616,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	/* Initialize the pointers in the DfsParams to the allocated memory */
 	pSpectInfoParams->pSpectCh = pSpectCh;
 
-	pChans = mac->scan.base_channels.channelList;
+	pChans = mac->scan.base_channels.channel_freq_list;
 
 #if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 	if (sap_ctx->dfs_ch_disable == true)
@@ -630,9 +630,12 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	for (channelnum = 0;
 	     channelnum < pSpectInfoParams->numSpectChans;
 	     channelnum++, pChans++, pSpectCh++) {
+		uint8_t channel;
+
+		channel = wlan_reg_freq_to_chan(mac->pdev, *pChans);
 		chSafe = true;
 
-		pSpectCh->chNum = *pChans;
+		pSpectCh->chNum = channel;
 		/* Initialise for all channels */
 		pSpectCh->rssiAgr = SOFTAP_MIN_RSSI;
 		/* Initialise 20MHz for all the Channels */
@@ -642,22 +645,22 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 
 		/* check if the channel is in NOL blacklist */
 		if (sap_dfs_is_channel_in_nol_list(
-					sap_ctx, *pChans,
+					sap_ctx, channel,
 					PHY_SINGLE_CHANNEL_CENTERED)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  "In %s, Ch %d is in NOL list", __func__,
-				  *pChans);
+				  channel);
 			chSafe = false;
 			continue;
 		}
 
 		if (!include_dfs_ch || sta_sap_scc_on_dfs_chan) {
-			if (wlan_reg_is_dfs_ch(mac->pdev, *pChans)) {
+			if (wlan_reg_is_dfs_ch(mac->pdev, channel)) {
 				chSafe = false;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
 					  "In %s, DFS Ch %d not considered for ACS. include_dfs_ch %u, sta_sap_scc_on_dfs_chan %d",
-					  __func__, *pChans, include_dfs_ch,
+					  __func__, channel, include_dfs_ch,
 					  sta_sap_scc_on_dfs_chan);
 				continue;
 			}
@@ -665,12 +668,12 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 
 #ifdef FEATURE_WLAN_CH_AVOID
 		for (i = 0; i < NUM_CHANNELS; i++) {
-			if ((safe_channels[i].channelNumber == *pChans) &&
+			if ((safe_channels[i].channelNumber == channel) &&
 			    (false == safe_channels[i].isSafe)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
 					  "In %s, Ch %d is not safe", __func__,
-					  *pChans);
+					  channel);
 				chSafe = false;
 				break;
 			}
@@ -678,17 +681,17 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 #endif /* FEATURE_WLAN_CH_AVOID */
 
 		/* OFDM rates are not supported on channel 14 */
-		if (*pChans == 14 &&
+		if (channel == 14 &&
 		    eCSR_DOT11_MODE_11b != sap_ctx->csr_roamProfile.phyMode) {
 			continue;
 		}
 
 		/* Skip DSRC channels */
-		if (wlan_reg_is_dsrc_chan(mac->pdev, *pChans))
+		if (wlan_reg_is_dsrc_chan(mac->pdev, channel))
 			continue;
 
 		if (!mac->mlme_cfg->reg.etsi13_srd_chan_in_master_mode &&
-		    wlan_reg_is_etsi13_srd_chan(mac->pdev, *pChans))
+		    wlan_reg_is_etsi13_srd_chan(mac->pdev, channel))
 			continue;
 
 		if (true == chSafe) {

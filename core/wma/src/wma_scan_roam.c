@@ -695,7 +695,7 @@ QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
  * wma_roam_scan_offload_chan_list() - set roam offload channel list
  * @wma_handle: wma handle
  * @chan_count: channel count
- * @chan_list: channel list
+ * @chan_freq_list: channel list
  * @list_type: list type
  * @vdev_id: vdev id
  *
@@ -705,7 +705,7 @@ QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
  */
 QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 					   uint8_t chan_count,
-					   uint8_t *chan_list,
+					   uint32_t *chan_freq_list,
 					   uint8_t list_type, uint32_t vdev_id)
 {
 	QDF_STATUS status;
@@ -729,7 +729,7 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 
 	for (i = 0; ((i < chan_count) &&
 		     (i < SIR_ROAM_MAX_CHANNELS)); i++) {
-		chan_list_mhz[i] = cds_chan_to_freq(chan_list[i]);
+		chan_list_mhz[i] = chan_freq_list[i];
 		WMA_LOGD("%d,", chan_list_mhz[i]);
 	}
 
@@ -1805,7 +1805,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 
 		qdf_status = wma_roam_scan_offload_chan_list(wma_handle,
 				roam_req->ConnectedNetwork.ChannelCount,
-				&roam_req->ConnectedNetwork.ChannelCache[0],
+				&roam_req->ConnectedNetwork.chan_freq_cache[0],
 				roam_req->ChannelCacheType,
 				roam_req->sessionId);
 		if ((qdf_status != QDF_STATUS_SUCCESS) &&
@@ -2038,7 +2038,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		 */
 		qdf_status = wma_roam_scan_offload_chan_list(wma_handle,
 			     roam_req->ConnectedNetwork.ChannelCount,
-			     &roam_req->ConnectedNetwork.ChannelCache[0],
+			     &roam_req->ConnectedNetwork.chan_freq_cache[0],
 			     roam_req->ChannelCacheType,
 			     roam_req->sessionId);
 		/*

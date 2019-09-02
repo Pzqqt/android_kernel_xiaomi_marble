@@ -266,7 +266,7 @@ typedef struct tagCsrEseCckmIe {
 
 typedef struct sCsrChannel_ {
 	uint8_t numChannels;
-	uint8_t channelList[CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 } sCsrChannel;
 
 typedef struct tagCsrScanResultFilter {
@@ -321,7 +321,7 @@ typedef struct tagCsrScanResultFilter {
 } tCsrScanResultFilter;
 
 typedef struct sCsrChnPower_ {
-	uint8_t firstChannel;
+	uint8_t first_chan_freq;
 	uint8_t numChannels;
 	uint8_t maxtxPower;
 } sCsrChnPower;

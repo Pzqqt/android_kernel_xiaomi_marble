@@ -5357,7 +5357,7 @@ sme_search_in_base_ch_lst(struct mac_context *mac_ctx, uint8_t curr_ch)
 
 	ch_lst_info = &mac_ctx->scan.base_channels;
 	for (i = 0; i < ch_lst_info->numChannels; i++) {
-		if (ch_lst_info->channelList[i] == curr_ch)
+		if (ch_lst_info->channel_freq_list[i] == wlan_reg_chan_to_freq(mac_ctx->pdev, curr_ch))
 			return true;
 	}
 
@@ -7343,9 +7343,7 @@ static bool sme_validate_freq_list(mac_handle_t mac_handle,
 	while (i < num_channels) {
 		found = false;
 		for (j = 0; j < ch_lst_info->numChannels; j++) {
-			if (wlan_reg_chan_to_freq(mac_ctx->pdev,
-						  ch_lst_info->channelList[j])
-			    == freq_list[i]) {
+			if (ch_lst_info->channel_freq_list[j] == freq_list[i]) {
 				found = true;
 				break;
 			}
@@ -15291,7 +15289,8 @@ bool sme_validate_channel_list(mac_handle_t mac_handle,
 	while (i < num_channels) {
 		found = false;
 		for (j = 0; j < ch_lst_info->numChannels; j++) {
-			if (ch_lst_info->channelList[j] == chan_list[i]) {
+			if (ch_lst_info->channel_freq_list[j] ==
+				wlan_reg_chan_to_freq(mac_ctx->pdev, chan_list[i])) {
 				found = true;
 				break;
 			}

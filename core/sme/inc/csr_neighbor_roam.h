@@ -206,7 +206,7 @@ QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(
 		uint8_t *pOutputChannelList,
 		uint8_t *pMergedOutputNumOfChannels);
 QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
-		uint8_t *pInputChannelList,
+		uint32_t *pinput_chan_freq_list,
 		uint8_t inputNumOfChannels,
 		uint8_t *pOutputChannelList,
 		uint8_t outputNumOfChannels,

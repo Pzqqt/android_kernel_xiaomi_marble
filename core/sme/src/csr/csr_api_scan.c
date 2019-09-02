@@ -52,7 +52,7 @@
 #include "wlan_blm_api.h"
 
 static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
-					   uint8_t *pChannelList,
+					   uint32_t *pchan_freq_list,
 					   uint8_t NumChannels);
 
 static void csr_save_tx_power_to_cfg(struct mac_context *mac,
@@ -341,17 +341,17 @@ static void csr_add_to_occupied_channels(struct mac_context *mac,
 {
 	QDF_STATUS status;
 	uint8_t num_occupied_ch = occupied_ch->numChannels;
-	uint8_t *occupied_ch_lst = occupied_ch->channelList;
+	uint32_t *occupied_ch_lst = occupied_ch->channel_freq_list;
 
 	if (is_init_list)
 		mac->scan.roam_candidate_count[sessionId]++;
 
 	if (csr_is_channel_present_in_list(occupied_ch_lst,
-					   num_occupied_ch, ch))
+					   num_occupied_ch, wlan_reg_chan_to_freq(mac->pdev, ch)))
 		return;
 
 	status = csr_add_to_channel_list_front(occupied_ch_lst,
-					       num_occupied_ch, ch);
+					       num_occupied_ch, wlan_reg_chan_to_freq(mac->pdev, ch));
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		occupied_ch->numChannels++;
 		sme_debug("Added channel %d to the list (count=%d)",
@@ -606,13 +606,13 @@ void csr_apply_channel_power_info_to_fw(struct mac_context *mac_ctx,
 		tempNumChannels = QDF_MIN(ch_lst->numChannels,
 					  CFG_VALID_CHANNEL_LIST_LEN);
 		for (i = 0; i < tempNumChannels; i++) {
-			tmp_ch_lst.channelList[num_ch] = ch_lst->channelList[i];
+			tmp_ch_lst.channel_freq_list[num_ch] = ch_lst->channel_freq_list[i];
 			num_ch++;
 		}
 		tmp_ch_lst.numChannels = num_ch;
 		/* Store the channel+power info in the global place: Cfg */
 		csr_apply_power2_current(mac_ctx);
-		csr_set_cfg_valid_channel_list(mac_ctx, tmp_ch_lst.channelList,
+		csr_set_cfg_valid_channel_list(mac_ctx, tmp_ch_lst.channel_freq_list,
 					       tmp_ch_lst.numChannels);
 	} else {
 		sme_err("11D channel list is empty");
@@ -636,12 +636,11 @@ static void csr_diag_reset_country_information(struct mac_context *mac)
 	qdf_mem_copy(p11dLog->countryCode, mac->scan.countryCodeCurrent, 3);
 	p11dLog->numChannel = mac->scan.base_channels.numChannels;
 	if (p11dLog->numChannel <= HOST_LOG_MAX_NUM_CHANNEL) {
-		qdf_mem_copy(p11dLog->Channels,
-			     mac->scan.base_channels.channelList,
-			     p11dLog->numChannel);
 		for (Index = 0;
 		     Index < mac->scan.base_channels.numChannels;
 		     Index++) {
+			p11dLog->Channels[Index] =
+				wlan_reg_freq_to_chan(mac->pdev, mac->scan.base_channels.channel_freq_list[Index]);
 			p11dLog->TxPwr[Index] = QDF_MIN(
 				mac->scan.defaultPowerTable[Index].tx_power,
 				mac->mlme_cfg->power.max_tx_power);
@@ -715,6 +714,7 @@ static void csr_diag_apply_country_info(struct mac_context *mac_ctx)
 	host_log_802_11d_pkt_type *p11dLog;
 	struct channel_power chnPwrInfo[CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t nChnInfo = CFG_VALID_CHANNEL_LIST_LEN, nTmp;
+	uint8_t i;
 
 	WLAN_HOST_DIAG_LOG_ALLOC(p11dLog, host_log_802_11d_pkt_type,
 				 LOG_WLAN_80211D_C);
@@ -727,9 +727,10 @@ static void csr_diag_apply_country_info(struct mac_context *mac_ctx)
 	if (p11dLog->numChannel > HOST_LOG_MAX_NUM_CHANNEL)
 		goto diag_end;
 
-	qdf_mem_copy(p11dLog->Channels,
-		     mac_ctx->scan.channels11d.channelList,
-		     p11dLog->numChannel);
+	for (i = 0; i < p11dLog->numChannel; i++)
+		p11dLog->Channels[i] =
+		wlan_reg_freq_to_chan(mac_ctx->pdev,
+				      mac_ctx->scan.channels11d.channel_freq_list[i]);
 	csr_get_channel_power_info(mac_ctx,
 				&mac_ctx->scan.channelPowerInfoList24,
 				&nChnInfo, chnPwrInfo);
@@ -853,8 +854,8 @@ bool csr_is_supported_channel(struct mac_context *mac, uint8_t channelId)
 	uint32_t i;
 
 	for (i = 0; i < mac->scan.base_channels.numChannels; i++) {
-		if (channelId ==
-		    mac->scan.base_channels.channelList[i]) {
+		if (wlan_reg_chan_to_freq(mac->pdev, channelId) ==
+		    mac->scan.base_channels.channel_freq_list[i]) {
 			fRet = true;
 			break;
 		}
@@ -1454,7 +1455,7 @@ error:
 }
 
 static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
-					   uint8_t *pChannelList,
+					   uint32_t *pchan_freq_list,
 					   uint8_t NumChannels)
 {
 	QDF_STATUS status;
@@ -1464,10 +1465,9 @@ static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
 		  "%s: dump valid channel list(NumChannels(%d))",
 		  __func__, NumChannels);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			   pChannelList, NumChannels);
+			   pchan_freq_list, NumChannels);
 	for (i = 0; i < NumChannels; i++) {
-		mac->mlme_cfg->reg.valid_channel_freq_list[i] =
-			wlan_reg_chan_to_freq(mac->pdev, pChannelList[i]);
+		mac->mlme_cfg->reg.valid_channel_freq_list[i] = pchan_freq_list[i];
 	}
 
 	mac->mlme_cfg->reg.valid_channel_list_num = NumChannels;

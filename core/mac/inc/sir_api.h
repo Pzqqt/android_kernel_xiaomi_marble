@@ -2021,7 +2021,7 @@ typedef struct {
 	uint8_t encryption;
 	uint8_t mcencryption;
 	uint8_t ChannelCount;
-	uint8_t ChannelCache[SIR_ROAM_MAX_CHANNELS];
+	uint32_t chan_freq_cache[SIR_ROAM_MAX_CHANNELS];
 #ifdef WLAN_FEATURE_11W
 	bool mfp_enabled;
 #endif
