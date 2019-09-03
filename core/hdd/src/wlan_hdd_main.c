@@ -15362,6 +15362,8 @@ bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
 			}
 			if (hdd_ctx->connection_in_progress) {
 				hdd_debug("AP/GO: connection is in progress");
+				*out_reason = SAP_CONNECTION_IN_PROGRESS;
+				*out_vdev_id = adapter->vdev_id;
 				return true;
 			}
 		}
