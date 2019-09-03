@@ -31,6 +31,7 @@
 #include <target_if.h>
 #include <qdf_module.h>
 #include <wlan_reg_services_api.h>
+#include <wlan_dfs_ucfg_api.h>
 
 /**
  * @spectral_ops - Spectral function table, holds the Spectral functions that
@@ -2912,6 +2913,49 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 	return 0;
 }
 
+/**
+ * target_if_is_aspectral_prohibited_by_adfs() - Is Agile Spectral prohibited by
+ * Agile DFS
+ * @psoc: Pointer to psoc
+ * @object: Pointer to pdev
+ * @arg: Pointer to flag which indicates whether Agile Spectral is prohibited
+ *
+ * This API checks whether Agile DFS is running on any of the pdevs. If so, it
+ * indicates that Agile Spectral scan is prohibited by Agile DFS.
+ *
+ * Return: void
+ */
+static void
+target_if_is_aspectral_prohibited_by_adfs(struct wlan_objmgr_psoc *psoc,
+					  void *object, void *arg)
+{
+	bool *is_aspectral_prohibited = arg;
+	struct wlan_objmgr_pdev *cur_pdev = object;
+	bool is_agile_dfs_enabled_cur_pdev = false;
+	QDF_STATUS status;
+
+	qdf_assert_always(is_aspectral_prohibited);
+	if (*is_aspectral_prohibited)
+		return;
+
+	qdf_assert_always(psoc);
+	qdf_assert_always(cur_pdev);
+
+	status = ucfg_dfs_get_agile_precac_enable
+				(cur_pdev,
+				 &is_agile_dfs_enabled_cur_pdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		spectral_err("Get agile precac failed, prohibiting aSpectral");
+		*is_aspectral_prohibited = true;
+		return;
+	}
+
+	if (is_agile_dfs_enabled_cur_pdev) {
+		spectral_err("aDFS is in progress on one of the pdevs");
+		*is_aspectral_prohibited = true;
+	}
+}
+
 QDF_STATUS
 target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 			      const enum spectral_scan_mode smode,
@@ -2919,12 +2963,19 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 {
 	struct target_if_spectral_ops *p_sops;
 	struct target_if_spectral *spectral;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (!err) {
 		spectral_err("Error code argument is null");
 		QDF_ASSERT(0);
 	}
 	*err = SPECTRAL_SCAN_ERR_INVALID;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
 		*err = SPECTRAL_SCAN_ERR_MODE_UNSUPPORTED;
@@ -2943,6 +2994,27 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 	}
 
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+
+	if (smode == SPECTRAL_SCAN_MODE_AGILE) {
+		bool is_aspectral_prohibited = false;
+		QDF_STATUS status;
+
+		status = wlan_objmgr_iterate_obj_list
+				(psoc, WLAN_PDEV_OP,
+				 target_if_is_aspectral_prohibited_by_adfs,
+				 &is_aspectral_prohibited, 0,
+				 WLAN_SPECTRAL_ID);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			spectral_err("Failed to iterate over pdevs");
+			*err = SPECTRAL_SCAN_ERR_MODE_UNSUPPORTED;
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (is_aspectral_prohibited) {
+			*err = SPECTRAL_SCAN_ERR_MODE_UNSUPPORTED;
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
 
 	if (!spectral->params_valid[smode]) {
 		target_if_spectral_info_read(spectral,
