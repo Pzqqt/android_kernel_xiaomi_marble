@@ -2137,8 +2137,8 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 
 	if (channel) {
 		/* don't allow 3rd home channel on same MAC */
-		if (!policy_mgr_allow_new_home_channel(psoc,
-			channel, num_connections))
+		if (!policy_mgr_allow_new_home_channel(psoc, mode, channel,
+						       num_connections))
 			goto done;
 
 		/*

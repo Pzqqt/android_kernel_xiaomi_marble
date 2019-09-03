@@ -535,8 +535,9 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 			uint8_t *pcl_channels, uint32_t *len,
 			enum policy_mgr_con_mode mode,
 			uint8_t *pcl_weights, uint32_t weight_len);
-bool policy_mgr_allow_new_home_channel(struct wlan_objmgr_psoc *psoc,
-			uint8_t channel, uint32_t num_connections);
+bool policy_mgr_allow_new_home_channel(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode,
+	uint8_t channel, uint32_t num_connections);
 bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
 				uint8_t channel, uint32_t *list,
 				enum policy_mgr_con_mode mode);

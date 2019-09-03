@@ -2484,8 +2484,41 @@ bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * policy_mgr_is_multi_ap_plus_sta_3vif_conc() - Check multiple AP plus STA
+ * concurrency
+ * @mode1: policy_mgr_con_mode of connection 1
+ * @mode2: policy_mgr_con_mode of connection 2
+ * @mode2: policy_mgr_con_mode of connection 3
+ *
+ * Check the 3vif concurrency is SAP(GO)+SAP(GO)+STA or not based on
+ * connection mode.
+ *
+ * Return: True/False
+ */
+static bool policy_mgr_is_multi_ap_plus_sta_3vif_conc(
+	enum policy_mgr_con_mode mode1, enum policy_mgr_con_mode mode2,
+	enum policy_mgr_con_mode mode3)
+{
+	if (mode1 == PM_STA_MODE &&
+	    (mode2 == PM_SAP_MODE || mode2 == PM_P2P_GO_MODE) &&
+	    (mode3 == PM_SAP_MODE || mode3 == PM_P2P_GO_MODE))
+		return true;
+	if (mode2 == PM_STA_MODE &&
+	    (mode1 == PM_SAP_MODE || mode1 == PM_P2P_GO_MODE) &&
+	    (mode3 == PM_SAP_MODE || mode3 == PM_P2P_GO_MODE))
+		return true;
+	if (mode3 == PM_STA_MODE &&
+	    (mode1 == PM_SAP_MODE || mode1 == PM_P2P_GO_MODE) &&
+	    (mode2 == PM_SAP_MODE || mode2 == PM_P2P_GO_MODE))
+		return true;
+
+	return false;
+}
+
+/**
  * policy_mgr_allow_new_home_channel() - Check for allowed number of
  * home channels
+ * @mode: policy_mgr_con_mode of new connection,
  * @channel: channel on which new connection is coming up
  * @num_connections: number of current connections
  *
@@ -2495,8 +2528,9 @@ bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
  *
  * Return: True/False
  */
-bool policy_mgr_allow_new_home_channel(struct wlan_objmgr_psoc *psoc,
-			uint8_t channel, uint32_t num_connections)
+bool policy_mgr_allow_new_home_channel(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode,
+	uint8_t channel, uint32_t num_connections)
 {
 	bool status = true;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -2565,6 +2599,35 @@ bool policy_mgr_allow_new_home_channel(struct wlan_objmgr_psoc *psoc,
 				(pm_conc_connection_list[1].chan)))) {
 					policy_mgr_err("don't allow 3rd home channel on same MAC");
 					status = false;
+			}
+		} else {
+			/* Existing two connections are SCC */
+			if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
+				/* keep legacy chip "allow" as it is */
+				policy_mgr_debug("allow 2 intf SCC + new intf ch %d for legacy hw",
+						 channel);
+			} else if ((pm_conc_connection_list[0].mode ==
+							    PM_NAN_DISC_MODE &&
+				    pm_conc_connection_list[1].mode ==
+								PM_NDI_MODE) ||
+				   (pm_conc_connection_list[0].mode ==
+								PM_NDI_MODE &&
+				    pm_conc_connection_list[1].mode ==
+							    PM_NAN_DISC_MODE)) {
+				/*
+				 * NAN + NDI are managed in Firmware by dividing
+				 * up slots. Connection on NDI is re-negotiable
+				 * and therefore a 3rd connection with the
+				 * same MAC is possible.
+				 */
+			} else if (wlan_reg_is_same_band_channels(
+				channel, pm_conc_connection_list[0].chan) &&
+				policy_mgr_is_multi_ap_plus_sta_3vif_conc(
+					pm_conc_connection_list[0].mode,
+					pm_conc_connection_list[1].mode,
+					mode)) {
+				policy_mgr_err("don't allow 3rd home channel on same MAC - sta existing");
+				status = false;
 			}
 		}
 	} else if ((num_connections == 1)
