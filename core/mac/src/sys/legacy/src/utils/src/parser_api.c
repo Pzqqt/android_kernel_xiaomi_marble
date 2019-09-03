@@ -413,6 +413,13 @@ populate_dot11f_country(struct mac_context *mac,
 
 		qdf_mem_copy(pDot11f->country, code, 2);
 
+		/* a wi-fi agile multiband AP shall include a country */
+		/* element in all beacon and probe response frames */
+		/* where the last octet of country string field is */
+		/* set to 0x04 */
+		if (mac->mlme_cfg->oce.oce_sap_enabled)
+			pDot11f->country[2] = 0x04;
+
 		if (len > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE) {
 			pe_err("len:%d is out of bounds, resetting", len);
 			len = MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE;
