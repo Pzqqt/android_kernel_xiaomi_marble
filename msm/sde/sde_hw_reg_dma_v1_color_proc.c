@@ -78,9 +78,12 @@
 		REG_DMA_HEADERS_BUFFER_SZ)
 #define LTM_VLUT_MEM_SIZE ((sizeof(struct drm_msm_ltm_data)) + \
 		REG_DMA_HEADERS_BUFFER_SZ)
+#define SPR_INIT_MEM_SIZE ((sizeof(struct drm_msm_spr_init_cfg)) + \
+		REG_DMA_HEADERS_BUFFER_SZ)
 
 #define REG_MASK(n) ((BIT(n)) - 1)
 #define REG_MASK_SHIFT(n, shift) ((REG_MASK(n)) << (shift))
+#define APPLY_MASK_AND_SHIFT(x, n, shift) ((x & (REG_MASK(n))) << (shift))
 #define REG_DMA_VIG_GAMUT_OP_MASK 0x300
 #define REG_DMA_VIG_IGC_OP_MASK 0x1001F
 #define DMA_DGM_0_OP_MODE_OFF 0x604
@@ -134,6 +137,7 @@ static u32 feature_map[SDE_DSPP_MAX] = {
 	/* MEMCOLOR can be mapped to any MEMC_SKIN/SKY/FOLIAGE/PROT*/
 	[SDE_DSPP_MEMCOLOR] = MEMC_SKIN,
 	[SDE_DSPP_SIXZONE] = SIX_ZONE,
+	[SDE_DSPP_SPR] = SPR_INIT,
 	[SDE_DSPP_DITHER] = REG_DMA_FEATURES_MAX,
 	[SDE_DSPP_HIST] = REG_DMA_FEATURES_MAX,
 	[SDE_DSPP_AD] = REG_DMA_FEATURES_MAX,
@@ -165,6 +169,7 @@ static u32 feature_reg_dma_sz[SDE_DSPP_MAX] = {
 	[SDE_DSPP_SIXZONE] = SIXZONE_MEM_SIZE,
 	[SDE_DSPP_MEMCOLOR] = MEMCOLOR_MEM_SIZE,
 	[SDE_DSPP_RC] = RC_MEM_SIZE,
+	[SDE_DSPP_SPR] = SPR_INIT_MEM_SIZE,
 };
 
 static u32 sspp_feature_reg_dma_sz[SDE_SSPP_MAX] = {
@@ -4416,4 +4421,262 @@ void reg_dmav2_setup_vig_gamutv61(struct sde_hw_pipe *ctx, void *cfg)
 
 exit:
 	kfree(data);
+}
+
+int reg_dmav1_setup_spr_cfg3_params(struct sde_hw_dspp *ctx,
+		struct drm_msm_spr_init_cfg *payload,
+		struct sde_reg_dma_setup_ops_cfg *dma_write_cfg,
+		struct sde_hw_reg_dma_ops *dma_ops)
+{
+	uint32_t reg_off, reg_cnt, base_off;
+	uint32_t reg[16];
+	int i, index, rc = 0;
+
+	if (!payload->cfg3)
+		return rc;
+
+	base_off = ctx->hw.blk_off + ctx->cap->sblk->spr.base;
+	reg_cnt = 2;
+	reg_off = base_off + 0x70;
+	reg[0] = APPLY_MASK_AND_SHIFT(payload->cfg13[0], 10, 0) |
+		APPLY_MASK_AND_SHIFT(payload->cfg13[1], 10, 10) |
+		APPLY_MASK_AND_SHIFT(payload->cfg13[2], 10, 20);
+	reg[1] = payload->cfg10 & REG_MASK(30);
+
+	REG_DMA_SETUP_OPS(*dma_write_cfg, reg_off, reg,
+			reg_cnt * sizeof(u32), REG_BLK_WRITE_SINGLE, 0, 0, 0);
+	rc = dma_ops->setup_payload(dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write spr cfg13 failed ret %d\n", rc);
+		return rc;
+	}
+
+	reg_cnt = ARRAY_SIZE(payload->cfg15) / 2;
+	reg_off = base_off + 0xA0;
+	for (i = 0; i < reg_cnt; i++) {
+		index = 2 * i;
+		reg[i] = APPLY_MASK_AND_SHIFT(payload->cfg15[index], 12, 0) |
+			APPLY_MASK_AND_SHIFT(payload->cfg15[index + 1], 12, 16);
+	}
+
+	REG_DMA_SETUP_OPS(*dma_write_cfg, reg_off, reg,
+			reg_cnt * sizeof(u32), REG_BLK_WRITE_SINGLE, 0, 0, 0);
+	rc = dma_ops->setup_payload(dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write spr cfg15 failed ret %d\n", rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+int reg_dmav1_setup_spr_cfg4_params(struct sde_hw_dspp *ctx,
+		struct drm_msm_spr_init_cfg *payload,
+		struct sde_reg_dma_setup_ops_cfg *dma_write_cfg,
+		struct sde_hw_reg_dma_ops *dma_ops)
+{
+	uint32_t reg_off, reg_cnt, base_off;
+	uint32_t reg[16];
+	int rc = 0;
+
+	if (!payload->cfg4)
+		return rc;
+
+	reg_cnt = 3;
+	base_off = ctx->hw.blk_off + ctx->cap->sblk->spr.base;
+	reg_off = base_off + 0x60;
+	reg[0] = payload->cfg9 & 0x0F;
+	reg[1] = APPLY_MASK_AND_SHIFT(payload->cfg12[3], 10, 0) |
+		APPLY_MASK_AND_SHIFT(payload->cfg12[0], 11, 16);
+	reg[2] = APPLY_MASK_AND_SHIFT(payload->cfg12[1], 11, 0) |
+		APPLY_MASK_AND_SHIFT(payload->cfg12[2], 11, 16);
+
+	REG_DMA_SETUP_OPS(*dma_write_cfg, reg_off, reg,
+			reg_cnt * sizeof(u32), REG_BLK_WRITE_SINGLE, 0, 0, 0);
+	rc = dma_ops->setup_payload(dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write spr cfg12 failed ret %d\n", rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+void reg_dmav1_disable_spr(struct sde_hw_dspp *ctx, void *cfg)
+{
+	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
+	struct sde_hw_cp_cfg *hw_cfg = cfg;
+	struct sde_reg_dma_kickoff_cfg kick_off;
+	struct sde_hw_reg_dma_ops *dma_ops;
+	uint32_t reg_off, reg = 0;
+	int rc = 0;
+
+	dma_ops = sde_reg_dma_get_ops();
+	dma_ops->reset_reg_dma_buf(dspp_buf[SPR_INIT][ctx->idx]);
+
+	REG_DMA_INIT_OPS(dma_write_cfg, MDSS, SPR_INIT,
+			dspp_buf[SPR_INIT][ctx->idx]);
+	REG_DMA_SETUP_OPS(dma_write_cfg, 0, NULL, 0, HW_BLK_SELECT, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("spr write decode select failed ret %d\n", rc);
+		return;
+	}
+
+	reg_off = ctx->hw.blk_off + ctx->cap->sblk->spr.base + 0x04;
+	REG_DMA_SETUP_OPS(dma_write_cfg, reg_off, &reg,
+			sizeof(u32), REG_BLK_WRITE_SINGLE, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write spr disable failed ret %d\n", rc);
+		return;
+	}
+
+	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
+			dspp_buf[SPR_INIT][ctx->idx],
+			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE);
+	rc = dma_ops->kick_off(&kick_off);
+	if (rc) {
+		DRM_ERROR("failed to kick off ret %d\n", rc);
+		return;
+	}
+}
+
+void reg_dmav1_setup_spr_init_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
+{
+	struct drm_msm_spr_init_cfg *payload = NULL;
+	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
+	struct sde_hw_cp_cfg *hw_cfg = cfg;
+	struct sde_reg_dma_kickoff_cfg kick_off;
+	struct sde_hw_reg_dma_ops *dma_ops;
+	uint32_t reg_off, reg_cnt, base_off;
+	uint32_t reg[16];
+	int i, index, rc = 0;
+
+	rc = reg_dma_dspp_check(ctx, cfg, SPR_INIT);
+	if (rc)
+		return;
+
+	if (!hw_cfg->payload)
+		return reg_dmav1_disable_spr(ctx, cfg);
+
+	if (hw_cfg->len != sizeof(struct drm_msm_spr_init_cfg)) {
+		DRM_ERROR("invalid payload size len %d exp %zd\n", hw_cfg->len,
+				sizeof(struct drm_msm_spr_init_cfg));
+		return;
+	}
+
+	payload = hw_cfg->payload;
+	base_off = ctx->hw.blk_off + ctx->cap->sblk->spr.base;
+	dma_ops = sde_reg_dma_get_ops();
+	dma_ops->reset_reg_dma_buf(dspp_buf[SPR_INIT][ctx->idx]);
+
+	REG_DMA_INIT_OPS(dma_write_cfg, MDSS, SPR_INIT,
+			dspp_buf[SPR_INIT][ctx->idx]);
+	REG_DMA_SETUP_OPS(dma_write_cfg, 0, NULL, 0, HW_BLK_SELECT, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("spr write decode select failed ret %d\n", rc);
+		return;
+	}
+
+	reg_cnt = 2;
+	reg_off = base_off + 0x04;
+	reg[0] = APPLY_MASK_AND_SHIFT(payload->cfg0, 1, 0) |
+		APPLY_MASK_AND_SHIFT(payload->cfg1, 1, 1) |
+		APPLY_MASK_AND_SHIFT(payload->cfg2, 1, 2) |
+		APPLY_MASK_AND_SHIFT(payload->cfg4, 1, 3) |
+		APPLY_MASK_AND_SHIFT(payload->cfg3, 1, 24);
+	reg[0] |= APPLY_MASK_AND_SHIFT(payload->cfg5, 4, 16);
+	reg[0] |= APPLY_MASK_AND_SHIFT(payload->cfg6, 3, 20);
+	reg[0] |= APPLY_MASK_AND_SHIFT(payload->cfg7, 2, 4);
+	reg[0] |= APPLY_MASK_AND_SHIFT(payload->cfg8, 2, 6);
+	reg[0] |= APPLY_MASK_AND_SHIFT(payload->cfg11[0], 2, 8);
+	reg[0] |= APPLY_MASK_AND_SHIFT(payload->cfg11[1], 2, 10);
+	reg[0] |= APPLY_MASK_AND_SHIFT(payload->cfg11[2], 2, 12);
+	reg[0] |= APPLY_MASK_AND_SHIFT(payload->cfg11[3], 1, 14);
+
+	reg[1] = 0;
+	if (hw_cfg->num_of_mixers == 2)
+		reg[1] = 1;
+	else if (hw_cfg->num_of_mixers == 4)
+		reg[1] = 3;
+
+	REG_DMA_SETUP_OPS(dma_write_cfg, reg_off, reg,
+			reg_cnt * sizeof(u32), REG_BLK_WRITE_SINGLE, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write spr config failed ret %d\n", rc);
+		return;
+	}
+
+	reg_cnt = 1;
+	reg_off = base_off + 0x54;
+	reg[0] = 0;
+	for (i = 0; i < ARRAY_SIZE(payload->cfg14); i++)
+		reg[0] |= APPLY_MASK_AND_SHIFT(payload->cfg14[i], 5, 5 * i);
+
+	REG_DMA_SETUP_OPS(dma_write_cfg, reg_off, reg,
+			reg_cnt * sizeof(u32), REG_SINGLE_WRITE, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write spr cfg14 failed ret %d\n", rc);
+		return;
+	}
+
+	reg_cnt = ARRAY_SIZE(payload->cfg17) / 6;
+	reg_off = base_off + 0x24;
+	for (i = 0; i < reg_cnt; i++) {
+		index = 6 * i;
+		reg[i] = APPLY_MASK_AND_SHIFT(payload->cfg17[index], 5, 0) |
+			APPLY_MASK_AND_SHIFT(payload->cfg17[index + 1], 5, 5) |
+			APPLY_MASK_AND_SHIFT(payload->cfg17[index + 2], 5, 10) |
+			APPLY_MASK_AND_SHIFT(payload->cfg17[index + 3], 5, 15) |
+			APPLY_MASK_AND_SHIFT(payload->cfg17[index + 4], 5, 20) |
+			APPLY_MASK_AND_SHIFT(payload->cfg17[index + 5], 5, 25);
+	}
+	reg[reg_cnt - 1] &= 0x3FF;
+
+	REG_DMA_SETUP_OPS(dma_write_cfg, reg_off, reg,
+			reg_cnt * sizeof(u32), REG_BLK_WRITE_SINGLE, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write spr cfg17 failed ret %d\n", rc);
+		return;
+	}
+
+	reg_cnt = ARRAY_SIZE(payload->cfg16) / 2;
+	reg_off = base_off + 0x34;
+	for (i = 0; i < reg_cnt; i++) {
+		index = 2 * i;
+		reg[i] = APPLY_MASK_AND_SHIFT(payload->cfg16[index], 11, 0) |
+			APPLY_MASK_AND_SHIFT(payload->cfg16[index + 1], 11, 16);
+	}
+
+	REG_DMA_SETUP_OPS(dma_write_cfg, reg_off, reg, reg_cnt * sizeof(u32),
+			REG_BLK_WRITE_SINGLE, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write spr cfg16 failed ret %d\n", rc);
+		return;
+	}
+
+	rc = reg_dmav1_setup_spr_cfg3_params(ctx, payload,
+			&dma_write_cfg, dma_ops);
+	if (rc)
+		return;
+
+	rc = reg_dmav1_setup_spr_cfg4_params(ctx, payload,
+			&dma_write_cfg, dma_ops);
+	if (rc)
+		return;
+
+	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
+			dspp_buf[SPR_INIT][ctx->idx],
+			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE);
+	rc = dma_ops->kick_off(&kick_off);
+	if (rc) {
+		DRM_ERROR("failed to kick off ret %d\n", rc);
+		return;
+	}
 }

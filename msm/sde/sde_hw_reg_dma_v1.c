@@ -808,6 +808,8 @@ int init_v12(struct sde_hw_reg_dma *cfg)
 	v1_supported[LTM_VLUT] = GRP_LTM_HW_BLK_SELECT;
 	v1_supported[RC_DATA] = (GRP_DSPP_HW_BLK_SELECT |
 			GRP_MDSS_HW_BLK_SELECT);
+	v1_supported[SPR_INIT] = (GRP_DSPP_HW_BLK_SELECT |
+			GRP_MDSS_HW_BLK_SELECT);
 
 	return 0;
 }

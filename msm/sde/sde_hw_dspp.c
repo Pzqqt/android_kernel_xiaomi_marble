@@ -274,6 +274,16 @@ static void dspp_rc(struct sde_hw_dspp *c)
 	}
 }
 
+static void dspp_spr(struct sde_hw_dspp *c)
+{
+	if (c->cap->sblk->spr.version == SDE_COLOR_PROCESS_VER(0x1, 0x0)) {
+		reg_dmav1_init_dspp_op_v4(SDE_DSPP_SPR, c->idx);
+		c->ops.setup_spr_init_config = reg_dmav1_setup_spr_init_cfgv1;
+	} else {
+		c->ops.setup_spr_init_config = NULL;
+	}
+}
+
 static void (*dspp_blocks[SDE_DSPP_MAX])(struct sde_hw_dspp *c);
 
 static void _init_dspp_ops(void)
@@ -291,6 +301,7 @@ static void _init_dspp_ops(void)
 	dspp_blocks[SDE_DSPP_AD] = dspp_ad;
 	dspp_blocks[SDE_DSPP_LTM] = dspp_ltm;
 	dspp_blocks[SDE_DSPP_RC] = dspp_rc;
+	dspp_blocks[SDE_DSPP_SPR] = dspp_spr;
 }
 
 static void _setup_dspp_ops(struct sde_hw_dspp *c, unsigned long features)

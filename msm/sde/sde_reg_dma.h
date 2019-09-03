@@ -54,6 +54,7 @@ enum sde_reg_dma_read_sel {
  * @SIX_ZONE: six zone
  * @HSIC: Hue, saturation and contrast
  * @GC: gamma correction
+ * @SPR_INIT: Sub pixel rendering init feature
  * @LTM_INIT: LTM INIT
  * @LTM_ROI: LTM ROI
  * @LTM_VLUT: LTM VLUT
@@ -73,6 +74,7 @@ enum sde_reg_dma_features {
 	SIX_ZONE,
 	HSIC,
 	GC,
+	SPR_INIT,
 	LTM_INIT,
 	LTM_ROI,
 	LTM_VLUT,
