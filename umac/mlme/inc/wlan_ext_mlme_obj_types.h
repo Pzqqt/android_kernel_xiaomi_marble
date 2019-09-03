@@ -37,4 +37,10 @@ typedef struct ieee80211com mlme_pdev_ext_t;
 struct ieee80211vap;
 typedef struct ieee80211vap mlme_vdev_ext_t;
 
+/**
+ * typedef mlme_psoc_ext_t - Opaque definition of psoc mlme pointer
+ */
+struct soc_ext_ptr;
+typedef struct soc_ext_ptr mlme_psoc_ext_t;
+
 #endif /* __WLAN_EXT_MLME_OBJ_TYPE_H__ */
