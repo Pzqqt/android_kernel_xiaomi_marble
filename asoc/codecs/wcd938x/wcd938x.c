@@ -548,12 +548,26 @@ static int wcd938x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		wcd938x_rx_clk_enable(component);
-		snd_soc_component_update_bits(component,
+		wcd938x->ear_rx_path =
+			snd_soc_component_read32(
+				component, WCD938X_DIGITAL_CDC_EAR_PATH_CTL);
+		if (wcd938x->ear_rx_path & EAR_RX_PATH_AUX) {
+			snd_soc_component_update_bits(component,
+				WCD938X_EAR_EAR_DAC_CON, 0x80, 0x00);
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_AUX_GAIN_CTL, 0x01, 0x01);
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x04, 0x04);
+			snd_soc_component_update_bits(component,
+				WCD938X_ANA_EAR_COMPANDER_CTL, 0x80, 0x80);
+		} else {
+			snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_HPH_GAIN_CTL, 0x04, 0x04);
-		snd_soc_component_update_bits(component,
+			snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x01, 0x01);
-		snd_soc_component_update_bits(component,
+			snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_COMP_CTL_0, 0x02, 0x02);
+		}
 		/* 5 msec delay as per HW requirement */
 		usleep_range(5000, 5010);
 		if (wcd938x->flyback_cur_det_disable == 0)
@@ -567,6 +581,14 @@ static int wcd938x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 			     wcd938x->hph_mode);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		if (wcd938x->ear_rx_path & EAR_RX_PATH_AUX) {
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_AUX_GAIN_CTL, 0x01, 0x00);
+		}
+		snd_soc_component_update_bits(component,
+				WCD938X_ANA_EAR_COMPANDER_CTL, 0x80, 0x00);
+		snd_soc_component_update_bits(component,
+				WCD938X_EAR_EAR_DAC_CON, 0x80, 0x80);
 		break;
 	};
 	return 0;
@@ -967,16 +989,21 @@ static int wcd938x_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_RX_SUPPLIES,
 					0x02, 0x02);
-		if (wcd938x->update_wcd_event)
-			wcd938x->update_wcd_event(wcd938x->handle,
+		if (wcd938x->ear_rx_path & EAR_RX_PATH_AUX) {
+			if (wcd938x->update_wcd_event)
+				wcd938x->update_wcd_event(wcd938x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
-						(WCD_RX1 << 0x10));
-		if (wcd938x->ear_rx_path & EAR_RX_PATH_AUX)
+						(WCD_RX3 << 0x10));
 			wcd_enable_irq(&wcd938x->irq_info,
 					WCD938X_IRQ_AUX_PDM_WD_INT);
-		else
+		} else {
+			if (wcd938x->update_wcd_event)
+				wcd938x->update_wcd_event(wcd938x->handle,
+						WCD_BOLERO_EVT_RX_MUTE,
+						(WCD_RX1 << 0x10));
 			wcd_enable_irq(&wcd938x->irq_info,
 					WCD938X_IRQ_HPHL_PDM_WD_INT);
+		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		if (wcd938x->ear_rx_path & EAR_RX_PATH_AUX)
