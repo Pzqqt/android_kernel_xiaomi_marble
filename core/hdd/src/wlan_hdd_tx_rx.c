@@ -2038,7 +2038,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 				++adapter->hdd_stats.hdd_arp_stats.
 							rx_arp_rsp_count;
 				QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
-						QDF_TRACE_LEVEL_INFO,
+						QDF_TRACE_LEVEL_DEBUG,
 						"%s: ARP packet received",
 						__func__);
 				track_arp = true;
