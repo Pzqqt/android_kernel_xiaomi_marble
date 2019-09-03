@@ -3643,39 +3643,31 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 
 	mac_handle = hdd_ctx->mac_handle;
 
-	/*
-	 * Do freq to chan conversion
-	 * TODO: for 11a
-	 */
+	/* Check freq range */
+	if ((wlan_reg_min_chan_freq() >
+	     chandef->chan->center_freq) ||
+	    (wlan_reg_max_chan_freq() < chandef->chan->center_freq)) {
+		hdd_err("channel: %d is outside valid freq range",
+			chandef->chan->center_freq);
+		return -EINVAL;
+	}
 
 	channel = ieee80211_frequency_to_channel(chandef->chan->center_freq);
 
 	if (NL80211_CHAN_WIDTH_80P80 == chandef->width ||
 	    NL80211_CHAN_WIDTH_160 == chandef->width) {
+		if ((wlan_reg_min_chan_freq() > chandef->center_freq2) ||
+		    (wlan_reg_max_chan_freq() < chandef->center_freq2)) {
+			hdd_err("center_freq2: %d is outside valid freq range",
+				chandef->center_freq2);
+			return -EINVAL;
+		}
+
 		if (chandef->center_freq2)
 			channel_seg2 = ieee80211_frequency_to_channel(
-					chandef->center_freq2);
+				chandef->center_freq2);
 		else
 			hdd_err("Invalid center_freq2");
-	}
-
-	/* Check freq range */
-	if ((WNI_CFG_CURRENT_CHANNEL_STAMIN > channel) ||
-	    (WNI_CFG_CURRENT_CHANNEL_STAMAX < channel)) {
-		hdd_err("Channel: %d is outside valid range from %d to %d",
-		       channel, WNI_CFG_CURRENT_CHANNEL_STAMIN,
-		       WNI_CFG_CURRENT_CHANNEL_STAMAX);
-		return -EINVAL;
-	}
-
-	/* Check freq range */
-
-	if ((WNI_CFG_CURRENT_CHANNEL_STAMIN > channel_seg2) ||
-	    (WNI_CFG_CURRENT_CHANNEL_STAMAX < channel_seg2)) {
-		hdd_err("Channel: %d is outside valid range from %d to %d",
-		       channel_seg2, WNI_CFG_CURRENT_CHANNEL_STAMIN,
-		       WNI_CFG_CURRENT_CHANNEL_STAMAX);
-		return -EINVAL;
 	}
 
 	num_ch = CFG_VALID_CHANNEL_LIST_LEN;
