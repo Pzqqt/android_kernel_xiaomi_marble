@@ -32,12 +32,10 @@
 #include <wlan_vdev_mlme_main.h>
 #include <wmi_unified_vdev_api.h>
 
-static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
+void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 {
-	struct wlan_objmgr_vdev *vdev = arg;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
-	struct vdev_response_timer *vdev_rsp;
 	struct crash_inject param;
 	struct wmi_unified *wmi_handle;
 	struct vdev_start_response start_rsp = {0};
@@ -47,22 +45,23 @@ static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 	uint8_t vdev_id;
 	uint16_t rsp_pos = RESPONSE_BIT_MAX;
 
-	vdev_id = wlan_vdev_get_id(vdev);
-	mlme_debug("Response timer expired for VDEV %d", vdev_id);
+	if (!vdev_rsp) {
+		mlme_err("Vdev response timer is NULL");
+		return;
+	}
 
-	psoc = wlan_vdev_get_psoc(vdev);
+	psoc = vdev_rsp->psoc;
 	if (!psoc) {
 		mlme_err("PSOC is NULL");
 		return;
 	}
 
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
-	if (!rx_ops || !rx_ops->vdev_mgr_get_response_timer_info) {
+	if (!rx_ops || !rx_ops->psoc_get_vdev_response_timer_info) {
 		mlme_err("No Rx Ops");
 		return;
 	}
 
-	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
 	if (!qdf_atomic_test_bit(START_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
 	    !qdf_atomic_test_bit(RESTART_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
 	    !qdf_atomic_test_bit(STOP_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
@@ -70,7 +69,15 @@ static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 	    !qdf_atomic_test_bit(
 			PEER_DELETE_ALL_RESPONSE_BIT,
 			&vdev_rsp->rsp_status)) {
-		mlme_debug("No response bit is set, ignoring actions");
+		mlme_debug("No response bit is set, ignoring actions :%d",
+			   vdev_rsp->vdev_id);
+		return;
+	}
+
+	vdev_id = vdev_rsp->vdev_id;
+	if (vdev_id >= WLAN_UMAC_PSOC_MAX_VDEVS) {
+		mlme_err("Invalid VDEV_%d PSOC_%d", vdev_id,
+			 wlan_psoc_get_id(psoc));
 		return;
 	}
 
@@ -79,7 +86,7 @@ static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 				&vdev_rsp->rsp_status) ||
 	    qdf_atomic_test_bit(RESTART_RESPONSE_BIT,
 				&vdev_rsp->rsp_status)) {
-		start_rsp.vdev_id = wlan_vdev_get_id(vdev);
+		start_rsp.vdev_id = vdev_id;
 		start_rsp.status = WLAN_MLME_HOST_VDEV_START_TIMEOUT;
 		if (qdf_atomic_test_bit(START_RESPONSE_BIT,
 					&vdev_rsp->rsp_status)) {
@@ -92,31 +99,28 @@ static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 			rsp_pos = RESTART_RESPONSE_BIT;
 		}
 
-		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, rsp_pos);
+		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
 
 		rx_ops->vdev_mgr_start_response(psoc, &start_rsp);
 	} else if (qdf_atomic_test_bit(STOP_RESPONSE_BIT,
 				       &vdev_rsp->rsp_status)) {
 		rsp_pos = STOP_RESPONSE_BIT;
-		stop_rsp.vdev_id = wlan_vdev_get_id(vdev);
-
-		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, rsp_pos);
+		stop_rsp.vdev_id = vdev_id;
+		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
 
 		rx_ops->vdev_mgr_stop_response(psoc, &stop_rsp);
 	} else if (qdf_atomic_test_bit(DELETE_RESPONSE_BIT,
 				       &vdev_rsp->rsp_status)) {
-		del_rsp.vdev_id = wlan_vdev_get_id(vdev);
+		del_rsp.vdev_id = vdev_id;
 		rsp_pos = DELETE_RESPONSE_BIT;
-
-		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, rsp_pos);
+		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
 
 		rx_ops->vdev_mgr_delete_response(psoc, &del_rsp);
 	} else if (qdf_atomic_test_bit(PEER_DELETE_ALL_RESPONSE_BIT,
 				&vdev_rsp->rsp_status)) {
-		peer_del_all_rsp.vdev_id = wlan_vdev_get_id(vdev);
+		peer_del_all_rsp.vdev_id = vdev_id;
 		rsp_pos = PEER_DELETE_ALL_RESPONSE_BIT;
-
-		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, rsp_pos);
+		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
 
 		rx_ops->vdev_mgr_peer_delete_all_response(
 				psoc,
@@ -134,7 +138,7 @@ static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 	}
 
 	/* Trigger fw recovery to collect fw dump */
-	wmi_handle = target_if_vdev_mgr_wmi_handle_get(vdev);
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 	if (wmi_handle) {
 		mlme_err("PSOC_%d VDEV_%d: Self recovery, %s rsp timeout",
 			 wlan_psoc_get_id(psoc), vdev_id,
@@ -150,46 +154,31 @@ static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 	}
 }
 
-void target_if_timer_flush_handler(struct wlan_objmgr_pdev *pdev,
-				   void *object,
-				   void *arg)
-{
-	struct vdev_response_timer *vdev_rsp;
-	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_objmgr_vdev *vdev = object;
-
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		mlme_err("PSOC is NULL");
-		return;
-	}
-
-	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
-	if (!rx_ops || !rx_ops->vdev_mgr_get_response_timer_info) {
-		mlme_err("No Rx Ops");
-		return;
-	}
-
-	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
-	if (qdf_timer_sync_cancel(&vdev_rsp->rsp_timer))
-		target_if_vdev_mgr_rsp_timer_cb(vdev);
-}
-
-void target_if_flush_vdev_timers(struct wlan_objmgr_pdev *pdev)
-{
-	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
-					  target_if_timer_flush_handler,
-					  NULL, true, WLAN_VDEV_TARGET_IF_ID);
-}
-
 #ifdef SERIALIZE_VDEV_RESP
 static QDF_STATUS target_if_vdev_mgr_rsp_flush_cb(struct scheduler_msg *msg)
 {
-	struct wlan_objmgr_vdev *vdev = msg->bodyptr;
+	struct vdev_response_timer *vdev_rsp;
+	struct wlan_objmgr_psoc *psoc;
 
-	if (vdev)
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+	if (!msg->bodyptr) {
+		mlme_err("Message bodyptr is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_rsp = msg->bodyptr;
+	if (!vdev_rsp) {
+		mlme_err("vdev response timer is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = vdev_rsp->psoc;
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (vdev_rsp->rsp_status)
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_PSOC_TARGET_IF_ID);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -198,12 +187,19 @@ static void
 target_if_vdev_mgr_rsp_cb_mc_ctx(void *arg)
 {
 	struct scheduler_msg msg = {0};
-	struct wlan_objmgr_vdev *vdev = arg;
+	struct vdev_response_timer *vdev_rsp = arg;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = vdev_rsp->psoc;
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
+		return;
+	}
 
 	msg.type = SYS_MSG_ID_MC_TIMER;
 	msg.reserved = SYS_MSG_COOKIE;
 	msg.callback = target_if_vdev_mgr_rsp_timer_cb;
-	msg.bodyptr = arg;
+	msg.bodyptr = vdev_rsp;
 	msg.bodyval = 0;
 	msg.flush_callback = target_if_vdev_mgr_rsp_flush_cb;
 
@@ -214,8 +210,8 @@ target_if_vdev_mgr_rsp_cb_mc_ctx(void *arg)
 		return;
 
 	mlme_err("Could not enqueue timer to timer queue");
-	if (vdev)
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+	if (psoc)
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_PSOC_TARGET_IF_ID);
 }
 
 void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
@@ -243,8 +239,8 @@ static int target_if_vdev_mgr_start_response_handler(ol_scn_t scn,
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
 	struct vdev_start_response rsp = {0};
 	wmi_host_vdev_start_resp vdev_start_resp;
+	uint8_t vdev_id;
 	struct vdev_response_timer *vdev_rsp;
-	struct wlan_objmgr_vdev *vdev;
 
 	if (!scn || !data) {
 		mlme_err("Invalid input");
@@ -274,35 +270,26 @@ static int target_if_vdev_mgr_start_response_handler(ol_scn_t scn,
 		return -EINVAL;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-						psoc,
-						vdev_start_resp.vdev_id,
-						WLAN_VDEV_TARGET_IF_ID);
-	if (!vdev) {
-		mlme_err("PSOC_%d :VDEV_%d is NULL", psoc->soc_objmgr.psoc_id,
-			 vdev_start_resp.vdev_id);
-		return -EINVAL;
-	}
-
-	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
+	vdev_id = vdev_start_resp.vdev_id;
+	vdev_rsp = rx_ops->psoc_get_vdev_response_timer_info(psoc, vdev_id);
 	if (!vdev_rsp) {
-		mlme_err("PSOC_%d VDEV_%d: VDEV RSP is NULL",
-			 psoc->soc_objmgr.psoc_id, vdev_start_resp.vdev_id);
-		goto release_vdev_target_if_ref;
+		mlme_err("vdev response timer is null VDEV_%d PSOC_%d",
+			 vdev_id, wlan_psoc_get_id(psoc));
+		return -EINVAL;
 	}
 
 	if (vdev_start_resp.resp_type == WMI_HOST_VDEV_RESTART_RESP_EVENT)
 		status = target_if_vdev_mgr_rsp_timer_stop(
-							vdev, vdev_rsp,
+							psoc, vdev_rsp,
 							RESTART_RESPONSE_BIT);
 	else
-		status = target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
+		status = target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp,
 							   START_RESPONSE_BIT);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err("PSOC_%d VDEV_%d: VDE MGR RSP Timer stop failed",
-			 psoc->soc_objmgr.psoc_id, vdev_start_resp.vdev_id);
-		goto release_vdev_target_if_ref;
+			 psoc->soc_objmgr.psoc_id, vdev_id);
+		goto err;
 	}
 
 	rsp.vdev_id = vdev_start_resp.vdev_id;
@@ -317,8 +304,7 @@ static int target_if_vdev_mgr_start_response_handler(ol_scn_t scn,
 
 	status = rx_ops->vdev_mgr_start_response(psoc, &rsp);
 
-release_vdev_target_if_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+err:
 	return qdf_status_to_os_return(status);
 }
 
@@ -333,7 +319,6 @@ static int target_if_vdev_mgr_stop_response_handler(ol_scn_t scn,
 	struct vdev_stop_response rsp = {0};
 	uint32_t vdev_id;
 	struct vdev_response_timer *vdev_rsp;
-	struct wlan_objmgr_vdev *vdev;
 
 	if (!scn || !data) {
 		mlme_err("Invalid input");
@@ -363,37 +348,26 @@ static int target_if_vdev_mgr_stop_response_handler(ol_scn_t scn,
 		return -EINVAL;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-						psoc,
-						vdev_id,
-						WLAN_VDEV_TARGET_IF_ID);
-	if (!vdev) {
-		mlme_err("PSOC_%d: VDEV_%d is NULL", psoc->soc_objmgr.psoc_id,
-			 vdev_id);
+	vdev_rsp = rx_ops->psoc_get_vdev_response_timer_info(psoc, vdev_id);
+	if (!vdev_rsp) {
+		mlme_err("vdev response timer is null VDEV_%d PSOC_%d",
+			 vdev_id, wlan_psoc_get_id(psoc));
 		return -EINVAL;
 	}
 
-	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
-	if (!vdev_rsp) {
-		mlme_err("PSOC_%d VDEV_%d: VDEV RSP is NULL",
-			 psoc->soc_objmgr.psoc_id, vdev_id);
-		goto release_vdev_target_if_ref;
-	}
-
-	status = target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
+	status = target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp,
 						   STOP_RESPONSE_BIT);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err("PSOC_%d VDEV_%d: VDE MGR RSP Timer stop failed",
 			 psoc->soc_objmgr.psoc_id, vdev_id);
-		goto release_vdev_target_if_ref;
+		goto err;
 	}
 
 	rsp.vdev_id = vdev_id;
 	status = rx_ops->vdev_mgr_stop_response(psoc, &rsp);
 
-release_vdev_target_if_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+err:
 	return qdf_status_to_os_return(status);
 }
 
@@ -408,7 +382,6 @@ static int target_if_vdev_mgr_delete_response_handler(ol_scn_t scn,
 	struct vdev_delete_response rsp = {0};
 	struct wmi_host_vdev_delete_resp vdev_del_resp;
 	struct vdev_response_timer *vdev_rsp;
-	struct wlan_objmgr_vdev *vdev;
 
 	if (!scn || !data) {
 		mlme_err("Invalid input");
@@ -438,38 +411,28 @@ static int target_if_vdev_mgr_delete_response_handler(ol_scn_t scn,
 		return -EINVAL;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-						psoc,
-						vdev_del_resp.vdev_id,
-						WLAN_VDEV_TARGET_IF_ID);
-	if (!vdev) {
-		mlme_err("PSOC_%d: VDEV_%d is NULL", psoc->soc_objmgr.psoc_id,
-			 vdev_del_resp.vdev_id);
+	vdev_rsp = rx_ops->psoc_get_vdev_response_timer_info(psoc,
+							 vdev_del_resp.vdev_id);
+	if (!vdev_rsp) {
+		mlme_err("vdev response timer is null VDEV_%d PSOC_%d",
+			 vdev_del_resp.vdev_id, wlan_psoc_get_id(psoc));
 		return -EINVAL;
 	}
 
-	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
-	if (!vdev_rsp) {
-		mlme_err("PSOC_%d VDEV_%d: VDEV RSP is NULL",
-			 psoc->soc_objmgr.psoc_id, vdev_del_resp.vdev_id);
-		goto release_vdev_target_if_ref;
-	}
-
 	status = target_if_vdev_mgr_rsp_timer_stop(
-						vdev, vdev_rsp,
+						psoc, vdev_rsp,
 						DELETE_RESPONSE_BIT);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err("PSOC_%d VDEV_%d: VDE MGR RSP Timer stop failed",
-			 psoc->soc_objmgr.psoc_id, vdev_del_resp.vdev_id);
-		goto release_vdev_target_if_ref;
+			 wlan_psoc_get_id(psoc), vdev_del_resp.vdev_id);
+		goto err;
 	}
 
 	rsp.vdev_id = vdev_del_resp.vdev_id;
 	status = rx_ops->vdev_mgr_delete_response(psoc, &rsp);
 
-release_vdev_target_if_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+err:
 	return qdf_status_to_os_return(status);
 }
 
@@ -486,7 +449,6 @@ static int target_if_vdev_mgr_peer_delete_all_response_handler(
 	struct wmi_host_vdev_peer_delete_all_response_event
 						vdev_peer_del_all_resp;
 	struct vdev_response_timer *vdev_rsp;
-	struct wlan_objmgr_vdev *vdev;
 
 	if (!scn || !data) {
 		mlme_err("Invalid input");
@@ -518,41 +480,32 @@ static int target_if_vdev_mgr_peer_delete_all_response_handler(
 		return -EINVAL;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-						psoc,
-						vdev_peer_del_all_resp.vdev_id,
-						WLAN_VDEV_TARGET_IF_ID);
-	if (!vdev) {
-		mlme_err("PSOC_%d: VDEV_%d is NULL", psoc->soc_objmgr.psoc_id,
-			 vdev_peer_del_all_resp.vdev_id);
+	vdev_rsp = rx_ops->psoc_get_vdev_response_timer_info(psoc,
+						vdev_peer_del_all_resp.vdev_id);
+	if (!vdev_rsp) {
+		mlme_err("vdev response timer is null VDEV_%d PSOC_%d",
+			 vdev_peer_del_all_resp.vdev_id,
+			 wlan_psoc_get_id(psoc));
 		return -EINVAL;
 	}
 
-	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
-	if (!vdev_rsp) {
-		mlme_err("PSOC_%d VDEV_%d: VDEV RSP is NULL",
-			 psoc->soc_objmgr.psoc_id,
-			 vdev_peer_del_all_resp.vdev_id);
-		goto release_vdev_target_if_ref;
-	}
-
 	status = target_if_vdev_mgr_rsp_timer_stop(
-						vdev, vdev_rsp,
+						psoc,
+						vdev_rsp,
 						PEER_DELETE_ALL_RESPONSE_BIT);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err("PSOC_%d VDEV_%d: VDE MGR RSP Timer stop failed",
 			 psoc->soc_objmgr.psoc_id,
 			 vdev_peer_del_all_resp.vdev_id);
-		goto release_vdev_target_if_ref;
+		goto err;
 	}
 
 	rsp.vdev_id = vdev_peer_del_all_resp.vdev_id;
 	rsp.status = vdev_peer_del_all_resp.status;
 	status = rx_ops->vdev_mgr_peer_delete_all_response(psoc, &rsp);
 
-release_vdev_target_if_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+err:
 	return qdf_status_to_os_return(status);
 }
 

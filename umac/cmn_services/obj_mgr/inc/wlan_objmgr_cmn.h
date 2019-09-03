@@ -256,6 +256,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_MISC_ID:               power manager, PAPI, rate set, etc.
  * @WLAN_FWOL_NB_ID:            fw offload northbound operations
  * @WLAN_FWOL_SB_ID:            fw offload southbound operations
+ * @WLAN_PSOC_TARGET_IF_ID      PSOC related target_if operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -334,6 +335,7 @@ typedef enum {
 	WLAN_MISC_ID          = 69,
 	WLAN_FWOL_NB_ID       = 70,
 	WLAN_FWOL_SB_ID       = 71,
+	WLAN_PSOC_TARGET_IF_ID = 72,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 

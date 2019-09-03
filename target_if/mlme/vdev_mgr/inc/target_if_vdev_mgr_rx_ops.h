@@ -51,33 +51,6 @@ static inline bool target_if_vdev_mgr_is_panic_allowed(void)
 }
 #endif
 
-/**
- * target_if_timer_flush_handler() - API to handle target_if timer flush
- * request
- * @pdev: pointer to pdev object
- * @object: pointer to vdev object
- * @arg: pointer to arguments passed
- *
- * This is a target_if timer flush handler used to flush target_if response
- * timer. This API used while wlan driver shut down.
- *
- * Return: none
- */
-void target_if_timer_flush_handler(struct wlan_objmgr_pdev *pdev,
-				   void *object,
-				   void *arg);
-
-/**
- * target_if_flush_vdev_timers() - API to flush target_if response timers
- * for vdev
- * @pdev: pointer to pdev object
- *
- * This API is used to flush target_if response timer. This API used while
- * wlan driver shut down.
- *
- * Return: none
- */
-void target_if_flush_vdev_timers(struct wlan_objmgr_pdev *pdev);
 
 /**
  * target_if_vdev_mgr_offload_bcn_tx_status_handler() - API to handle beacon
@@ -174,5 +147,13 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
  */
 QDF_STATUS target_if_vdev_mgr_wmi_event_unregister(
 					struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_vdev_mgr_rsp_timer_cb() - function to handle vdev related timeouts
+ * @vdev_rsp: pointer to vdev response timer
+ *
+ * Return: NONE
+ */
+void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp);
 
 #endif /* __TARGET_IF_VDEV_MGR_RX_OPS_H__ */

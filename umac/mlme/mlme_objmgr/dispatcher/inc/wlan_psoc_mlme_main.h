@@ -40,4 +40,12 @@ QDF_STATUS wlan_psoc_mlme_init(void);
  */
 QDF_STATUS wlan_psoc_mlme_deinit(void);
 
+/**
+ * mlme_psoc_get_priv: get MLME priv object from psoc object
+ * @psoc: pointer to psoc object
+ *
+ * Return: pointer to MLME psoc private object
+ */
+struct psoc_mlme_obj *mlme_psoc_get_priv(struct wlan_objmgr_psoc *psoc);
+
 #endif

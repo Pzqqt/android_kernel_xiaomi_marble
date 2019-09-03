@@ -81,16 +81,22 @@ static inline char *string_from_rsp_bit(enum wlan_vdev_mgr_tgt_if_rsp_bit bit)
 
 /**
  * struct vdev_response_timer - vdev mgmt response ops timer
+ * @psoc: Object manager psoc
  * @rsp_timer: VDEV MLME mgmt response timer
  * @rsp_status: variable to check response status
  * @expire_time: time to expire timer
  * @timer_status: status of timer
+ * @rsp_timer_inuse: Status bit to inform whether the rsp timer is inuse
+ * @vdev_id: vdev object id
  */
 struct vdev_response_timer {
+	struct wlan_objmgr_psoc *psoc;
 	qdf_timer_t rsp_timer;
 	unsigned long rsp_status;
 	uint32_t expire_time;
 	QDF_STATUS timer_status;
+	qdf_atomic_t rsp_timer_inuse;
+	uint8_t vdev_id;
 };
 
 /**

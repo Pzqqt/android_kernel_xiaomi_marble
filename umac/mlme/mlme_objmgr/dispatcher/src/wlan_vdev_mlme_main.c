@@ -22,23 +22,28 @@
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_mlme_dbg.h>
-#include "include/wlan_mlme_cmn.h"
-#include "include/wlan_vdev_mlme.h"
-#include "include/wlan_pdev_mlme.h"
-#include "vdev_mgr/core/src/vdev_mlme_sm.h"
-#include "wlan_pdev_mlme_api.h"
-#include "wlan_vdev_mlme_api.h"
-#include "wlan_serialization_api.h"
-#include "wlan_utility.h"
+#include <include/wlan_mlme_cmn.h>
+#include <include/wlan_vdev_mlme.h>
+#include <include/wlan_pdev_mlme.h>
+#include <vdev_mgr/core/src/vdev_mlme_sm.h>
+#include <wlan_pdev_mlme_api.h>
+#include <wlan_vdev_mlme_api.h>
+#include <wlan_serialization_api.h>
+#include <wlan_utility.h>
 #include <cdp_txrx_cmn.h>
-#include "target_if_vdev_mgr_wake_lock.h"
+#include <target_if_vdev_mgr_wake_lock.h>
+#include <wlan_lmac_if_def.h>
+#include <target_if_vdev_mgr_tx_ops.h>
 
 static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 					       void *arg)
 {
 	struct vdev_mlme_obj *vdev_mlme;
 	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
 	struct pdev_mlme_obj *pdev_mlme;
+	struct wlan_lmac_if_mlme_tx_ops *txops;
+	QDF_STATUS status;
 
 	if (!vdev) {
 		mlme_err(" VDEV is NULL");
@@ -51,9 +56,33 @@ static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/**
+	 * 1st check whether for this vdev any vdev commands are pending for
+	 * response.
+	 */
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	txops = target_if_vdev_mgr_get_tx_ops(psoc);
+	if (!txops || !txops->psoc_vdev_rsp_timer_inuse) {
+		mlme_err("Failed to get mlme txrx_ops PSOC_%d",
+			 wlan_psoc_get_id(psoc));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = txops->psoc_vdev_rsp_timer_inuse(psoc, wlan_vdev_get_id(vdev));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("The vdev response is pending for VDEV_%d status:%d",
+			 wlan_vdev_get_id(vdev), status);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	pdev_mlme = wlan_pdev_mlme_get_cmpt_obj(pdev);
 	if (!pdev_mlme) {
-		mlme_err(" PDEV MLME is NULL");
+		mlme_err("PDEV MLME is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -105,15 +134,6 @@ init_failed:
 	return QDF_STATUS_E_FAILURE;
 }
 
-static void mlme_vdev_obj_timer_deinit(
-				struct vdev_mlme_obj *vdev_mlme)
-{
-	struct vdev_response_timer *vdev_rsp;
-
-	vdev_rsp = &vdev_mlme->vdev_rt;
-	qdf_timer_free(&vdev_rsp->rsp_timer);
-}
-
 static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 						void *arg)
 {
@@ -142,8 +162,6 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 		cdp_vdev_detach(soc_txrx_handle, vdev_txrx_handle,
 				NULL, NULL);
 	}
-
-	mlme_vdev_obj_timer_deinit(vdev_mlme);
 
 	mlme_vdev_sm_destroy(vdev_mlme);
 

@@ -567,7 +567,6 @@ struct vdev_mlme_obj {
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_mlme_ops *ops;
 	mlme_vdev_ext_t *ext_vdev_ptr;
-	struct vdev_response_timer vdev_rt;
 #ifdef FEATURE_VDEV_RSP_WAKELOCK
 	struct vdev_mlme_wakelock vdev_wakelock;
 #endif

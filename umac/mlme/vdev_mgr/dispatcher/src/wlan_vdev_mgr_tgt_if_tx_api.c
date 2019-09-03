@@ -63,7 +63,6 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 	enum wlan_op_subtype cdp_txrx_subtype;
 	uint32_t vdev_id;
 	uint8_t *vdev_addr;
-	struct vdev_response_timer *vdev_rsp;
 
 	if (!param) {
 		mlme_err("Invalid input");
@@ -73,25 +72,27 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 	vdev = mlme_obj->vdev;
 	vdev_id = wlan_vdev_get_id(vdev);
 	txops = wlan_vdev_mlme_get_lmac_txops(vdev);
-	if (!txops || !txops->vdev_create_send ||
-	    !txops->vdev_mgr_rsp_timer_init) {
-		mlme_err("VDEV_%d: No Tx Ops", vdev_id);
+	if (!txops || !txops->vdev_create_send) {
+		mlme_err("VDEV_%d No Tx Ops", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("psoc object is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	status = txops->vdev_create_send(vdev, param);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		vdev_rsp = &mlme_obj->vdev_rt;
-		txops->vdev_mgr_rsp_timer_init(vdev, &vdev_rsp->rsp_timer);
-	} else {
-		mlme_err("VDEV_%d: Tx Ops Error : %d", vdev_id, status);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("VDEV_%d PSOC_%d Tx Ops Error : %d", vdev_id,
+			 wlan_psoc_get_id(psoc), status);
 		return status;
 	}
 
 	cdp_txrx_opmode = wlan_util_vdev_get_cdp_txrx_opmode(vdev);
 	cdp_txrx_subtype = wlan_util_vdev_get_cdp_txrx_subtype(vdev);
 	vdev_addr = wlan_vdev_mlme_get_macaddr(vdev);
-	psoc = wlan_vdev_get_psoc(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
 	soc_txrx_handle = wlan_psoc_get_dp_handle(psoc);
 	pdev_txrx_handle = wlan_pdev_get_dp_handle(pdev);
@@ -107,7 +108,6 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 		return QDF_STATUS_E_FAILURE;
 
 	wlan_vdev_set_dp_handle(vdev, vdev_txrx_handle);
-
 	return status;
 }
 

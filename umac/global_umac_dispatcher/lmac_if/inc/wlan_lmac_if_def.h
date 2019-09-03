@@ -185,8 +185,6 @@ enum wlan_mlme_cfg_id;
  * @get_wifi_iface_id: function to get wifi interface id
  * @vdev_mlme_attach: function to register events
  * @vdev_mlme_detach: function to unregister events
- * @vdev_mgr_rsp_timer_init: function to initialize vdev response timer
- * @vdev_mgr_rsp_timer_mod: function to timer_mod vdev response timer
  * @vdev_create_send: function to send vdev create
  * @vdev_start_send: function to send vdev start
  * @vdev_up_send: function to send vdev up
@@ -207,18 +205,16 @@ enum wlan_mlme_cfg_id;
  * @vdev_bcn_miss_offload_send: function to send beacon miss offload
  * @vdev_sta_ps_param_send: function to sent STA power save config
  * @peer_delete_all_send: function to send vdev delete all peer request
+ * @psoc_vdev_rsp_timer_init: function to initialize psoc vdev response timer
+ * @psoc_vdev_rsp_timer_deinit: function to deinitialize psoc vdev rsp timer
+ * @psoc_vdev_rsp_timer_inuse: function to determine whether the vdev rsp
+ * timer is inuse or not
+ * @psoc_vdev_rsp_timer_mod: function to modify the time of vdev rsp timer
  */
 struct wlan_lmac_if_mlme_tx_ops {
 	uint32_t (*get_wifi_iface_id) (struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*vdev_mlme_attach)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*vdev_mlme_detach)(struct wlan_objmgr_psoc *psoc);
-	QDF_STATUS (*vdev_mgr_rsp_timer_init)(
-					struct wlan_objmgr_vdev *vdev,
-					qdf_timer_t *rsp_timer);
-	QDF_STATUS (*vdev_mgr_rsp_timer_mod)(
-					struct wlan_objmgr_vdev *vdev,
-					struct vdev_response_timer *vdev_rsp,
-					int mseconds);
 	QDF_STATUS (*vdev_create_send)(struct wlan_objmgr_vdev *vdev,
 				       struct vdev_create_params *param);
 	QDF_STATUS (*vdev_start_send)(struct wlan_objmgr_vdev *vdev,
@@ -272,6 +268,20 @@ struct wlan_lmac_if_mlme_tx_ops {
 	QDF_STATUS (*peer_delete_all_send)(
 					struct wlan_objmgr_vdev *vdev,
 					struct peer_delete_all_params *param);
+	QDF_STATUS (*psoc_vdev_rsp_timer_init)(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id);
+	void (*psoc_vdev_rsp_timer_deinit)(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id);
+	QDF_STATUS (*psoc_vdev_rsp_timer_inuse)(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id);
+	QDF_STATUS (*psoc_vdev_rsp_timer_mod)(
+					struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id,
+					int mseconds);
+
 };
 
 /**
@@ -1489,7 +1499,6 @@ struct wlan_lmac_if_dfs_rx_ops {
 
 /**
  * struct wlan_lmac_if_mlme_rx_ops: Function pointer to call MLME functions
- * @vdev_mgr_get_response_timer_info: function to get response timer info
  * @vdev_mgr_start_response: function to handle start response
  * @vdev_mgr_stop_response: function to handle stop response
  * @vdev_mgr_delete_response: function to handle delete response
@@ -1499,10 +1508,10 @@ struct wlan_lmac_if_dfs_rx_ops {
  * @vdev_mgr_peer_delete_all_response: function to handle vdev delete all peer
  * event
  * @vdev_mgr_get_wakelock_info: function to get wakelock info
+ * @psoc_get_vdev_response_timer_info: function to get vdev response timer
+ * structure for a specific vdev id
  */
 struct wlan_lmac_if_mlme_rx_ops {
-	struct vdev_response_timer *(*vdev_mgr_get_response_timer_info)(
-					struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*vdev_mgr_start_response)(
 					struct wlan_objmgr_psoc *psoc,
 					struct vdev_start_response *rsp);
@@ -1525,6 +1534,9 @@ struct wlan_lmac_if_mlme_rx_ops {
 	struct vdev_mlme_wakelock *(*vdev_mgr_get_wakelock_info)(
 					struct wlan_objmgr_vdev *vdev);
 #endif
+	struct vdev_response_timer *(*psoc_get_vdev_response_timer_info)(
+						struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id);
 };
 
 #ifdef WLAN_SUPPORT_GREEN_AP

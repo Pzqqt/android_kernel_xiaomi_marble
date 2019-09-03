@@ -21,15 +21,19 @@
 #define _WLAN_PSOC_MLME_H_
 
 #include <wlan_ext_mlme_obj_types.h>
+#include <wlan_vdev_mgr_tgt_if_rx_defs.h>
+#include <qdf_timer.h>
 
 /**
- * struct psoc_mlme_obj -  PSOC MLME component object
- * @psoc:                  PSOC object
- * @ext_psoc_ptr:          extended psoc mlme pointer
+ * struct psoc_mlme_obj -  PSoC MLME component object
+ * @psoc:                  PSoC object
+ * @ext_psoc_ptr:        PSoC legacy pointer
+ * @psoc_vdev_rt:       PSoC Vdev response timer
  */
 struct psoc_mlme_obj {
 	struct wlan_objmgr_psoc *psoc;
 	mlme_psoc_ext_t *ext_psoc_ptr;
+	struct vdev_response_timer psoc_vdev_rt[WLAN_UMAC_PSOC_MAX_VDEVS];
 };
 
 #endif
