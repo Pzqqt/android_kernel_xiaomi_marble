@@ -1443,14 +1443,10 @@ static int hdd_convert_dot11mode_from_phymode(int phymode)
 static void hdd_fill_station_info(struct hdd_adapter *adapter,
 				  tSap_StationAssocReassocCompleteEvent *event)
 {
-	struct hdd_station_info *stainfo;
-	uint8_t i = 0, oldest_disassoc_sta_idx = WLAN_MAX_STA_COUNT + 1;
+	struct hdd_station_info *stainfo, *cache_sta_info;
+	struct hdd_station_info *oldest_disassoc_sta_info = NULL;
+	uint8_t index = 0;
 	qdf_time_t oldest_disassoc_sta_ts = 0;
-
-	if (event->staId >= WLAN_MAX_STA_COUNT) {
-		hdd_err("invalid sta id");
-		return;
-	}
 
 	stainfo = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
 					  event->staMac.bytes);
@@ -1512,46 +1508,55 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 	stainfo->dhcp_phase = DHCP_PHASE_ACK;
 	stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
 
-	while (i < WLAN_MAX_STA_COUNT) {
-		if (!qdf_mem_cmp(adapter->cache_sta_info[i].sta_mac.bytes,
-				 event->staMac.bytes,
-				 QDF_MAC_ADDR_SIZE))
-			break;
-		i++;
-	}
-	if (i >= WLAN_MAX_STA_COUNT) {
-		i = 0;
-		while (i < WLAN_MAX_STA_COUNT) {
-			if (adapter->cache_sta_info[i].in_use != TRUE)
-				break;
+	cache_sta_info =
+		hdd_get_sta_info_by_mac(&adapter->cache_sta_info_list,
+					event->staMac.bytes);
 
-			if (adapter->cache_sta_info[i].disassoc_ts &&
-			    (!oldest_disassoc_sta_ts ||
-			    (qdf_system_time_after(
-					oldest_disassoc_sta_ts,
-					adapter->
-					cache_sta_info[i].disassoc_ts)))) {
-				oldest_disassoc_sta_ts =
-					adapter->
-						cache_sta_info[i].disassoc_ts;
-				oldest_disassoc_sta_idx = i;
+	if (!cache_sta_info) {
+		cache_sta_info = qdf_mem_malloc(sizeof(*cache_sta_info));
+		if (!cache_sta_info)
+			return;
+
+		qdf_mem_copy(cache_sta_info, stainfo, sizeof(*cache_sta_info));
+		qdf_mem_zero(&cache_sta_info->sta_node,
+			     sizeof(cache_sta_info->sta_node));
+
+		/*
+		 * If cache_sta_info is not present and cache limit is not
+		 * reached, then create and attach. Else find the cache that is
+		 * the oldest and replace that with the new cache.
+		 */
+		if (qdf_atomic_read(&adapter->cache_sta_count) <
+		    WLAN_MAX_STA_COUNT) {
+			hdd_sta_info_attach(&adapter->cache_sta_info_list,
+					    cache_sta_info);
+			qdf_atomic_inc(&adapter->cache_sta_count);
+		} else {
+			struct hdd_station_info *temp_sta_info;
+
+			hdd_debug("reached max caching, removing oldest");
+
+			/* Find the oldest cached station */
+			hdd_for_each_station(adapter->cache_sta_info_list,
+					     temp_sta_info, index) {
+				if (temp_sta_info->disassoc_ts &&
+				    (!oldest_disassoc_sta_ts ||
+				    qdf_system_time_after(
+				    oldest_disassoc_sta_ts,
+				    temp_sta_info->disassoc_ts))) {
+					oldest_disassoc_sta_ts =
+						temp_sta_info->disassoc_ts;
+					oldest_disassoc_sta_info =
+						temp_sta_info;
+				}
 			}
-			i++;
+
+			/* Remove the oldest and store the current */
+			hdd_sta_info_detach(&adapter->cache_sta_info_list,
+					    oldest_disassoc_sta_info);
+			hdd_sta_info_attach(&adapter->cache_sta_info_list,
+					    cache_sta_info);
 		}
-	}
-
-	if ((i == WLAN_MAX_STA_COUNT) && oldest_disassoc_sta_ts) {
-		hdd_debug("reached max cached sta_id, removing oldest stainfo");
-		i = oldest_disassoc_sta_idx;
-	}
-	if (i < WLAN_MAX_STA_COUNT) {
-		qdf_mem_zero(&adapter->cache_sta_info[i],
-			     sizeof(*stainfo));
-		qdf_mem_copy(&adapter->cache_sta_info[i],
-				     stainfo, sizeof(struct hdd_station_info));
-
-	} else {
-		hdd_debug("reached max sta_id, stainfo can't be cached");
 	}
 
 	hdd_debug("cap %d %d %d %d %d %d %d %d %d %x %d",
@@ -2323,8 +2328,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		memcpy(wrqu.addr.sa_data,
 		       &disassoc_comp->staMac, QDF_MAC_ADDR_SIZE);
 
-		cache_stainfo = hdd_get_stainfo(adapter->cache_sta_info,
-						disassoc_comp->staMac);
+		cache_stainfo = hdd_get_sta_info_by_mac(
+						&adapter->cache_sta_info_list,
+						disassoc_comp->staMac.bytes);
 		if (cache_stainfo) {
 			/* Cache the disassoc info */
 			cache_stainfo->rssi = disassoc_comp->rssi;
@@ -3353,6 +3359,9 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	/* Register as a wireless device */
 	hdd_register_hostapd_wext(adapter->dev);
 
+	/* Cache station count initialize to zero */
+	qdf_atomic_init(&adapter->cache_sta_count);
+
 	/* Initialize the data path module */
 	hdd_softap_init_tx_rx(adapter);
 
@@ -3360,6 +3369,12 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("sta info init failed");
 		goto error_release_softap_tx_rx;
+	}
+
+	status = hdd_sta_info_init(&adapter->cache_sta_info_list);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("cache sta info init failed");
+		goto error_release_sta_info;
 	}
 
 	status = hdd_wmm_adapter_init(adapter);
@@ -3402,6 +3417,8 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	return status;
 
 error_release_wmm:
+	hdd_sta_info_deinit(&adapter->cache_sta_info_list);
+error_release_sta_info:
 	hdd_sta_info_deinit(&adapter->sta_info_list);
 error_release_softap_tx_rx:
 	hdd_softap_deinit_tx_rx(adapter);

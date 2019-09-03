@@ -266,5 +266,13 @@ QDF_STATUS hdd_sta_info_attach(struct hdd_sta_info_obj *sta_info_container,
 struct hdd_station_info *hdd_get_sta_info_by_mac(
 				struct hdd_sta_info_obj *sta_info_container,
 				const uint8_t *mac_addr);
+/**
+ * hdd_clear_cached_sta_info() - Clear the cached sta info from the container
+ * @sta_info_container: The station info container obj that stores and maintains
+ *                      the sta_info obj.
+ *
+ * Return: None
+ */
+void hdd_clear_cached_sta_info(struct hdd_sta_info_obj *sta_info_container);
 
 #endif /* __WLAN_HDD_STA_INFO_H */

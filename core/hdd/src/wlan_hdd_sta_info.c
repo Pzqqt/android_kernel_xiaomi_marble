@@ -116,3 +116,22 @@ struct hdd_station_info *hdd_get_sta_info_by_mac(
 
 	return NULL;
 }
+
+void hdd_clear_cached_sta_info(struct hdd_sta_info_obj *sta_info_container)
+{
+	struct hdd_station_info *sta_info = NULL;
+	uint8_t index = 0;
+	struct qdf_ht_entry *tmp;
+
+	if (!sta_info_container) {
+		hdd_err("Parameter null");
+		return;
+	}
+
+	qdf_ht_for_each_safe(sta_info_container->sta_obj, index, tmp, sta_info,
+			     sta_node) {
+		if (sta_info) {
+			hdd_sta_info_detach(sta_info_container, sta_info);
+		}
+	}
+}

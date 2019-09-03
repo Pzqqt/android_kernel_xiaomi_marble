@@ -4233,6 +4233,9 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	adapter->disconnection_in_progress = false;
 	adapter->send_mode_change = true;
 
+	/* Cache station count initialize to zero */
+	qdf_atomic_init(&adapter->cache_sta_count);
+
 	/* Init the net_device structure */
 	strlcpy(dev->name, name, IFNAMSIZ);
 
@@ -4856,8 +4859,10 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 	qdf_spinlock_destroy(&adapter->vdev_lock);
 
 	if (adapter->device_mode == QDF_SAP_MODE ||
-	    adapter->device_mode == QDF_P2P_GO_MODE)
+	    adapter->device_mode == QDF_P2P_GO_MODE) {
 		hdd_sta_info_deinit(&adapter->sta_info_list);
+		hdd_sta_info_deinit(&adapter->cache_sta_info_list);
+	}
 
 	wlan_hdd_debugfs_csr_deinit(adapter);
 	if (adapter->device_mode == QDF_STA_MODE)
@@ -6048,6 +6053,9 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		qdf_mem_free(adapter->session.ap.beacon);
 		adapter->session.ap.beacon = NULL;
 
+		/* Clear all the cached sta info */
+		hdd_clear_cached_sta_info(&adapter->cache_sta_info_list);
+
 		/*
 		 * If Do_Not_Break_Stream was enabled clear avoid channel list.
 		 */
@@ -6321,8 +6329,10 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 		hdd_softap_deinit_tx_rx(adapter);
 		if (adapter->device_mode == QDF_SAP_MODE ||
-		    adapter->device_mode == QDF_P2P_GO_MODE)
+		    adapter->device_mode == QDF_P2P_GO_MODE) {
 			hdd_sta_info_deinit(&adapter->sta_info_list);
+			hdd_sta_info_deinit(&adapter->cache_sta_info_list);
+		}
 
 		hdd_deregister_hl_netdev_fc_timer(adapter);
 		hdd_deregister_tx_flow_control(adapter);

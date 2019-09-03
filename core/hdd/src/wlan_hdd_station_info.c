@@ -996,12 +996,13 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 					 struct hdd_adapter *adapter,
 					 struct qdf_mac_addr mac_addr)
 {
-	struct hdd_station_info *stainfo = hdd_get_stainfo(
-						adapter->cache_sta_info,
-						mac_addr);
+	struct hdd_station_info *stainfo;
 	struct sk_buff *skb = NULL;
 	uint32_t nl_buf_len = NLMSG_HDRLEN;
 	uint8_t channel_width;
+
+	stainfo = hdd_get_sta_info_by_mac(&adapter->cache_sta_info_list,
+					   mac_addr.bytes);
 
 	if (!stainfo) {
 		hdd_err("peer " QDF_MAC_ADDR_STR " not found",
@@ -1081,7 +1082,8 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 		}
 	}
 
-	qdf_mem_zero(stainfo, sizeof(*stainfo));
+	hdd_sta_info_detach(&adapter->cache_sta_info_list, stainfo);
+	qdf_atomic_dec(&adapter->cache_sta_count);
 
 	return cfg80211_vendor_cmd_reply(skb);
 fail:

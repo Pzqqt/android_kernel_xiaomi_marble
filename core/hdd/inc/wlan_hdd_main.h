@@ -1042,6 +1042,7 @@ struct hdd_context;
  * @event_flags: a bitmap of hdd_adapter_flags
  * @mic_work: mic work information
  * @gpio_tsf_sync_work: work to sync send TSF CAP WMI command
+ * @cache_sta_count: number of currently cached stations
  *
  */
 struct hdd_adapter {
@@ -1145,6 +1146,7 @@ struct hdd_adapter {
 	/* TODO: _list from name will be removed after clean up */
 	struct hdd_sta_info_obj sta_info_list;
 	struct hdd_sta_info_obj cache_sta_info_list;
+	qdf_atomic_t cache_sta_count;
 
 #ifdef FEATURE_WLAN_WAPI
 	struct hdd_wapi_info wapi_info;
