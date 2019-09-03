@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -447,12 +447,12 @@ cdp_update_pdev_host_stats(ol_txrx_soc_handle soc,
 /**
  * @brief Update vdev host stats
  *
- * @param soc	   - soc handle
- * @param vdev_id  - id of the virtual device object
- * @param data     - pdev stats
- * @param stats_id - type of stats
+ * @soc: soc handle
+ * @vdev_id: id of the virtual device object
+ * @data: pdev stats
+ * @stats_id: type of stats
  *
- * @return - QDF_STATUS
+ * Return: QDF_STATUS
  */
 static inline QDF_STATUS
 cdp_update_vdev_host_stats(ol_txrx_soc_handle soc,

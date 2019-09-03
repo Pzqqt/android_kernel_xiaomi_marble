@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,4 +57,9 @@ struct cdp_ctrl_objmgr_peer;
  * cdp_cal_client - opaque handle for cal client object
  */
 struct cdp_cal_client;
+
+/**
+ * cdp_ext_vdev - opaque handle for extended vdev data path handle
+ */
+struct cdp_ext_vdev;
 #endif

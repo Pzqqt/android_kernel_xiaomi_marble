@@ -2050,6 +2050,30 @@ static bool dp_check_exc_metadata(struct cdp_tx_exception_metadata *tx_exc)
 }
 
 /**
+ * __dp_tx_send_exception: Wrapper API for dp_tx_send_exception.
+ * @soc: DP soc handle
+ * @vdev_id: id of DP vdev handle
+ * @tx_exc_metadata: Handle that holds exception path meta data
+ *
+ * Return: NULL on success,
+ *         nbuf when it fails to send
+ */
+qdf_nbuf_t
+__dp_tx_send_exception(ol_txrx_soc_handle soc, uint8_t vdev_id, qdf_nbuf_t nbuf,
+		       struct cdp_tx_exception_metadata *tx_exc_metadata)
+{
+	struct dp_vdev *vdev =
+			dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+							   vdev_id);
+
+	if (!vdev)
+		return nbuf;
+
+	return dp_tx_send_exception((struct cdp_vdev *)vdev, nbuf,
+				    tx_exc_metadata);
+}
+
+/**
  * dp_tx_send_exception() - Transmit a frame on a given VAP in exception path
  * @vap_dev: DP vdev handle
  * @nbuf: skb

@@ -1836,4 +1836,17 @@ dp_get_pdev_from_soc_pdev_id_wifi3(struct dp_soc *soc,
 QDF_STATUS dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 					 ba_window_size, uint32_t start_seq);
 
+/**
+ * dp_get_peer_mac_list(): function to get peer mac list of vdev
+ * @soc: Datapath soc handle
+ * @vdev_id: vdev id
+ * @newmac: Table of the clients mac
+ * @mac_cnt: No. of MACs required
+ *
+ * return: no of clients
+ */
+uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			      u_int8_t newmac[][QDF_MAC_ADDR_SIZE],
+			      u_int16_t mac_cnt);
+
 #endif /* #ifndef _DP_INTERNAL_H_ */

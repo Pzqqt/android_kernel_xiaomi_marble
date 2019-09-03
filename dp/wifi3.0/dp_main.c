@@ -5259,6 +5259,11 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 		/* debug print - will be removed later */
 		dp_warn("not deleting vdev object %pK (%pM) until deletion finishes for all its peers",
 			vdev, vdev->mac_addr.raw);
+
+		if (vdev->vdev_dp_ext_handle) {
+			qdf_mem_free(vdev->vdev_dp_ext_handle);
+			vdev->vdev_dp_ext_handle = NULL;
+		}
 		/* indicate that the vdev needs to be deleted */
 		vdev->delete.pending = 1;
 		vdev->delete.callback = callback;
@@ -5301,7 +5306,13 @@ free_vdev:
 	if (wlan_op_mode_monitor == vdev->opmode)
 		pdev->monitor_vdev = NULL;
 
+	if (vdev->vdev_dp_ext_handle) {
+		qdf_mem_free(vdev->vdev_dp_ext_handle);
+		vdev->vdev_dp_ext_handle = NULL;
+	}
+
 	dp_info("deleting vdev object %pK (%pM)", vdev, vdev->mac_addr.raw);
+
 	qdf_mem_free(vdev);
 
 	if (callback)
@@ -8442,7 +8453,7 @@ dp_txrx_get_pdev_stats(struct cdp_soc_t *soc, uint8_t pdev_id,
 }
 
 /* dp_txrx_update_vdev_me_stats(): Update vdev ME stats sent from CDP
- * @vdev_handle: DP vdev handle
+ * @vdev: DP vdev handle
  * @buf: buffer containing specific stats structure
  *
  * Returns: void
@@ -8497,6 +8508,7 @@ static QDF_STATUS dp_txrx_update_vdev_host_stats(struct cdp_soc_t *soc,
 			  "Invalid vdev handle");
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	switch (stats_id) {
 	case DP_VDEV_STATS_PKT_CNT_ONLY:
 		break;
@@ -9109,6 +9121,54 @@ dp_pdev_set_dp_txrx_handle(struct cdp_soc_t *soc, uint8_t pdev_id,
 		return;
 
 	pdev->dp_txrx_handle = dp_txrx_hdl;
+}
+
+/**
+ * dp_vdev_get_dp_ext_handle() - get dp handle from vdev
+ * @soc: datapath soc handle
+ * @vdev_id: vdev id
+ *
+ * Return: opaque pointer to dp txrx handle
+ */
+static void *dp_vdev_get_dp_ext_handle(ol_txrx_soc_handle soc, uint8_t vdev_id)
+{
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
+
+	if (!vdev)
+		return NULL;
+
+	return vdev->vdev_dp_ext_handle;
+}
+
+/**
+ * dp_vdev_set_dp_ext_handle() - set dp handle in vdev
+ * @soc: datapath soc handle
+ * @vdev_id: vdev id
+ * @size: size of advance dp handle
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+dp_vdev_set_dp_ext_handle(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			  uint16_t size)
+{
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
+	void *dp_ext_handle;
+
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
+
+	dp_ext_handle = qdf_mem_malloc(size);
+
+	if (!dp_ext_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	vdev->vdev_dp_ext_handle = dp_ext_handle;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -9825,6 +9885,8 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_data_tx_cb_set = dp_txrx_data_tx_cb_set,
 	.get_dp_txrx_handle = dp_pdev_get_dp_txrx_handle,
 	.set_dp_txrx_handle = dp_pdev_set_dp_txrx_handle,
+	.get_vdev_dp_ext_txrx_handle = dp_vdev_get_dp_ext_handle,
+	.set_vdev_dp_ext_txrx_handle = dp_vdev_set_dp_ext_handle,
 	.get_soc_dp_txrx_handle = dp_soc_get_dp_txrx_handle,
 	.set_soc_dp_txrx_handle = dp_soc_set_dp_txrx_handle,
 	.map_pdev_to_lmac = dp_soc_map_pdev_to_lmac,
@@ -9856,6 +9918,8 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 #ifdef QCA_MULTIPASS_SUPPORT
 	.set_vlan_groupkey = dp_set_vlan_groupkey,
 #endif
+	.get_peer_mac_list = dp_get_peer_mac_list,
+	.tx_send_exc = __dp_tx_send_exception,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
@@ -11368,4 +11432,40 @@ void dp_update_delay_stats(struct dp_pdev *pdev, uint32_t delay,
 		else
 			dstats->avg_delay = ((delay + dstats->avg_delay) / 2);
 	}
+}
+
+/**
+ * dp_get_peer_mac_list(): function to get peer mac list of vdev
+ * @soc: Datapath soc handle
+ * @vdev_id: vdev id
+ * @newmac: Table of the clients mac
+ * @mac_cnt: No. of MACs required
+ *
+ * return: no of clients
+ */
+uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			      u_int8_t newmac[][QDF_MAC_ADDR_SIZE],
+			      u_int16_t mac_cnt)
+{
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
+	struct dp_soc *dp_soc = (struct dp_soc *)soc;
+	struct dp_peer *peer;
+	uint16_t new_mac_cnt = 0;
+
+	if (!vdev)
+		return new_mac_cnt;
+
+	qdf_spin_lock_bh(&dp_soc->peer_ref_mutex);
+	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+		if (peer->bss_peer)
+			continue;
+		if (new_mac_cnt < mac_cnt) {
+			WLAN_ADDR_COPY(newmac[new_mac_cnt], peer->mac_addr.raw);
+			new_mac_cnt++;
+		}
+	}
+	qdf_spin_unlock_bh(&dp_soc->peer_ref_mutex);
+	return new_mac_cnt;
 }

@@ -268,6 +268,10 @@ struct cdp_cmn_ops {
 	void (*txrx_data_tx_cb_set)(struct cdp_soc_t *soc, uint8_t vdev_id,
 				    ol_txrx_data_tx_cb callback, void *ctxt);
 
+	qdf_nbuf_t (*tx_send_exc)
+		(ol_txrx_soc_handle soc, uint8_t vdev_id, qdf_nbuf_t msdu_list,
+		 struct cdp_tx_exception_metadata *tx_exc_metadata);
+
 	/*******************************************************************
 	 * Statistics and Debugging Interface (C Interface)
 	 ********************************************************************/
@@ -442,6 +446,12 @@ struct cdp_cmn_ops {
 	void (*set_dp_txrx_handle)(ol_txrx_soc_handle soc, uint8_t pdev_id,
 				   void *dp_hdl);
 
+	void *(*get_vdev_dp_ext_txrx_handle)(struct cdp_soc_t *soc,
+					     uint8_t vdev_id);
+	QDF_STATUS (*set_vdev_dp_ext_txrx_handle)(struct cdp_soc_t *soc,
+						  uint8_t vdev_id,
+						  uint16_t size);
+
 	void *(*get_soc_dp_txrx_handle)(struct cdp_soc *soc_handle);
 	void (*set_soc_dp_txrx_handle)(struct cdp_soc *soc_handle,
 			void *dp_txrx_handle);
@@ -512,6 +522,10 @@ struct cdp_cmn_ops {
 	QDF_STATUS (*set_vlan_groupkey)(struct cdp_soc_t *soc, uint8_t vdev_id,
 					uint16_t vlan_id, uint16_t group_key);
 #endif
+
+	uint16_t (*get_peer_mac_list)
+		 (ol_txrx_soc_handle soc, uint8_t vdev_id,
+		  u_int8_t newmac[][QDF_MAC_ADDR_SIZE], uint16_t mac_cnt);
 };
 
 struct cdp_ctrl_ops {
@@ -750,8 +764,8 @@ struct cdp_me_ops {
 	void
 		(*tx_me_free_descriptor)(struct cdp_pdev *pdev);
 
-	uint16_t
-		(*tx_me_convert_ucast)(struct cdp_vdev *vdev,
+	uint16_t (*tx_me_convert_ucast)(
+			ol_txrx_soc_handle soc, uint8_t vdev_id,
 			qdf_nbuf_t wbuf, u_int8_t newmac[][6],
 			uint8_t newmaccnt);
 	/* Should be a function pointer in ol_txrx_osif_ops{} */

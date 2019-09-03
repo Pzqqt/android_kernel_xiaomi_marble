@@ -1955,6 +1955,8 @@ struct dp_vdev {
 	TAILQ_HEAD(, dp_peer) mpass_peer_list;
 	DP_MUTEX_TYPE mpass_peer_mutex;
 #endif
+	/* Extended data path handle */
+	struct cdp_ext_vdev *vdev_dp_ext_handle;
 };
 
 

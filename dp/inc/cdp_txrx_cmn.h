@@ -1876,6 +1876,58 @@ cdp_pdev_set_dp_txrx_handle(ol_txrx_soc_handle soc, uint8_t pdev_id,
 	soc->ops->cmn_drv_ops->set_dp_txrx_handle(soc, pdev_id, dp_hdl);
 }
 
+/**
+ * cdp_vdev_get_dp_ext_txrx_handle() - get extended dp handle from vdev
+ * @soc: opaque soc handle
+ * @vdev_id: vdev id
+ *
+ * Return: opaque dp handle
+ */
+static inline void *
+cdp_vdev_get_dp_ext_txrx_handle(ol_txrx_soc_handle soc, uint8_t vdev_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (soc->ops->cmn_drv_ops->get_vdev_dp_ext_txrx_handle)
+		return soc->ops->cmn_drv_ops->get_vdev_dp_ext_txrx_handle(
+							soc, vdev_id);
+
+	return 0;
+}
+
+/**
+ * cdp_vdev_set_dp_ext_txrx_handle() - set extended dp handle in vdev
+ * @soc: opaque soc handle
+ * @vdev_id: vdev id
+ * @size: size of the advance dp handle
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+cdp_vdev_set_dp_ext_txrx_handle(ol_txrx_soc_handle soc, uint8_t vdev_id,
+				uint16_t size)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_vdev_dp_ext_txrx_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->cmn_drv_ops->set_vdev_dp_ext_txrx_handle(soc,
+								  vdev_id,
+								  size);
+}
+
 /*
  * cdp_soc_get_dp_txrx_handle() - get extended dp handle from soc
  * @soc: opaque soc handle
@@ -2653,4 +2705,67 @@ QDF_STATUS cdp_set_vdev_tidmap_prty(ol_txrx_soc_handle soc,
 
 	return soc->ops->cmn_drv_ops->set_vdev_tidmap_prty(vdev_handle, prio);
 }
+
+/**
+ * cdp_tx_send_exc() - Transmit a frame on a given vdev in exception path
+ *
+ * @soc: opaque soc handle
+ * @vdev_id: vdev id
+ * @nbuf: skb
+ * @tx_exc_metadata: Handle that holds exception path meta data
+ *
+ * Return: NULL on success
+ *         nbuf when it fails to send
+ */
+static inline qdf_nbuf_t
+cdp_tx_send_exc(ol_txrx_soc_handle soc,
+		uint8_t vdev_id,
+		qdf_nbuf_t nbuf,
+		struct cdp_tx_exception_metadata *tx_exc_metadata)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->tx_send_exc)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->tx_send_exc
+			(soc, vdev_id, nbuf, tx_exc_metadata);
+}
+
+/**
+ * cdp_vdev_get_peer_mac_list(): function to get peer mac list of vdev
+ * @soc: Datapath soc handle
+ * @vdev_id: vdev id
+ * @newmac: Table of the clients mac
+ * @mac_cnt: No. of MACs required
+ *
+ * return: no of clients
+ */
+static inline uint16_t
+cdp_vdev_get_peer_mac_list(ol_txrx_soc_handle soc,
+			   uint8_t vdev_id,
+			   uint8_t newmac[][QDF_MAC_ADDR_SIZE],
+			   uint16_t mac_cnt)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->get_peer_mac_list)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->get_peer_mac_list
+			(soc, vdev_id, newmac, mac_cnt);
+}
+
 #endif /* _CDP_TXRX_CMN_H_ */

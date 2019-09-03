@@ -186,6 +186,11 @@ QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev);
 QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev);
 
 qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf);
+
+qdf_nbuf_t
+__dp_tx_send_exception(ol_txrx_soc_handle soc, uint8_t vdev_id, qdf_nbuf_t nbuf,
+		       struct cdp_tx_exception_metadata *tx_exc_metadata);
+
 qdf_nbuf_t dp_tx_send_exception(struct cdp_vdev *data_vdev, qdf_nbuf_t nbuf,
 				struct cdp_tx_exception_metadata *tx_exc);
 qdf_nbuf_t dp_tx_send_mesh(struct cdp_soc_t *soc, uint8_t vdev_id,

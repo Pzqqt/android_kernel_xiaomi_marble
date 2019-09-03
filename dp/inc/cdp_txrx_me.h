@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -121,8 +121,8 @@ cdp_tx_me_free_descriptor(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 	soc->ops->me_ops->tx_me_free_descriptor(pdev);
 }
 
-static inline uint16_t
-cdp_tx_me_convert_ucast(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+static inline uint16_t cdp_tx_me_convert_ucast(
+	ol_txrx_soc_handle soc, uint8_t vdev_id,
 	qdf_nbuf_t wbuf, u_int8_t newmac[][6], uint8_t newmaccnt)
 {
 	if (!soc || !soc->ops) {
@@ -137,7 +137,7 @@ cdp_tx_me_convert_ucast(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		return 0;
 
 	return soc->ops->me_ops->tx_me_convert_ucast
-			(vdev, wbuf, newmac, newmaccnt);
+			(soc, vdev_id, wbuf, newmac, newmaccnt);
 }
 
 /* Should be a function pointer in ol_txrx_osif_ops{} */
