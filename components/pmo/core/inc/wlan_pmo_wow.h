@@ -494,9 +494,12 @@ static inline
 void pmo_core_update_wow_initial_wake_up(struct pmo_psoc_priv_obj *psoc_ctx,
 	bool value)
 {
-	qdf_spin_lock_bh(&psoc_ctx->lock);
+	/* Intentionally using irq save since initial wake flag is updated
+	 * from wake msi hard irq handler
+	 */
+	qdf_spin_lock_irqsave(&psoc_ctx->lock);
 	psoc_ctx->wow.wow_initial_wake_up = value;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	qdf_spin_unlock_irqrestore(&psoc_ctx->lock);
 }
 
 /**
@@ -510,9 +513,12 @@ bool pmo_core_get_wow_initial_wake_up(struct pmo_psoc_priv_obj *psoc_ctx)
 {
 	bool value;
 
-	qdf_spin_lock_bh(&psoc_ctx->lock);
+	/* Intentionally using irq save since initial wake flag is updated
+	 * from wake msi hard irq handler
+	 */
+	qdf_spin_lock_irqsave(&psoc_ctx->lock);
 	value = psoc_ctx->wow.wow_initial_wake_up;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	qdf_spin_unlock_irqrestore(&psoc_ctx->lock);
 
 	return value;
 }
