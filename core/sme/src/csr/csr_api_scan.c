@@ -806,7 +806,7 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 	tSirMacChanInfo *ch_info_start;
 	int32_t max_ch_idx;
 	bool tmp_bool;
-	uint8_t ch = 0;
+	uint32_t ch_freq = 0;
 
 	max_ch_idx =
 		(mac->scan.base_channels.numChannels <
@@ -821,9 +821,9 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 
 	ch_info_start = chan_info;
 	for (idx = 0; idx < max_ch_idx; idx++) {
-		ch = mac->scan.defaultPowerTable[idx].chan_num;
-		tmp_bool = (fill_5f && WLAN_REG_IS_5GHZ_CH(ch)) ||
-			(!fill_5f && WLAN_REG_IS_24GHZ_CH(ch));
+		ch_freq = mac->scan.defaultPowerTable[idx].center_freq;
+		tmp_bool = (fill_5f && WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) ||
+			(!fill_5f && WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq));
 		if (!tmp_bool)
 			continue;
 
@@ -833,8 +833,7 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 		}
 
 		chan_info->first_freq =
-			wlan_reg_chan_to_freq(mac->pdev,
-					      mac->scan.defaultPowerTable[idx].chan_num);
+			mac->scan.defaultPowerTable[idx].center_freq;
 		chan_info->numChannels = 1;
 		chan_info->maxTxPower =
 			QDF_MIN(mac->scan.defaultPowerTable[idx].tx_power,
@@ -1541,7 +1540,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 				chan = (wlan_reg_freq_to_chan(mac->pdev, ch_set->first_chan_freq)
 						+ (idx * ch_set->interChannelOffset));
 				ch_pwr_set->first_freq =
-					wlan_reg_chan_to_freq(mac->pdev, chan);
+					ch_set->first_chan_freq;
 				sme_debug(
 					"Setting Channel freq %d",
 					ch_pwr_set->first_freq);

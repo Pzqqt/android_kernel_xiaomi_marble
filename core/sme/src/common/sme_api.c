@@ -8825,7 +8825,8 @@ QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint8_t chanId,
 		return status;
 
 	for (i = 0; i < CFG_VALID_CHANNEL_LIST_LEN; i++) {
-		if (mac->scan.defaultPowerTable[i].chan_num == chanId) {
+		if (mac->scan.defaultPowerTable[i].center_freq ==
+		    wlan_reg_chan_to_freq(mac->pdev, chanId)) {
 			SME_SET_CHANNEL_REG_POWER(*regInfo1,
 				mac->scan.defaultPowerTable[i].tx_power);
 

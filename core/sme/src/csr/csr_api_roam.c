@@ -381,8 +381,8 @@ static const uint32_t
 csr_start_ibss_channels24[CSR_NUM_IBSS_START_CHANNELS_24] =
 							{ 2412, 2437, 2462 };
 
-static const uint8_t
-social_channel[MAX_SOCIAL_CHANNELS] = { 1, 6, 11 };
+static const uint32_t
+social_channel_freq[MAX_SOCIAL_CHANNELS] = { 2412, 2437, 2462 };
 
 static void init_config_param(struct mac_context *mac);
 static bool csr_roam_process_results(struct mac_context *mac, tSmeCmd *pCommand,
@@ -1059,15 +1059,15 @@ QDF_STATUS csr_close(struct mac_context *mac)
 	return status;
 }
 
-static int8_t csr_find_channel_pwr(struct channel_power *
-					     pdefaultPowerTable,
-					     uint8_t ChannelNum)
+static int8_t
+csr_find_channel_pwr(struct channel_power *pdefaultPowerTable,
+		     uint32_t chan_freq)
 {
 	uint8_t i;
 	/* TODO: if defaultPowerTable is guaranteed to be in ascending */
 	/* order of channel numbers, we can employ binary search */
 	for (i = 0; i < CFG_VALID_CHANNEL_LIST_LEN; i++) {
-		if (pdefaultPowerTable[i].chan_num == ChannelNum)
+		if (pdefaultPowerTable[i].center_freq == chan_freq)
 			return pdefaultPowerTable[i].tx_power;
 	}
 	/* could not find the channel list in default list */
@@ -1318,8 +1318,8 @@ static void csr_add_len_of_social_channels(struct mac_context *mac,
 			*num_chan);
 	if (CSR_IS_5G_BAND_ONLY(mac)) {
 		for (i = 0; i < MAX_SOCIAL_CHANNELS; i++) {
-			if (wlan_reg_get_channel_state(
-				mac->pdev, social_channel[i]) ==
+			if (wlan_reg_get_channel_state_for_freq(
+				mac->pdev, social_channel_freq[i]) ==
 					CHANNEL_STATE_ENABLE)
 				no_chan++;
 		}
@@ -1339,15 +1339,15 @@ static void csr_add_social_channels(struct mac_context *mac,
 			*num_chan);
 	if (CSR_IS_5G_BAND_ONLY(mac)) {
 		for (i = 0; i < MAX_SOCIAL_CHANNELS; i++) {
-			if (wlan_reg_get_channel_state(mac->pdev,
-				social_channel[i]) != CHANNEL_STATE_ENABLE)
+			if (wlan_reg_get_channel_state_for_freq(
+					mac->pdev, social_channel_freq[i]) !=
+					CHANNEL_STATE_ENABLE)
 				continue;
 			chan_list->chanParam[no_chan].freq =
-				wlan_reg_chan_to_freq(mac->pdev,
-						      social_channel[i]);
+				social_channel_freq[i];
 			chan_list->chanParam[no_chan].pwr =
 				csr_find_channel_pwr(pScan->defaultPowerTable,
-						social_channel[i]);
+						social_channel_freq[i]);
 			chan_list->chanParam[no_chan].dfsSet = false;
 			if (cds_is_5_mhz_enabled())
 				chan_list->chanParam[no_chan].quarter_rate
@@ -1388,7 +1388,10 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 	uint16_t unsafe_chan_cnt = 0;
 	uint16_t cnt = 0;
 	uint8_t  channel;
+	uint32_t  channel_freq;
 	bool is_unsafe_chan;
+	bool is_same_band;
+
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	if (!qdf_ctx) {
@@ -1419,15 +1422,14 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 
 		channel = wlan_reg_freq_to_chan(mac->pdev,
 						pScan->base_channels.channel_freq_list[i]);
-
+		channel_freq = pScan->base_channels.channel_freq_list[i];
 		/* Scan is not performed on DSRC channels*/
-		if (wlan_reg_is_dsrc_chan(mac->pdev, channel))
+		if (wlan_reg_is_dsrc_freq(channel_freq))
 			continue;
 
 		channel_state =
-			wlan_reg_get_channel_state(mac->pdev,
-				wlan_reg_freq_to_chan(mac->pdev,
-						      pScan->base_channels.channel_freq_list[i]));
+			wlan_reg_get_channel_state_for_freq(
+				mac->pdev, channel_freq);
 		if ((CHANNEL_STATE_ENABLE == channel_state) ||
 		    mac->scan.fEnableDFSChnlScan) {
 			if ((mac->roam.configParam.sta_roam_policy.dfs_mode ==
@@ -1449,26 +1451,29 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 						break;
 					}
 				}
-				if ((is_unsafe_chan) &&
-				    ((WLAN_REG_IS_24GHZ_CH(channel) &&
-				      roam_policy->sap_operating_band ==
-					BAND_2G) ||
-					(WLAN_REG_IS_5GHZ_CH(channel) &&
-					 roam_policy->sap_operating_band ==
-					BAND_5G))) {
+				is_same_band =
+					(WLAN_REG_IS_24GHZ_CH_FREQ(
+							channel_freq) &&
+					roam_policy->sap_operating_band ==
+							BAND_2G) ||
+					(WLAN_REG_IS_5GHZ_CH_FREQ(
+							channel_freq) &&
+					roam_policy->sap_operating_band ==
+							BAND_5G);
+				if (is_unsafe_chan && is_same_band) {
 					QDF_TRACE(QDF_MODULE_ID_SME,
 					QDF_TRACE_LEVEL_DEBUG,
-					FL("ignoring unsafe channel %d"),
-					channel);
+					FL("ignoring unsafe channel freq %d"),
+					channel_freq);
 					continue;
 				}
 			}
 			pChanList->chanParam[num_channel].freq =
-					pScan->base_channels.channel_freq_list[i];
+				pScan->base_channels.channel_freq_list[i];
 			pChanList->chanParam[num_channel].pwr =
-				csr_find_channel_pwr
-					(pScan->defaultPowerTable,
-					 wlan_reg_freq_to_chan(mac->pdev, pScan->base_channels.channel_freq_list[i]));
+				csr_find_channel_pwr(
+				pScan->defaultPowerTable,
+				pScan->base_channels.channel_freq_list[i]);
 
 			if (pScan->fcc_constraint) {
 				if (2467 ==
@@ -3188,7 +3193,8 @@ QDF_STATUS csr_get_channel_and_power_list(struct mac_context *mac)
 	QDF_STATUS qdf_status;
 	uint8_t Index = 0;
 
-	qdf_status = wlan_reg_get_channel_list_with_power(mac->pdev,
+	qdf_status = wlan_reg_get_channel_list_with_power_for_freq(
+				mac->pdev,
 				mac->scan.defaultPowerTable,
 				&num20MHzChannelsFound);
 
@@ -3204,7 +3210,7 @@ QDF_STATUS csr_get_channel_and_power_list(struct mac_context *mac)
 		/* structure -- this will be used as the scan list */
 		for (Index = 0; Index < num20MHzChannelsFound; Index++)
 			mac->scan.base_channels.channel_freq_list[Index] =
-				wlan_reg_chan_to_freq(mac->pdev, mac->scan.defaultPowerTable[Index].chan_num);
+				mac->scan.defaultPowerTable[Index].center_freq;
 		mac->scan.base_channels.numChannels =
 			num20MHzChannelsFound;
 	}
