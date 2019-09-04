@@ -402,7 +402,11 @@ static int swr_master_bulk_write(struct swr_mstr_ctrl *swrm, u32 *reg_addr,
 		mutex_lock(&swrm->iolock);
 		for (i = 0; i < length; i++) {
 		/* wait for FIFO WR command to complete to avoid overflow */
-			usleep_range(100, 105);
+		/*
+		 * Reduce sleep from 100us to 10us to meet KPIs
+		 * This still meets the hardware spec
+		 */
+			usleep_range(10, 12);
 			swr_master_write(swrm, reg_addr[i], val[i]);
 		}
 		mutex_unlock(&swrm->iolock);
@@ -564,7 +568,7 @@ static int swrm_cmd_fifo_wr_cmd(struct swr_mstr_ctrl *swrm, u8 cmd_data,
 	 * skip delay if write is handled in platform driver.
 	 */
 	if(!swrm->write)
-		usleep_range(250, 255);
+		usleep_range(150, 155);
 	if (cmd_id == 0xF) {
 		/*
 		 * sleep for 10ms for MSM soundwire variant to allow broadcast
