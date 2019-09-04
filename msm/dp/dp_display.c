@@ -45,10 +45,12 @@ enum dp_display_states {
 	DP_STATE_INITIALIZED            = BIT(1),
 	DP_STATE_READY                  = BIT(2),
 	DP_STATE_CONNECTED              = BIT(3),
-	DP_STATE_ENABLED                = BIT(4),
-	DP_STATE_SUSPENDED              = BIT(5),
-	DP_STATE_ABORTED                = BIT(6),
-	DP_STATE_HDCP_ABORTED           = BIT(7),
+	DP_STATE_CONNECT_NOTIFIED       = BIT(4),
+	DP_STATE_DISCONNECT_NOTIFIED    = BIT(5),
+	DP_STATE_ENABLED                = BIT(6),
+	DP_STATE_SUSPENDED              = BIT(7),
+	DP_STATE_ABORTED                = BIT(8),
+	DP_STATE_HDCP_ABORTED           = BIT(9),
 };
 
 static char *dp_display_state_name(enum dp_display_states state)
@@ -73,6 +75,14 @@ static char *dp_display_state_name(enum dp_display_states state)
 	if (state & DP_STATE_CONNECTED)
 		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
 			"CONNECTED");
+
+	if (state & DP_STATE_CONNECT_NOTIFIED)
+		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
+			"CONNECT_NOTIFIED");
+
+	if (state & DP_STATE_DISCONNECT_NOTIFIED)
+		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
+			"DISCONNECT_NOTIFIED");
 
 	if (state & DP_STATE_ENABLED)
 		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
@@ -653,6 +663,14 @@ static void dp_display_send_hpd_event(struct dp_display_private *dp)
 	envp[4] = NULL;
 	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE,
 			envp);
+
+	if (connector->status == connector_status_connected) {
+		dp_display_state_add(DP_STATE_CONNECT_NOTIFIED);
+		dp_display_state_remove(DP_STATE_DISCONNECT_NOTIFIED);
+	} else {
+		dp_display_state_add(DP_STATE_DISCONNECT_NOTIFIED);
+		dp_display_state_remove(DP_STATE_CONNECT_NOTIFIED);
+	}
 }
 
 static int dp_display_send_hpd_notification(struct dp_display_private *dp)
@@ -911,7 +929,8 @@ static int dp_display_process_hpd_low(struct dp_display_private *dp)
 
 	dp_display_process_mst_hpd_low(dp);
 
-	if (dp_display_state_is(DP_STATE_ENABLED) && !dp->mst.mst_active)
+	if (dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) &&
+			!dp->mst.mst_active)
 		rc = dp_display_send_hpd_notification(dp);
 
 	mutex_lock(&dp->session_lock);
