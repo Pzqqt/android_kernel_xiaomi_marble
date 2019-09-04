@@ -35,6 +35,9 @@
 #define CHANNEL_STATUS_SIZE 24
 #define CHANNEL_STATUS_MASK_INIT 0x0
 #define CHANNEL_STATUS_MASK 0x4
+#define PREEMPH_MASK 0x38
+#define PREEMPH_SHIFT 3
+#define GET_PREEMPH(b) ((b & PREEMPH_MASK) >> PREEMPH_SHIFT)
 #define AFE_API_VERSION_CLOCK_SET 1
 #define MSM_DAI_SYSFS_ENTRY_MAX_LEN 64
 
@@ -1739,22 +1742,41 @@ static void msm_dai_q6_spdif_process_event(uint32_t opcode, uint32_t token,
 {
 	struct msm_dai_q6_spdif_event_msg *evt;
 	struct msm_dai_q6_spdif_dai_data *dai_data;
+	int preemph_old = 0;
+	int preemph_new = 0;
 
 	evt = (struct msm_dai_q6_spdif_event_msg *)payload;
 	dai_data = (struct msm_dai_q6_spdif_dai_data *)private_data;
 
-	pr_debug("%s: old state %d, fmt %d, rate %d\n",
+	preemph_old = GET_PREEMPH(dai_data->fmt_event.channel_status[0]);
+	preemph_new = GET_PREEMPH(evt->fmt_event.channel_status[0]);
+
+	pr_debug("%s: old state %d, fmt %d, rate %d, preemph %d\n",
 			__func__, dai_data->fmt_event.status,
 			dai_data->fmt_event.data_format,
-			dai_data->fmt_event.sample_rate);
-	pr_debug("%s: new state %d, fmt %d, rate %d\n",
+			dai_data->fmt_event.sample_rate,
+			preemph_old);
+	pr_debug("%s: new state %d, fmt %d, rate %d, preemph %d\n",
 			__func__, evt->fmt_event.status,
 			evt->fmt_event.data_format,
-			evt->fmt_event.sample_rate);
+			evt->fmt_event.sample_rate,
+			preemph_new);
 
 	dai_data->fmt_event.status = evt->fmt_event.status;
 	dai_data->fmt_event.data_format = evt->fmt_event.data_format;
 	dai_data->fmt_event.sample_rate = evt->fmt_event.sample_rate;
+	dai_data->fmt_event.channel_status[0] =
+		evt->fmt_event.channel_status[0];
+	dai_data->fmt_event.channel_status[1] =
+		evt->fmt_event.channel_status[1];
+	dai_data->fmt_event.channel_status[2] =
+		evt->fmt_event.channel_status[2];
+	dai_data->fmt_event.channel_status[3] =
+		evt->fmt_event.channel_status[3];
+	dai_data->fmt_event.channel_status[4] =
+		evt->fmt_event.channel_status[4];
+	dai_data->fmt_event.channel_status[5] =
+		evt->fmt_event.channel_status[5];
 }
 
 static int msm_dai_q6_spdif_hw_params(struct snd_pcm_substream *substream,
@@ -1898,17 +1920,40 @@ static ssize_t msm_dai_q6_spdif_sysfs_rda_audio_rate(struct device *dev,
 	return ret;
 }
 
+static ssize_t msm_dai_q6_spdif_sysfs_rda_audio_preemph(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	ssize_t ret;
+	struct msm_dai_q6_spdif_dai_data *dai_data = dev_get_drvdata(dev);
+	int preemph = 0;
+
+	if (!dai_data) {
+		pr_err("%s: invalid input\n", __func__);
+		return -EINVAL;
+	}
+
+	preemph = GET_PREEMPH(dai_data->fmt_event.channel_status[0]);
+
+	ret = snprintf(buf, MSM_DAI_SYSFS_ENTRY_MAX_LEN, "%d\n", preemph);
+	pr_debug("%s: '%d'\n", __func__, preemph);
+
+	return ret;
+}
+
 static DEVICE_ATTR(audio_state, 0444, msm_dai_q6_spdif_sysfs_rda_audio_state,
 	NULL);
 static DEVICE_ATTR(audio_format, 0444, msm_dai_q6_spdif_sysfs_rda_audio_format,
 	NULL);
 static DEVICE_ATTR(audio_rate, 0444, msm_dai_q6_spdif_sysfs_rda_audio_rate,
 	NULL);
+static DEVICE_ATTR(audio_preemph, 0444,
+	msm_dai_q6_spdif_sysfs_rda_audio_preemph, NULL);
 
 static struct attribute *msm_dai_q6_spdif_fs_attrs[] = {
 	&dev_attr_audio_state.attr,
 	&dev_attr_audio_format.attr,
 	&dev_attr_audio_rate.attr,
+	&dev_attr_audio_preemph.attr,
 	NULL,
 };
 static struct attribute_group msm_dai_q6_spdif_fs_attrs_group = {
