@@ -564,15 +564,23 @@ static void ep92_read_audio_info(struct snd_soc_component *component,
 		send_uevent = true;
 	}
 
+	old = ep92->ai.cs[0];
+	ep92->ai.cs[0] = snd_soc_component_read32(component,
+		EP92_AUDIO_INFO_CHANNEL_STATUS_0);
+	if (ep92->ai.cs[0] == 0xff) {
+		dev_dbg(component->dev, "ep92 EP92_AUDIO_INFO_CHANNEL_STATUS_0 read 0xff\n");
+		ep92->ai.cs[0] = old;
+	}
+	change = ep92->ai.cs[0] ^ old;
+	if (change & EP92_AI_PREEMPH_MASK) {
+		dev_dbg(component->dev, "ep92 preemph changed to %d\n",
+			(ep92->ai.cs[0] & EP92_AI_PREEMPH_MASK) >>
+			EP92_AI_PREEMPH_SHIFT);
+		send_uevent = true;
+	}
+
 	new_mode = ep92->old_mode;
 	if (ep92->ai.audio_status & EP92_AI_STD_ADO_MASK) {
-		old = ep92->ai.cs[0];
-		ep92->ai.cs[0] = snd_soc_component_read32(component,
-			EP92_AUDIO_INFO_CHANNEL_STATUS_0);
-		if (ep92->ai.cs[0] == 0xff) {
-			dev_dbg(component->dev, "ep92 EP92_AUDIO_INFO_CHANNEL_STATUS_0 read 0xff\n");
-			ep92->ai.cs[0] = old;
-		}
 		if (ep92->ai.cs[0] & EP92_AI_NPCM_MASK)
 			new_mode = 1; /* Compr */
 		else
@@ -973,7 +981,7 @@ static ssize_t ep92_sysfs_rda_audio_ch_alloc(struct device *dev,
 	return ret;
 }
 
-static ssize_t ep92_sysfs_rda_avmute(struct device *dev,
+static ssize_t ep92_sysfs_rda_audio_preemph(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	ssize_t ret;
@@ -985,6 +993,26 @@ static ssize_t ep92_sysfs_rda_avmute(struct device *dev,
 		return -ENODEV;
 	}
 
+	val = (ep92->ai.cs[0] & EP92_AI_PREEMPH_MASK) >>
+		EP92_AI_PREEMPH_SHIFT;
+
+	ret = snprintf(buf, EP92_SYSFS_ENTRY_MAX_LEN, "%d\n", val);
+	dev_dbg(dev, "%s: '%d'\n", __func__, val);
+
+	return ret;
+}
+
+static ssize_t ep92_sysfs_rda_avmute(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	ssize_t ret;
+	int val;
+	struct ep92_pdata *ep92 = dev_get_drvdata(dev);
+
+	if (!ep92 || !ep92->component) {
+		dev_err(dev, "%s: device error\n", __func__);
+		return -ENODEV;
+	}
 
 	val = (ep92->ai.system_status_0 >> EP92_AI_AVMUTE_SHIFT) &
 		EP92_2CHOICE_MASK;
@@ -1570,6 +1598,7 @@ static DEVICE_ATTR(audio_rate, 0444, ep92_sysfs_rda_audio_rate, NULL);
 static DEVICE_ATTR(audio_layout, 0444, ep92_sysfs_rda_audio_layout, NULL);
 static DEVICE_ATTR(audio_ch_count, 0444, ep92_sysfs_rda_audio_ch_count, NULL);
 static DEVICE_ATTR(audio_ch_alloc, 0444, ep92_sysfs_rda_audio_ch_alloc, NULL);
+static DEVICE_ATTR(audio_preemph, 0444, ep92_sysfs_rda_audio_preemph, NULL);
 static DEVICE_ATTR(audio_avmute, 0444, ep92_sysfs_rda_avmute, NULL);
 static DEVICE_ATTR(link_on0, 0444, ep92_sysfs_rda_link_on0, NULL);
 static DEVICE_ATTR(link_on1, 0444, ep92_sysfs_rda_link_on1, NULL);
@@ -1602,6 +1631,7 @@ static struct attribute *ep92_fs_attrs[] = {
 	&dev_attr_audio_layout.attr,
 	&dev_attr_audio_ch_count.attr,
 	&dev_attr_audio_ch_alloc.attr,
+	&dev_attr_audio_preemph.attr,
 	&dev_attr_audio_avmute.attr,
 	&dev_attr_link_on0.attr,
 	&dev_attr_link_on1.attr,
