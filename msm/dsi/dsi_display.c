@@ -3964,7 +3964,7 @@ static void _dsi_display_calc_pipe_delay(struct dsi_display *display,
 	hr_bit_to_esc_ratio = ((dsi_ctrl->clk_freq.byte_clk_rate * 4 * 1000) /
 					esc_clk_rate_hz);
 
-	hsync_period = DSI_H_TOTAL_DSC(&mode->timing);
+	hsync_period = dsi_h_total_dce(&mode->timing);
 	delay->pipe_delay = (hsync_period + 1) / pclk_to_esc_ratio;
 	if (!display->panel->video_config.eof_bllp_lp11_en)
 		delay->pipe_delay += (17 / pclk_to_esc_ratio) +
@@ -4367,7 +4367,7 @@ static int dsi_display_get_dfps_timing(struct dsi_display *display,
 		rc = dsi_display_dfps_calc_front_porch(
 				curr_refresh_rate,
 				timing->refresh_rate,
-				DSI_H_TOTAL_DSC(timing),
+				dsi_h_total_dce(timing),
 				DSI_V_TOTAL(timing),
 				timing->v_front_porch,
 				&adj_mode->timing.v_front_porch);
@@ -4378,7 +4378,7 @@ static int dsi_display_get_dfps_timing(struct dsi_display *display,
 				curr_refresh_rate,
 				timing->refresh_rate,
 				DSI_V_TOTAL(timing),
-				DSI_H_TOTAL_DSC(timing),
+				dsi_h_total_dce(timing),
 				timing->h_front_porch,
 				&adj_mode->timing.h_front_porch);
 		if (!rc)

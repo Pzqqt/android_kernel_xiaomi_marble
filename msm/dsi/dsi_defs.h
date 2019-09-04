@@ -16,29 +16,6 @@
 #define DSI_V_TOTAL(t) (((t)->v_active) + ((t)->v_back_porch) + \
 			((t)->v_sync_width) + ((t)->v_front_porch))
 
-#define DSI_H_TOTAL_DSC(t) \
-	({\
-		u64 value;\
-		if ((t)->dsc_enabled && (t)->dsc)\
-			value = (t)->dsc->pclk_per_line;\
-		else\
-			value = (t)->h_active;\
-		value = value + (t)->h_back_porch + (t)->h_sync_width +\
-			(t)->h_front_porch;\
-		value;\
-	})
-
-#define DSI_H_ACTIVE_DSC(t) \
-	({\
-		u64 value;\
-		if ((t)->dsc_enabled && (t)->dsc)\
-			value = (t)->dsc->pclk_per_line;\
-		else\
-			value = (t)->h_active;\
-		value;\
-	})
-
-
 #define DSI_DEBUG_NAME_LEN		32
 #define display_for_each_ctrl(index, display) \
 	for (index = 0; (index < (display)->ctrl_count) &&\
@@ -726,4 +703,25 @@ static inline int dsi_pixel_format_to_bpp(enum dsi_pixel_format fmt)
 	}
 	return 24;
 }
+
+static inline u64 dsi_h_active_dce(struct dsi_mode_info *mode)
+{
+	u64 h_active = 0;
+
+	if (mode->dsc_enabled && mode->dsc)
+		h_active = mode->dsc->pclk_per_line;
+	else if (mode->vdc_enabled && mode->vdc)
+		h_active = mode->vdc->pclk_per_line;
+	else
+		h_active = mode->h_active;
+
+	return h_active;
+}
+
+static inline u64 dsi_h_total_dce(struct dsi_mode_info *mode)
+{
+	return dsi_h_active_dce(mode) + mode->h_back_porch +
+		mode->h_sync_width + mode->h_front_porch;
+}
+
 #endif /* _DSI_DEFS_H_ */

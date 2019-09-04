@@ -661,7 +661,7 @@ int dsi_phy_hw_calculate_timing_params(struct dsi_phy_hw *phy,
 	struct phy_timing_ops *ops = phy->ops.timing_ops;
 
 	memset(&desc, 0x0, sizeof(desc));
-	h_total = DSI_H_TOTAL_DSC(mode);
+	h_total = dsi_h_total_dce(mode);
 	v_total = DSI_V_TOTAL(mode);
 
 	bpp = bits_per_pixel[host->dst_format];

@@ -2195,7 +2195,7 @@ static int dsi_panel_parse_phy_timing(struct dsi_display_mode *mode,
 		 *  function dsi_panel_calc_dsi_transfer_time( )
 		 *  as we set it based on dsi clock or mdp transfer time.
 		 */
-		pixel_clk_khz = (DSI_H_TOTAL_DSC(&mode->timing) *
+		pixel_clk_khz = (dsi_h_total_dce(&mode->timing) *
 				DSI_V_TOTAL(&mode->timing) *
 				mode->timing.refresh_rate);
 		do_div(pixel_clk_khz, 1000);
@@ -3504,7 +3504,7 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 		min_bitclk_hz = (bits_per_line * timing->v_active *
 					timing->refresh_rate);
 	} else {
-		total_active_pixels = ((DSI_H_ACTIVE_DSC(timing)
+		total_active_pixels = ((dsi_h_active_dce(timing)
 					* timing->v_active));
 		/* calculate the actual bitclk needed to transfer the frame */
 		min_bitclk_hz = (total_active_pixels * (timing->refresh_rate) *
