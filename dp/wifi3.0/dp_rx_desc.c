@@ -192,16 +192,17 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 
 	/* link SW rx descs into a freelist */
 	rx_desc_pool->freelist = &rx_desc_pool->array[0];
-	for (i = 0; i < rx_desc_pool->pool_size-1; i++) {
-		rx_desc_pool->array[i].next = &rx_desc_pool->array[i+1];
+	for (i = 0; i <= rx_desc_pool->pool_size - 1; i++) {
+		if (i == rx_desc_pool->pool_size - 1)
+			rx_desc_pool->array[i].next = NULL;
+		else
+			rx_desc_pool->array[i].next =
+				&rx_desc_pool->array[i + 1];
 		rx_desc_pool->array[i].rx_desc.cookie = i | (pool_id << 18);
 		rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
 		rx_desc_pool->array[i].rx_desc.in_use = 0;
 	}
 
-	rx_desc_pool->array[i].next = NULL;
-	rx_desc_pool->array[i].rx_desc.cookie = i | (pool_id << 18);
-	rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 	return QDF_STATUS_SUCCESS;
 }
