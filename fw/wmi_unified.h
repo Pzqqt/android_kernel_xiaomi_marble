@@ -22475,6 +22475,7 @@ typedef struct {
     wmi_mac_addr peer_macaddr;
     A_UINT32 ratecount; /* Max Rate count for each mode */
     A_UINT32 vdev_id; /* ID of the vdev this peer belongs to */
+    A_UINT32 pdev_id; /* ID of the pdev this peer belongs to */
     /*
      * Following this structure are the TLV:
      * struct wmi_peer_cck_ofdm_rate_info;
