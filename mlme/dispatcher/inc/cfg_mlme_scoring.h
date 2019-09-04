@@ -135,7 +135,7 @@
  * chan_width_weightage - Channel Width Weightage to calculate best candidate
  * @Min: 0
  * @Max: 100
- * @Default: 17
+ * @Default: 12
  *
  * This ini is used to increase/decrease Channel Width weightage in best
  * candidate selection. AP with Higher channel width will get higher weightage
@@ -152,7 +152,7 @@
 	"chan_width_weightage", \
 	0, \
 	100, \
-	17, \
+	12, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Channel width weightage")
 
@@ -273,7 +273,7 @@
  * calculate best candidate
  * @Min: 0
  * @Max: 100
- * @Default: 5
+ * @Default: 25
  *
  * This ini is used to increase/decrease channel congestion weightage in
  * candidate selection. Congestion is measured with the help of ESP/QBSS load.
@@ -290,7 +290,7 @@
 	"channel_congestion_weightage", \
 	0, \
 	100, \
-	5, \
+	25, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Channel Congestion Weightage")
 
@@ -1140,7 +1140,7 @@
  * idle_roam_score_delta - Roam score delta value in percentage for idle roam.
  * @Min: 0
  * @Max: 100
- * @Default: 10
+ * @Default: 0
  *
  * This ini is used to configure the minimum change in roam score
  * value of the AP to consider it as candidate for
@@ -1159,7 +1159,7 @@
 		"idle_roam_score_delta", \
 		0, \
 		100, \
-		10, \
+		0, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Roam score delta for Idle roam trigger")
 
@@ -1169,7 +1169,7 @@
  * roaming.
  * @Min: 0
  * @Max: 100
- * @Default: 10
+ * @Default: 0
  *
  * This ini is used to configure the minimum change in roam score
  * value of the AP to consider it as candidate when the sta is disconnected
@@ -1189,7 +1189,7 @@
 	"btm_roam_score_delta", \
 	0, \
 	100, \
-	10, \
+	0, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Roam score delta for BTM roam trigger")
 
