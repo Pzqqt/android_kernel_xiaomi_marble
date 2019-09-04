@@ -15118,31 +15118,18 @@ bool sme_is_conn_state_connected(mac_handle_t mac_handle, uint8_t session_id)
 	return csr_is_conn_state_connected(mac_ctx, session_id);
 }
 
-void sme_enable_roaming_on_connected_sta(mac_handle_t mac_handle)
+void sme_enable_roaming_on_connected_sta(mac_handle_t mac_handle,
+					 uint8_t vdev_id)
 {
-	uint8_t session_id;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status;
 
-	session_id = csr_get_roam_enabled_sta_sessionid(mac_ctx);
-	if (session_id != WLAN_UMAC_VDEV_ID_MAX)
-		return;
-
-	session_id = csr_get_connected_infra(mac_ctx);
-	if (session_id == WLAN_UMAC_VDEV_ID_MAX) {
-		sme_debug("No STA in conencted state");
-		return;
-	}
-
-	sme_debug("Roaming not enabled on any STA, enable roaming on session %d",
-		  session_id);
 	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		csr_roam_offload_scan(mac_ctx, session_id,
-				      ROAM_SCAN_OFFLOAD_START,
-				      REASON_CTX_INIT);
-		sme_release_global_lock(&mac_ctx->sme);
-	}
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	csr_enable_roaming_on_connected_sta(mac_ctx, vdev_id);
+	sme_release_global_lock(&mac_ctx->sme);
 }
 
 int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)

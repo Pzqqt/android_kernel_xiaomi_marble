@@ -19186,7 +19186,6 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)
 {
 	struct csr_roam_session *session;
-	tpCsrNeighborRoamControlInfo roam_info;
 	uint8_t i;
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
@@ -19196,9 +19195,9 @@ uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)
 		if (!session->pCurRoamProfile ||
 		    session->pCurRoamProfile->csrPersona != QDF_STA_MODE)
 			continue;
-		roam_info = &mac_ctx->roam.neighborRoamInfo[i];
-		if (roam_info->b_roam_scan_offload_started) {
-			sme_debug("Roaming enabled on iface, session: %d", i);
+
+		if (MLME_IS_ROAM_INITIALIZED(mac_ctx->psoc, i)) {
+			sme_debug("ROAM: Enabled on vdev_id: %d", i);
 			return i;
 		}
 	}
@@ -19225,6 +19224,308 @@ csr_is_adaptive_11r_roam_supported(struct mac_context *mac_ctx,
 	return true;
 }
 #endif
+
+QDF_STATUS
+csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
+{
+	struct scheduler_msg sch_msg = {0};
+	QDF_STATUS status;
+	struct roam_offload_scan_req *req;
+	tpCsrNeighborRoamControlInfo roam_info;
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac, vdev_id);
+	if (!session) {
+		sme_err("ROAM: incorrect vdev ID %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	roam_info = &mac->roam.neighborRoamInfo[vdev_id];
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return QDF_STATUS_E_NOMEM;
+
+	req->sessionId = vdev_id;
+	req->Command = ROAM_SCAN_OFFLOAD_STOP;
+
+	if (reason == REASON_DRIVER_DISABLED)
+		req->reason = REASON_ROAM_STOP_ALL;
+	else
+		req->reason = REASON_SME_ISSUED;
+
+	if (csr_neighbor_middle_of_roaming(mac, vdev_id))
+		req->middle_of_roaming = 1;
+	else
+		csr_roam_reset_roam_params(mac);
+
+	/*
+	 * Disable offload_11k_params and btm_offload_config for current
+	 * vdev
+	 */
+	req->offload_11k_params.vdev_id = vdev_id;
+
+	sch_msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
+	sch_msg.bodyptr = req;
+
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA,
+					&sch_msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("ROAM: Post RSO stop to WMA failed, vdev_id: %d",
+			vdev_id);
+		qdf_mem_zero(req, sizeof(*req));
+		qdf_mem_free(req);
+		return QDF_STATUS_E_FAULT;
+	}
+	roam_info->last_sent_cmd = ROAM_SCAN_OFFLOAD_STOP;
+
+	return status;
+}
+
+static QDF_STATUS
+csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
+			uint8_t reason)
+{
+	enum roam_offload_state cur_state;
+	uint8_t temp_vdev_id;
+	uint32_t roaming_bitmap;
+	QDF_STATUS status;
+
+	cur_state = mlme_get_roam_state(mac->psoc, vdev_id);
+	switch (cur_state) {
+	case ROAM_DEINIT:
+		roaming_bitmap = mlme_get_roam_trigger_bitmap(mac->psoc,
+							      vdev_id);
+		if (!roaming_bitmap) {
+			sme_info("ROAM: Cannot change to INIT state for vdev[%d]",
+				 vdev_id);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		/*
+		 * Disable roaming on the enabled sta if supplicant wants to
+		 * enable roaming on this vdev id
+		 */
+		temp_vdev_id = csr_get_roam_enabled_sta_sessionid(mac);
+		if ((temp_vdev_id != WLAN_UMAC_VDEV_ID_MAX) &&
+		    (vdev_id != temp_vdev_id)) {
+			/*
+			 * Roam init state can be requested as part of
+			 * initial connection or due to enable from
+			 * supplicant via vendor command. This check will
+			 * ensure roaming does not get enabled on this STA
+			 * vdev id if it is not an explicit enable from
+			 * supplicant.
+			 */
+			if (reason != REASON_SUPPLICANT_INIT_ROAMING) {
+				sme_info("ROAM: Roam module already initialized on vdev:[%d]",
+					 temp_vdev_id);
+				return QDF_STATUS_E_FAILURE;
+			}
+			csr_post_roam_state_change(mac, temp_vdev_id,
+						   ROAM_DEINIT, reason);
+		}
+		break;
+
+	case ROAM_INIT:
+	case ROAM_RSO_STOPPED:
+	case ROAM_RSO_STARTED:
+	/*
+	 * Already the roaming module is initialized at fw,
+	 * just return from here
+	 */
+	default:
+		return QDF_STATUS_SUCCESS;
+	}
+
+	status = csr_send_roam_offload_init_msg(mac, vdev_id, true);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_INIT);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+csr_roam_switch_to_rso_start(struct mac_context *mac, uint8_t vdev_id,
+			     uint8_t reason)
+{
+	enum roam_offload_state cur_state;
+	QDF_STATUS status;
+	uint8_t control_bitmap;
+	bool sup_disabled_roaming;
+	bool rso_allowed = csr_roam_is_roam_offload_scan_enabled(mac);
+
+	cur_state = mlme_get_roam_state(mac->psoc, vdev_id);
+	switch (cur_state) {
+	case ROAM_INIT:
+	case ROAM_RSO_STOPPED:
+		break;
+
+	case ROAM_DEINIT:
+		status = csr_roam_switch_to_init(mac, vdev_id, reason);
+		if (QDF_IS_STATUS_ERROR(status))
+			return status;
+
+		break;
+	case ROAM_RSO_STARTED:
+	/*
+	 * Already the roaming module is initialized at fw,
+	 * nothing to do here
+	 */
+	default:
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!rso_allowed) {
+		sme_debug("ROAM: RSO disabled via INI");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	control_bitmap = mlme_get_operations_bitmap(mac->psoc, vdev_id);
+	if (control_bitmap) {
+		sme_debug("ROAM: RSO Disabled internaly: vdev[%d] bitmap[0x%x]",
+			  vdev_id, control_bitmap);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* TODO: Check if we can map the below flag to above bitmap */
+	sup_disabled_roaming = mlme_get_supplicant_disabled_roaming(mac->psoc,
+								    vdev_id);
+	if (sup_disabled_roaming) {
+		sme_debug("ROAM: RSO Disabled by Supplicant on vdev[%d]",
+			  vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = csr_roam_offload_scan(mac, vdev_id, ROAM_SCAN_OFFLOAD_START,
+				       reason);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_debug("ROAM: RSO start failed");
+		return status;
+	}
+	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_RSO_STARTED);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+csr_roam_switch_to_rso_stop(struct mac_context *mac, uint8_t vdev_id,
+			    uint8_t reason)
+{
+	enum roam_offload_state cur_state;
+	QDF_STATUS status;
+
+	cur_state = mlme_get_roam_state(mac->psoc, vdev_id);
+	switch (cur_state) {
+	case ROAM_RSO_STARTED:
+		status = csr_post_rso_stop(mac, vdev_id, reason);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sme_err("ROAM: Unable to switch to RSO STOP State");
+			return QDF_STATUS_E_FAILURE;
+		}
+		break;
+
+	case ROAM_DEINIT:
+	case ROAM_RSO_STOPPED:
+	case ROAM_INIT:
+	/*
+	 * Already the roaming module is initialized at fw,
+	 * nothing to do here
+	 */
+	default:
+		return QDF_STATUS_SUCCESS;
+	}
+	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_RSO_STOPPED);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+csr_roam_switch_to_deinit(struct mac_context *mac, uint8_t vdev_id,
+			  uint8_t reason)
+{
+	QDF_STATUS status;
+	enum roam_offload_state cur_state = mlme_get_roam_state(mac->psoc,
+								vdev_id);
+	switch (cur_state) {
+	case ROAM_RSO_STARTED:
+		csr_roam_switch_to_rso_stop(mac, vdev_id, reason);
+		break;
+	case ROAM_RSO_STOPPED:
+	case ROAM_INIT:
+		break;
+
+	case ROAM_DEINIT:
+	/*
+	 * Already the roaming module is de-initialized at fw,
+	 * do nothing here
+	 */
+	default:
+		return QDF_STATUS_SUCCESS;
+	}
+
+	status = csr_send_roam_offload_init_msg(mac, vdev_id, false);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_DEINIT);
+
+	if (reason != REASON_SUPPLICANT_INIT_ROAMING)
+		csr_enable_roaming_on_connected_sta(mac, vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+csr_handle_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
+			     enum roam_offload_state requested_state,
+			     uint8_t reason)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
+	if (requested_state != ROAM_DEINIT &&
+	    !csr_is_conn_state_connected_infra(mac, vdev_id)) {
+		sme_err("ROAM: roam state change requested in disconnected state");
+		return status;
+	}
+
+	switch (requested_state) {
+	case ROAM_DEINIT:
+		status = csr_roam_switch_to_deinit(mac, vdev_id,
+						   reason);
+		break;
+	case ROAM_INIT:
+		status = csr_roam_switch_to_init(mac, vdev_id,
+						 reason);
+		break;
+	case ROAM_RSO_STARTED:
+		status = csr_roam_switch_to_rso_start(mac, vdev_id,
+						      reason);
+		break;
+	case ROAM_RSO_STOPPED:
+		status = csr_roam_switch_to_rso_stop(mac, vdev_id,
+						     reason);
+		break;
+	default:
+		sme_debug("ROAM: Invalid roam state %d", requested_state);
+		break;
+	}
+
+	return status;
+}
+
+QDF_STATUS
+csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
+			   enum roam_offload_state state, uint8_t reason)
+{
+	return csr_handle_roam_state_change(mac, vdev_id, state, reason);
+}
 
 /**
  * csr_roam_offload_scan() - populates roam offload scan request and sends to
@@ -21682,4 +21983,95 @@ QDF_STATUS csr_update_owe_info(struct mac_context *mac,
 								   session_id);
 
 	return status;
+}
+
+QDF_STATUS
+csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
+			       bool enable)
+{
+	struct scheduler_msg message = {0};
+	QDF_STATUS status;
+	struct roam_init_params *params;
+
+	/* per contract must make a copy of the params when messaging */
+	params = qdf_mem_malloc(sizeof(*params));
+	if (!params)
+		return QDF_STATUS_E_NOMEM;
+
+	params->vdev_id = vdev_id;
+	params->enable = enable;
+
+	sme_debug("Post roam init to WMA for vdev %d", vdev_id);
+	message.bodyptr = params;
+	message.type = WMA_ROAM_INIT_PARAM;
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA,
+					&message);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("ROAM: Failed to post ROAM_TRIGGERS msg");
+		qdf_mem_free(params);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)
+{
+	if (!MLME_IS_ROAM_INITIALIZED(mac->psoc, vdev_id) &&
+	    reason != REASON_ROAM_SET_BLACKLIST_BSSID) {
+		sme_err("Update cfg received in roam uninitialized state");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return csr_roam_offload_scan(mac, vdev_id, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				     reason);
+}
+
+QDF_STATUS
+csr_enable_roaming_on_connected_sta(struct mac_context *mac, uint8_t vdev_id)
+{
+	uint8_t op_ch[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t sta_vdev_id = WLAN_INVALID_VDEV_ID;
+	struct csr_roam_session *session;
+	uint32_t count;
+	uint32_t idx;
+
+	sta_vdev_id = csr_get_roam_enabled_sta_sessionid(mac);
+	if (sta_vdev_id != WLAN_UMAC_VDEV_ID_MAX)
+		return QDF_STATUS_E_FAILURE;
+
+	count = policy_mgr_get_mode_specific_conn_info(mac->psoc, op_ch,
+						       vdev_id_list,
+						       PM_STA_MODE);
+
+	if (!count)
+		return QDF_STATUS_E_FAILURE;
+
+	/*
+	 * Loop through all connected STA vdevs and roaming will be enabled
+	 * on the STA that has a different vdev id from the one passed as
+	 * input and has non zero roam trigger value.
+	 */
+	for (idx = 0; idx < count; idx++) {
+		session = CSR_GET_SESSION(mac, vdev_id_list[idx]);
+		if (vdev_id_list[idx] != vdev_id &&
+		    mlme_get_roam_trigger_bitmap(mac->psoc,
+						 vdev_id_list[idx])) {
+			sta_vdev_id = vdev_id_list[idx];
+			break;
+		}
+	}
+
+	if (sta_vdev_id == WLAN_INVALID_VDEV_ID)
+		return QDF_STATUS_E_FAILURE;
+
+	sme_debug("ROAM: Enabling roaming on vdev[%d]", sta_vdev_id);
+
+	return csr_post_roam_state_change(mac, sta_vdev_id, ROAM_RSO_STARTED,
+					  REASON_CTX_INIT);
 }

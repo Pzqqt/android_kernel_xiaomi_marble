@@ -1899,7 +1899,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	hdd_print_bss_info(sta_ctx);
 
 	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc))
-		sme_enable_roaming_on_connected_sta(mac_handle);
+		sme_enable_roaming_on_connected_sta(mac_handle,
+						    adapter->vdev_id);
 
 	return status;
 }

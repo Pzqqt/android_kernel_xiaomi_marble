@@ -1727,14 +1727,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!wma_handle->interfaces[roam_req->sessionId].roam_offload_enabled) {
-		/* roam scan offload is not enabled in firmware.
-		 * Cannot initialize it in the middle of connection.
-		 */
-		qdf_mem_zero(roam_req, sizeof(*roam_req));
-		qdf_mem_free(roam_req);
-		return QDF_STATUS_E_PERM;
-	}
 	WMA_LOGD("%s: RSO Command:%d, reason:%d session ID %d en %d", __func__,
 		 roam_req->Command, roam_req->reason, roam_req->sessionId,
 		 roam_req->RoamScanOffloadEnabled);

@@ -2151,6 +2151,16 @@ struct mawc_params {
 };
 
 /**
+ * struct roam_init_params - Firmware roam module initialization parameters
+ * @vdev_id: vdev for which the roaming has to be enabled/disabled
+ * @enable:  flag to init/deinit roam module
+ */
+struct roam_init_params {
+	uint8_t vdev_id;
+	uint8_t enable;
+};
+
+/**
  * struct roam_sync_timeout_timer_info - Info related to roam sync timer
  * @vdev_id: Vdev id for which host waiting roam sync ind from fw
  */
