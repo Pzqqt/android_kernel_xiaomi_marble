@@ -124,13 +124,14 @@ struct mgmt_txrx_desc_elem_t *wlan_mgmt_txrx_desc_get(
 					  entry);
 	mgmt_txrx_desc->in_use = true;
 
+	qdf_spin_unlock_bh(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.desc_pool_lock);
+
 	/* acquire the wakelock when there are pending mgmt tx frames */
 	qdf_wake_lock_timeout_acquire(&mgmt_txrx_pdev_ctx->wakelock_tx_cmp,
 				      MGMT_TXRX_WAKELOCK_TIMEOUT_TX_CMP);
 	qdf_runtime_pm_prevent_suspend(
 		&mgmt_txrx_pdev_ctx->wakelock_tx_runtime_cmp);
 
-	qdf_spin_unlock_bh(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.desc_pool_lock);
 
 	return mgmt_txrx_desc;
 }
@@ -140,6 +141,7 @@ void wlan_mgmt_txrx_desc_put(
 			uint32_t desc_id)
 {
 	struct mgmt_txrx_desc_elem_t *desc;
+	bool release_wakelock = false;
 
 	desc = &mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[desc_id];
 	qdf_spin_lock_bh(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.desc_pool_lock);
@@ -162,13 +164,15 @@ void wlan_mgmt_txrx_desc_put(
 
 	/* release the wakelock if there are no pending mgmt tx frames */
 	if (mgmt_txrx_pdev_ctx->mgmt_desc_pool.free_list.count ==
-	    mgmt_txrx_pdev_ctx->mgmt_desc_pool.free_list.max_size) {
+	    mgmt_txrx_pdev_ctx->mgmt_desc_pool.free_list.max_size)
+		release_wakelock = true;
+
+	qdf_spin_unlock_bh(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.desc_pool_lock);
+
+	if (release_wakelock) {
 		qdf_runtime_pm_allow_suspend(
 			&mgmt_txrx_pdev_ctx->wakelock_tx_runtime_cmp);
 		qdf_wake_lock_release(&mgmt_txrx_pdev_ctx->wakelock_tx_cmp,
 				      MGMT_TXRX_WAKELOCK_REASON_TX_CMP);
 	}
-
-	qdf_spin_unlock_bh(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.desc_pool_lock);
-
 }
