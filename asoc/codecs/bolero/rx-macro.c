@@ -77,6 +77,8 @@ static const struct snd_kcontrol_new name##_mux = \
 #define RX_MACRO_EC_MIX_TX1_MASK 0x0f
 #define RX_MACRO_EC_MIX_TX2_MASK 0x0f
 
+#define COMP_MAX_COEFF 25
+
 struct wcd_imped_val {
 	u32 imped_val;
 	u8 index;
@@ -93,6 +95,75 @@ static const struct wcd_imped_val imped_index[] = {
 	{11, 7},
 	{12, 8},
 	{13, 9},
+};
+
+struct comp_coeff_val {
+	u8 lsb;
+	u8 msb;
+};
+
+enum {
+	HPH_ULP,
+	HPH_LOHIFI,
+	HPH_MODE_MAX,
+};
+
+static const struct comp_coeff_val
+			comp_coeff_table [HPH_MODE_MAX][COMP_MAX_COEFF] = {
+	{
+		{0x40, 0x00},
+		{0x4C, 0x00},
+		{0x5A, 0x00},
+		{0x6B, 0x00},
+		{0x7F, 0x00},
+		{0x97, 0x00},
+		{0xB3, 0x00},
+		{0xD5, 0x00},
+		{0xFD, 0x00},
+		{0x2D, 0x01},
+		{0x66, 0x01},
+		{0xA7, 0x01},
+		{0xF8, 0x01},
+		{0x57, 0x02},
+		{0xC7, 0x02},
+		{0x4B, 0x03},
+		{0xE9, 0x03},
+		{0xA3, 0x04},
+		{0x7D, 0x05},
+		{0x90, 0x06},
+		{0xD1, 0x07},
+		{0x49, 0x09},
+		{0x00, 0x0B},
+		{0x01, 0x0D},
+		{0x59, 0x0F},
+	},
+	{
+		{0x40, 0x00},
+		{0x4C, 0x00},
+		{0x5A, 0x00},
+		{0x6B, 0x00},
+		{0x80, 0x00},
+		{0x98, 0x00},
+		{0xB4, 0x00},
+		{0xD5, 0x00},
+		{0xFE, 0x00},
+		{0x2E, 0x01},
+		{0x66, 0x01},
+		{0xA9, 0x01},
+		{0xF8, 0x01},
+		{0x56, 0x02},
+		{0xC4, 0x02},
+		{0x4F, 0x03},
+		{0xF0, 0x03},
+		{0xAE, 0x04},
+		{0x8B, 0x05},
+		{0x8E, 0x06},
+		{0xBC, 0x07},
+		{0x56, 0x09},
+		{0x0F, 0x0B},
+		{0x13, 0x0D},
+		{0x6F, 0x0F},
+	},
 };
 
 struct rx_macro_reg_mask_val {
@@ -1526,6 +1597,47 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 	return 0;
 }
 
+static int rx_macro_load_compander_coeff(struct snd_soc_component *component,
+					 struct rx_macro_priv *rx_priv,
+					 int interp_n, int event)
+{
+	int comp = 0;
+	u16 comp_coeff_lsb_reg = 0, comp_coeff_msb_reg = 0;
+	int i = 0;
+	int hph_pwr_mode = HPH_LOHIFI;
+
+	if (!rx_priv->comp_enabled[comp])
+		return 0;
+
+	if (interp_n == INTERP_HPHL) {
+		comp_coeff_lsb_reg = BOLERO_CDC_RX_TOP_HPHL_COMP_WR_LSB;
+		comp_coeff_msb_reg = BOLERO_CDC_RX_TOP_HPHL_COMP_WR_MSB;
+	} else if (interp_n == INTERP_HPHR) {
+		comp_coeff_lsb_reg = BOLERO_CDC_RX_TOP_HPHR_COMP_WR_LSB;
+		comp_coeff_msb_reg = BOLERO_CDC_RX_TOP_HPHR_COMP_WR_MSB;
+	} else {
+		/* compander coefficients are loaded only for hph path */
+		return 0;
+	}
+
+	comp = interp_n;
+	hph_pwr_mode = rx_priv->hph_pwr_mode;
+	dev_dbg(component->dev, "%s: event %d compander %d, enabled %d\n",
+		__func__, event, comp + 1, rx_priv->comp_enabled[comp]);
+
+	if (SND_SOC_DAPM_EVENT_ON(event)) {
+		/* Load Compander Coeff */
+		for (i = 0; i < COMP_MAX_COEFF; i++) {
+			snd_soc_component_write(component, comp_coeff_lsb_reg,
+					comp_coeff_table[hph_pwr_mode][i].lsb);
+			snd_soc_component_write(component, comp_coeff_msb_reg,
+					comp_coeff_table[hph_pwr_mode][i].msb);
+		}
+	}
+
+	return 0;
+}
+
 static void rx_macro_enable_softclip_clk(struct snd_soc_component *component,
 					 struct rx_macro_priv *rx_priv,
 					 bool enable)
@@ -2245,6 +2357,8 @@ static int rx_macro_enable_interp_clk(struct snd_soc_component *component,
 					0x20, 0x20);
 			snd_soc_component_update_bits(component, rx_cfg2_reg,
 					0x03, 0x03);
+			rx_macro_load_compander_coeff(component, rx_priv,
+						      interp_idx, event);
 			rx_macro_idle_detect_control(component, rx_priv,
 					interp_idx, event);
 			if (rx_priv->hph_hd2_mode)
