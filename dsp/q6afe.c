@@ -915,6 +915,10 @@ int afe_sizeof_cfg_cmd(u16 port_id)
 	case AFE_PORT_ID_SENARY_MI2S_TX:
 		ret_size = SIZEOF_CFG_CMD(afe_param_id_i2s_cfg);
 		break;
+	case AFE_PORT_ID_PRIMARY_META_MI2S_RX:
+	case AFE_PORT_ID_SECONDARY_META_MI2S_RX:
+		ret_size = SIZEOF_CFG_CMD(afe_param_id_meta_i2s_cfg);
+		break;
 	case HDMI_RX:
 	case DISPLAY_PORT_RX:
 		ret_size =
@@ -4556,6 +4560,10 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	case AFE_PORT_ID_INT6_MI2S_TX:
 		cfg_type = AFE_PARAM_ID_I2S_CONFIG;
 		break;
+	case AFE_PORT_ID_PRIMARY_META_MI2S_RX:
+	case AFE_PORT_ID_SECONDARY_META_MI2S_RX:
+		cfg_type = AFE_PARAM_ID_META_I2S_CONFIG;
+		break;
 	case HDMI_RX:
 	case DISPLAY_PORT_RX:
 		cfg_type = AFE_PARAM_ID_HDMI_CONFIG;
@@ -5091,6 +5099,10 @@ int afe_get_port_index(u16 port_id)
 		return IDX_AFE_PORT_ID_INT6_MI2S_RX;
 	case AFE_PORT_ID_INT6_MI2S_TX:
 		return IDX_AFE_PORT_ID_INT6_MI2S_TX;
+	case AFE_PORT_ID_PRIMARY_META_MI2S_RX:
+		return IDX_AFE_PORT_ID_PRIMARY_META_MI2S_RX;
+	case AFE_PORT_ID_SECONDARY_META_MI2S_RX:
+		return IDX_AFE_PORT_ID_SECONDARY_META_MI2S_RX;
 	case AFE_PORT_ID_VA_CODEC_DMA_TX_0:
 		return IDX_AFE_PORT_ID_VA_CODEC_DMA_TX_0;
 	case AFE_PORT_ID_VA_CODEC_DMA_TX_1:
@@ -5253,6 +5265,10 @@ int afe_open(u16 port_id,
 	case AFE_PORT_ID_SENARY_MI2S_RX:
 	case AFE_PORT_ID_SENARY_MI2S_TX:
 		cfg_type = AFE_PARAM_ID_I2S_CONFIG;
+		break;
+	case AFE_PORT_ID_PRIMARY_META_MI2S_RX:
+	case AFE_PORT_ID_SECONDARY_META_MI2S_RX:
+		cfg_type = AFE_PARAM_ID_META_I2S_CONFIG;
 		break;
 	case HDMI_RX:
 	case DISPLAY_PORT_RX:
@@ -7231,6 +7247,8 @@ int afe_validate_port(u16 port_id)
 	case AFE_PORT_ID_QUINARY_MI2S_TX:
 	case AFE_PORT_ID_SENARY_MI2S_RX:
 	case AFE_PORT_ID_SENARY_MI2S_TX:
+	case AFE_PORT_ID_PRIMARY_META_MI2S_RX:
+	case AFE_PORT_ID_SECONDARY_META_MI2S_RX:
 	case AFE_PORT_ID_PRIMARY_TDM_RX:
 	case AFE_PORT_ID_PRIMARY_TDM_TX:
 	case AFE_PORT_ID_PRIMARY_TDM_RX_1:
