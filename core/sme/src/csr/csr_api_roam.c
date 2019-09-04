@@ -11620,6 +11620,26 @@ csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
 }
 
 static void
+csr_roam_chk_lnk_assoc_ind_upper_layer(
+		struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
+{
+	uint32_t session_id = WLAN_UMAC_VDEV_ID_MAX;
+	struct assoc_ind *assoc_ind;
+	QDF_STATUS status;
+
+	assoc_ind = (struct assoc_ind *)msg_ptr;
+	status = csr_roam_get_session_id_from_bssid(
+			mac_ctx, (struct qdf_mac_addr *)assoc_ind->bssId,
+			&session_id);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_debug("Couldn't find session_id for given BSSID");
+		return;
+	}
+	csr_send_assoc_ind_to_upper_layer_cnf_msg(
+					mac_ctx, assoc_ind, status, session_id);
+}
+
+static void
 csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
@@ -11743,19 +11763,12 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	}
 
 	if (csr_akm_type != eCSR_AUTH_TYPE_OWE) {
+		if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile) &&
+		    roam_info->status_code != eSIR_SME_ASSOC_REFUSED)
+			pAssocInd->need_assoc_rsp_tx_cb = true;
 		/* Send Association completion message to PE */
 		status = csr_send_assoc_cnf_msg(mac_ctx, pAssocInd, status,
 						mac_status_code);
-		/*
-		 * send a message to CSR itself just to avoid the EAPOL frames
-		 * going OTA before association response
-		 */
-		if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile) &&
-		    roam_info->status_code != eSIR_SME_ASSOC_REFUSED) {
-			roam_info->fReassocReq = pAssocInd->reassocReq;
-			status = csr_send_assoc_ind_to_upper_layer_cnf_msg(
-					mac_ctx, pAssocInd, status, sessionId);
-		}
 	}
 
 	qdf_mem_free(roam_info);
@@ -12556,6 +12569,9 @@ void csr_roam_check_for_link_status_change(struct mac_context *mac,
 	switch (pSirMsg->messageType) {
 	case eWNI_SME_ASSOC_IND:
 		csr_roam_chk_lnk_assoc_ind(mac, pSirMsg);
+		break;
+	case eWNI_SME_ASSOC_IND_UPPER_LAYER:
+		csr_roam_chk_lnk_assoc_ind_upper_layer(mac, pSirMsg);
 		break;
 	case eWNI_SME_DISASSOC_IND:
 		csr_roam_chk_lnk_disassoc_ind(mac, pSirMsg);
@@ -16567,6 +16583,7 @@ QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac,
 				     pAssocInd->owe_ie_len);
 			pMsg->owe_ie_len = pAssocInd->owe_ie_len;
 		}
+		pMsg->need_assoc_rsp_tx_cb = pAssocInd->need_assoc_rsp_tx_cb;
 
 		msg.type = pMsg->messageType;
 		msg.bodyval = 0;

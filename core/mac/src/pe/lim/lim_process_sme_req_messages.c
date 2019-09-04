@@ -3118,12 +3118,14 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 			eLIM_MLM_LINK_ESTABLISHED_STATE;
 		sta_ds->mlmStaContext.owe_ie = assoc_cnf.owe_ie;
 		sta_ds->mlmStaContext.owe_ie_len = assoc_cnf.owe_ie_len;
-		pe_debug("sending Assoc Rsp frame to STA (assoc id=%d)",
-			sta_ds->assocId);
-		lim_send_assoc_rsp_mgmt_frame(mac_ctx, QDF_STATUS_SUCCESS,
+		pe_debug("sending Assoc Rsp frame to STA assoc id=%d, tx cb %d",
+			 sta_ds->assocId, assoc_cnf.need_assoc_rsp_tx_cb);
+		lim_send_assoc_rsp_mgmt_frame(
+					mac_ctx, QDF_STATUS_SUCCESS,
 					sta_ds->assocId, sta_ds->staAddr,
 					sta_ds->mlmStaContext.subType, sta_ds,
-					session_entry);
+					session_entry,
+					assoc_cnf.need_assoc_rsp_tx_cb);
 		sta_ds->mlmStaContext.owe_ie = NULL;
 		sta_ds->mlmStaContext.owe_ie_len = 0;
 		goto end;
@@ -3160,7 +3162,8 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 	}
 end:
 	if (((session_entry) && (sta_ds)) &&
-		(session_entry->parsedAssocReq[sta_ds->assocId])) {
+		(session_entry->parsedAssocReq[sta_ds->assocId]) &&
+		!assoc_cnf.need_assoc_rsp_tx_cb) {
 		assoc_req = (tpSirAssocReq)
 			session_entry->parsedAssocReq[sta_ds->assocId];
 		if (assoc_req->assocReqFrame) {

@@ -640,21 +640,9 @@ void lim_process_mlm_assoc_cnf(struct mac_context *mac_ctx,
 	}
 }
 
-/**
- * lim_fill_assoc_ind_params() - Initialize association indication
- * mac_ctx: Pointer to Global MAC structure
- * assoc_ind: PE association indication structure
- * sme_assoc_ind: SME association indication
- * session_entry: PE session entry
- *
- * This function is called to initialzie the association
- * indication strucutre to process association indication.
- *
- * Return: None
- */
-
-static void
-lim_fill_assoc_ind_params(struct mac_context *mac_ctx,
+void
+lim_fill_sme_assoc_ind_params(
+	struct mac_context *mac_ctx,
 	tpLimMlmAssocInd assoc_ind, struct assoc_ind *sme_assoc_ind,
 	struct pe_session *session_entry)
 {
@@ -775,9 +763,9 @@ void lim_process_mlm_assoc_ind(struct mac_context *mac, uint32_t *msg_buf)
 	}
 
 	pSirSmeAssocInd->messageType = eWNI_SME_ASSOC_IND;
-	lim_fill_assoc_ind_params(mac, (tpLimMlmAssocInd) msg_buf,
-				  pSirSmeAssocInd,
-				  pe_session);
+	lim_fill_sme_assoc_ind_params(mac, (tpLimMlmAssocInd)msg_buf,
+				      pSirSmeAssocInd,
+				      pe_session);
 	msg.type = eWNI_SME_ASSOC_IND;
 	msg.bodyptr = pSirSmeAssocInd;
 	msg.bodyval = 0;

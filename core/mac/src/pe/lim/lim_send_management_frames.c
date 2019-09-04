@@ -1011,24 +1011,135 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 } /* End lim_send_addts_req_action_frame. */
 
 /**
- * lim_send_assoc_rsp_mgmt_frame() - Send assoc response
- * @mac_ctx: Handle for mac context
- * @status_code: Status code for assoc response frame
- * @aid: Association ID
- * @peer_addr: Mac address of requesting peer
- * @subtype: Assoc/Reassoc
- * @sta: Pointer to station node
- * @pe_session: PE session id.
+ * lim_assoc_rsp_tx_complete() - Confirmation for assoc rsp OTA
+ * @context: pointer to global mac
+ * @buf: buffer which is nothing but entire assoc rsp frame
+ * @tx_complete : Sent status
+ * @params; tx completion params
  *
- * Builds and sends association response frame to the requesting peer.
- *
- * Return: void
+ * Return: This returns QDF_STATUS
  */
+static QDF_STATUS lim_assoc_rsp_tx_complete(
+					void *context,
+					qdf_nbuf_t buf,
+					uint32_t tx_complete,
+					void *params)
+{
+	struct mac_context *mac_ctx = (struct mac_context *)context;
+	tSirMacMgmtHdr *mac_hdr;
+	struct pe_session *session_entry;
+	uint8_t session_id;
+	tpLimMlmAssocInd lim_assoc_ind;
+	tpDphHashNode sta_ds;
+	uint16_t aid;
+	uint8_t *data;
+	struct assoc_ind *sme_assoc_ind;
+	struct scheduler_msg msg;
+	tpSirAssocReq assoc_req;
+
+	if (!buf) {
+		pe_err("Assoc rsp frame buffer is NULL");
+		goto null_buf;
+	}
+
+	data = qdf_nbuf_data(buf);
+
+	if (!data) {
+		pe_err("Assoc rsp frame is NULL");
+		goto end;
+	}
+
+	mac_hdr = (tSirMacMgmtHdr *)data;
+
+	session_entry = pe_find_session_by_bssid(
+				mac_ctx, mac_hdr->sa,
+				&session_id);
+	if (!session_entry) {
+		pe_err("session entry is NULL");
+		goto end;
+	}
+
+	sta_ds = dph_lookup_hash_entry(mac_ctx,
+				       (uint8_t *)mac_hdr->da, &aid,
+				       &session_entry->dph.dphHashTable);
+	if (!sta_ds) {
+		pe_err("sta_ds is NULL");
+		goto end;
+	}
+
+	/* Get a copy of the already parsed Assoc Request */
+	assoc_req =
+		(tpSirAssocReq)session_entry->parsedAssocReq[sta_ds->assocId];
+
+	if (!assoc_req) {
+		pe_err("assoc req for assoc_id:%d is NULL", sta_ds->assocId);
+		goto end;
+	}
+
+	lim_assoc_ind = qdf_mem_malloc(sizeof(tLimMlmAssocInd));
+	if (!lim_assoc_ind) {
+		pe_err("lim assoc ind is NULL");
+		goto free_assoc_req;
+	}
+	if (!lim_fill_lim_assoc_ind_params(lim_assoc_ind, mac_ctx,
+					   sta_ds, session_entry)) {
+		pe_err("lim assoc ind fill error");
+		goto lim_assoc_ind;
+	}
+
+	sme_assoc_ind = qdf_mem_malloc(sizeof(struct assoc_ind));
+	if (!sme_assoc_ind) {
+		pe_err("sme assoc ind is NULL");
+		goto lim_assoc_ind;
+	}
+	sme_assoc_ind->messageType = eWNI_SME_ASSOC_IND_UPPER_LAYER;
+	lim_fill_sme_assoc_ind_params(
+				mac_ctx, lim_assoc_ind,
+				sme_assoc_ind,
+				session_entry);
+
+	qdf_mem_zero(&msg, sizeof(struct scheduler_msg));
+	msg.type = eWNI_SME_ASSOC_IND_UPPER_LAYER;
+	msg.bodyptr = sme_assoc_ind;
+	msg.bodyval = 0;
+	sme_assoc_ind->staId = sta_ds->staIndex;
+	sme_assoc_ind->reassocReq = sta_ds->mlmStaContext.subType;
+	sme_assoc_ind->timingMeasCap = sta_ds->timingMeasCap;
+
+	mac_ctx->lim.sme_msg_callback(mac_ctx, &msg);
+
+	qdf_mem_free(lim_assoc_ind);
+	if (assoc_req->assocReqFrame) {
+		qdf_mem_free(assoc_req->assocReqFrame);
+		assoc_req->assocReqFrame = NULL;
+	}
+	qdf_mem_free(session_entry->parsedAssocReq[sta_ds->assocId]);
+	session_entry->parsedAssocReq[sta_ds->assocId] = NULL;
+	qdf_nbuf_free(buf);
+
+	return QDF_STATUS_SUCCESS;
+
+lim_assoc_ind:
+	qdf_mem_free(lim_assoc_ind);
+free_assoc_req:
+	if (assoc_req->assocReqFrame) {
+		qdf_mem_free(assoc_req->assocReqFrame);
+		assoc_req->assocReqFrame = NULL;
+	}
+	qdf_mem_free(session_entry->parsedAssocReq[sta_ds->assocId]);
+	session_entry->parsedAssocReq[sta_ds->assocId] = NULL;
+end:
+	qdf_nbuf_free(buf);
+null_buf:
+	return QDF_STATUS_E_FAILURE;
+}
 
 void
-lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
+lim_send_assoc_rsp_mgmt_frame(
+	struct mac_context *mac_ctx,
 	uint16_t status_code, uint16_t aid, tSirMacAddr peer_addr,
-	uint8_t subtype, tpDphHashNode sta, struct pe_session *pe_session)
+	uint8_t subtype, tpDphHashNode sta, struct pe_session *pe_session,
+	bool tx_complete)
 {
 	static tDot11fAssocResponse frm;
 	uint8_t *frame;
@@ -1371,7 +1482,17 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
 				      pe_session, QDF_STATUS_SUCCESS, status_code);
 	/* Queue Association Response frame in high priority WQ */
-	qdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) bytes,
+	if (tx_complete)
+		qdf_status = wma_tx_frameWithTxComplete(
+				mac_ctx, packet, (uint16_t)bytes,
+				TXRX_FRM_802_11_MGMT,
+				ANI_TXDIR_TODS,
+				7, lim_tx_complete, frame,
+				lim_assoc_rsp_tx_complete, tx_flag,
+				sme_session, false, 0, RATEID_DEFAULT);
+	else
+		qdf_status = wma_tx_frame(
+				mac_ctx, packet, (uint16_t)bytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, frame, tx_flag,

@@ -404,6 +404,36 @@ QDF_STATUS lim_process_auth_frame_no_session(struct mac_context *mac,
 					     uint8_t *bd, void *body);
 
 void lim_process_assoc_req_frame(struct mac_context *, uint8_t *, uint8_t, struct pe_session *);
+
+/**
+ * lim_fill_lim_assoc_ind_params() - Initialize lim association indication
+ * @assoc_ind: PE association indication structure
+ * @mac_ctx: Pointer to Global MAC structure
+ * @sta_ds: station dph entry
+ * @session_entry: PE session entry
+ *
+ * Return: true if lim assoc ind filled successfully
+ */
+bool lim_fill_lim_assoc_ind_params(
+		tpLimMlmAssocInd assoc_ind,
+		struct mac_context *mac_ctx,
+		tpDphHashNode sta_ds,
+		struct pe_session *session_entry);
+
+/**
+ * lim_fill_sme_assoc_ind_params() - Initialize association indication
+ * @mac_ctx: Pointer to Global MAC structure
+ * @assoc_ind: PE association indication structure
+ * @sme_assoc_ind: SME association indication
+ * @session_entry: PE session entry
+ *
+ * Return: None
+ */
+void
+lim_fill_sme_assoc_ind_params(
+	struct mac_context *mac_ctx,
+	tpLimMlmAssocInd assoc_ind, struct assoc_ind *sme_assoc_ind,
+	struct pe_session *session_entry);
 void lim_send_mlm_assoc_ind(struct mac_context *mac, tpDphHashNode sta,
 			    struct pe_session *pe_session);
 
@@ -565,8 +595,27 @@ void lim_send_delts_req_action_frame(struct mac_context *mac, tSirMacAddr peer,
 void lim_send_addts_req_action_frame(struct mac_context *mac, tSirMacAddr peerMacAddr,
 				     tSirAddtsReqInfo *addts, struct pe_session *);
 
-void lim_send_assoc_rsp_mgmt_frame(struct mac_context *, uint16_t, uint16_t, tSirMacAddr,
-				   uint8_t, tpDphHashNode pSta, struct pe_session *);
+/**
+ * lim_send_assoc_rsp_mgmt_frame() - Send assoc response
+ * @mac_ctx: Handle for mac context
+ * @status_code: Status code for assoc response frame
+ * @aid: Association ID
+ * @peer_addr: Mac address of requesting peer
+ * @subtype: Assoc/Reassoc
+ * @sta: Pointer to station node
+ * @pe_session: PE session id.
+ * @tx_complete: Need tx complete callback or not
+ *
+ * Builds and sends association response frame to the requesting peer.
+ *
+ * Return: void
+ */
+void
+lim_send_assoc_rsp_mgmt_frame(
+	struct mac_context *mac_ctx,
+	uint16_t status_code, uint16_t aid, tSirMacAddr peer_addr,
+	uint8_t subtype, tpDphHashNode sta, struct pe_session *pe_session,
+	bool tx_complete);
 
 void lim_send_disassoc_mgmt_frame(struct mac_context *, uint16_t, tSirMacAddr,
 				  struct pe_session *, bool waitForAck);

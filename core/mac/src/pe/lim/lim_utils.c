@@ -302,6 +302,8 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_SME_START_BSS_RSP";
 	case eWNI_SME_ASSOC_IND:
 		return "eWNI_SME_ASSOC_IND";
+	case eWNI_SME_ASSOC_IND_UPPER_LAYER:
+		return "eWNI_SME_ASSOC_IND_UPPER_LAYER";
 	case eWNI_SME_ASSOC_CNF:
 		return "eWNI_SME_ASSOC_CNF";
 	case eWNI_SME_SWITCH_CHL_IND:
