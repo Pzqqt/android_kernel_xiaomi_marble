@@ -100,7 +100,7 @@ static int msm_ext_disp_edid_ctl_info(struct snd_kcontrol *kcontrol,
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
 		uinfo->count = 0;
 		mutex_unlock(&codec_data->dp_ops_lock);
-		return -EINVAL;
+		return 0;
 	}
 
 	rc = codec_data->ext_disp_ops.get_audio_edid_blk(
