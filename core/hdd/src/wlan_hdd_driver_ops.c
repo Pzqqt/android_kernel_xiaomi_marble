@@ -1323,13 +1323,14 @@ static int wlan_hdd_runtime_suspend(struct device *dev)
 						   hdd_pld_runtime_suspend_cb);
 	err = qdf_status_to_os_return(status);
 
-	hdd_ctx->runtime_suspend_done_time_stamp = qdf_get_system_timestamp();
+	hdd_ctx->runtime_suspend_done_time_stamp =
+						qdf_get_log_timestamp_usecs();
 	delta = hdd_ctx->runtime_suspend_done_time_stamp -
 		hdd_ctx->runtime_resume_start_time_stamp;
 
 	if (hdd_ctx->runtime_suspend_done_time_stamp >
 	   hdd_ctx->runtime_resume_start_time_stamp)
-		hdd_debug("Runtime suspend done result: %d total cxpc up time %lu ms",
+		hdd_debug("Runtime suspend done result: %d total cxpc up time %lu microseconds",
 			  err, delta);
 
 	return err;
@@ -1367,10 +1368,11 @@ static int wlan_hdd_runtime_resume(struct device *dev)
 	qdf_time_t delta;
 
 	hdd_debug("Starting runtime resume");
-	hdd_ctx->runtime_resume_start_time_stamp = qdf_get_system_timestamp();
+	hdd_ctx->runtime_resume_start_time_stamp =
+						qdf_get_log_timestamp_usecs();
 	delta = hdd_ctx->runtime_resume_start_time_stamp -
 		hdd_ctx->runtime_suspend_done_time_stamp;
-	hdd_debug("Starting runtime resume total cxpc down time %lu ms",
+	hdd_debug("Starting runtime resume total cxpc down time %lu microseconds",
 		  delta);
 
 	if (wlan_hdd_validate_context(hdd_ctx))
