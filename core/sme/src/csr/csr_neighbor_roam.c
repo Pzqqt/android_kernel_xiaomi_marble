@@ -853,10 +853,6 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 				sizeof(tSirMacSSid));
 			qdf_copy_macaddr(&pSession->prevApBssid,
 					&pSession->connectedProfile.bssid);
-			pSession->prevOpChannel =
-				wlan_reg_freq_to_chan(
-					mac->pdev,
-					pSession->connectedProfile.op_freq);
 			pSession->isPrevApInfoValid = true;
 			pSession->roamTS1 = qdf_mc_timer_get_system_time();
 		}
@@ -1504,8 +1500,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	}
 
 	profile->ChannelInfo.freq_list[0] =
-		wlan_reg_chan_to_freq(mac_ctx->pdev,
-				      roam_ctrl_info->handoffReqInfo.channel);
+				      roam_ctrl_info->handoffReqInfo.ch_freq;
 
 	/*
 	 * For User space connect requests, the scan has already been done.
@@ -1576,10 +1571,8 @@ QDF_STATUS csr_neighbor_roam_sssid_scan_done(struct mac_context *mac,
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Add an entry to csr scan cache");
 		hstatus = csr_scan_create_entry_in_scan_cache(mac, sessionId,
-							pNeighborRoamInfo->
-							handoffReqInfo.bssid,
-							pNeighborRoamInfo->
-							handoffReqInfo.channel);
+				     pNeighborRoamInfo->handoffReqInfo.bssid,
+				     pNeighborRoamInfo->handoffReqInfo.ch_freq);
 		if (QDF_STATUS_SUCCESS != hstatus) {
 			sme_err(
 				"csr_scan_create_entry_in_scan_cache failed with status %d",
@@ -1642,8 +1635,8 @@ QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(
 		sme_err("Received req has same BSSID as current AP!!");
 		return QDF_STATUS_E_FAILURE;
 	}
-	roam_ctrl_info->handoffReqInfo.channel =
-		handoff_req->channel;
+	roam_ctrl_info->handoffReqInfo.ch_freq =
+		wlan_reg_chan_to_freq(mac_ctx->pdev, handoff_req->channel);
 	roam_ctrl_info->handoffReqInfo.src =
 		handoff_req->handoff_src;
 	qdf_mem_copy(&roam_ctrl_info->handoffReqInfo.bssid.bytes,

@@ -374,10 +374,12 @@ enum mgmt_bss_type diag_persona_from_csr_type(enum QDF_OPMODE persona)
 }
 #endif /* #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR */
 
-static const uint8_t
-csr_start_ibss_channels50[CSR_NUM_IBSS_START_CHAN_50] = { 36, 44, 52, 56, 140 };
-static const uint8_t
-csr_start_ibss_channels24[CSR_NUM_IBSS_START_CHANNELS_24] = { 1, 6, 11 };
+static const uint32_t
+csr_start_ibss_channels50[CSR_NUM_IBSS_START_CHAN_50] =
+					{ 5180, 5220, 5260, 5280, 5700 };
+static const uint32_t
+csr_start_ibss_channels24[CSR_NUM_IBSS_START_CHANNELS_24] =
+							{ 2412, 2437, 2462 };
 
 static const uint8_t
 social_channel[MAX_SOCIAL_CHANNELS] = { 1, 6, 11 };
@@ -2400,8 +2402,11 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			pParam->HeartbeatThresh50;
 		mac->roam.configParam.ProprietaryRatesEnabled =
 			pParam->ProprietaryRatesEnabled;
-		mac->roam.configParam.AdHocChannel24 = pParam->AdHocChannel24;
-		mac->roam.configParam.AdHocChannel5G = pParam->AdHocChannel5G;
+		mac->roam.configParam.ad_hoc_ch_freq_5g =
+						pParam->ad_hoc_ch_freq_5g;
+		mac->roam.configParam.ad_hoc_ch_freq_2g =
+						pParam->ad_hoc_ch_freq_2g;
+
 		mac->roam.configParam.wep_tkip_in_he = pParam->wep_tkip_in_he;
 
 		mac->roam.configParam.uCfgDot11Mode =
@@ -2592,8 +2597,8 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac,
 	pParam->phyMode = cfg_params->phyMode;
 	pParam->HeartbeatThresh50 = cfg_params->HeartbeatThresh50;
 	pParam->ProprietaryRatesEnabled = cfg_params->ProprietaryRatesEnabled;
-	pParam->AdHocChannel24 = cfg_params->AdHocChannel24;
-	pParam->AdHocChannel5G = cfg_params->AdHocChannel5G;
+	pParam->ad_hoc_ch_freq_5g = cfg_params->ad_hoc_ch_freq_5g;
+	pParam->ad_hoc_ch_freq_2g = cfg_params->ad_hoc_ch_freq_2g;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
 	pParam->statsReqPeriodicity = cfg_params->statsReqPeriodicity;
 	pParam->statsReqPeriodicityInPS = cfg_params->statsReqPeriodicityInPS;
@@ -13355,25 +13360,27 @@ QDF_STATUS csr_roam_issue_stop_bss(struct mac_context *mac,
 }
 
 /* pNumChan is a caller allocated space with the sizeof pChannels */
-QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac, uint8_t *pChannels,
-				      uint32_t *pNumChan)
+QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac,
+				      uint32_t *ch_freq_list,
+				      uint32_t *num_ch_freq)
 {
 	uint8_t num_chan_temp = 0;
 	int i;
 	uint8_t chan;
+	uint32_t *valid_ch_freq_list =
+				mac->mlme_cfg->reg.valid_channel_freq_list;
 
-	*pNumChan = (uint32_t)mac->mlme_cfg->reg.valid_channel_list_num;
+	*num_ch_freq = mac->mlme_cfg->reg.valid_channel_list_num;
 
-	for (i = 0; i < *pNumChan; i++) {
-		chan = wlan_reg_freq_to_chan(mac->pdev,
-					     mac->mlme_cfg->reg.valid_channel_freq_list[i]);
+	for (i = 0; i < *num_ch_freq; i++) {
+		chan = wlan_reg_freq_to_chan(mac->pdev, valid_ch_freq_list[i]);
 		if (!wlan_reg_is_dsrc_chan(mac->pdev, chan)) {
-			pChannels[num_chan_temp] = chan;
+			ch_freq_list[num_chan_temp] = valid_ch_freq_list[i];
 			num_chan_temp++;
 		}
 	}
 
-	*pNumChan = num_chan_temp;
+	*num_ch_freq = num_chan_temp;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -13454,15 +13461,15 @@ error:
 bool csr_roam_is_channel_valid(struct mac_context *mac, uint8_t channel)
 {
 	bool fValid = false;
-	uint32_t idxValidChannels;
-	uint32_t len = sizeof(mac->roam.validChannelList);
+	uint32_t id_Valid_ch;
+	uint32_t len = sizeof(mac->roam.valid_ch_freq_list);
 
 	if (QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels(mac,
-					mac->roam.validChannelList, &len))) {
-		for (idxValidChannels = 0; (idxValidChannels < len);
-		     idxValidChannels++) {
-			if (channel ==
-			    mac->roam.validChannelList[idxValidChannels]) {
+					mac->roam.valid_ch_freq_list, &len))) {
+		for (id_Valid_ch = 0; (id_Valid_ch < len);
+		     id_Valid_ch++) {
+			if (channel == wlan_reg_freq_to_chan(mac->pdev,
+			    mac->roam.valid_ch_freq_list[id_Valid_ch])) {
 				fValid = true;
 				break;
 			}
@@ -13697,35 +13704,33 @@ static bool csr_roam_is_same_profile_keys(struct mac_context *mac,
 
 /* IBSS */
 
-static uint8_t csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
+static uint32_t
+csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
 {
-	uint8_t channel = 0;
+	uint32_t ch_freq = 0;
 	uint32_t idx;
-	uint32_t idxValidChannels;
+	uint32_t id_Valid_ch;
 	bool fFound = false;
-	uint32_t len = sizeof(mac->roam.validChannelList);
+	uint32_t len = sizeof(mac->roam.valid_ch_freq_list);
 
-	if (eCSR_OPERATING_CHANNEL_ANY != mac->roam.configParam.
-							AdHocChannel5G) {
-		channel = mac->roam.configParam.AdHocChannel5G;
-		if (!csr_roam_is_channel_valid(mac, channel))
-			channel = 0;
+	if (mac->roam.configParam.ad_hoc_ch_freq_5g) {
+		ch_freq = mac->roam.configParam.ad_hoc_ch_freq_5g;
+		if (!csr_roam_is_chan_freq_valid(mac, ch_freq))
+			ch_freq = 0;
 	}
-	if (0 == channel
+	if (0 == ch_freq
 	    &&
-	    QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels
-					  (mac, (uint8_t *) mac->roam.
-					validChannelList, &len))) {
+	    QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels(mac,
+				mac->roam.valid_ch_freq_list, &len))) {
 		for (idx = 0; (idx < CSR_NUM_IBSS_START_CHAN_50) && !fFound;
 		     idx++) {
-			for (idxValidChannels = 0;
-			     (idxValidChannels < len) && !fFound;
-			     idxValidChannels++) {
+			for (id_Valid_ch = 0;
+			     (id_Valid_ch < len) && !fFound;
+			     id_Valid_ch++) {
 				if (csr_start_ibss_channels50[idx] ==
-				    mac->roam.
-				    validChannelList[idxValidChannels]) {
+				    mac->roam.valid_ch_freq_list[id_Valid_ch]) {
 					fFound = true;
-					channel =
+					ch_freq =
 						csr_start_ibss_channels50[idx];
 				}
 			}
@@ -13736,16 +13741,16 @@ static uint8_t csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
 		 * return the first 11a channel found!
 		 */
 		if (!fFound) {
-			for (idxValidChannels = 0; idxValidChannels < len;
-			     idxValidChannels++) {
-				if (WLAN_REG_IS_5GHZ_CH(mac->roam.
-					validChannelList[idxValidChannels])) {
+			for (id_Valid_ch = 0; id_Valid_ch < len;
+			     id_Valid_ch++) {
+				if (WLAN_REG_IS_5GHZ_CH_FREQ(
+				   mac->roam.valid_ch_freq_list[id_Valid_ch])) {
 					/* the max channel# in 11g is 14 */
-					if (idxValidChannels <
+					if (id_Valid_ch <
 					    CSR_NUM_IBSS_START_CHAN_50) {
-						channel =
-						mac->roam.validChannelList
-						[idxValidChannels];
+						ch_freq =
+						mac->roam.valid_ch_freq_list
+						[id_Valid_ch];
 					}
 					break;
 				}
@@ -13753,46 +13758,45 @@ static uint8_t csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
 		}
 	} /* if */
 
-	return channel;
+	return wlan_reg_freq_to_chan(mac->pdev, ch_freq);
 }
 
-static uint8_t csr_roam_get_ibss_start_channel_number24(struct mac_context *mac)
+static uint32_t
+csr_roam_get_ibss_start_channel_number24(struct mac_context *mac)
 {
-	uint8_t channel = 1;
+	uint32_t ch_freq = 2412;
 	uint32_t idx;
-	uint32_t idxValidChannels;
+	uint32_t id_Valid_ch;
 	bool fFound = false;
-	uint32_t len = sizeof(mac->roam.validChannelList);
+	uint32_t len = sizeof(mac->roam.valid_ch_freq_list);
 
-	if (eCSR_OPERATING_CHANNEL_ANY != mac->roam.configParam.
-							AdHocChannel24) {
-		channel = mac->roam.configParam.AdHocChannel24;
-		if (!csr_roam_is_channel_valid(mac, channel))
-			channel = 0;
+	if (mac->roam.configParam.ad_hoc_ch_freq_2g) {
+		ch_freq = mac->roam.configParam.ad_hoc_ch_freq_2g;
+		if (!csr_roam_is_chan_freq_valid(mac, ch_freq))
+			ch_freq = 0;
 	}
 
-	if (0 == channel
+	if (0 == ch_freq
 	    &&
 	    QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels(mac,
-					(uint8_t *) mac->roam.validChannelList,
-					  &len))) {
+						mac->roam.valid_ch_freq_list,
+						&len))) {
 		for (idx = 0; (idx < CSR_NUM_IBSS_START_CHANNELS_24) && !fFound;
 		     idx++) {
-			for (idxValidChannels = 0;
-			     (idxValidChannels < len) && !fFound;
-			     idxValidChannels++) {
+			for (id_Valid_ch = 0;
+			     (id_Valid_ch < len) && !fFound;
+			     id_Valid_ch++) {
 				if (csr_start_ibss_channels24[idx] ==
-				    mac->roam.
-				    validChannelList[idxValidChannels]) {
+				    mac->roam.valid_ch_freq_list[id_Valid_ch]) {
 					fFound = true;
-					channel =
+					ch_freq =
 						csr_start_ibss_channels24[idx];
 				}
 			}
 		}
 	}
 
-	return channel;
+	return wlan_reg_freq_to_chan(mac->pdev, ch_freq);
 }
 /**
  * csr_populate_basic_rates() - populates OFDM or CCK rates
@@ -14908,17 +14912,18 @@ static void csr_add_supported_5Ghz_channels(struct mac_context *mac_ctx,
 		return;
 	}
 
-	size = sizeof(mac_ctx->roam.validChannelList);
+	size = sizeof(mac_ctx->roam.valid_ch_freq_list);
 	if (QDF_IS_STATUS_SUCCESS
 		(csr_get_cfg_valid_channels(mac_ctx,
-		(uint8_t *) mac_ctx->roam.validChannelList,
-				&size))) {
+					    mac_ctx->roam.valid_ch_freq_list,
+					    &size))) {
 		for (i = 0, j = 0; i < size; i++) {
 			/* Only add 5ghz channels.*/
-			if (WLAN_REG_IS_5GHZ_CH
-					(mac_ctx->roam.validChannelList[i])) {
-				chan_list[j]
-					= mac_ctx->roam.validChannelList[i];
+			if (WLAN_REG_IS_5GHZ_CH_FREQ
+					(mac_ctx->roam.valid_ch_freq_list[i])) {
+				chan_list[j] =
+					wlan_reg_freq_to_chan(mac_ctx->pdev,
+					  mac_ctx->roam.valid_ch_freq_list[i]);
 				j++;
 
 				if (supp_chan_ie) {
@@ -17701,29 +17706,6 @@ csr_check_band_freq_match(enum band_info band, uint32_t freq)
 }
 
 /**
- * csr_check_band_channel_match() - check if passed band and channel match
- * parameters
- * @band:       band to match with channel
- * @channel:    channel to match with band
- *
- * Return: bool if match else false
- */
-static bool
-csr_check_band_channel_match(enum band_info band, uint8_t channel)
-{
-	if (BAND_ALL == band)
-		return true;
-
-	if (BAND_2G == band && WLAN_REG_IS_24GHZ_CH(channel))
-		return true;
-
-	if (BAND_5G == band && WLAN_REG_IS_5GHZ_CH(channel))
-		return true;
-
-	return false;
-}
-
-/**
  * csr_populate_roam_chan_list()
  * parameters
  * @mac_ctx:      global mac ctx
@@ -17957,7 +17939,7 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 {
 	QDF_STATUS status;
 	uint32_t host_channels = 0;
-	uint8_t *ch_lst = NULL;
+	uint32_t *ch_freq_list = NULL;
 	uint8_t i = 0, num_channels = 0;
 	uint16_t  unsafe_chan[NUM_CHANNELS];
 	uint16_t  unsafe_chan_cnt = 0;
@@ -17976,9 +17958,9 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 			&unsafe_chan_cnt,
 			sizeof(unsafe_chan));
 
-	host_channels = sizeof(mac_ctx->roam.validChannelList);
+	host_channels = sizeof(mac_ctx->roam.valid_ch_freq_list);
 	status = csr_get_cfg_valid_channels(mac_ctx,
-					    mac_ctx->roam.validChannelList,
+					    mac_ctx->roam.valid_ch_freq_list,
 					    &host_channels);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -17997,15 +17979,18 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 			  connectedProfile.op_freq);
 	}
 
-	ch_lst = mac_ctx->roam.validChannelList;
+	ch_freq_list = mac_ctx->roam.valid_ch_freq_list;
 	mac_ctx->roam.numValidChannels = host_channels;
 
 	for (i = 0; i < mac_ctx->roam.numValidChannels; i++) {
-		if (!csr_check_band_channel_match(band, *ch_lst)) {
+		uint8_t channel =
+			wlan_reg_freq_to_chan(mac_ctx->pdev, *ch_freq_list);
+
+		if (!csr_check_band_freq_match(band, *ch_freq_list)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				("ignoring non-intra band channel %d"),
-				*ch_lst);
-			ch_lst++;
+				channel);
+			ch_freq_list++;
 			continue;
 		}
 
@@ -18013,10 +17998,10 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 			 ROAMING_DFS_CHANNEL_DISABLED) ||
 		     (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
-		    (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
+		    (wlan_reg_is_dfs_ch(mac_ctx->pdev, channel))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				("ignoring dfs channel %d"), *ch_lst);
-			ch_lst++;
+				("ignoring dfs channel %d"), channel);
+			ch_freq_list++;
 			continue;
 		}
 
@@ -18025,7 +18010,7 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 				unsafe_chan_cnt) {
 			is_unsafe_chan = false;
 			for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
-				if (unsafe_chan[cnt] == *ch_lst) {
+				if (unsafe_chan[cnt] == channel) {
 					is_unsafe_chan = true;
 					break;
 				}
@@ -18034,14 +18019,14 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 				QDF_TRACE(QDF_MODULE_ID_SME,
 						QDF_TRACE_LEVEL_DEBUG,
 					("ignoring unsafe channel %d"),
-					*ch_lst);
-				ch_lst++;
+					channel);
+				ch_freq_list++;
 				continue;
 			}
 		}
 		req_buf->ConnectedNetwork.chan_freq_cache[num_channels++] =
-			wlan_reg_chan_to_freq(mac_ctx->pdev, *ch_lst);
-		ch_lst++;
+								*ch_freq_list;
+		ch_freq_list++;
 	}
 	req_buf->ChannelCacheType = CHANNEL_LIST_DYNAMIC;
 	req_buf->ConnectedNetwork.ChannelCount = num_channels;
@@ -20081,7 +20066,7 @@ QDF_STATUS csr_handoff_request(struct mac_context *mac,
 	pMsg->msgType = eWNI_SME_HANDOFF_REQ;
 	pMsg->msgLen = (uint16_t) sizeof(tAniHandoffReq);
 	pMsg->sessionId = sessionId;
-	pMsg->channel = pHandoffInfo->channel;
+	pMsg->channel = wlan_reg_freq_to_chan(mac->pdev, pHandoffInfo->ch_freq);
 	pMsg->handoff_src = pHandoffInfo->src;
 	qdf_mem_copy(pMsg->bssid, pHandoffInfo->bssid.bytes, QDF_MAC_ADDR_SIZE);
 	msg.type = eWNI_SME_HANDOFF_REQ;

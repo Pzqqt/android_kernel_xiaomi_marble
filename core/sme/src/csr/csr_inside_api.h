@@ -318,7 +318,7 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 			   struct csr_roam_profile *pProfile,
 			   enum csr_cfgdot11mode *pReturnCfgDot11Mode,
 			   tDot11fBeaconIEs *pIes);
-bool csr_roam_is_channel_valid(struct mac_context *mac, uint8_t channel);
+bool csr_roam_is_channel_valid(struct mac_context *mac, uint8_t ch_freq);
 
 /**
  * csr_roam_is_chan_freq_valid() - validate channel frequency
@@ -333,8 +333,9 @@ bool csr_roam_is_channel_valid(struct mac_context *mac, uint8_t channel);
 bool csr_roam_is_chan_freq_valid(struct mac_context *mac, uint32_t freq);
 
 /* pNumChan is a caller allocated space with the sizeof pChannels */
-QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac, uint8_t *pChannels,
-				      uint32_t *pNumChan);
+QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac,
+				      uint32_t *ch_freq_list,
+				      uint32_t *num_ch_freq);
 /**
  * csr_get_cfg_valid_freqs() - Get valid channel frequency list
  * @mac: mac context
@@ -878,7 +879,7 @@ bool csr_neighbor_roam_connected_profile_match(struct mac_context *mac,
 QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 						uint32_t sessionId,
 						struct qdf_mac_addr bssid,
-						uint8_t channel);
+						uint32_t ch_freq);
 
 QDF_STATUS csr_update_channel_list(struct mac_context *mac);
 QDF_STATUS csr_roam_del_pmkid_from_cache(struct mac_context *mac,

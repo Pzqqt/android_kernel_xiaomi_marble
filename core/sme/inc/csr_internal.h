@@ -346,8 +346,8 @@ struct csr_config {
 	bool mcc_rts_cts_prot_enable;
 	bool mcc_bcast_prob_resp_enable;
 	uint8_t fAllowMCCGODiffBI;
-	uint8_t AdHocChannel24;
-	uint8_t AdHocChannel5G;
+	uint32_t ad_hoc_ch_freq_2g;
+	uint32_t ad_hoc_ch_freq_5g;
 	/* each RSSI category has one value */
 	uint32_t BssPreferValue[CSR_NUM_RSSI_CAT];
 	int RSSICat[CSR_NUM_RSSI_CAT];
@@ -557,11 +557,6 @@ struct csr_roam_session {
 	uint16_t curr_cache_idx; /* the index in pmkidcache to write next to */
 	tPmkidCacheInfo PmkidCacheInfo[CSR_MAX_PMKID_ALLOWED];
 	uint8_t cJoinAttemps;
-	/*
-	 * This may or may not have the up-to-date valid channel list. It is
-	 * used to get CFG_VALID_CHANNEL_LIST and not alloc memory all time
-	 */
-	tSirMacChanNum validChannelList[CFG_VALID_CHANNEL_LIST_LEN];
 	int32_t sPendingCommands;   /* 0 means CSR is ok to low power */
 #ifdef FEATURE_WLAN_WAPI
 	uint16_t NumBkidCache;
@@ -623,7 +618,6 @@ struct csr_roam_session {
 	bool isPrevApInfoValid;
 	tSirMacSSid prevApSSID;
 	struct qdf_mac_addr prevApBssid;
-	uint8_t prevOpChannel;
 	uint16_t clientDissSecs;
 	uint32_t roamTS1;
 	tCsrEseCckmIe suppCckmIeInfo;
@@ -674,7 +668,7 @@ struct csr_roamstruct {
 	 * This may or may not have the up-to-date valid channel list. It is
 	 * used to get CFG_VALID_CHANNEL_LIST and not alloc mem all time
 	 */
-	tSirMacChanNum validChannelList[CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t valid_ch_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numValidChannels;       /* total number of channels in CFG */
 	int32_t sPendingCommands;
 	qdf_mc_timer_t hTimerWaitForKey; /* support timeout for WaitForKey */

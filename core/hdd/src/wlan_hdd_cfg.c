@@ -856,8 +856,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	 */
 	/* This param cannot be configured from INI */
 	sme_config->csr_config.send_smps_action = true;
-	sme_config->csr_config.AdHocChannel5G = ibss_cfg.adhoc_ch_5g;
-	sme_config->csr_config.AdHocChannel24 = ibss_cfg.adhoc_ch_2g;
+	sme_config->csr_config.ad_hoc_ch_freq_5g = ibss_cfg.adhoc_ch_5g;
+	sme_config->csr_config.ad_hoc_ch_freq_2g = ibss_cfg.adhoc_ch_2g;
 	sme_config->csr_config.ProprietaryRatesEnabled = 0;
 	sme_config->csr_config.HeartbeatThresh50 = 40;
 	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,

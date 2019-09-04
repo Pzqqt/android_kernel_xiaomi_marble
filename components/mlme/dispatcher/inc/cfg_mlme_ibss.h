@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,13 +42,13 @@
 
 /*
  * <ini>
- * gAdHocChannel5G - Default 5Ghz IBSS channel if channel is not
+ * gAdHocChannel5G - Default 5Ghz IBSS channel if channel freq is not
  * provided by supplicant.
- * @Min: 36
- * @Max: 165
- * @Default: 44
+ * @Min: 5180
+ * @Max: 5825
+ * @Default: 5220
  *
- * This ini is used to set default 5Ghz IBSS channel
+ * This ini is used to set default 5Ghz IBSS channel frequency
  * if channel is not provided by supplicant and band is 5Ghz
  *
  * Related: None
@@ -60,22 +60,22 @@
  * </ini>
  */
 #define CFG_IBSS_ADHOC_CHANNEL_5GHZ CFG_INI_UINT( \
-		"gAdHocChannel5G", \
-		36, \
-		165, \
-		44, \
+		"ad_hoc_ch_freq_5g", \
+		5180, \
+		5825, \
+		5220, \
 		CFG_VALUE_OR_DEFAULT, \
-		"Default 5Ghz IBSS channel if not provided by supplicant")
+		"Default 5Ghz IBSS ch freq if not provided by supplicant")
 
 /*
  * <ini>
- * gAdHocChannel24G - Default 2.4Ghz IBSS channel if channel is not
+ * gAdHocChannel24G - Default 2.4Ghz IBSS channel if channel freq is not
  * provided by supplicant.
- * @Min: 1
- * @Max: 14
- * @Default: 6
+ * @Min: 2412
+ * @Max: 2484
+ * @Default: 2437
  *
- * This ini is used to set default 2.4Ghz IBSS channel
+ * This ini is used to set default 2.4Ghz IBSS channel frequency
  * if channel is not provided by supplicant and band is 2.4Ghz
  *
  * Related: None
@@ -87,12 +87,12 @@
  * </ini>
  */
 #define CFG_IBSS_ADHOC_CHANNEL_24GHZ CFG_INI_UINT( \
-		"gAdHocChannel24G", \
-		1, \
-		14, \
-		6, \
+		"ad_hoc_ch_freq_2g", \
+		2412, \
+		2484, \
+		2437, \
 		CFG_VALUE_OR_DEFAULT, \
-		"Default 2.4Ghz IBSS channel if not provided by supplicant")
+		"Default 2.4Ghz IBSS ch freq if not provided by supplicant")
 
 /*
  * <ini>

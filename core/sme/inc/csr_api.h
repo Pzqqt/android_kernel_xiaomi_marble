@@ -311,7 +311,6 @@ typedef struct tagCsrScanResultFilter {
 	 * used to support whitelist ssid feature.
 	 */
 	uint8_t scan_filter_for_roam;
-	struct sCsrChannel_ pcl_channels;
 	struct qdf_mac_addr bssid_hint;
 	enum QDF_OPMODE csrPersona;
 	bool realm_check;
@@ -321,7 +320,7 @@ typedef struct tagCsrScanResultFilter {
 } tCsrScanResultFilter;
 
 typedef struct sCsrChnPower_ {
-	uint8_t first_chan_freq;
+	uint32_t first_chan_freq;
 	uint8_t numChannels;
 	uint8_t maxtxPower;
 } sCsrChnPower;
@@ -955,8 +954,8 @@ struct csr_config_params {
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool ProprietaryRatesEnabled;
-	uint8_t AdHocChannel24;
-	uint8_t AdHocChannel5G;
+	uint32_t ad_hoc_ch_freq_5g;
+	uint32_t ad_hoc_ch_freq_2g;
 	/*
 	 * this number minus one is the number of times a scan doesn't find it
 	 * before it is removed
@@ -1097,16 +1096,12 @@ struct csr_roam_info {
 	uint16_t tsmRoamDelay;
 	struct ese_bcn_report_rsp *pEseBcnReportRsp;
 #endif
-	void *pRemainCtx;
-	uint32_t roc_scan_id;
-	uint32_t rxChan;
 #ifdef FEATURE_WLAN_TDLS
 	/*
 	 * TDLS parameters to check whether TDLS
 	 * and TDLS channel switch is allowed in the
 	 * AP network
 	 */
-	uint8_t staType;
 	bool tdls_prohibited;           /* per ExtCap in Assoc/Reassoc resp */
 	bool tdls_chan_swit_prohibited; /* per ExtCap in Assoc/Reassoc resp */
 #endif
@@ -1307,14 +1302,14 @@ typedef enum {
 
 typedef struct tagCsrHandoffRequest {
 	struct qdf_mac_addr bssid;
-	uint8_t channel;
+	uint32_t ch_freq;
 	uint8_t src;   /* To check if its a REASSOC or a FASTREASSOC IOCTL */
 } tCsrHandoffRequest;
 
 #ifdef FEATURE_WLAN_ESE
 typedef struct tagCsrEseBeaconReqParams {
 	uint16_t measurementToken;
-	uint8_t channel;
+	uint32_t ch_freq;
 	uint8_t scanMode;
 	uint16_t measurementDuration;
 } tCsrEseBeaconReqParams, *tpCsrEseBeaconReqParams;

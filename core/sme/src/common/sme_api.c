@@ -1683,7 +1683,7 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 		pSmeBcnReportReq->measurementDuration[counter] =
 			SYS_TU_TO_MS(pBeaconReq->measurementDuration);
 		pSmeBcnReportReq->channelList.channelNumber[counter] =
-			pBeaconReq->channel;
+			wlan_reg_freq_to_chan(mac->pdev, pBeaconReq->ch_freq);
 	}
 
 	status = sme_rrm_process_beacon_report_req_ind(mac, pSmeBcnReportReq);
@@ -5191,11 +5191,12 @@ QDF_STATUS sme_set_tsf_gpio(mac_handle_t mac_handle, uint32_t pinvalue)
 }
 #endif
 
-QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
-				      uint32_t *len)
+QDF_STATUS sme_get_cfg_valid_channels(uint8_t *valid_ch, uint32_t *len)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac_ctx = sme_get_mac_context();
+	uint32_t *valid_ch_freq_list;
+	uint32_t i;
 
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -5203,12 +5204,23 @@ QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	valid_ch_freq_list = qdf_mem_malloc(CFG_VALID_CHANNEL_LIST_LEN *
+					    sizeof(uint32_t));
+	if (!valid_ch_freq_list)
+		return QDF_STATUS_E_NOMEM;
+
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_get_cfg_valid_channels(mac_ctx,
-			aValidChannels, len);
+			valid_ch_freq_list, len);
 		sme_release_global_lock(&mac_ctx->sme);
 	}
+
+	for (i = 0; i < *len; i++)
+		valid_ch[i] =
+		   wlan_reg_freq_to_chan(mac_ctx->pdev, valid_ch_freq_list[i]);
+
+	qdf_mem_free(valid_ch_freq_list);
 
 	return status;
 }

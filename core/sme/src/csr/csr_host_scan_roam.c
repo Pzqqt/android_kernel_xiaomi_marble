@@ -216,8 +216,8 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 				descr->bssId,
 				n_roam_info->handoffReqInfo.bssid.bytes,
 				sizeof(tSirMacAddr))) ||
-			     (bss_chan_id !=
-			      n_roam_info->handoffReqInfo.channel))) {
+			     (descr->chan_freq !=
+			      n_roam_info->handoffReqInfo.ch_freq))) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_DEBUG,
 					  "SKIP-not a candidate AP for OS requested roam");

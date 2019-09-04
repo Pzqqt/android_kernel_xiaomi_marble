@@ -769,7 +769,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	} else {
 		tCsrHandoffRequest handoff;
 
-		handoff.channel = channel;
+		handoff.ch_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, channel);
 		handoff.src = src;
 		qdf_mem_copy(handoff.bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
 		sme_handoff_request(hdd_ctx->mac_handle, adapter->vdev_id,
@@ -2532,7 +2532,8 @@ done:
  *
  * Return: 0 for success non-zero for failure
  */
-static int hdd_parse_ese_beacon_req(uint8_t *command,
+static int hdd_parse_ese_beacon_req(struct wlan_objmgr_pdev *pdev,
+				    uint8_t *command,
 				    tCsrEseBeaconReq *req)
 {
 	uint8_t *in_ptr = command;
@@ -2619,7 +2620,8 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 						  temp_int);
 					return -EINVAL;
 				}
-				req->bcnReq[j].channel = temp_int;
+				req->bcnReq[j].ch_freq =
+				wlan_reg_chan_to_freq(pdev, temp_int);
 				break;
 
 			case 2: /* Scan mode */
@@ -2650,10 +2652,10 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 	}
 
 	for (j = 0; j < req->numBcnReqIe; j++) {
-		hdd_debug("Index: %d Measurement Token: %u Channel: %u Scan Mode: %u Measurement Duration: %u",
+		hdd_debug("Index: %d Measurement Token: %u ch_freq: %u Scan Mode: %u Measurement Duration: %u",
 			  j,
 			  req->bcnReq[j].measurementToken,
-			  req->bcnReq[j].channel,
+			  req->bcnReq[j].ch_freq,
 			  req->bcnReq[j].scanMode,
 			  req->bcnReq[j].measurementDuration);
 	}
@@ -4388,7 +4390,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 		goto exit;
 	}
 	/* Proceed with reassoc */
-	req.channel = channel;
+	req.ch_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, channel);
 	req.src = FASTREASSOC;
 	qdf_mem_copy(req.bssid.bytes, bssid, sizeof(tSirMacAddr));
 	sme_handoff_request(mac_handle, adapter->vdev_id, &req);
@@ -5619,7 +5621,7 @@ static int drv_cmd_ccx_beacon_req(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	ret = hdd_parse_ese_beacon_req(value, &req);
+	ret = hdd_parse_ese_beacon_req(hdd_ctx->pdev, value, &req);
 	if (ret) {
 		hdd_err("Failed to parse ese beacon req");
 		goto exit;

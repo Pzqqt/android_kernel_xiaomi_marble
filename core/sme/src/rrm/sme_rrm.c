@@ -309,8 +309,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 		qdf_mem_zero(&bcn_rpt_rsp, sizeof(bcn_rpt_rsp));
 
 		for (i = 0; i < rrm_ctx->eseBcnReqInfo.numBcnReqIe; i++) {
-			if (rrm_ctx->eseBcnReqInfo.bcnReq[i].channel ==
-				wlan_reg_freq_to_chan(mac_ctx->pdev, freq)) {
+			if (rrm_ctx->eseBcnReqInfo.bcnReq[i].ch_freq == freq) {
 				cur_meas_req =
 					&rrm_ctx->eseBcnReqInfo.bcnReq[i];
 				break;

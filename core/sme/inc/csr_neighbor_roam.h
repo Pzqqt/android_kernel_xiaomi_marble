@@ -95,12 +95,6 @@ typedef struct sCsrPreauthFailListInfo {
 	tSirMacAddr macAddress[MAX_NUM_PREAUTH_FAIL_LIST_ADDRESS];
 } tCsrPreauthFailListInfo, *tpCsrPreauthFailListInfo;
 
-typedef struct sCsrNeighborReportBssInfo {
-	uint8_t channelNum;
-	uint8_t neighborScore;
-	tSirMacAddr neighborBssId;
-} tCsrNeighborReportBssInfo, *tpCsrNeighborReportBssInfo;
-
 typedef struct sCsr11rAssocNeighborInfo {
 	bool preauthRspPending;
 	bool neighborRptPending;
