@@ -1396,6 +1396,40 @@ int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
 	return filled;
 }
 
+#if defined(WLAN_FEATURE_TSF_PLUS) && !defined(CONFIG_HL_SUPPORT)
+/**
+ * htt_rx_tail_msdu_timestamp() - update tail msdu tsf64 timestamp
+ * @tail_rx_desc: pointer to tail msdu descriptor
+ * @timestamp_rx_desc: pointer to timestamp msdu descriptor
+ *
+ * Return: none
+ */
+static inline void htt_rx_tail_msdu_timestamp(
+			struct htt_host_rx_desc_base *tail_rx_desc,
+			struct htt_host_rx_desc_base *timestamp_rx_desc)
+{
+	if (tail_rx_desc) {
+		if (!timestamp_rx_desc) {
+			tail_rx_desc->ppdu_end.wb_timestamp_lower_32 = 0;
+			tail_rx_desc->ppdu_end.wb_timestamp_upper_32 = 0;
+		} else {
+			if (timestamp_rx_desc != tail_rx_desc) {
+				tail_rx_desc->ppdu_end.wb_timestamp_lower_32 =
+			timestamp_rx_desc->ppdu_end.wb_timestamp_lower_32;
+				tail_rx_desc->ppdu_end.wb_timestamp_upper_32 =
+			timestamp_rx_desc->ppdu_end.wb_timestamp_upper_32;
+			}
+		}
+	}
+}
+#else
+static inline void htt_rx_tail_msdu_timestamp(
+			struct htt_host_rx_desc_base *tail_rx_desc,
+			struct htt_host_rx_desc_base *timestamp_rx_desc)
+{
+}
+#endif
+
 static int
 htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				qdf_nbuf_t rx_ind_msg,
@@ -1409,12 +1443,13 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	unsigned int msdu_count = 0;
 	uint8_t offload_ind, frag_ind;
 	uint8_t peer_id;
-	struct htt_host_rx_desc_base *rx_desc;
+	struct htt_host_rx_desc_base *rx_desc = NULL;
 	enum rx_pkt_fate status = RX_PKT_FATE_SUCCESS;
 	qdf_dma_addr_t paddr;
 	qdf_mem_info_t mem_map_table = {0};
 	int ret = 1;
 	bool ipa_smmu = false;
+	struct htt_host_rx_desc_base *timestamp_rx_desc = NULL;
 
 	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
 
@@ -1522,6 +1557,10 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		/* cache consistency has been taken care of by qdf_nbuf_unmap */
 		rx_desc = htt_rx_desc(msdu);
 		htt_rx_extract_lro_info(msdu, rx_desc);
+
+		/* check if the msdu is last mpdu */
+		if (rx_desc->attention.last_mpdu)
+			timestamp_rx_desc = rx_desc;
 
 		/*
 		 * Make the netbuf's data pointer point to the payload rather
@@ -1639,6 +1678,8 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 			qdf_nbuf_set_next(msdu, NULL);
 		}
 	}
+
+	htt_rx_tail_msdu_timestamp(rx_desc, timestamp_rx_desc);
 
 end:
 	return ret;
