@@ -27,54 +27,41 @@ QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 				    uint64_t tx_packets,
 				    uint64_t rx_packets)
 {
-	uint32_t next_cons_bw, next_prod_bw;
 	int ret;
+	uint32_t next_bw;
+	uint64_t total_packets = tx_packets + rx_packets;
 
 	if ((!wlan_ipa_is_enabled(ipa_ctx->config)) ||
 		(!wlan_ipa_is_clk_scaling_enabled(ipa_ctx->config)))
 		return 0;
 
-	if (tx_packets > (ipa_ctx->config->bus_bw_high / 2))
-		next_cons_bw = ipa_ctx->config->ipa_bw_high;
-	else if (tx_packets > (ipa_ctx->config->bus_bw_medium / 2))
-		next_cons_bw = ipa_ctx->config->ipa_bw_medium;
+	if (total_packets > (ipa_ctx->config->bus_bw_high / 2))
+		next_bw = ipa_ctx->config->ipa_bw_high;
+	else if (total_packets > (ipa_ctx->config->bus_bw_medium / 2))
+		next_bw = ipa_ctx->config->ipa_bw_medium;
 	else
-		next_cons_bw = ipa_ctx->config->ipa_bw_low;
+		next_bw = ipa_ctx->config->ipa_bw_low;
 
-	if (rx_packets > (ipa_ctx->config->bus_bw_high / 2))
-		next_prod_bw = ipa_ctx->config->ipa_bw_high;
-	else if (rx_packets > (ipa_ctx->config->bus_bw_medium / 2))
-		next_prod_bw = ipa_ctx->config->ipa_bw_medium;
-	else
-		next_prod_bw = ipa_ctx->config->ipa_bw_low;
-
-	if (ipa_ctx->curr_cons_bw != next_cons_bw) {
-		ipa_debug("Requesting CONS perf curr: %d, next: %d",
-			  ipa_ctx->curr_cons_bw, next_cons_bw);
+	if (ipa_ctx->curr_cons_bw != next_bw) {
+		ipa_debug("Requesting IPA perf curr: %d, next: %d",
+			  ipa_ctx->curr_cons_bw, next_bw);
 		ret = cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
 					     QDF_IPA_CLIENT_WLAN1_CONS,
-					     next_cons_bw);
+					     next_bw);
 		if (ret) {
 			ipa_err("RM CONS set perf profile failed: %d", ret);
 
 			return QDF_STATUS_E_FAILURE;
 		}
-		ipa_ctx->curr_cons_bw = next_cons_bw;
-		ipa_ctx->stats.num_cons_perf_req++;
-	}
-
-	if (ipa_ctx->curr_prod_bw != next_prod_bw) {
-		ipa_debug("Requesting PROD perf curr: %d, next: %d",
-			  ipa_ctx->curr_prod_bw, next_prod_bw);
 		ret = cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
 					     QDF_IPA_CLIENT_WLAN1_PROD,
-					     next_prod_bw);
+					     next_bw);
 		if (ret) {
 			ipa_err("RM PROD set perf profile failed: %d", ret);
 			return QDF_STATUS_E_FAILURE;
 		}
-		ipa_ctx->curr_prod_bw = next_prod_bw;
-		ipa_ctx->stats.num_prod_perf_req++;
+		ipa_ctx->curr_cons_bw = next_bw;
+		ipa_ctx->stats.num_cons_perf_req++;
 	}
 
 	return QDF_STATUS_SUCCESS;
