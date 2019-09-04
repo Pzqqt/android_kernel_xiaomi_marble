@@ -807,7 +807,8 @@ void ol_tx_hl_send_all_tcp_ack(struct ol_txrx_vdev_t *vdev)
 
 		/* Send all packets */
 		while (tcp_node_list) {
-			int tx_comp_req = vdev->pdev->cfg.default_tx_comp_req;
+			int tx_comp_req = pdev->cfg.default_tx_comp_req ||
+						pdev->cfg.request_tx_comp;
 			qdf_nbuf_t msdu_list;
 
 			temp = tcp_node_list;
@@ -1035,7 +1036,8 @@ void ol_tx_hl_find_and_send_tcp_stream(struct ol_txrx_vdev_t *vdev,
 
 	/* send packets */
 	if (node_to_be_remove) {
-		int tx_comp_req = vdev->pdev->cfg.default_tx_comp_req;
+		int tx_comp_req = pdev->cfg.default_tx_comp_req ||
+					pdev->cfg.request_tx_comp;
 		qdf_nbuf_t msdu_list;
 
 		msdu_list = ol_tx_hl_base(vdev, OL_TX_SPEC_STD,
@@ -1225,7 +1227,8 @@ void ol_tx_hl_find_and_replace_tcp_ack(struct ol_txrx_vdev_t *vdev,
 
 	/* send packets */
 	if (node_to_be_remove) {
-		int tx_comp_req = vdev->pdev->cfg.default_tx_comp_req;
+		int tx_comp_req = pdev->cfg.default_tx_comp_req ||
+					pdev->cfg.request_tx_comp;
 		qdf_nbuf_t msdu_list = NULL;
 
 		msdu_list = ol_tx_hl_base(vdev, OL_TX_SPEC_STD,
@@ -1405,7 +1408,8 @@ qdf_nbuf_t
 ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
-	int tx_comp_req = pdev->cfg.default_tx_comp_req;
+	int tx_comp_req = pdev->cfg.default_tx_comp_req ||
+				pdev->cfg.request_tx_comp;
 	struct packet_info pkt_info;
 	qdf_nbuf_t temp;
 
