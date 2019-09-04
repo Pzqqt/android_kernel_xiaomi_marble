@@ -7,7 +7,6 @@
 #include <linux/err.h>
 #include <linux/regulator/consumer.h>
 #include <linux/clk.h>
-#include <linux/msm-bus.h>
 #include <linux/list.h>
 
 #include "msm_drv.h"

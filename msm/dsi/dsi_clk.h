@@ -178,7 +178,6 @@ typedef int (*pre_clockon_cb)(void *priv,
  * @c_clks[MAX_DSI_CTRL]     array of core clock configurations
  * @l_lp_clks[MAX_DSI_CTRL]  array of low power(esc) clock configurations
  * @l_hs_clks[MAX_DSI_CTRL]  array of high speed clock configurations
- * @bus_handle[MAX_DSI_CTRL] array of bus handles
  * @ctrl_index[MAX_DSI_CTRL] array of DSI controller indexes mapped
  *                           to core and link clock configurations
  * @pre_clkoff_cb            callback before clock is turned off
@@ -194,7 +193,6 @@ struct dsi_clk_info {
 	struct dsi_core_clk_info c_clks[MAX_DSI_CTRL];
 	struct dsi_link_lp_clk_info l_lp_clks[MAX_DSI_CTRL];
 	struct dsi_link_hs_clk_info l_hs_clks[MAX_DSI_CTRL];
-	u32 bus_handle[MAX_DSI_CTRL];
 	u32 ctrl_index[MAX_DSI_CTRL];
 	pre_clockoff_cb pre_clkoff_cb;
 	post_clockoff_cb post_clkoff_cb;
