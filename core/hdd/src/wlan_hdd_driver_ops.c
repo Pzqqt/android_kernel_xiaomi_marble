@@ -42,6 +42,7 @@
 #include "wlan_ipa_ucfg_api.h"
 #include "wlan_hdd_debugfs.h"
 #include "cfg_ucfg_api.h"
+#include <linux/suspend.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -386,10 +387,41 @@ static void hdd_abort_system_suspend(struct device *dev)
 }
 #endif
 
-void hdd_soc_idle_restart_lock(struct device *dev)
+/* Total wait time for pm freeze is 10 seconds */
+#define HDD_SLEEP_FOR_PM_FREEZE_TIME (500)
+#define HDD_MAX_ATTEMPT_SLEEP_FOR_PM_FREEZE_TIME (20)
+
+static int hdd_wait_for_pm_freeze(void)
 {
-	hdd_abort_system_suspend(dev);
+	uint8_t count = 0;
+
+	while (pm_freezing) {
+		hdd_info("pm freezing wait for %d ms",
+			 HDD_SLEEP_FOR_PM_FREEZE_TIME);
+		msleep(HDD_SLEEP_FOR_PM_FREEZE_TIME);
+		count++;
+		if (count > HDD_MAX_ATTEMPT_SLEEP_FOR_PM_FREEZE_TIME) {
+			hdd_err("timeout occurred for pm freezing");
+			return -EBUSY;
+		}
+	}
+
+	return 0;
+}
+
+int hdd_soc_idle_restart_lock(struct device *dev)
+{
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART);
+
+	hdd_abort_system_suspend(dev);
+
+	if (hdd_wait_for_pm_freeze()) {
+		hdd_allow_suspend(
+			WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART);
+		return -EBUSY;
+	}
+
+	return 0;
 }
 
 void hdd_soc_idle_restart_unlock(void)

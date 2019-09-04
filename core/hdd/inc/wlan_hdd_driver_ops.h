@@ -124,9 +124,9 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
  *
  * This function takes wakelock to prevent suspend during idle restart
  *
- * Return: none
+ * Return: 0 for success and non zero for error
  */
-void hdd_soc_idle_restart_lock(struct device *dev);
+int hdd_soc_idle_restart_lock(struct device *dev);
 
 /**
  * hdd_soc_idle_restart_unlock() - Releases wakelock for idle restart
