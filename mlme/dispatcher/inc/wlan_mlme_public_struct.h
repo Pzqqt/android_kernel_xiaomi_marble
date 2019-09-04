@@ -2057,7 +2057,7 @@ struct wlan_mlme_reg {
 	bool indoor_channel_support;
 	uint32_t scan_11d_interval;
 	uint32_t valid_channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
-	uint8_t valid_channel_list_num;
+	uint32_t valid_channel_list_num;
 	uint8_t country_code[CFG_COUNTRY_CODE_LEN + 1];
 	uint8_t country_code_len;
 	bool enable_11d_in_world_mode;
