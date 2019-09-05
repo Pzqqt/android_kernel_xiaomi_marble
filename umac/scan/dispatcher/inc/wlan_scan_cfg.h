@@ -841,12 +841,19 @@
 
 /*
  * <ini>
- * wake_lock_in_user_scan - use wake lock during user scan
+ * wake_lock_in_user_scan - use to acquire wake lock during user scan
  * @Min: 0
  * @Max: 1
  * @Default: 0
  *
- * This ini is used to define if wake lock is held used during user scan req
+ * This INI is added for a specific OEM on their request, who don’t want to
+ * use PNO offload scan (sched scans). This is useful only if PNO scan offload
+ * is disabled. If PNO scan is enabled this INI should be disabled and its
+ * by default disabled intentionally.
+ * This is used to acquire wake lock to handle the case where PNO scan offload
+ * is disabled so that wlan is not suspended during scan before connect and
+ * thus scan is not aborted in between. In case PNO scan is offloaded, the FW
+ * will take care of connect scans and will wake up host when candidate is found
  *
  * Related: Scan
  *
