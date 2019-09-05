@@ -25,6 +25,7 @@
 
 #include <qdf_status.h>
 #include <qdf_types.h>
+#include <qdf_module.h>
 #include <wlan_cmn.h>
 #include <reg_services_public_struct.h>
 #include <wlan_reg_services_api.h>
@@ -104,6 +105,19 @@ wlan_reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch)
 {
 	return reg_chan_has_dfs_attribute(pdev, ch);
 }
+
+enum channel_state wlan_reg_get_5g_bonded_channel_and_state(
+	struct wlan_objmgr_pdev *pdev, uint8_t ch,
+	enum phy_ch_width bw,
+	const struct bonded_channel **bonded_chan_ptr_ptr)
+{
+	/*
+	 * Get channel and state from regulatory
+	 */
+	return reg_get_5g_bonded_channel(pdev, ch, bw, bonded_chan_ptr_ptr);
+}
+
+qdf_export_symbol(wlan_reg_get_5g_bonded_channel_and_state);
 
 /**
  * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
@@ -211,6 +225,8 @@ uint16_t wlan_reg_get_bw_value(enum phy_ch_width bw)
 {
 	return reg_get_bw_value(bw);
 }
+
+qdf_export_symbol(wlan_reg_get_bw_value);
 
 #ifdef CONFIG_CHAN_NUM_API
 /**
@@ -491,11 +507,15 @@ uint32_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 	return reg_freq_to_chan(pdev, freq);
 }
 
+qdf_export_symbol(wlan_reg_freq_to_chan);
+
 uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 			       uint32_t chan_num)
 {
 	return reg_chan_to_freq(pdev, chan_num);
 }
+
+qdf_export_symbol(wlan_reg_chan_to_freq);
 
 #ifdef CONFIG_CHAN_NUM_API
 bool wlan_reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev,

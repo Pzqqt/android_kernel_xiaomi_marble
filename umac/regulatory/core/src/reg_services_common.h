@@ -135,6 +135,20 @@ enum channel_state reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
 					 uint32_t ch);
 
 /**
+ * reg_get_5g_bonded_channel() - get the 5G bonded channel state
+ * @pdev: Pointer to pdev structure
+ * @chan_num: channel number
+ * @ch_width: channel width
+ * @bonded_chan_ptr_ptr: bonded channel ptr ptr
+ *
+ * Return: channel state
+ */
+enum channel_state reg_get_5g_bonded_channel(
+		struct wlan_objmgr_pdev *pdev, uint32_t chan_num,
+		enum phy_ch_width ch_width,
+		const struct bonded_channel **bonded_chan_ptr_ptr);
+
+/**
  * reg_get_5g_bonded_channel_state() - Get channel state for 5G bonded channel
  * @pdev: Pointer to pdev
  * @ch: channel number.
