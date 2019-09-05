@@ -72,6 +72,7 @@ struct tx_macro_swr_ctrl_platform_data {
 	int (*write)(void *handle, int reg, int val);
 	int (*bulk_write)(void *handle, u32 *reg, u32 *val, size_t len);
 	int (*clk)(void *handle, bool enable);
+	int (*core_vote)(void *handle, bool enable);
 	int (*handle_irq)(void *handle,
 			  irqreturn_t (*swrm_irq_handler)(int irq,
 							  void *data),
@@ -1726,9 +1727,16 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 		(enable ? "enable" : "disable"), tx_priv->tx_mclk_users);
 
 	if (enable) {
-		if (tx_priv->swr_clk_users == 0)
-			msm_cdc_pinctrl_select_active_state(
+		if (tx_priv->swr_clk_users == 0) {
+			ret = msm_cdc_pinctrl_select_active_state(
 						tx_priv->tx_swr_gpio_p);
+			if (ret < 0) {
+				dev_err_ratelimited(tx_priv->dev,
+					"%s: tx swr pinctrl enable failed\n",
+					__func__);
+				goto exit;
+			}
+		}
 
 		clk_tx_ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 						   TX_CORE_CLK,
@@ -1841,9 +1849,16 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 						   TX_CORE_CLK,
 						   TX_CORE_CLK,
 						   false);
-		if (tx_priv->swr_clk_users == 0)
-			msm_cdc_pinctrl_select_sleep_state(
+		if (tx_priv->swr_clk_users == 0) {
+			ret = msm_cdc_pinctrl_select_sleep_state(
 						tx_priv->tx_swr_gpio_p);
+			if (ret < 0) {
+				dev_err_ratelimited(tx_priv->dev,
+					"%s: tx swr pinctrl disable failed\n",
+					__func__);
+				goto exit;
+			}
+		}
 	}
 	return 0;
 
@@ -1853,6 +1868,7 @@ done:
 				TX_CORE_CLK,
 				TX_CORE_CLK,
 				false);
+exit:
 	return ret;
 }
 
@@ -1886,6 +1902,24 @@ static int tx_macro_clk_switch(struct snd_soc_component *component)
 	return ret;
 }
 
+static int tx_macro_core_vote(void *handle, bool enable)
+{
+	struct tx_macro_priv *tx_priv = (struct tx_macro_priv *) handle;
+	int ret = 0;
+
+	if (tx_priv == NULL) {
+		pr_err("%s: tx priv data is NULL\n", __func__);
+		return -EINVAL;
+	}
+	if (enable) {
+		pm_runtime_get_sync(tx_priv->dev);
+		pm_runtime_put_autosuspend(tx_priv->dev);
+		pm_runtime_mark_last_busy(tx_priv->dev);
+	}
+
+	return ret;
+}
+
 static int tx_macro_swrm_clock(void *handle, bool enable)
 {
 	struct tx_macro_priv *tx_priv = (struct tx_macro_priv *) handle;
@@ -1908,14 +1942,20 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 		if (tx_priv->va_swr_clk_cnt && !tx_priv->tx_swr_clk_cnt) {
 			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
 							VA_MCLK, enable);
-			if (ret)
+			if (ret) {
+				pm_runtime_mark_last_busy(tx_priv->dev);
+				pm_runtime_put_autosuspend(tx_priv->dev);
 				goto done;
+			}
 			tx_priv->va_clk_status++;
 		} else {
 			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
 							TX_MCLK, enable);
-			if (ret)
+			if (ret) {
+				pm_runtime_mark_last_busy(tx_priv->dev);
+				pm_runtime_put_autosuspend(tx_priv->dev);
 				goto done;
+			}
 			tx_priv->tx_clk_status++;
 		}
 		pm_runtime_mark_last_busy(tx_priv->dev);
@@ -2332,6 +2372,7 @@ static int tx_macro_probe(struct platform_device *pdev)
 	tx_priv->swr_plat_data.write = NULL;
 	tx_priv->swr_plat_data.bulk_write = NULL;
 	tx_priv->swr_plat_data.clk = tx_macro_swrm_clock;
+	tx_priv->swr_plat_data.core_vote = tx_macro_core_vote;
 	tx_priv->swr_plat_data.handle_irq = NULL;
 
 	mutex_init(&tx_priv->mclk_lock);

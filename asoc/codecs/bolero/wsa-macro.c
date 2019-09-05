@@ -151,6 +151,7 @@ struct wsa_macro_swr_ctrl_platform_data {
 	int (*write)(void *handle, int reg, int val);
 	int (*bulk_write)(void *handle, u32 *reg, u32 *val, size_t len);
 	int (*clk)(void *handle, bool enable);
+	int (*core_vote)(void *handle, bool enable);
 	int (*handle_irq)(void *handle,
 			  irqreturn_t (*swrm_irq_handler)(int irq,
 							  void *data),
@@ -2770,6 +2771,24 @@ static void wsa_macro_init_reg(struct snd_soc_component *component)
 	wsa_macro_init_bcl_pmic_reg(component);
 }
 
+static int wsa_macro_core_vote(void *handle, bool enable)
+{
+	struct wsa_macro_priv *wsa_priv = (struct wsa_macro_priv *) handle;
+	int ret = 0;
+
+	if (wsa_priv == NULL) {
+		pr_err("%s: wsa priv data is NULL\n", __func__);
+		return -EINVAL;
+	}
+	if (enable) {
+		pm_runtime_get_sync(wsa_priv->dev);
+		pm_runtime_put_autosuspend(wsa_priv->dev);
+		pm_runtime_mark_last_busy(wsa_priv->dev);
+	}
+
+	return ret;
+}
+
 static int wsa_swrm_clock(void *handle, bool enable)
 {
 	struct wsa_macro_priv *wsa_priv = (struct wsa_macro_priv *) handle;
@@ -2788,8 +2807,16 @@ static int wsa_swrm_clock(void *handle, bool enable)
 	if (enable) {
 		pm_runtime_get_sync(wsa_priv->dev);
 		if (wsa_priv->swr_clk_users == 0) {
-			msm_cdc_pinctrl_select_active_state(
+			ret = msm_cdc_pinctrl_select_active_state(
 						wsa_priv->wsa_swr_gpio_p);
+			if (ret < 0) {
+				dev_err_ratelimited(wsa_priv->dev,
+					"%s: wsa swr pinctrl enable failed\n",
+					__func__);
+				pm_runtime_mark_last_busy(wsa_priv->dev);
+				pm_runtime_put_autosuspend(wsa_priv->dev);
+				goto exit;
+			}
 			ret = wsa_macro_mclk_enable(wsa_priv, 1, true);
 			if (ret < 0) {
 				msm_cdc_pinctrl_select_sleep_state(
@@ -2797,6 +2824,8 @@ static int wsa_swrm_clock(void *handle, bool enable)
 				dev_err_ratelimited(wsa_priv->dev,
 					"%s: wsa request clock enable failed\n",
 					__func__);
+				pm_runtime_mark_last_busy(wsa_priv->dev);
+				pm_runtime_put_autosuspend(wsa_priv->dev);
 				goto exit;
 			}
 			if (wsa_priv->reset_swr)
@@ -2812,9 +2841,9 @@ static int wsa_swrm_clock(void *handle, bool enable)
 					0x02, 0x00);
 			wsa_priv->reset_swr = false;
 		}
+		wsa_priv->swr_clk_users++;
 		pm_runtime_mark_last_busy(wsa_priv->dev);
 		pm_runtime_put_autosuspend(wsa_priv->dev);
-		wsa_priv->swr_clk_users++;
 	} else {
 		if (wsa_priv->swr_clk_users <= 0) {
 			dev_err(wsa_priv->dev, "%s: clock already disabled\n",
@@ -2828,8 +2857,14 @@ static int wsa_swrm_clock(void *handle, bool enable)
 				BOLERO_CDC_WSA_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x00);
 			wsa_macro_mclk_enable(wsa_priv, 0, true);
-			msm_cdc_pinctrl_select_sleep_state(
+			ret = msm_cdc_pinctrl_select_sleep_state(
 						wsa_priv->wsa_swr_gpio_p);
+			if (ret < 0) {
+				dev_err_ratelimited(wsa_priv->dev,
+					"%s: wsa swr pinctrl disable failed\n",
+					__func__);
+				goto exit;
+			}
 		}
 	}
 	dev_dbg(wsa_priv->dev, "%s: swrm clock users %d\n",
@@ -3096,6 +3131,7 @@ static int wsa_macro_probe(struct platform_device *pdev)
 	wsa_priv->swr_plat_data.write = NULL;
 	wsa_priv->swr_plat_data.bulk_write = NULL;
 	wsa_priv->swr_plat_data.clk = wsa_swrm_clock;
+	wsa_priv->swr_plat_data.core_vote = wsa_macro_core_vote;
 	wsa_priv->swr_plat_data.handle_irq = NULL;
 
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,default-clk-id",
