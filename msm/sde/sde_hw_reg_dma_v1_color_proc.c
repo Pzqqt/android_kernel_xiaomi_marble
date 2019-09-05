@@ -139,6 +139,7 @@ static u32 feature_map[SDE_DSPP_MAX] = {
 	/* MEMCOLOR can be mapped to any MEMC_SKIN/SKY/FOLIAGE/PROT*/
 	[SDE_DSPP_MEMCOLOR] = MEMC_SKIN,
 	[SDE_DSPP_SIXZONE] = SIX_ZONE,
+	/* SPR can be mapped to SPR_INIT & SPR_PU_CFG */
 	[SDE_DSPP_SPR] = SPR_INIT,
 	[SDE_DSPP_DITHER] = REG_DMA_FEATURES_MAX,
 	[SDE_DSPP_HIST] = REG_DMA_FEATURES_MAX,
@@ -334,6 +335,16 @@ static int _reg_dma_init_dspp_feature_buf(int feature, enum sde_dspp idx)
 
 		rc = reg_dma_buf_init(
 			&dspp_buf[MEMC_PROT][idx],
+			feature_reg_dma_sz[feature]);
+	} else if (feature == SDE_DSPP_SPR) {
+		rc = reg_dma_buf_init(
+			&dspp_buf[SPR_INIT][idx],
+			feature_reg_dma_sz[feature]);
+		if (rc)
+			return rc;
+
+		rc = reg_dma_buf_init(
+			&dspp_buf[SPR_PU_CFG][idx],
 			feature_reg_dma_sz[feature]);
 	} else {
 		rc = reg_dma_buf_init(
@@ -4690,6 +4701,72 @@ void reg_dmav1_setup_spr_init_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
 
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 			dspp_buf[SPR_INIT][ctx->idx],
+			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE);
+	rc = dma_ops->kick_off(&kick_off);
+	if (rc) {
+		DRM_ERROR("failed to kick off ret %d\n", rc);
+		return;
+	}
+}
+
+void reg_dmav1_setup_spr_pu_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
+{
+	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
+	struct sde_hw_cp_cfg *hw_cfg = cfg;
+	struct sde_reg_dma_kickoff_cfg kick_off;
+	struct sde_hw_reg_dma_ops *dma_ops;
+	uint32_t reg, reg_off, base_off;
+	struct msm_roi_list *roi_list;
+	int rc = 0;
+
+	rc = reg_dma_dspp_check(ctx, cfg, SPR_PU_CFG);
+	if (rc)
+		return;
+
+	if (!hw_cfg->payload || hw_cfg->len != sizeof(struct sde_drm_roi_v1)) {
+		DRM_ERROR("invalid payload of pu rects\n");
+		return;
+	}
+
+	roi_list = hw_cfg->payload;
+	if (roi_list->num_rects > 1) {
+		DRM_ERROR("multiple pu regions not supported with spr\n");
+		return;
+	}
+
+	if ((roi_list->roi[0].x2 - roi_list->roi[0].x1) != hw_cfg->displayh) {
+		DRM_ERROR("pu region not full width %d\n",
+				(roi_list->roi[0].x2 - roi_list->roi[0].x1));
+		return;
+	}
+
+	dma_ops = sde_reg_dma_get_ops();
+	dma_ops->reset_reg_dma_buf(dspp_buf[SPR_PU_CFG][ctx->idx]);
+
+	REG_DMA_INIT_OPS(dma_write_cfg, MDSS, SPR_PU_CFG,
+			dspp_buf[SPR_PU_CFG][ctx->idx]);
+	REG_DMA_SETUP_OPS(dma_write_cfg, 0, NULL, 0, HW_BLK_SELECT, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("spr write decode select failed ret %d\n", rc);
+		return;
+	}
+
+	base_off = ctx->hw.blk_off + ctx->cap->sblk->spr.base;
+	reg_off = base_off + 0x20;
+	reg = APPLY_MASK_AND_SHIFT(roi_list->roi[0].x1, 16, 0) |
+		APPLY_MASK_AND_SHIFT(roi_list->roi[0].y1, 16, 16);
+	REG_DMA_SETUP_OPS(dma_write_cfg, reg_off, &reg,
+			sizeof(__u32), REG_SINGLE_WRITE, 0, 0, 0);
+
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write pu config failed ret %d\n", rc);
+		return;
+	}
+
+	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
+			dspp_buf[SPR_PU_CFG][ctx->idx],
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE);
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc) {

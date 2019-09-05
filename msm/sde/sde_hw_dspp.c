@@ -276,11 +276,25 @@ static void dspp_rc(struct sde_hw_dspp *c)
 
 static void dspp_spr(struct sde_hw_dspp *c)
 {
+	int ret = 0;
+
+	if (!c) {
+		SDE_ERROR("invalid arguments\n");
+		return;
+	}
+
+	c->ops.setup_spr_init_config = NULL;
+	c->ops.setup_spr_pu_config = NULL;
+
 	if (c->cap->sblk->spr.version == SDE_COLOR_PROCESS_VER(0x1, 0x0)) {
-		reg_dmav1_init_dspp_op_v4(SDE_DSPP_SPR, c->idx);
+		ret = reg_dmav1_init_dspp_op_v4(SDE_DSPP_SPR, c->idx);
+		if (ret) {
+			SDE_ERROR("regdma init failed for spr, ret %d\n", ret);
+			return;
+		}
+
 		c->ops.setup_spr_init_config = reg_dmav1_setup_spr_init_cfgv1;
-	} else {
-		c->ops.setup_spr_init_config = NULL;
+		c->ops.setup_spr_pu_config = reg_dmav1_setup_spr_pu_cfgv1;
 	}
 }
 

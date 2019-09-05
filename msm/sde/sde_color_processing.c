@@ -185,6 +185,7 @@ enum sde_cp_crtc_features {
 
 enum sde_cp_crtc_pu_features {
 	SDE_CP_CRTC_DSPP_RC_PU,
+	SDE_CP_CRTC_DSPP_SPR_PU,
 	SDE_CP_CRTC_MAX_PU_FEATURES,
 };
 
@@ -814,6 +815,45 @@ static int check_rc_pu_feature(struct sde_hw_dspp *hw_dspp,
 	return ret;
 }
 
+static int set_spr_pu_feature(struct sde_hw_dspp *hw_dspp,
+	struct sde_hw_cp_cfg *hw_cfg, struct sde_crtc *sde_crtc)
+{
+	if (!hw_dspp || !hw_cfg || !sde_crtc) {
+		DRM_ERROR("invalid argumets\n");
+		return -EINVAL;
+	}
+
+	if (hw_dspp->ops.setup_spr_pu_config)
+		hw_dspp->ops.setup_spr_pu_config(hw_dspp, hw_cfg);
+
+	return 0;
+}
+
+static int check_spr_pu_feature(struct sde_hw_dspp *hw_dspp,
+	struct sde_hw_cp_cfg *hw_cfg, struct sde_crtc *sde_crtc)
+{
+	struct msm_roi_list *roi_list;
+
+	if (!hw_cfg || hw_cfg->len != sizeof(struct sde_drm_roi_v1)) {
+		SDE_ERROR("invalid payload\n");
+		return -EINVAL;
+	}
+
+	roi_list = hw_cfg->payload;
+	if (roi_list->num_rects > 1) {
+		SDE_ERROR("multiple pu regions not supported with spr\n");
+		return -EINVAL;
+	}
+
+	if ((roi_list->roi[0].x2 - roi_list->roi[0].x1) != hw_cfg->displayh) {
+		SDE_ERROR("pu region not full width %d\n",
+				(roi_list->roi[0].x2 - roi_list->roi[0].x1));
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static int set_spr_init_feature(struct sde_hw_dspp *hw_dspp,
 				struct sde_hw_cp_cfg *hw_cfg,
 				struct sde_crtc *sde_crtc)
@@ -825,6 +865,8 @@ static int set_spr_init_feature(struct sde_hw_dspp *hw_dspp,
 		ret = -EINVAL;
 	} else {
 		hw_dspp->ops.setup_spr_init_config(hw_dspp, hw_cfg);
+		update_pu_feature_enable(sde_crtc, SDE_CP_CRTC_DSPP_SPR_PU,
+				hw_cfg->payload != NULL);
 	}
 
 	return ret;
@@ -902,6 +944,7 @@ feature_wrapper set_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
 do { \
 	memset(wrappers, 0, sizeof(wrappers)); \
 	wrappers[SDE_CP_CRTC_DSPP_RC_PU] = set_rc_pu_feature; \
+	wrappers[SDE_CP_CRTC_DSPP_SPR_PU] = set_spr_pu_feature; \
 } while (0)
 
 feature_wrapper check_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
@@ -909,6 +952,7 @@ feature_wrapper check_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
 do { \
 	memset(wrappers, 0, sizeof(wrappers)); \
 	wrappers[SDE_CP_CRTC_DSPP_RC_PU] = check_rc_pu_feature; \
+	wrappers[SDE_CP_CRTC_DSPP_SPR_PU] = check_spr_pu_feature; \
 } while (0)
 
 #define INIT_PROP_ATTACH(p, crtc, prop, node, feature, val) \

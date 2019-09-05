@@ -258,6 +258,12 @@ struct sde_hw_dspp_ops {
 	void (*setup_spr_init_config)(struct sde_hw_dspp *ctx, void *cfg);
 
 	/**
+	 * setup_spr_pu_config - function to configure spr hw block pu offsets
+	 * @ctx: Pointer to dspp context
+	 * @cfg: Pointer to configuration
+	 */
+	void (*setup_spr_pu_config)(struct sde_hw_dspp *ctx, void *cfg);
+	/**
 	 * setup_demura_cfg - function to program demura cfg
 	 * @ctx: Pointer to dspp context
 	 * @status: Pointer to configuration.
