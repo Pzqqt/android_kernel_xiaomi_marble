@@ -2912,7 +2912,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	uint8_t reqRsnIe[DOT11F_IE_RSN_MAX_LEN];
+	uint8_t *reqRsnIe;
 	uint32_t reqRsnLength = DOT11F_IE_RSN_MAX_LEN, ie_len;
 	int ft_carrier_on = false;
 	bool hddDisconInProgress = false;
@@ -3102,6 +3102,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			QDF_TRACE_DEFAULT_PDEV_ID,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_ASSOC));
 
+		reqRsnIe = qdf_mem_malloc(sizeof(uint8_t) *
+					  DOT11F_IE_RSN_MAX_LEN);
 		/*
 		 * For reassoc, the station is already registered, all we need
 		 * is to change the state of the STA in TL.
@@ -3115,7 +3117,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			u8 *assoc_req = NULL;
 			unsigned int assoc_req_len = 0;
 			struct ieee80211_channel *chan;
-			uint8_t rsp_rsn_ie[DOT11F_IE_RSN_MAX_LEN];
+			uint8_t *rsp_rsn_ie =
+				qdf_mem_malloc(sizeof(uint8_t) *
+					       DOT11F_IE_RSN_MAX_LEN);
 			uint32_t rsp_rsn_lemgth = DOT11F_IE_RSN_MAX_LEN;
 
 			/* add bss_id to cfg80211 data base */
@@ -3143,6 +3147,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					   adapter->vdev_id,
 					   eCSR_DISCONNECT_REASON_UNSPECIFIED);
 				}
+				qdf_mem_free(reqRsnIe);
+				qdf_mem_free(rsp_rsn_ie);
 				return QDF_STATUS_E_FAILURE;
 			}
 
@@ -3331,6 +3337,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				 * wpa supplicant expecting WPA/RSN IE in
 				 * connect result.
 				 */
+
 				sme_roam_get_wpa_rsn_req_ie(mac_handle,
 							    adapter->vdev_id,
 							    &reqRsnLength,
@@ -3395,6 +3402,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						WLAN_CONTROL_PATH);
 
 			}
+			qdf_mem_free(rsp_rsn_ie);
 		} else {
 			/*
 			 * wpa supplicant expecting WPA/RSN IE in connect result
@@ -3465,6 +3473,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						   WLAN_WAKE_ALL_NETIF_QUEUE,
 						   WLAN_CONTROL_PATH);
 		}
+		qdf_mem_free(reqRsnIe);
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("STA register with TL failed status: %d [%08X]",
