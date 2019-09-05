@@ -1877,12 +1877,12 @@ struct hdd_context {
 /**
  * struct hdd_vendor_acs_chan_params - vendor acs channel parameters
  * @pcl_count: pcl list count
- * @vendor_pcl_list: pointer to pcl list
+ * @vendor_pcl_list: pointer to pcl frequency (MHz) list
  * @vendor_weight_list: pointer to pcl weight list
  */
 struct hdd_vendor_acs_chan_params {
 	uint32_t pcl_count;
-	uint8_t *vendor_pcl_list;
+	uint32_t *vendor_pcl_list;
 	uint8_t *vendor_weight_list;
 };
 
@@ -1899,18 +1899,18 @@ struct hdd_external_acs_timer_context {
 /**
  * struct hdd_vendor_chan_info - vendor channel info
  * @band: channel operating band
- * @pri_ch: primary channel
- * @ht_sec_ch: secondary channel
- * @vht_seg0_center_ch: segment0 for vht
- * @vht_seg1_center_ch: vht segment 1
+ * @pri_chan_freq: primary channel freq in MHz
+ * @ht_sec_chan_freq: secondary channel freq in MHz
+ * @vht_seg0_center_chan_freq: segment0 for vht in MHz
+ * @vht_seg1_center_chan_freq: vht segment 1 in MHz
  * @chan_width: channel width
  */
 struct hdd_vendor_chan_info {
 	uint8_t band;
-	uint8_t pri_ch;
-	uint8_t ht_sec_ch;
-	uint8_t vht_seg0_center_ch;
-	uint8_t vht_seg1_center_ch;
+	uint32_t pri_chan_freq;
+	uint32_t ht_sec_chan_freq;
+	uint32_t vht_seg0_center_chan_freq;
+	uint32_t vht_seg1_center_chan_freq;
 	uint8_t chan_width;
 };
 

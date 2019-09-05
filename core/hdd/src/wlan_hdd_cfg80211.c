@@ -2003,8 +2003,7 @@ static void hdd_update_vendor_pcl_list(struct hdd_context *hdd_ctx,
 	 */
 	for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++) {
 		acs_chan_params->vendor_pcl_list[i] =
-			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-					      sap_config->acs_cfg.freq_list[i]);
+				sap_config->acs_cfg.freq_list[i];
 		acs_chan_params->vendor_weight_list[i] = 0;
 		for (j = 0; j < sap_config->acs_cfg.pcl_ch_count; j++) {
 			if (sap_config->acs_cfg.freq_list[i] ==
@@ -2023,13 +2022,13 @@ static void hdd_update_vendor_pcl_list(struct hdd_context *hdd_ctx,
  * for all the given channel
  * @adapter: pointer to SAP adapter struct
  * @channel_count: channel count
- * @channel_list: channel list
+ * @freq_list: channel frequency (MHz) list
  *
  * Return: Status of of channel information updation
  */
-static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
-			uint32_t channel_count,
-			uint8_t *channel_list)
+static int
+hdd_update_reg_chan_info(struct hdd_adapter *adapter,
+			 uint32_t channel_count, uint32_t *freq_list)
 {
 	int i;
 	struct hdd_channel_info *icv;
@@ -2051,8 +2050,8 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 
 	for (i = 0; i < channel_count; i++) {
 		icv = &sap_config->channel_info[i];
-		chan = channel_list[i];
-
+		chan = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+					     freq_list[i]);
 		if (chan == 0)
 			continue;
 
@@ -2080,7 +2079,8 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 		}
 
 		icv->flags = 0;
-		icv->flags = cds_get_vendor_reg_flags(hdd_ctx->pdev, chan,
+		icv->flags = cds_get_vendor_reg_flags(hdd_ctx->pdev,
+				icv->ieee_chan_number,
 				sap_config->acs_cfg.ch_width,
 				sap_config->acs_cfg.is_ht_enabled,
 				sap_config->acs_cfg.is_vht_enabled,
@@ -2121,8 +2121,14 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 #define CHAN_INFO_ATTR_VHT_SEG_1 \
 	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_VHT_SEG_1
 
+#define CHAN_INFO_ATTR_FREQ_VHT_SEG_0 \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FREQ_VHT_SEG_0
+#define CHAN_INFO_ATTR_FREQ_VHT_SEG_1 \
+	QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FREQ_VHT_SEG_1
+
 /**
  * hdd_cfg80211_update_channel_info() - add channel info attributes
+ * @hdd_ctx: pointer to hdd context
  * @skb: pointer to sk buff
  * @hdd_ctx: pointer to hdd station context
  * @idx: attribute index
@@ -2130,12 +2136,14 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
  * Return: Success(0) or reason code for failure
  */
 static int32_t
-hdd_cfg80211_update_channel_info(struct sk_buff *skb,
-			   struct sap_config *sap_config, int idx)
+hdd_cfg80211_update_channel_info(struct hdd_context *hdd_ctx,
+				 struct sk_buff *skb,
+				 struct sap_config *sap_config, int idx)
 {
 	struct nlattr *nla_attr, *channel;
 	struct hdd_channel_info *icv;
 	int i;
+	uint32_t freq_seg_0, freq_seg_1;
 
 	nla_attr = nla_nest_start(skb, idx);
 	if (!nla_attr)
@@ -2151,6 +2159,14 @@ hdd_cfg80211_update_channel_info(struct sk_buff *skb,
 			hdd_err("channel info not found");
 			goto fail;
 		}
+
+		freq_seg_0 = wlan_reg_legacy_chan_to_freq(
+						hdd_ctx->pdev,
+						icv->vht_center_freq_seg0);
+		freq_seg_1 = wlan_reg_legacy_chan_to_freq(
+						hdd_ctx->pdev,
+						icv->vht_center_freq_seg1);
+
 		if (nla_put_u16(skb, CHAN_INFO_ATTR_FREQ,
 				icv->freq) ||
 		    nla_put_u32(skb, CHAN_INFO_ATTR_FLAGS,
@@ -2170,7 +2186,11 @@ hdd_cfg80211_update_channel_info(struct sk_buff *skb,
 		    nla_put_u8(skb, CHAN_INFO_ATTR_VHT_SEG_0,
 				icv->vht_center_freq_seg0) ||
 		    nla_put_u8(skb, CHAN_INFO_ATTR_VHT_SEG_1,
-				icv->vht_center_freq_seg1)) {
+				icv->vht_center_freq_seg1) ||
+		    nla_put_u32(skb, CHAN_INFO_ATTR_FREQ_VHT_SEG_0,
+				freq_seg_0) ||
+		    nla_put_u32(skb, CHAN_INFO_ATTR_FREQ_VHT_SEG_1,
+				freq_seg_1)) {
 			hdd_err("put fail");
 			goto fail;
 		}
@@ -2193,8 +2213,12 @@ fail:
 #undef CHAN_INFO_ATTR_VHT_SEG_0
 #undef CHAN_INFO_ATTR_VHT_SEG_1
 
+#undef CHAN_INFO_ATTR_FREQ_VHT_SEG_0
+#undef CHAN_INFO_ATTR_FREQ_VHT_SEG_1
+
 /**
  * hdd_cfg80211_update_pcl() - add pcl info attributes
+ * @hdd_ctx: pointer to hdd context
  * @skb: pointer to sk buff
  * @hdd_ctx: pointer to hdd station context
  * @idx: attribute index
@@ -2204,15 +2228,16 @@ fail:
  * Return: Success(0) or reason code for failure
  */
 static int32_t
-hdd_cfg80211_update_pcl(struct sk_buff *skb,
+hdd_cfg80211_update_pcl(struct hdd_context *hdd_ctx,
+			struct sk_buff *skb,
 			uint8_t ch_list_count, int idx,
-			uint8_t *vendor_pcl_list, uint8_t *vendor_weight_list)
+			uint32_t *vendor_pcl_list, uint8_t *vendor_weight_list)
 {
 	struct nlattr *nla_attr, *channel;
 	int i;
+	uint8_t chan;
 
 	nla_attr = nla_nest_start(skb, idx);
-
 	if (!nla_attr)
 		goto fail;
 
@@ -2220,8 +2245,13 @@ hdd_cfg80211_update_pcl(struct sk_buff *skb,
 		channel = nla_nest_start(skb, i);
 		if (!channel)
 			goto fail;
-		if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_PCL_CHANNEL,
-			       vendor_pcl_list[i]) ||
+
+		chan = (uint8_t)wlan_reg_freq_to_chan(hdd_ctx->pdev,
+						      vendor_pcl_list[i]);
+
+		if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_PCL_CHANNEL, chan) ||
+		    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_PCL_FREQ,
+				vendor_pcl_list[i]) ||
 		    nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_PCL_WEIGHT,
 			       vendor_weight_list[i])) {
 			hdd_err("put fail");
@@ -2256,7 +2286,7 @@ static void hdd_get_scan_band(struct hdd_context *hdd_ctx,
  * wlan_hdd_sap_get_valid_channellist() - Get SAPs valid channel list
  * @ap_adapter: adapter
  * @channel_count: valid channel count
- * @channel_list: valid channel list
+ * @freq_list: valid channel frequency (MHz) list
  * @band: frequency band
  *
  * This API returns valid channel list for SAP after removing nol and
@@ -2266,18 +2296,16 @@ static void hdd_get_scan_band(struct hdd_context *hdd_ctx,
  */
 static int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 					      uint32_t *channel_count,
-					      uint8_t *channel_list,
+					      uint32_t *freq_list,
 					      enum band_info band)
 {
 	struct sap_config *sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	uint8_t tmp_chan_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t chan_count;
-	uint8_t i;
+	uint32_t i;
 	QDF_STATUS status;
 	struct wlan_objmgr_pdev *pdev = hdd_ctx->pdev;
-	uint8_t tmp_chan;
 
 	sap_config = &adapter->session.ap.sap_config;
 
@@ -2288,25 +2316,23 @@ static int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 		hdd_err("Failed to get channel list");
 		return -EINVAL;
 	}
-	for (i = 0; i < chan_count; i++)
-		tmp_chan_list[i] = wlan_freq_to_chan(pcl_freqs[i]);
 
+	*channel_count = 0;
 	for (i = 0; i < chan_count; i++) {
-		tmp_chan = tmp_chan_list[i];
-		if (*channel_count < QDF_MAX_NUM_CHAN) {
-			if ((band == BAND_2G) &&
-			    (WLAN_REG_IS_24GHZ_CH(tmp_chan)) &&
-			    (!wlan_reg_is_disable_ch(pdev, tmp_chan))) {
-				channel_list[*channel_count] = tmp_chan;
-				*channel_count += 1;
-			} else if ((band == BAND_5G) &&
-				(WLAN_REG_IS_5GHZ_CH(tmp_chan)) &&
-				(!wlan_reg_is_disable_ch(pdev, tmp_chan))) {
-				channel_list[*channel_count] = tmp_chan;
-				*channel_count += 1;
-			}
-		} else {
+		if (*channel_count >= QDF_MAX_NUM_CHAN)
 			break;
+
+		if (band == BAND_2G &&
+		    WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[i]) &&
+		    !wlan_reg_is_disable_for_freq(pdev, pcl_freqs[i])) {
+			freq_list[*channel_count] = pcl_freqs[i];
+			*channel_count += 1;
+		} else if (band == BAND_5G &&
+			   (WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[i]) ||
+			    WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_freqs[i])) &&
+			   !wlan_reg_is_disable_for_freq(pdev, pcl_freqs[i])) {
+			freq_list[*channel_count] = pcl_freqs[i];
+			*channel_count += 1;
 		}
 	}
 
@@ -2318,24 +2344,111 @@ static int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 	return 0;
 }
 
+/**
+ * hdd_get_external_acs_event_len() - Get event buffer length for external ACS
+ * @channel_count: number of channels for ACS operation
+ *
+ * Return: External ACS event (SUBCMD_UPDATE_EXTERNAL_ACS_CONFIG) buffer length.
+ */
+static int hdd_get_external_acs_event_len(uint32_t channel_count)
+{
+	uint32_t len = NLMSG_HDRLEN;
+	uint32_t i;
+
+	/* QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_REASON */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_IS_OFFLOAD_ENABLED */
+	len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_ADD_CHAN_STATS_SUPPORT */
+	len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_WIDTH */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_BAND */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PHY_MODE */
+	len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_FREQ_LIST */
+	len += nla_total_size(channel_count * sizeof(u32));
+
+	for (i = 0; i < channel_count; i++) {
+		/* QCA_WLAN_VENDOR_ATTR_PCL_CHANNEL */
+		len += nla_total_size(sizeof(u8));
+
+		/* QCA_WLAN_VENDOR_ATTR_PCL_FREQ */
+		len += nla_total_size(sizeof(u32));
+
+		/* QCA_WLAN_VENDOR_ATTR_PCL_WEIGHT */
+		len += nla_total_size(sizeof(u8));
+	}
+
+	for (i = 0; i < channel_count; i++) {
+		/* QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FREQ */
+		len += nla_total_size(sizeof(u16));
+
+		/* QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FLAGS */
+		len += nla_total_size(sizeof(u32));
+
+		/* QCA_WLAN_VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FLAG_EXT */
+		len += nla_total_size(sizeof(u32));
+
+		/* VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_MAX_REG_POWER */
+		len += nla_total_size(sizeof(u8));
+
+		/* VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_MAX_POWER */
+		len += nla_total_size(sizeof(u8));
+
+		/* VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_MIN_POWER */
+		len += nla_total_size(sizeof(u8));
+
+		/* VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_REG_CLASS_ID */
+		len += nla_total_size(sizeof(u8));
+
+		/* VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_ANTENNA_GAIN */
+		len += nla_total_size(sizeof(u8));
+
+		/* VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_VHT_SEG_0 */
+		len += nla_total_size(sizeof(u8));
+
+		/* VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_VHT_SEG_1 */
+		len += nla_total_size(sizeof(u8));
+
+		/* VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FREQ_VHT_SEG_0 */
+		len += nla_total_size(sizeof(u32));
+
+		/* VENDOR_EXTERNAL_ACS_EVENT_CHAN_INFO_ATTR_FREQ_VHT_SEG_1 */
+		len += nla_total_size(sizeof(u32));
+	}
+
+	/* QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_POLICY */
+	len += nla_total_size(sizeof(u32));
+
+	return len;
+}
+
 int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 				   uint8_t reason)
 {
 	struct sk_buff *skb;
 	struct sap_config *sap_config;
 	uint32_t channel_count = 0, status = -EINVAL;
-	uint8_t channel_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t freq_list[QDF_MAX_NUM_CHAN] = {0};
-	uint8_t vendor_pcl_list[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t vendor_pcl_list[QDF_MAX_NUM_CHAN] = {0};
 	uint8_t vendor_weight_list[QDF_MAX_NUM_CHAN] = {0};
 	struct hdd_vendor_acs_chan_params acs_chan_params;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	enum band_info band = BAND_2G;
 	eCsrPhyMode phy_mode;
 	enum qca_wlan_vendor_attr_external_acs_policy acs_policy;
-	uint32_t i;
+	uint32_t i, id;
 	QDF_STATUS qdf_status;
 	bool is_external_acs_policy = cfg_default(CFG_EXTERNAL_ACS_POLICY);
+	uint32_t len;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -2376,14 +2489,13 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	if (sap_config->acs_cfg.freq_list) {
 		/* Copy INI or hostapd provided ACS channel range*/
 		for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++)
-			channel_list[i] = wlan_reg_freq_to_chan(hdd_ctx->pdev,
-					      sap_config->acs_cfg.freq_list[i]);
+			freq_list[i] = sap_config->acs_cfg.freq_list[i];
 		channel_count = sap_config->acs_cfg.ch_list_count;
 	} else {
 		/* No channel list provided, copy all valid channels */
 		wlan_hdd_sap_get_valid_channellist(adapter,
 			&channel_count,
-			channel_list,
+			freq_list,
 			band);
 	}
 
@@ -2393,19 +2505,15 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	if (!sap_config->channel_info)
 		return -ENOMEM;
 
-	hdd_update_reg_chan_info(adapter, channel_count, channel_list);
+	hdd_update_reg_chan_info(adapter, channel_count, freq_list);
 
-	qdf_mem_copy(freq_list, sap_config->acs_cfg.freq_list,
-		     sizeof(uint32_t) * sap_config->acs_cfg.ch_list_count);
 	/* Get phymode */
 	phy_mode = adapter->session.ap.sap_config.acs_cfg.hw_mode;
 
-	skb = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
-			&(adapter->wdev),
-			EXTSCAN_EVENT_BUF_SIZE + NLMSG_HDRLEN,
-			QCA_NL80211_VENDOR_SUBCMD_UPDATE_EXTERNAL_ACS_CONFIG,
-			GFP_KERNEL);
-
+	len = hdd_get_external_acs_event_len(channel_count);
+	id = QCA_NL80211_VENDOR_SUBCMD_UPDATE_EXTERNAL_ACS_CONFIG;
+	skb = cfg80211_vendor_event_alloc(hdd_ctx->wiphy, &adapter->wdev,
+					  len, id, GFP_KERNEL);
 	if (!skb) {
 		hdd_err("cfg80211_vendor_event_alloc failed");
 		qdf_mem_free(sap_config->channel_info);
@@ -2426,7 +2534,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		hdd_debug("ACS PCL list: len: %d",
 			  acs_chan_params.pcl_count);
 		for (i = 0; i < acs_chan_params.pcl_count; i++)
-			hdd_debug("channel:%d, weight:%d ",
+			hdd_debug("channel_frequency: %u, weight: %u",
 				  acs_chan_params.
 				  vendor_pcl_list[i],
 				  acs_chan_params.
@@ -2465,7 +2573,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		goto fail;
 	}
 	status =
-	hdd_cfg80211_update_pcl(skb,
+	hdd_cfg80211_update_pcl(hdd_ctx, skb,
 				acs_chan_params.pcl_count,
 				QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PCL,
 				vendor_pcl_list,
@@ -2474,9 +2582,9 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	if (status != 0)
 		goto fail;
 
-	status = hdd_cfg80211_update_channel_info(skb, sap_config,
-			QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_INFO);
+	id = QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_INFO;
 
+	status = hdd_cfg80211_update_channel_info(hdd_ctx, skb, sap_config, id);
 	if (status != 0)
 		goto fail;
 
@@ -10992,22 +11100,23 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 }
 
 /**
- *wlan_hdd_validate_acs_channel() - validate channel provided by ACS
+ *wlan_hdd_validate_acs_channel() - validate channel frequency provided by ACS
  * @adapter: hdd adapter
- * @channel: channel number
+ * @chan_freq: channel frequency in MHz
  *
  * return: QDF status based on success or failure
  */
 static QDF_STATUS wlan_hdd_validate_acs_channel(struct hdd_adapter *adapter,
-						int channel, int chan_bw)
+						uint32_t chan_freq, int chan_bw)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t channel;
 
 	if (QDF_STATUS_SUCCESS !=
-	    wlan_hdd_validate_operation_channel(adapter,
-						wlan_reg_chan_to_freq(
-						hdd_ctx->pdev, channel)))
+	    wlan_hdd_validate_operation_channel(adapter, chan_freq))
 		return QDF_STATUS_E_FAILURE;
+
+	channel = (uint8_t)wlan_reg_freq_to_chan(hdd_ctx->pdev, chan_freq);
 	if ((wlansap_is_channel_in_nol_list(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 				channel,
 				PHY_SINGLE_CHANNEL_CENTERED))) {
@@ -11034,15 +11143,19 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	uint32_t channel_bonding_mode;
 
-	sap_config->chan_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
-						      channel_list->pri_ch);
+	sap_config->chan_freq = channel_list->pri_chan_freq;
 
 	sap_config->ch_params.center_freq_seg0 =
-				channel_list->vht_seg0_center_ch;
+		wlan_reg_freq_to_chan(hdd_ctx->pdev,
+				      channel_list->vht_seg0_center_chan_freq);
 	sap_config->ch_params.center_freq_seg1 =
-				channel_list->vht_seg1_center_ch;
+		wlan_reg_freq_to_chan(hdd_ctx->pdev,
+				      channel_list->vht_seg1_center_chan_freq);
 
-	sap_config->ch_params.sec_ch_offset = channel_list->ht_sec_ch;
+	sap_config->ch_params.sec_ch_offset =
+		wlan_reg_freq_to_chan(hdd_ctx->pdev,
+				      channel_list->ht_sec_chan_freq);
+
 	sap_config->ch_params.ch_width = channel_list->chan_width;
 	if (WLAN_REG_IS_5GHZ_CH_FREQ(sap_config->chan_freq)) {
 		status =
@@ -11057,18 +11170,14 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 		sap_config->ch_width_orig = channel_bonding_mode ?
 			eHT_CHANNEL_WIDTH_40MHZ : eHT_CHANNEL_WIDTH_20MHZ;
 	}
-	sap_config->acs_cfg.pri_ch_freq =
-		wlan_reg_chan_to_freq(hdd_ctx->pdev, channel_list->pri_ch);
+	sap_config->acs_cfg.pri_ch_freq = channel_list->pri_chan_freq;
 	sap_config->acs_cfg.ch_width = channel_list->chan_width;
 	sap_config->acs_cfg.vht_seg0_center_ch_freq =
-			wlan_reg_chan_to_freq(
-			hdd_ctx->pdev, channel_list->vht_seg0_center_ch);
+			channel_list->vht_seg0_center_chan_freq;
 	sap_config->acs_cfg.vht_seg1_center_ch_freq =
-			wlan_reg_chan_to_freq(
-			hdd_ctx->pdev, channel_list->vht_seg1_center_ch);
-
+			channel_list->vht_seg1_center_chan_freq;
 	sap_config->acs_cfg.ht_sec_ch_freq =
-		wlan_reg_chan_to_freq(hdd_ctx->pdev, channel_list->ht_sec_ch);
+			channel_list->ht_sec_chan_freq;
 }
 
 static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
@@ -11080,6 +11189,7 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	mac_handle_t mac_handle;
+	uint32_t ch;
 
 	if (!channel_list) {
 		hdd_err("channel_list is NULL");
@@ -11095,9 +11205,9 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 		qdf_mc_timer_stop(&adapter->session.ap.vendor_acs_timer);
 	}
 
-	if (channel_list->pri_ch == 0) {
+	if (channel_list->pri_chan_freq == 0) {
 		/* Check mode, set default channel */
-		channel_list->pri_ch = 6;
+		channel_list->pri_chan_freq = 2437;
 		/*
 		 * sap_select_default_oper_chan(mac_handle,
 		 *      sap_config->acs_cfg.hw_mode);
@@ -11115,9 +11225,11 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 
 	/* DFS detected on current channel */
 	case QCA_WLAN_VENDOR_ACS_SELECT_REASON_DFS:
+		ch = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+					   channel_list->pri_chan_freq);
+
 		wlan_sap_update_next_channel(
-				WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-				channel_list->pri_ch,
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter), (uint8_t)ch,
 				channel_list->chan_width);
 		status = sme_update_new_channel_event(
 					mac_handle,
@@ -11126,15 +11238,15 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 
 	/* LTE coex event on current channel */
 	case QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX:
-		sap_config->acs_cfg.pri_ch_freq =
-			wlan_reg_chan_to_freq(hdd_ctx->pdev,
-					      channel_list->pri_ch);
+		ch = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+					   channel_list->pri_chan_freq);
+		sap_config->acs_cfg.pri_ch_freq = channel_list->pri_chan_freq;
 		sap_config->acs_cfg.ch_width = channel_list->chan_width;
 		hdd_ap_ctx->sap_config.ch_width_orig =
 				channel_list->chan_width;
 		wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, adapter->vdev_id,
 					    CSA_REASON_LTE_COEX);
-		hdd_switch_sap_channel(adapter, channel_list->pri_ch, true);
+		hdd_switch_sap_channel(adapter, (uint8_t)ch, true);
 		break;
 
 	default:
@@ -11159,12 +11271,24 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_CENTER_SEG1
 #define	SET_CHAN_CHANNEL_WIDTH \
 	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_WIDTH
-#define	SET_CHAN_MAX QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_MAX
+
+#define SET_CHAN_FREQ_LIST QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_FREQUENCY_LIST
+#define SET_CHAN_FREQUENCY_PRIMARY \
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_FREQUENCY_PRIMARY
+#define SET_CHAN_FREQUENCY_SECONDARY \
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_FREQUENCY_SECONDARY
+#define SET_CHAN_SEG0_CENTER_FREQUENCY \
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_FREQUENCY_CENTER_SEG0
+#define SET_CHAN_SEG1_CENTER_FREQUENCY \
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_FREQUENCY_CENTER_SEG1
+
+#define SET_CHAN_MAX QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_MAX
 #define SET_EXT_ACS_BAND QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_BAND
 
 static const struct nla_policy acs_chan_config_policy[SET_CHAN_MAX + 1] = {
 	[SET_CHAN_REASON] = {.type = NLA_U8},
 	[SET_CHAN_CHAN_LIST] = {.type = NLA_NESTED},
+	[SET_CHAN_FREQ_LIST] = {.type = NLA_NESTED},
 };
 
 static const struct nla_policy acs_chan_list_policy[SET_CHAN_MAX + 1] = {
@@ -11174,21 +11298,29 @@ static const struct nla_policy acs_chan_list_policy[SET_CHAN_MAX + 1] = {
 	[SET_CHAN_SEG1_CENTER_CHANNEL] = {.type = NLA_U8},
 	[SET_CHAN_CHANNEL_WIDTH] = {.type = NLA_U8},
 	[SET_EXT_ACS_BAND] = {.type = NLA_U8},
+
+	[SET_CHAN_FREQUENCY_PRIMARY] = {.type = NLA_U32},
+	[SET_CHAN_FREQUENCY_SECONDARY] = {.type = NLA_U32},
+	[SET_CHAN_SEG0_CENTER_FREQUENCY] = {.type = NLA_U32},
+	[SET_CHAN_SEG1_CENTER_FREQUENCY] = {.type = NLA_U32},
 };
 
 /**
- * hdd_parse_vendor_acs_chan_config() - API to parse vendor acs channel config
- * @channel_list: pointer to hdd_vendor_chan_info
- * @reason: channel change reason
+ * hdd_extract_external_acs_frequencies() - API to parse and extract vendor acs
+ * channel frequency (in MHz) configuration.
+ * @hdd_ctx: pointer to hdd context
+ * @list_ptr: pointer to hdd_vendor_chan_info
  * @channel_cnt: channel count
  * @data: data
  * @data_len: data len
  *
  * Return: 0 on success, negative errno on failure
  */
-static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
-		**chan_list_ptr, uint8_t *reason, uint8_t *channel_cnt,
-		const void *data, int data_len)
+static int
+hdd_extract_external_acs_frequencies(struct hdd_context *hdd_ctx,
+				     struct hdd_vendor_chan_info **list_ptr,
+				     uint8_t *channel_cnt,
+				     const void *data, int data_len)
 {
 	int rem;
 	uint32_t i = 0;
@@ -11203,32 +11335,120 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 		return -EINVAL;
 	}
 
-	if (tb[SET_CHAN_REASON])
-		*reason = nla_get_u8(tb[SET_CHAN_REASON]);
+	nla_for_each_nested(curr_attr, tb[SET_CHAN_FREQ_LIST], rem)
+		i++;
 
-	if (!tb[SET_CHAN_CHAN_LIST]) {
-		hdd_err("channel list empty");
+	if (!i) {
+		hdd_err_rl("Error: channel count is zero");
+		return -EINVAL;
+	}
+
+	if (i > NUM_CHANNELS) {
+		hdd_err_rl("Error: Exceeded max channels: %u", NUM_CHANNELS);
+		return -ENOMEM;
+	}
+
+	channel_list = qdf_mem_malloc(sizeof(struct hdd_vendor_chan_info) * i);
+	if (!channel_list)
+		return -ENOMEM;
+
+	*channel_cnt = (uint8_t)i;
+	i = 0;
+	nla_for_each_nested(curr_attr, tb[SET_CHAN_FREQ_LIST], rem) {
+		if (wlan_cfg80211_nla_parse_nested(tb2, SET_CHAN_MAX,
+						   curr_attr,
+						   acs_chan_list_policy)) {
+			hdd_err_rl("nla_parse failed");
+			qdf_mem_free(channel_list);
+			*channel_cnt = 0;
+			return -EINVAL;
+		}
+
+		if (tb2[SET_EXT_ACS_BAND])
+			channel_list[i].band =
+				nla_get_u8(tb2[SET_EXT_ACS_BAND]);
+
+		if (tb2[SET_CHAN_FREQUENCY_PRIMARY])
+			channel_list[i].pri_chan_freq =
+				nla_get_u32(tb2[SET_CHAN_FREQUENCY_PRIMARY]);
+
+		if (tb2[SET_CHAN_FREQUENCY_SECONDARY])
+			channel_list[i].ht_sec_chan_freq =
+				nla_get_u32(tb2[SET_CHAN_FREQUENCY_SECONDARY]);
+
+		if (tb2[SET_CHAN_SEG0_CENTER_FREQUENCY])
+			channel_list[i].vht_seg0_center_chan_freq =
+			 nla_get_u32(tb2[SET_CHAN_SEG0_CENTER_FREQUENCY]);
+
+		if (tb2[SET_CHAN_SEG1_CENTER_FREQUENCY])
+			channel_list[i].vht_seg1_center_chan_freq =
+			 nla_get_u32(tb2[SET_CHAN_SEG1_CENTER_FREQUENCY]);
+
+		if (tb2[SET_CHAN_CHANNEL_WIDTH])
+			channel_list[i].chan_width =
+				nla_get_u8(tb2[SET_CHAN_CHANNEL_WIDTH]);
+
+		hdd_debug("index %d, pri_chan_freq %u, ht_sec_chan_freq %u seg0_freq %u seg1_freq %u width %u",
+			  i, channel_list[i].pri_chan_freq,
+			  channel_list[i].ht_sec_chan_freq,
+			  channel_list[i].vht_seg0_center_chan_freq,
+			  channel_list[i].vht_seg1_center_chan_freq,
+			  channel_list[i].chan_width);
+		i++;
+	}
+	*list_ptr = channel_list;
+
+	return 0;
+}
+
+/**
+ * hdd_extract_external_acs_channels() - API to parse and extract vendor acs
+ * channel configuration.
+ * @hdd_ctx: pointer to hdd context
+ * @list_ptr: pointer to hdd_vendor_chan_info
+ * @channel_cnt: channel count
+ * @data: data
+ * @data_len: data len
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int
+hdd_extract_external_acs_channels(struct hdd_context *hdd_ctx,
+				  struct hdd_vendor_chan_info **list_ptr,
+				  uint8_t *channel_cnt,
+				  const void *data, int data_len)
+{
+	int rem;
+	uint32_t i = 0;
+	struct nlattr *tb[SET_CHAN_MAX + 1];
+	struct nlattr *tb2[SET_CHAN_MAX + 1];
+	struct nlattr *curr_attr;
+	struct hdd_vendor_chan_info *channel_list;
+
+	if (wlan_cfg80211_nla_parse(tb, SET_CHAN_MAX, data, data_len,
+				    acs_chan_config_policy)) {
+		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
 	nla_for_each_nested(curr_attr, tb[SET_CHAN_CHAN_LIST], rem)
 		i++;
 
+	if (!i) {
+		hdd_err_rl("Error: channel count is zero");
+		return -EINVAL;
+	}
+
 	if (i > NUM_CHANNELS) {
-		hdd_err("Error: Exceeded max channels: %u", NUM_CHANNELS);
+		hdd_err_rl("Error: Exceeded max channels: %u", NUM_CHANNELS);
 		return -ENOMEM;
 	}
 
-	*channel_cnt = (uint8_t)i;
-
-	if (i == 0)
-		hdd_err("incorrect channel count");
-
-	channel_list = qdf_mem_malloc(sizeof(struct hdd_vendor_chan_info) *
-					(*channel_cnt));
+	channel_list = qdf_mem_malloc(sizeof(struct hdd_vendor_chan_info) * i);
 	if (!channel_list)
 		return -ENOMEM;
 
+	*channel_cnt = (uint8_t)i;
 	i = 0;
 	nla_for_each_nested(curr_attr, tb[SET_CHAN_CHAN_LIST], rem) {
 		if (wlan_cfg80211_nla_parse_nested(tb2, SET_CHAN_MAX,
@@ -11236,45 +11456,117 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 						   acs_chan_list_policy)) {
 			hdd_err("nla_parse failed");
 			qdf_mem_free(channel_list);
+			*channel_cnt = 0;
 			return -EINVAL;
 		}
+
 		if (tb2[SET_EXT_ACS_BAND]) {
 			channel_list[i].band =
 				nla_get_u8(tb2[SET_EXT_ACS_BAND]);
 		}
-		/* Parse and Fetch allowed SSID list*/
+
 		if (tb2[SET_CHAN_PRIMARY_CHANNEL]) {
-			channel_list[i].pri_ch =
-				nla_get_u8(
-					tb2[SET_CHAN_PRIMARY_CHANNEL]);
+			uint32_t ch =
+				nla_get_u8(tb2[SET_CHAN_PRIMARY_CHANNEL]);
+
+			channel_list[i].pri_chan_freq =
+				wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev, ch);
 		}
+
 		if (tb2[SET_CHAN_SECONDARY_CHANNEL]) {
-			channel_list[i].ht_sec_ch =
+			uint32_t ch =
 				nla_get_u8(tb2[SET_CHAN_SECONDARY_CHANNEL]);
+
+			channel_list[i].ht_sec_chan_freq =
+				wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev, ch);
 		}
+
 		if (tb2[SET_CHAN_SEG0_CENTER_CHANNEL]) {
-			channel_list[i].vht_seg0_center_ch =
+			uint32_t ch =
 				nla_get_u8(tb2[SET_CHAN_SEG0_CENTER_CHANNEL]);
+
+			channel_list[i].vht_seg0_center_chan_freq =
+				wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev, ch);
 		}
+
 		if (tb2[SET_CHAN_SEG1_CENTER_CHANNEL]) {
-			channel_list[i].vht_seg1_center_ch =
+			uint32_t ch =
 				nla_get_u8(tb2[SET_CHAN_SEG1_CENTER_CHANNEL]);
+
+			channel_list[i].vht_seg1_center_chan_freq =
+				wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev, ch);
 		}
+
 		if (tb2[SET_CHAN_CHANNEL_WIDTH]) {
 			channel_list[i].chan_width =
 				nla_get_u8(tb2[SET_CHAN_CHANNEL_WIDTH]);
 		}
-		hdd_debug("index %d pri %d sec %d seg0 %d seg1 %d width %d",
-			i, channel_list[i].pri_ch,
-			channel_list[i].ht_sec_ch,
-			channel_list[i].vht_seg0_center_ch,
-			channel_list[i].vht_seg1_center_ch,
-			channel_list[i].chan_width);
+		hdd_debug("index %d, pri_chan_freq %u, ht_sec_chan_freq %u seg0_freq %u seg1_freq %u width %u",
+			  i, channel_list[i].pri_chan_freq,
+			  channel_list[i].ht_sec_chan_freq,
+			  channel_list[i].vht_seg0_center_chan_freq,
+			  channel_list[i].vht_seg1_center_chan_freq,
+			  channel_list[i].chan_width);
 		i++;
 	}
-	*chan_list_ptr = channel_list;
+	*list_ptr = channel_list;
 
 	return 0;
+}
+
+/**
+ * hdd_parse_vendor_acs_chan_config() - API to parse vendor acs channel config
+ * @hdd_ctx: pointer to hdd context
+ * @channel_list: pointer to hdd_vendor_chan_info
+ * @reason: channel change reason
+ * @channel_cnt: channel count
+ * @data: data
+ * @data_len: data len
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int
+hdd_parse_vendor_acs_chan_config(struct hdd_context *hdd_ctx,
+				 struct hdd_vendor_chan_info **chan_list_ptr,
+				 uint8_t *reason, uint8_t *channel_cnt,
+				 const void *data, int data_len)
+{
+	struct nlattr *tb[SET_CHAN_MAX + 1];
+	int ret;
+
+	if (wlan_cfg80211_nla_parse(tb, SET_CHAN_MAX, data, data_len,
+				    acs_chan_config_policy)) {
+		hdd_err("Invalid ATTR");
+		return -EINVAL;
+	}
+
+	if (tb[SET_CHAN_REASON])
+		*reason = nla_get_u8(tb[SET_CHAN_REASON]);
+
+	if (!tb[SET_CHAN_FREQ_LIST] && !tb[SET_CHAN_CHAN_LIST]) {
+		hdd_err("Both channel list and frequency list are empty");
+		return -EINVAL;
+	}
+
+	if (tb[SET_CHAN_FREQ_LIST]) {
+		ret = hdd_extract_external_acs_frequencies(hdd_ctx,
+							   chan_list_ptr,
+							   channel_cnt,
+							   data, data_len);
+		if (ret) {
+			hdd_err("Failed to extract frequencies");
+			return ret;
+		}
+
+		return 0;
+	}
+
+	ret = hdd_extract_external_acs_channels(hdd_ctx, chan_list_ptr,
+						channel_cnt, data, data_len);
+	if (ret)
+		hdd_err("Failed to extract channels");
+
+	return ret;
 }
 
 /**
@@ -11286,6 +11578,13 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 #undef SET_CHAN_SECONDARY_CHANNEL
 #undef SET_CHAN_SEG0_CENTER_CHANNEL
 #undef SET_CHAN_SEG1_CENTER_CHANNEL
+
+#undef SET_CHAN_FREQ_LIST
+#undef SET_CHAN_FREQUENCY_PRIMARY
+#undef SET_CHAN_FREQUENCY_SECONDARY
+#undef SET_CHAN_SEG0_CENTER_FREQUENCY
+#undef SET_CHAN_SEG1_CENTER_FREQUENCY
+
 #undef SET_CHAN_CHANNEL_WIDTH
 #undef SET_CHAN_MAX
 
@@ -11328,8 +11627,9 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	ret_val = hdd_parse_vendor_acs_chan_config(&channel_list, &reason,
-					&channel_cnt, data, data_len);
+	ret_val = hdd_parse_vendor_acs_chan_config(hdd_ctx, &channel_list,
+						   &reason, &channel_cnt, data,
+						   data_len);
 	channel_list_ptr = channel_list;
 	if (ret_val)
 		return ret_val;
@@ -11337,14 +11637,14 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 	/* Validate channel to be set */
 	while (channel_cnt && channel_list) {
 		qdf_status = wlan_hdd_validate_acs_channel(adapter,
-					channel_list->pri_ch,
+					channel_list->pri_chan_freq,
 					channel_list->chan_width);
 		if (qdf_status == QDF_STATUS_SUCCESS)
 			break;
 		else if (channel_cnt == 1) {
-			hdd_err("invalid channel %d received from app",
-				channel_list->pri_ch);
-			channel_list->pri_ch = 0;
+			hdd_err("invalid channel frequ %u received from app",
+				channel_list->pri_chan_freq);
+			channel_list->pri_chan_freq = 0;
 			break;
 		}
 
@@ -11359,7 +11659,8 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	hdd_debug("received primary channel as %d", channel_list->pri_ch);
+	hdd_debug("received primary channel freq as %d",
+		  channel_list->pri_chan_freq);
 
 	ret_val = hdd_update_acs_channel(adapter, reason,
 				      channel_cnt, channel_list);
