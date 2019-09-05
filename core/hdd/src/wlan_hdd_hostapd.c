@@ -2881,6 +2881,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	uint8_t conc_rule1 = 0;
 	uint8_t scc_on_lte_coex = 0;
 	bool is_p2p_go_session = false;
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -2992,8 +2993,15 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	 * Post the Channel Change request to SAP.
 	 */
 
-	if (wlan_vdev_mlme_get_opmode(adapter->vdev) == QDF_P2P_GO_MODE)
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev) {
+		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
+		wlan_hdd_enable_roaming(adapter);
+		return -EINVAL;
+	}
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_GO_MODE)
 		is_p2p_go_session = true;
+	hdd_objmgr_put_vdev(vdev);
 
 	status = wlansap_set_channel_change_with_csa(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
