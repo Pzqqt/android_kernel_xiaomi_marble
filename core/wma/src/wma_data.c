@@ -2607,11 +2607,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		 * map, normal tx unmap is enough for this case.
 		 */
 		QDF_NBUF_CB_TX_DMA_BI_MAP((qdf_nbuf_t)tx_frame) = 1;
-	} else if (iface && !iface->rmfEnabled) {
-		if (pFc->wep && (frmType == TXRX_FRM_802_11_MGMT)) {
-			wma_err("PMF is disabled, but WEP is set");
-			pFc->wep = 0;
-		}
 	}
 #endif /* WLAN_FEATURE_11W */
 	mHdr = (tpSirMacMgmtHdr)qdf_nbuf_data(tx_frame);

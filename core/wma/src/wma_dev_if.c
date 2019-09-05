@@ -3805,9 +3805,45 @@ static void wma_set_mgmt_frame_protection(tp_wma_handle wma)
 		WMA_LOGD("%s: QOS MFP/PMF set", __func__);
 	}
 }
+
+/**
+ * wma_set_peer_pmf_status() - Get the peer and update PMF capability of it
+ * @wma: wma handle
+ * @peer_mac: peer mac addr
+ * @is_pmf_enabled: Carries the status whether PMF is enabled or not
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+wma_set_peer_pmf_status(tp_wma_handle wma, uint8_t *peer_mac,
+			bool is_pmf_enabled)
+{
+	struct wlan_objmgr_peer *peer;
+
+	peer = wlan_objmgr_get_peer(wma->psoc,
+				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+				    peer_mac, WLAN_LEGACY_WMA_ID);
+	if (!peer) {
+		WMA_LOGE("Peer of peer_mac %pM not found",
+			 peer_mac);
+		return QDF_STATUS_E_INVAL;
+	}
+	mlme_set_peer_pmf_status(peer, is_pmf_enabled);
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+	WMA_LOGD("set is_pmf_enabled %d for %pM", is_pmf_enabled, peer_mac);
+
+	return QDF_STATUS_SUCCESS;
+}
 #else
 static inline void wma_set_mgmt_frame_protection(tp_wma_handle wma)
 {
+}
+
+static QDF_STATUS
+wma_set_peer_pmf_status(tp_wma_handle wma, uint8_t *peer_mac,
+			bool is_pmf_enabled)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_11W */
 
@@ -4155,6 +4191,8 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, struct bss_params *add_bss)
 		iface->llbCoexist = add_bss->llbCoexist;
 		iface->shortSlotTimeSupported = add_bss->shortSlotTimeSupported;
 		iface->nwType = add_bss->nwType;
+		if (add_bss->rmfEnabled)
+			wma_set_peer_pmf_status(wma, add_bss->bssId, true);
 		if (add_bss->nonRoamReassoc) {
 			peer = cdp_peer_find_by_addr(soc,
 					pdev, add_bss->bssId,
@@ -4611,6 +4649,9 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		}
 	}
 #endif
+	if (add_sta->rmfEnabled)
+		wma_set_peer_pmf_status(wma, add_sta->staMac, true);
+
 	if (add_sta->uAPSD) {
 		status = wma_set_ap_peer_uapsd(wma, add_sta->smesessionId,
 					    add_sta->staMac,

@@ -3941,16 +3941,94 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 	}
 	return 0;
 }
+
+/**
+ * wma_get_peer_pmf_status() - Get the PMF capability of peer
+ * @wma: wma handle
+ * @peer_mac: peer mac addr
+ *
+ * Return: True if PMF is enabled, false otherwise.
+ */
+static bool
+wma_get_peer_pmf_status(tp_wma_handle wma, uint8_t *peer_mac)
+{
+	struct wlan_objmgr_peer *peer;
+	bool is_pmf_enabled;
+
+	if (!peer_mac) {
+		WMA_LOGE("peer_mac is NULL");
+		return false;
+	}
+
+	peer = wlan_objmgr_get_peer(wma->psoc,
+				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+				    peer_mac, WLAN_LEGACY_WMA_ID);
+	if (!peer) {
+		WMA_LOGE("Peer of peer_mac %pM not found",
+			 peer_mac);
+		return false;
+	}
+	is_pmf_enabled = mlme_get_peer_pmf_status(peer);
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+	WMA_LOGD("get is_pmf_enabled %d for %pM", is_pmf_enabled, peer_mac);
+
+	return is_pmf_enabled;
+}
+
+/**
+ * wma_check_and_process_rmf_frame() - Process the frame if it is of rmf type
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ * @wh: double pointer to 802.11 frame header which will be updated if the
+ *	frame is of rmf type.
+ * @rx_pkt: rx packet
+ * @buf: Buffer
+ *
+ * Process the frame as rmf frame only if both DUT and peer are of PMF capable
+ *
+ * Return: 0 for success or error code
+ */
+static int
+wma_check_and_process_rmf_frame(tp_wma_handle wma_handle,
+				uint8_t vdev_id,
+				struct ieee80211_frame **wh,
+				cds_pkt_t *rx_pkt,
+				qdf_nbuf_t buf)
+{
+	int status;
+	struct wma_txrx_node *iface;
+	struct ieee80211_frame *hdr = *wh;
+
+	iface = &(wma_handle->interfaces[vdev_id]);
+	if (!iface->rmfEnabled)
+		return 0;
+
+	if (qdf_is_macaddr_group((struct qdf_mac_addr *)(hdr->i_addr1)) ||
+	    qdf_is_macaddr_broadcast((struct qdf_mac_addr *)(hdr->i_addr1)) ||
+	    wma_get_peer_pmf_status(wma_handle, hdr->i_addr2)) {
+		status = wma_process_rmf_frame(wma_handle, iface, hdr,
+					       rx_pkt, buf);
+		if (status)
+			return status;
+		/*
+		 * CCMP header might have been pulled off reinitialize the
+		 * start pointer of mac header
+		 */
+		*wh = (struct ieee80211_frame *)qdf_nbuf_data(buf);
+	}
+
+	return 0;
+}
 #else
-static inline int wma_process_rmf_frame(tp_wma_handle wma_handle,
-	struct wma_txrx_node *iface,
-	struct ieee80211_frame *wh,
-	cds_pkt_t *rx_pkt,
-	qdf_nbuf_t wbuf)
+static inline int
+wma_check_and_process_rmf_frame(tp_wma_handle wma_handle,
+				uint8_t vdev_id,
+				struct ieee80211_frame **wh,
+				cds_pkt_t *rx_pkt,
+				qdf_nbuf_t buf)
 {
 	return 0;
 }
-
 #endif
 
 /**
@@ -3988,7 +4066,6 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 			struct mgmt_rx_event_params *mgmt_rx_params,
 			cds_pkt_t *rx_pkt)
 {
-	struct wma_txrx_node *iface = NULL;
 	uint8_t vdev_id = WMA_INVALID_VDEV_ID;
 	struct ieee80211_frame *wh;
 	uint8_t mgt_type, mgt_subtype;
@@ -4132,19 +4209,13 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	     mgt_subtype == MGMT_SUBTYPE_ACTION)) {
 		if (wma_find_vdev_by_bssid(
 			wma_handle, wh->i_addr3, &vdev_id)) {
-			iface = &(wma_handle->interfaces[vdev_id]);
-			if (iface->rmfEnabled) {
-				status = wma_process_rmf_frame(wma_handle,
-					iface, wh, rx_pkt, buf);
-				if (status != 0)
-					return status;
-				/*
-				 * CCMP header might have been pulled off
-				 * reinitialize the start pointer of mac header
-				 */
-				wh = (struct ieee80211_frame *)
-						qdf_nbuf_data(buf);
-			}
+			status = wma_check_and_process_rmf_frame(wma_handle,
+								 vdev_id,
+								 &wh,
+								 rx_pkt,
+								 buf);
+			if (status)
+				return status;
 		}
 	}
 
