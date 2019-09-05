@@ -1097,6 +1097,22 @@ wmi_unified_pdev_fips_cmd_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_DISA
+QDF_STATUS
+wmi_unified_encrypt_decrypt_send_cmd(void *wmi_hdl,
+				     struct disa_encrypt_decrypt_req_params
+				     *params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_encrypt_decrypt_send_cmd)
+		return wmi_handle->ops->send_encrypt_decrypt_send_cmd(wmi_handle
+								      , params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_FEATURE_DISA */
+
 QDF_STATUS
 wmi_unified_wlan_profile_enable_cmd_send(wmi_unified_t wmi_handle,
 					 struct wlan_profile_params *param)
@@ -1790,6 +1806,24 @@ wmi_extract_fips_event_data(wmi_unified_t wmi_handle, void *evt_buf,
 	}
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_DISA
+QDF_STATUS
+wmi_extract_encrypt_decrypt_resp_params(void *wmi_hdl, void *evt_buf,
+					struct disa_encrypt_decrypt_resp_params
+					*param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_encrypt_decrypt_resp_event)
+		return
+		wmi_handle->ops->extract_encrypt_decrypt_resp_event(wmi_handle,
+								    evt_buf,
+								    param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_FEATURE_DISA */
 
 QDF_STATUS
 wmi_extract_mgmt_rx_params(wmi_unified_t wmi_handle, void *evt_buf,

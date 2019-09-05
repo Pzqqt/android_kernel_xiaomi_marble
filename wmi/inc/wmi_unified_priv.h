@@ -939,15 +939,6 @@ QDF_STATUS (*extract_sar2_result_event)(void *handle,
 					uint8_t *event,
 					uint32_t len);
 
-#ifdef WLAN_FEATURE_DISA
-QDF_STATUS (*send_encrypt_decrypt_send_cmd)(wmi_unified_t wmi_handle,
-				struct disa_encrypt_decrypt_req_params *params);
-
-QDF_STATUS (*extract_encrypt_decrypt_resp_event)(wmi_unified_t wmi_handle,
-			void *evt_buf,
-			struct disa_encrypt_decrypt_resp_params *resp);
-#endif
-
 #ifdef FEATURE_WLAN_TDLS
 QDF_STATUS (*send_set_tdls_offchan_mode_cmd)(wmi_unified_t wmi_handle,
 			      struct tdls_channel_switch_params *chan_switch_params);
@@ -1042,6 +1033,13 @@ QDF_STATUS (*send_pdev_fips_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_wlan_profile_enable_cmd)(wmi_unified_t wmi_handle,
 		struct wlan_profile_params *param);
+
+#ifdef WLAN_FEATURE_DISA
+QDF_STATUS
+(*send_encrypt_decrypt_send_cmd)(wmi_unified_t wmi_handle,
+				 struct disa_encrypt_decrypt_req_params
+				 *params);
+#endif
 
 QDF_STATUS (*send_wlan_profile_trigger_cmd)(wmi_unified_t wmi_handle,
 		struct wlan_profile_params *param);
@@ -1389,6 +1387,14 @@ QDF_STATUS (*extract_dcs_im_tgt_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 
 QDF_STATUS (*extract_fips_event_data)(wmi_unified_t wmi_handle,
 	void *evt_buf, struct wmi_host_fips_event_param *param);
+
+#ifdef WLAN_FEATURE_DISA
+QDF_STATUS
+(*extract_encrypt_decrypt_resp_event)(wmi_unified_t wmi_handle,
+				      void *evt_buf,
+				      struct disa_encrypt_decrypt_resp_params
+				      *resp);
+#endif
 
 QDF_STATUS (*extract_vdev_start_resp)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_vdev_start_resp *vdev_rsp);
@@ -2353,14 +2359,6 @@ static inline void wmi_pmo_attach_tlv(struct wmi_unified *wmi_handle)
 void wmi_tdls_attach_tlv(struct wmi_unified *wmi_handle);
 #else
 static inline void wmi_tdls_attach_tlv(struct wmi_unified *wmi_handle)
-{
-}
-#endif
-
-#ifdef WLAN_FEATURE_DISA
-void wmi_disa_attach_tlv(struct wmi_unified *wmi_handle);
-#else
-static inline void wmi_disa_attach_tlv(struct wmi_unified *wmi_handle)
 {
 }
 #endif

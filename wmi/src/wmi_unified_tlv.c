@@ -7085,6 +7085,89 @@ static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
 }
 #endif
 
+#ifdef WLAN_FEATURE_DISA
+/**
+ * send_encrypt_decrypt_send_cmd() - send encrypt/decrypt cmd to fw
+ * @wmi_handle: wmi handle
+ * @params: encrypt/decrypt params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+send_encrypt_decrypt_send_cmd_tlv(wmi_unified_t wmi_handle,
+				  struct disa_encrypt_decrypt_req_params
+				  *encrypt_decrypt_params)
+{
+	wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint8_t *buf_ptr;
+	QDF_STATUS ret;
+	uint32_t len;
+
+	WMI_LOGD(FL("Send encrypt decrypt cmd"));
+
+	len = sizeof(*cmd) +
+			encrypt_decrypt_params->data_len +
+			WMI_TLV_HDR_SIZE;
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = wmi_buf_data(wmi_buf);
+	cmd = (wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+		       wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param));
+
+	cmd->vdev_id = encrypt_decrypt_params->vdev_id;
+	cmd->key_flag = encrypt_decrypt_params->key_flag;
+	cmd->key_idx = encrypt_decrypt_params->key_idx;
+	cmd->key_cipher = encrypt_decrypt_params->key_cipher;
+	cmd->key_len = encrypt_decrypt_params->key_len;
+	cmd->key_txmic_len = encrypt_decrypt_params->key_txmic_len;
+	cmd->key_rxmic_len = encrypt_decrypt_params->key_rxmic_len;
+
+	qdf_mem_copy(cmd->key_data, encrypt_decrypt_params->key_data,
+		     encrypt_decrypt_params->key_len);
+
+	qdf_mem_copy(cmd->mac_hdr, encrypt_decrypt_params->mac_header,
+		     MAX_MAC_HEADER_LEN);
+
+	cmd->data_len = encrypt_decrypt_params->data_len;
+
+	if (cmd->data_len) {
+		buf_ptr += sizeof(*cmd);
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+			       roundup(encrypt_decrypt_params->data_len,
+				       sizeof(uint32_t)));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		qdf_mem_copy(buf_ptr, encrypt_decrypt_params->data,
+			     encrypt_decrypt_params->data_len);
+	}
+
+	/* This conversion is to facilitate data to FW in little endian */
+	cmd->pn[5] = encrypt_decrypt_params->pn[0];
+	cmd->pn[4] = encrypt_decrypt_params->pn[1];
+	cmd->pn[3] = encrypt_decrypt_params->pn[2];
+	cmd->pn[2] = encrypt_decrypt_params->pn[3];
+	cmd->pn[1] = encrypt_decrypt_params->pn[4];
+	cmd->pn[0] = encrypt_decrypt_params->pn[5];
+
+	wmi_mtrace(WMI_VDEV_ENCRYPT_DECRYPT_DATA_REQ_CMDID, cmd->vdev_id, 0);
+	ret = wmi_unified_cmd_send(wmi_handle,
+				   wmi_buf, len,
+				   WMI_VDEV_ENCRYPT_DECRYPT_DATA_REQ_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send ENCRYPT DECRYPT cmd: %d", ret);
+		wmi_buf_free(wmi_buf);
+	}
+
+	return ret;
+}
+#endif /* WLAN_FEATURE_DISA */
+
 /**
  * send_pdev_fips_cmd_tlv() - send pdev fips cmd to fw
  * @wmi_handle: wmi handle
@@ -10003,6 +10086,54 @@ static QDF_STATUS extract_fips_event_data_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_DISA
+/**
+ * extract_encrypt_decrypt_resp_event_tlv() - extract encrypt decrypt resp
+ *      params from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @resp: Pointer to hold resp parameters
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+extract_encrypt_decrypt_resp_event_tlv(wmi_unified_t wmi_handle,
+				       void *evt_buf,
+				       struct disa_encrypt_decrypt_resp_params
+				       *resp)
+{
+	WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_encrypt_decrypt_data_resp_event_fixed_param *data_event;
+
+	param_buf = evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("encrypt decrypt resp evt_buf is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	data_event = param_buf->fixed_param;
+
+	resp->vdev_id = data_event->vdev_id;
+	resp->status = data_event->status;
+
+	if ((data_event->data_length > param_buf->num_enc80211_frame) ||
+	    (data_event->data_length > WMI_SVC_MSG_MAX_SIZE -
+		 WMI_TLV_HDR_SIZE - sizeof(*data_event))) {
+		WMI_LOGE("FW msg data_len %d more than TLV hdr %d",
+			 data_event->data_length,
+			 param_buf->num_enc80211_frame);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	resp->data_len = data_event->data_length;
+
+	if (resp->data_len)
+		resp->data = (uint8_t *)param_buf->enc80211_frame;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_DISA */
+
 static bool is_management_record_tlv(uint32_t cmd_id)
 {
 	switch (cmd_id) {
@@ -11921,7 +12052,14 @@ struct wmi_ops tlv_ops =  {
 	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_tlv,
 	.extract_fips_event_data = extract_fips_event_data_tlv,
+#ifdef WLAN_FEATURE_DISA
+	.extract_encrypt_decrypt_resp_event =
+				extract_encrypt_decrypt_resp_event_tlv,
+#endif
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_tlv,
+#ifdef WLAN_FEATURE_DISA
+	.send_encrypt_decrypt_send_cmd = send_encrypt_decrypt_send_cmd_tlv,
+#endif
 	.is_management_record = is_management_record_tlv,
 	.is_diag_event = is_diag_event_tlv,
 #ifdef WLAN_FEATURE_ACTION_OUI

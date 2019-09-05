@@ -72,33 +72,6 @@ QDF_STATUS
 wmi_unified_vdev_set_gtx_cfg_cmd(wmi_unified_t wmi_handle, uint32_t if_id,
 				 struct wmi_gtx_config *gtx_info);
 
-#ifdef WLAN_FEATURE_DISA
-/**
- * wmi_unified_encrypt_decrypt_send_cmd() - send encryptdecrypt cmd to fw
- * @wmi_handle: wmi handle
- * @params: encrypt/decrypt params
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_encrypt_decrypt_send_cmd(
-			wmi_unified_t wmi_handle,
-			struct disa_encrypt_decrypt_req_params *params);
-
-/**
- * wmi_extract_encrypt_decrypt_resp_params() -
- *       extract encrypt decrypt resp params from event buffer
- * @wmi_handle: wmi handle
- * @evt_buf: pointer to event buffer
- * @resp: encrypt decrypt resp params
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-QDF_STATUS wmi_extract_encrypt_decrypt_resp_params(
-			wmi_unified_t wmi_handle,
-			uint8_t *evt_buf,
-			struct disa_encrypt_decrypt_resp_params *resp);
-#endif /* WLAN_FEATURE_DISA */
-
 #ifdef FEATURE_BLACKLIST_MGR
 /**
  * wmi_unified_send_reject_ap_list() - send the reject ap list maintained by

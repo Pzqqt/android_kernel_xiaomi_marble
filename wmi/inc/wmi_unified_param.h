@@ -3348,6 +3348,40 @@ struct fips_params {
 	uint32_t pdev_id;
 };
 
+#ifdef WLAN_FEATURE_DISA_FIPS
+/**
+ * struct disa_encrypt_decrypt_req_params - disa encrypt request
+ * @vdev_id: virtual device id
+ * @key_flag: This indicates firmware to encrypt/decrypt payload
+ *    see ENCRYPT_DECRYPT_FLAG
+ * @key_idx: Index used in storing key
+ * @key_cipher: cipher used for encryption/decryption
+ *    Eg: see WMI_CIPHER_AES_CCM for CCMP
+ * @key_len: length of key data
+ * @key_txmic_len: length of Tx MIC
+ * @key_rxmic_len: length of Rx MIC
+ * @key_data: Key
+ * @pn: packet number
+ * @mac_header: MAC header
+ * @data_len: length of data
+ * @data: pointer to payload
+ */
+struct disa_encrypt_decrypt_req_params {
+	uint32_t vdev_id;
+	uint8_t key_flag;
+	uint32_t key_idx;
+	uint32_t key_cipher;
+	uint32_t key_len;
+	uint32_t key_txmic_len;
+	uint32_t key_rxmic_len;
+	uint8_t key_data[MAC_MAX_KEY_LENGTH];
+	uint8_t pn[MAC_PN_LENGTH];
+	uint8_t mac_header[MAX_MAC_HEADER_LEN];
+	uint32_t data_len;
+	uint8_t *data;
+};
+#endif
+
 /**
  * struct mcast_group_update_param - Mcast group table update to target
  * @action: Addition/deletion
@@ -6822,6 +6856,22 @@ struct wmi_host_fips_event_param {
 	uint32_t data_len;
 	uint32_t *data;
 };
+
+#ifdef WLAN_FEATURE_DISA_FIPS
+/**
+ * struct disa_encrypt_decrypt_resp_params - disa encrypt response
+ * @vdev_id: vdev id
+ * @status: status
+ * @data_length: data length
+ * @data: data pointer
+ */
+struct disa_encrypt_decrypt_resp_params {
+	uint32_t vdev_id;
+	int32_t status;
+	uint32_t data_len;
+	uint8_t *data;
+};
+#endif
 
 /**
  * struct wmi_host_proxy_ast_reserve_param

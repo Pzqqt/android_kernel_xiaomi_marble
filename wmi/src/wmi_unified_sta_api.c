@@ -181,31 +181,6 @@ QDF_STATUS wmi_extract_vdev_tdls_ev_param(wmi_unified_t wmi_handle,
 }
 #endif /* FEATURE_WLAN_TDLS */
 
-#ifdef WLAN_FEATURE_DISA
-QDF_STATUS wmi_unified_encrypt_decrypt_send_cmd(
-			wmi_unified_t wmi_handle,
-			struct disa_encrypt_decrypt_req_params *params)
-{
-	if (wmi_handle->ops->send_encrypt_decrypt_send_cmd)
-		return wmi_handle->ops->send_encrypt_decrypt_send_cmd(
-						wmi_handle,
-						params);
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS wmi_extract_encrypt_decrypt_resp_params(
-			wmi_unified_t wmi_handle,
-			uint8_t *evt_buf,
-			struct disa_encrypt_decrypt_resp_params *resp)
-{
-	if (wmi_handle->ops->extract_encrypt_decrypt_resp_event)
-		return wmi_handle->ops->extract_encrypt_decrypt_resp_event(
-				wmi_handle, evt_buf, resp);
-
-	return QDF_STATUS_E_FAILURE;
-}
-#endif /* WLAN_FEATURE_DISA */
-
 #ifdef FEATURE_BLACKLIST_MGR
 QDF_STATUS
 wmi_unified_send_reject_ap_list(struct wmi_unified *wmi_handle,
