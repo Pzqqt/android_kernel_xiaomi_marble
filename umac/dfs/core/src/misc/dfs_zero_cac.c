@@ -571,6 +571,29 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 }
 #endif
 
+/* dfs_is_tree_node_marked_as_cac() - Check if preCAC BSTree node is
+ * marked as CAC.
+ * @root: Pointer to root node of the preCAC BSTree.
+ * @channel: 20MHz channel to be checked if marked as CAC done already.
+ *
+ * Return: True if already marked, else false.
+ */
+static bool
+dfs_is_tree_node_marked_as_cac(struct precac_tree_node *root,
+				  uint8_t channel)
+{
+	struct precac_tree_node *curr_node = root;
+
+	while (curr_node) {
+		if (!curr_node->n_caced_subchs)
+			return false;
+		if (curr_node->ch_ieee == channel)
+			return curr_node->n_caced_subchs;
+		curr_node = dfs_descend_precac_tree(curr_node, channel);
+	}
+	return false;
+}
+
 /* dfs_mark_tree_node_as_cac_done() - Mark the preCAC BSTree node as CAC done.
  * @dfs:          Pointer to WLAN DFS structure.
  * @precac_entry: Precac_list entry pointer.
@@ -592,18 +615,23 @@ dfs_mark_tree_node_as_cac_done(struct wlan_dfs *dfs,
 	}
 
 	curr_node = precac_entry->tree_root;
+
+	/**
+	 * Check if the channel is already marked and return if true.
+	 * This will happen in scenarios like the following:
+	 * preCAC is running on channel 128 in HT20 mode (note: 124 is already
+	 * marked. Now if the mode is switched to HT40, preCAC is restarted
+	 * and the new channel picked for preCAC is 126 HT40. Here, 124
+	 * will be already marked since it was completed in HT20 mode.
+	 * This may happen for any mode switches (20<->40<->80 MHz).
+	 */
+	if (dfs_is_tree_node_marked_as_cac(curr_node, channel))
+		return;
+
 	while (curr_node) {
-		/* Update the current node's CACed subchannels count only
-		 * if it's less than maximum subchannels, else return.
-		 */
-		if (curr_node->n_caced_subchs <
-		    N_SUBCHS_FOR_BANDWIDTH(curr_node->bandwidth)) {
+		 if (curr_node->n_caced_subchs <
+		     N_SUBCHS_FOR_BANDWIDTH(curr_node->bandwidth))
 			curr_node->n_caced_subchs++;
-		} else {
-			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"CAC was done on an already preCACed channel!");
-			return;
-		}
 		curr_node = dfs_descend_precac_tree(curr_node, channel);
 	}
 }
