@@ -301,6 +301,15 @@ static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 			ret = -ENODEV;
 			goto exit;
 		}
+		if (swrm->core_vote) {
+			ret = swrm->core_vote(swrm->handle, true);
+			if (ret) {
+				dev_err_ratelimited(swrm->dev,
+					"%s: clock enable req failed",
+					__func__);
+				goto exit;
+			}
+		}
 		swrm->clk_ref_count++;
 		if (swrm->clk_ref_count == 1) {
 			ret = swrm->clk(swrm->handle, true);
@@ -2123,6 +2132,7 @@ static int swrm_probe(struct platform_device *pdev)
 					swrm->swrm_base_reg, SWRM_MAX_REGISTER);
 	}
 
+	swrm->core_vote = pdata->core_vote;
 	swrm->clk = pdata->clk;
 	if (!swrm->clk) {
 		dev_err(&pdev->dev, "%s: swrm->clk is NULL\n",
@@ -2584,7 +2594,12 @@ static int swrm_runtime_suspend(struct device *dev)
 			mutex_lock(&swrm->reslock);
 			usleep_range(100, 105);
 		}
-		swrm_clk_request(swrm, false);
+		ret = swrm_clk_request(swrm, false);
+		if (ret) {
+			dev_err(dev, "%s: swrmn clk failed\n", __func__);
+			ret = 0;
+			goto exit;
+		}
 
 		if (swrm->clk_stop_mode0_supp) {
 			if (swrm->wake_irq > 0) {
