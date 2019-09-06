@@ -41,6 +41,7 @@
 #define TX_MACRO_TX_PATH_OFFSET 0x80
 #define TX_MACRO_SWR_MIC_MUX_SEL_MASK 0xF
 #define TX_MACRO_ADC_MUX_CFG_OFFSET 0x2
+#define TX_MACRO_ADC_MODE_CFG0_SHIFT 1
 
 #define TX_MACRO_TX_UNMUTE_DELAY_MS	40
 
@@ -163,6 +164,7 @@ struct tx_macro_priv {
 	int va_clk_status;
 	int tx_clk_status;
 	bool bcs_enable;
+	int dec_mode[NUM_DECIMATORS];
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -609,6 +611,91 @@ static int tx_macro_tx_mixer_put(struct snd_kcontrol *kcontrol,
 
 	return 0;
 }
+
+static inline int tx_macro_path_get(const char *wname,
+				    unsigned int *path_num)
+{
+	int ret = 0;
+	char *widget_name = NULL;
+	char *w_name = NULL;
+	char *path_num_char = NULL;
+	char *path_name = NULL;
+
+	widget_name = kstrndup(wname, 10, GFP_KERNEL);
+	if (!widget_name)
+		return -EINVAL;
+
+	w_name = widget_name;
+
+	path_name = strsep(&widget_name, " ");
+	if (!path_name) {
+		pr_err("%s: Invalid widget name = %s\n",
+			__func__, widget_name);
+		ret = -EINVAL;
+		goto err;
+	}
+	path_num_char = strpbrk(path_name, "01234567");
+	if (!path_num_char) {
+		pr_err("%s: tx path index not found\n",
+			__func__);
+		ret = -EINVAL;
+		goto err;
+	}
+	ret = kstrtouint(path_num_char, 10, path_num);
+	if (ret < 0)
+		pr_err("%s: Invalid tx path = %s\n",
+			__func__, w_name);
+
+err:
+	kfree(w_name);
+	return ret;
+}
+
+static int tx_macro_dec_mode_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+	int ret = 0;
+	int path = 0;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	ret = tx_macro_path_get(kcontrol->id.name, &path);
+	if (ret)
+		return ret;
+
+	ucontrol->value.integer.value[0] = tx_priv->dec_mode[path];
+
+	return 0;
+}
+
+static int tx_macro_dec_mode_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+	int value = ucontrol->value.integer.value[0];
+	int ret = 0;
+	int path = 0;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	ret = tx_macro_path_get(kcontrol->id.name, &path);
+	if (ret)
+		return ret;
+
+	tx_priv->dec_mode[path] = value;
+
+	return 0;
+}
+
 static int tx_macro_get_bcs(struct snd_kcontrol *kcontrol,
                             struct snd_ctl_elem_value *ucontrol)
 {
@@ -759,6 +846,9 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		snd_soc_component_update_bits(component,
+			dec_cfg_reg, 0x06, tx_priv->dec_mode[decimator] <<
+			TX_MACRO_ADC_MODE_CFG0_SHIFT);
 		/* Enable TX PGA Mute */
 		snd_soc_component_update_bits(component,
 			tx_vol_ctl_reg, 0x10, 0x10);
@@ -840,6 +930,8 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
 						0x20, 0x00);
+		snd_soc_component_update_bits(component,
+			dec_cfg_reg, 0x06, 0x00);
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
 						0x10, 0x00);
 		if (tx_priv->bcs_enable) {
@@ -1110,6 +1202,14 @@ TX_MACRO_DAPM_ENUM_EXT(tx_smic6, BOLERO_CDC_TX_INP_MUX_ADC_MUX6_CFG0,
 TX_MACRO_DAPM_ENUM_EXT(tx_smic7, BOLERO_CDC_TX_INP_MUX_ADC_MUX7_CFG0,
 			0, smic_mux_text, snd_soc_dapm_get_enum_double,
 			tx_macro_put_dec_enum);
+
+static const char * const dec_mode_mux_text[] = {
+	"ADC_DEFAULT", "ADC_LOW_PWR", "ADC_HIGH_PERF",
+};
+
+static const struct soc_enum dec_mode_mux_enum =
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(dec_mode_mux_text),
+			    dec_mode_mux_text);
 
 static const struct snd_kcontrol_new tx_aif1_cap_mixer[] = {
 	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, TX_MACRO_DEC0, 1, 0,
@@ -1585,6 +1685,30 @@ static const struct snd_kcontrol_new tx_macro_snd_controls[] = {
 	SOC_SINGLE_SX_TLV("TX_DEC7 Volume",
 			  BOLERO_CDC_TX7_TX_VOL_CTL,
 			  0, -84, 40, digital_gain),
+
+	SOC_ENUM_EXT("DEC0 MODE", dec_mode_mux_enum,
+			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("DEC1 MODE", dec_mode_mux_enum,
+			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("DEC2 MODE", dec_mode_mux_enum,
+			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("DEC3 MODE", dec_mode_mux_enum,
+			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("DEC4 MODE", dec_mode_mux_enum,
+			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("DEC5 MODE", dec_mode_mux_enum,
+			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("DEC6 MODE", dec_mode_mux_enum,
+			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("DEC7 MODE", dec_mode_mux_enum,
+			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
 
 	SOC_SINGLE_EXT("DEC0_BCS Switch", SND_SOC_NOPM, 0, 1, 0,
 		       tx_macro_get_bcs, tx_macro_set_bcs),
