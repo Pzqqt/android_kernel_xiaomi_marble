@@ -93,10 +93,36 @@
 					       1, \
 					       "Enable NAN MAC Randomization")
 
+/*
+ * <ini>
+ * ndp_inactivity_timeout - To configure duration of how many seconds
+ * without TX/RX data traffic, NDI vdev can kickout the connected
+ * peer(i.e. NDP Termination).
+ *
+ * @Min: 0
+ * @Max: 1800
+ * @Default: 60
+ *
+ * Related: None
+ *
+ * Supported Feature: NAN
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_NAN_NDP_INACTIVITY_TIMEOUT CFG_INI_UINT("ndp_inactivity_timeout", \
+						    0, \
+						    1800, \
+						    60, \
+						    CFG_VALUE_OR_DEFAULT, \
+						    "NDP Auto Terminate time")
+
 #ifdef WLAN_FEATURE_NAN
 #define CFG_NAN_DISC CFG(CFG_NAN_ENABLE)
 #define CFG_NAN_DP      CFG(CFG_NAN_DATAPATH_ENABLE) \
-			CFG(CFG_NAN_RANDOMIZE_NDI_MAC)
+			CFG(CFG_NAN_RANDOMIZE_NDI_MAC) \
+			CFG(CFG_NAN_NDP_INACTIVITY_TIMEOUT)
 #else
 #define CFG_NAN_DISC
 #define CFG_NAN_DP

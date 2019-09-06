@@ -64,6 +64,8 @@ static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
 					       CFG_NAN_DATAPATH_ENABLE);
 	nan_obj->cfg_param.ndi_mac_randomize =
 				cfg_get(psoc, CFG_NAN_RANDOMIZE_NDI_MAC);
+	nan_obj->cfg_param.ndp_inactivity_timeout =
+				cfg_get(psoc, CFG_NAN_NDP_INACTIVITY_TIMEOUT);
 }
 #else
 static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
