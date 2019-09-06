@@ -613,6 +613,7 @@ typedef enum {
  * @allow_vht: VHT allowed on chan
  * @set_agile: is agile mode
  * @allow_he: HE allowed on chan
+ * @psc_channel: 6 ghz preferred scan chan
  * @phy_mode: phymode (vht80 or ht40 or ...)
  * @cfreq1: centre frequency on primary
  * @cfreq2: centre frequency on secondary
@@ -636,7 +637,8 @@ struct channel_param {
 		allow_ht:1,
 		allow_vht:1,
 		set_agile:1,
-		allow_he:1;
+		allow_he:1,
+		psc_channel:1;
 	uint32_t phy_mode;
 	uint32_t cfreq1;
 	uint32_t cfreq2;
