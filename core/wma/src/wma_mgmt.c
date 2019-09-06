@@ -3602,64 +3602,6 @@ QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 	return ret;
 }
 
-/**
- * wma_hidden_ssid_vdev_restart() - vdev restart for hidden ssid
- * @wma_handle: wma handle
- * @pReq: hidden ssid vdev restart request
- *
- * Return: none
- */
-void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
-				  tHalHiddenSsidVdevRestart *pReq)
-{
-	struct wma_txrx_node *intr = wma->interfaces;
-	struct hidden_ssid_vdev_restart_params params;
-	QDF_STATUS status;
-	uint8_t vdev_id;
-
-	vdev_id = pReq->sessionId;
-	if ((vdev_id != intr[vdev_id].vdev_restart_params.vdev_id)
-	    || !((intr[vdev_id].type == WMI_VDEV_TYPE_AP)
-		 && (intr[vdev_id].sub_type == 0))) {
-		WMA_LOGE(FL("invalid vdev_id %d"), vdev_id);
-		return;
-	}
-
-	intr[vdev_id].vdev_restart_params.ssidHidden = pReq->ssidHidden;
-	WMA_LOGD(FL("hidden ssid set using IOCTL for vdev %d ssid_hidden %d"),
-		 vdev_id, pReq->ssidHidden);
-
-	params.vdev_id = vdev_id;
-	params.ssid_len = intr[vdev_id].vdev_restart_params.ssid.ssid_len;
-	qdf_mem_copy(params.ssid,
-		     intr[vdev_id].vdev_restart_params.ssid.ssid,
-		     params.ssid_len);
-	params.flags = intr[vdev_id].vdev_restart_params.flags;
-	if (intr[vdev_id].vdev_restart_params.ssidHidden)
-		params.flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
-	else
-		params.flags &= (0xFFFFFFFE);
-	params.requestor_id = intr[vdev_id].vdev_restart_params.requestor_id;
-	params.disable_hw_ack =
-		intr[vdev_id].vdev_restart_params.disable_hw_ack;
-
-	params.mhz = intr[vdev_id].vdev_restart_params.chan.mhz;
-	params.band_center_freq1 =
-		intr[vdev_id].vdev_restart_params.chan.band_center_freq1;
-	params.band_center_freq2 =
-		intr[vdev_id].vdev_restart_params.chan.band_center_freq2;
-	params.info = intr[vdev_id].vdev_restart_params.chan.info;
-	params.reg_info_1 = intr[vdev_id].vdev_restart_params.chan.reg_info_1;
-	params.reg_info_2 = intr[vdev_id].vdev_restart_params.chan.reg_info_2;
-
-	status = wmi_unified_hidden_ssid_vdev_restart_send(wma->wmi_handle,
-							   &params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE(FL("Failed to send vdev restart command"));
-	}
-}
-
-
 #ifdef WLAN_FEATURE_11W
 
 /**

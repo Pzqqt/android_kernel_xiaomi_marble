@@ -938,18 +938,6 @@ struct send_peer_unmap_conf_params {
 };
 
 /**
- * struct tHalHiddenSsidVdevRestart - hidden ssid vdev restart params
- * @ssidHidden: is hidden ssid or not
- * @sessionId: session id
- */
-typedef struct tHalHiddenSsidVdevRestart {
-	uint8_t ssidHidden;
-	uint8_t sessionId;
-	uint16_t pe_session_id;
-} tHalHiddenSsidVdevRestart, *tpHalHiddenSsidVdevRestart;
-
-
-/**
  * struct tDisableIntraBssFwd - intra bss forward parameters
  * @sessionId: session id
  * @disableintrabssfwd: disable intra bss forward flag

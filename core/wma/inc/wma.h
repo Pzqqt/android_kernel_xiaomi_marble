@@ -665,26 +665,6 @@ typedef struct {
 } wma_igtk_key_t;
 #endif
 
-/**
- * struct vdev_restart_params_t - vdev restart parameters
- * @vdev_id: vdev id
- * @ssid: ssid
- * @flags: flags
- * @requestor_id: requestor id
- * @chan: channel
- * @hidden_ssid_restart_in_progress: hidden ssid restart flag
- * @ssidHidden: is ssid hidden or not
- */
-typedef struct {
-	A_UINT32 vdev_id;
-	wmi_ssid ssid;
-	A_UINT32 flags;
-	A_UINT32 requestor_id;
-	A_UINT32 disable_hw_ack;
-	wmi_channel chan;
-	uint8_t ssidHidden;
-} vdev_restart_params_t;
-
 struct roam_synch_frame_ind {
 	uint32_t bcn_probe_rsp_len;
 	uint8_t *bcn_probe_rsp;
@@ -703,7 +683,6 @@ struct roam_synch_frame_ind {
  * @bssid: bssid
  * @handle: wma handle
  * @beacon: beacon info
- * @vdev_restart_params: vdev restart parameters
  * @config: per vdev config parameters
  * @scan_info: scan info
  * @type: type
@@ -769,7 +748,6 @@ struct wma_txrx_node {
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	struct cdp_vdev *handle;
 	struct beacon_info *beacon;
-	vdev_restart_params_t vdev_restart_params;
 	vdev_cli_config_t config;
 	uint32_t type;
 	uint32_t sub_type;

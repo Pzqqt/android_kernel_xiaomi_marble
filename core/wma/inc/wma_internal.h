@@ -811,9 +811,6 @@ void wma_process_update_membership(tp_wma_handle wma_handle,
 void wma_process_update_userpos(tp_wma_handle wma_handle,
 				       tUpdateUserPos *userpos);
 
-void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
-				  tHalHiddenSsidVdevRestart *pReq);
-
 /*
  * wma_power.c functions declarations
  */

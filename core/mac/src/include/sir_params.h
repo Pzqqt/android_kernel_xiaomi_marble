@@ -458,9 +458,6 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_STATS_EXT_REQUEST           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 194)
 /* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 195) is unused */
 #endif /* WLAN_FEATURE_STATS_EXT */
-
-#define SIR_HAL_HIDE_SSID_VDEV_RESTART      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 196)
-
 /* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 197) is unused */
 
 #ifdef FEATURE_WLAN_EXTSCAN

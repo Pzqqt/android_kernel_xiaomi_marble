@@ -55,6 +55,7 @@
 #include "lim_process_fils.h"
 #include "wlan_utility.h"
 #include <wlan_crypto_global_api.h>
+#include "../../core/src/vdev_mgr_ops.h"
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
@@ -3607,33 +3608,23 @@ void
 lim_send_vdev_restart(struct mac_context *mac,
 		      struct pe_session *pe_session, uint8_t sessionId)
 {
-	tpHalHiddenSsidVdevRestart pHalHiddenSsidVdevRestart = NULL;
-	struct scheduler_msg msgQ = {0};
-	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
+	struct vdev_mlme_obj *mlme_obj;
 
 	if (!pe_session) {
 		pe_err("Invalid parameters");
 		return;
 	}
 
-	pHalHiddenSsidVdevRestart =
-		qdf_mem_malloc(sizeof(tHalHiddenSsidVdevRestart));
-	if (!pHalHiddenSsidVdevRestart)
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
 		return;
-
-	pHalHiddenSsidVdevRestart->ssidHidden = pe_session->ssidHidden;
-	pHalHiddenSsidVdevRestart->sessionId = sessionId;
-	pHalHiddenSsidVdevRestart->pe_session_id = pe_session->peSessionId;
-
-	msgQ.type = WMA_HIDDEN_SSID_VDEV_RESTART;
-	msgQ.bodyptr = pHalHiddenSsidVdevRestart;
-	msgQ.bodyval = 0;
-
-	retCode = wma_post_ctrl_msg(mac, &msgQ);
-	if (QDF_STATUS_SUCCESS != retCode) {
-		pe_err("wma_post_ctrl_msg() failed");
-		qdf_mem_free(pHalHiddenSsidVdevRestart);
 	}
+	pe_debug("pe_session->ssidHidden %d", pe_session->ssidHidden);
+
+	mlme_obj->mgmt.ap.hidden_ssid = pe_session->ssidHidden ? true : false;
+
+	vdev_mgr_start_send(mlme_obj,  true);
 }
 
 /**

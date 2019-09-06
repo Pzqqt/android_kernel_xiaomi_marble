@@ -1295,15 +1295,17 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 
 	iface = &wma->interfaces[rsp->vdev_id];
 
-	if (wma_get_hidden_ssid_restart_in_progress(iface) &&
-	    wma_is_vdev_in_ap_mode(wma, rsp->vdev_id))
-		wma_handle_hidden_ssid_restart(wma, iface);
-
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	if (rsp->status == QDF_STATUS_SUCCESS
 		&& mac_ctx->sap.sap_channel_avoidance)
 		wma_find_mcc_ap(wma, rsp->vdev_id, true);
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
+
+	if (wma_get_hidden_ssid_restart_in_progress(iface) &&
+	    wma_is_vdev_in_ap_mode(wma, rsp->vdev_id)) {
+		wma_handle_hidden_ssid_restart(wma, iface);
+		return QDF_STATUS_SUCCESS;
+	}
 
 	if (iface->type == WMI_VDEV_TYPE_STA)
 		assoc_type = mlme_get_assoc_type(vdev_mlme->vdev);
@@ -2902,10 +2904,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	struct wma_txrx_node *intr = wma->interfaces;
 	struct mac_context *mac_ctx = NULL;
 	uint32_t temp_ssid_len = 0;
-	uint32_t temp_flags = 0;
-	uint32_t temp_chan_info = 0;
-	uint32_t temp_reg_info_1 = 0;
-	uint32_t temp_reg_info_2 = 0;
 	uint16_t bw_val;
 	struct wma_txrx_node *iface = &wma->interfaces[req->vdev_id];
 	uint32_t chan_mode;
@@ -3031,17 +3029,9 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	intr[params.vdev_id].channel = wlan_reg_freq_to_chan(wma->pdev,
 							     req->op_chan_freq);
 
-	temp_chan_info &= 0xffffffc0;
-	temp_chan_info |= params.channel.phy_mode;
-
 	/* Set half or quarter rate WMI flags */
 	params.channel.half_rate = req->is_half_rate;
 	params.channel.quarter_rate = req->is_quarter_rate;
-
-	if (req->is_half_rate)
-		temp_chan_info |=  (1 << WMI_CHAN_FLAG_HALF_RATE);
-	else if (req->is_quarter_rate)
-		temp_chan_info |=  (1 << WMI_CHAN_FLAG_QUARTER_RATE);
 
 	/*
 	 * If the channel has DFS set, flip on radar reporting.
@@ -3057,7 +3047,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	params.cac_duration_ms = req->cac_duration_ms;
 	params.regdomain = req->dfs_regdomain;
 	if ((QDF_GLOBAL_MONITOR_MODE != cds_get_conparam()) && req->is_dfs) {
-		temp_chan_info |=  (1 << WMI_CHAN_FLAG_DFS);
 		params.disable_hw_ack = true;
 
 		/*
@@ -3074,7 +3063,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	if (req->beacon_tx_rate) {
 		WMA_LOGD("%s: beacon tx rate [%hu * 100 Kbps]",
 				__func__, req->beacon_tx_rate);
-		temp_flags |= WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT;
 		/*
 		 * beacon_tx_rate is in multiples of 100 Kbps.
 		 * Convert the data rate to hw rate code.
@@ -3085,18 +3073,10 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 	/* FIXME: Find out min, max and regulatory power levels */
 	params.channel.maxregpower = req->max_txpow;
-	temp_reg_info_1 &= 0xff00ffff;
-	temp_reg_info_1 |= ((req->max_txpow&0xff) << 16);
-
-	temp_reg_info_2 &= 0xffff00ff;
-	temp_reg_info_2 |= ((req->max_txpow&0xff)<<8);
 
 	/* TODO: Handle regulatory class, max antenna */
-	if (!isRestart) {
+	if (!isRestart)
 		params.pmf_enabled = req->pmf_enabled;
-		if (req->pmf_enabled)
-			temp_flags |= WMI_UNIFIED_VDEV_START_PMF_ENABLED;
-	}
 
 	/* Copy the SSID */
 	if (req->ssid.length) {
@@ -3110,40 +3090,12 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	}
 
 	params.hidden_ssid = req->hidden_ssid;
-	if (req->hidden_ssid)
-		temp_flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
 
 	params.num_noa_descriptors = 0;
 	params.preferred_rx_streams = req->preferred_rx_streams;
 	params.preferred_tx_streams = req->preferred_tx_streams;
 
 	wma_copy_vdev_start_he_ops(&params, req);
-
-	/* Store vdev params in SAP mode which can be used in vdev restart */
-	if (intr[req->vdev_id].type == WMI_VDEV_TYPE_AP &&
-	    intr[req->vdev_id].sub_type == 0) {
-		intr[req->vdev_id].vdev_restart_params.vdev_id = req->vdev_id;
-		intr[req->vdev_id].vdev_restart_params.ssid.ssid_len =
-			temp_ssid_len;
-		qdf_mem_copy(intr[req->vdev_id].vdev_restart_params.ssid.ssid,
-			     params.ssid.mac_ssid, temp_ssid_len);
-		intr[req->vdev_id].vdev_restart_params.flags = temp_flags;
-		intr[req->vdev_id].vdev_restart_params.requestor_id = 0;
-		intr[req->vdev_id].vdev_restart_params.disable_hw_ack =
-			params.disable_hw_ack;
-		intr[req->vdev_id].vdev_restart_params.chan.mhz =
-			params.channel.mhz;
-		intr[req->vdev_id].vdev_restart_params.chan.band_center_freq1 =
-			params.channel.cfreq1;
-		intr[req->vdev_id].vdev_restart_params.chan.band_center_freq2 =
-			params.channel.cfreq2;
-		intr[req->vdev_id].vdev_restart_params.chan.info =
-			temp_chan_info;
-		intr[req->vdev_id].vdev_restart_params.chan.reg_info_1 =
-			temp_reg_info_1;
-		intr[req->vdev_id].vdev_restart_params.chan.reg_info_2 =
-			temp_reg_info_2;
-	}
 
 	if (!isRestart) {
 		WMA_LOGD("%s, vdev_id: %d, unpausing tx_ll_queue at VDEV_START",
@@ -3692,15 +3644,6 @@ void wma_vdev_resp_timer(void *data)
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
 
 		wma_handle_add_bss_req_timeout(wma, tgt_req);
-	} else if (tgt_req->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART) {
-		if (wma_get_hidden_ssid_restart_in_progress(
-		    &wma->interfaces[tgt_req->vdev_id]) &&
-		    wma_is_vdev_in_ap_mode(wma, tgt_req->vdev_id)) {
-
-			WMA_LOGE("Hidden ssid vdev restart Timed Out; vdev_id: %d, type = %d",
-				 tgt_req->vdev_id, tgt_req->type);
-			qdf_mem_free(tgt_req->user_data);
-		}
 	}
 free_tgt_req:
 	qdf_mc_timer_destroy(&tgt_req->event_timeout);

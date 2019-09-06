@@ -8779,11 +8779,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* WLAN_FEATURE_STATS_EXT */
-	case WMA_HIDDEN_SSID_VDEV_RESTART:
-		wma_hidden_ssid_vdev_restart(wma_handle,
-				(tHalHiddenSsidVdevRestart *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	case WMA_WLAN_EXT_WOW:
 		wma_enable_ext_wow(wma_handle,

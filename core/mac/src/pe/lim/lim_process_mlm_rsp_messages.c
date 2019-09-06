@@ -2516,8 +2516,9 @@ void lim_process_mlm_update_hidden_ssid_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg message = {0};
 	QDF_STATUS status;
 
-	session_entry = pe_find_session_by_sme_session_id(mac_ctx, vdev_id);
+	pe_debug("hidden ssid resp for vdev_id:%d ", vdev_id);
 
+	session_entry = pe_find_session_by_sme_session_id(mac_ctx, vdev_id);
 	if (!session_entry) {
 		pe_err("vdev_id:%d Session Doesn't exist",
 		       vdev_id);
