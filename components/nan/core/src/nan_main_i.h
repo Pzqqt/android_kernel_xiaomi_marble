@@ -80,11 +80,13 @@ enum nan_disc_state {
  * @enable: NAN feature enable
  * @dp_enable: NAN Datapath feature enable
  * @ndi_mac_randomize: Randomize NAN datapath interface MAC
+ * @ndp_inactivity_timeout: NDP inactivity timeout
  */
 struct nan_cfg_params {
 	bool enable;
 	bool dp_enable;
 	bool ndi_mac_randomize;
+	uint16_t ndp_inactivity_timeout;
 };
 
 /**

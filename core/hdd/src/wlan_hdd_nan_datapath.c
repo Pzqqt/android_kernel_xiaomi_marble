@@ -681,6 +681,7 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 	struct hdd_station_ctx *sta_ctx;
 	struct csr_roam_info *roam_info;
 	struct bss_description tmp_bss_descp = {0};
+	uint16_t ndp_inactivity_timeout = 0;
 	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BCAST_INIT;
 	uint8_t sta_id;
 
@@ -720,6 +721,14 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
+
+		if (QDF_IS_STATUS_ERROR(cfg_nan_get_ndp_inactivity_timeout(
+		    hdd_ctx->psoc, &ndp_inactivity_timeout)))
+			hdd_err("Failed to fetch inactivity timeout value");
+
+		sme_cli_set_command(adapter->vdev_id,
+				    WMI_VDEV_PARAM_NDP_INACTIVITY_TIMEOUT,
+				    ndp_inactivity_timeout, VDEV_CMD);
 	} else {
 		hdd_alert("NDI interface creation failed with reason %d",
 			ndi_rsp->reason /* create_reason */);

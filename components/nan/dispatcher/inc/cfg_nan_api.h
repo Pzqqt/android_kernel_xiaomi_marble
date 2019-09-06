@@ -53,6 +53,17 @@ bool cfg_nan_get_datapath_enable(struct wlan_objmgr_psoc *psoc);
  * This function returns NAN Datapath Interface MAC randomization status
  */
 bool cfg_nan_get_ndi_mac_randomize(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * cfg_nan_get_ndp_inactivity_timeout() - get NDP inactivity timeout value
+ * @psoc: pointer to psoc object
+ * @val: pointer to the value where inactivity timeout has to be copied to
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cfg_nan_get_ndp_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
+					      uint16_t *val);
+
 #else
 static inline bool cfg_nan_get_enable(struct wlan_objmgr_psoc *psoc)
 {
@@ -67,6 +78,13 @@ static inline bool cfg_nan_get_datapath_enable(struct wlan_objmgr_psoc *psoc)
 static inline bool cfg_nan_get_ndi_mac_randomize(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
+}
+
+static inline
+QDF_STATUS cfg_nan_get_ndp_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
+					      uint16_t *val)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
