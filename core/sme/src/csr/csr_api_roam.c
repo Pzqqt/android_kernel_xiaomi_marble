@@ -18825,11 +18825,9 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 	uint8_t supp_chan_ie[DOT11F_IE_SUPPCHANNELS_MAX_LEN], supp_chan_ie_len;
 
 #ifdef FEATURE_WLAN_ESE
-	uint8_t ese_ie[DOT11F_IE_ESEVERSION_MAX_LEN]
-			= { 0x0, 0x40, 0x96, 0x3, ESE_VERSION_SUPPORTED};
+	uint8_t ese_ie[] = { 0x0, 0x40, 0x96, 0x3, ESE_VERSION_SUPPORTED};
 #endif
-	uint8_t qcn_ie[DOT11F_IE_QCN_IE_MAX_LEN]
-			= {0x8C, 0xFD, 0xF0, 0x1, QCN_IE_VERSION_SUBATTR_ID,
+	uint8_t qcn_ie[] = {0x8C, 0xFD, 0xF0, 0x1, QCN_IE_VERSION_SUBATTR_ID,
 				QCN_IE_VERSION_SUBATTR_DATA_LEN,
 				QCN_IE_VERSION_SUPPORTED,
 				QCN_IE_SUBVERSION_SUPPORTED};
@@ -18866,8 +18864,7 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 	/* Append ESE version IE if isEseIniFeatureEnabled INI is enabled */
 	if (mac_ctx->mlme_cfg->lfr.ese_enabled)
 		csr_append_assoc_ies(mac_ctx, req_buf, WLAN_ELEMID_VENDOR,
-					DOT11F_IE_ESEVERSION_MAX_LEN,
-					ese_ie);
+				     sizeof(ese_ie), ese_ie);
 #endif
 
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable) {
@@ -18887,8 +18884,7 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 	/* Append QCN IE if g_support_qcn_ie INI is enabled */
 	if (mac_ctx->mlme_cfg->sta.qcn_ie_support)
 		csr_append_assoc_ies(mac_ctx, req_buf, WLAN_ELEMID_VENDOR,
-					DOT11F_IE_QCN_IE_MAX_LEN,
-					qcn_ie);
+				     sizeof(qcn_ie), qcn_ie);
 }
 
 /**

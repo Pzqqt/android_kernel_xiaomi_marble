@@ -14848,7 +14848,7 @@ void sme_add_qcn_ie(mac_handle_t mac_handle, uint8_t *ie_data,
 		    uint16_t *ie_len)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	uint8_t qcn_ie[] = {WLAN_ELEMID_VENDOR, DOT11F_IE_QCN_IE_MAX_LEN,
+	uint8_t qcn_ie[] = {WLAN_ELEMID_VENDOR, 8,
 			    0x8C, 0xFD, 0xF0, 0x1, QCN_IE_VERSION_SUBATTR_ID,
 			    QCN_IE_VERSION_SUBATTR_DATA_LEN,
 			    QCN_IE_VERSION_SUPPORTED,

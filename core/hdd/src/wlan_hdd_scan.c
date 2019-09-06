@@ -353,6 +353,12 @@ static int wlan_hdd_update_scan_ies(struct hdd_adapter *adapter,
 		elem_len = *temp_ie++;
 		rem_len -= 2;
 
+		if (elem_len > rem_len) {
+			hdd_err("Invalid element len %d for elem %d", elem_len,
+				elem_id);
+			return 0;
+		}
+
 		switch (elem_id) {
 		case DOT11F_EID_EXTCAP:
 			if (!wlan_get_ie_ptr_from_eid(DOT11F_EID_EXTCAP,

@@ -6248,7 +6248,8 @@ static int wlan_hdd_save_default_scan_ies(struct hdd_context *hdd_ctx,
 			       scan_info->default_scan_ies,
 			       &scan_info->default_scan_ies_len);
 
-	hdd_debug("Saved default scan IE:");
+	hdd_debug("Saved default scan IE:len %d",
+		  scan_info->default_scan_ies_len);
 	qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 				(uint8_t *) scan_info->default_scan_ies,
 				scan_info->default_scan_ies_len);
