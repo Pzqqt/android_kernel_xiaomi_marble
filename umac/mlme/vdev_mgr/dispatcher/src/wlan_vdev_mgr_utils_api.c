@@ -27,6 +27,7 @@
 #include <cdp_txrx_cmn_struct.h>
 #include <wlan_mlme_dbg.h>
 #include <qdf_module.h>
+#include <wlan_vdev_mgr_tgt_if_tx_api.h>
 
 static QDF_STATUS vdev_mgr_config_ratemask_update(
 				struct vdev_mlme_obj *mlme_obj,
@@ -325,9 +326,15 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		break;
 	case WLAN_MLME_CFG_TX_DECAP_TYPE:
 		mlme_mgmt->generic.tx_decap_type = mlme_cfg.value;
+		tgt_vdev_mgr_set_tx_rx_decap_type(vdev_mlme,
+						  WLAN_MLME_CFG_TX_DECAP_TYPE,
+						  mlme_cfg.value);
 		break;
 	case WLAN_MLME_CFG_RX_DECAP_TYPE:
 		mlme_mgmt->generic.rx_decap_type = mlme_cfg.value;
+		tgt_vdev_mgr_set_tx_rx_decap_type(vdev_mlme,
+						  WLAN_MLME_CFG_RX_DECAP_TYPE,
+						  mlme_cfg.value);
 		break;
 	case WLAN_MLME_CFG_RATEMASK_TYPE:
 		mlme_mgmt->rate_info.type = mlme_cfg.value;

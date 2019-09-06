@@ -314,13 +314,6 @@ QDF_STATUS tgt_vdev_mgr_up_send(
 	if (!soc_txrx_handle || !vdev_txrx_handle)
 		return QDF_STATUS_E_INVAL;
 
-	cdp_set_vdev_rx_decap_type(soc_txrx_handle,
-				   (struct cdp_vdev *)vdev_txrx_handle,
-				   mlme_obj->mgmt.generic.rx_decap_type);
-	cdp_set_tx_encap_type(soc_txrx_handle,
-			      (struct cdp_vdev *)vdev_txrx_handle,
-			      mlme_obj->mgmt.generic.tx_decap_type);
-
 	status = txops->vdev_up_send(vdev, param);
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_err("VDEV_%d: Tx Ops Error : %d", vdev_id, status);
@@ -514,6 +507,35 @@ QDF_STATUS tgt_vdev_mgr_multiple_vdev_restart_send(
 
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
 	}
+
+	return status;
+}
+
+QDF_STATUS tgt_vdev_mgr_set_tx_rx_decap_type(struct vdev_mlme_obj *mlme_obj,
+					     enum wlan_mlme_cfg_id param_id,
+					     uint32_t value)
+{
+	QDF_STATUS status;
+	struct wlan_lmac_if_mlme_tx_ops *txops;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t vdev_id;
+
+	if (!mlme_obj) {
+		mlme_err("Invalid input");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev = mlme_obj->vdev;
+	vdev_id = wlan_vdev_get_id(vdev);
+	txops = wlan_vdev_mlme_get_lmac_txops(vdev);
+	if (!txops || !txops->vdev_set_tx_rx_decap_type) {
+		mlme_err("VDEV_%d: No Tx Ops", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = txops->vdev_set_tx_rx_decap_type(vdev, param_id, value);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("VDEV_%d: Tx Ops Error : %d", vdev_id, status);
 
 	return status;
 }

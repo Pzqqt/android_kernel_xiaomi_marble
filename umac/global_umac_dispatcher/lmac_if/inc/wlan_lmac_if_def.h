@@ -180,7 +180,7 @@ struct wlan_lmac_if_ftm_tx_ops {
 				uint8_t *buf, uint32_t len, uint8_t mac_id);
 };
 
-
+enum wlan_mlme_cfg_id;
 /**
  * struct wlan_lmac_if_mlme_tx_ops - south bound tx function pointers for mlme
  * @scan_sta_power_events: function to handle STA power events
@@ -198,6 +198,7 @@ struct wlan_lmac_if_ftm_tx_ops {
  * @vdev_stop_send: function to send vdev stop
  * @vdev_down_send: function to send vdev down
  * @vdev_set_param_send: function to send vdev parameter
+ * @vdev_set_tx_rx_decap_type: function to send vdev tx rx cap/decap type
  * @vdev_set_nac_rssi_send: function to send nac rssi
  * @vdev_set_neighbour_rx_cmd_send: function to send vdev neighbour rx cmd
  * @vdev_sifs_trigger_send: function to send vdev sifs trigger
@@ -240,6 +241,9 @@ struct wlan_lmac_if_mlme_tx_ops {
 				     struct vdev_down_params *param);
 	QDF_STATUS (*vdev_set_param_send)(struct wlan_objmgr_vdev *vdev,
 					  struct vdev_set_params *param);
+	QDF_STATUS (*vdev_set_tx_rx_decap_type)(struct wlan_objmgr_vdev *vdev,
+						enum wlan_mlme_cfg_id param_id,
+						uint32_t value);
 	QDF_STATUS (*vdev_set_nac_rssi_send)(
 				struct wlan_objmgr_vdev *vdev,
 				struct vdev_scan_nac_rssi_params *param);
