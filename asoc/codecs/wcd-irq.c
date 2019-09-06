@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -178,7 +178,8 @@ int wcd_irq_exit(struct wcd_irq_info *irq_info, struct irq_domain *virq)
 		return -EINVAL;
 	}
 
-	regmap_del_irq_chip(irq_find_mapping(virq, 0), irq_info->irq_chip);
+	devm_regmap_del_irq_chip(irq_info->dev, irq_find_mapping(virq, 0),
+				 irq_info->irq_chip);
 
 	return 0;
 }
