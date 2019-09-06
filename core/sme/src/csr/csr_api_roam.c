@@ -18736,7 +18736,7 @@ csr_roam_send_rso_cmd(struct mac_context *mac_ctx,
 static void csr_append_assoc_ies(struct mac_context *mac_ctx,
 				 struct roam_offload_scan_req *req_buf,
 				 uint8_t ie_id, uint8_t ie_len,
-				 uint8_t *ie_data)
+				 const uint8_t *ie_data)
 {
 	tSirAddie *assoc_ie = &req_buf->assoc_ie;
 
@@ -18825,12 +18825,14 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 	uint8_t supp_chan_ie[DOT11F_IE_SUPPCHANNELS_MAX_LEN], supp_chan_ie_len;
 
 #ifdef FEATURE_WLAN_ESE
-	uint8_t ese_ie[] = { 0x0, 0x40, 0x96, 0x3, ESE_VERSION_SUPPORTED};
+	static const uint8_t ese_ie[] = {0x0, 0x40, 0x96, 0x3,
+					 ESE_VERSION_SUPPORTED};
 #endif
-	uint8_t qcn_ie[] = {0x8C, 0xFD, 0xF0, 0x1, QCN_IE_VERSION_SUBATTR_ID,
-				QCN_IE_VERSION_SUBATTR_DATA_LEN,
-				QCN_IE_VERSION_SUPPORTED,
-				QCN_IE_SUBVERSION_SUPPORTED};
+	static const uint8_t qcn_ie[] = {0x8C, 0xFD, 0xF0, 0x1,
+					 QCN_IE_VERSION_SUBATTR_ID,
+					 QCN_IE_VERSION_SUBATTR_DATA_LEN,
+					 QCN_IE_VERSION_SUPPORTED,
+					 QCN_IE_SUBVERSION_SUPPORTED};
 
 	if (session->pConnectBssDesc)
 		max_tx_pwr_cap = csr_get_cfg_max_tx_power(mac_ctx,
