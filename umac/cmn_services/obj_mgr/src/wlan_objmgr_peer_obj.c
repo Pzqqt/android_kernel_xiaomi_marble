@@ -630,7 +630,7 @@ QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
 			uint8_t *macaddr;
 
 			macaddr = wlan_peer_get_macaddr(peer);
-			obj_mgr_warn(
+			obj_mgr_debug(
 			"peer(" QDF_MAC_ADDR_STR ") not in Created st(%d)",
 			QDF_MAC_ADDR_ARRAY(macaddr),
 			peer->obj_state);
