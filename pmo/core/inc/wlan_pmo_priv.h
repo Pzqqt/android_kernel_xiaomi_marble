@@ -43,7 +43,7 @@
  * @dp_hdl: psoc data path handle
  * @htc_hdl: htc layer handle
  * @hif_hdl: hif layer handle
- * @txrx_hdl: txrx pdev handle
+ * @txrx_pdev_id: txrx pdev identifier
  * @pause_bitmap_notifier: registered callback to update pause bitmap value
  * @pmo_get_pause_bitmap: registered callback to get pause bitmap value
  * @get_dtim_period: register callback to get dtim period from mlme
@@ -58,7 +58,7 @@ struct pmo_psoc_priv_obj {
 	void *dp_hdl;
 	void *htc_hdl;
 	void *hif_hdl;
-	void *txrx_hdl;
+	uint8_t txrx_pdev_id;
 	pmo_notify_pause_bitmap pause_bitmap_notifier;
 	pmo_get_pause_bitmap get_pause_bitmap;
 	pmo_get_vdev_dp_handle get_vdev_dp_handle;

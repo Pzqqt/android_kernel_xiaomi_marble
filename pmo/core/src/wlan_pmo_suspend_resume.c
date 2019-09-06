@@ -950,7 +950,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 {
 	void *hif_ctx;
 	void *dp_soc;
-	void *txrx_pdev;
+	uint8_t pdev_id;
 	void *htc_ctx;
 	QDF_STATUS status;
 	int ret;
@@ -973,11 +973,12 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 
 	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
 	dp_soc = pmo_core_psoc_get_dp_handle(psoc);
-	txrx_pdev = pmo_core_psoc_get_txrx_handle(psoc);
+	pdev_id = pmo_core_psoc_get_txrx_handle(psoc);
 	htc_ctx = pmo_core_psoc_get_htc_handle(psoc);
-	if (!hif_ctx || !dp_soc || !txrx_pdev || !htc_ctx) {
-		pmo_err("Invalid hif: %pK, dp: %pK, txrx: %pK, htc: %pK",
-			hif_ctx, dp_soc, txrx_pdev, htc_ctx);
+	if (!hif_ctx || !dp_soc || !htc_ctx ||
+	    pdev_id == OL_TXRX_INVALID_PDEV_ID) {
+		pmo_err("Invalid hif: %pK, dp: %pK, pdev_id: %d, htc: %pK",
+			hif_ctx, dp_soc, pdev_id, htc_ctx);
 		status = QDF_STATUS_E_INVAL;
 		goto dec_psoc_ref;
 	}
@@ -991,7 +992,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 		goto runtime_failure;
 	}
 
-	status = cdp_runtime_suspend(dp_soc, txrx_pdev);
+	status = cdp_runtime_suspend(dp_soc, pdev_id);
 	if (status != QDF_STATUS_SUCCESS)
 		goto runtime_failure;
 
@@ -1056,7 +1057,7 @@ resume_htc:
 
 cdp_runtime_resume:
 	QDF_BUG(QDF_STATUS_SUCCESS ==
-		cdp_runtime_resume(dp_soc, txrx_pdev));
+		cdp_runtime_resume(dp_soc, pdev_id));
 
 runtime_failure:
 	hif_process_runtime_suspend_failure(hif_ctx);
@@ -1076,7 +1077,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 	int ret;
 	void *hif_ctx;
 	void *dp_soc;
-	void *txrx_pdev;
+	uint8_t pdev_id;
 	void *htc_ctx;
 	QDF_STATUS status;
 	qdf_time_t begin, end;
@@ -1097,11 +1098,12 @@ QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 
 	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
 	dp_soc = pmo_core_psoc_get_dp_handle(psoc);
-	txrx_pdev = pmo_core_psoc_get_txrx_handle(psoc);
+	pdev_id = pmo_core_psoc_get_txrx_handle(psoc);
 	htc_ctx = pmo_core_psoc_get_htc_handle(psoc);
-	if (!hif_ctx || !dp_soc || !txrx_pdev || !htc_ctx) {
-		pmo_err("Invalid hif: %pK, dp: %pK, txrx: %pK, htc: %pK",
-			hif_ctx, dp_soc, txrx_pdev, htc_ctx);
+	if (!hif_ctx || !dp_soc || !htc_ctx ||
+	    pdev_id == OL_TXRX_INVALID_PDEV_ID) {
+		pmo_err("Invalid hif: %pK, dp: %pK, pdev_id: %d, htc: %pK",
+			hif_ctx, dp_soc, pdev_id, htc_ctx);
 		status = QDF_STATUS_E_INVAL;
 		goto dec_psoc_ref;
 	}
@@ -1141,7 +1143,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 		goto fail;
 	}
 
-	status = cdp_runtime_resume(dp_soc, txrx_pdev);
+	status = cdp_runtime_resume(dp_soc, pdev_id);
 	if (status != QDF_STATUS_SUCCESS)
 		goto fail;
 
