@@ -2787,8 +2787,9 @@ static void _sde_cp_crtc_queue_ltm_buffer(struct sde_crtc *sde_crtc, void *cfg)
 	struct drm_msm_ltm_buffer *buf;
 	struct drm_msm_ltm_stats_data *ltm_data = NULL;
 	u32 i;
-	bool found = false;
+	bool found = false, already = false;
 	unsigned long irq_flags;
+	struct sde_ltm_buffer *buffer = NULL, *n = NULL;
 
 	if (!sde_crtc || !cfg) {
 		DRM_ERROR("invalid parameters sde_crtc %pK cfg %pK\n", sde_crtc,
@@ -2818,7 +2819,13 @@ static void _sde_cp_crtc_queue_ltm_buffer(struct sde_crtc *sde_crtc, void *cfg)
 				 sde_crtc->ltm_buffers[i]->offset);
 			ltm_data->status_flag = 0;
 
-			list_add_tail(&sde_crtc->ltm_buffers[i]->node,
+			list_for_each_entry_safe(buffer, n,
+					&sde_crtc->ltm_buf_free, node) {
+				if (buffer->drm_fb_id == buf->fd)
+					already =  true;
+			}
+			if (!already)
+				list_add_tail(&sde_crtc->ltm_buffers[i]->node,
 					&sde_crtc->ltm_buf_free);
 			found = true;
 		}
@@ -2970,6 +2977,7 @@ static void sde_cp_ltm_hist_interrupt_cb(void *arg, int irq_idx)
 		}
 
 		spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
+		DRM_DEBUG_DRIVER("LTM histogram is disabled\n");
 		return;
 	}
 
@@ -3019,6 +3027,7 @@ static void sde_cp_ltm_hist_interrupt_cb(void *arg, int irq_idx)
 
 	hw_lm = sde_crtc->mixers[0].hw_lm;
 	if (!hw_lm) {
+		spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
 		DRM_ERROR("invalid layer mixer\n");
 		return;
 	}
@@ -3085,6 +3094,7 @@ static void sde_cp_notify_ltm_hist(struct drm_crtc *crtc, void *arg)
 		/* histogram is disabled, no need to notify user space */
 		spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
 		mutex_unlock(&sde_crtc->ltm_buffer_lock);
+		DRM_DEBUG_DRIVER("ltm histogram is disabled\n");
 		return;
 	}
 
@@ -3093,6 +3103,8 @@ static void sde_cp_notify_ltm_hist(struct drm_crtc *crtc, void *arg)
 	payload.offset = buf->offset;
 	event.length = sizeof(struct drm_msm_ltm_buffer);
 	event.type = DRM_EVENT_LTM_HIST;
+	DRM_DEBUG_DRIVER("notify with LTM hist event drm_fb_id %d\n",
+				buf->drm_fb_id);
 	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
 					(u8 *)&payload);
 	spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
