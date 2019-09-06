@@ -4272,9 +4272,11 @@ static int _sde_crtc_check_secure_state_smmu_translation(struct drm_crtc *crtc,
 	struct drm_encoder *encoder;
 	int is_video_mode = false;
 
-	drm_for_each_encoder_mask(encoder, crtc->dev, state->encoder_mask)
-		is_video_mode |= sde_encoder_check_curr_mode(encoder,
+	drm_for_each_encoder_mask(encoder, crtc->dev, state->encoder_mask) {
+		if (sde_encoder_is_primary_display(encoder))
+			is_video_mode |= sde_encoder_check_curr_mode(encoder,
 						MSM_DISPLAY_VIDEO_MODE);
+	}
 
 	/*
 	 * In video mode check for null commit before transition
