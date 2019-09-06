@@ -49,11 +49,6 @@ int wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 				   struct wireless_dev *wdev,
 				   const void *data, int data_len);
 
-int wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
-						 struct wireless_dev
-						 *wdev, const void *data,
-						 int data_len);
-
 int wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 					       struct wireless_dev *wdev,
 					       const void *data, int data_len);

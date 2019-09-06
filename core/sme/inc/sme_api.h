@@ -1184,12 +1184,12 @@ QDF_STATUS sme_update_dfs_scan_mode(mac_handle_t mac_handle,
 		uint8_t allowDFSChannelRoam);
 uint8_t sme_get_dfs_scan_mode(mac_handle_t mac_handle);
 
-#ifdef FEATURE_WLAN_EXTSCAN
 QDF_STATUS sme_get_valid_channels_by_band(mac_handle_t mac_handle,
 					  uint8_t wifiBand,
 					  uint32_t *aValidChannels,
 					  uint8_t *pNumChannels);
 
+#ifdef FEATURE_WLAN_EXTSCAN
 /**
  * sme_ext_scan_get_capabilities() - SME API to fetch extscan capabilities
  * @mac_handle: Opaque handle to the MAC context
