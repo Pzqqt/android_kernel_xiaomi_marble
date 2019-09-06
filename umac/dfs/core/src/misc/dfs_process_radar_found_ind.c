@@ -530,9 +530,19 @@ uint8_t dfs_get_bonding_channels(struct wlan_dfs *dfs,
 	else {
 		/* When precac is running "dfs_ch_vhtop_ch_freq_seg2" is
 		 * zero and "dfs_precac_secondary_freq" holds the secondary
-		 * frequency.
+		 * frequency in case of legacy chips.
+		 * For chips that support a separate agile detector engine,
+		 * "dfs_agile_precac_freq" holds the frequency that agile
+		 * engine operates on.
+		 *
+		 * In case of radar detected by the HW in the secondary 80
+		 * channel,"dfs_ch_vhtop_ch_freq_seg2" holds the secondary
+		 * segment center frequency in the below cases:
+		 * 1. preCAC timer is running in chips that support separate
+		 * agile engines.
+		 * 2. preCAC timer is not running.
 		 */
-		if (dfs_is_precac_timer_running(dfs))
+		if (dfs_is_precac_timer_running(dfs) && dfs->dfs_precac_enable)
 			center_chan = dfs->dfs_precac_secondary_freq;
 		else
 			center_chan = curchan->dfs_ch_vhtop_ch_freq_seg2;
