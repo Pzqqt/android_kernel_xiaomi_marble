@@ -288,9 +288,6 @@ QDF_STATUS (*send_vdev_start_cmd)(wmi_unified_t wmi,
 QDF_STATUS (*send_vdev_set_nac_rssi_cmd)(wmi_unified_t wmi,
 		struct vdev_scan_nac_rssi_params *req);
 
-QDF_STATUS (*send_hidden_ssid_vdev_restart_cmd)(wmi_unified_t wmi_handle,
-		struct hidden_ssid_vdev_restart_params *restart_params);
-
 QDF_STATUS (*send_peer_flush_tids_cmd)(wmi_unified_t wmi,
 					 uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 					 struct peer_flush_params *param);

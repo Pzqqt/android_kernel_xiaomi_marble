@@ -947,77 +947,6 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_hidden_ssid_vdev_restart_cmd_tlv() - restart vdev to set hidden ssid
- * @wmi_handle: wmi handle
- * @restart_params: vdev restart params
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-static QDF_STATUS send_hidden_ssid_vdev_restart_cmd_tlv(wmi_unified_t wmi_handle,
-			struct hidden_ssid_vdev_restart_params *restart_params)
-{
-	wmi_vdev_start_request_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	wmi_channel *chan;
-	int32_t len;
-	uint8_t *buf_ptr;
-	QDF_STATUS ret = 0;
-
-	len = sizeof(*cmd) + sizeof(wmi_channel) + WMI_TLV_HDR_SIZE;
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf)
-		return QDF_STATUS_E_NOMEM;
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_vdev_start_request_cmd_fixed_param *) buf_ptr;
-	chan = (wmi_channel *) (buf_ptr + sizeof(*cmd));
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_start_request_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_vdev_start_request_cmd_fixed_param));
-
-	WMITLV_SET_HDR(&chan->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_channel,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
-
-	cmd->vdev_id = restart_params->vdev_id;
-	cmd->ssid.ssid_len = restart_params->ssid_len;
-	qdf_mem_copy(cmd->ssid.ssid,
-		     restart_params->ssid,
-		     cmd->ssid.ssid_len);
-	cmd->flags = restart_params->flags;
-	cmd->requestor_id = restart_params->requestor_id;
-	cmd->disable_hw_ack = restart_params->disable_hw_ack;
-
-	chan->mhz = restart_params->mhz;
-	chan->band_center_freq1 =
-			restart_params->band_center_freq1;
-	chan->band_center_freq2 =
-			restart_params->band_center_freq2;
-	chan->info = restart_params->info;
-	chan->reg_info_1 = restart_params->reg_info_1;
-	chan->reg_info_2 = restart_params->reg_info_2;
-
-	cmd->num_noa_descriptors = 0;
-	buf_ptr = (uint8_t *) (((uint8_t *) cmd) + sizeof(*cmd) +
-			       sizeof(wmi_channel));
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
-		       cmd->num_noa_descriptors *
-		       sizeof(wmi_p2p_noa_descriptor));
-
-	wmi_mtrace(WMI_VDEV_RESTART_REQUEST_CMDID, cmd->vdev_id, 0);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				   WMI_VDEV_RESTART_REQUEST_CMDID);
-	if (QDF_IS_STATUS_ERROR(ret)) {
-		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
-
-/**
  * send_peer_flush_tids_cmd_tlv() - flush peer tids packets in fw
  * @wmi: wmi handle
  * @peer_addr: peer mac address
@@ -11805,8 +11734,6 @@ struct wmi_ops tlv_ops =  {
 	.send_vdev_nss_chain_params_cmd = send_vdev_nss_chain_params_cmd_tlv,
 	.send_vdev_down_cmd = send_vdev_down_cmd_tlv,
 	.send_vdev_start_cmd = send_vdev_start_cmd_tlv,
-	.send_hidden_ssid_vdev_restart_cmd =
-		send_hidden_ssid_vdev_restart_cmd_tlv,
 	.send_peer_flush_tids_cmd = send_peer_flush_tids_cmd_tlv,
 	.send_peer_param_cmd = send_peer_param_cmd_tlv,
 	.send_vdev_up_cmd = send_vdev_up_cmd_tlv,

@@ -582,18 +582,6 @@ wmi_unified_vdev_set_nac_rssi_send(wmi_unified_t wmi_handle,
 				   struct vdev_scan_nac_rssi_params *req);
 
 /**
- * wmi_unified_hidden_ssid_vdev_restart_send() - restart vdev to set hidden ssid
- * @wmi_handle: wmi handle
- * @restart_params: vdev restart params
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS
-wmi_unified_hidden_ssid_vdev_restart_send(
-		wmi_unified_t wmi_handle,
-		struct hidden_ssid_vdev_restart_params *restart_params);
-
-/**
  * wmi_unified_vdev_set_param_send() - WMI vdev set parameter function
  * @wmi_handle: handle to WMI.
  * @macaddr: MAC address

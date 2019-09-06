@@ -708,40 +708,6 @@ struct vdev_nss_chains {
 	bool disable_tx_mrc[NSS_CHAINS_BAND_MAX];
 };
 
-/**
- * struct hidden_ssid_vdev_restart_params -
- *                    vdev restart cmd parameter
- * @vdev_id: ID of the vdev that needs to be restarted
- * @ssid_len: ssid length
- * @ssid: ssid
- * @flags: flags
- * @requestor_id: requestor id
- * @disable_hw_ack: flag to disable hw ack feature
- * @mhz: channel frequency
- * @band_center_freq1: center freq 1
- * @band_center_freq2: center freq 2
- * @info: channel info
- * @reg_info_1: contains min power, max power,
- *              reg power and reg class id
- * @reg_info_2: contains antennamax
- * @hidden_ssid_restart_in_progress:
- *      flag to check if restart is in progress
- */
-struct hidden_ssid_vdev_restart_params {
-	uint8_t vdev_id;
-	uint32_t ssid_len;
-	uint32_t ssid[8];
-	uint32_t flags;
-	uint32_t requestor_id;
-	uint32_t disable_hw_ack;
-	uint32_t mhz;
-	uint32_t band_center_freq1;
-	uint32_t band_center_freq2;
-	uint32_t info;
-	uint32_t reg_info_1;
-	uint32_t reg_info_2;
-};
-
 #ifdef WLAN_CFR_ENABLE
 
 #define WMI_HOST_PEER_CFR_TIMER_ENABLE   1

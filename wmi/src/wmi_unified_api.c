@@ -139,18 +139,6 @@ wmi_unified_vdev_set_nac_rssi_send(wmi_unified_t wmi_handle,
 }
 
 QDF_STATUS
-wmi_unified_hidden_ssid_vdev_restart_send(
-		wmi_unified_t wmi_handle,
-		struct hidden_ssid_vdev_restart_params *restart_params)
-{
-	if (wmi_handle->ops->send_hidden_ssid_vdev_restart_cmd)
-		return wmi_handle->ops->send_hidden_ssid_vdev_restart_cmd(
-			wmi_handle, restart_params);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS
 wmi_unified_peer_flush_tids_send(wmi_unified_t wmi_handle,
 				 uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				 struct peer_flush_params *param)
