@@ -420,7 +420,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	buf_addr = (tx_evt_param.correlation_info_1 |((uint64_t)buf_addr_temp << 32));
 
 	if (target_if_dbr_cookie_lookup(pdev, DBR_MODULE_CFR, buf_addr,
-					&cookie)) {
+					&cookie, 0)) {
 		cfr_debug("Cookie lookup failure for addr: 0x%pK status: 0x%x",
 		buf_addr, tx_evt_param.status);
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
@@ -478,7 +478,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 				lut->data, lut->data_len, &end_magic, 4);
 		release_lut_entry(pdev, lut);
 		target_if_dbr_buf_release(pdev, DBR_MODULE_CFR, buf_addr,
-					  cookie);
+					  cookie, 0);
 		cfr_debug("Data sent to upper layers, releasing look up table");
 	} else if (status == STATUS_HOLD) {
 		cfr_debug("HOLD for buffer address: 0x%pK cookie: %u",
@@ -599,7 +599,7 @@ target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
 
 	if(dbr_tx_ops->direct_buf_rx_get_ring_params)
 		dbr_tx_ops->direct_buf_rx_get_ring_params(pdev, param,
-							  DBR_MODULE_CFR);
+							  DBR_MODULE_CFR, 0);
 	return param;
 }
 #else
