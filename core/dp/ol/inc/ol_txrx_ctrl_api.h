@@ -432,27 +432,37 @@ int16_t ol_txrx_peer_rssi(ol_txrx_peer_handle peer);
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)
 
 /**
- * @brief Configure the bad peer tx limit setting.
- * @details
+ * ol_txrx_bad_peer_txctl_set_setting() - Configure the bad peer tx
+ *					  limit setting.
+ * @soc_hdl: soc handle
+ * @pdev_id: datapath pdev identifier
+ * @enable: enable/disable setting
+ * @period: balance period in ms
+ * @txq_limit: balance txq limit
  *
  * @param pdev - the physics device
  */
 void
 ol_txrx_bad_peer_txctl_set_setting(
-	struct cdp_pdev *pdev,
+	struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	int enable,
 	int period,
 	int txq_limit);
 
 /**
- * @brief Configure the bad peer tx threshold limit
- * @details
+ * ol_txrx_bad_peer_txctl_update_threshold() - Configure the bad peer tx
+ *					       threshold limit
+ * @soc_hdl: soc handle
+ * @pdev_id: datapath pdev identifier
+ * @level: txctl level
+ * @tput_thresh throughput threshold
+ * @tx_limit: balance tx limit
  *
  * @param pdev - the physics device
  */
 void
 ol_txrx_bad_peer_txctl_update_threshold(
-	struct cdp_pdev *pdev,
+	struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	int level,
 	int tput_thresh,
 	int tx_limit);
@@ -461,7 +471,7 @@ ol_txrx_bad_peer_txctl_update_threshold(
 
 static inline void
 ol_txrx_bad_peer_txctl_set_setting(
-	struct cdp_pdev *pdev,
+	struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	int enable,
 	int period,
 	int txq_limit)
@@ -470,7 +480,7 @@ ol_txrx_bad_peer_txctl_set_setting(
 
 static inline void
 ol_txrx_bad_peer_txctl_update_threshold(
-	struct cdp_pdev *pdev,
+	struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	int level,
 	int tput_thresh,
 	int tx_limit)

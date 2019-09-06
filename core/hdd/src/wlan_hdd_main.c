@@ -11235,7 +11235,7 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 
 	cdp_register_pause_cb(soc, wlan_hdd_txrx_pause_cb);
 	/* Register HL netdev flow control callback */
-	cdp_hl_fc_register(soc, wlan_hdd_txrx_pause_cb);
+	cdp_hl_fc_register(soc, OL_TXRX_PDEV_ID, wlan_hdd_txrx_pause_cb);
 	/* Register rx mic error indication handler */
 	cdp_register_rx_mic_error_ind_handler(soc, hdd_rx_mic_error_ind);
 
@@ -13459,7 +13459,7 @@ static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 	ucfg_ipa_set_perf_level(hdd_ctx->pdev, 0, 0);
 	hdd_reset_tcp_delack(hdd_ctx);
 	cdp_pdev_reset_driver_del_ack(cds_get_context(QDF_MODULE_ID_SOC),
-				      cds_get_context(QDF_MODULE_ID_TXRX));
+				      OL_TXRX_PDEV_ID);
 }
 
 void hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)

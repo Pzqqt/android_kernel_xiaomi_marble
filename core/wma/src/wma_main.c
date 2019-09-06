@@ -2185,7 +2185,7 @@ static int wma_flush_complete_evt_handler(void *handle,
 		cdp_post_data_stall_event(soc,
 					DATA_STALL_LOG_INDICATOR_FIRMWARE,
 					data_stall_event->data_stall_type,
-					0XFF,
+					OL_TXRX_PDEV_ID,
 					data_stall_event->vdev_id_bitmap,
 					data_stall_event->recovery_type);
 	}
@@ -3721,7 +3721,7 @@ static int wma_pdev_set_hw_mode_resp_evt_handler(void *handle,
 
 		vdev_id = vdev_mac_entry[i].vdev_id;
 		pdev_id = vdev_mac_entry[i].pdev_id;
-		if (pdev_id == WMI_PDEV_ID_SOC) {
+		if (pdev_id == OL_TXRX_PDEV_ID) {
 			WMA_LOGE("%s: soc level id received for mac id)",
 				 __func__);
 			goto fail;
@@ -3822,7 +3822,7 @@ void wma_process_pdev_hw_mode_trans_ind(void *handle,
 		vdev_id = vdev_mac_entry[i].vdev_id;
 		pdev_id = vdev_mac_entry[i].pdev_id;
 
-		if (pdev_id == WMI_PDEV_ID_SOC) {
+		if (pdev_id == OL_TXRX_PDEV_ID) {
 			WMA_LOGE("%s: soc level id received for mac id)",
 				 __func__);
 			return;
@@ -5987,7 +5987,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		goto free_hw_mode_list;
 	}
 
-	cdp_mark_first_wakeup_packet(soc,
+	cdp_mark_first_wakeup_packet(
+		soc, OL_TXRX_PDEV_ID,
 		wmi_service_enabled(wmi_handle,
 				    wmi_service_mark_first_wakeup_packet));
 	wma_handle->is_dfs_offloaded =
@@ -9325,7 +9326,7 @@ QDF_STATUS wma_send_pdev_set_antenna_mode(tp_wma_handle wma_handle,
 		WMITLV_GET_STRUCT_TLVLEN(
 			wmi_pdev_set_antenna_mode_cmd_fixed_param));
 
-	cmd->pdev_id = WMI_PDEV_ID_SOC;
+	cmd->pdev_id = OL_TXRX_PDEV_ID;
 	/* Bits 0-15 is num of RX chains 16-31 is num of TX chains */
 	cmd->num_txrx_chains = msg->num_rx_chains;
 	cmd->num_txrx_chains |= (msg->num_tx_chains << 16);

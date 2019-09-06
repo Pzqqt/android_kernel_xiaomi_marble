@@ -356,10 +356,10 @@ void ucfg_pmo_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
 	pmo_core_psoc_set_hif_handle(psoc, hif_handle);
 }
 
-void ucfg_pmo_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
-				   void *txrx_handle)
+void ucfg_pmo_psoc_set_txrx_pdev_id(struct wlan_objmgr_psoc *psoc,
+				    uint8_t txrx_pdev_id)
 {
-	pmo_core_psoc_set_txrx_handle(psoc, txrx_handle);
+	pmo_core_psoc_set_txrx_pdev_id(psoc, txrx_pdev_id);
 }
 
 void ucfg_pmo_psoc_handle_initial_wake_up(void *cb_ctx)

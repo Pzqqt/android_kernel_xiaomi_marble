@@ -869,10 +869,11 @@ ol_tx_bad_peer_update_tx_limit(struct ol_txrx_pdev_t *pdev,
 }
 
 void
-ol_txrx_bad_peer_txctl_set_setting(struct cdp_pdev *ppdev,
+ol_txrx_bad_peer_txctl_set_setting(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 				   int enable, int period, int txq_limit)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 
 	if (enable)
 		pdev->tx_peer_bal.enabled = ol_tx_peer_bal_enable;
@@ -885,11 +886,12 @@ ol_txrx_bad_peer_txctl_set_setting(struct cdp_pdev *ppdev,
 }
 
 void
-ol_txrx_bad_peer_txctl_update_threshold(struct cdp_pdev *ppdev,
-					int level, int tput_thresh,
-					int tx_limit)
+ol_txrx_bad_peer_txctl_update_threshold(struct cdp_soc_t *soc_hdl,
+					uint8_t pdev_id, int level,
+					int tput_thresh, int tx_limit)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 
 	/* Set the current settingl */
 	pdev->tx_peer_bal.ctl_thresh[level].tput_thresh =

@@ -121,11 +121,13 @@ ol_tx_desc_pool_size_hl(struct cdp_cfg *ctrl_pdev);
 #if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
 
 void
-ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *vdev, bool flag);
+ol_txrx_hl_tdls_flag_reset(struct cdp_soc_t *soc_hdl,
+			   uint8_t vdev_id, bool flag);
 #else
 
 static inline void
-ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *vdev, bool flag)
+ol_txrx_hl_tdls_flag_reset(struct cdp_soc_t *soc_hdl,
+			   uint8_t vdev_id, bool flag)
 {
 }
 #endif
@@ -222,7 +224,7 @@ void *ol_txrx_find_peer_by_addr(struct cdp_pdev *pdev,
 				uint8_t *peer_addr,
 				uint8_t *peer_id);
 
-void htt_pkt_log_init(struct cdp_pdev *pdev_handle, void *scn);
+void htt_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn);
 void peer_unmap_timer_handler(void *data);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
@@ -549,12 +551,13 @@ struct ol_txrx_stats_req_internal
 /**
  * ol_txrx_register_hl_flow_control() -register hl netdev flow control callback
  * @soc_hdl: soc handle
- * @vdev_id: vdev_id
+ * @pdev_id: datapath pdev identifier
  * @flowControl: flow control callback
  *
  * Return: 0 for success or error code
  */
 int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc_hdl,
+				     uint8_t pdev_id,
 				     tx_pause_callback flowcontrol);
 
 /**
@@ -682,10 +685,11 @@ ol_txrx_vdev_alloc_tcp_node(struct ol_txrx_vdev_t *vdev);
  * Return: none
  */
 void
-ol_tx_pdev_reset_driver_del_ack(struct cdp_pdev *ppdev);
+ol_tx_pdev_reset_driver_del_ack(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
 
 /**
  * ol_tx_vdev_set_driver_del_ack_enable() - set driver delayed ack enabled flag
+ * @soc_hdl: datapath soc handle
  * @vdev_id: vdev id
  * @rx_packets: number of rx packets
  * @time_in_ms: time in ms
@@ -695,7 +699,8 @@ ol_tx_pdev_reset_driver_del_ack(struct cdp_pdev *ppdev);
  * Return: none
  */
 void
-ol_tx_vdev_set_driver_del_ack_enable(uint8_t vdev_id,
+ol_tx_vdev_set_driver_del_ack_enable(struct cdp_soc_t *soc_hdl,
+				     uint8_t vdev_id,
 				     unsigned long rx_packets,
 				     uint32_t time_in_ms,
 				     uint32_t high_th,
@@ -788,12 +793,13 @@ void ol_txrx_vdev_deinit_tcp_del_ack(struct ol_txrx_vdev_t *vdev)
 }
 
 static inline
-void ol_tx_pdev_reset_driver_del_ack(void)
+void ol_tx_pdev_reset_driver_del_ack(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 }
 
 static inline
-void ol_tx_vdev_set_driver_del_ack_enable(uint8_t vdev_id,
+void ol_tx_vdev_set_driver_del_ack_enable(struct cdp_soc_t *soc_hdl,
+					  uint8_t vdev_id,
 					  unsigned long rx_packets,
 					  uint32_t time_in_ms,
 					  uint32_t high_th,

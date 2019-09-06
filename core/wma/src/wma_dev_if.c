@@ -5169,7 +5169,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 		qdf_mem_free(roam_scan_stats_req);
 	}
 
-	if (wlan_op_mode_ibss == cdp_get_opmode(soc, txrx_vdev))
+	if (wlan_op_mode_ibss == cdp_get_opmode(soc, vdev_id))
 		wma->ibss_started = 0;
 
 	if (wma_is_roam_synch_in_progress(wma, vdev_id)) {

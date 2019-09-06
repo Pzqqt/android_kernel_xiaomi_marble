@@ -62,6 +62,7 @@
 
 #include <wma_types.h>
 #include <ol_txrx_osif_api.h>
+#include <ol_defines.h>
 #include "hif.h"
 #include "hif_unit_test_suspend.h"
 #include "sme_power_save_api.h"
@@ -1268,7 +1269,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	policy_mgr_clear_concurrent_session_count(hdd_ctx->psoc);
 
 	hdd_debug("Invoking packetdump deregistration API");
-	wlan_deregister_txrx_packetdump();
+	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
 
 	/* resume wlan threads before adapter reset which does vdev destroy */
 	if (hdd_ctx->is_scheduler_suspended) {

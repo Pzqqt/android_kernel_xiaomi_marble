@@ -385,24 +385,24 @@ void *pmo_core_psoc_get_hif_handle(struct wlan_objmgr_psoc *psoc)
 	return hif_hdl;
 }
 
-void pmo_core_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
-				   void *txrx_hdl)
+void pmo_core_psoc_set_txrx_pdev_id(struct wlan_objmgr_psoc *psoc,
+				    uint8_t txrx_pdev_id)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
-		psoc_ctx->txrx_hdl = txrx_hdl;
+		psoc_ctx->txrx_pdev_id = txrx_pdev_id;
 	}
 }
 
-void *pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc)
+uint8_t pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc)
 {
-	void *txrx_hdl = NULL;
+	uint8_t txrx_pdev_id = OL_TXRX_INVALID_PDEV_ID;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
-		txrx_hdl = psoc_ctx->txrx_hdl;
+		txrx_pdev_id = psoc_ctx->txrx_pdev_id;
 	}
 
-	return txrx_hdl;
+	return txrx_pdev_id;
 }

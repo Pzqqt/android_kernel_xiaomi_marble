@@ -71,6 +71,8 @@
 #include "wlan_blm_ucfg_api.h"
 #include "wlan_hdd_sta_info.h"
 
+#include <ol_defines.h>
+
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
 #define HDD_RSN_OUI_SIZE 4
@@ -1745,7 +1747,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	hdd_clear_roam_profile_ie(adapter);
 	hdd_wmm_init(adapter);
 	hdd_debug("Invoking packetdump deregistration API");
-	wlan_deregister_txrx_packetdump();
+	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
 
 	/* indicate 'disconnect' status to wpa_supplicant... */
 	hdd_send_association_event(dev, roam_info);
@@ -3586,7 +3588,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				       roam_result, roam_status);
 			}
 			hdd_debug("Invoking packetdump deregistration API");
-			wlan_deregister_txrx_packetdump();
+			wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
 
 			/* inform association failure event to nl80211 */
 			if (eCSR_ROAM_RESULT_ASSOC_FAIL_CON_CHANNEL ==

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,9 +64,9 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 		unsigned int tid, qdf_nbuf_t msdu_list);
 
 A_STATUS
-ol_get_intra_bss_fwd_pkts_count(
-	uint8_t vdev_id,
-	uint64_t *fwd_tx_packets,
-	uint64_t *fwd_rx_packets);
+ol_get_intra_bss_fwd_pkts_count(struct cdp_soc_t *soc_hdl,
+				uint8_t vdev_id,
+				uint64_t *fwd_tx_packets,
+				uint64_t *fwd_rx_packets);
 
 #endif /* _OL_RX_FWD_H_ */

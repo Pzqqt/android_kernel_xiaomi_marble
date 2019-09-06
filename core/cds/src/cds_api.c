@@ -54,6 +54,7 @@
 #include <cdp_txrx_cmn_reg.h>
 #include <cdp_txrx_cfg.h>
 #include <cdp_txrx_misc.h>
+#include <ol_defines.h>
 #include <dispatcher_init_deinit.h>
 #include <cdp_txrx_handle.h>
 #include "target_type.h"
@@ -810,14 +811,14 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 		false : gp_cds_context->cds_cfg->enable_dp_rx_threads;
 
 	qdf_status = dp_txrx_init(cds_get_context(QDF_MODULE_ID_SOC),
-				  WMI_PDEV_ID_SOC,
+				  OL_TXRX_PDEV_ID,
 				  &dp_config);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		goto intr_close;
 
-	ucfg_pmo_psoc_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
-	ucfg_ocb_set_txrx_pdev_id(psoc, WMI_PDEV_ID_SOC);
+	ucfg_pmo_psoc_set_txrx_pdev_id(psoc, OL_TXRX_PDEV_ID);
+	ucfg_ocb_set_txrx_pdev_id(psoc, OL_TXRX_PDEV_ID);
 
 	cds_debug("CDS successfully Opened");
 
@@ -874,7 +875,7 @@ QDF_STATUS cds_pre_enable(void)
 	/* call Packetlog connect service */
 	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam() &&
 	    QDF_GLOBAL_EPPING_MODE != cds_get_conparam())
-		cdp_pkt_log_con_service(soc, gp_cds_context->pdev_txrx_ctx,
+		cdp_pkt_log_con_service(soc, OL_TXRX_PDEV_ID,
 					scn);
 
 	/*call WMA pre start */
@@ -1266,7 +1267,7 @@ QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 		       (struct cdp_pdev *)ctx, 1);
 
 	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
-	ucfg_pmo_psoc_set_txrx_handle(psoc, NULL);
+	ucfg_pmo_psoc_set_txrx_pdev_id(psoc, OL_TXRX_INVALID_PDEV_ID);
 
 	return QDF_STATUS_SUCCESS;
 }

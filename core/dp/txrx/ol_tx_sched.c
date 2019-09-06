@@ -427,7 +427,7 @@ ol_tx_sched_init_rr(
 }
 
 void
-ol_txrx_set_wmm_param(struct cdp_pdev *data_pdev,
+ol_txrx_set_wmm_param(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		      struct ol_tx_wmm_param_t wmm_param)
 {
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
@@ -1108,10 +1108,12 @@ ol_tx_sched_init_wrr_adv(
  * settings of the scheduler, ie. VO, VI, BE, or BK.
  */
 void
-ol_txrx_set_wmm_param(struct cdp_pdev *pdev,
+ol_txrx_set_wmm_param(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		      struct ol_tx_wmm_param_t wmm_param)
 {
-	struct ol_txrx_pdev_t *data_pdev = (struct ol_txrx_pdev_t *)pdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle data_pdev =
+				ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 	struct ol_tx_sched_wrr_adv_t def_cfg;
 	struct ol_tx_sched_wrr_adv_t *scheduler =
 					data_pdev->tx_sched.scheduler;

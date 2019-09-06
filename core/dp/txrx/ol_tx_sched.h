@@ -74,7 +74,7 @@ void ol_tx_sched_cur_state_display(struct ol_txrx_pdev_t *pdev);
 void ol_tx_sched_stats_clear(struct ol_txrx_pdev_t *pdev);
 
 void
-ol_txrx_set_wmm_param(struct cdp_pdev *data_pdev,
+ol_txrx_set_wmm_param(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		      struct ol_tx_wmm_param_t wmm_param);
 
 #else

@@ -916,8 +916,8 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		if (tx_desc->pkt_type != OL_TX_FRM_TSO) {
 			packetdump_cb = pdev->ol_tx_packetdump_cb;
 			if (packetdump_cb)
-				packetdump_cb(soc,
-					      (struct cdp_vdev *)tx_desc->vdev,
+				packetdump_cb(soc, pdev->id,
+					      tx_desc->vdev_id,
 					      netbuf, status, TX_DATA_PKT);
 		}
 #endif
@@ -1175,7 +1175,7 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 #if !defined(REMOVE_PKT_LOG)
 	packetdump_cb = pdev->ol_tx_packetdump_cb;
 	if (packetdump_cb)
-		packetdump_cb(soc, (struct cdp_vdev *)tx_desc->vdev,
+		packetdump_cb(soc, pdev->id, tx_desc->vdev_id,
 			      netbuf, status, TX_MGMT_PKT);
 #endif
 

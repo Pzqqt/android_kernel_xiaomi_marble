@@ -1041,9 +1041,8 @@ int wma_peer_state_change_event_handler(void *handle,
 	}
 
 	if ((cdp_get_opmode(cds_get_context(QDF_MODULE_ID_SOC),
-			vdev) ==
-			wlan_op_mode_sta) &&
-		event->state == WMI_PEER_STATE_AUTHORIZED) {
+			    event->vdev_id) == wlan_op_mode_sta) &&
+	    event->state == WMI_PEER_STATE_AUTHORIZED) {
 		/*
 		 * set event so that hdd
 		 * can procced and unpause tx queue
@@ -1635,17 +1634,12 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 					struct t_bad_peer_txtcl_config *config)
 {
 	/* Parameter sanity check */
-	struct cdp_pdev *curr_pdev;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!wma || !config) {
 		WMA_LOGE("%s Invalid input\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!curr_pdev)
-		return QDF_STATUS_E_FAILURE;
 
 	WMA_LOGE("%s enable %d period %d txq limit %d\n", __func__,
 		 config->enable,
@@ -1659,7 +1653,7 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 		int i = 0;
 
 		cdp_bad_peer_txctl_set_setting(soc,
-					curr_pdev,
+					WMI_PDEV_ID_SOC,
 					config->enable,
 					config->period,
 					config->txq_limit);
@@ -1670,7 +1664,7 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 			threshold = config->threshold[i].thresh[0];
 			limit =	config->threshold[i].txlimit;
 			cdp_bad_peer_txctl_update_threshold(soc,
-						curr_pdev,
+						WMI_PDEV_ID_SOC,
 						i,
 						threshold,
 						limit);
@@ -2401,7 +2395,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 wma_tx_dwnld_comp_callback tx_frm_download_comp_cb,
 			 void *pData,
 			 wma_tx_ota_comp_callback tx_frm_ota_comp_cb,
-			 uint8_t tx_flag, uint8_t vdev_id, bool tdlsFlag,
+			 uint8_t tx_flag, uint8_t vdev_id, bool tdls_flag,
 			 uint16_t channel_freq, enum rateid rid)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) (wma_context);
@@ -2460,7 +2454,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdp_hl_tdls_flag_reset(soc, txrx_vdev, false);
+	cdp_hl_tdls_flag_reset(soc, vdev_id, false);
 
 	if (frmType >= TXRX_FRM_MAX) {
 		WMA_LOGE("Invalid Frame Type Fail to send Frame");
@@ -2685,14 +2679,14 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 		/* Send the Data frame to TxRx in Non Standard Path */
 		cdp_hl_tdls_flag_reset(soc,
-			txrx_vdev, tdlsFlag);
+			vdev_id, tdls_flag);
 
 		ret = cdp_tx_non_std(soc,
-			txrx_vdev,
+			vdev_id,
 			OL_TX_SPEC_NO_FREE, skb);
 
 		cdp_hl_tdls_flag_reset(soc,
-			txrx_vdev, false);
+			vdev_id, false);
 
 		if (ret) {
 			WMA_LOGE("TxRx Rejected. Fail to do Tx");

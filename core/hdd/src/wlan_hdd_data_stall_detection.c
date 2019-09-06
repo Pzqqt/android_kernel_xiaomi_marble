@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,7 @@
 #include "cdp_txrx_cmn.h"
 #include "cdp_txrx_misc.h"
 #include "ol_txrx_types.h"
+#include "ol_defines.h"
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 #include "host_diag_core_event.h"
 #include "host_diag_core_log.h"
@@ -74,7 +75,8 @@ int hdd_register_data_stall_detect_cb(void)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* Register the data stall callback */
-	status = cdp_data_stall_cb_register(soc, hdd_data_stall_process_cb);
+	status = cdp_data_stall_cb_register(soc, OL_TXRX_PDEV_ID,
+					    hdd_data_stall_process_cb);
 	return qdf_status_to_os_return(status);
 }
 
@@ -84,6 +86,7 @@ int hdd_deregister_data_stall_detect_cb(void)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* De-Register the data stall callback */
-	status = cdp_data_stall_cb_deregister(soc, hdd_data_stall_process_cb);
+	status = cdp_data_stall_cb_deregister(soc, OL_TXRX_PDEV_ID,
+					      hdd_data_stall_process_cb);
 	return qdf_status_to_os_return(status);
 }

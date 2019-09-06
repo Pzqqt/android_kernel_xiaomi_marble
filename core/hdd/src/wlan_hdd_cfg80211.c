@@ -143,6 +143,7 @@
 #include "wlan_hdd_oemdata.h"
 #include "os_if_fwol.h"
 #include "wlan_hdd_sta_info.h"
+#include <ol_defines.h>
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -5610,9 +5611,7 @@ static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 	QDF_STATUS status;
 	bool wisa_mode;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	mac_handle_t mac_handle;
-	struct cdp_vdev *txrx_vdev = NULL;
 
 	hdd_enter_dev(dev);
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
@@ -5646,15 +5645,8 @@ static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 		hdd_err("Unable to set WISA mode: %d to FW", wisa_mode);
 		ret_val = -EINVAL;
 	}
-	if (QDF_IS_STATUS_SUCCESS(status) || !wisa_mode) {
-		txrx_vdev = cdp_get_vdev_from_vdev_id(soc,
-						      (struct cdp_pdev *)pdev,
-						      adapter->vdev_id);
-		if (!txrx_vdev)
-			ret_val = -EINVAL;
-		else
-			cdp_set_wisa_mode(soc, txrx_vdev, wisa_mode);
-	}
+	if (QDF_IS_STATUS_SUCCESS(status) || !wisa_mode)
+		cdp_set_wisa_mode(soc, adapter->vdev_id, wisa_mode);
 err:
 	hdd_exit();
 	return ret_val;
@@ -13366,7 +13358,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 		cdp_post_data_stall_event(soc,
 				      DATA_STALL_LOG_INDICATOR_FRAMEWORK,
 				      DATA_STALL_LOG_NUD_FAILURE,
-				      0xFF, 0XFF,
+				      OL_TXRX_PDEV_ID, 0XFF,
 				      DATA_STALL_LOG_RECOVERY_TRIGGER_PDR);
 
 	mac_handle = hdd_ctx->mac_handle;

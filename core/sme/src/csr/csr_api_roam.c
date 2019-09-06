@@ -65,6 +65,8 @@
 #include "wlan_blm_api.h"
 #include "wlan_policy_mgr_i.h"
 
+#include <ol_defines.h>
+
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -1699,7 +1701,7 @@ static void csr_packetdump_timer_handler(void *pv)
 {
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"%s Invoking packetdump deregistration API", __func__);
-	wlan_deregister_txrx_packetdump();
+	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
 }
 
 void csr_packetdump_timer_stop(void)
@@ -16536,7 +16538,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 
 		if (pProfile->csrPersona == QDF_STA_MODE) {
 			sme_debug("Invoking packetdump register API");
-			wlan_register_txrx_packetdump();
+			wlan_register_txrx_packetdump(OL_TXRX_PDEV_ID);
 			packetdump_timer_status = qdf_mc_timer_start(
 						&mac->roam.packetdump_timer,
 						(PKT_DUMP_TIMER_DURATION *

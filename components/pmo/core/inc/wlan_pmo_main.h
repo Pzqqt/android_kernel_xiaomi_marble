@@ -315,22 +315,22 @@ void pmo_core_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
 void *pmo_core_psoc_get_hif_handle(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_core_psoc_set_txrx_handle() - update psoc pdev txrx layer handle
+ * pmo_core_psoc_set_txrx_pdev_id() - update psoc pdev txrx layer handle
  * @psoc: objmgr psoc handle
- * @txrx_hdl: pdev txrx context handle
+ * @txrx_pdev_id: txrx pdev identifier
  *
  * Return: None
  */
-void pmo_core_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
-				   void *txrx_hdl);
+void pmo_core_psoc_set_txrx_pdev_id(struct wlan_objmgr_psoc *psoc,
+				    uint8_t txrx_pdev_id);
 
 /**
  * pmo_core_psoc_get_txrx_handle() - Get psoc pdev txrx handle
  * @psoc: objmgr psoc handle
  *
- * Return: pdev txrx handle
+ * Return: txrx pdev identifier
  */
-void *pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc);
+uint8_t pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc);
 
 /**
  * pmo_intersect_arp_ns_offload() - intersect config and firmware capability for

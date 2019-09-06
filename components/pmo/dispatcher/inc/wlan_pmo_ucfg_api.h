@@ -767,14 +767,14 @@ void ucfg_pmo_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
 				  void *hif_handle);
 
 /**
- * ucfg_pmo_psoc_set_txrx_handle() - Set psoc pdev txrx layer handle
+ * ucfg_pmo_psoc_set_txrx_pdev_id() - Set psoc pdev txrx layer handle
  * @psoc: objmgr psoc handle
- * @txrx_handle: pdev txrx context handle
+ * @txrx_pdev_id: txrx pdev identifier
  *
  * Return: None
  */
-void ucfg_pmo_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
-				   void *txrx_handle);
+void ucfg_pmo_psoc_set_txrx_pdev_id(struct wlan_objmgr_psoc *psoc,
+				    uint8_t txrx_pdev_id);
 
 /**
  * ucfg_pmo_psoc_user_space_suspend_req() -  Handles user space suspend req
@@ -1392,9 +1392,9 @@ ucfg_pmo_psoc_set_hif_handle(
 }
 
 static inline void
-ucfg_pmo_psoc_set_txrx_handle(
+ucfg_pmo_psoc_set_txrx_pdev_id(
 		struct wlan_objmgr_psoc *psoc,
-		void *txrx_handle)
+		uint8_t txrx_pdev_id)
 {
 }
 

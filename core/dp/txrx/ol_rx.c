@@ -1706,8 +1706,7 @@ void ol_rx_pkt_dump_call(
 	packetdump_cb = pdev->ol_rx_packetdump_cb;
 	if (packetdump_cb &&
 	    wlan_op_mode_sta == peer->vdev->opmode)
-		packetdump_cb(soc_hdl,
-			      (struct cdp_vdev *)peer->vdev,
+		packetdump_cb(soc_hdl, OL_TXRX_PDEV_ID, peer->vdev->vdev_id,
 			      msdu, status, RX_DATA_PKT);
 }
 #endif

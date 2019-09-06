@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,6 +29,7 @@
 #include <cdp_txrx_misc.h>      /* ol_tx_spec */
 #include <cdp_txrx_handle.h>
 #include <ol_txrx_types.h>      /* ol_tx_desc_t, ol_txrx_msdu_info_t */
+#include <ol_txrx.h>
 #include <hif.h>
 
 #ifdef IPA_OFFLOAD
@@ -124,7 +125,8 @@ ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 
 /**
  * ol_tx_non_std() - Allow the control-path SW to send data frames
- * @data_vdev: which vdev should transmit the tx data frames
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: id of vdev
  * @tx_spec: what non-standard handling to apply to the tx data frames
  * @msdu_list: NULL-terminated list of tx MSDUs
  *
@@ -149,10 +151,12 @@ qdf_nbuf_t ol_tx_non_std_hl(struct ol_txrx_vdev_t *vdev,
 			    qdf_nbuf_t msdu_list);
 
 static inline qdf_nbuf_t
-ol_tx_non_std(struct cdp_vdev *pvdev,
+ol_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_vdev_t *vdev;
+
+	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 
 	return ol_tx_non_std_hl(vdev, tx_spec, msdu_list);
 }
@@ -161,10 +165,12 @@ qdf_nbuf_t ol_tx_non_std_ll(struct ol_txrx_vdev_t *vdev,
 			    enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 
 static inline qdf_nbuf_t
-ol_tx_non_std(struct cdp_vdev *pvdev,
+ol_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_vdev_t *vdev;
+
+	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 
 	return ol_tx_non_std_ll(vdev, tx_spec, msdu_list);
 }

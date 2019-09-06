@@ -693,14 +693,16 @@ MSDU_LOOP_BOTTOM:
 
 /**
  * ol_tx_pdev_reset_driver_del_ack() - reset driver delayed ack enabled flag
- * @ppdev: the data physical device
+ * @soc_hdl: soc handle
+ * @pdev_id: datapath pdev identifier
  *
  * Return: none
  */
 void
-ol_tx_pdev_reset_driver_del_ack(struct cdp_pdev *ppdev)
+ol_tx_pdev_reset_driver_del_ack(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 	struct ol_txrx_vdev_t *vdev;
 
 	if (!pdev)
@@ -716,6 +718,7 @@ ol_tx_pdev_reset_driver_del_ack(struct cdp_pdev *ppdev)
 
 /**
  * ol_tx_vdev_set_driver_del_ack_enable() - set driver delayed ack enabled flag
+ * @soc_hdl: datapath soc handle
  * @vdev_id: vdev id
  * @rx_packets: number of rx packets
  * @time_in_ms: time in ms
@@ -725,7 +728,8 @@ ol_tx_pdev_reset_driver_del_ack(struct cdp_pdev *ppdev)
  * Return: none
  */
 void
-ol_tx_vdev_set_driver_del_ack_enable(uint8_t vdev_id,
+ol_tx_vdev_set_driver_del_ack_enable(struct cdp_soc_t *soc_hdl,
+				     uint8_t vdev_id,
 				     unsigned long rx_packets,
 				     uint32_t time_in_ms,
 				     uint32_t high_th,
@@ -1646,15 +1650,18 @@ void ol_txrx_pdev_grp_stat_destroy(struct ol_txrx_pdev_t *pdev)
 
 /**
  * ol_txrx_hl_tdls_flag_reset() - reset tdls flag for vdev
- * @vdev: the virtual device object
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: id of vdev
  * @flag: flag
  *
  * Return: None
  */
 void
-ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *pvdev, bool flag)
+ol_txrx_hl_tdls_flag_reset(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			   bool flag)
 {
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 
 	vdev->hlTdlsFlag = flag;
 }
@@ -1923,13 +1930,19 @@ int ol_txrx_distribute_group_credits(struct ol_txrx_pdev_t *pdev,
 
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
 int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc_hdl,
+				     uint8_t pdev_id,
 				     tx_pause_callback flowcontrol)
 {
 	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
-	uint8_t pdev_id = OL_TXRX_PDEV_ID;
 	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
-	u32 desc_pool_size = ol_tx_desc_pool_size_hl(pdev->ctrl_pdev);
+	u32 desc_pool_size;
 
+	if (!pdev || !flowcontrol) {
+		ol_txrx_err("pdev or pause_cb is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	desc_pool_size = ol_tx_desc_pool_size_hl(pdev->ctrl_pdev);
 	/*
 	 * Assert if the tx descriptor pool size meets the requirements
 	 * Maximum 2 sessions are allowed on a band.
@@ -1937,12 +1950,6 @@ int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc_hdl,
 	QDF_ASSERT((2 * ol_txrx_tx_desc_alloc_table[TXRX_FC_5GH_80M_2x2] +
 		    ol_txrx_tx_desc_alloc_table[TXRX_FC_2GH_40M_2x2])
 		    <= desc_pool_size);
-
-	if (!pdev || !flowcontrol) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "pdev or pause_cb is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
 
 	pdev->pause_cb = flowcontrol;
 	return 0;
