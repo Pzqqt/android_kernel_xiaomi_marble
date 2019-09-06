@@ -1095,9 +1095,13 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 		cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
 		qdf_mem_zero(key->keyval, sizeof(key->keyval));
 
-		if (WLAN_CRYPTO_TX_OPS_DELKEY(psoc)) {
+		if (!IS_FILS_CIPHER(cipher_table->cipher) &&
+		    WLAN_CRYPTO_TX_OPS_DELKEY(psoc)) {
 			WLAN_CRYPTO_TX_OPS_DELKEY(psoc)(vdev, key,
 						macaddr, cipher_table->cipher);
+		} else if (IS_FILS_CIPHER(cipher_table->cipher)) {
+			if (key->private)
+				qdf_mem_free(key->private);
 		}
 	}
 	qdf_mem_free(key);
