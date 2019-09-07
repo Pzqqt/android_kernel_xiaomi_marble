@@ -3469,11 +3469,12 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 	for (j = 0; j < hif_ext_group->numirq; j++) {
 		irq = hif_ext_group->irq[j];
 
-		HIF_DBG("%s: request_irq = %d for grp %d",
-			  __func__, irq, hif_ext_group->grp_id);
+		hif_info("request_irq = %d for grp %d",
+			 irq, hif_ext_group->grp_id);
 		ret = request_irq(irq,
 				  hif_ext_group_interrupt_handler,
-				  IRQF_SHARED, "wlan_EXT_GRP",
+				  IRQF_SHARED | IRQF_NO_SUSPEND,
+				  "wlan_EXT_GRP",
 				  hif_ext_group);
 		if (ret) {
 			HIF_ERROR("%s: request_irq failed ret = %d",
