@@ -10213,6 +10213,11 @@ typedef enum {
     /* Enable/Disable using NULL frame for leaky AP  */
     WMI_VDEV_PARAM_ENABLE_NULL_FOR_LEAKY_AP,   /* 0x96 */
 
+    /**
+     * To configure duration of how many seconds without TX/RX data traffic,
+     * NDI vdev can kickout the connected peer (i.e. NDP Termination).
+     */
+    WMI_VDEV_PARAM_NDP_INACTIVITY_TIMEOUT,     /* 0x97 */
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
