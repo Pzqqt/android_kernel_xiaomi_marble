@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,23 +62,6 @@ target_if_tdls_update_peer_state(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 target_if_tdls_set_offchan_mode(struct wlan_objmgr_psoc *psoc,
 				struct tdls_channel_switch_params *params);
-
-/**
- * target_if_tdls_set_uapsd() - lmac handler to set uapsd auto trigger cmd
- * @psoc: psoc object
- * @params: upasd parameters
- *
- * This function sets the trigger
- * uapsd params such as service interval, delay interval
- * and suspend interval which will be used by the firmware
- * to send trigger frames periodically when there is no
- * traffic on the transmit side.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-target_if_tdls_set_uapsd(struct wlan_objmgr_psoc *psoc,
-			 struct sta_uapsd_trig_params *params);
 
 /**
  * target_if_tdls_register_event_handler() - lmac handler to register tdls event

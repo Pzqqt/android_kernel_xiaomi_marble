@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,16 +56,6 @@ QDF_STATUS tgt_tdls_set_peer_state(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS tgt_tdls_set_offchan_mode(struct wlan_objmgr_psoc *psoc,
 				     struct tdls_channel_switch_params *param);
-
-/**
- * tgt_tdls_set_uapsd()- invoke lamc tdls set uapsd function
- * @psoc: soc object
- * @params: uapsd parameters
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS tgt_tdls_set_uapsd(struct wlan_objmgr_psoc *psoc,
-			      struct sta_uapsd_trig_params *params);
 
 /**
  * tgt_tdls_send_mgmt_rsp() - process tdls mgmt response
