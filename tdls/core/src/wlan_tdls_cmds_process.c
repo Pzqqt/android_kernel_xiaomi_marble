@@ -1577,64 +1577,6 @@ tdls_wma_update_peer_state(struct tdls_soc_priv_obj *soc_obj,
 	return status;
 }
 
-static QDF_STATUS
-tdls_update_uapsd(struct wlan_objmgr_psoc *psoc, struct wlan_objmgr_vdev *vdev,
-		  uint8_t sta_id, uint32_t srvc_int, uint32_t sus_int,
-		  uint8_t dir, uint8_t psb, uint32_t delay_interval)
-{
-	uint8_t i;
-	static const uint8_t ac[AC_PRIORITY_NUM] = {UAPSD_AC_VO, UAPSD_AC_VI,
-						    UAPSD_AC_BK, UAPSD_AC_BE};
-	static const uint8_t tid[AC_PRIORITY_NUM] = {7, 5, 2, 3};
-	uint32_t vdev_id;
-
-	struct sta_uapsd_params tdls_uapsd_params;
-	struct sta_uapsd_trig_params tdls_trig_params;
-	struct wlan_objmgr_peer *bsspeer;
-	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
-	QDF_STATUS status;
-
-	if (!psb) {
-		tdls_debug("No need to configure auto trigger:psb is 0");
-		return QDF_STATUS_SUCCESS;
-	}
-	vdev_id = wlan_vdev_get_id(vdev);
-	bsspeer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_TDLS_SB_ID);
-	if (!bsspeer) {
-		tdls_err("bss peer is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	wlan_vdev_obj_lock(vdev);
-	qdf_mem_copy(macaddr,
-		     wlan_peer_get_macaddr(bsspeer), QDF_MAC_ADDR_SIZE);
-	wlan_vdev_obj_unlock(vdev);
-	wlan_objmgr_peer_release_ref(bsspeer, WLAN_TDLS_SB_ID);
-
-	tdls_debug("TDLS uapsd id %d, srvc %d, sus %d, dir %d psb %d delay %d",
-		   sta_id, srvc_int, sus_int, dir, psb, delay_interval);
-	for (i = 0; i < AC_PRIORITY_NUM; i++) {
-		tdls_uapsd_params.wmm_ac = ac[i];
-		tdls_uapsd_params.user_priority = tid[i];
-		tdls_uapsd_params.service_interval = srvc_int;
-		tdls_uapsd_params.delay_interval = delay_interval;
-		tdls_uapsd_params.suspend_interval = sus_int;
-
-		tdls_trig_params.vdevid = vdev_id;
-		tdls_trig_params.num_ac = 1;
-		tdls_trig_params.auto_triggerparam = &tdls_uapsd_params;
-
-		qdf_mem_copy(tdls_trig_params.peer_addr,
-			     macaddr, QDF_MAC_ADDR_SIZE);
-		status = tgt_tdls_set_uapsd(psoc, &tdls_trig_params);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			tdls_err("Failed to set uapsd for vdev %d, status %d",
-				 vdev_id, status);
-		}
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS tdls_process_enable_link(struct tdls_oper_request *req)
 {
 	struct tdls_peer *peer;
@@ -1727,11 +1669,6 @@ QDF_STATUS tdls_process_enable_link(struct tdls_oper_request *req)
 		   TDLS_IS_BUFFER_STA_ENABLED(feature),
 		   soc_obj->tdls_configs.tdls_uapsd_mask);
 
-	if (TDLS_IS_BUFFER_STA_ENABLED(feature) ||
-	    soc_obj->tdls_configs.tdls_uapsd_mask)
-		tdls_update_uapsd(soc_obj->soc,
-				  vdev, peer->sta_id, 0, 0, BI_DIR, 1,
-				  soc_obj->tdls_configs.delayed_trig_framint);
 error:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 	qdf_mem_free(req);

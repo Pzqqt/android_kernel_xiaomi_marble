@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -136,35 +136,6 @@ target_if_tdls_set_offchan_mode(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
-target_if_tdls_set_uapsd(struct wlan_objmgr_psoc *psoc,
-			 struct sta_uapsd_trig_params *params)
-{
-	QDF_STATUS ret;
-	struct wmi_unified *wmi_handle;
-
-	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
-	if (!wmi_handle) {
-		target_if_err("Invalid WMI handle");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (!wmi_service_enabled(wmi_handle,
-				    wmi_sta_uapsd_basic_auto_trig) ||
-	    !wmi_service_enabled(wmi_handle,
-				    wmi_sta_uapsd_var_auto_trig)) {
-		target_if_debug("Trigger uapsd is not supported vdev id %d",
-				params->vdevid);
-		return QDF_STATUS_SUCCESS;
-	}
-	ret = wmi_unified_set_sta_uapsd_auto_trig_cmd(wmi_handle,
-						      params);
-
-	if (QDF_IS_STATUS_ERROR(ret))
-		target_if_err("Failed to send set uapsd param ret = %d", ret);
-
-	return ret;
-}
-
-QDF_STATUS
 target_if_tdls_register_event_handler(struct wlan_objmgr_psoc *psoc,
 				      void *arg)
 {
@@ -208,7 +179,6 @@ target_if_tdls_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	tdls_txops->tdls_reg_ev_handler = target_if_tdls_register_event_handler;
 	tdls_txops->tdls_unreg_ev_handler =
 		target_if_tdls_unregister_event_handler;
-	tdls_txops->tdls_set_uapsd = target_if_tdls_set_uapsd;
 
 	return QDF_STATUS_SUCCESS;
 }
