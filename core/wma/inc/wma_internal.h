@@ -638,21 +638,11 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event);
 QDF_STATUS wma_vdev_start(tp_wma_handle wma, struct wma_vdev_start_req *req,
 			  bool isRestart);
 
-void wma_vdev_resp_timer(void *data);
-
-struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
-						uint8_t vdev_id,
-						uint32_t msg_type, uint8_t type,
-						void *params, uint32_t timeout);
-
 void wma_hold_req_timer(void *data);
 struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 				    uint8_t vdev_id, uint32_t msg_type,
 				    uint8_t type, void *params,
 				    uint32_t timeout);
-
-void wma_remove_vdev_req(tp_wma_handle wma, uint8_t vdev_id,
-				uint8_t type);
 
 void wma_add_bss(tp_wma_handle wma, struct bss_params *params);
 

@@ -732,9 +732,7 @@ struct roam_synch_frame_ind {
  * @ns_offload_req: cached ns offload request
  * @rcpi_req: rcpi request
  * @in_bmps: Whether bmps for this interface has been enabled
- * @vdev_start_wakelock: wakelock to protect vdev start op with firmware
  * @vdev_set_key_wakelock: wakelock to protect vdev set key op with firmware
- * @vdev_start_runtime_wakelock: runtime pm wakelock for vdev start
  * @vdev_set_key_runtime_wakelock: runtime pm wakelock for set key
  * @channel: channel
  * @roam_offload_enabled: is roam offload enable/disable
@@ -801,9 +799,7 @@ struct wma_txrx_node {
 	bool in_bmps;
 	struct beacon_filter_param beacon_filter;
 	bool beacon_filter_enabled;
-	qdf_wake_lock_t vdev_start_wakelock;
 	qdf_wake_lock_t vdev_set_key_wakelock;
-	qdf_runtime_lock_t vdev_start_runtime_wakelock;
 	qdf_runtime_lock_t vdev_set_key_runtime_wakelock;
 	struct roam_synch_frame_ind roam_synch_frame_ind;
 	bool is_waiting_for_key;
@@ -916,8 +912,6 @@ struct wma_wlm_stats_data {
  * @scan_id: scan id
  * @interfaces: txrx nodes(per vdev)
  * @pdevconfig: pdev related configrations
- * @vdev_resp_queue: vdev response queue
- * @vdev_respq_lock: vdev response queue lock
  * @wma_hold_req_queue: Queue use to serialize requests to firmware
  * @wma_hold_req_q_lock: Mutex for @wma_hold_req_queue
  * @vht_supp_mcs: VHT supported MCS
@@ -1048,8 +1042,6 @@ typedef struct {
 	uint32_t scan_id;
 	struct wma_txrx_node *interfaces;
 	pdev_cli_config_t pdevconfig;
-	qdf_list_t vdev_resp_queue;
-	qdf_spinlock_t vdev_respq_lock;
 	qdf_list_t wma_hold_req_queue;
 	qdf_spinlock_t wma_hold_req_q_lock;
 	uint32_t vht_supp_mcs;
@@ -1659,10 +1651,6 @@ QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
 QDF_STATUS wma_send_pdev_set_antenna_mode(tp_wma_handle wma_handle,
 		struct sir_antenna_mode_param *msg);
 
-struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
-					 uint8_t vdev_id,
-					 uint32_t msg_type, uint8_t type,
-					 void *params, uint32_t timeout);
 struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 				    uint8_t vdev_id, uint32_t msg_type,
 				    uint8_t type, void *params,
@@ -1670,9 +1658,6 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 
 QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 			  struct wma_vdev_start_req *req, bool isRestart);
-
-void wma_remove_vdev_req(tp_wma_handle wma, uint8_t vdev_id,
-				uint8_t type);
 
 int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 				   uint32_t len);
