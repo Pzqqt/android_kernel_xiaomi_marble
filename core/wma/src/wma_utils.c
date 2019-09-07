@@ -3250,22 +3250,17 @@ void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 		return;
 	}
 	wma->interfaces[vdev_id].mac_id = mac_id;
-	if (mac_id == 0) {
+	if (mac_id == 0)
 		wma->interfaces[vdev_id].tx_streams =
 			hw_mode.mac0_tx_ss;
-		wma->interfaces[vdev_id].rx_streams =
-			hw_mode.mac0_rx_ss;
-	} else {
+	else
 		wma->interfaces[vdev_id].tx_streams =
 			hw_mode.mac1_tx_ss;
-		wma->interfaces[vdev_id].rx_streams =
-			hw_mode.mac1_tx_ss;
-	}
-	WMA_LOGD("%s: vdev %d, update tx ss:%d rx ss:%d mac %d hw_mode_id %d",
+
+	WMA_LOGD("%s: vdev %d, update tx ss:%d mac %d hw_mode_id %d",
 		 __func__,
 		 vdev_id,
 		 wma->interfaces[vdev_id].tx_streams,
-		 wma->interfaces[vdev_id].rx_streams,
 		 mac_id,
 		 cfgd_hw_mode_index);
 }

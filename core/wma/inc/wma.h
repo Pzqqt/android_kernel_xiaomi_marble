@@ -172,8 +172,6 @@
 #define WMA_BSS_STATUS_STARTED 0x1
 #define WMA_BSS_STATUS_STOPPED 0x2
 
-#define WMA_TARGET_REQ_TYPE_VDEV_START 0x1
-
 #define WMA_PEER_ASSOC_CNF_START 0x01
 #define WMA_PEER_ASSOC_TIMEOUT SIR_PEER_ASSOC_TIMEOUT
 
@@ -188,7 +186,6 @@
 #define WMA_PDEV_MAC_CFG_RESP 0x07
 
 /* FW response timeout values in milli seconds */
-#define WMA_VDEV_START_REQUEST_TIMEOUT   START_RESPONSE_TIMER
 #define WMA_VDEV_PLCY_MGR_TIMEOUT        SIR_VDEV_PLCY_MGR_TIMEOUT
 #define WMA_VDEV_HW_MODE_REQUEST_TIMEOUT WMA_VDEV_PLCY_MGR_TIMEOUT
 #define WMA_VDEV_DUAL_MAC_CFG_TIMEOUT    WMA_VDEV_PLCY_MGR_TIMEOUT
@@ -695,8 +692,6 @@ struct roam_synch_frame_ind {
  * @shortSlotTimeSupported: is short slot time supported or not
  * @dtimPeriod: DTIM period
  * @chanmode: channel mode
- * @vht_capable: VHT capablity flag
- * @ht_capable: HT capablity flag
  * @mhz: channel frequency in KHz
  * @chan_width: channel bandwidth
  * @vdev_up: is vdev up or not
@@ -724,8 +719,6 @@ struct roam_synch_frame_ind {
  * @psnr_req: snr request
  * @delay_before_vdev_stop: delay
  * @tx_streams: number of tx streams can be used by the vdev
- * @rx_streams: number of rx streams can be used by the vdev
- * @chain_mask: chain mask can be used by the vdev
  * @mac_id: the mac on which vdev is on
  * @wep_default_key_idx: wep default index for group key
  * @arp_offload_req: cached arp offload request
@@ -757,8 +750,6 @@ struct wma_txrx_node {
 	uint8_t shortSlotTimeSupported;
 	uint8_t dtimPeriod;
 	WMI_HOST_WLAN_PHY_MODE chanmode;
-	uint8_t vht_capable;
-	uint8_t ht_capable;
 	A_UINT32 mhz;
 	enum phy_ch_width chan_width;
 	bool vdev_active;
@@ -789,8 +780,6 @@ struct wma_txrx_node {
 	bool extscan_in_progress;
 #endif
 	uint32_t tx_streams;
-	uint32_t rx_streams;
-	uint32_t chain_mask;
 	uint32_t mac_id;
 	bool roaming_in_progress;
 	int32_t roam_synch_delay;

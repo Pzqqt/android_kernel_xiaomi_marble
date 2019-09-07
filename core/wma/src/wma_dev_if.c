@@ -1143,10 +1143,6 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	if (rsp->status == QDF_STATUS_SUCCESS) {
 		wma->interfaces[rsp->vdev_id].tx_streams =
 			rsp->cfgd_tx_streams;
-		wma->interfaces[rsp->vdev_id].rx_streams =
-			rsp->cfgd_rx_streams;
-		wma->interfaces[rsp->vdev_id].chain_mask =
-			rsp->chain_mask;
 
 		if (wlan_res_cfg->use_pdev_id) {
 			if (rsp->mac_id == WMI_PDEV_ID_SOC) {
@@ -1163,9 +1159,9 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 		WMA_LOGD("%s: vdev:%d tx ss=%d rx ss=%d chain mask=%d mac=%d",
 				__func__,
 				rsp->vdev_id,
-				wma->interfaces[rsp->vdev_id].tx_streams,
-				wma->interfaces[rsp->vdev_id].rx_streams,
-				wma->interfaces[rsp->vdev_id].chain_mask,
+				rsp->cfgd_tx_streams,
+				rsp->cfgd_rx_streams,
+				rsp->chain_mask,
 				wma->interfaces[rsp->vdev_id].mac_id);
 	}
 
@@ -2863,8 +2859,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	params.vdev_id = req->vdev_id;
 
 	intr[params.vdev_id].chanmode = chan_mode;
-	intr[params.vdev_id].ht_capable = req->ht_capable;
-	intr[params.vdev_id].vht_capable = req->vht_capable;
 	intr[params.vdev_id].config.gtx_info.gtxRTMask[0] =
 		CFG_TGT_DEFAULT_GTX_HT_MASK;
 	intr[params.vdev_id].config.gtx_info.gtxRTMask[1] =

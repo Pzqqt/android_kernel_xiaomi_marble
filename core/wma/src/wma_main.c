@@ -2049,8 +2049,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			"\toem_response %u\n"
 			"dtimPeriod %d\n"
 			"chanmode %d\n"
-			"vht_capable %d\n"
-			"ht_capable %d\n"
 			"chan_width %d\n"
 			"vdev_active %d\n"
 			"vdev_up %d\n"
@@ -2060,9 +2058,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			"tx_power %d\n"
 			"max_tx_power %d\n"
 			"nwType %d\n"
-			"tx_streams %d\n"
-			"rx_streams %d\n"
-			"chain_mask %d",
+			"tx_streams %d",
 			vdev_id,
 			stats.pno_match_wake_up_count,
 			stats.pno_complete_wake_up_count,
@@ -2081,8 +2077,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			stats.oem_response_wake_up_count,
 			iface->dtimPeriod,
 			iface->chanmode,
-			iface->vht_capable,
-			iface->ht_capable,
 			iface->chan_width,
 			iface->vdev_active,
 			wma_is_vdev_up(vdev_id),
@@ -2092,9 +2086,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			iface->tx_power,
 			iface->max_tx_power,
 			iface->nwType,
-			iface->tx_streams,
-			iface->rx_streams,
-			iface->chain_mask);
+			iface->tx_streams);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	}
 
