@@ -1023,9 +1023,15 @@ static void sde_hw_sspp_setup_uidle(struct sde_hw_pipe *ctx,
 }
 
 static void _setup_layer_ops_colorproc(struct sde_hw_pipe *c,
-		unsigned long features)
+		unsigned long features, bool is_virtual_pipe)
 {
 	int ret = 0;
+
+	if (is_virtual_pipe) {
+		features &=
+			~(BIT(SDE_SSPP_VIG_IGC) | BIT(SDE_SSPP_VIG_GAMUT));
+		c->cap->features = features;
+	}
 
 	if (test_bit(SDE_SSPP_HSIC, &features)) {
 		if (c->cap->sblk->hsic_blk.version ==
@@ -1181,7 +1187,8 @@ static void sde_hw_sspp_setup_dgm_csc(struct sde_hw_pipe *ctx,
 }
 
 static void _setup_layer_ops(struct sde_hw_pipe *c,
-		unsigned long features, unsigned long perf_features)
+		unsigned long features, unsigned long perf_features,
+		bool is_virtual_pipe)
 {
 	int ret;
 
@@ -1247,7 +1254,7 @@ static void _setup_layer_ops(struct sde_hw_pipe *c,
 	if (test_bit(SDE_PERF_SSPP_UIDLE, &perf_features))
 		c->ops.setup_uidle = sde_hw_sspp_setup_uidle;
 
-	_setup_layer_ops_colorproc(c, features);
+	_setup_layer_ops_colorproc(c, features, is_virtual_pipe);
 
 	if (test_bit(SDE_SSPP_DGM_INVERSE_PMA, &features))
 		c->ops.setup_inverse_pma = sde_hw_sspp_setup_dgm_inverse_pma;
@@ -1264,6 +1271,7 @@ static struct sde_sspp_cfg *_sspp_offset(enum sde_sspp sspp,
 		struct sde_hw_blk_reg_map *b)
 {
 	int i;
+	struct sde_sspp_cfg *cfg;
 
 	if ((sspp < SSPP_MAX) && catalog && addr && b) {
 		for (i = 0; i < catalog->sspp_count; i++) {
@@ -1273,7 +1281,14 @@ static struct sde_sspp_cfg *_sspp_offset(enum sde_sspp sspp,
 				b->length = catalog->sspp[i].len;
 				b->hwversion = catalog->hwversion;
 				b->log_mask = SDE_DBG_MASK_SSPP;
-				return &catalog->sspp[i];
+
+				/* Only shallow copy is needed */
+				cfg =  kmemdup(&catalog->sspp[i], sizeof(*cfg),
+					GFP_KERNEL);
+				if (!cfg)
+					return ERR_PTR(-ENOMEM);
+
+				return cfg;
 			}
 		}
 	}
@@ -1313,7 +1328,7 @@ struct sde_hw_pipe *sde_hw_sspp_init(enum sde_sspp idx,
 	hw_pipe->idx = idx;
 	hw_pipe->cap = cfg;
 	_setup_layer_ops(hw_pipe, hw_pipe->cap->features,
-		hw_pipe->cap->perf_features);
+		hw_pipe->cap->perf_features, is_virtual_pipe);
 
 	if (hw_pipe->ops.get_scaler_ver) {
 		sde_init_scaler_blk(&hw_pipe->cap->sblk->scaler_blk,
@@ -1353,6 +1368,7 @@ void sde_hw_sspp_destroy(struct sde_hw_pipe *ctx)
 	if (ctx) {
 		sde_hw_blk_destroy(&ctx->base);
 		reg_dmav1_deinit_sspp_ops(ctx->idx);
+		kfree(ctx->cap);
 	}
 	kfree(ctx);
 }
