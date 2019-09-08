@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -652,6 +652,13 @@ struct ol_txrx_pdev_t {
 	qdf_device_t osdev;
 
 	htt_pdev_handle htt_pdev;
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+	void *mon_osif_dev;
+	QDF_STATUS (*mon_cb)(void *osif_dev,
+			     qdf_nbuf_t msdu_list);
+	uint8_t pktcapture_mode_value;
+#endif /* WLAN_FEATURE_PKT_CAPTURE */
 
 #ifdef WLAN_FEATURE_FASTPATH
 	struct CE_handle    *ce_tx_hdl; /* Handle to Tx packet posting CE */
