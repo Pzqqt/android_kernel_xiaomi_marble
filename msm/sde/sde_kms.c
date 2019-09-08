@@ -528,12 +528,24 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 end:
 	smmu_state->sui_misr_state = NONE;
 	smmu_state->transition_type = NONE;
-	smmu_state->transition_error = ret ? true : false;
+	smmu_state->transition_error = false;
 
-	SDE_DEBUG("crtc %d: old_state %d, new_state %d, sec_lvl %d, ret %d\n",
-			DRMID(crtc), old_smmu_state, smmu_state->state,
-			smmu_state->secure_level, ret);
-	SDE_EVT32(DRMID(crtc), smmu_state->state, smmu_state->transition_type,
+	/*
+	 * If switch failed, toggling secure_level is enough since
+	 * there are only two secure levels - secure/non-secure
+	 */
+	if (ret) {
+		smmu_state->transition_error = true;
+		smmu_state->state = smmu_state->prev_state;
+		smmu_state->secure_level = !smmu_state->secure_level;
+	}
+
+	SDE_DEBUG(
+		"crtc %d: old_state %d, req_state %d, new_state %d, sec_lvl %d, ret %d\n",
+			DRMID(crtc), smmu_state->prev_state, old_smmu_state,
+			smmu_state->state, smmu_state->secure_level, ret);
+	SDE_EVT32(DRMID(crtc), smmu_state->prev_state,
+			smmu_state->state, smmu_state->transition_type,
 			smmu_state->transition_error, smmu_state->secure_level,
 			smmu_state->sui_misr_state, ret, SDE_EVTLOG_FUNC_EXIT);
 
