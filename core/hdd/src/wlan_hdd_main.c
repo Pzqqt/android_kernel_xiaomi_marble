@@ -2564,6 +2564,8 @@ static int __hdd_pktcapture_open(struct net_device *dev)
 
 	hdd_mon_mode_ether_setup(dev);
 
+	ret = hdd_set_pktcapture_cb(dev, OL_TXRX_PDEV_ID);
+
 	if (!ret)
 		set_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
 
@@ -2571,7 +2573,7 @@ static int __hdd_pktcapture_open(struct net_device *dev)
 }
 
 /**
- * hdd_pktcapture_open() - Wrapper function for __hdd_mon_open to
+ * hdd_pktcapture_open() - Wrapper function for hdd_pktcapture_open to
  * protect it from SSR
  * @dev:	Pointer to net_device structure
  *
@@ -3771,10 +3773,12 @@ static int __hdd_stop(struct net_device *dev)
 
 	mac_handle = hdd_ctx->mac_handle;
 
-	hdd_debug("Disabling Auto Power save timer");
-	sme_ps_disable_auto_ps_timer(
-		mac_handle,
-		adapter->vdev_id);
+	if (!wlan_hdd_is_session_type_monitor(adapter->device_mode)) {
+		hdd_debug("Disabling Auto Power save timer");
+		sme_ps_disable_auto_ps_timer(
+			mac_handle,
+			adapter->vdev_id);
+	}
 
 	/*
 	 * Disable TX on the interface, after this hard_start_xmit() will not
@@ -3789,6 +3793,9 @@ static int __hdd_stop(struct net_device *dev)
 
 	if (adapter->device_mode == QDF_STA_MODE)
 		hdd_lpass_notify_stop(hdd_ctx);
+
+	if (wlan_hdd_is_session_type_monitor(adapter->device_mode))
+		hdd_reset_pktcapture_cb(OL_TXRX_PDEV_ID);
 
 	/*
 	 * NAN data interface is different in some sense. The traffic on NDI is
@@ -7148,6 +7155,12 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			hdd_delete_sta(adapter);
 			break;
 		case QDF_MONITOR_MODE:
+			if (wlan_hdd_is_session_type_monitor(
+						QDF_MONITOR_MODE)) {
+				hdd_set_pktcapture_cb(adapter->dev,
+						      OL_TXRX_PDEV_ID);
+				break;
+			}
 			chan = wlan_reg_freq_to_chan(hdd_ctx->pdev,
 						     adapter->mon_chan_freq);
 			hdd_start_station_adapter(adapter);
@@ -7921,6 +7934,10 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 		 */
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
 		hdd_abort_sched_scan_all_adapters(hdd_ctx);
+
+		if (wlan_hdd_is_session_type_monitor(QDF_MONITOR_MODE))
+			hdd_reset_pktcapture_cb(OL_TXRX_PDEV_ID);
+
 		hdd_stop_all_adapters(hdd_ctx);
 		hdd_deinit_all_adapters(hdd_ctx, false);
 	}

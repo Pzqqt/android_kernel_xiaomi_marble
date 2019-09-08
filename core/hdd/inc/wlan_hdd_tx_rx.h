@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -325,6 +325,36 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	return 0;
 }
 #endif
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+/**
+ * hdd_set_pktcapture_cb() - Set pkt capture mode callback
+ * @dev: Pointer to net_device structure
+ * @pdev_id: pdev id
+ *
+ * Return: 0 on success; non-zero for failure
+ */
+int hdd_set_pktcapture_cb(struct net_device *dev, uint8_t pdev_id);
+
+/**
+ * hdd_reset_pktcapture_cb() - Reset pkt capture mode callback
+ * @pdev_id: pdev id
+ *
+ * Return: None
+ */
+void hdd_reset_pktcapture_cb(uint8_t pdev_id);
+#else
+static inline
+int hdd_set_pktcapture_cb(struct net_device *dev, uint8_t pdev_id)
+{
+	return -ENOTSUPP;
+}
+
+static inline
+void hdd_reset_pktcapture_cb(uint8_t pdev_id)
+{
+}
+#endif /* WLAN_FEATURE_PKT_CAPTURE */
 
 void hdd_send_rps_ind(struct hdd_adapter *adapter);
 void hdd_send_rps_disable_ind(struct hdd_adapter *adapter);

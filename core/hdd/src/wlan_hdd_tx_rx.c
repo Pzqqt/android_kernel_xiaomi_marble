@@ -48,6 +48,7 @@
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_flow_ctrl_v2.h>
+#include <cdp_txrx_mon.h>
 #include "wlan_hdd_nan_datapath.h"
 #include "pld_common.h"
 #include <cdp_txrx_misc.h>
@@ -2709,6 +2710,37 @@ void hdd_print_netdev_txq_status(struct net_device *dev)
 				  i, txq->state);
 	}
 }
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+/**
+ * hdd_set_pktcapture_cb() - Set pkt capture mode callback
+ * @dev: Pointer to net_device structure
+ * @pdev_id: pdev id
+ *
+ * Return: 0 on success; non-zero for failure
+ */
+int hdd_set_pktcapture_cb(struct net_device *dev, uint8_t pdev_id)
+{
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	return cdp_register_pktcapture_cb(soc, pdev_id, adapter,
+					  hdd_mon_rx_packet_cbk);
+}
+
+/**
+ * hdd_reset_pktcapture_cb() - Reset pkt capture mode callback
+ * @pdev_id: pdev id
+ *
+ * Return: None
+ */
+void hdd_reset_pktcapture_cb(uint8_t pdev_id)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	cdp_deregister_pktcapture_cb(soc, pdev_id);
+}
+#endif /* WLAN_FEATURE_PKT_CAPTURE */
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**
