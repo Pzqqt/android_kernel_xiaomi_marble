@@ -1094,7 +1094,6 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 {
 	tp_wma_handle wma;
 	struct wma_txrx_node *iface;
-	struct vdev_up_params param = {0};
 	target_resource_config *wlan_res_cfg;
 	struct wlan_objmgr_psoc *psoc;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
@@ -1103,6 +1102,7 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	QDF_STATUS status;
 	enum vdev_assoc_type assoc_type = VDEV_ASSOC;
 	struct bss_params *bss_params;
+	struct vdev_mlme_obj *mlme_obj;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
@@ -1191,10 +1191,11 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 		if (QDF_IS_STATUS_ERROR(status))
 			return QDF_STATUS_E_FAILURE;
 	}  else if (iface->type == WMI_VDEV_TYPE_OCB) {
-		param.vdev_id = rsp->vdev_id;
-		param.assoc_id = iface->aid;
-		if (wma_send_vdev_up_to_fw(wma, &param, iface->bssid) !=
-		    QDF_STATUS_SUCCESS) {
+		mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+		mlme_obj->proto.sta.assoc_id = iface->aid;
+		qdf_mem_copy(mlme_obj->mgmt.generic.bssid, iface->bssid,
+			     QDF_MAC_ADDR_SIZE);
+		if (vdev_mgr_up_send(mlme_obj) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE(FL("failed to send vdev up"));
 			policy_mgr_set_do_hw_mode_change_flag(
 				wma->psoc, false);

@@ -78,6 +78,7 @@
 #include "wmi_unified_bcn_api.h"
 #include <wlan_crypto_global_api.h>
 #include <wlan_mlme_main.h>
+#include <../../core/src/vdev_mgr_ops.h>
 
 #if !defined(REMOVE_PKT_LOG)
 #include <wlan_logging_sock_svc.h>
@@ -3068,13 +3069,19 @@ void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 
 QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
 {
-	struct vdev_up_params param = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct vdev_mlme_obj *mlme_obj;
+	struct wlan_objmgr_vdev *vdev;
+	struct wma_txrx_node *iface;
 
-	param.vdev_id = vdev_id;
-	param.assoc_id = 0;
-	status = wma_send_vdev_up_to_fw(wma, &param,
-					wma->interfaces[vdev_id].bssid);
+	iface = &wma->interfaces[vdev_id];
+	vdev = iface->vdev;
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	mlme_obj->proto.sta.assoc_id = 0;
+	qdf_mem_copy(mlme_obj->mgmt.generic.bssid, iface->bssid,
+		     QDF_MAC_ADDR_SIZE);
+
+	status = vdev_mgr_up_send(mlme_obj);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE(FL("failed to send vdev up"));
 		policy_mgr_set_do_hw_mode_change_flag(

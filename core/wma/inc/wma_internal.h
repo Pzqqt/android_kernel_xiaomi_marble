@@ -1396,20 +1396,6 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id);
 int wma_get_arp_stats_handler(void *handle, uint8_t *data, uint32_t data_len);
 
 /**
- * wma_send_vdev_up_to_fw() - send the vdev up command to firmware
- * @wma: a reference to the global WMA handle
- * @params: the vdev up params to send to firmware
- * @bssid: the BssId to send to firmware
- *
- * This also releases the vdev start wakelock.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
-				  struct vdev_up_params *params,
-				  uint8_t bssid[QDF_MAC_ADDR_SIZE]);
-
-/**
  * wma_send_vdev_down_to_fw() - send the vdev down command to firmware
  * @wma: a reference to the global WMA handle
  * @vdev_id: the Id of the vdev to down
