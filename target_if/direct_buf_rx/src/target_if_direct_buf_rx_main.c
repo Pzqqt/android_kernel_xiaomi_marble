@@ -43,7 +43,6 @@ static uint8_t get_num_dbr_modules_per_pdev(struct wlan_objmgr_pdev *pdev)
 	struct wlan_psoc_host_dbr_ring_caps *dbr_ring_cap;
 	uint8_t num_dbr_ring_caps, cap_idx, pdev_id, num_modules;
 	struct target_psoc_info *tgt_psoc_info;
-	struct wlan_psoc_host_service_ext_param *ext_svc_param;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
@@ -57,8 +56,7 @@ static uint8_t get_num_dbr_modules_per_pdev(struct wlan_objmgr_pdev *pdev)
 		direct_buf_rx_err("target_psoc_info is null");
 		return 0;
 	}
-	ext_svc_param = target_psoc_get_service_ext_param(tgt_psoc_info);
-	num_dbr_ring_caps = ext_svc_param->num_dbr_ring_caps;
+	num_dbr_ring_caps = target_psoc_get_num_dbr_ring_caps(tgt_psoc_info);
 	dbr_ring_cap = target_psoc_get_dbr_ring_caps(tgt_psoc_info);
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	num_modules = 0;
@@ -81,7 +79,6 @@ static QDF_STATUS populate_dbr_cap_mod_param(struct wlan_objmgr_pdev *pdev,
 	enum DBR_MODULE mod_id = mod_param->mod_id;
 	uint32_t num_dbr_ring_caps, pdev_id;
 	struct target_psoc_info *tgt_psoc_info;
-	struct wlan_psoc_host_service_ext_param *ext_svc_param;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
@@ -96,8 +93,7 @@ static QDF_STATUS populate_dbr_cap_mod_param(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ext_svc_param = target_psoc_get_service_ext_param(tgt_psoc_info);
-	num_dbr_ring_caps = ext_svc_param->num_dbr_ring_caps;
+	num_dbr_ring_caps = target_psoc_get_num_dbr_ring_caps(tgt_psoc_info);
 	dbr_ring_cap = target_psoc_get_dbr_ring_caps(tgt_psoc_info);
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 

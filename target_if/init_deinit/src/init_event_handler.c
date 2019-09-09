@@ -233,6 +233,15 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 	if (err_code)
 		goto exit;
 
+	/* dbr_ring_caps could have already come as part of EXT event */
+	if (info->service_ext2_param.num_dbr_ring_caps) {
+		err_code = init_deinit_populate_dbr_ring_cap_ext2(psoc,
+								  wmi_handle,
+								  event, info);
+		if (err_code)
+			goto exit;
+	}
+
 	/* send init command */
 	init_deinit_set_send_init_cmd(psoc, tgt_hdl);
 
@@ -315,10 +324,13 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 			goto exit;
 	}
 
-	err_code = init_deinit_populate_dbr_ring_cap(psoc, wmi_handle,
-						event, info);
-	if (err_code)
-		goto exit;
+	/* dbr_ring_caps can be absent if enough space is not available */
+	if (info->service_ext_param.num_dbr_ring_caps) {
+		err_code = init_deinit_populate_dbr_ring_cap(psoc, wmi_handle,
+							     event, info);
+		if (err_code)
+			goto exit;
+	}
 
 	err_code = init_deinit_populate_spectral_bin_scale_params(psoc,
 								  wmi_handle,

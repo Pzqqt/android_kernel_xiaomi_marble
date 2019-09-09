@@ -180,6 +180,22 @@ int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
 				      struct tgt_info *info);
 
 /**
+ * init_deinit_populate_dbr_ring_cap_ext2() - populate dbr ring capability
+ *                                            from ext2 event
+ * @psoc: PSOC object
+ * @handle: WMI handle pointer
+ * @event: event buffer received from FW
+ * @info: tgt_info object
+ *
+ * API to populate dbr ring capability
+ *
+ * Return: zero on successful parsing of dbr ring capability or failure
+ */
+int init_deinit_populate_dbr_ring_cap_ext2(struct wlan_objmgr_psoc *psoc,
+					   wmi_unified_t handle, uint8_t *event,
+					   struct tgt_info *info);
+
+/**
  * init_deinit_populate_spectral_bin_scale_params() - populate Spectral scaling
  * @psoc: PSOC object
  * @handle: WMI handle pointer

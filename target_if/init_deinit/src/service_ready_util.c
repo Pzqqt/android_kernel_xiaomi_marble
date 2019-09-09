@@ -379,7 +379,6 @@ int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	num_dbr_ring_caps = info->service_ext_param.num_dbr_ring_caps;
-
 	target_if_debug("Num DMA Capabilities = %d", num_dbr_ring_caps);
 
 	if (!num_dbr_ring_caps)
@@ -411,6 +410,60 @@ free_and_return:
 	return qdf_status_to_os_return(status);
 }
 
+int init_deinit_populate_dbr_ring_cap_ext2(struct wlan_objmgr_psoc *psoc,
+					   wmi_unified_t handle, uint8_t *event,
+					   struct tgt_info *info)
+
+{
+	uint8_t cap_idx;
+	uint32_t num_dbr_ring_caps;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_psoc_host_dbr_ring_caps *param;
+
+	/*
+	 * If FW had already sent this info as part of EXT event,
+	 * we need to discard the same and use the info from EXT2.
+	 */
+	if (info->service_ext_param.num_dbr_ring_caps) {
+		target_if_debug("dbr_ring_caps already populated");
+		info->service_ext_param.num_dbr_ring_caps = 0;
+		qdf_mem_free(info->dbr_ring_cap);
+		info->dbr_ring_cap = NULL;
+	}
+
+	num_dbr_ring_caps = info->service_ext2_param.num_dbr_ring_caps;
+	target_if_debug("Num DMA Capabilities = %d", num_dbr_ring_caps);
+
+	if (!num_dbr_ring_caps)
+		return 0;
+
+	info->dbr_ring_cap = qdf_mem_malloc(
+				sizeof(struct wlan_psoc_host_dbr_ring_caps) *
+				num_dbr_ring_caps);
+
+	if (!info->dbr_ring_cap)
+		return -EINVAL;
+
+	for (cap_idx = 0; cap_idx < num_dbr_ring_caps; cap_idx++) {
+		param = &info->dbr_ring_cap[cap_idx];
+		status = wmi_extract_dbr_ring_cap_service_ready_ext2(handle,
+								     event,
+								     cap_idx,
+								     param);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("Extraction of DMA cap failed");
+			goto free_and_return;
+		}
+	}
+
+	return 0;
+
+free_and_return:
+	qdf_mem_free(info->dbr_ring_cap);
+	info->dbr_ring_cap = NULL;
+
+	return qdf_status_to_os_return(status);
+}
 int init_deinit_populate_spectral_bin_scale_params(
 			struct wlan_objmgr_psoc *psoc, wmi_unified_t handle,
 			uint8_t *event, struct tgt_info *info)

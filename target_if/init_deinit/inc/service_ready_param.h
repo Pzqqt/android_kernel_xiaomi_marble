@@ -354,13 +354,14 @@ struct wlan_psoc_host_service_ext_param {
  * reg_db_version_minor: REG DB version minor number
  * bdf_reg_db_version_major: BDF REG DB version major number
  * bdf_reg_db_version_minor: BDF REG DB version minor number
+ * @num_dbr_ring_caps: Number of direct buf rx ring capabilities
  */
 struct wlan_psoc_host_service_ext2_param {
 	uint8_t reg_db_version_major;
 	uint8_t reg_db_version_minor;
 	uint8_t bdf_reg_db_version_major;
 	uint8_t bdf_reg_db_version_minor;
-
+	uint32_t num_dbr_ring_caps;
 };
 
 #endif /* _SERVICE_READY_PARAM_H_*/

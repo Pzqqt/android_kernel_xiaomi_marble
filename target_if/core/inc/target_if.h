@@ -176,6 +176,7 @@ struct target_version_info {
  * @service_ext2_param: service ready ext2 event params
  * @service_ext_param: ext service params
  * @mac_phy_cap: phy caps array
+ * @dbr_ring_cap: dbr_ring capability info
  * @reg_cap: regulatory caps array
  * @scaling_params: Spectral bin scaling parameters
  * @num_mem_chunks: number of mem chunks allocated
@@ -1289,6 +1290,26 @@ static inline struct wlan_psoc_host_service_ext_param
 		return NULL;
 
 	return &psoc_info->info.service_ext_param;
+}
+
+/**
+ * target_psoc_get_num_dbr_ring_caps() - get no of dbr_ring_caps
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get num_dbr_ring_caps
+ *
+ * Return: no of dbr_ring_caps
+ */
+static inline uint32_t target_psoc_get_num_dbr_ring_caps
+		(struct target_psoc_info *psoc_info)
+{
+	if (!psoc_info)
+		return 0;
+
+	if (psoc_info->info.service_ext_param.num_dbr_ring_caps)
+		return psoc_info->info.service_ext_param.num_dbr_ring_caps;
+
+	return psoc_info->info.service_ext2_param.num_dbr_ring_caps;
 }
 
 /**
