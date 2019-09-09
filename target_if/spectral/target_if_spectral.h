@@ -1291,6 +1291,30 @@ int16_t target_if_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
+ * target_if_vdev_get_chan_freq_seg2() - Get center frequency of secondary 80 of
+ * given vdev
+ * @vdev: Pointer to vdev
+ *
+ * Get the center frequency of secondary 80 of given vdev
+ *
+ * Return: center frequency of secondary 80
+ */
+static inline
+int16_t target_if_vdev_get_chan_freq_seg2(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		spectral_err("psoc is NULL");
+		return -EINVAL;
+	}
+
+	return psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_chan_freq_seg2(
+		vdev);
+}
+
+/**
  * target_if_vdev_get_ch_width() - Get the operating channel bandwidth of a
  * given vdev
  * @pdev: Pointer to vdev

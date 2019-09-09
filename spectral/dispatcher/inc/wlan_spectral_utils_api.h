@@ -88,11 +88,13 @@ wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
 /**
  * struct spectral_legacy_cbacks - Spectral legacy callbacks
  * @vdev_get_chan_freq:          Get channel frequency
+ * @vdev_get_chan_freq_seg2:     Get secondary 80 center frequency
  * @vdev_get_ch_width:           Get channel width
  * @vdev_get_sec20chan_freq_mhz: Get seconadry 20 frequency
  */
 struct spectral_legacy_cbacks {
 	int16_t (*vdev_get_chan_freq)(struct wlan_objmgr_vdev *vdev);
+	int16_t (*vdev_get_chan_freq_seg2)(struct wlan_objmgr_vdev *vdev);
 	enum phy_ch_width (*vdev_get_ch_width)(struct wlan_objmgr_vdev *vdev);
 	int (*vdev_get_sec20chan_freq_mhz)(struct wlan_objmgr_vdev *vdev,
 					   uint16_t *sec20chan_freq);
@@ -105,6 +107,14 @@ struct spectral_legacy_cbacks {
  * Return: vdev operating frequency
  */
 int16_t spectral_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * spectral_vdev_get_chan_freq_seg2 - Get vdev's secondary 80 center frequency
+ * @vdev: vdev object
+ *
+ * Return: vdev secondary 80 center frequency
+ */
+int16_t spectral_vdev_get_chan_freq_seg2(struct wlan_objmgr_vdev *vdev);
 
 /**
  * spectral_vdev_get_sec20chan_freq_mhz - Get vdev secondary channel frequency

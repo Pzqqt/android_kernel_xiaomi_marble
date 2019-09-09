@@ -119,6 +119,8 @@ spectral_register_legacy_cb(struct wlan_objmgr_psoc *psoc,
 
 	sc->legacy_cbacks.vdev_get_chan_freq =
 	    legacy_cbacks->vdev_get_chan_freq;
+	sc->legacy_cbacks.vdev_get_chan_freq_seg2 =
+	    legacy_cbacks->vdev_get_chan_freq_seg2;
 	sc->legacy_cbacks.vdev_get_ch_width = legacy_cbacks->vdev_get_ch_width;
 	sc->legacy_cbacks.vdev_get_sec20chan_freq_mhz =
 	    legacy_cbacks->vdev_get_sec20chan_freq_mhz;
@@ -139,6 +141,20 @@ spectral_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev)
 	}
 
 	return sc->legacy_cbacks.vdev_get_chan_freq(vdev);
+}
+
+int16_t
+spectral_vdev_get_chan_freq_seg2(struct wlan_objmgr_vdev *vdev)
+{
+	struct spectral_context *sc;
+
+	sc = spectral_get_spectral_ctx_from_vdev(vdev);
+	if (!sc) {
+		spectral_err("spectral context is null");
+		return -EINVAL;
+	}
+
+	return sc->legacy_cbacks.vdev_get_chan_freq_seg2(vdev);
 }
 
 enum phy_ch_width
@@ -179,6 +195,8 @@ wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 	/* Spectral rx ops */
 	sptrl_rx_ops->sptrlro_get_target_handle = tgt_get_target_handle;
 	sptrl_rx_ops->sptrlro_vdev_get_chan_freq = spectral_vdev_get_chan_freq;
+	sptrl_rx_ops->sptrlro_vdev_get_chan_freq_seg2 =
+					spectral_vdev_get_chan_freq_seg2;
 	sptrl_rx_ops->sptrlro_vdev_get_ch_width = spectral_vdev_get_ch_width;
 	sptrl_rx_ops->sptrlro_vdev_get_sec20chan_freq_mhz =
 	    spectral_vdev_get_sec20chan_freq_mhz;

@@ -1202,11 +1202,14 @@ struct wlan_lmac_if_cfr_rx_ops {
  * struct wlan_lmac_if_sptrl_rx_ops - Spectral south bound Rx operations
  *
  * @sptrlro_get_target_handle: Get Spectral handle for target/LMAC private data
+ * @sptrlro_vdev_get_chan_freq_seg2: Get secondary 80 center frequency
  * @sptrlro_spectral_is_feature_disabled: Check if spectral feature is disabled
  */
 struct wlan_lmac_if_sptrl_rx_ops {
 	void * (*sptrlro_get_target_handle)(struct wlan_objmgr_pdev *pdev);
 	int16_t (*sptrlro_vdev_get_chan_freq)(struct wlan_objmgr_vdev *vdev);
+	int16_t (*sptrlro_vdev_get_chan_freq_seg2)
+					(struct wlan_objmgr_vdev *vdev);
 	enum phy_ch_width (*sptrlro_vdev_get_ch_width)(
 			struct wlan_objmgr_vdev *vdev);
 	int (*sptrlro_vdev_get_sec20chan_freq_mhz)(
