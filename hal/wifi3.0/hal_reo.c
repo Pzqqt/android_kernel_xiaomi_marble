@@ -156,8 +156,10 @@ void hal_reo_qdesc_setup(hal_soc_handle_t hal_soc_hdl, int tid,
 		HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2,
 			PN_SHALL_BE_UNEVEN, 1);
 
-	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2, PN_HANDLING_ENABLE,
-		pn_enable);
+	/*
+	 *  TODO: Need to check if PN handling in SW needs to be enabled
+	 *  So far this is not a requirement
+	 */
 
 	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2, PN_SIZE,
 		pn_size);
