@@ -579,6 +579,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	int  ret = -1;
 	txrx_ast_free_cb cb = NULL;
 	void *cookie = NULL;
+	struct dp_peer *tmp_peer = NULL;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	if (peer->delete_in_progress) {
@@ -625,6 +626,13 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			    (ast_entry->type == CDP_TXRX_AST_TYPE_MEC))
 				ast_entry->is_active = TRUE;
 
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			return 0;
+		}
+		tmp_peer = dp_peer_find_hash_find(soc, mac_addr, 0,
+						  DP_VDEV_ALL);
+		if (tmp_peer) {
+			dp_peer_unref_delete(tmp_peer);
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			return 0;
 		}
