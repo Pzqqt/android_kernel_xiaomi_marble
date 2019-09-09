@@ -613,7 +613,7 @@ struct wlan_lmac_if_direct_buf_rx_tx_ops {
 	QDF_STATUS (*direct_buf_rx_get_ring_params)
 		(struct wlan_objmgr_pdev *pdev,
 		 struct module_ring_params *param,
-		 int module_id);
+		 uint8_t module_id, uint8_t srng_id);
 };
 #endif
 

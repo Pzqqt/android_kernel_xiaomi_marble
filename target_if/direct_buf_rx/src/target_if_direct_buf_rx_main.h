@@ -29,6 +29,14 @@ struct direct_buf_rx_data;
 
 #define DBR_RING_BASE_ALIGN 8
 
+#ifdef DBR_MULTI_SRNG_ENABLE
+#define DBR_SRNG_NUM 2
+#define dbr_get_pdev_id(srng_id, pdev_id) (srng_id)
+#else
+#define DBR_SRNG_NUM 1
+#define dbr_get_pdev_id(srng_id, pdev_id) (pdev_id)
+#endif
+
 /**
  * struct direct_buf_rx_info - direct buffer rx operation info struct
  * @cookie: SW cookie used to get the virtual address
@@ -83,6 +91,7 @@ struct direct_buf_rx_ring_cap {
 /**
  * struct direct_buf_rx_module_param - DMA module param
  * @mod_id: Module ID
+ * @pdev_id: pdev ID
  * @dbr_config: Pointer to dirct buf rx module configuration struct
  * @dbr_ring_cap: Pointer to direct buf rx ring capabilities struct
  * @dbr_ring_cfg: Pointer to direct buf rx ring config struct
@@ -91,6 +100,7 @@ struct direct_buf_rx_ring_cap {
  */
 struct direct_buf_rx_module_param {
 	enum DBR_MODULE mod_id;
+	uint8_t pdev_id;
 	struct dbr_module_config dbr_config;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
@@ -106,7 +116,7 @@ struct direct_buf_rx_module_param {
  */
 struct direct_buf_rx_pdev_obj {
 	uint32_t num_modules;
-	struct direct_buf_rx_module_param *dbr_mod_param;
+	struct direct_buf_rx_module_param (*dbr_mod_param)[DBR_SRNG_NUM];
 };
 
 /**
@@ -211,12 +221,13 @@ QDF_STATUS target_if_direct_buf_rx_psoc_destroy_handler(
  * @pdev: pointer to pdev object
  * @dbr_pdev_obj: pointer to direct buffer rx module pdev obj
  * @mod_id: module id indicating the module using direct buffer rx framework
+ * @srng_id: srng ID
  *
  * Return : QDF status of operation
  */
 QDF_STATUS target_if_deinit_dbr_ring(struct wlan_objmgr_pdev *pdev,
 				struct direct_buf_rx_pdev_obj *dbr_pdev_obj,
-				enum DBR_MODULE mod_id);
+				enum DBR_MODULE mod_id, uint8_t srng_id);
 /**
  * target_if_direct_buf_rx_module_register() - Function to register to direct
  *                                             buffer rx module
@@ -253,10 +264,11 @@ QDF_STATUS target_if_direct_buf_rx_module_unregister(
  * @pdev: pointer to pdev object
  * @module_ring_params: pointer to store ring params
  * @mod_id: module idindicating module using direct buffer rx framework
+ * @srng_id: srng ID
  */
 QDF_STATUS
 target_if_direct_buf_rx_get_ring_params(struct wlan_objmgr_pdev *pdev,
 					struct module_ring_params *param,
-					int mod_id);
+					uint8_t mod_id, uint8_t srng_id);
 
 #endif /* _TARGET_IF_DIRECT_BUF_RX_MAIN_H_ */
