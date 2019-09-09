@@ -1458,6 +1458,10 @@ target_if_consume_sscan_summary_report_gen3(struct target_if_spectral *spectral,
 			psscan_summary_report->hdr_a,
 			SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_SIZE_GEN3,
 			SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_POS_GEN3);
+	fields->sscan_pri80 = get_bitfield(
+			psscan_summary_report->hdr_a,
+			SSCAN_SUMMARY_REPORT_HDR_A_PRI80_SIZE_GEN3,
+			SSCAN_SUMMARY_REPORT_HDR_A_PRI80_POS_GEN3);
 	fields->sscan_gainchange = get_bitfield(
 			psscan_summary_report->hdr_b,
 			SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3,
@@ -1614,6 +1618,7 @@ target_if_consume_spectral_report_gen3(
 		params.agc_total_gain =
 			sscan_report_fields.sscan_agc_total_gain;
 		params.gainchange = sscan_report_fields.sscan_gainchange;
+		params.pri80ind = sscan_report_fields.sscan_pri80;
 
 		/* Process Spectral search FFT report */
 		if (target_if_verify_sig_and_tag_gen3(
@@ -1765,6 +1770,7 @@ target_if_consume_spectral_report_gen3(
 		params.agc_total_gain_sec80 =
 			sscan_report_fields.sscan_agc_total_gain;
 		params.gainchange_sec80 = sscan_report_fields.sscan_gainchange;
+		params.pri80ind_sec80 = sscan_report_fields.sscan_pri80;
 
 		/* Process Spectral search FFT report */
 		if (target_if_verify_sig_and_tag_gen3(

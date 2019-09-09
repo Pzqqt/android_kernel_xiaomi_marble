@@ -244,6 +244,8 @@ struct spectral_phyerr_fft_gen2 {
 #define SSCAN_SUMMARY_REPORT_HDR_A_AGC_TOTAL_GAIN_SIZE_GEN3     (8)
 #define SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_POS_GEN3       (18)
 #define SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_SIZE_GEN3      (10)
+#define SSCAN_SUMMARY_REPORT_HDR_A_PRI80_POS_GEN3               (31)
+#define SSCAN_SUMMARY_REPORT_HDR_A_PRI80_SIZE_GEN3              (1)
 #define SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_POS_GEN3          (30)
 #define SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3         (1)
 
@@ -344,11 +346,16 @@ struct spectral_phyerr_fft_report_gen3 {
  * @sscan_gainchange: This bit is set to 1 if a gainchange occurred during
  *                 the spectral scan FFT.  Software may choose to
  *                 disregard the results.
+ * @sscan_pri80: This is set to 1 to indicate that the Spectral scan was
+ *                 performed on the pri80 segment. Software may choose to
+ *                 disregard the FFT sample if this is set to 1 but detector ID
+ *                 does not correspond to the ID for the pri80 segment.
  */
 struct sscan_report_fields_gen3 {
 	uint8_t sscan_agc_total_gain;
 	int16_t inband_pwr_db;
 	uint8_t sscan_gainchange;
+	uint8_t sscan_pri80;
 };
 
 /**
@@ -979,6 +986,16 @@ struct target_if_spectral {
  * @interf_list: List of interfernce sources
  * @classifier_params:  classifier parameters
  * @sc:  classifier parameters
+ * @pri80ind: Indication from hardware that the sample was received on the
+ * primary 80 MHz segment. If this is set when smode =
+ * SPECTRAL_SCAN_MODE_AGILE, it indicates that Spectral was carried out on
+ * pri80 instead of the Agile frequency due to a channel switch - Software may
+ * choose to ignore the sample in this case.
+ * @pri80ind_sec80: Indication from hardware that the sample was received on the
+ * primary 80 MHz segment instead of the secondary 80 MHz segment due to a
+ * channel switch - Software may choose to ignore the sample if this is set.
+ * Applicable only if smode = SPECTRAL_SCAN_MODE_NORMAL and for 160/80+80 MHz
+ * Spectral operation.
  */
 struct target_if_samp_msg_params {
 	int8_t      rssi;
@@ -1020,6 +1037,8 @@ struct target_if_samp_msg_params {
 	uint8_t gainchange;
 	uint8_t gainchange_sec80;
 	enum spectral_scan_mode smode;
+	uint8_t pri80ind;
+	uint8_t pri80ind_sec80;
 };
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE

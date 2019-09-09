@@ -342,6 +342,20 @@ struct spectral_classifier_params {
  *                            segment
  * @ch_width:                 Channel width 20/40/80/160 MHz
  * @spectral_mode:            Spectral scan mode
+ * @spectral_pri80ind:        Indication from hardware that the sample was
+ *                            received on the primary 80 MHz segment. If this
+ *                            is set when smode = SPECTRAL_SCAN_MODE_AGILE, it
+ *                            indicates that Spectral was carried out on pri80
+ *                            instead of the Agile frequency due to a
+ *                            channel switch - Software may choose
+ *                            to ignore the sample in this case.
+ * @spectral_pri80ind_sec80:  Indication from hardware that the sample was
+ *                            received on the primary 80 MHz segment instead of
+ *                            the secondary 80 MHz segment due to a channel
+ *                            switch - Software may choose to ignore the sample
+ *                            if this is set. Applicable only if smode =
+ *                            SPECTRAL_SCAN_MODE_NORMAL and for 160/80+80 MHz
+ *                            Spectral operation.
  */
 struct spectral_samp_data {
 	int16_t spectral_data_len;
@@ -399,6 +413,8 @@ struct spectral_samp_data {
 	uint8_t spectral_gainchange;
 	uint8_t spectral_gainchange_sec80;
 	enum spectral_scan_mode spectral_mode;
+	uint8_t spectral_pri80ind;
+	uint8_t spectral_pri80ind_sec80;
 } __packed;
 
 /**
