@@ -2341,6 +2341,9 @@ cppflags-$(CONFIG_ATH_SUPPORT_FLOWMAC_MODULE) += -DATH_SUPPORT_FLOWMAC_MODULE
 #Enable spectral support
 cppflags-$(CONFIG_ATH_SUPPORT_SPECTRAL) += -DATH_SUPPORT_SPECTRAL
 
+#Enable legacy pktlog
+cppflags-$(CONFIG_PKTLOG_LEGACY) += -DPKTLOG_LEGACY
+
 #Enable WDI Event support
 cppflags-$(CONFIG_WDI_EVENT_ENABLE) += -DWDI_EVENT_ENABLE
 

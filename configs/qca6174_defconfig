@@ -422,6 +422,10 @@ else
 CONFIG_WDI_EVENT_ENABLE := y
 endif
 
+ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
+CONFIG_PKTLOG_LEGACY := y
+endif
+
 #Endianness selection
 CONFIG_LITTLE_ENDIAN := y
 

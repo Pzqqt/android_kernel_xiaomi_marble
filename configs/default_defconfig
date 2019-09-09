@@ -515,6 +515,29 @@ CONFIG_ATH_SUPPORT_FLOWMAC_MODULE := n
 #Enable spectral support
 CONFIG_ATH_SUPPORT_SPECTRAL := n
 
+#Define the legacy pktlog
+ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
+ifeq ($(CONFIG_HELIUMPLUS), y)
+CONFIG_PKTLOG_LEGACY := y
+endif
+
+ifeq ($(CONFIG_ROME_IF), sdio)
+CONFIG_PKTLOG_LEGACY := y
+endif
+
+ifeq ($(CONFIG_ROME_IF), pci)
+CONFIG_PKTLOG_LEGACY := y
+endif
+
+ifeq ($(CONFIG_ROME_IF), usb)
+CONFIG_PKTLOG_LEGACY := y
+endif
+
+ifeq ($(CONFIG_ROME_IF), snoc)
+CONFIG_PKTLOG_LEGACY := y
+endif
+endif
+
 #Enable WDI Event support
 ifeq ($(CONFIG_REMOVE_PKT_LOG), y)
 CONFIG_WDI_EVENT_ENABLE := n
