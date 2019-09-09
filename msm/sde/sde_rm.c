@@ -754,7 +754,7 @@ static bool _sde_rm_check_lm(
 		struct sde_rm_hw_blk **ds,
 		struct sde_rm_hw_blk **pp)
 {
-	bool is_valid_dspp, is_valid_ds, ret;
+	bool is_valid_dspp, is_valid_ds, ret = true;
 
 	is_valid_dspp = (lm_cfg->dspp != DSPP_MAX) ? true : false;
 	is_valid_ds = (lm_cfg->ds != DS_MAX) ? true : false;
@@ -771,8 +771,6 @@ static bool _sde_rm_check_lm(
 		ret = is_valid_dspp;
 	else if (RM_RQ_DS(reqs))
 		ret = is_valid_ds;
-	else
-		ret = !(is_valid_dspp || is_valid_ds);
 
 	if (!ret) {
 		SDE_DEBUG(
@@ -1496,17 +1494,12 @@ static int _sde_rm_make_lm_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 		if (splash_display->lm_cnt != reqs->topology->num_lm)
 			SDE_DEBUG("Configured splash LMs != needed LM cnt\n");
 	}
+
 	/*
-	 * Assign LMs and blocks whose usage is tied to them: DSPP & Pingpong.
-	 * Do assignment preferring to give away low-resource mixers first:
-	 * - Check mixers without DSPPs
-	 * - Only then allow to grab from mixers with DSPP capability
+	 * Assign LMs and blocks whose usage is tied to them:
+	 * DSPP & Pingpong.
 	 */
 	ret = _sde_rm_reserve_lms(rm, rsvp, reqs, hw_ids);
-	if (ret && !RM_RQ_DSPP(reqs)) {
-		reqs->top_ctrl |= BIT(SDE_RM_TOPCTL_DSPP);
-		ret = _sde_rm_reserve_lms(rm, rsvp, reqs, hw_ids);
-	}
 
 	return ret;
 }
