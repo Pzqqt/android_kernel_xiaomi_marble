@@ -124,6 +124,20 @@
 #define CDP_TXRX_RATECODE_PREM_MASK 0x3
 #define CDP_TXRX_RATECODE_PREM_LSB 6
 
+/* Below BW_GAIN should be added to the SNR value of every ppdu based on the
+ * bandwidth. This table is obtained from HALPHY.
+ * BW         BW_Gain
+ * 20          0
+ * 40          3dBm
+ * 80          6dBm
+ * 160/80P80   9dBm
+ */
+
+#define PKT_BW_GAIN_20MHZ 0
+#define PKT_BW_GAIN_40MHZ 3
+#define PKT_BW_GAIN_80MHZ 6
+#define PKT_BW_GAIN_160MHZ 9
+
 /*
  * cdp_tx_transmit_type: Transmit type index
  * SU: SU Transmit type index

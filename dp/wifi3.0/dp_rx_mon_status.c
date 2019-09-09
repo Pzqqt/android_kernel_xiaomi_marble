@@ -441,6 +441,7 @@ static void dp_rx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 	uint8_t mcs, preamble, ac = 0;
 	uint16_t num_msdu;
 	bool is_invalid_peer = false;
+	uint8_t pkt_bw_offset;
 
 	mcs = ppdu->u.mcs;
 	preamble = ppdu->u.preamble;
@@ -459,7 +460,27 @@ static void dp_rx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 	if (!soc || soc->process_rx_status)
 		return;
 
-	DP_STATS_UPD(peer, rx.rssi, ppdu->rssi);
+	switch (ppdu->u.bw) {
+	case CMN_BW_20MHZ:
+		pkt_bw_offset = PKT_BW_GAIN_20MHZ;
+		break;
+	case CMN_BW_40MHZ:
+		pkt_bw_offset = PKT_BW_GAIN_40MHZ;
+		break;
+	case CMN_BW_80MHZ:
+		pkt_bw_offset = PKT_BW_GAIN_80MHZ;
+		break;
+	case CMN_BW_160MHZ:
+		pkt_bw_offset = PKT_BW_GAIN_160MHZ;
+		break;
+	default:
+		pkt_bw_offset = 0;
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "Invalid BW index = %d", ppdu->u.bw);
+	}
+
+	DP_STATS_UPD(peer, rx.rssi, (ppdu->rssi + pkt_bw_offset));
+
 	if (peer->stats.rx.avg_rssi == INVALID_RSSI)
 		peer->stats.rx.avg_rssi = ppdu->rssi;
 	else
