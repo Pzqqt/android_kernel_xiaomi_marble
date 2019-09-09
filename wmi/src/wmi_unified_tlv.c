@@ -9653,6 +9653,7 @@ extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
 			WMI_BDF_REG_DB_VERSION_MINOR_GET(
 				ev->reg_db_version);
 
+	param->num_dbr_ring_caps = param_buf->num_dma_ring_caps;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -9904,30 +9905,75 @@ static QDF_STATUS extract_reg_cap_service_ready_ext_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS extract_dbr_ring_cap_service_ready_ext_tlv(
-			wmi_unified_t wmi_handle,
-			uint8_t *event, uint8_t idx,
-			struct wlan_psoc_host_dbr_ring_caps *param)
+static QDF_STATUS validate_dbr_ring_caps_idx(uint8_t idx,
+					     uint8_t num_dma_ring_caps)
 {
-	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
-	WMI_DMA_RING_CAPABILITIES *dbr_ring_caps;
-
-	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *)event;
-	if (!param_buf)
+	/* If dma_ring_caps is populated, num_dbr_ring_caps is non-zero */
+	if (!num_dma_ring_caps) {
+		WMI_LOGI("%s: dma_ring_caps %d", __func__, num_dma_ring_caps);
 		return QDF_STATUS_E_INVAL;
+	}
+	if (idx >= num_dma_ring_caps) {
+		WMI_LOGE("%s: Index %d exceeds range", __func__, idx);
+		return QDF_STATUS_E_INVAL;
+	}
+	return QDF_STATUS_SUCCESS;
+}
 
-	dbr_ring_caps = &param_buf->dma_ring_caps[idx];
-
+static void
+populate_dbr_ring_cap_elems(wmi_unified_t wmi_handle,
+			    struct wlan_psoc_host_dbr_ring_caps *param,
+			    WMI_DMA_RING_CAPABILITIES *dbr_ring_caps)
+{
 	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
 				dbr_ring_caps->pdev_id);
 	param->mod_id = dbr_ring_caps->mod_id;
 	param->ring_elems_min = dbr_ring_caps->ring_elems_min;
 	param->min_buf_size = dbr_ring_caps->min_buf_size;
 	param->min_buf_align = dbr_ring_caps->min_buf_align;
+}
 
+static QDF_STATUS extract_dbr_ring_cap_service_ready_ext_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event, uint8_t idx,
+			struct wlan_psoc_host_dbr_ring_caps *param)
+{
+	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	QDF_STATUS status;
+
+	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	status = validate_dbr_ring_caps_idx(idx, param_buf->num_dma_ring_caps);
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
+	populate_dbr_ring_cap_elems(wmi_handle, param,
+				    &param_buf->dma_ring_caps[idx]);
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS extract_dbr_ring_cap_service_ready_ext2_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event, uint8_t idx,
+			struct wlan_psoc_host_dbr_ring_caps *param)
+{
+	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
+	QDF_STATUS status;
+
+	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	status = validate_dbr_ring_caps_idx(idx, param_buf->num_dma_ring_caps);
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
+	populate_dbr_ring_cap_elems(wmi_handle, param,
+				    &param_buf->dma_ring_caps[idx]);
+	return QDF_STATUS_SUCCESS;
+}
 /**
  * extract_thermal_stats_tlv() - extract thermal stats from event
  * @wmi_handle: wmi handle
@@ -12047,6 +12093,8 @@ struct wmi_ops tlv_ops =  {
 				extract_reg_cap_service_ready_ext_tlv,
 	.extract_dbr_ring_cap_service_ready_ext =
 				extract_dbr_ring_cap_service_ready_ext_tlv,
+	.extract_dbr_ring_cap_service_ready_ext2 =
+				extract_dbr_ring_cap_service_ready_ext2_tlv,
 	.extract_sar_cap_service_ready_ext =
 				extract_sar_cap_service_ready_ext_tlv,
 	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,
