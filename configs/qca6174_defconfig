@@ -229,7 +229,7 @@ else
 CONFIG_LL_DP_SUPPORT := y
 endif
 
-ifeq ($(CONFIG_HIF_PCI), y)
+ifeq ($(CONFIG_ROME_IF),pci)
 ifneq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 ifneq ($(CONFIG_LITHIUM), y)
 CONFIG_WLAN_TX_FLOW_CONTROL_LEGACY := y
