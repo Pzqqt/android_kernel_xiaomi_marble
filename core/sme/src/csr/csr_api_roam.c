@@ -21447,6 +21447,11 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 				       eCSR_ROAM_RESULT_SUCCESS);
 		vdev_roam_params->roam_invoke_in_progress = false;
 		goto end;
+	case SIR_ROAMING_DEAUTH:
+		sme_debug("LFR3: callback reason %d", reason);
+		csr_roam_roaming_offload_timer_action(
+			mac_ctx, 0, session_id, ROAMING_OFFLOAD_TIMER_STOP);
+		goto end;
 	default:
 		sme_debug("LFR3: callback reason %d", reason);
 		status = QDF_STATUS_E_FAILURE;

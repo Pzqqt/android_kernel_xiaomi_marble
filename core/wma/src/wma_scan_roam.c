@@ -5408,6 +5408,15 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		wma_handle->pe_disconnect_cb(wma_handle->mac_context,
 					     wmi_event->vdev_id,
 					     frame, wmi_event->notif_params1);
+		roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
+		if (!roam_synch_data)
+			return -ENOMEM;
+
+		roam_synch_data->roamed_vdev_id = wmi_event->vdev_id;
+		wma_handle->csr_roam_synch_cb(
+				wma_handle->mac_context,
+				roam_synch_data, NULL, SIR_ROAMING_DEAUTH);
+		qdf_mem_free(roam_synch_data);
 		break;
 	default:
 		WMA_LOGD("%s:Unhandled Roam Event %x for vdevid %x", __func__,
