@@ -47,6 +47,59 @@
 #define TX_DESC_ID_HIGH_MASK    0xffff0000
 #define TX_DESC_ID_HIGH_SHIFT   16
 
+#ifdef PKTLOG_HAS_SPECIFIC_DATA
+static inline void
+pktlog_hdr_set_specific_data(struct ath_pktlog_hdr *log_hdr,
+			     uint32_t type_specific_data)
+{
+	log_hdr->type_specific_data = type_specific_data;
+}
+
+static inline uint32_t
+pktlog_hdr_get_specific_data(struct ath_pktlog_hdr *log_hdr)
+{
+	return log_hdr->type_specific_data;
+}
+
+static inline void
+pktlog_arg_set_specific_data(struct ath_pktlog_arg *plarg,
+			     uint32_t type_specific_data)
+{
+	plarg->type_specific_data = type_specific_data;
+}
+
+static inline uint32_t
+pktlog_arg_get_specific_data(struct ath_pktlog_arg *plarg)
+{
+	return plarg->type_specific_data;
+}
+
+#else
+static inline void
+pktlog_hdr_set_specific_data(struct ath_pktlog_hdr *log_hdr,
+			     uint32_t type_specific_data)
+{
+}
+
+static inline uint32_t
+pktlog_hdr_get_specific_data(struct ath_pktlog_hdr *log_hdr)
+{
+	return 0;
+}
+
+static inline void
+pktlog_arg_set_specific_data(struct ath_pktlog_arg *plarg,
+			     uint32_t type_specific_data)
+{
+}
+
+static inline uint32_t
+pktlog_arg_get_specific_data(struct ath_pktlog_arg *plarg)
+{
+	return 0;
+}
+#endif
+
 void pktlog_getbuf_intsafe(struct ath_pktlog_arg *plarg)
 {
 	struct ath_pktlog_buf *log_buf;
@@ -110,7 +163,8 @@ void pktlog_getbuf_intsafe(struct ath_pktlog_arg *plarg)
 	log_hdr->size = (uint16_t) log_size;
 	log_hdr->missed_cnt = plarg->missed_cnt;
 	log_hdr->timestamp = plarg->timestamp;
-	log_hdr->type_specific_data = plarg->type_specific_data;
+	pktlog_hdr_set_specific_data(log_hdr,
+				     pktlog_arg_get_specific_data(plarg));
 	cur_wr_offset += sizeof(*log_hdr);
 
 	if ((buf_size - cur_wr_offset) < log_size) {
@@ -155,7 +209,8 @@ char *pktlog_getbuf(struct pktlog_dev_t *pl_dev,
 	plarg.flags = pl_hdr->flags;
 	plarg.missed_cnt = pl_hdr->missed_cnt;
 	plarg.timestamp = pl_hdr->timestamp;
-	plarg.type_specific_data = pl_hdr->type_specific_data;
+	pktlog_arg_set_specific_data(&plarg,
+				     pktlog_hdr_get_specific_data(pl_hdr));
 
 	if (flags & PHFLAGS_INTERRUPT_CONTEXT) {
 		/*
@@ -511,8 +566,10 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 	pl_hdr.size = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
 		       ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
-	pl_hdr.type_specific_data =
-		*(pl_tgt_hdr + ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET);
+
+	pktlog_hdr_set_specific_data(&pl_hdr,
+				     *(pl_tgt_hdr +
+				     ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET));
 
 	pl_info = pl_dev->pl_info;
 
@@ -682,8 +739,10 @@ process_offload_pktlog(struct cdp_pdev *pdev, void *data)
 	pl_hdr.size =  (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
 			ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
-	pl_hdr.type_specific_data = *(pl_tgt_hdr
-			+ ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET);
+
+	pktlog_hdr_set_specific_data(&pl_hdr,
+				     *(pl_tgt_hdr +
+				     ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET));
 
 	if (pl_hdr.size > MAX_PKTLOG_RECV_BUF_SIZE) {
 		pl_dev->invalid_packets++;
@@ -762,6 +821,9 @@ A_STATUS process_rx_info_remote(void *pdev, void *data)
 #else
 		pl_hdr.timestamp = rx_desc->ppdu_end.tsf_timestamp;
 #endif /* !defined(HELIUMPLUS) */
+
+		pktlog_hdr_set_specific_data(&pl_hdr, 0xDEADAA);
+
 		rxstat_log.rx_desc = (void *)pktlog_getbuf(pl_dev, pl_info,
 							   log_size, &pl_hdr);
 		qdf_mem_copy(rxstat_log.rx_desc, (void *)rx_desc +
@@ -1237,6 +1299,11 @@ A_STATUS process_sw_event(void *pdev, void *data)
 	pl_hdr.size = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
 		       ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
+
+	pktlog_hdr_set_specific_data(&pl_hdr,
+				     *(pl_tgt_hdr +
+				     ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET));
+
 	pl_info = pl_dev->pl_info;
 	log_size = pl_hdr.size;
 	sw_event.sw_event = (void *)pktlog_getbuf(pl_dev, pl_info,

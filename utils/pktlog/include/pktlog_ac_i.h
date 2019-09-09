@@ -48,7 +48,9 @@ struct ath_pktlog_arg {
 #endif
 	size_t log_size;
 	uint16_t timestamp;
+#ifdef PKTLOG_HAS_SPECIFIC_DATA
 	uint32_t type_specific_data;
+#endif
 	char *buf;
 };
 
