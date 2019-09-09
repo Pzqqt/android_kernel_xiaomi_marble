@@ -162,7 +162,7 @@ pktlog_enable_tgt(struct hif_opaque_softc *_scn, uint32_t log_state,
 				   ini_triggered, user_triggered);
 }
 
-#ifdef HELIUMPLUS
+#ifdef PKTLOG_LEGACY
 /**
  * wdi_pktlog_subscribe() - Subscribe pktlog callbacks
  * @cdp_pdev: abstract pdev handle
@@ -399,7 +399,7 @@ lit_pktlog_callback(void *context, enum WDI_EVENT event, void *log_data,
 	}
 }
 
-#ifdef HELIUMPLUS
+#ifdef PKTLOG_LEGACY
 /**
  * wdi_pktlog_unsubscribe() - Unsubscribe pktlog callbacks
  * @cdp_pdev: abstract pdev handle
@@ -557,7 +557,7 @@ int pktlog_disable(struct hif_opaque_softc *scn)
 	return 0;
 }
 
-#ifdef HELIUMPLUS
+#ifdef PKTLOG_LEGACY
 /**
  * pktlog_callback_registration() - Register pktlog handlers based on
  *                                  on callback type
