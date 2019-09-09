@@ -285,12 +285,15 @@ static void *q6lsm_mmap_apr_reg(void)
 
 static int q6lsm_mmap_apr_dereg(void)
 {
-	if (atomic_read(&lsm_common.apr_users) <= 0) {
-		WARN("%s: APR common port already closed\n", __func__);
-	} else {
-		if (atomic_dec_return(&lsm_common.apr_users) == 0) {
-			apr_deregister(lsm_common.apr);
-			pr_debug("%s: APR De-Register common port\n", __func__);
+	if (lsm_common.apr) {
+		if (atomic_read(&lsm_common.apr_users) <= 0) {
+			WARN("%s: APR common port already closed\n", __func__);
+		} else {
+			if (atomic_dec_return(&lsm_common.apr_users) == 0) {
+				apr_deregister(lsm_common.apr);
+				pr_debug("%s: APR De-Register common port\n",
+					__func__);
+			}
 		}
 	}
 	return 0;
