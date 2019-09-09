@@ -88,6 +88,11 @@ else
 CONFIG_WDI_EVENT_ENABLE := y
 endif
 
+#Enable the type_specific_data in the ath_pktlog_arg
+ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
+CONFIG_PKTLOG_HAS_SPECIFIC_DATA := y
+endif
+
 PANIC_ON_BUG := y
 WLAN_WARN_ON_ASSERT := y
 CONFIG_WLAN_LOGGING_SOCK_SVC := y

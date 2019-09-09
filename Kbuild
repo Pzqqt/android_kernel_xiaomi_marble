@@ -2336,6 +2336,9 @@ cppflags-$(CONFIG_ATH_SUPPORT_SPECTRAL) += -DATH_SUPPORT_SPECTRAL
 #Enable WDI Event support
 cppflags-$(CONFIG_WDI_EVENT_ENABLE) += -DWDI_EVENT_ENABLE
 
+#Enable the type_specific_data in the struct ath_pktlog_arg
+cppflags-$(CONFIG_PKTLOG_HAS_SPECIFIC_DATA) += -DPKTLOG_HAS_SPECIFIC_DATA
+
 #Endianness selection
 ifeq ($(CONFIG_LITTLE_ENDIAN), y)
 cppflags-y += -DANI_LITTLE_BYTE_ENDIAN

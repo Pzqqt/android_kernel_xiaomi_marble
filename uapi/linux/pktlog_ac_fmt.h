@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,7 +61,9 @@ struct ath_pktlog_hdr {
 #endif
 	uint16_t size;
 	uint32_t timestamp;
+#ifdef PKTLOG_HAS_SPECIFIC_DATA
 	uint32_t type_specific_data;
+#endif
 } __ATTRIB_PACK;
 
 #define ATH_PKTLOG_HDR_FLAGS_MASK 0xffff
