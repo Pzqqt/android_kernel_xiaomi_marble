@@ -4828,7 +4828,7 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 							 0);
 			}
 		} else {
-			peer = dp_peer_find_by_id(soc, peer_ids[i]);
+			peer = __dp_peer_find_by_id(soc, peer_ids[i]);
 
 			if (peer) {
 				dp_info("peer: %pM is getting flush",
