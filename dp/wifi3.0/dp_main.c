@@ -6517,6 +6517,19 @@ void dp_pdev_set_monitor_channel(struct cdp_pdev *pdev_handle, int chan_num)
 }
 
 /**
+ * dp_deliver_tx_mgmt() - Deliver mgmt frame for tx capture
+ * @pdev_handle: Datapath PDEV handle
+ * @nbuf: Management frame buffer
+ */
+static void
+dp_deliver_tx_mgmt(struct cdp_pdev *pdev_handle, qdf_nbuf_t nbuf)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	dp_deliver_mgmt_frm(pdev, nbuf);
+}
+
+/**
  * dp_get_pdev_id_frm_pdev() - get pdev_id
  * @pdev_handle: Datapath PDEV handle
  *
@@ -9145,6 +9158,7 @@ static struct cdp_mon_ops dp_ops_mon = {
 	/* Added support for HK advance filter */
 	.txrx_set_advance_monitor_filter = dp_pdev_set_advance_monitor_filter,
 	.txrx_monitor_record_channel = dp_pdev_set_monitor_channel,
+	.txrx_deliver_tx_mgmt = dp_deliver_tx_mgmt,
 };
 
 static struct cdp_host_stats_ops dp_ops_host_stats = {

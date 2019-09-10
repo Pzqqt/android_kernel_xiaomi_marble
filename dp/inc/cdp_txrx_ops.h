@@ -752,6 +752,9 @@ struct cdp_mon_ops {
 
 	void (*txrx_monitor_record_channel)
 		(struct cdp_pdev *, int val);
+
+	void (*txrx_deliver_tx_mgmt)
+		(struct cdp_pdev *pdev, qdf_nbuf_t nbuf);
 };
 
 struct cdp_host_stats_ops {

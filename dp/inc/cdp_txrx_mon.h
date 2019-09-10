@@ -166,4 +166,28 @@ static inline void cdp_record_monitor_chan_num
 
 	soc->ops->mon_ops->txrx_monitor_record_channel(pdev, chan_num);
 }
+
+/**
+ * cdp_deliver_tx_mgmt() - Deliver mgmt frame for tx capture
+ * @soc: Datapath SOC handle
+ * @pdev: Datapath PDEV handle
+ * @nbuf: Management frame buffer
+ */
+static inline void
+cdp_deliver_tx_mgmt(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+		    qdf_nbuf_t nbuf)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_deliver_tx_mgmt)
+		return;
+
+	soc->ops->mon_ops->txrx_deliver_tx_mgmt(pdev, nbuf);
+}
 #endif
