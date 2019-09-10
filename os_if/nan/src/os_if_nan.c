@@ -2451,6 +2451,7 @@ void os_if_nan_ndi_session_end(struct wlan_objmgr_vdev *vdev)
 
 	ucfg_nan_set_ndp_delete_transaction_id(vdev, 0);
 	ucfg_nan_set_ndi_state(vdev, NAN_DATA_NDI_DELETED_STATE);
+	ucfg_ndi_remove_entry_from_policy_mgr(vdev);
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
 	return;

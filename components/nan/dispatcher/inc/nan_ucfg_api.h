@@ -320,6 +320,15 @@ int ucfg_nan_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * ucfg_ndi_remove_entry_from_policy_mgr() - API to remove NDI entry from
+ *	policy manager.
+ * @vdev: vdev pointer for NDI interface
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_ndi_remove_entry_from_policy_mgr(struct wlan_objmgr_vdev *vdev);
+
 #else /* WLAN_FEATURE_NAN */
 
 static inline
