@@ -833,3 +833,45 @@ cleanup:
 
 	return status;
 }
+
+QDF_STATUS ucfg_ndi_remove_entry_from_policy_mgr(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nan_psoc_priv_obj *psoc_priv_obj;
+	struct nan_vdev_priv_obj *vdev_priv_obj = nan_get_vdev_priv_obj(vdev);
+	enum nan_datapath_state state;
+	uint32_t active_ndp_peers;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		nan_err("can't get psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc_priv_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_priv_obj) {
+		nan_err("psoc_priv_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!vdev_priv_obj) {
+		nan_err("priv_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	qdf_spin_lock_bh(&vdev_priv_obj->lock);
+	state = vdev_priv_obj->state;
+	active_ndp_peers = vdev_priv_obj->active_ndp_peers;
+	qdf_spin_unlock_bh(&vdev_priv_obj->lock);
+
+	if (state == NAN_DATA_NDI_DELETED_STATE &&
+	    psoc_priv_obj->nan_caps.ndi_dbs_supported &&
+	    active_ndp_peers) {
+		nan_info("Delete NDP peers: %u and remove NDI from policy mgr",
+			 active_ndp_peers);
+		policy_mgr_decr_session_set_pcl(psoc, QDF_NDI_MODE,
+						wlan_vdev_get_id(vdev));
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
