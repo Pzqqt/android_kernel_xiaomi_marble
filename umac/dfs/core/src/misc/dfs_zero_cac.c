@@ -1675,6 +1675,7 @@ uint8_t dfs_get_ieeechan_for_precac(struct wlan_dfs *dfs,
 			    (ieee_chan != exclude_pri_ch_ieee) &&
 			    (ieee_chan != exclude_sec_ch_ieee))
 				break;
+			ieee_chan = 0;
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
