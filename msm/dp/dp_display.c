@@ -929,7 +929,8 @@ static int dp_display_process_hpd_low(struct dp_display_private *dp)
 
 	dp_display_process_mst_hpd_low(dp);
 
-	if (dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) &&
+	if ((dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) ||
+			dp_display_state_is(DP_STATE_ENABLED)) &&
 			!dp->mst.mst_active)
 		rc = dp_display_send_hpd_notification(dp);
 
