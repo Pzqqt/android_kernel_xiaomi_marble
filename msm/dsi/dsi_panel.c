@@ -3948,7 +3948,8 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 	 * Consider about LP1->LP2->NOLP.
 	 */
 	if (dsi_panel_is_type_oled(panel) &&
-		(panel->power_mode == SDE_MODE_DPMS_LP2))
+	    (panel->power_mode == SDE_MODE_DPMS_LP1 ||
+	     panel->power_mode == SDE_MODE_DPMS_LP2))
 		dsi_pwr_panel_regulator_mode_set(&panel->power_info,
 			"ibb", REGULATOR_MODE_NORMAL);
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
