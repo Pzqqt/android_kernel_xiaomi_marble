@@ -1729,7 +1729,7 @@ void hal_srng_src_hw_init_generic(struct hal_soc *hal,
 	uint32_t reg_val = 0;
 	uint64_t tp_addr = 0;
 
-	HIF_DBG("%s: hw_init srng %d", __func__, srng->ring_id);
+	hal_debug("hw_init srng %d", srng->ring_id);
 
 	if (srng->flags & HAL_SRNG_MSI_INTR) {
 		SRNG_SRC_REG_WRITE(srng, MSI1_BASE_LSB,
@@ -1842,7 +1842,7 @@ void hal_srng_dst_hw_init_generic(struct hal_soc *hal,
 	uint32_t reg_val = 0;
 	uint64_t hp_addr = 0;
 
-	HIF_DBG("%s: hw_init srng %d", __func__, srng->ring_id);
+	hal_debug("hw_init srng %d", srng->ring_id);
 
 	if (srng->flags & HAL_SRNG_MSI_INTR) {
 		SRNG_DST_REG_WRITE(srng, MSI1_BASE_LSB,

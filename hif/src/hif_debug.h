@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2016, 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -49,6 +49,8 @@
 #define hif_warn(args ...) QDF_TRACE_WARN(QDF_MODULE_ID_HIF, args)
 #define hif_info(args ...) QDF_TRACE_INFO(QDF_MODULE_ID_HIF, args)
 #define hif_debug(args ...) QDF_TRACE_DEBUG(QDF_MODULE_ID_HIF, args)
+#define hif_info_high(args ...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_HIF, ## args)
 
 #define hif_nofl_alert(args ...) \
 	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_HIF, args)

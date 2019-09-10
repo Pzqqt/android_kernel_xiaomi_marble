@@ -3904,8 +3904,8 @@ int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx)
 	pm_state = qdf_atomic_read(&sc->pm_state);
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
 	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING)
-		HIF_INFO("Runtime PM resume is requested by %ps",
-			 (void *)_RET_IP_);
+		hif_info_high("Runtime PM resume is requested by %ps",
+			      (void *)_RET_IP_);
 
 	sc->pm_stats.runtime_get++;
 	ret = pm_runtime_get_sync(sc->dev);
@@ -3918,8 +3918,8 @@ int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx)
 
 	if (ret) {
 		sc->pm_stats.runtime_get_err++;
-		HIF_ERROR("Runtime PM Get Sync error in pm_state: %d, ret: %d",
-			  qdf_atomic_read(&sc->pm_state), ret);
+		hif_err("Runtime PM Get Sync error in pm_state: %d, ret: %d",
+			qdf_atomic_read(&sc->pm_state), ret);
 		hif_pm_runtime_put(hif_ctx);
 	}
 
@@ -4028,8 +4028,7 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 	int pm_state;
 
 	if (!scn) {
-		HIF_ERROR("%s: Could not do runtime get, scn is null",
-				__func__);
+		hif_err("Could not do runtime get, scn is null");
 		return -EFAULT;
 	}
 
@@ -4051,8 +4050,8 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 
 		if (ret && ret != -EINPROGRESS) {
 			sc->pm_stats.runtime_get_err++;
-			HIF_ERROR("%s: Runtime Get PM Error in pm_state:%d ret: %d",
-				__func__, qdf_atomic_read(&sc->pm_state), ret);
+			hif_err("Runtime Get PM Error in pm_state:%d ret: %d",
+				qdf_atomic_read(&sc->pm_state), ret);
 		}
 
 		return ret;
@@ -4060,8 +4059,8 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
 	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING) {
-		HIF_DBG("Runtime PM resume is requested by %ps",
-			(void *)_RET_IP_);
+		hif_info_high("Runtime PM resume is requested by %ps",
+			      (void *)_RET_IP_);
 		ret = -EAGAIN;
 	} else {
 		ret = -EBUSY;
