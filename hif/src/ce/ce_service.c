@@ -130,6 +130,35 @@ void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 }
 #endif
 
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) && defined(HIF_RECORD_RX_PADDR)
+/**
+ * hif_ce_desc_record_rx_paddr() - record physical address for IOMMU
+ * IOVA addr and MMU virtual addr for Rx
+ * @scn: hif_softc
+ * @event: structure detailing a ce event
+ *
+ * Record physical address for ce event type HIF_RX_DESC_POST and
+ * HIF_RX_DESC_COMPLETION
+ *
+ * Return: none
+ */
+void hif_ce_desc_record_rx_paddr(struct hif_softc *scn,
+				 struct hif_ce_desc_event *event)
+{
+	if (event->type != HIF_RX_DESC_POST &&
+	    event->type != HIF_RX_DESC_COMPLETION)
+		return;
+
+	if (event->descriptor.dest_desc.buffer_addr)
+		event->dma_to_phy = qdf_mem_paddr_from_dmaaddr(
+				scn->qdf_dev,
+				event->descriptor.dest_desc.buffer_addr);
+
+	if (event->memory)
+		event->virt_to_phy = virt_to_phys(qdf_nbuf_data(event->memory));
+}
+#endif
+
 /**
  * hif_record_ce_desc_event() - record ce descriptor events
  * @scn: hif_softc
@@ -181,6 +210,8 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 
 	event->memory = memory;
 	event->index = index;
+
+	hif_ce_desc_record_rx_paddr(scn, event);
 
 	if (ce_hist->data_enable[ce_id])
 		hif_ce_desc_data_record(event, len);
