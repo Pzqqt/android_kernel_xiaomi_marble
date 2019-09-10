@@ -8609,41 +8609,41 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 	int i;
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
-	hdd_nofl_info("BW compute Interval: %d ms",
-		      hdd_ctx->config->bus_bw_compute_interval);
-	hdd_nofl_info("BW TH - Very High: %d High: %d Med: %d Low: %d",
-		      hdd_ctx->config->bus_bw_very_high_threshold,
-		      hdd_ctx->config->bus_bw_high_threshold,
-		      hdd_ctx->config->bus_bw_medium_threshold,
-		      hdd_ctx->config->bus_bw_low_threshold);
-	hdd_nofl_info("Enable TCP DEL ACK: %d",
-		      hdd_ctx->en_tcp_delack_no_lro);
-	hdd_nofl_info("TCP DEL High TH: %d TCP DEL Low TH: %d",
-		      hdd_ctx->config->tcp_delack_thres_high,
-		      hdd_ctx->config->tcp_delack_thres_low);
-	hdd_nofl_info("TCP TX HIGH TP TH: %d (Use to set tcp_output_bytes_limit)",
-		      hdd_ctx->config->tcp_tx_high_tput_thres);
+	hdd_nofl_debug("BW compute Interval: %d ms",
+		       hdd_ctx->config->bus_bw_compute_interval);
+	hdd_nofl_debug("BW TH - Very High: %d High: %d Med: %d Low: %d",
+		       hdd_ctx->config->bus_bw_very_high_threshold,
+		       hdd_ctx->config->bus_bw_high_threshold,
+		       hdd_ctx->config->bus_bw_medium_threshold,
+		       hdd_ctx->config->bus_bw_low_threshold);
+	hdd_nofl_debug("Enable TCP DEL ACK: %d",
+		       hdd_ctx->en_tcp_delack_no_lro);
+	hdd_nofl_debug("TCP DEL High TH: %d TCP DEL Low TH: %d",
+		       hdd_ctx->config->tcp_delack_thres_high,
+		       hdd_ctx->config->tcp_delack_thres_low);
+	hdd_nofl_debug("TCP TX HIGH TP TH: %d (Use to set tcp_output_bytes_limit)",
+		       hdd_ctx->config->tcp_tx_high_tput_thres);
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
-	hdd_nofl_info("Total entries: %d Current index: %d",
-		      NUM_TX_RX_HISTOGRAM, hdd_ctx->hdd_txrx_hist_idx);
+	hdd_nofl_debug("Total entries: %d Current index: %d",
+		       NUM_TX_RX_HISTOGRAM, hdd_ctx->hdd_txrx_hist_idx);
 
-	hdd_nofl_info("[index][timestamp]: interval_rx, interval_tx, bus_bw_level, RX TP Level, TX TP Level");
+	hdd_nofl_debug("[index][timestamp]: interval_rx, interval_tx, bus_bw_level, RX TP Level, TX TP Level");
 
 	for (i = 0; i < NUM_TX_RX_HISTOGRAM; i++) {
 		/* using hdd_log to avoid printing function name */
 		if (hdd_ctx->hdd_txrx_hist[i].qtime > 0)
-			hdd_nofl_info("[%3d][%15llu]: %6llu, %6llu, %s, %s, %s",
-				      i, hdd_ctx->hdd_txrx_hist[i].qtime,
-				      hdd_ctx->hdd_txrx_hist[i].interval_rx,
-				      hdd_ctx->hdd_txrx_hist[i].interval_tx,
-				      convert_level_to_string(
+			hdd_nofl_debug("[%3d][%15llu]: %6llu, %6llu, %s, %s, %s",
+				       i, hdd_ctx->hdd_txrx_hist[i].qtime,
+				       hdd_ctx->hdd_txrx_hist[i].interval_rx,
+				       hdd_ctx->hdd_txrx_hist[i].interval_tx,
+				       convert_level_to_string(
 					hdd_ctx->hdd_txrx_hist[i].
 						next_vote_level),
-				      convert_level_to_string(
+				       convert_level_to_string(
 					hdd_ctx->hdd_txrx_hist[i].
 						next_rx_level),
-				      convert_level_to_string(
+				       convert_level_to_string(
 					hdd_ctx->hdd_txrx_hist[i].
 						next_tx_level));
 	}
@@ -8774,10 +8774,10 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->vdev_id == CDP_INVALID_VDEV_ID)
 			continue;
-		hdd_nofl_info("Netif queue operation statistics:");
-		hdd_nofl_info("vdev_id %d device mode %d",
-			      adapter->vdev_id, adapter->device_mode);
-		hdd_nofl_info("Current pause_map value %x", adapter->pause_map);
+		hdd_nofl_debug("Netif queue operation statistics:");
+		hdd_nofl_debug("vdev_id %d device mode %d",
+			       adapter->vdev_id, adapter->device_mode);
+		hdd_nofl_debug("Current pause_map %x", adapter->pause_map);
 		curr_time = qdf_system_ticks();
 		total = curr_time - adapter->start_time;
 		delta = curr_time - adapter->last_time;
@@ -8788,11 +8788,11 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 			unpause = adapter->total_unpause_time + delta;
 			pause = adapter->total_pause_time;
 		}
-		hdd_nofl_info("Total: %ums Pause: %ums Unpause: %ums",
-			      qdf_system_ticks_to_msecs(total),
-			      qdf_system_ticks_to_msecs(pause),
-			      qdf_system_ticks_to_msecs(unpause));
-		hdd_nofl_info("reason_type: pause_cnt: unpause_cnt: pause_time");
+		hdd_nofl_debug("Total: %ums Pause: %ums Unpause: %ums",
+			       qdf_system_ticks_to_msecs(total),
+			       qdf_system_ticks_to_msecs(pause),
+			       qdf_system_ticks_to_msecs(unpause));
+		hdd_nofl_debug("reason_type: pause_cnt: unpause_cnt: pause_time");
 
 		for (i = WLAN_CONTROL_PATH; i < WLAN_REASON_TYPE_MAX; i++) {
 			qdf_time_t pause_delta = 0;
@@ -8801,24 +8801,24 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 				pause_delta = delta;
 
 			/* using hdd_log to avoid printing function name */
-			hdd_nofl_info("%s: %d: %d: %ums",
-				      hdd_reason_type_to_string(i),
-				      adapter->queue_oper_stats[i].pause_count,
-				      adapter->queue_oper_stats[i].
+			hdd_nofl_debug("%s: %d: %d: %ums",
+				       hdd_reason_type_to_string(i),
+				       adapter->queue_oper_stats[i].pause_count,
+				       adapter->queue_oper_stats[i].
 					unpause_count,
-				      qdf_system_ticks_to_msecs(
-				      adapter->queue_oper_stats[i].
+				       qdf_system_ticks_to_msecs(
+				       adapter->queue_oper_stats[i].
 					total_pause_time + pause_delta));
 		}
 
-		hdd_nofl_info("Netif queue operation history: Total entries: %d current index %d(-1) time %u",
-			      WLAN_HDD_MAX_HISTORY_ENTRY,
-			      adapter->history_index,
-			      qdf_system_ticks_to_msecs(qdf_system_ticks()));
+		hdd_nofl_debug("Netif queue operation history: Total entries: %d current index %d(-1) time %u",
+			       WLAN_HDD_MAX_HISTORY_ENTRY,
+			       adapter->history_index,
+			       qdf_system_ticks_to_msecs(qdf_system_ticks()));
 
-		hdd_nofl_info("%2s%20s%50s%30s%10s  %s",
-			      "#", "time(ms)", "action_type", "reason_type",
-			      "pause_map", "netdev-queue-status");
+		hdd_nofl_debug("%2s%20s%50s%30s%10s  %s",
+			       "#", "time(ms)", "action_type", "reason_type",
+			       "pause_map", "netdev-queue-status");
 
 		for (i = 0; i < WLAN_HDD_MAX_HISTORY_ENTRY; i++) {
 			/* using hdd_log to avoid printing function name */
@@ -8828,17 +8828,17 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 			wlan_hdd_dump_queue_history_state(q_hist_ptr,
 							  q_status_buf,
 							  sizeof(q_status_buf));
-			hdd_nofl_info("%2d%20u%50s%30s%10x  %s",
-				      i, qdf_system_ticks_to_msecs(
+			hdd_nofl_debug("%2d%20u%50s%30s%10x  %s",
+				       i, qdf_system_ticks_to_msecs(
 					adapter->queue_oper_history[i].time),
-				      hdd_action_type_to_string(
+				       hdd_action_type_to_string(
 					adapter->queue_oper_history[i].
 						netif_action),
-				      hdd_reason_type_to_string(
+				       hdd_reason_type_to_string(
 					adapter->queue_oper_history[i].
 						netif_reason),
-				      adapter->queue_oper_history[i].pause_map,
-				      q_status_buf);
+				       adapter->queue_oper_history[i].pause_map,
+				       q_status_buf);
 		}
 	}
 }
