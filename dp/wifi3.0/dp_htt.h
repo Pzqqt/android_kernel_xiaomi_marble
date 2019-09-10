@@ -113,10 +113,16 @@ struct dp_htt_htc_pkt_union {
 	} u;
 };
 
+struct dp_htt_timestamp {
+	long *umac_ttt;
+	long *lmac_ttt;
+};
+
 struct htt_soc {
 	struct cdp_ctrl_objmgr_psoc *ctrl_psoc;
 	struct dp_soc *dp_soc;
 	hal_soc_handle_t hal_soc;
+	struct dp_htt_timestamp pdevid_tt[MAX_PDEV_CNT];
 	/* htt_logger handle */
 	struct htt_logger *htt_logger_handle;
 	HTC_HANDLE htc_soc;

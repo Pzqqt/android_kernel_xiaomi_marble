@@ -3466,6 +3466,9 @@ HTC_HANDLE htt_get_htc_handle(struct htt_soc *htt_soc)
 
 struct htt_soc *htt_soc_attach(struct dp_soc *soc, HTC_HANDLE htc_handle)
 {
+	int i;
+	int j;
+	int alloc_size = HTT_SW_UMAC_RING_IDX_MAX * sizeof(unsigned long);
 	struct htt_soc *htt_soc = NULL;
 
 	htt_soc = qdf_mem_malloc(sizeof(*htt_soc));
@@ -3473,6 +3476,27 @@ struct htt_soc *htt_soc_attach(struct dp_soc *soc, HTC_HANDLE htc_handle)
 		dp_err("HTT attach failed");
 		return NULL;
 	}
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		htt_soc->pdevid_tt[i].umac_ttt = qdf_mem_malloc(alloc_size);
+		if (!htt_soc->pdevid_tt[i].umac_ttt)
+			break;
+		qdf_mem_set(htt_soc->pdevid_tt[i].umac_ttt, alloc_size, -1);
+		htt_soc->pdevid_tt[i].lmac_ttt = qdf_mem_malloc(alloc_size);
+		if (!htt_soc->pdevid_tt[i].lmac_ttt) {
+			qdf_mem_free(htt_soc->pdevid_tt[i].umac_ttt);
+			break;
+		}
+		qdf_mem_set(htt_soc->pdevid_tt[i].lmac_ttt, alloc_size, -1);
+	}
+	if (i != MAX_PDEV_CNT) {
+		for (j = 0; j < i; j++) {
+			qdf_mem_free(htt_soc->pdevid_tt[i].umac_ttt);
+			qdf_mem_free(htt_soc->pdevid_tt[i].lmac_ttt);
+		}
+		return NULL;
+	}
+
 	htt_soc->dp_soc = soc;
 	htt_soc->htc_soc = htc_handle;
 	HTT_TX_MUTEX_INIT(&htt_soc->htt_tx_mutex);
@@ -3547,6 +3571,37 @@ dp_pktlog_msg_handler(struct htt_soc *soc,
 }
 #endif
 
+/*
+ * time_allow_print() - time allow print
+ * @htt_ring_tt:	ringi_id array of timestamps
+ * @ring_id:		ring_id (index)
+ *
+ * Return: 1 for successfully saving timestamp in array
+ *	and 0 for timestamp falling within 2 seconds after last one
+ */
+static bool time_allow_print(unsigned long *htt_ring_tt, u_int8_t ring_id)
+{
+	unsigned long tstamp;
+	unsigned long delta;
+
+	tstamp = qdf_get_system_timestamp();
+
+	if (!htt_ring_tt)
+		return 0; //unable to print backpressure messages
+
+	if (htt_ring_tt[ring_id] == -1) {
+		htt_ring_tt[ring_id] = tstamp;
+		return 1;
+	}
+	delta = tstamp - htt_ring_tt[ring_id];
+	if (delta >= 2000) {
+		htt_ring_tt[ring_id] = tstamp;
+		return 1;
+	}
+
+	return 0;
+}
+
 static void dp_htt_alert_print(enum htt_t2h_msg_type msg_type,
 			       u_int8_t pdev_id, u_int8_t ring_id,
 			       u_int16_t hp_idx, u_int16_t tp_idx,
@@ -3558,7 +3613,14 @@ static void dp_htt_alert_print(enum htt_t2h_msg_type msg_type,
 		 ring_id, hp_idx, tp_idx, bkp_time);
 }
 
-static void dp_htt_bkp_event_alert(u_int32_t *msg_word)
+/*
+ * dp_htt_bkp_event_alert() - htt backpressure event alert
+ * @msg_word:	htt packet context
+ * @htt_soc:	HTT SOC handle
+ *
+ * Return: after attempting to print stats
+ */
+static void dp_htt_bkp_event_alert(u_int32_t *msg_word, struct htt_soc *soc)
 {
 	u_int8_t ring_type;
 	u_int8_t pdev_id;
@@ -3567,34 +3629,46 @@ static void dp_htt_bkp_event_alert(u_int32_t *msg_word)
 	u_int16_t tp_idx;
 	u_int32_t bkp_time;
 	enum htt_t2h_msg_type msg_type;
+	struct dp_soc *dpsoc;
+	struct dp_pdev *pdev;
+	struct dp_htt_timestamp *radio_tt;
 
+	if (!soc)
+		return;
+
+	dpsoc = (struct dp_soc *)soc->dp_soc;
 	msg_type = HTT_T2H_MSG_TYPE_GET(*msg_word);
 	ring_type = HTT_T2H_RX_BKPRESSURE_RING_TYPE_GET(*msg_word);
 	pdev_id = HTT_T2H_RX_BKPRESSURE_PDEV_ID_GET(*msg_word);
 	pdev_id = DP_HW2SW_MACID(pdev_id);
+	pdev = (struct dp_pdev *)dpsoc->pdev_list[pdev_id];
 	ring_id = HTT_T2H_RX_BKPRESSURE_RINGID_GET(*msg_word);
 	hp_idx = HTT_T2H_RX_BKPRESSURE_HEAD_IDX_GET(*(msg_word + 1));
 	tp_idx = HTT_T2H_RX_BKPRESSURE_TAIL_IDX_GET(*(msg_word + 1));
 	bkp_time = HTT_T2H_RX_BKPRESSURE_TIME_MS_GET(*(msg_word + 2));
+	radio_tt = &soc->pdevid_tt[pdev_id];
 
 	switch (ring_type) {
 	case HTT_SW_RING_TYPE_UMAC:
+		if (!time_allow_print(radio_tt->umac_ttt, ring_id))
+			return;
 		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
 				   bkp_time, "HTT_SW_RING_TYPE_LMAC");
 	break;
 	case HTT_SW_RING_TYPE_LMAC:
+		if (!time_allow_print(radio_tt->lmac_ttt, ring_id))
+			return;
 		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
 				   bkp_time, "HTT_SW_RING_TYPE_LMAC");
-	break;
-	case HTT_SW_RING_TYPE_MAX:
-		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
-				   bkp_time, "HTT_SW_RING_TYPE_MAX");
 	break;
 	default:
 		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
 				   bkp_time, "UNKNOWN");
 	break;
 	}
+
+	dp_print_ring_stats(pdev);
+	dp_print_napi_stats(pdev->soc);
 }
 
 /*
@@ -3628,18 +3702,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	switch (msg_type) {
 	case HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND:
 	{
-		u_int8_t pdev_id;
-		struct dp_soc *dpsoc;
-		struct dp_pdev *pdev;
-
-		pdev_id = HTT_T2H_RX_BKPRESSURE_PDEV_ID_GET(*msg_word);
-		pdev_id = DP_HW2SW_MACID(pdev_id);
-		dpsoc = (struct dp_soc *)soc->dp_soc;
-		pdev = (struct dp_pdev *)dpsoc->pdev_list[pdev_id];
-
-		dp_htt_bkp_event_alert(msg_word);
-		dp_print_ring_stats(pdev);
-		dp_print_napi_stats(pdev->soc);
+		dp_htt_bkp_event_alert(msg_word, soc);
 		break;
 	}
 	case HTT_T2H_MSG_TYPE_PEER_MAP:
@@ -4029,10 +4092,17 @@ QDF_STATUS htt_soc_htc_prealloc(struct htt_soc *soc)
  */
 void htt_soc_detach(struct htt_soc *htt_hdl)
 {
+	int i;
 	struct htt_soc *htt_handle = (struct htt_soc *)htt_hdl;
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		qdf_mem_free(htt_handle->pdevid_tt[i].umac_ttt);
+		qdf_mem_free(htt_handle->pdevid_tt[i].lmac_ttt);
+	}
 
 	HTT_TX_MUTEX_DESTROY(&htt_handle->htt_tx_mutex);
 	qdf_mem_free(htt_handle);
+
 }
 
 /**
