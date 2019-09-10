@@ -410,6 +410,17 @@ static inline int qdf_ipa_wdi_wlan_stats(qdf_ipa_wdi_tx_info_t *tx_stats)
 {
 	return __qdf_ipa_wdi_wlan_stats(tx_stats);
 }
+
+/**
+ * qdf_ipa_uc_bw_monitor() - start/stop uc bw monitoring
+ * @bw_info: set bw info levels to monitor
+ *
+ * Returns: 0 on success, negative on failure
+ */
+static inline int qdf_ipa_uc_bw_monitor(qdf_ipa_wdi_bw_info_t *bw_info)
+{
+	return __qdf_ipa_uc_bw_monitor(bw_info);
+}
 #endif
 
 #endif /* IPA_OFFLOAD */

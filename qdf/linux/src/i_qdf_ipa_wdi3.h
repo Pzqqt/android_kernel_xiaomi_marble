@@ -398,8 +398,18 @@ static inline int __qdf_ipa_wdi_wlan_stats(struct ipa_wdi_tx_info *tx_stats)
 {
 	return ipa_wdi_sw_stats(tx_stats);
 }
-#endif
 
+/**
+ * ipa_uc_bw_monitor() - start/stop uc bw monitoring
+ * @bw_info: set bw info levels to monitor
+ *
+ * Returns: 0 on success, negative on failure
+ */
+static inline int __qdf_ipa_uc_bw_monitor(struct ipa_wdi_bw_info *bw_info)
+{
+	return ipa_uc_bw_monitor(bw_info);
+}
+#endif
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
 
 /**

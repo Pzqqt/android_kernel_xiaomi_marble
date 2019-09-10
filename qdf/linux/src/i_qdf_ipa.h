@@ -387,7 +387,31 @@ typedef struct ipa_wdi_tx_info __qdf_ipa_wdi_tx_info_t;
 	(((struct ipa_wdi_tx_info *)stats_info)->sta_tx)
 #define QDF_IPA_WDI_TX_INFO_SAP_TX_BYTES(stats_info)	\
 	(((struct ipa_wdi_tx_info *)stats_info)->ap_tx)
-#endif
+/**
+ * __qdf_ipa_wdi_bw_info_t - BW levels to be monitored by uC
+ */
+typedef struct ipa_wdi_bw_info __qdf_ipa_wdi_bw_info_t;
+
+#define QDF_IPA_WDI_BW_INFO_THRESHOLD_LEVEL_1(bw_info)	\
+	(((struct ipa_wdi_bw_info *)bw_info)->threshold[0])
+#define QDF_IPA_WDI_BW_INFO_THRESHOLD_LEVEL_2(bw_info)	\
+	(((struct ipa_wdi_bw_info *)bw_info)->threshold[1])
+#define QDF_IPA_WDI_BW_INFO_THRESHOLD_LEVEL_3(bw_info)	\
+	(((struct ipa_wdi_bw_info *)bw_info)->threshold[2])
+#define QDF_IPA_WDI_BW_INFO_START_STOP(bw_info)	\
+	(((struct ipa_wdi_bw_info *)bw_info)->stop)
+
+/**
+ * __qdf_ipa_inform_wlan_bw_t - BW information given by IPA driver
+ */
+typedef struct ipa_inform_wlan_bw  __qdf_ipa_inform_wlan_bw_t;
+
+#define QDF_IPA_INFORM_WLAN_BW_INDEX(bw_inform)	\
+	(((struct ipa_inform_wlan_bw*)bw_inform)->index)
+#define QDF_IPA_INFORM_WLAN_BW_THROUGHPUT(bw_inform)	\
+	(((struct ipa_inform_wlan_bw*)bw_inform)->throughput)
+
+#endif /* WDI3_STATS_UPDATE */
 
 /**
  * __qdf_ipa_dp_evt_type_t - type of event client callback is

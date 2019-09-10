@@ -221,6 +221,18 @@ typedef __qdf_ipa_dp_evt_type_t qdf_ipa_dp_evt_type_t;
  * embedded TX information.
  */
 typedef __qdf_ipa_wdi_tx_info_t qdf_ipa_wdi_tx_info_t;
+
+/**
+ * qdf_ipa_wdi_bw_info_t - BW threshold levels to be monitored
+ * by IPA uC
+ */
+typedef __qdf_ipa_wdi_bw_info_t qdf_ipa_wdi_bw_info_t;
+
+/**
+ * qdf_ipa_inform_wlan_bw_t - BW information given by IPA driver
+ * whenever uC detects threshold level reached
+ */
+typedef __qdf_ipa_inform_wlan_bw_t qdf_ipa_inform_wlan_bw_t;
 #endif
 
 typedef __qdf_ipa_hdr_add_t qdf_ipa_hdr_add_t;
