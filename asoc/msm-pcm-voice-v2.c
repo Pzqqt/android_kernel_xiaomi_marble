@@ -582,6 +582,20 @@ static int msm_voice_slowtalk_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int msm_voice_ecns_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	uint32_t enable = ucontrol->value.integer.value[0];
+	uint32_t session_id = ucontrol->value.integer.value[1];
+	uint32_t module_id = ucontrol->value.integer.value[2];
+
+	pr_debug("%s: ecns enable=%d session_id=%#x\n", __func__, enable,
+		 session_id);
+	voc_set_ecns_enable(session_id, module_id, enable);
+
+	return 0;
+}
+
 static int msm_voice_hd_voice_put(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
@@ -695,6 +709,8 @@ static struct snd_kcontrol_new msm_voice_controls[] = {
 				msm_voice_tty_mode_put),
 	SOC_SINGLE_MULTI_EXT("Slowtalk Enable", SND_SOC_NOPM, 0, VSID_MAX, 0, 2,
 				NULL, msm_voice_slowtalk_put),
+	SOC_SINGLE_MULTI_EXT("Voice ECNS Enable", SND_SOC_NOPM, 0, VSID_MAX, 0, 3,
+				NULL, msm_voice_ecns_put),
 	SOC_SINGLE_MULTI_EXT("Voice Topology Disable", SND_SOC_NOPM, 0,
 			     VSID_MAX, 0, 2, NULL,
 			     msm_voice_topology_disable_put),
