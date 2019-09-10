@@ -3107,8 +3107,8 @@ QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
 {
 	struct dp_peer *peer = peer_handle;
 
-	DP_TRACE(INFO, "peer %pK vdev %pK vdev id %d",
-			peer, peer->vdev, peer->vdev->vdev_id);
+	dp_info("peer %pK vdev %pK vdev id %d",
+		peer, peer->vdev, peer->vdev->vdev_id);
 	*vdev_id = peer->vdev->vdev_id;
 	return QDF_STATUS_SUCCESS;
 }
