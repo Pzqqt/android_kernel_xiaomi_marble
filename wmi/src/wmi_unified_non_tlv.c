@@ -942,6 +942,40 @@ static QDF_STATUS send_peer_delete_all_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_peer_ft_roam_cmd_non_tlv() - send PEER BA reset command to fw
+ * @wmi_handle: wmi handle
+ * @peer_addr: peer mac addr
+ * @vdev_id: vdev id
+ *
+ * Return: 0 for success or error code
+ */
+
+static QDF_STATUS send_peer_ft_roam_cmd_non_tlv(wmi_unified_t wmi_handle,
+					uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
+					uint8_t vdev_id)
+{
+	wmi_peer_ft_roaming_peer_update_cmd *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int len = sizeof(wmi_peer_ft_roaming_peer_update_cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_peer_ft_roaming_peer_update_cmd *)wmi_buf_data(buf);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
+	ret =  wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_FT_ROAMING_PEER_UPDATE_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send WMI_PEER_FT_ROAMING_PEER_UPDATE_CMDID");
+		wmi_buf_free(buf);
+	}
+	return ret;
+}
+
+/**
  * convert_host_peer_param_id_to_target_id_non_tlv - convert host peer param_id
  * to target id.
  * @peer_param_id: host param id.
@@ -9918,6 +9952,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_peer_create_cmd = send_peer_create_cmd_non_tlv,
 	.send_peer_delete_cmd = send_peer_delete_cmd_non_tlv,
 	.send_peer_delete_all_cmd = send_peer_delete_all_cmd_non_tlv,
+	.send_peer_ft_roam_cmd = send_peer_ft_roam_cmd_non_tlv,
 #ifdef WLAN_SUPPORT_GREEN_AP
 	.send_green_ap_ps_cmd = send_green_ap_ps_cmd_non_tlv,
 #endif

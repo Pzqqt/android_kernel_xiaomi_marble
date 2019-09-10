@@ -400,6 +400,17 @@ QDF_STATUS wmi_extract_vdev_peer_delete_all_response_event(
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_peer_ft_roam_send(wmi_unified_t wmi_handle,
+					 uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
+					 uint8_t vdev_id)
+{
+	if (wmi_handle->ops->send_peer_ft_roam_cmd)
+		return wmi_handle->ops->send_peer_ft_roam_cmd(wmi_handle,
+					peer_addr, vdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_extract_pdev_tpc_ev_param(
 		wmi_unified_t wmi_handle, void *evt_buf,
 		wmi_host_pdev_tpc_event *param)
