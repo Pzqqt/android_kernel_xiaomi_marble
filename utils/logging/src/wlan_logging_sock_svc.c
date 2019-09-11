@@ -1313,7 +1313,7 @@ static void driver_hal_status_map(uint8_t *status)
 /*
  * send_packetdump() - send packet dump
  * @soc: soc handle
- * @vdev: vdev handle
+ * @vdev_id: ID of the virtual device handle
  * @netbuf: netbuf
  * @status: status of tx packet
  * @type: type of packet
@@ -1325,7 +1325,7 @@ static void driver_hal_status_map(uint8_t *status)
  *
  */
 static void send_packetdump(ol_txrx_soc_handle soc,
-			    struct cdp_vdev *vdev, qdf_nbuf_t netbuf,
+			    uint8_t vdev_id, qdf_nbuf_t netbuf,
 			    uint8_t status, uint8_t type)
 {
 	struct ath_pktlog_hdr pktlog_hdr = {0};
@@ -1337,7 +1337,7 @@ static void send_packetdump(ol_txrx_soc_handle soc,
 	}
 
 	/* Send packet dump only for STA interface */
-	if (wlan_op_mode_sta != cdp_get_opmode(soc, vdev))
+	if (wlan_op_mode_sta != cdp_get_opmode(soc, vdev_id))
 		return;
 
 #if defined(HELIUMPLUS)
@@ -1390,17 +1390,7 @@ static void send_packetdump_monitor(uint8_t type)
 	wlan_pkt_stats_to_logger_thread(&pktlog_hdr, &pd_hdr, NULL);
 }
 
-/**
- * wlan_deregister_txrx_packetdump() - tx/rx packet dump
- *  deregistration
- *
- * This function is used to deregister tx/rx packet dump callbacks
- * with ol, pe and htt layers
- *
- * Return: None
- *
- */
-void wlan_deregister_txrx_packetdump(void)
+void wlan_deregister_txrx_packetdump(uint8_t pdev_id)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -1408,7 +1398,7 @@ void wlan_deregister_txrx_packetdump(void)
 		return;
 
 	if (gtx_count || grx_count) {
-		cdp_deregister_packetdump_cb(soc);
+		cdp_deregister_packetdump_cb(soc, pdev_id);
 		wma_deregister_packetdump_callback();
 		send_packetdump_monitor(STOP_MONITOR);
 		csr_packetdump_timer_stop();
@@ -1423,6 +1413,7 @@ void wlan_deregister_txrx_packetdump(void)
 /*
  * check_txrx_packetdump_count() - function to check
  * tx/rx packet dump global counts
+ * @pdev_id: datapath pdev identifier
  *
  * This function is used to check global counts of tx/rx
  * packet dump functionality.
@@ -1431,14 +1422,14 @@ void wlan_deregister_txrx_packetdump(void)
  *             0 otherwise
  *
  */
-static bool check_txrx_packetdump_count(void)
+static bool check_txrx_packetdump_count(uint8_t pdev_id)
 {
 	if (gtx_count == MAX_NUM_PKT_LOG ||
 		grx_count == MAX_NUM_PKT_LOG) {
 		LOGGING_TRACE(QDF_TRACE_LEVEL_DEBUG,
 			"%s gtx_count: %d grx_count: %d deregister packetdump",
 			__func__, gtx_count, grx_count);
-		wlan_deregister_txrx_packetdump();
+		wlan_deregister_txrx_packetdump(pdev_id);
 		return 1;
 	}
 	return 0;
@@ -1447,7 +1438,8 @@ static bool check_txrx_packetdump_count(void)
 /*
  * tx_packetdump_cb() - tx packet dump callback
  * @soc: soc handle
- * @vdev: vdev handle
+ * @pdev_id: datapath pdev id
+ * @vdev_id: vdev id
  * @netbuf: netbuf
  * @status: status of tx packet
  * @type: packet type
@@ -1459,27 +1451,29 @@ static bool check_txrx_packetdump_count(void)
  *
  */
 static void tx_packetdump_cb(ol_txrx_soc_handle soc,
-			     struct cdp_vdev *vdev, qdf_nbuf_t netbuf,
+			     uint8_t pdev_id, uint8_t vdev_id,
+			     qdf_nbuf_t netbuf,
 			     uint8_t status, uint8_t type)
 {
 	bool temp;
 
-	if (!soc || !vdev)
+	if (!soc)
 		return;
 
-	temp = check_txrx_packetdump_count();
+	temp = check_txrx_packetdump_count(pdev_id);
 	if (temp)
 		return;
 
 	driver_hal_status_map(&status);
-	send_packetdump(soc, vdev, netbuf, status, type);
+	send_packetdump(soc, vdev_id, netbuf, status, type);
 }
 
 
 /*
  * rx_packetdump_cb() - rx packet dump callback
  * @soc: soc handle
- * @vdev: vdev handle
+ * @pdev_id: datapath pdev id
+ * @vdev_id: vdev id
  * @netbuf: netbuf
  * @status: status of rx packet
  * @type: packet type
@@ -1491,40 +1485,31 @@ static void tx_packetdump_cb(ol_txrx_soc_handle soc,
  *
  */
 static void rx_packetdump_cb(ol_txrx_soc_handle soc,
-			     struct cdp_vdev *vdev, qdf_nbuf_t netbuf,
+			     uint8_t pdev_id, uint8_t vdev_id,
+			     qdf_nbuf_t netbuf,
 			     uint8_t status, uint8_t type)
 {
 	bool temp;
 
-	if (!soc || !vdev)
+	if (!soc)
 		return;
 
-	temp = check_txrx_packetdump_count();
+	temp = check_txrx_packetdump_count(pdev_id);
 	if (temp)
 		return;
 
-	send_packetdump(soc, vdev, netbuf, status, type);
+	send_packetdump(soc, vdev_id, netbuf, status, type);
 }
 
-
-/**
- * wlan_register_txrx_packetdump() - tx/rx packet dump
- * registration
- *
- * This function is used to register tx/rx packet dump callbacks
- * with ol, pe and htt layers
- *
- * Return: None
- *
- */
-void wlan_register_txrx_packetdump(void)
+void wlan_register_txrx_packetdump(uint8_t pdev_id)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!soc)
 		return;
 
-	cdp_register_packetdump_cb(soc, tx_packetdump_cb, rx_packetdump_cb);
+	cdp_register_packetdump_cb(soc, pdev_id,
+				   tx_packetdump_cb, rx_packetdump_cb);
 	wma_register_packetdump_callback(tx_packetdump_cb,
 			rx_packetdump_cb);
 	send_packetdump_monitor(START_MONITOR);

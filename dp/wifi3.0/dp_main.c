@@ -355,14 +355,22 @@ static void dp_service_mon_rings(void *arg)
 #ifndef REMOVE_PKT_LOG
 /**
  * dp_pkt_log_init() - API to initialize packet log
- * @ppdev: physical device handle
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  * @scn: HIF context
  *
  * Return: none
  */
-void dp_pkt_log_init(struct cdp_pdev *ppdev, void *scn)
+void dp_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn)
 {
-	struct dp_pdev *handle = (struct dp_pdev *)ppdev;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *handle =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!handle) {
+		dp_err("pdev handle is NULL");
+		return;
+	}
 
 	if (handle->pkt_log_init) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -384,16 +392,16 @@ void dp_pkt_log_init(struct cdp_pdev *ppdev, void *scn)
 
 /**
  * dp_pkt_log_con_service() - connect packet log service
- * @ppdev: physical device handle
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  * @scn: device context
  *
  * Return: none
  */
-static void dp_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn)
+static void dp_pkt_log_con_service(struct cdp_soc_t *soc_hdl,
+				   uint8_t pdev_id, void *scn)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-
-	dp_pkt_log_init((struct cdp_pdev *)pdev, scn);
+	dp_pkt_log_init(soc_hdl, pdev_id, scn);
 	pktlog_htc_attach();
 }
 
@@ -6166,9 +6174,15 @@ static struct cdp_vdev *dp_get_mon_vdev_from_pdev_wifi3(struct cdp_pdev *dev)
 	return (struct cdp_vdev *)pdev->monitor_vdev;
 }
 
-static int dp_get_opmode(struct cdp_vdev *vdev_handle)
+static int dp_get_opmode(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+
+	if (!vdev) {
+		dp_err("vdev for id %d is NULL", vdev_id);
+		return -EINVAL;
+	}
 
 	return vdev->opmode;
 }
@@ -9391,19 +9405,26 @@ static struct cdp_pflow_ops dp_ops_pflow = {
 #ifdef FEATURE_RUNTIME_PM
 /**
  * dp_runtime_suspend() - ensure DP is ready to runtime suspend
- * @opaque_pdev: DP pdev context
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  *
  * DP is ready to runtime suspend if there are no pending TX packets.
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS dp_runtime_suspend(struct cdp_pdev *opaque_pdev)
+static QDF_STATUS dp_runtime_suspend(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	/* Abort if there are any pending TX packets */
-	if (dp_get_tx_pending(opaque_pdev) > 0) {
+	if (dp_get_tx_pending(dp_pdev_to_cdp_pdev(pdev)) > 0) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  FL("Abort suspend due to pending TX packets"));
 		return QDF_STATUS_E_AGAIN;
@@ -9439,16 +9460,16 @@ void dp_flush_ring_hptp(struct dp_soc *soc, hal_ring_handle_t hal_srng)
 
 /**
  * dp_runtime_resume() - ensure DP is ready to runtime resume
- * @opaque_pdev: DP pdev context
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  *
  * Resume DP for runtime PM.
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS dp_runtime_resume(struct cdp_pdev *opaque_pdev)
+static QDF_STATUS dp_runtime_resume(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	int i;
 
 	if (soc->intr_mode == DP_INTR_POLL)
@@ -9466,18 +9487,18 @@ static QDF_STATUS dp_runtime_resume(struct cdp_pdev *opaque_pdev)
 
 /**
  * dp_tx_get_success_ack_stats() - get tx success completion count
- * @opaque_pdev: dp pdev context
+ * @soc_hdl: Datapath soc handle
  * @vdevid: vdev identifier
  *
  * Return: tx success ack count
  */
-static uint32_t dp_tx_get_success_ack_stats(struct cdp_pdev *pdev,
+static uint32_t dp_tx_get_success_ack_stats(struct cdp_soc_t *soc_hdl,
 					    uint8_t vdev_id)
 {
-	struct dp_soc *soc = ((struct dp_pdev *)pdev)->soc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_vdev *vdev =
 		(struct dp_vdev *)dp_get_vdev_from_soc_vdev_id_wifi3(soc,
-								 vdev_id);
+								     vdev_id);
 	struct cdp_vdev_stats *vdev_stats = NULL;
 	uint32_t tx_success;
 

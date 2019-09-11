@@ -3645,24 +3645,21 @@ more_data:
 }
 
 #ifdef FEATURE_WLAN_TDLS
-/**
- * dp_tx_non_std() - Allow the control-path SW to send data frames
- *
- * @data_vdev - which vdev should transmit the tx data frames
- * @tx_spec - what non-standard handling to apply to the tx data frames
- * @msdu_list - NULL-terminated list of tx MSDUs
- *
- * Return: NULL on success,
- *         nbuf when it fails to send
- */
-qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
-			enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
+qdf_nbuf_t dp_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			 enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *) vdev_handle;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+
+	if (!vdev) {
+		dp_err("vdev handle for id %d is NULL", vdev_id);
+		return NULL;
+	}
 
 	if (tx_spec & OL_TX_SPEC_NO_FREE)
 		vdev->is_tdls_frame = true;
-	return dp_tx_send(vdev_handle, msdu_list);
+
+	return dp_tx_send(dp_vdev_to_cdp_vdev(vdev), msdu_list);
 }
 #endif
 

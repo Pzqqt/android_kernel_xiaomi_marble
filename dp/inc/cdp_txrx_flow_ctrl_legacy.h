@@ -30,13 +30,17 @@
 
 /**
  * cdp_hl_fc_register() - Register HL flow control callback.
- * @soc - data path soc handle
- * @flowcontrol - callback function pointer to stop/start OS netdev queues
+ * @soc: data path soc handle
+ * @pdev_id: datapath pdev identifier
+ * @flowcontrol: callback function pointer to stop/start OS netdev queues
+ *
  * Register flow control callback.
- * return 0 success
+ *
+ * Returns: 0 for success
  */
 static inline int
-cdp_hl_fc_register(ol_txrx_soc_handle soc, tx_pause_callback flowcontrol)
+cdp_hl_fc_register(ol_txrx_soc_handle soc, uint8_t pdev_id,
+		   tx_pause_callback flowcontrol)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -49,7 +53,7 @@ cdp_hl_fc_register(ol_txrx_soc_handle soc, tx_pause_callback flowcontrol)
 	    !soc->ops->l_flowctl_ops->register_tx_flow_control)
 		return -EINVAL;
 
-	return soc->ops->l_flowctl_ops->register_tx_flow_control(soc,
+	return soc->ops->l_flowctl_ops->register_tx_flow_control(soc, pdev_id,
 								 flowcontrol);
 }
 
@@ -76,7 +80,8 @@ static inline int cdp_hl_fc_set_os_queue_status(ol_txrx_soc_handle soc,
 }
 #else
 static inline int
-cdp_hl_fc_register(ol_txrx_soc_handle soc, tx_pause_callback flowcontrol)
+cdp_hl_fc_register(ol_txrx_soc_handle soc, uint8_t pdev_id,
+		   tx_pause_callback flowcontrol)
 {
 	return 0;
 }

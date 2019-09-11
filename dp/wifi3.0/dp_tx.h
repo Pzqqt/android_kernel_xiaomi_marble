@@ -203,8 +203,18 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				    struct dp_tx_msdu_info_s *msdu_info);
 #endif
 #ifdef FEATURE_WLAN_TDLS
-qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
-		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
+/**
+ * dp_tx_non_std() - Allow the control-path SW to send data frames
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: id of vdev
+ * @tx_spec: what non-standard handling to apply to the tx data frames
+ * @msdu_list: NULL-terminated list of tx MSDUs
+ *
+ * Return: NULL on success,
+ *         nbuf when it fails to send
+ */
+qdf_nbuf_t dp_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			 enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 #endif
 
 /**

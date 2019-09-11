@@ -62,11 +62,34 @@ static inline void wlan_logging_set_log_to_console(bool log_to_console) {}
 
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE) && \
 	defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
-void wlan_deregister_txrx_packetdump(void);
-void wlan_register_txrx_packetdump(void);
+/**
+ * wlan_deregister_txrx_packetdump() - tx/rx packet dump
+ *  deregistration
+ * @pdev_id: id of the datapath pdev handle
+ *
+ * This function is used to deregister tx/rx packet dump callbacks
+ * with ol, pe and htt layers
+ *
+ * Return: None
+ *
+ */
+void wlan_deregister_txrx_packetdump(uint8_t pdev_id);
+
+/**
+ * wlan_register_txrx_packetdump() - tx/rx packet dump
+ * registration
+ * @pdev_id: id of the datapath pdev handle
+ *
+ * This function is used to register tx/rx packet dump callbacks
+ * with ol, pe and htt layers
+ *
+ * Return: None
+ *
+ */
+void wlan_register_txrx_packetdump(uint8_t pdev_id);
 #else
-static inline void wlan_deregister_txrx_packetdump(void) {}
-static inline void wlan_register_txrx_packetdump(void) {}
+static inline void wlan_deregister_txrx_packetdump(uint8_t pdev_id) {}
+static inline void wlan_register_txrx_packetdump(uint8_t pdev_id) {}
 #endif
 
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE) && defined(FEATURE_WLAN_DIAG_SUPPORT)
