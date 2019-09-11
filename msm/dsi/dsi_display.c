@@ -3724,6 +3724,13 @@ static int dsi_display_res_init(struct dsi_display *display)
 		goto error_ctrl_put;
 	}
 
+	display_for_each_ctrl(i, display) {
+		struct msm_dsi_phy *phy = display->ctrl[i].phy;
+
+		phy->cfg.force_clk_lane_hs =
+			display->panel->host_config.force_hs_clk_lane;
+	}
+
 	rc = dsi_display_parse_lane_map(display);
 	if (rc) {
 		DSI_ERR("Lane map not found, rc=%d\n", rc);
