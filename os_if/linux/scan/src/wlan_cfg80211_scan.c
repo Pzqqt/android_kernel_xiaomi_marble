@@ -1279,7 +1279,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	struct wlan_ssid *pssid;
 	uint8_t i;
 	int ret = 0;
-	uint8_t num_chan = 0, channel;
+	uint8_t num_chan = 0;
 	uint32_t c_freq;
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	wlan_scan_requester req_id;
@@ -1424,7 +1424,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		qdf_set_macaddr_broadcast(&req->scan_req.bssid_list[0]);
 
 	if (request->n_channels) {
-		char *chl = qdf_mem_malloc((request->n_channels * 5) + 1);
+		uint32_t buff_len = (request->n_channels * 5) + 1;
+		char *chl = qdf_mem_malloc(buff_len);
 		int len = 0;
 #ifdef WLAN_POLICY_MGR_ENABLE
 		bool ap_or_go_present =
@@ -1438,18 +1439,19 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 			goto err;
 		}
 		for (i = 0; i < request->n_channels; i++) {
-			channel = request->channels[i]->hw_value;
-			c_freq = wlan_reg_chan_to_freq(pdev, channel);
-			if (wlan_reg_is_dsrc_chan(pdev, channel))
+			c_freq = request->channels[i]->center_freq;
+			if (wlan_reg_is_dsrc_freq(c_freq))
 				continue;
 #ifdef WLAN_POLICY_MGR_ENABLE
 			if (ap_or_go_present) {
 				bool ok;
 
 				qdf_status =
-					policy_mgr_is_chan_ok_for_dnbs(psoc,
-								       channel,
-								       &ok);
+					policy_mgr_is_chan_ok_for_dnbs(
+							psoc,
+							wlan_reg_freq_to_chan(
+								pdev, c_freq),
+							&ok);
 
 				if (QDF_IS_STATUS_ERROR(qdf_status)) {
 					osif_err("DNBS check failed");
@@ -1462,7 +1464,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 					continue;
 			}
 #endif
-			len += snprintf(chl + len, 5, "%d ", channel);
+			len += snprintf(chl + len, buff_len - len, "%d ",
+					c_freq);
 			req->scan_req.chan_list.chan[num_chan].freq = c_freq;
 			band = util_scan_scm_freq_to_band(c_freq);
 			if (band == WLAN_BAND_2_4_GHZ)
@@ -1472,7 +1475,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 				req->scan_req.chan_list.chan[num_chan].phymode =
 					SCAN_PHY_MODE_11A;
 			num_chan++;
-			if (num_chan >= WLAN_SCAN_MAX_NUM_CHANNELS)
+			if (num_chan >= NUM_CHANNELS)
 				break;
 		}
 		osif_info("Channel-List: %s", chl);
