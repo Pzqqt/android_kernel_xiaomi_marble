@@ -778,8 +778,6 @@ void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer,
 void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer,
 			bool reuse);
 void dp_peer_unref_delete(struct dp_peer *peer);
-extern void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer,
-	unsigned tid, qdf_nbuf_t msdu_list);
 extern void *dp_find_peer_by_addr(struct cdp_pdev *dev,
 	uint8_t *peer_mac_addr, uint8_t *peer_id);
 extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,

@@ -1941,14 +1941,6 @@ struct dp_peer {
 		u_int32_t michael_key[2]; /* relevant for TKIP */
 	} security[2]; /* 0 -> multicast, 1 -> unicast */
 
-	/*
-	* rx proc function: this either is a copy of pdev's rx_opt_proc for
-	* regular rx processing, or has been redirected to a /dev/null discard
-	* function when peer deletion is in progress.
-	*/
-	void (*rx_opt_proc)(struct dp_vdev *vdev, struct dp_peer *peer,
-		unsigned tid, qdf_nbuf_t msdu_list);
-
 	/* NAWDS Flag and Bss Peer bit */
 	uint8_t nawds_enabled:1, /* NAWDS flag */
 		bss_peer:1, /* set for bss peer */

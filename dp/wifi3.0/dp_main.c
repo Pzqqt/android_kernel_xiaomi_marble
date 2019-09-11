@@ -5256,9 +5256,6 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	qdf_mem_copy(
 		&peer->mac_addr.raw[0], peer_mac_addr, QDF_MAC_ADDR_SIZE);
 
-	/* TODO: See of rx_opt_proc is really required */
-	peer->rx_opt_proc = soc->rx_opt_proc;
-
 	/* initialize the peer_id */
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
 		peer->peer_ids[i] = HTT_INVALID_PEER;
@@ -6015,8 +6012,6 @@ static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 	/* redirect the peer's rx delivery function to point to a
 	 * discard func
 	 */
-
-	peer->rx_opt_proc = dp_rx_discard;
 
 	/* Do not make ctrl_peer to NULL for connected sta peers.
 	 * We need ctrl_peer to release the reference during dp

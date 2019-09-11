@@ -2758,24 +2758,6 @@ int dp_delba_tx_completion_wifi3(void *peer_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer, unsigned tid,
-	qdf_nbuf_t msdu_list)
-{
-	while (msdu_list) {
-		qdf_nbuf_t msdu = msdu_list;
-
-		msdu_list = qdf_nbuf_next(msdu_list);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "discard rx %pK from partly-deleted peer %pK (%02x:%02x:%02x:%02x:%02x:%02x)",
-			  msdu, peer,
-			  peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-			  peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-			  peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
-		qdf_nbuf_free(msdu);
-	}
-}
-
-
 /**
  * dp_set_pn_check_wifi3() - enable PN check in REO for security
  * @peer: Datapath peer handle
