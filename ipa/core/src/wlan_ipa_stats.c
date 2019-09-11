@@ -763,6 +763,40 @@ void wlan_ipa_uc_stat(struct wlan_ipa_priv *ipa_ctx)
 static void __wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 					     void *data)
 {
+	struct wlan_ipa_priv *ipa_ctx = wlan_ipa_get_obj_context();
+	struct qdf_ipa_inform_wlan_bw *bw_info;
+	uint8_t bw_level_index;
+	uint64_t throughput;
+
+	if (evt != IPA_INFORM_WLAN_BW)
+		return;
+
+	bw_info = data;
+	bw_level_index = QDF_IPA_INFORM_WLAN_BW_INDEX(bw_info);
+	throughput = QDF_IPA_INFORM_WLAN_BW_THROUGHPUT(bw_info);
+	ipa_debug("bw_info idx:%d tp:%llu", bw_level_index, throughput);
+
+	if (bw_level_index == ipa_ctx->curr_bw_level)
+		return;
+
+	if (bw_level_index == WLAN_IPA_BW_LEVEL_LOW) {
+		cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
+				       QDF_IPA_CLIENT_WLAN2_CONS,
+				       ipa_ctx->config->ipa_bw_low);
+		ipa_ctx->curr_bw_level = WLAN_IPA_BW_LEVEL_LOW;
+	} else if (bw_level_index == WLAN_IPA_BW_LEVEL_MEDIUM) {
+		cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
+				       QDF_IPA_CLIENT_WLAN2_CONS,
+				       ipa_ctx->config->ipa_bw_medium);
+		ipa_ctx->curr_bw_level = WLAN_IPA_BW_LEVEL_MEDIUM;
+	} else if (bw_level_index == WLAN_IPA_BW_LEVEL_HIGH) {
+		cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
+				       QDF_IPA_CLIENT_WLAN2_CONS,
+				       ipa_ctx->config->ipa_bw_high);
+		ipa_ctx->curr_bw_level = WLAN_IPA_BW_LEVEL_HIGH;
+	}
+
+	ipa_debug("Requested BW level: %d", ipa_ctx->curr_bw_level);
 }
 
 void wlan_ipa_update_tx_stats(struct wlan_ipa_priv *ipa_ctx, uint64_t sta_tx,

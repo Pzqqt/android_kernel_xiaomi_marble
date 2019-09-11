@@ -74,6 +74,8 @@
 
 #define IPA_WLAN_RX_SOFTIRQ_THRESH 32
 
+#define WLAN_IPA_UC_BW_MONITOR_LEVEL        3
+
 /**
  * enum - IPA UC operation message
  *
@@ -140,6 +142,18 @@ enum wlan_ipa_forward_type {
 	WLAN_IPA_FORWARD_PKT_NONE = 0,
 	WLAN_IPA_FORWARD_PKT_LOCAL_STACK = 1,
 	WLAN_IPA_FORWARD_PKT_DISCARD = 2
+};
+
+/**
+ * enum wlan_ipa_bw_level -ipa bandwidth level
+ * @WLAN_IPA_BW_LEVEL_LOW: vote for low bandwidth
+ * @WLAN_IPA_BW_LEVEL_MEDIUM: vote for medium bandwidth
+ * @WLAN_IPA_BW_LEVEL_HIGH: vote for high bandwidth
+ */
+enum wlan_ipa_bw_level {
+	WLAN_IPA_BW_LEVEL_LOW,
+	WLAN_IPA_BW_LEVEL_MEDIUM,
+	WLAN_IPA_BW_LEVEL_HIGH,
 };
 
 /**
@@ -665,6 +679,7 @@ struct wlan_ipa_priv {
 	uint32_t wdi_version;
 	bool is_smmu_enabled;	/* IPA caps returned from ipa_wdi_init */
 	qdf_atomic_t stats_quota;
+	uint8_t curr_bw_level;
 };
 
 #define WLAN_IPA_WLAN_FRAG_HEADER        sizeof(struct frag_header)
