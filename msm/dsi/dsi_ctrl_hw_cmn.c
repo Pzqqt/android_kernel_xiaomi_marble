@@ -509,7 +509,7 @@ void dsi_ctrl_hw_cmn_debug_bus(struct dsi_ctrl_hw *ctrl, u32 *entries, u32 size)
 		/* make sure that debug test point is enabled */
 		wmb();
 		reg = DSI_R32(ctrl, DSI_DEBUG_BUS_STATUS);
-		DSI_CTRL_HW_ERR(ctrl, "debug bus ctrl: 0x%x status:0x%x\n",
+		DSI_CTRL_HW_INFO(ctrl, "debug bus ctrl: 0x%x status:0x%x\n",
 				entries[i], reg);
 	}
 }
