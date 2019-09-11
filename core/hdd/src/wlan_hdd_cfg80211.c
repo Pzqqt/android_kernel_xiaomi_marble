@@ -19574,7 +19574,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	 * STA+NDI concurrency gets preference over NDI+NDI. Disable
 	 * first NDI in case an NDI+NDI concurrency exists.
 	 */
-	ucfg_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc);
+	ucfg_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc, false);
 
 	if (req->bssid)
 		bssid = req->bssid;
