@@ -288,9 +288,7 @@ int sde_wb_config(struct drm_device *drm_dev, void *data,
 }
 static inline
 int sde_wb_connector_post_init(struct drm_connector *connector,
-		void *info,
-		void *display,
-		struct msm_mode_info *mode_info)
+					 void *display)
 {
 	return 0;
 }
@@ -318,7 +316,8 @@ int sde_wb_connector_set_property(struct drm_connector *connector,
 	return 0;
 }
 static inline
-int sde_wb_get_info(struct msm_display_info *info, void *display)
+int sde_wb_get_info(struct drm_connector *connector,
+		struct msm_display_info *info, void *display)
 {
 	return 0;
 }
@@ -341,7 +340,23 @@ int sde_wb_connector_state_get_output_roi(struct drm_connector_state *state,
 {
 	return 0;
 }
+static inline
+int sde_wb_connector_set_info_blob(struct drm_connector *connector,
+		void *info,
+		void *display,
+		struct msm_mode_info *mode_info)
+{
+	return 0;
+}
 
+static inline
+int sde_wb_get_mode_info(struct drm_connector *connector,
+		const struct drm_display_mode *drm_mode,
+		struct msm_mode_info *mode_info,
+		void *display, const struct msm_resource_caps_info *avail_res)
+{
+	return 0;
+}
 #endif
 #endif /* __SDE_WB_H__ */
 
