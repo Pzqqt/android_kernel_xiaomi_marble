@@ -137,16 +137,6 @@ bool wma_is_vdev_in_ap_mode(tp_wma_handle wma, uint8_t vdev_id)
 }
 
 #ifdef QCA_IBSS_SUPPORT
-/**
- * wma_is_vdev_in_ibss_mode() - check that vdev is in ibss mode or not
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Helper function to know whether given vdev id
- * is in IBSS mode or not.
- *
- * Return: True/False
- */
 bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id)
 {
 	struct wma_txrx_node *intf = wma->interfaces;
@@ -161,6 +151,196 @@ bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id)
 		return true;
 
 	return false;
+}
+
+/**
+ * wma_add_bss_ibss_mode() -  process add bss request in IBSS mode
+ * @wma: wma handle
+ * @add_bss: add bss parameters
+ *
+ * Return: none
+ */
+static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
+{
+	struct cdp_pdev *pdev;
+	struct cdp_vdev *vdev;
+	struct wma_vdev_start_req req;
+	void *peer = NULL;
+	struct wlan_objmgr_vdev *vdev_obj;
+	uint8_t vdev_id, peer_id;
+	QDF_STATUS status;
+	tSetBssKeyParams key_info;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	vdev = wma_find_vdev_by_addr(wma, add_bss->self_mac_addr, &vdev_id);
+	if (!vdev) {
+		WMA_LOGE("%s: vdev not found for vdev id %d.",
+			 __func__, vdev_id);
+		goto send_fail_resp;
+	}
+	WMA_LOGD("%s: add_bss->sessionId = %d", __func__, vdev_id);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		WMA_LOGE("%s: Failed to get pdev", __func__);
+		goto send_fail_resp;
+	}
+	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
+
+	/* create ibss bss peer */
+	status = wma_create_peer(wma, pdev, vdev, add_bss->self_mac_addr,
+				 WMI_PEER_TYPE_DEFAULT, vdev_id,
+				 false);
+	if (status != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: Failed to create peer", __func__);
+		goto send_fail_resp;
+	}
+	WMA_LOGA("IBSS BSS peer created with mac %pM",
+		 add_bss->self_mac_addr);
+
+	peer = cdp_peer_find_by_addr(soc, pdev,
+				     add_bss->self_mac_addr,
+				     &peer_id);
+	if (!peer) {
+		WMA_LOGE("%s Failed to find peer %pM", __func__,
+			 add_bss->self_mac_addr);
+		goto send_fail_resp;
+	}
+
+	/* clear leftover ibss keys on bss peer */
+
+	WMA_LOGD("%s: ibss bss key clearing", __func__);
+	qdf_mem_zero(&key_info, sizeof(key_info));
+	key_info.smesessionId = vdev_id;
+	key_info.numKeys = SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS;
+	qdf_mem_copy(&wma->ibsskey_info, &key_info, sizeof(tSetBssKeyParams));
+
+	/* start ibss vdev */
+
+	add_bss->operMode = BSS_OPERATIONAL_MODE_IBSS;
+	vdev_obj = wma->interfaces[vdev_id].vdev;
+	if (!vdev_obj) {
+		wma_err("vdev not found for id: %d", vdev_id);
+		goto send_fail_resp;
+	}
+	mlme_set_bss_params(vdev_obj, add_bss);
+
+	add_bss->staContext.staIdx = cdp_peer_get_local_peer_id(soc, peer);
+
+	/*
+	 * If IBSS Power Save is supported by firmware
+	 * set the IBSS power save params to firmware.
+	 */
+	if (wmi_service_enabled(wma->wmi_handle,
+				wmi_service_ibss_pwrsave)) {
+		status = wma_set_ibss_pwrsave_params(wma, vdev_id);
+		if (status != QDF_STATUS_SUCCESS) {
+			WMA_LOGE("%s: Failed to Set IBSS Power Save Params to firmware",
+				 __func__);
+			goto peer_cleanup;
+		}
+	}
+
+	qdf_mem_zero(&req, sizeof(req));
+	req.vdev_id = vdev_id;
+	req.op_chan_freq = add_bss->op_chan_freq;
+	req.chan_width = add_bss->ch_width;
+	req.chan_freq_seg0 = add_bss->chan_freq_seg0;
+	req.chan_freq_seg1 = add_bss->chan_freq_seg1;
+	req.vht_capable = add_bss->vhtCapable;
+#if defined WLAN_FEATURE_VOWIF
+	req.max_txpow = add_bss->maxTxPower;
+#else
+	req.max_txpow = 0;
+#endif /* WLAN_FEATURE_VOWIF */
+	req.beacon_intval = add_bss->beaconInterval;
+	req.dtim_period = add_bss->dtimPeriod;
+	req.hidden_ssid = add_bss->bHiddenSSIDEn;
+	req.is_dfs = add_bss->bSpectrumMgtEnabled;
+	req.oper_mode = BSS_OPERATIONAL_MODE_IBSS;
+	req.ssid.length = add_bss->ssId.length;
+	if (req.ssid.length > 0)
+		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
+			     add_bss->ssId.length);
+
+	if (add_bss->nss == 2) {
+		req.preferred_rx_streams = 2;
+		req.preferred_tx_streams = 2;
+	} else {
+		req.preferred_rx_streams = 1;
+		req.preferred_tx_streams = 1;
+	}
+
+	WMA_LOGD("%s: op_chan_freq %d chan_width %d", __func__,
+		 req.op_chan_freq, req.chan_width);
+	WMA_LOGD("%s: ssid = %s", __func__, req.ssid.ssId);
+
+	status = wma_vdev_start(wma, &req, false);
+	if (status != QDF_STATUS_SUCCESS) {
+		mlme_clear_bss_params(vdev_obj);
+		goto peer_cleanup;
+	}
+
+	/* Initialize protection mode to no protection */
+	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+				    WMI_VDEV_PARAM_PROTECTION_MODE,
+				    IEEE80211_PROT_NONE);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("Failed to initialize protection mode");
+
+	return;
+
+peer_cleanup:
+	if (peer)
+		wma_remove_peer(wma, add_bss->bssId, vdev_id, peer, false);
+send_fail_resp:
+	add_bss->status = QDF_STATUS_E_FAILURE;
+	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+}
+
+/**
+ * wma_send_peer_atim_window_len() - send peer atim window length
+ * @wma: wma handle
+ * @add_sta: add sta  parameters
+ *
+ * This API sends the peer Atim Window length if IBSS
+ * power save is enabled by the firmware.
+ *
+ * Return: none
+ */
+static void
+wma_send_peer_atim_window_len(tp_wma_handle wma, tpAddStaParams add_sta)
+{
+	if (wma_is_vdev_in_ibss_mode(wma, add_sta->smesessionId) &&
+	    wmi_service_enabled(wma->wmi_handle,
+				wmi_service_ibss_pwrsave)) {
+		/*
+		 * If ATIM Window is present in the peer
+		 * beacon then send it to firmware else
+		 * configure Zero ATIM Window length to
+		 * firmware.
+		 */
+		if (add_sta->atimIePresent) {
+			wma_set_peer_param(wma, add_sta->staMac,
+					   WMI_PEER_IBSS_ATIM_WINDOW_LENGTH,
+					   add_sta->peerAtimWindowLength,
+					   add_sta->smesessionId);
+		} else {
+			wma_set_peer_param(wma, add_sta->staMac,
+					   WMI_PEER_IBSS_ATIM_WINDOW_LENGTH,
+					   0, add_sta->smesessionId);
+		}
+	}
+}
+#else
+static inline
+void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
+{
+}
+
+static inline void
+wma_send_peer_atim_window_len(tp_wma_handle wma, tpAddStaParams add_sta)
+{
 }
 #endif /* QCA_IBSS_SUPPORT */
 
@@ -3538,152 +3718,6 @@ send_fail_resp:
 	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
 }
 
-#ifdef QCA_IBSS_SUPPORT
-/**
- * wma_add_bss_ibss_mode() -  process add bss request in IBSS mode
- * @wma: wma handle
- * @add_bss: add bss parameters
- *
- * Return: none
- */
-static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
-{
-	struct cdp_pdev *pdev;
-	struct cdp_vdev *vdev;
-	struct wma_vdev_start_req req;
-	void *peer = NULL;
-	struct wlan_objmgr_vdev *vdev_obj;
-	uint8_t vdev_id, peer_id;
-	QDF_STATUS status;
-	tSetBssKeyParams key_info;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	vdev = wma_find_vdev_by_addr(wma, add_bss->self_mac_addr, &vdev_id);
-	if (!vdev) {
-		WMA_LOGE("%s: vdev not found for vdev id %d.",
-				__func__, vdev_id);
-		goto send_fail_resp;
-	}
-	WMA_LOGD("%s: add_bss->sessionId = %d", __func__, vdev_id);
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
-		goto send_fail_resp;
-	}
-	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
-
-	/* create ibss bss peer */
-	status = wma_create_peer(wma, pdev, vdev, add_bss->self_mac_addr,
-				 WMI_PEER_TYPE_DEFAULT, vdev_id,
-				 false);
-	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Failed to create peer", __func__);
-		goto send_fail_resp;
-	}
-	WMA_LOGA("IBSS BSS peer created with mac %pM",
-		 add_bss->self_mac_addr);
-
-	peer = cdp_peer_find_by_addr(soc, pdev,
-			add_bss->self_mac_addr, &peer_id);
-	if (!peer) {
-		WMA_LOGE("%s Failed to find peer %pM", __func__,
-			 add_bss->self_mac_addr);
-		goto send_fail_resp;
-	}
-
-	/* clear leftover ibss keys on bss peer */
-
-	WMA_LOGD("%s: ibss bss key clearing", __func__);
-	qdf_mem_zero(&key_info, sizeof(key_info));
-	key_info.smesessionId = vdev_id;
-	key_info.numKeys = SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS;
-	qdf_mem_copy(&wma->ibsskey_info, &key_info, sizeof(tSetBssKeyParams));
-
-	/* start ibss vdev */
-
-	add_bss->operMode = BSS_OPERATIONAL_MODE_IBSS;
-	vdev_obj = wma->interfaces[vdev_id].vdev;
-	if (!vdev_obj) {
-		wma_err("vdev not found for id: %d", vdev_id);
-		goto send_fail_resp;
-	}
-	mlme_set_bss_params(vdev_obj, add_bss);
-
-	add_bss->staContext.staIdx = cdp_peer_get_local_peer_id(soc, peer);
-
-	/*
-	 * If IBSS Power Save is supported by firmware
-	 * set the IBSS power save params to firmware.
-	 */
-	if (wmi_service_enabled(wma->wmi_handle,
-				   wmi_service_ibss_pwrsave)) {
-		status = wma_set_ibss_pwrsave_params(wma, vdev_id);
-		if (status != QDF_STATUS_SUCCESS) {
-			WMA_LOGE("%s: Failed to Set IBSS Power Save Params to firmware",
-				__func__);
-			goto peer_cleanup;
-		}
-	}
-
-	qdf_mem_zero(&req, sizeof(req));
-	req.vdev_id = vdev_id;
-	req.op_chan_freq = add_bss->op_chan_freq;
-	req.chan_width = add_bss->ch_width;
-	req.chan_freq_seg0 = add_bss->chan_freq_seg0;
-	req.chan_freq_seg1 = add_bss->chan_freq_seg1;
-	req.vht_capable = add_bss->vhtCapable;
-#if defined WLAN_FEATURE_VOWIF
-	req.max_txpow = add_bss->maxTxPower;
-#else
-	req.max_txpow = 0;
-#endif /* WLAN_FEATURE_VOWIF */
-	req.beacon_intval = add_bss->beaconInterval;
-	req.dtim_period = add_bss->dtimPeriod;
-	req.hidden_ssid = add_bss->bHiddenSSIDEn;
-	req.is_dfs = add_bss->bSpectrumMgtEnabled;
-	req.oper_mode = BSS_OPERATIONAL_MODE_IBSS;
-	req.ssid.length = add_bss->ssId.length;
-	if (req.ssid.length > 0)
-		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
-			     add_bss->ssId.length);
-
-	if (add_bss->nss == 2) {
-		req.preferred_rx_streams = 2;
-		req.preferred_tx_streams = 2;
-	} else {
-		req.preferred_rx_streams = 1;
-		req.preferred_tx_streams = 1;
-	}
-
-	WMA_LOGD("%s: op_chan_freq %d chan_width %d", __func__,
-		 req.op_chan_freq, req.chan_width);
-	WMA_LOGD("%s: ssid = %s", __func__, req.ssid.ssId);
-
-	status = wma_vdev_start(wma, &req, false);
-	if (status != QDF_STATUS_SUCCESS) {
-		mlme_clear_bss_params(vdev_obj);
-		goto peer_cleanup;
-	}
-
-	/* Initialize protection mode to no protection */
-	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-					 WMI_VDEV_PARAM_PROTECTION_MODE,
-					 IEEE80211_PROT_NONE);
-	if (QDF_IS_STATUS_ERROR(status))
-		WMA_LOGE("Failed to initialize protection mode");
-
-	return;
-
-peer_cleanup:
-	if (peer)
-		wma_remove_peer(wma, add_bss->bssId, vdev_id, peer, false);
-send_fail_resp:
-	add_bss->status = QDF_STATUS_E_FAILURE;
-	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
-}
-#endif /* QCA_IBSS_SUPPORT */
-
 static QDF_STATUS wma_update_iface_params(tp_wma_handle wma,
 					  struct bss_params *add_bss)
 {
@@ -4071,13 +4105,6 @@ send_resp:
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wma_add_bss() - Add BSS request to fw as per opmode
- * @wma: wma handle
- * @params: add bss params
- *
- * Return: none
- */
 void wma_add_bss(tp_wma_handle wma, struct bss_params *params)
 {
 	WMA_LOGD("%s: add_bss_param.halPersona = %d",
@@ -4090,11 +4117,9 @@ void wma_add_bss(tp_wma_handle wma, struct bss_params *params)
 		wma_add_bss_ap_mode(wma, params);
 		break;
 
-#ifdef QCA_IBSS_SUPPORT
 	case QDF_IBSS_MODE:
 		wma_add_bss_ibss_mode(wma, params);
 		break;
-#endif
 
 	case QDF_NDI_MODE:
 		wma_add_bss_ndi_mode(wma, params);
@@ -4270,34 +4295,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 				peer, false);
 		goto send_rsp;
 	}
-#ifdef QCA_IBSS_SUPPORT
-	/*
-	 * In IBSS mode send the peer
-	 * Atim Window length if IBSS
-	 * power save is enabled by the
-	 * firmware.
-	 */
-	if (wma_is_vdev_in_ibss_mode(wma, add_sta->smesessionId) &&
-	    wmi_service_enabled(wma->wmi_handle,
-				   wmi_service_ibss_pwrsave)) {
-		/*
-		 * If ATIM Window is present in the peer
-		 * beacon then send it to firmware else
-		 * configure Zero ATIM Window length to
-		 * firmware.
-		 */
-		if (add_sta->atimIePresent) {
-			wma_set_peer_param(wma, add_sta->staMac,
-					   WMI_PEER_IBSS_ATIM_WINDOW_LENGTH,
-					   add_sta->peerAtimWindowLength,
-					   add_sta->smesessionId);
-		} else {
-			wma_set_peer_param(wma, add_sta->staMac,
-					   WMI_PEER_IBSS_ATIM_WINDOW_LENGTH,
-					   0, add_sta->smesessionId);
-		}
-	}
-#endif
+
+	wma_send_peer_atim_window_len(wma, add_sta);
 	if (add_sta->rmfEnabled)
 		wma_set_peer_pmf_status(wma, add_sta->staMac, true);
 
@@ -5000,13 +4999,6 @@ static void wma_sap_allow_runtime_pm(tp_wma_handle wma)
 	qdf_runtime_pm_allow_suspend(&wma->sap_prevent_runtime_pm_lock);
 }
 
-/**
- * wma_add_sta() - process add sta request as per opmode
- * @wma: wma handle
- * @add_Sta: add sta params
- *
- * Return: none
- */
 void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
@@ -5053,23 +5045,13 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		break;
 	}
 
-#ifdef QCA_IBSS_SUPPORT
 	/* adjust heart beat thresold timer value for detecting ibss peer
 	 * departure
 	 */
 	if (oper_mode == BSS_OPERATIONAL_MODE_IBSS)
 		wma_adjust_ibss_heart_beat_timer(wma, add_sta->smesessionId, 1);
-#endif
-
 }
 
-/**
- * wma_delete_sta() - process del sta request as per opmode
- * @wma: wma handle
- * @del_sta: delete sta params
- *
- * Return: none
- */
 void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 {
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
@@ -5142,13 +5124,11 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		qdf_mem_free(del_sta);
 	}
 
-#ifdef QCA_IBSS_SUPPORT
 	/* adjust heart beat thresold timer value for
 	 * detecting ibss peer departure
 	 */
 	if (oper_mode == BSS_OPERATIONAL_MODE_IBSS)
 		wma_adjust_ibss_heart_beat_timer(wma, smesession_id, -1);
-#endif
 }
 
 void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id)

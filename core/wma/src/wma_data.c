@@ -2023,16 +2023,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	return 0;
 }
 
-/**
- * wma_ibss_peer_info_event_handler() - IBSS peer info event handler
- * @handle: wma handle
- * @data: event data
- * @len: length of data
- *
- * This function handles IBSS peer info event from FW.
- *
- * Return: 0 for success or error code
- */
+#ifdef QCA_IBSS_SUPPORT
 int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 					    uint32_t len)
 {
@@ -2130,6 +2121,7 @@ send_response:
 
 	return 0;
 }
+#endif
 
 /**
  * wma_fast_tx_fail_event_handler() -tx failure event handler

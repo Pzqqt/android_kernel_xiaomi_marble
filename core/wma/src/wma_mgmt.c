@@ -2223,14 +2223,6 @@ static uint16_t wma_calc_ibss_heart_beat_timer(int16_t peer_num)
 	return heart_beat_timer[peer_num - 1];
 }
 
-/**
- * wma_adjust_ibss_heart_beat_timer() - set ibss heart beat timer in fw.
- * @wma: wma handle
- * @vdev_id: vdev id
- * @peer_num_delta: peer number delta value
- *
- * Return: none
- */
 void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 				      uint8_t vdev_id,
 				      int8_t peer_num_delta)
@@ -2296,139 +2288,6 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 	WMA_LOGD("Set IBSS link monitor timer: peer_num = %d timer_value = %d",
 		 new_peer_num, new_timer_value_ms);
 }
-#endif /* QCA_IBSS_SUPPORT */
-
-#ifndef CRYPTO_SET_KEY_CONVERGED
-void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
-{
-	struct wma_set_key_params key_params;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t i;
-	uint32_t def_key_idx = 0;
-	uint32_t wlan_opmode;
-	struct cdp_vdev *txrx_vdev;
-	uint8_t *mac_addr;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct wlan_objmgr_vdev *vdev;
-
-	WMA_LOGD("BSS key setup");
-	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
-	if (!txrx_vdev) {
-		WMA_LOGE("%s:Invalid vdev handle", __func__);
-		key_info->status = QDF_STATUS_E_FAILURE;
-		goto out;
-	}
-	wlan_opmode = cdp_get_opmode(soc, txrx_vdev);
-
-	/*
-	 * For IBSS, WMI expects the BSS key to be set per peer key
-	 * So cache the BSS key in the wma_handle and re-use it when the
-	 * STA key is been setup for a peer
-	 */
-	if (wlan_op_mode_ibss == wlan_opmode) {
-		key_info->status = QDF_STATUS_SUCCESS;
-		if (wma_handle->ibss_started > 0)
-			goto out;
-		WMA_LOGD("Caching IBSS Key");
-		qdf_mem_copy(&wma_handle->ibsskey_info, key_info,
-			     sizeof(tSetBssKeyParams));
-	}
-
-	qdf_mem_zero(&key_params, sizeof(key_params));
-	key_params.vdev_id = key_info->smesessionId;
-	key_params.key_type = key_info->encType;
-	key_params.singl_tid_rc = key_info->singleTidRc;
-	key_params.unicast = false;
-	if (wlan_opmode == wlan_op_mode_sta) {
-		qdf_mem_copy(key_params.peer_mac,
-			wma_handle->interfaces[key_info->smesessionId].bssid,
-			QDF_MAC_ADDR_SIZE);
-	} else {
-		mac_addr = cdp_get_vdev_mac_addr(soc,
-					txrx_vdev);
-		if (!mac_addr) {
-			WMA_LOGE("%s: mac_addr is NULL for vdev with id %d",
-				 __func__, key_info->smesessionId);
-			goto out;
-		}
-		/* vdev mac address will be passed for all other modes */
-		qdf_mem_copy(key_params.peer_mac, mac_addr,
-			     QDF_MAC_ADDR_SIZE);
-		WMA_LOGD("BSS Key setup with vdev_mac %pM\n",
-			 mac_addr);
-	}
-
-	if (key_info->numKeys == 0 &&
-	    (key_info->encType == eSIR_ED_WEP40 ||
-	     key_info->encType == eSIR_ED_WEP104)) {
-		vdev =
-		wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
-						     key_info->smesessionId,
-						     WLAN_LEGACY_WMA_ID);
-		wma_read_cfg_wepkey(wma_handle, key_info->key,
-				    &def_key_idx, &key_info->numKeys, vdev);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
-	} else if ((key_info->encType == eSIR_ED_WEP40) ||
-		   (key_info->encType == eSIR_ED_WEP104)) {
-		struct wma_txrx_node *intf =
-			&wma_handle->interfaces[key_info->smesessionId];
-		key_params.def_key_idx = intf->wep_default_key_idx;
-	}
-
-	for (i = 0; i < key_info->numKeys; i++) {
-		if (key_params.key_type != eSIR_ED_NONE &&
-		    !key_info->key[i].keyLength)
-			continue;
-		if (key_info->encType == eSIR_ED_WPI) {
-			key_params.key_idx = key_info->key[i].keyId;
-			key_params.def_key_idx = key_info->key[i].keyId;
-		} else
-			key_params.key_idx = key_info->key[i].keyId;
-
-		key_params.key_len = key_info->key[i].keyLength;
-		qdf_mem_copy(key_params.key_rsc,
-				key_info->key[i].keyRsc,
-				WLAN_CRYPTO_RSC_SIZE);
-		if (key_info->encType == eSIR_ED_TKIP) {
-			qdf_mem_copy(key_params.key_data,
-				     key_info->key[i].key, 16);
-			qdf_mem_copy(&key_params.key_data[16],
-				     &key_info->key[i].key[24], 8);
-			qdf_mem_copy(&key_params.key_data[24],
-				     &key_info->key[i].key[16], 8);
-		} else
-			qdf_mem_copy((void *)key_params.key_data,
-				     (const void *)key_info->key[i].key,
-				     key_info->key[i].keyLength);
-
-		WMA_LOGD("%s: bss key[%d] length %d", __func__, i,
-			 key_info->key[i].keyLength);
-
-		status = wma_setup_install_key_cmd(wma_handle, &key_params,
-						   wlan_opmode);
-		if (status == QDF_STATUS_E_NOMEM) {
-			WMA_LOGE("%s:Failed to setup install key buf",
-				 __func__);
-			key_info->status = QDF_STATUS_E_NOMEM;
-			goto out;
-		} else if (status == QDF_STATUS_E_FAILURE) {
-			WMA_LOGE("%s:Failed to send install key command",
-				 __func__);
-			key_info->status = QDF_STATUS_E_FAILURE;
-			goto out;
-		}
-	}
-
-	wma_handle->ibss_started++;
-	/* TODO: Should we wait till we get HTT_T2H_MSG_TYPE_SEC_IND? */
-	key_info->status = QDF_STATUS_SUCCESS;
-
-	qdf_mem_zero(&key_params, sizeof(struct wma_set_key_params));
-
-out:
-	wma_send_msg_high_priority(wma_handle, WMA_SET_BSSKEY_RSP,
-				   (void *)key_info, 0);
-}
 
 /**
  * wma_set_ibsskey_helper() - cached IBSS key in wma handle
@@ -2469,7 +2328,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	ASSERT(wlan_op_mode_ibss == opmode);
 
 	qdf_mem_copy(key_params.peer_mac, peer_macaddr.bytes,
-			QDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 
 	if (key_info->numKeys == 0 &&
 	    (key_info->encType == eSIR_ED_WEP40 ||
@@ -2520,6 +2379,146 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 				 __func__);
 		}
 	}
+}
+#else
+static inline
+void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
+			    tpSetBssKeyParams key_info,
+			    struct qdf_mac_addr peer_macaddr)
+{
+}
+#endif /* QCA_IBSS_SUPPORT */
+
+#ifndef CRYPTO_SET_KEY_CONVERGED
+void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
+{
+	struct wma_set_key_params key_params;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint32_t i;
+	uint32_t def_key_idx = 0;
+	uint32_t wlan_opmode;
+	struct cdp_vdev *txrx_vdev;
+	uint8_t *mac_addr;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_objmgr_vdev *vdev;
+
+	WMA_LOGD("BSS key setup");
+	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
+	if (!txrx_vdev) {
+		WMA_LOGE("%s:Invalid vdev handle", __func__);
+		key_info->status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+	wlan_opmode = cdp_get_opmode(soc, txrx_vdev);
+
+	/*
+	 * For IBSS, WMI expects the BSS key to be set per peer key
+	 * So cache the BSS key in the wma_handle and re-use it when the
+	 * STA key is been setup for a peer
+	 */
+	if (wlan_op_mode_ibss == wlan_opmode) {
+		key_info->status = QDF_STATUS_SUCCESS;
+		if (wma_handle->ibss_started > 0)
+			goto out;
+		WMA_LOGD("Caching IBSS Key");
+		qdf_mem_copy(&wma_handle->ibsskey_info, key_info,
+			     sizeof(tSetBssKeyParams));
+	}
+
+	qdf_mem_zero(&key_params, sizeof(key_params));
+	key_params.vdev_id = key_info->smesessionId;
+	key_params.key_type = key_info->encType;
+	key_params.singl_tid_rc = key_info->singleTidRc;
+	key_params.unicast = false;
+	if (wlan_opmode == wlan_op_mode_sta) {
+		qdf_mem_copy(key_params.peer_mac,
+			wma_handle->interfaces[key_info->smesessionId].bssid,
+			QDF_MAC_ADDR_SIZE);
+	} else {
+		mac_addr = cdp_get_vdev_mac_addr(soc, txrx_vdev);
+		if (!mac_addr) {
+			WMA_LOGE("%s: mac_addr is NULL for vdev with id %d",
+				 __func__, key_info->smesessionId);
+			goto out;
+		}
+		/* vdev mac address will be passed for all other modes */
+		qdf_mem_copy(key_params.peer_mac, mac_addr,
+			     QDF_MAC_ADDR_SIZE);
+		WMA_LOGD("BSS Key setup with vdev_mac %pM\n",
+			 mac_addr);
+	}
+
+	if (key_info->numKeys == 0 &&
+	    (key_info->encType == eSIR_ED_WEP40 ||
+	     key_info->encType == eSIR_ED_WEP104)) {
+		vdev =
+		wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
+						     key_info->smesessionId,
+						     WLAN_LEGACY_WMA_ID);
+		wma_read_cfg_wepkey(wma_handle, key_info->key,
+				    &def_key_idx, &key_info->numKeys, vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+	} else if ((key_info->encType == eSIR_ED_WEP40) ||
+		   (key_info->encType == eSIR_ED_WEP104)) {
+		struct wma_txrx_node *intf =
+			&wma_handle->interfaces[key_info->smesessionId];
+		key_params.def_key_idx = intf->wep_default_key_idx;
+	}
+
+	for (i = 0; i < key_info->numKeys; i++) {
+		if (key_params.key_type != eSIR_ED_NONE &&
+		    !key_info->key[i].keyLength)
+			continue;
+		if (key_info->encType == eSIR_ED_WPI) {
+			key_params.key_idx = key_info->key[i].keyId;
+			key_params.def_key_idx = key_info->key[i].keyId;
+		} else {
+			key_params.key_idx = key_info->key[i].keyId;
+		}
+
+		key_params.key_len = key_info->key[i].keyLength;
+		qdf_mem_copy(key_params.key_rsc,
+			     key_info->key[i].keyRsc,
+			     WLAN_CRYPTO_RSC_SIZE);
+		if (key_info->encType == eSIR_ED_TKIP) {
+			qdf_mem_copy(key_params.key_data,
+				     key_info->key[i].key, 16);
+			qdf_mem_copy(&key_params.key_data[16],
+				     &key_info->key[i].key[24], 8);
+			qdf_mem_copy(&key_params.key_data[24],
+				     &key_info->key[i].key[16], 8);
+		} else
+			qdf_mem_copy((void *)key_params.key_data,
+				     (const void *)key_info->key[i].key,
+				     key_info->key[i].keyLength);
+
+		WMA_LOGD("%s: bss key[%d] length %d", __func__, i,
+			 key_info->key[i].keyLength);
+
+		status = wma_setup_install_key_cmd(wma_handle, &key_params,
+						   wlan_opmode);
+		if (status == QDF_STATUS_E_NOMEM) {
+			WMA_LOGE("%s:Failed to setup install key buf",
+				 __func__);
+			key_info->status = QDF_STATUS_E_NOMEM;
+			goto out;
+		} else if (status == QDF_STATUS_E_FAILURE) {
+			WMA_LOGE("%s:Failed to send install key command",
+				 __func__);
+			key_info->status = QDF_STATUS_E_FAILURE;
+			goto out;
+		}
+	}
+
+	wma_handle->ibss_started++;
+	/* TODO: Should we wait till we get HTT_T2H_MSG_TYPE_SEC_IND? */
+	key_info->status = QDF_STATUS_SUCCESS;
+
+	qdf_mem_zero(&key_params, sizeof(struct wma_set_key_params));
+
+out:
+	wma_send_msg_high_priority(wma_handle, WMA_SET_BSSKEY_RSP,
+				   (void *)key_info, 0);
 }
 
 void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)

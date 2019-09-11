@@ -126,13 +126,6 @@ QDF_STATUS wma_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 }
 
 #ifdef QCA_IBSS_SUPPORT
-/**
- * wma_set_ibss_pwrsave_params() - set ibss power save parameter to fw
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Return: 0 for success or error code.
- */
 QDF_STATUS
 wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 {

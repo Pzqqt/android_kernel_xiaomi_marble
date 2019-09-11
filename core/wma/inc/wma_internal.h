@@ -541,7 +541,52 @@ struct cdp_vdev *wma_find_vdev_by_id(tp_wma_handle wma, uint8_t vdev_id)
 bool wma_is_vdev_in_ap_mode(tp_wma_handle wma, uint8_t vdev_id);
 
 #ifdef QCA_IBSS_SUPPORT
+/**
+ * wma_is_vdev_in_ibss_mode() - check that vdev is in ibss mode or not
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Helper function to know whether given vdev id
+ * is in IBSS mode or not.
+ *
+ * Return: True/False
+ */
 bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id);
+
+/**
+ * wma_adjust_ibss_heart_beat_timer() - set ibss heart beat timer in fw.
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @peer_num_delta: peer number delta value
+ *
+ * Return: none
+ */
+void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
+				      uint8_t vdev_id,
+				      int8_t peer_num_delta);
+
+/**
+ * wma_set_ibss_pwrsave_params() - set ibss power save parameter to fw
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: 0 for success or error code.
+ */
+QDF_STATUS
+wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id);
+
+/**
+ * wma_ibss_peer_info_event_handler() - IBSS peer info event handler
+ * @handle: wma handle
+ * @data: event data
+ * @len: length of data
+ *
+ * This function handles IBSS peer info event from FW.
+ *
+ * Return: 0 for success or error code
+ */
+int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
+				     uint32_t len);
 #else
 /**
  * wma_is_vdev_in_ibss_mode(): dummy function
@@ -555,7 +600,41 @@ bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id)
 {
 	return false;
 }
-#endif
+
+/**
+ * wma_adjust_ibss_heart_beat_timer() - set ibss heart beat timer in fw.
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @peer_num_delta: peer number delta value
+ *
+ * This function is dummy
+ *
+ * Return: none
+ */
+static inline void
+wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
+				 uint8_t vdev_id,
+				 int8_t peer_num_delta)
+{
+}
+
+/**
+ * wma_ibss_peer_info_event_handler() - IBSS peer info event handler
+ * @handle: wma handle
+ * @data: event data
+ * @len: length of data
+ *
+ * This function is dummy
+ *
+ * Return: 0 for success or error code
+ */
+static inline int
+wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
+				 uint32_t len)
+{
+	return 0;
+}
+#endif /* QCA_IBSS_SUPPORT */
 
 /**
  * wma_find_bssid_by_vdev_id() - Get the BSS ID corresponding to the vdev ID
@@ -644,10 +723,31 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 				    uint8_t type, void *params,
 				    uint32_t timeout);
 
+/**
+ * wma_add_bss() - Add BSS request to fw as per opmode
+ * @wma: wma handle
+ * @params: add bss params
+ *
+ * Return: none
+ */
 void wma_add_bss(tp_wma_handle wma, struct bss_params *params);
 
+/**
+ * wma_add_sta() - process add sta request as per opmode
+ * @wma: wma handle
+ * @add_Sta: add sta params
+ *
+ * Return: none
+ */
 void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta);
 
+/**
+ * wma_delete_sta() - process del sta request as per opmode
+ * @wma: wma handle
+ * @del_sta: delete sta params
+ *
+ * Return: none
+ */
 void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta);
 
 /**
@@ -725,10 +825,6 @@ void wma_process_update_beacon_params(tp_wma_handle wma,
 void wma_update_rts_params(tp_wma_handle wma, uint32_t value);
 
 void wma_update_frag_params(tp_wma_handle wma, uint32_t value);
-
-void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
-				      uint8_t vdev_id,
-				      int8_t peer_num_delta);
 
 #ifdef CRYPTO_SET_KEY_CONVERGED
 static inline void wma_set_stakey(tp_wma_handle wma_handle,
@@ -810,9 +906,6 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req);
 QDF_STATUS wma_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 					    uint32_t vdev_id, uint32_t param,
 					    uint32_t value);
-
-QDF_STATUS
-wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id);
 
 QDF_STATUS wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
 				     uint8_t *peer_addr, uint8_t uapsd_value,
@@ -931,9 +1024,6 @@ QDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
 
 int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 					uint32_t len);
-
-int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
-					    uint32_t len);
 
 int wma_fast_tx_fail_event_handler(void *handle, uint8_t *data,
 					  uint32_t len);
