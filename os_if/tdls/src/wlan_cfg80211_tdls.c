@@ -35,8 +35,6 @@
 #include <wlan_reg_services_api.h>
 #include "wlan_cfg80211_mc_cp_stats.h"
 
-#define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
-
 
 #define TDLS_MAX_NO_OF_2_4_CHANNELS 14
 
@@ -335,8 +333,8 @@ tdls_calc_channels_from_staparams(struct tdls_update_peer_params *req_info,
 	for (i = 0; i < num_unique_channels; i++)
 		osif_debug("[%d]: %d,", i, dest_chans[i]);
 
-	if (MAX_CHANNEL < num_unique_channels)
-		num_unique_channels = MAX_CHANNEL;
+	if (num_unique_channels > NUM_CHANNELS)
+		num_unique_channels = NUM_CHANNELS;
 	req_info->supported_channels_len = num_unique_channels;
 	osif_debug("After removing duplcates supported_channels_len: %d",
 		   req_info->supported_channels_len);

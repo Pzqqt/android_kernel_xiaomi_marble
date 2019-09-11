@@ -995,7 +995,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 				n_channels += wiphy->bands[band]->n_channels;
 	}
 
-	if (MAX_CHANNEL < n_channels) {
+	if (n_channels > NUM_CHANNELS) {
 		hdd_err("Exceed max number of channels: %d", n_channels);
 		return -EINVAL;
 	}

@@ -10905,8 +10905,8 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 	nla_for_each_nested(curr_attr, tb[SET_CHAN_CHAN_LIST], rem)
 		i++;
 
-	if (i > MAX_CHANNEL) {
-		hdd_err("Error: Exceeded max channels: %u", MAX_CHANNEL);
+	if (i > NUM_CHANNELS) {
+		hdd_err("Error: Exceeded max channels: %u", NUM_CHANNELS);
 		return -ENOMEM;
 	}
 

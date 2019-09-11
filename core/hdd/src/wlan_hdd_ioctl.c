@@ -7255,7 +7255,7 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t *param;
 	int j, i, temp_int, ret = 0, num_channels;
-	uint32_t parsed_channels[MAX_CHANNEL];
+	uint32_t parsed_channels[NUM_CHANNELS];
 	bool is_command_repeated = false;
 
 	if (!hdd_ctx) {
@@ -7288,7 +7288,7 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 		return -EINVAL;
 	}
 
-	if (temp_int < 0 || temp_int > MAX_CHANNEL) {
+	if (temp_int < 0 || temp_int > NUM_CHANNELS) {
 		hdd_err("Invalid Number of channel received");
 		return -EINVAL;
 	}
