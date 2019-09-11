@@ -1701,15 +1701,18 @@ static bool dp_get_peer_vdev_roaming_in_progress(struct dp_peer *peer)
 	struct ol_if_ops *ol_ops = NULL;
 	bool is_roaming = false;
 	uint8_t vdev_id = -1;
+	struct cdp_soc_t *soc;
 
 	if (!peer) {
 		dp_info("Peer is NULL. No roaming possible");
 		return false;
 	}
+
+	soc = dp_soc_to_cdp_soc_t(peer->vdev->pdev->soc);
 	ol_ops = peer->vdev->pdev->soc->cdp_soc.ol_ops;
 
 	if (ol_ops && ol_ops->is_roam_inprogress) {
-		dp_get_vdevid(peer, &vdev_id);
+		dp_get_vdevid(soc, peer->mac_addr.raw, &vdev_id);
 		is_roaming = ol_ops->is_roam_inprogress(vdev_id);
 	}
 
@@ -3117,24 +3120,18 @@ dp_rx_sec_ind_handler(struct dp_soc *soc, uint16_t peer_id,
 }
 
 #ifdef DP_PEER_EXTENDED_API
-/**
- * dp_register_peer() - Register peer into physical device
- * @pdev - data path device instance
- * @sta_desc - peer description
- *
- * Register peer into physical device
- *
- * Return: QDF_STATUS_SUCCESS registration success
- *         QDF_STATUS_E_FAULT peer not found
- */
-QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
-		struct ol_txrx_desc_type *sta_desc)
+QDF_STATUS dp_register_peer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			    struct ol_txrx_desc_type *sta_desc)
 {
 	struct dp_peer *peer;
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 
 	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev,
 				    sta_desc->peer_addr.bytes);
+
+	if (!pdev)
+		return QDF_STATUS_E_FAULT;
 
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
@@ -3148,21 +3145,16 @@ QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_clear_peer() - remove peer from physical device
- * @pdev - data path device instance
- * @peer_addr - peer mac address
- *
- * remove peer from physical device
- *
- * Return: QDF_STATUS_SUCCESS registration success
- *         QDF_STATUS_E_FAULT peer not found
- */
 QDF_STATUS
-dp_clear_peer(struct cdp_pdev *pdev_handle, struct qdf_mac_addr peer_addr)
+dp_clear_peer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+	      struct qdf_mac_addr peer_addr)
 {
 	struct dp_peer *peer;
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev)
+		return QDF_STATUS_E_FAULT;
 
 	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, peer_addr.bytes);
 	if (!peer)
@@ -3214,23 +3206,13 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 	return peer;
 }
 
-/**
- * dp_peer_state_update() - update peer local state
- * @pdev - data path device instance
- * @peer_addr - peer mac address
- * @state - new peer local state
- *
- * update peer local state
- *
- * Return: QDF_STATUS_SUCCESS registration success
- */
-QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
-		enum ol_txrx_peer_state state)
+QDF_STATUS dp_peer_state_update(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
+				enum ol_txrx_peer_state state)
 {
 	struct dp_peer *peer;
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 
-	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0, DP_VDEV_ALL);
+	peer =  dp_peer_find_hash_find(soc, peer_mac, 0, DP_VDEV_ALL);
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to find peer for: [%pM]", peer_mac);
@@ -3247,22 +3229,24 @@ QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_get_vdevid() - Get virtual interface id which peer registered
- * @peer - peer instance
- * @vdev_id - virtual interface id which peer registered
- *
- * Get virtual interface id which peer registered
- *
- * Return: QDF_STATUS_SUCCESS registration success
- */
-QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
+QDF_STATUS dp_get_vdevid(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
+			 uint8_t *vdev_id)
 {
-	struct dp_peer *peer = peer_handle;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_peer *peer =
+		dp_peer_find_hash_find(soc, peer_mac, 0, DP_VDEV_ALL);
+
+	if (!peer)
+		return QDF_STATUS_E_FAILURE;
 
 	dp_info("peer %pK vdev %pK vdev id %d",
 		peer, peer->vdev, peer->vdev->vdev_id);
 	*vdev_id = peer->vdev->vdev_id;
+	/* ref_cnt is incremented inside dp_peer_find_hash_find().
+	 * Decrement it here.
+	 */
+	dp_peer_unref_delete(peer);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3328,20 +3312,22 @@ uint8_t *dp_peer_get_peer_mac_addr(void *peer_handle)
 	return peer->mac_addr.raw;
 }
 
-/**
- * dp_get_peer_state() - Get local peer state
- * @peer - peer instance
- *
- * Get local peer state
- *
- * Return: peer status
- */
-int dp_get_peer_state(void *peer_handle)
+int dp_get_peer_state(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+		      uint8_t *peer_mac)
 {
-	struct dp_peer *peer = peer_handle;
+	enum ol_txrx_peer_state peer_state;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_peer *peer =  dp_peer_find_hash_find(soc, peer_mac, 0,
+						       vdev_id);
+
+	if (!peer)
+		return QDF_STATUS_E_FAILURE;
 
 	DP_TRACE(DEBUG, "peer %pK stats %d", peer, peer->state);
-	return peer->state;
+	peer_state = peer->state;
+	dp_peer_unref_delete(peer);
+
+	return peer_state;
 }
 
 /**
@@ -3424,6 +3410,60 @@ void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer)
 	pdev->local_peer_ids.freelist = i;
 	pdev->local_peer_ids.map[i] = NULL;
 	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
+}
+
+bool dp_find_peer_exist_on_vdev(struct cdp_soc_t *soc_hdl,
+				uint8_t vdev_id, uint8_t *peer_addr)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+
+	if (!vdev)
+		return false;
+
+	return !!dp_find_peer_by_addr_and_vdev(
+					dp_pdev_to_cdp_pdev(vdev->pdev),
+					dp_vdev_to_cdp_vdev(vdev),
+					peer_addr);
+}
+
+bool dp_find_peer_exist_on_other_vdev(struct cdp_soc_t *soc_hdl,
+				      uint8_t vdev_id, uint8_t *peer_addr,
+				      uint16_t max_bssid)
+{
+	int i;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev;
+
+	for (i = 0; i < max_bssid; i++) {
+		vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+		/* Need to check vdevs other than the vdev_id */
+		if (vdev_id == i || !vdev)
+			continue;
+		if (dp_find_peer_by_addr_and_vdev(
+					dp_pdev_to_cdp_pdev(vdev->pdev),
+					dp_vdev_to_cdp_vdev(vdev),
+					peer_addr)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+				  "%s: Duplicate peer %pM already exist on vdev %d",
+				  __func__, peer_addr, i);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool dp_find_peer_exist(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			uint8_t *peer_addr)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev)
+		return false;
+
+	return !!dp_find_peer_by_addr(dp_pdev_to_cdp_pdev(pdev), peer_addr);
 }
 #endif
 

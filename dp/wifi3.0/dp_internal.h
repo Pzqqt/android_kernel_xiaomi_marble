@@ -910,27 +910,133 @@ extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, int mac_addr_is_aligned, uint8_t vdev_id);
 
 #ifdef DP_PEER_EXTENDED_API
-QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
-		struct ol_txrx_desc_type *sta_desc);
-QDF_STATUS dp_clear_peer(struct cdp_pdev *pdev_handle,
+/**
+ * dp_register_peer() - Register peer into physical device
+ * @soc_hdl - data path soc handle
+ * @pdev_id - device instance id
+ * @sta_desc - peer description
+ *
+ * Register peer into physical device
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ *         QDF_STATUS_E_FAULT peer not found
+ */
+QDF_STATUS dp_register_peer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			    struct ol_txrx_desc_type *sta_desc);
+
+/**
+ * dp_clear_peer() - remove peer from physical device
+ * @soc_hdl - data path soc handle
+ * @pdev_id - device instance id
+ * @peer_addr - peer mac address
+ *
+ * remove peer from physical device
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ *         QDF_STATUS_E_FAULT peer not found
+ */
+QDF_STATUS dp_clear_peer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 			 struct qdf_mac_addr peer_addr);
+
+/*
+ * dp_find_peer_exist - find peer if already exists
+ * @soc: datapath soc handle
+ * @pdev_id: physical device instance id
+ * @peer_mac_addr: peer mac address
+ *
+ * Return: true or false
+ */
+bool dp_find_peer_exist(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			uint8_t *peer_addr);
+
+/*
+ * dp_find_peer_exist_on_vdev - find if peer exists on the given vdev
+ * @soc: datapath soc handle
+ * @vdev_id: vdev instance id
+ * @peer_mac_addr: peer mac address
+ *
+ * Return: true or false
+ */
+bool dp_find_peer_exist_on_vdev(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+				uint8_t *peer_addr);
+
+/*
+ * dp_find_peer_exist_on_other_vdev - find if peer exists
+ * on other than the given vdev
+ * @soc: datapath soc handle
+ * @vdev_id: vdev instance id
+ * @peer_mac_addr: peer mac address
+ * @max_bssid: max number of bssids
+ *
+ * Return: true or false
+ */
+bool dp_find_peer_exist_on_other_vdev(struct cdp_soc_t *soc_hdl,
+				      uint8_t vdev_id, uint8_t *peer_addr,
+				      uint16_t max_bssid);
+
 void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 		struct cdp_vdev *vdev,
 		uint8_t *peer_addr);
-QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
-		enum ol_txrx_peer_state state);
-QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id);
+
+/**
+ * dp_peer_state_update() - update peer local state
+ * @pdev - data path device instance
+ * @peer_addr - peer mac address
+ * @state - new peer local state
+ *
+ * update peer local state
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ */
+QDF_STATUS dp_peer_state_update(struct cdp_soc_t *soc, uint8_t *peer_mac,
+				enum ol_txrx_peer_state state);
+
+/**
+ * dp_get_vdevid() - Get virtual interface id which peer registered
+ * @soc - datapath soc handle
+ * @peer_mac - peer mac address
+ * @vdev_id - virtual interface id which peer registered
+ *
+ * Get virtual interface id which peer registered
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ */
+QDF_STATUS dp_get_vdevid(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
+			 uint8_t *vdev_id);
 struct cdp_vdev *dp_get_vdev_by_peer_addr(struct cdp_pdev *pdev_handle,
 		struct qdf_mac_addr peer_addr);
 struct cdp_vdev *dp_get_vdev_for_peer(void *peer);
 uint8_t *dp_peer_get_peer_mac_addr(void *peer);
-int dp_get_peer_state(void *peer_handle);
+
+/**
+ * dp_get_peer_state() - Get local peer state
+ * @soc - datapath soc handle
+ * @vdev_id - vdev id
+ * @peer_mac - peer mac addr
+ *
+ * Get local peer state
+ *
+ * Return: peer status
+ */
+int dp_get_peer_state(struct cdp_soc_t *soc, uint8_t vdev_id,
+		      uint8_t *peer_mac);
 void dp_local_peer_id_pool_init(struct dp_pdev *pdev);
 void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer);
 #else
+/**
+ * dp_get_vdevid() - Get virtual interface id which peer registered
+ * @soc - datapath soc handle
+ * @peer_mac - peer mac address
+ * @vdev_id - virtual interface id which peer registered
+ *
+ * Get virtual interface id which peer registered
+ *
+ * Return: QDF_STATUS_SUCCESS registration success
+ */
 static inline
-QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
+QDF_STATUS dp_get_vdevid(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
+			 uint8_t *vdev_id)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

@@ -113,9 +113,8 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_pdev *pdev;
 	enum cdp_sec_type sec_type = cdp_sec_type_none;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct cdp_pdev *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	uint32_t pn[4] = {0, 0, 0, 0};
-	struct cdp_peer *peer = NULL;
+	bool peer_exist = false;
 	uint8_t def_tx_idx;
 	wmi_unified_t pdev_wmi_handle;
 	bool pairwise;
@@ -157,13 +156,14 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	qdf_mem_copy(&params.key_rsc_ctr,
 		     &req->keyrsc[0], sizeof(uint64_t));
 
-	peer = cdp_peer_find_by_addr(soc, txrx_pdev, req->macaddr);
+	peer_exist = cdp_find_peer_exist(soc, pdev->pdev_objmgr.wlan_pdev_id,
+					 req->macaddr);
 	target_if_debug("key_type %d, mac: %02x:%02x:%02x:%02x:%02x:%02x",
 			key_type, req->macaddr[0], req->macaddr[1],
 			req->macaddr[2], req->macaddr[3], req->macaddr[4],
 			req->macaddr[5]);
 
-	if ((key_type == WLAN_CRYPTO_KEY_TYPE_UNICAST) && !peer) {
+	if ((key_type == WLAN_CRYPTO_KEY_TYPE_UNICAST) && !peer_exist) {
 		target_if_err("Invalid peer");
 		return QDF_STATUS_E_FAILURE;
 	}

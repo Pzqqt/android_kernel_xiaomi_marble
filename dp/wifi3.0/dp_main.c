@@ -10587,56 +10587,16 @@ static struct cdp_mob_stats_ops dp_ops_mob_stats = {
 	.clear_stats = dp_txrx_clear_dump_stats,
 };
 
-/*
- * dp_peer_get_ref_find_by_addr - get peer with addr by ref count inc
- * @dev: physical device instance
- * @peer_mac_addr: peer mac address
- * @debug_id: to track enum peer access
- *
- * Return: peer instance pointer
- */
-static inline void *
-dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
-			     enum peer_debug_id_type debug_id)
-{
-	struct dp_pdev *pdev = (struct dp_pdev *)dev;
-	struct dp_peer *peer;
-
-	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0, DP_VDEV_ALL);
-
-	if (!peer)
-		return NULL;
-
-	dp_info_rl("peer %pK mac: %pM", peer, peer->mac_addr.raw);
-
-	return peer;
-}
-
-/*
- * dp_peer_release_ref - release peer ref count
- * @peer: peer handle
- * @debug_id: to track enum peer access
- *
- * Return: None
- */
-static inline
-void dp_peer_release_ref(void *peer, enum peer_debug_id_type debug_id)
-{
-	dp_peer_unref_delete(peer);
-}
-
 static struct cdp_peer_ops dp_ops_peer = {
 	.register_peer = dp_register_peer,
 	.clear_peer = dp_clear_peer,
-	.find_peer_by_addr = dp_find_peer_by_addr,
-	.find_peer_by_addr_and_vdev = dp_find_peer_by_addr_and_vdev,
-	.peer_get_ref_by_addr = dp_peer_get_ref_find_by_addr,
-	.peer_release_ref = dp_peer_release_ref,
+	.find_peer_exist = dp_find_peer_exist,
+	.find_peer_exist_on_vdev = dp_find_peer_exist_on_vdev,
+	.find_peer_exist_on_other_vdev = dp_find_peer_exist_on_other_vdev,
 	.peer_state_update = dp_peer_state_update,
 	.get_vdevid = dp_get_vdevid,
 	.get_vdev_by_peer_addr = dp_get_vdev_by_peer_addr,
 	.peer_get_peer_mac_addr = dp_peer_get_peer_mac_addr,
-	.get_vdev_for_peer = dp_get_vdev_for_peer,
 	.get_peer_state = dp_get_peer_state,
 };
 #endif

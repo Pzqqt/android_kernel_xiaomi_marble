@@ -1171,70 +1171,69 @@ struct cdp_ocb_ops {
  * struct cdp_peer_ops - mcl peer related ops
  * @register_peer:
  * @clear_peer:
- * @cfg_attach:
- * @find_peer_by_addr:
- * @find_peer_by_addr_and_vdev:
- * @local_peer_id:
- * @peer_find_by_local_id:
+ * @find_peer_exist
+ * @find_peer_exist_on_vdev
+ * @find_peer_exist_on_other_vdev
  * @peer_state_update:
  * @get_vdevid:
- * @get_vdev_by_sta_id:
  * @register_ocb_peer:
  * @peer_get_peer_mac_addr:
  * @get_peer_state:
- * @get_vdev_for_peer:
  * @update_ibss_add_peer_num_of_vdev:
- * @remove_peers_for_vdev:
- * @remove_peers_for_vdev_no_lock:
  * @copy_mac_addr_raw:
  * @add_last_real_peer:
  * @is_vdev_restore_last_peer:
  * @update_last_real_peer:
  */
 struct cdp_peer_ops {
-	QDF_STATUS (*register_peer)(struct cdp_pdev *pdev,
-			struct ol_txrx_desc_type *sta_desc);
-	QDF_STATUS (*clear_peer)(struct cdp_pdev *pdev,
+	QDF_STATUS (*register_peer)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				    struct ol_txrx_desc_type *sta_desc);
+	QDF_STATUS (*clear_peer)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 				 struct qdf_mac_addr peer_addr);
-	QDF_STATUS (*change_peer_state)(uint8_t sta_id,
-			enum ol_txrx_peer_state sta_state,
-			bool roam_synch_in_progress);
-	void * (*peer_get_ref_by_addr)(struct cdp_pdev *pdev,
-				       uint8_t *peer_addr,
-				       enum peer_debug_id_type debug_id);
-	void (*peer_release_ref)(void *peer, enum peer_debug_id_type debug_id);
-	void * (*find_peer_by_addr)(struct cdp_pdev *pdev,
-			uint8_t *peer_addr);
-	void * (*find_peer_by_addr_and_vdev)(struct cdp_pdev *pdev,
-			struct cdp_vdev *vdev,
-			uint8_t *peer_addr);
-	QDF_STATUS (*peer_state_update)(struct cdp_pdev *pdev,
-			uint8_t *peer_addr,
-			enum ol_txrx_peer_state state);
-	QDF_STATUS (*get_vdevid)(void *peer, uint8_t *vdev_id);
+	bool (*find_peer_exist)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				uint8_t *peer_addr);
+	bool (*find_peer_exist_on_vdev)(struct cdp_soc_t *soc, uint8_t vdev_id,
+					uint8_t *peer_addr);
+	bool (*find_peer_exist_on_other_vdev)(struct cdp_soc_t *soc,
+					      uint8_t vdev_id,
+					      uint8_t *peer_addr,
+					      uint16_t max_bssid);
+	QDF_STATUS (*peer_state_update)(struct cdp_soc_t *soc,
+					uint8_t *peer_addr,
+					enum ol_txrx_peer_state state);
+	QDF_STATUS (*get_vdevid)(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
+				 uint8_t *vdev_id);
 	struct cdp_vdev * (*get_vdev_by_peer_addr)(struct cdp_pdev *pdev,
 			struct qdf_mac_addr peer_addr);
 	QDF_STATUS (*register_ocb_peer)(uint8_t *mac_addr);
 	uint8_t * (*peer_get_peer_mac_addr)(void *peer);
-	int (*get_peer_state)(void *peer);
+	int (*get_peer_state)(struct cdp_soc_t *soc, uint8_t vdev_id,
+			      uint8_t *peer_mac);
 	struct cdp_vdev * (*get_vdev_for_peer)(void *peer);
-	int16_t (*update_ibss_add_peer_num_of_vdev)(struct cdp_vdev *vdev,
-			int16_t peer_num_delta);
+	int16_t (*update_ibss_add_peer_num_of_vdev)(struct cdp_soc_t *soc,
+						    uint8_t vdev_id,
+						    int16_t peer_num_delta);
 	void (*remove_peers_for_vdev)(struct cdp_vdev *vdev,
 			ol_txrx_vdev_peer_remove_cb callback,
 			void *callback_context, bool remove_last_peer);
 	void (*remove_peers_for_vdev_no_lock)(struct cdp_vdev *vdev,
 			ol_txrx_vdev_peer_remove_cb callback,
 			void *callback_context);
-	void (*copy_mac_addr_raw)(struct cdp_vdev *vdev, uint8_t *bss_addr);
-	void (*add_last_real_peer)(struct cdp_pdev *pdev,
-		struct cdp_vdev *vdev);
-	bool (*is_vdev_restore_last_peer)(void *peer);
-	void (*update_last_real_peer)(struct cdp_pdev *pdev, void *vdev,
-			bool restore_last_peer);
-	void (*peer_detach_force_delete)(void *peer);
-	void (*set_tdls_offchan_enabled)(void *peer, bool val);
-	void (*set_peer_as_tdls_peer)(void *peer, bool val);
+	void (*copy_mac_addr_raw)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				  uint8_t *bss_addr);
+	void (*add_last_real_peer)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				   uint8_t vdev_id);
+	bool (*is_vdev_restore_last_peer)(struct cdp_soc_t *soc,
+					  uint8_t vdev_id,
+					  uint8_t *peer_mac);
+	void (*update_last_real_peer)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				      uint8_t vdev_id, bool restore_last_peer);
+	void (*peer_detach_force_delete)(struct cdp_soc_t *soc_hdl,
+					 uint8_t vdev_id, uint8_t *peer_addr);
+	void (*set_tdls_offchan_enabled)(struct cdp_soc_t *soc, uint8_t vdev_id,
+					 uint8_t *peer_mac, bool val);
+	void (*set_peer_as_tdls_peer)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				      uint8_t *peer_mac, bool val);
 };
 
 /**
