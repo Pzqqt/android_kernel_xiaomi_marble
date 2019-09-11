@@ -2612,18 +2612,18 @@ IE TimeAdvertisement (EID_TIME_ADVERTISEMENT)   // 8.4.2.63
     time_error[5];
 }
 
-const QCOM_VERSION_ATTR_ID = 1;
-const QCOM_VHT_MCS_10_11_ATTR_ID = 2;
+const QTI_VERSION_ATTR_ID = 1;
+const QTI_VHT_MCS_10_11_ATTR_ID = 2;
 
 IE qcn_ie (EID_VENDOR_SPECIFIC) OUI ( 0x8C, 0xFD, 0xF0, 0x01 )
 {
-   OPTIE IE version_attr (QCOM_VERSION_ATTR_ID)
+   OPTIE IE version_attr (QTI_VERSION_ATTR_ID)
    {
       version, 1;
       sub_version, 1;
    }
 
-   OPTIE IE vht_mcs11_attr (QCOM_VHT_MCS_10_11_ATTR_ID)
+   OPTIE IE vht_mcs11_attr (QTI_VHT_MCS_10_11_ATTR_ID)
    {
       vht_mcs_10_11_supp, 1;
    }
