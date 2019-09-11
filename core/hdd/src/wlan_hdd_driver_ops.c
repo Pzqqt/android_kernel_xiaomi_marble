@@ -1395,18 +1395,13 @@ static int hdd_pld_runtime_resume_cb(void)
  */
 static int wlan_hdd_runtime_resume(struct device *dev)
 {
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	qdf_time_t delta;
 
 	hdd_debug("Starting runtime resume");
-	hdd_ctx->runtime_resume_start_time_stamp =
-						qdf_get_log_timestamp_usecs();
-	delta = hdd_ctx->runtime_resume_start_time_stamp -
-		hdd_ctx->runtime_suspend_done_time_stamp;
-	hdd_debug("Starting runtime resume total cxpc down time %lu microseconds",
-		  delta);
 
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return 0;
 
@@ -1414,6 +1409,13 @@ static int wlan_hdd_runtime_resume(struct device *dev)
 		hdd_debug("Driver module closed skipping runtime resume");
 		return 0;
 	}
+
+	hdd_ctx->runtime_resume_start_time_stamp =
+						qdf_get_log_timestamp_usecs();
+	delta = hdd_ctx->runtime_resume_start_time_stamp -
+		hdd_ctx->runtime_suspend_done_time_stamp;
+	hdd_debug("Starting runtime resume total cxpc down time %lu microseconds",
+		  delta);
 
 	status = ucfg_pmo_psoc_bus_runtime_resume(hdd_ctx->psoc,
 						  hdd_pld_runtime_resume_cb);
