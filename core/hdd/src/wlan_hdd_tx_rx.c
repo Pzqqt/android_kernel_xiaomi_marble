@@ -939,6 +939,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	bool is_arp = false;
 	struct wlan_objmgr_vdev *vdev;
 	struct hdd_context *hdd_ctx;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 #ifdef QCA_WIFI_FTM
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
@@ -1139,8 +1140,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		goto drop_pkt_and_release_skb;
 	}
 
-	if (adapter->tx_fn(adapter->txrx_vdev,
-		 (qdf_nbuf_t)skb) != NULL) {
+	if (adapter->tx_fn(soc, adapter->vdev_id, (qdf_nbuf_t)skb)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Failed to send packet to txrx for sta_id: "
 			  QDF_MAC_ADDR_STR,
@@ -1349,7 +1349,6 @@ QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *adapter)
 	if (!adapter)
 		return QDF_STATUS_E_FAILURE;
 
-	adapter->txrx_vdev = NULL;
 	adapter->tx_fn = NULL;
 
 	return QDF_STATUS_SUCCESS;

@@ -43,16 +43,20 @@
 
 /**
  * ol_tx_data() - send data frame
- * @vdev: virtual device handle
+ * @soc_hdl: datapath soc handle
+ * @vdev_id: virtual interface id
  * @skb: skb
  *
  * Return: skb/NULL for success
  */
-qdf_nbuf_t ol_tx_data(struct cdp_vdev *data_vdev, qdf_nbuf_t skb)
+qdf_nbuf_t ol_tx_data(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+		      qdf_nbuf_t skb)
 {
 	struct ol_txrx_pdev_t *pdev;
 	qdf_nbuf_t ret;
-	ol_txrx_vdev_handle vdev = (struct ol_txrx_vdev_t *)data_vdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_soc_vdev_id(soc,
+								     vdev_id);
 
 	if (qdf_unlikely(!vdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,

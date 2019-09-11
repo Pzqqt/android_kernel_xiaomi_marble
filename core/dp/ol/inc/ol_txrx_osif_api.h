@@ -69,7 +69,7 @@ qdf_nbuf_t ol_txrx_osif_tso_segment(ol_txrx_vdev_handle txrx_vdev,
 				    int max_seg_payload_bytes,
 				    qdf_nbuf_t jumbo_tcp_frame);
 
-qdf_nbuf_t ol_tx_data(struct cdp_vdev *data_vdev, qdf_nbuf_t skb);
+qdf_nbuf_t ol_tx_data(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t skb);
 
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 			qdf_nbuf_t rx_buf_list);

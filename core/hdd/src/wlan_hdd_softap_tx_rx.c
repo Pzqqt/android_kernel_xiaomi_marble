@@ -422,7 +422,7 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 	struct qdf_mac_addr *dest_mac_addr, *mac_addr;
 	static struct qdf_mac_addr bcast_mac_addr = QDF_MAC_ADDR_BCAST_INIT;
-
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint32_t num_seg;
 	struct hdd_station_info *sta_info;
 
@@ -596,8 +596,7 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		goto drop_pkt_and_release_skb;
 	}
 
-	if (adapter->tx_fn(adapter->txrx_vdev,
-		 (qdf_nbuf_t)skb) != NULL) {
+	if (adapter->tx_fn(soc, adapter->vdev_id, (qdf_nbuf_t)skb)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Failed to send packet to txrx for sta: "
 			  QDF_MAC_ADDR_STR, __func__,
@@ -729,7 +728,6 @@ QDF_STATUS hdd_softap_deinit_tx_rx(struct hdd_adapter *adapter)
 	if (!adapter)
 		return QDF_STATUS_E_FAILURE;
 
-	adapter->txrx_vdev = NULL;
 	adapter->tx_fn = NULL;
 
 	return QDF_STATUS_SUCCESS;
@@ -1079,9 +1077,6 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 			  adapter->vdev_id,
 			  (ol_osif_vdev_handle)adapter,
 			  &txrx_ops);
-	adapter->txrx_vdev = cdp_get_vdev_from_vdev_id(soc,
-					(struct cdp_pdev *)pdev,
-					adapter->vdev_id);
 	adapter->tx_fn = txrx_ops.tx.tx;
 
 	qdf_status = cdp_peer_register(soc,
