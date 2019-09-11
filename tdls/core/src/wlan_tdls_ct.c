@@ -531,8 +531,9 @@ void tdls_indicate_teardown(struct tdls_vdev_priv_obj *tdls_vdev,
 	tdls_notice("Teardown reason %d", reason);
 
 	if (tdls_soc->tdls_dp_vdev_update)
-		tdls_soc->tdls_dp_vdev_update(&tdls_soc->soc,
-				&curr_peer->peer_mac,
+		tdls_soc->tdls_dp_vdev_update(
+				&tdls_soc->soc,
+				wlan_vdev_get_id(tdls_vdev->vdev),
 				tdls_soc->tdls_update_dp_vdev_flags,
 				false);
 
