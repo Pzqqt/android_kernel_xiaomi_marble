@@ -335,7 +335,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_peer_sta_kickout_event_fixed_param *kickout_event = NULL;
-	uint8_t vdev_id, peer_id, macaddr[QDF_MAC_ADDR_SIZE];
+	uint8_t vdev_id, macaddr[QDF_MAC_ADDR_SIZE];
 	void *peer;
 	struct cdp_pdev *pdev;
 	tpDeleteStaContext del_sta_ctx;
@@ -353,7 +353,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		return -EINVAL;
 	}
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&kickout_event->peer_macaddr, macaddr);
-	peer = cdp_peer_find_by_addr(soc, pdev,	macaddr, &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev, macaddr);
 	if (!peer) {
 		WMA_LOGE("PEER [%pM] not found", macaddr);
 		return -EINVAL;
@@ -370,9 +370,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	}
 	addr = wlan_vdev_mlme_get_macaddr(vdev);
 
-	WMA_LOGA("%s: PEER:[%pM], ADDR:[%pN], INTERFACE:%d, peer_id:%d, reason:%d",
-		__func__, macaddr, addr, vdev_id,
-		 peer_id, kickout_event->reason);
+	WMA_LOGA("%s: PEER:[%pM], ADDR:[%pN], INTERFACE:%d, reason:%d",
+		 __func__, macaddr, addr, vdev_id, kickout_event->reason);
 	if (wma->interfaces[vdev_id].roaming_in_progress) {
 		WMA_LOGE("Ignore STA kick out since roaming is in progress");
 		return -EINVAL;
@@ -391,8 +390,6 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 			WMA_LOGE("QDF MEM Alloc Failed for tSirIbssPeerInactivity");
 			return -ENOMEM;
 		}
-
-		inactivity->staIdx = peer_id;
 		qdf_mem_copy(inactivity->peer_addr.bytes, macaddr,
 			     QDF_MAC_ADDR_SIZE);
 		wma_send_msg(wma, WMA_IBSS_PEER_INACTIVITY_IND,
@@ -2099,7 +2096,6 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	struct cdp_pdev *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct cdp_vdev *txrx_vdev;
 	uint32_t pn[4] = {0, 0, 0, 0};
-	uint8_t peer_id;
 	struct cdp_peer *peer;
 	bool skip_set_key;
 
@@ -2122,10 +2118,8 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	txrx_vdev = wma_find_vdev_by_id(wma_handle,
-					key_params->vdev_id);
-	peer = cdp_peer_find_by_addr(soc, txrx_pdev,
-				key_params->peer_mac, &peer_id);
+	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_params->vdev_id);
+	peer = cdp_peer_find_by_addr(soc, txrx_pdev, key_params->peer_mac);
 	iface = &wma_handle->interfaces[key_params->vdev_id];
 
 	params.vdev_id = key_params->vdev_id;
@@ -2657,7 +2651,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	struct cdp_pdev *txrx_pdev;
 	struct cdp_vdev *txrx_vdev;
 	void *peer;
-	uint8_t num_keys = 0, peer_id;
+	uint8_t num_keys = 0;
 	struct wma_set_key_params key_params;
 	uint32_t def_key_idx = 0;
 	int opmode;
@@ -2675,8 +2669,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	}
 
 	peer = cdp_peer_find_by_addr(soc, txrx_pdev,
-				key_info->peer_macaddr.bytes,
-				&peer_id);
+				     key_info->peer_macaddr.bytes);
 	if (!peer) {
 		WMA_LOGE("%s:Invalid peer for key setting", __func__);
 		key_info->status = QDF_STATUS_E_FAILURE;

@@ -49,7 +49,6 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	struct cdp_vdev *vdev;
 	void *peer;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	u_int8_t peer_id;
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
 
@@ -74,7 +73,7 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	peer = cdp_peer_find_by_addr_and_vdev(soc,
 			pdev, vdev,
-			add_sta->staMac, &peer_id);
+			add_sta->staMac);
 	if (peer) {
 		WMA_LOGE(FL("NDI peer already exists, peer_addr %pM"),
 			 add_sta->staMac);
@@ -89,13 +88,11 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	 * exists on the pDev. As this peer belongs to other vDevs, just return
 	 * here.
 	 */
-	peer = cdp_peer_find_by_addr(soc,
-			pdev,
-			add_sta->staMac, &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev, add_sta->staMac);
 	if (peer) {
-		WMA_LOGE(FL("vdev:%d, peer exists on other vdev with peer_addr %pM and peer_id %d"),
-			cdp_get_vdev_id(soc, vdev),
-			add_sta->staMac, peer_id);
+		WMA_LOGE(FL("vdev:%d, peer exists on other vdev with peer_addr %pM"),
+			 cdp_get_vdev_id(soc, vdev),
+			add_sta->staMac);
 		add_sta->status = QDF_STATUS_E_EXISTS;
 		goto send_rsp;
 	}
@@ -111,7 +108,7 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	peer = cdp_peer_find_by_addr_and_vdev(soc,
 			pdev, vdev,
-			add_sta->staMac, &peer_id);
+			add_sta->staMac);
 	if (!peer) {
 		WMA_LOGE(FL("Failed to find peer handle using peer mac %pM"),
 			 add_sta->staMac);
@@ -147,8 +144,6 @@ void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 	struct cdp_pdev *pdev;
 	void *peer;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	/* Will be removed as a part of cleanup */
-	uint8_t sta_id;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
@@ -158,7 +153,7 @@ void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 	}
 
 	peer = cdp_peer_find_by_addr(cds_get_context(QDF_MODULE_ID_SOC),
-				     pdev, del_sta->staMac, &sta_id);
+				     pdev, del_sta->staMac);
 	if (!peer) {
 		WMA_LOGE(FL("Failed to get peer handle using peer mac "
 			 QDF_MAC_ADDR_STR),

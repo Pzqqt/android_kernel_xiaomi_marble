@@ -1963,16 +1963,13 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *peer;
-	/* Will be removed as a part of clean up */
-	uint8_t sta_id;
 
 	if (!pdev) {
 		hdd_err("Failed to get txrx context");
 		return QDF_STATUS_E_FAULT;
 	}
 
-	peer = cdp_peer_find_by_addr(soc, (struct cdp_pdev *)pdev,
-				     peer_mac, &sta_id);
+	peer = cdp_peer_find_by_addr(soc, (struct cdp_pdev *)pdev, peer_mac);
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 

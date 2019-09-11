@@ -4147,7 +4147,6 @@ void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
 {
 	struct cdp_pdev *pdev;
 	void *peer = NULL;
-	uint8_t peer_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	QDF_STATUS status;
 	struct qdf_mac_addr bss_peer;
@@ -4169,8 +4168,8 @@ void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
 		return;
 	}
 
-	peer = cdp_peer_find_by_addr(soc, pdev, bss_peer.bytes,
-				     &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev, bss_peer.bytes);
+
 	if (!peer) {
 		WMA_LOGE("%s Failed to find peer %pM",
 			 __func__, bss_peer.bytes);

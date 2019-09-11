@@ -1011,7 +1011,6 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 				   bool auth_required,
 				   bool privacy_required,
-				   uint8_t sta_id,
 				   struct qdf_mac_addr *sta_mac,
 				   bool wmm_enabled)
 {
@@ -1039,8 +1038,6 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		hdd_softap_deregister_sta(adapter, sta_info);
 	}
 
-	/* Get the Station ID from the one saved during the association. */
-	txrx_desc.sta_id = sta_id;
 	/*
 	 * If the address is a broadcast address, then provide the self mac addr
 	 * to the data path. Else provide the mac address of the connected peer.
@@ -1173,7 +1170,7 @@ QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
 	}
 
 	qdf_status = hdd_softap_register_sta(adapter, false,
-					     privacy_required, sta_id,
+					     privacy_required,
 					     &broadcast_macaddr, 0);
 
 	return qdf_status;

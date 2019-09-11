@@ -254,7 +254,6 @@ typedef struct {
 
 /**
  * struct tDeleteStaParams - parameters required for del sta request
- * @staIdx: station index
  * @assocId: association index
  * @status: status
  * @respReqd: is response required
@@ -264,7 +263,6 @@ typedef struct {
  * @staMac: station mac
  */
 typedef struct {
-	uint16_t staIdx;
 	uint16_t assocId;
 	QDF_STATUS status;
 	uint8_t respReqd;

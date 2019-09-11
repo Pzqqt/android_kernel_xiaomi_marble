@@ -2416,7 +2416,6 @@ static int wma_wake_event_piggybacked(
 	uint32_t wake_reason;
 	uint32_t event_id;
 	uint8_t *bssid;
-	uint8_t peer_id;
 	void *peer, *pdev;
 	tpDeleteStaContext del_sta_ctx;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -2446,8 +2445,7 @@ static int wma_wake_event_piggybacked(
 			 __func__, event_param->fixed_param->vdev_id);
 		return 0;
 	}
-
-	peer = cdp_peer_find_by_addr(soc, pdev, bssid, &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev, bssid);
 	wake_reason = event_param->fixed_param->wake_reason;
 
 	/* parse piggybacked event from param buffer */
@@ -2976,8 +2974,6 @@ QDF_STATUS wma_process_get_peer_info_req
 	uint16_t len;
 	wmi_buf_t buf;
 	int32_t vdev_id;
-	/* Will be removed in cleanup */
-	uint8_t sta_id;
 	struct cdp_pdev *pdev;
 	void *peer;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -3009,8 +3005,7 @@ QDF_STATUS wma_process_get_peer_info_req
 		qdf_mem_copy(peer_mac, bcast_mac, QDF_MAC_ADDR_SIZE);
 	} else {
 		/*get info for a single peer */
-		peer = cdp_peer_find_by_addr(soc, pdev,
-					     pReq->peer_mac.bytes, &sta_id);
+		peer = cdp_peer_find_by_addr(soc, pdev, pReq->peer_mac.bytes);
 		if (!peer) {
 			WMA_LOGE("%s: Failed to get peer handle using peer "
 				 QDF_MAC_ADDR_STR, __func__,
@@ -3738,7 +3733,6 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	uint32_t i;
 	struct cdp_pdev *pdev;
-	uint8_t peer_id;
 	void *peer, *vdev;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct tdls_peer_params *peer_cap;
@@ -3800,8 +3794,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 
 	peer = cdp_peer_find_by_addr(soc,
 				     pdev,
-				     peer_state->peer_macaddr,
-				     &peer_id);
+				     peer_state->peer_macaddr);
 	if (!peer) {
 		WMA_LOGE("%s: Failed to get peer handle using peer mac %pM",
 				__func__, peer_state->peer_macaddr);
@@ -3847,9 +3840,8 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			ret = -EINVAL;
 			goto end_tdls_peer_state;
 		}
-		cdp_peer_update_last_real_peer(soc,
-				pdev, vdev, &peer_id,
-				restore_last_peer);
+		cdp_peer_update_last_real_peer(soc, pdev, vdev,
+					       restore_last_peer);
 	}
 
 	if (TDLS_PEER_STATE_CONNECTED == peer_state->peer_state) {

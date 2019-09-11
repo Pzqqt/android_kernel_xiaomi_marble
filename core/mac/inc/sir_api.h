@@ -1595,7 +1595,6 @@ typedef struct sSmeIbssPeerInd {
 
 struct ibss_peer_inactivity_ind {
 	uint8_t bss_idx;
-	uint8_t staIdx;
 	struct qdf_mac_addr peer_addr;
 };
 

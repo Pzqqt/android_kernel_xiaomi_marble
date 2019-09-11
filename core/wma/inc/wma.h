@@ -2557,8 +2557,6 @@ QDF_STATUS wma_pre_assoc_req(struct bss_params *add_bss);
  */
 void wma_add_bss_lfr3(tp_wma_handle wma, struct bss_params *add_bss);
 
-uint8_t wma_peer_get_peet_id(uint8_t *mac);
-
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * wma_add_bss_lfr2_vdev_start() - add bss and start vdev during host roaming

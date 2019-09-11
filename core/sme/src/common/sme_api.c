@@ -16222,7 +16222,6 @@ QDF_STATUS sme_check_for_duplicate_session(mac_handle_t mac_handle,
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct cdp_pdev *pdev;
 	ol_txrx_peer_handle peer;
-	uint8_t peer_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
@@ -16241,10 +16240,9 @@ QDF_STATUS sme_check_for_duplicate_session(mac_handle_t mac_handle,
 		return status;
 
 	peer = cdp_peer_find_by_addr(soc, pdev,
-				     peer_addr,
-				     &peer_id);
+				     peer_addr);
 	if (peer) {
-		sme_err("Peer=%d exist with same MAC", peer_id);
+		sme_err("Peer exists with same MAC");
 		status = QDF_STATUS_E_EXISTS;
 	} else {
 		status = QDF_STATUS_SUCCESS;

@@ -2413,7 +2413,6 @@ static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
 	tDot11faddba_rsp rsp;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	uint8_t peer_id;
 	void *peer;
 	uint32_t frame_len;
 	QDF_STATUS status;
@@ -2449,7 +2448,7 @@ static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
 		goto error;
 	}
 
-	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->da, &peer_id,
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->da,
 					PEER_DEBUG_ID_WMA_ADDBA_REQ);
 	if (!peer) {
 		pe_debug("no PEER found for mac_addr:%pM", mac_hdr->da);
@@ -4925,7 +4924,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	uint8_t tx_flag = 0;
 	uint8_t vdev_id = 0;
 	uint16_t buff_size, status_code, batimeout;
-	uint8_t peer_id, dialog_token;
+	uint8_t dialog_token;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *peer, *pdev;
 	uint8_t he_frag = 0;
@@ -4941,7 +4940,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	peer = cdp_peer_get_ref_by_addr(soc, pdev, peer_mac, &peer_id,
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, peer_mac,
 					PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP);
 	if (!peer) {
 		pe_err("PEER [%pM] not found", peer_mac);

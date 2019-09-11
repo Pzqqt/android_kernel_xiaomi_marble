@@ -565,13 +565,11 @@ static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t *peer_mac)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	void *peer;
-	/* Will be removed in Phase 3 cleanup */
-	uint8_t peer_id;
 
 	QDF_BUG(soc);
 	QDF_BUG(pdev);
 
-	peer = cdp_peer_find_by_addr(soc, pdev, peer_mac, &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev, peer_mac);
 
 	if (!peer) {
 		hdd_err_rl("Unable to find peer entry for sta: "

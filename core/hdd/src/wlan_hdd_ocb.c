@@ -218,28 +218,18 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	struct ol_txrx_desc_type sta_desc = {0};
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	/* To be cleaned up */
-	uint8_t peer_id;
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct cdp_vdev *vdev;
 
 	qdf_status = cdp_peer_register_ocb_peer(soc,
-				adapter->mac_addr.bytes,
-				&peer_id);
+				adapter->mac_addr.bytes);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Error registering OCB Self Peer!");
 		return -EINVAL;
 	}
 
-	if (peer_id >= HDD_MAX_ADAPTERS) {
-		hdd_err("Error: Invalid peer_id: %u", peer_id);
-		return -EINVAL;
-	}
-
-	/* To be cleaned up */
-	sta_desc.sta_id = peer_id;
 	WLAN_ADDR_COPY(sta_desc.peer_addr.bytes, adapter->mac_addr.bytes);
 	sta_desc.is_qos_enabled = 1;
 

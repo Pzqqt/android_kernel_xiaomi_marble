@@ -2352,7 +2352,6 @@ lim_add_sta(struct mac_context *mac_ctx,
 	pe_debug("Assoc ID: %d wmmEnabled: %d listenInterval: %d",
 		 add_sta_params->assocId, add_sta_params->wmmEnabled,
 		 add_sta_params->listenInterval);
-
 	add_sta_params->staType = sta_ds->staType;
 
 	add_sta_params->updateSta = update_entry;
@@ -2819,10 +2818,10 @@ lim_del_sta(struct mac_context *mac,
 	msgQ.bodyval = 0;
 
 	pe_debug("Sessionid %d :Sending SIR_HAL_DELETE_STA_REQ "
-		 "for STAID: %X and AssocID: %d MAC : "
+		 "for mac_addr %pM and AssocID: %d MAC : "
 		 QDF_MAC_ADDR_STR, pDelStaParams->sessionId,
-		pDelStaParams->staIdx, pDelStaParams->assocId,
-		QDF_MAC_ADDR_ARRAY(sta->staAddr));
+		 pDelStaParams->staMac, pDelStaParams->assocId,
+		 QDF_MAC_ADDR_ARRAY(sta->staAddr));
 
 	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);

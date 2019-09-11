@@ -1635,7 +1635,6 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	tDot11faddba_req *addba_req;
 	uint32_t frame_len, status;
 	QDF_STATUS qdf_status;
-	uint8_t peer_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *peer, *pdev;
 
@@ -1669,7 +1668,7 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 			status, frame_len);
 	}
 
-	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->sa, &peer_id,
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->sa,
 					PEER_DEBUG_ID_WMA_ADDBA_REQ);
 	if (!peer) {
 		pe_err("PEER [%pM] not found", mac_hdr->sa);
@@ -1717,7 +1716,6 @@ static void lim_process_delba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	tDot11fdelba_req *delba_req;
 	uint32_t frame_len, status;
 	QDF_STATUS qdf_status;
-	uint8_t peer_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *peer, *pdev;
 
@@ -1751,7 +1749,7 @@ static void lim_process_delba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 			status, frame_len);
 	}
 
-	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->sa, &peer_id,
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->sa,
 					PEER_DEBUG_ID_WMA_DELBA_REQ);
 	if (!peer) {
 		pe_err("PEER [%pM] not found", mac_hdr->sa);
