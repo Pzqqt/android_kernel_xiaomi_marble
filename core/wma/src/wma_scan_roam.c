@@ -478,8 +478,12 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	rssi_thresh_diff = roam_req->OpportunisticScanThresholdDiff;
 	hirssi_scan_max_count = roam_req->hi_rssi_scan_max_count;
 	hirssi_scan_delta = roam_req->hi_rssi_scan_rssi_delta;
-	hirssi_upper_bound = roam_req->hi_rssi_scan_rssi_ub -
+	if (db2dbm_enabled) {
+		hirssi_upper_bound = roam_req->hi_rssi_scan_rssi_ub;
+	} else {
+		hirssi_upper_bound = roam_req->hi_rssi_scan_rssi_ub -
 				     WMA_NOISE_FLOOR_DBM_DEFAULT;
+	}
 
 	/* fill in threshold values */
 	params.vdev_id = roam_req->sessionId;
