@@ -489,11 +489,6 @@ static QDF_STATUS tdls_process_reset_all_peers(struct wlan_objmgr_vdev *vdev)
 		return status;
 	}
 
-	if (!tdls_soc->connected_peer_count) {
-		tdls_debug("No tdls connected peers");
-		return status;
-	}
-
 	reset_session_id = tdls_vdev->session_id;
 	for (staidx = 0; staidx < tdls_soc->max_num_tdls_sta;
 							staidx++) {
