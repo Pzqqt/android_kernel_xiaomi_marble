@@ -314,11 +314,13 @@ int ucfg_nan_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
  * ucfg_nan_check_and_disable_unsupported_ndi: ucfg API to check if NAN Datapath
  * is active on multiple NDI's and disable the unsupported concurrencies.
  * @psoc: pointer to psoc object
+ * @force: When set forces NDI disable
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
-ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc);
+ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc,
+					   bool force);
 
 /**
  * ucfg_ndi_remove_entry_from_policy_mgr() - API to remove NDI entry from
@@ -342,7 +344,8 @@ static inline void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc)
 }
 
 static inline QDF_STATUS
-ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc)
+ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc,
+					   bool force)
 {
 	return QDF_STATUS_SUCCESS;
 }
