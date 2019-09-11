@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,7 +40,7 @@
 
 typedef int (*nl_srv_msg_callback)(struct sk_buff *skb);
 
-int nl_srv_init(void *wiphy);
+int nl_srv_init(void *wiphy, int proto);
 void nl_srv_exit(void);
 int nl_srv_register(tWlanNlModTypes msg_type, nl_srv_msg_callback msg_handler);
 int nl_srv_unregister(tWlanNlModTypes msg_type,

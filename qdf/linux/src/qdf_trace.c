@@ -3453,7 +3453,7 @@ qdf_export_symbol(QDF_PRINT_INFO);
 void qdf_logging_init(void)
 {
 	wlan_logging_sock_init_svc();
-	nl_srv_init(NULL);
+	nl_srv_init(NULL, WLAN_NLINK_PROTO_FAMILY);
 	wlan_logging_set_flush_timer(qdf_log_flush_timer_period);
 }
 
@@ -3479,7 +3479,7 @@ void qdf_logging_flush_logs(void)
 #else
 void qdf_logging_init(void)
 {
-	nl_srv_init(NULL);
+	nl_srv_init(NULL, WLAN_NLINK_PROTO_FAMILY);
 }
 
 void qdf_logging_exit(void)
