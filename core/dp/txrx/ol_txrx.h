@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -132,10 +132,10 @@ ol_txrx_hl_tdls_flag_reset(struct cdp_soc_t *soc_hdl,
 #endif
 
 #ifdef WDI_EVENT_ENABLE
-void *ol_get_pldev(struct cdp_pdev *txrx_pdev);
+void *ol_get_pldev(struct cdp_soc_t *soc, uint8_t pdev_id);
 #else
 static inline
-void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
+void *ol_get_pldev(struct cdp_soc_t *soc, uint8_t pdev_id)
 {
 	return NULL;
 }

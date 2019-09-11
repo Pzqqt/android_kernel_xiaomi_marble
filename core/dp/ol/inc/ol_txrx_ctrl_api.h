@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -302,32 +302,6 @@ ol_txrx_data_tx_cb_set(struct cdp_soc_t *soc, uint8_t vdev_id,
  * @return - void
  */
 void ol_txrx_discard_tx_pending(ol_txrx_pdev_handle pdev);
-
-/**
- * @brief set the safemode of the device
- * @details
- *  This flag is used to bypass the encrypt and decrypt processes when send and
- *  receive packets. It works like open AUTH mode, HW will treate all packets
- *  as non-encrypt frames because no key installed. For rx fragmented frames,
- *  it bypasses all the rx defragmentaion.
- *
- * @param vdev - the data virtual device object
- * @param val - the safemode state
- * @return - void
- */
-void ol_txrx_set_safemode(ol_txrx_vdev_handle vdev, uint32_t val);
-
-/**
- * @brief configure the drop unencrypted frame flag
- * @details
- *  Rx related. When set this flag, all the unencrypted frames
- *  received over a secure connection will be discarded
- *
- * @param vdev - the data virtual device object
- * @param val - flag
- * @return - void
- */
-void ol_txrx_set_drop_unenc(ol_txrx_vdev_handle vdev, uint32_t val);
 
 void
 ol_txrx_peer_keyinstalled_state_update(ol_txrx_peer_handle data_peer,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -17,6 +17,7 @@
  */
 
 #include "ol_txrx_types.h"
+#include "ol_txrx.h"
 
 static inline wdi_event_subscribe *wdi_event_next_sub(wdi_event_subscribe *
 						      wdi_sub)
@@ -66,12 +67,13 @@ wdi_event_iter_sub(struct ol_txrx_pdev_t *pdev,
 
 void
 wdi_event_handler(enum WDI_EVENT event,
-		  struct cdp_pdev *ppdev, void *data)
+		  uint8_t pdev_id, void *data)
 {
 	uint32_t event_index;
 	wdi_event_subscribe *wdi_sub;
-	struct ol_txrx_pdev_t *txrx_pdev =
-				(struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	ol_txrx_pdev_handle txrx_pdev =
+		ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 
 	/*
 	 * Input validation
@@ -99,15 +101,15 @@ wdi_event_handler(enum WDI_EVENT event,
 }
 
 int
-wdi_event_sub(struct cdp_pdev *ppdev,
-	      void *pevent_cb_sub, uint32_t event)
+wdi_event_sub(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+	      wdi_event_subscribe *pevent_cb_sub, uint32_t event)
 {
 	uint32_t event_index;
 	wdi_event_subscribe *wdi_sub;
-	struct ol_txrx_pdev_t *txrx_pdev =
-				(struct ol_txrx_pdev_t *)ppdev;
-	wdi_event_subscribe *event_cb_sub =
-				(wdi_event_subscribe *)pevent_cb_sub;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle txrx_pdev = ol_txrx_get_pdev_from_pdev_id(soc,
+								      pdev_id);
+	wdi_event_subscribe *event_cb_sub = pevent_cb_sub;
 
 	/* Input validation */
 	if (!txrx_pdev || !txrx_pdev->wdi_event_list) {
@@ -149,16 +151,22 @@ wdi_event_sub(struct cdp_pdev *ppdev,
 }
 
 int
-wdi_event_unsub(struct cdp_pdev *ppdev,
-		void *pevent_cb_sub, uint32_t event)
+wdi_event_unsub(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+		wdi_event_subscribe *pevent_cb_sub, uint32_t event)
 {
 	uint32_t event_index = event - WDI_EVENT_BASE;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle txrx_pdev = ol_txrx_get_pdev_from_pdev_id(soc,
+								      pdev_id);
 
-	struct ol_txrx_pdev_t *txrx_pdev =
-				(struct ol_txrx_pdev_t *)ppdev;
+	wdi_event_subscribe *event_cb_sub = pevent_cb_sub;
 
-	wdi_event_subscribe *event_cb_sub =
-				(wdi_event_subscribe *)pevent_cb_sub;
+	/* Input validation */
+	if (!txrx_pdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid txrx_pdev in %s", __func__);
+		return -EINVAL;
+	}
 
 	/* Input validation */
 	if (!event_cb_sub) {

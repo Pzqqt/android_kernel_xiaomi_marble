@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,7 +110,7 @@ QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *pdev,
 				     enum ol_txrx_peer_state state);
 static void ol_vdev_rx_set_intrabss_fwd(struct cdp_soc_t *soc_hdl,
 					uint8_t vdev_id, bool val);
-int ol_txrx_get_tx_pending(struct cdp_pdev *pdev_handle);
+uint32_t ol_txrx_get_tx_pending(struct cdp_pdev *pdev_handle);
 extern void
 ol_txrx_set_wmm_param(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		      struct ol_tx_wmm_param_t wmm_param);
@@ -832,6 +832,7 @@ void htt_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn)
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
 			!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		pktlog_sethandle(&handle->pl_dev, scn);
+		pktlog_set_pdev_id(handle->pl_dev, pdev_id);
 		pktlog_set_callback_regtype(PKTLOG_DEFAULT_CALLBACK_REGISTRATION);
 		if (pktlogmod_init(scn))
 			qdf_print(" pktlogmod_init failed");
@@ -1849,11 +1850,6 @@ static QDF_STATUS ol_txrx_vdev_register(struct cdp_soc_t *soc_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
-void ol_txrx_set_safemode(ol_txrx_vdev_handle vdev, uint32_t val)
-{
-	vdev->safemode = val;
-}
-
 /**
  * ol_txrx_set_privacy_filters - set the privacy filter
  * @vdev - the data virtual device object
@@ -1871,11 +1867,6 @@ ol_txrx_set_privacy_filters(ol_txrx_vdev_handle vdev,
 	qdf_mem_copy(vdev->privacy_filters, filters,
 		     num * sizeof(struct privacy_exemption));
 	vdev->num_filters = num;
-}
-
-void ol_txrx_set_drop_unenc(ol_txrx_vdev_handle vdev, uint32_t val)
-{
-	vdev->drop_unenc = val;
 }
 
 #if defined(CONFIG_HL_SUPPORT) || defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
@@ -3637,7 +3628,7 @@ static QDF_STATUS ol_txrx_bus_resume(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
  *
  * Return: count of pending frames
  */
-int ol_txrx_get_tx_pending(struct cdp_pdev *ppdev)
+uint32_t ol_txrx_get_tx_pending(struct cdp_pdev *ppdev)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	uint32_t total;
@@ -5785,11 +5776,79 @@ static uint32_t ol_txrx_get_cfg(struct cdp_soc_t *soc_hdl, enum cdp_dp_cfg cfg)
 	return value;
 }
 
-#ifdef WDI_EVENT_ENABLE
-void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
+/*
+ * ol_get_pdev_param: function to get parameters from pdev
+ * @cdp_soc: txrx soc handle
+ * @pdev_id: id of pdev handle
+ * @param: parameter type to be get
+ * @val: parameter type to be get
+ *
+ * Return: SUCCESS or FAILURE
+ */
+static QDF_STATUS ol_get_pdev_param(struct cdp_soc_t *soc_hdl,  uint8_t pdev_id,
+				    enum cdp_pdev_param_type param,
+				    cdp_config_param_type *val)
 {
-	struct ol_txrx_pdev_t *pdev =
-				 (struct ol_txrx_pdev_t *)txrx_pdev;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	struct ol_txrx_pdev_t *olpdev = ol_txrx_get_pdev_from_pdev_id(soc,
+								      pdev_id);
+	struct cdp_pdev *pdev = ol_txrx_pdev_t_to_cdp_pdev(olpdev);
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	switch (param) {
+	case CDP_TX_PENDING:
+		val->cdp_pdev_param_tx_pending = ol_txrx_get_tx_pending(pdev);
+		break;
+	default:
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * ol_set_pdev_param: function to get parameters from pdev
+ * @cdp_soc: txrx soc handle
+ * @pdev_id: id of pdev handle
+ * @param: parameter type to be get
+ * @val: parameter type to be get
+ *
+ * Return: SUCCESS or FAILURE
+ */
+static QDF_STATUS ol_set_pdev_param(struct cdp_soc_t *soc_hdl,  uint8_t pdev_id,
+				    enum cdp_pdev_param_type param,
+				    cdp_config_param_type val)
+{
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	struct ol_txrx_pdev_t *olpdev = ol_txrx_get_pdev_from_pdev_id(soc,
+								      pdev_id);
+	struct cdp_pdev *pdev = ol_txrx_pdev_t_to_cdp_pdev(olpdev);
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	switch (param) {
+	case CDP_MONITOR_CHANNEL:
+	{
+		ol_htt_mon_note_chan(pdev, val.cdp_pdev_param_monitor_chan);
+		break;
+	}
+	default:
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef WDI_EVENT_ENABLE
+void *ol_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	struct ol_txrx_pdev_t *pdev = ol_txrx_get_pdev_from_pdev_id(soc,
+								    pdev_id);
+
 	if (pdev)
 		return pdev->pl_dev;
 
@@ -5882,7 +5941,6 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_mgmt_tx_cb_set = ol_txrx_mgmt_tx_cb_set,
 	.txrx_data_tx_cb_set = ol_txrx_data_tx_cb_set,
 	.txrx_peer_unmap_sync_cb_set = ol_txrx_peer_unmap_sync_cb_set,
-	.txrx_get_tx_pending = ol_txrx_get_tx_pending,
 	.flush_cache_rx_queue = ol_txrx_flush_cache_rx_queue,
 	.txrx_fw_stats_get = ol_txrx_fw_stats_get,
 	.display_stats = ol_txrx_display_stats,
@@ -6086,6 +6144,8 @@ static struct cdp_ctrl_ops ol_ops_ctrl = {
 	.txrx_get_pldev = ol_get_pldev,
 	.txrx_wdi_event_sub = wdi_event_sub,
 	.txrx_wdi_event_unsub = wdi_event_unsub,
+	.txrx_get_pdev_param = ol_get_pdev_param,
+	.txrx_set_pdev_param = ol_set_pdev_param
 };
 
 /* WINplatform specific structures */
@@ -6094,7 +6154,7 @@ static struct cdp_me_ops ol_ops_me = {
 };
 
 static struct cdp_mon_ops ol_ops_mon = {
-	.txrx_monitor_record_channel = ol_htt_mon_note_chan,
+	/* EMPTY FOR MCL */
 };
 
 static struct cdp_host_stats_ops ol_ops_host_stats = {

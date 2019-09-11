@@ -2018,16 +2018,15 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 }
 
 QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
-				    struct qdf_mac_addr *mac_addr,
+				    uint8_t vdev_id,
 				    uint32_t vdev_param,
 				    bool is_link_up)
 {
-	struct cdp_vdev *data_vdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct hdd_context *hdd_ctx;
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct wlan_objmgr_psoc **psoc;
+	cdp_config_param_type val;
 
 	if (!cbk_data)
 		return status;
@@ -2043,13 +2042,13 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 	if (!hdd_ctx->tdls_nap_active)
 		return status;
 
-	data_vdev = cdp_peer_get_vdev_by_peer_addr(soc, pdev, *mac_addr);
-	if (!data_vdev) {
+	if (vdev_id == WLAN_INVALID_VDEV_ID) {
 		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
 
-	cdp_txrx_set_vdev_param(soc, data_vdev, vdev_param, is_link_up);
+	val.cdp_vdev_param_tdls_flags = is_link_up;
+	cdp_txrx_set_vdev_param(soc, vdev_id, vdev_param, val);
 
 	return status;
 }

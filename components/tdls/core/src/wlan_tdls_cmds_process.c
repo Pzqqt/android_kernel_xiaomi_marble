@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1187,9 +1187,9 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 
 	if (soc_obj->tdls_dp_vdev_update)
 		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
-					&peer->peer_mac,
-					soc_obj->tdls_update_dp_vdev_flags,
-					false);
+					     wlan_vdev_get_id(vdev),
+					     soc_obj->tdls_update_dp_vdev_flags,
+					     false);
 
 	cmd.cmd_type = WLAN_SER_CMD_TDLS_DEL_PEER;
 	cmd.cmd_id = 0;
@@ -1674,11 +1674,12 @@ QDF_STATUS tdls_process_enable_link(struct tdls_oper_request *req)
 	feature = soc_obj->tdls_configs.tdls_feature_flags;
 
 	if (soc_obj->tdls_dp_vdev_update)
-		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
-					&peer->peer_mac,
-					soc_obj->tdls_update_dp_vdev_flags,
-					((peer->link_status ==
-					TDLS_LINK_CONNECTED) ? true : false));
+		soc_obj->tdls_dp_vdev_update(
+				&soc_obj->soc,
+				wlan_vdev_get_id(vdev),
+				soc_obj->tdls_update_dp_vdev_flags,
+				((peer->link_status == TDLS_LINK_CONNECTED) ?
+				 true : false));
 
 	tdls_debug("TDLS buffer sta: %d, uapsd_mask %d",
 		   TDLS_IS_BUFFER_STA_ENABLED(feature),
@@ -1890,8 +1891,9 @@ QDF_STATUS tdls_process_remove_force_peer(struct tdls_oper_request *req)
 					  TDLS_LINK_UNSPECIFIED);
 
 	if (soc_obj->tdls_dp_vdev_update)
-		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
-				&peer->peer_mac,
+		soc_obj->tdls_dp_vdev_update(
+				&soc_obj->soc,
+				wlan_vdev_get_id(vdev),
 				soc_obj->tdls_update_dp_vdev_flags,
 				false);
 

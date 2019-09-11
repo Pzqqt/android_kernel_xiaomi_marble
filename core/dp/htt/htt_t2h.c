@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -526,7 +526,8 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		}
 
 		/*len is reduced by sizeof(*msg_word)*/
-		pktlog_process_fw_msg(msg_word + 1, len - sizeof(*msg_word));
+		pktlog_process_fw_msg(OL_TXRX_PDEV_ID, msg_word + 1,
+				      len - sizeof(*msg_word));
 		break;
 	}
 #endif

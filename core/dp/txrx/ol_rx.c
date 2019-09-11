@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -153,7 +153,7 @@ void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
 	else
 		data.mac_id = 0;
 
-	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, (struct cdp_pdev *)pdev,
+	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, pdev->id,
 			  &data);
 }
 #else
@@ -176,7 +176,7 @@ void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
 	else
 		data.mac_id = 0;
 
-	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, (struct cdp_pdev *)pdev,
+	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, pdev->id,
 			  &data);
 }
 #endif
@@ -308,7 +308,7 @@ static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 	msg.wh = wh;
 	msg.msdu = msdu;
 	msg.vdev_id = vdev->vdev_id;
-	wdi_event_handler(WDI_EVENT_RX_PEER_INVALID, (struct cdp_pdev *)pdev,
+	wdi_event_handler(WDI_EVENT_RX_PEER_INVALID, pdev->id,
 			  &msg);
 }
 #else

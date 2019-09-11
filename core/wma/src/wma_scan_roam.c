@@ -78,6 +78,7 @@
 #include <wlan_mlme_main.h>
 #include <wlan_crypto_global_api.h>
 #include <cdp_txrx_mon.h>
+#include <cdp_txrx_ctrl.h>
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
@@ -4277,10 +4278,10 @@ QDF_STATUS wma_pre_chan_switch_setup(uint8_t vdev_id)
 QDF_STATUS wma_post_chan_switch_setup(uint8_t vdev_id)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct cdp_pdev *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct wma_txrx_node *intr = &wma->interfaces[vdev_id];
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_channel *des_chan;
+	cdp_config_param_type val;
 
 	/*
 	 * Record monitor mode channel here in case HW
@@ -4288,8 +4289,14 @@ QDF_STATUS wma_post_chan_switch_setup(uint8_t vdev_id)
 	 */
 	if (intr->type == WMI_VDEV_TYPE_MONITOR) {
 		des_chan = intr->vdev->vdev_mlme.des_chan;
-		cdp_record_monitor_chan_num(soc, pdev, des_chan->ch_ieee);
-		cdp_record_monitor_chan_freq(soc, pdev, des_chan->ch_freq);
+		val.cdp_pdev_param_monitor_chan = des_chan->ch_ieee;
+		cdp_txrx_set_pdev_param(soc,
+					wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+					CDP_MONITOR_CHANNEL, val);
+		val.cdp_pdev_param_mon_freq = des_chan->ch_freq;
+		cdp_txrx_set_pdev_param(soc,
+					wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+					CDP_MONITOR_FREQUENCY, val);
 	}
 	return QDF_STATUS_SUCCESS;
 }

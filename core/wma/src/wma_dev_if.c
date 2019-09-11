@@ -59,6 +59,7 @@
 #include <cdp_txrx_cfg.h>
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
+#include <cdp_txrx_ctrl.h>
 
 #include "wlan_policy_mgr_api.h"
 #include "wma_nan_datapath.h"
@@ -4997,6 +4998,7 @@ static void wma_wait_tx_complete(tp_wma_handle wma,
 {
 	struct cdp_pdev *pdev;
 	uint8_t max_wait_iterations = 0;
+	cdp_config_param_type val;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!wma_is_vdev_valid(session_id)) {
@@ -5015,10 +5017,19 @@ static void wma_wait_tx_complete(tp_wma_handle wma,
 		wma->interfaces[session_id].delay_before_vdev_stop /
 		WMA_TX_Q_RECHECK_TIMER_WAIT;
 
-	while (cdp_get_tx_pending(soc, pdev) && max_wait_iterations) {
+	if (cdp_txrx_get_pdev_param(soc,
+				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+				    CDP_TX_PENDING, &val))
+		return;
+	while (val.cdp_pdev_param_tx_pending && max_wait_iterations) {
 		WMA_LOGW(FL("Waiting for outstanding packet to drain."));
 		qdf_wait_for_event_completion(&wma->tx_queue_empty_event,
 				      WMA_TX_Q_RECHECK_TIMER_WAIT);
+		if (cdp_txrx_get_pdev_param(
+					soc,
+					wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+					CDP_TX_PENDING, &val))
+			return;
 		max_wait_iterations--;
 	}
 }
@@ -5028,7 +5039,8 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 	struct cdp_pdev *pdev;
 	void *peer = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct cdp_vdev *txrx_vdev = NULL;
+	uint32_t tx_pending = 0;
+	cdp_config_param_type val;
 	bool roam_synch_in_progress = false;
 	struct wma_txrx_node *iface;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -5089,13 +5101,6 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 	qdf_mem_zero(bssid_addr,
 		     QDF_MAC_ADDR_SIZE);
 
-	txrx_vdev = wma_find_vdev_by_id(wma, vdev_id);
-	if (!txrx_vdev) {
-		WMA_LOGE("%s:Invalid vdev handle", __func__);
-		status = QDF_STATUS_E_FAILURE;
-		goto out;
-	}
-
 	wma_delete_invalid_peer_entries(vdev_id, NULL);
 
 	if (iface->psnr_req) {
@@ -5137,13 +5142,17 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 		goto out;
 	}
 
-	WMA_LOGD(FL("Outstanding msdu packets: %d"),
-		 cdp_get_tx_pending(soc, pdev));
+	cdp_txrx_get_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+				CDP_TX_PENDING, &val);
+	tx_pending = val.cdp_pdev_param_tx_pending;
+	WMA_LOGD(FL("Outstanding msdu packets: %u"), tx_pending);
 	wma_wait_tx_complete(wma, vdev_id);
 
-	if (cdp_get_tx_pending(soc, pdev)) {
-		WMA_LOGW(FL("Outstanding msdu packets before VDEV_STOP : %d"),
-			 cdp_get_tx_pending(soc, pdev));
+	cdp_txrx_get_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+				CDP_TX_PENDING, &val);
+	if (tx_pending) {
+		WMA_LOGW(FL("Outstanding msdu packets before VDEV_STOP : %u"),
+			 tx_pending);
 	}
 
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP (del_bss)",
