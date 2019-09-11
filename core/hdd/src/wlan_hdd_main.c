@@ -9862,6 +9862,8 @@ static void hdd_init_wlan_logging_params(struct hdd_config *config,
 
 	config->wlan_logging_to_console =
 			cfg_get(psoc, CFG_WLAN_LOGGING_CONSOLE_SUPPORT);
+	config->host_log_custom_nl_proto =
+		cfg_get(psoc, CFG_HOST_LOG_CUSTOM_NETLINK_PROTO);
 }
 #else
 static void hdd_init_wlan_logging_params(struct hdd_config *config,

@@ -2943,7 +2943,10 @@ static inline void hdd_set_tso_flags(struct hdd_context *hdd_ctx,
  */
 static inline int wlan_hdd_nl_init(struct hdd_context *hdd_ctx)
 {
-	hdd_ctx->radio_index = nl_srv_init(hdd_ctx->wiphy);
+	int proto;
+
+	proto = hdd_ctx->config->host_log_custom_nl_proto;
+	hdd_ctx->radio_index = nl_srv_init(hdd_ctx->wiphy, proto);
 
 	/* radio_index is assigned from 0, so only >=0 will be valid index  */
 	if (hdd_ctx->radio_index >= 0)
@@ -2963,7 +2966,10 @@ static inline int wlan_hdd_nl_init(struct hdd_context *hdd_ctx)
  */
 static inline int wlan_hdd_nl_init(struct hdd_context *hdd_ctx)
 {
-	return nl_srv_init(hdd_ctx->wiphy);
+	int proto;
+
+	proto = hdd_ctx->config->host_log_custom_nl_proto;
+	return nl_srv_init(hdd_ctx->wiphy, proto);
 }
 #endif
 QDF_STATUS hdd_sme_open_session_callback(uint8_t vdev_id,
