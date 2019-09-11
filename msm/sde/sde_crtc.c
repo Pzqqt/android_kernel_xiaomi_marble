@@ -1793,7 +1793,8 @@ int sde_crtc_get_secure_transition_ops(struct drm_crtc *crtc,
 	 */
 	drm_for_each_encoder_mask(encoder, crtc->dev,
 			crtc->state->encoder_mask) {
-		post_commit |= sde_encoder_check_curr_mode(encoder,
+		if (sde_encoder_is_dsi_display(encoder))
+			post_commit |= sde_encoder_check_curr_mode(encoder,
 						MSM_DISPLAY_VIDEO_MODE);
 	}
 
@@ -4275,7 +4276,7 @@ static int _sde_crtc_check_secure_state_smmu_translation(struct drm_crtc *crtc,
 	int is_video_mode = false;
 
 	drm_for_each_encoder_mask(encoder, crtc->dev, state->encoder_mask) {
-		if (sde_encoder_is_primary_display(encoder))
+		if (sde_encoder_is_dsi_display(encoder))
 			is_video_mode |= sde_encoder_check_curr_mode(encoder,
 						MSM_DISPLAY_VIDEO_MODE);
 	}
