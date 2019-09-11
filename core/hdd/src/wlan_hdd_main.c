@@ -8498,6 +8498,30 @@ void hdd_set_driver_del_ack_enable(uint16_t vdev_id,
 }
 #endif
 
+#ifdef WDI3_STATS_UPDATE
+static inline
+void hdd_ipa_set_perf_level(struct hdd_context *hdd_ctx,
+			    uint64_t *tx_pkts, uint64_t *rx_pkts,
+			    uint32_t *ipa_tx_pkts, uint32_t *ipa_rx_pkts)
+{
+}
+#else
+static void hdd_ipa_set_perf_level(struct hdd_context *hdd_ctx,
+				   uint64_t *tx_pkts, uint64_t *rx_pkts,
+				   uint32_t *ipa_tx_pkts, uint32_t *ipa_rx_pkts)
+{
+	if (ucfg_ipa_is_fw_wdi_activated(hdd_ctx->pdev)) {
+		ucfg_ipa_uc_stat_query(hdd_ctx->pdev, ipa_tx_pkts,
+				       ipa_rx_pkts);
+		*tx_pkts += *ipa_tx_pkts;
+		*rx_pkts += *ipa_rx_pkts;
+
+		ucfg_ipa_set_perf_level(hdd_ctx->pdev, *tx_pkts, *rx_pkts);
+		ucfg_ipa_uc_stat_request(hdd_ctx->pdev, 2);
+	}
+}
+#endif
+
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
 static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 {
@@ -8599,19 +8623,11 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 	/* Send embedded Tx packet bytes on STA & SAP interface to IPA driver */
 	ucfg_ipa_update_tx_stats(hdd_ctx->pdev, sta_tx_bytes, sap_tx_bytes);
 
-	if (ucfg_ipa_is_fw_wdi_activated(hdd_ctx->pdev)) {
-		ucfg_ipa_uc_stat_query(hdd_ctx->pdev, &ipa_tx_packets,
-				&ipa_rx_packets);
-		tx_packets += (uint64_t)ipa_tx_packets;
-		rx_packets += (uint64_t)ipa_rx_packets;
-
-		if (con_sap_adapter) {
-			con_sap_adapter->stats.tx_packets += ipa_tx_packets;
-			con_sap_adapter->stats.rx_packets += ipa_rx_packets;
-		}
-
-		ucfg_ipa_set_perf_level(hdd_ctx->pdev, tx_packets, rx_packets);
-		ucfg_ipa_uc_stat_request(hdd_ctx->pdev, 2);
+	hdd_ipa_set_perf_level(hdd_ctx, &tx_packets, &rx_packets,
+			       &ipa_tx_packets, &ipa_rx_packets);
+	if (con_sap_adapter) {
+		con_sap_adapter->stats.tx_packets += ipa_tx_packets;
+		con_sap_adapter->stats.rx_packets += ipa_rx_packets;
 	}
 
 	hdd_pld_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets);

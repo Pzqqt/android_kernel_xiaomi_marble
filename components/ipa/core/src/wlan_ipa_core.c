@@ -1758,6 +1758,42 @@ static void wlan_ipa_uc_offload_enable_disable(struct wlan_ipa_priv *ipa_ctx,
 	}
 }
 
+#ifdef WDI3_STATS_UPDATE
+static void wlan_ipa_uc_bw_monitor(struct wlan_ipa_priv *ipa_ctx, bool stop)
+{
+	qdf_ipa_wdi_bw_info_t bw_info;
+	uint32_t bw_low = ipa_ctx->config->ipa_bw_low;
+	uint32_t bw_medium = ipa_ctx->config->ipa_bw_medium;
+	uint32_t bw_high = ipa_ctx->config->ipa_bw_high;
+	int ret;
+
+	bw_info.num = WLAN_IPA_UC_BW_MONITOR_LEVEL;
+	/* IPA uc will mobitor three bw levels for wlan client */
+	QDF_IPA_WDI_BW_INFO_THRESHOLD_LEVEL_1(&bw_info) = bw_low;
+	QDF_IPA_WDI_BW_INFO_THRESHOLD_LEVEL_2(&bw_info) = bw_medium;
+	QDF_IPA_WDI_BW_INFO_THRESHOLD_LEVEL_3(&bw_info) = bw_high;
+	QDF_IPA_WDI_BW_INFO_START_STOP(&bw_info) = stop;
+
+	ret = qdf_ipa_uc_bw_monitor(&bw_info);
+	if (ret)
+		ipa_err("ipa uc bw monitor fails");
+
+	if (!stop) {
+		cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
+				       QDF_IPA_CLIENT_WLAN2_CONS,
+				       ipa_ctx->config->ipa_bw_low);
+		ipa_ctx->curr_bw_level = WLAN_IPA_BW_LEVEL_LOW;
+	}
+
+	ipa_debug("ipa uc bw monitor %s", stop ? "stop" : "start");
+}
+#else
+static inline
+void wlan_ipa_uc_bw_monitor(struct wlan_ipa_priv *ipa_ctx, bool stop)
+{
+}
+#endif
+
 /**
  * __wlan_ipa_wlan_evt() - IPA event handler
  * @net_dev: Interface net device
@@ -2211,6 +2247,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 
 				return QDF_STATUS_E_BUSY;
 			}
+			wlan_ipa_uc_bw_monitor(ipa_ctx, false);
 		}
 
 		ipa_ctx->sap_num_connected_sta++;
@@ -2303,6 +2340,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 					wlan_ipa_uc_disable_pipes(ipa_ctx);
 				} else {
 					wlan_ipa_uc_handle_last_discon(ipa_ctx);
+					wlan_ipa_uc_bw_monitor(ipa_ctx, true);
 				}
 			}
 
