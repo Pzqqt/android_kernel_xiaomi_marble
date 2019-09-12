@@ -2097,6 +2097,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 					       uint8_t *cmd_param_info,
 					       uint32_t len)
 {
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
 	WMI_IFACE_LINK_STATS_EVENTID_param_tlvs *param_tlvs;
 	wmi_iface_link_stats_event_fixed_param *fixed_param;
 	wmi_iface_link_stats *link_stats, *iface_link_stats;
@@ -2108,6 +2109,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	size_t link_stats_size, ac_stats_size, iface_info_size;
 	size_t link_stats_results_size, offload_stats_size;
 	size_t total_ac_size, total_offload_size;
+	bool db2dbm_enabled;
 
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
@@ -2200,6 +2202,17 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 
 	iface_link_stats = &iface_stat->link_stats;
 	*iface_link_stats = *link_stats;
+	db2dbm_enabled = wmi_service_enabled(wma_handle->wmi_handle,
+					     wmi_service_hw_db2dbm_support);
+	if (!db2dbm_enabled) {
+		/* FW doesn't indicate support for HW db2dbm conversion */
+		iface_link_stats->rssi_mgmt += WMA_TGT_NOISE_FLOOR_DBM;
+		iface_link_stats->rssi_data += WMA_TGT_NOISE_FLOOR_DBM;
+		iface_link_stats->rssi_ack += WMA_TGT_NOISE_FLOOR_DBM;
+	}
+	WMA_LOGD("db2dbm: %d, rssi_mgmt: %d, rssi_data: %d, rssi_ack: %d",
+		 db2dbm_enabled, iface_link_stats->rssi_mgmt,
+		 iface_link_stats->rssi_data, iface_link_stats->rssi_ack);
 
 	/* Copy roaming state */
 	iface_stat->info.roaming = link_stats->roam_state;
