@@ -9764,8 +9764,6 @@ int hdd_psoc_idle_shutdown(struct device *dev)
 	else
 		ret =  __hdd_psoc_idle_shutdown(hdd_ctx);
 
-	cds_set_recovery_in_progress(false);
-
 	return ret;
 }
 
@@ -9838,6 +9836,10 @@ static void hdd_psoc_idle_timeout_callback(void *priv)
 		hdd_debug("System suspend in progress. Restart idle shutdown timer");
 		hdd_psoc_idle_timer_start(hdd_ctx);
 	}
+
+	/* Clear the recovery flag for PCIe discrete soc after idle shutdown*/
+	if (PLD_BUS_TYPE_PCIE == pld_get_bus_type(hdd_ctx->parent_dev))
+		cds_set_recovery_in_progress(false);
 }
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE

@@ -200,7 +200,7 @@ static struct dev_node *pld_get_dev_node(struct device *dev)
  *
  * Return: PLD bus type
  */
-static enum pld_bus_type pld_get_bus_type(struct device *dev)
+enum pld_bus_type pld_get_bus_type(struct device *dev)
 {
 	struct dev_node *dev_node = pld_get_dev_node(dev);
 

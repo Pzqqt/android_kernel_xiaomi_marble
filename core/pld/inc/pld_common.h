@@ -733,4 +733,11 @@ static inline int pld_nbuf_pre_alloc_free(struct sk_buff *skb)
 	return 0;
 }
 #endif
+/**
+ * pld_get_bus_type() - Bus type of the device
+ * @dev: device
+ *
+ * Return: PLD bus type
+ */
+enum pld_bus_type pld_get_bus_type(struct device *dev);
 #endif
