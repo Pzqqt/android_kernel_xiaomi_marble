@@ -313,6 +313,16 @@ uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev, uint32_t freq);
 uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev, uint32_t chan_num);
 
 /**
+ * reg_legacy_chan_to_freq() - Get freq from chan noumber, for 2G and 5G
+ * @pdev: Pointer to pdev
+ * @chan_num: Channel number
+ *
+ * Return: Channel frequency if success, otherwise 0
+ */
+uint16_t reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
+				 uint8_t chan_num);
+
+/**
  * reg_chan_is_49ghz() - Check if the input channel number is 4.9GHz
  * @pdev: Pdev pointer
  * @chan_num: Input channel number

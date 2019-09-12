@@ -519,6 +519,12 @@ uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(wlan_reg_chan_to_freq);
 
+uint16_t wlan_reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
+				      uint8_t chan_num)
+{
+	return reg_legacy_chan_to_freq(pdev, chan_num);
+}
+
 #ifdef CONFIG_CHAN_NUM_API
 bool wlan_reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev,
 		uint8_t chan_num)

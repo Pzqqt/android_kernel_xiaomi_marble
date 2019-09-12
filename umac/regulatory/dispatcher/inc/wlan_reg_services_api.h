@@ -705,6 +705,15 @@ uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 			       uint32_t chan);
 
 /**
+ * wlan_reg_legacy_chan_to_freq () - convert chan to freq, for 2G and 5G
+ * @chan: channel number
+ *
+ * Return: frequency
+ */
+uint16_t wlan_reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
+				      uint8_t chan);
+
+/**
  * wlan_reg_is_us() - reg is us country
  * @country: The country information
  *
