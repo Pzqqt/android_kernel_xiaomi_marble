@@ -384,7 +384,7 @@ skip_ns_dynamic_check:
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 		pmo_debug("skip ns offload enable as ns count is 0");
 		status = QDF_STATUS_E_INVAL;
-		goto out;
+		goto dec_ref;
 	}
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
