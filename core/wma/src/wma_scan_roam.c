@@ -188,6 +188,10 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 		else if (chan_list->chanParam[i].quarter_rate)
 			chan_p->quarter_rate = 1;
 
+		if (wlan_reg_is_6ghz_psc_chan_freq(
+			    chan_p->mhz))
+			chan_p->psc_channel = 1;
+
 		/*TODO: Set WMI_SET_CHANNEL_MIN_POWER */
 		/*TODO: Set WMI_SET_CHANNEL_ANTENNA_MAX */
 		/*TODO: WMI_SET_CHANNEL_REG_CLASSID */
