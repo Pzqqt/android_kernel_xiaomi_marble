@@ -460,6 +460,18 @@ void dfs_agile_precac_start(struct wlan_dfs *dfs);
 void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
 				  uint8_t ocac_status,
 				  struct dfs_agile_cac_params *adfs_param);
+
+/**
+ * dfs_set_fw_adfs_support() - Set FW aDFS support in dfs object.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @fw_adfs_support_160: aDFS enabled when pdev is on 160/80P80MHz.
+ * @fw_adfs_support_non_160: aDFS enabled when pdev is on 20/40/80MHz.
+ *
+ * Return: void.
+ */
+void dfs_set_fw_adfs_support(struct wlan_dfs *dfs,
+			     bool fw_adfs_support_160,
+			     bool fw_adfs_support_non_160);
 #else
 static inline void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
 						  uint8_t *cur_precac_dfs_index)
@@ -494,6 +506,13 @@ dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
 			     struct dfs_agile_cac_params *adfs_param)
 {
 }
+
+static inline void
+dfs_set_fw_adfs_support(struct wlan_dfs *dfs,
+			bool fw_adfs_support_160,
+			bool fw_adfs_support_non_160)
+{
+}
 #endif
 
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
@@ -515,7 +534,7 @@ static inline void dfs_agile_soc_obj_init(struct wlan_dfs *dfs,
 /**
  * dfs_set_precac_enable() - Set precac enable flag.
  * @dfs: Pointer to wlan_dfs structure.
- * @value: input value for dfs_precac_enable flag.
+ * @value: input value for dfs_legacy_precac_ucfg flag.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
 void dfs_set_precac_enable(struct wlan_dfs *dfs,
@@ -528,28 +547,35 @@ static inline void dfs_set_precac_enable(struct wlan_dfs *dfs,
 #endif
 
 /**
- * dfs_get_precac_enable() - Get precac enable flag.
- * @dfs: Pointer to wlan_dfs structure.
+ * dfs_is_legacy_precac_enabled() - Check if legacy preCAC is enabled for the
+ * DFS onject.
+ * @dfs: Pointer to the wlan_dfs object.
+ *
+ * Return: True if legacy preCAC is enabled, else false.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
-uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs);
+bool dfs_is_legacy_precac_enabled(struct wlan_dfs *dfs);
 #else
-static inline uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs)
+static inline bool dfs_is_legacy_precac_enabled(struct wlan_dfs *dfs)
 {
 	return 0;
 }
 #endif
 
 /**
- * dfs_get_agile_precac_enable() - Get agile precac enable flag.
- * @dfs: Pointer to wlan_dfs structure.
+ * dfs_is_agile_precac_enabled() - Check if agile preCAC is enabled for the DFS.
+ * @dfs: Pointer to the wlan_dfs object.
  *
- * Return: Value of flag dfs_agile_precac_enable
+ * Return: True if agile DFS is enabled, else false.
+ *
+ * For agile preCAC to be enabled,
+ * 1. User configuration should be set.
+ * 2. Target should support aDFS.
  */
 #ifdef QCA_SUPPORT_AGILE_DFS
-bool dfs_get_agile_precac_enable(struct wlan_dfs *dfs);
+bool dfs_is_agile_precac_enabled(struct wlan_dfs *dfs);
 #else
-static inline bool dfs_get_agile_precac_enable(struct wlan_dfs *dfs)
+static inline bool dfs_is_agile_precac_enabled(struct wlan_dfs *dfs)
 {
 	return false;
 }
@@ -560,7 +586,7 @@ static inline bool dfs_get_agile_precac_enable(struct wlan_dfs *dfs)
  * dfs_set_precac_intermediate_chan() - Set intermediate chan to be used while
  *                                      doing precac.
  * @dfs: Pointer to wlan_dfs structure.
- * @value: input value for dfs_precac_enable flag.
+ * @value: input value for dfs_legacy_precac_ucfg flag.
  *
  * Return:
  * * 0       - Successfully set intermediate channel.

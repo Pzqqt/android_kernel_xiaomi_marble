@@ -525,4 +525,24 @@ tgt_dfs_send_subchan_marking(struct wlan_objmgr_pdev *pdev, bool subchanmark)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+#ifdef QCA_SUPPORT_AGILE_DFS
+/**
+ * tgt_dfs_set_fw_adfs_support() - Set FW aDFS support in dfs object.
+ * @pdev: Pointer to pdev object.
+ * @fw_adfs_support_160: aDFS enabled when pdev is on 160/80P80MHz.
+ * @fw_adfs_support_non_160: aDFS enabled when pdev is on 20/40/80MHz.
+ *
+ * Return: void.
+ */
+void tgt_dfs_set_fw_adfs_support(struct wlan_objmgr_pdev *pdev,
+				 bool fw_adfs_support_160,
+				 bool fw_adfs_support_non_160);
+#else
+static inline
+void tgt_dfs_set_fw_adfs_support(struct wlan_objmgr_pdev *pdev,
+				 bool fw_adfs_support_160,
+				 bool fw_adfs_support_non_160)
+{
+}
+#endif
 #endif /* _WLAN_DFS_TGT_API_H_ */

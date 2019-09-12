@@ -240,7 +240,7 @@ QDF_STATUS ucfg_dfs_override_precac_timeout(struct wlan_objmgr_pdev *pdev,
 /**
  * ucfg_dfs_set_precac_enable() - Set precac enable flag.
  * @pdev: Pointer to DFS pdev object.
- * @value: input value for dfs_precac_enable flag.
+ * @value: input value for dfs_legacy_precac_ucfg flag.
  *
  * Wrapper function for dfs_set_precac_enable().
  * This function called from outside of dfs component.
@@ -249,21 +249,23 @@ QDF_STATUS ucfg_dfs_set_precac_enable(struct wlan_objmgr_pdev *pdev,
 				      uint32_t value);
 
 /**
- * ucfg_dfs_get_precac_enable() - Get precac enable flag.
+ * ucfg_dfs_get_legacy_precac_enable() - Get the legacy precac enable flag.
  * @pdev: Pointer to DFS pdev object.
  * @buff: Pointer to save precac_enable value.
  *
- * Wrapper function for dfs_get_precac_enable().
+ * Wrapper function for dfs_is_legacy_precac_enabled() and returns the
+ * legacy precac enable flag for partial offload chipsets.
  * This function called from outside of dfs component.
  */
-QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev, int *buff);
+QDF_STATUS ucfg_dfs_get_legacy_precac_enable(struct wlan_objmgr_pdev *pdev,
+					     bool *buff);
 
 /**
  * ucfg_dfs_get_agile_precac_enable() - Get agile precac enable flag.
  * @pdev: Pointer to DFS pdev object.
- * @buff: Pointer to save dfs_agile_precac_enable value.
+ * @buff: Pointer to save dfs_agile_precac_ucfg value.
  *
- * Wrapper function for dfs_get_agile_precac_enable().
+ * Wrapper function for dfs_is_legacy_precac_enabled().
  * This function called from outside of dfs component.
  *
  * Return:

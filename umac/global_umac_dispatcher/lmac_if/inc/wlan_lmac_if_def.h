@@ -1243,7 +1243,8 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
  * @dfs_cancel_precac_timer:          Cancel the precac timer.
  * @dfs_override_precac_timeout:      Override the default precac timeout.
  * @dfs_set_precac_enable:            Set precac enable flag.
- * @dfs_get_precac_enable:            Get precac enable flag.
+ * @dfs_get_legacy_precac_enable:     Get the precac enable flag for
+ *                                    partial offload (legacy) chipsets.
  * @dfs_set_precac_intermediate_chan: Set intermediate channel for precac.
  * @dfs_get_precac_intermediate_chan: Get intermediate channel for precac.
  * @dfs_precac_preferred_chan:        Configure preferred channel during
@@ -1324,8 +1325,9 @@ struct wlan_lmac_if_dfs_rx_ops {
 			int precac_timeout);
 	QDF_STATUS (*dfs_set_precac_enable)(struct wlan_objmgr_pdev *pdev,
 			uint32_t value);
-	QDF_STATUS (*dfs_get_precac_enable)(struct wlan_objmgr_pdev *pdev,
-			int *buff);
+	QDF_STATUS
+	(*dfs_get_legacy_precac_enable)(struct wlan_objmgr_pdev *pdev,
+					bool *buff);
 	QDF_STATUS (*dfs_get_agile_precac_enable)(struct wlan_objmgr_pdev *pdev,
 						  bool *buff);
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
@@ -1390,6 +1392,9 @@ struct wlan_lmac_if_dfs_rx_ops {
 	void (*dfs_allow_hw_pulses)(struct wlan_objmgr_pdev *pdev,
 				    bool allow_hw_pulses);
 	bool (*dfs_is_hw_pulses_allowed)(struct wlan_objmgr_pdev *pdev);
+	void (*dfs_set_fw_adfs_support)(struct wlan_objmgr_pdev *pdev,
+					bool fw_adfs_support_160,
+					bool fw_adfs_support_non_160);
 };
 
 /**

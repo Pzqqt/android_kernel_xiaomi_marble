@@ -139,8 +139,8 @@ QDF_STATUS ucfg_dfs_set_precac_enable(struct wlan_objmgr_pdev *pdev,
 }
 qdf_export_symbol(ucfg_dfs_set_precac_enable);
 
-QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev,
-		int *buff)
+QDF_STATUS ucfg_dfs_get_legacy_precac_enable(struct wlan_objmgr_pdev *pdev,
+					     bool *buff)
 {
 	struct wlan_dfs *dfs;
 
@@ -153,11 +153,12 @@ QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev,
 		return  QDF_STATUS_E_FAILURE;
 	}
 
-	*buff = dfs_get_precac_enable(dfs);
+	*buff = dfs_is_legacy_precac_enabled(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
-qdf_export_symbol(ucfg_dfs_get_precac_enable);
+
+qdf_export_symbol(ucfg_dfs_get_legacy_precac_enable);
 
 QDF_STATUS ucfg_dfs_get_agile_precac_enable(struct wlan_objmgr_pdev *pdev,
 					    bool *buff)
@@ -178,7 +179,7 @@ QDF_STATUS ucfg_dfs_get_agile_precac_enable(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*buff = dfs_get_agile_precac_enable(dfs);
+	*buff = dfs_is_agile_precac_enabled(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -772,3 +772,24 @@ bool tgt_dfs_is_stadfs_enabled(struct wlan_objmgr_pdev *pdev)
 
 	return dfs->dfs_is_stadfs_enabled;
 }
+
+#ifdef QCA_SUPPORT_AGILE_DFS
+void tgt_dfs_set_fw_adfs_support(struct wlan_objmgr_pdev *pdev,
+				 bool fw_adfs_support_160,
+				 bool fw_adfs_support_non_160)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs_set_fw_adfs_support(dfs,
+				fw_adfs_support_160,
+				fw_adfs_support_non_160);
+}
+
+qdf_export_symbol(tgt_dfs_set_fw_adfs_support);
+#endif

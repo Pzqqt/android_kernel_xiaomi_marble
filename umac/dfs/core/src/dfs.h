@@ -932,9 +932,6 @@ struct dfs_event_log {
  *                                   received.
  * @is_radar_during_precac:          Radar found during precac.
  * @dfs_precac_lock:                 Lock to protect precac lists.
- * @dfs_precac_enable:               Enable the precac for legacy chips.
- * @dfs_agile_precac_enable:         Enable preCAC for chips that supports agile
- *                                   detector engine.
  * @dfs_precac_secondary_freq:       Second segment freq for precac.
  *                                   Applicable to only legacy chips.
  * @dfs_precac_primary_freq:         PreCAC Primary freq applicable only to
@@ -1037,6 +1034,11 @@ struct dfs_event_log {
  *                                   to be sent in NOL IE with RCSA.
  * @dfs_is_rcsa_ie_sent:             To send or to not send RCSA IE.
  * @dfs_is_nol_ie_sent:              To send or to not send NOL IE.
+ * @dfs_legacy_precac_ucfg:          User configuration for legacy preCAC in
+ *                                   partial offload chipsets.
+ * @dfs_agile_precac_ucfg:           User configuration for agile preCAC.
+ * @dfs_fw_adfs_support_non_160:     Target Agile DFS support for non-160 BWs.
+ * @dfs_fw_adfs_support_160:         Target Agile DFS support for 160 BW.
  * @dfs_allow_hw_pulses:             Allow/Block HW pulses. When synthetic
  *                                   pulses are injected, the HW pulses should
  *                                   be blocked and this variable should be
@@ -1087,7 +1089,6 @@ struct wlan_dfs {
 	bool           dfs_radar_found_for_fo;
 	bool           is_radar_during_precac;
 	qdf_spinlock_t dfs_precac_lock;
-	bool           dfs_precac_enable;
 	uint8_t        dfs_precac_secondary_freq;
 	uint8_t        dfs_precac_primary_freq;
 	uint8_t        dfs_defer_precac_channel_change;
@@ -1182,7 +1183,10 @@ struct wlan_dfs {
 	uint8_t        dfs_nol_ie_bitmap;
 	bool           dfs_is_rcsa_ie_sent;
 	bool           dfs_is_nol_ie_sent;
-	bool           dfs_agile_precac_enable;
+	uint8_t        dfs_legacy_precac_ucfg:1,
+		       dfs_agile_precac_ucfg:1,
+		       dfs_fw_adfs_support_non_160:1,
+		       dfs_fw_adfs_support_160:1;
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(WLAN_DFS_SYNTHETIC_RADAR)
 	bool           dfs_allow_hw_pulses;
 #endif
