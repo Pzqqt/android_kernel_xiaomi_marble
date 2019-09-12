@@ -35,6 +35,7 @@
 #include "wlan_policy_mgr_api.h"
 #include "qwlan_version.h"
 #include "bmi.h"
+#include <ol_defines.h>
 #include "cdp_txrx_bus.h"
 #include "cdp_txrx_misc.h"
 #include "pld_common.h"
@@ -973,7 +974,6 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 	struct hdd_context *hdd_ctx;
 	void *hif_ctx;
 	void *dp_soc;
-	void *dp_pdev;
 	struct pmo_wow_enable_params pmo_params;
 
 	hdd_info("starting bus suspend");
@@ -1003,8 +1003,7 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 	}
 
 	dp_soc = cds_get_context(QDF_MODULE_ID_SOC);
-	dp_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	err = qdf_status_to_os_return(cdp_bus_suspend(dp_soc, dp_pdev));
+	err = qdf_status_to_os_return(cdp_bus_suspend(dp_soc, OL_TXRX_PDEV_ID));
 	if (err) {
 		hdd_err("Failed cdp bus suspend: %d", err);
 		return err;
@@ -1050,7 +1049,7 @@ late_hif_resume:
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 
 resume_cdp:
-	status = cdp_bus_resume(dp_soc, dp_pdev);
+	status = cdp_bus_resume(dp_soc, OL_TXRX_PDEV_ID);
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 
 	return err;
@@ -1160,7 +1159,6 @@ int wlan_hdd_bus_resume(void)
 	int status;
 	QDF_STATUS qdf_status;
 	void *dp_soc;
-	void *dp_pdev;
 
 	if (cds_is_driver_recovering())
 		return 0;
@@ -1205,8 +1203,7 @@ int wlan_hdd_bus_resume(void)
 	}
 
 	dp_soc = cds_get_context(QDF_MODULE_ID_SOC);
-	dp_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	qdf_status = cdp_bus_resume(dp_soc, dp_pdev);
+	qdf_status = cdp_bus_resume(dp_soc, OL_TXRX_PDEV_ID);
 	status = qdf_status_to_os_return(qdf_status);
 	if (status) {
 		hdd_err("Failed cdp bus resume");

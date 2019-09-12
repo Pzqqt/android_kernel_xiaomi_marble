@@ -3556,26 +3556,29 @@ static QDF_STATUS ol_txrx_runtime_resume(struct cdp_soc_t *soc_hdl,
 
 /**
  * ol_txrx_bus_suspend() - bus suspend
- * @ppdev: TXRX pdev context
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  *
  * Ensure that ol_txrx is ready for bus suspend
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS ol_txrx_bus_suspend(struct cdp_pdev *ppdev)
+static QDF_STATUS ol_txrx_bus_suspend(struct cdp_soc_t *soc_hdl,
+				      uint8_t pdev_id)
 {
 	return ol_txrx_wait_for_pending_tx(SUSPEND_DRAIN_WAIT);
 }
 
 /**
  * ol_txrx_bus_resume() - bus resume
- * @ppdev: TXRX pdev context
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
  *
  * Dummy function for symetry
  *
  * Return: QDF_STATUS_SUCCESS
  */
-static QDF_STATUS ol_txrx_bus_resume(struct cdp_pdev *ppdev)
+static QDF_STATUS ol_txrx_bus_resume(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	return QDF_STATUS_SUCCESS;
 }
