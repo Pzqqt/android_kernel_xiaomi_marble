@@ -331,7 +331,14 @@ void wlan_hdd_classify_pkt(struct sk_buff *skb);
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx);
+#ifdef RX_PERFORMANCE
 bool hdd_is_current_high_throughput(struct hdd_context *hdd_ctx);
+#else
+static inline bool hdd_is_current_high_throughput(struct hdd_context *hdd_ctx)
+{
+	return false;
+}
+#endif
 #define HDD_MSM_CFG(msm_cfg)	msm_cfg
 #else
 static inline void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx) {}
