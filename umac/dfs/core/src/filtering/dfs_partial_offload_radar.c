@@ -168,6 +168,14 @@ static struct dfs_pulse dfs_etsi_radars[] = {
 	/* PRF 4500, 20us duration, 9 pulses per burst */
 	{9,  20, 4500, 4500, 1,  4,  5, 19, 21, 18,  0, 0, 1,  1000, 0, 41},
 
+	/* Type 3 */
+	/* 10 15us, 200-1000 PRF, 15 pulses */
+	{15, 15, 200, 1000, 0, 4, 5, 8, 18, 22, 0, 0, 0, 5, 0, 42},
+
+	/* Type 4 */
+	/* 1-15us, 1200-1600 PRF, 15 pulses */
+	{15, 15, 1200, 1600, 0, 4, 5, 0, 18, 22, 0, 0, 0, 5, 0, 43},
+
 	/* TYPE staggered pulse */
 	/* Type 5*/
 	/* 0.8-2us, 2-3 bursts,300-400 PRF, 10 pulses each */
