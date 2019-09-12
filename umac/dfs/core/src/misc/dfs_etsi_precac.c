@@ -37,6 +37,7 @@
 #include "wlan_dfs_mlme_api.h"
 #include "wlan_dfs_utils_api.h"
 #include "dfs_internal.h"
+#include "dfs_zero_cac.h"
 #include "dfs_process_radar_found_ind.h"
 
 #define ETSI_CAC_TIME_OUT_MS 86400000
@@ -328,7 +329,7 @@ void dfs_add_to_etsi_precac_required_list(struct wlan_dfs *dfs, uint8_t *chan)
 	}
 
 	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_REGION &&
-	    dfs->dfs_precac_enable) {
+	    dfs_is_legacy_precac_enabled(dfs)) {
 		etsi_precac_entry = qdf_mem_malloc(sizeof(*etsi_precac_entry));
 
 		if (!etsi_precac_entry) {
