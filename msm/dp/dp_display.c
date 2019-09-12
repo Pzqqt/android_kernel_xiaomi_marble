@@ -2060,6 +2060,7 @@ static enum drm_mode_status dp_display_validate_mode(
 	struct dp_display_mode dp_mode;
 	bool dsc_en;
 	u32 num_lm = 0;
+	int rc = 0;
 
 	if (!dp_display || !mode || !panel ||
 			!avail_res || !avail_res->max_mixer_width) {
@@ -2105,8 +2106,12 @@ static enum drm_mode_status dp_display_validate_mode(
 		goto end;
 	}
 
-	num_lm = (avail_res->max_mixer_width <= mode->hdisplay) ?
-			2 : 1;
+	rc = msm_get_mixer_count(dp->priv, mode, avail_res, &num_lm);
+	if (rc) {
+		DP_ERR("error getting mixer count. rc:%d\n", rc);
+		goto end;
+	}
+
 	if (num_lm > avail_res->num_lm ||
 			(num_lm == 2 && !avail_res->num_3dmux)) {
 		DP_MST_DEBUG("num_lm:%d, req lm:%d 3dmux:%d\n", num_lm,

@@ -1938,6 +1938,33 @@ msm_gem_smmu_address_space_get(struct drm_device *dev,
 	return funcs->get_address_space(priv->kms, domain);
 }
 
+int msm_get_mixer_count(struct msm_drm_private *priv,
+		const struct drm_display_mode *mode,
+		const struct msm_resource_caps_info *res, u32 *num_lm)
+{
+	struct msm_kms *kms;
+	const struct msm_kms_funcs *funcs;
+
+	if (!priv) {
+		DRM_ERROR("invalid drm private struct\n");
+		return -EINVAL;
+	}
+
+	kms = priv->kms;
+	if (!kms) {
+		DRM_ERROR("invalid msm kms struct\n");
+		return -EINVAL;
+	}
+
+	funcs = kms->funcs;
+	if (!funcs || !funcs->get_mixer_count) {
+		DRM_ERROR("invalid function pointers\n");
+		return -EINVAL;
+	}
+
+	return funcs->get_mixer_count(priv->kms, mode, res, num_lm);
+}
+
 static int msm_drm_bind(struct device *dev)
 {
 	return msm_drm_init(dev, &msm_driver);
