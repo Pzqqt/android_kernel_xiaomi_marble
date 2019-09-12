@@ -426,10 +426,17 @@ static int msm_transcode_loopback_set_params(struct snd_compr_stream *cstream,
 	struct trans_loopback_pdata *pdata;
 	uint32_t bit_width = 16;
 	int ret = 0;
+	enum apr_subsys_state subsys_state;
 
 	if (trans == NULL) {
 		pr_err("%s: Invalid param\n", __func__);
 		return -EINVAL;
+	}
+
+	subsys_state = apr_get_subsys_state();
+	if (subsys_state == APR_SUBSYS_DOWN) {
+		pr_debug("%s: adsp is down\n", __func__);
+		return -ENETRESET;
 	}
 
 	mutex_lock(&trans->lock);
