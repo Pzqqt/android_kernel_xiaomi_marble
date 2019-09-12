@@ -1025,17 +1025,8 @@ static void wma_handle_hidden_ssid_restart(tp_wma_handle wma,
 				      0, NULL);
 }
 
-/**
- * wma_handle_channel_switch_resp() - handle channel switch resp
- * @wma: wma handle
- * @resp_event: response from firmware
- * @req: target req
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
-wma_handle_channel_switch_resp(tp_wma_handle wma,
-			       struct vdev_start_response *rsp)
+QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
+					  struct vdev_start_response *rsp)
 {
 	enum wlan_vdev_sm_evt  event;
 	struct wma_txrx_node *iface;

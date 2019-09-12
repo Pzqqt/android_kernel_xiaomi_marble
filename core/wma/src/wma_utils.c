@@ -4127,12 +4127,15 @@ wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 	uint32_t vdev_stop_type;
 	struct del_bss_resp *resp = (struct del_bss_resp *)data;
 
-	if (mlme_is_connection_fail(vdev_mlme->vdev)) {
+	if (mlme_is_connection_fail(vdev_mlme->vdev) ||
+	    mlme_get_vdev_start_failed(vdev_mlme->vdev)) {
 		WMA_LOGD("%s Vdev start req failed, no action required",
 			 __func__);
 		mlme_set_connection_fail(vdev_mlme->vdev, false);
+		mlme_set_vdev_start_failed(vdev_mlme->vdev, false);
 		return QDF_STATUS_SUCCESS;
 	}
+
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s wma handle is NULL", __func__);
@@ -4155,17 +4158,12 @@ wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (!mlme_get_vdev_start_failed(vdev_mlme->vdev)) {
-		if (vdev_stop_type == WMA_SET_LINK_STATE) {
-			lim_join_result_callback(
-					wma->mac_context,
-					wlan_vdev_get_id(vdev_mlme->vdev));
-		} else {
-			wma_send_del_bss_response(wma, resp);
-			return QDF_STATUS_SUCCESS;
-		}
+	if (vdev_stop_type == WMA_SET_LINK_STATE) {
+		lim_join_result_callback(wma->mac_context,
+					 wlan_vdev_get_id(vdev_mlme->vdev));
 	} else {
-		mlme_set_vdev_start_failed(vdev_mlme->vdev, false);
+		wma_send_del_bss_response(wma, resp);
+		return QDF_STATUS_SUCCESS;
 	}
 
 end:

@@ -3639,7 +3639,8 @@ send_resp:
 		 __func__, status);
 	rsp.status = status;
 	rsp.vdev_id = vdev_id;
-	lim_process_switch_channel_rsp(wma->mac_context, &rsp);
+
+	wma_handle_channel_switch_resp(wma, &rsp);
 }
 
 #ifdef FEATURE_WLAN_ESE
