@@ -1,3 +1,13 @@
+ENABLE_QCACLD := true
+ifeq ($(TARGET_USES_QMAA), true)
+ifneq ($(TARGET_USES_QMAA_OVERRIDE_WLAN), true)
+ENABLE_QCACLD := false
+else
+ENABLE_QCACLD := true
+endif
+endif
+
+ifeq  ($(ENABLE_QCACLD), true)
 # Android makefile for the WLAN Module
 LOCAL_PATH := $(call my-dir)
 
@@ -160,3 +170,4 @@ endif # Multi-ko check
 endif # DLKM check
 endif # supported target check
 endif # WLAN enabled check
+endif # ENABLE_QCACLD
