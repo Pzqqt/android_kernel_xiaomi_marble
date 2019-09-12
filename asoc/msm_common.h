@@ -32,6 +32,10 @@ enum {
 };
 
 struct msm_common_pdata {
+	uint8_t *aud_dev_state;
+	struct kobject aud_dev_kobj;
+	uint8_t dsp_sessions_closed;
+	uint32_t num_aud_devs;
 	struct device_node *mi2s_gpio_p[MI2S_TDM_AUXPCM_MAX];
 	struct mutex lock[MI2S_TDM_AUXPCM_MAX];
 	atomic_t mi2s_gpio_ref_cnt[MI2S_TDM_AUXPCM_MAX];

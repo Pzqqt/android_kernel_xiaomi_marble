@@ -25,6 +25,7 @@
 #define APM_STATE_READY_TIMEOUT_MS    10000
 #define Q6_READY_TIMEOUT_MS 1000
 #define APM_CMD_GET_GECKO_STATE 0x01001021
+#define APM_CMD_CLOSE_ALL 0x01001013
 #define APM_CMD_RSP_GET_GECKO_STATE 0x02001007
 #define APM_MODULE_INSTANCE_ID   0x00000001
 #define GPR_SVC_ADSP_CORE 0x3
@@ -34,7 +35,7 @@ struct gecko_core {
 	wait_queue_head_t wait;
 	struct mutex lock;
 	bool resp_received;
-	bool is_ready;
+	int32_t status;
 };
 
 struct gecko_core_private {
@@ -46,6 +47,13 @@ struct gecko_core_private {
 };
 
 static struct gecko_core_private *gecko_core_priv;
+
+/* used to decode basic responses from Gecko */
+struct gecko_cmd_basic_rsp {
+	uint32_t opcode;
+	int32_t status;
+};
+
 struct apm_cmd_rsp_get_gecko_status_t
 
 {
@@ -61,20 +69,34 @@ struct apm_cmd_rsp_get_gecko_status_t
 static int gecko_core_callback(struct gpr_device *adev, void *data)
 {
 	struct gecko_core *core = dev_get_drvdata(&adev->dev);
-	struct apm_cmd_rsp_get_gecko_status_t *result;
+	struct apm_cmd_rsp_get_gecko_status_t *gecko_status_rsp;
+	struct gecko_cmd_basic_rsp *basic_rsp;
 	struct gpr_hdr *hdr = data;
 
-	result = GPR_PKT_GET_PAYLOAD(struct apm_cmd_rsp_get_gecko_status_t, data);
 
-	dev_err(&adev->dev ,"%s: Payload %x",__func__, hdr->opcode);
+	dev_info(&adev->dev ,"%s: Payload %x",__func__, hdr->opcode);
 	switch (hdr->opcode) {
 	case GPR_IBASIC_RSP_RESULT:
-		dev_err(&adev->dev ,"%s: Failed response received",__func__);
+		basic_rsp = GPR_PKT_GET_PAYLOAD(
+				struct gecko_cmd_basic_rsp,
+				data);
+		dev_info(&adev->dev ,"%s: op %x status %d", __func__,
+				basic_rsp->opcode, basic_rsp->status);
+		if (basic_rsp->opcode == APM_CMD_CLOSE_ALL) {
+			core->status = basic_rsp->status;
+		} else {
+			dev_err(&adev->dev ,"%s: Failed response received",
+					__func__);
+		}
 		core->resp_received = true;
 		break;
 	case APM_CMD_RSP_GET_GECKO_STATE:
-		dev_err(&adev->dev ,"%s: sucess response received",__func__);
-		core->is_ready = result->status;
+		gecko_status_rsp =
+				GPR_PKT_GET_PAYLOAD(
+					struct apm_cmd_rsp_get_gecko_status_t,
+					data);
+		dev_info(&adev->dev ,"%s: sucess response received",__func__);
+		core->status = gecko_status_rsp->status;
 		core->resp_received = true;
 		break;
 	default:
@@ -93,12 +115,12 @@ static bool __gecko_core_is_apm_ready(struct gecko_core *core)
 	struct gpr_device *adev = core->adev;
 	struct gpr_pkt pkt;
 	int rc;
+	bool ret = false;
 
 	pkt.hdr.header = GPR_SET_FIELD(GPR_PKT_VERSION, GPR_PKT_VER) |
 			 GPR_SET_FIELD(GPR_PKT_HEADER_SIZE, GPR_PKT_HEADER_WORD_SIZE_V) |
 			 GPR_SET_FIELD(GPR_PKT_PACKET_SIZE, GPR_PKT_HEADER_BYTE_SIZE_V);
 
-	pkt.hdr.opcode = APM_CMD_GET_GECKO_STATE;
 	pkt.hdr.dst_port = APM_MODULE_INSTANCE_ID;
 	pkt.hdr.src_port = GPR_SVC_ADSP_CORE;
 	pkt.hdr.dst_domain_id = GPR_IDS_DOMAIN_ID_ADSP_V;
@@ -108,31 +130,30 @@ static bool __gecko_core_is_apm_ready(struct gecko_core *core)
 	dev_err(gecko_core_priv->dev, "%s: send_command ret\n",	__func__);
 
 	rc = gpr_send_pkt(adev, &pkt);
-	if (rc < 0)
-		return false;
+	if (rc < 0) {
+		ret = false;
+		goto done;
+	}
 
 	rc = wait_event_timeout(core->wait, (core->resp_received),
 				msecs_to_jiffies(Q6_READY_TIMEOUT_MS));
-	dev_err(gecko_core_priv->dev, "%s: wait event unblocked \n", __func__);
-//	core->resp_received = true;
-//	core->is_ready = true;
-	if (rc > 0 && core->resp_received) {
-		core->resp_received = false;
+	dev_dbg(gecko_core_priv->dev, "%s: wait event unblocked \n", __func__);
 
-		if (core->is_ready)
-			return true;
+	if (rc > 0 && core->resp_received) {
+		ret = core->status;
 	} else {
 		dev_err(gecko_core_priv->dev, "%s: command timedout, ret\n",
 			__func__);
         }
-
-	return false;
+done:
+	core->resp_received = false;
+	return ret;
 }
 
 /**
  * gecko_core_is_apm_ready() - Get status of adsp
  *
- * Return: Will be an true if apm is ready and false if not.
+ * Return: Will return true if apm is ready and false if not.
  */
 bool gecko_core_is_apm_ready(void)
 {
@@ -141,14 +162,15 @@ bool gecko_core_is_apm_ready(void)
 	struct gecko_core *core;
 
 	if (!gecko_core_priv)
-		return 0;
+		return ret;
 
+	mutex_lock(&gecko_core_priv->lock);
 	core = gecko_core_priv->gecko_core_drv;
 	if (!core)
-		return 0;
+		goto done;
 
-	mutex_lock(&core->lock);
 	timeout = jiffies + msecs_to_jiffies(APM_STATE_READY_TIMEOUT_MS);
+	mutex_lock(&core->lock);
 	for (;;) {
 		if (__gecko_core_is_apm_ready(core)) {
 			ret = true;
@@ -162,9 +184,79 @@ bool gecko_core_is_apm_ready(void)
 	}
 
 	mutex_unlock(&core->lock);
+done:
+	mutex_unlock(&gecko_core_priv->lock);
 	return ret;
 }
 EXPORT_SYMBOL_GPL(gecko_core_is_apm_ready);
+
+/**
+ * gecko_core_apm_close_all() - Get status of adsp
+ *
+ * Return: Will be return true if apm is ready and false if not.
+ */
+void gecko_core_apm_close_all(void)
+{
+	int rc = 0;
+	struct gecko_core *core;
+	struct gpr_pkt pkt;
+	struct gpr_device *adev = NULL;
+
+	if (!gecko_core_priv)
+		return;
+
+	mutex_lock(&gecko_core_priv->lock);
+	core = gecko_core_priv->gecko_core_drv;
+	if (!core) {
+		mutex_unlock(&gecko_core_priv->lock);
+		return;
+	}
+
+	mutex_lock(&core->lock);
+
+	adev = core->adev;
+
+	pkt.hdr.header = GPR_SET_FIELD(GPR_PKT_VERSION, GPR_PKT_VER) |
+			 GPR_SET_FIELD(GPR_PKT_HEADER_SIZE,
+					GPR_PKT_HEADER_WORD_SIZE_V) |
+			 GPR_SET_FIELD(GPR_PKT_PACKET_SIZE,
+					GPR_PKT_HEADER_BYTE_SIZE_V);
+
+	pkt.hdr.dst_port = APM_MODULE_INSTANCE_ID;
+	pkt.hdr.src_port = GPR_SVC_ADSP_CORE;
+	pkt.hdr.dst_domain_id = GPR_IDS_DOMAIN_ID_ADSP_V;
+	pkt.hdr.src_domain_id = GPR_IDS_DOMAIN_ID_APPS_V;
+	pkt.hdr.opcode = APM_CMD_CLOSE_ALL;
+
+	dev_info(gecko_core_priv->dev, "%s: send_command \n", __func__);
+
+	rc = gpr_send_pkt(adev, &pkt);
+	if (rc < 0) {
+		dev_err(gecko_core_priv->dev, "%s: send_pkt_failed %d\n",
+				__func__, rc);
+		goto done;
+	}
+
+	rc = wait_event_timeout(core->wait, (core->resp_received),
+				msecs_to_jiffies(Q6_READY_TIMEOUT_MS));
+	dev_info(gecko_core_priv->dev, "%s: wait event unblocked \n", __func__);
+	if (rc > 0 && core->resp_received) {
+		if (core->status != 0)
+			dev_err(gecko_core_priv->dev, "%s, cmd failed status %d",
+					__func__, core->status);
+	} else {
+		dev_err(gecko_core_priv->dev, "%s: command timedout, ret\n",
+			__func__);
+        }
+
+done:
+	core->resp_received = false;
+	mutex_unlock(&core->lock);
+	mutex_unlock(&gecko_core_priv->lock);
+	return;
+}
+EXPORT_SYMBOL_GPL(gecko_core_apm_close_all);
+
 
 static int gecko_core_probe(struct gpr_device *adev)
 {
@@ -176,8 +268,10 @@ static int gecko_core_probe(struct gpr_device *adev)
 	}
 	mutex_lock(&gecko_core_priv->lock);
 	core = kzalloc(sizeof(*core), GFP_KERNEL);
-	if (!core)
+	if (!core) {
+		mutex_unlock(&gecko_core_priv->lock);
 		return -ENOMEM;
+	}
 
 	dev_set_drvdata(&adev->dev, core);
 

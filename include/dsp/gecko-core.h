@@ -15,5 +15,6 @@
 #include <ipc/gpr-lite.h>
 
 bool gecko_core_is_apm_ready(void);
+void gecko_core_apm_close_all(void);
 
 #endif

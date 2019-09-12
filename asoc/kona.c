@@ -34,6 +34,7 @@
 #include "codecs/bolero/wsa-macro.h"
 #include "kona-port-config.h"
 #include "msm-audio-defs.h"
+#include "msm_common.h"
 
 #define DRV_NAME "kona-asoc-snd"
 #define __CHIPSET__ "KONA "
@@ -53,6 +54,7 @@
 
 struct msm_asoc_mach_data {
 	struct snd_info_entry *codec_root;
+	struct msm_common_pdata *common_pdata;
 	int lito_v2_enabled;
 	struct device_node *dmic01_gpio_p; /* used by pinctrl API */
 	struct device_node *dmic23_gpio_p; /* used by pinctrl API */
@@ -413,6 +415,11 @@ static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
 			tx_ch, ARRAY_SIZE(rx_ch), rx_ch);
 }
 
+static struct snd_soc_ops msm_common_be_ops = {
+	.startup = msm_common_snd_startup,
+	.shutdown = msm_common_snd_shutdown,
+};
+
 /* Digital audio interface glue - connects codec <---> CPU */
 static struct snd_soc_dai_link msm_common_dai_links[] = {
 	{
@@ -426,6 +433,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "wsa_macro_rx1",
 		.codec_name = "bolero_codec",
 		.init = &msm_int_audrx_init,
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -441,6 +449,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "wsa_macro_rx_mix",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -456,6 +465,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "wsa_macro_echo",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -471,6 +481,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "rx_macro_rx1",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -486,6 +497,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "rx_macro_rx2",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -501,6 +513,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "rx_macro_rx3",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -516,6 +529,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "rx_macro_rx4",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -531,6 +545,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "tx_macro_tx1",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -546,6 +561,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "tx_macro_tx2",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -561,6 +577,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "va_macro_tx1",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -576,6 +593,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "va_macro_tx2",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -591,6 +609,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "va_macro_tx3",
 		.codec_name = "bolero_codec",
+		.ops = &msm_common_be_ops,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -605,6 +624,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_name = "btfmslim_slave",
+		.ops = &msm_common_be_ops,
 		.codec_dai_name = "btfm_bt_sco_a2dp_slim_rx",
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
@@ -619,6 +639,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.codec_name = "btfmslim_slave",
+		.ops = &msm_common_be_ops,
 		.codec_dai_name = "btfm_bt_sco_slim_tx",
 		.ignore_suspend = 1,
 		.ignore_pmdown_time = 1,
@@ -636,6 +657,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
+		.ops = &msm_common_be_ops,
 	},
 	{
 		.name = LPASS_BE_USB_AUDIO_RX,
@@ -649,6 +671,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
+		.ops = &msm_common_be_ops,
 	},
 	{
 		.name = LPASS_BE_USB_AUDIO_TX,
@@ -661,6 +684,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_suspend = 1,
+		.ops = &msm_common_be_ops,
 	},
 };
 
@@ -1346,6 +1370,27 @@ static int msm_audio_ssr_register(struct device *dev)
 	return ret;
 }
 
+struct msm_common_pdata *msm_common_get_pdata(struct snd_soc_card *card)
+{
+	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+
+	if (!pdata)
+		return NULL;
+
+	return pdata->common_pdata;
+}
+
+void msm_common_set_pdata(struct snd_soc_card *card,
+			  struct msm_common_pdata *common_pdata)
+{
+	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+
+	if (!pdata)
+		return;
+
+	pdata->common_pdata = common_pdata;
+}
+
 static int msm_asoc_machine_probe(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = NULL;
@@ -1414,6 +1459,8 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	}
 	dev_info(&pdev->dev, "%s: Sound card %s registered\n",
 		 __func__, card->name);
+
+	msm_common_snd_init(pdev, card);
 
 	pdata->hph_en1_gpio_p = of_parse_phandle(pdev->dev.of_node,
 						"qcom,hph-en1-gpio", 0);
@@ -1510,6 +1557,16 @@ err:
 static int msm_asoc_machine_remove(struct platform_device *pdev)
 {
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
+	struct msm_asoc_mach_data *pdata = NULL;
+	struct msm_common_pdata *common_pdata = NULL;
+
+	if (card)
+		pdata = snd_soc_card_get_drvdata(card);
+
+	if (pdata)
+		common_pdata = pdata->common_pdata;
+
+	msm_common_snd_deinit(common_pdata);
 
 	snd_event_master_deregister(&pdev->dev);
 	snd_soc_unregister_card(card);
