@@ -9581,15 +9581,21 @@ static struct cdp_ipa_ops dp_ops_ipa = {
 #endif
 
 #ifdef DP_POWER_SAVE
-static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
+static QDF_STATUS dp_bus_suspend(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct cdp_pdev *pdev = (struct cdp_pdev *)
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	int timeout = SUSPEND_DRAIN_WAIT;
 	int drain_wait_delay = 50; /* 50 ms */
 
+	if (qdf_unlikely(!pdev)) {
+		dp_err("pdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	/* Abort if there are any pending TX packets */
-	while (dp_get_tx_pending(opaque_pdev) > 0) {
+	while (dp_get_tx_pending(pdev) > 0) {
 		qdf_sleep(drain_wait_delay);
 		if (timeout <= 0) {
 			dp_err("TX frames are pending, abort suspend");
@@ -9604,10 +9610,9 @@ static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS dp_bus_resume(struct cdp_pdev *opaque_pdev)
+static QDF_STATUS dp_bus_resume(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 
 	if (soc->intr_mode == DP_INTR_POLL)
 		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);

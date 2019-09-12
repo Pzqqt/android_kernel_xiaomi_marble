@@ -1452,12 +1452,12 @@ struct cdp_tx_delay_ops {
 
 /**
  * struct cdp_bus_ops - mcl bus suspend/resume ops
- * @bus_suspend:
- * @bus_resume:
+ * @bus_suspend: handler for bus suspend
+ * @bus_resume: handler for bus resume
  */
 struct cdp_bus_ops {
-	QDF_STATUS (*bus_suspend)(struct cdp_pdev *opaque_pdev);
-	QDF_STATUS (*bus_resume)(struct cdp_pdev *opaque_pdev);
+	QDF_STATUS (*bus_suspend)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
+	QDF_STATUS (*bus_resume)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
 };
 #endif
 
