@@ -1255,10 +1255,8 @@ struct wma_vdev_start_req {
 	uint32_t preferred_tx_streams;
 	uint32_t preferred_rx_streams;
 	uint16_t beacon_tx_rate;
-#ifdef WLAN_FEATURE_11AX
 	bool he_capable;
 	uint32_t he_ops;
-#endif
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 };

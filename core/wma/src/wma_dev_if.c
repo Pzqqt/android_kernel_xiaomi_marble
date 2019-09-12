@@ -2673,68 +2673,6 @@ enum mlme_bcn_tx_rate_code wma_get_bcn_rate_code(uint16_t rate)
 	}
 }
 
-static QDF_STATUS vdev_mgr_start_param_populate(struct vdev_mlme_obj *mlme_obj,
-						struct vdev_start_params *param)
-{
-	struct wlan_channel *des_chan;
-	struct wlan_objmgr_vdev *vdev;
-	struct wlan_objmgr_pdev *pdev;
-
-	vdev = mlme_obj->vdev;
-	if (!vdev) {
-		mlme_err("VDEV is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-	pdev = wlan_vdev_get_pdev(vdev);
-	if (!pdev) {
-		mlme_err("PDEV is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-	if (wlan_objmgr_pdev_try_get_ref(pdev, WLAN_MLME_SB_ID) !=
-							QDF_STATUS_SUCCESS) {
-		mlme_err("Failed to get pdev reference");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
-
-	mlme_obj->proto.generic.beacon_interval = param->beacon_interval;
-	mlme_obj->proto.generic.dtim_period = param->dtim_period;
-	mlme_obj->mgmt.generic.disable_hw_ack = param->disable_hw_ack;
-	mlme_obj->mgmt.chainmask_info.num_rx_chain =
-				param->preferred_rx_streams;
-	mlme_obj->mgmt.chainmask_info.num_tx_chain =
-				param->preferred_tx_streams;
-
-	mlme_obj->proto.he_ops_info.he_ops = param->he_ops;
-	des_chan->ch_ieee = param->channel.chan_id;
-	mlme_obj->mgmt.generic.tx_power = param->channel.pwr;
-	des_chan->ch_freq = param->channel.mhz;
-	mlme_obj->mgmt.rate_info.half_rate = param->channel.half_rate;
-	mlme_obj->mgmt.rate_info.quarter_rate = param->channel.quarter_rate;
-	mlme_obj->proto.ht_info.allow_ht = param->channel.allow_ht;
-	mlme_obj->proto.vht_info.allow_vht = param->channel.allow_vht;
-	mlme_obj->mgmt.generic.phy_mode = param->channel.phy_mode;
-	des_chan->ch_cfreq1 = param->channel.cfreq1;
-	des_chan->ch_cfreq2 = param->channel.cfreq2;
-	mlme_obj->mgmt.generic.maxpower = param->channel.maxpower;
-	mlme_obj->mgmt.generic.minpower = param->channel.minpower;
-	mlme_obj->mgmt.generic.maxregpower = param->channel.maxregpower;
-	mlme_obj->mgmt.generic.antennamax = param->channel.antennamax;
-	mlme_obj->mgmt.generic.reg_class_id = param->channel.reg_class_id;
-	mlme_obj->mgmt.rate_info.bcn_tx_rate = param->bcn_tx_rate_code;
-	mlme_obj->proto.generic.ldpc = param->ldpc_rx_enabled;
-	if (mlme_obj->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_AP) {
-		mlme_obj->mgmt.ap.hidden_ssid = param->hidden_ssid;
-		mlme_obj->mgmt.ap.cac_duration_ms  = param->cac_duration_ms;
-	}
-	wlan_vdev_mlme_set_ssid(vdev, param->ssid.mac_ssid,
-				param->ssid.length);
-
-	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_SB_ID);
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * wma_vdev_start() - send vdev start request to fw
  * @wma: wma handle
@@ -2746,11 +2684,8 @@ static QDF_STATUS vdev_mgr_start_param_populate(struct vdev_mlme_obj *mlme_obj,
 QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 			  struct wma_vdev_start_req *req, bool isRestart)
 {
-	struct vdev_start_params params = { 0 };
-	wmi_vdev_start_request_cmd_fixed_param *cmd;
 	struct wma_txrx_node *intr = wma->interfaces;
 	struct mac_context *mac_ctx = NULL;
-	uint32_t temp_ssid_len = 0;
 	uint16_t bw_val;
 	struct wma_txrx_node *iface = &wma->interfaces[req->vdev_id];
 	uint32_t chan_mode;
@@ -2759,6 +2694,16 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	QDF_STATUS status;
 	uint32_t vdev_stop_type;
 	struct vdev_mlme_obj *mlme_obj;
+	uint8_t vdev_id = req->vdev_id;
+	struct wlan_objmgr_vdev *vdev = intr[vdev_id].vdev;
+	struct wlan_channel *des_chan;
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	des_chan = vdev->vdev_mlme.des_chan;
 
 	ini_cfg = mlme_get_ini_vdev_config(iface->vdev);
 	if (!ini_cfg) {
@@ -2779,31 +2724,31 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	params.channel.cfreq1 = req->op_chan_freq;
+	des_chan->ch_cfreq1 = req->op_chan_freq;
 	ch_width = req->chan_width;
 	bw_val = wlan_reg_get_bw_value(req->chan_width);
 	if (bw_val > 20) {
 		if (req->chan_freq_seg0) {
-			params.channel.cfreq1 = req->chan_freq_seg0;
+			des_chan->ch_cfreq1 = req->chan_freq_seg0;
 		} else {
 			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 20",
 					__func__, bw_val);
-			params.channel.cfreq1 = req->op_chan_freq;
+			des_chan->ch_cfreq1 = req->op_chan_freq;
 			ch_width = CH_WIDTH_20MHZ;
 			bw_val = 20;
 		}
 	}
 	if (bw_val > 80) {
 		if (req->chan_freq_seg1) {
-			params.channel.cfreq2 = req->chan_freq_seg1;
+			des_chan->ch_cfreq2 = req->chan_freq_seg1;
 		} else {
 			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 80",
 					__func__, bw_val);
-			params.channel.cfreq2 = 0;
+			des_chan->ch_cfreq2 = 0;
 			ch_width = CH_WIDTH_80MHZ;
 		}
 	} else {
-		params.channel.cfreq2 = 0;
+		des_chan->ch_cfreq2 = 0;
 	}
 	chan_mode = wma_chan_phy_mode(req->op_chan_freq, ch_width,
 				      req->dot11_mode);
@@ -2813,19 +2758,19 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!params.channel.cfreq1) {
+	if (!des_chan->ch_cfreq1) {
 		WMA_LOGE("%s: invalid center freq1", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (((ch_width == CH_WIDTH_160MHZ) ||
-	     (ch_width == CH_WIDTH_80P80MHZ)) && !params.channel.cfreq2) {
+	     (ch_width == CH_WIDTH_80P80MHZ)) && !des_chan->ch_cfreq2) {
 		WMA_LOGE("%s: invalid center freq2 for 160MHz", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Fill channel info */
-	params.channel.mhz = req->op_chan_freq;
-	params.channel.phy_mode = chan_mode;
+	des_chan->ch_freq = req->op_chan_freq;
+	mlme_obj->mgmt.generic.phy_mode = chan_mode;
 
 	/* For Rome, only supports LFR2, not LFR3, for reassoc, need send vdev
 	 * start cmd to F/W while vdev started first, then send reassoc frame
@@ -2848,35 +2793,33 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 	WMA_LOGD("%s: Enter isRestart=%d vdev=%d", __func__, isRestart,
 		 req->vdev_id);
-	params.vdev_id = req->vdev_id;
 
-	intr[params.vdev_id].chanmode = chan_mode;
-	intr[params.vdev_id].config.gtx_info.gtxRTMask[0] =
+	intr[vdev_id].chanmode = chan_mode;
+	intr[vdev_id].config.gtx_info.gtxRTMask[0] =
 		CFG_TGT_DEFAULT_GTX_HT_MASK;
-	intr[params.vdev_id].config.gtx_info.gtxRTMask[1] =
+	intr[vdev_id].config.gtx_info.gtxRTMask[1] =
 		CFG_TGT_DEFAULT_GTX_VHT_MASK;
 
-	intr[params.vdev_id].config.gtx_info.gtxUsrcfg =
+	intr[vdev_id].config.gtx_info.gtxUsrcfg =
 		mac_ctx->mlme_cfg->sta.tgt_gtx_usr_cfg;
 
-	intr[params.vdev_id].config.gtx_info.gtxPERThreshold =
+	intr[vdev_id].config.gtx_info.gtxPERThreshold =
 		CFG_TGT_DEFAULT_GTX_PER_THRESHOLD;
-	intr[params.vdev_id].config.gtx_info.gtxPERMargin =
+	intr[vdev_id].config.gtx_info.gtxPERMargin =
 		CFG_TGT_DEFAULT_GTX_PER_MARGIN;
-	intr[params.vdev_id].config.gtx_info.gtxTPCstep =
+	intr[vdev_id].config.gtx_info.gtxTPCstep =
 		CFG_TGT_DEFAULT_GTX_TPC_STEP;
-	intr[params.vdev_id].config.gtx_info.gtxTPCMin =
+	intr[vdev_id].config.gtx_info.gtxTPCMin =
 		CFG_TGT_DEFAULT_GTX_TPC_MIN;
-	intr[params.vdev_id].config.gtx_info.gtxBWMask =
+	intr[vdev_id].config.gtx_info.gtxBWMask =
 		CFG_TGT_DEFAULT_GTX_BW_MASK;
-	intr[params.vdev_id].mhz = params.channel.mhz;
-	intr[params.vdev_id].chan_width = ch_width;
-	intr[params.vdev_id].channel = wlan_reg_freq_to_chan(wma->pdev,
-							     req->op_chan_freq);
-
-	/* Set half or quarter rate WMI flags */
-	params.channel.half_rate = req->is_half_rate;
-	params.channel.quarter_rate = req->is_quarter_rate;
+	intr[vdev_id].mhz = des_chan->ch_freq;
+	intr[vdev_id].chan_width = ch_width;
+	intr[vdev_id].channel = wlan_reg_freq_to_chan(wma->pdev,
+						      req->op_chan_freq);
+	/* Set half or quarter rate flags */
+	mlme_obj->mgmt.rate_info.half_rate = req->is_half_rate;
+	mlme_obj->mgmt.rate_info.quarter_rate = req->is_quarter_rate;
 
 	/*
 	 * If the channel has DFS set, flip on radar reporting.
@@ -2888,22 +2831,12 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	 * If that is ever the case we would insert the decision whether to
 	 * enable the firmware flag here.
 	 */
-	params.is_restart = isRestart;
-	params.cac_duration_ms = req->cac_duration_ms;
-	params.regdomain = req->dfs_regdomain;
-	if ((QDF_GLOBAL_MONITOR_MODE != cds_get_conparam()) && req->is_dfs) {
-		params.disable_hw_ack = true;
+	mlme_obj->mgmt.ap.cac_duration_ms = req->cac_duration_ms;
+	if (QDF_GLOBAL_MONITOR_MODE != cds_get_conparam() && req->is_dfs)
+		mlme_obj->mgmt.generic.disable_hw_ack = true;
 
-		/*
-		 * If channel is DFS and operating in AP mode,
-		 * set the WMI_CHAN_FLAG_DFS flag.
-		 */
-		if (wma_is_vdev_in_ap_mode(wma, params.vdev_id) == true)
-			params.channel.dfs_set = true;
-	}
-
-	params.beacon_interval = req->beacon_intval;
-	params.dtim_period = req->dtim_period;
+	mlme_obj->proto.generic.beacon_interval = req->beacon_intval;
+	mlme_obj->proto.generic.dtim_period = req->dtim_period;
 
 	if (req->beacon_tx_rate) {
 		WMA_LOGD("%s: beacon tx rate [%hu * 100 Kbps]",
@@ -2912,55 +2845,34 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		 * beacon_tx_rate is in multiples of 100 Kbps.
 		 * Convert the data rate to hw rate code.
 		 */
-		params.bcn_tx_rate_code =
+		mlme_obj->mgmt.rate_info.bcn_tx_rate =
 			wma_get_bcn_rate_code(req->beacon_tx_rate);
 	}
 
 	/* FIXME: Find out min, max and regulatory power levels */
-	params.channel.maxregpower = req->max_txpow;
-
-	/* TODO: Handle regulatory class, max antenna */
-	if (!isRestart)
-		params.pmf_enabled = req->pmf_enabled;
+	mlme_obj->mgmt.generic.maxregpower = req->max_txpow;
 
 	/* Copy the SSID */
-	if (req->ssid.length) {
-		params.ssid.length = req->ssid.length;
-		if (req->ssid.length < sizeof(cmd->ssid.ssid))
-			temp_ssid_len = req->ssid.length;
-		else
-			temp_ssid_len = sizeof(cmd->ssid.ssid);
-		qdf_mem_copy(params.ssid.mac_ssid, req->ssid.ssId,
-			     temp_ssid_len);
-	}
+	wlan_vdev_mlme_set_ssid(vdev, req->ssid.ssId, req->ssid.length);
 
-	params.hidden_ssid = req->hidden_ssid;
+	mlme_obj->mgmt.ap.hidden_ssid = req->hidden_ssid;
+	mlme_obj->mgmt.chainmask_info.num_rx_chain = req->preferred_rx_streams;
+	mlme_obj->mgmt.chainmask_info.num_tx_chain = req->preferred_tx_streams;
 
-	params.num_noa_descriptors = 0;
-	params.preferred_rx_streams = req->preferred_rx_streams;
-	params.preferred_tx_streams = req->preferred_tx_streams;
-
-	wma_copy_vdev_start_he_ops(&params, req);
+	mlme_obj->proto.he_ops_info.he_ops = req->he_ops;
 
 	if (!isRestart) {
 		WMA_LOGD("%s, vdev_id: %d, unpausing tx_ll_queue at VDEV_START",
-			 __func__, params.vdev_id);
+			 __func__, vdev_id);
 		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
-			wma->interfaces[params.vdev_id].handle,
+			wma->interfaces[vdev_id].handle,
 			0xffffffff);
-		wma_vdev_update_pause_bitmap(params.vdev_id, 0);
+		wma_vdev_update_pause_bitmap(vdev_id, 0);
 	}
 
 	/* Send the dynamic nss chain params before vdev start to fw */
 	if (wma->dynamic_nss_chains_support)
-		wma_vdev_nss_chain_params_send(params.vdev_id, ini_cfg);
-
-	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(intr[req->vdev_id].vdev);
-	if (!mlme_obj) {
-		pe_err("vdev component object is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	vdev_mgr_start_param_populate(mlme_obj, &params);
+		wma_vdev_nss_chain_params_send(vdev_id, ini_cfg);
 
 	return vdev_mgr_start_send(mlme_obj,  isRestart);
 }
