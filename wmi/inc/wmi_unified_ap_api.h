@@ -507,20 +507,6 @@ QDF_STATUS wmi_extract_peer_delete_response_event(
 		struct wmi_host_peer_delete_response_event *param);
 
 /**
- * wmi_extract_vdev_peer_delete_all_response_event() -
- *       extract vdev id from peer delete all response event
- * @wmi_handle: wmi handle
- * @evt_buf: pointer to event buffer
- * @param: Pointer to hold evt buf
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-QDF_STATUS wmi_extract_vdev_peer_delete_all_response_event(
-		wmi_unified_t wmi_handle,
-		uint8_t *evt_buf,
-		struct wmi_host_vdev_peer_delete_all_response_event *param);
-
-/**
  * wmi_send_bcn_offload_control_cmd - send beacon ofload control cmd to fw
  * @wmi_hdl: wmi handle
  * @bcn_ctrl_param: pointer to bcn_offload_control param

@@ -7394,7 +7394,7 @@ static QDF_STATUS extract_vdev_peer_delete_all_response_event_non_tlv(
  *
  * Return: 0 for success or error code
  */
-static QDF_STATUS extract_tbttoffset_num_vdevs_non_tlv(void *wmi_hdl,
+static QDF_STATUS extract_tbttoffset_num_vdevs_non_tlv(wmi_unified_t wmi_hdl,
 		void *evt_buf,
 		uint32_t *num_vdevs)
 {
@@ -7417,7 +7417,7 @@ static QDF_STATUS extract_tbttoffset_num_vdevs_non_tlv(void *wmi_hdl,
  *
  * Return: 0 for success or error code
  */
-static QDF_STATUS extract_tbttoffset_update_params_non_tlv(void *wmi_hdl,
+static QDF_STATUS extract_tbttoffset_update_params_non_tlv(wmi_unified_t wmi_hdl,
 		void *evt_buf, uint8_t idx,
 		struct tbttoffset_params *tbtt_param)
 {
