@@ -761,7 +761,6 @@ add_ast_entry:
 
 	qdf_mem_copy(&ast_entry->mac_addr.raw[0], mac_addr, QDF_MAC_ADDR_SIZE);
 	ast_entry->pdev_id = vdev->pdev->pdev_id;
-	ast_entry->vdev_id = vdev->vdev_id;
 	ast_entry->is_mapped = false;
 	ast_entry->delete_in_progress = false;
 
@@ -941,7 +940,7 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	 */
 	if (qdf_unlikely(ast_entry->peer == peer) &&
 	    (ast_entry->type == CDP_TXRX_AST_TYPE_WDS) &&
-	    (ast_entry->vdev_id == peer->vdev->vdev_id) &&
+	    (ast_entry->peer->vdev == peer->vdev) &&
 	    (ast_entry->is_active))
 		return 0;
 
@@ -951,7 +950,6 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	ast_entry->peer = peer;
 	ast_entry->type = CDP_TXRX_AST_TYPE_WDS;
 	ast_entry->pdev_id = peer->vdev->pdev->pdev_id;
-	ast_entry->vdev_id = peer->vdev->vdev_id;
 	ast_entry->is_active = TRUE;
 	TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry, ase_list_elem);
 

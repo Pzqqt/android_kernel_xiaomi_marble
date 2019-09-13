@@ -668,7 +668,7 @@ static bool dp_peer_get_ast_info_by_soc_wifi3
 	}
 	ast_entry_info->type = ast_entry->type;
 	ast_entry_info->pdev_id = ast_entry->pdev_id;
-	ast_entry_info->vdev_id = ast_entry->vdev_id;
+	ast_entry_info->vdev_id = ast_entry->peer->vdev->vdev_id;
 	ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
 	qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
 		     &ast_entry->peer->mac_addr.raw[0],
@@ -713,7 +713,7 @@ static bool dp_peer_get_ast_info_by_pdevid_wifi3
 	}
 	ast_entry_info->type = ast_entry->type;
 	ast_entry_info->pdev_id = ast_entry->pdev_id;
-	ast_entry_info->vdev_id = ast_entry->vdev_id;
+	ast_entry_info->vdev_id = ast_entry->peer->vdev->vdev_id;
 	ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
 	qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
 		     &ast_entry->peer->mac_addr.raw[0],
@@ -1051,8 +1051,7 @@ void dp_print_ast_stats(struct dp_soc *soc)
 					    ase->ast_idx,
 					    ase->ast_hash_value,
 					    ase->delete_in_progress,
-					    ase->pdev_id,
-					    ase->vdev_id);
+					    ase->pdev_id);
 				}
 			}
 		}

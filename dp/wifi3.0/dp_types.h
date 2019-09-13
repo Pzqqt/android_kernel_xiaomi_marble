@@ -813,7 +813,6 @@ struct dp_ast_entry {
 	bool is_active;
 	bool is_mapped;
 	uint8_t pdev_id;
-	uint8_t vdev_id;
 	uint16_t ast_hash_value;
 	qdf_atomic_t ref_cnt;
 	enum cdp_txrx_ast_entry_type type;
