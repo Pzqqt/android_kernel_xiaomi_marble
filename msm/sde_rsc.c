@@ -37,10 +37,11 @@
 /**
  * rsc_min_threshold will be set to MIN_THRESHOLD_OVERHEAD_TIME which
  * takes into account back off time + overhead from RSC/RSC_WRAPPER. The
- * overhead buffer time is required to be greater than 14. For measure,
- * this value assumes 18.
+ * overhead buffer time is required to be greater than 14. Program it
+ * with a higher value (3.3 ms), so it has sufficient time to complete
+ * the sequence in rare cases.
  */
-#define MIN_THRESHOLD_OVERHEAD_TIME	18
+#define MIN_THRESHOLD_OVERHEAD_TIME	64
 
 #define DEFAULT_PANEL_FPS		60
 #define DEFAULT_PANEL_JITTER_NUMERATOR	2
