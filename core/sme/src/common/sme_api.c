@@ -15170,17 +15170,29 @@ QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
 	struct sir_sae_msg *sae_msg;
 	struct scheduler_msg sch_msg = {0};
 	struct wmi_roam_auth_status_params *params;
-
-	if (!CSR_IS_SESSION_VALID(mac, session_id)) {
-		sme_err("Invalid session id: %d", session_id);
-		return false;
-	}
+	struct csr_roam_session *csr_session;
 
 	qdf_status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		return qdf_status;
 
-	if (!CSR_IS_ROAM_JOINED(mac, session_id)) {
+	csr_session = CSR_GET_SESSION(mac, session_id);
+	if (!csr_session) {
+		sme_err("session %d not found", session_id);
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	/* Update the status to SME in below cases
+	 * 1. SAP mode: Always
+	 * 2. STA mode: When the device is not in joined state
+	 *
+	 * If the device is in joined state, send the status to WMA which
+	 * is meant for roaming.
+	 */
+	if ((csr_session->pCurRoamProfile &&
+	     csr_session->pCurRoamProfile->csrPersona == QDF_SAP_MODE) ||
+	    !CSR_IS_ROAM_JOINED(mac, session_id)) {
 		sae_msg = qdf_mem_malloc(sizeof(*sae_msg));
 		if (!sae_msg) {
 			qdf_status = QDF_STATUS_E_NOMEM;
