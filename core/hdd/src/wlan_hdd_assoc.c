@@ -1858,9 +1858,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		hdd_debug("roam_result: %d", roam_result);
 
 		/* clear scan cache for Link Lost */
-		if (eCSR_ROAM_RESULT_DEAUTH_IND == roam_result ||
-		    eCSR_ROAM_RESULT_DISASSOC_IND == roam_result ||
-		    eCSR_ROAM_LOSTLINK == roam_status) {
+		if (eCSR_ROAM_LOSTLINK == roam_status) {
 			wlan_hdd_cfg80211_unlink_bss(adapter,
 				sta_ctx->conn_info.bssid.bytes,
 				sta_ctx->conn_info.ssid.SSID.ssId,
