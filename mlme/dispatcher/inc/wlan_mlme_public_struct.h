@@ -1107,6 +1107,7 @@ struct wlan_mlme_chainmask {
  * @enable_change_channel_bandwidth: enable/disable change channel bw in mission
  * mode
  * @disable_4way_hs_offload: enable/disable 4 way handshake offload to firmware
+ * @as_enabled: antenna sharing enabled or not (FW capability)
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1138,6 +1139,7 @@ struct wlan_mlme_generic {
 	bool data_stall_recovery_fw_support;
 	bool enable_change_channel_bandwidth;
 	bool disable_4way_hs_offload;
+	bool as_enabled;
 };
 
 /*
