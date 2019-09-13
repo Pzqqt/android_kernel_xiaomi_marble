@@ -2432,6 +2432,7 @@ bool hdd_is_roam_sync_in_progress(struct csr_roam_info *roaminfo)
 }
 #endif
 
+#ifdef QCA_IBSS_SUPPORT
 /**
  * hdd_get_ibss_peer_sta_id() - get sta id for IBSS peer
  * @hddstactx: pointer to HDD sta context
@@ -2463,6 +2464,206 @@ static uint8_t hdd_get_ibss_peer_sta_id(struct hdd_station_ctx *hddstactx,
 
 	return sta_id;
 }
+
+/**
+ * hdd_roam_ibss_indication_handler() - update the status of the IBSS
+ * @adapter: pointer to adapter
+ * @roam_info: pointer to roam info
+ * @roam_id: roam id
+ * @roam_status: roam status
+ * @roam_result: roam result
+ *
+ * Here we update the status of the Ibss when we receive information that we
+ * have started/joined an ibss session.
+ *
+ * Return: none
+ */
+static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
+					     struct csr_roam_info *roam_info,
+					     uint32_t roam_id,
+					     eRoamCmdStatus roam_status,
+					     eCsrRoamResult roam_result)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_debug("%s: id %d, status %d, result %d",
+		 adapter->dev->name, roam_id,
+		 roam_status, roam_result);
+
+	switch (roam_result) {
+	/* both IBSS Started and IBSS Join should come in here. */
+	case eCSR_ROAM_RESULT_IBSS_STARTED:
+	case eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS:
+	case eCSR_ROAM_RESULT_IBSS_COALESCED:
+	{
+		struct hdd_station_ctx *hdd_sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+		if (!roam_info) {
+			QDF_ASSERT(0);
+			return;
+		}
+
+		/* When IBSS Started comes from CSR, we need to move
+		 * connection state to IBSS Disconnected (meaning no peers
+		 * are in the IBSS).
+		 */
+		hdd_conn_set_connection_state(adapter,
+				      eConnectionState_IbssDisconnected);
+		/* notify wmm */
+		hdd_wmm_connect(adapter, roam_info,
+				eCSR_BSS_TYPE_IBSS);
+
+		hdd_sta_ctx->broadcast_sta_id = roam_info->staId;
+
+		hdd_roam_register_sta(adapter, roam_info,
+				      roam_info->staId,
+				      roam_info->bss_desc);
+
+		if (roam_info->bss_desc) {
+			struct cfg80211_bss *bss;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
+			struct ieee80211_channel *chan;
+#endif
+			/* we created the IBSS, notify supplicant */
+			hdd_debug("%s: created ibss " QDF_MAC_ADDR_STR,
+				adapter->dev->name,
+				QDF_MAC_ADDR_ARRAY(
+					roam_info->bss_desc->bssId));
+
+			/* we must first give cfg80211 the BSS information */
+			bss = wlan_hdd_cfg80211_update_bss_db(adapter,
+								roam_info);
+			if (!bss) {
+				hdd_err("%s: unable to create IBSS entry",
+					adapter->dev->name);
+				return;
+			}
+			hdd_debug("Enabling queues");
+			wlan_hdd_netif_queue_control(adapter,
+					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
+					WLAN_CONTROL_PATH);
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
+			chan = ieee80211_get_channel(
+				adapter->wdev.wiphy,
+				roam_info->bss_desc->chan_freq);
+
+			if (chan)
+				cfg80211_ibss_joined(adapter->dev,
+						     bss->bssid, chan,
+						     GFP_KERNEL);
+			else
+				hdd_warn("%s: freq: %d, can't find channel",
+					 adapter->dev->name,
+					 roam_info->bss_desc->chan_freq);
+#else
+			cfg80211_ibss_joined(adapter->dev, bss->bssid,
+					     GFP_KERNEL);
+#endif
+			cfg80211_put_bss(
+				hdd_ctx->wiphy,
+				bss);
+		}
+		if (eCSR_ROAM_RESULT_IBSS_STARTED == roam_result) {
+			policy_mgr_incr_active_session(hdd_ctx->psoc,
+				adapter->device_mode, adapter->vdev_id);
+			hdd_green_ap_start_state_mc(hdd_ctx,
+						    adapter->device_mode, true);
+		} else if (eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS == roam_result ||
+				eCSR_ROAM_RESULT_IBSS_COALESCED == roam_result) {
+			policy_mgr_update_connection_info(hdd_ctx->psoc,
+					adapter->vdev_id);
+		}
+		break;
+	}
+
+	case eCSR_ROAM_RESULT_IBSS_START_FAILED:
+	{
+		hdd_err("%s: unable to create IBSS", adapter->dev->name);
+		break;
+	}
+
+	default:
+		hdd_err("%s: unexpected result %d",
+			adapter->dev->name, (int)roam_result);
+		break;
+	}
+}
+
+/**
+ * hdd_is_key_install_required_for_ibss() - check encryption type to identify
+ *                                          if key installation is required
+ * @encr_type: encryption type
+ *
+ * Return: true if key installation is required and false otherwise.
+ */
+static inline bool hdd_is_key_install_required_for_ibss(
+				eCsrEncryptionType encr_type)
+{
+	if (eCSR_ENCRYPT_TYPE_WEP40_STATICKEY == encr_type ||
+	    eCSR_ENCRYPT_TYPE_WEP104_STATICKEY == encr_type ||
+	    eCSR_ENCRYPT_TYPE_TKIP == encr_type ||
+	    eCSR_ENCRYPT_TYPE_AES_GCMP == encr_type ||
+	    eCSR_ENCRYPT_TYPE_AES_GCMP_256 == encr_type ||
+	    eCSR_ENCRYPT_TYPE_AES == encr_type)
+		return true;
+	else
+		return false;
+}
+#else
+/**
+ * hdd_roam_ibss_indication_handler() - update the status of the IBSS
+ * @adapter: pointer to adapter
+ * @roam_info: pointer to roam info
+ * @roam_id: roam id
+ * @roam_status: roam status
+ * @roam_result: roam result
+ *
+ * This function is dummy
+ *
+ * Return: none
+ */
+static inline void
+hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
+				 struct csr_roam_info *roam_info,
+				 uint32_t roam_id,
+				 eRoamCmdStatus roam_status,
+				 eCsrRoamResult roam_result)
+{
+}
+
+/**
+ * hdd_get_ibss_peer_sta_id() - get sta id for IBSS peer
+ * @hddstactx: pointer to HDD sta context
+ * @roaminfo: pointer to roaminfo structure
+ *
+ * This function is dummy
+ *
+ * Return: WLAN_MAX_STA_COUNT if peer not found.
+ */
+static inline uint8_t
+hdd_get_ibss_peer_sta_id(struct hdd_station_ctx *hddstactx,
+			 struct csr_roam_info *roaminfo)
+{
+	return WLAN_MAX_STA_COUNT;
+}
+
+/**
+ * hdd_is_key_install_required_for_ibss() - check encryption type to identify
+ * if key installation is required
+ * @encr_type: encryption type
+ *
+ * This function is dummy
+ *
+ * Return: true.
+ */
+static inline bool
+hdd_is_key_install_required_for_ibss(eCsrEncryptionType encr_type)
+{
+	return true;
+}
+#endif
 
 /**
  * hdd_change_sta_state_authenticated()-
@@ -2515,27 +2716,6 @@ static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 	}
 
 	return qdf_status_to_os_return(status);
-}
-
-/**
- * hdd_is_key_install_required_for_ibss() - check encryption type to identify
- *                                          if key installation is required
- * @encr_type: encryption type
- *
- * Return: true if key installation is required and false otherwise.
- */
-static inline bool hdd_is_key_install_required_for_ibss(
-				eCsrEncryptionType encr_type)
-{
-	if (eCSR_ENCRYPT_TYPE_WEP40_STATICKEY == encr_type ||
-	    eCSR_ENCRYPT_TYPE_WEP104_STATICKEY == encr_type ||
-	    eCSR_ENCRYPT_TYPE_TKIP == encr_type ||
-	    eCSR_ENCRYPT_TYPE_AES_GCMP == encr_type ||
-	    eCSR_ENCRYPT_TYPE_AES_GCMP_256 == encr_type ||
-	    eCSR_ENCRYPT_TYPE_AES == encr_type)
-		return true;
-	else
-		return false;
 }
 
 /**
@@ -3507,132 +3687,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	}
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * hdd_roam_ibss_indication_handler() - update the status of the IBSS
- * @adapter: pointer to adapter
- * @roam_info: pointer to roam info
- * @roam_id: roam id
- * @roam_status: roam status
- * @roam_result: roam result
- *
- * Here we update the status of the Ibss when we receive information that we
- * have started/joined an ibss session.
- *
- * Return: none
- */
-static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
-					     struct csr_roam_info *roam_info,
-					     uint32_t roam_id,
-					     eRoamCmdStatus roam_status,
-					     eCsrRoamResult roam_result)
-{
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	hdd_debug("%s: id %d, status %d, result %d",
-		 adapter->dev->name, roam_id,
-		 roam_status, roam_result);
-
-	switch (roam_result) {
-	/* both IBSS Started and IBSS Join should come in here. */
-	case eCSR_ROAM_RESULT_IBSS_STARTED:
-	case eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS:
-	case eCSR_ROAM_RESULT_IBSS_COALESCED:
-	{
-		struct hdd_station_ctx *hdd_sta_ctx =
-			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-		if (!roam_info) {
-			QDF_ASSERT(0);
-			return;
-		}
-
-		/* When IBSS Started comes from CSR, we need to move
-		 * connection state to IBSS Disconnected (meaning no peers
-		 * are in the IBSS).
-		 */
-		hdd_conn_set_connection_state(adapter,
-				      eConnectionState_IbssDisconnected);
-		/* notify wmm */
-		hdd_wmm_connect(adapter, roam_info,
-				eCSR_BSS_TYPE_IBSS);
-
-		hdd_sta_ctx->broadcast_sta_id = roam_info->staId;
-
-		hdd_roam_register_sta(adapter, roam_info,
-				      roam_info->staId,
-				      roam_info->bss_desc);
-
-		if (roam_info->bss_desc) {
-			struct cfg80211_bss *bss;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
-			struct ieee80211_channel *chan;
-#endif
-			/* we created the IBSS, notify supplicant */
-			hdd_debug("%s: created ibss " QDF_MAC_ADDR_STR,
-				adapter->dev->name,
-				QDF_MAC_ADDR_ARRAY(
-					roam_info->bss_desc->bssId));
-
-			/* we must first give cfg80211 the BSS information */
-			bss = wlan_hdd_cfg80211_update_bss_db(adapter,
-								roam_info);
-			if (!bss) {
-				hdd_err("%s: unable to create IBSS entry",
-					adapter->dev->name);
-				return;
-			}
-			hdd_debug("Enabling queues");
-			wlan_hdd_netif_queue_control(adapter,
-					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
-					WLAN_CONTROL_PATH);
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
-			chan = ieee80211_get_channel(
-				adapter->wdev.wiphy,
-				roam_info->bss_desc->chan_freq);
-
-			if (chan)
-				cfg80211_ibss_joined(adapter->dev,
-						     bss->bssid, chan,
-						     GFP_KERNEL);
-			else
-				hdd_warn("%s: freq: %d, can't find channel",
-					 adapter->dev->name,
-					 roam_info->bss_desc->chan_freq);
-#else
-			cfg80211_ibss_joined(adapter->dev, bss->bssid,
-					     GFP_KERNEL);
-#endif
-			cfg80211_put_bss(
-				hdd_ctx->wiphy,
-				bss);
-		}
-		if (eCSR_ROAM_RESULT_IBSS_STARTED == roam_result) {
-			policy_mgr_incr_active_session(hdd_ctx->psoc,
-				adapter->device_mode, adapter->vdev_id);
-			hdd_green_ap_start_state_mc(hdd_ctx,
-						    adapter->device_mode, true);
-		} else if (eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS == roam_result ||
-				eCSR_ROAM_RESULT_IBSS_COALESCED == roam_result) {
-			policy_mgr_update_connection_info(hdd_ctx->psoc,
-					adapter->vdev_id);
-		}
-		break;
-	}
-
-	case eCSR_ROAM_RESULT_IBSS_START_FAILED:
-	{
-		hdd_err("%s: unable to create IBSS", adapter->dev->name);
-		break;
-	}
-
-	default:
-		hdd_err("%s: unexpected result %d",
-			adapter->dev->name, (int)roam_result);
-		break;
-	}
 }
 
 /**

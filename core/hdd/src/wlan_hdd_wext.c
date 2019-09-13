@@ -3328,6 +3328,7 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 	return ret;
 }
 
+#ifdef QCA_IBSS_SUPPORT
 /**
  * hdd_wlan_get_ibss_peer_info() - Print IBSS peer information
  * @adapter: Adapter upon which the IBSS client is active
@@ -3432,6 +3433,37 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info_all(struct hdd_adapter *adapter)
 
 	return status;
 }
+#else
+/**
+ * hdd_wlan_get_ibss_peer_info() - Print IBSS peer information
+ * @adapter: Adapter upon which the IBSS client is active
+ * @sta_id: Station index of the IBSS peer
+ *
+ * This function is dummy
+ *
+ * Return: QDF_STATUS_STATUS
+ */
+static inline QDF_STATUS
+hdd_wlan_get_ibss_peer_info(struct hdd_adapter *adapter,
+			    uint8_t sta_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_wlan_get_ibss_peer_info_all() - Print all IBSS peers
+ * @adapter: Adapter upon which the IBSS clients are active
+ *
+ * This function is dummy
+ *
+ * Return: QDF_STATUS_STATUS
+ */
+static inline QDF_STATUS
+hdd_wlan_get_ibss_peer_info_all(struct hdd_adapter *adapter)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * hdd_get_ldpc() - Get adapter LDPC

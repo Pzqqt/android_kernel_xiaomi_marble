@@ -2221,7 +2221,26 @@ struct hdd_adapter *hdd_get_first_valid_adapter(struct hdd_context *hdd_ctx);
 void hdd_allow_suspend(uint32_t reason);
 void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
 
+#ifdef QCA_IBSS_SUPPORT
+/**
+ * hdd_set_ibss_power_save_params() - update IBSS Power Save params to WMA.
+ * @struct hdd_adapter Hdd adapter.
+ *
+ * This function sets the IBSS power save config parameters to WMA
+ * which will send it to firmware if FW supports IBSS power save
+ * before vdev start.
+ *
+ * Return: QDF_STATUS QDF_STATUS_SUCCESS on Success and QDF_STATUS_E_FAILURE
+ *         on failure.
+ */
 QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *adapter);
+#else
+static inline QDF_STATUS
+hdd_set_ibss_power_save_params(struct hdd_adapter *adapter)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * wlan_hdd_validate_context() - check the HDD context
@@ -2907,9 +2926,6 @@ static inline void hdd_set_tso_flags(struct hdd_context *hdd_ctx,
 	hdd_set_sg_flags(hdd_ctx, wlan_dev);
 }
 #endif /* FEATURE_TSO */
-
-void hdd_get_ibss_peer_info_cb(void *context,
-				tSirPeerInfoRspParams *peer_info);
 
 #ifdef CONFIG_CNSS_LOGGER
 /**

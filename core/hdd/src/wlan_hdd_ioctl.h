@@ -48,5 +48,25 @@ QDF_STATUS hdd_update_smps_antenna_mode(struct hdd_context *hdd_ctx, int mode);
 int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 			  struct hdd_context *hdd_ctx, int mode);
 
+#ifdef QCA_IBSS_SUPPORT
+/**
+ * hdd_get_ibss_peer_info_cb() - IBSS peer Info request callback
+ * @context: callback context (adapter supplied by caller)
+ * @peer_info: Peer info response
+ *
+ * This is an asynchronous callback function from SME when the peer info
+ * is received
+ *
+ * Return: 0 for success non-zero for failure
+ */
+void hdd_get_ibss_peer_info_cb(void *context,
+				tSirPeerInfoRspParams *peer_info);
+#else
+static inline void
+hdd_get_ibss_peer_info_cb(void *context,
+			  tSirPeerInfoRspParams *peer_info)
+{
+}
+#endif
 #endif /* end #if !defined(WLAN_HDD_IOCTL_H) */
 
