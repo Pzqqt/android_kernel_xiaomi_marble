@@ -320,6 +320,14 @@ bool sde_encoder_in_clone_mode(struct drm_encoder *enc);
 bool sde_encoder_is_primary_display(struct drm_encoder *enc);
 
 /**
+ * sde_encoder_is_dsi_display - checks if underlying display is DSI
+ *     display or not.
+ * @drm_enc:    Pointer to drm encoder structure
+ * @Return:     true if it is primary display. false if secondary display
+ */
+bool sde_encoder_is_dsi_display(struct drm_encoder *enc);
+
+/**
  * sde_encoder_control_idle_pc - control enable/disable of idle power collapse
  * @drm_enc:    Pointer to drm encoder structure
  * @enable:	enable/disable flag
