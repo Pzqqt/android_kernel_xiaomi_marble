@@ -196,7 +196,7 @@
  * gEnablePowerSaveOffload - Enable Power Save Offload
  * @Min: 0
  * @Max: 5
- * @Default: 0
+ * @Default: 2
  *
  * This ini is used to set Power Save Offload configuration:
  * Current values of gEnablePowerSaveOffload:
@@ -219,7 +219,7 @@
 	"gEnablePowerSaveOffload", \
 	0, \
 	5, \
-	0, \
+	2, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Enable Power Save Offload")
 
