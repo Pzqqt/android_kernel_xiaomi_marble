@@ -2576,6 +2576,17 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	struct tag_csrscan_result *bss;
 	uint32_t bss_len, alloc_len, ie_len;
 	QDF_STATUS status;
+	enum channel_state ap_channel_state;
+
+	ap_channel_state =
+		wlan_reg_get_channel_state(mac_ctx->pdev,
+					   scan_entry->channel.chan_idx);
+	if (ap_channel_state == CHANNEL_STATE_DISABLE ||
+	    ap_channel_state == CHANNEL_STATE_INVALID) {
+		sme_err("BSS %pM channel %d invalid, not populating this BSSID",
+			scan_entry->bssid.bytes, scan_entry->channel.chan_idx);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	ie_len = util_scan_entry_ie_len(scan_entry);
 	ie_ptr = util_scan_entry_ie_data(scan_entry);
@@ -2690,32 +2701,26 @@ static QDF_STATUS csr_parse_scan_list(struct mac_context *mac_ctx,
 				      struct scan_result_list *ret_list,
 				      qdf_list_t *scan_list)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct tag_csrscan_result *pResult = NULL;
 	struct scan_cache_node *cur_node = NULL;
 	struct scan_cache_node *next_node = NULL;
 
-	status =
-		qdf_list_peek_front(scan_list,
-		   (qdf_list_node_t **) &cur_node);
+	qdf_list_peek_front(scan_list, (qdf_list_node_t **) &cur_node);
 
 	while (cur_node) {
-		qdf_list_peek_next(
-		  scan_list,
-		  (qdf_list_node_t *) cur_node,
-		  (qdf_list_node_t **) &next_node);
-		status = csr_fill_bss_from_scan_entry(mac_ctx,
-			cur_node->entry, &pResult);
-		if (QDF_IS_STATUS_ERROR(status))
-			return status;
+		qdf_list_peek_next(scan_list, (qdf_list_node_t *) cur_node,
+				  (qdf_list_node_t **) &next_node);
+		pResult = NULL;
+		csr_fill_bss_from_scan_entry(mac_ctx,
+					     cur_node->entry, &pResult);
 		if (pResult)
 			csr_ll_insert_tail(&ret_list->List, &pResult->Link,
-			   LL_ACCESS_NOLOCK);
+					   LL_ACCESS_NOLOCK);
 		cur_node = next_node;
 		next_node = NULL;
 	}
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2816,8 +2821,7 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 
 	csr_ll_open(&ret_list->List);
 	ret_list->pCurEntry = NULL;
-	status = csr_parse_scan_list(mac_ctx,
-		ret_list, list);
+	status = csr_parse_scan_list(mac_ctx, ret_list, list);
 	if (QDF_IS_STATUS_ERROR(status) || !results)
 		/* Fail or No one wants the result. */
 		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
