@@ -1750,8 +1750,7 @@ static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 	scoring_cfg->weight_cfg.oce_wan_weightage =
 		cfg_get(psoc, CFG_SCORING_OCE_WAN_WEIGHTAGE);
 
-	total_weight = scoring_cfg->enable_scoring_for_roam +
-			scoring_cfg->weight_cfg.rssi_weightage +
+	total_weight =  scoring_cfg->weight_cfg.rssi_weightage +
 			scoring_cfg->weight_cfg.ht_caps_weightage +
 			scoring_cfg->weight_cfg.vht_caps_weightage +
 			scoring_cfg->weight_cfg.he_caps_weightage +
