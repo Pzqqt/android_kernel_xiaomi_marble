@@ -4950,65 +4950,11 @@ static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
 static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
-	struct wma_caps_per_phy non_dbs_phy_cap;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	bool enable2x2 = false, enable_bt_chain_sep = false;
-	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
-
-	status = ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
-						      &dual_mac_feature);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("unable to get dual mac feature");
-
-	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &enable2x2);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("unable to get vht_enable2x2");
-
-	status = ucfg_mlme_get_bt_chain_separation_flag(hdd_ctx->psoc,
-							&enable_bt_chain_sep);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_debug("unable to get BT chain separation. using default");
-
-	hdd_debug("enable2x2: %d, lte_coex: %d, disable_DBS: %d",
-		  enable2x2, hdd_ctx->lte_coex_ant_share,
-		  dual_mac_feature);
-	hdd_debug("enable_bt_chain_separation %d", enable_bt_chain_sep);
-
-	status = wma_get_caps_for_phyidx_hwmode(&non_dbs_phy_cap,
-						HW_MODE_DBS_NONE,
-						CDS_BAND_ALL);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("couldn't get phy caps. skip chain mask programming");
-		return qdf_status_to_os_return(status);
-	}
-
-	if (non_dbs_phy_cap.tx_chain_mask_2G < 3 ||
-	    non_dbs_phy_cap.rx_chain_mask_2G < 3 ||
-	    non_dbs_phy_cap.tx_chain_mask_5G < 3 ||
-	    non_dbs_phy_cap.rx_chain_mask_5G < 3) {
-		hdd_debug("firmware not capable. skip chain mask programming");
-		return 0;
-	}
-
-	if (enable2x2 && !enable_bt_chain_sep) {
-		hdd_debug("2x2 enabled. skip chain mask programming");
-		return 0;
-	}
-
-	if (dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN) {
-		hdd_debug("DBS enabled(%d). skip chain mask programming",
-			  dual_mac_feature);
-		return 0;
-	}
-
-	if (hdd_ctx->lte_coex_ant_share) {
-		hdd_debug("lte ant sharing enabled. skip chainmask programming");
-		return 0;
-	}
 
 	status = ucfg_mlme_configure_chain_mask(hdd_ctx->psoc,
 						adapter->vdev_id);
-	if (status != QDF_STATUS_SUCCESS)
+	if (QDF_IS_STATUS_ERROR(status))
 		goto error;
 
 	return 0;
