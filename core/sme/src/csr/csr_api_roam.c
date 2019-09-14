@@ -16724,7 +16724,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	pMsg->add_ie_params = pParam->add_ie_params;
 	pMsg->obssEnabled = mac->roam.configParam.obssEnabled;
 	pMsg->sap_dot11mc = pParam->sap_dot11mc;
-	pMsg->vendor_vht_sap = mac->roam.configParam.vendor_vht_sap;
+	pMsg->vendor_vht_sap =
+		mac->mlme_cfg->vht_caps.vht_cap_info.vendor_24ghz_band;
 	pMsg->cac_duration_ms = pParam->cac_duration_ms;
 	pMsg->dfs_regdomain = pParam->dfs_regdomain;
 	pMsg->beacon_tx_rate = pParam->beacon_tx_rate;
