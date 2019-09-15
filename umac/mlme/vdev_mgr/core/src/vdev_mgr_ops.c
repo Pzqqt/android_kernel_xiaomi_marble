@@ -127,12 +127,14 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	    (WLAN_REG_IS_5GHZ_CH_FREQ(des_chan->ch_freq) ||
 	     WLAN_REG_IS_49GHZ_FREQ(des_chan->ch_freq) ||
 	     WLAN_REG_IS_6GHZ_CHAN_FREQ(des_chan->ch_freq)))
-		tgt_dfs_set_current_channel(pdev, des_chan->ch_freq,
-					    des_chan->ch_flags,
-					    des_chan->ch_flagext,
-					    des_chan->ch_ieee,
-					    des_chan->ch_freq_seg1,
-					    des_chan->ch_freq_seg2);
+		tgt_dfs_set_current_channel_for_freq(pdev, des_chan->ch_freq,
+						     des_chan->ch_flags,
+						     des_chan->ch_flagext,
+						     des_chan->ch_ieee,
+						     des_chan->ch_freq_seg1,
+						     des_chan->ch_freq_seg2,
+						     des_chan->ch_cfreq1,
+						     des_chan->ch_cfreq2);
 
 	param->beacon_interval = mlme_obj->proto.generic.beacon_interval;
 	param->dtim_period = mlme_obj->proto.generic.dtim_period;
@@ -155,7 +157,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 							  des_chan->ch_freq);
 	param->channel.dfs_set_cfreq2 = utils_is_dfs_cfreq2_ch(pdev);
 	param->channel.is_chan_passive =
-		utils_is_dfs_ch(pdev, param->channel.chan_id);
+		utils_is_dfs_chan_for_freq(pdev, param->channel.mhz);
 	param->channel.allow_ht = mlme_obj->proto.ht_info.allow_ht;
 	param->channel.allow_vht = mlme_obj->proto.vht_info.allow_vht;
 	param->channel.phy_mode = mlme_obj->mgmt.generic.phy_mode;
@@ -177,15 +179,14 @@ static QDF_STATUS vdev_mgr_start_param_update(
 
 	if (des_chan->ch_phymode == WLAN_PHYMODE_11AC_VHT80 ||
 	    des_chan->ch_phymode == WLAN_PHYMODE_11AXA_HE80) {
-		tgt_dfs_find_vht80_chan_for_precac(pdev,
-						   des_chan->ch_phymode,
-						   des_chan->ch_freq_seg1,
-						   &param->channel.cfreq1,
-						   &param->channel.cfreq2,
-						   &param->channel.phy_mode,
-						   &dfs_set_cfreq2,
-						   &set_agile);
-
+		tgt_dfs_find_vht80_precac_chan_freq(pdev,
+						    des_chan->ch_phymode,
+						    des_chan->ch_freq_seg1,
+						    &param->channel.cfreq1,
+						    &param->channel.cfreq2,
+						    &param->channel.phy_mode,
+						    &dfs_set_cfreq2,
+						    &set_agile);
 		param->channel.dfs_set_cfreq2 = dfs_set_cfreq2;
 		param->channel.set_agile = set_agile;
 	}
