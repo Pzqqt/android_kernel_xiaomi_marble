@@ -23,6 +23,7 @@
 #include "pinctrl-utils.h"
 
 #define LPI_AUTO_SUSPEND_DELAY           100 /* delay in msec */
+#define LPI_AUTO_SUSPEND_DELAY_ERROR     1   /* delay in msec */
 
 #define LPI_ADDRESS_SIZE                 0x20000
 #define LPI_SLEW_ADDRESS_SIZE            0x1000
@@ -824,13 +825,19 @@ int lpi_pinctrl_runtime_resume(struct device *dev)
 
 	mutex_lock(&state->core_hw_vote_lock);
 	ret = clk_prepare_enable(state->lpass_core_hw_vote);
-	if (ret < 0)
+	if (ret < 0) {
+		pm_runtime_set_autosuspend_delay(dev,
+						 LPI_AUTO_SUSPEND_DELAY_ERROR);
 		dev_err(dev, "%s:lpass core hw island enable failed\n",
 			__func__);
-	else
+		goto exit;
+	} else {
 		state->core_hw_vote_status = true;
+	}
 
 	pm_runtime_set_autosuspend_delay(dev, LPI_AUTO_SUSPEND_DELAY);
+
+exit:
 	mutex_unlock(&state->core_hw_vote_lock);
 	return 0;
 }
