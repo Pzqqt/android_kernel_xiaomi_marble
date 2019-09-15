@@ -372,6 +372,7 @@ struct rx_swr_ctrl_platform_data {
 	int (*write)(void *handle, int reg, int val);
 	int (*bulk_write)(void *handle, u32 *reg, u32 *val, size_t len);
 	int (*clk)(void *handle, bool enable);
+	int (*core_vote)(void *handle, bool enable);
 	int (*handle_irq)(void *handle,
 			  irqreturn_t (*swrm_irq_handler)(int irq,
 							  void *data),
@@ -3462,6 +3463,23 @@ static const struct snd_soc_dapm_route rx_audio_map[] = {
 	{"RX INT2 MIX2 INP", "SRC1", "SRC1"},
 };
 
+static int rx_macro_core_vote(void *handle, bool enable)
+{
+	struct rx_macro_priv *rx_priv = (struct rx_macro_priv *) handle;
+
+	if (rx_priv == NULL) {
+		pr_err("%s: rx priv data is NULL\n", __func__);
+		return -EINVAL;
+	}
+	if (enable) {
+		pm_runtime_get_sync(rx_priv->dev);
+		pm_runtime_put_autosuspend(rx_priv->dev);
+		pm_runtime_mark_last_busy(rx_priv->dev);
+	}
+
+	return 0;
+}
+
 static int rx_swrm_clock(void *handle, bool enable)
 {
 	struct rx_macro_priv *rx_priv = (struct rx_macro_priv *) handle;
@@ -3480,8 +3498,16 @@ static int rx_swrm_clock(void *handle, bool enable)
 	if (enable) {
 		pm_runtime_get_sync(rx_priv->dev);
 		if (rx_priv->swr_clk_users == 0) {
-			msm_cdc_pinctrl_select_active_state(
+			ret = msm_cdc_pinctrl_select_active_state(
 						rx_priv->rx_swr_gpio_p);
+			if (ret < 0) {
+				dev_err(rx_priv->dev,
+					"%s: rx swr pinctrl enable failed\n",
+					__func__);
+				pm_runtime_mark_last_busy(rx_priv->dev);
+				pm_runtime_put_autosuspend(rx_priv->dev);
+				goto exit;
+			}
 			ret = rx_macro_mclk_enable(rx_priv, 1, true);
 			if (ret < 0) {
 				msm_cdc_pinctrl_select_sleep_state(
@@ -3489,6 +3515,8 @@ static int rx_swrm_clock(void *handle, bool enable)
 				dev_err(rx_priv->dev,
 					"%s: rx request clock enable failed\n",
 					__func__);
+				pm_runtime_mark_last_busy(rx_priv->dev);
+				pm_runtime_put_autosuspend(rx_priv->dev);
 				goto exit;
 			}
 			if (rx_priv->reset_swr)
@@ -3521,8 +3549,14 @@ static int rx_swrm_clock(void *handle, bool enable)
 				BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x00);
 			rx_macro_mclk_enable(rx_priv, 0, true);
-			msm_cdc_pinctrl_select_sleep_state(
+			ret = msm_cdc_pinctrl_select_sleep_state(
 						rx_priv->rx_swr_gpio_p);
+			if (ret < 0) {
+				dev_err(rx_priv->dev,
+					"%s: rx swr pinctrl disable failed\n",
+					__func__);
+				goto exit;
+			}
 		}
 	}
 	dev_dbg(rx_priv->dev, "%s: swrm clock users %d\n",
@@ -3873,6 +3907,7 @@ static int rx_macro_probe(struct platform_device *pdev)
 	rx_priv->swr_plat_data.write = NULL;
 	rx_priv->swr_plat_data.bulk_write = NULL;
 	rx_priv->swr_plat_data.clk = rx_swrm_clock;
+	rx_priv->swr_plat_data.core_vote = rx_macro_core_vote;
 	rx_priv->swr_plat_data.handle_irq = NULL;
 
 	ret = of_property_read_u8_array(pdev->dev.of_node,
