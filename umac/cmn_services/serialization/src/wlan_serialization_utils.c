@@ -158,10 +158,28 @@ QDF_STATUS wlan_serialization_cleanup_vdev_timers(
 	struct wlan_serialization_timer *ser_timer;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t i = 0;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	struct wlan_objmgr_psoc *psoc = NULL;
 
 	ser_enter();
-	psoc_ser_obj = wlan_serialization_get_psoc_obj(
-			wlan_vdev_get_psoc(vdev));
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		QDF_BUG(0);
+		ser_err("pdev is null");
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		QDF_BUG(0);
+		ser_err("psoc is null");
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	psoc_ser_obj = wlan_serialization_get_psoc_obj(psoc);
 
 	if (!psoc_ser_obj) {
 		ser_err("Invalid psoc_ser_obj");
