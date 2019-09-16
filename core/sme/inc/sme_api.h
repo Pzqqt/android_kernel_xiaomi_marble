@@ -773,8 +773,18 @@ QDF_STATUS sme_update_roam_scan_home_away_time(mac_handle_t mac_handle,
 bool sme_get_roam_intra_band(mac_handle_t mac_handle);
 uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle);
 uint16_t sme_get_roam_scan_home_away_time(mac_handle_t mac_handle);
-QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t sessionId,
-		uint8_t RoamRssiDiff);
+
+/**
+ * sme_update_roam_rssi_diff() - Update RoamRssiDiff
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: vdev identifier
+ * @roam_rssi_diff: Minimum rssi difference between potential candidate and
+ *		    current AP.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t vdev_id,
+				     uint8_t roam_rssi_diff);
 QDF_STATUS sme_update_wes_mode(mac_handle_t mac_handle, bool isWESModeEnabled,
 		uint8_t sessionId);
 QDF_STATUS sme_set_roam_scan_control(mac_handle_t mac_handle, uint8_t sessionId,
@@ -919,7 +929,17 @@ QDF_STATUS sme_set_roam_bmiss_first_bcnt(mac_handle_t mac_handle,
 QDF_STATUS sme_set_roam_bmiss_final_bcnt(mac_handle_t mac_handle,
 					 uint8_t sessionId,
 					 const uint8_t nRoamBmissFinalBcnt);
-uint8_t sme_get_roam_rssi_diff(mac_handle_t mac_handle);
+/**
+ * sme_get_roam_rssi_diff() - get Roam rssi diff
+ * @mac_handle: The handle returned by mac_open
+ * @vdev_id: vdev identifier
+ * @rssi_diff: Buffer to fill the roam RSSI diff.
+ *	       Valid only if the return status is success.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_get_roam_rssi_diff(mac_handle_t mac_handle, uint8_t vdev_id,
+				  uint8_t *rssi_diff);
 QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 					     uint8_t sessionId,
 					     uint8_t *pChannelList,

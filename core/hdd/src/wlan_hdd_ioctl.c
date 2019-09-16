@@ -3903,15 +3903,21 @@ static int drv_cmd_get_roam_delta(struct hdd_adapter *adapter,
 				  struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	uint8_t rssi_diff =
-		sme_get_roam_rssi_diff(hdd_ctx->mac_handle);
+	uint8_t rssi_diff;
 	char extra[32];
 	uint8_t len;
+	QDF_STATUS status;
+
+	status = sme_get_roam_rssi_diff(hdd_ctx->mac_handle, adapter->vdev_id,
+					&rssi_diff);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	hdd_debug("vdev_id: %u, rssi_diff: %u", adapter->vdev_id, rssi_diff);
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_GETROAMDELTA_IOCTL,
 		   adapter->vdev_id, rssi_diff);
-
 	len = scnprintf(extra, sizeof(extra), "%s %d",
 			command, rssi_diff);
 	len = QDF_MIN(priv_data->total_len, len + 1);

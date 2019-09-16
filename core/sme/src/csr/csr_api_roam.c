@@ -18165,7 +18165,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		roam_info->cfgParams.nOpportunisticThresholdDiff;
 	req_buf->RoamRescanRssiDiff =
 		roam_info->cfgParams.nRoamRescanRssiDiff;
-	req_buf->RoamRssiDiff = mac_ctx->mlme_cfg->lfr.roam_rssi_diff;
+	req_buf->RoamRssiDiff = roam_info->cfgParams.roam_rssi_diff;
 	req_buf->rssi_abs_thresh =
 		mac_ctx->mlme_cfg->lfr.roam_rssi_abs_threshold;
 	req_buf->reason = reason;

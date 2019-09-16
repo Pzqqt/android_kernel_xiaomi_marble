@@ -1522,7 +1522,7 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t max_num_pre_auth;
 	uint32_t roam_preauth_retry_count;
 	uint32_t roam_preauth_no_ack_timeout;
-	uint32_t roam_rssi_diff;
+	uint8_t roam_rssi_diff;
 	bool roam_scan_offload_enabled;
 	uint32_t neighbor_scan_timer_period;
 	uint32_t neighbor_scan_min_timer_period;
