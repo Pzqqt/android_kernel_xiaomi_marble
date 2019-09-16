@@ -213,6 +213,15 @@ int hdd_get_ldpc(struct hdd_adapter *adapter, int *value);
  */
 int hdd_set_ldpc(struct hdd_adapter *adapter, int value);
 
+/**
+ * hdd_we_set_short_gi() - Set adapter Short GI
+ * @adapter: adapter being modified
+ * @sgi: new sgi value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_we_set_short_gi(struct hdd_adapter *adapter, int sgi);
+
 int hdd_get_tx_stbc(struct hdd_adapter *adapter, int *value);
 
 /**

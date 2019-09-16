@@ -4651,7 +4651,7 @@ static int hdd_we_set_nss(struct hdd_adapter *adapter, int nss)
 	return qdf_status_to_os_return(status);
 }
 
-static int hdd_we_set_short_gi(struct hdd_adapter *adapter, int sgi)
+int hdd_we_set_short_gi(struct hdd_adapter *adapter, int sgi)
 {
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
 	int errno;

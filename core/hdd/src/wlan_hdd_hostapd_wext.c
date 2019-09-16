@@ -777,16 +777,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SHORT_GI:
 	{
 		hdd_debug("QCASAP_SET_SHORT_GI val %d", set_value);
-		/*
-		 * wma_cli_set_command should be called instead of
-		 * sme_update_ht_config since SGI is used for HT/HE.
-		 * This should be refactored.
-		 *
-		 * SGI is same for 20MHZ and 40MHZ.
-		 */
-		ret = sme_update_ht_config(mac_handle, adapter->vdev_id,
-					   WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
-					   set_value);
+		ret = hdd_we_set_short_gi(adapter, set_value);
 		if (ret)
 			hdd_err("Failed to set ShortGI value ret: %d", ret);
 		break;
