@@ -468,19 +468,6 @@ uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx
 }
 #endif
 
-/**
- * dp_get_dp_vdev_from_cdp_vdev() - get dp_vdev from cdp_vdev by type-casting
- * @cdp_opaque_vdev: pointer to cdp_vdev
- *
- * Return: pointer to dp_vdev
- */
-static
-struct dp_vdev *dp_get_dp_vdev_from_cdp_vdev(struct cdp_vdev *cdp_opaque_vdev)
-{
-	return (struct dp_vdev *)cdp_opaque_vdev;
-}
-
-
 static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 				 uint8_t vdev_id,
 				 uint8_t *peer_mac,
@@ -6268,12 +6255,21 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 
 /*
  * dp_get_vdev_mac_addr_wifi3() – Detach txrx peer
- * @peer_handle:		Datapath peer handle
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: virtual interface id
+ *
+ * Return: MAC address on success, NULL on failure.
  *
  */
-static uint8 *dp_get_vdev_mac_addr_wifi3(struct cdp_vdev *pvdev)
+static uint8 *dp_get_vdev_mac_addr_wifi3(struct cdp_soc_t *soc_hdl,
+					 uint8_t vdev_id)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)pvdev;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+
+	if (!vdev)
+		return NULL;
+
 	return vdev->mac_addr.raw;
 }
 
@@ -6299,20 +6295,22 @@ static int dp_vdev_set_wds(struct cdp_soc_t *soc, uint8_t vdev_id, uint32_t val)
 }
 
 /*
- * dp_get_mon_vdev_from_pdev_wifi3() - Get vdev handle of monitor mode
- * @dev: PDEV handle
+ * dp_get_mon_vdev_from_pdev_wifi3() - Get vdev id of monitor mode
+ * @soc_hdl: datapath soc handle
+ * @pdev_id: physical device instance id
  *
- * Return: VDEV handle of monitor mode
+ * Return: virtual interface id
  */
-
-static struct cdp_vdev *dp_get_mon_vdev_from_pdev_wifi3(struct cdp_pdev *dev)
+static uint8_t dp_get_mon_vdev_from_pdev_wifi3(struct cdp_soc_t *soc_hdl,
+					       uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)dev;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 
 	if (qdf_unlikely(!pdev))
-		return NULL;
+		return -EINVAL;
 
-	return (struct cdp_vdev *)pdev->monitor_vdev;
+	return pdev->monitor_vdev->vdev_id;
 }
 
 static int dp_get_opmode(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
@@ -6328,23 +6326,50 @@ static int dp_get_opmode(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 	return vdev->opmode;
 }
 
+/**
+ * dp_get_os_rx_handles_from_vdev_wifi3() - Get os rx handles for a vdev
+ * @soc_hdl: ol_txrx_soc_handle handle
+ * @vdev_id: vdev id for which os rx handles are needed
+ * @stack_fn_p: pointer to stack function pointer
+ * @osif_handle_p: pointer to ol_osif_vdev_handle
+ *
+ * Return: void
+ */
 static
-void dp_get_os_rx_handles_from_vdev_wifi3(struct cdp_vdev *pvdev,
+void dp_get_os_rx_handles_from_vdev_wifi3(struct cdp_soc_t *soc_hdl,
+					  uint8_t vdev_id,
 					  ol_txrx_rx_fp *stack_fn_p,
 					  ol_osif_vdev_handle *osif_vdev_p)
 {
-	struct dp_vdev *vdev = dp_get_dp_vdev_from_cdp_vdev(pvdev);
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 
-	qdf_assert(vdev);
+	if (!vdev)
+		return;
+
 	*stack_fn_p = vdev->osif_rx_stack;
 	*osif_vdev_p = vdev->osif_vdev;
 }
 
-static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
+/**
+ * dp_get_ctrl_pdev_from_vdev() - Get control pdev of vdev
+ * @soc_hdl: datapath soc handle
+ * @vdev_id: virtual device/interface id
+ *
+ * Return: Handle to control pdev
+ */
+static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(
+						struct cdp_soc_t *soc_hdl,
+						uint8_t vdev_id)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)pvdev;
-	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+	struct dp_pdev *pdev;
 
+	if (!vdev || !vdev->pdev)
+		return NULL;
+
+	pdev = vdev->pdev;
 	return (struct cdp_cfg *)pdev->wlan_cfg_ctx;
 }
 
@@ -8840,16 +8865,21 @@ static struct cdp_wds_ops dp_ops_wds = {
 
 /*
  * dp_txrx_data_tx_cb_set(): set the callback for non standard tx
- * @vdev_handle - datapath vdev handle
+ * @soc_hdl - datapath soc handle
+ * @vdev_id - virtual interface id
  * @callback - callback function
  * @ctxt: callback context
  *
  */
 static void
-dp_txrx_data_tx_cb_set(struct cdp_vdev *vdev_handle,
+dp_txrx_data_tx_cb_set(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		       ol_txrx_data_tx_cb callback, void *ctxt)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+
+	if (!vdev)
+		return;
 
 	vdev->tx_non_std_data_callback.func = callback;
 	vdev->tx_non_std_data_callback.ctxt = ctxt;

@@ -102,10 +102,13 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 					   vdev_addr, vdev_id,
 					   cdp_txrx_opmode,
 					   cdp_txrx_subtype);
-	if (!vdev_txrx_handle)
+	if (!vdev_txrx_handle) {
+		wlan_vdev_set_dp_handle(vdev, NULL);
 		return QDF_STATUS_E_FAILURE;
+	} else {
+		wlan_vdev_set_dp_handle(vdev, vdev_txrx_handle);
+	}
 
-	wlan_vdev_set_dp_handle(vdev, vdev_txrx_handle);
 	return status;
 }
 
@@ -290,7 +293,6 @@ QDF_STATUS tgt_vdev_mgr_up_send(
 	QDF_STATUS status;
 	struct wlan_lmac_if_mlme_tx_ops *txops;
 	ol_txrx_soc_handle soc_txrx_handle;
-	struct cdp_vdev *vdev_txrx_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t vdev_id;
@@ -311,8 +313,7 @@ QDF_STATUS tgt_vdev_mgr_up_send(
 	/* cdp set rx and tx decap type */
 	psoc = wlan_vdev_get_psoc(vdev);
 	soc_txrx_handle = wlan_psoc_get_dp_handle(psoc);
-	vdev_txrx_handle = wlan_vdev_get_dp_handle(vdev);
-	if (!soc_txrx_handle || !vdev_txrx_handle)
+	if (!soc_txrx_handle || vdev_id == WLAN_INVALID_VDEV_ID)
 		return QDF_STATUS_E_INVAL;
 
 	status = txops->vdev_up_send(vdev, param);

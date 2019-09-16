@@ -83,10 +83,11 @@ struct cdp_cmn_ops {
 		(ol_txrx_soc_handle soc, HTC_HANDLE htc_pdev,
 		 qdf_device_t osdev, uint8_t pdev_id);
 
-	int (*txrx_pdev_post_attach)(struct cdp_pdev *pdev);
+	int (*txrx_pdev_post_attach)(struct cdp_soc_t *soc, uint8_t pdev_id);
 
 	void
-	(*txrx_pdev_pre_detach)(struct cdp_pdev *pdev, int force);
+	(*txrx_pdev_pre_detach)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				int force);
 
 	QDF_STATUS
 	(*txrx_pdev_detach)(struct cdp_soc_t *psoc, uint8_t pdev_id,
@@ -157,18 +158,18 @@ struct cdp_cmn_ops {
 	QDF_STATUS (*txrx_set_monitor_mode)(struct cdp_soc_t *soc,
 					    uint8_t vdev_id,
 					    uint8_t smart_monitor);
-	void (*txrx_peer_delete_sync)(void *peer,
+	void (*txrx_peer_delete_sync)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				      uint8_t *peer_mac,
 				      QDF_STATUS(*delete_cb)(
 						uint8_t vdev_id,
 						uint32_t peerid_cnt,
 						uint16_t *peerid_list),
 				      uint32_t bitmap);
 
-	void (*txrx_peer_unmap_sync_cb_set)(struct cdp_pdev *pdev,
-					    QDF_STATUS(*unmap_resp_cb)(
-						uint8_t vdev_id,
-						uint32_t peerid_cnt,
-						uint16_t *peerid_list));
+	void (*txrx_peer_unmap_sync_cb_set)(struct cdp_soc_t *soc_hdl,
+					    uint8_t pdev_id,
+					    ol_txrx_peer_unmap_sync_cb
+					    peer_unmap_sync);
 
 	uint8_t (*txrx_get_pdev_id_frm_pdev)(struct cdp_pdev *pdev);
 	bool (*txrx_get_vow_config_frm_pdev)(struct cdp_pdev *pdev);
@@ -264,8 +265,8 @@ struct cdp_cmn_ops {
 	 * done being transmitted
 	 */
 
-	void (*txrx_data_tx_cb_set)(struct cdp_vdev *data_vdev,
-			ol_txrx_data_tx_cb callback, void *ctxt);
+	void (*txrx_data_tx_cb_set)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				    ol_txrx_data_tx_cb callback, void *ctxt);
 
 	/*******************************************************************
 	 * Statistics and Debugging Interface (C Interface)
@@ -291,48 +292,33 @@ struct cdp_cmn_ops {
 
 	/**
 	 * ol_txrx_get_vdev_mac_addr() - Return mac addr of vdev
-	 * @vdev: vdev handle
+	 * @soc: datapath soc handle
+	 * @vdev_id: vdev id
 	 *
 	 * Return: vdev mac address
 	 */
-	uint8_t * (*txrx_get_vdev_mac_addr)(struct cdp_vdev *vdev);
-
-	/**
-	 * ol_txrx_get_vdev_struct_mac_addr() - Return handle to struct qdf_mac_addr of
-	 * vdev
-	 * @vdev: vdev handle
-	 *
-	 * Return: Handle to struct qdf_mac_addr
-	 */
-	struct qdf_mac_addr *
-		(*txrx_get_vdev_struct_mac_addr)(struct cdp_vdev *vdev);
-
-	/**
-	 * ol_txrx_get_pdev_from_vdev() - Return handle to pdev of vdev
-	 * @vdev: vdev handle
-	 *
-	 * Return: Handle to pdev
-	 */
-	struct cdp_pdev *(*txrx_get_pdev_from_vdev)
-		(struct cdp_vdev *vdev);
+	uint8_t * (*txrx_get_vdev_mac_addr)(struct cdp_soc_t *soc,
+					    uint8_t vdev_id);
 
 	/**
 	 * ol_txrx_get_ctrl_pdev_from_vdev() - Return control pdev of vdev
-	 * @vdev: vdev handle
+	 * @soc: datapath soc handle
+	 * @vdev_id: vdev id
 	 *
 	 * Return: Handle to control pdev
 	 */
-	struct cdp_cfg *
-		(*txrx_get_ctrl_pdev_from_vdev)(struct cdp_vdev *vdev);
+	struct cdp_cfg *(*txrx_get_ctrl_pdev_from_vdev)(struct cdp_soc_t *soc,
+							uint8_t vdev_id);
 
 	/**
 	 * txrx_get_mon_vdev_from_pdev() - Return monitor mode vdev
-	 * @pdev: pdev handle
+	 * @soc: datapath soc handle
+	 * @pdev: pdev id
 	 *
-	 * Return: Handle to vdev
+	 * Return: vdev_id
 	 */
-	struct cdp_vdev *
-		(*txrx_get_mon_vdev_from_pdev)(struct cdp_pdev *pdev);
+	uint8_t (*txrx_get_mon_vdev_from_pdev)(struct cdp_soc_t *soc,
+					       uint8_t pdev_id);
 
 	void (*txrx_soc_detach)(struct cdp_soc_t *soc);
 
@@ -488,12 +474,14 @@ struct cdp_cmn_ops {
 	/**
 	 * txrx_get_os_rx_handles_from_vdev() - Return function, osif vdev
 	 *					to deliver pkt to stack.
-	 * @vdev: vdev handle
+	 * @soc: datapath soc handle
+	 * @vdev: vdev id
 	 * @stack_fn: pointer to - function pointer to deliver RX pkt to stack
 	 * @osif_vdev: pointer to - osif vdev to deliver RX packet to.
 	 */
 	void (*txrx_get_os_rx_handles_from_vdev)
-					(struct cdp_vdev *vdev,
+					(ol_txrx_soc_handle soc,
+					 uint8_t vdev_id,
 					 ol_txrx_rx_fp *stack_fn,
 					 ol_osif_vdev_handle *osif_vdev);
 	int (*txrx_classify_update)
@@ -1393,7 +1381,8 @@ struct cdp_cfg_ops {
 	void (*set_cfg_packet_log_enabled)(struct cdp_cfg *cfg_pdev,
 		uint8_t val);
 	struct cdp_cfg * (*cfg_attach)(qdf_device_t osdev, void *cfg_param);
-	void (*vdev_rx_set_intrabss_fwd)(struct cdp_vdev *vdev, bool val);
+	void (*vdev_rx_set_intrabss_fwd)(struct cdp_soc_t *soc_hdl,
+					 uint8_t vdev_id, bool val);
 	uint8_t (*is_rx_fwd_disabled)(struct cdp_vdev *vdev);
 	void (*tx_set_is_mgmt_over_wmi_enabled)(uint8_t value);
 	int (*is_high_latency)(struct cdp_cfg *cfg_pdev);

@@ -112,7 +112,7 @@ static inline struct cdp_cfg
 /**
  * cdp_cfg_vdev_rx_set_intrabss_fwd() - enable/disable intra bass forwarding
  * @soc - data path soc handle
- * @vdev - virtual interface instance
+ * @vdev_id - virtual interface id
  * @val - enable or disable intra bss forwarding
  *
  * ap isolate, do not forward intra bss traffic
@@ -121,7 +121,7 @@ static inline struct cdp_cfg
  */
 static inline void
 cdp_cfg_vdev_rx_set_intrabss_fwd(ol_txrx_soc_handle soc,
-		struct cdp_vdev *vdev, bool val)
+				 uint8_t vdev_id, bool val)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -134,7 +134,7 @@ cdp_cfg_vdev_rx_set_intrabss_fwd(ol_txrx_soc_handle soc,
 	    !soc->ops->cfg_ops->vdev_rx_set_intrabss_fwd)
 		return;
 
-	soc->ops->cfg_ops->vdev_rx_set_intrabss_fwd(vdev, val);
+	soc->ops->cfg_ops->vdev_rx_set_intrabss_fwd(soc, vdev_id, val);
 }
 
 /**

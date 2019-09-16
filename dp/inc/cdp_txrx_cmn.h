@@ -295,8 +295,17 @@ static inline struct cdp_pdev *cdp_pdev_attach
 						       pdev_id);
 }
 
-static inline int cdp_pdev_post_attach(ol_txrx_soc_handle soc,
-	struct cdp_pdev *pdev)
+/**
+ * cdp_pdev_post_attach() - attach the data SW state
+ * @soc: datapath soc handle
+ * @pdev_id: the data physical device id being removed
+ *
+ * This function is used when the WLAN driver is being loaded to
+ * attach the host data component within the driver.
+ *
+ * Return: 0 for success or error code
+ */
+static inline int cdp_pdev_post_attach(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -309,11 +318,24 @@ static inline int cdp_pdev_post_attach(ol_txrx_soc_handle soc,
 	    !soc->ops->cmn_drv_ops->txrx_pdev_post_attach)
 		return 0;
 
-	return soc->ops->cmn_drv_ops->txrx_pdev_post_attach(pdev);
+	return soc->ops->cmn_drv_ops->txrx_pdev_post_attach(soc, pdev_id);
 }
 
+/**
+ * cdp_pdev_pre_detach() - detach the data SW state
+ * @soc: datapath soc handle
+ * @pdev_id: the data physical device id being removed
+ * @force: delete the pdev (and its vdevs and peers) even if
+ * there are outstanding references by the target to the vdevs
+ * and peers within the pdev
+ *
+ * This function is used when the WLAN driver is being removed to
+ * detach the host data component within the driver.
+ *
+ * Return: None
+ */
 static inline void
-cdp_pdev_pre_detach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int force)
+cdp_pdev_pre_detach(ol_txrx_soc_handle soc, uint8_t pdev_id, int force)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -326,7 +348,7 @@ cdp_pdev_pre_detach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int force)
 	    !soc->ops->cmn_drv_ops->txrx_pdev_pre_detach)
 		return;
 
-	soc->ops->cmn_drv_ops->txrx_pdev_pre_detach(pdev, force);
+	soc->ops->cmn_drv_ops->txrx_pdev_pre_detach(soc, pdev_id, force);
 }
 
 static inline QDF_STATUS
@@ -706,8 +728,18 @@ cdp_peer_delete(ol_txrx_soc_handle soc, uint8_t vdev_id,
 	soc->ops->cmn_drv_ops->txrx_peer_delete(soc, vdev_id, peer_mac, bitmap);
 }
 
+/**
+ * cdp_peer_detach_sync() - peer detach sync callback
+ * @soc: datapath soc handle
+ * @vdev_id: virtual device/interface id
+ * @peer_mac: peer mac address
+ * @peer_unmap_sync: peer unmap sync cb.
+ * @bitmap: bitmap indicating special handling of request.
+ *
+ * Return: None
+ */
 static inline void
-cdp_peer_delete_sync(ol_txrx_soc_handle soc, void *peer,
+cdp_peer_delete_sync(ol_txrx_soc_handle soc, uint8_t vdev_id, uint8_t *peer_mac,
 		     QDF_STATUS(*delete_cb)(
 				uint8_t vdev_id,
 				uint32_t peerid_cnt,
@@ -725,7 +757,7 @@ cdp_peer_delete_sync(ol_txrx_soc_handle soc, void *peer,
 	    !soc->ops->cmn_drv_ops->txrx_peer_delete_sync)
 		return;
 
-	soc->ops->cmn_drv_ops->txrx_peer_delete_sync(peer,
+	soc->ops->cmn_drv_ops->txrx_peer_delete_sync(soc, vdev_id, peer_mac,
 						     delete_cb,
 						     bitmap);
 }
@@ -881,9 +913,17 @@ cdp_mgmt_tx_cb_set(ol_txrx_soc_handle soc, uint8_t pdev_id,
 			(soc, pdev_id, type, download_cb, ota_ack_cb, ctxt);
 }
 
+/**
+ * cdp_peer_unmap_sync_cb_set() - set peer unmap sync callback
+ * @soc: datapath soc handle
+ * @pdev_id: physical device instance id
+ * @peer_unmap_sync: peer unmap sync callback
+ *
+ * Return: None
+ */
 static inline void
 cdp_peer_unmap_sync_cb_set(ol_txrx_soc_handle soc,
-			   struct cdp_pdev *pdev,
+			   uint8_t pdev_id,
 			   QDF_STATUS(*unmap_resp_cb)(
 					uint8_t vdev_id,
 					uint32_t peerid_cnt,
@@ -900,7 +940,8 @@ cdp_peer_unmap_sync_cb_set(ol_txrx_soc_handle soc,
 	    !soc->ops->cmn_drv_ops->txrx_peer_unmap_sync_cb_set)
 		return;
 
-	soc->ops->cmn_drv_ops->txrx_peer_unmap_sync_cb_set(pdev, unmap_resp_cb);
+	soc->ops->cmn_drv_ops->txrx_peer_unmap_sync_cb_set(soc, pdev_id,
+							   unmap_resp_cb);
 }
 
 static inline int cdp_get_tx_pending(ol_txrx_soc_handle soc,
@@ -921,9 +962,17 @@ struct cdp_pdev *pdev)
 	return soc->ops->cmn_drv_ops->txrx_get_tx_pending(pdev);
 }
 
+/*
+ * cdp_data_tx_cb_set(): set the callback for non standard tx
+ * @soc - datapath soc handle
+ * @vdev_id - virtual device/interface id
+ * @callback - callback function
+ * @ctxt: callback context
+ *
+ */
 static inline void
-cdp_data_tx_cb_set(ol_txrx_soc_handle soc, struct cdp_vdev *data_vdev,
-		 ol_txrx_data_tx_cb callback, void *ctxt)
+cdp_data_tx_cb_set(ol_txrx_soc_handle soc, uint8_t vdev_id,
+		   ol_txrx_data_tx_cb callback, void *ctxt)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -936,8 +985,8 @@ cdp_data_tx_cb_set(ol_txrx_soc_handle soc, struct cdp_vdev *data_vdev,
 	    !soc->ops->cmn_drv_ops->txrx_data_tx_cb_set)
 		return;
 
-	soc->ops->cmn_drv_ops->txrx_data_tx_cb_set(data_vdev,
-			callback, ctxt);
+	soc->ops->cmn_drv_ops->txrx_data_tx_cb_set(soc, vdev_id,
+						   callback, ctxt);
 }
 
 /******************************************************************************
@@ -1053,8 +1102,16 @@ static inline void cdp_print_level_set(ol_txrx_soc_handle soc, unsigned level)
 	soc->ops->cmn_drv_ops->txrx_print_level_set(level);
 }
 
+/*
+ * cdp_get_vdev_mac_addr() – Detach txrx peer
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: virtual device/interface id
+ *
+ * Return: MAC address on success, NULL on failure.
+ *
+ */
 static inline uint8_t *
-cdp_get_vdev_mac_addr(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+cdp_get_vdev_mac_addr(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -1067,63 +1124,14 @@ cdp_get_vdev_mac_addr(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 	    !soc->ops->cmn_drv_ops->txrx_get_vdev_mac_addr)
 		return NULL;
 
-	return soc->ops->cmn_drv_ops->txrx_get_vdev_mac_addr(vdev);
+	return soc->ops->cmn_drv_ops->txrx_get_vdev_mac_addr(soc, vdev_id);
 
-}
-
-/**
- * cdp_get_vdev_struct_mac_addr() - Return handle to struct qdf_mac_addr of
- * vdev
- * @vdev: vdev handle
- *
- * Return: Handle to struct qdf_mac_addr
- */
-static inline struct qdf_mac_addr *cdp_get_vdev_struct_mac_addr
-	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return NULL;
-	}
-
-	if (!soc->ops->cmn_drv_ops ||
-	    !soc->ops->cmn_drv_ops->txrx_get_vdev_struct_mac_addr)
-		return NULL;
-
-	return soc->ops->cmn_drv_ops->txrx_get_vdev_struct_mac_addr
-			(vdev);
-
-}
-
-/**
- * cdp_get_pdev_from_vdev() - Return handle to pdev of vdev
- * @vdev: vdev handle
- *
- * Return: Handle to pdev
- */
-static inline struct cdp_pdev *cdp_get_pdev_from_vdev
-	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return NULL;
-	}
-
-	if (!soc->ops->cmn_drv_ops ||
-	    !soc->ops->cmn_drv_ops->txrx_get_pdev_from_vdev)
-		return NULL;
-
-	return soc->ops->cmn_drv_ops->txrx_get_pdev_from_vdev(vdev);
 }
 
 /**
  * cdp_get_os_rx_handles_from_vdev() - Return os rx handles for a vdev
  * @soc: ol_txrx_soc_handle handle
- * @vdev: vdev for which os rx handles are needed
+ * @vdev_id: vdev id for which os rx handles are needed
  * @stack_fn_p: pointer to stack function pointer
  * @osif_handle_p: pointer to ol_osif_vdev_handle
  *
@@ -1131,7 +1139,7 @@ static inline struct cdp_pdev *cdp_get_pdev_from_vdev
  */
 static inline
 void cdp_get_os_rx_handles_from_vdev(ol_txrx_soc_handle soc,
-				     struct cdp_vdev *vdev,
+				     uint8_t vdev_id,
 				     ol_txrx_rx_fp *stack_fn_p,
 				     ol_osif_vdev_handle *osif_handle_p)
 {
@@ -1146,19 +1154,20 @@ void cdp_get_os_rx_handles_from_vdev(ol_txrx_soc_handle soc,
 	    !soc->ops->cmn_drv_ops->txrx_get_os_rx_handles_from_vdev)
 		return;
 
-	soc->ops->cmn_drv_ops->txrx_get_os_rx_handles_from_vdev(vdev,
+	soc->ops->cmn_drv_ops->txrx_get_os_rx_handles_from_vdev(soc, vdev_id,
 								stack_fn_p,
 								osif_handle_p);
 }
 
 /**
  * cdp_get_ctrl_pdev_from_vdev() - Return control pdev of vdev
- * @vdev: vdev handle
+ * @soc: datapath soc handle
+ * @vdev_id: virtual device/interface id
  *
  * Return: Handle to control pdev
  */
 static inline struct cdp_cfg *
-cdp_get_ctrl_pdev_from_vdev(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+cdp_get_ctrl_pdev_from_vdev(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -1171,26 +1180,32 @@ cdp_get_ctrl_pdev_from_vdev(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 	    !soc->ops->cmn_drv_ops->txrx_get_ctrl_pdev_from_vdev)
 		return NULL;
 
-	return soc->ops->cmn_drv_ops->txrx_get_ctrl_pdev_from_vdev
-			(vdev);
+	return soc->ops->cmn_drv_ops->txrx_get_ctrl_pdev_from_vdev(soc,
+								   vdev_id);
 }
 
-static inline struct cdp_vdev *
-cdp_get_mon_vdev_from_pdev(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+/*
+ * cdp_get_mon_vdev_from_pdev() - Get vdev handle of monitor mode
+ * @soc: datapath soc handle
+ * @pdev_id: physical device instance id
+ *
+ * Return: virtual interface id
+ */
+static inline uint8_t
+cdp_get_mon_vdev_from_pdev(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return NULL;
+		return -EINVAL;
 	}
 
 	if (!soc->ops->cmn_drv_ops ||
 	    !soc->ops->cmn_drv_ops->txrx_get_mon_vdev_from_pdev)
-		return NULL;
+		return -EINVAL;
 
-	return soc->ops->cmn_drv_ops->txrx_get_mon_vdev_from_pdev
-			(pdev);
+	return soc->ops->cmn_drv_ops->txrx_get_mon_vdev_from_pdev(soc, pdev_id);
 }
 
 static inline void
