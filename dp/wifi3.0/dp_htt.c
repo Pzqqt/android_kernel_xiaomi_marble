@@ -254,12 +254,14 @@ dp_tx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 	uint16_t num_msdu;
 	uint16_t num_mpdu;
 	uint16_t mpdu_tried;
+	uint16_t mpdu_failed;
 
 	preamble = ppdu->preamble;
 	mcs = ppdu->mcs;
 	num_msdu = ppdu->num_msdu;
 	num_mpdu = ppdu->mpdu_success;
 	mpdu_tried = ppdu->mpdu_tried_ucast + ppdu->mpdu_tried_mcast;
+	mpdu_failed = mpdu_tried - num_mpdu;
 
 	/* If the peer statistics are already processed as part of
 	 * per-MSDU completion handler, do not process these again in per-PPDU
@@ -268,6 +270,14 @@ dp_tx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 		return;
 
 	if (ppdu->completion_status != HTT_PPDU_STATS_USER_STATUS_OK) {
+		/*
+		 * All failed mpdu will be retried, so incrementing
+		 * retries mpdu based on mpdu failed. Even for
+		 * ack failure i.e for long retries we get
+		 * mpdu failed equal mpdu tried.
+		 */
+		DP_STATS_INC(peer, tx.retries, mpdu_failed);
+		DP_STATS_INC(peer, tx.tx_failed, ppdu->failed_msdus);
 		return;
 	}
 
@@ -339,6 +349,15 @@ dp_tx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 		break;
 		}
 	}
+
+	/*
+	 * All failed mpdu will be retried, so incrementing
+	 * retries mpdu based on mpdu failed. Even for
+	 * ack failure i.e for long retries we get
+	 * mpdu failed equal mpdu tried.
+	 */
+	DP_STATS_INC(peer, tx.retries, mpdu_failed);
+	DP_STATS_INC(peer, tx.tx_failed, ppdu->failed_msdus);
 
 	DP_STATS_INC(peer, tx.transmit_type[ppdu->ppdu_type].num_msdu,
 		     num_msdu);
@@ -2918,7 +2937,8 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 	ppdu_desc->ppdu_id = ppdu_info->ppdu_id;
 
 	tlv_bitmap_expected = HTT_PPDU_DEFAULT_TLV_BITMAP;
-	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
+	if (pdev->tx_sniffer_enable || pdev->mcopy_mode ||
+	    pdev->tx_capture_enabled) {
 		if (ppdu_info->is_ampdu)
 			tlv_bitmap_expected =
 				dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(
@@ -2948,19 +2968,6 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 			continue;
 
 		ppdu_desc->user[i].cookie = (void *)peer->wlanstats_ctx;
-		if (ppdu_desc->user[i].completion_status !=
-		    HTT_PPDU_STATS_USER_STATUS_OK) {
-			tlv_bitmap_expected = tlv_bitmap_expected & 0xFF;
-			if ((ppdu_desc->user[i].tid < CDP_DATA_TID_MAX ||
-			     (ppdu_desc->user[i].tid == CDP_DATA_NON_QOS_TID)) &&
-			      (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA)) {
-				DP_STATS_INC(peer, tx.retries,
-					     (ppdu_desc->user[i].long_retries +
-					      ppdu_desc->user[i].short_retries));
-				DP_STATS_INC(peer, tx.tx_failed,
-					     ppdu_desc->user[i].failed_msdus);
-			}
-		}
 
 		/*
 		 * different frame like DATA, BAR or CTRL has different
@@ -2970,12 +2977,15 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 		 * asynchronous So we need to depend on some tlv to confirm
 		 * all tlv is received for a ppdu.
 		 * So we depend on both HTT_PPDU_STATS_COMMON_TLV and
+		 * ACK_BA_STATUS_TLV. for failure packet we won't get
 		 * ACK_BA_STATUS_TLV.
 		 */
 		if (!(ppdu_info->tlv_bitmap &
 		      (1 << HTT_PPDU_STATS_COMMON_TLV)) ||
-		    !(ppdu_info->tlv_bitmap &
-		      (1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV))) {
+		    (!(ppdu_info->tlv_bitmap &
+		       (1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV)) &&
+		     (ppdu_desc->user[i].completion_status ==
+		      HTT_PPDU_STATS_USER_STATUS_OK))) {
 			dp_peer_unref_del_find_by_id(peer);
 			continue;
 		}
@@ -3248,7 +3258,8 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 
 	tlv_bitmap_expected = HTT_PPDU_DEFAULT_TLV_BITMAP;
 
-	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
+	if (pdev->tx_sniffer_enable || pdev->mcopy_mode ||
+	    pdev->tx_capture_enabled) {
 		if (ppdu_info->is_ampdu)
 			tlv_bitmap_expected =
 				dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(
@@ -3336,10 +3347,13 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 
 	/**
 	 * Once all the TLVs for a given PPDU has been processed,
-	 * return PPDU status to be delivered to higher layer
+	 * return PPDU status to be delivered to higher layer.
+	 * tlv_bitmap_expected can't be available for different frame type.
+	 * But STATS COMMON TLV is the last TLV from the FW for a ppdu.
+	 * apart from ACK BA TLV, FW sends other TLV in sequential order.
 	 */
 	if (ppdu_info->tlv_bitmap != 0 &&
-	    ppdu_info->tlv_bitmap == tlv_bitmap_expected)
+	    (ppdu_info->tlv_bitmap & (1 << HTT_PPDU_STATS_COMMON_TLV)))
 		return ppdu_info;
 
 	return NULL;
