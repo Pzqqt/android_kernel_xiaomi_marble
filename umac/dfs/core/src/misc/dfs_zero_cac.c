@@ -879,9 +879,8 @@ void dfs_mark_precac_nol(struct wlan_dfs *dfs,
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t i;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
-
-	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
-	dfs_soc_obj = dfs->dfs_soc_obj;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	struct wlan_objmgr_pdev *pdev;
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		  "is_radar_found_on_secondary_seg = %u subchannel_marking = %u detector_id = %u",
@@ -921,6 +920,12 @@ void dfs_mark_precac_nol(struct wlan_dfs *dfs,
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
+
+	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
+	dfs_soc_obj = dfs->dfs_soc_obj;
+
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+	pdev = dfs->dfs_pdev_obj;
 
 	/* PreCAC timer is not running, no need to restart preCAC */
 	if (!dfs_soc_obj->dfs_precac_timer_running)
@@ -965,18 +970,27 @@ void dfs_mark_precac_nol(struct wlan_dfs *dfs,
 
 		qdf_timer_sync_cancel(&dfs_soc_obj->dfs_precac_timer);
 		dfs_soc_obj->dfs_precac_timer_running = 0;
+
+		/* Since Agile DFS is interrupted due to radar, send
+		 * OCAC abort event to FW for a proper restart of the Agile
+		 * state machine.
+		 */
+		if (dfs_tx_ops && dfs_tx_ops->dfs_ocac_abort_cmd)
+			dfs_tx_ops->dfs_ocac_abort_cmd(pdev);
 		/*
 		 * If radar is found on agile engine, change the channel here
 		 * since primary channel change will not be triggered.
 		 * If radar is found on primary detector, let agile
 		 * channel change be triggered after start response.
 		 * Set precac_state_started to false to indicate preCAC is not
-		 * running.
+		 * running and also reset the current Agile channel.
 		 */
-		if (detector_id == AGILE_DETECTOR_ID)
+		if (detector_id == AGILE_DETECTOR_ID) {
 			dfs_prepare_agile_precac_chan(dfs);
-		else
-			dfs_soc_obj->precac_state_started = false;
+		} else {
+			dfs->dfs_agile_precac_freq = 0;
+			dfs_soc_obj->precac_state_started = PRECAC_NOT_STARTED;
+		}
 	}
 }
 
