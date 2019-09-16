@@ -7828,6 +7828,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	pdata->dmic45_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,cdc-dmic45-gpios",
 					       0);
+	if (pdata->dmic01_gpio_p)
+		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic01_gpio_p, false);
+	if (pdata->dmic23_gpio_p)
+		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic23_gpio_p, false);
 	if (pdata->dmic45_gpio_p)
 		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic45_gpio_p, false);
 
