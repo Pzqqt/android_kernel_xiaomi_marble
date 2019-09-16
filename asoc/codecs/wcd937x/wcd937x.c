@@ -2316,7 +2316,8 @@ int wcd937x_info_create_codec_entry(struct snd_info_entry *codec_root,
 						   "variant",
 						   priv->entry);
 	if (!variant_entry) {
-		dev_dbg(codec->dev, "%s: failed to create wcd937x variant entry\n",
+		dev_dbg(component->dev,
+			"%s: failed to create wcd937x variant entry\n",
 			__func__);
 		return -ENOMEM;
 	}
