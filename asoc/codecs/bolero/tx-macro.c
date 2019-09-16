@@ -1605,14 +1605,19 @@ static int tx_macro_register_event_listener(struct snd_soc_component *component,
 		return -EINVAL;
 	}
 	if (tx_priv->swr_ctrl_data) {
-		if (enable)
+		if (enable) {
 			ret = swrm_wcd_notify(
 				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
 				SWR_REGISTER_WAKEUP, NULL);
-		else
+			msm_cdc_pinctrl_set_wakeup_capable(
+					tx_priv->tx_swr_gpio_p, false);
+		} else {
+			msm_cdc_pinctrl_set_wakeup_capable(
+					tx_priv->tx_swr_gpio_p, true);
 			ret = swrm_wcd_notify(
 				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
 				SWR_DEREGISTER_WAKEUP, NULL);
+		}
 	}
 
 	return ret;
