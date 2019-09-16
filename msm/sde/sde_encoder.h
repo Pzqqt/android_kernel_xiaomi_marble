@@ -24,6 +24,7 @@
 #include "msm_prop.h"
 #include "sde_hw_mdss.h"
 #include "sde_kms.h"
+#include "sde_connector.h"
 
 #define MAX_CHANNELS_PER_ENC 2
 
@@ -51,7 +52,7 @@ struct sde_encoder_hw_resources {
 	enum sde_intf_mode wbs[WB_MAX];
 	bool needs_cdm;
 	u32 display_num_of_h_tiles;
-	bool display_type;
+	enum sde_connector_display display_type;
 	struct msm_display_topology topology;
 };
 
