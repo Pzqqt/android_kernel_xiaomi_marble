@@ -141,8 +141,11 @@ enum {
 #define PKTLOG_TYPE_SMART_ANTENNA 9
 #define PKTLOG_TYPE_SW_EVENT     10
 #define PKTLOG_TYPE_PKT_DUMP     11
-/* From WIN definations */
+/* Command to process Monitor status ring (Rx) buffers */
+#define PKTLOG_TYPE_RX_STATBUF   22
+/* Command to process PPDU Tx buffers from CE */
 #define PKTLOG_TYPE_LITE_T2H     23
+/* Command to process PPDU Rx buffers from Monitor status ring */
 #define PKTLOG_TYPE_LITE_RX      24
 #define PKTLOG_TYPE_MAX          25
 
