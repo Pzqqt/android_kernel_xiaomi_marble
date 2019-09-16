@@ -1216,11 +1216,14 @@ struct cdp_mob_stats_ops {
 
 /**
  * struct cdp_pmf_ops - mcl protected management frame ops
- * @get_pn_info:
+ * @get_pn_info: handler to get pn info from peer
+ *
+ * Function pointers for pmf related operations.
  */
 struct cdp_pmf_ops {
-	void (*get_pn_info)(void *peer, uint8_t **last_pn_valid,
-			uint64_t **last_pn, uint32_t **rmf_pn_replays);
+	void (*get_pn_info)(struct cdp_soc_t *soc, uint8_t *peer_mac,
+			    uint8_t vdev_id, uint8_t **last_pn_valid,
+			    uint64_t **last_pn, uint32_t **rmf_pn_replays);
 };
 #endif
 
