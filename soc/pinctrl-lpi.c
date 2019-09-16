@@ -86,6 +86,7 @@ enum lpi_gpio_func_index {
  * @base: stores one of gpio_base or slew_base at a given time.
  * @gpio_base: Address base of LPI GPIO PAD.
  * @slew_base: Address base of LPI SLEW PAD.
+ * @lpi_slew_reg: Address for lpi slew reg.
  * @pullup: Constant current which flow through GPIO output buffer.
  * @strength: No, Low, Medium, High
  * @function: See lpi_gpio_functions[]
@@ -99,6 +100,7 @@ struct lpi_gpio_pad {
 	char __iomem    *base;
 	char __iomem    *gpio_base;
 	char __iomem    *slew_base;
+	char __iomem    *lpi_slew_reg;
 	unsigned int    pullup;
 	unsigned int    strength;
 	unsigned int    function;
@@ -126,6 +128,7 @@ static const char *const lpi_gpio_groups[] = {
 #define LPI_TLMM_MAX_PINS 100
 static u32 lpi_offset[LPI_TLMM_MAX_PINS];
 static u32 lpi_slew_offset[LPI_TLMM_MAX_PINS];
+static u32 lpi_slew_base[LPI_TLMM_MAX_PINS];
 
 static const char *const lpi_gpio_functions[] = {
 	[LPI_GPIO_FUNC_INDEX_GPIO]	= LPI_GPIO_FUNC_GPIO,
@@ -366,6 +369,12 @@ static int lpi_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
 			pad->base = pad->slew_base;
 			pad->offset = 0;
 			mutex_lock(&state->slew_access_lock);
+			if (pad->lpi_slew_reg != NULL) {
+				pad->base = pad->lpi_slew_reg;
+				lpi_gpio_write(pad, LPI_SLEW_REG_VAL_CTL, arg);
+				pad->base = pad->slew_base;
+				goto slew_exit;
+			}
 			val = lpi_gpio_read(pad, LPI_SLEW_REG_VAL_CTL);
 			pad->offset = pad->slew_offset;
 			for (i = 0; i < LPI_SLEW_BITS_SIZE; i++) {
@@ -378,6 +387,7 @@ static int lpi_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
 			}
 			pad->offset = 0;
 			lpi_gpio_write(pad, LPI_SLEW_REG_VAL_CTL, val);
+slew_exit:
 			mutex_unlock(&state->slew_access_lock);
 			break;
 		default:
@@ -646,6 +656,16 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 			__func__, ret);
 	}
 
+	ret = of_property_read_u32_array(dev->of_node,
+					 "qcom,lpi-slew-base-tbl",
+					 lpi_slew_base, npins);
+	if (ret < 0) {
+		for (i = 0; i < npins; i++)
+			lpi_slew_base[i] = LPI_SLEW_OFFSET_INVALID;
+		dev_dbg(dev, "%s: error in reading lpi slew table: %d\n",
+			__func__, ret);
+	}
+
 	state = devm_kzalloc(dev, sizeof(*state), GFP_KERNEL);
 	if (!state)
 		return -ENOMEM;
@@ -712,6 +732,11 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 		pad->gpio_offset = lpi_offset[i];
 		pad->slew_offset = lpi_slew_offset[i];
 		pad->offset = pad->gpio_offset;
+		pad->lpi_slew_reg = NULL;
+		if ((lpi_slew_base[i] != LPI_SLEW_OFFSET_INVALID) &&
+		     lpi_slew_base[i])
+			pad->lpi_slew_reg = devm_ioremap(dev,
+                                                lpi_slew_base[i], 0x4);
 	}
 
 	state->chip = lpi_gpio_template;
