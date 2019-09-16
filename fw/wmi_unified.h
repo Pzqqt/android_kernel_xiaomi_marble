@@ -10219,6 +10219,9 @@ typedef enum {
      */
     WMI_VDEV_PARAM_NDP_INACTIVITY_TIMEOUT,     /* 0x97 */
 
+    /* To enable/disable multicast rate adaptation feature at vdev level */
+    WMI_VDEV_PARAM_ENABLE_MCAST_RC,            /* 0x98 */
+
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
      * prone to change.
