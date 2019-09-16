@@ -14,13 +14,16 @@
 #include <linux/pinctrl/qcom-pinctrl.h>
 #include <asoc/msm-cdc-pinctrl.h>
 
+#define MAX_GPIOS 16
+
 struct msm_cdc_pinctrl_info {
 	struct pinctrl *pinctrl;
 	struct pinctrl_state *pinctrl_active;
 	struct pinctrl_state *pinctrl_sleep;
 	int gpio;
 	bool state;
-	u32 tlmm_gpio;
+	u32 tlmm_gpio[MAX_GPIOS];
+	u32 count;
 	bool wakeup_capable;
 };
 
@@ -151,14 +154,21 @@ int msm_cdc_pinctrl_set_wakeup_capable(struct device_node *np, bool enable)
 {
 	struct msm_cdc_pinctrl_info *gpio_data;
 	int ret = 0;
+	u32 i = 0;
 
 	gpio_data = msm_cdc_pinctrl_get_gpiodata(np);
 	if (!gpio_data)
 		return -EINVAL;
 
-	if (gpio_data->wakeup_capable)
-		ret = msm_gpio_mpm_wake_set(gpio_data->tlmm_gpio, enable);
-
+	if (gpio_data->wakeup_capable) {
+		for (i = 0; i < gpio_data->count; i++) {
+			ret = msm_gpio_mpm_wake_set(gpio_data->tlmm_gpio[i],
+						    enable);
+			if (ret < 0)
+				goto exit;
+		}
+	}
+exit:
 	return ret;
 }
 EXPORT_SYMBOL(msm_cdc_pinctrl_set_wakeup_capable);
@@ -167,7 +177,9 @@ static int msm_cdc_pinctrl_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	struct msm_cdc_pinctrl_info *gpio_data;
-	u32 tlmm_gpio = 0;
+	u32 tlmm_gpio[MAX_GPIOS] = {0};
+	u32 i = 0;
+	int count = 0;
 
 	gpio_data = devm_kzalloc(&pdev->dev,
 				 sizeof(struct msm_cdc_pinctrl_info),
@@ -210,12 +222,19 @@ static int msm_cdc_pinctrl_probe(struct platform_device *pdev)
 				__func__, ret);
 	}
 
-	if (!of_property_read_u32(pdev->dev.of_node, "qcom,tlmm-gpio",
-				&tlmm_gpio)) {
+
+	count = of_property_count_u32_elems(pdev->dev.of_node, "qcom,tlmm-gpio");
+	if (count <= 0)
+		goto cdc_rst;
+	if (!of_property_read_u32_array(pdev->dev.of_node, "qcom,tlmm-gpio",
+				tlmm_gpio, count)) {
 		gpio_data->wakeup_capable = true;
-		gpio_data->tlmm_gpio = tlmm_gpio;
+		for (i = 0; i < count; i++)
+			gpio_data->tlmm_gpio[i] = tlmm_gpio[i];
+		gpio_data->count = count;
 	}
 
+cdc_rst:
 	gpio_data->gpio = of_get_named_gpio(pdev->dev.of_node,
 					    "qcom,cdc-rst-n-gpio", 0);
 	if (gpio_is_valid(gpio_data->gpio)) {
