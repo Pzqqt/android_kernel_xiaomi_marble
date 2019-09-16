@@ -612,7 +612,7 @@ struct cdp_ctrl_ops {
 					  enum cdp_peer_param_type param,
 					  cdp_config_param_type *val);
 
-	void * (*txrx_get_pldev)(struct cdp_pdev *pdev);
+	void * (*txrx_get_pldev)(struct cdp_soc_t *soc, uint8_t pdev_id);
 
 #ifdef ATH_SUPPORT_NAC_RSSI
 	QDF_STATUS (*txrx_vdev_config_for_nac_rssi)(struct cdp_soc_t *cdp_soc,

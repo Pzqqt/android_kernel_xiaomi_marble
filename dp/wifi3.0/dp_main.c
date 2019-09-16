@@ -385,6 +385,7 @@ void dp_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn)
 	}
 
 	pktlog_sethandle(&handle->pl_dev, scn);
+	pktlog_set_pdev_id(handle->pl_dev, pdev_id);
 	pktlog_set_callback_regtype(PKTLOG_DEFAULT_CALLBACK_REGISTRATION);
 
 	if (pktlogmod_init(scn)) {

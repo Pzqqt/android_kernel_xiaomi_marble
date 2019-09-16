@@ -616,9 +616,15 @@ cdp_set_mgmt_tx_power(ol_txrx_soc_handle soc,
 							subtype, tx_power);
 }
 
+/**
+ * cdp_get_pldev() - function to get pktlog device handle
+ * @soc: datapath soc handle
+ * @pdev_id: physical device id
+ *
+ * Return: pktlog device handle or NULL
+ */
 static inline void *
-cdp_get_pldev(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev)
+cdp_get_pldev(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -630,7 +636,7 @@ cdp_get_pldev(ol_txrx_soc_handle soc,
 	if (!soc->ops->ctrl_ops || !soc->ops->ctrl_ops->txrx_get_pldev)
 		return NULL;
 
-	return soc->ops->ctrl_ops->txrx_get_pldev(pdev);
+	return soc->ops->ctrl_ops->txrx_get_pldev(soc, pdev_id);
 }
 
 #if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)

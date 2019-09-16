@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012-2014, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2016-2018, 2020 The Linux Foundation.
+ * All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,6 +55,7 @@ struct pktlog_dev_t;
 
 void pktlog_sethandle(struct pktlog_dev_t **pl_handle,
 		     hif_opaque_softc_handle scn);
+void pktlog_set_pdev_id(struct pktlog_dev_t *pl_dev, uint8_t pdev_id);
 
 void *get_txrx_context(void);
 
@@ -129,6 +131,12 @@ struct ath_pktlog_info {
 #endif /* _PKTLOG_INFO */
 #else                           /* REMOVE_PKT_LOG */
 typedef void *pktlog_dev_handle;
+#define pktlog_set_pdev_id(pl_dev, pdev_id)	\
+	do {					\
+		(void)pl_dev;			\
+		(void)pdev_id;			\
+	} while (0)
+
 #define pktlog_sethandle(pl_handle, scn)	\
 	do {				\
 		(void)pl_handle;	\

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,7 +61,15 @@ extern void pktlog_release_buf(struct hif_opaque_softc *scn);
 
 ssize_t pktlog_read_proc_entry(char *buf, size_t nbytes, loff_t *ppos,
 		struct ath_pktlog_info *pl_info, bool *read_complete);
-A_STATUS wdi_pktlog_unsubscribe(struct cdp_pdev *txrx_pdev, uint32_t log_state);
+
+/**
+ * wdi_pktlog_unsubscribe() - Unsubscribe pktlog callbacks
+ * @pdev_id: pdev id
+ * @log_state: Pktlog registration
+ *
+ * Return: zero on success, non-zero on failure
+ */
+A_STATUS wdi_pktlog_unsubscribe(uint8_t pdev_id, uint32_t log_state);
 
 struct ol_pl_arch_dep_funcs {
 	void (*pktlog_init)(struct hif_opaque_softc *scn);
@@ -93,6 +101,7 @@ struct pktlog_dev_t {
 	struct ol_pl_arch_dep_funcs *pl_funcs;
 	struct ath_pktlog_info *pl_info;
 	ol_ath_generic_softc_handle scn;
+	uint8_t pdev_id;
 	char *name;
 	bool tgt_pktlog_alloced;
 	bool is_pktlog_cb_subscribed;
@@ -141,7 +150,17 @@ int pktlog_disable(struct hif_opaque_softc *scn);
 int pktlogmod_init(void *context);
 void pktlogmod_exit(void *context);
 int pktlog_htc_attach(void);
-void pktlog_process_fw_msg(uint32_t *msg_word, uint32_t msg_len);
+
+/**
+ * pktlog_process_fw_msg() - process packetlog message
+ * @pdev_id: physical device instance id
+ * @msg_word: message buffer
+ * @msg_len: message length
+ *
+ * Return: None
+ */
+void pktlog_process_fw_msg(uint8_t pdev_id, uint32_t *msg_word,
+			   uint32_t msg_len);
 void lit_pktlog_callback(void *context, enum WDI_EVENT event, void *log_data,
 	u_int16_t peer_id, uint32_t status);
 
@@ -204,7 +223,8 @@ static inline int pktlog_htc_attach(void)
 	return 0;
 }
 
-static inline void pktlog_process_fw_msg(uint32_t *msg_word, uint32_t msg_len)
+static inline void pktlog_process_fw_msg(uint8_t pdev_id, uint32_t *msg_word,
+					 uint32_t msg_len)
 { }
 #endif /* REMOVE_PKT_LOG */
 #endif /* _PKTLOG_AC_H_ */

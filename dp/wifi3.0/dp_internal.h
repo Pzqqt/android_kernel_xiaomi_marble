@@ -1403,7 +1403,15 @@ int dp_wdi_event_attach(struct dp_pdev *txrx_pdev);
 int dp_wdi_event_detach(struct dp_pdev *txrx_pdev);
 int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	bool enable);
-void *dp_get_pldev(struct cdp_pdev *txrx_pdev);
+
+/**
+ * dp_get_pldev() - function to get pktlog device handle
+ * @soc_hdl: datapath soc handle
+ * @pdev_id: physical device id
+ *
+ * Return: pktlog device handle or NULL
+ */
+void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
 void dp_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn);
 
 static inline void
