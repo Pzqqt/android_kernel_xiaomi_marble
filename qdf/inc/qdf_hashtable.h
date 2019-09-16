@@ -97,6 +97,18 @@
 	__qdf_ht_for_each(table, i, cursor, entry_field)
 
 /**
+ * qdf_ht_for_each_safe() - iterate all entries in @table safe against removal
+ * of hash entry.
+ * @table: a non-pointer qdf_ht instance to iterate
+ * @i: int type cursor populated with the bucket index
+ * @tmp: a &struct used for temporary storage
+ * @cursor: container struct pointer populated with each iteration
+ * @entry_field: name of the entry field in the entry container struct
+ */
+#define qdf_ht_for_each_safe(table, i, tmp, cursor, entry_field) \
+	__qdf_ht_for_each_safe(table, i, tmp, cursor, entry_field)
+
+/**
  * qdf_ht_for_each_in_bucket() - iterate entries in the bucket for @key
  * @table: a non-pointer qdf_ht instance to iterate
  * @cursor: container struct pointer populated with each iteration

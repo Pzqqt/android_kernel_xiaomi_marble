@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,5 +46,8 @@ do { \
 	__qdf_ht_for_each_match(table, cursor, entry_field, key, key_field) \
 		break; \
 } while (false)
+
+#define __qdf_ht_for_each_safe(table, i, tmp, cursor, entry_field) \
+	hash_for_each_safe(table, i, tmp, cursor, entry_field)
 
 #endif /* __I_QDF_HASHTABLE_H */
