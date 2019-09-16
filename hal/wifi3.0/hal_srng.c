@@ -726,6 +726,8 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 
 	SRNG_LOCK_INIT(&srng->lock);
 
+	srng->srng_event = 0;
+
 	srng->initialized = true;
 
 	return (void *)srng;

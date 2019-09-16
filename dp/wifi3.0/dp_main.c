@@ -9241,11 +9241,14 @@ static QDF_STATUS dp_runtime_suspend(struct cdp_pdev *opaque_pdev)
 static
 void dp_flush_ring_hptp(struct dp_soc *soc, hal_ring_handle_t hal_srng)
 {
-	if (hal_srng) {
+	if (hal_srng && hal_srng_get_clear_event(hal_srng,
+						 HAL_SRNG_FLUSH_EVENT)) {
 		/* Acquire the lock */
 		hal_srng_access_start(soc->hal_soc, hal_srng);
 
 		hal_srng_access_end(soc->hal_soc, hal_srng);
+
+		hal_srng_set_flush_last_ts(hal_srng);
 	}
 }
 

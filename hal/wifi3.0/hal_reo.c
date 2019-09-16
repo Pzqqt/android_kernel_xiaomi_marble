@@ -686,7 +686,6 @@ inline int hal_reo_cmd_update_rx_queue(hal_ring_handle_t hal_ring_hdl,
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 	uint32_t *reo_desc, val;
 	struct hal_reo_cmd_update_queue_params *p;
-	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	p = &cmd->u.upd_queue_params;
 
@@ -888,7 +887,8 @@ inline int hal_reo_cmd_update_rx_queue(hal_ring_handle_t hal_ring_hdl,
 		hif_pm_runtime_put(hal_soc->hif_handle);
 	} else {
 		hal_srng_access_end_reap(hal_soc_hdl, hal_ring_hdl);
-		srng->needs_flush++;
+		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
+		hal_srng_inc_flush_cnt(hal_ring_hdl);
 	}
 
 	val = reo_desc[CMD_HEADER_DW_OFFSET];
