@@ -76,14 +76,14 @@ int dfs_is_subchan_in_etsi_precac_done_list(struct wlan_dfs *dfs,
 	return 0;
 }
 
-bool dfs_is_etsi_precac_done(struct wlan_dfs *dfs)
+bool dfs_is_etsi_precac_done(struct wlan_dfs *dfs, struct dfs_channel *channel)
 {
 	bool ret_val = 1;
 	uint8_t channels[NUM_CHANNELS_160MHZ];
 	uint8_t nchannels = 0;
 	int i;
 
-	nchannels = dfs_get_bonding_channels_without_seg_info(dfs->dfs_curchan,
+	nchannels = dfs_get_bonding_channels_without_seg_info(channel,
 							      channels);
 
 	for (i = 0; i < nchannels; i++) {
