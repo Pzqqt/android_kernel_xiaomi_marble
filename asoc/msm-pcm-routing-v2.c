@@ -29790,8 +29790,8 @@ static int msm_routing_send_device_pp_params(int port_id, int copp_idx,
 	pr_debug("%s: port_id %d, copp_idx %d\n", __func__, port_id, copp_idx);
 
 	if (port_id != HDMI_RX && port_id != DISPLAY_PORT_RX) {
-		pr_err("%s: Device pp params on invalid port %d\n",
-			__func__, port_id);
+		pr_err("%s: Device pp params on invalid port %d, copp_idx %d, fe_id %d\n",
+			__func__, port_id, copp_idx, fe_id);
 		return  -EINVAL;
 	}
 

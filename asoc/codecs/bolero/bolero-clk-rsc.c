@@ -129,6 +129,8 @@ int bolero_rsc_clk_reset(struct device *dev, int clk_id)
 	}
 	dev_dbg(priv->dev,
 		"%s: clock reset after ssr, count %d\n", __func__, count);
+
+	trace_printk("%s: clock reset after ssr, count %d\n", __func__, count);
 	while (count--) {
 		clk_prepare_enable(priv->clk[clk_id]);
 		clk_prepare_enable(priv->clk[clk_id + NPL_CLK_OFFSET]);
@@ -238,6 +240,7 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 	char __iomem *clk_muxsel = NULL;
 	int ret = 0;
 	int default_clk_id = priv->default_clk_id[clk_id];
+	u32 muxsel = 0;
 
 	clk_muxsel = bolero_clk_rsc_get_clk_muxsel(priv, clk_id);
 	if (!clk_muxsel) {
@@ -280,6 +283,9 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 			 */
 			if (clk_id != VA_CORE_CLK) {
 				iowrite32(0x1, clk_muxsel);
+				muxsel = ioread32(clk_muxsel);
+				trace_printk("%s: muxsel value after enable: %d\n",
+						__func__, muxsel);
 				bolero_clk_rsc_mux0_clk_request(priv,
 							default_clk_id,
 							false);
@@ -308,6 +314,9 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 					 * care in DSP itself.
 					 */
 					iowrite32(0x0, clk_muxsel);
+					muxsel = ioread32(clk_muxsel);
+					trace_printk("%s: muxsel value after disable: %d\n",
+							__func__, muxsel);
 				}
 			}
 			if (priv->clk[clk_id + NPL_CLK_OFFSET])
@@ -529,6 +538,7 @@ int bolero_clk_rsc_request_clock(struct device *dev,
 	if (!priv->dev_up && enable) {
 		dev_err_ratelimited(priv->dev, "%s: SSR is in progress..\n",
 				__func__);
+		trace_printk("%s: SSR is in progress..\n", __func__);
 		ret = -EINVAL;
 		goto err;
 	}
@@ -556,6 +566,9 @@ int bolero_clk_rsc_request_clock(struct device *dev,
 		goto err;
 
 	dev_dbg(priv->dev, "%s: clk_cnt: %d for requested clk: %d, enable: %d\n",
+		__func__,  priv->clk_cnt[clk_id_req], clk_id_req,
+		enable);
+	trace_printk("%s: clk_cnt: %d for requested clk: %d, enable: %d\n",
 		__func__,  priv->clk_cnt[clk_id_req], clk_id_req,
 		enable);
 
