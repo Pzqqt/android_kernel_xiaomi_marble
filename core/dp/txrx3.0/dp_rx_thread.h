@@ -99,18 +99,16 @@ struct dp_rx_thread {
 };
 
 /**
- * enum dp_rx_thread_state - enum to keep track of the state of the rx thread
- * @DP_RX_THREAD_INVALID: initial invalid state
- * @DP_RX_THREAD_INIT: state after being initialized
- * @DP_RX_THREAD_RUNNING: rx thread is functional(NOT suspended, processing
+ * enum dp_rx_thread_state - enum to keep track of the state of the rx threads
+ * @DP_RX_THREADS_INVALID: initial invalid state
+ * @DP_RX_THREADS_RUNNING: rx threads functional(NOT suspended, processing
  *			  packets or waiting on a wait_queue)
- * @DP_RX_THREAD_SUSPENDED: rx_thread operation is suspeded from cfg8011 suspend
+ * @DP_RX_THREADS_SUSPENDED: rx_threads suspended from cfg8011 suspend
  */
 enum dp_rx_thread_state {
-	DP_RX_THREAD_INVALID,
-	DP_RX_THREAD_INIT,
-	DP_RX_THREAD_RUNNING,
-	DP_RX_THREAD_SUSPENDED
+	DP_RX_THREADS_INVALID,
+	DP_RX_THREADS_RUNNING,
+	DP_RX_THREADS_SUSPENDED
 };
 
 /**

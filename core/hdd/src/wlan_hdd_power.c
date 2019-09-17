@@ -1279,6 +1279,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	wlan_hdd_rx_thread_resume(hdd_ctx);
 
+	dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
+
 	/*
 	 * After SSR, FW clear its txrx stats. In host,
 	 * as adapter is intact so those counts are still
