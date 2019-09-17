@@ -294,8 +294,10 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 			if (bolero_tx_clk_switch(component))
 				dev_dbg(va_dev, "%s: clock switch failed\n",
 					__func__);
+		bolero_register_event_listener(component, true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		bolero_register_event_listener(component, false);
 		if (bolero_tx_clk_switch(component))
 			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		if (va_priv->lpass_audio_hw_vote)
