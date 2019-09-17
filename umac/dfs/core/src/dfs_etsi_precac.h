@@ -172,13 +172,15 @@ static inline int dfs_is_subchan_in_etsi_precac_done_list(struct wlan_dfs *dfs)
 /**
  * dfs_is_etsi_precac_done() - Is precac done.
  * @dfs: Pointer to wlan_dfs structure.
+ * @channel: Channel to be checked of dfs_channel structure.
  *
  * Return: If precac already done in channel, return 1. Otherwise return 0.
  */
 #if defined(QCA_SUPPORT_ETSI_PRECAC_DFS)
-bool dfs_is_etsi_precac_done(struct wlan_dfs *dfs);
+bool dfs_is_etsi_precac_done(struct wlan_dfs *dfs, struct dfs_channel *channel);
 #else
-static inline bool dfs_is_etsi_precac_done(struct wlan_dfs *dfs)
+static inline bool
+dfs_is_etsi_precac_done(struct wlan_dfs *dfs, struct dfs_channel *channel)
 {
 	return false;
 }

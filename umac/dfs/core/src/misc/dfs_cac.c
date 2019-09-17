@@ -410,7 +410,7 @@ bool dfs_is_cac_required(struct wlan_dfs *dfs,
 		return false;
 	}
 
-	if (dfs_is_etsi_precac_done(dfs)) {
+	if (dfs_is_etsi_precac_done(dfs, cur_chan)) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "ETSI PRE-CAC alreay done on this channel %d",
 			  dfs->dfs_curchan->dfs_ch_ieee);
