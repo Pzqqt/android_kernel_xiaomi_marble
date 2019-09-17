@@ -28,13 +28,17 @@
 #include <qdf_mem.h>
 #include <qdf_platform.h>
 
-#define LOG_DEL_OBJ_TIMEOUT_VALUE_MSEC   5000
-#define LOG_DEL_OBJ_DESTROY_DURATION_SEC 5
+/*
+ * Default TTL (of FW) for mgmt frames is 5 sec, by considering all the other
+ * delays, arrived with this value
+ */
+#define LOG_DEL_OBJ_TIMEOUT_VALUE_MSEC   8000
+#define LOG_DEL_OBJ_DESTROY_DURATION_SEC 8
 /*
  * The max duration for which a obj can be allowed to remain in L-state
  * The duration  should be higher than the psoc idle timeout.
  */
-#define LOG_DEL_OBJ_DESTROY_ASSERT_DURATION_SEC 15
+#define LOG_DEL_OBJ_DESTROY_ASSERT_DURATION_SEC 24
 #define LOG_DEL_OBJ_LIST_MAX_COUNT       (3 + 5 + 48 + 4096)
 
 union wlan_objmgr_del_obj {
