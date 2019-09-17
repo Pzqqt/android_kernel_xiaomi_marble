@@ -1026,8 +1026,6 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	struct dp_vdev *vdev = NULL;
 	struct dp_pdev *pdev = NULL;
 	struct ol_if_ops *tops = NULL;
-	struct ieee80211_frame *wh;
-	uint8_t *rx_pkt_hdr;
 	uint16_t rx_seq, fragno;
 	unsigned int tid;
 	QDF_STATUS status;
@@ -1035,9 +1033,6 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 	if (!hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr))
 		return;
-
-	rx_pkt_hdr = hal_rx_pkt_hdr_get(qdf_nbuf_data(nbuf));
-	wh = (struct ieee80211_frame *)rx_pkt_hdr;
 
 	if (!peer) {
 		dp_err_rl("peer not found");
@@ -1056,32 +1051,38 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		goto fail;
 	}
 
-	tid = hal_rx_mpdu_start_tid_get(soc->hal_soc, qdf_nbuf_data(nbuf));
-	rx_seq = (((*(uint16_t *)wh->i_seq) &
-			IEEE80211_SEQ_SEQ_MASK) >>
-			IEEE80211_SEQ_SEQ_SHIFT);
-
 	fragno = dp_rx_frag_get_mpdu_frag_number(qdf_nbuf_data(nbuf));
-
 	/* Can get only last fragment */
 	if (fragno) {
+		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
+						qdf_nbuf_data(nbuf));
+		rx_seq = hal_rx_get_rx_sequence(qdf_nbuf_data(nbuf));
+
 		status = dp_rx_defrag_add_last_frag(soc, peer,
 						    tid, rx_seq, nbuf);
 		dp_info_rl("Frag pkt seq# %d frag# %d consumed status %d !",
 			   rx_seq, fragno, status);
-			return;
+		return;
 	}
 
-	qdf_copy_macaddr((struct qdf_mac_addr *)&mic_failure_info.da_mac_addr,
-			 (struct qdf_mac_addr *)&wh->i_addr1);
-	qdf_copy_macaddr((struct qdf_mac_addr *)&mic_failure_info.ta_mac_addr,
-			 (struct qdf_mac_addr *)&wh->i_addr2);
+	if (hal_rx_mpdu_get_addr1(qdf_nbuf_data(nbuf),
+				  &mic_failure_info.da_mac_addr.bytes[0])) {
+		dp_err_rl("Failed to get da_mac_addr");
+		goto fail;
+	}
+
+	if (hal_rx_mpdu_get_addr2(qdf_nbuf_data(nbuf),
+				  &mic_failure_info.ta_mac_addr.bytes[0])) {
+		dp_err_rl("Failed to get ta_mac_addr");
+		goto fail;
+	}
+
 	mic_failure_info.key_id = 0;
 	mic_failure_info.multicast =
-		IEEE80211_IS_MULTICAST(wh->i_addr1);
+		IEEE80211_IS_MULTICAST(mic_failure_info.da_mac_addr.bytes);
 	qdf_mem_zero(mic_failure_info.tsc, MIC_SEQ_CTR_SIZE);
 	mic_failure_info.frame_type = cdp_rx_frame_type_802_11;
-	mic_failure_info.data = (uint8_t *)wh;
+	mic_failure_info.data = NULL;
 	mic_failure_info.vdev_id = vdev->vdev_id;
 
 	tops = pdev->soc->cdp_soc.ol_ops;
