@@ -18182,11 +18182,11 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->full_roam_scan_period =
 		roam_info->cfgParams.full_roam_scan_period;
 	req_buf->roam_scan_inactivity_time =
-		mac_ctx->mlme_cfg->lfr.roam_scan_inactivity_time;
+		roam_info->cfgParams.roam_scan_inactivity_time;
 	req_buf->roam_inactive_data_packet_count =
-		mac_ctx->mlme_cfg->lfr.roam_inactive_data_packet_count;
+		roam_info->cfgParams.roam_inactive_data_packet_count;
 	req_buf->roam_scan_period_after_inactivity =
-		mac_ctx->mlme_cfg->lfr.roam_scan_period_after_inactivity;
+		roam_info->cfgParams.roam_scan_period_after_inactivity;
 
 	req_buf->RoamBmissFirstBcnt =
 		roam_info->cfgParams.nRoamBmissFirstBcnt;
