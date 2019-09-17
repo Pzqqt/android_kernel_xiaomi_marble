@@ -6813,6 +6813,8 @@ QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
+		mac->mlme_cfg->lfr.empty_scan_refresh_period =
+			empty_scan_refresh_period;
 		pNeighborRoamInfo->cfgParams.emptyScanRefreshPeriod =
 			empty_scan_refresh_period;
 
