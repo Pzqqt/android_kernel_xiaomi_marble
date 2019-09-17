@@ -139,6 +139,7 @@ struct tbttoffset_params {
  * @csa_switch_count_offset: CSA swith count offset in beacon frame
  * @ext_csa_switch_count_offset: ECSA switch count offset in beacon frame
  * @esp_ie_offset: ESP IE offset in beacon frame
+ * @mu_edca_ie_offset: Mu EDCA IE offset in beacon frame
  * @frm: beacon template parameter
  */
 struct beacon_tmpl_params {
@@ -150,6 +151,7 @@ struct beacon_tmpl_params {
 	uint32_t csa_switch_count_offset;
 	uint32_t ext_csa_switch_count_offset;
 	uint32_t esp_ie_offset;
+	uint32_t mu_edca_ie_offset;
 	uint8_t *frm;
 };
 

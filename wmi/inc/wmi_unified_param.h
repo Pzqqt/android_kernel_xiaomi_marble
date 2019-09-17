@@ -4701,6 +4701,7 @@ typedef enum {
 	wmi_pdev_param_set_cmd_obss_pd_threshold,
 	wmi_pdev_param_set_cmd_obss_pd_per_ac,
 	wmi_pdev_param_set_cong_ctrl_max_msdus,
+	wmi_pdev_param_enable_fw_dynamic_he_edca,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
