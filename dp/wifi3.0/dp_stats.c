@@ -5597,6 +5597,8 @@ dp_print_soc_tx_stats(struct dp_soc *soc)
 		       soc->stats.tx.tcl_ring_full[2]);
 	DP_PRINT_STATS("Tx invalid completion release = %d",
 		       soc->stats.tx.invalid_release_source);
+	DP_PRINT_STATS("Tx comp wbm internal error = %d",
+		       soc->stats.tx.wbm_internal_error);
 	DP_PRINT_STATS("Tx comp loop pkt limit hit = %d",
 		       soc->stats.tx.tx_comp_loop_pkt_limit_hit);
 	DP_PRINT_STATS("Tx comp HP out of sync2 = %d",

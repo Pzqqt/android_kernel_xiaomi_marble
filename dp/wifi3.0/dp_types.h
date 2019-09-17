@@ -661,6 +661,8 @@ struct dp_soc_stats {
 		uint32_t dropped_fw_removed;
 		/* tx completion release_src != TQM or FW */
 		uint32_t invalid_release_source;
+		/* tx completion wbm_internal_error */
+		uint32_t wbm_internal_error;
 		/* TX Comp loop packet limit hit */
 		uint32_t tx_comp_loop_pkt_limit_hit;
 		/* Head pointer Out of sync at the end of dp_tx_comp_handler */

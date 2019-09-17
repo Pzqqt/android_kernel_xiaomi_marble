@@ -2379,6 +2379,29 @@ static inline bool hal_rx_reo_is_2k_jump(hal_ring_desc_t rx_desc)
 			true : false;
 }
 
+#define HAL_WBM_RELEASE_RING_DESC_LEN_DWORDS (NUM_OF_DWORDS_WBM_RELEASE_RING)
+/**
+ * hal_dump_wbm_rel_desc() - dump wbm release descriptor
+ * @hal_desc: hardware descriptor pointer
+ *
+ * This function will print wbm release descriptor
+ *
+ * Return: none
+ */
+static inline void hal_dump_wbm_rel_desc(void *src_srng_desc)
+{
+	uint32_t *wbm_comp = (uint32_t *)src_srng_desc;
+	uint32_t i;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_FATAL,
+		  "Current Rx wbm release descriptor is");
+
+	for (i = 0; i < HAL_WBM_RELEASE_RING_DESC_LEN_DWORDS; i++) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_FATAL,
+			  "DWORD[i] = 0x%x", wbm_comp[i]);
+	}
+}
+
 /**
  * hal_rx_msdu_link_desc_set: Retrieves MSDU Link Descriptor to WBM
  *
@@ -2398,16 +2421,36 @@ void hal_rx_msdu_link_desc_set(hal_soc_handle_t hal_soc_hdl,
 {
 	struct wbm_release_ring *wbm_rel_srng =
 			(struct wbm_release_ring *)src_srng_desc;
+	uint32_t addr_31_0;
+	uint8_t addr_39_32;
 
 	/* Structure copy !!! */
 	wbm_rel_srng->released_buff_or_desc_addr_info =
 				*((struct buffer_addr_info *)buf_addr_info);
+
+	addr_31_0 =
+	wbm_rel_srng->released_buff_or_desc_addr_info.buffer_addr_31_0;
+	addr_39_32 =
+	wbm_rel_srng->released_buff_or_desc_addr_info.buffer_addr_39_32;
+
 	HAL_DESC_SET_FIELD(src_srng_desc, WBM_RELEASE_RING_2,
 		RELEASE_SOURCE_MODULE, HAL_RX_WBM_ERR_SRC_SW);
 	HAL_DESC_SET_FIELD(src_srng_desc, WBM_RELEASE_RING_2, BM_ACTION,
 		bm_action);
 	HAL_DESC_SET_FIELD(src_srng_desc, WBM_RELEASE_RING_2,
 		BUFFER_OR_DESC_TYPE, HAL_RX_WBM_BUF_TYPE_MSDU_LINK_DESC);
+
+	/* WBM error is indicated when any of the link descriptors given to
+	 * WBM has a NULL address, and one those paths is the link descriptors
+	 * released from host after processing RXDMA errors,
+	 * or from Rx defrag path, and we want to add an assert here to ensure
+	 * host is not releasing descriptors with NULL address.
+	 */
+
+	if (qdf_unlikely(!addr_31_0 && !addr_39_32)) {
+		hal_dump_wbm_rel_desc(src_srng_desc);
+		qdf_assert_always(0);
+	}
 }
 
 /*

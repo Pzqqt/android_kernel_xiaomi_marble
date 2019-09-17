@@ -3437,6 +3437,7 @@ more_data:
 		 * Tx completion indication, assert */
 		if ((buffer_src != HAL_TX_COMP_RELEASE_SOURCE_TQM) &&
 				(buffer_src != HAL_TX_COMP_RELEASE_SOURCE_FW)) {
+			uint8_t wbm_internal_error;
 
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				  QDF_TRACE_LEVEL_FATAL,
@@ -3444,7 +3445,28 @@ more_data:
 				  buffer_src);
 			hal_dump_comp_desc(tx_comp_hal_desc);
 			DP_STATS_INC(soc, tx.invalid_release_source, 1);
-			qdf_assert_always(0);
+
+			/* When WBM sees NULL buffer_addr_info in any of
+			 * ingress rings it sends an error indication,
+			 * with wbm_internal_error=1, to a specific ring.
+			 * The WBM2SW ring used to indicate these errors is
+			 * fixed in HW, and that ring is being used as Tx
+			 * completion ring. These errors are not related to
+			 * Tx completions, and should just be ignored
+			 */
+
+			wbm_internal_error =
+			hal_get_wbm_internal_error(tx_comp_hal_desc);
+
+			if (wbm_internal_error) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  "Tx comp wbm_internal_error!!!\n");
+				DP_STATS_INC(soc, tx.wbm_internal_error, 1);
+				continue;
+			} else {
+				qdf_assert_always(0);
+			}
 		}
 
 		/* Get descriptor id */
