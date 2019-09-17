@@ -1947,12 +1947,16 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 static QDF_STATUS
 wma_cleanup_vdev_resp_and_hold_req(struct scheduler_msg *msg)
 {
+	tp_wma_handle wma;
+
 	if (!msg || !msg->bodyptr) {
 		WMA_LOGE(FL("msg or body pointer is NULL"));
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wma_cleanup_hold_req(msg->bodyptr);
+	wma = msg->bodyptr;
+	target_if_flush_vdev_timers(wma->pdev);
+	wma_cleanup_hold_req(wma);
 
 	return QDF_STATUS_SUCCESS;
 }
