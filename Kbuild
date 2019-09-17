@@ -89,6 +89,10 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_wext.o \
 	    $(HDD_SRC_DIR)/wlan_hdd_hostapd_wext.o
 endif
 
+ifeq ($(CONFIG_DCS), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_dcs.o
+endif
+
 ifeq ($(CONFIG_FEATURE_WLAN_EXTSCAN), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_ext_scan.o
 endif
@@ -1301,6 +1305,11 @@ WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_interop_issues_ap_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_interop_issues_ap_tlv.o
 endif
 
+ifeq ($(CONFIG_DCS), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_dcs_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_dcs_tlv.o
+endif
+
 ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_nan_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_nan_tlv.o
@@ -1602,6 +1611,22 @@ CP_STATS_OBJS := $(CP_STATS_TGT_SRC)/target_if_mc_cp_stats.o                 \
 		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_utils_api.o        \
 		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_mc_tgt_api.o       \
 		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_mc_ucfg_api.o
+endif
+
+###### DCS ######
+DCS_TGT_IF_SRC := $(WLAN_COMMON_ROOT)/target_if/dcs/src
+DCS_CORE_SRC   := $(WLAN_COMMON_ROOT)/umac/dcs/core/src
+DCS_DISP_SRC   := $(WLAN_COMMON_ROOT)/umac/dcs/dispatcher/src
+
+DCS_TGT_IF_INC := -I$(WLAN_COMMON_INC)/target_if/dcs/inc
+DCS_DISP_INC   := -I$(WLAN_COMMON_INC)/umac/dcs/dispatcher/inc
+
+ifeq ($(CONFIG_DCS), y)
+DCS_OBJS := $(DCS_TGT_IF_SRC)/target_if_dcs.o \
+	$(DCS_CORE_SRC)/wlan_dcs.o \
+	$(DCS_DISP_SRC)/wlan_dcs_init_deinit_api.o \
+	$(DCS_DISP_SRC)/wlan_dcs_ucfg_api.o \
+	$(DCS_DISP_SRC)/wlan_dcs_tgt_api.o
 endif
 
 ###### COMPONENT CP STATS ########
@@ -2043,6 +2068,9 @@ INCS +=		$(CP_STATS_OS_IF_INC)
 INCS +=		$(CP_STATS_TGT_INC)
 INCS +=		$(CP_STATS_DISPATCHER_INC)
 INCS += 	$(COMP_CP_STATS_DISPATCHER_INC)
+################ Dynamic ACS ####################
+INCS +=		$(DCS_TGT_IF_INC)
+INCS +=		$(DCS_DISP_INC)
 ################ INTEROP ISSUES AP ################
 INCS +=		$(INTEROP_ISSUES_AP_OS_IF_INC)
 INCS +=		$(INTEROP_ISSUES_AP_TGT_INC)
@@ -2155,6 +2183,7 @@ endif
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(WIFI_POS_OBJS)
 OBJS +=		$(CP_STATS_OBJS)
+OBJS +=		$(DCS_OBJS)
 OBJS +=		$(INTEROP_ISSUES_AP_OBJS)
 OBJS +=		$(WLAN_NAN_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
@@ -2281,6 +2310,7 @@ cppflags-$(CONFIG_WLAN_LOGGING_SOCK_SVC) += -DWLAN_LOGGING_SOCK_SVC_ENABLE
 cppflags-$(CONFIG_WLAN_LOGGING_BUFFERS_DYNAMICALLY) += -DWLAN_LOGGING_BUFFERS_DYNAMICALLY
 cppflags-$(CONFIG_WLAN_FEATURE_FILS) += -DWLAN_FEATURE_FILS_SK
 cppflags-$(CONFIG_CP_STATS) += -DQCA_SUPPORT_CP_STATS
+cppflags-$(CONFIG_DCS) += -DDCS_INTERFERENCE_DETECTION
 cppflags-$(CONFIG_FEATURE_INTEROP_ISSUES_AP) += -DWLAN_FEATURE_INTEROP_ISSUES_AP
 cppflags-$(CONFIG_FEATURE_MEMDUMP_ENABLE) += -DWLAN_FEATURE_MEMDUMP_ENABLE
 cppflags-$(CONFIG_FEATURE_FW_LOG_PARSING) += -DFEATURE_FW_LOG_PARSING

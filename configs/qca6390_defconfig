@@ -620,6 +620,9 @@ endif
 
 CONFIG_CP_STATS := y
 
+#Flag to enable compilation of DCS module
+CONFIG_DCS := y
+
 CONFIG_FEATURE_WLAN_WAPI := y
 
 CONFIG_AGEIE_ON_SCAN_RESULTS := y
