@@ -96,7 +96,7 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_CFR_ID);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfr_err("%s,%d unable to get reference", __func__, __LINE__);
+		cfr_err("unable to get reference");
 		return status;
 	}
 
@@ -213,8 +213,8 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 				prindex, cfr_dump_len, &end_magic, 4);
 	}
 
-	cfr_debug("CFR:%s status=%d rindex=%x dump_len=%d\n", __func__,
-		    cfr_cap_status, prindex, cfr_dump_len);
+	cfr_debug("CFR: status=%d rindex=0x%pK dump_len=%d\n",
+		  cfr_cap_status, prindex, cfr_dump_len);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 
@@ -264,7 +264,7 @@ cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
 				read_offset = pa->cfr_mem_chunk.vaddr;
 				(*read_offset) =
 				    CFR_CAPTURE_HOST_MEM_DEFAULT_READ_OFFSET;
-				cfr_debug("CFR:%s reqid=%d len=%d\n", __func__,
+				cfr_debug("CFR: reqid=%d len=%d\n",
 					pa->cfr_mem_chunk.req_id,
 					pa->cfr_mem_chunk.len);
 			}
