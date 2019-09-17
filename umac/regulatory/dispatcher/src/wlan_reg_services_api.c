@@ -215,6 +215,8 @@ QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 	return reg_get_current_chan_list(pdev, chan_list);
 }
 
+qdf_export_symbol(wlan_reg_get_current_chan_list);
+
 /**
  * wlan_reg_get_bw_value() - give bandwidth value
  * bw: bandwidth enum

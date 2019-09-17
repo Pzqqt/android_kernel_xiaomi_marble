@@ -425,12 +425,16 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 
 	case SPECTRAL_ACTIVATE_SCAN:
 		err = &sscan_req->action_req.sscan_err_code;
-		sc->sptrlc_start_spectral_scan(pdev, smode, err);
+		ret = sc->sptrlc_start_spectral_scan(pdev, smode, err);
+		if (QDF_IS_STATUS_ERROR(ret))
+			goto bad;
 		break;
 
 	case SPECTRAL_STOP_SCAN:
 		err = &sscan_req->action_req.sscan_err_code;
-		sc->sptrlc_stop_spectral_scan(pdev, smode, err);
+		ret = sc->sptrlc_stop_spectral_scan(pdev, smode, err);
+		if (QDF_IS_STATUS_ERROR(ret))
+			goto bad;
 		break;
 
 	case SPECTRAL_GET_CAPABILITY_INFO:
