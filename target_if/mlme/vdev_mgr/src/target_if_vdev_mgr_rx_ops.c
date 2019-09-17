@@ -150,6 +150,39 @@ static void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 	}
 }
 
+void target_if_timer_flush_handler(struct wlan_objmgr_pdev *pdev,
+				   void *object,
+				   void *arg)
+{
+	struct vdev_response_timer *vdev_rsp;
+	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev = object;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
+		return;
+	}
+
+	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
+	if (!rx_ops || !rx_ops->vdev_mgr_get_response_timer_info) {
+		mlme_err("No Rx Ops");
+		return;
+	}
+
+	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
+	if (qdf_timer_sync_cancel(&vdev_rsp->rsp_timer))
+		target_if_vdev_mgr_rsp_timer_cb(vdev);
+}
+
+void target_if_flush_vdev_timers(struct wlan_objmgr_pdev *pdev)
+{
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  target_if_timer_flush_handler,
+					  NULL, true, WLAN_VDEV_TARGET_IF_ID);
+}
+
 #ifdef SERIALIZE_VDEV_RESP_TIMER
 static QDF_STATUS target_if_vdev_mgr_rsp_flush_cb(struct scheduler_msg *msg)
 {
