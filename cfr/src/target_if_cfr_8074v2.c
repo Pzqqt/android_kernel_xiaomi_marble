@@ -234,7 +234,8 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	data = payload->vaddr;
 	cookie = payload->cookie;
 
-	cfr_debug("bufferaddr: 0x%pK cookie: %u", payload->paddr, cookie);
+	cfr_debug("bufferaddr: 0x%pK cookie: %u",
+		  (void *)((uintptr_t)payload->paddr), cookie);
 	qdf_mem_copy(&dma_hdr, &data[0], sizeof(struct whal_cfir_dma_hdr));
 
 	dump_dma_hdr(&dma_hdr, 0);
@@ -447,14 +448,15 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	if (target_if_dbr_cookie_lookup(pdev, DBR_MODULE_CFR, buf_addr,
 					&cookie, 0)) {
 		cfr_debug("Cookie lookup failure for addr: 0x%pK status: 0x%x",
-		buf_addr, tx_evt_param.status);
+			  (void *)((uintptr_t)buf_addr), tx_evt_param.status);
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 		return -EINVAL;
 	}
 
-	cfr_debug("buffer address: 0x%pK cookie: %u", buf_addr, cookie);
+	cfr_debug("buffer address: 0x%pK cookie: %u",
+		  (void *)((uintptr_t)buf_addr), cookie);
 
 	lut = &pdev_cfrobj->lut[cookie];
 	lut->tx_ppdu_id = (tx_evt_param.correlation_info_2 >> 16);
@@ -507,7 +509,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		cfr_debug("Data sent to upper layers, releasing look up table");
 	} else if (status == STATUS_HOLD) {
 		cfr_debug("HOLD for buffer address: 0x%pK cookie: %u",
-			  buf_addr, cookie);
+			  (void *)((uintptr_t)buf_addr), cookie);
 	} else {
 		cfr_err("Correlation returned invalid status!!");
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
