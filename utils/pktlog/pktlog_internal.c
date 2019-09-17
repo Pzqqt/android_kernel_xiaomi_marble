@@ -1496,7 +1496,7 @@ int process_rx_desc_remote(void *pdev, void *data)
 	qdf_mem_zero(&pl_hdr, sizeof(pl_hdr));
 	pl_hdr.flags = (1 << PKTLOG_FLG_FRM_TYPE_REMOTE_S);
 	pl_hdr.missed_cnt = 0;
-	pl_hdr.log_type = 22; /*PKTLOG_TYPE_RX_STATBUF*/
+	pl_hdr.log_type = PKTLOG_TYPE_RX_STATBUF;
 	pl_hdr.size = qdf_nbuf_len(log_nbuf);
 	pl_hdr.timestamp = 0;
 	log_size = pl_hdr.size;
