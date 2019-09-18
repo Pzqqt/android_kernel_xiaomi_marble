@@ -1740,6 +1740,8 @@ enum _ol_ath_param_t {
 	/* same ssid feature global disable */
 	OL_ATH_PARAM_SAME_SSID_DISABLE = 425,
 #endif
+	/* get MBSS enable flag */
+	OL_ATH_PARAM_MBSS_EN  = 426,
 };
 #endif
 /* Bitmasks for stats that can block */
