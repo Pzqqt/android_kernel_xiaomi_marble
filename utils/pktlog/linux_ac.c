@@ -539,13 +539,13 @@ static int __pktlog_open(struct inode *i, struct file *f)
 	PKTLOG_MOD_INC_USE_COUNT;
 	pl_info = PDE_DATA(f->f_path.dentry->d_inode);
 	if (!pl_info) {
-		pr_err("%s: pl_info NULL", __func__);
+		qdf_nofl_err("%s: pl_info NULL", __func__);
 		return -EINVAL;
 	}
 
 	if (pl_info->curr_pkt_state != PKTLOG_OPR_NOT_IN_PROGRESS) {
-		pr_info("%s: plinfo state (%d) != PKTLOG_OPR_NOT_IN_PROGRESS",
-			__func__, pl_info->curr_pkt_state);
+		qdf_nofl_info("%s: plinfo state (%d) != PKTLOG_OPR_NOT_IN_PROGRESS",
+			      __func__, pl_info->curr_pkt_state);
 		return -EBUSY;
 	}
 
@@ -642,8 +642,8 @@ static int __pktlog_release(struct inode *i, struct file *f)
 			cds_is_packet_log_enabled(), 0, 1);
 
 	if (ret != 0)
-		pr_warn("%s: pktlog cannot be enabled. ret value %d\n",
-			__func__, ret);
+		qdf_nofl_warn("%s: pktlog cannot be enabled. ret value %d",
+			      __func__, ret);
 
 	pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
 	return ret;

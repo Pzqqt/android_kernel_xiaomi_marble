@@ -414,7 +414,7 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 	}
 
 	if (!pl_dev) {
-		pr_err("Invalid pktlog handle in %s\n", __func__);
+		qdf_nofl_err("Invalid pktlog handle in %s", __func__);
 		qdf_assert(pl_dev);
 		return A_ERROR;
 	}
@@ -525,7 +525,7 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 	}
 
 	if (!pl_dev) {
-		pr_err("Invalid pktlog handle in %s\n", __func__);
+		qdf_nofl_err("Invalid pktlog handle in %s", __func__);
 		qdf_assert(pl_dev);
 		return A_ERROR;
 	}

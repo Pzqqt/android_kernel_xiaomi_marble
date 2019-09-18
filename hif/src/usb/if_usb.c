@@ -720,7 +720,7 @@ void hif_usb_ramdump_handler(struct hif_opaque_softc *scn)
 		reg = (uint32_t *) (data + 4);
 		start_addr = *reg++;
 		if (sc->fw_ram_dumping == 0) {
-			pr_err("Firmware stack dump:");
+			qdf_nofl_err("Firmware stack dump:");
 			sc->fw_ram_dumping = 1;
 			fw_stack_addr = start_addr;
 		}
@@ -729,13 +729,13 @@ void hif_usb_ramdump_handler(struct hif_opaque_softc *scn)
 		for (i = 0; i < (len - 8); i += 16) {
 			if ((*reg == FW_REG_END_PATTERN) && (i == len - 12)) {
 				sc->fw_ram_dumping = 0;
-				pr_err("Stack start address = %#08x\n",
-					fw_stack_addr);
+				qdf_nofl_err("Stack start address = %#08x",
+					     fw_stack_addr);
 				break;
 			}
 			hex_dump_to_buffer(reg, remaining, 16, 4, str_buf,
 						sizeof(str_buf), false);
-			pr_err("%#08x: %s\n", start_addr + i, str_buf);
+			qdf_nofl_err("%#08x: %s", start_addr + i, str_buf);
 			remaining -= 16;
 			reg += 4;
 		}

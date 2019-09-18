@@ -1527,7 +1527,7 @@ static void hal_reo_status_get_header_generic(uint32_t *d, int b, void *h1)
 			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER)];
 		break;
 	default:
-		pr_err("ERROR: Unknown tlv\n");
+		qdf_nofl_err("ERROR: Unknown tlv");
 		break;
 	}
 	h->cmd_num =
@@ -1570,7 +1570,7 @@ static void hal_reo_status_get_header_generic(uint32_t *d, int b, void *h1)
 			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER_GENERIC)];
 		break;
 	default:
-		pr_err("ERROR: Unknown tlv\n");
+		qdf_nofl_err("ERROR: Unknown tlv");
 		break;
 	}
 	h->tstamp =
