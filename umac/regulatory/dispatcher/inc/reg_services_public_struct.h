@@ -25,7 +25,13 @@
 #define __REG_SERVICES_PUBLIC_STRUCT_H_
 
 #define REG_SBS_SEPARATION_THRESHOLD 100
+
+#ifdef CONFIG_BAND_6GHZ
+#define REG_MAX_CHANNELS_PER_OPERATING_CLASS  70
+#else
 #define REG_MAX_CHANNELS_PER_OPERATING_CLASS  25
+#endif
+
 #define REG_MAX_SUPP_OPER_CLASSES 32
 #define REG_MAX_CHAN_CHANGE_CBKS 30
 #define MAX_STA_VDEV_CNT 4
@@ -540,16 +546,36 @@ enum offset_t {
 };
 
 /**
+ * enum behav_limit - behavior limit
+ * @BEHAV_NONE: none
+ * @BEHAV_BW40_LOW_PRIMARY: BW40 low primary
+ * @BEHAV_BW40_HIGH_PRIMARY: BW40 high primary
+ * @BEHAV_BW80_PLUS: BW 80 plus
+ * @BEHAV_INVALID: invalid behavior
+ */
+enum behav_limit {
+	BEHAV_NONE,
+	BEHAV_BW40_LOW_PRIMARY,
+	BEHAV_BW40_HIGH_PRIMARY,
+	BEHAV_BW80_PLUS,
+	BEHAV_INVALID = 0xFF
+};
+
+/**
  * struct reg_dmn_op_class_map_t: operating class
  * @op_class: operating class number
- * @ch_spacing: channel spacing
+ * @chan_spacing: channel spacing
  * @offset: offset
+ * @behav_limit: OR of bitmaps of enum behav_limit
+ * @start_freq: starting frequency
  * @channels: channel set
  */
 struct reg_dmn_op_class_map_t {
 	uint8_t op_class;
-	uint8_t ch_spacing;
+	uint8_t chan_spacing;
 	enum offset_t offset;
+	uint16_t behav_limit;
+	uint16_t start_freq;
 	uint8_t channels[REG_MAX_CHANNELS_PER_OPERATING_CLASS];
 };
 

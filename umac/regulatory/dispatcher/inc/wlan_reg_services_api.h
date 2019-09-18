@@ -1102,5 +1102,58 @@ uint16_t wlan_reg_min_chan_freq(void);
  */
 uint16_t wlan_reg_max_chan_freq(void);
 
+/**
+ * wlan_reg_freq_width_to_chan_op_class () - get op class from freq
+ * @pdev: pdev ptr
+ * @freq: channel frequency
+ * @chan_width: channel width
+ * @global_tbl_lookup: whether to look up global table
+ * @behav_limit: behavior limit
+ * @op_class: operating class
+ * @chan_num: channel number
+ *
+ * Return: void
+ */
+void wlan_reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
+					  uint16_t freq,
+					  uint16_t chan_width,
+					  bool global_tbl_lookup,
+					  uint16_t behav_limit,
+					  uint8_t *op_class,
+					  uint8_t *chan_num);
+
+/**
+ * wlan_reg_freq_to_chan_and_op_class () - converts freq to oper class
+ * @pdev: pdev ptr
+ * @freq: channel frequency
+ * @global_tbl_lookup: whether to look up global table
+ * @behav_limit: behavior limit
+ * @op_class: operating class
+ * @chan_num: channel number
+ *
+ * Return: void
+ */
+void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
+				    uint16_t freq,
+				    bool global_tbl_lookup,
+				    uint16_t behav_limit,
+				    uint8_t *op_class,
+				    uint8_t *chan_num);
+
 #endif /*CONFIG_CHAN_FREQ_API */
+
+/**
+ * wlan_reg_get_op_class_width () - get operating class chan width
+ * @pdev: pdev ptr
+ * @freq: channel frequency
+ * @global_tbl_lookup: whether to look up global table
+ * @op_class: operating class
+ * @chan_num: channel number
+ *
+ * Return: channel width of op class
+ */
+uint16_t wlan_reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
+				     uint8_t op_class,
+				     bool global_tbl_lookup);
+
 #endif

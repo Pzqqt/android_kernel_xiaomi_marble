@@ -74,6 +74,61 @@ uint16_t reg_dmn_set_curr_opclasses(uint8_t num_classes, uint8_t *class);
  */
 uint16_t reg_dmn_get_curr_opclasses(uint8_t *num_classes, uint8_t *class);
 
+#ifdef CONFIG_CHAN_FREQ_API
+
+/**
+ * reg_freq_width_to_chan_op_class() - convert frequency to oper class,
+ *                                     channel
+ * @pdev: pdev pointer
+ * @freq: channel frequency in mhz
+ * @chan_width: channel width
+ * @global_tbl_lookup: whether to lookup global op class tbl
+ * @behav_limit: behavior limit
+ * @op_class: operating class
+ * @chan_num: channel number
+ *
+ * Return: Void.
+ */
+void reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
+				     uint16_t freq,
+				     uint16_t chan_width,
+				     bool global_tbl_lookup,
+				     uint16_t behav_limit,
+				     uint8_t *op_class,
+				     uint8_t *chan_num);
+
+/**
+ * reg_freq_to_chan_op_class() - convert frequency to oper class,
+ *                                   channel
+ * @pdev: pdev pointer
+ * @freq: channel frequency in mhz
+ * @global_tbl_lookup: whether to lookup global op class tbl
+ * @behav_limit: behavior limit
+ * @op_class: operating class
+ * @chan_num: channel number
+ *
+ * Return: Void.
+ */
+void reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
+			       uint16_t freq,
+			       bool global_tbl_lookup,
+			       uint16_t behav_limit,
+			       uint8_t *op_class,
+			       uint8_t *chan_num);
+#endif
+
+/**
+ * reg_get_op_class_width() - get oper class width
+ *
+ * @pdev: pdev pointer
+ * @global_tbl_lookup: whether to lookup global op class tbl
+ * @op_class: operating class
+ * Return: uint16
+ */
+uint16_t reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
+				uint8_t op_class,
+				bool global_tbl_lookup);
+
 #else
 
 static inline uint16_t reg_dmn_get_chanwidth_from_opclass(
@@ -103,6 +158,38 @@ static inline uint16_t reg_dmn_get_opclass_from_channel(
 static inline void reg_dmn_print_channels_in_opclass(uint8_t *country,
 						     uint8_t op_class)
 {
+}
+
+#ifdef CONFIG_CHAN_FREQ_API
+
+static inline void
+reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
+				uint16_t freq,
+				uint16_t chan_width,
+				bool global_tbl_lookup,
+				uint16_t behav_limit,
+				uint8_t *op_class,
+				uint8_t *chan_num)
+{
+}
+
+static inline void
+reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
+			  uint16_t freq,
+			  bool global_tbl_lookup,
+			  uint16_t behav_limit,
+			  uint8_t *op_class,
+			  uint8_t *chan_num)
+{
+}
+
+#endif
+
+uint16_t reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
+				uint8_t op_class,
+				bool global_tbl_lookup)
+{
+	return 0;
 }
 
 #endif
