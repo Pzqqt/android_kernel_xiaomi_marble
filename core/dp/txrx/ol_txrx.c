@@ -1652,13 +1652,15 @@ ol_txrx_vdev_per_vdev_tx_desc_init(struct ol_txrx_vdev_t *vdev)
  * @vdev_id - the ID used to identify the virtual device to the target
  * @op_mode - whether this virtual device is operating as an AP,
  * an IBSS, or a STA
+ * @subtype:  Subtype of the operating vdev
  *
  * Return: success: handle to new data vdev object, failure: NULL
  */
 static struct cdp_vdev *
 ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 		    uint8_t *vdev_mac_addr,
-		    uint8_t vdev_id, enum wlan_op_mode op_mode)
+		    uint8_t vdev_id, enum wlan_op_mode op_mode,
+		    enum wlan_op_subtype subtype)
 {
 	struct ol_txrx_pdev_t  *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_vdev_t *vdev;
@@ -1676,6 +1678,7 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 	vdev->pdev = pdev;
 	vdev->vdev_id = vdev_id;
 	vdev->opmode = op_mode;
+	vdev->subtype = subtype;
 
 	vdev->delete.pending = 0;
 	vdev->safemode = 0;
