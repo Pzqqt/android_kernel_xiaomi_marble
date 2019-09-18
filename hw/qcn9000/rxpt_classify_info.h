@@ -23,7 +23,7 @@
 // ################ START SUMMARY #################
 //
 //	Dword	Fields
-//	0	reo_destination_indication[4:0], reserved_0a[6:5], use_flow_id_toeplitz_clfy[7], pkt_selection_fp_ucast_data[8], pkt_selection_fp_mcast_data[9], pkt_selection_fp_1000[10], rxdma0_source_ring_selection[12:11], rxdma0_destination_ring_selection[14:13], reserved_0b[31:15]
+//	0	reo_destination_indication[4:0], lmac_peer_id_msb[6:5], use_flow_id_toeplitz_clfy[7], pkt_selection_fp_ucast_data[8], pkt_selection_fp_mcast_data[9], pkt_selection_fp_1000[10], rxdma0_source_ring_selection[12:11], rxdma0_destination_ring_selection[14:13], reserved_0b[31:15]
 //
 // ################ END SUMMARY #################
 
@@ -31,7 +31,7 @@
 
 struct rxpt_classify_info {
              uint32_t reo_destination_indication      :  5, //[4:0]
-                      reserved_0a                     :  2, //[6:5]
+                      lmac_peer_id_msb                :  2, //[6:5]
                       use_flow_id_toeplitz_clfy       :  1, //[7]
                       pkt_selection_fp_ucast_data     :  1, //[8]
                       pkt_selection_fp_mcast_data     :  1, //[9]
@@ -72,10 +72,12 @@ reo_destination_indication
 			the REO2FW ring
 			
 			<enum 7 reo_destination_sw5> Reo will push the frame
-			into the REO2SW5 ring 
+			into the REO2SW5 ring (REO remaps this in chips without
+			REO2SW5 ring, e.g. Pine)
 			
 			<enum 8 reo_destination_sw6> Reo will push the frame
-			into the REO2SW6 ring 
+			into the REO2SW6 ring (REO remaps this in chips without
+			REO2SW6 ring, e.g. Pine)
 			
 			<enum 9 reo_destination_9> REO remaps this <enum 10
 			reo_destination_10> REO remaps this 
@@ -125,15 +127,28 @@ reo_destination_indication
 			
 			<legal all>
 
-reserved_0a
+lmac_peer_id_msb
+			
+			If use_flow_id_toeplitz_clfy is set and lmac_peer_id_'sb
+			is 2'b00, Rx OLE uses a REO desination indicati'n of {1'b1,
+			hash[3:0]} using the chosen Toeplitz hash from Common Parser
+			if flow search fails.
+			
+			If use_flow_id_toeplitz_clfy is set and lmac_peer_id_msb
+			's not 2'b00, Rx OLE uses a REO desination indication of
+			{lmac_peer_id_msb, hash[2:0]} using the chosen Toeplitz hash
+			from Common Parser if flow search fails.
+			
+			This LMAC/peer-based routing is not supported in
+			Hastings80 and HastingsPrime.
 			
 			<legal 0>
 
 use_flow_id_toeplitz_clfy
 			
-			Indication to Rx OLE to enable classification based on
-			the chosen Toeplitz hash from Common Parser, in case flow
-			search fails
+			Indication to Rx OLE to enable REO destination routing
+			based on the chosen Toeplitz hash from Common Parser, in
+			case flow search fails
 			
 			<legal all>
 
@@ -274,10 +289,12 @@ reserved_0b
 			the REO2FW ring
 			
 			<enum 7 reo_destination_sw5> Reo will push the frame
-			into the REO2SW5 ring 
+			into the REO2SW5 ring (REO remaps this in chips without
+			REO2SW5 ring, e.g. Pine)
 			
 			<enum 8 reo_destination_sw6> Reo will push the frame
-			into the REO2SW6 ring 
+			into the REO2SW6 ring (REO remaps this in chips without
+			REO2SW6 ring, e.g. Pine)
 			
 			<enum 9 reo_destination_9> REO remaps this <enum 10
 			reo_destination_10> REO remaps this 
@@ -331,19 +348,32 @@ reserved_0b
 #define RXPT_CLASSIFY_INFO_0_REO_DESTINATION_INDICATION_LSB          0
 #define RXPT_CLASSIFY_INFO_0_REO_DESTINATION_INDICATION_MASK         0x0000001f
 
-/* Description		RXPT_CLASSIFY_INFO_0_RESERVED_0A
+/* Description		RXPT_CLASSIFY_INFO_0_LMAC_PEER_ID_MSB
+			
+			If use_flow_id_toeplitz_clfy is set and lmac_peer_id_'sb
+			is 2'b00, Rx OLE uses a REO desination indicati'n of {1'b1,
+			hash[3:0]} using the chosen Toeplitz hash from Common Parser
+			if flow search fails.
+			
+			If use_flow_id_toeplitz_clfy is set and lmac_peer_id_msb
+			's not 2'b00, Rx OLE uses a REO desination indication of
+			{lmac_peer_id_msb, hash[2:0]} using the chosen Toeplitz hash
+			from Common Parser if flow search fails.
+			
+			This LMAC/peer-based routing is not supported in
+			Hastings80 and HastingsPrime.
 			
 			<legal 0>
 */
-#define RXPT_CLASSIFY_INFO_0_RESERVED_0A_OFFSET                      0x00000000
-#define RXPT_CLASSIFY_INFO_0_RESERVED_0A_LSB                         5
-#define RXPT_CLASSIFY_INFO_0_RESERVED_0A_MASK                        0x00000060
+#define RXPT_CLASSIFY_INFO_0_LMAC_PEER_ID_MSB_OFFSET                 0x00000000
+#define RXPT_CLASSIFY_INFO_0_LMAC_PEER_ID_MSB_LSB                    5
+#define RXPT_CLASSIFY_INFO_0_LMAC_PEER_ID_MSB_MASK                   0x00000060
 
 /* Description		RXPT_CLASSIFY_INFO_0_USE_FLOW_ID_TOEPLITZ_CLFY
 			
-			Indication to Rx OLE to enable classification based on
-			the chosen Toeplitz hash from Common Parser, in case flow
-			search fails
+			Indication to Rx OLE to enable REO destination routing
+			based on the chosen Toeplitz hash from Common Parser, in
+			case flow search fails
 			
 			<legal all>
 */

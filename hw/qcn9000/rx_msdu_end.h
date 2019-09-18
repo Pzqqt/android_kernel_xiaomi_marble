@@ -24,28 +24,26 @@
 //
 //	Dword	Fields
 //	0	rxpcu_mpdu_filter_in_category[1:0], sw_frame_group_id[8:2], reserved_0[15:9], phy_ppdu_id[31:16]
-//	1	ip_hdr_chksum[15:0], tcp_udp_chksum[31:16]
-//	2	key_id_octet[7:0], cce_super_rule[13:8], cce_classify_not_done_truncate[14], cce_classify_not_done_cce_dis[15], ext_wapi_pn_63_48[31:16]
-//	3	ext_wapi_pn_95_64[31:0]
-//	4	ext_wapi_pn_127_96[31:0]
-//	5	reported_mpdu_length[13:0], first_msdu[14], last_msdu[15], sa_idx_timeout[16], da_idx_timeout[17], msdu_limit_error[18], flow_idx_timeout[19], flow_idx_invalid[20], wifi_parser_error[21], amsdu_parser_error[22], sa_is_valid[23], da_is_valid[24], da_is_mcbc[25], l3_header_padding[27:26], reserved_5a[31:28]
+//	1	ip_hdr_chksum[15:0], reported_mpdu_length[29:16], reserved_1a[31:30]
+//	2	key_id_octet[7:0], cce_super_rule[13:8], cce_classify_not_done_truncate[14], cce_classify_not_done_cce_dis[15], reserved_2a[31:16]
+//	3	rule_indication_31_0[31:0]
+//	4	rule_indication_63_32[31:0]
+//	5	da_offset[5:0], sa_offset[11:6], da_offset_valid[12], sa_offset_valid[13], reserved_5a[15:14], l3_type[31:16]
 //	6	ipv6_options_crc[31:0]
 //	7	tcp_seq_number[31:0]
 //	8	tcp_ack_number[31:0]
 //	9	tcp_flag[8:0], lro_eligible[9], reserved_9a[15:10], window_size[31:16]
-//	10	da_offset[5:0], sa_offset[11:6], da_offset_valid[12], sa_offset_valid[13], reserved_10a[15:14], l3_type[31:16]
-//	11	rule_indication_31_0[31:0]
-//	12	rule_indication_63_32[31:0]
-//	13	sa_idx[15:0], da_idx_or_sw_peer_id[31:16]
-//	14	msdu_drop[0], reo_destination_indication[5:1], flow_idx[25:6], reserved_14[31:26]
-//	15	fse_metadata[31:0]
-//	16	cce_metadata[15:0], sa_sw_peer_id[31:16]
-//	17	aggregation_count[7:0], flow_aggregation_continuation[8], fisa_timeout[9], reserve_17a[31:10]
-//	18	cumulative_l4_checksum[15:0], cumulative_ip_length[31:16]
+//	10	tcp_udp_chksum[15:0], sa_idx_timeout[16], da_idx_timeout[17], msdu_limit_error[18], flow_idx_timeout[19], flow_idx_invalid[20], wifi_parser_error[21], amsdu_parser_error[22], sa_is_valid[23], da_is_valid[24], da_is_mcbc[25], l3_header_padding[27:26], first_msdu[28], last_msdu[29], reserved_10a[31:30]
+//	11	sa_idx[15:0], da_idx_or_sw_peer_id[31:16]
+//	12	msdu_drop[0], reo_destination_indication[5:1], flow_idx[25:6], reserved_12a[31:26]
+//	13	fse_metadata[31:0]
+//	14	cce_metadata[15:0], sa_sw_peer_id[31:16]
+//	15	aggregation_count[7:0], flow_aggregation_continuation[8], fisa_timeout[9], reserved_15a[31:10]
+//	16	cumulative_l4_checksum[15:0], cumulative_ip_length[31:16]
 //
 // ################ END SUMMARY #################
 
-#define NUM_OF_DWORDS_RX_MSDU_END 19
+#define NUM_OF_DWORDS_RX_MSDU_END 17
 
 struct rx_msdu_end {
              uint32_t rxpcu_mpdu_filter_in_category   :  2, //[1:0]
@@ -53,17 +51,29 @@ struct rx_msdu_end {
                       reserved_0                      :  7, //[15:9]
                       phy_ppdu_id                     : 16; //[31:16]
              uint32_t ip_hdr_chksum                   : 16, //[15:0]
-                      tcp_udp_chksum                  : 16; //[31:16]
+                      reported_mpdu_length            : 14, //[29:16]
+                      reserved_1a                     :  2; //[31:30]
              uint32_t key_id_octet                    :  8, //[7:0]
                       cce_super_rule                  :  6, //[13:8]
                       cce_classify_not_done_truncate  :  1, //[14]
                       cce_classify_not_done_cce_dis   :  1, //[15]
-                      ext_wapi_pn_63_48               : 16; //[31:16]
-             uint32_t ext_wapi_pn_95_64               : 32; //[31:0]
-             uint32_t ext_wapi_pn_127_96              : 32; //[31:0]
-             uint32_t reported_mpdu_length            : 14, //[13:0]
-                      first_msdu                      :  1, //[14]
-                      last_msdu                       :  1, //[15]
+                      reserved_2a                     : 16; //[31:16]
+             uint32_t rule_indication_31_0            : 32; //[31:0]
+             uint32_t rule_indication_63_32           : 32; //[31:0]
+             uint32_t da_offset                       :  6, //[5:0]
+                      sa_offset                       :  6, //[11:6]
+                      da_offset_valid                 :  1, //[12]
+                      sa_offset_valid                 :  1, //[13]
+                      reserved_5a                     :  2, //[15:14]
+                      l3_type                         : 16; //[31:16]
+             uint32_t ipv6_options_crc                : 32; //[31:0]
+             uint32_t tcp_seq_number                  : 32; //[31:0]
+             uint32_t tcp_ack_number                  : 32; //[31:0]
+             uint32_t tcp_flag                        :  9, //[8:0]
+                      lro_eligible                    :  1, //[9]
+                      reserved_9a                     :  6, //[15:10]
+                      window_size                     : 16; //[31:16]
+             uint32_t tcp_udp_chksum                  : 16, //[15:0]
                       sa_idx_timeout                  :  1, //[16]
                       da_idx_timeout                  :  1, //[17]
                       msdu_limit_error                :  1, //[18]
@@ -75,35 +85,22 @@ struct rx_msdu_end {
                       da_is_valid                     :  1, //[24]
                       da_is_mcbc                      :  1, //[25]
                       l3_header_padding               :  2, //[27:26]
-                      reserved_5a                     :  4; //[31:28]
-             uint32_t ipv6_options_crc                : 32; //[31:0]
-             uint32_t tcp_seq_number                  : 32; //[31:0]
-             uint32_t tcp_ack_number                  : 32; //[31:0]
-             uint32_t tcp_flag                        :  9, //[8:0]
-                      lro_eligible                    :  1, //[9]
-                      reserved_9a                     :  6, //[15:10]
-                      window_size                     : 16; //[31:16]
-             uint32_t da_offset                       :  6, //[5:0]
-                      sa_offset                       :  6, //[11:6]
-                      da_offset_valid                 :  1, //[12]
-                      sa_offset_valid                 :  1, //[13]
-                      reserved_10a                    :  2, //[15:14]
-                      l3_type                         : 16; //[31:16]
-             uint32_t rule_indication_31_0            : 32; //[31:0]
-             uint32_t rule_indication_63_32           : 32; //[31:0]
+                      first_msdu                      :  1, //[28]
+                      last_msdu                       :  1, //[29]
+                      reserved_10a                    :  2; //[31:30]
              uint32_t sa_idx                          : 16, //[15:0]
                       da_idx_or_sw_peer_id            : 16; //[31:16]
              uint32_t msdu_drop                       :  1, //[0]
                       reo_destination_indication      :  5, //[5:1]
                       flow_idx                        : 20, //[25:6]
-                      reserved_14                     :  6; //[31:26]
+                      reserved_12a                    :  6; //[31:26]
              uint32_t fse_metadata                    : 32; //[31:0]
              uint32_t cce_metadata                    : 16, //[15:0]
                       sa_sw_peer_id                   : 16; //[31:16]
              uint32_t aggregation_count               :  8, //[7:0]
                       flow_aggregation_continuation   :  1, //[8]
                       fisa_timeout                    :  1, //[9]
-                      reserve_17a                     : 22; //[31:10]
+                      reserved_15a                    : 22; //[31:10]
              uint32_t cumulative_l4_checksum          : 16, //[15:0]
                       cumulative_ip_length            : 16; //[31:16]
 };
@@ -251,14 +248,16 @@ ip_hdr_chksum
 			the LSB, i.e. requiring a byte-swap for little-endian FW/SW
 			w.r.t. the byte order in a packet)
 
-tcp_udp_chksum
+reported_mpdu_length
 			
-			The value of the computed TCP/UDP checksum.  A mode bit
-			selects whether this checksum is the full checksum or the
-			partial checksum which does not include the pseudo header.
-			(with the first byte in the MSB and the second byte in the
-			LSB, i.e. requiring a byte-swap for little-endian FW/SW
-			w.r.t. the byte order in a packet)
+			MPDU length before decapsulation.  Only valid when
+			first_msdu is set.  This field is taken directly from the
+			length field of the A-MPDU delimiter or the preamble length
+			field for non-A-MPDU frames.
+
+reserved_1a
+			
+			<legal 0>
 
 key_id_octet
 			
@@ -277,44 +276,97 @@ cce_classify_not_done_cce_dis
 			
 			Classification failed due to CCE global disable
 
-ext_wapi_pn_63_48
+reserved_2a
 			
-			Extension PN (packet number) which is only used by WAPI.
-			This corresponds to WAPI PN bits [63:48] (pn6 and pn7). 
-			The WAPI PN bits [63:0] are in the pn field of the
-			rx_mpdu_start descriptor.
+			<legal 0>
 
-ext_wapi_pn_95_64
+rule_indication_31_0
 			
-			Extension PN (packet number) which is only used by WAPI.
-			This corresponds to WAPI PN bits [95:64] (pn8, pn9, pn10
-			and pn11).
+			Bitmap indicating which of rules 31-0 have matched
 
-ext_wapi_pn_127_96
+rule_indication_63_32
 			
-			Extension PN (packet number) which is only used by WAPI.
-			This corresponds to WAPI PN bits [127:96] (pn12, pn13,
-			pn14, pn15).
+			Bitmap indicating which of rules 63-32 have matched
 
-reported_mpdu_length
+da_offset
 			
-			MPDU length before decapsulation.  Only valid when
-			first_msdu is set.  This field is taken directly from the
-			length field of the A-MPDU delimiter or the preamble length
-			field for non-A-MPDU frames.
+			Offset into MSDU buffer for DA
 
-first_msdu
+sa_offset
 			
-			Indicates the first MSDU of A-MSDU.  If both first_msdu
-			and last_msdu are set in the MSDU then this is a
-			non-aggregated MSDU frame: normal MPDU.  Interior MSDU in an
-			A-MSDU shall have both first_mpdu and last_mpdu bits set to
-			0.
+			Offset into MSDU buffer for SA
 
-last_msdu
+da_offset_valid
 			
-			Indicates the last MSDU of the A-MSDU.  MPDU end status
-			is only valid when last_msdu is set.
+			da_offset field is valid. This will be set to 0 in case
+			of a dynamic A-MSDU when DA is compressed
+
+sa_offset_valid
+			
+			sa_offset field is valid. This will be set to 0 in case
+			of a dynamic A-MSDU when SA is compressed
+
+reserved_5a
+			
+			<legal 0>
+
+l3_type
+			
+			The 16-bit type value indicating the type of L3 later
+			extracted from LLC/SNAP, set to zero if SNAP is not
+			available
+
+ipv6_options_crc
+			
+			32 bit CRC computed out of  IP v6 extension headers
+
+tcp_seq_number
+			
+			TCP sequence number (as a number assembled from a TCP
+			packet in big-endian order, i.e. requiring a byte-swap for
+			little-endian FW/SW w.r.t. the byte order in a packet)
+
+tcp_ack_number
+			
+			TCP acknowledge number (as a number assembled from a TCP
+			packet in big-endian order, i.e. requiring a byte-swap for
+			little-endian FW/SW w.r.t. the byte order in a packet)
+
+tcp_flag
+			
+			TCP flags
+			
+			{NS,CWR,ECE,URG,ACK,PSH, RST ,SYN,FIN}(with the NS bit
+			in bit 8 and the FIN bit in bit 0, i.e. in big-endian order,
+			i.e. requiring a byte-swap for little-endian FW/SW w.r.t.
+			the byte order in a packet)
+
+lro_eligible
+			
+			Computed out of TCP and IP fields to indicate that this
+			MSDU is eligible for  LRO
+
+reserved_9a
+			
+			NOTE: DO not assign a field... Internally used in
+			RXOLE..
+			
+			<legal 0>
+
+window_size
+			
+			TCP receive window size (as a number assembled from a
+			TCP packet in big-endian order, i.e. requiring a byte-swap
+			for little-endian FW/SW w.r.t. the byte order in a packet)
+
+tcp_udp_chksum
+			
+			The value of the computed TCP/UDP checksum.  A mode bit
+			selects whether this checksum is the full checksum or the
+			partial checksum which does not include the pseudo header.
+			(with the first byte in the MSB and the second byte in the
+			LSB, i.e. requiring a byte-swap for little-endian FW/SW
+			w.r.t. the byte order in a packet)
 
 sa_idx_timeout
 			
@@ -385,88 +437,22 @@ l3_header_padding
 			Number of bytes padded  to make sure that the L3 header
 			will always start of a Dword   boundary
 
-reserved_5a
+first_msdu
 			
-			<legal 0>
+			Indicates the first MSDU of A-MSDU.  If both first_msdu
+			and last_msdu are set in the MSDU then this is a
+			non-aggregated MSDU frame: normal MPDU.  Interior MSDU in an
+			A-MSDU shall have both first_mpdu and last_mpdu bits set to
+			0.
 
-ipv6_options_crc
+last_msdu
 			
-			32 bit CRC computed out of  IP v6 extension headers
-
-tcp_seq_number
-			
-			TCP sequence number (as a number assembled from a TCP
-			packet in big-endian order, i.e. requiring a byte-swap for
-			little-endian FW/SW w.r.t. the byte order in a packet)
-
-tcp_ack_number
-			
-			TCP acknowledge number (as a number assembled from a TCP
-			packet in big-endian order, i.e. requiring a byte-swap for
-			little-endian FW/SW w.r.t. the byte order in a packet)
-
-tcp_flag
-			
-			TCP flags
-			
-			{NS,CWR,ECE,URG,ACK,PSH, RST ,SYN,FIN}(with the NS bit
-			in bit 8 and the FIN bit in bit 0, i.e. in big-endian order,
-			i.e. requiring a byte-swap for little-endian FW/SW w.r.t.
-			the byte order in a packet)
-
-lro_eligible
-			
-			Computed out of TCP and IP fields to indicate that this
-			MSDU is eligible for  LRO
-
-reserved_9a
-			
-			NOTE: DO not assign a field... Internally used in
-			RXOLE..
-			
-			<legal 0>
-
-window_size
-			
-			TCP receive window size (as a number assembled from a
-			TCP packet in big-endian order, i.e. requiring a byte-swap
-			for little-endian FW/SW w.r.t. the byte order in a packet)
-
-da_offset
-			
-			Offset into MSDU buffer for DA
-
-sa_offset
-			
-			Offset into MSDU buffer for SA
-
-da_offset_valid
-			
-			da_offset field is valid. This will be set to 0 in case
-			of a dynamic A-MSDU when DA is compressed
-
-sa_offset_valid
-			
-			sa_offset field is valid. This will be set to 0 in case
-			of a dynamic A-MSDU when SA is compressed
+			Indicates the last MSDU of the A-MSDU.  MPDU end status
+			is only valid when last_msdu is set.
 
 reserved_10a
 			
 			<legal 0>
-
-l3_type
-			
-			The 16-bit type value indicating the type of L3 later
-			extracted from LLC/SNAP, set to zero if SNAP is not
-			available
-
-rule_indication_31_0
-			
-			Bitmap indicating which of rules 31-0 have matched
-
-rule_indication_63_32
-			
-			Bitmap indicating which of rules 63-32 have matched
 
 sa_idx
 			
@@ -522,10 +508,12 @@ reo_destination_indication
 			the REO2FW ring
 			
 			<enum 7 reo_destination_sw5> Reo will push the frame
-			into the REO2SW5 ring
+			into the REO2SW5 ring (REO remaps this in chips without
+			REO2SW5 ring, e.g. Pine)
 			
 			<enum 8 reo_destination_sw6> Reo will push the frame
-			into the REO2SW6 ring 
+			into the REO2SW6 ring (REO remaps this in chips without
+			REO2SW6 ring, e.g. Pine)
 			
 			<enum 9 reo_destination_9> REO remaps this <enum 10
 			reo_destination_10> REO remaps this 
@@ -581,7 +569,7 @@ flow_idx
 			
 			<legal all>
 
-reserved_14
+reserved_12a
 			
 			<legal 0>
 
@@ -636,7 +624,7 @@ fisa_timeout
 			
 			<legal all>
 
-reserve_17a
+reserved_15a
 			
 			<legal 0>
 
@@ -825,18 +813,24 @@ cumulative_ip_length
 #define RX_MSDU_END_1_IP_HDR_CHKSUM_LSB                              0
 #define RX_MSDU_END_1_IP_HDR_CHKSUM_MASK                             0x0000ffff
 
-/* Description		RX_MSDU_END_1_TCP_UDP_CHKSUM
+/* Description		RX_MSDU_END_1_REPORTED_MPDU_LENGTH
 			
-			The value of the computed TCP/UDP checksum.  A mode bit
-			selects whether this checksum is the full checksum or the
-			partial checksum which does not include the pseudo header.
-			(with the first byte in the MSB and the second byte in the
-			LSB, i.e. requiring a byte-swap for little-endian FW/SW
-			w.r.t. the byte order in a packet)
+			MPDU length before decapsulation.  Only valid when
+			first_msdu is set.  This field is taken directly from the
+			length field of the A-MPDU delimiter or the preamble length
+			field for non-A-MPDU frames.
 */
-#define RX_MSDU_END_1_TCP_UDP_CHKSUM_OFFSET                          0x00000004
-#define RX_MSDU_END_1_TCP_UDP_CHKSUM_LSB                             16
-#define RX_MSDU_END_1_TCP_UDP_CHKSUM_MASK                            0xffff0000
+#define RX_MSDU_END_1_REPORTED_MPDU_LENGTH_OFFSET                    0x00000004
+#define RX_MSDU_END_1_REPORTED_MPDU_LENGTH_LSB                       16
+#define RX_MSDU_END_1_REPORTED_MPDU_LENGTH_MASK                      0x3fff0000
+
+/* Description		RX_MSDU_END_1_RESERVED_1A
+			
+			<legal 0>
+*/
+#define RX_MSDU_END_1_RESERVED_1A_OFFSET                             0x00000004
+#define RX_MSDU_END_1_RESERVED_1A_LSB                                30
+#define RX_MSDU_END_1_RESERVED_1A_MASK                               0xc0000000
 
 /* Description		RX_MSDU_END_2_KEY_ID_OCTET
 			
@@ -871,189 +865,81 @@ cumulative_ip_length
 #define RX_MSDU_END_2_CCE_CLASSIFY_NOT_DONE_CCE_DIS_LSB              15
 #define RX_MSDU_END_2_CCE_CLASSIFY_NOT_DONE_CCE_DIS_MASK             0x00008000
 
-/* Description		RX_MSDU_END_2_EXT_WAPI_PN_63_48
+/* Description		RX_MSDU_END_2_RESERVED_2A
 			
-			Extension PN (packet number) which is only used by WAPI.
-			This corresponds to WAPI PN bits [63:48] (pn6 and pn7). 
-			The WAPI PN bits [63:0] are in the pn field of the
-			rx_mpdu_start descriptor.
+			<legal 0>
 */
-#define RX_MSDU_END_2_EXT_WAPI_PN_63_48_OFFSET                       0x00000008
-#define RX_MSDU_END_2_EXT_WAPI_PN_63_48_LSB                          16
-#define RX_MSDU_END_2_EXT_WAPI_PN_63_48_MASK                         0xffff0000
+#define RX_MSDU_END_2_RESERVED_2A_OFFSET                             0x00000008
+#define RX_MSDU_END_2_RESERVED_2A_LSB                                16
+#define RX_MSDU_END_2_RESERVED_2A_MASK                               0xffff0000
 
-/* Description		RX_MSDU_END_3_EXT_WAPI_PN_95_64
+/* Description		RX_MSDU_END_3_RULE_INDICATION_31_0
 			
-			Extension PN (packet number) which is only used by WAPI.
-			This corresponds to WAPI PN bits [95:64] (pn8, pn9, pn10
-			and pn11).
+			Bitmap indicating which of rules 31-0 have matched
 */
-#define RX_MSDU_END_3_EXT_WAPI_PN_95_64_OFFSET                       0x0000000c
-#define RX_MSDU_END_3_EXT_WAPI_PN_95_64_LSB                          0
-#define RX_MSDU_END_3_EXT_WAPI_PN_95_64_MASK                         0xffffffff
+#define RX_MSDU_END_3_RULE_INDICATION_31_0_OFFSET                    0x0000000c
+#define RX_MSDU_END_3_RULE_INDICATION_31_0_LSB                       0
+#define RX_MSDU_END_3_RULE_INDICATION_31_0_MASK                      0xffffffff
 
-/* Description		RX_MSDU_END_4_EXT_WAPI_PN_127_96
+/* Description		RX_MSDU_END_4_RULE_INDICATION_63_32
 			
-			Extension PN (packet number) which is only used by WAPI.
-			This corresponds to WAPI PN bits [127:96] (pn12, pn13,
-			pn14, pn15).
+			Bitmap indicating which of rules 63-32 have matched
 */
-#define RX_MSDU_END_4_EXT_WAPI_PN_127_96_OFFSET                      0x00000010
-#define RX_MSDU_END_4_EXT_WAPI_PN_127_96_LSB                         0
-#define RX_MSDU_END_4_EXT_WAPI_PN_127_96_MASK                        0xffffffff
+#define RX_MSDU_END_4_RULE_INDICATION_63_32_OFFSET                   0x00000010
+#define RX_MSDU_END_4_RULE_INDICATION_63_32_LSB                      0
+#define RX_MSDU_END_4_RULE_INDICATION_63_32_MASK                     0xffffffff
 
-/* Description		RX_MSDU_END_5_REPORTED_MPDU_LENGTH
+/* Description		RX_MSDU_END_5_DA_OFFSET
 			
-			MPDU length before decapsulation.  Only valid when
-			first_msdu is set.  This field is taken directly from the
-			length field of the A-MPDU delimiter or the preamble length
-			field for non-A-MPDU frames.
+			Offset into MSDU buffer for DA
 */
-#define RX_MSDU_END_5_REPORTED_MPDU_LENGTH_OFFSET                    0x00000014
-#define RX_MSDU_END_5_REPORTED_MPDU_LENGTH_LSB                       0
-#define RX_MSDU_END_5_REPORTED_MPDU_LENGTH_MASK                      0x00003fff
+#define RX_MSDU_END_5_DA_OFFSET_OFFSET                               0x00000014
+#define RX_MSDU_END_5_DA_OFFSET_LSB                                  0
+#define RX_MSDU_END_5_DA_OFFSET_MASK                                 0x0000003f
 
-/* Description		RX_MSDU_END_5_FIRST_MSDU
+/* Description		RX_MSDU_END_5_SA_OFFSET
 			
-			Indicates the first MSDU of A-MSDU.  If both first_msdu
-			and last_msdu are set in the MSDU then this is a
-			non-aggregated MSDU frame: normal MPDU.  Interior MSDU in an
-			A-MSDU shall have both first_mpdu and last_mpdu bits set to
-			0.
+			Offset into MSDU buffer for SA
 */
-#define RX_MSDU_END_5_FIRST_MSDU_OFFSET                              0x00000014
-#define RX_MSDU_END_5_FIRST_MSDU_LSB                                 14
-#define RX_MSDU_END_5_FIRST_MSDU_MASK                                0x00004000
+#define RX_MSDU_END_5_SA_OFFSET_OFFSET                               0x00000014
+#define RX_MSDU_END_5_SA_OFFSET_LSB                                  6
+#define RX_MSDU_END_5_SA_OFFSET_MASK                                 0x00000fc0
 
-/* Description		RX_MSDU_END_5_LAST_MSDU
+/* Description		RX_MSDU_END_5_DA_OFFSET_VALID
 			
-			Indicates the last MSDU of the A-MSDU.  MPDU end status
-			is only valid when last_msdu is set.
+			da_offset field is valid. This will be set to 0 in case
+			of a dynamic A-MSDU when DA is compressed
 */
-#define RX_MSDU_END_5_LAST_MSDU_OFFSET                               0x00000014
-#define RX_MSDU_END_5_LAST_MSDU_LSB                                  15
-#define RX_MSDU_END_5_LAST_MSDU_MASK                                 0x00008000
+#define RX_MSDU_END_5_DA_OFFSET_VALID_OFFSET                         0x00000014
+#define RX_MSDU_END_5_DA_OFFSET_VALID_LSB                            12
+#define RX_MSDU_END_5_DA_OFFSET_VALID_MASK                           0x00001000
 
-/* Description		RX_MSDU_END_5_SA_IDX_TIMEOUT
+/* Description		RX_MSDU_END_5_SA_OFFSET_VALID
 			
-			Indicates an unsuccessful MAC source address search due
-			to the expiring of the search timer.
+			sa_offset field is valid. This will be set to 0 in case
+			of a dynamic A-MSDU when SA is compressed
 */
-#define RX_MSDU_END_5_SA_IDX_TIMEOUT_OFFSET                          0x00000014
-#define RX_MSDU_END_5_SA_IDX_TIMEOUT_LSB                             16
-#define RX_MSDU_END_5_SA_IDX_TIMEOUT_MASK                            0x00010000
-
-/* Description		RX_MSDU_END_5_DA_IDX_TIMEOUT
-			
-			Indicates an unsuccessful MAC destination address search
-			due to the expiring of the search timer.
-*/
-#define RX_MSDU_END_5_DA_IDX_TIMEOUT_OFFSET                          0x00000014
-#define RX_MSDU_END_5_DA_IDX_TIMEOUT_LSB                             17
-#define RX_MSDU_END_5_DA_IDX_TIMEOUT_MASK                            0x00020000
-
-/* Description		RX_MSDU_END_5_MSDU_LIMIT_ERROR
-			
-			Indicates that the MSDU threshold was exceeded and thus
-			all the rest of the MSDUs will not be scattered and will not
-			be decapsulated but will be DMA'ed in RAW format as a single
-			MSDU buffer
-*/
-#define RX_MSDU_END_5_MSDU_LIMIT_ERROR_OFFSET                        0x00000014
-#define RX_MSDU_END_5_MSDU_LIMIT_ERROR_LSB                           18
-#define RX_MSDU_END_5_MSDU_LIMIT_ERROR_MASK                          0x00040000
-
-/* Description		RX_MSDU_END_5_FLOW_IDX_TIMEOUT
-			
-			Indicates an unsuccessful flow search due to the
-			expiring of the search timer.
-			
-			<legal all>
-*/
-#define RX_MSDU_END_5_FLOW_IDX_TIMEOUT_OFFSET                        0x00000014
-#define RX_MSDU_END_5_FLOW_IDX_TIMEOUT_LSB                           19
-#define RX_MSDU_END_5_FLOW_IDX_TIMEOUT_MASK                          0x00080000
-
-/* Description		RX_MSDU_END_5_FLOW_IDX_INVALID
-			
-			flow id is not valid
-			
-			<legal all>
-*/
-#define RX_MSDU_END_5_FLOW_IDX_INVALID_OFFSET                        0x00000014
-#define RX_MSDU_END_5_FLOW_IDX_INVALID_LSB                           20
-#define RX_MSDU_END_5_FLOW_IDX_INVALID_MASK                          0x00100000
-
-/* Description		RX_MSDU_END_5_WIFI_PARSER_ERROR
-			
-			Indicates that the WiFi frame has one of the following
-			errors
-			
-			o has less than minimum allowed bytes as per standard
-			
-			o has incomplete VLAN LLC/SNAP (only for non A-MSDUs)
-			
-			<legal all>
-*/
-#define RX_MSDU_END_5_WIFI_PARSER_ERROR_OFFSET                       0x00000014
-#define RX_MSDU_END_5_WIFI_PARSER_ERROR_LSB                          21
-#define RX_MSDU_END_5_WIFI_PARSER_ERROR_MASK                         0x00200000
-
-/* Description		RX_MSDU_END_5_AMSDU_PARSER_ERROR
-			
-			A-MSDU could not be properly de-agregated.
-			
-			<legal all>
-*/
-#define RX_MSDU_END_5_AMSDU_PARSER_ERROR_OFFSET                      0x00000014
-#define RX_MSDU_END_5_AMSDU_PARSER_ERROR_LSB                         22
-#define RX_MSDU_END_5_AMSDU_PARSER_ERROR_MASK                        0x00400000
-
-/* Description		RX_MSDU_END_5_SA_IS_VALID
-			
-			Indicates that OLE found a valid SA entry
-*/
-#define RX_MSDU_END_5_SA_IS_VALID_OFFSET                             0x00000014
-#define RX_MSDU_END_5_SA_IS_VALID_LSB                                23
-#define RX_MSDU_END_5_SA_IS_VALID_MASK                               0x00800000
-
-/* Description		RX_MSDU_END_5_DA_IS_VALID
-			
-			Indicates that OLE found a valid DA entry
-*/
-#define RX_MSDU_END_5_DA_IS_VALID_OFFSET                             0x00000014
-#define RX_MSDU_END_5_DA_IS_VALID_LSB                                24
-#define RX_MSDU_END_5_DA_IS_VALID_MASK                               0x01000000
-
-/* Description		RX_MSDU_END_5_DA_IS_MCBC
-			
-			Field Only valid if da_is_valid is set
-			
-			
-			
-			Indicates the DA address was a Multicast of Broadcast
-			address.
-*/
-#define RX_MSDU_END_5_DA_IS_MCBC_OFFSET                              0x00000014
-#define RX_MSDU_END_5_DA_IS_MCBC_LSB                                 25
-#define RX_MSDU_END_5_DA_IS_MCBC_MASK                                0x02000000
-
-/* Description		RX_MSDU_END_5_L3_HEADER_PADDING
-			
-			Number of bytes padded  to make sure that the L3 header
-			will always start of a Dword   boundary
-*/
-#define RX_MSDU_END_5_L3_HEADER_PADDING_OFFSET                       0x00000014
-#define RX_MSDU_END_5_L3_HEADER_PADDING_LSB                          26
-#define RX_MSDU_END_5_L3_HEADER_PADDING_MASK                         0x0c000000
+#define RX_MSDU_END_5_SA_OFFSET_VALID_OFFSET                         0x00000014
+#define RX_MSDU_END_5_SA_OFFSET_VALID_LSB                            13
+#define RX_MSDU_END_5_SA_OFFSET_VALID_MASK                           0x00002000
 
 /* Description		RX_MSDU_END_5_RESERVED_5A
 			
 			<legal 0>
 */
 #define RX_MSDU_END_5_RESERVED_5A_OFFSET                             0x00000014
-#define RX_MSDU_END_5_RESERVED_5A_LSB                                28
-#define RX_MSDU_END_5_RESERVED_5A_MASK                               0xf0000000
+#define RX_MSDU_END_5_RESERVED_5A_LSB                                14
+#define RX_MSDU_END_5_RESERVED_5A_MASK                               0x0000c000
+
+/* Description		RX_MSDU_END_5_L3_TYPE
+			
+			The 16-bit type value indicating the type of L3 later
+			extracted from LLC/SNAP, set to zero if SNAP is not
+			available
+*/
+#define RX_MSDU_END_5_L3_TYPE_OFFSET                                 0x00000014
+#define RX_MSDU_END_5_L3_TYPE_LSB                                    16
+#define RX_MSDU_END_5_L3_TYPE_MASK                                   0xffff0000
 
 /* Description		RX_MSDU_END_6_IPV6_OPTIONS_CRC
 			
@@ -1126,84 +1012,171 @@ cumulative_ip_length
 #define RX_MSDU_END_9_WINDOW_SIZE_LSB                                16
 #define RX_MSDU_END_9_WINDOW_SIZE_MASK                               0xffff0000
 
-/* Description		RX_MSDU_END_10_DA_OFFSET
+/* Description		RX_MSDU_END_10_TCP_UDP_CHKSUM
 			
-			Offset into MSDU buffer for DA
+			The value of the computed TCP/UDP checksum.  A mode bit
+			selects whether this checksum is the full checksum or the
+			partial checksum which does not include the pseudo header.
+			(with the first byte in the MSB and the second byte in the
+			LSB, i.e. requiring a byte-swap for little-endian FW/SW
+			w.r.t. the byte order in a packet)
 */
-#define RX_MSDU_END_10_DA_OFFSET_OFFSET                              0x00000028
-#define RX_MSDU_END_10_DA_OFFSET_LSB                                 0
-#define RX_MSDU_END_10_DA_OFFSET_MASK                                0x0000003f
+#define RX_MSDU_END_10_TCP_UDP_CHKSUM_OFFSET                         0x00000028
+#define RX_MSDU_END_10_TCP_UDP_CHKSUM_LSB                            0
+#define RX_MSDU_END_10_TCP_UDP_CHKSUM_MASK                           0x0000ffff
 
-/* Description		RX_MSDU_END_10_SA_OFFSET
+/* Description		RX_MSDU_END_10_SA_IDX_TIMEOUT
 			
-			Offset into MSDU buffer for SA
+			Indicates an unsuccessful MAC source address search due
+			to the expiring of the search timer.
 */
-#define RX_MSDU_END_10_SA_OFFSET_OFFSET                              0x00000028
-#define RX_MSDU_END_10_SA_OFFSET_LSB                                 6
-#define RX_MSDU_END_10_SA_OFFSET_MASK                                0x00000fc0
+#define RX_MSDU_END_10_SA_IDX_TIMEOUT_OFFSET                         0x00000028
+#define RX_MSDU_END_10_SA_IDX_TIMEOUT_LSB                            16
+#define RX_MSDU_END_10_SA_IDX_TIMEOUT_MASK                           0x00010000
 
-/* Description		RX_MSDU_END_10_DA_OFFSET_VALID
+/* Description		RX_MSDU_END_10_DA_IDX_TIMEOUT
 			
-			da_offset field is valid. This will be set to 0 in case
-			of a dynamic A-MSDU when DA is compressed
+			Indicates an unsuccessful MAC destination address search
+			due to the expiring of the search timer.
 */
-#define RX_MSDU_END_10_DA_OFFSET_VALID_OFFSET                        0x00000028
-#define RX_MSDU_END_10_DA_OFFSET_VALID_LSB                           12
-#define RX_MSDU_END_10_DA_OFFSET_VALID_MASK                          0x00001000
+#define RX_MSDU_END_10_DA_IDX_TIMEOUT_OFFSET                         0x00000028
+#define RX_MSDU_END_10_DA_IDX_TIMEOUT_LSB                            17
+#define RX_MSDU_END_10_DA_IDX_TIMEOUT_MASK                           0x00020000
 
-/* Description		RX_MSDU_END_10_SA_OFFSET_VALID
+/* Description		RX_MSDU_END_10_MSDU_LIMIT_ERROR
 			
-			sa_offset field is valid. This will be set to 0 in case
-			of a dynamic A-MSDU when SA is compressed
+			Indicates that the MSDU threshold was exceeded and thus
+			all the rest of the MSDUs will not be scattered and will not
+			be decapsulated but will be DMA'ed in RAW format as a single
+			MSDU buffer
 */
-#define RX_MSDU_END_10_SA_OFFSET_VALID_OFFSET                        0x00000028
-#define RX_MSDU_END_10_SA_OFFSET_VALID_LSB                           13
-#define RX_MSDU_END_10_SA_OFFSET_VALID_MASK                          0x00002000
+#define RX_MSDU_END_10_MSDU_LIMIT_ERROR_OFFSET                       0x00000028
+#define RX_MSDU_END_10_MSDU_LIMIT_ERROR_LSB                          18
+#define RX_MSDU_END_10_MSDU_LIMIT_ERROR_MASK                         0x00040000
+
+/* Description		RX_MSDU_END_10_FLOW_IDX_TIMEOUT
+			
+			Indicates an unsuccessful flow search due to the
+			expiring of the search timer.
+			
+			<legal all>
+*/
+#define RX_MSDU_END_10_FLOW_IDX_TIMEOUT_OFFSET                       0x00000028
+#define RX_MSDU_END_10_FLOW_IDX_TIMEOUT_LSB                          19
+#define RX_MSDU_END_10_FLOW_IDX_TIMEOUT_MASK                         0x00080000
+
+/* Description		RX_MSDU_END_10_FLOW_IDX_INVALID
+			
+			flow id is not valid
+			
+			<legal all>
+*/
+#define RX_MSDU_END_10_FLOW_IDX_INVALID_OFFSET                       0x00000028
+#define RX_MSDU_END_10_FLOW_IDX_INVALID_LSB                          20
+#define RX_MSDU_END_10_FLOW_IDX_INVALID_MASK                         0x00100000
+
+/* Description		RX_MSDU_END_10_WIFI_PARSER_ERROR
+			
+			Indicates that the WiFi frame has one of the following
+			errors
+			
+			o has less than minimum allowed bytes as per standard
+			
+			o has incomplete VLAN LLC/SNAP (only for non A-MSDUs)
+			
+			<legal all>
+*/
+#define RX_MSDU_END_10_WIFI_PARSER_ERROR_OFFSET                      0x00000028
+#define RX_MSDU_END_10_WIFI_PARSER_ERROR_LSB                         21
+#define RX_MSDU_END_10_WIFI_PARSER_ERROR_MASK                        0x00200000
+
+/* Description		RX_MSDU_END_10_AMSDU_PARSER_ERROR
+			
+			A-MSDU could not be properly de-agregated.
+			
+			<legal all>
+*/
+#define RX_MSDU_END_10_AMSDU_PARSER_ERROR_OFFSET                     0x00000028
+#define RX_MSDU_END_10_AMSDU_PARSER_ERROR_LSB                        22
+#define RX_MSDU_END_10_AMSDU_PARSER_ERROR_MASK                       0x00400000
+
+/* Description		RX_MSDU_END_10_SA_IS_VALID
+			
+			Indicates that OLE found a valid SA entry
+*/
+#define RX_MSDU_END_10_SA_IS_VALID_OFFSET                            0x00000028
+#define RX_MSDU_END_10_SA_IS_VALID_LSB                               23
+#define RX_MSDU_END_10_SA_IS_VALID_MASK                              0x00800000
+
+/* Description		RX_MSDU_END_10_DA_IS_VALID
+			
+			Indicates that OLE found a valid DA entry
+*/
+#define RX_MSDU_END_10_DA_IS_VALID_OFFSET                            0x00000028
+#define RX_MSDU_END_10_DA_IS_VALID_LSB                               24
+#define RX_MSDU_END_10_DA_IS_VALID_MASK                              0x01000000
+
+/* Description		RX_MSDU_END_10_DA_IS_MCBC
+			
+			Field Only valid if da_is_valid is set
+			
+			
+			
+			Indicates the DA address was a Multicast of Broadcast
+			address.
+*/
+#define RX_MSDU_END_10_DA_IS_MCBC_OFFSET                             0x00000028
+#define RX_MSDU_END_10_DA_IS_MCBC_LSB                                25
+#define RX_MSDU_END_10_DA_IS_MCBC_MASK                               0x02000000
+
+/* Description		RX_MSDU_END_10_L3_HEADER_PADDING
+			
+			Number of bytes padded  to make sure that the L3 header
+			will always start of a Dword   boundary
+*/
+#define RX_MSDU_END_10_L3_HEADER_PADDING_OFFSET                      0x00000028
+#define RX_MSDU_END_10_L3_HEADER_PADDING_LSB                         26
+#define RX_MSDU_END_10_L3_HEADER_PADDING_MASK                        0x0c000000
+
+/* Description		RX_MSDU_END_10_FIRST_MSDU
+			
+			Indicates the first MSDU of A-MSDU.  If both first_msdu
+			and last_msdu are set in the MSDU then this is a
+			non-aggregated MSDU frame: normal MPDU.  Interior MSDU in an
+			A-MSDU shall have both first_mpdu and last_mpdu bits set to
+			0.
+*/
+#define RX_MSDU_END_10_FIRST_MSDU_OFFSET                             0x00000028
+#define RX_MSDU_END_10_FIRST_MSDU_LSB                                28
+#define RX_MSDU_END_10_FIRST_MSDU_MASK                               0x10000000
+
+/* Description		RX_MSDU_END_10_LAST_MSDU
+			
+			Indicates the last MSDU of the A-MSDU.  MPDU end status
+			is only valid when last_msdu is set.
+*/
+#define RX_MSDU_END_10_LAST_MSDU_OFFSET                              0x00000028
+#define RX_MSDU_END_10_LAST_MSDU_LSB                                 29
+#define RX_MSDU_END_10_LAST_MSDU_MASK                                0x20000000
 
 /* Description		RX_MSDU_END_10_RESERVED_10A
 			
 			<legal 0>
 */
 #define RX_MSDU_END_10_RESERVED_10A_OFFSET                           0x00000028
-#define RX_MSDU_END_10_RESERVED_10A_LSB                              14
-#define RX_MSDU_END_10_RESERVED_10A_MASK                             0x0000c000
+#define RX_MSDU_END_10_RESERVED_10A_LSB                              30
+#define RX_MSDU_END_10_RESERVED_10A_MASK                             0xc0000000
 
-/* Description		RX_MSDU_END_10_L3_TYPE
-			
-			The 16-bit type value indicating the type of L3 later
-			extracted from LLC/SNAP, set to zero if SNAP is not
-			available
-*/
-#define RX_MSDU_END_10_L3_TYPE_OFFSET                                0x00000028
-#define RX_MSDU_END_10_L3_TYPE_LSB                                   16
-#define RX_MSDU_END_10_L3_TYPE_MASK                                  0xffff0000
-
-/* Description		RX_MSDU_END_11_RULE_INDICATION_31_0
-			
-			Bitmap indicating which of rules 31-0 have matched
-*/
-#define RX_MSDU_END_11_RULE_INDICATION_31_0_OFFSET                   0x0000002c
-#define RX_MSDU_END_11_RULE_INDICATION_31_0_LSB                      0
-#define RX_MSDU_END_11_RULE_INDICATION_31_0_MASK                     0xffffffff
-
-/* Description		RX_MSDU_END_12_RULE_INDICATION_63_32
-			
-			Bitmap indicating which of rules 63-32 have matched
-*/
-#define RX_MSDU_END_12_RULE_INDICATION_63_32_OFFSET                  0x00000030
-#define RX_MSDU_END_12_RULE_INDICATION_63_32_LSB                     0
-#define RX_MSDU_END_12_RULE_INDICATION_63_32_MASK                    0xffffffff
-
-/* Description		RX_MSDU_END_13_SA_IDX
+/* Description		RX_MSDU_END_11_SA_IDX
 			
 			The offset in the address table which matches the MAC
 			source address.
 */
-#define RX_MSDU_END_13_SA_IDX_OFFSET                                 0x00000034
-#define RX_MSDU_END_13_SA_IDX_LSB                                    0
-#define RX_MSDU_END_13_SA_IDX_MASK                                   0x0000ffff
+#define RX_MSDU_END_11_SA_IDX_OFFSET                                 0x0000002c
+#define RX_MSDU_END_11_SA_IDX_LSB                                    0
+#define RX_MSDU_END_11_SA_IDX_MASK                                   0x0000ffff
 
-/* Description		RX_MSDU_END_13_DA_IDX_OR_SW_PEER_ID
+/* Description		RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID
 			
 			Based on a register configuration in RXOLE, this field
 			will contain:
@@ -1216,22 +1189,22 @@ cumulative_ip_length
 			sw_peer_id from the address search entry corresponding
 			to the destination address of the MSDU
 */
-#define RX_MSDU_END_13_DA_IDX_OR_SW_PEER_ID_OFFSET                   0x00000034
-#define RX_MSDU_END_13_DA_IDX_OR_SW_PEER_ID_LSB                      16
-#define RX_MSDU_END_13_DA_IDX_OR_SW_PEER_ID_MASK                     0xffff0000
+#define RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID_OFFSET                   0x0000002c
+#define RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID_LSB                      16
+#define RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID_MASK                     0xffff0000
 
-/* Description		RX_MSDU_END_14_MSDU_DROP
+/* Description		RX_MSDU_END_12_MSDU_DROP
 			
 			When set, REO shall drop this MSDU and not forward it to
 			any other ring...
 			
 			<legal all>
 */
-#define RX_MSDU_END_14_MSDU_DROP_OFFSET                              0x00000038
-#define RX_MSDU_END_14_MSDU_DROP_LSB                                 0
-#define RX_MSDU_END_14_MSDU_DROP_MASK                                0x00000001
+#define RX_MSDU_END_12_MSDU_DROP_OFFSET                              0x00000030
+#define RX_MSDU_END_12_MSDU_DROP_LSB                                 0
+#define RX_MSDU_END_12_MSDU_DROP_MASK                                0x00000001
 
-/* Description		RX_MSDU_END_14_REO_DESTINATION_INDICATION
+/* Description		RX_MSDU_END_12_REO_DESTINATION_INDICATION
 			
 			The ID of the REO exit ring where the MSDU frame shall
 			push after (MPDU level) reordering has finished.
@@ -1260,10 +1233,12 @@ cumulative_ip_length
 			the REO2FW ring
 			
 			<enum 7 reo_destination_sw5> Reo will push the frame
-			into the REO2SW5 ring
+			into the REO2SW5 ring (REO remaps this in chips without
+			REO2SW5 ring, e.g. Pine)
 			
 			<enum 8 reo_destination_sw6> Reo will push the frame
-			into the REO2SW6 ring 
+			into the REO2SW6 ring (REO remaps this in chips without
+			REO2SW6 ring, e.g. Pine)
 			
 			<enum 9 reo_destination_9> REO remaps this <enum 10
 			reo_destination_10> REO remaps this 
@@ -1313,60 +1288,60 @@ cumulative_ip_length
 			
 			<legal all>
 */
-#define RX_MSDU_END_14_REO_DESTINATION_INDICATION_OFFSET             0x00000038
-#define RX_MSDU_END_14_REO_DESTINATION_INDICATION_LSB                1
-#define RX_MSDU_END_14_REO_DESTINATION_INDICATION_MASK               0x0000003e
+#define RX_MSDU_END_12_REO_DESTINATION_INDICATION_OFFSET             0x00000030
+#define RX_MSDU_END_12_REO_DESTINATION_INDICATION_LSB                1
+#define RX_MSDU_END_12_REO_DESTINATION_INDICATION_MASK               0x0000003e
 
-/* Description		RX_MSDU_END_14_FLOW_IDX
+/* Description		RX_MSDU_END_12_FLOW_IDX
 			
 			Flow table index
 			
 			<legal all>
 */
-#define RX_MSDU_END_14_FLOW_IDX_OFFSET                               0x00000038
-#define RX_MSDU_END_14_FLOW_IDX_LSB                                  6
-#define RX_MSDU_END_14_FLOW_IDX_MASK                                 0x03ffffc0
+#define RX_MSDU_END_12_FLOW_IDX_OFFSET                               0x00000030
+#define RX_MSDU_END_12_FLOW_IDX_LSB                                  6
+#define RX_MSDU_END_12_FLOW_IDX_MASK                                 0x03ffffc0
 
-/* Description		RX_MSDU_END_14_RESERVED_14
+/* Description		RX_MSDU_END_12_RESERVED_12A
 			
 			<legal 0>
 */
-#define RX_MSDU_END_14_RESERVED_14_OFFSET                            0x00000038
-#define RX_MSDU_END_14_RESERVED_14_LSB                               26
-#define RX_MSDU_END_14_RESERVED_14_MASK                              0xfc000000
+#define RX_MSDU_END_12_RESERVED_12A_OFFSET                           0x00000030
+#define RX_MSDU_END_12_RESERVED_12A_LSB                              26
+#define RX_MSDU_END_12_RESERVED_12A_MASK                             0xfc000000
 
-/* Description		RX_MSDU_END_15_FSE_METADATA
+/* Description		RX_MSDU_END_13_FSE_METADATA
 			
 			FSE related meta data:
 			
 			<legal all>
 */
-#define RX_MSDU_END_15_FSE_METADATA_OFFSET                           0x0000003c
-#define RX_MSDU_END_15_FSE_METADATA_LSB                              0
-#define RX_MSDU_END_15_FSE_METADATA_MASK                             0xffffffff
+#define RX_MSDU_END_13_FSE_METADATA_OFFSET                           0x00000034
+#define RX_MSDU_END_13_FSE_METADATA_LSB                              0
+#define RX_MSDU_END_13_FSE_METADATA_MASK                             0xffffffff
 
-/* Description		RX_MSDU_END_16_CCE_METADATA
+/* Description		RX_MSDU_END_14_CCE_METADATA
 			
 			CCE related meta data:
 			
 			<legal all>
 */
-#define RX_MSDU_END_16_CCE_METADATA_OFFSET                           0x00000040
-#define RX_MSDU_END_16_CCE_METADATA_LSB                              0
-#define RX_MSDU_END_16_CCE_METADATA_MASK                             0x0000ffff
+#define RX_MSDU_END_14_CCE_METADATA_OFFSET                           0x00000038
+#define RX_MSDU_END_14_CCE_METADATA_LSB                              0
+#define RX_MSDU_END_14_CCE_METADATA_MASK                             0x0000ffff
 
-/* Description		RX_MSDU_END_16_SA_SW_PEER_ID
+/* Description		RX_MSDU_END_14_SA_SW_PEER_ID
 			
 			sw_peer_id from the address search entry corresponding
 			to the source address of the MSDU
 			
 			<legal all>
 */
-#define RX_MSDU_END_16_SA_SW_PEER_ID_OFFSET                          0x00000040
-#define RX_MSDU_END_16_SA_SW_PEER_ID_LSB                             16
-#define RX_MSDU_END_16_SA_SW_PEER_ID_MASK                            0xffff0000
+#define RX_MSDU_END_14_SA_SW_PEER_ID_OFFSET                          0x00000038
+#define RX_MSDU_END_14_SA_SW_PEER_ID_LSB                             16
+#define RX_MSDU_END_14_SA_SW_PEER_ID_MASK                            0xffff0000
 
-/* Description		RX_MSDU_END_17_AGGREGATION_COUNT
+/* Description		RX_MSDU_END_15_AGGREGATION_COUNT
 			
 			FISA: Number of MSDU's aggregated so far
 			
@@ -1376,11 +1351,11 @@ cumulative_ip_length
 			
 			<legal all>
 */
-#define RX_MSDU_END_17_AGGREGATION_COUNT_OFFSET                      0x00000044
-#define RX_MSDU_END_17_AGGREGATION_COUNT_LSB                         0
-#define RX_MSDU_END_17_AGGREGATION_COUNT_MASK                        0x000000ff
+#define RX_MSDU_END_15_AGGREGATION_COUNT_OFFSET                      0x0000003c
+#define RX_MSDU_END_15_AGGREGATION_COUNT_LSB                         0
+#define RX_MSDU_END_15_AGGREGATION_COUNT_MASK                        0x000000ff
 
-/* Description		RX_MSDU_END_17_FLOW_AGGREGATION_CONTINUATION
+/* Description		RX_MSDU_END_15_FLOW_AGGREGATION_CONTINUATION
 			
 			FISA: To indicate that this MSDU can be aggregated with
 			the previous packet with the same flow id
@@ -1391,11 +1366,11 @@ cumulative_ip_length
 			
 			<legal all>
 */
-#define RX_MSDU_END_17_FLOW_AGGREGATION_CONTINUATION_OFFSET          0x00000044
-#define RX_MSDU_END_17_FLOW_AGGREGATION_CONTINUATION_LSB             8
-#define RX_MSDU_END_17_FLOW_AGGREGATION_CONTINUATION_MASK            0x00000100
+#define RX_MSDU_END_15_FLOW_AGGREGATION_CONTINUATION_OFFSET          0x0000003c
+#define RX_MSDU_END_15_FLOW_AGGREGATION_CONTINUATION_LSB             8
+#define RX_MSDU_END_15_FLOW_AGGREGATION_CONTINUATION_MASK            0x00000100
 
-/* Description		RX_MSDU_END_17_FISA_TIMEOUT
+/* Description		RX_MSDU_END_15_FISA_TIMEOUT
 			
 			FISA: To indicate that the aggregation has restarted for
 			this flow due to timeout
@@ -1406,19 +1381,19 @@ cumulative_ip_length
 			
 			<legal all>
 */
-#define RX_MSDU_END_17_FISA_TIMEOUT_OFFSET                           0x00000044
-#define RX_MSDU_END_17_FISA_TIMEOUT_LSB                              9
-#define RX_MSDU_END_17_FISA_TIMEOUT_MASK                             0x00000200
+#define RX_MSDU_END_15_FISA_TIMEOUT_OFFSET                           0x0000003c
+#define RX_MSDU_END_15_FISA_TIMEOUT_LSB                              9
+#define RX_MSDU_END_15_FISA_TIMEOUT_MASK                             0x00000200
 
-/* Description		RX_MSDU_END_17_RESERVE_17A
+/* Description		RX_MSDU_END_15_RESERVED_15A
 			
 			<legal 0>
 */
-#define RX_MSDU_END_17_RESERVE_17A_OFFSET                            0x00000044
-#define RX_MSDU_END_17_RESERVE_17A_LSB                               10
-#define RX_MSDU_END_17_RESERVE_17A_MASK                              0xfffffc00
+#define RX_MSDU_END_15_RESERVED_15A_OFFSET                           0x0000003c
+#define RX_MSDU_END_15_RESERVED_15A_LSB                              10
+#define RX_MSDU_END_15_RESERVED_15A_MASK                             0xfffffc00
 
-/* Description		RX_MSDU_END_18_CUMULATIVE_L4_CHECKSUM
+/* Description		RX_MSDU_END_16_CUMULATIVE_L4_CHECKSUM
 			
 			FISA: checksum for MSDU's that is part of this flow
 			aggregated so far
@@ -1429,11 +1404,11 @@ cumulative_ip_length
 			
 			<legal all>
 */
-#define RX_MSDU_END_18_CUMULATIVE_L4_CHECKSUM_OFFSET                 0x00000048
-#define RX_MSDU_END_18_CUMULATIVE_L4_CHECKSUM_LSB                    0
-#define RX_MSDU_END_18_CUMULATIVE_L4_CHECKSUM_MASK                   0x0000ffff
+#define RX_MSDU_END_16_CUMULATIVE_L4_CHECKSUM_OFFSET                 0x00000040
+#define RX_MSDU_END_16_CUMULATIVE_L4_CHECKSUM_LSB                    0
+#define RX_MSDU_END_16_CUMULATIVE_L4_CHECKSUM_MASK                   0x0000ffff
 
-/* Description		RX_MSDU_END_18_CUMULATIVE_IP_LENGTH
+/* Description		RX_MSDU_END_16_CUMULATIVE_IP_LENGTH
 			
 			FISA: Total MSDU length that is part of this flow
 			aggregated so far
@@ -1444,9 +1419,9 @@ cumulative_ip_length
 			
 			<legal all>
 */
-#define RX_MSDU_END_18_CUMULATIVE_IP_LENGTH_OFFSET                   0x00000048
-#define RX_MSDU_END_18_CUMULATIVE_IP_LENGTH_LSB                      16
-#define RX_MSDU_END_18_CUMULATIVE_IP_LENGTH_MASK                     0xffff0000
+#define RX_MSDU_END_16_CUMULATIVE_IP_LENGTH_OFFSET                   0x00000040
+#define RX_MSDU_END_16_CUMULATIVE_IP_LENGTH_LSB                      16
+#define RX_MSDU_END_16_CUMULATIVE_IP_LENGTH_MASK                     0xffff0000
 
 
 #endif // _RX_MSDU_END_H_

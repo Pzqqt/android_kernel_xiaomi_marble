@@ -31,10 +31,11 @@
 //	5	user_rssi[7:0], pkt_type[11:8], stbc[12], sgi[14:13], rate_mcs[18:15], receive_bandwidth[20:19], reception_type[23:21], mimo_ss_bitmap[31:24]
 //	6	ppdu_start_timestamp[31:0]
 //	7	sw_phy_meta_data[31:0]
+//	8	vlan_ctag_ci[15:0], vlan_stag_ci[31:16]
 //
 // ################ END SUMMARY #################
 
-#define NUM_OF_DWORDS_RX_MSDU_START 8
+#define NUM_OF_DWORDS_RX_MSDU_START 9
 
 struct rx_msdu_start {
              uint32_t rxpcu_mpdu_filter_in_category   :  2, //[1:0]
@@ -75,6 +76,8 @@ struct rx_msdu_start {
                       mimo_ss_bitmap                  :  8; //[31:24]
              uint32_t ppdu_start_timestamp            : 32; //[31:0]
              uint32_t sw_phy_meta_data                : 32; //[31:0]
+             uint32_t vlan_ctag_ci                    : 16, //[15:0]
+                      vlan_stag_ci                    : 16; //[31:16]
 };
 
 /*
@@ -360,10 +363,20 @@ ip4_protocol_ip6_next_header
 
 toeplitz_hash_2_or_4
 			
-			Controlled by RxOLE register - If register bit set to 0,
-			Toeplitz hash is computed over 2-tuple IPv4 or IPv6 src/dest
-			addresses; otherwise, toeplitz hash is computed over 4-tuple
-			IPv4 or IPv6 src/dest addresses and src/dest ports
+			Controlled by multiple RxOLE registers for TCP/UDP over
+			IPv4/IPv6 - Either, Toeplitz hash computed over 2-tuple IPv4
+			or IPv6 src/dest addresses is reported; or, Toeplitz hash
+			computed over 4-tuple IPv4 or IPv6 src/dest addresses and
+			src/dest ports is reported. The Flow_id_toeplitz hash can
+			also be reported here. Usually the hash reported here is the
+			one used for hash-based REO routing (see
+			use_flow_id_toeplitz_clfy in 'RXPT_CLASSIFY_INFO').
+			
+			
+			
+			In Pine, optionally the 3-tuple Toeplitz hash over IPv4
+			or IPv6 src/dest addresses and L4 protocol can be reported
+			here. (Unsupported in HastingsPrime)
 
 flow_id_toeplitz
 			
@@ -376,7 +389,13 @@ flow_id_toeplitz
 			In case of IPSec - Toeplitz hash of 4-tuple 
 			
 			{IP source address, IP destination address, SPI, L4
-			protocol} 
+			protocol}
+			
+			
+			
+			In Pine, optionally the 3-tuple Toeplitz hash over IPv4
+			or IPv6 src/dest addresses and L4 protocol can be reported
+			here. (Unsupported in HastingsPrime)
 			
 			
 			
@@ -528,6 +547,16 @@ sw_phy_meta_data
 			on.
 			
 			<legal all>
+
+vlan_ctag_ci
+			
+			2 bytes of C-VLAN Tag Control Information from
+			WHO_L2_LLC
+
+vlan_stag_ci
+			
+			2 bytes of S-VLAN Tag Control Information from
+			WHO_L2_LLC in case of double VLAN
 */
 
 
@@ -916,10 +945,20 @@ sw_phy_meta_data
 
 /* Description		RX_MSDU_START_3_TOEPLITZ_HASH_2_OR_4
 			
-			Controlled by RxOLE register - If register bit set to 0,
-			Toeplitz hash is computed over 2-tuple IPv4 or IPv6 src/dest
-			addresses; otherwise, toeplitz hash is computed over 4-tuple
-			IPv4 or IPv6 src/dest addresses and src/dest ports
+			Controlled by multiple RxOLE registers for TCP/UDP over
+			IPv4/IPv6 - Either, Toeplitz hash computed over 2-tuple IPv4
+			or IPv6 src/dest addresses is reported; or, Toeplitz hash
+			computed over 4-tuple IPv4 or IPv6 src/dest addresses and
+			src/dest ports is reported. The Flow_id_toeplitz hash can
+			also be reported here. Usually the hash reported here is the
+			one used for hash-based REO routing (see
+			use_flow_id_toeplitz_clfy in 'RXPT_CLASSIFY_INFO').
+			
+			
+			
+			In Pine, optionally the 3-tuple Toeplitz hash over IPv4
+			or IPv6 src/dest addresses and L4 protocol can be reported
+			here. (Unsupported in HastingsPrime)
 */
 #define RX_MSDU_START_3_TOEPLITZ_HASH_2_OR_4_OFFSET                  0x0000000c
 #define RX_MSDU_START_3_TOEPLITZ_HASH_2_OR_4_LSB                     0
@@ -936,7 +975,13 @@ sw_phy_meta_data
 			In case of IPSec - Toeplitz hash of 4-tuple 
 			
 			{IP source address, IP destination address, SPI, L4
-			protocol} 
+			protocol}
+			
+			
+			
+			In Pine, optionally the 3-tuple Toeplitz hash over IPv4
+			or IPv6 src/dest addresses and L4 protocol can be reported
+			here. (Unsupported in HastingsPrime)
 			
 			
 			
@@ -1132,6 +1177,24 @@ sw_phy_meta_data
 #define RX_MSDU_START_7_SW_PHY_META_DATA_OFFSET                      0x0000001c
 #define RX_MSDU_START_7_SW_PHY_META_DATA_LSB                         0
 #define RX_MSDU_START_7_SW_PHY_META_DATA_MASK                        0xffffffff
+
+/* Description		RX_MSDU_START_8_VLAN_CTAG_CI
+			
+			2 bytes of C-VLAN Tag Control Information from
+			WHO_L2_LLC
+*/
+#define RX_MSDU_START_8_VLAN_CTAG_CI_OFFSET                          0x00000020
+#define RX_MSDU_START_8_VLAN_CTAG_CI_LSB                             0
+#define RX_MSDU_START_8_VLAN_CTAG_CI_MASK                            0x0000ffff
+
+/* Description		RX_MSDU_START_8_VLAN_STAG_CI
+			
+			2 bytes of S-VLAN Tag Control Information from
+			WHO_L2_LLC in case of double VLAN
+*/
+#define RX_MSDU_START_8_VLAN_STAG_CI_OFFSET                          0x00000020
+#define RX_MSDU_START_8_VLAN_STAG_CI_LSB                             16
+#define RX_MSDU_START_8_VLAN_STAG_CI_MASK                            0xffff0000
 
 
 #endif // _RX_MSDU_START_H_

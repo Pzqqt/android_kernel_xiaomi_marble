@@ -25,9 +25,6 @@
 */
 /*
   ===========================================================================
-
-
-  ===========================================================================
 */
 
 /*----------------------------------------------------------------------------
@@ -135,14 +132,6 @@
 #define BLSP1_BLSP_BASE_PHYS                                        0x01b40000
 
 /*----------------------------------------------------------------------------
- * BASE: CE_WFSS_CE_REG
- *--------------------------------------------------------------------------*/
-
-#define CE_WFSS_CE_REG_BASE                                         0x01b80000
-#define CE_WFSS_CE_REG_BASE_SIZE                                    0x0001c000
-#define CE_WFSS_CE_REG_BASE_PHYS                                    0x01b80000
-
-/*----------------------------------------------------------------------------
  * BASE: MEMSS_CSR
  *--------------------------------------------------------------------------*/
 
@@ -205,14 +194,6 @@
 #define SECURITY_CONTROL_WLAN_BASE                                  0x01e20000
 #define SECURITY_CONTROL_WLAN_BASE_SIZE                             0x00008000
 #define SECURITY_CONTROL_WLAN_BASE_PHYS                             0x01e20000
-
-/*----------------------------------------------------------------------------
- * BASE: EDPD_EDPD_CAL_ACC
- *--------------------------------------------------------------------------*/
-
-#define EDPD_EDPD_CAL_ACC_BASE                                      0x01e28000
-#define EDPD_EDPD_CAL_ACC_BASE_SIZE                                 0x00004000
-#define EDPD_EDPD_CAL_ACC_BASE_PHYS                                 0x01e28000
 
 /*----------------------------------------------------------------------------
  * BASE: CPR_CX_CPR3
@@ -283,7 +264,7 @@
  *--------------------------------------------------------------------------*/
 
 #define SYSTEM_NOC_BASE                                             0x01e80000
-#define SYSTEM_NOC_BASE_SIZE                                        0x0000a000
+#define SYSTEM_NOC_BASE_SIZE                                        0x00003280
 #define SYSTEM_NOC_BASE_PHYS                                        0x01e80000
 
 /*----------------------------------------------------------------------------
@@ -291,7 +272,7 @@
  *--------------------------------------------------------------------------*/
 
 #define PC_NOC_BASE                                                 0x01f00000
-#define PC_NOC_BASE_SIZE                                            0x00004200
+#define PC_NOC_BASE_SIZE                                            0x00001180
 #define PC_NOC_BASE_PHYS                                            0x01f00000
 
 /*----------------------------------------------------------------------------
@@ -299,7 +280,7 @@
  *--------------------------------------------------------------------------*/
 
 #define WLAON_WL_AON_REG_BASE                                       0x01f80000
-#define WLAON_WL_AON_REG_BASE_SIZE                                  0x00000708
+#define WLAON_WL_AON_REG_BASE_SIZE                                  0x00000704
 #define WLAON_WL_AON_REG_BASE_PHYS                                  0x01f80000
 
 /*----------------------------------------------------------------------------
@@ -315,7 +296,7 @@
  *--------------------------------------------------------------------------*/
 
 #define PMU_WLAN_PMU_BASE                                           0x01f88000
-#define PMU_WLAN_PMU_BASE_SIZE                                      0x000000d4
+#define PMU_WLAN_PMU_BASE_SIZE                                      0x00000338
 #define PMU_WLAN_PMU_BASE_PHYS                                      0x01f88000
 
 /*----------------------------------------------------------------------------
@@ -325,14 +306,6 @@
 #define PMU_NOC_BASE                                                0x01f8a000
 #define PMU_NOC_BASE_SIZE                                           0x00000080
 #define PMU_NOC_BASE_PHYS                                           0x01f8a000
-
-/*----------------------------------------------------------------------------
- * BASE: BT_SEC_REG_SECURITY_CONTROL_BT
- *--------------------------------------------------------------------------*/
-
-#define BT_SEC_REG_SECURITY_CONTROL_BT_BASE                         0x01f90000
-#define BT_SEC_REG_SECURITY_CONTROL_BT_BASE_SIZE                    0x00008000
-#define BT_SEC_REG_SECURITY_CONTROL_BT_BASE_PHYS                    0x01f90000
 
 /*----------------------------------------------------------------------------
  * BASE: PCIE_ATU_REGION
@@ -358,59 +331,5 @@
 #define PCIE_ATU_REGION_END_BASE_SIZE                               0x100000000
 #define PCIE_ATU_REGION_END_BASE_PHYS                               0x43ffffff
 
-/*----------------------------------------------------------------------------
- * BASE: MEM_SS_RAM_START_ADDRESS
- *--------------------------------------------------------------------------*/
-
-#define MEM_SS_RAM_START_ADDRESS_BASE                               0x1400000
-#define MEM_SS_RAM_START_ADDRESS_BASE_SIZE                          0x100000000
-#define MEM_SS_RAM_START_ADDRESS_BASE_PHYS                          0x1400000
-
-/*----------------------------------------------------------------------------
- * BASE: MEM_SS_RAM_SIZE
- *--------------------------------------------------------------------------*/
-#define MEM_SS_RAM_SIZE_BASE                                        0x003a0000
-#define MEM_SS_RAM_SIZE_BASE_SIZE                                   0x100000000
-#define MEM_SS_RAM_SIZE_BASE_PHYS                                   0x003a0000
-
-/*----------------------------------------------------------------------------
- * BASE: MEM_SS_RAM_END_ADDRESS
- *--------------------------------------------------------------------------*/
-
-#define MEM_SS_RAM_END_ADDRESS_BASE                                 0x0179ffff
-#define MEM_SS_RAM_END_ADDRESS_BASE_SIZE                            0x100000000
-#define MEM_SS_RAM_END_ADDRESS_BASE_PHYS                            0x0179ffff
-
-/*----------------------------------------------------------------------------
- * BASE: MEM_SS_ROM_START_ADDRESS
- *--------------------------------------------------------------------------*/
-
-#define MEM_SS_ROM_START_ADDRESS_BASE                               0x00800000
-#define MEM_SS_ROM_START_ADDRESS_BASE_SIZE                          0x100000000
-#define MEM_SS_ROM_START_ADDRESS_BASE_PHYS                          0x00800000
-
-/*----------------------------------------------------------------------------
- * BASE: MEM_SS_ROM_END_ADDRESS
- *--------------------------------------------------------------------------*/
-
-#define MEM_SS_ROM_END_ADDRESS_BASE                                 0x008bffff
-#define MEM_SS_ROM_END_ADDRESS_BASE_SIZE                            0x100000000
-#define MEM_SS_ROM_END_ADDRESS_BASE_PHYS                            0x008bffff
-
-/*----------------------------------------------------------------------------
- * BASE: MEM_SS_ROM_SIZE
- *--------------------------------------------------------------------------*/
-
-#define MEM_SS_ROM_SIZE_BASE                                        0x000c0000
-#define MEM_SS_ROM_SIZE_BASE_SIZE                                   0x100000000
-#define MEM_SS_ROM_SIZE_BASE_PHYS                                   0x000c0000
-
-/*----------------------------------------------------------------------------
- * BASE: QDSP6V67SS_WLAN
- *--------------------------------------------------------------------------*/
-
-#define QDSP6V67SS_WLAN_BASE                                        0x00000000
-#define QDSP6V67SS_WLAN_BASE_SIZE                                   0x01000000
-#define QDSP6V67SS_WLAN_BASE_PHYS                                   0x00000000
 
 #endif /* __MSMHWIOBASE_H__ */

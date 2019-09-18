@@ -363,10 +363,12 @@ struct rx_msdu_desc_info rx_msdu_desc_info_details
 			the REO2FW ring
 			
 			<enum 7 reo_destination_sw5> Reo will push the frame
-			into the REO2SW5 ring 
+			into the REO2SW5 ring (REO remaps this in chips without
+			REO2SW5 ring, e.g. Pine) 
 			
 			<enum 8 reo_destination_sw6> Reo will push the frame
-			into the REO2SW6 ring 
+			into the REO2SW6 ring (REO remaps this in chips without
+			REO2SW6 ring, e.g. Pine)
 			
 			 <enum 9 reo_destination_9> REO remaps this <enum 10
 			reo_destination_10> REO remaps this 

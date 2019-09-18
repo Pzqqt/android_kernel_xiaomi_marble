@@ -24,19 +24,19 @@
 // ################ START SUMMARY #################
 //
 //	Dword	Fields
-//	0	rxpcu_mpdu_filter_in_category[1:0], sw_frame_group_id[8:2], ndp_frame[9], phy_err[10], phy_err_during_mpdu_header[11], protocol_version_err[12], ast_based_lookup_valid[13], reserved_0a[15:14], phy_ppdu_id[31:16]
-//	1	ast_index[15:0], sw_peer_id[31:16]
-//	2	mpdu_frame_control_valid[0], mpdu_duration_valid[1], mac_addr_ad1_valid[2], mac_addr_ad2_valid[3], mac_addr_ad3_valid[4], mac_addr_ad4_valid[5], mpdu_sequence_control_valid[6], mpdu_qos_control_valid[7], mpdu_ht_control_valid[8], frame_encryption_info_valid[9], mpdu_fragment_number[13:10], more_fragment_flag[14], reserved_2a[15], fr_ds[16], to_ds[17], encrypted[18], mpdu_retry[19], mpdu_sequence_number[31:20]
-//	3	epd_en[0], all_frames_shall_be_encrypted[1], encrypt_type[5:2], wep_key_width_for_variable_key[7:6], mesh_sta[9:8], bssid_hit[10], bssid_number[14:11], tid[18:15], reserved_3a[31:19]
-//	4	pn_31_0[31:0]
-//	5	pn_63_32[31:0]
-//	6	pn_95_64[31:0]
-//	7	pn_127_96[31:0]
+//	0	struct rxpt_classify_info rxpt_classify_info_details;
+//	1	rx_reo_queue_desc_addr_31_0[31:0]
+//	2	rx_reo_queue_desc_addr_39_32[7:0], receive_queue_number[23:8], pre_delim_err_warning[24], first_delim_err[25], reserved_2a[31:26]
+//	3	pn_31_0[31:0]
+//	4	pn_63_32[31:0]
+//	5	pn_95_64[31:0]
+//	6	pn_127_96[31:0]
+//	7	epd_en[0], all_frames_shall_be_encrypted[1], encrypt_type[5:2], wep_key_width_for_variable_key[7:6], mesh_sta[9:8], bssid_hit[10], bssid_number[14:11], tid[18:15], reserved_7a[31:19]
 //	8	peer_meta_data[31:0]
-//	9	struct rxpt_classify_info rxpt_classify_info_details;
-//	10	rx_reo_queue_desc_addr_31_0[31:0]
-//	11	rx_reo_queue_desc_addr_39_32[7:0], receive_queue_number[23:8], pre_delim_err_warning[24], first_delim_err[25], reserved_11[31:26]
-//	12	key_id_octet[7:0], new_peer_entry[8], decrypt_needed[9], decap_type[11:10], rx_insert_vlan_c_tag_padding[12], rx_insert_vlan_s_tag_padding[13], strip_vlan_c_tag_decap[14], strip_vlan_s_tag_decap[15], pre_delim_count[27:16], ampdu_flag[28], bar_frame[29], reserved_12[31:30]
+//	9	rxpcu_mpdu_filter_in_category[1:0], sw_frame_group_id[8:2], ndp_frame[9], phy_err[10], phy_err_during_mpdu_header[11], protocol_version_err[12], ast_based_lookup_valid[13], reserved_9a[15:14], phy_ppdu_id[31:16]
+//	10	ast_index[15:0], sw_peer_id[31:16]
+//	11	mpdu_frame_control_valid[0], mpdu_duration_valid[1], mac_addr_ad1_valid[2], mac_addr_ad2_valid[3], mac_addr_ad3_valid[4], mac_addr_ad4_valid[5], mpdu_sequence_control_valid[6], mpdu_qos_control_valid[7], mpdu_ht_control_valid[8], frame_encryption_info_valid[9], mpdu_fragment_number[13:10], more_fragment_flag[14], reserved_11a[15], fr_ds[16], to_ds[17], encrypted[18], mpdu_retry[19], mpdu_sequence_number[31:20]
+//	12	key_id_octet[7:0], new_peer_entry[8], decrypt_needed[9], decap_type[11:10], rx_insert_vlan_c_tag_padding[12], rx_insert_vlan_s_tag_padding[13], strip_vlan_c_tag_decap[14], strip_vlan_s_tag_decap[15], pre_delim_count[27:16], ampdu_flag[28], bar_frame[29], raw_mpdu[30], reserved_12[31]
 //	13	mpdu_length[13:0], first_mpdu[14], mcast_bcast[15], ast_index_not_found[16], ast_index_timeout[17], power_mgmt[18], non_qos[19], null_data[20], mgmt_type[21], ctrl_type[22], more_data[23], eosp[24], fragment_flag[25], order[26], u_apsd_trigger[27], encrypt_required[28], directed[29], amsdu_present[30], reserved_13[31]
 //	14	mpdu_frame_control_field[15:0], mpdu_duration_field[31:16]
 //	15	mac_addr_ad1_31_0[31:0]
@@ -53,6 +53,27 @@
 #define NUM_OF_DWORDS_RX_MPDU_INFO 23
 
 struct rx_mpdu_info {
+    struct            rxpt_classify_info                       rxpt_classify_info_details;
+             uint32_t rx_reo_queue_desc_addr_31_0     : 32; //[31:0]
+             uint32_t rx_reo_queue_desc_addr_39_32    :  8, //[7:0]
+                      receive_queue_number            : 16, //[23:8]
+                      pre_delim_err_warning           :  1, //[24]
+                      first_delim_err                 :  1, //[25]
+                      reserved_2a                     :  6; //[31:26]
+             uint32_t pn_31_0                         : 32; //[31:0]
+             uint32_t pn_63_32                        : 32; //[31:0]
+             uint32_t pn_95_64                        : 32; //[31:0]
+             uint32_t pn_127_96                       : 32; //[31:0]
+             uint32_t epd_en                          :  1, //[0]
+                      all_frames_shall_be_encrypted   :  1, //[1]
+                      encrypt_type                    :  4, //[5:2]
+                      wep_key_width_for_variable_key  :  2, //[7:6]
+                      mesh_sta                        :  2, //[9:8]
+                      bssid_hit                       :  1, //[10]
+                      bssid_number                    :  4, //[14:11]
+                      tid                             :  4, //[18:15]
+                      reserved_7a                     : 13; //[31:19]
+             uint32_t peer_meta_data                  : 32; //[31:0]
              uint32_t rxpcu_mpdu_filter_in_category   :  2, //[1:0]
                       sw_frame_group_id               :  7, //[8:2]
                       ndp_frame                       :  1, //[9]
@@ -60,7 +81,7 @@ struct rx_mpdu_info {
                       phy_err_during_mpdu_header      :  1, //[11]
                       protocol_version_err            :  1, //[12]
                       ast_based_lookup_valid          :  1, //[13]
-                      reserved_0a                     :  2, //[15:14]
+                      reserved_9a                     :  2, //[15:14]
                       phy_ppdu_id                     : 16; //[31:16]
              uint32_t ast_index                       : 16, //[15:0]
                       sw_peer_id                      : 16; //[31:16]
@@ -76,33 +97,12 @@ struct rx_mpdu_info {
                       frame_encryption_info_valid     :  1, //[9]
                       mpdu_fragment_number            :  4, //[13:10]
                       more_fragment_flag              :  1, //[14]
-                      reserved_2a                     :  1, //[15]
+                      reserved_11a                    :  1, //[15]
                       fr_ds                           :  1, //[16]
                       to_ds                           :  1, //[17]
                       encrypted                       :  1, //[18]
                       mpdu_retry                      :  1, //[19]
                       mpdu_sequence_number            : 12; //[31:20]
-             uint32_t epd_en                          :  1, //[0]
-                      all_frames_shall_be_encrypted   :  1, //[1]
-                      encrypt_type                    :  4, //[5:2]
-                      wep_key_width_for_variable_key  :  2, //[7:6]
-                      mesh_sta                        :  2, //[9:8]
-                      bssid_hit                       :  1, //[10]
-                      bssid_number                    :  4, //[14:11]
-                      tid                             :  4, //[18:15]
-                      reserved_3a                     : 13; //[31:19]
-             uint32_t pn_31_0                         : 32; //[31:0]
-             uint32_t pn_63_32                        : 32; //[31:0]
-             uint32_t pn_95_64                        : 32; //[31:0]
-             uint32_t pn_127_96                       : 32; //[31:0]
-             uint32_t peer_meta_data                  : 32; //[31:0]
-    struct            rxpt_classify_info                       rxpt_classify_info_details;
-             uint32_t rx_reo_queue_desc_addr_31_0     : 32; //[31:0]
-             uint32_t rx_reo_queue_desc_addr_39_32    :  8, //[7:0]
-                      receive_queue_number            : 16, //[23:8]
-                      pre_delim_err_warning           :  1, //[24]
-                      first_delim_err                 :  1, //[25]
-                      reserved_11                     :  6; //[31:26]
              uint32_t key_id_octet                    :  8, //[7:0]
                       new_peer_entry                  :  1, //[8]
                       decrypt_needed                  :  1, //[9]
@@ -114,7 +114,8 @@ struct rx_mpdu_info {
                       pre_delim_count                 : 12, //[27:16]
                       ampdu_flag                      :  1, //[28]
                       bar_frame                       :  1, //[29]
-                      reserved_12                     :  2; //[31:30]
+                      raw_mpdu                        :  1, //[30]
+                      reserved_12                     :  1; //[31]
              uint32_t mpdu_length                     : 14, //[13:0]
                       first_mpdu                      :  1, //[14]
                       mcast_bcast                     :  1, //[15]
@@ -150,6 +151,329 @@ struct rx_mpdu_info {
 };
 
 /*
+
+struct rxpt_classify_info rxpt_classify_info_details
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			RXOLE related classification info
+			
+			<legal all
+
+rx_reo_queue_desc_addr_31_0
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Address (lower 32 bits) of the REO queue descriptor. 
+			
+			
+			
+			If no Peer entry lookup happened for this frame, the
+			value wil be set to 0, and the frame shall never be pushed
+			to REO entrance ring.
+			
+			<legal all>
+
+rx_reo_queue_desc_addr_39_32
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Address (upper 8 bits) of the REO queue descriptor. 
+			
+			
+			
+			If no Peer entry lookup happened for this frame, the
+			value wil be set to 0, and the frame shall never be pushed
+			to REO entrance ring.
+			
+			<legal all>
+
+receive_queue_number
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Indicates the MPDU queue ID to which this MPDU link
+			descriptor belongs
+			
+			Used for tracking and debugging
+			
+			<legal all>
+
+pre_delim_err_warning
+			
+			Indicates that a delimiter FCS error was found in
+			between the Previous MPDU and this MPDU.
+			
+			
+			
+			Note that this is just a warning, and does not mean that
+			this MPDU is corrupted in any way. If it is, there will be
+			other errors indicated such as FCS or decrypt errors
+			
+			
+			
+			In case of ndp or phy_err, this field will indicate at
+			least one of delimiters located after the last MPDU in the
+			previous PPDU has been corrupted.
+
+first_delim_err
+			
+			Indicates that the first delimiter had a FCS failure. 
+			Only valid when first_mpdu and first_msdu are set.
+			
+			
+			
+
+reserved_2a
+			
+			<legal 0>
+
+pn_31_0
+			
+			
+			
+			
+			
+			WEP: IV = {key_id_octet, pn2, pn1, pn0}.  Only pn[23:0]
+			is valid.
+			
+			TKIP: IV = {pn5, pn4, pn3, pn2, key_id_octet, pn0,
+			WEPSeed[1], pn1}.  Only pn[47:0] is valid.
+			
+			AES-CCM: IV = {pn5, pn4, pn3, pn2, key_id_octet, 0x0,
+			pn1, pn0}.  Only pn[47:0] is valid.
+			
+			WAPI: IV = {key_id_octet, 0x0, pn15, pn14, pn13, pn12,
+			pn11, pn10, pn9, pn8, pn7, pn6, pn5, pn4, pn3, pn2, pn1,
+			pn0}.  pn[127:0] are valid.
+			
+			
+			
+
+pn_63_32
+			
+			
+			
+			
+			Bits [63:32] of the PN number.   See description for
+			pn_31_0.
+			
+			
+			
+
+pn_95_64
+			
+			
+			
+			
+			Bits [95:64] of the PN number.  See description for
+			pn_31_0.
+			
+			
+			
+
+pn_127_96
+			
+			
+			
+			
+			Bits [127:96] of the PN number.  See description for
+			pn_31_0.
+			
+			
+			
+
+epd_en
+			
+			Field only valid when AST_based_lookup_valid == 1.
+			
+			
+			
+			
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			If set to one use EPD instead of LPD
+			
+			
+			
+			
+			<legal all>
+
+all_frames_shall_be_encrypted
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			When set, all frames (data only ?) shall be encrypted.
+			If not, RX CRYPTO shall set an error flag.
+			
+			<legal all>
+
+encrypt_type
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Indicates type of decrypt cipher used (as defined in the
+			peer entry)
+			
+			
+			
+			<enum 0 wep_40> WEP 40-bit
+			
+			<enum 1 wep_104> WEP 104-bit
+			
+			<enum 2 tkip_no_mic> TKIP without MIC
+			
+			<enum 3 wep_128> WEP 128-bit
+			
+			<enum 4 tkip_with_mic> TKIP with MIC
+			
+			<enum 5 wapi> WAPI
+			
+			<enum 6 aes_ccmp_128> AES CCMP 128
+			
+			<enum 7 no_cipher> No crypto
+			
+			<enum 8 aes_ccmp_256> AES CCMP 256
+			
+			<enum 9 aes_gcmp_128> AES CCMP 128
+			
+			<enum 10 aes_gcmp_256> AES CCMP 256
+			
+			<enum 11 wapi_gcm_sm4> WAPI GCM SM4
+			
+			
+			
+			<enum 12 wep_varied_width> WEP encryption. As for WEP
+			per keyid the key bit width can vary, the key bit width for
+			this MPDU will be indicated in field
+			wep_key_width_for_variable key
+			
+			<legal 0-12>
+
+wep_key_width_for_variable_key
+			
+			Field only valid when key_type is set to
+			wep_varied_width. 
+			
+			
+			
+			This field indicates the size of the wep key for this
+			MPDU.
+			
+			 
+			
+			<enum 0 wep_varied_width_40> WEP 40-bit
+			
+			<enum 1 wep_varied_width_104> WEP 104-bit
+			
+			<enum 2 wep_varied_width_128> WEP 128-bit
+			
+			
+			
+			<legal 0-2>
+
+mesh_sta
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			When set, this is a Mesh (11s) STA.
+			
+			
+			
+			The interpretation of the A-MSDU 'Length' field in the
+			MPDU (if any) is decided by the e-numerations below.
+			
+			
+			
+			<enum 0 MESH_DISABLE>
+			
+			<enum 1 MESH_Q2Q> A-MSDU 'Length' is big endian and
+			includes the length of Mesh Control.
+			
+			<enum 2 MESH_11S_BE> A-MSDU 'Length' is big endian and
+			excludes the length of Mesh Control.
+			
+			<enum 3 MESH_11S_LE> A-MSDU 'Length' is little endian
+			and excludes the length of Mesh Control. This is
+			802.11s-compliant.
+			
+			<legal all>
+
+bssid_hit
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			When set, the BSSID of the incoming frame matched one of
+			the 8 BSSID register values
+			
+			
+			
+			<legal all>
+
+bssid_number
+			
+			Field only valid when bssid_hit is set.
+			
+			
+			
+			This number indicates which one out of the 8 BSSID
+			register values matched the incoming frame
+			
+			<legal all>
+
+tid
+			
+			Field only valid when mpdu_qos_control_valid is set
+			
+			
+			
+			The TID field in the QoS control field
+			
+			<legal all>
+
+reserved_7a
+			
+			<legal 0>
+
+peer_meta_data
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Meta data that SW has programmed in the Peer table entry
+			of the transmitting STA.
+			
+			<legal all>
 
 rxpcu_mpdu_filter_in_category
 			
@@ -341,7 +665,7 @@ ast_based_lookup_valid
 			
 			<legal all>
 
-reserved_0a
+reserved_9a
 			
 			<legal 0>
 
@@ -533,7 +857,7 @@ more_fragment_flag
 			
 			<legal all>
 
-reserved_2a
+reserved_11a
 			
 			<legal 0>
 
@@ -588,329 +912,6 @@ mpdu_sequence_number
 			The sequence number from the 802.11 header.
 			
 			<legal all>
-
-epd_en
-			
-			Field only valid when AST_based_lookup_valid == 1.
-			
-			
-			
-			
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			If set to one use EPD instead of LPD
-			
-			
-			
-			
-			<legal all>
-
-all_frames_shall_be_encrypted
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			When set, all frames (data only ?) shall be encrypted.
-			If not, RX CRYPTO shall set an error flag.
-			
-			<legal all>
-
-encrypt_type
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Indicates type of decrypt cipher used (as defined in the
-			peer entry)
-			
-			
-			
-			<enum 0 wep_40> WEP 40-bit
-			
-			<enum 1 wep_104> WEP 104-bit
-			
-			<enum 2 tkip_no_mic> TKIP without MIC
-			
-			<enum 3 wep_128> WEP 128-bit
-			
-			<enum 4 tkip_with_mic> TKIP with MIC
-			
-			<enum 5 wapi> WAPI
-			
-			<enum 6 aes_ccmp_128> AES CCMP 128
-			
-			<enum 7 no_cipher> No crypto
-			
-			<enum 8 aes_ccmp_256> AES CCMP 256
-			
-			<enum 9 aes_gcmp_128> AES CCMP 128
-			
-			<enum 10 aes_gcmp_256> AES CCMP 256
-			
-			<enum 11 wapi_gcm_sm4> WAPI GCM SM4
-			
-			
-			
-			<enum 12 wep_varied_width> WEP encryption. As for WEP
-			per keyid the key bit width can vary, the key bit width for
-			this MPDU will be indicated in field
-			wep_key_width_for_variable key
-			
-			<legal 0-12>
-
-wep_key_width_for_variable_key
-			
-			Field only valid when key_type is set to
-			wep_varied_width. 
-			
-			
-			
-			This field indicates the size of the wep key for this
-			MPDU.
-			
-			 
-			
-			<enum 0 wep_varied_width_40> WEP 40-bit
-			
-			<enum 1 wep_varied_width_104> WEP 104-bit
-			
-			<enum 2 wep_varied_width_128> WEP 128-bit
-			
-			
-			
-			<legal 0-2>
-
-mesh_sta
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			When set, this is a Mesh (11s) STA.
-			
-			
-			
-			The interpretation of the A-MSDU 'Length' field in the
-			MPDU (if any) is decided by the e-numerations below.
-			
-			
-			
-			<enum 0 MESH_DISABLE>
-			
-			<enum 1 MESH_Q2Q> A-MSDU 'Length' is big endian and
-			includes the length of Mesh Control.
-			
-			<enum 2 MESH_11S_BE> A-MSDU 'Length' is big endian and
-			excludes the length of Mesh Control.
-			
-			<enum 3 MESH_11S_LE> A-MSDU 'Length' is little endian
-			and excludes the length of Mesh Control. This is
-			802.11s-compliant.
-			
-			<legal all>
-
-bssid_hit
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			When set, the BSSID of the incoming frame matched one of
-			the 8 BSSID register values
-			
-			
-			
-			<legal all>
-
-bssid_number
-			
-			Field only valid when bssid_hit is set.
-			
-			
-			
-			This number indicates which one out of the 8 BSSID
-			register values matched the incoming frame
-			
-			<legal all>
-
-tid
-			
-			Field only valid when mpdu_qos_control_valid is set
-			
-			
-			
-			The TID field in the QoS control field
-			
-			<legal all>
-
-reserved_3a
-			
-			<legal 0>
-
-pn_31_0
-			
-			
-			
-			
-			
-			WEP: IV = {key_id_octet, pn2, pn1, pn0}.  Only pn[23:0]
-			is valid.
-			
-			TKIP: IV = {pn5, pn4, pn3, pn2, key_id_octet, pn0,
-			WEPSeed[1], pn1}.  Only pn[47:0] is valid.
-			
-			AES-CCM: IV = {pn5, pn4, pn3, pn2, key_id_octet, 0x0,
-			pn1, pn0}.  Only pn[47:0] is valid.
-			
-			WAPI: IV = {key_id_octet, 0x0, pn15, pn14, pn13, pn12,
-			pn11, pn10, pn9, pn8, pn7, pn6, pn5, pn4, pn3, pn2, pn1,
-			pn0}.  pn[127:0] are valid.
-			
-			
-			
-
-pn_63_32
-			
-			
-			
-			
-			Bits [63:32] of the PN number.   See description for
-			pn_31_0.
-			
-			
-			
-
-pn_95_64
-			
-			
-			
-			
-			Bits [95:64] of the PN number.  See description for
-			pn_31_0.
-			
-			
-			
-
-pn_127_96
-			
-			
-			
-			
-			Bits [127:96] of the PN number.  See description for
-			pn_31_0.
-			
-			
-			
-
-peer_meta_data
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Meta data that SW has programmed in the Peer table entry
-			of the transmitting STA.
-			
-			<legal all>
-
-struct rxpt_classify_info rxpt_classify_info_details
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			RXOLE related classification info
-			
-			<legal all
-
-rx_reo_queue_desc_addr_31_0
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Address (lower 32 bits) of the REO queue descriptor. 
-			
-			
-			
-			If no Peer entry lookup happened for this frame, the
-			value wil be set to 0, and the frame shall never be pushed
-			to REO entrance ring.
-			
-			<legal all>
-
-rx_reo_queue_desc_addr_39_32
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Address (upper 8 bits) of the REO queue descriptor. 
-			
-			
-			
-			If no Peer entry lookup happened for this frame, the
-			value wil be set to 0, and the frame shall never be pushed
-			to REO entrance ring.
-			
-			<legal all>
-
-receive_queue_number
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Indicates the MPDU queue ID to which this MPDU link
-			descriptor belongs
-			
-			Used for tracking and debugging
-			
-			<legal all>
-
-pre_delim_err_warning
-			
-			Indicates that a delimiter FCS error was found in
-			between the Previous MPDU and this MPDU.
-			
-			
-			
-			Note that this is just a warning, and does not mean that
-			this MPDU is corrupted in any way. If it is, there will be
-			other errors indicated such as FCS or decrypt errors
-			
-			
-			
-			In case of ndp or phy_err, this field will indicate at
-			least one of delimiters located after the last MPDU in the
-			previous PPDU has been corrupted.
-
-first_delim_err
-			
-			Indicates that the first delimiter had a FCS failure. 
-			Only valid when first_mpdu and first_msdu are set.
-			
-			
-			
-
-reserved_11
-			
-			<legal 0>
 
 key_id_octet
 			
@@ -1085,9 +1086,26 @@ bar_frame
 			
 			<legal all>
 
+raw_mpdu
+			
+			Consumer: SW
+			
+			Producer: RXOLE
+			
+			
+			
+			RXPCU sets this field to 0 and RXOLE overwrites it.
+			
+			
+			
+			Set to 1 by RXOLE when it has not performed any 802.11
+			to Ethernet/Natvie WiFi header conversion on this MPDU.
+			
+			<legal all>
+
 reserved_12
 			
-			<legal 0>.
+			<legal 0>
 
 mpdu_length
 			
@@ -1440,7 +1458,653 @@ mpdu_ht_control_field
 */
 
 
-/* Description		RX_MPDU_INFO_0_RXPCU_MPDU_FILTER_IN_CATEGORY
+ /* EXTERNAL REFERENCE : struct rxpt_classify_info rxpt_classify_info_details */ 
+
+
+/* Description		RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_REO_DESTINATION_INDICATION
+			
+			The ID of the REO exit ring where the MSDU frame shall
+			push after (MPDU level) reordering has finished.
+			
+			
+			
+			<enum 0 reo_destination_tcl> Reo will push the frame
+			into the REO2TCL ring
+			
+			<enum 1 reo_destination_sw1> Reo will push the frame
+			into the REO2SW1 ring
+			
+			<enum 2 reo_destination_sw2> Reo will push the frame
+			into the REO2SW2 ring
+			
+			<enum 3 reo_destination_sw3> Reo will push the frame
+			into the REO2SW3 ring
+			
+			<enum 4 reo_destination_sw4> Reo will push the frame
+			into the REO2SW4 ring
+			
+			<enum 5 reo_destination_release> Reo will push the frame
+			into the REO_release ring
+			
+			<enum 6 reo_destination_fw> Reo will push the frame into
+			the REO2FW ring
+			
+			<enum 7 reo_destination_sw5> Reo will push the frame
+			into the REO2SW5 ring (REO remaps this in chips without
+			REO2SW5 ring, e.g. Pine)
+			
+			<enum 8 reo_destination_sw6> Reo will push the frame
+			into the REO2SW6 ring (REO remaps this in chips without
+			REO2SW6 ring, e.g. Pine)
+			
+			<enum 9 reo_destination_9> REO remaps this <enum 10
+			reo_destination_10> REO remaps this 
+			
+			<enum 11 reo_destination_11> REO remaps this 
+			
+			<enum 12 reo_destination_12> REO remaps this <enum 13
+			reo_destination_13> REO remaps this 
+			
+			<enum 14 reo_destination_14> REO remaps this 
+			
+			<enum 15 reo_destination_15> REO remaps this 
+			
+			<enum 16 reo_destination_16> REO remaps this 
+			
+			<enum 17 reo_destination_17> REO remaps this 
+			
+			<enum 18 reo_destination_18> REO remaps this 
+			
+			<enum 19 reo_destination_19> REO remaps this 
+			
+			<enum 20 reo_destination_20> REO remaps this 
+			
+			<enum 21 reo_destination_21> REO remaps this 
+			
+			<enum 22 reo_destination_22> REO remaps this 
+			
+			<enum 23 reo_destination_23> REO remaps this 
+			
+			<enum 24 reo_destination_24> REO remaps this 
+			
+			<enum 25 reo_destination_25> REO remaps this 
+			
+			<enum 26 reo_destination_26> REO remaps this 
+			
+			<enum 27 reo_destination_27> REO remaps this 
+			
+			<enum 28 reo_destination_28> REO remaps this 
+			
+			<enum 29 reo_destination_29> REO remaps this 
+			
+			<enum 30 reo_destination_30> REO remaps this 
+			
+			<enum 31 reo_destination_31> REO remaps this 
+			
+			
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_REO_DESTINATION_INDICATION_OFFSET 0x00000000
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_REO_DESTINATION_INDICATION_LSB 0
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_REO_DESTINATION_INDICATION_MASK 0x0000001f
+
+/* Description		RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_LMAC_PEER_ID_MSB
+			
+			If use_flow_id_toeplitz_clfy is set and lmac_peer_id_'sb
+			is 2'b00, Rx OLE uses a REO desination indicati'n of {1'b1,
+			hash[3:0]} using the chosen Toeplitz hash from Common Parser
+			if flow search fails.
+			
+			If use_flow_id_toeplitz_clfy is set and lmac_peer_id_msb
+			's not 2'b00, Rx OLE uses a REO desination indication of
+			{lmac_peer_id_msb, hash[2:0]} using the chosen Toeplitz hash
+			from Common Parser if flow search fails.
+			
+			This LMAC/peer-based routing is not supported in
+			Hastings80 and HastingsPrime.
+			
+			<legal 0>
+*/
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_LMAC_PEER_ID_MSB_OFFSET 0x00000000
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_LMAC_PEER_ID_MSB_LSB 5
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_LMAC_PEER_ID_MSB_MASK 0x00000060
+
+/* Description		RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_USE_FLOW_ID_TOEPLITZ_CLFY
+			
+			Indication to Rx OLE to enable REO destination routing
+			based on the chosen Toeplitz hash from Common Parser, in
+			case flow search fails
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_USE_FLOW_ID_TOEPLITZ_CLFY_OFFSET 0x00000000
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_USE_FLOW_ID_TOEPLITZ_CLFY_LSB 7
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_USE_FLOW_ID_TOEPLITZ_CLFY_MASK 0x00000080
+
+/* Description		RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_UCAST_DATA
+			
+			Filter pass Unicast data frame (matching
+			rxpcu_filter_pass and sw_frame_group_Unicast_data) routing
+			selection
+			
+			
+			
+			1'b0: source and destination rings are selected from the
+			RxOLE register settings for the packet type
+			
+			
+			
+			1'b1: source ring and destination ring is selected from
+			the rxdma0_source_ring_selection and
+			rxdma0_destination_ring_selection fields in this STRUCT
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_UCAST_DATA_OFFSET 0x00000000
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_UCAST_DATA_LSB 8
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_UCAST_DATA_MASK 0x00000100
+
+/* Description		RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_MCAST_DATA
+			
+			Filter pass Multicast data frame (matching
+			rxpcu_filter_pass and sw_frame_group_Multicast_data) routing
+			selection
+			
+			
+			
+			1'b0: source and destination rings are selected from the
+			RxOLE register settings for the packet type
+			
+			
+			
+			1'b1: source ring and destination ring is selected from
+			the rxdma0_source_ring_selection and
+			rxdma0_destination_ring_selection fields in this STRUCT
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_MCAST_DATA_OFFSET 0x00000000
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_MCAST_DATA_LSB 9
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_MCAST_DATA_MASK 0x00000200
+
+/* Description		RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_1000
+			
+			Filter pass BAR frame (matching rxpcu_filter_pass and
+			sw_frame_group_ctrl_1000) routing selection
+			
+			
+			
+			1'b0: source and destination rings are selected from the
+			RxOLE register settings for the packet type
+			
+			
+			
+			1'b1: source ring and destination ring is selected from
+			the rxdma0_source_ring_selection and
+			rxdma0_destination_ring_selection fields in this STRUCT
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_1000_OFFSET 0x00000000
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_1000_LSB 10
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_1000_MASK 0x00000400
+
+/* Description		RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_SOURCE_RING_SELECTION
+			
+			Field only valid when for the received frame type the
+			corresponding pkt_selection_fp_... bit is set
+			
+			
+			
+			<enum 0 wbm2rxdma_buf_source_ring> The data buffer for
+			
+			<enum 1 fw2rxdma_buf_source_ring> The data buffer for
+			this frame shall be sourced by fw2rxdma buffer source ring.
+			
+			<enum 2 sw2rxdma_buf_source_ring> The data buffer for
+			this frame shall be sourced by sw2rxdma buffer source ring.
+			
+			<enum 3 no_buffer_ring> The frame shall not be written
+			to any data buffer.
+			
+			
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_SOURCE_RING_SELECTION_OFFSET 0x00000000
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_SOURCE_RING_SELECTION_LSB 11
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_SOURCE_RING_SELECTION_MASK 0x00001800
+
+/* Description		RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_DESTINATION_RING_SELECTION
+			
+			Field only valid when for the received frame type the
+			corresponding pkt_selection_fp_... bit is set
+			
+			
+			
+			<enum 0  rxdma_release_ring> RXDMA0 shall push the frame
+			to the Release ring. Effectively this means the frame needs
+			to be dropped.
+			
+			<enum 1  rxdma2fw_ring> RXDMA0 shall push the frame to
+			the FW ring.
+			
+			<enum 2  rxdma2sw_ring> RXDMA0 shall push the frame to
+			the SW ring.
+			
+			<enum 3  rxdma2reo_ring> RXDMA0 shall push the frame to
+			the REO entrance ring.
+			
+			
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_DESTINATION_RING_SELECTION_OFFSET 0x00000000
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_DESTINATION_RING_SELECTION_LSB 13
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_DESTINATION_RING_SELECTION_MASK 0x00006000
+
+/* Description		RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0B
+			
+			<legal 0>
+*/
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0B_OFFSET 0x00000000
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0B_LSB    15
+#define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0B_MASK   0xffff8000
+
+/* Description		RX_MPDU_INFO_1_RX_REO_QUEUE_DESC_ADDR_31_0
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Address (lower 32 bits) of the REO queue descriptor. 
+			
+			
+			
+			If no Peer entry lookup happened for this frame, the
+			value wil be set to 0, and the frame shall never be pushed
+			to REO entrance ring.
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_1_RX_REO_QUEUE_DESC_ADDR_31_0_OFFSET            0x00000004
+#define RX_MPDU_INFO_1_RX_REO_QUEUE_DESC_ADDR_31_0_LSB               0
+#define RX_MPDU_INFO_1_RX_REO_QUEUE_DESC_ADDR_31_0_MASK              0xffffffff
+
+/* Description		RX_MPDU_INFO_2_RX_REO_QUEUE_DESC_ADDR_39_32
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Address (upper 8 bits) of the REO queue descriptor. 
+			
+			
+			
+			If no Peer entry lookup happened for this frame, the
+			value wil be set to 0, and the frame shall never be pushed
+			to REO entrance ring.
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_2_RX_REO_QUEUE_DESC_ADDR_39_32_OFFSET           0x00000008
+#define RX_MPDU_INFO_2_RX_REO_QUEUE_DESC_ADDR_39_32_LSB              0
+#define RX_MPDU_INFO_2_RX_REO_QUEUE_DESC_ADDR_39_32_MASK             0x000000ff
+
+/* Description		RX_MPDU_INFO_2_RECEIVE_QUEUE_NUMBER
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Indicates the MPDU queue ID to which this MPDU link
+			descriptor belongs
+			
+			Used for tracking and debugging
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_2_RECEIVE_QUEUE_NUMBER_OFFSET                   0x00000008
+#define RX_MPDU_INFO_2_RECEIVE_QUEUE_NUMBER_LSB                      8
+#define RX_MPDU_INFO_2_RECEIVE_QUEUE_NUMBER_MASK                     0x00ffff00
+
+/* Description		RX_MPDU_INFO_2_PRE_DELIM_ERR_WARNING
+			
+			Indicates that a delimiter FCS error was found in
+			between the Previous MPDU and this MPDU.
+			
+			
+			
+			Note that this is just a warning, and does not mean that
+			this MPDU is corrupted in any way. If it is, there will be
+			other errors indicated such as FCS or decrypt errors
+			
+			
+			
+			In case of ndp or phy_err, this field will indicate at
+			least one of delimiters located after the last MPDU in the
+			previous PPDU has been corrupted.
+*/
+#define RX_MPDU_INFO_2_PRE_DELIM_ERR_WARNING_OFFSET                  0x00000008
+#define RX_MPDU_INFO_2_PRE_DELIM_ERR_WARNING_LSB                     24
+#define RX_MPDU_INFO_2_PRE_DELIM_ERR_WARNING_MASK                    0x01000000
+
+/* Description		RX_MPDU_INFO_2_FIRST_DELIM_ERR
+			
+			Indicates that the first delimiter had a FCS failure. 
+			Only valid when first_mpdu and first_msdu are set.
+			
+			
+			
+*/
+#define RX_MPDU_INFO_2_FIRST_DELIM_ERR_OFFSET                        0x00000008
+#define RX_MPDU_INFO_2_FIRST_DELIM_ERR_LSB                           25
+#define RX_MPDU_INFO_2_FIRST_DELIM_ERR_MASK                          0x02000000
+
+/* Description		RX_MPDU_INFO_2_RESERVED_2A
+			
+			<legal 0>
+*/
+#define RX_MPDU_INFO_2_RESERVED_2A_OFFSET                            0x00000008
+#define RX_MPDU_INFO_2_RESERVED_2A_LSB                               26
+#define RX_MPDU_INFO_2_RESERVED_2A_MASK                              0xfc000000
+
+/* Description		RX_MPDU_INFO_3_PN_31_0
+			
+			
+			
+			
+			
+			WEP: IV = {key_id_octet, pn2, pn1, pn0}.  Only pn[23:0]
+			is valid.
+			
+			TKIP: IV = {pn5, pn4, pn3, pn2, key_id_octet, pn0,
+			WEPSeed[1], pn1}.  Only pn[47:0] is valid.
+			
+			AES-CCM: IV = {pn5, pn4, pn3, pn2, key_id_octet, 0x0,
+			pn1, pn0}.  Only pn[47:0] is valid.
+			
+			WAPI: IV = {key_id_octet, 0x0, pn15, pn14, pn13, pn12,
+			pn11, pn10, pn9, pn8, pn7, pn6, pn5, pn4, pn3, pn2, pn1,
+			pn0}.  pn[127:0] are valid.
+			
+			
+			
+*/
+#define RX_MPDU_INFO_3_PN_31_0_OFFSET                                0x0000000c
+#define RX_MPDU_INFO_3_PN_31_0_LSB                                   0
+#define RX_MPDU_INFO_3_PN_31_0_MASK                                  0xffffffff
+
+/* Description		RX_MPDU_INFO_4_PN_63_32
+			
+			
+			
+			
+			Bits [63:32] of the PN number.   See description for
+			pn_31_0.
+			
+			
+			
+*/
+#define RX_MPDU_INFO_4_PN_63_32_OFFSET                               0x00000010
+#define RX_MPDU_INFO_4_PN_63_32_LSB                                  0
+#define RX_MPDU_INFO_4_PN_63_32_MASK                                 0xffffffff
+
+/* Description		RX_MPDU_INFO_5_PN_95_64
+			
+			
+			
+			
+			Bits [95:64] of the PN number.  See description for
+			pn_31_0.
+			
+			
+			
+*/
+#define RX_MPDU_INFO_5_PN_95_64_OFFSET                               0x00000014
+#define RX_MPDU_INFO_5_PN_95_64_LSB                                  0
+#define RX_MPDU_INFO_5_PN_95_64_MASK                                 0xffffffff
+
+/* Description		RX_MPDU_INFO_6_PN_127_96
+			
+			
+			
+			
+			Bits [127:96] of the PN number.  See description for
+			pn_31_0.
+			
+			
+			
+*/
+#define RX_MPDU_INFO_6_PN_127_96_OFFSET                              0x00000018
+#define RX_MPDU_INFO_6_PN_127_96_LSB                                 0
+#define RX_MPDU_INFO_6_PN_127_96_MASK                                0xffffffff
+
+/* Description		RX_MPDU_INFO_7_EPD_EN
+			
+			Field only valid when AST_based_lookup_valid == 1.
+			
+			
+			
+			
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			If set to one use EPD instead of LPD
+			
+			
+			
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_7_EPD_EN_OFFSET                                 0x0000001c
+#define RX_MPDU_INFO_7_EPD_EN_LSB                                    0
+#define RX_MPDU_INFO_7_EPD_EN_MASK                                   0x00000001
+
+/* Description		RX_MPDU_INFO_7_ALL_FRAMES_SHALL_BE_ENCRYPTED
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			When set, all frames (data only ?) shall be encrypted.
+			If not, RX CRYPTO shall set an error flag.
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_7_ALL_FRAMES_SHALL_BE_ENCRYPTED_OFFSET          0x0000001c
+#define RX_MPDU_INFO_7_ALL_FRAMES_SHALL_BE_ENCRYPTED_LSB             1
+#define RX_MPDU_INFO_7_ALL_FRAMES_SHALL_BE_ENCRYPTED_MASK            0x00000002
+
+/* Description		RX_MPDU_INFO_7_ENCRYPT_TYPE
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Indicates type of decrypt cipher used (as defined in the
+			peer entry)
+			
+			
+			
+			<enum 0 wep_40> WEP 40-bit
+			
+			<enum 1 wep_104> WEP 104-bit
+			
+			<enum 2 tkip_no_mic> TKIP without MIC
+			
+			<enum 3 wep_128> WEP 128-bit
+			
+			<enum 4 tkip_with_mic> TKIP with MIC
+			
+			<enum 5 wapi> WAPI
+			
+			<enum 6 aes_ccmp_128> AES CCMP 128
+			
+			<enum 7 no_cipher> No crypto
+			
+			<enum 8 aes_ccmp_256> AES CCMP 256
+			
+			<enum 9 aes_gcmp_128> AES CCMP 128
+			
+			<enum 10 aes_gcmp_256> AES CCMP 256
+			
+			<enum 11 wapi_gcm_sm4> WAPI GCM SM4
+			
+			
+			
+			<enum 12 wep_varied_width> WEP encryption. As for WEP
+			per keyid the key bit width can vary, the key bit width for
+			this MPDU will be indicated in field
+			wep_key_width_for_variable key
+			
+			<legal 0-12>
+*/
+#define RX_MPDU_INFO_7_ENCRYPT_TYPE_OFFSET                           0x0000001c
+#define RX_MPDU_INFO_7_ENCRYPT_TYPE_LSB                              2
+#define RX_MPDU_INFO_7_ENCRYPT_TYPE_MASK                             0x0000003c
+
+/* Description		RX_MPDU_INFO_7_WEP_KEY_WIDTH_FOR_VARIABLE_KEY
+			
+			Field only valid when key_type is set to
+			wep_varied_width. 
+			
+			
+			
+			This field indicates the size of the wep key for this
+			MPDU.
+			
+			 
+			
+			<enum 0 wep_varied_width_40> WEP 40-bit
+			
+			<enum 1 wep_varied_width_104> WEP 104-bit
+			
+			<enum 2 wep_varied_width_128> WEP 128-bit
+			
+			
+			
+			<legal 0-2>
+*/
+#define RX_MPDU_INFO_7_WEP_KEY_WIDTH_FOR_VARIABLE_KEY_OFFSET         0x0000001c
+#define RX_MPDU_INFO_7_WEP_KEY_WIDTH_FOR_VARIABLE_KEY_LSB            6
+#define RX_MPDU_INFO_7_WEP_KEY_WIDTH_FOR_VARIABLE_KEY_MASK           0x000000c0
+
+/* Description		RX_MPDU_INFO_7_MESH_STA
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			When set, this is a Mesh (11s) STA.
+			
+			
+			
+			The interpretation of the A-MSDU 'Length' field in the
+			MPDU (if any) is decided by the e-numerations below.
+			
+			
+			
+			<enum 0 MESH_DISABLE>
+			
+			<enum 1 MESH_Q2Q> A-MSDU 'Length' is big endian and
+			includes the length of Mesh Control.
+			
+			<enum 2 MESH_11S_BE> A-MSDU 'Length' is big endian and
+			excludes the length of Mesh Control.
+			
+			<enum 3 MESH_11S_LE> A-MSDU 'Length' is little endian
+			and excludes the length of Mesh Control. This is
+			802.11s-compliant.
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_7_MESH_STA_OFFSET                               0x0000001c
+#define RX_MPDU_INFO_7_MESH_STA_LSB                                  8
+#define RX_MPDU_INFO_7_MESH_STA_MASK                                 0x00000300
+
+/* Description		RX_MPDU_INFO_7_BSSID_HIT
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			When set, the BSSID of the incoming frame matched one of
+			the 8 BSSID register values
+			
+			
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_7_BSSID_HIT_OFFSET                              0x0000001c
+#define RX_MPDU_INFO_7_BSSID_HIT_LSB                                 10
+#define RX_MPDU_INFO_7_BSSID_HIT_MASK                                0x00000400
+
+/* Description		RX_MPDU_INFO_7_BSSID_NUMBER
+			
+			Field only valid when bssid_hit is set.
+			
+			
+			
+			This number indicates which one out of the 8 BSSID
+			register values matched the incoming frame
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_7_BSSID_NUMBER_OFFSET                           0x0000001c
+#define RX_MPDU_INFO_7_BSSID_NUMBER_LSB                              11
+#define RX_MPDU_INFO_7_BSSID_NUMBER_MASK                             0x00007800
+
+/* Description		RX_MPDU_INFO_7_TID
+			
+			Field only valid when mpdu_qos_control_valid is set
+			
+			
+			
+			The TID field in the QoS control field
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_7_TID_OFFSET                                    0x0000001c
+#define RX_MPDU_INFO_7_TID_LSB                                       15
+#define RX_MPDU_INFO_7_TID_MASK                                      0x00078000
+
+/* Description		RX_MPDU_INFO_7_RESERVED_7A
+			
+			<legal 0>
+*/
+#define RX_MPDU_INFO_7_RESERVED_7A_OFFSET                            0x0000001c
+#define RX_MPDU_INFO_7_RESERVED_7A_LSB                               19
+#define RX_MPDU_INFO_7_RESERVED_7A_MASK                              0xfff80000
+
+/* Description		RX_MPDU_INFO_8_PEER_META_DATA
+			
+			In case of ndp or phy_err or AST_based_lookup_valid ==
+			0, this field will be set to 0
+			
+			
+			
+			Meta data that SW has programmed in the Peer table entry
+			of the transmitting STA.
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_8_PEER_META_DATA_OFFSET                         0x00000020
+#define RX_MPDU_INFO_8_PEER_META_DATA_LSB                            0
+#define RX_MPDU_INFO_8_PEER_META_DATA_MASK                           0xffffffff
+
+/* Description		RX_MPDU_INFO_9_RXPCU_MPDU_FILTER_IN_CATEGORY
 			
 			Field indicates what the reason was that this MPDU frame
 			was allowed to come into the receive path by RXPCU
@@ -1481,11 +2145,11 @@ mpdu_ht_control_field
 			
 			<legal 0-2>
 */
-#define RX_MPDU_INFO_0_RXPCU_MPDU_FILTER_IN_CATEGORY_OFFSET          0x00000000
-#define RX_MPDU_INFO_0_RXPCU_MPDU_FILTER_IN_CATEGORY_LSB             0
-#define RX_MPDU_INFO_0_RXPCU_MPDU_FILTER_IN_CATEGORY_MASK            0x00000003
+#define RX_MPDU_INFO_9_RXPCU_MPDU_FILTER_IN_CATEGORY_OFFSET          0x00000024
+#define RX_MPDU_INFO_9_RXPCU_MPDU_FILTER_IN_CATEGORY_LSB             0
+#define RX_MPDU_INFO_9_RXPCU_MPDU_FILTER_IN_CATEGORY_MASK            0x00000003
 
-/* Description		RX_MPDU_INFO_0_SW_FRAME_GROUP_ID
+/* Description		RX_MPDU_INFO_9_SW_FRAME_GROUP_ID
 			
 			SW processes frames based on certain classifications.
 			This field indicates to what sw classification this MPDU is
@@ -1594,33 +2258,33 @@ mpdu_ht_control_field
 			
 			<legal 0-37>
 */
-#define RX_MPDU_INFO_0_SW_FRAME_GROUP_ID_OFFSET                      0x00000000
-#define RX_MPDU_INFO_0_SW_FRAME_GROUP_ID_LSB                         2
-#define RX_MPDU_INFO_0_SW_FRAME_GROUP_ID_MASK                        0x000001fc
+#define RX_MPDU_INFO_9_SW_FRAME_GROUP_ID_OFFSET                      0x00000024
+#define RX_MPDU_INFO_9_SW_FRAME_GROUP_ID_LSB                         2
+#define RX_MPDU_INFO_9_SW_FRAME_GROUP_ID_MASK                        0x000001fc
 
-/* Description		RX_MPDU_INFO_0_NDP_FRAME
+/* Description		RX_MPDU_INFO_9_NDP_FRAME
 			
 			When set, the received frame was an NDP frame, and thus
 			there will be no MPDU data.
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_0_NDP_FRAME_OFFSET                              0x00000000
-#define RX_MPDU_INFO_0_NDP_FRAME_LSB                                 9
-#define RX_MPDU_INFO_0_NDP_FRAME_MASK                                0x00000200
+#define RX_MPDU_INFO_9_NDP_FRAME_OFFSET                              0x00000024
+#define RX_MPDU_INFO_9_NDP_FRAME_LSB                                 9
+#define RX_MPDU_INFO_9_NDP_FRAME_MASK                                0x00000200
 
-/* Description		RX_MPDU_INFO_0_PHY_ERR
+/* Description		RX_MPDU_INFO_9_PHY_ERR
 			
 			When set, a PHY error was received before MAC received
 			any data, and thus there will be no MPDU data.
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_0_PHY_ERR_OFFSET                                0x00000000
-#define RX_MPDU_INFO_0_PHY_ERR_LSB                                   10
-#define RX_MPDU_INFO_0_PHY_ERR_MASK                                  0x00000400
+#define RX_MPDU_INFO_9_PHY_ERR_OFFSET                                0x00000024
+#define RX_MPDU_INFO_9_PHY_ERR_LSB                                   10
+#define RX_MPDU_INFO_9_PHY_ERR_MASK                                  0x00000400
 
-/* Description		RX_MPDU_INFO_0_PHY_ERR_DURING_MPDU_HEADER
+/* Description		RX_MPDU_INFO_9_PHY_ERR_DURING_MPDU_HEADER
 			
 			When set, a PHY error was received before MAC received
 			the complete MPDU header which was needed for proper
@@ -1628,22 +2292,22 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_0_PHY_ERR_DURING_MPDU_HEADER_OFFSET             0x00000000
-#define RX_MPDU_INFO_0_PHY_ERR_DURING_MPDU_HEADER_LSB                11
-#define RX_MPDU_INFO_0_PHY_ERR_DURING_MPDU_HEADER_MASK               0x00000800
+#define RX_MPDU_INFO_9_PHY_ERR_DURING_MPDU_HEADER_OFFSET             0x00000024
+#define RX_MPDU_INFO_9_PHY_ERR_DURING_MPDU_HEADER_LSB                11
+#define RX_MPDU_INFO_9_PHY_ERR_DURING_MPDU_HEADER_MASK               0x00000800
 
-/* Description		RX_MPDU_INFO_0_PROTOCOL_VERSION_ERR
+/* Description		RX_MPDU_INFO_9_PROTOCOL_VERSION_ERR
 			
 			Set when RXPCU detected a version error in the Frame
 			control field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_0_PROTOCOL_VERSION_ERR_OFFSET                   0x00000000
-#define RX_MPDU_INFO_0_PROTOCOL_VERSION_ERR_LSB                      12
-#define RX_MPDU_INFO_0_PROTOCOL_VERSION_ERR_MASK                     0x00001000
+#define RX_MPDU_INFO_9_PROTOCOL_VERSION_ERR_OFFSET                   0x00000024
+#define RX_MPDU_INFO_9_PROTOCOL_VERSION_ERR_LSB                      12
+#define RX_MPDU_INFO_9_PROTOCOL_VERSION_ERR_MASK                     0x00001000
 
-/* Description		RX_MPDU_INFO_0_AST_BASED_LOOKUP_VALID
+/* Description		RX_MPDU_INFO_9_AST_BASED_LOOKUP_VALID
 			
 			When set, AST based lookup for this frame has found a
 			valid result.
@@ -1654,30 +2318,30 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_0_AST_BASED_LOOKUP_VALID_OFFSET                 0x00000000
-#define RX_MPDU_INFO_0_AST_BASED_LOOKUP_VALID_LSB                    13
-#define RX_MPDU_INFO_0_AST_BASED_LOOKUP_VALID_MASK                   0x00002000
+#define RX_MPDU_INFO_9_AST_BASED_LOOKUP_VALID_OFFSET                 0x00000024
+#define RX_MPDU_INFO_9_AST_BASED_LOOKUP_VALID_LSB                    13
+#define RX_MPDU_INFO_9_AST_BASED_LOOKUP_VALID_MASK                   0x00002000
 
-/* Description		RX_MPDU_INFO_0_RESERVED_0A
+/* Description		RX_MPDU_INFO_9_RESERVED_9A
 			
 			<legal 0>
 */
-#define RX_MPDU_INFO_0_RESERVED_0A_OFFSET                            0x00000000
-#define RX_MPDU_INFO_0_RESERVED_0A_LSB                               14
-#define RX_MPDU_INFO_0_RESERVED_0A_MASK                              0x0000c000
+#define RX_MPDU_INFO_9_RESERVED_9A_OFFSET                            0x00000024
+#define RX_MPDU_INFO_9_RESERVED_9A_LSB                               14
+#define RX_MPDU_INFO_9_RESERVED_9A_MASK                              0x0000c000
 
-/* Description		RX_MPDU_INFO_0_PHY_PPDU_ID
+/* Description		RX_MPDU_INFO_9_PHY_PPDU_ID
 			
 			A ppdu counter value that PHY increments for every PPDU
 			received. The counter value wraps around  
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_0_PHY_PPDU_ID_OFFSET                            0x00000000
-#define RX_MPDU_INFO_0_PHY_PPDU_ID_LSB                               16
-#define RX_MPDU_INFO_0_PHY_PPDU_ID_MASK                              0xffff0000
+#define RX_MPDU_INFO_9_PHY_PPDU_ID_OFFSET                            0x00000024
+#define RX_MPDU_INFO_9_PHY_PPDU_ID_LSB                               16
+#define RX_MPDU_INFO_9_PHY_PPDU_ID_MASK                              0xffff0000
 
-/* Description		RX_MPDU_INFO_1_AST_INDEX
+/* Description		RX_MPDU_INFO_10_AST_INDEX
 			
 			This field indicates the index of the AST entry
 			corresponding to this MPDU. It is provided by the GSE module
@@ -1694,11 +2358,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_1_AST_INDEX_OFFSET                              0x00000004
-#define RX_MPDU_INFO_1_AST_INDEX_LSB                                 0
-#define RX_MPDU_INFO_1_AST_INDEX_MASK                                0x0000ffff
+#define RX_MPDU_INFO_10_AST_INDEX_OFFSET                             0x00000028
+#define RX_MPDU_INFO_10_AST_INDEX_LSB                                0
+#define RX_MPDU_INFO_10_AST_INDEX_MASK                               0x0000ffff
 
-/* Description		RX_MPDU_INFO_1_SW_PEER_ID
+/* Description		RX_MPDU_INFO_10_SW_PEER_ID
 			
 			In case of ndp or phy_err or AST_based_lookup_valid ==
 			0, this field will be set to 0
@@ -1712,11 +2376,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_1_SW_PEER_ID_OFFSET                             0x00000004
-#define RX_MPDU_INFO_1_SW_PEER_ID_LSB                                16
-#define RX_MPDU_INFO_1_SW_PEER_ID_MASK                               0xffff0000
+#define RX_MPDU_INFO_10_SW_PEER_ID_OFFSET                            0x00000028
+#define RX_MPDU_INFO_10_SW_PEER_ID_LSB                               16
+#define RX_MPDU_INFO_10_SW_PEER_ID_MASK                              0xffff0000
 
-/* Description		RX_MPDU_INFO_2_MPDU_FRAME_CONTROL_VALID
+/* Description		RX_MPDU_INFO_11_MPDU_FRAME_CONTROL_VALID
 			
 			When set, the field Mpdu_Frame_control_field has valid
 			information
@@ -1726,11 +2390,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MPDU_FRAME_CONTROL_VALID_OFFSET               0x00000008
-#define RX_MPDU_INFO_2_MPDU_FRAME_CONTROL_VALID_LSB                  0
-#define RX_MPDU_INFO_2_MPDU_FRAME_CONTROL_VALID_MASK                 0x00000001
+#define RX_MPDU_INFO_11_MPDU_FRAME_CONTROL_VALID_OFFSET              0x0000002c
+#define RX_MPDU_INFO_11_MPDU_FRAME_CONTROL_VALID_LSB                 0
+#define RX_MPDU_INFO_11_MPDU_FRAME_CONTROL_VALID_MASK                0x00000001
 
-/* Description		RX_MPDU_INFO_2_MPDU_DURATION_VALID
+/* Description		RX_MPDU_INFO_11_MPDU_DURATION_VALID
 			
 			When set, the field Mpdu_duration_field has valid
 			information
@@ -1740,11 +2404,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MPDU_DURATION_VALID_OFFSET                    0x00000008
-#define RX_MPDU_INFO_2_MPDU_DURATION_VALID_LSB                       1
-#define RX_MPDU_INFO_2_MPDU_DURATION_VALID_MASK                      0x00000002
+#define RX_MPDU_INFO_11_MPDU_DURATION_VALID_OFFSET                   0x0000002c
+#define RX_MPDU_INFO_11_MPDU_DURATION_VALID_LSB                      1
+#define RX_MPDU_INFO_11_MPDU_DURATION_VALID_MASK                     0x00000002
 
-/* Description		RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID
+/* Description		RX_MPDU_INFO_11_MAC_ADDR_AD1_VALID
 			
 			When set, the fields mac_addr_ad1_..... have valid
 			information
@@ -1754,11 +2418,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID_OFFSET                     0x00000008
-#define RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID_LSB                        2
-#define RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID_MASK                       0x00000004
+#define RX_MPDU_INFO_11_MAC_ADDR_AD1_VALID_OFFSET                    0x0000002c
+#define RX_MPDU_INFO_11_MAC_ADDR_AD1_VALID_LSB                       2
+#define RX_MPDU_INFO_11_MAC_ADDR_AD1_VALID_MASK                      0x00000004
 
-/* Description		RX_MPDU_INFO_2_MAC_ADDR_AD2_VALID
+/* Description		RX_MPDU_INFO_11_MAC_ADDR_AD2_VALID
 			
 			When set, the fields mac_addr_ad2_..... have valid
 			information
@@ -1771,11 +2435,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MAC_ADDR_AD2_VALID_OFFSET                     0x00000008
-#define RX_MPDU_INFO_2_MAC_ADDR_AD2_VALID_LSB                        3
-#define RX_MPDU_INFO_2_MAC_ADDR_AD2_VALID_MASK                       0x00000008
+#define RX_MPDU_INFO_11_MAC_ADDR_AD2_VALID_OFFSET                    0x0000002c
+#define RX_MPDU_INFO_11_MAC_ADDR_AD2_VALID_LSB                       3
+#define RX_MPDU_INFO_11_MAC_ADDR_AD2_VALID_MASK                      0x00000008
 
-/* Description		RX_MPDU_INFO_2_MAC_ADDR_AD3_VALID
+/* Description		RX_MPDU_INFO_11_MAC_ADDR_AD3_VALID
 			
 			When set, the fields mac_addr_ad3_..... have valid
 			information
@@ -1788,11 +2452,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MAC_ADDR_AD3_VALID_OFFSET                     0x00000008
-#define RX_MPDU_INFO_2_MAC_ADDR_AD3_VALID_LSB                        4
-#define RX_MPDU_INFO_2_MAC_ADDR_AD3_VALID_MASK                       0x00000010
+#define RX_MPDU_INFO_11_MAC_ADDR_AD3_VALID_OFFSET                    0x0000002c
+#define RX_MPDU_INFO_11_MAC_ADDR_AD3_VALID_LSB                       4
+#define RX_MPDU_INFO_11_MAC_ADDR_AD3_VALID_MASK                      0x00000010
 
-/* Description		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID
+/* Description		RX_MPDU_INFO_11_MAC_ADDR_AD4_VALID
 			
 			When set, the fields mac_addr_ad4_..... have valid
 			information
@@ -1805,11 +2469,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_OFFSET                     0x00000008
-#define RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_LSB                        5
-#define RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_MASK                       0x00000020
+#define RX_MPDU_INFO_11_MAC_ADDR_AD4_VALID_OFFSET                    0x0000002c
+#define RX_MPDU_INFO_11_MAC_ADDR_AD4_VALID_LSB                       5
+#define RX_MPDU_INFO_11_MAC_ADDR_AD4_VALID_MASK                      0x00000020
 
-/* Description		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID
+/* Description		RX_MPDU_INFO_11_MPDU_SEQUENCE_CONTROL_VALID
 			
 			When set, the fields mpdu_sequence_control_field and
 			mpdu_sequence_number have valid information as well as field
@@ -1824,11 +2488,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_OFFSET            0x00000008
-#define RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_LSB               6
-#define RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_MASK              0x00000040
+#define RX_MPDU_INFO_11_MPDU_SEQUENCE_CONTROL_VALID_OFFSET           0x0000002c
+#define RX_MPDU_INFO_11_MPDU_SEQUENCE_CONTROL_VALID_LSB              6
+#define RX_MPDU_INFO_11_MPDU_SEQUENCE_CONTROL_VALID_MASK             0x00000040
 
-/* Description		RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID
+/* Description		RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID
 			
 			When set, the field mpdu_qos_control_field has valid
 			information
@@ -1843,11 +2507,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_OFFSET                 0x00000008
-#define RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_LSB                    7
-#define RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_MASK                   0x00000080
+#define RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID_OFFSET                0x0000002c
+#define RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID_LSB                   7
+#define RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID_MASK                  0x00000080
 
-/* Description		RX_MPDU_INFO_2_MPDU_HT_CONTROL_VALID
+/* Description		RX_MPDU_INFO_11_MPDU_HT_CONTROL_VALID
 			
 			When set, the field mpdu_HT_control_field has valid
 			information
@@ -1862,11 +2526,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MPDU_HT_CONTROL_VALID_OFFSET                  0x00000008
-#define RX_MPDU_INFO_2_MPDU_HT_CONTROL_VALID_LSB                     8
-#define RX_MPDU_INFO_2_MPDU_HT_CONTROL_VALID_MASK                    0x00000100
+#define RX_MPDU_INFO_11_MPDU_HT_CONTROL_VALID_OFFSET                 0x0000002c
+#define RX_MPDU_INFO_11_MPDU_HT_CONTROL_VALID_LSB                    8
+#define RX_MPDU_INFO_11_MPDU_HT_CONTROL_VALID_MASK                   0x00000100
 
-/* Description		RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID
+/* Description		RX_MPDU_INFO_11_FRAME_ENCRYPTION_INFO_VALID
 			
 			When set, the encryption related info fields, like IV
 			and PN are valid
@@ -1880,11 +2544,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID_OFFSET            0x00000008
-#define RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID_LSB               9
-#define RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID_MASK              0x00000200
+#define RX_MPDU_INFO_11_FRAME_ENCRYPTION_INFO_VALID_OFFSET           0x0000002c
+#define RX_MPDU_INFO_11_FRAME_ENCRYPTION_INFO_VALID_LSB              9
+#define RX_MPDU_INFO_11_FRAME_ENCRYPTION_INFO_VALID_MASK             0x00000200
 
-/* Description		RX_MPDU_INFO_2_MPDU_FRAGMENT_NUMBER
+/* Description		RX_MPDU_INFO_11_MPDU_FRAGMENT_NUMBER
 			
 			Field only valid when Mpdu_sequence_control_valid is set
 			AND Fragment_flag is set 
@@ -1897,11 +2561,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MPDU_FRAGMENT_NUMBER_OFFSET                   0x00000008
-#define RX_MPDU_INFO_2_MPDU_FRAGMENT_NUMBER_LSB                      10
-#define RX_MPDU_INFO_2_MPDU_FRAGMENT_NUMBER_MASK                     0x00003c00
+#define RX_MPDU_INFO_11_MPDU_FRAGMENT_NUMBER_OFFSET                  0x0000002c
+#define RX_MPDU_INFO_11_MPDU_FRAGMENT_NUMBER_LSB                     10
+#define RX_MPDU_INFO_11_MPDU_FRAGMENT_NUMBER_MASK                    0x00003c00
 
-/* Description		RX_MPDU_INFO_2_MORE_FRAGMENT_FLAG
+/* Description		RX_MPDU_INFO_11_MORE_FRAGMENT_FLAG
 			
 			The More Fragment bit setting from the MPDU header of
 			the received frame
@@ -1910,19 +2574,19 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MORE_FRAGMENT_FLAG_OFFSET                     0x00000008
-#define RX_MPDU_INFO_2_MORE_FRAGMENT_FLAG_LSB                        14
-#define RX_MPDU_INFO_2_MORE_FRAGMENT_FLAG_MASK                       0x00004000
+#define RX_MPDU_INFO_11_MORE_FRAGMENT_FLAG_OFFSET                    0x0000002c
+#define RX_MPDU_INFO_11_MORE_FRAGMENT_FLAG_LSB                       14
+#define RX_MPDU_INFO_11_MORE_FRAGMENT_FLAG_MASK                      0x00004000
 
-/* Description		RX_MPDU_INFO_2_RESERVED_2A
+/* Description		RX_MPDU_INFO_11_RESERVED_11A
 			
 			<legal 0>
 */
-#define RX_MPDU_INFO_2_RESERVED_2A_OFFSET                            0x00000008
-#define RX_MPDU_INFO_2_RESERVED_2A_LSB                               15
-#define RX_MPDU_INFO_2_RESERVED_2A_MASK                              0x00008000
+#define RX_MPDU_INFO_11_RESERVED_11A_OFFSET                          0x0000002c
+#define RX_MPDU_INFO_11_RESERVED_11A_LSB                             15
+#define RX_MPDU_INFO_11_RESERVED_11A_MASK                            0x00008000
 
-/* Description		RX_MPDU_INFO_2_FR_DS
+/* Description		RX_MPDU_INFO_11_FR_DS
 			
 			Field only valid when Mpdu_frame_control_valid is set
 			
@@ -1932,11 +2596,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_FR_DS_OFFSET                                  0x00000008
-#define RX_MPDU_INFO_2_FR_DS_LSB                                     16
-#define RX_MPDU_INFO_2_FR_DS_MASK                                    0x00010000
+#define RX_MPDU_INFO_11_FR_DS_OFFSET                                 0x0000002c
+#define RX_MPDU_INFO_11_FR_DS_LSB                                    16
+#define RX_MPDU_INFO_11_FR_DS_MASK                                   0x00010000
 
-/* Description		RX_MPDU_INFO_2_TO_DS
+/* Description		RX_MPDU_INFO_11_TO_DS
 			
 			Field only valid when Mpdu_frame_control_valid is set 
 			
@@ -1946,11 +2610,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_TO_DS_OFFSET                                  0x00000008
-#define RX_MPDU_INFO_2_TO_DS_LSB                                     17
-#define RX_MPDU_INFO_2_TO_DS_MASK                                    0x00020000
+#define RX_MPDU_INFO_11_TO_DS_OFFSET                                 0x0000002c
+#define RX_MPDU_INFO_11_TO_DS_LSB                                    17
+#define RX_MPDU_INFO_11_TO_DS_MASK                                   0x00020000
 
-/* Description		RX_MPDU_INFO_2_ENCRYPTED
+/* Description		RX_MPDU_INFO_11_ENCRYPTED
 			
 			Field only valid when Mpdu_frame_control_valid is set.
 			
@@ -1960,11 +2624,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_ENCRYPTED_OFFSET                              0x00000008
-#define RX_MPDU_INFO_2_ENCRYPTED_LSB                                 18
-#define RX_MPDU_INFO_2_ENCRYPTED_MASK                                0x00040000
+#define RX_MPDU_INFO_11_ENCRYPTED_OFFSET                             0x0000002c
+#define RX_MPDU_INFO_11_ENCRYPTED_LSB                                18
+#define RX_MPDU_INFO_11_ENCRYPTED_MASK                               0x00040000
 
-/* Description		RX_MPDU_INFO_2_MPDU_RETRY
+/* Description		RX_MPDU_INFO_11_MPDU_RETRY
 			
 			Field only valid when Mpdu_frame_control_valid is set.
 			
@@ -1975,11 +2639,11 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MPDU_RETRY_OFFSET                             0x00000008
-#define RX_MPDU_INFO_2_MPDU_RETRY_LSB                                19
-#define RX_MPDU_INFO_2_MPDU_RETRY_MASK                               0x00080000
+#define RX_MPDU_INFO_11_MPDU_RETRY_OFFSET                            0x0000002c
+#define RX_MPDU_INFO_11_MPDU_RETRY_LSB                               19
+#define RX_MPDU_INFO_11_MPDU_RETRY_MASK                              0x00080000
 
-/* Description		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER
+/* Description		RX_MPDU_INFO_11_MPDU_SEQUENCE_NUMBER
 			
 			Field only valid when Mpdu_sequence_control_valid is
 			set.
@@ -1990,640 +2654,9 @@ mpdu_ht_control_field
 			
 			<legal all>
 */
-#define RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_OFFSET                   0x00000008
-#define RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_LSB                      20
-#define RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_MASK                     0xfff00000
-
-/* Description		RX_MPDU_INFO_3_EPD_EN
-			
-			Field only valid when AST_based_lookup_valid == 1.
-			
-			
-			
-			
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			If set to one use EPD instead of LPD
-			
-			
-			
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_3_EPD_EN_OFFSET                                 0x0000000c
-#define RX_MPDU_INFO_3_EPD_EN_LSB                                    0
-#define RX_MPDU_INFO_3_EPD_EN_MASK                                   0x00000001
-
-/* Description		RX_MPDU_INFO_3_ALL_FRAMES_SHALL_BE_ENCRYPTED
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			When set, all frames (data only ?) shall be encrypted.
-			If not, RX CRYPTO shall set an error flag.
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_3_ALL_FRAMES_SHALL_BE_ENCRYPTED_OFFSET          0x0000000c
-#define RX_MPDU_INFO_3_ALL_FRAMES_SHALL_BE_ENCRYPTED_LSB             1
-#define RX_MPDU_INFO_3_ALL_FRAMES_SHALL_BE_ENCRYPTED_MASK            0x00000002
-
-/* Description		RX_MPDU_INFO_3_ENCRYPT_TYPE
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Indicates type of decrypt cipher used (as defined in the
-			peer entry)
-			
-			
-			
-			<enum 0 wep_40> WEP 40-bit
-			
-			<enum 1 wep_104> WEP 104-bit
-			
-			<enum 2 tkip_no_mic> TKIP without MIC
-			
-			<enum 3 wep_128> WEP 128-bit
-			
-			<enum 4 tkip_with_mic> TKIP with MIC
-			
-			<enum 5 wapi> WAPI
-			
-			<enum 6 aes_ccmp_128> AES CCMP 128
-			
-			<enum 7 no_cipher> No crypto
-			
-			<enum 8 aes_ccmp_256> AES CCMP 256
-			
-			<enum 9 aes_gcmp_128> AES CCMP 128
-			
-			<enum 10 aes_gcmp_256> AES CCMP 256
-			
-			<enum 11 wapi_gcm_sm4> WAPI GCM SM4
-			
-			
-			
-			<enum 12 wep_varied_width> WEP encryption. As for WEP
-			per keyid the key bit width can vary, the key bit width for
-			this MPDU will be indicated in field
-			wep_key_width_for_variable key
-			
-			<legal 0-12>
-*/
-#define RX_MPDU_INFO_3_ENCRYPT_TYPE_OFFSET                           0x0000000c
-#define RX_MPDU_INFO_3_ENCRYPT_TYPE_LSB                              2
-#define RX_MPDU_INFO_3_ENCRYPT_TYPE_MASK                             0x0000003c
-
-/* Description		RX_MPDU_INFO_3_WEP_KEY_WIDTH_FOR_VARIABLE_KEY
-			
-			Field only valid when key_type is set to
-			wep_varied_width. 
-			
-			
-			
-			This field indicates the size of the wep key for this
-			MPDU.
-			
-			 
-			
-			<enum 0 wep_varied_width_40> WEP 40-bit
-			
-			<enum 1 wep_varied_width_104> WEP 104-bit
-			
-			<enum 2 wep_varied_width_128> WEP 128-bit
-			
-			
-			
-			<legal 0-2>
-*/
-#define RX_MPDU_INFO_3_WEP_KEY_WIDTH_FOR_VARIABLE_KEY_OFFSET         0x0000000c
-#define RX_MPDU_INFO_3_WEP_KEY_WIDTH_FOR_VARIABLE_KEY_LSB            6
-#define RX_MPDU_INFO_3_WEP_KEY_WIDTH_FOR_VARIABLE_KEY_MASK           0x000000c0
-
-/* Description		RX_MPDU_INFO_3_MESH_STA
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			When set, this is a Mesh (11s) STA.
-			
-			
-			
-			The interpretation of the A-MSDU 'Length' field in the
-			MPDU (if any) is decided by the e-numerations below.
-			
-			
-			
-			<enum 0 MESH_DISABLE>
-			
-			<enum 1 MESH_Q2Q> A-MSDU 'Length' is big endian and
-			includes the length of Mesh Control.
-			
-			<enum 2 MESH_11S_BE> A-MSDU 'Length' is big endian and
-			excludes the length of Mesh Control.
-			
-			<enum 3 MESH_11S_LE> A-MSDU 'Length' is little endian
-			and excludes the length of Mesh Control. This is
-			802.11s-compliant.
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_3_MESH_STA_OFFSET                               0x0000000c
-#define RX_MPDU_INFO_3_MESH_STA_LSB                                  8
-#define RX_MPDU_INFO_3_MESH_STA_MASK                                 0x00000300
-
-/* Description		RX_MPDU_INFO_3_BSSID_HIT
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			When set, the BSSID of the incoming frame matched one of
-			the 8 BSSID register values
-			
-			
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_3_BSSID_HIT_OFFSET                              0x0000000c
-#define RX_MPDU_INFO_3_BSSID_HIT_LSB                                 10
-#define RX_MPDU_INFO_3_BSSID_HIT_MASK                                0x00000400
-
-/* Description		RX_MPDU_INFO_3_BSSID_NUMBER
-			
-			Field only valid when bssid_hit is set.
-			
-			
-			
-			This number indicates which one out of the 8 BSSID
-			register values matched the incoming frame
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_3_BSSID_NUMBER_OFFSET                           0x0000000c
-#define RX_MPDU_INFO_3_BSSID_NUMBER_LSB                              11
-#define RX_MPDU_INFO_3_BSSID_NUMBER_MASK                             0x00007800
-
-/* Description		RX_MPDU_INFO_3_TID
-			
-			Field only valid when mpdu_qos_control_valid is set
-			
-			
-			
-			The TID field in the QoS control field
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_3_TID_OFFSET                                    0x0000000c
-#define RX_MPDU_INFO_3_TID_LSB                                       15
-#define RX_MPDU_INFO_3_TID_MASK                                      0x00078000
-
-/* Description		RX_MPDU_INFO_3_RESERVED_3A
-			
-			<legal 0>
-*/
-#define RX_MPDU_INFO_3_RESERVED_3A_OFFSET                            0x0000000c
-#define RX_MPDU_INFO_3_RESERVED_3A_LSB                               19
-#define RX_MPDU_INFO_3_RESERVED_3A_MASK                              0xfff80000
-
-/* Description		RX_MPDU_INFO_4_PN_31_0
-			
-			
-			
-			
-			
-			WEP: IV = {key_id_octet, pn2, pn1, pn0}.  Only pn[23:0]
-			is valid.
-			
-			TKIP: IV = {pn5, pn4, pn3, pn2, key_id_octet, pn0,
-			WEPSeed[1], pn1}.  Only pn[47:0] is valid.
-			
-			AES-CCM: IV = {pn5, pn4, pn3, pn2, key_id_octet, 0x0,
-			pn1, pn0}.  Only pn[47:0] is valid.
-			
-			WAPI: IV = {key_id_octet, 0x0, pn15, pn14, pn13, pn12,
-			pn11, pn10, pn9, pn8, pn7, pn6, pn5, pn4, pn3, pn2, pn1,
-			pn0}.  pn[127:0] are valid.
-			
-			
-			
-*/
-#define RX_MPDU_INFO_4_PN_31_0_OFFSET                                0x00000010
-#define RX_MPDU_INFO_4_PN_31_0_LSB                                   0
-#define RX_MPDU_INFO_4_PN_31_0_MASK                                  0xffffffff
-
-/* Description		RX_MPDU_INFO_5_PN_63_32
-			
-			
-			
-			
-			Bits [63:32] of the PN number.   See description for
-			pn_31_0.
-			
-			
-			
-*/
-#define RX_MPDU_INFO_5_PN_63_32_OFFSET                               0x00000014
-#define RX_MPDU_INFO_5_PN_63_32_LSB                                  0
-#define RX_MPDU_INFO_5_PN_63_32_MASK                                 0xffffffff
-
-/* Description		RX_MPDU_INFO_6_PN_95_64
-			
-			
-			
-			
-			Bits [95:64] of the PN number.  See description for
-			pn_31_0.
-			
-			
-			
-*/
-#define RX_MPDU_INFO_6_PN_95_64_OFFSET                               0x00000018
-#define RX_MPDU_INFO_6_PN_95_64_LSB                                  0
-#define RX_MPDU_INFO_6_PN_95_64_MASK                                 0xffffffff
-
-/* Description		RX_MPDU_INFO_7_PN_127_96
-			
-			
-			
-			
-			Bits [127:96] of the PN number.  See description for
-			pn_31_0.
-			
-			
-			
-*/
-#define RX_MPDU_INFO_7_PN_127_96_OFFSET                              0x0000001c
-#define RX_MPDU_INFO_7_PN_127_96_LSB                                 0
-#define RX_MPDU_INFO_7_PN_127_96_MASK                                0xffffffff
-
-/* Description		RX_MPDU_INFO_8_PEER_META_DATA
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Meta data that SW has programmed in the Peer table entry
-			of the transmitting STA.
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_8_PEER_META_DATA_OFFSET                         0x00000020
-#define RX_MPDU_INFO_8_PEER_META_DATA_LSB                            0
-#define RX_MPDU_INFO_8_PEER_META_DATA_MASK                           0xffffffff
-
- /* EXTERNAL REFERENCE : struct rxpt_classify_info rxpt_classify_info_details */ 
-
-
-/* Description		RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_REO_DESTINATION_INDICATION
-			
-			The ID of the REO exit ring where the MSDU frame shall
-			push after (MPDU level) reordering has finished.
-			
-			
-			
-			<enum 0 reo_destination_tcl> Reo will push the frame
-			into the REO2TCL ring
-			
-			<enum 1 reo_destination_sw1> Reo will push the frame
-			into the REO2SW1 ring
-			
-			<enum 2 reo_destination_sw2> Reo will push the frame
-			into the REO2SW2 ring
-			
-			<enum 3 reo_destination_sw3> Reo will push the frame
-			into the REO2SW3 ring
-			
-			<enum 4 reo_destination_sw4> Reo will push the frame
-			into the REO2SW4 ring
-			
-			<enum 5 reo_destination_release> Reo will push the frame
-			into the REO_release ring
-			
-			<enum 6 reo_destination_fw> Reo will push the frame into
-			the REO2FW ring
-			
-			<enum 7 reo_destination_sw5> Reo will push the frame
-			into the REO2SW5 ring 
-			
-			<enum 8 reo_destination_sw6> Reo will push the frame
-			into the REO2SW6 ring 
-			
-			<enum 9 reo_destination_9> REO remaps this <enum 10
-			reo_destination_10> REO remaps this 
-			
-			<enum 11 reo_destination_11> REO remaps this 
-			
-			<enum 12 reo_destination_12> REO remaps this <enum 13
-			reo_destination_13> REO remaps this 
-			
-			<enum 14 reo_destination_14> REO remaps this 
-			
-			<enum 15 reo_destination_15> REO remaps this 
-			
-			<enum 16 reo_destination_16> REO remaps this 
-			
-			<enum 17 reo_destination_17> REO remaps this 
-			
-			<enum 18 reo_destination_18> REO remaps this 
-			
-			<enum 19 reo_destination_19> REO remaps this 
-			
-			<enum 20 reo_destination_20> REO remaps this 
-			
-			<enum 21 reo_destination_21> REO remaps this 
-			
-			<enum 22 reo_destination_22> REO remaps this 
-			
-			<enum 23 reo_destination_23> REO remaps this 
-			
-			<enum 24 reo_destination_24> REO remaps this 
-			
-			<enum 25 reo_destination_25> REO remaps this 
-			
-			<enum 26 reo_destination_26> REO remaps this 
-			
-			<enum 27 reo_destination_27> REO remaps this 
-			
-			<enum 28 reo_destination_28> REO remaps this 
-			
-			<enum 29 reo_destination_29> REO remaps this 
-			
-			<enum 30 reo_destination_30> REO remaps this 
-			
-			<enum 31 reo_destination_31> REO remaps this 
-			
-			
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_REO_DESTINATION_INDICATION_OFFSET 0x00000024
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_REO_DESTINATION_INDICATION_LSB 0
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_REO_DESTINATION_INDICATION_MASK 0x0000001f
-
-/* Description		RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0A
-			
-			<legal 0>
-*/
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0A_OFFSET 0x00000024
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0A_LSB    5
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0A_MASK   0x00000060
-
-/* Description		RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_USE_FLOW_ID_TOEPLITZ_CLFY
-			
-			Indication to Rx OLE to enable classification based on
-			the chosen Toeplitz hash from Common Parser, in case flow
-			search fails
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_USE_FLOW_ID_TOEPLITZ_CLFY_OFFSET 0x00000024
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_USE_FLOW_ID_TOEPLITZ_CLFY_LSB 7
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_USE_FLOW_ID_TOEPLITZ_CLFY_MASK 0x00000080
-
-/* Description		RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_UCAST_DATA
-			
-			Filter pass Unicast data frame (matching
-			rxpcu_filter_pass and sw_frame_group_Unicast_data) routing
-			selection
-			
-			
-			
-			1'b0: source and destination rings are selected from the
-			RxOLE register settings for the packet type
-			
-			
-			
-			1'b1: source ring and destination ring is selected from
-			the rxdma0_source_ring_selection and
-			rxdma0_destination_ring_selection fields in this STRUCT
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_UCAST_DATA_OFFSET 0x00000024
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_UCAST_DATA_LSB 8
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_UCAST_DATA_MASK 0x00000100
-
-/* Description		RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_MCAST_DATA
-			
-			Filter pass Multicast data frame (matching
-			rxpcu_filter_pass and sw_frame_group_Multicast_data) routing
-			selection
-			
-			
-			
-			1'b0: source and destination rings are selected from the
-			RxOLE register settings for the packet type
-			
-			
-			
-			1'b1: source ring and destination ring is selected from
-			the rxdma0_source_ring_selection and
-			rxdma0_destination_ring_selection fields in this STRUCT
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_MCAST_DATA_OFFSET 0x00000024
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_MCAST_DATA_LSB 9
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_MCAST_DATA_MASK 0x00000200
-
-/* Description		RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_1000
-			
-			Filter pass BAR frame (matching rxpcu_filter_pass and
-			sw_frame_group_ctrl_1000) routing selection
-			
-			
-			
-			1'b0: source and destination rings are selected from the
-			RxOLE register settings for the packet type
-			
-			
-			
-			1'b1: source ring and destination ring is selected from
-			the rxdma0_source_ring_selection and
-			rxdma0_destination_ring_selection fields in this STRUCT
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_1000_OFFSET 0x00000024
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_1000_LSB 10
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_PKT_SELECTION_FP_1000_MASK 0x00000400
-
-/* Description		RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_SOURCE_RING_SELECTION
-			
-			Field only valid when for the received frame type the
-			corresponding pkt_selection_fp_... bit is set
-			
-			
-			
-			<enum 0 wbm2rxdma_buf_source_ring> The data buffer for
-			
-			<enum 1 fw2rxdma_buf_source_ring> The data buffer for
-			this frame shall be sourced by fw2rxdma buffer source ring.
-			
-			<enum 2 sw2rxdma_buf_source_ring> The data buffer for
-			this frame shall be sourced by sw2rxdma buffer source ring.
-			
-			<enum 3 no_buffer_ring> The frame shall not be written
-			to any data buffer.
-			
-			
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_SOURCE_RING_SELECTION_OFFSET 0x00000024
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_SOURCE_RING_SELECTION_LSB 11
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_SOURCE_RING_SELECTION_MASK 0x00001800
-
-/* Description		RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_DESTINATION_RING_SELECTION
-			
-			Field only valid when for the received frame type the
-			corresponding pkt_selection_fp_... bit is set
-			
-			
-			
-			<enum 0  rxdma_release_ring> RXDMA0 shall push the frame
-			to the Release ring. Effectively this means the frame needs
-			to be dropped.
-			
-			<enum 1  rxdma2fw_ring> RXDMA0 shall push the frame to
-			the FW ring.
-			
-			<enum 2  rxdma2sw_ring> RXDMA0 shall push the frame to
-			the SW ring.
-			
-			<enum 3  rxdma2reo_ring> RXDMA0 shall push the frame to
-			the REO entrance ring.
-			
-			
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_DESTINATION_RING_SELECTION_OFFSET 0x00000024
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_DESTINATION_RING_SELECTION_LSB 13
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RXDMA0_DESTINATION_RING_SELECTION_MASK 0x00006000
-
-/* Description		RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0B
-			
-			<legal 0>
-*/
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0B_OFFSET 0x00000024
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0B_LSB    15
-#define RX_MPDU_INFO_9_RXPT_CLASSIFY_INFO_DETAILS_RESERVED_0B_MASK   0xffff8000
-
-/* Description		RX_MPDU_INFO_10_RX_REO_QUEUE_DESC_ADDR_31_0
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Address (lower 32 bits) of the REO queue descriptor. 
-			
-			
-			
-			If no Peer entry lookup happened for this frame, the
-			value wil be set to 0, and the frame shall never be pushed
-			to REO entrance ring.
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_10_RX_REO_QUEUE_DESC_ADDR_31_0_OFFSET           0x00000028
-#define RX_MPDU_INFO_10_RX_REO_QUEUE_DESC_ADDR_31_0_LSB              0
-#define RX_MPDU_INFO_10_RX_REO_QUEUE_DESC_ADDR_31_0_MASK             0xffffffff
-
-/* Description		RX_MPDU_INFO_11_RX_REO_QUEUE_DESC_ADDR_39_32
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Address (upper 8 bits) of the REO queue descriptor. 
-			
-			
-			
-			If no Peer entry lookup happened for this frame, the
-			value wil be set to 0, and the frame shall never be pushed
-			to REO entrance ring.
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_11_RX_REO_QUEUE_DESC_ADDR_39_32_OFFSET          0x0000002c
-#define RX_MPDU_INFO_11_RX_REO_QUEUE_DESC_ADDR_39_32_LSB             0
-#define RX_MPDU_INFO_11_RX_REO_QUEUE_DESC_ADDR_39_32_MASK            0x000000ff
-
-/* Description		RX_MPDU_INFO_11_RECEIVE_QUEUE_NUMBER
-			
-			In case of ndp or phy_err or AST_based_lookup_valid ==
-			0, this field will be set to 0
-			
-			
-			
-			Indicates the MPDU queue ID to which this MPDU link
-			descriptor belongs
-			
-			Used for tracking and debugging
-			
-			<legal all>
-*/
-#define RX_MPDU_INFO_11_RECEIVE_QUEUE_NUMBER_OFFSET                  0x0000002c
-#define RX_MPDU_INFO_11_RECEIVE_QUEUE_NUMBER_LSB                     8
-#define RX_MPDU_INFO_11_RECEIVE_QUEUE_NUMBER_MASK                    0x00ffff00
-
-/* Description		RX_MPDU_INFO_11_PRE_DELIM_ERR_WARNING
-			
-			Indicates that a delimiter FCS error was found in
-			between the Previous MPDU and this MPDU.
-			
-			
-			
-			Note that this is just a warning, and does not mean that
-			this MPDU is corrupted in any way. If it is, there will be
-			other errors indicated such as FCS or decrypt errors
-			
-			
-			
-			In case of ndp or phy_err, this field will indicate at
-			least one of delimiters located after the last MPDU in the
-			previous PPDU has been corrupted.
-*/
-#define RX_MPDU_INFO_11_PRE_DELIM_ERR_WARNING_OFFSET                 0x0000002c
-#define RX_MPDU_INFO_11_PRE_DELIM_ERR_WARNING_LSB                    24
-#define RX_MPDU_INFO_11_PRE_DELIM_ERR_WARNING_MASK                   0x01000000
-
-/* Description		RX_MPDU_INFO_11_FIRST_DELIM_ERR
-			
-			Indicates that the first delimiter had a FCS failure. 
-			Only valid when first_mpdu and first_msdu are set.
-			
-			
-			
-*/
-#define RX_MPDU_INFO_11_FIRST_DELIM_ERR_OFFSET                       0x0000002c
-#define RX_MPDU_INFO_11_FIRST_DELIM_ERR_LSB                          25
-#define RX_MPDU_INFO_11_FIRST_DELIM_ERR_MASK                         0x02000000
-
-/* Description		RX_MPDU_INFO_11_RESERVED_11
-			
-			<legal 0>
-*/
-#define RX_MPDU_INFO_11_RESERVED_11_OFFSET                           0x0000002c
-#define RX_MPDU_INFO_11_RESERVED_11_LSB                              26
-#define RX_MPDU_INFO_11_RESERVED_11_MASK                             0xfc000000
+#define RX_MPDU_INFO_11_MPDU_SEQUENCE_NUMBER_OFFSET                  0x0000002c
+#define RX_MPDU_INFO_11_MPDU_SEQUENCE_NUMBER_LSB                     20
+#define RX_MPDU_INFO_11_MPDU_SEQUENCE_NUMBER_MASK                    0xfff00000
 
 /* Description		RX_MPDU_INFO_12_KEY_ID_OCTET
 			
@@ -2842,13 +2875,34 @@ mpdu_ht_control_field
 #define RX_MPDU_INFO_12_BAR_FRAME_LSB                                29
 #define RX_MPDU_INFO_12_BAR_FRAME_MASK                               0x20000000
 
+/* Description		RX_MPDU_INFO_12_RAW_MPDU
+			
+			Consumer: SW
+			
+			Producer: RXOLE
+			
+			
+			
+			RXPCU sets this field to 0 and RXOLE overwrites it.
+			
+			
+			
+			Set to 1 by RXOLE when it has not performed any 802.11
+			to Ethernet/Natvie WiFi header conversion on this MPDU.
+			
+			<legal all>
+*/
+#define RX_MPDU_INFO_12_RAW_MPDU_OFFSET                              0x00000030
+#define RX_MPDU_INFO_12_RAW_MPDU_LSB                                 30
+#define RX_MPDU_INFO_12_RAW_MPDU_MASK                                0x40000000
+
 /* Description		RX_MPDU_INFO_12_RESERVED_12
 			
-			<legal 0>.
+			<legal 0>
 */
 #define RX_MPDU_INFO_12_RESERVED_12_OFFSET                           0x00000030
-#define RX_MPDU_INFO_12_RESERVED_12_LSB                              30
-#define RX_MPDU_INFO_12_RESERVED_12_MASK                             0xc0000000
+#define RX_MPDU_INFO_12_RESERVED_12_LSB                              31
+#define RX_MPDU_INFO_12_RESERVED_12_MASK                             0x80000000
 
 /* Description		RX_MPDU_INFO_13_MPDU_LENGTH
 			

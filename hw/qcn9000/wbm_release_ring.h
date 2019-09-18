@@ -27,7 +27,7 @@
 //	Dword	Fields
 //	0-1	struct buffer_addr_info released_buff_or_desc_addr_info;
 //	2	release_source_module[2:0], bm_action[5:3], buffer_or_desc_type[8:6], first_msdu_index[12:9], tqm_release_reason[16:13], rxdma_push_reason[18:17], rxdma_error_code[23:19], reo_push_reason[25:24], reo_error_code[30:26], wbm_internal_error[31]
-//	3	tqm_status_number[23:0], transmit_count[30:24], reserved_3a[31]
+//	3	tqm_status_number[23:0], transmit_count[30:24], msdu_continuation[31]
 //	4	ack_frame_rssi[7:0], sw_release_details_valid[8], first_msdu[9], last_msdu[10], msdu_part_of_amsdu[11], fw_tx_notify_frame[12], buffer_timestamp[31:13]
 //	5-6	struct tx_rate_stats_info tx_rate_stats;
 //	7	sw_peer_id[15:0], tid[19:16], ring_id[27:20], looping_count[31:28]
@@ -50,7 +50,7 @@ struct wbm_release_ring {
                       wbm_internal_error              :  1; //[31]
              uint32_t tqm_status_number               : 24, //[23:0]
                       transmit_count                  :  7, //[30:24]
-                      reserved_3a                     :  1; //[31]
+                      msdu_continuation               :  1; //[31]
              uint32_t ack_frame_rssi                  :  8, //[7:0]
                       sw_release_details_valid        :  1, //[8]
                       first_msdu                      :  1, //[9]
@@ -80,6 +80,15 @@ struct buffer_addr_info released_buff_or_desc_addr_info
 			descriptor, WBM will look at the 'owner' of the released
 			buffer/descriptor and forward it to SW/FW is WBM is not the
 			owner.
+			
+			
+			
+			In case of TQM releasing Tx MSDU link descriptors with
+			Tqm_release_reason set to 'tqm_fw_reason3,' HastingsPrime
+			WBM can optionally release the MSDU buffers pointed to by
+			the MSDU link descriptors to FW and override the
+			tx_rate_stats field, for FW reinjection of these MSDUs.
+			This is not supported in Pine.
 
 release_source_module
 			
@@ -276,6 +285,15 @@ tqm_release_reason
 			
 			
 			<legal 0-8>
+			
+			
+			
+			In case of TQM releasing Tx MSDU link descriptors with
+			Tqm_release_reason set to 'tqm_fw_reason3,' HastingsPrime
+			WBM can optionally release the MSDU buffers pointed to by
+			the MSDU link descriptors to FW and override the
+			tx_rate_stats field, for FW reinjection of these MSDUs.
+			This is not supported in Pine.
 
 rxdma_push_reason
 			
@@ -493,9 +511,13 @@ transmit_count
 			
 			The number of times this frame has been transmitted
 
-reserved_3a
+msdu_continuation
 			
-			<legal 0>
+			requests MSDU_continuation reporting for Rx
+			MSDUs in Pine and HastingsPrime for which
+			SW_release_details_valid may not be set.
+			
+			<legal all>
 
 ack_frame_rssi
 			
@@ -554,6 +576,10 @@ first_msdu
 			
 			
 			
+			extends this to Rx MSDUs in Pine and
+			HastingsPrime for which SW_release_details_valid may not be
+			set.
+			
 			<legal all>
 
 last_msdu
@@ -572,6 +598,10 @@ last_msdu
 			'release_msdu_list' command.
 			
 			
+			
+			extends this to Rx MSDUs in Pine and
+			HastingsPrime for which SW_release_details_valid may not be
+			set.
 			
 			<legal all>
 
@@ -638,6 +668,16 @@ struct tx_rate_stats_info tx_rate_stats
 			
 			
 			Details for command execution tracking purposes. 
+			
+			
+			
+			In case of TQM releasing Tx MSDU link descriptors with
+			Tqm_release_reason set to 'tqm_fw_reason3,' HastingsPrime
+			WBM can optionally release the MSDU buffers pointed to by
+			the MSDU link descriptors to FW and override the
+			tx_rate_stats field with words 2 and 3 of the
+			'TX_MSDU_DETAILS' structure, for FW reinjection of these
+			MSDUs. This is not supported in Pine.
 
 sw_peer_id
 			
@@ -1153,6 +1193,15 @@ looping_count
 			
 			
 			<legal 0-8>
+			
+			
+			
+			In case of TQM releasing Tx MSDU link descriptors with
+			Tqm_release_reason set to 'tqm_fw_reason3,' HastingsPrime
+			WBM can optionally release the MSDU buffers pointed to by
+			the MSDU link descriptors to FW and override the
+			tx_rate_stats field, for FW reinjection of these MSDUs.
+			This is not supported in Pine.
 */
 #define WBM_RELEASE_RING_2_TQM_RELEASE_REASON_OFFSET                 0x00000008
 #define WBM_RELEASE_RING_2_TQM_RELEASE_REASON_LSB                    13
@@ -1402,13 +1451,17 @@ looping_count
 #define WBM_RELEASE_RING_3_TRANSMIT_COUNT_LSB                        24
 #define WBM_RELEASE_RING_3_TRANSMIT_COUNT_MASK                       0x7f000000
 
-/* Description		WBM_RELEASE_RING_3_RESERVED_3A
+/* Description		WBM_RELEASE_RING_3_MSDU_CONTINUATION
 			
-			<legal 0>
+			requests MSDU_continuation reporting for Rx
+			MSDUs in Pine and HastingsPrime for which
+			SW_release_details_valid may not be set.
+			
+			<legal all>
 */
-#define WBM_RELEASE_RING_3_RESERVED_3A_OFFSET                        0x0000000c
-#define WBM_RELEASE_RING_3_RESERVED_3A_LSB                           31
-#define WBM_RELEASE_RING_3_RESERVED_3A_MASK                          0x80000000
+#define WBM_RELEASE_RING_3_MSDU_CONTINUATION_OFFSET                  0x0000000c
+#define WBM_RELEASE_RING_3_MSDU_CONTINUATION_LSB                     31
+#define WBM_RELEASE_RING_3_MSDU_CONTINUATION_MASK                    0x80000000
 
 /* Description		WBM_RELEASE_RING_4_ACK_FRAME_RSSI
 			
@@ -1475,6 +1528,10 @@ looping_count
 			
 			
 			
+			extends this to Rx MSDUs in Pine and
+			HastingsPrime for which SW_release_details_valid may not be
+			set.
+			
 			<legal all>
 */
 #define WBM_RELEASE_RING_4_FIRST_MSDU_OFFSET                         0x00000010
@@ -1497,6 +1554,10 @@ looping_count
 			'release_msdu_list' command.
 			
 			
+			
+			extends this to Rx MSDUs in Pine and
+			HastingsPrime for which SW_release_details_valid may not be
+			set.
 			
 			<legal all>
 */

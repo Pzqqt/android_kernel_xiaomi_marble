@@ -30,7 +30,7 @@
 //	3-18	struct receive_rssi_info pre_rssi_info_details;
 //	19-34	struct receive_rssi_info preamble_rssi_info_details;
 //	35	pre_rssi_comb[7:0], rssi_comb[15:8], normalized_pre_rssi_comb[23:16], normalized_rssi_comb[31:24]
-//	36	rssi_comb_ppdu[7:0], rssi_db_to_dbm_offset[15:8], reserved_36a[31:16]
+//	36	rssi_comb_ppdu[7:0], rssi_db_to_dbm_offset[15:8], rssi_for_spatial_reuse[23:16], rssi_for_trigger_resp[31:24]
 //
 // ################ END SUMMARY #################
 
@@ -53,7 +53,8 @@ struct phyrx_rssi_legacy {
                       normalized_rssi_comb            :  8; //[31:24]
              uint32_t rssi_comb_ppdu                  :  8, //[7:0]
                       rssi_db_to_dbm_offset           :  8, //[15:8]
-                      reserved_36a                    : 16; //[31:16]
+                      rssi_for_spatial_reuse          :  8, //[23:16]
+                      rssi_for_trigger_resp           :  8; //[31:24]
 };
 
 /*
@@ -433,9 +434,43 @@ rssi_db_to_dbm_offset
 			
 			<legal all>
 
-reserved_36a
+rssi_for_spatial_reuse
 			
-			<legal 0>
+			<legal all>
+
+rssi_for_trigger_resp
+			
+			RSSI to be used by PDG for transmit (power) selection
+			during trigger response, reported as an 8-bit signed value
+			
+			
+			
+			The resolution can be: 
+			
+			1dB or 0.5dB. This is statically configured within the
+			PHY and MAC
+			
+			
+			
+			In case of 1dB, the Range is:
+			
+			 -128dB to 127dB
+			
+			
+			
+			In case of 0.5dB, the Range is:
+			
+			 -64dB to 63.5dB
+			
+			
+			
+			As per 802.11ax draft 3.3 subsubclauses 28.3.14.2, for
+			trigger response, the received power should be measured from
+			the non-HE portion of the preamble of the PPDU containing
+			the trigger, normalized to 20 MHz, averaged over the
+			antennas over which the average pathloss is being computed.
+			
+			<legal all>
 */
 
 
@@ -2250,13 +2285,28 @@ reserved_36a
 #define PHYRX_RSSI_LEGACY_36_RSSI_DB_TO_DBM_OFFSET_LSB               8
 #define PHYRX_RSSI_LEGACY_36_RSSI_DB_TO_DBM_OFFSET_MASK              0x0000ff00
 
-/* Description		PHYRX_RSSI_LEGACY_36_RESERVED_36A
+/* Description		PHYRX_RSSI_LEGACY_36_RSSI_FOR_SPATIAL_REUSE
 			
-			<legal 0>
+			RSSI to be used by HWSCH for transmit (power) selection
+			during an SR opportunity, reported as an 8-bit signed value
+			
+			<legal all>
 */
-#define PHYRX_RSSI_LEGACY_36_RESERVED_36A_OFFSET                     0x00000090
-#define PHYRX_RSSI_LEGACY_36_RESERVED_36A_LSB                        16
-#define PHYRX_RSSI_LEGACY_36_RESERVED_36A_MASK                       0xffff0000
+#define PHYRX_RSSI_LEGACY_36_RSSI_FOR_SPATIAL_REUSE_OFFSET           0x00000090
+#define PHYRX_RSSI_LEGACY_36_RSSI_FOR_SPATIAL_REUSE_LSB              16
+#define PHYRX_RSSI_LEGACY_36_RSSI_FOR_SPATIAL_REUSE_MASK             0x00ff0000
+
+/* Description		PHYRX_RSSI_LEGACY_36_RSSI_FOR_TRIGGER_RESP
+			
+			RSSI to be used by PDG for transmit (power) selection
+			during trigger response, reported as an 8-bit signed value
+			
+			
+			<legal all>
+*/
+#define PHYRX_RSSI_LEGACY_36_RSSI_FOR_TRIGGER_RESP_OFFSET            0x00000090
+#define PHYRX_RSSI_LEGACY_36_RSSI_FOR_TRIGGER_RESP_LSB               24
+#define PHYRX_RSSI_LEGACY_36_RSSI_FOR_TRIGGER_RESP_MASK              0xff000000
 
 
 #endif // _PHYRX_RSSI_LEGACY_H_

@@ -14,10 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/**
- * Generated file ... Do not hand edit ...
- */
-
 #ifndef _TLV_TAG_DEF_
 #define _TLV_TAG_DEF_
 
@@ -492,6 +488,20 @@ typedef enum {
   WIFISCHEDULER_SW_MSG_STATUS_E            = 466 /* 0x1d2 */,
   WIFIHWSCH_RXPCU_MAC_INFO_ANNOUNCEMENT_E  = 467 /* 0x1d3 */,
   WIFIRXPCU_SETUP_COMPLETE_E               = 468 /* 0x1d4 */,
+  WIFISNOOP_PPDU_START_E                   = 469 /* 0x1d5 */,
+  WIFISNOOP_MPDU_USR_DBG_INFO_E            = 470 /* 0x1d6 */,
+  WIFISNOOP_MSDU_USR_DBG_INFO_E            = 471 /* 0x1d7 */,
+  WIFISNOOP_MSDU_USR_DATA_E                = 472 /* 0x1d8 */,
+  WIFISNOOP_MPDU_USR_STAT_INFO_E           = 473 /* 0x1d9 */,
+  WIFISNOOP_PPDU_END_E                     = 474 /* 0x1da */,
+  WIFISNOOP_SPARE_E                        = 475 /* 0x1db */,
+  WIFIMACTX_PREFETCH_CV_BULK_E             = 476 /* 0x1dc */,
+  WIFIMACTX_PREFETCH_CV_BULK_USER_E        = 477 /* 0x1dd */,
+  WIFIPHYRX_OTHER_RECEIVE_INFO_MU_RSSI_COMMON_E = 478 /* 0x1de */,
+  WIFIPHYRX_OTHER_RECEIVE_INFO_MU_RSSI_USER_E = 479 /* 0x1df */,
+  WIFIMACTX_OTHER_TRANSMIT_INFO_SCH_DETAILS_E = 480 /* 0x1e0 */,
+  WIFISW_MONITOR_RING_E                    = 481 /* 0x1e1 */,
+  WIFIPHYRX_OTHER_RECEIVE_INFO_108P_EVM_DETAILS_E = 482 /* 0x1e2 */,
   WIFITLV_BASE_E                           = 511 /* 0x1ff */
 
 } tlv_tag_def__e; ///< tlv_tag_def Enum Type
