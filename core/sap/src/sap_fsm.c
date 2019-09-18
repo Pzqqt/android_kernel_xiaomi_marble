@@ -73,10 +73,6 @@
 /*----------------------------------------------------------------------------
  *  External declarations for global context
  * -------------------------------------------------------------------------*/
-#ifdef FEATURE_WLAN_CH_AVOID
-extern sapSafeChannelType safe_channels[];
-#endif /* FEATURE_WLAN_CH_AVOID */
-
 /*----------------------------------------------------------------------------
  * Static Variable Definitions
  * -------------------------------------------------------------------------*/
@@ -676,11 +672,31 @@ sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
 
 uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg)
 {
-	if (!acs_cfg || !acs_cfg->ch_list)
+	uint16_t i;
+
+	if (!acs_cfg || !acs_cfg->ch_list || !acs_cfg->ch_list_count)
 		return 0;
 
+	/*
+	 * There could be both 2.4Ghz and 5ghz channels present in the list
+	 * based upon the Hw mode received from hostapd, it is always better
+	 * to chose a default 5ghz operating channel than 2.4ghz, as it can
+	 * provide a better throughput, latency than 2.4ghz. Also 40 Mhz is
+	 * rare in 2.4ghz band, so 5ghz should be preferred. If we get a 5Ghz
+	 * chan in the acs cfg ch list , we should go for that first else the
+	 * default channel can be 2.4ghz.
+	 */
+
+	for (i = 0; i < acs_cfg->ch_list_count; i++) {
+		if (WLAN_CHAN_IS_5GHZ(acs_cfg->ch_list[i])) {
+			sap_debug("default channel chosen as %d",
+				  acs_cfg->ch_list[i]);
+			return acs_cfg->ch_list[i];
+		}
+	}
+
 	sap_debug("default channel chosen as %d", acs_cfg->ch_list[0]);
-	/* Return the default channel as first channel in list */
+
 	return acs_cfg->ch_list[0];
 }
 
@@ -3222,9 +3238,6 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	uint8_t start_ch_num, band_start_ch;
 	uint8_t end_ch_num, band_end_ch;
 	uint32_t en_lte_coex;
-#ifdef FEATURE_WLAN_CH_AVOID
-	uint8_t i;
-#endif
 	struct mac_context *mac_ctx;
 	tSapChSelSpectInfo spect_info_obj = { NULL, 0 };
 	uint16_t ch_width;
@@ -3238,6 +3251,9 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	}
 
 	dfs_master_enable = mac_ctx->mlme_cfg->dfs_cfg.dfs_master_capable;
+	if (sap_ctx->dfs_mode == ACS_DFS_MODE_DISABLE)
+		dfs_master_enable = false;
+
 	start_ch_num = sap_ctx->acs_cfg->start_ch;
 	end_ch_num = sap_ctx->acs_cfg->end_ch;
 	ch_width = sap_ctx->acs_cfg->ch_width;
@@ -3304,6 +3320,20 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		     )))
 			continue;
 
+		/* check if the channel is in NOL blacklist */
+		if (sap_dfs_is_channel_in_nol_list(sap_ctx,
+		    WLAN_REG_CH_NUM(loop_count),
+		    PHY_SINGLE_CHANNEL_CENTERED)) {
+			sap_debug("Ch %d in NOL list",
+				  WLAN_REG_CH_NUM(loop_count));
+			continue;
+		}
+
+		/* Skip DSRC channels */
+		if (wlan_reg_is_dsrc_chan(mac_ctx->pdev,
+					  WLAN_REG_CH_NUM(loop_count)))
+			continue;
+
 		/*
 		 * Skip the channels which are not in ACS config from user
 		 * space
@@ -3332,33 +3362,7 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		    wlan_reg_is_etsi13_srd_chan(mac_ctx->pdev,
 						WLAN_REG_CH_NUM(loop_count)))
 			continue;
-		/*
-		 * If we have any 5Ghz channel in the channel list
-		 * and bw is 40/80/160 Mhz then we don't want SAP to
-		 * come up in 2.4Ghz as for 40Mhz, 2.4Ghz channel is
-		 * not preferred and 80/160Mhz is not allowed for 2.4Ghz
-		 * band. So, don't even scan on 2.4Ghz channels if bw is
-		 * 40/80/160Mhz and channel list has any 5Ghz channel.
-		 */
-		if (end_ch_num >= WLAN_REG_CH_NUM(CHAN_ENUM_5180) &&
-		    ((ch_width == CH_WIDTH_40MHZ) ||
-		     (ch_width == CH_WIDTH_80MHZ) ||
-		     (ch_width == CH_WIDTH_80P80MHZ) ||
-		     (ch_width == CH_WIDTH_160MHZ))) {
-			if (WLAN_REG_CH_NUM(loop_count) >=
-			    WLAN_REG_CH_NUM(CHAN_ENUM_2412) &&
-			    WLAN_REG_CH_NUM(loop_count) <=
-			    WLAN_REG_CH_NUM(CHAN_ENUM_2484))
-				continue;
-		}
 
-#ifdef FEATURE_WLAN_CH_AVOID
-		for (i = 0; i < NUM_CHANNELS; i++) {
-			if (safe_channels[i].channelNumber ==
-			     WLAN_REG_CH_NUM(loop_count)) {
-				/* Check if channel is safe */
-				if (true == safe_channels[i].isSafe) {
-#endif
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 		uint8_t ch;
 
@@ -3395,12 +3399,6 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		list[ch_count] = wlan_reg_chan_to_freq(mac_ctx->pdev,
 						   WLAN_REG_CH_NUM(loop_count));
 		ch_count++;
-#endif
-#ifdef FEATURE_WLAN_CH_AVOID
-				}
-				break;
-			}
-		}
 #endif
 	}
 	if (0 == ch_count) {
