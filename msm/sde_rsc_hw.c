@@ -872,14 +872,19 @@ int rsc_hw_tcs_wait(struct sde_rsc_priv *rsc)
 	}
 
 	/* check for sequence running status before exiting */
-	for (count = MAX_CHECK_LOOPS; count > 0; count--) {
+	for (count = (MAX_CHECK_LOOPS / 4); count > 0; count--) {
 		seq_status = dss_reg_r(&rsc->wrapper_io, SDE_RSCC_WRAPPER_CTRL,
 				rsc->debug_mode) & BIT(1);
 		if (!seq_status) {
 			rc = 0;
 			break;
 		}
-		usleep_range(1, 2);
+
+		dss_reg_w(&rsc->wrapper_io, SDE_RSCC_WRAPPER_CTRL,
+						0x1, rsc->debug_mode);
+		usleep_range(3, 4);
+		dss_reg_w(&rsc->wrapper_io, SDE_RSCC_WRAPPER_CTRL,
+						0x0, rsc->debug_mode);
 	}
 
 	return rc;
