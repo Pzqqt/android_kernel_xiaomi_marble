@@ -396,20 +396,11 @@ static int32_t scm_calculate_bandwidth_score(
 		cbmode = score_config->cb_mode_5G;
 	}
 
-	if (entry->phy_mode == WLAN_PHYMODE_11AC_VHT80_80 ||
-	    entry->phy_mode == WLAN_PHYMODE_11AC_VHT160)
+	if (IS_WLAN_PHYMODE_160MHZ(entry->phy_mode))
 		ch_width_index = SCM_160MHZ_BW_INDEX;
-	else if (entry->phy_mode == WLAN_PHYMODE_11AC_VHT80)
-		 ch_width_index = SCM_80MHZ_BW_INDEX;
-	else if (entry->phy_mode == WLAN_PHYMODE_11NA_HT40PLUS ||
-		 entry->phy_mode == WLAN_PHYMODE_11NA_HT40MINUS ||
-		 entry->phy_mode == WLAN_PHYMODE_11NG_HT40PLUS ||
-		 entry->phy_mode == WLAN_PHYMODE_11NG_HT40MINUS ||
-		 entry->phy_mode == WLAN_PHYMODE_11NG_HT40 ||
-		 entry->phy_mode == WLAN_PHYMODE_11NA_HT40 ||
-		 entry->phy_mode == WLAN_PHYMODE_11AC_VHT40PLUS ||
-		 entry->phy_mode == WLAN_PHYMODE_11AC_VHT40MINUS ||
-		 entry->phy_mode == WLAN_PHYMODE_11AC_VHT40)
+	else if (IS_WLAN_PHYMODE_80MHZ(entry->phy_mode))
+		ch_width_index = SCM_80MHZ_BW_INDEX;
+	else if (IS_WLAN_PHYMODE_40MHZ(entry->phy_mode))
 		ch_width_index = SCM_40MHZ_BW_INDEX;
 	else
 		ch_width_index = SCM_20MHZ_BW_INDEX;
