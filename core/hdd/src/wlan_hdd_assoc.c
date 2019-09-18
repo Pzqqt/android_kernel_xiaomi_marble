@@ -2262,6 +2262,19 @@ void hdd_save_gtk_params(struct hdd_adapter *adapter,
 }
 #endif
 #endif
+
+static void hdd_roam_decr_conn_count(struct hdd_adapter *adapter,
+				     struct hdd_context *hdd_ctx)
+{
+	/* In case of LFR2.0, the number of connection count is
+	 * already decrement in hdd_sme_roam_callback. Hence
+	 * here we should not decrement again.
+	 */
+	if (roaming_offload_enabled(hdd_ctx))
+		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
+						adapter->device_mode,
+						adapter->vdev_id);
+}
 /**
  * hdd_send_re_assoc_event() - send reassoc event
  * @dev: pointer to net device
@@ -2330,8 +2343,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	 * successful reassoc decrement the active session count here.
 	 */
 	if (!hdd_is_roam_sync_in_progress(roam_info)) {
-		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
-				adapter->device_mode, adapter->vdev_id);
+		hdd_roam_decr_conn_count(adapter, hdd_ctx);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
 	}
@@ -3248,10 +3260,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						 */
 						if (!hdd_is_roam_sync_in_progress
 								(roam_info)) {
-						policy_mgr_decr_session_set_pcl(
-							hdd_ctx->psoc,
-							adapter->device_mode,
-							adapter->vdev_id);
+						hdd_roam_decr_conn_count(
+							 adapter, hdd_ctx);
+
 						hdd_green_ap_start_state_mc(
 							hdd_ctx,
 							adapter->device_mode,
