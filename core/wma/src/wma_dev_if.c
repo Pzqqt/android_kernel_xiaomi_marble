@@ -81,7 +81,9 @@
 #include "wlan_mlme_public_struct.h"
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_main.h"
+#include <wlan_dfs_utils_api.h>
 #include "../../core/src/vdev_mgr_ops.h"
+#include "wlan_utility.h"
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -3050,6 +3052,149 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		wma_vdev_nss_chain_params_send(vdev_id, ini_cfg);
 
 	return vdev_mgr_start_send(mlme_obj,  isRestart);
+}
+
+QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct wma_txrx_node *intr = wma->interfaces;
+	struct mac_context *mac_ctx = NULL;
+	uint16_t bw_val;
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
+	uint32_t chan_mode;
+	enum phy_ch_width ch_width;
+	struct wlan_mlme_nss_chains *ini_cfg;
+	struct vdev_mlme_obj *mlme_obj;
+	struct wlan_objmgr_vdev *vdev = intr[vdev_id].vdev;
+	struct wlan_channel *des_chan;
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		wma_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	des_chan = vdev->vdev_mlme.des_chan;
+
+	ini_cfg = mlme_get_ini_vdev_config(iface->vdev);
+	if (!ini_cfg) {
+		wma_err("nss chain ini config NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		WMA_LOGE("%s: vdev start failed as mac_ctx is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	des_chan->ch_cfreq1 = des_chan->ch_freq;
+	ch_width = des_chan->ch_width;
+	bw_val = wlan_reg_get_bw_value(ch_width);
+	if (bw_val > 20) {
+		if (des_chan->ch_freq_seg1) {
+			des_chan->ch_cfreq1 =
+				wlan_chan_to_freq(des_chan->ch_freq_seg1);
+		} else {
+			wma_err("Invalid cntr_freq for bw %d, drop to 20",
+				bw_val);
+			ch_width = CH_WIDTH_20MHZ;
+			bw_val = 20;
+		}
+	}
+	if (bw_val > 80) {
+		if (des_chan->ch_freq_seg2) {
+			des_chan->ch_cfreq2 =
+				wlan_chan_to_freq(des_chan->ch_freq_seg2);
+		} else {
+			wma_err("Invalid cntr_freq for bw %d, drop to 80",
+				bw_val);
+			des_chan->ch_cfreq2 = 0;
+			ch_width = CH_WIDTH_80MHZ;
+		}
+	} else {
+		des_chan->ch_cfreq2 = 0;
+	}
+	chan_mode = wma_chan_phy_mode(des_chan->ch_freq, ch_width,
+				      mlme_obj->mgmt.generic.phy_mode);
+
+	if (chan_mode == MODE_UNKNOWN) {
+		WMA_LOGE("%s: invalid phy mode!", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!des_chan->ch_cfreq1) {
+		WMA_LOGE("%s: invalid center freq1", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if ((ch_width == CH_WIDTH_160MHZ ||
+	     ch_width == CH_WIDTH_80P80MHZ) && !des_chan->ch_cfreq2) {
+		WMA_LOGE("%s: invalid center freq2 for 160MHz", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	mlme_obj->mgmt.generic.phy_mode = chan_mode;
+
+	intr[vdev_id].chanmode = chan_mode;
+	intr[vdev_id].config.gtx_info.gtxRTMask[0] =
+		CFG_TGT_DEFAULT_GTX_HT_MASK;
+	intr[vdev_id].config.gtx_info.gtxRTMask[1] =
+		CFG_TGT_DEFAULT_GTX_VHT_MASK;
+
+	intr[vdev_id].config.gtx_info.gtxUsrcfg =
+		mac_ctx->mlme_cfg->sta.tgt_gtx_usr_cfg;
+
+	intr[vdev_id].config.gtx_info.gtxPERThreshold =
+		CFG_TGT_DEFAULT_GTX_PER_THRESHOLD;
+	intr[vdev_id].config.gtx_info.gtxPERMargin =
+		CFG_TGT_DEFAULT_GTX_PER_MARGIN;
+	intr[vdev_id].config.gtx_info.gtxTPCstep =
+		CFG_TGT_DEFAULT_GTX_TPC_STEP;
+	intr[vdev_id].config.gtx_info.gtxTPCMin =
+		CFG_TGT_DEFAULT_GTX_TPC_MIN;
+	intr[vdev_id].config.gtx_info.gtxBWMask =
+		CFG_TGT_DEFAULT_GTX_BW_MASK;
+	intr[vdev_id].mhz = des_chan->ch_freq;
+	intr[vdev_id].chan_width = ch_width;
+	intr[vdev_id].ch_freq = des_chan->ch_freq;
+
+	/*
+	 * If the channel has DFS set, flip on radar reporting.
+	 *
+	 * It may be that this should only be done for IBSS/hostap operation
+	 * as this flag may be interpreted (at some point in the future)
+	 * by the firmware as "oh, and please do radar DETECTION."
+	 *
+	 * If that is ever the case we would insert the decision whether to
+	 * enable the firmware flag here.
+	 */
+	if (QDF_GLOBAL_MONITOR_MODE != cds_get_conparam() &&
+	    utils_is_dfs_ch(wma->pdev, des_chan->ch_ieee))
+		mlme_obj->mgmt.generic.disable_hw_ack = true;
+
+	if (mlme_obj->mgmt.rate_info.bcn_tx_rate) {
+		wma_debug("beacon tx rate [%u * 100 Kbps]",
+			  mlme_obj->mgmt.rate_info.bcn_tx_rate);
+		/*
+		 * beacon_tx_rate is in multiples of 100 Kbps.
+		 * Convert the data rate to hw rate code.
+		 */
+		mlme_obj->mgmt.rate_info.bcn_tx_rate =
+		wma_get_bcn_rate_code(mlme_obj->mgmt.rate_info.bcn_tx_rate);
+	}
+
+	if (!restart) {
+		WMA_LOGD("%s, vdev_id: %d, unpausing tx_ll_queue at VDEV_START",
+			 __func__, vdev_id);
+		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
+				    wma->interfaces[vdev_id].handle,
+			0xffffffff);
+		wma_vdev_update_pause_bitmap(vdev_id, 0);
+	}
+
+	/* Send the dynamic nss chain params before vdev start to fw */
+	if (wma->dynamic_nss_chains_support)
+		wma_vdev_nss_chain_params_send(vdev_id, ini_cfg);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

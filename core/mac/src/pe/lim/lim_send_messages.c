@@ -35,6 +35,7 @@
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "lim_utils.h"
 #include "wma.h"
+#include "../../core/src/vdev_mgr_ops.h"
 
 /**
  * lim_send_beacon_params() - updates bcn params to WMA
@@ -119,8 +120,14 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 					  uint32_t cac_duration_ms,
 					  uint32_t dfs_regdomain)
 {
-	struct wma_vdev_start_req req = {0};
 	struct pe_session *pe_session;
+	struct vdev_mlme_obj *mlme_obj;
+	struct wlan_channel *des_chan;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t vdev_id;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct vdev_start_response rsp = {0};
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	pe_session = pe_find_session_by_session_id(mac, peSessionId);
 	if (!pe_session) {
@@ -129,60 +136,61 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	req.vdev_id = pe_session->vdev_id;
-	req.op_chan_freq = wlan_reg_chan_to_freq(mac->pdev, chnlNumber);
-	req.chan_width = ch_width;
-	if (cds_is_5_mhz_enabled())
-		req.is_quarter_rate = 1;
-	else if (cds_is_10_mhz_enabled())
-		req.is_half_rate = 1;
-	req.chan_freq_seg0 =
-		wlan_reg_chan_to_freq(mac->pdev, ch_center_freq_seg0);
-	req.chan_freq_seg1 =
-		wlan_reg_chan_to_freq(mac->pdev, ch_center_freq_seg1);
-	req.dot11_mode = pe_session->dot11mode;
-	req.cac_duration_ms = cac_duration_ms;
-	/*Set DFS flag for DFS channel */
-	if (ch_width == CH_WIDTH_160MHZ) {
-		req.is_dfs = true;
-	} else if (ch_width == CH_WIDTH_80P80MHZ) {
-		req.is_dfs = false;
-		if (wlan_reg_get_channel_state(mac->pdev, chnlNumber) ==
-				CHANNEL_STATE_DFS ||
-		    wlan_reg_get_channel_state(mac->pdev,
-			    ch_center_freq_seg1 -
-				SIR_80MHZ_START_CENTER_CH_DIFF) ==
-							CHANNEL_STATE_DFS)
-			req.is_dfs = true;
-	} else {
-		if (wlan_reg_get_channel_state(mac->pdev, chnlNumber) ==
-				CHANNEL_STATE_DFS)
-			req.is_dfs = true;
-		else
-			req.is_dfs = false;
+	vdev_id = pe_session->vdev_id;
+	vdev = pe_session->vdev;
+	if (!vdev) {
+		pe_err("vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
-	req.beacon_intval = 100;
-	req.dtim_period = 1;
-	req.max_txpow = maxTxPower;
-	req.ssid = pe_session->ssId;
-	req.hidden_ssid = pe_session->ssidHidden;
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	des_chan = vdev->vdev_mlme.des_chan;
+	des_chan->ch_ieee = chnlNumber;
+	des_chan->ch_freq = wlan_reg_chan_to_freq(mac->pdev, chnlNumber);
+	if (des_chan->ch_freq == 0) {
+		pe_err("Invalid operating frequency: %d", des_chan->ch_freq);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_INVAL;
+	}
+	des_chan->ch_width = ch_width;
+	if (cds_is_5_mhz_enabled())
+		mlme_obj->mgmt.rate_info.quarter_rate = 1;
+	else if (cds_is_10_mhz_enabled())
+		mlme_obj->mgmt.rate_info.half_rate = 1;
+	des_chan->ch_freq_seg1 = ch_center_freq_seg0;
+	des_chan->ch_freq_seg2 = ch_center_freq_seg1;
+	pe_debug("ch_freq_seg1: %d, ch_freq_seg2: %d",
+		 des_chan->ch_freq_seg1, des_chan->ch_freq_seg2);
+
+	mlme_obj->mgmt.generic.phy_mode = pe_session->dot11mode;
+	mlme_obj->mgmt.ap.cac_duration_ms = cac_duration_ms;
+
+	mlme_obj->proto.generic.beacon_interval = 100;
+	mlme_obj->proto.generic.dtim_period = 1;
+	mlme_obj->mgmt.generic.maxregpower = maxTxPower;
+	wlan_vdev_mlme_set_ssid(vdev, pe_session->ssId.ssId,
+				pe_session->ssId.length);
+	mlme_obj->mgmt.ap.hidden_ssid = pe_session->ssidHidden;
 	if (pe_session->nss == 2) {
-		req.preferred_rx_streams = 2;
-		req.preferred_tx_streams = 2;
+		mlme_obj->mgmt.chainmask_info.num_rx_chain = 2;
+		mlme_obj->mgmt.chainmask_info.num_tx_chain = 2;
 	} else {
-		req.preferred_rx_streams = 1;
-		req.preferred_tx_streams = 1;
+		mlme_obj->mgmt.chainmask_info.num_rx_chain = 1;
+		mlme_obj->mgmt.chainmask_info.num_tx_chain = 1;
 	}
 	if (lim_is_session_he_capable(pe_session))
-		req.he_capable = true;
-	req.vht_capable = pe_session->vhtCapability;
+		mlme_obj->proto.he_ops_info.he_ops = true;
 
-	pe_debug("dot11mode: %d, vht_capable: %d nss value: %d",
-		 req.dot11_mode, req.vht_capable,
+	pe_debug("dot11mode: %d, he_capable: %d nss value: %d",
+		 pe_session->dot11mode, mlme_obj->proto.he_ops_info.he_ops,
 		 pe_session->nss);
 
-	pe_debug("ch width %d, freq %d, maxTxPower %d",
-		 req.chan_width, req.op_chan_freq, req.max_txpow);
+	pe_debug("ch width %d, ch id %d, maxTxPower %d",
+		 ch_width, chnlNumber, maxTxPower);
 
 	pe_session->ch_switch_in_progress = true;
 
@@ -190,7 +198,27 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 	 * get the response back from WMA
 	 */
 	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
-	wma_set_channel(&req);
+
+	status = wma_pre_chan_switch_setup(vdev_id);
+	if (status != QDF_STATUS_SUCCESS) {
+		pe_err("failed status = %d", status);
+		goto send_resp;
+	}
+	status = vdev_mgr_start_send(mlme_obj,
+				     mlme_is_chan_switch_in_progress(vdev));
+	if (status != QDF_STATUS_SUCCESS) {
+		pe_err("failed status = %d", status);
+		goto send_resp;
+	}
+	wma_post_chan_switch_setup(vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+send_resp:
+	pe_err("switch channel rsp, status = 0x%x", status);
+	rsp.status = status;
+	rsp.vdev_id = vdev_id;
+
+	wma_handle_channel_switch_resp(wma, &rsp);
 
 	return QDF_STATUS_SUCCESS;
 }

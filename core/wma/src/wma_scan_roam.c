@@ -3496,24 +3496,21 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
-void wma_set_channel(struct wma_vdev_start_req *req)
+QDF_STATUS wma_pre_chan_switch_setup(uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t vdev_id = req->vdev_id;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct cdp_pdev *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct wma_txrx_node *intr = &wma->interfaces[vdev_id];
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint16_t beacon_interval_ori;
-	uint8_t chan;
-	struct vdev_start_response rsp = {0};
 	bool restart;
 	uint16_t reduced_beacon_interval;
+	struct vdev_mlme_obj *mlme_obj;
+	struct wlan_objmgr_vdev *vdev = intr->vdev;
 
-	if (!pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
-		status = QDF_STATUS_E_FAILURE;
-		goto send_resp;
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	restart =
@@ -3539,8 +3536,9 @@ void wma_set_channel(struct wma_vdev_start_req *req)
 			 __func__, reduced_beacon_interval);
 
 		/* Add a timer to reset the beacon interval back*/
-		beacon_interval_ori = req->beacon_intval;
-		req->beacon_intval = reduced_beacon_interval;
+		beacon_interval_ori = mlme_obj->proto.generic.beacon_interval;
+		mlme_obj->proto.generic.beacon_interval =
+			reduced_beacon_interval;
 		if (wma_fill_beacon_interval_reset_req(wma,
 			vdev_id,
 			beacon_interval_ori,
@@ -3551,30 +3549,28 @@ void wma_set_channel(struct wma_vdev_start_req *req)
 		}
 	}
 
-	status = wma_vdev_start(wma, req, restart);
-	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGP("%s: vdev start failed status = %d", __func__,
-			status);
-		goto send_resp;
-	}
+	status = wma_vdev_pre_start(vdev_id, restart);
+
+	return status;
+}
+
+QDF_STATUS wma_post_chan_switch_setup(uint8_t vdev_id)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct cdp_pdev *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct wma_txrx_node *intr = &wma->interfaces[vdev_id];
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_channel *des_chan;
 
 	/*
 	 * Record monitor mode channel here in case HW
 	 * indicate RX PPDU TLV with invalid channel number.
 	 */
 	if (intr->type == WMI_VDEV_TYPE_MONITOR) {
-		chan = wlan_reg_freq_to_chan(wma->pdev, req->op_chan_freq);
-		cdp_record_monitor_chan_num(soc, pdev, chan);
+		des_chan = intr->vdev->vdev_mlme.des_chan;
+		cdp_record_monitor_chan_num(soc, pdev, des_chan->ch_ieee);
 	}
-
-	return;
-send_resp:
-	WMA_LOGI("%s: wma switch channel rsp, status = 0x%x",
-		 __func__, status);
-	rsp.status = status;
-	rsp.vdev_id = vdev_id;
-
-	wma_handle_channel_switch_resp(wma, &rsp);
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef FEATURE_WLAN_ESE

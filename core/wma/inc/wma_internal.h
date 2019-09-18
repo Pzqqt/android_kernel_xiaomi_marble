@@ -1676,16 +1676,6 @@ int wma_cold_boot_cal_event_handler(void *wma_ctx, uint8_t *event_buff,
 				    uint32_t len);
 
 /**
- * wma_handle_channel_switch_resp() - handle channel switch resp
- * @wma: wma handle
- * @rsp: response for channel switch
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
-					  struct vdev_start_response *rsp);
-
-/**
  * wma_set_roam_triggers() - Send roam trigger bitmap to WMI
  * @wma_handle: wma handle
  * @triggers: Carries vdev id and roam trigger bitmap.

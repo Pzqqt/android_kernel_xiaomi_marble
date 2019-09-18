@@ -2600,4 +2600,39 @@ QDF_STATUS wma_get_rx_chainmask(uint8_t pdev_id, uint32_t *chainmask_2g,
  * Return: None
  */
 void wma_set_channel(struct wma_vdev_start_req *req);
+
+/**
+ * wma_handle_channel_switch_resp() - handle channel switch resp
+ * @wma: wma handle
+ * @rsp: response for channel switch
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
+					  struct vdev_start_response *rsp);
+
+/**
+ * wma_pre_chan_switch_setup() - handler before channel switch vdev start
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_pre_chan_switch_setup(uint8_t vdev_id);
+
+/**
+ * wma_pre_chan_switch_setup() - handler after channel switch vdev start
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_post_chan_switch_setup(uint8_t vdev_id);
+
+/**
+ * wma_pre_chan_switch_setup() - handler vdev start
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart);
+
 #endif
