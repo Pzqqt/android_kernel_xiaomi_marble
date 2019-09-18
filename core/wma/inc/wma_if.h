@@ -724,55 +724,6 @@ typedef struct {
 } tUpdateUserPos, *tpUpdateUserPos;
 
 /**
- * struct tSwitchChannelParams - switch channel request parameter
- * @ch_freq: channel frequency ID
- * @localPowerConstraint: local power constraint
- * @secondaryChannelOffset: scondary channel offset
- * @peSessionId: PE session id
- * @txMgmtPower: TX mgmt power
- * @maxTxPower: max tx power
- * @selfStaMacAddr: self mac address
- * @bssId: bssid
- * @status: QDF status
- * @chainMask: chanin mask
- * @smpsMode: SMPS mode
- * @isDfsChannel: is DFS channel
- * @vhtCapable: VHT capable
- * @ch_center_freq_seg0: ch freq segment for primary channel(center frequency)
- * @ch_center_freq_seg1: ch freq segment for secondary channel(center frequency)
- * @dot11_mode: 802.11 mode
- * @cac_duration_ms: cac duration in milliseconds
- * @dfs_regdomain: dfs region
- * @reduced_beacon_interval: reduced beacon interval value
- * @ssid_hidden: the sap ssid is hidden
- * @ssid: sap ssid
- */
-typedef struct {
-	uint32_t ch_freq;
-	uint8_t peSessionId;
-	int8_t maxTxPower;
-	tSirMacAddr selfStaMacAddr;
-	QDF_STATUS status;
-	uint8_t isDfsChannel;
-	uint8_t vhtCapable;
-	enum phy_ch_width ch_width;
-	uint32_t ch_center_freq_seg0;
-	uint32_t ch_center_freq_seg1;
-	uint8_t dot11_mode;
-
-	uint8_t restart_on_chan_switch;
-	uint8_t nss;
-#ifdef WLAN_FEATURE_11AX
-	bool he_capable;
-#endif
-	uint32_t cac_duration_ms;
-	uint32_t dfs_regdomain;
-	uint16_t reduced_beacon_interval;
-	uint8_t ssid_hidden;
-	tSirMacSSid ssid;
-} tSwitchChannelParams, *tpSwitchChannelParams;
-
-/**
  * struct tEdcaParams - EDCA parameters
  * @bss_idx: BSSID index
  * @acbe: best effort access category

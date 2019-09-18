@@ -2744,7 +2744,7 @@ typedef struct sSirChanChangeRequest {
 
 typedef struct sSirChanChangeResponse {
 	uint8_t sessionId;
-	uint8_t newChannelNumber;
+	uint8_t new_op_freq;
 	uint8_t channelChangeStatus;
 } tSirChanChangeResponse, *tpSirChanChangeResponse;
 

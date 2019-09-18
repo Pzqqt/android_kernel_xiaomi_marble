@@ -7157,12 +7157,6 @@ void lim_update_session_he_capable(struct mac_context *mac, struct pe_session *s
 	pe_debug("he_capable: %d", session->he_capable);
 }
 
-void lim_update_chan_he_capable(struct mac_context *mac, tpSwitchChannelParams chan)
-{
-	chan->he_capable = true;
-	pe_debug("he_capable: %d", chan->he_capable);
-}
-
 void lim_set_he_caps(struct mac_context *mac, struct pe_session *session, uint8_t *ie_start,
 		     uint32_t num_bytes)
 {

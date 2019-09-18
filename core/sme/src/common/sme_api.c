@@ -9091,50 +9091,33 @@ static QDF_STATUS sme_process_channel_change_resp(struct mac_context *mac,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_info *roam_info;
 	eCsrRoamResult roamResult;
-	tpSwitchChannelParams pChnlParams = (tpSwitchChannelParams) msg_buf;
-	uint32_t SessionId = pChnlParams->peSessionId;
+	uint8_t session_id;
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (!roam_info)
 		return QDF_STATUS_E_NOMEM;
 
 	roam_info->channelChangeRespEvent =
-		qdf_mem_malloc(sizeof(tSirChanChangeResponse));
-	if (!roam_info->channelChangeRespEvent) {
-		status = QDF_STATUS_E_NOMEM;
-		qdf_mem_free(roam_info);
-		return status;
-	}
-	if (msg_type == eWNI_SME_CHANNEL_CHANGE_RSP) {
-		roam_info->channelChangeRespEvent->sessionId = SessionId;
-		roam_info->channelChangeRespEvent->newChannelNumber =
-			wlan_reg_freq_to_chan(mac->pdev, pChnlParams->ch_freq);
+		(struct sSirChanChangeResponse *)msg_buf;
 
-		if (pChnlParams->status == QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "sapdfs: Received success eWNI_SME_CHANNEL_CHANGE_RSP for sessionId[%d]",
-				  SessionId);
-			roam_info->channelChangeRespEvent->channelChangeStatus =
-				1;
-			roamResult = eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS;
-		} else {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "sapdfs: Received failure eWNI_SME_CHANNEL_CHANGE_RSP for sessionId[%d]",
-				  SessionId);
-			roam_info->channelChangeRespEvent->channelChangeStatus =
-				0;
-			roamResult = eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE;
-		}
+	session_id = roam_info->channelChangeRespEvent->sessionId;
 
-		csr_roam_call_callback(mac, SessionId, roam_info, 0,
-				       eCSR_ROAM_SET_CHANNEL_RSP, roamResult);
-
+	if (roam_info->channelChangeRespEvent->channelChangeStatus ==
+	    QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  "sapdfs: Received success eWNI_SME_CHANNEL_CHANGE_RSP for sessionId[%d]",
+			  session_id);
+		roamResult = eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS;
 	} else {
-		status = QDF_STATUS_E_FAILURE;
-		sme_err("Invalid Channel Change Resp Message: %d",
-			status);
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  "sapdfs: Received failure eWNI_SME_CHANNEL_CHANGE_RSP for sessionId[%d]",
+			  session_id);
+		roamResult = eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE;
 	}
-	qdf_mem_free(roam_info->channelChangeRespEvent);
+
+	csr_roam_call_callback(mac, session_id, roam_info, 0,
+			       eCSR_ROAM_SET_CHANNEL_RSP, roamResult);
+
 	qdf_mem_free(roam_info);
 
 	return status;

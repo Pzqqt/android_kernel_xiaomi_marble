@@ -1336,12 +1336,6 @@ void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
 		 pd_min, pd_max, sec_ch_ed, tx_pwr);
 }
 
-void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
-		tpSwitchChannelParams params)
-{
-	req->he_capable = params->he_capable;
-}
-
 QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma, uint8_t vdev_id,
 				tDot11fIEhe_op *he_op)
 {

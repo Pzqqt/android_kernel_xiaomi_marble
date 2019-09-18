@@ -34,6 +34,7 @@
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "lim_utils.h"
+#include "wma.h"
 
 /**
  * lim_send_beacon_params() - updates bcn params to WMA
@@ -118,8 +119,7 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 					  uint32_t cac_duration_ms,
 					  uint32_t dfs_regdomain)
 {
-	tpSwitchChannelParams pChnlParams = NULL;
-	struct scheduler_msg msgQ = {0};
+	struct wma_vdev_start_req req = {0};
 	struct pe_session *pe_session;
 
 	pe_session = pe_find_session_by_session_id(mac, peSessionId);
@@ -128,79 +128,69 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 				peSessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
-	pChnlParams = qdf_mem_malloc(sizeof(tSwitchChannelParams));
-	if (!pChnlParams)
-		return QDF_STATUS_E_NOMEM;
-	pChnlParams->ch_freq = wlan_reg_chan_to_freq(mac->pdev, chnlNumber);
-	pChnlParams->ch_center_freq_seg0 =
-		wlan_reg_chan_to_freq(mac->pdev, ch_center_freq_seg0);
-	pChnlParams->ch_center_freq_seg1 =
-		wlan_reg_chan_to_freq(mac->pdev, ch_center_freq_seg1);
-	pChnlParams->ch_width = ch_width;
-	qdf_mem_copy(pChnlParams->selfStaMacAddr, pe_session->self_mac_addr,
-		     sizeof(tSirMacAddr));
-	pChnlParams->maxTxPower = maxTxPower;
-	pChnlParams->peSessionId = peSessionId;
-	pChnlParams->vhtCapable = pe_session->vhtCapability;
-	if (lim_is_session_he_capable(pe_session))
-		lim_update_chan_he_capable(mac, pChnlParams);
-	pChnlParams->dot11_mode = pe_session->dot11mode;
-	pChnlParams->nss = pe_session->nss;
-	pe_debug("dot11mode: %d, vht_capable: %d nss value: %d",
-		pChnlParams->dot11_mode, pChnlParams->vhtCapable,
-		pChnlParams->nss);
 
+	req.vdev_id = pe_session->vdev_id;
+	req.op_chan_freq = wlan_reg_chan_to_freq(mac->pdev, chnlNumber);
+	req.chan_width = ch_width;
+	if (cds_is_5_mhz_enabled())
+		req.is_quarter_rate = 1;
+	else if (cds_is_10_mhz_enabled())
+		req.is_half_rate = 1;
+	req.chan_freq_seg0 =
+		wlan_reg_chan_to_freq(mac->pdev, ch_center_freq_seg0);
+	req.chan_freq_seg1 =
+		wlan_reg_chan_to_freq(mac->pdev, ch_center_freq_seg1);
+	req.dot11_mode = pe_session->dot11mode;
+	req.cac_duration_ms = cac_duration_ms;
 	/*Set DFS flag for DFS channel */
 	if (ch_width == CH_WIDTH_160MHZ) {
-		pChnlParams->isDfsChannel = true;
+		req.is_dfs = true;
 	} else if (ch_width == CH_WIDTH_80P80MHZ) {
-		pChnlParams->isDfsChannel = false;
+		req.is_dfs = false;
 		if (wlan_reg_get_channel_state(mac->pdev, chnlNumber) ==
 				CHANNEL_STATE_DFS ||
 		    wlan_reg_get_channel_state(mac->pdev,
-			    pChnlParams->ch_center_freq_seg1 -
+			    ch_center_freq_seg1 -
 				SIR_80MHZ_START_CENTER_CH_DIFF) ==
 							CHANNEL_STATE_DFS)
-			pChnlParams->isDfsChannel = true;
+			req.is_dfs = true;
 	} else {
 		if (wlan_reg_get_channel_state(mac->pdev, chnlNumber) ==
 				CHANNEL_STATE_DFS)
-			pChnlParams->isDfsChannel = true;
+			req.is_dfs = true;
 		else
-			pChnlParams->isDfsChannel = false;
+			req.is_dfs = false;
 	}
+	req.beacon_intval = 100;
+	req.dtim_period = 1;
+	req.max_txpow = maxTxPower;
+	req.ssid = pe_session->ssId;
+	req.hidden_ssid = pe_session->ssidHidden;
+	if (pe_session->nss == 2) {
+		req.preferred_rx_streams = 2;
+		req.preferred_tx_streams = 2;
+	} else {
+		req.preferred_rx_streams = 1;
+		req.preferred_tx_streams = 1;
+	}
+	if (lim_is_session_he_capable(pe_session))
+		req.he_capable = true;
+	req.vht_capable = pe_session->vhtCapability;
 
-	pChnlParams->restart_on_chan_switch = is_restart;
-	pChnlParams->cac_duration_ms = cac_duration_ms;
-	pChnlParams->dfs_regdomain = dfs_regdomain;
-	pChnlParams->reduced_beacon_interval =
-		mac->sap.SapDfsInfo.reduced_beacon_interval;
+	pe_debug("dot11mode: %d, vht_capable: %d nss value: %d",
+		 req.dot11_mode, req.vht_capable,
+		 pe_session->nss);
 
-	pChnlParams->ssid_hidden = pe_session->ssidHidden;
-	pChnlParams->ssid = pe_session->ssId;
-	if (cds_is_5_mhz_enabled())
-		pChnlParams->ch_width = CH_WIDTH_5MHZ;
-	else if (cds_is_10_mhz_enabled())
-		pChnlParams->ch_width = CH_WIDTH_10MHZ;
+	pe_debug("ch width %d, freq %d, maxTxPower %d",
+		 req.chan_width, req.op_chan_freq, req.max_txpow);
+
+	pe_session->ch_switch_in_progress = true;
 
 	/* we need to defer the message until we
 	 * get the response back from WMA
 	 */
 	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
-	msgQ.type = WMA_CHNL_SWITCH_REQ;
-	msgQ.reserved = 0;
-	msgQ.bodyptr = pChnlParams;
-	msgQ.bodyval = 0;
-	pe_debug("Sending CH_SWITCH_REQ, ch_width %d, ch_freq %d, maxTxPower %d",
-		       pChnlParams->ch_width,
-		       pChnlParams->ch_freq, pChnlParams->maxTxPower);
-	MTRACE(mac_trace_msg_tx(mac, peSessionId, msgQ.type));
-	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(mac, &msgQ)) {
-		qdf_mem_free(pChnlParams);
-		pe_err("Posting  CH_SWITCH_REQ to WMA failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	pe_session->ch_switch_in_progress = true;
+	wma_set_channel(&req);
 
 	return QDF_STATUS_SUCCESS;
 }

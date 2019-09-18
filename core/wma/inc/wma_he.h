@@ -173,16 +173,6 @@ static inline bool wma_is_peer_he_capable(tpAddStaParams params)
 }
 
 /**
- * wma_update_vdev_he_capable() - update vdev start request he capability
- * @req: pointer to vdev start request
- * @params: pointer to chan switch params
- *
- * Return: None
- */
-void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
-		tpSwitchChannelParams params);
-
-/**
  * wma_update_he_ops_ie() - update the HE OPS IE to firmware
  * @wma: pointer to wma context
  * @vdev_id: vdev id
@@ -302,11 +292,6 @@ static inline void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
 static inline bool wma_is_peer_he_capable(tpAddStaParams params)
 {
 	return false;
-}
-
-static inline void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
-					      tpSwitchChannelParams params)
-{
 }
 
 static inline void wma_set_he_vdev_param(struct wma_txrx_node *intr,

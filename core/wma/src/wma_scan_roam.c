@@ -3496,95 +3496,36 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
-/**
- * wma_set_channel() - set channel
- * @wma: wma handle
- * @params: switch channel parameters
- *
- * Return: none
- */
-void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
+void wma_set_channel(struct wma_vdev_start_req *req)
 {
-	struct wma_vdev_start_req req;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t vdev_id, peer_id;
-	void *peer;
-	struct cdp_pdev *pdev;
-	struct wma_txrx_node *intr = wma->interfaces;
+	uint8_t vdev_id = req->vdev_id;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct cdp_pdev *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct wma_txrx_node *intr = &wma->interfaces[vdev_id];
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint16_t beacon_interval_ori;
 	uint8_t chan;
 	struct vdev_start_response rsp = {0};
+	bool restart;
+	uint16_t reduced_beacon_interval;
 
-	WMA_LOGD("%s: Enter", __func__);
-	if (!wma_find_vdev_by_addr(wma, params->selfStaMacAddr, &vdev_id)) {
-		WMA_LOGP("%s: Failed to find vdev id for %pM",
-			 __func__, params->selfStaMacAddr);
-		status = QDF_STATUS_E_FAILURE;
-		goto send_resp;
-	}
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		status = QDF_STATUS_E_FAILURE;
 		goto send_resp;
 	}
 
-	peer = cdp_peer_find_by_addr(soc,
-			pdev,
-			intr[vdev_id].bssid, &peer_id);
+	restart =
+		wma_get_channel_switch_in_progress(intr);
+	if (restart && intr->beacon_filter_enabled)
+		wma_remove_beacon_filter(wma, &intr->beacon_filter);
 
-	qdf_mem_zero(&req, sizeof(req));
-	req.vdev_id = vdev_id;
-	req.op_chan_freq = params->ch_freq;
-	req.chan_width = params->ch_width;
+	reduced_beacon_interval =
+		wma->mac_context->sap.SapDfsInfo.reduced_beacon_interval;
+	if (wma_is_vdev_in_ap_mode(wma, vdev_id) && reduced_beacon_interval) {
 
-	if (params->ch_width == CH_WIDTH_10MHZ)
-		req.is_half_rate = 1;
-	else if (params->ch_width == CH_WIDTH_5MHZ)
-		req.is_quarter_rate = 1;
 
-	req.vht_capable = params->vhtCapable;
-	req.chan_freq_seg0 = params->ch_center_freq_seg0;
-	req.chan_freq_seg1 = params->ch_center_freq_seg1;
-	req.dot11_mode = params->dot11_mode;
-	wma_update_vdev_he_capable(&req, params);
-
-	WMA_LOGI(FL("vht_capable: %d, dot11_mode: %d"),
-		 req.vht_capable, req.dot11_mode);
-
-	if (params->nss == 2) {
-		req.preferred_rx_streams = 2;
-		req.preferred_tx_streams = 2;
-	} else {
-		req.preferred_rx_streams = 1;
-		req.preferred_tx_streams = 1;
-	}
-
-	req.max_txpow = params->maxTxPower;
-	req.beacon_intval = 100;
-	req.dtim_period = 1;
-	req.is_dfs = params->isDfsChannel;
-	req.cac_duration_ms = params->cac_duration_ms;
-	req.dfs_regdomain = params->dfs_regdomain;
-	req.ssid = params->ssid;
-
-	/* In case of AP mode, once radar is detected, we need to
-	 * issuse VDEV RESTART, so we making is_channel_switch as
-	 * true
-	 */
-	if ((wma_is_vdev_in_ap_mode(wma, req.vdev_id) == true) ||
-	    (params->restart_on_chan_switch == true)) {
-		req.hidden_ssid = params->ssid_hidden;
-	}
-
-	if (params->restart_on_chan_switch == true &&
-			wma->interfaces[req.vdev_id].beacon_filter_enabled)
-		wma_remove_beacon_filter(wma,
-				&wma->interfaces[req.vdev_id].beacon_filter);
-
-	if ((wma_is_vdev_in_ap_mode(wma, req.vdev_id) == true) &&
-		(params->reduced_beacon_interval)) {
 		/* Reduce the beacon interval just before the channel switch.
 		 * This would help in reducing the downtime on the STA side
 		 * (which is waiting for beacons from the AP to resume back
@@ -3595,23 +3536,22 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		 */
 
 		WMA_LOGD("%s: Changing beacon interval to %d",
-			__func__, params->reduced_beacon_interval);
+			 __func__, reduced_beacon_interval);
 
 		/* Add a timer to reset the beacon interval back*/
-		beacon_interval_ori = req.beacon_intval;
-		req.beacon_intval = params->reduced_beacon_interval;
+		beacon_interval_ori = req->beacon_intval;
+		req->beacon_intval = reduced_beacon_interval;
 		if (wma_fill_beacon_interval_reset_req(wma,
-			req.vdev_id,
+			vdev_id,
 			beacon_interval_ori,
 			RESET_BEACON_INTERVAL_TIMEOUT)) {
 
 			WMA_LOGD("%s: Failed to fill beacon interval reset req",
-				__func__);
+				 __func__);
 		}
 	}
 
-	status = wma_vdev_start(wma, &req, wma_get_channel_switch_in_progress(
-						&wma->interfaces[req.vdev_id]));
+	status = wma_vdev_start(wma, req, restart);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: vdev start failed status = %d", __func__,
 			status);
@@ -3622,18 +3562,14 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	 * Record monitor mode channel here in case HW
 	 * indicate RX PPDU TLV with invalid channel number.
 	 */
-	if (intr[vdev_id].type == WMI_VDEV_TYPE_MONITOR) {
-		chan = wlan_reg_freq_to_chan(wma->pdev, req.op_chan_freq);
+	if (intr->type == WMI_VDEV_TYPE_MONITOR) {
+		chan = wlan_reg_freq_to_chan(wma->pdev, req->op_chan_freq);
 		cdp_record_monitor_chan_num(soc, pdev, chan);
 	}
 
 	return;
 send_resp:
-	WMA_LOGD("%s: ch_freq %d ch_width %d txpower %d status %d", __func__,
-		 params->ch_freq, params->ch_width,
-		 params->maxTxPower,
-		 status);
-	WMA_LOGI("%s: wma switch channel rsp,, status = 0x%x",
+	WMA_LOGI("%s: wma switch channel rsp, status = 0x%x",
 		 __func__, status);
 	rsp.status = status;
 	rsp.vdev_id = vdev_id;

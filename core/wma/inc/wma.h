@@ -2591,4 +2591,12 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss);
  */
 QDF_STATUS wma_get_rx_chainmask(uint8_t pdev_id, uint32_t *chainmask_2g,
 				uint32_t *chainmask_5g);
+
+/**
+ * wma_set_channel() - API to set or switch channel
+ * @req: channel switch request
+ *
+ * Return: None
+ */
+void wma_set_channel(struct wma_vdev_start_req *req);
 #endif
