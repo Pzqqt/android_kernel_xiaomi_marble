@@ -3529,8 +3529,6 @@ void lim_sta_add_bss_update_ht_parameter(uint32_t bss_chan_freq,
 	if (!ht_inf->present)
 		return;
 
-	add_bss->htOperMode = ht_inf->opMode;
-	add_bss->dualCTSProtection = ht_inf->dualCTSProtection;
 	if (chan_width_support && ht_cap->supportedChannelWidthSet) {
 		add_bss->ch_width = ht_inf->recommendedTxWidthSet;
 		if (ht_inf->secondaryChannelOffset ==
@@ -3543,20 +3541,9 @@ void lim_sta_add_bss_update_ht_parameter(uint32_t bss_chan_freq,
 		add_bss->ch_width = CH_WIDTH_20MHZ;
 		add_bss->chan_freq_seg0 = 0;
 	}
-	add_bss->llnNonGFCoexist = ht_inf->nonGFDevicesPresent;
-	add_bss->fLsigTXOPProtectionFullSupport =
-		ht_inf->lsigTXOPProtectionFullSupport;
-	add_bss->fRIFSMode = ht_inf->rifsMode;
-	pe_debug("htOperMode: %d dualCTSProtection: %d txChannelWidth: %d",
-		 add_bss->htOperMode,
-		 add_bss->dualCTSProtection,
+
+	pe_debug("center_freq_0: %d ch_width %d", add_bss->chan_freq_seg0,
 		 add_bss->ch_width);
-	pe_debug("center_freq_0: %d llnNonGFCoexist: %d",
-		 add_bss->chan_freq_seg0,
-		 add_bss->llnNonGFCoexist);
-	pe_debug("fLsigTXOPProtectionFullSupport: %d fRIFSMode: %d",
-		 add_bss->fLsigTXOPProtectionFullSupport,
-		 add_bss->fRIFSMode);
 }
 
 QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp,
@@ -3597,31 +3584,12 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	pe_debug("BSSID: " QDF_MAC_ADDR_STR,
 		 QDF_MAC_ADDR_ARRAY(pAddBssParams->bssId));
 
-	pAddBssParams->bssType = eSIR_INFRASTRUCTURE_MODE;
-
-	pAddBssParams->operMode = BSS_OPERATIONAL_MODE_STA;
-
-	/* Update PE session ID */
-	pAddBssParams->sessionId = pe_session->peSessionId;
-	pAddBssParams->bss_idx = pe_session->smeSessionId;
+	pAddBssParams->vdev_id = pe_session->smeSessionId;
 
 	pAddBssParams->beaconInterval = bssDescription->beaconInterval;
 
 	pAddBssParams->dtimPeriod = pBeaconStruct->tim.dtimPeriod;
 	pAddBssParams->updateBss = updateEntry;
-
-	pAddBssParams->cfParamSet.cfpCount = pBeaconStruct->cfParamSet.cfpCount;
-	pAddBssParams->cfParamSet.cfpPeriod =
-		pBeaconStruct->cfParamSet.cfpPeriod;
-	pAddBssParams->cfParamSet.cfpMaxDuration =
-		pBeaconStruct->cfParamSet.cfpMaxDuration;
-	pAddBssParams->cfParamSet.cfpDurRemaining =
-		pBeaconStruct->cfParamSet.cfpDurRemaining;
-
-	pAddBssParams->rateSet.numRates = pAssocRsp->supportedRates.numRates;
-	qdf_mem_copy(pAddBssParams->rateSet.rate,
-		     pAssocRsp->supportedRates.rate,
-		     pAssocRsp->supportedRates.numRates);
 
 	if (IS_DOT11_MODE_11B(pe_session->dot11mode) &&
 	    bssDescription->nwType != eSIR_11B_NW_TYPE) {
@@ -3632,31 +3600,15 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 
 	pAddBssParams->shortSlotTimeSupported =
 		(uint8_t) pAssocRsp->capabilityInfo.shortSlotTime;
-	pAddBssParams->llaCoexist =
-		(uint8_t) pe_session->beaconParams.llaCoexist;
 	pAddBssParams->llbCoexist =
 		(uint8_t) pe_session->beaconParams.llbCoexist;
-	pAddBssParams->llgCoexist =
-		(uint8_t) pe_session->beaconParams.llgCoexist;
-	pAddBssParams->ht20Coexist =
-		(uint8_t) pe_session->beaconParams.ht20Coexist;
 
-	pe_debug("BSS Type %d Beacon Interval: %d dtimPeriod: %d "
-		 "cfpCount: %d", pAddBssParams->bssType,
-		pAddBssParams->beaconInterval, pAddBssParams->dtimPeriod,
-		pAddBssParams->cfParamSet.cfpCount);
+	pe_debug("Beacon Interval: %d dtimPeriod: %d",
+		 pAddBssParams->beaconInterval, pAddBssParams->dtimPeriod);
 
-	pe_debug("cfpPeriod: %d cfpMaxDuration: %d cfpDurRemaining: %d "
-		 "numRates: %d", pAddBssParams->cfParamSet.cfpPeriod,
-		pAddBssParams->cfParamSet.cfpMaxDuration,
-		pAddBssParams->cfParamSet.cfpDurRemaining,
-		pAddBssParams->rateSet.numRates);
-
-	pe_debug("nwType:%d shortSlotTimeSupported: %d llaCoexist: %d "
-		"llbCoexist: %d llgCoexist: %d ht20Coexist: %d",
+	pe_debug("nwType:%d shortSlotTimeSupported: %d llbCoexist: %d",
 		pAddBssParams->nwType, pAddBssParams->shortSlotTimeSupported,
-		pAddBssParams->llaCoexist, pAddBssParams->llbCoexist,
-		pAddBssParams->llgCoexist, pAddBssParams->ht20Coexist);
+		pAddBssParams->llbCoexist);
 
 	pAddBssParams->dot11_mode = pe_session->dot11mode;
 	pe_debug("dot11_mode: %d", pAddBssParams->dot11_mode);
@@ -3965,9 +3917,6 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 
 	pAddBssParams->maxTxPower = pe_session->maxTxPower;
 	pe_debug("maxTxPower: %d", pAddBssParams->maxTxPower);
-	/* FIXME_GEN4 - Any other value that can be used for initialization? */
-	pAddBssParams->status = QDF_STATUS_SUCCESS;
-	pAddBssParams->respReqd = true;
 	/* update persona */
 	pAddBssParams->halPersona = (uint8_t)pe_session->opmode;
 
@@ -4095,62 +4044,25 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 
 	pe_debug("BSSID: " QDF_MAC_ADDR_STR,
 		QDF_MAC_ADDR_ARRAY(pAddBssParams->bssId));
-	/* Incorrect BSS Type which caused UMA Descriptor to be overwritten on
-	 * top of an already established Infra link. This lead to issues in
-	 * concurrent data transfer.
-	 */
-
-	pAddBssParams->bssType = pe_session->bssType; /* eSIR_INFRASTRUCTURE_MODE; */
-	pAddBssParams->operMode = BSS_OPERATIONAL_MODE_STA;
 
 	pAddBssParams->beaconInterval = bssDescription->beaconInterval;
 
 	pAddBssParams->dtimPeriod = pBeaconStruct->tim.dtimPeriod;
 	pAddBssParams->updateBss = false;
 
-	pAddBssParams->cfParamSet.cfpCount = pBeaconStruct->cfParamSet.cfpCount;
-	pAddBssParams->cfParamSet.cfpPeriod =
-		pBeaconStruct->cfParamSet.cfpPeriod;
-	pAddBssParams->cfParamSet.cfpMaxDuration =
-		pBeaconStruct->cfParamSet.cfpMaxDuration;
-	pAddBssParams->cfParamSet.cfpDurRemaining =
-		pBeaconStruct->cfParamSet.cfpDurRemaining;
-
-	pAddBssParams->rateSet.numRates =
-		pBeaconStruct->supportedRates.numRates;
-	qdf_mem_copy(pAddBssParams->rateSet.rate,
-		     pBeaconStruct->supportedRates.rate,
-		     pBeaconStruct->supportedRates.numRates);
-
 	pAddBssParams->nwType = bssDescription->nwType;
 
 	pAddBssParams->shortSlotTimeSupported =
 		(uint8_t) pBeaconStruct->capabilityInfo.shortSlotTime;
-	pAddBssParams->llaCoexist =
-		(uint8_t) pe_session->beaconParams.llaCoexist;
 	pAddBssParams->llbCoexist =
 		(uint8_t) pe_session->beaconParams.llbCoexist;
-	pAddBssParams->llgCoexist =
-		(uint8_t) pe_session->beaconParams.llgCoexist;
-	pAddBssParams->ht20Coexist =
-		(uint8_t) pe_session->beaconParams.ht20Coexist;
 
-	pe_debug("BSS Type %d Beacon Interval: %d dtimPeriod: %d "
-		"cfpCount: %d", pAddBssParams->bssType,
-		pAddBssParams->beaconInterval, pAddBssParams->dtimPeriod,
-		pAddBssParams->cfParamSet.cfpCount);
+	pe_debug("Beacon Interval: %d dtimPeriod: %d",
+		 pAddBssParams->beaconInterval, pAddBssParams->dtimPeriod);
 
-	pe_debug("cfpPeriod: %d cfpMaxDuration: %d cfpDurRemaining: %d"
-		" numRates: %d", pAddBssParams->cfParamSet.cfpPeriod,
-		pAddBssParams->cfParamSet.cfpMaxDuration,
-		pAddBssParams->cfParamSet.cfpDurRemaining,
-		pAddBssParams->rateSet.numRates);
-
-	pe_debug("nwType:%d shortSlotTimeSupported: %d"
-		"llaCoexist: %d llbCoexist: %d llgCoexist: %d ht20Coexist: %d",
+	pe_debug("nwType:%d shortSlotTimeSupported: %d llbCoexist: %d",
 		pAddBssParams->nwType, pAddBssParams->shortSlotTimeSupported,
-		pAddBssParams->llaCoexist, pAddBssParams->llbCoexist,
-		pAddBssParams->llgCoexist, pAddBssParams->ht20Coexist);
+		pAddBssParams->llbCoexist);
 
 	/* Use the advertised capabilities from the received beacon/PR */
 	if (IS_DOT11_MODE_HT(pe_session->dot11mode)) {
@@ -4405,13 +4317,9 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 	pAddBssParams->maxTxPower = pe_session->maxTxPower;
 	pe_debug("maxTxPower: %d", pAddBssParams->maxTxPower);
 
-	pAddBssParams->status = QDF_STATUS_SUCCESS;
-	pAddBssParams->respReqd = true;
-
 	pAddBssParams->staContext.smesessionId = pe_session->smeSessionId;
 	pAddBssParams->staContext.sessionId = pe_session->peSessionId;
-	pAddBssParams->sessionId = pe_session->peSessionId;
-	pAddBssParams->bss_idx = pe_session->smeSessionId;
+	pAddBssParams->vdev_id = pe_session->smeSessionId;
 
 	pAddBssParams->halPersona = (uint8_t)pe_session->opmode;
 
@@ -4460,9 +4368,14 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 	if (lim_is_fils_connection(pe_session))
 		pAddBssParams->no_ptk_4_way = true;
 
-	pAddBssParams->status = wma_pre_assoc_req(pAddBssParams);
-	lim_process_sta_add_bss_rsp_pre_assoc(mac, pAddBssParams, pe_session);
+	retCode = wma_pre_assoc_req(pAddBssParams);
+	lim_process_sta_add_bss_rsp_pre_assoc(mac, pAddBssParams,
+					      pe_session, retCode);
 	qdf_mem_free(pAddBssParams);
+	/*
+	 * Set retCode sucess as lim_process_sta_add_bss_rsp_pre_assoc take
+	 * care of failure
+	 */
 	retCode = QDF_STATUS_SUCCESS;
 
 returnFailure:

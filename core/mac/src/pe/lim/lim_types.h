@@ -1267,6 +1267,7 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
  * @mac_ctx:  Pointer to mac context
  * @pAddBssParams: Bss params including rsp data
  * @session_entry: PE session handle
+ * @status: Qdf status
  *
  * This function is called to process a WMA_ADD_BSS_RSP from HAL.
  * Upon receipt of this message from HAL if the state is pre assoc.
@@ -1275,5 +1276,6 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
  */
 void lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 					   struct bss_params *add_bss_params,
-					   struct pe_session *session_entry);
+					   struct pe_session *session_entry,
+					   QDF_STATUS status);
 #endif /* __LIM_TYPES_H */

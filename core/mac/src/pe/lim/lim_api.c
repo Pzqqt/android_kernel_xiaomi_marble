@@ -2443,10 +2443,10 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return status;
 	}
 
-	add_bss_params->bss_idx = roam_sync_ind_ptr->roamed_vdev_id;
-	ft_session_ptr->bss_idx = (uint8_t)add_bss_params->bss_idx;
+	add_bss_params->vdev_id = roam_sync_ind_ptr->roamed_vdev_id;
+	ft_session_ptr->bss_idx = add_bss_params->vdev_id;
 
-	curr_sta_ds->bssId = add_bss_params->bss_idx;
+	curr_sta_ds->bssId = add_bss_params->vdev_id;
 	curr_sta_ds->staIndex = add_bss_params->staContext.staIdx;
 	mac_ctx->roam.reassocRespLen = roam_sync_ind_ptr->reassocRespLength;
 	mac_ctx->roam.pReassocResp =

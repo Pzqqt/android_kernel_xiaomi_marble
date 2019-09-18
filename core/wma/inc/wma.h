@@ -1241,7 +1241,6 @@ struct wma_vdev_start_req {
 	bool is_dfs;
 	uint8_t vdev_id;
 	uint32_t op_chan_freq;
-	uint8_t oper_mode;
 	tSirMacSSid ssid;
 	uint8_t hidden_ssid;
 	uint8_t pmf_enabled;

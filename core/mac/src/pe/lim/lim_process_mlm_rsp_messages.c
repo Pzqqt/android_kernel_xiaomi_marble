@@ -2121,7 +2121,8 @@ static void lim_update_fils_auth_mode(struct pe_session *session_entry,
 
 void lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 					   struct bss_params *add_bss_params,
-					   struct pe_session *session_entry)
+					   struct pe_session *session_entry,
+					   QDF_STATUS status)
 {
 	tAniAuthType cfgAuthType, authMode;
 	tLimMlmAuthReq *pMlmAuthReq;
@@ -2131,7 +2132,7 @@ void lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 		pe_err("Invalid body pointer in message");
 		goto joinFailure;
 	}
-	if (QDF_IS_STATUS_SUCCESS(add_bss_params->status)) {
+	if (QDF_IS_STATUS_SUCCESS(status)) {
 		sta = dph_add_hash_entry(mac_ctx,
 				add_bss_params->staContext.staMac,
 				DPH_STA_HASH_INDEX_PEER,
@@ -2143,9 +2144,9 @@ void lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 				add_bss_params->staContext.staMac, LOGE);
 			goto joinFailure;
 		}
-		session_entry->bss_idx = (uint8_t)add_bss_params->bss_idx;
+		session_entry->vdev_id = add_bss_params->vdev_id;
 		/* Success, handle below */
-		sta->bssId = add_bss_params->bss_idx;
+		sta->bssId = add_bss_params->vdev_id;
 		/* STA Index(genr by HAL) for the BSS entry is stored here */
 		sta->staIndex = add_bss_params->staContext.staIdx;
 		/* Trigger Authentication with AP */

@@ -300,7 +300,6 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 {
 	struct scheduler_msg msg_buf = {0};
 	struct bss_params *addbss_param = NULL;
-	struct wlan_mlme_qos *qos_aggr = &mac_ctx->mlme_cfg->qos_mlme_params;
 	uint32_t retcode;
 	bool is_ch_dfs = false;
 
@@ -317,35 +316,10 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	qdf_mem_copy(addbss_param->self_mac_addr,
 		     session->self_mac_addr, sizeof(tSirMacAddr));
 
-	addbss_param->bssType = mlm_start_req->bssType;
-	if (mlm_start_req->bssType == eSIR_IBSS_MODE)
-		addbss_param->operMode = BSS_OPERATIONAL_MODE_STA;
-	else if (mlm_start_req->bssType == eSIR_INFRA_AP_MODE)
-		addbss_param->operMode = BSS_OPERATIONAL_MODE_AP;
-	else if (mlm_start_req->bssType == eSIR_NDI_MODE)
-		addbss_param->operMode = BSS_OPERATIONAL_MODE_NDI;
-
 	addbss_param->shortSlotTimeSupported = session->shortSlotTimeSupported;
 	addbss_param->beaconInterval = mlm_start_req->beaconPeriod;
 	addbss_param->dtimPeriod = mlm_start_req->dtimPeriod;
 	addbss_param->wps_state = mlm_start_req->wps_state;
-	addbss_param->cfParamSet.cfpCount = mlm_start_req->cfParamSet.cfpCount;
-	addbss_param->cfParamSet.cfpPeriod =
-		mlm_start_req->cfParamSet.cfpPeriod;
-	addbss_param->cfParamSet.cfpMaxDuration =
-		mlm_start_req->cfParamSet.cfpMaxDuration;
-	addbss_param->cfParamSet.cfpDurRemaining =
-		mlm_start_req->cfParamSet.cfpDurRemaining;
-
-	addbss_param->rateSet.numRates = mlm_start_req->rateSet.numRates;
-	if (addbss_param->rateSet.numRates > WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
-		pe_warn("num of sup rates %d exceeding the limit %d, resetting",
-			addbss_param->rateSet.numRates,
-			WLAN_SUPPORTED_RATES_IE_MAX_LEN);
-		addbss_param->rateSet.numRates = WLAN_SUPPORTED_RATES_IE_MAX_LEN;
-	}
-	qdf_mem_copy(addbss_param->rateSet.rate, mlm_start_req->rateSet.rate,
-		     addbss_param->rateSet.numRates);
 
 	addbss_param->nwType = mlm_start_req->nwType;
 	addbss_param->htCapable = mlm_start_req->htCapable;
@@ -363,9 +337,6 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	addbss_param->chan_freq_seg1 =
 		wlan_reg_chan_to_freq(mac_ctx->pdev,
 				      session->ch_center_freq_seg1);
-	addbss_param->htOperMode = mlm_start_req->htOperMode;
-	addbss_param->dualCTSProtection = mlm_start_req->dualCTSProtection;
-	addbss_param->txChannelWidthSet = mlm_start_req->txChannelWidthSet;
 
 	addbss_param->op_chan_freq =
 		wlan_reg_chan_to_freq(mac_ctx->pdev,
@@ -374,10 +345,7 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	addbss_param->rmfEnabled = session->limRmfEnabled;
 #endif
 
-	/* Update PE sessionId */
-	addbss_param->sessionId = mlm_start_req->sessionId;
-	addbss_param->bss_idx = session->smeSessionId;
-
+	addbss_param->vdev_id = session->smeSessionId;
 
 	/* Send the SSID to HAL to enable SSID matching for IBSS */
 	addbss_param->ssId.length = mlm_start_req->ssId.length;
@@ -392,19 +360,11 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 		     mlm_start_req->ssId.ssId, addbss_param->ssId.length);
 	addbss_param->bHiddenSSIDEn = mlm_start_req->ssidHidden;
 	pe_debug("TRYING TO HIDE SSID %d", addbss_param->bHiddenSSIDEn);
-	/* CR309183. Disable Proxy Probe Rsp.  Host handles Probe Requests.  Until FW fixed. */
-	addbss_param->bProxyProbeRespEn = 0;
-	addbss_param->obssProtEnabled = mlm_start_req->obssProtEnabled;
-
 	addbss_param->maxTxPower = session->maxTxPower;
 
 	mlm_add_sta(mac_ctx, &addbss_param->staContext,
 		    addbss_param->bssId, addbss_param->htCapable,
 		    session);
-
-	addbss_param->status = QDF_STATUS_SUCCESS;
-	addbss_param->respReqd = 1;
-
 	/* Set a new state for MLME */
 	session->limMlmState = eLIM_MLM_WT_ADD_BSS_RSP_STATE;
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, session->peSessionId,
@@ -440,26 +400,6 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	addbss_param->cac_duration_ms = mlm_start_req->cac_duration_ms;
 	addbss_param->dfs_regdomain = mlm_start_req->dfs_regdomain;
 	addbss_param->beacon_tx_rate = session->beacon_tx_rate;
-	if (QDF_IBSS_MODE == addbss_param->halPersona) {
-		if (!(mac_ctx->mlme_cfg)) {
-			pe_err("Mlme cfg NULL");
-			return eSIR_SME_INVALID_PARAMETERS;
-		}
-		addbss_param->nss_2g = mac_ctx->vdev_type_nss_2g.ibss;
-		addbss_param->nss_5g = mac_ctx->vdev_type_nss_5g.ibss;
-		addbss_param->tx_aggregation_size =
-					qos_aggr->tx_aggregation_size;
-		addbss_param->tx_aggregation_size_be =
-					qos_aggr->tx_aggregation_size_be;
-		addbss_param->tx_aggregation_size_bk =
-					qos_aggr->tx_aggregation_size_bk;
-		addbss_param->tx_aggregation_size_vi =
-					qos_aggr->tx_aggregation_size_vi;
-		addbss_param->tx_aggregation_size_vo =
-					qos_aggr->tx_aggregation_size_vo;
-		addbss_param->rx_aggregation_size =
-					qos_aggr->rx_aggregation_size;
-	}
 	pe_debug("dot11_mode:%d nss value:%d",
 			addbss_param->dot11_mode, addbss_param->nss);
 

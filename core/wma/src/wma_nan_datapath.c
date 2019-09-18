@@ -96,7 +96,6 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	req.chan_freq_seg1 = add_bss->chan_freq_seg1;
 	req.vht_capable = add_bss->vhtCapable;
 	req.max_txpow = add_bss->maxTxPower;
-	req.oper_mode = add_bss->operMode;
 
 	status = wma_vdev_start(wma, &req, false);
 	if (status != QDF_STATUS_SUCCESS)
@@ -109,7 +108,7 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	return;
 
 send_fail_resp:
-	wma_send_add_bss_resp(wma, add_bss->bss_idx, QDF_STATUS_E_FAILURE);
+	wma_send_add_bss_resp(wma, add_bss->vdev_id, QDF_STATUS_E_FAILURE);
 }
 
 /**

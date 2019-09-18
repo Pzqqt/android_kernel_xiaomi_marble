@@ -153,43 +153,17 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	/* Fill in struct bss_params self_mac_addr */
 	qdf_mem_copy(pAddBssParams->self_mac_addr, ft_session->self_mac_addr,
 		     sizeof(tSirMacAddr));
-
-	pAddBssParams->bssType = ft_session->bssType;
-	pAddBssParams->operMode = BSS_OPERATIONAL_MODE_STA;
-
 	pAddBssParams->beaconInterval = bssDescription->beaconInterval;
 
 	pAddBssParams->dtimPeriod = pBeaconStruct->tim.dtimPeriod;
 	pAddBssParams->updateBss = false;
 
-	pAddBssParams->reassocReq = true;
-
-	pAddBssParams->cfParamSet.cfpCount = pBeaconStruct->cfParamSet.cfpCount;
-	pAddBssParams->cfParamSet.cfpPeriod =
-		pBeaconStruct->cfParamSet.cfpPeriod;
-	pAddBssParams->cfParamSet.cfpMaxDuration =
-		pBeaconStruct->cfParamSet.cfpMaxDuration;
-	pAddBssParams->cfParamSet.cfpDurRemaining =
-		pBeaconStruct->cfParamSet.cfpDurRemaining;
-
-	pAddBssParams->rateSet.numRates =
-		pBeaconStruct->supportedRates.numRates;
-	qdf_mem_copy(pAddBssParams->rateSet.rate,
-		     pBeaconStruct->supportedRates.rate,
-		     pBeaconStruct->supportedRates.numRates);
-
 	pAddBssParams->nwType = bssDescription->nwType;
 
 	pAddBssParams->shortSlotTimeSupported =
 		(uint8_t) pBeaconStruct->capabilityInfo.shortSlotTime;
-	pAddBssParams->llaCoexist =
-		(uint8_t) ft_session->beaconParams.llaCoexist;
 	pAddBssParams->llbCoexist =
 		(uint8_t) ft_session->beaconParams.llbCoexist;
-	pAddBssParams->llgCoexist =
-		(uint8_t) ft_session->beaconParams.llgCoexist;
-	pAddBssParams->ht20Coexist =
-		(uint8_t) ft_session->beaconParams.ht20Coexist;
 #ifdef WLAN_FEATURE_11W
 	pAddBssParams->rmfEnabled = ft_session->limRmfEnabled;
 #endif
@@ -408,14 +382,9 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		pAddBssParams->staContext.rmfEnabled = 1;
 	}
 #endif
-
-	pAddBssParams->status = QDF_STATUS_SUCCESS;
-	pAddBssParams->respReqd = true;
-
 	pAddBssParams->staContext.sessionId = ft_session->peSessionId;
 	pAddBssParams->staContext.smesessionId = ft_session->smeSessionId;
-	pAddBssParams->sessionId = ft_session->peSessionId;
-	pAddBssParams->bss_idx = ft_session->smeSessionId;
+	pAddBssParams->vdev_id = ft_session->smeSessionId;
 
 	/* Set a new state for MLME */
 	if (!lim_is_roam_synch_in_progress(ft_session)) {

@@ -372,49 +372,29 @@ typedef struct sLimMlmSetKeysReq {
  * struct struct bss_params - parameters required for add bss params
  * @bssId: MAC Address/BSSID
  * @self_mac_addr: Self Mac Address
- * @bssType: BSS type
- * @operMode: AP - 0; STA - 1;
  * @nwType: network type
  * @shortSlotTimeSupported: is short slot time supported or not
- * @llaCoexist: is 11a coexist or not
  * @llbCoexist: 11b coexist supported or not
- * @llgCoexist: 11g coexist supported or not
- * @ht20Coexist: HT20 coexist supported or not
- * @fLsigTXOPProtectionFullSupport: TXOP protection supported or not
- * @fRIFSMode: RIFS is supported or not
  * @beaconInterval: beacon interval
  * @dtimPeriod: DTIM period
- * @cfParamSet: CF Param Set
- * @rateSet: MAC Rate Set
  * @htCapable: Enable/Disable HT capabilities
- * @obssProtEnabled: Enable/Disable OBSS protection
  * @rmfEnabled: RMF enabled/disabled
- * @htOperMode: HT Operating Mode
- * @HT Operating Mode: Dual CTS Protection: 0 - Unused, 1 - Used
- * @txChannelWidthSet: TX Width Set: 0 - 20 MHz only, 1 - 20/40 MHz
  * @op_chan_freq: Current Operating frequency
  * @staContext: sta context
- * @status: status
- * @bss_idx: BSS index allocated by HAL
+ * @vdev_id: vdev id
  * @updateBss: update the existing BSS entry, if this flag is set
  * @ssId: Add BSSID info for rxp filter
- * @respReqd: send the response message to LIM only when this flag is set
- * @sessionId: PE session id
  * @txMgmtPower: tx power used for mgmt frames
  * @maxTxPower: max power to be used after applying the power constraint
  * @extSetStaKeyParamValid: Ext Bss Config Msg if set
  * @extSetStaKeyParam: SetStaKeyParams for ext bss msg
  * @bHiddenSSIDEn: To Enable Hidden ssid.
- * @bProxyProbeRespEn: To Enable Disable FW Proxy Probe Resp
  * @halPersona: Persona for the BSS can be STA,AP,GO,CLIENT value
  * @bSpectrumMgtEnabled: Spectrum Management Capability, 1:Enabled, 0:Disabled.
  * @vhtCapable: VHT capablity
  * @vhtTxChannelWidthSet: VHT tx channel width
  * @chan_freq_seg0: center freq seq 0
  * @chan_freq_seg1: center freq seq 1
- * @reassocReq: Set only during roaming reassociation
- * @chainMask: chain mask
- * @smpsMode: SMPS mode
  * @dot11_mode: 802.11 mode
  * @he_capable: HE Capability
  * @cac_duration_ms: cac duration in milliseconds
@@ -424,71 +404,41 @@ typedef struct sLimMlmSetKeysReq {
 struct bss_params {
 	tSirMacAddr bssId;
 	tSirMacAddr self_mac_addr;
-	enum bss_type bssType;
-	uint8_t operMode;
 	tSirNwType nwType;
 	uint8_t shortSlotTimeSupported;
-	uint8_t llaCoexist;
 	uint8_t llbCoexist;
-	uint8_t llgCoexist;
-	uint8_t ht20Coexist;
-	uint8_t llnNonGFCoexist;
-	uint8_t fLsigTXOPProtectionFullSupport;
-	uint8_t fRIFSMode;
 	tSirMacBeaconInterval beaconInterval;
 	uint8_t dtimPeriod;
-	tSirMacCfParamSet cfParamSet;
-	tSirMacRateSet rateSet;
 	uint8_t htCapable;
-	uint8_t obssProtEnabled;
 	uint8_t rmfEnabled;
-	tSirMacHTOperatingMode htOperMode;
-	uint8_t dualCTSProtection;
-	uint8_t txChannelWidthSet;
 	uint32_t op_chan_freq;
 	tAddStaParams staContext;
-	QDF_STATUS status;
-	uint16_t bss_idx;
+	uint8_t vdev_id;
 	/* HAL should update the existing BSS entry, if this flag is set.
 	 * PE will set this flag in case of reassoc, where we want to resue the
 	 * the old bssID and still return success.
 	 */
 	uint8_t updateBss;
 	tSirMacSSid ssId;
-	uint8_t respReqd;
-	uint8_t sessionId;
 	int8_t maxTxPower;
 
 	uint8_t extSetStaKeyParamValid;
 	tSetStaKeyParams extSetStaKeyParam;
 
 	uint8_t bHiddenSSIDEn;
-	uint8_t bProxyProbeRespEn;
 	uint8_t halPersona;
 	uint8_t bSpectrumMgtEnabled;
 	uint8_t vhtCapable;
 	enum phy_ch_width ch_width;
 	uint32_t chan_freq_seg0;
 	uint32_t chan_freq_seg1;
-	uint8_t reassocReq;     /* Set only during roaming reassociation */
-	uint16_t chainMask;
-	uint16_t smpsMode;
 	uint8_t dot11_mode;
 	uint8_t nonRoamReassoc;
 	uint8_t wps_state;
 	uint8_t nss;
-	uint8_t nss_2g;
-	uint8_t nss_5g;
 	uint16_t beacon_tx_rate;
-	uint32_t tx_aggregation_size;
-	uint32_t tx_aggregation_size_be;
-	uint32_t tx_aggregation_size_bk;
-	uint32_t tx_aggregation_size_vi;
-	uint32_t tx_aggregation_size_vo;
-	uint32_t rx_aggregation_size;
 #ifdef WLAN_FEATURE_11AX
 	bool he_capable;
-	tDot11fIEhe_cap he_config;
 	tDot11fIEhe_op he_op;
 	uint32_t he_sta_obsspd;
 #endif

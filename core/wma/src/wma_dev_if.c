@@ -216,7 +216,6 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
 
 	/* start ibss vdev */
 
-	add_bss->operMode = BSS_OPERATIONAL_MODE_IBSS;
 	add_bss->staContext.staIdx = cdp_peer_get_local_peer_id(soc, peer);
 
 	/*
@@ -249,7 +248,6 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	req.dtim_period = add_bss->dtimPeriod;
 	req.hidden_ssid = add_bss->bHiddenSSIDEn;
 	req.is_dfs = add_bss->bSpectrumMgtEnabled;
-	req.oper_mode = BSS_OPERATIONAL_MODE_IBSS;
 	req.ssid.length = add_bss->ssId.length;
 	if (req.ssid.length > 0)
 		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
@@ -284,7 +282,7 @@ peer_cleanup:
 	if (peer)
 		wma_remove_peer(wma, add_bss->bssId, vdev_id, peer, false);
 send_fail_resp:
-	wma_send_add_bss_resp(wma, add_bss->bss_idx, QDF_STATUS_E_FAILURE);
+	wma_send_add_bss_resp(wma, add_bss->vdev_id, QDF_STATUS_E_FAILURE);
 }
 
 /**
@@ -3657,7 +3655,6 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	req.beacon_tx_rate = add_bss->beacon_tx_rate;
 	req.hidden_ssid = add_bss->bHiddenSSIDEn;
 	req.is_dfs = add_bss->bSpectrumMgtEnabled;
-	req.oper_mode = BSS_OPERATIONAL_MODE_AP;
 	req.ssid.length = add_bss->ssId.length;
 	req.cac_duration_ms = add_bss->cac_duration_ms;
 	req.dfs_regdomain = add_bss->dfs_regdomain;
@@ -3688,7 +3685,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, struct bss_params *add_bss)
 peer_cleanup:
 	wma_remove_peer(wma, add_bss->bssId, vdev_id, peer, false);
 send_fail_resp:
-	wma_send_add_bss_resp(wma, add_bss->bss_idx, QDF_STATUS_E_FAILURE);
+	wma_send_add_bss_resp(wma, add_bss->vdev_id, QDF_STATUS_E_FAILURE);
 }
 
 static QDF_STATUS wma_update_iface_params(tp_wma_handle wma,
@@ -3758,14 +3755,13 @@ QDF_STATUS wma_save_bss_params(tp_wma_handle wma, struct bss_params *add_bss)
 		status = QDF_STATUS_E_FAILURE;
 	else
 		status = QDF_STATUS_SUCCESS;
-	add_bss->bss_idx = add_bss->staContext.smesessionId;
+	add_bss->vdev_id = add_bss->staContext.smesessionId;
 	qdf_mem_copy(add_bss->staContext.staMac, add_bss->bssId,
 		     sizeof(add_bss->staContext.staMac));
 
-	WMA_LOGD("%s: opermode %d update_bss %d nw_type %d bssid %pM staIdx %d status %d",
-		 __func__, add_bss->operMode,
-		 add_bss->updateBss, add_bss->nwType, add_bss->bssId,
-		 add_bss->staContext.staIdx, add_bss->status);
+	WMA_LOGD("%s: update_bss %d nw_type %d bssid %pM staIdx %d status %d",
+		 __func__, add_bss->updateBss, add_bss->nwType, add_bss->bssId,
+		 add_bss->staContext.staIdx, status);
 
 	return status;
 }
@@ -3897,7 +3893,6 @@ QDF_STATUS wma_add_bss_lfr2_vdev_start(struct bss_params *add_bss)
 	req.hidden_ssid = add_bss->bHiddenSSIDEn;
 	req.is_dfs = add_bss->bSpectrumMgtEnabled;
 	req.ssid.length = add_bss->ssId.length;
-	req.oper_mode = BSS_OPERATIONAL_MODE_STA;
 	if (req.ssid.length > 0)
 		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 			     add_bss->ssId.length);
@@ -3958,16 +3953,14 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		WMA_LOGE("%s Failed to get pdev", __func__);
-		add_bss->status = QDF_STATUS_E_FAILURE;
 		goto send_resp;
 	}
 
 	iface = &wma->interfaces[vdev_id];
 	status = wma_update_iface_params(wma, add_bss);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		add_bss->status = QDF_STATUS_E_FAILURE;
+	if (QDF_IS_STATUS_ERROR(status))
 		goto send_resp;
-	}
+
 	peer = wma_cdp_find_peer_by_addr(add_bss->bssId, &peer_id);
 	if (add_bss->nonRoamReassoc && peer) {
 		add_bss->staContext.staIdx = peer_id;
@@ -3979,7 +3972,6 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	if (!peer) {
 		WMA_LOGE("%s: %d Failed to find peer %pM",
 			 __func__, __LINE__, add_bss->bssId);
-		add_bss->status = QDF_STATUS_E_FAILURE;
 		goto send_resp;
 	}
 
@@ -3995,10 +3987,8 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 		cdp_peer_state_update(soc, pdev, add_bss->bssId,
 				      OL_TXRX_PEER_STATE_CONN);
 		status = wma_set_cdp_vdev_pause_reason(wma, vdev_id);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			add_bss->status = QDF_STATUS_E_FAILURE;
+		if (QDF_IS_STATUS_ERROR(status))
 			goto peer_cleanup;
-		}
 	}
 
 	wmi_unified_send_txbf(wma, &add_bss->staContext);
@@ -4020,7 +4010,6 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 				     &add_bss->staContext);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to send peer assoc status:%d", status);
-		add_bss->status = QDF_STATUS_E_FAILURE;
 		goto peer_cleanup;
 	}
 	peer_assoc_sent = true;
@@ -4046,7 +4035,7 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	qdf_mem_copy(iface->bssid, add_bss->bssId, QDF_MAC_ADDR_SIZE);
 
 send_bss_resp:
-	add_bss->status = wma_save_bss_params(wma, add_bss);
+	wma_save_bss_params(wma, add_bss);
 
 	if (!wmi_service_enabled(wma->wmi_handle,
 				 wmi_service_peer_assoc_conf)) {
