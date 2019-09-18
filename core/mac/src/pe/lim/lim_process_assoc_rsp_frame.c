@@ -896,12 +896,12 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 			goto assocReject;
 		}
 
-		if (ap_nss < session_entry->nss) {
+		if (ap_nss < session_entry->nss)
 			session_entry->nss = ap_nss;
-			lim_objmgr_update_vdev_nss(mac_ctx->psoc,
-						   session_entry->smeSessionId,
-						   ap_nss);
-		}
+
+		lim_objmgr_update_vdev_nss(mac_ctx->psoc,
+					   session_entry->smeSessionId,
+					   session_entry->nss);
 
 		if ((session_entry->limMlmState ==
 		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
@@ -989,12 +989,12 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	if (lim_search_pre_auth_list(mac_ctx, hdr->sa))
 		lim_delete_pre_auth_node(mac_ctx, hdr->sa);
 
-	if (ap_nss < session_entry->nss) {
+	if (ap_nss < session_entry->nss)
 		session_entry->nss = ap_nss;
-		lim_objmgr_update_vdev_nss(mac_ctx->psoc,
-					   session_entry->smeSessionId,
-					   ap_nss);
-	}
+
+	lim_objmgr_update_vdev_nss(mac_ctx->psoc,
+				   session_entry->smeSessionId,
+				   session_entry->nss);
 
 	lim_update_assoc_sta_datas(mac_ctx, sta_ds, assoc_rsp, session_entry);
 	/*
