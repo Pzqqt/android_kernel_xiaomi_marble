@@ -9945,7 +9945,7 @@ populate_dbr_ring_cap_elems(wmi_unified_t wmi_handle,
 			    struct wlan_psoc_host_dbr_ring_caps *param,
 			    WMI_DMA_RING_CAPABILITIES *dbr_ring_caps)
 {
-	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+	param->pdev_id = wmi_handle->ops->convert_target_pdev_id_to_host(
 				dbr_ring_caps->pdev_id);
 	param->mod_id = dbr_ring_caps->mod_id;
 	param->ring_elems_min = dbr_ring_caps->ring_elems_min;
