@@ -279,6 +279,7 @@ static QDF_STATUS wlan_objmgr_vdev_obj_destroy(struct wlan_objmgr_vdev *vdev)
 
 	vdev_id = wlan_vdev_get_id(vdev);
 
+	wlan_print_vdev_info(vdev);
 	obj_mgr_debug("Physically deleting vdev %d", vdev_id);
 
 	if (vdev->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
@@ -1079,4 +1080,24 @@ struct wlan_objmgr_vdev *wlan_vdev_get_next_active_vdev_of_pdev(
 
 	return NULL;
 }
+
+#ifdef WLAN_OBJMGR_DEBUG
+void wlan_print_vdev_info(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_vdev_objmgr *vdev_objmgr;
+	uint32_t ref_cnt;
+
+	vdev_objmgr = &vdev->vdev_objmgr;
+
+	ref_cnt = qdf_atomic_read(&vdev_objmgr->ref_cnt);
+
+	obj_mgr_debug("vdev: %pK", vdev);
+	obj_mgr_debug("vdev_id: %d", vdev_objmgr->vdev_id);
+	obj_mgr_debug("print_cnt: %d", vdev_objmgr->print_cnt);
+	obj_mgr_debug("wlan_pdev: %pK", vdev_objmgr->wlan_pdev);
+	obj_mgr_debug("ref_cnt: %d", ref_cnt);
+}
+
+qdf_export_symbol(wlan_print_vdev_info);
+#endif
 

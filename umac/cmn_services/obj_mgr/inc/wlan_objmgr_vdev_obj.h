@@ -1340,4 +1340,16 @@ static inline void *wlan_vdev_get_dp_handle(struct wlan_objmgr_vdev *vdev)
 	return vdev->dp_handle;
 }
 
+/**
+ * wlan_print_vdev_info() - print vdev members
+ * @vdev: vdev object pointer
+ *
+ * Return: void
+ */
+#ifdef WLAN_OBJMGR_DEBUG
+void wlan_print_vdev_info(struct wlan_objmgr_vdev *vdev);
+#else
+static inline void wlan_print_vdev_info(struct wlan_objmgr_vdev *vdev) {}
+#endif
+
 #endif /* _WLAN_OBJMGR_VDEV_OBJ_H_*/

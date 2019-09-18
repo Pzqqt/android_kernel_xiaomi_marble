@@ -1558,4 +1558,18 @@ static inline uint8_t wlan_psoc_get_id(
 
 	return psoc->soc_objmgr.psoc_id;
 }
+
+/**
+ * wlan_print_psoc_info() - print psoc members
+ * @psoc: psoc object pointer
+ *
+ * Return: void
+ */
+
+#ifdef WLAN_OBJMGR_DEBUG
+void wlan_print_psoc_info(struct wlan_objmgr_psoc *psoc);
+#else
+static inline void wlan_print_psoc_info(struct wlan_objmgr_psoc *psoc) {}
+#endif
+
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/

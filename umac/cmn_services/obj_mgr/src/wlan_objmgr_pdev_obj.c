@@ -194,6 +194,7 @@ static QDF_STATUS wlan_objmgr_pdev_obj_destroy(struct wlan_objmgr_pdev *pdev)
 
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 
+	wlan_print_pdev_info(pdev);
 	obj_mgr_info("Physically deleting pdev %d", pdev_id);
 
 	if (pdev->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
@@ -904,3 +905,43 @@ struct wlan_objmgr_vdev *wlan_objmgr_pdev_get_first_vdev(
 }
 
 qdf_export_symbol(wlan_objmgr_pdev_get_first_vdev);
+
+#ifdef WLAN_OBJMGR_DEBUG
+void wlan_print_pdev_info(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_pdev_objmgr *pdev_objmgr;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_vdev *vdev_next;
+	qdf_list_t *vdev_list;
+	uint16_t index = 0;
+
+	pdev_objmgr = &pdev->pdev_objmgr;
+
+	obj_mgr_debug("pdev: %pK", pdev);
+	obj_mgr_debug("wlan_pdev_id: %d", pdev_objmgr->wlan_pdev_id);
+	obj_mgr_debug("wlan_vdev_count: %d", pdev_objmgr->wlan_vdev_count);
+	obj_mgr_debug("max_vdev_count: %d", pdev_objmgr->max_vdev_count);
+	obj_mgr_debug("wlan_peer_count: %d", pdev_objmgr->wlan_peer_count);
+	obj_mgr_debug("max_peer_count: %d", pdev_objmgr->max_peer_count);
+	obj_mgr_debug("temp_peer_count: %d", pdev_objmgr->temp_peer_count);
+	obj_mgr_debug("wlan_psoc: %pK", pdev_objmgr->wlan_psoc);
+	obj_mgr_debug("ref_cnt: %d", qdf_atomic_read(&pdev_objmgr->ref_cnt));
+
+	wlan_pdev_obj_lock(pdev);
+	vdev_list = &pdev_objmgr->wlan_vdev_list;
+	/* Get first vdev */
+	vdev = wlan_pdev_vdev_list_peek_head(vdev_list);
+
+	while (vdev) {
+		obj_mgr_debug("wlan_vdev_list[%d]: %pK", index, vdev);
+		wlan_print_vdev_info(vdev);
+		index++;
+		/* get next vdev */
+		vdev_next = wlan_vdev_get_next_vdev_of_pdev(vdev_list, vdev);
+		vdev = vdev_next;
+	}
+	wlan_pdev_obj_unlock(pdev);
+}
+
+qdf_export_symbol(wlan_print_pdev_info);
+#endif

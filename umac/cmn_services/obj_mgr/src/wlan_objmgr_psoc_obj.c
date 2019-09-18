@@ -202,6 +202,7 @@ static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 	}
 	wlan_objmgr_notify_destroy(psoc, WLAN_PSOC_OP);
 
+	wlan_print_psoc_info(psoc);
 	obj_mgr_info("Physically deleting psoc %d", psoc->soc_objmgr.psoc_id);
 
 	if (psoc->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
@@ -2170,3 +2171,45 @@ void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc)
 	wlan_psoc_obj_unlock(psoc);
 }
 qdf_export_symbol(wlan_objmgr_psoc_check_for_peer_leaks);
+
+#ifdef WLAN_OBJMGR_DEBUG
+void wlan_print_psoc_info(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_objmgr_psoc_objmgr *psoc_objmgr;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_vdev *vdev;
+	uint16_t index = 0;
+
+	psoc_objmgr = &psoc->soc_objmgr;
+
+	obj_mgr_debug("psoc: %pK", psoc);
+	obj_mgr_debug("psoc_id: %d", psoc_objmgr->psoc_id);
+	obj_mgr_debug("wlan_pdev_count: %d", psoc_objmgr->wlan_pdev_count);
+	obj_mgr_debug("wlan_pdev_id_map: 0x%x", psoc_objmgr->wlan_pdev_id_map);
+	obj_mgr_debug("wlan_vdev_count: %d", psoc_objmgr->wlan_vdev_count);
+	obj_mgr_debug("max_vdev_count: %d", psoc_objmgr->max_vdev_count);
+	obj_mgr_debug("wlan_peer_count: %d", psoc_objmgr->wlan_peer_count);
+	obj_mgr_debug("max_peer_count: %d", psoc_objmgr->max_peer_count);
+	obj_mgr_debug("temp_peer_count: %d", psoc_objmgr->temp_peer_count);
+	obj_mgr_debug("ref_cnt: %d", qdf_atomic_read(&psoc_objmgr->ref_cnt));
+	obj_mgr_debug("qdf_dev: %pK", psoc_objmgr->qdf_dev);
+
+	obj_mgr_debug("wlan_vdev_id_map[%d]: 0x%x",
+		      index, psoc_objmgr->wlan_vdev_id_map[index]);
+	index++;
+	obj_mgr_debug("wlan_vdev_id_map[%d]: 0x%x",
+		      index, psoc_objmgr->wlan_vdev_id_map[index]);
+
+	wlan_objmgr_for_each_psoc_pdev(psoc, index, pdev) {
+		obj_mgr_debug("wlan_pdev_list[%d]: %pK", index, pdev);
+		wlan_print_pdev_info(pdev);
+	}
+
+	wlan_objmgr_for_each_psoc_vdev(psoc, index, vdev) {
+		obj_mgr_debug("wlan_vdev_list[%d]: %pK", index, vdev);
+		wlan_print_vdev_info(vdev);
+	}
+}
+
+qdf_export_symbol(wlan_print_psoc_info);
+#endif
