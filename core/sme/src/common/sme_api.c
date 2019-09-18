@@ -1799,6 +1799,14 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 
 #endif /* FEATURE_WLAN_ESE */
 
+#ifdef QCA_IBSS_SUPPORT
+/**
+ * sme_ibss_peer_info_response_handler() - Handler for ibss peer info
+ * @mac: Global MAC pointer
+ * @sme_ibss_peer_info_response_handler: ibss peer info params
+ *
+ * Return: QDF_STATUS
+ */
 static
 QDF_STATUS sme_ibss_peer_info_response_handler(struct mac_context *mac,
 					       tpSirIbssGetPeerInfoRspParams
@@ -1821,6 +1829,62 @@ QDF_STATUS sme_ibss_peer_info_response_handler(struct mac_context *mac,
 			      &pIbssPeerInfoParams->ibssPeerInfoRspParams);
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *cb_context,
+				      ibss_peer_info_cb peer_info_cb,
+				      bool allPeerInfoReqd, uint8_t staIdx)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct scheduler_msg message = {0};
+	tSirIbssGetPeerInfoReqParams *pIbssInfoReqParams;
+	struct ibss_peer_info_cb_info *cb_info;
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (status == QDF_STATUS_SUCCESS) {
+		cb_info = &mac->sme.peer_info_cb_info;
+		cb_info->peer_info_cb = peer_info_cb;
+		cb_info->peer_info_cb_context = cb_context;
+
+		pIbssInfoReqParams = (tSirIbssGetPeerInfoReqParams *)
+			qdf_mem_malloc(sizeof(tSirIbssGetPeerInfoReqParams));
+		if (!pIbssInfoReqParams) {
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+		pIbssInfoReqParams->allPeerInfoReqd = allPeerInfoReqd;
+		pIbssInfoReqParams->staIdx = staIdx;
+
+		message.type = WMA_GET_IBSS_PEER_INFO_REQ;
+		message.bodyptr = pIbssInfoReqParams;
+		message.reserved = 0;
+
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+						    QDF_MODULE_ID_WMA,
+						    QDF_MODULE_ID_WMA,
+						    &message);
+		if (qdf_status != QDF_STATUS_SUCCESS) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Post WMA_GET_IBSS_PEER_INFO_REQ MSG failed",
+				  __func__);
+			qdf_mem_free(pIbssInfoReqParams);
+			qdf_status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+
+	return qdf_status;
+}
+#else
+static inline
+QDF_STATUS sme_ibss_peer_info_response_handler(struct mac_context *mac,
+					       tpSirIbssGetPeerInfoRspParams
+					       pIbssPeerInfoParams)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * sme_process_dual_mac_config_resp() - Process set Dual mac config response
@@ -8031,63 +8095,6 @@ QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
 	return status;
 }
 #endif /* FEATURE_WLAN_RMC */
-
-/*
- * sme_request_ibss_peer_info() -  request ibss peer info
- * @mac_handle: Opaque handle to the global MAC context
- * @cb_context: Pointer to user data
- * @peer_info_cb: Peer info callback
- * @allPeerInfoReqd: All peer info required or not
- * @staIdx: sta index
- *
- * Return:  QDF_STATUS
- */
-QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *cb_context,
-				      ibss_peer_info_cb peer_info_cb,
-				      bool allPeerInfoReqd, uint8_t staIdx)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-	tSirIbssGetPeerInfoReqParams *pIbssInfoReqParams;
-	struct ibss_peer_info_cb_info *cb_info;
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		cb_info = &mac->sme.peer_info_cb_info;
-		cb_info->peer_info_cb = peer_info_cb;
-		cb_info->peer_info_cb_context = cb_context;
-
-		pIbssInfoReqParams = (tSirIbssGetPeerInfoReqParams *)
-			qdf_mem_malloc(sizeof(tSirIbssGetPeerInfoReqParams));
-		if (!pIbssInfoReqParams) {
-			sme_release_global_lock(&mac->sme);
-			return QDF_STATUS_E_NOMEM;
-		}
-		pIbssInfoReqParams->allPeerInfoReqd = allPeerInfoReqd;
-		pIbssInfoReqParams->staIdx = staIdx;
-
-		message.type = WMA_GET_IBSS_PEER_INFO_REQ;
-		message.bodyptr = pIbssInfoReqParams;
-		message.reserved = 0;
-
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (QDF_STATUS_SUCCESS != qdf_status) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Post WMA_GET_IBSS_PEER_INFO_REQ MSG failed",
-				  __func__);
-			qdf_mem_free(pIbssInfoReqParams);
-			qdf_status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return qdf_status;
-}
 
 /*
  * sme_send_cesium_enable_ind() -

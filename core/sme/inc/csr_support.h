@@ -229,7 +229,37 @@ csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
 
 bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len);
 bool csr_is_infra_bss_desc(struct bss_description *pSirBssDesc);
+
+#ifdef QCA_IBSS_SUPPORT
+/**
+ * csr_is_ibss_bss_desc() - API to check bss desc of ibss type
+ * @pSirBssDesc:  pointer to pSirBssDesc structure
+ *
+ * Return: true if bss desc of ibss type, else false
+ */
 bool csr_is_ibss_bss_desc(struct bss_description *pSirBssDesc);
+
+/**
+ * csr_is_ibss_bss_desc() - API to check bss desc of ibss type
+ * @bssType:  bss type
+ *
+ * Return: true if bss type is ibss type, else false
+ */
+bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
+#else
+static inline
+bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
+{
+	return false;
+}
+
+static inline
+bool csr_is_ibss_bss_desc(struct bss_description *pSirBssDesc)
+{
+	return false;
+}
+#endif
+
 bool csr_is_privacy(struct bss_description *pSirBssDesc);
 tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
@@ -302,7 +332,7 @@ bool csr_is_security_match(struct mac_context *mac_ctx, tCsrAuthList *auth_type,
 			   uint8_t *mfp_required, uint8_t *mfp_capable,
 			   struct bss_description *bss_desc,
 			   tDot11fBeaconIEs *ies_ptr, uint8_t session_id);
-bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
+
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 			struct qdf_mac_addr *BssBssid);
 void csr_add_rate_bitmap(uint8_t rate, uint16_t *pRateBitmap);

@@ -856,17 +856,66 @@ void csr_set_global_cfgs(struct mac_context *mac);
 void csr_set_default_dot11_mode(struct mac_context *mac);
 bool csr_is_conn_state_disconnected(struct mac_context *mac,
 						   uint32_t sessionId);
-bool csr_is_conn_state_connected_ibss(struct mac_context *mac,
-						      uint32_t sessionId);
-bool csr_is_conn_state_disconnected_ibss(struct mac_context *mac,
-							   uint32_t sessionId);
 bool csr_is_conn_state_connected_infra(struct mac_context *mac,
 							uint32_t sessionId);
 bool csr_is_conn_state_connected(struct mac_context *mac,
 					       uint32_t sessionId);
 bool csr_is_conn_state_infra(struct mac_context *mac,
 					uint32_t sessionId);
+
+#ifdef QCA_IBSS_SUPPORT
+/**
+ * csr_is_conn_state_ibss() - get the connection state for ibss session
+ * @mac_ctx:  pointer to global mac structure
+ * @sessionId: session id
+ *
+ *
+ * Return: true if IBSS connected/disconnected state, else flase
+ */
 bool csr_is_conn_state_ibss(struct mac_context *mac, uint32_t sessionId);
+
+/**
+ * csr_is_conn_state_connected_ibss() - get the connected state for ibss
+ * @mac_ctx:  pointer to global mac structure
+ * @sessionId: session id
+ *
+ *
+ * Return: true if IBSS connected state, else false
+ */
+bool csr_is_conn_state_connected_ibss(struct mac_context *mac,
+				      uint32_t sessionId);
+
+/**
+ * csr_is_conn_state_connected_ibss() - get the connected state for ibss
+ * @mac_ctx:  pointer to global mac structure
+ * @sessionId: session id
+ *
+ *
+ * Return: true if IBSS disconnected state, else false
+ */
+bool csr_is_conn_state_disconnected_ibss(struct mac_context *mac,
+					 uint32_t sessionId);
+#else
+static inline bool
+csr_is_conn_state_ibss(struct mac_context *mac, uint32_t sessionId)
+{
+	return true;
+}
+
+static inline bool
+csr_is_conn_state_connected_ibss(struct mac_context *mac, uint32_t sessionId)
+{
+	return true;
+}
+
+static inline bool
+csr_is_conn_state_disconnected_ibss(struct mac_context *mac,
+				    uint32_t sessionId)
+{
+	return true;
+}
+#endif
+
 bool csr_is_conn_state_wds(struct mac_context *mac, uint32_t sessionId);
 bool csr_is_conn_state_connected_wds(struct mac_context *mac,
 						    uint32_t sessionId);

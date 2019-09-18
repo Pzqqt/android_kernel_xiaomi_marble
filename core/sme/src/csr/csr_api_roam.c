@@ -388,9 +388,6 @@ static void init_config_param(struct mac_context *mac);
 static bool csr_roam_process_results(struct mac_context *mac, tSmeCmd *pCommand,
 				     enum csr_roamcomplete_result Result,
 				     void *Context);
-static QDF_STATUS csr_roam_start_ibss(struct mac_context *mac, uint32_t sessionId,
-				      struct csr_roam_profile *pProfile,
-				      bool *pfSameIbss);
 static void csr_roam_update_connected_profile_from_new_bss(struct mac_context *mac,
 							   uint32_t sessionId,
 							   struct new_bss_info *
@@ -445,7 +442,6 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac,
 				   enum band_info *pBand);
 static QDF_STATUS csr_roam_get_qos_info_from_bss(
 struct mac_context *mac, struct bss_description *bss_desc);
-static uint32_t csr_find_ibss_session(struct mac_context *mac);
 static uint32_t csr_find_session_by_type(struct mac_context *,
 					enum QDF_OPMODE);
 static bool csr_is_conn_allow_2g_band(struct mac_context *mac,
@@ -520,6 +516,443 @@ static inline void csr_roam_free_globals(void)
 {
 }
 #endif /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
+
+/* Returns whether handoff is currently in progress or not */
+static
+bool csr_roam_is_handoff_in_progress(struct mac_context *mac, uint8_t sessionId)
+{
+	return csr_neighbor_roam_is_handoff_in_progress(mac, sessionId);
+}
+
+static QDF_STATUS
+csr_roam_issue_disassociate(struct mac_context *mac, uint32_t sessionId,
+			    enum csr_roam_substate NewSubstate,
+			    bool fMICFailure)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct qdf_mac_addr bssId = QDF_MAC_ADDR_BCAST_INIT;
+	uint16_t reasonCode;
+	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+
+	if (!pSession) {
+		sme_err("session %d not found", sessionId);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (fMICFailure) {
+		reasonCode = eSIR_MAC_MIC_FAILURE_REASON;
+	} else if (NewSubstate == eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF) {
+		reasonCode = eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON;
+	} else if (eCSR_ROAM_SUBSTATE_DISASSOC_STA_HAS_LEFT == NewSubstate) {
+		reasonCode = eSIR_MAC_DISASSOC_LEAVING_BSS_REASON;
+		NewSubstate = eCSR_ROAM_SUBSTATE_DISASSOC_FORCED;
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  "set to reason code eSIR_MAC_DISASSOC_LEAVING_BSS_REASON and set back NewSubstate");
+	} else {
+		reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
+	}
+	if ((csr_roam_is_handoff_in_progress(mac, sessionId)) &&
+	    (NewSubstate != eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF)) {
+		tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
+			&mac->roam.neighborRoamInfo[sessionId];
+		qdf_copy_macaddr(&bssId,
+			      pNeighborRoamInfo->csrNeighborRoamProfile.BSSIDs.
+			      bssid);
+	} else if (pSession->pConnectBssDesc) {
+		qdf_mem_copy(&bssId.bytes, pSession->pConnectBssDesc->bssId,
+			     sizeof(struct qdf_mac_addr));
+	}
+
+	sme_debug("CSR Attempting to Disassociate Bssid=" QDF_MAC_ADDR_STR
+		   " subState: %s reason: %d", QDF_MAC_ADDR_ARRAY(bssId.bytes),
+		mac_trace_getcsr_roam_sub_state(NewSubstate), reasonCode);
+
+	csr_roam_substate_change(mac, NewSubstate, sessionId);
+
+	status = csr_send_mb_disassoc_req_msg(mac, sessionId, bssId.bytes,
+					      reasonCode);
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		csr_roam_link_down(mac, sessionId);
+#ifndef WLAN_MDM_CODE_REDUCTION_OPT
+		/* no need to tell QoS that we are disassociating, it will be
+		 * taken care off in assoc req for HO
+		 */
+		if (eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF != NewSubstate) {
+			/* notify QoS module that disassoc happening */
+			sme_qos_csr_event_ind(mac, (uint8_t)sessionId,
+					      SME_QOS_CSR_DISCONNECT_REQ, NULL);
+		}
+#endif
+	} else {
+		sme_warn("csr_send_mb_disassoc_req_msg failed status: %d",
+			 status);
+	}
+
+	return status;
+}
+
+/* This function assumes that we only support one IBSS session.
+ * We cannot use BSSID to identify session because for IBSS,
+ * the bssid changes.
+ */
+#ifdef QCA_IBSS_SUPPORT
+static uint32_t csr_find_ibss_session(struct mac_context *mac)
+{
+	uint32_t i, nRet = WLAN_UMAC_VDEV_ID_MAX;
+	struct csr_roam_session *pSession;
+
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
+		if (CSR_IS_SESSION_VALID(mac, i)) {
+			pSession = CSR_GET_SESSION(mac, i);
+			if (pSession->pCurRoamProfile &&
+			    (csr_is_bss_type_ibss
+				     (pSession->connectedProfile.BSSType))) {
+				/* Found it */
+				nRet = i;
+				break;
+			}
+		}
+	}
+	return nRet;
+}
+
+static QDF_STATUS
+csr_roam_start_ibss(struct mac_context *mac, uint32_t sessionId,
+		    struct csr_roam_profile *pProfile,
+		    bool *pfSameIbss)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	bool fSameIbss = false;
+
+	if (csr_is_conn_state_ibss(mac, sessionId)) {
+		/* Check if any profile parameter has changed ? If any profile
+		 * parameter has changed then stop old BSS and start a new one
+		 * with new parameters
+		 */
+		if (csr_is_same_profile(mac,
+				&mac->roam.roamSession[sessionId].
+				connectedProfile, pProfile))
+			fSameIbss = true;
+		else
+			status = csr_roam_issue_stop_bss(mac, sessionId,
+				eCSR_ROAM_SUBSTATE_DISCONNECT_CONTINUE_ROAMING);
+
+	} else if (csr_is_conn_state_connected_infra(mac, sessionId))
+		/* Disassociate from the connected Infrastructure network... */
+		status = csr_roam_issue_disassociate(mac, sessionId,
+				eCSR_ROAM_SUBSTATE_DISCONNECT_CONTINUE_ROAMING,
+						    false);
+	else {
+		struct bss_config_param *pBssConfig;
+
+		pBssConfig = qdf_mem_malloc(sizeof(struct bss_config_param));
+		if (!pBssConfig)
+			status = QDF_STATUS_E_NOMEM;
+		else
+			status = QDF_STATUS_SUCCESS;
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			/* there is no Bss description before we start an IBSS
+			 * so we need to adopt all Bss configuration parameters
+			 * from the Profile.
+			 */
+			status = csr_roam_prepare_bss_config_from_profile(mac,
+								pProfile,
+								pBssConfig,
+								NULL);
+			if (QDF_IS_STATUS_SUCCESS(status)) {
+				/* save dotMode */
+				mac->roam.roamSession[sessionId].bssParams.
+				uCfgDot11Mode = pBssConfig->uCfgDot11Mode;
+				/* Prepare some more parameters for this IBSS */
+				csr_roam_prepare_bss_params(mac, sessionId,
+							    pProfile, NULL,
+							    pBssConfig, NULL);
+				status = csr_roam_set_bss_config_cfg(mac,
+								sessionId,
+								pProfile, NULL,
+								pBssConfig,
+								NULL, false);
+			}
+
+			qdf_mem_free(pBssConfig);
+		} /* Allocate memory */
+	}
+
+	if (pfSameIbss)
+		*pfSameIbss = fSameIbss;
+	return status;
+}
+
+static void
+csr_roam_chk_lnk_ibss_new_peer_ind(struct mac_context *mac_ctx,
+				   tSirSmeRsp *msg_ptr)
+{
+	struct csr_roam_session *session;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
+	QDF_STATUS status;
+	struct csr_roam_info *roam_info = NULL;
+	tSmeIbssPeerInd *pIbssPeerInd = (tSmeIbssPeerInd *) msg_ptr;
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+	host_log_ibss_pkt_type *pIbssLog;
+
+	WLAN_HOST_DIAG_LOG_ALLOC(pIbssLog, host_log_ibss_pkt_type,
+				 LOG_WLAN_IBSS_C);
+	if (pIbssLog) {
+		pIbssLog->eventId = WLAN_IBSS_EVENT_PEER_JOIN;
+		qdf_copy_macaddr(&pIbssLog->peer_macaddr,
+				 &pIbssPeerInd->peer_addr);
+		WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);
+	}
+#endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
+
+	sessionId = csr_find_ibss_session(mac_ctx);
+	if (WLAN_UMAC_VDEV_ID_MAX == sessionId)
+		return;
+	session = CSR_GET_SESSION(mac_ctx, sessionId);
+	if (!session) {
+		sme_err("session %d not found", sessionId);
+		return;
+	}
+	/*
+	 * Issue the set Context request to LIM to establish the Unicast STA
+	 * context for the new peer...
+	 */
+	if (!session->pConnectBssDesc) {
+		sme_warn("CSR: connected BSS is empty");
+		goto callback_and_free;
+	}
+	roam_info = qdf_mem_malloc(sizeof(*roam_info));
+	if (!roam_info)
+		goto callback_and_free;
+	qdf_copy_macaddr(&roam_info->peerMac, &pIbssPeerInd->peer_addr);
+	qdf_mem_copy(&roam_info->bssid, session->pConnectBssDesc->bssId,
+		     sizeof(struct qdf_mac_addr));
+	if (pIbssPeerInd->mesgLen > sizeof(tSmeIbssPeerInd)) {
+		roam_info->pbFrames = qdf_mem_malloc((pIbssPeerInd->mesgLen -
+					sizeof(tSmeIbssPeerInd)));
+		if (!roam_info->pbFrames) {
+			status = QDF_STATUS_E_NOMEM;
+		} else {
+			status = QDF_STATUS_SUCCESS;
+			roam_info->nBeaconLength = pIbssPeerInd->mesgLen -
+							sizeof(tSmeIbssPeerInd);
+			qdf_mem_copy(roam_info->pbFrames,
+				     ((uint8_t *)pIbssPeerInd) +
+				     sizeof(tSmeIbssPeerInd),
+				     roam_info->nBeaconLength);
+		}
+		roam_info->staId = (uint8_t)pIbssPeerInd->staId;
+		roam_info->bss_desc = qdf_mem_malloc(
+					session->pConnectBssDesc->length);
+		if (!roam_info->bss_desc) {
+			status = QDF_STATUS_E_NOMEM;
+		} else {
+			status = QDF_STATUS_SUCCESS;
+			qdf_mem_copy(roam_info->bss_desc,
+				     session->pConnectBssDesc,
+				     session->pConnectBssDesc->length);
+		}
+	}
+	if ((eCSR_ENCRYPT_TYPE_NONE ==
+		session->connectedProfile.EncryptionType)) {
+		/* NO keys. these key parameters don't matter */
+		csr_roam_issue_set_context_req_helper(mac_ctx, sessionId,
+			session->connectedProfile.EncryptionType,
+			session->pConnectBssDesc,
+			&pIbssPeerInd->peer_addr.bytes,
+			false, true, eSIR_TX_RX, 0, 0, NULL, 0);
+	}
+
+callback_and_free:
+	/* send up the sec type for the new peer */
+	if (roam_info)
+		roam_info->u.pConnectedProfile = &session->connectedProfile;
+	csr_roam_call_callback(mac_ctx, sessionId, roam_info, 0,
+			       eCSR_ROAM_CONNECT_STATUS_UPDATE,
+			       eCSR_ROAM_RESULT_IBSS_NEW_PEER);
+	if (roam_info) {
+		qdf_mem_free(roam_info->pbFrames);
+		qdf_mem_free(roam_info->bss_desc);
+		qdf_mem_free(roam_info);
+	}
+}
+
+static void
+csr_roam_chk_lnk_ibss_peer_departed_ind(struct mac_context *mac_ctx,
+					tSirSmeRsp *msg_ptr)
+{
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
+	struct csr_roam_info *roam_info;
+	tSmeIbssPeerInd *pIbssPeerInd;
+
+	if (!msg_ptr) {
+		sme_err("IBSS peer ind. message is NULL");
+		return;
+	}
+	roam_info = qdf_mem_malloc(sizeof(*roam_info));
+	if (!roam_info)
+		return;
+	pIbssPeerInd = (tSmeIbssPeerInd *)msg_ptr;
+	sessionId = csr_find_ibss_session(mac_ctx);
+	if (WLAN_UMAC_VDEV_ID_MAX != sessionId) {
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+		host_log_ibss_pkt_type *pIbssLog;
+
+		WLAN_HOST_DIAG_LOG_ALLOC(pIbssLog, host_log_ibss_pkt_type,
+					 LOG_WLAN_IBSS_C);
+		if (pIbssLog) {
+			pIbssLog->eventId = WLAN_IBSS_EVENT_PEER_LEAVE;
+			if (pIbssPeerInd) {
+				qdf_copy_macaddr(&pIbssLog->peer_macaddr,
+						 &pIbssPeerInd->peer_addr);
+			}
+			WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);
+		}
+#endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
+		sme_debug("CSR: Peer departed notification from LIM");
+		roam_info->staId = (uint8_t)pIbssPeerInd->staId;
+		qdf_copy_macaddr(&roam_info->peerMac, &pIbssPeerInd->peer_addr);
+		csr_roam_call_callback(mac_ctx, sessionId, roam_info, 0,
+				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
+				       eCSR_ROAM_RESULT_IBSS_PEER_DEPARTED);
+	}
+	qdf_mem_free(roam_info);
+}
+
+static uint32_t
+csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
+{
+	uint32_t ch_freq = 0;
+	uint32_t idx;
+	uint32_t id_Valid_ch;
+	bool fFound = false;
+	uint32_t len = sizeof(mac->roam.valid_ch_freq_list);
+
+	if (mac->roam.configParam.ad_hoc_ch_freq_5g) {
+		ch_freq = mac->roam.configParam.ad_hoc_ch_freq_5g;
+		if (!csr_roam_is_chan_freq_valid(mac, ch_freq))
+			ch_freq = 0;
+	}
+	if (0 == ch_freq
+	    &&
+	    QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels(mac,
+				mac->roam.valid_ch_freq_list, &len))) {
+		for (idx = 0; (idx < CSR_NUM_IBSS_START_CHAN_50) && !fFound;
+		     idx++) {
+			for (id_Valid_ch = 0;
+			     (id_Valid_ch < len) && !fFound;
+			     id_Valid_ch++) {
+				if (csr_start_ibss_channels50[idx] ==
+				    mac->roam.valid_ch_freq_list[id_Valid_ch]) {
+					fFound = true;
+					ch_freq =
+						csr_start_ibss_channels50[idx];
+				}
+			}
+		}
+		/*
+		 * this is rare, but if it does happen,
+		 * we find anyone in 11a bandwidth and
+		 * return the first 11a channel found!
+		 */
+		if (!fFound) {
+			for (id_Valid_ch = 0; id_Valid_ch < len;
+			     id_Valid_ch++) {
+				if (WLAN_REG_IS_5GHZ_CH_FREQ(
+				   mac->roam.valid_ch_freq_list[id_Valid_ch])) {
+					/* the max channel# in 11g is 14 */
+					if (id_Valid_ch <
+					    CSR_NUM_IBSS_START_CHAN_50) {
+						ch_freq =
+						mac->roam.valid_ch_freq_list
+						[id_Valid_ch];
+					}
+					break;
+				}
+			}
+		}
+	} /* if */
+
+	return wlan_reg_freq_to_chan(mac->pdev, ch_freq);
+}
+
+static uint32_t
+csr_roam_get_ibss_start_channel_number24(struct mac_context *mac)
+{
+	uint32_t ch_freq = 2412;
+	uint32_t idx;
+	uint32_t id_Valid_ch;
+	bool fFound = false;
+	uint32_t len = sizeof(mac->roam.valid_ch_freq_list);
+
+	if (mac->roam.configParam.ad_hoc_ch_freq_2g) {
+		ch_freq = mac->roam.configParam.ad_hoc_ch_freq_2g;
+		if (!csr_roam_is_chan_freq_valid(mac, ch_freq))
+			ch_freq = 0;
+	}
+
+	if (0 == ch_freq
+	    &&
+	    QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels(mac,
+						mac->roam.valid_ch_freq_list,
+						&len))) {
+		for (idx = 0; (idx < CSR_NUM_IBSS_START_CHANNELS_24) && !fFound;
+		     idx++) {
+			for (id_Valid_ch = 0;
+			     (id_Valid_ch < len) && !fFound;
+			     id_Valid_ch++) {
+				if (csr_start_ibss_channels24[idx] ==
+				    mac->roam.valid_ch_freq_list[id_Valid_ch]) {
+					fFound = true;
+					ch_freq =
+						csr_start_ibss_channels24[idx];
+				}
+			}
+		}
+	}
+
+	return wlan_reg_freq_to_chan(mac->pdev, ch_freq);
+}
+#else
+static inline uint32_t
+csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
+{
+	return 0;
+}
+
+static inline uint32_t
+csr_roam_get_ibss_start_channel_number24(struct mac_context *mac)
+{
+	return 0;
+}
+
+static inline void
+csr_roam_chk_lnk_ibss_new_peer_ind(struct mac_context *mac_ctx,
+				   tSirSmeRsp *msg_ptr)
+{
+}
+
+static void
+csr_roam_chk_lnk_ibss_peer_departed_ind(struct mac_context *mac_ctx,
+					tSirSmeRsp *msg_ptr)
+{
+}
+
+static QDF_STATUS
+csr_roam_start_ibss(struct mac_context *mac, uint32_t sessionId,
+		    struct csr_roam_profile *pProfile,
+		    bool *pfSameIbss)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint32_t
+csr_find_ibss_session(struct mac_context *mac)
+{
+	return WLAN_MAX_VDEVS;
+}
+#endif
 
 static void csr_roam_de_init_globals(struct mac_context *mac)
 {
@@ -3506,81 +3939,6 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 				EVENT_WLAN_STATUS_V2);
 	}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
-
-	return status;
-}
-
-/* Returns whether handoff is currently in progress or not */
-static
-bool csr_roam_is_handoff_in_progress(struct mac_context *mac, uint8_t sessionId)
-{
-	return csr_neighbor_roam_is_handoff_in_progress(mac, sessionId);
-}
-
-static
-QDF_STATUS csr_roam_issue_disassociate(struct mac_context *mac, uint32_t sessionId,
-				       enum csr_roam_substate NewSubstate,
-				       bool fMICFailure)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct qdf_mac_addr bssId = QDF_MAC_ADDR_BCAST_INIT;
-	uint16_t reasonCode;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-
-	if (!pSession) {
-		sme_err("session %d not found", sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (fMICFailure) {
-		reasonCode = eSIR_MAC_MIC_FAILURE_REASON;
-	} else if (NewSubstate == eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF) {
-		reasonCode = eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON;
-	} else if (eCSR_ROAM_SUBSTATE_DISASSOC_STA_HAS_LEFT == NewSubstate) {
-		reasonCode = eSIR_MAC_DISASSOC_LEAVING_BSS_REASON;
-		NewSubstate = eCSR_ROAM_SUBSTATE_DISASSOC_FORCED;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"set to reason code eSIR_MAC_DISASSOC_LEAVING_BSS_REASON and set back NewSubstate");
-	} else {
-		reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
-	}
-	if ((csr_roam_is_handoff_in_progress(mac, sessionId)) &&
-	    (NewSubstate != eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF)) {
-		tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-			&mac->roam.neighborRoamInfo[sessionId];
-		qdf_copy_macaddr(&bssId,
-			      pNeighborRoamInfo->csrNeighborRoamProfile.BSSIDs.
-			      bssid);
-	} else if (pSession->pConnectBssDesc) {
-		qdf_mem_copy(&bssId.bytes, pSession->pConnectBssDesc->bssId,
-			     sizeof(struct qdf_mac_addr));
-	}
-
-	sme_debug("CSR Attempting to Disassociate Bssid=" QDF_MAC_ADDR_STR
-		   " subState: %s reason: %d", QDF_MAC_ADDR_ARRAY(bssId.bytes),
-		mac_trace_getcsr_roam_sub_state(NewSubstate), reasonCode);
-
-	csr_roam_substate_change(mac, NewSubstate, sessionId);
-
-	status = csr_send_mb_disassoc_req_msg(mac, sessionId, bssId.bytes,
-						reasonCode);
-
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		csr_roam_link_down(mac, sessionId);
-#ifndef WLAN_MDM_CODE_REDUCTION_OPT
-		/* no need to tell QoS that we are disassociating, it will be
-		 * taken care off in assoc req for HO
-		 */
-		if (eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF != NewSubstate) {
-			/* notify QoS module that disassoc happening */
-			sme_qos_csr_event_ind(mac, (uint8_t) sessionId,
-					      SME_QOS_CSR_DISCONNECT_REQ, NULL);
-		}
-#endif
-	} else {
-		sme_warn("csr_send_mb_disassoc_req_msg failed status: %d",
-			status);
-	}
 
 	return status;
 }
@@ -12009,141 +12367,6 @@ out:
 	qdf_mem_free(roam_info);
 }
 
-static void
-csr_roam_chk_lnk_ibss_new_peer_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
-{
-	struct csr_roam_session *session;
-	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
-	QDF_STATUS status;
-	struct csr_roam_info *roam_info = NULL;
-	tSmeIbssPeerInd *pIbssPeerInd = (tSmeIbssPeerInd *) msg_ptr;
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-	host_log_ibss_pkt_type *pIbssLog;
-
-	WLAN_HOST_DIAG_LOG_ALLOC(pIbssLog, host_log_ibss_pkt_type,
-				 LOG_WLAN_IBSS_C);
-	if (pIbssLog) {
-		pIbssLog->eventId = WLAN_IBSS_EVENT_PEER_JOIN;
-		qdf_copy_macaddr(&pIbssLog->peer_macaddr,
-				 &pIbssPeerInd->peer_addr);
-		WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);
-	}
-#endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
-
-	sessionId = csr_find_ibss_session(mac_ctx);
-	if (WLAN_UMAC_VDEV_ID_MAX == sessionId)
-		return;
-	session = CSR_GET_SESSION(mac_ctx, sessionId);
-	if (!session) {
-		sme_err("session %d not found", sessionId);
-		return;
-	}
-	/*
-	 * Issue the set Context request to LIM to establish the Unicast STA
-	 * context for the new peer...
-	 */
-	if (!session->pConnectBssDesc) {
-		sme_warn("CSR: connected BSS is empty");
-		goto callback_and_free;
-	}
-	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (!roam_info)
-		goto callback_and_free;
-	qdf_copy_macaddr(&roam_info->peerMac, &pIbssPeerInd->peer_addr);
-	qdf_mem_copy(&roam_info->bssid, session->pConnectBssDesc->bssId,
-		     sizeof(struct qdf_mac_addr));
-	if (pIbssPeerInd->mesgLen > sizeof(tSmeIbssPeerInd)) {
-		roam_info->pbFrames = qdf_mem_malloc((pIbssPeerInd->mesgLen -
-					sizeof(tSmeIbssPeerInd)));
-		if (!roam_info->pbFrames) {
-			status = QDF_STATUS_E_NOMEM;
-		} else {
-			status = QDF_STATUS_SUCCESS;
-			roam_info->nBeaconLength = pIbssPeerInd->mesgLen -
-							sizeof(tSmeIbssPeerInd);
-			qdf_mem_copy(roam_info->pbFrames,
-				     ((uint8_t *)pIbssPeerInd) +
-				     sizeof(tSmeIbssPeerInd),
-				     roam_info->nBeaconLength);
-		}
-		roam_info->staId = (uint8_t)pIbssPeerInd->staId;
-		roam_info->bss_desc = qdf_mem_malloc(
-					session->pConnectBssDesc->length);
-		if (!roam_info->bss_desc) {
-			status = QDF_STATUS_E_NOMEM;
-		} else {
-			status = QDF_STATUS_SUCCESS;
-			qdf_mem_copy(roam_info->bss_desc,
-				     session->pConnectBssDesc,
-				     session->pConnectBssDesc->length);
-		}
-	}
-	if ((eCSR_ENCRYPT_TYPE_NONE ==
-		session->connectedProfile.EncryptionType)) {
-		/* NO keys. these key parameters don't matter */
-		csr_roam_issue_set_context_req_helper(mac_ctx, sessionId,
-			session->connectedProfile.EncryptionType,
-			session->pConnectBssDesc,
-			&pIbssPeerInd->peer_addr.bytes,
-			false, true, eSIR_TX_RX, 0, 0, NULL, 0);
-	}
-
-callback_and_free:
-	/* send up the sec type for the new peer */
-	if (roam_info)
-		roam_info->u.pConnectedProfile = &session->connectedProfile;
-	csr_roam_call_callback(mac_ctx, sessionId, roam_info, 0,
-			       eCSR_ROAM_CONNECT_STATUS_UPDATE,
-			       eCSR_ROAM_RESULT_IBSS_NEW_PEER);
-	if (roam_info) {
-		qdf_mem_free(roam_info->pbFrames);
-		qdf_mem_free(roam_info->bss_desc);
-		qdf_mem_free(roam_info);
-	}
-}
-
-static void
-csr_roam_chk_lnk_ibss_peer_departed_ind(struct mac_context *mac_ctx,
-					tSirSmeRsp *msg_ptr)
-{
-	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
-	struct csr_roam_info *roam_info;
-	tSmeIbssPeerInd *pIbssPeerInd;
-
-	if (!msg_ptr) {
-		sme_err("IBSS peer ind. message is NULL");
-		return;
-	}
-	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (!roam_info)
-		return;
-	pIbssPeerInd = (tSmeIbssPeerInd *) msg_ptr;
-	sessionId = csr_find_ibss_session(mac_ctx);
-	if (WLAN_UMAC_VDEV_ID_MAX != sessionId) {
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-		host_log_ibss_pkt_type *pIbssLog;
-
-		WLAN_HOST_DIAG_LOG_ALLOC(pIbssLog, host_log_ibss_pkt_type,
-					 LOG_WLAN_IBSS_C);
-		if (pIbssLog) {
-			pIbssLog->eventId = WLAN_IBSS_EVENT_PEER_LEAVE;
-			if (pIbssPeerInd) {
-				qdf_copy_macaddr(&pIbssLog->peer_macaddr,
-						 &pIbssPeerInd->peer_addr);
-			}
-			WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);
-		}
-#endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
-		sme_debug("CSR: Peer departed notification from LIM");
-		roam_info->staId = (uint8_t)pIbssPeerInd->staId;
-		qdf_copy_macaddr(&roam_info->peerMac, &pIbssPeerInd->peer_addr);
-		csr_roam_call_callback(mac_ctx, sessionId, roam_info, 0,
-				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
-				       eCSR_ROAM_RESULT_IBSS_PEER_DEPARTED);
-	}
-	qdf_mem_free(roam_info);
-}
-
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 static void
 csr_roam_diag_set_ctx_rsp(struct mac_context *mac_ctx,
@@ -13702,102 +13925,6 @@ static bool csr_roam_is_same_profile_keys(struct mac_context *mac,
 	return fCheck;
 }
 
-/* IBSS */
-
-static uint32_t
-csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
-{
-	uint32_t ch_freq = 0;
-	uint32_t idx;
-	uint32_t id_Valid_ch;
-	bool fFound = false;
-	uint32_t len = sizeof(mac->roam.valid_ch_freq_list);
-
-	if (mac->roam.configParam.ad_hoc_ch_freq_5g) {
-		ch_freq = mac->roam.configParam.ad_hoc_ch_freq_5g;
-		if (!csr_roam_is_chan_freq_valid(mac, ch_freq))
-			ch_freq = 0;
-	}
-	if (0 == ch_freq
-	    &&
-	    QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels(mac,
-				mac->roam.valid_ch_freq_list, &len))) {
-		for (idx = 0; (idx < CSR_NUM_IBSS_START_CHAN_50) && !fFound;
-		     idx++) {
-			for (id_Valid_ch = 0;
-			     (id_Valid_ch < len) && !fFound;
-			     id_Valid_ch++) {
-				if (csr_start_ibss_channels50[idx] ==
-				    mac->roam.valid_ch_freq_list[id_Valid_ch]) {
-					fFound = true;
-					ch_freq =
-						csr_start_ibss_channels50[idx];
-				}
-			}
-		}
-		/*
-		 * this is rare, but if it does happen,
-		 * we find anyone in 11a bandwidth and
-		 * return the first 11a channel found!
-		 */
-		if (!fFound) {
-			for (id_Valid_ch = 0; id_Valid_ch < len;
-			     id_Valid_ch++) {
-				if (WLAN_REG_IS_5GHZ_CH_FREQ(
-				   mac->roam.valid_ch_freq_list[id_Valid_ch])) {
-					/* the max channel# in 11g is 14 */
-					if (id_Valid_ch <
-					    CSR_NUM_IBSS_START_CHAN_50) {
-						ch_freq =
-						mac->roam.valid_ch_freq_list
-						[id_Valid_ch];
-					}
-					break;
-				}
-			}
-		}
-	} /* if */
-
-	return wlan_reg_freq_to_chan(mac->pdev, ch_freq);
-}
-
-static uint32_t
-csr_roam_get_ibss_start_channel_number24(struct mac_context *mac)
-{
-	uint32_t ch_freq = 2412;
-	uint32_t idx;
-	uint32_t id_Valid_ch;
-	bool fFound = false;
-	uint32_t len = sizeof(mac->roam.valid_ch_freq_list);
-
-	if (mac->roam.configParam.ad_hoc_ch_freq_2g) {
-		ch_freq = mac->roam.configParam.ad_hoc_ch_freq_2g;
-		if (!csr_roam_is_chan_freq_valid(mac, ch_freq))
-			ch_freq = 0;
-	}
-
-	if (0 == ch_freq
-	    &&
-	    QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels(mac,
-						mac->roam.valid_ch_freq_list,
-						&len))) {
-		for (idx = 0; (idx < CSR_NUM_IBSS_START_CHANNELS_24) && !fFound;
-		     idx++) {
-			for (id_Valid_ch = 0;
-			     (id_Valid_ch < len) && !fFound;
-			     id_Valid_ch++) {
-				if (csr_start_ibss_channels24[idx] ==
-				    mac->roam.valid_ch_freq_list[id_Valid_ch]) {
-					fFound = true;
-					ch_freq =
-						csr_start_ibss_channels24[idx];
-				}
-			}
-		}
-	}
-
-	return wlan_reg_freq_to_chan(mac->pdev, ch_freq);
-}
 /**
  * csr_populate_basic_rates() - populates OFDM or CCK rates
  * @rates:         rate struct to populate
@@ -14346,72 +14473,6 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 			pSession->bssParams.cbMode = cbMode;
 		}
 	}
-}
-
-static QDF_STATUS csr_roam_start_ibss(struct mac_context *mac, uint32_t sessionId,
-				      struct csr_roam_profile *pProfile,
-				      bool *pfSameIbss)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	bool fSameIbss = false;
-
-	if (csr_is_conn_state_ibss(mac, sessionId)) {
-		/* Check if any profile parameter has changed ? If any profile
-		 * parameter has changed then stop old BSS and start a new one
-		 * with new parameters
-		 */
-		if (csr_is_same_profile(mac,
-				&mac->roam.roamSession[sessionId].
-				connectedProfile, pProfile))
-			fSameIbss = true;
-		else
-			status = csr_roam_issue_stop_bss(mac, sessionId,
-				eCSR_ROAM_SUBSTATE_DISCONNECT_CONTINUE_ROAMING);
-
-	} else if (csr_is_conn_state_connected_infra(mac, sessionId))
-		/* Disassociate from the connected Infrastructure network... */
-		status = csr_roam_issue_disassociate(mac, sessionId,
-				eCSR_ROAM_SUBSTATE_DISCONNECT_CONTINUE_ROAMING,
-						    false);
-	else {
-		struct bss_config_param *pBssConfig;
-
-		pBssConfig = qdf_mem_malloc(sizeof(struct bss_config_param));
-		if (!pBssConfig)
-			status = QDF_STATUS_E_NOMEM;
-		else
-			status = QDF_STATUS_SUCCESS;
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			/* there is no Bss description before we start an IBSS
-			 * so we need to adopt all Bss configuration parameters
-			 * from the Profile.
-			 */
-			status = csr_roam_prepare_bss_config_from_profile(mac,
-								pProfile,
-								pBssConfig,
-								NULL);
-			if (QDF_IS_STATUS_SUCCESS(status)) {
-				/* save dotMode */
-				mac->roam.roamSession[sessionId].bssParams.
-				uCfgDot11Mode = pBssConfig->uCfgDot11Mode;
-				/* Prepare some more parameters for this IBSS */
-				csr_roam_prepare_bss_params(mac, sessionId,
-							    pProfile, NULL,
-							    pBssConfig, NULL);
-				status = csr_roam_set_bss_config_cfg(mac,
-								sessionId,
-								pProfile, NULL,
-								pBssConfig,
-								NULL, false);
-			}
-
-			qdf_mem_free(pBssConfig);
-		} /* Allocate memory */
-	}
-
-	if (pfSameIbss)
-		*pfSameIbss = fSameIbss;
-	return status;
 }
 
 static void csr_roam_update_connected_profile_from_new_bss(struct mac_context *mac,
@@ -17369,31 +17430,6 @@ QDF_STATUS csr_roam_get_session_id_from_bssid(struct mac_context *mac,
 		}
 	}
 	return status;
-}
-
-/* This function assumes that we only support one IBSS session.
- * We cannot use BSSID to identify session because for IBSS,
- * the bssid changes.
- */
-static uint32_t csr_find_ibss_session(struct mac_context *mac)
-{
-	uint32_t i, nRet = WLAN_UMAC_VDEV_ID_MAX;
-	struct csr_roam_session *pSession;
-
-	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
-		if (CSR_IS_SESSION_VALID(mac, i)) {
-			pSession = CSR_GET_SESSION(mac, i);
-			if (pSession->pCurRoamProfile
-			    &&
-			    (csr_is_bss_type_ibss
-				     (pSession->connectedProfile.BSSType))) {
-				/* Found it */
-				nRet = i;
-				break;
-			}
-		}
-	}
-	return nRet;
 }
 
 static void csr_roam_link_up(struct mac_context *mac, struct qdf_mac_addr bssid)

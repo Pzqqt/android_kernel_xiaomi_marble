@@ -583,20 +583,6 @@ static bool csr_is_conn_state(struct mac_context *mac_ctx, uint32_t session_id,
 	return mac_ctx->roam.roamSession[session_id].connectState == state;
 }
 
-bool csr_is_conn_state_connected_ibss(struct mac_context *mac_ctx,
-				      uint32_t session_id)
-{
-	return csr_is_conn_state(mac_ctx, session_id,
-				 eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED);
-}
-
-bool csr_is_conn_state_disconnected_ibss(struct mac_context *mac_ctx,
-					 uint32_t session_id)
-{
-	return csr_is_conn_state(mac_ctx, session_id,
-				 eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED);
-}
-
 bool csr_is_conn_state_connected_infra(struct mac_context *mac_ctx,
 				       uint32_t session_id)
 {
@@ -616,11 +602,53 @@ bool csr_is_conn_state_infra(struct mac_context *mac, uint32_t sessionId)
 	return csr_is_conn_state_connected_infra(mac, sessionId);
 }
 
+static tSirMacCapabilityInfo csr_get_bss_capabilities(struct bss_description *
+						      pSirBssDesc)
+{
+	tSirMacCapabilityInfo dot11Caps;
+
+	/* tSirMacCapabilityInfo is 16-bit */
+	qdf_get_u16((uint8_t *) &pSirBssDesc->capabilityInfo,
+		    (uint16_t *) &dot11Caps);
+
+	return dot11Caps;
+}
+
+#ifdef QCA_IBSS_SUPPORT
+bool csr_is_conn_state_connected_ibss(struct mac_context *mac_ctx,
+				      uint32_t session_id)
+{
+	return csr_is_conn_state(mac_ctx, session_id,
+				 eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED);
+}
+
+bool csr_is_conn_state_disconnected_ibss(struct mac_context *mac_ctx,
+					 uint32_t session_id)
+{
+	return csr_is_conn_state(mac_ctx, session_id,
+				 eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED);
+}
+
 bool csr_is_conn_state_ibss(struct mac_context *mac, uint32_t sessionId)
 {
 	return csr_is_conn_state_connected_ibss(mac, sessionId) ||
 	       csr_is_conn_state_disconnected_ibss(mac, sessionId);
 }
+
+bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
+{
+	return (bool)
+		(eCSR_BSS_TYPE_START_IBSS == bssType
+		 || eCSR_BSS_TYPE_IBSS == bssType);
+}
+
+bool csr_is_ibss_bss_desc(struct bss_description *pSirBssDesc)
+{
+	tSirMacCapabilityInfo dot11Caps = csr_get_bss_capabilities(pSirBssDesc);
+
+	return (bool) dot11Caps.ibss;
+}
+#endif
 
 bool csr_is_conn_state_connected_wds(struct mac_context *mac_ctx,
 				     uint32_t session_id)
@@ -1245,30 +1273,11 @@ bool csr_is_valid_mc_concurrent_session(struct mac_context *mac_ctx,
 	return false;
 }
 
-static tSirMacCapabilityInfo csr_get_bss_capabilities(struct bss_description *
-						      pSirBssDesc)
-{
-	tSirMacCapabilityInfo dot11Caps;
-
-	/* tSirMacCapabilityInfo is 16-bit */
-	qdf_get_u16((uint8_t *) &pSirBssDesc->capabilityInfo,
-		    (uint16_t *) &dot11Caps);
-
-	return dot11Caps;
-}
-
 bool csr_is_infra_bss_desc(struct bss_description *pSirBssDesc)
 {
 	tSirMacCapabilityInfo dot11Caps = csr_get_bss_capabilities(pSirBssDesc);
 
 	return (bool) dot11Caps.ess;
-}
-
-bool csr_is_ibss_bss_desc(struct bss_description *pSirBssDesc)
-{
-	tSirMacCapabilityInfo dot11Caps = csr_get_bss_capabilities(pSirBssDesc);
-
-	return (bool) dot11Caps.ibss;
 }
 
 static bool csr_is_qos_bss_desc(struct bss_description *pSirBssDesc)
@@ -5609,13 +5618,6 @@ bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 	} while (0);
 
 	return fMatch;
-}
-
-bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
-{
-	return (bool)
-		(eCSR_BSS_TYPE_START_IBSS == bssType
-		 || eCSR_BSS_TYPE_IBSS == bssType);
 }
 
 /**
