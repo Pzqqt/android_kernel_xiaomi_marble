@@ -456,7 +456,7 @@ static inline bool _sde_core_perf_is_wb(struct drm_crtc *crtc)
 {
 	enum sde_intf_mode if_mode = INTF_MODE_NONE;
 
-	if_mode = sde_crtc_get_intf_mode(crtc);
+	if_mode = sde_crtc_get_intf_mode(crtc, crtc->state);
 	if (if_mode == INTF_MODE_WB_BLOCK ||
 		if_mode == INTF_MODE_WB_LINE)
 		return true;
@@ -678,7 +678,7 @@ void sde_core_perf_crtc_release_bw(struct drm_crtc *crtc)
 	sde_cstate = to_sde_crtc_state(crtc->state);
 
 	/* only do this for command mode rt client (non-rsc client) */
-	if ((sde_crtc_get_intf_mode(crtc) != INTF_MODE_CMD) &&
+	if ((sde_crtc_get_intf_mode(crtc, crtc->state) != INTF_MODE_CMD) &&
 		(sde_crtc_get_client_type(crtc) != RT_RSC_CLIENT))
 		return;
 
@@ -686,11 +686,11 @@ void sde_core_perf_crtc_release_bw(struct drm_crtc *crtc)
 	 * If video interface present, cmd panel bandwidth cannot be
 	 * released.
 	 */
-	if (sde_crtc_get_intf_mode(crtc) == INTF_MODE_CMD)
+	if (sde_crtc_get_intf_mode(crtc, crtc->state) == INTF_MODE_CMD)
 		drm_for_each_crtc(tmp_crtc, crtc->dev) {
 			if (_sde_core_perf_crtc_is_power_on(tmp_crtc) &&
-				sde_crtc_get_intf_mode(tmp_crtc) ==
-						INTF_MODE_VIDEO)
+				sde_crtc_get_intf_mode(tmp_crtc,
+					tmp_crtc->state) == INTF_MODE_VIDEO)
 				return;
 		}
 

@@ -593,9 +593,11 @@ int sde_crtc_register_custom_event(struct sde_kms *kms,
 
 /**
  * sde_crtc_get_intf_mode - get interface mode of the given crtc
- * @crtc: Pointert to crtc
+ * @crtc: Pointert to DRM crtc
+ * @crtc: Pointert to DRM crtc_state
  */
-enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc);
+enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc,
+		struct drm_crtc_state *cstate);
 
 /**
  * sde_crtc_get_fps_mode - get frame rate of the given crtc
@@ -621,14 +623,16 @@ static inline enum sde_crtc_client_type sde_crtc_get_client_type(
 
 /**
  * sde_crtc_is_rt_client - check if real-time client or not
- * @crtc: Pointer to crtc
+ * @crtc: Pointer to DRM crtc
+ * @crtc_state: Pointer to DRM crtc_state
  */
-static inline bool sde_crtc_is_rt_client(struct drm_crtc *crtc)
+static inline bool sde_crtc_is_rt_client(struct drm_crtc *crtc,
+		struct drm_crtc_state *cstate)
 {
-	if (!crtc || !crtc->state)
+	if (!crtc || !cstate)
 		return true;
 
-	return (sde_crtc_get_intf_mode(crtc) != INTF_MODE_WB_LINE);
+	return (sde_crtc_get_intf_mode(crtc, cstate) != INTF_MODE_WB_LINE);
 }
 
 /**
