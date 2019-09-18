@@ -1958,6 +1958,22 @@ wma_cleanup_vdev_resp_and_hold_req(struct scheduler_msg *msg)
 }
 
 /**
+ * wma_cleanup_vdev_resp_and_hold_req_flush_cb() - flush cb for the msg to clean
+ * up vdev resp and hold req
+ * @msg :scheduler msg
+ *
+ * As passed msg->bodyptr is wma in this case this is dummy flush cb so that
+ * driver doesnt try to free msg->bodyptr when this msg is flushed.
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+wma_cleanup_vdev_resp_and_hold_req_flush_cb(struct scheduler_msg *msg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_shutdown_notifier_cb - Shutdown notifer call back
  * @priv : WMA handle
  *
@@ -1978,8 +1994,9 @@ static void wma_shutdown_notifier_cb(void *priv)
 	ucfg_pmo_psoc_wakeup_host_event_received(wma_handle->psoc);
 	wmi_stop(wma_handle->wmi_handle);
 
-	msg.bodyptr = priv;
+	msg.bodyptr = wma_handle;
 	msg.callback = wma_cleanup_vdev_resp_and_hold_req;
+	msg.flush_callback = wma_cleanup_vdev_resp_and_hold_req_flush_cb;
 	status = scheduler_post_message(QDF_MODULE_ID_WMA,
 					QDF_MODULE_ID_WMA,
 					QDF_MODULE_ID_TARGET_IF, &msg);
