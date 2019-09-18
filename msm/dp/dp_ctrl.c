@@ -69,6 +69,7 @@ struct dp_ctrl_private {
 	bool power_on;
 	bool mst_mode;
 	bool fec_mode;
+	bool dsc_mode;
 
 	atomic_t aborted;
 
@@ -575,7 +576,6 @@ end:
 static int dp_ctrl_setup_main_link(struct dp_ctrl_private *ctrl)
 {
 	int ret = 0;
-	const unsigned int fec_cfg_dpcd = 0x120;
 
 	if (ctrl->link->sink_request & DP_TEST_LINK_PHY_TEST_PATTERN)
 		goto end;
@@ -588,7 +588,8 @@ static int dp_ctrl_setup_main_link(struct dp_ctrl_private *ctrl)
 	ctrl->catalog->reset(ctrl->catalog);
 
 	if (ctrl->fec_mode)
-		drm_dp_dpcd_writeb(ctrl->aux->drm_aux, fec_cfg_dpcd, 0x01);
+		drm_dp_dpcd_writeb(ctrl->aux->drm_aux, DP_FEC_CONFIGURATION,
+				0x01);
 
 	ret = dp_ctrl_link_train(ctrl);
 
@@ -926,7 +927,7 @@ static void dp_ctrl_process_phy_test_request(struct dp_ctrl *dp_ctrl)
 	ctrl->aux->init(ctrl->aux, ctrl->parser->aux_cfg);
 
 	ret = ctrl->dp_ctrl.on(&ctrl->dp_ctrl, ctrl->mst_mode,
-					ctrl->fec_mode, false);
+			ctrl->fec_mode, ctrl->dsc_mode, false);
 	if (ret)
 		DP_ERR("failed to enable DP controller\n");
 
@@ -1138,19 +1139,18 @@ static void dp_ctrl_fec_dsc_setup(struct dp_ctrl_private *ctrl)
 	u8 fec_sts = 0;
 	int rlen;
 	u32 dsc_enable;
-	const unsigned int fec_sts_dpcd = 0x280;
 
-	if (ctrl->stream_count || !ctrl->fec_mode)
+	if (!ctrl->fec_mode)
 		return;
 
 	ctrl->catalog->fec_config(ctrl->catalog, ctrl->fec_mode);
 
 	/* wait for controller to start fec sequence */
 	usleep_range(900, 1000);
-	drm_dp_dpcd_readb(ctrl->aux->drm_aux, fec_sts_dpcd, &fec_sts);
+	drm_dp_dpcd_readb(ctrl->aux->drm_aux, DP_FEC_STATUS, &fec_sts);
 	DP_DEBUG("sink fec status:%d\n", fec_sts);
 
-	dsc_enable = ctrl->fec_mode ? 1 : 0;
+	dsc_enable = ctrl->dsc_mode ? 1 : 0;
 	rlen = drm_dp_dpcd_writeb(ctrl->aux->drm_aux, DP_DSC_ENABLE,
 			dsc_enable);
 	if (rlen < 1)
@@ -1191,12 +1191,13 @@ static int dp_ctrl_stream_on(struct dp_ctrl *dp_ctrl, struct dp_panel *panel)
 
 	dp_ctrl_wait4video_ready(ctrl);
 
-	dp_ctrl_fec_dsc_setup(ctrl);
-
 	ctrl->stream_count++;
 
 	link_ready = ctrl->catalog->mainlink_ready(ctrl->catalog);
 	DP_DEBUG("mainlink %s\n", link_ready ? "READY" : "NOT READY");
+
+	/* wait for link training completion before fec config as per spec */
+	dp_ctrl_fec_dsc_setup(ctrl);
 
 	return rc;
 }
@@ -1266,7 +1267,7 @@ static void dp_ctrl_stream_off(struct dp_ctrl *dp_ctrl, struct dp_panel *panel)
 }
 
 static int dp_ctrl_on(struct dp_ctrl *dp_ctrl, bool mst_mode,
-				bool fec_mode, bool shallow)
+		bool fec_mode, bool dsc_mode, bool shallow)
 {
 	int rc = 0;
 	struct dp_ctrl_private *ctrl;
@@ -1285,7 +1286,11 @@ static int dp_ctrl_on(struct dp_ctrl *dp_ctrl, bool mst_mode,
 		goto end;
 
 	ctrl->mst_mode = mst_mode;
-	ctrl->fec_mode = fec_mode;
+	if (fec_mode) {
+		ctrl->fec_mode = fec_mode;
+		ctrl->dsc_mode = dsc_mode;
+	}
+
 	rate = ctrl->panel->link_info.rate;
 
 	if (ctrl->link->sink_request & DP_TEST_LINK_PHY_TEST_PATTERN) {
@@ -1323,6 +1328,7 @@ static void dp_ctrl_off(struct dp_ctrl *dp_ctrl)
 	if (!ctrl->power_on)
 		return;
 
+	ctrl->catalog->fec_config(ctrl->catalog, false);
 	dp_ctrl_configure_source_link_params(ctrl, false);
 	ctrl->catalog->reset(ctrl->catalog);
 
@@ -1333,6 +1339,7 @@ static void dp_ctrl_off(struct dp_ctrl *dp_ctrl)
 
 	ctrl->mst_mode = false;
 	ctrl->fec_mode = false;
+	ctrl->dsc_mode = false;
 	ctrl->power_on = false;
 	memset(&ctrl->mst_ch_info, 0, sizeof(ctrl->mst_ch_info));
 	DP_DEBUG("DP off done\n");
