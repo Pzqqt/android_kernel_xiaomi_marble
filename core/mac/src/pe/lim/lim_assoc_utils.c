@@ -4038,10 +4038,10 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	retCode = wma_send_peer_assoc_req(pAddBssParams);
 	if (QDF_IS_STATUS_ERROR(retCode)) {
 		SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-		qdf_mem_free(pAddBssParams);
 		pe_err("wma_send_peer_assoc_req failed=%X",
 		       retCode);
 	}
+	qdf_mem_free(pAddBssParams);
 
 returnFailure:
 	/* Clean-up will be done by the caller... */

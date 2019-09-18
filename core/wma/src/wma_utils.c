@@ -3932,15 +3932,26 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-void wma_remove_peer_on_add_bss_failure(struct bss_params *add_bss_params)
+void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
+					       uint8_t vdev_id)
 {
-	tp_wma_handle wma;
 	struct cdp_pdev *pdev;
 	void *peer = NULL;
 	uint8_t peer_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	QDF_STATUS status;
+	struct qdf_mac_addr bss_peer;
+	struct wma_txrx_node *iface;
 
-	WMA_LOGE("%s: ADD BSS failure %d", __func__, add_bss_params->status);
+	iface = &wma->interfaces[vdev_id];
+
+	status = mlme_get_vdev_bss_peer_mac_addr(iface->vdev, &bss_peer);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to get bssid", __func__);
+		return;
+	}
+
+	WMA_LOGE("%s: ADD BSS failure for vdev %d", __func__, vdev_id);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
@@ -3948,21 +3959,15 @@ void wma_remove_peer_on_add_bss_failure(struct bss_params *add_bss_params)
 		return;
 	}
 
-	peer = cdp_peer_find_by_addr(soc, pdev, add_bss_params->bssId,
+	peer = cdp_peer_find_by_addr(soc, pdev, bss_peer.bytes,
 				     &peer_id);
 	if (!peer) {
 		WMA_LOGE("%s Failed to find peer %pM",
-			 __func__, add_bss_params->bssId);
+			 __func__, bss_peer.bytes);
 		return;
 	}
 
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		WMA_LOGE("%s wma handle is NULL", __func__);
-		return;
-	}
-	wma_remove_peer(wma, add_bss_params->bssId, add_bss_params->bss_idx,
-			peer, false);
+	wma_remove_peer(wma, bss_peer.bytes, vdev_id, peer, false);
 }
 
 QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
@@ -4020,11 +4025,11 @@ bool wma_get_channel_switch_in_progress(struct wma_txrx_node *iface)
 }
 
 static QDF_STATUS wma_vdev_send_start_resp(tp_wma_handle wma,
-					   struct bss_params *add_bss)
+					  struct add_bss_rsp *add_bss_rsp)
 {
 	WMA_LOGD(FL("Sending add bss rsp to umac(vdev %d status %d)"),
-		 add_bss->bss_idx, add_bss->status);
-	lim_handle_mlm_add_bss_rsp(wma->mac_context, add_bss);
+		 add_bss_rsp->vdev_id, add_bss_rsp->status);
+	lim_handle_add_bss_rsp(wma->mac_context, add_bss_rsp);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4048,8 +4053,7 @@ QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 		lim_process_switch_channel_rsp(wma->mac_context, data);
 		break;
 	case VDEV_FT_REASSOC:
-		wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP,
-					   data, 0);
+		lim_handle_add_bss_rsp(wma->mac_context, data);
 		break;
 	default:
 		WMA_LOGE(FL("assoc_type %d is invalid"), assoc_type);
@@ -4103,7 +4107,7 @@ QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 						       vdev_id);
 		ap_mlme_set_hidden_ssid_restart_in_progress(vdev, false);
 	} else {
-		status = wma_vdev_send_start_resp(wma, (struct bss_params *)data);
+		status = wma_vdev_send_start_resp(wma, data);
 	}
 
 	return status;
@@ -4190,7 +4194,7 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data)
 {
 	tp_wma_handle wma;
-	struct bss_params *bss_params = (struct bss_params *)data;
+	struct add_bss_rsp *add_bss_rsp = data;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
@@ -4198,13 +4202,13 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (wma_send_vdev_stop_to_fw(wma, bss_params->bss_idx))
+	if (wma_send_vdev_stop_to_fw(wma, add_bss_rsp->vdev_id))
 		WMA_LOGE(FL("Failed to send vdev stop for vdev id %d"),
-			 bss_params->bss_idx);
+			 add_bss_rsp->vdev_id);
 
-	wma_remove_peer_on_add_bss_failure(bss_params);
+	wma_remove_bss_peer_on_vdev_start_failure(wma, add_bss_rsp->vdev_id);
 
-	return wma_vdev_send_start_resp(wma, bss_params);
+	return wma_vdev_send_start_resp(wma, add_bss_rsp);
 }
 
 QDF_STATUS wma_mon_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,

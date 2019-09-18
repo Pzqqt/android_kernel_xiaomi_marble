@@ -67,7 +67,7 @@ void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg);
 /**
  * lim_process_sta_mlm_add_bss_rsp_ft() - Handle ft add bss response
  * @mac: Global MAC context
- * @add_bss_params: Bss params including rsp data
+ * @add_bss_rsp: Bss params rsp data
  * @pe_session: PE Session
  *
  * Function to handle fast roaming add bss response in FT reassoc state,
@@ -76,7 +76,7 @@ void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg);
  * Return: None
  */
 void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
-					struct bss_params *add_bss_params,
+					struct add_bss_rsp *add_bss_rsp,
 					struct pe_session *pe_session);
 void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 				 tLimMlmReassocReq *reassoc_req);
@@ -105,7 +105,7 @@ static inline void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx,
 {}
 static inline
 void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
-					struct bss_params *add_bss_params,
+					struct add_bss_rsp *add_bss_rsp,
 					struct pe_session *pe_session)
 {}
 static inline void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,

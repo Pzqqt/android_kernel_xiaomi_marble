@@ -373,7 +373,7 @@ QDF_STATUS lim_sta_reassoc_error_handler(struct reassoc_params *param)
 }
 
 void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
-					struct bss_params *add_bss_params,
+					struct add_bss_rsp *add_bss_rsp,
 					struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf; /* keep sme */
@@ -384,8 +384,8 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 
 	/* Sanity Checks */
 
-	if (!add_bss_params) {
-		pe_err("Invalid parameters");
+	if (!add_bss_rsp) {
+		pe_err("add_bss_rsp is NULL");
 		goto end;
 	}
 	if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE !=
@@ -393,14 +393,13 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		goto end;
 	}
 
-	sta = dph_add_hash_entry(mac, add_bss_params->bssId,
+	sta = dph_add_hash_entry(mac, pe_session->bssId,
 				 DPH_STA_HASH_INDEX_PEER,
 				 &pe_session->dph.dphHashTable);
 	if (!sta) {
 		/* Could not add hash table entry */
-		pe_err("could not add hash entry at DPH for");
-		lim_print_mac_addr(mac, add_bss_params->staContext.staMac,
-				   LOGE);
+		pe_err("could not add hash entry at DPH for %pM",
+		       pe_session->bssId);
 		goto end;
 	}
 	/* Prepare and send Reassociation request frame */
@@ -458,15 +457,12 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	pe_debug("Set the mlm state: %d session: %d",
 		       pe_session->limMlmState, pe_session->peSessionId);
 
-	pe_session->bss_idx = (uint8_t)add_bss_params->bss_idx;
+	pe_session->bss_idx = add_bss_rsp->vdev_id;
 
 	/* Success, handle below */
-	sta->bssId = add_bss_params->bss_idx;
+	sta->bssId = add_bss_rsp->vdev_id;
 	/* STA Index(genr by HAL) for the BSS entry is stored here */
-	sta->staIndex = add_bss_params->staContext.staIdx;
-
-	rrm_cache_mgmt_tx_power(mac, add_bss_params->txMgmtPower,
-				pe_session);
+	sta->staIndex = wma_peer_get_peet_id(pe_session->bssId);
 
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (!pAddStaParams)
@@ -476,9 +472,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	qdf_mem_copy((uint8_t *)pAddStaParams->staMac,
 		     (uint8_t *)pe_session->self_mac_addr,
 		     sizeof(tSirMacAddr));
-
-	qdf_mem_copy((uint8_t *) pAddStaParams->bssId,
-		     pe_session->bssId, sizeof(tSirMacAddr));
 
 	pAddStaParams->staType = STA_ENTRY_SELF;
 	pAddStaParams->status = QDF_STATUS_SUCCESS;
@@ -661,10 +654,10 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 	status = wma_add_bss_lfr2_vdev_start(session->ftPEContext.pAddBssReq);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-		qdf_mem_free(session->ftPEContext.pAddBssReq);
 		pe_err("wma_add_bss_lfr2_vdev_start, reason: %X",
 		       status);
 	}
+	qdf_mem_free(session->ftPEContext.pAddBssReq);
 
 	session->ftPEContext.pAddBssReq = NULL;
 	return;

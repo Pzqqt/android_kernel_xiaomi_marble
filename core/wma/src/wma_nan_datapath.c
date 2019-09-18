@@ -49,7 +49,6 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	struct cdp_vdev *vdev;
 	struct wma_vdev_start_req req;
 	void *peer = NULL;
-	struct wlan_objmgr_vdev *vdev_obj;
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -84,13 +83,6 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 		goto send_fail_resp;
 	}
 
-	vdev_obj = wma->interfaces[vdev_id].vdev;
-	if (!vdev_obj) {
-		wma_err("vdev not found for id: %d", vdev_id);
-		goto send_fail_resp;
-	}
-	mlme_set_bss_params(vdev_obj, add_bss);
-
 	add_bss->staContext.staIdx = cdp_peer_get_local_peer_id(soc, peer);
 
 	/*
@@ -107,10 +99,8 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	req.oper_mode = add_bss->operMode;
 
 	status = wma_vdev_start(wma, &req, false);
-	if (status != QDF_STATUS_SUCCESS) {
-		mlme_clear_bss_params(vdev_obj);
+	if (status != QDF_STATUS_SUCCESS)
 		goto send_fail_resp;
-	}
 
 	/* Initialize protection mode to no protection */
 	wma_vdev_set_param(wma->wmi_handle, vdev_id,
@@ -119,8 +109,7 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, struct bss_params *add_bss)
 	return;
 
 send_fail_resp:
-	add_bss->status = QDF_STATUS_E_FAILURE;
-	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+	wma_send_add_bss_resp(wma, add_bss->bss_idx, QDF_STATUS_E_FAILURE);
 }
 
 /**

@@ -551,8 +551,7 @@ static bool def_msg_decision(struct mac_context *mac_ctx,
 				mgmt_pkt_defer = false;
 		}
 
-		if ((lim_msg->type != WMA_ADD_BSS_RSP) &&
-		    (lim_msg->type != WMA_DELETE_BSS_RSP) &&
+		if ((lim_msg->type != WMA_DELETE_BSS_RSP) &&
 		    (lim_msg->type != WMA_DELETE_BSS_HO_FAIL_RSP) &&
 		    (lim_msg->type != WMA_ADD_STA_RSP) &&
 		    (lim_msg->type != WMA_DELETE_STA_RSP) &&
@@ -1918,9 +1917,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		break;
 	case SIR_LIM_UPDATE_OLBC_CACHEL_TIMEOUT:
 		lim_handle_update_olbc_cache(mac_ctx);
-		break;
-	case WMA_ADD_BSS_RSP:
-		lim_process_mlm_add_bss_rsp(mac_ctx, msg);
 		break;
 	case WMA_ADD_STA_RSP:
 		lim_process_add_sta_rsp(mac_ctx, msg);

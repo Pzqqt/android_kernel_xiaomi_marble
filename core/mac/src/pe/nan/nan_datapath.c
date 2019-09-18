@@ -338,26 +338,27 @@ skip_event:
 }
 
 void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
-				     struct bss_params *add_bss_params,
+				     struct add_bss_rsp *add_bss_rsp,
 				     struct pe_session *session_entry)
 {
 	tLimMlmStartCnf mlm_start_cnf;
 
-	if (!add_bss_params) {
-		pe_err("Invalid body pointer in message");
+	if (!add_bss_rsp) {
+		pe_err("add_bss_rsp is NULL");
 		return;
 	}
-	pe_debug("Status %d", add_bss_params->status);
-	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
+	pe_debug("Status %d", add_bss_rsp->status);
+	if (QDF_IS_STATUS_SUCCESS(add_bss_rsp->status)) {
 		pe_debug("WDA_ADD_BSS_RSP returned QDF_STATUS_SUCCESS");
 		session_entry->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			session_entry->peSessionId,
 			session_entry->limMlmState));
-		session_entry->bss_idx = (uint8_t)add_bss_params->bss_idx;
+		session_entry->bss_idx = add_bss_rsp->vdev_id;
 		session_entry->limSystemRole = eLIM_NDI_ROLE;
 		session_entry->statypeForBss = STA_ENTRY_SELF;
-		session_entry->staId = add_bss_params->staContext.staIdx;
+		session_entry->staId =
+			wma_peer_get_peet_id(session_entry->self_mac_addr);
 		/* Apply previously set configuration at HW */
 		lim_apply_configuration(mac_ctx, session_entry);
 		mlm_start_cnf.resultCode = eSIR_SME_SUCCESS;
@@ -366,7 +367,7 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 		lim_init_peer_idxpool(mac_ctx, session_entry);
 	} else {
 		pe_err("WDA_ADD_BSS_REQ failed with status %d",
-			add_bss_params->status);
+			add_bss_rsp->status);
 		mlm_start_cnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
 	}
 	mlm_start_cnf.sessionId = session_entry->peSessionId;

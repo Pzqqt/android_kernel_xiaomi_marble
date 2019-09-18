@@ -457,7 +457,6 @@ struct bss_params {
 	tSirMacSSid ssId;
 	uint8_t respReqd;
 	uint8_t sessionId;
-	int8_t txMgmtPower;
 	int8_t maxTxPower;
 
 	uint8_t extSetStaKeyParamValid;
@@ -496,6 +495,20 @@ struct bss_params {
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 	bool no_ptk_4_way;
+};
+
+/**
+ * struct add_bss_rsp - params required for add bss response
+ * @vdev_id: vdev_id
+ * @status: QDF status
+ * @chain_mask: chain mask vdev start resp
+ * @smps_mode: smps mode in vdev start resp
+ */
+struct add_bss_rsp {
+	uint8_t vdev_id;
+	QDF_STATUS status;
+	uint32_t chain_mask;
+	uint8_t smps_mode;
 };
 
 /**

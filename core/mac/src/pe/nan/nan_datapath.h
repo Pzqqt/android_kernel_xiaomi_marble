@@ -36,13 +36,13 @@ struct peer_nan_datapath_map;
 /**
  * lim_process_ndi_mlm_add_bss_rsp() - Process ADD_BSS response for NDI
  * @mac_ctx: Pointer to Global MAC structure
- * @add_bss_params: Bss params including rsp data
+ * @add_bss_rsp: Bss params including rsp data
  * @session_entry: PE session
  *
  * Return: None
  */
 void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
-				     struct bss_params *add_bss_params,
+				     struct add_bss_rsp *add_bss_rsp,
 				     struct pe_session *session_entry);
 /* Handler for DEL BSS resp for NDI interface */
 
@@ -78,7 +78,7 @@ void lim_ndp_delete_peers_by_addr_converged(uint8_t vdev_id,
 #else
 static inline
 void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
-				     struct bss_params *add_bss_params,
+				     struct add_bss_rsp *add_bss_rsp,
 				     struct pe_session *session_entry)
 {
 }

@@ -1618,16 +1618,29 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 				   struct sir_roam_scan_stats *req);
 
 /**
- * wma_remove_peer_on_add_bss_failure() - remove the CDP peers in case of
- *					  ADD BSS request failed
- * @add_bss_params: Pointer to the Add BSS request params
+ * wma_remove_bss_peer_on_vdev_start_failure() - remove the bss peers in case of
+ * vdev start request failure
+ * @wma: wma handle.
+ * @vdev_id: vdev id
  *
- * This API deletes the CDP peer created during ADD BSS in case of ADD BSS
+ * This API deletes the BSS peer created during ADD BSS in case of ADD BSS
  * request sent to the FW fails.
  *
  * Return: None;
  */
-void wma_remove_peer_on_add_bss_failure(struct bss_params *add_bss_params);
+void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
+					       uint8_t vdev_id);
+
+/**
+ * wma_send_add_bss_resp() - send add bss failure
+ * @wma: wma handle.
+ * @vdev_id: vdev id
+ * @status: status
+ *
+ * Return: Success or Failure status
+ */
+void wma_send_add_bss_resp(tp_wma_handle wma, uint8_t vdev_id,
+			   QDF_STATUS status);
 
 /**
  * wma_roam_scan_stats_event_handler() - roam scan stats event handler

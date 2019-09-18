@@ -213,7 +213,6 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_DELETE_STA_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 3)
 #define SIR_HAL_DELETE_STA_RSP             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 4)
 #define SIR_HAL_ADD_BSS_REQ                (SIR_HAL_ITC_MSG_TYPES_BEGIN + 5)
-#define SIR_HAL_ADD_BSS_RSP                (SIR_HAL_ITC_MSG_TYPES_BEGIN + 6)
 #define SIR_HAL_DELETE_BSS_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 7)
 #define SIR_HAL_DELETE_BSS_RSP             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 8)
 /*
