@@ -128,7 +128,6 @@ struct wlan_mlme_roam {
  * @peer_disconnect_ies: Disconnect IEs received in deauth/disassoc frames
  *			 from peer
  * @vdev_stop_type: vdev stop type request
- * @bss_params: Bss params to be used in add bss resp handler
  * @roam_off_state: Roam offload state
  */
 struct mlme_legacy_priv {
@@ -145,7 +144,6 @@ struct mlme_legacy_priv {
 	struct wlan_ies self_disconnect_ies;
 	struct wlan_ies peer_disconnect_ies;
 	uint32_t vdev_stop_type;
-	struct bss_params *bss_params;
 	struct wlan_mlme_roam mlme_roam;
 };
 
