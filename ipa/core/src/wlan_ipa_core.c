@@ -1865,6 +1865,9 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			goto end;
 		}
 
+		ipa_ctx->vdev_to_iface[session_id] =
+				wlan_ipa_get_ifaceid(ipa_ctx, session_id);
+
 		if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config) &&
 		    (ipa_ctx->sap_num_connected_sta > 0 ||
 		     wlan_ipa_is_sta_only_offload_enabled()) &&
@@ -1890,12 +1893,11 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 						SIR_STA_RX_DATA_OFFLOAD,
 						session_id,
 						false);
+				ipa_ctx->vdev_to_iface[session_id] =
+				    WLAN_IPA_MAX_SESSION;
 				goto end;
 			}
 		}
-
-		ipa_ctx->vdev_to_iface[session_id] =
-				wlan_ipa_get_ifaceid(ipa_ctx, session_id);
 
 		ipa_ctx->sta_connected = 1;
 
