@@ -150,7 +150,7 @@ void sde_setup_dspp_igcv3(struct sde_hw_dspp *ctx, void *cfg)
 	struct drm_msm_igc_lut *lut_cfg;
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
 	int i = 0, j = 0;
-	u32 *addr = NULL;
+	u32 *addr[IGC_TBL_NUM];
 	u32 offset = 0;
 
 	if (!ctx || !cfg) {
@@ -172,17 +172,20 @@ void sde_setup_dspp_igcv3(struct sde_hw_dspp *ctx, void *cfg)
 
 	lut_cfg = hw_cfg->payload;
 
+	addr[0] = lut_cfg->c0;
+	addr[1] = lut_cfg->c1;
+	addr[2] = lut_cfg->c2;
+
 	for (i = 0; i < IGC_TBL_NUM; i++) {
-		addr = lut_cfg->c0 + (i * ARRAY_SIZE(lut_cfg->c0));
 		offset = IGC_C0_OFF + (i * sizeof(u32));
 
 		for (j = 0; j < IGC_TBL_LEN; j++) {
-			addr[j] &= IGC_DATA_MASK;
-			addr[j] |= IGC_DSPP_SEL_MASK(ctx->idx - 1);
+			addr[i][j] &= IGC_DATA_MASK;
+			addr[i][j] |= IGC_DSPP_SEL_MASK(ctx->idx - 1);
 			if (j == 0)
-				addr[j] |= IGC_INDEX_UPDATE;
+				addr[i][j] |= IGC_INDEX_UPDATE;
 			/* IGC lut registers are part of DSPP Top HW block */
-			SDE_REG_WRITE(&ctx->hw_top, offset, addr[j]);
+			SDE_REG_WRITE(&ctx->hw_top, offset, addr[i][j]);
 		}
 	}
 
