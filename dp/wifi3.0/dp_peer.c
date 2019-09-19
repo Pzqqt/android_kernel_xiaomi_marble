@@ -1538,8 +1538,10 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 				peer->vdev->vap_bss_peer = peer;
 			}
 
-			if (peer->vdev->opmode == wlan_op_mode_sta)
+			if (peer->vdev->opmode == wlan_op_mode_sta) {
 				peer->vdev->bss_ast_hash = ast_hash;
+				peer->vdev->bss_ast_idx = hw_peer_id;
+			}
 
 			/* Add ast entry incase self ast entry is
 			 * deleted due to DP CP sync issue

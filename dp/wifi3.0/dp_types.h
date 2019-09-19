@@ -1836,6 +1836,9 @@ struct dp_vdev {
 	/* AST hash value for BSS peer in HW valid for STA VAP*/
 	uint16_t bss_ast_hash;
 
+	/* AST hash index for BSS peer in HW valid for STA VAP*/
+	uint16_t bss_ast_idx;
+
 	/* Capture timestamp of previous tx packet enqueued */
 	uint64_t prev_tx_enq_tstamp;
 
