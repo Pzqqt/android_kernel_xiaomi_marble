@@ -155,6 +155,104 @@ QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * ucfg_mlme_convert_power_cfg_chan_to_freq() - converts channel numbers to
+ * frequencies and copies the triplets to power_freq_data array
+ * @pdev: pointer to pdev object
+ * @max_length: Max length of the power chan data array
+ * @length: length of the data present in power_chan_data array
+ * @power_chan_data: Power data array from which channel numbers needs to be
+ * converted to frequencies
+ * @power_freq_data: Power data array in which the power data needs to be copied
+ * after conversion of channel numbers to frequencies
+ *
+ * power_data is received in the form of (first_channel_number,
+ * number_of_channels, max_tx_power) triplet, convert the channel numbers from
+ * the power_chan_data array to frequencies and copy the triplets
+ * (first_frequency, number_of_channels, max_tx_power) values to
+ * the power_freq_data array
+ *
+ * Return: Number of bytes filled in power_freq_data
+ */
+
+static uint32_t ucfg_mlme_convert_power_cfg_chan_to_freq(
+						struct wlan_objmgr_pdev *pdev,
+						uint32_t max_length,
+						qdf_size_t length,
+						uint8_t *power_chan_data,
+						uint8_t *power_freq_data)
+{
+	uint32_t count = 0, rem_length = length, copied_length = 0, i = 0;
+	tSirMacChanInfo *pwr_cfg_data;
+
+	pwr_cfg_data = qdf_mem_malloc(max_length);
+	if (!pwr_cfg_data)
+		return 0;
+
+	mlme_legacy_debug("max_length %d length %zu", max_length, length);
+	while ((rem_length >= 3) &&
+	       (copied_length <= (max_length - (sizeof(tSirMacChanInfo))))) {
+		pwr_cfg_data[i].first_freq = wlan_reg_chan_to_freq(
+						pdev,
+						power_chan_data[count++]);
+		pwr_cfg_data[i].numChannels = power_chan_data[count++];
+		pwr_cfg_data[i].maxTxPower = power_chan_data[count++];
+		copied_length += sizeof(tSirMacChanInfo);
+		rem_length -= 3;
+		mlme_legacy_debug("First freq %d num channels %d max tx power %d",
+				  pwr_cfg_data[i].first_freq,
+				  pwr_cfg_data[i].numChannels,
+				  pwr_cfg_data[i].maxTxPower);
+		i++;
+	}
+
+	qdf_mem_zero(power_freq_data, max_length);
+	qdf_mem_copy(power_freq_data, pwr_cfg_data, copied_length);
+	qdf_mem_free(pwr_cfg_data);
+	return copied_length;
+}
+
+void ucfg_mlme_cfg_chan_to_freq(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	struct wlan_mlme_cfg *mlme_cfg;
+	uint32_t converted_data_len = 0;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	mlme_cfg = &mlme_obj->cfg;
+
+	mlme_cfg->power.max_tx_power_24.max_len = CFG_MAX_TX_POWER_2_4_LEN;
+	converted_data_len = ucfg_mlme_convert_power_cfg_chan_to_freq(
+				pdev,
+				mlme_cfg->power.max_tx_power_24_chan.max_len,
+				mlme_cfg->power.max_tx_power_24_chan.len,
+				mlme_cfg->power.max_tx_power_24_chan.data,
+				mlme_cfg->power.max_tx_power_24.data);
+	if (!converted_data_len) {
+		mlme_legacy_err("mlme cfg power 2_4 data chan number to freq failed");
+		return;
+	}
+
+	mlme_cfg->power.max_tx_power_24.len = converted_data_len;
+
+	mlme_cfg->power.max_tx_power_5.max_len = CFG_MAX_TX_POWER_5_LEN;
+	converted_data_len = ucfg_mlme_convert_power_cfg_chan_to_freq(
+				pdev,
+				mlme_cfg->power.max_tx_power_5_chan.max_len,
+				mlme_cfg->power.max_tx_power_5_chan.len,
+				mlme_cfg->power.max_tx_power_5_chan.data,
+				mlme_cfg->power.max_tx_power_5.data);
+	if (!converted_data_len) {
+		mlme_legacy_err("mlme cfg power 5 data chan number to freq failed");
+		return;
+	}
+	mlme_cfg->power.max_tx_power_5.len = converted_data_len;
+}
+
 QDF_STATUS
 ucfg_mlme_get_sta_keep_alive_period(struct wlan_objmgr_psoc *psoc,
 				    uint32_t *val)

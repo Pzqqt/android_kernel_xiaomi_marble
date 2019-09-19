@@ -102,6 +102,17 @@ QDF_STATUS ucfg_mlme_global_init(void);
 QDF_STATUS ucfg_mlme_global_deinit(void);
 
 /**
+ * ucfg_mlme_cfg_chan_to_freq() - convert channel numbers to frequencies
+ * @pdev: pointer to pdev object
+ *
+ * convert the channels numbers received as part of cfg items to
+ * frequencies.
+ *
+ * Return: None
+ */
+void ucfg_mlme_cfg_chan_to_freq(struct wlan_objmgr_pdev *pdev);
+
+/**
  * wlan_mlme_get_power_usage() - Get the power usage info
  * @psoc: pointer to psoc object
  *

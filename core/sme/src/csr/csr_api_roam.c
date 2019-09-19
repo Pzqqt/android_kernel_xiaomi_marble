@@ -13647,10 +13647,11 @@ int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint8_t channel)
 {
 	uint32_t cfg_length = 0;
 	int8_t maxTxPwr = 0;
-	uint8_t *pCountryInfo = NULL;
+	tSirMacChanInfo *pCountryInfo = NULL;
 	uint8_t count = 0;
-	uint8_t firstChannel;
 	uint8_t maxChannels;
+	uint8_t firstChannel;
+	int32_t rem_length = 0;
 
 	if (WLAN_REG_IS_5GHZ_CH(channel)) {
 		cfg_length = mac->mlme_cfg->power.max_tx_power_5.len;
@@ -13679,10 +13680,15 @@ int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint8_t channel)
 	}
 
 	/* Identify the channel and maxtxpower */
-	while (count <= (cfg_length - (sizeof(tSirMacChanInfo)))) {
-		firstChannel = pCountryInfo[count++];
-		maxChannels = pCountryInfo[count++];
-		maxTxPwr = pCountryInfo[count++];
+	rem_length = cfg_length;
+	while (rem_length >= (sizeof(tSirMacChanInfo))) {
+		firstChannel = wlan_reg_freq_to_chan(
+					mac->pdev,
+					pCountryInfo[count].first_freq);
+		maxChannels = pCountryInfo[count].numChannels;
+		maxTxPwr = pCountryInfo[count].maxTxPower;
+		count++;
+		rem_length -= (sizeof(tSirMacChanInfo));
 
 		if ((channel >= firstChannel) &&
 		    (channel < (firstChannel + maxChannels))) {

@@ -8227,10 +8227,11 @@ lim_get_dot11d_transmit_power(struct mac_context *mac, uint8_t channel)
 {
 	uint32_t cfg_length = 0;
 	int8_t max_tx_pwr = 0;
-	uint8_t *country_info = NULL;
+	tSirMacChanInfo *country_info = NULL;
 	uint8_t count = 0;
 	uint8_t first_channel;
 	uint8_t maxChannels;
+	int32_t rem_length = 0;
 
 	if (WLAN_REG_IS_5GHZ_CH(channel))
 		cfg_length = mac->mlme_cfg->power.max_tx_power_5.len;
@@ -8258,10 +8259,15 @@ lim_get_dot11d_transmit_power(struct mac_context *mac, uint8_t channel)
 	}
 
 	/* Identify the channel and maxtxpower */
-	while (count <= (cfg_length - (sizeof(tSirMacChanInfo)))) {
-		first_channel = country_info[count++];
-		maxChannels = country_info[count++];
-		max_tx_pwr = country_info[count++];
+	rem_length = cfg_length;
+	while (rem_length >= (sizeof(tSirMacChanInfo))) {
+		first_channel = wlan_reg_freq_to_chan(
+					mac->pdev,
+					country_info[count].first_freq);
+		maxChannels = country_info[count].numChannels;
+		max_tx_pwr = country_info[count].maxTxPower;
+		count++;
+		rem_length -= (sizeof(tSirMacChanInfo));
 
 		if ((channel >= first_channel) &&
 		    (channel < (first_channel + maxChannels))) {

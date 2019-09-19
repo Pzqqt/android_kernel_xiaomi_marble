@@ -1582,13 +1582,23 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 		pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_LOCK);
 	}
 	if (band == BAND_2G) {
-		mac->mlme_cfg->power.max_tx_power_24.len = 3 * count;
+		mac->mlme_cfg->power.max_tx_power_24.len =
+					sizeof(tSirMacChanInfo) * count;
+		if (mac->mlme_cfg->power.max_tx_power_24.len >
+						CFG_MAX_TX_POWER_2_4_LEN)
+			mac->mlme_cfg->power.max_tx_power_24.len =
+						CFG_MAX_TX_POWER_2_4_LEN;
 		qdf_mem_copy(mac->mlme_cfg->power.max_tx_power_24.data,
 			     (uint8_t *)p_buf,
 			     mac->mlme_cfg->power.max_tx_power_24.len);
 	}
 	if (band == BAND_5G) {
-		mac->mlme_cfg->power.max_tx_power_5.len = 3 * count;
+		mac->mlme_cfg->power.max_tx_power_5.len =
+					sizeof(tSirMacChanInfo) * count;
+		if (mac->mlme_cfg->power.max_tx_power_5.len >
+							CFG_MAX_TX_POWER_5_LEN)
+			mac->mlme_cfg->power.max_tx_power_5.len =
+							CFG_MAX_TX_POWER_5_LEN;
 		qdf_mem_copy(mac->mlme_cfg->power.max_tx_power_5.data,
 			     (uint8_t *)p_buf,
 			     mac->mlme_cfg->power.max_tx_power_5.len);

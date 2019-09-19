@@ -385,51 +385,79 @@ QDF_STATUS
 populate_dot11f_country(struct mac_context *mac,
 			tDot11fIECountry *pDot11f, struct pe_session *pe_session)
 {
-	uint32_t len;
+	uint32_t len, j = 0;
 	enum band_info rfBand;
 	uint8_t temp[CFG_MAX_STR_LEN], code[3];
+	tSirMacChanInfo *max_tx_power_data;
+	uint32_t rem_length = 0, copied_length = 0;
 
-	if (pe_session->lim11dEnabled) {
-		lim_get_rf_band_new(mac, &rfBand, pe_session);
-		if (rfBand == BAND_5G) {
-			len = mac->mlme_cfg->power.max_tx_power_5.len;
-			qdf_mem_copy(temp,
-				     mac->mlme_cfg->power.max_tx_power_5.data,
-				     len);
-		} else {
-			len = mac->mlme_cfg->power.max_tx_power_24.len;
-			qdf_mem_copy(temp,
-				     mac->mlme_cfg->power.max_tx_power_24.data,
-				     len);
+	if (!pe_session->lim11dEnabled)
+		return QDF_STATUS_SUCCESS;
+
+	lim_get_rf_band_new(mac, &rfBand, pe_session);
+	if (rfBand == BAND_5G) {
+		len = mac->mlme_cfg->power.max_tx_power_5.len;
+		max_tx_power_data =
+		(tSirMacChanInfo *)mac->mlme_cfg->power.max_tx_power_5.data;
+		rem_length = len;
+		while (rem_length >= (sizeof(tSirMacChanInfo))) {
+			temp[copied_length++] =
+				(uint8_t)wlan_reg_freq_to_chan(
+					mac->pdev,
+					max_tx_power_data[j].first_freq);
+			temp[copied_length++] =
+					max_tx_power_data[j].numChannels;
+			temp[copied_length++] =
+					max_tx_power_data[j].maxTxPower;
+			j++;
+			rem_length -= (sizeof(tSirMacChanInfo));
 		}
-
-		if (3 > len) {
-			/* no limit on tx power, cannot include the IE because at least */
-			/* one (channel,num,tx power) must be present */
-			return QDF_STATUS_SUCCESS;
+	} else {
+		len = mac->mlme_cfg->power.max_tx_power_24.len;
+		max_tx_power_data =
+		(tSirMacChanInfo *)mac->mlme_cfg->power.max_tx_power_24.data;
+		rem_length = len;
+		while (rem_length >= (sizeof(tSirMacChanInfo))) {
+			temp[copied_length++] =
+				(uint8_t)wlan_reg_freq_to_chan(
+					mac->pdev,
+					max_tx_power_data[j].first_freq);
+			temp[copied_length++] =
+				max_tx_power_data[j].numChannels;
+			temp[copied_length++] =
+				max_tx_power_data[j].maxTxPower;
+			j++;
+			rem_length -= (sizeof(tSirMacChanInfo));
 		}
-
-		wlan_reg_read_current_country(mac->psoc, code);
-
-		qdf_mem_copy(pDot11f->country, code, 2);
-
-		/* a wi-fi agile multiband AP shall include a country */
-		/* element in all beacon and probe response frames */
-		/* where the last octet of country string field is */
-		/* set to 0x04 */
-		if (mac->mlme_cfg->oce.oce_sap_enabled)
-			pDot11f->country[2] = 0x04;
-
-		if (len > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE) {
-			pe_err("len:%d is out of bounds, resetting", len);
-			len = MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE;
-		}
-
-		pDot11f->num_triplets = (uint8_t) (len / 3);
-		qdf_mem_copy((uint8_t *) pDot11f->triplets, temp, len);
-
-		pDot11f->present = 1;
 	}
+
+	if (sizeof(tSirMacChanInfo) > len) {
+		/* no limit on tx power, cannot include the IE because at */
+		/* atleast one (channel,num,tx power) must be present */
+		return QDF_STATUS_SUCCESS;
+	}
+
+	wlan_reg_read_current_country(mac->psoc, code);
+
+	qdf_mem_copy(pDot11f->country, code, 2);
+
+	/* a wi-fi agile multiband AP shall include a country */
+	/* element in all beacon and probe response frames */
+	/* where the last octet of country string field is */
+	/* set to 0x04 */
+	if (mac->mlme_cfg->oce.oce_sap_enabled)
+		pDot11f->country[2] = 0x04;
+
+	if (copied_length > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE) {
+		pe_err("len:%d is out of bounds, resetting", len);
+		copied_length = MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE;
+	}
+
+	pDot11f->num_triplets = (uint8_t)(copied_length / 3);
+
+	qdf_mem_copy((uint8_t *)pDot11f->triplets, temp, copied_length);
+
+	pDot11f->present = 1;
 
 	return QDF_STATUS_SUCCESS;
 } /* End populate_dot11f_country. */
@@ -5882,8 +5910,10 @@ QDF_STATUS
 populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 				    tDot11fTimingAdvertisementFrame *frame)
 {
-	uint32_t val, len;
+	uint32_t val, len, j = 0;
 	uint8_t temp[CFG_MAX_STR_LEN], code[3];
+	tSirMacChanInfo *max_tx_power_data;
+	int32_t rem_length = 0, copied_length = 0;
 
 	/* Capabilities */
 	val = mac_ctx->mlme_cfg->wep_params.is_privacy_enabled;
@@ -5910,14 +5940,28 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 
 	/* Country */
 	len = mac_ctx->mlme_cfg->power.max_tx_power_5.len;
-	qdf_mem_copy(temp, mac_ctx->mlme_cfg->power.max_tx_power_5.data, len);
+	max_tx_power_data =
+		(tSirMacChanInfo *)mac_ctx->mlme_cfg->power.max_tx_power_5.data;
+	rem_length = len;
+	while (rem_length >= (sizeof(tSirMacChanInfo))) {
+		temp[copied_length++] =
+			(uint8_t)wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					max_tx_power_data[j].first_freq);
+
+		temp[copied_length++] = max_tx_power_data[j].numChannels;
+		temp[copied_length++] = max_tx_power_data[j].maxTxPower;
+		j++;
+		rem_length -= (sizeof(tSirMacChanInfo));
+	}
+
 	wlan_reg_read_current_country(mac_ctx->psoc, code);
 	qdf_mem_copy(&frame->Country, code, 2);
-	if (len > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE)
-		len = MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE;
+	if (copied_length > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE)
+		copied_length = MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE;
 
-	frame->Country.num_triplets = (uint8_t)(len / 3);
-	qdf_mem_copy((uint8_t *)&frame->Country.triplets, temp, len);
+	frame->Country.num_triplets = (uint8_t)(copied_length / 3);
+	qdf_mem_copy((uint8_t *)&frame->Country.triplets, temp, copied_length);
 	frame->Country.present = 1;
 
 	/* PowerConstraints */
