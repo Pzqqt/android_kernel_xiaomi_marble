@@ -8725,6 +8725,14 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 		return 0;
 	}
 
+	if (hdd_ctx->is_pktlog_enabled &&
+	    (start_log.verbose_level == WLAN_LOG_LEVEL_ACTIVE))
+		return 0;
+
+	if ((!hdd_ctx->is_pktlog_enabled) &&
+	    (start_log.verbose_level != WLAN_LOG_LEVEL_ACTIVE))
+		return 0;
+
 	mac_handle = hdd_ctx->mac_handle;
 	status = sme_wifi_start_logger(mac_handle, start_log);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -8732,6 +8740,12 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 				status);
 		return -EINVAL;
 	}
+
+	if (start_log.verbose_level != WLAN_LOG_LEVEL_ACTIVE)
+		hdd_ctx->is_pktlog_enabled = true;
+	else
+		hdd_ctx->is_pktlog_enabled = false;
+
 	return 0;
 }
 

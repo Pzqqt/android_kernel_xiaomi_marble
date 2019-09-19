@@ -8299,6 +8299,15 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			hdd_disable_rx_ol_for_low_tput(hdd_ctx, true);
 		else
 			hdd_disable_rx_ol_for_low_tput(hdd_ctx, false);
+
+		if (hdd_ctx->is_pktlog_enabled) {
+			if (next_vote_level >= PLD_BUS_WIDTH_HIGH)
+				hdd_pktlog_enable_disable(hdd_ctx, false,
+							  0, 0);
+			else
+				hdd_pktlog_enable_disable(hdd_ctx, true,
+							  0, 0);
+		}
 	}
 
 	qdf_dp_trace_apply_tput_policy(dptrace_high_tput_req);
@@ -10741,21 +10750,29 @@ int hdd_process_pktlog_command(struct hdd_context *hdd_ctx, uint32_t set_value,
 /**
  * hdd_pktlog_enable_disable() - Enable/Disable packet logging
  * @hdd_ctx: HDD context
- * @enable: Flag to enable/disable
+ * @enable_disable_flag: Flag to enable/disable
  * @user_triggered: triggered through iwpriv
  * @size: buffer size to be used for packetlog
  *
  * Return: 0 on success; error number otherwise
  */
-int hdd_pktlog_enable_disable(struct hdd_context *hdd_ctx, bool enable,
-				uint8_t user_triggered, int size)
+int hdd_pktlog_enable_disable(struct hdd_context *hdd_ctx,
+			      bool enable_disable_flag,
+			      uint8_t user_triggered, int size)
 {
 	struct sir_wifi_start_log start_log;
 	QDF_STATUS status;
 
+	if (hdd_ctx->is_pktlog_enabled && enable_disable_flag)
+		return 0;
+
+	if ((!hdd_ctx->is_pktlog_enabled) && (!enable_disable_flag))
+		return 0;
+
 	start_log.ring_id = RING_ID_PER_PACKET_STATS;
 	start_log.verbose_level =
-			enable ? WLAN_LOG_LEVEL_ACTIVE : WLAN_LOG_LEVEL_OFF;
+		enable_disable_flag ?
+			WLAN_LOG_LEVEL_ACTIVE : WLAN_LOG_LEVEL_OFF;
 	start_log.ini_triggered = cds_is_packet_log_enabled();
 	start_log.user_triggered = user_triggered;
 	start_log.size = size;
@@ -10769,6 +10786,7 @@ int hdd_pktlog_enable_disable(struct hdd_context *hdd_ctx, bool enable,
 	 * but for iwpriv command, host will send it to fw.
 	 */
 	start_log.is_iwpriv_command = 1;
+
 	status = sme_wifi_start_logger(hdd_ctx->mac_handle, start_log);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_wifi_start_logger failed(err=%d)", status);
@@ -10776,10 +10794,7 @@ int hdd_pktlog_enable_disable(struct hdd_context *hdd_ctx, bool enable,
 		return -EINVAL;
 	}
 
-	if (enable == true)
-		hdd_ctx->is_pktlog_enabled = 1;
-	else
-		hdd_ctx->is_pktlog_enabled = 0;
+	hdd_ctx->is_pktlog_enabled = enable_disable_flag;
 
 	return 0;
 }
