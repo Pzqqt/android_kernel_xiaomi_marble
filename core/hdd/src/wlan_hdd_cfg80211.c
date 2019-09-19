@@ -10246,9 +10246,10 @@ static int wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 
 static const struct nla_policy
 wlan_hdd_sap_config_policy[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX + 1] = {
-	[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL] = {.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_FREQUENCY] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST] = {
-							.type = NLA_NESTED },
+							.type = NLA_NESTED},
 };
 
 static const struct nla_policy
@@ -10772,9 +10773,9 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	struct hdd_adapter *hostapd_adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX + 1];
-	uint8_t config_channel = 0;
 	struct hdd_ap_ctx *ap_ctx;
 	int ret;
+	uint32_t chan_freq = 0;
 	QDF_STATUS status;
 
 	hdd_enter();
@@ -10795,35 +10796,42 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL]) {
+	if (tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_FREQUENCY]) {
+		chan_freq = nla_get_u32(
+				tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_FREQUENCY]);
+	} else if (tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL]) {
+		uint32_t config_channel =
+			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL]);
+
+		chan_freq = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+							 config_channel);
+	}
+
+	if (chan_freq) {
 		if (!test_bit(SOFTAP_BSS_STARTED,
 					&hostapd_adapter->event_flags)) {
 			hdd_err("SAP is not started yet. Restart sap will be invalid");
 			return -EINVAL;
 		}
 
-		config_channel =
-			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL]);
-
-		if (!((IS_24G_CH(config_channel)) ||
-			(IS_5G_CH(config_channel)))) {
-			hdd_err("Channel  %d is not valid to restart SAP",
-					config_channel);
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq) &&
+		    !WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq) &&
+		    !WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq)) {
+			hdd_err("Channel frequency %u is invalid to restart SAP",
+				chan_freq);
 			return -ENOTSUPP;
 		}
 
 		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(hostapd_adapter);
-		ap_ctx->sap_config.chan_freq = wlan_reg_chan_to_freq(
-						hdd_ctx->pdev, config_channel);
+		ap_ctx->sap_config.chan_freq = chan_freq;
 		ap_ctx->sap_config.ch_params.ch_width =
 					ap_ctx->sap_config.ch_width_orig;
 		ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_VENDOR_CONFIG_CHAN;
 
-		wlan_reg_set_channel_params(hdd_ctx->pdev,
-					    config_channel,
-					    wlan_reg_freq_to_chan(hdd_ctx->pdev,
-						ap_ctx->sap_config.sec_ch_freq),
-					    &ap_ctx->sap_config.ch_params);
+		wlan_reg_set_channel_params_for_freq(
+				hdd_ctx->pdev, chan_freq,
+				ap_ctx->sap_config.sec_ch_freq,
+				&ap_ctx->sap_config.ch_params);
 
 		hdd_restart_sap(hostapd_adapter);
 	}
