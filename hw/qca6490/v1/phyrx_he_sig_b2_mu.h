@@ -43,9 +43,103 @@ struct he_sig_b2_mu_info phyrx_he_sig_b2_mu_info_details
 			See detailed description of the STRUCT
 */
 
-#define PHYRX_HE_SIG_B2_MU_0_HE_SIG_B2_MU_INFO_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_OFFSET 0x00000000
-#define PHYRX_HE_SIG_B2_MU_0_HE_SIG_B2_MU_INFO_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_LSB 0
-#define PHYRX_HE_SIG_B2_MU_0_HE_SIG_B2_MU_INFO_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_MASK 0xffffffff
+
+ /* EXTERNAL REFERENCE : struct he_sig_b2_mu_info phyrx_he_sig_b2_mu_info_details */
+
+
+/* Description		PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_ID
+
+			Identifies the STA that is addressed. Details of STA ID
+			are TBD
+*/
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_ID_OFFSET 0x00000000
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_ID_LSB 0
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_ID_MASK 0x000007ff
+
+/* Description		PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_SPATIAL_CONFIG
+
+			Number of assigned spatial streams and their
+			corresponding index.
+
+			Total number of spatial streams assigned for the MU-MIMO
+			allocation is also signaled.
+*/
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_SPATIAL_CONFIG_OFFSET 0x00000000
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_SPATIAL_CONFIG_LSB 11
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_SPATIAL_CONFIG_MASK 0x00007800
+
+/* Description		PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_MCS
+
+			Indicates the data MCS
+*/
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_MCS_OFFSET 0x00000000
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_MCS_LSB 15
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_MCS_MASK 0x00078000
+
+/* Description		PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_RESERVED_SET_TO_1
+
+			<legal 1>
+*/
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_RESERVED_SET_TO_1_OFFSET 0x00000000
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_RESERVED_SET_TO_1_LSB 19
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_RESERVED_SET_TO_1_MASK 0x00080000
+
+/* Description		PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_CODING
+
+			Distinguishes between BCC/LDPC
+
+
+
+			0: BCC
+
+			1: LDPC
+
+			<legal all>
+*/
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_CODING_OFFSET 0x00000000
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_CODING_LSB 20
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_STA_CODING_MASK 0x00100000
+
+/* Description		PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_RESERVED_0A
+
+			<legal 0>
+*/
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_RESERVED_0A_OFFSET 0x00000000
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_RESERVED_0A_LSB 21
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_RESERVED_0A_MASK 0x1fe00000
+
+/* Description		PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_NSTS
+
+			MAC RX side usage only:
+
+			Needed by RXPCU. Provided by PHY so that RXPCU does not
+			need to have the RU number decoding logic.
+
+
+
+			Number of spatial streams for this user
+
+
+
+			<enum 0 1_spatial_stream>Single spatial stream
+
+			<enum 1 2_spatial_streams>2 spatial streams
+
+			<enum 2 3_spatial_streams>3 spatial streams
+
+			<enum 3 4_spatial_streams>4 spatial streams
+
+			<enum 4 5_spatial_streams>5 spatial streams
+
+			<enum 5 6_spatial_streams>6 spatial streams
+
+			<enum 6 7_spatial_streams>7 spatial streams
+
+			<enum 7 8_spatial_streams>8 spatial streams
+*/
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_NSTS_OFFSET 0x00000000
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_NSTS_LSB 29
+#define PHYRX_HE_SIG_B2_MU_0_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_NSTS_MASK 0xe0000000
 
 
 #endif // _PHYRX_HE_SIG_B2_MU_H_
