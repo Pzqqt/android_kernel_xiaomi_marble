@@ -935,7 +935,7 @@ static QDF_STATUS target_if_get_dbr_data(struct wlan_objmgr_pdev *pdev,
  *
  * Return : pointer to pdev
  */
-struct wlan_objmgr_pdev *
+static struct wlan_objmgr_pdev *
 dbr_get_pdev_and_srng_id(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 			 uint8_t *srng_id)
 {
@@ -956,7 +956,7 @@ dbr_get_pdev_and_srng_id(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 	return pdev;
 }
 #else
-struct wlan_objmgr_pdev *
+static struct wlan_objmgr_pdev *
 dbr_get_pdev_and_srng_id(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 			 uint8_t *srng_id)
 {
