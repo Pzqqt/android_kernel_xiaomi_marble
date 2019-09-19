@@ -27,10 +27,10 @@
 #include <wlan_osif_priv.h>
 #include <init_deinit_lmac.h>
 #include <reg_services_public_struct.h>
-#include <reg_services_public_struct.h>
 #include <target_if_spectral_sim.h>
 #include <target_if.h>
 #include <qdf_module.h>
+#include <wlan_reg_services_api.h>
 
 /**
  * @spectral_ops - Spectral function table, holds the Spectral functions that
@@ -2152,6 +2152,140 @@ target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
 	return;
 }
 
+/* target_if_spectral_find_agile_width() - Given a channel width enum, find the
+ *                          corresponding translation for Agile channel width.
+ *                          Translation schema of different operating modes:
+ *                          20 -> 20, 40 -> 40, (80 & 160 & 80_80) -> 80.
+ * @chwidth: Channel width enum.
+ *
+ * Return: The translated channel width enum.
+ */
+static enum phy_ch_width
+target_if_spectral_find_agile_width(enum phy_ch_width chwidth)
+{
+	switch (chwidth) {
+	case CH_WIDTH_20MHZ:
+		return CH_WIDTH_20MHZ;
+	case CH_WIDTH_40MHZ:
+		return CH_WIDTH_40MHZ;
+	case CH_WIDTH_80MHZ:
+	case CH_WIDTH_80P80MHZ:
+	case CH_WIDTH_160MHZ:
+		return CH_WIDTH_80MHZ;
+	default:
+		spectral_err("Invalid chwidth enum %d", chwidth);
+		return CH_WIDTH_INVALID;
+	}
+}
+
+/**
+ * target_if_is_agile_span_overlap_with_operating_span() - Helper routine to
+ * check whether agile span overlaps with current operating band.
+ *
+ * @spectral: Pointer to Spectral object
+ * @ss_frequency: Agile span center frequency
+ * @is_overlapping: Indicates whether Agile span overlaps with operating span
+ *
+ * Helper routine to check whether agile span overlaps with current
+ * operating band.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_is_agile_span_overlap_with_operating_span
+			(struct target_if_spectral *spectral,
+			 uint32_t ss_frequency,
+			 bool *is_overlapping)
+{
+	uint32_t chan_num;
+	enum phy_ch_width ch_width;
+	enum phy_ch_width agile_ch_width;
+	const struct bonded_channel *bonded_chan_ptr = NULL;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	int16_t chan_freq;
+	uint32_t op_start_freq;
+	uint32_t op_end_freq;
+	uint32_t agile_start_freq;
+	uint32_t agile_end_freq;
+	uint32_t cfreq2;
+
+	if (!spectral) {
+		spectral_err("Spectral object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pdev  = spectral->pdev_obj;
+	if (!pdev) {
+		spectral_err("pdev object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!is_overlapping) {
+		spectral_err("Argument(is_overlapping) is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev = target_if_spectral_get_vdev(spectral);
+	if (!vdev) {
+		spectral_err("vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	ch_width = target_if_vdev_get_ch_width(vdev);
+	chan_freq = target_if_vdev_get_chan_freq(vdev);
+	cfreq2 = target_if_vdev_get_chan_freq_seg2(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
+	if (cfreq2 < 0)
+		return QDF_STATUS_E_FAILURE;
+
+	chan_num = wlan_reg_freq_to_chan(pdev, chan_freq);
+
+	if (ch_width == CH_WIDTH_20MHZ) {
+		op_start_freq = chan_freq - 10;
+		op_end_freq = chan_freq + 10;
+	} else {
+		wlan_reg_get_5g_bonded_channel_and_state
+			(pdev, chan_num, ch_width, &bonded_chan_ptr);
+		if (!bonded_chan_ptr) {
+			spectral_err("Bonded channel is not found");
+			return QDF_STATUS_E_FAILURE;
+		}
+		op_start_freq =
+			wlan_reg_chan_to_freq(pdev,
+					      bonded_chan_ptr->start_ch) - 10;
+		op_end_freq =
+			wlan_reg_chan_to_freq(pdev,
+					      bonded_chan_ptr->end_ch) + 10;
+	}
+
+	agile_ch_width = target_if_spectral_find_agile_width(ch_width);
+	if (agile_ch_width == CH_WIDTH_INVALID)
+		return QDF_STATUS_E_FAILURE;
+	agile_start_freq = ss_frequency -
+				(wlan_reg_get_bw_value(agile_ch_width) >> 1);
+	agile_end_freq = ss_frequency +
+				(wlan_reg_get_bw_value(agile_ch_width) >> 1);
+	if (agile_end_freq <= op_start_freq || op_end_freq <= agile_start_freq)
+		*is_overlapping = false;
+	else
+		*is_overlapping = true;
+
+	/* Use non zero cfreq2 to identify 80p80 */
+	if (cfreq2) {
+		uint32_t sec80_start_feq;
+		uint32_t sec80_end_freq;
+
+		sec80_start_feq = cfreq2 - 40;
+		sec80_end_freq = cfreq2 + 40;
+
+		if ((agile_end_freq > sec80_start_feq) &&
+		    (sec80_end_freq > agile_start_freq))
+			*is_overlapping = true;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * _target_if_set_spectral_config() - Set spectral config
  * @spectral:       Pointer to spectral object
@@ -2173,6 +2307,8 @@ _target_if_set_spectral_config(struct target_if_spectral *spectral,
 	struct spectral_config params;
 	struct target_if_spectral_ops *p_sops;
 	struct spectral_config *sparams;
+	QDF_STATUS status;
+	bool is_overlapping;
 
 	if (!err) {
 		spectral_err("Error code argument is null");
@@ -2275,6 +2411,16 @@ _target_if_set_spectral_config(struct target_if_spectral *spectral,
 		sparams->ss_chn_mask = value;
 		break;
 	case SPECTRAL_PARAM_FREQUENCY:
+		status = target_if_is_agile_span_overlap_with_operating_span
+				(spectral, value, &is_overlapping);
+		if (QDF_IS_STATUS_ERROR(status))
+			return QDF_STATUS_E_FAILURE;
+
+		if (is_overlapping) {
+			spectral_err("Agile span overlapping with current BW");
+			*err = SPECTRAL_SCAN_ERR_PARAM_INVALID_VALUE;
+			return QDF_STATUS_E_FAILURE;
+		}
 		sparams->ss_frequency = value;
 		break;
 	}
@@ -2813,6 +2959,26 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 		*err = SPECTRAL_SCAN_ERR_PARAM_NOT_INITIALIZED;
 		qdf_spin_unlock(&spectral->spectral_lock);
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (smode == SPECTRAL_SCAN_MODE_AGILE) {
+		QDF_STATUS status;
+		bool is_overlapping;
+
+		status = target_if_is_agile_span_overlap_with_operating_span
+				(spectral,
+				 spectral->params[smode].ss_frequency,
+				 &is_overlapping);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			qdf_spin_unlock(&spectral->spectral_lock);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (is_overlapping) {
+			*err = SPECTRAL_SCAN_ERR_PARAM_INVALID_VALUE;
+			qdf_spin_unlock(&spectral->spectral_lock);
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
 
 	target_if_spectral_scan_enable_params(spectral,
