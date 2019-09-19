@@ -268,8 +268,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		pAddBssParams->staContext.assocId = 0;
 		pAddBssParams->staContext.uAPSD = 0;
 		pAddBssParams->staContext.maxSPLen = 0;
-		pAddBssParams->staContext.shortPreambleSupported =
-			(uint8_t) pBeaconStruct->capabilityInfo.shortPreamble;
 		pAddBssParams->staContext.updateSta = false;
 		pAddBssParams->staContext.encryptType =
 			ft_session->encryptType;
@@ -280,12 +278,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 
 		if (IS_DOT11_MODE_HT(ft_session->dot11mode) &&
 		    (pBeaconStruct->HTCaps.present)) {
-			pAddBssParams->staContext.us32MaxAmpduDuration = 0;
 			pAddBssParams->staContext.htCapable = 1;
-			pAddBssParams->staContext.greenFieldCapable =
-				(uint8_t) pBeaconStruct->HTCaps.greenField;
-			pAddBssParams->staContext.lsigTxopProtection =
-				(uint8_t) pBeaconStruct->HTCaps.lsigTXOPProtection;
 			if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
 			    chan_width_support) {
 				pAddBssParams->staContext.ch_width = (uint8_t)
@@ -327,22 +320,14 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 			pAddBssParams->staContext.mimoPS =
 				(tSirMacHTMIMOPowerSaveState) pBeaconStruct->HTCaps.
 				mimoPowerSave;
-			pAddBssParams->staContext.maxAmsduSize =
-				(uint8_t) pBeaconStruct->HTCaps.maximalAMSDUsize;
 			pAddBssParams->staContext.maxAmpduDensity =
 				pBeaconStruct->HTCaps.mpduDensity;
-			pAddBssParams->staContext.fDsssCckMode40Mhz =
-				(uint8_t) pBeaconStruct->HTCaps.dsssCckMode40MHz;
 			pAddBssParams->staContext.fShortGI20Mhz =
 				(uint8_t) pBeaconStruct->HTCaps.shortGI20MHz;
 			pAddBssParams->staContext.fShortGI40Mhz =
 				(uint8_t) pBeaconStruct->HTCaps.shortGI40MHz;
 			pAddBssParams->staContext.maxAmpduSize =
 				pBeaconStruct->HTCaps.maxRxAMPDUFactor;
-
-			if (pBeaconStruct->HTInfo.present)
-				pAddBssParams->staContext.rifsMode =
-					pBeaconStruct->HTInfo.rifsMode;
 		}
 
 		if ((ft_session->limWmeEnabled

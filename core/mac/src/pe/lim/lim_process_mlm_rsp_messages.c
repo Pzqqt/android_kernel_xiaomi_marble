@@ -1919,7 +1919,7 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				       pe_session);
 		goto end;
 	}
-	sta->bssId = pAddStaParams->bss_idx;
+	sta->bssId = pe_session->vdev_id;
 	sta->staIndex = pAddStaParams->staIdx;
 	sta->nss = pAddStaParams->nss;
 	/* if the AssocRsp frame is not acknowledged, then keep alive timer will take care of the state */

@@ -475,7 +475,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 
 	pAddStaParams->staType = STA_ENTRY_SELF;
 	pAddStaParams->status = QDF_STATUS_SUCCESS;
-	pAddStaParams->respReqd = 1;
 
 	/* Update  PE session ID */
 	pAddStaParams->sessionId = pe_session->peSessionId;
@@ -488,8 +487,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		pAddStaParams->staIdx = STA_INVALID_IDX;
 	pAddStaParams->updateSta = false;
 
-	pAddStaParams->shortPreambleSupported =
-		(uint8_t) pe_session->beaconParams.fShortPreamble;
 	lim_populate_peer_rate_set(mac, &pAddStaParams->supportedRates, NULL,
 				   false, pe_session, NULL, NULL);
 
@@ -497,32 +494,15 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		pAddStaParams->htCapable = pe_session->htCapability;
 		pAddStaParams->vhtCapable = pe_session->vhtCapability;
 		pAddStaParams->ch_width = pe_session->ch_width;
-		pAddStaParams->greenFieldCapable =
-			lim_get_ht_capability(mac, eHT_GREENFIELD,
-					      pe_session);
+
 		pAddStaParams->mimoPS =
 			lim_get_ht_capability(mac, eHT_MIMO_POWER_SAVE,
-					      pe_session);
-		pAddStaParams->rifsMode =
-			lim_get_ht_capability(mac, eHT_RIFS_MODE,
-					pe_session);
-		pAddStaParams->lsigTxopProtection =
-			lim_get_ht_capability(mac, eHT_LSIG_TXOP_PROTECTION,
 					      pe_session);
 		pAddStaParams->maxAmpduDensity =
 			lim_get_ht_capability(mac, eHT_MPDU_DENSITY,
 					pe_session);
 		pAddStaParams->maxAmpduSize =
 			lim_get_ht_capability(mac, eHT_MAX_RX_AMPDU_FACTOR,
-					      pe_session);
-		pAddStaParams->maxAmsduSize =
-			lim_get_ht_capability(mac, eHT_MAX_AMSDU_LENGTH,
-					      pe_session);
-		pAddStaParams->max_amsdu_num =
-			lim_get_ht_capability(mac, eHT_MAX_AMSDU_NUM,
-					      pe_session);
-		pAddStaParams->fDsssCckMode40Mhz =
-			lim_get_ht_capability(mac, eHT_DSSS_CCK_MODE_40MHZ,
 					      pe_session);
 		pAddStaParams->fShortGI20Mhz =
 			lim_get_ht_capability(mac, eHT_SHORT_GI_20MHZ,

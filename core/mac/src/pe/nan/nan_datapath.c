@@ -493,7 +493,7 @@ void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session
 		qdf_mem_free(add_sta_rsp);
 		return;
 	}
-	sta_ds->bssId = add_sta_rsp->bss_idx;
+	sta_ds->bssId = session->vdev_id;
 	sta_ds->staIndex = add_sta_rsp->staIdx;
 	sta_ds->valid = 1;
 	sta_ds->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;

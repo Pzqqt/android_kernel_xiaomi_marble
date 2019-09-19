@@ -2172,7 +2172,6 @@ lim_add_sta(struct mac_context *mac_ctx,
 
 	add_sta_params->wmmEnabled = sta_ds->qosMode;
 	add_sta_params->listenInterval = sta_ds->mlmStaContext.listenInterval;
-	add_sta_params->shortPreambleSupported = sta_ds->shortPreambleEnabled;
 	if (LIM_IS_AP_ROLE(session_entry) &&
 	   (sta_ds->mlmStaContext.subType == LIM_REASSOC)) {
 		/*
@@ -2184,10 +2183,9 @@ lim_add_sta(struct mac_context *mac_ctx,
 	sta_ds->valid = 0;
 	sta_ds->mlmStaContext.mlmState = eLIM_MLM_WT_ADD_STA_RSP_STATE;
 
-	pe_debug("Assoc ID: %d wmmEnabled: %d listenInterval: %d"
-		 " shortPreambleSupported: %d", add_sta_params->assocId,
-		add_sta_params->wmmEnabled, add_sta_params->listenInterval,
-		add_sta_params->shortPreambleSupported);
+	pe_debug("Assoc ID: %d wmmEnabled: %d listenInterval: %d",
+		 add_sta_params->assocId, add_sta_params->wmmEnabled,
+		 add_sta_params->listenInterval);
 	/* This will indicate HAL to "allocate" a new STA index */
 #ifdef FEATURE_WLAN_TDLS
 	/*
@@ -2208,7 +2206,6 @@ lim_add_sta(struct mac_context *mac_ctx,
 	add_sta_params->updateSta = update_entry;
 
 	add_sta_params->status = QDF_STATUS_SUCCESS;
-	add_sta_params->respReqd = 1;
 
 	/* Update VHT/HT Capability */
 	if (LIM_IS_AP_ROLE(session_entry) ||
@@ -2256,29 +2253,21 @@ lim_add_sta(struct mac_context *mac_ctx,
 	lim_update_sta_he_capable(mac_ctx, add_sta_params, sta_ds,
 				  session_entry);
 
-	add_sta_params->greenFieldCapable = sta_ds->htGreenfield;
 	add_sta_params->maxAmpduDensity = sta_ds->htAMpduDensity;
 	add_sta_params->maxAmpduSize = sta_ds->htMaxRxAMpduFactor;
-	add_sta_params->fDsssCckMode40Mhz = sta_ds->htDsssCckRate40MHzSupport;
 	add_sta_params->fShortGI20Mhz = sta_ds->htShortGI20Mhz;
 	add_sta_params->fShortGI40Mhz = sta_ds->htShortGI40Mhz;
-	add_sta_params->lsigTxopProtection = sta_ds->htLsigTXOPProtection;
-	add_sta_params->maxAmsduSize = sta_ds->htMaxAmsduLength;
 	add_sta_params->ch_width = sta_ds->htSupportedChannelWidthSet;
 	add_sta_params->mimoPS = sta_ds->htMIMOPSState;
 
-	pe_debug("greenFieldCapable: %d maxAmpduDensity: %d maxAmpduDensity: %d",
-		add_sta_params->greenFieldCapable,
-		add_sta_params->maxAmpduDensity, add_sta_params->maxAmpduSize);
+	pe_debug("maxAmpduDensity: %d maxAmpduDensity: %d",
+		 add_sta_params->maxAmpduDensity, add_sta_params->maxAmpduSize);
 
-	pe_debug("fDsssCckMode40Mhz: %d fShortGI20Mhz: %d fShortGI40Mhz: %d",
-		add_sta_params->fDsssCckMode40Mhz,
+	pe_debug("fShortGI20Mhz: %d fShortGI40Mhz: %d",
 		 add_sta_params->fShortGI20Mhz,	add_sta_params->fShortGI40Mhz);
 
-	pe_debug("lsigTxopProtection: %d maxAmsduSize: %d txChannelWidth: %d mimoPS: %d",
-		add_sta_params->lsigTxopProtection,
-		add_sta_params->maxAmsduSize, add_sta_params->ch_width,
-		add_sta_params->mimoPS);
+	pe_debug("txChannelWidth: %d mimoPS: %d", add_sta_params->ch_width,
+		 add_sta_params->mimoPS);
 
 	if (add_sta_params->vhtCapable) {
 		if (sta_ds->vhtSupportedChannelWidthSet)
@@ -2498,8 +2487,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 	 * we need to defer the message until we get the
 	 * response back from HAL.
 	 */
-	if (add_sta_params->respReqd)
-		SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, false);
+	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, false);
 
 	add_sta_params->nwType = session_entry->nwType;
 
@@ -2547,8 +2535,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 
 	ret_code = wma_post_ctrl_msg(mac_ctx, &msg_q);
 	if (QDF_STATUS_SUCCESS != ret_code) {
-		if (add_sta_params->respReqd)
-			SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
+		SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 		pe_err("ADD_STA_REQ for aId %d failed (reason %X)",
 			sta_ds->assocId, ret_code);
 		qdf_mem_free(add_sta_params);
@@ -2777,7 +2764,6 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	pAddStaParams->assocId = pe_session->limAID;
 	pAddStaParams->staType = STA_ENTRY_SELF;
 	pAddStaParams->status = QDF_STATUS_SUCCESS;
-	pAddStaParams->respReqd = 1;
 
 	/* Update  PE session ID */
 	pAddStaParams->sessionId = pe_session->peSessionId;
@@ -2790,33 +2776,19 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	/* This will indicate HAL to "allocate" a new STA index */
 	pAddStaParams->staIdx = staIdx;
 	pAddStaParams->updateSta = updateSta;
-	qdf_mem_copy(&pAddStaParams->mbssid_info,
-		     &pe_session->lim_join_req->bssDescription.mbssid_info,
-		     sizeof(struct scan_mbssid_info));
 
 	lim_set_mbssid_info(pe_session);
-
-	pAddStaParams->shortPreambleSupported =
-					mac->mlme_cfg->ht_caps.short_preamble;
 
 	lim_populate_own_rate_set(mac, &pAddStaParams->supportedRates,
 				  NULL, false,
 				  pe_session, NULL, NULL);
 	if (IS_DOT11_MODE_HT(selfStaDot11Mode)) {
 		pAddStaParams->htCapable = true;
-		pAddStaParams->greenFieldCapable =
-			lim_get_ht_capability(mac, eHT_GREENFIELD,
-					      pe_session);
+
 		pAddStaParams->ch_width =
 			mac->roam.configParam.channelBondingMode5GHz;
 		pAddStaParams->mimoPS =
 			lim_get_ht_capability(mac, eHT_MIMO_POWER_SAVE,
-					      pe_session);
-		pAddStaParams->rifsMode =
-			lim_get_ht_capability(mac, eHT_RIFS_MODE,
-					      pe_session);
-		pAddStaParams->lsigTxopProtection =
-			lim_get_ht_capability(mac, eHT_LSIG_TXOP_PROTECTION,
 					      pe_session);
 		pAddStaParams->maxAmpduDensity =
 			lim_get_ht_capability(mac, eHT_MPDU_DENSITY,
@@ -2824,32 +2796,18 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 		pAddStaParams->maxAmpduSize =
 			lim_get_ht_capability(mac, eHT_MAX_RX_AMPDU_FACTOR,
 					      pe_session);
-		pAddStaParams->maxAmsduSize =
-			lim_get_ht_capability(mac, eHT_MAX_AMSDU_LENGTH,
-					      pe_session);
-		pAddStaParams->max_amsdu_num =
-			lim_get_ht_capability(mac, eHT_MAX_AMSDU_NUM,
-					      pe_session);
-		pAddStaParams->fDsssCckMode40Mhz =
-			lim_get_ht_capability(mac, eHT_DSSS_CCK_MODE_40MHZ,
-					      pe_session);
 		pAddStaParams->fShortGI20Mhz = pe_session->ht_config.ht_sgi20;
 		pAddStaParams->fShortGI40Mhz = pe_session->ht_config.ht_sgi40;
-		pe_debug("greenFieldCapable: %d maxAmpduDensity: %d maxAmpduSize: %d",
-			 pAddStaParams->greenFieldCapable,
+		pe_debug("maxAmpduDensity: %d maxAmpduSize: %d",
 			 pAddStaParams->maxAmpduDensity,
 			 pAddStaParams->maxAmpduSize);
 
-		pe_debug("fDsssCckMode40Mhz: %d fShortGI20Mhz: %d fShortGI40Mhz: %d lsigTxopProtection: %d",
-			 pAddStaParams->fDsssCckMode40Mhz,
+		pe_debug("fShortGI20Mhz: %d fShortGI40Mhz: %d",
 			 pAddStaParams->fShortGI20Mhz,
-			 pAddStaParams->fShortGI40Mhz,
-			 pAddStaParams->lsigTxopProtection);
+			 pAddStaParams->fShortGI40Mhz);
 
-		pe_debug("maxAmsduSize: %d txChannelWidth: %d mimoPS: %d rifsMode %d",
-			 pAddStaParams->maxAmsduSize,
-			 pAddStaParams->ch_width,
-			 pAddStaParams->mimoPS, pAddStaParams->rifsMode);
+		pe_debug("txChannelWidth: %d mimoPS: %d",
+			 pAddStaParams->ch_width, pAddStaParams->mimoPS);
 	}
 	pAddStaParams->vhtCapable = IS_DOT11_MODE_VHT(selfStaDot11Mode);
 	if (pAddStaParams->vhtCapable) {
@@ -2905,11 +2863,9 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 		pAddStaParams->nonRoamReassoc = 1;
 		pe_session->isNonRoamReassoc = 0;
 	}
-	pe_debug("sessionid: %d  Assoc ID: %d listenInterval = %d "
-			       "shortPreambleSupported: %d",
-		pe_session->smeSessionId, pAddStaParams->assocId,
-		pAddStaParams->listenInterval,
-		pAddStaParams->shortPreambleSupported);
+	pe_debug("sessionid: %d  Assoc ID: %d listenInterval = %d",
+		 pe_session->smeSessionId, pAddStaParams->assocId,
+		 pAddStaParams->listenInterval);
 
 	if (IS_DOT11_MODE_HE(selfStaDot11Mode))
 		lim_add_self_he_cap(pAddStaParams, pe_session);
@@ -3692,27 +3648,16 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 		pe_session->gUapsdPerAcBitmask;
 
 	pAddBssParams->staContext.maxSPLen = 0;
-	pAddBssParams->staContext.shortPreambleSupported =
-		(uint8_t) pAssocRsp->capabilityInfo.shortPreamble;
 	pAddBssParams->staContext.updateSta = updateEntry;
 
-	pe_debug("StaContext: " QDF_MAC_ADDR_STR
-			" shortPreambleSupported: %d",
-			QDF_MAC_ADDR_ARRAY(pAddBssParams->staContext.staMac),
-			pAddBssParams->staContext.shortPreambleSupported);
+	pe_debug("StaContext: staMac " QDF_MAC_ADDR_STR,
+		 QDF_MAC_ADDR_ARRAY(pAddBssParams->staContext.staMac));
 
 	if (IS_DOT11_MODE_HT(pe_session->dot11mode)
 			&& pBeaconStruct->HTCaps.present) {
-		pAddBssParams->staContext.us32MaxAmpduDuration = 0;
 		pAddBssParams->staContext.htCapable = 1;
-		pAddBssParams->staContext.greenFieldCapable =
-			(uint8_t) pAssocRsp->HTCaps.greenField;
-		pAddBssParams->staContext.lsigTxopProtection =
-			(uint8_t) pAssocRsp->HTCaps.lsigTXOPProtection;
-		pe_debug("StaCtx: htCap %d GFcap %d lsigTxopProtn %d",
-				pAddBssParams->staContext.htCapable,
-				pAddBssParams->staContext.greenFieldCapable,
-				pAddBssParams->staContext.lsigTxopProtection);
+		pe_debug("StaCtx: htCap %d",
+			 pAddBssParams->staContext.htCapable);
 		if (pe_session->ht_config.ht_tx_stbc)
 			pAddBssParams->staContext.stbc_capable =
 				pAssocRsp->HTCaps.rxSTBC;
@@ -3789,12 +3734,8 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 		pAddBssParams->staContext.mimoPS =
 			(tSirMacHTMIMOPowerSaveState)
 			pAssocRsp->HTCaps.mimoPowerSave;
-		pAddBssParams->staContext.maxAmsduSize =
-			(uint8_t) pAssocRsp->HTCaps.maximalAMSDUsize;
 		pAddBssParams->staContext.maxAmpduDensity =
 			pAssocRsp->HTCaps.mpduDensity;
-		pAddBssParams->staContext.fDsssCckMode40Mhz =
-			(uint8_t) pAssocRsp->HTCaps.dsssCckMode40MHz;
 		/*
 		 * We will check gShortGI20Mhz and gShortGI40Mhz from
 		 * session entry  if they are set then we will use what ever
@@ -3857,19 +3798,13 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			}
 		}
 
-		if (pBeaconStruct->HTInfo.present)
-			pAddBssParams->staContext.rifsMode =
-				pAssocRsp->HTInfo.rifsMode;
+		pe_debug("StaCtx: ChBW %d mimoPS %d",
+			 pAddBssParams->staContext.ch_width,
+			 pAddBssParams->staContext.mimoPS);
 
-		pe_debug("StaCtx: ChBW %d mimoPS %d maxAmsduSize %d",
-				pAddBssParams->staContext.ch_width,
-				pAddBssParams->staContext.mimoPS,
-				pAddBssParams->staContext.maxAmsduSize);
-
-		pe_debug("maxAmpduDens %d CckMode40Mhz %d SGI20Mhz %d",
-				pAddBssParams->staContext.maxAmpduDensity,
-				pAddBssParams->staContext.fDsssCckMode40Mhz,
-				pAddBssParams->staContext.fShortGI20Mhz);
+		pe_debug("maxAmpduDens %d SGI20Mhz %d",
+			 pAddBssParams->staContext.maxAmpduDensity,
+			 pAddBssParams->staContext.fShortGI20Mhz);
 
 		pe_debug("SGI40M %d maxAmpdu %d htLdpc %d vhtLdpc %d",
 				pAddBssParams->staContext.fShortGI40Mhz,
@@ -4140,29 +4075,19 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 	pAddBssParams->staContext.assocId = 0;
 	pAddBssParams->staContext.uAPSD = 0;
 	pAddBssParams->staContext.maxSPLen = 0;
-	pAddBssParams->staContext.shortPreambleSupported =
-		(uint8_t) pBeaconStruct->capabilityInfo.shortPreamble;
 	pAddBssParams->staContext.updateSta = false;
 
-	pe_debug("StaCtx: " QDF_MAC_ADDR_STR " shortPreamble: %d",
-			QDF_MAC_ADDR_ARRAY(pAddBssParams->staContext.staMac),
-			pAddBssParams->staContext.shortPreambleSupported);
+	pe_debug("StaCtx: " QDF_MAC_ADDR_STR,
+		 QDF_MAC_ADDR_ARRAY(pAddBssParams->staContext.staMac));
 
 	pAddBssParams->dot11_mode = pe_session->dot11mode;
 	pe_debug("dot11_mode:%d", pAddBssParams->dot11_mode);
 
 	if (IS_DOT11_MODE_HT(pe_session->dot11mode)
 			&& (pBeaconStruct->HTCaps.present)) {
-		pAddBssParams->staContext.us32MaxAmpduDuration = 0;
 		pAddBssParams->staContext.htCapable = 1;
-		pAddBssParams->staContext.greenFieldCapable =
-			(uint8_t) pBeaconStruct->HTCaps.greenField;
-		pAddBssParams->staContext.lsigTxopProtection =
-			(uint8_t) pBeaconStruct->HTCaps.lsigTXOPProtection;
-		pe_debug("StaCtx: htCap %d GFCap %d lsigTxopProtn %d",
-				pAddBssParams->staContext.htCapable,
-				pAddBssParams->staContext.greenFieldCapable,
-				pAddBssParams->staContext.lsigTxopProtection);
+		pe_debug("StaCtx: htCap %d",
+			 pAddBssParams->staContext.htCapable);
 		if (pe_session->vhtCapability &&
 			(IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps) ||
 			 IS_BSS_VHT_CAPABLE(
@@ -4218,12 +4143,8 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 		pAddBssParams->staContext.mimoPS =
 			(tSirMacHTMIMOPowerSaveState) pBeaconStruct->HTCaps.
 			mimoPowerSave;
-		pAddBssParams->staContext.maxAmsduSize =
-			(uint8_t) pBeaconStruct->HTCaps.maximalAMSDUsize;
 		pAddBssParams->staContext.maxAmpduDensity =
 			pBeaconStruct->HTCaps.mpduDensity;
-		pAddBssParams->staContext.fDsssCckMode40Mhz =
-			(uint8_t) pBeaconStruct->HTCaps.dsssCckMode40MHz;
 		/*
 		 * We will check gShortGI20Mhz and gShortGI40Mhz from ini file.
 		 * if they are set then we will use what ever Beacon coming
@@ -4271,18 +4192,13 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 				pAddBssParams->staContext.vhtLdpcCapable = 0;
 		}
 
-		if (pBeaconStruct->HTInfo.present)
-			pAddBssParams->staContext.rifsMode =
-				pBeaconStruct->HTInfo.rifsMode;
-		pe_debug("StaContext ChannelWidth: %d mimoPS: %d maxAmsduSize: %d",
-				pAddBssParams->staContext.ch_width,
-				pAddBssParams->staContext.mimoPS,
-				pAddBssParams->staContext.maxAmsduSize);
+		pe_debug("StaContext ChannelWidth: %d mimoPS: %d",
+			 pAddBssParams->staContext.ch_width,
+			 pAddBssParams->staContext.mimoPS);
 
-		pe_debug("maxAmpduDensity %d Cck40Mhz %d SGI20Mhz %d",
-				pAddBssParams->staContext.maxAmpduDensity,
-				pAddBssParams->staContext.fDsssCckMode40Mhz,
-				pAddBssParams->staContext.fShortGI20Mhz);
+		pe_debug("maxAmpduDensity %d SGI20Mhz %d",
+			 pAddBssParams->staContext.maxAmpduDensity,
+			 pAddBssParams->staContext.fShortGI20Mhz);
 
 		pe_debug("SGI40M %d maxAmpdu %d htLdpc %d vhtLdpc %d",
 				pAddBssParams->staContext.fShortGI40Mhz,

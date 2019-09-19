@@ -125,30 +125,21 @@ struct sAniProbeRspStruct {
  * @assocId: associd
  * @staType: 0 - Self, 1 other/remote, 2 - bssid
  * @staMac: MAC Address of STA
- * @shortPreambleSupported: is short preamble supported or not
  * @listenInterval: Listen interval
  * @wmmEnabled: Support for 11e/WMM
  * @uAPSD: U-APSD Flags: 1b per AC
  * @maxSPLen: Max SP Length
  * @htCapable: 11n HT capable STA
- * @greenFieldCapable: 11n Green Field preamble support
  * @txChannelWidthSet: TX Width Set: 0 - 20 MHz only, 1 - 20/40 MHz
  * @mimoPS: MIMO Power Save
- * @rifsMode: RIFS mode: 0 - NA, 1 - Allowed
- * @lsigTxopProtection: L-SIG TXOP Protection mechanism
- * @us32MaxAmpduDuration: in units of 32 us
- * @maxAmpduSize:  0 : 8k , 1 : 16k, 2 : 32k, 3 : 64k
  * @maxAmpduDensity: 3 : 0~7 : 2^(11nAMPDUdensity -4)
  * @maxAmsduSize: 1 : 3839 bytes, 0 : 7935 bytes
- * @fDsssCckMode40Mhz: DSSS CCK supported 40MHz
  * @fShortGI40Mhz: short GI support for 40Mhz packets
  * @fShortGI20Mhz: short GI support for 20Mhz packets
  * @supportedRates: legacy supported rates
  * @status: QDF status
  * @staIdx: station index
- * @bss_idx: BSSID of BSS to which the station is associated
  * @updateSta: pdate the existing STA entry, if this flag is set
- * @respReqd: A flag to indicate to HAL if the response message is required
  * @rmfEnabled: Robust Management Frame (RMF) enabled/disabled
  * @encryptType: The unicast encryption type in the association
  * @sessionId: PE session id
@@ -160,7 +151,6 @@ struct sAniProbeRspStruct {
  * @vhtTxBFCapable: txbf capable or not
  * @vhtTxMUBformeeCapable: Bformee capable or not
  * @enableVhtpAid: enable VHT AID
- * @enableVhtGid: enable VHT GID
  * @enableAmpduPs: AMPDU power save
  * @enableHtSmps: enable HT SMPS
  * @htSmpsconfig: HT SMPS config
@@ -178,8 +168,6 @@ struct sAniProbeRspStruct {
  * @peerAtimWindowLength: peer ATIM Window length
  * @nss: Return the number of spatial streams supported
  * @stbc_capable: stbc capable
- * @max_amsdu_num: Maximum number of MSDUs in a tx aggregate frame
- * @mbssid_info: Multiple bssid information
  * @no_ptk_4_way: Do not need 4-way handshake
  *
  * This structure contains parameter required for
@@ -193,39 +181,22 @@ typedef struct {
 	 * This may or may not be required in production driver.
 	 */
 	uint8_t staType;
-	uint8_t shortPreambleSupported;
 	tSirMacAddr staMac;
 	uint16_t listenInterval;
 	uint8_t wmmEnabled;
 	uint8_t uAPSD;
 	uint8_t maxSPLen;
 	uint8_t htCapable;
-	/* 11n Green Field preamble support
-	 * 0 - Not supported, 1 - Supported
-	 * Add it to RA related fields of sta entry in HAL
-	 */
-	uint8_t greenFieldCapable;
 	uint8_t ch_width;
-
 	tSirMacHTMIMOPowerSaveState mimoPS;
-	uint8_t rifsMode;
-	/* L-SIG TXOP Protection mechanism
-	 * 0 - No Support, 1 - Supported
-	 * SG - there is global field.
-	 */
-	uint8_t lsigTxopProtection;
-	uint8_t us32MaxAmpduDuration;
 	uint8_t maxAmpduSize;
 	uint8_t maxAmpduDensity;
-	uint8_t maxAmsduSize;
-
 	/* 11n Parameters */
 	/* HT STA should set it to 1 if it is enabled in BSS
 	 * HT STA should set it to 0 if AP does not support it.
 	 * This indication is sent to HAL and HAL uses this flag
 	 * to pickup up appropriate 40Mhz rates.
 	 */
-	uint8_t fDsssCckMode40Mhz;
 	uint8_t fShortGI40Mhz;
 	uint8_t fShortGI20Mhz;
 	struct supported_rates supportedRates;
@@ -239,15 +210,7 @@ typedef struct {
 	 * QDF_STATUS_SUCCESS
 	 */
 	uint8_t staIdx;
-	/* BSSID of BSS to which the station is associated.
-	 * This should be filled back in by HAL, and sent back to LIM as part of
-	 * the response message, so LIM can cache it in the station entry of
-	 * hash table. When station is deleted, LIM will make use of this
-	 * bss_idx to delete BSS from hal tables and from softmac.
-	 */
-	uint8_t bss_idx;
 	uint8_t updateSta;
-	uint8_t respReqd;
 	uint8_t rmfEnabled;
 	uint32_t encryptType;
 	uint8_t sessionId;
@@ -259,7 +222,6 @@ typedef struct {
 	uint8_t enable_su_tx_bformer;
 	uint8_t vhtTxMUBformeeCapable;
 	uint8_t enableVhtpAid;
-	uint8_t enableVhtGid;
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmpsconfig;
@@ -278,14 +240,12 @@ typedef struct {
 	uint32_t peerAtimWindowLength;
 	uint8_t nonRoamReassoc;
 	uint32_t nss;
-	struct scan_mbssid_info mbssid_info;
 #ifdef WLAN_FEATURE_11AX
 	bool he_capable;
 	tDot11fIEhe_cap he_config;
 	tDot11fIEhe_op he_op;
 #endif
 	uint8_t stbc_capable;
-	uint8_t max_amsdu_num;
 #ifdef WLAN_SUPPORT_TWT
 	uint8_t twt_requestor;
 	uint8_t twt_responder;

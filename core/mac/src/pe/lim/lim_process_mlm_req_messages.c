@@ -192,14 +192,10 @@ static void mlm_add_sta(struct mac_context *mac_ctx, tpAddStaParams sta_param,
 	val = mac_ctx->mlme_cfg->sap_cfg.listen_interval;
 	sta_param->listenInterval = (uint16_t) val;
 
-	sta_param->shortPreambleSupported =
-		mac_ctx->mlme_cfg->ht_caps.short_preamble;
-
 	sta_param->assocId = 0;      /* Is SMAC OK with this? */
 	sta_param->wmmEnabled = 0;
 	sta_param->uAPSD = 0;
 	sta_param->maxSPLen = 0;
-	sta_param->us32MaxAmpduDuration = 0;
 	sta_param->maxAmpduSize = 0; /* 0: 8k, 1: 16k,2: 32k,3: 64k, 4:128k */
 
 	/* For Self STA get the LDPC capability from config.ini */
@@ -210,32 +206,14 @@ static void mlm_add_sta(struct mac_context *mac_ctx, tpAddStaParams sta_param,
 
 	if (IS_DOT11_MODE_HT(session_entry->dot11mode)) {
 		sta_param->htCapable = ht_capable;
-		sta_param->greenFieldCapable =
-			lim_get_ht_capability(mac_ctx, eHT_GREENFIELD,
-					      session_entry);
 		sta_param->ch_width =
 			lim_get_ht_capability(mac_ctx,
 				eHT_SUPPORTED_CHANNEL_WIDTH_SET, session_entry);
 		sta_param->mimoPS =
 			(tSirMacHTMIMOPowerSaveState)lim_get_ht_capability(
 				mac_ctx, eHT_MIMO_POWER_SAVE, session_entry);
-		sta_param->rifsMode =
-			lim_get_ht_capability(mac_ctx, eHT_RIFS_MODE,
-					      session_entry);
-		sta_param->lsigTxopProtection =
-			lim_get_ht_capability(mac_ctx, eHT_LSIG_TXOP_PROTECTION,
-					      session_entry);
 		sta_param->maxAmpduDensity =
 			lim_get_ht_capability(mac_ctx, eHT_MPDU_DENSITY,
-					      session_entry);
-		sta_param->maxAmsduSize =
-			lim_get_ht_capability(mac_ctx, eHT_MAX_AMSDU_LENGTH,
-					      session_entry);
-		sta_param->max_amsdu_num =
-			lim_get_ht_capability(mac_ctx, eHT_MAX_AMSDU_NUM,
-					      session_entry);
-		sta_param->fDsssCckMode40Mhz =
-			lim_get_ht_capability(mac_ctx, eHT_DSSS_CCK_MODE_40MHZ,
 					      session_entry);
 		sta_param->fShortGI20Mhz =
 			lim_get_ht_capability(mac_ctx, eHT_SHORT_GI_20MHZ,
@@ -274,11 +252,9 @@ static void mlm_add_sta(struct mac_context *mac_ctx, tpAddStaParams sta_param,
 	lim_populate_own_rate_set(mac_ctx, &sta_param->supportedRates, NULL,
 				  false, session_entry, NULL, NULL);
 
-	pe_debug("GF: %d, ChnlWidth: %d, MimoPS: %d, lsigTXOP: %d, dsssCCK: %d,"
-		" SGI20: %d, SGI40%d", sta_param->greenFieldCapable,
-		sta_param->ch_width, sta_param->mimoPS,
-		sta_param->lsigTxopProtection, sta_param->fDsssCckMode40Mhz,
-		sta_param->fShortGI20Mhz, sta_param->fShortGI40Mhz);
+	pe_debug("ChnlWidth: %d, MimoPS: %d, SGI20: %d, SGI40%d",
+		 sta_param->ch_width, sta_param->mimoPS,
+		 sta_param->fShortGI20Mhz, sta_param->fShortGI40Mhz);
 
 	if (QDF_P2P_GO_MODE == session_entry->opmode)
 		sta_param->p2pCapableSta = 1;
