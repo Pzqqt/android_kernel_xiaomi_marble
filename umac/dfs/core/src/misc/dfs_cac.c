@@ -372,29 +372,6 @@ dfs_is_new_chan_subset_of_old_chan(struct wlan_dfs *dfs,
 				     n_new_subchans);
 }
 
-#ifdef QCA_SKIP_CAC_AFTER_RESTART
-bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs,
-				     struct dfs_channel *cur_chan,
-				     struct dfs_channel *prev_chan)
-{
-	if (dfs_is_new_chan_subset_of_old_chan(dfs, cur_chan, prev_chan)) {
-		/* AP bandwidth reduce case:
-		 * When AP detects the RADAR in in-service monitoring
-		 * mode in channel A, it cancels the running CAC and
-		 * tries to find the channel B with the reduced
-		 * bandwidth of channel A.
-		 * If the new channel B is subset of the channel A
-		 * then AP skips the CAC.
-		 */
-		if (!dfs->dfs_cac_aborted) {
-			dfs_debug(dfs, WLAN_DEBUG_DFS, "Skip CAC");
-			return false;
-		}
-	}
-	return true;
-}
-#endif
-
 bool dfs_is_cac_required(struct wlan_dfs *dfs,
 			 struct dfs_channel *cur_chan,
 			 struct dfs_channel *prev_chan,
@@ -456,9 +433,22 @@ bool dfs_is_cac_required(struct wlan_dfs *dfs,
 			dfs_cancel_cac_timer(dfs);
 		}
 	} else { /* CAC timer is not running. */
-		return dfs_skip_cac_after_vdev_restart(dfs,
+		if (dfs_is_new_chan_subset_of_old_chan(dfs,
 						       cur_chan,
-						       prev_chan);
+						       prev_chan)) {
+			/* AP bandwidth reduce case:
+			 * When AP detects the RADAR in in-service monitoring
+			 * mode in channel A, it cancels the running CAC and
+			 * tries to find the channel B with the reduced
+			 * bandwidth of channel A.
+			 * If the new channel B is subset of the channel A
+			 * then AP skips the CAC.
+			 */
+			if (!dfs->dfs_cac_aborted) {
+				dfs_debug(dfs, WLAN_DEBUG_DFS, "Skip CAC");
+				return false;
+			}
+		}
 	}
 
 	return true;

@@ -1988,20 +1988,6 @@ void dfs_cancel_cac_timer(struct wlan_dfs *dfs);
 void dfs_start_cac_timer(struct wlan_dfs *dfs);
 
 /**
- * dfs_is_curchan_subset_of_cac_started_chan() - Check if the dfs current
- * channel is subset of cac started channel.
- * @dfs: Pointer to wlan_dfs structure.
- *
- * If the current channel and the cac_started_chan is same or
- * if the current channel is subset of the cac_started_chan then
- * this function returns true.
- *
- * Return: true if current channel is same or subset of  cac started channel,
- * else false.
- */
-bool dfs_is_curchan_subset_of_cac_started_chan(struct wlan_dfs *dfs);
-
-/**
  * dfs_set_update_nol_flag() - Sets update_nol flag.
  * @dfs: Pointer to wlan_dfs structure.
  * @val: update_nol flag.
@@ -2656,27 +2642,4 @@ void dfs_reset_agile_config(struct dfs_soc_priv_obj *dfs_soc);
  * @dfs: Pointer to wlan_dfs.
  */
 int dfs_reinit_timers(struct wlan_dfs *dfs);
-
-/**
- * dfs_skip_cac_after_vdev_restart() - Skip CAC if new channel is same
- * as old channel after vdev restart.
- * @dfs: Pointer to wlan_dfs structure.
- * @cur_chan: Pointer to current channel of the pdev.
- * @prev_chan: Pointer to previous channel of the pdev.
- *
- * Return: False if CAC can be skipped, else true.
- */
-#ifdef QCA_SKIP_CAC_AFTER_RESTART
-bool dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs,
-				     struct dfs_channel *cur_chan,
-				     struct dfs_channel *prev_chan);
-#else
-static inline bool
-dfs_skip_cac_after_vdev_restart(struct wlan_dfs *dfs,
-				struct dfs_channel *cur_chan,
-				struct dfs_channel *prev_chan)
-{
-	return true;
-}
-#endif
 #endif  /* _DFS_H_ */
