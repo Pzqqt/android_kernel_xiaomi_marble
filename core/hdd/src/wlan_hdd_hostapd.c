@@ -1824,6 +1824,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 		wlansap_get_dfs_ignore_cac(mac_handle, &ignoreCAC);
+		if (!policy_mgr_get_dfs_master_dynamic_enabled(
+				hdd_ctx->psoc, adapter->vdev_id))
+			ignoreCAC = true;
 
 		/* DFS requirement: DO NOT transmit during CAC. */
 		if (CHANNEL_STATE_DFS !=
