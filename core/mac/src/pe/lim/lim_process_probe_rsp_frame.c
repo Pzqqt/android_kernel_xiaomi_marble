@@ -276,7 +276,7 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 						session_entry);
 				lim_send_edca_params(mac_ctx,
 					session_entry->gLimEdcaParamsActive,
-					sta_ds->bssId, false);
+					session_entry->vdev_id, false);
 			} else {
 				pe_err("SelfEntry missing in Hash");
 			}

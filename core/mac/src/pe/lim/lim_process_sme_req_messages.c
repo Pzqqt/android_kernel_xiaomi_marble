@@ -3407,7 +3407,7 @@ __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *msg_buf)
 				   &pe_session->dph.dphHashTable);
 	if (sta) {
 		lim_send_edca_params(mac, pe_session->gLimEdcaParamsActive,
-				     sta->bssId, false);
+				     pe_session->vdev_id, false);
 		status = QDF_STATUS_SUCCESS;
 	} else {
 		pe_err("Self entry missing in Hash Table");
@@ -3528,7 +3528,7 @@ static void lim_process_sme_update_edca_params(struct mac_context *mac_ctx,
 	if (sta_ds_ptr)
 		lim_send_edca_params(mac_ctx,
 				     pe_session->gLimEdcaParamsActive,
-				     sta_ds_ptr->bssId, false);
+				     pe_session->vdev_id, false);
 	else
 		pe_err("Self entry missing in Hash Table");
 }
@@ -3548,7 +3548,7 @@ static void lim_process_sme_update_mu_edca_params(struct mac_context *mac_ctx,
 					&pe_session->dph.dphHashTable);
 	if (sta_ds_ptr)
 		lim_send_edca_params(mac_ctx, mac_ctx->usr_mu_edca_params,
-				     sta_ds_ptr->bssId, true);
+				     pe_session->vdev_id, true);
 	else
 		pe_err("Self entry missing in Hash Table");
 }

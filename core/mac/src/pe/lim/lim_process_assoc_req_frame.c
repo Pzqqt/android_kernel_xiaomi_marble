@@ -33,7 +33,6 @@
 #include "lim_assoc_utils.h"
 #include "lim_security_utils.h"
 #include "lim_ser_des_utils.h"
-#include "lim_sta_hash_api.h"
 #include "lim_admit_control.h"
 #include "cds_packet.h"
 #include "lim_session_utils.h"

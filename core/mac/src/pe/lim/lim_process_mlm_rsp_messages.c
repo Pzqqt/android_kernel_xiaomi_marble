@@ -1511,12 +1511,12 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 				pe_debug("Send user cfg MU EDCA params to FW");
 				lim_send_edca_params(mac_ctx,
 					     mac_ctx->usr_mu_edca_params,
-					     sta_ds->bssId, true);
+					     session_entry->vdev_id, true);
 			} else if (session_entry->mu_edca_present) {
 				pe_debug("Send MU EDCA params to FW");
 				lim_send_edca_params(mac_ctx,
 					session_entry->ap_mu_edca_params,
-					sta_ds->bssId, true);
+					session_entry->vdev_id, true);
 			}
 		}
 	} else {
@@ -1919,7 +1919,6 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				       pe_session);
 		goto end;
 	}
-	sta->bssId = pe_session->vdev_id;
 	sta->staIndex = pAddStaParams->staIdx;
 	sta->nss = pAddStaParams->nss;
 	/* if the AssocRsp frame is not acknowledged, then keep alive timer will take care of the state */
@@ -2147,7 +2146,6 @@ void lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 		}
 		session_entry->vdev_id = add_bss_params->vdev_id;
 		/* Success, handle below */
-		sta->bssId = add_bss_params->vdev_id;
 		/* STA Index(genr by HAL) for the BSS entry is stored here */
 		sta->staIndex = add_bss_params->staContext.staIdx;
 		/* Trigger Authentication with AP */
@@ -2270,7 +2268,6 @@ static void lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 			session_entry->bss_idx =
 				add_bss_rsp->vdev_id;
 			/* Success, handle below */
-			sta_ds->bssId = add_bss_rsp->vdev_id;
 			/*
 			 * STA Index(genr by HAL) for the BSS
 			 * entry is stored here
@@ -2282,7 +2279,7 @@ static void lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 				session_entry->gLimEdcaParams, session_entry);
 			lim_send_edca_params(mac_ctx,
 				session_entry->gLimEdcaParamsActive,
-				sta_ds->bssId, false);
+				session_entry->vdev_id, false);
 			if (lim_add_sta_self(mac_ctx, sta_idx, update_sta,
 				session_entry) != QDF_STATUS_SUCCESS) {
 				/* Add STA context at HW */

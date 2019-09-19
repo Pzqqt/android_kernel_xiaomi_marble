@@ -223,30 +223,9 @@ send_resp:
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * lim_send_edca_params()
- *
- ***FUNCTION:
- * This function is called to send dynamically changing EDCA Parameters to WMA.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param mac  pointer to Global Mac structure.
- * @param tpUpdatedEdcaParams pointer to the structure which contains
- *                                       dynamically changing EDCA parameters.
- * @param highPerformance  If the peer is Airgo (taurus) then switch to highPerformance is true.
- *
- * @return success if message send is ok, else false.
- */
 QDF_STATUS lim_send_edca_params(struct mac_context *mac,
-				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
-				   uint16_t bss_idx, bool mu_edca)
+				tSirMacEdcaParamRecord *pUpdatedEdcaParams,
+				uint16_t vdev_id, bool mu_edca)
 {
 	tEdcaParams *pEdcaParams = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -255,7 +234,7 @@ QDF_STATUS lim_send_edca_params(struct mac_context *mac,
 	pEdcaParams = qdf_mem_malloc(sizeof(tEdcaParams));
 	if (!pEdcaParams)
 		return QDF_STATUS_E_NOMEM;
-	pEdcaParams->bss_idx = bss_idx;
+	pEdcaParams->vdev_id = vdev_id;
 	pEdcaParams->acbe = pUpdatedEdcaParams[QCA_WLAN_AC_BE];
 	pEdcaParams->acbk = pUpdatedEdcaParams[QCA_WLAN_AC_BK];
 	pEdcaParams->acvi = pUpdatedEdcaParams[QCA_WLAN_AC_VI];

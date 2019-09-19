@@ -34,7 +34,6 @@
 #include "lim_send_messages.h"
 #include "lim_ser_des_utils.h"
 #include "lim_admit_control.h"
-#include "lim_sta_hash_api.h"
 #include "dot11f.h"
 #include "dot11fdefs.h"
 #include "wmm_apsd.h"
@@ -3919,29 +3918,8 @@ static void lim_ht_switch_chnl_req(struct pe_session *session)
 	}
 }
 
-/**
- * \brief This function updates lim global structure, if CB parameters in the BSS
- *  have changed, and sends an indication to HAL also with the
- * updated HT Parameters.
- * This function does not detect the change in the primary channel, that is done as part
- * of channel Swtich IE processing.
- * If STA is configured with '20Mhz only' mode, then this function does not do anything
- * This function changes the CB mode, only if the self capability is set to '20 as well as 40Mhz'
- *
- *
- * \param mac Pointer to global MAC structure
- *
- * \param pRcvdHTInfo Pointer to HT Info IE obtained from a  Beacon or
- * Probe Response
- *
- * \param bss_idx BSS Index of the Bss to which Station is associated.
- *
- *
- */
-
 void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 						   tDot11fIEHTInfo *pHTInfo,
-						   uint8_t bss_idx,
 						   struct pe_session *pe_session)
 {
 	/* If self capability is set to '20Mhz only', then do not change the CB mode. */

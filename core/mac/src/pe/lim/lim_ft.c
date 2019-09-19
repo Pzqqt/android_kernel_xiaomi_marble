@@ -1004,7 +1004,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
 
 				lim_send_edca_params(mac,
 					     pe_session->gLimEdcaParamsActive,
-					     pSta->bssId, false);
+					     pe_session->vdev_id, false);
 
 			if (QDF_STATUS_SUCCESS !=
 			    lim_tspec_add(mac, pSta->staAddr, pSta->assocId,

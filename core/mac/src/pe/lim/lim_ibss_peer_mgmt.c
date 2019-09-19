@@ -22,7 +22,6 @@
 #include "wni_cfg.h"
 #include "lim_utils.h"
 #include "lim_assoc_utils.h"
-#include "lim_sta_hash_api.h"
 #include "sch_api.h"             /* sch_set_fixed_beacon_fields for IBSS coalesce */
 #include "lim_security_utils.h"
 #include "lim_send_messages.h"
@@ -1186,7 +1185,6 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sta->bssId = pe_session->vdev_id;
 	sta->staIndex = pAddStaParams->staIdx;
 	sta->valid = 1;
 	sta->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;

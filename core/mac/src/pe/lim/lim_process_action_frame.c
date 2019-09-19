@@ -829,7 +829,7 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 				   &session->dph.dphHashTable);
 	if (sta_ds_ptr)
 		lim_send_edca_params(mac_ctx, session->gLimEdcaParamsActive,
-				     sta_ds_ptr->bssId, false);
+				     session->vdev_id, false);
 	else
 		pe_err("Self entry missing in Hash Table");
 	sir_copy_mac_addr(peer_macaddr, session->bssId);
@@ -1030,7 +1030,7 @@ static void __lim_process_del_ts_req(struct mac_context *mac_ctx,
 				   &session->dph.dphHashTable);
 	if (sta_ds_ptr)
 		lim_send_edca_params(mac_ctx, session->gLimEdcaParamsActive,
-				     sta_ds_ptr->bssId, false);
+				     session->vdev_id, false);
 	else
 		pe_err("Self entry missing in Hash Table");
 

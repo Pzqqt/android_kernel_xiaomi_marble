@@ -58,7 +58,6 @@
 #include "lim_utils.h"
 #include "lim_security_utils.h"
 #include "dot11f.h"
-#include "lim_sta_hash_api.h"
 #include "sch_api.h"
 #include "lim_send_messages.h"
 #include "utils_parser.h"
@@ -2738,7 +2737,6 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg,
 		goto add_sta_error;
 	}
 
-	sta->bssId = pe_session->vdev_id;
 	sta->staIndex = pAddStaParams->staIdx;
 	sta->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	sta->valid = 1;

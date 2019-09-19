@@ -2776,7 +2776,7 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 	QDF_STATUS status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	vdev_id = edca_params->bss_idx;
+	vdev_id = edca_params->vdev_id;
 	if (!wma_is_vdev_valid(vdev_id)) {
 		WMA_LOGE("%s: vdev id:%d is not active ", __func__, vdev_id);
 		goto fail;

@@ -33,7 +33,6 @@
 #include "lim_security_utils.h"
 #include "lim_prop_exts_utils.h"
 #include "dot11f.h"
-#include "lim_sta_hash_api.h"
 #include "sch_api.h"
 #include "lim_send_messages.h"
 #include "lim_assoc_utils.h"

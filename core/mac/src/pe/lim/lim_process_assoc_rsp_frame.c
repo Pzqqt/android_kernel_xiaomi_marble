@@ -39,7 +39,6 @@
 #include "lim_assoc_utils.h"
 #include "lim_security_utils.h"
 #include "lim_ser_des_utils.h"
-#include "lim_sta_hash_api.h"
 #include "lim_send_messages.h"
 #include "lim_process_fils.h"
 
@@ -922,7 +921,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 			if (!lim_is_roam_synch_in_progress(session_entry)) {
 				lim_send_edca_params(mac_ctx,
 					session_entry->gLimEdcaParamsActive,
-					sta_ds->bssId, false);
+					session_entry->vdev_id, false);
 				lim_add_ft_sta_self(mac_ctx,
 					(assoc_rsp->aid & 0x3FFF),
 					session_entry);

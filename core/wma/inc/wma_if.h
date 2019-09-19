@@ -648,7 +648,7 @@ typedef struct {
 
 /**
  * struct tEdcaParams - EDCA parameters
- * @bss_idx: BSSID index
+ * @vdev_id: vdev id
  * @acbe: best effort access category
  * @acbk: Background access category
  * @acvi: video access category
@@ -656,7 +656,7 @@ typedef struct {
  * @mu_edca_params: flag to indicate MU EDCA
  */
 typedef struct {
-	uint16_t bss_idx;
+	uint16_t vdev_id;
 	tSirMacEdcaParamRecord acbe;
 	tSirMacEdcaParamRecord acbk;
 	tSirMacEdcaParamRecord acvi;

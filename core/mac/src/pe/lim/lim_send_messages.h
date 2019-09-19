@@ -63,9 +63,18 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 					  uint32_t cac_duration_ms,
 					  uint32_t dfs_regdomain);
 
+/**
+ * lim_send_edca_params() - Send edsa params to firmware
+ * @mac: pointer to Global MAC structure
+ * @pUpdatedEdcaParams: updated edca params
+ * @vdev_id: vdev id
+ * @mu_edca: MU edca
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS lim_send_edca_params(struct mac_context *mac,
-				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
-				   uint16_t bss_idx, bool mu_edca);
+				tSirMacEdcaParamRecord *pUpdatedEdcaParams,
+				uint16_t vdev_id, bool mu_edca);
 /**
  * lim_set_active_edca_params() - Choose best EDCA parameters
  * @mac_ctx:  pointer to Global Mac structure.
