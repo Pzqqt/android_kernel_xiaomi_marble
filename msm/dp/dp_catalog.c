@@ -1824,7 +1824,7 @@ static void dp_catalog_ctrl_send_phy_pattern(struct dp_catalog_ctrl *ctrl,
 		dp_write(DP_MAINLINK_CTRL, value);
 		break;
 	case DP_TEST_PHY_PATTERN_CP2520_PATTERN_3:
-		dp_write(DP_MAINLINK_CTRL, 0x11);
+		dp_write(DP_MAINLINK_CTRL, 0x01);
 		dp_write(DP_STATE_CTRL, 0x8);
 		break;
 	default:
