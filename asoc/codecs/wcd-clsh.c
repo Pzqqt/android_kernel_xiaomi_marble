@@ -482,6 +482,9 @@ static bool wcd_clsh_is_state_valid(u8 state)
 	case WCD_CLSH_STATE_HPHR_AUX:
 	case WCD_CLSH_STATE_HPH_ST_AUX:
 	case WCD_CLSH_STATE_EAR_AUX:
+	case WCD_CLSH_STATE_HPHL_EAR:
+	case WCD_CLSH_STATE_HPHR_EAR:
+	case WCD_CLSH_STATE_HPH_ST_EAR:
 		return true;
 	default:
 		return false;
