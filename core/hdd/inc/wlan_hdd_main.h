@@ -1427,11 +1427,11 @@ enum driver_modules_status {
 /**
  * struct acs_dfs_policy - Define ACS policies
  * @acs_dfs_mode: Dfs mode enabled/disabled.
- * @acs_channel: pre defined channel to avoid ACS.
+ * @acs_chan_freq: pre defined channel frequency to avoid ACS.
  */
 struct acs_dfs_policy {
 	enum dfs_mode acs_dfs_mode;
-	uint8_t acs_channel;
+	uint32_t acs_chan_freq;
 };
 
 /**

@@ -3325,8 +3325,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	if (!reinit) {
 		adapter->session.ap.sap_config.chan_freq =
-			wlan_reg_chan_to_freq(hdd_ctx->pdev,
-					      hdd_ctx->acs_policy.acs_channel);
+					      hdd_ctx->acs_policy.acs_chan_freq;
 		acs_dfs_mode = hdd_ctx->acs_policy.acs_dfs_mode;
 		adapter->session.ap.sap_config.acs_dfs_mode =
 			wlan_hdd_get_dfs_mode(acs_dfs_mode);
@@ -5054,13 +5053,12 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	hdd_debug("acs_mode %d", config->acs_cfg.acs_mode);
 
 	if (config->acs_cfg.acs_mode == true) {
-		hdd_debug("acs_channel %d, acs_dfs_mode %d",
-			hdd_ctx->acs_policy.acs_channel,
-			hdd_ctx->acs_policy.acs_dfs_mode);
+		hdd_debug("acs_chan_freq %u, acs_dfs_mode %u",
+			  hdd_ctx->acs_policy.acs_chan_freq,
+			  hdd_ctx->acs_policy.acs_dfs_mode);
 
-		if (hdd_ctx->acs_policy.acs_channel)
-			config->chan_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
-					    hdd_ctx->acs_policy.acs_channel);
+		if (hdd_ctx->acs_policy.acs_chan_freq)
+			config->chan_freq = hdd_ctx->acs_policy.acs_chan_freq;
 		mode = hdd_ctx->acs_policy.acs_dfs_mode;
 		config->acs_dfs_mode = wlan_hdd_get_dfs_mode(mode);
 	}
