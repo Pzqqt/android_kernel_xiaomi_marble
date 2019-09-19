@@ -1027,20 +1027,20 @@ void wlan_reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
  *
  * Return: int
  */
-uint32_t wlan_reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
-						 uint32_t freq);
+uint8_t wlan_reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
+						uint16_t freq);
 
 /**
  * wlan_reg_update_nol_ch_for_freq () - set nol channel
  * @pdev: pdev ptr
- * @ch_list: channel list to be returned
+ * @chan_freq_list: channel list to be returned
  * @num_ch: number of channels
  * @nol_ch: nol flag
  *
  * Return: void
  */
 void wlan_reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
-				     uint16_t *ch_list,
+				     uint16_t *chan_freq_list,
 				     uint8_t num_ch,
 				     bool nol_ch);
 

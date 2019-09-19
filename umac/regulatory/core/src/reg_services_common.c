@@ -3262,7 +3262,7 @@ bool reg_is_dfs_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq)
 }
 
 void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
-				uint16_t *chan_list,
+				uint16_t *chan_freq_list,
 				uint8_t num_chan,
 				bool nol_chan)
 {
@@ -3271,8 +3271,8 @@ void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	uint16_t i;
 
-	if (!num_chan || !chan_list) {
-		reg_err("chan_list or num_ch is NULL");
+	if (!num_chan || !chan_freq_list) {
+		reg_err("chan_freq_list or num_ch is NULL");
 		return;
 	}
 
@@ -3284,10 +3284,10 @@ void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	mas_chan_list = pdev_priv_obj->mas_chan_list;
 	for (i = 0; i < num_chan; i++) {
-		chan_enum = reg_get_chan_enum(chan_list[i]);
+		chan_enum = reg_get_chan_enum_for_freq(chan_freq_list[i]);
 		if (chan_enum == INVALID_CHANNEL) {
-			reg_err("Invalid ch in nol list, chan %d",
-				chan_list[i]);
+			reg_err("Invalid freq in nol list, freq %d",
+				chan_freq_list[i]);
 			continue;
 		}
 		mas_chan_list[chan_enum].nol_chan = nol_chan;

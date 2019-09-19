@@ -819,14 +819,14 @@ uint8_t reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
 /**
  * reg_update_nol_ch_for_freq () - Updates NOL channels in current channel list
  * @pdev: pointer to pdev object
- * @ch_list: pointer to NOL channel list
+ * @chan_freq_list: pointer to NOL channel list
  * @num_ch: No.of channels in list
  * @update_nol: set/reset the NOL status
  *
  * Return: None
  */
 void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
-				uint16_t *chan_list,
+				uint16_t *chan_freq_list,
 				uint8_t num_chan,
 				bool nol_chan);
 /**
