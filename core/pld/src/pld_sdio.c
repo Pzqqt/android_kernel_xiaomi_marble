@@ -122,34 +122,6 @@ static void pld_sdio_remove(struct sdio_func *sdio_func)
 	pld_del_dev(pld_context, dev);
 }
 
-static void pld_sdio_uevent(struct sdio_func *sdio_func, uint32_t status)
-{
-	struct pld_context *pld_context;
-	struct device *dev = &sdio_func->dev;
-	struct pld_uevent_data data;
-
-	pld_context = pld_get_global_context();
-
-	if (!pld_context)
-		return;
-
-	switch (status) {
-	case CNSS_RECOVERY:
-		data.uevent = PLD_FW_RECOVERY_START;
-		break;
-	case CNSS_FW_DOWN:
-		data.uevent = PLD_FW_DOWN;
-		break;
-	default:
-		goto out;
-	}
-
-	if (pld_context->ops->uevent)
-		pld_context->ops->uevent(dev, &data);
-out:
-	return;
-}
-
 #ifdef CONFIG_PLD_SDIO_CNSS
 /**
  * pld_sdio_reinit() - SSR re-initialize function for SDIO device
@@ -347,6 +319,34 @@ static void pld_sdio_shutdown(struct sdio_func *sdio_func)
 static void pld_sdio_crash_shutdown(struct sdio_func *sdio_func)
 {
 	/* TODO */
+}
+
+static void pld_sdio_uevent(struct sdio_func *sdio_func, uint32_t status)
+{
+	struct pld_context *pld_context;
+	struct device *dev = &sdio_func->dev;
+	struct pld_uevent_data data;
+
+	pld_context = pld_get_global_context();
+
+	if (!pld_context)
+		return;
+
+	switch (status) {
+	case CNSS_RECOVERY:
+		data.uevent = PLD_FW_RECOVERY_START;
+		break;
+	case CNSS_FW_DOWN:
+		data.uevent = PLD_FW_DOWN;
+		break;
+	default:
+		goto out;
+	}
+
+	if (pld_context->ops->uevent)
+		pld_context->ops->uevent(dev, &data);
+out:
+	return;
 }
 
 struct cnss_sdio_wlan_driver pld_sdio_ops = {
