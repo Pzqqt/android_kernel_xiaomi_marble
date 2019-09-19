@@ -260,6 +260,7 @@ void csr_roam_reset_roam_params(struct mac_context *mac_ptr);
 #define REASON_DRIVER_ENABLED                       43
 #define REASON_ROAM_FULL_SCAN_PERIOD_CHANGED        44
 #define REASON_SCORING_CRITERIA_CHANGED             45
+#define REASON_ROAM_CONTROL_CONFIG_RESTORED         46
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan(struct mac_context *mac, uint8_t sessionId,

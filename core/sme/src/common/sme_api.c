@@ -6904,12 +6904,52 @@ out:
 	return status;
 }
 
+/**
+ * sme_restore_default_roaming_params() - Restore neighbor roam config
+ * @mac: mac context
+ * @roam_info: Neighbor roam info pointer to be populated
+ *
+ * Restore neighbor roam info request params with lfr config params
+ *
+ * Return: None
+ */
+static void
+sme_restore_default_roaming_params(struct mac_context *mac,
+				   tCsrNeighborRoamControlInfo *roam_info)
+{
+	sme_debug("%s default roam scoring",
+		  mac->mlme_cfg->scoring.enable_scoring_for_roam ?
+		  "Enable" : "Disable");
+
+	roam_info->cfgParams.enable_scoring_for_roam =
+			mac->mlme_cfg->scoring.enable_scoring_for_roam;
+	roam_info->cfgParams.emptyScanRefreshPeriod =
+			mac->mlme_cfg->lfr.empty_scan_refresh_period;
+	roam_info->cfgParams.full_roam_scan_period =
+			mac->mlme_cfg->lfr.roam_full_scan_period;
+	roam_info->cfgParams.maxChannelScanTime =
+			mac->mlme_cfg->lfr.neighbor_scan_max_chan_time;
+	roam_info->cfgParams.neighborScanPeriod =
+			mac->mlme_cfg->lfr.neighbor_scan_timer_period;
+	roam_info->cfgParams.neighborLookupThreshold =
+			mac->mlme_cfg->lfr.neighbor_lookup_rssi_threshold;
+	roam_info->cfgParams.roam_rssi_diff =
+			mac->mlme_cfg->lfr.roam_rssi_diff;
+	roam_info->cfgParams.maxChannelScanTime =
+			mac->mlme_cfg->lfr.neighbor_scan_max_chan_time;
+	roam_info->cfgParams.roam_scan_home_away_time =
+			mac->mlme_cfg->lfr.roam_scan_home_away_time;
+	roam_info->cfgParams.roam_scan_n_probes =
+			mac->mlme_cfg->lfr.roam_scan_n_probes;
+}
+
 QDF_STATUS sme_roam_control_restore_default_config(mac_handle_t mac_handle,
 						   uint8_t vdev_id)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status;
 	tpCsrNeighborRoamControlInfo neighbor_roam_info;
+	tCsrChannelInfo *chan_info;
 
 	if (vdev_id >= WLAN_MAX_VDEVS) {
 		sme_err("Invalid vdev_id: %d", vdev_id);
@@ -6926,24 +6966,23 @@ QDF_STATUS sme_roam_control_restore_default_config(mac_handle_t mac_handle,
 		goto out;
 	}
 
-	sme_debug("%s default roam scoring",
-		  mac->mlme_cfg->scoring.enable_scoring_for_roam ?
-		  "Enable" : "Disable");
+	sme_debug("Cleanup roam scan control");
+	mac->roam.configParam.nRoamScanControl = false;
 
 	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
 
-	neighbor_roam_info->cfgParams.enable_scoring_for_roam =
-			mac->mlme_cfg->scoring.enable_scoring_for_roam;
+	sme_debug("Cleanup Preferred frequency list");
+	chan_info = &neighbor_roam_info->cfgParams.pref_chan_info;
+	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
 
-	neighbor_roam_info->cfgParams.emptyScanRefreshPeriod =
-			mac->mlme_cfg->lfr.empty_scan_refresh_period;
+	sme_debug("Cleanup specific frequency list");
+	chan_info = &neighbor_roam_info->cfgParams.specific_chan_info;
+	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
 
-	neighbor_roam_info->cfgParams.full_roam_scan_period =
-			mac->mlme_cfg->lfr.roam_full_scan_period;
+	sme_debug("Cleanup roam control config related lfr params");
+	mlme_reinit_control_config_lfr_params(mac->psoc, &mac->mlme_cfg->lfr);
 
-	sme_debug("Restore scan period to: %u and full scan period to: %u",
-		  neighbor_roam_info->cfgParams.emptyScanRefreshPeriod,
-		  neighbor_roam_info->cfgParams.full_roam_scan_period);
+	sme_restore_default_roaming_params(mac, neighbor_roam_info);
 
 	csr_roam_offload_scan(mac, vdev_id,
 			      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
