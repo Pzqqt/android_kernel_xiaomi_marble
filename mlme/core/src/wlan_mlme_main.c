@@ -1503,6 +1503,17 @@ mlme_init_bss_load_trigger_params(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_BSS_LOAD_TRIG_2G_RSSI_THRES);
 }
 
+void mlme_reinit_control_config_lfr_params(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_mlme_lfr_cfg *lfr)
+{
+	/* Restore the params set through SETDFSSCANMODE */
+	lfr->roaming_dfs_channel =
+		cfg_get(psoc, CFG_LFR_ROAMING_DFS_CHANNEL);
+
+	/* Restore the params set through SETWESMODE */
+	lfr->wes_mode_enabled = cfg_get(psoc, CFG_LFR_ENABLE_WES_MODE);
+}
+
 static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_lfr_cfg *lfr)
 {
