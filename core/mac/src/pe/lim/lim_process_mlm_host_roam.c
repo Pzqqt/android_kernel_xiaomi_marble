@@ -457,8 +457,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	pe_debug("Set the mlm state: %d session: %d",
 		       pe_session->limMlmState, pe_session->peSessionId);
 
-	pe_session->bss_idx = add_bss_rsp->vdev_id;
-
 	/* Success, handle below */
 	/* STA Index(genr by HAL) for the BSS entry is stored here */
 	sta->staIndex = wma_peer_get_peet_id(pe_session->bssId);

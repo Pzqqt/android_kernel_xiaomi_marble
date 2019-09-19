@@ -561,7 +561,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 		"OBSS Scan Indication bss_idx- %d staId %d",
-		session->bss_idx, session->staId);
+		session->vdev_id, session->staId);
 
 	ht40_obss_scanind->cmd = HT40_OBSS_SCAN_PARAM_START;
 	ht40_obss_scanind->scan_type = eSIR_ACTIVE_SCAN;
@@ -606,7 +606,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	ht40_obss_scanind->channel_count = channel24gnum;
 	/* FW API requests BSS IDX */
 	ht40_obss_scanind->self_sta_idx = session->staId;
-	ht40_obss_scanind->bss_id = session->bss_idx;
+	ht40_obss_scanind->bss_id = session->vdev_id;
 	ht40_obss_scanind->fortymhz_intolerent = 0;
 	ht40_obss_scanind->iefield_len = 0;
 	msg.type = WMA_HT40_OBSS_SCAN_IND;

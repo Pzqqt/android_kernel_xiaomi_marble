@@ -1243,7 +1243,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	 */
 	populate_dot11f_capabilities(mac_ctx, &frm.Capabilities, pe_session);
 
-	beacon_params.bss_idx = pe_session->bss_idx;
+	beacon_params.bss_idx = pe_session->vdev_id;
 
 	/* Send message to HAL about beacon parameter change. */
 	if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)

@@ -601,9 +601,9 @@ void ibss_bss_delete(struct mac_context *mac_ctx, struct pe_session *session)
 			session->limMlmState);
 		return;
 	}
-	status = lim_del_bss(mac_ctx, NULL, session->bss_idx, session);
+	status = lim_del_bss(mac_ctx, NULL, session->vdev_id, session);
 	if (QDF_IS_STATUS_ERROR(status))
-		pe_err("delBss failed for bss: %d", session->bss_idx);
+		pe_err("delBss failed for bss: %d", session->vdev_id);
 }
 
 /**
@@ -964,7 +964,7 @@ lim_ibss_sta_add(struct mac_context *mac, void *pBody, struct pe_session *pe_ses
 					sch_set_fixed_beacon_fields(mac,
 								    pe_session);
 					beaconParams.bss_idx =
-						pe_session->bss_idx;
+						pe_session->vdev_id;
 					lim_send_beacon_params(mac, &beaconParams,
 							       pe_session);
 				}
@@ -1498,7 +1498,7 @@ lim_ibss_coalesce(struct mac_context *mac,
 		if (beaconParams.paramChangeBitmap) {
 			pe_err("beaconParams.paramChangeBitmap=1 ---> Update Beacon Params");
 			sch_set_fixed_beacon_fields(mac, pe_session);
-			beaconParams.bss_idx = pe_session->bss_idx;
+			beaconParams.bss_idx = pe_session->vdev_id;
 			lim_send_beacon_params(mac, &beaconParams, pe_session);
 		}
 	} else

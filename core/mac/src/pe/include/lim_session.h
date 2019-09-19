@@ -151,7 +151,6 @@ struct pe_session {
 	tSirMacAddr bssId;
 	tSirMacAddr self_mac_addr;
 	tSirMacSSid ssId;
-	uint8_t bss_idx;
 	uint8_t valid;
 	tLimMlmStates limMlmState;      /* MLM State */
 	tLimMlmStates limPrevMlmState;  /* Previous MLM State */
@@ -651,18 +650,14 @@ struct pe_session *pe_find_session_by_bssid(struct mac_context *mac, uint8_t *bs
 				     uint8_t *sessionId);
 
 /**
- * pe_find_session_by_bss_idx() - looks up the PE session given the bss_idx.
- *
- * @mac:          pointer to global adapter context
- * @bss_idx:        bss index of the session
- *
- * This function returns the session context  if the session
- * corresponding to the given bss_idx is found in the PE session table.
+ * pe_find_session_by_vdev_id() - looks up the PE session given the vdev_id.
+ * @mac:             pointer to global adapter context
+ * @vdev_id:         vdev id the session
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-struct pe_session *pe_find_session_by_bss_idx(struct mac_context *mac,
-					      uint8_t bss_idx);
+struct pe_session *pe_find_session_by_vdev_id(struct mac_context *mac,
+					      uint8_t vdev_id);
 
 /**
  * pe_find_session_by_peer_sta() - looks up the PE session given the Peer
@@ -724,16 +719,20 @@ void pe_delete_session(struct mac_context *mac, struct pe_session *pe_session);
 
 /**
  * pe_find_session_by_sme_session_id() - looks up the PE session for given sme
- * session id
- * @mac_ctx:          pointer to global adapter context
- * @sme_session_id:   sme session id
+ * session id/vdev_id
+ * @mac_ctx: pointer to global adapter context
+ * @sme_session_id: sme session id/vdev id
  *
- * looks up the PE session for given sme session id
+ * Looks up the PE session for given sme session id ie.e vdev id
  *
  * Return: pe session entry for given sme session if found else NULL
  */
+static inline
 struct pe_session *pe_find_session_by_sme_session_id(struct mac_context *mac_ctx,
-					      uint8_t sme_session_id);
+						     uint8_t sme_session_id)
+{
+	return pe_find_session_by_vdev_id(mac_ctx, sme_session_id);
+}
 
 /**
  * pe_find_session_by_scan_id() - looks up the PE session for given scan id

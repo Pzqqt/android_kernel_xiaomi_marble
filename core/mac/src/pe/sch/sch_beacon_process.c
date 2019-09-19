@@ -1053,7 +1053,7 @@ void sch_beacon_process_for_ap(struct mac_context *mac_ctx,
 	qdf_mem_zero(&bcn_prm, sizeof(tUpdateBeaconParams));
 	bcn_prm.paramChangeBitmap = 0;
 
-	bcn_prm.bss_idx = ap_session->bss_idx;
+	bcn_prm.bss_idx = ap_session->vdev_id;
 
 	if (!ap_session->is_session_obss_color_collision_det_enabled)
 		sch_check_bss_color_ie(mac_ctx, ap_session,

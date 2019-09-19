@@ -878,7 +878,7 @@ void lim_handle_update_olbc_cache(struct mac_context *mac_ctx)
 		return;
 	}
 	qdf_mem_zero((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams));
-	beaconParams.bss_idx = pe_session->bss_idx;
+	beaconParams.bss_idx = pe_session->vdev_id;
 
 	beaconParams.paramChangeBitmap = 0;
 	/*
@@ -4657,7 +4657,7 @@ void lim_handle_heart_beat_timeout_for_session(struct mac_context *mac_ctx,
 		 * Failure detected
 		 */
 		pe_debug("Sending Probe for Session: %d",
-			psession_entry->bss_idx);
+			psession_entry->vdev_id);
 		lim_deactivate_and_change_timer(mac_ctx,
 			eLIM_PROBE_AFTER_HB_TIMER);
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE, 0,

@@ -354,7 +354,7 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			session_entry->peSessionId,
 			session_entry->limMlmState));
-		session_entry->bss_idx = add_bss_rsp->vdev_id;
+		session_entry->vdev_id = add_bss_rsp->vdev_id;
 		session_entry->limSystemRole = eLIM_NDI_ROLE;
 		session_entry->statypeForBss = STA_ENTRY_SELF;
 		session_entry->staId =

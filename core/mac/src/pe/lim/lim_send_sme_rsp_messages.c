@@ -2078,7 +2078,7 @@ lim_process_beacon_tx_success_ind(struct mac_context *mac_ctx, uint16_t msgType,
 	tpSirFirstBeaconTxCompleteInd bcn_ind =
 		(tSirFirstBeaconTxCompleteInd *) event;
 
-	session = pe_find_session_by_bss_idx(mac_ctx, bcn_ind->bss_idx);
+	session = pe_find_session_by_vdev_id(mac_ctx, bcn_ind->bss_idx);
 	if (!session) {
 		pe_err("Session Does not exist for given session id");
 		return;

@@ -2013,7 +2013,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 				wlan_reg_freq_to_chan(
 				mac_ctx->pdev, session_entry->curr_op_freq))
 					!= CHANNEL_STATE_DFS) {
-				beacon_params.bss_idx = session_entry->bss_idx;
+				beacon_params.bss_idx = session_entry->vdev_id;
 				beacon_params.beaconInterval =
 					session_entry->beaconParams.beaconInterval;
 				beacon_params.paramChangeBitmap |=

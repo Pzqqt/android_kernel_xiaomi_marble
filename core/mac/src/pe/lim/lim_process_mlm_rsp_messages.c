@@ -1982,7 +1982,6 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 			pe_session->statypeForBss = STA_ENTRY_PEER; /* to know session created for self/peer */
 			limResetHBPktCount(pe_session);
 		}
-		pe_session->bss_idx = add_bss_rsp->vdev_id;
 
 		pe_session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
 
@@ -2065,7 +2064,6 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 		 */
 		pe_session->limIbssActive = false;
 		limResetHBPktCount(pe_session);
-		pe_session->bss_idx = add_bss_rsp->vdev_id;
 		pe_session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
 		pe_session->statypeForBss = STA_ENTRY_SELF;
 		sch_edca_profile_update(mac, pe_session);
@@ -2265,8 +2263,6 @@ static void lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 			mlm_assoc_cnf.resultCode =
 				(tSirResultCodes) eSIR_SME_REFUSED;
 		} else {
-			session_entry->bss_idx =
-				add_bss_rsp->vdev_id;
 			/* Success, handle below */
 			/*
 			 * STA Index(genr by HAL) for the BSS

@@ -660,7 +660,7 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode sta,
 	if (!pe_session->add_bss_failed) {
 		if (pe_session->limSmeState == eLIM_SME_JOIN_FAILURE_STATE) {
 			retCode =
-				lim_del_bss(mac, sta, pe_session->bss_idx,
+				lim_del_bss(mac, sta, pe_session->vdev_id,
 					    pe_session);
 		} else
 			retCode = lim_del_sta(mac,
@@ -2981,7 +2981,7 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 		return;
 	}
 
-	beacon_params.bss_idx = session_entry->bss_idx;
+	beacon_params.bss_idx = session_entry->vdev_id;
 	sta_ds = dph_lookup_hash_entry(mac_ctx, sta_addr, &aid,
 			 &session_entry->dph.dphHashTable);
 
