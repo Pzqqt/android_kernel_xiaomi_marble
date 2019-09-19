@@ -1046,16 +1046,21 @@ static int wcd938x_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		if (wcd938x->ear_rx_path & EAR_RX_PATH_AUX)
+		if (wcd938x->ear_rx_path & EAR_RX_PATH_AUX) {
 			wcd_disable_irq(&wcd938x->irq_info,
 					WCD938X_IRQ_AUX_PDM_WD_INT);
-		else
+			if (wcd938x->update_wcd_event)
+				wcd938x->update_wcd_event(wcd938x->handle,
+						WCD_BOLERO_EVT_RX_MUTE,
+						(WCD_RX3 << 0x10 | 0x1));
+		} else {
 			wcd_disable_irq(&wcd938x->irq_info,
 					WCD938X_IRQ_HPHL_PDM_WD_INT);
-		if (wcd938x->update_wcd_event)
-			wcd938x->update_wcd_event(wcd938x->handle,
+			if (wcd938x->update_wcd_event)
+				wcd938x->update_wcd_event(wcd938x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10 | 0x1));
+		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* 7 msec delay as per HW requirement */
