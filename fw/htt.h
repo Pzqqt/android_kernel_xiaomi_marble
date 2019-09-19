@@ -191,9 +191,11 @@
  * 3.70 Add AST1-AST3 fields to HTT_T2H PEER_MAP_V2 msg
  * 3.71 Add rx offload engine / flow search engine htt setup message defs for
  *      HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG, HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG
+ * 3.72 Add tx_retry_cnt fields to htt_tx_offload_deliver_ind_hdr_t and
+ *      htt_tx_data_hdr_information
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 71
+#define HTT_CURRENT_VERSION_MINOR 72
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -7855,7 +7857,9 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
         status:3, /* [2:0] */
         format:1, /* [3] 0: 802.3 format, 1: 802.11 format */
         tx_mpdu_bytes:16, /* [19:4] */
-        reserved_4:12; /* [31:20] */
+        /* Indicates retry count of offloaded/local generated Data tx frames */
+        tx_retry_cnt:6, /* [25:20] */
+        reserved_4:6; /* [31:26] */
 } POSTPACK;
 
 /* FW offload deliver ind message header fields */
@@ -7905,6 +7909,8 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
 #define HTT_FW_OFFLOAD_IND_FORMAT_S             3
 #define HTT_FW_OFFLOAD_IND_TX_MPDU_BYTES_M      0x000ffff0
 #define HTT_FW_OFFLOAD_IND_TX_MPDU_BYTES_S      4
+#define HTT_FW_OFFLOAD_IND_TX_RETRY_CNT_M       0x03f00000
+#define HTT_FW_OFFLOAD_IND_TX_RETRY_CNT_S       20
 
 #define HTT_FW_OFFLOAD_IND_PHY_TIMESTAMP_L32_SET(word, value) \
     do { \
@@ -8055,6 +8061,14 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
     } while (0)
 #define HTT_FW_OFFLOAD_IND_TX_MPDU_BYTES_GET(word) \
     (((word) & HTT_FW_OFFLOAD_IND_TX_MPDU_BYTES_M) >> HTT_FW_OFFLOAD_IND_TX_MPDU_BYTES_S)
+
+#define HTT_FW_OFFLOAD_IND_TX_RETRY_CNT_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_FW_OFFLOAD_IND_TX_RETRY_CNT, value); \
+        (word) |= (value)  << HTT_FW_OFFLOAD_IND_TX_RETRY_CNT_S; \
+    } while (0)
+#define HTT_FW_OFFLOAD_IND_TX_RETRY_CNT_GET(word) \
+    (((word) & HTT_FW_OFFLOAD_IND_TX_RETRY_CNT_M) >> HTT_FW_OFFLOAD_IND_TX_RETRY_CNT_S)
 
 
 /*
@@ -9500,7 +9514,10 @@ PREPACK struct htt_tx_data_hdr_information {
         sgi     : 1, /* [23] */
         ldpc    : 1, /* [24] */
         beamformed: 1, /* [25] */
-        reserved_1: 6; /* [31:26] */
+        /* tx_retry_cnt:
+         * Indicates retry count of data tx frames provided by the host.
+         */
+        tx_retry_cnt: 6; /* [31:26] */
     A_UINT32 /* word 2 */
         framectrl:16, /* [15: 0] */
         seqno:16;     /* [31:16] */
@@ -9690,6 +9707,8 @@ PREPACK struct htt_tx_compl_ind_append_tx_tsf64 {
 #define HTT_FW_TX_DATA_HDR_LDPC_S               24
 #define HTT_FW_TX_DATA_HDR_BEAMFORMED_M         0x02000000
 #define HTT_FW_TX_DATA_HDR_BEAMFORMED_S         25
+#define HTT_FW_TX_DATA_HDR_TX_RETRY_CNT_M       0xfc000000
+#define HTT_FW_TX_DATA_HDR_TX_RETRY_CNT_S       26
 
 /* DWORD two */
 #define HTT_FW_TX_DATA_HDR_FRAMECTRL_M          0x0000ffff
@@ -9788,6 +9807,14 @@ PREPACK struct htt_tx_compl_ind_append_tx_tsf64 {
     } while (0)
 #define HTT_FW_TX_DATA_HDR_BEAMFORMED_GET(word) \
     (((word) & HTT_FW_TX_DATA_HDR_BEAMFORMED_M) >> HTT_FW_TX_DATA_HDR_BEAMFORMED_S)
+
+#define HTT_FW_TX_DATA_HDR_TX_RETRY_CNT_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_FW_TX_DATA_HDR_TX_RETRY_CNT, value); \
+        (word) |= (value)  << HTT_FW_TX_DATA_HDR_TX_RETRY_CNT_S; \
+    } while (0)
+#define HTT_FW_TX_DATA_HDR_TX_RETRY_CNT_GET(word) \
+    (((word) & HTT_FW_TX_DATA_HDR_TX_RETRY_CNT_M) >> HTT_FW_TX_DATA_HDR_TX_RETRY_CNT_S)
 
 #define HTT_FW_TX_DATA_HDR_FRAMECTRL_SET(word, value) \
     do { \

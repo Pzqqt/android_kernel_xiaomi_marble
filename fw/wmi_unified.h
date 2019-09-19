@@ -4494,10 +4494,25 @@ typedef struct {
      */
     A_UINT32 tx_status;
 
+    A_UINT32
+        /* tx_retry_cnt:
+         * Indicates retry count of offloaded/local & host mgmt tx frames.
+         * The WMI_MGMT_HDR_TX_RETRY_[SET,GET] macros can be used to access
+         * this bitfield in a portable manner.
+         */
+        tx_retry_cnt:6, /* [5:0] */
+        reserved_1:26;  /* [31:6] */
+
 /* This TLV may be followed by array of bytes:
  *   A_UINT8 bufp[]; <-- management frame buffer
  */
 } wmi_mgmt_hdr;
+
+/* Tx retry cnt set & get bits*/
+#define WMI_MGMT_HDR_TX_RETRY_CNT_SET(tx_retry_cnt, value) \
+    WMI_SET_BITS(tx_retry_cnt, 0, 6, value)
+#define WMI_MGMT_HDR_TX_RETRY_CNT_GET(tx_retry_cnt) \
+    WMI_GET_BITS(tx_retry_cnt, 0, 6)
 
 /*
  * Instead of universally increasing the RX_HDR_HEADROOM size which may cause problems for older targets,
@@ -18529,7 +18544,7 @@ enum {
     do { \
         (param) &= ~PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_MASK; \
         (param) |= (value) << PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_SHIFT; \
-    while (0)
+    } while (0)
 
 #define GET_PDEV_SMART_CHAINMASK_SCHEME_DECISION(param)     \
     (((param) & PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_MASK) >> PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_SHIFT)
