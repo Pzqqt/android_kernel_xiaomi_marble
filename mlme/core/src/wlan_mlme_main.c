@@ -1710,17 +1710,17 @@ static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
 	power->tx_power_2g = cfg_get(psoc, CFG_SET_TXPOWER_LIMIT2G);
 	power->tx_power_5g = cfg_get(psoc, CFG_SET_TXPOWER_LIMIT5G);
 
-	power->max_tx_power_24.max_len = CFG_MAX_TX_POWER_2_4_LEN;
+	power->max_tx_power_24_chan.max_len = CFG_MAX_TX_POWER_2_4_LEN;
 	qdf_uint8_array_parse(cfg_default(CFG_MAX_TX_POWER_2_4),
-			      power->max_tx_power_24.data,
-			      sizeof(power->max_tx_power_24.data),
-			      &power->max_tx_power_24.len);
+			      power->max_tx_power_24_chan.data,
+			      sizeof(power->max_tx_power_24_chan.data),
+			      &power->max_tx_power_24_chan.len);
 
-	power->max_tx_power_5.max_len = CFG_MAX_TX_POWER_5_LEN;
+	power->max_tx_power_5_chan.max_len = CFG_MAX_TX_POWER_5_LEN;
 	qdf_uint8_array_parse(cfg_default(CFG_MAX_TX_POWER_5),
-			      power->max_tx_power_5.data,
-			      sizeof(power->max_tx_power_5.data),
-			      &power->max_tx_power_5.len);
+			      power->max_tx_power_5_chan.data,
+			      sizeof(power->max_tx_power_5_chan.data),
+			      &power->max_tx_power_5_chan.len);
 
 	power->power_usage.max_len = CFG_POWER_USAGE_MAX_LEN;
 	power->power_usage.len = CFG_POWER_USAGE_MAX_LEN;

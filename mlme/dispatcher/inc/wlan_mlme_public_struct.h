@@ -54,7 +54,7 @@
 #define CFG_STR_DATA_LEN     17
 #define CFG_EDCA_DATA_LEN    17
 #define CFG_MAX_TX_POWER_2_4_LEN    128
-#define CFG_MAX_TX_POWER_5_LEN      128
+#define CFG_MAX_TX_POWER_5_LEN      256
 #define CFG_POWER_USAGE_MAX_LEN      4
 #define CFG_MAX_STR_LEN       256
 #define MAX_VENDOR_IES_LEN 1532
@@ -1882,8 +1882,18 @@ struct mlme_power_usage {
 
 /*
  * struct wlan_mlme_power - power related config items
- * @max_tx_power_24: max power Tx for 2.4 ghz
- * @max_tx_power_5: max power Tx for 5 ghz
+ * @max_tx_power_24: max power Tx for 2.4 ghz, this is based on frequencies
+ * @max_tx_power_5: max power Tx for 5 ghz, this is based on frequencies
+ * @max_tx_power_24_chan: max power Tx for 2.4 ghz, this is based on channel
+ * numbers, this is added to parse the ini values to maintain the backward
+ * compatibility, these channel numbers are converted to frequencies and copied
+ * to max_tx_power_24 structure, once this conversion is done this structure
+ * should not be used.
+ * @max_tx_power_5_chan: max power Tx for 5 ghz, this is based on channel
+ * numbers, this is added to parse the ini values to maintain the backward
+ * compatibility, these channel numbers are converted to frequencies and copied
+ * to max_tx_power_24 structure, once this conversion is done this structure
+ * should not be used.
  * @power_usage: power usage mode, min, max, mod
  * @tx_power_2g: limit tx power in 2.4 ghz
  * @tx_power_5g: limit tx power in 5 ghz
@@ -1894,6 +1904,8 @@ struct mlme_power_usage {
 struct wlan_mlme_power {
 	struct mlme_max_tx_power_24 max_tx_power_24;
 	struct mlme_max_tx_power_5 max_tx_power_5;
+	struct mlme_max_tx_power_24 max_tx_power_24_chan;
+	struct mlme_max_tx_power_5 max_tx_power_5_chan;
 	struct mlme_power_usage power_usage;
 	uint8_t tx_power_2g;
 	uint8_t tx_power_5g;
