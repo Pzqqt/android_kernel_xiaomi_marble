@@ -596,6 +596,11 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 			rtac_set_afe_handle(this_afe.apr);
 		}
 
+		/* Reset the core client handle in SSR/PDR use cases */
+		mutex_lock(&this_afe.afe_cmd_lock);
+		this_afe.lpass_hw_core_client_hdl = 0;
+		mutex_unlock(&this_afe.afe_cmd_lock);
+
 		/*
 		 * Pass reset events to proxy driver, if cb is registered
 		 */
@@ -9058,6 +9063,7 @@ int __init afe_init(void)
 	this_afe.mmap_handle = 0;
 	this_afe.vi_tx_port = -1;
 	this_afe.vi_rx_port = -1;
+	this_afe.lpass_hw_core_client_hdl = 0;
 	this_afe.prot_cfg.mode = MSM_SPKR_PROT_DISABLED;
 	this_afe.th_ftm_cfg.mode = MSM_SPKR_PROT_DISABLED;
 	this_afe.ex_ftm_cfg.mode = MSM_SPKR_PROT_DISABLED;
@@ -9262,6 +9268,11 @@ int afe_unvote_lpass_core_hw(uint32_t hw_block_id, uint32_t client_handle)
 
 	mutex_lock(&this_afe.afe_cmd_lock);
 
+	if (!this_afe.lpass_hw_core_client_hdl) {
+		pr_debug("%s: SSR in progress, return\n", __func__);
+		goto done;
+	}
+
 	memset(cmd_ptr, 0, sizeof(hw_vote_cfg));
 
 	cmd_ptr->hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
@@ -9277,6 +9288,12 @@ int afe_unvote_lpass_core_hw(uint32_t hw_block_id, uint32_t client_handle)
 
 	pr_debug("%s: lpass core hw unvote opcode[0x%x] hw id[0x%x]\n",
 		__func__, cmd_ptr->hdr.opcode, cmd_ptr->hw_block_id);
+
+	if (cmd_ptr->client_handle <= 0) {
+		pr_err("%s: invalid client handle\n", __func__);
+		ret = -EINVAL;
+		goto done;
+	}
 
 	atomic_set(&this_afe.status, 0);
 	atomic_set(&this_afe.state, 1);
