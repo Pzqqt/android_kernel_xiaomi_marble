@@ -2485,14 +2485,14 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 		  QDF_MAC_ADDR_ARRAY(params->peerMacAddr.bytes));
 }
 
-void sap_undo_acs(struct sap_context *sap_ctx)
+void sap_undo_acs(struct sap_context *sap_ctx, struct sap_config *sap_cfg)
 {
 	struct sap_acs_cfg *acs_cfg;
 
 	if (!sap_ctx)
 		return;
 
-	acs_cfg = sap_ctx->acs_cfg;
+	acs_cfg = &sap_cfg->acs_cfg;
 	if (!acs_cfg)
 		return;
 

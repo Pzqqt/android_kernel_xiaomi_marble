@@ -5774,8 +5774,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	cds_flush_work(&adapter->sap_stop_bss_work);
 	adapter->session.ap.sap_config.acs_cfg.acs_mode = false;
 	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
-	qdf_mem_zero(&adapter->session.ap.sap_config.acs_cfg,
-						sizeof(struct sap_acs_cfg));
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,

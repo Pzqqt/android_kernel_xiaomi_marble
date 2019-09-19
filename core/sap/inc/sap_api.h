@@ -1331,7 +1331,7 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
  *
  * Return: None
  */
-void sap_undo_acs(struct sap_context *sap_context);
+void sap_undo_acs(struct sap_context *sap_context, struct sap_config *sap_cfg);
 
 /**
  * wlansap_get_chan_width() - get sap channel width.

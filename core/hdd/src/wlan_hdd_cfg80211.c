@@ -3033,7 +3033,8 @@ static int wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
  */
 void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
 {
-	sap_undo_acs(WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+	sap_undo_acs(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+		     &adapter->session.ap.sap_config);
 }
 
 /**
