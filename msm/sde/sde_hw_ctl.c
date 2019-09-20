@@ -1041,6 +1041,7 @@ static int sde_hw_ctl_reset_post_disable(struct sde_hw_ctl *ctx,
 		ctx->flush.pending_merge_3d_flush_mask =
 			BIT(merge_3d_idx - MERGE_3D_0);
 		merge_3d_active &= ~BIT(merge_3d_idx - MERGE_3D_0);
+		UPDATE_MASK(ctx->flush.pending_flush_mask, MERGE_3D_IDX, 1);
 		SDE_REG_WRITE(c, CTL_MERGE_3D_ACTIVE, merge_3d_active);
 	}
 
