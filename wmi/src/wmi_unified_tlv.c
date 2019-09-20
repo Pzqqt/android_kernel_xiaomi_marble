@@ -1626,7 +1626,12 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_pdev_set_param_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_set_param_cmd_fixed_param));
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+	if (param->is_target_pdev_id)
+		cmd->pdev_id = wmi_handle->ops->convert_host_pdev_id_to_target(
+								wmi_handle,
+								mac_id);
+	else
+		cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
 								wmi_handle,
 								mac_id);
 	cmd->param_id = pdev_param;
@@ -14165,6 +14170,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_nan_attach_tlv(wmi_handle);
 	wmi_p2p_attach_tlv(wmi_handle);
 	wmi_interop_issues_ap_attach_tlv(wmi_handle);
+	wmi_dcs_attach_tlv(wmi_handle);
 	wmi_roam_attach_tlv(wmi_handle);
 	wmi_concurrency_attach_tlv(wmi_handle);
 	wmi_pmo_attach_tlv(wmi_handle);

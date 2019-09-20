@@ -82,6 +82,10 @@ struct dbr_module_config;
 #include <wlan_vdev_mgr_tgt_if_tx_defs.h>
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
 
+#ifdef DCS_INTERFERENCE_DETECTION
+#include <wlan_dcs_tgt_api.h>
+#endif
+
 #ifdef QCA_SUPPORT_CP_STATS
 /**
  * struct wlan_lmac_if_cp_stats_tx_ops - defines southbound tx callbacks for
@@ -113,6 +117,33 @@ struct wlan_lmac_if_cp_stats_rx_ops {
 	QDF_STATUS (*process_stats_event)(struct wlan_objmgr_psoc *psoc,
 					  struct stats_event *ev);
 #endif
+};
+#endif
+
+#ifdef DCS_INTERFERENCE_DETECTION
+/**
+ * struct wlan_target_if_dcs_tx_ops - south bound tx function pointers for dcs
+ * @dcs_attach: function to register event handlers with FW
+ * @dcs_detach: function to de-register event handlers with FW
+ * @dcs_cmd_send: function to send dcs commands to FW
+ */
+struct wlan_target_if_dcs_tx_ops {
+	QDF_STATUS (*dcs_attach)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*dcs_detach)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*dcs_cmd_send)(struct wlan_objmgr_psoc *psoc,
+				   uint32_t pdev_id,
+				   bool is_target_pdev_id,
+				   uint32_t dcs_enable);
+};
+
+/**
+ * struct wlan_target_if_dcs_rx_ops - defines southbound rx callbacks for
+ * dcs component
+ * @process_dcs_event:  function pointer to rx FW events
+ */
+struct wlan_target_if_dcs_rx_ops {
+	QDF_STATUS (*process_dcs_event)(struct wlan_objmgr_psoc *psoc,
+					struct dcs_stats_event *event);
 };
 #endif
 
@@ -963,6 +994,9 @@ struct wlan_lmac_if_tx_ops {
 #ifdef QCA_SUPPORT_CP_STATS
 	struct wlan_lmac_if_cp_stats_tx_ops cp_stats_tx_ops;
 #endif
+#ifdef DCS_INTERFERENCE_DETECTION
+	struct wlan_target_if_dcs_tx_ops dcs_tx_ops;
+#endif
 #ifdef WLAN_SA_API_ENABLE
 	struct wlan_lmac_if_sa_api_tx_ops sa_api_tx_ops;
 #endif
@@ -1651,6 +1685,9 @@ struct wlan_lmac_if_rx_ops {
 #endif
 #ifdef QCA_SUPPORT_CP_STATS
 	struct wlan_lmac_if_cp_stats_rx_ops cp_stats_rx_ops;
+#endif
+#ifdef DCS_INTERFERENCE_DETECTION
+	struct wlan_target_if_dcs_rx_ops dcs_rx_ops;
 #endif
 #ifdef WLAN_SA_API_ENABLE
 	struct wlan_lmac_if_sa_api_rx_ops sa_api_rx_ops;
