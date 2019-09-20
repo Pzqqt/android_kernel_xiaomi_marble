@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -96,7 +96,7 @@ enum mlme_stats_link_speed_rpt_type {
 #define CFG_REPORT_MAX_LINK_SPEED CFG_INI_UINT( \
 		"gReportMaxLinkSpeed", \
 		CFG_STATS_LINK_SPEED_REPORT_ACTUAL, \
-		CFG_STATS_LINK_SPEED_REPORT_ACTUAL, \
+		CFG_STATS_LINK_SPEED_REPORT_MAX_SCALED, \
 		CFG_STATS_LINK_SPEED_REPORT_MAX_SCALED, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Max link speed")
