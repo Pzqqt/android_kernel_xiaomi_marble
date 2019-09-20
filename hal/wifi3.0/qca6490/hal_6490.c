@@ -87,9 +87,26 @@ uint16_t hal_rx_msdu_end_sa_idx_get_6490(uint8_t *buf)
 	return sa_idx;
 }
 
+/**
+ * hal_rx_desc_is_first_msdu_6490() - Check if first msdu
+ *
+ * @hal_soc_hdl: hal_soc handle
+ * @hw_desc_addr: hardware descriptor address
+ *
+ * Return: 0 - success/ non-zero failure
+ */
+static uint32_t hal_rx_desc_is_first_msdu_6490(void *hw_desc_addr)
+{
+	struct rx_pkt_tlvs *rx_tlvs = (struct rx_pkt_tlvs *)hw_desc_addr;
+	struct rx_msdu_end *msdu_end = &rx_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	return HAL_RX_GET(msdu_end, RX_MSDU_END_10, FIRST_MSDU);
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* rx */
 	hal_rx_get_rx_fragment_number_6490,
 	hal_rx_msdu_end_da_is_mcbc_get_6490,
 	hal_rx_msdu_end_sa_is_valid_get_6490,
+	hal_rx_desc_is_first_msdu_6490,
 };

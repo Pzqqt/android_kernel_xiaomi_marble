@@ -176,6 +176,22 @@ static uint16_t hal_rx_msdu_end_sa_idx_get_8074v2(uint8_t *buf)
 	return sa_idx;
 }
 
+/**
+ * hal_rx_desc_is_first_msdu_8074v2() - Check if first msdu
+ *
+ * @hal_soc_hdl: hal_soc handle
+ * @hw_desc_addr: hardware descriptor address
+ *
+ * Return: 0 - success/ non-zero failure
+ */
+static uint32_t hal_rx_desc_is_first_msdu_8074v2(void *hw_desc_addr)
+{
+	struct rx_pkt_tlvs *rx_tlvs = (struct rx_pkt_tlvs *)hw_desc_addr;
+	struct rx_msdu_end *msdu_end = &rx_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	return HAL_RX_GET(msdu_end, RX_MSDU_END_5, FIRST_MSDU);
+}
+
 struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -222,6 +238,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_msdu_end_da_is_mcbc_get_8074v2,
 	hal_rx_msdu_end_sa_is_valid_get_8074v2,
 	hal_rx_msdu_end_sa_idx_get_8074v2,
+	hal_rx_desc_is_first_msdu_8074v2,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

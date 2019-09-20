@@ -3389,13 +3389,21 @@ void hal_reo_status_get_header(uint32_t *d, int b,
 	hal_soc->ops->hal_reo_status_get_header(d, b, h);
 }
 
+/**
+ * hal_rx_desc_is_first_msdu() - Check if first msdu
+ *
+ * @hal_soc_hdl: hal_soc handle
+ * @hw_desc_addr: hardware descriptor address
+ *
+ * Return: 0 - success/ non-zero failure
+ */
 static inline
-uint32_t hal_rx_desc_is_first_msdu(void *hw_desc_addr)
+uint32_t hal_rx_desc_is_first_msdu(hal_soc_handle_t hal_soc_hdl,
+				   void *hw_desc_addr)
 {
-	struct rx_pkt_tlvs *rx_tlvs = (struct rx_pkt_tlvs *)hw_desc_addr;
-	struct rx_msdu_end *msdu_end = &rx_tlvs->msdu_end_tlv.rx_msdu_end;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	return HAL_RX_GET(msdu_end, RX_MSDU_END_5, FIRST_MSDU);
+	return hal_soc->ops->hal_rx_desc_is_first_msdu(hw_desc_addr);
 }
 
 static inline
@@ -3433,11 +3441,12 @@ HAL_RX_DESC_GET_80211_HDR(void *hw_desc_addr) {
 
 #ifdef NO_RX_PKT_HDR_TLV
 static inline
-bool HAL_IS_DECAP_FORMAT_RAW(uint8_t *rx_tlv_hdr)
+bool HAL_IS_DECAP_FORMAT_RAW(hal_soc_handle_t hal_soc_hdl,
+			     uint8_t *rx_tlv_hdr)
 {
 	uint8_t decap_format;
 
-	if (hal_rx_desc_is_first_msdu(rx_tlv_hdr)) {
+	if (hal_rx_desc_is_first_msdu(hal_soc_hdl, rx_tlv_hdr)) {
 		decap_format = HAL_RX_DESC_GET_DECAP_FORMAT(rx_tlv_hdr);
 		if (decap_format == HAL_HW_RX_DECAP_FORMAT_RAW)
 			return true;
@@ -3447,7 +3456,8 @@ bool HAL_IS_DECAP_FORMAT_RAW(uint8_t *rx_tlv_hdr)
 }
 #else
 static inline
-bool HAL_IS_DECAP_FORMAT_RAW(uint8_t *rx_tlv_hdr)
+bool HAL_IS_DECAP_FORMAT_RAW(hal_soc_handle_t hal_soc_hdl,
+			     uint8_t *rx_tlv_hdr)
 {
 	return true;
 }

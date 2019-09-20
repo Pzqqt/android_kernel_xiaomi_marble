@@ -415,7 +415,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					buf_info.paddr;
 			}
 
-			if (hal_rx_desc_is_first_msdu(rx_desc_tlv))
+			if (hal_rx_desc_is_first_msdu(soc->hal_soc,
+						      rx_desc_tlv))
 				hal_rx_mon_hw_desc_get_mpdu_status(soc->hal_soc,
 					rx_desc_tlv,
 					&(dp_pdev->ppdu_info.rx_status));

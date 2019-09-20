@@ -731,7 +731,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 
 	rx_pkt_hdr = hal_rx_pkt_hdr_get(rx_tlv_hdr);
 
-	if (!HAL_IS_DECAP_FORMAT_RAW(rx_tlv_hdr)) {
+	if (!HAL_IS_DECAP_FORMAT_RAW(soc->hal_soc, rx_tlv_hdr)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "Drop decapped frames");
 		goto free;
