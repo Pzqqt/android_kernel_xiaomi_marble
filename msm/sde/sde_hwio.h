@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HWIO_H
@@ -56,6 +56,11 @@
 #define DP_DHDR_MEM_POOL_1_DATA         0x470
 #define DP_DHDR_MEM_POOL_0_NUM_BYTES    0x47c
 #define DP_DHDR_MEM_POOL_1_NUM_BYTES    0x480
+
+#define DP_DHDR_MEM_POOL_0_DATA_4K      0x1004
+#define DP_DHDR_MEM_POOL_1_DATA_4K      0x2004
+#define DP_DHDR_MEM_POOL_0_NUM_BYTES_4K 0x100c
+#define DP_DHDR_MEM_POOL_1_NUM_BYTES_4K 0x200c
 
 /* SDE_SCALER_QSEED3 */
 #define QSEED3_COEF_LUT_OFF              0x100

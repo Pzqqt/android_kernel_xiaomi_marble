@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hwio.h"
@@ -485,32 +485,45 @@ static void sde_hw_program_cwb_ppb_ctrl(struct sde_hw_mdp *mdp,
 static void sde_hw_set_hdr_plus_metadata(struct sde_hw_mdp *mdp,
 		u8 *payload, u32 len, u32 stream_id)
 {
-	u32 i;
-	size_t length = len - 1;
-	u32 offset = 0, data = 0, byte_idx = 0;
+	u32 i, b;
+	u32 length = len - 1;
+	u32 d_offset, nb_offset, data = 0;
 	const u32 dword_size = sizeof(u32);
+	bool is_4k_aligned = mdp->caps->features &
+			BIT(SDE_MDP_DHDR_MEMPOOL_4K);
 
 	if (!payload || !len) {
 		SDE_ERROR("invalid payload with length: %d\n", len);
 		return;
 	}
 
-	if (stream_id)
-		offset = DP_DHDR_MEM_POOL_1_DATA - DP_DHDR_MEM_POOL_0_DATA;
-
-	/* payload[0] is set in VSCEXT header byte 1, skip programming here */
-	SDE_REG_WRITE(&mdp->hw, DP_DHDR_MEM_POOL_0_NUM_BYTES + offset, length);
-	for (i = 1; i < len; i++) {
-		if (byte_idx && !(byte_idx % dword_size)) {
-			SDE_REG_WRITE(&mdp->hw, DP_DHDR_MEM_POOL_0_DATA +
-				offset, data);
-			data = 0;
+	if (stream_id) {
+		if (is_4k_aligned) {
+			d_offset = DP_DHDR_MEM_POOL_1_DATA_4K;
+			nb_offset = DP_DHDR_MEM_POOL_1_NUM_BYTES_4K;
+		} else {
+			d_offset = DP_DHDR_MEM_POOL_1_DATA;
+			nb_offset = DP_DHDR_MEM_POOL_1_NUM_BYTES;
 		}
-
-		data |= payload[i] << (8 * (byte_idx++ % dword_size));
+	} else {
+		if (is_4k_aligned) {
+			d_offset = DP_DHDR_MEM_POOL_0_DATA_4K;
+			nb_offset = DP_DHDR_MEM_POOL_0_NUM_BYTES_4K;
+		} else {
+			d_offset = DP_DHDR_MEM_POOL_0_DATA;
+			nb_offset = DP_DHDR_MEM_POOL_0_NUM_BYTES;
+		}
 	}
 
-	SDE_REG_WRITE(&mdp->hw, DP_DHDR_MEM_POOL_0_DATA + offset, data);
+	/* payload[0] is set in VSCEXT header byte 1, skip programming here */
+	SDE_REG_WRITE(&mdp->hw, nb_offset, length);
+	for (i = 1; i < len; i += dword_size) {
+		for (b = 0; (i + b) < len && b < dword_size; b++)
+			data |= payload[i + b] << (8 * b);
+
+		SDE_REG_WRITE(&mdp->hw, d_offset, data);
+		data = 0;
+	}
 }
 
 static void _setup_mdp_ops(struct sde_hw_mdp_ops *ops,
@@ -533,7 +546,9 @@ static void _setup_mdp_ops(struct sde_hw_mdp_ops *ops,
 		ops->setup_vsync_source = sde_hw_setup_vsync_source;
 	else
 		ops->setup_vsync_source = sde_hw_setup_vsync_source_v1;
-	if (cap & BIT(SDE_MDP_DHDR_MEMPOOL))
+
+	if (cap & BIT(SDE_MDP_DHDR_MEMPOOL_4K) ||
+			cap & BIT(SDE_MDP_DHDR_MEMPOOL))
 		ops->set_hdr_plus_metadata = sde_hw_set_hdr_plus_metadata;
 }
 
