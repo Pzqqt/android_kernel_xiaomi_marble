@@ -55,6 +55,7 @@
 
 #define DFS_INJECT_SEQUENCE 27
 #define DFS_ALLOW_HW_PULSES 28
+#define DFS_SET_PRI_MULTIPILER   29
 
 /*
  * Spectral IOCTLs use DFS_LAST_IOCTL as the base.

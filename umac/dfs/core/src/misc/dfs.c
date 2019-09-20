@@ -719,6 +719,12 @@ int dfs_control(struct wlan_dfs *dfs,
 		}
 		dfs_allow_hw_pulses(dfs, !!(*(u_int8_t *)indata));
 		break;
+	case DFS_SET_PRI_MULTIPILER:
+		dfs->dfs_pri_multiplier = *(int *)indata;
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Set dfs pri multiplier to %d, dfsdomain %d",
+			  dfs->dfs_pri_multiplier, dfs->dfsdomain);
+		break;
 	default:
 		error = -EINVAL;
 	}

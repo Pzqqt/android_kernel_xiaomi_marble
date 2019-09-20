@@ -494,6 +494,14 @@ bool target_is_tgt_type_qca9984(uint32_t target_type);
  */
 bool target_is_tgt_type_qca9888(uint32_t target_type);
 
+/**
+ * target_is_tgt_type_adrastea() - Check if the target type is QCS40X
+ * @target_type: target type to be checked.
+ *
+ * Return: true if the target_type is QCS40X, else false.
+ */
+bool target_is_tgt_type_adrastea(uint32_t target_type);
+
 
 /**
  * target_psoc_set_wlan_init_status() - set info wlan_init_status

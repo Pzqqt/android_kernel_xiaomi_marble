@@ -262,6 +262,7 @@ static struct dfs_pulse dfs_korea_radars[] = {
 };
 
 #define RSSI_THERSH_AR900B    15
+#define RSSI_THERSH_ADRASTEA  18
 
 /**
  * dfs_assign_fcc_pulse_table() - Assign FCC pulse table
@@ -291,6 +292,37 @@ static inline void dfs_assign_fcc_pulse_table(
 		rinfo->numb5radars = QDF_ARRAY_SIZE(dfs_fcc_bin5pulses);
 	}
 }
+
+#ifdef DFS_OVERRIDE_RF_THRESHOLD
+static void dfs_set_adrastea_rf_thrshold(
+		struct wlan_objmgr_psoc *psoc,
+		int dfsdomain,
+		uint32_t target_type,
+		struct wlan_dfs_radar_tab_info *rinfo)
+{
+	int i;
+	struct wlan_lmac_if_target_tx_ops *tx_ops;
+
+	tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
+
+	if (tx_ops->tgt_is_tgt_type_adrastea(target_type) &&
+	    dfsdomain == DFS_ETSI_DOMAIN) {
+		for (i = 0; i < rinfo->numradars; i++) {
+			rinfo->dfs_radars[i].rp_rssithresh =
+				DFS_MIN(rinfo->dfs_radars[i].rp_rssithresh,
+					RSSI_THERSH_ADRASTEA);
+		}
+	}
+}
+#else
+static inline void dfs_set_adrastea_rf_thrshold(
+		struct wlan_objmgr_psoc *psoc,
+		int dfsdomain,
+		uint32_t target_type,
+		struct wlan_dfs_radar_tab_info *rinfo)
+{
+}
+#endif
 
 void dfs_get_po_radars(struct wlan_dfs *dfs)
 {
@@ -425,6 +457,8 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		for (i = 0; i < rinfo.numradars; i++)
 			rinfo.dfs_radars[i].rp_rssithresh = RSSI_THERSH_AR900B;
 	}
+
+	dfs_set_adrastea_rf_thrshold(psoc, dfsdomain, target_type, &rinfo);
 
 	WLAN_DFS_DATA_STRUCT_LOCK(dfs);
 	dfs_init_radar_filters(dfs, &rinfo);
