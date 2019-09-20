@@ -92,7 +92,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	 * then drop the pkt as it is looped back
 	 */
 	qdf_spin_lock_bh(&soc->ast_lock);
-	if (hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr)) {
+	if (hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc, rx_tlv_hdr)) {
 		sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
 
 		if ((sa_idx < 0) ||
@@ -705,7 +705,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	qdf_nbuf_set_da_valid(nbuf,
 			      hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr));
 	qdf_nbuf_set_sa_valid(nbuf,
-			      hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr));
+			      hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc,
+							      rx_tlv_hdr));
 
 	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
 	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);

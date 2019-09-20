@@ -1082,12 +1082,6 @@ hal_rx_msdu_end_sa_idx_get(uint8_t *buf)
 	return sa_idx;
 }
 
-#define HAL_RX_MSDU_END_SA_IS_VALID_GET(_rx_msdu_end)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
-		RX_MSDU_END_5_SA_IS_VALID_OFFSET)),	\
-		RX_MSDU_END_5_SA_IS_VALID_MASK,		\
-		RX_MSDU_END_5_SA_IS_VALID_LSB))
-
  /**
  * hal_rx_msdu_end_sa_is_valid_get(): API to get the
  * sa_is_valid bit from rx_msdu_end TLV
@@ -1096,15 +1090,12 @@ hal_rx_msdu_end_sa_idx_get(uint8_t *buf)
  * Return: sa_is_valid bit
  */
 static inline uint8_t
-hal_rx_msdu_end_sa_is_valid_get(uint8_t *buf)
+hal_rx_msdu_end_sa_is_valid_get(hal_soc_handle_t hal_soc_hdl,
+				uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint8_t sa_is_valid;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	sa_is_valid = HAL_RX_MSDU_END_SA_IS_VALID_GET(msdu_end);
-
-	return sa_is_valid;
+	return hal_soc->ops->hal_rx_msdu_end_sa_is_valid_get(buf);
 }
 
 #define HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(_rx_msdu_end)		\

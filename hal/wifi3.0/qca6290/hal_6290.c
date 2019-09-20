@@ -143,6 +143,25 @@ hal_rx_msdu_end_da_is_mcbc_get_6290(uint8_t *buf)
 	return HAL_RX_MSDU_END_DA_IS_MCBC_GET(msdu_end);
 }
 
+/**
+ * hal_rx_msdu_end_sa_is_valid_get_6290(): API to get_6290 the
+ * sa_is_valid bit from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: sa_is_valid bit
+ */
+static uint8_t
+hal_rx_msdu_end_sa_is_valid_get_6290(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint8_t sa_is_valid;
+
+	sa_is_valid = HAL_RX_MSDU_END_SA_IS_VALID_GET(msdu_end);
+
+	return sa_is_valid;
+}
+
 struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -186,6 +205,7 @@ struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	hal_tx_update_tidmap_prty_generic,
 	hal_rx_get_rx_fragment_number_6290,
 	hal_rx_msdu_end_da_is_mcbc_get_6290,
+	hal_rx_msdu_end_sa_is_valid_get_6290,
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {

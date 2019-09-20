@@ -382,6 +382,7 @@ struct hal_hw_txrx_ops {
 	void (*hal_tx_set_tidmap_prty)(struct hal_soc *hal_soc, uint8_t prio);
 	uint8_t (*hal_rx_get_rx_fragment_number)(uint8_t *buf);
 	uint8_t (*hal_rx_msdu_end_da_is_mcbc_get)(uint8_t *buf);
+	uint8_t (*hal_rx_msdu_end_sa_is_valid_get)(uint8_t *buf);
 };
 
 /**
