@@ -380,6 +380,7 @@ struct hal_hw_txrx_ops {
 	void (*hal_tx_update_pcp_tid_map)(struct hal_soc *hal_soc, uint8_t pcp,
 					  uint8_t id);
 	void (*hal_tx_set_tidmap_prty)(struct hal_soc *hal_soc, uint8_t prio);
+	uint8_t (*hal_rx_get_rx_fragment_number)(uint8_t *buf);
 };
 
 /**

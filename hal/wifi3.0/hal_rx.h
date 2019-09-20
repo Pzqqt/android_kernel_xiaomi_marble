@@ -2853,17 +2853,10 @@ uint16_t hal_rx_get_rx_sequence(uint8_t *buf)
  * Returns: rx fragment number
  */
 static inline
-uint8_t hal_rx_get_rx_fragment_number(uint8_t *buf)
+uint8_t hal_rx_get_rx_fragment_number(struct hal_soc *hal_soc,
+				      uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
-	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
-	uint8_t frag_number = 0;
-
-	frag_number = HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info) &
-		DOT11_SEQ_FRAG_MASK;
-
-	/* Return first 4 bits as fragment number */
-	return frag_number;
+	return hal_soc->ops->hal_rx_get_rx_fragment_number(buf);
 }
 
 #define HAL_RX_MPDU_GET_FRAME_CONTROL_FIELD(_rx_mpdu_info)	\
@@ -3088,7 +3081,7 @@ int hal_rx_chain_msdu_links(struct hal_soc *hal_soc, qdf_nbuf_t msdu,
 	if (num_msdus < HAL_RX_NUM_MSDU_DESC) {
 		/* mark first and last MSDUs */
 		rx_desc_info = qdf_nbuf_data(msdu);
-		fragno = hal_rx_get_rx_fragment_number(rx_desc_info);
+		fragno = hal_rx_get_rx_fragment_number(hal_soc, rx_desc_info);
 		more_frag = hal_rx_get_rx_more_frag_bit(rx_desc_info);
 
 		/* TODO: create skb->fragslist[] */

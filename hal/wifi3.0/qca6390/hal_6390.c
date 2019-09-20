@@ -110,6 +110,23 @@
 #include <hal_generic_api.h>
 #include <hal_wbm.h>
 
+/**
+ * hal_rx_get_rx_fragment_number_6390(): Function to retrieve rx fragment number
+ *
+ * @nbuf: Network buffer
+ * Returns: rx fragment number
+ */
+static
+uint8_t hal_rx_get_rx_fragment_number_6390(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+
+	/* Return first 4 bits as fragment number */
+	return (HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info) &
+		DOT11_SEQ_FRAG_MASK);
+}
+
 struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -151,6 +168,7 @@ struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	hal_tx_set_pcp_tid_map_generic,
 	hal_tx_update_pcp_tid_generic,
 	hal_tx_update_tidmap_prty_generic,
+	hal_rx_get_rx_fragment_number_6390,
 };
 
 struct hal_hw_srng_config hw_srng_table_6390[] = {
@@ -606,3 +624,4 @@ void hal_qca6390_attach(struct hal_soc *hal_soc)
 	hal_soc->hal_hw_reg_offset = hal_hw_reg_offset_qca6390;
 	hal_soc->ops = &qca6390_hal_hw_txrx_ops;
 }
+

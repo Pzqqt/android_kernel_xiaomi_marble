@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,11 @@
 #include "dp_types.h"
 #include "hal_api_mon.h"
 
+#define HAL_RX_MPDU_GET_SEQUENCE_NUMBER(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_OFFSET)),	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_MASK,	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_LSB))
 /*
  * hal_rx_msdu_start_nss_get_8074(): API to get the NSS
  * Interval from rx_msdu_start

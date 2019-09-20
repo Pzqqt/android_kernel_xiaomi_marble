@@ -35,6 +35,12 @@
 #include "hal_api_mon.h"
 #include "phyrx_other_receive_info_ru_details.h"
 
+#define HAL_RX_MPDU_GET_SEQUENCE_NUMBER(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_OFFSET)),	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_MASK,	\
+		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_LSB))
+
 #if defined(QCA_WIFI_QCA6290_11AX)
 #define HAL_RX_MSDU_START_MIMO_SS_BITMAP(_rx_msdu_start)\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\

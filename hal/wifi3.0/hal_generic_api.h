@@ -2337,4 +2337,5 @@ void hal_tx_update_tidmap_prty_generic(struct hal_soc *soc, uint8_t value)
 	HAL_REG_WRITE(soc, addr,
 		      (value & HWIO_TCL_R0_TID_MAP_PRTY_RMSK));
 }
+
 #endif /* _HAL_GENERIC_API_H_ */
