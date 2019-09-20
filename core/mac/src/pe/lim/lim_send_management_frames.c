@@ -4897,6 +4897,9 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *peer, *pdev;
 	uint8_t he_frag = 0;
+	tpDphHashNode sta_ds;
+	uint16_t aid;
+	bool he_cap = false;
 
 	sme_sessionid = session->smeSessionId;
 
@@ -4928,10 +4931,19 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 		pe_err("refused addba req");
 	}
 	frm.addba_param_set.tid = tid;
-	if (lim_is_session_he_capable(session))
+
+	if (lim_is_session_he_capable(session)) {
+		sta_ds = dph_lookup_hash_entry(mac_ctx, peer_mac, &aid,
+					       &session->dph.dphHashTable);
+		if (sta_ds)
+			he_cap = lim_is_sta_he_capable(sta_ds);
+	}
+
+	if (he_cap)
 		frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
 	else
 		frm.addba_param_set.buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
+
 	if (mac_ctx->usr_cfg_ba_buff_size)
 		frm.addba_param_set.buff_size = mac_ctx->usr_cfg_ba_buff_size;
 
