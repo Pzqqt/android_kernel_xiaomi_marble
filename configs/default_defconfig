@@ -546,6 +546,10 @@ CONFIG_PKTLOG_LEGACY := y
 endif
 endif
 
+ifeq ($(CONFIG_LITHIUM), y)
+CONFIG_PKTLOG_LEGACY := n
+endif
+
 #Enable WDI Event support
 ifeq ($(CONFIG_REMOVE_PKT_LOG), y)
 CONFIG_WDI_EVENT_ENABLE := n
