@@ -44,6 +44,7 @@
 #include <drm/drm_plane_helper.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/msm_drm.h>
+#include <drm/sde_drm.h>
 #include <drm/drm_gem.h>
 
 #include "sde_power_handle.h"
