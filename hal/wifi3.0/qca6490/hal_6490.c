@@ -33,7 +33,24 @@ uint8_t hal_rx_get_rx_fragment_number_6490(uint8_t *buf)
 		DOT11_SEQ_FRAG_MASK);
 }
 
+/**
+ * hal_rx_msdu_end_da_is_mcbc_get_6490(): API to check if pkt is MCBC
+ * from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: da_is_mcbc
+ */
+static uint8_t
+hal_rx_msdu_end_da_is_mcbc_get_6490(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	return HAL_RX_MSDU_END_DA_IS_MCBC_GET(msdu_end);
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* rx */
 	hal_rx_get_rx_fragment_number_6490,
+	hal_rx_msdu_end_da_is_mcbc_get_6490,
 };

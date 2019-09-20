@@ -2023,7 +2023,8 @@ done:
 		if (qdf_unlikely(qdf_nbuf_is_frag(nbuf))) {
 			bool is_mcbc, is_sa_vld, is_da_vld;
 
-			is_mcbc = hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr);
+			is_mcbc = hal_rx_msdu_end_da_is_mcbc_get(soc->hal_soc,
+								 rx_tlv_hdr);
 			is_sa_vld = hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr);
 			is_da_vld = hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr);
 

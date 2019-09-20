@@ -64,7 +64,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	if (vdev->opmode != wlan_op_mode_sta)
 		return false;
 
-	if (!hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))
+	if (!hal_rx_msdu_end_da_is_mcbc_get(soc->hal_soc, rx_tlv_hdr))
 		return false;
 
 	data = qdf_nbuf_data(nbuf);
@@ -700,7 +700,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 				hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr));
 	qdf_nbuf_set_rx_chfrag_end(nbuf,
 				   hal_rx_msdu_end_last_msdu_get(rx_tlv_hdr));
-	qdf_nbuf_set_da_mcbc(nbuf, hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr));
+	qdf_nbuf_set_da_mcbc(nbuf, hal_rx_msdu_end_da_is_mcbc_get(soc->hal_soc,
+								  rx_tlv_hdr));
 	qdf_nbuf_set_da_valid(nbuf,
 			      hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr));
 	qdf_nbuf_set_sa_valid(nbuf,
@@ -792,7 +793,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 
 	if (qdf_unlikely((peer->nawds_enabled == true) &&
-			hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
+			hal_rx_msdu_end_da_is_mcbc_get(soc->hal_soc,
+						       rx_tlv_hdr))) {
 		dp_err_rl("free buffer for multicast packet");
 		DP_STATS_INC(peer, rx.nawds_mcast_drop, 1);
 		goto drop_nbuf;
@@ -836,7 +838,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 					      rx_tlv_hdr, true);
 
 			if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(
-						rx_tlv_hdr) &&
+					soc->hal_soc, rx_tlv_hdr) &&
 					 (vdev->rx_decap_type ==
 					  htt_cmn_pkt_type_ethernet))) {
 				eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
@@ -995,8 +997,9 @@ process_mesh:
 		dp_rx_fill_mesh_stats(vdev, nbuf, rx_tlv_hdr, peer);
 	}
 process_rx:
-	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
-				(vdev->rx_decap_type ==
+	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(soc->hal_soc,
+							rx_tlv_hdr) &&
+		(vdev->rx_decap_type ==
 				htt_cmn_pkt_type_ethernet))) {
 		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		is_broadcast = (QDF_IS_ADDR_BROADCAST
