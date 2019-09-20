@@ -2227,17 +2227,18 @@ end:
 	spin_unlock_irqrestore(&dev->event_lock, flags);
 }
 
-enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc)
+enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc,
+		struct drm_crtc_state *cstate)
 {
 	struct drm_encoder *encoder;
 
-	if (!crtc || !crtc->dev) {
+	if (!crtc || !crtc->dev || !cstate) {
 		SDE_ERROR("invalid crtc\n");
 		return INTF_MODE_NONE;
 	}
 
 	drm_for_each_encoder_mask(encoder, crtc->dev,
-			crtc->state->encoder_mask) {
+			cstate->encoder_mask) {
 		/* continue if copy encoder is encountered */
 		if (sde_encoder_in_clone_mode(encoder))
 			continue;
@@ -5589,7 +5590,8 @@ static int sde_crtc_debugfs_state_show(struct seq_file *s, void *v)
 
 	seq_printf(s, "num_connectors: %d\n", cstate->num_connectors);
 	seq_printf(s, "client type: %d\n", sde_crtc_get_client_type(crtc));
-	seq_printf(s, "intf_mode: %d\n", sde_crtc_get_intf_mode(crtc));
+	seq_printf(s, "intf_mode: %d\n", sde_crtc_get_intf_mode(crtc,
+				crtc->state));
 	seq_printf(s, "core_clk_rate: %llu\n",
 			sde_crtc->cur_perf.core_clk_rate);
 	for (i = SDE_POWER_HANDLE_DBUS_ID_MNOC;
