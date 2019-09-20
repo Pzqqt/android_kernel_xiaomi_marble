@@ -3018,6 +3018,7 @@ static void sde_cp_ltm_hist_interrupt_cb(void *arg, int irq_idx)
 
 	list_del_init(&busy_buf->node);
 	list_del_init(&free_buf->node);
+	INIT_LIST_HEAD(&sde_crtc->ltm_buf_busy);
 	list_add_tail(&free_buf->node, &sde_crtc->ltm_buf_busy);
 
 	ltm_data = (struct drm_msm_ltm_stats_data *)
