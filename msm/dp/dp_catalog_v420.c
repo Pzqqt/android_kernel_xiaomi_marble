@@ -65,7 +65,7 @@ static u8 const dp_pre_emp_hbr_rbr[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
 static u8 const dp_swing_hbr_rbr[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
 	{0x08, 0x0F, 0x16, 0x1F}, /* sw0, 0.4v */
 	{0x11, 0x1E, 0x1F, 0xFF}, /* sw1, 0.6v */
-	{0x1A, 0x1F, 0xFF, 0xFF}, /* sw1, 0.8v */
+	{0x16, 0x1F, 0xFF, 0xFF}, /* sw1, 0.8v */
 	{0x1F, 0xFF, 0xFF, 0xFF}  /* sw1, 1.2v */
 };
 
