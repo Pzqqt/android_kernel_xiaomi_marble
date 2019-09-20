@@ -577,7 +577,7 @@ static enum hdd_tsf_op_result hdd_indicate_tsf_internal(
 	defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC)
 #define WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC 2
 #else
-#define WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC 10
+#define WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC 4
 #endif
 #define OVERFLOW_INDICATOR32 (((int64_t)0x1) << 32)
 #define CAP_TSF_TIMER_FIX_SEC 1
@@ -1064,10 +1064,6 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter)
 		 */
 		interval = (WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC -
 			    CAP_TSF_TIMER_FIX_SEC) * MSEC_PER_SEC;
-		if (adapter->device_mode == QDF_SAP_MODE ||
-		    adapter->device_mode == QDF_P2P_GO_MODE) {
-			interval *= WLAN_HDD_SOFTAP_INTERVAL_TIMES;
-		}
 
 		adapter->continuous_error_count = 0;
 		hdd_debug("ts-pair updated: interval: %d",
