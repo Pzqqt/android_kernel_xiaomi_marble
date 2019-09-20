@@ -80,10 +80,23 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 					struct pe_session *pe_session);
 void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 				 tLimMlmReassocReq *reassoc_req);
+
+/**
+ * lim_preauth_scan_event_handler() - Process preauth scan events
+ * @mac_ctx:Pointer to global MAC structure
+ * @event: Scan event
+ * @vdev_id: vdev id
+ * @scan_id: scan id from WMA scan event.
+ *
+ * If scan event signifies failure or successful completion, operation
+ * is complete.
+ * If scan event signifies that STA is on foreign channel, send auth frame
+ *
+ * Return: void
+ */
 void lim_preauth_scan_event_handler(struct mac_context *mac_ctx,
-				enum sir_scan_event_type event,
-				uint8_t session_id,
-				uint32_t scan_id);
+				    enum sir_scan_event_type event,
+				    uint8_t vdev_id, uint32_t scan_id);
 QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 		struct pe_session *session_entry, tSirFTPreAuthReq *ft_preauth_req);
 #else
@@ -113,7 +126,7 @@ static inline void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 {}
 static inline void lim_preauth_scan_event_handler(struct mac_context *mac_ctx,
 		enum sir_scan_event_type event,
-		uint8_t session_id, uint32_t scan_id)
+		uint8_t vdev_id, uint32_t scan_id)
 {}
 static inline int lim_process_ft_pre_auth_req(struct mac_context *mac,
 		struct scheduler_msg *pMsg)

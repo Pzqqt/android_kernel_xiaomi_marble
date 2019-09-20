@@ -800,15 +800,10 @@ void lim_send_set_bss_key_req(struct mac_context *mac,
 	}
 
 	/* Update the WMA_SET_BSSKEY_REQ parameters */
-	pSetBssKeyParams->bss_idx = pe_session->vdev_id;
 	pSetBssKeyParams->encType = pMlmSetKeysReq->edType;
-
 	pSetBssKeyParams->singleTidRc =
 		(uint8_t)(mac->mlme_cfg->sta.single_tid);
-	/* Update PE session Id */
-	pSetBssKeyParams->sessionId = pe_session->peSessionId;
-
-	pSetBssKeyParams->smesessionId = pMlmSetKeysReq->smesessionId;
+	pSetBssKeyParams->vdev_id = pMlmSetKeysReq->vdev_id;
 
 	if (pMlmSetKeysReq->key[0].keyId &&
 	    ((pMlmSetKeysReq->edType == eSIR_ED_WEP40) ||
@@ -897,8 +892,6 @@ void lim_send_set_sta_key_req(struct mac_context *mac,
 
 	pSetStaKeyParams->singleTidRc =
 		(uint8_t)(mac->mlme_cfg->sta.single_tid);
-	/* Update  PE session ID */
-	pSetStaKeyParams->sessionId = pe_session->peSessionId;
 
 	/**
 	 * For WEP - defWEPIdx indicates the default WEP
@@ -910,7 +903,7 @@ void lim_send_set_sta_key_req(struct mac_context *mac,
 
 	pSetStaKeyParams->defWEPIdx = defWEPIdx;
 
-	pSetStaKeyParams->smesessionId = pMlmSetKeysReq->smesessionId;
+	pSetStaKeyParams->vdev_id = pMlmSetKeysReq->vdev_id;
 	qdf_copy_macaddr(&pSetStaKeyParams->peer_macaddr,
 			 &pMlmSetKeysReq->peer_macaddr);
 

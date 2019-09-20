@@ -5706,7 +5706,7 @@ QDF_STATUS sme_update_session_param(mac_handle_t mac_handle, uint8_t session_id,
 		else {
 			msg->message_type = eWNI_SME_SESSION_UPDATE_PARAM;
 			msg->length = len;
-			msg->session_id = session_id;
+			msg->vdev_id = session_id;
 			msg->param_type = param_type;
 			msg->param_val = param_val;
 			status = umac_send_mb_message_to_mac(msg);
@@ -8754,7 +8754,7 @@ QDF_STATUS sme_update_access_policy_vendor_ie(mac_handle_t mac_handle,
 
 	qdf_mem_copy(&msg->ie[0], vendor_ie, sizeof(msg->ie));
 
-	msg->sme_session_id = session_id;
+	msg->vdev_id = session_id;
 	msg->access_policy = access_policy;
 
 	sme_debug("sme_session_id: %hu, access_policy: %d", session_id,
@@ -11917,7 +11917,7 @@ int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle, uint8_t session_id,
 		return -EIO;
 
 	cfg_msg->type = WNI_SME_CFG_ACTION_FRM_HE_TB_PPDU;
-	cfg_msg->session_id = session_id;
+	cfg_msg->vdev_id = session_id;
 	cfg_msg->cfg = cfg_val;
 
 	msg.bodyptr = cfg_msg;
@@ -13048,7 +13048,7 @@ void sme_send_disassoc_req_frame(mac_handle_t mac_handle, uint8_t session_id,
 
 	msg->msg_type = eWNI_SME_SEND_DISASSOC_FRAME;
 	msg->length = sizeof(*msg);
-	msg->session_id = session_id;
+	msg->vdev_id = session_id;
 	qdf_mem_copy(msg->peer_mac, peer_mac, QDF_MAC_ADDR_SIZE);
 	msg->reason = reason;
 	msg->wait_for_ack = wait_for_ack;
@@ -13409,7 +13409,7 @@ QDF_STATUS sme_set_he_bss_color(mac_handle_t mac_handle, uint8_t session_id,
 
 	bss_color_msg->message_type = eWNI_SME_SET_HE_BSS_COLOR;
 	bss_color_msg->length = len;
-	bss_color_msg->session_id = session_id;
+	bss_color_msg->vdev_id = session_id;
 	bss_color_msg->bss_color = bss_color;
 	return umac_send_mb_message_to_mac(bss_color_msg);
 }
@@ -13639,7 +13639,7 @@ QDF_STATUS sme_set_default_scan_ie(mac_handle_t mac_handle, uint16_t session_id,
 		else {
 			set_ie_params->message_type = eWNI_SME_DEFAULT_SCAN_IE;
 			set_ie_params->length = sizeof(*set_ie_params);
-			set_ie_params->session_id = session_id;
+			set_ie_params->vdev_id = session_id;
 			set_ie_params->ie_len = ie_len;
 			qdf_mem_copy(set_ie_params->ie_data, ie_data, ie_len);
 			status = umac_send_mb_message_to_mac(set_ie_params);
@@ -15204,14 +15204,14 @@ QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
 
 		sae_msg->message_type = eWNI_SME_SEND_SAE_MSG;
 		sae_msg->length = sizeof(*sae_msg);
-		sae_msg->session_id = session_id;
+		sae_msg->vdev_id = session_id;
 		sae_msg->sae_status = sae_status;
 		qdf_mem_copy(sae_msg->peer_mac_addr,
 			     peer_mac_addr.bytes,
 			     QDF_MAC_ADDR_SIZE);
-		sme_debug("SAE: sae_status %d session_id %d Peer: "
+		sme_debug("SAE: sae_status %d vdev_id %d Peer: "
 			  QDF_MAC_ADDR_STR, sae_msg->sae_status,
-			  sae_msg->session_id,
+			  sae_msg->vdev_id,
 			  QDF_MAC_ADDR_ARRAY(sae_msg->peer_mac_addr));
 
 		sch_msg.type = eWNI_SME_SEND_SAE_MSG;

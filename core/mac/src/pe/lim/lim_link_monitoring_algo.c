@@ -203,7 +203,7 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 		pe_err("Invalid body pointer in message");
 		return;
 	}
-	session_entry = pe_find_session_by_sme_session_id(mac_ctx, msg->vdev_id);
+	session_entry = pe_find_session_by_vdev_id(mac_ctx, msg->vdev_id);
 	if (!session_entry) {
 		pe_err("session not found for given sme session");
 		qdf_mem_free(msg);
@@ -579,8 +579,7 @@ void lim_rx_invalid_peer_process(struct mac_context *mac_ctx,
 		return;
 	}
 
-	session_entry = pe_find_session_by_sme_session_id(mac_ctx,
-							  msg->vdev_id);
+	session_entry = pe_find_session_by_vdev_id(mac_ctx, msg->vdev_id);
 	if (!session_entry) {
 		pe_err_rl("session not found for given sme session");
 		qdf_mem_free(msg);

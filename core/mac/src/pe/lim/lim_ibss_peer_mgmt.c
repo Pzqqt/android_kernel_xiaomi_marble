@@ -1273,8 +1273,7 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac,
 		goto end;
 	}
 
-	pe_session = pe_find_session_by_sme_session_id(mac,
-						       vdev_stop_rsp->vdev_id);
+	pe_session = pe_find_session_by_vdev_id(mac, vdev_stop_rsp->vdev_id);
 	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");
 		goto end;

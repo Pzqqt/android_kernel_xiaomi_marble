@@ -716,24 +716,6 @@ struct pe_session *pe_find_session_by_sta_id(struct mac_context *mac, uint8_t st
  */
 void pe_delete_session(struct mac_context *mac, struct pe_session *pe_session);
 
-
-/**
- * pe_find_session_by_sme_session_id() - looks up the PE session for given sme
- * session id/vdev_id
- * @mac_ctx: pointer to global adapter context
- * @sme_session_id: sme session id/vdev id
- *
- * Looks up the PE session for given sme session id ie.e vdev id
- *
- * Return: pe session entry for given sme session if found else NULL
- */
-static inline
-struct pe_session *pe_find_session_by_sme_session_id(struct mac_context *mac_ctx,
-						     uint8_t sme_session_id)
-{
-	return pe_find_session_by_vdev_id(mac_ctx, sme_session_id);
-}
-
 /**
  * pe_find_session_by_scan_id() - looks up the PE session for given scan id
  * @mac_ctx:   pointer to global adapter context

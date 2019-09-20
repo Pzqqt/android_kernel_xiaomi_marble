@@ -6190,20 +6190,8 @@ static void lim_send_action_frm_tb_ppdu_cfg_flush_cb(struct scheduler_msg *msg)
 	}
 }
 
-/**
- * lim_send_action_frm_tb_ppdu_cfg() - sets action frame in TB PPDU cfg to FW
- * @mac_ctx: global MAC context
- * @session_id: SME session id
- * @cfg: config setting
- *
- * Preapres the vendor action frame and send action frame in HE TB PPDU
- * configuration to FW.
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS lim_send_action_frm_tb_ppdu_cfg(struct mac_context *mac_ctx,
-					   uint32_t session_id,
-					   uint8_t cfg)
+					   uint32_t vdev_id, uint8_t cfg)
 {
 	tDot11fvendor_action_frame *frm;
 	uint8_t frm_len = sizeof(*frm);
@@ -6212,11 +6200,10 @@ QDF_STATUS lim_send_action_frm_tb_ppdu_cfg(struct mac_context *mac_ctx,
 	struct scheduler_msg msg = {0};
 	uint8_t *data_buf;
 
-	session = pe_find_session_by_sme_session_id(mac_ctx, session_id);
-
+	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
-		pe_err("pe session does not exist for sme session id %d",
-		       session_id);
+		pe_err("pe session does not exist for vdev_id %d",
+		       vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -6236,7 +6223,7 @@ QDF_STATUS lim_send_action_frm_tb_ppdu_cfg(struct mac_context *mac_ctx,
 
 	frm->vendor_action_subtype.subtype = 0xFF;
 
-	cfg_msg->vdev_id = session_id;
+	cfg_msg->vdev_id = vdev_id;
 	cfg_msg->cfg = cfg;
 	cfg_msg->frm_len = frm_len;
 	cfg_msg->data = (uint8_t *)frm;

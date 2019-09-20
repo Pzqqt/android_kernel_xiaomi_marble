@@ -732,25 +732,9 @@ QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 	return status;
 }
 
-/**
- * lim_preauth_scan_event_handler() - Process firmware preauth scan events
- *
- * @mac_ctx:Pointer to global MAC structure
- * @event: Scan event
- * @session_id: session entry
- * @scan_id: scan id from WMA scan event.
- *
- * If scan event signifies failure or successful completion, operation
- * is complete.
- * If scan event signifies that STA is on foreign channel, send auth frame
- *
- * Return: void
- */
-
 void lim_preauth_scan_event_handler(struct mac_context *mac_ctx,
-				enum sir_scan_event_type event,
-				uint8_t session_id,
-				uint32_t scan_id)
+				    enum sir_scan_event_type event,
+				    uint8_t vdev_id, uint32_t scan_id)
 {
 	struct pe_session *session_entry;
 
@@ -767,13 +751,11 @@ void lim_preauth_scan_event_handler(struct mac_context *mac_ctx,
 		/* For the first pre-auth request
 		 * need to get it by sme session id (vdev id)
 		 */
-		session_entry = pe_find_session_by_sme_session_id(mac_ctx,
-								  session_id);
+		session_entry = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	}
 
 	if (!session_entry) {
-		pe_err("SmeSessionId:%d PeSessionId:%d does not exist",
-			session_id,
+		pe_err("vdev_id :%d PeSessionId:%d does not exist", vdev_id,
 			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);
 		return;
 	}

@@ -174,12 +174,12 @@ struct sir_mgmt_msg {
 /**
  * struct sir_cfg_action_frm_tb_ppdu - cfg to set action frame in he tb ppdu
  * @type: Message type
- * @session_id: session id
+ * @vdev_id: vdev id
  * @cfg: enable/disable cfg
  */
 struct sir_cfg_action_frm_tb_ppdu {
 	uint16_t type;
-	uint8_t session_id;
+	uint8_t vdev_id;
 	uint8_t cfg;
 };
 

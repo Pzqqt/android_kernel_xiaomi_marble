@@ -285,7 +285,6 @@ typedef struct {
  * @smesessionId: sme session id
  * @peerMacAddr: peer mac address
  * @status: status
- * @sessionId: session id
  * @sendRsp: send response
  * @macaddr: MAC address of the peer
  *
@@ -300,10 +299,9 @@ typedef struct {
 	uint8_t defWEPIdx;
 	tSirKeys key[SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS];
 	uint8_t singleTidRc;
-	uint8_t smesessionId;
+	uint8_t vdev_id;
 	struct qdf_mac_addr peer_macaddr;
 	QDF_STATUS status;
-	uint8_t sessionId;
 	uint8_t sendRsp;
 	struct qdf_mac_addr macaddr;
 } tSetStaKeyParams, *tpSetStaKeyParams;
@@ -312,7 +310,7 @@ typedef struct {
  * struct sLimMlmSetKeysReq - set key request parameters
  * @peerMacAddr: peer mac address
  * @sessionId: PE session id
- * @smesessionId: SME session id
+ * @vdev_id: vdev id
  * @aid: association id
  * @edType: Encryption/Decryption type
  * @numKeys: number of keys
@@ -321,7 +319,7 @@ typedef struct {
 typedef struct sLimMlmSetKeysReq {
 	struct qdf_mac_addr peer_macaddr;
 	uint8_t sessionId;      /* Added For BT-AMP Support */
-	uint8_t smesessionId;   /* Added for drivers based on wmi interface */
+	uint8_t vdev_id;   /* Added for drivers based on wmi interface */
 	uint16_t aid;
 	tAniEdType edType;      /* Encryption/Decryption type */
 	uint8_t numKeys;
@@ -535,25 +533,21 @@ typedef struct sSendProbeRespParams {
 
 /**
  * struct tSetBssKeyParams - BSS key parameters
- * @bss_idx: BSSID index
  * @encType: encryption Type
  * @numKeys: number of keys
  * @key: key data
  * @singleTidRc: 1=Single TID based Replay Count, 0=Per TID based RC
- * @smesessionId: sme session id
+ * @vdev_id: vdev id id
  * @status: return status of command
- * @sessionId: PE session id
  * @macaddr: MAC address of the peer
  */
 typedef struct {
-	uint8_t bss_idx;
 	tAniEdType encType;
 	uint8_t numKeys;
 	tSirKeys key[SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS];
 	uint8_t singleTidRc;
-	uint8_t smesessionId;
+	uint8_t vdev_id;
 	QDF_STATUS status;
-	uint8_t sessionId;
 	struct qdf_mac_addr macaddr;
 } tSetBssKeyParams, *tpSetBssKeyParams;
 

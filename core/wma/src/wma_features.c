@@ -5253,7 +5253,7 @@ int wma_vdev_obss_detection_info_handler(void *handle, uint8_t *event,
 }
 
 #ifdef CRYPTO_SET_KEY_CONVERGED
-static void wma_send_set_key_rsp(uint8_t session_id, bool pairwise,
+static void wma_send_set_key_rsp(uint8_t vdev_id, bool pairwise,
 				 uint8_t key_index)
 {
 	tSetStaKeyParams *key_info_uc;
@@ -5268,7 +5268,7 @@ static void wma_send_set_key_rsp(uint8_t session_id, bool pairwise,
 		return;
 	}
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
-						    session_id,
+						    vdev_id,
 						    WLAN_LEGACY_WMA_ID);
 	if (!vdev) {
 		wma_err("VDEV object not found");
@@ -5286,8 +5286,7 @@ static void wma_send_set_key_rsp(uint8_t session_id, bool pairwise,
 		key_info_uc = qdf_mem_malloc(sizeof(*key_info_uc));
 		if (!key_info_uc)
 			return;
-		key_info_uc->sessionId = session_id;
-		key_info_uc->smesessionId = session_id;
+		key_info_uc->vdev_id = vdev_id;
 		key_info_uc->status = QDF_STATUS_SUCCESS;
 		key_info_uc->key[0].keyLength = crypto_key->keylen;
 		qdf_mem_copy(&key_info_uc->macaddr, &crypto_key->macaddr,
@@ -5298,8 +5297,7 @@ static void wma_send_set_key_rsp(uint8_t session_id, bool pairwise,
 		key_info_mc = qdf_mem_malloc(sizeof(*key_info_mc));
 		if (!key_info_mc)
 			return;
-		key_info_mc->sessionId = session_id;
-		key_info_mc->smesessionId = session_id;
+		key_info_mc->vdev_id = vdev_id;
 		key_info_mc->status = QDF_STATUS_SUCCESS;
 		key_info_mc->key[0].keyLength = crypto_key->keylen;
 		qdf_mem_copy(&key_info_mc->macaddr, &bcast_mac,

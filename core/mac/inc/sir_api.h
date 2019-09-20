@@ -876,7 +876,7 @@ typedef struct sEsePEContext {
 struct join_req {
 	uint16_t messageType;   /* eWNI_SME_JOIN_REQ */
 	uint16_t length;
-	uint8_t sessionId;
+	uint8_t vdev_id;
 	tSirMacSSid ssId;
 	tSirMacAddr self_mac_addr;        /* self Mac address */
 	enum bss_type bsstype;    /* add new type for BT-AMP STA and AP Modules */
@@ -1357,7 +1357,7 @@ struct missed_beacon_ind {
 struct set_context_req {
 	uint16_t messageType;   /* eWNI_SME_SET_CONTEXT_REQ */
 	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
+	uint8_t vdev_id;      /* vdev ID */
 	struct qdf_mac_addr peer_macaddr;
 	struct qdf_mac_addr bssid;      /* BSSID */
 	tSirKeyMaterial keyMaterial;
@@ -1752,7 +1752,7 @@ typedef struct sSirAPWPSIEs {
 struct update_config {
 	uint16_t messageType;   /* eWNI_SME_UPDATE_CONFIG */
 	uint16_t length;
-	uint8_t sme_session_id;
+	uint8_t vdev_id;
 	uint16_t capab;
 	uint32_t value;
 };
@@ -1771,14 +1771,14 @@ enum sir_update_session_param_type {
  * struct sir_update_session_param
  * @message_type: SME message type
  * @length: size of struct sir_update_session_param
- * @session_id: Session ID
+ * @vdev_id: vdev ID
  * @param_type: parameter to be updated
  * @param_val: Parameter value to update
  */
 struct sir_update_session_param {
 	uint16_t message_type;
 	uint16_t length;
-	uint8_t session_id;
+	uint8_t vdev_id;
 	uint32_t param_type;
 	uint32_t param_val;
 };
@@ -1787,13 +1787,13 @@ struct sir_update_session_param {
  * struct sir_set_he_bss_color
  * @message_type: SME message type
  * @length: size of struct sir_set_he_bss_color
- * @session_id: Session ID
+ * @vdev_id: vdev ID
  * @bss_color: bss color value
  */
 struct sir_set_he_bss_color {
 	uint16_t message_type;
 	uint16_t length;
-	uint8_t session_id;
+	uint8_t vdev_id;
 	uint8_t bss_color;
 };
 
@@ -4269,14 +4269,14 @@ struct chip_pwr_save_fail_detected_params {
  * struct hdd_default_scan_ie - HDD default scan IE structure
  * @message_type: message type to be set with eWNI_SME_DEFAULT_SCAN_IE
  * @length: length of the struct hdd_default_scan_ie
- * @session_id: Session Id
+ * @vdev_id: vdev_id
  * @ie_len: Default scan IE length
  * @ie_data: Pointer to default scan IE data
  */
 struct hdd_default_scan_ie {
 	uint16_t message_type;
 	uint16_t length;
-	uint16_t session_id;
+	uint16_t vdev_id;
 	uint16_t ie_len;
 	uint8_t ie_data[MAX_DEFAULT_SCAN_IE_LEN];
 };
@@ -4399,13 +4399,13 @@ enum powersave_qpower_mode {
  * @message_type: message id
  * @length: msg length
  * @new_channel: new channel
- * @session_id: session id
+ * @vdev_id: vdev id
  */
 struct sir_sme_ext_cng_chan_req {
 	uint16_t  message_type; /* eWNI_SME_EXT_CHANGE_CHANNEL */
 	uint16_t  length;
 	uint32_t  new_channel;
-	uint8_t   session_id;
+	uint8_t   vdev_id;
 };
 
 /**
@@ -5105,7 +5105,7 @@ struct sir_mac_pwr_dbg_cmd {
  * struct sme_send_disassoc_frm_req - send disassoc request frame
  * @msg_type: message type
  * @length: length of message
- * @session_id: session id
+ * @vdev_id: vdev id
  * @peer_mac: peer mac address
  * @reason: reason for disassoc
  * @wait_for_ack: wait for acknowledgment
@@ -5113,7 +5113,7 @@ struct sir_mac_pwr_dbg_cmd {
  struct sme_send_disassoc_frm_req {
 	uint16_t msg_type;
 	uint16_t length;
-	uint8_t session_id;
+	uint8_t vdev_id;
 	uint8_t peer_mac[6];
 	uint16_t reason;
 	uint8_t wait_for_ack;
@@ -5124,14 +5124,14 @@ struct sir_mac_pwr_dbg_cmd {
  * policy
  * @msg_type: message id
  * @msg_len: message length
- * @sme_session_id: sme session id
+ * @vdev_id: vdev id
  * @ie: vendor ie
  * @access_policy: access policy for vendor ie
  */
 struct sme_update_access_policy_vendor_ie {
 	uint16_t msg_type;
 	uint16_t length;
-	uint32_t sme_session_id;
+	uint32_t vdev_id;
 	uint8_t ie[WLAN_MAX_IE_LEN + 2];
 	uint8_t access_policy;
 };
@@ -5651,14 +5651,14 @@ struct sir_sae_info {
  * struct sir_sae_msg - SAE msg used for message posting
  * @message_type: message type
  * @length: message length
- * @session_id: SME session id
+ * @vdev_id: vdev id
  * @sae_status: SAE status, 0: Success, Non-zero: Failure.
  * @peer_mac_addr: peer MAC address
  */
 struct sir_sae_msg {
 	uint16_t message_type;
 	uint16_t length;
-	uint16_t session_id;
+	uint16_t vdev_id;
 	uint8_t sae_status;
 	tSirMacAddr peer_mac_addr;
 };

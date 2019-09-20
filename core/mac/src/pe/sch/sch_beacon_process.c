@@ -1567,8 +1567,7 @@ QDF_STATUS lim_process_obss_detection_ind(struct mac_context *mac_ctx,
 		 obss_detection->matched_detection_masks,
 		 QDF_MAC_ADDR_ARRAY(obss_detection->matched_bssid_addr));
 
-	session = pe_find_session_by_sme_session_id(mac_ctx,
-						    obss_detection->vdev_id);
+	session = pe_find_session_by_vdev_id(mac_ctx, obss_detection->vdev_id);
 	if (!session) {
 		pe_err("Failed to get session for id %d",
 		       obss_detection->vdev_id);

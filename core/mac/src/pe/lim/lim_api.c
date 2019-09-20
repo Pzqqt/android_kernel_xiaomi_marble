@@ -629,8 +629,7 @@ static bool is_mgmt_protected(uint32_t vdev_id,
 	if (!mac_ctx)
 		return false;
 
-	session = pe_find_session_by_sme_session_id(mac_ctx,
-						    vdev_id);
+	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
 		/* couldn't find session */
 		pe_err("Session not found for vdev_id: %d", vdev_id);
@@ -2280,7 +2279,7 @@ pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 {
 	struct pe_session *session;
 
-	session = pe_find_session_by_sme_session_id(mac, vdev_id);
+	session = pe_find_session_by_vdev_id(mac, vdev_id);
 	if (!session) {
 		pe_err("LFR3: Vdev %d doesn't exist", vdev_id);
 		return QDF_STATUS_E_FAILURE;
@@ -2313,7 +2312,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		pe_err("LFR3:roam_sync_ind_ptr is NULL");
 		return status;
 	}
-	session_ptr = pe_find_session_by_sme_session_id(mac_ctx,
+	session_ptr = pe_find_session_by_vdev_id(mac_ctx,
 				roam_sync_ind_ptr->roamed_vdev_id);
 	if (!session_ptr) {
 		pe_err("LFR3:Unable to find session");

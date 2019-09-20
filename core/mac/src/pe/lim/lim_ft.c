@@ -745,7 +745,7 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *msg_buf)
 		qdf_copy_macaddr(&pMlmSetKeysReq->peer_macaddr,
 				 &pKeyInfo->bssid);
 		pMlmSetKeysReq->sessionId = pe_session->peSessionId;
-		pMlmSetKeysReq->smesessionId = pe_session->smeSessionId;
+		pMlmSetKeysReq->vdev_id = pe_session->vdev_id;
 		pMlmSetKeysReq->edType = pKeyInfo->keyMaterial.edType;
 		pMlmSetKeysReq->numKeys = pKeyInfo->keyMaterial.numKeys;
 		qdf_mem_copy((uint8_t *) &pMlmSetKeysReq->key,

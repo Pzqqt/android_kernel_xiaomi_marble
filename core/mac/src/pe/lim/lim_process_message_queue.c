@@ -199,8 +199,7 @@ static void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *bod
 		return;
 	}
 
-	session = pe_find_session_by_sme_session_id(mac,
-				sae_msg->session_id);
+	session = pe_find_session_by_vdev_id(mac, sae_msg->vdev_id);
 	if (!session) {
 		pe_err("SAE:Unable to find session");
 		return;
@@ -420,9 +419,8 @@ static void lim_process_set_default_scan_ie_request(struct mac_context *mac_ctx,
 	if (!local_ie_buf)
 		return;
 
-	pe_session = pe_find_session_by_sme_session_id(mac_ctx,
-
-			set_ie_params->session_id);
+	pe_session = pe_find_session_by_vdev_id(mac_ctx,
+						set_ie_params->vdev_id);
 	if (lim_update_ext_cap_ie(mac_ctx,
 			(uint8_t *)set_ie_params->ie_data,
 			local_ie_buf, &local_ie_len, pe_session)) {
@@ -434,7 +432,7 @@ static void lim_process_set_default_scan_ie_request(struct mac_context *mac_ctx,
 	if (!wma_ie_params)
 		goto scan_ie_send_fail;
 
-	wma_ie_params->vdev_id = set_ie_params->session_id;
+	wma_ie_params->vdev_id = set_ie_params->vdev_id;
 	wma_ie_params->ie_id = DEFAULT_SCAN_IE_ID;
 	wma_ie_params->length = local_ie_len;
 	wma_ie_params->data = (uint8_t *)(wma_ie_params)
@@ -1990,8 +1988,8 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		beacon_params.paramChangeBitmap = 0;
 		for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 			vdev_id = ((uint8_t *)msg->bodyptr)[i];
-			session_entry = pe_find_session_by_sme_session_id(
-				mac_ctx, vdev_id);
+			session_entry = pe_find_session_by_vdev_id(mac_ctx,
+								   vdev_id);
 			if (!session_entry)
 				continue;
 			session_entry->sap_advertise_avoid_ch_ie =

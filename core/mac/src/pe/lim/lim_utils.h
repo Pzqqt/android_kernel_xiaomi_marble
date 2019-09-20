@@ -797,7 +797,7 @@ QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
 /**
  * lim_send_action_frm_tb_ppdu_cfg() - sets action frame in TB PPDU cfg to FW
  * @mac_ctx: global MAC context
- * @session_id: SME session id
+ * @vdev_id: vdev id
  * @cfg: config setting
  *
  * Preapres the vendor action frame and send action frame in HE TB PPDU
@@ -806,7 +806,7 @@ QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS lim_send_action_frm_tb_ppdu_cfg(struct mac_context *mac_ctx,
-					   uint32_t session_id,
+					   uint32_t vdev_id,
 					   uint8_t cfg);
 
 void lim_update_extcap_struct(struct mac_context *mac_ctx, uint8_t *buf,

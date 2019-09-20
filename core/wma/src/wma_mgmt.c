@@ -2409,7 +2409,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	struct wlan_objmgr_vdev *vdev;
 
 	WMA_LOGD("BSS key setup for peer");
-	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
+	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->vdev_id);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
 		key_info->status = QDF_STATUS_E_FAILURE;
@@ -2419,7 +2419,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	qdf_mem_zero(&key_params, sizeof(key_params));
 	opmode = cdp_get_opmode(soc, txrx_vdev);
 	qdf_mem_zero(&key_params, sizeof(key_params));
-	key_params.vdev_id = key_info->smesessionId;
+	key_params.vdev_id = key_info->vdev_id;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
 	key_params.unicast = false;
@@ -2433,7 +2433,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	     key_info->encType == eSIR_ED_WEP104)) {
 		vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
-						     key_info->smesessionId,
+						     key_info->vdev_id,
 						     WLAN_LEGACY_WMA_ID);
 		wma_read_cfg_wepkey(wma_handle, key_info->key,
 				    &def_key_idx, &key_info->numKeys, vdev);
@@ -2441,7 +2441,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	} else if ((key_info->encType == eSIR_ED_WEP40) ||
 		(key_info->encType == eSIR_ED_WEP104)) {
 		struct wma_txrx_node *intf =
-			&wma_handle->interfaces[key_info->smesessionId];
+			&wma_handle->interfaces[key_info->vdev_id];
 		key_params.def_key_idx = intf->wep_default_key_idx;
 	}
 
@@ -2501,7 +2501,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	struct wlan_objmgr_vdev *vdev;
 
 	WMA_LOGD("BSS key setup");
-	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
+	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->vdev_id);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
 		key_info->status = QDF_STATUS_E_FAILURE;
@@ -2524,19 +2524,19 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	}
 
 	qdf_mem_zero(&key_params, sizeof(key_params));
-	key_params.vdev_id = key_info->smesessionId;
+	key_params.vdev_id = key_info->vdev_id;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
 	key_params.unicast = false;
 	if (wlan_opmode == wlan_op_mode_sta) {
 		qdf_mem_copy(key_params.peer_mac,
-			wma_handle->interfaces[key_info->smesessionId].bssid,
+			wma_handle->interfaces[key_info->vdev_id].bssid,
 			QDF_MAC_ADDR_SIZE);
 	} else {
 		mac_addr = cdp_get_vdev_mac_addr(soc, txrx_vdev);
 		if (!mac_addr) {
 			WMA_LOGE("%s: mac_addr is NULL for vdev with id %d",
-				 __func__, key_info->smesessionId);
+				 __func__, key_info->vdev_id);
 			goto out;
 		}
 		/* vdev mac address will be passed for all other modes */
@@ -2551,7 +2551,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	     key_info->encType == eSIR_ED_WEP104)) {
 		vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
-						     key_info->smesessionId,
+						     key_info->vdev_id,
 						     WLAN_LEGACY_WMA_ID);
 		wma_read_cfg_wepkey(wma_handle, key_info->key,
 				    &def_key_idx, &key_info->numKeys, vdev);
@@ -2559,7 +2559,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	} else if ((key_info->encType == eSIR_ED_WEP40) ||
 		   (key_info->encType == eSIR_ED_WEP104)) {
 		struct wma_txrx_node *intf =
-			&wma_handle->interfaces[key_info->smesessionId];
+			&wma_handle->interfaces[key_info->vdev_id];
 		key_params.def_key_idx = intf->wep_default_key_idx;
 	}
 
@@ -2652,7 +2652,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		goto out;
 	}
 
-	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
+	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->vdev_id);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:TxRx Vdev Handle is NULL", __func__);
 		key_info->status = QDF_STATUS_E_FAILURE;
@@ -2666,7 +2666,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	    opmode != wlan_op_mode_ap) {
 		vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
-						     key_info->smesessionId,
+						     key_info->vdev_id,
 						     WLAN_LEGACY_WMA_ID);
 		wma_read_cfg_wepkey(wma_handle, key_info->key,
 				    &def_key_idx, &num_keys, vdev);
@@ -2685,7 +2685,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		}
 	}
 	qdf_mem_zero(&key_params, sizeof(key_params));
-	key_params.vdev_id = key_info->smesessionId;
+	key_params.vdev_id = key_info->vdev_id;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
 	key_params.unicast = true;

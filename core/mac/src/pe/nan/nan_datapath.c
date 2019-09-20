@@ -56,8 +56,7 @@ static QDF_STATUS lim_add_ndi_peer(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	session = pe_find_session_by_sme_session_id(mac_ctx,
-						vdev_id);
+	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
 		/* couldn't find session */
 		pe_err("Session not found for vdev_id: %d", vdev_id);
@@ -139,7 +138,7 @@ static void lim_ndp_delete_peer_by_addr(struct mac_context *mac_ctx, uint8_t vde
 	pe_info("deleting peer: "QDF_MAC_ADDR_STR" confirm rejected",
 		QDF_MAC_ADDR_ARRAY(peer_ndi_mac_addr.bytes));
 
-	session = pe_find_session_by_sme_session_id(mac_ctx, vdev_id);
+	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session || (session->bssType != eSIR_NDI_MODE)) {
 		pe_err("PE session is NULL or non-NDI for sme session %d",
 			vdev_id);
@@ -209,8 +208,8 @@ static void lim_ndp_delete_peers(struct mac_context *mac_ctx,
 		if (ndp_map[i].num_active_ndp_sessions > 0)
 			continue;
 
-		session = pe_find_session_by_sme_session_id(mac_ctx,
-						ndp_map[i].vdev_id);
+		session = pe_find_session_by_vdev_id(mac_ctx,
+						     ndp_map[i].vdev_id);
 		if (!session || (session->bssType != eSIR_NDI_MODE)) {
 			pe_err("PE session is NULL or non-NDI for sme session %d",
 				ndp_map[i].vdev_id);
@@ -386,8 +385,7 @@ void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}
-	session_entry =
-		pe_find_session_by_sme_session_id(mac_ctx, del_bss->vdev_id);
+	session_entry = pe_find_session_by_vdev_id(mac_ctx, del_bss->vdev_id);
 	if (!session_entry) {
 		pe_err("Session Does not exist for given sessionID");
 		goto end;

@@ -15380,7 +15380,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 
 		csr_join_req->messageType = messageType;
 		csr_join_req->length = msgLen;
-		csr_join_req->sessionId = (uint8_t) sessionId;
+		csr_join_req->vdev_id = (uint8_t) sessionId;
 		if (pIes->SSID.present &&
 		    !csr_is_nullssid(pIes->SSID.ssid,
 				     pIes->SSID.num_ssid)) {
@@ -16547,7 +16547,7 @@ QDF_STATUS csr_send_mb_set_context_req_msg(struct mac_context *mac,
 			return QDF_STATUS_E_NOMEM;
 		pMsg->messageType = eWNI_SME_SETCONTEXT_REQ;
 		pMsg->length = msgLen;
-		pMsg->sessionId = (uint8_t) sessionId;
+		pMsg->vdev_id = (uint8_t) sessionId;
 		qdf_copy_macaddr(&pMsg->peer_macaddr, &peer_macaddr);
 		qdf_copy_macaddr(&pMsg->bssid,
 				 &pSession->connectedProfile.bssid);
@@ -20004,7 +20004,7 @@ QDF_STATUS csr_roam_update_config(struct mac_context *mac_ctx, uint8_t session_i
 		return QDF_STATUS_E_NOMEM;
 
 	msg->messageType = eWNI_SME_UPDATE_CONFIG;
-	msg->sme_session_id = session_id;
+	msg->vdev_id = session_id;
 	msg->capab = capab;
 	msg->value = value;
 	msg->length = sizeof(*msg);
@@ -20323,7 +20323,7 @@ QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx, uint32_t cha
 	msg->message_type = eWNI_SME_EXT_CHANGE_CHANNEL;
 	msg->length = sizeof(*msg);
 	msg->new_channel = channel;
-	msg->session_id = session_id;
+	msg->vdev_id = session_id;
 	status = umac_send_mb_message_to_mac(msg);
 	return status;
 }

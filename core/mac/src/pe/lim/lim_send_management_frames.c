@@ -4957,17 +4957,17 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx,
 {
 	tpSirMacFrameCtl fc = (tpSirMacFrameCtl) mb_msg->data;
 	QDF_STATUS qdf_status;
-	uint8_t sme_session_id = 0;
+	uint8_t vdev_id = 0;
 	struct pe_session *session;
 	uint16_t auth_ack_status;
 	enum rateid min_rid = RATEID_DEFAULT;
 
-	sme_session_id = mb_msg->session_id;
-	session = pe_find_session_by_sme_session_id(mac_ctx, sme_session_id);
+	vdev_id = mb_msg->session_id;
+	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
 		cds_packet_free((void *)packet);
-		pe_err("session not found for given sme session %d",
-		       sme_session_id);
+		pe_err("session not found for given vdev_id %d",
+		       vdev_id);
 		return;
 	}
 
@@ -4982,7 +4982,7 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx,
 					 TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
 					 7, lim_tx_complete, frame,
 					 lim_auth_tx_complete_cnf,
-					 0, sme_session_id, false, 0, min_rid);
+					 0, vdev_id, false, 0, min_rid);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		session->peSessionId, qdf_status));
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
