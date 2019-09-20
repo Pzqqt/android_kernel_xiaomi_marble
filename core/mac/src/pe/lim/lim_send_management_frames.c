@@ -1690,6 +1690,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	enum rateid min_rid = RATEID_DEFAULT;
 	uint8_t *mbo_ie = NULL, *adaptive_11r_ie = NULL, *vendor_ies = NULL;
 	uint8_t mbo_ie_len = 0, adaptive_11r_ie_len = 0;
+	struct wlan_objmgr_peer *peer;
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
@@ -2030,6 +2031,18 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		/* Include the EID and length fields */
 		mbo_ie_len = mbo_ie[1] + 2;
 		pe_debug("Stripped MBO IE of length %d", mbo_ie_len);
+
+		peer = wlan_objmgr_get_peer_by_mac(mac_ctx->psoc,
+						   mlm_assoc_req->peerMacAddr,
+						   WLAN_MBO_ID);
+		if (peer && !mlme_get_peer_pmf_status(peer)) {
+			pe_debug("Peer doesn't support PMF, Don't add MBO IE");
+			qdf_mem_free(mbo_ie);
+			mbo_ie = NULL;
+			mbo_ie_len = 0;
+		}
+		if (peer)
+			wlan_objmgr_peer_release_ref(peer, WLAN_MBO_ID);
 	}
 
 	/*
