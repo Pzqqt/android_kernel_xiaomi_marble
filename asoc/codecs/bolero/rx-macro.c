@@ -3566,6 +3566,15 @@ exit:
 	return ret;
 }
 
+static const struct rx_macro_reg_mask_val rx_macro_reg_init[] = {
+	{BOLERO_CDC_RX_RX0_RX_PATH_SEC7, 0x07, 0x02},
+	{BOLERO_CDC_RX_RX1_RX_PATH_SEC7, 0x07, 0x02},
+	{BOLERO_CDC_RX_RX2_RX_PATH_SEC7, 0x07, 0x02},
+	{BOLERO_CDC_RX_RX0_RX_PATH_CFG3, 0x03, 0x02},
+	{BOLERO_CDC_RX_RX1_RX_PATH_CFG3, 0x03, 0x02},
+	{BOLERO_CDC_RX_RX2_RX_PATH_CFG3, 0x03, 0x02},
+};
+
 static void rx_macro_init_bcl_pmic_reg(struct snd_soc_component *component)
 {
 	struct device *rx_dev = NULL;
@@ -3620,6 +3629,7 @@ static int rx_macro_init(struct snd_soc_component *component)
 	int ret = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
+	int i;
 
 	rx_dev = bolero_get_device_ptr(component->dev, RX_MACRO);
 	if (!rx_dev) {
@@ -3671,18 +3681,11 @@ static int rx_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC3_INP");
 	snd_soc_dapm_sync(dapm);
 
-	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX0_RX_PATH_SEC7,
-				0x07, 0x02);
-	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX1_RX_PATH_SEC7,
-				0x07, 0x02);
-	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX2_RX_PATH_SEC7,
-				0x07, 0x02);
-	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX0_RX_PATH_CFG3,
-				0x03, 0x02);
-	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX1_RX_PATH_CFG3,
-				0x03, 0x02);
-	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX2_RX_PATH_CFG3,
-				0x03, 0x02);
+	for (i = 0; i < ARRAY_SIZE(rx_macro_reg_init); i++)
+		snd_soc_component_update_bits(component,
+				rx_macro_reg_init[i].reg,
+				rx_macro_reg_init[i].mask,
+				rx_macro_reg_init[i].val);
 
 	rx_priv->component = component;
 	rx_macro_init_bcl_pmic_reg(component);
