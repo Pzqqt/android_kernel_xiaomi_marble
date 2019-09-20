@@ -10877,8 +10877,11 @@ static int hdd_initialize_mac_address(struct hdd_context *hdd_ctx)
 	bool update_mac_addr_to_fw = true;
 
 	ret = hdd_platform_wlan_mac(hdd_ctx);
-	if (hdd_ctx->config->mac_provision || !ret) {
+	if (!ret) {
 		hdd_info("using MAC address from platform driver");
+		return ret;
+	} else if (hdd_ctx->config->mac_provision) {
+		hdd_err("getting MAC address from platform driver failed");
 		return ret;
 	}
 
