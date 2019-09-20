@@ -984,6 +984,9 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	ret = policy_mgr_set_connection_update(context);
 	if (!QDF_IS_STATUS_SUCCESS(ret))
 		policy_mgr_err("ERROR: set connection_update_done event failed");
+	/* Notify tdls */
+	if (pm_ctx->tdls_cbacks.tdls_notify_decrement_session)
+		pm_ctx->tdls_cbacks.tdls_notify_decrement_session(pm_ctx->psoc);
 
 	if (PM_NOP != next_action)
 		policy_mgr_next_actions(context, session_id,
