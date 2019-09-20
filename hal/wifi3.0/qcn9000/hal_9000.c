@@ -21,7 +21,6 @@
 #include "target_type.h"
 #include "wcss_version.h"
 #include "qdf_module.h"
-
 #define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_OFFSET \
 	RXPCU_PPDU_END_INFO_9_RX_PPDU_DURATION_OFFSET
 #define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_MASK \
@@ -51,7 +50,7 @@
 #define UNIFIED_PHYRX_RSSI_LEGACY_19_RECEIVE_RSSI_INFO_PREAMBLE_RSSI_INFO_DETAILS_OFFSET \
 	PHYRX_RSSI_LEGACY_19_PREAMBLE_RSSI_INFO_DETAILS_RSSI_PRI20_CHAIN0_OFFSET
 #define UNIFIED_RX_MPDU_START_0_RX_MPDU_INFO_RX_MPDU_INFO_DETAILS_OFFSET \
-	RX_MPDU_START_0_RX_MPDU_INFO_DETAILS_RXPCU_MPDU_FILTER_IN_CATEGORY_OFFSET
+	RX_MPDU_START_9_RX_MPDU_INFO_DETAILS_RXPCU_MPDU_FILTER_IN_CATEGORY_OFFSET
 #define UNIFIED_RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET \
 	RX_MSDU_LINK_8_MSDU_0_BUFFER_ADDR_INFO_DETAILS_BUFFER_ADDR_31_0_OFFSET
 #define UNIFIED_RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET \
@@ -95,11 +94,11 @@
 #define UNIFIED_TCL_DATA_CMD_2_BUF_OR_EXT_DESC_TYPE_MASK \
 	TCL_DATA_CMD_2_BUF_OR_EXT_DESC_TYPE_MASK
 #define UNIFIED_WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_MASK \
-	WBM_RELEASE_RING_6_TX_RATE_STATS_TSF_DIRECTLY_AFTER_PPDU_TRANSMISSION_MASK
+	WBM_RELEASE_RING_6_TX_RATE_STATS_PPDU_TRANSMISSION_TSF_MASK
 #define UNIFIED_WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_OFFSET \
-	WBM_RELEASE_RING_6_TX_RATE_STATS_TSF_DIRECTLY_AFTER_PPDU_TRANSMISSION_OFFSET
+	WBM_RELEASE_RING_6_TX_RATE_STATS_PPDU_TRANSMISSION_TSF_OFFSET
 #define UNIFIED_WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_LSB \
-	WBM_RELEASE_RING_6_TX_RATE_STATS_TSF_DIRECTLY_AFTER_PPDU_TRANSMISSION_LSB
+	WBM_RELEASE_RING_6_TX_RATE_STATS_PPDU_TRANSMISSION_TSF_LSB
 
 #define CE_WINDOW_ADDRESS_9000 \
 		((CE_WFSS_CE_REG_BASE >> WINDOW_SHIFT) & WINDOW_VALUE_MASK)
@@ -112,19 +111,330 @@
 		 (UMAC_WINDOW_ADDRESS_9000 << 12) | \
 		 WINDOW_ENABLE_BIT)
 
-/* Including hkv2 files as the functions between hkv2 and pine are exactly
- * similar
- */
-#include <hal_8074v2_tx.h>
-#include <hal_8074v2_rx.h>
+#include <hal_9000_tx.h>
+#include <hal_9000_rx.h>
 #include <hal_generic_api.h>
 #include <hal_wbm.h>
 
-#define HAL_RX_MPDU_GET_SEQUENCE_NUMBER(_rx_mpdu_info)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_OFFSET)),	\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_MASK,	\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_LSB))
+/**
+ * hal_rx_msdu_start_nss_get_9000(): API to get the NSS
+ * Interval from rx_msdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(nss)
+ */
+static uint32_t hal_rx_msdu_start_nss_get_9000(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+				&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint8_t mimo_ss_bitmap;
+
+	mimo_ss_bitmap = HAL_RX_MSDU_START_MIMO_SS_BITMAP(msdu_start);
+
+	return qdf_get_hweight8(mimo_ss_bitmap);
+}
+
+/**
+ * hal_rx_mon_hw_desc_get_mpdu_status_9000(): Retrieve MPDU status
+ *
+ * @ hw_desc_addr: Start address of Rx HW TLVs
+ * @ rs: Status for monitor mode
+ *
+ * Return: void
+ */
+static void hal_rx_mon_hw_desc_get_mpdu_status_9000(void *hw_desc_addr,
+						    struct mon_rx_status *rs)
+{
+	struct rx_msdu_start *rx_msdu_start;
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+	uint32_t reg_value;
+	const uint32_t sgi_hw_to_cdp[] = {
+		CDP_SGI_0_8_US,
+		CDP_SGI_0_4_US,
+		CDP_SGI_1_6_US,
+		CDP_SGI_3_2_US,
+	};
+
+	rx_msdu_start = &rx_desc->msdu_start_tlv.rx_msdu_start;
+
+	HAL_RX_GET_MSDU_AGGREGATION(rx_desc, rs);
+
+	rs->ant_signal_db = HAL_RX_GET(rx_msdu_start,
+				RX_MSDU_START_5, USER_RSSI);
+	rs->is_stbc = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, STBC);
+
+	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, SGI);
+	rs->sgi = sgi_hw_to_cdp[reg_value];
+	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, RECEPTION_TYPE);
+	rs->beamformed = (reg_value == HAL_RX_RECEPTION_TYPE_MU_MIMO) ? 1 : 0;
+	/* TODO: rs->beamformed should be set for SU beamforming also */
+}
+
+#define LINK_DESC_SIZE (NUM_OF_DWORDS_RX_MSDU_LINK << 2)
+/**
+ * hal_get_link_desc_size_9000(): API to get the link desc size
+ *
+ * Return: uint32_t
+ */
+static uint32_t hal_get_link_desc_size_9000(void)
+{
+	return LINK_DESC_SIZE;
+}
+
+/**
+ * hal_rx_get_tlv_9000(): API to get the tlv
+ *
+ * @rx_tlv: TLV data extracted from the rx packet
+ * Return: uint8_t
+ */
+static uint8_t hal_rx_get_tlv_9000(void *rx_tlv)
+{
+	return HAL_RX_GET(rx_tlv, PHYRX_RSSI_LEGACY_0, RECEIVE_BANDWIDTH);
+}
+
+/**
+ * hal_rx_proc_phyrx_other_receive_info_tlv_9000(): API to get tlv info
+ *
+ * Return: uint32_t
+ */
+static inline
+void hal_rx_proc_phyrx_other_receive_info_tlv_9000(void *rx_tlv_hdr,
+						   void *ppdu_info_hdl)
+{
+}
+
+/**
+ * hal_rx_dump_msdu_start_tlv_9000() : dump RX msdu_start TLV in structured
+ *			     human readable format.
+ * @ msdu_start: pointer the msdu_start TLV in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static void hal_rx_dump_msdu_start_tlv_9000(void *msdustart,
+					    uint8_t dbg_level)
+{
+	struct rx_msdu_start *msdu_start = (struct rx_msdu_start *)msdustart;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+		  "rx_msdu_start tlv - "
+		  "rxpcu_mpdu_filter_in_category: %d "
+		  "sw_frame_group_id: %d "
+		  "phy_ppdu_id: %d "
+		  "msdu_length: %d "
+		  "ipsec_esp: %d "
+		  "l3_offset: %d "
+		  "ipsec_ah: %d "
+		  "l4_offset: %d "
+		  "msdu_number: %d "
+		  "decap_format: %d "
+		  "ipv4_proto: %d "
+		  "ipv6_proto: %d "
+		  "tcp_proto: %d "
+		  "udp_proto: %d "
+		  "ip_frag: %d "
+		  "tcp_only_ack: %d "
+		  "da_is_bcast_mcast: %d "
+		  "ip4_protocol_ip6_next_header: %d "
+		  "toeplitz_hash_2_or_4: %d "
+		  "flow_id_toeplitz: %d "
+		  "user_rssi: %d "
+		  "pkt_type: %d "
+		  "stbc: %d "
+		  "sgi: %d "
+		  "rate_mcs: %d "
+		  "receive_bandwidth: %d "
+		  "reception_type: %d "
+		  "ppdu_start_timestamp: %d "
+		  "sw_phy_meta_data: %d ",
+		  msdu_start->rxpcu_mpdu_filter_in_category,
+		  msdu_start->sw_frame_group_id,
+		  msdu_start->phy_ppdu_id,
+		  msdu_start->msdu_length,
+		  msdu_start->ipsec_esp,
+		  msdu_start->l3_offset,
+		  msdu_start->ipsec_ah,
+		  msdu_start->l4_offset,
+		  msdu_start->msdu_number,
+		  msdu_start->decap_format,
+		  msdu_start->ipv4_proto,
+		  msdu_start->ipv6_proto,
+		  msdu_start->tcp_proto,
+		  msdu_start->udp_proto,
+		  msdu_start->ip_frag,
+		  msdu_start->tcp_only_ack,
+		  msdu_start->da_is_bcast_mcast,
+		  msdu_start->ip4_protocol_ip6_next_header,
+		  msdu_start->toeplitz_hash_2_or_4,
+		  msdu_start->flow_id_toeplitz,
+		  msdu_start->user_rssi,
+		  msdu_start->pkt_type,
+		  msdu_start->stbc,
+		  msdu_start->sgi,
+		  msdu_start->rate_mcs,
+		  msdu_start->receive_bandwidth,
+		  msdu_start->reception_type,
+		  msdu_start->ppdu_start_timestamp,
+		  msdu_start->sw_phy_meta_data);
+}
+
+/**
+ * hal_rx_dump_msdu_end_tlv_9000: dump RX msdu_end TLV in structured
+ *			     human readable format.
+ * @ msdu_end: pointer the msdu_end TLV in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static void hal_rx_dump_msdu_end_tlv_9000(void *msduend,
+					  uint8_t dbg_level)
+{
+	struct rx_msdu_end *msdu_end = (struct rx_msdu_end *)msduend;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+		  "rx_msdu_end tlv - "
+		  "rxpcu_mpdu_filter_in_category: %d "
+		  "sw_frame_group_id: %d "
+		  "phy_ppdu_id: %d "
+		  "ip_hdr_chksum: %d "
+		  "reported_mpdu_length: %d "
+		  "key_id_octet: %d "
+		  "cce_super_rule: %d "
+		  "cce_classify_not_done_truncat: %d "
+		  "cce_classify_not_done_cce_dis: %d "
+		  "rule_indication_31_0: %d "
+		  "rule_indication_63_32: %d "
+		  "da_offset: %d "
+		  "sa_offset: %d "
+		  "da_offset_valid: %d "
+		  "sa_offset_valid: %d "
+		  "ipv6_options_crc: %d "
+		  "tcp_seq_number: %d "
+		  "tcp_ack_number: %d "
+		  "tcp_flag: %d "
+		  "lro_eligible: %d "
+		  "window_size: %d "
+		  "tcp_udp_chksum: %d "
+		  "sa_idx_timeout: %d "
+		  "da_idx_timeout: %d "
+		  "msdu_limit_error: %d "
+		  "flow_idx_timeout: %d "
+		  "flow_idx_invalid: %d "
+		  "wifi_parser_error: %d "
+		  "amsdu_parser_error: %d "
+		  "sa_is_valid: %d "
+		  "da_is_valid: %d "
+		  "da_is_mcbc: %d "
+		  "l3_header_padding: %d "
+		  "first_msdu: %d "
+		  "last_msdu: %d "
+		  "sa_idx: %d "
+		  "msdu_drop: %d "
+		  "reo_destination_indication: %d "
+		  "flow_idx: %d "
+		  "fse_metadata: %d "
+		  "cce_metadata: %d "
+		  "sa_sw_peer_id: %d ",
+		  msdu_end->rxpcu_mpdu_filter_in_category,
+		  msdu_end->sw_frame_group_id,
+		  msdu_end->phy_ppdu_id,
+		  msdu_end->ip_hdr_chksum,
+		  msdu_end->reported_mpdu_length,
+		  msdu_end->key_id_octet,
+		  msdu_end->cce_super_rule,
+		  msdu_end->cce_classify_not_done_truncate,
+		  msdu_end->cce_classify_not_done_cce_dis,
+		  msdu_end->rule_indication_31_0,
+		  msdu_end->rule_indication_63_32,
+		  msdu_end->da_offset,
+		  msdu_end->sa_offset,
+		  msdu_end->da_offset_valid,
+		  msdu_end->sa_offset_valid,
+		  msdu_end->ipv6_options_crc,
+		  msdu_end->tcp_seq_number,
+		  msdu_end->tcp_ack_number,
+		  msdu_end->tcp_flag,
+		  msdu_end->lro_eligible,
+		  msdu_end->window_size,
+		  msdu_end->tcp_udp_chksum,
+		  msdu_end->sa_idx_timeout,
+		  msdu_end->da_idx_timeout,
+		  msdu_end->msdu_limit_error,
+		  msdu_end->flow_idx_timeout,
+		  msdu_end->flow_idx_invalid,
+		  msdu_end->wifi_parser_error,
+		  msdu_end->amsdu_parser_error,
+		  msdu_end->sa_is_valid,
+		  msdu_end->da_is_valid,
+		  msdu_end->da_is_mcbc,
+		  msdu_end->l3_header_padding,
+		  msdu_end->first_msdu,
+		  msdu_end->last_msdu,
+		  msdu_end->sa_idx,
+		  msdu_end->msdu_drop,
+		  msdu_end->reo_destination_indication,
+		  msdu_end->flow_idx,
+		  msdu_end->fse_metadata,
+		  msdu_end->cce_metadata,
+		  msdu_end->sa_sw_peer_id);
+}
+
+/**
+ * hal_rx_mpdu_start_tid_get_9000(): API to get tid
+ * from rx_msdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(tid value)
+ */
+static uint32_t hal_rx_mpdu_start_tid_get_9000(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+			&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	uint32_t tid;
+
+	tid = HAL_RX_MPDU_INFO_TID_GET(&mpdu_start->rx_mpdu_info_details);
+
+	return tid;
+}
+
+/**
+ * hal_rx_msdu_start_reception_type_get(): API to get the reception type
+ * Interval from rx_msdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(reception_type)
+ */
+static uint32_t hal_rx_msdu_start_reception_type_get_9000(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t reception_type;
+
+	reception_type = HAL_RX_MSDU_START_RECEPTION_TYPE_GET(msdu_start);
+
+	return reception_type;
+}
+
+ /**
+ * hal_rx_msdu_end_da_idx_get_9000: API to get da_idx
+ * from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: da index
+ */
+static uint16_t hal_rx_msdu_end_da_idx_get_9000(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint16_t da_idx;
+
+	da_idx = HAL_RX_MSDU_END_DA_IDX_GET(msdu_end);
+
+	return da_idx;
+}
 
 /**
  * hal_rx_get_rx_fragment_number_9000(): Function to retrieve rx fragment number
@@ -209,7 +519,7 @@ static uint32_t hal_rx_desc_is_first_msdu_9000(void *hw_desc_addr)
 	struct rx_pkt_tlvs *rx_tlvs = (struct rx_pkt_tlvs *)hw_desc_addr;
 	struct rx_msdu_end *msdu_end = &rx_tlvs->msdu_end_tlv.rx_msdu_end;
 
-	return HAL_RX_GET(msdu_end, RX_MSDU_END_5, FIRST_MSDU);
+	return HAL_RX_GET(msdu_end, RX_MSDU_END_10, FIRST_MSDU);
 }
 
 /**
@@ -335,7 +645,7 @@ inline bool hal_rx_get_mpdu_mac_ad4_valid_9000(uint8_t *buf)
 	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
 	bool ad4_valid = 0;
 
-	ad4_valid = HAL_RX_MPDU_GET_MAC_AD4_VALID(rx_mpdu_info);
+	ad4_valid = HAL_RX_MPDU_MAC_ADDR_AD4_VALID_GET(rx_mpdu_info);
 
 	return ad4_valid;
 }
@@ -574,9 +884,9 @@ static bool hal_rx_is_unicast_9000(uint8_t *buf)
 	uint8_t *rx_mpdu_info = (uint8_t *)&mpdu_start->rx_mpdu_info_details;
 
 	grp_id = (_HAL_MS((*_OFFSET_TO_WORD_PTR((rx_mpdu_info),
-			   RX_MPDU_INFO_0_SW_FRAME_GROUP_ID_OFFSET)),
-			  RX_MPDU_INFO_0_SW_FRAME_GROUP_ID_MASK,
-			  RX_MPDU_INFO_0_SW_FRAME_GROUP_ID_LSB));
+			   RX_MPDU_INFO_9_SW_FRAME_GROUP_ID_OFFSET)),
+			  RX_MPDU_INFO_9_SW_FRAME_GROUP_ID_MASK,
+			  RX_MPDU_INFO_9_SW_FRAME_GROUP_ID_LSB));
 
 	return (HAL_MPDU_SW_FRAME_GROUP_UNICAST_DATA == grp_id) ? true : false;
 }
@@ -596,12 +906,12 @@ static uint32_t hal_rx_tid_get_9000(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 	uint8_t *rx_mpdu_info = (uint8_t *)&mpdu_start->rx_mpdu_info_details;
 	uint8_t qos_control_valid =
 		(_HAL_MS((*_OFFSET_TO_WORD_PTR((rx_mpdu_info),
-			  RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_OFFSET)),
-			 RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_MASK,
-			 RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_LSB));
+			  RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID_OFFSET)),
+			 RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID_MASK,
+			 RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID_LSB));
 
 	if (qos_control_valid)
-		return hal_rx_mpdu_start_tid_get_8074v2(buf);
+		return hal_rx_mpdu_start_tid_get_9000(buf);
 
 	return HAL_RX_NON_QOS_TID;
 }
@@ -620,7 +930,7 @@ static uint32_t hal_rx_hw_desc_get_ppduid_get_9000(void *hw_desc_addr)
 	rx_mpdu_info =
 		&rx_desc->mpdu_start_tlv.rx_mpdu_start.rx_mpdu_info_details;
 
-	return HAL_RX_GET(rx_mpdu_info, RX_MPDU_INFO_0, PHY_PPDU_ID);
+	return HAL_RX_GET(rx_mpdu_info, RX_MPDU_INFO_9, PHY_PPDU_ID);
 }
 
 /**
@@ -768,8 +1078,8 @@ hal_rx_msdu_end_sa_sw_peer_id_get_9000(uint8_t *buf)
 static inline
 void hal_tx_desc_set_mesh_en_9000(void *desc, uint8_t en)
 {
-	HAL_SET_FLD(desc, TCL_DATA_CMD_4, MESH_ENABLE) |=
-		HAL_TX_SM(TCL_DATA_CMD_4, MESH_ENABLE, en);
+	HAL_SET_FLD(desc, TCL_DATA_CMD_5, MESH_ENABLE) |=
+		HAL_TX_SM(TCL_DATA_CMD_5, MESH_ENABLE, en);
 }
 
 static
@@ -1044,10 +1354,10 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	hal_get_window_address_9000,
 
 	/* tx */
-	hal_tx_desc_set_dscp_tid_table_id_8074v2,
-	hal_tx_set_dscp_tid_map_8074v2,
-	hal_tx_update_dscp_tid_8074v2,
-	hal_tx_desc_set_lmac_id_8074v2,
+	hal_tx_desc_set_dscp_tid_table_id_9000,
+	hal_tx_set_dscp_tid_map_9000,
+	hal_tx_update_dscp_tid_9000,
+	hal_tx_desc_set_lmac_id_9000,
 	hal_tx_desc_set_buf_addr_generic,
 	hal_tx_desc_set_search_type_generic,
 	hal_tx_desc_set_search_index_generic,
@@ -1057,16 +1367,16 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	hal_tx_desc_set_mesh_en_9000,
 
 	/* rx */
-	hal_rx_msdu_start_nss_get_8074v2,
-	hal_rx_mon_hw_desc_get_mpdu_status_8074v2,
-	hal_rx_get_tlv_8074v2,
-	hal_rx_proc_phyrx_other_receive_info_tlv_8074v2,
-	hal_rx_dump_msdu_start_tlv_8074v2,
-	hal_rx_dump_msdu_end_tlv_8074v2,
-	hal_get_link_desc_size_8074v2,
-	hal_rx_mpdu_start_tid_get_8074v2,
-	hal_rx_msdu_start_reception_type_get_8074v2,
-	hal_rx_msdu_end_da_idx_get_8074v2,
+	hal_rx_msdu_start_nss_get_9000,
+	hal_rx_mon_hw_desc_get_mpdu_status_9000,
+	hal_rx_get_tlv_9000,
+	hal_rx_proc_phyrx_other_receive_info_tlv_9000,
+	hal_rx_dump_msdu_start_tlv_9000,
+	hal_rx_dump_msdu_end_tlv_9000,
+	hal_get_link_desc_size_9000,
+	hal_rx_mpdu_start_tid_get_9000,
+	hal_rx_msdu_start_reception_type_get_9000,
+	hal_rx_msdu_end_da_idx_get_9000,
 	hal_rx_msdu_desc_info_get_ptr_9000,
 	hal_rx_link_desc_msdu0_ptr_9000,
 	hal_reo_status_get_header_9000,
@@ -1101,7 +1411,7 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	hal_rx_is_unicast_9000,
 	hal_rx_tid_get_9000,
 	hal_rx_hw_desc_get_ppduid_get_9000,
-	hal_rx_mpdu_start_mpdu_qos_control_valid_9000,
+	hal_rx_mpdu_start_mpdu_qos_control_valid_get_9000,
 	hal_rx_msdu_end_sa_sw_peer_id_get_9000,
 	hal_rx_msdu0_buffer_addr_lsb_9000,
 	hal_rx_msdu_desc_info_ptr_get_9000,
@@ -1262,9 +1572,9 @@ struct hal_hw_srng_config hw_srng_table_9000[] = {
 		.lmac_ring =  FALSE,
 		.ring_dir = HAL_SRNG_SRC_RING,
 		.reg_start = {
-			HWIO_TCL_R0_SW2TCL_CMD_RING_BASE_LSB_ADDR(
+			HWIO_TCL_R0_SW2TCL_CREDIT_RING_BASE_LSB_ADDR(
 				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET),
-			HWIO_TCL_R2_SW2TCL_CMD_RING_HP_ADDR(
+			HWIO_TCL_R2_SW2TCL_CREDIT_RING_HP_ADDR(
 				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET),
 		},
 		/* Single ring - provide ring size if multiple rings of this
@@ -1272,8 +1582,8 @@ struct hal_hw_srng_config hw_srng_table_9000[] = {
 		 */
 		.reg_size = {},
 		.max_size =
-			HWIO_TCL_R0_SW2TCL_CMD_RING_BASE_MSB_RING_SIZE_BMSK >>
-			HWIO_TCL_R0_SW2TCL_CMD_RING_BASE_MSB_RING_SIZE_SHFT,
+			HWIO_TCL_R0_SW2TCL_CREDIT_RING_BASE_MSB_RING_SIZE_BMSK >>
+			HWIO_TCL_R0_SW2TCL_CREDIT_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* TCL_STATUS */
 		.start_ring_id = HAL_SRNG_TCL_STATUS,
