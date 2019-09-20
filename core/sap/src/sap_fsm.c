@@ -1606,7 +1606,6 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		/* also fill up the channel info from the csr_roamInfo */
 		chaninfo = &reassoc_complete->chan_info;
 
-		chaninfo->chan_id = csr_roaminfo->chan_info.chan_id;
 		chaninfo->mhz = csr_roaminfo->chan_info.mhz;
 		chaninfo->info = csr_roaminfo->chan_info.info;
 		chaninfo->band_center_freq1 =

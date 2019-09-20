@@ -2757,8 +2757,6 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 		assoc_ind->beaconPtr = session_entry->beacon;
 		assoc_ind->beaconLength = session_entry->bcnLen;
 
-		assoc_ind->chan_info.chan_id = wlan_reg_freq_to_chan(
-			mac_ctx->pdev, session_entry->curr_op_freq);
 		assoc_ind->chan_info.mhz = session_entry->curr_op_freq;
 		assoc_ind->chan_info.band_center_freq1 =
 			session_entry->curr_op_freq;

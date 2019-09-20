@@ -500,9 +500,8 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 					  &reg_info_1, &reg_info_2);
 		if (QDF_STATUS_SUCCESS == status) {
 			/* copy into hdd chan info struct */
-			hddChanInfo.chan_id = chanId;
 			hddChanInfo.reserved0 = 0;
-			hddChanInfo.mhz = cds_chan_to_freq(chanId);
+			hddChanInfo.mhz = wlan_reg_chan_to_freq(p_hdd_ctx->pdev, chanId);
 			hddChanInfo.band_center_freq1 = hddChanInfo.mhz;
 			hddChanInfo.band_center_freq2 = 0;
 
@@ -522,9 +521,8 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 			 */
 			hdd_debug("sme_get_reg_info failed for chan: %d, fill 0s",
 				   chanId);
-			hddChanInfo.chan_id = chanId;
 			hddChanInfo.reserved0 = 0;
-			hddChanInfo.mhz = 0;
+			hddChanInfo.mhz = wlan_reg_chan_to_freq(p_hdd_ctx->pdev, chanId);
 			hddChanInfo.band_center_freq1 = 0;
 			hddChanInfo.band_center_freq2 = 0;
 			hddChanInfo.info = 0;
@@ -721,7 +719,6 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peer_mac,
 		peer_info->reserved0 |= 0x01;
 
 	if (chan_info) {
-		peer_info->peer_chan_info.chan_id = chan_info->chan_id;
 		peer_info->peer_chan_info.reserved0 = 0;
 		peer_info->peer_chan_info.mhz = chan_info->mhz;
 		peer_info->peer_chan_info.band_center_freq1 =
@@ -735,14 +732,13 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peer_mac,
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
 
 	hdd_info("sending peer " QDF_MAC_ADDR_STR
-		  " status(%d), peer_capability(%d), vdev_id(%d), chanId(%d)"
+		  " status(%d), peer_capability(%d), vdev_id(%d),"
 		  " to oem app pid(%d), center freq 1 (%d), center freq 2 (%d),"
 		  " info (0x%x), frequency (%d),reg info 1 (0x%x),"
 		  " reg info 2 (0x%x)",
 		  QDF_MAC_ADDR_ARRAY(peer_mac->bytes),
 		  peer_status, peer_capability,
-		  vdev_id, peer_info->peer_chan_info.chan_id,
-		  p_hdd_ctx->oem_pid,
+		  vdev_id, p_hdd_ctx->oem_pid,
 		  peer_info->peer_chan_info.band_center_freq1,
 		  peer_info->peer_chan_info.band_center_freq2,
 		  peer_info->peer_chan_info.info,

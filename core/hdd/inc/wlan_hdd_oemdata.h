@@ -107,7 +107,6 @@ struct oem_data_cap {
 
 /**
  * struct hdd_channel_info - Channel information
- * @chan_id: channel id
  * @reserved0: reserved for padding and future use
  * @mhz: primary 20 MHz channel frequency in mhz
  * @band_center_freq1: Center frequency 1 in MHz
@@ -119,7 +118,6 @@ struct oem_data_cap {
  * @reg_info_2: regulatory information field 2 which contains antennamax
  */
 struct hdd_channel_info {
-	uint32_t chan_id;
 	uint32_t reserved0;
 	uint32_t mhz;
 	uint32_t band_center_freq1;

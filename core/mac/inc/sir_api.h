@@ -1030,7 +1030,6 @@ struct join_rsp {
 };
 
 struct oem_channel_info {
-	uint8_t chan_id;
 	uint32_t mhz;
 	uint32_t band_center_freq1;
 	uint32_t band_center_freq2;

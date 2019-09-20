@@ -1410,7 +1410,6 @@ static void hdd_send_association_event(struct net_device *dev,
 		}
 		qdf_copy_macaddr(&peer_macaddr,
 				 &sta_ctx->conn_info.bssid);
-		chan_info.chan_id = roam_info->chan_info.chan_id;
 		chan_info.mhz = roam_info->chan_info.mhz;
 		chan_info.info = roam_info->chan_info.info;
 		chan_info.band_center_freq1 =
@@ -4653,17 +4652,15 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 
-	hdd_debug("channel switch for session:%d to channel:%d",
-		adapter->vdev_id, roam_info->chan_info.chan_id);
+	hdd_debug("channel switch for session:%d to channel freq:%d",
+		adapter->vdev_id, roam_info->chan_info.mhz);
 
 	/* Enable Roaming on STA interface which was disabled before CSA */
 	if (adapter->device_mode == QDF_STA_MODE)
 		sme_start_roaming(mac_handle, adapter->vdev_id,
 				  REASON_DRIVER_ENABLED);
 
-	chan_change.chan_freq =
-		wlan_reg_chan_to_freq(hdd_ctx->pdev,
-				      roam_info->chan_info.chan_id);
+	chan_change.chan_freq = roam_info->chan_info.mhz;
 	chan_change.chan_params.ch_width =
 		roam_info->chan_info.ch_width;
 	chan_change.chan_params.sec_ch_offset =

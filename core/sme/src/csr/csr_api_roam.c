@@ -3325,6 +3325,7 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 	struct csr_roam_session *pSession;
 	tDot11fBeaconIEs *beacon_ies = NULL;
 	uint8_t chan1, chan2;
+	uint8_t chan_id;
 
 	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
 		sme_err("Session ID: %d is not valid", sessionId);
@@ -3364,18 +3365,12 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 			roam_info->chan_info.band_center_freq2 = 0;
 			roam_info->chan_info.info = 0;
 		}
-		roam_info->chan_info.chan_id =
-			wlan_reg_freq_to_chan(
-				mac->pdev,
-				roam_info->u.pConnectedProfile->op_freq);
-		roam_info->chan_info.mhz =
-			cds_chan_to_freq(roam_info->chan_info.chan_id);
+		roam_info->chan_info.mhz = roam_info->u.pConnectedProfile->op_freq;
+		chan_id = wlan_reg_freq_to_chan(mac->pdev, roam_info->chan_info.mhz);
 		roam_info->chan_info.reg_info_1 =
-			(csr_get_cfg_max_tx_power(mac,
-				roam_info->chan_info.chan_id) << 16);
+			(csr_get_cfg_max_tx_power(mac, chan_id) << 16);
 		roam_info->chan_info.reg_info_2 =
-			(csr_get_cfg_max_tx_power(mac,
-				roam_info->chan_info.chan_id) << 8);
+			(csr_get_cfg_max_tx_power(mac, chan_id) << 8);
 		qdf_mem_free(beacon_ies);
 	} else if ((u1 == eCSR_ROAM_FT_REASSOC_FAILED)
 			&& (pSession->bRefAssocStartCnt)) {
@@ -11656,8 +11651,7 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (!roam_info)
 		return;
-	roam_info->chan_info.chan_id =
-		wlan_reg_freq_to_chan(mac_ctx->pdev, pSwitchChnInd->freq);
+	roam_info->chan_info.mhz = pSwitchChnInd->freq;
 	roam_info->chan_info.ch_width = pSwitchChnInd->chan_params.ch_width;
 	roam_info->chan_info.sec_ch_offset =
 				pSwitchChnInd->chan_params.sec_ch_offset;

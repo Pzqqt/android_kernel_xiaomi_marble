@@ -1461,7 +1461,7 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 
 	qdf_mem_copy(&stainfo->capability, &event->capability_info,
 		     sizeof(uint16_t));
-	stainfo->freq = cds_chan_to_freq(event->chan_info.chan_id);
+	stainfo->freq = event->chan_info.mhz;
 	stainfo->sta_type = event->staType;
 	stainfo->dot11_mode =
 		hdd_convert_dot11mode_from_phymode(event->chan_info.info);
@@ -1635,7 +1635,7 @@ hdd_hostapd_apply_action_oui(struct hdd_context *hdd_ctx,
 	if (ch_width != eHT_CHANNEL_WIDTH_20MHZ)
 		return;
 
-	freq = cds_chan_to_freq(event->chan_info.chan_id);
+	freq = event->chan_info.mhz;
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq))
 		attr.enable_2g = true;
 	else if (WLAN_REG_IS_5GHZ_CH_FREQ(freq))
