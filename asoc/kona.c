@@ -167,6 +167,7 @@ enum {
 struct msm_asoc_mach_data {
 	struct snd_info_entry *codec_root;
 	int usbc_en2_gpio; /* used by gpio driver API */
+	int lito_v2_enabled;
 	struct device_node *dmic01_gpio_p; /* used by pinctrl API */
 	struct device_node *dmic23_gpio_p; /* used by pinctrl API */
 	struct device_node *dmic45_gpio_p; /* used by pinctrl API */
@@ -5288,8 +5289,17 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 						WSA_MACRO_GAIN_OFFSET_M1P5_DB);
 			}
 		}
-		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map),
-				    sm_port_map);
+		if (pdata->lito_v2_enabled) {
+			/*
+			 * Enable tx data line3 for saipan version v2 amd
+			 * write corresponding lpi register.
+			 */
+			bolero_set_port_map(component, ARRAY_SIZE(sm_port_map_v2),
+					sm_port_map_v2);
+		} else {
+			bolero_set_port_map(component, ARRAY_SIZE(sm_port_map),
+					sm_port_map);
+		}
 	}
 	card = rtd->card->snd_card;
 	if (!pdata->codec_root) {
@@ -7897,6 +7907,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			sizeof(struct msm_asoc_mach_data), GFP_KERNEL);
 	if (!pdata)
 		return -ENOMEM;
+
+	of_property_read_u32(pdev->dev.of_node,
+				"qcom,lito-is-v2-enabled",
+				&pdata->lito_v2_enabled);
 
 	card = populate_snd_card_dailinks(&pdev->dev);
 	if (!card) {
