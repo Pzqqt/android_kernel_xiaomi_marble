@@ -554,12 +554,12 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gOperatingChannel- Default STA operating channel
+ * def_sta_operating_freq - Default STA operating Freq
  * @Min: 0
- * @Max: 14
- * @Default: 1
+ * @Max: 2484
+ * @Default: 2412
  *
- * This ini is used to specify the default operating channel of a STA during
+ * This ini is used to specify the default operating frequency of a STA during
  * initialization.
  *
  * Related: None
@@ -570,14 +570,13 @@ enum hdd_dot11_mode {
  *
  * </ini>
  */
-#define CFG_OPERATING_CHANNEL CFG_INI_UINT( \
-			"gOperatingChannel", \
+#define CFG_OPERATING_FREQUENCY CFG_INI_UINT( \
+			"def_sta_operating_freq", \
 			0, \
-			14, \
-			1, \
+			2484, \
+			2412, \
 			CFG_VALUE_OR_DEFAULT, \
-			"Default Operating Channel")
-
+			"Default STA Operating Frequency")
 #ifdef DHCP_SERVER_OFFLOAD
 #define IPADDR_NUM_ENTRIES     (4)
 #define IPADDR_STRING_LENGTH   (16)
@@ -1470,7 +1469,7 @@ enum host_log_level {
 	CFG(CFG_INFORM_BSS_RSSI_RAW) \
 	CFG(CFG_MULTICAST_HOST_FW_MSGS) \
 	CFG(CFG_NUM_VDEV_ENABLE) \
-	CFG(CFG_OPERATING_CHANNEL) \
+	CFG(CFG_OPERATING_FREQUENCY) \
 	CFG(CFG_PRIVATE_WEXT_CONTROL) \
 	CFG(CFG_PROVISION_INTERFACE_POOL) \
 	CFG(CFG_TIMER_MULTIPLIER) \

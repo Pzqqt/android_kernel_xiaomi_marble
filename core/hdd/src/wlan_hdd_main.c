@@ -4676,11 +4676,8 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	/* set fast roaming capability in sme session */
 	status = sme_config_fast_roaming(mac_handle, adapter->vdev_id,
 					 true);
-	/* Set the default operation channel */
-	sta_ctx->conn_info.chan_freq =
-		wlan_reg_chan_to_freq(
-			hdd_ctx->pdev,
-			hdd_ctx->config->operating_channel);
+	/* Set the default operation channel freq*/
+	sta_ctx->conn_info.chan_freq = hdd_ctx->config->operating_chan_freq;
 
 	/* Make the default Auth Type as OPEN */
 	sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
@@ -9972,7 +9969,6 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 	struct hdd_config *config = hdd_ctx->config;
-
 	if (!psoc) {
 		hdd_err("Invalid psoc");
 		return;
@@ -9999,7 +9995,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	config->private_wext_control = cfg_get(psoc, CFG_PRIVATE_WEXT_CONTROL);
 	config->enablefwprint = cfg_get(psoc, CFG_ENABLE_FW_UART_PRINT);
 	config->enable_fw_log = cfg_get(psoc, CFG_ENABLE_FW_LOG);
-	config->operating_channel = cfg_get(psoc, CFG_OPERATING_CHANNEL);
+	config->operating_chan_freq = cfg_get(psoc, CFG_OPERATING_FREQUENCY);
 	config->num_vdevs = cfg_get(psoc, CFG_NUM_VDEV_ENABLE);
 	qdf_str_lcopy(config->enable_concurrent_sta,
 		      cfg_get(psoc, CFG_ENABLE_CONCURRENT_STA),
