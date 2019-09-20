@@ -4125,7 +4125,12 @@ roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
  * @hdd_ctx: HDD context
  * @vdev_id: vdev id
  * @full_roam_scan_period: Idle period in seconds between two successive
- * full channel roam scans
+ *			   full channel roam scans
+ * @check_and_update: If this is true/set, update the value only if the current
+ *		      configured value is not same as global value read from
+ *		      ini param. This is to give priority to the user configured
+ *		      values and retain the value, if updated already.
+ *		      If this is not set, update the value without any check.
  *
  * Validate the full roam scan period and send it to firmware
  *
@@ -4134,9 +4139,11 @@ roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
 static QDF_STATUS
 hdd_send_roam_full_scan_period_to_sme(struct hdd_context *hdd_ctx,
 				      uint8_t vdev_id,
-				      uint32_t full_roam_scan_period)
+				      uint32_t full_roam_scan_period,
+				      bool check_and_update)
 {
 	QDF_STATUS status;
+	uint32_t full_roam_scan_period_current, full_roam_scan_period_global;
 
 	if (!ucfg_mlme_validate_full_roam_scan_period(full_roam_scan_period))
 		return QDF_STATUS_E_INVAL;
@@ -4144,6 +4151,19 @@ hdd_send_roam_full_scan_period_to_sme(struct hdd_context *hdd_ctx,
 	hdd_debug("Received Command to Set full roam scan period = %u",
 		  full_roam_scan_period);
 
+	status = sme_get_full_roam_scan_period(hdd_ctx->mac_handle, vdev_id,
+					       &full_roam_scan_period_current);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	full_roam_scan_period_global =
+		sme_get_full_roam_scan_period_global(hdd_ctx->mac_handle);
+	if (check_and_update &&
+	    full_roam_scan_period_current != full_roam_scan_period_global) {
+		hdd_debug("Full roam scan period is already updated, value: %u",
+			  full_roam_scan_period_current);
+		return QDF_STATUS_SUCCESS;
+	}
 	status = sme_update_full_roam_scan_period(hdd_ctx->mac_handle, vdev_id,
 						  full_roam_scan_period);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -4287,6 +4307,11 @@ hdd_send_roam_cand_sel_criteria_to_sme(struct hdd_context *hdd_ctx,
  * @hdd_ctx: HDD context
  * @vdev_id: vdev id
  * @roam_scan_period: Roam scan period in seconds
+ * @check_and_update: If this is true/set, update the value only if the current
+ *		      configured value is not same as global value read from
+ *		      ini param. This is to give priority to the user configured
+ *		      values and retain the value, if updated already.
+ *		      If this is not set, update the value without any check.
  *
  * Validate the roam scan period and send it to firmware if valid.
  *
@@ -4295,9 +4320,11 @@ hdd_send_roam_cand_sel_criteria_to_sme(struct hdd_context *hdd_ctx,
 static QDF_STATUS
 hdd_send_roam_scan_period_to_sme(struct hdd_context *hdd_ctx,
 				 uint8_t vdev_id,
-				 uint32_t roam_scan_period)
+				 uint32_t roam_scan_period,
+				 bool check_and_update)
 {
 	QDF_STATUS status;
+	uint16_t roam_scan_period_current, roam_scan_period_global;
 
 	if (!ucfg_mlme_validate_scan_period(roam_scan_period * 1000))
 		return QDF_STATUS_E_INVAL;
@@ -4305,6 +4332,19 @@ hdd_send_roam_scan_period_to_sme(struct hdd_context *hdd_ctx,
 	hdd_debug("Received Command to Set roam scan period (Empty Scan refresh period) = %d",
 		  roam_scan_period);
 
+	status = sme_get_empty_scan_refresh_period(hdd_ctx->mac_handle, vdev_id,
+						   &roam_scan_period_current);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	roam_scan_period_global =
+		sme_get_empty_scan_refresh_period_global(hdd_ctx->mac_handle);
+	if (check_and_update &&
+	    roam_scan_period_current != roam_scan_period_global) {
+		hdd_debug("roam scan period is already updated, value: %u",
+			  roam_scan_period_current / 1000);
+		return QDF_STATUS_SUCCESS;
+	}
 	status = sme_update_empty_scan_refresh_period(hdd_ctx->mac_handle,
 						      vdev_id,
 						      roam_scan_period * 1000);
@@ -4357,17 +4397,6 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 			hdd_err("failed to config roam control");
 	}
 
-	attr = tb2[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD];
-	if (attr) {
-		hdd_debug("Parse and send full scan period to firmware");
-		value = nla_get_u32(attr);
-		status = hdd_send_roam_full_scan_period_to_sme(hdd_ctx,
-							       vdev_id,
-							       value);
-		if (status)
-			hdd_err("failed to config full scan period");
-	}
-
 	if (tb2[QCA_ATTR_ROAM_CONTROL_TRIGGERS]) {
 		hdd_debug("Parse and send roam triggers to firmware");
 		value = nla_get_u32(tb2[QCA_ATTR_ROAM_CONTROL_TRIGGERS]);
@@ -4387,6 +4416,62 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 						    nla_get_u8(attr));
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("failed to enable/disable roam control config");
+
+		attr = tb2[QCA_ATTR_ROAM_CONTROL_SCAN_PERIOD];
+		if (attr) {
+			hdd_debug("Parse and send scan period to firmware");
+			/* Default value received as part of Roam control enable
+			 * Set this only if user hasn't configured any value so
+			 * far.
+			 */
+			value = nla_get_u32(attr);
+			status = hdd_send_roam_scan_period_to_sme(hdd_ctx,
+								  vdev_id,
+								  value, true);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_err("failed to send scan period to firmware");
+		}
+
+		attr = tb2[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD];
+		if (attr) {
+			hdd_debug("Parse and send full scan period to firmware");
+			value = nla_get_u32(attr);
+			/* Default value received as part of Roam control enable
+			 * Set this only if user hasn't configured any value so
+			 * far.
+			 */
+			status = hdd_send_roam_full_scan_period_to_sme(hdd_ctx,
+								       vdev_id,
+								       value,
+								       true);
+			if (status)
+				hdd_err("failed to config full scan period");
+		}
+	} else {
+		attr = tb2[QCA_ATTR_ROAM_CONTROL_SCAN_PERIOD];
+		if (attr) {
+			hdd_debug("Parse and send scan period to firmware");
+			/* User configured value, cache the value directly */
+			value = nla_get_u32(attr);
+			status = hdd_send_roam_scan_period_to_sme(hdd_ctx,
+								  vdev_id,
+								  value, false);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_err("failed to send scan period to firmware");
+		}
+
+		attr = tb2[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD];
+		if (attr) {
+			hdd_debug("Parse and send full scan period to firmware");
+			value = nla_get_u32(attr);
+			/* User configured value, cache the value directly */
+			status = hdd_send_roam_full_scan_period_to_sme(hdd_ctx,
+								       vdev_id,
+								       value,
+								       false);
+			if (status)
+				hdd_err("failed to config full scan period");
+		}
 	}
 
 	/* Scoring and roam candidate selection criteria */
@@ -4397,15 +4482,6 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 								vdev_id, attr);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("failed to set candidate selection criteria");
-	}
-
-	attr = tb2[QCA_ATTR_ROAM_CONTROL_SCAN_PERIOD];
-	if (attr) {
-		hdd_debug("Parse and send scan period to firmware");
-		status = hdd_send_roam_scan_period_to_sme(hdd_ctx, vdev_id,
-							  nla_get_u32(attr));
-		if (QDF_IS_STATUS_ERROR(status))
-			hdd_err("failed to send scan period to firmware");
 	}
 
 	return qdf_status_to_os_return(status);

@@ -891,6 +891,14 @@ QDF_STATUS sme_set_neighbor_scan_refresh_period(mac_handle_t mac_handle,
 uint16_t sme_get_neighbor_scan_refresh_period(mac_handle_t mac_handle);
 
 /**
+ * sme_get_empty_scan_refresh_period_global() - get global scan refresh period
+ * @mac_handle: The handle returned by mac_open
+ *
+ * Return: Empty scan refresh period configured through ini
+ */
+uint16_t sme_get_empty_scan_refresh_period_global(mac_handle_t mac_handle);
+
+/**
  * sme_get_empty_scan_refresh_period() - get empty scan refresh period
  * @mac_handle: The handle returned by mac_open.
  * @vdev_id: vdev identifier
@@ -3819,6 +3827,14 @@ QDF_STATUS sme_set_roam_config_enable(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_get_roam_config_status(mac_handle_t mac_handle, uint8_t vdev_id,
 				      uint8_t *config_status);
+
+/**
+ * sme_get_full_roam_scan_period_global() - get global full scan refresh period
+ * @mac_handle: The handle returned by mac_open
+ *
+ * Return: Full roam scan period configured through ini
+ */
+uint16_t sme_get_full_roam_scan_period_global(mac_handle_t mac_handle);
 
 /**
  * sme_get_full_roam_scan_period() - Get full roam scan period
