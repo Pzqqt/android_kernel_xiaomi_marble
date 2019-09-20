@@ -765,14 +765,24 @@ QDF_STATUS sme_hide_ssid(mac_handle_t mac_handle, uint8_t sessionId,
 QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
 					 uint8_t sessionId,
 					 const uint8_t nProbes);
-QDF_STATUS sme_update_roam_scan_home_away_time(mac_handle_t mac_handle,
-		uint8_t sessionId,
-		const uint16_t nRoamScanHomeAwayTime,
-		const bool bSendOffloadCmd);
+
+/**
+ * sme_update_roam_scan_home_away_time() - Update roam scan Home away time
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: vdev identifier
+ * @roam_scan_home_away_time: Scan home away time
+ * @send_offload_cmd: If it's true, the command is sent to firmware,
+ *		      otherwise the command is not sent to firmware
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_update_roam_scan_home_away_time(mac_handle_t mac_handle, uint8_t vdev_id,
+				    const uint16_t roam_scan_home_away_time,
+				    const bool send_offload_cmd);
 
 bool sme_get_roam_intra_band(mac_handle_t mac_handle);
 uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle);
-uint16_t sme_get_roam_scan_home_away_time(mac_handle_t mac_handle);
 
 /**
  * sme_update_roam_rssi_diff() - Update RoamRssiDiff
@@ -785,6 +795,19 @@ uint16_t sme_get_roam_scan_home_away_time(mac_handle_t mac_handle);
  */
 QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t vdev_id,
 				     uint8_t roam_rssi_diff);
+
+/**
+ * sme_get_roam_scan_home_away_time() - get Roam scan home away time
+ * @mac_handle: The handle returned by mac_open
+ * @vdev_id: vdev identifier
+ * @roam_scan_home_away_time: Buffer to fill the roam scan home away time.
+ *			      Valid only if the return status is success.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_get_roam_scan_home_away_time(mac_handle_t mac_handle,
+					    uint8_t vdev_id,
+					    uint16_t *roam_scan_home_away_time);
 QDF_STATUS sme_update_wes_mode(mac_handle_t mac_handle, bool isWESModeEnabled,
 		uint8_t sessionId);
 QDF_STATUS sme_set_roam_scan_control(mac_handle_t mac_handle, uint8_t sessionId,

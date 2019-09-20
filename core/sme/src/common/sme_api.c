@@ -5754,50 +5754,50 @@ QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
 	return status;
 }
 
-/*
- * sme_update_roam_scan_home_away_time() -
- *  Function to update roam scan Home away time
- *	    This function is called through dynamic setConfig callback function
- *	    to update roam scan home away time
- *
- * mac_handle: Opaque handle to the global MAC context
- * sessionId - Session Identifier
- * nRoamScanAwayTime Scan home away time
- * bSendOffloadCmd If true then send offload command to firmware
- *			    If false then command is not sent to firmware
- * Return Success or failure
- */
-QDF_STATUS sme_update_roam_scan_home_away_time(
-					mac_handle_t mac_handle,
-					uint8_t sessionId,
-					const uint16_t nRoamScanHomeAwayTime,
-					const bool bSendOffloadCmd)
+QDF_STATUS
+sme_update_roam_scan_home_away_time(mac_handle_t mac_handle, uint8_t vdev_id,
+				    const uint16_t roam_scan_home_away_time,
+				    const bool send_offload_cmd)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+	tCsrNeighborRoamControlInfo *neighbor_roam_info;
 
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		sme_err("Invalid vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_UPDATE_ROAM_SCAN_HOME_AWAY_TIME,
-			 NO_SESSION, 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: gRoamScanHomeAwayTime is changed from %d to %d",
-			  __func__,
-			  mac->mlme_cfg->lfr.roam_scan_home_away_time,
-			  nRoamScanHomeAwayTime);
-		mac->mlme_cfg->lfr.roam_scan_home_away_time =
-			nRoamScanHomeAwayTime;
+			 vdev_id, 0));
 
-		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled &&
-		    bSendOffloadCmd) {
-			csr_roam_offload_scan(mac, sessionId,
-					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-					      REASON_HOME_AWAY_TIME_CHANGED);
-		}
-		sme_release_global_lock(&mac->sme);
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to acquire sme lock; status: %d", status);
+		return status;
 	}
-	return status;
+	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
+
+	if (neighbor_roam_info->cfgParams.roam_scan_home_away_time ==
+	    roam_scan_home_away_time) {
+		sme_debug("Not updated as current value is :%u",
+			  roam_scan_home_away_time);
+		sme_release_global_lock(&mac->sme);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	sme_debug("gRoamScanHomeAwayTime is changed from %d to %d",
+		  neighbor_roam_info->cfgParams.roam_scan_home_away_time,
+		  roam_scan_home_away_time);
+	neighbor_roam_info->cfgParams.roam_scan_home_away_time =
+		roam_scan_home_away_time;
+	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled && send_offload_cmd)
+		csr_roam_offload_scan(mac, vdev_id,
+				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				      REASON_HOME_AWAY_TIME_CHANGED);
+	sme_release_global_lock(&mac->sme);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5870,18 +5870,30 @@ uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle)
 	return mac->mlme_cfg->lfr.roam_scan_n_probes;
 }
 
-/*
- * sme_get_roam_scan_home_away_time() -
- * get Roam scan home away time
- *
- * mac_handle: Opaque handle to the global MAC context
- * Return Success or failure
- */
-uint16_t sme_get_roam_scan_home_away_time(mac_handle_t mac_handle)
+QDF_STATUS sme_get_roam_scan_home_away_time(mac_handle_t mac_handle,
+					    uint8_t vdev_id,
+					    uint16_t *roam_scan_home_away_time)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS status;
+	tCsrNeighborRoamControlInfo *neighbor_roam_info;
 
-	return mac->mlme_cfg->lfr.roam_scan_home_away_time;
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		sme_err("Invalid vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to acquire sme lock; status: %d", status);
+		return status;
+	}
+	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
+	*roam_scan_home_away_time =
+		neighbor_roam_info->cfgParams.roam_scan_home_away_time;
+	sme_release_global_lock(&mac->sme);
+
+	return status;
 }
 
 QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t vdev_id,

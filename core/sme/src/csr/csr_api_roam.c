@@ -18301,7 +18301,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		mac_ctx->roam.roamSession[session_id].connectedProfile.mdid;
 	req_buf->sessionId = session_id;
 	req_buf->nProbes = mac_ctx->mlme_cfg->lfr.roam_scan_n_probes;
-	req_buf->HomeAwayTime = mac_ctx->mlme_cfg->lfr.roam_scan_home_away_time;
+	req_buf->HomeAwayTime = roam_info->cfgParams.roam_scan_home_away_time;
 
 	/*
 	 * Home Away Time should be at least equal to (MaxDwell time + (2*RFS)),
