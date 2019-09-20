@@ -47,10 +47,14 @@ target_if_fwol_set_elna_bypass(struct wlan_objmgr_psoc *psoc,
 			       struct set_elna_bypass_request *req)
 {
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 
-	status = wmi_unified_send_set_elna_bypass_cmd(
-					    get_wmi_unified_hdl_from_psoc(psoc),
-					    req);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi_handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_send_set_elna_bypass_cmd(wmi_handle, req);
 	if (status)
 		target_if_err("Failed to set eLNA bypass %d", status);
 
@@ -69,10 +73,14 @@ target_if_fwol_get_elna_bypass(struct wlan_objmgr_psoc *psoc,
 			       struct get_elna_bypass_request *req)
 {
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 
-	status = wmi_unified_send_get_elna_bypass_cmd(
-					    get_wmi_unified_hdl_from_psoc(psoc),
-					    req);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi_handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_send_get_elna_bypass_cmd(wmi_handle, req);
 	if (status)
 		target_if_err("Failed to set eLNA bypass %d", status);
 
@@ -93,6 +101,7 @@ static int target_if_fwol_get_elna_bypass_resp(ol_scn_t scn, uint8_t *event_buf,
 	QDF_STATUS status;
 	struct get_elna_bypass_response resp;
 	struct wlan_objmgr_psoc *psoc;
+	wmi_unified_t wmi_handle;
 	struct wlan_fwol_psoc_obj *fwol_obj;
 	struct wlan_fwol_rx_ops *rx_ops;
 
@@ -108,6 +117,12 @@ static int target_if_fwol_get_elna_bypass_resp(ol_scn_t scn, uint8_t *event_buf,
 		return -EINVAL;
 	}
 
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi_handle");
+		return -EINVAL;
+	}
+
 	fwol_obj = fwol_get_psoc_obj(psoc);
 	if (!fwol_obj) {
 		target_if_err("Failed to get FWOL Obj");
@@ -116,9 +131,8 @@ static int target_if_fwol_get_elna_bypass_resp(ol_scn_t scn, uint8_t *event_buf,
 
 	rx_ops = &fwol_obj->rx_ops;
 	if (rx_ops->get_elna_bypass_resp) {
-		status = wmi_extract_get_elna_bypass_resp(
-					    get_wmi_unified_hdl_from_psoc(psoc),
-					    event_buf, &resp);
+		status = wmi_extract_get_elna_bypass_resp(wmi_handle,
+							  event_buf, &resp);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			target_if_err("Failed to extract eLNA bypass");
 			return -EINVAL;
