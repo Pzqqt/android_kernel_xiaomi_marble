@@ -383,6 +383,7 @@ struct hal_hw_txrx_ops {
 	uint8_t (*hal_rx_get_rx_fragment_number)(uint8_t *buf);
 	uint8_t (*hal_rx_msdu_end_da_is_mcbc_get)(uint8_t *buf);
 	uint8_t (*hal_rx_msdu_end_sa_is_valid_get)(uint8_t *buf);
+	uint16_t (*hal_rx_msdu_end_sa_idx_get)(uint8_t *buf);
 };
 
 /**

@@ -93,7 +93,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	 */
 	qdf_spin_lock_bh(&soc->ast_lock);
 	if (hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc, rx_tlv_hdr)) {
-		sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
+		sa_idx = hal_rx_msdu_end_sa_idx_get(soc->hal_soc, rx_tlv_hdr);
 
 		if ((sa_idx < 0) ||
 		    (sa_idx >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) {

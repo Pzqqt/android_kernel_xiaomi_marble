@@ -158,6 +158,24 @@ hal_rx_msdu_end_sa_is_valid_get_8074v2(uint8_t *buf)
 	return sa_is_valid;
 }
 
+/**
+ * hal_rx_msdu_end_sa_idx_get_8074v2(): API to get_8074v2 the
+ * sa_idx from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: sa_idx (SA AST index)
+ */
+static uint16_t hal_rx_msdu_end_sa_idx_get_8074v2(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint16_t sa_idx;
+
+	sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
+
+	return sa_idx;
+}
+
 struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -203,6 +221,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_get_rx_fragment_number_8074v2,
 	hal_rx_msdu_end_da_is_mcbc_get_8074v2,
 	hal_rx_msdu_end_sa_is_valid_get_8074v2,
+	hal_rx_msdu_end_sa_idx_get_8074v2,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

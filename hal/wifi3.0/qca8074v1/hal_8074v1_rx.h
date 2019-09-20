@@ -41,6 +41,13 @@
 		RX_MSDU_END_5_SA_IS_VALID_OFFSET)),	\
 		RX_MSDU_END_5_SA_IS_VALID_MASK,		\
 		RX_MSDU_END_5_SA_IS_VALID_LSB))
+
+#define HAL_RX_MSDU_END_SA_IDX_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_13_SA_IDX_OFFSET)),	\
+		RX_MSDU_END_13_SA_IDX_MASK,		\
+		RX_MSDU_END_13_SA_IDX_LSB))
+
 /*
  * hal_rx_msdu_start_nss_get_8074(): API to get the NSS
  * Interval from rx_msdu_start

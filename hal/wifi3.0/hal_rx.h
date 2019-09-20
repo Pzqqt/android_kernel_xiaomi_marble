@@ -1057,13 +1057,7 @@ hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
 	return l3_header_padding;
 }
 
-#define HAL_RX_MSDU_END_SA_IDX_GET(_rx_msdu_end)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
-		RX_MSDU_END_13_SA_IDX_OFFSET)),	\
-		RX_MSDU_END_13_SA_IDX_MASK,		\
-		RX_MSDU_END_13_SA_IDX_LSB))
-
- /**
+/**
  * hal_rx_msdu_end_sa_idx_get(): API to get the
  * sa_idx from rx_msdu_end TLV
  *
@@ -1071,15 +1065,12 @@ hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
  * Return: sa_idx (SA AST index)
  */
 static inline uint16_t
-hal_rx_msdu_end_sa_idx_get(uint8_t *buf)
+hal_rx_msdu_end_sa_idx_get(hal_soc_handle_t hal_soc_hdl,
+			   uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint16_t sa_idx;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
-
-	return sa_idx;
+	return hal_soc->ops->hal_rx_msdu_end_sa_idx_get(buf);
 }
 
  /**
