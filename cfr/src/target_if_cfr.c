@@ -177,6 +177,10 @@ int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 	if (pa == NULL)
 		return QDF_STATUS_E_FAILURE;
 
+	/* Reset unassociated entries for every init */
+	qdf_mem_zero(&pa->unassoc_pool[0], MAX_CFR_ENABLED_CLIENTS *
+		     sizeof(struct unassoc_pool_entry));
+
 	cfr_sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						       WLAN_UMAC_COMP_CFR);
 
