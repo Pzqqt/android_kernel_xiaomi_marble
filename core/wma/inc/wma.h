@@ -676,8 +676,6 @@ struct roam_synch_frame_ind {
 /**
  * struct wma_txrx_node - txrx node
  * @vdev: pointer to vdev object
- * @addr: mac address
- * @bssid: bssid
  * @handle: wma handle
  * @beacon: beacon info
  * @config: per vdev config parameters
@@ -735,8 +733,6 @@ struct roam_synch_frame_ind {
  */
 struct wma_txrx_node {
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t addr[QDF_MAC_ADDR_SIZE];
-	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	struct cdp_vdev *handle;
 	struct beacon_info *beacon;
 	vdev_cli_config_t config;
@@ -1525,6 +1521,14 @@ enum uapsd_ac {
 	UAPSD_VO
 };
 
+/**
+ * wma_disable_uapsd_per_ac() - disable uapsd per ac
+ * @wmi_handle: wma handle
+ * @vdev_id: vdev id
+ * @ac: access category
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code.
+ */
 QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 				    uint32_t vdev_id, enum uapsd_ac ac);
 
@@ -1597,6 +1601,21 @@ A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
 					 eCsrEncryptionType encr);
 A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr);
 
+/**
+ * wma_trigger_uapsd_params() - set trigger uapsd parameter
+ * @wmi_handle: wma handle
+ * @vdev_id: vdev id
+ * @trigger_uapsd_params: trigger uapsd parameters
+ *
+ * This function sets the trigger uapsd
+ * params such as service interval, delay
+ * interval and suspend interval which
+ * will be used by the firmware to send
+ * trigger frames periodically when there
+ * is no traffic on the transmit side.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code.
+ */
 QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 				    tp_wma_trigger_uapsd_params
 				    trigger_uapsd_params);

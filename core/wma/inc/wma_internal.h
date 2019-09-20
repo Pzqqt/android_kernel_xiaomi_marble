@@ -516,6 +516,14 @@ static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
  * wma_dev_if.c functions declarations
  */
 
+/**
+ * wma_find_vdev_by_addr() - find vdev_id from mac address
+ * @wma: wma handle
+ * @addr: mac address
+ * @vdev_id: return vdev_id
+ *
+ * Return: Returns vdev handle or NULL if mac address don't match
+ */
 struct cdp_vdev *wma_find_vdev_by_addr(tp_wma_handle wma, uint8_t *addr,
 				   uint8_t *vdev_id);
 
@@ -635,6 +643,16 @@ wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 #endif /* QCA_IBSS_SUPPORT */
 
 /**
+ * wma_get_vdev_bssid() - Get BSSID from mlme_obj
+ * @vdev - pointer to vdev
+ *
+ * This API is used to get BSSID stored in vdev mlme object.
+ *
+ * Return: pointer to bssid on success else NULL.
+ */
+uint8_t *wma_get_vdev_bssid(struct wlan_objmgr_vdev *vdev);
+
+/**
  * wma_find_bssid_by_vdev_id() - Get the BSS ID corresponding to the vdev ID
  * @wma - wma handle
  * @vdev_id - vdev ID
@@ -648,9 +666,17 @@ static inline uint8_t *wma_find_bssid_by_vdev_id(tp_wma_handle wma,
 	if (vdev_id >= wma->max_bssid)
 		return NULL;
 
-	return wma->interfaces[vdev_id].bssid;
+	return wma_get_vdev_bssid(wma->interfaces[vdev_id].vdev);
 }
 
+/**
+ * wma_find_vdev_by_bssid() - Get the corresponding vdev_id from BSSID
+ * @wma - wma handle
+ * @vdev_id - vdev ID
+ *
+ * Return: fill vdev_id with appropriate vdev id and return vdev
+ *         handle or NULL if not found.
+ */
 struct cdp_vdev *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 				    uint8_t *vdev_id);
 
@@ -787,6 +813,18 @@ uint32_t wma_get_bcn_rate_code(uint16_t rate);
 int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len);
 #endif
 
+/**
+ * wma_peer_sta_kickout_event_handler() - kickout event handler
+ * @handle: wma handle
+ * @event: event data
+ * @len: data length
+ *
+ * Kickout event is received from firmware on observing beacon miss
+ * It handles kickout event for different modes and indicate to
+ * upper layers.
+ *
+ * Return: 0 for success or error code
+ */
 int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 				       uint32_t len);
 
@@ -1041,12 +1079,26 @@ int wma_smps_mode_to_force_mode_param(uint8_t smps_mode);
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle);
 
+/**
+ * wma_process_ll_stats_clear_req() - clear link layer stats
+ * @wma: wma handle
+ * @clearReq: ll stats clear request command params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
 QDF_STATUS wma_process_ll_stats_clear_req
 	(tp_wma_handle wma, const tpSirLLStatsClearReq clearReq);
 
 QDF_STATUS wma_process_ll_stats_set_req
 	(tp_wma_handle wma, const tpSirLLStatsSetReq setReq);
 
+/**
+ * wma_process_ll_stats_get_req() - link layer stats get request
+ * @wma:wma handle
+ * @getReq:ll stats get request command params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
 QDF_STATUS wma_process_ll_stats_get_req
 	(tp_wma_handle wma, const tpSirLLStatsGetReq getReq);
 

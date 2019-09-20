@@ -647,7 +647,14 @@ QDF_STATUS
 wma_ds_peek_rx_packet_info
 	(cds_pkt_t *vosDataBuff, void **ppRxHeader, bool bSwap);
 
-
+/**
+ * wma_tx_abort() - abort tx
+ * @vdev_id: vdev id
+ *
+ * In case of deauth host abort transmitting packet.
+ *
+ * Return: none
+ */
 void wma_tx_abort(uint8_t vdev_id);
 
 /**

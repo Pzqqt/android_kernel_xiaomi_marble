@@ -154,6 +154,12 @@ QDF_STATUS wma_get_link_speed(WMA_HANDLE handle,
 QDF_STATUS wma_update_channel_list(WMA_HANDLE handle, void *scan_chan_info);
 #endif
 
+/**
+ * wma_get_vdev_address_by_vdev_id() - lookup MAC address from vdev ID
+ * @vdev_id: vdev id
+ *
+ * Return: mac address
+ */
 uint8_t *wma_get_vdev_address_by_vdev_id(uint8_t vdev_id);
 struct wma_txrx_node *wma_get_interface_by_vdev_id(uint8_t vdev_id);
 QDF_STATUS wma_get_connection_info(uint8_t vdev_id,

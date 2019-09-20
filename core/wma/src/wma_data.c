@@ -2945,6 +2945,7 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct mic_failure_ind *mic_err_ind;
 	qdf_ether_header_t *eth_hdr;
+	uint8_t *bssid;
 	struct scheduler_msg cds_msg = {0};
 
 	if (!wma)
@@ -2963,8 +2964,15 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 	mic_err_ind->messageType = eWNI_SME_MIC_FAILURE_IND;
 	mic_err_ind->length = sizeof(*mic_err_ind);
 	mic_err_ind->sessionId = vdev_id;
+	bssid = wma_get_vdev_bssid(wma->interfaces[vdev_id].vdev);
+	if (!bssid) {
+		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
+			 __func__, vdev_id);
+		qdf_mem_free((void *)mic_err_ind);
+		return;
+	}
 	qdf_copy_macaddr(&mic_err_ind->bssId,
-		     (struct qdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
+		     (struct qdf_mac_addr *)bssid);
 	qdf_mem_copy(mic_err_ind->info.taMacAddr,
 		     (struct qdf_mac_addr *) peer_mac_addr,
 			sizeof(tSirMacAddr));
@@ -2994,20 +3002,13 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 	}
 }
 
-/**
- * wma_tx_abort() - abort tx
- * @vdev_id: vdev id
- *
- * In case of deauth host abort transmitting packet.
- *
- * Return: none
- */
 void wma_tx_abort(uint8_t vdev_id)
 {
 #define PEER_ALL_TID_BITMASK 0xffffffff
 	tp_wma_handle wma;
 	uint32_t peer_tid_bitmap = PEER_ALL_TID_BITMASK;
 	struct wma_txrx_node *iface;
+	uint8_t *bssid;
 	struct peer_flush_params param = {0};
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -3020,7 +3021,14 @@ void wma_tx_abort(uint8_t vdev_id)
 			 __func__, iface->handle);
 		return;
 	}
-	WMA_LOGD("%s: vdevid %d bssid %pM", __func__, vdev_id, iface->bssid);
+	bssid = wma_get_vdev_bssid(iface->vdev);
+	if (!bssid) {
+		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
+			 __func__, vdev_id);
+		return;
+	}
+
+	WMA_LOGD("%s: vdevid %d bssid %pM", __func__, vdev_id, bssid);
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_pause(cds_get_context(QDF_MODULE_ID_SOC),
 			iface->handle,
@@ -3030,7 +3038,7 @@ void wma_tx_abort(uint8_t vdev_id)
 	peer_tid_bitmap &= ~(0x1 << WMI_MGMT_TID);
 	param.peer_tid_bitmap = peer_tid_bitmap;
 	param.vdev_id = vdev_id;
-	wmi_unified_peer_flush_tids_send(wma->wmi_handle, iface->bssid,
+	wmi_unified_peer_flush_tids_send(wma->wmi_handle, bssid,
 					 &param);
 }
 

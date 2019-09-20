@@ -2430,7 +2430,13 @@ static int wma_wake_event_piggybacked(
 	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	bssid = wma->interfaces[event_param->fixed_param->vdev_id].bssid;
+	bssid = wma_get_vdev_bssid
+		(wma->interfaces[event_param->fixed_param->vdev_id].vdev);
+	if (!bssid) {
+		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
+			 __func__, event_param->fixed_param->vdev_id);
+		return 0;
+	}
 	peer = cdp_peer_find_by_addr(soc, pdev, bssid, &peer_id);
 	wake_reason = event_param->fixed_param->wake_reason;
 

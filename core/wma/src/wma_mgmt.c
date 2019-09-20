@@ -329,18 +329,6 @@ void wma_sta_kickout_event(uint32_t kickout_reason, uint8_t vdev_id,
 }
 #endif
 
-/**
- * wma_peer_sta_kickout_event_handler() - kickout event handler
- * @handle: wma handle
- * @event: event data
- * @len: data length
- *
- * Kickout event is received from firmware on observing beacon miss
- * It handles kickout event for different modes and indicate to
- * upper layers.
- *
- * Return: 0 for success or error code
- */
 int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 				       uint32_t len)
 {
@@ -352,6 +340,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	struct cdp_pdev *pdev;
 	tpDeleteStaContext del_sta_ctx;
 	struct ibss_peer_inactivity_ind *inactivity;
+	uint8_t *addr, *bssid;
+	struct wlan_objmgr_vdev *vdev;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -373,13 +363,25 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		WMA_LOGE("Not able to find BSSID for peer [%pM]", macaddr);
 		return -EINVAL;
 	}
+	vdev = wma->interfaces[vdev_id].vdev;
+	if (!vdev) {
+		WMA_LOGE("Not able to find vdev for VDEV_%d", vdev_id);
+		return -EINVAL;
+	}
+	addr = wlan_vdev_mlme_get_macaddr(vdev);
 
 	WMA_LOGA("%s: PEER:[%pM], ADDR:[%pN], INTERFACE:%d, peer_id:%d, reason:%d",
-		__func__, macaddr, wma->interfaces[vdev_id].addr, vdev_id,
+		__func__, macaddr, addr, vdev_id,
 		 peer_id, kickout_event->reason);
 	if (wma->interfaces[vdev_id].roaming_in_progress) {
 		WMA_LOGE("Ignore STA kick out since roaming is in progress");
 		return -EINVAL;
+	}
+	bssid = wma_get_vdev_bssid(wma->interfaces[vdev_id].vdev);
+	if (!bssid) {
+		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
+			 __func__, vdev_id);
+		return -ENOMEM;
 	}
 
 	switch (kickout_event->reason) {
@@ -410,7 +412,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		del_sta_ctx->vdev_id = vdev_id;
 		del_sta_ctx->staId = peer_id;
 		qdf_mem_copy(del_sta_ctx->addr2, macaddr, QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].bssid,
+		qdf_mem_copy(del_sta_ctx->bssId, bssid,
 			     QDF_MAC_ADDR_SIZE);
 		del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
 		wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND,
@@ -422,7 +424,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		    (wma->interfaces[vdev_id].sub_type == 0 ||
 		     wma->interfaces[vdev_id].sub_type ==
 		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT) &&
-		    !qdf_mem_cmp(wma->interfaces[vdev_id].bssid,
+		    !qdf_mem_cmp(bssid,
 				    macaddr, QDF_MAC_ADDR_SIZE)) {
 			wma_sta_kickout_event(HOST_STA_KICKOUT_REASON_XRETRY,
 							vdev_id, macaddr);
@@ -451,7 +453,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		    (wma->interfaces[vdev_id].sub_type == 0 ||
 		     wma->interfaces[vdev_id].sub_type ==
 		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT) &&
-		    !qdf_mem_cmp(wma->interfaces[vdev_id].bssid,
+		    !qdf_mem_cmp(bssid,
 				    macaddr, QDF_MAC_ADDR_SIZE)) {
 			wma_sta_kickout_event(
 			HOST_STA_KICKOUT_REASON_UNSPECIFIED, vdev_id, macaddr);
@@ -496,8 +498,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	del_sta_ctx->vdev_id = vdev_id;
 	del_sta_ctx->staId = peer_id;
 	qdf_mem_copy(del_sta_ctx->addr2, macaddr, QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].addr,
-		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(del_sta_ctx->bssId, addr, QDF_MAC_ADDR_SIZE);
 	del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
 	if (wmi_service_enabled(wma->wmi_handle,
 				wmi_service_hw_db2dbm_support))
@@ -2498,7 +2499,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	uint32_t def_key_idx = 0;
 	uint32_t wlan_opmode;
 	struct cdp_vdev *txrx_vdev;
-	uint8_t *mac_addr;
+	uint8_t *mac_addr, *bssid;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_objmgr_vdev *vdev;
 
@@ -2531,9 +2532,15 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	key_params.singl_tid_rc = key_info->singleTidRc;
 	key_params.unicast = false;
 	if (wlan_opmode == wlan_op_mode_sta) {
-		qdf_mem_copy(key_params.peer_mac,
-			wma_handle->interfaces[key_info->vdev_id].bssid,
-			QDF_MAC_ADDR_SIZE);
+		bssid = wma_get_vdev_bssid
+			(wma_handle->interfaces[key_info->vdev_id].vdev);
+		if (!bssid) {
+			WMA_LOGE("%s: Failed to get bssid for vdev_%d",
+				 __func__, key_info->vdev_id);
+			key_info->status = QDF_STATUS_E_FAILURE;
+			goto out;
+		}
+		qdf_mem_copy(key_params.peer_mac, bssid, QDF_MAC_ADDR_SIZE);
 	} else {
 		mac_addr = cdp_get_vdev_mac_addr(soc, txrx_vdev);
 		if (!mac_addr) {
@@ -3177,8 +3184,6 @@ QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
 	vdev = iface->vdev;
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	mlme_obj->proto.sta.assoc_id = 0;
-	qdf_mem_copy(mlme_obj->mgmt.generic.bssid, iface->bssid,
-		     QDF_MAC_ADDR_SIZE);
 
 	status = vdev_mgr_up_send(mlme_obj);
 	if (QDF_IS_STATUS_ERROR(status)) {

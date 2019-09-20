@@ -2651,7 +2651,7 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	tDeleteStaParams *del_sta_params;
 	tAddStaParams *add_sta_params;
 	uint32_t uc_cipher = 0, cipher_cap = 0;
-	uint8_t vdev_id;
+	uint8_t vdev_id, *bssid;
 
 	vdev_id = roam_synch_ind_ptr->roamed_vdev_id;
 	wma->interfaces[vdev_id].nss = roam_synch_ind_ptr->nss;
@@ -2678,11 +2678,18 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	add_sta_params->staIdx = STA_INVALID_IDX;
 	add_sta_params->assocId = roam_synch_ind_ptr->aid;
 
+	bssid = wma_get_vdev_bssid(wma->interfaces[vdev_id].vdev);
+	if (!bssid) {
+		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
+			 __func__, vdev_id);
+		return;
+	}
+
 	/*
 	 * Get uc cipher of old peer to update new peer as it doesnt
 	 * change in roaming
 	 */
-	wma_get_peer_uc_cipher(wma, wma->interfaces[vdev_id].bssid,
+	wma_get_peer_uc_cipher(wma, bssid,
 			       &uc_cipher, &cipher_cap);
 
 	wma_delete_sta(wma, del_sta_params);
@@ -2694,8 +2701,8 @@ wma_roam_update_vdev(tp_wma_handle wma,
 					      roam_synch_ind_ptr->bssid.bytes);
 	wma_add_bss_lfr3(wma, roam_synch_ind_ptr->add_bss_params);
 	wma_add_sta(wma, add_sta_params);
-	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
-			roam_synch_ind_ptr->bssid.bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(bssid, roam_synch_ind_ptr->bssid.bytes,
+		     QDF_MAC_ADDR_SIZE);
 	qdf_mem_free(add_sta_params);
 }
 

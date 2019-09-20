@@ -1973,17 +1973,11 @@ void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
 
 }
 
-
-/**
- * wma_process_ll_stats_clear_req() - clear link layer stats
- * @wma: wma handle
- * @clearReq: ll stats clear request command params
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
 QDF_STATUS wma_process_ll_stats_clear_req(tp_wma_handle wma,
 				 const tpSirLLStatsClearReq clearReq)
 {
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t *addr;
 	struct ll_stats_clear_params cmd = {0};
 	int ret;
 
@@ -2001,9 +1995,20 @@ QDF_STATUS wma_process_ll_stats_clear_req(tp_wma_handle wma,
 	cmd.stop_req = clearReq->stopReq;
 	cmd.vdev_id = clearReq->staId;
 	cmd.stats_clear_mask = clearReq->statsClearReqMask;
-	qdf_mem_copy(cmd.peer_macaddr.bytes,
-		     wma->interfaces[clearReq->staId].addr,
-		     QDF_MAC_ADDR_SIZE);
+
+	vdev = wma->interfaces[clearReq->staId].vdev;
+	if (!vdev) {
+		WMA_LOGE("%s: Failed to get vdev for vdev_%d",
+			 __func__, clearReq->staId);
+		return QDF_STATUS_E_FAILURE;
+	}
+	addr = wlan_vdev_mlme_get_macaddr(vdev);
+	if (!addr) {
+		WMA_LOGE("%s: Failed to get macaddr for vdev_%d",
+			 __func__, clearReq->staId);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_copy(cmd.peer_macaddr.bytes, addr, QDF_MAC_ADDR_SIZE);
 	ret = wmi_unified_process_ll_stats_clear_cmd(wma->wmi_handle, &cmd);
 	if (ret) {
 		WMA_LOGE("%s: Failed to send clear link stats req", __func__);
@@ -2045,16 +2050,11 @@ QDF_STATUS wma_process_ll_stats_set_req(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wma_process_ll_stats_get_req() - link layer stats get request
- * @wma:wma handle
- * @getReq:ll stats get request command params
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
 QDF_STATUS wma_process_ll_stats_get_req(tp_wma_handle wma,
 				 const tpSirLLStatsGetReq getReq)
 {
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t *addr;
 	struct ll_stats_get_params cmd = {0};
 	int ret;
 
@@ -2072,10 +2072,20 @@ QDF_STATUS wma_process_ll_stats_get_req(tp_wma_handle wma,
 	cmd.req_id = getReq->reqId;
 	cmd.param_id_mask = getReq->paramIdMask;
 	cmd.vdev_id = getReq->staId;
-	qdf_mem_copy(cmd.peer_macaddr.bytes,
-		     wma->interfaces[getReq->staId].addr,
-		     QDF_MAC_ADDR_SIZE);
 
+	vdev = wma->interfaces[getReq->staId].vdev;
+	if (!vdev) {
+		WMA_LOGE("%s: Failed to get vdev for vdev_%d",
+			 __func__, getReq->staId);
+		return QDF_STATUS_E_FAILURE;
+	}
+	addr = wlan_vdev_mlme_get_macaddr(vdev);
+	if (!addr) {
+		WMA_LOGE("%s: Failed to get macaddr for vdev_%d",
+			 __func__, getReq->staId);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_copy(cmd.peer_macaddr.bytes, addr, QDF_MAC_ADDR_SIZE);
 	ret = wmi_unified_process_ll_stats_get_cmd(wma->wmi_handle, &cmd);
 	if (ret) {
 		WMA_LOGE("%s: Failed to send get link stats request", __func__);
@@ -3130,15 +3140,10 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size)
 	return buf;
 }
 
-/**
- * wma_get_vdev_address_by_vdev_id() - lookup MAC address from vdev ID
- * @vdev_id: vdev id
- *
- * Return: mac address
- */
 uint8_t *wma_get_vdev_address_by_vdev_id(uint8_t vdev_id)
 {
 	tp_wma_handle wma;
+	struct wlan_objmgr_vdev *vdev;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
@@ -3150,8 +3155,12 @@ uint8_t *wma_get_vdev_address_by_vdev_id(uint8_t vdev_id)
 		WMA_LOGE("%s: Invalid vdev_id %u", __func__, vdev_id);
 		return NULL;
 	}
-
-	return wma->interfaces[vdev_id].addr;
+	vdev = wma->interfaces[vdev_id].vdev;
+	if (!vdev) {
+		WMA_LOGE("%s: Invalid vdev for vdev_id %u", __func__, vdev_id);
+		return NULL;
+	}
+	return wlan_vdev_mlme_get_macaddr(vdev);
 }
 
 QDF_STATUS wma_get_connection_info(uint8_t vdev_id,
@@ -3985,15 +3994,13 @@ QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
 	iface = &wma->interfaces[vdev_id];
 	vdev_mlme->proto.sta.assoc_id = iface->aid;
-	qdf_mem_copy(vdev_mlme->mgmt.generic.bssid, iface->bssid,
-		     QDF_MAC_ADDR_SIZE);
 
 	wma_update_roam_offload_flag(wma, vdev_id, true);
 	status = vdev_mgr_up_send(vdev_mlme);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
-			 __func__, vdev_id, iface->bssid);
+		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d",
+			 __func__, vdev_id);
 		policy_mgr_set_do_hw_mode_change_flag(
 			wma->psoc, false);
 		status = QDF_STATUS_E_FAILURE;
@@ -4244,13 +4251,11 @@ QDF_STATUS wma_mon_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
 	iface = &wma->interfaces[vdev_id];
 	vdev_mlme->proto.sta.assoc_id = 0;
-	qdf_mem_copy(vdev_mlme->mgmt.generic.bssid, iface->bssid,
-		     QDF_MAC_ADDR_SIZE);
 
 	status = vdev_mgr_up_send(vdev_mlme);
 	if (QDF_IS_STATUS_ERROR(status))
-		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
-			 __func__, vdev_id, iface->bssid);
+		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d",
+			 __func__, vdev_id);
 
 	return status;
 }

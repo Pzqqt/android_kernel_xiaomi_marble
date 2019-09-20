@@ -85,23 +85,20 @@
 #include "../../core/src/vdev_mgr_ops.h"
 #include "wlan_utility.h"
 
-/**
- * wma_find_vdev_by_addr() - find vdev_id from mac address
- * @wma: wma handle
- * @addr: mac address
- * @vdev_id: return vdev_id
- *
- * Return: Returns vdev handle or NULL if mac address don't match
- */
 struct cdp_vdev *wma_find_vdev_by_addr(tp_wma_handle wma, uint8_t *addr,
 				   uint8_t *vdev_id)
 {
 	uint8_t i;
+	struct wlan_objmgr_vdev *vdev;
 
 	for (i = 0; i < wma->max_bssid; i++) {
+		vdev = wma->interfaces[i].vdev;
+		if (!vdev)
+			continue;
+
 		if (qdf_is_macaddr_equal(
-			(struct qdf_mac_addr *) wma->interfaces[i].addr,
-			(struct qdf_mac_addr *) addr) == true) {
+			(struct qdf_mac_addr *)wlan_vdev_mlme_get_macaddr(vdev),
+			(struct qdf_mac_addr *)addr) == true) {
 			*vdev_id = i;
 			return wma->interfaces[i].handle;
 		}
@@ -333,23 +330,38 @@ wma_send_peer_atim_window_len(tp_wma_handle wma, tpAddStaParams add_sta)
 }
 #endif /* QCA_IBSS_SUPPORT */
 
-/**
- * wma_find_vdev_by_bssid() - Get the corresponding vdev_id from BSSID
- * @wma - wma handle
- * @vdev_id - vdev ID
- *
- * Return: fill vdev_id with appropriate vdev id and return vdev
- *         handle or NULL if not found.
- */
+uint8_t *wma_get_vdev_bssid(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *mlme_obj;
+
+	if (!vdev) {
+		WMA_LOGE("%s vdev is NULL", __func__);
+		return NULL;
+	}
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		WMA_LOGE("%s Failed to get mlme_obj", __func__);
+		return NULL;
+	}
+
+	return mlme_obj->mgmt.generic.bssid;
+}
+
 struct cdp_vdev *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 				    uint8_t *vdev_id)
 {
 	int i;
+	uint8_t *bssid_addr;
 
 	for (i = 0; i < wma->max_bssid; i++) {
+		bssid_addr = wma_get_vdev_bssid(wma->interfaces[i].vdev);
+		if (!bssid_addr)
+			continue;
+
 		if (qdf_is_macaddr_equal(
-			(struct qdf_mac_addr *) wma->interfaces[i].bssid,
-			(struct qdf_mac_addr *) bssid) == true) {
+			(struct qdf_mac_addr *)bssid_addr,
+			(struct qdf_mac_addr *)bssid) == true) {
 			*vdev_id = i;
 			return wma->interfaces[i].handle;
 		}
@@ -1203,6 +1215,7 @@ QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 {
 	enum wlan_vdev_sm_evt  event;
 	struct wma_txrx_node *iface;
+	uint8_t *bssid;
 
 	iface = &wma->interfaces[rsp->vdev_id];
 	WMA_LOGD("%s: Send channel switch resp vdev %d status %d",
@@ -1228,7 +1241,13 @@ QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 		int err;
 
 		/* for CSA case firmware expects phymode before ch_wd */
-		err = wma_set_peer_param(wma, iface->bssid,
+		bssid = wma_get_vdev_bssid(iface->vdev);
+		if (!bssid) {
+			WMA_LOGE("%s:Failed to get bssid for vdev_id %d",
+				 __func__, rsp->vdev_id);
+			return QDF_STATUS_E_FAILURE;
+		}
+		err = wma_set_peer_param(wma, bssid,
 					 WMI_PEER_PHYMODE, iface->chanmode,
 					rsp->vdev_id);
 		WMA_LOGD("%s:vdev_id %d chanmode %d status %d",
@@ -1236,7 +1255,7 @@ QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 
 		chanwidth = wmi_get_ch_width_from_phy_mode(wma->wmi_handle,
 							   iface->chanmode);
-		err = wma_set_peer_param(wma, iface->bssid, WMI_PEER_CHWIDTH,
+		err = wma_set_peer_param(wma, bssid, WMI_PEER_CHWIDTH,
 					 chanwidth, rsp->vdev_id);
 		WMA_LOGD("%s:vdev_id %d chanwidth %d status %d",
 			 __func__, rsp->vdev_id, chanwidth, err);
@@ -1356,8 +1375,6 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	}  else if (iface->type == WMI_VDEV_TYPE_OCB) {
 		mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
 		mlme_obj->proto.sta.assoc_id = iface->aid;
-		qdf_mem_copy(mlme_obj->mgmt.generic.bssid, iface->bssid,
-			     QDF_MAC_ADDR_SIZE);
 		if (vdev_mgr_up_send(mlme_obj) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE(FL("failed to send vdev up"));
 			policy_mgr_set_do_hw_mode_change_flag(
@@ -1374,8 +1391,12 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 			WMA_LOGE("%s: Failed to get bssid", __func__);
 			return QDF_STATUS_E_INVAL;
 		}
-
-		qdf_mem_copy(iface->bssid, bss_peer.bytes,
+		mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+		if (!mlme_obj) {
+			WMA_LOGE("%s: Failed to get mlme obj", __func__);
+			return QDF_STATUS_E_INVAL;
+		}
+		qdf_mem_copy(mlme_obj->mgmt.generic.bssid, bss_peer.bytes,
 			     QDF_MAC_ADDR_SIZE);
 		wma_vdev_start_rsp(wma, vdev_mlme->vdev, rsp);
 	}
@@ -1780,17 +1801,25 @@ static int wma_get_obj_mgr_peer_type(tp_wma_handle wma, uint8_t vdev_id,
 
 {
 	uint32_t obj_peer_type = 0;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t *addr;
+
+	vdev = wma->interfaces[vdev_id].vdev;
+	if (!vdev) {
+		WMA_LOGE("Couldnt find vdev for VDEV_%d", vdev_id);
+		return obj_peer_type;
+	}
+	addr = wlan_vdev_mlme_get_macaddr(vdev);
 
 	WMA_LOGD("vdev id %d vdev type %d vdev subtype %d peer addr %pM vdev addr %pM",
 		 vdev_id, wma->interfaces[vdev_id].type,
 		 wma->interfaces[vdev_id].sub_type, peer_addr,
-		 wma->interfaces[vdev_id].addr);
+		 addr);
 
 	if (wma_peer_type == WMI_PEER_TYPE_TDLS)
 		return WLAN_PEER_TDLS;
 
-	if (!qdf_mem_cmp(wma->interfaces[vdev_id].addr, peer_addr,
-					QDF_MAC_ADDR_SIZE)) {
+	if (!qdf_mem_cmp(addr, peer_addr, QDF_MAC_ADDR_SIZE)) {
 		obj_peer_type = WLAN_PEER_SELF;
 	} else if (wma->interfaces[vdev_id].type == WMI_VDEV_TYPE_STA) {
 		if (wma->interfaces[vdev_id].sub_type ==
@@ -2560,10 +2589,6 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		vdev_mlme->mgmt.generic.type;
 	wma_handle->interfaces[vdev_id].sub_type =
 		vdev_mlme->mgmt.generic.subtype;
-
-	qdf_mem_copy(wma_handle->interfaces[vdev_id].addr,
-		     vdev->vdev_mlme.macaddr,
-		     sizeof(wma_handle->interfaces[vdev_id].addr));
 
 	qos_aggr = &mac->mlme_cfg->qos_mlme_params;
 	status = wma_set_tx_rx_aggr_size(vdev_id, qos_aggr->tx_aggregation_size,
@@ -4084,6 +4109,7 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
 	int pps_val = 0;
+	struct vdev_mlme_obj *mlme_obj;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	bool peer_assoc_sent = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -4173,11 +4199,17 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 				add_bss->llbCoexist,
 				add_bss->maxTxPower);
 
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+	if (!mlme_obj) {
+		WMA_LOGE("Failed to mlme obj");
+		goto peer_cleanup;
+	}
 	/*
 	 * Store the bssid in interface table, bssid will
 	 * be used during group key setting sta mode.
 	 */
-	qdf_mem_copy(iface->bssid, add_bss->bssId, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(mlme_obj->mgmt.generic.bssid,
+		     add_bss->bssId, QDF_MAC_ADDR_SIZE);
 
 send_bss_resp:
 	wma_save_bss_params(wma, add_bss);
@@ -5248,6 +5280,7 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct vdev_stop_response resp_event;
 	struct del_bss_resp *vdev_stop_resp;
+	uint8_t *bssid;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -5262,7 +5295,13 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id)
 				__func__, vdev_id);
 		goto fail_del_bss_ho_fail;
 	}
-	qdf_mem_zero(iface->bssid, QDF_MAC_ADDR_SIZE);
+	bssid = wma_get_vdev_bssid(iface->vdev);
+	if (!bssid) {
+		WMA_LOGE("%s:Invalid bssid", __func__);
+		status = QDF_STATUS_E_FAILURE;
+		goto fail_del_bss_ho_fail;
+	}
+	qdf_mem_zero(bssid, QDF_MAC_ADDR_SIZE);
 
 	txrx_vdev = wma_find_vdev_by_id(wma, vdev_id);
 	if (!txrx_vdev) {
@@ -5387,6 +5426,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct qdf_mac_addr bssid;
 	struct del_bss_resp *params;
+	uint8_t *addr, *bssid_addr;
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
@@ -5408,18 +5448,19 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 		goto out;
 	}
 
+	addr = wlan_vdev_mlme_get_macaddr(iface->vdev);
+	if (!addr) {
+		WMA_LOGE("%s vdev id %d : failed to get macaddr",
+			 __func__, vdev_id);
+		goto out;
+	}
 	if (wma_is_vdev_in_ibss_mode(wma, vdev_id))
 		/* in rome ibss case, self mac is used to create the bss peer */
-		peer = cdp_peer_find_by_addr(soc,
-			pdev,
-			wma->interfaces[vdev_id].addr,
-			&peer_id);
+		peer = cdp_peer_find_by_addr(soc, pdev, addr, &peer_id);
 	else if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces,
 			vdev_id))
 		/* In ndi case, self mac is used to create the self peer */
-		peer = cdp_peer_find_by_addr(soc, pdev,
-				wma->interfaces[vdev_id].addr,
-				&peer_id);
+		peer = cdp_peer_find_by_addr(soc, pdev, addr, &peer_id);
 	else
 		peer = cdp_peer_find_by_addr(soc, pdev,
 				bssid.bytes,
@@ -5431,8 +5472,14 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
-
-	qdf_mem_zero(wma->interfaces[vdev_id].bssid,
+	bssid_addr = wma_get_vdev_bssid(wma->interfaces[vdev_id].vdev);
+	if (!bssid_addr) {
+		WMA_LOGE("%s: Failed to bssid for vdev_%d", __func__,
+			 vdev_id);
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+	qdf_mem_zero(bssid_addr,
 		     QDF_MAC_ADDR_SIZE);
 
 	txrx_vdev = wma_find_vdev_by_id(wma, vdev_id);
