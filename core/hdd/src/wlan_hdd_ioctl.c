@@ -4497,9 +4497,19 @@ static int drv_cmd_get_scan_n_probes(struct hdd_adapter *adapter,
 				     struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	uint8_t val = sme_get_roam_scan_n_probes(hdd_ctx->mac_handle);
+	uint8_t val;
 	char extra[32];
 	uint8_t len = 0;
+	QDF_STATUS status;
+
+	status = sme_get_roam_scan_n_probes(hdd_ctx->mac_handle,
+					    adapter->vdev_id,
+					    &val);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	hdd_debug("vdev_id: %u, scan_n_probes: %u",
+		  adapter->vdev_id, val);
 
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, val);
 	len = QDF_MIN(priv_data->total_len, len + 1);

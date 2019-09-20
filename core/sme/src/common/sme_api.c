@@ -5716,41 +5716,37 @@ QDF_STATUS sme_update_session_param(mac_handle_t mac_handle, uint8_t session_id,
 	return status;
 }
 
-/*
- * sme_update_roam_scan_n_probes() -
- * Function to update roam scan N probes
- *	    This function is called through dynamic setConfig callback function
- *	    to update roam scan N probes
- * mac_handle: Opaque handle to the global MAC context
- * sessionId - Session Identifier
- * nProbes number of probe requests to be sent out
- * Return Success or failure
- */
 QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
-					 uint8_t sessionId,
-					 const uint8_t nProbes)
+					 uint8_t vdev_id,
+					 const uint8_t probes)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+	tCsrNeighborRoamControlInfo *neighbor_roam_info;
 
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		sme_err("Invalid vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_UPDATE_ROAM_SCAN_N_PROBES,
-			 NO_SESSION, 0));
+			 vdev_id, 0));
 	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: gRoamScanNProbes is changed from %d to %d",
-			  __func__, mac->mlme_cfg->lfr.roam_scan_n_probes,
-			  nProbes);
-		mac->mlme_cfg->lfr.roam_scan_n_probes = nProbes;
-
-		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
-			csr_roam_offload_scan(mac, sessionId,
-					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-					      REASON_NPROBES_CHANGED);
-		}
-		sme_release_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to acquire sme lock; status: %d", status);
+		return status;
 	}
+	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
+	sme_debug("gRoamScanNProbes is changed from %u to %u",
+		  neighbor_roam_info->cfgParams.roam_scan_n_probes, probes);
+	neighbor_roam_info->cfgParams.roam_scan_n_probes = probes;
+
+	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
+		csr_roam_offload_scan(mac, vdev_id,
+				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				      REASON_NPROBES_CHANGED);
+	sme_release_global_lock(&mac->sme);
+
 	return status;
 }
 
@@ -5856,18 +5852,28 @@ bool sme_get_roam_intra_band(mac_handle_t mac_handle)
 	return mac->mlme_cfg->lfr.roam_intra_band;
 }
 
-/*
- * sme_get_roam_scan_n_probes() -
- * get N Probes
- *
- * mac_handle: Opaque handle to the global MAC context
- * Return Success or failure
- */
-uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle)
+QDF_STATUS sme_get_roam_scan_n_probes(mac_handle_t mac_handle, uint8_t vdev_id,
+				      uint8_t *roam_scan_n_probes)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS status;
+	tCsrNeighborRoamControlInfo *neighbor_roam_info;
 
-	return mac->mlme_cfg->lfr.roam_scan_n_probes;
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		sme_err("Invalid vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to acquire sme lock; status: %d", status);
+		return status;
+	}
+	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
+	*roam_scan_n_probes = neighbor_roam_info->cfgParams.roam_scan_n_probes;
+	sme_release_global_lock(&mac->sme);
+
+	return status;
 }
 
 QDF_STATUS sme_get_roam_scan_home_away_time(mac_handle_t mac_handle,

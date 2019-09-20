@@ -762,9 +762,17 @@ QDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr);
 QDF_STATUS sme_hide_ssid(mac_handle_t mac_handle, uint8_t sessionId,
 		uint8_t ssidHidden);
 
+/**
+ * sme_update_roam_scan_n_probes() - Update no.of roam scan probes
+ * @mac_handle: The handle returned by mac_open
+ * @vdev_id: vdev identifier
+ * @probes: number of probe requests to be sent out
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
-					 uint8_t sessionId,
-					 const uint8_t nProbes);
+					 uint8_t vdev_id,
+					 const uint8_t probes);
 
 /**
  * sme_update_roam_scan_home_away_time() - Update roam scan Home away time
@@ -782,7 +790,18 @@ sme_update_roam_scan_home_away_time(mac_handle_t mac_handle, uint8_t vdev_id,
 				    const bool send_offload_cmd);
 
 bool sme_get_roam_intra_band(mac_handle_t mac_handle);
-uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle);
+
+/**
+ * sme_get_roam_scan_n_probes() - get Roam scan number of probes
+ * @mac_handle: The handle returned by mac_open
+ * @vdev_id: vdev identifier
+ * @roam_scan_n_probes: Buffer to fill the number of probes.
+ *			Valid only if the return status is success.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_get_roam_scan_n_probes(mac_handle_t mac_handle, uint8_t vdev_id,
+				      uint8_t *roam_scan_n_probes);
 
 /**
  * sme_update_roam_rssi_diff() - Update RoamRssiDiff

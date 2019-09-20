@@ -18300,7 +18300,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->mdid =
 		mac_ctx->roam.roamSession[session_id].connectedProfile.mdid;
 	req_buf->sessionId = session_id;
-	req_buf->nProbes = mac_ctx->mlme_cfg->lfr.roam_scan_n_probes;
+	req_buf->nProbes = roam_info->cfgParams.roam_scan_n_probes;
 	req_buf->HomeAwayTime = roam_info->cfgParams.roam_scan_home_away_time;
 
 	/*

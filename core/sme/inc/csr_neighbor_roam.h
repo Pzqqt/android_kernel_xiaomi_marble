@@ -68,6 +68,7 @@ typedef struct sCsrNeighborRoamCfgParams {
 	bool enable_scoring_for_roam;
 	uint8_t roam_rssi_diff;
 	uint16_t roam_scan_home_away_time;
+	uint8_t roam_scan_n_probes;
 } tCsrNeighborRoamCfgParams, *tpCsrNeighborRoamCfgParams;
 
 #define CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX    255
