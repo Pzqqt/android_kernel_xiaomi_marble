@@ -392,6 +392,7 @@ struct hal_hw_txrx_ops {
 	uint8_t (*hal_rx_msdu_end_da_is_valid_get)(uint8_t *buf);
 	uint8_t (*hal_rx_msdu_end_last_msdu_get)(uint8_t *buf);
 	bool (*hal_rx_get_mpdu_mac_ad4_valid)(uint8_t *buf);
+	uint32_t (*hal_rx_mpdu_start_sw_peer_id_get)(uint8_t *buf);
 };
 
 /**

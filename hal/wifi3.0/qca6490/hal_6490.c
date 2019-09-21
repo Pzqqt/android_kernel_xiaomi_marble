@@ -231,6 +231,22 @@ static bool hal_rx_get_mpdu_mac_ad4_valid_6490(uint8_t *buf)
 	return ad4_valid;
 }
 
+/**
+ * hal_rx_mpdu_start_sw_peer_id_get_6490: Retrieve sw peer_id
+ * @buf: network buffer
+ *
+ * Return: sw peer_id
+ */
+static uint32_t hal_rx_mpdu_start_sw_peer_id_get_6490(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+			&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	return HAL_RX_MPDU_INFO_SW_PEER_ID_GET(
+		&mpdu_start->rx_mpdu_info_details);
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* rx */
 	hal_rx_get_rx_fragment_number_6490,
@@ -244,4 +260,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_msdu_end_da_is_valid_get_6490,
 	hal_rx_msdu_end_last_msdu_get_6490,
 	hal_rx_get_mpdu_mac_ad4_valid_6490,
+	hal_rx_mpdu_start_sw_peer_id_get_6490,
 };

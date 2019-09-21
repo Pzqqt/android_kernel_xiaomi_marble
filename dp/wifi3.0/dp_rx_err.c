@@ -1456,7 +1456,8 @@ done:
 		uint8_t *tlv_hdr;
 		rx_tlv_hdr = qdf_nbuf_data(nbuf);
 
-		peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
+		peer_id = hal_rx_mpdu_start_sw_peer_id_get(soc->hal_soc,
+							   rx_tlv_hdr);
 		peer = dp_peer_find_by_id(soc, peer_id);
 
 		/*
@@ -1507,7 +1508,8 @@ done:
 					if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
 									   rx_tlv_hdr)) {
 						peer_id =
-						hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
+						hal_rx_mpdu_start_sw_peer_id_get(soc->hal_soc,
+										 rx_tlv_hdr);
 						tid =
 						hal_rx_mpdu_start_tid_get(hal_soc, rx_tlv_hdr);
 					}

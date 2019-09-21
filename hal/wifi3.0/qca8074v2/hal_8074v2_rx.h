@@ -116,6 +116,12 @@
 		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_OFFSET)),	\
 		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_MASK,		\
 		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_LSB))
+
+#define HAL_RX_MPDU_INFO_SW_PEER_ID_GET(_rx_mpdu_info) \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_info),	\
+		RX_MPDU_INFO_1_SW_PEER_ID_OFFSET)),	\
+		RX_MPDU_INFO_1_SW_PEER_ID_MASK,		\
+		RX_MPDU_INFO_1_SW_PEER_ID_LSB))
 /*
  * hal_rx_msdu_start_nss_get_8074v2(): API to get the NSS
  * Interval from rx_msdu_start

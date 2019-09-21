@@ -1265,28 +1265,20 @@ hal_rx_tid_get(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 	return HAL_RX_NON_QOS_TID;
 }
 
-
-/*
- * Get SW peer id from RX_MPDU_START
+/**
+ * hal_rx_mpdu_start_sw_peer_id_get() - Retrieve sw peer id
+ * @hal_soc_hdl: hal soc handle
+ * @buf: pointer to rx pkt TLV.
+ *
+ * Return: sw peer_id
  */
-#define HAL_RX_MPDU_INFO_SW_PEER_ID_GET(_rx_mpdu_info) \
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_info),	\
-		RX_MPDU_INFO_1_SW_PEER_ID_OFFSET)),	\
-		RX_MPDU_INFO_1_SW_PEER_ID_MASK,		\
-		RX_MPDU_INFO_1_SW_PEER_ID_LSB))
-
 static inline uint32_t
-hal_rx_mpdu_start_sw_peer_id_get(uint8_t *buf)
+hal_rx_mpdu_start_sw_peer_id_get(hal_soc_handle_t hal_soc_hdl,
+				 uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_start *mpdu_start =
-			&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
-	uint32_t sw_peer_id;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	sw_peer_id = HAL_RX_MPDU_INFO_SW_PEER_ID_GET(
-		&(mpdu_start->rx_mpdu_info_details));
-
-	return sw_peer_id;
+	return hal_soc->ops->hal_rx_mpdu_start_sw_peer_id_get(buf);
 }
 
 #define HAL_RX_MSDU_START_SGI_GET(_rx_msdu_start)	\
