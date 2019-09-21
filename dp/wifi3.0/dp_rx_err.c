@@ -697,7 +697,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	qdf_ether_header_t *eh;
 
 	qdf_nbuf_set_rx_chfrag_start(nbuf,
-				hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr));
+				hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
+							       rx_tlv_hdr));
 	qdf_nbuf_set_rx_chfrag_end(nbuf,
 				   hal_rx_msdu_end_last_msdu_get(rx_tlv_hdr));
 	qdf_nbuf_set_da_mcbc(nbuf, hal_rx_msdu_end_da_is_mcbc_get(soc->hal_soc,
@@ -1049,7 +1050,8 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	QDF_STATUS status;
 	struct cdp_rx_mic_err_info mic_failure_info;
 
-	if (!hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr))
+	if (!hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
+					    rx_tlv_hdr))
 		return;
 
 	if (!peer) {
@@ -1500,7 +1502,8 @@ done:
 				case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
 					pool_id = wbm_err_info.pool_id;
 
-					if (hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr)) {
+					if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
+									   rx_tlv_hdr)) {
 						peer_id =
 						hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
 						tid =

@@ -254,6 +254,24 @@ static void hal_rx_print_pn_6390(uint8_t *buf)
 		  pn_127_96, pn_95_64, pn_63_32, pn_31_0);
 }
 
+/**
+ * hal_rx_msdu_end_first_msduget_6390: API to get first msdu status
+ * from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: first_msdu
+ */
+static uint8_t hal_rx_msdu_end_first_msdu_get_6390(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint8_t first_msdu;
+
+	first_msdu = HAL_RX_MSDU_END_FIRST_MSDU_GET(msdu_end);
+
+	return first_msdu;
+}
+
 struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -303,6 +321,7 @@ struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	hal_rx_msdu_end_l3_hdr_padding_get_6390,
 	hal_rx_encryption_info_valid_6390,
 	hal_rx_print_pn_6390,
+	hal_rx_msdu_end_first_msdu_get_6390,
 };
 
 struct hal_hw_srng_config hw_srng_table_6390[] = {

@@ -84,6 +84,12 @@
 	RX_MPDU_INFO_7_PN_127_96_MASK,			\
 	RX_MPDU_INFO_7_PN_127_96_LSB))
 
+#define HAL_RX_MSDU_END_FIRST_MSDU_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_5_FIRST_MSDU_OFFSET)),	\
+		RX_MSDU_END_5_FIRST_MSDU_MASK,		\
+		RX_MSDU_END_5_FIRST_MSDU_LSB))
+
 /*
  * hal_rx_msdu_start_nss_get_8074(): API to get the NSS
  * Interval from rx_msdu_start
