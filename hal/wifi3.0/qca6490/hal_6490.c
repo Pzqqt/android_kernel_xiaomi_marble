@@ -471,6 +471,31 @@ static bool hal_rx_is_unicast_6490(uint8_t *buf)
 
 	return (HAL_MPDU_SW_FRAME_GROUP_UNICAST_DATA == grp_id) ? true : false;
 }
+
+/**
+ * hal_rx_tid_get_6490: get tid based on qos control valid.
+ * @hal_soc_hdl: hal_soc handle
+ * @ buf: pointer to rx pkt TLV.
+ *
+ * Return: tid
+ */
+static uint32_t hal_rx_tid_get_6490(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+	&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	uint8_t *rx_mpdu_info = (uint8_t *)&mpdu_start->rx_mpdu_info_details;
+	uint8_t qos_control_valid =
+		(_HAL_MS((*_OFFSET_TO_WORD_PTR((rx_mpdu_info),
+			  RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID_OFFSET)),
+			 RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID_MASK,
+			 RX_MPDU_INFO_11_MPDU_QOS_CONTROL_VALID_LSB));
+
+	if (qos_control_valid)
+		return hal_rx_mpdu_start_tid_get_6490(buf);
+
+	return HAL_RX_NON_QOS_TID;
+}
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* rx */
 	hal_rx_get_rx_fragment_number_6490,
@@ -494,4 +519,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_mpdu_get_addr4_6490,
 	hal_rx_get_mpdu_sequence_control_valid_6490,
 	hal_rx_is_unicast_6490,
+	hal_rx_tid_get_6490,
 };

@@ -1231,8 +1231,8 @@ hal_rx_is_unicast(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 
 /**
  * hal_rx_tid_get: get tid based on qos control valid.
- *
- * @ buf: pointer to rx pkt TLV.
+ * @hal_soc_hdl: hal soc handle
+ * @buf: pointer to rx pkt TLV.
  *
  * Return: tid
  */
@@ -1240,20 +1240,8 @@ static inline uint32_t
 hal_rx_tid_get(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 {
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_start *mpdu_start =
-	&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
-	uint8_t *rx_mpdu_info = (uint8_t *)&mpdu_start->rx_mpdu_info_details;
-	uint8_t qos_control_valid =
-		(_HAL_MS((*_OFFSET_TO_WORD_PTR((rx_mpdu_info),
-			  RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_OFFSET)),
-			 RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_MASK,
-			 RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_LSB));
 
-	if (qos_control_valid)
-		return hal_soc->ops->hal_rx_mpdu_start_tid_get(buf);
-
-	return HAL_RX_NON_QOS_TID;
+	return hal_soc->ops->hal_rx_tid_get(hal_soc_hdl, buf);
 }
 
 /**
