@@ -383,7 +383,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					goto next_msdu;
 				}
 
-				msdu_ppdu_id = HAL_RX_HW_DESC_GET_PPDUID_GET(
+				msdu_ppdu_id = hal_rx_hw_desc_get_ppduid_get(
+						soc->hal_soc,
 						rx_desc_tlv);
 				is_first_msdu = false;
 

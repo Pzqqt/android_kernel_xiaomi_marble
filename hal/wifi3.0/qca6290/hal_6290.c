@@ -592,6 +592,24 @@ static uint32_t hal_rx_tid_get_6290(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 
 	return HAL_RX_NON_QOS_TID;
 }
+
+/**
+ * hal_rx_hw_desc_get_ppduid_get_6290(): retrieve ppdu id
+ * @hw_desc_addr: hw addr
+ *
+ * Return: ppdu id
+ */
+static uint32_t hal_rx_hw_desc_get_ppduid_get_6290(void *hw_desc_addr)
+{
+	struct rx_mpdu_info *rx_mpdu_info;
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+
+	rx_mpdu_info =
+		&rx_desc->mpdu_start_tlv.rx_mpdu_start.rx_mpdu_info_details;
+
+	return HAL_RX_GET(rx_mpdu_info, RX_MPDU_INFO_0, PHY_PPDU_ID);
+}
+
 struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -656,6 +674,7 @@ struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	hal_rx_get_mpdu_sequence_control_valid_6290,
 	hal_rx_is_unicast_6290,
 	hal_rx_tid_get_6290,
+	hal_rx_hw_desc_get_ppduid_get_6290,
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {

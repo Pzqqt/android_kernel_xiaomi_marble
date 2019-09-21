@@ -228,17 +228,6 @@ bool HAL_RX_HW_DESC_MPDU_VALID(void *hw_desc_addr)
 	return tlv_tag == WIFIRX_MPDU_START_E ? true : false;
 }
 
-static inline
-uint32_t HAL_RX_HW_DESC_GET_PPDUID_GET(void *hw_desc_addr)
-{
-	struct rx_mpdu_info *rx_mpdu_info;
-	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
-
-	rx_mpdu_info =
-		&rx_desc->mpdu_start_tlv.rx_mpdu_start.rx_mpdu_info_details;
-
-	return HAL_RX_GET(rx_mpdu_info, RX_MPDU_INFO_0, PHY_PPDU_ID);
-}
 
 /* TODO: Move all Rx descriptor functions to hal_rx.h to avoid duplication */
 

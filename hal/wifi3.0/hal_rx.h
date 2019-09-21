@@ -3313,4 +3313,20 @@ static inline void hal_rx_msdu_get_flow_params(uint8_t *buf,
 	*flow_timeout = HAL_RX_MSDU_END_FLOW_IDX_TIMEOUT_GET(msdu_end);
 	*flow_index = HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
 }
+
+/**
+ * hal_rx_hw_desc_get_ppduid_get() - Retrieve ppdu id
+ * @hal_soc_hdl: hal_soc handle
+ * @hw_desc_addr: hardware descriptor address
+ *
+ * Return: 0 - success/ non-zero failure
+ */
+static inline
+uint32_t hal_rx_hw_desc_get_ppduid_get(hal_soc_handle_t hal_soc_hdl,
+				       void *hw_desc_addr)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_hw_desc_get_ppduid_get(hw_desc_addr);
+}
 #endif /* _HAL_RX_H */
