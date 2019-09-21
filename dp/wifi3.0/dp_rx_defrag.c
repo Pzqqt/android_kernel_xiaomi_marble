@@ -952,8 +952,8 @@ dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc,
 			QDF_MAC_ADDR_SIZE);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
-		hal_rx_mpdu_get_addr3(rx_desc_info,
-			&mac_addr.raw[0]);
+		hal_rx_mpdu_get_addr3(soc->hal_soc, rx_desc_info,
+				      &mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->dest_addr, &mac_addr.raw[0],
 			QDF_MAC_ADDR_SIZE);
 		hal_rx_mpdu_get_addr2(soc->hal_soc, rx_desc_info,
@@ -966,15 +966,15 @@ dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc,
 				      &mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->dest_addr, &mac_addr.raw[0],
 			QDF_MAC_ADDR_SIZE);
-		hal_rx_mpdu_get_addr3(rx_desc_info,
-			&mac_addr.raw[0]);
+		hal_rx_mpdu_get_addr3(soc->hal_soc, rx_desc_info,
+				      &mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->src_addr, &mac_addr.raw[0],
 			QDF_MAC_ADDR_SIZE);
 		break;
 
 	case IEEE80211_FC1_DIR_DSTODS:
-		hal_rx_mpdu_get_addr3(rx_desc_info,
-			&mac_addr.raw[0]);
+		hal_rx_mpdu_get_addr3(soc->hal_soc, rx_desc_info,
+				      &mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->dest_addr, &mac_addr.raw[0],
 			QDF_MAC_ADDR_SIZE);
 		hal_rx_mpdu_get_addr4(rx_desc_info,
