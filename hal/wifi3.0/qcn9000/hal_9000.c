@@ -201,6 +201,24 @@ static uint32_t hal_rx_desc_is_first_msdu_9000(void *hw_desc_addr)
 	return HAL_RX_GET(msdu_end, RX_MSDU_END_5, FIRST_MSDU);
 }
 
+/**
+ * hal_rx_msdu_end_l3_hdr_padding_get_9000(): API to get_9000 the
+ * l3_header padding from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: number of l3 header padding bytes
+ */
+static uint32_t hal_rx_msdu_end_l3_hdr_padding_get_9000(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint32_t l3_header_padding;
+
+	l3_header_padding = HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(msdu_end);
+
+	return l3_header_padding;
+}
+
 struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -248,6 +266,7 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	hal_rx_msdu_end_sa_is_valid_get_9000,
 	hal_rx_msdu_end_sa_idx_get_9000,
 	hal_rx_desc_is_first_msdu_9000,
+	hal_rx_msdu_end_l3_hdr_padding_get_9000,
 };
 
 struct hal_hw_srng_config hw_srng_table_9000[] = {

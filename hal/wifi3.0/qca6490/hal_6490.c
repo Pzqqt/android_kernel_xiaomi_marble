@@ -103,10 +103,29 @@ static uint32_t hal_rx_desc_is_first_msdu_6490(void *hw_desc_addr)
 	return HAL_RX_GET(msdu_end, RX_MSDU_END_10, FIRST_MSDU);
 }
 
+/**
+ * hal_rx_msdu_end_l3_hdr_padding_get_6490(): API to get_6490 the
+ * l3_header padding from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: number of l3 header padding bytes
+ */
+static uint32_t hal_rx_msdu_end_l3_hdr_padding_get_6490(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint32_t l3_header_padding;
+
+	l3_header_padding = HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(msdu_end);
+
+	return l3_header_padding;
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* rx */
 	hal_rx_get_rx_fragment_number_6490,
 	hal_rx_msdu_end_da_is_mcbc_get_6490,
 	hal_rx_msdu_end_sa_is_valid_get_6490,
 	hal_rx_desc_is_first_msdu_6490,
+	hal_rx_msdu_end_l3_hdr_padding_get_6490,
 };

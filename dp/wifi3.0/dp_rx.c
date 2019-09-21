@@ -1601,7 +1601,7 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 
 	rx_tlv_hdr = qdf_nbuf_data(nbuf);
 	l2_hdr_offset =
-		hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
+		hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc, rx_tlv_hdr);
 
 	msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
@@ -2045,7 +2045,8 @@ done:
 			next = nbuf->next;
 		} else {
 			l2_hdr_offset =
-				hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
+				hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc,
+								   rx_tlv_hdr);
 
 			msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 			pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;

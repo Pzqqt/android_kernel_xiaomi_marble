@@ -1038,23 +1038,20 @@ hal_rx_mpdu_peer_meta_data_set(uint8_t *buf, uint32_t peer_mdata)
 		RX_MSDU_START_4_FLOW_ID_TOEPLITZ_MASK, \
 		RX_MSDU_START_4_FLOW_ID_TOEPLITZ_LSB))
 
- /**
+/**
  * hal_rx_msdu_end_l3_hdr_padding_get(): API to get the
  * l3_header padding from rx_msdu_end TLV
  *
- * @ buf: pointer to the start of RX PKT TLV headers
+ * @buf: pointer to the start of RX PKT TLV headers
  * Return: number of l3 header padding bytes
  */
 static inline uint32_t
-hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
+hal_rx_msdu_end_l3_hdr_padding_get(hal_soc_handle_t hal_soc_hdl,
+				   uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint32_t l3_header_padding;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	l3_header_padding = HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(msdu_end);
-
-	return l3_header_padding;
+	return hal_soc->ops->hal_rx_msdu_end_l3_hdr_padding_get(buf);
 }
 
 /**
