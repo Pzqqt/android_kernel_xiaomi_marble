@@ -232,6 +232,28 @@ static uint32_t hal_rx_encryption_info_valid_6290(uint8_t *buf)
 	return encryption_info;
 }
 
+/*
+ * hal_rx_print_pn_6290: Prints the PN of rx packet.
+ * @buf: rx_tlv_hdr of the received packet
+ *
+ * Return: void
+ */
+static void hal_rx_print_pn_6290(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+
+	uint32_t pn_31_0 = HAL_RX_MPDU_PN_31_0_GET(mpdu_info);
+	uint32_t pn_63_32 = HAL_RX_MPDU_PN_63_32_GET(mpdu_info);
+	uint32_t pn_95_64 = HAL_RX_MPDU_PN_95_64_GET(mpdu_info);
+	uint32_t pn_127_96 = HAL_RX_MPDU_PN_127_96_GET(mpdu_info);
+
+	hal_debug("PN number pn_127_96 0x%x pn_95_64 0x%x pn_63_32 0x%x pn_31_0 0x%x ",
+		  pn_127_96, pn_95_64, pn_63_32, pn_31_0);
+}
+
 struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -280,6 +302,7 @@ struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	hal_rx_desc_is_first_msdu_6290,
 	hal_rx_msdu_end_l3_hdr_padding_get_6290,
 	hal_rx_encryption_info_valid_6290,
+	hal_rx_print_pn_6290,
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {

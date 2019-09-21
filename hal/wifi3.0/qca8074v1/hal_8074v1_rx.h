@@ -59,6 +59,31 @@
 	RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID_OFFSET)),	\
 	RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID_MASK,	\
 	RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID_LSB))
+
+#define HAL_RX_MPDU_PN_31_0_GET(_rx_mpdu_info)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+	RX_MPDU_INFO_4_PN_31_0_OFFSET)),		\
+	RX_MPDU_INFO_4_PN_31_0_MASK,			\
+	RX_MPDU_INFO_4_PN_31_0_LSB))
+
+#define HAL_RX_MPDU_PN_63_32_GET(_rx_mpdu_info)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+	RX_MPDU_INFO_5_PN_63_32_OFFSET)),		\
+	RX_MPDU_INFO_5_PN_63_32_MASK,			\
+	RX_MPDU_INFO_5_PN_63_32_LSB))
+
+#define HAL_RX_MPDU_PN_95_64_GET(_rx_mpdu_info)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+	RX_MPDU_INFO_6_PN_95_64_OFFSET)),		\
+	RX_MPDU_INFO_6_PN_95_64_MASK,			\
+	RX_MPDU_INFO_6_PN_95_64_LSB))
+
+#define HAL_RX_MPDU_PN_127_96_GET(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+	RX_MPDU_INFO_7_PN_127_96_OFFSET)),		\
+	RX_MPDU_INFO_7_PN_127_96_MASK,			\
+	RX_MPDU_INFO_7_PN_127_96_LSB))
+
 /*
  * hal_rx_msdu_start_nss_get_8074(): API to get the NSS
  * Interval from rx_msdu_start

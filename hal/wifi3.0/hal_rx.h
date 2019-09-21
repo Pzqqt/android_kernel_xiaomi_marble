@@ -410,31 +410,6 @@ enum hal_rx_ret_buf_manager {
 	HAL_RX_MSDU_DA_IS_MCBC_FLAG_GET(msdu_info_ptr) | \
 	HAL_RX_MSDU_DA_IDX_TIMEOUT_FLAG_GET(msdu_info_ptr))
 
-
-#define HAL_RX_MPDU_PN_31_0_GET(_rx_mpdu_info)		\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
-	RX_MPDU_INFO_4_PN_31_0_OFFSET)),		\
-	RX_MPDU_INFO_4_PN_31_0_MASK,			\
-	RX_MPDU_INFO_4_PN_31_0_LSB))
-
-#define HAL_RX_MPDU_PN_63_32_GET(_rx_mpdu_info)		\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
-	RX_MPDU_INFO_5_PN_63_32_OFFSET)),		\
-	RX_MPDU_INFO_5_PN_63_32_MASK,			\
-	RX_MPDU_INFO_5_PN_63_32_LSB))
-
-#define HAL_RX_MPDU_PN_95_64_GET(_rx_mpdu_info)		\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
-	RX_MPDU_INFO_6_PN_95_64_OFFSET)),		\
-	RX_MPDU_INFO_6_PN_95_64_MASK,			\
-	RX_MPDU_INFO_6_PN_95_64_LSB))
-
-#define HAL_RX_MPDU_PN_127_96_GET(_rx_mpdu_info)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
-	RX_MPDU_INFO_7_PN_127_96_OFFSET)),		\
-	RX_MPDU_INFO_7_PN_127_96_MASK,			\
-	RX_MPDU_INFO_7_PN_127_96_LSB))
-
 #define HAL_RX_MPDU_ENCRYPT_TYPE_GET(_rx_mpdu_info)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
 	RX_MPDU_INFO_3_ENCRYPT_TYPE_OFFSET)),		\
@@ -692,27 +667,18 @@ hal_rx_encryption_info_valid(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 }
 
 /*
- * @ hal_rx_print_pn: Prints the PN of rx packet.
+ * hal_rx_print_pn: Prints the PN of rx packet.
+ * @hal_soc_hdl: hal soc handle
+ * @buf: rx_tlv_hdr of the received packet
  *
- * @ buf: rx_tlv_hdr of the received packet
- * @ Return: void
+ * Return: void
  */
 static inline void
-hal_rx_print_pn(uint8_t *buf)
+hal_rx_print_pn(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_start *mpdu_start =
-				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
-	struct rx_mpdu_info *mpdu_info = &(mpdu_start->rx_mpdu_info_details);
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	uint32_t pn_31_0 = HAL_RX_MPDU_PN_31_0_GET(mpdu_info);
-	uint32_t pn_63_32 = HAL_RX_MPDU_PN_63_32_GET(mpdu_info);
-	uint32_t pn_95_64 = HAL_RX_MPDU_PN_95_64_GET(mpdu_info);
-	uint32_t pn_127_96 = HAL_RX_MPDU_PN_127_96_GET(mpdu_info);
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		"PN number pn_127_96 0x%x pn_95_64 0x%x pn_63_32 0x%x pn_31_0 0x%x ",
-			pn_127_96, pn_95_64, pn_63_32, pn_31_0);
+	hal_soc->ops->hal_rx_print_pn(buf);
 }
 
 /*
