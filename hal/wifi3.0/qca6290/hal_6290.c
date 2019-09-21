@@ -426,6 +426,41 @@ static QDF_STATUS hal_rx_mpdu_get_addr1_6290(uint8_t *buf, uint8_t *mac_addr)
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/*
+ * hal_rx_mpdu_get_addr2_6290(): API to check get address2 of the mpdu
+ * in the packet
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * @mac_addr: pointer to mac address
+ * Return: success/failure
+ */
+static QDF_STATUS hal_rx_mpdu_get_addr2_6290(uint8_t *buf,
+					     uint8_t *mac_addr)
+{
+	struct __attribute__((__packed__)) hal_addr2 {
+		uint16_t ad2_15_0;
+		uint32_t ad2_47_16;
+	};
+
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	struct hal_addr2 *addr = (struct hal_addr2 *)mac_addr;
+	uint32_t mac_addr_ad2_valid;
+
+	mac_addr_ad2_valid = HAL_RX_MPDU_MAC_ADDR_AD2_VALID_GET(mpdu_info);
+
+	if (mac_addr_ad2_valid) {
+		addr->ad2_15_0 = HAL_RX_MPDU_AD2_15_0_GET(mpdu_info);
+		addr->ad2_47_16 = HAL_RX_MPDU_AD2_47_16_GET(mpdu_info);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
 struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -484,6 +519,7 @@ struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	hal_rx_mpdu_get_fr_ds_6290,
 	hal_rx_get_mpdu_frame_control_valid_6290,
 	hal_rx_mpdu_get_addr1_6290,
+	hal_rx_mpdu_get_addr2_6290,
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {
