@@ -402,6 +402,8 @@ struct hal_hw_txrx_ops {
 		(*hal_rx_mpdu_get_addr2)(uint8_t *buf, uint8_t *mac_addr);
 	QDF_STATUS
 		(*hal_rx_mpdu_get_addr3)(uint8_t *buf, uint8_t *mac_addr);
+	QDF_STATUS
+		(*hal_rx_mpdu_get_addr4)(uint8_t *buf, uint8_t *mac_addr);
 };
 
 /**

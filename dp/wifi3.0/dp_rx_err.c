@@ -1087,13 +1087,13 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		return;
 	}
 
-	if (hal_rx_mpdu_get_addr1(qdf_nbuf_data(nbuf),
+	if (hal_rx_mpdu_get_addr1(soc->hal_soc, qdf_nbuf_data(nbuf),
 				  &mic_failure_info.da_mac_addr.bytes[0])) {
 		dp_err_rl("Failed to get da_mac_addr");
 		goto fail;
 	}
 
-	if (hal_rx_mpdu_get_addr2(qdf_nbuf_data(nbuf),
+	if (hal_rx_mpdu_get_addr2(soc->hal_soc, qdf_nbuf_data(nbuf),
 				  &mic_failure_info.ta_mac_addr.bytes[0])) {
 		dp_err_rl("Failed to get ta_mac_addr");
 		goto fail;

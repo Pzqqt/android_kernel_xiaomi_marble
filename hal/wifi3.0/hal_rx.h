@@ -1582,36 +1582,18 @@ QDF_STATUS hal_rx_mpdu_get_addr3(hal_soc_handle_t hal_soc_hdl,
 /*
  * hal_rx_mpdu_get_addr4(): API to get address4 of the mpdu
  * in the packet
- *
+ * @hal_soc_hdl: hal_soc handle
  * @buf: pointer to the start of RX PKT TLV header
  * @mac_addr: pointer to mac address
  * Return: success/failure
  */
 static inline
-QDF_STATUS hal_rx_mpdu_get_addr4(uint8_t *buf, uint8_t *mac_addr)
+QDF_STATUS hal_rx_mpdu_get_addr4(hal_soc_handle_t hal_soc_hdl,
+				 uint8_t *buf, uint8_t *mac_addr)
 {
-	struct __attribute__((__packed__)) hal_addr4 {
-		uint32_t ad4_31_0;
-		uint16_t ad4_47_32;
-	};
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_start *mpdu_start =
-				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
-
-	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
-	struct hal_addr4 *addr = (struct hal_addr4 *)mac_addr;
-	uint32_t mac_addr_ad4_valid;
-
-	mac_addr_ad4_valid = HAL_RX_MPDU_MAC_ADDR_AD4_VALID_GET(mpdu_info);
-
-	if (mac_addr_ad4_valid) {
-		addr->ad4_31_0 = HAL_RX_MPDU_AD4_31_0_GET(mpdu_info);
-		addr->ad4_47_32 = HAL_RX_MPDU_AD4_47_32_GET(mpdu_info);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	return QDF_STATUS_E_FAILURE;
+	return hal_soc->ops->hal_rx_mpdu_get_addr4(buf, mac_addr);
 }
 
  /**
