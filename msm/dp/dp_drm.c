@@ -376,8 +376,6 @@ int dp_connector_get_mode_info(struct drm_connector *connector,
 		struct msm_mode_info *mode_info,
 		void *display, const struct msm_resource_caps_info *avail_res)
 {
-	const u32 dual_lm = 2;
-	const u32 single_lm = 1;
 	const u32 single_intf = 1;
 	const u32 no_enc = 0;
 	struct msm_display_topology *topology;
@@ -385,9 +383,12 @@ int dp_connector_get_mode_info(struct drm_connector *connector,
 	struct dp_panel *dp_panel;
 	struct dp_display_mode dp_mode;
 	struct dp_display *dp_disp = display;
+	struct msm_drm_private *priv;
+	int rc = 0;
 
 	if (!drm_mode || !mode_info || !avail_res ||
-			!avail_res->max_mixer_width || !connector || !display) {
+			!avail_res->max_mixer_width || !connector || !display ||
+			!connector->dev || !connector->dev->dev_private) {
 		DP_ERR("invalid params\n");
 		return -EINVAL;
 	}
@@ -396,10 +397,17 @@ int dp_connector_get_mode_info(struct drm_connector *connector,
 
 	sde_conn = to_sde_connector(connector);
 	dp_panel = sde_conn->drv_panel;
+	priv = connector->dev->dev_private;
 
 	topology = &mode_info->topology;
-	topology->num_lm = (avail_res->max_mixer_width < drm_mode->hdisplay) ?
-							dual_lm : single_lm;
+
+	rc = msm_get_mixer_count(priv, drm_mode, avail_res,
+			&topology->num_lm);
+	if (rc) {
+		DP_ERR("error getting mixer count. rc:%d\n", rc);
+		return rc;
+	}
+
 	topology->num_enc = no_enc;
 	topology->num_intf = single_intf;
 
