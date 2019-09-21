@@ -309,6 +309,23 @@ static uint8_t hal_rx_msdu_end_last_msdu_get_6290(uint8_t *buf)
 	return last_msdu;
 }
 
+/*
+ * hal_rx_get_mpdu_mac_ad4_valid_6290(): Retrieves if mpdu 4th addr is valid
+ *
+ * @nbuf: Network buffer
+ * Returns: value of mpdu 4th address valid field
+ */
+static bool hal_rx_get_mpdu_mac_ad4_valid_6290(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+	bool ad4_valid = 0;
+
+	ad4_valid = HAL_RX_MPDU_GET_MAC_AD4_VALID(rx_mpdu_info);
+
+	return ad4_valid;
+}
+
 struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -361,6 +378,7 @@ struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	hal_rx_msdu_end_first_msdu_get_6290,
 	hal_rx_msdu_end_da_is_valid_get_6290,
 	hal_rx_msdu_end_last_msdu_get_6290,
+	hal_rx_get_mpdu_mac_ad4_valid_6290,
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {

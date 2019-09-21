@@ -2873,27 +2873,19 @@ uint8_t hal_rx_get_mpdu_frame_control_valid(uint8_t *buf)
 	return frm_ctrl_valid;
 }
 
-#define HAL_RX_MPDU_GET_MAC_AD4_VALID(_rx_mpdu_info)		\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,		\
-		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_OFFSET)),	\
-		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_MASK,		\
-		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_LSB))
-/*
+/**
  * hal_rx_get_mpdu_mac_ad4_valid(): Retrieves if mpdu 4th addr is valid
- *
+ * @hal_soc_hdl: hal soc handle
  * @nbuf: Network buffer
  * Returns: value of mpdu 4th address valid field
  */
 static inline
-bool hal_rx_get_mpdu_mac_ad4_valid(uint8_t *buf)
+bool hal_rx_get_mpdu_mac_ad4_valid(hal_soc_handle_t hal_soc_hdl,
+				   uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
-	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
-	bool ad4_valid = 0;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	ad4_valid = HAL_RX_MPDU_GET_MAC_AD4_VALID(rx_mpdu_info);
-
-	return ad4_valid;
+	return hal_soc->ops->hal_rx_get_mpdu_mac_ad4_valid(buf);
 }
 
 /*

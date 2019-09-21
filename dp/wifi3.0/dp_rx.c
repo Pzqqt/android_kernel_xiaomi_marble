@@ -2081,7 +2081,8 @@ done:
 
 		if (qdf_unlikely(peer && (peer->nawds_enabled) &&
 				 (qdf_nbuf_is_da_mcbc(nbuf)) &&
-				 (hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr) ==
+				 (hal_rx_get_mpdu_mac_ad4_valid(soc->hal_soc,
+								rx_tlv_hdr) ==
 				  false))) {
 			tid_stats->fail_cnt[NAWDS_MCAST_DROP]++;
 			DP_STATS_INC(peer, rx.nawds_mcast_drop, 1);
