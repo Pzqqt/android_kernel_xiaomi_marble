@@ -2216,29 +2216,8 @@
 #define WE_MAC_PWR_DEBUG_CMD 4
 
 /* subcommand 5 is unused */
+/* subcommand 6 is unused */
 
-/*
- * <ioctl>
- * ibssPeerInfo - Print the ibss peers's MAC, rate and RSSI
- *
- * @INPUT: sta_id
- *
- * @OUTPUT: print ibss peer corresponding to sta_id in info logs
- *  PEER ADDR : 8c:fd:f0:01:9c:bf TxRate: 1 Mbps RSSI: -35
- *
- * This IOCTL is used to print the specific ibss peers's MAC,
- * rate and RSSI in info logs
- *
- * @E.g: iwpriv wlan0 ibssPeerInfo <sta_id>
- *  iwpriv wlan0 ibssPeerInfo 0
- *
- * Supported Feature: IBSS
- *
- * Usage: Internal/External
- *
- * </ioctl>
- */
-#define WE_IBSS_GET_PEER_INFO   6
 #define WE_UNIT_TEST_CMD   7
 
 #define WE_MTRACE_DUMP_CMD    8
@@ -3329,57 +3308,6 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 }
 
 #ifdef QCA_IBSS_SUPPORT
-/**
- * hdd_wlan_get_ibss_peer_info() - Print IBSS peer information
- * @adapter: Adapter upon which the IBSS client is active
- * @sta_id: Station index of the IBSS peer
- *
- * Return: QDF_STATUS_STATUS if the peer was found and displayed,
- * otherwise an appropriate QDF_STATUS_E_* failure code.
- */
-static QDF_STATUS hdd_wlan_get_ibss_peer_info(struct hdd_adapter *adapter,
-					      uint8_t sta_id)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	tSirPeerInfoRspParams *peer_info = &sta_ctx->ibss_peer_info;
-
-	INIT_COMPLETION(adapter->ibss_peer_info_comp);
-	status = sme_request_ibss_peer_info(mac_handle, adapter,
-					    hdd_get_ibss_peer_info_cb,
-					    false, sta_id);
-
-	if (QDF_STATUS_SUCCESS == status) {
-		unsigned long rc;
-
-		rc = wait_for_completion_timeout
-			     (&adapter->ibss_peer_info_comp,
-			     msecs_to_jiffies(IBSS_PEER_INFO_REQ_TIMOEUT));
-		if (!rc) {
-			hdd_err("failed wait on ibss_peer_info_comp");
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		/** Print the peer info */
-		hdd_debug("peer_info->numIBSSPeers = %d ", peer_info->numPeers);
-		{
-			uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
-			uint32_t tx_rate = peer_info->peerInfoParams[0].txRate;
-
-			qdf_mem_copy(mac_addr, peer_info->peerInfoParams[0].
-					mac_addr, sizeof(mac_addr));
-			hdd_debug("PEER ADDR : %pM TxRate: %d Mbps  RSSI: %d",
-				mac_addr, (int)tx_rate,
-				(int)peer_info->peerInfoParams[0].rssi);
-		}
-	} else {
-		hdd_warn("Warning: sme_request_ibss_peer_info Request failed");
-	}
-
-	return status;
-}
-
 /**
  * hdd_wlan_get_ibss_peer_info_all() - Print all IBSS peers
  * @adapter: Adapter upon which the IBSS clients are active
@@ -7860,13 +7788,6 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	hdd_debug("Received length %d", wrqu->data.length);
 
 	switch (sub_cmd) {
-	case WE_IBSS_GET_PEER_INFO:
-	{
-		pr_info("Station ID = %d\n", apps_args[0]);
-		hdd_wlan_get_ibss_peer_info(adapter, apps_args[0]);
-	}
-	break;
-
 	case WE_P2P_NOA_CMD:
 	{
 		struct p2p_app_set_ps p2p_noa;
@@ -10755,12 +10676,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 ""},
-
-	/* handlers for sub-ioctl */
-	{WE_IBSS_GET_PEER_INFO,
-	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
-	 0,
-	 "ibssPeerInfo"},
 
 #ifdef TRACE_RECORD
 	/* handlers for sub-ioctl */
