@@ -405,6 +405,7 @@ struct hal_hw_txrx_ops {
 	QDF_STATUS
 		(*hal_rx_mpdu_get_addr4)(uint8_t *buf, uint8_t *mac_addr);
 	uint8_t (*hal_rx_get_mpdu_sequence_control_valid)(uint8_t *buf);
+	bool (*hal_rx_is_unicast)(uint8_t *buf);
 };
 
 /**

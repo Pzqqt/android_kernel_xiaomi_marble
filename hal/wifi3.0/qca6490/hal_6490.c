@@ -448,6 +448,29 @@ static uint8_t hal_rx_get_mpdu_sequence_control_valid_6490(uint8_t *buf)
 
 	return HAL_RX_MPDU_GET_SEQUENCE_CONTROL_VALID(rx_mpdu_info);
 }
+
+/**
+ * hal_rx_is_unicast_6490: check packet is unicast frame or not.
+ *
+ * @ buf: pointer to rx pkt TLV.
+ *
+ * Return: true on unicast.
+ */
+static bool hal_rx_is_unicast_6490(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+		&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	uint32_t grp_id;
+	uint8_t *rx_mpdu_info = (uint8_t *)&mpdu_start->rx_mpdu_info_details;
+
+	grp_id = (_HAL_MS((*_OFFSET_TO_WORD_PTR((rx_mpdu_info),
+			   RX_MPDU_INFO_9_SW_FRAME_GROUP_ID_OFFSET)),
+			  RX_MPDU_INFO_9_SW_FRAME_GROUP_ID_MASK,
+			  RX_MPDU_INFO_9_SW_FRAME_GROUP_ID_LSB));
+
+	return (HAL_MPDU_SW_FRAME_GROUP_UNICAST_DATA == grp_id) ? true : false;
+}
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* rx */
 	hal_rx_get_rx_fragment_number_6490,
@@ -470,4 +493,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_mpdu_get_addr3_6490,
 	hal_rx_mpdu_get_addr4_6490,
 	hal_rx_get_mpdu_sequence_control_valid_6490,
+	hal_rx_is_unicast_6490,
 };
