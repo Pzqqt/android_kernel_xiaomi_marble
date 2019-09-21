@@ -580,6 +580,14 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	txrx_ast_free_cb cb = NULL;
 	void *cookie = NULL;
 	struct dp_peer *tmp_peer = NULL;
+	bool is_peer_found = false;
+
+	tmp_peer = dp_peer_find_hash_find(soc, mac_addr, 0,
+					  DP_VDEV_ALL);
+	if (tmp_peer) {
+		dp_peer_unref_delete(tmp_peer);
+		is_peer_found = true;
+	}
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	if (peer->delete_in_progress) {
@@ -629,10 +637,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			return 0;
 		}
-		tmp_peer = dp_peer_find_hash_find(soc, mac_addr, 0,
-						  DP_VDEV_ALL);
-		if (tmp_peer) {
-			dp_peer_unref_delete(tmp_peer);
+		if (is_peer_found) {
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			return 0;
 		}
