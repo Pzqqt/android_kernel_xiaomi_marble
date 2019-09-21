@@ -532,7 +532,7 @@ static uint16_t dp_rx_defrag_hdrsize(struct dp_soc *soc, qdf_nbuf_t nbuf)
 	uint16_t frm_ctrl_field;
 
 	to_ds = hal_rx_mpdu_get_to_ds(soc->hal_soc, rx_tlv_hdr);
-	fr_ds = hal_rx_mpdu_get_fr_ds(rx_tlv_hdr);
+	fr_ds = hal_rx_mpdu_get_fr_ds(soc->hal_soc, rx_tlv_hdr);
 	frm_ctrl_valid = hal_rx_get_mpdu_frame_control_valid(rx_tlv_hdr);
 	frm_ctrl_field = hal_rx_get_frame_ctrl_field(rx_tlv_hdr);
 

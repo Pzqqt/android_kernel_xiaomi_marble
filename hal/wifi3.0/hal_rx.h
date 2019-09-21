@@ -1491,33 +1491,21 @@ hal_rx_mpdu_get_to_ds(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 	return hal_soc->ops->hal_rx_mpdu_get_to_ds(buf);
 }
 
-#define HAL_RX_MPDU_GET_FROMDS(_rx_mpdu_info)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
-		RX_MPDU_INFO_2_FR_DS_OFFSET)),	\
-		RX_MPDU_INFO_2_FR_DS_MASK,	\
-		RX_MPDU_INFO_2_FR_DS_LSB))
 
 /*
  * hal_rx_mpdu_get_fr_ds(): API to get the from ds info
  * from rx_mpdu_start
- *
+ * @hal_soc_hdl: hal soc handle
  * @buf: pointer to the start of RX PKT TLV header
+ *
  * Return: uint32_t(fr_ds)
  */
-
 static inline uint32_t
-hal_rx_mpdu_get_fr_ds(uint8_t *buf)
+hal_rx_mpdu_get_fr_ds(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_start *mpdu_start =
-				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
-	uint32_t fr_ds;
-
-	fr_ds = HAL_RX_MPDU_GET_FROMDS(mpdu_info);
-
-	return fr_ds;
+	return hal_soc->ops->hal_rx_mpdu_get_fr_ds(buf);
 }
 
 #define HAL_RX_MPDU_MAC_ADDR_AD1_VALID_GET(_rx_mpdu_info) \

@@ -131,6 +131,12 @@
 		RX_MPDU_INFO_2_TO_DS_MASK,	\
 		RX_MPDU_INFO_2_TO_DS_LSB))
 
+#define HAL_RX_MPDU_GET_FROMDS(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_2_FR_DS_OFFSET)),	\
+		RX_MPDU_INFO_2_FR_DS_MASK,	\
+		RX_MPDU_INFO_2_FR_DS_LSB))
+
 #define HAL_RX_MSDU_START_MIMO_SS_BITMAP(_rx_msdu_start)\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
 	RX_MSDU_START_5_MIMO_SS_BITMAP_OFFSET)),	\

@@ -119,6 +119,12 @@
 		RX_MPDU_INFO_2_TO_DS_OFFSET)),	\
 		RX_MPDU_INFO_2_TO_DS_MASK,	\
 		RX_MPDU_INFO_2_TO_DS_LSB))
+
+#define HAL_RX_MPDU_GET_FROMDS(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_2_FR_DS_OFFSET)),	\
+		RX_MPDU_INFO_2_FR_DS_MASK,	\
+		RX_MPDU_INFO_2_FR_DS_LSB))
 /*
  * hal_rx_msdu_start_nss_get_8074(): API to get the NSS
  * Interval from rx_msdu_start
