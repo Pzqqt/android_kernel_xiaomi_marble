@@ -210,6 +210,23 @@ static uint32_t hal_rx_msdu_end_l3_hdr_padding_get_8074v1(uint8_t *buf)
 	return l3_header_padding;
 }
 
+/*
+ * @ hal_rx_encryption_info_valid_8074v1: Returns encryption type.
+ *
+ * @ buf: rx_tlv_hdr of the received packet
+ * @ Return: encryption type
+ */
+static uint32_t hal_rx_encryption_info_valid_8074v1(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	uint32_t encryption_info = HAL_RX_MPDU_ENCRYPTION_INFO_VALID(mpdu_info);
+
+	return encryption_info;
+}
+
 struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -258,6 +275,7 @@ struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 	hal_rx_msdu_end_sa_idx_get_8074v1,
 	hal_rx_desc_is_first_msdu_8074v1,
 	hal_rx_msdu_end_l3_hdr_padding_get_8074v1,
+	hal_rx_encryption_info_valid_8074v1,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074[] = {

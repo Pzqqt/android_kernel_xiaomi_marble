@@ -386,6 +386,7 @@ struct hal_hw_txrx_ops {
 	uint16_t (*hal_rx_msdu_end_sa_idx_get)(uint8_t *buf);
 	uint32_t (*hal_rx_desc_is_first_msdu)(void *hw_desc_addr);
 	uint32_t (*hal_rx_msdu_end_l3_hdr_padding_get)(uint8_t *buf);
+	uint32_t (*hal_rx_encryption_info_valid)(uint8_t *buf);
 };
 
 /**

@@ -299,7 +299,7 @@ dp_rx_msdus_drop(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 			"Packet received with PN error for tid :%d", tid);
 
 		rx_tlv_hdr = qdf_nbuf_data(rx_desc->nbuf);
-		if (hal_rx_encryption_info_valid(rx_tlv_hdr))
+		if (hal_rx_encryption_info_valid(soc->hal_soc, rx_tlv_hdr))
 			hal_rx_print_pn(rx_tlv_hdr);
 
 		/* Just free the buffers */

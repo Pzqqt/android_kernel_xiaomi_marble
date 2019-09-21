@@ -441,12 +441,6 @@ enum hal_rx_ret_buf_manager {
 	RX_MPDU_INFO_3_ENCRYPT_TYPE_MASK,		\
 	RX_MPDU_INFO_3_ENCRYPT_TYPE_LSB))
 
-#define HAL_RX_MPDU_ENCRYPTION_INFO_VALID(_rx_mpdu_info)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,		\
-	RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID_OFFSET)),	\
-	RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID_MASK,	\
-	RX_MPDU_INFO_2_FRAME_ENCRYPTION_INFO_VALID_LSB))
-
 #define HAL_RX_FLD_SET(_ptr, _wrd, _field, _val)		\
 	(*(uint32_t *)(((uint8_t *)_ptr) +			\
 		_wrd ## _ ## _field ## _OFFSET) |=		\
@@ -681,21 +675,20 @@ static inline uint8_t
 }
 
 /*
- * @ hal_rx_encryption_info_valid: Returns encryption type.
+ * hal_rx_encryption_info_valid(): Returns encryption type.
  *
- * @ buf: rx_tlv_hdr of the received packet
- * @ Return: encryption type
+ * @hal_soc_hdl: hal soc handle
+ * @buf: rx_tlv_hdr of the received packet
+ *
+ * Return: encryption type
  */
 static inline uint32_t
-hal_rx_encryption_info_valid(uint8_t *buf)
+hal_rx_encryption_info_valid(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_start *mpdu_start =
-				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
-	struct rx_mpdu_info *mpdu_info = &(mpdu_start->rx_mpdu_info_details);
-	uint32_t encryption_info = HAL_RX_MPDU_ENCRYPTION_INFO_VALID(mpdu_info);
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	return encryption_info;
+	return hal_soc->ops->hal_rx_encryption_info_valid(buf);
+
 }
 
 /*
