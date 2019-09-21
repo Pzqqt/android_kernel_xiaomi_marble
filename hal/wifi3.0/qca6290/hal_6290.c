@@ -378,6 +378,21 @@ static uint32_t hal_rx_mpdu_get_fr_ds_6290(uint8_t *buf)
 
 	return HAL_RX_MPDU_GET_FROMDS(mpdu_info);
 }
+
+/*
+ * hal_rx_get_mpdu_frame_control_valid_6290(): Retrieves mpdu frame
+ * control valid
+ *
+ * @nbuf: Network buffer
+ * Returns: value of frame control valid field
+ */
+static uint8_t hal_rx_get_mpdu_frame_control_valid_6290(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+
+	return HAL_RX_MPDU_GET_FRAME_CONTROL_VALID(rx_mpdu_info);
+}
 struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -434,6 +449,7 @@ struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	hal_rx_mpdu_start_sw_peer_id_get_6290,
 	hal_rx_mpdu_get_to_ds_6290,
 	hal_rx_mpdu_get_fr_ds_6290,
+	hal_rx_get_mpdu_frame_control_valid_6290,
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {

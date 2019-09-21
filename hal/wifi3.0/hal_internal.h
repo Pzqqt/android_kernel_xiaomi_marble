@@ -395,6 +395,7 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_rx_mpdu_start_sw_peer_id_get)(uint8_t *buf);
 	uint32_t (*hal_rx_mpdu_get_to_ds)(uint8_t *buf);
 	uint32_t (*hal_rx_mpdu_get_fr_ds)(uint8_t *buf);
+	uint8_t (*hal_rx_get_mpdu_frame_control_valid)(uint8_t *buf);
 };
 
 /**

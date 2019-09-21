@@ -533,7 +533,9 @@ static uint16_t dp_rx_defrag_hdrsize(struct dp_soc *soc, qdf_nbuf_t nbuf)
 
 	to_ds = hal_rx_mpdu_get_to_ds(soc->hal_soc, rx_tlv_hdr);
 	fr_ds = hal_rx_mpdu_get_fr_ds(soc->hal_soc, rx_tlv_hdr);
-	frm_ctrl_valid = hal_rx_get_mpdu_frame_control_valid(rx_tlv_hdr);
+	frm_ctrl_valid =
+		hal_rx_get_mpdu_frame_control_valid(soc->hal_soc,
+						    rx_tlv_hdr);
 	frm_ctrl_field = hal_rx_get_frame_ctrl_field(rx_tlv_hdr);
 
 	if (to_ds && fr_ds)
@@ -894,6 +896,7 @@ static void dp_rx_defrag_err(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 
 /*
  * dp_rx_defrag_nwifi_to_8023(): Transcap 802.11 to 802.3
+ * @soc: dp soc handle
  * @nbuf: Pointer to the fragment buffer
  * @hdrsize: Size of headers
  *
@@ -902,7 +905,8 @@ static void dp_rx_defrag_err(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
  * Returns: None
  */
 static void
-dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
+dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc,
+			   qdf_nbuf_t nbuf, uint16_t hdrsize)
 {
 	struct llc_snap_hdr_t *llchdr;
 	struct ethernet_hdr_t *eth_hdr;
@@ -930,7 +934,8 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 
 	eth_hdr = (struct ethernet_hdr_t *)(qdf_nbuf_data(nbuf));
 
-	if (hal_rx_get_mpdu_frame_control_valid(rx_desc_info))
+	if (hal_rx_get_mpdu_frame_control_valid(soc->hal_soc,
+						rx_desc_info))
 		fc = hal_rx_get_frame_ctrl_field(rx_desc_info);
 
 	dp_debug("%s: frame control type: 0x%x", __func__, fc);
@@ -1309,7 +1314,7 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 	}
 
 	/* Convert the header to 802.3 header */
-	dp_rx_defrag_nwifi_to_8023(frag_list_head, hdr_space);
+	dp_rx_defrag_nwifi_to_8023(soc, frag_list_head, hdr_space);
 	dp_rx_construct_fraglist(peer, frag_list_head, hdr_space);
 
 	return QDF_STATUS_SUCCESS;
@@ -1453,7 +1458,8 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	}
 
 	mpdu_frame_control_valid =
-		hal_rx_get_mpdu_frame_control_valid(rx_desc->rx_buf_start);
+		hal_rx_get_mpdu_frame_control_valid(soc->hal_soc,
+						    rx_desc->rx_buf_start);
 
 	/* Invalid frame control field */
 	if (!mpdu_frame_control_valid) {
