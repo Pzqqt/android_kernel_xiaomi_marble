@@ -1811,29 +1811,21 @@ hal_rx_msdu_end_first_msdu_get(hal_soc_handle_t hal_soc_hdl,
 	return hal_soc->ops->hal_rx_msdu_end_first_msdu_get(buf);
 }
 
-#define HAL_RX_MSDU_END_LAST_MSDU_GET(_rx_msdu_end)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
-		RX_MSDU_END_5_LAST_MSDU_OFFSET)),	\
-		RX_MSDU_END_5_LAST_MSDU_MASK,		\
-		RX_MSDU_END_5_LAST_MSDU_LSB))
-
- /**
+/**
  * hal_rx_msdu_end_last_msdu_get: API to get last msdu status
  * from rx_msdu_end TLV
+ * @hal_soc_hdl: hal soc handle
+ * @buf: pointer to the start of RX PKT TLV headers
  *
- * @ buf: pointer to the start of RX PKT TLV headers
  * Return: last_msdu
  */
 static inline uint8_t
-hal_rx_msdu_end_last_msdu_get(uint8_t *buf)
+hal_rx_msdu_end_last_msdu_get(hal_soc_handle_t hal_soc_hdl,
+			      uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint8_t last_msdu;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	last_msdu = HAL_RX_MSDU_END_LAST_MSDU_GET(msdu_end);
-
-	return last_msdu;
+	return hal_soc->ops->hal_rx_msdu_end_last_msdu_get(buf);
 }
 
 #define HAL_RX_MSDU_END_CCE_METADATA_GET(_rx_msdu_end)	\

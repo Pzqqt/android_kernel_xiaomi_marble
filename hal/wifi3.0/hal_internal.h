@@ -390,6 +390,7 @@ struct hal_hw_txrx_ops {
 	void (*hal_rx_print_pn)(uint8_t *buf);
 	uint8_t (*hal_rx_msdu_end_first_msdu_get)(uint8_t *buf);
 	uint8_t (*hal_rx_msdu_end_da_is_valid_get)(uint8_t *buf);
+	uint8_t (*hal_rx_msdu_end_last_msdu_get)(uint8_t *buf);
 };
 
 /**

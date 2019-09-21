@@ -286,6 +286,24 @@ static uint8_t hal_rx_msdu_end_da_is_valid_get_8074v1(uint8_t *buf)
 	return da_is_valid;
 }
 
+/**
+ * hal_rx_msdu_end_last_msdu_get_8074v1: API to get last msdu status
+ * from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: last_msdu
+ */
+static uint8_t hal_rx_msdu_end_last_msdu_get_8074v1(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint8_t last_msdu;
+
+	last_msdu = HAL_RX_MSDU_END_LAST_MSDU_GET(msdu_end);
+
+	return last_msdu;
+}
+
 struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -338,6 +356,7 @@ struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 	hal_rx_print_pn_8074v1,
 	hal_rx_msdu_end_first_msdu_get_8074v1,
 	hal_rx_msdu_end_da_is_valid_get_8074v1,
+	hal_rx_msdu_end_last_msdu_get_8074v1,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074[] = {
