@@ -1508,11 +1508,6 @@ hal_rx_mpdu_get_fr_ds(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 	return hal_soc->ops->hal_rx_mpdu_get_fr_ds(buf);
 }
 
-#define HAL_RX_MPDU_MAC_ADDR_AD1_VALID_GET(_rx_mpdu_info) \
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
-		RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID_OFFSET)), \
-		RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID_MASK,	\
-		RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID_LSB))
 
 #define HAL_RX_MPDU_MAC_ADDR_AD2_VALID_GET(_rx_mpdu_info) \
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
@@ -1532,17 +1527,6 @@ hal_rx_mpdu_get_fr_ds(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_MASK,	\
 		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_LSB))
 
-#define HAL_RX_MPDU_AD1_31_0_GET(_rx_mpdu_info)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
-		RX_MPDU_INFO_15_MAC_ADDR_AD1_31_0_OFFSET)), \
-		RX_MPDU_INFO_15_MAC_ADDR_AD1_31_0_MASK,	\
-		RX_MPDU_INFO_15_MAC_ADDR_AD1_31_0_LSB))
-
-#define HAL_RX_MPDU_AD1_47_32_GET(_rx_mpdu_info)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
-		RX_MPDU_INFO_16_MAC_ADDR_AD1_47_32_OFFSET)), \
-		RX_MPDU_INFO_16_MAC_ADDR_AD1_47_32_MASK,	\
-		RX_MPDU_INFO_16_MAC_ADDR_AD1_47_32_LSB))
 
 #define HAL_RX_MPDU_AD2_15_0_GET(_rx_mpdu_info)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
@@ -1582,36 +1566,19 @@ hal_rx_mpdu_get_fr_ds(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 
 /*
  * hal_rx_mpdu_get_addr1(): API to check get address1 of the mpdu
- *
+ * @hal_soc_hdl: hal soc handle
  * @buf: pointer to the start of RX PKT TLV headera
  * @mac_addr: pointer to mac address
+ *
  * Return: success/failure
  */
 static inline
-QDF_STATUS hal_rx_mpdu_get_addr1(uint8_t *buf, uint8_t *mac_addr)
+QDF_STATUS hal_rx_mpdu_get_addr1(hal_soc_handle_t hal_soc_hdl,
+				 uint8_t *buf, uint8_t *mac_addr)
 {
-	struct __attribute__((__packed__)) hal_addr1 {
-		uint32_t ad1_31_0;
-		uint16_t ad1_47_32;
-	};
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_start *mpdu_start =
-				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
-
-	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
-	struct hal_addr1 *addr = (struct hal_addr1 *)mac_addr;
-	uint32_t mac_addr_ad1_valid;
-
-	mac_addr_ad1_valid = HAL_RX_MPDU_MAC_ADDR_AD1_VALID_GET(mpdu_info);
-
-	if (mac_addr_ad1_valid) {
-		addr->ad1_31_0 = HAL_RX_MPDU_AD1_31_0_GET(mpdu_info);
-		addr->ad1_47_32 = HAL_RX_MPDU_AD1_47_32_GET(mpdu_info);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	return QDF_STATUS_E_FAILURE;
+	return hal_soc->ops->hal_rx_mpdu_get_addr1(buf, mac_addr);
 }
 
 /*

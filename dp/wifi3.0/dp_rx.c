@@ -629,7 +629,8 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				return  QDF_STATUS_SUCCESS;
 
 		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_RA) {
-			if (hal_rx_mpdu_get_addr1(rx_tlv_hdr,
+			if (hal_rx_mpdu_get_addr1(soc->hal_soc,
+						  rx_tlv_hdr,
 					&mac_addr.raw[0]))
 				return QDF_STATUS_E_FAILURE;
 

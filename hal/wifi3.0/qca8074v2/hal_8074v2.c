@@ -386,6 +386,40 @@ static uint8_t hal_rx_get_mpdu_frame_control_valid_8074v2(uint8_t *buf)
 
 	return HAL_RX_MPDU_GET_FRAME_CONTROL_VALID(rx_mpdu_info);
 }
+
+/*
+ * hal_rx_mpdu_get_addr1_8074v2(): API to check get address1 of the mpdu
+ *
+ * @buf: pointer to the start of RX PKT TLV headera
+ * @mac_addr: pointer to mac address
+ * Return: success/failure
+ */
+static QDF_STATUS hal_rx_mpdu_get_addr1_8074v2(uint8_t *buf, uint8_t *mac_addr)
+{
+	struct __attribute__((__packed__)) hal_addr1 {
+		uint32_t ad1_31_0;
+		uint16_t ad1_47_32;
+	};
+
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	struct hal_addr1 *addr = (struct hal_addr1 *)mac_addr;
+	uint32_t mac_addr_ad1_valid;
+
+	mac_addr_ad1_valid = HAL_RX_MPDU_MAC_ADDR_AD1_VALID_GET(mpdu_info);
+
+	if (mac_addr_ad1_valid) {
+		addr->ad1_31_0 = HAL_RX_MPDU_AD1_31_0_GET(mpdu_info);
+		addr->ad1_47_32 = HAL_RX_MPDU_AD1_47_32_GET(mpdu_info);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -444,6 +478,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_mpdu_get_to_ds_8074v2,
 	hal_rx_mpdu_get_fr_ds_8074v2,
 	hal_rx_get_mpdu_frame_control_valid_8074v2,
+	hal_rx_mpdu_get_addr1_8074v2,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {
