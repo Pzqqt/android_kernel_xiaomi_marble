@@ -341,6 +341,23 @@ static uint32_t hal_rx_mpdu_start_sw_peer_id_get_6390(uint8_t *buf)
 		&mpdu_start->rx_mpdu_info_details);
 }
 
+/*
+ * hal_rx_mpdu_get_to_ds_6390(): API to get the tods info
+ * from rx_mpdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(to_ds)
+ */
+static uint32_t hal_rx_mpdu_get_to_ds_6390(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+
+	return HAL_RX_MPDU_GET_TODS(mpdu_info);
+}
 struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -395,6 +412,7 @@ struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	hal_rx_msdu_end_last_msdu_get_6390,
 	hal_rx_get_mpdu_mac_ad4_valid_6390,
 	hal_rx_mpdu_start_sw_peer_id_get_6390,
+	hal_rx_mpdu_get_to_ds_6390,
 };
 
 struct hal_hw_srng_config hw_srng_table_6390[] = {

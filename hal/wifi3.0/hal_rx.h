@@ -1484,18 +1484,11 @@ hal_rx_msdu_start_get_pkt_type(uint8_t *buf)
  */
 
 static inline uint32_t
-hal_rx_mpdu_get_to_ds(uint8_t *buf)
+hal_rx_mpdu_get_to_ds(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_start *mpdu_start =
-				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
-	uint32_t to_ds;
-
-	to_ds = HAL_RX_MPDU_GET_TODS(mpdu_info);
-
-	return to_ds;
+	return hal_soc->ops->hal_rx_mpdu_get_to_ds(buf);
 }
 
 #define HAL_RX_MPDU_GET_FROMDS(_rx_mpdu_info)	\

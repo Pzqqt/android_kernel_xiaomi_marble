@@ -608,6 +608,7 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 					uint8_t *rx_tlv_hdr)
 {
 	union dp_align_mac_addr mac_addr;
+	struct dp_soc *soc = vdev->pdev->soc;
 
 	if (qdf_unlikely(vdev->mesh_rx_filter)) {
 		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_FROMDS)
@@ -615,12 +616,14 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				return  QDF_STATUS_SUCCESS;
 
 		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_TODS)
-			if (hal_rx_mpdu_get_to_ds(rx_tlv_hdr))
+			if (hal_rx_mpdu_get_to_ds(soc->hal_soc,
+						  rx_tlv_hdr))
 				return  QDF_STATUS_SUCCESS;
 
 		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_NODS)
-			if (!hal_rx_mpdu_get_fr_ds(rx_tlv_hdr)
-				&& !hal_rx_mpdu_get_to_ds(rx_tlv_hdr))
+			if (!hal_rx_mpdu_get_fr_ds(rx_tlv_hdr) &&
+			    !hal_rx_mpdu_get_to_ds(soc->hal_soc,
+						   rx_tlv_hdr))
 				return  QDF_STATUS_SUCCESS;
 
 		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_RA) {

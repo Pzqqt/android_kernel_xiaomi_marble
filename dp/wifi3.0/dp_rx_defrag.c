@@ -515,13 +515,14 @@ static QDF_STATUS dp_rx_defrag_wep_decap(qdf_nbuf_t msdu, uint16_t hdrlen)
 
 /*
  * dp_rx_defrag_hdrsize(): Calculate the header size of the received fragment
+ * @soc: soc handle
  * @nbuf: Pointer to the fragment
  *
  * Calculate the header size of the received fragment
  *
  * Returns: header size (uint16_t)
  */
-static uint16_t dp_rx_defrag_hdrsize(qdf_nbuf_t nbuf)
+static uint16_t dp_rx_defrag_hdrsize(struct dp_soc *soc, qdf_nbuf_t nbuf)
 {
 	uint8_t *rx_tlv_hdr = qdf_nbuf_data(nbuf);
 	uint16_t size = sizeof(struct ieee80211_frame);
@@ -530,7 +531,7 @@ static uint16_t dp_rx_defrag_hdrsize(qdf_nbuf_t nbuf)
 	uint8_t frm_ctrl_valid;
 	uint16_t frm_ctrl_field;
 
-	to_ds = hal_rx_mpdu_get_to_ds(rx_tlv_hdr);
+	to_ds = hal_rx_mpdu_get_to_ds(soc->hal_soc, rx_tlv_hdr);
 	fr_ds = hal_rx_mpdu_get_fr_ds(rx_tlv_hdr);
 	frm_ctrl_valid = hal_rx_get_mpdu_frame_control_valid(rx_tlv_hdr);
 	frm_ctrl_field = hal_rx_get_frame_ctrl_field(rx_tlv_hdr);
@@ -1188,7 +1189,7 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 	struct dp_soc *soc = vdev->pdev->soc;
 	uint8_t status = 0;
 
-	hdr_space = dp_rx_defrag_hdrsize(cur);
+	hdr_space = dp_rx_defrag_hdrsize(soc, cur);
 	index = hal_rx_msdu_is_wlan_mcast(cur) ?
 		dp_sec_mcast : dp_sec_ucast;
 
