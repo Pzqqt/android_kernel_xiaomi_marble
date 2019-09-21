@@ -704,7 +704,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	qdf_nbuf_set_da_mcbc(nbuf, hal_rx_msdu_end_da_is_mcbc_get(soc->hal_soc,
 								  rx_tlv_hdr));
 	qdf_nbuf_set_da_valid(nbuf,
-			      hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr));
+			      hal_rx_msdu_end_da_is_valid_get(soc->hal_soc,
+							      rx_tlv_hdr));
 	qdf_nbuf_set_sa_valid(nbuf,
 			      hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc,
 							      rx_tlv_hdr));

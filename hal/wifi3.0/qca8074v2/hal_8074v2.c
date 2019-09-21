@@ -267,6 +267,24 @@ static uint8_t hal_rx_msdu_end_first_msdu_get_8074v2(uint8_t *buf)
 	return first_msdu;
 }
 
+/**
+ * hal_rx_msdu_end_da_is_valid_get_8074v2: API to check if da is valid
+ * from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: da_is_valid
+ */
+static uint8_t hal_rx_msdu_end_da_is_valid_get_8074v2(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint8_t da_is_valid;
+
+	da_is_valid = HAL_RX_MSDU_END_DA_IS_VALID_GET(msdu_end);
+
+	return da_is_valid;
+}
+
 struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -318,6 +336,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_encryption_info_valid_8074v2,
 	hal_rx_print_pn_8074v2,
 	hal_rx_msdu_end_first_msdu_get_8074v2,
+	hal_rx_msdu_end_da_is_valid_get_8074v2,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

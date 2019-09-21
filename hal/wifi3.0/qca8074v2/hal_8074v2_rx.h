@@ -98,6 +98,12 @@
 	RX_MSDU_START_5_MIMO_SS_BITMAP_OFFSET)),	\
 	RX_MSDU_START_5_MIMO_SS_BITMAP_MASK,		\
 	RX_MSDU_START_5_MIMO_SS_BITMAP_LSB))
+
+#define HAL_RX_MSDU_END_DA_IS_VALID_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_5_DA_IS_VALID_OFFSET)),	\
+		RX_MSDU_END_5_DA_IS_VALID_MASK,		\
+		RX_MSDU_END_5_DA_IS_VALID_LSB))
 /*
  * hal_rx_msdu_start_nss_get_8074v2(): API to get the NSS
  * Interval from rx_msdu_start

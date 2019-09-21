@@ -2028,7 +2028,9 @@ done:
 			is_sa_vld =
 				hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc,
 								rx_tlv_hdr);
-			is_da_vld = hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr);
+			is_da_vld =
+				hal_rx_msdu_end_da_is_valid_get(soc->hal_soc,
+								rx_tlv_hdr);
 
 			qdf_nbuf_set_da_mcbc(nbuf, is_mcbc);
 			qdf_nbuf_set_da_valid(nbuf, is_da_vld);
