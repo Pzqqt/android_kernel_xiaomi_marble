@@ -531,6 +531,21 @@ static QDF_STATUS hal_rx_mpdu_get_addr4_9000(uint8_t *buf, uint8_t *mac_addr)
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/*
+ * hal_rx_get_mpdu_sequence_control_valid_9000(): Get mpdu
+ * sequence control valid
+ *
+ * @nbuf: Network buffer
+ * Returns: value of sequence control valid field
+ */
+static uint8_t hal_rx_get_mpdu_sequence_control_valid_9000(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+
+	return HAL_RX_MPDU_GET_SEQUENCE_CONTROL_VALID(rx_mpdu_info);
+}
 struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -593,6 +608,7 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	hal_rx_mpdu_get_addr2_9000,
 	hal_rx_mpdu_get_addr3_9000,
 	hal_rx_mpdu_get_addr4_9000,
+	hal_rx_get_mpdu_sequence_control_valid_9000,
 };
 
 struct hal_hw_srng_config hw_srng_table_9000[] = {

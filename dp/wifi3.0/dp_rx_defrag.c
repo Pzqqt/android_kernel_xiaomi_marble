@@ -1446,7 +1446,8 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	rx_tid = &peer->rx_tid[tid];
 
 	mpdu_sequence_control_valid =
-		hal_rx_get_mpdu_sequence_control_valid(rx_desc->rx_buf_start);
+		hal_rx_get_mpdu_sequence_control_valid(soc->hal_soc,
+						       rx_desc->rx_buf_start);
 
 	/* Invalid MPDU sequence control field, MPDU is of no use */
 	if (!mpdu_sequence_control_valid) {

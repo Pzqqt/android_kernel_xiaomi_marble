@@ -2675,28 +2675,20 @@ uint32_t hal_rx_msdu_is_wlan_mcast(qdf_nbuf_t nbuf)
 	return rx_attn->mcast_bcast;
 }
 
-#define HAL_RX_MPDU_GET_SEQUENCE_CONTROL_VALID(_rx_mpdu_info)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_OFFSET)),	\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_MASK,	\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_LSB))
 /*
  * hal_rx_get_mpdu_sequence_control_valid(): Get mpdu sequence control valid
- *
+ * @hal_soc_hdl: hal soc handle
  * @nbuf: Network buffer
- * Returns: value of sequence control valid field
+ *
+ * Return: value of sequence control valid field
  */
 static inline
-uint8_t hal_rx_get_mpdu_sequence_control_valid(uint8_t *buf)
+uint8_t hal_rx_get_mpdu_sequence_control_valid(hal_soc_handle_t hal_soc_hdl,
+					       uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
-	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
-	uint8_t seq_ctrl_valid = 0;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	seq_ctrl_valid =
-		HAL_RX_MPDU_GET_SEQUENCE_CONTROL_VALID(rx_mpdu_info);
-
-	return seq_ctrl_valid;
+	return hal_soc->ops->hal_rx_get_mpdu_sequence_control_valid(buf);
 }
 
 /*
