@@ -155,11 +155,36 @@
 		1, \
 		"External ACS Policy Control")
 
+#define ACS_WEIGHT_MAX_STR_LEN            500
+
+/*
+ * <ini>
+ * normalize_acs_weight - Used to control the ACS channel weightage.
+ *
+ * This ini is used to specify the weight percentage of the channel. Channel
+ * weights can be controlled by user to prioritize or de-prioritize channels.
+ *
+ * Related: ACS
+ *
+ * Supported Feature: ACS
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_NORMALIZE_ACS_WEIGHT CFG_INI_STRING( \
+		"normalize_acs_weight", \
+		0, \
+		ACS_WEIGHT_MAX_STR_LEN, \
+		"", \
+		"Used to specify the channel weights")
+
 #define CFG_ACS_ALL \
 	CFG(CFG_ACS_WITH_MORE_PARAM) \
 	CFG(CFG_AUTO_CHANNEL_SELECT_WEIGHT) \
 	CFG(CFG_USER_AUTO_CHANNEL_SELECTION) \
 	CFG(CFG_USER_ACS_DFS_LTE) \
-	CFG(CFG_EXTERNAL_ACS_POLICY)
+	CFG(CFG_EXTERNAL_ACS_POLICY) \
+	CFG(CFG_NORMALIZE_ACS_WEIGHT)
 
 #endif /* __CFG_MLME_ACS_H */
