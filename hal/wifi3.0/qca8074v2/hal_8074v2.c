@@ -734,6 +734,24 @@ hal_rx_msdu_end_sa_sw_peer_id_get_8074v2(uint8_t *buf)
 	return HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(msdu_end);
 }
 
+/**
+ * hal_tx_desc_set_mesh_en_8074v2 - Set mesh_enable flag in Tx descriptor
+ * @desc: Handle to Tx Descriptor
+ * @en:   For raw WiFi frames, this indicates transmission to a mesh STA,
+ *        enabling the interpretation of the 'Mesh Control Present' bit
+ *        (bit 8) of QoS Control (otherwise this bit is ignored),
+ *        For native WiFi frames, this indicates that a 'Mesh Control' field
+ *        is present between the header and the LLC.
+ *
+ * Return: void
+ */
+static inline
+void hal_tx_desc_set_mesh_en_8074v2(void *desc, uint8_t en)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_4, MESH_ENABLE) |=
+		HAL_TX_SM(TCL_DATA_CMD_4, MESH_ENABLE, en);
+}
+
 struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -754,6 +772,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_tx_desc_set_cache_set_num_generic,
 	hal_tx_comp_get_status_generic,
 	hal_tx_comp_get_release_reason_generic,
+	hal_tx_desc_set_mesh_en_8074v2,
 
 	/* rx */
 	hal_rx_msdu_start_nss_get_8074v2,

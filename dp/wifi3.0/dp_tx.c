@@ -1133,7 +1133,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		hal_tx_desc_set_hlos_tid(hal_tx_desc_cached, tid);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_MESH)
-		hal_tx_desc_set_mesh_en(hal_tx_desc_cached, 1);
+		hal_tx_desc_set_mesh_en(soc->hal_soc, hal_tx_desc_cached, 1);
 
 
 	tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_get());

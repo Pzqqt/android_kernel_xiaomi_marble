@@ -611,7 +611,27 @@ static void hal_reo_status_get_header_6490(uint32_t *d, int b, void *h1)
 		HAL_GET_FIELD(UNIFORM_REO_STATUS_HEADER_1, TIMESTAMP, val1);
 }
 
+/**
+ * hal_tx_desc_set_mesh_en_6490 - Set mesh_enable flag in Tx descriptor
+ * @desc: Handle to Tx Descriptor
+ * @en:   For raw WiFi frames, this indicates transmission to a mesh STA,
+ *        enabling the interpretation of the 'Mesh Control Present' bit
+ *        (bit 8) of QoS Control (otherwise this bit is ignored),
+ *        For native WiFi frames, this indicates that a 'Mesh Control' field
+ *        is present between the header and the LLC.
+ *
+ * Return: void
+ */
+static inline
+void hal_tx_desc_set_mesh_en_6490(void *desc, uint8_t en)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_5, MESH_ENABLE) |=
+		HAL_TX_SM(TCL_DATA_CMD_5, MESH_ENABLE, en);
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
+	/* tx */
+	hal_tx_desc_set_mesh_en_6490,
 	/* rx */
 	hal_rx_get_rx_fragment_number_6490,
 	hal_rx_msdu_end_da_is_mcbc_get_6490,
