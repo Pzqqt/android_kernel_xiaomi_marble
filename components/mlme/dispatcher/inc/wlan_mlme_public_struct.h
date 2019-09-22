@@ -1162,12 +1162,40 @@ struct wlan_mlme_product_details_cfg {
 };
 
 /*
+ * struct acs_weight - Normalize ACS weight for mentioned channels
+ * @chan_freq: frequency of the channel
+ * @normalize_weight: Normalization factor of the frequency
+ */
+struct acs_weight {
+	uint32_t chan_freq;
+	uint8_t normalize_weight;
+};
+
+/*
+ * struct acs_weight_range - Normalize ACS weight for mentioned channel range
+ * @start_freq: frequency of the start channel
+ * @end_freq: frequency of the end channel
+ * @normalize_weight: Normalization factor for freq range
+ */
+struct acs_weight_range {
+	uint32_t start_freq;
+	uint32_t end_freq;
+	uint8_t normalize_weight;
+};
+
+#define MAX_ACS_WEIGHT_RANGE              10
+
+/*
  * struct wlan_mlme_acs - All acs related cfg items
  * @is_acs_with_more_param - to enable acs with more param
  * @auto_channel_select_weight - to set acs channel weight
  * @is_vendor_acs_support - enable application based channel selection
  * @is_acs_support_for_dfs_ltecoex - enable channel for dfs and lte coex
  * @is_external_acs_policy - control external policy
+ * @normalize_weight_chan: Weight factor to be considered in ACS
+ * @normalize_weight_num_chan: Number of freq items for normalization.
+ * @normalize_weight_range: Frequency range for weight normalization
+ * @num_weight_range: num of ranges provided by user
  */
 struct wlan_mlme_acs {
 	bool is_acs_with_more_param;
@@ -1175,6 +1203,10 @@ struct wlan_mlme_acs {
 	bool is_vendor_acs_support;
 	bool is_acs_support_for_dfs_ltecoex;
 	bool is_external_acs_policy;
+	struct acs_weight normalize_weight_chan[QDF_MAX_NUM_CHAN];
+	uint16_t normalize_weight_num_chan;
+	struct acs_weight_range normalize_weight_range[MAX_ACS_WEIGHT_RANGE];
+	uint16_t num_weight_range;
 };
 
 /*

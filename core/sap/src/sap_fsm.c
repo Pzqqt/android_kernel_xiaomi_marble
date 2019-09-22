@@ -3241,6 +3241,12 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	struct mac_context *mac_ctx;
 	tSapChSelSpectInfo spect_info_obj = { NULL, 0 };
 	uint16_t ch_width;
+	uint8_t normalize_factor = 100;
+	uint32_t chan_freq;
+	struct acs_weight *weight_list;
+	struct acs_weight_range *range_list;
+	bool freq_present_in_list = false;
+	uint8_t i;
 
 	mac_ctx = sap_get_mac_context();
 	if (!mac_ctx) {
@@ -3249,6 +3255,9 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		*freq_list = NULL;
 		return QDF_STATUS_E_FAULT;
 	}
+
+	weight_list = mac_ctx->mlme_cfg->acs.normalize_weight_chan;
+	range_list = mac_ctx->mlme_cfg->acs.normalize_weight_range;
 
 	dfs_master_enable = mac_ctx->mlme_cfg->dfs_cfg.dfs_master_capable;
 	if (sap_ctx->dfs_mode == ACS_DFS_MODE_DISABLE)
@@ -3284,8 +3293,7 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	}
 
 	/* Allocate the max number of channel supported */
-	list = qdf_mem_malloc((NUM_5GHZ_CHANNELS + NUM_24GHZ_CHANNELS) *
-			      sizeof(uint32_t));
+	list = qdf_mem_malloc((NUM_CHANNELS) * sizeof(uint32_t));
 	if (!list) {
 		*num_ch = 0;
 		*freq_list = NULL;
@@ -3363,6 +3371,38 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 						WLAN_REG_CH_NUM(loop_count)))
 			continue;
 
+		chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
+						  WLAN_REG_CH_NUM(loop_count));
+		/* Check if the freq is present in range list */
+		for (i = 0; i < mac_ctx->mlme_cfg->acs.num_weight_range; i++) {
+			if (chan_freq >= range_list[i].start_freq &&
+			    chan_freq <= range_list[i].end_freq) {
+				normalize_factor =
+					range_list[i].normalize_weight;
+				sap_debug("Range list, freq %d normalize weight factor %d",
+					  chan_freq, normalize_factor);
+				freq_present_in_list = true;
+			}
+		}
+
+		for (i = 0;
+		     i < mac_ctx->mlme_cfg->acs.normalize_weight_num_chan;
+		     i++) {
+			if (chan_freq == weight_list[i].chan_freq) {
+				normalize_factor =
+					weight_list[i].normalize_weight;
+				sap_debug("freq %d normalize weight factor %d",
+					  chan_freq, normalize_factor);
+				freq_present_in_list = true;
+			}
+		}
+
+		/* This would mean that the user does not want this freq */
+		if (freq_present_in_list && !normalize_factor) {
+			sap_debug("chan_freq %d ecluded normalize weight 0",
+				  chan_freq);
+			continue;
+		}
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 		if ((sap_ctx->acs_cfg->skip_scan_status ==
 			eSAP_DO_PAR_ACS_SCAN)) {

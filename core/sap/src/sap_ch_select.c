@@ -1399,6 +1399,14 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		pSpectInfoParams->numSpectChans;
 	qdf_list_node_t *cur_lst = NULL, *next_lst = NULL;
 	struct scan_cache_node *cur_node = NULL;
+	uint32_t normalized_weight;
+	uint8_t normalize_factor;
+	uint32_t chan_freq;
+	struct acs_weight *weight_list =
+				mac->mlme_cfg->acs.normalize_weight_chan;
+	struct acs_weight_range *range_list =
+				mac->mlme_cfg->acs.normalize_weight_range;
+	bool freq_present_in_list = false;
 
 	bcn_struct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (!bcn_struct)
@@ -1576,6 +1584,44 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 			pSpectCh->rssiAgr = SOFTAP_MIN_RSSI;
 			rssi = SOFTAP_MIN_RSSI;
 			pSpectCh->bssCount = SOFTAP_MIN_COUNT;
+		}
+
+		chan_freq = wlan_reg_chan_to_freq(mac->pdev, pSpectCh->chNum);
+
+		/* Check if the freq is present in range list */
+		for (i = 0; i < mac->mlme_cfg->acs.num_weight_range; i++) {
+			if (chan_freq >= range_list[i].start_freq &&
+			    chan_freq <= range_list[i].end_freq) {
+				normalize_factor =
+					range_list[i].normalize_weight;
+				sap_debug("Range list, freq %d normalize weight factor %d",
+					  chan_freq, normalize_factor);
+				freq_present_in_list = true;
+			}
+		}
+
+		/* Check if user wants a special factor for this freq */
+
+		for (i = 0; i < mac->mlme_cfg->acs.normalize_weight_num_chan;
+		     i++) {
+			if (chan_freq == weight_list[i].chan_freq) {
+				normalize_factor =
+					weight_list[i].normalize_weight;
+				sap_debug("freq %d normalize weight factor %d",
+					  chan_freq, normalize_factor);
+				freq_present_in_list = true;
+			}
+		}
+
+		if (freq_present_in_list) {
+			normalized_weight =
+				((SAP_ACS_WEIGHT_MAX - pSpectCh->weight) *
+				(100 - normalize_factor)) / 100;
+			sap_debug("freq %d old weight %d new weight %d",
+				  chan_freq, pSpectCh->weight,
+				  pSpectCh->weight + normalized_weight);
+			pSpectCh->weight += normalized_weight;
+			freq_present_in_list = false;
 		}
 
 		if (pSpectCh->weight > SAP_ACS_WEIGHT_MAX)

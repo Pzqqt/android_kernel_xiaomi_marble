@@ -1291,6 +1291,90 @@ static void mlme_init_threshold_cfg(struct wlan_objmgr_psoc *psoc,
 	threshold->frag_threshold = cfg_get(psoc, CFG_FRAG_THRESHOLD);
 }
 
+static bool
+mlme_is_freq_present_in_list(struct acs_weight *normalize_weight_chan_list,
+			     uint8_t num_freq, uint32_t freq, uint8_t *index)
+{
+	uint8_t i;
+
+	for (i = 0; i < num_freq; i++) {
+		if (normalize_weight_chan_list[i].chan_freq == freq) {
+			*index = i;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static void
+mlme_acs_parse_weight_list(struct wlan_objmgr_psoc *psoc,
+			   struct wlan_mlme_acs *acs)
+{
+	char *acs_weight, *str1, *str2 = NULL, *acs_weight_temp, is_range = '-';
+	int freq1, freq2, normalize_factor;
+	uint8_t num_acs_weight = 0, num_acs_weight_range = 0, index = 0;
+	struct acs_weight *weight_list = acs->normalize_weight_chan;
+	struct acs_weight_range *range_list = acs->normalize_weight_range;
+
+	if (!qdf_str_len(cfg_get(psoc, CFG_NORMALIZE_ACS_WEIGHT)))
+		return;
+
+	acs_weight = qdf_mem_malloc(ACS_WEIGHT_MAX_STR_LEN);
+
+	if (!acs_weight)
+		return;
+
+	qdf_mem_copy(acs_weight, cfg_get(psoc, CFG_NORMALIZE_ACS_WEIGHT),
+		     ACS_WEIGHT_MAX_STR_LEN);
+	acs_weight_temp = acs_weight;
+
+	while(acs_weight_temp) {
+		str1 = strsep(&acs_weight_temp, ",");
+		if (!str1)
+			goto end;
+		freq1 = 0;
+		freq2 = 0;
+		if (strchr(str1, is_range)) {
+			str2 = strsep(&str1, "-");
+			sscanf(str2, "%d", &freq1);
+			sscanf(str1, "%d", &freq2);
+			strsep(&str1, "=");
+			sscanf(str1, "%d", &normalize_factor);
+
+			if (num_acs_weight_range == MAX_ACS_WEIGHT_RANGE)
+				continue;
+			range_list[num_acs_weight_range].normalize_weight =
+							normalize_factor;
+			range_list[num_acs_weight_range].start_freq = freq1;
+			range_list[num_acs_weight_range++].end_freq = freq2;
+		} else {
+			sscanf(str1, "%d", &freq1);
+			strsep(&str1, "=");
+			sscanf(str1, "%d", &normalize_factor);
+			if (mlme_is_freq_present_in_list(weight_list,
+							 num_acs_weight, freq1,
+							 &index)) {
+				weight_list[index].normalize_weight =
+							normalize_factor;
+			} else {
+				if (num_acs_weight == QDF_MAX_NUM_CHAN)
+					continue;
+
+				weight_list[num_acs_weight].chan_freq = freq1;
+				weight_list[num_acs_weight++].normalize_weight =
+							normalize_factor;
+			}
+		}
+	}
+
+	acs->normalize_weight_num_chan = num_acs_weight;
+	acs->num_weight_range = num_acs_weight_range;
+
+end:
+	qdf_mem_free(acs_weight);
+}
+
 static void mlme_init_acs_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_acs *acs)
 {
@@ -1304,6 +1388,8 @@ static void mlme_init_acs_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_USER_ACS_DFS_LTE);
 	acs->is_external_acs_policy =
 		cfg_get(psoc, CFG_EXTERNAL_ACS_POLICY);
+
+	mlme_acs_parse_weight_list(psoc, acs);
 }
 
 QDF_STATUS mlme_init_ibss_cfg(struct wlan_objmgr_psoc *psoc,
