@@ -117,6 +117,7 @@ struct msm_plat_data {
 	struct msm_pcm_ch_map *ch_map[MSM_FRONTEND_DAI_MAX];
 	struct snd_pcm *pcm_device[MSM_FRONTEND_DAI_MM_SIZE];
 	struct msm_pcm_channel_mixer *chmixer_pspd[MSM_FRONTEND_DAI_MM_SIZE][2];
+	struct mutex lock;
 };
 
 struct msm_pcm_ch_map {
