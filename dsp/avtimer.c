@@ -335,6 +335,11 @@ int avcs_core_query_timer_offset(int64_t *av_offset, int32_t clock_id)
 	uint64_t avtimer_tick_temp, avtimer_tick, sys_time = 0;
 	struct timespec ts;
 
+	if (!atomic_read(&avtimer.adsp_ready)) {
+		pr_debug("%s:In SSR, return\n", __func__);
+		return -ENETRESET;
+	}
+
 	if ((avtimer.p_avtimer_lsw == NULL) ||
 	    (avtimer.p_avtimer_msw == NULL)) {
 		return -EINVAL;
