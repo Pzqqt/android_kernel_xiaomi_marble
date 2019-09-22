@@ -848,6 +848,7 @@ static int wsa_macro_digital_mute(struct snd_soc_dai *dai, int mute)
 						mix_reg, 0x20, 0x20);
 		}
 	}
+	bolero_wsa_pa_on(wsa_dev);
 		break;
 	default:
 		break;
@@ -1422,14 +1423,22 @@ static int wsa_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 				snd_soc_dapm_to_component(w->dapm);
 	u16 reg = 0;
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+
+	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
 
 	reg = BOLERO_CDC_WSA_RX0_RX_PATH_CTL +
 			WSA_MACRO_RX_PATH_OFFSET * w->shift;
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		if (wsa_macro_adie_lb(component, w->shift))
+		if (wsa_macro_adie_lb(component, w->shift)) {
 			snd_soc_component_update_bits(component,
 						reg, 0x20, 0x20);
+			bolero_wsa_pa_on(wsa_dev);
+		}
 		break;
 	default:
 		break;

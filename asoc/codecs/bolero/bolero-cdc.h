@@ -83,6 +83,7 @@ int bolero_set_port_map(struct snd_soc_component *component, u32 size, void *dat
 int bolero_tx_clk_switch(struct snd_soc_component *component);
 int bolero_register_event_listener(struct snd_soc_component *component,
 				   bool enable);
+void bolero_wsa_pa_on(struct device *dev);
 #else
 static inline int bolero_register_res_clk(struct device *dev, rsc_clk_cb_t cb)
 {
@@ -154,5 +155,8 @@ static inline int bolero_register_event_listener(
 	return 0;
 }
 
+static void bolero_wsa_pa_on(struct device *dev)
+{
+}
 #endif /* CONFIG_SND_SOC_BOLERO */
 #endif /* BOLERO_CDC_H */
