@@ -40,6 +40,8 @@
 #define SWR_HSTOP_MAX_VAL 0xF
 #define SWR_HSTART_MIN_VAL 0x0
 
+#define ERR_AUTO_SUSPEND_TIMER_VAL 0x1
+
 #define SWRM_INTERRUPT_STATUS_MASK 0x1FDFD
 /* pm runtime auto suspend timer in msecs */
 static int auto_suspend_timer = SWR_AUTO_SUSPEND_DELAY * 1000;
@@ -2496,6 +2498,7 @@ static int swrm_runtime_resume(struct device *dev)
 	struct platform_device *pdev = to_platform_device(dev);
 	struct swr_mstr_ctrl *swrm = platform_get_drvdata(pdev);
 	int ret = 0;
+	bool swrm_clk_req_err = false;
 	bool hw_core_err = false;
 	bool aud_core_err = false;
 	struct swr_master *mstr = &swrm->master;
@@ -2529,7 +2532,7 @@ static int swrm_runtime_resume(struct device *dev)
 			 * Set autosuspend timer to 1 for
 			 * master to enter into suspend.
 			 */
-			auto_suspend_timer = 1;
+			swrm_clk_req_err = true;
 			goto exit;
 		}
 		if (!swrm->clk_stop_mode0_supp || swrm->state == SWR_MSTR_SSR) {
@@ -2572,8 +2575,12 @@ exit:
 		swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, false);
 	if (!hw_core_err)
 		swrm_request_hw_vote(swrm, LPASS_HW_CORE, false);
-	pm_runtime_set_autosuspend_delay(&pdev->dev, auto_suspend_timer);
-	auto_suspend_timer = SWR_AUTO_SUSPEND_DELAY * 1000;
+	if (swrm_clk_req_err)
+		pm_runtime_set_autosuspend_delay(&pdev->dev,
+				ERR_AUTO_SUSPEND_TIMER_VAL);
+	else
+		pm_runtime_set_autosuspend_delay(&pdev->dev,
+				auto_suspend_timer);
 	mutex_unlock(&swrm->reslock);
 
 	return ret;
