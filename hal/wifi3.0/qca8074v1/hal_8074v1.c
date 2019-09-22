@@ -605,6 +605,103 @@ static uint32_t hal_rx_hw_desc_get_ppduid_get_8074v1(void *hw_desc_addr)
 
 	return HAL_RX_GET(rx_mpdu_info, RX_MPDU_INFO_0, PHY_PPDU_ID);
 }
+
+/**
+ * hal_reo_status_get_header_8074v1 - Process reo desc info
+ * @d - Pointer to reo descriptior
+ * @b - tlv type info
+ * @h1 - Pointer to hal_reo_status_header where info to be stored
+ *
+ * Return - none.
+ *
+ */
+static void hal_reo_status_get_header_8074v1(uint32_t *d, int b, void *h1)
+{
+	uint32_t val1 = 0;
+	struct hal_reo_status_header *h =
+			(struct hal_reo_status_header *)h1;
+
+	switch (b) {
+	case HAL_REO_QUEUE_STATS_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_GET_QUEUE_STATS_STATUS_0,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER)];
+		break;
+	case HAL_REO_FLUSH_QUEUE_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_FLUSH_QUEUE_STATUS_0,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER)];
+		break;
+	case HAL_REO_FLUSH_CACHE_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_FLUSH_CACHE_STATUS_0,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER)];
+		break;
+	case HAL_REO_UNBLK_CACHE_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_UNBLOCK_CACHE_STATUS_0,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER)];
+		break;
+	case HAL_REO_TIMOUT_LIST_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_FLUSH_TIMEOUT_LIST_STATUS_0,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER)];
+		break;
+	case HAL_REO_DESC_THRES_STATUS_TLV:
+		val1 =
+		d[HAL_OFFSET_DW(REO_DESCRIPTOR_THRESHOLD_REACHED_STATUS_0,
+		UNIFORM_REO_STATUS_HEADER_STATUS_HEADER)];
+		break;
+	case HAL_REO_UPDATE_RX_QUEUE_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_UPDATE_RX_REO_QUEUE_STATUS_0,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER)];
+		break;
+	default:
+		qdf_nofl_err("ERROR: Unknown tlv\n");
+		break;
+	}
+	h->cmd_num =
+		HAL_GET_FIELD(
+			      UNIFORM_REO_STATUS_HEADER_0, REO_STATUS_NUMBER,
+			      val1);
+	h->exec_time =
+		HAL_GET_FIELD(UNIFORM_REO_STATUS_HEADER_0,
+			      CMD_EXECUTION_TIME, val1);
+	h->status =
+		HAL_GET_FIELD(UNIFORM_REO_STATUS_HEADER_0,
+			      REO_CMD_EXECUTION_STATUS, val1);
+	switch (b) {
+	case HAL_REO_QUEUE_STATS_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_GET_QUEUE_STATS_STATUS_1,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER_GENERIC)];
+		break;
+	case HAL_REO_FLUSH_QUEUE_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_FLUSH_QUEUE_STATUS_1,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER_GENERIC)];
+		break;
+	case HAL_REO_FLUSH_CACHE_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_FLUSH_CACHE_STATUS_1,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER_GENERIC)];
+		break;
+	case HAL_REO_UNBLK_CACHE_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_UNBLOCK_CACHE_STATUS_1,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER_GENERIC)];
+		break;
+	case HAL_REO_TIMOUT_LIST_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_FLUSH_TIMEOUT_LIST_STATUS_1,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER_GENERIC)];
+		break;
+	case HAL_REO_DESC_THRES_STATUS_TLV:
+		val1 =
+		  d[HAL_OFFSET_DW(REO_DESCRIPTOR_THRESHOLD_REACHED_STATUS_1,
+		  UNIFORM_REO_STATUS_HEADER_STATUS_HEADER_GENERIC)];
+		break;
+	case HAL_REO_UPDATE_RX_QUEUE_STATUS_TLV:
+		val1 = d[HAL_OFFSET_DW(REO_UPDATE_RX_REO_QUEUE_STATUS_1,
+			UNIFORM_REO_STATUS_HEADER_STATUS_HEADER_GENERIC)];
+		break;
+	default:
+		qdf_nofl_err("ERROR: Unknown tlv\n");
+		break;
+	}
+	h->tstamp =
+		HAL_GET_FIELD(UNIFORM_REO_STATUS_HEADER_1, TIMESTAMP, val1);
+}
 struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -639,7 +736,7 @@ struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 	hal_rx_msdu_end_da_idx_get_8074,
 	hal_rx_msdu_desc_info_get_ptr_generic,
 	hal_rx_link_desc_msdu0_ptr_generic,
-	hal_reo_status_get_header_generic,
+	hal_reo_status_get_header_8074v1,
 	hal_rx_status_get_tlv_info_generic,
 	hal_rx_wbm_err_info_get_generic,
 	hal_rx_dump_mpdu_start_tlv_generic,
