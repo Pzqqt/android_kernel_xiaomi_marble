@@ -1045,31 +1045,6 @@ hal_rx_msdu_end_sa_is_valid_get(hal_soc_handle_t hal_soc_hdl,
 	return hal_soc->ops->hal_rx_msdu_end_sa_is_valid_get(buf);
 }
 
-#define HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(_rx_msdu_end)		\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,		\
-		RX_MSDU_END_16_SA_SW_PEER_ID_OFFSET)),		\
-		RX_MSDU_END_16_SA_SW_PEER_ID_MASK,		\
-		RX_MSDU_END_16_SA_SW_PEER_ID_LSB))
-
- /**
- * hal_rx_msdu_end_sa_sw_peer_id_get(): API to get the
- * sa_sw_peer_id from rx_msdu_end TLV
- *
- * @ buf: pointer to the start of RX PKT TLV headers
- * Return: sa_sw_peer_id index
- */
-static inline uint32_t
-hal_rx_msdu_end_sa_sw_peer_id_get(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint32_t sa_sw_peer_id;
-
-	sa_sw_peer_id = HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(msdu_end);
-
-	return sa_sw_peer_id;
-}
-
 #define HAL_RX_MSDU_START_MSDU_LEN_GET(_rx_msdu_start)		\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,		\
 		RX_MSDU_START_1_MSDU_LENGTH_OFFSET)),		\
@@ -3333,5 +3308,30 @@ uint32_t hal_rx_hw_desc_get_ppduid_get(hal_soc_handle_t hal_soc_hdl,
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
 	return hal_soc->ops->hal_rx_hw_desc_get_ppduid_get(hw_desc_addr);
+}
+
+/**
+ * hal_rx_msdu_end_sa_sw_peer_id_get() - get sw peer id
+ * @hal_soc_hdl: hal_soc handle
+ * @buf: rx tlv address
+ *
+ * Return: sw peer id
+ */
+static inline
+uint32_t hal_rx_msdu_end_sa_sw_peer_id_get(hal_soc_handle_t hal_soc_hdl,
+					   uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if ((!hal_soc) || (!hal_soc->ops)) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (hal_soc->ops->hal_rx_msdu_end_sa_sw_peer_id_get)
+		return hal_soc->ops->hal_rx_msdu_end_sa_sw_peer_id_get(buf);
+
+	return QDF_STATUS_E_INVAL;
 }
 #endif /* _HAL_RX_H */

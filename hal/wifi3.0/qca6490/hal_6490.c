@@ -637,4 +637,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_tid_get_6490,
 	hal_rx_hw_desc_get_ppduid_get_6490,
 	NULL,
+	NULL,
 };
