@@ -699,6 +699,25 @@ static void hal_reo_status_get_header_8074v2(uint32_t *d, int b, void *h1)
 	h->tstamp =
 		HAL_GET_FIELD(UNIFORM_REO_STATUS_HEADER_1, TIMESTAMP, val1);
 }
+
+/**
+ * hal_rx_mpdu_start_mpdu_qos_control_valid_get_8074v2():
+ * Retrieve qos control valid bit from the tlv.
+ * @buf: pointer to rx pkt TLV.
+ *
+ * Return: qos control value.
+ */
+static inline uint32_t
+hal_rx_mpdu_start_mpdu_qos_control_valid_get_8074v2(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+			&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	return HAL_RX_MPDU_INFO_QOS_CONTROL_VALID_GET(
+		&mpdu_start->rx_mpdu_info_details);
+}
+
 struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -765,6 +784,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_is_unicast_8074v2,
 	hal_rx_tid_get_8074v2,
 	hal_rx_hw_desc_get_ppduid_get_8074v2,
+	hal_rx_mpdu_start_mpdu_qos_control_valid_get_8074v2,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

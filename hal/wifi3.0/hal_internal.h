@@ -408,6 +408,7 @@ struct hal_hw_txrx_ops {
 	bool (*hal_rx_is_unicast)(uint8_t *buf);
 	uint32_t (*hal_rx_tid_get)(hal_soc_handle_t hal_soc_hdl, uint8_t *buf);
 	uint32_t (*hal_rx_hw_desc_get_ppduid_get)(void *hw_desc_addr);
+	uint32_t (*hal_rx_mpdu_start_mpdu_qos_control_valid_get)(uint8_t *buf);
 };
 
 /**

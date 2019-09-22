@@ -610,6 +610,7 @@ static void hal_reo_status_get_header_6490(uint32_t *d, int b, void *h1)
 	h->tstamp =
 		HAL_GET_FIELD(UNIFORM_REO_STATUS_HEADER_1, TIMESTAMP, val1);
 }
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* rx */
 	hal_rx_get_rx_fragment_number_6490,
@@ -635,4 +636,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_is_unicast_6490,
 	hal_rx_tid_get_6490,
 	hal_rx_hw_desc_get_ppduid_get_6490,
+	NULL,
 };

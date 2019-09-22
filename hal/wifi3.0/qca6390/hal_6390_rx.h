@@ -227,6 +227,12 @@
 	RX_MSDU_START_5_MIMO_SS_BITMAP_MASK,		\
 	RX_MSDU_START_5_MIMO_SS_BITMAP_LSB))
 
+#define HAL_RX_MPDU_INFO_QOS_CONTROL_VALID_GET(_rx_mpdu_info) \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_info),		\
+		RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_OFFSET)),		\
+		RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_MASK,		\
+		RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_LSB))
+
 /*
  * hal_rx_msdu_start_nss_get_6390(): API to get the NSS
  * Interval from rx_msdu_start

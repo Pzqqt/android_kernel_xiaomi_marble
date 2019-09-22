@@ -1168,29 +1168,6 @@ hal_rx_msdu_start_toeplitz_get(uint8_t *buf)
 	return HAL_RX_MSDU_START_FLOWID_TOEPLITZ_GET(msdu_start);
 }
 
-/*
- * Get qos_control_valid from RX_MPDU_START
- */
-#define HAL_RX_MPDU_INFO_QOS_CONTROL_VALID_GET(_rx_mpdu_info) \
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_info),		\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_OFFSET)),		\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_MASK,		\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_CONTROL_VALID_LSB))
-
-static inline uint32_t
-hal_rx_mpdu_start_mpdu_qos_control_valid_get(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_mpdu_start *mpdu_start =
-			&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
-	uint32_t qos_control_valid;
-
-	qos_control_valid = HAL_RX_MPDU_INFO_QOS_CONTROL_VALID_GET(
-		&(mpdu_start->rx_mpdu_info_details));
-
-	return qos_control_valid;
-}
-
 /**
  * enum hal_rx_mpdu_info_sw_frame_group_id_type: Enum for group id in MPDU_INFO
  *
@@ -1213,6 +1190,34 @@ enum hal_rx_mpdu_info_sw_frame_group_id_type {
 	HAL_MPDU_SW_FRAME_GROUP_UNSUPPORTED = 36,
 	HAL_MPDU_SW_FRAME_GROUP_MAX = 37,
 };
+
+/**
+ * hal_rx_mpdu_start_mpdu_qos_control_valid_get():
+ * Retrieve qos control valid bit from the tlv.
+ * @hal_soc_hdl: hal_soc handle
+ * @buf: pointer to rx pkt TLV.
+ *
+ * Return: qos control value.
+ */
+static inline uint32_t
+hal_rx_mpdu_start_mpdu_qos_control_valid_get(
+				hal_soc_handle_t hal_soc_hdl,
+				uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if ((!hal_soc) || (!hal_soc->ops)) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (hal_soc->ops->hal_rx_mpdu_start_mpdu_qos_control_valid_get)
+		return hal_soc->ops->
+		       hal_rx_mpdu_start_mpdu_qos_control_valid_get(buf);
+
+	return QDF_STATUS_E_INVAL;
+}
 
 /**
  * hal_rx_is_unicast: check packet is unicast frame or not.
