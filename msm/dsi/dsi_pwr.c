@@ -126,12 +126,18 @@ static int dsi_pwr_enable_vregs(struct dsi_regulator_info *regs, bool enable)
 	int rc = 0, i = 0;
 	struct dsi_vreg *vreg;
 	int num_of_v = 0;
+	u32 pre_on_ms, post_on_ms;
+	u32 pre_off_ms, post_off_ms;
 
 	if (enable) {
 		for (i = 0; i < regs->count; i++) {
 			vreg = &regs->vregs[i];
+			pre_on_ms = vreg->pre_on_sleep;
+			post_on_ms = vreg->post_on_sleep;
+
 			if (vreg->pre_on_sleep)
-				msleep(vreg->pre_on_sleep);
+				usleep_range((pre_on_ms * 1000),
+						(pre_on_ms * 1000) + 10);
 
 			rc = regulator_set_load(vreg->vreg,
 						vreg->enable_load);
@@ -160,12 +166,18 @@ static int dsi_pwr_enable_vregs(struct dsi_regulator_info *regs, bool enable)
 			}
 
 			if (vreg->post_on_sleep)
-				msleep(vreg->post_on_sleep);
+				usleep_range((post_on_ms * 1000),
+						(post_on_ms * 1000) + 10);
 		}
 	} else {
 		for (i = (regs->count - 1); i >= 0; i--) {
-			if (regs->vregs[i].pre_off_sleep)
-				msleep(regs->vregs[i].pre_off_sleep);
+			vreg = &regs->vregs[i];
+			pre_off_ms = vreg->pre_off_sleep;
+			post_off_ms = vreg->post_off_sleep;
+
+			if (pre_off_ms)
+				usleep_range((pre_off_ms * 1000),
+						(pre_off_ms * 1000) + 10);
 
 			if (regs->vregs[i].off_min_voltage)
 				(void)regulator_set_voltage(regs->vregs[i].vreg,
@@ -176,8 +188,9 @@ static int dsi_pwr_enable_vregs(struct dsi_regulator_info *regs, bool enable)
 						regs->vregs[i].disable_load);
 			(void)regulator_disable(regs->vregs[i].vreg);
 
-			if (regs->vregs[i].post_off_sleep)
-				msleep(regs->vregs[i].post_off_sleep);
+			if (post_off_ms)
+				usleep_range((post_off_ms * 1000),
+						(post_off_ms * 1000) + 10);
 		}
 	}
 
@@ -192,8 +205,13 @@ error_disable_voltage:
 					    0, regs->vregs[i].max_voltage);
 error:
 	for (i--; i >= 0; i--) {
-		if (regs->vregs[i].pre_off_sleep)
-			msleep(regs->vregs[i].pre_off_sleep);
+		vreg = &regs->vregs[i];
+		pre_off_ms = vreg->pre_off_sleep;
+		post_off_ms = vreg->post_off_sleep;
+
+		if (pre_off_ms)
+			usleep_range((pre_off_ms * 1000),
+					(pre_off_ms * 1000) + 10);
 
 		(void)regulator_set_load(regs->vregs[i].vreg,
 					 regs->vregs[i].disable_load);
@@ -205,8 +223,9 @@ error:
 
 		(void)regulator_disable(regs->vregs[i].vreg);
 
-		if (regs->vregs[i].post_off_sleep)
-			msleep(regs->vregs[i].post_off_sleep);
+		if (post_off_ms)
+			usleep_range((post_off_ms * 1000),
+					(post_off_ms * 1000) + 10);
 	}
 
 	return rc;
