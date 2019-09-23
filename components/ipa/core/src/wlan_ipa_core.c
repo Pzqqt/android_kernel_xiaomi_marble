@@ -2002,12 +2002,11 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			wlan_ipa_uc_offload_enable_disable(ipa_ctx,
 				SIR_STA_RX_DATA_OFFLOAD, session_id, false);
 			qdf_mutex_acquire(&ipa_ctx->event_lock);
-			ipa_ctx->vdev_to_iface[session_id] =
-				WLAN_IPA_MAX_SESSION;
-			ipa_debug("vdev_to_iface[%u]=%u",
-				 session_id,
-				 ipa_ctx->vdev_to_iface[session_id]);
 		}
+
+		ipa_ctx->vdev_to_iface[session_id] = WLAN_IPA_MAX_SESSION;
+		ipa_debug("vdev_to_iface[%u]=%u", session_id,
+			  ipa_ctx->vdev_to_iface[session_id]);
 
 		for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 			iface_ctx = &ipa_ctx->iface_context[i];
