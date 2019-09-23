@@ -10,8 +10,13 @@ LINUXINCLUDE    += -include $(srctree)/techpack/display/config/konadispconf.h
 endif
 
 ifeq ($(CONFIG_ARCH_LAHAINA), y)
-include $(srctree)/techpack/display/config/lahainadisp.conf
+     ifeq ($(CONFIG_QGKI), y)
+		include $(srctree)/techpack/display/config/lahainadisp.conf
 LINUXINCLUDE    += -include $(srctree)/techpack/display/config/lahainadispconf.h
+     else
+		include $(srctree)/techpack/display/config/gki_lahainadisp.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/display/config/gki_lahainadispconf.h
+     endif
 LINUXINCLUDE    += \
 		   -I$(srctree)/techpack/display/include/uapi/display \
 		   -I$(srctree)/techpack/display/include
@@ -36,4 +41,3 @@ endif
 
 obj-$(CONFIG_DRM_MSM) += msm/
 obj-$(CONFIG_MSM_SDE_ROTATOR) += rotator/
-obj-$(CONFIG_HDCP_QSEECOM) += hdcp/
