@@ -12,7 +12,7 @@
 
 #include "dp_display.h"
 
-#ifdef CONFIG_DRM_MSM_DP_MST
+#if IS_ENABLED(CONFIG_DRM_MSM_DP_MST)
 
 /**
  * dp_mst_drm_bridge_init - initialize mst bridge
@@ -60,6 +60,6 @@ static inline int dp_mst_deinit(struct dp_display *dp_display)
 {
 	return 0;
 }
-#endif
+#endif /* CONFIG_DRM_MSM_DP_MST */
 
 #endif /* _DP_MST_DRM_H_ */

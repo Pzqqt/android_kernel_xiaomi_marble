@@ -7732,17 +7732,17 @@ int dsi_display_unprepare(struct dsi_display *display)
 	return rc;
 }
 
-static int __init dsi_display_register(void)
+void __init dsi_display_register(void)
 {
 	dsi_phy_drv_register();
 	dsi_ctrl_drv_register();
 
 	dsi_display_parse_boot_display_selection();
 
-	return platform_driver_register(&dsi_display_driver);
+	platform_driver_register(&dsi_display_driver);
 }
 
-static void __exit dsi_display_unregister(void)
+void __exit dsi_display_unregister(void)
 {
 	platform_driver_unregister(&dsi_display_driver);
 	dsi_ctrl_drv_unregister();
@@ -7756,5 +7756,3 @@ module_param_string(dsi_display1, dsi_display_secondary, MAX_CMDLINE_PARAM_LEN,
 								0600);
 MODULE_PARM_DESC(dsi_display1,
 	"msm_drm.dsi_display1=<display node>:<configX> where <display node> is 'secondary dsi display node name' and <configX> where x represents index in the topology list");
-module_init(dsi_display_register);
-module_exit(dsi_display_unregister);

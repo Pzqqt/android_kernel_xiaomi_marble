@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 #define pr_fmt(fmt)	"%s:%d: " fmt, __func__, __LINE__
 
@@ -3618,16 +3618,12 @@ static struct platform_driver rotator_driver = {
 	},
 };
 
-static int __init sde_rotator_init_module(void)
+void  __init sde_rotator_register(void)
 {
-	return platform_driver_register(&rotator_driver);
+	platform_driver_register(&rotator_driver);
 }
 
-static void __exit sde_rotator_exit_module(void)
+void __exit sde_rotator_unregister(void)
 {
 	platform_driver_unregister(&rotator_driver);
 }
-
-late_initcall(sde_rotator_init_module);
-module_exit(sde_rotator_exit_module);
-MODULE_DESCRIPTION("MSM SDE ROTATOR driver");

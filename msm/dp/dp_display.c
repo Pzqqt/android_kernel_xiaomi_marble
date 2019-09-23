@@ -3347,22 +3347,13 @@ static struct platform_driver dp_display_driver = {
 	},
 };
 
-static int __init dp_display_init(void)
+void __init dp_display_register(void)
 {
-	int ret;
 
-	ret = platform_driver_register(&dp_display_driver);
-	if (ret) {
-		DP_ERR("driver register failed\n");
-		return ret;
-	}
-
-	return ret;
+	platform_driver_register(&dp_display_driver);
 }
-late_initcall(dp_display_init);
 
-static void __exit dp_display_cleanup(void)
+void __exit dp_display_unregister(void)
 {
 	platform_driver_unregister(&dp_display_driver);
 }
-module_exit(dp_display_cleanup);

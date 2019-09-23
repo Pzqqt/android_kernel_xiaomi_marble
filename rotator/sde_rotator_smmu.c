@@ -494,7 +494,6 @@ static const struct of_device_id sde_smmu_dt_match[] = {
 	{ .compatible = SMMU_SDE_ROT_SEC, .data = &sde_rot_sec},
 	{}
 };
-MODULE_DEVICE_TABLE(of, sde_smmu_dt_match);
 
 /*
  * sde_smmu_probe()
@@ -673,28 +672,12 @@ static struct platform_driver sde_smmu_driver = {
 	},
 };
 
-static int sde_smmu_register_driver(void)
+void __init sde_rotator_smmu_driver_register(void)
 {
-	return platform_driver_register(&sde_smmu_driver);
+	platform_driver_register(&sde_smmu_driver);
 }
 
-static int __init sde_smmu_driver_init(void)
-{
-	int ret;
-
-	ret = sde_smmu_register_driver();
-	if (ret)
-		SDEROT_ERR("sde_smmu_register_driver() failed!\n");
-
-	return ret;
-}
-module_init(sde_smmu_driver_init);
-
-static void __exit sde_smmu_driver_cleanup(void)
+void __exit sde_rotator_smmu_driver_unregister(void)
 {
 	platform_driver_unregister(&sde_smmu_driver);
 }
-module_exit(sde_smmu_driver_cleanup);
-
-MODULE_LICENSE("GPL v2");
-MODULE_DESCRIPTION("SDE SMMU driver");

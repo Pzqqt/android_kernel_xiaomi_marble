@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -163,7 +163,7 @@ struct msm_kms *mdp4_kms_init(struct drm_device *dev);
 static inline
 struct msm_kms *mdp4_kms_init(struct drm_device *dev) { return NULL; };
 #endif
-#ifdef CONFIG_DRM_MSM_MDP5
+#if IS_ENABLED(CONFIG_DRM_MSM_MDP5)
 struct msm_kms *mdp5_kms_init(struct drm_device *dev);
 int msm_mdss_init(struct drm_device *dev);
 void msm_mdss_destroy(struct drm_device *dev);
@@ -190,7 +190,7 @@ static inline int msm_mdss_disable(struct msm_mdss *mdss)
 {
 	return 0;
 }
-#endif
+#endif /* CONFIG_DRM_MSM_MDP5 */
 
 struct msm_kms *sde_kms_init(struct drm_device *dev);
 

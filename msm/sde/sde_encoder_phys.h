@@ -511,7 +511,7 @@ struct sde_encoder_phys *sde_encoder_phys_cmd_init(
  * @p:	Pointer to init params structure
  * Return: Error code or newly allocated encoder
  */
-#ifdef CONFIG_DRM_SDE_WB
+#if IS_ENABLED(CONFIG_DRM_SDE_WB)
 struct sde_encoder_phys *sde_encoder_phys_wb_init(
 		struct sde_enc_phys_init_params *p);
 #else
@@ -521,7 +521,7 @@ struct sde_encoder_phys *sde_encoder_phys_wb_init(
 {
 	return NULL;
 }
-#endif
+#endif /* CONFIG_DRM_SDE_WB */
 
 void sde_encoder_phys_setup_cdm(struct sde_encoder_phys *phys_enc,
 		struct drm_framebuffer *fb, const struct sde_format *format,

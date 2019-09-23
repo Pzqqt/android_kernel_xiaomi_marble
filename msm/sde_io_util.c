@@ -82,7 +82,6 @@ static struct resource *msm_dss_get_res_byname(struct platform_device *pdev,
 
 	return res;
 } /* msm_dss_get_res_byname */
-EXPORT_SYMBOL(msm_dss_get_res_byname);
 
 int msm_dss_ioremap_byname(struct platform_device *pdev,
 	struct dss_io_data *io_data, const char *name)
