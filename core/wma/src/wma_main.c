@@ -2023,6 +2023,8 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 	struct wma_txrx_node *iface;
 	struct wake_lock_stats stats;
 	struct wlan_objmgr_vdev *vdev;
+	uint32_t rate_flag;
+	QDF_STATUS status;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
@@ -2034,7 +2036,15 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 
 	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
 		iface = &wma->interfaces[vdev_id];
-		if (!iface->handle)
+		vdev = iface->vdev;
+		if (!vdev)
+			continue;
+
+		if (!wlan_vdev_get_dp_handle(iface->vdev))
+			continue;
+
+		status = wma_get_vdev_rate_flag(iface->vdev, &rate_flag);
+		if (QDF_IS_STATUS_ERROR(status))
 			continue;
 
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
@@ -2095,7 +2105,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			iface->vdev_active,
 			wma_is_vdev_up(vdev_id),
 			iface->aid,
-			iface->rate_flags,
+			rate_flag,
 			iface->nss,
 			iface->tx_power,
 			iface->max_tx_power,
@@ -2860,11 +2870,6 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 		qdf_nbuf_free(bcn->buf);
 		qdf_mem_free(bcn);
 		vdev->beacon = NULL;
-	}
-
-	if (vdev->handle) {
-		qdf_mem_free(vdev->handle);
-		vdev->handle = NULL;
 	}
 
 	if (vdev->addBssStaContext) {
@@ -4484,6 +4489,7 @@ QDF_STATUS wma_stop(void)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int i;
 	struct mac_context *mac = NULL;
+	struct wlan_objmgr_vdev *vdev;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	WMA_LOGD("%s: Enter", __func__);
@@ -4521,12 +4527,14 @@ QDF_STATUS wma_stop(void)
 		WMA_LOGE("Failed to destroy the log completion timer");
 	/* clean up ll-queue for all vdev */
 	for (i = 0; i < wma_handle->max_bssid; i++) {
-		if (wma_handle->interfaces[i].handle &&
-				wma_is_vdev_up(i)) {
-			cdp_fc_vdev_flush(
-				cds_get_context(QDF_MODULE_ID_SOC),
-				wma_handle->
-				interfaces[i].handle);
+		vdev = wma_handle->interfaces[i].vdev;
+		if (!vdev)
+			continue;
+		if (wlan_vdev_get_dp_handle(vdev) && wma_is_vdev_up(i)) {
+			cdp_fc_vdev_flush
+			(cds_get_context(QDF_MODULE_ID_SOC),
+			 wlan_vdev_get_dp_handle
+				(wma_handle->interfaces[i].vdev));
 		}
 	}
 

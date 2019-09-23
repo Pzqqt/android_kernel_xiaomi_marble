@@ -676,7 +676,6 @@ struct roam_synch_frame_ind {
 /**
  * struct wma_txrx_node - txrx node
  * @vdev: pointer to vdev object
- * @handle: wma handle
  * @beacon: beacon info
  * @config: per vdev config parameters
  * @scan_info: scan info
@@ -702,7 +701,6 @@ struct roam_synch_frame_ind {
  * @stats_rsp: stats response
  * @del_staself_req: delete sta self request
  * @bss_status: bss status
- * @rate_flags: rate flags
  * @nss: nss value
  * @is_channel_switch: is channel switch
  * @pause_bitmap: pause bitmap
@@ -732,7 +730,6 @@ struct roam_synch_frame_ind {
  */
 struct wma_txrx_node {
 	struct wlan_objmgr_vdev *vdev;
-	struct cdp_vdev *handle;
 	struct beacon_info *beacon;
 	vdev_cli_config_t config;
 	uint32_t type;
@@ -759,7 +756,6 @@ struct wma_txrx_node {
 	void *del_staself_req;
 	bool is_del_sta_defered;
 	qdf_atomic_t bss_status;
-	uint8_t rate_flags;
 	uint8_t nss;
 	uint16_t pause_bitmap;
 	int8_t tx_power;
@@ -1901,7 +1897,7 @@ void wma_vdev_update_pause_bitmap(uint8_t vdev_id, uint16_t value)
 		return;
 	}
 
-	if (!iface->handle) {
+	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("%s: Failed to get iface handle: NULL",
 			 __func__);
 		return;
@@ -1935,7 +1931,7 @@ uint16_t wma_vdev_get_pause_bitmap(uint8_t vdev_id)
 		return 0;
 	}
 
-	if (!iface->handle) {
+	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("%s: Failed to get iface handle: NULL",
 			 __func__);
 		return 0;
@@ -1972,7 +1968,7 @@ struct cdp_vdev *wma_vdev_get_vdev_dp_handle(uint8_t vdev_id)
 		return NULL;
 	}
 
-	return iface->handle;
+	return wlan_vdev_get_dp_handle(iface->vdev);
 }
 
 /**
@@ -1999,7 +1995,7 @@ static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
 		return 0;
 	}
 
-	if (!iface->handle) {
+	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("%s: Failed to get iface handle:NULL",
 			 __func__);
 		return 0;
@@ -2031,7 +2027,7 @@ QDF_STATUS wma_vdev_get_dtim_period(uint8_t vdev_id, uint8_t *value)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface || !iface->handle)
+	if (!iface || !wlan_vdev_get_dp_handle(iface->vdev))
 		return QDF_STATUS_E_FAILURE;
 
 	*value = iface->dtimPeriod;
@@ -2061,10 +2057,40 @@ QDF_STATUS wma_vdev_get_beacon_interval(uint8_t  vdev_id, uint16_t *value)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface || !iface->handle)
+	if (!iface || !wlan_vdev_get_dp_handle(iface->vdev))
 		return QDF_STATUS_E_FAILURE;
 
 	*value = iface->beaconInterval;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_get_vdev_rate_flag - Get beacon rate flag from mlme
+ * @vdev_id: vdev index number
+ * @rate_flag: pointer to the value to fill out
+ *
+ * Note caller must verify return status before using value
+ *
+ * Return: QDF_STATUS_SUCCESS when fetched a valid value from mlme else
+ * QDF_STATUS_E_FAILURE
+ */
+static inline QDF_STATUS
+wma_get_vdev_rate_flag(struct wlan_objmgr_vdev *vdev, uint32_t *rate_flag)
+{
+	struct vdev_mlme_obj *mlme_obj;
+
+	if (!vdev) {
+		WMA_LOGE("%s vdev is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		WMA_LOGE("%s Failed to get mlme_obj", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*rate_flag = mlme_obj->mgmt.rate_info.rate_flags;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2094,7 +2120,7 @@ void wma_vdev_set_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 		return;
 	}
 
-	if (!iface->handle) {
+	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("%s: Failed to get iface handle: NULL",
 			 __func__);
 		return;
@@ -2129,7 +2155,7 @@ void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 		return;
 	}
 
-	if (!iface->handle) {
+	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("%s: Failed to get iface handle: NULL",
 			 __func__);
 		return;

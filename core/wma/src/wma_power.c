@@ -714,13 +714,6 @@ static enum powersave_qpower_mode wma_get_qpower_config(tp_wma_handle wma)
 	}
 }
 
-/**
- * wma_enable_sta_ps_mode() - enable sta powersave params in fw
- * @wma: wma handle
- * @ps_req: power save request
- *
- * Return: none
- */
 void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 {
 	uint32_t vdev_id = ps_req->sessionid;
@@ -728,7 +721,7 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
-	if (!iface->handle) {
+	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("vdev id %d is not active", vdev_id);
 		return;
 	}
@@ -863,13 +856,6 @@ QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower)
 					    wma_get_qpower_config(wma));
 }
 
-/**
- * wma_enable_uapsd_mode() - enable uapsd mode in fw
- * @wma: wma handle
- * @ps_req: power save request
- *
- * Return: none
- */
 void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 {
 	QDF_STATUS ret;
@@ -878,7 +864,7 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
-	if (!iface->handle) {
+	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("vdev id %d is not active", vdev_id);
 		return;
 	}

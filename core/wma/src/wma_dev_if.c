@@ -100,7 +100,7 @@ struct cdp_vdev *wma_find_vdev_by_addr(tp_wma_handle wma, uint8_t *addr,
 			(struct qdf_mac_addr *)wlan_vdev_mlme_get_macaddr(vdev),
 			(struct qdf_mac_addr *)addr) == true) {
 			*vdev_id = i;
-			return wma->interfaces[i].handle;
+			return wlan_vdev_get_dp_handle(wma->interfaces[i].vdev);
 		}
 	}
 	return NULL;
@@ -218,6 +218,8 @@ struct cdp_vdev *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 	uint8_t *bssid_addr;
 
 	for (i = 0; i < wma->max_bssid; i++) {
+		if (!wma->interfaces[i].vdev)
+			continue;
 		bssid_addr = wma_get_vdev_bssid(wma->interfaces[i].vdev);
 		if (!bssid_addr)
 			continue;
@@ -226,7 +228,7 @@ struct cdp_vdev *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 			(struct qdf_mac_addr *)bssid_addr,
 			(struct qdf_mac_addr *)bssid) == true) {
 			*vdev_id = i;
-			return wma->interfaces[i].handle;
+			return wlan_vdev_get_dp_handle(wma->interfaces[i].vdev);
 		}
 	}
 
@@ -489,7 +491,6 @@ QDF_STATUS wma_vdev_detach_callback(
  *
  * Return: success if peer delete command sent to firmware, else failure.
  */
-
 static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 			struct del_vdev_params *del_vdev_req_param)
 {
@@ -559,17 +560,6 @@ error:
 	return qdf_status;
 }
 
-static void
-wma_cdp_vdev_detach(ol_txrx_soc_handle soc,
-		    tp_wma_handle wma_handle,
-		    uint8_t vdev_id)
-{
-	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
-
-	cdp_vdev_detach(soc, iface->handle, NULL, NULL);
-	iface->handle = NULL;
-}
-
 /**
  * wma_release_vdev_ref() - Release vdev object reference count
  * @iface: wma interface txrx node
@@ -612,6 +602,13 @@ static void wma_handle_monitor_mode_vdev_detach(tp_wma_handle wma,
 	iface->vdev_active = false;
 }
 
+/**
+ * wma_handle_vdev_detach() - wma vdev detach handler
+ * @wma_handle: pointer to wma handle
+ * @del_vdev_req_param: pointer to del req param
+ *
+ * Return: none.
+ */
 static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 			struct del_vdev_params *del_vdev_req_param)
 {
@@ -630,7 +627,6 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	if (!vdev_mlme) {
 		wma_err("Failed to get vdev mlme obj for vdev id %d",
 			del_vdev_req_param->vdev_id);
-		wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 		goto out;
 	}
 
@@ -638,8 +634,6 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 		wma_handle_monitor_mode_vdev_detach(wma_handle, vdev_id);
 
 	iface->del_staself_req = del_vdev_req_param;
-	wlan_vdev_set_dp_handle(iface->vdev, NULL);
-	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 	wma_release_vdev_ref(iface);
 
 	status = vdev_mgr_delete_send(vdev_mlme);
@@ -795,12 +789,11 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 			struct del_vdev_params *pdel_vdev_req_param)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t vdev_id = pdel_vdev_req_param->vdev_id;
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 	uint32_t vdev_stop_type;
 
-	if (!iface->handle) {
+	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
 			 vdev_id);
 		goto send_rsp;
@@ -814,9 +807,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	 * CDP Vdev.
 	 */
 	if (!cds_is_target_ready()) {
-		wlan_vdev_set_dp_handle(iface->vdev, NULL);
 		wma_release_vdev_and_peer_ref(wma_handle, iface);
-		wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 		goto send_rsp;
 	}
 
@@ -1633,15 +1624,21 @@ static bool wma_find_duplicate_peer_on_other_vdev(tp_wma_handle wma,
 {
 	int i;
 	uint8_t peer_id;
+	struct cdp_vdev *handle;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_objmgr_vdev *vdev;
 
 	for (i = 0; i < wma->max_bssid; i++) {
+		vdev = wma->interfaces[i].vdev;
+		if (!vdev)
+			continue;
+		handle = wlan_vdev_get_dp_handle(wma->interfaces[i].vdev);
 		/* Need to check vdevs other than the vdev_id */
 		if (vdev_id == i ||
-		   !wma->interfaces[i].handle)
+		   !handle)
 			continue;
 		if (cdp_peer_find_by_addr_and_vdev(soc, pdev,
-			wma->interfaces[i].handle, peer_mac, &peer_id)) {
+			handle, peer_mac, &peer_id)) {
 			WMA_LOGE("%s :Duplicate peer %pM (peer id %d) already exist on vdev %d",
 				__func__, peer_mac, peer_id, i);
 			return true;
@@ -2080,6 +2077,7 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct del_bss_resp *resp)
 	struct wma_txrx_node *iface;
 	struct beacon_info *bcn;
 	uint8_t vdev_id;
+	struct cdp_vdev *handle;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!resp) {
@@ -2089,7 +2087,8 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct del_bss_resp *resp)
 
 	vdev_id = resp->vdev_id;
 	iface = &wma->interfaces[vdev_id];
-	if (!iface->handle) {
+	handle = wlan_vdev_get_dp_handle(iface->vdev);
+	if (!handle) {
 		WMA_LOGE("%s vdev id %d is already deleted",
 			 __func__, vdev_id);
 		if (resp)
@@ -2097,11 +2096,10 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct del_bss_resp *resp)
 		return;
 	}
 
-	cdp_fc_vdev_flush(soc, iface->handle);
+	cdp_fc_vdev_flush(soc, handle);
 	WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
 		 __func__, vdev_id);
-	cdp_fc_vdev_unpause(soc, iface->handle,
-		OL_TXQ_PAUSE_REASON_VDEV_STOP);
+	cdp_fc_vdev_unpause(soc, handle, OL_TXQ_PAUSE_REASON_VDEV_STOP);
 	wma_vdev_clear_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 	WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
@@ -2312,7 +2310,7 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 	    vdev_stop_type == WMA_SET_LINK_STATE) {
 		uint8_t type;
 
-		if (!iface->handle) {
+		if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 			WMA_LOGE("%s vdev id %d is already deleted",
 				 __func__, resp_event->vdev_id);
 			status = -EINVAL;
@@ -2442,12 +2440,11 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 
 	vdev_id = wlan_vdev_get_id(vdev);
 	txrx_vdev_handle = wlan_vdev_get_dp_handle(vdev);
+	wma_handle->interfaces[vdev_id].vdev = vdev;
 
 	wma_handle->interfaces[vdev_id].vdev_active = true;
-	wma_handle->interfaces[vdev_id].handle = txrx_vdev_handle;
 	wma_vdev_update_pause_bitmap(vdev_id, 0);
 
-	wma_handle->interfaces[vdev_id].vdev = vdev;
 	wma_handle->interfaces[vdev_id].type =
 		vdev_mlme->mgmt.generic.type;
 	wma_handle->interfaces[vdev_id].sub_type =
@@ -2698,7 +2695,6 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 
 end:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
-	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 	wma_handle->interfaces[vdev_id].vdev_active = false;
 	txrx_vdev_handle = NULL;
 
@@ -2814,7 +2810,7 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 		WMA_LOGD("%s, vdev_id: %d, unpausing tx_ll_queue at VDEV_START",
 			 __func__, vdev_id);
 		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
-				    wma->interfaces[vdev_id].handle,
+			wlan_vdev_get_dp_handle(wma->interfaces[vdev_id].vdev),
 			0xffffffff);
 		wma_vdev_update_pause_bitmap(vdev_id, 0);
 	}
@@ -3374,7 +3370,7 @@ QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vdev = iface->handle;
+	vdev = wlan_vdev_get_dp_handle(iface->vdev);
 	if (!vdev) {
 		wma_err("Failed to get vdev handle: %d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
@@ -4838,7 +4834,7 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id)
 {
 	struct cdp_pdev *pdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct cdp_vdev *txrx_vdev = NULL;
+	struct cdp_vdev *txrx_vdev = NULL, *handle;
 	struct wma_txrx_node *iface;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct vdev_stop_response resp_event;
@@ -4853,7 +4849,8 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id)
 	}
 
 	iface = &wma->interfaces[vdev_id];
-	if (!iface || !iface->handle) {
+	handle = wlan_vdev_get_dp_handle(iface->vdev);
+	if (!iface || !handle) {
 		WMA_LOGE("%s vdev id %d is already deleted",
 				__func__, vdev_id);
 		goto fail_del_bss_ho_fail;
@@ -4895,14 +4892,12 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id)
 
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP (del_bss)",
 		 __func__,  vdev_id);
-	cdp_fc_vdev_pause(soc, iface->handle,
-			   OL_TXQ_PAUSE_REASON_VDEV_STOP);
+	cdp_fc_vdev_pause(soc, handle, OL_TXQ_PAUSE_REASON_VDEV_STOP);
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
-	cdp_fc_vdev_flush(soc, iface->handle);
+	cdp_fc_vdev_flush(soc, handle);
 	WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
-			__func__,  vdev_id);
-	cdp_fc_vdev_unpause(soc, iface->handle,
-			OL_TXQ_PAUSE_REASON_VDEV_STOP);
+		 __func__,  vdev_id);
+	cdp_fc_vdev_unpause(soc, handle, OL_TXQ_PAUSE_REASON_VDEV_STOP);
 	wma_vdev_clear_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 	WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
@@ -4998,7 +4993,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 	}
 
 	iface = &wma->interfaces[vdev_id];
-	if (!iface || !iface->handle) {
+	if (!iface || !wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("%s vdev id %d is already deleted",
 			 __func__, vdev_id);
 		goto out;
@@ -5104,7 +5099,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 		 __func__, vdev_id);
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_pause(soc,
-		wma->interfaces[vdev_id].handle,
+		wlan_vdev_get_dp_handle(iface->vdev),
 		OL_TXQ_PAUSE_REASON_VDEV_STOP);
 
 	if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
@@ -5157,23 +5152,18 @@ int32_t wma_find_vdev_by_type(tp_wma_handle wma, int32_t type)
 	return -EFAULT;
 }
 
-/**
- * wma_set_vdev_intrabss_fwd() - set intra_fwd value to wni_in.
- * @wma_handle: wma handle
- * @pdis_intra_fwd: Pointer to DisableIntraBssFwd struct
- *
- * Return: none
- */
 void wma_set_vdev_intrabss_fwd(tp_wma_handle wma_handle,
 				      tpDisableIntraBssFwd pdis_intra_fwd)
 {
 	struct cdp_vdev *txrx_vdev;
+	struct wlan_objmgr_vdev *vdev;
 
 	WMA_LOGD("%s:intra_fwd:vdev(%d) intrabss_dis=%s",
 		 __func__, pdis_intra_fwd->sessionId,
 		 (pdis_intra_fwd->disableintrabssfwd ? "true" : "false"));
 
-	txrx_vdev = wma_handle->interfaces[pdis_intra_fwd->sessionId].handle;
+	vdev = wma_handle->interfaces[pdis_intra_fwd->sessionId].vdev;
+	txrx_vdev = wlan_vdev_get_dp_handle(vdev);
 	cdp_cfg_vdev_rx_set_intrabss_fwd(cds_get_context(QDF_MODULE_ID_SOC),
 				    txrx_vdev,
 				    pdis_intra_fwd->disableintrabssfwd);
@@ -5322,8 +5312,9 @@ QDF_STATUS wma_send_vdev_stop(uint8_t vdev_id)
 
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP",
 		 __func__, vdev_id);
-	cdp_fc_vdev_pause(soc, wma->interfaces[vdev_id].handle,
-			  OL_TXQ_PAUSE_REASON_VDEV_STOP);
+	cdp_fc_vdev_pause
+		(soc, wlan_vdev_get_dp_handle(wma->interfaces[vdev_id].vdev),
+		 OL_TXQ_PAUSE_REASON_VDEV_STOP);
 
 	status = mlme_set_vdev_stop_type(
 				wma->interfaces[vdev_id].vdev,

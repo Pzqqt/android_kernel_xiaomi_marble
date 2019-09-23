@@ -1976,17 +1976,18 @@ void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
 QDF_STATUS wma_process_ll_stats_clear_req(tp_wma_handle wma,
 				 const tpSirLLStatsClearReq clearReq)
 {
-	struct wlan_objmgr_vdev *vdev;
 	uint8_t *addr;
 	struct ll_stats_clear_params cmd = {0};
 	int ret;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!clearReq || !wma) {
 		WMA_LOGE("%s: input pointer is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!wma->interfaces[clearReq->staId].handle) {
+	vdev = wma->interfaces[clearReq->staId].vdev;
+	if (!wlan_vdev_get_dp_handle(vdev)) {
 		WMA_LOGE("%s: vdev_id %d handle is NULL",
 			 __func__, clearReq->staId);
 		return QDF_STATUS_E_FAILURE;
@@ -2439,14 +2440,6 @@ void wma_post_link_status(tAniGetLinkStatus *pGetLinkStatus,
 	}
 }
 
-/**
- * wma_link_status_event_handler() - link status event handler
- * @handle: wma handle
- * @cmd_param_info: data from event
- * @len: length
- *
- * Return: 0 for success or error code
- */
 int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 				  uint32_t len)
 {
@@ -2456,7 +2449,8 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 	wmi_vdev_rate_ht_info *ht_info;
 	struct wma_txrx_node *intr = wma->interfaces;
 	uint8_t link_status = LINK_STATUS_LEGACY;
-	uint32_t i;
+	uint32_t i, rate_flag;
+	QDF_STATUS status;
 
 	param_buf =
 	      (WMI_UPDATE_VDEV_RATE_STATS_EVENTID_param_tlvs *) cmd_param_info;
@@ -2479,6 +2473,13 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 			param_buf->num_ht_info);
 		return -EINVAL;
 	}
+
+	status = wma_get_vdev_rate_flag(intr[ht_info->vdevid].vdev, &rate_flag);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to get rate flag",	__func__);
+		return -EINVAL;
+	}
+
 	for (i = 0; (i < event->num_vdev_stats) && ht_info; i++) {
 		WMA_LOGD("%s vdevId:%d  tx_nss:%d rx_nss:%d tx_preamble:%d rx_preamble:%d",
 			__func__, ht_info->vdevid, ht_info->tx_nss,
@@ -2496,7 +2497,7 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 			if (intr[ht_info->vdevid].nss == 2)
 				link_status |= LINK_SUPPORT_MIMO;
 
-			if (intr[ht_info->vdevid].rate_flags &
+			if (rate_flag &
 				(TX_RATE_VHT20 | TX_RATE_VHT40 |
 				TX_RATE_VHT80))
 				link_status |= LINK_SUPPORT_VHT;
