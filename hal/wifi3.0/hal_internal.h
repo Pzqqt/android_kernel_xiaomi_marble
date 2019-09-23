@@ -411,6 +411,10 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_rx_hw_desc_get_ppduid_get)(void *hw_desc_addr);
 	uint32_t (*hal_rx_mpdu_start_mpdu_qos_control_valid_get)(uint8_t *buf);
 	uint32_t (*hal_rx_msdu_end_sa_sw_peer_id_get)(uint8_t *buf);
+	void * (*hal_rx_msdu0_buffer_addr_lsb)(void *link_desc_addr);
+	void * (*hal_rx_msdu_desc_info_ptr_get)(void *msdu0);
+	void * (*hal_ent_mpdu_desc_info)(void *hw_addr);
+	void * (*hal_dst_mpdu_desc_info)(void *hw_addr);
 };
 
 /**

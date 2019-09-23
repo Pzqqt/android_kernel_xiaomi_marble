@@ -1038,9 +1038,7 @@ dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc,
 
 	qdf_assert(link_desc_va);
 
-	msdu0 = (uint8_t *)link_desc_va +
-		RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET;
-
+	msdu0 = hal_rx_msdu0_buffer_addr_lsb(soc->hal_soc, link_desc_va);
 	nbuf_len = qdf_nbuf_len(head) - RX_PKT_TLVS_LEN;
 
 	HAL_RX_UNIFORM_HDR_SET(link_desc_va, OWNER, UNI_DESC_OWNER_SW);
@@ -1048,8 +1046,7 @@ dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc,
 			UNI_DESC_BUF_TYPE_RX_MSDU_LINK);
 
 	/* msdu reconfig */
-	msdu_desc_info = (uint8_t *)msdu0 +
-		RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET;
+	msdu_desc_info = hal_rx_msdu_desc_info_ptr_get(soc->hal_soc, msdu0);
 
 	dst_ind = hal_rx_msdu_reo_dst_ind_get(soc->hal_soc, link_desc_va);
 
@@ -1121,11 +1118,10 @@ dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc,
 				     buf_info.sw_cookie,
 				     HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST);
 	/* mpdu desc info */
-	ent_mpdu_desc_info = (uint8_t *)ent_ring_desc +
-	RX_MPDU_DETAILS_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET;
-
-	dst_mpdu_desc_info = (uint8_t *)dst_ring_desc +
-	REO_DESTINATION_RING_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET;
+	ent_mpdu_desc_info = hal_ent_mpdu_desc_info(soc->hal_soc,
+						    ent_ring_desc);
+	dst_mpdu_desc_info = hal_dst_mpdu_desc_info(soc->hal_soc,
+						    dst_ring_desc);
 
 	qdf_mem_copy(ent_mpdu_desc_info, dst_mpdu_desc_info,
 				sizeof(struct rx_mpdu_desc_info));

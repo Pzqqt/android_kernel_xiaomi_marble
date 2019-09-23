@@ -231,6 +231,22 @@
 		RX_MSDU_END_16_SA_SW_PEER_ID_MASK,		\
 		RX_MSDU_END_16_SA_SW_PEER_ID_LSB))
 
+#define HAL_RX_MSDU0_BUFFER_ADDR_LSB(link_desc_va)      \
+	(uint8_t *)(link_desc_va) +			\
+	RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET
+
+#define HAL_RX_MSDU_DESC_INFO_PTR_GET(msdu0)			\
+	(uint8_t *)(msdu0) +				\
+	RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET
+
+#define HAL_ENT_MPDU_DESC_INFO(ent_ring_desc)		\
+	(uint8_t *)(ent_ring_desc) +			\
+	RX_MPDU_DETAILS_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET
+
+#define HAL_DST_MPDU_DESC_INFO(dst_ring_desc)		\
+	(uint8_t *)(dst_ring_desc) +			\
+	REO_DESTINATION_RING_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET
+
 /*
  * hal_rx_msdu_start_nss_get_8074v2(): API to get the NSS
  * Interval from rx_msdu_start

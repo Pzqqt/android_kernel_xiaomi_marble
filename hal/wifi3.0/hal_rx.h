@@ -3334,4 +3334,40 @@ uint32_t hal_rx_msdu_end_sa_sw_peer_id_get(hal_soc_handle_t hal_soc_hdl,
 
 	return QDF_STATUS_E_INVAL;
 }
+
+static inline
+void *hal_rx_msdu0_buffer_addr_lsb(hal_soc_handle_t hal_soc_hdl,
+				   void *link_desc_addr)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_msdu0_buffer_addr_lsb(link_desc_addr);
+}
+
+static inline
+void *hal_rx_msdu_desc_info_ptr_get(hal_soc_handle_t hal_soc_hdl,
+				    void *msdu_addr)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_msdu_desc_info_ptr_get(msdu_addr);
+}
+
+static inline
+void *hal_ent_mpdu_desc_info(hal_soc_handle_t hal_soc_hdl,
+			     void *hw_addr)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_ent_mpdu_desc_info(hw_addr);
+}
+
+static inline
+void *hal_dst_mpdu_desc_info(hal_soc_handle_t hal_soc_hdl,
+			     void *hw_addr)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_dst_mpdu_desc_info(hw_addr);
+}
 #endif /* _HAL_RX_H */

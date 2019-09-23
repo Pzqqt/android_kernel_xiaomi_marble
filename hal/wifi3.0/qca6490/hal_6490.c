@@ -629,6 +629,30 @@ void hal_tx_desc_set_mesh_en_6490(void *desc, uint8_t en)
 		HAL_TX_SM(TCL_DATA_CMD_5, MESH_ENABLE, en);
 }
 
+static
+void *hal_rx_msdu0_buffer_addr_lsb_6490(void *link_desc_va)
+{
+	return (void *)HAL_RX_MSDU0_BUFFER_ADDR_LSB(link_desc_va);
+}
+
+static
+void *hal_rx_msdu_desc_info_ptr_get_6490(void *msdu0)
+{
+	return (void *)HAL_RX_MSDU_DESC_INFO_PTR_GET(msdu0);
+}
+
+static
+void *hal_ent_mpdu_desc_info_6490(void *ent_ring_desc)
+{
+	return (void *)HAL_ENT_MPDU_DESC_INFO(ent_ring_desc);
+}
+
+static
+void *hal_dst_mpdu_desc_info_6490(void *dst_ring_desc)
+{
+	return (void *)HAL_DST_MPDU_DESC_INFO(dst_ring_desc);
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* tx */
 	hal_tx_desc_set_mesh_en_6490,
@@ -658,4 +682,8 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_hw_desc_get_ppduid_get_6490,
 	NULL,
 	NULL,
+	hal_rx_msdu0_buffer_addr_lsb_6490,
+	hal_rx_msdu_desc_info_ptr_get_6490,
+	hal_ent_mpdu_desc_info_6490,
+	hal_dst_mpdu_desc_info_6490,
 };
