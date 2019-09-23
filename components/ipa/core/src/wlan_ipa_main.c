@@ -635,6 +635,8 @@ void ipa_component_config_update(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_MEDIUM_THRESHOLD);
 	g_ipa_config->bus_bw_low =
 		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_LOW_THRESHOLD);
+	g_ipa_config->ipa_force_voting =
+		cfg_get(psoc, CFG_DP_IPA_ENABLE_FORCE_VOTING);
 }
 
 uint32_t ipa_get_tx_buf_count(void)

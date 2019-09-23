@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,6 +38,7 @@
  * @ipa_bw_high: IPA bandwidth high threshold
  * @ipa_bw_medium: IPA bandwidth medium threshold
  * @ipa_bw_low: IPA bandwidth low threshold
+ * @ipa_force_voting: support force bw voting
  */
 struct wlan_ipa_config {
 	uint32_t ipa_config;
@@ -49,6 +50,7 @@ struct wlan_ipa_config {
 	uint32_t ipa_bw_high;
 	uint32_t ipa_bw_medium;
 	uint32_t ipa_bw_low;
+	bool ipa_force_voting;
 };
 
 /**
