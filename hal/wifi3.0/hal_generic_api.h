@@ -1380,19 +1380,15 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		uint8_t *rx_mpdu_start =
 			(uint8_t *)rx_tlv + HAL_RX_OFFSET(UNIFIED_RX_MPDU_START_0,
 					RX_MPDU_INFO_RX_MPDU_INFO_DETAILS);
-		uint32_t ppdu_id = HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0,
-					      PHY_PPDU_ID);
+		uint32_t ppdu_id =
+				HAL_RX_GET_PPDU_ID(rx_mpdu_start);
 		uint8_t filter_category = 0;
 
 		ppdu_info->nac_info.fc_valid =
-			HAL_RX_GET(rx_mpdu_start,
-				   RX_MPDU_INFO_2,
-				   MPDU_FRAME_CONTROL_VALID);
+				HAL_RX_GET_FC_VALID(rx_mpdu_start);
 
 		ppdu_info->nac_info.to_ds_flag =
-			HAL_RX_GET(rx_mpdu_start,
-				   RX_MPDU_INFO_2,
-				   TO_DS);
+				HAL_RX_GET_TO_DS_FLAG(rx_mpdu_start);
 
 		ppdu_info->nac_info.frame_control =
 			HAL_RX_GET(rx_mpdu_start,
@@ -1400,9 +1396,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				   MPDU_FRAME_CONTROL_FIELD);
 
 		ppdu_info->nac_info.mac_addr2_valid =
-			HAL_RX_GET(rx_mpdu_start,
-				   RX_MPDU_INFO_2,
-				   MAC_ADDR_AD2_VALID);
+				HAL_RX_GET_MAC_ADDR2_VALID(rx_mpdu_start);
 
 		*(uint16_t *)&ppdu_info->nac_info.mac_addr2[0] =
 			HAL_RX_GET(rx_mpdu_start,
@@ -1425,8 +1419,8 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				MPDU_LENGTH);
 		}
 
-		filter_category = HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0,
-							RXPCU_MPDU_FILTER_IN_CATEGORY);
+		filter_category =
+				HAL_RX_GET_FILTER_CATEGORY(rx_mpdu_start);
 
 		if (filter_category == 0)
 			ppdu_info->rx_status.rxpcu_filter_pass = 1;

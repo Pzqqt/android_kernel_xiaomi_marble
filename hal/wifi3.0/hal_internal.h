@@ -415,6 +415,11 @@ struct hal_hw_txrx_ops {
 	void * (*hal_rx_msdu_desc_info_ptr_get)(void *msdu0);
 	void * (*hal_ent_mpdu_desc_info)(void *hw_addr);
 	void * (*hal_dst_mpdu_desc_info)(void *hw_addr);
+	uint8_t (*hal_rx_get_fc_valid)(uint8_t *buf);
+	uint8_t (*hal_rx_get_to_ds_flag)(uint8_t *buf);
+	uint8_t (*hal_rx_get_mac_addr2_valid)(uint8_t *buf);
+	uint8_t (*hal_rx_get_filter_category)(uint8_t *buf);
+	uint32_t (*hal_rx_get_ppdu_id)(uint8_t *buf);
 };
 
 /**

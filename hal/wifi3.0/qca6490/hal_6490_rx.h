@@ -229,3 +229,18 @@
 #define HAL_DST_MPDU_DESC_INFO(dst_ring_desc)		\
 	(uint8_t *)(dst_ring_desc) +			\
 	REO_DESTINATION_RING_2_RX_MPDU_DESC_INFO_DETAILS_MSDU_COUNT_OFFSET
+
+#define HAL_RX_GET_FC_VALID(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_11, MPDU_FRAME_CONTROL_VALID)
+
+#define HAL_RX_GET_TO_DS_FLAG(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_11, TO_DS)
+
+#define HAL_RX_GET_MAC_ADDR2_VALID(rx_mpdu_start) \
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_11, MAC_ADDR_AD2_VALID)
+
+#define HAL_RX_GET_FILTER_CATEGORY(rx_mpdu_start) \
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_9, RXPCU_MPDU_FILTER_IN_CATEGORY)
+
+#define HAL_RX_GET_PPDU_ID(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_9, PHY_PPDU_ID)

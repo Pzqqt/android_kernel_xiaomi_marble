@@ -781,6 +781,33 @@ void *hal_dst_mpdu_desc_info_6390(void *dst_ring_desc)
 	return (void *)HAL_DST_MPDU_DESC_INFO(dst_ring_desc);
 }
 
+static
+uint8_t hal_rx_get_fc_valid_6390(uint8_t *buf)
+{
+	return HAL_RX_GET_FC_VALID(buf);
+}
+
+static uint8_t hal_rx_get_to_ds_flag_6390(uint8_t *buf)
+{
+	return HAL_RX_GET_TO_DS_FLAG(buf);
+}
+
+static uint8_t hal_rx_get_mac_addr2_valid_6390(uint8_t *buf)
+{
+	return HAL_RX_GET_MAC_ADDR2_VALID(buf);
+}
+
+static uint8_t hal_rx_get_filter_category_6390(uint8_t *buf)
+{
+	return HAL_RX_GET_FILTER_CATEGORY(buf);
+}
+
+static uint32_t
+hal_rx_get_ppdu_id_6390(uint8_t *buf)
+{
+	return HAL_RX_GET_PPDU_ID(buf);
+}
+
 struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -852,6 +879,11 @@ struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	hal_rx_msdu_desc_info_ptr_get_6390,
 	hal_ent_mpdu_desc_info_6390,
 	hal_dst_mpdu_desc_info_6390,
+	hal_rx_get_fc_valid_6390,
+	hal_rx_get_to_ds_flag_6390,
+	hal_rx_get_mac_addr2_valid_6390,
+	hal_rx_get_filter_category_6390,
+	hal_rx_get_ppdu_id_6390,
 };
 
 struct hal_hw_srng_config hw_srng_table_6390[] = {

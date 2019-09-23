@@ -247,6 +247,21 @@
 	(uint8_t *)(dst_ring_desc) +			\
 	REO_DESTINATION_RING_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET
 
+#define HAL_RX_GET_FC_VALID(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_2, MPDU_FRAME_CONTROL_VALID)
+
+#define HAL_RX_GET_TO_DS_FLAG(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_2, TO_DS)
+
+#define HAL_RX_GET_MAC_ADDR2_VALID(rx_mpdu_start) \
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_2, MAC_ADDR_AD2_VALID)
+
+#define HAL_RX_GET_FILTER_CATEGORY(rx_mpdu_start) \
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0, RXPCU_MPDU_FILTER_IN_CATEGORY)
+
+#define HAL_RX_GET_PPDU_ID(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0, PHY_PPDU_ID)
+
 /*
  * hal_rx_msdu_start_nss_get_8074v2(): API to get the NSS
  * Interval from rx_msdu_start

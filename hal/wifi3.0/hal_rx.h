@@ -3370,4 +3370,48 @@ void *hal_dst_mpdu_desc_info(hal_soc_handle_t hal_soc_hdl,
 
 	return hal_soc->ops->hal_dst_mpdu_desc_info(hw_addr);
 }
+
+static inline
+uint8_t hal_rx_get_fc_valid(hal_soc_handle_t hal_soc_hdl,
+			    uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_get_fc_valid(buf);
+}
+
+static inline
+uint8_t hal_rx_get_to_ds_flag(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_get_to_ds_flag(buf);
+}
+
+static inline
+uint8_t hal_rx_get_mac_addr2_valid(hal_soc_handle_t hal_soc_hdl,
+				   uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_get_mac_addr2_valid(buf);
+}
+
+static inline
+uint8_t hal_rx_get_filter_category(hal_soc_handle_t hal_soc_hdl,
+				   uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_get_filter_category(buf);
+}
+
+static inline
+uint32_t hal_rx_get_ppdu_id(hal_soc_handle_t hal_soc_hdl,
+			    uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_get_ppdu_id(buf);
+}
 #endif /* _HAL_RX_H */

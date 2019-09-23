@@ -249,6 +249,21 @@
 	(uint8_t *)(dst_ring_desc) +			\
 	REO_DESTINATION_RING_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET
 
+#define HAL_RX_GET_FC_VALID(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_2, MPDU_FRAME_CONTROL_VALID)
+
+#define HAL_RX_GET_TO_DS_FLAG(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_2, TO_DS)
+
+#define HAL_RX_GET_MAC_ADDR2_VALID(rx_mpdu_start) \
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_2, MAC_ADDR_AD2_VALID)
+
+#define HAL_RX_GET_FILTER_CATEGORY(rx_mpdu_start) \
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0, RXPCU_MPDU_FILTER_IN_CATEGORY)
+
+#define HAL_RX_GET_PPDU_ID(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0, PHY_PPDU_ID)
+
 #if defined(QCA_WIFI_QCA6290_11AX)
 #define HAL_RX_MSDU_START_MIMO_SS_BITMAP(_rx_msdu_start)\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
