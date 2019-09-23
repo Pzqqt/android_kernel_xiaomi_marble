@@ -600,8 +600,23 @@ QDF_STATUS lim_p2p_oper_chan_change_confirm_action_frame(
 QDF_STATUS lim_send_neighbor_report_request_frame(struct mac_context *,
 						     tpSirMacNeighborReportReq,
 						     tSirMacAddr, struct pe_session *);
-QDF_STATUS lim_send_link_report_action_frame(struct mac_context *, tpSirMacLinkReport,
-						tSirMacAddr, struct pe_session *);
+
+/**
+ * lim_send_link_report_action_frame() - Send link measurement report action
+ * frame in response for a link measurement request received.
+ * @mac: Pointer to Mac context
+ * @link_report: Pointer to the sSirMacLinkReport struct
+ * @peer: BSSID of the peer
+ * @pe_session: Pointer to the pe_session
+ *
+ * Return: QDF_STATUS
+ *
+ */
+QDF_STATUS
+lim_send_link_report_action_frame(struct mac_context *mac,
+				  tpSirMacLinkReport link_report,
+				  tSirMacAddr peer,
+				  struct pe_session *pe_session);
 
 /**
  * lim_send_radio_measure_report_action_frame - Send RRM report action frame

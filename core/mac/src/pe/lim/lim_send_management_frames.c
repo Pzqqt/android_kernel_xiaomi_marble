@@ -4170,23 +4170,6 @@ returnAfterError:
 	return status_code;
 } /* End lim_send_neighbor_report_request_frame. */
 
-/**
- * \brief Send a Link Report Action frame
- *
- *
- * \param mac Pointer to the global MAC structure
- *
- * \param pLinkReport Address of a tSirMacLinkReport
- *
- * \param peer mac address of peer station.
- *
- * \param pe_session address of session entry.
- *
- * \return QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE else
- *
- *
- */
-
 QDF_STATUS
 lim_send_link_report_action_frame(struct mac_context *mac,
 				  tpSirMacLinkReport pLinkReport,
@@ -4200,13 +4183,14 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 	void *pPacket;
 	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
-	uint8_t smeSessionId = 0;
+	uint8_t vdev_id = 0;
 
 	if (!pe_session) {
-		pe_err("(!psession) in Request to send Link Report action frame");
+		pe_err("RRM: Send link report: NULL PE session");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	vdev_id = pe_session->vdev_id;
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
 	frm.Category.category = ACTION_CATEGORY_RRM;
@@ -4281,8 +4265,7 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 			nStatus);
 	}
 
-	pe_warn("Sending a Link Report to");
-	lim_print_mac_addr(mac, peer, LOGW);
+	pe_warn("RRM: Sending Link Report to %pM on vdev[%d]", peer, vdev_id);
 
 	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
@@ -4297,7 +4280,7 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
-				smeSessionId, 0, RATEID_DEFAULT);
+				vdev_id, 0, RATEID_DEFAULT);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 			 pe_session->peSessionId, qdf_status));
 	if (QDF_STATUS_SUCCESS != qdf_status) {
