@@ -326,6 +326,41 @@ ucfg_mlme_set_sap_tx_leakage_threshold(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+ucfg_mlme_get_dfs_pri_multiplier(struct wlan_objmgr_psoc *psoc,
+				 uint32_t *dfs_pri_multiplier)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*dfs_pri_multiplier =
+			cfg_default(CFG_DFS_RADAR_PRI_MULTIPLIER);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*dfs_pri_multiplier =
+		mlme_obj->cfg.dfs_cfg.dfs_pri_multiplier;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_dfs_pri_multiplier(struct wlan_objmgr_psoc *psoc,
+				 uint32_t dfs_pri_multiplier)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.dfs_cfg.dfs_pri_multiplier =
+		dfs_pri_multiplier;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 ucfg_mlme_get_dfs_filter_offload(struct wlan_objmgr_psoc *psoc,
 				 bool *dfs_filter_offload)
 {

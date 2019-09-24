@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,6 +46,31 @@
 			310, \
 			CFG_VALUE_OR_DEFAULT, \
 			"sap tx leakage threshold")
+
+/*
+ * <ini>
+ * gDFSradarMappingPriMultiplier - dfs pri multiplier
+ * @Min: 1
+ * @Max: 10
+ * @Default: 2
+ *
+ * customer can set this value from 1 to 10 which means
+ * host could handle missing pulses while there is high
+ * channel loading, for example: 30% ETSI and 50% Japan W53
+ *
+ * Related: none
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DFS_RADAR_PRI_MULTIPLIER CFG_INI_UINT( \
+			"gDFSradarMappingPriMultiplier", \
+			1, \
+			10, \
+			2, \
+			CFG_VALUE_OR_DEFAULT, \
+			"dfs pri multiplier")
 
 /*
  * <ini>
@@ -203,6 +228,7 @@
 	CFG(CFG_DISABLE_DFS_CH_SWITCH) \
 	CFG(CFG_DFS_BEACON_TX_ENHANCED) \
 	CFG(CFG_SAP_TX_LEAKAGE_THRESHOLD) \
+	CFG(CFG_DFS_RADAR_PRI_MULTIPLIER) \
 	CFG(CFG_ENABLE_NON_DFS_CHAN_ON_RADAR) \
 	CFG(CFG_ENABLE_DFS_MASTER_CAPABILITY) \
 	CFG(CFG_DISABLE_DFS_JAPAN_W53) \
