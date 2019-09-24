@@ -2386,7 +2386,10 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 	WMA_LOGD("Set IBSS link monitor timer: peer_num = %d timer_value = %d",
 		 new_peer_num, new_timer_value_ms);
 }
+#endif /* QCA_IBSS_SUPPORT */
 
+#ifndef CRYPTO_SET_KEY_CONVERGED
+#ifdef QCA_IBSS_SUPPORT
 /**
  * wma_set_ibsskey_helper() - cached IBSS key in wma handle
  * @wma_handle: wma handle
@@ -2487,7 +2490,6 @@ void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 }
 #endif /* QCA_IBSS_SUPPORT */
 
-#ifndef CRYPTO_SET_KEY_CONVERGED
 void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 {
 	struct wma_set_key_params key_params;
