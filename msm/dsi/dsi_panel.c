@@ -1860,6 +1860,8 @@ error:
 static int dsi_panel_parse_misc_features(struct dsi_panel *panel)
 {
 	struct dsi_parser_utils *utils = &panel->utils;
+	const char *string;
+	int i, rc = 0;
 
 	panel->ulps_feature_enabled =
 		utils->read_bool(utils->data, "qcom,ulps-enabled");
@@ -1881,6 +1883,29 @@ static int dsi_panel_parse_misc_features(struct dsi_panel *panel)
 
 	panel->lp11_init = utils->read_bool(utils->data,
 			"qcom,mdss-dsi-lp11-init");
+
+	panel->spr_info.enable = false;
+	panel->spr_info.pack_type = MSM_DISPLAY_SPR_TYPE_MAX;
+
+	rc = utils->read_string(utils->data, "qcom,spr-pack-type", &string);
+	if (!rc) {
+		// find match for pack-type string
+		for (i = 0; i < MSM_DISPLAY_SPR_TYPE_MAX; i++) {
+			if (msm_spr_pack_type_str[i] &&
+				(!strcmp(string, msm_spr_pack_type_str[i]))) {
+				panel->spr_info.enable = true;
+				panel->spr_info.pack_type = i;
+				break;
+			}
+		}
+	}
+
+	pr_debug("%s source side spr packing, pack-type %s\n",
+		panel->spr_info.enable ? "enable" : "disable",
+		panel->spr_info.enable ?
+		msm_spr_pack_type_str[panel->spr_info.pack_type] : "none");
+
+
 	return 0;
 }
 
