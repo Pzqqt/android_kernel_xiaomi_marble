@@ -253,6 +253,36 @@
 #define HAL_RX_GET_PPDU_ID(rx_mpdu_start)	\
 	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0, PHY_PPDU_ID)
 
+#define HAL_REO_R0_CONFIG(soc, reg_val, reo_params)		\
+	do { \
+		reg_val &= \
+			~(HWIO_REO_R0_GENERAL_ENABLE_FRAGMENT_DEST_RING_BMSK |\
+			HWIO_REO_R0_GENERAL_ENABLE_AGING_LIST_ENABLE_BMSK | \
+			HWIO_REO_R0_GENERAL_ENABLE_AGING_FLUSH_ENABLE_BMSK); \
+		reg_val |= \
+			HAL_SM(HWIO_REO_R0_GENERAL_ENABLE, \
+			       FRAGMENT_DEST_RING, \
+			       (reo_params)->frag_dst_ring) |	\
+			HAL_SM(HWIO_REO_R0_GENERAL_ENABLE, \
+			       AGING_LIST_ENABLE, 1) |\
+			HAL_SM(HWIO_REO_R0_GENERAL_ENABLE, \
+			       AGING_FLUSH_ENABLE, 1);\
+		HAL_REG_WRITE((soc), \
+			      HWIO_REO_R0_GENERAL_ENABLE_ADDR( \
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),\
+			      (reg_val)); \
+	} while (0)
+
+#define HAL_RX_MSDU_DESC_INFO_GET(msdu_details_ptr) \
+	((struct rx_msdu_desc_info *) \
+	_OFFSET_TO_BYTE_PTR((msdu_details_ptr), \
+UNIFIED_RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET))
+
+#define HAL_RX_LINK_DESC_MSDU0_PTR(link_desc)   \
+	((struct rx_msdu_details *) \
+	 _OFFSET_TO_BYTE_PTR((link_desc),\
+	UNIFIED_RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET))
+
 /*
  * hal_rx_msdu_start_nss_get_8074(): API to get the NSS
  * Interval from rx_msdu_start

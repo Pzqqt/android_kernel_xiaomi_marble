@@ -19,7 +19,7 @@
 #ifndef _HAL_RX_H_
 #define _HAL_RX_H_
 
-#include <hal_internal.h>
+#include <hal_api.h>
 
 #define HAL_RX_OFFSET(block, field) block##_##field##_OFFSET
 #define HAL_RX_LSB(block, field) block##_##field##_LSB
@@ -3413,5 +3413,23 @@ uint32_t hal_rx_get_ppdu_id(hal_soc_handle_t hal_soc_hdl,
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
 	return hal_soc->ops->hal_rx_get_ppdu_id(buf);
+}
+
+/**
+ * hal_reo_config(): Set reo config parameters
+ * @soc: hal soc handle
+ * @reg_val: value to be set
+ * @reo_params: reo parameters
+ *
+ * Return: void
+ */
+static inline
+void hal_reo_config(struct hal_soc *hal_soc,
+		    uint32_t reg_val,
+		    struct hal_reo_params *reo_params)
+{
+	hal_soc->ops->hal_reo_config(hal_soc,
+				     reg_val,
+				     reo_params);
 }
 #endif /* _HAL_RX_H */

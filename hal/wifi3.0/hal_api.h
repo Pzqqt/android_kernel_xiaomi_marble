@@ -1288,21 +1288,6 @@ uint32_t hal_idle_list_num_scatter_bufs(hal_soc_handle_t hal_soc_hdl,
 	return num_scatter_bufs;
 }
 
-/* REO parameters to be passed to hal_reo_setup */
-struct hal_reo_params {
-	/** rx hash steering enabled or disabled */
-	bool rx_hash_enabled;
-	/** reo remap 1 register */
-	uint32_t remap1;
-	/** reo remap 2 register */
-	uint32_t remap2;
-	/** fragment destination ring */
-	uint8_t frag_dst_ring;
-	/** padding */
-	uint8_t padding[3];
-};
-
-
 enum hal_pn_type {
 	HAL_PN_NONE,
 	HAL_PN_WPA,

@@ -803,6 +803,46 @@ hal_rx_get_ppdu_id_8074v2(uint8_t *buf)
 	return HAL_RX_GET_PPDU_ID(buf);
 }
 
+/**
+ * hal_reo_config_8074v2(): Set reo config parameters
+ * @soc: hal soc handle
+ * @reg_val: value to be set
+ * @reo_params: reo parameters
+ *
+ * Return: void
+ */
+static void
+hal_reo_config_8074v2(struct hal_soc *soc,
+		      uint32_t reg_val,
+		      struct hal_reo_params *reo_params)
+{
+	HAL_REO_R0_CONFIG(soc, reg_val, reo_params);
+}
+
+/**
+ * hal_rx_msdu_desc_info_get_ptr_8074v2() - Get msdu desc info ptr
+ * @msdu_details_ptr - Pointer to msdu_details_ptr
+ *
+ * Return - Pointer to rx_msdu_desc_info structure.
+ *
+ */
+static void *hal_rx_msdu_desc_info_get_ptr_8074v2(void *msdu_details_ptr)
+{
+	return HAL_RX_MSDU_DESC_INFO_GET(msdu_details_ptr);
+}
+
+/**
+ * hal_rx_link_desc_msdu0_ptr_8074v2 - Get pointer to rx_msdu details
+ * @link_desc - Pointer to link desc
+ *
+ * Return - Pointer to rx_msdu_details structure
+ *
+ */
+static void *hal_rx_link_desc_msdu0_ptr_8074v2(void *link_desc)
+{
+	return HAL_RX_LINK_DESC_MSDU0_PTR(link_desc);
+}
+
 struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -836,8 +876,8 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_mpdu_start_tid_get_8074v2,
 	hal_rx_msdu_start_reception_type_get_8074v2,
 	hal_rx_msdu_end_da_idx_get_8074v2,
-	hal_rx_msdu_desc_info_get_ptr_generic,
-	hal_rx_link_desc_msdu0_ptr_generic,
+	hal_rx_msdu_desc_info_get_ptr_8074v2,
+	hal_rx_link_desc_msdu0_ptr_8074v2,
 	hal_reo_status_get_header_8074v2,
 	hal_rx_status_get_tlv_info_generic,
 	hal_rx_wbm_err_info_get_generic,
@@ -881,6 +921,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_get_mac_addr2_valid_8074v2,
 	hal_rx_get_filter_category_8074v2,
 	hal_rx_get_ppdu_id_8074v2,
+	hal_reo_config_8074v2,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

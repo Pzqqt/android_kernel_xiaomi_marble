@@ -312,6 +312,20 @@ struct hal_hw_srng_config {
 
 #define MAX_SHADOW_REGISTERS 36
 
+/* REO parameters to be passed to hal_reo_setup */
+struct hal_reo_params {
+	/** rx hash steering enabled or disabled */
+	bool rx_hash_enabled;
+	/** reo remap 1 register */
+	uint32_t remap1;
+	/** reo remap 2 register */
+	uint32_t remap2;
+	/** fragment destination ring */
+	uint8_t frag_dst_ring;
+	/** padding */
+	uint8_t padding[3];
+};
+
 struct hal_hw_txrx_ops {
 
 	/* init and setup */
@@ -420,6 +434,9 @@ struct hal_hw_txrx_ops {
 	uint8_t (*hal_rx_get_mac_addr2_valid)(uint8_t *buf);
 	uint8_t (*hal_rx_get_filter_category)(uint8_t *buf);
 	uint32_t (*hal_rx_get_ppdu_id)(uint8_t *buf);
+	void (*hal_reo_config)(struct hal_soc *soc,
+			       uint32_t reg_val,
+			       struct hal_reo_params *reo_params);
 };
 
 /**
