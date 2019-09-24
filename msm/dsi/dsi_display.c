@@ -4064,7 +4064,7 @@ static int dsi_display_dynamic_clk_switch_vid(struct dsi_display *display,
 	dsi_display_mask_ctrl_error_interrupts(display, mask, true);
 
 	/* update the phy timings based on new mode */
-	for (i = 0; i < display->ctrl_count; i++) {
+	display_for_each_ctrl(i, display) {
 		ctrl = &display->ctrl[i];
 		dsi_phy_update_phy_timings(ctrl->phy, &display->config);
 	}
@@ -4084,7 +4084,7 @@ static int dsi_display_dynamic_clk_switch_vid(struct dsi_display *display,
 	_dsi_display_calc_pipe_delay(display, &delay, mode);
 
 	/* configure dynamic refresh ctrl registers */
-	for (i = 0; i < display->ctrl_count; i++) {
+	display_for_each_ctrl(i, display) {
 		ctrl = &display->ctrl[i];
 		if (!ctrl->phy)
 			continue;
@@ -5997,14 +5997,14 @@ int dsi_display_get_panel_vfp(void *dsi_display,
 	struct dsi_display *display = (struct dsi_display *)dsi_display;
 	struct dsi_host_common_cfg *host;
 
-	if (!display)
+	if (!display || !display->panel)
 		return -EINVAL;
 
 	mutex_lock(&display->display_lock);
 
 	count = display->panel->num_display_modes;
 
-	if (display->panel && display->panel->cur_mode)
+	if (display->panel->cur_mode)
 		refresh_rate = display->panel->cur_mode->timing.refresh_rate;
 
 	dsi_panel_get_dfps_caps(display->panel, &dfps_caps);
