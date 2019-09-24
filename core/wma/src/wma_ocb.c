@@ -35,24 +35,44 @@
  */
 static QDF_STATUS wma_start_ocb_vdev(struct ocb_config *config)
 {
-	struct wma_vdev_start_req req;
 	QDF_STATUS status;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mlme_obj *mlme_obj;
+	struct wlan_channel *des_chan;
+	uint8_t dot11_mode;
 
-	qdf_mem_zero(&req, sizeof(req));
-	req.op_chan_freq = config->channels[0].chan_freq;
-	req.vdev_id = config->vdev_id;
-	if (wlan_reg_is_24ghz_ch_freq(req.op_chan_freq))
-		req.dot11_mode = MLME_DOT11_MODE_11G;
+	vdev = wma->interfaces[config->vdev_id].vdev;
+	if (!vdev) {
+		wma_err("vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		wma_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	des_chan = vdev->vdev_mlme.des_chan;
+
+	des_chan->ch_freq = config->channels[0].chan_freq;
+	if (wlan_reg_is_24ghz_ch_freq(des_chan->ch_freq))
+		dot11_mode = MLME_DOT11_MODE_11G;
 	else
-		req.dot11_mode = MLME_DOT11_MODE_11A;
+		dot11_mode = MLME_DOT11_MODE_11A;
 
-	req.preferred_rx_streams = 2;
-	req.preferred_tx_streams = 2;
+	status = lim_set_ch_phy_mode(vdev, dot11_mode);
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_FAILURE;
 
-	status = wma_vdev_start(wma, &req, false);
+	mlme_obj->mgmt.chainmask_info.num_rx_chain = 2;
+	mlme_obj->mgmt.chainmask_info.num_tx_chain = 2;
+
+	status = wma_vdev_pre_start(config->vdev_id, false);
 	if (status != QDF_STATUS_SUCCESS)
-		WMA_LOGE(FL("vdev_start failed, status = %d"), status);
+		return status;
+
+	status = vdev_mgr_start_send(mlme_obj, false);
 
 	return status;
 }

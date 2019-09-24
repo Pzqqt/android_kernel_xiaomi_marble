@@ -2738,210 +2738,6 @@ enum mlme_bcn_tx_rate_code wma_get_bcn_rate_code(uint16_t rate)
 	}
 }
 
-/**
- * wma_vdev_start() - send vdev start request to fw
- * @wma: wma handle
- * @req: vdev start params
- * @isRestart: isRestart flag
- *
- * Return: QDF status
- */
-QDF_STATUS wma_vdev_start(tp_wma_handle wma,
-			  struct wma_vdev_start_req *req, bool isRestart)
-{
-	struct wma_txrx_node *intr = wma->interfaces;
-	struct mac_context *mac_ctx = NULL;
-	uint16_t bw_val;
-	struct wma_txrx_node *iface = &wma->interfaces[req->vdev_id];
-	uint32_t chan_mode;
-	enum phy_ch_width ch_width;
-	struct wlan_mlme_nss_chains *ini_cfg;
-	QDF_STATUS status;
-	uint32_t vdev_stop_type;
-	struct vdev_mlme_obj *mlme_obj;
-	uint8_t vdev_id = req->vdev_id;
-	struct wlan_objmgr_vdev *vdev = intr[vdev_id].vdev;
-	struct wlan_channel *des_chan;
-
-	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!mlme_obj) {
-		pe_err("vdev component object is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	des_chan = vdev->vdev_mlme.des_chan;
-
-	ini_cfg = mlme_get_ini_vdev_config(iface->vdev);
-	if (!ini_cfg) {
-		wma_err("nss chain ini config NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac_ctx) {
-		WMA_LOGE("%s: vdev start failed as mac_ctx is NULL", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (req->op_chan_freq == 0) {
-		WMA_LOGE("%s: Invalid operating frequency: %d", __func__,
-			 req->op_chan_freq);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	des_chan->ch_cfreq1 = req->op_chan_freq;
-	ch_width = req->chan_width;
-	bw_val = wlan_reg_get_bw_value(req->chan_width);
-	if (bw_val > 20) {
-		if (req->chan_freq_seg0) {
-			des_chan->ch_cfreq1 = req->chan_freq_seg0;
-		} else {
-			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 20",
-					__func__, bw_val);
-			des_chan->ch_cfreq1 = req->op_chan_freq;
-			ch_width = CH_WIDTH_20MHZ;
-			bw_val = 20;
-		}
-	}
-	if (bw_val > 80) {
-		if (req->chan_freq_seg1) {
-			des_chan->ch_cfreq2 = req->chan_freq_seg1;
-		} else {
-			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 80",
-					__func__, bw_val);
-			des_chan->ch_cfreq2 = 0;
-			ch_width = CH_WIDTH_80MHZ;
-		}
-	} else {
-		des_chan->ch_cfreq2 = 0;
-	}
-	chan_mode = wma_chan_phy_mode(req->op_chan_freq, ch_width,
-				      req->dot11_mode);
-
-	if (chan_mode == MODE_UNKNOWN) {
-		WMA_LOGE("%s: invalid phy mode!", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!des_chan->ch_cfreq1) {
-		WMA_LOGE("%s: invalid center freq1", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (((ch_width == CH_WIDTH_160MHZ) ||
-	     (ch_width == CH_WIDTH_80P80MHZ)) && !des_chan->ch_cfreq2) {
-		WMA_LOGE("%s: invalid center freq2 for 160MHz", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-	/* Fill channel info */
-	des_chan->ch_freq = req->op_chan_freq;
-	mlme_obj->mgmt.generic.phy_mode = chan_mode;
-
-	/* For Rome, only supports LFR2, not LFR3, for reassoc, need send vdev
-	 * start cmd to F/W while vdev started first, then send reassoc frame
-	 */
-	if (!isRestart &&
-	    qdf_atomic_read(&iface->bss_status) == WMA_BSS_STATUS_STARTED &&
-	    wmi_service_enabled(wma->wmi_handle, wmi_service_roam_ho_offload)) {
-		status = mlme_get_vdev_stop_type(iface->vdev, &vdev_stop_type);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("%s: Failed to get wma req msg_type",
-				 __func__);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		if (vdev_stop_type != WMA_DELETE_BSS_REQ) {
-			WMA_LOGE("BSS is in started state before vdev start");
-			cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-		}
-	}
-
-	WMA_LOGD("%s: Enter isRestart=%d vdev=%d", __func__, isRestart,
-		 req->vdev_id);
-
-	intr[vdev_id].chanmode = chan_mode;
-	intr[vdev_id].config.gtx_info.gtxRTMask[0] =
-		CFG_TGT_DEFAULT_GTX_HT_MASK;
-	intr[vdev_id].config.gtx_info.gtxRTMask[1] =
-		CFG_TGT_DEFAULT_GTX_VHT_MASK;
-
-	intr[vdev_id].config.gtx_info.gtxUsrcfg =
-		mac_ctx->mlme_cfg->sta.tgt_gtx_usr_cfg;
-
-	intr[vdev_id].config.gtx_info.gtxPERThreshold =
-		CFG_TGT_DEFAULT_GTX_PER_THRESHOLD;
-	intr[vdev_id].config.gtx_info.gtxPERMargin =
-		CFG_TGT_DEFAULT_GTX_PER_MARGIN;
-	intr[vdev_id].config.gtx_info.gtxTPCstep =
-		CFG_TGT_DEFAULT_GTX_TPC_STEP;
-	intr[vdev_id].config.gtx_info.gtxTPCMin =
-		CFG_TGT_DEFAULT_GTX_TPC_MIN;
-	intr[vdev_id].config.gtx_info.gtxBWMask =
-		CFG_TGT_DEFAULT_GTX_BW_MASK;
-	intr[vdev_id].mhz = des_chan->ch_freq;
-	intr[vdev_id].chan_width = ch_width;
-	intr[vdev_id].ch_freq = des_chan->ch_freq;
-
-	/* Set half or quarter rate flags */
-	mlme_obj->mgmt.rate_info.half_rate = req->is_half_rate;
-	mlme_obj->mgmt.rate_info.quarter_rate = req->is_quarter_rate;
-
-	/*
-	 * If the channel has DFS set, flip on radar reporting.
-	 *
-	 * It may be that this should only be done for IBSS/hostap operation
-	 * as this flag may be interpreted (at some point in the future)
-	 * by the firmware as "oh, and please do radar DETECTION."
-	 *
-	 * If that is ever the case we would insert the decision whether to
-	 * enable the firmware flag here.
-	 */
-	mlme_obj->mgmt.ap.cac_duration_ms = req->cac_duration_ms;
-	if (QDF_GLOBAL_MONITOR_MODE != cds_get_conparam() && req->is_dfs)
-		mlme_obj->mgmt.generic.disable_hw_ack = true;
-
-	mlme_obj->proto.generic.beacon_interval = req->beacon_intval;
-	mlme_obj->proto.generic.dtim_period = req->dtim_period;
-
-	if (req->beacon_tx_rate) {
-		WMA_LOGD("%s: beacon tx rate [%hu * 100 Kbps]",
-				__func__, req->beacon_tx_rate);
-		/*
-		 * beacon_tx_rate is in multiples of 100 Kbps.
-		 * Convert the data rate to hw rate code.
-		 */
-		mlme_obj->mgmt.rate_info.bcn_tx_rate =
-			wma_get_bcn_rate_code(req->beacon_tx_rate);
-	}
-
-	/* FIXME: Find out min, max and regulatory power levels */
-	mlme_obj->mgmt.generic.maxregpower = req->max_txpow;
-
-	/* Copy the SSID */
-	wlan_vdev_mlme_set_ssid(vdev, req->ssid.ssId, req->ssid.length);
-
-	mlme_obj->mgmt.ap.hidden_ssid = req->hidden_ssid;
-	mlme_obj->mgmt.chainmask_info.num_rx_chain = req->preferred_rx_streams;
-	mlme_obj->mgmt.chainmask_info.num_tx_chain = req->preferred_tx_streams;
-
-	mlme_obj->proto.he_ops_info.he_ops = req->he_ops;
-
-	if (!isRestart) {
-		WMA_LOGD("%s, vdev_id: %d, unpausing tx_ll_queue at VDEV_START",
-			 __func__, vdev_id);
-		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
-			wma->interfaces[vdev_id].handle,
-			0xffffffff);
-		wma_vdev_update_pause_bitmap(vdev_id, 0);
-	}
-
-	/* Send the dynamic nss chain params before vdev start to fw */
-	if (wma->dynamic_nss_chains_support)
-		wma_vdev_nss_chain_params_send(vdev_id, ini_cfg);
-
-	return vdev_mgr_start_send(mlme_obj,  isRestart);
-}
-
 QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -3827,65 +3623,47 @@ void wma_send_add_bss_resp(tp_wma_handle wma, uint8_t vdev_id,
 }
 
 #ifdef WLAN_FEATURE_HOST_ROAM
-QDF_STATUS wma_add_bss_lfr2_vdev_start(struct bss_params *add_bss)
+QDF_STATUS wma_add_bss_lfr2_vdev_start(struct wlan_objmgr_vdev *vdev,
+				       struct bss_params *add_bss)
 {
 	tp_wma_handle wma;
-	struct wma_vdev_start_req req;
-	uint8_t vdev_id, peer_id;
+	uint8_t peer_id;
 	void *peer = NULL;
 	QDF_STATUS status;
+	struct vdev_mlme_obj *mlme_obj;
+	uint8_t vdev_id;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		WMA_LOGE("Invalid pdev or wma");
+	if (!wma || !vdev) {
+		WMA_LOGE("Invalid wma or vdev");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	vdev_id = add_bss->staContext.smesessionId;
+	vdev_id = vdev->vdev_objmgr.vdev_id;
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		wma_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	status = wma_update_iface_params(wma, add_bss);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto send_fail_resp;
 
-	peer = wma_cdp_find_peer_by_addr(add_bss->bssId, &peer_id);
+	peer = wma_cdp_find_peer_by_addr(mlme_obj->mgmt.generic.bssid,
+					 &peer_id);
 	if (!peer) {
-		WMA_LOGE("%s Failed to find peer %pM", __func__,
-			 add_bss->bssId);
+		wma_err("Failed to find peer %pM",
+			mlme_obj->mgmt.generic.bssid);
 		goto send_fail_resp;
 	}
-	add_bss->staContext.staIdx = peer_id;
 
-	qdf_mem_zero(&req, sizeof(req));
-	req.vdev_id = vdev_id;
-	req.op_chan_freq = add_bss->op_chan_freq;
-	req.chan_width = add_bss->ch_width;
-
-	if (add_bss->ch_width == CH_WIDTH_10MHZ)
-		req.is_half_rate = 1;
-	else if (add_bss->ch_width == CH_WIDTH_5MHZ)
-		req.is_quarter_rate = 1;
-
-	req.chan_freq_seg0 = add_bss->chan_freq_seg0;
-	req.chan_freq_seg1 = add_bss->chan_freq_seg1;
-	req.max_txpow = add_bss->maxTxPower;
-	req.beacon_intval = add_bss->beaconInterval;
-	req.dtim_period = add_bss->dtimPeriod;
-	req.hidden_ssid = add_bss->bHiddenSSIDEn;
-	req.is_dfs = add_bss->bSpectrumMgtEnabled;
-	req.ssid.length = add_bss->ssId.length;
-	if (req.ssid.length > 0)
-		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
-			     add_bss->ssId.length);
-
-	if (add_bss->nss == 2) {
-		req.preferred_rx_streams = 2;
-		req.preferred_tx_streams = 2;
-	} else {
-		req.preferred_rx_streams = 1;
-		req.preferred_tx_streams = 1;
+	status = wma_vdev_pre_start(vdev_id, false);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err("failed, status: %d", status);
+		goto peer_cleanup;
 	}
-
-	status = wma_vdev_start(wma, &req, false);
+	status = vdev_mgr_start_send(mlme_obj, false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("failed, status: %d", status);
 		goto peer_cleanup;
@@ -3900,7 +3678,8 @@ QDF_STATUS wma_add_bss_lfr2_vdev_start(struct bss_params *add_bss)
 
 peer_cleanup:
 	if (peer)
-		wma_remove_peer(wma, add_bss->bssId, vdev_id, peer, false);
+		wma_remove_peer(wma, mlme_obj->mgmt.generic.bssid, vdev_id,
+				peer, false);
 
 send_fail_resp:
 	wma_send_add_bss_resp(wma, vdev_id, QDF_STATUS_E_FAILURE);

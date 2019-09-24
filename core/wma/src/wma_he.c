@@ -1289,12 +1289,6 @@ void wma_update_vdev_he_ops(uint32_t *he_ops, tDot11fIEhe_op *he_op)
 	WMI_HEOPS_BSSCOLORDISABLE_SET(*he_ops, he_op->bss_col_disabled);
 }
 
-void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
-		struct wma_vdev_start_req *req)
-{
-	params->he_ops = req->he_ops;
-}
-
 void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 				struct vdev_mlme_he_ops_info *he_info)
 {

@@ -1198,63 +1198,6 @@ struct wma_target_req {
 };
 
 /**
- * struct wma_vdev_start_req - vdev start request parameters
- * @beacon_intval: beacon interval
- * @dtim_period: dtim period
- * @max_txpow: max tx power
- * @chan_offset: channel offset
- * @is_dfs: is dfs supported or not
- * @vdev_id: vdev id
- * @op_chan_freq: operating frequency
- * @oper_mode: operating mode
- * @ssid: ssid
- * @hidden_ssid: hidden ssid
- * @pmf_enabled: is pmf enabled or not
- * @vht_capable: VHT capabality
- * @chan_freq_seg0: center freq seq 0
- * @chan_freq_seg1: center freq seq 1
- * @ht_capable: HT capabality
- * @dot11_mode: 802.11 mode
- * @is_half_rate: is the channel operating at 10MHz
- * @is_quarter_rate: is the channel operating at 5MHz
- * @preferred_tx_streams: policy manager indicates the preferred
- *			number of transmit streams
- * @preferred_rx_streams: policy manager indicates the preferred
- *			number of receive streams
- * @beacon_tx_rate: beacon tx rate
- * @he_capable: HE capability
- * @he_ops: HE operation
- * @cac_duration_ms: cac duration in milliseconds
- * @dfs_regdomain: dfs region
- */
-struct wma_vdev_start_req {
-	uint32_t beacon_intval;
-	uint32_t dtim_period;
-	int32_t max_txpow;
-	enum phy_ch_width chan_width;
-	bool is_dfs;
-	uint8_t vdev_id;
-	uint32_t op_chan_freq;
-	tSirMacSSid ssid;
-	uint8_t hidden_ssid;
-	uint8_t pmf_enabled;
-	uint8_t vht_capable;
-	uint32_t chan_freq_seg0;
-	uint32_t chan_freq_seg1;
-	uint8_t ht_capable;
-	uint8_t dot11_mode;
-	bool is_half_rate;
-	bool is_quarter_rate;
-	uint32_t preferred_tx_streams;
-	uint32_t preferred_rx_streams;
-	uint16_t beacon_tx_rate;
-	bool he_capable;
-	uint32_t he_ops;
-	uint32_t cac_duration_ms;
-	uint32_t dfs_regdomain;
-};
-
-/**
  * struct wma_set_key_params - set key parameters
  * @vdev_id: vdev id
  * @def_key_idx: used to see if we have to read the key from cfg
@@ -1658,9 +1601,6 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 				    uint8_t vdev_id, uint32_t msg_type,
 				    uint8_t type, void *params,
 				    uint32_t timeout);
-
-QDF_STATUS wma_vdev_start(tp_wma_handle wma,
-			  struct wma_vdev_start_req *req, bool isRestart);
 
 int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 				   uint32_t len);
@@ -2582,11 +2522,13 @@ uint8_t wma_peer_get_peet_id(uint8_t *mac);
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * wma_add_bss_lfr2_vdev_start() - add bss and start vdev during host roaming
+ * @vdev: vdev in object manager
  * @add_bss: add bss param
  *
  * Return: None
  */
-QDF_STATUS wma_add_bss_lfr2_vdev_start(struct bss_params *add_bss);
+QDF_STATUS wma_add_bss_lfr2_vdev_start(struct wlan_objmgr_vdev *vdev,
+				       struct bss_params *add_bss);
 #endif
 
 /**

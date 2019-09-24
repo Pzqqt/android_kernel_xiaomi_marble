@@ -135,16 +135,6 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 void wma_update_vdev_he_ops(uint32_t *he_ops, tDot11fIEhe_op *he_op);
 
 /**
- * wma_copy_vdev_start_he_ops() - copy HE ops from vdev start req to vdev start
- * @params: pointer to vdev_start_params
- * @req: pointer to vdev start request
- *
- * Return: None
- */
-void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
-		struct wma_vdev_start_req *req);
-
-/**
  * wma_vdev_set_he_bss_params() - set HE OPs in vdev start
  * @wma: pointer to wma handle
  * @vdev_id: VDEV id
@@ -264,11 +254,6 @@ static inline void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 
 static inline
 void wma_update_vdev_he_ops(uint32_t *he_ops, tDot11fIEhe_op *he_op)
-{
-}
-
-static inline void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
-			struct wma_vdev_start_req *req)
 {
 }
 
