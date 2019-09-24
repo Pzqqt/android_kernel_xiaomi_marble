@@ -2625,6 +2625,19 @@ void wlan_sap_enable_phy_error_logs(mac_handle_t mac_handle,
 			sizeof(uint32_t), NULL, NULL, &error);
 }
 
+#ifdef DFS_PRI_MULTIPLIER
+void wlan_sap_set_dfs_pri_multiplier(mac_handle_t mac_handle)
+{
+	int error;
+
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	tgt_dfs_control(mac_ctx->pdev, DFS_SET_PRI_MULTIPILER,
+			&mac_ctx->mlme_cfg->dfs_cfg.dfs_pri_multiplier,
+			sizeof(uint32_t), NULL, NULL, &error);
+}
+#endif
+
 uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx)
 {
 	return wlan_sap_get_vht_ch_width(sap_ctx);

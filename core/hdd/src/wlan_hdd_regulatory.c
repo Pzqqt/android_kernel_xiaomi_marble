@@ -1265,6 +1265,26 @@ static enum nl80211_dfs_regions dfs_reg_to_nl80211_dfs_regions(
 	}
 }
 
+/**
+ * hdd_set_dfs_pri_multiplier() - Set dfs_pri_multiplier for ETSI region
+ * @dfs_region: DFS region
+ *
+ * Return: none
+ */
+#ifdef DFS_PRI_MULTIPLIER
+static void hdd_set_dfs_pri_multiplier(struct hdd_context *hdd_ctx,
+				       enum dfs_reg dfs_region)
+{
+	if (dfs_region == DFS_ETSI_REGION)
+		wlan_sap_set_dfs_pri_multiplier(hdd_ctx->mac_handle);
+}
+#else
+static inline void hdd_set_dfs_pri_multiplier(struct hdd_context *hdd_ctx,
+					      enum dfs_reg dfs_region)
+{
+}
+#endif
+
 void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
 {
 	struct ieee80211_regdomain *regd;
@@ -1302,6 +1322,9 @@ void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
 	qdf_mem_copy(regd->alpha2, reg_rules->alpha2, REG_ALPHA2_LEN + 1);
 	regd->dfs_region =
 		dfs_reg_to_nl80211_dfs_regions(reg_rules->dfs_region);
+
+	hdd_set_dfs_pri_multiplier(hdd_ctx, reg_rules->dfs_region);
+
 	regd_rules = regd->reg_rules;
 	hdd_debug("Regulatory Domain %s", regd->alpha2);
 	hdd_debug("start freq\tend freq\t@ max_bw\tant_gain\tpwr\tflags");

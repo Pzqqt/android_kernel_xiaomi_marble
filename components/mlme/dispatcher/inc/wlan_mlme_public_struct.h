@@ -702,6 +702,7 @@ struct wlan_mlme_cfg_sap {
  * @dfs_prefer_non_dfs: perefer non dfs channel after radar
  * @dfs_disable_japan_w53: Disable W53 channels
  * @sap_tx_leakage_threshold: sap tx leakage threshold
+ * @dfs_pri_multiplier: dfs_pri_multiplier for handle missing pulses
  */
 struct wlan_mlme_dfs_cfg {
 	bool dfs_master_capable;
@@ -712,6 +713,7 @@ struct wlan_mlme_dfs_cfg {
 	bool dfs_prefer_non_dfs;
 	bool dfs_disable_japan_w53;
 	uint32_t sap_tx_leakage_threshold;
+	uint32_t dfs_pri_multiplier;
 };
 
 /**

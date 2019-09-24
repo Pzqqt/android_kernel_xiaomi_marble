@@ -752,6 +752,28 @@ ucfg_mlme_set_sap_tx_leakage_threshold(struct wlan_objmgr_psoc *psoc,
 				       uint32_t sap_tx_leakage_threshold);
 
 /*
+ * ucfg_mlme_get_dfs_pri_multiplier() - Get dfs pri multiplier
+ * @psoc: pointer to psoc object
+ * @dfs_pri_multiplier: Pointer to the value which will be filled
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_dfs_pri_multiplier(struct wlan_objmgr_psoc *psoc,
+				 uint32_t *dfs_pri_multiplier);
+
+/*
+ * ucfg_mlme_set_dfs_pri_multiplier() - Set dfs pri multiplier
+ * @psoc: pointer to psoc object
+ * @dfs_pri_multiplier: Value that needs to be set.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_dfs_pri_multiplier(struct wlan_objmgr_psoc *psoc,
+				 uint32_t dfs_pri_multiplier);
+
+/*
  * ucfg_mlme_get_dfs_filter_offload() - Get the dfs filter offload
  * @psoc: pointer to psoc object
  * @dfs_filter_offload: Pointer to the value which will be filled
