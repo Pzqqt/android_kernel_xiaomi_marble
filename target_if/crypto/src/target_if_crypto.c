@@ -34,6 +34,7 @@
 #include <cds_api.h>
 #include <cdp_txrx_cmn.h>
 #include <wmi_unified_api.h>
+#include <wmi_unified_crypto_api.h>
 #include <cdp_txrx_peer_ops.h>
 
 #ifdef FEATURE_WLAN_WAPI
