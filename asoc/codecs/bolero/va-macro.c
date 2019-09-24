@@ -124,6 +124,7 @@ struct va_macro_priv {
 	int micb_users;
 	u16 default_clk_id;
 	u16 clk_id;
+	int tx_clk_status;
 };
 
 static bool va_macro_get_data(struct snd_soc_component *component,
@@ -330,14 +331,19 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 						   va_priv->default_clk_id,
 						   TX_CORE_CLK,
 						   true);
+		if (!ret)
+			va_priv->tx_clk_status++;
 		ret = va_macro_mclk_enable(va_priv, 1, true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		va_macro_mclk_enable(va_priv, 0, true);
-		bolero_clk_rsc_request_clock(va_priv->dev,
+		if (va_priv->tx_clk_status > 0) {
+			bolero_clk_rsc_request_clock(va_priv->dev,
 					   va_priv->default_clk_id,
 					   TX_CORE_CLK,
 					   false);
+			va_priv->tx_clk_status--;
+		}
 		break;
 	default:
 		dev_err(va_priv->dev,
@@ -769,16 +775,21 @@ static int va_macro_enable_tx(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
-		ret = bolero_clk_rsc_request_clock(va_priv->dev,
+		if (va_priv->tx_clk_status > 0) {
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
 						   va_priv->default_clk_id,
 						   TX_CORE_CLK,
 						   false);
+			va_priv->tx_clk_status--;
+		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		ret = bolero_clk_rsc_request_clock(va_priv->dev,
 						   va_priv->default_clk_id,
 						   TX_CORE_CLK,
 						   true);
+		if (!ret)
+			va_priv->tx_clk_status++;
 		break;
 	default:
 		dev_err(va_priv->dev,
