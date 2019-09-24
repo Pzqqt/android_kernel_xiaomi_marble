@@ -166,9 +166,11 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 	pe_debug("ch_freq_seg1: %d, ch_freq_seg2: %d",
 		 des_chan->ch_freq_seg1, des_chan->ch_freq_seg2);
 
-	mlme_obj->mgmt.generic.phy_mode = pe_session->dot11mode;
-	mlme_obj->mgmt.ap.cac_duration_ms = cac_duration_ms;
+	status = lim_set_ch_phy_mode(vdev, pe_session->dot11mode);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto send_resp;
 
+	mlme_obj->mgmt.ap.cac_duration_ms = cac_duration_ms;
 	mlme_obj->proto.generic.beacon_interval = 100;
 	mlme_obj->proto.generic.dtim_period = 1;
 	mlme_obj->mgmt.generic.maxregpower = maxTxPower;
@@ -182,12 +184,12 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 		mlme_obj->mgmt.chainmask_info.num_rx_chain = 1;
 		mlme_obj->mgmt.chainmask_info.num_tx_chain = 1;
 	}
-	if (lim_is_session_he_capable(pe_session))
-		mlme_obj->proto.he_ops_info.he_ops = true;
 
-	pe_debug("dot11mode: %d, he_capable: %d nss value: %d",
-		 pe_session->dot11mode, mlme_obj->proto.he_ops_info.he_ops,
-		 pe_session->nss);
+	mlme_obj->proto.ht_info.allow_ht = pe_session->htCapability;
+	mlme_obj->proto.vht_info.allow_vht = pe_session->vhtCapability;
+
+	pe_debug("dot11mode: %d, nss value: %d",
+		 pe_session->dot11mode, pe_session->nss);
 
 	pe_debug("ch width %d, ch id %d, maxTxPower %d",
 		 ch_width, chnlNumber, maxTxPower);

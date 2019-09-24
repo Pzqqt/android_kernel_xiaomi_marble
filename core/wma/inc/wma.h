@@ -2613,14 +2613,6 @@ QDF_STATUS wma_get_rx_chainmask(uint8_t pdev_id, uint32_t *chainmask_2g,
 				uint32_t *chainmask_5g);
 
 /**
- * wma_set_channel() - API to set or switch channel
- * @req: channel switch request
- *
- * Return: None
- */
-void wma_set_channel(struct wma_vdev_start_req *req);
-
-/**
  * wma_handle_channel_switch_resp() - handle channel switch resp
  * @wma: wma handle
  * @rsp: response for channel switch
@@ -2639,7 +2631,7 @@ QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 QDF_STATUS wma_pre_chan_switch_setup(uint8_t vdev_id);
 
 /**
- * wma_pre_chan_switch_setup() - handler after channel switch vdev start
+ * wma_post_chan_switch_setup() - handler after channel switch vdev start
  * @vdev_id: vdev id
  *
  * Return: QDF_STATUS
@@ -2647,11 +2639,56 @@ QDF_STATUS wma_pre_chan_switch_setup(uint8_t vdev_id);
 QDF_STATUS wma_post_chan_switch_setup(uint8_t vdev_id);
 
 /**
- * wma_pre_chan_switch_setup() - handler vdev start
+ * wma_vdev_pre_start() - prepare vdev start
  * @vdev_id: vdev id
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart);
+
+/**
+ * wma_remove_bss_peer_on_vdev_start_failure() - remove the bss peers in case of
+ * vdev start request failure
+ * @wma: wma handle.
+ * @vdev_id: vdev id
+ *
+ * This API deletes the BSS peer created during ADD BSS in case of ADD BSS
+ * request sent to the FW fails.
+ *
+ * Return: None;
+ */
+void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
+					       uint8_t vdev_id);
+
+/**
+ * wma_send_add_bss_resp() - send add bss failure
+ * @wma: wma handle.
+ * @vdev_id: vdev id
+ * @status: status
+ *
+ * Return: None
+ */
+void wma_send_add_bss_resp(tp_wma_handle wma, uint8_t vdev_id,
+			   QDF_STATUS status);
+
+/**
+ * wma_post_vdev_start_setup() - wma post vdev start handler
+ * @wma: wma handle.
+ * @vdev_id: vdev id
+ *
+ * Return: Success or Failure status
+ */
+QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id);
+
+/**
+ * wma_pre_vdev_start_setup() - wma pre vdev start handler
+ * @wma: wma handle.
+ * @vdev_id: vdev id
+ * @addbss_param: bss param
+ *
+ * Return: Success or Failure status
+ */
+QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
+				    struct bss_params *add_bss);
 
 #endif

@@ -127,13 +127,12 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 
 /**
  * wma_update_vdev_he_ops() - update he ops in vdev start request
- * @req: pointer to vdev start request
- * @add_bss: pointer to ADD BSS params
+ * @he_ops: target he ops
+ * @he_op: source he ops
  *
  * Return: None
  */
-void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
-		struct bss_params *add_bss);
+void wma_update_vdev_he_ops(uint32_t *he_ops, tDot11fIEhe_op *he_op);
 
 /**
  * wma_copy_vdev_start_he_ops() - copy HE ops from vdev start req to vdev start
@@ -149,12 +148,12 @@ void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
  * wma_vdev_set_he_bss_params() - set HE OPs in vdev start
  * @wma: pointer to wma handle
  * @vdev_id: VDEV id
- * @req: pointer to vdev start request
+ * @he_info: pointer to he info
  *
  * Return: None
  */
 void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
-				struct wma_vdev_start_req *req);
+				struct vdev_mlme_he_ops_info *he_info);
 
 /**
  * wma_vdev_set_he_config() - set HE Config in vdev start
@@ -263,8 +262,8 @@ static inline void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 {
 }
 
-static inline void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
-			struct bss_params *add_bss)
+static inline
+void wma_update_vdev_he_ops(uint32_t *he_ops, tDot11fIEhe_op *he_op)
 {
 }
 
@@ -279,8 +278,9 @@ static inline  QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline void wma_vdev_set_he_bss_params(tp_wma_handle wma,
-				uint8_t vdev_id, struct wma_vdev_start_req *req)
+static inline
+void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
+				struct vdev_mlme_he_ops_info *he_info)
 {
 }
 

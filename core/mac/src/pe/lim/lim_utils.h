@@ -1085,14 +1085,14 @@ void lim_update_usr_he_cap(struct mac_context *mac_ctx, struct pe_session *sessi
 /**
  * lim_decide_he_op() - Determine HE operation elements
  * @mac_ctx: global mac context
- * @he_ops: pointer to HE operation IE
+ * @he_ops: mlme he ops
  * @session: PE session entry
  *
  * Parse the HE Operation IE and populate the fields to be
  * sent to FW as part of add bss.
  */
-void lim_decide_he_op(struct mac_context *mac_ctx, struct bss_params *add_bss,
-		struct pe_session *session);
+void lim_decide_he_op(struct mac_context *mac_ctx, uint32_t *mlme_he_ops,
+		      struct pe_session *session);
 
 /**
  * lim_update_sta_he_capable(): Update he_capable in add sta params
@@ -1244,7 +1244,7 @@ static inline void lim_update_usr_he_cap(struct mac_context *mac_ctx,
 }
 
 static inline void lim_decide_he_op(struct mac_context *mac_ctx,
-			struct bss_params *add_bss, struct pe_session *session)
+			uint32_t *mlme_he_ops, struct pe_session *session)
 {
 }
 
@@ -1799,5 +1799,14 @@ void lim_flush_bssid(struct mac_context *mac_ctx, uint8_t *bssid);
  * Return: true if akm is sha384 based kdf or false
  */
 bool lim_is_sha384_akm(enum ani_akm_type akm);
+
+/**
+ * lim_set_ch_phy_mode() - set channel phy mode
+ * @vdev: pointer to vdev
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode);
 
 #endif /* __LIM_UTILS_H */

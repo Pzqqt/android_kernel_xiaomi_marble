@@ -1279,22 +1279,14 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	return;
 }
 
-void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
-		struct bss_params *add_bss)
+void wma_update_vdev_he_ops(uint32_t *he_ops, tDot11fIEhe_op *he_op)
 {
-	uint32_t he_ops = 0;
-	tDot11fIEhe_op *he_op = &add_bss->he_op;
-
-	req->he_capable = add_bss->he_capable;
-
-	WMI_HEOPS_COLOR_SET(he_ops, he_op->bss_color);
-	WMI_HEOPS_DEFPE_SET(he_ops, he_op->default_pe);
-	WMI_HEOPS_TWT_SET(he_ops, he_op->twt_required);
-	WMI_HEOPS_RTSTHLD_SET(he_ops, he_op->txop_rts_threshold);
-	WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, he_op->partial_bss_col);
-	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
-
-	req->he_ops = he_ops;
+	WMI_HEOPS_COLOR_SET(*he_ops, he_op->bss_color);
+	WMI_HEOPS_DEFPE_SET(*he_ops, he_op->default_pe);
+	WMI_HEOPS_TWT_SET(*he_ops, he_op->twt_required);
+	WMI_HEOPS_RTSTHLD_SET(*he_ops, he_op->txop_rts_threshold);
+	WMI_HEOPS_PARTBSSCOLOR_SET(*he_ops, he_op->partial_bss_col);
+	WMI_HEOPS_BSSCOLORDISABLE_SET(*he_ops, he_op->bss_col_disabled);
 }
 
 void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
@@ -1304,15 +1296,14 @@ void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
 }
 
 void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
-				struct wma_vdev_start_req *req)
+				struct vdev_mlme_he_ops_info *he_info)
 {
 	QDF_STATUS ret;
 
-	if (!req->he_capable)
+	if (!he_info->he_ops)
 		return;
-
 	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-			WMI_VDEV_PARAM_HEOPS_0_31, req->he_ops);
+			WMI_VDEV_PARAM_HEOPS_0_31, he_info->he_ops);
 
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE(FL("Failed to set HE OPs"));

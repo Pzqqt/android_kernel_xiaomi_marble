@@ -6784,13 +6784,13 @@ void lim_update_usr_he_cap(struct mac_context *mac_ctx, struct pe_session *sessi
 		he_cap->su_beamformer, he_cap->su_beamformee, he_cap->mu_beamformer);
 }
 
-void lim_decide_he_op(struct mac_context *mac_ctx, struct bss_params *add_bss,
+void lim_decide_he_op(struct mac_context *mac_ctx, uint32_t *mlme_he_ops,
 		      struct pe_session *session)
 {
 	uint32_t val;
 	uint8_t color;
 	struct he_ops_network_endian *he_ops_from_ie;
-	tDot11fIEhe_op *he_ops = &add_bss->he_op;
+	tDot11fIEhe_op he_ops;
 	struct add_ie_params *add_ie = &session->add_ie_params;
 	uint8_t extracted_buff[DOT11F_IE_HE_OP_MAX_LEN + 2];
 	QDF_STATUS status;
@@ -6809,34 +6809,36 @@ void lim_decide_he_op(struct mac_context *mac_ctx, struct bss_params *add_bss,
 					&extracted_buff[HE_OP_OUI_SIZE + 2];
 
 	if (he_ops_from_ie->bss_color) {
-		he_ops->bss_color = he_ops_from_ie->bss_color;
+		he_ops.bss_color = he_ops_from_ie->bss_color;
 	} else {
 		qdf_get_random_bytes(&color, sizeof(color));
 		/* make sure color is within 1-63*/
-		he_ops->bss_color = (color % WNI_CFG_HE_OPS_BSS_COLOR_MAX) + 1;
+		he_ops.bss_color = (color % WNI_CFG_HE_OPS_BSS_COLOR_MAX) + 1;
 	}
-	he_ops->default_pe = he_ops_from_ie->default_pe;
-	he_ops->twt_required = he_ops_from_ie->twt_required;
-	he_ops->txop_rts_threshold = he_ops_from_ie->txop_rts_threshold;
-	he_ops->partial_bss_col = he_ops_from_ie->partial_bss_col;
-	he_ops->bss_col_disabled = he_ops_from_ie->bss_col_disabled;
+	he_ops.default_pe = he_ops_from_ie->default_pe;
+	he_ops.twt_required = he_ops_from_ie->twt_required;
+	he_ops.txop_rts_threshold = he_ops_from_ie->txop_rts_threshold;
+	he_ops.partial_bss_col = he_ops_from_ie->partial_bss_col;
+	he_ops.bss_col_disabled = he_ops_from_ie->bss_col_disabled;
 
 	val = mac_ctx->mlme_cfg->he_caps.he_ops_basic_mcs_nss;
 
-	*((uint16_t *)he_ops->basic_mcs_nss) = (uint16_t)val;
+	*((uint16_t *)he_ops.basic_mcs_nss) = (uint16_t)val;
 
-	qdf_mem_copy(&session->he_op, he_ops, sizeof(*he_ops));
+	qdf_mem_copy(&session->he_op, &he_ops, sizeof(tDot11fIEhe_op));
 
 	pe_debug("HE Op: bss_color: 0x%0x, default_pe_duration: 0x%0x",
-		he_ops->bss_color, he_ops->default_pe);
+		he_ops.bss_color, he_ops.default_pe);
 	pe_debug("He Op: twt_required: 0x%0x, txop_rts_threshold: 0x%0x",
-		 he_ops->twt_required, he_ops->txop_rts_threshold);
+		 he_ops.twt_required, he_ops.txop_rts_threshold);
 	pe_debug("HE Op: partial_bss_color: 0x%0x",
-		 he_ops->partial_bss_col);
+		 he_ops.partial_bss_col);
 	pe_debug("HE Op: BSS color disabled: 0x%0x",
-		he_ops->bss_col_disabled);
+		he_ops.bss_col_disabled);
 	pe_debug("HE Op: Basic MCS NSS: 0x%04x",
-		*((uint16_t *)he_ops->basic_mcs_nss));
+		*((uint16_t *)he_ops.basic_mcs_nss));
+
+	wma_update_vdev_he_ops(mlme_he_ops, &he_ops);
 }
 
 void lim_copy_bss_he_cap(struct pe_session *session,
@@ -8448,4 +8450,71 @@ bool lim_is_sha384_akm(enum ani_akm_type akm)
 	default:
 		return false;
 	}
+}
+
+QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
+{
+	struct vdev_mlme_obj *mlme_obj;
+	struct wlan_channel *des_chan;
+	uint32_t chan_mode;
+	enum phy_ch_width ch_width;
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	uint16_t bw_val;
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		wma_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	des_chan = vdev->vdev_mlme.des_chan;
+	des_chan->ch_ieee = wlan_reg_freq_to_chan(mac_ctx->pdev,
+						  des_chan->ch_freq);
+	des_chan->ch_cfreq1 = des_chan->ch_freq;
+	ch_width = des_chan->ch_width;
+	bw_val = wlan_reg_get_bw_value(ch_width);
+	if (bw_val > 20) {
+		if (des_chan->ch_freq_seg1) {
+			des_chan->ch_cfreq1 =
+				wlan_chan_to_freq(des_chan->ch_freq_seg1);
+		} else {
+			pe_err("Invalid cntr_freq for bw %d, drop to 20",
+			       bw_val);
+			ch_width = CH_WIDTH_20MHZ;
+			bw_val = 20;
+		}
+	}
+	if (bw_val > 80) {
+		if (des_chan->ch_freq_seg2) {
+			des_chan->ch_cfreq2 =
+				wlan_chan_to_freq(des_chan->ch_freq_seg2);
+		} else {
+			pe_err("Invalid cntr_freq for bw %d, drop to 80",
+			       bw_val);
+			des_chan->ch_cfreq2 = 0;
+			ch_width = CH_WIDTH_80MHZ;
+		}
+	} else {
+		des_chan->ch_cfreq2 = 0;
+	}
+	chan_mode = wma_chan_phy_mode(des_chan->ch_freq, ch_width,
+				      dot11mode);
+
+	if (chan_mode == MODE_UNKNOWN) {
+		pe_err("Invalid phy mode!");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!des_chan->ch_cfreq1) {
+		pe_err("Invalid center freq1");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if ((ch_width == CH_WIDTH_160MHZ ||
+	     ch_width == CH_WIDTH_80P80MHZ) && !des_chan->ch_cfreq2) {
+		pe_err("Invalid center freq2 for 160MHz");
+		return QDF_STATUS_E_FAILURE;
+	}
+	mlme_obj->mgmt.generic.phy_mode = chan_mode;
+	des_chan->ch_phymode = chan_mode;
+
+	return QDF_STATUS_SUCCESS;
 }

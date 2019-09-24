@@ -40,6 +40,9 @@
 #include "wlan_reg_services_api.h"
 #include "lim_process_fils.h"
 #include "wlan_mlme_public_struct.h"
+#include "../../core/src/vdev_mgr_ops.h"
+#include "wlan_pmo_ucfg_api.h"
+#include "wlan_objmgr_vdev_obj.h"
 
 static void lim_process_mlm_auth_req(struct mac_context *, uint32_t *);
 static void lim_process_mlm_assoc_req(struct mac_context *, uint32_t *);
@@ -164,103 +167,6 @@ void lim_process_mlm_req_messages(struct mac_context *mac_ctx,
 }
 
 /**
- * mlm_add_sta() - MLM add sta
- * @mac_ctx: global MAC context
- * @sta_param: Add sta params
- * @bssid: BSSID
- * @ht_capable: HT capability
- * @session_entry: PE session entry
- *
- * This function is called to update station parameters
- *
- * Return: None
- */
-static void mlm_add_sta(struct mac_context *mac_ctx, tpAddStaParams sta_param,
-		uint8_t *bssid, uint8_t ht_capable, struct pe_session *session_entry)
-{
-	uint32_t val;
-	uint32_t self_dot11mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
-
-	sta_param->staType = STA_ENTRY_SELF; /* Identifying self */
-
-	qdf_mem_copy(sta_param->bssId, bssid, sizeof(tSirMacAddr));
-	qdf_mem_copy(sta_param->staMac, session_entry->self_mac_addr,
-		     sizeof(tSirMacAddr));
-
-	/* Configuration related parameters to be changed to support BT-AMP */
-
-	val = mac_ctx->mlme_cfg->sap_cfg.listen_interval;
-	sta_param->listenInterval = (uint16_t) val;
-
-	sta_param->assocId = 0;      /* Is SMAC OK with this? */
-	sta_param->wmmEnabled = 0;
-	sta_param->uAPSD = 0;
-	sta_param->maxSPLen = 0;
-	sta_param->maxAmpduSize = 0; /* 0: 8k, 1: 16k,2: 32k,3: 64k, 4:128k */
-
-	/* For Self STA get the LDPC capability from config.ini */
-	sta_param->htLdpcCapable =
-		(session_entry->txLdpcIniFeatureEnabled & 0x01);
-	sta_param->vhtLdpcCapable =
-		((session_entry->txLdpcIniFeatureEnabled >> 1) & 0x01);
-
-	if (IS_DOT11_MODE_HT(session_entry->dot11mode)) {
-		sta_param->htCapable = ht_capable;
-		sta_param->ch_width =
-			lim_get_ht_capability(mac_ctx,
-				eHT_SUPPORTED_CHANNEL_WIDTH_SET, session_entry);
-		sta_param->mimoPS =
-			(tSirMacHTMIMOPowerSaveState)lim_get_ht_capability(
-				mac_ctx, eHT_MIMO_POWER_SAVE, session_entry);
-		sta_param->maxAmpduDensity =
-			lim_get_ht_capability(mac_ctx, eHT_MPDU_DENSITY,
-					      session_entry);
-		sta_param->fShortGI20Mhz =
-			lim_get_ht_capability(mac_ctx, eHT_SHORT_GI_20MHZ,
-					      session_entry);
-		sta_param->fShortGI40Mhz =
-			lim_get_ht_capability(mac_ctx, eHT_SHORT_GI_40MHZ,
-					      session_entry);
-	}
-	if (session_entry->vhtCapability) {
-		sta_param->vhtCapable = true;
-		sta_param->vhtTxBFCapable =
-				session_entry->vht_config.su_beam_formee;
-		sta_param->vhtTxMUBformeeCapable =
-				session_entry->vht_config.mu_beam_formee;
-		sta_param->enable_su_tx_bformer =
-				session_entry->vht_config.su_beam_former;
-	}
-
-	if (lim_is_session_he_capable(session_entry))
-		lim_add_self_he_cap(sta_param, session_entry);
-
-	/*
-	 * Since this is Self-STA, need to populate Self MAX_AMPDU_SIZE
-	 * capabilities
-	 */
-	if (IS_DOT11_MODE_VHT(self_dot11mode)) {
-		sta_param->maxAmpduSize =
-		mac_ctx->mlme_cfg->vht_caps.vht_cap_info.ampdu_len_exponent;
-	}
-	sta_param->enableVhtpAid = session_entry->enableVhtpAid;
-	sta_param->enableAmpduPs = session_entry->enableAmpduPs;
-	sta_param->enableHtSmps = session_entry->enableHtSmps;
-	sta_param->htSmpsconfig = session_entry->htSmpsvalue;
-	sta_param->send_smps_action = session_entry->send_smps_action;
-
-	lim_populate_own_rate_set(mac_ctx, &sta_param->supportedRates, NULL,
-				  false, session_entry, NULL, NULL);
-
-	pe_debug("ChnlWidth: %d, MimoPS: %d, SGI20: %d, SGI40%d",
-		 sta_param->ch_width, sta_param->mimoPS,
-		 sta_param->fShortGI20Mhz, sta_param->fShortGI40Mhz);
-
-	if (QDF_P2P_GO_MODE == session_entry->opmode)
-		sta_param->p2pCapableSta = 1;
-}
-
-/**
  * lim_mlm_add_bss() - HAL interface for WMA_ADD_BSS_REQ
  * @mac_ctx: global MAC context
  * @mlm_start_req: MLM start request
@@ -274,132 +180,111 @@ tSirResultCodes
 lim_mlm_add_bss(struct mac_context *mac_ctx,
 		tLimMlmStartReq *mlm_start_req, struct pe_session *session)
 {
-	struct scheduler_msg msg_buf = {0};
+	struct vdev_mlme_obj *mlme_obj;
+	struct wlan_channel *des_chan;
+	struct wlan_objmgr_vdev *vdev = session->vdev;
+	uint8_t vdev_id = session->vdev_id;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct bss_params *addbss_param = NULL;
-	uint32_t retcode;
-	bool is_ch_dfs = false;
-	uint32_t chan_num;
 
-	/* Package WMA_ADD_BSS_REQ message parameters */
-	addbss_param = qdf_mem_malloc(sizeof(struct bss_params));
-	if (!addbss_param)
-		return eSIR_SME_RESOURCES_UNAVAILABLE;
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		return eSIR_SME_INVALID_PARAMETERS;
+	}
 
-	/* Fill in struct bss_params members */
-	qdf_mem_copy(addbss_param->bssId, mlm_start_req->bssId,
-		     sizeof(tSirMacAddr));
+	qdf_mem_copy(mlme_obj->mgmt.generic.bssid, mlm_start_req->bssId,
+		     QDF_MAC_ADDR_SIZE);
+	mlme_obj->proto.generic.slot_time = session->shortSlotTimeSupported;
+	mlme_obj->proto.generic.beacon_interval = mlm_start_req->beaconPeriod;
+	mlme_obj->proto.generic.dtim_period = mlm_start_req->dtimPeriod;
 
-	/* Fill in struct bss_params self_mac_addr */
-	qdf_mem_copy(addbss_param->self_mac_addr,
-		     session->self_mac_addr, sizeof(tSirMacAddr));
-
-	addbss_param->shortSlotTimeSupported = session->shortSlotTimeSupported;
-	addbss_param->beaconInterval = mlm_start_req->beaconPeriod;
-	addbss_param->dtimPeriod = mlm_start_req->dtimPeriod;
-	addbss_param->wps_state = mlm_start_req->wps_state;
-
-	addbss_param->nwType = mlm_start_req->nwType;
-	addbss_param->htCapable = mlm_start_req->htCapable;
-	addbss_param->vhtCapable = session->vhtCapability;
+	mlme_obj->proto.ht_info.allow_ht = mlm_start_req->htCapable;
+	mlme_obj->proto.vht_info.allow_vht = session->vhtCapability;
 	if (lim_is_session_he_capable(session)) {
-		lim_update_bss_he_capable(mac_ctx, addbss_param);
-		lim_decide_he_op(mac_ctx, addbss_param, session);
+		lim_decide_he_op(mac_ctx, &mlme_obj->proto.he_ops_info.he_ops,
+				 session);
 		lim_update_usr_he_cap(mac_ctx, session);
 	}
 
-	addbss_param->ch_width = session->ch_width;
-	addbss_param->chan_freq_seg0 =
-		wlan_reg_chan_to_freq(mac_ctx->pdev,
-				      session->ch_center_freq_seg0);
-	addbss_param->chan_freq_seg1 =
-		wlan_reg_chan_to_freq(mac_ctx->pdev,
-				      session->ch_center_freq_seg1);
-
-	addbss_param->op_chan_freq = mlm_start_req->oper_ch_freq;
-	chan_num = wlan_reg_freq_to_chan(mac_ctx->pdev,
-					 addbss_param->op_chan_freq);
-#ifdef WLAN_FEATURE_11W
-	addbss_param->rmfEnabled = session->limRmfEnabled;
-#endif
-
-	addbss_param->vdev_id = session->smeSessionId;
+	des_chan = vdev->vdev_mlme.des_chan;
+	des_chan->ch_freq = mlm_start_req->oper_ch_freq;
+	des_chan->ch_width = session->ch_width;
+	des_chan->ch_freq_seg1 = session->ch_center_freq_seg0;
+	des_chan->ch_freq_seg2 = session->ch_center_freq_seg1;
+	pe_debug("ch_freq_seg1: %d, ch_freq_seg2: %d",
+		 des_chan->ch_freq_seg1, des_chan->ch_freq_seg2);
 
 	/* Send the SSID to HAL to enable SSID matching for IBSS */
-	addbss_param->ssId.length = mlm_start_req->ssId.length;
-	if (addbss_param->ssId.length > WLAN_SSID_MAX_LEN) {
-		pe_err("Invalid ssid length %d, max length allowed %d",
-		       addbss_param->ssId.length,
-		       WLAN_SSID_MAX_LEN);
-		qdf_mem_free(addbss_param);
-		return eSIR_SME_INVALID_PARAMETERS;
-	}
-	qdf_mem_copy(addbss_param->ssId.ssId,
-		     mlm_start_req->ssId.ssId, addbss_param->ssId.length);
-	addbss_param->bHiddenSSIDEn = mlm_start_req->ssidHidden;
-	pe_debug("TRYING TO HIDE SSID %d", addbss_param->bHiddenSSIDEn);
-	addbss_param->maxTxPower = session->maxTxPower;
+	wlan_vdev_mlme_set_ssid(vdev, mlm_start_req->ssId.ssId,
+				mlm_start_req->ssId.length);
+	mlme_obj->mgmt.ap.hidden_ssid = session->ssidHidden;
+	pe_debug("TRYING TO HIDE SSID %d", mlme_obj->mgmt.ap.hidden_ssid);
+	mlme_obj->mgmt.generic.maxregpower = session->maxTxPower;
 
-	mlm_add_sta(mac_ctx, &addbss_param->staContext,
-		    addbss_param->bssId, addbss_param->htCapable,
-		    session);
 	/* Set a new state for MLME */
 	session->limMlmState = eLIM_MLM_WT_ADD_BSS_RSP_STATE;
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, session->peSessionId,
 			 session->limMlmState));
 
-	/* pass on the session persona to hal */
-	addbss_param->halPersona = session->opmode;
+	status = lim_set_ch_phy_mode(vdev, session->dot11mode);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto send_fail_resp;
 
-	if (session->ch_width == CH_WIDTH_160MHZ) {
-		is_ch_dfs = true;
-	} else if (session->ch_width == CH_WIDTH_80P80MHZ) {
-		if (wlan_reg_get_channel_state(mac_ctx->pdev, chan_num) ==
-				CHANNEL_STATE_DFS ||
-				wlan_reg_get_channel_state(mac_ctx->pdev,
-					session->ch_center_freq_seg1 -
-					SIR_80MHZ_START_CENTER_CH_DIFF) ==
-				CHANNEL_STATE_DFS)
-			is_ch_dfs = true;
+	if (session->nss == 2) {
+		mlme_obj->mgmt.chainmask_info.num_rx_chain = 2;
+		mlme_obj->mgmt.chainmask_info.num_tx_chain = 2;
 	} else {
-		if (wlan_reg_get_channel_state(mac_ctx->pdev, chan_num) ==
-				CHANNEL_STATE_DFS)
-			is_ch_dfs = true;
+		mlme_obj->mgmt.chainmask_info.num_rx_chain = 1;
+		mlme_obj->mgmt.chainmask_info.num_tx_chain = 1;
 	}
-
-	addbss_param->bSpectrumMgtEnabled =
-				session->spectrumMgtEnabled || is_ch_dfs;
-	addbss_param->extSetStaKeyParamValid = 0;
-
-	addbss_param->dot11_mode = session->dot11mode;
-	addbss_param->nss = session->nss;
-	addbss_param->cac_duration_ms = mlm_start_req->cac_duration_ms;
-	addbss_param->dfs_regdomain = mlm_start_req->dfs_regdomain;
-	addbss_param->beacon_tx_rate = session->beacon_tx_rate;
+	mlme_obj->mgmt.ap.cac_duration_ms = session->cac_duration_ms;
+	mlme_obj->mgmt.rate_info.bcn_tx_rate = session->beacon_tx_rate;
 	pe_debug("dot11_mode:%d nss value:%d",
-			addbss_param->dot11_mode, addbss_param->nss);
+			session->dot11mode, session->nss);
 
 	if (cds_is_5_mhz_enabled()) {
-		addbss_param->ch_width = CH_WIDTH_5MHZ;
-		addbss_param->staContext.ch_width = CH_WIDTH_5MHZ;
+		mlme_obj->mgmt.rate_info.quarter_rate = 1;
 	} else if (cds_is_10_mhz_enabled()) {
-		addbss_param->ch_width = CH_WIDTH_10MHZ;
-		addbss_param->staContext.ch_width = CH_WIDTH_10MHZ;
+		mlme_obj->mgmt.rate_info.half_rate = 1;
 	}
 
-	msg_buf.type = WMA_ADD_BSS_REQ;
-	msg_buf.reserved = 0;
-	msg_buf.bodyptr = addbss_param;
-	msg_buf.bodyval = 0;
-	MTRACE(mac_trace_msg_tx(mac_ctx, session->peSessionId, msg_buf.type));
-
-	pe_debug("Sending WMA_ADD_BSS_REQ...");
-	retcode = wma_post_ctrl_msg(mac_ctx, &msg_buf);
-	if (QDF_STATUS_SUCCESS != retcode) {
-		pe_err("Posting ADD_BSS_REQ to HAL failed, reason=%X",
-			retcode);
-		qdf_mem_free(addbss_param);
-		return eSIR_SME_HAL_SEND_MESSAGE_FAIL;
+	 addbss_param = qdf_mem_malloc(sizeof(struct bss_params));
+	if (!addbss_param) {
+		pe_err("malloc failed");
+		goto send_fail_resp;
 	}
+	addbss_param->vhtCapable = mlm_start_req->htCapable;
+	addbss_param->htCapable = session->vhtCapability;
+	addbss_param->ch_width = session->ch_width;
+	addbss_param->rmfEnabled = session->limRmfEnabled;
+	addbss_param->staContext.fShortGI20Mhz =
+		lim_get_ht_capability(mac_ctx, eHT_SHORT_GI_20MHZ, session);
+	addbss_param->staContext.fShortGI40Mhz =
+		lim_get_ht_capability(mac_ctx, eHT_SHORT_GI_40MHZ, session);
+	status = wma_pre_vdev_start_setup(vdev_id, addbss_param);
+	qdf_mem_free(addbss_param);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto send_fail_resp;
+
+	if (session->wps_state == SAP_WPS_DISABLED)
+		ucfg_pmo_disable_wakeup_event(wma->psoc, vdev_id,
+					      WOW_PROBE_REQ_WPS_IE_EVENT);
+	status = wma_vdev_pre_start(vdev_id, false);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto peer_cleanup;
+	status = vdev_mgr_start_send(mlme_obj, false);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto peer_cleanup;
+	wma_post_vdev_start_setup(vdev_id);
+
+	return eSIR_SME_SUCCESS;
+
+peer_cleanup:
+	wma_remove_bss_peer_on_vdev_start_failure(wma, vdev_id);
+send_fail_resp:
+	wma_send_add_bss_resp(wma, vdev_id, QDF_STATUS_E_FAILURE);
 
 	return eSIR_SME_SUCCESS;
 }
