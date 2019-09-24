@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -235,6 +235,10 @@ static inline int hif_napi_destroy(struct hif_opaque_softc  *hif,
 
 static inline struct qca_napi_data *hif_napi_get_all(
 				struct hif_opaque_softc *hif)
+{ return NULL; }
+
+static inline struct qca_napi_info *hif_get_napi(int napi_id,
+						 struct qca_napi_data *napid)
 { return NULL; }
 
 static inline int hif_napi_event(struct hif_opaque_softc     *hif,
