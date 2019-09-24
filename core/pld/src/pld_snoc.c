@@ -27,6 +27,7 @@
 
 #include "pld_internal.h"
 #include "pld_snoc.h"
+#include "osif_psoc_sync.h"
 
 #ifdef CONFIG_PLD_SNOC_ICNSS
 /**
@@ -72,15 +73,28 @@ out:
 static void pld_snoc_remove(struct device *dev)
 {
 	struct pld_context *pld_context;
+	int errno;
+	struct osif_psoc_sync *psoc_sync;
+
+	errno = osif_psoc_sync_trans_start_wait(dev, &psoc_sync);
+	if (errno)
+		return;
+
+	osif_psoc_sync_unregister(dev);
+	osif_psoc_sync_wait_for_ops(psoc_sync);
 
 	pld_context = pld_get_global_context();
 
 	if (!pld_context)
-		return;
+		goto out;
 
 	pld_context->ops->remove(dev, PLD_BUS_TYPE_SNOC);
 
 	pld_del_dev(pld_context, dev);
+
+out:
+	osif_psoc_sync_trans_stop(psoc_sync);
+	osif_psoc_sync_destroy(psoc_sync);
 }
 
 /**

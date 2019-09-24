@@ -28,6 +28,7 @@
 
 #include "pld_internal.h"
 #include "pld_pcie.h"
+#include "osif_psoc_sync.h"
 
 #ifdef CONFIG_PCI
 
@@ -82,15 +83,28 @@ out:
 static void pld_pcie_remove(struct pci_dev *pdev)
 {
 	struct pld_context *pld_context;
+	int errno;
+	struct osif_psoc_sync *psoc_sync;
+
+	errno = osif_psoc_sync_trans_start_wait(&pdev->dev, &psoc_sync);
+	if (errno)
+		return;
+
+	osif_psoc_sync_unregister(&pdev->dev);
+	osif_psoc_sync_wait_for_ops(psoc_sync);
 
 	pld_context = pld_get_global_context();
 
 	if (!pld_context)
-		return;
+		goto out;
 
 	pld_context->ops->remove(&pdev->dev, PLD_BUS_TYPE_PCIE);
 
 	pld_del_dev(pld_context, &pdev->dev);
+
+out:
+	osif_psoc_sync_trans_stop(psoc_sync);
+	osif_psoc_sync_destroy(psoc_sync);
 }
 
 #ifdef CONFIG_PLD_PCIE_CNSS

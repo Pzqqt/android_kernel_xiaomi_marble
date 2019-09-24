@@ -32,7 +32,7 @@
 #include "pld_common.h"
 #include "pld_internal.h"
 #include "pld_sdio.h"
-
+#include "osif_psoc_sync.h"
 
 #ifdef CONFIG_SDIO
 /* SDIO manufacturer ID and Codes */
@@ -112,14 +112,27 @@ static void pld_sdio_remove(struct sdio_func *sdio_func)
 {
 	struct pld_context *pld_context;
 	struct device *dev = &sdio_func->dev;
+	int errno;
+	struct osif_psoc_sync *psoc_sync;
+
+	errno = osif_psoc_sync_trans_start_wait(dev, &psoc_sync);
+	if (errno)
+		return;
+
+	osif_psoc_sync_unregister(dev);
+	osif_psoc_sync_wait_for_ops(psoc_sync);
 
 	pld_context = pld_get_global_context();
 
 	if (!pld_context)
-		return;
+		goto out;
 
 	pld_context->ops->remove(dev, PLD_BUS_TYPE_SDIO);
 	pld_del_dev(pld_context, dev);
+
+out:
+	osif_psoc_sync_trans_stop(psoc_sync);
+	osif_psoc_sync_destroy(psoc_sync);
 }
 
 #ifdef CONFIG_PLD_SDIO_CNSS
