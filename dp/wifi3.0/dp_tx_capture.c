@@ -593,7 +593,8 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 				       struct dp_peer *peer,
 				       void *data,
 				       qdf_nbuf_t nbuf,
-				       uint16_t ether_type)
+				       uint16_t ether_type,
+				       uint8_t *src_addr)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct ieee80211_frame *ptr_wh;
@@ -621,6 +622,8 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 		ptr_qoscntl->i_qos[1] = (ppdu_desc->user[0].qos_ctrl &
 					 0xFF00) >> 8;
 		ptr_qoscntl->i_qos[0] = (ppdu_desc->user[0].qos_ctrl & 0xFF);
+		/* Update Addr 3 (SA) with SA derived from ether packet */
+		qdf_mem_copy(ptr_wh->i_addr3, src_addr, QDF_MAC_ADDR_SIZE);
 
 		peer->tx_capture.tx_wifi_ppdu_id = ppdu_desc->ppdu_id;
 	}
@@ -736,7 +739,7 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 
 			dp_tx_update_80211_hdr(pdev, peer,
 					       ppdu_desc, mpdu_nbuf,
-					       ether_type);
+					       ether_type, eh->ether_shost);
 
 			/* update first buffer to previous buffer */
 			prev_nbuf = curr_nbuf;
