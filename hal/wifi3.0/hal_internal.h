@@ -496,6 +496,7 @@ struct hal_soc {
 	struct hal_hw_txrx_ops *ops;
 };
 
+void hal_qca6490_attach(struct hal_soc *hal_soc);
 void hal_qca6390_attach(struct hal_soc *hal_soc);
 void hal_qca6290_attach(struct hal_soc *hal_soc);
 void hal_qca8074_attach(struct hal_soc *hal_soc);

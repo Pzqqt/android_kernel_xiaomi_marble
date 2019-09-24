@@ -758,6 +758,9 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			ppdu_info->rx_status.nss = 0;
 #endif
 			break;
+		case TARGET_TYPE_QCA6490:
+			ppdu_info->rx_status.nss = 0;
+			break;
 		default:
 			break;
 		}

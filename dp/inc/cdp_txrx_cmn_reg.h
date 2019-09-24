@@ -109,6 +109,7 @@ static inline ol_txrx_soc_handle cdp_soc_attach(
 	case QCA6290_DEVICE_ID:
 	case QCN9000_DEVICE_ID:
 	case QCA6390_DEVICE_ID:
+	case QCA6490_DEVICE_ID:
 	case QCA6390_EMULATION_DEVICE_ID:
 	case RUMIM2M_DEVICE_ID_NODE0: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE1: /*lithium emulation */

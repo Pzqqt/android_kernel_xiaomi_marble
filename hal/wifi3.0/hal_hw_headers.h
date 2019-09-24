@@ -38,6 +38,11 @@
 #include "mac_tcl_reg_seq_hwioreg.h"
 #include "ce_src_desc.h"
 #include "ce_stat_desc.h"
+#ifdef QCA_WIFI_QCA6490
+#include "wfss_ce_channel_dst_reg_seq_hwioreg.h"
+#else
+#include "wfss_ce_reg_seq_hwioreg.h"
+#endif /* QCA_WIFI_QCA6490 */
 #include "wfss_ce_reg_seq_hwioreg.h"
 #include "wbm_link_descriptor_ring.h"
 #include "wbm_reg_seq_hwioreg.h"
@@ -80,7 +85,7 @@
 #define HAL_NON_QOS_TID 16
 
 /* calculate the register address offset from bar0 of shadow register x */
-#ifdef QCA_WIFI_QCA6390
+#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490)
 #define SHADOW_REGISTER(x) (0x000008FC + (4 * (x)))
 #else
 #define SHADOW_REGISTER(x) (0x00003024 + (4 * (x)))

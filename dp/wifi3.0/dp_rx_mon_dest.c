@@ -1191,7 +1191,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 }
 
 #ifndef DISABLE_MON_CONFIG
-#ifndef QCA_WIFI_QCA6390
+#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
 /**
  * dp_rx_pdev_mon_buf_attach() - Allocate the monitor descriptor pool
  *

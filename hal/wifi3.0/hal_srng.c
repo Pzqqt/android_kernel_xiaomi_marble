@@ -33,6 +33,9 @@ void hal_qca8074v2_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCA6390
 void hal_qca6390_attach(struct hal_soc *hal);
 #endif
+#ifdef QCA_WIFI_QCA6490
+void hal_qca6490_attach(struct hal_soc *hal);
+#endif
 #ifdef QCA_WIFI_QCN9000
 void hal_qcn9000_attach(struct hal_soc *hal);
 #endif
@@ -244,6 +247,12 @@ static void hal_target_based_configure(struct hal_soc *hal)
 	case TARGET_TYPE_QCA6390:
 		hal->use_register_windowing = true;
 		hal_qca6390_attach(hal);
+	break;
+#endif
+#ifdef QCA_WIFI_QCA6490
+	case TARGET_TYPE_QCA6490:
+		hal->use_register_windowing = true;
+		hal_qca6490_attach(hal);
 	break;
 #endif
 #if defined(QCA_WIFI_QCA8074) && defined(WIFI_TARGET_TYPE_3_0)

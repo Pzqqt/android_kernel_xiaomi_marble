@@ -9793,8 +9793,9 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle,
 		soc->ast_override_support = 1;
 		soc->da_war_enabled = false;
 		break;
-#ifdef QCA_WIFI_QCA6390
+#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490)
 	case TARGET_TYPE_QCA6390:
+	case TARGET_TYPE_QCA6490:
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA6290);
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);
@@ -9811,7 +9812,8 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle,
 		}
 		soc->wlan_cfg_ctx->rxdma1_enable = 0;
 		break;
-#endif
+#endif /* QCA_WIFI_QCA6390 || QCA_WIFI_QCA6490 */
+
 	case TARGET_TYPE_QCA8074:
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA8074);

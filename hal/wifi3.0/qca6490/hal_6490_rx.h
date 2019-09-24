@@ -16,6 +16,34 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _HAL_6490_RX_H_
+#define _HAL_6490_RX_H_
+#include "qdf_util.h"
+#include "qdf_types.h"
+#include "qdf_lock.h"
+#include "qdf_mem.h"
+#include "qdf_nbuf.h"
+#include "tcl_data_cmd.h"
+#include "mac_tcl_reg_seq_hwioreg.h"
+#include "phyrx_rssi_legacy.h"
+#include "rx_msdu_start.h"
+#include "tlv_tag_def.h"
+#include "hal_hw_headers.h"
+#include "hal_internal.h"
+#include "cdp_txrx_mon_struct.h"
+#include "qdf_trace.h"
+#include "hal_rx.h"
+#include "hal_tx.h"
+#include "dp_types.h"
+#include "hal_api_mon.h"
+#include "phyrx_other_receive_info_ru_details.h"
+
+#define HAL_RX_MSDU_START_MIMO_SS_BITMAP(_rx_msdu_start)\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
+	RX_MSDU_START_5_MIMO_SS_BITMAP_OFFSET)),	\
+	RX_MSDU_START_5_MIMO_SS_BITMAP_MASK,		\
+	RX_MSDU_START_5_MIMO_SS_BITMAP_LSB))
+
 #define HAL_RX_MPDU_GET_SEQUENCE_NUMBER(_rx_mpdu_info)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
 		RX_MPDU_INFO_11_MPDU_SEQUENCE_NUMBER_OFFSET)),	\

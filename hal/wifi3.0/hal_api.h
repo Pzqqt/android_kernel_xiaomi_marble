@@ -24,7 +24,7 @@
 #include "qdf_atomic.h"
 #include "hal_internal.h"
 #define MAX_UNWINDOWED_ADDRESS 0x80000
-#ifdef QCA_WIFI_QCA6390
+#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490)
 #define WINDOW_ENABLE_BIT 0x40000000
 #else
 #define WINDOW_ENABLE_BIT 0x80000000
@@ -70,7 +70,7 @@ hal_set_verbose_debug(bool flag)
 }
 #endif
 
-#ifndef QCA_WIFI_QCA6390
+#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
 static inline int hal_force_wake_request(struct hal_soc *soc)
 {
 	return 0;
@@ -136,7 +136,7 @@ static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
  * note3: WINDOW_VALUE_MASK = big enough that trying to write past that window
  *				would be a bug
  */
-#ifndef QCA_WIFI_QCA6390
+#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 				  uint32_t value)
 {
@@ -197,7 +197,7 @@ static inline void hal_write_address_32_mb(struct hal_soc *hal_soc,
 	hal_write32_mb(hal_soc, offset, value);
 }
 
-#ifndef QCA_WIFI_QCA6390
+#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
 static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 {
 	uint32_t ret;
