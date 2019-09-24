@@ -2523,6 +2523,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 
 	/* HE Rates */
+	cmd->min_data_rate = param->min_data_rate;
 	cmd->peer_he_mcs = param->peer_he_mcs_count;
 	buf_ptr += sizeof(wmi_vht_rate_set);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,

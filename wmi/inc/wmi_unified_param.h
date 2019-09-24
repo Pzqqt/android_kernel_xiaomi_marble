@@ -991,6 +991,7 @@ typedef struct {
  * @tx_max_rate: max tx rates
  * @tx_mcs_set: tx mcs
  * @vht_capable: VHT capabalities
+ * @min_data_rate: Peer minimum rate
  * @tx_max_mcs_nss: max tx MCS and NSS
  * @peer_bw_rxnss_override: Peer BW RX NSS overridden or not.
  * @is_pmf_enabled: PMF enabled
@@ -1047,6 +1048,7 @@ struct peer_assoc_params {
 	uint32_t tx_max_rate;
 	uint32_t tx_mcs_set;
 	uint8_t vht_capable;
+	uint8_t min_data_rate;
 	uint32_t peer_bw_rxnss_override;
 	uint32_t tx_max_mcs_nss;
 	uint32_t is_pmf_enabled:1,

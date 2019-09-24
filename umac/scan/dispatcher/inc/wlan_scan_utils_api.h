@@ -1400,6 +1400,19 @@ util_scan_entry_hecap(struct scan_cache_entry *scan_entry)
 	return scan_entry->ie_list.hecap;
 }
 
+/**
+ * util_scan_entry_he_6g_cap() - function to read  he 6GHz caps vendor ie
+ * @scan_entry: scan entry
+ *
+ * API, function to read he 6GHz caps vendor ie
+ *
+ * Return: he caps vendorie or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_he_6g_cap(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.hecap_6g;
+}
 
 /**
  * util_scan_entry_heop() - function to read heop vendor ie

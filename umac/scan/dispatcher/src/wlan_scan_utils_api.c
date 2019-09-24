@@ -390,6 +390,9 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 	case WLAN_EXTN_ELEMID_MUEDCA:
 		scan_params->ie_list.muedca = (uint8_t *)ie;
 		break;
+	case WLAN_EXTN_ELEMID_HE_6G_CAP:
+		scan_params->ie_list.hecap_6g = (uint8_t *)ie;
+		break;
 	default:
 		break;
 	}

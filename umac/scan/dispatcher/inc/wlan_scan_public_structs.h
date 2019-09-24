@@ -148,6 +148,8 @@ struct element_info {
  * @cswrp:      pointer to channel switch announcement wrapper ie
  * @widebw:     pointer to wide band channel switch sub ie
  * @txpwrenvlp: pointer to tx power envelop sub ie
+ * @hecap:      pointer to hecap ie
+ * @hecap_6g:   pointer to he 6ghz cap ie
  * @srp: pointer to spatial reuse parameter sub extended ie
  * @fils_indication: pointer to FILS indication ie
  * @esp: pointer to ESP indication ie
@@ -194,6 +196,7 @@ struct ie_list {
 	uint8_t *secchanoff;
 	uint8_t *mdie;
 	uint8_t *hecap;
+	uint8_t *hecap_6g;
 	uint8_t *heop;
 	uint8_t *srp;
 	uint8_t *fils_indication;
