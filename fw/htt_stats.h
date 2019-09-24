@@ -143,6 +143,7 @@ enum htt_dbg_ext_stats_type {
      *           4 bit htt_tx_tid_stats_tlv/htt_tx_tid_stats_v1_tlv
      *           5 bit htt_rx_tid_stats_tlv
      *           6 bit htt_msdu_flow_stats_tlv
+     *           7 bit htt_peer_sched_stats_tlv
      *   - config_param2: [Bit31 : Bit0] mac_addr31to0
      *   - config_param3: [Bit15 : Bit0] mac_addr47to32
      *                    [Bit 16] If this bit is set, reset per peer stats
@@ -439,6 +440,7 @@ typedef enum {
     HTT_STATS_RX_PDEV_UL_MIMO_USER_STATS_TAG       = 96, /* htt_rx_pdev_ul_mimo_user_stats_tlv */
     HTT_STATS_RX_PDEV_UL_MUMIMO_TRIG_STATS_TAG     = 97, /* htt_rx_pdev_ul_mumimo_trig_stats_tlv */
     HTT_STATS_RX_FSE_STATS_TAG                     = 98, /* htt_rx_fse_stats_tlv */
+    HTT_STATS_PEER_SCHED_STATS_TAG                 = 99, /* htt_peer_sched_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -1333,9 +1335,25 @@ typedef enum {
     HTT_TX_TID_STATS_TLV       = 4,
     HTT_RX_TID_STATS_TLV       = 5,
     HTT_MSDU_FLOW_STATS_TLV    = 6,
+    HTT_PEER_SCHED_STATS_TLV   = 7,
 
     HTT_PEER_STATS_MAX_TLV     = 31,
 } htt_peer_stats_tlv_enum;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 peer_id;
+    /* Num of DL schedules for peer */
+    A_UINT32 num_sched_dl;
+    /* Num od UL schedules for peer */
+    A_UINT32 num_sched_ul;
+    /* Peer TX time */
+    A_UINT32 peer_tx_active_dur_us_low;
+    A_UINT32 peer_tx_active_dur_us_high;
+    /* Peer RX time */
+    A_UINT32 peer_rx_active_dur_us_low;
+    A_UINT32 peer_rx_active_dur_us_high;
+} htt_peer_sched_stats_tlv;
 
 /* config_param0 */
 #define HTT_DBG_EXT_STATS_PEER_INFO_IS_MAC_ADDR_M 0x00000001
@@ -1385,6 +1403,7 @@ typedef enum {
  *   - HTT_STATS_RX_TID_DETAILS_TAG (multiple)
  *   - HTT_STATS_PEER_MSDU_FLOWQ_TAG (multiple)
  *   - HTT_STATS_TX_TID_DETAILS_V1_TAG (multiple)
+ *   - HTT_STATS_PEER_SCHED_STATS_TAG
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -1401,6 +1420,7 @@ typedef struct _htt_peer_stats {
     htt_rx_tid_stats_tlv       rx_tid_stats[1];
     htt_msdu_flow_stats_tlv    msdu_flowq[1];
     htt_tx_tid_stats_v1_tlv    tx_tid_stats_v1[1];
+    htt_peer_sched_stats_tlv   peer_sched_stats;
 } htt_peer_stats_t;
 
 /* =========== ACTIVE PEER LIST ========== */
@@ -1898,7 +1918,7 @@ typedef struct {
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* Scheduler command posted per tx_mode su / mu mimo 11ac / mu mimo 11ax / mu ofdma */
+    /* Scheduler command posted per tx_mode */
     A_UINT32 sched_cmd_posted[1]; /* HTT_TX_PDEV_SCHED_TX_MODE_MAX */
 } htt_sched_txq_cmd_posted_tlv_v;
 
@@ -1907,7 +1927,7 @@ typedef struct {
 /* NOTE: Variable length TLV, use length spec to infer array size */
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* Scheduler command reaped per tx_mode su / mu mimo 11ac / mu mimo 11ax / mu ofdma */
+    /* Scheduler command reaped per tx_mode */
     A_UINT32 sched_cmd_reaped[1]; /* HTT_TX_PDEV_SCHED_TX_MODE_MAX */
 } htt_sched_txq_cmd_reaped_tlv_v;
 
@@ -2041,6 +2061,12 @@ typedef struct {
     A_UINT32 su_min_txtime_sched_delay;
     /* scheduled via no delay */
     A_UINT32 su_no_delay;
+    /* Num of supercycles for this TxQ */
+    A_UINT32 num_supercycles;
+    /* Num of subcycles with sort for this TxQ */
+    A_UINT32 num_subcycles_with_sort;
+    /* Num of subcycles without sort for this Txq */
+    A_UINT32 num_subcycles_no_sort;
 } htt_tx_pdev_stats_sched_per_txq_tlv;
 
 #define HTT_STATS_TX_SCHED_CMN_MAC_ID_M 0x000000ff
