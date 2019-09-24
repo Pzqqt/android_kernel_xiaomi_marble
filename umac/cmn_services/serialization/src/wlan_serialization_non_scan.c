@@ -424,7 +424,7 @@ QDF_STATUS wlan_ser_remove_non_scan_cmd(
 	if (vdev_status != QDF_STATUS_SUCCESS) {
 		status = vdev_status;
 		if (vdev_status != QDF_STATUS_E_PENDING)
-			ser_err("Failed to remove cmd from vdev queue");
+			ser_debug("Failed to remove cmd from vdev queue");
 		goto error;
 	}
 

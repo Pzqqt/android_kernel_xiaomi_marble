@@ -322,8 +322,8 @@ void wlan_serialization_remove_cmd(
 
 	if (ser_status != WLAN_SER_CMD_IN_ACTIVE_LIST) {
 		if (ser_status != WLAN_SER_CMD_MARKED_FOR_ACTIVATION)
-		ser_err("Can't dequeue requested cmd_id[%d] type[%d]",
-			cmd.cmd_id, cmd.cmd_type);
+		ser_debug("Can't dequeue requested cmd_id[%d] type[%d]",
+			  cmd.cmd_id, cmd.cmd_type);
 	}
 
 error:

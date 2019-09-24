@@ -487,7 +487,7 @@ wlan_serialization_remove_cmd_from_queue(
 		goto error;
 
 	if (!queue || wlan_serialization_list_empty(queue)) {
-		ser_err("Empty queue");
+		ser_debug("Empty queue");
 		goto error;
 	}
 
