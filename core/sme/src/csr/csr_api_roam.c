@@ -19427,7 +19427,7 @@ csr_handle_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
 			     enum roam_offload_state requested_state,
 			     uint8_t reason)
 {
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (requested_state != ROAM_DEINIT &&
 	    !csr_is_conn_state_connected_infra(mac, vdev_id)) {
