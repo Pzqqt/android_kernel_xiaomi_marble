@@ -239,6 +239,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 						   eCsrScanStatus scan_status)
 {
 	uint8_t oper_channel = SAP_CHANNEL_NOT_SELECTED;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
 	host_log_acs_scan_done(acs_scan_done_status_str(scan_status),
 			  sessionid, scanid);
@@ -248,7 +249,8 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 			scan_status);
 		oper_channel =
 			sap_select_default_oper_chan(sap_ctx->acs_cfg);
-		sap_ctx->chan_freq = wlan_reg_ch_to_freq(oper_channel);
+		sap_ctx->chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
+							   oper_channel);
 		sap_ctx->acs_cfg->pri_ch = oper_channel;
 		sap_config_acs_result(mac_handle, sap_ctx,
 				      sap_ctx->acs_cfg->ht_sec_ch);
@@ -268,7 +270,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 		oper_channel = sap_select_default_oper_chan(sap_ctx->acs_cfg);
 	}
 
-	sap_ctx->chan_freq = wlan_reg_ch_to_freq(oper_channel);
+	sap_ctx->chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, oper_channel);
 	sap_ctx->acs_cfg->pri_ch = oper_channel;
 	sap_config_acs_result(mac_handle, sap_ctx,
 			sap_ctx->acs_cfg->ht_sec_ch);
@@ -350,7 +352,8 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 			is_ch_dfs = true;
 	}
 
-	sap_ctx->chan_freq = wlan_reg_ch_to_freq(target_channel);
+	sap_ctx->chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
+						   target_channel);
 	/* check if currently selected channel is a DFS channel */
 	if (is_ch_dfs && sap_ctx->pre_cac_complete) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED, FL(

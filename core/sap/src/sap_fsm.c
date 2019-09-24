@@ -735,12 +735,12 @@ sap_validate_chan(struct sap_context *sap_context,
 		if (sap_context->cc_switch_mode !=
 					QDF_MCC_TO_SCC_SWITCH_DISABLE) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-				FL("check for overlap: chan:%d mode:%d"),
-				sap_ch,
+				FL("check for overlap: chan freq:%d mode:%d"),
+				sap_context->chan_freq,
 				sap_context->csr_roamProfile.phyMode);
 			con_ch = sme_check_concurrent_channel_overlap(
 					mac_handle,
-					sap_ch,
+					sap_context->chan_freq,
 					sap_context->csr_roamProfile.phyMode,
 					sap_context->cc_switch_mode);
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
