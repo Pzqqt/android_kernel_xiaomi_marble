@@ -129,6 +129,8 @@ enum ieee80211_protmode {
 
 /* flagext */
 #define IEEE80211_CHAN_DFS              0x0002  /* DFS required on channel */
+/* DFS required on channel for 2nd band of 80+80*/
+#define IEEE80211_CHAN_DFS_CFREQ2       0x0004
 
 #define IEEE80211_SEQ_MASK      0xfff   /* sequence generator mask */
 #define MIN_SW_SEQ              0x100   /* minimum sequence for SW generate packect */

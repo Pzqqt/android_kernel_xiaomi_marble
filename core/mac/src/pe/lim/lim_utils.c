@@ -8446,6 +8446,10 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 	des_chan = vdev->vdev_mlme.des_chan;
 	des_chan->ch_ieee = wlan_reg_freq_to_chan(mac_ctx->pdev,
 						  des_chan->ch_freq);
+	/*
+	 * Set ch_cfreq1 to ch_freq for 20Mhz. If BW is greater than 20 it
+	 * will be updated from ch_freq_seg1.
+	 */
 	des_chan->ch_cfreq1 = des_chan->ch_freq;
 	ch_width = des_chan->ch_width;
 	bw_val = wlan_reg_get_bw_value(ch_width);
@@ -8458,7 +8462,16 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 			       bw_val);
 			ch_width = CH_WIDTH_20MHZ;
 			bw_val = 20;
+			if (des_chan->ch_cfreq1)
+				des_chan->ch_freq_seg1 =
+					wlan_reg_freq_to_chan(
+						mac_ctx->pdev,
+						des_chan->ch_cfreq1);
 		}
+	} else if (des_chan->ch_cfreq1) {
+		des_chan->ch_freq_seg1 =
+			wlan_reg_freq_to_chan(mac_ctx->pdev,
+					      des_chan->ch_cfreq1);
 	}
 	if (bw_val > 80) {
 		if (des_chan->ch_freq_seg2) {
@@ -8468,11 +8481,47 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 			pe_err("Invalid cntr_freq for bw %d, drop to 80",
 			       bw_val);
 			des_chan->ch_cfreq2 = 0;
+			des_chan->ch_freq_seg2 = 0;
 			ch_width = CH_WIDTH_80MHZ;
 		}
 	} else {
 		des_chan->ch_cfreq2 = 0;
+		des_chan->ch_freq_seg2 = 0;
 	}
+
+	des_chan->ch_flags = 0;
+	switch (ch_width) {
+	case CH_WIDTH_20MHZ:
+		des_chan->ch_flags |= IEEE80211_CHAN_VHT20;
+		break;
+	case CH_WIDTH_40MHZ:
+		des_chan->ch_flags |= IEEE80211_CHAN_VHT40PLUS;
+		break;
+	case CH_WIDTH_80MHZ:
+		des_chan->ch_flags |= IEEE80211_CHAN_VHT80;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		des_chan->ch_flags |= IEEE80211_CHAN_VHT80_80;
+		break;
+	case CH_WIDTH_160MHZ:
+		des_chan->ch_flags |= IEEE80211_CHAN_VHT160;
+		break;
+	default:
+		break;
+	}
+
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(des_chan->ch_freq))
+		des_chan->ch_flags |= IEEE80211_CHAN_2GHZ;
+	else
+		des_chan->ch_flags |= IEEE80211_CHAN_5GHZ;
+
+	des_chan->ch_flagext = 0;
+	if (wlan_reg_is_dfs_for_freq(mac_ctx->pdev, des_chan->ch_freq))
+		des_chan->ch_flagext |= IEEE80211_CHAN_DFS;
+	if (des_chan->ch_cfreq2 &&
+	    wlan_reg_is_dfs_for_freq(mac_ctx->pdev, des_chan->ch_cfreq2))
+		des_chan->ch_flagext |= IEEE80211_CHAN_DFS_CFREQ2;
+
 	chan_mode = wma_chan_phy_mode(des_chan->ch_freq, ch_width,
 				      dot11mode);
 

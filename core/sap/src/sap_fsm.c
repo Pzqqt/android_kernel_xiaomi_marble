@@ -484,17 +484,13 @@ void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 void sap_dfs_set_current_channel(void *ctx)
 {
 	struct sap_context *sap_ctx = ctx;
-	uint32_t ic_flags = 0;
-	uint16_t ic_flagext = 0;
-	uint8_t ic_ieee;
-	uint16_t ic_freq = sap_ctx->chan_freq;
 	uint8_t vht_seg0 = sap_ctx->csr_roamProfile.ch_params.center_freq_seg0;
 	uint8_t vht_seg1 = sap_ctx->csr_roamProfile.ch_params.center_freq_seg1;
 	struct wlan_objmgr_pdev *pdev;
 	struct mac_context *mac_ctx;
 	uint32_t use_nol = 0;
 	int error;
-	uint16_t sap_ch;
+	bool is_dfs;
 
 	mac_ctx = sap_get_mac_context();
 	if (!mac_ctx) {
@@ -509,47 +505,14 @@ void sap_dfs_set_current_channel(void *ctx)
 		return;
 	}
 
-	ic_ieee = wlan_reg_freq_to_chan(pdev, sap_ctx->chan_freq);
-	switch (sap_ctx->csr_roamProfile.ch_params.ch_width) {
-	case CH_WIDTH_20MHZ:
-		ic_flags |= IEEE80211_CHAN_VHT20;
-		break;
-	case CH_WIDTH_40MHZ:
-		ic_flags |= IEEE80211_CHAN_VHT40PLUS;
-		break;
-	case CH_WIDTH_80MHZ:
-		ic_flags |= IEEE80211_CHAN_VHT80;
-		break;
-	case CH_WIDTH_80P80MHZ:
-		ic_flags |= IEEE80211_CHAN_VHT80_80;
-		break;
-	case CH_WIDTH_160MHZ:
-		ic_flags |= IEEE80211_CHAN_VHT160;
-		break;
-	default:
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid channel width=%d"),
-			  sap_ctx->csr_roamProfile.ch_params.ch_width);
-		return;
-	}
-
-	if (WLAN_REG_IS_24GHZ_CH_FREQ(sap_ctx->chan_freq))
-		ic_flags |= IEEE80211_CHAN_2GHZ;
-	else
-		ic_flags |= IEEE80211_CHAN_5GHZ;
-
-	sap_ch = wlan_reg_freq_to_chan(pdev, sap_ctx->chan_freq);
-	if (wlan_reg_is_dfs_ch(pdev, sap_ch))
-		ic_flagext |= IEEE80211_CHAN_DFS;
+	is_dfs = wlan_reg_is_dfs_for_freq(pdev, sap_ctx->chan_freq);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-		  FL("freq=%d, channel=%d, seg0=%d, seg1=%d, flags=0x%x, ext flags=0x%x"),
-		  ic_freq, ic_ieee, vht_seg0, vht_seg1, ic_flags, ic_flagext);
+		  FL("freq=%d, dfs %d seg0=%d, seg1=%d, bw %d"),
+		  sap_ctx->chan_freq, is_dfs, vht_seg0, vht_seg1,
+		  sap_ctx->csr_roamProfile.ch_params.ch_width);
 
-	tgt_dfs_set_current_channel(pdev, ic_freq, ic_flags,
-			ic_flagext, ic_ieee, vht_seg0, vht_seg1);
-
-	if (wlan_reg_is_dfs_ch(pdev, sap_ch)) {
+	if (is_dfs) {
 		if (policy_mgr_concurrent_beaconing_sessions_running(
 		    mac_ctx->psoc)) {
 			uint16_t con_ch_freq;
