@@ -1613,23 +1613,25 @@ endif
 ifeq ($(CONFIG_HIF_USB), y)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_DISPATCHER_DIR)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_USB_DIR)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_CE_DIR)
 endif
 
 ifeq ($(CONFIG_HIF_SDIO), y)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_DISPATCHER_DIR)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SDIO_DIR)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SDIO_NATIVE_INC_DIR)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_CE_DIR)
 endif
 
 HIF_COMMON_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
-		   $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o
+		   $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o \
+		   $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o
 
 ifneq ($(CONFIG_LITHIUM), y)
 HIF_COMMON_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main_legacy.o
 endif
 
 ifeq ($(CONFIG_WLAN_NAPI), y)
-HIF_COMMON_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o
 HIF_COMMON_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_irq_affinity.o
 endif
 
