@@ -1847,7 +1847,7 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs,
 	 * that etsi_precac/cac is done on primary segment.
 	 */
 	if (WLAN_IS_CHAN_DFS(dfs->dfs_curchan) &&
-	    !dfs_is_etsi_precac_done(dfs) &&
+	    !dfs_is_etsi_precac_done(dfs, dfs->dfs_curchan) &&
 	    !dfs_is_precac_done(dfs, dfs->dfs_curchan))
 		precac_timeout = QDF_MAX(primary_cac_timeout,
 					 secondary_cac_timeout) +
