@@ -3180,12 +3180,6 @@ bool HAL_IS_DECAP_FORMAT_RAW(hal_soc_handle_t hal_soc_hdl,
 }
 #endif
 
-#define HAL_RX_MSDU_END_FSE_METADATA_GET(_rx_msdu_end)  \
-		(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,  \
-		RX_MSDU_END_15_FSE_METADATA_OFFSET)),  \
-		RX_MSDU_END_15_FSE_METADATA_MASK,    \
-		RX_MSDU_END_15_FSE_METADATA_LSB))
-
 /**
  * hal_rx_msdu_fse_metadata_get: API to get FSE metadata
  * from rx_msdu_end TLV
@@ -3193,14 +3187,13 @@ bool HAL_IS_DECAP_FORMAT_RAW(hal_soc_handle_t hal_soc_hdl,
  *
  * Return: fse metadata value from MSDU END TLV
  */
-static inline uint32_t hal_rx_msdu_fse_metadata_get(uint8_t *buf)
+static inline uint32_t
+hal_rx_msdu_fse_metadata_get(hal_soc_handle_t hal_soc_hdl,
+			     uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint32_t fse_metadata;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	fse_metadata = HAL_RX_MSDU_END_FSE_METADATA_GET(msdu_end);
-	return fse_metadata;
+	return hal_soc->ops->hal_rx_msdu_fse_metadata_get(buf);
 }
 
 /**
