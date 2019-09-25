@@ -7769,8 +7769,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	int *apps_args = (int *) extra;
 	struct hdd_context *hdd_ctx;
 	int ret, num_args;
-	void *soc = NULL;
-	struct cdp_pdev *pdev = NULL;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct cdp_vdev *vdev = NULL;
 	struct cdp_txrx_stats_req req = {0};
 
@@ -7989,20 +7988,17 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	break;
 	case WE_SET_TXRX_STATS:
 	{
-		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
-					       adapter->vdev_id);
-
-		if (ret != 0) {
-			hdd_err("Invalid handles");
-			break;
-		}
-
 		req.stats = apps_args[0];
 		/* default value of secondary parameter is 0(mac_id) */
 		req.mac_id = apps_args[1];
 
 		hdd_debug("WE_SET_TXRX_STATS stats cmd: %d mac_id: %d",
-			  req.stats, req.mac_id);
+				req.stats, req.mac_id);
+		if (qdf_unlikely(!soc)) {
+			hdd_err("soc is NULL");
+			return -EINVAL;
+		}
+
 		if (apps_args[0] == CDP_TXRX_STATS_28) {
 			if (sta_ctx->conn_info.is_authenticated) {
 				hdd_debug("ap mac addr: %pM",

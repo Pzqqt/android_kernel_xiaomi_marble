@@ -1617,8 +1617,15 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 #ifdef WLAN_FEATURE_TSF_PLUS
 void ol_register_timestamp_callback(tp_ol_timestamp_cb ol_tx_timestamp_cb)
 {
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	ol_txrx_pdev_handle pdev;
 
+	if (qdf_unlikely(!soc)) {
+		ol_txrx_err("soc is NULL");
+		return;
+	}
+
+	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
 		ol_txrx_err("pdev is NULL");
 		return;
@@ -1628,8 +1635,10 @@ void ol_register_timestamp_callback(tp_ol_timestamp_cb ol_tx_timestamp_cb)
 
 void ol_deregister_timestamp_callback(void)
 {
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	ol_txrx_pdev_handle pdev;
 
+	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
 		ol_txrx_err("pdev is NULL");
 		return;

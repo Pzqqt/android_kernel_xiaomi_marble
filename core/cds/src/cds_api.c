@@ -810,7 +810,7 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 		false : gp_cds_context->cds_cfg->enable_dp_rx_threads;
 
 	qdf_status = dp_txrx_init(cds_get_context(QDF_MODULE_ID_SOC),
-				  cds_get_context(QDF_MODULE_ID_TXRX),
+				  WMI_PDEV_ID_SOC,
 				  &dp_config);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))

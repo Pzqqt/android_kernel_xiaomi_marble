@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -18,15 +18,29 @@
 
 #include <wlan_objmgr_pdev_obj.h>
 #include <dp_txrx.h>
+#include <dp_internal.h>
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
 
-QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
 			struct dp_txrx_config *config)
 {
 	struct dp_txrx_handle *dp_ext_hdl;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	uint8_t num_dp_rx_threads;
+	struct dp_pdev *pdev;
+
+	if (qdf_unlikely(!soc)) {
+		dp_err("soc is NULL");
+		return 0;
+	}
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(cdp_soc_t_to_dp_soc(soc),
+						  pdev_id);
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return 0;
+	}
 
 	dp_ext_hdl = qdf_mem_malloc(sizeof(*dp_ext_hdl));
 	if (!dp_ext_hdl) {
@@ -36,7 +50,7 @@ QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 
 	dp_info("dp_txrx_handle allocated");
 	dp_ext_hdl->soc = soc;
-	dp_ext_hdl->pdev = pdev;
+	dp_ext_hdl->pdev = dp_pdev_to_cdp_pdev(pdev);
 	cdp_soc_set_dp_txrx_handle(soc, dp_ext_hdl);
 	qdf_mem_copy(&dp_ext_hdl->config, config, sizeof(*config));
 	dp_ext_hdl->rx_tm_hdl.txrx_handle_cmn =

@@ -33,6 +33,7 @@
 #include <ol_rx_reorder_timeout.h>      /* OL_RX_REORDER_TIMEOUT_UPDATE */
 #include <ol_rx_defrag.h>       /* ol_rx_defrag_waitlist_flush */
 #include <ol_txrx_internal.h>
+#include <ol_txrx.h>
 #include <wdi_event.h>
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 #include <ol_txrx_encap.h>      /* ol_rx_decap_info_t, etc */
@@ -228,8 +229,15 @@ void ol_rx_trigger_restore(htt_pdev_handle htt_pdev, qdf_nbuf_t head_msdu,
 void ol_rx_update_histogram_stats(uint32_t msdu_count, uint8_t frag_ind,
 		 uint8_t offload_ind)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	ol_txrx_pdev_handle pdev;
 
+	if (qdf_unlikely(!soc)) {
+		ol_txrx_err("soc is NULL");
+		return;
+	}
+
+	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
 		ol_txrx_err("pdev is NULL");
 		return;
@@ -1672,12 +1680,18 @@ void ol_rx_pkt_dump_call(
 	uint8_t peer_id,
 	uint8_t status)
 {
-	ol_txrx_pdev_handle pdev;
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	ol_txrx_soc_handle soc_hdl = ol_txrx_soc_t_to_cdp_soc_t(soc);
 	struct ol_txrx_peer_t *peer = NULL;
 	ol_txrx_pktdump_cb packetdump_cb;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	ol_txrx_pdev_handle pdev;
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (qdf_unlikely(!soc)) {
+		ol_txrx_err("soc is NULL");
+		return;
+	}
+
+	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
 		ol_txrx_err("pdev is NULL");
 		return;
@@ -1692,7 +1706,8 @@ void ol_rx_pkt_dump_call(
 	packetdump_cb = pdev->ol_rx_packetdump_cb;
 	if (packetdump_cb &&
 	    wlan_op_mode_sta == peer->vdev->opmode)
-		packetdump_cb(soc, (struct cdp_vdev *)peer->vdev,
+		packetdump_cb(soc_hdl,
+			      (struct cdp_vdev *)peer->vdev,
 			      msdu, status, RX_DATA_PKT);
 }
 #endif

@@ -94,11 +94,12 @@ dp_txrx_get_pdev_from_ext_handle(struct dp_txrx_handle_cmn *txrx_cmn_hdl)
 /**
  * dp_txrx_init() - initialize DP TXRX module
  * @soc: ol_txrx_soc_handle
+ * @pdev_id: id of dp pdev handle
  * @config: configuration for DP TXRX modules
  *
  * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
  */
-QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
 			struct dp_txrx_config *config);
 
 /**
@@ -320,8 +321,8 @@ ret:
 #else
 
 static inline
-QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-			    struct dp_txrx_config *config)
+QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
+			struct dp_txrx_config *config)
 {
 	return QDF_STATUS_SUCCESS;
 }

@@ -27,6 +27,8 @@
 #include <ol_txrx_internal.h>
 #include <qdf_hrtimer.h>
 
+#define OL_TXRX_PDEV_ID 0
+
 /*
  * Pool of tx descriptors reserved for
  * high-priority traffic, such as ARP/EAPOL etc
@@ -150,6 +152,21 @@ ol_txrx_peer_get_ref_by_local_id(struct cdp_pdev *ppdev,
 				 enum peer_debug_id_type dbg_id);
 #endif /* QCA_SUPPORT_TXRX_LOCAL_PEER_ID */
 
+/**
+ * ol_txrx_get_pdev_from_pdev_id() - Returns pdev object given the pdev id
+ * @soc: core DP soc context
+ * @pdev_id: pdev id from pdev object can be retrieved
+ *
+ * Return: Pointer to DP pdev object
+ */
+
+static inline struct ol_txrx_pdev_t *
+ol_txrx_get_pdev_from_pdev_id(struct ol_txrx_soc_t *soc,
+			      uint8_t pdev_id)
+{
+	return soc->pdev_list[pdev_id];
+}
+
 /*
  * @nbuf: buffer which contains data to be displayed
  * @nbuf_paddr: physical address of the buffer
@@ -160,7 +177,25 @@ ol_txrx_peer_get_ref_by_local_id(struct cdp_pdev *ppdev,
 void
 ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
 
+/**
+ * ol_txrx_get_vdev_from_vdev_id() - get vdev from vdev_id
+ * @vdev_id: vdev_id
+ *
+ * Return: vdev handle
+ *            NULL if not found.
+ */
 struct cdp_vdev *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
+
+/**
+ * ol_txrx_get_vdev_from_soc_vdev_id() - get vdev from soc and vdev_id
+ * @soc: datapath soc handle
+ * @vdev_id: vdev_id
+ *
+ * Return: vdev handle
+ *            NULL if not found.
+ */
+struct ol_txrx_vdev_t *ol_txrx_get_vdev_from_soc_vdev_id(
+				struct ol_txrx_soc_t *soc, uint8_t vdev_id);
 
 /**
  * ol_txrx_get_mon_vdev_from_pdev() - get monitor mode vdev from pdev
@@ -340,6 +375,54 @@ static inline
 ol_txrx_soc_handle ol_txrx_soc_t_to_cdp_soc_t(struct ol_txrx_soc_t *soc)
 {
 	return (struct cdp_soc_t *)soc;
+}
+
+/**
+ * cdp_pdev_to_ol_txrx_pdev_t() - typecast cdp_pdev to ol_txrx_pdev_t
+ * @pdev: OL pdev handle
+ *
+ * Return: struct ol_txrx_pdev_t pointer
+ */
+static inline
+struct ol_txrx_pdev_t *cdp_pdev_to_ol_txrx_pdev_t(struct cdp_pdev *pdev)
+{
+	return (struct ol_txrx_pdev_t *)pdev;
+}
+
+/**
+ * ol_txrx_pdev_t_to_cdp_pdev() - typecast ol_txrx_pdev_t to cdp_pdev
+ * @pdev: Opaque pdev handle
+ *
+ * Return: struct cdp_pdev pointer
+ */
+static inline
+struct cdp_pdev *ol_txrx_pdev_t_to_cdp_pdev(struct ol_txrx_pdev_t *pdev)
+{
+	return (struct cdp_pdev *)pdev;
+}
+
+/**
+ * cdp_vdev_to_ol_txrx_vdev_t() - typecast cdp_vdev to ol_txrx_vdev_t
+ * @vdev: OL vdev handle
+ *
+ * Return: struct ol_txrx_vdev_t pointer
+ */
+static inline
+struct ol_txrx_vdev_t *cdp_vdev_to_ol_txrx_vdev_t(struct cdp_vdev *vdev)
+{
+	return (struct ol_txrx_vdev_t *)vdev;
+}
+
+/**
+ * ol_txrx_vdev_t_to_cdp_vdev() - typecast ol_txrx_vdev_t to cdp_vdev
+ * @vdev: Opaque vdev handle
+ *
+ * Return: struct cdp_vdev pointer
+ */
+static inline
+struct cdp_vdev *ol_txrx_vdev_t_to_cdp_vdev(struct ol_txrx_vdev_t *vdev)
+{
+	return (struct cdp_vdev *)vdev;
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
