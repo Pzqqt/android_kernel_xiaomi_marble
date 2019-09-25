@@ -2899,6 +2899,7 @@ static void _sde_cp_crtc_enable_ltm_hist(struct sde_crtc *sde_crtc,
 			sde_crtc->ltm_hist_en = true;
 		hw_dspp->ops.setup_ltm_hist_ctrl(hw_dspp, hw_cfg,
 			true, addr);
+		SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY);
 	}
 	spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
 }
@@ -2909,15 +2910,30 @@ static void _sde_cp_crtc_disable_ltm_hist(struct sde_crtc *sde_crtc,
 {
 	unsigned long irq_flags;
 	u32 i = 0;
+	bool notify = false;
+	u8 hist_off = 1;
+	struct drm_event event;
 
 	spin_lock_irqsave(&sde_crtc->ltm_lock, irq_flags);
+	notify = sde_crtc->ltm_hist_en;
 	sde_crtc->ltm_hist_en = false;
 	INIT_LIST_HEAD(&sde_crtc->ltm_buf_free);
 	INIT_LIST_HEAD(&sde_crtc->ltm_buf_busy);
 	for (i = 0; i < sde_crtc->ltm_buffer_cnt; i++)
 		list_add(&sde_crtc->ltm_buffers[i]->node,
 			&sde_crtc->ltm_buf_free);
+	hw_dspp->ops.setup_ltm_hist_ctrl(hw_dspp, NULL,
+			false, 0);
 	spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
+	event.type = DRM_EVENT_LTM_OFF;
+	event.length = sizeof(hist_off);
+	if (notify) {
+		SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY);
+		msm_mode_object_event_notify(&sde_crtc->base.base,
+				sde_crtc->base.dev, &event,
+				(u8 *)&hist_off);
+	}
+
 }
 
 static void sde_cp_ltm_hist_interrupt_cb(void *arg, int irq_idx)
@@ -3316,4 +3332,10 @@ static void _sde_cp_crtc_update_ltm_roi(struct sde_crtc *sde_crtc,
 	}
 
 	sde_crtc->ltm_cfg = *cfg_param;
+}
+
+int sde_cp_ltm_off_event_handler(struct drm_crtc *crtc_drm, bool en,
+	struct sde_irq_callback *hist_irq)
+{
+	return 0;
 }
