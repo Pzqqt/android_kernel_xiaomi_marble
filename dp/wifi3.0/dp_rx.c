@@ -917,16 +917,18 @@ void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
 #ifdef RECEIVE_OFFLOAD
 /**
  * dp_rx_print_offload_info() - Print offload info from RX TLV
+ * @soc: dp soc handle
  * @rx_tlv: RX TLV for which offload information is to be printed
  *
  * Return: None
  */
-static void dp_rx_print_offload_info(uint8_t *rx_tlv)
+static void dp_rx_print_offload_info(struct dp_soc *soc, uint8_t *rx_tlv)
 {
 	dp_verbose_debug("----------------------RX DESC LRO/GRO----------------------");
 	dp_verbose_debug("lro_eligible 0x%x", HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv));
 	dp_verbose_debug("pure_ack 0x%x", HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv));
-	dp_verbose_debug("chksum 0x%x", HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv));
+	dp_verbose_debug("chksum 0x%x", hal_rx_tlv_get_tcp_chksum(soc->hal_soc,
+								  rx_tlv));
 	dp_verbose_debug("TCP seq num 0x%x", HAL_RX_TLV_GET_TCP_SEQ(rx_tlv));
 	dp_verbose_debug("TCP ack num 0x%x", HAL_RX_TLV_GET_TCP_ACK(rx_tlv));
 	dp_verbose_debug("TCP window 0x%x", HAL_RX_TLV_GET_TCP_WIN(rx_tlv));
@@ -963,7 +965,8 @@ void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
 	QDF_NBUF_CB_RX_TCP_PURE_ACK(msdu) =
 			HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv);
 	QDF_NBUF_CB_RX_TCP_CHKSUM(msdu) =
-			 HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv);
+			hal_rx_tlv_get_tcp_chksum(soc->hal_soc,
+						  rx_tlv);
 	QDF_NBUF_CB_RX_TCP_SEQ_NUM(msdu) =
 			 HAL_RX_TLV_GET_TCP_SEQ(rx_tlv);
 	QDF_NBUF_CB_RX_TCP_ACK_NUM(msdu) =
@@ -979,7 +982,7 @@ void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
 	QDF_NBUF_CB_RX_FLOW_ID(msdu) =
 			 HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv);
 
-	dp_rx_print_offload_info(rx_tlv);
+	dp_rx_print_offload_info(soc, rx_tlv);
 }
 #else
 static void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,

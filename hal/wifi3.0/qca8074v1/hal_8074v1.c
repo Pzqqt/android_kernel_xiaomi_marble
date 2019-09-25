@@ -946,6 +946,18 @@ hal_rx_msdu_get_flow_params_8074v1(uint8_t *buf,
 	*flow_index = HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
 }
 
+/**
+ * hal_rx_tlv_get_tcp_chksum_8074v1() - API to get tcp checksum
+ * @buf: rx_tlv_hdr
+ *
+ * Return: tcp checksum
+ */
+static uint16_t
+hal_rx_tlv_get_tcp_chksum_8074v1(uint8_t *buf)
+{
+	return HAL_RX_TLV_GET_TCP_CHKSUM(buf);
+}
+
 struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -1030,6 +1042,7 @@ struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 	hal_rx_msdu_fse_metadata_get_8074v1,
 	hal_rx_msdu_cce_metadata_get_8074v1,
 	hal_rx_msdu_get_flow_params_8074v1,
+	hal_rx_tlv_get_tcp_chksum_8074v1,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074[] = {

@@ -796,6 +796,18 @@ hal_rx_msdu_cce_metadata_get_6490(uint8_t *buf)
 	return HAL_RX_MSDU_END_CCE_METADATA_GET(msdu_end);
 }
 
+/**
+ * hal_rx_tlv_get_tcp_chksum_6490() - API to get tcp checksum
+ * @buf: rx_tlv_hdr
+ *
+ * Return: tcp checksum
+ */
+static uint16_t
+hal_rx_tlv_get_tcp_chksum_6490(uint8_t *buf)
+{
+	return HAL_RX_TLV_GET_TCP_CHKSUM(buf);
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* tx */
 	hal_tx_desc_set_mesh_en_6490,
@@ -841,4 +853,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_msdu_fse_metadata_get_6490,
 	hal_rx_msdu_cce_metadata_get_6490,
 	NULL,
+	hal_rx_tlv_get_tcp_chksum_6490,
 };

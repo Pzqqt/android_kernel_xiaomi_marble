@@ -917,14 +917,6 @@ hal_rx_mpdu_peer_meta_data_set(uint8_t *buf, uint32_t peer_mdata)
 		RX_MSDU_END_9_LRO_ELIGIBLE_MASK, \
 		RX_MSDU_END_9_LRO_ELIGIBLE_LSB))
 
-#define HAL_RX_TLV_GET_TCP_CHKSUM(buf) \
-	(_HAL_MS( \
-		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
-			 msdu_end_tlv.rx_msdu_end), \
-			 RX_MSDU_END_1_TCP_UDP_CHKSUM_OFFSET)), \
-		RX_MSDU_END_1_TCP_UDP_CHKSUM_MASK, \
-		RX_MSDU_END_1_TCP_UDP_CHKSUM_LSB))
-
 #define HAL_RX_TLV_GET_TCP_ACK(buf) \
 	(_HAL_MS( \
 		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
@@ -3405,5 +3397,14 @@ hal_rx_msdu_get_flow_params(hal_soc_handle_t hal_soc_hdl,
 						    flow_invalid,
 						    flow_timeout,
 						    flow_index);
+}
+
+static inline
+uint16_t hal_rx_tlv_get_tcp_chksum(hal_soc_handle_t hal_soc_hdl,
+				   uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_tlv_get_tcp_chksum(buf);
 }
 #endif /* _HAL_RX_H */
