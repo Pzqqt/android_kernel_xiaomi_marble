@@ -943,6 +943,8 @@ enum reg_domains_2g {
 	WORLD_2G_1,
 	WORLD_2G_2,
 	WORLD_2G_3,
+
+	REG_DOMAINS_2G_MAX,
 };
 
 enum reg_domains_5g {
@@ -1002,6 +1004,8 @@ enum reg_domains_5g {
 	MKK17,
 	WORLD_5G_1,
 	WORLD_5G_2,
+
+	REG_DOMAINS_5G_MAX,
 };
 
 const struct reg_domain_pair g_reg_dmn_pairs[] = {
@@ -1555,6 +1559,67 @@ const struct regdomain regdomains_5g[] = {
 			 CHAN_5490_5730_2,
 			 CHAN_5735_5835_5} },
 };
+
+#ifdef CONFIG_REG_CLIENT
+const uint32_t reg_2g_sub_dmn_code[REG_DOMAINS_2G_MAX] = {
+	[FCCA] = 0x0A10,
+	[FCCB] = 0x0B90,
+	[WORLD] = 0x0199,
+	[MKKA] = 0x0A40,
+	[MKKC] = 0x0A50,
+	[ETSIC] = 0x0C30,
+	[ETSID] = 0x0F30,
+	[KRRA] = 0x0A60,
+};
+
+const uint32_t reg_5g_sub_dmn_code[REG_DOMAINS_5G_MAX] = {
+	[NULL1] = 0x0198,
+	[FCC1] = 0x0110,
+	[FCC2] = 0x0120,
+	[FCC3] = 0x0160,
+	[FCC4] = 0x0165,
+	[FCC5] = 0x0510,
+	[FCC6] = 0x0610,
+	[FCC8] = 0x0810,
+	[FCC10] = 0x0B10,
+	[FCC11] = 0x0B20,
+	[FCC13] = 0x0B60,
+	[FCC14] = 0x0B70,
+	[ETSI1] = 0x0130,
+	[ETSI3] = 0x0330,
+	[ETSI4] = 0x0430,
+	[ETSI8] = 0x0830,
+	[ETSI9] = 0x0930,
+	[ETSI10] = 0x0D30,
+	[ETSI11] = 0x0E30,
+	[ETSI12] = 0x0E38,
+	[ETSI13] = 0x0E39,
+	[ETSI14] = 0x0E40,
+	[ETSI15] = 0x0E41,
+	[APL1] = 0x0150,
+	[APL2] = 0x0250,
+	[APL4] = 0x0450,
+	[APL6] = 0x0650,
+	[APL8] = 0x0850,
+	[APL9] = 0x0950,
+	[APL10] = 0x1050,
+	[APL11] = 0x1150,
+	[APL12] = 0x1160,
+	[APL13] = 0x1170,
+	[APL14] = 0x1180,
+	[APL15] = 0x1190,
+	[APL16] = 0x1200,
+	[APL17] = 0x1210,
+	[APL23] = 0x1280,
+	[APL20] = 0x1250,
+	[APL23] = 0x1280,
+	[MKK3] = 0x0340,
+	[MKK5] = 0x0540,
+	[MKK11] = 0x1140,
+	[MKK16] =  0x1640,
+	[MKK17] =  0x1650,
+};
+#endif
 
 QDF_STATUS reg_get_num_countries(int *num_countries)
 {

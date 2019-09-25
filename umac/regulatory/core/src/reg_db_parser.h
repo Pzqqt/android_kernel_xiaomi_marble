@@ -32,6 +32,11 @@ extern const struct regdomain regdomains_2g[];
 extern const struct regulatory_rule reg_rules_5g[];
 extern const struct regdomain regdomains_5g[];
 
+#ifdef CONFIG_REG_CLIENT
+extern const uint32_t reg_2g_sub_dmn_code[];
+extern const uint32_t reg_5g_sub_dmn_code[];
+#endif
+
 /**
  * reg_is_country_code_valid() - Check if the given country code is valid
  * @alpha2: Country string

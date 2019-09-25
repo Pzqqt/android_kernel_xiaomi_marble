@@ -345,6 +345,39 @@ QDF_STATUS tgt_if_regulatory_modify_freq_range(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_REG_CLIENT
+/**
+ * tgt_if_regulatory_send_ctl_info() - Send CTL info to firmware
+ * @psoc: Pointer to psoc
+ * @params: Pointer to reg control params
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+tgt_if_regulatory_send_ctl_info(struct wlan_objmgr_psoc *psoc,
+				struct reg_ctl_params *params)
+{
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_send_regdomain_info_to_fw_cmd(wmi_handle,
+							 params->regd,
+							 params->regd_2g,
+							 params->regd_5g,
+							 params->ctl_2g,
+							 params->ctl_5g);
+}
+#else
+static QDF_STATUS
+tgt_if_regulatory_send_ctl_info(struct wlan_objmgr_psoc *psoc,
+				struct reg_ctl_params *params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS target_if_register_regulatory_tx_ops(
 		struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -383,6 +416,8 @@ QDF_STATUS target_if_register_regulatory_tx_ops(
 
 	reg_ops->unregister_ch_avoid_event_handler =
 		tgt_if_regulatory_unregister_ch_avoid_event_handler;
+
+	reg_ops->send_ctl_info = tgt_if_regulatory_send_ctl_info;
 
 	return QDF_STATUS_SUCCESS;
 }
