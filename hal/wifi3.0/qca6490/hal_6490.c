@@ -780,6 +780,22 @@ static uint32_t hal_rx_msdu_fse_metadata_get_6490(uint8_t *buf)
 	return HAL_RX_MSDU_END_FSE_METADATA_GET(msdu_end);
 }
 
+/**
+ * hal_rx_msdu_cce_metadata_get_6490: API to get CCE metadata
+ * from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ *
+ * Return: cce_metadata
+ */
+static uint16_t
+hal_rx_msdu_cce_metadata_get_6490(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	return HAL_RX_MSDU_END_CCE_METADATA_GET(msdu_end);
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* tx */
 	hal_tx_desc_set_mesh_en_6490,
@@ -823,4 +839,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_msdu_flow_idx_invalid_6490,
 	hal_rx_msdu_flow_idx_timeout_6490,
 	hal_rx_msdu_fse_metadata_get_6490,
+	hal_rx_msdu_cce_metadata_get_6490,
 };

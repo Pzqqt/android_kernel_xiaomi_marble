@@ -441,6 +441,7 @@ struct hal_hw_txrx_ops {
 	bool (*hal_rx_msdu_flow_idx_invalid)(uint8_t *buf);
 	bool (*hal_rx_msdu_flow_idx_timeout)(uint8_t *buf);
 	uint32_t (*hal_rx_msdu_fse_metadata_get)(uint8_t *buf);
+	uint16_t (*hal_rx_msdu_cce_metadata_get)(uint8_t *buf);
 };
 
 /**

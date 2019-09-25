@@ -1637,28 +1637,19 @@ hal_rx_msdu_end_last_msdu_get(hal_soc_handle_t hal_soc_hdl,
 	return hal_soc->ops->hal_rx_msdu_end_last_msdu_get(buf);
 }
 
-#define HAL_RX_MSDU_END_CCE_METADATA_GET(_rx_msdu_end)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
-		RX_MSDU_END_16_CCE_METADATA_OFFSET)),	\
-		RX_MSDU_END_16_CCE_METADATA_MASK,	\
-		RX_MSDU_END_16_CCE_METADATA_LSB))
-
 /**
  * hal_rx_msdu_cce_metadata_get: API to get CCE metadata
  * from rx_msdu_end TLV
  * @buf: pointer to the start of RX PKT TLV headers
- * Return: last_msdu
+ * Return: cce_meta_data
  */
-
-static inline uint32_t
-hal_rx_msdu_cce_metadata_get(uint8_t *buf)
+static inline uint16_t
+hal_rx_msdu_cce_metadata_get(hal_soc_handle_t hal_soc_hdl,
+			     uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint32_t cce_metadata;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	cce_metadata = HAL_RX_MSDU_END_CCE_METADATA_GET(msdu_end);
-	return cce_metadata;
+	return hal_soc->ops->hal_rx_msdu_cce_metadata_get(buf);
 }
 
 /*******************************************************************************
