@@ -2141,7 +2141,6 @@ void lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 				add_bss_params->staContext.staMac, LOGE);
 			goto joinFailure;
 		}
-		session_entry->vdev_id = add_bss_params->vdev_id;
 		/* Success, handle below */
 		/* STA Index(genr by HAL) for the BSS entry is stored here */
 		sta->staIndex = add_bss_params->staContext.staIdx;

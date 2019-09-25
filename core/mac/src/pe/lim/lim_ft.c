@@ -149,10 +149,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
 		     sizeof(tSirMacAddr));
-
-	/* Fill in struct bss_params self_mac_addr */
-	qdf_mem_copy(pAddBssParams->self_mac_addr, ft_session->self_mac_addr,
-		     sizeof(tSirMacAddr));
 	pAddBssParams->beaconInterval = bssDescription->beaconInterval;
 
 	pAddBssParams->dtimPeriod = pBeaconStruct->tim.dtimPeriod;
@@ -188,7 +184,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 			     sizeof(pAddBssParams->staContext.ht_caps));
 	}
 
-	pAddBssParams->op_chan_freq = bssDescription->chan_freq;
 	ft_session->htSecondaryChannelOffset =
 		pBeaconStruct->HTInfo.secondaryChannelOffset;
 	sta_ctx = &pAddBssParams->staContext;
@@ -196,17 +191,9 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	if (ft_session->vhtCapability &&
 	    ft_session->vhtCapabilityPresentInBeacon) {
 		pAddBssParams->vhtCapable = pBeaconStruct->VHTCaps.present;
-		if (pBeaconStruct->VHTOperation.chanWidth &&
-		    chan_width_support) {
+		if (pBeaconStruct->VHTOperation.chanWidth && chan_width_support)
 			pAddBssParams->ch_width =
 				pBeaconStruct->VHTOperation.chanWidth + 1;
-			pAddBssParams->chan_freq_seg0 =
-			    wlan_reg_chan_to_freq(mac->pdev,
-				pBeaconStruct->VHTOperation.chanCenterFreqSeg1);
-			pAddBssParams->chan_freq_seg1 =
-			    wlan_reg_chan_to_freq(mac->pdev,
-				pBeaconStruct->VHTOperation.chanCenterFreqSeg2);
-		}
 		pAddBssParams->staContext.vht_caps =
 			((pBeaconStruct->VHTCaps.maxMPDULen <<
 			  SIR_MAC_VHT_CAP_MAX_MPDU_LEN) |
@@ -369,7 +356,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 #endif
 	pAddBssParams->staContext.sessionId = ft_session->peSessionId;
 	pAddBssParams->staContext.smesessionId = ft_session->smeSessionId;
-	pAddBssParams->vdev_id = ft_session->smeSessionId;
 
 	/* Set a new state for MLME */
 	if (!lim_is_roam_synch_in_progress(ft_session)) {
@@ -380,8 +366,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 			ft_session->peSessionId,
 			eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE));
 	}
-	pAddBssParams->halPersona = (uint8_t)ft_session->opmode;
-
 	ft_session->ftPEContext.pAddBssReq = pAddBssParams;
 
 	pe_debug("Saving SIR_HAL_ADD_BSS_REQ for pre-auth ap");

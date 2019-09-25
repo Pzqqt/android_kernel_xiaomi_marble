@@ -1129,15 +1129,6 @@ static inline bool lim_is_sta_he_capable(tpDphHashNode sta_ds)
 }
 
 /**
- * lim_update_bss_he_capable(): Update he_capable in add BSS params
- * @mac: pointer to MAC context
- * @add_bss: pointer to add BSS params
- *
- * Return: None
- */
-void lim_update_bss_he_capable(struct mac_context *mac, struct bss_params *add_bss);
-
-/**
  * lim_update_stads_he_capable() - Update he_capable in sta ds context
  * @sta_ds: pointer to sta ds
  * @assoc_req: pointer to assoc request
@@ -1288,11 +1279,6 @@ static inline uint8_t lim_get_session_he_frag_cap(struct pe_session *session)
 static inline bool lim_is_sta_he_capable(tpDphHashNode sta_ds)
 {
 	return false;
-}
-
-static inline void lim_update_bss_he_capable(struct mac_context *mac,
-			struct bss_params *add_bss)
-{
 }
 
 static inline void lim_update_stads_he_capable(tpDphHashNode sta_ds,

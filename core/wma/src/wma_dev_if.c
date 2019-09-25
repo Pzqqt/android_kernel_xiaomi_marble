@@ -3531,7 +3531,6 @@ QDF_STATUS wma_save_bss_params(tp_wma_handle wma, struct bss_params *add_bss)
 		status = QDF_STATUS_E_FAILURE;
 	else
 		status = QDF_STATUS_SUCCESS;
-	add_bss->vdev_id = add_bss->staContext.smesessionId;
 	qdf_mem_copy(add_bss->staContext.staMac, add_bss->bssId,
 		     sizeof(add_bss->staContext.staMac));
 
