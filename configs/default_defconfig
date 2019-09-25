@@ -878,6 +878,9 @@ ifeq ($(CONFIG_ARCH_SDXPRAIRIE), y)
 	ifneq ($(CONFIG_SLUB_DEBUG), y)
 		CONFIG_DP_TRACE := n
 	endif
+
+	CONFIG_DIRECT_BUF_RX_ENABLE := n
+	CONFIG_WMI_DBR_SUPPORT := n
 endif
 
 ifneq ($(CONFIG_HIF_USB), y)
