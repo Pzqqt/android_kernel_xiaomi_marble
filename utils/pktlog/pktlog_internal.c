@@ -1477,7 +1477,8 @@ A_STATUS process_rate_update(void *pdev, void *data)
 }
 #endif
 
-#if  defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
+#if  defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
+defined(QCA_WIFI_QCA6490)
 int process_rx_desc_remote(void *pdev, void *data)
 {
 	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
