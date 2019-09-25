@@ -241,6 +241,20 @@ enum rrm_actioncode {
 };
 
 /**
+ * enum ft_actioncode - ft action frames
+ * @FT_FAST_BSS_TRNST_REQ: ft request frame
+ * @FT_FAST_BSS_TRNST_RES: ft response frame
+ * @FT_FAST_BSS_TRNST_CONFIRM: ft confirm frame
+ * @FT_FAST_BSS_TRNST_ACK: ft ACK frame
+ */
+enum ft_actioncode {
+	FT_FAST_BSS_TRNST_REQ = 1,
+	FT_FAST_BSS_TRNST_RES,
+	FT_FAST_BSS_TRNST_CONFIRM,
+	FT_FAST_BSS_TRNST_ACK,
+};
+
+/**
  * enum ht_actioncode - ht action frames
  * @HT_ACTION_NOTIFY_CHANWIDTH: ht notify bw action frame
  * @HT_ACTION_SMPS: ht smps action frame
@@ -602,6 +616,10 @@ enum mgmt_frame_type {
 	MGMT_ACTION_RRM_LINK_MEASUREMENT_RPT,
 	MGMT_ACTION_RRM_NEIGHBOR_REQ,
 	MGMT_ACTION_RRM_NEIGHBOR_RPT,
+	MGMT_ACTION_FT_REQUEST,
+	MGMT_ACTION_FT_RESPONSE,
+	MGMT_ACTION_FT_CONFIRM,
+	MGMT_ACTION_FT_ACK,
 	MGMT_ACTION_HT_NOTIFY_CHANWIDTH,
 	MGMT_ACTION_HT_SMPS,
 	MGMT_ACTION_HT_PSMP,

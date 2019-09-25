@@ -258,6 +258,32 @@ mgmt_get_rrm_action_subtype(uint8_t action_code)
 	return frm_type;
 }
 
+static enum mgmt_frame_type
+mgmt_get_ft_action_subtype(uint8_t action_code)
+{
+	enum mgmt_frame_type frm_type;
+
+	switch (action_code) {
+	case FT_FAST_BSS_TRNST_REQ:
+		frm_type = MGMT_ACTION_FT_REQUEST;
+		break;
+	case FT_FAST_BSS_TRNST_RES:
+		frm_type = MGMT_ACTION_FT_RESPONSE;
+		break;
+	case FT_FAST_BSS_TRNST_CONFIRM:
+		frm_type = MGMT_ACTION_FT_CONFIRM;
+		break;
+	case FT_FAST_BSS_TRNST_ACK:
+		frm_type = MGMT_ACTION_FT_ACK;
+		break;
+	default:
+		frm_type = MGMT_FRM_UNSPECIFIED;
+		break;
+	}
+
+	return frm_type;
+}
+
 /**
  * mgmt_get_ht_action_subtype() - gets ht action subtype
  * @action_code: action code
@@ -709,6 +735,9 @@ mgmt_txrx_get_action_frm_subtype(uint8_t *mpdu_data_ptr)
 	case ACTION_CATEGORY_SPECTRUM_MGMT:
 		frm_type = mgmt_get_spec_mgmt_action_subtype(
 						action_hdr->action_code);
+		break;
+	case ACTION_FAST_BSS_TRNST:
+		frm_type = mgmt_get_ft_action_subtype(action_hdr->action_code);
 		break;
 	case ACTION_CATEGORY_QOS:
 		frm_type = mgmt_get_qos_action_subtype(action_hdr->action_code);
