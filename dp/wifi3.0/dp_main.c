@@ -8218,7 +8218,8 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value,
 		break;
 
 	case CDP_DUMP_TX_FLOW_POOL_INFO:
-		cdp_dump_flow_pool_info((struct cdp_soc_t *)soc);
+		if (level == QDF_STATS_VERBOSITY_LEVEL_HIGH)
+			cdp_dump_flow_pool_info((struct cdp_soc_t *)soc);
 		break;
 
 	case CDP_DP_NAPI_STATS:
