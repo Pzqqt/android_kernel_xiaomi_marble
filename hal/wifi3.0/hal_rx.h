@@ -3242,11 +3242,6 @@ static inline bool hal_rx_msdu_flow_idx_timeout(uint8_t *buf)
 	return timeout;
 }
 
-#define HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(_rx_msdu_end)  \
-		(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,  \
-		RX_MSDU_END_5_FLOW_IDX_INVALID_OFFSET)),  \
-		RX_MSDU_END_5_FLOW_IDX_INVALID_MASK,    \
-		RX_MSDU_END_5_FLOW_IDX_INVALID_LSB))
 /**
  * hal_rx_msdu_flow_idx_invalid: API to get flow index invalid
  * from rx_msdu_end TLV
@@ -3254,14 +3249,13 @@ static inline bool hal_rx_msdu_flow_idx_timeout(uint8_t *buf)
  *
  * Return: flow index invalid value from MSDU END TLV
  */
-static inline bool hal_rx_msdu_flow_idx_invalid(uint8_t *buf)
+static inline bool
+hal_rx_msdu_flow_idx_invalid(hal_soc_handle_t hal_soc_hdl,
+			     uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	bool invalid;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	invalid = HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(msdu_end);
-	return invalid;
+	return hal_soc->ops->hal_rx_msdu_flow_idx_invalid(buf);
 }
 
 /**

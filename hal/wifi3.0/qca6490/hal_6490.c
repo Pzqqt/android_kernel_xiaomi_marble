@@ -735,6 +735,21 @@ static inline uint32_t hal_rx_msdu_flow_idx_get_6490(uint8_t *buf)
 	return HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
 }
 
+/**
+ * hal_rx_msdu_flow_idx_invalid_6490: API to get flow index invalid
+ * from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ *
+ * Return: flow index invalid value from MSDU END TLV
+ */
+static bool hal_rx_msdu_flow_idx_invalid_6490(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	return HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(msdu_end);
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* tx */
 	hal_tx_desc_set_mesh_en_6490,
@@ -775,4 +790,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_get_ppdu_id_6490,
 	hal_reo_config_6490,
 	hal_rx_msdu_flow_idx_get_6490,
+	hal_rx_msdu_flow_idx_invalid_6490,
 };
