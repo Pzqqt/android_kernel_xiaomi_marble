@@ -3236,29 +3236,6 @@ hal_rx_msdu_flow_idx_invalid(hal_soc_handle_t hal_soc_hdl,
 }
 
 /**
- * hal_rx_msdu_get_flow_params: API to get flow index, flow index invalid
- * and flow index timeout from rx_msdu_end TLV
- * @buf: pointer to the start of RX PKT TLV headers
- * @flow_invalid: pointer to return value of flow_idx_valid
- * @flow_timeout: pointer to return value of flow_idx_timeout
- * @flow_index: pointer to return value of flow_idx
- *
- * Return: none
- */
-static inline void hal_rx_msdu_get_flow_params(uint8_t *buf,
-					       bool *flow_invalid,
-					       bool *flow_timeout,
-					       uint32_t *flow_index)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-
-	*flow_invalid = HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(msdu_end);
-	*flow_timeout = HAL_RX_MSDU_END_FLOW_IDX_TIMEOUT_GET(msdu_end);
-	*flow_index = HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
-}
-
-/**
  * hal_rx_hw_desc_get_ppduid_get() - Retrieve ppdu id
  * @hal_soc_hdl: hal_soc handle
  * @hw_desc_addr: hardware descriptor address
@@ -3395,5 +3372,38 @@ void hal_reo_config(struct hal_soc *hal_soc,
 	hal_soc->ops->hal_reo_config(hal_soc,
 				     reg_val,
 				     reo_params);
+}
+
+/**
+ * hal_rx_msdu_get_flow_params: API to get flow index,
+ * flow index invalid and flow index timeout from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ * @flow_invalid: pointer to return value of flow_idx_valid
+ * @flow_timeout: pointer to return value of flow_idx_timeout
+ * @flow_index: pointer to return value of flow_idx
+ *
+ * Return: none
+ */
+static inline void
+hal_rx_msdu_get_flow_params(hal_soc_handle_t hal_soc_hdl,
+			    uint8_t *buf,
+			    bool *flow_invalid,
+			    bool *flow_timeout,
+			    uint32_t *flow_index)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if ((!hal_soc) || (!hal_soc->ops)) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (hal_soc->ops->hal_rx_msdu_get_flow_params)
+		hal_soc->ops->
+			hal_rx_msdu_get_flow_params(buf,
+						    flow_invalid,
+						    flow_timeout,
+						    flow_index);
 }
 #endif /* _HAL_RX_H */

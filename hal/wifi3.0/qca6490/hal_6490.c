@@ -840,4 +840,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_msdu_flow_idx_timeout_6490,
 	hal_rx_msdu_fse_metadata_get_6490,
 	hal_rx_msdu_cce_metadata_get_6490,
+	NULL,
 };

@@ -18,6 +18,8 @@
 #ifndef _HAL_GENERIC_API_H_
 #define _HAL_GENERIC_API_H_
 
+#include <hal_rx.h>
+
 /**
  * hal_tx_comp_get_status() - TQM Release reason
  * @hal_desc: completion ring Tx status

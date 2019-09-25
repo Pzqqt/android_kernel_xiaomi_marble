@@ -928,6 +928,30 @@ hal_rx_msdu_cce_metadata_get_9000(uint8_t *buf)
 	return HAL_RX_MSDU_END_CCE_METADATA_GET(msdu_end);
 }
 
+/**
+ * hal_rx_msdu_get_flow_params_9000: API to get flow index, flow index invalid
+ * and flow index timeout from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ * @flow_invalid: pointer to return value of flow_idx_valid
+ * @flow_timeout: pointer to return value of flow_idx_timeout
+ * @flow_index: pointer to return value of flow_idx
+ *
+ * Return: none
+ */
+static inline void
+hal_rx_msdu_get_flow_params_9000(uint8_t *buf,
+				 bool *flow_invalid,
+				 bool *flow_timeout,
+				 uint32_t *flow_index)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	*flow_invalid = HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(msdu_end);
+	*flow_timeout = HAL_RX_MSDU_END_FLOW_IDX_TIMEOUT_GET(msdu_end);
+	*flow_index = HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
+}
+
 struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -1012,6 +1036,7 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	hal_rx_msdu_flow_idx_timeout_9000,
 	hal_rx_msdu_fse_metadata_get_9000,
 	hal_rx_msdu_cce_metadata_get_9000,
+	hal_rx_msdu_get_flow_params_9000,
 };
 
 struct hal_hw_srng_config hw_srng_table_9000[] = {
