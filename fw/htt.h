@@ -13406,7 +13406,7 @@ PREPACK struct htt_chan_caldata_msg {
     } while (0)
 
 
-#define HTT_CHAN_CALDATA_MSG_PLD_SIZE_S    0
+#define HTT_CHAN_CALDATA_MSG_PLD_SIZE_S    16
 #define HTT_CHAN_CALDATA_MSG_PLD_SIZE_M    0xffff0000
 #define HTT_CHAN_CALDATA_MSG_PLD_SIZE_GET(_var) \
     (((_var) & HTT_CHAN_CALDATA_MSG_PLD_SIZE_M) >> HTT_CHAN_CALDATA_MSG_PLD_SIZE_S)
