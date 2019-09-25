@@ -274,7 +274,7 @@ const struct wlan_crypto_cipher gcmp_cipher_table = {
 	WLAN_CRYPTO_CIPHER_AES_GCM,
 	WLAN_CRYPTO_IV_LEN + WLAN_CRYPTO_KEYID_LEN + WLAN_CRYPTO_EXT_IV_LEN,
 	0,
-	WLAN_CRYPTO_MIC_LEN,
+	WLAN_CRYPTO_MIC256_LEN,
 	128,
 	ccmp_setkey,
 	ccmp_encap,
