@@ -181,7 +181,6 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 		tLimMlmStartReq *mlm_start_req, struct pe_session *session)
 {
 	struct vdev_mlme_obj *mlme_obj;
-	struct wlan_channel *des_chan;
 	struct wlan_objmgr_vdev *vdev = session->vdev;
 	uint8_t vdev_id = session->vdev_id;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -196,65 +195,25 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 
 	qdf_mem_copy(mlme_obj->mgmt.generic.bssid, mlm_start_req->bssId,
 		     QDF_MAC_ADDR_SIZE);
-	mlme_obj->proto.generic.slot_time = session->shortSlotTimeSupported;
-	mlme_obj->proto.generic.beacon_interval = mlm_start_req->beaconPeriod;
-	mlme_obj->proto.generic.dtim_period = mlm_start_req->dtimPeriod;
-
-	mlme_obj->proto.ht_info.allow_ht = mlm_start_req->htCapable;
-	mlme_obj->proto.vht_info.allow_vht = session->vhtCapability;
 	if (lim_is_session_he_capable(session)) {
 		lim_decide_he_op(mac_ctx, &mlme_obj->proto.he_ops_info.he_ops,
 				 session);
 		lim_update_usr_he_cap(mac_ctx, session);
 	}
 
-	des_chan = vdev->vdev_mlme.des_chan;
-	des_chan->ch_freq = mlm_start_req->oper_ch_freq;
-	des_chan->ch_width = session->ch_width;
-	des_chan->ch_freq_seg1 = session->ch_center_freq_seg0;
-	des_chan->ch_freq_seg2 = session->ch_center_freq_seg1;
-	pe_debug("ch_freq_seg1: %d, ch_freq_seg2: %d",
-		 des_chan->ch_freq_seg1, des_chan->ch_freq_seg2);
-
-	/* Send the SSID to HAL to enable SSID matching for IBSS */
-	wlan_vdev_mlme_set_ssid(vdev, mlm_start_req->ssId.ssId,
-				mlm_start_req->ssId.length);
-	mlme_obj->mgmt.ap.hidden_ssid = session->ssidHidden;
-	pe_debug("TRYING TO HIDE SSID %d", mlme_obj->mgmt.ap.hidden_ssid);
-	mlme_obj->mgmt.generic.maxregpower = session->maxTxPower;
-
 	/* Set a new state for MLME */
 	session->limMlmState = eLIM_MLM_WT_ADD_BSS_RSP_STATE;
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, session->peSessionId,
 			 session->limMlmState));
 
-	status = lim_set_ch_phy_mode(vdev, session->dot11mode);
+	status = lim_pre_vdev_start(mac_ctx, mlme_obj, session);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto send_fail_resp;
 
-	if (session->nss == 2) {
-		mlme_obj->mgmt.chainmask_info.num_rx_chain = 2;
-		mlme_obj->mgmt.chainmask_info.num_tx_chain = 2;
-	} else {
-		mlme_obj->mgmt.chainmask_info.num_rx_chain = 1;
-		mlme_obj->mgmt.chainmask_info.num_tx_chain = 1;
-	}
-	mlme_obj->mgmt.ap.cac_duration_ms = session->cac_duration_ms;
-	mlme_obj->mgmt.rate_info.bcn_tx_rate = session->beacon_tx_rate;
-	pe_debug("dot11_mode:%d nss value:%d",
-			session->dot11mode, session->nss);
-
-	if (cds_is_5_mhz_enabled()) {
-		mlme_obj->mgmt.rate_info.quarter_rate = 1;
-	} else if (cds_is_10_mhz_enabled()) {
-		mlme_obj->mgmt.rate_info.half_rate = 1;
-	}
-
 	 addbss_param = qdf_mem_malloc(sizeof(struct bss_params));
-	if (!addbss_param) {
-		pe_err("malloc failed");
+	if (!addbss_param)
 		goto send_fail_resp;
-	}
+
 	addbss_param->vhtCapable = mlm_start_req->htCapable;
 	addbss_param->htCapable = session->vhtCapability;
 	addbss_param->ch_width = session->ch_width;
@@ -385,14 +344,8 @@ static void lim_post_join_set_link_state_callback(
 		 session_entry->curr_op_freq,
 		 session_entry->ch_width,
 		 session_entry->maxTxPower);
-	lim_set_channel(
-		mac,
-		wlan_reg_freq_to_chan(mac->pdev, session_entry->curr_op_freq),
-		session_entry->ch_center_freq_seg0,
-		session_entry->ch_center_freq_seg1,
-		session_entry->ch_width,
-		session_entry->maxTxPower,
-		session_entry->peSessionId, 0, 0);
+	lim_send_switch_chnl_params(mac, session_entry);
+
 	return;
 
 failure:
@@ -2215,39 +2168,4 @@ void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 				eSIR_SME_REASSOC_TIMEOUT_RESULT_CODE,
 				eSIR_MAC_UNSPEC_FAILURE_STATUS, session);
 	}
-}
-
-/**
- * lim_set_channel() - set channel api for lim
- *
- * @mac_ctx:                Pointer to Global MAC structure
- * @channel:                power save state
- * @ch_center_freq_seg0:    center freq seq 0
- * @ch_center_freq_seg1:    center freq seq 1
- * @ch_width:               channel width
- * @max_tx_power:           max tx power
- * @pe_session_id:          pe session id
- *
- * set channel api for lim
- *
- * @Return: None
- */
-void lim_set_channel(struct mac_context *mac_ctx, uint8_t channel,
-		     uint8_t ch_center_freq_seg0, uint8_t ch_center_freq_seg1,
-		     enum phy_ch_width ch_width, int8_t max_tx_power,
-		     uint8_t pe_session_id, uint32_t cac_duration_ms,
-		     uint32_t dfs_regdomain)
-{
-	struct pe_session *pe_session;
-
-	pe_session = pe_find_session_by_session_id(mac_ctx, pe_session_id);
-
-	if (!pe_session) {
-		pe_err("Invalid PE session: %d", pe_session_id);
-		return;
-	}
-	lim_send_switch_chnl_params(mac_ctx, channel, ch_center_freq_seg0,
-				    ch_center_freq_seg1, ch_width,
-				    max_tx_power, pe_session_id, false,
-				    cac_duration_ms, dfs_regdomain);
 }

@@ -558,7 +558,6 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 	uint32_t teleBcnEn = 0;
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_mlme_obj *mlme_obj;
-	struct wlan_channel *des_chan;
 
 	if (!reassoc_req) {
 		pe_err("reassoc_req is NULL");
@@ -639,40 +638,14 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 		pe_err("vdev component object is NULL");
 		return;
 	}
-	des_chan = vdev->vdev_mlme.des_chan;
-	des_chan->ch_freq = session->curr_op_freq;
-	des_chan->ch_width = session->ch_width;
-	des_chan->ch_freq_seg1 = session->ch_center_freq_seg0;
-	des_chan->ch_freq_seg2 = session->ch_center_freq_seg1;
 
-	if (session->ch_width == CH_WIDTH_10MHZ)
-		mlme_obj->mgmt.rate_info.half_rate = 1;
-	else if (session->ch_width == CH_WIDTH_5MHZ)
-		mlme_obj->mgmt.rate_info.quarter_rate = 1;
-
-	status = lim_set_ch_phy_mode(vdev, session->dot11mode);
+	status = lim_pre_vdev_start(mac, mlme_obj, session);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(reassoc_req);
 		return;
 	}
-
-	mlme_obj->mgmt.generic.maxregpower = session->maxTxPower;
-	mlme_obj->proto.generic.beacon_interval =
-		session->beaconParams.beaconInterval;
-	mlme_obj->proto.generic.dtim_period = session->dtimPeriod;
-	mlme_obj->mgmt.ap.hidden_ssid = session->ssidHidden;
-	wlan_vdev_mlme_set_ssid(vdev, session->ssId.ssId,
-				session->ssId.length);
 	qdf_mem_copy(mlme_obj->mgmt.generic.bssid, session->bssId,
 		     QDF_MAC_ADDR_SIZE);
-
-	if (session->nss == 2) {
-		mlme_obj->mgmt.chainmask_info.num_rx_chain = 2;
-		mlme_obj->mgmt.chainmask_info.num_tx_chain = 2;
-	} else {
-		mlme_obj->mgmt.chainmask_info.num_rx_chain = 1;
-		mlme_obj->mgmt.chainmask_info.num_tx_chain = 1;
-	}
 
 	session->pLimMlmReassocReq = reassoc_req;
 	/* we need to defer the message until we get response back from HAL */

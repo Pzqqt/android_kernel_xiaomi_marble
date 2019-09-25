@@ -60,6 +60,8 @@ static QDF_STATUS wma_start_ocb_vdev(struct ocb_config *config)
 		dot11_mode = MLME_DOT11_MODE_11G;
 	else
 		dot11_mode = MLME_DOT11_MODE_11A;
+	des_chan->ch_ieee =
+		wlan_reg_freq_to_chan(wma->pdev, des_chan->ch_freq);
 
 	status = lim_set_ch_phy_mode(vdev, dot11_mode);
 	if (QDF_IS_STATUS_ERROR(status))

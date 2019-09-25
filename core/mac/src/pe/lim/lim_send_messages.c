@@ -88,137 +88,56 @@ QDF_STATUS lim_send_beacon_params(struct mac_context *mac,
 	return retCode;
 }
 
-/**
- * lim_send_switch_chnl_params()
- *
- ***FUNCTION:
- * This function is called to send Channel Switch Indication to WMA
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param mac  pointer to Global Mac structure.
- * @param chnlNumber New Channel Number to be switched to.
- * @param ch_width an enum for channel width.
- * @param localPowerConstraint 11h local power constraint value
- *
- * @return success if message send is ok, else false.
- */
 QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
-					  uint8_t chnlNumber,
-					  uint8_t ch_center_freq_seg0,
-					  uint8_t ch_center_freq_seg1,
-					  enum phy_ch_width ch_width,
-					  int8_t maxTxPower,
-					  uint8_t peSessionId,
-					  uint8_t is_restart,
-					  uint32_t cac_duration_ms,
-					  uint32_t dfs_regdomain)
+				       struct pe_session *session)
 {
-	struct pe_session *pe_session;
 	struct vdev_mlme_obj *mlme_obj;
-	struct wlan_channel *des_chan;
-	struct wlan_objmgr_vdev *vdev;
-	uint8_t vdev_id;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct vdev_start_response rsp = {0};
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	pe_session = pe_find_session_by_session_id(mac, peSessionId);
-	if (!pe_session) {
-		pe_err("Unable to get Session for session Id %d",
-				peSessionId);
+	if (!session) {
+		pe_err("session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	vdev_id = pe_session->vdev_id;
-	vdev = pe_session->vdev;
-	if (!vdev) {
+	if (!session->vdev) {
 		pe_err("vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
 	if (!mlme_obj) {
 		pe_err("vdev component object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	des_chan = vdev->vdev_mlme.des_chan;
-	des_chan->ch_ieee = chnlNumber;
-	des_chan->ch_freq = wlan_reg_chan_to_freq(mac->pdev, chnlNumber);
-	if (des_chan->ch_freq == 0) {
-		pe_err("Invalid operating frequency: %d", des_chan->ch_freq);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_INVAL;
-	}
-	des_chan->ch_width = ch_width;
-	if (cds_is_5_mhz_enabled())
-		mlme_obj->mgmt.rate_info.quarter_rate = 1;
-	else if (cds_is_10_mhz_enabled())
-		mlme_obj->mgmt.rate_info.half_rate = 1;
-	des_chan->ch_freq_seg1 = ch_center_freq_seg0;
-	des_chan->ch_freq_seg2 = ch_center_freq_seg1;
-	pe_debug("ch_freq_seg1: %d, ch_freq_seg2: %d",
-		 des_chan->ch_freq_seg1, des_chan->ch_freq_seg2);
-
-	status = lim_set_ch_phy_mode(vdev, pe_session->dot11mode);
+	status = lim_pre_vdev_start(mac, mlme_obj, session);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto send_resp;
 
-	mlme_obj->mgmt.ap.cac_duration_ms = cac_duration_ms;
-	mlme_obj->proto.generic.beacon_interval = 100;
-	mlme_obj->proto.generic.dtim_period = 1;
-	mlme_obj->mgmt.generic.maxregpower = maxTxPower;
-	wlan_vdev_mlme_set_ssid(vdev, pe_session->ssId.ssId,
-				pe_session->ssId.length);
-	mlme_obj->mgmt.ap.hidden_ssid = pe_session->ssidHidden;
-	if (pe_session->nss == 2) {
-		mlme_obj->mgmt.chainmask_info.num_rx_chain = 2;
-		mlme_obj->mgmt.chainmask_info.num_tx_chain = 2;
-	} else {
-		mlme_obj->mgmt.chainmask_info.num_rx_chain = 1;
-		mlme_obj->mgmt.chainmask_info.num_tx_chain = 1;
-	}
-
-	mlme_obj->proto.ht_info.allow_ht = pe_session->htCapability;
-	mlme_obj->proto.vht_info.allow_vht = pe_session->vhtCapability;
-
-	pe_debug("dot11mode: %d, nss value: %d",
-		 pe_session->dot11mode, pe_session->nss);
-
-	pe_debug("ch width %d, ch id %d, maxTxPower %d",
-		 ch_width, chnlNumber, maxTxPower);
-
-	pe_session->ch_switch_in_progress = true;
+	session->ch_switch_in_progress = true;
 
 	/* we need to defer the message until we
 	 * get the response back from WMA
 	 */
 	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
 
-	status = wma_pre_chan_switch_setup(vdev_id);
+	status = wma_pre_chan_switch_setup(session->vdev_id);
 	if (status != QDF_STATUS_SUCCESS) {
 		pe_err("failed status = %d", status);
 		goto send_resp;
 	}
 	status = vdev_mgr_start_send(mlme_obj,
-				     mlme_is_chan_switch_in_progress(vdev));
+				mlme_is_chan_switch_in_progress(session->vdev));
 	if (status != QDF_STATUS_SUCCESS) {
 		pe_err("failed status = %d", status);
 		goto send_resp;
 	}
-	wma_post_chan_switch_setup(vdev_id);
+	wma_post_chan_switch_setup(session->vdev_id);
 
 	return QDF_STATUS_SUCCESS;
 send_resp:
 	pe_err("switch channel rsp, status = 0x%x", status);
 	rsp.status = status;
-	rsp.vdev_id = vdev_id;
+	rsp.vdev_id = session->vdev_id;
 
 	wma_handle_channel_switch_resp(wma, &rsp);
 

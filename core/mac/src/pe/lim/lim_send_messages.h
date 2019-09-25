@@ -52,16 +52,16 @@ QDF_STATUS lim_set_membership(struct mac_context *mac,
 QDF_STATUS lim_set_user_pos(struct mac_context *mac,
 			       tUpdateUserPos *pTempParam,
 			       struct pe_session *pe_session);
+
+/**
+ * lim_send_switch_chnl_params() - change channel
+ * @mac: pointer to Global MAC structure
+ * @session: pe session
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
-					  uint8_t chnlNumber,
-					  uint8_t ch_center_freq_seg0,
-					  uint8_t ch_center_freq_seg1,
-					  enum phy_ch_width ch_width,
-					  int8_t maxTxPower,
-					  uint8_t peSessionId,
-					  uint8_t is_restart,
-					  uint32_t cac_duration_ms,
-					  uint32_t dfs_regdomain);
+				       struct pe_session *session);
 
 /**
  * lim_send_edca_params() - Send edsa params to firmware

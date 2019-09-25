@@ -728,14 +728,6 @@ void lim_tear_down_link_with_ap(struct mac_context *, uint8_t, tSirMacReasonCode
 /* / Function that defers the messages received */
 uint32_t lim_defer_msg(struct mac_context *, struct scheduler_msg *);
 
-/* / Function that Switches the Channel and sets the CB Mode */
-void lim_set_channel(struct mac_context *mac, uint8_t channel,
-		uint8_t ch_center_freq_seg0, uint8_t ch_center_freq_seg1,
-		enum phy_ch_width ch_width, int8_t maxTxPower,
-		uint8_t peSessionId, uint32_t cac_duration_ms,
-		uint32_t dfs_regdomain);
-
-
 #ifdef ANI_SUPPORT_11H
 /* / Function that sends Measurement Report action frame */
 QDF_STATUS lim_send_meas_report_frame(struct mac_context *, tpSirMacMeasReqActionFrame,

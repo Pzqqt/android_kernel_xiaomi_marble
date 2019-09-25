@@ -1800,6 +1800,19 @@ void lim_flush_bssid(struct mac_context *mac_ctx, uint8_t *bssid);
  */
 bool lim_is_sha384_akm(enum ani_akm_type akm);
 
+
+/**
+ * lim_pre_vdev_start() - set set vdev params from session
+ * @mac: pointer to mac context
+ * @mlme_obj: vdev mlme obj
+ * @session: pointer to pe session
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
+			      struct vdev_mlme_obj *mlme_obj,
+			      struct pe_session *session);
+
 /**
  * lim_set_ch_phy_mode() - set channel phy mode
  * @vdev: pointer to vdev
