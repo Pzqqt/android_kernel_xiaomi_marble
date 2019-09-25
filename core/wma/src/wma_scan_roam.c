@@ -806,6 +806,8 @@ A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
 			return WMI_AUTH_OPEN;
 		}
 		return WMI_AUTH_NONE;
+	case eCSR_AUTH_TYPE_SHARED_KEY:
+		return WMI_AUTH_SHARED;
 	case eCSR_AUTH_TYPE_FILS_SHA256:
 		return WMI_AUTH_RSNA_FILS_SHA256;
 	case eCSR_AUTH_TYPE_FILS_SHA384:
