@@ -843,6 +843,21 @@ static void *hal_rx_link_desc_msdu0_ptr_8074v2(void *link_desc)
 	return HAL_RX_LINK_DESC_MSDU0_PTR(link_desc);
 }
 
+/**
+ * hal_rx_msdu_flow_idx_get_8074v2: API to get flow index
+ * from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ *
+ * Return: flow index value from MSDU END TLV
+ */
+static inline uint32_t hal_rx_msdu_flow_idx_get_8074v2(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	return HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
+}
+
 struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -922,6 +937,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_get_filter_category_8074v2,
 	hal_rx_get_ppdu_id_8074v2,
 	hal_reo_config_8074v2,
+	hal_rx_msdu_flow_idx_get_8074v2,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

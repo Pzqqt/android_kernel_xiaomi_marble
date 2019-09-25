@@ -299,6 +299,12 @@ UNIFIED_RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET))
 	((struct rx_msdu_details *) \
 	 _OFFSET_TO_BYTE_PTR((link_desc),\
 	UNIFIED_RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET))
+
+#define HAL_RX_MSDU_END_FLOW_IDX_GET(_rx_msdu_end)  \
+		(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,  \
+		RX_MSDU_END_14_FLOW_IDX_OFFSET)),  \
+		RX_MSDU_END_14_FLOW_IDX_MASK,    \
+		RX_MSDU_END_14_FLOW_IDX_LSB))
 /*
  * hal_rx_msdu_start_nss_get_6390(): API to get the NSS
  * Interval from rx_msdu_start

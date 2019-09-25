@@ -437,6 +437,7 @@ struct hal_hw_txrx_ops {
 	void (*hal_reo_config)(struct hal_soc *soc,
 			       uint32_t reg_val,
 			       struct hal_reo_params *reo_params);
+	uint32_t (*hal_rx_msdu_flow_idx_get)(uint8_t *buf);
 };
 
 /**

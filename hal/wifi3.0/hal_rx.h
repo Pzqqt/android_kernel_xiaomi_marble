@@ -3203,12 +3203,6 @@ static inline uint32_t hal_rx_msdu_fse_metadata_get(uint8_t *buf)
 	return fse_metadata;
 }
 
-#define HAL_RX_MSDU_END_FLOW_IDX_GET(_rx_msdu_end)  \
-		(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,  \
-		RX_MSDU_END_14_FLOW_IDX_OFFSET)),  \
-		RX_MSDU_END_14_FLOW_IDX_MASK,    \
-		RX_MSDU_END_14_FLOW_IDX_LSB))
-
 /**
  * hal_rx_msdu_flow_idx_get: API to get flow index
  * from rx_msdu_end TLV
@@ -3216,14 +3210,13 @@ static inline uint32_t hal_rx_msdu_fse_metadata_get(uint8_t *buf)
  *
  * Return: flow index value from MSDU END TLV
  */
-static inline uint32_t hal_rx_msdu_flow_idx_get(uint8_t *buf)
+static inline uint32_t
+hal_rx_msdu_flow_idx_get(hal_soc_handle_t hal_soc_hdl,
+			 uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint32_t flow_idx;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	flow_idx = HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
-	return flow_idx;
+	return hal_soc->ops->hal_rx_msdu_flow_idx_get(buf);
 }
 
 #define HAL_RX_MSDU_END_FLOW_IDX_TIMEOUT_GET(_rx_msdu_end)  \

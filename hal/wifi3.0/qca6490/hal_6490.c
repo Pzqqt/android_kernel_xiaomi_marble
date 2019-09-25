@@ -719,6 +719,22 @@ static void *hal_rx_link_desc_msdu0_ptr_6490(void *link_desc)
 {
 	return HAL_RX_LINK_DESC_MSDU0_PTR(link_desc);
 }
+
+/**
+ * hal_rx_msdu_flow_idx_get_6490: API to get flow index
+ * from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ *
+ * Return: flow index value from MSDU END TLV
+ */
+static inline uint32_t hal_rx_msdu_flow_idx_get_6490(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	return HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* tx */
 	hal_tx_desc_set_mesh_en_6490,
@@ -758,4 +774,5 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_get_filter_category_6490,
 	hal_rx_get_ppdu_id_6490,
 	hal_reo_config_6490,
+	hal_rx_msdu_flow_idx_get_6490,
 };
