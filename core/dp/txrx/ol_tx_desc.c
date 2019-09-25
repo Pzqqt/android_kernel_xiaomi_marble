@@ -886,9 +886,11 @@ void ol_tx_desc_frame_list_free(struct ol_txrx_pdev_t *pdev,
 		 * DMA mapped address. In such case, there's no need for WLAN
 		 * driver to DMA unmap the skb.
 		 */
-		if ((qdf_nbuf_get_users(msdu) <= 1) &&
-		    !qdf_nbuf_ipa_owned_get(msdu))
-			qdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
+		if (qdf_nbuf_get_users(msdu) <= 1) {
+			if (!qdf_nbuf_ipa_owned_get(msdu))
+				qdf_nbuf_unmap(pdev->osdev, msdu,
+					       QDF_DMA_TO_DEVICE);
+		}
 
 		/* free the tx desc */
 		ol_tx_desc_free(pdev, tx_desc);
