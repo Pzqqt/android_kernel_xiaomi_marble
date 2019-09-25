@@ -912,11 +912,11 @@ static QDF_STATUS target_if_get_dbr_data(struct wlan_objmgr_pdev *pdev,
 				  dbr_rsp->dbr_entries[idx].paddr_lo);
 	*cookie = WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_GET(
 				dbr_rsp->dbr_entries[idx].paddr_hi);
-	direct_buf_rx_info("Cookie = %d", *cookie);
 	dbr_data->vaddr = target_if_dbr_vaddr_lookup(mod_param, paddr, *cookie);
 	dbr_data->cookie = *cookie;
 	dbr_data->paddr = paddr;
-	direct_buf_rx_info("Vaddr look up = %x", dbr_data->vaddr);
+	direct_buf_rx_debug("Cookie = %d Vaddr look up = %pK",
+			    dbr_data->cookie, dbr_data->vaddr);
 	dbr_data->dbr_len = dbr_rsp->dbr_entries[idx].len;
 	qdf_mem_unmap_nbytes_single(dbr_psoc_obj->osdev, (qdf_dma_addr_t)paddr,
 				    QDF_DMA_FROM_DEVICE,
@@ -1008,8 +1008,8 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	direct_buf_rx_info("Num buf release entry = %d",
-			   dbr_rsp.num_buf_release_entry);
+	direct_buf_rx_debug("Num buf release entry = %d",
+			    dbr_rsp.num_buf_release_entry);
 
 	pdev = dbr_get_pdev_and_srng_id(psoc, (uint8_t)dbr_rsp.pdev_id,
 					&srng_id);
