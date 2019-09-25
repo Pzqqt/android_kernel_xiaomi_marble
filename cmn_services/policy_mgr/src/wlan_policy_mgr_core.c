@@ -2603,7 +2603,8 @@ bool policy_mgr_allow_new_home_channel(
 					policy_mgr_err("don't allow 3rd home channel on same MAC");
 					status = false;
 			}
-		} else {
+		} else if (pm_conc_connection_list[0].mac ==
+			   pm_conc_connection_list[1].mac) {
 			/* Existing two connections are SCC */
 			if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
 				/* keep legacy chip "allow" as it is */
