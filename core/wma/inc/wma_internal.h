@@ -640,6 +640,21 @@ wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 {
 	return 0;
 }
+
+/**
+ * wma_set_ibss_pwrsave_params() - set ibss power save parameter to fw
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * This function is dummy
+ *
+ * Return: 0 for success or error code.
+ */
+static inline QDF_STATUS
+wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* QCA_IBSS_SUPPORT */
 
 /**
