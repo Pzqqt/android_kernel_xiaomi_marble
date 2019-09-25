@@ -439,6 +439,7 @@ struct hal_hw_txrx_ops {
 			       struct hal_reo_params *reo_params);
 	uint32_t (*hal_rx_msdu_flow_idx_get)(uint8_t *buf);
 	bool (*hal_rx_msdu_flow_idx_invalid)(uint8_t *buf);
+	bool (*hal_rx_msdu_flow_idx_timeout)(uint8_t *buf);
 };
 
 /**
