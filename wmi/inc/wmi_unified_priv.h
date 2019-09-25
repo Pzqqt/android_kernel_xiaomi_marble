@@ -398,6 +398,9 @@ QDF_STATUS (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_packet_log_disable_cmd)(wmi_unified_t wmi_handle,
 	uint8_t mac_id);
 
+QDF_STATUS (*send_fd_tmpl_cmd)(wmi_unified_t wmi_handle,
+				struct fils_discovery_tmpl_params *param);
+
 QDF_STATUS (*send_beacon_send_cmd)(wmi_unified_t wmi_handle,
 				struct beacon_params *param);
 

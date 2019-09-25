@@ -854,6 +854,17 @@ wmi_unified_pdev_param_send(wmi_unified_t wmi_handle,
 			    uint8_t mac_id);
 
 /**
+ * wmi_unified_fd_tmpl_send_cmd() - WMI FILS Discovery send function
+ * @wmi_handle: handle to WMI.
+ * @param: pointer to hold FILS Discovery send cmd parameter
+ *
+ * @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_fd_tmpl_send_cmd(wmi_unified_t wmi_handle,
+			     struct fils_discovery_tmpl_params *param);
+
+/**
  * wmi_unified_beacon_tmpl_send_cmd() - WMI beacon send function
  * @wmi_handle: handle to WMI.
  * @macaddr: MAC address

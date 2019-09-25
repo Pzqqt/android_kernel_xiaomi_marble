@@ -2252,6 +2252,54 @@ static void send_time_stamp_sync_cmd_tlv(wmi_unified_t wmi_handle)
 }
 
 /**
+ *  send_fd_tmpl_cmd_tlv() - WMI FILS Discovery send function
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to hold FILS Discovery send cmd parameter
+ *
+ *  Return: 0  on success and -ve on failure.
+ */
+static QDF_STATUS send_fd_tmpl_cmd_tlv(wmi_unified_t wmi_handle,
+				struct fils_discovery_tmpl_params *param)
+{
+	int32_t ret;
+	wmi_fd_tmpl_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint8_t *buf_ptr;
+	uint32_t wmi_buf_len;
+
+	wmi_buf_len = sizeof(wmi_fd_tmpl_cmd_fixed_param) +
+		      WMI_TLV_HDR_SIZE + param->tmpl_len_aligned;
+	wmi_buf = wmi_buf_alloc(wmi_handle, wmi_buf_len);
+	if (!wmi_buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
+	cmd = (wmi_fd_tmpl_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_fd_tmpl_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_fd_tmpl_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	cmd->buf_len = param->tmpl_len;
+	buf_ptr += sizeof(wmi_fd_tmpl_cmd_fixed_param);
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, param->tmpl_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	qdf_mem_copy(buf_ptr, param->frm, param->tmpl_len);
+
+	wmi_mtrace(WMI_FD_TMPL_CMDID, cmd->vdev_id, 0);
+	ret = wmi_unified_cmd_send(wmi_handle,
+				wmi_buf, wmi_buf_len, WMI_FD_TMPL_CMDID);
+
+	if (ret) {
+		WMI_LOGE("%s: Failed to send fd tmpl: %d", __func__, ret);
+		wmi_buf_free(wmi_buf);
+		return ret;
+	}
+
+	return 0;
+}
+
+/**
  *  send_beacon_send_tmpl_cmd_tlv() - WMI beacon send function
  *  @param wmi_handle      : handle to WMI.
  *  @param param    : pointer to hold beacon send cmd parameter
@@ -12074,6 +12122,7 @@ struct wmi_ops tlv_ops =  {
 	.send_time_stamp_sync_cmd = send_time_stamp_sync_cmd_tlv,
 	.send_packet_log_disable_cmd = send_packet_log_disable_cmd_tlv,
 	.send_beacon_tmpl_send_cmd = send_beacon_tmpl_send_cmd_tlv,
+	.send_fd_tmpl_cmd = send_fd_tmpl_cmd_tlv,
 	.send_peer_assoc_cmd = send_peer_assoc_cmd_tlv,
 	.send_scan_start_cmd = send_scan_start_cmd_tlv,
 	.send_scan_stop_cmd = send_scan_stop_cmd_tlv,

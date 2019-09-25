@@ -175,6 +175,19 @@ struct beacon_params {
 	bool is_high_latency;
 };
 
+/* struct fils_discovery_tmpl_params - FILS Discovery template cmd parameter
+ * @vdev_id: vdev ID
+ * @tmpl_len: FILS Discovery template length
+ * @tmpl_aligned: FILS Discovery template alignment
+ * @frm: FILS Discovery template parameter
+ */
+struct fils_discovery_tmpl_params {
+	uint8_t vdev_id;
+	uint32_t tmpl_len;
+	uint32_t tmpl_len_aligned;
+	uint8_t *frm;
+};
+
 /**
  * struct mlme_channel_param - Channel parameters with all
  *			info required by target.
