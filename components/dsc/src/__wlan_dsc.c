@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +23,7 @@
 #include "qdf_threads.h"
 #include "qdf_timer.h"
 #include "__wlan_dsc.h"
+#include "cds_api.h"
 
 #ifdef WLAN_DSC_DEBUG
 static void __dsc_dbg_op_timeout(void *opaque_op)
@@ -179,8 +180,12 @@ static void __dsc_dbg_trans_timeout(void *opaque_trans)
 	struct dsc_trans *trans = opaque_trans;
 
 	qdf_print_thread_trace(trans->thread);
-	QDF_DEBUG_PANIC("Transition '%s' exceeded %ums",
-			trans->active_desc, DSC_TRANS_TIMEOUT_MS);
+
+	if (cds_is_fw_down())
+		dsc_err("fw is down avoid panic");
+	else
+		QDF_DEBUG_PANIC("Transition '%s' exceeded %ums",
+				trans->active_desc, DSC_TRANS_TIMEOUT_MS);
 }
 
 /**
