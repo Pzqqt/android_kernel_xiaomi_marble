@@ -978,8 +978,8 @@ void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
 	vdev_id = wlan_vdev_get_id(vdev);
 
 	if (!qdf_atomic_read(&vdev->vdev_objmgr.ref_id_dbg[id])) {
-		obj_mgr_err("vdev (id:%d)ref cnt was not taken by %d",
-				vdev_id, id);
+		obj_mgr_alert("vdev (id:%d)ref cnt was not taken by %d",
+			      vdev_id, id);
 		wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg,
 					  QDF_TRACE_LEVEL_FATAL);
 		WLAN_OBJMGR_BUG(0);
@@ -987,7 +987,7 @@ void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (!qdf_atomic_read(&vdev->vdev_objmgr.ref_cnt)) {
-		obj_mgr_err("vdev ref cnt is 0");
+		obj_mgr_alert("vdev ref cnt is 0");
 		WLAN_OBJMGR_BUG(0);
 		return;
 	}
