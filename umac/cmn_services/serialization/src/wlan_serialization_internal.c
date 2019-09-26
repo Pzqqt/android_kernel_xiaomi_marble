@@ -335,7 +335,7 @@ QDF_STATUS wlan_serialization_activate_cmd(
 
 	status = cmd_list->cmd.cmd_cb(&cmd_list->cmd,
 				WLAN_SER_CB_ACTIVATE_CMD);
-
+timer_failed:
 	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 
 	qdf_atomic_clear_bit(CMD_MARKED_FOR_ACTIVATION,
@@ -345,7 +345,6 @@ QDF_STATUS wlan_serialization_activate_cmd(
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
-timer_failed:
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wlan_serialization_dequeue_cmd(&cmd_list->cmd,
 					       SER_ACTIVATION_FAILED,
@@ -805,6 +804,11 @@ wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
 		status = wlan_objmgr_vdev_try_get_ref(ser_timer->cmd->vdev,
 						      WLAN_SERIALIZATION_ID);
 		if (QDF_IS_STATUS_ERROR(status)) {
+			/*
+			 * Set cmd to null so that ref release is not tried for
+			 * vdev when timer is flushed.
+			 */
+			ser_timer->cmd = NULL;
 			wlan_serialization_release_lock(
 					&psoc_ser_obj->timer_lock);
 			ser_err("Unbale to get vdev reference");
