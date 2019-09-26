@@ -8437,8 +8437,6 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 		return QDF_STATUS_E_FAILURE;
 	}
 	des_chan = vdev->vdev_mlme.des_chan;
-	des_chan->ch_ieee = wlan_reg_freq_to_chan(mac_ctx->pdev,
-						  des_chan->ch_freq);
 	/*
 	 * Set ch_cfreq1 to ch_freq for 20Mhz. If BW is greater than 20 it
 	 * will be updated from ch_freq_seg1.
@@ -8481,6 +8479,8 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 		des_chan->ch_cfreq2 = 0;
 		des_chan->ch_freq_seg2 = 0;
 	}
+
+	des_chan->ch_width = ch_width;
 
 	des_chan->ch_flags = 0;
 	switch (ch_width) {
