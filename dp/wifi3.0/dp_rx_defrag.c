@@ -1017,6 +1017,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 	hal_ring_desc_t dst_ring_desc =
 		peer->rx_tid[tid].dst_ring_desc;
 	hal_ring_handle_t hal_srng = soc->reo_reinject_ring.hal_srng;
+	struct dp_rx_desc *rx_desc = peer->rx_tid[tid].head_frag_desc;
 
 	ent_ring_desc = hal_srng_src_get_next(soc->hal_soc, hal_srng);
 	if (!ent_ring_desc) {
@@ -1071,13 +1072,19 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 
 	/* map the nbuf before reinject it into HW */
 	ret = qdf_nbuf_map_single(soc->osdev, head,
-					QDF_DMA_FROM_DEVICE);
-
+				  QDF_DMA_FROM_DEVICE);
 	if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"%s: nbuf map failed !", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/*
+	 * As part of rx frag handler bufffer was unmapped and rx desc
+	 * unmapped is set to 1. So again for defrag reinject frame reset
+	 * it back to 0.
+	 */
+	rx_desc->unmapped = 0;
 
 	dp_ipa_handle_rx_buf_smmu_mapping(soc, head, true);
 
@@ -1686,6 +1693,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	msdu = rx_desc->nbuf;
 
 	qdf_nbuf_unmap_single(soc->osdev, msdu,	QDF_DMA_FROM_DEVICE);
+	rx_desc->unmapped = 1;
 
 	rx_desc->rx_buf_start = qdf_nbuf_data(msdu);
 
