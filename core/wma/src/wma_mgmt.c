@@ -3543,47 +3543,49 @@ void wma_process_update_opmode(tp_wma_handle wma_handle,
 	struct wlan_objmgr_peer *peer;
 	struct wlan_objmgr_psoc *psoc = wma_handle->psoc;
 	enum wlan_phymode peer_phymode;
-	WLAN_PHY_MODE fw_phymode;
+	uint32_t fw_phymode;
 	enum wlan_peer_type peer_type;
+	struct wma_txrx_node *iface;
 
-	pdev_id = wlan_objmgr_pdev_get_pdev_id(wma_handle->pdev);
-	peer = wlan_objmgr_get_peer(psoc, pdev_id, update_vht_opmode->peer_mac,
-				    WLAN_LEGACY_WMA_ID);
-	if (!peer) {
-		WMA_LOGE("peer object invalid");
-		return;
-	}
+	iface = &wma_handle->interfaces[update_vht_opmode->smesessionId];
 
-	peer_type = wlan_peer_get_peer_type(peer);
-	if (peer_type == WLAN_PEER_SELF) {
-		WMA_LOGE("self peer wrongly used");
+	if (iface->type == WMI_VDEV_TYPE_STA) {
+		fw_phymode = iface->chanmode;
+	} else {
+		pdev_id = wlan_objmgr_pdev_get_pdev_id(wma_handle->pdev);
+		peer = wlan_objmgr_get_peer(psoc, pdev_id,
+					    update_vht_opmode->peer_mac,
+					    WLAN_LEGACY_WMA_ID);
+		if (!peer) {
+			WMA_LOGE("peer object invalid");
+			return;
+		}
+
+		peer_type = wlan_peer_get_peer_type(peer);
+		if (peer_type == WLAN_PEER_SELF) {
+			WMA_LOGE("self peer wrongly used");
+			wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+			return;
+		}
+
+		wlan_peer_obj_lock(peer);
+		peer_phymode = wlan_peer_get_phymode(peer);
+		wlan_peer_obj_unlock(peer);
 		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
-		return;
+
+		fw_phymode = wma_host_to_fw_phymode(peer_phymode);
 	}
-
-	wlan_peer_obj_lock(peer);
-	peer_phymode = wlan_peer_get_phymode(peer);
-	wlan_peer_obj_unlock(peer);
-	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
-
-	fw_phymode = wma_host_to_fw_phymode(peer_phymode);
 
 	ch_width = wmi_get_ch_width_from_phy_mode(wma_handle->wmi_handle,
-						  (WMI_HOST_WLAN_PHY_MODE)
 						  fw_phymode);
-	WMA_LOGD("%s: peer phymode: %d, ch_width: %d, fw phymode: %d",
-		 __func__, peer_phymode, ch_width, fw_phymode);
+	WMA_LOGD("%s: ch_width: %d, fw phymode: %d", __func__,
+		 ch_width, fw_phymode);
 	if (ch_width < update_vht_opmode->opMode) {
 		WMA_LOGE("%s: Invalid peer bw update %d, self bw %d",
 				__func__, update_vht_opmode->opMode,
 				ch_width);
 		return;
 	}
-
-	/* Always send phymode before BW to avoid any mismatch in FW */
-	wma_set_peer_param(wma_handle, update_vht_opmode->peer_mac,
-			   WMI_PEER_PHYMODE, fw_phymode,
-			   update_vht_opmode->smesessionId);
 
 	WMA_LOGD("%s: opMode = %d", __func__, update_vht_opmode->opMode);
 	wma_set_peer_param(wma_handle, update_vht_opmode->peer_mac,
