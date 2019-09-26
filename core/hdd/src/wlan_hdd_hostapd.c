@@ -5523,13 +5523,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	config->ch_params.ch_width = config->ch_width_orig;
-	wlan_reg_set_channel_params(hdd_ctx->pdev,
-				    wlan_reg_freq_to_chan(hdd_ctx->pdev,
-							  config->chan_freq),
-				    wlan_reg_freq_to_chan(hdd_ctx->pdev,
-							  config->sec_ch_freq),
-				    &config->ch_params);
-
+	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev, config->chan_freq,
+					     config->sec_ch_freq,
+					     &config->ch_params);
 	if (0 != wlan_hdd_cfg80211_update_apies(adapter)) {
 		hdd_err("SAP Not able to set AP IEs");
 		ret = -EINVAL;

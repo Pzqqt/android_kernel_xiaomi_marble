@@ -795,8 +795,9 @@ sap_validate_chan(struct sap_context *sap_context,
 					con_ch);
 				sap_context->chan_freq = wlan_reg_chan_to_freq(
 							mac_ctx->pdev, con_ch);
-				wlan_reg_set_channel_params(mac_ctx->pdev,
-						con_ch, 0,
+				wlan_reg_set_channel_params_for_freq(
+						mac_ctx->pdev,
+						sap_context->chan_freq, 0,
 						&sap_context->ch_params);
 			}
 		}
@@ -2172,10 +2173,10 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 			  sap_ctx->chan_freq, ch);
 
 		sap_ctx->chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, ch);
-		wlan_reg_set_channel_params(mac_ctx->pdev, ch,
-					    wlan_reg_freq_to_chan(mac_ctx->pdev,
-							sap_ctx->sec_ch_freq),
-					    &sap_ctx->ch_params);
+		wlan_reg_set_channel_params_for_freq(mac_ctx->pdev,
+						     sap_ctx->chan_freq,
+						     sap_ctx->sec_ch_freq,
+						     &sap_ctx->ch_params);
 	}
 
 	/*
@@ -2199,8 +2200,9 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 		     WLAN_REG_IS_5GHZ_CH_FREQ(sap_ctx->chan_freq)) &&
 		     con_ch && wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch)) {
 			sap_ctx->chan_freq = con_ch_freq;
-			wlan_reg_set_channel_params(mac_ctx->pdev,
-						    con_ch, 0,
+			wlan_reg_set_channel_params_for_freq(
+						    mac_ctx->pdev,
+						    con_ch_freq, 0,
 						    &sap_ctx->ch_params);
 		}
 	}
