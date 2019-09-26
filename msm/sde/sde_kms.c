@@ -949,7 +949,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 	struct drm_crtc_state *old_crtc_state;
 	struct drm_connector *connector;
 	struct drm_connector_state *old_conn_state;
-	struct msm_display_kickoff_params params;
+	struct msm_display_conn_params params;
 	int i, rc = 0;
 
 	if (!kms || !old_state)
@@ -983,9 +983,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 		if (!c_conn->ops.post_kickoff)
 			continue;
 
-		params.rois = NULL;
-		params.hdr_meta = NULL;
-		params.qsync_update = false;
+		memset(&params, 0, sizeof(params));
 
 		sde_connector_complete_qsync_commit(connector, &params);
 
