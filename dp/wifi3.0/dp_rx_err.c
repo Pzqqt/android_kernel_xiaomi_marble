@@ -1079,7 +1079,8 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	if (fragno) {
 		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
 						qdf_nbuf_data(nbuf));
-		rx_seq = hal_rx_get_rx_sequence(qdf_nbuf_data(nbuf));
+		rx_seq = hal_rx_get_rx_sequence(soc->hal_soc,
+						qdf_nbuf_data(nbuf));
 
 		status = dp_rx_defrag_add_last_frag(soc, peer,
 						    tid, rx_seq, nbuf);

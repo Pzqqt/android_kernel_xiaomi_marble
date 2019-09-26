@@ -584,7 +584,7 @@ static uint32_t hal_rx_tid_get_8074v1(hal_soc_handle_t hal_soc_hdl,
 			 RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_LSB));
 
 	if (qos_control_valid)
-		return hal_rx_mpdu_start_tid_get_8074v1(buf);
+		return hal_rx_mpdu_start_tid_get_8074(buf);
 
 	return HAL_RX_NON_QOS_TID;
 }
@@ -958,6 +958,21 @@ hal_rx_tlv_get_tcp_chksum_8074v1(uint8_t *buf)
 	return HAL_RX_TLV_GET_TCP_CHKSUM(buf);
 }
 
+/**
+ * hal_rx_get_rx_sequence_8074v1(): Function to retrieve rx sequence number
+ *
+ * @nbuf: Network buffer
+ * Returns: rx sequence number
+ */
+static
+uint16_t hal_rx_get_rx_sequence_8074v1(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+
+	return HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info);
+}
+
 struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -1043,6 +1058,7 @@ struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 	hal_rx_msdu_cce_metadata_get_8074v1,
 	hal_rx_msdu_get_flow_params_8074v1,
 	hal_rx_tlv_get_tcp_chksum_8074v1,
+	hal_rx_get_rx_sequence_8074v1,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074[] = {

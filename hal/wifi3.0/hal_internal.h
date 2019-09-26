@@ -449,6 +449,7 @@ struct hal_hw_txrx_ops {
 					  bool *flow_timeout,
 					  uint32_t *flow_index);
 	uint16_t (*hal_rx_tlv_get_tcp_chksum)(uint8_t *buf);
+	uint16_t (*hal_rx_get_rx_sequence)(uint8_t *buf);
 };
 
 /**

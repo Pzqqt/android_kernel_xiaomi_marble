@@ -900,12 +900,6 @@ hal_rx_mpdu_peer_meta_data_set(uint8_t *buf, uint32_t peer_mdata)
 	HAL_RX_MPDU_PEER_META_DATA_SET(mpdu_info, peer_mdata);
 }
 
-#define HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(_rx_msdu_end)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,		\
-		RX_MSDU_END_5_L3_HEADER_PADDING_OFFSET)),	\
-		RX_MSDU_END_5_L3_HEADER_PADDING_MASK,		\
-		RX_MSDU_END_5_L3_HEADER_PADDING_LSB))
-
 /**
 * LRO information needed from the TLVs
 */
@@ -1420,12 +1414,6 @@ hal_rx_msdu_start_get_pkt_type(uint8_t *buf)
 	return pkt_type;
 }
 
-#define HAL_RX_MPDU_GET_TODS(_rx_mpdu_info)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
-		RX_MPDU_INFO_2_TO_DS_OFFSET)),	\
-		RX_MPDU_INFO_2_TO_DS_MASK,	\
-		RX_MPDU_INFO_2_TO_DS_LSB))
-
 /*
  * hal_rx_mpdu_get_tods(): API to get the tods info
  * from rx_mpdu_start
@@ -1458,12 +1446,6 @@ hal_rx_mpdu_get_fr_ds(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 
 	return hal_soc->ops->hal_rx_mpdu_get_fr_ds(buf);
 }
-
-#define HAL_RX_MPDU_MAC_ADDR_AD4_VALID_GET(_rx_mpdu_info) \
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
-		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_OFFSET)), \
-		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_MASK,	\
-		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_LSB))
 
 #define HAL_RX_MPDU_AD4_31_0_GET(_rx_mpdu_info)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
@@ -2517,31 +2499,8 @@ struct rx_mpdu_info *hal_rx_get_mpdu_info(struct rx_pkt_tlvs *pkt_tlvs)
 	return &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start.rx_mpdu_info_details;
 }
 
-/**
- * hal_rx_get_rx_sequence(): Function to retrieve rx sequence number
- *
- * @nbuf: Network buffer
- * Returns: rx sequence number
- */
 #define DOT11_SEQ_FRAG_MASK		0x000f
 #define DOT11_FC1_MORE_FRAG_OFFSET	0x04
-
-#define HAL_RX_MPDU_GET_SEQUENCE_NUMBER(_rx_mpdu_info)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_OFFSET)),	\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_MASK,	\
-		RX_MPDU_INFO_2_MPDU_SEQUENCE_NUMBER_LSB))
-static inline
-uint16_t hal_rx_get_rx_sequence(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
-	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
-	uint16_t seq_number = 0;
-
-	seq_number = HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info);
-
-	return seq_number;
-}
 
 /**
  * hal_rx_get_rx_fragment_number(): Function to retrieve rx fragment number
@@ -3406,5 +3365,14 @@ uint16_t hal_rx_tlv_get_tcp_chksum(hal_soc_handle_t hal_soc_hdl,
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
 	return hal_soc->ops->hal_rx_tlv_get_tcp_chksum(buf);
+}
+
+static inline
+uint16_t hal_rx_get_rx_sequence(hal_soc_handle_t hal_soc_hdl,
+				uint8_t *buf)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_get_rx_sequence(buf);
 }
 #endif /* _HAL_RX_H */

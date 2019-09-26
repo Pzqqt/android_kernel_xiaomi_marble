@@ -164,20 +164,3 @@ static void hal_tx_desc_set_lmac_id_6490(void *desc, uint8_t lmac_id)
 	HAL_SET_FLD(desc, TCL_DATA_CMD_4, LMAC_ID) |=
 		HAL_TX_SM(TCL_DATA_CMD_4, LMAC_ID, lmac_id);
 }
-
-/**
- * hal_tx_desc_set_mesh_en - Set mesh_enable flag in Tx descriptor
- * @desc: Handle to Tx Descriptor
- * @en:   For raw WiFi frames, this indicates transmission to a mesh STA,
- *        enabling the interpretation of the 'Mesh Control Present' bit
- *        (bit 8) of QoS Control (otherwise this bit is ignored),
- *        For native WiFi frames, this indicates that a 'Mesh Control' field
- *        is present between the header and the LLC.
- *
- * Return: void
- */
-inline void hal_tx_desc_set_mesh_en(void *desc, uint8_t en)
-{
-	HAL_SET_FLD(desc, TCL_DATA_CMD_5, MESH_ENABLE) |=
-		HAL_TX_SM(TCL_DATA_CMD_5, MESH_ENABLE, en);
-}

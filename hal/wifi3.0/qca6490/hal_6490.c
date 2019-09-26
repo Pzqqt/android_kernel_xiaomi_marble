@@ -1275,10 +1275,20 @@ hal_rx_tlv_get_tcp_chksum_6490(uint8_t *buf)
 	return HAL_RX_TLV_GET_TCP_CHKSUM(buf);
 }
 
-struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
-	/* tx */
-	/* rx */
-};
+/**
+ * hal_rx_get_rx_sequence_6490(): Function to retrieve rx sequence number
+ *
+ * @nbuf: Network buffer
+ * Returns: rx sequence number
+ */
+static
+uint16_t hal_rx_get_rx_sequence_6490(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
+	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
+
+	return HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info);
+}
 
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* init and setup */
@@ -1325,6 +1335,7 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_get_rx_fragment_number_6490,
 	hal_rx_msdu_end_da_is_mcbc_get_6490,
 	hal_rx_msdu_end_sa_is_valid_get_6490,
+	hal_rx_msdu_end_sa_idx_get_6490,
 	hal_rx_desc_is_first_msdu_6490,
 	hal_rx_msdu_end_l3_hdr_padding_get_6490,
 	hal_rx_encryption_info_valid_6490,
@@ -1364,6 +1375,7 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_msdu_cce_metadata_get_6490,
 	NULL,
 	hal_rx_tlv_get_tcp_chksum_6490,
+	hal_rx_get_rx_sequence_6490,
 };
 
 struct hal_hw_srng_config hw_srng_table_6490[] = {

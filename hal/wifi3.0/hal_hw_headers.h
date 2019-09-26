@@ -43,7 +43,6 @@
 #else
 #include "wfss_ce_reg_seq_hwioreg.h"
 #endif /* QCA_WIFI_QCA6490 */
-#include "wfss_ce_reg_seq_hwioreg.h"
 #include "wbm_link_descriptor_ring.h"
 #include "wbm_reg_seq_hwioreg.h"
 #include "wbm_buffer_ring.h"
