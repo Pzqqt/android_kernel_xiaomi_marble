@@ -46,6 +46,7 @@
 #include "sde_plane.h"
 #include "sde_crtc.h"
 #include "sde_reg_dma.h"
+#include "sde_connector.h"
 
 #include <soc/qcom/scm.h>
 #include "soc/qcom/secure_buffer.h"
@@ -948,6 +949,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 	struct drm_crtc_state *old_crtc_state;
 	struct drm_connector *connector;
 	struct drm_connector_state *old_conn_state;
+	struct msm_display_kickoff_params params;
 	int i, rc = 0;
 
 	if (!kms || !old_state)
@@ -980,7 +982,14 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 		c_conn = to_sde_connector(connector);
 		if (!c_conn->ops.post_kickoff)
 			continue;
-		rc = c_conn->ops.post_kickoff(connector);
+
+		params.rois = NULL;
+		params.hdr_meta = NULL;
+		params.qsync_update = false;
+
+		sde_connector_complete_qsync_commit(connector, &params);
+
+		rc = c_conn->ops.post_kickoff(connector, &params);
 		if (rc) {
 			pr_err("Connector Post kickoff failed rc=%d\n",
 					 rc);

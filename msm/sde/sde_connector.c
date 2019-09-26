@@ -58,6 +58,7 @@ static const struct drm_prop_enum_list e_power_mode[] = {
 static const struct drm_prop_enum_list e_qsync_mode[] = {
 	{SDE_RM_QSYNC_DISABLED,	"none"},
 	{SDE_RM_QSYNC_CONTINUOUS_MODE,	"continuous"},
+	{SDE_RM_QSYNC_ONE_SHOT_MODE,	"one_shot"},
 };
 static const struct drm_prop_enum_list e_frame_trigger_mode[] = {
 	{FRAME_DONE_WAIT_DEFAULT, "default"},
@@ -643,6 +644,27 @@ void sde_connector_set_qsync_params(struct drm_connector *connector)
 				qsync_propval);
 		c_conn->qsync_updated = true;
 		c_conn->qsync_mode = qsync_propval;
+	}
+}
+
+void sde_connector_complete_qsync_commit(struct drm_connector *conn,
+				struct msm_display_kickoff_params *params)
+{
+	struct sde_connector *c_conn;
+
+	if (!conn || !params) {
+		SDE_ERROR("invalid params\n");
+		return;
+	}
+
+	c_conn = to_sde_connector(conn);
+
+	if (c_conn && c_conn->qsync_updated &&
+		(c_conn->qsync_mode == SDE_RM_QSYNC_ONE_SHOT_MODE)) {
+		/* Reset qsync states if mode is one shot */
+		params->qsync_mode = c_conn->qsync_mode = 0;
+		params->qsync_update = true;
+		SDE_EVT32(conn->base.id, c_conn->qsync_mode);
 	}
 }
 

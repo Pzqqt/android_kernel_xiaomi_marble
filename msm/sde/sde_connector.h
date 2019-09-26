@@ -229,9 +229,12 @@ struct sde_connector_ops {
 	/**
 	 * post_kickoff - display to program post kickoff-time features
 	 * @connector: Pointer to drm connector structure
+	 * @params: Parameter bundle of connector-stored information for
+	 *	post kickoff programming into the display
 	 * Returns: Zero on success
 	 */
-	int (*post_kickoff)(struct drm_connector *connector);
+	int (*post_kickoff)(struct drm_connector *connector,
+		struct msm_display_kickoff_params *params);
 
 	/**
 	 * post_open - calls connector to process post open functionalities
@@ -731,6 +734,16 @@ int sde_connector_get_dpms(struct drm_connector *connector);
  * It must only be called once per frame update for the given connector.
  */
 void sde_connector_set_qsync_params(struct drm_connector *connector);
+
+/**
+ * sde_connector_complete_qsync_commit - callback signalling completion
+ *			of qsync, if modified for the current commit
+ * @conn   - Pointer to drm connector object
+ * @params - Parameter bundle of connector-stored information for
+ *	post kickoff programming into the display
+ */
+void sde_connector_complete_qsync_commit(struct drm_connector *conn,
+			struct msm_display_kickoff_params *params);
 
 /**
 * sde_connector_get_dyn_hdr_meta - returns pointer to connector state's dynamic
