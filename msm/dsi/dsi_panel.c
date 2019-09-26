@@ -3212,6 +3212,7 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 {
 	struct dsi_panel *panel;
 	struct dsi_parser_utils *utils;
+	const char *panel_physical_type;
 	int rc = 0;
 
 	panel = kzalloc(sizeof(*panel), GFP_KERNEL);
@@ -3230,6 +3231,14 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	if (!panel->name)
 		panel->name = DSI_PANEL_DEFAULT_LABEL;
 
+	/*
+	 * Set panel type to LCD as default.
+	 */
+	panel->panel_type = DSI_DISPLAY_PANEL_TYPE_LCD;
+	panel_physical_type = utils->get_property(utils->data,
+				"qcom,mdss-dsi-panel-physical-type", NULL);
+	if (panel_physical_type && !strcmp(panel_physical_type, "oled"))
+		panel->panel_type = DSI_DISPLAY_PANEL_TYPE_OLED;
 	rc = dsi_panel_parse_host_config(panel);
 	if (rc) {
 		DSI_ERR("failed to parse host configuration, rc=%d\n",
