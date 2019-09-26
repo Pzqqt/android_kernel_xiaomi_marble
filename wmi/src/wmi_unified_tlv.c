@@ -9107,6 +9107,8 @@ static QDF_STATUS extract_per_chain_rssi_stats_tlv(wmi_unified_t wmi_handle,
 
 	data = ((uint8_t *)(&rssi_event[1])) + WMI_TLV_HDR_SIZE;
 	fw_rssi_stats = &((wmi_rssi_stats *)data)[index];
+	if (fw_rssi_stats->vdev_id >= WLAN_UMAC_PDEV_MAX_VDEVS)
+		return QDF_STATUS_E_INVAL;
 
 	rssi_stats->vdev_id = fw_rssi_stats->vdev_id;
 	qdf_mem_copy(rssi_stats->rssi_avg_beacon,

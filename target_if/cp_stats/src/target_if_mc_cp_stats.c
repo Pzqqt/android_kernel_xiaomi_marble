@@ -324,6 +324,7 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_chain_rssi_stats(
 							  &rssi_stats);
 		if (QDF_IS_STATUS_ERROR(status))
 			continue;
+		ev->vdev_chain_rssi[i].vdev_id = rssi_stats.vdev_id;
 
 		for (j = 0; j < MAX_NUM_CHAINS; j++) {
 			dat_snr = rssi_stats.rssi_avg_data[j];
