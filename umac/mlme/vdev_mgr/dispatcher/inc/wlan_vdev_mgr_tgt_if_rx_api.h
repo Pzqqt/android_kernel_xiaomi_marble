@@ -47,4 +47,15 @@ void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
 QDF_STATUS
 tgt_vdev_mgr_ext_tbttoffset_update_handle(uint32_t num_vdevs, bool is_ext);
 
+/**
+ * tgt_vdev_mgr_get_response_timer_info() - API to get vdev_mgr timer info
+ * @psoc: objmgr psoc object
+ * @vdev_id: vdev id
+ *
+ * Return: struct vdev_response_timer on success else NULL
+ */
+struct vdev_response_timer *
+tgt_vdev_mgr_get_response_timer_info(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id);
+
 #endif /* __WLAN_VDEV_MGR_RX_OPS_H__ */

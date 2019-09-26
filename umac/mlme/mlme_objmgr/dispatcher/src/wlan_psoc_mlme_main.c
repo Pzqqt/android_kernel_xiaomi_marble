@@ -18,6 +18,7 @@
  * DOC: Implements PSOC MLME APIs
  */
 
+#include <qdf_module.h>
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_mlme_dbg.h>
@@ -40,6 +41,8 @@ struct psoc_mlme_obj *mlme_psoc_get_priv(struct wlan_objmgr_psoc *psoc)
 
 	return psoc_mlme;
 }
+
+qdf_export_symbol(mlme_psoc_get_priv);
 
 static QDF_STATUS mlme_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc,
 					       void *arg)

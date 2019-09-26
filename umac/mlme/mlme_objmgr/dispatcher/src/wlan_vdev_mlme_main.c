@@ -65,7 +65,7 @@ static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	txops = target_if_vdev_mgr_get_tx_ops(psoc);
+	txops = wlan_mlme_get_lmac_tx_ops(psoc);
 	if (!txops || !txops->psoc_vdev_rsp_timer_inuse) {
 		mlme_err("Failed to get mlme txrx_ops PSOC_%d",
 			 wlan_psoc_get_id(psoc));

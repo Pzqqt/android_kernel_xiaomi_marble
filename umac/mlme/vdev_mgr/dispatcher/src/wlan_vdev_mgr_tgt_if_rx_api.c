@@ -22,6 +22,7 @@
  * This file provide definition for APIs registered for LMAC MLME Rx Ops
  */
 #include <qdf_types.h>
+#include <qdf_module.h>
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
 #include <wlan_vdev_mgr_tgt_if_rx_api.h>
 #include <include/wlan_vdev_mlme.h>
@@ -32,7 +33,7 @@
 #include <include/wlan_psoc_mlme.h>
 #include <include/wlan_mlme_cmn.h>
 
-static struct vdev_response_timer *
+struct vdev_response_timer *
 tgt_vdev_mgr_get_response_timer_info(struct wlan_objmgr_psoc *psoc,
 				     uint8_t vdev_id)
 {
@@ -47,6 +48,8 @@ tgt_vdev_mgr_get_response_timer_info(struct wlan_objmgr_psoc *psoc,
 
 	return &psoc_mlme->psoc_vdev_rt[vdev_id];
 }
+
+qdf_export_symbol(tgt_vdev_mgr_get_response_timer_info);
 
 static QDF_STATUS tgt_vdev_mgr_start_response_handler(
 					struct wlan_objmgr_psoc *psoc,

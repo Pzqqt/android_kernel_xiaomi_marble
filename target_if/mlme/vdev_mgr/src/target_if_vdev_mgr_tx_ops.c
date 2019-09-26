@@ -1192,5 +1192,7 @@ target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 			target_if_wake_lock_init;
 	mlme_tx_ops->psoc_wake_lock_deinit =
 			target_if_wake_lock_deinit;
+	mlme_tx_ops->vdev_mgr_rsp_timer_stop =
+			target_if_vdev_mgr_rsp_timer_stop;
 	return QDF_STATUS_SUCCESS;
 }

@@ -27,6 +27,7 @@
 #define __WLAN_VDEV_MGR_TGT_IF_RX_DEFS_H__
 
 #include <qdf_timer.h>
+#include <qdf_atomic.h>
 #ifdef FEATURE_RUNTIME_PM
 #include <wlan_pmo_common_public_struct.h>
 #endif

@@ -287,6 +287,10 @@ struct wlan_lmac_if_mlme_tx_ops {
 				struct wlan_objmgr_psoc *psoc);
 	void (*psoc_wake_lock_deinit)(
 				struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*vdev_mgr_rsp_timer_stop)(
+				struct wlan_objmgr_psoc *psoc,
+				struct vdev_response_timer *vdev_rsp,
+				enum wlan_vdev_mgr_tgt_if_rsp_bit clear_bit);
 };
 
 /**
