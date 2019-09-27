@@ -2936,6 +2936,26 @@ static inline void hdd_set_tso_flags(struct hdd_context *hdd_ctx,
 }
 #endif /* FEATURE_TSO */
 
+/**
+ * wlan_hdd_get_host_log_nl_proto() - Get host log netlink protocol
+ * @hdd_ctx: HDD context
+ *
+ * This function returns with host log netlink protocol settings
+ *
+ * Return: none
+ */
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+static inline int wlan_hdd_get_host_log_nl_proto(struct hdd_context *hdd_ctx)
+{
+	return hdd_ctx->config->host_log_custom_nl_proto;
+}
+#else
+static inline int wlan_hdd_get_host_log_nl_proto(struct hdd_context *hdd_ctx)
+{
+	return NETLINK_USERSOCK;
+}
+#endif
+
 #ifdef CONFIG_CNSS_LOGGER
 /**
  * wlan_hdd_nl_init() - wrapper function to CNSS_LOGGER case
@@ -2954,7 +2974,7 @@ static inline int wlan_hdd_nl_init(struct hdd_context *hdd_ctx)
 {
 	int proto;
 
-	proto = hdd_ctx->config->host_log_custom_nl_proto;
+	proto = wlan_hdd_get_host_log_nl_proto(hdd_ctx);
 	hdd_ctx->radio_index = nl_srv_init(hdd_ctx->wiphy, proto);
 
 	/* radio_index is assigned from 0, so only >=0 will be valid index  */
@@ -2977,7 +2997,7 @@ static inline int wlan_hdd_nl_init(struct hdd_context *hdd_ctx)
 {
 	int proto;
 
-	proto = hdd_ctx->config->host_log_custom_nl_proto;
+	proto = wlan_hdd_get_host_log_nl_proto(hdd_ctx);
 	return nl_srv_init(hdd_ctx->wiphy, proto);
 }
 #endif
