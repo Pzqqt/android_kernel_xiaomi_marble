@@ -225,6 +225,8 @@ struct spectral_config {
  * @rssi_thr: rssi_thr
  * @default_agc_max_gain: default_agc_max_gain
  * @agile_spectral_cap: agile Spectral capability
+ * @agile_spectral_cap_160: agile Spectral capability for 160 MHz
+ * @agile_spectral_cap_80p80: agile Spectral capability for 80p80
  */
 struct spectral_caps {
 	uint8_t phydiag_cap;
@@ -239,6 +241,8 @@ struct spectral_caps {
 	int16_t rssi_thr;
 	uint8_t default_agc_max_gain;
 	bool agile_spectral_cap;
+	bool agile_spectral_cap_160;
+	bool agile_spectral_cap_80p80;
 };
 
 #define SPECTRAL_IOCTL_PARAM_NOVAL (65535)
