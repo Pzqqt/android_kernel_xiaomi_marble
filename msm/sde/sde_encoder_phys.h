@@ -25,6 +25,7 @@
 #define KICKOFF_TIMEOUT_MS		84
 #define KICKOFF_TIMEOUT_JIFFIES		msecs_to_jiffies(KICKOFF_TIMEOUT_MS)
 
+#define MAX_TE_PROFILE_COUNT		5
 /**
  * enum sde_enc_split_role - Role this physical encoder will play in a
  *	split-panel configuration, where one panel is master, and others slaves.
@@ -362,6 +363,17 @@ struct sde_encoder_phys_cmd_autorefresh {
 };
 
 /**
+ * struct sde_encoder_phys_cmd_te_timestamp - list node to keep track of
+ *     rd_ptr/TE timestamp
+ * @list: list node
+ * @timestamp: TE timestamp
+ */
+struct sde_encoder_phys_cmd_te_timestamp {
+	struct list_head list;
+	ktime_t timestamp;
+};
+
+/**
  * struct sde_encoder_phys_cmd - sub-class of sde_encoder_phys to handle command
  *	mode specific operations
  * @base:	Baseclass physical encoder structure
@@ -371,6 +383,8 @@ struct sde_encoder_phys_cmd_autorefresh {
  * @pending_vblank_cnt: Atomic counter tracking pending wait for VBLANK
  * @pending_vblank_wq: Wait queue for blocking until VBLANK received
  * @wr_ptr_wait_success: log wr_ptr_wait success for release fence trigger
+ * @te_timestamp_list: List head for the TE timestamp list
+ * @te_timestamp: Array of size MAX_TE_PROFILE_COUNT te_timestamp_list elements
  */
 struct sde_encoder_phys_cmd {
 	struct sde_encoder_phys base;
@@ -380,6 +394,9 @@ struct sde_encoder_phys_cmd {
 	atomic_t pending_vblank_cnt;
 	wait_queue_head_t pending_vblank_wq;
 	bool wr_ptr_wait_success;
+	struct list_head te_timestamp_list;
+	struct sde_encoder_phys_cmd_te_timestamp
+			te_timestamp[MAX_TE_PROFILE_COUNT];
 };
 
 /**
@@ -557,6 +574,21 @@ int sde_encoder_helper_wait_event_timeout(
 		int32_t drm_id,
 		int32_t hw_id,
 		struct sde_encoder_wait_info *info);
+
+/*
+ * sde_encoder_get_fps - get the allowed panel jitter in nanoseconds
+ * @encoder: Pointer to drm encoder object
+ */
+void sde_encoder_helper_get_jitter_bounds_ns(struct drm_encoder *encoder,
+			u64 *l_bound, u64 *u_bound);
+
+/**
+ * sde_encoder_helper_switch_vsync - switch vsync source to WD or default
+ * @drm_enc:     Pointer to drm encoder structure
+ * @watchdog_te: switch vsync source to watchdog TE
+ */
+int sde_encoder_helper_switch_vsync(struct drm_encoder *drm_enc,
+		bool watchdog_te);
 
 /**
  * sde_encoder_helper_hw_reset - issue ctl hw reset
