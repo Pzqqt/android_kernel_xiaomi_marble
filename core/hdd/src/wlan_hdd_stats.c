@@ -1552,6 +1552,9 @@ int wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	int errno;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
+	if (!qdf_ctx)
+		return -EINVAL;
+
 	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
 	if (errno)
 		return errno;
@@ -4687,6 +4690,9 @@ static int _wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno)
 		return errno;
+
+	if (!qdf_ctx)
+		return -EINVAL;
 
 	errno = pld_qmi_send_get(qdf_ctx->dev);
 	if (errno)
