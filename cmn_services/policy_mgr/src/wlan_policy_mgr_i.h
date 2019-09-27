@@ -336,7 +336,7 @@ struct policy_mgr_psoc_priv_obj {
 	struct policy_mgr_tdls_cbacks tdls_cbacks;
 	struct policy_mgr_cdp_cbacks cdp_cbacks;
 	struct policy_mgr_dp_cbacks dp_cbacks;
-	uint32_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
+	uint32_t sap_mandatory_channels[NUM_CHANNELS];
 	uint32_t sap_mandatory_channels_len;
 	bool do_hw_mode_change;
 	bool do_sap_unsafe_ch_check;
@@ -352,7 +352,7 @@ struct policy_mgr_psoc_priv_obj {
 	struct dual_mac_config dual_mac_cfg;
 	uint32_t hw_mode_change_in_progress;
 	struct policy_mgr_user_cfg user_cfg;
-	uint32_t unsafe_channel_list[QDF_MAX_NUM_CHAN];
+	uint32_t unsafe_channel_list[NUM_CHANNELS];
 	uint16_t unsafe_channel_count;
 	struct sta_ap_intf_check_work_ctx *sta_ap_intf_check_work_info;
 	uint8_t cur_conc_system_pref;
@@ -361,6 +361,8 @@ struct policy_mgr_psoc_priv_obj {
 	send_mode_change_event_cb mode_change_cb;
 	uint32_t user_config_sap_ch_freq;
 	struct policy_mgr_cfg cfg;
+	uint32_t valid_ch_freq_list[NUM_CHANNELS];
+	uint32_t valid_ch_freq_list_count;
 };
 
 /**

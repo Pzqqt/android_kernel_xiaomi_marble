@@ -1398,8 +1398,6 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
  * @sme_change_mcc_beacon_interval: Set MCC beacon interval to FW
  */
 struct policy_mgr_sme_cbacks {
-	QDF_STATUS (*sme_get_valid_channels)(uint32_t *ch_freq_list,
-					     uint32_t *list_len);
 	void (*sme_get_nss_for_vdev)(enum QDF_OPMODE,
 				     uint8_t *nss_2g, uint8_t *nss_5g);
 	QDF_STATUS (*sme_soc_set_dual_mac_config)(

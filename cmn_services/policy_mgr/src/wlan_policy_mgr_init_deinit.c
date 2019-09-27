@@ -558,8 +558,6 @@ QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
 
 	pm_ctx->sme_cbacks.sme_get_nss_for_vdev =
 		sme_cbacks->sme_get_nss_for_vdev;
-	pm_ctx->sme_cbacks.sme_get_valid_channels =
-		sme_cbacks->sme_get_valid_channels;
 	pm_ctx->sme_cbacks.sme_nss_update_request =
 		sme_cbacks->sme_nss_update_request;
 	pm_ctx->sme_cbacks.sme_pdev_set_hw_mode =
