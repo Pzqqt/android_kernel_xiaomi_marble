@@ -1397,6 +1397,7 @@ void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac,
 
 #endif /* FEATURE_WLAN_ESE */
 
+#ifdef QCA_IBSS_SUPPORT
 void
 lim_send_sme_ibss_peer_ind(struct mac_context *mac,
 			   tSirMacAddr peerMacAddr,
@@ -1430,6 +1431,7 @@ lim_send_sme_ibss_peer_ind(struct mac_context *mac,
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 }
+#endif
 
 /**
  * lim_process_csa_wbw_ie() - Process CSA Wide BW IE

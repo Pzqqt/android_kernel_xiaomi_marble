@@ -5199,6 +5199,7 @@ lim_update_add_ie_buffer(struct mac_context *mac,
 
 }
 
+#ifdef QCA_IBSS_SUPPORT
 /**
  * lim_update_ibss_prop_add_ies() - update IBSS prop IE
  * @mac          : Pointer to Global MAC structure
@@ -5269,7 +5270,14 @@ lim_update_ibss_prop_add_ies(struct mac_context *mac, uint8_t **pDstData_buff,
 	}
 	return true;
 }
-
+#else
+static bool
+lim_update_ibss_prop_add_ies(struct mac_context *mac, uint8_t **pDstData_buff,
+			     uint16_t *pDstDataLen, tSirModifyIE *pModifyIE)
+{
+	return false;
+}
+#endif
 /*
 * lim_process_modify_add_ies() - process modify additional IE req.
 *

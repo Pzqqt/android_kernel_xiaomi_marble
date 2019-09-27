@@ -4807,6 +4807,7 @@ void lim_handle_heart_beat_failure_timeout(struct mac_context *mac_ctx)
 	 */
 }
 
+#ifdef QCA_IBSS_SUPPORT
 /*
  * This function assumes there will not be more than one IBSS session active at any time.
  */
@@ -4823,6 +4824,7 @@ struct pe_session *lim_is_ibss_session_active(struct mac_context *mac)
 
 	return NULL;
 }
+#endif
 
 struct pe_session *lim_is_ap_session_active(struct mac_context *mac)
 {

@@ -2026,6 +2026,15 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 	lim_send_start_bss_confirm(mac, &mlmStartCnf);
 }
 
+#ifdef QCA_IBSS_SUPPORT
+/*
+ * lim_process_ibss_mlm_add_bss_rsp: API to process add bss response
+ * in IBSS role
+ * @session_entry: pe session entry
+ * @auth_mode: auth mode needs to be updated
+ *
+ * Return: None
+ */
 static void
 lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 				 struct add_bss_rsp *add_bss_rsp,
@@ -2080,6 +2089,14 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 	mlmStartCnf.sessionId = pe_session->peSessionId;
 	lim_send_start_bss_confirm(mac, &mlmStartCnf);
 }
+#else
+static inline void
+lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
+				 struct add_bss_rsp *add_bss_rsp,
+				 struct pe_session *pe_session)
+{
+}
+#endif
 
 #ifdef WLAN_FEATURE_FILS_SK
 /*

@@ -189,13 +189,46 @@ QDF_STATUS lim_post_msg_high_priority(struct mac_context *mac,
  */
 void lim_message_processor(struct mac_context *, struct scheduler_msg *);
 
+#ifdef QCA_IBSS_SUPPORT
 /**
- * Function to handle IBSS coalescing.
- * Beacon Processing module to call this.
+ * lim_handle_ibss_coalescing() - Function to handle IBSS coalescing.
+ * @param  mac	  - Pointer to Global MAC structure
+ * @param  pBeacon - Parsed Beacon Frame structure
+ * @param  pRxPacketInfo - Pointer to RX packet info structure
+ * @pe_session - pointer to pe session
+ *
+ * This function is called upon receiving Beacon/Probe Response
+ * while operating in IBSS mode.
+ *
+ * @return Status whether to process or ignore received Beacon Frame
  */
-QDF_STATUS lim_handle_ibss_coalescing(struct mac_context *,
-				      tpSchBeaconStruct,
-				      uint8_t *, struct pe_session *);
+QDF_STATUS
+lim_handle_ibss_coalescing(struct mac_context *mac,
+			   tpSchBeaconStruct pBeacon,
+			   uint8_t *pRxPacketInfo,
+			   struct pe_session *pe_session);
+#else
+/**
+ * lim_handle_ibss_coalescing() - Function to handle IBSS coalescing.
+ * @param  mac	  - Pointer to Global MAC structure
+ * @param  pBeacon - Parsed Beacon Frame structure
+ * @param  pRxPacketInfo - Pointer to RX packet info structure
+ * @pe_session - pointer to pe session
+ *
+ * This function is dummy
+ *
+ * @return Status whether to process or ignore received Beacon Frame
+ */
+static inline QDF_STATUS
+lim_handle_ibss_coalescing(struct mac_context *mac,
+			   tpSchBeaconStruct pBeacon,
+			   uint8_t *pRxPacketInfo,
+			   struct pe_session *pe_session)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /* / Function used by other Sirius modules to read global SME state */
 static inline tLimSmeStates lim_get_sme_state(struct mac_context *mac)
 {

@@ -1389,21 +1389,14 @@ lim_update_overlap_sta_param(struct mac_context *mac, tSirMacAddr bssId,
 	}
 }
 
+#ifdef QCA_IBSS_SUPPORT
 /**
- * lim_ibss_enc_type_matched
- *
- ***FUNCTION:
- * This function compares the encryption type of the peer with self
- * while operating in IBSS mode and detects mismatch.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
+ * lim_ibss_enc_type_matched() - API to check enc type match
  * @param  pBeacon  - Parsed Beacon Frame structure
  * @param  pSession - Pointer to the PE session
+ *
+ * This function compares the encryption type of the peer with self
+ * while operating in IBSS mode and detects mismatch.
  *
  * @return true if encryption type is matched; false otherwise
  */
@@ -1436,26 +1429,6 @@ static bool lim_ibss_enc_type_matched(tpSchBeaconStruct pBeacon,
 
 	return false;
 }
-
-/**
- * lim_handle_ibs_scoalescing()
- *
- ***FUNCTION:
- * This function is called upon receiving Beacon/Probe Response
- * while operating in IBSS mode.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  mac    - Pointer to Global MAC structure
- * @param  pBeacon - Parsed Beacon Frame structure
- * @param  pRxPacketInfo - Pointer to RX packet info structure
- *
- * @return Status whether to process or ignore received Beacon Frame
- */
 
 QDF_STATUS
 lim_handle_ibss_coalescing(struct mac_context *mac,
@@ -1499,6 +1472,7 @@ lim_handle_ibss_coalescing(struct mac_context *mac,
 	}
 	return retCode;
 } /*** end lim_handle_ibs_scoalescing() ***/
+#endif
 
 /**
  * lim_enc_type_matched() - matches security type of incoming beracon with

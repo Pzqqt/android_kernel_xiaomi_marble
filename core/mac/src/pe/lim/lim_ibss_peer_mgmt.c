@@ -863,51 +863,10 @@ lim_ibss_decide_protection(struct mac_context *mac, tpDphHashNode sta,
 	return;
 }
 
-/**
- * lim_ibss_peer_find()
- *
- ***FUNCTION:
- * This function is called while adding a context at
- * DPH & Polaris for a peer in IBSS.
- * If peer is found in the list, capabilities from the
- * returned BSS description are used at DPH node & Polaris.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  macAddr - MAC address of the peer
- *
- * @return Pointer to peer node if found, else NULL
- */
 tLimIbssPeerNode *lim_ibss_peer_find(struct mac_context *mac, tSirMacAddr macAddr)
 {
 	return ibss_peer_find(mac, macAddr);
 }
-
-/**
- * lim_ibss_sta_add()
- *
- ***FUNCTION:
- * This function is called to add an STA context in IBSS role
- * whenever a data frame is received from/for a STA that failed
- * hash lookup at DPH.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  mac       Pointer to Global MAC structure
- * @param  peerAdddr  MAC address of the peer being added
- * @return retCode    Indicates success or failure return code
- * @return
- */
 
 QDF_STATUS
 lim_ibss_sta_add(struct mac_context *mac, void *pBody, struct pe_session *pe_session)
@@ -1340,26 +1299,6 @@ static void lim_ibss_bss_delete(struct mac_context *mac,
 		pe_err("Deliver WLAN_VDEV_SM_EV_DOWN failed");
 }
 
-/**
- * lim_ibss_coalesce()
- *
- ***FUNCTION:
- * This function is called upon receiving Beacon/Probe Response
- * while operating in IBSS mode.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  mac    - Pointer to Global MAC structure
- * @param  pBeacon - Parsed Beacon Frame structure
- * @param  pBD     - Pointer to received BD
- *
- * @return Status whether to process or ignore received Beacon Frame
- */
-
 QDF_STATUS
 lim_ibss_coalesce(struct mac_context *mac,
 		  tpSirMacMgmtHdr pHdr,
@@ -1520,16 +1459,6 @@ lim_ibss_coalesce(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 } /*** end lim_handle_ibs_scoalescing() ***/
 
-/**
- * lim_ibss_heart_beat_handle() - handle IBSS hearbeat failure
- *
- * @mac_ctx: global mac context
- * @session: PE session entry
- *
- * Hanlde IBSS hearbeat failure.
- *
- * Return: None.
- */
 void lim_ibss_heart_beat_handle(struct mac_context *mac_ctx, struct pe_session *session)
 {
 	tLimIbssPeerNode *tempnode, *prevnode;
@@ -1645,18 +1574,6 @@ void lim_ibss_heart_beat_handle(struct mac_context *mac_ctx, struct pe_session *
 	}
 }
 
-/**
- * lim_ibss_decide_protection_on_delete() - decides protection related info.
- *
- * @mac_ctx: global mac context
- * @stads: station hash node
- * @bcn_param: beacon parameters
- * @session: PE session entry
- *
- * Decides all the protection related information.
- *
- * Return: None
- */
 void lim_ibss_decide_protection_on_delete(struct mac_context *mac_ctx,
 					  tpDphHashNode stads,
 					  tpUpdateBeaconParams bcn_param,
