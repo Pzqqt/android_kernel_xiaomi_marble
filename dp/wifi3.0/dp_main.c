@@ -3098,7 +3098,8 @@ static QDF_STATUS dp_lro_hash_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = soc->cdp_soc.ol_ops->lro_hash_config(pdev->ctrl_pdev,
+	status = soc->cdp_soc.ol_ops->lro_hash_config(soc->ctrl_psoc,
+						      pdev->pdev_id,
 						      &lro_hash);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		dp_err("failed to send lro_hash_config to FW %u", status);
@@ -3409,7 +3410,6 @@ static QDF_STATUS dp_htt_ppdu_stats_attach(struct dp_pdev *pdev)
 
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
-* @ctrl_pdev: Opaque PDEV object
 * @txrx_soc: Datapath SOC handle
 * @htc_handle: HTC handle for host-target interface
 * @qdf_osdev: QDF OS device
@@ -3418,7 +3418,6 @@ static QDF_STATUS dp_htt_ppdu_stats_attach(struct dp_pdev *pdev)
 * Return: DP PDEV handle on success, NULL on failure
 */
 static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
-	struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev, uint8_t pdev_id)
 {
 	int ring_size;
@@ -3476,7 +3475,6 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 			(nss_cfg & (1 << pdev_id)));
 
 	pdev->soc = soc;
-	pdev->ctrl_pdev = ctrl_pdev;
 	pdev->pdev_id = pdev_id;
 	soc->pdev_list[pdev_id] = pdev;
 
@@ -4868,12 +4866,10 @@ fail0:
  * Return: DP VDEV handle on success, NULL on failure
  */
 static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
-	void *osif_vdev, struct cdp_ctrl_objmgr_vdev *ctrl_vdev,
-	struct ol_txrx_ops *txrx_ops)
+	void *osif_vdev, struct ol_txrx_ops *txrx_ops)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	vdev->osif_vdev = osif_vdev;
-	vdev->ctrl_vdev = ctrl_vdev;
 	vdev->osif_rx = txrx_ops->rx.rx;
 	vdev->osif_rx_stack = txrx_ops->rx.rx_stack;
 	vdev->osif_rx_flush = txrx_ops->rx.rx_flush;
@@ -5258,7 +5254,9 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		* increment the count back.
 		*/
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
-			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
+			soc->cdp_soc.ol_ops->peer_unref_delete(
+				soc->ctrl_psoc,
+				pdev->pdev_id,
 				peer->mac_addr.raw, vdev->mac_addr.raw,
 				vdev->opmode);
 		}
@@ -5548,7 +5546,9 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
 		/* TODO: Check the destination ring number to be passed to FW */
 		soc->cdp_soc.ol_ops->peer_set_default_routing(
-				pdev->ctrl_pdev, peer->mac_addr.raw,
+				soc->ctrl_psoc,
+				peer->vdev->pdev->pdev_id,
+				peer->mac_addr.raw,
 				peer->vdev->vdev_id, hash_based, reo_dest);
 	}
 
@@ -8787,7 +8787,7 @@ static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
 
 	if (soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi)
 		soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi
-			((void *)vdev->pdev->ctrl_pdev,
+			(soc->ctrl_psoc, pdev->pdev_id,
 			 vdev->vdev_id, cmd, bssid, client_macaddr);
 
 	return QDF_STATUS_SUCCESS;
@@ -8914,21 +8914,6 @@ static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 	soc->is_peer_map_unmap_v2 = peer_map_unmap_v2;
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * dp_pdev_set_ctrl_pdev() - set ctrl pdev handle in dp pdev
- * @dp_pdev: dp pdev handle
- * @ctrl_pdev: UMAC ctrl pdev handle
- *
- * Return: void
- */
-static void dp_pdev_set_ctrl_pdev(struct cdp_pdev *dp_pdev,
-				  struct cdp_ctrl_objmgr_pdev *ctrl_pdev)
-{
-	struct dp_pdev *pdev = (struct dp_pdev *)dp_pdev;
-
-	pdev->ctrl_pdev = ctrl_pdev;
 }
 
 static void dp_set_rate_stats_cap(struct cdp_soc_t *soc_hdl,
@@ -9295,7 +9280,6 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_reset_ast_table = dp_wds_reset_ast_table_wifi3,
 	.txrx_peer_flush_ast_table = dp_wds_flush_ast_table_wifi3,
 	.txrx_peer_map_attach = dp_peer_map_attach_wifi3,
-	.txrx_pdev_set_ctrl_pdev = dp_pdev_set_ctrl_pdev,
 	.txrx_get_os_rx_handles_from_vdev =
 					dp_get_os_rx_handles_from_vdev_wifi3,
 	.delba_tx_completion = dp_delba_tx_completion_wifi3,

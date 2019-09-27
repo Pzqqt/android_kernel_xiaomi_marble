@@ -77,8 +77,8 @@ struct cdp_cmn_ops {
 		 void *cb_context);
 
 	struct cdp_pdev *(*txrx_pdev_attach)
-		(ol_txrx_soc_handle soc, struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
-		HTC_HANDLE htc_pdev, qdf_device_t osdev, uint8_t pdev_id);
+		(ol_txrx_soc_handle soc, HTC_HANDLE htc_pdev,
+		 qdf_device_t osdev, uint8_t pdev_id);
 
 	int (*txrx_pdev_post_attach)(struct cdp_pdev *pdev);
 
@@ -204,7 +204,7 @@ struct cdp_cmn_ops {
 	 ********************************************************************/
 
 	void (*txrx_vdev_register)(struct cdp_vdev *vdev,
-			void *osif_vdev, struct cdp_ctrl_objmgr_vdev *ctrl_vdev,
+			void *osif_vdev,
 			struct ol_txrx_ops *txrx_ops);
 
 	int (*txrx_mgmt_send)(struct cdp_vdev *vdev,
@@ -433,9 +433,6 @@ struct cdp_cmn_ops {
 					   uint32_t max_ast_index,
 					   bool peer_map_unmap_v2);
 
-	void (*txrx_pdev_set_ctrl_pdev)(struct cdp_pdev *pdev_hdl,
-					struct cdp_ctrl_objmgr_pdev *ctrl_pdev);
-
 	ol_txrx_tx_fp tx_send;
 	/**
 	 * txrx_get_os_rx_handles_from_vdev() - Return function, osif vdev
@@ -479,6 +476,7 @@ struct cdp_ctrl_ops {
 
 	int
 		(*txrx_mempools_attach)(void *ctrl_pdev);
+
 	int
 		(*txrx_set_filter_neighbour_peers)(
 				struct cdp_pdev *pdev,
@@ -919,75 +917,95 @@ struct cdp_lro_hash_config {
 
 struct ol_if_ops {
 	void
-	(*peer_set_default_routing)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
-				    uint8_t *peer_macaddr, uint8_t vdev_id,
+	(*peer_set_default_routing)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+				    uint8_t pdev_id, uint8_t *peer_macaddr,
+				    uint8_t vdev_id,
 				    bool hash_based, uint8_t ring_num);
 	QDF_STATUS
-	(*peer_rx_reorder_queue_setup)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
+	(*peer_rx_reorder_queue_setup)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+				       uint8_t pdev_id,
 				       uint8_t vdev_id, uint8_t *peer_mac,
 				       qdf_dma_addr_t hw_qdesc, int tid,
 				       uint16_t queue_num,
 				       uint8_t ba_window_size_valid,
 				       uint16_t ba_window_size);
 	QDF_STATUS
-	(*peer_rx_reorder_queue_remove)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
+	(*peer_rx_reorder_queue_remove)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+					uint8_t pdev_id,
 					uint8_t vdev_id, uint8_t *peer_macaddr,
 					uint32_t tid_mask);
-	int (*peer_unref_delete)(void *scn_handle, uint8_t *peer_mac,
+	int (*peer_unref_delete)(struct cdp_ctrl_objmgr_psoc *psoc,
+				 uint8_t pdev_id,
+				 uint8_t *peer_mac,
 				 uint8_t *vdev_mac, enum wlan_op_mode opmode);
 	bool (*is_hw_dbs_2x2_capable)(struct wlan_objmgr_psoc *psoc);
-	int (*peer_add_wds_entry)(void *vdev_handle,
-				  struct cdp_peer *peer_handle,
+	int (*peer_add_wds_entry)(struct cdp_ctrl_objmgr_psoc *soc,
+				  uint8_t vdev_id,
+				  uint8_t *peer_macaddr,
 				  const uint8_t *dest_macaddr,
 				  uint8_t *next_node_mac,
 				  uint32_t flags);
-	int (*peer_update_wds_entry)(void *ol_soc_handle,
-			uint8_t *dest_macaddr, uint8_t *peer_macaddr,
-			uint32_t flags);
-	void (*peer_del_wds_entry)(void *ol_soc_handle,
+	int (*peer_update_wds_entry)(struct cdp_ctrl_objmgr_psoc *soc,
+				     uint8_t vdev_id,
+				     uint8_t *dest_macaddr,
+				     uint8_t *peer_macaddr,
+				     uint32_t flags);
+	void (*peer_del_wds_entry)(struct cdp_ctrl_objmgr_psoc *soc,
+				   uint8_t vdev_id,
 				   uint8_t *wds_macaddr,
 				   uint8_t type);
 	QDF_STATUS
-	(*lro_hash_config)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
+	(*lro_hash_config)(struct cdp_ctrl_objmgr_psoc *psoc, uint8_t pdev_id,
 			   struct cdp_lro_hash_config *rx_offld_hash);
+
 	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
 			uint8_t type);
 #ifdef FEATURE_NAC_RSSI
-	uint8_t (*rx_invalid_peer)(void *ctrl_pdev, void *msg);
+	uint8_t (*rx_invalid_peer)(struct cdp_ctrl_objmgr_psoc *soc,
+				   uint8_t pdev_id, void *msg);
 #else
 	uint8_t (*rx_invalid_peer)(uint8_t vdev_id, void *wh);
 #endif
-	int  (*peer_map_event)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
+
+	int  (*peer_map_event)(struct cdp_ctrl_objmgr_psoc *psoc,
 			       uint16_t peer_id, uint16_t hw_peer_id,
 			       uint8_t vdev_id, uint8_t *peer_mac_addr,
 			       enum cdp_txrx_ast_entry_type peer_type,
 			       uint32_t tx_ast_hashidx);
-	int (*peer_unmap_event)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
+	int (*peer_unmap_event)(struct cdp_ctrl_objmgr_psoc *psoc,
 				uint16_t peer_id,
 				uint8_t vdev_id);
 
-	int (*get_dp_cfg_param)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
+	int (*get_dp_cfg_param)(struct cdp_ctrl_objmgr_psoc *psoc,
 				enum cdp_cfg_param_type param_num);
 
-	void (*rx_mic_error)(void *ol_soc_handle,
+	void (*rx_mic_error)(struct cdp_ctrl_objmgr_psoc *psoc,
+			     uint8_t pdev_id,
 			     struct cdp_rx_mic_err_info *info);
-	bool (*rx_frag_tkip_demic)(struct wlan_objmgr_peer *ctrl_peer,
+
+	bool (*rx_frag_tkip_demic)(struct cdp_ctrl_objmgr_psoc *psoc,
+				   uint8_t vdev_id, uint8_t *peer_mac_addr,
 				   qdf_nbuf_t nbuf,
 				   uint16_t hdr_space);
-	uint8_t (*freq_to_channel)(void *ol_soc_handle,  uint16_t vdev_id);
 
-	void (*record_act_change)(struct wlan_objmgr_pdev *pdev,
-				  u_int8_t *dstmac, bool active);
+	uint8_t (*freq_to_channel)(struct cdp_ctrl_objmgr_psoc *psoc,
+				   uint8_t vdev_id, uint16_t freq);
+
 #ifdef ATH_SUPPORT_NAC_RSSI
-	int (*config_fw_for_nac_rssi)(struct wlan_objmgr_pdev *pdev,
-		u_int8_t vdev_id, enum cdp_nac_param_cmd cmd, char *bssid,
-		char *client_macaddr, uint8_t chan_num);
-	int (*config_bssid_in_fw_for_nac_rssi)(struct wlan_objmgr_pdev *pdev,
-					       u_int8_t vdev_id,
-					       enum cdp_nac_param_cmd cmd,
-					       char *bssid, char *client_mac);
+	int (*config_fw_for_nac_rssi)(struct cdp_ctrl_objmgr_psoc *psoc,
+				      uint8_t pdev_id,
+				      u_int8_t vdev_id,
+				      enum cdp_nac_param_cmd cmd, char *bssid,
+				      char *client_macaddr, uint8_t chan_num);
+
+	int
+	(*config_bssid_in_fw_for_nac_rssi)(struct cdp_ctrl_objmgr_psoc *psoc,
+					   uint8_t pdev_id, u_int8_t vdev_id,
+					   enum cdp_nac_param_cmd cmd,
+					   char *bssid, char *client_mac);
 #endif
-	int (*peer_sta_kickout)(void *ctrl_pdev, uint8_t *peer_macaddr);
+	int (*peer_sta_kickout)(struct cdp_ctrl_objmgr_psoc *psoc,
+				uint16_t pdev_id, uint8_t *peer_macaddr);
 
 	/**
 	 * send_delba() - Send delba to peer
@@ -998,13 +1016,16 @@ struct ol_if_ops {
 	 *
 	 * Return: 0 for success, non-zero for failure
 	 */
-	int (*send_delba)(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+	int (*send_delba)(struct cdp_ctrl_objmgr_psoc *psoc, uint8_t vdev_id,
 			  uint8_t *peer_macaddr, uint8_t tid,
 			  uint8_t reason_code);
-	int (*peer_delete_multiple_wds_entries)(void *vdev_handle,
-						uint8_t *dest_macaddr,
-						uint8_t *peer_macaddr,
-						uint32_t flags);
+
+	int
+	(*peer_delete_multiple_wds_entries)(struct cdp_ctrl_objmgr_psoc *psoc,
+					    uint8_t vdev_id,
+					    uint8_t *dest_macaddr,
+					    uint8_t *peer_macaddr,
+					    uint32_t flags);
 
 	bool (*is_roam_inprogress)(uint32_t vdev_id);
 	enum QDF_GLOBAL_MODE (*get_con_mode)(void);

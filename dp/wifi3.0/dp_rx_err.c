@@ -1115,7 +1115,8 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 	tops = pdev->soc->cdp_soc.ol_ops;
 	if (tops->rx_mic_error)
-		tops->rx_mic_error(pdev->ctrl_pdev, &mic_failure_info);
+		tops->rx_mic_error(soc->ctrl_psoc, pdev->pdev_id,
+				   &mic_failure_info);
 
 fail:
 	qdf_nbuf_free(nbuf);

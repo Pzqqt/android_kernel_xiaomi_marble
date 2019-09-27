@@ -821,8 +821,9 @@ add_ast_entry:
 	    (ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC)) {
 		if (QDF_STATUS_SUCCESS ==
 				soc->cdp_soc.ol_ops->peer_add_wds_entry(
-				peer->vdev->osif_vdev,
-				(struct cdp_peer *)peer,
+				soc->ctrl_psoc,
+				peer->vdev->vdev_id,
+				peer->mac_addr.raw,
 				mac_addr,
 				next_node_mac,
 				flags)) {
@@ -954,7 +955,8 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
 	ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
-				peer->vdev->osif_vdev,
+				soc->ctrl_psoc,
+				peer->vdev->vdev_id,
 				ast_entry->mac_addr.raw,
 				peer->mac_addr.raw,
 				flags);
@@ -1097,7 +1099,8 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 		  ast_entry->next_hop, ast_entry->peer->mac_addr.raw);
 
 	if (ast_entry->next_hop) {
-		cdp_soc->ol_ops->peer_del_wds_entry(peer->vdev->osif_vdev,
+		cdp_soc->ol_ops->peer_del_wds_entry(soc->ctrl_psoc,
+						    peer->vdev->vdev_id,
 						    ast_entry->mac_addr.raw,
 						    ast_entry->type);
 	}
@@ -1766,7 +1769,7 @@ static QDF_STATUS dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 
 	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup)
 		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
-			peer->vdev->pdev->ctrl_pdev,
+			soc->ctrl_psoc, peer->vdev->pdev->pdev_id,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			rx_tid->hw_qdesc_paddr, tid, tid, 1, ba_window_size);
 
@@ -1981,7 +1984,9 @@ try_desc_alloc:
 
 	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
 		if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
-		    vdev->pdev->ctrl_pdev, peer->vdev->vdev_id,
+		    soc->ctrl_psoc,
+		    peer->vdev->pdev->pdev_id,
+		    peer->vdev->vdev_id,
 		    peer->mac_addr.raw, rx_tid->hw_qdesc_paddr, tid, tid,
 		    1, ba_window_size)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -2415,7 +2420,8 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer, bool reuse)
 	}
 #ifdef notyet /* See if FW can remove queues as part of peer cleanup */
 	if (soc->ol_ops->peer_rx_reorder_queue_remove) {
-		soc->ol_ops->peer_rx_reorder_queue_remove(vdev->pdev->ctrl_pdev,
+		soc->ol_ops->peer_rx_reorder_queue_remove(soc->ctrl_psoc,
+			peer->vdev->pdev->pdev_id,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			tid_delete_mask);
 	}

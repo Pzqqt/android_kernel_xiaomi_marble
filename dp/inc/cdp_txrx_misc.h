@@ -638,7 +638,8 @@ static inline void cdp_deregister_packetdump_cb(ol_txrx_soc_handle soc,
 		return soc->ops->misc_ops->unregister_pktdump_cb(soc, pdev_id);
 }
 
-typedef void (*rx_mic_error_callback)(void *scn_handle,
+typedef void (*rx_mic_error_callback)(struct cdp_ctrl_objmgr_psoc *psoc,
+				uint8_t pdev_id,
 				struct cdp_rx_mic_err_info *info);
 
 /**

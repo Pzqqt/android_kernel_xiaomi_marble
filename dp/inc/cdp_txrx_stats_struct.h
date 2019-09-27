@@ -24,9 +24,7 @@
 #ifndef _CDP_TXRX_STATS_STRUCT_H_
 #define _CDP_TXRX_STATS_STRUCT_H_
 
-#ifdef FEATURE_TSO_STATS
 #include <qdf_types.h>
-#endif /* FEATURE_TSO_STATS */
 
 #define TXRX_STATS_LEVEL_OFF   0
 #define TXRX_STATS_LEVEL_BASIC 1

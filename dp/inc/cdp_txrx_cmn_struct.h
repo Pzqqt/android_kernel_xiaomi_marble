@@ -1910,13 +1910,14 @@ enum cdp_dp_cfg {
 /**
  * struct cdp_peer_cookie - cookie used when creating peer
  * @peer_id: peer id
+ * @pdev_id: pdev_id
  * @mac_addr: MAC address of peer
  * @cookie: cookie to be used by consumer
  * @ctx: context passed to be used by consumer
  */
 struct cdp_peer_cookie {
-	uint8_t peer_id;
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+	uint8_t peer_id;
 	uint8_t cookie;
 	struct cdp_stats_cookie *ctx;
 };

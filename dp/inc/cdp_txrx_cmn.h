@@ -274,8 +274,8 @@ cdp_pdev_attach_target(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 }
 
 static inline struct cdp_pdev *cdp_pdev_attach
-	(ol_txrx_soc_handle soc, struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
-	HTC_HANDLE htc_pdev, qdf_device_t osdev, uint8_t pdev_id)
+	(ol_txrx_soc_handle soc, HTC_HANDLE htc_pdev, qdf_device_t osdev,
+	 uint8_t pdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -288,8 +288,8 @@ static inline struct cdp_pdev *cdp_pdev_attach
 	    !soc->ops->cmn_drv_ops->txrx_pdev_attach)
 		return NULL;
 
-	return soc->ops->cmn_drv_ops->txrx_pdev_attach(soc, ctrl_pdev,
-			htc_pdev, osdev, pdev_id);
+	return soc->ops->cmn_drv_ops->txrx_pdev_attach(soc, htc_pdev, osdev,
+						       pdev_id);
 }
 
 static inline int cdp_pdev_post_attach(ol_txrx_soc_handle soc,
@@ -814,7 +814,7 @@ cdp_set_monitor_filter(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  *****************************************************************************/
 static inline void
 cdp_vdev_register(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-	 void *osif_vdev, struct cdp_ctrl_objmgr_vdev *ctrl_vdev,
+	 void *osif_vdev,
 	 struct ol_txrx_ops *txrx_ops)
 {
 	if (!soc || !soc->ops) {
@@ -829,7 +829,7 @@ cdp_vdev_register(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		return;
 
 	soc->ops->cmn_drv_ops->txrx_vdev_register(vdev,
-			osif_vdev, ctrl_vdev, txrx_ops);
+			osif_vdev, txrx_ops);
 }
 
 static inline int
@@ -2306,25 +2306,6 @@ cdp_peer_map_attach(ol_txrx_soc_handle soc, uint32_t max_peers,
 							peer_map_unmap_v2);
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/**
-
- * cdp_pdev_set_ctrl_pdev() - set UMAC ctrl pdev to dp pdev
- * @soc: opaque soc handle
- * @pdev: opaque dp pdev handle
- * @ctrl_pdev: opaque ctrl pdev handle
- *
- * Return: void
- */
-static inline void
-cdp_pdev_set_ctrl_pdev(ol_txrx_soc_handle soc, struct cdp_pdev *dp_pdev,
-		       struct cdp_ctrl_objmgr_pdev *ctrl_pdev)
-{
-	if (soc && soc->ops && soc->ops->cmn_drv_ops &&
-	    soc->ops->cmn_drv_ops->txrx_pdev_set_ctrl_pdev)
-		soc->ops->cmn_drv_ops->txrx_pdev_set_ctrl_pdev(dp_pdev,
-							       ctrl_pdev);
 }
 
 /* cdp_txrx_classify_and_update() - To classify the packet and update stats

@@ -803,8 +803,9 @@ out:
 	msg.nbuf = mpdu;
 	msg.vdev_id = vdev->vdev_id;
 	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer)
-		pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(pdev->ctrl_pdev,
-							&msg);
+		pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(
+				(struct cdp_ctrl_objmgr_psoc *)soc->ctrl_psoc,
+				pdev->pdev_id, &msg);
 
 free:
 	/* Drop and free packet */
