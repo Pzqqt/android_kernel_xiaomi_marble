@@ -1607,6 +1607,12 @@ static irqreturn_t swr_mstr_interrupt_v2(int irq, void *dev)
 	struct swr_device *swr_dev;
 	struct swr_master *mstr = &swrm->master;
 
+	if (!swrm->dev_up || swrm->state == SWR_MSTR_SSR) {
+		complete(&swrm->broadcast);
+		dev_dbg(swrm->dev, "%s swrm is not up\n", __func__);
+		return IRQ_NONE;
+	}
+
 	if (unlikely(swrm_lock_sleep(swrm) == false)) {
 		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
 		return IRQ_NONE;
@@ -1621,7 +1627,12 @@ static irqreturn_t swr_mstr_interrupt_v2(int irq, void *dev)
 		ret = IRQ_NONE;
 		goto err_audio_hw_vote;
 	}
-	swrm_clk_request(swrm, true);
+	ret = swrm_clk_request(swrm, true);
+	if (ret) {
+		dev_err(dev, "%s: swrm clk failed\n", __func__);
+		ret = IRQ_NONE;
+		goto err_audio_core_vote;
+	}
 	mutex_unlock(&swrm->reslock);
 
 	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
@@ -1797,6 +1808,7 @@ handle_irq:
 
 	mutex_lock(&swrm->reslock);
 	swrm_clk_request(swrm, false);
+err_audio_core_vote:
 	swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, false);
 
 err_audio_hw_vote:
