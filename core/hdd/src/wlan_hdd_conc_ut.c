@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -634,7 +634,6 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 
 	ucfg_policy_mgr_get_sys_pref(hdd_ctx->psoc, &system_pref);
 
-	sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 	sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 	/* flush the entire table first */
 	ret = policy_mgr_psoc_enable(hdd_ctx->psoc);
@@ -695,7 +694,6 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 		sub_type < PM_MAX_NUM_OF_MODE; sub_type++) {
 		type = wlan_hdd_valid_type_of_persona(sub_type);
 
-		sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 		/* flush the entire table first */
 		ret = policy_mgr_psoc_enable(hdd_ctx->psoc);
@@ -802,7 +800,6 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 
 		type_1 = wlan_hdd_valid_type_of_persona(sub_type_1);
 
-		sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 		/* flush the entire table first */
 		ret = policy_mgr_psoc_enable(hdd_ctx->psoc);

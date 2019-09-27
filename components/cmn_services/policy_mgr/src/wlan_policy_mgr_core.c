@@ -2006,7 +2006,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t num_channels = 0;
 	uint32_t sbs_num_channels = 0;
-	uint32_t chan_index = 0, chan_index_24 = 0, chan_index_5 = 0;
+	uint32_t chan_index_24 = 0, chan_index_5 = 0;
 	bool skip_dfs_channel = false;
 	bool is_etsi13_srd_chan_allowed_in_mas_mode = true;
 	uint32_t i = 0, j = 0;
@@ -2039,10 +2039,10 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	channel_list = qdf_mem_malloc(QDF_MAX_NUM_CHAN * sizeof(uint32_t));
-	channel_list_24 = qdf_mem_malloc(QDF_MAX_NUM_CHAN * sizeof(uint32_t));
-	channel_list_5 = qdf_mem_malloc(QDF_MAX_NUM_CHAN * sizeof(uint32_t));
-	sbs_channel_list = qdf_mem_malloc(QDF_MAX_NUM_CHAN * sizeof(uint32_t));
+	channel_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
+	channel_list_24 = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
+	channel_list_5 = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
+	sbs_channel_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
 	if (!channel_list || !channel_list_24 || !channel_list_5 ||
 	    !sbs_channel_list) {
 		status = QDF_STATUS_E_NOMEM;
@@ -2078,46 +2078,25 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* Let's divide the list in 2.4 & 5 Ghz lists */
-	while ((chan_index < QDF_MAX_NUM_CHAN) && (channel_list[chan_index] <=
-	       wlan_reg_chan_to_freq(pm_ctx->pdev, 11)) &&
-	       (chan_index_24 < QDF_MAX_NUM_CHAN))
-		channel_list_24[chan_index_24++] = channel_list[chan_index++];
+	for (i = 0; i < num_channels; i++) {
+		if (wlan_reg_is_24ghz_ch_freq(channel_list[i])) {
+			channel_list_24[chan_index_24++] = channel_list[i];
+		} else if (wlan_reg_is_5ghz_ch_freq(channel_list[i])) {
+			if ((true == skip_dfs_channel) &&
+			    wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
+						     channel_list[i]))
+				continue;
 
-	if (chan_index < QDF_MAX_NUM_CHAN && channel_list[chan_index] ==
-	    wlan_reg_chan_to_freq(pm_ctx->pdev, 12) &&
-	    chan_index_24 < QDF_MAX_NUM_CHAN) {
-		channel_list_24[chan_index_24++] = channel_list[chan_index++];
-		if ((chan_index < QDF_MAX_NUM_CHAN) &&
-			(channel_list[chan_index] ==
-			 wlan_reg_chan_to_freq(pm_ctx->pdev, 13)) &&
-			(chan_index_24 < QDF_MAX_NUM_CHAN)) {
-			channel_list_24[chan_index_24++] =
-				channel_list[chan_index++];
-			if ((chan_index < QDF_MAX_NUM_CHAN) &&
-				(channel_list[chan_index] ==
-				 wlan_reg_chan_to_freq(pm_ctx->pdev, 14)) &&
-				(chan_index_24 < QDF_MAX_NUM_CHAN))
-				channel_list_24[chan_index_24++] =
-					channel_list[chan_index++];
-		}
-	}
+			if (!is_etsi13_srd_chan_allowed_in_mas_mode &&
+			    wlan_reg_is_etsi13_srd_chan_for_freq(
+			    pm_ctx->pdev, channel_list[i]))
+				continue;
 
-	while (chan_index < num_channels &&
-	       chan_index < QDF_MAX_NUM_CHAN &&
-	       chan_index_5 < QDF_MAX_NUM_CHAN) {
-		if ((true == skip_dfs_channel) &&
-		    wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
-					     channel_list[chan_index])) {
-			chan_index++;
-			continue;
+			channel_list_5[chan_index_5++] = channel_list[i];
+		} else if (wlan_reg_is_6ghz_chan_freq(channel_list[i])) {
+			/* Add to 5G list untill 6G conc support is enabled */
+			channel_list_5[chan_index_5++] = channel_list[i];
 		}
-		if (!is_etsi13_srd_chan_allowed_in_mas_mode &&
-		    wlan_reg_is_etsi13_srd_chan_for_freq(
-		    pm_ctx->pdev, channel_list[chan_index])) {
-			chan_index++;
-			continue;
-		}
-		channel_list_5[chan_index_5++] = channel_list[chan_index++];
 	}
 
 	num_channels = 0;
@@ -2139,20 +2118,20 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	 * When the weight to be assigned to the group is known along with the
 	 * number of channels, the weights are directly assigned to the
 	 * pcl_weights list. But, the channel list is populated using
-     * policy_mgr_get_connection_channels(), the order of weights to be used
-     * is passed as an argument to the function
-     * policy_mgr_get_connection_channels() using
-     * 'enum policy_mgr_pcl_group_id' which indicates the next available
-     * weights to be used and policy_mgr_get_connection_channels() will take
-     * care of the weight assignments.
+	 * policy_mgr_get_connection_channels(), the order of weights to be used
+	 * is passed as an argument to the function
+	 * policy_mgr_get_connection_channels() using
+	 * 'enum policy_mgr_pcl_group_id' which indicates the next available
+	 * weights to be used and policy_mgr_get_connection_channels() will take
+	 * care of the weight assignments.
 	 *
-     * e.g., 'enum policy_mgr_pcl_group_id' value of
-     * POLICY_MGR_PCL_GROUP_ID2_ID3 indicates that the next available groups
-     * for weight assignment are WEIGHT_OF_GROUP2_PCL_CHANNELS and
-     * WEIGHT_OF_GROUP3_PCL_CHANNELS and that the
-     * weight WEIGHT_OF_GROUP1_PCL_CHANNELS was already allocated.
-     * So, in the same example, when order is
-     * POLICY_MGR_PCL_ORDER_24G_THEN_5G,
+	 * e.g., 'enum policy_mgr_pcl_group_id' value of
+	 * POLICY_MGR_PCL_GROUP_ID2_ID3 indicates that the next available groups
+	 * for weight assignment are WEIGHT_OF_GROUP2_PCL_CHANNELS and
+	 * WEIGHT_OF_GROUP3_PCL_CHANNELS and that the
+	 * weight WEIGHT_OF_GROUP1_PCL_CHANNELS was already allocated.
+	 * So, in the same example, when order is
+	 * POLICY_MGR_PCL_ORDER_24G_THEN_5G,
 	 * policy_mgr_get_connection_channels() will assign the weight
 	 * WEIGHT_OF_GROUP2_PCL_CHANNELS to 2.4GHz channels and assign the
 	 * weight WEIGHT_OF_GROUP3_PCL_CHANNELS to 5GHz channels.

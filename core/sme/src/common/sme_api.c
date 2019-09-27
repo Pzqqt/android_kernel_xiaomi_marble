@@ -1194,7 +1194,6 @@ QDF_STATUS sme_start(mac_handle_t mac_handle)
 			break;
 		}
 		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
-		sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 		sme_cbacks.sme_nss_update_request = sme_nss_update_request;
 		sme_cbacks.sme_pdev_set_hw_mode = sme_pdev_set_hw_mode;
 		sme_cbacks.sme_pdev_set_pcl = sme_pdev_set_pcl;

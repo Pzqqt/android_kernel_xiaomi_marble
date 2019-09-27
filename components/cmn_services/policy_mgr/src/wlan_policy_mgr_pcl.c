@@ -158,11 +158,43 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
 	return;
 }
 
-void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
-		struct wlan_objmgr_pdev *pdev,
-		struct regulatory_channel *chan_list,
-		struct avoid_freq_ind_data *avoid_freq_ind,
-		void *arg)
+/**
+ * policy_mgr_update_valid_ch_freq_list() - Update policy manager valid ch list
+ * @pm_ctx: policy manager context data
+ * @ch_list: Regulatory channel list
+ *
+ * When regulatory component channel list is updated this internal function is
+ * called to update policy manager copy of valid channel list.
+ *
+ * Return: QDF_STATUS_SUCCESS on success other qdf error status code
+ */
+static void
+policy_mgr_update_valid_ch_freq_list(struct policy_mgr_psoc_priv_obj *pm_ctx,
+				     struct regulatory_channel *reg_ch_list)
+{
+	uint32_t i, j = 0, ch;
+	enum channel_state state;
+
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		ch = reg_ch_list[i].chan_num;
+		state = wlan_reg_get_channel_state(pm_ctx->pdev, ch);
+
+		if (state != CHANNEL_STATE_DISABLE &&
+		    state != CHANNEL_STATE_INVALID) {
+			pm_ctx->valid_ch_freq_list[j] =
+				reg_ch_list[i].center_freq;
+			j++;
+		}
+	}
+	pm_ctx->valid_ch_freq_list_count = j;
+}
+
+void
+policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_objmgr_pdev *pdev,
+				    struct regulatory_channel *chan_list,
+				    struct avoid_freq_ind_data *avoid_freq_ind,
+				    void *arg)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t i;
@@ -172,6 +204,8 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("Invalid Context");
 		return;
 	}
+
+	policy_mgr_update_valid_ch_freq_list(pm_ctx, chan_list);
 
 	if (!avoid_freq_ind) {
 		policy_mgr_debug("avoid_freq_ind NULL");
@@ -2063,7 +2097,6 @@ QDF_STATUS policy_mgr_get_valid_chans_int(struct wlan_objmgr_psoc *psoc,
 					  uint32_t *ch_freq_list,
 					  uint32_t *list_len)
 {
-	QDF_STATUS status;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	*list_len = 0;
@@ -2073,20 +2106,15 @@ QDF_STATUS policy_mgr_get_valid_chans_int(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("Invalid Context");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	if (!pm_ctx->sme_cbacks.sme_get_valid_channels) {
-		policy_mgr_err("sme_get_valid_chans callback is NULL");
-		return QDF_STATUS_E_FAILURE;
+	if (!pm_ctx->valid_ch_freq_list_count) {
+		policy_mgr_err("Invalid PM valid channel list");
+		return QDF_STATUS_E_INVAL;
 	}
 
-	*list_len = QDF_MAX_NUM_CHAN;
-	status = pm_ctx->sme_cbacks.sme_get_valid_channels(
-					ch_freq_list, list_len);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		policy_mgr_err("Error in getting valid channels");
-		*list_len = 0;
-		return status;
-	}
+	*list_len = pm_ctx->valid_ch_freq_list_count;
+	qdf_mem_copy(ch_freq_list, pm_ctx->valid_ch_freq_list,
+		     pm_ctx->valid_ch_freq_list_count *
+		     sizeof(pm_ctx->valid_ch_freq_list[0]));
 
 	policy_mgr_remove_dsrc_channels(ch_freq_list, list_len, pm_ctx->pdev);
 
