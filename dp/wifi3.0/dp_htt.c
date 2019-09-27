@@ -2584,7 +2584,12 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 
 	ppdu_user_desc->success_msdus = ppdu_user_desc->num_msdu;
 
-	tag_buf += 2;
+	tag_buf++;
+	ppdu_user_desc->start_seq =
+		HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_START_SEQ_GET(
+			*tag_buf);
+
+	tag_buf++;
 	ppdu_user_desc->success_bytes = *tag_buf;
 
 	/* increase successful mpdu counter */
