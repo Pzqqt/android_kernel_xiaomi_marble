@@ -1313,6 +1313,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_is_precac_timer_running)(struct wlan_objmgr_pdev *pdev,
 						  bool *is_precac_timer_running
 						  );
+#ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS
 	    (*dfs_find_vht80_chan_for_precac)(struct wlan_objmgr_pdev *pdev,
 					      uint32_t chan_mode,
@@ -1322,6 +1323,19 @@ struct wlan_lmac_if_dfs_rx_ops {
 					      uint32_t *phy_mode,
 					      bool *dfs_set_cfreq2,
 					      bool *set_agile);
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	QDF_STATUS
+	    (*dfs_find_vht80_chan_for_precac_for_freq)(struct wlan_objmgr_pdev
+						       *pdev,
+						       uint32_t chan_mode,
+						       uint16_t ch_freq_seg1,
+						       uint32_t *cfreq1,
+						       uint32_t *cfreq2,
+						       uint32_t *phy_mode,
+						       bool *dfs_set_cfreq2,
+						       bool *set_agile);
+#endif
 	QDF_STATUS (*dfs_agile_precac_start)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_set_agile_precac_state)(struct wlan_objmgr_pdev *pdev,
 						 int agile_precac_state);
@@ -1346,15 +1360,33 @@ struct wlan_lmac_if_dfs_rx_ops {
 						       uint32_t value);
 	QDF_STATUS (*dfs_get_precac_intermediate_chan)(struct wlan_objmgr_pdev *pdev,
 						       int *buff);
+#ifdef CONFIG_CHAN_NUM_API
 	bool (*dfs_decide_precac_preferred_chan)(struct wlan_objmgr_pdev *pdev,
 						 uint8_t *pref_chan,
 						 enum wlan_phymode mode);
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	bool (*dfs_decide_precac_preferred_chan_for_freq)(struct
+						    wlan_objmgr_pdev *pdev,
+						    uint16_t *pref_chan_freq,
+						    enum wlan_phymode mode);
+#endif
+
+#ifdef CONFIG_CHAN_NUM_API
 	enum precac_chan_state (*dfs_get_precac_chan_state)(struct wlan_objmgr_pdev *pdev,
 							    uint8_t precac_chan);
+#endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+	enum precac_chan_state (*dfs_get_precac_chan_state_for_freq)(struct
+						      wlan_objmgr_pdev *pdev,
+						      uint16_t pcac_freq);
+#endif
 #endif
 	QDF_STATUS (*dfs_get_override_precac_timeout)(
 			struct wlan_objmgr_pdev *pdev,
 			int *precac_timeout);
+#ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS (*dfs_set_current_channel)(struct wlan_objmgr_pdev *pdev,
 			uint16_t ic_freq,
 			uint64_t ic_flags,
@@ -1362,6 +1394,19 @@ struct wlan_lmac_if_dfs_rx_ops {
 			uint8_t ic_ieee,
 			uint8_t ic_vhtop_ch_freq_seg1,
 			uint8_t ic_vhtop_ch_freq_seg2);
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	QDF_STATUS
+	    (*dfs_set_current_channel_for_freq)(struct wlan_objmgr_pdev *pdev,
+						uint16_t ic_freq,
+						uint64_t ic_flags,
+						uint16_t ic_flagext,
+						uint8_t ic_ieee,
+						uint8_t ic_vhtop_ch_freq_seg1,
+						uint8_t ic_vhtop_ch_freq_seg2,
+						uint16_t dfs_ch_mhz_freq_seg1,
+						uint16_t dfs_ch_mhz_freq_seg2);
+#endif
 #ifdef DFS_COMPONENT_ENABLE
 	QDF_STATUS (*dfs_process_radar_ind)(struct wlan_objmgr_pdev *pdev,
 			struct radar_found_info *radar_found);

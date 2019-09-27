@@ -348,6 +348,51 @@ static void wlan_lmac_if_umac_rx_ops_register_p2p(
 }
 #endif
 
+/*
+ * register_precac_auto_chan_rx_ops_ieee() - Register auto chan switch rx ops
+ * for IEEE channel based APIs.
+ * rx_ops: Pointer to wlan_lmac_if_dfs_rx_ops
+ */
+#ifdef DFS_COMPONENT_ENABLE
+#if defined(WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT) && defined(CONFIG_CHAN_NUM_API)
+static inline void
+register_precac_auto_chan_rx_ops_ieee(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+	if (!rx_ops)
+		return;
+	rx_ops->dfs_get_precac_chan_state = ucfg_dfs_get_precac_chan_state;
+}
+#else
+static inline void
+register_precac_auto_chan_rx_ops_ieee(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+}
+#endif
+#endif
+
+/*
+ * register_precac_auto_chan_rx_ops_freq() - Register auto chan switch rx ops
+ * for frequency based channel APIs.
+ * rx_ops: Pointer to wlan_lmac_if_dfs_rx_ops
+ */
+#ifdef DFS_COMPONENT_ENABLE
+#if defined(WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT) && defined(CONFIG_CHAN_FREQ_API)
+static inline void
+register_precac_auto_chan_rx_ops_freq(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+	if (!rx_ops)
+		return;
+	rx_ops->dfs_get_precac_chan_state_for_freq =
+		ucfg_dfs_get_precac_chan_state_for_freq;
+}
+#else
+static inline void
+register_precac_auto_chan_rx_ops_freq(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+}
+#endif
+#endif
+
 #ifdef DFS_COMPONENT_ENABLE
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 static inline void
@@ -359,12 +404,46 @@ register_precac_auto_chan_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
 		ucfg_dfs_set_precac_intermediate_chan;
 	rx_ops->dfs_get_precac_intermediate_chan =
 		ucfg_dfs_get_precac_intermediate_chan;
-	rx_ops->dfs_get_precac_chan_state = ucfg_dfs_get_precac_chan_state;
 }
 #else
 static inline void
 register_precac_auto_chan_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
 {
+}
+#endif
+
+/*
+ * register_dfs_rx_ops_for_freq() - Register DFS rx ops for frequency based
+ * channel APIs.
+ * rx_ops: Pointer to wlan_lmac_if_dfs_rx_ops.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+static void register_dfs_rx_ops_for_freq(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+	if (!rx_ops)
+		return;
+	rx_ops->dfs_find_vht80_chan_for_precac_for_freq =
+		tgt_dfs_find_vht80_precac_chan_freq;
+	rx_ops->dfs_set_current_channel_for_freq =
+		tgt_dfs_set_current_channel_for_freq;
+}
+#endif
+
+/*
+ * register_dfs_rx_ops_for_ieee() - Register DFS rx ops for IEEE channel based
+ * APIs
+ * rx_ops: Pointer to wlan_lmac_if_dfs_rx_ops.
+ */
+
+#ifdef CONFIG_CHAN_NUM_API
+static void register_dfs_rx_ops_for_ieee(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+	if (!rx_ops)
+		return;
+	rx_ops->dfs_find_vht80_chan_for_precac =
+		tgt_dfs_find_vht80_chan_for_precac;
+	rx_ops->dfs_set_current_channel =
+		tgt_dfs_set_current_channel;
 }
 #endif
 
@@ -383,8 +462,6 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	dfs_rx_ops->dfs_control = tgt_dfs_control;
 	dfs_rx_ops->dfs_is_precac_timer_running =
 		tgt_dfs_is_precac_timer_running;
-	dfs_rx_ops->dfs_find_vht80_chan_for_precac =
-		tgt_dfs_find_vht80_chan_for_precac;
 	dfs_rx_ops->dfs_agile_precac_start =
 		tgt_dfs_agile_precac_start;
 	dfs_rx_ops->dfs_set_agile_precac_state =
@@ -401,7 +478,6 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 		ucfg_dfs_get_agile_precac_enable;
 	dfs_rx_ops->dfs_get_override_precac_timeout =
 		ucfg_dfs_get_override_precac_timeout;
-	dfs_rx_ops->dfs_set_current_channel = tgt_dfs_set_current_channel;
 	dfs_rx_ops->dfs_process_radar_ind = tgt_dfs_process_radar_ind;
 	dfs_rx_ops->dfs_dfs_cac_complete_ind = tgt_dfs_cac_complete;
 	dfs_rx_ops->dfs_dfs_ocac_complete_ind = tgt_dfs_ocac_complete;
@@ -440,6 +516,10 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 		utils_dfs_reset_dfs_prevchan;
 
 	register_precac_auto_chan_rx_ops(dfs_rx_ops);
+	register_precac_auto_chan_rx_ops_ieee(dfs_rx_ops);
+	register_precac_auto_chan_rx_ops_freq(dfs_rx_ops);
+	register_dfs_rx_ops_for_freq(dfs_rx_ops);
+	register_dfs_rx_ops_for_ieee(dfs_rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }
