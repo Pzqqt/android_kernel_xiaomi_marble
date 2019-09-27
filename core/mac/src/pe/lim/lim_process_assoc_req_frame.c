@@ -1968,8 +1968,19 @@ static void lim_defer_sme_indication(struct mac_context *mac_ctx,
 				     struct sDphHashNode *sta_ds)
 {
 	struct tLimPreAuthNode *sta_pre_auth_ctx;
+	struct lim_assoc_data *cached_req;
+
 	/* Extract pre-auth context for the STA, if any. */
 	sta_pre_auth_ctx = lim_search_pre_auth_list(mac_ctx, hdr->sa);
+	if (sta_pre_auth_ctx->assoc_req.present) {
+		pe_debug("Free the cached assoc req as a new one is received");
+		cached_req = &sta_pre_auth_ctx->assoc_req;
+		lim_process_assoc_cleanup(mac_ctx, session,
+					  cached_req->assoc_req,
+					  cached_req->sta_ds,
+					  cached_req->assoc_req_copied);
+	}
+
 	sta_pre_auth_ctx->assoc_req.present = true;
 	sta_pre_auth_ctx->assoc_req.sub_type = sub_type;
 	qdf_mem_copy(&sta_pre_auth_ctx->assoc_req.hdr, hdr,
