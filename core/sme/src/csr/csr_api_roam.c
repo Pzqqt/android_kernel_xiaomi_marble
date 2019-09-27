@@ -17194,6 +17194,8 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 	struct mlme_vht_capabilities_info *vht_cap_info;
 	struct vdev_mlme_obj *vdev_mlme;
 	enum QDF_OPMODE op_mode;
+	u8 vdev_id;
+	struct qdf_mac_addr *mac_addr;
 
 	if (!(mac_ctx->mlme_cfg)) {
 		sme_err("invalid mlme cfg");
@@ -17206,6 +17208,10 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 		sme_err("Failed to get cmpt obj");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	vdev_id = wlan_vdev_get_id(session_param->vdev);
+	mac_addr = (struct qdf_mac_addr *)
+		   wlan_vdev_mlme_get_macaddr(session_param->vdev);
 
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
 	csr_get_vdev_type_nss(mac_ctx, op_mode,
@@ -17221,33 +17227,30 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 	}
 
 	/* check to see if the mac address already belongs to a session */
-	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-			(struct qdf_mac_addr *)session_param->self_mac_addr,
-			&existing_session_id);
+	status = csr_roam_get_session_id_from_bssid(mac_ctx, mac_addr,
+						    &existing_session_id);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("Session %d exists with mac address " QDF_MAC_ADDR_STR,
+		sme_err("Session %d exists with mac address %pM",
 			existing_session_id,
-			QDF_MAC_ADDR_ARRAY(session_param->self_mac_addr));
+			mac_addr);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* attempt to retrieve session for Id */
-	session = CSR_GET_SESSION(mac_ctx, session_param->vdev_id);
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 	if (!session) {
-		sme_err("Session does not exist for interface %d",
-			session_param->vdev_id);
+		sme_err("Session does not exist for interface %d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* check to see if the session is already active */
 	if (session->sessionActive) {
-		sme_err("Cannot re-open active session with Id %d",
-			session_param->vdev_id);
+		sme_err("Cannot re-open active session with Id %d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	session->sessionActive = true;
-	session->sessionId = session_param->vdev_id;
+	session->sessionId = vdev_id;
 
 	/* Initialize FT related data structures only in STA mode */
 	sme_ft_open(MAC_HANDLE(mac_ctx), session->sessionId);
@@ -17256,7 +17259,7 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 	session->callback = session_param->callback;
 	session->pContext = session_param->callback_ctx;
 
-	qdf_mem_copy(&session->self_mac_addr, session_param->self_mac_addr,
+	qdf_mem_copy(&session->self_mac_addr, mac_addr,
 		     sizeof(struct qdf_mac_addr));
 	status = qdf_mc_timer_init(&session->hTimerRoaming,
 				   QDF_TIMER_TYPE_SW,
@@ -17318,7 +17321,7 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 	status = mlme_vdev_create_send(vdev);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		csr_cleanup_session(mac_ctx, wlan_vdev_get_id(vdev));
+		csr_cleanup_session(mac_ctx, vdev_id);
 		return status;
 	}
 

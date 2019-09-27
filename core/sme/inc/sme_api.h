@@ -215,8 +215,6 @@ struct sme_5g_band_pref_params {
  * @callback: callback to be invoked for roaming events
  * @vdev: pointer to vdev object
  * @callback_ctx: user-supplied context to be passed back on roaming events
- * @self_mac_addr: Self mac address
- * @vdev_id: vdev id
  */
 struct sme_session_params {
 	csr_session_open_cb  session_open_cb;
@@ -224,8 +222,6 @@ struct sme_session_params {
 	csr_roam_complete_cb callback;
 	struct wlan_objmgr_vdev *vdev;
 	void *callback_ctx;
-	uint8_t *self_mac_addr;
-	uint8_t vdev_id;
 };
 
 #define MAX_CANDIDATE_INFO 10

@@ -4487,8 +4487,6 @@ static int hdd_set_sme_session_param(struct hdd_adapter *adapter,
 			csr_roam_complete_cb callback,
 			void *callback_ctx)
 {
-	session_param->vdev_id = adapter->vdev_id;
-	session_param->self_mac_addr = (uint8_t *)&adapter->mac_addr;
 	session_param->session_close_cb = hdd_sme_close_session_callback;
 	session_param->callback = callback;
 	session_param->callback_ctx = callback_ctx;

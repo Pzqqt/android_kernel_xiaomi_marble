@@ -4514,11 +4514,14 @@ QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct cdp_pdev *pdev;
 	ol_txrx_peer_handle peer;
-	uint8_t peer_id;
+	u8 peer_id, vdev_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	u8 *mac_addr;
 
-	sme_debug("vdev_id %d addr:%pM", params->vdev_id,
-		  params->self_mac_addr);
+	vdev_id = wlan_vdev_get_id(params->vdev);
+	mac_addr = wlan_vdev_mlme_get_macaddr(params->vdev);
+
+	sme_debug("vdev_id %d addr:%pM", vdev_id, mac_addr);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -4531,7 +4534,8 @@ QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	peer = cdp_peer_find_by_addr(soc, pdev, params->self_mac_addr,
+	peer = cdp_peer_find_by_addr(soc, pdev,
+				     mac_addr,
 				     &peer_id);
 	if (peer) {
 		sme_err("Peer=%d exist with same MAC", peer_id);
@@ -4544,7 +4548,7 @@ QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
 	sme_release_global_lock(&mac_ctx->sme);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
-			 params->vdev_id, 0));
+			 vdev_id, 0));
 
 	return status;
 }
