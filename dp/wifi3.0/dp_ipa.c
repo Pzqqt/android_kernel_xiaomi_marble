@@ -34,6 +34,15 @@
 /* Hard coded config parameters until dp_ops_cfg.cfg_attach implemented */
 #define CFG_IPA_UC_TX_BUF_SIZE_DEFAULT            (2048)
 
+/* WAR for IPA_OFFLOAD case. In some cases, its observed that WBM tries to
+ * release a buffer into WBM2SW RELEASE ring for IPA, and the ring is full.
+ * This causes back pressure, resulting in a FW crash.
+ * By leaving some entries with no buffer attached, WBM will be able to write
+ * to the ring, and from dumps we can figure out the buffer which is causing
+ * this issue.
+ */
+#define DP_IPA_WAR_WBM2SW_REL_RING_NO_BUF_ENTRIES 16
+
 static QDF_STATUS __dp_ipa_handle_buf_smmu_mapping(struct dp_soc *soc,
 						   qdf_nbuf_t nbuf,
 						   bool create)
@@ -249,6 +258,7 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	int num_entries;
 	qdf_nbuf_t nbuf;
 	int retval = QDF_STATUS_SUCCESS;
+	int max_alloc_count = 0;
 
 	/*
 	 * Uncomment when dp_ops_cfg.cfg_attach is implemented
@@ -262,17 +272,21 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 			    &srng_params);
 	num_entries = srng_params.num_entries;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		  "%s: requested %d buffers to be posted to wbm ring",
-		   __func__, num_entries);
+	max_alloc_count =
+		num_entries - DP_IPA_WAR_WBM2SW_REL_RING_NO_BUF_ENTRIES;
+	if (max_alloc_count <= 0) {
+		dp_err("incorrect value for buffer count %u", max_alloc_count);
+		return -EINVAL;
+	}
+
+	dp_info("requested %d buffers to be posted to wbm ring",
+		max_alloc_count);
 
 	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned =
 		qdf_mem_malloc(num_entries *
 		sizeof(*soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned));
 	if (!soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: IPA WBM Ring Tx buf pool vaddr alloc fail",
-			  __func__);
+		dp_err("IPA WBM Ring Tx buf pool vaddr alloc fail");
 		return -ENOMEM;
 	}
 
@@ -280,13 +294,14 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 				       hal_srng_to_hal_ring_handle(wbm_srng));
 
 	/*
-	 * Allocate Tx buffers as many as possible
+	 * Allocate Tx buffers as many as possible.
+	 * Leave DP_IPA_WAR_WBM2SW_REL_RING_NO_BUF_ENTRIES empty
 	 * Populate Tx buffers into WBM2IPA ring
 	 * This initial buffer population will simulate H/W as source ring,
 	 * and update HP
 	 */
 	for (tx_buffer_count = 0;
-		tx_buffer_count < num_entries - 1; tx_buffer_count++) {
+		tx_buffer_count < max_alloc_count - 1; tx_buffer_count++) {
 		nbuf = qdf_nbuf_alloc(soc->osdev, alloc_size, 0, 256, FALSE);
 		if (!nbuf)
 			break;
@@ -325,13 +340,9 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt = tx_buffer_count;
 
 	if (tx_buffer_count) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "%s: IPA WDI TX buffer: %d allocated",
-			  __func__, tx_buffer_count);
+		dp_info("IPA WDI TX buffer: %d allocated", tx_buffer_count);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: No IPA WDI TX buffer allocated",
-			  __func__);
+		dp_err("No IPA WDI TX buffer allocated!");
 		qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned);
 		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned = NULL;
 		retval = -ENOMEM;
