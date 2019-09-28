@@ -53,6 +53,8 @@
 #define SWRM_COL_02    02
 #define SWRM_COL_16    16
 
+#define SWRM_NUM_AUTO_ENUM_SLAVES    6
+
 /* pm runtime auto suspend timer in msecs */
 static int auto_suspend_timer = SWR_AUTO_SUSPEND_DELAY * 1000;
 module_param(auto_suspend_timer, int, 0664);
@@ -1749,6 +1751,7 @@ static irqreturn_t swr_mstr_interrupt_v2(int irq, void *dev)
 	int ret = IRQ_HANDLED;
 	struct swr_device *swr_dev;
 	struct swr_master *mstr = &swrm->master;
+	int retry = 5;
 
 	if (unlikely(swrm_lock_sleep(swrm) == false)) {
 		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
@@ -1902,6 +1905,17 @@ handle_irq:
 				__func__);
 			break;
 		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_FAILED_V2:
+			swr_master_write(swrm, SWRM_ENUMERATOR_CFG_ADDR, 0);
+			while (swr_master_read(swrm, SWRM_ENUMERATOR_STATUS)) {
+				if (!retry) {
+					dev_dbg(swrm->dev,
+						"%s: ENUM status is not idle\n",
+						__func__);
+					break;
+				}
+				retry--;
+			}
+			swr_master_write(swrm, SWRM_ENUMERATOR_CFG_ADDR, 1);
 			break;
 		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_TABLE_IS_FULL_V2:
 			break;
@@ -2401,9 +2415,10 @@ static int swrm_probe(struct platform_device *pdev)
 		dev_dbg(&pdev->dev, "%s: Looking up %s property failed\n",
 			__func__, "qcom,swr-num-dev");
 	} else {
-		if (swrm->num_dev > SWR_MAX_SLAVE_DEVICES) {
+		if (swrm->num_dev > SWRM_NUM_AUTO_ENUM_SLAVES) {
 			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
-				__func__, swrm->num_dev, SWR_MAX_SLAVE_DEVICES);
+				__func__, swrm->num_dev,
+				SWRM_NUM_AUTO_ENUM_SLAVES);
 			ret = -EINVAL;
 			goto err_pdata_fail;
 		}
@@ -2767,6 +2782,7 @@ static int swrm_runtime_resume(struct device *dev)
 			}
 			swr_master_write(swrm, SWRM_COMP_SW_RESET, 0x01);
 			swr_master_write(swrm, SWRM_COMP_SW_RESET, 0x01);
+			swr_master_write(swrm, SWRM_MCP_BUS_CTRL_ADDR, 0x01);
 			swrm_master_init(swrm);
 			/* wait for hw enumeration to complete */
 			usleep_range(100, 105);
