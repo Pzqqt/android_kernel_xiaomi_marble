@@ -22,7 +22,8 @@
 #include <soc/swr-common.h>
 #include <linux/regmap.h>
 #include <dsp/msm-audio-event-notify.h>
-#include "swrm_registers.h"
+#include "swr-mstr-registers.h"
+#include "swr-slave-registers.h"
 #include "swr-mstr-ctrl.h"
 
 #define SWRM_FRAME_SYNC_SEL    4000 /* 4KHz */
@@ -53,7 +54,23 @@
 #define SWRM_COL_02    02
 #define SWRM_COL_16    16
 
+#define SWRS_SCP_INT_STATUS_CLEAR_1 0x40
+#define SWRS_SCP_INT_STATUS_MASK_1 0x41
 #define SWRM_NUM_AUTO_ENUM_SLAVES    6
+
+#define SWRM_MCP_SLV_STATUS_MASK    0x03
+#define SWRM_ROW_CTRL_MASK    0xF8
+#define SWRM_COL_CTRL_MASK    0x07
+#define SWRM_SSP_PERIOD_MASK  0xff0000
+#define SWRM_NUM_PINGS_MASK   0x3E0000
+#define SWRM_MCP_FRAME_CTRL_BANK_ROW_CTRL_SHFT    3
+#define SWRM_MCP_FRAME_CTRL_BANK_COL_CTRL_SHFT    0
+#define SWRM_MCP_FRAME_CTRL_BANK_SSP_PERIOD_SHFT  16
+#define SWRM_NUM_PINGS_POS    0x11
+
+#define SWRM_DP_PORT_CTRL_EN_CHAN_SHFT    0x18
+#define SWRM_DP_PORT_CTRL_OFFSET2_SHFT    0x10
+#define SWRM_DP_PORT_CTRL_OFFSET1_SHFT    0x08
 
 /* pm runtime auto suspend timer in msecs */
 static int auto_suspend_timer = SWR_AUTO_SUSPEND_DELAY * 1000;
@@ -142,13 +159,13 @@ static ssize_t swrm_reg_show(struct swr_mstr_ctrl *swrm, char __user *ubuf,
 	if (!ubuf || !ppos)
 		return 0;
 
-	i = ((int) *ppos + SWR_MSTR_START_REG_ADDR);
+	i = ((int) *ppos + SWRM_BASE);
 	rem = i%4;
 
 	if (rem)
 		i = (i - rem);
 
-	for (; i <= SWR_MSTR_MAX_REG_ADDR; i += 4) {
+	for (; i <= SWRM_MAX_REGISTER; i += 4) {
 		usleep_range(100, 150);
 		reg_val = swr_master_read(swrm, i);
 		len = snprintf(tmp_buf, 25, "0x%.3x: 0x%.2x\n", i, reg_val);
@@ -239,7 +256,7 @@ static ssize_t swrm_debug_peek_write(struct file *file, const char __user *ubuf,
 
 	lbuf[count] = '\0';
 	rc = get_parameters(lbuf, param, 1);
-	if ((param[0] <= SWR_MSTR_MAX_REG_ADDR) && (rc == 0))
+	if ((param[0] <= SWRM_MAX_REGISTER) && (rc == 0))
 		swrm->read_data = swr_master_read(swrm, param[0]);
 	else
 		rc = -EINVAL;
@@ -276,7 +293,7 @@ static ssize_t swrm_debug_write(struct file *file,
 
 	lbuf[count] = '\0';
 	rc = get_parameters(lbuf, param, 2);
-	if ((param[0] <= SWR_MSTR_MAX_REG_ADDR) &&
+	if ((param[0] <= SWRM_MAX_REGISTER) &&
 		(param[1] <= 0xFFFFFFFF) &&
 		(rc == 0))
 		swr_master_write(swrm, param[0], param[1]);
@@ -677,7 +694,7 @@ static int swrm_cmd_fifo_rd_cmd(struct swr_mstr_ctrl *swrm, int *cmd_data,
 		usleep_range(250, 255);
 	}
 retry_read:
-	*cmd_data = swr_master_read(swrm, SWRM_CMD_FIFO_RD_FIFO_ADDR);
+	*cmd_data = swr_master_read(swrm, SWRM_CMD_FIFO_RD_FIFO);
 	dev_dbg(swrm->dev, "%s: reg: 0x%x, cmd_id: 0x%x, rcmd_id: 0x%x, \
 		dev_num: 0x%x, cmd_data: 0x%x\n", __func__, reg_addr,
 		cmd_id, swrm->rcmd_id, dev_addr, *cmd_data);
@@ -874,8 +891,7 @@ err:
 
 static u8 get_inactive_bank_num(struct swr_mstr_ctrl *swrm)
 {
-	return (swr_master_read(swrm, SWRM_MCP_STATUS) &
-		SWRM_MCP_STATUS_BANK_NUM_MASK) ? 0 : 1;
+	return (swr_master_read(swrm, SWRM_MCP_STATUS) & 0x01) ? 0 : 1;
 }
 
 static void enable_bank_switch(struct swr_mstr_ctrl *swrm, u8 bank,
@@ -1228,9 +1244,8 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 	int ret;
 	u8 ssp_period = 0;
 	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(master);
-	int mask = (SWRM_MCP_FRAME_CTRL_BANK_ROW_CTRL_BMSK |
-		    SWRM_MCP_FRAME_CTRL_BANK_COL_CTRL_BMSK |
-		    SWRM_MCP_FRAME_CTRL_BANK_SSP_PERIOD_BMSK);
+	int mask = (SWRM_ROW_CTRL_MASK | SWRM_COL_CTRL_MASK |
+		    SWRM_SSP_PERIOD_MASK);
 	u8 inactive_bank;
 	int frame_sync = SWRM_FRAME_SYNC_SEL;
 
@@ -1277,7 +1292,7 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 			mutex_unlock(&swrm->mlock);
 			return -EINVAL;
 		}
-		swr_master_write(swrm, SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN,
+		swr_master_write(swrm, SWRM_CPU1_INTERRUPT_EN,
 				 SWRM_INTERRUPT_STATUS_MASK);
 		/* apply the new port config*/
 		swrm_apply_port_config(master);
@@ -1326,15 +1341,15 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 	ssp_period = swrm_get_ssp_period(swrm, row, col, frame_sync);
 	dev_dbg(swrm->dev, "%s: ssp_period: %d\n", __func__, ssp_period);
 
-	value = swr_master_read(swrm, SWRM_MCP_FRAME_CTRL_BANK_ADDR(bank));
+	value = swr_master_read(swrm, SWRM_MCP_FRAME_CTRL_BANK(bank));
 	value &= (~mask);
 	value |= ((n_row << SWRM_MCP_FRAME_CTRL_BANK_ROW_CTRL_SHFT) |
 		  (n_col << SWRM_MCP_FRAME_CTRL_BANK_COL_CTRL_SHFT) |
 		  ((ssp_period - 1) << SWRM_MCP_FRAME_CTRL_BANK_SSP_PERIOD_SHFT));
-	swr_master_write(swrm, SWRM_MCP_FRAME_CTRL_BANK_ADDR(bank), value);
+	swr_master_write(swrm, SWRM_MCP_FRAME_CTRL_BANK(bank), value);
 
 	dev_dbg(swrm->dev, "%s: regaddr: 0x%x, value: 0x%x\n", __func__,
-		SWRM_MCP_FRAME_CTRL_BANK_ADDR(bank), value);
+		SWRM_MCP_FRAME_CTRL_BANK(bank), value);
 
 	enable_bank_switch(swrm, bank, n_row, n_col);
 	inactive_bank = bank ? 0 : 1;
@@ -1577,180 +1592,6 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 	int ret = IRQ_HANDLED;
 	struct swr_device *swr_dev;
 	struct swr_master *mstr = &swrm->master;
-
-	if (unlikely(swrm_lock_sleep(swrm) == false)) {
-		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
-		return IRQ_NONE;
-	}
-
-	mutex_lock(&swrm->reslock);
-	if (swrm_clk_request(swrm, true)) {
-		dev_err_ratelimited(swrm->dev, "%s:clk request failed\n",
-				__func__);
-		mutex_unlock(&swrm->reslock);
-		goto exit;
-	}
-	mutex_unlock(&swrm->reslock);
-
-	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
-	intr_sts_masked = intr_sts & swrm->intr_mask;
-handle_irq:
-	for (i = 0; i < SWRM_INTERRUPT_MAX; i++) {
-		value = intr_sts_masked & (1 << i);
-		if (!value)
-			continue;
-
-		switch (value) {
-		case SWRM_INTERRUPT_STATUS_SLAVE_PEND_IRQ:
-			dev_dbg(swrm->dev, "Trigger irq to slave device\n");
-			status = swr_master_read(swrm, SWRM_MCP_SLV_STATUS);
-			ret = swrm_find_alert_slave(swrm, status, &devnum);
-			if (ret) {
-				dev_err_ratelimited(swrm->dev,
-				   "no slave alert found.spurious interrupt\n");
-				break;
-			}
-			swrm_cmd_fifo_rd_cmd(swrm, &temp, devnum, 0x0,
-						SWRS_SCP_INT_STATUS_CLEAR_1, 1);
-			swrm_cmd_fifo_wr_cmd(swrm, 0x4, devnum, 0x0,
-						SWRS_SCP_INT_STATUS_CLEAR_1);
-			swrm_cmd_fifo_wr_cmd(swrm, 0x0, devnum, 0x0,
-						SWRS_SCP_INT_STATUS_CLEAR_1);
-
-
-			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
-				if (swr_dev->dev_num != devnum)
-					continue;
-				if (swr_dev->slave_irq) {
-					do {
-						swr_dev->slave_irq_pending = 0;
-						handle_nested_irq(
-							irq_find_mapping(
-							swr_dev->slave_irq, 0));
-					} while (swr_dev->slave_irq_pending);
-				}
-
-			}
-			break;
-		case SWRM_INTERRUPT_STATUS_NEW_SLAVE_ATTACHED:
-			dev_dbg(swrm->dev, "SWR new slave attached\n");
-			break;
-		case SWRM_INTERRUPT_STATUS_CHANGE_ENUM_SLAVE_STATUS:
-			status = swr_master_read(swrm, SWRM_MCP_SLV_STATUS);
-			if (status == swrm->slave_status) {
-				dev_dbg(swrm->dev,
-					"%s: No change in slave status: %d\n",
-					__func__, status);
-				break;
-			}
-			chg_sts = swrm_check_slave_change_status(swrm, status,
-								&devnum);
-			switch (chg_sts) {
-			case SWR_NOT_PRESENT:
-				dev_dbg(swrm->dev, "device %d got detached\n",
-					devnum);
-				break;
-			case SWR_ATTACHED_OK:
-				dev_dbg(swrm->dev, "device %d got attached\n",
-					devnum);
-				/* enable host irq from slave device*/
-				swrm_cmd_fifo_wr_cmd(swrm, 0xFF, devnum, 0x0,
-					SWRS_SCP_INT_STATUS_CLEAR_1);
-				swrm_cmd_fifo_wr_cmd(swrm, 0x4, devnum, 0x0,
-					SWRS_SCP_INT_STATUS_MASK_1);
-
-				break;
-			case SWR_ALERT:
-				dev_dbg(swrm->dev,
-					"device %d has pending interrupt\n",
-					devnum);
-				break;
-			}
-			break;
-		case SWRM_INTERRUPT_STATUS_MASTER_CLASH_DET:
-			dev_err_ratelimited(swrm->dev,
-					"SWR bus clsh detected\n");
-			break;
-		case SWRM_INTERRUPT_STATUS_RD_FIFO_OVERFLOW:
-			dev_dbg(swrm->dev, "SWR read FIFO overflow\n");
-			break;
-		case SWRM_INTERRUPT_STATUS_RD_FIFO_UNDERFLOW:
-			dev_dbg(swrm->dev, "SWR read FIFO underflow\n");
-			break;
-		case SWRM_INTERRUPT_STATUS_WR_CMD_FIFO_OVERFLOW:
-			dev_dbg(swrm->dev, "SWR write FIFO overflow\n");
-			break;
-		case SWRM_INTERRUPT_STATUS_CMD_ERROR:
-			value = swr_master_read(swrm, SWRM_CMD_FIFO_STATUS);
-			dev_err_ratelimited(swrm->dev,
-			"SWR CMD error, fifo status 0x%x, flushing fifo\n",
-					    value);
-			swr_master_write(swrm, SWRM_CMD_FIFO_CMD, 0x1);
-			break;
-		case SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION:
-			dev_err_ratelimited(swrm->dev, "SWR Port collision detected\n");
-			swrm->intr_mask &= ~SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION;
-			swr_master_write(swrm,
-				SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
-			break;
-		case SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH:
-			dev_dbg(swrm->dev, "SWR read enable valid mismatch\n");
-			swrm->intr_mask &=
-				~SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH;
-			swr_master_write(swrm,
-				 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
-			break;
-		case SWRM_INTERRUPT_STATUS_SPECIAL_CMD_ID_FINISHED:
-			complete(&swrm->broadcast);
-			dev_dbg(swrm->dev, "SWR cmd id finished\n");
-			break;
-		case SWRM_INTERRUPT_STATUS_NEW_SLAVE_AUTO_ENUM_FINISHED:
-			break;
-		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_FAILED:
-			break;
-		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_TABLE_IS_FULL:
-			break;
-		case SWRM_INTERRUPT_STATUS_BUS_RESET_FINISHED:
-			complete(&swrm->reset);
-			break;
-		case SWRM_INTERRUPT_STATUS_CLK_STOP_FINISHED:
-			break;
-		default:
-			dev_err_ratelimited(swrm->dev,
-					"SWR unknown interrupt\n");
-			ret = IRQ_NONE;
-			break;
-		}
-	}
-	swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, intr_sts);
-	swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, 0x0);
-
-	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
-	intr_sts_masked = intr_sts & swrm->intr_mask;
-
-	if (intr_sts_masked) {
-		dev_dbg(swrm->dev, "%s: new interrupt received\n", __func__);
-		goto handle_irq;
-	}
-
-	mutex_lock(&swrm->reslock);
-	swrm_clk_request(swrm, false);
-	mutex_unlock(&swrm->reslock);
-exit:
-	swrm_unlock_sleep(swrm);
-	return ret;
-}
-
-static irqreturn_t swr_mstr_interrupt_v2(int irq, void *dev)
-{
-	struct swr_mstr_ctrl *swrm = dev;
-	u32 value, intr_sts, intr_sts_masked;
-	u32 temp = 0;
-	u32 status, chg_sts, i;
-	u8 devnum = 0;
-	int ret = IRQ_HANDLED;
-	struct swr_device *swr_dev;
-	struct swr_master *mstr = &swrm->master;
 	int retry = 5;
 
 	if (unlikely(swrm_lock_sleep(swrm) == false)) {
@@ -1888,7 +1729,7 @@ handle_irq:
 					__func__);
 			swrm->intr_mask &= ~SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION;
 			swr_master_write(swrm,
-				SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
+				SWRM_CPU1_INTERRUPT_EN, swrm->intr_mask);
 			break;
 		case SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH:
 			dev_dbg(swrm->dev,
@@ -1897,15 +1738,15 @@ handle_irq:
 			swrm->intr_mask &=
 				~SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH;
 			swr_master_write(swrm,
-				 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
+				 SWRM_CPU1_INTERRUPT_EN, swrm->intr_mask);
 			break;
 		case SWRM_INTERRUPT_STATUS_SPECIAL_CMD_ID_FINISHED:
 			complete(&swrm->broadcast);
 			dev_dbg(swrm->dev, "%s: SWR cmd id finished\n",
 				__func__);
 			break;
-		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_FAILED_V2:
-			swr_master_write(swrm, SWRM_ENUMERATOR_CFG_ADDR, 0);
+		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_FAILED:
+			swr_master_write(swrm, SWRM_ENUMERATOR_CFG, 0);
 			while (swr_master_read(swrm, SWRM_ENUMERATOR_STATUS)) {
 				if (!retry) {
 					dev_dbg(swrm->dev,
@@ -1915,14 +1756,14 @@ handle_irq:
 				}
 				retry--;
 			}
-			swr_master_write(swrm, SWRM_ENUMERATOR_CFG_ADDR, 1);
+			swr_master_write(swrm, SWRM_ENUMERATOR_CFG, 1);
 			break;
-		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_TABLE_IS_FULL_V2:
+		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_TABLE_IS_FULL:
 			break;
-		case SWRM_INTERRUPT_STATUS_BUS_RESET_FINISHED_V2:
+		case SWRM_INTERRUPT_STATUS_BUS_RESET_FINISHED:
 			swrm_check_link_status(swrm, 0x1);
 			break;
-		case SWRM_INTERRUPT_STATUS_CLK_STOP_FINISHED_V2:
+		case SWRM_INTERRUPT_STATUS_CLK_STOP_FINISHED:
 			break;
 		case SWRM_INTERRUPT_STATUS_EXT_CLK_STOP_WAKEUP:
 			if (swrm->state == SWR_MSTR_UP)
@@ -2208,33 +2049,33 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 		(col_ctrl << SWRM_MCP_FRAME_CTRL_BANK_COL_CTRL_SHFT) |
 		((ssp_period - 1) << SWRM_MCP_FRAME_CTRL_BANK_SSP_PERIOD_SHFT));
 
-	reg[len] = SWRM_MCP_FRAME_CTRL_BANK_ADDR(0);
+	reg[len] = SWRM_MCP_FRAME_CTRL_BANK(0);
 	value[len++] = val;
 
 	/* Set Auto enumeration flag */
-	reg[len] = SWRM_ENUMERATOR_CFG_ADDR;
+	reg[len] = SWRM_ENUMERATOR_CFG;
 	value[len++] = 1;
 
 	/* Configure No pings */
-	val = swr_master_read(swrm, SWRM_MCP_CFG_ADDR);
-	val &= ~SWRM_MCP_CFG_MAX_NUM_OF_CMD_NO_PINGS_BMSK;
-	val |= (0x1f << SWRM_MCP_CFG_MAX_NUM_OF_CMD_NO_PINGS_SHFT);
-	reg[len] = SWRM_MCP_CFG_ADDR;
+	val = swr_master_read(swrm, SWRM_MCP_CFG);
+	val &= ~SWRM_NUM_PINGS_MASK;
+	val |= (0x1f << SWRM_NUM_PINGS_POS);
+	reg[len] = SWRM_MCP_CFG;
 	value[len++] = val;
 
 	/* Configure number of retries of a read/write cmd */
-	val = (retry_cmd_num << SWRM_CMD_FIFO_CFG_NUM_OF_CMD_RETRY_SHFT);
-	reg[len] = SWRM_CMD_FIFO_CFG_ADDR;
+	val = (retry_cmd_num);
+	reg[len] = SWRM_CMD_FIFO_CFG;
 	value[len++] = val;
 
-	reg[len] = SWRM_MCP_BUS_CTRL_ADDR;
+	reg[len] = SWRM_MCP_BUS_CTRL;
 	value[len++] = 0x2;
 
 	/* Set IRQ to PULSE */
-	reg[len] = SWRM_COMP_CFG_ADDR;
+	reg[len] = SWRM_COMP_CFG;
 	value[len++] = 0x02;
 
-	reg[len] = SWRM_COMP_CFG_ADDR;
+	reg[len] = SWRM_COMP_CFG;
 	value[len++] = 0x03;
 
 	reg[len] = SWRM_INTERRUPT_CLEAR;
@@ -2242,10 +2083,10 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 
 	swrm->intr_mask = SWRM_INTERRUPT_STATUS_MASK;
 	/* Mask soundwire interrupts */
-	reg[len] = SWRM_INTERRUPT_MASK_ADDR;
+	reg[len] = SWRM_INTERRUPT_EN;
 	value[len++] = swrm->intr_mask;
 
-	reg[len] = SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN;
+	reg[len] = SWRM_CPU1_INTERRUPT_EN;
 	value[len++] = swrm->intr_mask;
 
 	swr_master_bulk_write(swrm, reg, value, len);
@@ -2256,15 +2097,12 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 			__func__);
 		return -EINVAL;
 	}
-	/*
-	 * For SWR master version 1.5.1, continue
-	 * execute on command ignore.
-	 */
+
 	/* Execute it for versions >= 1.5.1 */
 	if (swrm->version >= SWRM_VERSION_1_5_1)
-		swr_master_write(swrm, SWRM_CMD_FIFO_CFG_ADDR,
+		swr_master_write(swrm, SWRM_CMD_FIFO_CFG,
 				(swr_master_read(swrm,
-					SWRM_CMD_FIFO_CFG_ADDR) | 0x80000000));
+					SWRM_CMD_FIFO_CFG) | 0x80000000));
 
 	/* SW workaround to gate hw_ctl for SWR version >=1.6 */
 	if (swrm->version >= SWRM_VERSION_1_6) {
@@ -2559,7 +2397,7 @@ static int swrm_probe(struct platform_device *pdev)
 		}
 
 		ret = request_threaded_irq(swrm->irq, NULL,
-					   swr_mstr_interrupt_v2,
+					   swr_mstr_interrupt,
 					   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					   "swr_master_irq", swrm);
 		if (ret) {
@@ -2699,10 +2537,10 @@ static int swrm_clk_pause(struct swr_mstr_ctrl *swrm)
 	u32 val;
 
 	dev_dbg(swrm->dev, "%s: state: %d\n", __func__, swrm->state);
-	swr_master_write(swrm, SWRM_INTERRUPT_MASK_ADDR, 0x1FDFD);
-	val = swr_master_read(swrm, SWRM_MCP_CFG_ADDR);
-	val |= SWRM_MCP_CFG_BUS_CLK_PAUSE_BMSK;
-	swr_master_write(swrm, SWRM_MCP_CFG_ADDR, val);
+	swr_master_write(swrm, SWRM_INTERRUPT_EN, 0x1FDFD);
+	val = swr_master_read(swrm, SWRM_MCP_CFG);
+	val |= 0x02;
+	swr_master_write(swrm, SWRM_MCP_CFG, val);
 
 	return 0;
 }
@@ -2782,7 +2620,7 @@ static int swrm_runtime_resume(struct device *dev)
 			}
 			swr_master_write(swrm, SWRM_COMP_SW_RESET, 0x01);
 			swr_master_write(swrm, SWRM_COMP_SW_RESET, 0x01);
-			swr_master_write(swrm, SWRM_MCP_BUS_CTRL_ADDR, 0x01);
+			swr_master_write(swrm, SWRM_MCP_BUS_CTRL, 0x01);
 			swrm_master_init(swrm);
 			/* wait for hw enumeration to complete */
 			usleep_range(100, 105);
@@ -2798,14 +2636,14 @@ static int swrm_runtime_resume(struct device *dev)
 			}
 		} else {
 			/*wake up from clock stop*/
-			swr_master_write(swrm, SWRM_MCP_BUS_CTRL_ADDR, 0x2);
+			swr_master_write(swrm, SWRM_MCP_BUS_CTRL, 0x2);
 			/* clear and enable bus clash interrupt */
 			swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, 0x08);
 			swrm->intr_mask |= 0x08;
-			swr_master_write(swrm, SWRM_INTERRUPT_MASK_ADDR,
+			swr_master_write(swrm, SWRM_INTERRUPT_EN,
 					 swrm->intr_mask);
 			swr_master_write(swrm,
-					 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN,
+					 SWRM_CPU1_INTERRUPT_EN,
 					 swrm->intr_mask);
 			usleep_range(100, 105);
 			if (!swrm_check_link_status(swrm, 0x1))
@@ -2873,7 +2711,7 @@ static int swrm_runtime_suspend(struct device *dev)
 			enable_bank_switch(swrm, 0, SWR_ROW_50, SWR_MIN_COL);
 			mutex_lock(&swrm->reslock);
 			swrm_clk_pause(swrm);
-			swr_master_write(swrm, SWRM_COMP_CFG_ADDR, 0x00);
+			swr_master_write(swrm, SWRM_COMP_CFG, 0x00);
 			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
 				ret = swr_device_down(swr_dev);
 				if (ret == -ENODEV) {
@@ -2891,10 +2729,10 @@ static int swrm_runtime_suspend(struct device *dev)
 		} else {
 			/* Mask bus clash interrupt */
 			swrm->intr_mask &= ~((u32)0x08);
-			swr_master_write(swrm, SWRM_INTERRUPT_MASK_ADDR,
+			swr_master_write(swrm, SWRM_INTERRUPT_EN,
 					 swrm->intr_mask);
 			swr_master_write(swrm,
-					 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN,
+					 SWRM_CPU1_INTERRUPT_EN,
 					 swrm->intr_mask);
 			mutex_unlock(&swrm->reslock);
 			/* clock stop sequence */
