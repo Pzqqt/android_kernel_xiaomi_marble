@@ -7907,6 +7907,7 @@ static int afe_get_sp_th_vi_v_vali_data(
 	if (this_afe.vi_tx_port != -1)
 		port = this_afe.vi_tx_port;
 
+	mutex_lock(&this_afe.afe_cmd_lock);
 	memset(&param_hdr, 0, sizeof(param_hdr));
 
 	param_hdr.module_id = AFE_MODULE_SPEAKER_PROTECTION_V2_TH_VI;
@@ -7917,7 +7918,7 @@ static int afe_get_sp_th_vi_v_vali_data(
 	ret = q6afe_get_params(port, NULL, &param_hdr);
 	if (ret) {
 		pr_err("%s: Failed to get TH VI V-Vali data\n", __func__);
-		goto done;
+		goto get_params_fail;
 	}
 
 	th_vi_v_vali->pdata = param_hdr;
@@ -7929,6 +7930,8 @@ static int afe_get_sp_th_vi_v_vali_data(
 		 th_vi_v_vali->param.status[SP_V2_SPKR_1],
 		 th_vi_v_vali->param.status[SP_V2_SPKR_2]);
 	ret = 0;
+get_params_fail:
+	mutex_unlock(&this_afe.afe_cmd_lock);
 done:
 	return ret;
 }
@@ -7946,6 +7949,7 @@ int afe_get_sp_th_vi_ftm_data(struct afe_sp_th_vi_get_param *th_vi)
 	if (this_afe.vi_tx_port != -1)
 		port = this_afe.vi_tx_port;
 
+	mutex_lock(&this_afe.afe_cmd_lock);
 	memset(&param_hdr, 0, sizeof(param_hdr));
 
 	param_hdr.module_id = AFE_MODULE_SPEAKER_PROTECTION_V2_TH_VI;
@@ -7956,7 +7960,7 @@ int afe_get_sp_th_vi_ftm_data(struct afe_sp_th_vi_get_param *th_vi)
 	ret = q6afe_get_params(port, NULL, &param_hdr);
 	if (ret) {
 		pr_err("%s: Failed to get TH VI FTM data\n", __func__);
-		goto done;
+		goto get_params_fail;
 	}
 
 	th_vi->pdata = param_hdr;
@@ -7970,6 +7974,8 @@ int afe_get_sp_th_vi_ftm_data(struct afe_sp_th_vi_get_param *th_vi)
 		 th_vi->param.status[SP_V2_SPKR_1],
 		 th_vi->param.status[SP_V2_SPKR_2]);
 	ret = 0;
+get_params_fail:
+	mutex_unlock(&this_afe.afe_cmd_lock);
 done:
 	return ret;
 }
@@ -7987,6 +7993,7 @@ int afe_get_sp_ex_vi_ftm_data(struct afe_sp_ex_vi_get_param *ex_vi)
 	if (this_afe.vi_tx_port != -1)
 		port = this_afe.vi_tx_port;
 
+	mutex_lock(&this_afe.afe_cmd_lock);
 	memset(&param_hdr, 0, sizeof(param_hdr));
 
 	param_hdr.module_id = AFE_MODULE_SPEAKER_PROTECTION_V2_EX_VI;
@@ -7998,7 +8005,7 @@ int afe_get_sp_ex_vi_ftm_data(struct afe_sp_ex_vi_get_param *ex_vi)
 	if (ret < 0) {
 		pr_err("%s: get param port 0x%x param id[0x%x]failed %d\n",
 		       __func__, port, param_hdr.param_id, ret);
-		goto done;
+		goto get_params_fail;
 	}
 
 	ex_vi->pdata = param_hdr;
@@ -8014,6 +8021,8 @@ int afe_get_sp_ex_vi_ftm_data(struct afe_sp_ex_vi_get_param *ex_vi)
 		 ex_vi->param.status[SP_V2_SPKR_1],
 		 ex_vi->param.status[SP_V2_SPKR_2]);
 	ret = 0;
+get_params_fail:
+	mutex_unlock(&this_afe.afe_cmd_lock);
 done:
 	return ret;
 }
@@ -8039,6 +8048,7 @@ int afe_get_sp_rx_tmax_xmax_logging_data(
 		goto done;
 	}
 
+	mutex_lock(&this_afe.afe_cmd_lock);
 	memset(&param_hdr, 0, sizeof(param_hdr));
 
 	param_hdr.module_id = AFE_MODULE_FB_SPKR_PROT_V2_RX;
@@ -8050,7 +8060,7 @@ int afe_get_sp_rx_tmax_xmax_logging_data(
 	if (ret < 0) {
 		pr_err("%s: get param port 0x%x param id[0x%x]failed %d\n",
 		       __func__, port_id, param_hdr.param_id, ret);
-		goto done;
+		goto get_params_fail;
 	}
 
 	memcpy(xt_logging, &this_afe.xt_logging_resp.param,
@@ -8064,6 +8074,8 @@ int afe_get_sp_rx_tmax_xmax_logging_data(
 		 xt_logging->max_temperature[SP_V2_SPKR_2],
 		 xt_logging->count_exceeded_temperature[SP_V2_SPKR_1],
 		 xt_logging->count_exceeded_temperature[SP_V2_SPKR_2]);
+get_params_fail:
+	mutex_unlock(&this_afe.afe_cmd_lock);
 done:
 	return ret;
 }
@@ -8089,6 +8101,7 @@ int afe_get_av_dev_drift(struct afe_param_id_dev_timing_stats *timing_stats,
 		goto exit;
 	}
 
+	mutex_lock(&this_afe.afe_cmd_lock);
 	memset(&param_hdr, 0, sizeof(param_hdr));
 	param_hdr.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
 	param_hdr.instance_id = INSTANCE_ID_0;
@@ -8099,12 +8112,14 @@ int afe_get_av_dev_drift(struct afe_param_id_dev_timing_stats *timing_stats,
 	if (ret < 0) {
 		pr_err("%s: get param port 0x%x param id[0x%x] failed %d\n",
 		       __func__, port, param_hdr.param_id, ret);
-		goto exit;
+		goto get_params_fail;
 	}
 
 	memcpy(timing_stats, &this_afe.av_dev_drift_resp.timing_stats,
 	       param_hdr.param_size);
 	ret = 0;
+get_params_fail:
+	mutex_unlock(&this_afe.afe_cmd_lock);
 exit:
 	return ret;
 }
@@ -8130,6 +8145,7 @@ int afe_get_doa_tracking_mon(u16 port,
 		goto exit;
 	}
 
+	mutex_lock(&this_afe.afe_cmd_lock);
 	memset(&param_hdr, 0, sizeof(param_hdr));
 	param_hdr.module_id = AUDPROC_MODULE_ID_FFNS;
 	param_hdr.instance_id = INSTANCE_ID_0;
@@ -8140,7 +8156,7 @@ int afe_get_doa_tracking_mon(u16 port,
 	if (ret < 0) {
 		pr_err("%s: get param port 0x%x param id[0x%x] failed %d\n",
 			 __func__, port, param_hdr.param_id, ret);
-		goto exit;
+		goto get_params_fail;
 	}
 
 	memcpy(doa_tracking_data, &this_afe.doa_tracking_mon_resp.doa,
@@ -8152,6 +8168,8 @@ int afe_get_doa_tracking_mon(u16 port,
 			 __func__, i, doa_tracking_data->interf_angle_L16[i]);
 	}
 
+get_params_fail:
+	mutex_unlock(&this_afe.afe_cmd_lock);
 exit:
 	return ret;
 }
@@ -8170,6 +8188,7 @@ int afe_spk_prot_get_calib_data(struct afe_spkr_prot_get_vi_calib *calib_resp)
 	if (this_afe.vi_tx_port != -1)
 		port = this_afe.vi_tx_port;
 
+	mutex_lock(&this_afe.afe_cmd_lock);
 	memset(&param_hdr, 0, sizeof(param_hdr));
 	param_hdr.module_id = AFE_MODULE_FB_SPKR_PROT_VI_PROC_V2;
 	param_hdr.instance_id = INSTANCE_ID_0;
@@ -8180,7 +8199,7 @@ int afe_spk_prot_get_calib_data(struct afe_spkr_prot_get_vi_calib *calib_resp)
 	if (ret < 0) {
 		pr_err("%s: get param port 0x%x param id[0x%x]failed %d\n",
 		       __func__, port, param_hdr.param_id, ret);
-		goto fail_cmd;
+		goto get_params_fail;
 	}
 	memcpy(&calib_resp->res_cfg, &this_afe.calib_data.res_cfg,
 		sizeof(this_afe.calib_data.res_cfg));
@@ -8189,6 +8208,8 @@ int afe_spk_prot_get_calib_data(struct afe_spkr_prot_get_vi_calib *calib_resp)
 		calib_resp->res_cfg.r0_cali_q24[SP_V2_SPKR_1],
 		calib_resp->res_cfg.r0_cali_q24[SP_V2_SPKR_2]);
 	ret = 0;
+get_params_fail:
+	mutex_unlock(&this_afe.afe_cmd_lock);
 fail_cmd:
 	return ret;
 }
