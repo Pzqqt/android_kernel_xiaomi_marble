@@ -231,17 +231,25 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 /**
  * dp_txrx_set_wds_rx_policy() - API to store datapath
  *                            config parameters
- * @vdev_handle - datapath vdev handle
+ * @soc - datapath soc handle
+ * @vdev_id - id of datapath vdev handle
  * @cfg: ini parameter handle
  *
  * Return: status
  */
 #ifdef WDS_VENDOR_EXTENSION
 void
-dp_txrx_set_wds_rx_policy(struct cdp_vdev *vdev_handle,	u_int32_t val)
+dp_txrx_set_wds_rx_policy(struct cdp_soc_t *soc, uint8_t vdev_id, u_int32_t val)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_peer *peer;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						    vdev_id);
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("vdev is NULL for vdev_id %d"), vdev_id);
+		return;
+	}
 
 	if (vdev->opmode == wlan_op_mode_ap) {
 		/* for ap, set it on bss_peer */
@@ -270,17 +278,28 @@ dp_txrx_set_wds_rx_policy(struct cdp_vdev *vdev_handle,	u_int32_t val)
 /**
  * dp_txrx_peer_wds_tx_policy_update() - API to set tx wds policy
  *
- * @peer_handle - datapath peer handle
+ * @cdp_soc: DP soc handle
+ * @vdev_id: id of vdev handle
+ * @peer_mac: peer mac address
  * @wds_tx_ucast: policy for unicast transmission
  * @wds_tx_mcast: policy for multicast transmission
  *
  * Return: void
  */
 void
-dp_txrx_peer_wds_tx_policy_update(struct cdp_peer *peer_handle,
-				  int wds_tx_ucast, int wds_tx_mcast)
+dp_txrx_peer_wds_tx_policy_update(struct cdp_soc_t *soc,  uint8_t vdev_id,
+				  uint8_t *peer_mac, int wds_tx_ucast,
+				  int wds_tx_mcast)
 {
-	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+						       peer_mac, 0,
+						       vdev_id);
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("peer is NULL for mac %pM vdev_id %d"),
+			  peer_mac, vdev_id);
+		return;
+	}
 
 	if (wds_tx_ucast || wds_tx_mcast) {
 		peer->wds_enabled = 1;
@@ -302,6 +321,8 @@ dp_txrx_peer_wds_tx_policy_update(struct cdp_peer *peer_handle,
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		  "peer->wds_ecm.wds_tx_mcast_4addr %d\n",
 		  peer->wds_ecm.wds_tx_mcast_4addr);
+
+	dp_peer_unref_delete(peer);
 }
 
 int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
