@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,7 @@
 #include "cdp_txrx_handle.h"
 
 static inline uint32_t cdp_pflow_update_pdev_params
-	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+	(ol_txrx_soc_handle soc, uint8_t pdev_id,
 	enum _ol_ath_param_t param, uint32_t val, void *ctx)
 {
 	if (!soc || !soc->ops) {
@@ -44,6 +44,6 @@ static inline uint32_t cdp_pflow_update_pdev_params
 		return 0;
 
 	return soc->ops->pflow_ops->pflow_update_pdev_params
-			(pdev, param, val, ctx);
+			(soc, pdev_id, param, val, ctx);
 }
 #endif
