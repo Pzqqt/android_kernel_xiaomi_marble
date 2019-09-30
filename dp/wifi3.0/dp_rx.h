@@ -1100,7 +1100,7 @@ bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf,
 
 #ifndef WLAN_RX_PKT_CAPTURE_ENH
 static inline
-void dp_peer_set_rx_capture_enabled(struct cdp_peer *peer_handle, bool value)
+void dp_peer_set_rx_capture_enabled(struct dp_peer *peer_handle, bool value)
 {
 }
 #endif

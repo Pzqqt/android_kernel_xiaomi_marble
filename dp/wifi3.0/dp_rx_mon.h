@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,7 +45,7 @@ QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle);
+QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
 
 /**
  * dp_pdev_configure_monitor_rings() - configure monitor rings

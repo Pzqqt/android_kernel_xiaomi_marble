@@ -774,12 +774,12 @@ typedef QDF_STATUS(*ol_txrx_get_key_fp)(void *osif_dev, uint8_t *key_buf, uint8_
  * @osif_dev  - the virtual device's OS shim object
  * @list_head - poniter to head of receive packet queue to decap
  * @list_tail - poniter to tail of receive packet queue to decap
- * @peer      - Peer handler
+ * @peer_mac  - mac address of peer handler
  */
 typedef QDF_STATUS(*ol_txrx_rsim_rx_decap_fp)(void *osif_dev,
 						qdf_nbuf_t *list_head,
 						qdf_nbuf_t *list_tail,
-						struct cdp_peer *peer);
+						uint8_t *peer_mac);
 
 /* ol_txrx_rx_fp - external tx free function to read per packet stats and
  *                            free tx buffer externally
@@ -997,6 +997,8 @@ enum cdp_peer_param_type {
  * @CDP_FILTER_MCAST_DATA: filter multicast data
  * @CDP_FILTER_NO_DATA: filter no data
  * @CDP_MONITOR_CHANNEL: monitor channel
+ * @CDP_MONITOR_FREQUENCY: monitor frequency
+ * @CDP_CONFIG_BSS_COLOR: configure bss color
  */
 enum cdp_pdev_param_type {
 	CDP_CONFIG_DEBUG_SNIFFER,
@@ -1024,6 +1026,8 @@ enum cdp_pdev_param_type {
 	CDP_FILTER_MCAST_DATA,
 	CDP_FILTER_NO_DATA,
 	CDP_MONITOR_CHANNEL,
+	CDP_MONITOR_FREQUENCY,
+	CDP_CONFIG_BSS_COLOR,
 };
 
 /*
@@ -1069,6 +1073,8 @@ enum cdp_pdev_param_type {
  * @cdp_pdev_param_chn_noise_flr: set channel noise floor
  * @cdp_pdev_param_cfg_vow: set/get vow config
  * @cdp_pdev_param_tidq_override: set/get tid queue override
+ * @cdp_pdev_param_mon_freq: set monitor frequency
+ * @cdp_pdev_param_bss_color: configure bss color
  * @cdp_pdev_param_tidmap_prty: set/get tid map prty
  * @cdp_pdev_param_tx_pending: get tx pending
  * @cdp_pdev_param_fltr_neigh_peers: filter neighbour peers
@@ -1125,7 +1131,9 @@ typedef union cdp_config_param_t {
 	uint8_t cdp_pdev_param_igmpmld_tid;
 	uint8_t cdp_pdev_param_arp_dbg_conf;
 	uint8_t cdp_pdev_param_tidq_override;
+	uint8_t cdp_pdev_param_bss_color;
 	uint16_t cdp_pdev_param_chn_noise_flr;
+	qdf_freq_t cdp_pdev_param_mon_freq;
 	int cdp_pdev_param_dbg_snf;
 	int cdp_pdev_param_bpr_enable;
 	int cdp_pdev_param_monitor_chan;

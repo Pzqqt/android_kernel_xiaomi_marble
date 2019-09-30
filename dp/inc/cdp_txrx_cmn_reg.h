@@ -77,13 +77,13 @@ void *dp_soc_init_wifi3(struct cdp_soc_t *soc,
 			HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			struct ol_if_ops *ol_ops, uint16_t device_id);
 #else
-static inline
-struct cdp_soc_t *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
-				      struct hif_opaque_softc *hif_handle,
-				      HTC_HANDLE htc_handle,
-				      qdf_device_t qdf_osdev,
-				      struct ol_if_ops *ol_ops,
-				      uint16_t device_id)
+static inline struct cdp_soc_t *
+dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+		    struct hif_opaque_softc *hif_handle,
+		    HTC_HANDLE htc_handle,
+		    qdf_device_t qdf_osdev,
+		    struct ol_if_ops *ol_ops,
+		    uint16_t device_id)
 {
 	return NULL;
 }
@@ -99,10 +99,13 @@ void *dp_soc_init_wifi3(struct cdp_soc_t *soc,
 }
 #endif /* QCA_WIFI_QCA8074 */
 
-static inline ol_txrx_soc_handle cdp_soc_attach(
-		u_int16_t devid, void *hif_handle, void *psoc,
-		HTC_HANDLE htc_handle, qdf_device_t qdf_dev,
-		struct ol_if_ops *dp_ol_if_ops)
+static inline
+ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
+				  struct hif_opaque_softc *hif_handle,
+				  struct cdp_ctrl_objmgr_psoc *psoc,
+				  HTC_HANDLE htc_handle,
+				  qdf_device_t qdf_dev,
+				  struct ol_if_ops *dp_ol_if_ops)
 {
 	switch (devid) {
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */

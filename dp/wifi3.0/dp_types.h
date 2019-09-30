@@ -1915,7 +1915,7 @@ struct dp_vdev {
 	struct dp_tx_desc_pool_s *pool;
 #endif
 	/* AP BRIDGE enabled */
-	uint32_t ap_bridge_enabled;
+	bool ap_bridge_enabled;
 
 	enum cdp_sec_type  sec_type;
 

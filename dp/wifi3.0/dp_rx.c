@@ -313,7 +313,7 @@ dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
 	}
 
 	vdev->osif_rsim_rx_decap(vdev->osif_vdev, &deliver_list_head,
-				 &deliver_list_tail, (struct cdp_peer*) peer);
+				 &deliver_list_tail, peer->mac_addr.raw);
 
 	vdev->osif_rx(vdev->osif_vdev, deliver_list_head);
 }
@@ -1323,7 +1323,7 @@ static inline void dp_rx_deliver_to_stack(struct dp_vdev *vdev,
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw) ||
 			(vdev->rx_decap_type == htt_cmn_pkt_type_native_wifi)) {
 		vdev->osif_rsim_rx_decap(vdev->osif_vdev, &nbuf_head,
-				&nbuf_tail, (struct cdp_peer *) peer);
+				&nbuf_tail, peer->mac_addr.raw);
 	}
 
 	vdev->osif_rx(vdev->osif_vdev, nbuf_head);

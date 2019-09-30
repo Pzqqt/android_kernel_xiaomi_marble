@@ -705,29 +705,4 @@ cdp_host_get_radio_stats(ol_txrx_soc_handle soc,
 	return soc->ops->host_stats_ops->txrx_get_radio_stats(soc, pdev_id,
 							      buf);
 }
-
-/**
- * @brief confgure rate stats at soc
- *
- * @param soc - opaque soc handle
- * @param val - capabilities
- * @return - QDF_STATUS
- */
-static inline QDF_STATUS
-cdp_soc_configure_rate_stats(ol_txrx_soc_handle soc, uint8_t val)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Invalid Instance", __func__);
-		QDF_BUG(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!soc->ops->host_stats_ops ||
-	    !soc->ops->host_stats_ops->configure_rate_stats)
-		return QDF_STATUS_E_FAILURE;
-
-	return soc->ops->host_stats_ops->configure_rate_stats(soc, val);
-}
-
 #endif /* _CDP_TXRX_HOST_STATS_H_ */

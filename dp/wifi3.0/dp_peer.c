@@ -3428,39 +3428,6 @@ void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer)
 #endif
 
 /**
- * dp_get_peer_mac_addr_frm_id(): get mac address of the peer
- * @soc_handle: DP SOC handle
- * @peer_id:peer_id of the peer
- *
- * return: vdev_id of the vap
- */
-uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
-		uint16_t peer_id, uint8_t *peer_mac)
-{
-	struct dp_soc *soc = (struct dp_soc *)soc_handle;
-	struct dp_peer *peer;
-	uint8_t vdev_id;
-
-	peer = dp_peer_find_by_id(soc, peer_id);
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "soc %pK peer_id %d", soc, peer_id);
-
-	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "peer not found ");
-		return CDP_INVALID_VDEV_ID;
-	}
-
-	qdf_mem_copy(peer_mac, peer->mac_addr.raw, 6);
-	vdev_id = peer->vdev->vdev_id;
-
-	dp_peer_unref_del_find_by_id(peer);
-
-	return vdev_id;
-}
-
-/**
  * dp_peer_rxtid_stats: Retried Rx TID (REO queue) stats from HW
  * @peer: DP peer handle
  * @dp_stats_cmd_cb: REO command callback function

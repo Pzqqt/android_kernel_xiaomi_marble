@@ -49,7 +49,7 @@ static inline int cdp_is_target_ar900b
 
 /* WIN */
 static inline int
-cdp_mempools_attach(ol_txrx_soc_handle soc, void *ctrl_pdev)
+cdp_mempools_attach(ol_txrx_soc_handle soc)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -62,36 +62,7 @@ cdp_mempools_attach(ol_txrx_soc_handle soc, void *ctrl_pdev)
 	    !soc->ops->ctrl_ops->txrx_mempools_attach)
 		return 0;
 
-	return soc->ops->ctrl_ops->txrx_mempools_attach(ctrl_pdev);
-}
-
-/**
- * @brief set filter neighbour peers
- * @details
- *  This defines interface function to set neighbour peer filtering.
- *
- * @param soc - the pointer to soc object
- * @param pdev - the pointer physical device object
- * @param val - the enable/disable value
- * @return - int
- */
-static inline int
-cdp_set_filter_neighbour_peers(ol_txrx_soc_handle soc,
-	struct cdp_pdev *pdev, u_int32_t val)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return 0;
-	}
-
-	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_set_filter_neighbour_peers)
-		return 0;
-
-	return soc->ops->ctrl_ops->txrx_set_filter_neighbour_peers
-			(pdev, val);
+	return soc->ops->ctrl_ops->txrx_mempools_attach(soc);
 }
 
 /**
@@ -123,143 +94,6 @@ cdp_update_filter_neighbour_peers(ol_txrx_soc_handle soc,
 
 	return soc->ops->ctrl_ops->txrx_update_filter_neighbour_peers
 			(soc, vdev_id, cmd, macaddr);
-}
-
-/**
- * @brief set the safemode of the device
- * @details
- *  This flag is used to bypass the encrypt and decrypt processes when send and
- *  receive packets. It works like open AUTH mode, HW will treate all packets
- *  as non-encrypt frames because no key installed. For rx fragmented frames,
- *  it bypasses all the rx defragmentaion.
- *
- * @param vdev - the data virtual device object
- * @param val - the safemode state
- * @return - void
- */
-static inline void
-cdp_set_safemode(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev, u_int32_t val)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return;
-	}
-
-	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_set_safemode)
-		return;
-
-	soc->ops->ctrl_ops->txrx_set_safemode(vdev, val);
-}
-/**
- * @brief configure the drop unencrypted frame flag
- * @details
- *  Rx related. When set this flag, all the unencrypted frames
- *  received over a secure connection will be discarded
- *
- * @param vdev - the data virtual device object
- * @param val - flag
- * @return - void
- */
-static inline void
-cdp_set_drop_unenc(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev, u_int32_t val)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return;
-	}
-
-	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_set_drop_unenc)
-		return;
-
-	soc->ops->ctrl_ops->txrx_set_drop_unenc(vdev, val);
-}
-
-
-/**
- * @brief set the Tx encapsulation type of the VDEV
- * @details
- *  This will be used to populate the HTT desc packet type field during Tx
- *
- * @param vdev - the data virtual device object
- * @param val - the Tx encap type (htt_cmn_pkt_type)
- * @return - void
- */
-static inline void
-cdp_set_tx_encap_type(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev, enum htt_cmn_pkt_type val)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return;
-	}
-
-	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_set_tx_encap_type)
-		return;
-
-	soc->ops->ctrl_ops->txrx_set_tx_encap_type(vdev, val);
-}
-
-/**
- * @brief set the Rx decapsulation type of the VDEV
- * @details
- *  This will be used to configure into firmware and hardware which format to
- *  decap all Rx packets into, for all peers under the VDEV.
- *
- * @param vdev - the data virtual device object
- * @param val - the Rx decap mode (htt_cmn_pkt_type)
- * @return - void
- */
-static inline void
-cdp_set_vdev_rx_decap_type(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev, enum htt_cmn_pkt_type val)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return;
-	}
-
-	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type)
-		return;
-
-	soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type
-			(vdev, val);
-}
-
-/**
- * @brief get the Rx decapsulation type of the VDEV
- *
- * @param vdev - the data virtual device object
- * @return - the Rx decap type (htt_cmn_pkt_type)
- */
-static inline enum htt_cmn_pkt_type
-cdp_get_vdev_rx_decap_type(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return 0;
-	}
-
-	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_get_vdev_rx_decap_type)
-		return 0;
-
-	return soc->ops->ctrl_ops->txrx_get_vdev_rx_decap_type(vdev);
 }
 
 /**
@@ -323,77 +157,34 @@ cdp_get_pdev_reo_dest(ol_txrx_soc_handle soc, uint8_t pdev_id)
  *  updates the peer/node-related parameters within rate-control
  *  context of the peer at association.
  *
- * @param peer - pointer to the node's object
+ * @param soc - pointer to the soc
+ * @param vdev_id - id of the pointer to vdev
+ * @param peer_mac - mac address of the node's object
  * @authorize - either to authorize or unauthorize peer
  *
- * @return none
+ * @return QDF_STATUS
  */
-static inline void
-cdp_peer_authorize(ol_txrx_soc_handle soc,
-	struct cdp_peer *peer, u_int32_t authorize)
+static inline QDF_STATUS
+cdp_peer_authorize(ol_txrx_soc_handle soc, uint8_t vdev_id, uint8_t *peer_mac,
+		   u_int32_t authorize)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->ctrl_ops ||
 	    !soc->ops->ctrl_ops->txrx_peer_authorize)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->ctrl_ops->txrx_peer_authorize
-			(peer, authorize);
-}
-
-/* Should be ol_txrx_ctrl_api.h */
-static inline void cdp_set_mesh_mode
-(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, u_int32_t val)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return;
-	}
-
-	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_set_mesh_mode)
-		return;
-
-	soc->ops->ctrl_ops->txrx_set_mesh_mode(vdev, val);
-}
-
-/**
- * @brief set mesh rx filter
- * @details based on the bits enabled in the filter packets has to be dropped.
- *
- * @param soc - pointer to the soc
- * @param vdev - the data virtual device object
- * @param val - value to be set
- * @return - void
- */
-static inline
-void cdp_set_mesh_rx_filter(ol_txrx_soc_handle soc,
-				struct cdp_vdev *vdev, uint32_t val)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return;
-	}
-
-	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_set_mesh_rx_filter)
-		return;
-
-	soc->ops->ctrl_ops->txrx_set_mesh_rx_filter(vdev, val);
+	return soc->ops->ctrl_ops->txrx_peer_authorize
+			(soc, vdev_id, peer_mac, authorize);
 }
 
 static inline void cdp_tx_flush_buffers
-(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -406,65 +197,179 @@ static inline void cdp_tx_flush_buffers
 	    !soc->ops->ctrl_ops->tx_flush_buffers)
 		return;
 
-	soc->ops->ctrl_ops->tx_flush_buffers(vdev);
+	soc->ops->ctrl_ops->tx_flush_buffers(soc, vdev_id);
 }
 
-static inline uint32_t cdp_txrx_get_vdev_param(ol_txrx_soc_handle soc,
-					       struct cdp_vdev *vdev,
-					       enum cdp_vdev_param_type type)
+static inline QDF_STATUS cdp_txrx_get_vdev_param(ol_txrx_soc_handle soc,
+						 uint8_t vdev_id,
+						 enum cdp_vdev_param_type type,
+						 cdp_config_param_type *val)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return -1;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->ctrl_ops ||
 	    !soc->ops->ctrl_ops->txrx_get_vdev_param) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: callback not registered:", __func__);
-		return -1;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return soc->ops->ctrl_ops->txrx_get_vdev_param(vdev, type);
+	return soc->ops->ctrl_ops->txrx_get_vdev_param(soc, vdev_id,
+						       type, val);
 }
 
-static inline void cdp_txrx_set_vdev_param(ol_txrx_soc_handle soc,
-		struct cdp_vdev *vdev, enum cdp_vdev_param_type type,
-		uint32_t val)
+static inline QDF_STATUS
+cdp_txrx_set_vdev_param(ol_txrx_soc_handle soc,
+			uint8_t vdev_id, enum cdp_vdev_param_type type,
+			cdp_config_param_type val)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->ctrl_ops ||
 	    !soc->ops->ctrl_ops->txrx_set_vdev_param)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->ctrl_ops->txrx_set_vdev_param(vdev, type, val);
+	return soc->ops->ctrl_ops->txrx_set_vdev_param(soc, vdev_id,
+						       type, val);
 }
 
-static inline void
-cdp_peer_set_nawds(ol_txrx_soc_handle soc,
-		struct cdp_peer *peer, uint8_t value)
+static inline QDF_STATUS
+cdp_txrx_set_psoc_param(ol_txrx_soc_handle soc,
+			enum cdp_psoc_param_type type,
+			cdp_config_param_type val)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_peer_set_nawds)
-		return;
+	    !soc->ops->ctrl_ops->txrx_set_psoc_param)
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->ctrl_ops->txrx_peer_set_nawds
-			(peer, value);
+	return soc->ops->ctrl_ops->txrx_set_psoc_param(soc, type, val);
+}
+
+static inline QDF_STATUS
+cdp_txrx_get_psoc_param(ol_txrx_soc_handle soc,
+			enum cdp_psoc_param_type type,
+			cdp_config_param_type *val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_get_psoc_param)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_get_psoc_param(soc, type, val);
+}
+
+/**
+ * cdp_txrx_set_pdev_param() - set pdev parameter
+ * @soc: opaque soc handle
+ * @pdev_id: id of data path pdev handle
+ * @type: param type
+ * @val: value
+ *
+ * Return: status: 0 - Success, non-zero: Failure
+ */
+static inline QDF_STATUS cdp_txrx_set_pdev_param(ol_txrx_soc_handle soc,
+						 uint8_t pdev_id,
+						 enum cdp_pdev_param_type type,
+						 cdp_config_param_type val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_pdev_param)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_set_pdev_param
+			(soc, pdev_id, type, val);
+}
+
+/**
+ * cdp_txrx_set_peer_param() - set pdev parameter
+ * @soc: opaque soc handle
+ * @vdev_id: id of data path vdev handle
+ * @peer_mac: peer mac address
+ * @type: param type
+ * @val: value
+ *
+ * Return: status: 0 - Success, non-zero: Failure
+ */
+static inline QDF_STATUS cdp_txrx_set_peer_param(ol_txrx_soc_handle soc,
+						 uint8_t vdev_id,
+						 uint8_t *peer_mac,
+						 enum cdp_peer_param_type type,
+						 cdp_config_param_type val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_peer_param)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_set_peer_param
+			(soc, vdev_id, peer_mac, type, val);
+}
+
+/**
+ * cdp_txrx_get_peer_param() - set pdev parameter
+ * @soc: opaque soc handle
+ * @vdev_id: id of data path vdev handle
+ * @peer_mac: peer mac address
+ * @type: param type
+ * @val: address of buffer
+ *
+ * Return: status
+ */
+static inline QDF_STATUS cdp_txrx_get_peer_param(ol_txrx_soc_handle soc,
+						 uint8_t vdev_id,
+						 uint8_t *peer_mac,
+						 enum cdp_peer_param_type type,
+						 cdp_config_param_type *val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_get_peer_param)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_get_peer_param
+			(soc, vdev_id, peer_mac, type, val);
 }
 
 #ifdef QCA_MULTIPASS_SUPPORT
@@ -489,32 +394,32 @@ cdp_peer_set_vlan_id(ol_txrx_soc_handle soc, uint8_t vdev_id,
 #endif
 
 /**
- * cdp_txrx_set_pdev_param() - set pdev parameter
+ * cdp_txrx_get_pdev_param() - get pdev parameter
  * @soc: opaque soc handle
- * @pdev: data path pdev handle
+ * @pdev_id: id of data path pdev handle
  * @type: param type
- * @val: value of pdev_tx_capture
+ * @value: address of value buffer
  *
- * Return: status: 0 - Success, non-zero: Failure
+ * Return: status
  */
-static inline QDF_STATUS cdp_txrx_set_pdev_param(ol_txrx_soc_handle soc,
-						 struct cdp_pdev *pdev,
+static inline QDF_STATUS cdp_txrx_get_pdev_param(ol_txrx_soc_handle soc,
+						 uint8_t pdev_id,
 						 enum cdp_pdev_param_type type,
-						 uint32_t val)
+						 cdp_config_param_type *value)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return QDF_STATUS_SUCCESS;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_set_pdev_param)
-		return QDF_STATUS_SUCCESS;
+	    !soc->ops->ctrl_ops->txrx_get_pdev_param)
+		return QDF_STATUS_E_FAILURE;
 
-	return soc->ops->ctrl_ops->txrx_set_pdev_param
-			(pdev, type, val);
+	return soc->ops->ctrl_ops->txrx_get_pdev_param
+			(soc, pdev_id, type, value);
 }
 
 /**
