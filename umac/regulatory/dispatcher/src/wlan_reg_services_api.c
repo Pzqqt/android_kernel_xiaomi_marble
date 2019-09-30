@@ -959,4 +959,15 @@ enum reg_wifi_band wlan_reg_freq_to_band(uint16_t freq)
 {
 	return reg_freq_to_band(freq);
 }
+
+uint16_t wlan_reg_min_chan_freq(void)
+{
+	return reg_min_chan_freq();
+}
+
+uint16_t wlan_reg_max_chan_freq(void)
+{
+	return reg_max_chan_freq();
+}
+
 #endif /* CONFIG CHAN FREQ API */

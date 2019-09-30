@@ -889,5 +889,20 @@ bool reg_is_frequency_valid_5g_sbs(uint16_t curfreq, uint16_t newfreq);
  * Return: wifi band
  */
 enum reg_wifi_band reg_freq_to_band(uint16_t freq);
+
+/**
+ * reg_min_chan_freq() - minimum channel frequency supported
+ *
+ * Return: channel frequency
+ */
+uint16_t reg_min_chan_freq(void);
+
+/**
+ * reg_max_chan_freq() - maximum channel frequency supported
+ *
+ * Return: channel frequency
+ */
+uint16_t reg_max_chan_freq(void);
+
 #endif /* CONFIG_CHAN_FREQ_API */
 #endif

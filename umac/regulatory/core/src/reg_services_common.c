@@ -3352,6 +3352,16 @@ bool reg_is_frequency_valid_5g_sbs(uint16_t curfreq, uint16_t newfreq)
 	return REG_IS_FREQUENCY_VALID_5G_SBS(curfreq, newfreq);
 }
 
+uint16_t reg_min_chan_freq(void)
+{
+	return channel_map[MIN_24GHZ_CHANNEL].center_freq;
+}
+
+uint16_t reg_max_chan_freq(void)
+{
+	return channel_map[NUM_CHANNELS - 1].center_freq;
+}
+
 bool reg_is_same_band_freqs(uint16_t freq1, uint16_t freq2)
 {
 	return (freq1 && freq2 && ((REG_IS_6GHZ_FREQ(freq1) &&

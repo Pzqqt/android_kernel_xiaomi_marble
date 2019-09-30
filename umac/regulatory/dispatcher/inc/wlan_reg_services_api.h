@@ -1087,5 +1087,20 @@ bool wlan_reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
  * Return: wifi band
  */
 enum reg_wifi_band wlan_reg_freq_to_band(uint16_t freq);
+
+/**
+ * wlan_reg_min_chan_freq () - minimum channel frequency supported
+ *
+ * Return: frequency
+ */
+uint16_t wlan_reg_min_chan_freq(void);
+
+/**
+ * wlan_reg_max_chan_freq () - Checks chan state f
+ *
+ * Return: frequency
+ */
+uint16_t wlan_reg_max_chan_freq(void);
+
 #endif /*CONFIG_CHAN_FREQ_API */
 #endif
