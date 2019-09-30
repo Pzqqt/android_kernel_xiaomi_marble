@@ -77,7 +77,7 @@ struct wlan_peer_rx_rate_stats {
  * @rx: rx rate statistics
  * @mac_addr: peer MAC address
  * @peer_cookie: cookie for unique session of peer
- * @pdev: dp pdev
+ * @pdev_id: id of dp pdev
  */
 struct wlan_peer_rate_stats_ctx {
 	struct wlan_peer_tx_rate_stats tx;
@@ -85,6 +85,7 @@ struct wlan_peer_rate_stats_ctx {
 	uint8_t mac_addr[WLAN_MAC_ADDR_LEN];
 	uint64_t peer_cookie;
 	struct cdp_pdev *pdev;
+	uint8_t pdev_id;
 };
 
 /**

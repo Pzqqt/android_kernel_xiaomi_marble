@@ -723,18 +723,21 @@ void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
 
 /**
  * dp_set_vlan_groupkey: set vlan map for vdev
- * @vdev_handle: pointer to vdev
+ * @soc: pointer to soc
+ * @vdev_id : id of vdev
  * @vlan_id: vlan_id
  * @group_key: group key for vlan
  *
  * return: set success/failure
  */
-QDF_STATUS dp_set_vlan_groupkey(struct cdp_vdev *vdev_handle,
+QDF_STATUS dp_set_vlan_groupkey(struct cdp_soc_t *soc, uint8_t vdev_id,
 		uint16_t vlan_id, uint16_t group_key)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						    vdev_id);
 
-	if (!vdev->multipass_en)
+	if (!vdev || !vdev->multipass_en)
 		return QDF_STATUS_E_INVAL;
 
 	if (!vdev->iv_vlan_map) {
