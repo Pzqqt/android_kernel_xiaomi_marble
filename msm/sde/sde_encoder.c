@@ -777,8 +777,8 @@ void sde_encoder_helper_update_intf_cfg(
 	struct sde_hw_intf_cfg_v1 *intf_cfg;
 	enum sde_3d_blend_mode mode_3d;
 
-	if (!phys_enc) {
-		SDE_ERROR("invalid arg, encoder %d\n", !phys_enc);
+	if (!phys_enc || !phys_enc->hw_pp) {
+		SDE_ERROR("invalid args, encoder %d\n", !phys_enc);
 		return;
 	}
 
