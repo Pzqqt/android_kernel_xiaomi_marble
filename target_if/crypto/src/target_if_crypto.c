@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -195,16 +195,14 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 					  &req->keyval[0],
 					  req->keylen);
 	params.key_len = req->keylen;
-	if (peer) {
-		/* Set PN check & security type in data path */
-		qdf_mem_copy(&pn[0], &params.key_rsc_ctr, sizeof(pn));
-		cdp_set_pn_check(soc, vdev->vdev_objmgr.vdev_id, req->macaddr,
-				 sec_type, pn);
-		cdp_set_key(soc, peer, pairwise, (uint32_t *)(req->keyval +
-			    WLAN_CRYPTO_IV_SIZE + WLAN_CRYPTO_MIC_LEN));
-	} else {
-		target_if_info("peer not found");
-	}
+
+	/* Set PN check & security type in data path */
+	qdf_mem_copy(&pn[0], &params.key_rsc_ctr, sizeof(pn));
+	cdp_set_pn_check(soc, vdev->vdev_objmgr.vdev_id, req->macaddr,
+			 sec_type, pn);
+	cdp_set_key(soc, vdev->vdev_objmgr.vdev_id, req->macaddr, pairwise,
+		    (uint32_t *)(req->keyval + WLAN_CRYPTO_IV_SIZE +
+		     WLAN_CRYPTO_MIC_LEN));
 
 	target_if_debug("vdev_id:%d, key: idx:%d,len:%d", params.vdev_id,
 			params.key_idx, params.key_len);

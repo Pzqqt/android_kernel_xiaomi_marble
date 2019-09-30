@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -308,24 +308,27 @@ QDF_STATUS target_if_vdev_set_tx_rx_decap_type(struct wlan_objmgr_vdev *vdev,
 					       uint32_t value)
 {
 	ol_txrx_soc_handle soc_txrx_handle;
-	struct cdp_vdev *vdev_txrx_handle;
 	struct wlan_objmgr_psoc *psoc;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	cdp_config_param_type val = {0};
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	soc_txrx_handle = wlan_psoc_get_dp_handle(psoc);
-	vdev_txrx_handle = wlan_vdev_get_dp_handle(vdev);
 
-	if (!soc_txrx_handle || !vdev_txrx_handle)
+	if (!soc_txrx_handle)
 		return QDF_STATUS_E_INVAL;
 
-	if (param_id ==  WLAN_MLME_CFG_TX_ENCAP_TYPE)
-		cdp_set_tx_encap_type(soc_txrx_handle,
-				      (struct cdp_vdev *)vdev_txrx_handle,
-				      value);
-	else if (param_id == WLAN_MLME_CFG_RX_DECAP_TYPE)
-		cdp_set_vdev_rx_decap_type(soc_txrx_handle,
-					   (struct cdp_vdev *)vdev_txrx_handle,
-					   value);
+	if (param_id ==  WLAN_MLME_CFG_TX_ENCAP_TYPE) {
+		val.cdp_vdev_param_tx_encap = value;
+		return cdp_txrx_set_vdev_param(soc_txrx_handle,
+					       vdev_id, CDP_TX_ENCAP_TYPE,
+					       val);
+	} else if (param_id == WLAN_MLME_CFG_RX_DECAP_TYPE) {
+		val.cdp_vdev_param_rx_decap = value;
+		return cdp_txrx_set_vdev_param(soc_txrx_handle,
+					       vdev_id, CDP_RX_DECAP_TYPE,
+					       val);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
