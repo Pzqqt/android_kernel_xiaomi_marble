@@ -8552,7 +8552,7 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 	A_STATUS ret;
 	bool connected = false;
 	uint32_t ipa_tx_packets = 0, ipa_rx_packets = 0;
-	uint64_t sta_tx_bytes, sap_tx_bytes;
+	uint64_t sta_tx_bytes = 0, sap_tx_bytes = 0;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		goto stop_work;
