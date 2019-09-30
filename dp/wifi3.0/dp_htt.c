@@ -268,9 +268,6 @@ dp_tx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 		return;
 
 	if (ppdu->completion_status != HTT_PPDU_STATS_USER_STATUS_OK) {
-		DP_STATS_INC(peer, tx.retries,
-			     (ppdu->long_retries + ppdu->short_retries));
-		DP_STATS_INC(peer, tx.tx_failed, ppdu->failed_msdus);
 		return;
 	}
 
@@ -2945,8 +2942,18 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 
 		ppdu_desc->user[i].cookie = (void *)peer->wlanstats_ctx;
 		if (ppdu_desc->user[i].completion_status !=
-		    HTT_PPDU_STATS_USER_STATUS_OK)
+		    HTT_PPDU_STATS_USER_STATUS_OK) {
 			tlv_bitmap_expected = tlv_bitmap_expected & 0xFF;
+			if ((ppdu_desc->user[i].tid < CDP_DATA_TID_MAX ||
+			     (ppdu_desc->user[i].tid == CDP_DATA_NON_QOS_TID)) &&
+			      (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA)) {
+				DP_STATS_INC(peer, tx.retries,
+					     (ppdu_desc->user[i].long_retries +
+					      ppdu_desc->user[i].short_retries));
+				DP_STATS_INC(peer, tx.tx_failed,
+					     ppdu_desc->user[i].failed_msdus);
+			}
+		}
 
 		/*
 		 * different frame like DATA, BAR or CTRL has different
@@ -2970,6 +2977,7 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 		 * Update tx stats for data frames having Qos as well as
 		 * non-Qos data tid
 		 */
+
 		if ((ppdu_desc->user[i].tid < CDP_DATA_TID_MAX ||
 		     (ppdu_desc->user[i].tid == CDP_DATA_NON_QOS_TID)) &&
 		      (ppdu_desc->frame_type != CDP_PPDU_FTYPE_CTRL)) {
