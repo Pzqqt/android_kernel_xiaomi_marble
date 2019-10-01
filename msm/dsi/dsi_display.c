@@ -4489,8 +4489,13 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 
 	if ((mode->dsi_mode_flags & DSI_MODE_FLAG_DMS) &&
 			(display->panel->panel_mode == DSI_OP_CMD_MODE)) {
+		u64 cur_bitclk = display->panel->cur_mode->timing.clk_rate_hz;
+		u64 to_bitclk = mode->timing.clk_rate_hz;
 		commit_phy_timing = true;
-		atomic_set(&display->clkrate_change_pending, 1);
+
+		/* No need to set clkrate pending flag if clocks are same */
+		if (cur_bitclk != to_bitclk)
+			atomic_set(&display->clkrate_change_pending, 1);
 
 		dsi_display_validate_dms_fps(display->panel->cur_mode, mode);
 	}
