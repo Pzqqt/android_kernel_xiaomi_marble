@@ -1200,7 +1200,7 @@
  * @Max: 1
  * @Default: 0
  *
- * By default the value is 0 and QCOM roam algorithm will be used.
+ * By default the value is 0 and default roam algorithm will be used.
  * When the value is 1, the V2 roaming algorithm will be used:
  * For this V2 algo, AP score calculation is based on below equation:
  * AP Score = (RSSIfactor * rssiweight(0.65)) + (CUfactor *cuweight(0.35))
