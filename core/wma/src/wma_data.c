@@ -3034,8 +3034,7 @@ void wma_tx_abort(uint8_t vdev_id)
 	}
 	handle = wlan_vdev_get_dp_handle(iface->vdev);
 	if (!handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %pK",
-			 __func__, handle);
+		WMA_LOGE("%s: Failed to get dp handle", __func__);
 		return;
 	}
 	bssid = wma_get_vdev_bssid(iface->vdev);

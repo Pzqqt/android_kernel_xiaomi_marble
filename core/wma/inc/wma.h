@@ -1897,8 +1897,7 @@ void wma_vdev_update_pause_bitmap(uint8_t vdev_id, uint16_t value)
 	}
 
 	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-		WMA_LOGE("%s: Failed to get iface handle: NULL",
-			 __func__);
+		WMA_LOGE("%s: Failed to get dp handle", __func__);
 		return;
 	}
 
@@ -1930,8 +1929,7 @@ uint16_t wma_vdev_get_pause_bitmap(uint8_t vdev_id)
 	}
 
 	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-		WMA_LOGE("%s: Failed to get iface handle: NULL",
-			 __func__);
+		WMA_LOGE("%s: Failed to get dp handle", __func__);
 		return 0;
 	}
 
@@ -1992,8 +1990,7 @@ static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
 	}
 
 	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-		WMA_LOGE("%s: Failed to get iface handle:NULL",
-			 __func__);
+		WMA_LOGE("%s: Failed to get dp handle", __func__);
 		return 0;
 	}
 
@@ -2116,8 +2113,7 @@ void wma_vdev_set_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 	}
 
 	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-		WMA_LOGE("%s: Failed to get iface handle: NULL",
-			 __func__);
+		WMA_LOGE("%s: Failed to get dp handle", __func__);
 		return;
 	}
 
@@ -2150,8 +2146,7 @@ void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 	}
 
 	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-		WMA_LOGE("%s: Failed to get iface handle: NULL",
-			 __func__);
+		WMA_LOGE("%s: Failed to get dp handle", __func__);
 		return;
 	}
 
@@ -2650,5 +2645,17 @@ QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id);
  */
 QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
 				    struct bss_params *add_bss);
+
+/**
+ * wma_release_pending_vdev_refs() - release vdev ref taken by interface txrx
+ * node and delete all the peers attached to this vdev.
+ *
+ * This API loop and release vdev ref taken by all iface and all the peers
+ * attached to the vdev, this need to be called on recovery to flush vdev
+ * and peer.
+ *
+ * Return: void.
+ */
+void wma_release_pending_vdev_refs(void);
 
 #endif

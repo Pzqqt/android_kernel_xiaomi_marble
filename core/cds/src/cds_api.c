@@ -1186,6 +1186,11 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 	}
 
 	gp_cds_context->mac_context = NULL;
+	/*
+	 * Call this before cdp soc detatch as it used the cdp soc to free the
+	 * cdp vdev if any.
+	 */
+	wma_release_pending_vdev_refs();
 
 	cdp_soc_detach(gp_cds_context->dp_soc);
 	gp_cds_context->dp_soc = NULL;

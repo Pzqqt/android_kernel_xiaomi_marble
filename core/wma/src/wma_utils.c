@@ -1994,7 +1994,7 @@ QDF_STATUS wma_process_ll_stats_clear_req(tp_wma_handle wma,
 	}
 
 	if (!wlan_vdev_get_dp_handle(vdev)) {
-		WMA_LOGE("%s: vdev_id %d handle is NULL",
+		WMA_LOGE("%s: vdev_id %d dp handle is NULL",
 			 __func__, clearReq->staId);
 		return QDF_STATUS_E_FAILURE;
 	}

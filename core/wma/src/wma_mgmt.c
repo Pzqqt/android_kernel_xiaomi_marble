@@ -554,7 +554,8 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 	dp_handle = wlan_vdev_get_dp_handle
 			(wma->interfaces[resp_event->vdev_id].vdev);
 	if (!dp_handle) {
-		WMA_LOGE("%s: The session does not exist", __func__);
+		WMA_LOGE("%s: Failed to get dp handle for vdev id %d",
+			 __func__, resp_event->vdev_id);
 		return -EINVAL;
 	}
 

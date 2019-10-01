@@ -560,6 +560,26 @@ error:
 	return qdf_status;
 }
 
+static void
+wma_cdp_vdev_detach(ol_txrx_soc_handle soc, tp_wma_handle wma_handle,
+		    uint8_t vdev_id)
+{
+	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
+	struct wlan_objmgr_vdev *vdev = iface->vdev;
+	struct cdp_vdev *cdp_vdev;
+
+	if (!vdev) {
+		WMA_LOGE(FL("vdev is NULL"));
+		return;
+	}
+
+	cdp_vdev = wlan_vdev_get_dp_handle(vdev);
+	if (soc && cdp_vdev) {
+		wlan_vdev_set_dp_handle(vdev, NULL);
+		cdp_vdev_detach(soc, cdp_vdev, NULL, NULL);
+	}
+}
+
 /**
  * wma_release_vdev_ref() - Release vdev object reference count
  * @iface: wma interface txrx node
@@ -620,20 +640,21 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 
 	if (!soc) {
 		WMA_LOGE("%s:SOC context is NULL", __func__);
-		goto out;
+		goto rel_ref;
 	}
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
 	if (!vdev_mlme) {
 		wma_err("Failed to get vdev mlme obj for vdev id %d",
 			del_vdev_req_param->vdev_id);
-		goto out;
+		goto rel_ref;
 	}
 
 	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
 		wma_handle_monitor_mode_vdev_detach(wma_handle, vdev_id);
 
 	iface->del_staself_req = del_vdev_req_param;
+	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 	wma_release_vdev_ref(iface);
 
 	status = vdev_mgr_delete_send(vdev_mlme);
@@ -644,9 +665,10 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 
 	return status;
 
-out:
-	wlan_vdev_set_dp_handle(iface->vdev, NULL);
+rel_ref:
+	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 	wma_release_vdev_ref(iface);
+out:
 	wma_vdev_deinit(iface);
 	qdf_mem_zero(iface, sizeof(*iface));
 	wma_vdev_init(iface);
@@ -670,6 +692,7 @@ static void wma_force_objmgr_vdev_peer_cleanup(tp_wma_handle wma,
 	struct wlan_objmgr_peer *peer = NULL;
 	struct wlan_objmgr_peer *peer_next = NULL;
 	qdf_list_t *peer_list;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!iface->vdev)
 		return;
@@ -681,6 +704,8 @@ static void wma_force_objmgr_vdev_peer_cleanup(tp_wma_handle wma,
 	 * wont be deleted for the vdev.
 	 */
 	vdev = iface->vdev;
+
+	wma_cdp_vdev_detach(soc, wma, wlan_vdev_get_id(vdev));
 
 	WMA_LOGI("%s: SSR: force cleanup peers in vdev(%d)", __func__,
 		 wlan_vdev_get_id(vdev));
@@ -713,8 +738,9 @@ static void wma_force_objmgr_vdev_peer_cleanup(tp_wma_handle wma,
 	iface->peer_count = 0;
 }
 
-void wma_release_vdev_and_peer_ref(tp_wma_handle wma,
-				   struct wma_txrx_node *iface)
+static void
+wma_release_vdev_and_peer_ref(tp_wma_handle wma,
+			      struct wma_txrx_node *iface)
 {
 	if (!iface) {
 		WMA_LOGE("iface is NULL");
@@ -723,6 +749,22 @@ void wma_release_vdev_and_peer_ref(tp_wma_handle wma,
 
 	wma_force_objmgr_vdev_peer_cleanup(wma, iface);
 	wma_release_vdev_ref(iface);
+}
+
+void wma_release_pending_vdev_refs(void)
+{
+	int i;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	/* validate the wma_handle */
+	if (!wma) {
+		WMA_LOGE("%s: Invalid wma handle", __func__);
+		return;
+	}
+
+	for (i = 0; i < wma->max_bssid; i++)
+		/* Release peer and vdev ref hold by wma if not already done */
+		wma_release_vdev_and_peer_ref(wma, &wma->interfaces[i]);
 }
 
 static bool wma_vdev_uses_self_peer(uint32_t vdev_type, uint32_t vdev_subtype)
@@ -799,8 +841,8 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	}
 
 	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
-			 vdev_id);
+		WMA_LOGE("%s: Failed to get dp handle for vdev id %d",
+			 __func__, vdev_id);
 		goto send_rsp;
 	}
 
@@ -2102,7 +2144,7 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct del_bss_resp *resp)
 	}
 	handle = wlan_vdev_get_dp_handle(iface->vdev);
 	if (!handle) {
-		WMA_LOGE("%s vdev id %d is already deleted",
+		WMA_LOGE("%s: Failed to get dp handle for vdev id %d",
 			 __func__, vdev_id);
 		if (resp)
 			qdf_mem_free(resp);
@@ -2324,7 +2366,7 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 		uint8_t type;
 
 		if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-			WMA_LOGE("%s vdev id %d is already deleted",
+			WMA_LOGE("%s: Failed to get dp handle for vdev id %d",
 				 __func__, resp_event->vdev_id);
 			status = -EINVAL;
 			goto free_params;
@@ -2445,17 +2487,22 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		QDF_STATUS_SUCCESS)
 		return QDF_STATUS_E_FAILURE;
 
+	vdev_id = wlan_vdev_get_id(vdev);
+	wma_handle->interfaces[vdev_id].vdev = vdev;
+	wma_handle->interfaces[vdev_id].vdev_active = true;
+	txrx_vdev_handle = wlan_vdev_get_dp_handle(vdev);
+	if (!txrx_vdev_handle) {
+		WMA_LOGE("%s: Failed to get dp handle for vdev id %d",
+			 __func__, vdev_id);
+		goto end;
+	}
+
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
 		WMA_LOGE("%s: Failed to get vdev mlme obj!", __func__);
-		return QDF_STATUS_E_FAILURE;
+		goto end;
 	}
 
-	vdev_id = wlan_vdev_get_id(vdev);
-	txrx_vdev_handle = wlan_vdev_get_dp_handle(vdev);
-	wma_handle->interfaces[vdev_id].vdev = vdev;
-
-	wma_handle->interfaces[vdev_id].vdev_active = true;
 	wma_vdev_update_pause_bitmap(vdev_id, 0);
 
 	wma_handle->interfaces[vdev_id].type =
@@ -2707,9 +2754,10 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 
 end:
+	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
+	wma_handle->interfaces[vdev_id].vdev = NULL;
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	wma_handle->interfaces[vdev_id].vdev_active = false;
-	txrx_vdev_handle = NULL;
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -3385,7 +3433,7 @@ QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
 
 	vdev = wlan_vdev_get_dp_handle(iface->vdev);
 	if (!vdev) {
-		wma_err("Failed to get vdev handle: %d", vdev_id);
+		wma_err("Failed to get dp handle fro vdev id %d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 

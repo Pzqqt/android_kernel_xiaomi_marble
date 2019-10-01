@@ -4600,12 +4600,8 @@ QDF_STATUS wma_wmi_service_close(void)
 	wmi_unified_detach(wma_handle->wmi_handle);
 	wma_handle->wmi_handle = NULL;
 
-	for (i = 0; i < wma_handle->max_bssid; i++) {
-		/* Release peer and vdev ref hold by wma if not already done */
-		wma_release_vdev_and_peer_ref(wma_handle,
-					      &wma_handle->interfaces[i]);
+	for (i = 0; i < wma_handle->max_bssid; i++)
 		wma_vdev_deinit(&wma_handle->interfaces[i]);
-	}
 
 	qdf_mem_free(wma_handle->interfaces);
 

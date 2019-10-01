@@ -708,20 +708,6 @@ struct cdp_vdev *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 			struct del_vdev_params *pdel_vdev_req_param);
 
-/**
- * wma_release_vdev_and_peer_ref() - release vdev ref taken by interface txrx
- * node and delete all the peers attached to this vdev
- * @wma - wma handle
- * @iface: wma interface txrx node
- *
- * This API release vdev ref taken by iface and all the peers attached to this
- * vdev, this need to be called on recovery to flush vdev and peer.
- *
- * Return: void.
- */
-void wma_release_vdev_and_peer_ref(tp_wma_handle wma,
-				   struct wma_txrx_node *iface);
-
 QDF_STATUS wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value);
 
