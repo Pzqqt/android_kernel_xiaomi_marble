@@ -721,6 +721,11 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
+	if (!iface->vdev) {
+		WMA_LOGE("%s: vdev is NULL for vdev_%d", __func__, vdev_id);
+		return;
+	}
+
 	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("vdev id %d is not active", vdev_id);
 		return;
@@ -864,6 +869,10 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
+	if (!iface->vdev) {
+		WMA_LOGE("%s: vdev is NULL for vdev_%d", __func__, vdev_id);
+		return;
+	}
 	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("vdev id %d is not active", vdev_id);
 		return;

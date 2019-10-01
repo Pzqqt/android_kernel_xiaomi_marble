@@ -793,6 +793,11 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 	uint32_t vdev_stop_type;
 
+	if (!iface->vdev) {
+		WMA_LOGE("vdev %d is NULL", vdev_id);
+		goto send_rsp;
+	}
+
 	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
 			 vdev_id);
@@ -2087,6 +2092,14 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct del_bss_resp *resp)
 
 	vdev_id = resp->vdev_id;
 	iface = &wma->interfaces[vdev_id];
+
+	if (!iface->vdev) {
+		WMA_LOGE("%s vdev id %d iface->vdev is NULL",
+			 __func__, vdev_id);
+		if (resp)
+			qdf_mem_free(resp);
+		return;
+	}
 	handle = wlan_vdev_get_dp_handle(iface->vdev);
 	if (!handle) {
 		WMA_LOGE("%s vdev id %d is already deleted",
@@ -4849,6 +4862,11 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id)
 	}
 
 	iface = &wma->interfaces[vdev_id];
+	if (!iface->vdev) {
+		WMA_LOGE("%s: vdev is NULL for vdev_%d", __func__, vdev_id);
+		goto fail_del_bss_ho_fail;
+	}
+
 	handle = wlan_vdev_get_dp_handle(iface->vdev);
 	if (!iface || !handle) {
 		WMA_LOGE("%s vdev id %d is already deleted",
@@ -4993,7 +5011,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 	}
 
 	iface = &wma->interfaces[vdev_id];
-	if (!iface || !wlan_vdev_get_dp_handle(iface->vdev)) {
+	if (!iface || !iface->vdev || !wlan_vdev_get_dp_handle(iface->vdev)) {
 		WMA_LOGE("%s vdev id %d is already deleted",
 			 __func__, vdev_id);
 		goto out;

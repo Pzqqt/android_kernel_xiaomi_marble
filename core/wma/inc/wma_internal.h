@@ -541,6 +541,9 @@ struct cdp_vdev *wma_find_vdev_by_id(tp_wma_handle wma, uint8_t vdev_id)
 	if (vdev_id >= wma->max_bssid)
 		return NULL;
 
+	if (!wma->interfaces[vdev_id].vdev)
+		return NULL;
+
 	return wlan_vdev_get_dp_handle(wma->interfaces[vdev_id].vdev);
 }
 

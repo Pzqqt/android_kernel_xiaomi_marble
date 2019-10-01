@@ -1987,6 +1987,12 @@ QDF_STATUS wma_process_ll_stats_clear_req(tp_wma_handle wma,
 	}
 
 	vdev = wma->interfaces[clearReq->staId].vdev;
+	if (!vdev) {
+		WMA_LOGE("%s: vdev is NULL for vdev_%d",
+			 __func__, clearReq->staId);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (!wlan_vdev_get_dp_handle(vdev)) {
 		WMA_LOGE("%s: vdev_id %d handle is NULL",
 			 __func__, clearReq->staId);

@@ -1891,9 +1891,8 @@ void wma_vdev_update_pause_bitmap(uint8_t vdev_id, uint16_t value)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface) {
-		WMA_LOGE("%s: Failed to get iface: NULL",
-			 __func__);
+	if (!iface || !iface->vdev) {
+		WMA_LOGE("%s: Vdev is NULL", __func__);
 		return;
 	}
 
@@ -1925,9 +1924,8 @@ uint16_t wma_vdev_get_pause_bitmap(uint8_t vdev_id)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface) {
-		WMA_LOGE("%s: Failed to get iface: NULL",
-			 __func__);
+	if (!iface || !iface->vdev) {
+		WMA_LOGE("%s: Vdev is NULL", __func__);
 		return 0;
 	}
 
@@ -1962,9 +1960,8 @@ struct cdp_vdev *wma_vdev_get_vdev_dp_handle(uint8_t vdev_id)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface) {
-		WMA_LOGE("%s: Failed to get iface: NULL",
-			 __func__);
+	if (!iface || !iface->vdev) {
+		WMA_LOGE("%s: Vdev is NULL", __func__);
 		return NULL;
 	}
 
@@ -1989,9 +1986,8 @@ static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface) {
-		WMA_LOGE("%s: Failed to get iface: NULL",
-			 __func__);
+	if (!iface || !iface->vdev) {
+		WMA_LOGE("%s: Vdev is NULL", __func__);
 		return 0;
 	}
 
@@ -2027,7 +2023,7 @@ QDF_STATUS wma_vdev_get_dtim_period(uint8_t vdev_id, uint8_t *value)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface || !wlan_vdev_get_dp_handle(iface->vdev))
+	if (!iface || !iface->vdev || !wlan_vdev_get_dp_handle(iface->vdev))
 		return QDF_STATUS_E_FAILURE;
 
 	*value = iface->dtimPeriod;
@@ -2057,7 +2053,7 @@ QDF_STATUS wma_vdev_get_beacon_interval(uint8_t  vdev_id, uint16_t *value)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface || !wlan_vdev_get_dp_handle(iface->vdev))
+	if (!iface || !iface->vdev || !wlan_vdev_get_dp_handle(iface->vdev))
 		return QDF_STATUS_E_FAILURE;
 
 	*value = iface->beaconInterval;
@@ -2114,9 +2110,8 @@ void wma_vdev_set_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface) {
-		WMA_LOGE("%s: Failed to get iface: NULL",
-			 __func__);
+	if (!iface || !iface->vdev) {
+		WMA_LOGE("%s: Vdev is NULL", __func__);
 		return;
 	}
 
@@ -2149,9 +2144,8 @@ void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 
 	iface = &wma->interfaces[vdev_id];
 
-	if (!iface) {
-		WMA_LOGE("%s: Failed to get iface: NULL",
-			 __func__);
+	if (!iface || !iface->vdev) {
+		WMA_LOGE("%s: Vdev is NULL", __func__);
 		return;
 	}
 

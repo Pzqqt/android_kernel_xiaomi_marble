@@ -546,6 +546,11 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 	/* Check for valid handle to ensure session is not
 	 * deleted in any race
 	 */
+	if (!wma->interfaces[resp_event->vdev_id].vdev) {
+		WMA_LOGE("%s: vdev is NULL for vdev_%d",
+			 __func__, resp_event->vdev_id);
+		return -EINVAL;
+	}
 	dp_handle = wlan_vdev_get_dp_handle
 			(wma->interfaces[resp_event->vdev_id].vdev);
 	if (!dp_handle) {
@@ -4730,6 +4735,11 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (!wma_handle->interfaces[mgmt_params->vdev_id].vdev) {
+		WMA_LOGE("%s: vdev is NULL for vdev_%d",
+			 __func__, mgmt_params->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
 	txrx_vdev = wlan_vdev_get_dp_handle
 			(wma_handle->interfaces[mgmt_params->vdev_id].vdev);
 

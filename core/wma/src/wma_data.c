@@ -1444,6 +1444,13 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 		if (!(vdev_map & 0x1)) {
 			/* No Vdev */
 		} else {
+			if (!wma->interfaces[vdev_id].vdev) {
+				WMA_LOGE("%s: vdev is NULL for %d", __func__,
+					 vdev_id);
+				/* Test Next VDEV */
+				vdev_map >>= 1;
+				continue;
+			}
 			dp_handle = wlan_vdev_get_dp_handle
 					(wma->interfaces[vdev_id].vdev);
 			if (!dp_handle) {
@@ -2386,6 +2393,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_E_FAILURE;
 	}
 	iface = &wma_handle->interfaces[vdev_id];
+	if (!iface->vdev) {
+		WMA_LOGE("iface->vdev is NULL");
+		cds_packet_free((void *)tx_frame);
+		return QDF_STATUS_E_FAILURE;
+	}
 	/* Get the vdev handle from vdev id */
 	txrx_vdev = wlan_vdev_get_dp_handle(iface->vdev);
 
@@ -3016,6 +3028,10 @@ void wma_tx_abort(uint8_t vdev_id)
 		return;
 
 	iface = &wma->interfaces[vdev_id];
+	if (!iface->vdev) {
+		WMA_LOGE("%s: iface->vdev is NULL", __func__);
+		return;
+	}
 	handle = wlan_vdev_get_dp_handle(iface->vdev);
 	if (!handle) {
 		WMA_LOGE("%s: Failed to get iface handle: %pK",
