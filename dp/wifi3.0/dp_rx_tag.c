@@ -135,7 +135,7 @@ dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	cce_match = true;
 	/* Get the cce_metadata from RX MSDU TLV */
-	cce_metadata = (hal_rx_msdu_cce_metadata_get(rx_tlv_hdr) &
+	cce_metadata = (hal_rx_msdu_cce_metadata_get(soc->hal_soc, rx_tlv_hdr) &
 			RX_MSDU_END_16_CCE_METADATA_MASK);
 	/*
 	 * Received CCE metadata should be within the
@@ -160,7 +160,7 @@ dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 	qdf_nbuf_set_rx_protocol_tag(nbuf, protocol_tag);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		  "Seq:%u dcap:%u CCE Match:%u ProtoID:%u Tag:%u stats:%u",
-		  hal_rx_get_rx_sequence(rx_tlv_hdr),
+		  hal_rx_get_rx_sequence(soc->hal_soc, rx_tlv_hdr),
 		  vdev->rx_decap_type, cce_match, cce_metadata,
 		  protocol_tag, is_update_stats);
 
@@ -207,12 +207,12 @@ dp_rx_update_flow_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		  "Seq:%u dcap:%u invalid:%u timeout:%u flow:%u tag:%u stat:%u",
-		  hal_rx_get_rx_sequence(rx_tlv_hdr),
+		  hal_rx_get_rx_sequence(soc->hal_soc, rx_tlv_hdr),
 		  vdev->rx_decap_type,
-		  hal_rx_msdu_flow_idx_invalid(rx_tlv_hdr),
-		  hal_rx_msdu_flow_idx_timeout(rx_tlv_hdr),
-		  hal_rx_msdu_flow_idx_get(rx_tlv_hdr),
-		  hal_rx_msdu_fse_metadata_get(rx_tlv_hdr),
+		  hal_rx_msdu_flow_idx_invalid(soc->hal_soc, rx_tlv_hdr),
+		  hal_rx_msdu_flow_idx_timeout(soc->hal_soc, rx_tlv_hdr),
+		  hal_rx_msdu_flow_idx_get(soc->hal_soc, rx_tlv_hdr),
+		  hal_rx_msdu_fse_metadata_get(soc->hal_soc, rx_tlv_hdr),
 		  update_stats);
 
 	/**
@@ -225,8 +225,8 @@ dp_rx_update_flow_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (qdf_likely((vdev->rx_decap_type !=  htt_cmn_pkt_type_ethernet)))
 		return;
 
-	flow_idx_invalid = hal_rx_msdu_flow_idx_invalid(rx_tlv_hdr);
-	hal_rx_msdu_get_flow_params(rx_tlv_hdr, &flow_idx_invalid,
+	flow_idx_invalid = hal_rx_msdu_flow_idx_invalid(soc->hal_soc, rx_tlv_hdr);
+	hal_rx_msdu_get_flow_params(soc->hal_soc, rx_tlv_hdr, &flow_idx_invalid,
 				    &flow_idx_timeout, &flow_idx);
 	if (qdf_unlikely(flow_idx_invalid))
 		return;
@@ -238,14 +238,14 @@ dp_rx_update_flow_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 	 * Limit FSE metadata to 16 bit as we have allocated only
 	 * 16 bits for flow_tag field in skb->cb
 	 */
-	fse_metadata = hal_rx_msdu_fse_metadata_get(rx_tlv_hdr) & 0xFFFF;
+	fse_metadata = hal_rx_msdu_fse_metadata_get(soc->hal_soc, rx_tlv_hdr) & 0xFFFF;
 
 	/* update the skb->cb with the user-specified tag/metadata */
 	qdf_nbuf_set_rx_flow_tag(nbuf, fse_metadata);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		  "Seq:%u dcap:%u invalid:%u timeout:%u flow:%u tag:%u stat:%u",
-		  hal_rx_get_rx_sequence(rx_tlv_hdr),
+		  hal_rx_get_rx_sequence(soc->hal_soc, rx_tlv_hdr),
 		  vdev->rx_decap_type, flow_idx_invalid, flow_idx_timeout,
 		  flow_idx, fse_metadata, update_stats);
 
@@ -284,7 +284,7 @@ void dp_rx_mon_update_protocol_flow_tag(struct dp_soc *soc,
 	if (qdf_likely(1 != dp_pdev->ppdu_info.rx_status.rxpcu_filter_pass))
 		return;
 
-	msdu_ppdu_id = HAL_RX_HW_DESC_GET_PPDUID_GET(rx_desc);
+	msdu_ppdu_id = hal_rx_hw_desc_get_ppduid_get(soc->hal_soc, rx_desc);
 
 	if (msdu_ppdu_id != dp_pdev->ppdu_info.com_info.ppdu_id) {
 		QDF_TRACE(QDF_MODULE_ID_DP,
