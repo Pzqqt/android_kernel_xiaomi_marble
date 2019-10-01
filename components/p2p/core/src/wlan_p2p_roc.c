@@ -687,7 +687,7 @@ QDF_STATUS p2p_restart_roc_timer(struct p2p_roc_context *roc_ctx)
 	if (QDF_TIMER_STATE_RUNNING ==
 		qdf_mc_timer_get_current_state(&roc_ctx->roc_timer)) {
 		p2p_debug("roc timer is running");
-		status = qdf_mc_timer_stop(&roc_ctx->roc_timer);
+		status = qdf_mc_timer_stop_sync(&roc_ctx->roc_timer);
 		if (status != QDF_STATUS_SUCCESS) {
 			p2p_err("Failed to stop roc timer");
 			return status;

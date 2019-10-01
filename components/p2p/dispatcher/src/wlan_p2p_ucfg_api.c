@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -199,7 +199,7 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	status = qdf_idr_find(&p2p_soc_obj->p2p_idr,
 			      cookie, &roc_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		p2p_err("invalid id");
+		p2p_err("invalid id for cookie 0x%llx", cookie);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -400,6 +400,8 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 		p2p_err("post msg fail:%d", status);
 	}
 
+	p2p_debug("cookie = 0x%llx", *cookie);
+
 	return status;
 }
 
@@ -429,7 +431,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 	status = qdf_idr_find(&p2p_soc_obj->p2p_idr,
 			      (int32_t)cookie, &tx_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		p2p_debug("invalid id");
+		p2p_debug("invalid id for cookie 0x%llx", cookie);
 		return QDF_STATUS_E_INVAL;
 	}
 	p2p_del_random_mac(soc, wlan_vdev_get_id(vdev), cookie, 20);
