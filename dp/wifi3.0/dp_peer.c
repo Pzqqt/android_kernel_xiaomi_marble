@@ -573,7 +573,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			uint32_t flags)
 {
 	struct dp_ast_entry *ast_entry = NULL;
-	struct dp_vdev *vdev = NULL;
+	struct dp_vdev *vdev = NULL, *tmp_vdev = NULL;
 	struct dp_pdev *pdev = NULL;
 	uint8_t next_node_mac[6];
 	int  ret = -1;
@@ -582,11 +582,31 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	struct dp_peer *tmp_peer = NULL;
 	bool is_peer_found = false;
 
+	vdev = peer->vdev;
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Peers vdev is NULL"));
+		QDF_ASSERT(0);
+		return ret;
+	}
+
+	pdev = vdev->pdev;
+
 	tmp_peer = dp_peer_find_hash_find(soc, mac_addr, 0,
 					  DP_VDEV_ALL);
 	if (tmp_peer) {
+		tmp_vdev = tmp_peer->vdev;
+		if (!tmp_vdev) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Peers vdev is NULL"));
+			QDF_ASSERT(0);
+			dp_peer_unref_delete(tmp_peer);
+			return ret;
+		}
+		if (tmp_vdev->pdev->pdev_id == pdev->pdev_id)
+			is_peer_found = true;
+
 		dp_peer_unref_delete(tmp_peer);
-		is_peer_found = true;
 	}
 
 	qdf_spin_lock_bh(&soc->ast_lock);
@@ -594,17 +614,6 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		return ret;
 	}
-
-	vdev = peer->vdev;
-	if (!vdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Peers vdev is NULL"));
-		QDF_ASSERT(0);
-		qdf_spin_unlock_bh(&soc->ast_lock);
-		return ret;
-	}
-
-	pdev = vdev->pdev;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: pdevid: %u vdev: %u  ast_entry->type: %d flags: 0x%x peer_mac: %pM peer: %pK mac %pM",
