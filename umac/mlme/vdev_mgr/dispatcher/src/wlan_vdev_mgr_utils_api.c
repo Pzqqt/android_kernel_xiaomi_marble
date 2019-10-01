@@ -348,13 +348,15 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_UAPSD:
 		mlme_proto->sta.uapsd_cfg = mlme_cfg.value;
 		break;
-	case WLAN_MLME_CFG_TX_DECAP_TYPE:
-		mlme_mgmt->generic.tx_decap_type = mlme_cfg.value;
+	case WLAN_MLME_CFG_TX_ENCAP_TYPE:
+		is_wmi_cmd = true;
+		mlme_mgmt->generic.tx_encap_type = mlme_cfg.value;
 		tgt_vdev_mgr_set_tx_rx_decap_type(vdev_mlme,
-						  WLAN_MLME_CFG_TX_DECAP_TYPE,
+						  WLAN_MLME_CFG_TX_ENCAP_TYPE,
 						  mlme_cfg.value);
 		break;
 	case WLAN_MLME_CFG_RX_DECAP_TYPE:
+		is_wmi_cmd = true;
 		mlme_mgmt->generic.rx_decap_type = mlme_cfg.value;
 		tgt_vdev_mgr_set_tx_rx_decap_type(vdev_mlme,
 						  WLAN_MLME_CFG_RX_DECAP_TYPE,

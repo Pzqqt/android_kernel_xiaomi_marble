@@ -313,6 +313,12 @@ target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 	case WLAN_MLME_CFG_MAX_GROUP_KEYS:
 		wmi_id = wmi_vdev_param_max_group_keys;
 		break;
+	case WLAN_MLME_CFG_TX_ENCAP_TYPE:
+		wmi_id = wmi_vdev_param_tx_encap_type;
+		break;
+	case WLAN_MLME_CFG_RX_DECAP_TYPE:
+		wmi_id = wmi_vdev_param_rx_decap_type;
+		break;
 	default:
 		wmi_id = cfg_id;
 		break;
@@ -337,7 +343,7 @@ QDF_STATUS target_if_vdev_set_tx_rx_decap_type(struct wlan_objmgr_vdev *vdev,
 	if (!soc_txrx_handle || !vdev_txrx_handle)
 		return QDF_STATUS_E_INVAL;
 
-	if (param_id ==  WLAN_MLME_CFG_TX_DECAP_TYPE)
+	if (param_id ==  WLAN_MLME_CFG_TX_ENCAP_TYPE)
 		cdp_set_tx_encap_type(soc_txrx_handle,
 				      (struct cdp_vdev *)vdev_txrx_handle,
 				      value);

@@ -198,7 +198,7 @@ struct vdev_mlme_proto {
  * @type: vdev type
  * @sub_type: vdev subtype
  * @rx_decap_type: rx decap type
- * @tx_decap_type: tx decap type
+ * @tx_encap_type: tx encap type
  * @disable_hw_ack: disable ha ack flag
  * @bssid: bssid
  * @phy_mode: phy mode
@@ -223,7 +223,7 @@ struct vdev_mlme_mgmt_generic {
 	uint8_t type;
 	uint8_t subtype;
 	uint8_t rx_decap_type;
-	uint8_t tx_decap_type;
+	uint8_t tx_encap_type;
 	bool disable_hw_ack;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint32_t phy_mode;
