@@ -1953,36 +1953,6 @@ uint16_t wma_vdev_get_pause_bitmap(uint8_t vdev_id)
 }
 
 /**
- * wma_vdev_get_dp_handle() - Get vdev datapth handle
- * @vdev_id: the Id of the vdev to configure
- *
- * Return: Vdev datapath handle else NULL on error
- */
-static inline
-struct cdp_vdev *wma_vdev_get_vdev_dp_handle(uint8_t vdev_id)
-{
-	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
-	struct wma_txrx_node *iface;
-
-	if (!wma) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
-		return NULL;
-	}
-
-	if (vdev_id >= wma->max_bssid)
-		return NULL;
-
-	iface = &wma->interfaces[vdev_id];
-
-	if (!iface || !iface->vdev) {
-		WMA_LOGE("%s: Vdev is NULL", __func__);
-		return NULL;
-	}
-
-	return wlan_vdev_get_dp_handle(iface->vdev);
-}
-
-/**
  * wma_vdev_is_device_in_low_pwr_mode - is device in power save mode
  * @vdev_id: the Id of the vdev to configure
  *

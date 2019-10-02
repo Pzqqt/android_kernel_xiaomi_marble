@@ -133,6 +133,9 @@ static void ol_tx_vdev_ll_pause_queue_send_base(struct ol_txrx_vdev_t *vdev)
 {
 	int max_to_accept;
 
+	if (!vdev)
+		return;
+
 	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	if (vdev->ll_pause.paused_reason) {
 		qdf_spin_unlock_bh(&vdev->ll_pause.mutex);

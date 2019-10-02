@@ -24,6 +24,7 @@
 #include <cds_sched.h>
 #include <cds_utils.h>
 #include "wlan_hdd_rx_monitor.h"
+#include "ol_txrx.h"
 
 /**
  * hdd_rx_monitor_callback(): Callback function for receive monitor mode
@@ -120,11 +121,13 @@ void hdd_monitor_set_rx_monitor_cb(struct ol_txrx_ops *txrx,
 int hdd_enable_monitor_mode(struct net_device *dev)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	uint8_t vdev_id;
 
 	hdd_enter_dev(dev);
 
-	return cdp_set_monitor_mode(soc,
-			(struct cdp_vdev *)cdp_get_mon_vdev_from_pdev(soc,
-			(struct cdp_pdev *)pdev), false);
+	vdev_id = cdp_get_mon_vdev_from_pdev(soc, OL_TXRX_PDEV_ID);
+	if (vdev_id < 0)
+		return -EINVAL;
+
+	return cdp_set_monitor_mode(soc, vdev_id, false);
 }

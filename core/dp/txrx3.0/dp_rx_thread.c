@@ -17,6 +17,8 @@
  */
 
 #include <dp_txrx.h>
+#include "dp_peer.h"
+#include "dp_internal.h"
 #include <cdp_txrx_cmn_struct.h>
 #include <cdp_txrx_peer_ops.h>
 #include <cds_sched.h>
@@ -276,41 +278,6 @@ static qdf_nbuf_t dp_rx_tm_thread_dequeue(struct dp_rx_thread *rx_thread)
 }
 
 /**
- * dp_rx_thread_get_nbuf_vdev_handle() - get vdev handle from nbuf
- *			                 dequeued from rx thread
- * @soc: soc handle
- * @pdev: pdev handle
- * @rx_thread: rx_thread whose nbuf was dequeued
- * @nbuf_list: nbuf list dequeued from rx_thread
- *
- * Returns: vdev handle on Success, NULL on failure
- */
-static struct cdp_vdev *
-dp_rx_thread_get_nbuf_vdev_handle(ol_txrx_soc_handle soc,
-				  struct cdp_pdev *pdev,
-				  struct dp_rx_thread *rx_thread,
-				  qdf_nbuf_t nbuf_list)
-{
-	uint32_t num_list_elements = 0;
-	struct cdp_vdev *vdev;
-	uint8_t vdev_id;
-
-	vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf_list);
-	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
-	if (!vdev) {
-		num_list_elements =
-			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list);
-		rx_thread->stats.dropped_invalid_vdev +=
-						num_list_elements;
-		dp_err("vdev not found for vdev_id %u!, pkt dropped",
-		       vdev_id);
-		return NULL;
-	}
-
-	return vdev;
-}
-
-/**
  * dp_rx_thread_process_nbufq() - process nbuf queue of a thread
  * @rx_thread - rx_thread whose nbuf queue needs to be processed
  *
@@ -319,12 +286,11 @@ dp_rx_thread_get_nbuf_vdev_handle(ol_txrx_soc_handle soc,
 static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 {
 	qdf_nbuf_t nbuf_list;
-	struct cdp_vdev *vdev;
+	uint8_t vdev_id;
 	ol_txrx_rx_fp stack_fn;
 	ol_osif_vdev_handle osif_vdev;
 	ol_txrx_soc_handle soc;
 	uint32_t num_list_elements = 0;
-	struct cdp_pdev *pdev;
 
 	struct dp_txrx_handle_cmn *txrx_handle_cmn;
 
@@ -332,10 +298,8 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 		dp_rx_thread_get_txrx_handle(rx_thread->rtm_handle_cmn);
 
 	soc = dp_txrx_get_soc_from_ext_handle(txrx_handle_cmn);
-	pdev = dp_txrx_get_pdev_from_ext_handle(txrx_handle_cmn);
-
-	if (!soc || !pdev) {
-		dp_err("invalid soc or pdev!");
+	if (!soc) {
+		dp_err("invalid soc!");
 		QDF_BUG(0);
 		return -EFAULT;
 	}
@@ -349,13 +313,8 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list);
 		rx_thread->stats.nbuf_dequeued += num_list_elements;
 
-		vdev = dp_rx_thread_get_nbuf_vdev_handle(soc, pdev, rx_thread,
-							 nbuf_list);
-		if (!vdev) {
-			qdf_nbuf_list_free(nbuf_list);
-			goto dequeue_rx_thread;
-		}
-		cdp_get_os_rx_handles_from_vdev(soc, vdev, &stack_fn,
+		vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf_list);
+		cdp_get_os_rx_handles_from_vdev(soc, vdev_id, &stack_fn,
 						&osif_vdev);
 		if (!stack_fn || !osif_vdev) {
 			rx_thread->stats.dropped_invalid_os_rx_handles +=

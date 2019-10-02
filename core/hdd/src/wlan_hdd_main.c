@@ -2348,7 +2348,7 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 				true;
 			hdd_info("tx blocked for vdev: %d",
 				adapter->vdev_id);
-			if (adapter->txrx_vdev)
+			if (adapter->vdev_id != WLAN_UMAC_VDEV_ID_MAX)
 				cdp_fc_vdev_flush(
 					cds_get_context(QDF_MODULE_ID_SOC),
 					adapter->vdev_id);
@@ -8078,7 +8078,6 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 {
 	static uint32_t counter;
 	static bool data_in_time_period;
-	ol_txrx_pdev_handle pdev;
 	ol_txrx_soc_handle soc;
 	uint32_t periodic_stats_disp_time = 0;
 
@@ -8090,12 +8089,6 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 	soc = cds_get_context(QDF_MODULE_ID_SOC);
 	if (!soc) {
 		hdd_err("soc is NULL");
-		return;
-	}
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		hdd_err("pdev is NULL");
 		return;
 	}
 

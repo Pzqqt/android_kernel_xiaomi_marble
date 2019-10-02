@@ -1636,13 +1636,6 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	uint32_t frame_len, status;
 	QDF_STATUS qdf_status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *peer, *pdev;
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		pe_err("pdev is NULL");
-		return;
-	}
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -1668,19 +1661,14 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 			status, frame_len);
 	}
 
-	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->sa,
-					PEER_DEBUG_ID_WMA_ADDBA_REQ);
-	if (!peer) {
-		pe_err("PEER [%pM] not found", mac_hdr->sa);
-		goto error;
-	}
-
-	qdf_status = cdp_addba_requestprocess(soc, peer,
-			addba_req->DialogToken.token,
-			addba_req->addba_param_set.tid,
-			addba_req->ba_timeout.timeout,
-			addba_req->addba_param_set.buff_size,
-			addba_req->ba_start_seq_ctrl.ssn);
+	qdf_status = cdp_addba_requestprocess(
+					soc, mac_hdr->sa,
+					session->vdev_id,
+					addba_req->DialogToken.token,
+					addba_req->addba_param_set.tid,
+					addba_req->ba_timeout.timeout,
+					addba_req->addba_param_set.buff_size,
+					addba_req->ba_start_seq_ctrl.ssn);
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		qdf_status = lim_send_addba_response_frame(mac_ctx,
@@ -1691,15 +1679,14 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 			addba_req->addba_param_set.amsdu_supp);
 		if (qdf_status != QDF_STATUS_SUCCESS) {
 			pe_err("Failed to send addba response frame");
-			cdp_addba_resp_tx_completion(soc, peer,
-				addba_req->addba_param_set.tid,
-				WMI_MGMT_TX_COMP_TYPE_DISCARD);
+			cdp_addba_resp_tx_completion(
+					soc, mac_hdr->sa, session->vdev_id,
+					addba_req->addba_param_set.tid,
+					WMI_MGMT_TX_COMP_TYPE_DISCARD);
 		}
 	} else {
 		pe_err_rl("Failed to process addba request");
 	}
-
-	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_ADDBA_REQ);
 
 error:
 	qdf_mem_free(addba_req);
@@ -1725,13 +1712,6 @@ static void lim_process_delba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	uint32_t frame_len, status;
 	QDF_STATUS qdf_status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *peer, *pdev;
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		pe_err("pdev is NULL");
-		return;
-	}
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -1757,17 +1737,8 @@ static void lim_process_delba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 			status, frame_len);
 	}
 
-	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->sa,
-					PEER_DEBUG_ID_WMA_DELBA_REQ);
-	if (!peer) {
-		pe_err("PEER [%pM] not found", mac_hdr->sa);
-		goto error;
-	}
-
-	qdf_status = cdp_delba_process(soc, peer,
+	qdf_status = cdp_delba_process(soc, mac_hdr->sa, session->vdev_id,
 			delba_req->delba_param_set.tid, delba_req->Reason.code);
-
-	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_DELBA_REQ);
 
 	if (QDF_STATUS_SUCCESS != qdf_status)
 		pe_err("Failed to process delba request");

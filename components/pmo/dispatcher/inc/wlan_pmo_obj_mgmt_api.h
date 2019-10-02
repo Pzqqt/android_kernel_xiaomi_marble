@@ -251,24 +251,6 @@ QDF_STATUS
 pmo_unregister_get_beacon_interval_callback(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_register_get_vdev_dp_handle(): API to register get vdev datapath handle
- * @psoc: objmgr psoc handle
- * @handler: get vdev datapath handle callback
- *
- * Return QDF_STATUS status - in case of success else return error
- */
-QDF_STATUS pmo_register_get_vdev_dp_handle(struct wlan_objmgr_psoc *psoc,
-					   pmo_get_vdev_dp_handle handler);
-
-/**
- * pmo_unregister_get_vdev_dp_handle(): API to unregister get vdev dp handle
- * @psoc: objmgr psoc handle
- *
- * Return QDF_STATUS status - in case of success else return error
- */
-QDF_STATUS pmo_unregister_get_vdev_dp_handle(struct wlan_objmgr_psoc *psoc);
-
-/**
  * pmo_register_is_device_in_low_pwr_mode(): API to get register device  power
  * save check notifier.
  * @psoc: objmgr psoc handle
@@ -397,19 +379,6 @@ pmo_register_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
 
 static inline QDF_STATUS
 pmo_unregister_get_pause_bitmap(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-pmo_register_get_vdev_dp_handle(struct wlan_objmgr_psoc *psoc,
-				pmo_get_vdev_dp_handle handler)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-QDF_STATUS pmo_unregister_get_vdev_dp_handle(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }

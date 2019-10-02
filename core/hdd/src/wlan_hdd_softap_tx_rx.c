@@ -1020,7 +1020,6 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	struct cdp_vdev *txrx_vdev = NULL;
 	struct hdd_ap_ctx *ap_ctx;
 	struct hdd_station_info *sta_info;
 
@@ -1076,15 +1075,9 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		txrx_ops.rx.rx_flush = NULL;
 	}
 
-	txrx_vdev = cdp_get_vdev_from_vdev_id(soc,
-					      (struct cdp_pdev *)pdev,
-					      adapter->vdev_id);
-	if (!txrx_vdev)
-		return QDF_STATUS_E_FAILURE;
-
 	cdp_vdev_register(soc,
-			  txrx_vdev,
-			  adapter,
+			  adapter->vdev_id,
+			  (ol_osif_vdev_handle)adapter,
 			  &txrx_ops);
 	adapter->txrx_vdev = cdp_get_vdev_from_vdev_id(soc,
 					(struct cdp_pdev *)pdev,

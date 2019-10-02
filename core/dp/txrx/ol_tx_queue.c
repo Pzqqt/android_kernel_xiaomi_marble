@@ -673,6 +673,9 @@ void ol_txrx_vdev_flush(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 		return;
 	}
 
+	if (!vdev)
+		return;
+
 	ol_tx_queue_vdev_flush(vdev->pdev, vdev);
 }
 

@@ -74,19 +74,12 @@ static QDF_STATUS ocb_set_chan_info(void *dp_soc,
 				    uint32_t vdev_id,
 				    struct ocb_config *config)
 {
-	struct cdp_vdev *dp_vdev;
 	struct ol_txrx_ocb_set_chan ocb_set_chan;
 	struct ol_txrx_ocb_chan_info *ocb_channel_info;
 
 	if (!dp_soc || !dp_pdev) {
 		ocb_err("DP global handle is null");
 		return QDF_STATUS_E_INVAL;
-	}
-
-	dp_vdev = cdp_get_vdev_from_vdev_id(dp_soc, dp_pdev, vdev_id);
-	if (!dp_vdev) {
-		ocb_err("DP vdev handle is NULL");
-		return QDF_STATUS_E_FAILURE;
 	}
 
 	ocb_set_chan.ocb_channel_count = config->channel_count;

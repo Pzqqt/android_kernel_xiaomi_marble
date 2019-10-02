@@ -195,12 +195,14 @@ struct ol_txrx_vdev_t *ol_txrx_get_vdev_from_soc_vdev_id(
 
 /**
  * ol_txrx_get_mon_vdev_from_pdev() - get monitor mode vdev from pdev
- * @ppdev: the physical device the virtual device belongs to
+ * @soc: datapath soc handle
+ * @pdev_id: the physical device id the virtual device belongs to
  *
- * Return: vdev handle
- *         NULL if not found.
+ * Return: vdev id
+ *         error if not found.
  */
-struct cdp_vdev *ol_txrx_get_mon_vdev_from_pdev(struct cdp_pdev *ppdev);
+uint8_t ol_txrx_get_mon_vdev_from_pdev(struct cdp_soc_t *soc,
+				       uint8_t pdev_id);
 
 /**
  * ol_txrx_get_vdev_by_peer_addr() - Get vdev handle by peer mac address

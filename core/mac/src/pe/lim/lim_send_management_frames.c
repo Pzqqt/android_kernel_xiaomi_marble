@@ -2482,11 +2482,10 @@ static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
 	tSirMacMgmtHdr *mac_hdr;
 	tDot11faddba_rsp rsp;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	void *peer;
 	uint32_t frame_len;
 	QDF_STATUS status;
 	uint8_t *data;
+	struct wmi_mgmt_params *mgmt_params = (struct wmi_mgmt_params *)params;
 
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
 		pe_debug("Add ba response successfully sent");
@@ -2518,15 +2517,8 @@ static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
 		goto error;
 	}
 
-	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->da,
-					PEER_DEBUG_ID_WMA_ADDBA_REQ);
-	if (!peer) {
-		pe_debug("no PEER found for mac_addr:%pM", mac_hdr->da);
-		goto error;
-	}
-	cdp_addba_resp_tx_completion(soc, peer, rsp.addba_param_set.tid,
-				     tx_complete);
-	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_ADDBA_REQ);
+	cdp_addba_resp_tx_completion(soc, mac_hdr->da, mgmt_params->vdev_id,
+				     rsp.addba_param_set.tid, tx_complete);
 error:
 	if (buf)
 		qdf_nbuf_free(buf);
@@ -4996,7 +4988,6 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	uint16_t buff_size, status_code, batimeout;
 	uint8_t dialog_token;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *peer, *pdev;
 	uint8_t he_frag = 0;
 	tpDphHashNode sta_ds;
 	uint16_t aid;
@@ -5004,23 +4995,10 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 
 	vdev_id = session->vdev_id;
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		pe_err("pdev is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
+	cdp_addba_responsesetup(soc, peer_mac, vdev_id, tid,
+				&dialog_token, &status_code, &buff_size,
+				&batimeout);
 
-	peer = cdp_peer_get_ref_by_addr(soc, pdev, peer_mac,
-					PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP);
-	if (!peer) {
-		pe_err("PEER [%pM] not found", peer_mac);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	cdp_addba_responsesetup(soc, peer, tid, &dialog_token,
-		&status_code, &buff_size, &batimeout);
-
-	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP);
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 	frm.Category.category = ACTION_CATEGORY_BACK;
 	frm.Action.action = ADDBA_RESPONSE;

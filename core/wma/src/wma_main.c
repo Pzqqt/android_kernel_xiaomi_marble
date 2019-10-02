@@ -915,16 +915,9 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		break;
 	case GEN_CMD:
 	{
-		struct cdp_vdev *vdev = NULL;
 		struct wma_txrx_node *intr = wma->interfaces;
 		wmi_vdev_custom_aggr_type_t aggr_type =
 			WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU;
-
-		vdev = wma_find_vdev_by_id(wma, privcmd->param_vdev_id);
-		if (!vdev) {
-			WMA_LOGE("%s:Invalid vdev handle", __func__);
-			return;
-		}
 
 		WMA_LOGD("gen pid %d pval %d", privcmd->param_id,
 			 privcmd->param_value);
@@ -938,8 +931,8 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			}
 
 			if (privcmd->param_id == GEN_VDEV_PARAM_AMPDU) {
-				ret = cdp_aggr_cfg(soc, vdev,
-						privcmd->param_value, 0);
+				ret = cdp_aggr_cfg(soc, privcmd->param_vdev_id,
+						   privcmd->param_value, 0);
 				if (ret)
 					WMA_LOGE("cdp_aggr_cfg set ampdu failed ret %d",
 						ret);
@@ -2608,6 +2601,9 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 		vdev->beacon = NULL;
 	}
 
+	if (vdev->vdev_active == true)
+		vdev->vdev_active = false;
+
 	if (vdev->addBssStaContext) {
 		qdf_mem_free(vdev->addBssStaContext);
 		vdev->addBssStaContext = NULL;
@@ -3320,8 +3316,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		wma_vdev_update_pause_bitmap);
 	pmo_register_get_pause_bitmap(wma_handle->psoc,
 		wma_vdev_get_pause_bitmap);
-	pmo_register_get_vdev_dp_handle(wma_handle->psoc,
-					wma_vdev_get_vdev_dp_handle);
 	pmo_register_is_device_in_low_pwr_mode(wma_handle->psoc,
 		wma_vdev_is_device_in_low_pwr_mode);
 	pmo_register_get_dtim_period_callback(wma_handle->psoc,
@@ -4467,7 +4461,6 @@ QDF_STATUS wma_close(void)
 	pmo_unregister_is_device_in_low_pwr_mode(wma_handle->psoc);
 	pmo_unregister_get_pause_bitmap(wma_handle->psoc);
 	pmo_unregister_pause_bitmap_notifier(wma_handle->psoc);
-	pmo_unregister_get_vdev_dp_handle(wma_handle->psoc);
 
 	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
 	init_deinit_free_num_units(wma_handle->psoc, tgt_psoc_info);

@@ -2093,8 +2093,7 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	struct wma_txrx_node *iface = NULL;
 	enum cdp_sec_type sec_type = cdp_sec_type_none;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct cdp_pdev *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	struct cdp_vdev *txrx_vdev;
+	void *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	uint32_t pn[4] = {0, 0, 0, 0};
 	struct cdp_peer *peer;
 	bool skip_set_key;
@@ -2118,7 +2117,6 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_params->vdev_id);
 	peer = cdp_peer_find_by_addr(soc, txrx_pdev, key_params->peer_mac);
 	iface = &wma_handle->interfaces[key_params->vdev_id];
 
@@ -2282,7 +2280,8 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		  (key_params->unicast) ? "unicast" : "group",
 		  key_params->key_rsc[3], key_params->key_rsc[2],
 		  key_params->key_rsc[1], key_params->key_rsc[0]);
-	cdp_set_pn_check(soc, txrx_vdev, peer, sec_type, pn);
+	cdp_set_pn_check(soc, key_params->vdev_id, key_params->peer_mac,
+			 sec_type, pn);
 	cdp_set_key(soc, peer, key_params->unicast,
 		    (uint32_t *)(key_params->key_data +
 				WMA_IV_KEY_LEN +
@@ -2423,18 +2422,11 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t i;
 	uint32_t def_key_idx = 0;
-	struct cdp_vdev *txrx_vdev;
 	int opmode;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_objmgr_vdev *vdev;
 
 	WMA_LOGD("BSS key setup for peer");
-	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->vdev_id);
-	if (!txrx_vdev) {
-		WMA_LOGE("%s:Invalid vdev handle", __func__);
-		key_info->status = QDF_STATUS_E_FAILURE;
-		return;
-	}
 
 	qdf_mem_zero(&key_params, sizeof(key_params));
 	opmode = cdp_get_opmode(soc, key_info->vdev_id);
@@ -2514,18 +2506,11 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	uint32_t i;
 	uint32_t def_key_idx = 0;
 	uint32_t wlan_opmode;
-	struct cdp_vdev *txrx_vdev;
 	uint8_t *mac_addr, *bssid;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_objmgr_vdev *vdev;
 
 	WMA_LOGD("BSS key setup");
-	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->vdev_id);
-	if (!txrx_vdev) {
-		WMA_LOGE("%s:Invalid vdev handle", __func__);
-		key_info->status = QDF_STATUS_E_FAILURE;
-		goto out;
-	}
 	wlan_opmode = cdp_get_opmode(soc, key_info->vdev_id);
 
 	/*
@@ -2558,7 +2543,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		}
 		qdf_mem_copy(key_params.peer_mac, bssid, QDF_MAC_ADDR_SIZE);
 	} else {
-		mac_addr = cdp_get_vdev_mac_addr(soc, txrx_vdev);
+		mac_addr = cdp_get_vdev_mac_addr(soc, key_params.vdev_id);
 		if (!mac_addr) {
 			WMA_LOGE("%s: mac_addr is NULL for vdev with id %d",
 				 __func__, key_info->vdev_id);
@@ -2649,7 +2634,6 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	int32_t i;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct cdp_pdev *txrx_pdev;
-	struct cdp_vdev *txrx_vdev;
 	void *peer;
 	uint8_t num_keys = 0;
 	struct wma_set_key_params key_params;
@@ -2676,12 +2660,6 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		goto out;
 	}
 
-	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->vdev_id);
-	if (!txrx_vdev) {
-		WMA_LOGE("%s:TxRx Vdev Handle is NULL", __func__);
-		key_info->status = QDF_STATUS_E_FAILURE;
-		goto out;
-	}
 	opmode = cdp_get_opmode(soc, key_info->vdev_id);
 
 	if (key_info->defWEPIdx == WMA_INVALID_KEY_IDX &&
@@ -3396,11 +3374,11 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	QDF_STATUS ret;
 #if !defined(REMOVE_PKT_LOG)
 	uint8_t vdev_id = 0;
-	struct cdp_vdev *txrx_vdev;
 	ol_txrx_pktdump_cb packetdump_cb;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	enum tx_status pktdump_status;
 #endif
+	struct wmi_mgmt_params mgmt_params = {};
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
@@ -3424,7 +3402,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 
 #if !defined(REMOVE_PKT_LOG)
 	vdev_id = mgmt_txrx_get_vdev_id(pdev, desc_id);
-	txrx_vdev = wma_find_vdev_by_id(wma_handle, vdev_id);
+	mgmt_params.vdev_id = vdev_id;
 	packetdump_cb = wma_handle->wma_mgmt_tx_packetdump_cb;
 	pktdump_status = wma_mgmt_pktdump_status_map(status);
 	if (packetdump_cb)
@@ -3432,7 +3410,8 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 			      buf, pktdump_status, TX_MGMT_PKT);
 #endif
 
-	ret = mgmt_txrx_tx_completion_handler(pdev, desc_id, status, NULL);
+	ret = mgmt_txrx_tx_completion_handler(pdev, desc_id, status,
+					      &mgmt_params);
 
 	if (ret != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to process mgmt tx completion", __func__);
@@ -4198,7 +4177,6 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 #if !defined(REMOVE_PKT_LOG)
 	ol_txrx_pktdump_cb packetdump_cb;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct cdp_vdev *txrx_vdev;
 #endif
 	static uint8_t limit_prints_invalid_len = RATE_LIMIT - 1;
 	static uint8_t limit_prints_load_unload = RATE_LIMIT - 1;
@@ -4366,8 +4344,6 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 
 #if !defined(REMOVE_PKT_LOG)
 	packetdump_cb = wma_handle->wma_mgmt_rx_packetdump_cb;
-	txrx_vdev = wma_find_vdev_by_id(wma_handle,
-					rx_pkt->pkt_meta.session_id);
 	if ((mgt_type == IEEE80211_FC0_TYPE_MGT &&
 		mgt_subtype != MGMT_SUBTYPE_BEACON) &&
 		packetdump_cb)
@@ -4701,7 +4677,6 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 	struct wmi_mgmt_params *mgmt_params =
 			(struct wmi_mgmt_params *)mgmt_tx_params;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct cdp_vdev *txrx_vdev;
 
 	if (!mgmt_params) {
 		WMA_LOGE("%s: mgmt_params ptr passed is NULL", __func__);
@@ -4720,23 +4695,15 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!wma_handle->interfaces[mgmt_params->vdev_id].vdev) {
-		WMA_LOGE("%s: vdev is NULL for vdev_%d",
-			 __func__, mgmt_params->vdev_id);
-		return QDF_STATUS_E_INVAL;
-	}
-	txrx_vdev = wlan_vdev_get_dp_handle
-			(wma_handle->interfaces[mgmt_params->vdev_id].vdev);
-
 	if (wmi_service_enabled(wma_handle->wmi_handle,
 				   wmi_service_mgmt_tx_wmi)) {
 		status = wmi_mgmt_unified_cmd_send(wma_handle->wmi_handle,
 						   mgmt_params);
-	} else if (txrx_vdev) {
+	} else {
 		QDF_NBUF_CB_MGMT_TXRX_DESC_ID(buf)
 						= mgmt_params->desc_id;
 
-		ret = cdp_mgmt_send_ext(soc, txrx_vdev, buf,
+		ret = cdp_mgmt_send_ext(soc, mgmt_params->vdev_id, buf,
 					mgmt_params->tx_type,
 					mgmt_params->use_6mbps,
 					mgmt_params->chanfreq);

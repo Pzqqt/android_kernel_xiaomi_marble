@@ -146,39 +146,6 @@ static void cds_recovery_work_deinit(void)
 	}
 }
 
-/** cds_get_datapath_handles - Initialize pdev, vdev and soc
- * @soc - soc handle
- * @vdev - virtual handle
- * @pdev - physical handle
- */
-uint8_t cds_get_datapath_handles(void **soc, struct cdp_pdev **pdev,
-		struct cdp_vdev **vdev, uint8_t sessionId)
-{
-
-	(*soc) = cds_get_context(QDF_MODULE_ID_SOC);
-
-	if (!(*soc)) {
-		cds_err("soc handle is invalid");
-		return -EINVAL;
-	}
-
-	(*pdev) = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!(*pdev)) {
-		cds_err("pdev handle is invalid");
-		return -EINVAL;
-	}
-
-	(*vdev) = cdp_get_vdev_from_vdev_id((*soc), (*pdev),
-					sessionId);
-
-	if (!(*vdev)) {
-		cds_err("vdev handle is invalid");
-		return -EINVAL;
-	}
-	return 0;
-}
-
 static bool cds_is_drv_connected(void)
 {
 	int ret;
@@ -705,12 +672,12 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	    TARGET_TYPE_QCA6390 == hdd_ctx->target_type ||
 	    TARGET_TYPE_QCA6490 == hdd_ctx->target_type)
 		gp_cds_context->dp_soc = cdp_soc_attach(LITHIUM_DP,
-			gp_cds_context->hif_context, psoc,
+			gp_cds_context->hif_context, htcInfo.target_psoc,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
 			&dp_ol_if_ops);
 	else
 		gp_cds_context->dp_soc = cdp_soc_attach(MOB_DRV_LEGACY_DP,
-			gp_cds_context->hif_context, psoc,
+			gp_cds_context->hif_context, htcInfo.target_psoc,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
 			&dp_ol_if_ops);
 
@@ -849,7 +816,7 @@ intr_close:
 
 pdev_detach:
 	cdp_pdev_detach(gp_cds_context->dp_soc,
-			cds_get_context(QDF_MODULE_ID_TXRX), false);
+			OL_TXRX_PDEV_ID, false);
 
 close:
 	return QDF_STATUS_E_FAILURE;
@@ -917,7 +884,7 @@ QDF_STATUS cds_pre_enable(void)
 		goto stop_wmi;
 	}
 
-	errno = cdp_pdev_post_attach(soc, gp_cds_context->pdev_txrx_ctx);
+	errno = cdp_pdev_post_attach(soc, OL_TXRX_PDEV_ID);
 	if (errno) {
 		cds_err("Failed to attach pdev");
 		status = qdf_status_from_os_return(errno);
@@ -998,7 +965,7 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	errno = cdp_pdev_attach_target(cds_get_context(QDF_MODULE_ID_SOC),
-				       cds_get_context(QDF_MODULE_ID_TXRX));
+				       OL_TXRX_PDEV_ID);
 	if (errno) {
 		cds_err("Failed to attach pdev target; errno:%d", errno);
 		goto err_soc_target_detach;
@@ -1121,7 +1088,6 @@ QDF_STATUS cds_post_disable(void)
 {
 	tp_wma_handle wma_handle;
 	struct hif_opaque_softc *hif_ctx;
-	struct cdp_pdev *txrx_pdev;
 	struct scheduler_ctx *sched_ctx;
 	QDF_STATUS qdf_status;
 
@@ -1134,12 +1100,6 @@ QDF_STATUS cds_post_disable(void)
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
 		cds_err("Failed to get hif_handle!");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!txrx_pdev) {
-		cds_err("Failed to get txrx pdev!");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1175,7 +1135,7 @@ QDF_STATUS cds_post_disable(void)
 	}
 
 	cdp_pdev_pre_detach(cds_get_context(QDF_MODULE_ID_SOC),
-		       (struct cdp_pdev *)txrx_pdev, 1);
+			    OL_TXRX_PDEV_ID, 1);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1278,8 +1238,7 @@ QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 
 	dp_txrx_deinit(cds_get_context(QDF_MODULE_ID_SOC));
 
-	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
-		       (struct cdp_pdev *)ctx, 1);
+	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC), OL_TXRX_PDEV_ID, 1);
 
 	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
 	ucfg_pmo_psoc_set_txrx_pdev_id(psoc, OL_TXRX_INVALID_PDEV_ID);

@@ -54,11 +54,12 @@
  *  to the target has to be done in the separate pdev_attach_target call
  *  that is invoked after HTC setup is complete.
  *
- * @param pdev - txrx_pdev handle
+ * @param soc - datapath soc handle
+ * @param pdev_id - physical device instance id
  * @return 0 for success or error code
  */
 int
-ol_txrx_pdev_post_attach(struct cdp_pdev *pdev);
+ol_txrx_pdev_post_attach(struct cdp_soc_t *soc, uint8_t pdev_id);
 
 /**
  * @brief Parameter type to be input to ol_txrx_peer_update
@@ -280,14 +281,15 @@ void ol_txrx_tx_sync(ol_txrx_pdev_handle data_pdev, uint8_t sync_cnt);
  *  when transmission completes.  Rather, these specially-marked frames
  *  are provided to the callback registered with this function.
  *
- * @param data_vdev - which vdev the callback is being registered with
+ * @param soc - datapath soc handle
+ * @param vdev_id - id of which vdev the callback is being registered with
  *      (Currently the callback is stored in the pdev rather than the vdev.)
  * @param callback - the function to call when tx frames marked as "no free"
  *      are done being transmitted
  * @param ctxt - the context argument provided to the callback function
  */
 void
-ol_txrx_data_tx_cb_set(struct cdp_vdev *data_vdev,
+ol_txrx_data_tx_cb_set(struct cdp_soc_t *soc, uint8_t vdev_id,
 		       ol_txrx_data_tx_cb callback, void *ctxt);
 
 /**

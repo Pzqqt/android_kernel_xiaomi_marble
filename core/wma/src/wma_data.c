@@ -1031,8 +1031,9 @@ int wma_peer_state_change_event_handler(void *handle,
 {
 	WMI_PEER_STATE_EVENTID_param_tlvs *param_buf;
 	wmi_peer_state_event_fixed_param *event;
-	struct cdp_vdev *vdev;
+#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+#endif
 
 	if (!event_buff) {
 		WMA_LOGE("%s: Received NULL event ptr from FW", __func__);
@@ -1045,12 +1046,6 @@ int wma_peer_state_change_event_handler(void *handle,
 	}
 
 	event = param_buf->fixed_param;
-	vdev = wma_find_vdev_by_id(wma_handle, event->vdev_id);
-	if (!vdev) {
-		WMA_LOGD("%s: Couldn't find vdev for vdev_id: %d",
-			 __func__, event->vdev_id);
-		return -EINVAL;
-	}
 
 	if ((cdp_get_opmode(cds_get_context(QDF_MODULE_ID_SOC),
 			    event->vdev_id) == wlan_op_mode_sta) &&
@@ -1335,11 +1330,15 @@ wma_mgmt_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
 	struct wlan_objmgr_pdev *pdev = (struct wlan_objmgr_pdev *)
 					wma_handle->pdev;
+	struct wmi_mgmt_params mgmt_params = {};
 	uint16_t desc_id;
+	uint8_t vdev_id;
 
 	desc_id = QDF_NBUF_CB_MGMT_TXRX_DESC_ID(netbuf);
+	vdev_id = mgmt_txrx_get_vdev_id(pdev, desc_id);
 
-	mgmt_txrx_tx_completion_handler(pdev, desc_id, status, NULL);
+	mgmt_params.vdev_id = vdev_id;
+	mgmt_txrx_tx_completion_handler(pdev, desc_id, status, &mgmt_params);
 }
 
 /**
@@ -1394,18 +1393,18 @@ QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
 	struct cds_context *cds_handle =
 		(struct cds_context *) (wma_handle->cds_context);
 
-	/* Get the txRx Pdev handle */
-	struct cdp_pdev *txrx_pdev = cds_handle->pdev_txrx_ctx;
+	/* Get the txRx Pdev ID */
+	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* Register for Tx Management Frames */
-	cdp_mgmt_tx_cb_set(soc, txrx_pdev, 0,
-			wma_mgmt_tx_dload_comp_hldr,
-			wma_mgmt_tx_ack_comp_hdlr, wma_handle);
+	cdp_mgmt_tx_cb_set(soc, pdev_id, 0,
+			   wma_mgmt_tx_dload_comp_hldr,
+			   wma_mgmt_tx_ack_comp_hdlr, wma_handle);
 
 	/* Register callback to send PEER_UNMAP_RESPONSE cmd*/
 	if (cdp_cfg_get_peer_unmap_conf_support(soc))
-		cdp_peer_unmap_sync_cb_set(soc, txrx_pdev,
+		cdp_peer_unmap_sync_cb_set(soc, pdev_id,
 					   wma_peer_unmap_conf_cb);
 
 	/* Store the Mac Context */
@@ -1426,21 +1425,17 @@ QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	/* Get the Vos Context */
-	struct cds_context *cds_handle =
-		(struct cds_context *) (wma_handle->cds_context);
-
-	/* Get the txRx Pdev handle */
-	struct cdp_pdev *txrx_pdev = cds_handle->pdev_txrx_ctx;
+	/* Get the txRx Pdev ID */
+	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 
 	if (!soc) {
 		WMA_LOGE("%s:SOC context is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (txrx_pdev) {
+	if (pdev_id != OL_TXRX_INVALID_PDEV_ID) {
 		/* Deregister with TxRx for Tx Mgmt completion call back */
-		cdp_mgmt_tx_cb_set(soc, txrx_pdev, 0, NULL, NULL, txrx_pdev);
+		cdp_mgmt_tx_cb_set(soc, pdev_id, 0, NULL, NULL, NULL);
 	}
 
 	/* Reset Tx Frm Callbacks */
@@ -2415,7 +2410,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int32_t is_high_latency;
 	bool is_wmi_mgmt_tx = false;
-	struct cdp_vdev *txrx_vdev;
 	enum frame_index tx_frm_index = GENERIC_NODOWNLD_NOACK_COMP_INDEX;
 	tpSirMacFrameCtl pFc = (tpSirMacFrameCtl) (qdf_nbuf_data(tx_frame));
 	uint8_t use_6mbps = 0;
@@ -2447,19 +2441,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_E_FAILURE;
 	}
 	iface = &wma_handle->interfaces[vdev_id];
-	if (!iface->vdev) {
-		WMA_LOGE("iface->vdev is NULL");
-		cds_packet_free((void *)tx_frame);
-		return QDF_STATUS_E_FAILURE;
-	}
-	/* Get the vdev handle from vdev id */
-	txrx_vdev = wlan_vdev_get_dp_handle(iface->vdev);
-
-	if (!txrx_vdev) {
-		WMA_LOGE("TxRx Vdev Handle is NULL");
-		cds_packet_free((void *)tx_frame);
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	if (!soc) {
 		WMA_LOGE("%s:SOC context is NULL", __func__);
@@ -2622,17 +2603,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	if (frmType == TXRX_FRM_802_11_DATA) {
 		qdf_nbuf_t ret;
 		qdf_nbuf_t skb = (qdf_nbuf_t) tx_frame;
-		void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 		struct wma_decap_info_t decap_info;
 		struct ieee80211_frame *wh =
 			(struct ieee80211_frame *)qdf_nbuf_data(skb);
 		unsigned long curr_timestamp = qdf_mc_timer_get_system_ticks();
-
-		if (!pdev) {
-			cds_packet_free((void *)tx_frame);
-			return QDF_STATUS_E_FAULT;
-		}
 
 		/*
 		 * 1) TxRx Module expects data input to be 802.3 format
@@ -2721,8 +2696,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	ctrl_pdev = cdp_get_ctrl_pdev_from_vdev(soc,
-				txrx_vdev);
+	ctrl_pdev = cdp_get_ctrl_pdev_from_vdev(soc, vdev_id);
 	if (!ctrl_pdev) {
 		WMA_LOGE("ol_pdev_handle is NULL\n");
 		cds_packet_free((void *)tx_frame);

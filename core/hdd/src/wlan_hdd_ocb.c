@@ -220,8 +220,6 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	struct cdp_vdev *vdev;
 
 	qdf_status = cdp_peer_register_ocb_peer(soc,
 				adapter->mac_addr.bytes);
@@ -236,13 +234,8 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_rx_packet_cbk;
-	vdev = cdp_get_vdev_from_vdev_id(soc,
-					 (struct cdp_pdev *)pdev,
-					 adapter->vdev_id);
-	if (!vdev)
-		return -EINVAL;
 
-	cdp_vdev_register(soc, vdev, adapter,
+	cdp_vdev_register(soc, adapter->vdev_id, (ol_osif_vdev_handle)adapter,
 			  &txrx_ops);
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 	adapter->tx_fn = txrx_ops.tx.tx;
