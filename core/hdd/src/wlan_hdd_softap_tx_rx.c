@@ -1088,7 +1088,6 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	cdp_vdev_register(soc,
 			  txrx_vdev,
 			  adapter,
-			  (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
 			  &txrx_ops);
 	adapter->txrx_vdev = cdp_get_vdev_from_vdev_id(soc,
 					(struct cdp_pdev *)pdev,

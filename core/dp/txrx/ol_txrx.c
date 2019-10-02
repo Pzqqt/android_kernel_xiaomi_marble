@@ -719,8 +719,7 @@ static inline void ol_txrx_debugfs_exit(ol_txrx_pdev_handle pdev)
 
 /**
  * ol_txrx_pdev_attach() - allocate txrx pdev
- * @soc: soc handle
- * @ctrl_pdev: cfg pdev
+ * @soc: datapath soc handle
  * @htc_pdev: HTC pdev
  * @osdev: os dev
  * @pdev_id: pdev identifier for pdev attach
@@ -730,12 +729,11 @@ static inline void ol_txrx_debugfs_exit(ol_txrx_pdev_handle pdev)
  */
 static struct cdp_pdev *
 ol_txrx_pdev_attach(ol_txrx_soc_handle soc,
-		    struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 		    HTC_HANDLE htc_pdev, qdf_device_t osdev, uint8_t pdev_id)
 {
 	struct ol_txrx_soc_t *ol_soc = cdp_soc_t_to_ol_txrx_soc_t(soc);
 	struct ol_txrx_pdev_t *pdev;
-	struct cdp_cfg *cfg_pdev = (struct cdp_cfg *)ctrl_pdev;
+	struct cdp_cfg *cfg_pdev = cds_get_context(QDF_MODULE_ID_CFG);
 	int i, tid;
 
 	if (pdev_id == OL_TXRX_INVALID_PDEV_ID)
@@ -1832,12 +1830,11 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 }
 
 /**
- *ol_txrx_vdev_register - Link a vdev's data object with the
+ * ol_txrx_vdev_register - Link a vdev's data object with the
  * matching OS shim vdev object.
  *
- * @txrx_vdev: the virtual device's data object
+ * @pvdev: the virtual device's data object
  * @osif_vdev: the virtual device's OS shim object
- * @ctrl_vdev: UMAC vdev objmgr handle
  * @txrx_ops: (pointers to)functions used for tx and rx data xfer
  *
  *  The data object for a virtual device is created by the
@@ -1852,7 +1849,6 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
  *  when passing rx data received by a vdev up to the OS shim.
  */
 static void ol_txrx_vdev_register(struct cdp_vdev *pvdev, void *osif_vdev,
-				  struct cdp_ctrl_objmgr_vdev *ctrl_vdev,
 				  struct ol_txrx_ops *txrx_ops)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
@@ -1864,7 +1860,6 @@ static void ol_txrx_vdev_register(struct cdp_vdev *pvdev, void *osif_vdev,
 	}
 
 	vdev->osif_dev = osif_vdev;
-	vdev->ctrl_vdev = ctrl_vdev;
 	vdev->rx = txrx_ops->rx.rx;
 	vdev->stats_rx = txrx_ops->rx.stats_rx;
 	vdev->tx_comp = txrx_ops->tx.tx_comp;
@@ -2179,9 +2174,7 @@ static void ol_txrx_dump_peer_access_list(ol_txrx_peer_handle peer)
 /**
  * ol_txrx_peer_attach - Allocate and set up references for a
  * data peer object.
- * @data_pdev: data physical device object that will indirectly
- * own the data_peer object
- * @data_vdev - data virtual device object that will directly
+ * @pvdev - data virtual device object that will directly
  * own the data_peer object
  * @peer_mac_addr - MAC address of the new peer
  *
@@ -2200,8 +2193,7 @@ static void ol_txrx_dump_peer_access_list(ol_txrx_peer_handle peer)
  * fails
  */
 static void *
-ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
-		    struct cdp_ctrl_objmgr_peer *ctrl_peer)
+ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_peer_t *peer;
@@ -2295,7 +2287,6 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 
 	/* store provided params */
 	peer->vdev = vdev;
-	peer->ctrl_peer = ctrl_peer;
 	qdf_mem_copy(&peer->mac_addr.raw[0], peer_mac_addr,
 		     QDF_MAC_ADDR_SIZE);
 
@@ -5560,22 +5551,6 @@ struct cdp_vdev *ol_txrx_wrapper_get_vdev_from_vdev_id(struct cdp_pdev *ppdev,
 }
 
 /**
- * ol_txrx_pdev_set_ctrl_pdev() - set ctrl pdev handle in txrx pdev
- * @txrx_pdev: txrx pdev handle
- * @ctrl_pdev: UMAC ctrl pdev handle
- *
- * Return: void
- */
-static void
-ol_txrx_pdev_set_ctrl_pdev(struct cdp_pdev *txrx_pdev,
-			   struct cdp_ctrl_objmgr_pdev *ctrl_pdev)
-{
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)txrx_pdev;
-
-	pdev->control_pdev = ctrl_pdev;
-}
-
-/**
  * ol_txrx_wrapper_register_peer() - register peer
  * @pdev: pdev handle
  * @sta_desc: peer description
@@ -5882,7 +5857,6 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_fw_stats_get = ol_txrx_fw_stats_get,
 	.display_stats = ol_txrx_display_stats,
 	.txrx_get_cfg = ol_txrx_get_cfg,
-	.txrx_pdev_set_ctrl_pdev = ol_txrx_pdev_set_ctrl_pdev,
 	/* TODO: Add other functions */
 };
 

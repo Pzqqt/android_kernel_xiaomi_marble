@@ -2144,9 +2144,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	}
 
 	txrx_ops.tx.tx = NULL;
-	cdp_vdev_register(soc,
-		adapter->txrx_vdev, adapter,
-		(struct cdp_ctrl_objmgr_vdev *)adapter->vdev, &txrx_ops);
+	cdp_vdev_register(soc, adapter->txrx_vdev, adapter, &txrx_ops);
 	if (!txrx_ops.tx.tx) {
 		hdd_err("%s vdev register fail", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -4105,7 +4103,6 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 
 	cdp_vdev_register(soc, txrx_vdev,
 			  adapter,
-			  (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
 			  &txrx_ops);
 	adapter->tx_fn = txrx_ops.tx.tx;
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;

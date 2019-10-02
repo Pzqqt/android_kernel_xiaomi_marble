@@ -963,7 +963,8 @@ ol_rx_send_mic_err_ind(struct ol_txrx_pdev_t *pdev, uint8_t vdev_id,
 	struct cdp_rx_mic_err_info mic_failure_info;
 	qdf_ether_header_t *eth_hdr;
 	struct ol_if_ops *tops = NULL;
-	ol_txrx_soc_handle ol_txrx_soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	ol_txrx_soc_handle ol_txrx_soc = &soc->cdp_soc;
 
 	if (err_type != OL_RX_ERR_TKIP_MIC)
 		return;
@@ -987,7 +988,7 @@ ol_rx_send_mic_err_ind(struct ol_txrx_pdev_t *pdev, uint8_t vdev_id,
 
 	tops = ol_txrx_soc->ol_ops;
 	if (tops->rx_mic_error)
-		tops->rx_mic_error(pdev->control_pdev, &mic_failure_info);
+		tops->rx_mic_error(soc->psoc, pdev->id, &mic_failure_info);
 }
 
 void

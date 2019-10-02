@@ -810,9 +810,8 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 
 	cds_set_context(QDF_MODULE_ID_TXRX,
 		cdp_pdev_attach(cds_get_context(QDF_MODULE_ID_SOC),
-			(struct cdp_ctrl_objmgr_pdev *)gp_cds_context->cfg_ctx,
-			gp_cds_context->htc_ctx,
-			gp_cds_context->qdf_ctx, 0));
+				gp_cds_context->htc_ctx,
+				gp_cds_context->qdf_ctx, 0));
 	if (!gp_cds_context->pdev_txrx_ctx) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_alert("Failed to open TXRX");

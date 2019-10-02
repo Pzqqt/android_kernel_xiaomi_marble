@@ -2030,10 +2030,6 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	 */
 	hdd_component_cfg_chan_to_freq(hdd_ctx->pdev);
 
-	cdp_pdev_set_ctrl_pdev(cds_get_context(QDF_MODULE_ID_SOC),
-			cds_get_context(QDF_MODULE_ID_TXRX),
-			(struct cdp_ctrl_objmgr_pdev *)hdd_ctx->pdev);
-
 	wlan_pdev_set_dp_handle(hdd_ctx->pdev,
 				cds_get_context(QDF_MODULE_ID_TXRX));
 
@@ -7941,15 +7937,16 @@ struct hdd_adapter *hdd_get_first_valid_adapter(struct hdd_context *hdd_ctx)
 
 /**
  * hdd_rx_mic_error_ind() - MIC error indication handler
- * @scn_handle: pdev handle from osif layer
- * @info: mic failure information
+ * @psoc: opaque handle for UMAC psoc object
+ * @pdev_id: physical device instance id
+ * @mic_failure_info: mic failure information
  *
  * This function indicates the Mic failure to the supplicant
  *
  * Return: None
  */
 static void
-hdd_rx_mic_error_ind(void *scn_handle,
+hdd_rx_mic_error_ind(struct cdp_ctrl_objmgr_psoc *psoc, uint8_t pdev_id,
 		     struct cdp_rx_mic_err_info *mic_failure_info)
 {
 	struct wiphy *wiphy;
@@ -7959,7 +7956,14 @@ hdd_rx_mic_error_ind(void *scn_handle,
 	struct hdd_mic_error_info *hdd_mic_info;
 	struct wlan_objmgr_pdev *pdev;
 
-	pdev = (struct wlan_objmgr_pdev *)scn_handle;
+	if (!psoc)
+		return;
+
+	pdev = wlan_objmgr_get_pdev_by_id((struct wlan_objmgr_psoc *)psoc,
+					  pdev_id, WLAN_MLME_SB_ID);
+	if (!pdev)
+		return;
+
 	pdev_priv = wlan_pdev_get_ospriv(pdev);
 	wiphy = pdev_priv->wiphy;
 	hdd_ctx = wiphy_priv(wiphy);

@@ -1928,8 +1928,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	 * where the HTT peer map event is received before the peer object
 	 * is created in the data path
 	 */
-	peer = cdp_peer_create(dp_soc, vdev, peer_addr,
-			       (struct cdp_ctrl_objmgr_peer *)obj_peer);
+	peer = cdp_peer_create(dp_soc, vdev, peer_addr);
 	if (!peer) {
 		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
 		wlan_objmgr_peer_obj_delete(obj_peer);
