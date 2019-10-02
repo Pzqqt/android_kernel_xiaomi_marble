@@ -113,11 +113,12 @@ SIDE EFFECTS
   ** macroized to access memory directly
   */
 
-  #define inp(port)         (*((volatile dword *) (port)))
+  #define inp(port)         (*((volatile byte *) (port)))
+
   #define inpw(port)        (*((volatile word *) (port)))
   #define inpdw(port)       (*((volatile dword *)(port)))
 
-  #define outp(port, val)   (*((volatile dword *) (port)) = ((dword) (val)))
+  #define outp(port, val)   (*((volatile byte *) (port)) = ((byte) (val)))
   #define outpw(port, val)  (*((volatile word *) (port)) = ((word) (val)))
   #define outpdw(port, val) (*((volatile dword *) (port)) = ((dword) (val)))
 
