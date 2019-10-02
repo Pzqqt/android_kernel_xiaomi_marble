@@ -3993,6 +3993,11 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 	int mc_count = 0;
 
+	if (hdd_ctx->hdd_wlan_suspended) {
+		hdd_err_rl("Device is system suspended");
+		return;
+	}
+
 	hdd_enter_dev(dev);
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		goto out;
