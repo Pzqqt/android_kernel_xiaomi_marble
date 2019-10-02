@@ -314,6 +314,11 @@ static void swrm_reg_dump(struct swr_mstr_ctrl *swrm,
 			func, reg[i], val[i]);
 }
 
+static bool is_swr_clk_needed(struct swr_mstr_ctrl *swrm)
+{
+	return ((swrm->version <= SWRM_VERSION_1_5_1) ? true : false);
+}
+
 static int swrm_request_hw_vote(struct swr_mstr_ctrl *swrm,
 				int core_type, bool enable)
 {
@@ -359,6 +364,30 @@ static int swrm_get_ssp_period(struct swr_mstr_ctrl *swrm,
 	return ((swrm->bus_clk * 2) / ((row * col) * frame_sync));
 }
 
+static int swrm_core_vote_request(struct swr_mstr_ctrl *swrm)
+{
+	int ret = 0;
+
+	if (!swrm->handle)
+		return -EINVAL;
+
+	mutex_lock(&swrm->clklock);
+	if (!swrm->dev_up) {
+		ret = -ENODEV;
+		goto exit;
+	}
+	if (swrm->core_vote) {
+		ret = swrm->core_vote(swrm->handle, true);
+		if (ret)
+			dev_err_ratelimited(swrm->dev,
+				"%s: core vote request failed\n", __func__);
+	}
+exit:
+	mutex_unlock(&swrm->clklock);
+
+	return ret;
+}
+
 static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 {
 	int ret = 0;
@@ -372,13 +401,15 @@ static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 			ret = -ENODEV;
 			goto exit;
 		}
-		if (swrm->core_vote) {
-			ret = swrm->core_vote(swrm->handle, true);
-			if (ret) {
-				dev_err_ratelimited(swrm->dev,
-					"%s: clock enable req failed",
-					__func__);
-				goto exit;
+		if (is_swr_clk_needed(swrm)) {
+			if (swrm->core_vote) {
+				ret = swrm->core_vote(swrm->handle, true);
+				if (ret) {
+					dev_err_ratelimited(swrm->dev,
+						"%s: core vote request failed\n",
+						__func__);
+					goto exit;
+				}
 			}
 		}
 		swrm->clk_ref_count++;
@@ -415,14 +446,21 @@ static int swrm_ahb_write(struct swr_mstr_ctrl *swrm,
 	if (!swrm->dev_up)
 		goto err;
 
-	ret = swrm_clk_request(swrm, TRUE);
-	if (ret) {
-		dev_err_ratelimited(swrm->dev, "%s: clock request failed\n",
-				    __func__);
+	if (is_swr_clk_needed(swrm)) {
+		ret = swrm_clk_request(swrm, TRUE);
+		if (ret) {
+			dev_err_ratelimited(swrm->dev,
+					    "%s: clock request failed\n",
+					    __func__);
+			goto err;
+		}
+	} else if (swrm_core_vote_request(swrm)) {
 		goto err;
 	}
+
 	iowrite32(temp, swrm->swrm_dig_base + reg);
-	swrm_clk_request(swrm, FALSE);
+	if (is_swr_clk_needed(swrm))
+		swrm_clk_request(swrm, FALSE);
 err:
 	mutex_unlock(&swrm->devlock);
 	return ret;
@@ -438,15 +476,21 @@ static int swrm_ahb_read(struct swr_mstr_ctrl *swrm,
 	if (!swrm->dev_up)
 		goto err;
 
-	ret = swrm_clk_request(swrm, TRUE);
-	if (ret) {
-		dev_err_ratelimited(swrm->dev, "%s: clock request failed\n",
-				    __func__);
+	if (is_swr_clk_needed(swrm)) {
+		ret = swrm_clk_request(swrm, TRUE);
+		if (ret) {
+			dev_err_ratelimited(swrm->dev, "%s: clock request failed\n",
+					    __func__);
+			goto err;
+		}
+	} else if (swrm_core_vote_request(swrm)) {
 		goto err;
 	}
+
 	temp = ioread32(swrm->swrm_dig_base + reg);
 	*value = temp;
-	swrm_clk_request(swrm, FALSE);
+	if (is_swr_clk_needed(swrm))
+		swrm_clk_request(swrm, FALSE);
 err:
 	mutex_unlock(&swrm->devlock);
 	return ret;
