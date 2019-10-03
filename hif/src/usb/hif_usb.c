@@ -384,6 +384,7 @@ QDF_STATUS hif_usb_device_init(struct hif_usb_softc *sc)
 		qdf_spinlock_create(&(device->cs_lock));
 		qdf_spinlock_create(&(device->rx_lock));
 		qdf_spinlock_create(&(device->tx_lock));
+		qdf_spinlock_create(&device->rx_prestart_lock);
 		device->udev = dev;
 		device->interface = interface;
 

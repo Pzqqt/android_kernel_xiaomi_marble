@@ -602,8 +602,10 @@ static void usb_hif_usb_recv_prestart_complete
 	usb_hif_cleanup_recv_urb(urb_context);
 
 	/* Prestart URBs runs out and now start working receive pipe. */
+	qdf_spin_lock_irqsave(&pipe->device->rx_prestart_lock);
 	if ((--pipe->urb_prestart_cnt == 0) && !sc->suspend_state)
 		usb_hif_start_recv_pipes(pipe->device);
+	qdf_spin_unlock_irqrestore(&pipe->device->rx_prestart_lock);
 
 	HIF_DBG("-%s", __func__);
 }
@@ -855,6 +857,7 @@ static void usb_hif_post_recv_prestart_transfers(struct HIF_USB_PIPE *recv_pipe,
 
 	HIF_TRACE("+%s", __func__);
 
+	qdf_spin_lock_irqsave(&recv_pipe->device->rx_prestart_lock);
 	for (i = 0; i < prestart_urb; i++) {
 		urb_context = usb_hif_alloc_urb_from_pipe(recv_pipe);
 		if (!urb_context)
@@ -886,7 +889,6 @@ static void usb_hif_post_recv_prestart_transfers(struct HIF_USB_PIPE *recv_pipe,
 			urb_context->buf);
 
 		usb_hif_enqueue_pending_transfer(recv_pipe, urb_context);
-
 		usb_status = usb_submit_urb(urb, GFP_ATOMIC);
 
 		if (usb_status) {
@@ -898,6 +900,7 @@ static void usb_hif_post_recv_prestart_transfers(struct HIF_USB_PIPE *recv_pipe,
 		}
 		recv_pipe->urb_prestart_cnt++;
 	}
+	qdf_spin_unlock_irqrestore(&recv_pipe->device->rx_prestart_lock);
 
 	HIF_TRACE("-%s", __func__);
 }
@@ -1071,8 +1074,9 @@ void usb_hif_start_recv_pipes(struct HIF_DEVICE_USB *device)
 	pipe = &device->pipes[HIF_RX_DATA_PIPE];
 	pipe->urb_cnt_thresh = pipe->urb_alloc / 2;
 
-	HIF_TRACE("Post URBs to RX_DATA_PIPE: %d",
-		device->pipes[HIF_RX_DATA_PIPE].urb_cnt);
+	HIF_TRACE("Post URBs to RX_DATA_PIPE: %d is_bundle %d",
+		  device->pipes[HIF_RX_DATA_PIPE].urb_cnt,
+		  device->is_bundle_enabled);
 	if (device->is_bundle_enabled) {
 		usb_hif_post_recv_bundle_transfers(pipe,
 					pipe->device->rx_bundle_buf_len);
