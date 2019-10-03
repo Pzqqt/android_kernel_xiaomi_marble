@@ -4757,6 +4757,8 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 			qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 	}
 
+	soc->vdev_id_map[vdev_id] = vdev;
+
 	if (wlan_op_mode_monitor == vdev->opmode) {
 		pdev->monitor_vdev = vdev;
 		return (struct cdp_vdev *)vdev;
@@ -4981,6 +4983,8 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	qdf_assert_always(vdev);
 	pdev = vdev->pdev;
 	soc = pdev->soc;
+
+	soc->vdev_id_map[vdev->vdev_id] = NULL;
 
 	if (wlan_op_mode_monitor == vdev->opmode)
 		goto free_vdev;
@@ -5853,6 +5857,8 @@ static void dp_delete_pending_vdev(struct dp_pdev *pdev, struct dp_vdev *vdev,
 	dp_tx_flow_pool_unmap_handler(pdev, vdev_id,
 			FLOW_TYPE_VDEV, vdev_id);
 	dp_tx_vdev_detach(vdev);
+
+	pdev->soc->vdev_id_map[vdev_id] = NULL;
 
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
@@ -9383,10 +9389,10 @@ static QDF_STATUS dp_runtime_resume(struct cdp_pdev *opaque_pdev)
 static uint32_t dp_tx_get_success_ack_stats(struct cdp_pdev *pdev,
 					    uint8_t vdev_id)
 {
-	struct dp_vdev *vdev =
-		(struct dp_vdev *)dp_get_vdev_from_vdev_id_wifi3(pdev,
-								 vdev_id);
 	struct dp_soc *soc = ((struct dp_pdev *)pdev)->soc;
+	struct dp_vdev *vdev =
+		(struct dp_vdev *)dp_get_vdev_from_soc_vdev_id_wifi3(soc,
+								 vdev_id);
 	struct cdp_vdev_stats *vdev_stats = NULL;
 	uint32_t tx_success;
 
@@ -9728,6 +9734,7 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc, HTC_HANDLE htc_handle,
 	soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_MAPS;
 
 	wlan_set_srng_cfg(&soc->wlan_srng_cfg);
+	qdf_mem_zero(&soc->vdev_id_map, sizeof(soc->vdev_id_map));
 
 	soc->wlan_cfg_ctx = wlan_cfg_soc_attach(soc->ctrl_psoc);
 	if (!soc->wlan_cfg_ctx) {

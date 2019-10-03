@@ -78,6 +78,13 @@
 #define MAX_PDEV_CNT 3
 #endif
 
+/* Max no. of VDEV per PSOC */
+#ifdef WLAN_PSOC_MAX_VDEVS
+#define MAX_VDEV_CNT WLAN_PSOC_MAX_VDEVS
+#else
+#define MAX_VDEV_CNT 51
+#endif
+
 #define MAX_LINK_DESC_BANKS 8
 #define MAX_TXDESC_POOLS 4
 #define MAX_RXDESC_POOLS 4
@@ -981,6 +988,9 @@ struct dp_soc {
 	bool dp_soc_reinit;
 
 	uint32_t wbm_idle_scatter_buf_size;
+
+	/* VDEVs on this SOC */
+	struct dp_vdev *vdev_id_map[MAX_VDEV_CNT];
 
 	/* Tx H/W queues lock */
 	qdf_spinlock_t tx_queue_lock[MAX_TX_HW_QUEUES];

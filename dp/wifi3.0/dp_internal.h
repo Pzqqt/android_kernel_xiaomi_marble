@@ -1502,4 +1502,22 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 }
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+
+/**
+ * dp_get_vdev_from_soc_vdev_id_wifi3() - Returns vdev object given the vdev id
+ * @soc: core DP soc context
+ * @vdev_id: vdev id from vdev object can be retrieved
+ *
+ * Return: struct dp_vdev*: Pointer to DP vdev object
+ */
+static inline struct dp_vdev *
+dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
+				   uint8_t vdev_id)
+{
+	if (qdf_unlikely(vdev_id >= MAX_VDEV_CNT))
+		return NULL;
+
+	return soc->vdev_id_map[vdev_id];
+}
+
 #endif /* #ifndef _DP_INTERNAL_H_ */

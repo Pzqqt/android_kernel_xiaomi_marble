@@ -149,41 +149,6 @@ void dp_peer_ast_hash_remove(struct dp_soc *soc,
 			     struct dp_ast_entry *ase);
 
 /*
- * dp_get_vdev_from_soc_vdev_id_wifi3() -
- * Returns vdev object given the vdev id
- * vdev id is unique across pdev's
- *
- * @soc         : core DP soc context
- * @vdev_id     : vdev id from vdev object can be retrieved
- *
- * Return: struct dp_vdev*: Pointer to DP vdev object
- */
-static inline struct dp_vdev *
-dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
-					uint8_t vdev_id)
-{
-	struct dp_pdev *pdev = NULL;
-	struct dp_vdev *vdev = NULL;
-	int i;
-
-	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
-		pdev = soc->pdev_list[i];
-		qdf_spin_lock_bh(&pdev->vdev_list_lock);
-		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-			if (vdev->vdev_id == vdev_id) {
-				qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-				return vdev;
-			}
-		}
-		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	}
-	dp_err("Failed to find vdev for vdev_id %d", vdev_id);
-
-	return NULL;
-
-}
-
-/*
  * dp_peer_find_by_id_exist - check if peer exists for given id
  * @soc: core DP soc context
  * @peer_id: peer id from peer object can be retrieved
