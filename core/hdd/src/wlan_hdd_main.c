@@ -6159,7 +6159,9 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
-	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
+	/* do not flush work if it is not created */
+	if (hdd_ctx->sap_pre_cac_work.fn)
+		cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		hdd_info("[SSR] reset adapter with device mode %s(%d)",
