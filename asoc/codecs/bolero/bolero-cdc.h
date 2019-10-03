@@ -84,6 +84,7 @@ int bolero_tx_clk_switch(struct snd_soc_component *component);
 int bolero_register_event_listener(struct snd_soc_component *component,
 				   bool enable);
 void bolero_wsa_pa_on(struct device *dev);
+bool bolero_check_core_votes(struct device *dev);
 #else
 static inline int bolero_register_res_clk(struct device *dev, rsc_clk_cb_t cb)
 {
@@ -157,6 +158,11 @@ static inline int bolero_register_event_listener(
 
 static void bolero_wsa_pa_on(struct device *dev)
 {
+}
+
+static inline bool bolero_check_core_votes(struct device *dev)
+{
+	return false;
 }
 #endif /* CONFIG_SND_SOC_BOLERO */
 #endif /* BOLERO_CDC_H */

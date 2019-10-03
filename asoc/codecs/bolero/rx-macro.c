@@ -3499,7 +3499,10 @@ static int rx_macro_core_vote(void *handle, bool enable)
 		pm_runtime_mark_last_busy(rx_priv->dev);
 	}
 
-	return 0;
+	if (bolero_check_core_votes(rx_priv->dev))
+		return 0;
+	else
+		return -EINVAL;
 }
 
 static int rx_swrm_clock(void *handle, bool enable)

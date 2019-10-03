@@ -1952,7 +1952,6 @@ static int tx_macro_clk_switch(struct snd_soc_component *component)
 static int tx_macro_core_vote(void *handle, bool enable)
 {
 	struct tx_macro_priv *tx_priv = (struct tx_macro_priv *) handle;
-	int ret = 0;
 
 	if (tx_priv == NULL) {
 		pr_err("%s: tx priv data is NULL\n", __func__);
@@ -1964,7 +1963,10 @@ static int tx_macro_core_vote(void *handle, bool enable)
 		pm_runtime_mark_last_busy(tx_priv->dev);
 	}
 
-	return ret;
+	if (bolero_check_core_votes(tx_priv->dev))
+		return 0;
+	else
+		return -EINVAL;
 }
 
 static int tx_macro_swrm_clock(void *handle, bool enable)

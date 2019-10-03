@@ -1180,6 +1180,21 @@ int bolero_runtime_suspend(struct device *dev)
 }
 EXPORT_SYMBOL(bolero_runtime_suspend);
 
+bool bolero_check_core_votes(struct device *dev)
+{
+	struct bolero_priv *priv = dev_get_drvdata(dev->parent);
+	bool ret = true;
+
+	mutex_lock(&priv->vote_lock);
+	if ((priv->lpass_core_hw_vote && !priv->core_hw_vote_count) ||
+		(priv->lpass_audio_hw_vote && !priv->core_audio_vote_count))
+		ret = false;
+	mutex_unlock(&priv->vote_lock);
+
+	return ret;
+}
+EXPORT_SYMBOL(bolero_check_core_votes);
+
 static const struct of_device_id bolero_dt_match[] = {
 	{.compatible = "qcom,bolero-codec"},
 	{}
