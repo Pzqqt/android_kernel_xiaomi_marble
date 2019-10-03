@@ -393,10 +393,10 @@ va_hpf_set:
 	snd_soc_component_update_bits(component,
 			dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
 			hpf_cut_off_freq << 5);
-	snd_soc_component_update_bits(component, hpf_gate_reg, 0x03, 0x02);
+	snd_soc_component_update_bits(component, hpf_gate_reg, 0x02, 0x02);
 	/* Minimum 1 clk cycle delay is required as per HW spec */
 	usleep_range(1000, 1010);
-	snd_soc_component_update_bits(component, hpf_gate_reg, 0x03, 0x01);
+	snd_soc_component_update_bits(component, hpf_gate_reg, 0x02, 0x00);
 }
 
 static void va_macro_mute_update_callback(struct work_struct *work)
@@ -688,6 +688,10 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				tx_vol_ctl_reg, 0x20, 0x20);
 		snd_soc_component_update_bits(component,
 				hpf_gate_reg, 0x01, 0x00);
+		/*
+		 * Minimum 1 clk cycle delay is required as per HW spec
+		 */
+		usleep_range(1000, 1010);
 
 		hpf_cut_off_freq = (snd_soc_component_read32(
 					component, dec_cfg_reg) &
@@ -700,7 +704,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					    TX_HPF_CUT_OFF_FREQ_MASK,
 					    CF_MIN_3DB_150HZ << 5);
 			snd_soc_component_update_bits(component,
-					hpf_gate_reg, 0x02, 0x02);
+					hpf_gate_reg, 0x03, 0x03);
 			/*
 			 * Minimum 1 clk cycle delay is required as per HW spec
 			 */
