@@ -439,7 +439,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	header->start_magic_num        = 0xDEADBEAF;
 	header->vendorid               = 0x8cfdf0;
-	header->cfr_metadata_version   = CFR_META_VERSION_1;
+	header->cfr_metadata_version   = CFR_META_VERSION_2;
 	header->cfr_data_version       = CFR_DATA_VERSION_1;
 	header->chip_type              = CFR_CAPTURE_RADIO_HKV2;
 	header->pltform_type           = CFR_PLATFORM_TYPE_ARM;
