@@ -96,8 +96,7 @@ struct cdp_cmn_ops {
 	void (*txrx_pdev_deinit)(struct cdp_pdev *pdev, int force);
 
 	void *(*txrx_peer_create)
-		(struct cdp_vdev *vdev, uint8_t *peer_mac_addr,
-		 struct cdp_ctrl_objmgr_peer *ctrl_peer);
+		(struct cdp_vdev *vdev, uint8_t *peer_mac_addr);
 
 	void (*txrx_peer_setup)
 		(struct cdp_vdev *vdev_hdl, void *peer_hdl);
@@ -935,8 +934,7 @@ struct ol_if_ops {
 					uint8_t vdev_id, uint8_t *peer_macaddr,
 					uint32_t tid_mask);
 	int (*peer_unref_delete)(void *scn_handle, uint8_t *peer_mac,
-				 uint8_t *vdev_mac, enum wlan_op_mode opmode,
-				 void *old_peer, void *new_peer);
+				 uint8_t *vdev_mac, enum wlan_op_mode opmode);
 	bool (*is_hw_dbs_2x2_capable)(struct wlan_objmgr_psoc *psoc);
 	int (*peer_add_wds_entry)(void *vdev_handle,
 				  struct cdp_peer *peer_handle,
@@ -993,15 +991,15 @@ struct ol_if_ops {
 
 	/**
 	 * send_delba() - Send delba to peer
-	 * @pdev_handle: Dp pdev handle
-	 * @ctrl_peer: Peer handle
+	 * @psoc: Objmgr soc handle
+	 * @vdev_id: dp vdev id
 	 * @peer_macaddr: Peer mac addr
 	 * @tid: Tid number
 	 *
 	 * Return: 0 for success, non-zero for failure
 	 */
-	int (*send_delba)(void *pdev_handle,  void *ctrl_peer,
-			  uint8_t *peer_macaddr, uint8_t tid, void *vdev_handle,
+	int (*send_delba)(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			  uint8_t *peer_macaddr, uint8_t tid,
 			  uint8_t reason_code);
 	int (*peer_delete_multiple_wds_entries)(void *vdev_handle,
 						uint8_t *dest_macaddr,

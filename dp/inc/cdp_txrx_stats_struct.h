@@ -957,7 +957,8 @@ struct cdp_peer_stats {
 };
 
 /* struct cdp_interface_peer_stats - interface structure for txrx peer stats
- * @peer_hdl: control path peer handle
+ * @peer_mac: peer mac address
+ * @vdev_id : vdev_id for the peer
  * @last_peer_tx_rate: peer tx rate for last transmission
  * @peer_tx_rate: tx rate for current transmission
  * @peer_rssi: current rssi value of peer
@@ -970,17 +971,18 @@ struct cdp_peer_stats {
  * @rssi_changed: denotes rssi is changed
  */
 struct cdp_interface_peer_stats {
-	void  *peer_hdl;
+	uint8_t  peer_mac[QDF_MAC_ADDR_SIZE];
+	uint8_t  vdev_id;
+	uint8_t  rssi_changed;
 	uint32_t last_peer_tx_rate;
 	uint32_t peer_tx_rate;
-	uint32_t  peer_rssi;
+	uint32_t peer_rssi;
 	uint32_t tx_packet_count;
 	uint32_t rx_packet_count;
 	uint32_t tx_byte_count;
 	uint32_t rx_byte_count;
 	uint32_t per;
 	uint32_t ack_rssi;
-	uint8_t  rssi_changed;
 };
 
 /* Tx completions per interrupt */

@@ -4056,7 +4056,9 @@ QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
 	if ((peer_stats->rx.rssi && peer_stats_intf.rssi_changed) ||
 	    (peer_stats->tx.tx_rate &&
 	     peer_stats->tx.tx_rate != peer_stats->tx.last_tx_rate)) {
-		peer_stats_intf.peer_hdl = peer->ctrl_peer;
+		qdf_mem_copy(peer_stats_intf.peer_mac, peer->mac_addr.raw,
+			     QDF_MAC_ADDR_SIZE);
+		peer_stats_intf.vdev_id = peer->vdev->vdev_id;
 		peer_stats_intf.last_peer_tx_rate = peer_stats->tx.last_tx_rate;
 		peer_stats_intf.peer_tx_rate = peer_stats->tx.tx_rate;
 		peer_stats_intf.peer_rssi = peer_stats->rx.rssi;

@@ -139,8 +139,7 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc, HTC_HANDLE htc_handle,
 	      struct ol_if_ops *ol_ops, uint16_t device_id);
 static void dp_pktlogmod_exit(struct dp_pdev *handle);
 static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
-				uint8_t *peer_mac_addr,
-				struct cdp_ctrl_objmgr_peer *ctrl_peer);
+				uint8_t *peer_mac_addr);
 static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap);
 static void dp_ppdu_ring_reset(struct dp_pdev *pdev);
 static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
@@ -4851,8 +4850,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_create_wifi3((struct cdp_vdev *)vdev,
-							vdev->mac_addr.raw,
-							NULL);
+							vdev->mac_addr.raw);
 
 	return (struct cdp_vdev *)vdev;
 
@@ -5214,7 +5212,7 @@ static inline void dp_peer_rx_bufq_resources_init(struct dp_peer *peer)
  * Return: DP peeer handle on success, NULL on failure
  */
 static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
-		uint8_t *peer_mac_addr, struct cdp_ctrl_objmgr_peer *ctrl_peer)
+		uint8_t *peer_mac_addr)
 {
 	struct dp_peer *peer;
 	int i;
@@ -5262,9 +5260,8 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
 			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
 				peer->mac_addr.raw, vdev->mac_addr.raw,
-				vdev->opmode, peer->ctrl_peer, ctrl_peer);
+				vdev->opmode);
 		}
-		peer->ctrl_peer = ctrl_peer;
 
 		dp_local_peer_id_alloc(pdev, peer);
 
@@ -5302,7 +5299,6 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	/* store provided params */
 	peer->vdev = vdev;
-	peer->ctrl_peer = ctrl_peer;
 
 	if ((vdev->opmode == wlan_op_mode_sta) &&
 	    !qdf_mem_cmp(peer_mac_addr, &vdev->mac_addr.raw[0],
@@ -5898,10 +5894,10 @@ static void dp_peer_release_mem(struct dp_soc *soc,
 {
 	if (soc->cdp_soc.ol_ops->peer_unref_delete)
 		soc->cdp_soc.ol_ops->peer_unref_delete(
-				pdev->ctrl_pdev,
+				soc->ctrl_psoc,
+				pdev->pdev_id,
 				peer->mac_addr.raw, vdev_mac_addr,
-				vdev_opmode, peer->ctrl_peer,
-				NULL);
+				vdev_opmode);
 
 	/*
 	 * Peer AST list hast to be empty here
@@ -6104,19 +6100,6 @@ static inline void dp_peer_rx_bufq_resources_deinit(struct dp_peer *peer)
 static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-
-	/* redirect the peer's rx delivery function to point to a
-	 * discard func
-	 */
-
-	/* Do not make ctrl_peer to NULL for connected sta peers.
-	 * We need ctrl_peer to release the reference during dp
-	 * peer free. This reference was held for
-	 * obj_mgr peer during the creation of dp peer.
-	 */
-	if (!(peer->vdev && (peer->vdev->opmode != wlan_op_mode_sta) &&
-	      !peer->bss_peer))
-		peer->ctrl_peer = NULL;
 
 	peer->valid = 0;
 

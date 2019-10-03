@@ -1979,8 +1979,6 @@ struct dp_peer {
 	/* VDEV to which this peer is associated */
 	struct dp_vdev *vdev;
 
-	struct cdp_ctrl_objmgr_peer *ctrl_peer;
-
 	struct dp_ast_entry *self_ast_entry;
 
 	qdf_atomic_t ref_cnt;

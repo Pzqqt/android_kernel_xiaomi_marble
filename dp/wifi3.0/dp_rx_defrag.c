@@ -1292,27 +1292,22 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 
 	if (tkip_demic) {
 		msdu = frag_list_head;
-		if (soc->cdp_soc.ol_ops->rx_frag_tkip_demic) {
-			status = soc->cdp_soc.ol_ops->rx_frag_tkip_demic(
-				(void *)peer->ctrl_peer, msdu, hdr_space);
-		} else {
-			qdf_mem_copy(key,
-				     &peer->security[index].michael_key[0],
-				IEEE80211_WEP_MICLEN);
-			status = dp_rx_defrag_tkip_demic(key, msdu,
-							 RX_PKT_TLVS_LEN +
-							 hdr_space);
+		qdf_mem_copy(key,
+			     &peer->security[index].michael_key[0],
+			     IEEE80211_WEP_MICLEN);
+		status = dp_rx_defrag_tkip_demic(key, msdu,
+						 RX_PKT_TLVS_LEN +
+						 hdr_space);
 
-			if (status) {
-				dp_rx_defrag_err(vdev, frag_list_head);
+		if (status) {
+			dp_rx_defrag_err(vdev, frag_list_head);
 
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: TKIP demic failed status %d",
-					  __func__, status);
+			QDF_TRACE(QDF_MODULE_ID_TXRX,
+				  QDF_TRACE_LEVEL_ERROR,
+				  "%s: TKIP demic failed status %d",
+				   __func__, status);
 
-				return QDF_STATUS_E_DEFRAG_ERROR;
-			}
+			return QDF_STATUS_E_DEFRAG_ERROR;
 		}
 	}
 

@@ -362,7 +362,7 @@ cdp_pdev_deinit(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int force)
 
 static inline void *cdp_peer_create
 	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-	uint8_t *peer_mac_addr, struct cdp_ctrl_objmgr_peer *ctrl_peer)
+	uint8_t *peer_mac_addr)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -376,7 +376,7 @@ static inline void *cdp_peer_create
 		return NULL;
 
 	return soc->ops->cmn_drv_ops->txrx_peer_create(vdev,
-			peer_mac_addr, ctrl_peer);
+			peer_mac_addr);
 }
 
 static inline void cdp_peer_setup
