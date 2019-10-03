@@ -36,6 +36,7 @@
 #include <linux/debugfs.h>
 
 #ifdef WMI_EXT_DBG
+#include "qdf_atomic.h"
 
 /**
  * wmi_ext_dbg_msg_enqueue() - enqueue wmi message
@@ -1688,6 +1689,7 @@ QDF_STATUS wmi_unified_cmd_send_over_qmi(struct wmi_unified *wmi_handle,
 				    uint32_t cmd_id)
 {
 	QDF_STATUS status;
+	int32_t ret;
 
 	if (!qdf_nbuf_push_head(buf, sizeof(WMI_CMD_HDR))) {
 		wmi_err("Failed to send cmd %x, no memory", cmd_id);
@@ -1705,6 +1707,8 @@ QDF_STATUS wmi_unified_cmd_send_over_qmi(struct wmi_unified *wmi_handle,
 		qdf_nbuf_pull_head(buf, sizeof(WMI_CMD_HDR));
 		wmi_warn("WMI send on QMI failed. Retrying WMI on HTC");
 	} else {
+		ret = qdf_atomic_inc_return(&wmi_handle->num_stats_over_qmi);
+		wmi_debug("num stats over qmi: %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -2635,6 +2639,7 @@ void *wmi_unified_attach(void *scn_handle,
 	soc->scn_handle = scn_handle;
 	qdf_atomic_init(&wmi_handle->pending_cmds);
 	qdf_atomic_init(&wmi_handle->is_target_suspended);
+	qdf_atomic_init(&wmi_handle->num_stats_over_qmi);
 	wmi_runtime_pm_init(wmi_handle);
 	qdf_spinlock_create(&wmi_handle->eventq_lock);
 	qdf_nbuf_queue_init(&wmi_handle->event_queue);

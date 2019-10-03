@@ -625,6 +625,8 @@ static QDF_STATUS wmi_unified_cmd_send_pm_chk(struct wmi_unified *wmi_handle,
 			return QDF_STATUS_SUCCESS;
 	}
 
+	qdf_atomic_set(&wmi_handle->num_stats_over_qmi, 0);
+
 	return wmi_unified_cmd_send(wmi_handle, buf, buflen, cmd_id);
 }
 #else
