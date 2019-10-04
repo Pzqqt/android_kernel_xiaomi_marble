@@ -198,14 +198,13 @@ policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 	 * NUM_CHANNELS and hence the ch_cnt should also not
 	 * exceed NUM_CHANNELS.
 	 */
-	pm_ctx->unsafe_channel_count = avoid_freq_ind->chan_list.ch_cnt >=
+	pm_ctx->unsafe_channel_count = avoid_freq_ind->chan_list.chan_cnt >=
 			NUM_CHANNELS ?
-			NUM_CHANNELS : avoid_freq_ind->chan_list.ch_cnt;
+			NUM_CHANNELS : avoid_freq_ind->chan_list.chan_cnt;
 
 	for (i = 0; i < pm_ctx->unsafe_channel_count; i++)
 		pm_ctx->unsafe_channel_list[i] =
-			wlan_reg_chan_to_freq(
-			pm_ctx->pdev, avoid_freq_ind->chan_list.ch_list[i]);
+			avoid_freq_ind->chan_list.chan_freq_list[i];
 
 	policy_mgr_debug("Channel list update, received %d avoided channels",
 			 pm_ctx->unsafe_channel_count);
