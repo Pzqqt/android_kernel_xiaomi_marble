@@ -15,6 +15,10 @@ ifeq ($(call is-board-platform,lito),true)
 AUDIO_SELECT  := CONFIG_SND_SOC_LITO=m
 endif
 
+ifeq ($(call is-board-platform,bengal),true)
+AUDIO_SELECT  := CONFIG_SND_SOC_BENGAL=m
+endif
+
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
 ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET) kona lito bengal),true)
@@ -52,6 +56,7 @@ LOCAL_MODULE_DEBUG_ENABLE := true
 LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
 include $(DLKM_DIR)/AndroidKernelModule.mk
 ###########################################################
+ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET) kona lito),true)
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_wsa_macro.ko
 LOCAL_MODULE_KBUILD_NAME  := wsa_macro_dlkm.ko
@@ -59,6 +64,7 @@ LOCAL_MODULE_TAGS         := optional
 LOCAL_MODULE_DEBUG_ENABLE := true
 LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
 include $(DLKM_DIR)/AndroidKernelModule.mk
+endif
 ###########################################################
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_va_macro.ko

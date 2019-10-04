@@ -36,6 +36,11 @@ TARGET := lito
 AUDIO_SELECT  := CONFIG_SND_SOC_LITO=m
 endif
 
+ifeq ($(call is-board-platform,bengal),true)
+TARGET := bengal
+AUDIO_SELECT  := CONFIG_SND_SOC_BENGAL=m
+endif
+
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
 ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET) kona lito bengal sdmshrike),true)

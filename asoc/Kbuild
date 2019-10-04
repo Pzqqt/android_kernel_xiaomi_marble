@@ -51,9 +51,9 @@ ifeq ($(KERNEL_BUILD), 0)
 		INCS    +=  -include $(AUDIO_ROOT)/config/litoautoconf.h
 	endif
 	ifeq ($(CONFIG_ARCH_BENGAL), y)
-		include $(AUDIO_ROOT)/config/litoauto.conf
+		include $(AUDIO_ROOT)/config/bengalauto.conf
 		export
-		INCS    +=  -include $(AUDIO_ROOT)/config/litoautoconf.h
+		INCS    +=  -include $(AUDIO_ROOT)/config/bengalautoconf.h
 	endif
 	ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 		ifdef CONFIG_SND_SOC_SA8155
@@ -133,6 +133,11 @@ endif
 
 ifdef CONFIG_SND_SOC_LITO
 	MACHINE_OBJS += kona.o
+endif
+
+# for BENGAL sound card driver
+ifdef CONFIG_SND_SOC_BENGAL
+	MACHINE_OBJS += bengal.o
 endif
 
 # for sa8155 sound card driver
@@ -242,6 +247,9 @@ obj-$(CONFIG_SND_SOC_KONA) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_LITO) += machine_dlkm.o
+machine_dlkm-y := $(MACHINE_OBJS)
+
+obj-$(CONFIG_SND_SOC_BENGAL) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_SA8155) += machine_dlkm.o
