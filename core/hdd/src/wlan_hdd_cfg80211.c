@@ -10905,8 +10905,12 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 static QDF_STATUS wlan_hdd_validate_acs_channel(struct hdd_adapter *adapter,
 						int channel, int chan_bw)
 {
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
 	if (QDF_STATUS_SUCCESS !=
-	    wlan_hdd_validate_operation_channel(adapter, channel))
+	    wlan_hdd_validate_operation_channel(adapter,
+						wlan_reg_chan_to_freq(
+						hdd_ctx->pdev, channel)))
 		return QDF_STATUS_E_FAILURE;
 	if ((wlansap_is_channel_in_nol_list(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 				channel,
@@ -15410,49 +15414,50 @@ bool wlan_hdd_is_ap_supports_immediate_power_save(uint8_t *ies, int length)
  * channel list.
  */
 QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
-					       int channel)
+					       uint32_t ch_freq)
 {
-	uint32_t num_ch = 0;
-	uint32_t valid_ch[CFG_VALID_CHANNEL_LIST_LEN];
-	u32 indx = 0;
-	bool is_valid_channel = false;
-	uint8_t count;
-	QDF_STATUS status;
-	bool value;
-	struct hdd_context *hdd_ctx;
+	bool value = 0;
+	uint32_t i;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct regulatory_channel *cur_chan_list;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
-	num_ch = CFG_VALID_CHANNEL_LIST_LEN;
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = ucfg_mlme_get_sap_allow_all_channels(hdd_ctx->psoc, &value);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Unable to fetch sap allow all channels");
+
 	if (value) {
 		/* Validate the channel */
-		for (count = CHAN_ENUM_2412; count <= CHAN_ENUM_5865; count++) {
-			if (channel == WLAN_REG_CH_NUM(count)) {
-				is_valid_channel = true;
+		for (i = CHAN_ENUM_2412; i < NUM_CHANNELS; i++) {
+			if (ch_freq == WLAN_REG_CH_TO_FREQ(i)) {
+				status = QDF_STATUS_SUCCESS;
 				break;
 			}
 		}
-		if (!is_valid_channel) {
-			hdd_err("Invalid Channel: %d", channel);
-			return QDF_STATUS_E_FAILURE;
-		}
 	} else {
-		ucfg_mlme_get_valid_channel_freq_list(hdd_ctx->psoc, valid_ch,
-						      &num_ch);
-		for (indx = 0; indx < num_ch; indx++) {
-			if (channel ==
-				wlan_reg_freq_to_chan(hdd_ctx->pdev, valid_ch[indx]))
-				break;
+		cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
+				sizeof(struct regulatory_channel));
+		if (!cur_chan_list)
+			return QDF_STATUS_E_NOMEM;
+
+		if (wlan_reg_get_current_chan_list(
+		    hdd_ctx->pdev, cur_chan_list) != QDF_STATUS_SUCCESS) {
+			qdf_mem_free(cur_chan_list);
+			return QDF_STATUS_E_INVAL;
 		}
 
-		if (indx >= num_ch) {
-			hdd_err("Invalid Channel: %d", channel);
-			return QDF_STATUS_E_FAILURE;
+		for (i = 0; i < NUM_CHANNELS; i++) {
+			if (ch_freq != cur_chan_list[i].center_freq)
+				continue;
+			if (cur_chan_list[i].state != CHANNEL_STATE_DISABLE &&
+			    cur_chan_list[i].state != CHANNEL_STATE_INVALID)
+				status = QDF_STATUS_SUCCESS;
+			break;
 		}
+		qdf_mem_free(cur_chan_list);
 	}
-	return QDF_STATUS_SUCCESS;
+
+	return status;
 
 }
 
