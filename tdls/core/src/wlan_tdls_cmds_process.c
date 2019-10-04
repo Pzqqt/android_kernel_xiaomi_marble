@@ -36,6 +36,7 @@
 #include "wlan_tdls_cmds_process.h"
 #include "wlan_tdls_tgt_api.h"
 #include "wlan_policy_mgr_api.h"
+#include "nan_ucfg_api.h"
 
 static uint16_t tdls_get_connected_peer(struct tdls_soc_priv_obj *soc_obj)
 {
@@ -678,6 +679,11 @@ int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req)
 
 	/* other than teardown frame, mgmt frames are not sent if disabled */
 	if (TDLS_TEARDOWN != tdls_validate->action_code) {
+		if (ucfg_is_nan_disc_active(tdls_soc->soc)) {
+			tdls_err("NAN active. NAN+TDLS not supported");
+			return -EPERM;
+		}
+
 		if (!tdls_check_is_tdls_allowed(vdev)) {
 			tdls_err("TDLS not allowed, reject MGMT, action = %d",
 				tdls_validate->action_code);
@@ -799,14 +805,25 @@ QDF_STATUS tdls_process_add_peer(struct tdls_add_peer_request *req)
 	struct wlan_serialization_command cmd = {0,};
 	enum wlan_serialization_status ser_cmd_status;
 	struct wlan_objmgr_vdev *vdev;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (!req || !req->vdev) {
 		tdls_err("req: %pK", req);
-		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
 	vdev = req->vdev;
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		tdls_err("can't get psoc");
+		goto error;
+	}
+	if (ucfg_is_nan_disc_active(psoc)) {
+		tdls_err("NAN active. NAN+TDLS not supported");
+		goto error;
+	}
+	status = QDF_STATUS_SUCCESS;
+
 	cmd.cmd_type = WLAN_SER_CMD_TDLS_ADD_PEER;
 	cmd.cmd_id = 0;
 	cmd.cmd_cb = tdls_add_peer_serialize_callback;

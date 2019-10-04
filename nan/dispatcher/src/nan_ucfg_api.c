@@ -553,6 +553,11 @@ bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc, uint8_t nan_chan)
 	return nan_is_enable_allowed(psoc, nan_chan);
 }
 
+bool ucfg_is_nan_disc_active(struct wlan_objmgr_psoc *psoc)
+{
+	return nan_is_disc_active(psoc);
+}
+
 QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
 {
 	struct wlan_objmgr_psoc *psoc;
