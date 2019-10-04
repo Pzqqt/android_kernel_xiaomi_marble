@@ -1153,6 +1153,7 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 {
 	uint16_t *local_unsafe_list;
 	uint16_t local_unsafe_list_count;
+	uint8_t i;
 
 	/* Basic sanity */
 	if (!hdd_ctxt) {
@@ -1177,10 +1178,12 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 	qdf_mem_zero(hdd_ctxt->unsafe_channel_list,
 					sizeof(hdd_ctxt->unsafe_channel_list));
 
-	hdd_ctxt->unsafe_channel_count = unsafe_chan_list->ch_cnt;
+	hdd_ctxt->unsafe_channel_count = unsafe_chan_list->chan_cnt;
 
-	qdf_mem_copy(hdd_ctxt->unsafe_channel_list, unsafe_chan_list->ch_list,
-					sizeof(hdd_ctxt->unsafe_channel_list));
+	for (i = 0; i < unsafe_chan_list->chan_cnt; i++) {
+		hdd_ctxt->unsafe_channel_list[i] =
+			wlan_reg_freq_to_chan(hdd_ctxt->pdev, unsafe_chan_list->chan_freq_list[i]);
+	}
 	hdd_debug("number of unsafe channels is %d ",
 	       hdd_ctxt->unsafe_channel_count);
 
