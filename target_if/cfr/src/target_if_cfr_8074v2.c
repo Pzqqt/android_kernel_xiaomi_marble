@@ -306,6 +306,24 @@ void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 		  event->chain_phase[6], event->chain_phase[7]);
 }
 
+void prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param *tx_evt_param,
+		struct csi_cfr_header *header)
+{
+	header->start_magic_num        = 0xDEADBEAF;
+	header->vendorid               = 0x8cfdf0;
+	header->cfr_metadata_version   = CFR_META_VERSION_2;
+	header->cfr_data_version       = CFR_DATA_VERSION_1;
+	header->chip_type              = CFR_CAPTURE_RADIO_HKV2;
+	header->pltform_type           = CFR_PLATFORM_TYPE_ARM;
+	header->Reserved               = 0;
+	header->u.meta_v2.status       = 0; /* failure */
+	header->u.meta_v2.length	   = 0;
+
+	qdf_mem_copy(&header->u.meta_v2.peer_addr[0],
+		     &tx_evt_param->peer_mac_addr.bytes[0], QDF_MAC_ADDR_SIZE);
+
+}
+
 static int
 target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 {
@@ -319,6 +337,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	struct pdev_cfr *pdev_cfrobj;
 	struct look_up_table *lut = NULL;
 	struct csi_cfr_header *header = NULL;
+	struct csi_cfr_header header_error = {0};
 	wmi_cfr_peer_tx_event_param tx_evt_param = {0};
 	qdf_dma_addr_t buf_addr = 0, buf_addr_temp = 0;
 	int status;
@@ -391,6 +410,12 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) == 1) {
 		cfr_debug("CFR capture failed as peer is in powersave : %s",
 			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
+
+		prepare_cfr_header_txstatus(&tx_evt_param, &header_error);
+		psoc->soc_cb.rx_ops.cfr_rx_ops.cfr_info_send(pdev, &header_error,
+				sizeof(struct csi_cfr_header),
+				NULL, 0, &end_magic, 4);
+
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
