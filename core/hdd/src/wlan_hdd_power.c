@@ -1785,7 +1785,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 		return rc;
 
 	if (hdd_ctx->config->is_wow_disabled) {
-		hdd_err("wow is disabled");
+		hdd_info_rl("wow is disabled");
 		return -EINVAL;
 	}
 
