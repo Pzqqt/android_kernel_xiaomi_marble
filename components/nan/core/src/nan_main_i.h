@@ -245,6 +245,14 @@ enum nan_disc_state nan_get_discovery_state(struct wlan_objmgr_psoc *psoc);
 bool nan_is_enable_allowed(struct wlan_objmgr_psoc *psoc, uint8_t nan_chan);
 
 /*
+ * nan_is_disc_active: Queries whether NAN Discovery is active
+ * @psoc: PSOC object
+ *
+ * Return: True if NAN Disc is active, False otherwise
+ */
+bool nan_is_disc_active(struct wlan_objmgr_psoc *psoc);
+
+/*
  * nan_get_connection_info: Gets connection info of the NAN Discovery interface
  * @psoc: PSOC object
  * @chan: NAN Social channel to be returned

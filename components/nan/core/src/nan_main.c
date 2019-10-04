@@ -1046,6 +1046,17 @@ bool nan_is_enable_allowed(struct wlan_objmgr_psoc *psoc, uint8_t nan_chan)
 					     HW_MODE_20_MHZ));
 }
 
+bool nan_is_disc_active(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		nan_err("psoc object object is NULL");
+		return false;
+	}
+
+	return (NAN_DISC_ENABLED == nan_get_discovery_state(psoc) ||
+		NAN_DISC_ENABLE_IN_PROGRESS == nan_get_discovery_state(psoc));
+}
+
 QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
 				    uint8_t nan_social_channel)
 {

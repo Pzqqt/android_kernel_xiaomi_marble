@@ -284,6 +284,15 @@ bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc,
 				uint8_t nan_chan);
 
 /**
+ * ucfg_is_nan_disc_active() - ucfg API to query if NAN Discovery is
+ * active
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if NAN Discovery is active, False otherwise
+ */
+bool ucfg_is_nan_disc_active(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_nan_set_tgt_caps: ucfg API to set the NAN capabilities of the Target
  * @psoc: pointer to psoc object
  * @nan_caps: pointer to the structure of NAN capability bits
@@ -357,6 +366,11 @@ static inline QDF_STATUS ucfg_nan_psoc_open(struct wlan_objmgr_psoc *psoc)
 
 static inline void ucfg_nan_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+}
+
+static inline bool ucfg_is_nan_disc_active(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 
 #endif /* WLAN_FEATURE_NAN */
