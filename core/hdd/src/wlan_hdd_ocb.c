@@ -41,6 +41,7 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_handle.h>
 #include <cdp_txrx_ocb.h>
+#include "ol_txrx.h"
 
 /* Structure definitions for WLAN_SET_DOT11P_CHANNEL_SCHED */
 #define AIFSN_MIN		(2)
@@ -240,7 +241,7 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 	adapter->tx_fn = txrx_ops.tx.tx;
 
-	qdf_status = cdp_peer_register(soc, (struct cdp_pdev *)pdev, &sta_desc);
+	qdf_status = cdp_peer_register(soc, OL_TXRX_PDEV_ID, &sta_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to register. Status= %d [0x%08X]",
 		       qdf_status, qdf_status);

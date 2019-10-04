@@ -52,6 +52,7 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_misc.h>
 #include <cdp_txrx_ctrl.h>
+#include "ol_txrx.h"
 #include <wlan_logging_sock_svc.h>
 #include <wlan_hdd_object_manager.h>
 #include <cdp_txrx_handle.h>
@@ -1618,8 +1619,7 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter,
 	QDF_STATUS qdf_status;
 
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
-			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
-			mac_addr);
+				    OL_TXRX_PDEV_ID, mac_addr);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_clear_peer() failed for sta mac: "
 			QDF_MAC_ADDR_STR ". Status(%d) [0x%08X]",
@@ -1942,7 +1942,7 @@ static void hdd_set_peer_authorized_event(uint32_t vdev_id)
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 static inline
-void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter, void *peer)
+void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter)
 {
 	unsigned long rc;
 	/* wait for event from firmware to set the event */
@@ -1958,7 +1958,7 @@ void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter, void *peer)
 }
 #else
 static inline
-void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter, void *peer)
+void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter)
 { }
 #endif
 
@@ -1968,20 +1968,9 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 				 bool roam_synch_in_progress)
 {
 	QDF_STATUS err;
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *peer;
 
-	if (!pdev) {
-		hdd_err("Failed to get txrx context");
-		return QDF_STATUS_E_FAULT;
-	}
-
-	peer = cdp_peer_find_by_addr(soc, (struct cdp_pdev *)pdev, peer_mac);
-	if (!peer)
-		return QDF_STATUS_E_FAULT;
-
-	err = cdp_peer_state_update(soc, pdev, peer_mac, sta_state);
+	err = cdp_peer_state_update(soc, peer_mac, sta_state);
 	if (err != QDF_STATUS_SUCCESS) {
 		hdd_err("peer state update failed");
 		return QDF_STATUS_E_FAULT;
@@ -2011,7 +2000,7 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 
 		if (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
-			hdd_set_unpause_queue(soc, adapter, peer);
+			hdd_set_unpause_queue(soc, adapter);
 		}
 	}
 	return QDF_STATUS_SUCCESS;
@@ -2099,7 +2088,6 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	struct ol_txrx_desc_type txrx_desc = {0};
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!bss_desc)
 		return QDF_STATUS_E_FAILURE;
@@ -2152,8 +2140,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	}
 
 	adapter->tx_fn = txrx_ops.tx.tx;
-	qdf_status = cdp_peer_register(soc,
-			(struct cdp_pdev *)pdev, &txrx_desc);
+	qdf_status = cdp_peer_register(soc, OL_TXRX_PDEV_ID, &txrx_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_peer_register() failed Status: %d [0x%08X]",
 			 qdf_status, qdf_status);
@@ -4002,7 +3989,6 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	struct ol_txrx_desc_type txrx_desc = { 0 };
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	/*
 	 * TDLS sta in BSS should be set as STA type TDLS and STA MAC should
@@ -4031,8 +4017,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 
 	/* Register the Station with TL...  */
-	qdf_status = cdp_peer_register(soc,
-			(struct cdp_pdev *)pdev, &txrx_desc);
+	qdf_status = cdp_peer_register(soc, OL_TXRX_PDEV_ID, &txrx_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_peer_register() failed Status: %d [0x%08X]",
 			qdf_status, qdf_status);
@@ -4048,8 +4033,7 @@ QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
 	QDF_STATUS qdf_status;
 
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
-			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
-			*peer_mac);
+				    OL_TXRX_PDEV_ID, *peer_mac);
 
 	return qdf_status;
 }

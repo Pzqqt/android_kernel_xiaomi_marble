@@ -568,15 +568,15 @@ static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
  */
 
 /**
- * wma_find_vdev_by_addr() - find vdev_id from mac address
+ * wma_find_vdev_id_by_addr() - find vdev_id from mac address
  * @wma: wma handle
  * @addr: mac address
  * @vdev_id: return vdev_id
  *
- * Return: Returns vdev handle or NULL if mac address don't match
+ * Return: SUCCESS or FAILURE
  */
-struct cdp_vdev *wma_find_vdev_by_addr(tp_wma_handle wma, uint8_t *addr,
-				   uint8_t *vdev_id);
+QDF_STATUS wma_find_vdev_id_by_addr(tp_wma_handle wma, uint8_t *addr,
+				    uint8_t *vdev_id);
 
 /**
  * wma_find_vdev_by_id() - Returns vdev handle for given vdev id.
@@ -739,15 +739,15 @@ static inline uint8_t *wma_find_bssid_by_vdev_id(tp_wma_handle wma,
 }
 
 /**
- * wma_find_vdev_by_bssid() - Get the corresponding vdev_id from BSSID
+ * wma_find_vdev_id_by_bssid() - Get the corresponding vdev_id from BSSID
  * @wma - wma handle
+ * @bssid - bssid address
  * @vdev_id - vdev ID
  *
- * Return: fill vdev_id with appropriate vdev id and return vdev
- *         handle or NULL if not found.
+ * Return: SUCCESS or FAILURE.
  */
-struct cdp_vdev *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
-				    uint8_t *vdev_id);
+QDF_STATUS wma_find_vdev_id_by_bssid(tp_wma_handle wma, uint8_t *bssid,
+				     uint8_t *vdev_id);
 
 /**
  * wma_vdev_detach() - send vdev delete command to fw
@@ -762,18 +762,16 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 QDF_STATUS wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value);
 
-QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
-			   uint8_t vdev_id, void *peer,
-			   bool roam_synch_in_progress);
+QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
+			   uint8_t vdev_id, bool roam_synch_in_progress);
 
 QDF_STATUS wma_peer_unmap_conf_send(tp_wma_handle wma,
 				    struct send_peer_unmap_conf_params *msg);
 
-QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
-			  struct cdp_vdev *vdev,
-			  uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
-			  uint32_t peer_type, uint8_t vdev_id,
-			  bool roam_synch_in_progress);
+QDF_STATUS wma_create_peer(tp_wma_handle wma,
+			   uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
+			   uint32_t peer_type, uint8_t vdev_id,
+			   bool roam_synch_in_progress);
 
 /**
  * wma_send_del_bss_response() - send delete bss resp

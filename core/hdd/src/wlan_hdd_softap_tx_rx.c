@@ -982,7 +982,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 
 	qdf_status = cdp_clear_peer(
 			cds_get_context(QDF_MODULE_ID_SOC),
-			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
+			OL_TXRX_PDEV_ID,
 			*mac_addr);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_clear_peer failed for sta: " QDF_MAC_ADDR_STR
@@ -1017,7 +1017,6 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct hdd_ap_ctx *ap_ctx;
 	struct hdd_station_info *sta_info;
 
@@ -1079,8 +1078,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 			  &txrx_ops);
 	adapter->tx_fn = txrx_ops.tx.tx;
 
-	qdf_status = cdp_peer_register(soc,
-			(struct cdp_pdev *)pdev, &txrx_desc);
+	qdf_status = cdp_peer_register(soc, OL_TXRX_PDEV_ID, &txrx_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_peer_register() failed to register.  Status = %d [0x%08X]",
 			qdf_status, qdf_status);

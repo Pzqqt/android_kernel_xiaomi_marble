@@ -16097,8 +16097,7 @@ QDF_STATUS sme_check_for_duplicate_session(mac_handle_t mac_handle,
 					   uint8_t *peer_addr)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
-	struct cdp_pdev *pdev;
-	ol_txrx_peer_handle peer;
+	bool peer_exist = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
@@ -16107,18 +16106,11 @@ QDF_STATUS sme_check_for_duplicate_session(mac_handle_t mac_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		sme_err("Failed to get pdev handler");
-		return QDF_STATUS_E_INVAL;
-	}
-
 	if (QDF_STATUS_SUCCESS != sme_acquire_global_lock(&mac_ctx->sme))
 		return status;
 
-	peer = cdp_peer_find_by_addr(soc, pdev,
-				     peer_addr);
-	if (peer) {
+	peer_exist = cdp_find_peer_exist(soc, OL_TXRX_PDEV_ID, peer_addr);
+	if (peer_exist) {
 		sme_err("Peer exists with same MAC");
 		status = QDF_STATUS_E_EXISTS;
 	} else {

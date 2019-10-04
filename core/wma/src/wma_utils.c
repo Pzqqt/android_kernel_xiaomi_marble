@@ -4218,8 +4218,7 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
 					       uint8_t vdev_id)
 {
-	struct cdp_pdev *pdev;
-	void *peer = NULL;
+	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	QDF_STATUS status;
 	struct qdf_mac_addr bss_peer;
@@ -4235,21 +4234,13 @@ void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
 
 	WMA_LOGE("%s: ADD BSS failure for vdev %d", __func__, vdev_id);
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
-		return;
-	}
-
-	peer = cdp_peer_find_by_addr(soc, pdev, bss_peer.bytes);
-
-	if (!peer) {
+	if (!cdp_find_peer_exist(soc, pdev_id, bss_peer.bytes)) {
 		WMA_LOGE("%s Failed to find peer %pM",
 			 __func__, bss_peer.bytes);
 		return;
 	}
 
-	wma_remove_peer(wma, bss_peer.bytes, vdev_id, peer, false);
+	wma_remove_peer(wma, bss_peer.bytes, vdev_id, false);
 }
 
 QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,

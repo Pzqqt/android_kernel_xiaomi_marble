@@ -221,6 +221,27 @@ ol_txrx_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
 void *ol_txrx_find_peer_by_addr(struct cdp_pdev *pdev,
 				uint8_t *peer_addr);
 
+/**
+ * @brief specify the peer's authentication state
+ * @details
+ *  Specify the peer's authentication state (none, connected, authenticated)
+ *  to allow the data SW to determine whether to filter out invalid data frames.
+ *  (In the "connected" state, where security is enabled, but authentication
+ *  has not completed, tx and rx data frames other than EAPOL or WAPI should
+ *  be discarded.)
+ *  This function is only relevant for systems in which the tx and rx filtering
+ *  are done in the host rather than in the target.
+ *
+ * @param soc - datapath soc handle
+ * @param peer_mac - mac address of which peer has changed its state
+ * @param state - the new state of the peer
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ol_txrx_peer_state_update(struct cdp_soc_t *soc_hdl,
+				     uint8_t *peer_mac,
+				     enum ol_txrx_peer_state state);
+
 void htt_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn);
 void peer_unmap_timer_handler(void *data);
 
@@ -315,14 +336,75 @@ ol_txrx_pdev_grp_stat_destroy(struct ol_txrx_pdev_t *pdev) {}
 #endif
 
 #if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
-void ol_txrx_copy_mac_addr_raw(struct cdp_vdev *pvdev, uint8_t *bss_addr);
-void ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
-				struct cdp_vdev *pvdev);
-bool is_vdev_restore_last_peer(void *ppeer);
-void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *pvdev,
+/**
+ * ol_txrx_copy_mac_addr_raw() - copy raw mac addr
+ * @soc_hdl: datapath soc handle
+ * @vdev_id: the data virtual device id
+ * @bss_addr: bss address
+ *
+ * Return: None
+ */
+void ol_txrx_copy_mac_addr_raw(struct cdp_soc_t *soc, uint8_t vdev_id,
+			       uint8_t *bss_addr);
+
+/**
+ * ol_txrx_add_last_real_peer() - add last peer
+ * @soc_hdl: datapath soc handle
+ * @pdev_id: the data physical device id
+ * @vdev_id: virtual device id
+ *
+ * Return: None
+ */
+void ol_txrx_add_last_real_peer(struct cdp_soc_t *soc, uint8_t pdev_id,
+				uint8_t vdev_id);
+
+/**
+ * is_vdev_restore_last_peer() - check for vdev last peer
+ * @soc: datapath soc handle
+ * vdev_id: vdev id
+ * @peer_mac: peer mac address
+ *
+ * Return: true if last peer is not null
+ */
+bool is_vdev_restore_last_peer(struct cdp_soc_t *soc, uint8_t vdev_id,
+			       uint8_t *peer_mac);
+
+/**
+ * ol_txrx_update_last_real_peer() - check for vdev last peer
+ * @soc: datapath soc handle
+ * @pdev_id: the data physical device id
+ * @vdev_id: vdev_id
+ * @restore_last_peer: restore last peer flag
+ *
+ * Return: None
+ */
+void ol_txrx_update_last_real_peer(struct cdp_soc_t *soc, uint8_t pdev_id,
+				   uint8_t vdev_id,
 				   bool restore_last_peer);
-void ol_txrx_set_peer_as_tdls_peer(void *ppeer, bool val);
-void ol_txrx_set_tdls_offchan_enabled(void *ppeer, bool val);
+
+/**
+ * ol_txrx_set_peer_as_tdls_peer() - mark peer as tdls peer
+ * @soc: pointer to SOC handle
+ * @vdev_id: virtual interface id
+ * @peer_mac: peer mac address
+ * @value: false/true
+ *
+ * Return: None
+ */
+void ol_txrx_set_peer_as_tdls_peer(struct cdp_soc_t *soc, uint8_t vdev_id,
+				   uint8_t *peer_mac, bool val);
+
+/**
+ * ol_txrx_set_tdls_offchan_enabled() - set tdls offchan enabled
+ * @soc: pointer to SOC handle
+ * @vdev_id: virtual interface id
+ * @peer_mac: peer mac address
+ * @value: false/true
+ *
+ * Return: None
+ */
+void ol_txrx_set_tdls_offchan_enabled(struct cdp_soc_t *soc, uint8_t vdev_id,
+				      uint8_t *peer_mac, bool val);
 #endif
 
 #if defined(FEATURE_TSO) && defined(FEATURE_TSO_DEBUG)

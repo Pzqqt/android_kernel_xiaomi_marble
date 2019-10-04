@@ -87,7 +87,6 @@
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
  * @wma: wma handle
- * @pdev: txrx pdev
  * @vdev_id: vdev id
  * @param_buf: SWBA parameters
  *
@@ -95,7 +94,6 @@
  */
 #ifdef WLAN_WMI_BCN
 static void wma_send_bcn_buf_ll(tp_wma_handle wma,
-				struct cdp_pdev *pdev,
 				uint8_t vdev_id,
 				WMI_HOST_SWBA_EVENTID_param_tlvs *param_buf)
 {
@@ -252,7 +250,6 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 #else
 static inline void
 wma_send_bcn_buf_ll(tp_wma_handle wma,
-		    struct cdp_pdev *pdev,
 		    uint8_t vdev_id,
 		    WMI_HOST_SWBA_EVENTID_param_tlvs *param_buf)
 {
@@ -276,7 +273,6 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 	WMI_HOST_SWBA_EVENTID_param_tlvs *param_buf;
 	wmi_host_swba_event_fixed_param *swba_event;
 	uint32_t vdev_map;
-	struct cdp_pdev *pdev;
 	uint8_t vdev_id = 0;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -288,12 +284,6 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 	swba_event = param_buf->fixed_param;
 	vdev_map = swba_event->vdev_map;
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE("%s: pdev is NULL", __func__);
-		return -EINVAL;
-	}
-
 	WMA_LOGD("vdev_map = %d", vdev_map);
 	for (; vdev_map && vdev_id < wma->max_bssid;
 			vdev_id++, vdev_map >>= 1) {
@@ -301,7 +291,7 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 			continue;
 		if (!cdp_cfg_is_high_latency(soc,
 			(struct cdp_cfg *)cds_get_context(QDF_MODULE_ID_CFG)))
-			wma_send_bcn_buf_ll(wma, pdev, vdev_id, param_buf);
+			wma_send_bcn_buf_ll(wma, vdev_id, param_buf);
 		break;
 	}
 	return 0;
@@ -336,8 +326,6 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_peer_sta_kickout_event_fixed_param *kickout_event = NULL;
 	uint8_t vdev_id, macaddr[QDF_MAC_ADDR_SIZE];
-	void *peer;
-	struct cdp_pdev *pdev;
 	tpDeleteStaContext del_sta_ctx;
 	struct ibss_peer_inactivity_ind *inactivity;
 	uint8_t *addr, *bssid;
@@ -347,19 +335,9 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	WMA_LOGD("%s: Enter", __func__);
 	param_buf = (WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs *) event;
 	kickout_event = param_buf->fixed_param;
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE("%s: pdev is NULL", __func__);
-		return -EINVAL;
-	}
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&kickout_event->peer_macaddr, macaddr);
-	peer = cdp_peer_find_by_addr(soc, pdev, macaddr);
-	if (!peer) {
-		WMA_LOGE("PEER [%pM] not found", macaddr);
-		return -EINVAL;
-	}
-
-	if (cdp_peer_get_vdevid(soc, peer, &vdev_id) != QDF_STATUS_SUCCESS) {
+	if (cdp_peer_get_vdevid(soc, macaddr, &vdev_id) !=
+			QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Not able to find BSSID for peer [%pM]", macaddr);
 		return -EINVAL;
 	}
@@ -960,7 +938,6 @@ static inline uint8_t wma_parse_mpdudensity(uint8_t mpdudensity)
 
 /**
  * wma_unified_peer_state_update() - update peer state
- * @pdev: pdev handle
  * @sta_mac: pointer to sta mac addr
  * @bss_addr: bss address
  * @sta_type: sta entry type
@@ -970,7 +947,6 @@ static inline uint8_t wma_parse_mpdudensity(uint8_t mpdudensity)
  */
 static void
 wma_unified_peer_state_update(
-	struct cdp_pdev *pdev,
 	uint8_t *sta_mac,
 	uint8_t *bss_addr,
 	uint8_t sta_type)
@@ -978,24 +954,23 @@ wma_unified_peer_state_update(
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (STA_ENTRY_TDLS_PEER == sta_type)
-		cdp_peer_state_update(soc, pdev, sta_mac,
-					  OL_TXRX_PEER_STATE_AUTH);
+		cdp_peer_state_update(soc, sta_mac,
+				      OL_TXRX_PEER_STATE_AUTH);
 	else
-		cdp_peer_state_update(soc, pdev, bss_addr,
-					  OL_TXRX_PEER_STATE_AUTH);
+		cdp_peer_state_update(soc, bss_addr,
+				      OL_TXRX_PEER_STATE_AUTH);
 }
 #else
 
 static inline void
 wma_unified_peer_state_update(
-	struct cdp_pdev *pdev,
 	uint8_t *sta_mac,
 	uint8_t *bss_addr,
 	uint8_t sta_type)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	cdp_peer_state_update(soc, pdev, bss_addr, OL_TXRX_PEER_STATE_AUTH);
+	cdp_peer_state_update(soc, bss_addr, OL_TXRX_PEER_STATE_AUTH);
 }
 #endif
 
@@ -1341,7 +1316,6 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 				    tSirNwType nw_type,
 				    tpAddStaParams params)
 {
-	struct cdp_pdev *pdev;
 	struct peer_assoc_params *cmd;
 	int32_t ret, max_rates, i;
 	uint8_t *rate_pos;
@@ -1363,14 +1337,6 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	}
 
 	intr = &wma->interfaces[params->smesessionId];
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
-		qdf_mem_free(cmd);
-		return QDF_STATUS_E_INVAL;
-	}
 
 	wma_mask_tx_ht_rate(wma, params->supportedRates.supportedMCSSet);
 
@@ -1577,7 +1543,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	if (params->wpa_rsn >> 1)
 		cmd->need_gtk_2_way = 1;
 
-	wma_unified_peer_state_update(pdev, params->staMac,
+	wma_unified_peer_state_update(params->staMac,
 				      params->bssId, params->staType);
 
 #ifdef FEATURE_WLAN_WAPI
@@ -2017,7 +1983,6 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 				      uint8_t vdev_id,
 				      int8_t peer_num_delta)
 {
-	struct cdp_vdev *vdev;
 	int16_t new_peer_num;
 	uint16_t new_timer_value_sec;
 	uint32_t new_timer_value_ms;
@@ -2029,16 +1994,10 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 		return;
 	}
 
-	vdev = wma_find_vdev_by_id(wma, vdev_id);
-	if (!vdev) {
-		WMA_LOGE("vdev not found : vdev_id %d", vdev_id);
-		return;
-	}
-
 	/* adjust peer numbers */
-	new_peer_num = cdp_peer_update_ibss_add_peer_num_of_vdev(soc, vdev,
-								 peer_num_delta
-								 );
+	new_peer_num = cdp_peer_update_ibss_add_peer_num_of_vdev(
+								soc, vdev_id,
+								peer_num_delta);
 	if (OL_TXRX_INVALID_NUM_PEERS == new_peer_num) {
 		WMA_LOGE("new peer num %d out of valid boundary", new_peer_num);
 		return;
@@ -2447,7 +2406,6 @@ static int wma_p2p_go_set_beacon_ie(t_wma_handle *wma_handle,
 void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 				    tpSendProbeRespParams probe_rsp_info)
 {
-	struct cdp_vdev *vdev;
 	uint8_t vdev_id;
 	struct sAniProbeRspStruct *probe_rsp;
 
@@ -2463,9 +2421,8 @@ void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 		return;
 	}
 
-	vdev = wma_find_vdev_by_addr(wma, probe_rsp->macHdr.sa, &vdev_id);
-	if (!vdev) {
-		WMA_LOGE(FL("failed to get vdev handle"));
+	if (wma_find_vdev_id_by_addr(wma, probe_rsp->macHdr.sa, &vdev_id)) {
+		WMA_LOGE(FL("failed to get vdev id"));
 		return;
 	}
 
@@ -2517,7 +2474,6 @@ QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
  */
 void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 {
-	struct cdp_vdev *vdev;
 	uint8_t vdev_id;
 	QDF_STATUS status;
 	uint8_t *p2p_ie;
@@ -2525,9 +2481,8 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 
 	WMA_LOGD("Beacon update reason %d", bcn_info->reason);
 	beacon = (struct sAniBeaconStruct *) (bcn_info->beacon);
-	vdev = wma_find_vdev_by_addr(wma, beacon->macHdr.sa, &vdev_id);
-	if (!vdev) {
-		WMA_LOGE("%s : failed to get vdev handle", __func__);
+	if (wma_find_vdev_id_by_addr(wma, beacon->macHdr.sa, &vdev_id)) {
+		WMA_LOGE("%s : failed to get vdev id", __func__);
 		status = QDF_STATUS_E_INVAL;
 		goto send_rsp;
 	}
@@ -3106,7 +3061,7 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	bool ret = false;
 
-	if (!wma_find_vdev_by_bssid(cds_ctx, wh->i_addr3, &vdev_id)) {
+	if (wma_find_vdev_id_by_bssid(cds_ctx, wh->i_addr3, &vdev_id)) {
 		WMA_LOGE("%s: Failed to find vdev", __func__);
 		return true;
 	}
@@ -3634,8 +3589,8 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	    (mgt_subtype == MGMT_SUBTYPE_DISASSOC ||
 	     mgt_subtype == MGMT_SUBTYPE_DEAUTH ||
 	     mgt_subtype == MGMT_SUBTYPE_ACTION)) {
-		if (wma_find_vdev_by_bssid(
-			wma_handle, wh->i_addr3, &vdev_id)) {
+		if (wma_find_vdev_id_by_bssid(wma_handle, wh->i_addr3,
+					      &vdev_id) == QDF_STATUS_SUCCESS) {
 			status = wma_check_and_process_rmf_frame(wma_handle,
 								 vdev_id,
 								 &wh,

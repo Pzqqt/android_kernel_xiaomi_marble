@@ -35,6 +35,7 @@
 #include "wni_cfg.h"
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_cfg.h>
+#include <cdp_txrx_ctrl.h>
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"

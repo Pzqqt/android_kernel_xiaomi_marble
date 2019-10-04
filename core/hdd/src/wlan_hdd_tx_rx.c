@@ -551,7 +551,8 @@ void hdd_reset_all_adapters_connectivity_stats(struct hdd_context *hdd_ctx)
 /**
  * hdd_is_tx_allowed() - check if Tx is allowed based on current peer state
  * @skb: pointer to OS packet (sk_buff)
- * @peer_id: Peer STA ID in peer table
+ * @vdev_id: virtual interface id
+ * @peer_mac: Peer mac address
  *
  * This function gets the peer state from DP and check if it is either
  * in OL_TXRX_PEER_STATE_CONN or OL_TXRX_PEER_STATE_AUTH. Only EAP packets
@@ -560,26 +561,15 @@ void hdd_reset_all_adapters_connectivity_stats(struct hdd_context *hdd_ctx)
  *
  * Return: true if Tx is allowed and false otherwise.
  */
-static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t *peer_mac)
+static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t vdev_id,
+				     uint8_t *peer_mac)
 {
 	enum ol_txrx_peer_state peer_state;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	void *peer;
 
 	QDF_BUG(soc);
-	QDF_BUG(pdev);
 
-	peer = cdp_peer_find_by_addr(soc, pdev, peer_mac);
-
-	if (!peer) {
-		hdd_err_rl("Unable to find peer entry for sta: "
-			   QDF_MAC_ADDR_STR,
-			   QDF_MAC_ADDR_ARRAY(peer_mac));
-		return false;
-	}
-
-	peer_state = cdp_peer_state_get(soc, peer);
+	peer_state = cdp_peer_state_get(soc, vdev_id, peer_mac);
 	if (likely(OL_TXRX_PEER_STATE_AUTH == peer_state))
 		return true;
 	if (OL_TXRX_PEER_STATE_CONN == peer_state &&
@@ -1110,7 +1100,8 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 			sizeof(qdf_nbuf_data(skb)),
 			QDF_TX));
 
-	if (!hdd_is_tx_allowed(skb, mac_addr_tx_allowed.bytes)) {
+	if (!hdd_is_tx_allowed(skb, wlan_vdev_get_id(vdev),
+			       mac_addr_tx_allowed.bytes)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
 			  QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Tx not allowed for sta: "
@@ -2758,7 +2749,6 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	struct ol_txrx_desc_type sta_desc = {0};
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	WLAN_ADDR_COPY(sta_desc.peer_addr.bytes, adapter->mac_addr.bytes);
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
@@ -2768,8 +2758,7 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 			  (ol_osif_vdev_handle)adapter,
 			  &txrx_ops);
 	/* peer is created wma_vdev_attach->wma_create_peer */
-	qdf_status = cdp_peer_register(soc,
-			(struct cdp_pdev *)pdev, &sta_desc);
+	qdf_status = cdp_peer_register(soc, OL_TXRX_PDEV_ID, &sta_desc);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		hdd_err("cdp_peer_register() failed to register. Status= %d [0x%08X]",
 			qdf_status, qdf_status);

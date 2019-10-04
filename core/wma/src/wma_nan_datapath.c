@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,36 +45,17 @@
 void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	enum ol_txrx_peer_state state = OL_TXRX_PEER_STATE_CONN;
-	struct cdp_pdev *pdev;
-	struct cdp_vdev *vdev;
-	void *peer;
+	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev) {
-		WMA_LOGE(FL("Failed to find pdev"));
-		add_sta->status = QDF_STATUS_E_FAILURE;
-		goto send_rsp;
-	}
-
-	vdev = wma_find_vdev_by_id(wma, add_sta->smesessionId);
-	if (!vdev) {
-		WMA_LOGE(FL("Failed to find vdev"));
-		add_sta->status = QDF_STATUS_E_FAILURE;
-		goto send_rsp;
-	}
-
-	iface = &wma->interfaces[cdp_get_vdev_id(soc, vdev)];
+	iface = &wma->interfaces[add_sta->smesessionId];
 	wma_debug("vdev: %d, peer_mac_addr: "QDF_MAC_ADDR_STR,
 		add_sta->smesessionId, QDF_MAC_ADDR_ARRAY(add_sta->staMac));
 
-	peer = cdp_peer_find_by_addr_and_vdev(soc,
-			pdev, vdev,
-			add_sta->staMac);
-	if (peer) {
+	if (cdp_find_peer_exist_on_vdev(soc, add_sta->smesessionId,
+					add_sta->staMac)) {
 		WMA_LOGE(FL("NDI peer already exists, peer_addr %pM"),
 			 add_sta->staMac);
 		add_sta->status = QDF_STATUS_E_EXISTS;
@@ -88,16 +69,14 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	 * exists on the pDev. As this peer belongs to other vDevs, just return
 	 * here.
 	 */
-	peer = cdp_peer_find_by_addr(soc, pdev, add_sta->staMac);
-	if (peer) {
-		WMA_LOGE(FL("vdev:%d, peer exists on other vdev with peer_addr %pM"),
-			 cdp_get_vdev_id(soc, vdev),
-			add_sta->staMac);
+	if (cdp_find_peer_exist(soc, pdev_id, add_sta->staMac)) {
+		WMA_LOGE(FL("peer exists on other vdev with peer_addr %pM"),
+			 add_sta->staMac);
 		add_sta->status = QDF_STATUS_E_EXISTS;
 		goto send_rsp;
 	}
 
-	status = wma_create_peer(wma, pdev, vdev, add_sta->staMac,
+	status = wma_create_peer(wma, add_sta->staMac,
 				 WMI_PEER_TYPE_NAN_DATA, add_sta->smesessionId,
 				 false);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -106,20 +85,18 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		goto send_rsp;
 	}
 
-	peer = cdp_peer_find_by_addr_and_vdev(soc,
-			pdev, vdev,
-			add_sta->staMac);
-	if (!peer) {
+	if (!cdp_find_peer_exist_on_vdev(soc, add_sta->smesessionId,
+					 add_sta->staMac)) {
 		WMA_LOGE(FL("Failed to find peer handle using peer mac %pM"),
 			 add_sta->staMac);
 		add_sta->status = QDF_STATUS_E_FAILURE;
 		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId,
-				peer, false);
+				false);
 		goto send_rsp;
 	}
 
 	WMA_LOGD(FL("Moving peer %pM to state %d"), add_sta->staMac, state);
-	cdp_peer_state_update(soc, pdev, add_sta->staMac, state);
+	cdp_peer_state_update(soc, add_sta->staMac, state);
 
 	add_sta->nss    = iface->nss;
 	add_sta->status = QDF_STATUS_SUCCESS;
@@ -141,32 +118,10 @@ send_rsp:
 void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 					tpDeleteStaParams del_sta)
 {
-	struct cdp_pdev *pdev;
-	void *peer;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE(FL("Failed to get pdev"));
-		del_sta->status = QDF_STATUS_E_FAILURE;
-		goto send_del_rsp;
-	}
-
-	peer = cdp_peer_find_by_addr(cds_get_context(QDF_MODULE_ID_SOC),
-				     pdev, del_sta->staMac);
-	if (!peer) {
-		WMA_LOGE(FL("Failed to get peer handle using peer mac "
-			 QDF_MAC_ADDR_STR),
-			 QDF_MAC_ADDR_ARRAY(del_sta->staMac));
-		del_sta->status = QDF_STATUS_E_FAILURE;
-		goto send_del_rsp;
-	}
-
-	wma_remove_peer(wma, cdp_peer_get_peer_mac_addr(soc, peer),
-			del_sta->smesessionId, peer, false);
+	wma_remove_peer(wma, wma->peer_macaddr.bytes,
+			del_sta->smesessionId, false);
 	del_sta->status = QDF_STATUS_SUCCESS;
 
-send_del_rsp:
 	if (del_sta->respReqd) {
 		WMA_LOGD(FL("Sending del rsp to umac (status: %d)"),
 				del_sta->status);
