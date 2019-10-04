@@ -356,7 +356,7 @@
  *
  * @Min: 0
  * @Max: 4294967295UL
- * @Default: 7000
+ * @Default: 9000
  *
  * This ini specifies the bus bandwidth very high threshold
  *
@@ -369,7 +369,7 @@
 		"gBusBandwidthVeryHighThreshold", \
 		0, \
 		4294967295UL, \
-		7000, \
+		9000, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Bus bandwidth very high threshold")
 
