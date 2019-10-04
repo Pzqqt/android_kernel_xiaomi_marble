@@ -992,12 +992,12 @@ struct ch_avoid_ind_type {
 
 /**
  * struct unsafe_ch_list
- * @ch_cnt: no.of channels
- * @ch_list: channel list
+ * @chan_cnt: no.of channels
+ * @chan_freq_list: channel frequency list
  */
 struct unsafe_ch_list {
-	uint16_t ch_cnt;
-	uint16_t ch_list[NUM_CHANNELS];
+	uint16_t chan_cnt;
+	uint16_t chan_freq_list[NUM_CHANNELS];
 };
 
 /**
