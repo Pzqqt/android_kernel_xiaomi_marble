@@ -1433,6 +1433,10 @@ struct cdp_tx_completion_ppdu_user {
  * @mcs: MCS index
  * @preamble: preamble
  * @gi: guard interval 800/400/1600/3200 ns
+ * @resp_type: response type
+ * @mprot_type: medium protection type
+ * @rts_success: rts success
+ * @rts failure: rts failure
  * @channel: frequency
  * @channel_num: channel number
  * @ack_rssi: ack rssi
@@ -1445,6 +1449,9 @@ struct cdp_tx_completion_ppdu_user {
  * @ba_start_seq: Block Ack sequence number
  * @ba_bitmap: Block Ack bitmap
  * @ppdu_cookie: 16-bit ppdu_cookie
+ * @long_retries: long retries
+ * @short_retries: short retries
+ * @completion_status: completion status - OK/Filter/Abort/Timeout
  */
 struct cdp_tx_indication_mpdu_info {
 	uint32_t ppdu_id;
@@ -1475,6 +1482,13 @@ struct cdp_tx_indication_mpdu_info {
 	uint32_t ba_start_seq;
 	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint16_t ppdu_cookie;
+	uint16_t long_retries:4,
+		 short_retries:4,
+		 completion_status:8;
+	uint16_t resp_type:4,
+		 mprot_type:3,
+		 rts_success:1,
+		 rts_failure:1;
 };
 
 /**
@@ -1499,8 +1513,14 @@ struct cdp_tx_indication_info {
  * @num_mpdu: Number of MPDUs in PPDU
  * @num_msdu: Number of MSDUs in PPDU
  * @frame_type: frame SU or MU
+ * @htt_frame_type: frame type from htt
  * @frame_ctrl: frame control of 80211 header
  * @channel: Channel informartion
+ * @resp_type: response type
+ * @mprot_type: medium protection type
+ * @rts_success: rts success
+ * @rts failure: rts failure
+ * @phymode: phy mode
  * @ack_rssi: RSSI value of last ack packet (units=dB above noise floor)
  * @tx_duration: PPDU airtime
  * @ppdu_start_timestamp: TSF at PPDU start
@@ -1510,6 +1530,10 @@ struct cdp_tx_indication_info {
  * @user: per-User stats (array of per-user structures)
  * @mpdu_q: queue of mpdu in a ppdu
  * @mpdus: MPDU list based on enqueue sequence bitmap
+ * @bar_ppdu_id: BAR ppdu_id
+ * @bar_tx_duration: BAR tx duration
+ * @bar_ppdu_start_timestamp: BAR start timestamp
+ * @bar_ppdu_end_timestamp: BAR end timestamp
  */
 struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_id;
@@ -1522,8 +1546,13 @@ struct cdp_tx_completion_ppdu {
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
 	uint16_t frame_type;
+	uint16_t htt_frame_type;
 	uint16_t frame_ctrl;
 	uint16_t channel;
+	uint16_t resp_type:4,
+		 mprot_type:3,
+		 rts_success:1,
+		 rts_failure:1;
 	uint16_t phy_mode;
 	uint32_t ack_rssi;
 	uint32_t tx_duration;
@@ -1534,6 +1563,10 @@ struct cdp_tx_completion_ppdu {
 	struct cdp_tx_completion_ppdu_user user[CDP_MU_MAX_USERS];
 	qdf_nbuf_queue_t mpdu_q;
 	qdf_nbuf_t *mpdus;
+	uint32_t bar_ppdu_id;
+	uint32_t bar_tx_duration;
+	uint32_t bar_ppdu_start_timestamp;
+	uint32_t bar_ppdu_end_timestamp;
 };
 
 /**

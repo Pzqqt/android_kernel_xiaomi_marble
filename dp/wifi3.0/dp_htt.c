@@ -2054,6 +2054,7 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 		HTT_PPDU_STATS_COMMON_TLV_NUM_USERS_GET(*tag_buf);
 	tag_buf++;
 	frame_type = HTT_PPDU_STATS_COMMON_TLV_FRM_TYPE_GET(*tag_buf);
+	ppdu_desc->htt_frame_type = frame_type;
 
 	frame_ctrl = ppdu_desc->frame_ctrl;
 
@@ -2072,6 +2073,7 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	case HTT_STATS_FTYPE_SGEN_MU_BAR:
 	case HTT_STATS_FTYPE_SGEN_BAR:
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_BAR;
+		ppdu_desc->bar_ppdu_id = ppdu_info->ppdu_id;
 	break;
 	default:
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
@@ -2085,6 +2087,11 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 
 	ppdu_desc->ppdu_end_timestamp = ppdu_desc->ppdu_start_timestamp +
 					ppdu_desc->tx_duration;
+
+	ppdu_desc->bar_ppdu_start_timestamp = ppdu_desc->ppdu_start_timestamp;
+	ppdu_desc->bar_ppdu_end_timestamp = ppdu_desc->ppdu_end_timestamp;
+	ppdu_desc->bar_tx_duration = ppdu_desc->tx_duration;
+
 	/* Ack time stamp is same as end time stamp*/
 	ppdu_desc->ack_timestamp = ppdu_desc->ppdu_end_timestamp;
 
@@ -2118,6 +2125,8 @@ static void dp_process_ppdu_stats_user_common_tlv(
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
+	struct dp_peer *peer;
+	struct dp_vdev *vdev;
 
 	ppdu_desc =
 		(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
@@ -2133,9 +2142,20 @@ static void dp_process_ppdu_stats_user_common_tlv(
 	if (peer_id == DP_SCAN_PEER_ID) {
 		ppdu_desc->vdev_id =
 			HTT_PPDU_STATS_USER_COMMON_TLV_VAP_ID_GET(*tag_buf);
-	} else {
-		if (!dp_peer_find_by_id_valid(pdev->soc, peer_id))
+		vdev =
+		       dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
+							  ppdu_desc->vdev_id);
+		if (!vdev)
 			return;
+		qdf_mem_copy(ppdu_user_desc->mac_addr, vdev->mac_addr.raw,
+			     QDF_MAC_ADDR_SIZE);
+	} else {
+		peer = dp_peer_find_by_id(pdev->soc, peer_id);
+		if (!peer)
+			return;
+		qdf_mem_copy(ppdu_user_desc->mac_addr,
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_del_find_by_id(peer);
 	}
 
 	ppdu_user_desc->peer_id = peer_id;
@@ -2212,14 +2232,10 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 							  ppdu_desc->vdev_id);
 		if (!vdev)
 			return;
-		qdf_mem_copy(ppdu_user_desc->mac_addr, vdev->mac_addr.raw,
-			     QDF_MAC_ADDR_SIZE);
 	} else {
 		peer = dp_peer_find_by_id(pdev->soc, peer_id);
 		if (!peer)
 			return;
-		qdf_mem_copy(ppdu_user_desc->mac_addr,
-			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
 		dp_peer_unref_del_find_by_id(peer);
 	}
 
@@ -2438,6 +2454,15 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 	ppdu_user_desc->is_ampdu =
 		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_AMPDU_GET(*tag_buf);
 	ppdu_info->is_ampdu = ppdu_user_desc->is_ampdu;
+
+	ppdu_desc->resp_type =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RESP_TYPE_GET(*tag_buf);
+	ppdu_desc->mprot_type =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPROT_TYPE_GET(*tag_buf);
+	ppdu_desc->rts_success =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS_GET(*tag_buf);
+	ppdu_desc->rts_failure =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_GET(*tag_buf);
 
 	/*
 	 * increase successful mpdu counter from
@@ -3322,6 +3347,9 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 			if (peer->last_delayed_ba) {
 				dp_peer_copy_stats_to_bar(peer,
 							  &ppdu_desc->user[i]);
+				ppdu_desc->bar_ppdu_id = ppdu_desc->ppdu_id;
+				ppdu_desc->ppdu_id =
+					peer->last_delayed_ba_ppduid;
 			}
 			dp_peer_unref_del_find_by_id(peer);
 		}
