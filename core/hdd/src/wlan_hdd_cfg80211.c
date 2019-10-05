@@ -8415,6 +8415,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 		struct nlattr *twt_session;
 		int tmp, rc;
+		uint32_t congestion_timeout = 0;
 
 		if ((adapter->device_mode != QDF_STA_MODE &&
 		     adapter->device_mode != QDF_P2P_CLIENT_MODE) ||
@@ -8540,6 +8541,19 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 				  params.flag_flow_type,
 				  params.flag_protection);
 
+			ucfg_mlme_get_twt_congestion_timeout(hdd_ctx->psoc,
+							&congestion_timeout);
+			if (congestion_timeout) {
+				ret_val = qdf_status_to_os_return(
+					hdd_send_twt_disable_cmd(hdd_ctx));
+				if (ret_val) {
+					hdd_err("Failed to disable TWT");
+					goto send_err;
+				}
+				ucfg_mlme_set_twt_congestion_timeout(
+						hdd_ctx->psoc, 0);
+				hdd_send_twt_enable_cmd(hdd_ctx);
+			}
 			ret_val = qdf_status_to_os_return(
 					wma_twt_process_add_dialog(&params));
 			if (ret_val)

@@ -46,6 +46,14 @@ void wma_set_twt_peer_caps(tpAddStaParams params,
 			   struct peer_assoc_params *cmd);
 
 /**
+ * wma_send_twt_disable_cmd() - Send TWT disable command to firmware
+ * @pdev_id: pdev id
+ *
+ * Return: None
+ */
+void wma_send_twt_disable_cmd(uint32_t pdev_id);
+
+/**
  * wma_twt_process_add_dialog() - Process twt add dialog command
  * @params: add dialog configuration param
  *
@@ -67,6 +75,10 @@ static inline void wma_send_twt_enable_cmd(uint32_t pdev_id,
 					   bool bcast_val)
 {
 	WMA_LOGD(FL("TWT not supported as WLAN_SUPPORT_TWT is disabled"));
+}
+
+static inline void wma_send_twt_disable_cmd(uint32_t pdev_id)
+{
 }
 
 static inline void wma_set_twt_peer_caps(tpAddStaParams params,

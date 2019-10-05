@@ -74,6 +74,18 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 		wma_send_twt_enable_cmd(pdev_id, congestion_timeout, bcast_val);
 }
 
+QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx)
+{
+	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
+
+	hdd_debug("TWT disable cmd :pdev:%d", pdev_id);
+
+	wma_send_twt_disable_cmd(pdev_id);
+
+	return qdf_wait_single_event(&hdd_ctx->twt_disable_comp_evt,
+				     TWT_DISABLE_COMPLETE_TIMEOUT);
+}
+
 /**
  * hdd_twt_enable_comp_cb() - TWT enable complete event callback
  * @hdd_handle: opaque handle for the global HDD Context
@@ -126,6 +138,7 @@ hdd_twt_disable_comp_cb(hdd_handle_t hdd_handle)
 {
 	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	enum twt_status prev_state;
+	QDF_STATUS status;
 
 	if (!hdd_ctx) {
 		hdd_err("TWT: Invalid HDD Context");
@@ -136,6 +149,10 @@ hdd_twt_disable_comp_cb(hdd_handle_t hdd_handle)
 
 	hdd_debug("TWT: State transitioned from %d to %d",
 		  prev_state, hdd_ctx->twt_state);
+
+	status = qdf_event_set(&hdd_ctx->twt_disable_comp_evt);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Failed to set twt_disable_comp_evt");
 }
 
 void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
@@ -156,6 +173,14 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 		hdd_err("Register twt disable complete failed");
 		goto twt_init_fail;
 	}
+
+	status = qdf_event_create(&hdd_ctx->twt_disable_comp_evt);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("twt_disable_comp_evt init failed");
+		sme_deregister_twt_disable_complete_cb(hdd_ctx->mac_handle);
+		goto twt_init_fail;
+	}
+
 	hdd_send_twt_enable_cmd(hdd_ctx);
 	return;
 
@@ -174,6 +199,10 @@ void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
 	status  = sme_deregister_twt_enable_complete_cb(hdd_ctx->mac_handle);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("De-register of twt enable cb failed: %d", status);
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy(
+				   &hdd_ctx->twt_disable_comp_evt)))
+		hdd_err("Failed to destroy twt_disable_comp_evt");
 
 	hdd_ctx->twt_state = TWT_CLOSED;
 }

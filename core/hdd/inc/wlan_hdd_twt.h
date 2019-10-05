@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -82,6 +82,15 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
  */
 void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx);
 
+#define TWT_DISABLE_COMPLETE_TIMEOUT 1000
+/**
+ * hdd_send_twt_disable_cmd() - Send TWT disable command to target
+ * @hdd_ctx: HDD Context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx);
+
 /**
  * wlan_hdd_twt_init() - Initialize TWT
  * @hdd_ctx: pointer to global HDD Context
@@ -112,6 +121,11 @@ static inline void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 
 static inline void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 {
+}
+
+static inline QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)

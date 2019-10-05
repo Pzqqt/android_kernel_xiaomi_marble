@@ -82,6 +82,42 @@ int wma_twt_en_complete_event_handler(void *handle,
 	return status;
 }
 
+void wma_send_twt_disable_cmd(uint32_t pdev_id)
+{
+	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct wmi_twt_disable_param twt_disable_params = {0};
+	int32_t ret;
+
+	if (!wma) {
+		WMA_LOGE("Invalid WMA context, Disable TWT failed");
+		return;
+	}
+	twt_disable_params.pdev_id = pdev_id;
+	ret = wmi_unified_twt_disable_cmd(wma->wmi_handle, &twt_disable_params);
+
+	if (ret)
+		WMA_LOGE("Failed to disable TWT");
+}
+
+int wma_twt_disable_comp_event_handler(void *handle, uint8_t *event,
+				       uint32_t len)
+{
+	struct mac_context *mac;
+
+	mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		WMA_LOGE("Invalid MAC context");
+		return -EINVAL;
+	}
+
+	WMA_LOGD("TWT: Rcvd TWT disable comp event");
+
+	if (mac->sme.twt_disable_cb)
+		mac->sme.twt_disable_cb(mac->hdd_handle);
+
+	return 0;
+}
+
 void wma_set_twt_peer_caps(tpAddStaParams params, struct peer_assoc_params *cmd)
 {
 	if (params->twt_requestor)

@@ -1751,8 +1751,43 @@ int wma_vdev_bss_color_collision_info_handler(void *handle,
 					      uint8_t *event,
 					      uint32_t len);
 
+#ifdef WLAN_SUPPORT_TWT
+/**
+ * wma_twt_en_complete_event_handler - TWT enable complete event handler
+ * @handle: wma handle
+ * @event: buffer with event
+ * @len: buffer length
+ *
+ * Return: 0 on success
+ */
 int wma_twt_en_complete_event_handler(void *handle,
 				      uint8_t *event, uint32_t len);
+
+/**
+ * wma_twt_disable_comp_event_handler- TWT disable complete event handler
+ * @handle: wma handle
+ * @event: buffer with event
+ * @len: buffer length
+ *
+ * Return: 0 on success
+ */
+int wma_twt_disable_comp_event_handler(void *handle, uint8_t *event,
+				       uint32_t len);
+#else
+static inline int wma_twt_en_complete_event_handler(void *handle,
+						    uint8_t *event,
+						    uint32_t len)
+{
+	return 0;
+}
+
+static inline int wma_twt_disable_comp_event_handler(void *handle,
+						     uint8_t *event,
+						     uint32_t len)
+{
+	return 0;
+}
+#endif
 /**
  * wma_get_roam_scan_stats() - Get roam scan stats request
  * @handle: wma handle

@@ -1953,6 +1953,7 @@ struct hdd_context {
 	struct board_info hw_bd_info;
 #ifdef WLAN_SUPPORT_TWT
 	enum twt_status twt_state;
+	qdf_event_t twt_disable_comp_evt;
 #endif
 #ifdef FEATURE_WLAN_APF
 	uint32_t apf_version;
