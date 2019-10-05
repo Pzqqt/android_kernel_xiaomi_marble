@@ -2587,6 +2587,45 @@ end:
 	drm_modeset_acquire_fini(&ctx);
 }
 
+static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
+	struct device *dev)
+{
+	int i, ret;
+	struct drm_device *ddev = dev_get_drvdata(dev);
+	struct drm_connector *conn;
+	struct drm_connector_list_iter conn_iter;
+	struct msm_drm_private *priv = sde_kms->dev->dev_private;
+
+	drm_connector_list_iter_begin(ddev, &conn_iter);
+	drm_for_each_connector_iter(conn, &conn_iter) {
+		uint64_t lp;
+
+		lp = sde_connector_get_lp(conn);
+		if (lp != SDE_MODE_DPMS_LP2)
+			continue;
+
+		ret = sde_encoder_wait_for_event(conn->encoder,
+						MSM_ENC_TX_COMPLETE);
+		if (ret && ret != -EWOULDBLOCK)
+			SDE_ERROR(
+				"[conn: %d] wait for commit done returned %d\n",
+				conn->base.id, ret);
+		else if (!ret)
+			sde_encoder_idle_request(conn->encoder);
+	}
+	drm_connector_list_iter_end(&conn_iter);
+
+	for (i = 0; i < priv->num_crtcs; i++) {
+		if (priv->disp_thread[i].thread)
+			kthread_flush_worker(
+				&priv->disp_thread[i].worker);
+		if (priv->event_thread[i].thread)
+			kthread_flush_worker(
+				&priv->event_thread[i].worker);
+	}
+	kthread_flush_worker(&priv->pp_event_worker);
+}
+
 static int sde_kms_pm_suspend(struct device *dev)
 {
 	struct drm_device *ddev;
@@ -2607,6 +2646,7 @@ static int sde_kms_pm_suspend(struct device *dev)
 
 	sde_kms = to_sde_kms(ddev_to_msm_kms(ddev));
 	SDE_EVT32(0);
+	pm_runtime_put_noidle(dev);
 
 	/* disable hot-plug polling */
 	drm_kms_helper_poll_disable(ddev);
@@ -2689,6 +2729,7 @@ retry:
 	if (num_crtcs == 0) {
 		DRM_DEBUG("all crtcs are already in the off state\n");
 		sde_kms->suspend_block = true;
+		_sde_kms_pm_suspend_idle_helper(sde_kms, dev);
 		goto unlock;
 	}
 
@@ -2700,25 +2741,8 @@ retry:
 	}
 
 	sde_kms->suspend_block = true;
+	_sde_kms_pm_suspend_idle_helper(sde_kms, dev);
 
-	drm_connector_list_iter_begin(ddev, &conn_iter);
-	drm_for_each_connector_iter(conn, &conn_iter) {
-		uint64_t lp;
-
-		lp = sde_connector_get_lp(conn);
-		if (lp != SDE_MODE_DPMS_LP2)
-			continue;
-
-		ret = sde_encoder_wait_for_event(conn->encoder,
-						MSM_ENC_TX_COMPLETE);
-		if (ret && ret != -EWOULDBLOCK)
-			SDE_ERROR(
-				"[enc: %d] wait for commit done returned %d\n",
-				conn->encoder->base.id, ret);
-		else if (!ret)
-			sde_encoder_idle_request(conn->encoder);
-	}
-	drm_connector_list_iter_end(&conn_iter);
 unlock:
 	if (state) {
 		drm_atomic_state_put(state);
@@ -2731,6 +2755,7 @@ unlock:
 	}
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
+	pm_runtime_get_noresume(dev);
 
 	return ret;
 }
