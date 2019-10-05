@@ -554,8 +554,8 @@ int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id);
  * @descriptor: descriptor enqueued or dequeued
  * @memory: virtual address that was used
  * @index: location of the descriptor in the ce ring;
- * @data: data pointed by descriptor
  * @actual_data_len: length of the data
+ * @data: data pointed by descriptor
  */
 struct hif_ce_desc_event {
 	int index;
@@ -570,8 +570,8 @@ struct hif_ce_desc_event {
 #endif
 	void *memory;
 #ifdef HIF_CE_DEBUG_DATA_BUF
-	uint8_t *data;
 	size_t actual_data_len;
+	uint8_t *data;
 #endif /* HIF_CE_DEBUG_DATA_BUF */
 
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
@@ -634,6 +634,16 @@ void hif_record_ce_srng_desc_event(struct hif_softc *scn, int ce_id,
  * Return:
  */
 void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len);
+
+/**
+ * hif_clear_ce_desc_debug_data() - Clear the contents of hif_ce_desc_event
+ * upto data field before reusing it.
+ *
+ * @event: record every CE event
+ *
+ * Return: None
+ */
+void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event);
 QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 #else
@@ -650,6 +660,8 @@ static inline
 void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 {
 }
+
+void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event);
 #endif /*HIF_CE_DEBUG_DATA_BUF*/
 
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON

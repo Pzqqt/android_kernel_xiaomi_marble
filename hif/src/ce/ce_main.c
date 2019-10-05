@@ -1274,8 +1274,10 @@ QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 		event = &hist_ev[index];
 		event->data =
 			(uint8_t *)qdf_mem_malloc(CE_DEBUG_MAX_DATA_BUF_SIZE);
-		if (!event->data)
+		if (!event->data) {
+			hif_err_rl("ce debug data alloc failed");
 			return QDF_STATUS_E_NOMEM;
+		}
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -1307,6 +1309,7 @@ void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 		event->data = NULL;
 		event = NULL;
 	}
+
 }
 #endif /* HIF_CE_DEBUG_DATA_BUF */
 
@@ -1350,11 +1353,11 @@ static void free_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id)
 	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
 
 	ce_hist->enable[ce_id] = 0;
-	ce_hist->hist_ev[ce_id] = NULL;
 	if (ce_hist->data_enable[ce_id]) {
 		ce_hist->data_enable[ce_id] = false;
 		free_mem_ce_debug_hist_data(scn, ce_id);
 	}
+	ce_hist->hist_ev[ce_id] = NULL;
 }
 #else
 static inline QDF_STATUS

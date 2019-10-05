@@ -111,7 +111,7 @@ void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 	uint8_t *data = NULL;
 
 	if (!event->data) {
-		hif_err("No memory allocated");
+		hif_err_rl("No ce debug memory allocated");
 		return;
 	}
 
@@ -127,6 +127,17 @@ void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 				 len : CE_DEBUG_MAX_DATA_BUF_SIZE));
 		event->actual_data_len = len;
 	}
+}
+
+void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event)
+{
+	qdf_mem_zero(event,
+		     offsetof(struct hif_ce_desc_event, data));
+}
+#else
+void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event)
+{
+	qdf_mem_zero(event, sizeof(struct hif_ce_desc_event));
 }
 #endif
 
@@ -199,14 +210,14 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 
 	event = &hist_ev[record_index];
 
-	qdf_mem_zero(event, sizeof(struct hif_ce_desc_event));
+	hif_clear_ce_desc_debug_data(event);
 
 	event->type = type;
 	event->time = qdf_get_log_timestamp();
 
 	if (descriptor)
 		qdf_mem_copy(&event->descriptor, descriptor,
-			     sizeof(union ce_desc));
+			     sizeof(union ce_srng_desc));
 
 	event->memory = memory;
 	event->index = index;

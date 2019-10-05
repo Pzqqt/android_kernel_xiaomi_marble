@@ -108,7 +108,7 @@ void hif_record_ce_srng_desc_event(struct hif_softc *scn, int ce_id,
 
 	event = &hist_ev[record_index];
 
-	qdf_mem_zero(event, sizeof(struct hif_ce_desc_event));
+	hif_clear_ce_desc_debug_data(event);
 
 	event->type = type;
 	event->time = qdf_get_log_timestamp();
