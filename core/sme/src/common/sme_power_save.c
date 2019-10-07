@@ -346,6 +346,11 @@ QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (!mac_ctx->usr_cfg_ps_enable) {
+		sme_debug("Cannot initiate PS. PS is disabled by usr(ioctl)");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	/* Check whether the given session is Infra and in Connected State
 	 * also if command is power save disable  there is not need to check
 	 * for connected state as firmware can handle this
@@ -806,6 +811,9 @@ QDF_STATUS sme_ps_open(mac_handle_t mac_handle)
 {
 
 	uint32_t i;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	mac_ctx->usr_cfg_ps_enable = true;
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (QDF_STATUS_SUCCESS != sme_ps_open_per_session(mac_handle,
