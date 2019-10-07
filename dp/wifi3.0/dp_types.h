@@ -88,6 +88,13 @@
 #define DP_MAX_IRQ_PER_CONTEXT 12
 #define DEFAULT_HW_PEER_ID 0xffff
 
+#define WBM_INT_ERROR_ALL 0
+#define WBM_INT_ERROR_REO_NULL_BUFFER 1
+#define WBM_INT_ERROR_REO_NULL_LINK_DESC 2
+#define WBM_INT_ERROR_REO_NULL_MSDU_BUFF 3
+#define WBM_INT_ERROR_REO_BUFF_REAPED 4
+#define MAX_WBM_INT_ERROR_REASONS 5
+
 #define MAX_TX_HW_QUEUES MAX_TCL_DATA_RINGS
 /* Maximum retries for Delba per tid per peer */
 #define DP_MAX_DELBA_RETRY 3
@@ -662,7 +669,7 @@ struct dp_soc_stats {
 		/* tx completion release_src != TQM or FW */
 		uint32_t invalid_release_source;
 		/* tx completion wbm_internal_error */
-		uint32_t wbm_internal_error;
+		uint32_t wbm_internal_error[MAX_WBM_INT_ERROR_REASONS];
 		/* TX Comp loop packet limit hit */
 		uint32_t tx_comp_loop_pkt_limit_hit;
 		/* Head pointer Out of sync at the end of dp_tx_comp_handler */
