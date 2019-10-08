@@ -313,7 +313,9 @@ static void assert_on_excessive_logging(void)
 	 * Note: This is not thread safe, and can result in more than one reset.
 	 * For our purposes, this is fine.
 	 */
-	if (qdf_system_time_after(now, __log_window_end_ticks)) {
+	if (!qdf_atomic_read(&__log_window_count)) {
+		__log_window_end_ticks = now + qdf_system_ticks_per_sec;
+	} else if (qdf_system_time_after(now, __log_window_end_ticks)) {
 		__log_window_end_ticks = now + qdf_system_ticks_per_sec;
 		qdf_atomic_set(&__log_window_count, 0);
 	}
