@@ -182,4 +182,12 @@ int sde_cp_ltm_hist_interrupt(struct drm_crtc *crtc_drm, bool en,
 int sde_cp_ltm_wb_pb_interrupt(struct drm_crtc *crtc_drm, bool en,
 	struct sde_irq_callback *hist_irq);
 
+/**
+ * sde_cp_ltm_off_event_handler: API to enable/disable LTM off notification
+ * @crtc: Pointer to crtc.
+ * @en: Variable to enable/disable notification.
+ * @irq: Pointer to irq callback
+ */
+int sde_cp_ltm_off_event_handler(struct drm_crtc *crtc_drm, bool en,
+	struct sde_irq_callback *hist_irq);
 #endif /*_SDE_COLOR_PROCESSING_H */
