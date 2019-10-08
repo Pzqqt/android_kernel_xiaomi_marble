@@ -255,5 +255,15 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev);
 QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 				      struct dp_pdev *pdev,
 				      struct hal_rx_ppdu_info *ppdu_info);
+
+/**
+ * dp_peer_set_tx_capture_enabled: Set tx_cap_enabled bit in peer
+ * @peer_handle: Peer handle
+ * @value: Enable/disable setting for tx_cap_enabled
+ *
+ * Return: None
+ */
+void
+dp_peer_set_tx_capture_enabled(struct cdp_peer *peer_handle, bool value);
 #endif
 #endif

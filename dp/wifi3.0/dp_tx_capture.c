@@ -180,6 +180,23 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 	}
 }
 
+static
+void dp_peer_tx_cap_tid_queue_flush(struct dp_peer *peer)
+{
+	int tid;
+	struct dp_tx_tid *tx_tid;
+
+	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+		tx_tid = &peer->tx_capture.tx_tid[tid];
+
+		qdf_spin_lock_bh(&tx_tid->tid_lock);
+		qdf_nbuf_queue_free(&tx_tid->msdu_comp_q);
+		qdf_spin_unlock_bh(&tx_tid->tid_lock);
+
+		tx_tid->max_ppdu_id = 0;
+	}
+}
+
 /*
  * dp_peer_tid_queue_cleanup() – remove ppdu stats queue per TID
  * @peer: Datapath peer
@@ -468,7 +485,7 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 {
 	int ret = QDF_STATUS_E_FAILURE;
 
-	if ((desc->pdev->tx_capture_enabled != CDP_TX_ENH_CAPTURE_DISABLED) &&
+	if (peer && dp_peer_or_pdev_tx_cap_enabled(desc->pdev, peer) &&
 	    ((ts->status == HAL_TX_TQM_RR_FRAME_ACKED) ||
 	    (ts->status == HAL_TX_TQM_RR_REM_CMD_TX) ||
 	    ((ts->status == HAL_TX_TQM_RR_REM_CMD_AGED) && ts->transmit_cnt))) {
@@ -3166,5 +3183,22 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_peer_set_tx_capture_enabled: Set tx_cap_enabled bit in peer
+ * @peer_handle: Peer handle
+ * @value: Enable/disable setting for tx_cap_enabled
+ *
+ * Return: None
+ */
+void
+dp_peer_set_tx_capture_enabled(struct cdp_peer *peer_handle, bool value)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+
+	peer->tx_cap_enabled = value;
+	if (!value)
+		dp_peer_tx_cap_tid_queue_flush(peer);
 }
 #endif
