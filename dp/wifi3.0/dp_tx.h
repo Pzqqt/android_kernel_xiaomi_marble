@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -352,4 +352,11 @@ static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 	return;
 }
 /* TODO TX_FEATURE_NOT_YET */
+
+#ifndef WLAN_TX_PKT_CAPTURE_ENH
+static inline
+void dp_peer_set_tx_capture_enabled(struct cdp_peer *peer_handle, bool value)
+{
+}
+#endif
 #endif

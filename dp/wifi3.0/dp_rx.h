@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1097,4 +1097,10 @@ bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf,
 			     uint8_t tid);
 #endif
 
+#ifndef WLAN_RX_PKT_CAPTURE_ENH
+static inline
+void dp_peer_set_rx_capture_enabled(struct cdp_peer *peer_handle, bool value)
+{
+}
+#endif
 #endif /* _DP_RX_H */

@@ -8256,36 +8256,6 @@ static void dp_peer_set_nawds(struct cdp_peer *peer_handle, uint8_t value)
 }
 
 /**
- * dp_peer_set_tx_capture_enabled: Set tx_cap_enabled bit in peer
- * @peer_handle: Peer handle
- * @value: Enable/disable setting for tx_cap_enabled
- *
- * Return: None
- */
-static void
-dp_peer_set_tx_capture_enabled(struct cdp_peer *peer_handle, bool value)
-{
-	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-
-	peer->tx_cap_enabled = value;
-}
-
-/**
- * dp_peer_set_rx_capture_enabled: Set rx_cap_enabled bit in peer
- * @peer_handle: Peer handle
- * @value: Enable/disable setting for rx_cap_enabled
- *
- * Return: None
- */
-static void
-dp_peer_set_rx_capture_enabled(struct cdp_peer *peer_handle, bool value)
-{
-	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-
-	peer->rx_cap_enabled = value;
-}
-
-/**
  * dp_peer_update_pkt_capture_params: Set Rx & Tx Capture flags for a peer
  * @is_rx_pkt_cap_enable: enable/disable Rx packet capture in monitor mode
  * @is_tx_pkt_cap_enable: enable/disable Tx packet capture in monitor mode
@@ -8298,7 +8268,6 @@ dp_peer_update_pkt_capture_params(struct cdp_pdev *pdev,
 				  bool is_rx_pkt_cap_enable,
 				  bool is_tx_pkt_cap_enable,
 				  uint8_t *peer_mac)
-
 {
 	struct dp_peer *peer;
 
