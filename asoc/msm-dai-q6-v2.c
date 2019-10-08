@@ -3461,15 +3461,6 @@ static const struct snd_kcontrol_new afe_enc_config_controls[] = {
 		.get = msm_dai_q6_afe_enc_cfg_get,
 		.put = msm_dai_q6_afe_enc_cfg_put,
 	},
-	{
-		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
-			   SNDRV_CTL_ELEM_ACCESS_INACTIVE),
-		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
-		.name = "SLIM_7_RX APTX_AD Enc Cfg",
-		.info = msm_dai_q6_afe_enc_cfg_info,
-		.get = msm_dai_q6_afe_enc_cfg_get,
-		.put = msm_dai_q6_afe_enc_cfg_put,
-	},
 	SOC_ENUM_EXT("AFE Input Channels", afe_chs_enum[0],
 		     msm_dai_q6_afe_input_channel_get,
 		     msm_dai_q6_afe_input_channel_put),
@@ -3482,7 +3473,16 @@ static const struct snd_kcontrol_new afe_enc_config_controls[] = {
 		       msm_dai_q6_afe_scrambler_mode_put),
 	SOC_ENUM_EXT("TWS Channel Mode", tws_chs_mode_enum[0],
 		       msm_dai_q6_tws_channel_mode_get,
-		       msm_dai_q6_tws_channel_mode_put)
+		       msm_dai_q6_tws_channel_mode_put),
+	{
+		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
+			   SNDRV_CTL_ELEM_ACCESS_INACTIVE),
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name = "SLIM_7_RX APTX_AD Enc Cfg",
+		.info = msm_dai_q6_afe_enc_cfg_info,
+		.get = msm_dai_q6_afe_enc_cfg_get,
+		.put = msm_dai_q6_afe_enc_cfg_put,
+	}
 };
 
 static int  msm_dai_q6_afe_dec_cfg_info(struct snd_kcontrol *kcontrol,
@@ -3895,7 +3895,7 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 				 dai));
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				 snd_ctl_new1(&afe_enc_config_controls[5],
-				 dai));
+				 dai_data));
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(&avd_drift_config_controls[2],
 					dai));
