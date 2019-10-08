@@ -31,6 +31,9 @@
 
 #include "dp_tx_capture.h"
 
+#define MAX_MONITOR_HEADER (512)
+#define MAX_DUMMY_FRM_BODY (128)
+
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 /**
  * dp_peer_or_pdev_tx_cap_enabled - Returns status of tx_cap_enabled
@@ -135,7 +138,7 @@ void dp_peer_update_80211_hdr(struct dp_vdev *vdev, struct dp_peer *peer)
  */
 void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 {
-	struct cdp_tx_indication_info tx_capture_info;
+	uint32_t ppdu_id;
 
 	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
 		dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
@@ -146,24 +149,26 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 	if (pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS ||
 	    pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER) {
 		/* invoke WDI event handler here send mgmt pkt here */
+		struct ieee80211_frame *wh;
+		uint8_t type, subtype;
 
-		/* pull ppdu_id from the packet */
-		qdf_nbuf_pull_head(nbuf, sizeof(uint32_t));
-		tx_capture_info.frame_payload = 1;
-		tx_capture_info.mpdu_nbuf = nbuf;
-
-		/*
-		 * send MPDU to osif layer
-		 * do we need to update mpdu_info before tranmit
-		 * get current mpdu_nbuf
-		 */
-		dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-				     &tx_capture_info, HTT_INVALID_PEER,
-				     WDI_NO_VAL, pdev->pdev_id);
-
-		if (tx_capture_info.mpdu_nbuf)
-			qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
-
+		ppdu_id = *(uint32_t *)qdf_nbuf_data(nbuf);
+		wh = (struct ieee80211_frame *)(qdf_nbuf_data(nbuf) +
+			sizeof(uint32_t));
+		type = (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) >>
+			IEEE80211_FC0_TYPE_SHIFT;
+		subtype = (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) >>
+			IEEE80211_FC0_SUBTYPE_SHIFT;
+		qdf_spin_lock_bh(
+			&pdev->tx_capture.ctl_mgmt_lock[type][subtype]);
+		qdf_nbuf_queue_add(&pdev->tx_capture.ctl_mgmt_q[type][subtype],
+			nbuf);
+		qdf_spin_unlock_bh(
+			&pdev->tx_capture.ctl_mgmt_lock[type][subtype]);
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_DEBUG,
+			"dlvr mgmt frm(0x%08x): fc 0x%x %x, dur 0x%x%x\n",
+			ppdu_id, wh->i_fc[1], wh->i_fc[0],
+			wh->i_dur[1], wh->i_dur[0]);
 	}
 }
 
@@ -175,6 +180,7 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
  */
 void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 {
+	int i, j;
 	/* Work queue setup for HTT stats and tx capture handling */
 	qdf_create_work(0, &pdev->tx_capture.ppdu_stats_work,
 			dp_tx_ppdu_stats_process,
@@ -188,6 +194,14 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 	pdev->tx_capture.ppdu_stats_next_sched = 0;
 	pdev->tx_capture.ppdu_stats_defer_queue_depth = 0;
 	pdev->tx_capture.ppdu_dropped = 0;
+	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
+		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
+			qdf_nbuf_queue_init(
+				&pdev->tx_capture.ctl_mgmt_q[i][j]);
+			qdf_spinlock_create(
+				&pdev->tx_capture.ctl_mgmt_lock[i][j]);
+		}
+	}
 }
 
 /**
@@ -199,6 +213,7 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 {
 	struct ppdu_info *ppdu_info, *tmp_ppdu_info = NULL;
+	int i, j;
 
 	if (!pdev || !pdev->tx_capture.ppdu_stats_workqueue)
 		return;
@@ -224,6 +239,18 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 			      ppdu_info, ppdu_info, ppdu_info_queue_elem);
 		qdf_nbuf_free(ppdu_info->nbuf);
 		qdf_mem_free(ppdu_info);
+	}
+	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
+		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
+			qdf_spin_lock_bh(
+				&pdev->tx_capture.ctl_mgmt_lock[i][j]);
+			qdf_nbuf_queue_free(
+				&pdev->tx_capture.ctl_mgmt_q[i][j]);
+			qdf_spin_unlock_bh(
+				&pdev->tx_capture.ctl_mgmt_lock[i][j]);
+			qdf_spinlock_destroy(
+				&pdev->tx_capture.ctl_mgmt_lock[i][j]);
+		}
 	}
 }
 
@@ -478,6 +505,7 @@ QDF_STATUS
 dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	int i, j;
 
 	pdev->tx_capture_enabled = val;
 
@@ -494,6 +522,16 @@ dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
 					  DP_PPDU_STATS_CFG_ENH_STATS,
 					  pdev->pdev_id);
 		dp_iterate_free_peer_msdu_q(pdev);
+		for (i = 0; i < TXCAP_MAX_TYPE; i++) {
+			for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
+				qdf_spin_lock_bh(
+					&pdev->tx_capture.ctl_mgmt_lock[i][j]);
+				qdf_nbuf_queue_free(
+					&pdev->tx_capture.ctl_mgmt_q[i][j]);
+				qdf_spin_unlock_bh(
+					&pdev->tx_capture.ctl_mgmt_lock[i][j]);
+			}
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -664,8 +702,6 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) - mpdu_buf_len);
 	return 0;
 }
-
-#define MAX_MONITOR_HEADER (512)
 
 /**
  * dp_tx_mon_restitch_mpdu_from_msdus(): Function to restitch msdu to mpdu
@@ -1136,18 +1172,13 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 		if (!ppdu_desc)
 			continue;
 
-		if (qdf_nbuf_is_queue_empty(&ppdu_desc->mpdu_q)) {
-			tmp_nbuf = nbuf_ppdu_desc_list[desc_cnt];
-			nbuf_ppdu_desc_list[desc_cnt] = NULL;
-			qdf_nbuf_free(tmp_nbuf);
-			continue;
-		}
-
 		ppdu_id = ppdu_desc->ppdu_id;
 
 		if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_CTRL) {
 			struct cdp_tx_indication_info tx_capture_info;
 			struct cdp_tx_indication_mpdu_info *mpdu_info;
+			qdf_nbuf_t mgmt_ctl_nbuf;
+			uint8_t type, subtype;
 
 			qdf_mem_set(&tx_capture_info,
 				    sizeof(struct cdp_tx_indication_info),
@@ -1165,20 +1196,105 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 			mpdu_info->num_msdu = ppdu_desc->num_msdu;
 
 			/* update cdp_tx_indication_mpdu_info */
-			dp_tx_update_user_mpdu_info(ppdu_desc->ppdu_id,
+			dp_tx_update_user_mpdu_info(ppdu_id,
 						    &tx_capture_info.mpdu_info,
 						    &ppdu_desc->user[0]);
 
 			tx_capture_info.mpdu_info.channel_num =
 				pdev->operating_channel;
 
-			tx_capture_info.mpdu_nbuf =
-				qdf_nbuf_queue_remove(&ppdu_desc->mpdu_q);
+			type = (ppdu_desc->frame_ctrl &
+				IEEE80211_FC0_TYPE_MASK) >>
+				IEEE80211_FC0_TYPE_SHIFT;
+			subtype = (ppdu_desc->frame_ctrl &
+				IEEE80211_FC0_SUBTYPE_MASK) >>
+				IEEE80211_FC0_SUBTYPE_SHIFT;
+			qdf_spin_lock_bh(
+				&pdev->tx_capture.ctl_mgmt_lock[type][subtype]);
+			mgmt_ctl_nbuf = qdf_nbuf_queue_remove(
+				&pdev->tx_capture.ctl_mgmt_q[type][subtype]);
+			qdf_spin_unlock_bh(
+				&pdev->tx_capture.ctl_mgmt_lock[type][subtype]);
+			if (mgmt_ctl_nbuf) {
+				struct ieee80211_frame *wh;
+				uint16_t duration_le, seq_le;
 
+				tx_capture_info.mpdu_nbuf =
+					qdf_nbuf_alloc(pdev->soc->osdev,
+					MAX_MONITOR_HEADER, MAX_MONITOR_HEADER,
+					4, FALSE);
+				if (!tx_capture_info.mpdu_nbuf) {
+					qdf_nbuf_free(mgmt_ctl_nbuf);
+					goto free_ppdu_desc;
+				}
+				/* pull ppdu_id from the packet */
+				tx_capture_info.mpdu_info.ppdu_id =
+					*(uint32_t *)qdf_nbuf_data(mgmt_ctl_nbuf);
+				qdf_nbuf_pull_head(mgmt_ctl_nbuf, sizeof(uint32_t));
+				wh = (struct ieee80211_frame *)qdf_nbuf_data(mgmt_ctl_nbuf);
+
+				if (subtype != IEEE80211_FC0_SUBTYPE_BEACON) {
+					duration_le = qdf_cpu_to_le16(
+						ppdu_desc->tx_duration);
+					wh->i_dur[1] =
+						(duration_le & 0xFF00) >> 8;
+					wh->i_dur[0] = duration_le & 0xFF;
+					seq_le = qdf_cpu_to_le16(
+						ppdu_desc->user[0].start_seq <<
+						IEEE80211_SEQ_SEQ_SHIFT);
+					wh->i_seq[1] = (seq_le & 0xFF00) >> 8;
+					wh->i_seq[0] = seq_le & 0xFF;
+				}
+				qdf_nbuf_append_ext_list(
+					tx_capture_info.mpdu_nbuf,
+					mgmt_ctl_nbuf,
+					qdf_nbuf_len(mgmt_ctl_nbuf));
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					QDF_TRACE_LEVEL_DEBUG,
+					"ctrl/mgmt frm(0x%08x): fc 0x%x 0x%x\n",
+					tx_capture_info.mpdu_info.ppdu_id,
+					wh->i_fc[1], wh->i_fc[0]);
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					QDF_TRACE_LEVEL_DEBUG,
+					"desc->ppdu_id 0x%08x\n", ppdu_id);
+			} else if ((ppdu_desc->frame_ctrl &
+				   IEEE80211_FC0_TYPE_MASK) ==
+				   IEEE80211_FC0_TYPE_CTL) {
+				struct ieee80211_frame_min_one *wh_min;
+				uint16_t frame_ctrl_le, duration_le;
+
+				tx_capture_info.mpdu_nbuf =
+					qdf_nbuf_alloc(pdev->soc->osdev,
+					MAX_MONITOR_HEADER + MAX_DUMMY_FRM_BODY,
+					MAX_MONITOR_HEADER,
+					4, FALSE);
+				if (!tx_capture_info.mpdu_nbuf)
+					goto free_ppdu_desc;
+				wh_min = (struct ieee80211_frame_min_one *)
+					qdf_nbuf_data(
+					tx_capture_info.mpdu_nbuf);
+				qdf_mem_zero(wh_min, MAX_DUMMY_FRM_BODY);
+				frame_ctrl_le =
+					qdf_cpu_to_le16(ppdu_desc->frame_ctrl);
+				duration_le =
+					qdf_cpu_to_le16(ppdu_desc->tx_duration);
+				wh_min->i_fc[1] = (frame_ctrl_le & 0xFF00) >> 8;
+				wh_min->i_fc[0] = (frame_ctrl_le & 0xFF);
+				wh_min->i_dur[1] = (duration_le & 0xFF00) >> 8;
+				wh_min->i_dur[0] = (duration_le & 0xFF);
+				qdf_mem_copy(wh_min->i_addr1,
+					mpdu_info->mac_address,
+					QDF_MAC_ADDR_SIZE);
+				qdf_nbuf_set_pktlen(tx_capture_info.mpdu_nbuf,
+					sizeof(*wh_min));
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					QDF_TRACE_LEVEL_DEBUG,
+					"frm(0x%08x): fc %x %x, dur 0x%x%x\n",
+					ppdu_id, wh_min->i_fc[1], wh_min->i_fc[0],
+					wh_min->i_dur[1], wh_min->i_dur[0]);
+			}
 			/*
 			 * send MPDU to osif layer
-			 * do we need to update mpdu_info before tranmit
-			 * get current mpdu_nbuf
 			 */
 			dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
 					     &tx_capture_info, HTT_INVALID_PEER,
@@ -1187,13 +1303,20 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 			if (tx_capture_info.mpdu_nbuf)
 				qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
 
+free_ppdu_desc:
 			tmp_nbuf = nbuf_ppdu_desc_list[desc_cnt];
 			nbuf_ppdu_desc_list[desc_cnt] = NULL;
 			qdf_nbuf_free(tmp_nbuf);
 			continue;
 		}
 
-		ppdu_id = ppdu_desc->ppdu_id;
+		if (qdf_nbuf_is_queue_empty(&ppdu_desc->mpdu_q)) {
+			tmp_nbuf = nbuf_ppdu_desc_list[desc_cnt];
+			nbuf_ppdu_desc_list[desc_cnt] = NULL;
+			qdf_nbuf_free(tmp_nbuf);
+			continue;
+		}
+
 		/* find mpdu tried is same as success mpdu */
 
 		mpdu_tried = ppdu_desc->user[0].mpdu_tried_ucast +
@@ -1228,7 +1351,7 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 						nbuf_ppdu_desc_list + desc_cnt,
 						ppdu_desc_cnt - desc_cnt,
 						seq_no,
-						ppdu_desc->ppdu_id);
+						ppdu_id);
 
 				/* check mpdu_nbuf NULL */
 				if (!mpdu_nbuf)
@@ -1464,28 +1587,22 @@ void dp_tx_ppdu_stats_process(void *context)
 				continue;
 			}
 
-			/**
-			 * check whether it is bss peer,
-			 * if bss_peer no need to process further
-			 */
-			if (peer->bss_peer) {
-				dp_peer_unref_del_find_by_id(peer);
-				qdf_nbuf_free(nbuf);
-				continue;
-			}
-
-			/**
-			 * check whether tx_capture feature is enabled
-			 * for this peer or globally for all peers
-			 */
-			if (!dp_peer_or_pdev_tx_cap_enabled(pdev, peer)) {
-				dp_peer_unref_del_find_by_id(peer);
-				qdf_nbuf_free(nbuf);
-				continue;
-			}
-
 			if ((ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA) &&
 			    (!ppdu_desc->user[0].completion_status)) {
+				/**
+				 * check whether it is bss peer,
+				 * if bss_peer no need to process further
+				 * check whether tx_capture feature is enabled
+				 * for this peer or globally for all peers
+				 */
+				if (peer->bss_peer ||
+				    !dp_peer_or_pdev_tx_cap_enabled(pdev,
+				    peer)) {
+					dp_peer_unref_del_find_by_id(peer);
+					qdf_nbuf_free(nbuf);
+					continue;
+				}
+
 				/* print the bit map */
 				dp_tx_print_bitmap(pdev, ppdu_desc,
 						   0, ppdu_desc->ppdu_id);

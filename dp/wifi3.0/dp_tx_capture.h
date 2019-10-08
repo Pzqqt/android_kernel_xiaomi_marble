@@ -29,6 +29,10 @@ struct dp_vdev;
 struct dp_peer;
 struct dp_tx_desc_s;
 
+#define TXCAP_MAX_TYPE \
+	((IEEE80211_FC0_TYPE_CTL >> IEEE80211_FC0_TYPE_SHIFT) + 1)
+#define TXCAP_MAX_SUBTYPE \
+	((IEEE80211_FC0_SUBTYPE_MASK >> IEEE80211_FC0_SUBTYPE_SHIFT) + 1)
 struct dp_pdev_tx_capture {
 	/* For deferred PPDU status processing */
 	qdf_spinlock_t ppdu_stats_lock;
@@ -48,6 +52,8 @@ struct dp_pdev_tx_capture {
 	uint32_t last_msdu_id;
 	qdf_event_t miss_ppdu_event;
 	uint32_t ppdu_dropped;
+	qdf_nbuf_queue_t ctl_mgmt_q[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
+	qdf_spinlock_t ctl_mgmt_lock[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
 };
 
 /* Tx TID */
