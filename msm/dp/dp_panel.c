@@ -2152,7 +2152,8 @@ static int dp_panel_read_sink_caps(struct dp_panel *dp_panel,
 	dp_panel->fec_en = false;
 	dp_panel->dsc_en = false;
 
-	if (dp_panel->fec_feature_enable) {
+	if (dp_panel->dpcd[DP_DPCD_REV] >= DP_DPCD_REV_14 &&
+			dp_panel->fec_feature_enable) {
 		dp_panel_read_sink_fec_caps(dp_panel);
 
 		if (dp_panel->dsc_feature_enable && dp_panel->fec_en)
