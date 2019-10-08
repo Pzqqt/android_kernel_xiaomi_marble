@@ -3756,7 +3756,6 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	int pps_val = 0;
 	struct vdev_mlme_obj *mlme_obj;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
-	bool peer_assoc_sent = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -3769,6 +3768,7 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		WMA_LOGE("%s Failed to get pdev", __func__);
+		status = QDF_STATUS_E_FAILURE;
 		goto send_resp;
 	}
 
@@ -3780,14 +3780,15 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	peer = wma_cdp_find_peer_by_addr(add_bss->bssId, &peer_id);
 	if (add_bss->nonRoamReassoc && peer) {
 		add_bss->staContext.staIdx = peer_id;
-		goto send_bss_resp;
+		goto send_resp;
 	}
 	if (!add_bss->updateBss)
-		goto send_bss_resp;
+		goto send_resp;
 
 	if (!peer) {
 		WMA_LOGE("%s: %d Failed to find peer %pM",
 			 __func__, __LINE__, add_bss->bssId);
+		status = QDF_STATUS_E_FAILURE;
 		goto send_resp;
 	}
 
@@ -3828,7 +3829,6 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 		WMA_LOGE("Failed to send peer assoc status:%d", status);
 		goto peer_cleanup;
 	}
-	peer_assoc_sent = true;
 
 	/* we just had peer assoc, so install key will be done later */
 	if (add_bss->staContext.encryptType != eSIR_ED_NONE)
@@ -3847,6 +3847,7 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
 	if (!mlme_obj) {
 		WMA_LOGE("Failed to mlme obj");
+		status = QDF_STATUS_E_FAILURE;
 		goto peer_cleanup;
 	}
 	/*
@@ -3856,18 +3857,13 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	qdf_mem_copy(mlme_obj->mgmt.generic.bssid,
 		     add_bss->bssId, QDF_MAC_ADDR_SIZE);
 
-send_bss_resp:
 	wma_save_bss_params(wma, add_bss);
 
 	if (!wmi_service_enabled(wma->wmi_handle,
 				 wmi_service_peer_assoc_conf)) {
-		WMA_LOGE(FL("WMI_SERVICE_PEER_ASSOC_CONF not enabled"));
+		WMA_LOGI(FL("WMI_SERVICE_PEER_ASSOC_CONF not enabled"));
 		goto send_resp;
 	}
-
-	/* In case of reassoc, peer assoc cmd will not be sent */
-	if (!peer_assoc_sent)
-		goto send_resp;
 
 	msg = wma_fill_hold_req(wma, vdev_id, WMA_ADD_BSS_REQ,
 				WMA_PEER_ASSOC_CNF_START, NULL,
@@ -3876,6 +3872,7 @@ send_bss_resp:
 		WMA_LOGE(FL("Failed to allocate request for vdev_id %d"),
 			 vdev_id);
 		wma_remove_req(wma, vdev_id, WMA_PEER_ASSOC_CNF_START);
+		status = QDF_STATUS_E_FAILURE;
 		goto peer_cleanup;
 	}
 
@@ -3885,7 +3882,7 @@ peer_cleanup:
 	if (peer)
 		wma_remove_peer(wma, add_bss->bssId, vdev_id, peer, false);
 send_resp:
-	wma_send_add_bss_resp(wma, vdev_id, QDF_STATUS_E_FAILURE);
+	wma_send_add_bss_resp(wma, vdev_id, status);
 
 	return QDF_STATUS_SUCCESS;
 }
