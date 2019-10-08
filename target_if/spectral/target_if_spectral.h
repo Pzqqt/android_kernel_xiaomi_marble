@@ -1274,10 +1274,19 @@ static inline
 struct target_if_spectral *get_target_if_spectral_handle_from_pdev(
 	struct wlan_objmgr_pdev *pdev)
 {
-	struct target_if_spectral *spectral = NULL;
-	struct wlan_objmgr_psoc *psoc = NULL;
+	struct target_if_spectral *spectral;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!pdev) {
+		spectral_err("pdev is null");
+		return NULL;
+	}
 
 	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return NULL;
+	}
 
 	spectral = (struct target_if_spectral *)
 		psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_get_target_handle(
@@ -1416,6 +1425,11 @@ void target_if_spectral_set_rxchainmask(struct wlan_objmgr_pdev *pdev,
 	}
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("Spectral target if object is null");
+		return;
+	}
+
 	/* set chainmask for all the modes */
 	for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++)
 		spectral->params[smode].ss_chn_mask = spectral_rx_chainmask;
@@ -1449,6 +1463,11 @@ void target_if_spectral_process_phyerr(
 	struct target_if_spectral_ops *p_sops = NULL;
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("Spectral target if object is null");
+		return;
+	}
+
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 	p_sops->spectral_process_phyerr(spectral, data, datalen,
 					p_rfqual, p_chaninfo,

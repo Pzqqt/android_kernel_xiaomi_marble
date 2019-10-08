@@ -1361,6 +1361,15 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 }
 #endif
 
+#ifdef FEATURE_PERPKT_INFO
+void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf);
+#else
+static inline
+void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
+{
+}
+#endif
+
 /**
  * dp_vdev_to_cdp_vdev() - typecast dp vdev to cdp vdev
  * @vdev: DP vdev handle

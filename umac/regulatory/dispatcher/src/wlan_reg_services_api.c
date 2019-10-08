@@ -807,6 +807,8 @@ enum band_info wlan_reg_chan_to_band(uint32_t chan_num)
 	return reg_chan_to_band(chan_num);
 }
 
+qdf_export_symbol(wlan_reg_chan_to_band);
+
 /**
  * wlan_reg_get_chan_enum() - Get channel enum for given channel number
  * @chan_num: Channel number

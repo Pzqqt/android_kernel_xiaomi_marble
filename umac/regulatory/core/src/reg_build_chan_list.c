@@ -542,8 +542,50 @@ static void reg_modify_chan_list_for_cached_channels(
 }
 #endif
 
-void reg_compute_pdev_current_chan_list(
-		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+#ifdef CONFIG_REG_CLIENT
+/**
+ * reg_modify_chan_list_for_srd_channels() - Modify SRD channels in ETSI13
+ * @pdev: Pointer to pdev object
+ * @chan_list: Current channel list
+ *
+ * This function converts SRD channels to passive in ETSI13 regulatory domain
+ * when enable_srd_chan_in_master_mode is not set.
+ */
+static void
+reg_modify_chan_list_for_srd_channels(struct wlan_objmgr_pdev *pdev,
+				      struct regulatory_channel *chan_list)
+{
+	enum channel_enum chan_enum;
+
+	if (!reg_is_etsi13_regdmn(pdev))
+		return;
+
+	if (reg_is_etsi13_srd_chan_allowed_master_mode(pdev))
+		return;
+
+	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+		if (chan_list[chan_enum].chan_flags & REGULATORY_CHAN_DISABLED)
+			continue;
+
+		if (reg_is_etsi13_srd_chan(pdev,
+					   chan_list[chan_enum].chan_num)) {
+			chan_list[chan_enum].state =
+				CHANNEL_STATE_DFS;
+			chan_list[chan_enum].chan_flags |=
+				REGULATORY_CHAN_NO_IR;
+		}
+	}
+}
+#else
+static inline void
+reg_modify_chan_list_for_srd_channels(struct wlan_objmgr_pdev *pdev,
+				      struct regulatory_channel *chan_list)
+{
+}
+#endif
+
+void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
+					*pdev_priv_obj)
 {
 	qdf_mem_copy(pdev_priv_obj->cur_chan_list, pdev_priv_obj->mas_chan_list,
 		     NUM_CHANNELS * sizeof(struct regulatory_channel));
@@ -571,6 +613,9 @@ void reg_compute_pdev_current_chan_list(
 					  pdev_priv_obj->en_chan_144);
 
 	reg_modify_chan_list_for_cached_channels(pdev_priv_obj);
+
+	reg_modify_chan_list_for_srd_channels(pdev_priv_obj->pdev_ptr,
+					      pdev_priv_obj->cur_chan_list);
 }
 
 void reg_reset_reg_rules(struct reg_rule_info *reg_rules)
@@ -907,7 +952,6 @@ QDF_STATUS reg_process_master_chan_list(
 	if (pdev) {
 		reg_propagate_mas_chan_list_to_pdev(psoc, pdev, &dir);
 		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
-		reg_reset_reg_rules(reg_rules);
 	}
 
 	return QDF_STATUS_SUCCESS;

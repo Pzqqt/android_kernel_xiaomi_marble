@@ -953,13 +953,13 @@ void reg_reset_ctry_pending_hints(struct wlan_regulatory_psoc_priv_obj
 	}
 }
 
-QDF_STATUS reg_set_curr_country(
-		struct wlan_regulatory_psoc_priv_obj *soc_reg,
-		struct cur_regulatory_info *regulat_info,
-		struct wlan_lmac_if_reg_tx_ops *tx_ops)
+QDF_STATUS reg_set_curr_country(struct wlan_regulatory_psoc_priv_obj *soc_reg,
+				struct cur_regulatory_info *regulat_info,
+				struct wlan_lmac_if_reg_tx_ops *tx_ops)
 {
 	struct wlan_objmgr_psoc *psoc = regulat_info->psoc;
 	uint8_t pdev_id;
+	uint8_t phy_num;
 	struct set_country country_code;
 	QDF_STATUS status;
 
@@ -974,13 +974,19 @@ QDF_STATUS reg_set_curr_country(
 			  REG_ALPHA2_LEN)))
 		return QDF_STATUS_SUCCESS;
 
-	pdev_id = soc_reg->def_pdev_id;
-	if (soc_reg->cc_src == SOURCE_USERSPACE)
-		soc_reg->new_user_ctry_pending[pdev_id] = true;
-	else if (soc_reg->cc_src == SOURCE_11D)
-		soc_reg->new_11d_ctry_pending[pdev_id] = true;
-	else
-		soc_reg->world_country_pending[pdev_id] = true;
+	/*
+	 * Need firmware to send channel list event
+	 * for all phys. Therefore set pdev_id to 0xFF
+	 */
+	pdev_id = 0xFF;
+	for (phy_num = 0; phy_num < regulat_info->num_phy; phy_num++) {
+		if (soc_reg->cc_src == SOURCE_USERSPACE)
+			soc_reg->new_user_ctry_pending[phy_num] = true;
+		else if (soc_reg->cc_src == SOURCE_11D)
+			soc_reg->new_11d_ctry_pending[phy_num] = true;
+		else
+			soc_reg->world_country_pending[phy_num] = true;
+	}
 
 	qdf_mem_zero(&country_code, sizeof(country_code));
 	qdf_mem_copy(country_code.country, soc_reg->cur_country,
@@ -1013,7 +1019,7 @@ error:
 bool reg_ignore_default_country(struct wlan_regulatory_psoc_priv_obj *soc_reg,
 				struct cur_regulatory_info *regulat_info)
 {
-	uint8_t pdev_id;
+	uint8_t phy_num;
 
 	if (!soc_reg->offload_enabled)
 		return false;
@@ -1021,12 +1027,11 @@ bool reg_ignore_default_country(struct wlan_regulatory_psoc_priv_obj *soc_reg,
 	if (soc_reg->cc_src == SOURCE_UNKNOWN)
 		return false;
 
-	pdev_id = regulat_info->phy_id;
-
-	if (soc_reg->new_user_ctry_pending[pdev_id] ||
-	    soc_reg->new_init_ctry_pending[pdev_id] ||
-	    soc_reg->new_11d_ctry_pending[pdev_id] ||
-	    soc_reg->world_country_pending[pdev_id])
+	phy_num = regulat_info->phy_id;
+	if (soc_reg->new_user_ctry_pending[phy_num] ||
+	    soc_reg->new_init_ctry_pending[phy_num] ||
+	    soc_reg->new_11d_ctry_pending[phy_num] ||
+	    soc_reg->world_country_pending[phy_num])
 		return false;
 
 	return true;

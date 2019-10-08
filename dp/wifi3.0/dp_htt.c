@@ -2691,7 +2691,7 @@ static void dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
  *
  * return: void
  */
-static void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
+void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 {
 	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
 		dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
