@@ -499,8 +499,8 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 		if (hw_wb->ops.bind_pingpong_blk)
 			hw_wb->ops.bind_pingpong_blk(hw_wb, enable, hw_pp->idx);
 
-		if (hw_ctl->ops.update_cwb_cfg) {
-			hw_ctl->ops.update_cwb_cfg(hw_ctl, &intf_cfg, enable);
+		if (hw_ctl->ops.update_intf_cfg) {
+			hw_ctl->ops.update_intf_cfg(hw_ctl, &intf_cfg, enable);
 			SDE_DEBUG("in CWB mode on CTL_%d PP-%d merge3d:%d\n",
 					hw_ctl->idx - CTL_0,
 					hw_pp->idx - PINGPONG_0,

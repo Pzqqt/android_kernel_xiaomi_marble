@@ -249,10 +249,10 @@ struct sde_hw_ctl_ops {
 	/** update cwb  for ctl_path
 	 * @ctx       : ctl path ctx pointer
 	 * @cfg    : interface config structure pointer
-	 * @enable    : enable/disable the cwb hw block
+	 * @enable    : enable/disable the dynamic sub-blocks in interface cfg
 	 * @Return: error code
 	 */
-	int (*update_cwb_cfg)(struct sde_hw_ctl *ctx,
+	int (*update_intf_cfg)(struct sde_hw_ctl *ctx,
 		struct sde_hw_intf_cfg_v1 *cfg, bool enable);
 
 	/**

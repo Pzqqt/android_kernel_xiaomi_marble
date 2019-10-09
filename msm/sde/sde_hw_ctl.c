@@ -64,6 +64,8 @@
 
 #define CTL_INVALID_BIT                0xffff
 
+#define UPDATE_ACTIVE(r, idx, en)  UPDATE_MASK((r), (idx), (en))
+
 /**
  * List of SSPP bits in CTL_FLUSH
  */
@@ -1078,7 +1080,7 @@ static int sde_hw_ctl_reset_post_disable(struct sde_hw_ctl *ctx,
 	return 0;
 }
 
-static int sde_hw_ctl_update_cwb_cfg(struct sde_hw_ctl *ctx,
+static int sde_hw_ctl_update_intf_cfg(struct sde_hw_ctl *ctx,
 		struct sde_hw_intf_cfg_v1 *cfg, bool enable)
 {
 	int i;
@@ -1091,28 +1093,33 @@ static int sde_hw_ctl_update_cwb_cfg(struct sde_hw_ctl *ctx,
 		return -EINVAL;
 
 	c = &ctx->hw;
-	cwb_active = SDE_REG_READ(c, CTL_CWB_ACTIVE);
-	for (i = 0; i < cfg->cwb_count; i++) {
-		if (cfg->cwb[i])
-			cwb_active |= BIT(cfg->cwb[i] - CWB_0);
-	}
 
-	merge_3d_active = SDE_REG_READ(c, CTL_MERGE_3D_ACTIVE);
-	for (i = 0; i < cfg->merge_3d_count; i++) {
-		if (cfg->merge_3d[i])
-			merge_3d_active |= BIT(cfg->merge_3d[i] - MERGE_3D_0);
-	}
+	if (cfg->cwb_count) {
+		wb_active = 0;
+		cwb_active = SDE_REG_READ(c, CTL_CWB_ACTIVE);
+		for (i = 0; i < cfg->cwb_count; i++) {
+			if (cfg->cwb[i])
+				UPDATE_ACTIVE(cwb_active,
+					(cfg->cwb[i] - CWB_0),
+					enable);
+		}
 
-	if (enable) {
-		wb_active = BIT(2);
-		SDE_REG_WRITE(c, CTL_WB_ACTIVE, wb_active);
-		SDE_REG_WRITE(c, CTL_MERGE_3D_ACTIVE, merge_3d_active);
+		wb_active = enable ? BIT(2) : 0;
 		SDE_REG_WRITE(c, CTL_CWB_ACTIVE, cwb_active);
-	} else {
-		SDE_REG_WRITE(c, CTL_WB_ACTIVE, 0x0);
-		SDE_REG_WRITE(c, CTL_MERGE_3D_ACTIVE, 0x0);
-		SDE_REG_WRITE(c, CTL_CWB_ACTIVE, 0x0);
+		SDE_REG_WRITE(c, CTL_WB_ACTIVE, wb_active);
 	}
+
+	if (cfg->merge_3d_count) {
+		merge_3d_active = SDE_REG_READ(c, CTL_MERGE_3D_ACTIVE);
+		for (i = 0; i < cfg->merge_3d_count; i++) {
+			if (cfg->merge_3d[i])
+				UPDATE_ACTIVE(merge_3d_active,
+					(cfg->merge_3d[i] - MERGE_3D_0),
+					enable);
+		}
+		SDE_REG_WRITE(c, CTL_MERGE_3D_ACTIVE, merge_3d_active);
+	}
+
 	return 0;
 }
 
@@ -1280,7 +1287,7 @@ static void _setup_ctl_ops(struct sde_hw_ctl_ops *ops,
 		ops->trigger_flush = sde_hw_ctl_trigger_flush_v1;
 
 		ops->setup_intf_cfg_v1 = sde_hw_ctl_intf_cfg_v1;
-		ops->update_cwb_cfg = sde_hw_ctl_update_cwb_cfg;
+		ops->update_intf_cfg = sde_hw_ctl_update_intf_cfg;
 		ops->setup_dsc_cfg = sde_hw_ctl_dsc_cfg;
 
 		ops->update_bitmask_cdm = sde_hw_ctl_update_bitmask_cdm_v1;
