@@ -2587,6 +2587,32 @@ struct wlan_ies *mlme_get_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev)
 	return &mlme_priv->peer_disconnect_ies;
 }
 
+void mlme_set_follow_ap_edca_flag(struct wlan_objmgr_vdev *vdev, bool flag)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return;
+	}
+
+	mlme_priv->follow_ap_edca = flag;
+}
+
+bool mlme_get_follow_ap_edca_flag(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return false;
+	}
+
+	return mlme_priv->follow_ap_edca;
+}
+
 void mlme_set_peer_pmf_status(struct wlan_objmgr_peer *peer,
 			      bool is_pmf_enabled)
 {
