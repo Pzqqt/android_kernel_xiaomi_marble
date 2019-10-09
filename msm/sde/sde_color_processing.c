@@ -6,6 +6,7 @@
 #define pr_fmt(fmt)	"%s: " fmt, __func__
 
 #include <linux/dma-buf.h>
+#include <linux/string.h>
 #include <drm/msm_drm_pp.h>
 #include "sde_color_processing.h"
 #include "sde_kms.h"
@@ -122,7 +123,7 @@ static void lm_gc_install_property(struct drm_crtc *crtc);
 #define setup_lm_prop_install_funcs(func) \
 	(func[SDE_MIXER_GC] = lm_gc_install_property)
 
-enum {
+enum sde_cp_crtc_features {
 	/* Append new DSPP features before SDE_CP_CRTC_DSPP_MAX */
 	/* DSPP Features start */
 	SDE_CP_CRTC_DSPP_IGC,
@@ -169,11 +170,26 @@ enum {
 	SDE_CP_CRTC_MAX_FEATURES,
 };
 
+enum sde_cp_crtc_pu_features {
+	SDE_CP_CRTC_MAX_PU_FEATURES,
+};
+
+static enum sde_cp_crtc_pu_features
+		sde_cp_crtc_pu_to_feature[SDE_CP_CRTC_MAX_PU_FEATURES];
+
 static void _sde_cp_crtc_enable_hist_irq(struct sde_crtc *sde_crtc);
 
 typedef int (*feature_wrapper)(struct sde_hw_dspp *hw_dspp,
 				   struct sde_hw_cp_cfg *hw_cfg,
 				   struct sde_crtc *hw_crtc);
+
+
+static struct sde_kms *get_kms(struct drm_crtc *crtc)
+{
+	struct msm_drm_private *priv = crtc->dev->dev_private;
+
+	return to_sde_kms(priv->kms);
+}
 
 static int set_dspp_vlut_feature(struct sde_hw_dspp *hw_dspp,
 				 struct sde_hw_cp_cfg *hw_cfg,
@@ -703,6 +719,14 @@ do { \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_HIST_CTL] = set_ltm_hist_crtl_feature; \
 } while (0)
 
+feature_wrapper set_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
+#define setup_set_crtc_pu_feature_wrappers(wrappers) \
+memset(wrappers, 0, sizeof(wrappers))
+
+feature_wrapper check_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
+#define setup_check_crtc_pu_feature_wrappers(wrappers) \
+memset(wrappers, 0, sizeof(wrappers))
+
 #define INIT_PROP_ATTACH(p, crtc, prop, node, feature, val) \
 	do { \
 		(p)->crtc = crtc; \
@@ -890,12 +914,6 @@ static int sde_cp_enable_crtc_property(struct drm_crtc *crtc,
 	return ret;
 }
 
-static struct sde_kms *get_kms(struct drm_crtc *crtc)
-{
-	struct msm_drm_private *priv = crtc->dev->dev_private;
-
-	return to_sde_kms(priv->kms);
-}
 
 static void sde_cp_crtc_prop_attach(struct sde_cp_prop_attach *prop_attach)
 {
@@ -1380,6 +1398,90 @@ void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
 	}
 }
 
+static int sde_cp_crtc_check_pu_features(struct drm_crtc *crtc)
+{
+	int ret = 0, i = 0, j = 0;
+	struct sde_crtc *sde_crtc;
+	struct sde_crtc_state *sde_crtc_state;
+	struct sde_hw_cp_cfg hw_cfg;
+	struct sde_hw_dspp *hw_dspp;
+
+	if (!crtc) {
+		DRM_ERROR("invalid crtc %pK\n", crtc);
+		return -EINVAL;
+	}
+
+	sde_crtc = to_sde_crtc(crtc);
+	if (!sde_crtc) {
+		DRM_ERROR("invalid sde_crtc %pK\n", sde_crtc);
+		return -EINVAL;
+	}
+
+	sde_crtc_state = to_sde_crtc_state(crtc->state);
+	if (!sde_crtc_state) {
+		DRM_ERROR("invalid sde_crtc_state %pK\n", sde_crtc_state);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < sde_crtc->num_mixers; i++) {
+		if (!sde_crtc->mixers[i].hw_lm) {
+			DRM_ERROR("invalid lm in mixer %d\n", i);
+			return -EINVAL;
+		}
+
+		if (!sde_crtc->mixers[i].hw_ctl) {
+			DRM_ERROR("invalid ctl in mixer %d\n", i);
+			return -EINVAL;
+		}
+
+		if (!sde_crtc->mixers[i].hw_dspp) {
+			DRM_ERROR("invalid dspp in mixer %d\n", i);
+			return -EINVAL;
+		}
+	}
+
+	/* early return when not a partial update frame */
+	if (sde_crtc_state->user_roi_list.num_rects == 0) {
+		DRM_DEBUG_DRIVER("no partial update required\n");
+		return 0;
+	}
+
+	memset(&hw_cfg, 0, sizeof(hw_cfg));
+	hw_cfg.num_of_mixers = sde_crtc->num_mixers;
+	hw_cfg.payload = &sde_crtc_state->user_roi_list;
+	hw_cfg.len = sizeof(sde_crtc_state->user_roi_list);
+	for (i = 0; i < hw_cfg.num_of_mixers; i++)
+		hw_cfg.dspp[i] = sde_crtc->mixers[i].hw_dspp;
+
+	for (i = 0; i < SDE_CP_CRTC_MAX_PU_FEATURES; i++) {
+		feature_wrapper check_pu_feature =
+				check_crtc_pu_feature_wrappers[i];
+
+		if (!check_pu_feature)
+			continue;
+
+		for (j = 0; j < hw_cfg.num_of_mixers; j++) {
+			hw_dspp = sde_crtc->mixers[j].hw_dspp;
+
+			/* use incoming state information */
+			hw_cfg.mixer_info = sde_crtc->mixers[j].hw_lm;
+			hw_cfg.ctl = sde_crtc->mixers[j].hw_ctl;
+			hw_cfg.displayh = hw_cfg.num_of_mixers *
+					sde_crtc_state->lm_roi[i].w;
+			hw_cfg.displayv = sde_crtc_state->lm_roi[i].h;
+
+			ret = check_pu_feature(hw_dspp, &hw_cfg, sde_crtc);
+			if (ret) {
+				DRM_ERROR("failed pu feature %d in mixer %d\n",
+						i, j);
+				return -EAGAIN;
+			}
+		}
+	}
+
+	return ret;
+}
+
 int sde_cp_crtc_check_properties(struct drm_crtc *crtc,
 	struct drm_crtc_state *state)
 {
@@ -1407,6 +1509,12 @@ int sde_cp_crtc_check_properties(struct drm_crtc *crtc,
 	}
 	mutex_lock(&sde_crtc->crtc_cp_lock);
 
+	ret = sde_cp_crtc_check_pu_features(crtc);
+	if (ret) {
+		DRM_ERROR("failed check pu features, ret %d\n", ret);
+		goto exit;
+	}
+
 	if (list_empty(&sde_crtc->dirty_list)) {
 		DRM_DEBUG_DRIVER("Dirty list is empty\n");
 		goto exit;
@@ -1428,6 +1536,120 @@ exit:
 	return ret;
 }
 
+static int sde_cp_crtc_set_pu_features(struct drm_crtc *crtc, bool *need_flush)
+{
+	int ret = 0, i = 0, j = 0;
+	struct sde_crtc *sde_crtc;
+	struct sde_crtc_state *sde_crtc_state;
+	struct sde_hw_cp_cfg hw_cfg;
+	struct sde_hw_dspp *hw_dspp;
+	struct sde_hw_mixer *hw_lm;
+	struct sde_mdss_cfg *catalog;
+	struct sde_rect user_rect, cached_rect;
+
+	if (!need_flush) {
+		DRM_ERROR("invalid need_flush %pK\n", need_flush);
+		return -EINVAL;
+	}
+
+	if (!crtc) {
+		DRM_ERROR("invalid crtc %pK\n", crtc);
+		return -EINVAL;
+	}
+
+	sde_crtc = to_sde_crtc(crtc);
+	if (!sde_crtc) {
+		DRM_ERROR("invalid sde_crtc %pK\n", sde_crtc);
+		return -EINVAL;
+	}
+
+	sde_crtc_state = to_sde_crtc_state(crtc->state);
+	if (!sde_crtc_state) {
+		DRM_ERROR("invalid sde_crtc_state %pK\n", sde_crtc_state);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < sde_crtc->num_mixers; i++) {
+		if (!sde_crtc->mixers[i].hw_lm) {
+			DRM_ERROR("invalid lm in mixer %d\n", i);
+			return -EINVAL;
+		}
+
+		if (!sde_crtc->mixers[i].hw_ctl) {
+			DRM_ERROR("invalid ctl in mixer %d\n", i);
+			return -EINVAL;
+		}
+
+		if (!sde_crtc->mixers[i].hw_dspp) {
+			DRM_ERROR("invalid dspp in mixer %d\n", i);
+			return -EINVAL;
+		}
+	}
+
+	/* early return if not a partial update frame or no change in rois */
+	if (sde_crtc_state->user_roi_list.num_rects == 0) {
+		DRM_DEBUG_DRIVER("no partial update required\n");
+		memset(&sde_crtc_state->cached_user_roi_list, 0,
+				sizeof(struct msm_roi_list));
+		return 0;
+	}
+
+	sde_kms_rect_merge_rectangles(&sde_crtc_state->user_roi_list,
+			&user_rect);
+	sde_kms_rect_merge_rectangles(&sde_crtc_state->cached_user_roi_list,
+			&cached_rect);
+	if (sde_kms_rect_is_equal(&user_rect, &cached_rect)) {
+		DRM_DEBUG_DRIVER("no change in list of ROIs\n");
+		return 0;
+	}
+
+	catalog = get_kms(&sde_crtc->base)->catalog;
+	memset(&hw_cfg, 0, sizeof(hw_cfg));
+	hw_cfg.num_of_mixers = sde_crtc->num_mixers;
+	hw_cfg.broadcast_disabled = catalog->dma_cfg.broadcast_disabled;
+	hw_cfg.payload = &sde_crtc_state->user_roi_list;
+	hw_cfg.len = sizeof(sde_crtc_state->user_roi_list);
+	for (i = 0; i < hw_cfg.num_of_mixers; i++)
+		hw_cfg.dspp[i] = sde_crtc->mixers[i].hw_dspp;
+
+	for (i = 0; i < SDE_CP_CRTC_MAX_PU_FEATURES; i++) {
+		feature_wrapper set_pu_feature =
+				set_crtc_pu_feature_wrappers[i];
+
+		if (!set_pu_feature)
+			continue;
+
+		for (j = 0; j < hw_cfg.num_of_mixers; j++) {
+			hw_lm = sde_crtc->mixers[j].hw_lm;
+			hw_dspp = sde_crtc->mixers[j].hw_dspp;
+
+			hw_cfg.mixer_info = hw_lm;
+			hw_cfg.ctl = sde_crtc->mixers[j].hw_ctl;
+			hw_cfg.displayh = hw_cfg.num_of_mixers *
+					hw_lm->cfg.out_width;
+			hw_cfg.displayv = hw_lm->cfg.out_height;
+
+			ret = set_pu_feature(hw_dspp, &hw_cfg, sde_crtc);
+			/* feature does not need flush when ret > 0 */
+			if (ret < 0) {
+				DRM_ERROR("failed pu feature %d in mixer %d\n",
+						i, j);
+				return ret;
+			} else if (ret == 0) {
+				sde_cp_dspp_flush_helper(sde_crtc,
+						sde_cp_crtc_pu_to_feature[i]);
+				*need_flush = true;
+			}
+		}
+	}
+
+	memcpy(&sde_crtc_state->cached_user_roi_list,
+			&sde_crtc_state->user_roi_list,
+			sizeof(struct msm_roi_list));
+
+	return 0;
+}
+
 void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc = NULL;
@@ -1435,6 +1657,8 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 	struct sde_cp_node *prop_node = NULL, *n = NULL;
 	struct sde_hw_ctl *ctl;
 	u32 num_mixers = 0, i = 0;
+	int rc = 0;
+	bool need_flush = false;
 
 	if (!crtc || !crtc->dev) {
 		DRM_ERROR("invalid crtc %pK dev %pK\n", crtc,
@@ -1450,43 +1674,48 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 
 	num_mixers = sde_crtc->num_mixers;
 	if (!num_mixers) {
-		DRM_DEBUG_DRIVER("no mixers for this crtc\n");
+		DRM_ERROR("no mixers for this crtc\n");
 		return;
 	}
 
 	mutex_lock(&sde_crtc->crtc_cp_lock);
 
-	/* Check if dirty lists are empty and ad features are disabled for
-	 * early return. If ad properties are active then we need to issue
-	 * dspp flush.
-	 **/
 	if (list_empty(&sde_crtc->dirty_list) &&
-		list_empty(&sde_crtc->ad_dirty)) {
-		if (list_empty(&sde_crtc->ad_active)) {
-			DRM_DEBUG_DRIVER("Dirty list is empty\n");
-			goto exit;
-		}
-		set_dspp_flush = true;
+			list_empty(&sde_crtc->ad_dirty) &&
+			list_empty(&sde_crtc->ad_active) &&
+			list_empty(&sde_crtc->active_list)) {
+		DRM_DEBUG_DRIVER("all lists are empty\n");
+		goto exit;
 	}
 
-	if (!list_empty(&sde_crtc->ad_active))
-		sde_cp_ad_set_prop(sde_crtc, AD_IPC_RESET);
+	rc = sde_cp_crtc_set_pu_features(crtc, &need_flush);
+	if (rc) {
+		DRM_ERROR("failed set pu features, skip cp updates\n");
+		goto exit;
+	} else if (need_flush) {
+		set_dspp_flush = true;
+		set_lm_flush = true;
+	}
 
 	list_for_each_entry_safe(prop_node, n, &sde_crtc->dirty_list,
-				dirty_list) {
+			dirty_list) {
 		sde_cp_crtc_setfeature(prop_node, sde_crtc);
 		sde_cp_dspp_flush_helper(sde_crtc, prop_node->feature);
-		/* Set the flush flag to true */
 		if (prop_node->is_dspp_feature)
 			set_dspp_flush = true;
 		else
 			set_lm_flush = true;
 	}
 
-	list_for_each_entry_safe(prop_node, n, &sde_crtc->ad_dirty,
-				dirty_list) {
+	if (!list_empty(&sde_crtc->ad_active)) {
+		sde_cp_ad_set_prop(sde_crtc, AD_IPC_RESET);
 		set_dspp_flush = true;
+	}
+
+	list_for_each_entry_safe(prop_node, n, &sde_crtc->ad_dirty,
+			dirty_list) {
 		sde_cp_crtc_setfeature(prop_node, sde_crtc);
+		set_dspp_flush = true;
 	}
 
 	for (i = 0; i < num_mixers; i++) {
@@ -1560,6 +1789,10 @@ void sde_cp_crtc_install_properties(struct drm_crtc *crtc)
 		setup_lm_prop_install_funcs(lm_prop_install_func);
 		setup_set_crtc_feature_wrappers(set_crtc_feature_wrappers);
 		setup_check_crtc_feature_wrappers(check_crtc_feature_wrappers);
+		setup_set_crtc_pu_feature_wrappers(
+				set_crtc_pu_feature_wrappers);
+		setup_check_crtc_pu_feature_wrappers(
+				check_crtc_pu_feature_wrappers);
 	}
 	if (!priv->cp_property)
 		goto exit;
