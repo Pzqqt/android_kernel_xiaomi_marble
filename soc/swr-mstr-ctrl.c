@@ -1607,12 +1607,6 @@ static irqreturn_t swr_mstr_interrupt_v2(int irq, void *dev)
 	struct swr_device *swr_dev;
 	struct swr_master *mstr = &swrm->master;
 
-	if (!swrm->dev_up || swrm->state == SWR_MSTR_SSR) {
-		complete(&swrm->broadcast);
-		dev_dbg(swrm->dev, "%s swrm is not up\n", __func__);
-		return IRQ_NONE;
-	}
-
 	if (unlikely(swrm_lock_sleep(swrm) == false)) {
 		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
 		return IRQ_NONE;
