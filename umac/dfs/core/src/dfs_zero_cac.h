@@ -34,7 +34,10 @@
 #include "dfs.h"
 #include <wlan_dfs_tgt_api.h>
 
+#ifdef CONFIG_CHAN_NUM_API
 #define VHT160_IEEE_FREQ_DIFF 16
+#endif
+
 #define OCAC_SUCCESS 0
 #define OCAC_RESET 1
 #define OCAC_CANCEL 2
@@ -72,7 +75,8 @@
  *                           the precac forest maintained.
  * @left_child:        Pointer to the left child of the node.
  * @right_child:       Pointer to the right child of the node.
- * @ch_ieee:           Center channel ieee value (BSTree node key value).
+ * @ch_ieee:           Center channel ieee value.
+ * @ch_freq:           Center channel frequency value (BSTree node key value).
  * @n_caced_subchs:    Number of CACed subchannels of the ch_ieee.
  * @n_nol_subchs:      Number of subchannels of the ch_ieee in NOL.
  * @n_valid_subchs:    Number of subchannels of the ch_ieee available (as per
@@ -83,6 +87,7 @@ struct precac_tree_node {
 	struct precac_tree_node *left_child;
 	struct precac_tree_node *right_child;
 	uint8_t ch_ieee;
+	uint16_t ch_freq;
 	uint8_t n_caced_subchs;
 	uint8_t n_nol_subchs;
 	uint8_t n_valid_subchs;
@@ -109,12 +114,14 @@ enum precac_chan_state {
  * struct dfs_precac_entry - PreCAC entry.
  * @pe_list:           PreCAC entry.
  * @vht80_ch_ieee:     VHT80 centre channel IEEE value.
+ * @vht80_ch_freq:     VHT80 centre channel frequency value.
  * @dfs:               Pointer to wlan_dfs structure.
  * @tree_root:         Tree root node with 80MHz channel key.
  */
 struct dfs_precac_entry {
 	TAILQ_ENTRY(dfs_precac_entry) pe_list;
 	uint8_t             vht80_ch_ieee;
+	uint16_t            vht80_ch_freq;
 	struct wlan_dfs     *dfs;
 	struct precac_tree_node *tree_root;
 };
@@ -197,13 +204,34 @@ void dfs_init_precac_list(struct wlan_dfs *dfs);
  * @precac_chan: Start thr precac timer in this channel.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
+#ifdef CONFIG_CHAN_NUM_API
 void dfs_start_precac_timer(struct wlan_dfs *dfs,
 			    uint8_t precac_chan);
+#endif
+
+/**
+ * dfs_start_precac_timer() - Start precac timer.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @precac_chan_freq: Frequency to start precac timer.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+void dfs_start_precac_timer_for_freq(struct wlan_dfs *dfs,
+				     uint16_t precac_chan_freq);
+#endif
 #else
+#ifdef CONFIG_CHAN_NUM_API
 static inline void dfs_start_precac_timer(struct wlan_dfs *dfs,
 					  uint8_t precac_chan)
 {
 }
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+static inline
+void dfs_start_precac_timer_for_freq(struct wlan_dfs *dfs,
+				     uint16_t precac_chan_freq)
+{
+}
+#endif
 #endif
 
 /**
@@ -287,16 +315,48 @@ static inline bool dfs_is_precac_done(struct wlan_dfs *dfs,
  *
  * Return: True if intermediate channel needs to configure. False otherwise.
  */
+#ifdef CONFIG_CHAN_NUM_API
 bool
 dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs,
 				  uint8_t *pref_chan,
 				  enum wlan_phymode mode);
+#endif
+
+/**
+ * dfs_decide_precac_preferred_chan_for_freq() - Choose operating channel among
+ *                                      configured DFS channel and
+ *                                      intermediate channel based on
+ *                                      precac status of configured
+ *                                      DFS channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @pref_chan: Configured DFS channel frequency
+ * @mode: Configured PHY mode.
+ *
+ * Return: True if intermediate channel needs to configure. False otherwise.
+ */
+
+#ifdef CONFIG_CHAN_FREQ_API
+bool
+dfs_decide_precac_preferred_chan_for_freq(struct wlan_dfs *dfs,
+					  uint16_t *pref_chan_freq,
+					  enum wlan_phymode mode);
+#endif
 #else
+#ifdef CONFIG_CHAN_NUM_API
 static inline void dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs,
 						    uint8_t *pref_chan,
 						    enum wlan_phymode mode)
 {
 }
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+static inline void
+dfs_decide_precac_preferred_chan_for_freq(struct wlan_dfs *dfs,
+					  uint8_t *pref_chan,
+					  enum wlan_phymode mode)
+{
+}
+#endif
 #endif
 
 /**
@@ -307,10 +367,27 @@ static inline void dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs,
  * @exclude_sec_ch_ieee: Secondary channel IEEE to be excluded for preCAC.
  * @bandwidth:           Bandwidth of requested channel.
  */
+#ifdef CONFIG_CHAN_NUM_API
 uint8_t dfs_get_ieeechan_for_precac(struct wlan_dfs *dfs,
 				    uint8_t exclude_pri_ch_ieee,
 				    uint8_t exclude_sec_ch_ieee,
 				    uint8_t bandwidth);
+#endif
+
+/**
+ * dfs_get_ieeechan_for_precac_for_freq() - Get chan of required bandwidth from
+ *                                 precac_list.
+ * @dfs:                 Pointer to wlan_dfs structure.
+ * @exclude_pri_chan_freq: Primary channel freq to be excluded for preCAC.
+ * @exclude_sec_chan_freq: Secondary channel freq to be excluded for preCAC.
+ * @bandwidth:           Bandwidth of requested channel.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+uint16_t dfs_get_ieeechan_for_precac_for_freq(struct wlan_dfs *dfs,
+					      uint16_t exclude_pri_chan_freq,
+					      uint16_t exclude_sec_chan_freq,
+					      uint8_t bandwidth);
+#endif
 
 /**
  * dfs_override_precac_timeout() - Override the default precac timeout.
@@ -380,6 +457,7 @@ static inline int dfs_get_override_precac_timeout(struct wlan_dfs *dfs,
  * exhausted the VHT80_80/VHT160 comes back to VHT80 mode.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
+#ifdef CONFIG_CHAN_NUM_API
 void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		uint32_t chan_mode,
 		uint8_t ch_freq_seg1,
@@ -388,7 +466,32 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		uint32_t *phy_mode,
 		bool *dfs_set_cfreq2,
 		bool *set_agile);
+#endif
+
+/*
+ * dfs_find_vht80_chan_for_precac() - Find VHT80 channel for precac.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan_mode: Channel mode.
+ * @ch_freq_seg1: Segment1 channel freq in mhz.
+ * @cfreq1: cfreq1.
+ * @cfreq2: cfreq2.
+ * @phy_mode: Precac phymode.
+ * @dfs_set_cfreq2: Precac cfreq2
+ * @set_agile: Agile mode flag.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+void dfs_find_vht80_chan_for_precac_for_freq(struct wlan_dfs *dfs,
+					     uint32_t chan_mode,
+					     uint16_t ch_freq_seg1_mhz,
+					     uint32_t *cfreq1,
+					     uint32_t *cfreq2,
+					     uint32_t *phy_mode,
+					     bool *dfs_set_cfreq2,
+					     bool *set_agile);
+#endif
+
 #else
+#ifdef CONFIG_CHAN_NUM_API
 static inline void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		uint32_t chan_mode,
 		uint8_t ch_freq_seg1,
@@ -399,6 +502,21 @@ static inline void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		bool *set_agile)
 {
 }
+#endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+static inline
+void dfs_find_vht80_chan_for_precac_for_freq(struct wlan_dfs *dfs,
+					     uint32_t chan_mode,
+					     uint16_t ch_freq_seg1_mhz,
+					     uint32_t *cfreq1,
+					     uint32_t *cfreq2,
+					     uint32_t *phy_mode,
+					     bool *dfs_set_cfreq2,
+					     bool *set_agile)
+{
+}
+#endif
 #endif
 
 #if defined(QCA_SUPPORT_AGILE_DFS)
@@ -436,10 +554,30 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
  * Find an IEEE channel for agileCAC which is not the current operating
  * channels (indicated by pri_ch_ieee, sec_ch_ieee).
  */
+#ifdef CONFIG_CHAN_NUM_API
 void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
 				   uint8_t *ch_ieee,
 				   uint8_t pri_ch_ieee,
 				   uint8_t sec_ch_ieee);
+#endif
+
+/**
+ * dfs_get_ieeechan_for_agilecac_for_freq() - Find chan freq for agile CAC.
+ * @dfs:         Pointer to wlan_dfs structure.
+ * @chan_freq:     Pointer to channel freq for agile set request.
+ * @pri_chan_freq: Current primary IEEE channel freq.
+ * @sec_chan_freq: Current secondary IEEE channel freq (in HT80_80 mode).
+ *
+ * Find an IEEE channel freq for agileCAC which is not the current operating
+ * channels (indicated by pri_chan_freq, sec_chan_freq).
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+void dfs_get_ieeechan_for_agilecac_for_freq(struct wlan_dfs *dfs,
+					    uint16_t *chan_freq,
+					    uint16_t pri_chan_freq,
+					    uint16_t sec_chan_freq);
+#endif
+
 /**
  * dfs_agile_precac_start() - Start agile precac.
  * @dfs: Pointer to wlan_dfs structure.
@@ -489,12 +627,24 @@ dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 {
 }
 
+#ifdef CONFIG_CHAN_NUM_API
 static inline void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
 						 uint8_t *ch_ieee,
 						 uint8_t pri_ch_ieee,
 						 uint8_t sec_ch_ieee)
 {
 }
+#endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+static inline void
+dfs_get_ieeechan_for_agilecac_for_freq(struct wlan_dfs *dfs,
+				       uint16_t *chan_freq,
+				       uint16_t pri_chan_freq,
+				       uint16_t sec_chan_freq)
+{
+}
+#endif
 
 static inline void dfs_agile_precac_start(struct wlan_dfs *dfs)
 {
@@ -633,13 +783,38 @@ static inline uint32_t dfs_get_intermediate_chan(struct wlan_dfs *dfs)
  */
 enum precac_chan_state
 dfs_get_precac_chan_state(struct wlan_dfs *dfs, uint8_t precac_chan);
+
+/**
+ * dfs_get_precac_chan_state_for_freq() - Get precac status of a given channel.
+ * @dfs:         Pointer to wlan_dfs structure.
+ * @precac_chan: Channel freq for which precac state need to be checked.
+ */
+
+#ifdef CONFIG_CHAN_FREQ_API
+enum precac_chan_state
+dfs_get_precac_chan_state_for_freq(struct wlan_dfs *dfs,
+				   uint16_t precac_chan_freq);
+#endif
+
 #else
+
+#ifdef CONFIG_CHAN_NUM_API
 static inline enum precac_chan_state
 dfs_get_precac_chan_state(struct wlan_dfs *dfs,
 			  uint8_t precac_chan)
 {
 	return PRECAC_REQUIRED;
 }
+#endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+static inline enum precac_chan_state
+dfs_get_precac_chan_state_for_freq(struct wlan_dfs *dfs,
+				   uint16_t precac_chan_freq)
+{
+	return PRECAC_REQUIRED;
+}
+#endif
 #endif
 
 /**
@@ -658,8 +833,25 @@ void dfs_zero_cac_reset(struct wlan_dfs *dfs);
  * * True:  If CAC is done on channel.
  * * False: If CAC is not done on channel.
  */
+#ifdef CONFIG_CHAN_NUM_API
 bool dfs_is_precac_done_on_ht20_40_80_chan(struct wlan_dfs *dfs,
 					   uint8_t chan);
+#endif
+
+/**
+ * dfs_is_precac_done_on_ht20_40_80_chan_for_freq() - Is precac done on a
+ *                                                    VHT20/40/80 channel.
+ *@dfs: Pointer to wlan_dfs structure.
+ *@chan: Channel frequency
+ *
+ * Return:
+ * * True:  If CAC is done on channel.
+ * * False: If CAC is not done on channel.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+bool dfs_is_precac_done_on_ht20_40_80_chan_for_freq(struct wlan_dfs *dfs,
+						    uint16_t chan_freq);
+#endif
 
 /**
  * dfs_is_precac_done_on_ht8080_ht160_chan() - Is precac done on
@@ -685,10 +877,29 @@ bool dfs_is_precac_done_on_ht8080_ht160_chan(struct wlan_dfs *dfs,
  * @primary_chan_ieee:    Primary IEEE channel.
  * @secondary_chan_ieee:  Secondary IEEE channel (in HT80_80 mode).
  */
+#ifdef CONFIG_CHAN_NUM_API
 void dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
 				      enum phy_ch_width *chwidth,
 				      uint8_t *primary_chan_ieee,
 				      uint8_t *secondary_chan_ieee);
+
+#endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+/**
+ * dfs_find_chwidth_and_center_chan_for_freq() - Find the channel width enum and
+ *                                      primary and secondary center channel
+ *                                      value of the current channel.
+ * @dfs:                  Pointer to wlan_dfs structure.
+ * @chwidth:              Channel width enum of current channel.
+ * @primary_chan_freq:    Primary IEEE channel freq.
+ * @secondary_chan_freq:  Secondary IEEE channel freq (in HT80_80 mode).
+ */
+void dfs_find_chwidth_and_center_chan_for_freq(struct wlan_dfs *dfs,
+					       enum phy_ch_width *chwidth,
+					       uint16_t *primary_chan_freq,
+					       uint16_t *secondary_chan_freq);
+#endif
 
 /**
  * dfs_mark_precac_done() - Mark the channel as preCAC done.
@@ -697,10 +908,26 @@ void dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
  * @sec_ch_ieee:   Secondary channel IEEE (only in HT80_80 mode).
  * @ch_width:      Channel width enum.
  */
+#ifdef CONFIG_CHAN_NUM_API
 void dfs_mark_precac_done(struct wlan_dfs *dfs,
 			  uint8_t pri_ch_ieee,
 			  uint8_t sec_ch_ieee,
 			  enum phy_ch_width ch_width);
+#endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+/**
+ * dfs_mark_precac_done_for_freq() - Mark the channel as preCAC done.
+ * @dfs:             Pointer to wlan_dfs structure.
+ * @pri_chan_freq:   Primary channel IEEE freq.
+ * @sec_chan_freq:   Secondary channel IEEE freq(only in HT80_80 mode).
+ * @chan_width:      Channel width enum.
+ */
+void dfs_mark_precac_done_for_freq(struct wlan_dfs *dfs,
+				   uint16_t pri_chan_freq,
+				   uint16_t sec_chan_freq,
+				   enum phy_ch_width chan_width);
+#endif
 
 /**
  * dfs_mark_precac_nol() - Mark the precac channel as radar.
@@ -710,20 +937,50 @@ void dfs_mark_precac_done(struct wlan_dfs *dfs,
  * @channels:                         Array of radar found subchannels.
  * @num_channels:                     Number of radar found subchannels.
  */
+#ifdef CONFIG_CHAN_NUM_API
 void dfs_mark_precac_nol(struct wlan_dfs *dfs,
 			 uint8_t is_radar_found_on_secondary_seg,
 			 uint8_t detector_id,
 			 uint8_t *channels,
 			 uint8_t num_channels);
+#endif
+
+/**
+ * dfs_mark_precac_nol_for_freq() - Mark the precac channel as radar.
+ * @dfs:                              Pointer to wlan_dfs structure.
+ * @is_radar_found_on_secondary_seg:  Radar found on secondary seg for Cascade.
+ * @detector_id:                      detector id which found RADAR in HW.
+ * @freq_list:                         Array of radar found frequencies.
+ * @num_channels:                     Number of radar found subchannels.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+void dfs_mark_precac_nol_for_freq(struct wlan_dfs *dfs,
+				  uint8_t is_radar_found_on_secondary_seg,
+				  uint8_t detector_id,
+				  uint16_t *freq_list,
+				  uint8_t num_channels);
+#endif
 
 /**
  * dfs_unmark_precac_nol() - Unmark the precac channel as radar.
  * @dfs:      Pointer to wlan_dfs structure.
  * @channel:  channel marked as radar.
  */
+#ifdef CONFIG_CHAN_NUM_API
 void dfs_unmark_precac_nol(struct wlan_dfs *dfs, uint8_t channel);
+#endif
+
+/**
+ * dfs_unmark_precac_nol_for_freq() - Unmark the precac channel as radar.
+ * @dfs:      Pointer to wlan_dfs structure.
+ * @channel:  channel freq marked as radar.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+void dfs_unmark_precac_nol_for_freq(struct wlan_dfs *dfs, uint16_t chan_freq);
+#endif
 
 #else
+#ifdef CONFIG_CHAN_NUM_API
 static inline void
 dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
 				 enum phy_ch_width *chwidth,
@@ -731,14 +988,37 @@ dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
 				 uint8_t *secondary_chan_ieee)
 {
 }
+#endif
 
+#ifdef CONFIG_CHAN_FREQ_API
+static inline void
+dfs_find_chwidth_and_center_chan_for_freq(struct wlan_dfs *dfs,
+					  enum phy_ch_width *chwidth,
+					  uint16_t *primary_chan_freq,
+					  uint16_t *secondary_chan_freq)
+{
+}
+#endif
+
+#ifdef CONFIG_CHAN_NUM_API
 static inline void dfs_mark_precac_done(struct wlan_dfs *dfs,
 					uint8_t pri_ch_ieee,
 					uint8_t sec_ch_ieee,
 					enum phy_ch_width ch_width)
 {
 }
+#endif
 
+#ifdef CONFIG_CHAN_FREQ_API
+static inline void dfs_mark_precac_done_for_freq(struct wlan_dfs *dfs,
+						 uint16_t pri_chan_freq,
+						 uint16_t sec_chan_freq,
+						 enum phy_ch_width chan_width)
+{
+}
+#endif
+
+#ifdef CONFIG_CHAN_NUM_API
 static inline void dfs_mark_precac_nol(struct wlan_dfs *dfs,
 				       uint8_t is_radar_found_on_secondary_seg,
 				       uint8_t detector_id,
@@ -746,10 +1026,31 @@ static inline void dfs_mark_precac_nol(struct wlan_dfs *dfs,
 				       uint8_t num_channels)
 {
 }
+#endif
 
+#ifdef CONFIG_CHAN_FREQ_API
+static inline void
+dfs_mark_precac_nol_for_freq(struct wlan_dfs *dfs,
+			     uint8_t is_radar_found_on_secondary_seg,
+			     uint8_t detector_id,
+			     uint16_t *freq,
+			     uint8_t num_channels)
+{
+}
+#endif
+
+#ifdef CONFIG_CHAN_NUM_API
 static inline void dfs_unmark_precac_nol(struct wlan_dfs *dfs, uint8_t channel)
 {
 }
+#endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+static inline void dfs_unmark_precac_nol_for_freq(struct wlan_dfs *dfs,
+						  uint16_t chan_freq)
+{
+}
+#endif
 #endif
 
 /**
@@ -764,4 +1065,21 @@ static inline bool dfs_is_precac_timer_running(struct wlan_dfs *dfs)
 	return false;
 }
 #endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+#define VHT160_FREQ_DIFF 80
+
+#define INITIAL_20_CHAN_FREQ_OFFSET           -30
+#define INITIAL_40_CHAN_FREQ_OFFSET           -20
+#define INITIAL_80_CHAN_FREQ_OFFSET            0
+
+#define NEXT_20_CHAN_FREQ_OFFSET               20
+#define NEXT_40_CHAN_FREQ_OFFSET               40
+#define NEXT_80_CHAN_FREQ_OFFSET               80
+
+#define WEATHER_CHAN_START_FREQ              5600
+#define WEATHER_CHAN_END_FREQ                5640
+
+#endif
+
 #endif /* _DFS_ZERO_CAC_H_ */

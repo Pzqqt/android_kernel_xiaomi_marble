@@ -576,6 +576,28 @@ static inline void dfs_radarfound_reset_vars(
 	}
 }
 
+/*
+ * dfs_print_radar_found_freq() - Print radar found frequency.
+ * @dfs: Pointer to wlan_dfs.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+static void dfs_print_radar_found_freq(struct wlan_dfs *dfs)
+{
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		  "bangradar on 2nd segment cfreq = %u",
+		  dfs->dfs_precac_secondary_freq_mhz);
+}
+#else
+#ifdef CONFIG_CHAN_NUM_API
+static void dfs_print_radar_found_freq(struct wlan_dfs *dfs)
+{
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		  "bangradar on 2nd segment cfreq = %u",
+		  dfs->dfs_precac_secondary_freq);
+}
+#endif
+#endif
+
 /**
  * dfs_handle_bangradar - Handle the case of bangradar
  * @dfs: Pointer to wlan_dfs structure.
@@ -608,9 +630,7 @@ static inline int dfs_handle_bangradar(
 			    WLAN_IS_CHAN_11AC_VHT160(chan) ||
 			    WLAN_IS_CHAN_11AC_VHT80_80(chan)) {
 				dfs->is_radar_found_on_secondary_seg = 1;
-				dfs_debug(dfs, WLAN_DEBUG_DFS,
-					  "bangradar on 2nd segment cfreq = %u",
-					  dfs->dfs_precac_secondary_freq);
+				dfs_print_radar_found_freq(dfs);
 			} else {
 				dfs_debug(dfs, WLAN_DEBUG_DFS,
 					  "No second segment");

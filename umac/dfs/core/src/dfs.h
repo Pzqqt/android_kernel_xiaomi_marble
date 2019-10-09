@@ -689,9 +689,14 @@ struct dfs_filtertype {
  * @dfs_ch_flags:               Channel flags.
  * @dfs_ch_flagext:             Extended channel flags.
  * @dfs_ch_ieee:                IEEE channel number.
- * @dfs_ch_vhtop_ch_freq_seg1:  Channel Center frequency.
- * @dfs_ch_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
- *                          mode of operation.
+ * @dfs_ch_vhtop_ch_freq_seg1:  IEEE Channel Center of primary segment
+ * @dfs_ch_vhtop_ch_freq_seg2:  IEEE Channel Center applicable for 80+80MHz
+ *                              mode of operation.
+ * @dfs_ch_mhz_freq_seg1:       Channel center frequency of primary segment in
+ *                              MHZ.
+ * @dfs_ch_mhz_freq_seg2:       Channel center frequency of secondary segment
+ *                              in MHZ applicable only for 80+80MHZ mode of
+ *                              operation.
  */
 struct dfs_channel {
 	uint16_t       dfs_ch_freq;
@@ -700,6 +705,8 @@ struct dfs_channel {
 	uint8_t        dfs_ch_ieee;
 	uint8_t        dfs_ch_vhtop_ch_freq_seg1;
 	uint8_t        dfs_ch_vhtop_ch_freq_seg2;
+	uint16_t       dfs_ch_mhz_freq_seg1;
+	uint16_t       dfs_ch_mhz_freq_seg2;
 };
 
 /**
@@ -934,12 +941,20 @@ struct dfs_event_log {
  * @dfs_precac_lock:                 Lock to protect precac lists.
  * @dfs_precac_secondary_freq:       Second segment freq for precac.
  *                                   Applicable to only legacy chips.
+ * @dfs_precac_secondary_freq_mhz:   Second segment freq in MHZ for precac.
+ *                                   Applicable to only legacy chips.
  * @dfs_precac_primary_freq:         PreCAC Primary freq applicable only to
  *                                   legacy chips.
+ * @dfs_precac_primary_freq_mhz:     PreCAC Primary freq in MHZ applicable only
+ *                                   to legacy chips.
  * @dfs_defer_precac_channel_change: Defer precac channel change.
  * @dfs_precac_inter_chan:           Intermediate non-DFS channel used while
  *                                   doing precac.
+ * @dfs_precac_inter_chan_freq:      Intermediate non-DFS freq used while
+ *                                   doing precac.
  * @dfs_autoswitch_des_chan:         Desired channel which has to be used
+ *                                   after precac.
+ * @dfs_autoswitch_des_chan_freq:    Desired freq which has to be used
  *                                   after precac.
  * @dfs_autoswitch_des_mode:         Desired PHY mode which has to be used
  *                                   after precac.
@@ -988,6 +1003,7 @@ struct dfs_event_log {
  * @dfs_cac_started_chan:            CAC started channel.
  * @dfs_pdev_obj:                    DFS pdev object.
  * @dfs_is_offload_enabled:          Set if DFS offload enabled.
+ * @dfs_agile_precac_freq_mhz:       Freq in MHZ configured on Agile DFS engine.
  * @dfs_use_nol:                     Use the NOL when radar found(default: TRUE)
  * @dfs_nol_lock:                    Lock to protect nol list.
  * @tx_leakage_threshold:            Tx leakage threshold for dfs.
@@ -1090,13 +1106,28 @@ struct wlan_dfs {
 	bool           dfs_radar_found_for_fo;
 	bool           is_radar_during_precac;
 	qdf_spinlock_t dfs_precac_lock;
+	bool           dfs_precac_enable;
+#ifdef CONFIG_CHAN_NUM_API
 	uint8_t        dfs_precac_secondary_freq;
 	uint8_t        dfs_precac_primary_freq;
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	uint16_t        dfs_precac_secondary_freq_mhz;
+	uint16_t        dfs_precac_primary_freq_mhz;
+#endif
 	uint8_t        dfs_defer_precac_channel_change;
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+#ifdef CONFIG_CHAN_NUM_API
 	uint8_t        dfs_precac_inter_chan;
 	uint8_t        dfs_autoswitch_des_chan;
+#endif
 	enum wlan_phymode dfs_autoswitch_des_mode;
+#endif
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+#ifdef CONFIG_CHAN_FREQ_API
+	uint16_t       dfs_precac_inter_chan_freq;
+	uint16_t       dfs_autoswitch_des_chan_freq;
+#endif
 #endif
 	uint8_t        dfs_pre_cac_timeout_channel_change:1;
 	qdf_timer_t    wlan_dfs_task_timer;
@@ -1148,7 +1179,12 @@ struct wlan_dfs {
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
 	uint8_t dfs_psoc_idx;
 #endif
+#ifdef CONFIG_CHAN_NUM_API
 	uint8_t        dfs_agile_precac_freq;
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	uint16_t       dfs_agile_precac_freq_mhz;
+#endif
 	bool           dfs_is_offload_enabled;
 	int            dfs_use_nol;
 	qdf_spinlock_t dfs_nol_lock;
@@ -1963,9 +1999,23 @@ void dfs_detach(struct wlan_dfs *dfs);
  * @prevchan_ieee: Prevchan number.
  * @prevchan_flags: Prevchan flags.
  */
+#ifdef CONFIG_CHAN_NUM_API
 void dfs_cac_valid_reset(struct wlan_dfs *dfs,
 		uint8_t prevchan_ieee,
 		uint32_t prevchan_flags);
+#endif
+
+/**
+ * dfs_cac_valid_reset_for_freq() - Cancels the dfs_cac_valid_timer timer.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @prevchan_chan: Prevchan frequency
+ * @prevchan_flags: Prevchan flags.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+void dfs_cac_valid_reset_for_freq(struct wlan_dfs *dfs,
+				  uint16_t prevchan_freq,
+				  uint32_t prevchan_flags);
+#endif
 
 /**
  * dfs_cac_stop() - Clear the AP CAC timer.
@@ -2318,6 +2368,7 @@ static inline bool dfs_is_en302_502_applicable(struct wlan_dfs *dfs)
  * @dfs_ch_vhtop_ch_freq_seg1: Channel Center frequency1.
  * @dfs_ch_vhtop_ch_freq_seg2: Channel Center frequency2.
  */
+#ifdef CONFIG_CHAN_NUM_API
 void dfs_set_current_channel(struct wlan_dfs *dfs,
 		uint16_t dfs_ch_freq,
 		uint64_t dfs_ch_flags,
@@ -2325,7 +2376,33 @@ void dfs_set_current_channel(struct wlan_dfs *dfs,
 		uint8_t dfs_ch_ieee,
 		uint8_t dfs_ch_vhtop_ch_freq_seg1,
 		uint8_t dfs_ch_vhtop_ch_freq_seg2);
+#endif
 
+#ifdef CONFIG_CHAN_FREQ_API
+/**
+ * dfs_set_current_channel_for_freq() - Set DFS current channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @dfs_chan_freq: Frequency in Mhz.
+ * @dfs_chan_flags: Channel flags.
+ * @dfs_chan_flagext: Extended channel flags.
+ * @dfs_chan_ieee: IEEE channel number.
+ * @dfs_chan_vhtop_freq_seg1: Channel Center frequency1.
+ * @dfs_chan_vhtop_freq_seg2: Channel Center frequency2.
+ * @dfs_chan_mhz_freq_seg1: Channel center frequency of primary segment in MHZ.
+ * @dfs_chan_mhz_freq_seg2: Channel center frequency of secondary segment in MHZ
+ *                          applicable only for 80+80MHZ mode of operation.
+ */
+void dfs_set_current_channel_for_freq(struct wlan_dfs *dfs,
+				      uint16_t dfs_chan_freq,
+				      uint64_t dfs_chan_flags,
+				      uint16_t dfs_chan_flagext,
+				      uint8_t dfs_chan_ieee,
+				      uint8_t dfs_chan_vhtop_freq_seg1,
+				      uint8_t dfs_chan_vhtop_freq_seg2,
+				      uint16_t dfs_chan_mhz_freq_seg1,
+				      uint16_t dfs_chan_mhz_freq_seg2);
+
+#endif
 /**
  * dfs_get_nol_chfreq_and_chwidth() - Get channel freq and width from NOL list.
  * @dfs_nol: Pointer to NOL channel entry.
