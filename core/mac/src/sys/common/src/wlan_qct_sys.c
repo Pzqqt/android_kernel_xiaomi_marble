@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -72,6 +72,11 @@ static void umac_stop_complete_cb(void *user_data)
 }
 #endif
 
+static inline QDF_STATUS umac_stop_flush_cb(struct scheduler_msg *msg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * umac_stop() - To post stop message to system module
  *
@@ -96,6 +101,7 @@ QDF_STATUS umac_stop(void)
 	/* Save the user callback and user data */
 	umac_stop_msg.callback = umac_stop_complete_cb;
 	umac_stop_msg.bodyptr = (void *)&g_stop_evt;
+	umac_stop_msg.flush_callback = umac_stop_flush_cb;
 
 	/* post the message.. */
 	qdf_status = scheduler_post_message(QDF_MODULE_ID_SYS,
