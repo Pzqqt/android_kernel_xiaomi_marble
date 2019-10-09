@@ -375,18 +375,6 @@ lim_assoc_rej_get_remaining_delta(struct sir_rssi_disallow_lst *node);
 QDF_STATUS
 lim_rem_blacklist_entry_with_lowest_delta(qdf_list_t *list);
 
-/**
- * lim_get_session_by_macaddr() - api to find session based on MAC
- * @mac_ctx: Pointer to global mac structure.
- * @self_mac: MAC address.
- *
- * This function is used to get session for given MAC address.
- *
- * Return: session pointer if exists, NULL otherwise.
- */
-struct csr_roam_session *lim_get_session_by_macaddr(struct mac_context *mac_ctx,
-		tSirMacAddr self_mac);
-
 static inline enum band_info lim_get_rf_band(uint8_t channel)
 {
 	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&

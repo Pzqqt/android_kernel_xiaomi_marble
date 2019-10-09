@@ -581,9 +581,15 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 	if (lim_is_auth_algo_supported(mac_ctx,
 			(tAniAuthType) rx_auth_frm_body->authAlgoNumber,
 			pe_session)) {
+		struct wlan_objmgr_vdev *vdev;
 
-		if (lim_get_session_by_macaddr(mac_ctx, mac_hdr->sa)) {
-
+		vdev =
+		  wlan_objmgr_get_vdev_by_macaddr_from_pdev(mac_ctx->pdev,
+							    mac_hdr->sa,
+							    WLAN_LEGACY_MAC_ID);
+		/* SA is same as any of the device vdev, return failure */
+		if (vdev) {
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 			auth_frame->authAlgoNumber =
 				rx_auth_frm_body->authAlgoNumber;
 			auth_frame->authTransactionSeqNumber =
