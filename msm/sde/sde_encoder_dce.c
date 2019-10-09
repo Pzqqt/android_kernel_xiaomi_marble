@@ -172,8 +172,10 @@ static bool _dce_dsc_ich_reset_override_needed(bool pu_en,
 
 static void _dce_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
 		struct sde_hw_pingpong *hw_pp, struct msm_display_dsc_info *dsc,
-		u32 common_mode, bool ich_reset, bool enable,
-		struct sde_hw_pingpong *hw_dsc_pp)
+		u32 common_mode, bool ich_reset,
+		struct sde_hw_pingpong *hw_dsc_pp,
+		enum sde_3d_blend_mode mode_3d,
+		bool disable_merge_3d, bool enable)
 {
 	if (!enable) {
 		if (hw_dsc_pp && hw_dsc_pp->ops.disable_dsc)
@@ -185,6 +187,9 @@ static void _dce_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
 		if (hw_dsc && hw_dsc->ops.bind_pingpong_blk)
 			hw_dsc->ops.bind_pingpong_blk(hw_dsc, false,
 					PINGPONG_MAX);
+
+		if (mode_3d && hw_pp && hw_pp->ops.reset_3d_mode)
+			hw_pp->ops.reset_3d_mode(hw_pp);
 		return;
 	}
 
@@ -203,13 +208,39 @@ static void _dce_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
 	if (hw_dsc_pp && hw_dsc_pp->ops.setup_dsc)
 		hw_dsc_pp->ops.setup_dsc(hw_dsc_pp);
 
-	if (hw_dsc->ops.bind_pingpong_blk)
+	if (mode_3d && disable_merge_3d && hw_pp->ops.reset_3d_mode) {
+		SDE_DEBUG("disabling 3d mux \n");
+		hw_pp->ops.reset_3d_mode(hw_pp);
+	} else if (mode_3d && disable_merge_3d && hw_pp->ops.setup_3d_mode) {
+		SDE_DEBUG("enabling 3d mux \n");
+		hw_pp->ops.setup_3d_mode(hw_pp, mode_3d);
+	}
+
+	if (hw_dsc && hw_dsc->ops.bind_pingpong_blk)
 		hw_dsc->ops.bind_pingpong_blk(hw_dsc, true, hw_pp->idx);
 
 	if (hw_dsc_pp && hw_dsc_pp->ops.enable_dsc)
 		hw_dsc_pp->ops.enable_dsc(hw_dsc_pp);
 }
 
+static inline bool _dce_check_half_panel_update(int num_dsc,
+		bool merge_3d,
+		unsigned long affected_displays)
+{
+	/**
+	 * partial update logic is currently supported only upto dual
+	 * pipe configurations.
+	 */
+
+	if (merge_3d) {
+		int num_mixers = 2;
+
+		return (hweight_long(affected_displays) != num_mixers);
+	} else if (num_dsc > 1) {
+		return (hweight_long(affected_displays) != num_dsc);
+	}
+	return false;
+}
 static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 		struct sde_encoder_kickoff_params *params)
 {
@@ -226,8 +257,10 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 	const struct sde_rm_topology_def *def;
 	const struct sde_rect *roi;
 	struct sde_hw_ctl *hw_ctl;
-	struct sde_ctl_dsc_cfg cfg;
-	bool half_panel_partial_update, dsc_merge;
+	struct sde_hw_intf_cfg_v1 cfg;
+	enum sde_3d_blend_mode mode_3d;
+	bool half_panel_partial_update, dsc_merge, merge_3d;
+	bool disable_merge_3d = false;
 	int this_frame_slices;
 	int intf_ip_w, enc_ip_w;
 	int num_intf, num_dsc;
@@ -268,7 +301,6 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 			sde_enc->cur_master->cached_mode.hdisplay,
 			sde_enc->cur_master->cached_mode.vdisplay);
 
-	memset(&cfg, 0, sizeof(cfg));
 	enc_master = sde_enc->cur_master;
 	roi = &sde_enc->cur_conn_roi;
 	hw_ctl = enc_master->hw_ctl;
@@ -280,6 +312,8 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 
 	num_dsc = def->num_comp_enc;
 	num_intf = def->num_intf;
+	mode_3d = (topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC) ?
+		BLEND_3D_H_ROW_INT : BLEND_3D_NONE;
 
 	/*
 	 * If this encoder is driving more than one DSC encoder, they
@@ -287,13 +321,16 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 	 * each of them.(pp-split is assumed to be not supported)
 	 */
 	_dce_dsc_update_pic_dim(dsc, roi->w, roi->h);
-
-	half_panel_partial_update = (num_dsc > 1) ?
-			(hweight_long(params->affected_displays) != num_dsc) :
-			false;
+	merge_3d = (mode_3d != BLEND_3D_NONE) ? true: false;
 	dsc_merge = (num_dsc > num_intf) ? true : false;
 
-	if (!half_panel_partial_update)
+	half_panel_partial_update = _dce_check_half_panel_update(
+			num_dsc, merge_3d, params->affected_displays);
+
+	if (half_panel_partial_update && merge_3d)
+		disable_merge_3d = true;
+
+	if (!half_panel_partial_update && !merge_3d)
 		dsc_common_mode |= DSC_MODE_SPLIT_PANEL;
 	if (dsc_merge)
 		dsc_common_mode |= DSC_MODE_MULTIPLEX;
@@ -323,7 +360,7 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 	 * updating pic dimension, mdss_panel_dsc_update_pic_dim.
 	 */
 	ich_res = _dce_dsc_ich_reset_override_needed(
-			half_panel_partial_update, dsc);
+			(half_panel_partial_update && !merge_3d), dsc);
 
 	SDE_DEBUG_DCE(sde_enc, "pic_w: %d pic_h: %d mode:%d\n",
 				roi->w, roi->h, dsc_common_mode);
@@ -331,44 +368,80 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 	for (i = 0; i < num_dsc; i++) {
 		bool active = !!((1 << i) & params->affected_displays);
 
-		hw_pp[i] = sde_enc->hw_pp[i];
+		/*
+		 * in 3d_merge and half_panel partial update dsc should be
+		 * bound to the pp which is driving the update, else in
+		 * 3d_merge dsc should be bound to left side of the pipe
+		 */
+		if (merge_3d && half_panel_partial_update)
+			hw_pp[i] = (active) ? sde_enc->hw_pp[0]:
+				sde_enc->hw_pp[1];
+		else
+			hw_pp[i] = sde_enc->hw_pp[i];
+
 		hw_dsc[i] = sde_enc->hw_dsc[i];
 		hw_dsc_pp[i] = sde_enc->hw_dsc_pp[i];
 
 		if (!hw_pp[i] || !hw_dsc[i]) {
 			SDE_ERROR_DCE(sde_enc, "invalid params for DSC\n");
-			SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h,
-				dsc_common_mode, i, active);
+			SDE_EVT32(DRMID(&sde_enc->base), !hw_pp[i], !hw_dsc[i],
+					SDE_EVTLOG_ERROR);
 			return -EINVAL;
 		}
 
+		SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h,
+				dsc_common_mode, i, active, merge_3d,
+				disable_merge_3d);
+
 		_dce_dsc_pipe_cfg(hw_dsc[i], hw_pp[i], dsc,
-				dsc_common_mode, ich_res, active, hw_dsc_pp[i]);
+				dsc_common_mode, ich_res, hw_dsc_pp[i],
+				mode_3d, disable_merge_3d, active);
 
-		if (active) {
-			if (cfg.dsc_count >= MAX_DSC_PER_CTL_V1) {
-				pr_err("Invalid dsc count:%d\n",
-						cfg.dsc_count);
-				return -EINVAL;
-			}
-			cfg.dsc[cfg.dsc_count++] = hw_dsc[i]->idx;
+		memset(&cfg, 0, sizeof(cfg));
+		cfg.dsc[cfg.dsc_count++] = hw_dsc[i]->idx;
 
-			if (hw_ctl->ops.update_bitmask_dsc)
-				hw_ctl->ops.update_bitmask_dsc(hw_ctl,
-						hw_dsc[i]->idx, 1);
+		if (hw_ctl->ops.update_intf_cfg)
+			hw_ctl->ops.update_intf_cfg(hw_ctl,
+					&cfg,
+					active);
+
+		if (hw_ctl->ops.update_bitmask_dsc)
+			hw_ctl->ops.update_bitmask_dsc(hw_ctl,
+					hw_dsc[i]->idx, active);
+
+		SDE_DEBUG_DCE(sde_enc,
+				"update_intf_cfg hw_ctl[%d], dsc:%d, %s",
+				hw_ctl->idx,
+				cfg.dsc[0],
+				active ? "enabled" : "disabled");
+
+		if (mode_3d) {
+			memset(&cfg, 0, sizeof(cfg));
+
+			cfg.merge_3d[cfg.merge_3d_count++] =
+				hw_pp[i]->merge_3d->idx;
+
+			if (hw_ctl->ops.update_intf_cfg)
+				hw_ctl->ops.update_intf_cfg(hw_ctl,
+						&cfg,
+						!disable_merge_3d);
+
+			if (hw_ctl->ops.update_bitmask_merge3d)
+				hw_ctl->ops.update_bitmask_merge3d(
+						hw_ctl,
+						hw_pp[i]->merge_3d->idx, true);
+
+			SDE_DEBUG("mode_3d %s, on CTL_%d PP-%d merge3d:%d\n",
+					!disable_merge_3d ?
+					"enabled" : "disabled",
+					hw_ctl->idx - CTL_0,
+					hw_pp[i]->idx - PINGPONG_0,
+					hw_pp[i]->merge_3d ?
+					hw_pp[i]->merge_3d->idx - MERGE_3D_0 :
+					-1);
 		}
 	}
 
-	/* setup dsc active configuration in the control path */
-	if (hw_ctl->ops.setup_dsc_cfg) {
-		hw_ctl->ops.setup_dsc_cfg(hw_ctl, &cfg);
-		SDE_DEBUG_DCE(sde_enc,
-				"setup dsc_cfg hw_ctl[%d], count:%d,dsc[0]:%d, dsc[1]:%d\n",
-				hw_ctl->idx,
-				cfg.dsc_count,
-				cfg.dsc[0],
-				cfg.dsc[1]);
-	}
 	return 0;
 }
 
@@ -379,7 +452,7 @@ static void _dce_dsc_disable(struct sde_encoder_virt *sde_enc)
 	struct sde_hw_pingpong *hw_dsc_pp = NULL;
 	struct sde_hw_dsc *hw_dsc = NULL;
 	struct sde_hw_ctl *hw_ctl = NULL;
-	struct sde_ctl_dsc_cfg cfg;
+	struct sde_hw_intf_cfg_v1 cfg;
 
 	if (!sde_enc || !sde_enc->phys_encs[0] ||
 			!sde_enc->phys_encs[0]->connector) {
@@ -391,6 +464,8 @@ static void _dce_dsc_disable(struct sde_encoder_virt *sde_enc)
 	if (sde_enc->cur_master)
 		hw_ctl = sde_enc->cur_master->hw_ctl;
 
+	memset(&cfg, 0, sizeof(cfg));
+
 	/* Disable DSC for all the pp's present in this topology */
 	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
 		hw_pp = sde_enc->hw_pp[i];
@@ -398,17 +473,18 @@ static void _dce_dsc_disable(struct sde_encoder_virt *sde_enc)
 		hw_dsc_pp = sde_enc->hw_dsc_pp[i];
 
 		_dce_dsc_pipe_cfg(hw_dsc, hw_pp, NULL,
-						0, 0, 0, hw_dsc_pp);
+					0, 0, hw_dsc_pp,
+					BLEND_3D_NONE, false, false);
 
-		if (hw_dsc)
+		if (hw_dsc) {
 			sde_enc->dirty_dsc_ids[i] = hw_dsc->idx;
+			cfg.dsc[cfg.dsc_count++] = hw_dsc->idx;
+		}
 	}
 
 	/* Clear the DSC ACTIVE config for this CTL */
-	if (hw_ctl && hw_ctl->ops.setup_dsc_cfg) {
-		memset(&cfg, 0, sizeof(cfg));
-		hw_ctl->ops.setup_dsc_cfg(hw_ctl, &cfg);
-	}
+	if (hw_ctl && hw_ctl->ops.update_intf_cfg)
+		hw_ctl->ops.update_intf_cfg(hw_ctl, &cfg, false);
 
 	/**
 	 * Since pending flushes from previous commit get cleared

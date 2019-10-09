@@ -82,6 +82,8 @@ struct sde_hw_intf_cfg {
  * @cwb:                      Id of active cwb blocks
  * @cdm_count:                No. of active chroma down module
  * @cdm:                      Id of active cdm blocks
+ * @dsc_count:                No. of active dsc blocks
+ * @dsc:                      Id of active dsc blocks
  */
 struct sde_hw_intf_cfg_v1 {
 	uint32_t intf_count;
@@ -100,16 +102,7 @@ struct sde_hw_intf_cfg_v1 {
 
 	uint32_t cdm_count;
 	enum sde_cdm cdm[MAX_CDM_PER_CTL_V1];
-};
 
-/**
- * struct sde_hw_ctl_dsc_cfg :Describes the DSC blocks being used for this
- *                            display on a platoform which supports ctl path
- *                            version 1.
- * @dsc_count:                No. of active dsc blocks
- * @dsc:                      Id of active dsc blocks
- */
-struct sde_ctl_dsc_cfg {
 	uint32_t dsc_count;
 	enum sde_dsc dsc[MAX_DSC_PER_CTL_V1];
 };
@@ -263,15 +256,6 @@ struct sde_hw_ctl_ops {
 	 */
 	int (*setup_intf_cfg_v1)(struct sde_hw_ctl *ctx,
 		struct sde_hw_intf_cfg_v1 *cfg);
-
-	/**
-	 * Setup ctl_path dsc config for SDE_CTL_ACTIVE_CFG
-	 * @ctx   : ctl path ctx pointer
-	 * @cfg    : dsc config structure pointer
-	 * @Return: error code
-	 */
-	int (*setup_dsc_cfg)(struct sde_hw_ctl *ctx,
-		struct sde_ctl_dsc_cfg *cfg);
 
 	/** Update the interface selection with input WB config
 	 * @ctx       : ctl path ctx pointer

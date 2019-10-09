@@ -487,7 +487,7 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 			intf_cfg.cwb[intf_cfg.cwb_count++] =
 				(enum sde_cwb)(hw_pp->idx + i);
 
-		if (enable && hw_pp->merge_3d && (intf_cfg.merge_3d_count <
+		if (hw_pp->merge_3d && (intf_cfg.merge_3d_count <
 				MAX_MERGE_3D_PER_CTL_V1) && need_merge)
 			intf_cfg.merge_3d[intf_cfg.merge_3d_count++] =
 				hw_pp->merge_3d->idx;
