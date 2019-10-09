@@ -66,6 +66,7 @@ static struct sde_crtc_custom_events custom_events[] = {
 	{DRM_EVENT_SDE_POWER, sde_crtc_pm_event_handler},
 	{DRM_EVENT_LTM_HIST, sde_cp_ltm_hist_interrupt},
 	{DRM_EVENT_LTM_WB_PB, sde_cp_ltm_wb_pb_interrupt},
+	{DRM_EVENT_LTM_OFF, sde_cp_ltm_off_event_handler},
 };
 
 /* default input fence timeout, in ms */
@@ -729,9 +730,6 @@ static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 			return -EINVAL;
 		}
 
-		if (!mode_info.roi_caps.enabled)
-			continue;
-
 		sde_conn = to_sde_connector(conn_state->connector);
 		sde_conn_state = to_sde_connector_state(conn_state);
 
@@ -740,6 +738,9 @@ static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 						&sde_conn->property_info,
 						&sde_conn_state->property_state,
 						CONNECTOR_PROP_ROI_V1);
+
+		if (!mode_info.roi_caps.enabled)
+			continue;
 
 		/*
 		 * current driver only supports same connector and crtc size,
@@ -1781,6 +1782,8 @@ int sde_crtc_get_secure_transition_ops(struct drm_crtc *crtc,
 		return -EINVAL;
 
 	smmu_state = &sde_kms->smmu_state;
+	smmu_state->prev_state = smmu_state->state;
+
 	sde_crtc = to_sde_crtc(crtc);
 	secure_level = sde_crtc_get_secure_level(crtc, crtc->state);
 	catalog = sde_kms->catalog;
@@ -1791,7 +1794,8 @@ int sde_crtc_get_secure_transition_ops(struct drm_crtc *crtc,
 	 */
 	drm_for_each_encoder_mask(encoder, crtc->dev,
 			crtc->state->encoder_mask) {
-		post_commit |= sde_encoder_check_curr_mode(encoder,
+		if (sde_encoder_is_dsi_display(encoder))
+			post_commit |= sde_encoder_check_curr_mode(encoder,
 						MSM_DISPLAY_VIDEO_MODE);
 	}
 
@@ -2224,17 +2228,18 @@ end:
 	spin_unlock_irqrestore(&dev->event_lock, flags);
 }
 
-enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc)
+enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc,
+		struct drm_crtc_state *cstate)
 {
 	struct drm_encoder *encoder;
 
-	if (!crtc || !crtc->dev) {
+	if (!crtc || !crtc->dev || !cstate) {
 		SDE_ERROR("invalid crtc\n");
 		return INTF_MODE_NONE;
 	}
 
 	drm_for_each_encoder_mask(encoder, crtc->dev,
-			crtc->state->encoder_mask) {
+			cstate->encoder_mask) {
 		/* continue if copy encoder is encountered */
 		if (sde_encoder_in_clone_mode(encoder))
 			continue;
@@ -4272,9 +4277,11 @@ static int _sde_crtc_check_secure_state_smmu_translation(struct drm_crtc *crtc,
 	struct drm_encoder *encoder;
 	int is_video_mode = false;
 
-	drm_for_each_encoder_mask(encoder, crtc->dev, state->encoder_mask)
-		is_video_mode |= sde_encoder_check_curr_mode(encoder,
+	drm_for_each_encoder_mask(encoder, crtc->dev, state->encoder_mask) {
+		if (sde_encoder_is_dsi_display(encoder))
+			is_video_mode |= sde_encoder_check_curr_mode(encoder,
 						MSM_DISPLAY_VIDEO_MODE);
+	}
 
 	/*
 	 * In video mode check for null commit before transition
@@ -5584,7 +5591,8 @@ static int sde_crtc_debugfs_state_show(struct seq_file *s, void *v)
 
 	seq_printf(s, "num_connectors: %d\n", cstate->num_connectors);
 	seq_printf(s, "client type: %d\n", sde_crtc_get_client_type(crtc));
-	seq_printf(s, "intf_mode: %d\n", sde_crtc_get_intf_mode(crtc));
+	seq_printf(s, "intf_mode: %d\n", sde_crtc_get_intf_mode(crtc,
+				crtc->state));
 	seq_printf(s, "core_clk_rate: %llu\n",
 			sde_crtc->cur_perf.core_clk_rate);
 	for (i = SDE_POWER_HANDLE_DBUS_ID_MNOC;

@@ -45,10 +45,12 @@ enum dp_display_states {
 	DP_STATE_INITIALIZED            = BIT(1),
 	DP_STATE_READY                  = BIT(2),
 	DP_STATE_CONNECTED              = BIT(3),
-	DP_STATE_ENABLED                = BIT(4),
-	DP_STATE_SUSPENDED              = BIT(5),
-	DP_STATE_ABORTED                = BIT(6),
-	DP_STATE_HDCP_ABORTED           = BIT(7),
+	DP_STATE_CONNECT_NOTIFIED       = BIT(4),
+	DP_STATE_DISCONNECT_NOTIFIED    = BIT(5),
+	DP_STATE_ENABLED                = BIT(6),
+	DP_STATE_SUSPENDED              = BIT(7),
+	DP_STATE_ABORTED                = BIT(8),
+	DP_STATE_HDCP_ABORTED           = BIT(9),
 };
 
 static char *dp_display_state_name(enum dp_display_states state)
@@ -73,6 +75,14 @@ static char *dp_display_state_name(enum dp_display_states state)
 	if (state & DP_STATE_CONNECTED)
 		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
 			"CONNECTED");
+
+	if (state & DP_STATE_CONNECT_NOTIFIED)
+		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
+			"CONNECT_NOTIFIED");
+
+	if (state & DP_STATE_DISCONNECT_NOTIFIED)
+		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
+			"DISCONNECT_NOTIFIED");
 
 	if (state & DP_STATE_ENABLED)
 		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
@@ -653,6 +663,14 @@ static void dp_display_send_hpd_event(struct dp_display_private *dp)
 	envp[4] = NULL;
 	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE,
 			envp);
+
+	if (connector->status == connector_status_connected) {
+		dp_display_state_add(DP_STATE_CONNECT_NOTIFIED);
+		dp_display_state_remove(DP_STATE_DISCONNECT_NOTIFIED);
+	} else {
+		dp_display_state_add(DP_STATE_DISCONNECT_NOTIFIED);
+		dp_display_state_remove(DP_STATE_CONNECT_NOTIFIED);
+	}
 }
 
 static int dp_display_send_hpd_notification(struct dp_display_private *dp)
@@ -833,8 +851,7 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 	if (dp_display_state_is(DP_STATE_CONNECTED)) {
 		DP_DEBUG("dp already connected, skipping hpd high\n");
 		mutex_unlock(&dp->session_lock);
-		rc = -EISCONN;
-		goto end;
+		return -EISCONN;
 	}
 
 	dp_display_state_add(DP_STATE_CONNECTED);
@@ -867,7 +884,7 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 	dp_display_process_mst_hpd_high(dp, false);
 
 	rc = dp->ctrl->on(dp->ctrl, dp->mst.mst_active,
-				dp->panel->fec_en, false);
+			dp->panel->fec_en, dp->panel->dsc_en, false);
 	if (rc) {
 		dp_display_state_remove(DP_STATE_CONNECTED);
 		goto end;
@@ -911,7 +928,9 @@ static int dp_display_process_hpd_low(struct dp_display_private *dp)
 
 	dp_display_process_mst_hpd_low(dp);
 
-	if (dp_display_state_is(DP_STATE_ENABLED) && !dp->mst.mst_active)
+	if ((dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) ||
+			dp_display_state_is(DP_STATE_ENABLED)) &&
+			!dp->mst.mst_active)
 		rc = dp_display_send_hpd_notification(dp);
 
 	mutex_lock(&dp->session_lock);
@@ -989,6 +1008,30 @@ static void dp_display_stream_disable(struct dp_display_private *dp,
 	dp->ctrl->stream_off(dp->ctrl, dp_panel);
 	dp->active_panels[dp_panel->stream_id] = NULL;
 	dp->active_stream_cnt--;
+}
+
+static void dp_audio_enable(struct dp_display_private *dp, bool enable)
+{
+	struct dp_panel *dp_panel;
+	int idx;
+
+	for (idx = DP_STREAM_0; idx < DP_STREAM_MAX; idx++) {
+		if (!dp->active_panels[idx])
+			continue;
+		dp_panel = dp->active_panels[idx];
+
+		if (dp_panel->audio_supported) {
+			if (enable) {
+				dp_panel->audio->bw_code =
+					dp->link->link_params.bw_code;
+				dp_panel->audio->lane_count =
+					dp->link->link_params.lane_count;
+				dp_panel->audio->on(dp->panel->audio);
+			} else {
+				dp_panel->audio->off(dp_panel->audio);
+			}
+		}
+	}
 }
 
 static void dp_display_clean(struct dp_display_private *dp)
@@ -1082,10 +1125,8 @@ static int dp_display_usbpd_disconnect_cb(struct device *dev)
 
 	dp_display_state_remove(DP_STATE_CONFIGURED);
 
-	mutex_lock(&dp->session_lock);
 	if (dp->debug->psm_enabled && dp_display_state_is(DP_STATE_READY))
 		dp->link->psm_config(dp->link, &dp->panel->link_info, true);
-	mutex_unlock(&dp->session_lock);
 
 	dp_display_disconnect_sync(dp);
 
@@ -1178,19 +1219,33 @@ static void dp_display_attention_work(struct work_struct *work)
 		goto mst_attention;
 	}
 
-	if (dp->link->sink_request & DP_TEST_LINK_PHY_TEST_PATTERN) {
-		dp->ctrl->process_phy_test_request(dp->ctrl);
-		goto mst_attention;
+	if (dp->link->sink_request & (DP_TEST_LINK_PHY_TEST_PATTERN |
+		DP_TEST_LINK_TRAINING | DP_LINK_STATUS_UPDATED)) {
+
+		mutex_lock(&dp->session_lock);
+		dp_audio_enable(dp, false);
+		mutex_unlock(&dp->session_lock);
+
+		if (dp->link->sink_request & DP_TEST_LINK_PHY_TEST_PATTERN)
+			dp->ctrl->process_phy_test_request(dp->ctrl);
+
+		if (dp->link->sink_request & DP_TEST_LINK_TRAINING) {
+			dp->link->send_test_response(dp->link);
+			dp->ctrl->link_maintenance(dp->ctrl);
+		}
+
+		if (dp->link->sink_request & DP_LINK_STATUS_UPDATED)
+			dp->ctrl->link_maintenance(dp->ctrl);
+
+		mutex_lock(&dp->session_lock);
+		dp_audio_enable(dp, true);
+		mutex_unlock(&dp->session_lock);
+
+		if (dp->link->sink_request & (DP_TEST_LINK_PHY_TEST_PATTERN |
+			DP_TEST_LINK_TRAINING))
+			goto mst_attention;
 	}
 
-	if (dp->link->sink_request & DP_TEST_LINK_TRAINING) {
-		dp->link->send_test_response(dp->link);
-		dp->ctrl->link_maintenance(dp->ctrl);
-		goto mst_attention;
-	}
-
-	if (dp->link->sink_request & DP_LINK_STATUS_UPDATED)
-		dp->ctrl->link_maintenance(dp->ctrl);
 cp_irq:
 	if (dp_display_is_hdcp_enabled(dp) && dp->hdcp.ops->cp_irq)
 		dp->hdcp.ops->cp_irq(dp->hdcp.data);
@@ -1608,7 +1663,8 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 	 * So, we execute in shallow mode here to do only minimal
 	 * and required things.
 	 */
-	rc = dp->ctrl->on(dp->ctrl, dp->mst.mst_active, dp_panel->fec_en, true);
+	rc = dp->ctrl->on(dp->ctrl, dp->mst.mst_active, dp_panel->fec_en,
+			dp_panel->dsc_en, true);
 	if (rc)
 		goto end;
 
@@ -2004,6 +2060,7 @@ static enum drm_mode_status dp_display_validate_mode(
 	struct dp_display_mode dp_mode;
 	bool dsc_en;
 	u32 num_lm = 0;
+	int rc = 0;
 
 	if (!dp_display || !mode || !panel ||
 			!avail_res || !avail_res->max_mixer_width) {
@@ -2049,8 +2106,12 @@ static enum drm_mode_status dp_display_validate_mode(
 		goto end;
 	}
 
-	num_lm = (avail_res->max_mixer_width <= mode->hdisplay) ?
-			2 : 1;
+	rc = msm_get_mixer_count(dp->priv, mode, avail_res, &num_lm);
+	if (rc) {
+		DP_ERR("error getting mixer count. rc:%d\n", rc);
+		goto end;
+	}
+
 	if (num_lm > avail_res->num_lm ||
 			(num_lm == 2 && !avail_res->num_3dmux)) {
 		DP_MST_DEBUG("num_lm:%d, req lm:%d 3dmux:%d\n", num_lm,

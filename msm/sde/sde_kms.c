@@ -19,6 +19,7 @@
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
 #include <drm/drm_crtc.h>
+#include <drm/drm_fixed.h>
 #include <linux/debugfs.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
@@ -528,12 +529,24 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 end:
 	smmu_state->sui_misr_state = NONE;
 	smmu_state->transition_type = NONE;
-	smmu_state->transition_error = ret ? true : false;
+	smmu_state->transition_error = false;
 
-	SDE_DEBUG("crtc %d: old_state %d, new_state %d, sec_lvl %d, ret %d\n",
-			DRMID(crtc), old_smmu_state, smmu_state->state,
-			smmu_state->secure_level, ret);
-	SDE_EVT32(DRMID(crtc), smmu_state->state, smmu_state->transition_type,
+	/*
+	 * If switch failed, toggling secure_level is enough since
+	 * there are only two secure levels - secure/non-secure
+	 */
+	if (ret) {
+		smmu_state->transition_error = true;
+		smmu_state->state = smmu_state->prev_state;
+		smmu_state->secure_level = !smmu_state->secure_level;
+	}
+
+	SDE_DEBUG(
+		"crtc %d: old_state %d, req_state %d, new_state %d, sec_lvl %d, ret %d\n",
+			DRMID(crtc), smmu_state->prev_state, old_smmu_state,
+			smmu_state->state, smmu_state->secure_level, ret);
+	SDE_EVT32(DRMID(crtc), smmu_state->prev_state,
+			smmu_state->state, smmu_state->transition_type,
 			smmu_state->transition_error, smmu_state->secure_level,
 			smmu_state->sui_misr_state, ret, SDE_EVTLOG_FUNC_EXIT);
 
@@ -2456,6 +2469,52 @@ static bool sde_kms_check_for_splash(struct msm_kms *kms)
 	return sde_kms->splash_data.num_splash_displays;
 }
 
+static int sde_kms_get_mixer_count(const struct msm_kms *kms,
+		const struct drm_display_mode *mode,
+		const struct msm_resource_caps_info *res, u32 *num_lm)
+{
+	struct sde_kms *sde_kms;
+	s64 mode_clock_hz = 0;
+	s64 max_mdp_clock_hz = 0;
+	s64 mdp_fudge_factor = 0;
+	s64 temp = 0;
+	s64 htotal_fp = 0;
+	s64 vtotal_fp = 0;
+	s64 vrefresh_fp = 0;
+
+	if (!num_lm) {
+		SDE_ERROR("invalid num_lm pointer\n");
+		return -EINVAL;
+	}
+
+	*num_lm = 1;
+	if (!kms || !mode || !res) {
+		SDE_ERROR("invalid input args\n");
+		return -EINVAL;
+	}
+
+	sde_kms = to_sde_kms(kms);
+
+	max_mdp_clock_hz = drm_fixp_from_fraction(
+			sde_kms->perf.max_core_clk_rate, 1);
+	mdp_fudge_factor = drm_fixp_from_fraction(105, 100); /* 1.05 */
+	htotal_fp = drm_fixp_from_fraction(mode->htotal, 1);
+	vtotal_fp = drm_fixp_from_fraction(mode->vtotal, 1);
+	vrefresh_fp = drm_fixp_from_fraction(mode->vrefresh, 1);
+
+	temp = drm_fixp_mul(htotal_fp, vtotal_fp);
+	temp = drm_fixp_mul(temp, vrefresh_fp);
+	mode_clock_hz = drm_fixp_mul(temp, mdp_fudge_factor);
+	if (mode_clock_hz > max_mdp_clock_hz ||
+			mode->hdisplay > res->max_mixer_width)
+		*num_lm = 2;
+	SDE_DEBUG("[%s] h=%d, v=%d, fps=%d, max_mdp_clk_hz=%llu, num_lm=%d\n",
+			mode->name, mode->htotal, mode->vtotal, mode->vrefresh,
+			sde_kms->perf.max_core_clk_rate, *num_lm);
+
+	return 0;
+}
+
 static void _sde_kms_null_commit(struct drm_device *dev,
 		struct drm_encoder *enc)
 {
@@ -2528,6 +2587,45 @@ end:
 	drm_modeset_acquire_fini(&ctx);
 }
 
+static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
+	struct device *dev)
+{
+	int i, ret;
+	struct drm_device *ddev = dev_get_drvdata(dev);
+	struct drm_connector *conn;
+	struct drm_connector_list_iter conn_iter;
+	struct msm_drm_private *priv = sde_kms->dev->dev_private;
+
+	drm_connector_list_iter_begin(ddev, &conn_iter);
+	drm_for_each_connector_iter(conn, &conn_iter) {
+		uint64_t lp;
+
+		lp = sde_connector_get_lp(conn);
+		if (lp != SDE_MODE_DPMS_LP2)
+			continue;
+
+		ret = sde_encoder_wait_for_event(conn->encoder,
+						MSM_ENC_TX_COMPLETE);
+		if (ret && ret != -EWOULDBLOCK)
+			SDE_ERROR(
+				"[conn: %d] wait for commit done returned %d\n",
+				conn->base.id, ret);
+		else if (!ret)
+			sde_encoder_idle_request(conn->encoder);
+	}
+	drm_connector_list_iter_end(&conn_iter);
+
+	for (i = 0; i < priv->num_crtcs; i++) {
+		if (priv->disp_thread[i].thread)
+			kthread_flush_worker(
+				&priv->disp_thread[i].worker);
+		if (priv->event_thread[i].thread)
+			kthread_flush_worker(
+				&priv->event_thread[i].worker);
+	}
+	kthread_flush_worker(&priv->pp_event_worker);
+}
+
 static int sde_kms_pm_suspend(struct device *dev)
 {
 	struct drm_device *ddev;
@@ -2548,6 +2646,7 @@ static int sde_kms_pm_suspend(struct device *dev)
 
 	sde_kms = to_sde_kms(ddev_to_msm_kms(ddev));
 	SDE_EVT32(0);
+	pm_runtime_put_noidle(dev);
 
 	/* disable hot-plug polling */
 	drm_kms_helper_poll_disable(ddev);
@@ -2630,6 +2729,7 @@ retry:
 	if (num_crtcs == 0) {
 		DRM_DEBUG("all crtcs are already in the off state\n");
 		sde_kms->suspend_block = true;
+		_sde_kms_pm_suspend_idle_helper(sde_kms, dev);
 		goto unlock;
 	}
 
@@ -2641,25 +2741,8 @@ retry:
 	}
 
 	sde_kms->suspend_block = true;
+	_sde_kms_pm_suspend_idle_helper(sde_kms, dev);
 
-	drm_connector_list_iter_begin(ddev, &conn_iter);
-	drm_for_each_connector_iter(conn, &conn_iter) {
-		uint64_t lp;
-
-		lp = sde_connector_get_lp(conn);
-		if (lp != SDE_MODE_DPMS_LP2)
-			continue;
-
-		ret = sde_encoder_wait_for_event(conn->encoder,
-						MSM_ENC_TX_COMPLETE);
-		if (ret && ret != -EWOULDBLOCK)
-			SDE_ERROR(
-				"[enc: %d] wait for commit done returned %d\n",
-				conn->encoder->base.id, ret);
-		else if (!ret)
-			sde_encoder_idle_request(conn->encoder);
-	}
-	drm_connector_list_iter_end(&conn_iter);
 unlock:
 	if (state) {
 		drm_atomic_state_put(state);
@@ -2672,6 +2755,7 @@ unlock:
 	}
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
+	pm_runtime_get_noresume(dev);
 
 	return ret;
 }
@@ -2766,6 +2850,7 @@ static const struct msm_kms_funcs kms_funcs = {
 	.get_address_space_device = _sde_kms_get_address_space_device,
 	.postopen = _sde_kms_post_open,
 	.check_for_splash = sde_kms_check_for_splash,
+	.get_mixer_count = sde_kms_get_mixer_count,
 };
 
 /* the caller api needs to turn on clock before calling it */

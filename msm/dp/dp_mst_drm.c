@@ -403,10 +403,16 @@ static int dp_mst_sim_topology_mgr_set_mst(
 		struct drm_dp_mst_topology_mgr *mgr,
 		bool mst_state)
 {
+	int rc;
 	struct dp_mst_private *mst = container_of(mgr,
 			struct dp_mst_private, mst_mgr);
 
-	drm_dp_mst_topology_mgr_set_mst(mgr, mst_state);
+	rc = drm_dp_mst_topology_mgr_set_mst(mgr, mst_state);
+	if (rc < 0) {
+		DRM_ERROR("unable to set mst topology mgr, rc: %d\n", rc);
+		return rc;
+	}
+
 	if (mst_state)
 		queue_work(system_long_wq, &mst->simulator.probe_work);
 
@@ -1451,7 +1457,7 @@ mode_set:
 
 	crtc_state = drm_atomic_get_new_crtc_state(state, new_conn_state->crtc);
 
-	if (drm_atomic_crtc_needs_modeset(crtc_state)) {
+	if (drm_atomic_crtc_needs_modeset(crtc_state) && crtc_state->active) {
 		c_conn = to_sde_connector(connector);
 
 		dp_display->convert_to_dp_mode(dp_display, c_conn->drv_panel,
@@ -1945,9 +1951,12 @@ static void dp_mst_display_hpd(void *dp_display, bool hpd_status,
 	mst->mst_session_state = hpd_status;
 	mutex_unlock(&mst->mst_lock);
 
-	if (!hpd_status)
+	if (!hpd_status) {
 		rc = mst->mst_fw_cbs->topology_mgr_set_mst(&mst->mst_mgr,
 				hpd_status);
+		if (rc < 0)
+			goto fail;
+	}
 
 	if (info && !info->mst_protocol) {
 		if (hpd_status) {
@@ -1959,13 +1968,21 @@ static void dp_mst_display_hpd(void *dp_display, bool hpd_status,
 		mst->mst_fw_cbs = &drm_dp_mst_fw_helper_ops;
 	}
 
-	if (hpd_status)
+	if (hpd_status) {
 		rc = mst->mst_fw_cbs->topology_mgr_set_mst(&mst->mst_mgr,
 				hpd_status);
+		if (rc < 0)
+			goto fail;
+	}
 
 	dp_mst_hpd_event_notify(mst, hpd_status);
 
-	DP_MST_INFO_LOG("mst display hpd:%d, rc:%d\n", hpd_status, rc);
+	DP_MST_INFO_LOG("mst display hpd success. hpd:%d, rc:%d\n", hpd_status,
+			rc);
+	return;
+fail:
+	DRM_ERROR("mst display hpd failed. hpd: %d, rc: %d\n",
+			hpd_status, rc);
 }
 
 static void dp_mst_display_hpd_irq(void *dp_display,

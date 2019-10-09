@@ -535,7 +535,8 @@ static void complete_commit(struct msm_commit *c)
 
 	msm_atomic_helper_commit_modeset_disables(dev, state);
 
-	drm_atomic_helper_commit_planes(dev, state, 0);
+	drm_atomic_helper_commit_planes(dev, state,
+				DRM_PLANE_COMMIT_ACTIVE_ONLY);
 
 	msm_atomic_helper_commit_modeset_enables(dev, state);
 

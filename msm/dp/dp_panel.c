@@ -2019,14 +2019,7 @@ end:
 
 static void dp_panel_decode_dsc_dpcd(struct dp_panel *dp_panel)
 {
-	s64 fec_overhead_fp = drm_fixp_from_fraction(1, 1);
-
-	if (!dp_panel->dsc_feature_enable || !dp_panel->fec_feature_enable) {
-		DP_DEBUG("source dsc is not supported\n");
-		return;
-	}
-
-	if (dp_panel->dsc_dpcd[0] && dp_panel->fec_dpcd) {
+	if (dp_panel->dsc_dpcd[0]) {
 		dp_panel->sink_dsc_caps.dsc_capable = true;
 		dp_panel->sink_dsc_caps.version = dp_panel->dsc_dpcd[1];
 		dp_panel->sink_dsc_caps.block_pred_en =
@@ -2039,21 +2032,13 @@ static void dp_panel_decode_dsc_dpcd(struct dp_panel *dp_panel)
 		dp_panel->dsc_en = false;
 	}
 
-	dp_panel->fec_en = dp_panel->dsc_en;
 	dp_panel->widebus_en = dp_panel->dsc_en;
-
-	/* fec_overhead = 1.00 / 0.97582 */
-	if (dp_panel->fec_en)
-		fec_overhead_fp = drm_fixp_from_fraction(100000, 97582);
-
-	dp_panel->fec_overhead_fp = fec_overhead_fp;
 }
 
 static void dp_panel_read_sink_dsc_caps(struct dp_panel *dp_panel)
 {
 	int rlen;
 	struct dp_panel_private *panel;
-	const int fec_cap = 0x90;
 	int dpcd_rev;
 
 	if (!dp_panel) {
@@ -2061,14 +2046,9 @@ static void dp_panel_read_sink_dsc_caps(struct dp_panel *dp_panel)
 		return;
 	}
 
-	dp_panel->dsc_en = false;
-	dp_panel->fec_en = false;
-
 	dpcd_rev = dp_panel->dpcd[DP_DPCD_REV];
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
-
-	dp_panel->fec_overhead_fp = 0;
 	if (panel->parser->dsc_feature_enable && dpcd_rev >= 0x14) {
 		rlen = drm_dp_dpcd_read(panel->aux->drm_aux, DP_DSC_SUPPORT,
 			dp_panel->dsc_dpcd, (DP_RECEIVER_DSC_CAP_SIZE + 1));
@@ -2081,15 +2061,36 @@ static void dp_panel_read_sink_dsc_caps(struct dp_panel *dp_panel)
 			DUMP_PREFIX_NONE, 8, 1, dp_panel->dsc_dpcd, rlen,
 			false);
 
-		rlen = drm_dp_dpcd_read(panel->aux->drm_aux, fec_cap,
-			&dp_panel->fec_dpcd, 1);
-		if (rlen < 1) {
-			DP_ERR("fec dpcd read failed, rlen=%d\n", rlen);
-			return;
-		}
-
 		dp_panel_decode_dsc_dpcd(dp_panel);
 	}
+}
+
+static void dp_panel_read_sink_fec_caps(struct dp_panel *dp_panel)
+{
+	int rlen;
+	struct dp_panel_private *panel;
+	s64 fec_overhead_fp = drm_fixp_from_fraction(1, 1);
+
+	if (!dp_panel) {
+		DP_ERR("invalid input\n");
+		return;
+	}
+
+	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
+	rlen = drm_dp_dpcd_readb(panel->aux->drm_aux, DP_FEC_CAPABILITY,
+			&dp_panel->fec_dpcd);
+	if (rlen < 1) {
+		DP_ERR("fec capability read failed, rlen=%d\n", rlen);
+		return;
+	}
+
+	dp_panel->fec_en = dp_panel->fec_dpcd & DP_FEC_CAPABLE;
+	if (dp_panel->fec_en)
+		fec_overhead_fp = drm_fixp_from_fraction(100000, 97582);
+
+	dp_panel->fec_overhead_fp = fec_overhead_fp;
+
+	return;
 }
 
 static int dp_panel_read_sink_caps(struct dp_panel *dp_panel,
@@ -2148,7 +2149,18 @@ static int dp_panel_read_sink_caps(struct dp_panel *dp_panel,
 	dp_panel->dsc_feature_enable = panel->parser->dsc_feature_enable;
 	dp_panel->fec_feature_enable = panel->parser->fec_feature_enable;
 
-	dp_panel_read_sink_dsc_caps(dp_panel);
+	dp_panel->fec_en = false;
+	dp_panel->dsc_en = false;
+
+	if (dp_panel->fec_feature_enable) {
+		dp_panel_read_sink_fec_caps(dp_panel);
+
+		if (dp_panel->dsc_feature_enable && dp_panel->fec_en)
+			dp_panel_read_sink_dsc_caps(dp_panel);
+	}
+
+	DP_INFO("fec_en=%d, dsc_en=%d, widebus_en=%d\n", dp_panel->fec_en,
+			dp_panel->dsc_en, dp_panel->widebus_en);
 end:
 	return rc;
 }
@@ -2157,8 +2169,12 @@ static u32 dp_panel_get_supported_bpp(struct dp_panel *dp_panel,
 		u32 mode_edid_bpp, u32 mode_pclk_khz)
 {
 	struct drm_dp_link *link_info;
-	const u32 max_supported_bpp = 30, min_supported_bpp = 18;
+	const u32 max_supported_bpp = 30;
+	u32 min_supported_bpp = 18;
 	u32 bpp = 0, data_rate_khz = 0;
+
+	if (dp_panel->dsc_en)
+		min_supported_bpp = 24;
 
 	bpp = min_t(u32, mode_edid_bpp, max_supported_bpp);
 

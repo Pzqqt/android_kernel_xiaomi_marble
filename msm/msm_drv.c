@@ -1938,6 +1938,33 @@ msm_gem_smmu_address_space_get(struct drm_device *dev,
 	return funcs->get_address_space(priv->kms, domain);
 }
 
+int msm_get_mixer_count(struct msm_drm_private *priv,
+		const struct drm_display_mode *mode,
+		const struct msm_resource_caps_info *res, u32 *num_lm)
+{
+	struct msm_kms *kms;
+	const struct msm_kms_funcs *funcs;
+
+	if (!priv) {
+		DRM_ERROR("invalid drm private struct\n");
+		return -EINVAL;
+	}
+
+	kms = priv->kms;
+	if (!kms) {
+		DRM_ERROR("invalid msm kms struct\n");
+		return -EINVAL;
+	}
+
+	funcs = kms->funcs;
+	if (!funcs || !funcs->get_mixer_count) {
+		DRM_ERROR("invalid function pointers\n");
+		return -EINVAL;
+	}
+
+	return funcs->get_mixer_count(priv->kms, mode, res, num_lm);
+}
+
 static int msm_drm_bind(struct device *dev)
 {
 	return msm_drm_init(dev, &msm_driver);
@@ -2024,16 +2051,6 @@ static struct platform_driver msm_platform_driver = {
 	},
 };
 
-#ifdef CONFIG_QCOM_KGSL
-void __init adreno_register(void)
-{
-}
-
-void __exit adreno_unregister(void)
-{
-}
-#endif
-
 static int __init msm_drm_register(void)
 {
 	if (!modeset)
@@ -2044,7 +2061,6 @@ static int __init msm_drm_register(void)
 	msm_dsi_register();
 	msm_edp_register();
 	msm_hdmi_register();
-	adreno_register();
 	return platform_driver_register(&msm_platform_driver);
 }
 
@@ -2053,7 +2069,6 @@ static void __exit msm_drm_unregister(void)
 	DBG("fini");
 	platform_driver_unregister(&msm_platform_driver);
 	msm_hdmi_unregister();
-	adreno_unregister();
 	msm_edp_unregister();
 	msm_dsi_unregister();
 	msm_smmu_driver_cleanup();

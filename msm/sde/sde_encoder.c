@@ -456,6 +456,14 @@ bool sde_encoder_is_primary_display(struct drm_encoder *drm_enc)
 		SDE_CONNECTOR_PRIMARY);
 }
 
+bool sde_encoder_is_dsi_display(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+
+	return sde_enc &&
+		(sde_enc->disp_info.intf_type == DRM_MODE_CONNECTOR_DSI);
+}
+
 int sde_encoder_in_cont_splash(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
@@ -769,8 +777,8 @@ void sde_encoder_helper_update_intf_cfg(
 	struct sde_hw_intf_cfg_v1 *intf_cfg;
 	enum sde_3d_blend_mode mode_3d;
 
-	if (!phys_enc) {
-		SDE_ERROR("invalid arg, encoder %d\n", !phys_enc);
+	if (!phys_enc || !phys_enc->hw_pp) {
+		SDE_ERROR("invalid args, encoder %d\n", !phys_enc);
 		return;
 	}
 
@@ -1761,6 +1769,9 @@ static void _sde_encoder_update_vsync_source(struct sde_encoder_virt *sde_enc,
 		else
 			vsync_source = sde_enc->te_source;
 
+		SDE_EVT32(DRMID(&sde_enc->base), vsync_source, is_dummy,
+				disp_info->is_te_using_watchdog_timer);
+
 		for (i = 0; i < sde_enc->num_phys_encs; i++) {
 			phys = sde_enc->phys_encs[i];
 
@@ -1817,7 +1828,8 @@ static void _sde_encoder_dsc_disable(struct sde_encoder_virt *sde_enc)
 	 */
 }
 
-static int _sde_encoder_switch_to_watchdog_vsync(struct drm_encoder *drm_enc)
+int sde_encoder_helper_switch_vsync(struct drm_encoder *drm_enc,
+	 bool watchdog_te)
 {
 	struct sde_encoder_virt *sde_enc;
 	struct msm_display_info disp_info;
@@ -1832,7 +1844,7 @@ static int _sde_encoder_switch_to_watchdog_vsync(struct drm_encoder *drm_enc)
 	sde_encoder_control_te(drm_enc, false);
 
 	memcpy(&disp_info, &sde_enc->disp_info, sizeof(disp_info));
-	disp_info.is_te_using_watchdog_timer = true;
+	disp_info.is_te_using_watchdog_timer = watchdog_te;
 	_sde_encoder_update_vsync_source(sde_enc, &disp_info, false);
 
 	sde_encoder_control_te(drm_enc, true);
@@ -1893,7 +1905,7 @@ static int _sde_encoder_rsc_client_update_vsync_wait(
 			 * by generating the vsync from watchdog timer.
 			 */
 			if (crtc->base.id == wait_vblank_crtc_id)
-				_sde_encoder_switch_to_watchdog_vsync(drm_enc);
+				sde_encoder_helper_switch_vsync(drm_enc, true);
 		}
 	}
 
@@ -3336,7 +3348,8 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	/* wait for idle */
 	sde_encoder_wait_for_event(drm_enc, MSM_ENC_TX_COMPLETE);
 
-	if (sde_enc->input_handler)
+	if (sde_enc->input_handler &&
+		sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
 		input_unregister_handler(sde_enc->input_handler);
 
 	/*
@@ -5687,6 +5700,28 @@ int sde_encoder_wait_for_event(struct drm_encoder *drm_enc,
 	return ret;
 }
 
+void sde_encoder_helper_get_jitter_bounds_ns(struct drm_encoder *drm_enc,
+		u64 *l_bound, u64 *u_bound)
+{
+	struct sde_encoder_virt *sde_enc;
+	u64 jitter_ns, frametime_ns;
+	struct msm_mode_info *info;
+
+	if (!drm_enc) {
+		SDE_ERROR("invalid encoder\n");
+		return;
+	}
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	info = &sde_enc->mode_info;
+
+	frametime_ns = (1 * 1000000000) / info->frame_rate;
+	jitter_ns =  (info->jitter_numer * frametime_ns) /
+				(info->jitter_denom * 100);
+	*l_bound = frametime_ns - jitter_ns;
+	*u_bound = frametime_ns + jitter_ns;
+}
+
 u32 sde_encoder_get_fps(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc;
@@ -5984,12 +6019,12 @@ int sde_encoder_display_failure_notification(struct drm_encoder *enc,
 		kthread_flush_work(&sde_enc->esd_trigger_work);
 	}
 
-	/**
+	/*
 	 * panel may stop generating te signal (vsync) during esd failure. rsc
 	 * hardware may hang without vsync. Avoid rsc hang by generating the
 	 * vsync from watchdog timer instead of panel.
 	 */
-	_sde_encoder_switch_to_watchdog_vsync(enc);
+	sde_encoder_helper_switch_vsync(enc, true);
 
 	if (!skip_pre_kickoff)
 		sde_encoder_wait_for_event(enc, MSM_ENC_TX_COMPLETE);

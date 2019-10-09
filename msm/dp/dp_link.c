@@ -1122,7 +1122,7 @@ static int dp_link_process_link_status_update(struct dp_link_private *link)
 		return -EINVAL;
 
 	DP_DEBUG("channel_eq_done = %d, clock_recovery_done = %d\n",
-			drm_dp_clock_recovery_ok(link->link_status,
+			drm_dp_channel_eq_ok(link->link_status,
 			link->dp_link.link_params.lane_count),
 			drm_dp_clock_recovery_ok(link->link_status,
 			link->dp_link.link_params.lane_count));

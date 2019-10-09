@@ -929,19 +929,24 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 {
 	const struct sde_lm_cfg *lm_cfg = to_sde_hw_mixer(lm->hw)->cap;
 	const struct sde_pingpong_cfg *pp_cfg;
-	bool ret;
-	u32 display_pref, cwb_pref;
+	bool ret, is_conn_primary, is_conn_secondary;
+	u32 lm_primary_pref, lm_secondary_pref, cwb_pref;
 
 	*dspp = NULL;
 	*ds = NULL;
 	*pp = NULL;
-	display_pref = lm_cfg->features & BIT(SDE_DISP_PRIMARY_PREF) ||
-			lm_cfg->features & BIT(SDE_DISP_SECONDARY_PREF);
-	cwb_pref = lm_cfg->features & BIT(SDE_DISP_CWB_PREF);
 
-	SDE_DEBUG("check lm %d: dspp %d ds %d pp %d disp_pref: %d cwb_pref%d\n",
-		lm_cfg->id, lm_cfg->dspp, lm_cfg->ds,
-		lm_cfg->pingpong, display_pref, cwb_pref);
+	lm_primary_pref = lm_cfg->features & BIT(SDE_DISP_PRIMARY_PREF);
+	lm_secondary_pref = lm_cfg->features & BIT(SDE_DISP_SECONDARY_PREF);
+	cwb_pref = lm_cfg->features & BIT(SDE_DISP_CWB_PREF);
+	is_conn_primary = (reqs->hw_res.display_type ==
+				 SDE_CONNECTOR_PRIMARY) ? true : false;
+	is_conn_secondary = (reqs->hw_res.display_type ==
+				 SDE_CONNECTOR_SECONDARY) ? true : false;
+
+	SDE_DEBUG("check lm %d: dspp %d ds %d pp %d features %d disp type %d\n",
+		 lm_cfg->id, lm_cfg->dspp, lm_cfg->ds, lm_cfg->pingpong,
+		 lm_cfg->features, (int)reqs->hw_res.display_type);
 
 	/* Check if this layer mixer is a peer of the proposed primary LM */
 	if (primary_lm) {
@@ -956,7 +961,7 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 	}
 
 	/* bypass rest of the checks if LM for primary display is found */
-	if (!display_pref) {
+	if (!lm_primary_pref && !lm_secondary_pref) {
 		/* Check lm for valid requirements */
 		ret = _sde_rm_check_lm(rm, rsvp, reqs, lm_cfg, lm,
 				dspp, ds, pp);
@@ -971,10 +976,11 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 			SDE_DEBUG("fail: cwb supported lm not allocated\n");
 			return false;
 		}
-	} else if (!(reqs->hw_res.display_type && display_pref)) {
+	} else if ((!is_conn_primary && lm_primary_pref) ||
+			(!is_conn_secondary && lm_secondary_pref)) {
 		SDE_DEBUG(
-			"display preference is not met. display_type: %d display_pref: %d\n",
-			(int)reqs->hw_res.display_type, (int)display_pref);
+			"display preference is not met. display_type: %d lm_features: %x\n",
+			(int)reqs->hw_res.display_type, lm_cfg->features);
 		return false;
 	}
 

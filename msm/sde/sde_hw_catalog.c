@@ -4127,14 +4127,15 @@ static int _sde_hardware_post_caps(struct sde_mdss_cfg *sde_cfg,
 		sde_cfg->max_display_width = sde_cfg->max_sspp_linewidth *
 			max_horz_deci;
 	else
-		sde_cfg->max_display_width = sde_cfg->max_mixer_width *
-			sde_cfg->max_lm_per_display;
+		sde_cfg->max_display_width = sde_cfg->max_sspp_linewidth *
+			MAX_DOWNSCALE_RATIO;
 
 	if (max_vert_deci)
 		sde_cfg->max_display_height =
 			MAX_DISPLAY_HEIGHT_WITH_DECIMATION * max_vert_deci;
 	else
-		sde_cfg->max_display_height = MAX_DISPLAY_HEIGHT;
+		sde_cfg->max_display_height = MAX_DISPLAY_HEIGHT_WITH_DECIMATION
+			* MAX_DOWNSCALE_RATIO;
 
 	sde_cfg->min_display_height = MIN_DISPLAY_HEIGHT;
 	sde_cfg->min_display_width = MIN_DISPLAY_WIDTH;

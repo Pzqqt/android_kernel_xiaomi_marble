@@ -3212,6 +3212,7 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 {
 	struct dsi_panel *panel;
 	struct dsi_parser_utils *utils;
+	const char *panel_physical_type;
 	int rc = 0;
 
 	panel = kzalloc(sizeof(*panel), GFP_KERNEL);
@@ -3230,6 +3231,14 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	if (!panel->name)
 		panel->name = DSI_PANEL_DEFAULT_LABEL;
 
+	/*
+	 * Set panel type to LCD as default.
+	 */
+	panel->panel_type = DSI_DISPLAY_PANEL_TYPE_LCD;
+	panel_physical_type = utils->get_property(utils->data,
+				"qcom,mdss-dsi-panel-physical-type", NULL);
+	if (panel_physical_type && !strcmp(panel_physical_type, "oled"))
+		panel->panel_type = DSI_DISPLAY_PANEL_TYPE_OLED;
 	rc = dsi_panel_parse_host_config(panel);
 	if (rc) {
 		DSI_ERR("failed to parse host configuration, rc=%d\n",
@@ -3306,6 +3315,7 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	if (rc)
 		DSI_DEBUG("failed to parse esd config, rc=%d\n", rc);
 
+	panel->power_mode = SDE_MODE_DPMS_OFF;
 	drm_panel_init(&panel->drm_panel);
 	panel->drm_panel.dev = &panel->mipi_device.dev;
 	panel->mipi_device.dev.of_node = of_node;
@@ -3446,8 +3456,11 @@ int dsi_panel_get_mode_count(struct dsi_panel *panel)
 {
 	const u32 SINGLE_MODE_SUPPORT = 1;
 	struct dsi_parser_utils *utils;
-	struct device_node *timings_np;
+	struct device_node *timings_np, *child_np;
+	int num_dfps_rates, num_bit_clks;
+	int num_video_modes = 0, num_cmd_modes = 0;
 	int count, rc = 0;
+	void *utils_data = NULL;
 
 	if (!panel) {
 		DSI_ERR("invalid params\n");
@@ -3474,12 +3487,37 @@ int dsi_panel_get_mode_count(struct dsi_panel *panel)
 		goto error;
 	}
 
-	/* No multiresolution support is available for video mode panels */
+	/* No multiresolution support is available for video mode panels.
+	 * Multi-mode is supported for video mode during POMS is enabled.
+	 */
 	if (panel->panel_mode != DSI_OP_CMD_MODE &&
-		!panel->host_config.ext_bridge_mode)
+		!panel->host_config.ext_bridge_mode &&
+		!panel->panel_mode_switch_enabled)
 		count = SINGLE_MODE_SUPPORT;
 
 	panel->num_timing_nodes = count;
+	dsi_for_each_child_node(timings_np, child_np) {
+		utils_data = child_np;
+		if (utils->read_bool(utils->data, "qcom,mdss-dsi-video-mode"))
+			num_video_modes++;
+		else if (utils->read_bool(utils->data,
+					"qcom,mdss-dsi-cmd-mode"))
+			num_cmd_modes++;
+		else if (panel->panel_mode == DSI_OP_VIDEO_MODE)
+			num_video_modes++;
+		else if (panel->panel_mode == DSI_OP_CMD_MODE)
+			num_cmd_modes++;
+	}
+
+	num_dfps_rates = !panel->dfps_caps.dfps_support ? 1 :
+					panel->dfps_caps.dfps_list_len;
+
+	num_bit_clks = !panel->dyn_clk_caps.dyn_clk_support ? 1 :
+					panel->dyn_clk_caps.bit_clk_list_len;
+
+	/* Inflate num_of_modes by fps and bit clks in dfps */
+	panel->num_display_modes = (num_cmd_modes * num_bit_clks) +
+			(num_video_modes * num_bit_clks * num_dfps_rates);
 
 error:
 	return rc;
@@ -3851,6 +3889,17 @@ int dsi_panel_set_lp1(struct dsi_panel *panel)
 	if (!panel->panel_initialized)
 		goto exit;
 
+	/*
+	 * Consider LP1->LP2->LP1.
+	 * If the panel is already in LP mode, do not need to
+	 * set the regulator.
+	 * IBB and AB power mode would be set at the same time
+	 * in PMIC driver, so we only call ibb setting that is enough.
+	 */
+	if (dsi_panel_is_type_oled(panel) &&
+		panel->power_mode != SDE_MODE_DPMS_LP2)
+		dsi_pwr_panel_regulator_mode_set(&panel->power_info,
+			"ibb", REGULATOR_MODE_IDLE);
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_LP1);
 	if (rc)
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_LP1 cmd, rc=%d\n",
@@ -3895,6 +3944,14 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 	if (!panel->panel_initialized)
 		goto exit;
 
+	/*
+	 * Consider about LP1->LP2->NOLP.
+	 */
+	if (dsi_panel_is_type_oled(panel) &&
+	    (panel->power_mode == SDE_MODE_DPMS_LP1 ||
+	     panel->power_mode == SDE_MODE_DPMS_LP2))
+		dsi_pwr_panel_regulator_mode_set(&panel->power_info,
+			"ibb", REGULATOR_MODE_NORMAL);
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
 	if (rc)
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_NOLP cmd, rc=%d\n",
@@ -4295,6 +4352,15 @@ int dsi_panel_disable(struct dsi_panel *panel)
 
 	/* Avoid sending panel off commands when ESD recovery is underway */
 	if (!atomic_read(&panel->esd_recovery_pending)) {
+		/*
+		 * Need to set IBB/AB regulator mode to STANDBY,
+		 * if panel is going off from AOD mode.
+		 */
+		if (dsi_panel_is_type_oled(panel) &&
+			(panel->power_mode == SDE_MODE_DPMS_LP1 ||
+			panel->power_mode == SDE_MODE_DPMS_LP2))
+			dsi_pwr_panel_regulator_mode_set(&panel->power_info,
+				"ibb", REGULATOR_MODE_STANDBY);
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_OFF);
 		if (rc) {
 			/*
@@ -4309,6 +4375,7 @@ int dsi_panel_disable(struct dsi_panel *panel)
 		}
 	}
 	panel->panel_initialized = false;
+	panel->power_mode = SDE_MODE_DPMS_OFF;
 
 	mutex_unlock(&panel->panel_lock);
 	return rc;

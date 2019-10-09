@@ -184,6 +184,19 @@ static inline int dp_connector_config_hdr(struct drm_connector *connector,
 	return 0;
 }
 
+int dp_connector_atomic_check(struct drm_connector *connector,
+	void *display,
+	struct drm_connector_state *c_state)
+{
+	return 0;
+}
+
+int dp_connector_set_colorspace(struct drm_connector *connector,
+	void *display)
+{
+	return 0;
+}
+
 static inline int dp_connector_post_init(struct drm_connector *connector,
 		void *display)
 {

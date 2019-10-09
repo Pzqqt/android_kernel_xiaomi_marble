@@ -24,6 +24,7 @@
 #include "msm_prop.h"
 #include "sde_hw_mdss.h"
 #include "sde_kms.h"
+#include "sde_connector.h"
 
 #define MAX_CHANNELS_PER_ENC 2
 
@@ -51,7 +52,7 @@ struct sde_encoder_hw_resources {
 	enum sde_intf_mode wbs[WB_MAX];
 	bool needs_cdm;
 	u32 display_num_of_h_tiles;
-	bool display_type;
+	enum sde_connector_display display_type;
 	struct msm_display_topology topology;
 };
 
@@ -318,6 +319,14 @@ bool sde_encoder_in_clone_mode(struct drm_encoder *enc);
  * @Return:     true if it is primary display. false if secondary display
  */
 bool sde_encoder_is_primary_display(struct drm_encoder *enc);
+
+/**
+ * sde_encoder_is_dsi_display - checks if underlying display is DSI
+ *     display or not.
+ * @drm_enc:    Pointer to drm encoder structure
+ * @Return:     true if it is primary display. false if secondary display
+ */
+bool sde_encoder_is_dsi_display(struct drm_encoder *enc);
 
 /**
  * sde_encoder_control_idle_pc - control enable/disable of idle power collapse
