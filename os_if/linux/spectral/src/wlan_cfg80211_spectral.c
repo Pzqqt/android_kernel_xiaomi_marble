@@ -694,6 +694,25 @@ int wlan_cfg80211_spectral_scan_get_cap(struct wiphy *wiphy,
 		if (ret)
 			goto fail;
 	}
+
+	if (scaps->agile_spectral_cap_160) {
+		int ret;
+
+		ret = nla_put_flag
+		    (skb,
+		     QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_AGILE_SPECTRAL_160);
+		if (ret)
+			goto fail;
+	}
+	if (scaps->agile_spectral_cap_80p80) {
+		int ret;
+
+		ret = nla_put_flag
+		  (skb,
+		   QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_AGILE_SPECTRAL_80_80);
+		if (ret)
+			goto fail;
+	}
 	qal_devcfg_send_response((qdf_nbuf_t)skb);
 
 	return 0;
