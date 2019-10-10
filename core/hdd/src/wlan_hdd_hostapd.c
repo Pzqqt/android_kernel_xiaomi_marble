@@ -2536,12 +2536,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 		phy_mode = wlan_sap_get_phymode(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+		hdd_debug("phy_mode:%d", phy_mode);
 
 		switch (phy_mode) {
 		case eCSR_DOT11_MODE_11n:
 		case eCSR_DOT11_MODE_11n_ONLY:
 		case eCSR_DOT11_MODE_11ac:
 		case eCSR_DOT11_MODE_11ac_ONLY:
+		case eCSR_DOT11_MODE_11ax:
+		case eCSR_DOT11_MODE_11ax_ONLY:
 			legacy_phymode = false;
 			break;
 		default:
