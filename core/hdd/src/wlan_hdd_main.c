@@ -1368,6 +1368,9 @@ static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx)
 
 	qdf_runtime_lock_init(&ctx->dfs);
 	qdf_runtime_lock_init(&ctx->connect);
+	qdf_runtime_lock_init(&ctx->user);
+
+	ctx->is_user_wakelock_acquired = false;
 
 	wlan_scan_runtime_pm_init(hdd_ctx->pdev);
 }
@@ -1382,8 +1385,12 @@ static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx)
 {
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
-	qdf_runtime_lock_deinit(&ctx->dfs);
+	if (ctx->is_user_wakelock_acquired)
+		qdf_runtime_pm_allow_suspend(&ctx->user);
+
+	qdf_runtime_lock_deinit(&ctx->user);
 	qdf_runtime_lock_deinit(&ctx->connect);
+	qdf_runtime_lock_deinit(&ctx->dfs);
 
 	wlan_scan_runtime_pm_deinit(hdd_ctx->pdev);
 }

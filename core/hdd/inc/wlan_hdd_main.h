@@ -1115,12 +1115,15 @@ struct hdd_chan_change_params {
  * struct hdd_runtime_pm_context - context to prevent/allow runtime pm
  * @dfs: dfs context to prevent/allow runtime pm
  * @connect: connect context to prevent/allow runtime pm
+ * @user: user context to prevent/allow runtime pm
  *
  * Runtime PM control for underlying activities
  */
 struct hdd_runtime_pm_context {
 	qdf_runtime_lock_t dfs;
 	qdf_runtime_lock_t connect;
+	qdf_runtime_lock_t user;
+	bool is_user_wakelock_acquired;
 };
 
 /*

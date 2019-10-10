@@ -7933,6 +7933,20 @@ static int wlan_hdd_cfg80211_wifi_configuration_get(struct wiphy *wiphy,
 	return errno;
 }
 
+static void hdd_disable_runtime_pm_for_user(struct hdd_context *hdd_ctx)
+{
+	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
+
+	if (!ctx)
+		return;
+
+	if (ctx->is_user_wakelock_acquired)
+		return;
+
+	ctx->is_user_wakelock_acquired = true;
+	qdf_runtime_pm_prevent_suspend(&ctx->user);
+}
+
 /**
  * __wlan_hdd_cfg80211_set_wifi_test_config() - Wifi test configuration
  * vendor command
@@ -8389,6 +8403,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SET_HE_TESTBED_DEFAULTS;
 	if (tb[cmd_id]) {
+		hdd_disable_runtime_pm_for_user(hdd_ctx);
 		cfg_val = nla_get_u8(tb[cmd_id]);
 		hdd_debug("Configure HE testbed defaults %d", cfg_val);
 		if (!cfg_val)
