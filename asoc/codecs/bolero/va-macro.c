@@ -121,6 +121,7 @@ struct va_macro_priv {
 	struct regulator *micb_supply;
 	u32 micb_voltage;
 	u32 micb_current;
+	u32 version;
 	int micb_users;
 	u16 default_clk_id;
 	u16 clk_id;
@@ -1118,6 +1119,28 @@ VA_MACRO_DAPM_ENUM_EXT(va_smic7, BOLERO_CDC_VA_INP_MUX_ADC_MUX7_CFG0,
 			0, smic_mux_text, snd_soc_dapm_get_enum_double,
 			va_macro_put_dec_enum);
 
+static const char * const smic_mux_text_v2[] = {
+	"ZERO", "SWR_MIC0", "SWR_MIC1", "SWR_MIC2", "SWR_MIC3",
+	"SWR_MIC4", "SWR_MIC5", "SWR_MIC6", "SWR_MIC7",
+	"SWR_MIC8", "SWR_MIC9", "SWR_MIC10", "SWR_MIC11"
+};
+
+VA_MACRO_DAPM_ENUM_EXT(va_smic0_v2, BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0,
+			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
+			va_macro_put_dec_enum);
+
+VA_MACRO_DAPM_ENUM_EXT(va_smic1_v2, BOLERO_CDC_VA_INP_MUX_ADC_MUX1_CFG0,
+			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
+			va_macro_put_dec_enum);
+
+VA_MACRO_DAPM_ENUM_EXT(va_smic2_v3, BOLERO_CDC_VA_INP_MUX_ADC_MUX2_CFG0,
+			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
+			va_macro_put_dec_enum);
+
+VA_MACRO_DAPM_ENUM_EXT(va_smic3_v3, BOLERO_CDC_VA_INP_MUX_ADC_MUX3_CFG0,
+			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
+			va_macro_put_dec_enum);
+
 static const struct snd_kcontrol_new va_aif1_cap_mixer[] = {
 	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, VA_MACRO_DEC0, 1, 0,
 			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
@@ -1173,6 +1196,194 @@ static const struct snd_kcontrol_new va_aif3_cap_mixer[] = {
 			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
 	SOC_SINGLE_EXT("DEC7", SND_SOC_NOPM, VA_MACRO_DEC7, 1, 0,
 			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+};
+
+static const struct snd_kcontrol_new va_aif1_cap_mixer_v2[] = {
+	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, VA_MACRO_DEC0, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, VA_MACRO_DEC1, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+};
+
+static const struct snd_kcontrol_new va_aif2_cap_mixer_v2[] = {
+	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, VA_MACRO_DEC0, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, VA_MACRO_DEC1, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+};
+
+static const struct snd_kcontrol_new va_aif3_cap_mixer_v2[] = {
+	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, VA_MACRO_DEC0, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, VA_MACRO_DEC1, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+};
+
+static const struct snd_kcontrol_new va_aif1_cap_mixer_v3[] = {
+	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, VA_MACRO_DEC0, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, VA_MACRO_DEC1, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, VA_MACRO_DEC2, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, VA_MACRO_DEC3, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+};
+
+static const struct snd_kcontrol_new va_aif2_cap_mixer_v3[] = {
+	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, VA_MACRO_DEC0, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, VA_MACRO_DEC1, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, VA_MACRO_DEC2, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, VA_MACRO_DEC3, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+};
+
+static const struct snd_kcontrol_new va_aif3_cap_mixer_v3[] = {
+	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, VA_MACRO_DEC0, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, VA_MACRO_DEC1, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, VA_MACRO_DEC2, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, VA_MACRO_DEC3, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+};
+
+static const struct snd_soc_dapm_widget va_macro_dapm_widgets_common[] = {
+	SND_SOC_DAPM_AIF_OUT_E("VA_AIF1 CAP", "VA_AIF1 Capture", 0,
+		SND_SOC_NOPM, VA_MACRO_AIF1_CAP, 0,
+		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU |
+		SND_SOC_DAPM_PRE_PMD),
+
+	SND_SOC_DAPM_AIF_OUT_E("VA_AIF2 CAP", "VA_AIF2 Capture", 0,
+		SND_SOC_NOPM, VA_MACRO_AIF2_CAP, 0,
+		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU |
+		SND_SOC_DAPM_PRE_PMD),
+
+	SND_SOC_DAPM_AIF_OUT_E("VA_AIF3 CAP", "VA_AIF3 Capture", 0,
+		SND_SOC_NOPM, VA_MACRO_AIF3_CAP, 0,
+		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU |
+		SND_SOC_DAPM_PRE_PMD),
+
+	VA_MACRO_DAPM_MUX("VA DMIC MUX0", 0, va_dmic0),
+	VA_MACRO_DAPM_MUX("VA DMIC MUX1", 0, va_dmic1),
+
+	VA_MACRO_DAPM_MUX("VA SMIC MUX0", 0, va_smic0_v2),
+	VA_MACRO_DAPM_MUX("VA SMIC MUX1", 0, va_smic1_v2),
+
+	SND_SOC_DAPM_INPUT("VA SWR_MIC0"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC1"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC2"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC3"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC4"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC5"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC6"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC7"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC8"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC9"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC10"),
+	SND_SOC_DAPM_INPUT("VA SWR_MIC11"),
+
+	SND_SOC_DAPM_MICBIAS_E("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
+			       va_macro_enable_micbias,
+			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_ADC_E("VA DMIC0", NULL, SND_SOC_NOPM, 0, 0,
+		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
+		SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_ADC_E("VA DMIC1", NULL, SND_SOC_NOPM, 0, 0,
+		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
+		SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_ADC_E("VA DMIC2", NULL, SND_SOC_NOPM, 0, 0,
+		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
+		SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_ADC_E("VA DMIC3", NULL, SND_SOC_NOPM, 0, 0,
+		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
+		SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_ADC_E("VA DMIC4", NULL, SND_SOC_NOPM, 0, 0,
+		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
+		SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_ADC_E("VA DMIC5", NULL, SND_SOC_NOPM, 0, 0,
+		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
+		SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_ADC_E("VA DMIC6", NULL, SND_SOC_NOPM, 0, 0,
+		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
+		SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_ADC_E("VA DMIC7", NULL, SND_SOC_NOPM, 0, 0,
+		va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
+		SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_MUX_E("VA DEC0 MUX", SND_SOC_NOPM, VA_MACRO_DEC0, 0,
+			   &va_dec0_mux, va_macro_enable_dec,
+			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
+			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_MUX_E("VA DEC1 MUX", SND_SOC_NOPM, VA_MACRO_DEC1, 0,
+			   &va_dec1_mux, va_macro_enable_dec,
+			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
+			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", -1, SND_SOC_NOPM, 0, 0,
+			      va_macro_mclk_event,
+			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+};
+
+static const struct snd_soc_dapm_widget va_macro_dapm_widgets_v2[] = {
+	SND_SOC_DAPM_MIXER("VA_AIF1_CAP Mixer", SND_SOC_NOPM,
+		VA_MACRO_AIF1_CAP, 0,
+		va_aif1_cap_mixer_v2, ARRAY_SIZE(va_aif1_cap_mixer_v2)),
+
+	SND_SOC_DAPM_MIXER("VA_AIF2_CAP Mixer", SND_SOC_NOPM,
+		VA_MACRO_AIF2_CAP, 0,
+		va_aif2_cap_mixer_v2, ARRAY_SIZE(va_aif2_cap_mixer_v2)),
+
+	SND_SOC_DAPM_MIXER("VA_AIF3_CAP Mixer", SND_SOC_NOPM,
+		VA_MACRO_AIF3_CAP, 0,
+		va_aif3_cap_mixer_v2, ARRAY_SIZE(va_aif3_cap_mixer_v2)),
+};
+
+static const struct snd_soc_dapm_widget va_macro_dapm_widgets_v3[] = {
+	SND_SOC_DAPM_MIXER("VA_AIF1_CAP Mixer", SND_SOC_NOPM,
+		VA_MACRO_AIF1_CAP, 0,
+		va_aif1_cap_mixer_v3, ARRAY_SIZE(va_aif1_cap_mixer_v3)),
+
+	SND_SOC_DAPM_MIXER("VA_AIF2_CAP Mixer", SND_SOC_NOPM,
+		VA_MACRO_AIF2_CAP, 0,
+		va_aif2_cap_mixer_v3, ARRAY_SIZE(va_aif2_cap_mixer_v3)),
+
+	SND_SOC_DAPM_MIXER("VA_AIF3_CAP Mixer", SND_SOC_NOPM,
+		VA_MACRO_AIF3_CAP, 0,
+		va_aif3_cap_mixer_v3, ARRAY_SIZE(va_aif3_cap_mixer_v3)),
+
+	VA_MACRO_DAPM_MUX("VA DMIC MUX2", 0, va_dmic2),
+	VA_MACRO_DAPM_MUX("VA DMIC MUX3", 0, va_dmic3),
+
+	VA_MACRO_DAPM_MUX("VA SMIC MUX2", 0, va_smic2_v3),
+	VA_MACRO_DAPM_MUX("VA SMIC MUX3", 0, va_smic3_v3),
+
+	SND_SOC_DAPM_MUX_E("VA DEC2 MUX", SND_SOC_NOPM, VA_MACRO_DEC2, 0,
+			   &va_dec2_mux, va_macro_enable_dec,
+			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
+			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_MUX_E("VA DEC3 MUX", SND_SOC_NOPM, VA_MACRO_DEC3, 0,
+			   &va_dec3_mux, va_macro_enable_dec,
+			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
+			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
+			      va_macro_swr_pwr_event,
+			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
 static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
@@ -1323,6 +1534,146 @@ static const struct snd_soc_dapm_widget va_macro_wod_dapm_widgets[] = {
 	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", -1, SND_SOC_NOPM, 0, 0,
 			      va_macro_mclk_event,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+};
+
+static const struct snd_soc_dapm_route va_audio_map_common[] = {
+	{"VA_AIF1 CAP", NULL, "VA_MCLK"},
+	{"VA_AIF2 CAP", NULL, "VA_MCLK"},
+	{"VA_AIF3 CAP", NULL, "VA_MCLK"},
+
+	{"VA_AIF1 CAP", NULL, "VA_AIF1_CAP Mixer"},
+	{"VA_AIF2 CAP", NULL, "VA_AIF2_CAP Mixer"},
+	{"VA_AIF3 CAP", NULL, "VA_AIF3_CAP Mixer"},
+
+	{"VA_AIF1_CAP Mixer", "DEC0", "VA DEC0 MUX"},
+	{"VA_AIF1_CAP Mixer", "DEC1", "VA DEC1 MUX"},
+
+	{"VA_AIF2_CAP Mixer", "DEC0", "VA DEC0 MUX"},
+	{"VA_AIF2_CAP Mixer", "DEC1", "VA DEC1 MUX"},
+
+	{"VA_AIF3_CAP Mixer", "DEC0", "VA DEC0 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC1", "VA DEC1 MUX"},
+
+	{"VA DEC0 MUX", "MSM_DMIC", "VA DMIC MUX0"},
+	{"VA DMIC MUX0", "DMIC0", "VA DMIC0"},
+	{"VA DMIC MUX0", "DMIC1", "VA DMIC1"},
+	{"VA DMIC MUX0", "DMIC2", "VA DMIC2"},
+	{"VA DMIC MUX0", "DMIC3", "VA DMIC3"},
+	{"VA DMIC MUX0", "DMIC4", "VA DMIC4"},
+	{"VA DMIC MUX0", "DMIC5", "VA DMIC5"},
+	{"VA DMIC MUX0", "DMIC6", "VA DMIC6"},
+	{"VA DMIC MUX0", "DMIC7", "VA DMIC7"},
+
+	{"VA DEC0 MUX", "SWR_MIC", "VA SMIC MUX0"},
+	{"VA SMIC MUX0", "SWR_MIC0", "VA SWR_MIC0"},
+	{"VA SMIC MUX0", "SWR_MIC1", "VA SWR_MIC1"},
+	{"VA SMIC MUX0", "SWR_MIC2", "VA SWR_MIC2"},
+	{"VA SMIC MUX0", "SWR_MIC3", "VA SWR_MIC3"},
+	{"VA SMIC MUX0", "SWR_MIC4", "VA SWR_MIC4"},
+	{"VA SMIC MUX0", "SWR_MIC5", "VA SWR_MIC5"},
+	{"VA SMIC MUX0", "SWR_MIC6", "VA SWR_MIC6"},
+	{"VA SMIC MUX0", "SWR_MIC7", "VA SWR_MIC7"},
+	{"VA SMIC MUX0", "SWR_MIC8", "VA SWR_MIC8"},
+	{"VA SMIC MUX0", "SWR_MIC9", "VA SWR_MIC9"},
+	{"VA SMIC MUX0", "SWR_MIC10", "VA SWR_MIC10"},
+	{"VA SMIC MUX0", "SWR_MIC11", "VA SWR_MIC11"},
+
+	{"VA DEC1 MUX", "MSM_DMIC", "VA DMIC MUX1"},
+	{"VA DMIC MUX1", "DMIC0", "VA DMIC0"},
+	{"VA DMIC MUX1", "DMIC1", "VA DMIC1"},
+	{"VA DMIC MUX1", "DMIC2", "VA DMIC2"},
+	{"VA DMIC MUX1", "DMIC3", "VA DMIC3"},
+	{"VA DMIC MUX1", "DMIC4", "VA DMIC4"},
+	{"VA DMIC MUX1", "DMIC5", "VA DMIC5"},
+	{"VA DMIC MUX1", "DMIC6", "VA DMIC6"},
+	{"VA DMIC MUX1", "DMIC7", "VA DMIC7"},
+
+	{"VA DEC1 MUX", "SWR_MIC", "VA SMIC MUX1"},
+	{"VA SMIC MUX1", "SWR_MIC0", "VA SWR_MIC0"},
+	{"VA SMIC MUX1", "SWR_MIC1", "VA SWR_MIC1"},
+	{"VA SMIC MUX1", "SWR_MIC2", "VA SWR_MIC2"},
+	{"VA SMIC MUX1", "SWR_MIC3", "VA SWR_MIC3"},
+	{"VA SMIC MUX1", "SWR_MIC4", "VA SWR_MIC4"},
+	{"VA SMIC MUX1", "SWR_MIC5", "VA SWR_MIC5"},
+	{"VA SMIC MUX1", "SWR_MIC6", "VA SWR_MIC6"},
+	{"VA SMIC MUX1", "SWR_MIC7", "VA SWR_MIC7"},
+	{"VA SMIC MUX1", "SWR_MIC8", "VA SWR_MIC8"},
+	{"VA SMIC MUX1", "SWR_MIC9", "VA SWR_MIC9"},
+	{"VA SMIC MUX1", "SWR_MIC10", "VA SWR_MIC10"},
+	{"VA SMIC MUX1", "SWR_MIC11", "VA SWR_MIC11"},
+
+	{"VA SWR_MIC0", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC1", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC2", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC3", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC4", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC5", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC6", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC7", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC8", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC9", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC10", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC11", NULL, "VA_SWR_PWR"},
+
+};
+
+static const struct snd_soc_dapm_route va_audio_map_v3[] = {
+	{"VA_AIF1_CAP Mixer", "DEC2", "VA DEC2 MUX"},
+	{"VA_AIF1_CAP Mixer", "DEC3", "VA DEC3 MUX"},
+
+	{"VA_AIF2_CAP Mixer", "DEC2", "VA DEC2 MUX"},
+	{"VA_AIF2_CAP Mixer", "DEC3", "VA DEC3 MUX"},
+
+	{"VA_AIF3_CAP Mixer", "DEC2", "VA DEC2 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC3", "VA DEC3 MUX"},
+
+	{"VA DEC2 MUX", "MSM_DMIC", "VA DMIC MUX2"},
+	{"VA DMIC MUX2", "DMIC0", "VA DMIC0"},
+	{"VA DMIC MUX2", "DMIC1", "VA DMIC1"},
+	{"VA DMIC MUX2", "DMIC2", "VA DMIC2"},
+	{"VA DMIC MUX2", "DMIC3", "VA DMIC3"},
+	{"VA DMIC MUX2", "DMIC4", "VA DMIC4"},
+	{"VA DMIC MUX2", "DMIC5", "VA DMIC5"},
+	{"VA DMIC MUX2", "DMIC6", "VA DMIC6"},
+	{"VA DMIC MUX2", "DMIC7", "VA DMIC7"},
+
+	{"VA DEC2 MUX", "SWR_MIC", "VA SMIC MUX2"},
+	{"VA SMIC MUX2", "SWR_MIC0", "VA SWR_MIC0"},
+	{"VA SMIC MUX2", "SWR_MIC1", "VA SWR_MIC1"},
+	{"VA SMIC MUX2", "SWR_MIC2", "VA SWR_MIC2"},
+	{"VA SMIC MUX2", "SWR_MIC3", "VA SWR_MIC3"},
+	{"VA SMIC MUX2", "SWR_MIC4", "VA SWR_MIC4"},
+	{"VA SMIC MUX2", "SWR_MIC5", "VA SWR_MIC5"},
+	{"VA SMIC MUX2", "SWR_MIC6", "VA SWR_MIC6"},
+	{"VA SMIC MUX2", "SWR_MIC7", "VA SWR_MIC7"},
+	{"VA SMIC MUX2", "SWR_MIC8", "VA SWR_MIC8"},
+	{"VA SMIC MUX2", "SWR_MIC9", "VA SWR_MIC9"},
+	{"VA SMIC MUX2", "SWR_MIC10", "VA SWR_MIC10"},
+	{"VA SMIC MUX2", "SWR_MIC11", "VA SWR_MIC11"},
+
+	{"VA DEC3 MUX", "MSM_DMIC", "VA DMIC MUX3"},
+	{"VA DMIC MUX3", "DMIC0", "VA DMIC0"},
+	{"VA DMIC MUX3", "DMIC1", "VA DMIC1"},
+	{"VA DMIC MUX3", "DMIC2", "VA DMIC2"},
+	{"VA DMIC MUX3", "DMIC3", "VA DMIC3"},
+	{"VA DMIC MUX3", "DMIC4", "VA DMIC4"},
+	{"VA DMIC MUX3", "DMIC5", "VA DMIC5"},
+	{"VA DMIC MUX3", "DMIC6", "VA DMIC6"},
+	{"VA DMIC MUX3", "DMIC7", "VA DMIC7"},
+
+	{"VA DEC3 MUX", "SWR_MIC", "VA SMIC MUX3"},
+	{"VA SMIC MUX3", "SWR_MIC0", "VA SWR_MIC0"},
+	{"VA SMIC MUX3", "SWR_MIC1", "VA SWR_MIC1"},
+	{"VA SMIC MUX3", "SWR_MIC2", "VA SWR_MIC2"},
+	{"VA SMIC MUX3", "SWR_MIC3", "VA SWR_MIC3"},
+	{"VA SMIC MUX3", "SWR_MIC4", "VA SWR_MIC4"},
+	{"VA SMIC MUX3", "SWR_MIC5", "VA SWR_MIC5"},
+	{"VA SMIC MUX3", "SWR_MIC6", "VA SWR_MIC6"},
+	{"VA SMIC MUX3", "SWR_MIC7", "VA SWR_MIC7"},
+	{"VA SMIC MUX3", "SWR_MIC8", "VA SWR_MIC8"},
+	{"VA SMIC MUX3", "SWR_MIC9", "VA SWR_MIC9"},
+	{"VA SMIC MUX3", "SWR_MIC10", "VA SWR_MIC10"},
+	{"VA SMIC MUX3", "SWR_MIC11", "VA SWR_MIC11"},
 };
 
 static const struct snd_soc_dapm_route va_audio_map[] = {
@@ -1586,6 +1937,24 @@ static const struct snd_kcontrol_new va_macro_snd_controls[] = {
 			  0, -84, 40, digital_gain),
 };
 
+static const struct snd_kcontrol_new va_macro_snd_controls_common[] = {
+	SOC_SINGLE_SX_TLV("VA_DEC0 Volume",
+			  BOLERO_CDC_VA_TX0_TX_VOL_CTL,
+			  0, -84, 40, digital_gain),
+	SOC_SINGLE_SX_TLV("VA_DEC1 Volume",
+			  BOLERO_CDC_VA_TX1_TX_VOL_CTL,
+			  0, -84, 40, digital_gain),
+};
+
+static const struct snd_kcontrol_new va_macro_snd_controls_v3[] = {
+	SOC_SINGLE_SX_TLV("VA_DEC2 Volume",
+			  BOLERO_CDC_VA_TX2_TX_VOL_CTL,
+			  0, -84, 40, digital_gain),
+	SOC_SINGLE_SX_TLV("VA_DEC3 Volume",
+			  BOLERO_CDC_VA_TX3_TX_VOL_CTL,
+			  0, -84, 40, digital_gain),
+};
+
 static int va_macro_validate_dmic_sample_rate(u32 dmic_sample_rate,
 				      struct va_macro_priv *va_priv)
 {
@@ -1670,18 +2039,65 @@ static int va_macro_init(struct snd_soc_component *component)
 		return 0;
 	}
 
-	ret = snd_soc_dapm_new_controls(dapm, va_macro_dapm_widgets,
+	va_priv->version = bolero_get_version(va_dev);
+	if (va_priv->version >= BOLERO_VERSION_2_0) {
+		ret = snd_soc_dapm_new_controls(dapm,
+				va_macro_dapm_widgets_common,
+				ARRAY_SIZE(va_macro_dapm_widgets_common));
+		if (ret < 0) {
+			dev_err(va_dev, "%s: Failed to add controls\n",
+				__func__);
+			return ret;
+		}
+		if (va_priv->version == BOLERO_VERSION_2_1)
+			ret = snd_soc_dapm_new_controls(dapm,
+				va_macro_dapm_widgets_v2,
+				ARRAY_SIZE(va_macro_dapm_widgets_v2));
+		else if (va_priv->version == BOLERO_VERSION_2_0)
+			ret = snd_soc_dapm_new_controls(dapm,
+				va_macro_dapm_widgets_v3,
+				ARRAY_SIZE(va_macro_dapm_widgets_v3));
+		if (ret < 0) {
+			dev_err(va_dev, "%s: Failed to add controls\n",
+				__func__);
+			return ret;
+		}
+	} else {
+		ret = snd_soc_dapm_new_controls(dapm, va_macro_dapm_widgets,
 					ARRAY_SIZE(va_macro_dapm_widgets));
-	if (ret < 0) {
-		dev_err(va_dev, "%s: Failed to add controls\n", __func__);
-		return ret;
+		if (ret < 0) {
+			dev_err(va_dev, "%s: Failed to add controls\n",
+				__func__);
+			return ret;
+		}
 	}
 
-	ret = snd_soc_dapm_add_routes(dapm, va_audio_map,
+	if (va_priv->version >= BOLERO_VERSION_2_0) {
+		ret = snd_soc_dapm_add_routes(dapm,
+					va_audio_map_common,
+					ARRAY_SIZE(va_audio_map_common));
+		if (ret < 0) {
+			dev_err(va_dev, "%s: Failed to add routes\n",
+				__func__);
+			return ret;
+		}
+		if (va_priv->version == BOLERO_VERSION_2_0)
+			ret = snd_soc_dapm_add_routes(dapm,
+					va_audio_map_v3,
+					ARRAY_SIZE(va_audio_map_v3));
+		if (ret < 0) {
+			dev_err(va_dev, "%s: Failed to add routes\n",
+				__func__);
+			return ret;
+		}
+	} else {
+		ret = snd_soc_dapm_add_routes(dapm, va_audio_map,
 					ARRAY_SIZE(va_audio_map));
-	if (ret < 0) {
-		dev_err(va_dev, "%s: Failed to add routes\n", __func__);
-		return ret;
+		if (ret < 0) {
+			dev_err(va_dev, "%s: Failed to add routes\n",
+				__func__);
+			return ret;
+		}
 	}
 
 	ret = snd_soc_dapm_new_widgets(dapm->card);
@@ -1689,28 +2105,65 @@ static int va_macro_init(struct snd_soc_component *component)
 		dev_err(va_dev, "%s: Failed to add widgets\n", __func__);
 		return ret;
 	}
-	ret = snd_soc_add_component_controls(component, va_macro_snd_controls,
-				   ARRAY_SIZE(va_macro_snd_controls));
-	if (ret < 0) {
-		dev_err(va_dev, "%s: Failed to add snd_ctls\n", __func__);
-		return ret;
+	if (va_priv->version >= BOLERO_VERSION_2_0) {
+		ret = snd_soc_add_component_controls(component,
+				va_macro_snd_controls_common,
+				ARRAY_SIZE(va_macro_snd_controls_common));
+		if (ret < 0) {
+			dev_err(va_dev, "%s: Failed to add snd_ctls\n",
+				__func__);
+			return ret;
+		}
+		if (va_priv->version == BOLERO_VERSION_2_0)
+			ret = snd_soc_add_component_controls(component,
+					va_macro_snd_controls_v3,
+					ARRAY_SIZE(va_macro_snd_controls_v3));
+		if (ret < 0) {
+			dev_err(va_dev, "%s: Failed to add snd_ctls\n",
+				__func__);
+			return ret;
+		}
+	} else {
+		ret = snd_soc_add_component_controls(component,
+				va_macro_snd_controls,
+				ARRAY_SIZE(va_macro_snd_controls));
+		if (ret < 0) {
+			dev_err(va_dev, "%s: Failed to add snd_ctls\n",
+				__func__);
+			return ret;
+		}
 	}
 
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF1 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF2 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF3 Capture");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC0");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC1");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC2");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC3");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC0");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC1");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC2");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC3");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC4");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC5");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC6");
-	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC7");
+	if (va_priv->version >= BOLERO_VERSION_2_0) {
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC0");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC1");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC2");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC3");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC4");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC5");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC6");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC7");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC8");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC9");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC10");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC11");
+	} else {
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC0");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC1");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC2");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC3");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC0");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC1");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC2");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC3");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC4");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC5");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC6");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC7");
+	}
 	snd_soc_dapm_sync(dapm);
 
 	for (i = 0; i < VA_MACRO_NUM_DECIMATORS; i++) {
