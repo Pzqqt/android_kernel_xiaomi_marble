@@ -978,11 +978,11 @@ wlan_hdd_cfg80211_convert_rxmgmt_flags(enum rxmgmt_flags flag,
 	return ret;
 }
 
-void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
-			       uint32_t frm_len,
-			       uint8_t *pb_frames,
-			       uint8_t frame_type, uint32_t rx_chan,
-			       int8_t rx_rssi, enum rxmgmt_flags rx_flags)
+static void
+__hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
+				  uint32_t frm_len, uint8_t *pb_frames,
+				  uint8_t frame_type, uint32_t rx_chan,
+				  int8_t rx_rssi, enum rxmgmt_flags rx_flags)
 {
 	uint16_t freq;
 	uint8_t type = 0;
@@ -1097,6 +1097,24 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 			rx_rssi * 100,
 			pb_frames, frm_len, GFP_ATOMIC);
 #endif /* LINUX_VERSION_CODE */
+}
+
+void hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
+				     uint32_t frm_len, uint8_t *pb_frames,
+				     uint8_t frame_type, uint32_t rx_chan,
+				     int8_t rx_rssi, enum rxmgmt_flags rx_flags)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(adapter->dev, &vdev_sync);
+	if (errno)
+		return;
+
+	__hdd_indicate_mgmt_frame_to_user(adapter, frm_len, pb_frames,
+					  frame_type, rx_chan,
+					  rx_rssi, rx_flags);
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 int wlan_hdd_set_power_save(struct hdd_adapter *adapter,

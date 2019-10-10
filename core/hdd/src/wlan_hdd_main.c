@@ -9538,7 +9538,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 		hdd_for_each_adapter(hdd_ctx, adapter) {
 			if ((adapter) &&
 			    (WLAN_HDD_ADAPTER_MAGIC == adapter->magic)) {
-				__hdd_indicate_mgmt_frame(adapter,
+				hdd_indicate_mgmt_frame_to_user(adapter,
 						frame_ind->frame_len,
 						frame_ind->frameBuf,
 						frame_ind->frameType,
@@ -9555,7 +9555,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 
 	if ((adapter) &&
 		(WLAN_HDD_ADAPTER_MAGIC == adapter->magic))
-		__hdd_indicate_mgmt_frame(adapter,
+		hdd_indicate_mgmt_frame_to_user(adapter,
 						frame_ind->frame_len,
 						frame_ind->frameBuf,
 						frame_ind->frameType,

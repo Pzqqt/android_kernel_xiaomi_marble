@@ -60,10 +60,21 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData);
 int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command);
 int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command);
 
-void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
-			       uint32_t frm_len, uint8_t *pb_frames,
-			       uint8_t frame_type, uint32_t rx_chan,
-			       int8_t rx_rssi, enum rxmgmt_flags rx_flags);
+/**
+ * hdd_indicate_mgmt_frame_to_user- send mgmt frame to user
+ * @adapter: adapter pointer
+ * @frm_len: frame length
+ * @pb_frames: frame bytes
+ * @frame_type: frame type
+ * @rx_chan: channel on which frame was received
+ * @rx_rssi: rssi
+ * @rx_flags: rx flags of the frame
+ */
+void hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
+				     uint32_t frm_len, uint8_t *pb_frames,
+				     uint8_t frame_type, uint32_t rx_chan,
+				     int8_t rx_rssi,
+				     enum rxmgmt_flags rx_flags);
 
 int wlan_hdd_check_remain_on_channel(struct hdd_adapter *adapter);
 void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *adapter);
