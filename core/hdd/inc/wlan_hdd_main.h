@@ -197,6 +197,8 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define NUM_CPUS 1
 #endif
 
+#define ACS_COMPLETE_TIMEOUT 3000
+
 #define HDD_PSOC_IDLE_SHUTDOWN_SUSPEND_DELAY (1000)
 /**
  * enum hdd_adapter_flags - event bitmap flags registered net device
@@ -1043,7 +1045,7 @@ struct hdd_context;
  * @mic_work: mic work information
  * @gpio_tsf_sync_work: work to sync send TSF CAP WMI command
  * @cache_sta_count: number of currently cached stations
- *
+ * @acs_complete_event: acs complete event
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1168,6 +1170,7 @@ struct hdd_adapter {
 	} session;
 
 	qdf_atomic_t ch_switch_in_progress;
+	qdf_event_t acs_complete_event;
 
 #ifdef WLAN_FEATURE_TSF
 	/* tsf value received from firmware */
