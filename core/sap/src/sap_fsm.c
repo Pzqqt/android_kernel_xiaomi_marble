@@ -3364,11 +3364,11 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 			continue;
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-		uint8_t ch;
-
-		ch = WLAN_REG_CH_NUM(loop_count);
 		if ((sap_ctx->acs_cfg->skip_scan_status ==
 			eSAP_DO_PAR_ACS_SCAN)) {
+			uint8_t ch;
+
+			ch = WLAN_REG_CH_NUM(loop_count);
 		    if ((ch >= sap_ctx->acs_cfg->skip_scan_range1_stch &&
 			 ch <= sap_ctx->acs_cfg->skip_scan_range1_endch) ||
 			(ch >= sap_ctx->acs_cfg->skip_scan_range2_stch &&
@@ -3392,8 +3392,8 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 			ch_count++;
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_INFO,
-				FL("%d %d added to ACS ch range"),
-				ch_count, ch);
+				FL("%d added to ACS ch range"),
+				ch_count);
 		}
 #else
 		list[ch_count] = wlan_reg_chan_to_freq(mac_ctx->pdev,
