@@ -426,6 +426,7 @@ bool lim_fill_lim_assoc_ind_params(
  * @assoc_ind: PE association indication structure
  * @sme_assoc_ind: SME association indication
  * @session_entry: PE session entry
+ * @assoc_req_alloc: malloc memory for assoc_req or not
  *
  * Return: None
  */
@@ -433,7 +434,7 @@ void
 lim_fill_sme_assoc_ind_params(
 	struct mac_context *mac_ctx,
 	tpLimMlmAssocInd assoc_ind, struct assoc_ind *sme_assoc_ind,
-	struct pe_session *session_entry);
+	struct pe_session *session_entry, bool assoc_req_alloc);
 void lim_send_mlm_assoc_ind(struct mac_context *mac, tpDphHashNode sta,
 			    struct pe_session *pe_session);
 

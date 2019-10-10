@@ -11769,6 +11769,15 @@ csr_roam_chk_lnk_assoc_ind_upper_layer(
 	}
 	csr_send_assoc_ind_to_upper_layer_cnf_msg(
 					mac_ctx, assoc_ind, status, session_id);
+	/*in the association response tx compete case,
+	 *memory for assoc_ind->assocReqPtr will be malloced
+	 *in the lim_assoc_rsp_tx_complete -> lim_fill_sme_assoc_ind_params
+	 *and then assoc_ind will pass here, so after using it
+	 *in the csr_send_assoc_ind_to_upper_layer_cnf_msg and
+	 *then free the memroy here.
+	 */
+	if (assoc_ind->assocReqLength != 0 && assoc_ind->assocReqPtr)
+		qdf_mem_free(assoc_ind->assocReqPtr);
 }
 
 static void

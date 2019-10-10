@@ -644,14 +644,21 @@ void
 lim_fill_sme_assoc_ind_params(
 	struct mac_context *mac_ctx,
 	tpLimMlmAssocInd assoc_ind, struct assoc_ind *sme_assoc_ind,
-	struct pe_session *session_entry)
+	struct pe_session *session_entry, bool assoc_req_alloc)
 {
 	sme_assoc_ind->length = sizeof(struct assoc_ind);
 	sme_assoc_ind->sessionId = session_entry->smeSessionId;
 
 	/* Required for indicating the frames to upper layer */
 	sme_assoc_ind->assocReqLength = assoc_ind->assocReqLength;
-	sme_assoc_ind->assocReqPtr = assoc_ind->assocReqPtr;
+	if (assoc_req_alloc && assoc_ind->assocReqLength) {
+		sme_assoc_ind->assocReqPtr = qdf_mem_malloc(
+					     assoc_ind->assocReqLength);
+		qdf_mem_copy(sme_assoc_ind->assocReqPtr, assoc_ind->assocReqPtr,
+			     assoc_ind->assocReqLength);
+	} else {
+		sme_assoc_ind->assocReqPtr = assoc_ind->assocReqPtr;
+	}
 
 	sme_assoc_ind->beaconPtr = session_entry->beacon;
 	sme_assoc_ind->beaconLength = session_entry->bcnLen;
@@ -765,7 +772,7 @@ void lim_process_mlm_assoc_ind(struct mac_context *mac, uint32_t *msg_buf)
 	pSirSmeAssocInd->messageType = eWNI_SME_ASSOC_IND;
 	lim_fill_sme_assoc_ind_params(mac, (tpLimMlmAssocInd)msg_buf,
 				      pSirSmeAssocInd,
-				      pe_session);
+				      pe_session, false);
 	msg.type = eWNI_SME_ASSOC_IND;
 	msg.bodyptr = pSirSmeAssocInd;
 	msg.bodyval = 0;

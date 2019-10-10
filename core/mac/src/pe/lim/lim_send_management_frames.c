@@ -1096,7 +1096,7 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 	lim_fill_sme_assoc_ind_params(
 				mac_ctx, lim_assoc_ind,
 				sme_assoc_ind,
-				session_entry);
+				session_entry, true);
 
 	qdf_mem_zero(&msg, sizeof(struct scheduler_msg));
 	msg.type = eWNI_SME_ASSOC_IND_UPPER_LAYER;
@@ -1105,8 +1105,8 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 	sme_assoc_ind->staId = sta_ds->staIndex;
 	sme_assoc_ind->reassocReq = sta_ds->mlmStaContext.subType;
 	sme_assoc_ind->timingMeasCap = sta_ds->timingMeasCap;
-
-	mac_ctx->lim.sme_msg_callback(mac_ctx, &msg);
+	MTRACE(mac_trace_msg_tx(mac_ctx, session_entry->peSessionId, msg.type));
+	lim_sys_process_mmh_msg_api(mac_ctx, &msg);
 
 	qdf_mem_free(lim_assoc_ind);
 	if (assoc_req->assocReqFrame) {
