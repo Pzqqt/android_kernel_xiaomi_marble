@@ -165,6 +165,17 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/* Don't send WMI_PDEV_SET_HW_MODE_CMDID to FW if existing SAP / GO is
+	 * in CAC-in-progress state. Host is blocking this command as FW is
+	 * having design limitation and FW don't expect this command when CAC
+	 * is in progress state.
+	 */
+	if (pm_ctx->hdd_cbacks.hdd_is_cac_in_progress &&
+	    pm_ctx->hdd_cbacks.hdd_is_cac_in_progress()) {
+		policy_mgr_err("SAP CAC_IN_PROGRESS state, drop WMI_PDEV_SET_HW_MODE_CMDID");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	msg.hw_mode_index = hw_mode_index;
 	msg.set_hw_mode_cb = (void *)policy_mgr_pdev_set_hw_mode_cb;
 	msg.reason = reason;

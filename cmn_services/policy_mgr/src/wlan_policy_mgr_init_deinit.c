@@ -610,6 +610,8 @@ QDF_STATUS policy_mgr_register_hdd_cb(struct wlan_objmgr_psoc *psoc,
 		hdd_cbacks->hdd_wapi_security_sta_exist;
 	pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress =
 		hdd_cbacks->hdd_is_chan_switch_in_progress;
+	pm_ctx->hdd_cbacks.hdd_is_cac_in_progress =
+		hdd_cbacks->hdd_is_cac_in_progress;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -628,6 +630,8 @@ QDF_STATUS policy_mgr_deregister_hdd_cb(struct wlan_objmgr_psoc *psoc)
 	pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart = NULL;
 	pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev = NULL;
 	pm_ctx->hdd_cbacks.hdd_get_device_mode = NULL;
+	pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress = NULL;
+	pm_ctx->hdd_cbacks.hdd_is_cac_in_progress = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }
