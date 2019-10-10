@@ -899,20 +899,20 @@ bool csr_is_conn_state_disconnected_ibss(struct mac_context *mac,
 static inline bool
 csr_is_conn_state_ibss(struct mac_context *mac, uint32_t sessionId)
 {
-	return true;
+	return false;
 }
 
 static inline bool
 csr_is_conn_state_connected_ibss(struct mac_context *mac, uint32_t sessionId)
 {
-	return true;
+	return false;
 }
 
 static inline bool
 csr_is_conn_state_disconnected_ibss(struct mac_context *mac,
 				    uint32_t sessionId)
 {
-	return true;
+	return false;
 }
 #endif
 
