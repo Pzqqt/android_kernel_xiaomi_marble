@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
+
 #include <drm/msm_drm_pp.h>
 #include "sde_hw_mdss.h"
 #include "sde_hwio.h"
@@ -10,6 +11,7 @@
 #include "sde_hw_color_processing.h"
 #include "sde_dbg.h"
 #include "sde_ad4.h"
+#include "sde_hw_rc.h"
 #include "sde_kms.h"
 
 static struct sde_dspp_cfg *_dspp_offset(enum sde_dspp dspp,
@@ -241,6 +243,37 @@ static void dspp_ltm(struct sde_hw_dspp *c)
 	}
 }
 
+static void dspp_rc(struct sde_hw_dspp *c)
+{
+	int ret = 0;
+
+	if (!c) {
+		SDE_ERROR("invalid arguments\n");
+		return;
+	}
+
+	if (c->cap->sblk->rc.version == SDE_COLOR_PROCESS_VER(0x1, 0x0)) {
+		ret = sde_hw_rc_init(c);
+		if (ret) {
+			SDE_ERROR("rc init failed, ret %d\n", ret);
+			return;
+		}
+
+		ret = reg_dmav1_init_dspp_op_v4(SDE_DSPP_RC, c->idx);
+		if (!ret)
+			c->ops.setup_rc_data =
+					sde_hw_rc_setup_data_dma;
+		else
+			c->ops.setup_rc_data =
+					sde_hw_rc_setup_data_ahb;
+
+		c->ops.validate_rc_mask = sde_hw_rc_check_mask;
+		c->ops.setup_rc_mask = sde_hw_rc_setup_mask;
+		c->ops.validate_rc_pu_roi = sde_hw_rc_check_pu_roi;
+		c->ops.setup_rc_pu_roi = sde_hw_rc_setup_pu_roi;
+	}
+}
+
 static void (*dspp_blocks[SDE_DSPP_MAX])(struct sde_hw_dspp *c);
 
 static void _init_dspp_ops(void)
@@ -257,6 +290,7 @@ static void _init_dspp_ops(void)
 	dspp_blocks[SDE_DSPP_VLUT] = dspp_vlut;
 	dspp_blocks[SDE_DSPP_AD] = dspp_ad;
 	dspp_blocks[SDE_DSPP_LTM] = dspp_ltm;
+	dspp_blocks[SDE_DSPP_RC] = dspp_rc;
 }
 
 static void _setup_dspp_ops(struct sde_hw_dspp *c, unsigned long features)
@@ -286,6 +320,7 @@ struct sde_hw_dspp *sde_hw_dspp_init(enum sde_dspp idx,
 	struct sde_hw_dspp *c;
 	struct sde_dspp_cfg *cfg;
 	int rc;
+	char buf[256];
 
 	if (!addr || !m)
 		return ERR_PTR(-EINVAL);
@@ -329,6 +364,13 @@ struct sde_hw_dspp *sde_hw_dspp_init(enum sde_dspp idx,
 				c->hw.xin_id);
 	}
 
+	if ((cfg->sblk->rc.id == SDE_DSPP_RC) && cfg->sblk->rc.base) {
+		snprintf(buf, ARRAY_SIZE(buf), "%s_%d", "rc", c->idx - DSPP_0);
+		sde_dbg_reg_register_dump_range(SDE_DBG_NAME, buf,
+				c->hw.blk_off + cfg->sblk->rc.base,
+				c->hw.blk_off + cfg->sblk->rc.base +
+				cfg->sblk->rc.len, c->hw.xin_id);
+	}
 	return c;
 
 blk_init_error:

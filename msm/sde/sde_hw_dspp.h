@@ -209,6 +209,46 @@ struct sde_hw_dspp_ops {
 	 * @status: Pointer to u32 where ltm status value is dumped.
 	 */
 	void (*ltm_read_intr_status)(struct sde_hw_dspp *ctx, u32 *status);
+
+	/**
+	 * validate_rc_mask -  Validate RC mask configuration
+	 * @ctx: Pointer to dspp context.
+	 * @cfg: Pointer to configuration.
+	 * Return: 0 on success, non-zero otherwise.
+	 */
+	int (*validate_rc_mask)(struct sde_hw_dspp *ctx, void *cfg);
+
+	/**
+	 * setup_rc_mask -  Setup RC mask configuration
+	 * @ctx: Pointer to dspp context.
+	 * @cfg: Pointer to configuration.
+	 * Return: 0 on success, non-zero otherwise.
+	 */
+	int (*setup_rc_mask)(struct sde_hw_dspp *ctx, void *cfg);
+
+	/**
+	 * validate_rc_pu_roi -  Validate RC regions in during partial update.
+	 * @ctx: Pointer to dspp context.
+	 * @cfg: Pointer to configuration.
+	 * Return: 0 on success, non-zero otherwise.
+	 */
+	int (*validate_rc_pu_roi)(struct sde_hw_dspp *ctx, void *cfg);
+
+	/**
+	 * setup_rc_pu_roi -  Setup RC regions in during partial update.
+	 * @ctx: Pointer to dspp context.
+	 * @cfg: Pointer to configuration.
+	 * Return: 0 on success, non-zero otherwise.
+	 */
+	int (*setup_rc_pu_roi)(struct sde_hw_dspp *ctx, void *cfg);
+
+	/**
+	 * setup_rc_data -  Program RC mask data
+	 * @ctx: Pointer to dspp context.
+	 * @cfg: Pointer to configuration.
+	 * Return: 0 on success, non-zero otherwise.
+	 */
+	int (*setup_rc_data)(struct sde_hw_dspp *ctx, void *cfg);
 };
 
 /**

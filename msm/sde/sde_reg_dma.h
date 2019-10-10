@@ -57,6 +57,7 @@ enum sde_reg_dma_read_sel {
  * @LTM_INIT: LTM INIT
  * @LTM_ROI: LTM ROI
  * @LTM_VLUT: LTM VLUT
+ * @RC_DATA: Rounded corner data
  * @REG_DMA_FEATURES_MAX: invalid selection
  */
 enum sde_reg_dma_features {
@@ -75,6 +76,7 @@ enum sde_reg_dma_features {
 	LTM_INIT,
 	LTM_ROI,
 	LTM_VLUT,
+	RC_DATA,
 	REG_DMA_FEATURES_MAX,
 };
 
@@ -152,6 +154,7 @@ enum sde_reg_dma_setup_ops {
 };
 
 #define REG_DMA_BLK_MAX 32
+
 /**
  * enum sde_reg_dma_blk - defines blocks for which reg dma op should be
  *                        performed

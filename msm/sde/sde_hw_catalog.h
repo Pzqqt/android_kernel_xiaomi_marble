@@ -755,6 +755,20 @@ struct sde_lm_sub_blks {
 	struct sde_pp_blk gc;
 };
 
+/**
+ * struct sde_dspp_rc: Pixel processing rounded corner sub-blk information
+ * @info: HW register and features supported by this sub-blk.
+ * @version: HW Algorithm version.
+ * @idx: HW block instance id.
+ * @mem_total_size: data memory size.
+ */
+struct sde_dspp_rc {
+	SDE_HW_SUBBLK_INFO;
+	u32 version;
+	u32 idx;
+	u32 mem_total_size;
+};
+
 struct sde_dspp_sub_blks {
 	struct sde_pp_blk igc;
 	struct sde_pp_blk pcc;
@@ -768,6 +782,7 @@ struct sde_dspp_sub_blks {
 	struct sde_pp_blk ad;
 	struct sde_pp_blk ltm;
 	struct sde_pp_blk vlut;
+	struct sde_dspp_rc rc;
 };
 
 struct sde_pingpong_sub_blks {
@@ -1426,6 +1441,7 @@ struct sde_limit_cfg {
  * @has_vig_p010  indicates if vig pipe supports p010 format
  * @inline_rot_formats	formats supported by the inline rotator feature
  * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
+ * @rc_count	number of rounded corner hardware instances
  */
 struct sde_mdss_cfg {
 	u32 hwversion;
@@ -1536,6 +1552,7 @@ struct sde_mdss_cfg {
 
 	u32 ad_count;
 	u32 ltm_count;
+	u32 rc_count;
 
 	u32 merge_3d_count;
 	struct sde_merge_3d_cfg merge_3d[MAX_BLOCKS];
@@ -1583,6 +1600,7 @@ struct sde_mdss_hw_cfg_handler {
 #define BLK_WB(s) ((s)->wb)
 #define BLK_AD(s) ((s)->ad)
 #define BLK_LTM(s) ((s)->ltm)
+#define BLK_RC(s) ((s)->rc)
 
 /**
  * sde_hw_set_preference: populate the individual hw lm preferences,

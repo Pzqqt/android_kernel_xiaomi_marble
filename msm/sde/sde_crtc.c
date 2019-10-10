@@ -755,6 +755,9 @@ static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 		}
 
 		sde_kms_rect_merge_rectangles(&sde_conn_state->rois, &conn_roi);
+		SDE_DEBUG("conn_roi x:%u, y:%u, w:%u, h:%u\n",
+				conn_roi.x, conn_roi.y,
+				conn_roi.w, conn_roi.h);
 		SDE_EVT32_VERBOSE(DRMID(crtc), DRMID(conn),
 				conn_roi.x, conn_roi.y,
 				conn_roi.w, conn_roi.h);
@@ -5003,8 +5006,13 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 		sde_crtc_install_dest_scale_properties(sde_crtc, catalog,
 				info);
 
+	if (catalog->dspp_count && catalog->rc_count)
+		sde_kms_info_add_keyint(info, "rc_mem_size",
+				catalog->dspp[0].sblk->rc.mem_total_size);
+
 	msm_property_install_blob(&sde_crtc->property_info, "capabilities",
 		DRM_MODE_PROP_IMMUTABLE, CRTC_PROP_INFO);
+
 	msm_property_set_blob(&sde_crtc->property_info, &sde_crtc->blob_info,
 			info->data, SDE_KMS_INFO_DATALEN(info),
 			CRTC_PROP_INFO);

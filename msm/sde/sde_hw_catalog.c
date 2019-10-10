@@ -384,6 +384,14 @@ enum {
 };
 
 enum {
+	RC_OFF,
+	RC_LEN,
+	RC_VERSION,
+	RC_MEM_TOTAL_SIZE,
+	RC_PROP_MAX,
+};
+
+enum {
 	MIXER_OFF,
 	MIXER_LEN,
 	MIXER_PAIR_MASK,
@@ -697,6 +705,13 @@ static struct sde_prop_type ad_prop[] = {
 static struct sde_prop_type ltm_prop[] = {
 	{LTM_OFF, "qcom,sde-dspp-ltm-off", false, PROP_TYPE_U32_ARRAY},
 	{LTM_VERSION, "qcom,sde-dspp-ltm-version", false, PROP_TYPE_U32},
+};
+
+static struct sde_prop_type rc_prop[] = {
+	{RC_OFF, "qcom,sde-dspp-rc-off", false, PROP_TYPE_U32_ARRAY},
+	{RC_LEN, "qcom,sde-dspp-rc-size", false, PROP_TYPE_U32},
+	{RC_VERSION, "qcom,sde-dspp-rc-version", false, PROP_TYPE_U32},
+	{RC_MEM_TOTAL_SIZE, "qcom,sde-dspp-rc-mem-size", false, PROP_TYPE_U32},
 };
 
 static struct sde_prop_type ds_top_prop[] = {
@@ -2471,8 +2486,8 @@ static int sde_dspp_parse_dt(struct device_node *np,
 						struct sde_mdss_cfg *sde_cfg)
 {
 	int rc = 0, i;
-	u32 off_count, ad_off_count, ltm_off_count;
-	struct sde_dt_props *props, *ad_props, *ltm_props;
+	u32 off_count, ad_off_count, ltm_off_count, rc_off_count;
+	struct sde_dt_props *props, *ad_props, *ltm_props, *rc_props;
 	struct sde_dt_props *blocks_props = NULL;
 	struct sde_dspp_cfg *dspp;
 	struct sde_dspp_sub_blks *sblk;
@@ -2506,6 +2521,14 @@ static int sde_dspp_parse_dt(struct device_node *np,
 		goto put_ad_props;
 	}
 
+	/* Parse RC dtsi entries */
+	rc_props = sde_get_dt_props(np, RC_PROP_MAX, rc_prop,
+			ARRAY_SIZE(rc_prop), &rc_off_count);
+	if (IS_ERR_OR_NULL(rc_props)) {
+		rc = PTR_ERR(rc_props);
+		goto put_ltm_props;
+	}
+
 	/* get DSPP feature dt properties if they exist */
 	snp = of_get_child_by_name(np, dspp_prop[DSPP_BLOCKS].prop_name);
 	if (snp) {
@@ -2514,7 +2537,7 @@ static int sde_dspp_parse_dt(struct device_node *np,
 				NULL);
 		if (IS_ERR_OR_NULL(blocks_props)) {
 			rc = PTR_ERR(blocks_props);
-			goto put_ltm_props;
+			goto put_rc_props;
 		}
 	}
 
@@ -2571,10 +2594,28 @@ static int sde_dspp_parse_dt(struct device_node *np,
 				goto end;
 		}
 
+		sblk->rc.id = SDE_DSPP_RC;
+		sde_cfg->rc_count = rc_off_count;
+		if (rc_props && (i < rc_off_count) &&
+		    rc_props->exists[RC_OFF]) {
+			sblk->rc.base = PROP_VALUE_ACCESS(rc_props->values,
+					RC_OFF, i);
+			sblk->rc.len = PROP_VALUE_ACCESS(rc_props->values,
+					RC_LEN, 0);
+			sblk->rc.version = PROP_VALUE_ACCESS(rc_props->values,
+					RC_VERSION, 0);
+			sblk->rc.mem_total_size = PROP_VALUE_ACCESS(
+					rc_props->values, RC_MEM_TOTAL_SIZE,
+					0);
+			sblk->rc.idx = i;
+			set_bit(SDE_DSPP_RC, &dspp->features);
+		}
 	}
 
 end:
 	sde_put_dt_props(blocks_props);
+put_rc_props:
+	sde_put_dt_props(rc_props);
 put_ltm_props:
 	sde_put_dt_props(ltm_props);
 put_ad_props:
