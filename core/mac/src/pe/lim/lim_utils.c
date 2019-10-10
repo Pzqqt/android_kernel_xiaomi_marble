@@ -8441,6 +8441,8 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 	enum phy_ch_width ch_width;
 	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	uint16_t bw_val;
+	enum reg_wifi_band band;
+	uint8_t band_mask;
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!mlme_obj) {
@@ -8453,12 +8455,16 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 	 * will be updated from ch_freq_seg1.
 	 */
 	des_chan->ch_cfreq1 = des_chan->ch_freq;
+	band = wlan_reg_freq_to_band(des_chan->ch_freq);
+	band_mask = 1 << band;
 	ch_width = des_chan->ch_width;
 	bw_val = wlan_reg_get_bw_value(ch_width);
 	if (bw_val > 20) {
 		if (des_chan->ch_freq_seg1) {
 			des_chan->ch_cfreq1 =
-				wlan_chan_to_freq(des_chan->ch_freq_seg1);
+			wlan_reg_chan_band_to_freq(mac_ctx->pdev,
+						   des_chan->ch_freq_seg1,
+						   band_mask);
 		} else {
 			pe_err("Invalid cntr_freq for bw %d, drop to 20",
 			       bw_val);
@@ -8478,7 +8484,9 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 	if (bw_val > 80) {
 		if (des_chan->ch_freq_seg2) {
 			des_chan->ch_cfreq2 =
-				wlan_chan_to_freq(des_chan->ch_freq_seg2);
+			wlan_reg_chan_band_to_freq(mac_ctx->pdev,
+						   des_chan->ch_freq_seg2,
+						   band_mask);
 		} else {
 			pe_err("Invalid cntr_freq for bw %d, drop to 80",
 			       bw_val);
