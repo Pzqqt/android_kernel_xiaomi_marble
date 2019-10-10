@@ -647,8 +647,15 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			return 0;
 		}
 		if (is_peer_found) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			return 0;
+			/* During WDS to static roaming, peer is added
+			 * to the list before static AST entry create.
+			 * So, allow AST entry for STATIC type
+			 * even if peer is present
+			 */
+			if (type != CDP_TXRX_AST_TYPE_STATIC) {
+				qdf_spin_unlock_bh(&soc->ast_lock);
+				return 0;
+			}
 		}
 	} else {
 		/* For HWMWDS_SEC entries can be added for same mac address
