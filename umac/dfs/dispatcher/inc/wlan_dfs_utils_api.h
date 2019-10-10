@@ -707,6 +707,24 @@ bool utils_dfs_is_cac_required(struct wlan_objmgr_pdev *pdev,
 			       struct wlan_channel *prev_chan,
 			       bool *continue_current_cac);
 
+/**
+ * utils_dfs_is_cac_required_on_dfs_curchan() - Check if CAC is required on the
+ * dfs_curchan.
+ * @pdev: pdev ptr
+ * @continue_current_cac: If AP can start CAC then this variable indicates
+ * whether to continue with the current CAC or restart the CAC. This variable
+ * is valid only if this function returns true.
+ *
+ * This API checks if the dfs_curchan is a subset of the dfs_prevchan.
+ * dfs_curchan and dfs_prevchan are updated after start response by
+ * dfs_set_current_channel().
+ *
+ * Return: true if AP requires CAC or can continue current CAC, else false.
+ */
+bool
+utils_dfs_is_cac_required_on_dfs_curchan(struct wlan_objmgr_pdev *pdev,
+					 bool *continue_current_cac);
+
 /** utils_dfs_is_precac_done() - Check if precac has been done in chosen channel
  * @pdev: Pointer to DFS pdev object.
  * @wlan_chan: Pointer to wlan channel object that can be accessed by other
@@ -746,4 +764,12 @@ QDF_STATUS utils_dfs_get_disable_radar_marking(struct wlan_objmgr_pdev *pdev,
  */
 void utils_dfs_deliver_event(struct wlan_objmgr_pdev *pdev, uint16_t freq,
 			     enum WLAN_DFS_EVENTS event);
+
+/**
+ * utils_dfs_reset_dfs_prevchan() - Reset DFS previous channel structure.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: None.
+ */
+void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_UTILS_API_H_ */

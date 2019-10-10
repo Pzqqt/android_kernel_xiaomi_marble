@@ -68,15 +68,20 @@ static inline struct dfs_channel *dfs_alloc_dfs_curchan(void)
 	return qdf_mem_malloc(sizeof(struct dfs_channel));
 }
 
+static inline struct dfs_channel *dfs_alloc_dfs_prevchan(void)
+{
+	return qdf_mem_malloc(sizeof(struct dfs_channel));
+}
+
 /*
- * dfs_free_dfs_curchan() - Free dfs_channel buffer
- * @dfs_curchan: dfs_channel buffer pointer
+ * dfs_free_dfs_chan() - Free dfs_channel buffer
+ * @dfs_chan: dfs_channel buffer pointer
  *
  * Return: None
  */
-static inline void dfs_free_dfs_curchan(struct dfs_channel *dfs_curchan)
+static inline void dfs_free_dfs_chan(struct dfs_channel *dfs_chan)
 {
-	qdf_mem_free(dfs_curchan);
+	qdf_mem_free(dfs_chan);
 }
 
 #else
@@ -84,6 +89,7 @@ static inline void dfs_free_dfs_curchan(struct dfs_channel *dfs_curchan)
 /* Static buffers for DFS objects */
 static struct wlan_dfs global_dfs;
 static struct dfs_channel global_dfs_curchan;
+static struct dfs_channel global_dfs_prevchan;
 
 static inline struct wlan_dfs *dfs_alloc_wlan_dfs(void)
 {
@@ -99,7 +105,12 @@ static inline struct dfs_channel *dfs_alloc_dfs_curchan(void)
 	return &global_dfs_curchan;
 }
 
-static inline void dfs_free_dfs_curchan(struct dfs_channel *dfs_curchan)
+static inline struct dfs_channel *dfs_alloc_dfs_prevchan(void)
+{
+	return &global_dfs_prevchan;
+}
+
+static inline void dfs_free_dfs_chan(struct dfs_channel *dfs_chan)
 {
 }
 #endif
@@ -161,6 +172,12 @@ int dfs_create_object(struct wlan_dfs **dfs)
 		return 1;
 	}
 
+	(*dfs)->dfs_prevchan = dfs_alloc_dfs_prevchan();
+	if (!((*dfs)->dfs_prevchan)) {
+		dfs_free_wlan_dfs(*dfs);
+		return 1;
+	}
+	qdf_mem_zero((*dfs)->dfs_prevchan, sizeof(struct dfs_channel));
 	return 0;
 }
 
@@ -260,7 +277,8 @@ void dfs_detach(struct wlan_dfs *dfs)
 #ifndef WLAN_DFS_STATIC_MEM_ALLOC
 void dfs_destroy_object(struct wlan_dfs *dfs)
 {
-	dfs_free_dfs_curchan(dfs->dfs_curchan);
+	dfs_free_dfs_chan(dfs->dfs_prevchan);
+	dfs_free_dfs_chan(dfs->dfs_curchan);
 	dfs_free_wlan_dfs(dfs);
 }
 #else
@@ -729,6 +747,39 @@ bad:
 	return error;
 }
 
+/**
+ * dfs_is_curchan_same_as_given_chan() - Find if dfs_curchan has the same
+ * channel parameters provided.
+ * @dfs_curchan: Pointer to DFS current channel structure.
+ * @dfs_ch_freq: New curchan's primary frequency.
+ * @dfs_ch_flags: New curchan's channel flags.
+ * @dfs_ch_flagext: New curchan's channel flags extension.
+ * @dfs_ch_vhtop_ch_freq_seg1: New curchan's primary centre IEEE.
+ * @dfs_ch_vhtop_ch_freq_seg2: New curchan's secondary centre IEEE.
+ *
+ * Return: True if curchan has the same channel parameters of the given channel,
+ * else false.
+ */
+static bool
+dfs_is_curchan_same_as_given_chan(struct dfs_channel *dfs_curchan,
+				  uint16_t dfs_ch_freq,
+				  uint64_t dfs_ch_flags,
+				  uint16_t dfs_ch_flagext,
+				  uint8_t dfs_ch_vhtop_ch_freq_seg1,
+				  uint8_t dfs_ch_vhtop_ch_freq_seg2)
+{
+	if ((dfs_curchan->dfs_ch_freq == dfs_ch_freq) &&
+	    (dfs_curchan->dfs_ch_flags == dfs_ch_flags) &&
+	    (dfs_curchan->dfs_ch_flagext == dfs_ch_flagext) &&
+	    (dfs_curchan->dfs_ch_vhtop_ch_freq_seg1 ==
+	     dfs_ch_vhtop_ch_freq_seg1) &&
+	    (dfs_curchan->dfs_ch_vhtop_ch_freq_seg2 ==
+	     dfs_ch_vhtop_ch_freq_seg2))
+		return true;
+
+	return false;
+}
+
 void dfs_set_current_channel(struct wlan_dfs *dfs,
 		uint16_t dfs_ch_freq,
 		uint64_t dfs_ch_flags,
@@ -741,6 +792,29 @@ void dfs_set_current_channel(struct wlan_dfs *dfs,
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
+
+	if (!dfs->dfs_curchan) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_curchan is NULL");
+		return;
+	}
+
+	/* Check if the input parameters are the same as that of dfs_curchan */
+	if (dfs_is_curchan_same_as_given_chan(dfs->dfs_curchan,
+					      dfs_ch_freq,
+					      dfs_ch_flags,
+					      dfs_ch_flagext,
+					      dfs_ch_vhtop_ch_freq_seg1,
+					      dfs_ch_vhtop_ch_freq_seg2)) {
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "dfs_curchan already updated");
+		return;
+	}
+
+	/* Update dfs previous channel with the old dfs_curchan, if it exists */
+	if (dfs->dfs_curchan->dfs_ch_freq)
+		qdf_mem_copy(dfs->dfs_prevchan,
+			     dfs->dfs_curchan,
+			     sizeof(struct dfs_channel));
 
 	dfs->dfs_curchan->dfs_ch_freq = dfs_ch_freq;
 	dfs->dfs_curchan->dfs_ch_flags = dfs_ch_flags;
@@ -765,4 +839,9 @@ int dfs_reinit_timers(struct wlan_dfs *dfs)
 	dfs_nol_timer_init(dfs);
 	dfs_main_task_testtimer_init(dfs);
 	return 0;
+}
+
+void dfs_reset_dfs_prevchan(struct wlan_dfs *dfs)
+{
+	qdf_mem_zero(dfs->dfs_prevchan, sizeof(struct dfs_channel));
 }

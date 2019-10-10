@@ -1279,6 +1279,8 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
  * @dfs_allow_hw_pulses:              Set or unset dfs_allow_hw_pulses which
  *                                    allow or disallow HW pulses.
  * @dfs_is_hw_pulses_allowed:         Check if HW pulses are allowed or not.
+ * @dfs_set_fw_adfs_support:          Set the agile DFS FW support in DFS.
+ * @dfs_reset_dfs_prevchan:           Reset DFS previous channel structure.
  */
 struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
@@ -1398,6 +1400,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 	void (*dfs_set_fw_adfs_support)(struct wlan_objmgr_pdev *pdev,
 					bool fw_adfs_support_160,
 					bool fw_adfs_support_non_160);
+	void (*dfs_reset_dfs_prevchan)(struct wlan_objmgr_pdev *pdev);
 };
 
 /**

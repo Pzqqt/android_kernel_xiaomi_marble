@@ -255,6 +255,22 @@ bool utils_dfs_is_cac_required(struct wlan_objmgr_pdev *pdev,
 				   continue_current_cac);
 }
 
+bool
+utils_dfs_is_cac_required_on_dfs_curchan(struct wlan_objmgr_pdev *pdev,
+					 bool *continue_current_cac)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs)
+		return false;
+
+	return dfs_is_cac_required(dfs,
+				   dfs->dfs_curchan,
+				   dfs->dfs_prevchan,
+				   continue_current_cac);
+}
+
 QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
@@ -1218,4 +1234,20 @@ void utils_dfs_deliver_event(struct wlan_objmgr_pdev *pdev, uint16_t freq,
 {
 	if (global_dfs_to_mlme.mlme_dfs_deliver_event)
 		global_dfs_to_mlme.mlme_dfs_deliver_event(pdev, freq, event);
+}
+
+void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	if (!tgt_dfs_is_pdev_5ghz(pdev))
+		return;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is null");
+		return;
+	}
+
+	dfs_reset_dfs_prevchan(dfs);
 }
