@@ -1278,10 +1278,16 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 		wlansap_roam_process_ch_change_success(mac_ctx, sap_ctx,
 						csr_roam_info, &qdf_ret_status);
 
-		qdf_ret_status =
-			sap_signal_hdd_event(sap_ctx, csr_roam_info,
-					     eSAP_CHANNEL_CHANGE_RESP,
-					     (void *)QDF_STATUS_SUCCESS);
+		if (QDF_IS_STATUS_ERROR(qdf_ret_status))
+			qdf_ret_status =
+				sap_signal_hdd_event(sap_ctx, csr_roam_info,
+						     eSAP_CHANNEL_CHANGE_RESP,
+						   (void *)eSAP_STATUS_FAILURE);
+		else
+			qdf_ret_status =
+				sap_signal_hdd_event(sap_ctx, csr_roam_info,
+						     eSAP_CHANNEL_CHANGE_RESP,
+						   (void *)QDF_STATUS_SUCCESS);
 		break;
 	case eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE:
 		/* This is much more serious issue, we have to vacate the

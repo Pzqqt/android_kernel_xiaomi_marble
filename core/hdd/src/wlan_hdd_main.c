@@ -2957,6 +2957,19 @@ static bool hdd_is_chan_switch_in_progress(void)
 	return false;
 }
 
+/**
+ * hdd_is_cac_in_progress() - Check if any SAP connection is performing
+ * CAC on DFS channel
+ *
+ * Return: true, if any of existing SAP is performing CAC
+ * or else false
+ */
+static bool hdd_is_cac_in_progress(void)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	return (hdd_ctx->dev_dfs_cac_status == DFS_CAC_IN_PROGRESS);
+}
 
 static void hdd_register_policy_manager_callback(
 			struct wlan_objmgr_psoc *psoc)
@@ -2975,6 +2988,8 @@ static void hdd_register_policy_manager_callback(
 		hdd_wapi_security_sta_exist;
 	hdd_cbacks.hdd_is_chan_switch_in_progress =
 				hdd_is_chan_switch_in_progress;
+	hdd_cbacks.hdd_is_cac_in_progress =
+				hdd_is_cac_in_progress;
 	hdd_cbacks.wlan_hdd_set_sap_csa_reason =
 				wlan_hdd_set_sap_csa_reason;
 

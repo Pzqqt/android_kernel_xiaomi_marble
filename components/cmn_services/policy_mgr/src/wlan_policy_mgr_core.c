@@ -1464,6 +1464,7 @@ void pm_dbs_opportunistic_timer_handler(void *data)
 	uint32_t session_id;
 	struct wlan_objmgr_psoc *psoc = (struct wlan_objmgr_psoc *)data;
 	enum policy_mgr_conn_update_reason reason;
+	struct policy_mgr_psoc_priv_obj *pm_ctx = policy_mgr_get_context(psoc);
 
 	if (!psoc) {
 		policy_mgr_err("Invalid Context");
@@ -1473,8 +1474,14 @@ void pm_dbs_opportunistic_timer_handler(void *data)
 	/* if we still need it */
 	action = policy_mgr_need_opportunistic_upgrade(psoc, &reason);
 	policy_mgr_debug("action:%d", action);
-	if (!action)
+	if (!action) {
 		return;
+	} else if (pm_ctx->hdd_cbacks.hdd_is_cac_in_progress &&
+		   pm_ctx->hdd_cbacks.hdd_is_cac_in_progress()) {
+		policy_mgr_debug("SAP is in CAC_IN_PROGRESS state, restarting");
+		policy_mgr_restart_opportunistic_timer(psoc, false);
+		return;
+	}
 	session_id = pm_get_vdev_id_of_first_conn_idx(psoc);
 	policy_mgr_next_actions(psoc, session_id, action,
 				reason);
