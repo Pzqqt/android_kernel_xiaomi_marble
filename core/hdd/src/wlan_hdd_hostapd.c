@@ -5700,10 +5700,10 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	/**
+	/*
 	 * In case of SSR and other FW down cases, validate context will
 	 * fail. But return success to upper layer so that it can clean up
-	 * kernal variables like beacon interval. If the failure status
+	 * kernel variables like beacon interval. If the failure status
 	 * is returned then next set beacon command will fail as beacon
 	 * interval in not reset.
 	 */
@@ -5712,16 +5712,18 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
-		return -EINVAL;
+		return 0;
 	}
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
 		hdd_err("Driver module is closed; dropping request");
-		return -EINVAL;
+		return 0;
 	}
 
-	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
-		return -EINVAL;
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id)) {
+		hdd_err("vdev is invalid. Hence return");
+		return 0;
+	}
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_STOP_AP,
@@ -5729,7 +5731,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	if (!(adapter->device_mode == QDF_SAP_MODE ||
 	      adapter->device_mode == QDF_P2P_GO_MODE)) {
-		return -EOPNOTSUPP;
+		hdd_err("stop ap is given on device modes other than SAP/GO. Hence return");
+		return 0;
 	}
 
 	/* Clear SOFTAP_INIT_DONE flag to mark stop_ap deinit. So that we do
