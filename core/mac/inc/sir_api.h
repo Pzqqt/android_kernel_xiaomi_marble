@@ -2025,12 +2025,12 @@ typedef struct {
 	uint32_t authentication;
 	uint8_t encryption;
 	uint8_t mcencryption;
+	tAniEdType gp_mgmt_cipher_suite;
 	uint8_t ChannelCount;
 	uint32_t chan_freq_cache[SIR_ROAM_MAX_CHANNELS];
 #ifdef WLAN_FEATURE_11W
 	bool mfp_enabled;
 #endif
-
 } tSirRoamNetworkType;
 
 typedef enum {

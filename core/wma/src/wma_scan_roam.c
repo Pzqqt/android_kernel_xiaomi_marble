@@ -874,6 +874,44 @@ A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr)
 	}
 }
 
+/* ToDo: Replace this with WMI inteface enum nce the
+ * interface changes are ready
+ */
+#define CIPHER_BIP_CMAC_128 0xc
+#define CIPHER_BIP_GMAC_128 0xd
+#define CIPHER_BIP_GMAC_256 0xe
+
+/**
+ * wma_convert_gp_mgmt_cipher_to_target_cipher_type() - map csr ani group mgmt
+ * enc type to RSN cipher
+ * @encr: CSR Encryption
+ *
+ * Map CSR's group management cipher type into RSN cipher types used by firmware
+ *
+ * Return: WMI RSN cipher
+ */
+static uint32_t
+wma_convert_gp_mgmt_cipher_to_target_cipher_type(tAniEdType cipher_type)
+{
+	switch (cipher_type) {
+	/* BIP-CMAC-128 (00:0f:ac: 0x06) */
+	case eSIR_ED_AES_128_CMAC:
+		return CIPHER_BIP_CMAC_128;
+
+	/* BIP-GMAC-128 (00:0f:ac: 0x0b) */
+	case eSIR_ED_AES_GMAC_128:
+		return CIPHER_BIP_GMAC_128;
+
+	/* BIP-GMAC-256(00:0f:ac: 0x0c)*/
+	case eSIR_ED_AES_GMAC_256:
+		return CIPHER_BIP_GMAC_256;
+
+	case eSIR_ED_NONE:
+	default:
+		return WMI_CIPHER_NONE;
+	}
+}
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wma_roam_scan_get_cckm_mode() - Get the CCKM auth mode
@@ -927,39 +965,47 @@ wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
 		profile->rsn_mcastcipherset = WMI_CIPHER_NONE;
 		profile->rsn_mcastmgmtcipherset = WMI_CIPHER_NONE;
 		profile->rssi_threshold = WMA_ROAM_RSSI_DIFF_DEFAULT;
-	} else {
-		profile->ssid.length =
-			roam_req->ConnectedNetwork.ssId.length;
-		qdf_mem_copy(profile->ssid.mac_ssid,
-			     roam_req->ConnectedNetwork.ssId.ssId,
-			     profile->ssid.length);
-		profile->rsn_authmode =
-			e_csr_auth_type_to_rsn_authmode(
-				roam_req->ConnectedNetwork.authentication,
-				roam_req->ConnectedNetwork.encryption);
-		rsn_authmode = profile->rsn_authmode;
 
-		if ((rsn_authmode == WMI_AUTH_CCKM_WPA) ||
-			(rsn_authmode == WMI_AUTH_CCKM_RSNA))
-			profile->rsn_authmode =
-				wma_roam_scan_get_cckm_mode(
-						roam_req, rsn_authmode);
-		profile->rsn_ucastcipherset =
-			e_csr_encryption_type_to_rsn_cipherset(
-					roam_req->ConnectedNetwork.encryption);
-		profile->rsn_mcastcipherset =
-			e_csr_encryption_type_to_rsn_cipherset(
-				roam_req->ConnectedNetwork.mcencryption);
-		profile->rsn_mcastmgmtcipherset =
-			profile->rsn_mcastcipherset;
-		profile->rssi_threshold = roam_req->RoamRssiDiff;
-		if (roam_req->rssi_abs_thresh)
-			profile->rssi_abs_thresh = roam_req->rssi_abs_thresh;
-#ifdef WLAN_FEATURE_11W
-		if (roam_req->ConnectedNetwork.mfp_enabled)
-			profile->flags |= WMI_AP_PROFILE_FLAG_PMF;
-#endif
+		return;
 	}
+
+	profile->ssid.length = roam_req->ConnectedNetwork.ssId.length;
+	qdf_mem_copy(profile->ssid.mac_ssid,
+		     roam_req->ConnectedNetwork.ssId.ssId,
+		     profile->ssid.length);
+	profile->rsn_authmode =
+		e_csr_auth_type_to_rsn_authmode(
+			roam_req->ConnectedNetwork.authentication,
+			roam_req->ConnectedNetwork.encryption);
+	rsn_authmode = profile->rsn_authmode;
+
+	if (rsn_authmode == WMI_AUTH_CCKM_WPA ||
+	    rsn_authmode == WMI_AUTH_CCKM_RSNA)
+		profile->rsn_authmode =
+			wma_roam_scan_get_cckm_mode(roam_req, rsn_authmode);
+
+	/* Pairwise cipher suite */
+	profile->rsn_ucastcipherset =
+		e_csr_encryption_type_to_rsn_cipherset(
+				roam_req->ConnectedNetwork.encryption);
+
+	/* Group cipher suite */
+	profile->rsn_mcastcipherset =
+		e_csr_encryption_type_to_rsn_cipherset(
+			roam_req->ConnectedNetwork.mcencryption);
+
+	/* Group management cipher suite */
+	profile->rsn_mcastmgmtcipherset =
+		wma_convert_gp_mgmt_cipher_to_target_cipher_type(
+			roam_req->ConnectedNetwork.gp_mgmt_cipher_suite);
+
+	profile->rssi_threshold = roam_req->RoamRssiDiff;
+	if (roam_req->rssi_abs_thresh)
+		profile->rssi_abs_thresh = roam_req->rssi_abs_thresh;
+#ifdef WLAN_FEATURE_11W
+	if (roam_req->ConnectedNetwork.mfp_enabled)
+		profile->flags |= WMI_AP_PROFILE_FLAG_PMF;
+#endif
 }
 
 /**
