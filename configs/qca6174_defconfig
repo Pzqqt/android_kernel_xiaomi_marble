@@ -709,7 +709,9 @@ endif
 CONFIG_SM_ENG_HIST := n
 
 #Enable Beacon Reception Stats
+ifeq ($(CONFIG_WLAN_SYSFS), y)
 CONFIG_FEATURE_BECN_STATS := y
+endif
 
 ifeq (y,$(findstring y,$(CONFIG_ARCH_MSM) $(CONFIG_ARCH_QCOM)))
 CONFIG_WLAN_FEATURE_DP_BUS_BANDWIDTH := y
