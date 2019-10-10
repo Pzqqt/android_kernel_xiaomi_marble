@@ -104,8 +104,7 @@ static int q6lsm_get_session_id_from_lsm_client(struct lsm_client *client)
 		if (lsm_session[n] == client)
 			return n;
 	}
-	pr_err("%s: cannot find matching lsm client. client = %pa\n",
-		__func__, client);
+	pr_err("%s: cannot find matching lsm client.\n", __func__);
 	return LSM_INVALID_SESSION_ID;
 }
 
