@@ -17775,6 +17775,13 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
 		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
 
+	/*
+	 * Reset the ptk, gtk status flags to avoid using old/previous
+	 * connection status.
+	 */
+	hdd_sta_ctx->conn_info.gtk_installed = false;
+	hdd_sta_ctx->conn_info.ptk_installed = false;
+
 	roam_profile = hdd_roam_profile(adapter);
 	if (roam_profile) {
 		struct hdd_station_ctx *sta_ctx;
