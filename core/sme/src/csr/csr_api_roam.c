@@ -19946,12 +19946,11 @@ void csr_release_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd)
 	}
 	qdf_mem_zero(&cmd_info,
 			sizeof(struct wlan_serialization_queued_cmd_info));
-
-	sme_debug("filled cmd_id = %d", sme_cmd->cmd_id);
 	cmd_info.cmd_id = sme_cmd->cmd_id;
 	cmd_info.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
 	cmd_info.cmd_type = csr_get_cmd_type(sme_cmd);
 	cmd_info.vdev = vdev;
+	sme_debug("cmd_id = %d type %d", sme_cmd->cmd_id, cmd_info.cmd_type);
 	qdf_mem_zero(&cmd, sizeof(struct wlan_serialization_command));
 	cmd.cmd_id = cmd_info.cmd_id;
 	cmd.cmd_type = cmd_info.cmd_type;
@@ -19960,11 +19959,13 @@ void csr_release_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd)
 				mac_ctx->psoc, &cmd)) {
 		sme_debug("Releasing active cmd_id[%d] cmd_type[%d]",
 				cmd_info.cmd_id, cmd_info.cmd_type);
+		cmd_info.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE;
 		wlan_serialization_remove_cmd(&cmd_info);
 	} else if (wlan_serialization_is_cmd_present_in_pending_queue(
 				mac_ctx->psoc, &cmd)) {
 		sme_debug("Releasing pending cmd_id[%d] cmd_type[%d]",
 				cmd_info.cmd_id, cmd_info.cmd_type);
+		cmd_info.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
 		wlan_serialization_cancel_request(&cmd_info);
 	} else {
 		sme_debug("can't find cmd_id[%d] cmd_type[%d]",
