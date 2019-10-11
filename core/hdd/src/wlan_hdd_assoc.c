@@ -3513,8 +3513,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			hdd_ctx->psoc);
 	} else {
 		bool connect_timeout = false;
-		/* do we need to change the HW mode */
-		policy_mgr_check_n_start_opportunistic_timer(hdd_ctx->psoc);
 		if (roam_info && roam_info->is_fils_connection &&
 		    eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE == roam_result)
 			qdf_copy_macaddr(&roam_info->bssid,
@@ -3663,12 +3661,13 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					   timeout_reason);
 		}
 
-		/* Check to change TDLS state in FW
-		 * as connection failed.
-		 */
 		if (roam_status == eCSR_ROAM_ASSOCIATION_FAILURE ||
 		    roam_status == eCSR_ROAM_CANCELLED) {
+			/* notify connect faiilure on final failure */
 			ucfg_tdls_notify_connect_failure(hdd_ctx->psoc);
+			/* do we need to change the HW mode on final failure */
+			policy_mgr_check_n_start_opportunistic_timer(
+								hdd_ctx->psoc);
 		}
 
 		/*
