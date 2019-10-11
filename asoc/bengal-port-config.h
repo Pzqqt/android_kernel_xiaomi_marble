@@ -37,7 +37,7 @@ static struct port_params tx_frame_params_default[SWR_MSTR_PORT_LEN] = {
 };
 
 static struct swr_mstr_port_map sm_port_map[] = {
-	{TX_MACRO, SWR_UC0, tx_frame_params_default},
+	{VA_MACRO, SWR_UC0, tx_frame_params_default},
 	{RX_MACRO, SWR_UC0, rx_frame_params_default},
 	{RX_MACRO, SWR_UC1, rx_frame_params_dsd},
 };
