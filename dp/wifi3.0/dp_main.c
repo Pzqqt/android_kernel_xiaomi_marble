@@ -144,6 +144,8 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap);
 static void dp_ppdu_ring_reset(struct dp_pdev *pdev);
 static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
+static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle,
+				bool unmap_only);
 #ifdef ENABLE_VERBOSE_DEBUG
 bool is_dp_verbose_debug_enabled;
 #endif
@@ -3773,6 +3775,46 @@ static void dp_pdev_mem_reset(struct dp_pdev *pdev)
 	qdf_mem_zero(dp_pdev_offset, len);
 }
 
+#ifdef WLAN_DP_PENDING_MEM_FLUSH
+/**
+ * dp_pdev_flush_pending_vdevs() - Flush all delete pending vdevs in pdev
+ * @pdev: Datapath PDEV handle
+ *
+ * This is the last chance to flush all pending dp vdevs/peers,
+ * some peer/vdev leak case like Non-SSR + peer unmap missing
+ * will be covered here.
+ *
+ * Return: None
+ */
+static void dp_pdev_flush_pending_vdevs(struct dp_pdev *pdev)
+{
+	struct dp_vdev *vdev = NULL;
+
+	while (true) {
+		qdf_spin_lock_bh(&pdev->vdev_list_lock);
+		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+			if (vdev->delete.pending)
+				break;
+		}
+		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+
+		/*
+		 * vdev will be freed when all peers get cleanup,
+		 * dp_delete_pending_vdev will remove vdev from vdev_list
+		 * in pdev.
+		 */
+		if (vdev)
+			dp_vdev_flush_peers((struct cdp_vdev *)vdev, 0);
+		else
+			break;
+	}
+}
+#else
+static void dp_pdev_flush_pending_vdevs(struct dp_pdev *pdev)
+{
+}
+#endif
+
 /**
  * dp_pdev_deinit() - Deinit txrx pdev
  * @txrx_pdev: Datapath PDEV handle
@@ -3797,6 +3839,8 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 	pdev->pdev_deinit = 1;
 
 	dp_wdi_event_detach(pdev);
+
+	dp_pdev_flush_pending_vdevs(pdev);
 
 	dp_tx_pdev_detach(pdev);
 
@@ -4814,10 +4858,10 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
  *
  * Return: void
  */
-static inline void dp_peer_flush_ast_entry(struct dp_soc *soc,
-					   struct dp_peer *peer,
-					   uint16_t peer_id,
-					   uint8_t vdev_id)
+static void dp_peer_flush_ast_entry(struct dp_soc *soc,
+				    struct dp_peer *peer,
+				    uint16_t peer_id,
+				    uint8_t vdev_id)
 {
 	struct dp_ast_entry *ase, *tmp_ase;
 
@@ -4846,7 +4890,9 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 	struct dp_soc *soc = pdev->soc;
 	struct dp_peer *peer;
 	uint16_t *peer_ids;
+	struct dp_peer **peer_array;
 	uint8_t i = 0, j = 0;
+	uint8_t m = 0, n = 0;
 
 	peer_ids = qdf_mem_malloc(soc->max_peers * sizeof(peer_ids[0]));
 	if (!peer_ids) {
@@ -4854,8 +4900,21 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 		return;
 	}
 
+	if (!unmap_only) {
+		peer_array = qdf_mem_malloc(
+				soc->max_peers * sizeof(struct dp_peer *));
+		if (!peer_array) {
+			qdf_mem_free(peer_ids);
+			dp_err("DP alloc failure - unable to flush peers");
+			return;
+		}
+	}
+
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+		if (!unmap_only && n < soc->max_peers)
+			peer_array[n++] = peer;
+
 		for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
 			if (peer->peer_ids[i] != HTT_INVALID_PEER)
 				if (j < soc->max_peers)
@@ -4863,25 +4922,35 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 	}
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
+	/*
+	 * If peer id is invalid, need to flush the peer if
+	 * peer valid flag is true, this is needed for NAN + SSR case.
+	 */
+	if (!unmap_only) {
+		for (m = 0; m < n ; m++) {
+			peer = peer_array[m];
+
+			dp_info("peer: %pM is getting deleted",
+				peer->mac_addr.raw);
+			/* only if peer valid is true */
+			if (peer->valid)
+				dp_peer_delete_wifi3(peer, 0);
+		}
+		qdf_mem_free(peer_array);
+	}
+
 	for (i = 0; i < j ; i++) {
 		peer = __dp_peer_find_by_id(soc, peer_ids[i]);
 
 		if (!peer)
 			continue;
 
-		dp_info("peer: %pM is getting flush",
+		dp_info("peer: %pM is getting unmap",
 			peer->mac_addr.raw);
 		/* free AST entries of peer */
 		dp_peer_flush_ast_entry(soc, peer,
 					peer_ids[i],
 					vdev->vdev_id);
-		/*
-		 * If peer flag valid is false, then dp_peer_delete_wifi3()
-		 * is already executed, skip doing it again to avoid
-		 * peer member invalid accessing.
-		 */
-		if (!unmap_only && peer->valid)
-			dp_peer_delete_wifi3(peer, 0);
 
 		dp_rx_peer_unmap_handler(soc, peer_ids[i],
 					 vdev->vdev_id,
@@ -4889,7 +4958,6 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 	}
 
 	qdf_mem_free(peer_ids);
-
 	dp_info("Flushed peers for vdev object %pK ", vdev);
 }
 
