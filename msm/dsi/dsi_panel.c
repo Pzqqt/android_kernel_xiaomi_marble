@@ -3646,6 +3646,14 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 			frame_threshold_us;
 	}
 
+	timing->mdp_transfer_time_us = timing->dsi_transfer_time_us;
+
+	/* Force update mdp xfer time to hal,if clk and mdp xfer time is set */
+	if (mode->priv_info->mdp_transfer_time_us && timing->clk_rate_hz) {
+		timing->mdp_transfer_time_us =
+			mode->priv_info->mdp_transfer_time_us;
+	}
+
 	/* Calculate pclk_khz to update modeinfo */
 	pclk_rate_hz = mult_frac(min_bitclk_hz, frame_time_us,
 			timing->dsi_transfer_time_us);

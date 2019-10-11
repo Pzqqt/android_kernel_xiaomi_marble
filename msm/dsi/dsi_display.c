@@ -5930,9 +5930,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 				display_mode.timing.min_dsi_clk_hz;
 
 			display_mode.priv_info->mdp_transfer_time_us =
-				display_mode.priv_info->dsi_transfer_time_us;
-			display_mode.timing.mdp_transfer_time_us =
-				display_mode.timing.dsi_transfer_time_us;
+				display_mode.timing.mdp_transfer_time_us;
 		}
 
 		is_split_link = host->split_link.split_link_enabled;
