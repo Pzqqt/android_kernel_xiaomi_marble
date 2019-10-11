@@ -17738,7 +17738,6 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	struct csr_roam_profile *roam_profile;
 	enum csr_akm_type rsn_auth_type;
 	struct sme_config_params *sme_config;
-	uint8_t channel = 0;
 	mac_handle_t mac_handle;
 	uint8_t wmm_mode = 0;
 	uint8_t value = 0;
@@ -18078,20 +18077,6 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 
 		roam_profile->ChannelInfo.freq_list = NULL;
 		roam_profile->ChannelInfo.numOfChannels = 0;
-
-		if ((QDF_STA_MODE == adapter->device_mode)
-			&& policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc)
-			&& !policy_mgr_is_hw_dbs_2x2_capable(
-			hdd_ctx->psoc)) {
-			policy_mgr_get_channel_from_scan_result(
-				hdd_ctx->psoc,
-				roam_profile, &channel);
-			hdd_info("Move to single MAC mode(optimization) if applicable");
-			if (channel)
-				policy_mgr_checkn_update_hw_mode_single_mac_mode(
-					hdd_ctx->psoc, channel);
-		}
-
 	} else {
 		hdd_err("No valid Roam profile");
 		status = -EINVAL;
