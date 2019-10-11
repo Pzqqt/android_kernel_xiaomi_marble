@@ -2354,7 +2354,7 @@ bool reg_is_6ghz_psc_chan_freq(uint16_t freq)
 	uint8_t count;
 
 	if (!REG_IS_6GHZ_FREQ(freq)) {
-		reg_err(" Channel frequency is not a 6GHz frequency");
+		reg_debug(" Channel frequency is not a 6GHz frequency");
 		return false;
 	}
 	for (count = 1; count <= NUM_PSC_FREQ; count++) {
@@ -2363,7 +2363,7 @@ bool reg_is_6ghz_psc_chan_freq(uint16_t freq)
 		    (FREQ_TO_CHAN_SCALE * NUM_80MHZ_BAND_IN_6G)))
 			return true;
 	}
-	reg_err(" Channel frequency is not a 6GHz PSC frequency");
+	reg_debug(" Channel frequency is not a 6GHz PSC frequency");
 
 	return false;
 }
