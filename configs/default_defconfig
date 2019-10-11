@@ -114,7 +114,7 @@ endif
 CONFIG_WLAN_FEATURE_MBSSID := y
 
 #Flag to enable Legacy Fast Roaming3(LFR3)
-ifneq ($(CONFIG_ARCH_SDX20), y)
+ifeq (y,$(findstring y,$(CONFIG_HELIUMPLUS) $(CONFIG_LITHIUM)))
 	CONFIG_QCACLD_WLAN_LFR3 := y
 else
 	CONFIG_QCACLD_WLAN_LFR2 := y
