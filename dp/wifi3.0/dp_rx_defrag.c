@@ -236,9 +236,8 @@ static void dp_rx_defrag_waitlist_add(struct dp_peer *peer, unsigned tid)
 	struct dp_soc *psoc = peer->vdev->pdev->soc;
 	struct dp_rx_tid *rx_reorder = &peer->rx_tid[tid];
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("Adding TID %u to waitlist for peer %pK"),
-		  tid, peer);
+	dp_info("Adding TID %u to waitlist for peer %pK at MAC address %pM",
+		tid, peer, peer->mac_addr.raw);
 
 	/* TODO: use LIST macros instead of TAIL macros */
 	qdf_spin_lock_bh(&psoc->rx.defrag.defrag_lock);
@@ -266,11 +265,12 @@ void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid)
 	struct dp_rx_tid *rx_reorder;
 	struct dp_rx_tid *tmp;
 
-	if (tid > DP_MAX_TIDS) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "TID out of bounds: %d", tid);
-		qdf_assert(0);
-		return;
+	dp_info("Removing TID %u to waitlist for peer %pK at MAC address %pM",
+		tid, peer, peer->mac_addr.raw);
+
+	if (tid >= DP_MAX_TIDS) {
+		dp_info("TID out of bounds: %d", tid);
+		qdf_assert_always(0);
 	}
 
 	qdf_spin_lock_bh(&soc->rx.defrag.defrag_lock);
@@ -1429,6 +1429,11 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			"Unknown peer, dropping the fragment");
 
 		goto discard_frag;
+	}
+
+	if (tid >= DP_MAX_TIDS) {
+		dp_info("TID out of bounds: %d", tid);
+		qdf_assert_always(0);
 	}
 
 	pdev = peer->vdev->pdev;

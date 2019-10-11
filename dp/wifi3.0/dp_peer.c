@@ -2298,12 +2298,12 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer, bool reuse)
 	int tid;
 	uint32_t tid_delete_mask = 0;
 
-	DP_TRACE(INFO_HIGH, FL("Remove tids for peer: %pK"), peer);
+	dp_info("Remove tids for peer: %pK", peer);
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
 		qdf_spin_lock_bh(&rx_tid->tid_lock);
-		if (!peer->bss_peer && peer->vdev->opmode != wlan_op_mode_sta) {
+		if (!peer->bss_peer || peer->vdev->opmode == wlan_op_mode_sta) {
 			/* Cleanup defrag related resource */
 			dp_rx_defrag_waitlist_remove(peer, tid);
 			dp_rx_reorder_flush_frag(peer, tid);
