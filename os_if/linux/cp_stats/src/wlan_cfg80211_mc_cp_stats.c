@@ -43,8 +43,12 @@ static void wlan_cfg80211_mc_cp_stats_dealloc(void *priv)
 {
 	struct stats_event *stats = priv;
 
-	if (!stats)
+	osif_debug("Enter");
+
+	if (!stats) {
+		osif_err("stats is NULL");
 		return;
+	}
 
 	qdf_mem_free(stats->pdev_stats);
 	qdf_mem_free(stats->peer_stats);
@@ -52,6 +56,7 @@ static void wlan_cfg80211_mc_cp_stats_dealloc(void *priv)
 	qdf_mem_free(stats->vdev_summary_stats);
 	qdf_mem_free(stats->vdev_chain_rssi);
 	qdf_mem_free(stats->peer_adv_stats);
+	osif_debug("Exit");
 }
 
 /**
@@ -424,6 +429,8 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 	struct osif_request *request;
 	uint32_t summary_size, rssi_size, peer_adv_size;
 
+	osif_debug("Enter");
+
 	request = osif_request_get(cookie);
 	if (!request) {
 		osif_err("Obsolete request");
@@ -471,6 +478,8 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 station_stats_cb_fail:
 	osif_request_complete(request);
 	osif_request_put(request);
+
+	osif_debug("Exit");
 }
 
 struct stats_event *
@@ -488,6 +497,8 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 		.timeout_ms = 2 * CP_STATS_WAIT_TIME_STAT,
 		.dealloc = wlan_cfg80211_mc_cp_stats_dealloc,
 	};
+
+	osif_debug("Enter");
 
 	out = qdf_mem_malloc(sizeof(*out));
 	if (!out) {
@@ -557,11 +568,15 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 	priv->peer_adv_stats = NULL;
 	osif_request_put(request);
 
+	osif_debug("Exit");
+
 	return out;
 
 get_station_stats_fail:
 	osif_request_put(request);
 	wlan_cfg80211_mc_cp_stats_free_stats_event(out);
+
+	osif_debug("Exit");
 
 	return NULL;
 }
