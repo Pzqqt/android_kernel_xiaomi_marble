@@ -3057,7 +3057,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	{
 		WE_SET_THERMAL_THROTTLE_CFG,
 		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
-		0, "setThermalCfg"
+		0, "set_thermal_cfg"
 	}
 	,
 #endif /* FW_THERMAL_THROTTLE_SUPPORT */
