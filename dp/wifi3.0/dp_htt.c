@@ -1926,7 +1926,7 @@ void htt_t2h_stats_handler(void *context)
 	uint32_t *msg_word;
 	qdf_nbuf_t htt_msg = NULL;
 	uint8_t done;
-	uint8_t rem_stats;
+	uint32_t rem_stats;
 
 	if (!soc || !qdf_atomic_read(&soc->cmn_init_done)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -1959,10 +1959,14 @@ void htt_t2h_stats_handler(void *context)
 	rem_stats = --soc->htt_stats.num_stats;
 	qdf_spin_unlock_bh(&soc->htt_stats.lock);
 
-	dp_process_htt_stat_msg(&htt_stats, soc);
-	/* If there are more stats to process, schedule stats work again */
+	/* If there are more stats to process, schedule stats work again.
+	 * Scheduling prior to processing ht_stats to queue with early
+	 * index
+	 */
 	if (rem_stats)
 		qdf_sched_work(0, &soc->htt_stats.work);
+
+	dp_process_htt_stat_msg(&htt_stats, soc);
 }
 
 /*
