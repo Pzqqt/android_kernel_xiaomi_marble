@@ -49,7 +49,7 @@
 #include "sde_reg_dma.h"
 #include "sde_connector.h"
 
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 #include "soc/qcom/secure_buffer.h"
 #include <linux/qtee_shmbridge.h>
 
@@ -273,14 +273,14 @@ static int _sde_kms_secure_ctrl_xin_clients(struct sde_kms *sde_kms,
 static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 {
 	struct drm_device *dev;
-	struct scm_desc desc = {0};
 	uint32_t num_sids;
 	uint32_t *sec_sid;
-	uint32_t mem_protect_sd_ctrl_id = MEM_PROTECT_SD_CTRL_SWITCH;
 	struct sde_mdss_cfg *sde_cfg = sde_kms->catalog;
 	int ret = 0, i;
 	struct qtee_shm shm;
 	bool qtee_en = qtee_shmbridge_is_enabled();
+	phys_addr_t mem_addr;
+	u64 mem_size;
 
 	dev = sde_kms->dev;
 
@@ -297,20 +297,16 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 			return -ENOMEM;
 
 		sec_sid = (uint32_t *) shm.vaddr;
-		desc.args[1] = shm.paddr;
-		desc.args[2] = shm.size;
+		mem_addr = shm.paddr;
+		mem_size = shm.size;
 	} else {
 		sec_sid = kcalloc(num_sids, sizeof(uint32_t), GFP_KERNEL);
 		if (!sec_sid)
 			return -ENOMEM;
 
-		desc.args[1] = SCM_BUFFER_PHYS(sec_sid);
-		desc.args[2] = sizeof(uint32_t) * num_sids;
+		mem_addr = virt_to_phys(sec_sid);
+		mem_size = sizeof(uint32_t) * num_sids;
 	}
-
-	desc.arginfo = SCM_ARGS(4, SCM_VAL, SCM_RW, SCM_VAL, SCM_VAL);
-	desc.args[0] = MDP_DEVICE_ID;
-	desc.args[3] =  vmid;
 
 	for (i = 0; i < num_sids; i++) {
 		sec_sid[i] = sde_cfg->sec_sid_mask[i];
@@ -322,13 +318,13 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 	SDE_DEBUG("calling scm_call for vmid 0x%x, num_sids %d, qtee_en %d",
 				vmid, num_sids, qtee_en);
 
-	ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				mem_protect_sd_ctrl_id), &desc);
+	ret = qcom_scm_mem_protect_sd_ctrl(MDP_DEVICE_ID, mem_addr,
+				mem_size, vmid);
 	if (ret)
 		SDE_ERROR("Error:scm_call2, vmid %lld, ret%d\n",
-				desc.args[3], ret);
-	SDE_EVT32(mem_protect_sd_ctrl_id, desc.args[0], desc.args[2],
-			desc.args[3], qtee_en, num_sids, ret);
+				vmid, ret);
+	SDE_EVT32(MEM_PROTECT_SD_CTRL_SWITCH, MDP_DEVICE_ID, mem_size,
+			vmid, qtee_en, num_sids, ret);
 
 	if (qtee_en)
 		qtee_shmbridge_free_shm(&shm);

@@ -6,8 +6,6 @@
 #ifndef __SDE_HDCP_H__
 #define __SDE_HDCP_H__
 
-#include <soc/qcom/scm.h>
-
 #include <linux/types.h>
 #include <linux/bitops.h>
 #include <linux/debugfs.h>
