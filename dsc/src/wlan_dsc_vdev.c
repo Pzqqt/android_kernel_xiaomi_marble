@@ -115,11 +115,11 @@ void dsc_vdev_destroy(struct dsc_vdev **out_vdev)
  * This function checks if the vdev transition can occur or not by checking if
  * any other down the tree/up the tree transition/operation is taking place.
  *
- * If there are any driver transition taking place, then the vdev trans/ops
+ * If there are any driver/psoc transition taking place, then the vdev trans/ops
  * should be rejected and not queued in the DSC queue. Return QDF_STATUS_E_INVAL
  * in this case.
  *
- * If there any psoc or vdev trans/ops is taking place, then the vdev trans/ops
+ * If there are any vdev trans/ops taking place, then the vdev trans/ops
  * should be rejected and queued in the DSC queue so that it may be resumed
  * after the current trans/ops is completed. Return QDF_STATUS_E_AGAIN in this
  * case.
@@ -128,11 +128,11 @@ void dsc_vdev_destroy(struct dsc_vdev **out_vdev)
  */
 static QDF_STATUS __dsc_vdev_can_trans(struct dsc_vdev *vdev)
 {
-	if (__dsc_trans_active_or_queued(&vdev->psoc->driver->trans))
+	if (__dsc_trans_active_or_queued(&vdev->psoc->driver->trans) ||
+	    __dsc_trans_active_or_queued(&vdev->psoc->trans))
 		return QDF_STATUS_E_INVAL;
 
-	if (__dsc_trans_active_or_queued(&vdev->psoc->trans) ||
-	    __dsc_trans_active_or_queued(&vdev->trans))
+	if (__dsc_trans_active_or_queued(&vdev->trans))
 		return QDF_STATUS_E_AGAIN;
 
 	return QDF_STATUS_SUCCESS;

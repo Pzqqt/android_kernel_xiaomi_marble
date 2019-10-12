@@ -264,8 +264,8 @@ static uint32_t dsc_test_psoc_trans_blocks(void)
 
 	/* ... children vdev trans/ops to fail */
 	dsc_for_each_psoc_vdev(psoc, vdev) {
-		action_expect(vdev, trans, QDF_STATUS_E_AGAIN, errors);
-		action_expect(vdev, op, QDF_STATUS_E_AGAIN, errors);
+		action_expect(vdev, trans, QDF_STATUS_E_INVAL, errors);
+		action_expect(vdev, op, QDF_STATUS_E_INVAL, errors);
 	}
 
 	/* a sibling psoc in transition should succeed and cause ... */
@@ -282,8 +282,8 @@ static uint32_t dsc_test_psoc_trans_blocks(void)
 
 	/* ... children vdev trans/ops to fail */
 	dsc_for_each_psoc_vdev(psoc, vdev) {
-		action_expect(vdev, trans, QDF_STATUS_E_AGAIN, errors);
-		action_expect(vdev, op, QDF_STATUS_E_AGAIN, errors);
+		action_expect(vdev, trans, QDF_STATUS_E_INVAL, errors);
+		action_expect(vdev, op, QDF_STATUS_E_INVAL, errors);
 	}
 
 	/* teardown */
