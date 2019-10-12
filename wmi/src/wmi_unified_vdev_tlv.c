@@ -317,6 +317,10 @@ static QDF_STATUS extract_tbttoffset_update_params_tlv(
 		return QDF_STATUS_E_INVAL;
 	tbtt_param->tbttoffset =
 		param_buf->tbttoffset_list[tbtt_param->vdev_id];
+	tbtt_param->vdev_tbtt_qtime_lo =
+		param_buf->tbtt_qtime_low_us_list[tbtt_param->vdev_id];
+	tbtt_param->vdev_tbtt_qtime_hi =
+		param_buf->tbtt_qtime_high_us_list[tbtt_param->vdev_id];
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -338,6 +342,8 @@ static QDF_STATUS extract_ext_tbttoffset_update_params_tlv(
 
 	tbtt_param->vdev_id = tbtt_offset_info->vdev_id;
 	tbtt_param->tbttoffset = tbtt_offset_info->tbttoffset;
+	tbtt_param->vdev_tbtt_qtime_lo = tbtt_offset_info->tbtt_qtime_low_us;
+	tbtt_param->vdev_tbtt_qtime_hi = tbtt_offset_info->tbtt_qtime_high_us;
 
 	return QDF_STATUS_SUCCESS;
 }

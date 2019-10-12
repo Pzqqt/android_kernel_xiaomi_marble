@@ -123,10 +123,14 @@ struct sta_ps_params {
  * struct tbttoffset_params - Tbttoffset event params
  * @vdev_id: Virtual AP device identifier
  * @tbttoffset : Tbttoffset for the virtual AP device
+ * @vdev_tbtt_qtime_lo: Tbtt qtime low value
+ * @vdev_tbtt_qtime_hi: Tbtt qtime high value
  */
 struct tbttoffset_params {
 	uint32_t vdev_id;
 	uint32_t tbttoffset;
+	uint32_t vdev_tbtt_qtime_lo;
+	uint32_t vdev_tbtt_qtime_hi;
 };
 
 /**
