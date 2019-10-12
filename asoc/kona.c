@@ -55,6 +55,14 @@
 #define SAMPLING_RATE_352P8KHZ  352800
 #define SAMPLING_RATE_384KHZ    384000
 
+#define IS_FRACTIONAL(x) \
+((x == SAMPLING_RATE_11P025KHZ) || (x == SAMPLING_RATE_22P05KHZ) || \
+(x == SAMPLING_RATE_44P1KHZ) || (x == SAMPLING_RATE_88P2KHZ) || \
+(x == SAMPLING_RATE_176P4KHZ) || (x == SAMPLING_RATE_352P8KHZ))
+
+#define IS_MSM_INTERFACE_MI2S(x) \
+((x == PRIM_MI2S) || (x == SEC_MI2S) || (x == TERT_MI2S))
+
 #define WCD9XXX_MBHC_DEF_RLOADS     5
 #define WCD9XXX_MBHC_DEF_BUTTONS    8
 #define CODEC_EXT_CLK_RATE          9600000
@@ -179,6 +187,8 @@ struct msm_asoc_mach_data {
 	struct device_node *hph_en0_gpio_p; /* used by pinctrl API */
 	bool is_afe_config_done;
 	struct device_node *fsa_handle;
+	struct clk *lpass_audio_hw_vote;
+	int core_audio_vote_count;
 };
 
 struct tdm_port {
@@ -675,7 +685,9 @@ static char const *tdm_ch_text[] = {"One", "Two", "Three", "Four",
 static const char *const auxpcm_rate_text[] = {"KHZ_8", "KHZ_16"};
 static char const *mi2s_rate_text[] = {"KHZ_8", "KHZ_11P025", "KHZ_16",
 				      "KHZ_22P05", "KHZ_32", "KHZ_44P1",
-				      "KHZ_48", "KHZ_96", "KHZ_192"};
+				      "KHZ_48", "KHZ_88P2", "KHZ_96",
+				      "KHZ_176P4", "KHZ_192","KHZ_352P8",
+				      "KHZ_384"};
 static const char *const mi2s_ch_text[] = {"One", "Two", "Three", "Four",
 					   "Five", "Six", "Seven",
 					   "Eight"};
@@ -2320,10 +2332,22 @@ static int mi2s_get_sample_rate(int value)
 		sample_rate = SAMPLING_RATE_48KHZ;
 		break;
 	case 7:
-		sample_rate = SAMPLING_RATE_96KHZ;
+		sample_rate = SAMPLING_RATE_88P2KHZ;
 		break;
 	case 8:
+		sample_rate = SAMPLING_RATE_96KHZ;
+		break;
+	case 9:
+		sample_rate = SAMPLING_RATE_176P4KHZ;
+		break;
+	case 10:
 		sample_rate = SAMPLING_RATE_192KHZ;
+		break;
+	case 11:
+		sample_rate = SAMPLING_RATE_352P8KHZ;
+		break;
+	case 12:
+		sample_rate = SAMPLING_RATE_384KHZ;
 		break;
 	default:
 		sample_rate = SAMPLING_RATE_48KHZ;
@@ -2358,11 +2382,23 @@ static int mi2s_get_sample_rate_val(int sample_rate)
 	case SAMPLING_RATE_48KHZ:
 		sample_rate_val = 6;
 		break;
-	case SAMPLING_RATE_96KHZ:
+	case SAMPLING_RATE_88P2KHZ:
 		sample_rate_val = 7;
 		break;
-	case SAMPLING_RATE_192KHZ:
+	case SAMPLING_RATE_96KHZ:
 		sample_rate_val = 8;
+		break;
+	case SAMPLING_RATE_176P4KHZ:
+		sample_rate_val = 9;
+		break;
+	case SAMPLING_RATE_192KHZ:
+		sample_rate_val = 10;
+		break;
+	case SAMPLING_RATE_352P8KHZ:
+		sample_rate_val = 11;
+		break;
+	case SAMPLING_RATE_384KHZ:
+		sample_rate_val = 12;
 		break;
 	default:
 		sample_rate_val = 6;
@@ -4876,6 +4912,39 @@ static int msm_fe_qos_prepare(struct snd_pcm_substream *substream)
 	return 0;
 }
 
+void mi2s_disable_audio_vote(struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
+	int index = cpu_dai->id;
+	struct snd_soc_card *card = rtd->card;
+	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+	int sample_rate = 0;
+
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		sample_rate = mi2s_rx_cfg[index].sample_rate;
+	} else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
+		sample_rate = mi2s_tx_cfg[index].sample_rate;
+	} else {
+		pr_err("%s: invalid stream %d\n", __func__, substream->stream);
+		return;
+	}
+
+	if (IS_MSM_INTERFACE_MI2S(index) && IS_FRACTIONAL(sample_rate)) {
+		if (pdata->lpass_audio_hw_vote != NULL) {
+			if (--pdata->core_audio_vote_count == 0) {
+				clk_disable_unprepare(
+					pdata->lpass_audio_hw_vote);
+			} else if (pdata->core_audio_vote_count < 0) {
+				pr_err("%s: audio vote mismatch\n", __func__);
+				pdata->core_audio_vote_count = 0;
+			}
+		} else {
+			pr_err("%s: Invalid lpass audio hw node\n", __func__);
+		}
+	}
+}
+
 static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
@@ -4885,6 +4954,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+	int sample_rate = 0;
 
 	dev_dbg(rtd->card->dev,
 		"%s: substream = %s  stream = %d, dai name %s, dai ID %d\n",
@@ -4904,6 +4974,34 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	 * that the same clock won't be enable twice.
 	 */
 	mutex_lock(&mi2s_intf_conf[index].lock);
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		sample_rate = mi2s_rx_cfg[index].sample_rate;
+	} else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
+		sample_rate = mi2s_tx_cfg[index].sample_rate;
+	} else {
+		pr_err("%s: invalid stream %d\n", __func__, substream->stream);
+		ret = -EINVAL;
+		goto vote_err;
+	}
+
+	if (IS_MSM_INTERFACE_MI2S(index) && IS_FRACTIONAL(sample_rate)) {
+		if (pdata->lpass_audio_hw_vote == NULL) {
+			dev_err(rtd->card->dev, "%s: Invalid lpass audio hw node\n",
+				__func__);
+			ret = -EINVAL;
+			goto vote_err;
+		}
+		if (pdata->core_audio_vote_count == 0) {
+			ret = clk_prepare_enable(pdata->lpass_audio_hw_vote);
+			if (ret < 0) {
+				dev_err(rtd->card->dev, "%s: audio vote error\n",
+					__func__);
+				goto vote_err;
+			}
+		}
+		pdata->core_audio_vote_count++;
+	}
+
 	if (++mi2s_intf_conf[index].ref_cnt == 1) {
 		/* Check if msm needs to provide the clock to the interface */
 		if (!mi2s_intf_conf[index].msm_is_mi2s_master) {
@@ -4942,8 +5040,11 @@ clk_off:
 	if (ret < 0)
 		msm_mi2s_set_sclk(substream, false);
 clean_up:
-	if (ret < 0)
+	if (ret < 0) {
 		mi2s_intf_conf[index].ref_cnt--;
+		mi2s_disable_audio_vote(substream);
+	}
+vote_err:
 	mutex_unlock(&mi2s_intf_conf[index].lock);
 err:
 	return ret;
@@ -4983,6 +5084,7 @@ static void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 			pr_err("%s:clock disable failed for MI2S (%d); ret=%d\n",
 				__func__, index, ret);
 	}
+	mi2s_disable_audio_vote(substream);
 	mutex_unlock(&mi2s_intf_conf[index].lock);
 }
 
@@ -7897,6 +7999,7 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	const char *mbhc_audio_jack_type = NULL;
 	int ret = 0;
 	uint index = 0;
+	struct clk *lpass_audio_hw_vote = NULL;
 
 	if (!pdev->dev.of_node) {
 		dev_err(&pdev->dev, "%s: No platform supplied from device tree\n", __func__);
@@ -8054,6 +8157,18 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 					"qcom,sen-mi2s-gpios", 0);
 	for (index = PRIM_MI2S; index < MI2S_MAX; index++)
 		atomic_set(&(pdata->mi2s_gpio_ref_count[index]), 0);
+
+	/* Register LPASS audio hw vote */
+	lpass_audio_hw_vote = devm_clk_get(&pdev->dev, "lpass_audio_hw_vote");
+	if (IS_ERR(lpass_audio_hw_vote)) {
+		ret = PTR_ERR(lpass_audio_hw_vote);
+		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
+			__func__, "lpass_audio_hw_vote", ret);
+		lpass_audio_hw_vote = NULL;
+		ret = 0;
+	}
+	pdata->lpass_audio_hw_vote = lpass_audio_hw_vote;
+	pdata->core_audio_vote_count = 0;
 
 	ret = msm_audio_ssr_register(&pdev->dev);
 	if (ret)
