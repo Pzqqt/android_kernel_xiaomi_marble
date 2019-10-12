@@ -3091,27 +3091,97 @@ QDF_STATUS wma_lro_config_cmd(void *handle,
 						&wmi_lro_cmd);
 }
 
+void wma_delete_invalid_peer_entries(uint8_t vdev_id, uint8_t *peer_mac_addr)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	uint8_t i;
+	struct wma_txrx_node *iface;
+
+	if (!wma) {
+		wma_err("wma handle is NULL");
+		return;
+	}
+
+	iface = &wma->interfaces[vdev_id];
+
+	if (peer_mac_addr) {
+		for (i = 0; i < INVALID_PEER_MAX_NUM; i++) {
+			if (qdf_mem_cmp
+				      (iface->invalid_peers[i].rx_macaddr,
+				      peer_mac_addr,
+				      QDF_MAC_ADDR_SIZE) == 0) {
+				qdf_mem_zero(iface->invalid_peers[i].rx_macaddr,
+					     sizeof(QDF_MAC_ADDR_SIZE));
+				break;
+			}
+		}
+		if (i == INVALID_PEER_MAX_NUM)
+			wma_debug("peer_mac_addr %pM is not found", peer_mac_addr);
+	} else {
+		qdf_mem_zero(iface->invalid_peers,
+			     sizeof(iface->invalid_peers));
+	}
+}
+
 uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 {
 	struct ol_rx_inv_peer_params *rx_inv_msg;
 	struct ieee80211_frame *wh_l = (struct ieee80211_frame *)wh;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	uint8_t i, index;
+	bool invalid_peer_found = false;
+	struct wma_txrx_node *iface;
 
+	if (!wma) {
+		wma_err("wma handle is NULL");
+		return -EINVAL;
+	}
+
+	iface = &wma->interfaces[vdev_id];
 	rx_inv_msg = qdf_mem_malloc(sizeof(struct ol_rx_inv_peer_params));
 	if (!rx_inv_msg)
 		return -ENOMEM;
 
+	index = iface->invalid_peer_idx;
 	rx_inv_msg->vdev_id = vdev_id;
 	qdf_mem_copy(rx_inv_msg->ra, wh_l->i_addr1, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(rx_inv_msg->ta, wh_l->i_addr2, QDF_MAC_ADDR_SIZE);
 
-	WMA_LOGD("%s: vdev_id %d", __func__, vdev_id);
-	wma_debug("RA:"QDF_MAC_ADDR_STR,
-		  QDF_MAC_ADDR_ARRAY(rx_inv_msg->ra));
-	wma_debug("TA:"QDF_MAC_ADDR_STR,
-		  QDF_MAC_ADDR_ARRAY(rx_inv_msg->ta));
 
-	wma_send_msg(wma, SIR_LIM_RX_INVALID_PEER, (void *)rx_inv_msg, 0);
+	for (i = 0; i < INVALID_PEER_MAX_NUM; i++) {
+		if (qdf_mem_cmp
+			      (iface->invalid_peers[i].rx_macaddr,
+			      rx_inv_msg->ra,
+			      QDF_MAC_ADDR_SIZE) == 0) {
+			invalid_peer_found = true;
+			break;
+		}
+	}
+
+	if (!invalid_peer_found) {
+		qdf_mem_copy(iface->invalid_peers[index].rx_macaddr,
+			     rx_inv_msg->ra,
+			    QDF_MAC_ADDR_SIZE);
+
+		/* reset count if reached max */
+		iface->invalid_peer_idx =
+			(index + 1) % INVALID_PEER_MAX_NUM;
+
+		/* send deauth */
+		WMA_LOGD("%s: vdev_id %d", __func__, vdev_id);
+		wma_debug(" RA: " QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_ARRAY(rx_inv_msg->ra));
+		wma_debug(" TA: " QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_ARRAY(rx_inv_msg->ta));
+
+		wma_send_msg(wma,
+			     SIR_LIM_RX_INVALID_PEER,
+			     (void *)rx_inv_msg, 0);
+	} else {
+		wma_debug_rl("Ignore invalid peer indication as received more than once "
+			QDF_MAC_ADDR_STR,
+			QDF_MAC_ADDR_ARRAY(rx_inv_msg->ra));
+	}
 
 	return 0;
 }

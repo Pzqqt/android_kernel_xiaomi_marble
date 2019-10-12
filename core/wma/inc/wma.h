@@ -90,6 +90,7 @@
 #define wma_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_WMA, params)
 #define wma_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_WMA, params)
 #define wma_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_WMA, params)
+#define wma_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_WMA, params)
 #define wma_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_WMA, params)
 
 #define wma_nofl_alert(params...) \
@@ -672,6 +673,16 @@ struct roam_synch_frame_ind {
 	uint8_t *reassoc_rsp;
 };
 
+/* Max number of invalid peer entries */
+#define INVALID_PEER_MAX_NUM 5
+
+/**
+ * struct wma_invalid_peer_params - stores invalid peer entries
+ * @rx_macaddr: store mac addr of invalid peer
+ */
+struct wma_invalid_peer_params {
+	uint8_t rx_macaddr[QDF_MAC_ADDR_SIZE];
+};
 
 /**
  * struct wma_txrx_node - txrx node
@@ -725,7 +736,8 @@ struct roam_synch_frame_ind {
  * @vdev_set_key_runtime_wakelock: runtime pm wakelock for set key
  * @ch_freq: channel frequency
  * @roam_scan_stats_req: cached roam scan stats request
- *
+ * @wma_invalid_peer_params: structure storing invalid peer params
+ * @invalid_peer_idx: invalid peer index
  * It stores parameters per vdev in wma.
  */
 struct wma_txrx_node {
@@ -785,6 +797,8 @@ struct wma_txrx_node {
 	bool is_waiting_for_key;
 	uint32_t ch_freq;
 	struct sir_roam_scan_stats *roam_scan_stats_req;
+	struct wma_invalid_peer_params invalid_peers[INVALID_PEER_MAX_NUM];
+	uint8_t invalid_peer_idx;
 };
 
 /**
@@ -2434,7 +2448,16 @@ void wma_check_and_set_wake_timer(uint32_t time);
 #endif
 
 /**
- * wma_rx_invalid_peer_ind(): the callback for DP to notify WMA layer
+ * wma_delete_invalid_peer_entries() - Delete invalid peer entries stored
+ * @vdev_id: virtual interface id
+ * @peer_mac_addr: Peer MAC address
+ *
+ * Removes the invalid peer mac entry from wma node
+ */
+void wma_delete_invalid_peer_entries(uint8_t vdev_id, uint8_t *peer_mac_addr);
+
+/**
+ * wma_rx_invalid_peer_ind() - the callback for DP to notify WMA layer
  * invalid peer data is received, this function will send message to
  * lim module.
  * @vdev_id: virtual device ID
