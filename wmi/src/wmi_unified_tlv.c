@@ -60,6 +60,11 @@
 #ifdef WMI_AP_SUPPORT
 #include "wmi_unified_ap_api.h"
 #endif
+
+#ifdef WLAN_CFR_ENABLE
+#include "wmi_unified_cfr_api.h"
+#endif
+
 #include <wmi_unified_vdev_api.h>
 #include <wmi_unified_vdev_tlv.h>
 
@@ -12009,52 +12014,6 @@ static QDF_STATUS extract_single_phyerr_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_CFR_ENABLE
-/**
- * send_peer_cfr_capture_cmd_tlv() - configure cfr params in fw
- * @wmi_handle: wmi handle
- * @param: pointer to hold peer cfr config parameter
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS send_peer_cfr_capture_cmd_tlv(wmi_unified_t wmi_handle,
-						struct peer_cfr_params *param)
-{
-	wmi_peer_cfr_capture_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int len = sizeof(*cmd);
-	int ret;
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	cmd = (wmi_peer_cfr_capture_cmd_fixed_param *)wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_peer_cfr_capture_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-		       (wmi_peer_cfr_capture_cmd_fixed_param));
-
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->macaddr, &cmd->mac_addr);
-	cmd->request = param->request;
-	cmd->vdev_id = param->vdev_id;
-	cmd->periodicity = param->periodicity;
-	cmd->bandwidth = param->bandwidth;
-	cmd->capture_method = param->capture_method;
-
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				   WMI_PEER_CFR_CAPTURE_CMDID);
-	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_PEER_CFR_CAPTURE_CMDID");
-		wmi_buf_free(buf);
-	}
-
-	return ret;
-}
-#endif /* WLAN_CFR_ENABLE */
-
 /**
  * extract_esp_estimation_ev_param_tlv() - extract air time from event
  * @wmi_handle: wmi handle
@@ -12304,75 +12263,6 @@ send_vdev_fils_enable_cmd_send(struct wmi_unified *wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-
-#ifdef WLAN_CFR_ENABLE
-/**
- * extract_cfr_peer_tx_event_param_tlv() - Extract peer cfr tx event params
- * @wmi_handle: wmi handle
- * @event_buf: pointer to event buffer
- * @peer_tx_event: Pointer to hold peer cfr tx event params
- *
- * Return QDF_STATUS_SUCCESS on success or proper error code.
- */
-static QDF_STATUS
-extract_cfr_peer_tx_event_param_tlv(wmi_unified_t wmi_handle, void *evt_buf,
-				    wmi_cfr_peer_tx_event_param *peer_tx_event)
-{
-	int idx;
-	WMI_PEER_CFR_CAPTURE_EVENTID_param_tlvs *param_buf;
-	wmi_peer_cfr_capture_event_fixed_param *peer_tx_event_ev;
-	wmi_peer_cfr_capture_event_phase_fixed_param *chain_phase_ev;
-
-	param_buf = (WMI_PEER_CFR_CAPTURE_EVENTID_param_tlvs *)evt_buf;
-	if (!param_buf) {
-		WMI_LOGE("Invalid cfr capture buffer");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	peer_tx_event_ev = param_buf->fixed_param;
-	if (!peer_tx_event_ev) {
-		qdf_err("peer cfr capture buffer is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	peer_tx_event->capture_method = peer_tx_event_ev->capture_method;
-	peer_tx_event->vdev_id = peer_tx_event_ev->vdev_id;
-	WMI_MAC_ADDR_TO_CHAR_ARRAY(&peer_tx_event_ev->mac_addr,
-				   &peer_tx_event->peer_mac_addr.bytes[0]);
-	peer_tx_event->primary_20mhz_chan =
-		peer_tx_event_ev->chan_mhz;
-	peer_tx_event->bandwidth = peer_tx_event_ev->bandwidth;
-	peer_tx_event->phy_mode = peer_tx_event_ev->phy_mode;
-	peer_tx_event->band_center_freq1 = peer_tx_event_ev->band_center_freq1;
-	peer_tx_event->band_center_freq2 = peer_tx_event_ev->band_center_freq2;
-	peer_tx_event->spatial_streams = peer_tx_event_ev->sts_count;
-	peer_tx_event->correlation_info_1 =
-		peer_tx_event_ev->correlation_info_1;
-	peer_tx_event->correlation_info_2 =
-		peer_tx_event_ev->correlation_info_2;
-	peer_tx_event->status = peer_tx_event_ev->status;
-	peer_tx_event->timestamp_us = peer_tx_event_ev->timestamp_us;
-	peer_tx_event->counter = peer_tx_event_ev->counter;
-	qdf_mem_copy(peer_tx_event->chain_rssi, peer_tx_event_ev->chain_rssi,
-		     sizeof(peer_tx_event->chain_rssi));
-
-	chain_phase_ev = param_buf->phase_param;
-	if (chain_phase_ev) {
-		for (idx = 0; idx < WMI_HOST_MAX_CHAINS; idx++) {
-			/* Due to FW's alignment rules, phase information being
-			 * passed is 32-bit, out of which only 16 bits is valid.
-			 * Remaining bits are all zeroed. So direct mem copy
-			 * will not work as it will copy extra zeroes into host
-			 * structures.
-			 */
-			peer_tx_event->chain_phase[idx] =
-				(0xffff & chain_phase_ev->chain_phase[idx]);
-		}
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* WLAN_CFR_ENABLE */
 
 #ifdef WLAN_MWS_INFO_DEBUGFS
 /**
@@ -13161,11 +13051,6 @@ struct wmi_ops tlv_ops =  {
 	.extract_offload_bcn_tx_status_evt = extract_offload_bcn_tx_status_evt,
 	.extract_ctl_failsafe_check_ev_param =
 		extract_ctl_failsafe_check_ev_param_tlv,
-#ifdef WLAN_CFR_ENABLE
-	.send_peer_cfr_capture_cmd =
-		send_peer_cfr_capture_cmd_tlv,
-	.extract_cfr_peer_tx_event_param = extract_cfr_peer_tx_event_param_tlv,
-#endif /* WLAN_CFR_ENABLE */
 #ifdef WIFI_POS_CONVERGED
 	.extract_oem_response_param = extract_oem_response_param_tlv,
 #endif /* WIFI_POS_CONVERGED */
@@ -13868,6 +13753,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_11ax_bss_color_attach_tlv(wmi_handle);
 	wmi_fwol_attach_tlv(wmi_handle);
 	wmi_vdev_attach_tlv(wmi_handle);
+	wmi_cfr_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 

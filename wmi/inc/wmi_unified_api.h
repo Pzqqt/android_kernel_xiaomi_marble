@@ -3736,31 +3736,6 @@ QDF_STATUS wmi_unified_send_mws_coex_req_cmd(struct wmi_unified *wmi_handle,
 QDF_STATUS
 wmi_unified_send_idle_trigger_monitor(wmi_unified_t wmi_handle, uint8_t val);
 
-#ifdef WLAN_CFR_ENABLE
-/**
- * wmi_unified_send_peer_cfr_capture_cmd() - WMI function to start CFR capture
- * for a peer
- * @wmi_handle: WMI handle
- * @param: configuration params for capture
- *
- * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
- */
-QDF_STATUS
-wmi_unified_send_peer_cfr_capture_cmd(wmi_unified_t wmi_handle,
-				      struct peer_cfr_params *param);
-/**
- * wmi_extract_cfr_peer_tx_event_param() - WMI function to extract cfr tx event
- * for a peer
- * @wmi_handle: WMI handle
- * @evt_buf: Buffer holding event data
- * @peer_tx_event: pointer to hold tx event data
- *
- * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
- */
-QDF_STATUS
-wmi_extract_cfr_peer_tx_event_param(wmi_unified_t wmi_handle, void *evt_buf,
-				    wmi_cfr_peer_tx_event_param *peer_tx_event);
-#endif /* WLAN_CFR_ENABLE */
 
 #ifdef WIFI_POS_CONVERGED
 /**

@@ -2997,33 +2997,6 @@ QDF_STATUS wmi_unified_extract_obss_color_collision_info(
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef WLAN_CFR_ENABLE
-QDF_STATUS wmi_unified_send_peer_cfr_capture_cmd(wmi_unified_t wmi_handle,
-						 struct peer_cfr_params *param)
-{
-	if (wmi_handle->ops->send_peer_cfr_capture_cmd)
-		return wmi_handle->ops->send_peer_cfr_capture_cmd(wmi_handle,
-								  param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_extract_cfr_peer_tx_event_param() - extract tx event params from event
- */
-QDF_STATUS
-wmi_extract_cfr_peer_tx_event_param(wmi_unified_t wmi_handle, void *evt_buf,
-				    wmi_cfr_peer_tx_event_param *peer_tx_event)
-{
-	if (wmi_handle->ops->extract_cfr_peer_tx_event_param)
-		return wmi_handle->ops->extract_cfr_peer_tx_event_param(
-							wmi_handle,
-							evt_buf,
-							peer_tx_event);
-	return QDF_STATUS_E_FAILURE;
-}
-#endif /* WLAN_CFR_ENABLE */
-
 QDF_STATUS wmi_unified_send_mws_coex_req_cmd(struct wmi_unified *wmi_handle,
 					     uint32_t vdev_id,
 					     uint32_t cmd_id)

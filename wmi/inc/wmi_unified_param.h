@@ -710,30 +710,6 @@ struct vdev_nss_chains {
 	bool disable_tx_mrc[NSS_CHAINS_BAND_MAX];
 };
 
-#ifdef WLAN_CFR_ENABLE
-
-#define WMI_HOST_PEER_CFR_TIMER_ENABLE   1
-#define WMI_HOST_PEER_CFR_TIMER_DISABLE  0
-
-/**
- * struct peer_cfr_params - peer cfr capture cmd parameter
- * @request: enable/disable cfr capture
- * @macaddr: macaddr of the client
- * @vdev_id: vdev id
- * @periodicity: cfr capture period
- * @bandwidth: bandwidth of cfr capture
- * @capture_method: cfr capture method/type
- */
-struct peer_cfr_params {
-	uint32_t request;
-	uint8_t  *macaddr;
-	uint32_t vdev_id;
-	uint32_t periodicity;
-	uint32_t bandwidth;
-	uint32_t capture_method;
-};
-
-#endif /* WLAN_CFR_ENABLE */
 
 /**
  * struct peer_delete_params - peer delete cmd parameter

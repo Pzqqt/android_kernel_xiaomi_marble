@@ -491,6 +491,12 @@ struct wlan_lmac_if_sa_api_tx_ops {
  * @cfr_enable_cfr_timer: Function to enable CFR timer
  * @cfr_start_capture: Function to start CFR capture
  * @cfr_stop_capture: Function to stop CFR capture
+ * @cfr_config_rcc: Function to set the Repetitive channel capture params
+ * @cfr_start_lut_timer: Function to start timer to flush aged-out LUT entries
+ * @cfr_stop_lut_timer: Function to stop timer to flush aged-out LUT entries
+ * @cfr_default_ta_ra_cfg: Function to configure default values for TA_RA mode
+ * @cfr_dump_lut_enh: Function to dump LUT entries
+ * @cfr_rx_tlv_process: Function to process PPDU status TLVs
  */
 struct wlan_lmac_if_cfr_tx_ops {
 	int (*cfr_init_pdev)(struct wlan_objmgr_psoc *psoc,
@@ -504,6 +510,16 @@ struct wlan_lmac_if_cfr_tx_ops {
 				 struct cfr_capture_params *params);
 	int (*cfr_stop_capture)(struct wlan_objmgr_pdev *pdev,
 				struct wlan_objmgr_peer *peer);
+#ifdef WLAN_ENH_CFR_ENABLE
+	QDF_STATUS (*cfr_config_rcc)(struct wlan_objmgr_pdev *pdev,
+				     struct cfr_rcc_param *params);
+	QDF_STATUS (*cfr_start_lut_timer)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*cfr_stop_lut_timer)(struct wlan_objmgr_pdev *pdev);
+	void (*cfr_default_ta_ra_cfg)(struct cfr_rcc_param *params,
+				      bool allvalid, uint16_t reset_cfg);
+	void (*cfr_dump_lut_enh)(struct wlan_objmgr_pdev *pdev);
+	void (*cfr_rx_tlv_process)(struct wlan_objmgr_pdev *pdev, void *nbuf);
+#endif
 };
 #endif /* WLAN_CFR_ENABLE */
 

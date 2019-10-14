@@ -65,6 +65,10 @@
 #include <wlan_interop_issues_ap_public_structs.h>
 #endif
 
+#ifdef WLAN_CFR_ENABLE
+#include <wmi_unified_cfr_param.h>
+#endif
+
 #define WMI_UNIFIED_MAX_EVENT 0x100
 
 #ifdef WMI_EXT_DBG
@@ -2022,9 +2026,6 @@ QDF_STATUS (*extract_dfs_status_from_fw)(wmi_unified_t wmi_handle,
 					 uint32_t *dfs_status_check);
 #endif
 
-QDF_STATUS
-(*extract_cfr_peer_tx_event_param)(wmi_unified_t wmi_handle, void *evt_buf,
-				   wmi_cfr_peer_tx_event_param * peer_tx_event);
 
 #ifdef OBSS_PD
 QDF_STATUS (*send_obss_spatial_reuse_set)(wmi_unified_t wmi_handle,
@@ -2046,9 +2047,18 @@ QDF_STATUS (*send_peer_del_all_wds_entries_cmd)(wmi_unified_t wmi_handle,
 		struct peer_del_all_wds_entries_params *param);
 
 #ifdef WLAN_CFR_ENABLE
+QDF_STATUS
+(*extract_cfr_peer_tx_event_param)(wmi_unified_t wmi_handle, void *evt_buf,
+				   wmi_cfr_peer_tx_event_param *peer_tx_event);
+
 QDF_STATUS (*send_peer_cfr_capture_cmd)(wmi_unified_t wmi_handle,
 					struct peer_cfr_params *param);
+#ifdef WLAN_ENH_CFR_ENABLE
+QDF_STATUS (*send_cfr_rcc_cmd)(wmi_unified_t wmi_handle,
+			  struct cfr_rcc_param *cfg);
 #endif
+#endif
+
 #ifdef WMI_AP_SUPPORT
 QDF_STATUS (*send_vdev_pcp_tid_map_cmd)(wmi_unified_t wmi_handle,
 					struct vap_pcp_tid_map_params *param);
@@ -2627,4 +2637,12 @@ static inline QDF_STATUS wmi_ext_dbgfs_deinit(struct wmi_unified *wmi_handle)
 }
 
 #endif /*WMI_EXT_DBG */
+
+#ifdef WLAN_CFR_ENABLE
+void wmi_cfr_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_cfr_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif
 #endif
