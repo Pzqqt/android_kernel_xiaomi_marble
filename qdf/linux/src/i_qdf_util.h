@@ -205,7 +205,7 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 		qdf_err("Assertion failed! %s:%s %s:%d",   \
 		#expr, __FUNCTION__, __FILE__, __LINE__);      \
 		dump_stack();                                      \
-		panic("Take care of the TARGET ASSERT first\n");          \
+		QDF_DEBUG_PANIC("Take care of the TARGET ASSERT first\n");  \
 	}     \
 } while (0)
 
