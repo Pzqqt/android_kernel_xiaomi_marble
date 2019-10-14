@@ -269,56 +269,6 @@ typedef struct sCsrChannel_ {
 	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 } sCsrChannel;
 
-typedef struct tagCsrScanResultFilter {
-	tCsrBSSIDs BSSIDs;
-	tCsrSSIDs SSIDs;
-	tCsrChannelInfo ChannelInfo;
-	tCsrAuthList authType;
-	tCsrEncryptionList EncryptionType;
-	/*
-	 * eCSR_ENCRYPT_TYPE_ANY cannot be set in multicast encryption type.
-	 * If caller doesn't case, put all supported encryption types in here
-	 */
-	tCsrEncryptionList mcEncryptionType;
-	eCsrRoamBssType BSSType;
-	/* its a bit mask of all the needed phy mode defined in eCsrPhyMode */
-	eCsrPhyMode phyMode;
-	/*
-	 * If countryCode[0] is not 0, countryCode is checked
-	 * independent of fCheckUnknownCountryCode
-	 */
-	uint8_t countryCode[CFG_COUNTRY_CODE_LEN];
-	uint8_t uapsd_mask;
-	/* For WPS filtering if true => auth and ecryption should be ignored */
-	bool bWPSAssociation;
-	bool bOSENAssociation;
-	/*
-	 * For measurement reports --> if set, only SSID,
-	 * BSSID and channel is considered for filtering.
-	 */
-	bool fMeasurement;
-	struct mobility_domain_info mdid;
-	bool p2pResult;
-#ifdef WLAN_FEATURE_11W
-	/* Management Frame Protection */
-	bool MFPEnabled;
-	uint8_t MFPRequired;
-	uint8_t MFPCapable;
-#endif
-	/* The following flag is used to distinguish the
-	 * roaming case while building the scan filter and
-	 * applying it on to the scan results. This is mainly
-	 * used to support whitelist ssid feature.
-	 */
-	uint8_t scan_filter_for_roam;
-	struct qdf_mac_addr bssid_hint;
-	enum QDF_OPMODE csrPersona;
-	bool realm_check;
-	uint8_t fils_realm[2];
-	bool force_rsne_override;
-	qdf_time_t age_threshold;
-} tCsrScanResultFilter;
-
 typedef struct sCsrChnPower_ {
 	uint32_t first_chan_freq;
 	uint8_t numChannels;

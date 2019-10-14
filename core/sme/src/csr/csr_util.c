@@ -5954,23 +5954,6 @@ void csr_release_profile(struct mac_context *mac, struct csr_roam_profile *pProf
 	}
 }
 
-void csr_free_scan_filter(struct mac_context *mac, tCsrScanResultFilter
-						*pScanFilter)
-{
-	if (pScanFilter->BSSIDs.bssid) {
-		qdf_mem_free(pScanFilter->BSSIDs.bssid);
-		pScanFilter->BSSIDs.bssid = NULL;
-	}
-	if (pScanFilter->ChannelInfo.freq_list) {
-		qdf_mem_free(pScanFilter->ChannelInfo.freq_list);
-		pScanFilter->ChannelInfo.freq_list = NULL;
-	}
-	if (pScanFilter->SSIDs.SSIDList) {
-		qdf_mem_free(pScanFilter->SSIDs.SSIDList);
-		pScanFilter->SSIDs.SSIDList = NULL;
-	}
-}
-
 void csr_free_roam_profile(struct mac_context *mac, uint32_t sessionId)
 {
 	struct csr_roam_session *pSession = &mac->roam.roamSession[sessionId];

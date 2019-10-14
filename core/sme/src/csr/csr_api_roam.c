@@ -8354,12 +8354,13 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tScanResultHandle hBSSList;
-	tCsrScanResultFilter *pScanFilter;
+	struct scan_filter *filter;
 	uint32_t roamId = 0;
 	bool fCallCallback = false;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 	struct bss_description *first_ap_profile;
 	uint8_t channel_id = 0, first_ap_chan_id;
+	enum QDF_OPMODE opmode = QDF_STA_MODE;
 
 	if (!pSession) {
 		sme_err("session does not exist for given sessionId: %d",
@@ -8409,41 +8410,31 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		mac->roam.roamSession[sessionId].connectState =
 			eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
 
-	pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (!pScanFilter) {
+	filter = qdf_mem_malloc(sizeof(*filter));
+	if (!filter) {
 		status = QDF_STATUS_E_NOMEM;
-		goto end;
+		goto error;
 	}
 
 	/* Try to connect to any BSS */
 	if (!pProfile) {
 		/* No encryption */
-		pScanFilter->EncryptionType.numEntries = 1;
-		pScanFilter->EncryptionType.encryptionType[0] =
-			eCSR_ENCRYPT_TYPE_NONE;
+		filter->num_of_enc_type = 1;
+		filter->enc_type[0] = WLAN_ENCRYPT_TYPE_NONE;
 	} else {
 		/* Here is the profile we need to connect to */
-		status = csr_roam_prepare_filter_from_profile(mac,
-				pProfile, pScanFilter);
+		status = csr_roam_get_scan_filter_from_profile(mac, pProfile,
+							       filter, false);
+		opmode = pProfile->csrPersona;
 	}
 	roamId = GET_NEXT_ROAM_ID(&mac->roam);
 	if (pRoamId)
 		*pRoamId = roamId;
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		qdf_mem_free(pScanFilter);
-		goto end;
+		qdf_mem_free(filter);
+		goto error;
 	}
 
-	/*Save the WPS info */
-	if (pProfile) {
-		pScanFilter->bWPSAssociation =
-			pProfile->bWPSAssociation;
-		pScanFilter->bOSENAssociation =
-			pProfile->bOSENAssociation;
-	} else {
-		pScanFilter->bWPSAssociation = 0;
-		pScanFilter->bOSENAssociation = 0;
-	}
 	if (pProfile && CSR_IS_INFRA_AP(pProfile)) {
 		/* This can be started right away */
 		status = csr_roam_issue_connect(mac, sessionId, pProfile, NULL,
@@ -8455,17 +8446,17 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		} else
 			sme_debug("Connect request to proceed for sap mode");
 
-		csr_free_scan_filter(mac, pScanFilter);
-		qdf_mem_free(pScanFilter);
-		goto end;
+		qdf_mem_free(filter);
+		goto error;
 	}
-	status = csr_scan_get_result(mac, pScanFilter, &hBSSList);
+	status = csr_scan_get_result(mac, filter, &hBSSList);
+	qdf_mem_free(filter);
 	sme_debug("csr_scan_get_result Status: %d", status);
 	csr_roam_print_candidate_aps(hBSSList);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* check if set hw mode needs to be done */
-		if ((pScanFilter->csrPersona == QDF_STA_MODE) ||
-		    (pScanFilter->csrPersona == QDF_P2P_CLIENT_MODE)) {
+		if ((opmode == QDF_STA_MODE) ||
+		    (opmode == QDF_P2P_CLIENT_MODE)) {
 			bool ok;
 
 			csr_get_bssdescr_from_scan_handle(hBSSList,
@@ -8555,15 +8546,6 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 	}
 
 error:
-	if (pProfile)
-		/*
-		 * we need to free memory for filter
-		 * if profile exists
-		 */
-		csr_free_scan_filter(mac, pScanFilter);
-
-	qdf_mem_free(pScanFilter);
-end:
 	/* tell the caller if we fail to trigger a join request */
 	if (fCallCallback) {
 		csr_roam_call_callback(mac, sessionId, NULL, roamId,
@@ -9731,15 +9713,10 @@ static void
 csr_post_roam_failure(struct mac_context *mac_ctx,
 		      uint32_t session_id,
 		      struct csr_roam_info *roam_info,
-		      struct tagCsrScanResultFilter *scan_filter,
 		      struct csr_roam_profile *cur_roam_profile)
 {
 	QDF_STATUS status;
 
-	if (scan_filter) {
-		csr_free_scan_filter(mac_ctx, scan_filter);
-		qdf_mem_free(scan_filter);
-	}
 	if (cur_roam_profile)
 		qdf_mem_free(cur_roam_profile);
 
@@ -9772,7 +9749,6 @@ csr_post_roam_failure(struct mac_context *mac_ctx,
  * csr_check_profile_in_scan_cache() - finds if roam profile is present in scan
  * cache or not
  * @mac:                  mac global context
- * @scan_filter:           out param, scan filter
  * @neighbor_roam_info:    roam info struct
  * @hBSSList:              scan result
  *
@@ -9780,26 +9756,28 @@ csr_post_roam_failure(struct mac_context *mac_ctx,
  */
 static bool
 csr_check_profile_in_scan_cache(struct mac_context *mac_ctx,
-				tCsrScanResultFilter **scan_filter,
 				tpCsrNeighborRoamControlInfo neighbor_roam_info,
 				tScanResultHandle *hBSSList)
 {
 	QDF_STATUS status;
-	*scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (!*scan_filter)
+	struct scan_filter *scan_filter;
+
+	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
+	if (!scan_filter)
 		return false;
 
-	(*scan_filter)->scan_filter_for_roam = 1;
-	status = csr_roam_prepare_filter_from_profile(mac_ctx,
+	status = csr_roam_get_scan_filter_from_profile(mac_ctx,
 			&neighbor_roam_info->csrNeighborRoamProfile,
-			*scan_filter);
+			scan_filter, true);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err(
 			"failed to prepare scan filter, status %d",
 			status);
+		qdf_mem_free(scan_filter);
 		return false;
 	}
-	status = csr_scan_get_result(mac_ctx, *scan_filter, hBSSList);
+	status = csr_scan_get_result(mac_ctx, scan_filter, hBSSList);
+	qdf_mem_free(scan_filter);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err(
 			"csr_scan_get_result failed, status %d",
@@ -9902,8 +9880,7 @@ purge_scan_result:
 	csr_scan_result_purge(mac, scan_handle_roam_ap);
 
 POST_ROAM_FAILURE:
-	csr_post_roam_failure(mac, session_id, roam_info,
-			      NULL, NULL);
+	csr_post_roam_failure(mac, session_id, roam_info, NULL);
 	qdf_mem_free(roam_info);
 	return status;
 }
@@ -9913,7 +9890,6 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 {
 	uint32_t roam_id = 0;
 	struct csr_roam_info *roam_info;
-	struct tagCsrScanResultFilter *scan_filter = NULL;
 	struct sCsrNeighborRoamControlInfo *neighbor_roam_info = NULL;
 	struct scan_result_list *scan_handle_roam_ap;
 	struct sCsrNeighborRoamBSSInfo *bss_node;
@@ -9930,8 +9906,7 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 	 * First ensure if the roam profile is in the scan cache.
 	 * If not, post a reassoc failure and disconnect.
 	 */
-	if (!csr_check_profile_in_scan_cache(mac, &scan_filter,
-			     neighbor_roam_info,
+	if (!csr_check_profile_in_scan_cache(mac, neighbor_roam_info,
 			     (tScanResultHandle *)&scan_handle_roam_ap))
 		goto POST_ROAM_FAILURE;
 
@@ -9976,8 +9951,6 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 		/*if hw_mode change is required then handle roam
 		* issue connect in mode change response handler
 		*/
-		csr_free_scan_filter(mac, scan_filter);
-		qdf_mem_free(scan_filter);
 		qdf_mem_free(roam_info);
 		return;
 	} else if (status == QDF_STATUS_E_FAILURE)
@@ -9987,15 +9960,13 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 					     scan_handle_roam_ap,
 					     roam_id);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		csr_free_scan_filter(mac, scan_filter);
-		qdf_mem_free(scan_filter);
 		qdf_mem_free(roam_info);
 		return;
 	}
 	csr_scan_result_purge(mac, scan_handle_roam_ap);
 
 POST_ROAM_FAILURE:
-	csr_post_roam_failure(mac, session_id, roam_info, scan_filter, NULL);
+	csr_post_roam_failure(mac, session_id, roam_info, NULL);
 	qdf_mem_free(roam_info);
 }
 #else
@@ -11012,15 +10983,8 @@ csr_create_fils_realm_hash(struct cds_fils_connection_info *fils_con_info,
 	return true;
 }
 
-/*
- * csr_update_fils_scan_filter: update scan filter in case of fils session
- * @scan_fltr: pointer to scan filer
- * @profile: csr profile pointer
- *
- * Return: None
- */
-static void csr_update_fils_scan_filter(tCsrScanResultFilter *scan_fltr,
-				struct csr_roam_profile *profile)
+static void csr_update_fils_scan_filter(struct scan_filter *filter,
+					struct csr_roam_profile *profile)
 {
 	if (profile->fils_con_info &&
 	    profile->fils_con_info->is_fils_connection) {
@@ -11028,184 +10992,344 @@ static void csr_update_fils_scan_filter(tCsrScanResultFilter *scan_fltr,
 
 		sme_debug("creating realm based on fils info %d",
 			profile->fils_con_info->is_fils_connection);
-		scan_fltr->realm_check =  csr_create_fils_realm_hash(
-				profile->fils_con_info, realm_hash);
-		memcpy(scan_fltr->fils_realm, realm_hash,
-			sizeof(uint8_t) * 2);
+		filter->fils_scan_filter.realm_check =
+			csr_create_fils_realm_hash(profile->fils_con_info,
+						   realm_hash);
+		if (filter->fils_scan_filter.realm_check)
+			qdf_mem_copy(filter->fils_scan_filter.fils_realm,
+				     realm_hash, REAM_HASH_LEN);
 	}
-
 }
+
 #else
-static void csr_update_fils_scan_filter(tCsrScanResultFilter *scan_fltr,
-				struct csr_roam_profile *profile)
+static void csr_update_fils_scan_filter(struct scan_filter *filter,
+					struct csr_roam_profile *profile)
 { }
 #endif
 
-/*
- * Prepare a filter base on a profile for parsing the scan results.
- * Upon successful return, caller MUST call csr_free_scan_filter on
- *pScanFilter when it is done with the filter.
- */
-QDF_STATUS
-csr_roam_prepare_filter_from_profile(struct mac_context *mac_ctx,
-				     struct csr_roam_profile *profile,
-				     tCsrScanResultFilter *scan_fltr)
+static inline void csr_copy_ssids(struct wlan_ssid *ssid, tSirMacSSid *from)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t size = 0;
-	uint8_t idx = 0;
-	tCsrChannelInfo *fltr_ch_info = &scan_fltr->ChannelInfo;
-	tCsrChannelInfo *profile_ch_info = &profile->ChannelInfo;
-	struct roam_ext_params *roam_params;
+	ssid->length = from->length;
+	if (ssid->length > WLAN_SSID_MAX_LEN)
+		ssid->length = WLAN_SSID_MAX_LEN;
+	qdf_mem_copy(ssid->ssid, from->ssId, ssid->length);
+}
+
+void csr_copy_ssids_from_roam_params(struct roam_ext_params *roam_params,
+				     struct scan_filter *filter)
+{
 	uint8_t i;
-	uint32_t *flt_freq_lst, *prof_freq_lst;
-	uint32_t num_ch;
 
-	roam_params = &mac_ctx->roam.configParam.roam_params;
+	if (!roam_params->num_ssid_allowed_list)
+		return;
 
-	if (profile->BSSIDs.numOfBSSIDs) {
-		size = sizeof(struct qdf_mac_addr) * profile->BSSIDs.
-							numOfBSSIDs;
-		scan_fltr->BSSIDs.bssid = qdf_mem_malloc(size);
-		if (!scan_fltr->BSSIDs.bssid) {
-			status = QDF_STATUS_E_NOMEM;
-			goto free_filter;
-		}
-		scan_fltr->BSSIDs.numOfBSSIDs = profile->BSSIDs.numOfBSSIDs;
-		qdf_mem_copy(scan_fltr->BSSIDs.bssid,
-			     profile->BSSIDs.bssid, size);
+	filter->num_of_ssid = roam_params->num_ssid_allowed_list;
+	if (filter->num_of_ssid > WLAN_SCAN_FILTER_NUM_SSID)
+		filter->num_of_ssid = WLAN_SCAN_FILTER_NUM_SSID;
+	for  (i = 0; i < filter->num_of_ssid; i++)
+		csr_copy_ssids(&filter->ssid_list[i],
+			       &roam_params->ssid_allowed_list[i]);
+}
+
+static void csr_copy_ssids_from_profile(tCsrSSIDs *ssid_list,
+					struct scan_filter *filter)
+{
+	uint8_t i;
+
+	filter->num_of_ssid = ssid_list->numOfSSIDs;
+	if (filter->num_of_ssid > WLAN_SCAN_FILTER_NUM_SSID)
+		filter->num_of_ssid = WLAN_SCAN_FILTER_NUM_SSID;
+	for (i = 0; i < filter->num_of_ssid; i++)
+		csr_copy_ssids(&filter->ssid_list[i],
+			       &ssid_list->SSIDList[i].SSID);
+}
+
+#ifdef WLAN_ADAPTIVE_11R
+static void
+csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
+				    struct scan_filter *filter)
+{
+	filter->enable_adaptive_11r =
+		   mac_ctx->mlme_cfg->lfr.enable_adaptive_11r;
+}
+#else
+static inline void
+csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
+				    struct scan_filter *filter)
+{
+	filter->enable_adaptive_11r = false;
+}
+#endif
+
+void csr_update_connect_n_roam_cmn_filter(struct mac_context *mac_ctx,
+					  struct scan_filter *filter,
+					  enum QDF_OPMODE opmode)
+{
+	enum policy_mgr_con_mode pm_mode;
+	uint32_t len = 0;
+	QDF_STATUS status;
+
+	/* enable bss scoring for only STA mode */
+	if (opmode == QDF_STA_MODE)
+		filter->bss_scoring_required = true;
+
+	csr_update_adaptive_11r_scan_filter(mac_ctx, filter);
+
+	if (filter->num_of_bssid)
+		return;
+
+	if (policy_mgr_map_concurrency_mode(&opmode, &pm_mode)) {
+		status = policy_mgr_get_pcl(mac_ctx->psoc, pm_mode,
+					    filter->pcl_channel_list, &len,
+					    filter->pcl_weight_list,
+					    QDF_MAX_NUM_CHAN);
+		if (QDF_IS_STATUS_ERROR(status))
+			return;
+		filter->num_of_pcl_channels = len;
 	}
+}
 
-	if (profile->SSIDs.numOfSSIDs) {
-		scan_fltr->SSIDs.numOfSSIDs = profile->SSIDs.numOfSSIDs;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			("No of Allowed List:%d"),
-			roam_params->num_ssid_allowed_list);
-		if (scan_fltr->scan_filter_for_roam
-			&& roam_params->num_ssid_allowed_list) {
-			scan_fltr->SSIDs.numOfSSIDs =
-				roam_params->num_ssid_allowed_list;
-			size = sizeof(tCsrSSIDInfo) *
-				scan_fltr->SSIDs.numOfSSIDs;
-			scan_fltr->SSIDs.SSIDList = qdf_mem_malloc(size);
-			if (!scan_fltr->SSIDs.SSIDList)
-				status = QDF_STATUS_E_FAILURE;
-			else
-				status = QDF_STATUS_SUCCESS;
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				goto free_filter;
-			for  (i = 0;
-				i < roam_params->num_ssid_allowed_list;
-				i++) {
-				qdf_mem_copy((void *)
-				    scan_fltr->SSIDs.SSIDList[i].SSID.ssId,
-				    roam_params->ssid_allowed_list[i].ssId,
-				    roam_params->ssid_allowed_list[i].length);
-				scan_fltr->SSIDs.SSIDList[i].SSID.length =
-				    roam_params->ssid_allowed_list[i].length;
-				scan_fltr->SSIDs.SSIDList[i].handoffPermitted =
-					1;
-				scan_fltr->SSIDs.SSIDList[i].ssidHidden = 0;
-			}
-		} else {
-			size = sizeof(tCsrSSIDInfo) *
-				profile->SSIDs.numOfSSIDs;
-			scan_fltr->SSIDs.SSIDList = qdf_mem_malloc(size);
-			if (!scan_fltr->SSIDs.SSIDList) {
-				status = QDF_STATUS_E_NOMEM;
-				goto free_filter;
-			}
-			qdf_mem_copy(scan_fltr->SSIDs.SSIDList,
-					profile->SSIDs.SSIDList, size);
-		}
-	}
-
-	if (!profile_ch_info->freq_list ||
-	    profile_ch_info->freq_list[0] == 0) {
-		fltr_ch_info->numOfChannels = 0;
-		fltr_ch_info->freq_list = NULL;
-	} else if (profile_ch_info->numOfChannels) {
-		fltr_ch_info->numOfChannels = 0;
-		fltr_ch_info->freq_list =
-			qdf_mem_malloc(sizeof(*fltr_ch_info->freq_list) *
-				       profile_ch_info->numOfChannels);
-		if (!fltr_ch_info->freq_list) {
-			status = QDF_STATUS_E_NOMEM;
-			goto free_filter;
-		}
-
-		flt_freq_lst = fltr_ch_info->freq_list;
-		prof_freq_lst = profile_ch_info->freq_list;
-		num_ch = 0;
-
-		for (idx = 0; idx < profile_ch_info->numOfChannels; idx++) {
-			if (csr_roam_is_chan_freq_valid(mac_ctx,
-							prof_freq_lst[idx])) {
-				flt_freq_lst[num_ch] = prof_freq_lst[idx];
-				num_ch++;
-			} else {
-				sme_debug(
-					"Channel freq (%d) is invalid",
-					profile_ch_info->freq_list[idx]);
-			}
-		}
-
-		fltr_ch_info->numOfChannels = num_ch;
-	} else {
-		sme_err("Channel list empty");
-		status = QDF_STATUS_E_FAILURE;
-		goto free_filter;
-	}
-	scan_fltr->uapsd_mask = profile->uapsd_mask;
-	scan_fltr->authType = profile->AuthType;
-	scan_fltr->EncryptionType = profile->EncryptionType;
-	scan_fltr->mcEncryptionType = profile->mcEncryptionType;
-	scan_fltr->BSSType = profile->BSSType;
-	scan_fltr->phyMode = profile->phyMode;
 #ifdef FEATURE_WLAN_WAPI
+/**
+ * csr_update_phy_mode: Updates phy mode for wapi
+ * @profile: Source profile
+ * @phy_mode: phy_mode to be modified
+ *
+ * Return: None
+ */
+static void csr_update_phy_mode(struct csr_roam_profile *profile,
+				uint32_t *phy_mode)
+{
 	/*
 	 * check if user asked for WAPI with 11n or auto mode, in that
 	 * case modify the phymode to 11g
 	 */
 	if (csr_is_profile_wapi(profile)) {
-		if (scan_fltr->phyMode & eCSR_DOT11_MODE_11n)
-			scan_fltr->phyMode &= ~eCSR_DOT11_MODE_11n;
-		if (scan_fltr->phyMode & eCSR_DOT11_MODE_AUTO)
-			scan_fltr->phyMode &= ~eCSR_DOT11_MODE_AUTO;
-		if (!scan_fltr->phyMode)
-			scan_fltr->phyMode = eCSR_DOT11_MODE_11g;
+		if (*phy_mode & eCSR_DOT11_MODE_11n)
+			*phy_mode &= ~eCSR_DOT11_MODE_11n;
+		if (*phy_mode & eCSR_DOT11_MODE_AUTO)
+			*phy_mode &= ~eCSR_DOT11_MODE_AUTO;
+		if (!*phy_mode)
+			*phy_mode = eCSR_DOT11_MODE_11g;
 	}
-#endif /* FEATURE_WLAN_WAPI */
-	/*Save the WPS info */
-	scan_fltr->bWPSAssociation = profile->bWPSAssociation;
-	scan_fltr->bOSENAssociation = profile->bOSENAssociation;
-	if (profile->countryCode[0]) {
+}
+#else
+static inline
+void csr_update_phy_mode(struct csr_roam_profile *profile, uint32_t *phy_mode)
+{}
+#endif
+
+/**
+ * csr_convert_dotllmod_phymode: Convert eCsrPhyMode to wlan_phymode
+ * @dotllmode: phy mode
+ *
+ * Return: returns enum wlan_phymode
+ */
+static enum wlan_phymode csr_convert_dotllmod_phymode(eCsrPhyMode dotllmode)
+{
+	enum wlan_phymode con_phy_mode;
+
+	switch (dotllmode) {
+	case eCSR_DOT11_MODE_abg:
+		con_phy_mode = WLAN_PHYMODE_AUTO;
+		break;
+	case eCSR_DOT11_MODE_11a:
+		con_phy_mode = WLAN_PHYMODE_11A;
+		break;
+	case eCSR_DOT11_MODE_11b:
+		con_phy_mode = WLAN_PHYMODE_11B;
+		break;
+	case eCSR_DOT11_MODE_11g:
+		con_phy_mode = WLAN_PHYMODE_11G;
+		break;
+	case eCSR_DOT11_MODE_11n:
+		con_phy_mode = WLAN_PHYMODE_11NA_HT20;
+		break;
+	case eCSR_DOT11_MODE_11g_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11G;
+		break;
+	case eCSR_DOT11_MODE_11n_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11NA_HT20;
+		break;
+	case eCSR_DOT11_MODE_11b_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11B;
+		break;
+	case eCSR_DOT11_MODE_11ac:
+		con_phy_mode = WLAN_PHYMODE_11AC_VHT160;
+		break;
+	case eCSR_DOT11_MODE_11ac_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11AC_VHT160;
+		break;
+	case eCSR_DOT11_MODE_AUTO:
+		con_phy_mode = WLAN_PHYMODE_AUTO;
+		break;
+	case eCSR_DOT11_MODE_11ax:
+		con_phy_mode = WLAN_PHYMODE_11AXA_HE160;
+		break;
+	case eCSR_DOT11_MODE_11ax_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11AXA_HE160;
+		break;
+	default:
+		con_phy_mode = WLAN_PHYMODE_AUTO;
+		break;
+	}
+
+	return con_phy_mode;
+}
+
+#ifdef WLAN_FEATURE_11W
+
+/**
+ * csr_update_pmf_cap_from_profile: Updates PMF cap
+ * @profile: Source profile
+ * @filter: scan filter
+ *
+ * Return: None
+ */
+static void csr_update_pmf_cap_from_profile(struct csr_roam_profile *profile,
+					    struct scan_filter *filter)
+{
+	if (profile->MFPCapable || profile->MFPEnabled)
+		filter->pmf_cap = WLAN_PMF_CAPABLE;
+	if (profile->MFPRequired)
+		filter->pmf_cap = WLAN_PMF_REQUIRED;
+}
+#else
+static inline
+void csr_update_pmf_cap_from_profile(struct csr_roam_profile *profile,
+				     struct scan_filter *filter)
+{}
+#endif
+
+QDF_STATUS
+csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
+				      struct csr_roam_profile *profile,
+				      struct scan_filter *filter,
+				      bool is_roam)
+{
+	tCsrChannelInfo *ch_info;
+	struct roam_ext_params *roam_params;
+	uint8_t i;
+	uint32_t phy_mode;
+
+	if (!filter || !profile) {
+		sme_err("filter or profile is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	roam_params = &mac_ctx->roam.configParam.roam_params;
+
+	qdf_mem_zero(filter, sizeof(*filter));
+	if (profile->BSSIDs.numOfBSSIDs) {
+		filter->num_of_bssid = profile->BSSIDs.numOfBSSIDs;
+		if (filter->num_of_bssid > WLAN_SCAN_FILTER_NUM_BSSID)
+			filter->num_of_bssid = WLAN_SCAN_FILTER_NUM_BSSID;
+		for (i = 0; i < filter->num_of_bssid; i++)
+			qdf_mem_copy(filter->bssid_list[i].bytes,
+				     profile->BSSIDs.bssid[i].bytes,
+				     QDF_MAC_ADDR_SIZE);
+	}
+
+	if (profile->SSIDs.numOfSSIDs) {
+		if (is_roam && roam_params->num_ssid_allowed_list)
+			csr_copy_ssids_from_roam_params(roam_params, filter);
+		else
+			csr_copy_ssids_from_profile(&profile->SSIDs, filter);
+	}
+
+	ch_info = &profile->ChannelInfo;
+	if (ch_info->numOfChannels && ch_info->freq_list &&
+	    ch_info->freq_list[0]) {
+		filter->num_of_channels = 0;
+		for (i = 0; i < ch_info->numOfChannels; i++) {
+			if (filter->num_of_channels >= QDF_MAX_NUM_CHAN) {
+				sme_err("max allowed channel(%d) reached",
+					filter->num_of_channels);
+				break;
+			}
+			if (csr_roam_is_chan_freq_valid(mac_ctx,
+						ch_info->freq_list[i])) {
+				filter->channel_list[filter->num_of_channels] =
+				  (uint8_t)wlan_reg_freq_to_chan(mac_ctx->pdev,
+							ch_info->freq_list[i]);
+				filter->num_of_channels++;
+			} else {
+				sme_debug("freq (%d) is invalid",
+					  ch_info->freq_list[i]);
+			}
+		}
+	}
+
+	if (profile->force_rsne_override) {
+		sme_debug("force_rsne_override set auth type and enctype to any and ignore pmf cap");
+		filter->num_of_auth = 1;
+		filter->auth_type[0] = WLAN_AUTH_TYPE_ANY;
+		filter->num_of_enc_type = 1;
+		filter->enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
+		filter->num_of_mc_enc_type = 1;
+		filter->mc_enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
+
+		filter->ignore_pmf_cap = true;
+	} else {
+		filter->num_of_auth =
+			profile->AuthType.numEntries;
+		if (filter->num_of_auth > WLAN_NUM_OF_SUPPORT_AUTH_TYPE)
+			filter->num_of_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
+		for (i = 0; i < filter->num_of_auth; i++)
+			filter->auth_type[i] =
+			  csr_covert_auth_type_new(
+			  profile->AuthType.authType[i]);
+		filter->num_of_enc_type =
+			profile->EncryptionType.numEntries;
+		if (filter->num_of_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
+			filter->num_of_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
+		for (i = 0; i < filter->num_of_enc_type; i++)
+			filter->enc_type[i] =
+			  csr_covert_enc_type_new(
+			  profile->EncryptionType.encryptionType[i]);
+		filter->num_of_mc_enc_type =
+				profile->mcEncryptionType.numEntries;
+		if (filter->num_of_mc_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
+			filter->num_of_mc_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
+		for (i = 0; i < filter->num_of_mc_enc_type; i++)
+			filter->mc_enc_type[i] =
+			  csr_covert_enc_type_new(
+			  profile->mcEncryptionType.encryptionType[i]);
+	}
+
+	if (profile->BSSType == eCSR_BSS_TYPE_INFRASTRUCTURE)
+		filter->bss_type = WLAN_TYPE_BSS;
+	else if (profile->BSSType == eCSR_BSS_TYPE_IBSS ||
+		 profile->BSSType == eCSR_BSS_TYPE_START_IBSS)
+		filter->bss_type = WLAN_TYPE_IBSS;
+	else
+		filter->bss_type = WLAN_TYPE_ANY;
+
+	phy_mode = profile->phyMode;
+	csr_update_phy_mode(profile, &phy_mode);
+
+	filter->dot11_mode = csr_convert_dotllmod_phymode(phy_mode);
+	if (profile->bWPSAssociation || profile->bOSENAssociation)
+		filter->ignore_auth_enc_type = true;
+	if (profile->countryCode[0])
 		/*
 		 * This causes the matching function to use countryCode as one
 		 * of the criteria.
 		 */
-		qdf_mem_copy(scan_fltr->countryCode, profile->countryCode,
+		qdf_mem_copy(filter->country, profile->countryCode,
 			     CFG_COUNTRY_CODE_LEN);
-	}
-	scan_fltr->mdid = profile->mdid;
-	qdf_mem_copy(scan_fltr->bssid_hint.bytes,
-		profile->bssid_hint.bytes, QDF_MAC_ADDR_SIZE);
 
-#ifdef WLAN_FEATURE_11W
-	/* Management Frame Protection */
-	scan_fltr->MFPEnabled = profile->MFPEnabled;
-	scan_fltr->MFPRequired = profile->MFPRequired;
-	scan_fltr->MFPCapable = profile->MFPCapable;
-#endif
-	scan_fltr->csrPersona = profile->csrPersona;
-	csr_update_fils_scan_filter(scan_fltr, profile);
-	scan_fltr->force_rsne_override = profile->force_rsne_override;
+	filter->mobility_domain = profile->mdid.mobility_domain;
+	qdf_mem_copy(filter->bssid_hint.bytes, profile->bssid_hint.bytes,
+		     QDF_MAC_ADDR_SIZE);
 
-free_filter:
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		csr_free_scan_filter(mac_ctx, scan_fltr);
+	csr_update_pmf_cap_from_profile(profile, filter);
 
-	return status;
+	csr_update_fils_scan_filter(filter, profile);
+
+	csr_update_connect_n_roam_cmn_filter(mac_ctx, filter,
+					     profile->csrPersona);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static
@@ -13862,24 +13986,14 @@ bool csr_is_same_profile(struct mac_context *mac,
 {
 	uint32_t i;
 	bool fCheck = false;
-	tCsrScanResultFilter *pScanFilter = NULL;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!(pProfile1 && pProfile2))
 		return fCheck;
-	pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (!pScanFilter)
-		return fCheck;
 
-	status = csr_roam_prepare_filter_from_profile(mac, pProfile2,
-						      pScanFilter);
-	if (!(QDF_IS_STATUS_SUCCESS(status)))
-		goto free_scan_filter;
-
-	for (i = 0; i < pScanFilter->SSIDs.numOfSSIDs; i++) {
+	for (i = 0; i < pProfile2->SSIDs.numOfSSIDs; i++) {
 		fCheck = csr_is_ssid_match(mac,
-				pScanFilter->SSIDs.SSIDList[i].SSID.ssId,
-				pScanFilter->SSIDs.SSIDList[i].SSID.length,
+				pProfile2->SSIDs.SSIDList[i].SSID.ssId,
+				pProfile2->SSIDs.SSIDList[i].SSID.length,
 				pProfile1->SSID.ssId,
 				pProfile1->SSID.length,
 				false);
@@ -13887,7 +14001,7 @@ bool csr_is_same_profile(struct mac_context *mac,
 			break;
 	}
 	if (!fCheck)
-		goto free_scan_filter;
+		goto exit;
 
 	if (!csr_is_auth_in_list(mac, &pProfile2->AuthType,
 				 pProfile1->AuthType)
@@ -13895,20 +14009,18 @@ bool csr_is_same_profile(struct mac_context *mac,
 	    || !csr_is_encryption_in_list(mac, &pProfile2->EncryptionType,
 					  pProfile1->EncryptionType)) {
 		fCheck = false;
-		goto free_scan_filter;
+		goto exit;
 	}
 	if (pProfile1->mdid.mdie_present || pProfile2->mdid.mdie_present) {
 		if (pProfile1->mdid.mobility_domain !=
 		    pProfile2->mdid.mobility_domain) {
 			fCheck = false;
-			goto free_scan_filter;
+			goto exit;
 		}
 	}
 	/* Match found */
 	fCheck = true;
-free_scan_filter:
-	csr_free_scan_filter(mac, pScanFilter);
-	qdf_mem_free(pScanFilter);
+exit:
 	return fCheck;
 }
 

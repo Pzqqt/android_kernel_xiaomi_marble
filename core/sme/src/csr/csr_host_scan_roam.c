@@ -358,29 +358,32 @@ QDF_STATUS csr_neighbor_roam_process_scan_complete(struct mac_context *mac,
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
-	tCsrScanResultFilter scanFilter;
+	struct scan_filter *filter;
 	tScanResultHandle scanResult;
 	uint32_t tempVal = 0;
 	QDF_STATUS hstatus;
 
-	hstatus = csr_neighbor_roam_prepare_scan_profile_filter(mac,
-								&scanFilter,
-								sessionId);
+	filter = qdf_mem_malloc(sizeof(*filter));
+	if (!filter)
+		return QDF_STATUS_E_NOMEM;
+
+	hstatus = csr_neighbor_roam_get_scan_filter_from_profile(mac,
+								 filter,
+								 sessionId);
 	sme_debug("Prepare scan to find neighbor AP filter status: %d",
 		hstatus);
 	if (QDF_STATUS_SUCCESS != hstatus) {
 		sme_err("Scan Filter prep fail for Assoc %d Bail out",
 			tempVal);
+		qdf_mem_free(filter);
 		return QDF_STATUS_E_FAILURE;
 	}
-	hstatus = csr_scan_get_result(mac, &scanFilter, &scanResult);
+	hstatus = csr_scan_get_result(mac, filter, &scanResult);
+	qdf_mem_free(filter);
 	if (hstatus != QDF_STATUS_SUCCESS)
 		sme_err("Get Scan Result status code %d", hstatus);
 	/* Process the scan results and update roamable AP list */
 	csr_neighbor_roam_process_scan_results(mac, sessionId, &scanResult);
-
-	/* Free the scan filter */
-	csr_free_scan_filter(mac, &scanFilter);
 
 	tempVal = csr_ll_count(&pNeighborRoamInfo->roamableAPList);
 

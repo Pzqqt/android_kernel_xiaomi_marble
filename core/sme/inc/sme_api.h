@@ -475,9 +475,18 @@ void sme_purge_pdev_all_ser_cmd_list(mac_handle_t mac_handle);
 QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg);
 
 QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
-QDF_STATUS sme_scan_get_result(mac_handle_t mac_handle, uint8_t sessionId,
-		tCsrScanResultFilter *pFilter,
-		tScanResultHandle *phResult);
+/*
+ * sme_scan_get_result() - Return scan results based on filter
+ * @mac: Pointer to Global MAC structure
+ * @vdev_id: vdev_id
+ * @filter: If pFilter is NULL, all cached results are returned
+ * @phResult: an object for the result.
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS sme_scan_get_result(mac_handle_t mac_handle, uint8_t vdev_id,
+			       struct scan_filter *filter,
+			       tScanResultHandle *phResult);
 QDF_STATUS sme_get_ap_channel_from_scan_cache(
 		struct csr_roam_profile *profile,
 		tScanResultHandle *scan_cache,

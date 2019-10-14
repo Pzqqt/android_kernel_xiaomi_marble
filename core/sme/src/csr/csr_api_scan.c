@@ -50,6 +50,8 @@
 #include "wlan_reg_services_api.h"
 #include "sch_api.h"
 #include "wlan_blm_api.h"
+#include "qdf_crypto.h"
+#include <wlan_crypto_global_api.h>
 
 static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
 					   uint32_t *pchan_freq_list,
@@ -118,7 +120,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tScanResultHandle hBSSList = CSR_INVALID_SCANRESULT_HANDLE;
-	tCsrScanResultFilter *pScanFilter = NULL;
+	struct scan_filter *filter;
 	struct csr_roam_profile *profile;
 	struct csr_roam_session *session;
 
@@ -152,16 +154,19 @@ QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 		}
 		if (!profile)
 			break;
-		pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-		if (!pScanFilter) {
+		filter = qdf_mem_malloc(sizeof(*filter));
+		if (!filter) {
 			status = QDF_STATUS_E_NOMEM;
 			break;
 		}
-		status = csr_roam_prepare_filter_from_profile(mac_ctx, profile,
-							      pScanFilter);
-		if (!QDF_IS_STATUS_SUCCESS(status))
+		status = csr_roam_get_scan_filter_from_profile(mac_ctx, profile,
+							       filter, false);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			qdf_mem_free(filter);
 			break;
-		status = csr_scan_get_result(mac_ctx, pScanFilter, &hBSSList);
+		}
+		status = csr_scan_get_result(mac_ctx, filter, &hBSSList);
+		qdf_mem_free(filter);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
 		if (mac_ctx->roam.roamSession[session_id].connectState ==
@@ -187,10 +192,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 				       eCSR_ROAM_ASSOCIATION_FAILURE,
 				       eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE);
 	}
-	if (pScanFilter) {
-		csr_free_scan_filter(mac_ctx, pScanFilter);
-		qdf_mem_free(pScanFilter);
-	}
+
 	return status;
 }
 
@@ -2053,7 +2055,7 @@ csr_scan_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 	return candidate_chan;
 }
 
-static enum wlan_auth_type csr_covert_auth_type_new(enum csr_akm_type auth)
+enum wlan_auth_type csr_covert_auth_type_new(enum csr_akm_type auth)
 {
 	switch (auth) {
 	case eCSR_AUTH_TYPE_NONE:
@@ -2184,7 +2186,7 @@ static enum csr_akm_type csr_covert_auth_type_old(enum wlan_auth_type auth)
 	}
 }
 
-static enum wlan_enc_type csr_covert_enc_type_new(eCsrEncryptionType enc)
+enum wlan_enc_type csr_covert_enc_type_new(eCsrEncryptionType enc)
 {
 	switch (enc) {
 	case eCSR_ENCRYPT_TYPE_NONE:
@@ -2252,241 +2254,6 @@ static eCsrEncryptionType csr_covert_enc_type_old(enum wlan_enc_type enc)
 	default:
 		return eCSR_ENCRYPT_TYPE_NONE;
 	}
-}
-
-#ifdef WLAN_FEATURE_11W
-/**
- * csr_update_pmf_cap: Updates PMF cap
- * @src_filter: Source filter
- * @dst_filter: Destination filter
- *
- * Return: None
- */
-static void csr_update_pmf_cap(tCsrScanResultFilter *src_filter,
-			       struct scan_filter *dst_filter) {
-
-	if (src_filter->MFPCapable || src_filter->MFPEnabled)
-		dst_filter->pmf_cap = WLAN_PMF_CAPABLE;
-	if (src_filter->MFPRequired)
-		dst_filter->pmf_cap = WLAN_PMF_REQUIRED;
-}
-#else
-static inline void csr_update_pmf_cap(tCsrScanResultFilter *src_filter,
-				      struct scan_filter *dst_filter)
-{}
-#endif
-
-/**
- * csr_convert_dotllmod_phymode: Convert eCsrPhyMode to wlan_phymode
- * @dotllmode: phy mode
- *
- * Return: returns enum wlan_phymode
- */
-static enum wlan_phymode csr_convert_dotllmod_phymode(eCsrPhyMode dotllmode)
-{
-
-	enum wlan_phymode con_phy_mode;
-
-	switch (dotllmode) {
-	case eCSR_DOT11_MODE_abg:
-		con_phy_mode = WLAN_PHYMODE_AUTO;
-		break;
-	case eCSR_DOT11_MODE_11a:
-		con_phy_mode = WLAN_PHYMODE_11A;
-		break;
-	case eCSR_DOT11_MODE_11b:
-		con_phy_mode = WLAN_PHYMODE_11B;
-		break;
-	case eCSR_DOT11_MODE_11g:
-		con_phy_mode = WLAN_PHYMODE_11G;
-		break;
-	case eCSR_DOT11_MODE_11n:
-		con_phy_mode = WLAN_PHYMODE_11NA_HT20;
-		break;
-	case eCSR_DOT11_MODE_11g_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11G;
-		break;
-	case eCSR_DOT11_MODE_11n_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11NA_HT20;
-		break;
-	case eCSR_DOT11_MODE_11b_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11B;
-		break;
-	case eCSR_DOT11_MODE_11ac:
-		con_phy_mode = WLAN_PHYMODE_11AC_VHT160;
-		break;
-	case eCSR_DOT11_MODE_11ac_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11AC_VHT160;
-		break;
-	case eCSR_DOT11_MODE_AUTO:
-		con_phy_mode = WLAN_PHYMODE_AUTO;
-		break;
-	case eCSR_DOT11_MODE_11ax:
-		con_phy_mode = WLAN_PHYMODE_11AXA_HE160;
-		break;
-	case eCSR_DOT11_MODE_11ax_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11AXA_HE160;
-		break;
-	default:
-		con_phy_mode = WLAN_PHYMODE_AUTO;
-		break;
-	}
-
-	return con_phy_mode;
-}
-
-#ifdef WLAN_ADAPTIVE_11R
-/**
- * csr_update_adaptive_11r_scan_filter - Copy adaptive 11r ini to scan
- * module
- * @mac_ctx: Pointer to mac_context
- * @scan_filter: Scan filter to be sent to scan module
- *
- * Return: None
- */
-static void
-csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
-				    struct scan_filter *filter)
-{
-	filter->enable_adaptive_11r =
-		   mac_ctx->mlme_cfg->lfr.enable_adaptive_11r;
-}
-#else
-static inline void
-csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
-				    struct scan_filter *filter)
-{
-	filter->enable_adaptive_11r = false;
-}
-#endif
-
-static QDF_STATUS csr_prepare_scan_filter(struct mac_context *mac_ctx,
-					  tCsrScanResultFilter *pFilter,
-					  struct scan_filter *filter)
-{
-	int i;
-	uint32_t len = 0;
-	QDF_STATUS status;
-	enum policy_mgr_con_mode new_mode;
-
-	filter->num_of_bssid = pFilter->BSSIDs.numOfBSSIDs;
-	if (filter->num_of_bssid > WLAN_SCAN_FILTER_NUM_BSSID)
-		filter->num_of_bssid = WLAN_SCAN_FILTER_NUM_BSSID;
-	for (i = 0; i < filter->num_of_bssid; i++)
-		qdf_mem_copy(filter->bssid_list[i].bytes,
-			pFilter->BSSIDs.bssid[i].bytes,
-			QDF_MAC_ADDR_SIZE);
-
-	filter->age_threshold = pFilter->age_threshold;
-
-	filter->num_of_ssid = pFilter->SSIDs.numOfSSIDs;
-	if (filter->num_of_ssid > WLAN_SCAN_FILTER_NUM_SSID)
-		filter->num_of_ssid = WLAN_SCAN_FILTER_NUM_SSID;
-	for (i = 0; i < filter->num_of_ssid; i++) {
-		filter->ssid_list[i].length =
-			pFilter->SSIDs.SSIDList[i].SSID.length;
-		qdf_mem_copy(filter->ssid_list[i].ssid,
-			pFilter->SSIDs.SSIDList[i].SSID.ssId,
-			filter->ssid_list[i].length);
-	}
-
-	filter->num_of_channels =
-		pFilter->ChannelInfo.numOfChannels;
-	if (filter->num_of_channels > QDF_MAX_NUM_CHAN)
-		filter->num_of_channels = QDF_MAX_NUM_CHAN;
-	sme_freq_to_chan_list(mac_ctx->pdev, filter->channel_list,
-			      pFilter->ChannelInfo.freq_list,
-			      filter->num_of_channels);
-	if (pFilter->realm_check) {
-		filter->fils_scan_filter.realm_check = true;
-		qdf_mem_copy(filter->fils_scan_filter.fils_realm,
-			pFilter->fils_realm, REAM_HASH_LEN);
-	}
-
-	if (pFilter->force_rsne_override) {
-
-		sme_debug("force_rsne_override set auth type and enctype to any and ignore pmf cap");
-
-		filter->num_of_auth = 1;
-		filter->auth_type[0] = WLAN_AUTH_TYPE_ANY;
-		filter->num_of_enc_type = 1;
-		filter->enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
-		filter->num_of_mc_enc_type = 1;
-		filter->mc_enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
-
-		filter->ignore_pmf_cap = true;
-	} else {
-		filter->num_of_auth =
-			pFilter->authType.numEntries;
-		if (filter->num_of_auth > WLAN_NUM_OF_SUPPORT_AUTH_TYPE)
-			filter->num_of_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
-		for (i = 0; i < filter->num_of_auth; i++)
-			filter->auth_type[i] =
-			  csr_covert_auth_type_new(
-			  pFilter->authType.authType[i]);
-		filter->num_of_enc_type =
-			pFilter->EncryptionType.numEntries;
-		if (filter->num_of_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
-			filter->num_of_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
-		for (i = 0; i < filter->num_of_enc_type; i++)
-			filter->enc_type[i] =
-			  csr_covert_enc_type_new(
-			  pFilter->EncryptionType.encryptionType[i]);
-		filter->num_of_mc_enc_type =
-				pFilter->mcEncryptionType.numEntries;
-		if (filter->num_of_mc_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
-			filter->num_of_mc_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
-		for (i = 0; i < filter->num_of_mc_enc_type; i++)
-			filter->mc_enc_type[i] =
-			  csr_covert_enc_type_new(
-			  pFilter->mcEncryptionType.encryptionType[i]);
-	}
-	qdf_mem_copy(filter->country, pFilter->countryCode,
-		     CFG_COUNTRY_CODE_LEN);
-
-	if (pFilter->bWPSAssociation || pFilter->bOSENAssociation)
-		filter->ignore_auth_enc_type = true;
-
-	filter->rrm_measurement_filter = pFilter->fMeasurement;
-
-	filter->mobility_domain = pFilter->mdid.mobility_domain;
-
-	filter->p2p_results = pFilter->p2pResult;
-
-	csr_update_pmf_cap(pFilter, filter);
-
-	if (pFilter->BSSType == eCSR_BSS_TYPE_INFRASTRUCTURE)
-		filter->bss_type = WLAN_TYPE_BSS;
-	else if (pFilter->BSSType == eCSR_BSS_TYPE_IBSS ||
-		pFilter->BSSType == eCSR_BSS_TYPE_START_IBSS)
-		filter->bss_type = WLAN_TYPE_IBSS;
-	else
-		filter->bss_type = WLAN_TYPE_ANY;
-
-	filter->dot11_mode = csr_convert_dotllmod_phymode(pFilter->phyMode);
-
-	// enable bss scoring for only STA mode
-	if (pFilter->csrPersona == QDF_STA_MODE)
-		filter->bss_scoring_required = true;
-	else
-		filter->bss_scoring_required = false;
-
-	csr_update_adaptive_11r_scan_filter(mac_ctx, filter);
-
-	if (!pFilter->BSSIDs.numOfBSSIDs) {
-		if (policy_mgr_map_concurrency_mode(
-		   &pFilter->csrPersona, &new_mode)) {
-			status = policy_mgr_get_pcl(mac_ctx->psoc, new_mode,
-				filter->pcl_channel_list, &len,
-				filter->pcl_weight_list, QDF_MAX_NUM_CHAN);
-			filter->num_of_pcl_channels = (uint8_t)len;
-		}
-	}
-	qdf_mem_copy(filter->bssid_hint.bytes,
-			pFilter->bssid_hint.bytes,
-			QDF_MAC_ADDR_SIZE);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
@@ -2769,13 +2536,12 @@ static void csr_remove_ap_with_assoc_disallowed(struct mac_context *mac_ctx,
 }
 
 QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
-			       tCsrScanResultFilter *pFilter,
+			       struct scan_filter *filter,
 			       tScanResultHandle *results)
 {
 	QDF_STATUS status;
 	struct scan_result_list *ret_list = NULL;
 	qdf_list_t *list = NULL;
-	struct scan_filter *filter = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	uint32_t num_bss = 0;
 
@@ -2789,28 +2555,14 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (pFilter) {
-		filter = qdf_mem_malloc(sizeof(*filter));
-		if (!filter) {
-			status = QDF_STATUS_E_NOMEM;
-			goto error;
-		}
-
-		status = csr_prepare_scan_filter(mac_ctx, pFilter, filter);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			sme_err("Prepare filter failed");
-			goto error;
-		}
-	}
-
-	list = ucfg_scan_get_result(pdev,
-		    pFilter ? filter : NULL);
+	list = ucfg_scan_get_result(pdev, filter);
 	if (list) {
 		num_bss = qdf_list_size(list);
 		sme_debug("num_entries %d", num_bss);
 	}
+
 	/* Filter the scan list with the blacklist, rssi reject, avoided APs */
-	if (pFilter && pFilter->csrPersona == QDF_STA_MODE)
+	if (filter && filter->bss_scoring_required)
 		wlan_blm_filter_bssid(pdev, list);
 
 	if (!list || (list && !qdf_list_size(list))) {
@@ -2835,7 +2587,7 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		/* Fail or No one wants the result. */
 		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
 	else {
-		if (pFilter && pFilter->csrPersona == QDF_STA_MODE)
+		if (filter && filter->bss_scoring_required)
 			csr_remove_ap_with_assoc_disallowed(mac_ctx, ret_list);
 
 		if (!csr_ll_count(&ret_list->List)) {
@@ -2857,8 +2609,6 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 	}
 
 error:
-	if (filter)
-		qdf_mem_free(filter);
 	if (list)
 		ucfg_scan_purge_results(list);
 	if (pdev)
@@ -2872,7 +2622,7 @@ QDF_STATUS csr_scan_get_result_for_bssid(struct mac_context *mac_ctx,
 					 tCsrScanResultInfo *res)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tCsrScanResultFilter *scan_filter = NULL;
+	struct scan_filter *scan_filter;
 	tScanResultHandle filtered_scan_result = NULL;
 	tCsrScanResultInfo *scan_result;
 
@@ -2882,18 +2632,13 @@ QDF_STATUS csr_scan_get_result_for_bssid(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
 	if (!scan_filter)
 		return QDF_STATUS_E_NOMEM;
 
-	scan_filter->BSSIDs.bssid = qdf_mem_malloc(sizeof(*bssid));
-	if (!scan_filter->BSSIDs.bssid) {
-		status = QDF_STATUS_E_FAILURE;
-		goto free_filter;
-	}
-
-	scan_filter->BSSIDs.numOfBSSIDs = 1;
-	qdf_mem_copy(scan_filter->BSSIDs.bssid, bssid, sizeof(*bssid));
+	scan_filter->num_of_bssid = 1;
+	qdf_mem_copy(scan_filter->bssid_list[0].bytes, bssid->bytes,
+		     QDF_MAC_ADDR_SIZE);
 
 	status = csr_scan_get_result(mac_ctx, scan_filter,
 				&filtered_scan_result);
@@ -2921,7 +2666,6 @@ QDF_STATUS csr_scan_get_result_for_bssid(struct mac_context *mac_ctx,
 	csr_scan_result_purge(mac_ctx, filtered_scan_result);
 
 free_filter:
-	csr_free_scan_filter(mac_ctx, scan_filter);
 	if (scan_filter)
 		qdf_mem_free(scan_filter);
 

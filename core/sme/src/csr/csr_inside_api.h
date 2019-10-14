@@ -157,16 +157,6 @@ QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
 					    uint32_t sessionId,
 					    struct bss_description *bss_desc);
 
-/*
- * Prepare a filter base on a profile for parsing the scan results.
- * Upon successful return, caller MUST call csr_free_scan_filter on
- * pScanFilter when it is done with the filter.
- */
-QDF_STATUS
-csr_roam_prepare_filter_from_profile(struct mac_context *mac,
-				     struct csr_roam_profile *pProfile,
-				     tCsrScanResultFilter *pScanFilter);
-
 QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 				 struct csr_roam_profile *pDstProfile,
 				 struct csr_roam_profile *pSrcProfile);
@@ -360,10 +350,6 @@ void csr_free_connect_bss_desc(struct mac_context *mac, uint32_t sessionId);
 void csr_release_profile(struct mac_context *mac,
 			 struct csr_roam_profile *pProfile);
 
-/* To free memory allocated inside scanFilter */
-void csr_free_scan_filter(struct mac_context *mac, tCsrScanResultFilter
-			*pScanFilter);
-
 enum csr_cfgdot11mode
 csr_get_cfg_dot11_mode_from_csr_phy_mode(struct csr_roam_profile *pProfile,
 					 eCsrPhyMode phyMode,
@@ -424,15 +410,89 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
 							uint32_t phyMode);
 
 /*
- * csr_scan_get_result() -
- * Return scan results.
+ * csr_copy_ssids_from_roam_params() - copy SSID from roam_params to scan filter
+ * @roam_params: roam params
+ * @filter: scan filter
  *
- * pFilter - If pFilter is NULL, all cached results are returned
- * phResult - an object for the result.
+ * Return void
+ */
+void csr_copy_ssids_from_roam_params(struct roam_ext_params *roam_params,
+				     struct scan_filter *filter);
+
+/*
+ * csr_update_connect_n_roam_cmn_filter() - update common scan filter
+ * @mac_ctx: pointer to mac context
+ * @filter: scan filter
+ * @opmode: opmode
+ *
+ * Return void
+ */
+void csr_update_connect_n_roam_cmn_filter(struct mac_context *mac_ctx,
+					  struct scan_filter *filter,
+					  enum QDF_OPMODE opmode);
+
+/*
+ * csr_covert_enc_type_new() - convert csr enc type to wlan enc type
+ * @enc: csr enc type
+ *
+ * Return enum wlan_enc_type
+ */
+enum wlan_enc_type csr_covert_enc_type_new(eCsrEncryptionType enc);
+
+/*
+ * csr_covert_auth_type_new() - convert csr auth type to wlan auth type
+ * @auth: csr auth type
+ *
+ * Return enum wlan_auth_type
+ */
+enum wlan_auth_type csr_covert_auth_type_new(enum csr_akm_type auth);
+
+/**
+ * csr_roam_get_scan_filter_from_profile() - prepare scan filter from
+ * given roam profile
+ * @mac: Pointer to Global MAC structure
+ * @profile: roam profile
+ * @filter: Populated scan filter based on the connected profile
+ * @is_roam: if filter is for roam
+ *
+ * This function creates a scan filter based on the roam profile. Based on this
+ * filter, scan results are obtained.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
+ */
+QDF_STATUS
+csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
+				      struct csr_roam_profile *profile,
+				      struct scan_filter *filter,
+				      bool is_roam);
+
+/**
+ * csr_neighbor_roam_get_scan_filter_from_profile() - prepare scan filter from
+ * connected profile
+ * @mac: Pointer to Global MAC structure
+ * @filter: Populated scan filter based on the connected profile
+ * @vdev_id: Session ID
+ *
+ * This function creates a scan filter based on the currently
+ * connected profile. Based on this filter, scan results are obtained
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
+ */
+QDF_STATUS
+csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
+					       struct scan_filter *filter,
+					       uint8_t vdev_id);
+/*
+ * csr_scan_get_result() - Return scan results based on filter
+ * @mac: Pointer to Global MAC structure
+ * @filter: If pFilter is NULL, all cached results are returned
+ * @phResult: an object for the result.
+ *
  * Return QDF_STATUS
  */
-QDF_STATUS csr_scan_get_result(struct mac_context *mac, tCsrScanResultFilter
-				*pFilter, tScanResultHandle *phResult);
+QDF_STATUS csr_scan_get_result(struct mac_context *mac,
+			       struct scan_filter *filter,
+			       tScanResultHandle *phResult);
 
 /**
  * csr_scan_get_result_for_bssid - gets the scan result from scan cache for the

@@ -433,7 +433,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 					   uint8_t measurementdone)
 {
 	mac_handle_t mac_handle = MAC_HANDLE(mac_ctx);
-	tCsrScanResultFilter filter;
+	struct scan_filter *filter;
 	tScanResultHandle result_handle;
 	tCsrScanResultInfo *scan_results, *next_result;
 	tCsrScanResultInfo **scanresults_arr = NULL;
@@ -446,28 +446,30 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 	tSirScanType scan_type;
 	struct csr_roam_session *session;
 
-	qdf_mem_zero(&filter, sizeof(filter));
-	filter.BSSIDs.numOfBSSIDs = 1;
-	filter.BSSIDs.bssid = (struct qdf_mac_addr *)&rrm_ctx->bssId;
+	filter = qdf_mem_malloc(sizeof(*filter));
+	if (!filter)
+		return QDF_STATUS_E_NOMEM;
+
+	/* update filter to get scan result with just target BSSID */
+	filter->num_of_bssid = 1;
+	qdf_mem_copy(filter->bssid_list[0].bytes,
+		     rrm_ctx->bssId, sizeof(struct qdf_mac_addr));
 
 	if (rrm_ctx->ssId.length) {
-		filter.SSIDs.SSIDList = qdf_mem_malloc(sizeof(tCsrSSIDInfo));
-		if (!filter.SSIDs.SSIDList)
-			return QDF_STATUS_E_NOMEM;
-
-		filter.SSIDs.SSIDList->SSID.length =
-			rrm_ctx->ssId.length;
-		qdf_mem_copy(filter.SSIDs.SSIDList->SSID.ssId,
-				rrm_ctx->ssId.ssId, rrm_ctx->ssId.length);
-		filter.SSIDs.numOfSSIDs = 1;
-	} else {
-		filter.SSIDs.numOfSSIDs = 0;
+		filter->num_of_ssid = 1;
+		filter->ssid_list[0].length = rrm_ctx->ssId.length;
+		if (filter->ssid_list[0].length > WLAN_SSID_MAX_LEN)
+			filter->ssid_list[0].length = WLAN_SSID_MAX_LEN;
+		qdf_mem_copy(filter->ssid_list[0].ssid,
+			     rrm_ctx->ssId.ssId, filter->ssid_list[0].length);
 	}
 
-	filter.ChannelInfo.numOfChannels = num_chan;
-	filter.ChannelInfo.freq_list = freq_list;
-	filter.fMeasurement = true;
-
+	filter->num_of_channels = num_chan;
+	if (filter->num_of_channels > QDF_MAX_NUM_CHAN)
+		filter->num_of_channels = QDF_MAX_NUM_CHAN;
+	sme_freq_to_chan_list(mac_ctx->pdev, filter->channel_list,
+			      freq_list, filter->num_of_channels);
+	filter->rrm_measurement_filter = true;
 	/*
 	 * In case this is beacon report request from last AP (before roaming)
 	 * following call to csr_roam_get_session_id_from_bssid will fail,
@@ -479,10 +481,8 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		session_id = mac_ctx->roam.roamSession->sessionId;
 	}
 	status = sme_scan_get_result(mac_handle, (uint8_t)session_id,
-				     &filter, &result_handle);
-
-	if (filter.SSIDs.SSIDList)
-		qdf_mem_free(filter.SSIDs.SSIDList);
+				     filter, &result_handle);
+	qdf_mem_free(filter);
 
 	sme_debug("RRM Measurement Done %d", measurementdone);
 	if (!result_handle) {
