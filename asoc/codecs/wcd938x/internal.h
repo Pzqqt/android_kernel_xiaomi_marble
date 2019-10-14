@@ -149,6 +149,7 @@ enum {
 	WCD_BOLERO_EVT_IMPED_TRUE,	/* for imped true */
 	WCD_BOLERO_EVT_IMPED_FALSE,	/* for imped false */
 	WCD_BOLERO_EVT_RX_COMPANDER_SOFT_RST,
+	WCD_BOLERO_EVT_BCS_CLK_OFF,
 };
 
 enum {
@@ -182,6 +183,9 @@ enum {
 
 extern struct wcd938x_mbhc *wcd938x_soc_get_mbhc(
 				struct snd_soc_component *component);
+extern void wcd938x_disable_bcs_before_slow_insert(
+				struct snd_soc_component *component,
+				bool bcs_disable);
 extern int wcd938x_mbhc_micb_adjust_voltage(struct snd_soc_component *component,
 					int volt, int micb_num);
 extern int wcd938x_get_micb_vout_ctl_val(u32 micb_mv);

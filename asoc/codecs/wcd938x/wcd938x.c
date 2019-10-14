@@ -1523,6 +1523,21 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
+void wcd938x_disable_bcs_before_slow_insert(struct snd_soc_component *component,
+					    bool bcs_disable)
+{
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	if (wcd938x->update_wcd_event) {
+		if (bcs_disable)
+			wcd938x->update_wcd_event(wcd938x->handle,
+						WCD_BOLERO_EVT_BCS_CLK_OFF, 0);
+		else
+			wcd938x->update_wcd_event(wcd938x->handle,
+						WCD_BOLERO_EVT_BCS_CLK_OFF, 1);
+	}
+}
+
 int wcd938x_tx_channel_config(struct snd_soc_component *component,
 			      int channel, int mode)
 {
