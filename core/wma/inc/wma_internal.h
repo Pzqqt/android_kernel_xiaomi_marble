@@ -1232,9 +1232,21 @@ QDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle);
 int wma_unified_debug_print_event_handler(void *handle, uint8_t *datap,
 					  uint32_t len);
 
-WLAN_PHY_MODE wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
-			       uint8_t is_ht, uint8_t ch_width,
-			       uint8_t is_vht, bool is_he);
+/**
+ * wma_peer_phymode() - get phymode
+ * @nw_type: nw type
+ * @sta_type: sta type
+ * @is_ht: is ht supported
+ * @ch_width: supported channel width
+ * @is_vht: is vht supported
+ * @is_he: is HE supported
+ *
+ * Return: host phymode
+ */
+enum wlan_phymode
+wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
+		 uint8_t is_ht, uint8_t ch_width,
+		 uint8_t is_vht, bool is_he);
 
 int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 				uint8_t vdev_id, uint32_t value);
@@ -1788,6 +1800,7 @@ static inline int wma_twt_disable_comp_event_handler(void *handle,
 	return 0;
 }
 #endif
+
 /**
  * wma_get_roam_scan_stats() - Get roam scan stats request
  * @handle: wma handle

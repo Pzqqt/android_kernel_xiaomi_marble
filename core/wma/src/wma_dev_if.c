@@ -1140,6 +1140,7 @@ QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 	     iface->type == WMI_VDEV_TYPE_MONITOR)) {
 		wmi_host_channel_width chanwidth;
 		int err;
+		WMI_HOST_WLAN_PHY_MODE phy_mode;
 
 		/* for CSA case firmware expects phymode before ch_wd */
 		bssid = wma_get_vdev_bssid(iface->vdev);
@@ -1148,14 +1149,16 @@ QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 				 __func__, rsp->vdev_id);
 			return QDF_STATUS_E_FAILURE;
 		}
-		err = wma_set_peer_param(wma, bssid,
-					 WMI_PEER_PHYMODE, iface->chanmode,
-					rsp->vdev_id);
-		WMA_LOGD("%s:vdev_id %d chanmode %d status %d",
-			 __func__, rsp->vdev_id, iface->chanmode, err);
+		phy_mode = wma_host_to_fw_phymode(iface->chanmode);
 
+		/* for CSA case firmware expects phymode before ch_wd */
+		err = wma_set_peer_param(wma, bssid, WMI_PEER_PHYMODE,
+					 phy_mode, rsp->vdev_id);
+		WMA_LOGD("%s:vdev_id %d fw_phy_mode %d chanmode %d status %d",
+			 __func__, rsp->vdev_id, phy_mode,
+			 iface->chanmode, err);
 		chanwidth = wmi_get_ch_width_from_phy_mode(wma->wmi_handle,
-							   iface->chanmode);
+							   phy_mode);
 		err = wma_set_peer_param(wma, bssid, WMI_PEER_CHWIDTH,
 					 chanwidth, rsp->vdev_id);
 		WMA_LOGD("%s:vdev_id %d chanwidth %d status %d",
@@ -2819,7 +2822,7 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	intr[vdev_id].chanmode = mlme_obj->mgmt.generic.phy_mode;
+	intr[vdev_id].chanmode = des_chan->ch_phymode;
 	intr[vdev_id].config.gtx_info.gtxRTMask[0] =
 		CFG_TGT_DEFAULT_GTX_HT_MASK;
 	intr[vdev_id].config.gtx_info.gtxRTMask[1] =

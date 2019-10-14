@@ -741,7 +741,7 @@ struct wma_txrx_node {
 	uint8_t llbCoexist;
 	uint8_t shortSlotTimeSupported;
 	uint8_t dtimPeriod;
-	uint32_t chanmode;
+	enum wlan_phymode chanmode;
 	A_UINT32 mhz;
 	enum phy_ch_width chan_width;
 	bool vdev_active;
@@ -1770,8 +1770,36 @@ QDF_STATUS wma_get_cca_stats(tp_wma_handle wma_handle,
 				uint8_t vdev_id);
 
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
-WLAN_PHY_MODE wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
-				uint8_t dot11_mode);
+
+/**
+ * wma_chan_phy__mode() - get host phymode for channel
+ * @freq: channel freq
+ * @chan_width: maximum channel width possible
+ * @dot11_mode: maximum phy_mode possible
+ *
+ * Return: return host phymode
+ */
+enum wlan_phymode wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
+				    uint8_t dot11_mode);
+
+/**
+ * wma_host_to_fw_phymode() - convert host to fw phymode
+ * @host_phymode: phymode to convert
+ *
+ * Return: one of the values defined in enum WMI_HOST_WLAN_PHY_MODE;
+ *         or WMI_HOST_MODE_UNKNOWN if the conversion fails
+ */
+WMI_HOST_WLAN_PHY_MODE wma_host_to_fw_phymode(enum wlan_phymode host_phymode);
+
+/**
+ * wma_fw_to_host_phymode() - convert fw to host phymode
+ * @phymode: phymode to convert
+ *
+ * Return: one of the values defined in enum wlan_phymode;
+ *         or WLAN_PHYMODE_AUTO if the conversion fails
+ */
+enum wlan_phymode wma_fw_to_host_phymode(WMI_HOST_WLAN_PHY_MODE phymode);
+
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 /**

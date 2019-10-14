@@ -2961,7 +2961,8 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 	channel = wlan_freq_to_chan(wma->interfaces[synch_event->vdev_id].mhz);
 	if (param_buf->chan) {
 		wma->interfaces[synch_event->vdev_id].chanmode =
-			WMI_GET_CHANNEL_MODE(param_buf->chan);
+			wma_fw_to_host_phymode(
+				WMI_GET_CHANNEL_MODE(param_buf->chan));
 	} else {
 		wma_get_phy_mode_cb(channel,
 				    wma->interfaces[synch_event->vdev_id].

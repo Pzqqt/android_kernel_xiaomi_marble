@@ -8520,7 +8520,8 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 		pe_err("Invalid center freq2 for 160MHz");
 		return QDF_STATUS_E_FAILURE;
 	}
-	mlme_obj->mgmt.generic.phy_mode = chan_mode;
+	/* Till conversion is not done in WMI we need to fill fw phy mode */
+	mlme_obj->mgmt.generic.phy_mode = wma_host_to_fw_phymode(chan_mode);
 	des_chan->ch_phymode = chan_mode;
 
 	return QDF_STATUS_SUCCESS;

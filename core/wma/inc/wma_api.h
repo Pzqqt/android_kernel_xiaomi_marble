@@ -140,7 +140,8 @@ int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
  *
  * Return: None
  */
-void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width, uint32_t *phy_mode);
+void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width,
+			 enum wlan_phymode  *phy_mode);
 
 QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value);
 

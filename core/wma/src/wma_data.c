@@ -555,8 +555,7 @@ static QDF_STATUS wma_fill_vht80_mcast_rate(uint32_t shortgi,
  */
 static QDF_STATUS wma_fill_ht_mcast_rate(uint32_t shortgi,
 					 uint32_t chwidth, int32_t mbpsx10_rate,
-					 uint8_t nss, WMI_HOST_WLAN_PHY_MODE chanmode,
-					 uint8_t *rate,
+					 uint8_t nss, uint8_t *rate,
 					 int32_t *streaming_rate)
 {
 	int32_t ret = 0;
@@ -590,7 +589,6 @@ static QDF_STATUS wma_fill_ht_mcast_rate(uint32_t shortgi,
 static QDF_STATUS wma_fill_vht_mcast_rate(uint32_t shortgi,
 					  uint32_t chwidth,
 					  int32_t mbpsx10_rate, uint8_t nss,
-					  WMI_HOST_WLAN_PHY_MODE chanmode,
 					  uint8_t *rate,
 					  int32_t *streaming_rate)
 {
@@ -626,8 +624,7 @@ static QDF_STATUS wma_fill_vht_mcast_rate(uint32_t shortgi,
  * Return: QDF status
  */
 static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
-			     WMI_HOST_WLAN_PHY_MODE chanmode, A_UINT32 mhz,
-			     int32_t mbpsx10_rate, uint8_t nss,
+			     A_UINT32 mhz, int32_t mbpsx10_rate, uint8_t nss,
 			     uint8_t *rate)
 {
 	int32_t ret = 0;
@@ -639,8 +636,8 @@ static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
 	 * (3) 540 < mbpsx10_rate <= 2000: use 1x1 HT/VHT
 	 * (4) 2000 < mbpsx10_rate: use 2x2 HT/VHT
 	 */
-	WMA_LOGE("%s: Input: nss = %d, chanmode = %d, mbpsx10 = 0x%x, chwidth = %d, shortgi = %d",
-		 __func__, nss, chanmode, mbpsx10_rate, chwidth, shortgi);
+	WMA_LOGE("%s: Input: nss = %d, mbpsx10 = 0x%x, chwidth = %d, shortgi = %d",
+		 __func__, nss, mbpsx10_rate, chwidth, shortgi);
 	if ((mbpsx10_rate & 0x40000000) && nss > 0) {
 		/* bit 30 indicates user inputed nss,
 		 * bit 28 and 29 used to encode nss
@@ -670,7 +667,7 @@ static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
 		int32_t stream_rate = 0;
 
 		ret = wma_fill_ht_mcast_rate(shortgi, chwidth, mbpsx10_rate,
-					     nss, chanmode, &rate_ht,
+					     nss, &rate_ht,
 					     &stream_rate_ht);
 		if (ret != QDF_STATUS_SUCCESS)
 			stream_rate_ht = 0;
@@ -682,7 +679,7 @@ static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
 		}
 		/* capable doing 11AC mcast so that search vht tables */
 		ret = wma_fill_vht_mcast_rate(shortgi, chwidth, mbpsx10_rate,
-					      nss, chanmode, &rate_vht,
+					      nss, &rate_vht,
 					      &stream_rate_vht);
 		if (ret != QDF_STATUS_SUCCESS) {
 			if (stream_rate_ht != 0)
@@ -714,8 +711,8 @@ static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
 			}
 		}
 ht_vht_done:
-		WMA_LOGE("%s: NSS = %d, ucast_chanmode = %d, freq = %d",
-			 __func__, nss, chanmode, mhz);
+		WMA_LOGE("%s: NSS = %d, freq = %d",
+			 __func__, nss, mhz);
 		WMA_LOGD(" %s: input_rate = %d, chwidth = %d rate = 0x%x, streaming_rate = %d",
 			 __func__, mbpsx10_rate, chwidth, *rate, stream_rate);
 	} else {
@@ -725,8 +722,8 @@ ht_vht_done:
 		else
 			*rate = 0xFF;
 
-		WMA_LOGE("%s: NSS = %d, ucast_chanmode = %d, input_rate = %d, rate = 0x%x",
-			 __func__, nss, chanmode, mbpsx10_rate, *rate);
+		WMA_LOGE("%s: NSS = %d, input_rate = %d, rate = 0x%x",
+			 __func__, nss, mbpsx10_rate, *rate);
 	}
 	return ret;
 }
@@ -1240,8 +1237,8 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 		 __func__, pRateUpdateParams->bssid.bytes,
 		 intr[vdev_id].config.shortgi, rate_flag);
 	ret = wma_encode_mc_rate(short_gi, intr[vdev_id].config.chwidth,
-				 intr[vdev_id].chanmode, intr[vdev_id].mhz,
-				 mbpsx10_rate, pRateUpdateParams->nss, &rate);
+				 intr[vdev_id].mhz, mbpsx10_rate,
+				 pRateUpdateParams->nss, &rate);
 	if (ret != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Error, Invalid input rate value", __func__);
 		qdf_mem_free(pRateUpdateParams);

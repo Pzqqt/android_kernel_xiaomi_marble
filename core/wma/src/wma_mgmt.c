@@ -1125,14 +1125,7 @@ wma_fw_to_host_phymode_160(WMI_HOST_WLAN_PHY_MODE phymode)
 }
 #endif
 
-/**
- * wma_fw_to_host_phymode() - convert fw to host phymode
- * @phymode: phymode to convert
- *
- * Return: one of the values defined in enum wlan_phymode;
- *         or WLAN_PHYMODE_AUTO if the conversion fails
- */
-static enum wlan_phymode wma_fw_to_host_phymode(WMI_HOST_WLAN_PHY_MODE phymode)
+enum wlan_phymode wma_fw_to_host_phymode(WMI_HOST_WLAN_PHY_MODE phymode)
 {
 	enum wlan_phymode host_phymode;
 	switch (phymode) {
@@ -1242,15 +1235,7 @@ wma_host_to_fw_phymode_11ax(enum wlan_phymode host_phymode)
 }
 #endif
 
-/**
- * wma_host_to_fw_phymode() - convert host to fw phymode
- * @host_phymode: phymode to convert
- *
- * Return: one of the values defined in enum WMI_HOST_WLAN_PHY_MODE;
- *         or WMI_HOST_MODE_UNKNOWN if the conversion fails
- */
-static WMI_HOST_WLAN_PHY_MODE
-wma_host_to_fw_phymode(enum wlan_phymode host_phymode)
+WMI_HOST_WLAN_PHY_MODE wma_host_to_fw_phymode(enum wlan_phymode host_phymode)
 {
 	WMI_HOST_WLAN_PHY_MODE fw_phymode;
 
@@ -1305,7 +1290,7 @@ wma_host_to_fw_phymode(enum wlan_phymode host_phymode)
  */
 static void wma_objmgr_set_peer_mlme_phymode(tp_wma_handle wma,
 					     uint8_t *mac_addr,
-					     WMI_HOST_WLAN_PHY_MODE phymode)
+					     enum wlan_phymode phymode)
 {
 	uint8_t pdev_id;
 	struct wlan_objmgr_peer *peer;
@@ -1320,7 +1305,7 @@ static void wma_objmgr_set_peer_mlme_phymode(tp_wma_handle wma,
 	}
 
 	wlan_peer_obj_lock(peer);
-	wlan_peer_set_phymode(peer, wma_fw_to_host_phymode(phymode));
+	wlan_peer_set_phymode(peer, phymode);
 	wlan_peer_obj_unlock(peer);
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
 }
@@ -1377,7 +1362,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	wmi_rate_set peer_legacy_rates, peer_ht_rates;
 	uint32_t num_peer_11b_rates = 0;
 	uint32_t num_peer_11a_rates = 0;
-	uint32_t phymode;
+	enum wlan_phymode phymode;
 	uint32_t peer_nss = 1;
 	struct wma_txrx_node *intr = NULL;
 	bool is_he;
@@ -1423,8 +1408,6 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		phymode = intr->chanmode;
 	}
 
-	wma_objmgr_set_peer_mlme_phymode(wma, params->staMac, phymode);
-
 	if (!mac->mlme_cfg->rates.disable_abg_rate_txdata) {
 		/* Legacy Rateset */
 		rate_pos = (uint8_t *) peer_legacy_rates.rates;
@@ -1444,8 +1427,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		}
 	}
 
-	if ((phymode == MODE_11A && num_peer_11a_rates == 0) ||
-	    (phymode == MODE_11B && num_peer_11b_rates == 0)) {
+	if ((phymode == WLAN_PHYMODE_11A && num_peer_11a_rates == 0) ||
+	    (phymode == WLAN_PHYMODE_11B && num_peer_11b_rates == 0)) {
 		WMA_LOGW("%s: Invalid phy rates. phymode 0x%x, 11b_rates %d, 11a_rates %d",
 			__func__, phymode, num_peer_11b_rates,
 			num_peer_11a_rates);
@@ -1503,8 +1486,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	} else {
 		qdf_mem_copy(cmd->peer_mac, params->bssId,
 						sizeof(cmd->peer_mac));
-		wma_objmgr_set_peer_mlme_phymode(wma, params->bssId, phymode);
 	}
+	wma_objmgr_set_peer_mlme_phymode(wma, cmd->peer_mac, phymode);
 
 	cmd->vdev_id = params->smesessionId;
 	cmd->peer_new_assoc = 1;
@@ -1718,11 +1701,12 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	if (!wma_is_vdev_in_ap_mode(wma, params->smesessionId))
 		intr->nss = cmd->peer_nss;
 
-	cmd->peer_phymode = phymode;
+	/* Till conversion is not done in WMI we need to fill fw phy mode */
+	cmd->peer_phymode = wma_host_to_fw_phymode(phymode);
 	WMA_LOGD("%s: vdev_id %d associd %d rate_caps %x peer_caps %x",
 		 __func__,  cmd->vdev_id, cmd->peer_associd,
 		 cmd->peer_rate_caps, cmd->peer_caps);
-	WMA_LOGD("%s:listen_intval %d ht_caps %x max_mpdu %d nss %d phymode %d",
+	WMA_LOGD("%s:listen_intval %d ht_caps %x max_mpdu %d nss %d fw_phymode %d",
 		 __func__, cmd->peer_listen_intval, cmd->peer_ht_caps,
 		 cmd->peer_max_mpdu, cmd->peer_nss, cmd->peer_phymode);
 	WMA_LOGD("%s: peer_mpdu_density %d encr_type %d cmd->peer_vht_caps %x",

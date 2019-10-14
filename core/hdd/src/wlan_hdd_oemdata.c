@@ -399,7 +399,8 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 {
 	struct ch_params ch_params = {0};
 	uint16_t sec_ch_2g = 0;
-	WLAN_PHY_MODE phy_mode;
+	enum wlan_phymode phy_mode;
+	uint16_t fw_phy_mode;
 	uint32_t wni_dot11_mode;
 	struct hdd_channel_info *hdd_chan_info = chan_info;
 	uint32_t freq;
@@ -425,14 +426,16 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 		 * invalid and should not have been received in channel info
 		 * req. Set invalid phymode in this case.
 		 */
-		phy_mode = MODE_UNKNOWN;
+		phy_mode = WLAN_PHYMODE_AUTO;
 
-	hdd_debug("chan %d dot11_mode %d ch_width %d sec offset %d freq_seg0 %d phy_mode %d",
+	fw_phy_mode = wma_host_to_fw_phymode(phy_mode);
+
+	hdd_debug("chan %d dot11_mode %d ch_width %d sec offset %d freq_seg0 %d phy_mode %d fw_phy_mode %d",
 		chan, wni_dot11_mode, ch_params.ch_width,
 		ch_params.sec_ch_offset,
-		hdd_chan_info->band_center_freq1, phy_mode);
+		hdd_chan_info->band_center_freq1, phy_mode, fw_phy_mode);
 
-	WMI_SET_CHANNEL_MODE(hdd_chan_info, phy_mode);
+	WMI_SET_CHANNEL_MODE(hdd_chan_info, fw_phy_mode);
 }
 
 /**

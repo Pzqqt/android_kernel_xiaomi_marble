@@ -529,30 +529,22 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
 					    &peer_set_param_fp);
 }
 
-/**
- * wma_chan_phy__mode() - get WLAN_PHY_MODE for channel
- * @freq: operating frequency of connection
- * @chan_width: maximum channel width possible
- * @dot11_mode: maximum phy_mode possible
- *
- * Return: return WLAN_PHY_MODE
- */
-WLAN_PHY_MODE wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
-				uint8_t dot11_mode)
+enum wlan_phymode wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
+				    uint8_t dot11_mode)
 {
-	WLAN_PHY_MODE phymode = MODE_UNKNOWN;
+	enum wlan_phymode phymode = WLAN_PHYMODE_AUTO;
 	uint16_t bw_val = wlan_reg_get_bw_value(chan_width);
 	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
 	uint16_t chan;
 
 	if (!wma) {
 		WMA_LOGE("%s : wma_handle is NULL", __func__);
-		return MODE_UNKNOWN;
+		return WLAN_PHYMODE_AUTO;
 	}
 
 	if (chan_width >= CH_WIDTH_INVALID) {
 		WMA_LOGE("%s : Invalid channel width", __func__);
-		return MODE_UNKNOWN;
+		return WLAN_PHYMODE_AUTO;
 	}
 
 	chan = wlan_reg_freq_to_chan(wma->pdev, freq);
@@ -565,49 +557,49 @@ WLAN_PHY_MODE wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 		     (MLME_DOT11_MODE_ALL == dot11_mode) ||
 		     (MLME_DOT11_MODE_11AC == dot11_mode) ||
 		     (MLME_DOT11_MODE_11AX == dot11_mode)))
-			phymode = MODE_11G;
+			phymode = WLAN_PHYMODE_11G;
 		else {
 			switch (dot11_mode) {
 			case MLME_DOT11_MODE_11B:
 				if ((bw_val == 20) || (bw_val == 40))
-					phymode = MODE_11B;
+					phymode = WLAN_PHYMODE_11B;
 				break;
 			case MLME_DOT11_MODE_11G:
 				if ((bw_val == 20) || (bw_val == 40))
-					phymode = MODE_11G;
+					phymode = WLAN_PHYMODE_11G;
 				break;
 			case MLME_DOT11_MODE_11G_ONLY:
 				if ((bw_val == 20) || (bw_val == 40))
-					phymode = MODE_11GONLY;
+					phymode = WLAN_PHYMODE_11G_ONLY;
 				break;
 			case MLME_DOT11_MODE_11N:
 			case MLME_DOT11_MODE_11N_ONLY:
 				if (bw_val == 20)
-					phymode = MODE_11NG_HT20;
+					phymode = WLAN_PHYMODE_11NG_HT20;
 				else if (bw_val == 40)
-					phymode = MODE_11NG_HT40;
+					phymode = WLAN_PHYMODE_11NG_HT40;
 				break;
 			case MLME_DOT11_MODE_ALL:
 			case MLME_DOT11_MODE_11AC:
 			case MLME_DOT11_MODE_11AC_ONLY:
 				if (bw_val == 20)
-					phymode = MODE_11AC_VHT20_2G;
+					phymode = WLAN_PHYMODE_11AC_VHT20_2G;
 				else if (bw_val == 40)
-					phymode = MODE_11AC_VHT40_2G;
+					phymode = WLAN_PHYMODE_11AC_VHT40_2G;
 				break;
 			case MLME_DOT11_MODE_11AX:
 			case MLME_DOT11_MODE_11AX_ONLY:
 				if (20 == bw_val)
-					phymode = MODE_11AX_HE20_2G;
+					phymode = WLAN_PHYMODE_11AXG_HE20;
 				else if (40 == bw_val)
-					phymode = MODE_11AX_HE40_2G;
+					phymode = WLAN_PHYMODE_11AXG_HE40;
 				break;
 			default:
 				break;
 			}
 		}
 	} else if (wlan_reg_is_dsrc_chan(wma->pdev, chan))
-		phymode = MODE_11A;
+		phymode = WLAN_PHYMODE_11A;
 	else {
 		if (((CH_WIDTH_5MHZ == chan_width) ||
 		     (CH_WIDTH_10MHZ == chan_width)) &&
@@ -616,46 +608,46 @@ WLAN_PHY_MODE wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 		     (MLME_DOT11_MODE_ALL == dot11_mode) ||
 		     (MLME_DOT11_MODE_11AC == dot11_mode) ||
 		     (MLME_DOT11_MODE_11AX == dot11_mode)))
-			phymode = MODE_11A;
+			phymode = WLAN_PHYMODE_11A;
 		else {
 			switch (dot11_mode) {
 			case MLME_DOT11_MODE_11A:
 				if (0 < bw_val)
-					phymode = MODE_11A;
+					phymode = WLAN_PHYMODE_11A;
 				break;
 			case MLME_DOT11_MODE_11N:
 			case MLME_DOT11_MODE_11N_ONLY:
 				if (bw_val == 20)
-					phymode = MODE_11NA_HT20;
+					phymode = WLAN_PHYMODE_11NA_HT20;
 				else if (40 <= bw_val)
-					phymode = MODE_11NA_HT40;
+					phymode = WLAN_PHYMODE_11NA_HT40;
 				break;
 			case MLME_DOT11_MODE_ALL:
 			case MLME_DOT11_MODE_11AC:
 			case MLME_DOT11_MODE_11AC_ONLY:
 				if (bw_val == 20)
-					phymode = MODE_11AC_VHT20;
+					phymode = WLAN_PHYMODE_11AC_VHT20;
 				else if (bw_val == 40)
-					phymode = MODE_11AC_VHT40;
+					phymode = WLAN_PHYMODE_11AC_VHT40;
 				else if (bw_val == 80)
-					phymode = MODE_11AC_VHT80;
+					phymode = WLAN_PHYMODE_11AC_VHT80;
 				else if (chan_width == CH_WIDTH_160MHZ)
-					phymode = MODE_11AC_VHT160;
+					phymode = WLAN_PHYMODE_11AC_VHT160;
 				else if (chan_width == CH_WIDTH_80P80MHZ)
-					phymode = MODE_11AC_VHT80_80;
+					phymode = WLAN_PHYMODE_11AC_VHT80_80;
 				break;
 			case MLME_DOT11_MODE_11AX:
 			case MLME_DOT11_MODE_11AX_ONLY:
 				if (20 == bw_val)
-					phymode = MODE_11AX_HE20;
+					phymode = WLAN_PHYMODE_11AXA_HE20;
 				else if (40 == bw_val)
-					phymode = MODE_11AX_HE40;
+					phymode = WLAN_PHYMODE_11AXA_HE40;
 				else if (80 == bw_val)
-					phymode = MODE_11AX_HE80;
+					phymode = WLAN_PHYMODE_11AXA_HE80;
 				else if (CH_WIDTH_160MHZ == chan_width)
-					phymode = MODE_11AX_HE160;
+					phymode = WLAN_PHYMODE_11AXA_HE160;
 				else if (CH_WIDTH_80P80MHZ == chan_width)
-					phymode = MODE_11AX_HE80_80;
+					phymode = WLAN_PHYMODE_11AXA_HE80_80;
 				break;
 			default:
 				break;
@@ -666,7 +658,7 @@ WLAN_PHY_MODE wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 	WMA_LOGD("%s: phymode %d freq %d ch_width %d dot11_mode %d",
 		 __func__, phymode, freq, chan_width, dot11_mode);
 
-	QDF_ASSERT(MODE_UNKNOWN != phymode);
+	QDF_ASSERT(phymode != WLAN_PHYMODE_AUTO);
 	return phymode;
 }
 
