@@ -161,6 +161,20 @@ struct cdp_vdev *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
  */
 struct cdp_vdev *ol_txrx_get_mon_vdev_from_pdev(struct cdp_pdev *ppdev);
 
+/**
+ * ol_txrx_get_vdev_by_peer_addr() - Get vdev handle by peer mac address
+ * @ppdev - data path device instance
+ * @peer_addr - peer mac address
+ *
+ * Get virtual interface handle by local peer mac address
+ *
+ * Return: Virtual interface instance handle
+ *         NULL in case cannot find
+ */
+ol_txrx_vdev_handle
+ol_txrx_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
+			      struct qdf_mac_addr peer_addr);
+
 void *ol_txrx_find_peer_by_addr(struct cdp_pdev *pdev,
 				uint8_t *peer_addr,
 				uint8_t *peer_id);

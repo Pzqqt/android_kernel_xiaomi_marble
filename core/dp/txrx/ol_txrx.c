@@ -204,7 +204,7 @@ static QDF_STATUS ol_txrx_get_vdevid(void *ppeer, uint8_t *vdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-static struct cdp_vdev *
+ol_txrx_vdev_handle
 ol_txrx_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
 			      struct qdf_mac_addr peer_addr)
 {
@@ -234,7 +234,25 @@ ol_txrx_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
 	vdev = peer->vdev;
 	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 
-	return (struct cdp_vdev *)vdev;
+	return vdev;
+}
+
+/**
+ * ol_txrx_wrapper_get_vdev_by_peer_addr() - Get vdev handle by peer mac address
+ * @ppdev - data path device instance
+ * @peer_addr - peer mac address
+ *
+ * Get virtual interface handle by local peer mac address
+ *
+ * Return: Virtual interface instance handle
+ *         NULL in case cannot find
+ */
+static struct cdp_vdev *
+ol_txrx_wrapper_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
+				      struct qdf_mac_addr peer_addr)
+{
+	return (struct cdp_vdev *)ol_txrx_get_vdev_by_peer_addr(ppdev,
+								peer_addr);
 }
 
 /**
@@ -5786,7 +5804,7 @@ static struct cdp_peer_ops ol_ops_peer = {
 	.peer_find_by_local_id = ol_txrx_wrapper_peer_find_by_local_id,
 	.peer_state_update = ol_txrx_wrapper_peer_state_update,
 	.get_vdevid = ol_txrx_get_vdevid,
-	.get_vdev_by_peer_addr = ol_txrx_get_vdev_by_peer_addr,
+	.get_vdev_by_peer_addr = ol_txrx_wrapper_get_vdev_by_peer_addr,
 	.register_ocb_peer = ol_txrx_register_ocb_peer,
 	.peer_get_peer_mac_addr = ol_txrx_peer_get_peer_mac_addr,
 	.get_peer_state = ol_txrx_get_peer_state,
