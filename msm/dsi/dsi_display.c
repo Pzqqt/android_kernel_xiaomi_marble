@@ -6306,6 +6306,15 @@ int dsi_display_set_mode(struct dsi_display *display,
 	timing = adj_mode.timing;
 	adjust_timing_by_ctrl_count(display, &adj_mode);
 
+	if (!display->panel->cur_mode) {
+		display->panel->cur_mode =
+			kzalloc(sizeof(struct dsi_display_mode), GFP_KERNEL);
+		if (!display->panel->cur_mode) {
+			rc = -ENOMEM;
+			goto error;
+		}
+	}
+
 	/*For dynamic DSI setting, use specified clock rate */
 	if (display->cached_clk_rate > 0)
 		adj_mode.priv_info->clk_rate_hz = display->cached_clk_rate;
@@ -6320,15 +6329,6 @@ int dsi_display_set_mode(struct dsi_display *display,
 	if (rc) {
 		DSI_ERR("[%s] failed to set mode\n", display->name);
 		goto error;
-	}
-
-	if (!display->panel->cur_mode) {
-		display->panel->cur_mode =
-			kzalloc(sizeof(struct dsi_display_mode), GFP_KERNEL);
-		if (!display->panel->cur_mode) {
-			rc = -ENOMEM;
-			goto error;
-		}
 	}
 
 	DSI_INFO("mdp_transfer_time_us=%d us\n",
