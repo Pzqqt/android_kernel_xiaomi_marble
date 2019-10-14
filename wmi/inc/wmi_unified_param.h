@@ -948,6 +948,12 @@ typedef struct {
 #define WMI_HOST_HECAP_MAC_WORD1	0
 #define WMI_HOST_HECAP_MAC_WORD2	1
 #define WMI_HOST_MAX_HE_RATE_SET	3
+
+#define WMI_HOST_HE_INVALID_MCSNSSMAP (0xFFFF)
+#define WMI_HOST_HE_TXRX_MCS_NSS_IDX_80    0
+#define WMI_HOST_HE_TXRX_MCS_NSS_IDX_160   1
+#define WMI_HOST_HE_TXRX_MCS_NSS_IDX_80_80 2
+
 /**
  * struct wmi_host_ppe_threshold -PPE threshold
  * @numss_m1: NSS - 1

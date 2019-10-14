@@ -2600,6 +2600,20 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		buf_ptr += sizeof(wmi_he_rate_set);
 	}
 
+	if ((param->he_flag) && (param->peer_he_mcs_count > 1) &&
+	    (param->peer_he_rx_mcs_set[WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]
+	     == WMI_HOST_HE_INVALID_MCSNSSMAP ||
+	     param->peer_he_tx_mcs_set[WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]
+	     == WMI_HOST_HE_INVALID_MCSNSSMAP)) {
+		WMI_LOGD("param->peer_he_tx_mcs_set[160MHz]=%x",
+			 param->peer_he_tx_mcs_set[WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]);
+		WMI_LOGD("param->peer_he_rx_mcs_set[160MHz]=%x",
+			 param->peer_he_rx_mcs_set[WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]);
+		WMI_LOGD("peer_mac=%02x:%02x:%02x:%02x:%02x:%02x",
+			 param->peer_mac[0], param->peer_mac[1],
+			 param->peer_mac[2], param->peer_mac[3],
+			 param->peer_mac[4], param->peer_mac[5]);
+	}
 
 	WMI_LOGD("%s: vdev_id %d associd %d peer_flags %x rate_caps %x "
 		 "peer_caps %x listen_intval %d ht_caps %x max_mpdu %d "
