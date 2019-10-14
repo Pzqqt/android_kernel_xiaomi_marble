@@ -680,9 +680,11 @@ void dfs_nol_free_list(struct wlan_dfs *dfs)
 	dfs->dfs_nol = NULL;
 }
 
+#ifdef CONFIG_CHAN_FREQ_API
 void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 {
 	struct dfs_nolelem *nol;
+	uint16_t nol_freq;
 
 	while (true) {
 		WLAN_DFSNOL_LOCK(dfs);
@@ -691,7 +693,13 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 		if (nol) {
 			dfs->dfs_nol = nol->nol_next;
 			dfs->dfs_nol_count--;
+			nol_freq = nol->nol_freq;
 			WLAN_DFSNOL_UNLOCK(dfs);
+			utils_dfs_reg_update_nol_chan_for_freq(
+					dfs->dfs_pdev_obj,
+					&nol_freq,
+					1,
+					DFS_NOL_RESET);
 
 			qdf_timer_free(&nol->nol_timer);
 			qdf_mem_free(nol);
@@ -701,6 +709,37 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 		}
 	}
 }
+#else
+#ifdef CONFIG_CHAN_NUM_API
+void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
+{
+	struct dfs_nolelem *nol;
+	uint8_t nol_chan;
+
+	while (true) {
+		WLAN_DFSNOL_LOCK(dfs);
+
+		nol = dfs->dfs_nol;
+		if (nol) {
+			dfs->dfs_nol = nol->nol_next;
+			dfs->dfs_nol_count--;
+			nol_chan = utils_dfs_freq_to_chan(nol->nol_freq);
+			WLAN_DFSNOL_UNLOCK(dfs);
+			utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
+						    &nol_chan,
+						    1,
+						    DFS_NOL_RESET);
+
+			qdf_timer_free(&nol->nol_timer);
+			qdf_mem_free(nol);
+		} else {
+			WLAN_DFSNOL_UNLOCK(dfs);
+			break;
+		}
+	}
+}
+#endif
+#endif
 
 void dfs_nol_workqueue_cleanup(struct wlan_dfs *dfs)
 {
