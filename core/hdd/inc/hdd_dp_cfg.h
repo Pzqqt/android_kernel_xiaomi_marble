@@ -39,12 +39,12 @@
 #define CFG_RX_MODE_DEFAULT CFG_ENABLE_NAPI
 #endif
 
+#ifndef CFG_RX_MODE_DEFAULT
 #if defined(FEATURE_WLAN_DP_RX_THREADS)
 #define CFG_RX_MODE_DEFAULT (CFG_ENABLE_DP_RX_THREADS | CFG_ENABLE_NAPI)
-#endif
-
-#ifndef CFG_RX_MODE_DEFAULT
+#else
 #define CFG_RX_MODE_DEFAULT (CFG_ENABLE_RX_THREAD | CFG_ENABLE_NAPI)
+#endif
 #endif
 
 /* Max # of packets to be processed in 1 tx comp loop */
