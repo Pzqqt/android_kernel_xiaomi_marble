@@ -1264,11 +1264,6 @@ static int _sde_rm_reserve_dsc(
 		bool has_422_420_support =
 			BIT(SDE_DSC_NATIVE_422_EN) & features;
 
-		SDE_DEBUG("blk id = %d, is_422_420_req:%d ,is_supported:%d\n",
-				iter_i.blk->id,
-				(dsc_info->config.native_422 ||
-				dsc_info->config.native_420),
-				has_422_420_support);
 		memset(&dsc, 0, sizeof(dsc));
 		alloc_count = 0;
 
@@ -1660,8 +1655,7 @@ static int _sde_rm_get_hw_blk_for_cont_splash(struct sde_rm *rm,
 		struct sde_splash_display *splash_display)
 {
 	u32 lm_reg;
-	struct sde_rm_hw_iter iter_lm, iter_pp;
-	struct sde_hw_pingpong *pp;
+	struct sde_rm_hw_iter iter_lm, iter_dsc;
 
 	if (!rm || !ctl || !splash_display) {
 		SDE_ERROR("invalid input parameters\n");
@@ -1669,10 +1663,8 @@ static int _sde_rm_get_hw_blk_for_cont_splash(struct sde_rm *rm,
 	}
 
 	sde_rm_init_hw_iter(&iter_lm, 0, SDE_HW_BLK_LM);
-	sde_rm_init_hw_iter(&iter_pp, 0, SDE_HW_BLK_PINGPONG);
+	sde_rm_init_hw_iter(&iter_dsc, 0, SDE_HW_BLK_DSC);
 	while (_sde_rm_get_hw_locked(rm, &iter_lm)) {
-		_sde_rm_get_hw_locked(rm, &iter_pp);
-
 		if (splash_display->lm_cnt >= MAX_DATA_PATH_PER_DSIPLAY)
 			break;
 
@@ -1695,16 +1687,20 @@ static int _sde_rm_get_hw_blk_for_cont_splash(struct sde_rm *rm,
 					iter_lm.blk->id - LM_0);
 			return 0;
 		}
+	}
 
-		pp = to_sde_hw_pingpong(iter_pp.blk->hw);
-		if (pp && pp->ops.get_dsc_status &&
-				pp->ops.get_dsc_status(pp)) {
-			splash_display->dsc_ids[splash_display->dsc_cnt++] =
-				iter_pp.blk->id;
-			SDE_DEBUG("lm/pp[%d] path, using dsc[%d]\n",
-					iter_lm.blk->id - LM_0,
-					iter_pp.blk->id - DSC_0);
-		}
+	while (_sde_rm_get_hw_locked(rm, &iter_dsc)) {
+		if (!ctl->ops.read_active_status &&
+				!(ctl->ops.read_active_status(ctl,
+					SDE_HW_BLK_DSC,
+					iter_dsc.blk->id)))
+			continue;
+
+		splash_display->dsc_ids[splash_display->dsc_cnt++] =
+				iter_dsc.blk->id;
+		SDE_DEBUG("CTL[%d] path, using dsc[%d]\n",
+				ctl->idx,
+				iter_dsc.blk->id - DSC_0);
 	}
 
 	return splash_display->lm_cnt;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -1220,6 +1220,42 @@ static inline u32 sde_hw_ctl_read_ctl_layers(struct sde_hw_ctl *ctx, int index)
 	return ctl_top;
 }
 
+static inline bool sde_hw_ctl_read_active_status(struct sde_hw_ctl *ctx,
+		enum sde_hw_blk_type blk, int index)
+{
+	struct sde_hw_blk_reg_map *c;
+
+	if (!ctx) {
+		pr_err("Invalid input argument\n");
+		return 0;
+	}
+
+	c = &ctx->hw;
+
+	switch (blk) {
+	case SDE_HW_BLK_MERGE_3D:
+		return (SDE_REG_READ(c, CTL_MERGE_3D_ACTIVE) &
+			BIT(index - MERGE_3D_0)) ? true : false;
+	case SDE_HW_BLK_DSC:
+		return (SDE_REG_READ(c, CTL_DSC_ACTIVE) &
+			BIT(index - DSC_0)) ? true : false;
+	case SDE_HW_BLK_WB:
+		return (SDE_REG_READ(c, CTL_WB_ACTIVE) &
+			BIT(index - WB_0)) ? true : false;
+	case SDE_HW_BLK_CDM:
+		return (SDE_REG_READ(c, CTL_CDM_ACTIVE) &
+			BIT(index - CDM_0)) ? true : false;
+	case SDE_HW_BLK_INTF:
+		return (SDE_REG_READ(c, CTL_INTF_ACTIVE) &
+			BIT(index - INTF_0)) ? true : false;
+	default:
+		pr_err("unsupported blk %d\n", blk);
+		return false;
+	};
+
+	return false;
+}
+
 static int sde_hw_reg_dma_flush(struct sde_hw_ctl *ctx, bool blocking)
 {
 	struct sde_hw_reg_dma_ops *ops = sde_reg_dma_get_ops();
@@ -1259,6 +1295,7 @@ static void _setup_ctl_ops(struct sde_hw_ctl_ops *ops,
 		ops->get_ctl_intf = sde_hw_ctl_get_intf_v1;
 		ops->reset_post_disable = sde_hw_ctl_reset_post_disable;
 		ops->get_scheduler_status = sde_hw_ctl_get_scheduler_status;
+		ops->read_active_status = sde_hw_ctl_read_active_status;
 	} else {
 		ops->update_pending_flush = sde_hw_ctl_update_pending_flush;
 		ops->trigger_flush = sde_hw_ctl_trigger_flush;

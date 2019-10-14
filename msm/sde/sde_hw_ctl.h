@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_CTL_H
@@ -434,6 +434,17 @@ struct sde_hw_ctl_ops {
 	 * @return	: CTL layers register value
 	 */
 	u32 (*read_ctl_layers)(struct sde_hw_ctl *ctx, int index);
+
+	/**
+	 * read active register configuration for this block
+	 * @ctx       : ctl path ctx pointer
+	 * @blk       : hw blk type, supported blocks are DSC, MERGE_3D, INTF,
+	 *              CDM, WB
+	 * @index     : blk index
+	 * @return    : true if blk at idx is active or false
+	 */
+	bool (*read_active_status)(struct sde_hw_ctl *ctx,
+			enum sde_hw_blk_type blk, int index);
 
 	/**
 	 * Set all blend stages to disabled
