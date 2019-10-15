@@ -80,6 +80,7 @@ struct sde_dbg_evtlog_log {
 	u32 data[SDE_EVTLOG_MAX_DATA];
 	u32 data_cnt;
 	int pid;
+	u8 cpu;
 };
 
 /**
