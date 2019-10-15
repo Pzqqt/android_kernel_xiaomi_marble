@@ -5014,6 +5014,9 @@ static const struct snd_kcontrol_new mi2s_config_controls[] = {
 	SOC_ENUM_EXT("QUIN MI2S RX Format", mi2s_config_enum[0],
 		     msm_dai_q6_mi2s_format_get,
 		     msm_dai_q6_mi2s_format_put),
+	SOC_ENUM_EXT("SENARY MI2S RX Format", mi2s_config_enum[0],
+		     msm_dai_q6_mi2s_format_get,
+		     msm_dai_q6_mi2s_format_put),
 	SOC_ENUM_EXT("PRI MI2S TX Format", mi2s_config_enum[0],
 		     msm_dai_q6_mi2s_format_get,
 		     msm_dai_q6_mi2s_format_put),
@@ -5068,6 +5071,8 @@ static int msm_dai_q6_dai_mi2s_probe(struct snd_soc_dai *dai)
 			ctrl = &mi2s_config_controls[3];
 		if (dai->id == MSM_QUIN_MI2S)
 			ctrl = &mi2s_config_controls[4];
+		if (dai->id == MSM_SENARY_MI2S)
+			ctrl = &mi2s_config_controls[5];
 	}
 
 	if (ctrl) {
@@ -5084,19 +5089,19 @@ static int msm_dai_q6_dai_mi2s_probe(struct snd_soc_dai *dai)
 	ctrl = NULL;
 	if (mi2s_dai_data->tx_dai.mi2s_dai_data.port_config.i2s.channel_mode) {
 		if (dai->id == MSM_PRIM_MI2S)
-			ctrl = &mi2s_config_controls[5];
-		if (dai->id == MSM_SEC_MI2S)
 			ctrl = &mi2s_config_controls[6];
-		if (dai->id == MSM_TERT_MI2S)
+		if (dai->id == MSM_SEC_MI2S)
 			ctrl = &mi2s_config_controls[7];
-		if (dai->id == MSM_QUAT_MI2S)
+		if (dai->id == MSM_TERT_MI2S)
 			ctrl = &mi2s_config_controls[8];
-		if (dai->id == MSM_QUIN_MI2S)
+		if (dai->id == MSM_QUAT_MI2S)
 			ctrl = &mi2s_config_controls[9];
-		if (dai->id == MSM_SENARY_MI2S)
+		if (dai->id == MSM_QUIN_MI2S)
 			ctrl = &mi2s_config_controls[10];
-		if (dai->id == MSM_INT5_MI2S)
+		if (dai->id == MSM_SENARY_MI2S)
 			ctrl = &mi2s_config_controls[11];
+		if (dai->id == MSM_INT5_MI2S)
+			ctrl = &mi2s_config_controls[12];
 	}
 
 	if (ctrl) {
