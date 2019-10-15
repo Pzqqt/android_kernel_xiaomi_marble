@@ -38,6 +38,7 @@
 #define SWRM_VERSION_1_3 0x01040000
 #define SWRM_VERSION_1_5 0x01050000
 #define SWRM_VERSION_1_5_1 0x01050001
+#define SWRM_VERSION_1_6   0x01060000
 
 #define SWR_MAX_CH_PER_PORT 8
 
@@ -125,6 +126,7 @@ struct swr_mstr_ctrl {
 	struct mutex pm_lock;
 	u32 swrm_base_reg;
 	char __iomem *swrm_dig_base;
+	char __iomem *swrm_hctl_reg;
 	u8 rcmd_id;
 	u8 wcmd_id;
 	u32 master_id;

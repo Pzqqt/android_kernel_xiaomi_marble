@@ -2022,6 +2022,7 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	u8 retry_cmd_num = 3;
 	u32 reg[SWRM_MAX_INIT_REG];
 	u32 value[SWRM_MAX_INIT_REG];
+	u32 temp = 0;
 	int len = 0;
 
 	/* Clear Rows and Cols */
@@ -2075,11 +2076,20 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	 * For SWR master version 1.5.1, continue
 	 * execute on command ignore.
 	 */
-	if (swrm->version == SWRM_VERSION_1_5_1)
+	/* Execute it for versions >= 1.5.1 */
+	if (swrm->version >= SWRM_VERSION_1_5_1)
 		swr_master_write(swrm, SWRM_CMD_FIFO_CFG_ADDR,
 				(swr_master_read(swrm,
 					SWRM_CMD_FIFO_CFG_ADDR) | 0x80000000));
 
+	/* SW workaround to gate hw_ctl for SWR version >=1.6 */
+	if (swrm->version >= SWRM_VERSION_1_6) {
+		if (swrm->swrm_hctl_reg) {
+			temp = ioread32(swrm->swrm_hctl_reg);
+			temp &= 0xFFFFFFFD;
+			iowrite32(temp, swrm->swrm_hctl_reg);
+		}
+	}
 	return ret;
 }
 
@@ -2129,7 +2139,7 @@ static int swrm_probe(struct platform_device *pdev)
 {
 	struct swr_mstr_ctrl *swrm;
 	struct swr_ctrl_platform_data *pdata;
-	u32 i, num_ports, port_num, port_type, ch_mask;
+	u32 i, num_ports, port_num, port_type, ch_mask, swrm_hctl_reg = 0;
 	u32 *temp, map_size, map_length, ch_iter = 0, old_port_num = 0;
 	int ret = 0;
 	struct clk *lpass_core_hw_vote = NULL;
@@ -2198,6 +2208,10 @@ static int swrm_probe(struct platform_device *pdev)
 	}
 
 	swrm->core_vote = pdata->core_vote;
+	if (!(of_property_read_u32(pdev->dev.of_node,
+			"qcom,swrm-hctl-reg", &swrm_hctl_reg)))
+		swrm->swrm_hctl_reg = devm_ioremap(&pdev->dev,
+						swrm_hctl_reg, 0x4);
 	swrm->clk = pdata->clk;
 	if (!swrm->clk) {
 		dev_err(&pdev->dev, "%s: swrm->clk is NULL\n",
