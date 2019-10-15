@@ -34,6 +34,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_nan_api.h"
 #include "nan_public_structs.h"
+#include "wlan_reg_services_api.h"
 
 /* invalid channel id. */
 #define INVALID_CHANNEL_ID 0
@@ -2114,6 +2115,7 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	bool sta_sap_scc_on_dfs_chan;
+	uint8_t chan;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2186,14 +2188,18 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
+	/* Check for STA+STA concurrency */
 	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
 							  list);
-
-	/* Check for STA+STA concurrency */
-	if (mode == PM_STA_MODE && count &&
-	    !policy_mgr_allow_multiple_sta_connections(psoc)) {
-		policy_mgr_err("No 2nd STA connection, already one STA is connected");
-		goto done;
+	if (mode == PM_STA_MODE && count) {
+		if (count >= 2) {
+			policy_mgr_err("3rd STA isn't permitted");
+			goto done;
+		}
+		chan = pm_conc_connection_list[list[0]].chan;
+		if (!policy_mgr_allow_multiple_sta_connections(psoc, channel,
+							       chan))
+			goto done;
 	}
 
 	/*
@@ -3753,7 +3759,9 @@ bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
 	return true;
 }
 
-bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *psoc)
+bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *psoc,
+					       uint8_t second_sta_chan,
+					       uint8_t first_sta_chan)
 {
 	struct wmi_unified *wmi_handle;
 
@@ -3762,13 +3770,17 @@ bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_debug("Invalid WMI handle");
 		return false;
 	}
+	if (!wmi_service_enabled(wmi_handle,
+				 wmi_service_sta_plus_sta_support))
+		return false;
 
-	if (wmi_service_enabled(wmi_handle,
-				wmi_service_sta_plus_sta_support))
-		return true;
+	if (second_sta_chan && second_sta_chan != first_sta_chan &&
+	    wlan_reg_is_same_band_channels(second_sta_chan, first_sta_chan)) {
+		policy_mgr_err("STA+STA MCC isn't permitted");
+		return false;
+	}
 
-	policy_mgr_debug("Concurrent STA connections are not supported");
-	return false;
+	return true;
 }
 
 bool policy_mgr_dual_beacon_on_single_mac_scc_capable(

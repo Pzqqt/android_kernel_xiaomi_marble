@@ -63,6 +63,7 @@
 #include <wlan_crypto_global_api.h>
 #include "wlan_qct_sys.h"
 #include "wlan_blm_api.h"
+#include "wlan_policy_mgr_i.h"
 
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
@@ -5379,6 +5380,20 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 	bool status = false;
 	struct tag_csrscan_result *scan_result = NULL;
 	tCsrScanResultInfo *result = NULL;
+	enum QDF_OPMODE op_mode;
+	struct wlan_objmgr_vdev *vdev;
+	enum policy_mgr_con_mode mode;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
+						    session_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Vdev ref error");
+		return true;
+	}
+	op_mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	while (*roam_bss_entry) {
 		scan_result = GET_BASE_ADDR(*roam_bss_entry, struct
@@ -5394,6 +5409,22 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		chan_id = wlan_reg_freq_to_chan(
 				mac_ctx->pdev,
 				result->BssDescriptor.chan_freq);
+		mode = policy_mgr_convert_device_mode_to_qdf_type(op_mode);
+		/* If concurrency is not allowed select next bss */
+		if (!policy_mgr_is_concurrency_allowed(mac_ctx->psoc,
+						       mode,
+						       chan_id,
+						       HW_MODE_20_MHZ)) {
+			sme_err("Concurrency not allowed for this channel %d bssid %pM, selecting next",
+				chan_id, result->BssDescriptor.bssId);
+			*roam_state = eCsrStopRoamingDueToConcurrency;
+			status = true;
+			*roam_bss_entry = csr_ll_next(&bss_list->List,
+						      *roam_bss_entry,
+						      LL_ACCESS_LOCK);
+			continue;
+		}
+
 		/*
 		 * check if channel is allowed for current hw mode, if not fetch
 		 * next BSS.
