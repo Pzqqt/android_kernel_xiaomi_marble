@@ -28,7 +28,9 @@
 
 uint32_t wlan_chan_to_freq(uint8_t chan)
 {
-	/* ch 0 - ch 13 */
+	if (chan == 0 )
+		return 0;
+
 	if (chan < WLAN_24_GHZ_CHANNEL_14)
 		return WLAN_24_GHZ_BASE_FREQ + chan * WLAN_CHAN_SPACING_5MHZ;
 	else if (chan == WLAN_24_GHZ_CHANNEL_14)
@@ -46,6 +48,9 @@ uint32_t wlan_chan_to_freq(uint8_t chan)
 uint8_t wlan_freq_to_chan(uint32_t freq)
 {
 	uint8_t chan;
+
+	if (freq == 0)
+		return 0;
 
 	if (freq > WLAN_24_GHZ_BASE_FREQ && freq < WLAN_CHAN_14_FREQ)
 		chan = ((freq - WLAN_24_GHZ_BASE_FREQ) /
