@@ -179,6 +179,7 @@
 #include "wlan_pkt_capture_ucfg_api.h"
 #include <wlan_hdd_sar_limits.h>
 #include "cfg_nan_api.h"
+#include "wlan_hdd_btc_chain_mode.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -3463,6 +3464,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		 * register HDD callbacks with UMAC's NAN componenet.
 		 */
 		hdd_nan_register_callbacks(hdd_ctx);
+
+		wlan_hdd_register_btc_chain_mode_handler(hdd_ctx->psoc);
 
 		status = cds_pre_enable();
 		if (!QDF_IS_STATUS_SUCCESS(status)) {

@@ -88,6 +88,7 @@
 #include <wlan_dfs_utils_api.h>
 #include "../../core/src/vdev_mgr_ops.h"
 #include "wlan_utility.h"
+#include "wlan_coex_ucfg_api.h"
 
 QDF_STATUS wma_find_vdev_id_by_addr(tp_wma_handle wma, uint8_t *addr,
 				    uint8_t *vdev_id)
@@ -2781,6 +2782,8 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 	struct vdev_mlme_obj *mlme_obj;
 	struct wlan_objmgr_vdev *vdev = intr[vdev_id].vdev;
 	struct wlan_channel *des_chan;
+	QDF_STATUS status;
+	uint8_t btc_chain_mode;
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!mlme_obj) {
@@ -2857,6 +2860,21 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 	/* Send the dynamic nss chain params before vdev start to fw */
 	if (wma->dynamic_nss_chains_support)
 		wma_vdev_nss_chain_params_send(vdev_id, ini_cfg);
+
+	status = ucfg_coex_psoc_get_btc_chain_mode(wma->psoc, &btc_chain_mode);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err("Failed to get btc chain mode");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (btc_chain_mode != WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED) {
+		status = ucfg_coex_send_btc_chain_mode(vdev, btc_chain_mode);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			wma_err("Failed to send btc chain mode %d",
+				btc_chain_mode);
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

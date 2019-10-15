@@ -768,6 +768,7 @@ populate_dot11f_ht_caps(struct mac_context *mac,
 			 disable_high_ht_mcs_2x2);
 		if (pe_session->nss == NSS_1x1_MODE) {
 			pDot11f->supportedMCSSet[1] = 0;
+			pDot11f->txSTBC = 0;
 		} else if (wlan_reg_is_24ghz_ch_freq(
 			   pe_session->curr_op_freq) &&
 			   disable_high_ht_mcs_2x2 &&
@@ -1107,6 +1108,7 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 				DISABLE_VHT_MCS_9(pDot11f->rxMCSMap,
 						NSS_1x1_MODE);
 			}
+			pDot11f->txSTBC = 0;
 		} else {
 			if (!pe_session->ch_width &&
 			    !vht_cap_info->enable_vht20_mcs9 &&
@@ -1119,6 +1121,7 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 			}
 		}
 	}
+
 	lim_log_vht_cap(mac, pDot11f);
 	return QDF_STATUS_SUCCESS;
 }
@@ -1128,6 +1131,9 @@ populate_dot11f_vht_operation(struct mac_context *mac,
 			      struct pe_session *pe_session,
 			      tDot11fIEVHTOperation *pDot11f)
 {
+	uint32_t mcs_set;
+	struct mlme_vht_capabilities_info *vht_cap_info;
+
 	if (!pe_session || !pe_session->vhtCapability)
 		return QDF_STATUS_SUCCESS;
 
@@ -1149,9 +1155,16 @@ populate_dot11f_vht_operation(struct mac_context *mac,
 		pDot11f->chan_center_freq_seg1 = 0;
 	}
 
-	pDot11f->basicMCSSet =
-		(uint16_t)mac->mlme_cfg->vht_caps.vht_cap_info.basic_mcs_set;
+	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;
+	mcs_set = vht_cap_info->basic_mcs_set;
+	mcs_set = (mcs_set & 0xFFFC) | vht_cap_info->rx_mcs;
 
+	if (pe_session->nss == NSS_1x1_MODE)
+		mcs_set |= 0x000C;
+	else
+		mcs_set = (mcs_set & 0xFFF3) | (vht_cap_info->rx_mcs2x2 << 2);
+
+	pDot11f->basicMCSSet = (uint16_t)mcs_set;
 	lim_log_vht_operation(mac, pDot11f);
 
 	return QDF_STATUS_SUCCESS;

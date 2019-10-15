@@ -146,6 +146,7 @@
 #include "sme_api.h"
 #include "wlan_hdd_thermal.h"
 #include <ol_defines.h>
+#include "wlan_hdd_btc_chain_mode.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -14784,6 +14785,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	FEATURE_MPTA_HELPER_COMMANDS
 	FEATURE_HW_CAPABILITY_COMMANDS
 	FEATURE_THERMAL_VENDOR_COMMANDS
+	FEATURE_BTC_CHAIN_MODE_COMMANDS
 };
 
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void)

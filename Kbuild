@@ -273,6 +273,10 @@ ifeq ($(CONFIG_FW_THERMAL_THROTTLE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_thermal.o
 endif
 
+ifeq ($(CONFIG_QCACLD_FEATURE_BTC_CHAIN_MODE), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_btc_chain_mode.o
+endif
+
 ###### OSIF_SYNC ########
 SYNC_DIR := os_if/sync
 SYNC_INC_DIR := $(SYNC_DIR)/inc
@@ -2971,6 +2975,9 @@ cppflags-$(CONFIG_QCACLD_FEATURE_MPTA_HELPER) += -DFEATURE_MPTA_HELPER
 
 #Flag to enable get hw capability
 cppflags-$(CONFIG_QCACLD_FEATURE_HW_CAPABILITY) += -DFEATURE_HW_CAPABILITY
+
+#Flag to enable set btc chain mode feature
+cppflags-$(CONFIG_QCACLD_FEATURE_BTC_CHAIN_MODE) += -DFEATURE_BTC_CHAIN_MODE
 
 cppflags-$(CONFIG_DATA_CE_SW_INDEX_NO_INLINE_UPDATE) += -DDATA_CE_SW_INDEX_NO_INLINE_UPDATE
 

@@ -59,6 +59,7 @@
 #include "wlan_mlme_main.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_fwol_ucfg_api.h"
+#include <wlan_coex_ucfg_api.h>
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -3885,10 +3886,11 @@ sme_fill_nss_chain_params(struct mac_context *mac_ctx,
 			  enum nss_chains_band_info band,
 			  uint8_t rf_chains_supported)
 {
-	uint8_t nss_chain_shift;
+	uint8_t nss_chain_shift, btc_chain_mode;
 	uint8_t max_supported_nss;
 	struct wlan_mlme_nss_chains *nss_chains_ini_cfg =
 					&mac_ctx->mlme_cfg->nss_chains_ini_cfg;
+	QDF_STATUS status;
 
 	nss_chain_shift = sme_get_nss_chain_shift(device_mode);
 	max_supported_nss = mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2 ?
@@ -3900,6 +3902,17 @@ sme_fill_nss_chain_params(struct mac_context *mac_ctx,
 	 */
 	if (device_mode == QDF_NDI_MODE && mac_ctx->lteCoexAntShare &&
 	    band == NSS_CHAINS_BAND_2GHZ)
+		max_supported_nss = NSS_1x1_MODE;
+
+	status = ucfg_coex_psoc_get_btc_chain_mode(mac_ctx->psoc,
+						   &btc_chain_mode);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to get BT coex chain mode");
+		btc_chain_mode = WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED;
+	}
+
+	if (band == NSS_CHAINS_BAND_2GHZ &&
+	    btc_chain_mode == QCA_BTC_CHAIN_SEPARATED)
 		max_supported_nss = NSS_1x1_MODE;
 
 	/* If the fw doesn't support two chains, num rf chains can max be 1 */
@@ -3975,6 +3988,11 @@ sme_store_nss_chains_cfg_in_vdev(struct wlan_objmgr_vdev *vdev,
 {
 	struct wlan_mlme_nss_chains *ini_cfg;
 	struct wlan_mlme_nss_chains *dynamic_cfg;
+
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return;
+	}
 
 	ini_cfg = mlme_get_ini_vdev_config(vdev);
 	dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
