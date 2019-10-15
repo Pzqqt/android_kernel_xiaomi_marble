@@ -145,11 +145,11 @@ static void wlan_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 	}
 
 	ipa_ctx = priv_ctxt;
-	ipa_ctx->uc_loaded = true;
 
 	uc_op_work = &ipa_ctx->uc_op_work[WLAN_IPA_UC_OPCODE_UC_READY];
 	if (!list_empty(&uc_op_work->work.work.entry)) {
 		/* uc_op_work is not initialized yet */
+		ipa_ctx->uc_loaded = true;
 		return;
 	}
 
@@ -3044,15 +3044,11 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 
 	ipa_info("UC READY");
 
-	if (!qdf_dev) {
-		ipa_err("qdf device is NULL!");
-		return;
-	}
-
 	if (true == ipa_ctx->uc_loaded) {
 		ipa_info("UC already loaded");
 		return;
 	}
+	ipa_ctx->uc_loaded = true;
 
 	if (!qdf_dev) {
 		ipa_err("qdf_dev is null");
