@@ -693,6 +693,8 @@ struct dp_soc_stats {
 		uint32_t reap_loop_pkt_limit_hit;
 		/* Head pointer Out of sync at the end of dp_rx_process */
 		uint32_t hp_oos2;
+		/* Rx ring near full */
+		uint32_t near_full;
 		struct {
 			/* Invalid RBM error count */
 			uint32_t invalid_rbm;
