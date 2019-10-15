@@ -25,6 +25,9 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 
+#include "wmi_unified_cfr_api.h"
+#include "wmi_unified_param.h"
+#include "wmi_unified_cfr_param.h"
 #define PEER_CFR_CAPTURE_ENABLE   1
 #define PEER_CFR_CAPTURE_DISABLE  0
 
