@@ -180,3 +180,97 @@ tgt_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev, uint32_t cfr_timer)
 
 	return status;
 }
+
+#ifdef WLAN_ENH_CFR_ENABLE
+QDF_STATUS
+tgt_cfr_config_rcc(struct wlan_objmgr_pdev *pdev,
+		   struct cfr_rcc_param *rcc_param)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
+
+	if (cfr_tx_ops->cfr_config_rcc)
+		status = cfr_tx_ops->cfr_config_rcc(pdev, rcc_param);
+
+	if (status != QDF_STATUS_SUCCESS)
+		cfr_err("Error occurred with exit code %d\n", status);
+
+	return status;
+}
+
+QDF_STATUS
+tgt_cfr_start_lut_age_timer(struct wlan_objmgr_pdev *pdev)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
+
+	if (cfr_tx_ops->cfr_start_lut_timer)
+		status = cfr_tx_ops->cfr_start_lut_timer(pdev);
+
+	if (status != QDF_STATUS_SUCCESS)
+		cfr_err("Error occurred with exit code %d\n", status);
+
+	return status;
+}
+
+QDF_STATUS
+tgt_cfr_stop_lut_age_timer(struct wlan_objmgr_pdev *pdev)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
+
+	if (cfr_tx_ops->cfr_stop_lut_timer)
+		status = cfr_tx_ops->cfr_stop_lut_timer(pdev);
+
+	if (status != QDF_STATUS_SUCCESS)
+		cfr_err("Error occurred with exit code %d\n", status);
+
+	return status;
+}
+
+void tgt_cfr_default_ta_ra_cfg(struct wlan_objmgr_pdev *pdev,
+			       struct cfr_rcc_param *rcc_param,
+			       bool allvalid, uint16_t reset_cfg)
+{
+	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
+
+	if (cfr_tx_ops->cfr_default_ta_ra_cfg)
+		cfr_tx_ops->cfr_default_ta_ra_cfg(rcc_param,
+						 allvalid, reset_cfg);
+}
+
+void tgt_cfr_dump_lut_enh(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
+
+	if (cfr_tx_ops->cfr_dump_lut_enh)
+		cfr_tx_ops->cfr_dump_lut_enh(pdev);
+}
+
+void tgt_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
+{
+	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
+
+	if (cfr_tx_ops->cfr_rx_tlv_process)
+		cfr_tx_ops->cfr_rx_tlv_process(pdev, nbuf);
+}
+
+#endif

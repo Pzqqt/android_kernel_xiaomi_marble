@@ -1565,6 +1565,20 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
+	pcfr->rcc_param.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	pcfr->rcc_param.modified_in_curr_session = MAX_RESET_CFG_ENTRY;
+	pcfr->rcc_param.num_grp_tlvs = MAX_TA_RA_ENTRIES;
+
+	target_if_cfr_default_ta_ra_config(&pcfr->rcc_param,
+					   true, MAX_RESET_CFG_ENTRY);
+
+	status = target_if_cfr_config_rcc(pdev, &pcfr->rcc_param);
+	if (status != QDF_STATUS_SUCCESS) {
+		cfr_err("Failed sending WMI to configure default values\n");
+		return status;
+	}
+	pcfr->rcc_param.modified_in_curr_session = 0;
+
 	pcfr->cfr_max_sta_count = MAX_CFR_ENABLED_CLIENTS;
 	pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_CYP;
 	pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_CYP;
@@ -1632,6 +1646,9 @@ QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 		     sizeof(uint64_t) * NUM_CHAN_CAPTURE_STATUS);
 	qdf_mem_zero(&pcfr->bb_captured_reason_cnt,
 		     sizeof(uint64_t) * NUM_CHAN_CAPTURE_REASON);
+	qdf_mem_zero(&pcfr->rcc_param, sizeof(struct cfr_rcc_param));
+	qdf_mem_zero(&pcfr->global, (sizeof(struct ta_ra_cfr_cfg) *
+				     MAX_TA_RA_ENTRIES));
 
 #ifdef DIRECT_BUF_RX_ENABLE
 	status = target_if_unregister_to_dbr_enh(pdev);

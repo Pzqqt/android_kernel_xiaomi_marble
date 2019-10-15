@@ -228,6 +228,99 @@ int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NOSUPPORT;
 }
 
+#ifdef WLAN_ENH_CFR_ENABLE
+QDF_STATUS target_if_cfr_config_rcc(struct wlan_objmgr_pdev *pdev,
+				    struct cfr_rcc_param *rcc_info)
+{
+	QDF_STATUS status;
+	struct wmi_unified *pdev_wmi_handle = NULL;
+
+	pdev_wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	if (!pdev_wmi_handle) {
+		cfr_err("pdev_wmi_handle is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	rcc_info->pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	rcc_info->num_grp_tlvs =
+		count_set_bits(rcc_info->modified_in_curr_session);
+
+	status = wmi_unified_send_cfr_rcc_cmd(pdev_wmi_handle, rcc_info);
+	return status;
+}
+
+void target_if_cfr_default_ta_ra_config(struct cfr_rcc_param *rcc_info,
+					bool allvalid, uint16_t reset_cfg)
+{
+	struct ta_ra_cfr_cfg *curr_cfg = NULL;
+	int grp_id;
+
+	uint8_t null_mac[QDF_MAC_ADDR_SIZE] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+
+	for (grp_id = 0; grp_id < MAX_TA_RA_ENTRIES; grp_id++) {
+		if (qdf_test_bit(grp_id, (unsigned long *)&reset_cfg)) {
+			curr_cfg = &rcc_info->curr[grp_id];
+			qdf_mem_copy(curr_cfg->tx_addr,
+				     null_mac, QDF_MAC_ADDR_SIZE);
+			qdf_mem_copy(curr_cfg->tx_addr_mask,
+				     null_mac, QDF_MAC_ADDR_SIZE);
+			qdf_mem_copy(curr_cfg->rx_addr,
+				     null_mac, QDF_MAC_ADDR_SIZE);
+			qdf_mem_copy(curr_cfg->rx_addr_mask,
+				     null_mac, QDF_MAC_ADDR_SIZE);
+			curr_cfg->bw = 0xf;
+			curr_cfg->nss = 0xff;
+			curr_cfg->mgmt_subtype_filter = 0xffff;
+			curr_cfg->ctrl_subtype_filter = 0xffff;
+			curr_cfg->data_subtype_filter = 0xffff;
+			if (!allvalid) {
+				curr_cfg->valid_ta = 0;
+				curr_cfg->valid_ta_mask = 0;
+				curr_cfg->valid_ra = 0;
+				curr_cfg->valid_ra_mask = 0;
+				curr_cfg->valid_bw_mask = 0;
+				curr_cfg->valid_nss_mask = 0;
+				curr_cfg->valid_mgmt_subtype = 0;
+				curr_cfg->valid_ctrl_subtype = 0;
+				curr_cfg->valid_data_subtype = 0;
+			} else {
+				curr_cfg->valid_ta = 1;
+				curr_cfg->valid_ta_mask = 1;
+				curr_cfg->valid_ra = 1;
+				curr_cfg->valid_ra_mask = 1;
+				curr_cfg->valid_bw_mask = 1;
+				curr_cfg->valid_nss_mask = 1;
+				curr_cfg->valid_mgmt_subtype = 1;
+				curr_cfg->valid_ctrl_subtype = 1;
+				curr_cfg->valid_data_subtype = 1;
+			}
+		}
+	}
+}
+#endif
+
+#ifdef WLAN_ENH_CFR_ENABLE
+void target_if_enh_cfr_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	tx_ops->cfr_tx_ops.cfr_config_rcc =
+		target_if_cfr_config_rcc;
+	tx_ops->cfr_tx_ops.cfr_start_lut_timer =
+		target_if_cfr_start_lut_age_timer;
+	tx_ops->cfr_tx_ops.cfr_stop_lut_timer =
+		target_if_cfr_stop_lut_age_timer;
+	tx_ops->cfr_tx_ops.cfr_default_ta_ra_cfg =
+		target_if_cfr_default_ta_ra_config;
+	tx_ops->cfr_tx_ops.cfr_dump_lut_enh =
+		target_if_cfr_dump_lut_enh;
+	tx_ops->cfr_tx_ops.cfr_rx_tlv_process =
+		target_if_cfr_rx_tlv_process;
+}
+#else
+void target_if_enh_cfr_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif
+
 void target_if_cfr_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	tx_ops->cfr_tx_ops.cfr_init_pdev =
@@ -240,6 +333,7 @@ void target_if_cfr_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_cfr_start_capture;
 	tx_ops->cfr_tx_ops.cfr_stop_capture =
 		target_if_cfr_stop_capture;
+	target_if_enh_cfr_tx_ops(tx_ops);
 }
 
 void target_if_cfr_set_cfr_support(struct wlan_objmgr_psoc *psoc,
