@@ -4890,7 +4890,7 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 	struct dp_soc *soc = pdev->soc;
 	struct dp_peer *peer;
 	uint16_t *peer_ids;
-	struct dp_peer **peer_array;
+	struct dp_peer **peer_array = NULL;
 	uint8_t i = 0, j = 0;
 	uint8_t m = 0, n = 0;
 
