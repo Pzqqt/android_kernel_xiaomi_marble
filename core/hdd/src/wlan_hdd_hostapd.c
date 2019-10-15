@@ -326,8 +326,7 @@ static void hdd_hostapd_channel_allow_suspend(struct hdd_adapter *adapter,
 	if (hostapd_state->bss_state == BSS_STOP)
 		return;
 
-	if (wlan_reg_get_channel_state(hdd_ctx->pdev, channel) !=
-	    CHANNEL_STATE_DFS)
+	if (!wlan_reg_chan_has_dfs_attribute(hdd_ctx->pdev, channel))
 		return;
 
 	/* Release wakelock when no more DFS channels are used */
@@ -359,14 +358,12 @@ static void hdd_hostapd_channel_prevent_suspend(struct hdd_adapter *adapter,
 	hdd_debug("bss_state: %d, channel: %d, dfs_ref_cnt: %d",
 	       hostapd_state->bss_state, channel,
 	       atomic_read(&hdd_ctx->sap_dfs_ref_cnt));
-
 	/* Return if BSS is already started && wakelock is acquired */
 	if ((hostapd_state->bss_state == BSS_START) &&
 		(atomic_read(&hdd_ctx->sap_dfs_ref_cnt) >= 1))
 		return;
 
-	if (wlan_reg_get_channel_state(hdd_ctx->pdev, channel) !=
-	    CHANNEL_STATE_DFS)
+	if (!wlan_reg_chan_has_dfs_attribute(hdd_ctx->pdev, channel))
 		return;
 
 	/* Acquire wakelock if we have at least one DFS channel in use */
@@ -2497,14 +2494,18 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	case eSAP_CHANNEL_CHANGE_EVENT:
 		hdd_debug("Received eSAP_CHANNEL_CHANGE_EVENT event");
 		if (hostapd_state->bss_state != BSS_STOP) {
-			/* Prevent suspend for new channel */
-			hdd_hostapd_channel_prevent_suspend(adapter,
-				wlan_reg_freq_to_chan(hdd_ctx->pdev,
-				sap_event->sapevt.sap_ch_selected.pri_ch_freq));
 			/* Allow suspend for old channel */
-			hdd_hostapd_channel_allow_suspend(adapter,
-				wlan_reg_freq_to_chan(hdd_ctx->pdev,
+			hdd_hostapd_channel_allow_suspend(
+				adapter,
+				wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
 				ap_ctx->operating_chan_freq));
+			/* Prevent suspend for new channel */
+			hdd_hostapd_channel_prevent_suspend(
+				adapter,
+				wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				sap_event->sapevt.sap_ch_selected.pri_ch_freq));
 		}
 		/* SME/PE is already updated for new operation
 		 * channel. So update HDD layer also here. This
