@@ -980,6 +980,8 @@ struct target_if_spectral {
  * @freq: Center frequency of primary 20MHz channel in MHz
  * @vhtop_ch_freq_seg1: VHT operation first segment center frequency in MHz
  * @vhtop_ch_freq_seg2: VHT operation second segment center frequency in MHz
+ * @agile_freq: Center frequency in MHz of the entire span across which Agile
+ * Spectral is carried out. Applicable only for Agile Spectral samples.
  * @freq_loading: spectral control duty cycles
  * @noise_floor:  current noise floor (except for secondary 80 segment)
  * @noise_floor_sec80:  current noise floor for secondary 80 segment
@@ -1026,6 +1028,7 @@ struct target_if_samp_msg_params {
 	uint16_t   freq;
 	uint16_t   vhtop_ch_freq_seg1;
 	uint16_t   vhtop_ch_freq_seg2;
+	uint16_t   agile_freq;
 	uint16_t   freq_loading;
 	int16_t     noise_floor;
 	int16_t     noise_floor_sec80;

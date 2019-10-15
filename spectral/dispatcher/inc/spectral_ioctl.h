@@ -427,6 +427,9 @@ struct spectral_samp_data {
  * @freq:               Operating frequency in MHz
  * @vhtop_ch_freq_seg1: VHT Segment 1 centre frequency in MHz
  * @vhtop_ch_freq_seg2: VHT Segment 2 centre frequency in MHz
+ * @agile_freq:         Center frequency in MHz of the entire span across which
+ *                      Agile Spectral is carried out. Applicable only for Agile
+ *                      Spectral samples.
  * @freq_loading:       How busy was the channel
  * @dcs_enabled:        Whether DCS is enabled
  * @int_type:           Interference type indicated by DCS
@@ -438,6 +441,7 @@ struct spectral_samp_msg {
 	uint16_t freq;
 	uint16_t vhtop_ch_freq_seg1;
 	uint16_t vhtop_ch_freq_seg2;
+	uint16_t agile_freq;
 	uint16_t freq_loading;
 	uint16_t dcs_enabled;
 	enum dcs_int_type int_type;

@@ -1753,6 +1753,10 @@ target_if_consume_spectral_report_gen3(
 						   SPECTRAL_FFT_BINS_POS);
 		params.freq = p_sops->get_current_channel(spectral);
 
+		if (params.smode == SPECTRAL_SCAN_MODE_AGILE)
+			params.agile_freq =
+				spectral->params[params.smode].ss_frequency;
+
 		/*
 		 * For modes upto VHT80, the noise floor is populated with
 		 * the one corresponding
