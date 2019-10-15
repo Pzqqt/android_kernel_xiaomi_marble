@@ -56,7 +56,7 @@
 #define DP_NSS_LENGTH (6 * SS_COUNT)
 #define DP_MU_GROUP_LENGTH (6 * DP_MU_GROUP_SHOW)
 #define DP_MU_GROUP_SHOW 16
-#define DP_MAX_MCS_STRING_LEN 30
+#define DP_MAX_MCS_STRING_LEN 34
 #define DP_RXDMA_ERR_LENGTH (6 * HAL_RXDMA_ERR_MAX)
 #define DP_REO_ERR_LENGTH (6 * HAL_REO_ERR_MAX)
 #define STATS_PROC_TIMEOUT        (HZ / 1000)
@@ -151,6 +151,61 @@ static const struct dp_rate_debug dp_rate_string[DOT11_MAX][MAX_MCS] = {
 		{"HE MCS 11 (1024-QAM 5/6)", MCS_VALID},
 		{"INVALID ", MCS_VALID},
 	}
+};
+
+static const struct dp_rate_debug dp_ppdu_rate_string[DOT11_MAX][MAX_MCS] = {
+	{
+		{"HE MCS 0 (BPSK 1/2)     ", MCS_VALID},
+		{"HE MCS 1 (QPSK 1/2)     ", MCS_VALID},
+		{"HE MCS 2 (QPSK 3/4)     ", MCS_VALID},
+		{"HE MCS 3 (16-QAM 1/2)   ", MCS_VALID},
+		{"HE MCS 4 (16-QAM 3/4)   ", MCS_VALID},
+		{"HE MCS 5 (64-QAM 2/3)   ", MCS_VALID},
+		{"HE MCS 6 (64-QAM 3/4)   ", MCS_VALID},
+		{"HE MCS 7 (64-QAM 5/6)   ", MCS_VALID},
+		{"HE MCS 8 (256-QAM 3/4)  ", MCS_VALID},
+		{"HE MCS 9 (256-QAM 5/6)  ", MCS_VALID},
+		{"HE MCS 10 (1024-QAM 3/4)", MCS_VALID},
+		{"HE MCS 11 (1024-QAM 5/6)", MCS_VALID},
+		{"INVALID ", MCS_VALID},
+	}
+};
+
+static const struct dp_rate_debug dp_mu_rate_string[RX_TYPE_MU_MAX][MAX_MCS] = {
+	{
+		{"HE MU-MIMO MCS 0 (BPSK 1/2)     ", MCS_VALID},
+		{"HE MU-MIMO MCS 1 (QPSK 1/2)     ", MCS_VALID},
+		{"HE MU-MIMO MCS 2 (QPSK 3/4)     ", MCS_VALID},
+		{"HE MU-MIMO MCS 3 (16-QAM 1/2)   ", MCS_VALID},
+		{"HE MU-MIMO MCS 4 (16-QAM 3/4)   ", MCS_VALID},
+		{"HE MU-MIMO MCS 5 (64-QAM 2/3)   ", MCS_VALID},
+		{"HE MU-MIMO MCS 6 (64-QAM 3/4)   ", MCS_VALID},
+		{"HE MU-MIMO MCS 7 (64-QAM 5/6)   ", MCS_VALID},
+		{"HE MU-MIMO MCS 8 (256-QAM 3/4)  ", MCS_VALID},
+		{"HE MU-MIMO MCS 9 (256-QAM 5/6)  ", MCS_VALID},
+		{"HE MU-MIMO MCS 10 (1024-QAM 3/4)", MCS_VALID},
+		{"HE MU-MIMO MCS 11 (1024-QAM 5/6)", MCS_VALID},
+		{"INVALID ", MCS_VALID},
+	},
+	{
+		{"HE OFDMA MCS 0 (BPSK 1/2)     ", MCS_VALID},
+		{"HE OFDMA MCS 1 (QPSK 1/2)     ", MCS_VALID},
+		{"HE OFDMA MCS 2 (QPSK 3/4)     ", MCS_VALID},
+		{"HE OFDMA MCS 3 (16-QAM 1/2)   ", MCS_VALID},
+		{"HE OFDMA MCS 4 (16-QAM 3/4)   ", MCS_VALID},
+		{"HE OFDMA MCS 5 (64-QAM 2/3)   ", MCS_VALID},
+		{"HE OFDMA MCS 6 (64-QAM 3/4)   ", MCS_VALID},
+		{"HE OFDMA MCS 7 (64-QAM 5/6)   ", MCS_VALID},
+		{"HE OFDMA MCS 8 (256-QAM 3/4)  ", MCS_VALID},
+		{"HE OFDMA MCS 9 (256-QAM 5/6)  ", MCS_VALID},
+		{"HE OFDMA MCS 10 (1024-QAM 3/4)", MCS_VALID},
+		{"HE OFDMA MCS 11 (1024-QAM 5/6)", MCS_VALID},
+		{"INVALID ", MCS_VALID},
+	},
+};
+
+const char *mu_reception_mode[RX_TYPE_MU_MAX] = {
+	"MU MIMO", "MU OFDMA"
 };
 
 #ifdef QCA_ENH_V3_STATS_SUPPORT
@@ -4790,6 +4845,7 @@ dp_print_common_rates_info(struct cdp_pkt_type *pkt_type_array)
 {
 	uint8_t mcs, pkt_type;
 
+	DP_PRINT_STATS("MSDU Count");
 	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
 		for (mcs = 0; mcs < MAX_MCS; mcs++) {
 			if (!dp_rate_string[pkt_type][mcs].valid)
@@ -4798,6 +4854,56 @@ dp_print_common_rates_info(struct cdp_pkt_type *pkt_type_array)
 			DP_PRINT_STATS("	%s = %d",
 				       dp_rate_string[pkt_type][mcs].mcs_type,
 				       pkt_type_array[pkt_type].mcs_count[mcs]);
+		}
+
+		DP_PRINT_STATS("\n");
+	}
+}
+
+/**
+ * dp_print_common_ppdu_rates_info(): Print common rate for tx or rx
+ * @pkt_type_array: rate type array contains rate info
+ *
+ * Return:void
+ */
+static inline void
+dp_print_common_ppdu_rates_info(struct cdp_pkt_type *pkt_type_array)
+{
+	uint8_t mcs;
+
+	DP_PRINT_STATS("PPDU Count");
+	for (mcs = 0; mcs < MAX_MCS; mcs++) {
+		if (!dp_ppdu_rate_string[0][mcs].valid)
+			continue;
+
+		DP_PRINT_STATS("	%s = %d",
+			       dp_ppdu_rate_string[0][mcs].mcs_type,
+			       pkt_type_array->mcs_count[mcs]);
+	}
+
+	DP_PRINT_STATS("\n");
+}
+
+/**
+ * dp_print_mu_ppdu_rates_info(): Print mu rate for tx or rx
+ * @rx_mu: rx MU stats array
+ *
+ * Return:void
+ */
+static inline void
+dp_print_mu_ppdu_rates_info(struct cdp_rx_mu *rx_mu)
+{
+	uint8_t mcs, pkt_type;
+
+	DP_PRINT_STATS("PPDU Count");
+	for (pkt_type = 0; pkt_type < RX_TYPE_MU_MAX; pkt_type++) {
+		for (mcs = 0; mcs < MAX_MCS; mcs++) {
+			if (!dp_mu_rate_string[pkt_type][mcs].valid)
+				continue;
+
+			DP_PRINT_STATS("	%s = %d",
+				dp_mu_rate_string[pkt_type][mcs].mcs_type,
+				rx_mu[pkt_type].ppdu.mcs_count[mcs]);
 		}
 
 		DP_PRINT_STATS("\n");
@@ -4881,6 +4987,26 @@ void dp_print_tx_rates(struct dp_vdev *vdev)
 		       pdev->stats.tx.non_amsdu_cnt);
 }
 
+/**
+ * dp_print_nss(): Print nss count
+ * @nss: printable nss count array
+ * @pnss: nss count array
+ * @ss_count: number of nss
+ *
+ * Return:void
+ */
+static void dp_print_nss(char *nss, uint32_t *pnss, uint32_t ss_count)
+{
+	uint32_t index;
+	uint8_t i;
+
+	index = 0;
+	for (i = 0; i < ss_count; i++) {
+		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
+				     " %d", *(pnss + i));
+	}
+}
+
 void dp_print_peer_stats(struct dp_peer *peer)
 {
 	uint8_t i;
@@ -4889,6 +5015,9 @@ void dp_print_peer_stats(struct dp_peer *peer)
 	char nss[DP_NSS_LENGTH];
 	char mu_group_id[DP_MU_GROUP_LENGTH];
 	struct dp_pdev *pdev;
+	uint32_t *pnss;
+	enum cdp_mu_packet_type rx_mu_type;
+	struct cdp_rx_mu *rx_mu;
 
 	pdev = peer->vdev->pdev;
 
@@ -4972,11 +5101,9 @@ void dp_print_peer_stats(struct dp_peer *peer)
 		       peer->stats.tx.bw[0], peer->stats.tx.bw[1],
 		       peer->stats.tx.bw[2], peer->stats.tx.bw[3]);
 
-	index = 0;
-	for (i = 0; i < SS_COUNT; i++) {
-		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
-				" %d", peer->stats.tx.nss[i]);
-	}
+	pnss = &peer->stats.tx.nss[0];
+	dp_print_nss(nss, pnss, SS_COUNT);
+
 	DP_PRINT_STATS("NSS(1-8) = %s", nss);
 
 	DP_PRINT_STATS("Transmit Type :");
@@ -5080,21 +5207,53 @@ void dp_print_peer_stats(struct dp_peer *peer)
 	DP_PRINT_STATS("BW Counts = 20MHZ %d 40MHZ %d 80MHZ %d 160MHZ %d",
 		       peer->stats.rx.bw[0], peer->stats.rx.bw[1],
 		       peer->stats.rx.bw[2], peer->stats.rx.bw[3]);
-	DP_PRINT_STATS("Reception Type = SU %d MU_MIMO %d MU_OFDMA %d MU_OFDMA_MIMO %d",
+	DP_PRINT_STATS("MSDU Reception Type");
+	DP_PRINT_STATS("SU %d MU_MIMO %d MU_OFDMA %d MU_OFDMA_MIMO %d",
 		       peer->stats.rx.reception_type[0],
 		       peer->stats.rx.reception_type[1],
 		       peer->stats.rx.reception_type[2],
 		       peer->stats.rx.reception_type[3]);
+	DP_PRINT_STATS("PPDU Reception Type");
+	DP_PRINT_STATS("SU %d MU_MIMO %d MU_OFDMA %d MU_OFDMA_MIMO %d",
+		       peer->stats.rx.ppdu_cnt[0],
+		       peer->stats.rx.ppdu_cnt[1],
+		       peer->stats.rx.ppdu_cnt[2],
+		       peer->stats.rx.ppdu_cnt[3]);
 
 	dp_print_common_rates_info(peer->stats.rx.pkt_type);
+	dp_print_common_ppdu_rates_info(&peer->stats.rx.su_ax_ppdu_cnt);
+	dp_print_mu_ppdu_rates_info(&peer->stats.rx.rx_mu[0]);
 
-	index = 0;
-	for (i = 0; i < SS_COUNT; i++) {
-		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
-				     " %d", peer->stats.rx.nss[i]);
+	pnss = &peer->stats.rx.nss[0];
+	dp_print_nss(nss, pnss, SS_COUNT);
+	DP_PRINT_STATS("MSDU Count");
+	DP_PRINT_STATS("	NSS(1-8) = %s", nss);
+
+	DP_PRINT_STATS("reception mode SU");
+	pnss = &peer->stats.rx.ppdu_nss[0];
+	dp_print_nss(nss, pnss, SS_COUNT);
+
+	DP_PRINT_STATS("	PPDU Count");
+	DP_PRINT_STATS("	NSS(1-8) = %s", nss);
+
+	DP_PRINT_STATS("	MPDU OK = %d, MPDU Fail = %d",
+		       peer->stats.rx.mpdu_cnt_fcs_ok,
+		       peer->stats.rx.mpdu_cnt_fcs_err);
+
+	for (rx_mu_type = 0; rx_mu_type < RX_TYPE_MU_MAX; rx_mu_type++) {
+		DP_PRINT_STATS("reception mode %s",
+			       mu_reception_mode[rx_mu_type]);
+		rx_mu = &peer->stats.rx.rx_mu[rx_mu_type];
+
+		pnss = &rx_mu->ppdu_nss[0];
+		dp_print_nss(nss, pnss, SS_COUNT);
+		DP_PRINT_STATS("	PPDU Count");
+		DP_PRINT_STATS("	NSS(1-8) = %s", nss);
+
+		DP_PRINT_STATS("	MPDU OK = %d, MPDU Fail = %d",
+			       rx_mu->mpdu_cnt_fcs_ok,
+			       rx_mu->mpdu_cnt_fcs_err);
 	}
-	DP_PRINT_STATS("NSS(1-8) = %s",
-		       nss);
 
 	DP_PRINT_STATS("Aggregation:");
 	DP_PRINT_STATS("	Msdu's Part of Ampdu = %d",

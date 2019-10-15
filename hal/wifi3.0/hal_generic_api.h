@@ -219,15 +219,15 @@ hal_rx_handle_other_tlvs(uint32_t tlv_tag, void *rx_tlv,
 defined(RX_PPDU_END_USER_STATS_22_SW_RESPONSE_REFERENCE_PTR_EXT_OFFSET)
 
 static inline void
-hal_rx_handle_ofdma_info(
+hal_rx_handle_mu_ul_info(
 	void *rx_tlv,
 	struct mon_rx_user_status *mon_rx_user_status)
 {
-	mon_rx_user_status->ul_ofdma_user_v0_word0 =
+	mon_rx_user_status->mu_ul_user_v0_word0 =
 		HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_11,
 			   SW_RESPONSE_REFERENCE_PTR);
 
-	mon_rx_user_status->ul_ofdma_user_v0_word1 =
+	mon_rx_user_status->mu_ul_user_v0_word1 =
 		HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_22,
 			   SW_RESPONSE_REFERENCE_PTR_EXT);
 }
@@ -251,7 +251,7 @@ hal_rx_populate_byte_count(void *rx_tlv, void *ppduinfo,
 }
 #else
 static inline void
-hal_rx_handle_ofdma_info(void *rx_tlv,
+hal_rx_handle_mu_ul_info(void *rx_tlv,
 			 struct mon_rx_user_status *mon_rx_user_status)
 {
 }
@@ -546,7 +546,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			mon_rx_user_status =
 				&ppdu_info->rx_user_status[user_id];
 
-			hal_rx_handle_ofdma_info(rx_tlv, mon_rx_user_status);
+			hal_rx_handle_mu_ul_info(rx_tlv, mon_rx_user_status);
 
 			ppdu_info->com_info.num_users++;
 

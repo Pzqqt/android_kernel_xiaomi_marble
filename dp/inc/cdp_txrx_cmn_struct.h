@@ -1622,7 +1622,7 @@ struct cdp_tx_completion_msdu {
  * @peer_id: Peer ID
  * @vdev_id: VAP ID
  * @is_ampdu: mpdu aggregate or non-aggregate?
- * @ofdma_info_valid: RU info valid
+ * @mu_ul_info_valid: MU UL info valid
  * @ofdma_ru_start_index: RU index number(0-73)
  * @ofdma_ru_width: size of RU in units of 1(26tone)RU
  * @nss: NSS 1,2, ...8
@@ -1652,7 +1652,7 @@ struct cdp_rx_stats_ppdu_user {
 	uint16_t peer_id;
 	uint8_t vdev_id;
 	bool is_ampdu;
-	uint32_t ofdma_info_valid:1,
+	uint32_t mu_ul_info_valid:1,
 		 ofdma_ru_start_index:7,
 		 ofdma_ru_width:7,
 		 nss:4,
@@ -1661,6 +1661,7 @@ struct cdp_rx_stats_ppdu_user {
 	uint8_t  user_index;
 	uint32_t ast_index;
 	uint32_t tid;
+	uint32_t num_msdu;
 	uint16_t  tcp_msdu_count;
 	uint16_t  udp_msdu_count;
 	uint16_t  other_msdu_count;

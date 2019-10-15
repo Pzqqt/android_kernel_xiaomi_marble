@@ -328,9 +328,12 @@ struct mon_rx_status {
  * extracted from hardware TLV.
  * @mcs: MCS index of Rx frame
  * @nss: Number of spatial streams
- * @ofdma_info_valid: OFDMA info below is valid
- * @dl_ofdma_ru_start_index: OFDMA RU start index
- * @dl_ofdma_ru_width: OFDMA total RU width
+ * @mu_ul_info_valid: MU UL info below is valid
+ * @ofdma_ru_start_index: OFDMA RU start index
+ * @ofdma_ru_width: OFDMA total RU width
+ * @ofdma_ru_size: OFDMA RU size index
+ * @mu_ul_user_v0_word0: MU UL user info word 0
+ * @mu_ul_user_v0_word1: MU UL user info word 1
  * @ast_index: AST table hash index
  * @tid: QoS traffic tid number
  * @tcp_msdu_count: tcp protocol msdu count
@@ -355,12 +358,12 @@ struct mon_rx_status {
 struct mon_rx_user_status {
 	uint32_t mcs:4,
 		 nss:3,
-		 ofdma_info_valid:1,
-		 dl_ofdma_ru_start_index:7,
-		 dl_ofdma_ru_width:7,
-		 dl_ofdma_ru_size:8;
-	uint32_t ul_ofdma_user_v0_word0;
-	uint32_t ul_ofdma_user_v0_word1;
+		 mu_ul_info_valid:1,
+		 ofdma_ru_start_index:7,
+		 ofdma_ru_width:7,
+		 ofdma_ru_size:8;
+	uint32_t mu_ul_user_v0_word0;
+	uint32_t mu_ul_user_v0_word1;
 	uint32_t ast_index;
 	uint32_t tid;
 	uint16_t tcp_msdu_count;
