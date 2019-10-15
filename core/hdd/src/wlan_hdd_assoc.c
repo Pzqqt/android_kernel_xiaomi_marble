@@ -1380,8 +1380,8 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		ucfg_p2p_status_connect(adapter->vdev);
 
-		hdd_info("wlan: " QDF_MAC_ADDR_STR " connected to "
-			QDF_MAC_ADDR_STR "\n",
+		hdd_info("%s(vdevid-%d): " QDF_MAC_ADDR_STR " connected to "
+			QDF_MAC_ADDR_STR, dev->name, adapter->vdev_id,
 			QDF_MAC_ADDR_ARRAY(adapter->mac_addr.bytes),
 			QDF_MAC_ADDR_ARRAY(wrqu.ap_addr.sa_data));
 		hdd_send_update_beacon_ies_event(adapter, roam_info);
@@ -1451,10 +1451,12 @@ static void hdd_send_association_event(struct net_device *dev,
 				adapter->vdev_id);
 		memcpy(wrqu.ap_addr.sa_data, sta_ctx->conn_info.bssid.bytes,
 				ETH_ALEN);
-		hdd_debug("wlan: new IBSS peer connection to BSSID " QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(sta_ctx->conn_info.bssid.bytes));
+		hdd_debug("%s(vdevid-%d): new IBSS peer connection to BSSID " QDF_MAC_ADDR_STR,
+			  dev->name, adapter->vdev_id,
+			  QDF_MAC_ADDR_ARRAY(sta_ctx->conn_info.bssid.bytes));
 	} else {                /* Not Associated */
-		hdd_debug("wlan: disconnected");
+		hdd_info("%s(vdevid-%d): disconnected", dev->name,
+			 adapter->vdev_id);
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 				adapter->device_mode, adapter->vdev_id);
@@ -3488,13 +3490,15 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			qdf_copy_macaddr(&roam_info->bssid,
 					 &sta_ctx->requested_bssid);
 		if (roam_info)
-			hdd_err("wlan: connection failed with " QDF_MAC_ADDR_STR
-				 " result: %d and Status: %d",
+			hdd_err("%s(vdevid-%d): connection failed with " QDF_MAC_ADDR_STR
+				 " result: %d and Status: %d", dev->name,
+				 adapter->vdev_id,
 				 QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes),
 				 roam_result, roam_status);
 		else
-			hdd_err("wlan: connection failed with " QDF_MAC_ADDR_STR
-				 " result: %d and Status: %d",
+			hdd_err("%s(vdevid-%d): connection failed with " QDF_MAC_ADDR_STR
+				 " result: %d and Status: %d", dev->name,
+				 adapter->vdev_id,
 				 QDF_MAC_ADDR_ARRAY(sta_ctx->requested_bssid.bytes),
 				 roam_result, roam_status);
 
