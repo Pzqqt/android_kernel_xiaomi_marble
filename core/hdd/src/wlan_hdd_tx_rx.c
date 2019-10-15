@@ -2683,6 +2683,7 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
+	WLAN_ADDR_COPY(sta_desc.peer_addr.bytes, adapter->mac_addr.bytes);
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_mon_rx_packet_cbk;
 	hdd_monitor_set_rx_monitor_cb(&txrx_ops, hdd_rx_monitor_callback);
