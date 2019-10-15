@@ -992,3 +992,6 @@ CONFIG_6G_SCAN_CHAN_SORT_ALGO := y
 endif
 
 CONFIG_SAP_DHCP_FW_IND := y
+
+#Enable support to get ANI level
+CONFIG_ANI_LEVEL_REQUEST := y

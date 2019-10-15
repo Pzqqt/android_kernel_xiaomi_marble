@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -125,6 +125,18 @@ struct pkt_filter_cfg {
 	struct pkt_filter_param_cfg params_data[HDD_MAX_CMP_PER_PACKET_FILTER];
 };
 
+#endif
+
+#ifdef FEATURE_ANI_LEVEL_REQUEST
+/**
+ * ani_priv - structure to store the priv data for get ani request
+ * @num_freq: number of freq received from the FW
+ * @ani: data received from the FW
+ */
+struct ani_priv {
+	uint32_t num_freq;
+	struct wmi_host_ani_level_event *ani;
+};
 #endif
 
 /**
@@ -551,4 +563,19 @@ static inline int wlan_hdd_rx_thread_suspend(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef FEATURE_ANI_LEVEL_REQUEST
+/**
+ * wlan_hdd_get_ani_level() - Wrapper to call API to fetch ani level
+ * @adapter: pointer to HDD adapter
+ * @ani: pointer to structure storing ani level for channels
+ * @parsed_freqs: parsed freqs from the get ani command
+ * @num_freqs: number of parsed channels
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_hdd_get_ani_level(struct hdd_adapter *adapter,
+				  struct wmi_host_ani_level_event *ani,
+				  uint32_t *parsed_freqs,
+				  uint8_t num_freqs);
+#endif /* FEATURE_ANI_LEVEL_REQUEST */
 #endif /* __WLAN_HDD_POWER_H */

@@ -3298,6 +3298,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 				wma_pdev_div_info_evt_handler,
 				WMA_RX_WORK_CTX);
 
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_get_ani_level_event_id,
+					   wma_get_ani_level_evt_handler,
+					   WMA_RX_WORK_CTX);
 
 	wma_register_debug_callback();
 	wifi_pos_register_get_phy_mode_cb(wma_handle->psoc,
@@ -9383,3 +9387,12 @@ QDF_STATUS wma_get_rx_chainmask(uint8_t pdev_id, uint32_t *chainmask_2g,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef FEATURE_ANI_LEVEL_REQUEST
+QDF_STATUS wma_send_ani_level_request(tp_wma_handle wma_handle,
+				      uint32_t *freqs, uint8_t num_freqs)
+{
+	return wmi_unified_ani_level_cmd_send(wma_handle->wmi_handle, freqs,
+					      num_freqs);
+}
+#endif

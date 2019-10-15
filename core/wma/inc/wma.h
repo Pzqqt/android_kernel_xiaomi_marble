@@ -2683,4 +2683,17 @@ QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
  */
 void wma_release_pending_vdev_refs(void);
 
+#ifdef FEATURE_ANI_LEVEL_REQUEST
+/**
+ * wma_send_ani_level_request() - Send get ani level cmd to WMI
+ * @wma_handle: wma handle.
+ * @freqs: pointer to channels for which ANI level has to be retrieved
+ * @num_freqs: number of channels in the above parameter
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_send_ani_level_request(tp_wma_handle wma_handle,
+				      uint32_t *freqs, uint8_t num_freqs);
+#endif /* FEATURE_ANI_LEVEL_REQUEST */
 #endif
+

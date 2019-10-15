@@ -1483,4 +1483,7 @@ QDF_STATUS csr_update_owe_info(struct mac_context *mac,
 QDF_STATUS
 csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
 			       bool enable);
+
+typedef void (*csr_ani_callback)(int8_t *ani, void *context);
+
 #endif
