@@ -3670,9 +3670,10 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		   TRACE_CODE_HDD_CFG80211_SET_CHANNEL,
 		   adapter->vdev_id, channel_type);
 
-	hdd_debug("Device_mode %s(%d)  freq = %d",
+	hdd_debug("Dev_mode %s(%d) freq %d, ch_bw %d ccfs1 %d ccfs2 %d",
 		  qdf_opmode_str(adapter->device_mode),
-		  adapter->device_mode, chandef->chan->center_freq);
+		  adapter->device_mode, chandef->chan->center_freq,
+		  chandef->width, chandef->center_freq1, chandef->center_freq2);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -3692,8 +3693,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 
 	channel = ieee80211_frequency_to_channel(chandef->chan->center_freq);
 
-	if (NL80211_CHAN_WIDTH_80P80 == chandef->width ||
-	    NL80211_CHAN_WIDTH_160 == chandef->width) {
+	if (NL80211_CHAN_WIDTH_80P80 == chandef->width) {
 		if ((wlan_reg_min_chan_freq() > chandef->center_freq2) ||
 		    (wlan_reg_max_chan_freq() < chandef->center_freq2)) {
 			hdd_err("center_freq2: %d is outside valid freq range",
