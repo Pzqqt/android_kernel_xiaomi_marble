@@ -17,6 +17,7 @@ INCS += -Inbuf/linux -Inet/linux -Ios/linux
 INCS += -I$(WLAN_TOP)/../../include
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/inc
 INCS += -I$(WLAN_TOP)/cmn_dev/qal/inc
+INCS += -I$(WLAN_TOP)/cmn_dev/utils/sys
 INCS += -I$(WLAN_TOP)/component_dev/qal/inc
 INCS += -I$(WLAN_TOP)/cmn_dev/qal/linux/src
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/linux/src
