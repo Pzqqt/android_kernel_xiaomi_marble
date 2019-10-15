@@ -34,6 +34,7 @@
 #include <wlan_policy_mgr_api.h>
 #endif
 #include <wlan_dfs_utils_api.h>
+#include <wlan_scan_cfg.h>
 
 QDF_STATUS
 scm_scan_free_scan_request_mem(struct scan_start_request *req)
@@ -806,6 +807,97 @@ static inline void scm_scan_chlist_concurrency_modify(
 }
 #endif
 
+#ifdef CONFIG_BAND_6GHZ
+static void
+scm_update_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
+			     struct chan_list *chan_list,
+			     struct wlan_scan_obj *scan_obj)
+{
+	uint8_t i;
+	struct regulatory_channel *chan_list_6g;
+	bool psc_channel_found = false;
+	bool channel_6g_found = false;
+	uint8_t num_scan_channels = 0, channel_count;
+	struct wlan_objmgr_pdev *pdev;
+	uint32_t freq;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return;
+
+	scm_debug("6g scan mode %d", scan_obj->scan_def.scan_mode_6g);
+	for (i = 0; i < chan_list->num_chan; i++) {
+		freq = chan_list->chan[i].freq;
+		if ((scan_obj->scan_def.scan_mode_6g ==
+		     SCAN_MODE_6G_NO_CHANNEL) &&
+		    (wlan_reg_is_6ghz_chan_freq(freq))) {
+			/* Drop the 6Ghz channels */
+			continue;
+		} else if ((scan_obj->scan_def.scan_mode_6g ==
+			SCAN_MODE_6G_PSC_CHANNEL) &&
+			(wlan_reg_is_6ghz_chan_freq(freq))) {
+			/* Allow only PSC channels */
+			if (wlan_reg_is_6ghz_psc_chan_freq(freq))
+				psc_channel_found = true;
+			else
+				continue;
+		} else if ((scan_obj->scan_def.scan_mode_6g ==
+			     SCAN_MODE_6G_ALL_CHANNEL) &&
+			    (wlan_reg_is_6ghz_chan_freq(freq))) {
+			/* Allow  any 6ghz channel */
+			channel_6g_found = true;
+		}
+		chan_list->chan[num_scan_channels++] =
+			chan_list->chan[i];
+	}
+
+	scm_debug("psc_channel_found %d channel_6g_found%d",
+		  psc_channel_found, channel_6g_found);
+	if ((scan_obj->scan_def.scan_mode_6g == SCAN_MODE_6G_PSC_CHANNEL &&
+	     !psc_channel_found) ||
+	    (scan_obj->scan_def.scan_mode_6g == SCAN_MODE_6G_ALL_CHANNEL &&
+	     !channel_6g_found)) {
+		chan_list_6g = qdf_mem_malloc(NUM_6GHZ_CHANNELS *
+				sizeof(struct regulatory_channel));
+		if (!chan_list_6g)
+			goto end;
+
+		/* Add the 6Ghz channels based on config*/
+		channel_count = wlan_reg_get_band_channel_list(pdev,
+							       REG_BAND_6G,
+							       chan_list_6g);
+		scm_debug("Number of 6G channels %d", channel_count);
+		for (i = 0; i < channel_count; i++) {
+			if ((scan_obj->scan_def.scan_mode_6g ==
+			     SCAN_MODE_6G_PSC_CHANNEL) &&
+			     (!psc_channel_found) &&
+			     wlan_reg_is_6ghz_psc_chan_freq(chan_list_6g[i].
+				center_freq)) {
+				chan_list->chan[num_scan_channels++].freq =
+					chan_list_6g[i].center_freq;
+			} else if ((scan_obj->scan_def.scan_mode_6g ==
+			     SCAN_MODE_6G_ALL_CHANNEL) &&
+			    (!channel_6g_found)) {
+				chan_list->chan[num_scan_channels++].freq =
+					chan_list_6g[i].center_freq;
+			}
+		}
+	}
+	scm_debug("Number of channels to scan %d", num_scan_channels);
+	for (i = 0; i < num_scan_channels; i++)
+		scm_debug("channels to scan %d", chan_list->chan[i].freq);
+end:
+	chan_list->num_chan = num_scan_channels;
+}
+#else
+static void
+scm_update_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
+			     struct chan_list *chan_list,
+			     struct wlan_scan_obj *scan_obj)
+{
+}
+#endif
+
 /**
  * scm_update_channel_list() - update scan req params depending on dfs inis
  * and initial scan request.
@@ -872,10 +964,14 @@ scm_update_channel_list(struct scan_start_request *req,
 			continue;
 		if (utils_dfs_is_freq_in_nol(pdev, freq))
 			continue;
+
 		req->scan_req.chan_list.chan[num_scan_channels++] =
 			req->scan_req.chan_list.chan[i];
 	}
+
 	req->scan_req.chan_list.num_chan = num_scan_channels;
+	scm_update_6ghz_channel_list(req->vdev, &req->scan_req.chan_list,
+				     scan_obj);
 	scm_scan_chlist_concurrency_modify(req->vdev, req);
 }
 

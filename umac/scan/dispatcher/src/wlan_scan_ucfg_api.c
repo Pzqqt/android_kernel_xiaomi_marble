@@ -1042,6 +1042,7 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.scan_ev_restarted = true;
 	scan_obj->scan_def.enable_connected_scan =
 		cfg_get(psoc, CFG_ENABLE_CONNECTED_SCAN);
+	scan_obj->scan_def.scan_mode_6g = cfg_get(psoc, CFG_6GHZ_SCAN_MODE);
 	/* init scan id seed */
 	qdf_atomic_init(&scan_obj->scan_ids);
 

@@ -24,6 +24,19 @@
 
 #include "cfg_define.h"
 
+/**
+ * enum scan_mode_6ghz - scan mode for 6GHz
+ * @SCAN_MODE_6G_NO_CHANNEL: Remove 6GHz channels in the scan request
+ * @SCAN_MODE_6G_PSC_CHANNEL: Allow/Add 6Ghz PSC channels to scan request
+ * @SCAN_MODE_6G_ALL_CHANNEL: Allow all the 6Ghz channels
+ */
+enum scan_mode_6ghz {
+	SCAN_MODE_6G_NO_CHANNEL,
+	SCAN_MODE_6G_PSC_CHANNEL,
+	SCAN_MODE_6G_ALL_CHANNEL,
+	SCAN_MODE_6G_MAX = SCAN_MODE_6G_ALL_CHANNEL,
+};
+
 /*
  * <ini>
  * drop_bcn_on_chan_mismatch - drop the beacon for chan mismatch
@@ -1189,6 +1202,32 @@
 			false,\
 			"Enable/Disable SNR Monitoring")
 
+/*
+ * <ini>
+ * scan_mode_6ghz - 6ghz Scan mode
+ * @Min: 0
+ * @Max: 2
+ * @Default: 2
+ *
+ * Configure the 6Ghz scan mode
+ * 0 - Remove 6GHz channels in the scan request
+ * 1 - Allow/Add 6Ghz PSC channels to scan request
+ * 2 - Allow all the 6Ghz channels
+ *
+ * Related: SCAN
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_6GHZ_SCAN_MODE CFG_INI_UINT( \
+				"scan_mode_6ghz", \
+				SCAN_MODE_6G_NO_CHANNEL, \
+				SCAN_MODE_6G_MAX, \
+				SCAN_MODE_6G_PSC_CHANNEL, \
+				CFG_VALUE_OR_DEFAULT, \
+				"6ghz scan mode")
+
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_ENABLE_WAKE_LOCK_IN_SCAN) \
@@ -1220,6 +1259,7 @@
 	CFG(CFG_ENABLE_SNR_MONITORING) \
 	CFG(CFG_AP_SCAN_BURST_DURATION) \
 	CFG(CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH) \
+	CFG(CFG_6GHZ_SCAN_MODE) \
 	CFG_SCAN_PNO
 
 #endif /* __CONFIG_SCAN_H */
