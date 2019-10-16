@@ -34,6 +34,30 @@
 #define MAX_MONITOR_HEADER (512)
 #define MAX_DUMMY_FRM_BODY (128)
 
+/* Macros to handle sequence number bitmaps */
+
+/* Size (in bits) of a segment of sequence number bitmap */
+#define SEQ_SEG_SZ_BITS(_seqarr) (sizeof(_seqarr[0]) << 3)
+
+/* Array index of a segment of sequence number bitmap */
+#define SEQ_SEG_INDEX(_seqarr, _seqno) ((_seqno) / SEQ_SEG_SZ_BITS(_seqarr))
+
+/* Bit mask of a seqno within a segment of sequence bitmap */
+#define SEQ_SEG_MSK(_seqseg, _index) \
+	(1 << ((_index) & ((sizeof(_seqseg) << 3) - 1)))
+
+/* Check seqno bit in a segment of sequence bitmap */
+#define SEQ_SEG_BIT(_seqseg, _index) \
+	((_seqseg) & SEQ_SEG_MSK((_seqseg), _index))
+
+/* Segment of sequence bitmap containing a given sequence number */
+#define SEQ_SEG(_seqarr, _seqno) \
+	(_seqarr[(_seqno) / (sizeof(_seqarr[0]) << 3)])
+
+/* Check seqno bit in the sequence bitmap */
+#define SEQ_BIT(_seqarr, _seqno) \
+	SEQ_SEG_BIT(SEQ_SEG(_seqarr, (_seqno)), (_seqno))
+
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 /**
  * dp_peer_or_pdev_tx_cap_enabled - Returns status of tx_cap_enabled
@@ -71,6 +95,7 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 		tx_tid = &peer->tx_capture.tx_tid[tid];
 		tx_tid->tid = tid;
 		qdf_nbuf_queue_init(&tx_tid->msdu_comp_q);
+		qdf_nbuf_queue_init(&tx_tid->pending_ppdu_q);
 		tx_tid->max_ppdu_id = 0;
 
 		/* spinlock create */
@@ -313,6 +338,7 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 	msdu_comp_info->msdu_part_of_amsdu = ts->msdu_part_of_amsdu;
 	msdu_comp_info->transmit_cnt = ts->transmit_cnt;
 	msdu_comp_info->tsf = ts->tsf;
+	msdu_comp_info->status = ts->status;
 
 	/* update max ppdu_id */
 	tx_tid->max_ppdu_id = ts->ppdu_id;
@@ -351,8 +377,10 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 {
 	int ret = QDF_STATUS_E_FAILURE;
 
-	if (desc->pdev->tx_capture_enabled != CDP_TX_ENH_CAPTURE_DISABLED &&
-	    ts->status == HAL_TX_TQM_RR_FRAME_ACKED) {
+	if ((desc->pdev->tx_capture_enabled != CDP_TX_ENH_CAPTURE_DISABLED) &&
+	    ((ts->status == HAL_TX_TQM_RR_FRAME_ACKED) ||
+	    (ts->status == HAL_TX_TQM_RR_REM_CMD_TX) ||
+	    ((ts->status == HAL_TX_TQM_RR_REM_CMD_AGED) && ts->transmit_cnt))) {
 		ret = dp_update_msdu_to_list(soc, desc->pdev,
 					     peer, ts, desc->nbuf);
 	}
@@ -385,6 +413,7 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 	uint32_t i;
 	uint32_t k;
 	uint32_t ba_bitmap = 0;
+	int last_set_bit;
 
 	user = (struct cdp_tx_completion_ppdu_user *)data;
 
@@ -407,8 +436,34 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 			  ppdu_id, user->ba_bitmap[i], user->enq_bitmap[i]);
 	}
 
+	/* Handle sequence no. wraparound */
 	if (start_seq <= ba_seq_no) {
 		diff = ba_seq_no - start_seq;
+		/* Sequence delta of more than 2048 is considered wraparound
+		 * and we extend start_seq to be more than ba_seq just to
+		 * adjust failed_bitmap
+		 */
+		if (qdf_unlikely(diff > (IEEE80211_SEQ_MAX / 2))) {
+			diff = (start_seq - ba_seq_no) &
+				(IEEE80211_SEQ_MAX - 1);
+			start_seq = ba_seq_no + diff;
+		}
+	} else {
+		diff = start_seq - ba_seq_no;
+		/* Sequence delta of more than 2048 is considered wraparound
+		 * and we extend ba_seq to be more than start_seq just to
+		 * adjust failed_bitmap
+		 */
+		if (qdf_unlikely(diff > (IEEE80211_SEQ_MAX / 2))) {
+			diff = (ba_seq_no - start_seq) &
+				(IEEE80211_SEQ_MAX - 1);
+			ba_seq_no = start_seq + diff;
+		}
+	}
+
+	/* Adjust failed_bitmap to start from same seq_no as enq_bitmap */
+	last_set_bit = 0;
+	if (start_seq <= ba_seq_no) {
 		bitmask = (1 << diff) - 1;
 		for (i = 0; i < size; i++) {
 			ba_bitmap = user->ba_bitmap[i];
@@ -421,9 +476,12 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 
 			user->failed_bitmap[i] = user->enq_bitmap[i] &
 						 user->failed_bitmap[i];
+			if (user->enq_bitmap[i]) {
+				last_set_bit = i * 32 +
+					qdf_fls(user->enq_bitmap[i]) - 1;
+			}
 		}
 	} else {
-		diff = start_seq - ba_seq_no;
 		/* array index */
 		k = diff >> 5;
 		diff = diff & 0x1F;
@@ -440,8 +498,14 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 
 			user->failed_bitmap[i] = user->enq_bitmap[i] &
 						 user->failed_bitmap[i];
+			if (user->enq_bitmap[i]) {
+				last_set_bit = i * 32 +
+					qdf_fls(user->enq_bitmap[i]) - 1;
+			}
 		}
 	}
+	user->last_enq_seq = user->start_seq + last_set_bit;
+	user->ba_size = user->last_enq_seq - user->start_seq + 1;
 }
 
 /*
@@ -481,12 +545,36 @@ static void  dp_iterate_free_peer_msdu_q(void *pdev_hdl)
 			struct dp_tx_tid *tx_tid;
 
 			for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+				qdf_nbuf_t ppdu_nbuf = NULL;
+				struct cdp_tx_completion_ppdu *ppdu_desc =
+					NULL;
+				int i;
 				tx_tid = &peer->tx_capture.tx_tid[tid];
 
 				/* spinlock hold */
 				qdf_spin_lock_bh(&tx_tid->tid_lock);
 				qdf_nbuf_queue_free(&tx_tid->msdu_comp_q);
 				qdf_spin_unlock_bh(&tx_tid->tid_lock);
+				while ((ppdu_nbuf = qdf_nbuf_queue_remove(
+				       &tx_tid->pending_ppdu_q))) {
+					ppdu_desc =
+					(struct cdp_tx_completion_ppdu *)
+					qdf_nbuf_data(ppdu_nbuf);
+					if (!ppdu_desc->mpdus) {
+						qdf_nbuf_free(ppdu_nbuf);
+						continue;
+					}
+					for (i = 0; i <
+					   ppdu_desc->user[0].ba_size; i++) {
+						if (!ppdu_desc->mpdus[i])
+							continue;
+						qdf_nbuf_free(
+							ppdu_desc->mpdus[i]);
+					}
+					qdf_mem_free(ppdu_desc->mpdus);
+					ppdu_desc->mpdus = NULL;
+					qdf_nbuf_free(ppdu_nbuf);
+				}
 			}
 		}
 	}
@@ -507,6 +595,7 @@ dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	int i, j;
 
+	qdf_spin_lock(&pdev->tx_capture.config_lock);
 	pdev->tx_capture_enabled = val;
 
 	if (pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS ||
@@ -534,6 +623,7 @@ dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
 		}
 	}
 
+	qdf_spin_unlock(&pdev->tx_capture.config_lock);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -608,7 +698,7 @@ QDF_STATUS dp_tx_print_bitmap(struct dp_pdev *pdev,
 
 		for (i = 0; i < CDP_BA_256_BIT_MAP_SIZE_DWORDS; i++) {
 			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_ERROR,
+				  QDF_TRACE_LEVEL_INFO,
 				  "ppdu_id[%d] ba_bitmap[0x%x] enqueue_bitmap[0x%x] failed_bitmap[0x%x]",
 				  ppdu_id, user->ba_bitmap[i],
 				  user->enq_bitmap[i],
@@ -620,7 +710,7 @@ QDF_STATUS dp_tx_print_bitmap(struct dp_pdev *pdev,
 	}
 
 	if (fail_num_mpdu == num_mpdu && num_mpdu)
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: %d ppdu_id[%d] num_mpdu[%d, %d]",
 			  __func__, __LINE__, ppdu_id, num_mpdu, fail_num_mpdu);
 
@@ -707,7 +797,7 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 }
 
 /**
- * dp_tx_mon_restitch_mpdu_from_msdus(): Function to restitch msdu to mpdu
+ * dp_tx_mon_restitch_mpdu(): Function to restitch msdu to mpdu
  * @pdev: dp_pdev
  * @peer: dp_peer
  * @head_msdu: head msdu queue
@@ -715,18 +805,15 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
  * return: status
  */
 static uint32_t
-dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
-				   struct dp_peer *peer,
-				   struct cdp_tx_completion_ppdu *ppdu_desc,
-				   qdf_nbuf_queue_t *head_msdu)
+dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
+			struct cdp_tx_completion_ppdu *ppdu_desc,
+			qdf_nbuf_queue_t *head_msdu,
+			qdf_nbuf_queue_t *mpdu_q)
 {
 	qdf_nbuf_t curr_nbuf = NULL;
 	qdf_nbuf_t first_nbuf = NULL;
 	qdf_nbuf_t prev_nbuf = NULL;
 	qdf_nbuf_t mpdu_nbuf = NULL;
-
-	qdf_nbuf_queue_t *mpdu = NULL;
-	uint32_t num_mpdu = 0;
 
 	struct msdu_completion_info *ptr_msdu_info = NULL;
 
@@ -736,9 +823,6 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 	uint8_t first_msdu_not_seen = 1;
 	uint16_t ether_type = 0;
 	qdf_ether_header_t *eh = NULL;
-
-	num_mpdu = ppdu_desc->num_mpdu;
-	mpdu = &ppdu_desc->mpdu_q;
 
 	curr_nbuf = qdf_nbuf_queue_remove(head_msdu);
 
@@ -754,16 +838,17 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 		ether_type = eh->ether_type;
 
 		/* pull msdu_completion_info added in pre header */
-		/* pull ethernet header from header */
 		qdf_nbuf_pull_head(curr_nbuf,
-				   sizeof(struct msdu_completion_info) +
-				   sizeof(qdf_ether_header_t));
+			sizeof(struct msdu_completion_info));
 
 		if (first_msdu && first_msdu_not_seen) {
 			first_nbuf = curr_nbuf;
 			frag_list_sum_len = 0;
 			first_msdu_not_seen = 0;
 
+			/* pull ethernet header from first MSDU alone */
+			qdf_nbuf_pull_head(curr_nbuf,
+					   sizeof(qdf_ether_header_t));
 			mpdu_nbuf = qdf_nbuf_alloc(pdev->soc->osdev,
 						   MAX_MONITOR_HEADER,
 						   MAX_MONITOR_HEADER,
@@ -830,7 +915,7 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 						 frag_list_sum_len);
 
 			/* add mpdu to mpdu queue */
-			qdf_nbuf_queue_add(mpdu, mpdu_nbuf);
+			qdf_nbuf_queue_add(mpdu_q, mpdu_nbuf);
 			first_nbuf = NULL;
 			mpdu_nbuf = NULL;
 
@@ -873,7 +958,7 @@ free_ppdu_desc_mpdu_q:
 	/* free queued remaining msdu pkt per ppdu */
 	qdf_nbuf_queue_free(head_msdu);
 	/* free queued mpdu per ppdu */
-	qdf_nbuf_queue_free(mpdu);
+	qdf_nbuf_queue_free(mpdu_q);
 	return 0;
 }
 
@@ -893,17 +978,15 @@ static
 uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 			    uint16_t tid, uint32_t num_msdu,
 			    qdf_nbuf_queue_t *head,
+			    qdf_nbuf_queue_t *head_xretries,
 			    uint32_t start_tsf, uint32_t end_tsf)
 {
 	struct dp_tx_tid *tx_tid  = NULL;
 	uint32_t msdu_ppdu_id;
 	qdf_nbuf_t curr_msdu = NULL;
 	qdf_nbuf_t prev_msdu = NULL;
-	qdf_nbuf_t nbuf = NULL;
 	struct msdu_completion_info *ptr_msdu_info = NULL;
-
 	uint32_t wbm_tsf;
-
 	uint32_t matched = 0;
 
 	if (qdf_unlikely(!peer))
@@ -923,8 +1006,10 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 	curr_msdu = qdf_nbuf_queue_first(&tx_tid->msdu_comp_q);
 
 	while (curr_msdu) {
-		if (qdf_nbuf_queue_len(head) == num_msdu)
+		if (qdf_nbuf_queue_len(head) == num_msdu) {
+			matched = 1;
 			break;
+		}
 
 		ptr_msdu_info =
 			(struct msdu_completion_info *)qdf_nbuf_data(curr_msdu);
@@ -933,12 +1018,29 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 
 		wbm_tsf = ptr_msdu_info->tsf;
 
-		if (wbm_tsf < start_tsf) {
-			/* remove the aged packet */
-			nbuf = qdf_nbuf_queue_remove(
-					&tx_tid->msdu_comp_q);
+		if ((ptr_msdu_info->status == HAL_TX_TQM_RR_REM_CMD_TX) ||
+		    (ptr_msdu_info->status == HAL_TX_TQM_RR_REM_CMD_AGED)) {
+			/* Frames removed due to excessive retries */
+			qdf_nbuf_queue_remove(&tx_tid->msdu_comp_q);
+			qdf_nbuf_queue_add(head_xretries, curr_msdu);
+			curr_msdu = qdf_nbuf_queue_first(
+				&tx_tid->msdu_comp_q);
+			prev_msdu = NULL;
+			continue;
+		}
 
-			qdf_nbuf_free(nbuf);
+		if (wbm_tsf > end_tsf) {
+			/* PPDU being matched is older than MSDU at head of
+			 * completion queue. Return matched=1 to skip PPDU
+			 */
+			matched = 1;
+			break;
+		}
+
+		if (wbm_tsf && (wbm_tsf < start_tsf)) {
+			/* remove the aged packet */
+			qdf_nbuf_queue_remove(&tx_tid->msdu_comp_q);
+			qdf_nbuf_free(curr_msdu);
 
 			curr_msdu = qdf_nbuf_queue_first(
 					&tx_tid->msdu_comp_q);
@@ -946,22 +1048,9 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 			continue;
 		}
 		if (msdu_ppdu_id == ppdu_id) {
-			matched = 1;
-
-			if (wbm_tsf > start_tsf && wbm_tsf < end_tsf) {
-				/*packet found */
-			} else if (wbm_tsf > end_tsf) {
-				/*
-				 * Do we need delta in above case.
-				 * for searching ppdu out of ppdu tsf
-				 */
-				break;
-			}
-
 			if (qdf_likely(!prev_msdu)) {
 				/* remove head */
-				curr_msdu = qdf_nbuf_queue_remove(
-						&tx_tid->msdu_comp_q);
+				qdf_nbuf_queue_remove(&tx_tid->msdu_comp_q);
 
 				/* add msdu to head queue */
 				qdf_nbuf_queue_add(head, curr_msdu);
@@ -990,9 +1079,6 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 		curr_msdu = prev_msdu->next;
 	}
 
-	if (qdf_nbuf_queue_len(head) != num_msdu)
-		matched = 0;
-
 	qdf_spin_unlock_bh(&tx_tid->tid_lock);
 
 	return matched;
@@ -1012,12 +1098,10 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 static
 qdf_nbuf_t get_mpdu_clone_from_next_ppdu(qdf_nbuf_t nbuf_ppdu_desc_list[],
 					 uint32_t ppdu_desc_cnt,
-					 uint32_t missed_seq_no,
-					 uint32_t ppdu_id)
+					 uint16_t missed_seq_no,
+					 uint16_t peer_id, uint32_t ppdu_id)
 {
 	uint32_t i = 0;
-	uint32_t k = 0;
-	uint32_t mpdu_tried = 0;
 	uint32_t found = 0;
 	uint32_t seq_no = 0;
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
@@ -1027,17 +1111,13 @@ qdf_nbuf_t get_mpdu_clone_from_next_ppdu(qdf_nbuf_t nbuf_ppdu_desc_list[],
 		ppdu_desc = (struct cdp_tx_completion_ppdu *)
 				qdf_nbuf_data(nbuf_ppdu_desc_list[i]);
 
-		mpdu_tried = ppdu_desc->user[0].mpdu_tried_ucast +
-				ppdu_desc->user[0].mpdu_tried_mcast;
-
 		/* check if seq number is between the range */
-		if ((missed_seq_no >= ppdu_desc->user[0].start_seq) &&
-		    (missed_seq_no <= ppdu_desc->user[0].start_seq +
-		     mpdu_tried)) {
+		if ((peer_id == ppdu_desc->user[0].peer_id) &&
+		    ((missed_seq_no >= ppdu_desc->user[0].start_seq) &&
+		    (missed_seq_no <= ppdu_desc->user[0].last_enq_seq))) {
 			seq_no = ppdu_desc->user[0].start_seq;
-
-			if (ppdu_desc->user[0].failed_bitmap[k] &
-			    (1 << (missed_seq_no - seq_no))) {
+			if (SEQ_BIT(ppdu_desc->user[0].failed_bitmap,
+			    (missed_seq_no - seq_no))) {
 				found = 1;
 				break;
 			}
@@ -1046,13 +1126,13 @@ qdf_nbuf_t get_mpdu_clone_from_next_ppdu(qdf_nbuf_t nbuf_ppdu_desc_list[],
 
 	if (found == 0) {
 		/* mpdu not found in sched cmd id */
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: missed seq_no[%d] ppdu_id[%d] [%d] not found!!!",
 			  __func__, missed_seq_no, ppdu_id, ppdu_desc_cnt);
 		return NULL;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: seq_no[%d] missed ppdu_id[%d] m[%d] found in ppdu_id[%d]!!",
 		  __func__,
 		  missed_seq_no, ppdu_id,
@@ -1060,8 +1140,9 @@ qdf_nbuf_t get_mpdu_clone_from_next_ppdu(qdf_nbuf_t nbuf_ppdu_desc_list[],
 
 	mpdu = qdf_nbuf_queue_first(&ppdu_desc->mpdu_q);
 	if (!mpdu) {
-		/* bitmap shows it found  sequence number, but queue empty */
-		/* do we need to allocate skb and send instead of NULL ? */
+		/* bitmap shows it found  sequence number, but
+		 * MPDU not found in PPDU
+		 */
 		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
 			  "%s: missed seq_no[%d] ppdu_id[%d] [%d] found but queue empty!!!",
 			  __func__, missed_seq_no, ppdu_id, ppdu_desc_cnt);
@@ -1081,7 +1162,7 @@ qdf_nbuf_t get_mpdu_clone_from_next_ppdu(qdf_nbuf_t nbuf_ppdu_desc_list[],
 		}
 	}
 
-	return skb_copy_expand(mpdu, MAX_MONITOR_HEADER, 0, GFP_ATOMIC);
+	return qdf_nbuf_copy_expand(mpdu, MAX_MONITOR_HEADER, 0);
 }
 
 /**
@@ -1151,29 +1232,389 @@ void dp_tx_update_sequence_number(qdf_nbuf_t nbuf, uint32_t seq_no)
  * return: status
  */
 static
-QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
-				      qdf_nbuf_t nbuf_ppdu_desc_list[],
-				      uint32_t ppdu_desc_cnt)
+void dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
+				struct cdp_tx_completion_ppdu
+				*ppdu_desc)
+{
+	struct cdp_tx_indication_info tx_capture_info;
+	struct cdp_tx_indication_mpdu_info *mpdu_info;
+	int i;
+	uint32_t seq_no, start_seq;
+	uint32_t ppdu_id = ppdu_desc->ppdu_id;
+
+	qdf_mem_set(&tx_capture_info,
+		    sizeof(struct cdp_tx_indication_info),
+		    0);
+
+	mpdu_info = &tx_capture_info.mpdu_info;
+
+	mpdu_info->channel = ppdu_desc->channel;
+	mpdu_info->frame_type = ppdu_desc->frame_type;
+	mpdu_info->ppdu_start_timestamp =
+				ppdu_desc->ppdu_start_timestamp;
+	mpdu_info->ppdu_end_timestamp =
+				ppdu_desc->ppdu_end_timestamp;
+	mpdu_info->tx_duration = ppdu_desc->tx_duration;
+	mpdu_info->num_msdu = ppdu_desc->num_msdu;
+
+	/* update cdp_tx_indication_mpdu_info */
+	dp_tx_update_user_mpdu_info(ppdu_id,
+				    &tx_capture_info.mpdu_info,
+				    &ppdu_desc->user[0]);
+
+	tx_capture_info.mpdu_info.channel_num =
+		pdev->operating_channel;
+
+	start_seq = ppdu_desc->user[0].start_seq;
+	for (i = 0; i < ppdu_desc->user[0].ba_size; i++) {
+		if (qdf_likely(ppdu_desc->user[0].tid !=
+		    DP_NON_QOS_TID) &&
+		    !(SEQ_BIT(ppdu_desc->user[0].enq_bitmap, i))) {
+			continue;
+		}
+		seq_no = start_seq + i;
+		if (!ppdu_desc->mpdus[i])
+			continue;
+
+		tx_capture_info.mpdu_nbuf = ppdu_desc->mpdus[i];
+		ppdu_desc->mpdus[i] = NULL;
+		mpdu_info->seq_no = seq_no;
+		dp_tx_update_sequence_number(tx_capture_info.mpdu_nbuf, seq_no);
+		/*
+		 * send MPDU to osif layer
+		 * do we need to update mpdu_info before tranmit
+		 * get current mpdu_nbuf
+		 */
+		dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
+				     &tx_capture_info,
+				     HTT_INVALID_PEER,
+				     WDI_NO_VAL, pdev->pdev_id);
+
+		if (tx_capture_info.mpdu_nbuf)
+			qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
+	}
+}
+
+static void
+dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
+			uint16_t tid)
+{
+	struct dp_tx_tid *tx_tid = &peer->tx_capture.tx_tid[tid];
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct cdp_tx_completion_ppdu *xretry_ppdu;
+	qdf_nbuf_t ppdu_nbuf;
+	qdf_nbuf_t mpdu_nbuf;
+	uint32_t mpdu_tried = 0;
+	int i;
+	uint32_t seq_no;
+
+	xretry_ppdu = &tx_tid->xretry_ppdu;
+
+	if (qdf_nbuf_is_queue_empty(&tx_tid->pending_ppdu_q)) {
+		qdf_nbuf_queue_free(&xretry_ppdu->mpdu_q);
+		return;
+	}
+
+	if (qdf_nbuf_is_queue_empty(&xretry_ppdu->mpdu_q))
+		return;
+
+	ppdu_nbuf = qdf_nbuf_queue_first(&tx_tid->pending_ppdu_q);
+	while (ppdu_nbuf) {
+		struct msdu_completion_info *ptr_msdu_info = NULL;
+
+		ppdu_desc = (struct cdp_tx_completion_ppdu *)
+			qdf_nbuf_data(ppdu_nbuf);
+		if (ppdu_desc->pending_retries) {
+			uint32_t start_seq = ppdu_desc->user[0].start_seq;
+
+			mpdu_tried = ppdu_desc->user[0].mpdu_tried_ucast +
+			ppdu_desc->user[0].mpdu_tried_mcast;
+			mpdu_nbuf = qdf_nbuf_queue_first(&xretry_ppdu->mpdu_q);
+			for (i = 0; (mpdu_tried > 0) && mpdu_nbuf; i++) {
+				if (!(SEQ_BIT(ppdu_desc->user[0].enq_bitmap,
+				    i)))
+					continue;
+				mpdu_tried--;
+				/* missed seq number */
+				seq_no = start_seq + i;
+
+				if (SEQ_BIT(ppdu_desc->user[0].failed_bitmap, i))
+					continue;
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					  QDF_TRACE_LEVEL_INFO,
+					"%s: fill seqno %d from xretries",
+					__func__, seq_no);
+
+				ptr_msdu_info = (struct msdu_completion_info *)
+					(qdf_nbuf_data(qdf_nbuf_get_ext_list(
+					mpdu_nbuf)) -
+					(sizeof(struct msdu_completion_info) +
+					sizeof(qdf_ether_header_t)));
+				ptr_msdu_info->transmit_cnt--;
+				SEQ_SEG(ppdu_desc->user[0].failed_bitmap, i) |=
+				SEQ_SEG_MSK(ppdu_desc->user[0].failed_bitmap[0],
+					    i);
+				ppdu_desc->pending_retries--;
+				if (ptr_msdu_info->transmit_cnt == 0) {
+					ppdu_desc->mpdus[seq_no - start_seq] =
+						mpdu_nbuf;
+					qdf_nbuf_queue_remove(
+						&xretry_ppdu->mpdu_q);
+					mpdu_nbuf = qdf_nbuf_queue_first(
+						&xretry_ppdu->mpdu_q);
+				} else {
+					ppdu_desc->mpdus[seq_no - start_seq] =
+					qdf_nbuf_copy_expand(mpdu_nbuf,
+							     MAX_MONITOR_HEADER,
+							     0);
+					mpdu_nbuf =
+						qdf_nbuf_queue_next(mpdu_nbuf);
+				}
+			}
+		}
+
+		if ((ppdu_desc->pending_retries == 0) && (ppdu_nbuf ==
+			qdf_nbuf_queue_first(&tx_tid->pending_ppdu_q))) {
+			qdf_nbuf_queue_remove(&tx_tid->pending_ppdu_q);
+			/* Deliver PPDU */
+			dp_send_mpdu_info_to_stack(pdev, ppdu_desc);
+			qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
+			qdf_mem_free(ppdu_desc->mpdus);
+			ppdu_desc->mpdus = NULL;
+			qdf_nbuf_free(ppdu_nbuf);
+			ppdu_nbuf = qdf_nbuf_queue_first(
+				&tx_tid->pending_ppdu_q);
+		} else {
+			ppdu_nbuf = qdf_nbuf_queue_next(ppdu_nbuf);
+		}
+	}
+	qdf_nbuf_queue_free(&xretry_ppdu->mpdu_q);
+}
+
+#define MAX_PENDING_PPDUS 32
+static void
+dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
+			     qdf_nbuf_t nbuf_ppdu_desc_list[], uint32_t
+			     ppdu_desc_cnt, qdf_nbuf_queue_t *head_ppdu,
+			     uint32_t peer_id)
+{
+	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
+	struct cdp_tx_completion_ppdu *cur_ppdu_desc = NULL;
+	qdf_nbuf_t pend_ppdu;
+	uint32_t ppdu_cnt;
+	uint32_t failed_seq;
+	uint32_t cur_index, cur_start_seq, cur_last_seq;
+	int i, k;
+	bool last_pend_ppdu = false;
+	qdf_nbuf_t tmp_nbuf;
+
+	pend_ppdu = qdf_nbuf_queue_first(&tx_tid->pending_ppdu_q);
+	if (!pend_ppdu) {
+		for (ppdu_cnt = 0; ppdu_cnt < ppdu_desc_cnt; ppdu_cnt++) {
+			if (!nbuf_ppdu_desc_list[ppdu_cnt])
+				continue;
+			ppdu_desc = (struct cdp_tx_completion_ppdu *)
+				qdf_nbuf_data(
+				nbuf_ppdu_desc_list[ppdu_cnt]);
+			if (!ppdu_desc || (peer_id !=
+			    ppdu_desc->user[0].peer_id) || (tx_tid->tid !=
+			    ppdu_desc->user[0].tid))
+				continue;
+			if ((ppdu_desc->pending_retries == 0) &&
+			    qdf_nbuf_is_queue_empty(&tx_tid->pending_ppdu_q) &&
+			    qdf_nbuf_is_queue_empty(head_ppdu)) {
+				dp_send_mpdu_info_to_stack(pdev, ppdu_desc);
+				qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
+				qdf_mem_free(ppdu_desc->mpdus);
+				ppdu_desc->mpdus = NULL;
+				tmp_nbuf = nbuf_ppdu_desc_list[ppdu_cnt];
+				nbuf_ppdu_desc_list[ppdu_cnt] = NULL;
+				qdf_nbuf_free(tmp_nbuf);
+			} else {
+				qdf_nbuf_queue_add(head_ppdu,
+						   nbuf_ppdu_desc_list[ppdu_cnt]);
+				nbuf_ppdu_desc_list[ppdu_cnt] = NULL;
+			}
+		}
+		return;
+	}
+	while (pend_ppdu) {
+		qdf_nbuf_t mpdu_nbuf;
+
+		/* Find missing mpdus from current schedule list */
+		ppdu_cnt = 0;
+
+		if (!nbuf_ppdu_desc_list[ppdu_cnt]) {
+			ppdu_cnt++;
+			if (ppdu_cnt < ppdu_desc_cnt)
+				continue;
+			break;
+		}
+
+		ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(
+			pend_ppdu);
+
+		cur_ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(
+			nbuf_ppdu_desc_list[ppdu_cnt]);
+		if (pend_ppdu == qdf_nbuf_queue_last(
+		    &tx_tid->pending_ppdu_q)) {
+			last_pend_ppdu = true;
+			qdf_nbuf_queue_add(head_ppdu,
+					   nbuf_ppdu_desc_list[ppdu_cnt]);
+			nbuf_ppdu_desc_list[ppdu_cnt] = NULL;
+		}
+		cur_index = 0;
+		cur_start_seq = cur_ppdu_desc->user[0].start_seq;
+		cur_last_seq = cur_ppdu_desc->user[0].last_enq_seq;
+		if (qdf_unlikely(ppdu_desc->user[0].ba_size >
+		    CDP_BA_256_BIT_MAP_SIZE_DWORDS *
+		    SEQ_SEG_SZ_BITS(ppdu_desc->user[0].failed_bitmap))) {
+			qdf_assert_always(0);
+			return;
+		}
+		for (i = 0; (i < ppdu_desc->user[0].ba_size) && cur_ppdu_desc;
+		     i++) {
+			if (!(i & (SEQ_SEG_SZ_BITS(
+			    ppdu_desc->user[0].failed_bitmap) - 1))) {
+				k =
+				SEQ_SEG_INDEX(ppdu_desc->user[0].failed_bitmap,
+					      i);
+				failed_seq =
+					ppdu_desc->user[0].failed_bitmap[k] ^
+					ppdu_desc->user[0].enq_bitmap[k];
+			}
+
+			/* Skip to next bitmap segment if there are no
+			 * more holes in current segment
+			 */
+			if (!failed_seq) {
+				i = ((k + 1) *
+				SEQ_SEG_SZ_BITS(ppdu_desc->user[0].failed_bitmap))
+						- 1;
+				continue;
+			}
+			if (!(SEQ_SEG_BIT(failed_seq, i)))
+				continue;
+			failed_seq ^= SEQ_SEG_MSK(failed_seq, i);
+			mpdu_nbuf = cur_ppdu_desc->mpdus[cur_index];
+			if (mpdu_nbuf) {
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					  QDF_TRACE_LEVEL_INFO,
+					"%s: fill seqno %d (%d) from swretries",
+					__func__,
+					ppdu_desc->user[0].start_seq + i,
+					ppdu_desc->ppdu_id);
+				ppdu_desc->mpdus[i] =
+				qdf_nbuf_copy_expand(mpdu_nbuf,
+						     MAX_MONITOR_HEADER, 0);
+				ppdu_desc->user[0].failed_bitmap[k] |=
+				SEQ_SEG_MSK(ppdu_desc->user[0].failed_bitmap[k],
+					    i);
+				ppdu_desc->pending_retries--;
+			}
+			cur_index++;
+			/* Skip through empty slots in current PPDU */
+			while (!(SEQ_BIT(cur_ppdu_desc->user[0].enq_bitmap,
+			       cur_index))) {
+				struct cdp_tx_completion_ppdu *next_ppdu = NULL;
+
+				cur_index++;
+				if (cur_index <= (cur_last_seq -
+				    cur_start_seq))
+					continue;
+				cur_ppdu_desc = NULL;
+				/* Check if subsequent PPDUs in this schedule
+				 * has higher sequence numbers enqueued
+				 */
+				while (ppdu_cnt < (ppdu_desc_cnt - 1)) {
+					ppdu_cnt++;
+					if (!nbuf_ppdu_desc_list[ppdu_cnt])
+						continue;
+					next_ppdu =
+					(struct cdp_tx_completion_ppdu *)
+					qdf_nbuf_data(
+						      nbuf_ppdu_desc_list[
+							ppdu_cnt]);
+					if (!next_ppdu || (peer_id !=
+					    next_ppdu->user[0].peer_id))
+						continue;
+					if (last_pend_ppdu) {
+						qdf_nbuf_queue_add(head_ppdu,
+							nbuf_ppdu_desc_list[ppdu_cnt]);
+						nbuf_ppdu_desc_list[ppdu_cnt] =
+							NULL;
+					}
+					if (next_ppdu->user[0].last_enq_seq >
+					    cur_last_seq) {
+						cur_ppdu_desc = next_ppdu;
+						break;
+					}
+				}
+				if (!cur_ppdu_desc)
+					break;
+				/* Start from seq. no following cur_last_seq
+				 * since everything before is already populated
+				 * from previous PPDU
+				 */
+				cur_start_seq =
+					cur_ppdu_desc->user[0].start_seq;
+				cur_index = (cur_last_seq >= cur_start_seq) ?
+					cur_last_seq - cur_start_seq + 1 : 0;
+				cur_last_seq =
+					cur_ppdu_desc->user[0].last_enq_seq;
+			}
+		}
+		if ((pend_ppdu ==
+		    qdf_nbuf_queue_first(&tx_tid->pending_ppdu_q)) &&
+		    (ppdu_desc->pending_retries == 0)) {
+			qdf_nbuf_queue_remove(&tx_tid->pending_ppdu_q);
+			dp_send_mpdu_info_to_stack(pdev, ppdu_desc);
+			qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
+			qdf_mem_free(ppdu_desc->mpdus);
+			ppdu_desc->mpdus = NULL;
+			qdf_nbuf_free(pend_ppdu);
+			pend_ppdu = qdf_nbuf_queue_first(
+				&tx_tid->pending_ppdu_q);
+		} else {
+			pend_ppdu = qdf_nbuf_queue_next(pend_ppdu);
+		}
+	}
+}
+
+/**
+ * dp_check_ppdu_and_deliver(): Check PPDUs for any holes and deliver
+ * to upper layer if complete
+ * @pdev: DP pdev handle
+ * @nbuf_ppdu_desc_list: ppdu_desc_list per sched cmd id
+ * @ppdu_desc_cnt: number of ppdu_desc_cnt
+ *
+ * return: status
+ */
+static void
+dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
+			  qdf_nbuf_t nbuf_ppdu_desc_list[],
+			  uint32_t ppdu_desc_cnt)
 {
 	uint32_t ppdu_id;
 	uint32_t desc_cnt;
 	qdf_nbuf_t tmp_nbuf;
+	struct dp_tx_tid *tx_tid  = NULL;
+	int i;
 
 	for (desc_cnt = 0; desc_cnt < ppdu_desc_cnt; desc_cnt++) {
 		struct cdp_tx_completion_ppdu *ppdu_desc;
-		uint32_t mpdu_tried;
 		uint32_t num_mpdu;
-		uint32_t k;
-		uint32_t i;
-		uint32_t seq_no = 0;
+		uint16_t start_seq, seq_no = 0;
+		int i;
 		uint32_t len;
 		qdf_nbuf_t mpdu_nbuf;
+		struct dp_peer *peer;
+
+		if (!nbuf_ppdu_desc_list[desc_cnt])
+			continue;
 
 		ppdu_desc = (struct cdp_tx_completion_ppdu *)
 			qdf_nbuf_data(nbuf_ppdu_desc_list[desc_cnt]);
-
-		if (!ppdu_desc)
-			continue;
 
 		ppdu_id = ppdu_desc->ppdu_id;
 
@@ -1320,28 +1761,67 @@ free_ppdu_desc:
 			continue;
 		}
 
+		peer = dp_peer_find_by_id(pdev->soc,
+					  ppdu_desc->user[0].peer_id);
+		if (!peer) {
+			tmp_nbuf = nbuf_ppdu_desc_list[desc_cnt];
+			nbuf_ppdu_desc_list[desc_cnt] = NULL;
+			qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
+			qdf_nbuf_free(tmp_nbuf);
+			continue;
+		}
+
+		tx_tid = &peer->tx_capture.tx_tid[ppdu_desc->user[0].tid];
+
+		ppdu_id = ppdu_desc->ppdu_id;
+
 		/* find mpdu tried is same as success mpdu */
 
-		mpdu_tried = ppdu_desc->user[0].mpdu_tried_ucast +
-				ppdu_desc->user[0].mpdu_tried_mcast;
 		num_mpdu = ppdu_desc->user[0].mpdu_success;
 
 		/* get length */
 		len = qdf_nbuf_queue_len(&ppdu_desc->mpdu_q);
 
+		/* ba_size is updated in BA bitmap TLVs, which are not received
+		 * in case of non-QoS TID.
+		 */
+		if (qdf_unlikely(ppdu_desc->user[0].tid == DP_NON_QOS_TID)) {
+			ppdu_desc->user[0].ba_size = 1;
+			ppdu_desc->user[0].last_enq_seq =
+				ppdu_desc->user[0].start_seq;
+		}
+
 		/* find list of missing sequence */
-		for (i = 0, k = 0; i < mpdu_tried; i++) {
-			struct cdp_tx_indication_info tx_capture_info;
-			struct cdp_tx_indication_mpdu_info *mpdu_info;
+		ppdu_desc->mpdus = qdf_mem_malloc(sizeof(qdf_nbuf_t) *
+			ppdu_desc->user[0].ba_size);
 
-			qdf_mem_set(&tx_capture_info,
-				    sizeof(struct cdp_tx_indication_info),
-				    0);
+		if (qdf_unlikely(!ppdu_desc->mpdus)) {
+			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_FATAL,
+				  "%s: ppdu_desc->mpdus allocation failed",
+				  __func__);
+			tmp_nbuf = nbuf_ppdu_desc_list[desc_cnt];
+			nbuf_ppdu_desc_list[desc_cnt] = NULL;
+			qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
+			qdf_nbuf_free(tmp_nbuf);
+			continue;
+		}
 
-			mpdu_info = &tx_capture_info.mpdu_info;
-
+		if (qdf_unlikely(ppdu_desc->user[0].ba_size >
+		    CDP_BA_256_BIT_MAP_SIZE_DWORDS *
+		    SEQ_SEG_SZ_BITS(ppdu_desc->user[0].failed_bitmap))) {
+			qdf_assert_always(0);
+			return;
+		}
+		/* Fill seq holes within current schedule list */
+		start_seq = ppdu_desc->user[0].start_seq;
+		for (i = 0; i < ppdu_desc->user[0].ba_size; i++) {
+			if (qdf_likely(ppdu_desc->user[0].tid !=
+			    DP_NON_QOS_TID) &&
+			    !(SEQ_BIT(ppdu_desc->user[0].enq_bitmap, i)))
+				continue;
 			/* missed seq number */
-			seq_no = ppdu_desc->user[0].start_seq + i;
+			seq_no = start_seq + i;
 
 			/* Fill failed MPDUs in AMPDU if they're available in
 			 * subsequent PPDUs in current burst schedule. This
@@ -1349,80 +1829,110 @@ free_ppdu_desc:
 			 */
 			if (qdf_likely(ppdu_desc->user[0].tid !=
 			    DP_NON_QOS_TID) &&
-			    !(ppdu_desc->user[0].failed_bitmap[k] & (1 << i))) {
+			    !(SEQ_BIT(ppdu_desc->user[0].failed_bitmap, i))) {
 				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: finding missing seq no: %d in other ppdu list cnt[%d]",
-					  __func__, seq_no, ppdu_desc_cnt);
+					  QDF_TRACE_LEVEL_DEBUG,
+					  "%s:find seq %d in next ppdu %d",
+					  __func__, seq_no,
+					  ppdu_desc_cnt);
 
-				/* send rest of ppdu_desc list */
 				mpdu_nbuf = get_mpdu_clone_from_next_ppdu(
-						nbuf_ppdu_desc_list + desc_cnt,
-						ppdu_desc_cnt - desc_cnt,
-						seq_no,
+						nbuf_ppdu_desc_list +
+						desc_cnt,
+						ppdu_desc_cnt -
+						desc_cnt, seq_no,
+						ppdu_desc->user[0].peer_id,
 						ppdu_id);
 
 				/* check mpdu_nbuf NULL */
-				if (!mpdu_nbuf)
+				if (!mpdu_nbuf) {
+					ppdu_desc->pending_retries++;
 					continue;
-
-				qdf_nbuf_queue_add(&ppdu_desc->mpdu_q,
-						   mpdu_nbuf);
-
+				}
+				ppdu_desc->mpdus[seq_no - start_seq] =
+					mpdu_nbuf;
+				SEQ_SEG(ppdu_desc->user[0].failed_bitmap, i) |=
+				SEQ_SEG_MSK(ppdu_desc->user[0].failed_bitmap[0],
+					    i);
 			} else {
 				/* any error case we need to handle */
+				ppdu_desc->mpdus[seq_no - start_seq] =
+					qdf_nbuf_queue_remove(
+					&ppdu_desc->mpdu_q);
 			}
-
-			/* k need to be increase, if i increased more than 32 */
-
-			tx_capture_info.mpdu_nbuf =
-				qdf_nbuf_queue_remove(&ppdu_desc->mpdu_q);
-
-			if (!tx_capture_info.mpdu_nbuf)
-				continue;
-
-			mpdu_info->channel = ppdu_desc->channel;
-			mpdu_info->frame_type = ppdu_desc->frame_type;
-			mpdu_info->ppdu_start_timestamp =
-						ppdu_desc->ppdu_start_timestamp;
-			mpdu_info->ppdu_end_timestamp =
-						ppdu_desc->ppdu_end_timestamp;
-			mpdu_info->tx_duration = ppdu_desc->tx_duration;
-			mpdu_info->seq_no = seq_no;
-			mpdu_info->num_msdu = ppdu_desc->num_msdu;
-
-			/* update cdp_tx_indication_mpdu_info */
-			dp_tx_update_user_mpdu_info(ppdu_id,
-						    &tx_capture_info.mpdu_info,
-						    &ppdu_desc->user[0]);
-
-			tx_capture_info.mpdu_info.channel_num =
-				pdev->operating_channel;
-
-			dp_tx_update_sequence_number(tx_capture_info.mpdu_nbuf,
-						     seq_no);
-			/*
-			 * send MPDU to osif layer
-			 * do we need to update mpdu_info before tranmit
-			 * get current mpdu_nbuf
-			 */
-			dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-					     &tx_capture_info,
-					     HTT_INVALID_PEER,
-					     WDI_NO_VAL, pdev->pdev_id);
-
-			if (tx_capture_info.mpdu_nbuf)
-				qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
-
 		}
+		dp_peer_unref_del_find_by_id(peer);
 
-		qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
-		tmp_nbuf = nbuf_ppdu_desc_list[desc_cnt];
-		nbuf_ppdu_desc_list[desc_cnt] = NULL;
-		qdf_nbuf_free(tmp_nbuf);
+		if ((ppdu_desc->pending_retries == 0) &&
+		    qdf_nbuf_is_queue_empty(&tx_tid->pending_ppdu_q)) {
+			dp_send_mpdu_info_to_stack(pdev, ppdu_desc);
+			qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
+			qdf_mem_free(ppdu_desc->mpdus);
+			ppdu_desc->mpdus = NULL;
+			tmp_nbuf = nbuf_ppdu_desc_list[desc_cnt];
+			nbuf_ppdu_desc_list[desc_cnt] = NULL;
+			qdf_nbuf_free(tmp_nbuf);
+		}
 	}
 
-	return QDF_STATUS_SUCCESS;
+	for (i = 0; i < ppdu_desc_cnt; i++) {
+		uint32_t pending_ppdus;
+		struct cdp_tx_completion_ppdu *cur_ppdu_desc;
+		struct dp_peer *peer;
+		qdf_nbuf_queue_t head_ppdu;
+
+		if (!nbuf_ppdu_desc_list[i])
+			continue;
+		cur_ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(
+			nbuf_ppdu_desc_list[i]);
+		if (!cur_ppdu_desc)
+			continue;
+		peer = dp_peer_find_by_id(pdev->soc,
+					  cur_ppdu_desc->user[0].peer_id);
+		if (!peer) {
+			tmp_nbuf = nbuf_ppdu_desc_list[i];
+			nbuf_ppdu_desc_list[i] = NULL;
+			qdf_nbuf_queue_free(&cur_ppdu_desc->mpdu_q);
+			qdf_mem_free(cur_ppdu_desc->mpdus);
+			qdf_nbuf_free(tmp_nbuf);
+			continue;
+		}
+		tx_tid = &peer->tx_capture.tx_tid[cur_ppdu_desc->user[0].tid];
+		qdf_nbuf_queue_init(&head_ppdu);
+		dp_tx_mon_proc_pending_ppdus(pdev, tx_tid,
+					     nbuf_ppdu_desc_list + i,
+					     ppdu_desc_cnt - i, &head_ppdu,
+					     cur_ppdu_desc->user[0].peer_id);
+
+		if (qdf_nbuf_is_queue_empty(&tx_tid->pending_ppdu_q)) {
+			while ((tmp_nbuf = qdf_nbuf_queue_first(&head_ppdu))) {
+				cur_ppdu_desc =
+				(struct cdp_tx_completion_ppdu *)
+					qdf_nbuf_data(tmp_nbuf);
+				if (cur_ppdu_desc->pending_retries)
+					break;
+				dp_send_mpdu_info_to_stack(pdev, cur_ppdu_desc);
+				qdf_nbuf_queue_free(&cur_ppdu_desc->mpdu_q);
+				qdf_mem_free(cur_ppdu_desc->mpdus);
+				cur_ppdu_desc->mpdus = NULL;
+				qdf_nbuf_queue_remove(&head_ppdu);
+				qdf_nbuf_free(tmp_nbuf);
+			}
+		}
+		qdf_nbuf_queue_append(&tx_tid->pending_ppdu_q, &head_ppdu);
+
+		dp_tx_mon_proc_xretries(pdev, peer, tx_tid->tid);
+
+		dp_peer_unref_del_find_by_id(peer);
+		pending_ppdus = qdf_nbuf_queue_len(&tx_tid->pending_ppdu_q);
+		if (pending_ppdus > MAX_PENDING_PPDUS) {
+			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_FATAL,
+				  "pending ppdus (%d, %d) : %d\n",
+				  cur_ppdu_desc->user[0].peer_id,
+				  tx_tid->tid, pending_ppdus);
+		}
+	}
 }
 
 /**
@@ -1448,6 +1958,7 @@ void dp_tx_ppdu_stats_process(void *context)
 	qdf_nbuf_t *nbuf_ppdu_desc_list;
 	qdf_nbuf_t tmp_nbuf;
 	struct dp_pdev_tx_capture *ptr_tx_cap = &pdev->tx_capture;
+	qdf_nbuf_queue_t head_xretries;
 
 	STAILQ_INIT(&sched_ppdu_queue);
 	/* Move the PPDU entries to defer list */
@@ -1509,6 +2020,7 @@ void dp_tx_ppdu_stats_process(void *context)
 			continue;
 		}
 
+		qdf_spin_lock(&ptr_tx_cap->config_lock);
 		ppdu_desc_cnt = 0;
 		STAILQ_FOREACH_SAFE(sched_ppdu_info,
 				    &sched_ppdu_queue,
@@ -1526,6 +2038,7 @@ void dp_tx_ppdu_stats_process(void *context)
 			uint32_t qlen = 0;
 
 			qdf_nbuf_queue_init(&head_msdu);
+			qdf_nbuf_queue_init(&head_xretries);
 
 			ppdu_info = sched_ppdu_info;
 			ppdu_desc = (struct cdp_tx_completion_ppdu *)
@@ -1596,8 +2109,7 @@ void dp_tx_ppdu_stats_process(void *context)
 				continue;
 			}
 
-			if ((ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA) &&
-			    (!ppdu_desc->user[0].completion_status)) {
+			if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA) {
 				/**
 				 * check whether it is bss peer,
 				 * if bss_peer no need to process further
@@ -1653,48 +2165,56 @@ dequeue_msdu_again:
 				ret = dp_tx_msdu_dequeue(peer,
 							 ppdu_desc->ppdu_id,
 							 tid, num_msdu,
-							 &head_msdu, start_tsf,
-							 end_tsf);
+							 &head_msdu,
+							 &head_xretries,
+							 start_tsf, end_tsf);
 
-				if (!ret && (++retries < 3)) {
+				if (!ret && (++retries < 2)) {
 					/* wait for wbm to complete */
-					qdf_sleep(20);
+					qdf_mdelay(2);
 					goto dequeue_msdu_again;
 				}
 
-				if (qdf_nbuf_is_queue_empty(&head_msdu)) {
-					dp_peer_unref_del_find_by_id(peer);
+				if (!qdf_nbuf_is_queue_empty(&head_xretries)) {
+					struct dp_tx_tid *tx_tid =
+						&peer->tx_capture.tx_tid[tid];
+					struct cdp_tx_completion_ppdu
+						*xretry_ppdu =
+						&tx_tid->xretry_ppdu;
+
+					xretry_ppdu->ppdu_id =
+					peer->tx_capture.tx_wifi_ppdu_id;
+					/* Restitch MPDUs from xretry MSDUs */
+					dp_tx_mon_restitch_mpdu(pdev, peer,
+								xretry_ppdu,
+								&head_xretries,
+								&xretry_ppdu->mpdu_q);
+				}
+				if (!qdf_nbuf_is_queue_empty(&head_msdu)) {
 					/*
-					 * head msdu is NULL
-					 * free nbuf as no processing required
+					 * now head_msdu hold - msdu list for
+					 * that particular ppdu_id, restitch
+					 * mpdu from msdu and create a mpdu
+					 * queue
 					 */
-					qdf_nbuf_free(nbuf);
-					continue;
+					dp_tx_mon_restitch_mpdu(pdev, peer,
+								ppdu_desc,
+								&head_msdu,
+								&ppdu_desc->mpdu_q);
+					/*
+					 * sanity: free local head msdu queue
+					 * do we need this ?
+					 */
+					qdf_nbuf_queue_free(&head_msdu);
+					qlen =
+					qdf_nbuf_queue_len(&ppdu_desc->mpdu_q);
+					if (!qlen) {
+						qdf_nbuf_free(nbuf);
+						dp_peer_unref_del_find_by_id(peer);
+						continue;
+					}
 				}
 
-				/*
-				 * now head_msdu hold - msdu list for that
-				 * particular ppdu_id, restitch mpdu from
-				 * msdu and create a mpdu queue
-				 */
-				dp_tx_mon_restitch_mpdu_from_msdus(pdev,
-								   peer,
-								   ppdu_desc,
-								   &head_msdu);
-
-				/*
-				 * sanity: free local head msdu queue
-				 * do we need this ?
-				 */
-				qdf_nbuf_queue_free(&head_msdu);
-
-				qlen = qdf_nbuf_queue_len(&ppdu_desc->mpdu_q);
-
-				if (!qlen) {
-					qdf_nbuf_free(nbuf);
-					dp_peer_unref_del_find_by_id(peer);
-					continue;
-				}
 				nbuf_ppdu_desc_list[ppdu_desc_cnt++] = nbuf;
 
 				/* print ppdu_desc info for debugging purpose */
@@ -1713,13 +2233,8 @@ dequeue_msdu_again:
 					  ppdu_desc->user[0].start_seq,
 					  ppdu_cnt,
 					  ppdu_desc_cnt);
-
-				nbuf->next =
-				qdf_nbuf_queue_first(&ppdu_desc->mpdu_q);
 			} else if (ppdu_desc->frame_type ==
 				   CDP_PPDU_FTYPE_CTRL) {
-				nbuf->next =
-				qdf_nbuf_queue_first(&ppdu_desc->mpdu_q);
 				nbuf_ppdu_desc_list[ppdu_desc_cnt++] = nbuf;
 			} else {
 				qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
@@ -1734,11 +2249,11 @@ dequeue_msdu_again:
 		 * based on packet capture flags send mpdu info to upper stack
 		 */
 		if (ppdu_desc_cnt) {
-			dp_send_mpdu_info_to_stack(pdev,
-						   nbuf_ppdu_desc_list,
-						   ppdu_desc_cnt);
+			dp_check_ppdu_and_deliver(pdev, nbuf_ppdu_desc_list,
+						  ppdu_desc_cnt);
 		}
 
+		qdf_spin_unlock(&ptr_tx_cap->config_lock);
 		qdf_mem_free(nbuf_ppdu_desc_list);
 	}
 }
