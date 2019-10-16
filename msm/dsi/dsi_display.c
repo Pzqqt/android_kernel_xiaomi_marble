@@ -4387,6 +4387,30 @@ static bool dsi_display_validate_mode_seamless(struct dsi_display *display,
 	return rc;
 }
 
+static void dsi_display_validate_dms_fps(struct dsi_display_mode *cur_mode,
+		struct dsi_display_mode *to_mode)
+{
+	u32 cur_fps, to_fps;
+	u32 cur_h_active, to_h_active;
+	u32 cur_v_active, to_v_active;
+
+	cur_fps = cur_mode->timing.refresh_rate;
+	to_fps = to_mode->timing.refresh_rate;
+	cur_h_active = cur_mode->timing.h_active;
+	cur_v_active = cur_mode->timing.v_active;
+	to_h_active = to_mode->timing.h_active;
+	to_v_active = to_mode->timing.v_active;
+
+	if ((cur_h_active == to_h_active) && (cur_v_active == to_v_active) &&
+			(cur_fps != to_fps)) {
+		to_mode->dsi_mode_flags |= DSI_MODE_FLAG_DMS_FPS;
+		DSI_DEBUG("DMS Modeset with FPS change\n");
+	} else {
+		to_mode->dsi_mode_flags &= ~DSI_MODE_FLAG_DMS_FPS;
+	}
+}
+
+
 static int dsi_display_set_mode_sub(struct dsi_display *display,
 				    struct dsi_display_mode *mode,
 				    u32 flags)
@@ -4403,6 +4427,7 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 		return -EINVAL;
 	}
 
+	SDE_EVT32(mode->dsi_mode_flags);
 	if (mode->dsi_mode_flags & DSI_MODE_FLAG_POMS) {
 		display->config.panel_mode = mode->panel_mode;
 		display->panel->panel_mode = mode->panel_mode;
@@ -4462,8 +4487,11 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 	}
 
 	if ((mode->dsi_mode_flags & DSI_MODE_FLAG_DMS) &&
-			(display->panel->panel_mode == DSI_OP_CMD_MODE))
+			(display->panel->panel_mode == DSI_OP_CMD_MODE)) {
 		atomic_set(&display->clkrate_change_pending, 1);
+
+		dsi_display_validate_dms_fps(display->panel->cur_mode, mode);
+	}
 
 	if (priv_info->phy_timing_len) {
 		display_for_each_ctrl(i, display) {
@@ -7134,7 +7162,9 @@ int dsi_display_enable(struct dsi_display *display)
 		}
 	}
 
-	if (mode->priv_info->dsc_enabled) {
+	/* Block sending pps command if modeset is due to fps difference */
+	if ((mode->priv_info->dsc_enabled) &&
+			!(mode->dsi_mode_flags & DSI_MODE_FLAG_DMS_FPS)) {
 		mode->priv_info->dsc.pic_width *= display->ctrl_count;
 		rc = dsi_panel_update_pps(display->panel);
 		if (rc) {
