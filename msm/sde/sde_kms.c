@@ -2641,7 +2641,6 @@ static int sde_kms_pm_suspend(struct device *dev)
 
 	sde_kms = to_sde_kms(ddev_to_msm_kms(ddev));
 	SDE_EVT32(0);
-	pm_runtime_put_noidle(dev);
 
 	/* disable hot-plug polling */
 	drm_kms_helper_poll_disable(ddev);
@@ -2750,6 +2749,15 @@ unlock:
 	}
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
+
+	/*
+	 * pm runtime driver avoids multiple runtime_suspend API call by
+	 * checking runtime_status. However, this call helps when there is a
+	 * race condition between pm_suspend call and doze_suspend/power_off
+	 * commit. It removes the extra vote from suspend and adds it back
+	 * later to allow power collapse during pm_suspend call
+	 */
+	pm_runtime_put_sync(dev);
 	pm_runtime_get_noresume(dev);
 
 	return ret;
