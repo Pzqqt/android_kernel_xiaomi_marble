@@ -84,10 +84,12 @@ static inline int hal_force_wake_release(struct hal_soc *soc)
 static inline int hal_force_wake_request(struct hal_soc *soc)
 {
 	uint32_t timeout = 0;
+	int ret;
 
-	if (pld_force_wake_request(soc->qdf_dev->dev)) {
+	ret = pld_force_wake_request(soc->qdf_dev->dev);
+	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Request send failed \n", __func__);
+			  "%s: Request send failed %d\n", __func__, ret);
 		return -EINVAL;
 	}
 
@@ -155,11 +157,17 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 				  uint32_t value)
 {
-	if ((offset > MAPPED_REF_OFF) &&
-	    hal_force_wake_request(hal_soc)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Wake up request failed\n", __func__);
-		return;
+	int ret;
+
+	if (offset > MAPPED_REF_OFF) {
+		ret = hal_force_wake_request(hal_soc);
+		if (ret) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Wake up request failed %d\n",
+				  __func__, ret);
+			QDF_BUG(0);
+			return;
+		}
 	}
 
 	if (!hal_soc->use_register_windowing ||
