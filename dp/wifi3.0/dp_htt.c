@@ -2500,6 +2500,7 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(
 	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
 	qdf_mem_copy(&ppdu_user_desc->ba_bitmap, &dp_stats_buf->ba_bitmap,
 		     sizeof(uint32_t) * CDP_BA_64_BIT_MAP_SIZE_DWORDS);
+	ppdu_user_desc->ba_size = CDP_BA_64_BIT_MAP_SIZE_DWORDS * 32;
 }
 
 /*
@@ -2540,6 +2541,7 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(
 	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
 	qdf_mem_copy(&ppdu_user_desc->ba_bitmap, &dp_stats_buf->ba_bitmap,
 		     sizeof(uint32_t) * CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+	ppdu_user_desc->ba_size = CDP_BA_256_BIT_MAP_SIZE_DWORDS * 32;
 }
 
 /*

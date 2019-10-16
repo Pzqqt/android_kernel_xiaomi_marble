@@ -1272,6 +1272,7 @@ struct cdp_delayed_tx_completion_ppdu_user {
  * @completion_status: completion status - OK/Filter/Abort/Timeout
  * @tid: TID number
  * @peer_id: Peer ID
+ * @ba_size: Block-Ack size
  * @frame_ctrl: frame control field in 802.11 header
  * @qos_ctrl: QoS control field in 802.11 header
  * @mpdu_tried: number of mpdus tried
@@ -1321,12 +1322,14 @@ struct cdp_delayed_tx_completion_ppdu_user {
  * @sa_max_rates: smart antenna tx feedback info max rates
  * @sa_goodput: smart antenna tx feedback info goodput
  * @current_rate_per: Moving average per
+ * @last_enq_seq: last equeue sequence number
  */
 struct cdp_tx_completion_ppdu_user {
 	uint32_t completion_status:8,
 		 tid:8,
 		 peer_id:16;
 	uint8_t mac_addr[6];
+	uint16_t ba_size;
 	uint32_t frame_ctrl:16,
 		 qos_ctrl:16;
 	uint32_t mpdu_tried_ucast:16,
@@ -1404,6 +1407,7 @@ struct cdp_tx_completion_ppdu_user {
 	 * of no use. It is just for Host computation.
 	 */
 	uint32_t current_rate_per;
+	uint32_t last_enq_seq;
 };
 
 /**
@@ -1491,6 +1495,7 @@ struct cdp_tx_indication_info {
  * @vdev_id: VAP Id
  * @bar_num_users: BA response user count, based on completion common TLV
  * @num_users: Number of users
+ * @pending_retries: pending MPDUs (retries)
  * @num_mpdu: Number of MPDUs in PPDU
  * @num_msdu: Number of MSDUs in PPDU
  * @frame_type: frame SU or MU
@@ -1504,6 +1509,7 @@ struct cdp_tx_indication_info {
  * @delayed_ba: Delayed ba flag
  * @user: per-User stats (array of per-user structures)
  * @mpdu_q: queue of mpdu in a ppdu
+ * @mpdus: MPDU list based on enqueue sequence bitmap
  */
 struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_id;
@@ -1512,6 +1518,7 @@ struct cdp_tx_completion_ppdu {
 	uint16_t bar_num_users;
 	uint32_t num_users;
 	uint8_t last_usr_index;
+	uint32_t pending_retries;
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
 	uint16_t frame_type;
@@ -1526,6 +1533,7 @@ struct cdp_tx_completion_ppdu {
 	bool delayed_ba;
 	struct cdp_tx_completion_ppdu_user user[CDP_MU_MAX_USERS];
 	qdf_nbuf_queue_t mpdu_q;
+	qdf_nbuf_t *mpdus;
 };
 
 /**
