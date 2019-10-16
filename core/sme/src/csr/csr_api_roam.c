@@ -19400,7 +19400,6 @@ csr_is_adaptive_11r_roam_supported(struct mac_context *mac_ctx,
 QDF_STATUS
 csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 {
-	struct scheduler_msg sch_msg = {0};
 	QDF_STATUS status;
 	struct roam_offload_scan_req *req;
 	tpCsrNeighborRoamControlInfo roam_info;
@@ -19423,6 +19422,8 @@ csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 
 	if (reason == REASON_DRIVER_DISABLED)
 		req->reason = REASON_ROAM_STOP_ALL;
+	else if (reason == REASON_SUPPLICANT_DISABLED_ROAMING)
+		req->reason = REASON_SUPPLICANT_DISABLED_ROAMING;
 	else
 		req->reason = REASON_SME_ISSUED;
 
@@ -19432,21 +19433,13 @@ csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 		csr_roam_reset_roam_params(mac);
 
 	/*
-	 * Disable offload_11k_params for current
-	 * vdev
+	 * Disable offload_11k_params for current vdev
 	 */
 	req->offload_11k_params.vdev_id = vdev_id;
 
-	sch_msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
-	sch_msg.bodyptr = req;
-
-	status = scheduler_post_message(QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_WMA,
-					QDF_MODULE_ID_WMA,
-					&sch_msg);
+	status = csr_roam_send_rso_cmd(mac, vdev_id, req);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("ROAM: Post RSO stop to WMA failed, vdev_id: %d",
-			vdev_id);
+		sme_err("ROAM: Post RSO stop failed, vdev_id: %d", vdev_id);
 		qdf_mem_zero(req, sizeof(*req));
 		qdf_mem_free(req);
 		return QDF_STATUS_E_FAULT;
@@ -19565,15 +19558,6 @@ csr_roam_switch_to_rso_start(struct mac_context *mac, uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* TODO: Check if we can map the below flag to above bitmap */
-	sup_disabled_roaming = mlme_get_supplicant_disabled_roaming(mac->psoc,
-								    vdev_id);
-	if (sup_disabled_roaming) {
-		sme_debug("ROAM: RSO Disabled by Supplicant on vdev[%d]",
-			  vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	status = csr_roam_offload_scan(mac, vdev_id, ROAM_SCAN_OFFLOAD_START,
 				       reason);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -19582,7 +19566,20 @@ csr_roam_switch_to_rso_start(struct mac_context *mac, uint8_t vdev_id,
 	}
 	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_RSO_STARTED);
 
-	return QDF_STATUS_SUCCESS;
+	/*
+	 * If supplicant disabled roaming, driver does not send
+	 * RSO cmd to fw. This causes roam invoke to fail in FW
+	 * since RSO start never happened at least once to
+	 * configure roaming engine in FW.
+	 */
+	sup_disabled_roaming = mlme_get_supplicant_disabled_roaming(mac->psoc,
+								    vdev_id);
+	if (!sup_disabled_roaming)
+		return QDF_STATUS_SUCCESS;
+
+	sme_debug("ROAM: RSO disabled by Supplicant on vdev[%d]", vdev_id);
+	return csr_post_roam_state_change(mac, vdev_id, ROAM_RSO_STOPPED,
+					  REASON_SUPPLICANT_DISABLED_ROAMING);
 }
 
 static QDF_STATUS
