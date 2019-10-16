@@ -1340,7 +1340,7 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 		client->addr == WSA881X_I2C_SPK1_SLAVE1_ADDR) &&
 		(pdata->status == WSA881X_STATUS_PROBING)) {
 		wsa881x_probing_count++;
-		return ret;
+		return -EPROBE_DEFER;
 	}
 
 	if (pdata->status == WSA881X_STATUS_I2C) {
@@ -1396,6 +1396,15 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 			ret = -EINVAL;
 			goto err;
 		}
+		wsa_mclk = devm_clk_get(&client->dev, "wsa_mclk");
+		if (IS_ERR(wsa_mclk)) {
+			ret = PTR_ERR(wsa_mclk);
+			dev_dbg(&client->dev, "%s: clk get %s failed %d\n",
+				__func__, "wsa_mclk", ret);
+			wsa_mclk = NULL;
+			goto err;
+		}
+		pdata->wsa_mclk = wsa_mclk;
 		dev_set_drvdata(&client->dev, client);
 
 		pdata->regmap[WSA881X_DIGITAL_SLAVE] =
@@ -1410,15 +1419,6 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 				__func__, ret);
 			goto err;
 		}
-		wsa_mclk = devm_clk_get(&client->dev, "wsa_mclk");
-		if (IS_ERR(wsa_mclk)) {
-			ret = PTR_ERR(wsa_mclk);
-			dev_dbg(&client->dev, "%s: clk get %s failed %d\n",
-				__func__, "wsa_mclk", ret);
-			wsa_mclk = NULL;
-			ret = 0;
-		}
-		pdata->wsa_mclk = wsa_mclk;
 
 		/* bus reset sequence */
 		ret = wsa881x_reset(pdata, true);
@@ -1459,7 +1459,7 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 err1:
 	wsa881x_reset(pdata, false);
 err:
-	return 0;
+	return ret;
 }
 
 static int wsa881x_i2c_remove(struct i2c_client *client)
