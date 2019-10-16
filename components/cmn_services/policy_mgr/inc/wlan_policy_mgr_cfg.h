@@ -435,7 +435,7 @@ CFG_INI_UINT("g_sta_sap_scc_on_dfs_chan", 0, 2, 0, CFG_VALUE_OR_DEFAULT, \
  */
 
 #define CFG_FORCE_1X1_FEATURE \
-CFG_INI_UINT("gForce1x1Exception", 0, 1, 2, CFG_VALUE_OR_DEFAULT, \
+CFG_INI_UINT("gForce1x1Exception", 0, 2, 1, CFG_VALUE_OR_DEFAULT, \
 	     "force 1x1 when connecting to certain peer")
 
 /*
