@@ -427,6 +427,9 @@ union ce_srng_desc {
  * @HIF_CE_DEST_RING_BUFFER_POST: record the packet when buffer is posted to ce dst ring
  * @HIF_CE_DEST_RING_BUFFER_REAP: record the packet when buffer is reaped from ce dst ring
  * @HIF_CE_DEST_STATUS_RING_REAP: record the packet when status ring is reaped
+ * @HIF_RX_DESC_PRE_NBUF_ALLOC: record the packet before nbuf allocation
+ * @HIF_RX_DESC_PRE_NBUF_MAP: record the packet before nbuf map
+ * @HIF_RX_DESC_POST_NBUF_MAP: record the packet after nbuf map
  */
 enum hif_ce_event_type {
 	HIF_RX_DESC_POST,
@@ -461,6 +464,10 @@ enum hif_ce_event_type {
 	HIF_CE_DEST_RING_BUFFER_POST,
 	HIF_CE_DEST_RING_BUFFER_REAP,
 	HIF_CE_DEST_STATUS_RING_REAP,
+
+	HIF_RX_DESC_PRE_NBUF_ALLOC,
+	HIF_RX_DESC_PRE_NBUF_MAP,
+	HIF_RX_DESC_POST_NBUF_MAP,
 };
 
 void ce_init_ce_desc_event_log(struct hif_softc *scn, int ce_id, int size);
