@@ -259,11 +259,12 @@ ol_tx_send_nonstd(struct ol_txrx_pdev_t *pdev,
 	}
 }
 
-static inline void
+static inline bool
 ol_tx_download_done_base(struct ol_txrx_pdev_t *pdev,
 			 A_STATUS status, qdf_nbuf_t msdu, uint16_t msdu_id)
 {
 	struct ol_tx_desc_t *tx_desc;
+	bool is_frame_freed = false;
 
 	tx_desc = ol_tx_desc_find(pdev, msdu_id);
 	qdf_assert(tx_desc);
@@ -286,6 +287,7 @@ ol_tx_download_done_base(struct ol_txrx_pdev_t *pdev,
 		ol_tx_target_credit_incr(pdev, msdu);
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc,
 					     1 /* download err */);
+		is_frame_freed = true;
 	} else {
 		if (OL_TX_DESC_NO_REFS(tx_desc)) {
 			/*
@@ -296,8 +298,10 @@ ol_tx_download_done_base(struct ol_txrx_pdev_t *pdev,
 			ol_tx_desc_frame_free_nonstd(pdev, tx_desc,
 						     tx_desc->status !=
 						     htt_tx_status_ok);
+			is_frame_freed = true;
 		}
 	}
+	return is_frame_freed;
 }
 
 void
@@ -324,6 +328,7 @@ ol_tx_download_done_hl_free(void *txrx_pdev,
 {
 	struct ol_txrx_pdev_t *pdev = txrx_pdev;
 	struct ol_tx_desc_t *tx_desc;
+	bool is_frame_freed;
 
 	tx_desc = ol_tx_desc_find(pdev, msdu_id);
 	qdf_assert(tx_desc);
@@ -335,13 +340,12 @@ ol_tx_download_done_hl_free(void *txrx_pdev,
 				 sizeof(qdf_nbuf_data(msdu)), tx_desc->id,
 				 status));
 
-	ol_tx_download_done_base(pdev, status, msdu, msdu_id);
+	is_frame_freed = ol_tx_download_done_base(pdev, status, msdu, msdu_id);
 
 	/*
-	 * Incase of error return from here since netbuf and tx_desc would
-	 * have been freed in ol_tx_download_done_base().
+	 * if frame is freed in ol_tx_download_done_base then return.
 	 */
-	if (status != A_OK) {
+	if (is_frame_freed) {
 		qdf_atomic_add(1, &pdev->tx_queue.rsrc_cnt);
 		return;
 	}
