@@ -1916,6 +1916,21 @@ __qdf_nbuf_expand(struct sk_buff *skb, uint32_t headroom, uint32_t tailroom)
 }
 
 /**
+ * __qdf_nbuf_copy_expand() - copy and expand nbuf
+ * @buf: Network buf instance
+ * @headroom: Additional headroom to be added
+ * @tailroom: Additional tailroom to be added
+ *
+ * Return: New nbuf that is a copy of buf, with additional head and tailroom
+ *	or NULL if there is no memory
+ */
+static inline struct sk_buff *
+__qdf_nbuf_copy_expand(struct sk_buff *buf, int headroom, int tailroom)
+{
+	return skb_copy_expand(buf, headroom, tailroom, GFP_ATOMIC);
+}
+
+/**
  * __qdf_nbuf_tx_cksum_info() - tx checksum info
  *
  * Return: true/false

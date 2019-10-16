@@ -555,6 +555,7 @@ enum qdf_nbuf_event_type {
 	QDF_NBUF_FREE,
 	QDF_NBUF_MAP,
 	QDF_NBUF_UNMAP,
+	QDF_NBUF_ALLOC_COPY_EXPAND,
 };
 
 struct qdf_nbuf_event {
@@ -2680,6 +2681,25 @@ qdf_nbuf_t qdf_nbuf_copy_debug(qdf_nbuf_t buf, const char *func, uint32_t line)
 	return copied_buf;
 }
 qdf_export_symbol(qdf_nbuf_copy_debug);
+
+qdf_nbuf_t
+qdf_nbuf_copy_expand_debug(qdf_nbuf_t buf, int headroom, int tailroom,
+			   const char *func, uint32_t line)
+{
+	qdf_nbuf_t copied_buf = __qdf_nbuf_copy_expand(buf, headroom, tailroom);
+
+	if (qdf_unlikely(!copied_buf))
+		return NULL;
+
+	/* Store SKB in internal QDF tracking table */
+	qdf_net_buf_debug_add_node(copied_buf, 0, func, line);
+	qdf_nbuf_history_add(copied_buf, func, line,
+			     QDF_NBUF_ALLOC_COPY_EXPAND);
+
+	return copied_buf;
+}
+
+qdf_export_symbol(qdf_nbuf_copy_expand_debug);
 
 #endif /* NBUF_MEMORY_DEBUG */
 
