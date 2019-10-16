@@ -305,8 +305,9 @@ static void wifi_update_channel_bw_info(struct wlan_objmgr_psoc *psoc,
 	wlan_reg_set_channel_params(pdev, chan, sec_ch_2g, &ch_params);
 	if (ch_params.center_freq_seg0)
 		chan_info->band_center_freq1 =
-			wlan_reg_get_channel_freq(pdev,
-						  ch_params.center_freq_seg0);
+			wlan_reg_legacy_chan_to_freq(
+						pdev,
+						ch_params.center_freq_seg0);
 
 	wifi_pos_psoc->wifi_pos_get_phy_mode(chan, ch_params.ch_width,
 					     &phy_mode);
