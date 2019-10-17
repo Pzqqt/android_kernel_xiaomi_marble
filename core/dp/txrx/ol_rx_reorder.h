@@ -58,25 +58,11 @@ void
 ol_rx_reorder_first_hole(struct ol_txrx_peer_t *peer,
 			 unsigned int tid, unsigned int *idx_end);
 
-#ifdef WLAN_PARTIAL_REORDER_OFFLOAD
 void
 ol_rx_reorder_peer_cleanup(struct ol_txrx_vdev_t *vdev,
 			   struct ol_txrx_peer_t *peer);
 
 void ol_rx_reorder_init(struct ol_rx_reorder_t *rx_reorder, uint8_t tid);
-#else
-static inline void
-ol_rx_reorder_peer_cleanup(struct ol_txrx_vdev_t *vdev,
-			   struct ol_txrx_peer_t *peer)
-{
-}
-
-static inline void
-ol_rx_reorder_init(struct ol_rx_reorder_t *rx_reorder, uint8_t tid)
-{
-}
-#endif
-
 
 enum htt_rx_status
 ol_rx_seq_num_check(struct ol_txrx_pdev_t *pdev,
