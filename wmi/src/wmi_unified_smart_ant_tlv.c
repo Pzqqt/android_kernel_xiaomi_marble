@@ -64,6 +64,7 @@ static QDF_STATUS send_smart_ant_enable_cmd_tlv(wmi_unified_t wmi_handle,
 				wmi_pdev_smart_ant_enable_cmd_fixed_param));
 
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
 								param->pdev_id);
 	cmd->enable = param->enable;
 	cmd->mode = param->mode;
@@ -99,6 +100,7 @@ static QDF_STATUS send_smart_ant_enable_cmd_tlv(wmi_unified_t wmi_handle,
 		/* Setting it to 0 for now */
 		gpio_param->pdev_id =
 			wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
 								param->pdev_id);
 		gpio_param++;
 	}
@@ -158,6 +160,7 @@ static QDF_STATUS send_smart_ant_set_rx_ant_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_pdev_smart_ant_set_rx_antenna_cmd_fixed_param));
 	cmd->rx_antenna = param->antenna;
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
 								param->pdev_id);
 
 	wmi_mtrace(WMI_PDEV_SMART_ANT_SET_RX_ANTENNA_CMDID, NO_SESSION, 0);
@@ -288,7 +291,9 @@ send_set_ant_switch_tbl_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->antCtrlCommon1 = param->ant_ctrl_common1;
 	cmd->antCtrlCommon2 = param->ant_ctrl_common2;
 	cmd->mac_id =
-		wmi_handle->ops->convert_pdev_id_host_to_target(param->pdev_id);
+		wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								param->pdev_id);
 
 	/* TLV indicating array of structures to follow */
 	buf_ptr += sizeof(wmi_pdev_set_ant_switch_tbl_cmd_fixed_param);
@@ -301,7 +306,9 @@ send_set_ant_switch_tbl_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_pdev_set_ant_ctrl_chain,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_set_ant_ctrl_chain));
 	ctrl_chain->pdev_id =
-		wmi_handle->ops->convert_pdev_id_host_to_target(param->pdev_id);
+		wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								param->pdev_id);
 	ctrl_chain->antCtrlChain = param->antCtrlChain;
 
 	wmi_mtrace(WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID, NO_SESSION, 0);
@@ -508,7 +515,8 @@ static QDF_STATUS extract_peer_ratecode_list_ev_tlv(
 	param_buf = (WMI_PEER_RATECODE_LIST_EVENTID_param_tlvs *)evt_buf;
 	ev = (wmi_peer_ratecode_list_event_fixed_param *)param_buf->fixed_param;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, peer_mac);
-	*pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(ev->pdev_id);
+	*pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(wmi_handle,
+								   ev->pdev_id);
 
 	for (i = 0; i < SA_BYTES_IN_DWORD; i++) {
 		rate_cap->ratecount[i] = ((ev->ratecount >> (i*8)) &

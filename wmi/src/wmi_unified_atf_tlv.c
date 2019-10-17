@@ -76,6 +76,7 @@ send_set_atf_cmd_tlv(wmi_unified_t wmi_handle,
 		peer_info->vdev_id = param->peer_info[i].vdev_id;
 		peer_info->pdev_id =
 			wmi_handle->ops->convert_pdev_id_host_to_target(
+				wmi_handle,
 				param->peer_info[i].pdev_id);
 		/*
 		 * TLV definition for peer atf request fixed param combines
@@ -162,6 +163,7 @@ send_set_bwf_cmd_tlv(wmi_unified_t wmi_handle,
 				param->peer_info[i].vdev_id;
 		peer_info->pdev_id =
 			wmi_handle->ops->convert_pdev_id_host_to_target(
+				wmi_handle,
 				param->peer_info[i].pdev_id);
 		peer_info++;
 	}

@@ -9867,7 +9867,8 @@ QDF_STATUS send_multiple_vdev_restart_req_cmd_non_tlv(
  *
  * Return None.
  */
-void wmi_non_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
+void wmi_non_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle,
+					   uint32_t *pdev_id_map, uint8_t size)
 {
 	WMI_LOGD("PDEV conversion Not Available");
 }
