@@ -1218,7 +1218,7 @@ QDF_STATUS target_if_direct_buf_rx_register_events(
 			WMI_RX_UMAC_CTX);
 
 	if (ret)
-		direct_buf_rx_info("event handler not supported", ret);
+		direct_buf_rx_info("event handler not supported, ret=%d", ret);
 
 	return QDF_STATUS_SUCCESS;
 }
