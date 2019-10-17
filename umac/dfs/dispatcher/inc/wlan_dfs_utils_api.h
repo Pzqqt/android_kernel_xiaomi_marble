@@ -93,10 +93,26 @@ extern struct dfs_to_mlme global_dfs_to_mlme;
  * Wrapper function for dfs_cac_valid_reset(). This function called from
  * outside of DFS component.
  */
-
+#ifdef CONFIG_CHAN_NUM_API
 QDF_STATUS utils_dfs_cac_valid_reset(struct wlan_objmgr_pdev *pdev,
 		uint8_t prevchan_ieee,
 		uint32_t prevchan_flags);
+#endif
+
+/**
+ * utils_dfs_cac_valid_reset_for_freq() - Cancels the dfs_cac_valid_timer timer.
+ * @pdev: Pointer to DFS pdev object.
+ * @prevchan_freq: Prevchan frequency.
+ * @prevchan_flags: Prevchan flags.
+ *
+ * Wrapper function for dfs_cac_valid_reset_for_freq(). This function called
+ * from outside of DFS component.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+QDF_STATUS utils_dfs_cac_valid_reset_for_freq(struct wlan_objmgr_pdev *pdev,
+					      uint16_t prevchan_freq,
+					      uint32_t prevchan_flags);
+#endif
 
 /**
  * utils_dfs_reset() - Reset DFS members.
@@ -131,7 +147,21 @@ QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev);
  *
  * Return void.
  */
+#ifdef CONFIG_CHAN_NUM_API
 void utils_dfs_unmark_precac_nol(struct wlan_objmgr_pdev *pdev, uint8_t chan);
+#endif
+
+/**
+ * utils_dfs_unmark_precac_nol_for_freq() - Clears precac channel marked as NOL.
+ * @pdev: Pointer to DFS pdev object.
+ * @chan_freq: channel freq to be unmarked as NOL.
+ *
+ * Return void.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+void utils_dfs_unmark_precac_nol_for_freq(struct wlan_objmgr_pdev *pdev,
+					  uint16_t chan_freq);
+#endif
 
 /**
  * utils_dfs_cancel_precac_timer() - Cancel the precac timer.
@@ -167,10 +197,30 @@ QDF_STATUS utils_dfs_start_precac_timer(struct wlan_objmgr_pdev *pdev);
  *
  * Return: True if intermediate channel needs to configure. False otherwise.
  */
+#ifdef CONFIG_CHAN_NUM_API
 bool
 utils_dfs_precac_decide_pref_chan(struct wlan_objmgr_pdev *pdev,
 				  uint8_t *ch_ieee,
 				  enum wlan_phymode mode);
+#endif
+
+/**
+ * utils_dfs_precac_decide_pref_chan() - Choose preferred channel
+ * @pdev: Pointer to DFS pdev object.
+ * @ch_freq: Pointer to channel frequency.
+ * @mode: Configured PHY mode.
+ *
+ * Wrapper function for dfs_decide_precac_preferred_chan(). This
+ * function called from outside of dfs component.
+ *
+ * Return: True if intermediate channel needs to configure. False otherwise.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+bool
+utils_dfs_precac_decide_pref_chan_for_freq(struct wlan_objmgr_pdev *pdev,
+					   uint16_t *ch_freq,
+					   enum wlan_phymode mode);
+#endif
 #endif
 
 /**
@@ -414,10 +464,35 @@ QDF_STATUS utils_dfs_get_nol_chfreq_and_chwidth(struct wlan_objmgr_pdev *pdev,
  *
  * Return: QDF_STATUS
  */
+#ifdef CONFIG_CHAN_NUM_API
 QDF_STATUS utils_dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
 		uint16_t flags, struct ch_params *ch_params,
 		uint32_t *hw_mode, uint8_t *target_chan,
 		struct dfs_acs_info *acs_info);
+#endif
+
+/**
+ * utils_dfs_get_random_channel() - Get random channel.
+ * @pdev: Pointer to DFS pdev object.
+ * @flags: random channel selection flags.
+ * @ch_params: current channel params.
+ * @hw_mode: current operating mode.
+ * @target_chan: Pointer to target_chan freq.
+ * @acs_info: acs range info.
+ *
+ * wrapper function for get_random_chan(). this
+ * function called from outside of dfs component.
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+QDF_STATUS
+utils_dfs_get_random_channel_for_freq(struct wlan_objmgr_pdev *pdev,
+				      uint16_t flags,
+				      struct ch_params *ch_params,
+				      uint32_t *hw_mode, uint16_t *target_chan,
+				      struct dfs_acs_info *acs_info);
+#endif
 
 /**
  * utils_dfs_get_vdev_random_channel() - Get random channel for vdev
@@ -434,10 +509,35 @@ QDF_STATUS utils_dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
  *
  * Return: QDF_STATUS
  */
+#ifdef CONFIG_CHAN_NUM_API
 QDF_STATUS utils_dfs_get_vdev_random_channel(
 	struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
 	uint16_t flags, struct ch_params *ch_params, uint32_t *hw_mode,
 	uint8_t *target_chan, struct dfs_acs_info *acs_info);
+#endif
+
+/**
+ * utils_dfs_get_vdev_random_channel() - Get random channel for vdev
+ * @pdev: Pointer to DFS pdev object.
+ * @vdev: vdev of the request
+ * @flags: random channel selection flags.
+ * @ch_params: current channel params.
+ * @hw_mode: current operating mode.
+ * @target_chan: Pointer to target_chan_freq.
+ * @acs_info: acs range info.
+ *
+ * Get random channel based on vdev interface type. If the vdev is null,
+ * the function will get random channel by SAP interface type.
+ *
+ * Return: QDF_STATUS
+ */
+
+#ifdef CONFIG_CHAN_FREQ_API
+QDF_STATUS utils_dfs_get_vdev_random_channel_for_freq(
+	struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
+	uint16_t flags, struct ch_params *ch_params, uint32_t *hw_mode,
+	uint16_t *target_chan_freq, struct dfs_acs_info *acs_info);
+#endif
 
 /**
  * utils_dfs_bw_reduced_channel() - Get BW reduced channel.
@@ -451,10 +551,32 @@ QDF_STATUS utils_dfs_get_vdev_random_channel(
  *
  * Return: QDF_STATUS
  */
+#ifdef CONFIG_CHAN_NUM_API
 QDF_STATUS utils_dfs_bw_reduced_channel(struct wlan_objmgr_pdev *pdev,
 					struct ch_params *ch_params,
 					uint32_t *hw_mode,
 					uint8_t *target_chan);
+#endif
+
+/**
+ * utils_dfs_bw_reduced_channel_for_freq() - Get BW reduced channel.
+ * @pdev: Pointer to DFS pdev object.
+ * @ch_params: current channel params.
+ * @hw_mode: current operating mode.
+ * @target_chan: Pointer to target_chan freq.
+ *
+ * wrapper function for get bw_reduced_channel. this
+ * function called from outside of dfs component.
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+QDF_STATUS utils_dfs_bw_reduced_channel_for_freq(struct wlan_objmgr_pdev *pdev,
+						 struct ch_params *ch_params,
+						 uint32_t *hw_mode,
+						 uint16_t *target_chan_freq);
+#endif
+
 /**
  * utils_dfs_init_nol() - Initialize nol from platform driver.
  * @pdev: pdev handler.
@@ -507,6 +629,23 @@ static inline void utils_dfs_print_nol_channels(struct wlan_objmgr_pdev *pdev)
 void utils_dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * utils_is_dfs_chan_for_freq() - is channel dfs.
+ * @pdev: pdev handler.
+ * @chan_freq: Channel frequency in MHZ.
+ *
+ * is channel dfs.
+ *
+ * Return: True if channel dfs, else false.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+static inline bool utils_is_dfs_chan_for_freq(struct wlan_objmgr_pdev *pdev,
+					      uint32_t chan_freq)
+{
+	return wlan_reg_is_dfs_for_freq(pdev, chan_freq);
+}
+#endif
+
+/**
  * utils_is_dfs_ch() - is channel dfs.
  * @pdev: pdev handler.
  *
@@ -514,10 +653,12 @@ void utils_dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev);
  *
  * Return: True if channel dfs, else false.
  */
+#ifdef CONFIG_CHAN_NUM_API
 static inline bool utils_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
 {
 	return wlan_reg_is_dfs_ch(pdev, chan);
 }
+#endif
 
 /**
  * utils_is_dfs_cfreq2_ch() - is channel dfs cfreq2.
@@ -547,11 +688,29 @@ bool utils_is_dfs_cfreq2_ch(struct wlan_objmgr_pdev *pdev)
  *
  * Return: void
  */
+#ifdef CONFIG_CHAN_NUM_API
 void utils_dfs_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 		uint8_t *ch_list,
 		uint8_t num_ch,
 		bool nol_ch);
+#endif
 
+/**
+ * utils_dfs_reg_update_nol_chan_for_freq() - set nol channel
+ *
+ * @pdev: pdev ptr
+ * @ch_list: freq channel list to be returned
+ * @num_ch: number of channels
+ * @nol_ch: nol flag
+ *
+ * Return: void
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+void utils_dfs_reg_update_nol_chan_for_freq(struct wlan_objmgr_pdev *pdev,
+					    uint16_t *ch_list,
+					    uint8_t num_ch,
+					    bool nol_ch);
+#endif
 /**
  * utils_dfs_freq_to_chan () - convert channel freq to channel number
  * @freq: frequency
@@ -600,11 +759,33 @@ QDF_STATUS utils_dfs_update_cur_chan_flags(struct wlan_objmgr_pdev *pdev,
  *
  * Return: QDF_STATUS
  */
+#ifdef CONFIG_CHAN_NUM_API
 QDF_STATUS utils_dfs_mark_leaking_ch(struct wlan_objmgr_pdev *pdev,
 	enum phy_ch_width ch_width,
 	uint8_t temp_ch_lst_sz,
 	uint8_t *temp_ch_lst);
+#endif
+/**
+ * utils_dfs_mark_leaking_chan_for_freq() - to mark channel leaking in to nol
+ * @pdev: Pointer to pdev structure.
+ * @ch_width: channel width
+ * @temp_ch_lst_sz: the target channel list
+ * @temp_ch_lst: the target frequency list
+ *
+ * This function removes the channels from temp channel list that
+ * (if selected as target channel) will cause leakage in one of
+ * the NOL channels
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+QDF_STATUS utils_dfs_mark_leaking_chan_for_freq(struct wlan_objmgr_pdev *pdev,
+						enum phy_ch_width ch_width,
+						uint8_t temp_ch_lst_sz,
+						uint16_t *temp_ch_lst);
+#endif
 #else
+#ifdef CONFIG_CHAN_NUM_API
 static inline QDF_STATUS utils_dfs_mark_leaking_ch
 	(struct wlan_objmgr_pdev *pdev,
 	enum phy_ch_width ch_width,
@@ -613,6 +794,17 @@ static inline QDF_STATUS utils_dfs_mark_leaking_ch
 {
 	return QDF_STATUS_SUCCESS;
 }
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+static inline QDF_STATUS utils_dfs_mark_leaking_chan_for_freq
+	(struct wlan_objmgr_pdev *pdev,
+	enum phy_ch_width ch_width,
+	uint8_t temp_ch_lst_sz,
+	uint16_t *temp_ch_lst)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif
 /**
  * utils_get_dfsdomain() - Get DFS domain.
@@ -686,10 +878,29 @@ void utils_dfs_get_nol_history_chan_list(struct wlan_objmgr_pdev *pdev,
  *
  * Return: void
  */
+#ifdef CONFIG_CHAN_NUM_API
 void utils_dfs_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
 					 uint8_t *ch_list,
 					 uint8_t num_ch,
 					 bool nol_history_ch);
+#endif
+
+/**
+ * utils_dfs_reg_update_nol_history_chan_for_freq() - set nol history channel
+ *
+ * @pdev: pdev ptr
+ * @ch_list: freq channel list to be returned
+ * @num_ch: number of channels
+ * @nol_history_ch: nol history flag
+ *
+ * Return: void
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+void utils_dfs_reg_update_nol_history_chan_for_freq(struct wlan_objmgr_pdev *,
+						    uint16_t *freq_list,
+						    uint8_t num_ch,
+						    bool nol_history_ch);
+#endif
 
 /**
  * utils_dfs_is_cac_required() - Check if CAC is required on the cur_chan.

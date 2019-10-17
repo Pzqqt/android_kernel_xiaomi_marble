@@ -64,6 +64,15 @@
  * @mlme_update_scan_channel_list:     Update the scan channel list sent to FW.
  * @mlme_bringdown_vaps:               Bringdown vaps if no chans is present.
  * @mlme_dfs_deliver_event:            Deliver DFS events to user space
+ * @mlme_precac_chan_change_csa_for_freq:Channel change triggered by PrCAC using
+ *                                     Channel Switch Announcement.
+ * @mlme_mark_dfs_for_freq:            Mark DFS channel frequency as radar.
+ * @mlme_get_extchan_for_freq:         Get the extension channel.
+ * @mlme_find_dot11_chan_for_freq:     Find a channel pointer.
+ * @mlme_get_dfs_channels_for_freq:    Get DFS channels from current channel
+ *                                     list.
+ * @mlme_get_cac_timeout_for_freq:     Get CAC timeout for a given channel
+ *                                     frequency.
  */
 struct dfs_to_mlme {
 	QDF_STATUS (*pdev_component_obj_attach)(struct wlan_objmgr_pdev *pdev,
@@ -75,19 +84,37 @@ struct dfs_to_mlme {
 			void *comp_priv_obj);
 	QDF_STATUS (*dfs_start_rcsa)(struct wlan_objmgr_pdev *pdev,
 			bool *wait_for_csa);
+#ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS (*mlme_mark_dfs)(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee,
 			uint16_t freq,
 			uint8_t vhtop_ch_freq_seg2,
 			uint64_t flags);
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	QDF_STATUS (*mlme_mark_dfs_for_freq)(struct wlan_objmgr_pdev *pdev,
+					     uint8_t ieee,
+					     uint16_t freq,
+					     uint16_t ic_mhz_freq_seg2,
+					     uint64_t flags);
+#endif
+#ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS (*mlme_start_csa)(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee_chan, uint16_t freq,
 			uint8_t cfreq2, uint64_t flags);
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	QDF_STATUS (*mlme_start_csa_for_freq)(struct wlan_objmgr_pdev *pdev,
+					      uint8_t ieee_chan, uint16_t freq,
+					      uint16_t cfreq2, uint64_t flags);
+#endif
+
 	QDF_STATUS (*mlme_proc_cac)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_deliver_event_up_after_cac)(
 			struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_get_dfs_ch_nchans)(struct wlan_objmgr_pdev *pdev,
 			int *nchans);
+#ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS (*mlme_get_extchan)(struct wlan_objmgr_pdev *pdev,
 			uint16_t *dfs_ch_freq,
 			uint64_t *dfs_ch_flags,
@@ -95,12 +122,25 @@ struct dfs_to_mlme {
 			uint8_t *dfs_ch_ieee,
 			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
 			uint8_t *dfs_ch_vhtop_ch_freq_seg2);
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	QDF_STATUS (*mlme_get_extchan_for_freq)(struct wlan_objmgr_pdev *pdev,
+						uint16_t *dfs_ch_freq,
+						uint64_t *dfs_ch_flags,
+						uint16_t *dfs_ch_flagext,
+						uint8_t *dfs_ch_ieee,
+						uint8_t *dfs_vhtop_ch_freq_seg1,
+						uint8_t *dfs_vhtop_ch_freq_seg2,
+						uint16_t *dfs_ch_mhz_freq_seg1,
+						uint16_t *dfs_ch_mhz_freq_seg2);
+#endif
 	QDF_STATUS (*mlme_set_no_chans_available)(struct wlan_objmgr_pdev *pdev,
 			int val);
 	QDF_STATUS (*mlme_ieee2mhz)(struct wlan_objmgr_pdev *pdev,
 			int ieee,
 			uint64_t flag,
 			int *freq);
+#ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS (*mlme_find_dot11_channel)(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee,
 			uint8_t des_cfreq2,
@@ -111,7 +151,22 @@ struct dfs_to_mlme {
 			uint8_t *dfs_ch_ieee,
 			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
 			uint8_t *dfs_ch_vhtop_ch_freq_seg2);
-
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	QDF_STATUS (*mlme_find_dot11_chan_for_freq)(struct wlan_objmgr_pdev *,
+						    uint16_t freq,
+						    uint16_t des_cfreq2_mhz,
+						    int mode,
+						    uint16_t *dfs_ch_freq,
+						    uint64_t *dfs_ch_flags,
+						    uint16_t *dfs_ch_flagext,
+						    uint8_t *dfs_ch_ieee,
+						    uint8_t *dfs_ch_freq_seg1,
+						    uint8_t *dfs_ch_freq_seg2,
+						    uint16_t *dfs_cfreq1_mhz,
+						    uint16_t *dfs_cfreq2_mhz);
+#endif
+#ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS (*mlme_get_dfs_ch_channels)(struct wlan_objmgr_pdev *pdev,
 			uint16_t *dfs_ch_freq,
 			uint64_t *dfs_ch_flags,
@@ -120,14 +175,37 @@ struct dfs_to_mlme {
 			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
 			uint8_t *dfs_ch_vhtop_ch_freq_seg2,
 			int index);
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	QDF_STATUS (*mlme_get_dfs_channels_for_freq)(
+			struct wlan_objmgr_pdev *pdev,
+			uint16_t *dfs_chan_freq,
+			uint64_t *dfs_chan_flags,
+			uint16_t *dfs_chan_flagext,
+			uint8_t *dfs_chan_ieee,
+			uint8_t *dfs_chan_vhtop_ch_freq_seg1,
+			uint8_t *dfs_chan_vhtop_ch_freq_seg2,
+			uint16_t *dfs_chan_mhz_freq_seg1,
+			uint16_t *dfs_chan_mhz_freq_seg2,
+			int index);
+#endif
 	QDF_STATUS (*mlme_dfs_ch_flags_ext)(struct wlan_objmgr_pdev *pdev,
 			uint16_t *flag_ext);
 	QDF_STATUS (*mlme_channel_change_by_precac)(
 			struct wlan_objmgr_pdev *pdev);
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
-	QDF_STATUS (*mlme_precac_chan_change_csa)(struct wlan_objmgr_pdev *pdev,
-						  uint8_t des_chan,
-						  enum wlan_phymode des_mode);
+#ifdef CONFIG_CHAN_FREQ_API
+	QDF_STATUS
+	    (*mlme_precac_chan_change_csa_for_freq)(struct wlan_objmgr_pdev *,
+						    uint16_t des_chan_freq,
+						    enum wlan_phymode des_mode);
+#endif
+#ifdef CONFIG_CHAN_NUM_API
+	QDF_STATUS
+		(*mlme_precac_chan_change_csa)(struct wlan_objmgr_pdev *,
+					       uint8_t des_chan,
+					       enum wlan_phymode des_mode);
+#endif
 #endif
 	QDF_STATUS (*mlme_nol_timeout_notification)(
 			struct wlan_objmgr_pdev *pdev);
@@ -135,17 +213,27 @@ struct dfs_to_mlme {
 			void *nollist,
 			int nentries);
 	bool (*mlme_is_opmode_sta)(struct wlan_objmgr_pdev *pdev);
+#ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS (*mlme_get_cac_timeout)(struct wlan_objmgr_pdev *pdev,
 			uint16_t dfs_ch_freq,
 			uint8_t c_vhtop_ch_freq_seg2,
 			uint64_t dfs_ch_flags,
 			int *cac_timeout);
+#endif
+#ifdef CONFIG_CHAN_FREQ_API
+	QDF_STATUS
+	    (*mlme_get_cac_timeout_for_freq)(struct wlan_objmgr_pdev *pdev,
+					     uint16_t dfs_ch_freq,
+					     uint16_t c_vhtop_ch_freq_seg2,
+					     uint64_t dfs_ch_flags,
+					     int *cac_timeout);
+#endif
 	QDF_STATUS (*mlme_rebuild_chan_list_with_non_dfs_channels)
 			(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_restart_vaps_with_non_dfs_chan)
 			(struct wlan_objmgr_pdev *pdev, int no_chans_avail);
 	bool (*mlme_check_allowed_prim_chanlist)
-			(struct wlan_objmgr_pdev *pdev, uint32_t chan_num);
+			(struct wlan_objmgr_pdev *pdev, uint32_t chan);
 	QDF_STATUS (*mlme_update_scan_channel_list)
 			(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_bringdown_vaps)
@@ -316,9 +404,30 @@ QDF_STATUS ucfg_dfs_get_precac_intermediate_chan(struct wlan_objmgr_pdev *pdev,
  *
  * Return: Precac state of the given channel.
  */
+#ifdef CONFIG_CHAN_NUM_API
 enum precac_chan_state
 ucfg_dfs_get_precac_chan_state(struct wlan_objmgr_pdev *pdev,
 			       uint8_t precac_chan);
+#endif
+
+/**
+ * ucfg_dfs_get_precac_chan_state_for_freq() - Get precac status for the
+ * given channel.
+ * @pdev: Pointer to DFS pdev object.
+ * @precac_chan: Channel frequency for which precac state needs to be
+ *               determined.
+ *
+ * Wrapper function for dfs_get_precac_chan_state().
+ * This function called from outside of dfs component.
+ *
+ * Return: Precac state of the given channel.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+enum precac_chan_state
+ucfg_dfs_get_precac_chan_state_for_freq(struct wlan_objmgr_pdev *pdev,
+					uint16_t precac_freq);
+#endif
+
 #endif
 
 #ifdef QCA_MCL_DFS_SUPPORT
