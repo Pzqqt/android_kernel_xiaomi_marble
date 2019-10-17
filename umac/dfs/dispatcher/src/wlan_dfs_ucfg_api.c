@@ -278,8 +278,22 @@ enum precac_chan_state
 ucfg_dfs_get_precac_chan_state_for_freq(struct wlan_objmgr_pdev *pdev,
 					uint16_t precac_chan_freq)
 {
-	/* To be implemented when component dev changes are ready */
-	return PRECAC_ERR;
+	struct wlan_dfs *dfs;
+	enum precac_chan_state retval = PRECAC_ERR;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
+		return PRECAC_ERR;
+	}
+
+	retval = dfs_get_precac_chan_state_for_freq(dfs, precac_chan_freq);
+	if (retval == PRECAC_ERR) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Could not find precac channel state");
+	}
+
+	return retval;
 }
 #endif
 #endif
