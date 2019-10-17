@@ -20057,12 +20057,11 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 	  (eConnectionState_IbssConnected == sta_ctx->conn_info.conn_state)) {
 		eConnectionState prev_conn_state;
 
+		INIT_COMPLETION(adapter->disconnect_comp_var);
 		prev_conn_state = sta_ctx->conn_info.conn_state;
 		hdd_conn_set_connection_state(adapter,
 					      eConnectionState_Disconnecting);
 		/* Issue disconnect to CSR */
-		INIT_COMPLETION(adapter->disconnect_comp_var);
-
 		status = sme_roam_disconnect(mac_handle,
 				adapter->vdev_id,
 				eCSR_DISCONNECT_REASON_UNSPECIFIED);
@@ -20517,6 +20516,7 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 		}
 	}
 
+	INIT_COMPLETION(adapter->disconnect_comp_var);
 	prev_conn_state = sta_ctx->conn_info.conn_state;
 	/*stop tx queues */
 	hdd_info("Disabling queues");
@@ -20524,8 +20524,6 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 		WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER, WLAN_CONTROL_PATH);
 	hdd_debug("Set HDD conn_state to eConnectionState_Disconnecting");
 	hdd_conn_set_connection_state(adapter, eConnectionState_Disconnecting);
-
-	INIT_COMPLETION(adapter->disconnect_comp_var);
 
 	/* issue disconnect */
 
