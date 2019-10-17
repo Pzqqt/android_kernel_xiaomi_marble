@@ -614,7 +614,7 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 	return ret;
 }
 
-void ramdump_work_handler(void *data)
+static void __ramdump_work_handler(void *data)
 {
 	int ret;
 	uint32_t host_interest_address;
@@ -693,6 +693,18 @@ out_fail:
 		pld_device_crashed(qdf_dev->dev);
 
 	ol_check_clean_recovery_flag(ol_ctx);
+}
+
+void ramdump_work_handler(void *data)
+{
+	struct qdf_op_sync *op_sync;
+
+	if (qdf_op_protect(&op_sync))
+		return;
+
+	__ramdump_work_handler(data);
+
+	qdf_op_unprotect(op_sync);
 }
 
 void fw_indication_work_handler(void *data)
