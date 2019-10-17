@@ -50,24 +50,57 @@ struct wlan_dfs *wlan_pdev_get_dfs_obj(struct wlan_objmgr_pdev *pdev)
 	return dfs;
 }
 
+/*
+ * register_dfs_precac_auto_chan_callbacks_freq() - Register auto chan switch
+ * frequency based APIs callback.
+ * @mlme_callback: Pointer to dfs_to_mlme.
+ */
 #ifndef QCA_MCL_DFS_SUPPORT
-#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+#if defined(WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT) && defined(CONFIG_CHAN_FREQ_API)
 static inline void
-register_dfs_precac_auto_chan_callbacks(struct dfs_to_mlme *mlme_callback)
+register_dfs_precac_auto_chan_callbacks_freq(struct dfs_to_mlme *mlme_callback)
 {
 	if (!mlme_callback)
 		return;
 
-	mlme_callback->mlme_precac_chan_change_csa =
-		mlme_dfs_precac_chan_change_csa;
+	mlme_callback->mlme_precac_chan_change_csa_for_freq =
+		mlme_dfs_precac_chan_change_csa_for_freq;
 }
 #else
 static inline void
-register_dfs_precac_auto_chan_callbacks(struct dfs_to_mlme *mlme_callback)
+register_dfs_precac_auto_chan_callbacks_freq(struct dfs_to_mlme *mlme_callback)
 {
 }
 #endif
+#endif
 
+/*
+ * register_dfs_callbacks_for_freq() - Register dfs callbacks.
+ * @mlme_callback: Pointer to dfs_to_mlme.
+ */
+#ifndef QCA_MCL_DFS_SUPPORT
+#ifdef CONFIG_CHAN_FREQ_API
+static inline void
+register_dfs_callbacks_for_freq(struct dfs_to_mlme *mlme_callback)
+{
+	if (!mlme_callback)
+		return;
+
+	mlme_callback->mlme_mark_dfs_for_freq = mlme_dfs_mark_dfs_for_freq;
+	mlme_callback->mlme_find_dot11_chan_for_freq =
+		mlme_dfs_find_dot11_chan_for_freq;
+	mlme_callback->mlme_get_dfs_channels_for_freq =
+		mlme_dfs_get_dfs_channels_for_freq;
+	mlme_callback->mlme_get_cac_timeout_for_freq =
+		mlme_dfs_get_cac_timeout_for_freq;
+	mlme_callback->mlme_get_extchan_for_freq =
+		mlme_dfs_get_extchan_for_freq;
+	mlme_callback->mlme_start_csa_for_freq = mlme_dfs_start_csa_for_freq;
+}
+#endif
+#endif
+
+#ifndef QCA_MCL_DFS_SUPPORT
 void register_dfs_callbacks(void)
 {
 	struct dfs_to_mlme *tmp_dfs_to_mlme = &global_dfs_to_mlme;
@@ -78,26 +111,19 @@ void register_dfs_callbacks(void)
 		wlan_objmgr_pdev_component_obj_detach;
 
 	tmp_dfs_to_mlme->dfs_start_rcsa = mlme_dfs_start_rcsa;
-	tmp_dfs_to_mlme->mlme_mark_dfs = mlme_dfs_mark_dfs;
-	tmp_dfs_to_mlme->mlme_start_csa = mlme_dfs_start_csa;
 	tmp_dfs_to_mlme->mlme_proc_cac = mlme_dfs_proc_cac;
 	tmp_dfs_to_mlme->mlme_deliver_event_up_after_cac =
 		mlme_dfs_deliver_event_up_after_cac;
 	tmp_dfs_to_mlme->mlme_get_dfs_ch_nchans = mlme_dfs_get_dfs_ch_nchans;
-	tmp_dfs_to_mlme->mlme_get_extchan = mlme_dfs_get_extchan;
 	tmp_dfs_to_mlme->mlme_set_no_chans_available =
 		mlme_dfs_set_no_chans_available;
 	tmp_dfs_to_mlme->mlme_ieee2mhz = mlme_dfs_ieee2mhz;
-	tmp_dfs_to_mlme->mlme_find_dot11_channel = mlme_dfs_find_dot11_channel;
-	tmp_dfs_to_mlme->mlme_get_dfs_ch_channels =
-		mlme_dfs_get_dfs_ch_channels;
 	tmp_dfs_to_mlme->mlme_dfs_ch_flags_ext = mlme_dfs_dfs_ch_flags_ext;
 	tmp_dfs_to_mlme->mlme_channel_change_by_precac =
 		mlme_dfs_channel_change_by_precac;
 	tmp_dfs_to_mlme->mlme_nol_timeout_notification =
 		mlme_dfs_nol_timeout_notification;
 	tmp_dfs_to_mlme->mlme_clist_update = mlme_dfs_clist_update;
-	tmp_dfs_to_mlme->mlme_get_cac_timeout = mlme_dfs_get_cac_timeout;
 	tmp_dfs_to_mlme->mlme_rebuild_chan_list_with_non_dfs_channels =
 		mlme_dfs_rebuild_chan_list_with_non_dfs_channels;
 	tmp_dfs_to_mlme->mlme_restart_vaps_with_non_dfs_chan =
@@ -116,7 +142,9 @@ void register_dfs_callbacks(void)
 	/*
 	 * Register precac auto channel switch feature related callbacks
 	 */
-	register_dfs_precac_auto_chan_callbacks(tmp_dfs_to_mlme);
+	register_dfs_precac_auto_chan_callbacks_freq(tmp_dfs_to_mlme);
+	/* Register freq based callbacks */
+	register_dfs_callbacks_for_freq(tmp_dfs_to_mlme);
 }
 #else
 void register_dfs_callbacks(void)
