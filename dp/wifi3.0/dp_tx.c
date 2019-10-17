@@ -1660,6 +1660,8 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				dp_tx_me_free_buf(pdev,
 					(void *)(msdu_info->u.sg_info
 						.curr_seg->frags[0].vaddr));
+				i++;
+				continue;
 			}
 			goto done;
 		}
@@ -1695,6 +1697,10 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			tid_stats->swdrop_cnt[TX_HW_ENQUEUE]++;
 
 			dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
+			if (msdu_info->frm_type == dp_tx_frm_me) {
+				i++;
+				continue;
+			}
 			goto done;
 		}
 
