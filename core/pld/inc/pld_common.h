@@ -623,6 +623,8 @@ int pld_get_ce_id(struct device *dev, int irq);
 int pld_get_irq(struct device *dev, int ce_id);
 void pld_lock_pm_sem(struct device *dev);
 void pld_release_pm_sem(struct device *dev);
+void pld_lock_reg_window(struct device *dev, unsigned long *flags);
+void pld_unlock_reg_window(struct device *dev, unsigned long *flags);
 int pld_power_on(struct device *dev);
 int pld_power_off(struct device *dev);
 int pld_athdiag_read(struct device *dev, uint32_t offset, uint32_t memtype,

@@ -283,6 +283,16 @@ static inline void pld_pcie_release_pm_sem(struct device *dev)
 {
 }
 
+static inline void pld_pcie_lock_reg_window(struct device *dev,
+					    unsigned long *flags)
+{
+}
+
+static inline void pld_pcie_unlock_reg_window(struct device *dev,
+					      unsigned long *flags)
+{
+}
+
 static inline int pld_pcie_power_on(struct device *dev)
 {
 	return 0;
@@ -501,6 +511,18 @@ static inline void pld_pcie_lock_pm_sem(struct device *dev)
 static inline void pld_pcie_release_pm_sem(struct device *dev)
 {
 	cnss_release_pm_sem(dev);
+}
+
+static inline void pld_pcie_lock_reg_window(struct device *dev,
+					    unsigned long *flags)
+{
+	cnss_pci_lock_reg_window(dev, flags);
+}
+
+static inline void pld_pcie_unlock_reg_window(struct device *dev,
+					      unsigned long *flags)
+{
+	cnss_pci_unlock_reg_window(dev, flags);
 }
 
 static inline int pld_pcie_power_on(struct device *dev)

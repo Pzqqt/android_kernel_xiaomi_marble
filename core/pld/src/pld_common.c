@@ -1388,6 +1388,60 @@ void pld_release_pm_sem(struct device *dev)
 }
 
 /**
+ * pld_lock_reg_window() - Lock register window spinlock
+ * @dev: device pointer
+ * @flags: variable pointer to save CPU states
+ *
+ * It uses spinlock_bh so avoid calling in top half context.
+ *
+ * Return: void
+ */
+void pld_lock_reg_window(struct device *dev, unsigned long *flags)
+{
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		pld_pcie_lock_reg_window(dev, flags);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+		break;
+	case PLD_BUS_TYPE_SDIO:
+		break;
+	case PLD_BUS_TYPE_USB:
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+}
+
+/**
+ * pld_unlock_reg_window() - Unlock register window spinlock
+ * @dev: device pointer
+ * @flags: variable pointer to save CPU states
+ *
+ * It uses spinlock_bh so avoid calling in top half context.
+ *
+ * Return: void
+ */
+void pld_unlock_reg_window(struct device *dev, unsigned long *flags)
+{
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		pld_pcie_unlock_reg_window(dev, flags);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+		break;
+	case PLD_BUS_TYPE_SDIO:
+		break;
+	case PLD_BUS_TYPE_USB:
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+}
+
+/**
  * pld_power_on() - Power on WLAN hardware
  * @dev: device
  *
