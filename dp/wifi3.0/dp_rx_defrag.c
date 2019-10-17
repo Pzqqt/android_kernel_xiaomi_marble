@@ -1335,7 +1335,8 @@ void dp_rx_defrag_cleanup(struct dp_peer *peer, unsigned tid)
 		 * array pointer usually points to base variable
 		 * of TID queue structure: "struct dp_rx_tid"
 		 */
-		QDF_ASSERT(0);
+		dp_info("Cleanup self peer %pK and TID %u at MAC address %pM",
+			peer, tid, peer->mac_addr.raw);
 		return;
 	}
 	/* Free up nbufs */
