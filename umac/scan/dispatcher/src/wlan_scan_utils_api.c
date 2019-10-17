@@ -1236,7 +1236,7 @@ static void util_gen_new_bssid(uint8_t *bssid, uint8_t max_bssid,
 	lsb_n = bssid_tmp & ((1 << max_bssid) - 1);
 	new_bssid = bssid_tmp;
 	new_bssid &= ~((1 << max_bssid) - 1);
-	new_bssid |= (lsb_n + mbssid_index) % (1 << max_bssid);
+	new_bssid |= qdf_do_div((lsb_n + mbssid_index), (1 << max_bssid));
 
 	for (i = QDF_MAC_ADDR_SIZE - 1; i >= 0; i--) {
 		new_bssid_addr[i] = new_bssid & 0xff;
