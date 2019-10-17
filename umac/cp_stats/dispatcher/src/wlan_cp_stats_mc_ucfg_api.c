@@ -133,28 +133,25 @@ QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats_by_protocol(
 					uint8_t vdev_id,
 					enum qdf_proto_subtype protocol)
 {
-	struct wlan_objmgr_vdev *vdev;
 	struct wake_lock_stats *stats;
-	struct vdev_mc_cp_stats *vdev_mc_stats;
-	struct vdev_cp_stats *vdev_cp_stats_priv;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+	struct psoc_mc_cp_stats *psoc_mc_stats;
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
-						    WLAN_CP_STATS_ID);
-	if (!vdev) {
-		cp_stats_err("vdev numm for vdev_id: %d", vdev_id);
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
-	if (!vdev_cp_stats_priv) {
-		cp_stats_err("vdev cp stats object is null");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+
+	if (!psoc_mc_stats) {
+		cp_stats_err("psoc mc stats is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
-	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
-	stats = &vdev_mc_stats->wow_stats;
+	stats = &psoc_mc_stats->wow_stats;
 	switch (protocol) {
 	case QDF_PROTO_ICMP_REQ:
 	case QDF_PROTO_ICMP_RES:
@@ -180,9 +177,8 @@ QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats_by_protocol(
 	default:
 		break;
 	}
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
 
-	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -190,28 +186,25 @@ QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats_by_dst_addr(
 					struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id, uint8_t *dest_mac)
 {
-	struct wlan_objmgr_vdev *vdev;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+	struct psoc_mc_cp_stats *psoc_mc_stats;
 	struct wake_lock_stats *stats;
-	struct vdev_mc_cp_stats *vdev_mc_stats;
-	struct vdev_cp_stats *vdev_cp_stats_priv;
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
-						    WLAN_CP_STATS_ID);
-	if (!vdev) {
-		cp_stats_err("vdev numm for vdev_id: %d", vdev_id);
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
-	if (!vdev_cp_stats_priv) {
-		cp_stats_err("vdev cp stats object is null");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	if (!psoc_mc_stats) {
+		cp_stats_err("psoc mc stats is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
-	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
-	stats = &vdev_mc_stats->wow_stats;
+	stats = &psoc_mc_stats->wow_stats;
+
 	switch (*dest_mac) {
 	case QDF_BCAST_MAC_ADDR:
 		stats->bcast_wake_up_count++;
@@ -226,9 +219,8 @@ QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats_by_dst_addr(
 		stats->ucast_wake_up_count++;
 		break;
 	}
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
 
-	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -238,11 +230,8 @@ QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
 {
 	struct wake_lock_stats *stats;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct wlan_objmgr_vdev *vdev = NULL;
 	struct psoc_mc_cp_stats *psoc_mc_stats;
 	struct psoc_cp_stats *psoc_cp_stats_priv;
-	struct vdev_mc_cp_stats *vdev_mc_stats;
-	struct vdev_cp_stats *vdev_cp_stats_priv;
 
 	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
 	if (!psoc_cp_stats_priv) {
@@ -250,34 +239,20 @@ QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
-						    WLAN_CP_STATS_ID);
-	if (!vdev) {
-		cp_stats_err("vdev numm for vdev_id: %d", vdev_id);
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+
+	if (!psoc_mc_stats) {
+		cp_stats_err("psoc mc stats is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
-	if (!vdev_cp_stats_priv) {
-		cp_stats_err("vdev cp stats object is null");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto release_vdev_ref;
-	}
+	stats = &psoc_mc_stats->wow_stats;
 
-	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
-	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
-
-	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
-	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
-	stats = &vdev_mc_stats->wow_stats;
 	status = tgt_mc_cp_stats_inc_wake_lock_stats(psoc, reason, stats,
 				&psoc_mc_stats->wow_unspecified_wake_up_count);
-	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
 	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
-
-release_vdev_ref:
-	if (vdev)
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
 
 	return status;
 }
@@ -294,18 +269,23 @@ static void vdev_iterator(struct wlan_objmgr_psoc *psoc, void *vdev, void *arg)
 {
 	struct wake_lock_stats *vdev_stats;
 	struct wake_lock_stats *stats = arg;
-	struct vdev_mc_cp_stats *vdev_mc_stats;
-	struct vdev_cp_stats *vdev_cp_stats_priv;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+	struct psoc_mc_cp_stats *psoc_mc_stats;
 
-	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
-	if (!vdev_cp_stats_priv) {
-		cp_stats_err("vdev cp stats object is null");
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
 		return;
 	}
 
-	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
-	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
-	vdev_stats = &vdev_mc_stats->wow_stats;
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	if (!psoc_mc_stats) {
+		cp_stats_err("psoc mc stats is null");
+		return;
+	}
+
+	vdev_stats = &psoc_mc_stats->wow_stats;
+
 	stats->ucast_wake_up_count += vdev_stats->ucast_wake_up_count;
 	stats->bcast_wake_up_count += vdev_stats->bcast_wake_up_count;
 	stats->ipv4_mcast_wake_up_count += vdev_stats->ipv4_mcast_wake_up_count;
@@ -326,7 +306,6 @@ static void vdev_iterator(struct wlan_objmgr_psoc *psoc, void *vdev, void *arg)
 			vdev_stats->oem_response_wake_up_count;
 	stats->pwr_save_fail_detected += vdev_stats->pwr_save_fail_detected;
 	stats->scan_11d += vdev_stats->scan_11d;
-	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
 }
 
 QDF_STATUS ucfg_mc_cp_stats_get_psoc_wake_lock_stats(
@@ -356,19 +335,36 @@ QDF_STATUS ucfg_mc_cp_stats_get_vdev_wake_lock_stats(
 						struct wlan_objmgr_vdev *vdev,
 						struct wake_lock_stats *stats)
 {
-	struct vdev_cp_stats *vdev_cp_stats_priv;
-	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct wlan_objmgr_psoc *psoc;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+	struct psoc_mc_cp_stats *psoc_mc_stats;
 
-	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
-	if (!vdev_cp_stats_priv) {
-		cp_stats_err("vdev cp stats object is null");
+	wlan_vdev_obj_lock(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		wlan_vdev_obj_unlock(vdev);
+		cp_stats_err("psoc NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	wlan_vdev_obj_unlock(vdev);
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
-	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
-	qdf_mem_copy(stats, &vdev_mc_stats->wow_stats, sizeof(*stats));
-	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+
+	if (!psoc_mc_stats) {
+		cp_stats_err("psoc mc stats is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	qdf_mem_copy(stats, &psoc_mc_stats->wow_stats, sizeof(*stats));
+
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
 
 	return QDF_STATUS_SUCCESS;
 }

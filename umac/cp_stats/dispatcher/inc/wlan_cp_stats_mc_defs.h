@@ -196,11 +196,13 @@ struct cca_stats {
  * @is_cp_stats_suspended: is cp stats suspended or not
  * @pending: details of pending requests
  * @wow_unspecified_wake_up_count: number of non-wow related wake ups
+ * @wow_stats: wake_lock stats for vdev
  */
 struct psoc_mc_cp_stats {
 	bool is_cp_stats_suspended;
 	struct pending_stats_requests pending;
 	uint32_t wow_unspecified_wake_up_count;
+	struct wake_lock_stats wow_stats;
 };
 
 /**
@@ -245,14 +247,12 @@ struct summary_stats {
 
 /**
  * struct vdev_mc_cp_stats - vdev specific stats
- * @wow_stats: wake_lock stats for vdev
  * @cca: cca stats
  * @tx_rate_flags: tx rate flags (enum tx_rate_info)
  * @chain_rssi: chain rssi
  * @vdev_summary_stats: vdev's summary stats
  */
 struct vdev_mc_cp_stats {
-	struct wake_lock_stats wow_stats;
 	struct cca_stats cca;
 	uint32_t tx_rate_flags;
 	int8_t chain_rssi[MAX_NUM_CHAINS];
