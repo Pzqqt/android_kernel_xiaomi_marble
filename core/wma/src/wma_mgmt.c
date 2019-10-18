@@ -1962,7 +1962,8 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 
 #ifdef FEATURE_WLAN_WAPI
 #define WPI_IV_LEN 16
-#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
+#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
+	defined(QCA_WIFI_QCA6490)
 /**
  * wma_fill_in_wapi_key_params() - update key parameters about wapi
  * @key_params: wma key parameters
