@@ -1373,6 +1373,44 @@ fill_wiphy_6ghz_band_channels(struct wiphy *wiphy,
 }
 #endif
 
+#define HDD_MAX_CHAN_INFO_LOG 192
+
+/**
+ * hdd_regulatory_chanlist_dump() - Dump regulatory channel list info
+ * @chan_list: regulatory channel list
+ *
+ * Return: void
+ */
+static void hdd_regulatory_chanlist_dump(struct regulatory_channel *chan_list)
+{
+	uint32_t i;
+	uint8_t info[HDD_MAX_CHAN_INFO_LOG];
+	int len = 0;
+	struct regulatory_channel *chan;
+	uint32_t count = 0;
+	int ret;
+
+	hdd_debug("start (freq MHz, tx power dBm):");
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		chan = &chan_list[i];
+		if ((chan->chan_flags & REGULATORY_CHAN_DISABLED))
+			continue;
+		count++;
+		ret = scnprintf(info + len, sizeof(info) - len, "%d %d ",
+				chan->center_freq, chan->tx_power);
+		if (ret <= 0)
+			break;
+		len += ret;
+		if (len >= (sizeof(info) - 20)) {
+			hdd_debug("%s", info);
+			len = 0;
+		}
+	}
+	if (len > 0)
+		hdd_debug("%s", info);
+	hdd_debug("end total_count %d", count);
+}
+
 static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_objmgr_pdev *pdev,
 				   struct regulatory_channel *chan_list,
@@ -1390,6 +1428,7 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	hdd_ctx = wiphy_priv(wiphy);
 
 	hdd_debug("process channel list update from regulatory");
+	hdd_regulatory_chanlist_dump(chan_list);
 
 	fill_wiphy_band_channels(wiphy, chan_list, NL80211_BAND_2GHZ);
 	fill_wiphy_band_channels(wiphy, chan_list, NL80211_BAND_5GHZ);
