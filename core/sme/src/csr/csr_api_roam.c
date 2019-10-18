@@ -15531,6 +15531,8 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	enum csr_akm_type akm;
 	bool force_max_nss;
 	uint8_t ap_nss;
+	struct wlan_objmgr_vdev *vdev;
+	bool follow_ap_edca;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -15690,6 +15692,18 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 
 		if (pSession->nss == 1)
 			pSession->supported_nss_1x1 = true;
+
+		follow_ap_edca = ucfg_action_oui_search(mac->psoc,
+					    &vendor_ap_search_attr,
+					    ACTION_OUI_DISABLE_AGGRESSIVE_EDCA);
+
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
+							sessionId,
+							WLAN_LEGACY_MAC_ID);
+		if (vdev) {
+			mlme_set_follow_ap_edca_flag(vdev, follow_ap_edca);
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		}
 
 		is_vendor_ap_present =
 				ucfg_action_oui_search(mac->psoc,

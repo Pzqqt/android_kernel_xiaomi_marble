@@ -1185,6 +1185,7 @@ sch_beacon_edca_process(struct mac_context *mac, tSirMacEdcaParamSetIE *edca,
 			struct pe_session *session)
 {
 	uint8_t i;
+	bool follow_ap_edca;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	host_log_qos_edca_pkt_type *log_ptr = NULL;
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -1193,6 +1194,8 @@ sch_beacon_edca_process(struct mac_context *mac, tSirMacEdcaParamSetIE *edca,
 		pe_err("invalid mlme cfg");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	follow_ap_edca = mlme_get_follow_ap_edca_flag(session->vdev);
 
 	pe_debug("Updating parameter set count: Old %d ---> new %d",
 		session->gLimEdcaParamSetCount, edca->qosInfo.count);
@@ -1203,7 +1206,7 @@ sch_beacon_edca_process(struct mac_context *mac, tSirMacEdcaParamSetIE *edca,
 	session->gLimEdcaParams[QCA_WLAN_AC_VI] = edca->acvi;
 	session->gLimEdcaParams[QCA_WLAN_AC_VO] = edca->acvo;
 
-	if (mac->mlme_cfg->edca_params.enable_edca_params) {
+	if (mac->mlme_cfg->edca_params.enable_edca_params && !follow_ap_edca) {
 		session->gLimEdcaParams[QCA_WLAN_AC_VO].aci.aifsn =
 			mac->mlme_cfg->edca_params.edca_ac_vo.vo_aifs;
 		session->gLimEdcaParams[QCA_WLAN_AC_VI].aci.aifsn =

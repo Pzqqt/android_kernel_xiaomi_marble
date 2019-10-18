@@ -118,6 +118,7 @@ struct wlan_mlme_roam {
  * @vdev_start_failed: flag to indicate that vdev start failed.
  * @connection_fail: flag to indicate connection failed
  * @cac_required_for_new_channel: if CAC is required for new channel
+ * @follow_ap_edca: if true, it is forced to follow the AP's edca.
  * @assoc_type: vdev associate/reassociate type
  * @dynamic_cfg: current configuration of nss, chains for vdev.
  * @ini_cfg: Max configuration of nss, chains supported for vdev.
@@ -136,6 +137,7 @@ struct mlme_legacy_priv {
 	bool vdev_start_failed;
 	bool connection_fail;
 	bool cac_required_for_new_channel;
+	bool follow_ap_edca;
 	enum vdev_assoc_type assoc_type;
 	struct wlan_mlme_nss_chains dynamic_cfg;
 	struct wlan_mlme_nss_chains ini_cfg;
@@ -370,6 +372,23 @@ void mlme_set_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
  * Return: None
  */
 void mlme_free_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_set_follow_ap_edca_flag() - Set follow ap's edca flag
+ * @vdev: vdev pointer
+ * @flag: carries if following ap's edca is true or not.
+ *
+ * Return: None
+ */
+void mlme_set_follow_ap_edca_flag(struct wlan_objmgr_vdev *vdev, bool flag);
+
+/**
+ * mlme_get_follow_ap_edca_flag() - Get follow ap's edca flag
+ * @vdev: vdev pointer
+ *
+ * Return: value of follow_ap_edca
+ */
+bool mlme_get_follow_ap_edca_flag(struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlme_get_peer_disconnect_ies() - Get diconnect IEs from vdev object
