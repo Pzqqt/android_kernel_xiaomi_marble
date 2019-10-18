@@ -425,6 +425,13 @@ void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 	pmo_set_wow_event_bitmap(WOW_NLO_SCAN_COMPLETE_EVENT,
 				 wow_bitmap_size,
 				 bitmask);
+	/*
+	 * WPA3 roaming offloads SAE authentication to wpa_supplicant
+	 * Firmware will send WMI_ROAM_PREAUTH_STATUS_CMDID
+	 */
+	pmo_set_wow_event_bitmap(WOW_ROAM_PREAUTH_START_EVENT,
+				 wow_bitmap_size,
+				 bitmask);
 }
 
 void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
