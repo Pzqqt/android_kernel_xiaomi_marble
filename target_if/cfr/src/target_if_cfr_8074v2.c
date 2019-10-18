@@ -49,9 +49,9 @@ int dump_lut(struct wlan_objmgr_pdev *pdev)
 
 	for (i = 0; i < 136; i++) {
 		lut = &pdev_cfrobj->lut[i];
-		cfr_err("idx:%d dbrevnt: %d txevent: %d dbrppdu:0x%x txppdu:0x%x\n",
-			i, lut->dbr_recv, lut->tx_recv,
-			lut->dbr_ppdu_id, lut->tx_ppdu_id);
+		cfr_info("idx:%d dbrevnt: %d txevent: %d dbrppdu:0x%x txppdu:0x%x",
+			 i, lut->dbr_recv, lut->tx_recv,
+			 lut->dbr_ppdu_id, lut->tx_ppdu_id);
 	}
 
 	return 0;
