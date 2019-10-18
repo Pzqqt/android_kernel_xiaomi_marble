@@ -3966,6 +3966,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		goto send_rsp;
 	}
 
+	wma_delete_invalid_peer_entries(add_sta->smesessionId, add_sta->staMac);
+
 	status = wma_create_peer(wma, pdev, vdev, add_sta->staMac,
 				 WMI_PEER_TYPE_DEFAULT, add_sta->smesessionId,
 				 false);
@@ -5112,6 +5114,8 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
+
+	wma_delete_invalid_peer_entries(vdev_id, NULL);
 
 	if (iface->psnr_req) {
 		qdf_mem_free(iface->psnr_req);
