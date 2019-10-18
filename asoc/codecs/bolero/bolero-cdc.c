@@ -661,7 +661,11 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 	priv->dev_up = true;
 	mutex_unlock(&priv->clk_lock);
 	regcache_mark_dirty(priv->regmap);
+	bolero_clk_rsc_enable_all_clocks(priv->clk_dev, true);
 	regcache_sync(priv->regmap);
+	/* Add a 100usec sleep to ensure last register write is done */
+	usleep_range(100,110);
+	bolero_clk_rsc_enable_all_clocks(priv->clk_dev, false);
 	/* call ssr event for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
 		if (!priv->macro_params[macro_idx].event_handler)

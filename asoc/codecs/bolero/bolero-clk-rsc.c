@@ -137,6 +137,49 @@ int bolero_rsc_clk_reset(struct device *dev, int clk_id)
 }
 EXPORT_SYMBOL(bolero_rsc_clk_reset);
 
+void bolero_clk_rsc_enable_all_clocks(struct device *dev, bool enable)
+{
+	struct device *clk_dev = NULL;
+	struct bolero_clk_rsc *priv = NULL;
+	int i = 0;
+
+	if (!dev) {
+		pr_err("%s: dev is null %d\n", __func__);
+		return;
+	}
+
+	clk_dev = bolero_get_rsc_clk_device_ptr(dev->parent);
+	if (!clk_dev) {
+		pr_err("%s: Invalid rsc clk device\n", __func__);
+		return;
+	}
+
+	priv = dev_get_drvdata(clk_dev);
+	if (!priv) {
+		pr_err("%s: Invalid rsc clk private data\n", __func__);
+		return;
+	}
+	mutex_lock(&priv->rsc_clk_lock);
+	for (i = 0; i < MAX_CLK - NPL_CLK_OFFSET; i++) {
+		if (enable) {
+			if (priv->clk[i])
+				clk_prepare_enable(priv->clk[i]);
+			if (priv->clk[i + NPL_CLK_OFFSET])
+				clk_prepare_enable(
+					priv->clk[i + NPL_CLK_OFFSET]);
+		} else {
+			if (priv->clk[i + NPL_CLK_OFFSET])
+				clk_disable_unprepare(
+					priv->clk[i + NPL_CLK_OFFSET]);
+			if (priv->clk[i])
+				clk_disable_unprepare(priv->clk[i]);
+		}
+	}
+	mutex_unlock(&priv->rsc_clk_lock);
+	return;
+}
+EXPORT_SYMBOL(bolero_clk_rsc_enable_all_clocks);
+
 static int bolero_clk_rsc_mux0_clk_request(struct bolero_clk_rsc *priv,
 					   int clk_id,
 					   bool enable)
