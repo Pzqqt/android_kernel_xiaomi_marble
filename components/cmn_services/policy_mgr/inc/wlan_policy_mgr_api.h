@@ -2955,15 +2955,17 @@ bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
 					 uint32_t vdev_id);
 
 /**
- * policy_mgr_allow_multiple_sta_connections() - API to get FW support
+ * policy_mgr_allow_multiple_sta_connections() - check whether multiple STA
+ * concurrency is allowed and F/W supported
  * @psoc: Pointer to soc
- *
- * This function checks FW support for simultaneous connections on
- * concurrent STA interfaces.
+ * @second_sta_chan: 2nd STA channel
+ * @first_sta_chan: 2nd STA channel
  *
  *  Return: true if supports else false.
  */
-bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *psoc);
+bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *psoc,
+					       uint8_t second_sta_chan,
+					       uint8_t first_sta_chan);
 
 /**
  * policy_mgr_dual_beacon_on_single_mac_scc_capable() - get capability that
