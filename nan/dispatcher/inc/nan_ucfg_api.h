@@ -373,5 +373,11 @@ static inline bool ucfg_is_nan_disc_active(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 
+static inline
+enum nan_datapath_state ucfg_nan_get_ndi_state(struct wlan_objmgr_vdev *vdev)
+{
+	return NAN_DATA_INVALID_STATE;
+}
+
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */
