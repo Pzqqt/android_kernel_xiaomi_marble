@@ -356,6 +356,7 @@ void hdd_get_tx_resource(struct hdd_adapter *adapter,
 {
 	if (false ==
 	    cdp_fc_get_tx_resource(cds_get_context(QDF_MODULE_ID_SOC),
+				   cds_get_context(QDF_MODULE_ID_TXRX),
 				   *mac_addr,
 				   adapter->tx_flow_low_watermark,
 				   adapter->tx_flow_hi_watermark_offset)) {
