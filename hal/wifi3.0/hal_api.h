@@ -80,6 +80,19 @@ static inline int hal_force_wake_release(struct hal_soc *soc)
 {
 	return 0;
 }
+
+static inline void hal_lock_reg_access(struct hal_soc *soc,
+				       unsigned long *flags)
+{
+	qdf_spin_lock_irqsave(&soc->register_access_lock);
+}
+
+static inline void hal_unlock_reg_access(struct hal_soc *soc,
+					 unsigned long *flags)
+{
+	qdf_spin_unlock_irqrestore(&soc->register_access_lock);
+}
+
 #else
 static inline int hal_force_wake_request(struct hal_soc *soc)
 {
@@ -108,6 +121,18 @@ static inline int hal_force_wake_request(struct hal_soc *soc)
 static inline int hal_force_wake_release(struct hal_soc *soc)
 {
 	return pld_force_wake_release(soc->qdf_dev->dev);
+}
+
+static inline void hal_lock_reg_access(struct hal_soc *soc,
+				       unsigned long *flags)
+{
+	pld_lock_reg_window(soc->qdf_dev->dev, flags);
+}
+
+static inline void hal_unlock_reg_access(struct hal_soc *soc,
+					 unsigned long *flags)
+{
+	pld_unlock_reg_window(soc->qdf_dev->dev, flags);
 }
 #endif
 
@@ -142,15 +167,17 @@ static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 				  uint32_t value)
 {
+	unsigned long flags;
+
 	if (!hal_soc->use_register_windowing ||
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
 	} else {
-		qdf_spin_lock_irqsave(&hal_soc->register_access_lock);
+		hal_lock_reg_access(hal_soc, &flags);
 		hal_select_window(hal_soc, offset);
 		qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_START +
 			  (offset & WINDOW_RANGE_MASK), value);
-		qdf_spin_unlock_irqrestore(&hal_soc->register_access_lock);
+		hal_unlock_reg_access(hal_soc, &flags);
 	}
 }
 #else
@@ -158,6 +185,7 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 				  uint32_t value)
 {
 	int ret;
+	unsigned long flags;
 
 	if (offset > MAPPED_REF_OFF) {
 		ret = hal_force_wake_request(hal_soc);
@@ -174,11 +202,11 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
 	} else {
-		qdf_spin_lock_irqsave(&hal_soc->register_access_lock);
+		hal_lock_reg_access(hal_soc, &flags);
 		hal_select_window(hal_soc, offset);
 		qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_START +
 			  (offset & WINDOW_RANGE_MASK), value);
-		qdf_spin_unlock_irqrestore(&hal_soc->register_access_lock);
+		hal_unlock_reg_access(hal_soc, &flags);
 	}
 
 	if ((offset > MAPPED_REF_OFF) &&
@@ -209,17 +237,18 @@ static inline void hal_write_address_32_mb(struct hal_soc *hal_soc,
 static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 {
 	uint32_t ret;
+	unsigned long flags;
 
 	if (!hal_soc->use_register_windowing ||
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		return qdf_ioread32(hal_soc->dev_base_addr + offset);
 	}
 
-	qdf_spin_lock_irqsave(&hal_soc->register_access_lock);
+	hal_lock_reg_access(hal_soc, &flags);
 	hal_select_window(hal_soc, offset);
 	ret = qdf_ioread32(hal_soc->dev_base_addr + WINDOW_START +
 		       (offset & WINDOW_RANGE_MASK));
-	qdf_spin_unlock_irqrestore(&hal_soc->register_access_lock);
+	hal_unlock_reg_access(hal_soc, &flags);
 
 	return ret;
 }
@@ -248,6 +277,7 @@ static inline uint32_t hal_read_address_32_mb(struct hal_soc *soc,
 static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 {
 	uint32_t ret;
+	unsigned long flags;
 
 	if ((offset > MAPPED_REF_OFF) &&
 	    hal_force_wake_request(hal_soc)) {
@@ -261,11 +291,11 @@ static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 		return qdf_ioread32(hal_soc->dev_base_addr + offset);
 	}
 
-	qdf_spin_lock_irqsave(&hal_soc->register_access_lock);
+	hal_lock_reg_access(hal_soc, &flags);
 	hal_select_window(hal_soc, offset);
 	ret = qdf_ioread32(hal_soc->dev_base_addr + WINDOW_START +
 		       (offset & WINDOW_RANGE_MASK));
-	qdf_spin_unlock_irqrestore(&hal_soc->register_access_lock);
+	hal_unlock_reg_access(hal_soc, &flags);
 
 	if ((offset > MAPPED_REF_OFF) &&
 	    hal_force_wake_release(hal_soc))
