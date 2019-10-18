@@ -27,6 +27,10 @@ ifeq ($(call is-board-platform,lito),true)
 AUDIO_SELECT  := CONFIG_SND_SOC_LITO=m
 endif
 
+ifeq ($(call is-board-platform,bengal),true)
+AUDIO_SELECT  := CONFIG_SND_SOC_BENGAL=m
+endif
+
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
 ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET) kona lito bengal sdmshrike),true)
@@ -56,7 +60,7 @@ KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_OPTIONS += $(AUDIO_SELECT)
 
 ###########################################################
-ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET) kona lito),true)
+ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET) kona lito bengal),true)
 ifneq ($(TARGET_BOARD_AUTO),true)
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_pinctrl_lpi.ko
@@ -98,7 +102,7 @@ LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
 include $(DLKM_DIR)/AndroidKernelModule.mk
 endif
 ###########################################################
-ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) kona lito sdmshrike),true)
+ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) kona lito bengal sdmshrike),true)
 ifneq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), msmnile))
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_snd_event.ko

@@ -13,7 +13,7 @@ endif
 
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform-in-list,kona lito bengal),true)
+ifeq ($(call is-board-platform-in-list,kona lito),true)
 
 LOCAL_PATH := $(call my-dir)
 

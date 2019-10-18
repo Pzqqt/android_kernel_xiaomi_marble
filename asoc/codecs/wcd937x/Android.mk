@@ -7,9 +7,13 @@ ifeq ($(call is-board-platform,$(MSMSTEPPE) $(TRINKET)),true)
 AUDIO_SELECT  := CONFIG_SND_SOC_SM6150=m
 endif
 
+ifeq ($(call is-board-platform,bengal),true)
+AUDIO_SELECT  := CONFIG_SND_SOC_BENGAL=m
+endif
+
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET)),true)
+ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET) bengal),true)
 
 LOCAL_PATH := $(call my-dir)
 
