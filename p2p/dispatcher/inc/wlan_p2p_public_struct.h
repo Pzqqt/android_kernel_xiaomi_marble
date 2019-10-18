@@ -103,7 +103,7 @@ struct p2p_event {
 /**
  * struct p2p_rx_mgmt_frame - rx mgmt frame structure
  * @frame_len:   Frame length
- * @rx_chan:     RX channel
+ * @rx_freq:     RX Frequency
  * @vdev_id:     Vdev id
  * @frm_type:    Frame type
  * @rx_rssi:     RX rssi
@@ -111,7 +111,7 @@ struct p2p_event {
  */
 struct p2p_rx_mgmt_frame {
 	uint32_t frame_len;
-	uint32_t rx_chan;
+	uint32_t rx_freq;
 	uint32_t vdev_id;
 	uint32_t frm_type;
 	uint32_t rx_rssi;
