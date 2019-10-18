@@ -307,6 +307,7 @@ static QDF_STATUS tdls_pe_update_peer(struct tdls_update_peer_request *req)
 		     &update_peer->vht_cap,
 		     sizeof(update_peer->vht_cap));
 	addstareq->supported_rates_length = update_peer->supported_rates_len;
+	addstareq->is_pmf = update_peer->is_pmf;
 	qdf_mem_copy(&addstareq->supported_rates,
 		     update_peer->supported_rates,
 		     update_peer->supported_rates_len);

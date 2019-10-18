@@ -418,6 +418,10 @@ wlan_cfg80211_tdls_extract_params(struct tdls_update_peer_params *req_info,
 	if (params->ht_capa || params->vht_capa ||
 	    (params->sta_flags_set & BIT(NL80211_STA_FLAG_WME)))
 		req_info->is_qos_wmm_sta = true;
+	if (params->sta_flags_set & BIT(NL80211_STA_FLAG_MFP)) {
+		osif_debug("TDLS peer pmf capable");
+		req_info->is_pmf = 1;
+	}
 }
 
 int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_vdev *vdev,

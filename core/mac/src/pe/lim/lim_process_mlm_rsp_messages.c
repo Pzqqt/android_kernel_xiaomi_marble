@@ -1171,13 +1171,11 @@ void lim_process_mlm_set_keys_cnf(struct mac_context *mac, uint32_t *msg_buf)
 	if (eSIR_SME_SUCCESS == pMlmSetKeysCnf->resultCode) {
 		if (pMlmSetKeysCnf->key_len_nonzero)
 			pe_session->is_key_installed = 1;
-		if (LIM_IS_AP_ROLE(pe_session)) {
-			sta_ds = dph_lookup_hash_entry(mac,
+		sta_ds = dph_lookup_hash_entry(mac,
 				pMlmSetKeysCnf->peer_macaddr.bytes,
 				&aid, &pe_session->dph.dphHashTable);
-			if (sta_ds && pMlmSetKeysCnf->key_len_nonzero)
-				sta_ds->is_key_installed = 1;
-		}
+		if (sta_ds && pMlmSetKeysCnf->key_len_nonzero)
+			sta_ds->is_key_installed = 1;
 	}
 	pe_debug("is_key_installed = %d", pe_session->is_key_installed);
 

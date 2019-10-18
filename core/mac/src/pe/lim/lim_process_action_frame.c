@@ -1591,22 +1591,18 @@ lim_drop_unprotected_action_frame(struct mac_context *mac, struct pe_session *pe
 	tpDphHashNode sta;
 	bool rmfConnection = false;
 
-	if (LIM_IS_AP_ROLE(pe_session)) {
-		sta =
-			dph_lookup_hash_entry(mac, pHdr->sa, &aid,
-					      &pe_session->dph.dphHashTable);
-		if (sta)
-			if (sta->rmfEnabled)
-				rmfConnection = true;
-	} else if (pe_session->limRmfEnabled)
+	sta = dph_lookup_hash_entry(mac, pHdr->sa, &aid,
+				    &pe_session->dph.dphHashTable);
+	if (sta && sta->rmfEnabled)
 		rmfConnection = true;
 
 	if (rmfConnection && (pHdr->fc.wep == 0)) {
 		pe_err("Dropping unprotected Action category: %d frame since RMF is enabled",
 			category);
 		return true;
-	} else
-		return false;
+	}
+
+	return false;
 }
 #endif
 

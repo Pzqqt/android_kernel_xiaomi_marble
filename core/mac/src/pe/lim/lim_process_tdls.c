@@ -2431,6 +2431,7 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 	} else if (add_sta_req->tdls_oper == TDLS_OPER_UPDATE) {
 		lim_tdls_populate_dot11f_ht_caps(mac, NULL,
 						 add_sta_req, &htCap);
+		sta->rmfEnabled = add_sta_req->is_pmf;
 	}
 	htCaps = &htCap;
 	if (htCaps->present) {

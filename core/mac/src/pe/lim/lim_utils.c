@@ -5293,24 +5293,18 @@ lim_set_protected_bit(struct mac_context *mac,
 	uint16_t aid;
 	tpDphHashNode sta;
 
-	if (LIM_IS_AP_ROLE(pe_session)) {
-
-		sta = dph_lookup_hash_entry(mac, peer, &aid,
-					       &pe_session->dph.dphHashTable);
-		if (sta) {
-			/* rmfenabled will be set at the time of addbss.
-			 * but sometimes EAP auth fails and keys are not
-			 * installed then if we send any management frame
-			 * like deauth/disassoc with this bit set then
-			 * firmware crashes. so check for keys are
-			 * installed or not also before setting the bit
-			 */
-			if (sta->rmfEnabled && sta->is_key_installed)
-				pMacHdr->fc.wep = 1;
-		}
-	} else if (pe_session->limRmfEnabled &&
-			pe_session->is_key_installed) {
-		pMacHdr->fc.wep = 1;
+	sta = dph_lookup_hash_entry(mac, peer, &aid,
+				    &pe_session->dph.dphHashTable);
+	if (sta) {
+		/* rmfenabled will be set at the time of addbss.
+		 * but sometimes EAP auth fails and keys are not
+		 * installed then if we send any management frame
+		 * like deauth/disassoc with this bit set then
+		 * firmware crashes. so check for keys are
+		 * installed or not also before setting the bit
+		 */
+		if (sta->rmfEnabled && sta->is_key_installed)
+			pMacHdr->fc.wep = 1;
 	}
 } /*** end lim_set_protected_bit() ***/
 #endif

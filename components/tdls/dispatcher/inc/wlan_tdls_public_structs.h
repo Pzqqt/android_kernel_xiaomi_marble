@@ -769,6 +769,7 @@ struct tdls_update_peer_params {
 	uint8_t supported_oper_classes_len;
 	uint8_t supported_oper_classes[WLAN_MAX_SUPP_OPER_CLASSES];
 	bool is_qos_wmm_sta;
+	bool is_pmf;
 };
 
 struct tdls_update_peer_request {
@@ -1302,6 +1303,7 @@ struct tdls_add_sta_req {
 	struct vhtcap vht_cap;
 	uint8_t uapsd_queues;
 	uint8_t max_sp;
+	bool is_pmf;
 };
 
 /**

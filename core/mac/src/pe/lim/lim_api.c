@@ -636,24 +636,18 @@ static bool is_mgmt_protected(uint32_t vdev_id,
 		return false;
 	}
 
-	if (LIM_IS_AP_ROLE(session)) {
-		sta_ds = dph_lookup_hash_entry(mac_ctx,
-					       (uint8_t *)peer_mac_addr, &aid,
-					       &session->dph.dphHashTable);
-		if (sta_ds) {
-			/* rmfenabled will be set at the time of addbss.
-			 * but sometimes EAP auth fails and keys are not
-			 * installed then if we send any management frame
-			 * like deauth/disassoc with this bit set then
-			 * firmware crashes. so check for keys are
-			 * installed or not also before setting the bit
-			 */
-			if (sta_ds->rmfEnabled && sta_ds->is_key_installed)
-				protected = true;
-		}
-	} else if (session->limRmfEnabled &&
-		   session->is_key_installed) {
-		protected = true;
+	sta_ds = dph_lookup_hash_entry(mac_ctx, (uint8_t *)peer_mac_addr, &aid,
+				       &session->dph.dphHashTable);
+	if (sta_ds) {
+		/* rmfenabled will be set at the time of addbss.
+		 * but sometimes EAP auth fails and keys are not
+		 * installed then if we send any management frame
+		 * like deauth/disassoc with this bit set then
+		 * firmware crashes. so check for keys are
+		 * installed or not also before setting the bit
+		 */
+		if (sta_ds->rmfEnabled && sta_ds->is_key_installed)
+			protected = true;
 	}
 
 	return protected;

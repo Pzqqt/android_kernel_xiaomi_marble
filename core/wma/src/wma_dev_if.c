@@ -4242,6 +4242,8 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 
 		WMA_LOGD("%s: changeSta, calling wma_send_peer_assoc",
 			 __func__);
+		if (add_sta->rmfEnabled)
+			wma_set_peer_pmf_status(wma, add_sta->staMac, true);
 
 		ret =
 			wma_send_peer_assoc(wma, add_sta->nwType, add_sta);
@@ -4445,6 +4447,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			     params->supportedRates.supportedMCSSet,
 			     SIR_MAC_MAX_SUPPORTED_MCS_SET);
 
+
 		ret = wma_send_peer_assoc(wma,
 				iface->nwType,
 				(tAddStaParams *) iface->addBssStaContext);
@@ -4455,8 +4458,10 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			goto out;
 		}
 
-		if (params->rmfEnabled)
+		if (params->rmfEnabled) {
 			wma_set_mgmt_frame_protection(wma);
+			wma_set_peer_pmf_status(wma, params->bssId, true);
+		}
 
 		/*
 		 * Set the PTK in 11r mode because we already have it.
