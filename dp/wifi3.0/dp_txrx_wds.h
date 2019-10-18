@@ -274,8 +274,8 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 			struct dp_peer *ta_peer,
 			qdf_nbuf_t nbuf)
 {
-	uint16_t sa_sw_peer_id = hal_rx_msdu_end_sa_sw_peer_id_get(rx_tlv_hdr);
-	uint8_t sa_is_valid = hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr);
+	uint16_t sa_sw_peer_id = hal_rx_msdu_end_sa_sw_peer_id_get(soc->hal_soc, rx_tlv_hdr);
+	uint8_t sa_is_valid = hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc, rx_tlv_hdr);
 	uint16_t sa_idx;
 	uint8_t is_chfrag_start = 0;
 	uint8_t is_ad4_valid = 0;
@@ -285,13 +285,13 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 
 	is_chfrag_start = qdf_nbuf_is_rx_chfrag_start(nbuf);
 	if (is_chfrag_start)
-		is_ad4_valid = hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr);
+		is_ad4_valid = hal_rx_get_mpdu_mac_ad4_valid(soc->hal_soc, rx_tlv_hdr);
 
 
 	/*
 	 * Get the AST entry from HW SA index and mark it as active
 	 */
-	sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
+	sa_idx = hal_rx_msdu_end_sa_idx_get(soc->hal_soc, rx_tlv_hdr);
 
 	dp_rx_wds_add_or_update_ast(soc, ta_peer, nbuf, is_ad4_valid,
 				    sa_is_valid, is_chfrag_start,
