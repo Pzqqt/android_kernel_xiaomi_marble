@@ -4457,13 +4457,15 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 		if (adapter->device_mode == QDF_NDI_MODE)
 			hdd_ndp_session_end_handler(adapter);
 
-		if (status == QDF_STATUS_E_TIMEOUT)
+		if (status == QDF_STATUS_E_TIMEOUT) {
 			hdd_err("timed out waiting for sme vdev delete");
-		else if (adapter->qdf_session_close_event.force_set)
+			sme_cleanup_session(hdd_ctx->mac_handle, vdev_id);
+		} else if (adapter->qdf_session_close_event.force_set) {
 			hdd_info("SSR occurred during sme vdev delete");
-		else
+		} else {
 			hdd_err("failed to wait for sme vdev delete; status:%u",
 				status);
+		}
 	}
 
 release_vdev:

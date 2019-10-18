@@ -4562,6 +4562,18 @@ QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle, uint8_t vdev_id)
 	return status;
 }
 
+void sme_cleanup_session(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+	csr_cleanup_session(mac, vdev_id);
+	sme_release_global_lock(&mac->sme);
+}
+
 /*
  * sme_change_mcc_beacon_interval() -
  * To update P2P-GO beaconInterval. This function should be called after

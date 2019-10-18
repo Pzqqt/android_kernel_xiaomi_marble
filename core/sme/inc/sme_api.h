@@ -399,6 +399,15 @@ QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
 QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle, uint8_t vdev_id);
 
 /**
+ * sme_cleanup_session() -  clean up sme session info for vdev
+ * @mac_handle: mac handle
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+void sme_cleanup_session(mac_handle_t mac_handle, uint8_t vdev_id);
+
+/**
  * sme_set_curr_device_mode() - Sets the current operating device mode.
  * @mac_handle: The handle returned by mac_open.
  * @curr_device_mode: Current operating device mode.
