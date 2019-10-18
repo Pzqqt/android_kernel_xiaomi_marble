@@ -4853,15 +4853,12 @@ returnAfterError:
 
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
 #ifdef WLAN_FEATURE_11AX
-#define IS_PE_SESSION_11N_MODE(_session) \
-	((_session)->htCapability && !(_session)->vhtCapability && \
-	 !(_session)->he_capable)
+#define IS_PE_SESSION_HE_MODE(_session) ((_session)->he_capable)
 #else
-#define IS_PE_SESSION_11N_MODE(_session) \
-	((_session)->htCapability && !(_session)->vhtCapability)
+#define IS_PE_SESSION_HE_MODE(_session) false
 #endif /* WLAN_FEATURE_11AX */
 #else
-#define IS_PE_SESSION_11N_MODE(_session) false
+#define IS_PE_SESSION_HE_MODE(_session) false
 #endif
 
 /**
@@ -4959,10 +4956,11 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 		session->active_ba_64_session = true;
 	}
 
-	/* disable 11n RX AMSDU */
+	/* Enable RX AMSDU only in HE mode if supported */
 	if (mac_ctx->is_usr_cfg_amsdu_enabled &&
-	    !IS_PE_SESSION_11N_MODE(session) &&
-	    !WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq))
+	    ((IS_PE_SESSION_HE_MODE(session) &&
+	      WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq)) ||
+	     WLAN_REG_IS_5GHZ_CH_FREQ(session->curr_op_freq)))
 		frm.addba_param_set.amsdu_supp = amsdu_support;
 	else
 		frm.addba_param_set.amsdu_supp = 0;
