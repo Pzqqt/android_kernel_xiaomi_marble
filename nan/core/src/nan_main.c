@@ -51,6 +51,12 @@ QDF_STATUS nan_set_discovery_state(struct wlan_objmgr_psoc *psoc,
 
 	qdf_spin_lock_bh(&psoc_priv->lock);
 	cur_state = psoc_priv->disc_state;
+	if (cur_state == new_state) {
+		qdf_spin_unlock_bh(&psoc_priv->lock);
+		nan_err("curr_state: %u and new state: %u are same",
+			cur_state, new_state);
+		return status;
+	}
 
 	switch (new_state) {
 	case NAN_DISC_DISABLED:
@@ -804,6 +810,7 @@ static QDF_STATUS nan_handle_enable_rsp(struct nan_event_params *nan_event)
 	struct nan_psoc_priv_obj *psoc_nan_obj;
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+	void (*call_back)(void *cookie);
 
 	psoc = nan_event->psoc;
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
@@ -843,6 +850,10 @@ static QDF_STATUS nan_handle_enable_rsp(struct nan_event_params *nan_event)
 		policy_mgr_check_n_start_opportunistic_timer(psoc);
 	}
 
+	call_back = psoc_nan_obj->cb_obj.ucfg_nan_request_process_cb;
+	if (call_back)
+		call_back(psoc_nan_obj->request_context);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -862,16 +873,17 @@ static QDF_STATUS nan_handle_disable_ind(struct nan_event_params *nan_event)
 	status = nan_set_discovery_state(nan_event->psoc,
 					 NAN_DISC_DISABLED);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
+		void (*call_back)(void *cookie);
+
+		call_back = psoc_nan_obj->cb_obj.ucfg_nan_request_process_cb;
 		policy_mgr_decr_session_set_pcl(psoc, QDF_NAN_DISC_MODE,
 						NAN_PSEUDO_VDEV_ID);
-
 		if (psoc_nan_obj->is_explicit_disable) {
-			if (psoc_nan_obj->cb_obj.ucfg_explicit_disable_cb)
-				psoc_nan_obj->cb_obj.ucfg_explicit_disable_cb(
-				psoc_nan_obj->disable_context);
-		} else {
-			policy_mgr_nan_sap_post_disable_conc_check(psoc);
+			if (call_back)
+				call_back(psoc_nan_obj->request_context);
 		}
+
+		policy_mgr_nan_sap_post_disable_conc_check(psoc);
 	} else {
 		/* Should not happen, NAN state can always be disabled */
 		nan_err("Cannot set NAN state to disabled!");
