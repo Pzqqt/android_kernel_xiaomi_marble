@@ -407,7 +407,7 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 				    (uint8_t *)mac_hdr,
 				    frame_len + sizeof(tSirMacMgmtHdr),
 				    pe_session->smeSessionId,
-				    WMA_GET_RX_CH(rx_pkt_info), pe_session,
+				    WMA_GET_RX_FREQ(rx_pkt_info), pe_session,
 				    WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info),
 				    rx_flags);
 }
@@ -1649,7 +1649,7 @@ bool lim_process_sae_preauth_frame(struct mac_context *mac, uint8_t *rx_pkt)
 				    (uint8_t *)dot11_hdr,
 				    frm_len + sizeof(tSirMacMgmtHdr),
 				    SME_SESSION_ID_ANY,
-				    WMA_GET_RX_CH(rx_pkt), NULL,
+				    WMA_GET_RX_FREQ(rx_pkt), NULL,
 				    WMA_GET_RX_RSSI_NORMALIZED(rx_pkt),
 				    RXMGMT_FLAG_NONE);
 	return true;

@@ -193,7 +193,7 @@ void lim_update_short_slot_time(struct mac_context *mac, tSirMacAddr peerMacAddr
  * @frame_len: Length og mgmt frame
  * @session_id: session id
  * @psession_entry: PE Session Entry
- * @rx_channel: Channel of where packet is received
+ * @rx_freq: Frequency on which packet is received
  * @rx_rssi: rssi value
  * @rx_flags: RXMGMT flags to be set for the frame. Defined in enum rxmgmt_flags
  *
@@ -204,7 +204,7 @@ void lim_update_short_slot_time(struct mac_context *mac, tSirMacAddr peerMacAddr
 */
 void lim_send_sme_mgmt_frame_ind(struct mac_context *mac_ctx, uint8_t frame_type,
 				 uint8_t *frame, uint32_t frame_len,
-				 uint16_t session_id, uint32_t rx_channel,
+				 uint16_t session_id, uint32_t rx_freq,
 				 struct pe_session *psession_entry,
 				 int8_t rx_rssi, enum rxmgmt_flags rx_flags);
 

@@ -4053,12 +4053,10 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
 	uint32_t status, nPayload;
 	uint8_t *pPayload;
 	tpSirMacMgmtHdr pHdr;
-	uint8_t mappedRXCh;
 
 	pPayload = WMA_GET_RX_MPDU_DATA(pFrame);
 	nPayload = WMA_GET_RX_PAYLOAD_LEN(pFrame);
 	pHdr = WMA_GET_RX_MAC_HEADER(pFrame);
-	mappedRXCh = WMA_GET_RX_CH(pFrame);
 
 	/* Zero-init our [out] parameter, */
 	qdf_mem_zero((uint8_t *) pBeaconStruct, sizeof(tSirProbeRespBeacon));
@@ -4222,7 +4220,9 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
 	} else if (pBeacon->HTInfo.present) {
 		pBeaconStruct->channelNumber = pBeacon->HTInfo.primaryChannel;
 	} else {
-		pBeaconStruct->channelNumber = mappedRXCh;
+		pBeaconStruct->channelNumber =
+			wlan_reg_freq_to_chan(mac->pdev,
+					      WMA_GET_RX_FREQ(pFrame));
 		pe_debug_rl("In Beacon No Channel info");
 	}
 

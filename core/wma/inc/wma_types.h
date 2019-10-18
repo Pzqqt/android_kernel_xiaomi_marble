@@ -57,8 +57,8 @@
 
 #define WMA_GET_RX_UNKNOWN_UCAST(pRxMeta) 0
 
-#define WMA_GET_RX_CH(pRxMeta) \
-	(((t_packetmeta *)pRxMeta)->channel)
+#define WMA_GET_RX_FREQ(pRxMeta) \
+	(((t_packetmeta *)pRxMeta)->frequency)
 
 #define WMA_GET_RX_FT_DONE(pRxMeta) 0
 

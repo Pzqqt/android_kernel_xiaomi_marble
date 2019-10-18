@@ -390,8 +390,7 @@ static void csr_scan_add_result(struct mac_context *mac_ctx,
 		frm_type = MGMT_PROBE_RESP;
 
 	rx_param.pdev_id = 0;
-	rx_param.channel = wlan_reg_freq_to_chan(mac_ctx->pdev,
-						 bss_desc->chan_freq);
+	rx_param.chan_freq = bss_desc->chan_freq;
 	rx_param.rssi = bss_desc->rssi;
 	rx_param.tsf_delta = bss_desc->tsf_delta;
 
@@ -2355,12 +2354,15 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	enum channel_state ap_channel_state;
 
 	ap_channel_state =
-		wlan_reg_get_channel_state(mac_ctx->pdev,
-					   scan_entry->channel.chan_idx);
+		wlan_reg_get_channel_state(
+				mac_ctx->pdev,
+				wlan_reg_freq_to_chan(
+					mac_ctx->pdev,
+					scan_entry->channel.chan_freq));
 	if (ap_channel_state == CHANNEL_STATE_DISABLE ||
 	    ap_channel_state == CHANNEL_STATE_INVALID) {
 		sme_err("BSS %pM channel %d invalid, not populating this BSSID",
-			scan_entry->bssid.bytes, scan_entry->channel.chan_idx);
+			scan_entry->bssid.bytes, scan_entry->channel.chan_freq);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -2408,7 +2410,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	bss_desc->beaconInterval = scan_entry->bcn_int;
 	bss_desc->capabilityInfo = scan_entry->cap_info.value;
 
-	if (WLAN_REG_IS_5GHZ_CH(scan_entry->channel.chan_idx))
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(scan_entry->channel.chan_freq))
 		bss_desc->nwType = eSIR_11A_NW_TYPE;
 	else if (scan_entry->phy_mode == WLAN_PHYMODE_11B)
 		bss_desc->nwType = eSIR_11B_NW_TYPE;
@@ -2419,9 +2421,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	bss_desc->rssi_raw = scan_entry->rssi_raw;
 
 	/* channel frequency what peer sent in beacon/probersp. */
-	bss_desc->chan_freq =
-		wlan_reg_chan_to_freq(mac_ctx->pdev,
-				      scan_entry->channel.chan_idx);
+	bss_desc->chan_freq = scan_entry->channel.chan_freq;
 	bss_desc->received_time =
 		scan_entry->scan_entry_time;
 	bss_desc->startTSF[0] =
@@ -2809,7 +2809,9 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	while (cur_lst) {
 		cur_node = qdf_container_of(cur_lst, struct scan_cache_node,
 					    node);
-		ch = cur_node->entry->channel.chan_idx;
+		ch = wlan_reg_freq_to_chan(
+				pdev,
+				cur_node->entry->channel.chan_freq);
 		csr_add_to_occupied_channels(
 				mac_ctx, ch,
 				sessionId,

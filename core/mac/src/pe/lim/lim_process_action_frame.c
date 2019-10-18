@@ -1070,7 +1070,7 @@ static void __lim_process_qos_map_configure_frame(struct mac_context *mac_ctx,
 	lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
 				    (uint8_t *)mac_hdr,
 				    frame_len + sizeof(tSirMacMgmtHdr), 0,
-				    WMA_GET_RX_CH(rx_pkt_info), session,
+				    WMA_GET_RX_FREQ(rx_pkt_info), session,
 				    WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info),
 				    RXMGMT_FLAG_NONE);
 }
@@ -1289,7 +1289,7 @@ __lim_process_radio_measure_request(struct mac_context *mac, uint8_t *pRxPacketI
 	mac->rrm.rrmPEContext.prev_rrm_report_seq_num = curr_seq_num;
 	lim_send_sme_mgmt_frame_ind(mac, pHdr->fc.subType, (uint8_t *)pHdr,
 				    frameLen + sizeof(tSirMacMgmtHdr), 0,
-				    WMA_GET_RX_CH(pRxPacketInfo), pe_session,
+				    WMA_GET_RX_FREQ(pRxPacketInfo), pe_session,
 				    WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo),
 				    RXMGMT_FLAG_NONE);
 
@@ -1519,7 +1519,7 @@ static void __lim_process_sa_query_response_action_frame(struct mac_context *mac
 					    (uint8_t *)pHdr,
 					    frame_len + sizeof(tSirMacMgmtHdr),
 					    0,
-					    WMA_GET_RX_CH(pRxPacketInfo),
+					    WMA_GET_RX_FREQ(pRxPacketInfo),
 					    pe_session,
 					    WMA_GET_RX_RSSI_NORMALIZED(
 					    pRxPacketInfo), RXMGMT_FLAG_NONE);
@@ -1941,7 +1941,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 					(uint8_t *) mac_hdr,
 					frame_len + sizeof(tSirMacMgmtHdr),
 					session->smeSessionId,
-					WMA_GET_RX_CH(rx_pkt_info),
+					WMA_GET_RX_FREQ(rx_pkt_info),
 					session, rssi, RXMGMT_FLAG_NONE);
 			break;
 		default:
@@ -2029,7 +2029,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 					frame_len +
 					sizeof(tSirMacMgmtHdr),
 					session->smeSessionId,
-					WMA_GET_RX_CH(rx_pkt_info),
+					WMA_GET_RX_FREQ(rx_pkt_info),
 					session,
 					WMA_GET_RX_RSSI_NORMALIZED(
 					rx_pkt_info), RXMGMT_FLAG_NONE);
@@ -2089,7 +2089,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 					(uint8_t *) mac_hdr,
 					frame_len + sizeof(tSirMacMgmtHdr),
 					session->smeSessionId,
-					WMA_GET_RX_CH(rx_pkt_info), session,
+					WMA_GET_RX_FREQ(rx_pkt_info), session,
 					WMA_GET_RX_RSSI_NORMALIZED(
 					rx_pkt_info), RXMGMT_FLAG_NONE);
 			break;
@@ -2153,7 +2153,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 					    (uint8_t *)hdr,
 					    frame_len + sizeof(tSirMacMgmtHdr),
 					    session->smeSessionId,
-					    WMA_GET_RX_CH(rx_pkt_info),
+					    WMA_GET_RX_FREQ(rx_pkt_info),
 					    session,
 					    WMA_GET_RX_RSSI_NORMALIZED(
 					    rx_pkt_info), RXMGMT_FLAG_NONE);
@@ -2173,7 +2173,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 				mac_hdr->fc.subType, (uint8_t *) mac_hdr,
 				frame_len + sizeof(tSirMacMgmtHdr),
 				session->smeSessionId,
-				WMA_GET_RX_CH(rx_pkt_info), session, rssi,
+				WMA_GET_RX_FREQ(rx_pkt_info), session, rssi,
 				RXMGMT_FLAG_NONE);
 			break;
 		default:
@@ -2277,7 +2277,7 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pBd)
 					mac_hdr->fc.subType,
 					(uint8_t *) mac_hdr,
 					frame_len + sizeof(tSirMacMgmtHdr), 0,
-					WMA_GET_RX_CH(pBd), NULL,
+					WMA_GET_RX_FREQ(pBd), NULL,
 					WMA_GET_RX_RSSI_NORMALIZED(pBd),
 					RXMGMT_FLAG_NONE);
 			break;

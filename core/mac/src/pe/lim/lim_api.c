@@ -1895,7 +1895,7 @@ lim_roam_gen_mbssid_beacon(struct mac_context *mac,
 	bcn_prb_ptr = (uint8_t *)roam_ind +
 				roam_ind->beaconProbeRespOffset;
 
-	rx_param.channel = wlan_freq_to_chan(roam_ind->chan_freq);
+	rx_param.chan_freq = roam_ind->chan_freq;
 	rx_param.pdev_id = wlan_objmgr_pdev_get_pdev_id(mac->pdev);
 	rx_param.rssi = roam_ind->rssi;
 

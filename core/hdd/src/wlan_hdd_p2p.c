@@ -981,18 +981,17 @@ wlan_hdd_cfg80211_convert_rxmgmt_flags(enum rxmgmt_flags flag,
 static void
 __hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
 				  uint32_t frm_len, uint8_t *pb_frames,
-				  uint8_t frame_type, uint32_t rx_chan,
+				  uint8_t frame_type, uint32_t rx_freq,
 				  int8_t rx_rssi, enum rxmgmt_flags rx_flags)
 {
-	uint16_t freq;
 	uint8_t type = 0;
 	uint8_t sub_type = 0;
 	struct hdd_context *hdd_ctx;
 	uint8_t *dest_addr;
 	enum nl80211_rxmgmt_flags nl80211_flag = 0;
 
-	hdd_debug("Frame Type = %d Frame Length = %d",
-		  frame_type, frm_len);
+	hdd_debug("Frame Type = %d Frame Length = %d freq = %d",
+		  frame_type, frm_len, rx_freq);
 
 	if (!adapter) {
 		hdd_err("adapter is NULL");
@@ -1063,12 +1062,6 @@ __hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
 
 	/* Channel indicated may be wrong. TODO */
 	/* Indicate an action frame. */
-	if (rx_chan <= MAX_NO_OF_2_4_CHANNELS)
-		freq = ieee80211_channel_to_frequency(rx_chan,
-						      NL80211_BAND_2GHZ);
-	else
-		freq = ieee80211_channel_to_frequency(rx_chan,
-						      NL80211_BAND_5GHZ);
 
 	if (hdd_is_qos_action_frame(pb_frames, frm_len))
 		sme_update_dsc_pto_up_mapping(hdd_ctx->mac_handle,
@@ -1085,23 +1078,23 @@ __hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
 	cfg80211_rx_mgmt(adapter->dev->ieee80211_ptr,
-		 freq, rx_rssi * 100, pb_frames,
+			 rx_freq, rx_rssi * 100, pb_frames,
 			 frm_len, NL80211_RXMGMT_FLAG_ANSWERED | nl80211_flag);
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0))
 	cfg80211_rx_mgmt(adapter->dev->ieee80211_ptr,
-			freq, rx_rssi * 100, pb_frames,
+			 rx_freq, rx_rssi * 100, pb_frames,
 			 frm_len, NL80211_RXMGMT_FLAG_ANSWERED,
 			 GFP_ATOMIC);
 #else
-	cfg80211_rx_mgmt(adapter->dev->ieee80211_ptr, freq,
-			rx_rssi * 100,
-			pb_frames, frm_len, GFP_ATOMIC);
+	cfg80211_rx_mgmt(adapter->dev->ieee80211_ptr, rx_freq,
+			 rx_rssi * 100,
+			 pb_frames, frm_len, GFP_ATOMIC);
 #endif /* LINUX_VERSION_CODE */
 }
 
 void hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
 				     uint32_t frm_len, uint8_t *pb_frames,
-				     uint8_t frame_type, uint32_t rx_chan,
+				     uint8_t frame_type, uint32_t rx_freq,
 				     int8_t rx_rssi, enum rxmgmt_flags rx_flags)
 {
 	int errno;
@@ -1112,7 +1105,7 @@ void hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
 		return;
 
 	__hdd_indicate_mgmt_frame_to_user(adapter, frm_len, pb_frames,
-					  frame_type, rx_chan,
+					  frame_type, rx_freq,
 					  rx_rssi, rx_flags);
 	osif_vdev_sync_op_stop(vdev_sync);
 }

@@ -1926,7 +1926,7 @@ enum rxmgmt_flags {
 
 typedef struct sSirSmeMgmtFrameInd {
 	uint16_t frame_len;
-	uint32_t rxChan;
+	uint32_t rx_freq;
 	uint8_t sessionId;
 	uint8_t frameType;
 	int8_t rxRssi;

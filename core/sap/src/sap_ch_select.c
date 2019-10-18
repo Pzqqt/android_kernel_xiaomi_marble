@@ -1453,8 +1453,10 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		for (chn_num = 0; chn_num < pSpectInfoParams->numSpectChans;
 		     chn_num++) {
 
-			channel_id =
-				util_scan_entry_channel_num(cur_node->entry);
+			channel_id = wlan_reg_freq_to_chan(
+					mac->pdev,
+					util_scan_entry_channel_frequency(
+							cur_node->entry));
 
 			if (pSpectCh && (channel_id == pSpectCh->chNum)) {
 				if (pSpectCh->rssiAgr <

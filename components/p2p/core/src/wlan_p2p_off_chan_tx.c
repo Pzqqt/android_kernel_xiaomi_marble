@@ -3015,10 +3015,10 @@ QDF_STATUS p2p_process_rx_mgmt(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	p2p_debug("soc:%pK, frame_len:%d, rx_chan:%d, vdev_id:%d, frm_type:%d, rx_rssi:%d, buf:%pK",
-		p2p_soc_obj->soc, rx_mgmt->frame_len,
-		rx_mgmt->rx_chan, rx_mgmt->vdev_id, rx_mgmt->frm_type,
-		rx_mgmt->rx_rssi, rx_mgmt->buf);
+	p2p_debug("soc:%pK, frame_len:%d, rx_freq:%d, vdev_id:%d, frm_type:%d, rx_rssi:%d, buf:%pK",
+		  p2p_soc_obj->soc, rx_mgmt->frame_len,
+		  rx_mgmt->rx_freq, rx_mgmt->vdev_id, rx_mgmt->frm_type,
+		  rx_mgmt->rx_rssi, rx_mgmt->buf);
 
 	if (rx_mgmt->frm_type == MGMT_ACTION_VENDOR_SPECIFIC) {
 		p2p_get_frame_info(rx_mgmt->buf, rx_mgmt->frame_len,
