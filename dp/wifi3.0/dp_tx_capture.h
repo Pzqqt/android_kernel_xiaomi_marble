@@ -30,7 +30,7 @@ struct dp_peer;
 struct dp_tx_desc_s;
 
 #define TXCAP_MAX_TYPE \
-	((IEEE80211_FC0_TYPE_CTL >> IEEE80211_FC0_TYPE_SHIFT) + 1)
+	((IEEE80211_FC0_TYPE_DATA >> IEEE80211_FC0_TYPE_SHIFT) + 1)
 #define TXCAP_MAX_SUBTYPE \
 	((IEEE80211_FC0_SUBTYPE_MASK >> IEEE80211_FC0_SUBTYPE_SHIFT) + 1)
 struct dp_pdev_tx_capture {
