@@ -352,6 +352,9 @@
  *	binary blobs from application/service to firmware. The attributes
  *	defined in enum qca_wlan_vendor_attr_oem_data_params are used to
  *	deliver the parameters.
+ * @QCA_NL80211_VENDOR_SUBCMD_ADD_STA_NODE: This vendor subcommand is used to
+ *	add the STA node details in driver/firmware. Attributes for this event
+ *	are specified in enum qca_wlan_vendor_attr_add_sta_node_params.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -567,6 +570,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING = 180,
 	QCA_NL80211_VENDOR_SUBCMD_INTEROP_ISSUES_AP = 181,
 	QCA_NL80211_VENDOR_SUBCMD_OEM_DATA = 182,
+	QCA_NL80211_VENDOR_SUBCMD_ADD_STA_NODE = 184,
 };
 
 enum qca_wlan_vendor_tos {
@@ -7812,5 +7816,24 @@ enum qca_wlan_vendor_attr_oem_data_params {
 	QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_MAX =
 		QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_AFTER_LAST - 1
+};
+
+/*
+ * enum qca_wlan_vendor_attr_add_sta_node_params - Used by the vendor command
+ * QCA_NL80211_VENDOR_SUBCMD_ADD_STA_NODE.
+ */
+enum qca_wlan_vendor_attr_add_sta_node_params {
+	QCA_WLAN_VENDOR_ATTR_ADD_STA_NODE_INVALID = 0,
+	/* 6 byte MAC address of STA */
+	QCA_WLAN_VENDOR_ATTR_ADD_STA_NODE_MAC_ADDR = 1,
+	/* Authentication algorithm used by the station of size u16;
+	 * defined in enum nl80211_auth_type.
+	 */
+	QCA_WLAN_VENDOR_ATTR_ADD_STA_NODE_AUTH_ALGO = 2,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_ADD_STA_NODE_PARAM_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_ADD_STA_NODE_PARAM_MAX =
+		QCA_WLAN_VENDOR_ATTR_ADD_STA_NODE_PARAM_AFTER_LAST - 1
 };
 #endif
