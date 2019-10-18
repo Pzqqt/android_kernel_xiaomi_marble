@@ -2061,6 +2061,7 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	switch (frame_type) {
 	case HTT_STATS_FTYPE_TIDQ_DATA_SU:
 	case HTT_STATS_FTYPE_TIDQ_DATA_MU:
+	case HTT_STATS_FTYPE_SGEN_QOS_NULL:
 		/*
 		 * for management packet, frame type come as DATA_SU
 		 * need to check frame_ctrl before setting frame_type
@@ -3022,7 +3023,9 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 		 */
 
 		if ((ppdu_desc->user[i].tid < CDP_DATA_TID_MAX ||
-		     (ppdu_desc->user[i].tid == CDP_DATA_NON_QOS_TID)) &&
+		     (ppdu_desc->user[i].tid == CDP_DATA_NON_QOS_TID) ||
+		     (ppdu_desc->htt_frame_type ==
+		      HTT_STATS_FTYPE_SGEN_QOS_NULL)) &&
 		      (ppdu_desc->frame_type != CDP_PPDU_FTYPE_CTRL)) {
 
 			dp_tx_stats_update(pdev, peer,
@@ -3363,9 +3366,12 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	 * which comes out of order. successful mpdu also populated from
 	 * COMPLTN COMMON TLV which comes in order. for every ppdu_info
 	 * we store successful mpdu from both tlv and compare before delivering
-	 * to make sure we received ACK BA STATUS TLV.
+	 * to make sure we received ACK BA STATUS TLV. For some self generated
+	 * frame we won't get ack ba status tlv so no need to wait for
+	 * ack ba status tlv.
 	 */
-	if (ppdu_desc->frame_type != CDP_PPDU_FTYPE_CTRL) {
+	if (ppdu_desc->frame_type != CDP_PPDU_FTYPE_CTRL &&
+	    ppdu_desc->htt_frame_type != HTT_STATS_FTYPE_SGEN_QOS_NULL) {
 		/*
 		 * successful mpdu count should match with both tlv
 		 */
