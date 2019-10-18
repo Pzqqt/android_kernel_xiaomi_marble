@@ -112,6 +112,7 @@ struct lpi_gpio_state {
 	struct gpio_chip     chip;
 	char __iomem        *base;
 	struct clk          *lpass_core_hw_vote;
+	struct clk          *lpass_audio_hw_vote;
 	struct mutex         slew_access_lock;
 	bool core_hw_vote_status;
 	struct mutex        core_hw_vote_lock;
@@ -626,6 +627,7 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 	char __iomem *slew_base;
 	u32 reg, slew_reg;
 	struct clk *lpass_core_hw_vote = NULL;
+	struct clk *lpass_audio_hw_vote = NULL;
 
 	ret = of_property_read_u32(dev->of_node, "reg", &reg);
 	if (ret < 0) {
@@ -796,6 +798,17 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 	}
 	state->lpass_core_hw_vote = lpass_core_hw_vote;
 
+	/* Register LPASS audio hw vote */
+	lpass_audio_hw_vote = devm_clk_get(&pdev->dev, "lpass_audio_hw_vote");
+	if (IS_ERR(lpass_audio_hw_vote)) {
+		ret = PTR_ERR(lpass_audio_hw_vote);
+		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
+			__func__, "lpass_audio_hw_vote", ret);
+		lpass_audio_hw_vote = NULL;
+		ret = 0;
+	}
+	state->lpass_audio_hw_vote = lpass_audio_hw_vote;
+
 	state->core_hw_vote_status = false;
 	pm_runtime_set_autosuspend_delay(&pdev->dev, LPI_AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
@@ -842,14 +855,19 @@ int lpi_pinctrl_runtime_resume(struct device *dev)
 {
 	struct lpi_gpio_state *state = dev_get_drvdata(dev);
 	int ret = 0;
+	struct clk *hw_vote = state->lpass_core_hw_vote;
 
 	if (state->lpass_core_hw_vote == NULL) {
 		dev_dbg(dev, "%s: Invalid core hw node\n", __func__);
-		return 0;
+		if (state->lpass_audio_hw_vote == NULL) {
+			dev_dbg(dev, "%s: Invalid audio hw node\n", __func__);
+			return 0;
+		}
+		hw_vote = state->lpass_audio_hw_vote;
 	}
 
 	mutex_lock(&state->core_hw_vote_lock);
-	ret = clk_prepare_enable(state->lpass_core_hw_vote);
+	ret = clk_prepare_enable(hw_vote);
 	if (ret < 0) {
 		pm_runtime_set_autosuspend_delay(dev,
 						 LPI_AUTO_SUSPEND_DELAY_ERROR);
@@ -870,15 +888,20 @@ exit:
 int lpi_pinctrl_runtime_suspend(struct device *dev)
 {
 	struct lpi_gpio_state *state = dev_get_drvdata(dev);
+	struct clk *hw_vote = state->lpass_core_hw_vote;
 
 	if (state->lpass_core_hw_vote == NULL) {
 		dev_dbg(dev, "%s: Invalid core hw node\n", __func__);
-		return 0;
+		if (state->lpass_audio_hw_vote == NULL) {
+			dev_dbg(dev, "%s: Invalid audio hw node\n", __func__);
+			return 0;
+		}
+		hw_vote = state->lpass_audio_hw_vote;
 	}
 
 	mutex_lock(&state->core_hw_vote_lock);
 	if (state->core_hw_vote_status) {
-		clk_disable_unprepare(state->lpass_core_hw_vote);
+		clk_disable_unprepare(hw_vote);
 		state->core_hw_vote_status = false;
 	}
 	mutex_unlock(&state->core_hw_vote_lock);
