@@ -4307,33 +4307,6 @@ static QDF_STATUS hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_sme_open_session_callback(uint8_t vdev_id,
-					 QDF_STATUS qdf_status)
-{
-	struct hdd_adapter *adapter;
-	struct hdd_context *hdd_ctx;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Invalid HDD_CTX");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (!adapter) {
-		hdd_err("NULL adapter for %d", vdev_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (qdf_status == QDF_STATUS_SUCCESS)
-		set_bit(SME_SESSION_OPENED, &adapter->event_flags);
-
-	qdf_event_set(&adapter->qdf_session_open_event);
-	hdd_debug("session %d opened", adapter->vdev_id);
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id)
 {
 	struct hdd_adapter *adapter;
@@ -4498,7 +4471,6 @@ static int hdd_set_sme_session_param(struct hdd_adapter *adapter,
 {
 	session_param->vdev_id = adapter->vdev_id;
 	session_param->self_mac_addr = (uint8_t *)&adapter->mac_addr;
-	session_param->session_open_cb = hdd_sme_open_session_callback;
 	session_param->session_close_cb = hdd_sme_close_session_callback;
 	session_param->callback = callback;
 	session_param->callback_ctx = callback_ctx;
@@ -4562,13 +4534,6 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 		return errno;
 	}
 
-	/* Open a SME session (prepare vdev in firmware via legacy API) */
-	status = qdf_event_reset(&adapter->qdf_session_open_event);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("failed to reinit session open event");
-		errno = qdf_status_to_os_return(status);
-		goto objmgr_vdev_destroy_procedure;
-	}
 	errno = hdd_set_sme_session_param(adapter, &sme_session_params,
 					  callback, ctx);
 	if (errno) {
@@ -4583,33 +4548,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 		goto objmgr_vdev_destroy_procedure;
 	}
 
-	/* block on a completion variable until vdev is created in firmware */
-	status = qdf_wait_for_event_completion(&adapter->qdf_session_open_event,
-			SME_CMD_VDEV_CREATE_DELETE_TIMEOUT);
-	if (QDF_STATUS_SUCCESS != status) {
-		if (adapter->qdf_session_open_event.force_set)
-			/*
-			 * SSR/PDR has caused shutdown, which has forcefully
-			 * set the event.
-			 */
-			hdd_err("Session open event forcefully set");
-
-		else if (QDF_STATUS_E_TIMEOUT == status)
-			hdd_err("Session failed to open within timeout period");
-		else
-			hdd_err("Failed to wait for session open event(status-%d)",
-				status);
-		errno = -ETIMEDOUT;
-		set_bit(SME_SESSION_OPENED, &adapter->event_flags);
-		goto hdd_vdev_destroy_procedure;
-	}
-
-	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
-		hdd_err("Session failed to open due to vdev create failure");
-		errno = -EINVAL;
-		goto objmgr_vdev_destroy_procedure;
-	}
-
+	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
 	/* firmware ready for component communication, raise vdev_ready event */
 	errno = hdd_vdev_ready(adapter);
 	if (errno) {

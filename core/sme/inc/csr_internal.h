@@ -542,7 +542,6 @@ struct csr_roam_session {
 	/* For BT-AMP station, this serve as BSSID for self-BSS. */
 	struct qdf_mac_addr self_mac_addr;
 
-	csr_session_open_cb  session_open_cb;
 	csr_session_close_cb session_close_cb;
 	csr_roam_complete_cb callback;
 	void *pContext;

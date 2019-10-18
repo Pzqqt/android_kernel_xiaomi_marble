@@ -24,6 +24,7 @@
 #include "wma_api.h"
 #include "lim_types.h"
 #include <include/wlan_mlme_cmn.h>
+#include <../../core/src/vdev_mgr_ops.h>
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
@@ -1066,6 +1067,35 @@ vdevmgr_vdev_start_rsp_handle(struct vdev_mlme_obj *vdev_mlme,
 			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	status =  wma_vdev_start_resp_handler(vdev_mlme, rsp);
 
+	return status;
+}
+
+QDF_STATUS mlme_vdev_create_send(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme = NULL;
+	QDF_STATUS status;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("Failed to get vdev mlme obj for vdev id %d",
+			 wlan_vdev_get_id(vdev));
+		status = QDF_STATUS_E_INVAL;
+		goto return_status;
+	}
+
+	status = vdev_mgr_create_send(vdev_mlme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Failed to create vdev for vdev id %d",
+			 wlan_vdev_get_id(vdev));
+		goto return_status;
+	}
+
+	status = wma_post_vdev_create_setup(vdev);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		vdev_mgr_delete_send(vdev_mlme);
+
+return_status:
 	return status;
 }
 

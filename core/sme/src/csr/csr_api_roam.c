@@ -3792,7 +3792,7 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 				  uint32_t roamId,
 				  eRoamCmdStatus u1, eCsrRoamResult u2)
 {
-	QDF_STATUS ret, status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 
 	WLAN_HOST_DIAG_EVENT_DEF(connectionStatus,
@@ -3865,15 +3865,8 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 		   && (u2 == eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS)) {
 		pSession->connectedProfile.op_freq =
 			roam_info->channelChangeRespEvent->new_op_freq;
-	} else if (u1 == eCSR_ROAM_SESSION_OPENED) {
-		ret = (u2 == eCSR_ROAM_RESULT_SUCCESS) ?
-		      QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
-
-		if (pSession->session_open_cb)
-			pSession->session_open_cb(sessionId, ret);
-		else
-			sme_err("session_open_cb is not registered");
 	}
+
 	if (eCSR_ROAM_ASSOCIATION_COMPLETION == u1)
 		csr_dump_connection_stats(mac, pSession, roam_info, u1, u2);
 
@@ -17141,31 +17134,6 @@ QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
 	return status;
 }
 
-static QDF_STATUS csr_roam_session_opened(struct mac_context *mac,
-					  QDF_STATUS qdf_status,
-					  uint32_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_roam_info *roam_info;
-
-	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (!roam_info)
-		return QDF_STATUS_E_NOMEM;
-
-	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		status = csr_roam_call_callback(mac, sessionId, roam_info, 0,
-						eCSR_ROAM_SESSION_OPENED,
-						eCSR_ROAM_RESULT_FAILURE);
-	} else {
-		status = csr_roam_call_callback(mac, sessionId, roam_info, 0,
-						eCSR_ROAM_SESSION_OPENED,
-						eCSR_ROAM_RESULT_SUCCESS);
-	}
-
-	qdf_mem_free(roam_info);
-	return status;
-}
-
 /**
  * csr_store_oce_cfg_flags_in_vdev() - fill OCE flags from ini
  * @mac: mac_context.
@@ -17218,63 +17186,6 @@ static void csr_send_set_ie(uint8_t type, uint8_t sub_type,
 	status = umac_send_mb_message_to_mac(msg);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sme_err("Failed to send set IE req for vdev_%d", vdev_id);
-}
-
-QDF_STATUS csr_vdev_create_resp(struct mac_context *mac, uint8_t *pmsg)
-{
-	struct vdev_create_req_param *rsp;
-	struct vdev_mlme_obj *vdev_mlme;
-	struct wlan_objmgr_vdev *vdev;
-
-	if (!pmsg) {
-		sme_err("msg ptr is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	rsp = (struct vdev_create_req_param *)pmsg;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
-						    rsp->vdev_id,
-						    WLAN_LEGACY_MAC_ID);
-	if (!vdev) {
-		sme_err("Failed to get vdev obj for vdev id %d",
-			rsp->vdev_id);
-		csr_cleanup_session(mac, rsp->vdev_id);
-		csr_roam_session_opened(mac, QDF_STATUS_E_FAILURE,
-					rsp->vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	sme_debug("create vdev status = %d", rsp->status);
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		sme_err("Fail to get vdev priv object");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-		csr_cleanup_session(mac, rsp->vdev_id);
-		csr_roam_session_opened(mac, QDF_STATUS_E_FAILURE,
-					rsp->vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (QDF_IS_STATUS_SUCCESS(rsp->status)) {
-		csr_send_set_ie(vdev_mlme->mgmt.generic.type,
-				vdev_mlme->mgmt.generic.subtype,
-				rsp->vdev_id);
-
-		if (vdev_mlme->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_STA) {
-			csr_store_oce_cfg_flags_in_vdev(mac, mac->pdev,
-							rsp->vdev_id);
-			wlan_mlme_update_oce_flags(mac->pdev);
-		}
-	}
-
-	csr_roam_session_opened(mac, rsp->status, rsp->vdev_id);
-
-	if (QDF_IS_STATUS_ERROR(rsp->status))
-		csr_cleanup_session(mac, rsp->vdev_id);
-
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -17337,33 +17248,6 @@ void csr_get_vdev_type_nss(struct mac_context *mac_ctx,
 	}
 	sme_debug("mode - %d: nss_2g - %d, 5g - %d",
 		  dev_mode, *nss_2g, *nss_5g);
-}
-
-static
-QDF_STATUS csr_issue_vdev_create_req(struct mac_context *mac,
-				     uint32_t vdev_id)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct vdev_create_req_param *vdev_create_req;
-	struct scheduler_msg message = {0};
-
-	vdev_create_req = qdf_mem_malloc(sizeof(*vdev_create_req));
-	if (!vdev_create_req)
-		return QDF_STATUS_E_NOMEM;
-
-	vdev_create_req->vdev_id = vdev_id;
-	/* Serialize the req through MC thread */
-	message.type    = eWNI_SME_VDEV_CREATE_REQ;
-	message.bodyptr = vdev_create_req;
-	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
-					QDF_MODULE_ID_PE, &message);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("scheduler_post_msg failed!(err=%d)", status);
-		qdf_mem_free(vdev_create_req);
-		status = QDF_STATUS_E_FAILURE;
-	}
-
-	return status;
 }
 
 QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
@@ -17435,7 +17319,6 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 	/* Initialize FT related data structures only in STA mode */
 	sme_ft_open(MAC_HANDLE(mac_ctx), session->sessionId);
 
-	session->session_open_cb = session_param->session_open_cb;
 	session->session_close_cb = session_param->session_close_cb;
 	session->callback = session_param->callback;
 	session->pContext = session_param->callback_ctx;
@@ -17499,7 +17382,24 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 	 */
 	csr_init_session_twt_cap(session, vdev_mlme->mgmt.generic.type);
 
-	return csr_issue_vdev_create_req(mac_ctx, session->sessionId);
+	status = mlme_vdev_create_send(vdev);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		csr_cleanup_session(mac_ctx, wlan_vdev_get_id(vdev));
+		return status;
+	}
+
+	csr_send_set_ie(vdev_mlme->mgmt.generic.type,
+			vdev_mlme->mgmt.generic.subtype,
+			wlan_vdev_get_id(vdev));
+
+	if (vdev_mlme->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_STA) {
+		csr_store_oce_cfg_flags_in_vdev(mac_ctx, mac_ctx->pdev,
+						wlan_vdev_get_id(vdev));
+		wlan_mlme_update_oce_flags(mac_ctx->pdev);
+	}
+
+	return status;
 }
 
 QDF_STATUS csr_process_vdev_del_rsp(struct mac_context *mac_ctx,

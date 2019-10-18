@@ -238,17 +238,6 @@ csr_roam_save_connected_information(struct mac_context *mac,
 void csr_roam_check_for_link_status_change(struct mac_context *mac,
 					tSirSmeRsp *pSirMsg);
 
-/**
- * csr_vdev_create_resp() - Vdev create response handler
- * @mac_ctx: global mac context
- * @pMsg: pointer to response data
- *
- * This API handles vdev create response.
- *
- * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
- */
-QDF_STATUS csr_vdev_create_resp(struct mac_context *mac, uint8_t *pmsg);
-
 QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 				    struct csr_roamstart_bssparams *pParam,
 				    struct csr_roam_profile *pProfile,

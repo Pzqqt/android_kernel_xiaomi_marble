@@ -2066,14 +2066,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-	case eWNI_SME_VDEV_CREATE_RSP:
-		if (pMsg->bodyptr) {
-			status = csr_vdev_create_resp(mac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
-		break;
 	case eWNI_SME_VDEV_DELETE_RSP:
 		if (pMsg->bodyptr) {
 			status = csr_process_vdev_del_rsp(mac, pMsg->bodyptr);
@@ -2091,7 +2083,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-
 #ifdef WLAN_FEATURE_11W
 	case eWNI_SME_UNPROT_MGMT_FRM_IND:
 		if (pMsg->bodyptr) {

@@ -232,4 +232,14 @@ QDF_STATUS mlme_set_vdev_stop_type(struct wlan_objmgr_vdev *vdev,
  */
 enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * mlme_vdev_create_send() - function to send the vdev create to firmware
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS_SUCCESS when the command has been successfully sent
+ * to firmware or QDF_STATUS_E_** when there is a failure in sending the command
+ * to firmware.
+ */
+QDF_STATUS mlme_vdev_create_send(struct wlan_objmgr_vdev *vdev);
+
 #endif
