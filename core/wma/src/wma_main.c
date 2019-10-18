@@ -3003,13 +3003,13 @@ static void wma_register_md_events(tp_wma_handle wma_handle)
 	}
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_MOTION_DET_HOST_EVENTID,
+					   wmi_motion_det_host_eventid,
 					   wma_motion_det_host_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(
 				wma_handle->wmi_handle,
-				WMI_MOTION_DET_BASE_LINE_HOST_EVENTID,
+				wmi_motion_det_base_line_host_eventid,
 				wma_motion_det_base_line_host_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 }
