@@ -6301,19 +6301,25 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			qdf_copy_macaddr(&peer_macaddr,
 					 &sta_ctx->conn_info.bssid);
 
-		} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
-			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
+		} else if (adapter->device_mode == QDF_P2P_GO_MODE ||
+			   adapter->device_mode == QDF_SAP_MODE) {
 
+			/*
+			 * Clear SOFTAP_BSS_STARTED bit only in case of P2P GO
+			 * as SAP is restarted after SSR.
+			 */
+			if (adapter->device_mode == QDF_P2P_GO_MODE)
+				clear_bit(SOFTAP_BSS_STARTED,
+					  &adapter->event_flags);
+
+			/* Loop over and deregister every registered peer */
 			hdd_for_each_station(adapter->sta_info_list, sta_info,
 					     index) {
-				hdd_debug(
-				    "[SSR] deregister STA MAC:"
-				    QDF_MAC_ADDR_STR,
-				    QDF_MAC_ADDR_ARRAY(
-				    sta_info->sta_mac.bytes));
-				hdd_softap_deregister_sta(
-						adapter,
-						sta_info);
+				hdd_debug("[SSR] deregister STA MAC:"
+					  QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(
+					  sta_info->sta_mac.bytes));
+
+				hdd_softap_deregister_sta(adapter, sta_info);
 			}
 		}
 
