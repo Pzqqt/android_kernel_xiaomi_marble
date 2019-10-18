@@ -102,8 +102,8 @@ struct nan_cfg_params {
  * @nan_social_ch_5g: NAN 5G Social channel for discovery
  * @nan_disc_mac_id: MAC id used for NAN Discovery
  * @is_explicit_disable: Flag to indicate that NAN is being explicitly
- * disabled by driver
- * @disable_context: Explicit disable context
+ * disabled by driver or user-space
+ * @request_context: NAN enable/disable request context
  */
 struct nan_psoc_priv_obj {
 	qdf_spinlock_t lock;
@@ -117,7 +117,7 @@ struct nan_psoc_priv_obj {
 	uint8_t nan_social_ch_5g;
 	uint8_t nan_disc_mac_id;
 	bool is_explicit_disable;
-	void *disable_context;
+	void *request_context;
 };
 
 /**
