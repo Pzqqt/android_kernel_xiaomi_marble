@@ -7750,6 +7750,34 @@ static void hdd_ch_avoid_unit_cmd(struct hdd_context *hdd_ctx,
 {
 }
 #endif
+
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+/**
+ * hdd_send_thermal_mgmt_cmd - Send thermal management params
+ * @mac_handle: Opaque handle to the global MAC context
+ * @lower_thresh_deg: Lower threshold value of Temperature
+ * @higher_thresh_deg: Higher threshold value of Temperature
+ *
+ * Return: QDF_STATUS
+ */
+#ifndef QCN7605_SUPPORT
+static QDF_STATUS hdd_send_thermal_mgmt_cmd(mac_handle_t mac_handle,
+					    uint16_t lower_thresh_deg,
+					    uint16_t higher_thresh_deg)
+{
+	return sme_set_thermal_mgmt(mac_handle, lower_thresh_deg,
+				    higher_thresh_deg);
+}
+#else
+static QDF_STATUS hdd_send_thermal_mgmt_cmd(mac_handle_t mac_handle,
+					    uint16_t lower_thresh_deg,
+					    uint16_t higher_thresh_deg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
+
 /**
  * __iw_set_var_ints_getnone - Generic "set many" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -8092,9 +8120,9 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			return qdf_status_to_os_return(status);
 
 		if (!apps_args[6]) {
-			status = sme_set_thermal_mgmt(hdd_ctx->mac_handle,
-						      apps_args[4],
-						      apps_args[5]);
+			status = hdd_send_thermal_mgmt_cmd(hdd_ctx->mac_handle,
+							   apps_args[4],
+							   apps_args[5]);
 			if (QDF_IS_STATUS_ERROR(status))
 				return qdf_status_to_os_return(status);
 		}
