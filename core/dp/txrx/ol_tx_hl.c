@@ -794,6 +794,7 @@ void ol_tx_hl_send_all_tcp_ack(struct ol_txrx_vdev_t *vdev)
 	int i;
 	struct tcp_stream_node *tcp_node_list;
 	struct tcp_stream_node *temp;
+	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 
 	for (i = 0; i < OL_TX_HL_DEL_ACK_HASH_SIZE; i++) {
 		tcp_node_list = NULL;
@@ -985,6 +986,7 @@ void ol_tx_hl_find_and_send_tcp_stream(struct ol_txrx_vdev_t *vdev,
 {
 	uint8_t no_of_entries;
 	struct tcp_stream_node *node_to_be_remove = NULL;
+	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 
 	/* remove tcp node from hash */
 	qdf_spin_lock_bh(&vdev->tcp_ack_hash.node[info->stream_id].
@@ -1159,6 +1161,7 @@ void ol_tx_hl_find_and_replace_tcp_ack(struct ol_txrx_vdev_t *vdev,
 	uint8_t no_of_entries;
 	struct tcp_stream_node *node_to_be_remove = NULL;
 	bool is_found = false, start_timer = false;
+	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 
 	/* replace ack if required or send packets */
 	qdf_spin_lock_bh(&vdev->tcp_ack_hash.node[info->stream_id].
