@@ -1865,31 +1865,29 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 }
 
 /**
- * lim_process_auth_retry_timer()- function to Retry Auth
+ * lim_process_auth_retry_timer()- function to Retry Auth when auth timeout
+ * occurs
  * @mac_ctx:pointer to global mac
  *
  * Return: void
  */
-
 static void lim_process_auth_retry_timer(struct mac_context *mac_ctx)
 {
-	struct pe_session * session_entry;
+	struct pe_session *session_entry;
+	tAniAuthType auth_type = mac_ctx->lim.gpLimMlmAuthReq->authType;
+	tLimTimers *lim_timers = &mac_ctx->lim.lim_timers;
+	uint16_t vdev_id =
+		lim_timers->g_lim_periodic_auth_retry_timer.sessionId;
 
-	session_entry =
-	  pe_find_session_by_session_id(mac_ctx,
-	  mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer.sessionId);
+	session_entry = pe_find_session_by_session_id(mac_ctx, vdev_id);
 	if (!session_entry) {
-		pe_err("session does not exist for given SessionId: %d",
-		  mac_ctx->lim.lim_timers.
-			g_lim_periodic_auth_retry_timer.sessionId);
+		pe_err("session does not exist for vdev_id: %d", vdev_id);
 		return;
 	}
 
 	if (tx_timer_running(&mac_ctx->lim.lim_timers.gLimAuthFailureTimer) &&
-			     (session_entry->limMlmState ==
-			      eLIM_MLM_WT_AUTH_FRAME2_STATE) &&
-			     (LIM_AUTH_ACK_RCD_SUCCESS !=
-			      mac_ctx->auth_ack_status)) {
+	    (session_entry->limMlmState == eLIM_MLM_WT_AUTH_FRAME2_STATE) &&
+	     (LIM_AUTH_ACK_RCD_SUCCESS != mac_ctx->auth_ack_status)) {
 		tSirMacAuthFrameBody    auth_frame;
 
 		/*
@@ -1898,16 +1896,20 @@ static void lim_process_auth_retry_timer(struct mac_context *mac_ctx)
 		 */
 		if (LIM_AUTH_ACK_RCD_FAILURE == mac_ctx->auth_ack_status) {
 			/* Prepare & send Authentication frame */
-			auth_frame.authAlgoNumber =
-			    (uint8_t) mac_ctx->lim.gpLimMlmAuthReq->authType;
+			if (session_entry->sae_pmk_cached &&
+			    auth_type == eSIR_AUTH_TYPE_SAE)
+				auth_frame.authAlgoNumber = eSIR_OPEN_SYSTEM;
+			else
+				auth_frame.authAlgoNumber = (uint8_t)
+					mac_ctx->lim.gpLimMlmAuthReq->authType;
+
 			auth_frame.authTransactionSeqNumber =
 						SIR_MAC_AUTH_FRAME_1;
 			auth_frame.authStatusCode = 0;
 			pe_debug("Retry Auth");
 			mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
 			lim_increase_fils_sequence_number(session_entry);
-			lim_send_auth_mgmt_frame(mac_ctx,
-				&auth_frame,
+			lim_send_auth_mgmt_frame(mac_ctx, &auth_frame,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 				LIM_NO_WEP_IN_FC, session_entry);
 		}
