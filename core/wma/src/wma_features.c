@@ -1395,6 +1395,8 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "IOAC_TIMER_EVENT";
 	case WOW_REASON_ROAM_HO:
 		return "ROAM_HO";
+	case WOW_REASON_ROAM_PREAUTH_START:
+		return "ROAM_PREAUTH_START_EVENT";
 	case WOW_REASON_DFS_PHYERR_RADADR_EVENT:
 		return "DFS_PHYERR_RADADR_EVENT";
 	case WOW_REASON_BEACON_RECV:
@@ -1667,6 +1669,9 @@ static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
 		break;
 	case WOW_REASON_11D_SCAN:
 		event_id = WMI_11D_NEW_COUNTRY_EVENTID;
+		break;
+	case WOW_ROAM_PREAUTH_START_EVENT:
+		event_id = WMI_ROAM_PREAUTH_STATUS_CMDID;
 		break;
 	default:
 		WMA_LOGD(FL("No Event Id for WOW reason %s(%d)"),
@@ -2244,6 +2249,9 @@ static void wma_acquire_wow_wakelock(t_wma_handle *wma, int wake_reason)
 		wl = &wma->roam_ho_wl;
 		ms = WMA_ROAM_HO_WAKE_LOCK_DURATION;
 		break;
+	case WOW_REASON_ROAM_PREAUTH_START:
+		wl = &wma->roam_preauth_wl;
+		ms = WMA_ROAM_PREAUTH_WAKE_LOCK_DURATION;
 	default:
 		return;
 	}
