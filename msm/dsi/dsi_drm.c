@@ -799,6 +799,8 @@ int dsi_connector_get_modes(struct drm_connector *connector, void *data,
 	struct drm_display_mode drm_mode;
 	struct dsi_display *display = data;
 	struct edid edid;
+	u8 width_mm = connector->display_info.width_mm;
+	u8 height_mm = connector->display_info.height_mm;
 	const u8 edid_buf[EDID_LENGTH] = {
 		0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x44, 0x6D,
 		0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x1B, 0x10, 0x01, 0x03,
@@ -860,6 +862,14 @@ int dsi_connector_get_modes(struct drm_connector *connector, void *data,
 	rc =  drm_connector_update_edid_property(connector, &edid);
 	if (rc)
 		count = 0;
+	/*
+	 * DRM EDID structure maintains panel physical dimensions in
+	 * centimeters, we will be losing the precision anything below cm.
+	 * Changing DRM framework will effect other clients at this
+	 * moment, overriding the values back to millimeter.
+	 */
+	connector->display_info.width_mm = width_mm;
+	connector->display_info.height_mm = height_mm;
 end:
 	DSI_DEBUG("MODE COUNT =%d\n\n", count);
 	return count;
