@@ -63,12 +63,6 @@ struct swr_port {
 	u8 port_type;
 };
 
-enum {
-	WSA883X_DEV_DOWN,
-	WSA883X_DEV_UP,
-	WSA883X_DEV_READY,
-};
-
 extern struct regmap_config wsa883x_regmap_config;
 
 /*
@@ -81,24 +75,18 @@ struct wsa883x_priv {
 	struct swr_device *swr_slave;
 	struct snd_soc_component *component;
 	bool comp_enable;
-	bool boost_enable;
 	bool visense_enable;
-	u8 pa_gain;
+	bool ext_vdd_spk;
 	struct swr_port port[WSA883X_MAX_SWR_PORTS];
 	int pd_gpio;
-	struct wsa883x_tz_priv tz_pdata;
-	int bg_cnt;
-	int clk_cnt;
-	int version;
-	struct mutex bg_lock;
+	int global_pa_cnt;
+	int dev_mode;
 	struct mutex res_lock;
-	struct mutex temp_lock;
 	struct snd_info_entry *entry;
 	struct snd_info_entry *version_entry;
-	int state;
-	struct delayed_work ocp_ctl_work;
 	struct device_node *wsa_rst_np;
 	int pa_mute;
+	int curr_temp;
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *debugfs_dent;
 	struct dentry *debugfs_peek;
