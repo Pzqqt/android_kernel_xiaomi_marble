@@ -80,6 +80,7 @@ void sde_evtlog_log(struct sde_dbg_evtlog *evtlog, const char *name, int line,
 	log->line = line;
 	log->data_cnt = 0;
 	log->pid = current->pid;
+	log->cpu = current->cpu;
 
 	va_start(args, flag);
 	for (i = 0; i < SDE_EVTLOG_MAX_DATA; i++) {
@@ -165,8 +166,8 @@ ssize_t sde_evtlog_dump_to_buffer(struct sde_dbg_evtlog *evtlog,
 	}
 
 	off += snprintf((evtlog_buf + off), (evtlog_buf_size - off),
-		"=>[%-8d:%-11llu:%9llu][%-4d]:", evtlog->first,
-		log->time, (log->time - prev_log->time), log->pid);
+		"=>[%-8d:%-11llu:%9llu][%-4d]:[%-4d]:", evtlog->first,
+		log->time, (log->time - prev_log->time), log->pid, log->cpu);
 
 	for (i = 0; i < log->data_cnt; i++)
 		off += snprintf((evtlog_buf + off), (evtlog_buf_size - off),
