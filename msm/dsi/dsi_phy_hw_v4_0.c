@@ -183,6 +183,26 @@ static void dsi_phy_hw_v4_0_lane_settings(struct dsi_phy_hw *phy,
 
 }
 
+void dsi_phy_hw_v4_0_commit_phy_timing(struct dsi_phy_hw *phy,
+		struct dsi_phy_per_lane_cfgs *timing)
+{
+	/* Commit DSI PHY timings */
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_0, timing->lane_v4[0]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_1, timing->lane_v4[1]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_2, timing->lane_v4[2]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_3, timing->lane_v4[3]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_4, timing->lane_v4[4]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_5, timing->lane_v4[5]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_6, timing->lane_v4[6]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_7, timing->lane_v4[7]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_8, timing->lane_v4[8]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_9, timing->lane_v4[9]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_10, timing->lane_v4[10]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_11, timing->lane_v4[11]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_12, timing->lane_v4[12]);
+	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_13, timing->lane_v4[13]);
+}
+
 /**
  * enable() - Enable PHY hardware
  * @phy:      Pointer to DSI PHY hardware object.
@@ -290,20 +310,7 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 	DSI_W32(phy, DSIPHY_CMN_CLK_CFG1, (data << 2)); /* set PLL src */
 
 	/* DSI PHY timings */
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_0, timing->lane_v4[0]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_1, timing->lane_v4[1]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_2, timing->lane_v4[2]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_3, timing->lane_v4[3]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_4, timing->lane_v4[4]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_5, timing->lane_v4[5]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_6, timing->lane_v4[6]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_7, timing->lane_v4[7]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_8, timing->lane_v4[8]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_9, timing->lane_v4[9]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_10, timing->lane_v4[10]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_11, timing->lane_v4[11]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_12, timing->lane_v4[12]);
-	DSI_W32(phy, DSIPHY_CMN_TIMING_CTRL_13, timing->lane_v4[13]);
+	dsi_phy_hw_v4_0_commit_phy_timing(phy, timing);
 
 	/* DSI lane settings */
 	dsi_phy_hw_v4_0_lane_settings(phy, cfg);

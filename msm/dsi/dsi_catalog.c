@@ -262,6 +262,7 @@ static void dsi_catalog_phy_4_0_init(struct dsi_phy_hw *phy)
 	phy->ops.dyn_refresh_ops.cache_phy_timings =
 		dsi_phy_hw_v4_0_cache_phy_timings;
 	phy->ops.set_continuous_clk = dsi_phy_hw_v4_0_set_continuous_clk;
+	phy->ops.commit_phy_timing = dsi_phy_hw_v4_0_commit_phy_timing;
 }
 
 /**
