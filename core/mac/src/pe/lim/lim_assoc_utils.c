@@ -4092,8 +4092,10 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 	}
 
 	if (lim_is_session_he_capable(pe_session) &&
-	    pBeaconStruct->he_cap.present)
+	    pBeaconStruct->he_cap.present) {
+		lim_update_bss_he_capable(mac, pAddBssParams);
 		lim_add_bss_he_cfg(pAddBssParams, pe_session);
+	}
 	pe_debug("vhtCapable %d ch_width %d", pAddBssParams->vhtCapable,
 		 pAddBssParams->ch_width);
 	/*

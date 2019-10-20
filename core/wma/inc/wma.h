@@ -768,6 +768,7 @@ struct wma_txrx_node {
 	void *del_staself_req;
 	bool is_del_sta_defered;
 	qdf_atomic_t bss_status;
+	enum tx_rate_info rate_flags;
 	uint8_t nss;
 	uint16_t pause_bitmap;
 	int8_t tx_power;

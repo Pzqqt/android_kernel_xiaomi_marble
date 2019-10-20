@@ -761,12 +761,48 @@ static void wma_cp_stats_set_rate_flag(tp_wma_handle wma, uint8_t vdev_id)
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 }
 
+#ifdef WLAN_FEATURE_11AX
+/**
+ * wma_set_bss_rate_flags_he() - set rate flags based on BSS capability
+ * @rate_flags: rate_flags pointer
+ * @add_bss: add_bss params
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wma_set_bss_rate_flags_he(enum tx_rate_info *rate_flags,
+					    struct bss_params *add_bss)
+{
+	if (!add_bss->he_capable)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	/*extend TX_RATE_HE160 in future*/
+	if (add_bss->ch_width == CH_WIDTH_160MHZ ||
+	    add_bss->ch_width == CH_WIDTH_80P80MHZ ||
+	    add_bss->ch_width == CH_WIDTH_80MHZ)
+		*rate_flags |= TX_RATE_HE80;
+
+	else if (add_bss->ch_width)
+		*rate_flags |= TX_RATE_HE40;
+	else
+		*rate_flags |= TX_RATE_HE20;
+
+	wma_debug("he_capable %d", add_bss->he_capable);
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS wma_set_bss_rate_flags_he(enum tx_rate_info *rate_flags,
+					    struct bss_params *add_bss)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
 void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 			    struct bss_params *add_bss)
 {
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 	struct vdev_mlme_obj *vdev_mlme;
-	uint32_t *rate_flags;
+	enum tx_rate_info *rate_flags;
 
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
@@ -777,24 +813,28 @@ void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 	}
 	rate_flags = &vdev_mlme->mgmt.rate_info.rate_flags;
 	*rate_flags = 0;
-	if (add_bss->vhtCapable) {
-		if (add_bss->ch_width == CH_WIDTH_80P80MHZ)
-			*rate_flags |= TX_RATE_VHT80;
-		if (add_bss->ch_width == CH_WIDTH_160MHZ)
-			*rate_flags |= TX_RATE_VHT80;
-		if (add_bss->ch_width == CH_WIDTH_80MHZ)
-			*rate_flags |= TX_RATE_VHT80;
-		else if (add_bss->ch_width)
-			*rate_flags |= TX_RATE_VHT40;
-		else
-			*rate_flags |= TX_RATE_VHT20;
-	}
-	/* avoid to conflict with htCapable flag */
-	else if (add_bss->htCapable) {
-		if (add_bss->ch_width)
-			*rate_flags |= TX_RATE_HT40;
-		else
-			*rate_flags |= TX_RATE_HT20;
+
+	if (QDF_STATUS_SUCCESS !=
+		wma_set_bss_rate_flags_he(rate_flags, add_bss)) {
+		if (add_bss->vhtCapable) {
+			if (add_bss->ch_width == CH_WIDTH_80P80MHZ)
+				*rate_flags |= TX_RATE_VHT80;
+			if (add_bss->ch_width == CH_WIDTH_160MHZ)
+				*rate_flags |= TX_RATE_VHT80;
+			if (add_bss->ch_width == CH_WIDTH_80MHZ)
+				*rate_flags |= TX_RATE_VHT80;
+			else if (add_bss->ch_width)
+				*rate_flags |= TX_RATE_VHT40;
+			else
+				*rate_flags |= TX_RATE_VHT20;
+		}
+		/* avoid to conflict with htCapable flag */
+		else if (add_bss->htCapable) {
+			if (add_bss->ch_width)
+				*rate_flags |= TX_RATE_HT40;
+			else
+				*rate_flags |= TX_RATE_HT20;
+		}
 	}
 
 	if (add_bss->staContext.fShortGI20Mhz ||
@@ -803,6 +843,10 @@ void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 
 	if (!add_bss->htCapable && !add_bss->vhtCapable)
 		*rate_flags = TX_RATE_LEGACY;
+
+	wma_debug("capable: vht %u, ht %u, rate_flags %x, ch_width %d",
+		  add_bss->vhtCapable, add_bss->htCapable,
+		  *rate_flags, add_bss->ch_width);
 
 	wma_cp_stats_set_rate_flag(wma, vdev_id);
 }

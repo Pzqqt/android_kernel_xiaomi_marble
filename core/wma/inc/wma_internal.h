@@ -57,7 +57,14 @@
 
 #define MAX_HT_MCS_IDX 8
 #define MAX_VHT_MCS_IDX 10
+#ifdef WLAN_FEATURE_11AX
+#define MAX_HE_MCS_IDX 12
+#endif
 #define INVALID_MCS_IDX 255
+
+#define IS_MCS_HAS_DCM_RATE(val)  \
+		((val) == 0 || (val) == 1 || \
+		 (val) == 3 || (val) == 4)
 
 #define LINK_STATUS_LEGACY      0
 #define LINK_STATUS_VHT         0x1
@@ -95,6 +102,23 @@ struct index_vht_data_rate_type {
 	uint16_t ht40_rate[2];
 	uint16_t ht80_rate[2];
 };
+
+#ifdef WLAN_FEATURE_11AX
+#define MAX_HE_DCM_INDEX 2
+/**
+ * struct index_he_data_rate_type - he data rate type
+ * @beacon_rate_index: Beacon rate index
+ * @supported_he80_rate: he80 rate
+ * @supported_he40_rate: he40 rate
+ * @supported_he20_rate: he20 rate
+ */
+struct index_he_data_rate_type {
+	uint8_t beacon_rate_index;
+	uint16_t supported_he20_rate[MAX_HE_DCM_INDEX][3];
+	uint16_t supported_he40_rate[MAX_HE_DCM_INDEX][3];
+	uint16_t supported_he80_rate[MAX_HE_DCM_INDEX][3];
+};
+#endif
 
 struct wifi_scan_cmd_req_params;
 /*

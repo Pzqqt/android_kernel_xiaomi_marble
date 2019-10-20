@@ -6717,6 +6717,7 @@ void lim_add_bss_he_cap(struct bss_params *add_bss, tpSirAssocRsp assoc_rsp)
 
 	he_cap = &assoc_rsp->he_cap;
 	he_op = &assoc_rsp->he_op;
+	add_bss->he_capable = he_cap->present;
 	if (he_cap)
 		qdf_mem_copy(&add_bss->staContext.he_config,
 			     he_cap, sizeof(*he_cap));
@@ -7122,6 +7123,13 @@ void lim_update_sta_he_capable(struct mac_context *mac,
 		add_sta_params->he_capable = session_entry->he_capable;
 
 	pe_debug("he_capable: %d", add_sta_params->he_capable);
+}
+
+void lim_update_bss_he_capable(struct mac_context *mac,
+			       struct bss_params *add_bss)
+{
+	add_bss->he_capable = true;
+	pe_debug("he_capable: %d", add_bss->he_capable);
 }
 
 void lim_update_stads_he_capable(tpDphHashNode sta_ds, tpSirAssocReq assoc_req)

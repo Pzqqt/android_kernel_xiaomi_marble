@@ -3377,15 +3377,19 @@ static inline void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 
 /**
  * sme_get_mcs_idx() - gets mcs index
- * @max_rate: max rate
+ * @raw_rate: raw rate from fw
  * @rate_flags: rate flags
  * @nss: number of nss
+ * @dcm: dcm will be calculated from rate
+ * @guard_interval: guard interval info from rate
  * @mcs_rate_flags: mcs rate flag
  *
  * Return: return mcs index
  */
-uint8_t sme_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
-			uint8_t *nss, uint8_t *mcs_rate_flags);
+uint8_t sme_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
+			uint8_t *nss, uint8_t *dcm,
+			enum txrate_gi *guard_interval,
+			enum tx_rate_info *mcs_rate_flags);
 
 #ifdef WLAN_SUPPORT_TWT
 /**

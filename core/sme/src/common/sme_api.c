@@ -15318,10 +15318,13 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 }
 #endif
 
-uint8_t sme_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
-			uint8_t *nss, uint8_t *mcs_rate_flags)
+uint8_t sme_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
+			uint8_t *nss, uint8_t *dcm,
+			enum txrate_gi *guard_interval,
+			enum tx_rate_info *mcs_rate_flags)
 {
-	return wma_get_mcs_idx(max_rate, rate_flags, nss, mcs_rate_flags);
+	return wma_get_mcs_idx(raw_rate, rate_flags,
+			       nss, dcm, guard_interval, mcs_rate_flags);
 }
 
 bool sme_find_session_by_bssid(mac_handle_t mac_handle, uint8_t *bssid)

@@ -450,15 +450,19 @@ void wma_wmi_stop(void);
 
 /**
  * wma_get_mcs_idx() - get mcs index
- * @max_rate: max rate
+ * @raw_rate: raw rate from fw
  * @rate_flags: rate flags
  * @nss: nss
+ * @dcm: dcm
+ * @guard_interval: guard interval
  * @mcs_rate_flag: mcs rate flags
  *
  *  Return: mcs index
  */
-uint8_t wma_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
-			uint8_t *nss, uint8_t *mcs_rate_flag);
+uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
+			uint8_t *nss, uint8_t *dcm,
+			enum txrate_gi *guard_interval,
+			enum tx_rate_info *mcs_rate_flag);
 
 /**
  * wma_get_hidden_ssid_restart_in_progress() - check if hidden ssid restart is

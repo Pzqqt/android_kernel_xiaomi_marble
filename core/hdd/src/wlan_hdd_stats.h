@@ -457,7 +457,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx);
 bool hdd_report_max_rate(mac_handle_t mac_handle,
 			 struct rate_info *rate,
 			 int8_t signal,
-			 uint8_t rate_flags,
+			 enum tx_rate_info rate_flags,
 			 uint8_t mcs_index,
 			 uint16_t fw_rate, uint8_t nss);
 

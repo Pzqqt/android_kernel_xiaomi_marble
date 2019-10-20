@@ -815,7 +815,7 @@ struct hdd_rate_info {
 	uint8_t mode;
 	uint8_t nss;
 	uint8_t mcs;
-	uint8_t rate_flags;
+	enum tx_rate_info rate_flags;
 };
 
 /**

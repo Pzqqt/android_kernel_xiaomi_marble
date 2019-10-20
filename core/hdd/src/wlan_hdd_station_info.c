@@ -372,7 +372,8 @@ static void hdd_get_max_tx_bitrate(struct hdd_context *hdd_ctx,
 				   struct hdd_adapter *adapter)
 {
 	struct station_info sinfo;
-	uint8_t tx_rate_flags, tx_mcs_index, tx_nss = 1;
+	enum tx_rate_info tx_rate_flags;
+	uint8_t tx_mcs_index, tx_nss = 1;
 	uint16_t my_tx_rate;
 	struct hdd_station_ctx *hdd_sta_ctx;
 

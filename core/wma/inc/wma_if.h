@@ -342,6 +342,7 @@ typedef struct sLimMlmSetKeysReq {
  * @bSpectrumMgtEnabled: Spectrum Management Capability, 1:Enabled, 0:Disabled.
  * @vhtCapable: VHT capablity
  * @ch_width: VHT tx channel width
+ * @he_capable: HE Capability
  * @no_ptk_4_way: Do not need 4-way handshake
  */
 struct bss_params {
@@ -368,6 +369,7 @@ struct bss_params {
 	enum phy_ch_width ch_width;
 	uint8_t nonRoamReassoc;
 #ifdef WLAN_FEATURE_11AX
+	bool he_capable;
 	uint32_t he_sta_obsspd;
 #endif
 	bool no_ptk_4_way;
