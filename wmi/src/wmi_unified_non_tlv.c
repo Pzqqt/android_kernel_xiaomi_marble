@@ -9355,6 +9355,7 @@ static QDF_STATUS extract_chan_info_event_non_tlv(wmi_unified_t wmi_handle,
 	chan_info->my_bss_rx_cycle_count = chan_info_ev->my_bss_rx_cycle_count;
 	chan_info->rx_11b_mode_data_duration =
 			chan_info_ev->rx_11b_mode_data_duration;
+	chan_info->mac_clk_mhz = chan_info_ev->mac_clk_mhz;
 	/* ONLY NON-TLV */
 	chan_info->chan_tx_pwr_range = chan_info_ev->chan_tx_pwr_range;
 	chan_info->chan_tx_pwr_tp = chan_info_ev->chan_tx_pwr_tp;
