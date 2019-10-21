@@ -604,54 +604,6 @@ wlan_objmgr_peer_get_debug_id_ref(struct wlan_objmgr_peer *peer,
 				  wlan_objmgr_ref_dbgid id) {}
 #endif
 
-void wlan_objmgr_peer_get_ref(struct wlan_objmgr_peer *peer,
-			      wlan_objmgr_ref_dbgid id)
-{
-	if (!peer) {
-		obj_mgr_err("peer obj is NULL for %d", id);
-		QDF_ASSERT(0);
-		return;
-	}
-	/* Increment ref count */
-	qdf_atomic_inc(&peer->peer_objmgr.ref_cnt);
-	wlan_objmgr_peer_get_debug_id_ref(peer, id);
-
-	return;
-}
-qdf_export_symbol(wlan_objmgr_peer_get_ref);
-
-QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
-						 wlan_objmgr_ref_dbgid id)
-{
-	if (!peer) {
-		obj_mgr_err("peer obj is NULL for %d", id);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	wlan_peer_obj_lock(peer);
-	if (peer->obj_state != WLAN_OBJ_STATE_CREATED) {
-		wlan_peer_obj_unlock(peer);
-		if (peer->peer_objmgr.print_cnt++ <=
-				WLAN_OBJMGR_RATELIMIT_THRESH) {
-			uint8_t *macaddr;
-
-			macaddr = wlan_peer_get_macaddr(peer);
-			obj_mgr_debug(
-			"peer(" QDF_MAC_ADDR_STR ") not in Created st(%d)",
-			QDF_MAC_ADDR_ARRAY(macaddr),
-			peer->obj_state);
-		}
-		return QDF_STATUS_E_RESOURCES;
-	}
-
-	wlan_objmgr_peer_get_ref(peer, id);
-	wlan_peer_obj_unlock(peer);
-
-	return QDF_STATUS_SUCCESS;
-}
-qdf_export_symbol(wlan_objmgr_peer_try_get_ref);
-
 #ifdef WLAN_OBJMGR_REF_ID_DEBUG
 static QDF_STATUS
 wlan_objmgr_peer_release_debug_id_ref(struct wlan_objmgr_peer *peer,
@@ -683,48 +635,237 @@ wlan_objmgr_peer_release_debug_id_ref(struct wlan_objmgr_peer *peer,
 }
 #endif
 
-void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
-				  wlan_objmgr_ref_dbgid id)
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+static inline void
+wlan_objmgr_peer_ref_trace(struct wlan_objmgr_peer *peer,
+			   wlan_objmgr_ref_dbgid id,
+			   const char *func, int line)
 {
-	QDF_STATUS status;
+}
 
+static inline void
+wlan_objmgr_peer_deref_trace(struct wlan_objmgr_peer *peer,
+			     wlan_objmgr_ref_dbgid id,
+			     const char *func, int line)
+{
+}
+#endif
+
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+void wlan_objmgr_peer_get_ref_debug(struct wlan_objmgr_peer *peer,
+				    wlan_objmgr_ref_dbgid id,
+				    const char *func, int line)
+{
 	if (!peer) {
 		obj_mgr_err("peer obj is NULL for %d", id);
 		QDF_ASSERT(0);
 		return;
 	}
+	/* Increment ref count */
+	qdf_atomic_inc(&peer->peer_objmgr.ref_cnt);
+	wlan_objmgr_peer_get_debug_id_ref(peer, id);
 
-	if (!qdf_atomic_read(&peer->peer_objmgr.ref_cnt)) {
-		uint8_t *macaddr;
-
-		macaddr = wlan_peer_get_macaddr(peer);
-		obj_mgr_err("peer(%02x:%02x:%02x:%02x:%02x:%02x) ref cnt is 0",
-				macaddr[0], macaddr[1], macaddr[2],
-				macaddr[3], macaddr[4], macaddr[5]);
-		WLAN_OBJMGR_BUG(0);
-		return;
-	}
-
-	status = wlan_objmgr_peer_release_debug_id_ref(peer, id);
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
-
-	/* Provide synchronization from the access to add peer
-	 * to logically deleted peer list.
-	 */
-	wlan_peer_obj_lock(peer);
-	/* Decrement ref count, free peer object, if ref count == 0 */
-	if (qdf_atomic_dec_and_test(&peer->peer_objmgr.ref_cnt)) {
-		wlan_peer_obj_unlock(peer);
-		wlan_objmgr_peer_obj_destroy(peer);
-	} else {
-		wlan_peer_obj_unlock(peer);
-	}
-
+	wlan_objmgr_peer_ref_trace(peer, id, func, line);
 	return;
 }
-qdf_export_symbol(wlan_objmgr_peer_release_ref);
 
+qdf_export_symbol(wlan_objmgr_peer_get_ref_debug);
+#else
+void wlan_objmgr_peer_get_ref(struct wlan_objmgr_peer *peer,
+			      wlan_objmgr_ref_dbgid id)
+{
+	if (!peer) {
+		obj_mgr_err("peer obj is NULL for %d", id);
+		QDF_ASSERT(0);
+		return;
+	}
+	/* Increment ref count */
+	qdf_atomic_inc(&peer->peer_objmgr.ref_cnt);
+	wlan_objmgr_peer_get_debug_id_ref(peer, id);
+}
+
+qdf_export_symbol(wlan_objmgr_peer_get_ref);
+#endif
+
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+QDF_STATUS wlan_objmgr_peer_try_get_ref_debug(struct wlan_objmgr_peer *peer,
+					      wlan_objmgr_ref_dbgid id,
+					      const char *func, int line)
+{
+	if (!peer) {
+		obj_mgr_err("peer obj is NULL for %d", id);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_peer_obj_lock(peer);
+	if (peer->obj_state != WLAN_OBJ_STATE_CREATED) {
+		wlan_peer_obj_unlock(peer);
+		if (peer->peer_objmgr.print_cnt++ <=
+				WLAN_OBJMGR_RATELIMIT_THRESH) {
+			uint8_t *macaddr;
+
+			macaddr = wlan_peer_get_macaddr(peer);
+			obj_mgr_debug(
+			"peer(" QDF_MAC_ADDR_STR ") not in Created st(%d)",
+			QDF_MAC_ADDR_ARRAY(macaddr),
+			peer->obj_state);
+		}
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	wlan_objmgr_peer_get_ref_debug(peer, id, func, line);
+	wlan_peer_obj_unlock(peer);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(wlan_objmgr_peer_try_get_ref_debug);
+#else
+QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
+					wlan_objmgr_ref_dbgid id)
+{
+	if (!peer) {
+		obj_mgr_err("peer obj is NULL for %d", id);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_peer_obj_lock(peer);
+	if (peer->obj_state != WLAN_OBJ_STATE_CREATED) {
+		wlan_peer_obj_unlock(peer);
+		if (peer->peer_objmgr.print_cnt++ <=
+				WLAN_OBJMGR_RATELIMIT_THRESH) {
+			uint8_t *macaddr;
+
+			macaddr = wlan_peer_get_macaddr(peer);
+			obj_mgr_debug(
+			"peer(" QDF_MAC_ADDR_STR ") not in Created st(%d)",
+			QDF_MAC_ADDR_ARRAY(macaddr),
+			peer->obj_state);
+		}
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	wlan_objmgr_peer_get_ref(peer, id);
+	wlan_peer_obj_unlock(peer);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(wlan_objmgr_peer_try_get_ref);
+#endif
+
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_peer *wlan_peer_get_next_active_peer_of_psoc_debug(
+					struct wlan_peer_list *peer_list,
+					uint8_t hash_index,
+					struct wlan_objmgr_peer *peer,
+					wlan_objmgr_ref_dbgid dbg_id,
+					const char *func, int line)
+{
+	struct wlan_objmgr_peer *peer_next = NULL;
+	qdf_list_node_t *psoc_node = NULL;
+	qdf_list_node_t *prev_psoc_node = NULL;
+	qdf_list_t *obj_list;
+
+	qdf_spin_lock_bh(&peer_list->peer_list_lock);
+	obj_list = &peer_list->peer_hash[hash_index];
+
+	prev_psoc_node = &peer->psoc_peer;
+	while (qdf_list_peek_next(obj_list, prev_psoc_node, &psoc_node) ==
+						QDF_STATUS_SUCCESS) {
+		peer_next = qdf_container_of(psoc_node, struct wlan_objmgr_peer,
+					     psoc_peer);
+
+		if (wlan_objmgr_peer_try_get_ref_debug(peer_next, dbg_id,
+						       func, line) ==
+				QDF_STATUS_SUCCESS) {
+			qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+			return peer_next;
+		}
+
+		prev_psoc_node = psoc_node;
+	}
+
+	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+
+	return NULL;
+}
+#else
+struct wlan_objmgr_peer *wlan_peer_get_next_active_peer_of_psoc(
+					struct wlan_peer_list *peer_list,
+					uint8_t hash_index,
+					struct wlan_objmgr_peer *peer,
+					wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_peer *peer_next = NULL;
+	qdf_list_node_t *psoc_node = NULL;
+	qdf_list_node_t *prev_psoc_node = NULL;
+	qdf_list_t *obj_list;
+
+	qdf_spin_lock_bh(&peer_list->peer_list_lock);
+	obj_list = &peer_list->peer_hash[hash_index];
+
+	prev_psoc_node = &peer->psoc_peer;
+	while (qdf_list_peek_next(obj_list, prev_psoc_node, &psoc_node) ==
+						QDF_STATUS_SUCCESS) {
+		peer_next = qdf_container_of(psoc_node, struct wlan_objmgr_peer,
+					     psoc_peer);
+
+		if (wlan_objmgr_peer_try_get_ref(peer_next, dbg_id) ==
+				QDF_STATUS_SUCCESS) {
+			qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+			return peer_next;
+		}
+
+		prev_psoc_node = psoc_node;
+	}
+
+	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+
+	return NULL;
+}
+#endif
+
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_peer *wlan_vdev_peer_list_peek_active_head_debug(
+				struct wlan_objmgr_vdev *vdev,
+				qdf_list_t *peer_list,
+				wlan_objmgr_ref_dbgid dbg_id,
+				const char *func, int line)
+{
+	struct wlan_objmgr_peer *peer;
+	qdf_list_node_t *vdev_node = NULL;
+	qdf_list_node_t *prev_vdev_node = NULL;
+
+	wlan_vdev_obj_lock(vdev);
+
+	if (qdf_list_peek_front(peer_list, &vdev_node) != QDF_STATUS_SUCCESS) {
+		wlan_vdev_obj_unlock(vdev);
+		return NULL;
+	}
+
+	do {
+		peer = qdf_container_of(vdev_node, struct wlan_objmgr_peer,
+					vdev_peer);
+
+		if (wlan_objmgr_peer_try_get_ref_debug(peer, dbg_id,
+						       func, line) ==
+				QDF_STATUS_SUCCESS) {
+			wlan_vdev_obj_unlock(vdev);
+			return peer;
+		}
+
+		prev_vdev_node = vdev_node;
+	} while (qdf_list_peek_next(peer_list, prev_vdev_node, &vdev_node) ==
+							QDF_STATUS_SUCCESS);
+
+	wlan_vdev_obj_unlock(vdev);
+
+	return NULL;
+}
+#else
 struct wlan_objmgr_peer *wlan_vdev_peer_list_peek_active_head(
 				struct wlan_objmgr_vdev *vdev,
 				qdf_list_t *peer_list,
@@ -759,7 +900,46 @@ struct wlan_objmgr_peer *wlan_vdev_peer_list_peek_active_head(
 
 	return NULL;
 }
+#endif
 
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_peer *wlan_peer_get_next_active_peer_of_vdev_debug(
+					struct wlan_objmgr_vdev *vdev,
+					qdf_list_t *peer_list,
+					struct wlan_objmgr_peer *peer,
+					wlan_objmgr_ref_dbgid dbg_id,
+					const char *func, int line)
+{
+	struct wlan_objmgr_peer *peer_next;
+	qdf_list_node_t *vdev_node = NULL;
+	qdf_list_node_t *prev_vdev_node = NULL;
+
+	if (!peer)
+		return NULL;
+
+	wlan_vdev_obj_lock(vdev);
+
+	prev_vdev_node = &peer->vdev_peer;
+	while (qdf_list_peek_next(peer_list, prev_vdev_node, &vdev_node) ==
+						QDF_STATUS_SUCCESS) {
+		peer_next = qdf_container_of(vdev_node, struct wlan_objmgr_peer,
+					     vdev_peer);
+
+		if (wlan_objmgr_peer_try_get_ref_debug(peer_next, dbg_id,
+						       func, line) ==
+				QDF_STATUS_SUCCESS) {
+			wlan_vdev_obj_unlock(vdev);
+			return peer_next;
+		}
+
+		prev_vdev_node = vdev_node;
+	}
+
+	wlan_vdev_obj_unlock(vdev);
+
+	return NULL;
+}
+#else
 struct wlan_objmgr_peer *wlan_peer_get_next_active_peer_of_vdev(
 					struct wlan_objmgr_vdev *vdev,
 					qdf_list_t *peer_list,
@@ -794,14 +974,16 @@ struct wlan_objmgr_peer *wlan_peer_get_next_active_peer_of_vdev(
 
 	return NULL;
 }
+#endif
 
-struct wlan_objmgr_peer *wlan_peer_get_next_active_peer_of_psoc(
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_peer *wlan_psoc_peer_list_peek_active_head_debug(
 					struct wlan_peer_list *peer_list,
 					uint8_t hash_index,
-					struct wlan_objmgr_peer *peer,
-					wlan_objmgr_ref_dbgid dbg_id)
+					wlan_objmgr_ref_dbgid dbg_id,
+					const char *func, int line)
 {
-	struct wlan_objmgr_peer *peer_next = NULL;
+	struct wlan_objmgr_peer *peer;
 	qdf_list_node_t *psoc_node = NULL;
 	qdf_list_node_t *prev_psoc_node = NULL;
 	qdf_list_t *obj_list;
@@ -809,26 +991,29 @@ struct wlan_objmgr_peer *wlan_peer_get_next_active_peer_of_psoc(
 	qdf_spin_lock_bh(&peer_list->peer_list_lock);
 	obj_list = &peer_list->peer_hash[hash_index];
 
-	prev_psoc_node = &peer->psoc_peer;
-	while (qdf_list_peek_next(obj_list, prev_psoc_node, &psoc_node) ==
-						QDF_STATUS_SUCCESS) {
-		peer_next = qdf_container_of(psoc_node, struct wlan_objmgr_peer,
-						psoc_peer);
+	if (qdf_list_peek_front(obj_list, &psoc_node) != QDF_STATUS_SUCCESS) {
+		qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+		return NULL;
+	}
 
-		if (wlan_objmgr_peer_try_get_ref(peer_next, dbg_id) ==
+	do {
+		peer = qdf_container_of(psoc_node, struct wlan_objmgr_peer,
+					psoc_peer);
+		if (wlan_objmgr_peer_try_get_ref_debug(peer, dbg_id,
+						       func, line) ==
 				QDF_STATUS_SUCCESS) {
 			qdf_spin_unlock_bh(&peer_list->peer_list_lock);
-			return peer_next;
+			return peer;
 		}
 
 		prev_psoc_node = psoc_node;
-	}
+	} while (qdf_list_peek_next(obj_list, prev_psoc_node, &psoc_node) ==
+						QDF_STATUS_SUCCESS);
 
 	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
-
 	return NULL;
 }
-
+#else
 struct wlan_objmgr_peer *wlan_psoc_peer_list_peek_active_head(
 					struct wlan_peer_list *peer_list,
 					uint8_t hash_index,
@@ -863,7 +1048,35 @@ struct wlan_objmgr_peer *wlan_psoc_peer_list_peek_active_head(
 	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
 	return NULL;
 }
+#endif
 
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_peer *wlan_psoc_peer_list_peek_head_ref_debug(
+					struct wlan_peer_list *peer_list,
+					uint8_t hash_index,
+					wlan_objmgr_ref_dbgid dbg_id,
+					const char *func, int line)
+{
+	struct wlan_objmgr_peer *peer;
+	qdf_list_t *obj_list;
+
+	qdf_spin_lock_bh(&peer_list->peer_list_lock);
+	obj_list = &peer_list->peer_hash[hash_index];
+
+	peer = wlan_psoc_peer_list_peek_head(obj_list);
+
+	/* This API is invoked by caller, only when caller need to access the
+	 * peer object, though object is not in active state, this API should be
+	 * used carefully, where multiple object frees are not triggered
+	 */
+	if (peer)
+		wlan_objmgr_peer_get_ref_debug(peer, dbg_id, func, line);
+
+	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+
+	return peer;
+}
+#else
 struct wlan_objmgr_peer *wlan_psoc_peer_list_peek_head_ref(
 					struct wlan_peer_list *peer_list,
 					uint8_t hash_index,
@@ -877,8 +1090,7 @@ struct wlan_objmgr_peer *wlan_psoc_peer_list_peek_head_ref(
 
 	peer = wlan_psoc_peer_list_peek_head(obj_list);
 
-	/**
-	 * This API is invoked by caller, only when caller need to access the
+	/* This API is invoked by caller, only when caller need to access the
 	 * peer object, though object is not in active state, this API should be
 	 * used carefully, where multiple object frees are not triggered
 	 */
@@ -889,7 +1101,34 @@ struct wlan_objmgr_peer *wlan_psoc_peer_list_peek_head_ref(
 
 	return peer;
 }
+#endif
 
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_peer *wlan_peer_get_next_peer_of_psoc_ref_debug(
+			struct wlan_peer_list *peer_list, uint8_t hash_index,
+			struct wlan_objmgr_peer *peer,
+			wlan_objmgr_ref_dbgid dbg_id,
+			const char *func, int line)
+{
+	qdf_list_t *obj_list;
+	struct wlan_objmgr_peer *peer_next;
+
+	qdf_spin_lock_bh(&peer_list->peer_list_lock);
+	obj_list = &peer_list->peer_hash[hash_index];
+
+	peer_next = wlan_peer_get_next_peer_of_psoc(obj_list, peer);
+	/* This API is invoked by caller, only when caller need to access the
+	 * peer object, though object is not in active state, this API should be
+	 * used carefully, where multiple free on object are not triggered
+	 */
+	if (peer_next)
+		wlan_objmgr_peer_get_ref_debug(peer_next, dbg_id, func, line);
+
+	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+
+	return peer_next;
+}
+#else
 struct wlan_objmgr_peer *wlan_peer_get_next_peer_of_psoc_ref(
 			struct wlan_peer_list *peer_list, uint8_t hash_index,
 			struct wlan_objmgr_peer *peer,
@@ -902,8 +1141,7 @@ struct wlan_objmgr_peer *wlan_peer_get_next_peer_of_psoc_ref(
 	obj_list = &peer_list->peer_hash[hash_index];
 
 	peer_next = wlan_peer_get_next_peer_of_psoc(obj_list, peer);
-	/**
-	 * This API is invoked by caller, only when caller need to access the
+	/* This API is invoked by caller, only when caller need to access the
 	 * peer object, though object is not in active state, this API should be
 	 * used carefully, where multiple free on object are not triggered
 	 */
@@ -914,6 +1152,95 @@ struct wlan_objmgr_peer *wlan_peer_get_next_peer_of_psoc_ref(
 
 	return peer_next;
 }
+#endif
+
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+void wlan_objmgr_peer_release_ref_debug(struct wlan_objmgr_peer *peer,
+					wlan_objmgr_ref_dbgid id,
+					const char *func, int line)
+{
+	QDF_STATUS status;
+
+	if (!peer) {
+		obj_mgr_err("peer obj is NULL for %d", id);
+		QDF_ASSERT(0);
+		return;
+	}
+
+	if (!qdf_atomic_read(&peer->peer_objmgr.ref_cnt)) {
+		uint8_t *macaddr;
+
+		macaddr = wlan_peer_get_macaddr(peer);
+		obj_mgr_err("peer(%02x:%02x:%02x:%02x:%02x:%02x) ref cnt is 0",
+				macaddr[0], macaddr[1], macaddr[2],
+				macaddr[3], macaddr[4], macaddr[5]);
+		WLAN_OBJMGR_BUG(0);
+		return;
+	}
+
+	status = wlan_objmgr_peer_release_debug_id_ref(peer, id);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	wlan_objmgr_peer_deref_trace(peer, id, func, line);
+	/* Provide synchronization from the access to add peer
+	 * to logically deleted peer list.
+	 */
+	wlan_peer_obj_lock(peer);
+	/* Decrement ref count, free peer object, if ref count == 0 */
+	if (qdf_atomic_dec_and_test(&peer->peer_objmgr.ref_cnt)) {
+		wlan_peer_obj_unlock(peer);
+		wlan_objmgr_peer_obj_destroy(peer);
+	} else {
+		wlan_peer_obj_unlock(peer);
+	}
+
+	return;
+}
+
+qdf_export_symbol(wlan_objmgr_peer_release_ref_debug);
+#else
+void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
+				  wlan_objmgr_ref_dbgid id)
+{
+	QDF_STATUS status;
+
+	if (!peer) {
+		obj_mgr_err("peer obj is NULL for %d", id);
+		QDF_ASSERT(0);
+		return;
+	}
+
+	if (!qdf_atomic_read(&peer->peer_objmgr.ref_cnt)) {
+		uint8_t *macaddr;
+
+		macaddr = wlan_peer_get_macaddr(peer);
+		obj_mgr_err("peer(%02x:%02x:%02x:%02x:%02x:%02x) ref cnt is 0",
+			    macaddr[0], macaddr[1], macaddr[2],
+			    macaddr[3], macaddr[4], macaddr[5]);
+		WLAN_OBJMGR_BUG(0);
+		return;
+	}
+
+	status = wlan_objmgr_peer_release_debug_id_ref(peer, id);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	/* Provide synchronization from the access to add peer
+	 * to logically deleted peer list.
+	 */
+	wlan_peer_obj_lock(peer);
+	/* Decrement ref count, free peer object, if ref count == 0 */
+	if (qdf_atomic_dec_and_test(&peer->peer_objmgr.ref_cnt)) {
+		wlan_peer_obj_unlock(peer);
+		wlan_objmgr_peer_obj_destroy(peer);
+	} else {
+		wlan_peer_obj_unlock(peer);
+	}
+}
+
+qdf_export_symbol(wlan_objmgr_peer_release_ref);
+#endif
 
 #ifdef WLAN_OBJMGR_REF_ID_DEBUG
 void
