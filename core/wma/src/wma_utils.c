@@ -2936,6 +2936,8 @@ static void wma_fill_peer_info(tp_wma_handle wma,
 		wmi_peer_stats_info *stats_info,
 		struct sir_peer_info_ext *peer_info)
 {
+	int i;
+
 	peer_info->tx_packets = stats_info->tx_packets.low_32;
 	peer_info->tx_bytes = stats_info->tx_bytes.high_32;
 	peer_info->tx_bytes <<= 32;
@@ -2946,11 +2948,15 @@ static void wma_fill_peer_info(tp_wma_handle wma,
 	peer_info->rx_bytes += stats_info->rx_bytes.low_32;
 	peer_info->tx_retries = stats_info->tx_retries;
 	peer_info->tx_failed = stats_info->tx_failed;
+	peer_info->tx_succeed = stats_info->tx_succeed;
 	peer_info->rssi = stats_info->peer_rssi;
 	peer_info->tx_rate = stats_info->last_tx_bitrate_kbps;
 	peer_info->tx_rate_code = stats_info->last_tx_rate_code;
 	peer_info->rx_rate = stats_info->last_rx_bitrate_kbps;
 	peer_info->rx_rate_code = stats_info->last_rx_rate_code;
+	for (i = 0; i < WMI_MAX_CHAINS; i++)
+		peer_info->peer_rssi_per_chain[i] =
+				stats_info->peer_rssi_per_chain[i];
 }
 
 /**
@@ -3048,40 +3054,45 @@ static QDF_STATUS wma_peer_info_ext_rsp(tp_wma_handle wma, u_int8_t *buf)
 static void dump_peer_stats_info(wmi_peer_stats_info_event_fixed_param *event,
 		wmi_peer_stats_info *peer_stats)
 {
-	int i;
+	int i, j;
 	wmi_peer_stats_info *stats = peer_stats;
 	u_int8_t mac[6];
 
-	WMA_LOGI("%s vdev_id %d, num_peers %d more_data %d",
-			__func__, event->vdev_id,
-			event->num_peers, event->more_data);
+	WMA_LOGD("%s vdev_id %d, num_peers %d more_data %d",
+		 __func__, event->vdev_id,
+		 event->num_peers, event->more_data);
 
 	for (i = 0; i < event->num_peers; i++) {
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&stats->peer_macaddr, mac);
-		WMA_LOGI("%s mac %pM", __func__, mac);
-		WMA_LOGI("%s tx_bytes %d %d tx_packets %d %d",
-				__func__,
-				stats->tx_bytes.low_32,
-				stats->tx_bytes.high_32,
-				stats->tx_packets.low_32,
-				stats->tx_packets.high_32);
-		WMA_LOGI("%s rx_bytes %d %d rx_packets %d %d",
-				__func__,
-				stats->rx_bytes.low_32,
-				stats->rx_bytes.high_32,
-				stats->rx_packets.low_32,
-				stats->rx_packets.high_32);
-		WMA_LOGI("%s tx_retries %d tx_failed %d",
-				__func__, stats->tx_retries, stats->tx_failed);
-		WMA_LOGI("%s tx_rate_code %x rx_rate_code %x",
-				__func__,
-				stats->last_tx_rate_code,
-				stats->last_rx_rate_code);
-		WMA_LOGI("%s tx_rate %x rx_rate %x",
-				__func__,
-				stats->last_tx_bitrate_kbps,
-				stats->last_rx_bitrate_kbps);
-		WMA_LOGI("%s peer_rssi %d", __func__, stats->peer_rssi);
+		WMA_LOGD("%s mac %pM", __func__, mac);
+		WMA_LOGD("%s tx_bytes %d %d tx_packets %d %d",
+			 __func__,
+			 stats->tx_bytes.low_32,
+			 stats->tx_bytes.high_32,
+			 stats->tx_packets.low_32,
+			 stats->tx_packets.high_32);
+		WMA_LOGD("%s rx_bytes %d %d rx_packets %d %d",
+			 __func__,
+			 stats->rx_bytes.low_32,
+			 stats->rx_bytes.high_32,
+			 stats->rx_packets.low_32,
+			 stats->rx_packets.high_32);
+		WMA_LOGD("%s tx_retries %d tx_failed %d",
+			 __func__, stats->tx_retries, stats->tx_failed);
+		WMA_LOGD("%s tx_rate_code %x rx_rate_code %x",
+			 __func__,
+			 stats->last_tx_rate_code,
+			 stats->last_rx_rate_code);
+		WMA_LOGD("%s tx_rate %x rx_rate %x",
+			 __func__,
+			 stats->last_tx_bitrate_kbps,
+			 stats->last_rx_bitrate_kbps);
+		WMA_LOGD("%s peer_rssi %d", __func__, stats->peer_rssi);
+		WMA_LOGD("%s tx_succeed %d", __func__, stats->tx_succeed);
+		for (j = 0; j < WMI_MAX_CHAINS; j++)
+			WMA_LOGD("%s chain%d_rssi %d", __func__, j,
+				 stats->peer_rssi_per_chain[j]);
+
 		stats++;
 	}
 }

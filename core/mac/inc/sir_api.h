@@ -2591,13 +2591,15 @@ struct sir_peer_info_ext_req {
  * @tx_bytes: bytes transmitted to this station
  * @rx_packets: packets received from this station
  * @rx_bytes: bytes received from this station
- * @rx_retries: cumulative retry counts
- * @tx_failed: number of failed transmissions
- * @rssi: The signal strength
+ * @tx_retries: cumulative retry counts
+ * @tx_failed: the number of failed frames
+ * @tx_succeed: the number of succeed frames
+ * @rssi: the signal strength
  * @tx_rate: last used tx bitrate (kbps)
  * @tx_rate_code: last tx rate code (last_tx_rate_code of wmi_peer_stats_info)
  * @rx_rate: last used rx bitrate (kbps)
  * @rx_rate_code: last rx rate code (last_rx_rate_code of wmi_peer_stats_info)
+ * @peer_rssi_per_chain: the average value of RSSI (dbm) per chain
  *
  * a station's information
  */
@@ -2609,11 +2611,13 @@ struct sir_peer_info_ext {
 	uint64_t rx_bytes;
 	uint32_t tx_retries;
 	uint32_t tx_failed;
+	uint32_t tx_succeed;
 	int32_t rssi;
 	uint32_t tx_rate;
 	uint32_t tx_rate_code;
 	uint32_t rx_rate;
 	uint32_t rx_rate_code;
+	int32_t peer_rssi_per_chain[WMI_MAX_CHAINS];
 };
 
 /**
