@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -13,10 +13,13 @@
 #include "../../../drivers/clk/qcom/common.h"
 #include <linux/pinctrl/consumer.h>
 #include <linux/platform_device.h>
+#include <dsp/apr_audio-v2.h>
 #include <dt-bindings/clock/qcom,audio-ext-clk.h>
-#include <dsp/q6afe-v2.h>
+#ifdef CONFIG_AUDIO_PRM
+#include <dsp/audio_prm.h>
+#else
 #include "audio-ext-clk-up.h"
-
+#endif
 enum {
 	AUDIO_EXT_CLK_PMI,
 	AUDIO_EXT_CLK_LNBB2,
@@ -51,6 +54,9 @@ struct audio_ext_clk_priv {
 	struct device *dev;
 	int clk_src;
 	struct afe_clk_set clk_cfg;
+#ifdef CONFIG_AUDIO_PRM
+	struct clk_cfg prm_clk_cfg;
+#endif
 	struct audio_ext_clk audio_clk;
 	const char *clk_name;
 	uint32_t lpass_core_hwvote_client_handle;
@@ -69,16 +75,19 @@ static int audio_ext_clk_prepare(struct clk_hw *hw)
 	int ret;
 
 	if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS) &&
-		(clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX))  {
-		clk_priv->clk_cfg.enable = 1;
-		trace_printk("%s: vote for %d clock\n",
-			__func__, clk_priv->clk_src);
+		(clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX) && !clk_priv->clk_cfg.enable)  {
+#ifdef CONFIG_AUDIO_PRM
+	    pr_debug("%s: clk_id %d ",__func__, clk_priv->prm_clk_cfg.clk_id);
+		ret = audio_prm_set_lpass_clk_cfg(&clk_priv->prm_clk_cfg,1);
+#else
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
+#endif
 		if (ret < 0) {
 			pr_err_ratelimited("%s afe_set_digital_codec_core_clock failed\n",
 				__func__);
 			return ret;
 		}
+		clk_priv->clk_cfg.enable = 1;
 	}
 
 	if (pnctrl_info->pinctrl) {
@@ -115,9 +124,13 @@ static void audio_ext_clk_unprepare(struct clk_hw *hw)
 	if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS) &&
 		(clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX))  {
 		clk_priv->clk_cfg.enable = 0;
-		trace_printk("%s: unvote for %d clock\n",
-			__func__, clk_priv->clk_src);
+#ifdef CONFIG_AUDIO_PRM
+		pr_debug("%s: clk_id %d",__func__,
+				clk_priv->prm_clk_cfg.clk_id);
+		ret = audio_prm_set_lpass_clk_cfg(&clk_priv->prm_clk_cfg,0);
+#else
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
+#endif
 		if (ret < 0)
 			pr_err_ratelimited("%s: afe_set_lpass_clk_cfg failed, ret = %d\n",
 				__func__, ret);
@@ -147,6 +160,7 @@ static u8 audio_ext_clk_get_parent(struct clk_hw *hw)
 
 static int lpass_hw_vote_prepare(struct clk_hw *hw)
 {
+#if 0
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	int ret;
 
@@ -175,12 +189,13 @@ static int lpass_hw_vote_prepare(struct clk_hw *hw)
 			return ret;
 		}
 	}
-
+#endif
 	return 0;
 }
 
 static void lpass_hw_vote_unprepare(struct clk_hw *hw)
 {
+#if 0
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	int ret = 0;
 
@@ -207,6 +222,7 @@ static void lpass_hw_vote_unprepare(struct clk_hw *hw)
 				__func__, ret);
 		}
 	}
+#endif
 }
 
 static const struct clk_ops audio_ext_clk_ops = {
@@ -542,19 +558,38 @@ static int audio_ref_clk_probe(struct platform_device *pdev)
 	clk_priv->clk_cfg.clk_freq_in_hz = Q6AFE_LPASS_OSR_CLK_9_P600_MHZ;
 	clk_priv->clk_cfg.clk_attri = Q6AFE_LPASS_CLK_ATTRIBUTE_COUPLE_NO;
 
+#ifdef CONFIG_AUDIO_PRM
+	/* Init prm clk cfg default values */
+	clk_priv->prm_clk_cfg.clk_id = Q6AFE_LPASS_CLK_ID_SPEAKER_I2S_OSR;
+	clk_priv->prm_clk_cfg.clk_freq_in_hz = Q6AFE_LPASS_OSR_CLK_9_P600_MHZ;
+	clk_priv->prm_clk_cfg.clk_attri = Q6AFE_LPASS_CLK_ATTRIBUTE_COUPLE_NO;
+	clk_priv->prm_clk_cfg.clk_root = 0;
+#endif
+
 	ret = of_property_read_u32(pdev->dev.of_node,
 			"qcom,codec-lpass-ext-clk-freq",
 			&clk_freq);
-	if (!ret)
+	if (!ret) {
 		clk_priv->clk_cfg.clk_freq_in_hz = clk_freq;
+#ifdef CONFIG_AUDIO_PRM
+		clk_priv->prm_clk_cfg.clk_freq_in_hz = clk_freq;
+#endif
+	}
 
 	ret = of_property_read_u32(pdev->dev.of_node,
 			"qcom,codec-lpass-clk-id",
 			&clk_id);
-	if (!ret)
+	if (!ret) {
 		clk_priv->clk_cfg.clk_id = clk_id;
+#ifdef CONFIG_AUDIO_PRM
+		clk_priv->prm_clk_cfg.clk_id = clk_id;
+		dev_info(&pdev->dev, "%s: ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
+			__func__, clk_priv->prm_clk_cfg.clk_freq_in_hz,
+			clk_priv->prm_clk_cfg.clk_id, clk_priv->clk_src);
+#endif
+	}
 
-	dev_dbg(&pdev->dev, "%s: ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
+	dev_info(&pdev->dev, "%s: ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
 			__func__, clk_priv->clk_cfg.clk_freq_in_hz,
 			clk_priv->clk_cfg.clk_id, clk_priv->clk_src);
 	platform_set_drvdata(pdev, clk_priv);

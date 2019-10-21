@@ -43,6 +43,8 @@
 #define MSM_META_MI2S_MIN  MSM_PRIM_META_MI2S
 #define MSM_META_MI2S_MAX  MSM_SEC_META_MI2S
 
+#define MAX_NUM_I2S_META_PORT_MEMBER_PORTS 4
+
 struct msm_dai_auxpcm_config {
 	u16 mode;
 	u16 sync;
@@ -57,6 +59,8 @@ struct msm_dai_auxpcm_config {
 struct msm_dai_auxpcm_pdata {
 	struct msm_dai_auxpcm_config mode_8k;
 	struct msm_dai_auxpcm_config mode_16k;
+	struct msm_dai_auxpcm_config mode_32k;
+	struct msm_dai_auxpcm_config mode_48k;
 };
 
 struct msm_mi2s_pdata {

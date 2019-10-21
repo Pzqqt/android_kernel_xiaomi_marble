@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -14,7 +14,6 @@
 #include <sound/soc.h>
 #include <sound/pcm_params.h>
 #include <dsp/apr_audio-v2.h>
-#include <dsp/q6afe-v2.h>
 #include "msm-dai-q6-v2.h"
 
 #define HDMI_RX_CA_MAX 0x32
@@ -51,6 +50,7 @@ struct msm_dai_q6_hdmi_dai_data {
 	union afe_port_config port_config;
 };
 
+#if 0
 static int get_port_id(int dai_id)
 {
 	/* Currently, display devices share a common AFE port */
@@ -59,6 +59,7 @@ static int get_port_id(int dai_id)
 
 	return dai_id;
 }
+#endif
 
 static int msm_dai_q6_ext_disp_format_put(struct snd_kcontrol *kcontrol,
 					  struct snd_ctl_elem_value *ucontrol)
@@ -195,6 +196,7 @@ static int msm_dai_q6_ext_disp_drift_info(struct snd_kcontrol *kcontrol,
 static int msm_dai_q6_ext_disp_drift_get(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
 {
+	#if 0
 	int ret = -EINVAL;
 	struct afe_param_id_dev_timing_stats timing_stats;
 	struct snd_soc_dai *dai = kcontrol->private_data;
@@ -220,6 +222,8 @@ static int msm_dai_q6_ext_disp_drift_get(struct snd_kcontrol *kcontrol,
 	       sizeof(struct afe_param_id_dev_timing_stats));
 done:
 	return ret;
+	#endif
+	return 0;
 }
 
 static const struct snd_kcontrol_new hdmi_config_controls[] = {
@@ -348,17 +352,18 @@ static void msm_dai_q6_hdmi_shutdown(struct snd_pcm_substream *substream,
 				struct snd_soc_dai *dai)
 {
 	struct msm_dai_q6_hdmi_dai_data *dai_data = dev_get_drvdata(dai->dev);
-	int rc = 0;
+//	int rc = 0;
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
 		pr_info("%s:  afe port not started. dai_data->status_mask = %ld\n",
 		 __func__, *dai_data->status_mask);
 		return;
 	}
-
+	#if 0
 	rc = afe_close(get_port_id(dai->id)); /* can block */
 	if (rc < 0)
 		dev_err(dai->dev, "fail to close AFE port\n");
+	#endif
 
 	pr_debug("%s: dai_data->status_mask = %ld\n", __func__,
 			*dai_data->status_mask);
@@ -378,6 +383,7 @@ static int msm_dai_q6_hdmi_prepare(struct snd_pcm_substream *substream,
 							      dai_data->ca.ca;
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
+		#if 0
 		rc = afe_set_display_stream(get_port_id(dai->id), dai_data->stream_idx,
 						dai_data->ctl_idx);
 		if (rc < 0) {
@@ -397,9 +403,10 @@ static int msm_dai_q6_hdmi_prepare(struct snd_pcm_substream *substream,
 		else
 			set_bit(STATUS_PORT_STARTED,
 				dai_data->status_mask);
+		#endif
 	}
 
-err:
+//err:
 	return rc;
 }
 
@@ -518,15 +525,17 @@ static int msm_dai_q6_hdmi_dai_probe(struct snd_soc_dai *dai)
 static int msm_dai_q6_hdmi_dai_remove(struct snd_soc_dai *dai)
 {
 	struct msm_dai_q6_hdmi_dai_data *dai_data;
-	int rc;
+//	int rc;
 
 	dai_data = dev_get_drvdata(dai->dev);
 
 	/* If AFE port is still up, close it */
 	if (test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
+		#if 0
 		rc = afe_close(get_port_id(dai->id)); /* can block */
 		if (rc < 0)
 			dev_err(dai->dev, "fail to close AFE port\n");
+		#endif
 
 		clear_bit(STATUS_PORT_STARTED, dai_data->status_mask);
 	}
