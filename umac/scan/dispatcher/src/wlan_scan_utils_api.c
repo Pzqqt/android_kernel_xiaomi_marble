@@ -180,6 +180,98 @@ static bool util_is_pureg_rate(uint8_t *rates, uint8_t nrates)
 
 	return pureg;
 }
+
+#ifdef CONFIG_BAND_6GHZ
+static enum wlan_phymode
+util_scan_get_phymode_6g(struct scan_cache_entry *scan_params)
+{
+	uint8_t len;
+	struct he_oper_6g_param *he_6g_params;
+	uint32_t he_oper_params;
+	enum wlan_phymode phymode = WLAN_PHYMODE_11AXA_HE20;
+	uint8_t *he_ops;
+
+	he_ops = util_scan_entry_heop(scan_params);
+	if (!util_scan_entry_hecap(scan_params) || !he_ops)
+		return phymode;
+
+	len = he_ops[1];
+	he_ops += 2;
+
+	/* Length less than fixed params length */
+	if (len < 7)
+		return phymode;
+
+	/* element id extension */
+	he_ops++;
+	len--;
+
+	he_oper_params = LE_READ_4(he_ops);
+	if (!(he_oper_params & WLAN_HEOP_6GHZ_INFO_PRESENT_MASK))
+		return phymode;
+
+	/* fixed params */
+	he_ops += 6;
+	len -= 6;
+
+	if (!len)
+		return phymode;
+
+	/* vht oper params */
+	if (he_oper_params & WLAN_HEOP_VHTOP_PRESENT_MASK) {
+		if (len < 3)
+			return phymode;
+		he_ops += 3;
+		len -= 3;
+	}
+
+	if (!len)
+		return phymode;
+
+	if (he_oper_params & WLAN_HEOP_CO_LOCATED_BSS_MASK) {
+		he_ops += 1;
+		len -= 1;
+	}
+
+	if (len < sizeof(*he_6g_params))
+		return phymode;
+
+	he_6g_params = (struct he_oper_6g_param *)he_ops;
+
+	switch (he_6g_params->width) {
+	case WLAN_HE_6GHZ_CHWIDTH_20:
+		phymode = WLAN_PHYMODE_11AXA_HE20;
+		break;
+	case WLAN_HE_6GHZ_CHWIDTH_40:
+		phymode = WLAN_PHYMODE_11AXA_HE40;
+		break;
+	case WLAN_HE_6GHZ_CHWIDTH_80:
+		phymode = WLAN_PHYMODE_11AXA_HE80;
+		break;
+	case WLAN_HE_6GHZ_CHWIDTH_160_80_80:
+		if (WLAN_IS_HE80_80(he_6g_params))
+			phymode = WLAN_PHYMODE_11AXA_HE80_80;
+		else if (WLAN_IS_HE160(he_6g_params))
+			phymode = WLAN_PHYMODE_11AXA_HE160;
+		else
+			phymode = WLAN_PHYMODE_11AXA_HE80;
+		break;
+	default:
+		scm_err("Invalid he_6g_params width: %d", he_6g_params->width);
+		phymode = WLAN_PHYMODE_11AXA_HE20;
+		break;
+	}
+
+	return phymode;
+}
+#else
+static inline enum wlan_phymode
+util_scan_get_phymode_6g(struct scan_cache_entry *scan_params)
+{
+	return WLAN_PHYMODE_AUTO;
+}
+#endif
+
 static enum wlan_phymode
 util_scan_get_phymode_5g(struct scan_cache_entry *scan_params)
 {
@@ -201,6 +293,11 @@ util_scan_get_phymode_5g(struct scan_cache_entry *scan_params)
 
 	if (htcap)
 		ht_cap = le16toh(htcap->hc_cap);
+
+	if (ht_cap & WLAN_HTCAP_C_CHWIDTH40)
+		phymode = WLAN_PHYMODE_11NA_HT40;
+	else
+		phymode = WLAN_PHYMODE_11NA_HT20;
 
 	if (util_scan_entry_vhtcap(scan_params) && vhtop) {
 		switch (vhtop->vht_op_chwidth) {
@@ -230,10 +327,34 @@ util_scan_get_phymode_5g(struct scan_cache_entry *scan_params)
 			phymode = WLAN_PHYMODE_11AC_VHT20;
 			break;
 		}
-	} else if (ht_cap & WLAN_HTCAP_C_CHWIDTH40) {
-		phymode = WLAN_PHYMODE_11NA_HT40;
-	} else {
-		phymode = WLAN_PHYMODE_11NA_HT20;
+	}
+
+	if (!util_scan_entry_hecap(scan_params))
+		return phymode;
+
+	/* for 5Ghz Check for HE, only if VHT cap and HE cap are present */
+	if (!IS_WLAN_PHYMODE_VHT(phymode))
+		return phymode;
+
+	switch (phymode) {
+	case WLAN_PHYMODE_11AC_VHT20:
+		phymode = WLAN_PHYMODE_11AXA_HE20;
+		break;
+	case WLAN_PHYMODE_11AC_VHT40:
+		phymode = WLAN_PHYMODE_11AXA_HE40;
+		break;
+	case WLAN_PHYMODE_11AC_VHT80:
+		phymode = WLAN_PHYMODE_11AXA_HE80;
+		break;
+	case WLAN_PHYMODE_11AC_VHT160:
+		phymode = WLAN_PHYMODE_11AXA_HE160;
+		break;
+	case WLAN_PHYMODE_11AC_VHT80_80:
+		phymode = WLAN_PHYMODE_11AXA_HE80_80;
+		break;
+	default:
+		phymode = WLAN_PHYMODE_11AXA_HE20;
+		break;
 	}
 
 	return phymode;
@@ -283,6 +404,10 @@ util_scan_get_phymode_2g(struct scan_cache_entry *scan_params)
 		}
 	}
 
+	/* Check for VHT only if HT cap is present */
+	if (!IS_WLAN_PHYMODE_HT(phymode))
+		return phymode;
+
 	if (util_scan_entry_vhtcap(scan_params) && vhtop) {
 		switch (vhtop->vht_op_chwidth) {
 		case WLAN_VHTOP_CHWIDTH_2040:
@@ -302,7 +427,30 @@ util_scan_get_phymode_2g(struct scan_cache_entry *scan_params)
 		}
 	}
 
+	if (!util_scan_entry_hecap(scan_params))
+		return phymode;
+
+	if (phymode == WLAN_PHYMODE_11AC_VHT40PLUS_2G ||
+	    phymode == WLAN_PHYMODE_11NG_HT40PLUS)
+		phymode = WLAN_PHYMODE_11AXG_HE40PLUS;
+	else if (phymode == WLAN_PHYMODE_11AC_VHT40MINUS_2G ||
+		 phymode == WLAN_PHYMODE_11NG_HT40MINUS)
+		phymode = WLAN_PHYMODE_11AXG_HE40MINUS;
+	else
+		phymode = WLAN_PHYMODE_11AXG_HE20;
+
 	return phymode;
+}
+
+static enum wlan_phymode
+util_scan_get_phymode(struct scan_cache_entry *scan_params)
+{
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(scan_params->channel.chan_freq))
+		return util_scan_get_phymode_2g(scan_params);
+	else if (WLAN_REG_IS_6GHZ_CHAN_FREQ(scan_params->channel.chan_freq))
+		return util_scan_get_phymode_6g(scan_params);
+	else
+		return util_scan_get_phymode_5g(scan_params);
 }
 
 static QDF_STATUS
@@ -1173,10 +1321,8 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	}
 	qdf_mem_copy(&scan_entry->mbssid_info, mbssid_info,
 		     sizeof(scan_entry->mbssid_info));
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(scan_entry->channel.chan_freq))
-		scan_entry->phy_mode = util_scan_get_phymode_5g(scan_entry);
-	else
-		scan_entry->phy_mode = util_scan_get_phymode_2g(scan_entry);
+
+	scan_entry->phy_mode = util_scan_get_phymode(scan_entry);
 
 	scan_entry->nss = util_scan_scm_calc_nss_supported_by_ap(scan_entry);
 	scm_fill_adaptive_11r_cap(scan_entry);

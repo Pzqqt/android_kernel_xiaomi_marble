@@ -422,6 +422,26 @@ enum wlan_phymode {
 	((mode) == WLAN_PHYMODE_11AXG_HE40PLUS)  || \
 	((mode) == WLAN_PHYMODE_11AXG_HE40MINUS); })
 
+#define IS_WLAN_PHYMODE_HT(_mode) ({typeof(_mode) mode = (_mode); \
+	((mode) == WLAN_PHYMODE_11NA_HT20) || \
+	((mode) == WLAN_PHYMODE_11NG_HT20)     || \
+	((mode) == WLAN_PHYMODE_11NA_HT40)  || \
+	((mode) == WLAN_PHYMODE_11NG_HT40PLUS)  || \
+	((mode) == WLAN_PHYMODE_11NG_HT40MINUS)  || \
+	((mode) == WLAN_PHYMODE_11NG_HT40); })
+
+#define IS_WLAN_PHYMODE_VHT(_mode) ({typeof(_mode) mode = (_mode); \
+	((mode) == WLAN_PHYMODE_11AC_VHT20) || \
+	((mode) == WLAN_PHYMODE_11AC_VHT20_2G)     || \
+	((mode) == WLAN_PHYMODE_11AC_VHT40)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT40PLUS_2G)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT40MINUS_2G)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT40_2G)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT80)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT80_2G)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT160)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT80_80); })
+
 #define IS_WLAN_PHYMODE_HE(_mode) ({typeof(_mode) mode = (_mode); \
 	((mode) == WLAN_PHYMODE_11AXA_HE20) || \
 	((mode) == WLAN_PHYMODE_11AXG_HE20)     || \
