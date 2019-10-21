@@ -779,11 +779,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			}
 		}
 
-		if (session->vhtCapability &&
-			(session->ch_width > CH_WIDTH_80MHZ)) {
-			session->nss = 1;
-			pe_debug("nss set to [%d]", session->nss);
-		}
 		pe_debug("vht su tx bformer %d",
 			session->vht_config.su_beam_former);
 
