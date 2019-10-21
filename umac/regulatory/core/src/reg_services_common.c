@@ -1632,6 +1632,11 @@ uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 	struct regulatory_channel *chan_list;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 
+	if (freq == 0) {
+		reg_err_rl("Invalid frequency %d", freq);
+		return 0;
+	}
+
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 
 	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
@@ -1732,6 +1737,11 @@ uint16_t reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 	uint16_t min_chan_range = MIN_24GHZ_CHANNEL;
 	uint16_t max_chan_range = MAX_5GHZ_CHANNEL;
 
+	if (chan_num == 0) {
+		reg_err_rl("Invalid channel %d", chan_num);
+		return 0;
+	}
+
 	return reg_compute_chan_to_freq(pdev, chan_num,
 					min_chan_range,
 					max_chan_range);
@@ -1744,6 +1754,11 @@ uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 	uint32_t count;
 	struct regulatory_channel *chan_list;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	if (chan_num == 0) {
+		reg_err_rl("Invalid channel %d", chan_num);
+		return 0;
+	}
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 
@@ -2447,6 +2462,11 @@ uint16_t reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
 	enum channel_enum min_chan, max_chan;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	uint16_t freq;
+
+	if (chan_num == 0) {
+		reg_err_rl("Invalid channel %d", chan_num);
+		return 0;
+	}
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
