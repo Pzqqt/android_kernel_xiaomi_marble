@@ -174,7 +174,7 @@ char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id);
  * @rate_flags: Rate Flags for this connection
  * @ecsa_capable: Extended CSA capabilities
  * @max_phy_rate: Calcuated maximum phy rate based on mode, nss, mcs etc.
- * @tx_packets: Packets send to current station
+ * @tx_packets: The number of frames from host to firmware
  * @tx_bytes: Bytes send to current station
  * @rx_packets: Packets received from current station
  * @rx_bytes: Bytes received from current station
@@ -184,6 +184,7 @@ char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id);
  * @rx_rate: Rx rate with current station reported from F/W
  * @ampdu: Ampdu enable or not of the station
  * @sgi_enable: Short GI enable or not of the station
+ * @guard_interval: Guard interval
  * @tx_stbc: Tx Space-time block coding enable/disable
  * @rx_stbc: Rx Space-time block coding enable/disable
  * @ch_width: Channel Width of the connection
@@ -211,6 +212,13 @@ char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id);
  * MSB of rx_mc_bc_cnt indicates whether FW supports rx_mc_bc_cnt
  * feature or not, if first bit is 1 it indicates that FW supports this
  * feature, if it is 0 it indicates FW doesn't support this feature
+ * @tx_retry_succeed: the number of frames retried but successfully transmit
+ * @tx_retry_exhaust: the number of frames retried but finally failed
+ *                    from host to firmware
+ * @tx_total_fw: the number of all frames from firmware to remote station
+ * @tx_retry_fw: the number of retried frames from firmware to remote station
+ * @tx_retry_exhaust_fw: the number of frames retried but finally failed from
+ *                    firmware to remote station
  * @sta_info: The sta_info node for the station info list maintained in adapter
  * @assoc_req_ies: Assoc request IEs of the peer station
  * @ref_cnt: Reference count to synchronize sta_info access
@@ -242,6 +250,7 @@ struct hdd_station_info {
 	uint32_t rx_rate;
 	bool ampdu;
 	bool sgi_enable;
+	enum txrate_gi guard_interval;
 	bool tx_stbc;
 	bool rx_stbc;
 	tSirMacHTChannelWidth ch_width;
@@ -265,6 +274,11 @@ struct hdd_station_info {
 	uint8_t support_mode;
 	uint32_t rx_retry_cnt;
 	uint32_t rx_mc_bc_cnt;
+	uint32_t tx_retry_succeed;
+	uint32_t tx_retry_exhaust;
+	uint32_t tx_total_fw;
+	uint32_t tx_retry_fw;
+	uint32_t tx_retry_exhaust_fw;
 	qdf_list_node_t sta_node;
 	struct wlan_ies assoc_req_ies;
 	qdf_atomic_t ref_cnt;

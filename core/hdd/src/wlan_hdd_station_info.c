@@ -38,6 +38,11 @@
 #include "wlan_hdd_sta_info.h"
 #include "wlan_hdd_object_manager.h"
 
+#include <cdp_txrx_handle.h>
+#include <cdp_txrx_stats_struct.h>
+#include <cdp_txrx_peer_ops.h>
+#include <cdp_txrx_host_stats.h>
+
 /*
  * define short names for the global vendor params
  * used by __wlan_hdd_cfg80211_get_station_cmd()
@@ -128,6 +133,12 @@ hdd_get_station_policy[STATION_MAX + 1] = {
 	[STATION_INFO] = {.type = NLA_FLAG},
 	[STATION_ASSOC_FAIL_REASON] = {.type = NLA_FLAG},
 	[STATION_REMOTE] = {.type = NLA_BINARY, .len = QDF_MAC_ADDR_SIZE},
+};
+
+const struct nla_policy
+hdd_get_sta_policy[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC] = {.type = NLA_BINARY,
+						   .len = QDF_MAC_ADDR_SIZE},
 };
 
 static int hdd_get_sta_congestion(struct hdd_adapter *adapter,
@@ -1467,6 +1478,454 @@ int32_t hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
 		return errno;
 
 	errno = __hdd_cfg80211_get_station_cmd(wiphy, wdev, data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+
+/**
+ * hdd_get_peer_stats - get peer statistics information
+ * @adapter: pointer to adapter
+ * @stainfo: station information
+ *
+ * This function gets peer statistics information
+ *
+ * Return : 0 on success and errno on failure
+ */
+static int hdd_get_peer_stats(struct hdd_adapter *adapter,
+			      struct hdd_station_info *stainfo)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct cdp_peer_stats *peer_stats;
+	struct stats_event *stats;
+	QDF_STATUS status;
+	int ret;
+
+	peer_stats = qdf_mem_malloc(sizeof(*peer_stats));
+	if (!peer_stats)
+		return -ENOMEM;
+
+	status = cdp_host_get_peer_stats(soc, adapter->vdev_id,
+					 stainfo->sta_mac.bytes, peer_stats);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("cdp_host_get_peer_stats failed");
+		return -EINVAL;
+	}
+
+	stainfo->rx_retry_cnt = peer_stats->rx.rx_retries;
+	stainfo->rx_mc_bc_cnt = peer_stats->rx.multicast.num +
+				peer_stats->rx.bcast.num;
+
+	qdf_mem_free(peer_stats);
+	peer_stats = NULL;
+
+	stats = wlan_cfg80211_mc_cp_stats_get_peer_stats(adapter->vdev,
+							 stainfo->sta_mac.bytes,
+							 &ret);
+	if (ret || !stats) {
+		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
+		hdd_err("Failed to get peer stats info");
+		return -EINVAL;
+	}
+
+	stainfo->tx_retry_succeed = stats->peer_stats_info_ext->tx_retries -
+				    stats->peer_stats_info_ext->tx_failed;
+	/* This host counter is not supported
+	 * since currently tx retry is not done in host side
+	 */
+	stainfo->tx_retry_exhaust = 0;
+	stainfo->tx_total_fw = stats->peer_stats_info_ext->tx_packets;
+	stainfo->tx_retry_fw = stats->peer_stats_info_ext->tx_retries;
+	stainfo->tx_retry_exhaust_fw = stats->peer_stats_info_ext->tx_failed;
+
+	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
+
+	return 0;
+}
+
+/**
+ * hdd_add_peer_stats_get_len - get data length used in
+ * hdd_add_peer_stats()
+ * @stainfo: station information
+ *
+ * This function calculates the data length used in
+ * hdd_add_peer_stats()
+ *
+ * Return: total data length used in hdd_add_peer_stats()
+ */
+static uint32_t
+hdd_add_peer_stats_get_len(struct hdd_station_info *stainfo)
+{
+	return (nla_attr_size(sizeof(stainfo->rx_retry_cnt)) +
+		nla_attr_size(sizeof(stainfo->rx_mc_bc_cnt)) +
+		nla_attr_size(sizeof(stainfo->tx_retry_succeed)) +
+		nla_attr_size(sizeof(stainfo->tx_retry_exhaust)) +
+		nla_attr_size(sizeof(stainfo->tx_total_fw)) +
+		nla_attr_size(sizeof(stainfo->tx_retry_fw)) +
+		nla_attr_size(sizeof(stainfo->tx_retry_exhaust_fw)));
+}
+
+/**
+ * hdd_add_peer_stats - add peer statistics information
+ * @skb: pointer to response skb buffer
+ * @stainfo: station information
+ *
+ * This function adds peer statistics information to response skb buffer
+ *
+ * Return : 0 on success and errno on failure
+ */
+static int hdd_add_peer_stats(struct sk_buff *skb,
+			      struct hdd_station_info *stainfo)
+{
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_RX_RETRY_COUNT,
+			stainfo->rx_retry_cnt)) {
+		hdd_err("Failed to put rx_retry_cnt");
+		goto fail;
+	}
+
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_RX_BC_MC_COUNT,
+			stainfo->rx_mc_bc_cnt)) {
+		hdd_err("Failed to put rx_mc_bc_cnt");
+		goto fail;
+	}
+
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TX_RETRY_SUCCEED,
+			stainfo->tx_retry_succeed)) {
+		hdd_err("Failed to put tx_retry_succeed");
+		goto fail;
+	}
+
+	if (nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TX_RETRY_EXHAUSTED,
+			stainfo->tx_retry_exhaust)) {
+		hdd_err("Failed to put tx_retry_exhaust");
+		goto fail;
+	}
+
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TARGET_TX_TOTAL,
+			stainfo->tx_total_fw)) {
+		hdd_err("Failed to put tx_total_fw");
+		goto fail;
+	}
+
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TARGET_TX_RETRY,
+			stainfo->tx_retry_fw)) {
+		hdd_err("Failed to put tx_retry_fw");
+		goto fail;
+	}
+
+	if (nla_put_u32(skb,
+		    QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TARGET_TX_RETRY_EXHAUSTED,
+		    stainfo->tx_retry_exhaust_fw)) {
+		hdd_err("Failed to put tx_retry_exhaust_fw");
+		goto fail;
+	}
+
+	return 0;
+fail:
+	return -EINVAL;
+}
+
+/**
+ * hdd_get_station_info_ex() - send STA info to userspace, for STA mode only
+ * @hdd_ctx: pointer to hdd context
+ * @adapter: pointer to adapter
+ * @mac_addr: self mac address
+ *
+ * Return: 0 if success else error status
+ */
+static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
+				   struct hdd_adapter *adapter,
+				   struct qdf_mac_addr mac_addr)
+{
+	struct sk_buff *skb = NULL;
+	uint32_t nl_buf_len;
+	struct hdd_station_ctx *hdd_sta_ctx;
+	struct hdd_station_info stainfo;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!hdd_sta_ctx) {
+		hdd_err_rl("Invalid hdd_sta_ctx");
+		return -EINVAL;
+	}
+
+	if (!qdf_is_macaddr_equal(&mac_addr, &adapter->mac_addr)) {
+		hdd_err_rl("Invalid MAC address");
+		return -EINVAL;
+	}
+
+	qdf_mem_copy(&stainfo.sta_mac, &mac_addr, sizeof(stainfo.sta_mac));
+
+	if (hdd_get_peer_stats(adapter, &stainfo)) {
+		hdd_err_rl("hdd_get_peer_stats fail");
+		return -EINVAL;
+	}
+
+	nl_buf_len = NLMSG_HDRLEN;
+	nl_buf_len += nla_attr_size(QDF_MAC_ADDR_SIZE) +
+		      hdd_add_peer_stats_get_len(&stainfo);
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
+	if (!skb) {
+		hdd_err_rl("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC,
+		    QDF_MAC_ADDR_SIZE, mac_addr.bytes)) {
+		hdd_err_rl("Failed to put MAC address");
+		goto fail;
+	}
+
+	if (hdd_add_peer_stats(skb, &stainfo)) {
+		hdd_err_rl("hdd_add_peer_stats fail");
+		goto fail;
+	}
+
+	return cfg80211_vendor_cmd_reply(skb);
+fail:
+	if (skb)
+		kfree_skb(skb);
+	return -EINVAL;
+}
+
+/**
+ * hdd_get_connected_station_info_ex() - get connected peer's info
+ * @hdd_ctx: hdd context
+ * @adapter: hostapd interface
+ * @stainfo: pointer to hdd_station_info
+ *
+ * This function collect and indicate the connected peer's info
+ *
+ * Return: 0 on success, otherwise error value
+ */
+static int hdd_get_connected_station_info_ex(struct hdd_context *hdd_ctx,
+					     struct hdd_adapter *adapter,
+					     struct hdd_station_info *stainfo)
+{
+	struct sk_buff *skb = NULL;
+	uint32_t nl_buf_len, guard_interval;
+	bool sap_get_peer_info;
+	struct nl80211_sta_flag_update sta_flags = {0};
+	QDF_STATUS status;
+
+	if (hdd_get_peer_stats(adapter, stainfo)) {
+		hdd_err_rl("hdd_get_peer_stats fail");
+		return -EINVAL;
+	}
+
+	nl_buf_len = NLMSG_HDRLEN;
+	nl_buf_len += nla_attr_size(QDF_MAC_ADDR_SIZE);
+
+	status = ucfg_mlme_get_sap_get_peer_info(hdd_ctx->psoc,
+						 &sap_get_peer_info);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err_rl("Unable to fetch sap ger peer info");
+
+	if (sap_get_peer_info)
+		nl_buf_len += hdd_add_peer_stats_get_len(stainfo);
+
+	if (stainfo->mode > SIR_SME_PHY_MODE_LEGACY)
+		nl_buf_len += nla_attr_size(sizeof(sta_flags)) +
+			      nla_attr_size(sizeof(guard_interval));
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
+	if (!skb) {
+		hdd_err_rl("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		goto fail;
+	}
+
+	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC,
+		    QDF_MAC_ADDR_SIZE, stainfo->sta_mac.bytes)) {
+		hdd_err_rl("Failed to put MAC address");
+		goto fail;
+	}
+
+	if (sap_get_peer_info && hdd_add_peer_stats(skb, stainfo)) {
+		hdd_err_rl("hdd_add_peer_stats fail");
+		goto fail;
+	}
+
+	if (stainfo->mode > SIR_SME_PHY_MODE_LEGACY) {
+		sta_flags.mask = QCA_VENDOR_WLAN_STA_FLAG_AMPDU |
+				 QCA_VENDOR_WLAN_STA_FLAG_TX_STBC |
+				 QCA_VENDOR_WLAN_STA_FLAG_RX_STBC;
+
+		if (stainfo->ampdu)
+			sta_flags.set |= QCA_VENDOR_WLAN_STA_FLAG_AMPDU;
+		if (stainfo->tx_stbc)
+			sta_flags.set |= QCA_VENDOR_WLAN_STA_FLAG_TX_STBC;
+		if (stainfo->rx_stbc)
+			sta_flags.set |= QCA_VENDOR_WLAN_STA_FLAG_RX_STBC;
+
+		if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_FLAGS,
+			    sizeof(sta_flags), &sta_flags)) {
+			hdd_err_rl("Failed to put STA flags");
+			goto fail;
+		}
+
+		switch (stainfo->guard_interval) {
+		case TXRATE_GI_0_8_US:
+			guard_interval = QCA_VENDOR_WLAN_STA_GI_800_NS;
+			break;
+		case TXRATE_GI_0_4_US:
+			guard_interval = QCA_VENDOR_WLAN_STA_GI_400_NS;
+			break;
+		case TXRATE_GI_1_6_US:
+			guard_interval = QCA_VENDOR_WLAN_STA_GI_1600_NS;
+			break;
+		case TXRATE_GI_3_2_US:
+			guard_interval = QCA_VENDOR_WLAN_STA_GI_3200_NS;
+			break;
+		default:
+			hdd_err_rl("Invalid guard_interval %d",
+				   stainfo->guard_interval);
+			goto fail;
+		}
+
+		if (nla_put_u32(skb,
+			       QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_GUARD_INTERVAL,
+			       guard_interval)) {
+			hdd_err_rl("Failed to put guard_interval");
+			goto fail;
+		}
+	}
+
+	return cfg80211_vendor_cmd_reply(skb);
+
+fail:
+	if (skb)
+		kfree_skb(skb);
+
+	return -EINVAL;
+}
+
+/**
+ * hdd_get_station_remote_ex() - get remote peer's info, for SAP/GO mode only
+ * @hdd_ctx: hdd context
+ * @adapter: hostapd interface
+ * @mac_addr: mac address of requested peer
+ *
+ * This function collect and indicate the remote peer's info
+ *
+ * Return: 0 on success, otherwise error value
+ */
+static int hdd_get_station_remote_ex(struct hdd_context *hdd_ctx,
+				     struct hdd_adapter *adapter,
+				     struct qdf_mac_addr mac_addr)
+{
+	bool is_associated = false;
+	struct hdd_station_info *stainfo =
+				hdd_get_sta_info_by_mac(&adapter->sta_info_list,
+					       mac_addr.bytes,
+					       STA_INFO_HDD_GET_STATION_REMOTE);
+
+	/* For now, only connected STAs are supported */
+	if (!stainfo) {
+		hdd_err_rl("Failed to get peer STA");
+		return -EINVAL;
+	}
+
+	is_associated = hdd_is_peer_associated(adapter, &mac_addr);
+	if (!is_associated) {
+		hdd_err_rl("Peer STA is not associated");
+		return -EINVAL;
+	}
+
+	return hdd_get_connected_station_info_ex(hdd_ctx, adapter, stainfo);
+}
+
+/**
+ * __hdd_cfg80211_get_sta_info_cmd() - Handle get sta info vendor cmd
+ * @wiphy: pointer to wireless phy
+ * @wdev: wireless device
+ * @data: data
+ * @data_len: data length
+ *
+ * Handles QCA_NL80211_VENDOR_SUBCMD_GET_STA_INFO.
+ * Validate cmd attributes and send the station info to upper layers.
+ *
+ * Return: Success(0) or reason code for failure
+ */
+static int
+__hdd_cfg80211_get_sta_info_cmd(struct wiphy *wiphy,
+				struct wireless_dev *wdev,
+				const void *data,
+				int data_len)
+{
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAX + 1];
+	struct qdf_mac_addr mac_addr;
+	int32_t status;
+
+	hdd_enter_dev(dev);
+
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
+	    hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE) {
+		hdd_err_rl("Command not allowed in FTM / Monitor mode");
+		status = -EPERM;
+		goto out;
+	}
+
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (status != 0)
+		goto out;
+
+	status = wlan_cfg80211_nla_parse(tb,
+					 QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAX,
+					 data, data_len,
+					 hdd_get_sta_policy);
+	if (status) {
+		hdd_err_rl("Invalid ATTR");
+		goto out;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC]) {
+		hdd_err_rl("MAC address is not present");
+		status = -EINVAL;
+		goto out;
+	}
+
+	nla_memcpy(mac_addr.bytes, tb[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC],
+		   QDF_MAC_ADDR_SIZE);
+	hdd_debug("STA " QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(mac_addr.bytes));
+
+	switch (adapter->device_mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+		status = hdd_get_station_info_ex(hdd_ctx, adapter, mac_addr);
+		break;
+	case QDF_SAP_MODE:
+	case QDF_P2P_GO_MODE:
+		status = hdd_get_station_remote_ex(hdd_ctx, adapter, mac_addr);
+		break;
+	default:
+		hdd_err_rl("Invalid device_mode: %d", adapter->device_mode);
+		status = -EINVAL;
+		goto out;
+	}
+
+	hdd_exit();
+out:
+	return status;
+}
+
+int32_t hdd_cfg80211_get_sta_info_cmd(struct wiphy *wiphy,
+				      struct wireless_dev *wdev,
+				      const void *data,
+				      int data_len)
+{
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __hdd_cfg80211_get_sta_info_cmd(wiphy, wdev, data, data_len);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 

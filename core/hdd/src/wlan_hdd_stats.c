@@ -4274,11 +4274,11 @@ static uint8_t hdd_get_rate_flags(uint32_t rate,
 }
 
 /**
- * wlan_hdd_fill_rate_info() - fill HDD rate info from SIR peer info
+ * wlan_hdd_fill_rate_info() - fill HDD rate info from peer info
  * @txrx_stats: pointer to txrx stats to be filled with rate info
- * @peer_info: SIR peer info pointer
+ * @peer_info: peer info pointer
  *
- * This function is used to fill HDD rate info rom SIR peer info
+ * This function is used to fill HDD rate info from peer info
  *
  * Return: None
  */
@@ -4407,6 +4407,7 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	txrx_stats.rx_bytes = stats->peer_stats_info_ext->rx_bytes;
 	txrx_stats.tx_retries = stats->peer_stats_info_ext->tx_retries;
 	txrx_stats.tx_failed = stats->peer_stats_info_ext->tx_failed;
+	txrx_stats.tx_succeed = stats->peer_stats_info_ext->tx_succeed;
 	txrx_stats.rssi = stats->peer_stats_info_ext->rssi
 			+ WLAN_HDD_TGT_NOISE_FLOOR_DBM;
 	wlan_hdd_fill_rate_info(&txrx_stats, stats->peer_stats_info_ext);
