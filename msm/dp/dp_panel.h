@@ -81,6 +81,7 @@ struct dp_dsc_caps {
 	bool dsc_capable;
 	u8 version;
 	bool block_pred_en;
+	u8 color_depth;
 };
 
 struct dp_audio;

@@ -2023,7 +2023,9 @@ static void dp_panel_decode_dsc_dpcd(struct dp_panel *dp_panel)
 		dp_panel->sink_dsc_caps.dsc_capable = true;
 		dp_panel->sink_dsc_caps.version = dp_panel->dsc_dpcd[1];
 		dp_panel->sink_dsc_caps.block_pred_en =
-			dp_panel->dsc_dpcd[6] ? true : false;
+				dp_panel->dsc_dpcd[6] ? true : false;
+		dp_panel->sink_dsc_caps.color_depth =
+				dp_panel->dsc_dpcd[10];
 
 		if (dp_panel->sink_dsc_caps.version >= 0x11)
 			dp_panel->dsc_en = true;
@@ -2152,7 +2154,8 @@ static int dp_panel_read_sink_caps(struct dp_panel *dp_panel,
 	dp_panel->fec_en = false;
 	dp_panel->dsc_en = false;
 
-	if (dp_panel->fec_feature_enable) {
+	if (dp_panel->dpcd[DP_DPCD_REV] >= DP_DPCD_REV_14 &&
+			dp_panel->fec_feature_enable) {
 		dp_panel_read_sink_fec_caps(dp_panel);
 
 		if (dp_panel->dsc_feature_enable && dp_panel->fec_en)
@@ -2181,11 +2184,30 @@ static u32 dp_panel_get_supported_bpp(struct dp_panel *dp_panel,
 	link_info = &dp_panel->link_info;
 	data_rate_khz = link_info->num_lanes * link_info->rate * 8;
 
-	while (bpp > min_supported_bpp) {
+	for (; bpp > min_supported_bpp; bpp -= 6) {
+		if (dp_panel->dsc_en) {
+			if (bpp == 36 && !(dp_panel->sink_dsc_caps.color_depth
+					& DP_DSC_12_BPC))
+				continue;
+			else if (bpp == 30 &&
+					!(dp_panel->sink_dsc_caps.color_depth &
+					DP_DSC_10_BPC))
+				continue;
+			else if (bpp == 24 &&
+					!(dp_panel->sink_dsc_caps.color_depth &
+					DP_DSC_8_BPC))
+				continue;
+		}
+
 		if (mode_pclk_khz * bpp <= data_rate_khz)
 			break;
-		bpp -= 6;
 	}
+
+	if (bpp < min_supported_bpp)
+		DP_ERR("bpp %d is below minimum supported bpp %d\n", bpp,
+				min_supported_bpp);
+	if (dp_panel->dsc_en && bpp != 24 && bpp != 30 && bpp != 36)
+		DP_ERR("bpp %d is not supported when dsc is enabled\n", bpp);
 
 	return bpp;
 }

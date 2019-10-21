@@ -4387,6 +4387,30 @@ static bool dsi_display_validate_mode_seamless(struct dsi_display *display,
 	return rc;
 }
 
+static void dsi_display_validate_dms_fps(struct dsi_display_mode *cur_mode,
+		struct dsi_display_mode *to_mode)
+{
+	u32 cur_fps, to_fps;
+	u32 cur_h_active, to_h_active;
+	u32 cur_v_active, to_v_active;
+
+	cur_fps = cur_mode->timing.refresh_rate;
+	to_fps = to_mode->timing.refresh_rate;
+	cur_h_active = cur_mode->timing.h_active;
+	cur_v_active = cur_mode->timing.v_active;
+	to_h_active = to_mode->timing.h_active;
+	to_v_active = to_mode->timing.v_active;
+
+	if ((cur_h_active == to_h_active) && (cur_v_active == to_v_active) &&
+			(cur_fps != to_fps)) {
+		to_mode->dsi_mode_flags |= DSI_MODE_FLAG_DMS_FPS;
+		DSI_DEBUG("DMS Modeset with FPS change\n");
+	} else {
+		to_mode->dsi_mode_flags &= ~DSI_MODE_FLAG_DMS_FPS;
+	}
+}
+
+
 static int dsi_display_set_mode_sub(struct dsi_display *display,
 				    struct dsi_display_mode *mode,
 				    u32 flags)
@@ -4395,6 +4419,7 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 	int i;
 	struct dsi_display_ctrl *ctrl;
 	struct dsi_display_mode_priv_info *priv_info;
+	bool commit_phy_timing = false;
 
 	priv_info = mode->priv_info;
 	if (!priv_info) {
@@ -4403,6 +4428,7 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 		return -EINVAL;
 	}
 
+	SDE_EVT32(mode->dsi_mode_flags);
 	if (mode->dsi_mode_flags & DSI_MODE_FLAG_POMS) {
 		display->config.panel_mode = mode->panel_mode;
 		display->panel->panel_mode = mode->panel_mode;
@@ -4462,15 +4488,20 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 	}
 
 	if ((mode->dsi_mode_flags & DSI_MODE_FLAG_DMS) &&
-			(display->panel->panel_mode == DSI_OP_CMD_MODE))
+			(display->panel->panel_mode == DSI_OP_CMD_MODE)) {
+		commit_phy_timing = true;
 		atomic_set(&display->clkrate_change_pending, 1);
+
+		dsi_display_validate_dms_fps(display->panel->cur_mode, mode);
+	}
 
 	if (priv_info->phy_timing_len) {
 		display_for_each_ctrl(i, display) {
 			ctrl = &display->ctrl[i];
 			 rc = dsi_phy_set_timing_params(ctrl->phy,
 				priv_info->phy_timing_val,
-				priv_info->phy_timing_len);
+				priv_info->phy_timing_len,
+				commit_phy_timing);
 			if (rc)
 				DSI_ERR("failed to add DSI PHY timing params\n");
 		}
@@ -5930,9 +5961,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 				display_mode.timing.min_dsi_clk_hz;
 
 			display_mode.priv_info->mdp_transfer_time_us =
-				display_mode.priv_info->dsi_transfer_time_us;
-			display_mode.timing.mdp_transfer_time_us =
-				display_mode.timing.dsi_transfer_time_us;
+				display_mode.timing.mdp_transfer_time_us;
 		}
 
 		is_split_link = host->split_link.split_link_enabled;
@@ -6280,6 +6309,15 @@ int dsi_display_set_mode(struct dsi_display *display,
 	timing = adj_mode.timing;
 	adjust_timing_by_ctrl_count(display, &adj_mode);
 
+	if (!display->panel->cur_mode) {
+		display->panel->cur_mode =
+			kzalloc(sizeof(struct dsi_display_mode), GFP_KERNEL);
+		if (!display->panel->cur_mode) {
+			rc = -ENOMEM;
+			goto error;
+		}
+	}
+
 	/*For dynamic DSI setting, use specified clock rate */
 	if (display->cached_clk_rate > 0)
 		adj_mode.priv_info->clk_rate_hz = display->cached_clk_rate;
@@ -6294,15 +6332,6 @@ int dsi_display_set_mode(struct dsi_display *display,
 	if (rc) {
 		DSI_ERR("[%s] failed to set mode\n", display->name);
 		goto error;
-	}
-
-	if (!display->panel->cur_mode) {
-		display->panel->cur_mode =
-			kzalloc(sizeof(struct dsi_display_mode), GFP_KERNEL);
-		if (!display->panel->cur_mode) {
-			rc = -ENOMEM;
-			goto error;
-		}
 	}
 
 	DSI_INFO("mdp_transfer_time_us=%d us\n",
@@ -7136,7 +7165,9 @@ int dsi_display_enable(struct dsi_display *display)
 		}
 	}
 
-	if (mode->priv_info->dsc_enabled) {
+	/* Block sending pps command if modeset is due to fps difference */
+	if ((mode->priv_info->dsc_enabled) &&
+			!(mode->dsi_mode_flags & DSI_MODE_FLAG_DMS_FPS)) {
 		mode->priv_info->dsc.pic_width *= display->ctrl_count;
 		rc = dsi_panel_update_pps(display->panel);
 		if (rc) {
