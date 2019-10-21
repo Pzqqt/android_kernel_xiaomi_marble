@@ -743,7 +743,7 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 				       struct dfs_channel *chan_list,
 				       uint32_t *num_chan)
 {
-	uint8_t pcl_ch[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t pcl_ch[QDF_MAX_NUM_CHAN] = {0};
 	uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t len;
 	uint32_t weight_len;
@@ -787,8 +787,8 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 
 	for (i = 0; i < len; i++) {
 		chan_list[i].dfs_ch_ieee  = pcl_ch[i];
-		chan_list[i].dfs_ch_freq  =
-			wlan_reg_chan_to_freq(pdev, pcl_ch[i]);
+			wlan_reg_freq_to_chan(pdev, pcl_ch[i]);
+		chan_list[i].dfs_ch_freq  = pcl_ch[i];
 	}
 	*num_chan = i;
 	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "num channels %d", i);
