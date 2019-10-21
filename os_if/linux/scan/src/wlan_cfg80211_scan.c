@@ -267,7 +267,8 @@ static QDF_STATUS wlan_cfg80211_is_chan_ok_for_dnbs(
 			struct wlan_objmgr_psoc *psoc,
 			u8 channel, bool *ok)
 {
-	QDF_STATUS status = policy_mgr_is_chan_ok_for_dnbs(psoc, channel, ok);
+	QDF_STATUS status = policy_mgr_is_chan_ok_for_dnbs(
+				psoc, wlan_chan_to_freq(channel), ok);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		osif_err("DNBS check failed");
@@ -1446,12 +1447,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 			if (ap_or_go_present) {
 				bool ok;
 
-				qdf_status =
-					policy_mgr_is_chan_ok_for_dnbs(
-							psoc,
-							wlan_reg_freq_to_chan(
-								pdev, c_freq),
-							&ok);
+				qdf_status = policy_mgr_is_chan_ok_for_dnbs(
+							psoc, c_freq, &ok);
 
 				if (QDF_IS_STATUS_ERROR(qdf_status)) {
 					osif_err("DNBS check failed");
