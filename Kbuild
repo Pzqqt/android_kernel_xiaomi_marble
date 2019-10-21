@@ -2712,6 +2712,7 @@ cppflags-y += -DDP_MOB_DEFS
 cppflags-y += -DDP_PRINT_NO_CONSOLE
 cppflags-y += -DDP_INTR_POLL_BOTH
 cppflags-y += -DDP_INVALID_PEER_ASSERT
+cppflags-y += -DHIF_CE_HISTORY_MAX=8192
 #endof dummy flags
 
 ccflags-$(CONFIG_ENABLE_SIZE_OPTIMIZE) += -Os
