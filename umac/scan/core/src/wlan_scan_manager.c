@@ -712,10 +712,10 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (ap_present) {
-		uint8_t ap_chan;
+		uint8_t ap_chan_freq;
 		struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 
-		ap_chan = policy_mgr_get_channel(psoc, PM_SAP_MODE, NULL);
+		ap_chan_freq = policy_mgr_get_channel(psoc, PM_SAP_MODE, NULL);
 		/*
 		 * P2P/STA scan while SoftAP is sending beacons.
 		 * Max duration of CTS2self is 32 ms, which limits the
@@ -729,7 +729,7 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 					SCAN_ROAM_SCAN_CHANNEL_SWITCH_TIME));
 			if (!policy_mgr_is_hw_dbs_capable(psoc) ||
 			    (policy_mgr_is_hw_dbs_capable(psoc) &&
-			     WLAN_CHAN_IS_5GHZ(ap_chan))) {
+			     WLAN_REG_IS_5GHZ_CH_FREQ(ap_chan_freq))) {
 				req->scan_req.dwell_time_passive =
 					req->scan_req.dwell_time_active;
 			}
@@ -739,7 +739,7 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 				scan_obj->scan_def.ap_scan_burst_duration;
 		} else {
 			req->scan_req.burst_duration = 0;
-			if (utils_is_dfs_ch(pdev, ap_chan))
+			if (wlan_reg_is_dfs_for_freq(pdev, ap_chan_freq))
 				req->scan_req.burst_duration =
 					SCAN_BURST_SCAN_MAX_NUM_OFFCHANNELS *
 					req->scan_req.dwell_time_active;

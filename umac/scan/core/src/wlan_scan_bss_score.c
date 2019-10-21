@@ -649,7 +649,8 @@ static uint32_t scm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
 	 * NSS as 2*2.
 	 */
 
-	if (policy_mgr_is_chnl_in_diff_band(psoc, bss_channel) &&
+	if (policy_mgr_is_chnl_in_diff_band(
+	    psoc, wlan_chan_to_freq(bss_channel)) &&
 	    policy_mgr_is_hw_dbs_capable(psoc) &&
 	    !(policy_mgr_is_hw_dbs_2x2_capable(psoc)))
 		return 1;
