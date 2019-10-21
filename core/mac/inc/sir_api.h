@@ -5686,4 +5686,18 @@ struct sir_get_mws_coex_info {
 	uint32_t cmd_id;
 };
 #endif /* WLAN_MWS_INFO_DEBUGFS */
+
+/*
+ * struct sir_update_session_txq_edca_param
+ * @message_type: SME message type
+ * @length: size of struct sir_update_session_txq_edca_param
+ * @vdev_id: vdev ID
+ * @txq_edca_params: txq edca parameter to update
+ */
+struct sir_update_session_txq_edca_param {
+	uint16_t message_type;
+	uint16_t length;
+	uint8_t vdev_id;
+	tSirMacEdcaParamRecord txq_edca_params;
+};
 #endif /* __SIR_API_H */
