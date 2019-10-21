@@ -90,11 +90,8 @@
 					struct msm_acdb_cmd_device)
 #define AUDIO_GET_ACDB_BLK _IOW(AUDIO_IOCTL_MAGIC, 96,  \
 					struct msm_acdb_cmd_device)
-
-#define AUDIO_REGISTER_ION _IOW(AUDIO_IOCTL_MAGIC, 97, \
-		struct msm_audio_ion_info)
-#define AUDIO_DEREGISTER_ION _IOW(AUDIO_IOCTL_MAGIC, 98, \
-		struct msm_audio_ion_info)
+#define IOCTL_MAP_PHYS_ADDR _IOW(AUDIO_IOCTL_MAGIC, 97, int)
+#define IOCTL_UNMAP_PHYS_ADDR _IOW(AUDIO_IOCTL_MAGIC, 98, int)
 #define AUDIO_SET_EFFECTS_CONFIG   _IOW(AUDIO_IOCTL_MAGIC, 99, \
 				struct msm_hwacc_effects_config)
 #define AUDIO_EFFECTS_SET_BUF_LEN _IOW(AUDIO_IOCTL_MAGIC, 100, \
@@ -107,8 +104,9 @@
 
 #define AUDIO_PM_AWAKE      _IOW(AUDIO_IOCTL_MAGIC, 105, unsigned int)
 #define AUDIO_PM_RELAX      _IOW(AUDIO_IOCTL_MAGIC, 106, unsigned int)
-
-#define	AUDIO_MAX_COMMON_IOCTL_NUM	107
+#define AUDIO_REGISTER_ION   _IOW(AUDIO_IOCTL_MAGIC, 107, struct msm_audio_ion_info)
+#define AUDIO_DEREGISTER_ION _IOW(AUDIO_IOCTL_MAGIC, 108, struct msm_audio_ion_info)
+#define	AUDIO_MAX_COMMON_IOCTL_NUM	109
 
 
 #define HANDSET_MIC			0x01

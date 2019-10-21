@@ -108,36 +108,11 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 
 ifdef CONFIG_SND_SOC_MSM_QDSP6V2_INTF
 	Q6_OBJS += msm-audio-event-notify.o
-	Q6_OBJS += audio_calibration.o
-	Q6_OBJS += audio_cal_utils.o
-	Q6_OBJS += q6adm.o
-	Q6_OBJS += q6afe.o
-	Q6_OBJS += q6asm.o
-	Q6_OBJS += q6audio-v2.o
-	Q6_OBJS += q6voice.o
-	Q6_OBJS += q6core.o
-	Q6_OBJS += q6common.o
-	Q6_OBJS += rtac.o
-	Q6_OBJS += q6lsm.o
-	Q6_OBJS += adsp_err.o
-	Q6_OBJS += msm_audio_ion.o
 	Q6_OBJS += q6_init.o
 endif
 
 ifdef CONFIG_SND_SOC_MSM_QDSP6V2_VM
 	Q6_OBJS += msm-audio-event-notify.o
-	Q6_OBJS += audio_calibration.o
-	Q6_OBJS += audio_cal_utils.o
-	Q6_OBJS += q6adm.o
-	Q6_OBJS += q6afe.o
-	Q6_OBJS += q6asm.o
-	Q6_OBJS += q6audio-v2.o
-	Q6_OBJS += q6voice.o
-	Q6_OBJS += q6core.o
-	Q6_OBJS += q6common.o
-	Q6_OBJS += rtac.o
-	Q6_OBJS += q6lsm.o
-	Q6_OBJS += adsp_err.o
 	Q6_OBJS += msm_audio_ion_vm.o
 	Q6_OBJS += q6_init.o
 endif
@@ -148,18 +123,6 @@ endif
 
 ifdef CONFIG_XT_LOGGING
 	Q6_OBJS += sp_params.o
-endif
-
-ifdef CONFIG_WCD9XXX_CODEC_CORE
-	Q6_OBJS += audio_slimslave.o
-endif
-
-ifdef CONFIG_DTS_SRS_TM
-	Q6_OBJS += msm-dts-srs-tm-config.o
-endif
-
-ifdef CONFIG_AFE_HWDEP
-	Q6_OBJS += q6afecal-hwdep.o
 endif
 
 ifdef CONFIG_MSM_ADSP_LOADER
@@ -174,16 +137,16 @@ ifdef CONFIG_MSM_QDSP6_NOTIFIER
 QDSP6_NOTIFIER_OBJS += audio_notifier.o audio_ssr.o
 endif
 
-ifdef CONFIG_MSM_ULTRASOUND
-USF_OBJS += usf.o usfcdev.o q6usm.o
+ifdef CONFIG_GECKO_CORE
+GECKO_CORE_OBJS += gecko-core.o
 endif
 
-ifdef CONFIG_MSM_MDF
-	Q6_OBJS += msm_mdf.o
+ifdef CONFIG_AUDIO_PRM
+AUDIO_PRM += audio_prm.o
 endif
 
-ifdef CONFIG_VOICE_MHI
-	Q6_OBJS += voice_mhi.o
+ifdef CONFIG_AUDIO_PKT_ION
+AUDIO_PKT_ION += msm_audio_ion.o
 endif
 
 LINUX_INC +=	-Iinclude/linux
@@ -244,17 +207,23 @@ q6_dlkm-y := $(Q6_OBJS)
 obj-$(CONFIG_SND_SOC_MSM_QDSP6V2_VM) += q6_dlkm.o
 q6_dlkm-y := $(Q6_OBJS)
 
-obj-$(CONFIG_MSM_ULTRASOUND) += usf_dlkm.o
-usf_dlkm-y := $(USF_OBJS)
-
 obj-$(CONFIG_MSM_ADSP_LOADER) += adsp_loader_dlkm.o
 adsp_loader_dlkm-y := $(ADSP_LOADER_OBJS)
 
 obj-$(CONFIG_MSM_QDSP6_PDR) += q6_pdr_dlkm.o
 q6_pdr_dlkm-y := $(QDSP6_PDR_OBJS)
 
+obj-$(CONFIG_GECKO_CORE) += gecko_core_dlkm.o
+gecko_core_dlkm-y := $(GECKO_CORE_OBJS)
+
 obj-$(CONFIG_MSM_QDSP6_NOTIFIER) += q6_notifier_dlkm.o
 q6_notifier_dlkm-y := $(QDSP6_NOTIFIER_OBJS)
+
+obj-$(CONFIG_AUDIO_PRM) += audio_prm_dlkm.o
+audio_prm_dlkm-y := $(AUDIO_PRM)
+
+obj-$(CONFIG_AUDIO_PKT_ION) += audpkt_ion_dlkm.o
+audpkt_ion_dlkm-y := $(AUDIO_PKT_ION)
 
 # inject some build related information
 DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
