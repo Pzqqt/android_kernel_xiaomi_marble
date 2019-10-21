@@ -2078,6 +2078,91 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
 	return status;
 }
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * csr_check_band_freq_match() - check if passed band and ch freq match
+ * @band: band to match with channel frequency
+ * @freq: freq to match with band
+ *
+ * Return: bool if match else false
+ */
+static bool
+csr_check_band_freq_match(enum band_info band, uint32_t freq)
+{
+	if (band == BAND_ALL)
+		return true;
+
+	if (band == BAND_2G && WLAN_REG_IS_24GHZ_CH_FREQ(freq))
+		return true;
+
+	if (band == BAND_5G && WLAN_REG_IS_5GHZ_CH_FREQ(freq))
+		return true;
+
+	return false;
+}
+
+/**
+ * is_dfs_unsafe_extra_band_chan() - check if dfs unsafe or extra band channel
+ * @mac_ctx: MAC context
+ * @freq: channel freq to check
+ * @band: band for intra band check
+.*.
+ * Return: bool if match else false
+ */
+static bool
+is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
+			      enum band_info band)
+{
+	uint16_t  unsafe_chan[NUM_CHANNELS];
+	uint16_t  unsafe_chan_cnt = 0;
+	uint16_t  cnt = 0;
+	bool      is_unsafe_chan;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_ctx) {
+		cds_err("qdf_ctx is NULL");
+		return true;
+	}
+
+	if ((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel ==
+	     ROAMING_DFS_CHANNEL_DISABLED ||
+	     mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+	     CSR_STA_ROAM_POLICY_DFS_DISABLED) &&
+	    (wlan_reg_is_dfs_for_freq(mac_ctx->pdev, freq))) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  ("dfs freq %d"), freq);
+		return true;
+	}
+
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
+				    &unsafe_chan_cnt,
+				    sizeof(unsafe_chan));
+	if (mac_ctx->roam.configParam.sta_roam_policy.skip_unsafe_channels &&
+	    unsafe_chan_cnt) {
+		is_unsafe_chan = false;
+		for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
+			if (unsafe_chan[cnt] ==
+			    wlan_reg_freq_to_chan(mac_ctx->pdev, freq)) {
+				is_unsafe_chan = true;
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					  QDF_TRACE_LEVEL_DEBUG,
+					  ("ignoring unsafe channel freq %d"),
+					  freq);
+				return true;
+			}
+		}
+	}
+	sme_debug("band %d", band);
+	if (!csr_check_band_freq_match(band, freq)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  ("ignoring non-intra band freq %d"),
+			freq);
+		return true;
+	}
+
+	return false;
+}
+#endif
 
 #ifdef FEATURE_WLAN_ESE
 /**
@@ -2356,90 +2441,6 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-/**
- * csr_check_band_freq_match() - check if passed band and ch freq match
- * @band: band to match with channel frequency
- * @freq: freq to match with band
- *
- * Return: bool if match else false
- */
-static bool
-csr_check_band_freq_match(enum band_info band, uint32_t freq)
-{
-	if (band == BAND_ALL)
-		return true;
-
-	if (band == BAND_2G && WLAN_REG_IS_24GHZ_CH_FREQ(freq))
-		return true;
-
-	if (band == BAND_5G && WLAN_REG_IS_5GHZ_CH_FREQ(freq))
-		return true;
-
-	return false;
-}
-
-/**
- * is_dfs_unsafe_extra_band_chan() - check if dfs unsafe or extra band channel
- * @mac_ctx: MAC context
- * @freq: channel freq to check
- * @band: band for intra band check
-.*.
- * Return: bool if match else false
- */
-static bool
-is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
-			      enum band_info band)
-{
-	uint16_t  unsafe_chan[NUM_CHANNELS];
-	uint16_t  unsafe_chan_cnt = 0;
-	uint16_t  cnt = 0;
-	bool      is_unsafe_chan;
-	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-
-	if (!qdf_ctx) {
-		cds_err("qdf_ctx is NULL");
-		return true;
-	}
-
-	if ((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel ==
-	     ROAMING_DFS_CHANNEL_DISABLED ||
-	     mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
-	     CSR_STA_ROAM_POLICY_DFS_DISABLED) &&
-	    (wlan_reg_is_dfs_for_freq(mac_ctx->pdev, freq))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  ("dfs freq %d"), freq);
-		return true;
-	}
-
-	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
-				    &unsafe_chan_cnt,
-				    sizeof(unsafe_chan));
-	if (mac_ctx->roam.configParam.sta_roam_policy.skip_unsafe_channels &&
-	    unsafe_chan_cnt) {
-		is_unsafe_chan = false;
-		for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
-			if (unsafe_chan[cnt] ==
-			    wlan_reg_freq_to_chan(mac_ctx->pdev, freq)) {
-				is_unsafe_chan = true;
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_DEBUG,
-					  ("ignoring unsafe channel freq %d"),
-					  freq);
-				return true;
-			}
-		}
-	}
-	sme_debug("band %d", band);
-	if (!csr_check_band_freq_match(band, freq)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  ("ignoring non-intra band freq %d"),
-			freq);
-		return true;
-	}
-
-	return false;
-}
-
 /**
  * csr_fetch_ch_lst_from_received_list() - fetch channel list from received list
  * and update req msg
