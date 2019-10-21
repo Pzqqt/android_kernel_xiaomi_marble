@@ -3483,7 +3483,7 @@ static int rmnet_ipa3_query_tethering_stats_hw(
 		}
 	}
 
-	if (ipa3_ctx_get_type(IPA_HW_TYPE) == IPA_HW_v4_5)
+	if (ipa3_ctx->ipa_wdi3_over_gsi)
 		wlan_client = IPA_CLIENT_WLAN2_CONS;
 	else
 		wlan_client = IPA_CLIENT_WLAN1_CONS;
@@ -3566,7 +3566,7 @@ static int rmnet_ipa3_query_tethering_stats_hw(
 		return rc;
 	}
 
-	if (ipa3_ctx->ipa_hw_type == IPA_HW_v4_5)
+	if (ipa3_ctx->ipa_wdi3_over_gsi)
 		wlan_client = IPA_CLIENT_WLAN2_CONS;
 	else
 		wlan_client = IPA_CLIENT_WLAN1_CONS;
@@ -3691,7 +3691,7 @@ skip_nlo_stats:
 	/* query WLAN UL stats */
 	memset(con_stats, 0, sizeof(struct ipa_quota_stats_all));
 
-	if (ipa3_ctx_get_type(IPA_HW_TYPE) == IPA_HW_v4_5)
+	if (ipa3_ctx->ipa_wdi3_over_gsi)
 		rc = ipa_query_teth_stats(IPA_CLIENT_WLAN2_PROD,
 			con_stats, reset);
 	else
