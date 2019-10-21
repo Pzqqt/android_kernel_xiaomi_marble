@@ -822,6 +822,8 @@ struct mac_context {
 #endif
 	bool obss_scan_offload;
 	bool bcn_reception_stats;
+	csr_session_close_cb session_close_cb;
+	csr_roam_complete_cb session_roam_complete_cb;
 };
 
 #ifdef FEATURE_WLAN_TDLS

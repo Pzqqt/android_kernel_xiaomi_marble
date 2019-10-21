@@ -186,3 +186,13 @@ QDF_STATUS mac_close(mac_handle_t mac_handle)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+void mac_register_sesssion_open_close_cb(mac_handle_t mac_handle,
+					 csr_session_close_cb close_session,
+					 csr_roam_complete_cb callback)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	mac->session_close_cb = close_session;
+	mac->session_roam_complete_cb = callback;
+}

@@ -3874,7 +3874,7 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 	if (eCSR_ROAM_ASSOCIATION_COMPLETION == u1)
 		csr_dump_connection_stats(mac, pSession, roam_info, u1, u2);
 
-	if (pSession->callback) {
+	if (mac->session_roam_complete_cb) {
 		if (roam_info) {
 			roam_info->sessionId = (uint8_t) sessionId;
 			/*
@@ -3888,8 +3888,8 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 				(roam_info->reasonCode == eSIR_BEACON_MISSED) ?
 				0 : roam_info->reasonCode;
 		}
-		status = pSession->callback(pSession->pContext, roam_info,
-					roamId, u1, u2);
+		status = mac->session_roam_complete_cb(mac->psoc, sessionId, roam_info,
+						       roamId, u1, u2);
 	}
 	/*
 	 * EVENT_WLAN_STATUS_V2: eCSR_ROAM_ASSOCIATION_COMPLETION,
@@ -17330,9 +17330,6 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 	/* Initialize FT related data structures only in STA mode */
 	sme_ft_open(MAC_HANDLE(mac_ctx), session->sessionId);
 
-	session->session_close_cb = session_param->session_close_cb;
-	session->callback = session_param->callback;
-	session->pContext = session_param->callback_ctx;
 
 	qdf_mem_copy(&session->self_mac_addr, mac_addr,
 		     sizeof(struct qdf_mac_addr));
@@ -17555,13 +17552,13 @@ QDF_STATUS csr_roam_vdev_delete(struct mac_context *mac_ctx,
 	 * as expected by firmware and should not be flushed.
 	 */
 	csr_purge_vdev_all_scan_ser_cmd_list(mac_ctx, vdev_id);
-	if (!session->session_close_cb) {
+	if (!mac_ctx->session_close_cb) {
 		sme_err("no close session callback registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 	status = csr_issue_vdev_del_req(mac_ctx, vdev_id,
 					session->self_mac_addr.bytes,
-					session->session_close_cb, NULL);
+					mac_ctx->session_close_cb, NULL);
 	return status;
 }
 
@@ -17576,8 +17573,6 @@ static void csr_init_session(struct mac_context *mac, uint32_t sessionId)
 
 	pSession->sessionActive = false;
 	pSession->sessionId = WLAN_UMAC_VDEV_ID_MAX;
-	pSession->callback = NULL;
-	pSession->pContext = NULL;
 	pSession->connectState = eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
 	csr_saved_scan_cmd_free_fields(mac, pSession);
 	csr_free_roam_profile(mac, sessionId);

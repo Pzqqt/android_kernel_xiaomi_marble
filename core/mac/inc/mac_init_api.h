@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,5 +100,15 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, mac_handle_t *mac_handle,
  *         closed.
  */
 QDF_STATUS mac_close(mac_handle_t mac_handle);
+
+/**
+ * mac_register_sesssion_open_close_cb() - register open/close session cb
+ * @mac_handle: Opaque handle to the MAC context
+ * @close_session: callback to be registered with SME for closing the session
+ * @callback: Common callback to hdd for all modes
+ */
+void mac_register_sesssion_open_close_cb(mac_handle_t mac_handle,
+					 csr_session_close_cb close_session,
+					 csr_roam_complete_cb callback);
 
 #endif /* __MAC_INIT_API_H */

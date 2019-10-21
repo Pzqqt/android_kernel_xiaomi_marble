@@ -1295,7 +1295,8 @@ struct wep_update_default_key_idx {
 	uint8_t default_idx;
 };
 
-typedef QDF_STATUS (*csr_roam_complete_cb)(void *context,
+typedef QDF_STATUS (*csr_roam_complete_cb)(struct wlan_objmgr_psoc *psoc,
+					   uint8_t session_id,
 					   struct csr_roam_info *param,
 					   uint32_t roam_id,
 					   eRoamCmdStatus roam_status,

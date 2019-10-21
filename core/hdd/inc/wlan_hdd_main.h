@@ -2238,8 +2238,16 @@ hdd_get_adapter_by_rand_macaddr(struct hdd_context *hdd_ctx,
  */
 bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter);
 
-int hdd_vdev_create(struct hdd_adapter *adapter,
-		    csr_roam_complete_cb callback, void *ctx);
+/**
+ * hdd_vdev_create() - Create the vdev in the firmware
+ * @adapter: hdd adapter
+ *
+ * This function will create the vdev in the firmware
+ *
+ * Return: 0 when the vdev create is sent to firmware or -EINVAL when
+ * there is a failure to send the command.
+ */
+int hdd_vdev_create(struct hdd_adapter *adapter);
 int hdd_vdev_destroy(struct hdd_adapter *adapter);
 int hdd_vdev_ready(struct hdd_adapter *adapter);
 
@@ -4000,4 +4008,20 @@ int hdd_psoc_idle_shutdown(struct device *dev);
  */
 int hdd_psoc_idle_restart(struct device *dev);
 
+/**
+ * hdd_common_roam_callback() - common sme roam callback
+ * @psoc: Object Manager Psoc
+ * @session_id: session id for which callback is called
+ * @roam_info: pointer to roam info
+ * @roam_status: roam status
+ * @roam_result: roam result
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS hdd_common_roam_callback(struct wlan_objmgr_psoc *psoc,
+				    uint8_t session_id,
+				    struct csr_roam_info *roam_info,
+				    uint32_t roam_id,
+				    eRoamCmdStatus roam_status,
+				    eCsrRoamResult roam_result);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
