@@ -80,45 +80,6 @@ void target_if_timer_flush_handler(struct wlan_objmgr_pdev *pdev,
 void target_if_flush_vdev_timers(struct wlan_objmgr_pdev *pdev);
 
 /**
- * target_if_vdev_mgr_delete_response_handler() - API to handle vdev delete
- * response
- * @scn: pointer to scan object
- * @data: pointer to data
- * @datalen: length of data
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-int target_if_vdev_mgr_delete_response_handler(ol_scn_t scn,
-					       uint8_t *data,
-					       uint32_t datalen);
-
-/**
- * target_if_vdev_mgr_stop_response_handler() - API to handle vdev stop
- * response
- * @scn: pointer to scan object
- * @data: pointer to data
- * @datalen: length of data
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-int target_if_vdev_mgr_stop_response_handler(ol_scn_t scn,
-					     uint8_t *data,
-					     uint32_t datalen);
-
-/**
- * target_if_vdev_mgr_start_response_handler() - API to handle vdev stop
- * response
- * @scn: pointer to scan object
- * @data: pointer to data
- * @datalen: length of data
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-int target_if_vdev_mgr_start_response_handler(ol_scn_t scn,
-					      uint8_t *data,
-					      uint32_t datalen);
-
-/**
  * target_if_vdev_mgr_offload_bcn_tx_status_handler() - API to handle beacon
  * tx status event
  * @scn: pointer to scan object
