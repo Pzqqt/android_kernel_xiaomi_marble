@@ -2106,23 +2106,18 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 }
 
 /**
- * sap_goto_starting() - Trigger softap start
+ * sap_validate_dfs_nol() - Validate SAP channel with NOL list
  * @sap_ctx: SAP context
- * @sap_event: SAP event buffer
- * @mac_ctx: global MAC context
- * @mac_handle: Opaque handle to the global MAC context
+ * @sap_ctx: MAC context
  *
- * This function triggers start of softap. Before starting, it can select
- * new channel if given channel has leakage or if given channel in DFS_NOL.
+ * Function will be called to validate SAP channel and bonded sub channels
+ * included in DFS NOL or not.
  *
- * Return: QDF_STATUS
+ * Return: QDF_STATUS_SUCCESS for NOT in NOL
  */
-static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
-				    struct sap_sm_event *sap_event,
-				    struct mac_context *mac_ctx,
-				    mac_handle_t mac_handle)
+static QDF_STATUS sap_validate_dfs_nol(struct sap_context *sap_ctx,
+				       struct mac_context *mac_ctx)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	bool b_leak_chan = false;
 	uint8_t temp_chan;
 	uint8_t sap_chan;
@@ -2169,6 +2164,38 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 						     sap_ctx->chan_freq,
 						     sap_ctx->sec_ch_freq,
 						     &sap_ctx->ch_params);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * sap_goto_starting() - Trigger softap start
+ * @sap_ctx: SAP context
+ * @sap_event: SAP event buffer
+ * @mac_ctx: global MAC context
+ * @mac_handle: Opaque handle to the global MAC context
+ *
+ * This function triggers start of softap. Before starting, it can select
+ * new channel if given channel has leakage or if given channel in DFS_NOL.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
+				    struct sap_sm_event *sap_event,
+				    struct mac_context *mac_ctx,
+				    mac_handle_t mac_handle)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+
+	/*
+	 * check if channel is in DFS_NOL or if the channel
+	 * has leakage to the channels in NOL.
+	 */
+	if (!WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ctx->chan_freq)) {
+		qdf_status = sap_validate_dfs_nol(sap_ctx, mac_ctx);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			return qdf_status;
 	}
 
 	/*
