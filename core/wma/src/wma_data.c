@@ -3181,6 +3181,7 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 		wma_debug_rl("Ignore invalid peer indication as received more than once "
 			QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(rx_inv_msg->ra));
+		qdf_mem_free(rx_inv_msg);
 	}
 
 	return 0;
