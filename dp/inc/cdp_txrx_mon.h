@@ -27,7 +27,8 @@
 #include "cdp_txrx_handle.h"
 
 static inline QDF_STATUS cdp_reset_monitor_mode(ol_txrx_soc_handle soc,
-						uint8_t pdev_id)
+						uint8_t pdev_id,
+						u_int8_t smart_monitor)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -40,7 +41,8 @@ static inline QDF_STATUS cdp_reset_monitor_mode(ol_txrx_soc_handle soc,
 	    !soc->ops->mon_ops->txrx_reset_monitor_mode)
 		return 0;
 
-	return soc->ops->mon_ops->txrx_reset_monitor_mode(soc, pdev_id);
+	return soc->ops->mon_ops->txrx_reset_monitor_mode(soc, pdev_id,
+							  smart_monitor);
 }
 
 /**

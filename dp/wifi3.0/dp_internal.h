@@ -1977,5 +1977,15 @@ QDF_STATUS dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			      u_int8_t newmac[][QDF_MAC_ADDR_SIZE],
 			      u_int16_t mac_cnt);
+/*
+ * dp_is_hw_dbs_enable() - Procedure to check if DBS is supported
+ * @soc:		DP SoC context
+ * @max_mac_rings:	No of MAC rings
+ *
+ * Return: None
+ */
+void dp_is_hw_dbs_enable(struct dp_soc *soc,
+				int *max_mac_rings);
+
 
 #endif /* #ifndef _DP_INTERNAL_H_ */

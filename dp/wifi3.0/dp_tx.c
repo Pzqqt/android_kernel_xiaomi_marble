@@ -3143,6 +3143,7 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 }
 #else
 static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
+					       struct dp_peer *peer,
 					       uint8_t tid,
 					       uint64_t txdesc_ts,
 					       uint32_t ppdu_id)

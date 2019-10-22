@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -200,6 +200,8 @@ struct htt_soc {
  * @rx_msdu_end_offset: Offset of rx_msdu_end tlv
  * @rx_msdu_start_offset: Offset of rx_msdu_start tlv
  * @rx_attn_offset: Offset of rx_attention tlv
+ *
+ * NOTE: Do not change the layout of this structure
  */
 struct htt_rx_ring_tlv_filter {
 	u_int32_t mpdu_start:1,
