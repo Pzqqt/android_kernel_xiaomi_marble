@@ -2476,10 +2476,72 @@ QDF_STATUS wma_vdev_stop_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	return status;
 }
 
+static void wma_clean_up_iface(void *soc, tp_wma_handle wma_handle,
+			       struct wlan_objmgr_vdev *vdev)
+{
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
+	wma_handle->interfaces[vdev_id].vdev = NULL;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+	wma_handle->interfaces[vdev_id].vdev_active = false;
+}
+
+QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme)
+{
+	struct wlan_objmgr_peer *obj_peer;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
+	struct cdp_pdev *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	tp_wma_handle wma_handle;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!soc) {
+		wma_err("SOC handle is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!txrx_pdev) {
+		wma_err("TXRX PDEV is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		wma_err("WMA context is invalid");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wma_vdev_uses_self_peer(vdev_mlme->mgmt.generic.type,
+				    vdev_mlme->mgmt.generic.subtype)) {
+		status = wma_create_peer(wma_handle, txrx_pdev,
+					 wlan_vdev_get_dp_handle(vdev),
+					 vdev->vdev_mlme.macaddr,
+					 WMI_PEER_TYPE_DEFAULT,
+					 wlan_vdev_get_id(vdev), false);
+		if (QDF_IS_STATUS_ERROR(status))
+			wma_err("Failed to create peer %d", status);
+	} else if (vdev_mlme->mgmt.generic.type == WMI_VDEV_TYPE_STA) {
+		obj_peer = wma_create_objmgr_peer(wma_handle,
+						  wlan_vdev_get_id(vdev),
+						  vdev->vdev_mlme.macaddr,
+						  WMI_PEER_TYPE_DEFAULT);
+		if (!obj_peer) {
+			wma_err("Failed to create obj mgr peer for self");
+			status = QDF_STATUS_E_INVAL;
+		}
+	}
+
+	/* If error cleanup the interface */
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_clean_up_iface(soc, wma_handle, vdev);
+
+	return status;
+}
+
 QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 {
 	struct cdp_vdev *txrx_vdev_handle = NULL;
-	struct cdp_pdev *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t cfg_val;
@@ -2488,7 +2550,6 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	u_int8_t vdev_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct wlan_objmgr_peer *obj_peer;
 	struct wlan_mlme_qos *qos_aggr;
 	struct vdev_mlme_obj *vdev_mlme;
 	tp_wma_handle wma_handle;
@@ -2544,17 +2605,7 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		WMA_LOGE("failed to set aggregation sizes(status = %d)",
 			 status);
 
-	if (wma_vdev_uses_self_peer(vdev_mlme->mgmt.generic.type,
-				    vdev_mlme->mgmt.generic.subtype)) {
-		ret = wma_create_peer(wma_handle, txrx_pdev, txrx_vdev_handle,
-				      vdev->vdev_mlme.macaddr,
-				      WMI_PEER_TYPE_DEFAULT,
-				      vdev_id, false);
-		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMA_LOGE("%s: Failed to create peer", __func__);
-			goto end;
-		}
-	} else if (vdev_mlme->mgmt.generic.type == WMI_VDEV_TYPE_STA) {
+	if (vdev_mlme->mgmt.generic.type == WMI_VDEV_TYPE_STA) {
 		status = wma_set_tx_rx_aggr_size_per_ac(
 					wma_handle, vdev_id,
 					qos_aggr,
@@ -2597,15 +2648,6 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		if (QDF_IS_STATUS_ERROR(status))
 			WMA_LOGE("failed to set sw retry threshold per ac(status = %d)",
 				 status);
-
-		obj_peer = wma_create_objmgr_peer(wma_handle, vdev_id,
-						  vdev->vdev_mlme.macaddr,
-						  WMI_PEER_TYPE_DEFAULT);
-		if (!obj_peer) {
-			WMA_LOGE("%s: Failed to create obj mgr peer for self sta",
-				 __func__);
-			goto end;
-		}
 	}
 
 	WMA_LOGD("Setting WMI_VDEV_PARAM_DISCONNECT_TH: %d",
@@ -2780,11 +2822,7 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 
 end:
-	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
-	wma_handle->interfaces[vdev_id].vdev = NULL;
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
-	wma_handle->interfaces[vdev_id].vdev_active = false;
-
+	wma_clean_up_iface(soc, wma_handle, vdev);
 	return QDF_STATUS_E_FAILURE;
 }
 

@@ -279,4 +279,12 @@ enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS mlme_vdev_create_send(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * mlme_vdev_self_peer_create() - function to send the vdev create self peer
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS_SUCCESS when the self peer is successfully created
+ * to firmware or QDF_STATUS_E_** when there is a failure.
+ */
+QDF_STATUS mlme_vdev_self_peer_create(struct wlan_objmgr_vdev *vdev);
 #endif

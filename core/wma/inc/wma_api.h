@@ -762,4 +762,15 @@ int wma_wlm_stats_rsp(void *wma_ctx, uint8_t *event, uint32_t len);
  */
 void wma_update_roam_offload_flag(void *handle,
 				  struct roam_init_params *params);
+
+/**
+ * wma_self_peer_create() - create self peer in objmgr
+ * @vdev_mlme: vdev mlme component private object
+ *
+ * Create the self peer in firmware for beaconing vdev's and create then
+ * object manager self-peer for the vdev.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme);
 #endif /* WMA_API_H */

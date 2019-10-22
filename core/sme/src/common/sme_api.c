@@ -4538,6 +4538,8 @@ QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
 		status = QDF_STATUS_E_INVAL;
 	} else {
 		status = csr_create_vdev(mac_ctx, params->vdev, params);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			status = mlme_vdev_self_peer_create(params->vdev);
 	}
 	sme_release_global_lock(&mac_ctx->sme);
 
