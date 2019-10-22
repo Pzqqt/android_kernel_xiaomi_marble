@@ -188,7 +188,7 @@ enum hdd_dot11_mode {
 			CFG_VALUE_OR_DEFAULT, \
 			"Timer Multiplier")
 
-#define CFG_BUG_ON_REINIT_FAILURE_DEFAULT 1
+#define CFG_BUG_ON_REINIT_FAILURE_DEFAULT 0
 /*
  * <ini>
  * g_bug_on_reinit_failure  - Enable/Disable bug on reinit
