@@ -1201,6 +1201,20 @@ return_status:
 	return status;
 }
 
+QDF_STATUS mlme_vdev_self_peer_create(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("Failed to get vdev mlme obj for vdev id %d",
+			 wlan_vdev_get_id(vdev));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wma_vdev_self_peer_create(vdev_mlme);
+}
+
 /**
  * struct sta_mlme_ops - VDEV MLME operation callbacks strucutre for sta
  * @mlme_vdev_start_send:               callback to initiate actions of VDEV
