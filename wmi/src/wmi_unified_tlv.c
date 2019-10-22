@@ -3152,6 +3152,9 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 		if (num_sends)
 			cmd->flags |= APPEND_TO_EXISTING_CHAN_LIST;
 
+		if (chan_list->max_bw_support_present)
+			cmd->flags |= CHANNEL_MAX_BANDWIDTH_VALID;
+
 		cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
 						wmi_handle,
 						chan_list->pdev_id);
