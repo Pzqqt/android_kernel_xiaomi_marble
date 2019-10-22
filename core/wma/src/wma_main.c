@@ -1563,10 +1563,11 @@ uint32_t wma_critical_events_in_flight(void)
 	t_wma_handle *wma;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma)
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("Invalid wma or wmi handle");
 		return 0;
-
-	return qdf_atomic_read(&wma->critical_events_in_flight);
+	}
+	return wmi_critical_events_in_flight(wma->wmi_handle);
 }
 
 static bool wma_event_is_critical(uint32_t event_id)
@@ -3367,19 +3368,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	qdf_spinlock_create(&wma_handle->wma_hold_req_q_lock);
 	qdf_atomic_init(&wma_handle->is_wow_bus_suspended);
 
-	/* Register vdev start response event handler */
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_vdev_start_resp_event_id,
-					   target_if_vdev_mgr_start_response_handler,
-					   WMA_RX_SERIALIZER_CTX);
-
-	/* Register vdev stop response event handler */
-	wmi_unified_register_event_handler(
-				wma_handle->wmi_handle,
-				wmi_vdev_stopped_event_id,
-				target_if_vdev_mgr_stop_response_handler,
-				WMA_RX_SERIALIZER_CTX);
-
 	/* register for STA kickout function */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_peer_sta_kickout_event_id,
@@ -3538,11 +3526,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wmi_peer_assoc_conf_event_id,
 					   wma_peer_assoc_conf_handler,
 					   WMA_RX_SERIALIZER_CTX);
-	wmi_unified_register_event_handler(
-				wma_handle->wmi_handle,
-				wmi_vdev_delete_resp_event_id,
-				target_if_vdev_mgr_delete_response_handler,
-				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_peer_delete_response_event_id,
 					   wma_peer_delete_handler,

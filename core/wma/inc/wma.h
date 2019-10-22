@@ -421,9 +421,9 @@ typedef void (*txFailIndCallback)(uint8_t *peer_mac, uint8_t seqNo);
  *
  */
 enum wma_rx_exec_ctx {
-	WMA_RX_WORK_CTX,
-	WMA_RX_TASKLET_CTX,
-	WMA_RX_SERIALIZER_CTX
+	WMA_RX_WORK_CTX = WMI_RX_WORK_CTX,
+	WMA_RX_TASKLET_CTX = WMI_RX_TASKLET_CTX,
+	WMA_RX_SERIALIZER_CTX = WMI_RX_SERIALIZER_CTX,
 };
 
 /**

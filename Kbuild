@@ -2970,7 +2970,7 @@ cppflags-y += -DFEATURE_NBUFF_REPLENISH_TIMER
 cppflags-y += -DPEER_CACHE_RX_PKTS
 cppflags-y += -DPCIE_REG_WINDOW_LOCAL_NO_CACHE
 
-cppflags-y += -DSERIALIZE_VDEV_RESP_TIMER
+cppflags-y += -DSERIALIZE_VDEV_RESP
 cppflags-y += -DTGT_IF_VDEV_MGR_CONV
 
 cppflags-y += -DCONFIG_CHAN_NUM_API
