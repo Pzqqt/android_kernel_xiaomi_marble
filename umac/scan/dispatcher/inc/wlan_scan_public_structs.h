@@ -287,8 +287,10 @@ struct scan_mbssid_info {
  * @is_hidden_ssid: is AP having hidden ssid.
  * @seq_num: sequence number
  * @phy_mode: Phy mode of the AP
- * @avg_rssi: Average RSSI fof the AP
+ * @avg_rssi: Average RSSI of the AP
  * @rssi_raw: The rssi of the last beacon/probe received
+ * @snr: The snr of the last beacon/probe received
+ * @avg_snr: Average SNR of the AP
  * @bcn_int: Beacon interval of the AP
  * @cap_info: Capability of the AP
  * @tsf_info: TSF info
@@ -329,6 +331,8 @@ struct scan_cache_entry {
 	enum wlan_phymode phy_mode;
 	int32_t avg_rssi;
 	int8_t rssi_raw;
+	uint8_t snr;
+	uint32_t avg_snr;
 	uint16_t bcn_int;
 	union wlan_capability cap_info;
 	union {

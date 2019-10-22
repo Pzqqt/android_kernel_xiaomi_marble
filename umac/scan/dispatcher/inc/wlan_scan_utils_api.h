@@ -208,7 +208,7 @@ util_scan_entry_reset_timestamp(struct scan_cache_entry *scan_entry)
 
 #define WLAN_RSSI_EP_MULTIPLIER (1<<7)  /* pow2 to optimize out * and / */
 
-#define WLAN_RSSI_LPF_LEN       10
+#define WLAN_RSSI_LPF_LEN       0
 #define WLAN_RSSI_DUMMY_MARKER  0x127
 
 #define WLAN_EP_MUL(x, mul) ((x) * (mul))
@@ -231,13 +231,31 @@ util_scan_entry_reset_timestamp(struct scan_cache_entry *scan_entry)
 	((x != WLAN_RSSI_DUMMY_MARKER) ? ((((x) << 3) + (y) - (x)) >> 3) : (y))
 
 #define WLAN_RSSI_LPF(x, y) do { \
-	if ((y) >= RSSI_LPF_THRESHOLD) \
+	if ((y) < RSSI_LPF_THRESHOLD) \
 		x = WLAN_LPF_RSSI((x), WLAN_RSSI_IN((y)), WLAN_RSSI_LPF_LEN); \
 	} while (0)
 
 #define WLAN_ABS_RSSI_LPF(x, y) do { \
 	if ((y) >= (RSSI_LPF_THRESHOLD + WLAN_DEFAULT_NOISE_FLOOR)) \
 		x = WLAN_LPF_RSSI((x), WLAN_RSSI_IN((y)), WLAN_RSSI_LPF_LEN); \
+	} while (0)
+
+#define WLAN_SNR_EP_MULTIPLIER BIT(7) /* pow2 to optimize out * and / */
+#define WLAN_SNR_DUMMY_MARKER  0x127
+#define SNR_LPF_THRESHOLD      0
+#define WLAN_SNR_LPF_LEN       10
+
+#define WLAN_SNR_OUT(x) (((x) != WLAN_SNR_DUMMY_MARKER) ?     \
+	(WLAN_EP_RND((x), WLAN_SNR_EP_MULTIPLIER)) :  WLAN_SNR_DUMMY_MARKER)
+
+#define WLAN_SNR_IN(x)         (WLAN_EP_MUL((x), WLAN_SNR_EP_MULTIPLIER))
+
+#define WLAN_LPF_SNR(x, y, len) \
+	((x != WLAN_SNR_DUMMY_MARKER) ? ((((x) << 3) + (y) - (x)) >> 3) : (y))
+
+#define WLAN_SNR_LPF(x, y) do { \
+	if ((y) > SNR_LPF_THRESHOLD) \
+		x = WLAN_LPF_SNR((x), WLAN_SNR_IN((y)), WLAN_SNR_LPF_LEN); \
 	} while (0)
 
 /**
@@ -262,6 +280,29 @@ util_scan_entry_rssi(struct scan_cache_entry *scan_entry)
 	 * (RSSI values are typically 0-90).
 	 */
 	return (rssi >= WLAN_RSSI_DUMMY_MARKER) ? 0 : (uint8_t) rssi;
+}
+
+/**
+ * util_scan_entry_snr() - function to read snr of scan entry
+ * @scan_entry: scan entry
+ *
+ * API, function to read snr value of scan entry
+ *
+ * Return: snr
+ */
+static inline uint8_t
+util_scan_entry_snr(struct scan_cache_entry *scan_entry)
+{
+	uint32_t snr = WLAN_SNR_OUT(scan_entry->avg_snr);
+	/*
+	 * An entry is in the BSS list means we've received at least one beacon
+	 * from the corresponding AP, so the snr must be initialized.
+	 *
+	 * If the SNR is not initialized, return 0 (i.e. SNR == Noise Floor).
+	 * Once se_avgsnr field has been initialized, ATH_SNR_OUT always
+	 * returns values that fit in an 8-bit variable.
+	 */
+	return (snr >= WLAN_SNR_DUMMY_MARKER) ? 0 : (uint8_t)snr;
 }
 
 /**

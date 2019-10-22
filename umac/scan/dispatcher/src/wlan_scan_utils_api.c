@@ -1077,6 +1077,8 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	scan_entry->seq_num =
 		(le16toh(*(uint16_t *)hdr->i_seq) >> WLAN_SEQ_SEQ_SHIFT);
 
+	scan_entry->snr = rx_param->snr;
+	scan_entry->avg_snr = WLAN_SNR_IN(scan_entry->snr);
 	scan_entry->rssi_raw = rx_param->rssi;
 	scan_entry->avg_rssi = WLAN_RSSI_IN(scan_entry->rssi_raw);
 	scan_entry->tsf_delta = rx_param->tsf_delta;

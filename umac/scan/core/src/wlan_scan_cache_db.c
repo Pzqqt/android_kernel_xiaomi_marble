@@ -567,29 +567,37 @@ scm_copy_info_from_dup_entry(struct wlan_objmgr_pdev *pdev,
 
 	/* Use old value for rssi if beacon was heard on adjacent channel. */
 	if (scan_params->channel_mismatch) {
+		scan_params->snr = scan_entry->snr;
+		scan_params->avg_snr = scan_entry->avg_snr;
 		scan_params->rssi_raw = scan_entry->rssi_raw;
 		scan_params->avg_rssi = scan_entry->avg_rssi;
 		scan_params->rssi_timestamp =
 			scan_entry->rssi_timestamp;
 	} else {
-		/* If elapsed time since last rssi update for this
+		/* If elapsed time since last rssi and snr update for this
 		 * entry is smaller than a thresold, calculate a
-		 * running average of the RSSI values.
-		 * Otherwise new frames RSSI is more representive
+		 * running average of the RSSI and SNR values.
+		 * Otherwise new frames RSSI and SNR are more representive
 		 * of the signal strength.
 		 */
 		time_gap =
 			scan_params->scan_entry_time -
 			scan_entry->rssi_timestamp;
-		if (time_gap > WLAN_RSSI_AVERAGING_TIME)
+		if (time_gap > WLAN_RSSI_AVERAGING_TIME) {
 			scan_params->avg_rssi =
 				WLAN_RSSI_IN(scan_params->rssi_raw);
+			scan_params->avg_snr =
+				WLAN_SNR_IN(scan_params->snr);
+		}
 		else {
-			/* Copy previous average rssi to new entry */
+			/* Copy previous average rssi and snr to new entry */
+			scan_params->avg_snr = scan_entry->avg_snr;
 			scan_params->avg_rssi = scan_entry->avg_rssi;
 			/* Average with previous samples */
 			WLAN_RSSI_LPF(scan_params->avg_rssi,
-					scan_params->rssi_raw);
+				      scan_params->rssi_raw);
+			WLAN_SNR_LPF(scan_params->avg_snr,
+				     scan_params->snr);
 		}
 
 		scan_params->rssi_timestamp = scan_params->scan_entry_time;
@@ -824,12 +832,13 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 			continue;
 		}
 
-		scm_nofl_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %d  ssid:%.*s, rssi: %d frequency %d pdev_id = %d",
+		scm_nofl_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %d  ssid:%.*s, rssi: %d snr = %d frequency %d pdev_id = %d",
 			       (bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
 			       "Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
 			       scan_entry->tsf_delta, scan_entry->seq_num,
 			       scan_entry->ssid.length, scan_entry->ssid.ssid,
 			       scan_entry->rssi_raw,
+			       scan_entry->snr,
 			       scan_entry->channel.chan_freq,
 			       wlan_objmgr_pdev_get_pdev_id(pdev));
 
