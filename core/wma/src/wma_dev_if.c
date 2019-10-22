@@ -1111,12 +1111,61 @@ static void wma_handle_hidden_ssid_restart(tp_wma_handle wma,
 				      0, NULL);
 }
 
+/**
+ * wma_update_peer_phymode_after_vdev_restart() - for sta set new phymode to
+ * bss peer after vdev restart.
+ * @wma: wma handle
+ * @iface: interfcae pointer
+ *
+ * Return: none
+ */
+static
+void wma_update_peer_phymode_after_vdev_restart(tp_wma_handle wma,
+						struct wma_txrx_node *iface)
+{
+	wmi_host_channel_width ch_width;
+	uint8_t vdev_id;
+	enum wlan_phymode bss_phymode;
+	uint32_t fw_phymode;
+	uint8_t *bssid;
+	struct wlan_channel *des_chan;
+	QDF_STATUS status;
+
+	vdev_id = wlan_vdev_get_id(iface->vdev);
+	/* for CSA case firmware expects phymode before ch_wd */
+	bssid = wma_get_vdev_bssid(iface->vdev);
+	if (!bssid) {
+		WMA_LOGE("%s:Failed to get bssid for vdev_id %d",
+			 __func__, vdev_id);
+		return;
+	}
+
+	des_chan = wlan_vdev_mlme_get_des_chan(iface->vdev);
+	bss_phymode = des_chan->ch_phymode;
+
+	/* update new phymode to peer */
+	wma_objmgr_set_peer_mlme_phymode(wma, bssid, bss_phymode);
+	fw_phymode = wma_host_to_fw_phymode(bss_phymode);
+
+	/* for CSA case firmware expects phymode before ch_wd */
+	status = wma_set_peer_param(wma, bssid, WMI_PEER_PHYMODE, fw_phymode,
+				    vdev_id);
+	WMA_LOGD("%s:vdev_id %d fw_phy_mode %d bss_phymode %d status %d",
+		 __func__, vdev_id, fw_phymode, bss_phymode, status);
+
+	ch_width = wmi_get_ch_width_from_phy_mode(wma->wmi_handle, fw_phymode);
+	status = wma_set_peer_param(wma, bssid, WMI_PEER_CHWIDTH, ch_width,
+				    vdev_id);
+	WMA_LOGD("%s:vdev_id %d chanwidth %d status %d", __func__, vdev_id,
+		 ch_width, status);
+}
+
+
 QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 					  struct vdev_start_response *rsp)
 {
 	enum wlan_vdev_sm_evt  event;
 	struct wma_txrx_node *iface;
-	uint8_t *bssid;
 
 	iface = &wma->interfaces[rsp->vdev_id];
 	WMA_LOGD("%s: Send channel switch resp vdev %d status %d",
@@ -1132,38 +1181,10 @@ QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if ((QDF_IS_STATUS_SUCCESS(rsp->status) &&
-	     rsp->resp_type == WMI_VDEV_RESTART_RESP_EVENT &&
-	     (iface->type == WMI_VDEV_TYPE_STA ||
-	      iface->type == WMI_VDEV_TYPE_MONITOR)) ||
-	    (rsp->resp_type == WMI_VDEV_START_RESP_EVENT &&
-	     iface->type == WMI_VDEV_TYPE_MONITOR)) {
-		wmi_host_channel_width chanwidth;
-		int err;
-		WMI_HOST_WLAN_PHY_MODE phy_mode;
-
-		/* for CSA case firmware expects phymode before ch_wd */
-		bssid = wma_get_vdev_bssid(iface->vdev);
-		if (!bssid) {
-			WMA_LOGE("%s:Failed to get bssid for vdev_id %d",
-				 __func__, rsp->vdev_id);
-			return QDF_STATUS_E_FAILURE;
-		}
-		phy_mode = wma_host_to_fw_phymode(iface->chanmode);
-
-		/* for CSA case firmware expects phymode before ch_wd */
-		err = wma_set_peer_param(wma, bssid, WMI_PEER_PHYMODE,
-					 phy_mode, rsp->vdev_id);
-		WMA_LOGD("%s:vdev_id %d fw_phy_mode %d chanmode %d status %d",
-			 __func__, rsp->vdev_id, phy_mode,
-			 iface->chanmode, err);
-		chanwidth = wmi_get_ch_width_from_phy_mode(wma->wmi_handle,
-							   phy_mode);
-		err = wma_set_peer_param(wma, bssid, WMI_PEER_CHWIDTH,
-					 chanwidth, rsp->vdev_id);
-		WMA_LOGD("%s:vdev_id %d chanwidth %d status %d",
-			 __func__, rsp->vdev_id, chanwidth, err);
-	}
+	if (QDF_IS_STATUS_SUCCESS(rsp->status) &&
+	    rsp->resp_type == WMI_VDEV_RESTART_RESP_EVENT &&
+	    iface->type == WMI_VDEV_TYPE_STA)
+		wma_update_peer_phymode_after_vdev_restart(wma, iface);
 
 	if (wma_is_vdev_in_ap_mode(wma, rsp->vdev_id) ||
 	    mlme_is_chan_switch_in_progress(iface->vdev))
@@ -2822,7 +2843,6 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	intr[vdev_id].chanmode = des_chan->ch_phymode;
 	intr[vdev_id].config.gtx_info.gtxRTMask[0] =
 		CFG_TGT_DEFAULT_GTX_HT_MASK;
 	intr[vdev_id].config.gtx_info.gtxRTMask[1] =

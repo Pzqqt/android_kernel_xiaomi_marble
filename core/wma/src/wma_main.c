@@ -2076,7 +2076,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			"\tipv6_mcast_na %u\n"
 			"\toem_response %u\n"
 			"dtimPeriod %d\n"
-			"chanmode %d\n"
 			"chan_width %d\n"
 			"vdev_active %d\n"
 			"vdev_up %d\n"
@@ -2104,7 +2103,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			stats.ipv6_mcast_na_stats,
 			stats.oem_response_wake_up_count,
 			iface->dtimPeriod,
-			iface->chanmode,
 			iface->chan_width,
 			iface->vdev_active,
 			wma_is_vdev_up(vdev_id),

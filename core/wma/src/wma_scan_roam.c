@@ -2749,6 +2749,35 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	qdf_mem_free(add_sta_params);
 }
 
+static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
+				       wmi_channel *chan,
+				       struct wma_txrx_node *iface)
+{
+	enum wlan_phymode bss_phymode;
+	struct wlan_channel *des_chan;
+	struct vdev_mlme_obj *vdev_mlme;
+	uint8_t channel;
+
+	channel = wlan_freq_to_chan(iface->mhz);
+	if (chan)
+		bss_phymode =
+			wma_fw_to_host_phymode(WMI_GET_CHANNEL_MODE(chan));
+	else
+		wma_get_phy_mode_cb(channel, iface->chan_width, &bss_phymode);
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+	des_chan = wlan_vdev_mlme_get_des_chan(iface->vdev);
+
+	des_chan->ch_phymode = bss_phymode;
+	/* Till conversion is not done in WMI we need to fill fw phy mode */
+	vdev_mlme->mgmt.generic.phy_mode = wma_host_to_fw_phymode(bss_phymode);
+
+	/* update new phymode to peer */
+	wma_objmgr_set_peer_mlme_phymode(wma, bssid, bss_phymode);
+
+	WMA_LOGD("LFR3: new phymode %d", bss_phymode);
+}
+
 int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 					 uint32_t len)
 {
@@ -2757,7 +2786,6 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	struct roam_offload_synch_ind *roam_synch_ind_ptr = NULL;
 	struct bss_description *bss_desc_ptr = NULL;
-	uint8_t channel;
 	uint16_t ie_len = 0;
 	int status = -EINVAL;
 	struct roam_offload_scan_req *roam_req;
@@ -2951,24 +2979,15 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 			roam_synch_ind_ptr->join_rsp->vht_channel_width;
 	/*
 	 * update phy_mode in wma to avoid mismatch in phymode between host and
-	 * firmware. The phymode stored in interface[vdev_id].chanmode is sent
-	 * to firmware as part of opmode update during either - vht opmode
+	 * firmware. The phymode stored in peer->peer_mlme.phymode is
+	 * sent to firmware as part of opmode update during either - vht opmode
 	 * action frame received or during opmode change detected while
 	 * processing beacon. Any mismatch of this value with firmware phymode
 	 * results in firmware assert.
 	 */
-	channel = wlan_freq_to_chan(wma->interfaces[synch_event->vdev_id].mhz);
-	if (param_buf->chan) {
-		wma->interfaces[synch_event->vdev_id].chanmode =
-			wma_fw_to_host_phymode(
-				WMI_GET_CHANNEL_MODE(param_buf->chan));
-	} else {
-		wma_get_phy_mode_cb(channel,
-				    wma->interfaces[synch_event->vdev_id].
-				    chan_width,
-				    &wma->interfaces[synch_event->vdev_id].
-				    chanmode);
-	}
+	wma_update_phymode_on_roam(wma, roam_synch_ind_ptr->bssid.bytes,
+				   param_buf->chan,
+				   &wma->interfaces[synch_event->vdev_id]);
 
 	wma->csr_roam_synch_cb(wma->mac_context, roam_synch_ind_ptr,
 			       bss_desc_ptr, SIR_ROAM_SYNCH_COMPLETE);
