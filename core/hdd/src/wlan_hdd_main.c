@@ -6298,6 +6298,9 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		hdd_softap_deinit_tx_rx(adapter);
 		if (adapter->device_mode == QDF_SAP_MODE ||
 		    adapter->device_mode == QDF_P2P_GO_MODE) {
+			/* Clear all the cached sta info */
+			hdd_clear_cached_sta_info(
+					&adapter->cache_sta_info_list);
 			hdd_sta_info_deinit(&adapter->sta_info_list);
 			hdd_sta_info_deinit(&adapter->cache_sta_info_list);
 		}
