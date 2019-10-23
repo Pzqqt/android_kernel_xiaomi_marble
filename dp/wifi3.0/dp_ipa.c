@@ -758,24 +758,28 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *ppdev)
 		return QDF_STATUS_SUCCESS;
 
 	/* Call HAL API to remap REO rings to REO2IPA ring */
-	ix0 = HAL_REO_REMAP_VAL(REO_REMAP_TCL, REO_REMAP_TCL) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_SW1, REO_REMAP_SW4) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_SW2, REO_REMAP_SW4) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_SW3, REO_REMAP_SW4) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_SW4, REO_REMAP_SW4) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_RELEASE, REO_REMAP_RELEASE) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_FW, REO_REMAP_FW) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_UNUSED, REO_REMAP_FW);
+	ix0 = HAL_REO_REMAP_IX0(REO_REMAP_TCL, 0) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 1) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 2) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 3) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 4) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_RELEASE, 5) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 6) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 7);
 
 	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
-		ix2 = ((REO_REMAP_SW4 << 0) | (REO_REMAP_SW4 << 3) |
-		       (REO_REMAP_SW4 << 6) | (REO_REMAP_SW4 << 9) |
-		       (REO_REMAP_SW4 << 12) | (REO_REMAP_SW4 << 15) |
-		       (REO_REMAP_SW4 << 18) | (REO_REMAP_SW4 << 21)) << 8;
-
-		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
-					   &ix2, &ix2);
+		ix2 = HAL_REO_REMAP_IX2(REO_REMAP_SW4, 16) |
+		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 17) |
+		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 18) |
+		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 19) |
+		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 20) |
+		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 21) |
+		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 22) |
+		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 23);
 	}
+
+	hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
+				   &ix2, &ix2);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -800,14 +804,14 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_pdev *ppdev)
 		return QDF_STATUS_SUCCESS;
 
 	/* Call HAL API to remap REO rings to REO2IPA ring */
-	ix0 = HAL_REO_REMAP_VAL(REO_REMAP_TCL, REO_REMAP_TCL) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_SW1, REO_REMAP_SW1) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_SW2, REO_REMAP_SW2) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_SW3, REO_REMAP_SW3) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_SW4, REO_REMAP_SW2) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_RELEASE, REO_REMAP_RELEASE) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_FW, REO_REMAP_FW) |
-	      HAL_REO_REMAP_VAL(REO_REMAP_UNUSED, REO_REMAP_FW);
+	ix0 = HAL_REO_REMAP_IX0(REO_REMAP_TCL, 0) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW1, 1) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW2, 2) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW3, 3) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW2, 4) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_RELEASE, 5) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 6) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 7);
 
 	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
 		dp_reo_remap_config(soc, &ix2, &ix3);

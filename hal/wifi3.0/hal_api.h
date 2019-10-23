@@ -537,16 +537,31 @@ extern void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 #define REO_REMAP_UNUSED 7
 
 /*
- * currently this macro only works for IX0 since all the rings we are remapping
- * can be remapped from HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0
+ * Macro to access HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0
+ * to map destination to rings
  */
-#define HAL_REO_REMAP_VAL(_ORIGINAL_DEST, _NEW_DEST) \
-	HAL_REO_REMAP_VAL_(_ORIGINAL_DEST, _NEW_DEST)
-/* allow the destination macros to be expanded */
-#define HAL_REO_REMAP_VAL_(_ORIGINAL_DEST, _NEW_DEST) \
-	(_NEW_DEST << \
+#define HAL_REO_REMAP_IX0(_VALUE, _OFFSET) \
+	((_VALUE) << \
 	 (HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_DEST_RING_MAPPING_ ## \
-	  _ORIGINAL_DEST ## _SHFT))
+	  _OFFSET ## _SHFT))
+
+/*
+ * Macro to access HWIO_REO_R0_DESTINATION_RING_CTRL_IX_1
+ * to map destination to rings
+ */
+#define HAL_REO_REMAP_IX2(_VALUE, _OFFSET) \
+	((_VALUE) << \
+	 (HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_DEST_RING_MAPPING_ ## \
+	  _OFFSET ## _SHFT))
+
+/*
+ * Macro to access HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3
+ * to map destination to rings
+ */
+#define HAL_REO_REMAP_IX3(_VALUE, _OFFSET) \
+	((_VALUE) << \
+	 (HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_DEST_RING_MAPPING_ ## \
+	  _OFFSET ## _SHFT))
 
 /**
  * hal_reo_read_write_ctrl_ix - Read or write REO_DESTINATION_RING_CTRL_IX
