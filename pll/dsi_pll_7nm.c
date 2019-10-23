@@ -576,11 +576,11 @@ static void dsi_pll_calc_dec_frac(struct dsi_pll_7nm *pll,
 		break;
 	case MDSS_DSI_PLL_7NM_V4_1:
 	default:
-		if (pll_freq <= 1000000000)
+		if (pll_freq <= 1000000000ULL)
 			regs->pll_clock_inverters = 0xA0;
-		else if (pll_freq <= 2500000000)
+		else if (pll_freq <= 2500000000ULL)
 			regs->pll_clock_inverters = 0x20;
-		else if (pll_freq <= 3020000000)
+		else if (pll_freq <= 3020000000ULL)
 			regs->pll_clock_inverters = 0x00;
 		else
 			regs->pll_clock_inverters = 0x40;
@@ -680,16 +680,16 @@ static void dsi_pll_config_hzindep_reg(struct dsi_pll_7nm *pll,
 		break;
 	case MDSS_DSI_PLL_7NM_V4_1:
 	default:
-		if (vco_rate < 3100000000)
+		if (vco_rate < 3100000000ULL)
 			MDSS_PLL_REG_W(pll_base,
 					PLL_ANALOG_CONTROLS_FIVE_1, 0x01);
 		else
 			MDSS_PLL_REG_W(pll_base,
 					PLL_ANALOG_CONTROLS_FIVE_1, 0x03);
 
-		if (vco_rate < 1520000000)
+		if (vco_rate < 1520000000ULL)
 			MDSS_PLL_REG_W(pll_base, PLL_VCO_CONFIG_1, 0x08);
-		else if (vco_rate < 2990000000)
+		else if (vco_rate < 2990000000ULL)
 			MDSS_PLL_REG_W(pll_base, PLL_VCO_CONFIG_1, 0x01);
 		else
 			MDSS_PLL_REG_W(pll_base, PLL_VCO_CONFIG_1, 0x00);
