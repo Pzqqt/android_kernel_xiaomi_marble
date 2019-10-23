@@ -3941,4 +3941,16 @@ uint16_t sme_get_full_roam_scan_period_global(mac_handle_t mac_handle);
 QDF_STATUS sme_get_full_roam_scan_period(mac_handle_t mac_handle,
 					 uint8_t vdev_id,
 					 uint32_t *full_roam_scan_period);
+
+/**
+ * sme_check_for_duplicate_session() - check for duplicate session
+ * @mac_handle: Opaque handle to the MAC context
+ * @peer_addr: Peer device mac address
+ *
+ * Check for duplicate mac address is available on other vdev.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_check_for_duplicate_session(mac_handle_t mac_handle,
+					   uint8_t *peer_addr);
 #endif /* #if !defined( __SME_API_H ) */

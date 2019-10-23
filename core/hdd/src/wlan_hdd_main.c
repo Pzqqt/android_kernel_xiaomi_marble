@@ -4497,6 +4497,13 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 
 	/* do vdev create via objmgr */
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	status = sme_check_for_duplicate_session(hdd_ctx->mac_handle,
+						 adapter->mac_addr.bytes);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Duplicate session is existing with same mac address");
+		errno = qdf_status_to_os_return(status);
+		return errno;
+	}
 	errno = hdd_objmgr_create_and_store_vdev(hdd_ctx->pdev, adapter);
 	if (errno) {
 		hdd_err("failed to create objmgr vdev: %d", errno);

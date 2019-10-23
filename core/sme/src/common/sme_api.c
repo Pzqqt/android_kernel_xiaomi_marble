@@ -4504,10 +4504,7 @@ QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct cdp_pdev *pdev;
-	ol_txrx_peer_handle peer;
-	u8 peer_id, vdev_id;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint8_t vdev_id;
 	u8 *mac_addr;
 
 	vdev_id = wlan_vdev_get_id(params->vdev);
@@ -4515,28 +4512,13 @@ QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
 
 	sme_debug("vdev_id %d addr:%pM", vdev_id, mac_addr);
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev) {
-		sme_err("Failed to get pdev handler");
-		return status;
-	}
-
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	peer = cdp_peer_find_by_addr(soc, pdev,
-				     mac_addr,
-				     &peer_id);
-	if (peer) {
-		sme_err("Peer=%d exist with same MAC", peer_id);
-		status = QDF_STATUS_E_INVAL;
-	} else {
-		status = csr_create_vdev(mac_ctx, params->vdev, params);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			status = mlme_vdev_self_peer_create(params->vdev);
-	}
+	status = csr_create_vdev(mac_ctx, params->vdev, params);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		status = mlme_vdev_self_peer_create(params->vdev);
 	sme_release_global_lock(&mac_ctx->sme);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
@@ -16185,6 +16167,44 @@ sme_get_full_roam_scan_period(mac_handle_t mac_handle, uint8_t vdev_id,
 	*full_roam_scan_period =
 		neighbor_roam_info->cfgParams.full_roam_scan_period;
 	sme_release_global_lock(&mac->sme);
+
+	return status;
+}
+
+QDF_STATUS sme_check_for_duplicate_session(mac_handle_t mac_handle,
+					   uint8_t *peer_addr)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct cdp_pdev *pdev;
+	ol_txrx_peer_handle peer;
+	uint8_t peer_id;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	if (!soc) {
+		sme_err("Failed to get soc handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		sme_err("Failed to get pdev handler");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (QDF_STATUS_SUCCESS != sme_acquire_global_lock(&mac_ctx->sme))
+		return status;
+
+	peer = cdp_peer_find_by_addr(soc, pdev,
+				     peer_addr,
+				     &peer_id);
+	if (peer) {
+		sme_err("Peer=%d exist with same MAC", peer_id);
+		status = QDF_STATUS_E_EXISTS;
+	} else {
+		status = QDF_STATUS_SUCCESS;
+	}
+	sme_release_global_lock(&mac_ctx->sme);
 
 	return status;
 }
