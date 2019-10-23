@@ -265,10 +265,10 @@ static bool wlan_cfg80211_is_ap_go_present(struct wlan_objmgr_psoc *psoc)
 
 static QDF_STATUS wlan_cfg80211_is_chan_ok_for_dnbs(
 			struct wlan_objmgr_psoc *psoc,
-			u8 channel, bool *ok)
+			u16 chan_freq, bool *ok)
 {
 	QDF_STATUS status = policy_mgr_is_chan_ok_for_dnbs(
-				psoc, wlan_chan_to_freq(channel), ok);
+				psoc, chan_freq, ok);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		osif_err("DNBS check failed");
@@ -285,7 +285,7 @@ static bool wlan_cfg80211_is_ap_go_present(struct wlan_objmgr_psoc *psoc)
 
 static QDF_STATUS wlan_cfg80211_is_chan_ok_for_dnbs(
 			struct wlan_objmgr_psoc *psoc,
-			u8 channel,
+			u16 chan_freq,
 			bool *ok)
 {
 	if (!ok)
@@ -396,7 +396,8 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 	struct pno_scan_req_params *req;
 	int i, j, ret = 0;
 	QDF_STATUS status;
-	uint8_t num_chan = 0, channel;
+	uint8_t num_chan = 0;
+	uint16_t chan_freq;
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t valid_ch[SCAN_PNO_MAX_NETW_CHANNELS_EX] = {0};
@@ -455,14 +456,14 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 			goto error;
 		}
 		for (i = 0; i < request->n_channels; i++) {
-			channel = request->channels[i]->hw_value;
+			chan_freq = request->channels[i]->center_freq;
 			if ((!enable_dfs_pno_chnl_scan) &&
-			    (wlan_reg_is_dfs_ch(pdev, channel))) {
-				osif_debug("Dropping DFS channel :%d",
-					   channel);
+			    (wlan_reg_is_dfs_for_freq(pdev, chan_freq))) {
+				osif_debug("Dropping DFS channel freq :%d",
+					   chan_freq);
 				continue;
 			}
-			if (wlan_reg_is_dsrc_chan(pdev, channel))
+			if (wlan_reg_is_dsrc_freq(chan_freq))
 				continue;
 
 			if (ap_or_go_present) {
@@ -470,7 +471,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 
 				status =
 				wlan_cfg80211_is_chan_ok_for_dnbs(psoc,
-								  channel,
+								  chan_freq,
 								  &ok);
 				if (QDF_IS_STATUS_ERROR(status)) {
 					osif_err("DNBS check failed");
@@ -482,8 +483,8 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 				if (!ok)
 					continue;
 			}
-			len += snprintf(chl + len, 5, "%d ", channel);
-			valid_ch[num_chan++] = wlan_chan_to_freq(channel);
+			len += snprintf(chl + len, 5, "%d ", chan_freq);
+			valid_ch[num_chan++] = chan_freq;
 		}
 		osif_notice("No. of Scan Channels: %d", num_chan);
 		osif_notice("Channel-List: %s", chl);
