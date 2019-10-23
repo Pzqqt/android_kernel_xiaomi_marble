@@ -3852,6 +3852,7 @@ int voc_map_rtac_block(struct rtac_cal_block_data *cal_block)
 				&cal_block->cal_data.paddr,
 				cal_block->map_data.map_size);
 
+			common.rtac_mem_map_table.dma_buf = NULL;
 			goto done_unlock;
 		}
 	}
