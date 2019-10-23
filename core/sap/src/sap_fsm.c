@@ -764,8 +764,8 @@ sap_validate_chan(struct sap_context *sap_context,
 				  con_ch);
 			if (sap_context->cc_switch_mode !=
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) {
-				uint32_t con_ch_freq;
-
+				uint32_t con_ch_freq =
+				wlan_reg_chan_to_freq(mac_ctx->pdev, con_ch);
 				if (QDF_IS_STATUS_ERROR(
 					policy_mgr_valid_sap_conc_channel_check(
 						mac_ctx->psoc, &con_ch_freq,
