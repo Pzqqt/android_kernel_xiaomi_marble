@@ -60,6 +60,9 @@ enum stats_req_type {
  * @TX_RATE_VHT20: VHT 20 rates
  * @TX_RATE_VHT40: VHT 40 rates
  * @TX_RATE_VHT80: VHT 80 rates
+ * @TX_RATE_HE20: HE 20 rates
+ * @TX_RATE_HE40: HE 40 rates
+ * @TX_RATE_HE80: HE 80 rates
  */
 enum tx_rate_info {
 	TX_RATE_LEGACY = 0x1,
@@ -70,6 +73,23 @@ enum tx_rate_info {
 	TX_RATE_VHT20 = 0x20,
 	TX_RATE_VHT40 = 0x40,
 	TX_RATE_VHT80 = 0x80,
+	TX_RATE_HE20 = 0x100,
+	TX_RATE_HE40 = 0x200,
+	TX_RATE_HE80 = 0x400,
+};
+
+/**
+ * enum - txrate_gi
+ * @txrate_gi_0_8_US: guard interval 0.8 us
+ * @txrate_gi_0_4_US: guard interval 0.4 us for legacy
+ * @txrate_gi_1_6_US: guard interval 1.6 us
+ * @txrate_gi_3_2_US: guard interval 3.2 us
+ */
+enum txrate_gi {
+	TXRATE_GI_0_8_US = 0,
+	TXRATE_GI_0_4_US,
+	TXRATE_GI_1_6_US,
+	TXRATE_GI_3_2_US,
 };
 
 /**
