@@ -97,7 +97,7 @@ struct dfs_emulate_bang_radar_test_cmd {
  * @vdev_id: Physical device identifier
  * @chan_freq: Channel number
  * @chan_width: Channel Width
- * @center_freq: Center Frequency channel number
+ * @center_freq: Center channel number
  * @ocac_status: off channel cac status
  */
 struct vdev_adfs_complete_status {
@@ -122,6 +122,7 @@ extern struct dfs_to_mlme global_dfs_to_mlme;
  * @dfs_ch_vhtop_ch_freq_seg2: Channel Center frequency2.
  */
 #ifdef DFS_COMPONENT_ENABLE
+#ifdef CONFIG_CHAN_NUM_API
 QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 		uint16_t dfs_ch_freq,
 		uint64_t dfs_ch_flags,
@@ -129,6 +130,34 @@ QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 		uint8_t dfs_ch_ieee,
 		uint8_t dfs_ch_vhtop_ch_freq_seg1,
 		uint8_t dfs_ch_vhtop_ch_freq_seg2);
+#endif
+
+/**
+ * tgt_dfs_set_current_channel_for_freq() - Fill dfs channel structure from
+ *                                          dfs_channel structure.
+ * @pdev: Pointer to DFS pdev object.
+ * @dfs_ch_freq: Frequency in Mhz.
+ * @dfs_ch_flags: Channel flags.
+ * @dfs_ch_flagext: Extended channel flags.
+ * @dfs_ch_ieee: IEEE channel number.
+ * @dfs_ch_vhtop_ch_freq_seg1: Channel Center frequency1.
+ * @dfs_ch_vhtop_ch_freq_seg2: Channel Center frequency2.
+ * @dfs_ch_mhz_freq_seg1:  Channel center frequency of primary segment in MHZ.
+ * @dfs_ch_mhz_freq_seg2:  Channel center frequency of secondary segment in MHZ
+ *                         applicable only for 80+80MHZ mode of operation.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+QDF_STATUS
+tgt_dfs_set_current_channel_for_freq(struct wlan_objmgr_pdev *pdev,
+				     uint16_t dfs_ch_freq,
+				     uint64_t dfs_ch_flags,
+				     uint16_t dfs_ch_flagext,
+				     uint8_t dfs_ch_ieee,
+				     uint8_t dfs_ch_vhtop_ch_freq_seg1,
+				     uint8_t dfs_ch_vhtop_ch_freq_seg2,
+				     uint16_t dfs_ch_mhz_freq_seg1,
+				     uint16_t dfs_ch_mhz_freq_seg2);
+#endif
 
 /**
  * tgt_dfs_radar_enable() - Enables the radar.
@@ -347,6 +376,7 @@ QDF_STATUS tgt_dfs_ocac_complete(struct wlan_objmgr_pdev *pdev,
  * wrapper function for  dfs_find_vht80_chan_for_precacdfs_cancel_cac_timer().
  * This function called from outside of dfs component.
  */
+#ifdef CONFIG_CHAN_NUM_API
 QDF_STATUS tgt_dfs_find_vht80_chan_for_precac(struct wlan_objmgr_pdev *pdev,
 		uint32_t chan_mode,
 		uint8_t ch_freq_seg1,
@@ -355,6 +385,32 @@ QDF_STATUS tgt_dfs_find_vht80_chan_for_precac(struct wlan_objmgr_pdev *pdev,
 		uint32_t *phy_mode,
 		bool *dfs_set_cfreq2,
 		bool *set_agile);
+#endif
+
+/**
+ * tgt_dfs_find_vht80_precac_chan_freq() - Find VHT80 channel for precac
+ * @pdev: Pointer to DFS pdev object.
+ * @chan_mode: Channel mode.
+ * @ch_freq_seg1_mhz: Segment1 channel freq in MHZ.
+ * @cfreq1: cfreq1.
+ * @cfreq2: cfreq2.
+ * @phy_mode: Precac phymode.
+ * @dfs_set_cfreq2: Precac cfreq2
+ * @set_agile: Agile mode flag.
+ *
+ * wrapper function for  dfs_find_vht80_chan_for_precac_for_freq().
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+QDF_STATUS
+tgt_dfs_find_vht80_precac_chan_freq(struct wlan_objmgr_pdev *pdev,
+				    uint32_t chan_mode,
+				    uint16_t ch_freq_mhz_seg1,
+				    uint32_t *cfreq1,
+				    uint32_t *cfreq2,
+				    uint32_t *phy_mode,
+				    bool *dfs_set_cfreq2,
+				    bool *set_agile);
+#endif
 
 /**
  * tgt_dfs_cac_complete() - Process cac complete indication.
