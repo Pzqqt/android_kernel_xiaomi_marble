@@ -226,7 +226,7 @@ struct htt_host_rx_desc_base {
  *    @posted: time-stamp when HTT message is recived
  *    @recvd : 0x48545452584D5367 ('HTTRXMSG')
  */
-#define HTT_RX_RING_BUFF_DBG_LIST          (2 * 1024)
+#define HTT_RX_RING_BUFF_DBG_LIST          (8 * 1024)
 struct rx_buf_debug {
 	qdf_dma_addr_t paddr;
 	qdf_nbuf_t     nbuf;

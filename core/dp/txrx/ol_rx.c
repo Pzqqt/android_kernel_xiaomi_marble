@@ -87,7 +87,7 @@ struct ol_rx_ind_record {
 
 #ifdef OL_RX_INDICATION_RECORD
 static uint32_t ol_rx_ind_record_index;
-static struct ol_rx_ind_record
+struct ol_rx_ind_record
 	      ol_rx_indication_record_history[OL_RX_INDICATION_MAX_RECORDS];
 
 /**
