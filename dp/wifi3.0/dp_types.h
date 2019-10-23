@@ -1122,8 +1122,7 @@ struct dp_soc {
 		qdf_dma_addr_t ipa_rx_refill_buf_hp_paddr;
 	} ipa_uc_rx_rsc;
 
-	bool reo_remapped; /* Indicate if REO2IPA rings are remapped */
-	qdf_spinlock_t remap_lock;
+	qdf_atomic_t ipa_pipes_enabled;
 #endif
 
 	/* Smart monitor capability for HKv2 */

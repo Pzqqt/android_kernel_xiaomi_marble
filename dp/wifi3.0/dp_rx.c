@@ -210,6 +210,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		paddr = qdf_nbuf_get_frag_paddr(rx_netbuf, 0);
 
+		dp_ipa_handle_rx_buf_smmu_mapping(dp_soc, rx_netbuf, true);
 		/*
 		 * check if the physical address of nbuf->data is
 		 * less then 0x50000000 then free the nbuf and try
@@ -248,7 +249,6 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		*desc_list = next;
 
-		dp_ipa_handle_rx_buf_smmu_mapping(dp_soc, rx_netbuf, true);
 	}
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
