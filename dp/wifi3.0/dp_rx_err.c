@@ -1049,6 +1049,7 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	struct dp_pdev *pdev = NULL;
 	struct ol_if_ops *tops = NULL;
 	uint16_t rx_seq, fragno;
+	uint8_t is_raw;
 	unsigned int tid;
 	QDF_STATUS status;
 	struct cdp_rx_mic_err_info mic_failure_info;
@@ -1074,19 +1075,22 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		goto fail;
 	}
 
-	fragno = dp_rx_frag_get_mpdu_frag_number(qdf_nbuf_data(nbuf));
-	/* Can get only last fragment */
-	if (fragno) {
-		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
-						qdf_nbuf_data(nbuf));
-		rx_seq = hal_rx_get_rx_sequence(soc->hal_soc,
-						qdf_nbuf_data(nbuf));
+	is_raw = HAL_IS_DECAP_FORMAT_RAW(soc->hal_soc, qdf_nbuf_data(nbuf));
+	if (is_raw) {
+		fragno = dp_rx_frag_get_mpdu_frag_number(qdf_nbuf_data(nbuf));
+		/* Can get only last fragment */
+		if (fragno) {
+			tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
+							qdf_nbuf_data(nbuf));
+			rx_seq = hal_rx_get_rx_sequence(soc->hal_soc,
+							qdf_nbuf_data(nbuf));
 
-		status = dp_rx_defrag_add_last_frag(soc, peer,
-						    tid, rx_seq, nbuf);
-		dp_info_rl("Frag pkt seq# %d frag# %d consumed status %d !",
-			   rx_seq, fragno, status);
-		return;
+			status = dp_rx_defrag_add_last_frag(soc, peer,
+							    tid, rx_seq, nbuf);
+			dp_info_rl("Frag pkt seq# %d frag# %d consumed "
+				   "status %d !", rx_seq, fragno, status);
+			return;
+		}
 	}
 
 	if (hal_rx_mpdu_get_addr1(soc->hal_soc, qdf_nbuf_data(nbuf),
