@@ -21296,6 +21296,7 @@ void csr_process_nss_update_req(struct mac_context *mac, tSmeCmd *command)
 	msg->msgLen = sizeof(*msg);
 
 	msg->new_nss = command->u.nss_update_cmd.new_nss;
+	msg->ch_width = command->u.nss_update_cmd.ch_width;
 	msg->vdev_id = command->u.nss_update_cmd.session_id;
 
 	sme_debug("Posting eWNI_SME_NSS_UPDATE_REQ to PE");

@@ -12374,6 +12374,7 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
  * @mac_handle: Handle returned by macOpen
  * @vdev_id: the session id
  * @new_nss: the new nss value
+ * @ch_width: channel width, optional value
  * @cback: hdd callback
  * @next_action: next action to happen at policy mgr after beacon update
  * @original_vdev_id: original request hwmode change vdev id
@@ -12382,7 +12383,8 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
  * Return: QDF_STATUS_SUCCESS on successful posting
  */
 QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
-				uint8_t  new_nss, policy_mgr_nss_update_cback cback,
+				uint8_t  new_nss, uint8_t ch_width,
+				policy_mgr_nss_update_cback cback,
 				uint8_t next_action, struct wlan_objmgr_psoc *psoc,
 				enum policy_mgr_conn_update_reason reason,
 				uint32_t original_vdev_id)
@@ -12407,6 +12409,7 @@ QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 		/* Sessionized modules may require this info */
 		cmd->sessionId = vdev_id;
 		cmd->u.nss_update_cmd.new_nss = new_nss;
+		cmd->u.nss_update_cmd.ch_width = ch_width;
 		cmd->u.nss_update_cmd.session_id = vdev_id;
 		cmd->u.nss_update_cmd.nss_update_cb = cback;
 		cmd->u.nss_update_cmd.context = psoc;

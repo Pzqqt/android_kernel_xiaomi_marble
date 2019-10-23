@@ -5898,6 +5898,11 @@ static void lim_process_nss_update_request(struct mac_context *mac_ctx,
 	if ((nss_update_req_ptr->new_nss == NSS_1x1_MODE) &&
 			(session_entry->ch_width > CH_WIDTH_80MHZ))
 		session_entry->gLimOperatingMode.chanWidth = CH_WIDTH_80MHZ;
+	if (session_entry->gLimOperatingMode.chanWidth <= CH_WIDTH_160MHZ &&
+	    nss_update_req_ptr->ch_width <
+			session_entry->gLimOperatingMode.chanWidth)
+		session_entry->gLimOperatingMode.chanWidth =
+			nss_update_req_ptr->ch_width;
 
 	pe_debug("ch width %d Rx NSS %d",
 		 session_entry->gLimOperatingMode.chanWidth,

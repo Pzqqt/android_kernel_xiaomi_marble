@@ -1707,7 +1707,7 @@ bool sme_is_any_session_in_connected_state(mac_handle_t mac_handle);
 QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg);
 QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg);
 QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
-				  uint8_t  new_nss,
+				  uint8_t  new_nss, uint8_t ch_width,
 				  policy_mgr_nss_update_cback cback,
 				  uint8_t next_action,
 				  struct wlan_objmgr_psoc *psoc,

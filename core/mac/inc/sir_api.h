@@ -4350,12 +4350,14 @@ struct cfg_action_frm_tb_ppdu {
  * @msgType: nss update msg type
  * @msgLen: length of the msg
  * @new_nss: new spatial stream value
+ * @ch_width: channel width - optional
  * @vdev_id: session id
  */
 struct sir_nss_update_request {
 	uint16_t msgType;
 	uint16_t msgLen;
 	uint8_t  new_nss;
+	uint8_t ch_width;
 	uint32_t vdev_id;
 };
 

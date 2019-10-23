@@ -61,6 +61,7 @@ typedef struct sGenericQosCmd {
 /**
  * struct s_nss_update_cmd - Format of nss update request
  * @new_nss: new nss value
+ * @ch_width: new channel width - optional
  * @session_id: Session ID
  * @set_hw_mode_cb: HDD nss update callback
  * @context: Adapter context
@@ -70,6 +71,7 @@ typedef struct sGenericQosCmd {
  */
 struct s_nss_update_cmd {
 	uint32_t new_nss;
+	uint32_t ch_width;
 	uint32_t session_id;
 	void *nss_update_cb;
 	void *context;
