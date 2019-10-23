@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -566,4 +566,20 @@ bool dfs_mlme_is_opmode_sta(struct wlan_objmgr_pdev *pdev)
 		return false;
 
 	return global_dfs_to_mlme.mlme_is_opmode_sta(pdev);
+}
+
+void dfs_mlme_acquire_radar_mode_switch_lock(struct wlan_objmgr_pdev *pdev)
+{
+	if (!global_dfs_to_mlme.mlme_acquire_radar_mode_switch_lock)
+		return;
+
+	global_dfs_to_mlme.mlme_acquire_radar_mode_switch_lock(pdev);
+}
+
+void dfs_mlme_release_radar_mode_switch_lock(struct wlan_objmgr_pdev *pdev)
+{
+	if (!global_dfs_to_mlme.mlme_release_radar_mode_switch_lock)
+		return;
+
+	global_dfs_to_mlme.mlme_release_radar_mode_switch_lock(pdev);
 }

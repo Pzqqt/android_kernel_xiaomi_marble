@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -139,6 +139,10 @@ void register_dfs_callbacks(void)
 	tmp_dfs_to_mlme->mlme_dfs_deliver_event =
 		mlme_dfs_deliver_event;
 
+	tmp_dfs_to_mlme->mlme_acquire_radar_mode_switch_lock =
+		mlme_acquire_radar_mode_switch_lock;
+	tmp_dfs_to_mlme->mlme_release_radar_mode_switch_lock =
+		mlme_release_radar_mode_switch_lock;
 	/*
 	 * Register precac auto channel switch feature related callbacks
 	 */

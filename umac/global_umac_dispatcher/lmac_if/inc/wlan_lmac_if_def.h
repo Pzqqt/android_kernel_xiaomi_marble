@@ -802,6 +802,7 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_send_avg_radar_params_to_fw:    Send average radar parameters to FW.
  * @dfs_send_usenol_pdev_param:         Send usenol pdev param to FW.
  * @dfs_send_subchan_marking_pdev_param: Send subchan marking pdev param to FW.
+ * @dfs_check_mode_switch_state:        Find if HW mode switch is in progress.
  */
 
 struct wlan_lmac_if_dfs_tx_ops {
@@ -855,6 +856,9 @@ struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_send_subchan_marking_pdev_param)(
 			struct wlan_objmgr_pdev *pdev,
 			bool subchanmark);
+	QDF_STATUS (*dfs_check_mode_switch_state)(
+			struct wlan_objmgr_pdev *pdev,
+			bool *is_hw_mode_switch_in_progress);
 };
 
 /**
@@ -1356,6 +1360,12 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
  * @dfs_is_hw_pulses_allowed:         Check if HW pulses are allowed or not.
  * @dfs_set_fw_adfs_support:          Set the agile DFS FW support in DFS.
  * @dfs_reset_dfs_prevchan:           Reset DFS previous channel structure.
+ * @dfs_init_tmp_psoc_nol:            Init temporary PSOC NOL structure.
+ * @dfs_deinit_tmp_psoc_nol:          Deinit temporary PSOC NOL structure.
+ * @dfs_save_dfs_nol_in_psoc:         Copy DFS NOL data to the PSOC copy.
+ * @dfs_reinit_nol_from_psoc_copy:    Reinit DFS NOL from the PSOC NOL copy.
+ * @dfs_reinit_precac_lists:          Reinit precac lists from other pdev.
+ * @dfs_complete_deferred_tasks:      Process mode switch completion in DFS.
  */
 struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
@@ -1523,6 +1533,20 @@ struct wlan_lmac_if_dfs_rx_ops {
 					bool fw_adfs_support_160,
 					bool fw_adfs_support_non_160);
 	void (*dfs_reset_dfs_prevchan)(struct wlan_objmgr_pdev *pdev);
+	void (*dfs_init_tmp_psoc_nol)(struct wlan_objmgr_pdev *pdev,
+				      uint8_t num_radios);
+	void (*dfs_deinit_tmp_psoc_nol)(struct wlan_objmgr_pdev *pdev);
+	void (*dfs_save_dfs_nol_in_psoc)(struct wlan_objmgr_pdev *pdev,
+					 uint8_t pdev_id,
+					 uint16_t low_5ghz_freq,
+					 uint16_t high_5ghz_freq);
+	void (*dfs_reinit_nol_from_psoc_copy)(struct wlan_objmgr_pdev *pdev,
+					      uint8_t pdev_id);
+	void (*dfs_reinit_precac_lists)(struct wlan_objmgr_pdev *src_pdev,
+					struct wlan_objmgr_pdev *dest_pdev,
+					uint16_t low_5g_freq,
+					uint16_t high_5g_freq);
+	void (*dfs_complete_deferred_tasks)(struct wlan_objmgr_pdev *pdev);
 };
 
 /**

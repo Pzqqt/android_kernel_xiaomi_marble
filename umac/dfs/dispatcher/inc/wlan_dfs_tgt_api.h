@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -604,4 +604,77 @@ void tgt_dfs_set_fw_adfs_support(struct wlan_objmgr_pdev *pdev,
 {
 }
 #endif
+
+/**
+ * tgt_dfs_init_tmp_psoc_nol() - Init temporary psoc NOL structure.
+ * @pdev: Pointer to pdev object.
+ * @num_radios: Number of radios in the psoc.
+ *
+ * Return: void.
+ */
+void tgt_dfs_init_tmp_psoc_nol(struct wlan_objmgr_pdev *pdev,
+			       uint8_t num_radios);
+
+/**
+ * tgt_dfs_deinit_tmp_psoc_nol() - De-init temporary psoc NOL structure.
+ * @pdev: Pointer to pdev object.
+ *
+ * Return: void.
+ */
+void tgt_dfs_deinit_tmp_psoc_nol(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * tgt_dfs_save_dfs_nol_in_psoc() - Save NOL data of given pdev.
+ * @pdev: Pointer to pdev object.
+ * @pdev_id: The pdev ID which will have the NOL data.
+ * @low_5ghz_freq: The low 5GHz frequency value of the target pdev id.
+ * @high_5ghz_freq: The high 5GHz frequency value of the target pdev id.
+ *
+ * Based on the frequency of the NOL channel, copy it to the target pdev_id
+ * structure in psoc.
+ *
+ * Return: void.
+ */
+void tgt_dfs_save_dfs_nol_in_psoc(struct wlan_objmgr_pdev *pdev,
+				  uint8_t pdev_id,
+				  uint16_t low_5ghz_freq,
+				  uint16_t high_5ghz_freq);
+
+/**
+ * tgt_dfs_reinit_nol_from_psoc_copy() - Reinit saved NOL data to corresponding
+ * pdevs.
+ * @pdev: Pointer to pdev object.
+ * @pdev_id: pdev_id of the given pdev.
+ *
+ * Return: void.
+ */
+void tgt_dfs_reinit_nol_from_psoc_copy(struct wlan_objmgr_pdev *pdev,
+				       uint8_t pdev_id);
+
+/**
+ * tgt_dfs_reinit_precac_lists() - Reinit preCAC lists.
+ * @src_pdev: Source pdev object from which the preCAC list is copied.
+ * @dest_pdev: Destination pdev object to which the preCAC list is copied.
+ * @low_5g_freq: Low 5G frequency value of the destination DFS.
+ * @high_5g_freq: High 5G frequency value of the destination DFS.
+ *
+ * Copy all the preCAC list entries from the source pdev object to the
+ * destination pdev object which fall within the frequency range of
+ * low_5g_freq and high_5g_freq.
+ *
+ * Return: None (void).
+ */
+void tgt_dfs_reinit_precac_lists(struct wlan_objmgr_pdev *src_pdev,
+				 struct wlan_objmgr_pdev *dest_pdev,
+				 uint16_t low_5g_freq,
+				 uint16_t high_5g_freq);
+
+/**
+ * tgt_dfs_complete_deferred_tasks() - Process HW mode switch completion and
+ * handle deferred tasks.
+ * @pdev: Pointer to primary pdev object.
+ *
+ * Return: void.
+ */
+void tgt_dfs_complete_deferred_tasks(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_TGT_API_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -197,3 +197,20 @@ bool lmac_is_host_dfs_check_support_enabled(struct wlan_objmgr_pdev *pdev)
 	return enabled;
 }
 #endif
+
+bool lmac_dfs_is_hw_mode_switch_in_progress(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	bool is_hw_mode_switch_in_progress = false;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
+
+	if (dfs_tx_ops->dfs_check_mode_switch_state)
+		dfs_tx_ops->dfs_check_mode_switch_state(
+			pdev,
+			&is_hw_mode_switch_in_progress);
+
+	return is_hw_mode_switch_in_progress;
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2006, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,6 +31,7 @@
 #include "../dfs_full_offload.h"
 #include <wlan_objmgr_vdev_obj.h>
 #include "wlan_dfs_utils_api.h"
+#include "../dfs_process_radar_found_ind.h"
 #include "../dfs_partial_offload_radar.h"
 
 /* Disable NOL in FW. */
@@ -916,4 +917,27 @@ int dfs_reinit_timers(struct wlan_dfs *dfs)
 void dfs_reset_dfs_prevchan(struct wlan_dfs *dfs)
 {
 	qdf_mem_zero(dfs->dfs_prevchan, sizeof(struct dfs_channel));
+}
+
+bool dfs_is_hw_mode_switch_in_progress(struct wlan_dfs *dfs)
+{
+	return lmac_dfs_is_hw_mode_switch_in_progress(dfs->dfs_pdev_obj);
+}
+
+void dfs_complete_deferred_tasks(struct wlan_dfs *dfs)
+{
+	if (dfs->dfs_defer_params.is_radar_detected) {
+		/* Handle radar event that was deferred and free the temporary
+		 * storage of the radar event parameters.
+		 */
+		dfs_process_radar_ind(dfs, dfs->dfs_defer_params.radar_params);
+		qdf_mem_free(dfs->dfs_defer_params.radar_params);
+		dfs->dfs_defer_params.is_radar_detected = false;
+	} else if (dfs->dfs_defer_params.is_cac_completed) {
+		/* Handle CAC completion event that was deferred for HW mode
+		 * switch.
+		 */
+		dfs_process_cac_completion(dfs);
+		dfs->dfs_defer_params.is_cac_completed = false;
+	}
 }
