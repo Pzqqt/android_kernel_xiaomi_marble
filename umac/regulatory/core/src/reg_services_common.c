@@ -1692,7 +1692,7 @@ static uint16_t reg_compute_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 	chan_list = pdev_priv_obj->mas_chan_list;
 
 	for (count = min_chan_range; count <= max_chan_range; count++) {
-		if (reg_chan_is_49ghz(pdev, chan_list[count].chan_num)) {
+		if (REG_IS_49GHZ_FREQ(chan_list[count].center_freq)) {
 			if (chan_list[count].chan_num == chan_num)
 				break;
 			continue;
@@ -1715,7 +1715,7 @@ static uint16_t reg_compute_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 		goto end;
 
 	if ((chan_list[count - 1].chan_num == INVALID_CHANNEL_NUM) ||
-	    reg_chan_is_49ghz(pdev, chan_list[count - 1].chan_num) ||
+	    REG_IS_49GHZ_FREQ(chan_list[count - 1].center_freq) ||
 	    (chan_list[count].chan_num == INVALID_CHANNEL_NUM)) {
 		reg_err("Channel %d invalid in current reg domain",
 			chan_num);
