@@ -1616,10 +1616,14 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 	msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
 
-	qdf_nbuf_set_pktlen(nbuf, pkt_len);
-	qdf_nbuf_pull_head(nbuf,
-			   RX_PKT_TLVS_LEN +
-			   l2_hdr_offset);
+	if (qdf_unlikely(qdf_nbuf_is_frag(nbuf))) {
+		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+	} else {
+		qdf_nbuf_set_pktlen(nbuf, pkt_len);
+		qdf_nbuf_pull_head(nbuf,
+				   RX_PKT_TLVS_LEN +
+				   l2_hdr_offset);
+	}
 
 	/* only allow special frames */
 	if (!dp_is_special_data(nbuf))
