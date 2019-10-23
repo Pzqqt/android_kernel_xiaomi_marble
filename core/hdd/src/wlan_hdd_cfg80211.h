@@ -318,7 +318,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 					       uint32_t ch_freq);
 
-void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t op_chan,
+void hdd_select_cbmode(struct hdd_adapter *adapter, uint32_t oper_freq,
 		       struct ch_params *ch_params);
 
 /**

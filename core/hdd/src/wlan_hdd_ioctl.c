@@ -1297,7 +1297,7 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *command,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 					const tSirMacAddr bssid,
-					int channel)
+					uint32_t ch_freq)
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -1308,24 +1308,13 @@ QDF_STATUS hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 	qdf_mem_copy(connected_bssid, hdd_sta_ctx->conn_info.bssid.bytes,
 		     ETH_ALEN);
 	return sme_fast_reassoc(adapter->hdd_ctx->mac_handle,
-				roam_profile, bssid, channel,
+				roam_profile, bssid, ch_freq,
 				adapter->vdev_id, connected_bssid);
 }
 #endif
 
-/**
- * hdd_reassoc() - perform a userspace-directed reassoc
- * @adapter:    Adapter upon which the command was received
- * @bssid:      BSSID with which to reassociate
- * @channel:    channel upon which to reassociate
- * @src:        The source for the trigger of this action
- *
- * This function performs a userspace-directed reassoc operation
- *
- * Return: 0 for success non-zero for failure
- */
 int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
-		uint8_t channel, const handoff_src src)
+		uint32_t ch_freq, const handoff_src src)
 {
 	struct hdd_station_ctx *sta_ctx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1368,24 +1357,21 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	 * use the current connections's channel.
 	 */
 	if (!memcmp(bssid, sta_ctx->conn_info.bssid.bytes,
-			QDF_MAC_ADDR_SIZE)) {
+		    QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
-		channel = wlan_reg_freq_to_chan(hdd_ctx->pdev,
-						sta_ctx->conn_info.chan_freq);
+		ch_freq = sta_ctx->conn_info.chan_freq;
 	}
 
-	/* Check channel number is a valid channel number */
 	if (QDF_STATUS_SUCCESS !=
-	    wlan_hdd_validate_operation_channel(adapter, channel)) {
-		hdd_err("Invalid Channel: %d", channel);
+	    wlan_hdd_validate_operation_channel(adapter, ch_freq)) {
+		hdd_err("Invalid Ch freq: %d", ch_freq);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	/* Proceed with reassoc */
 	if (roaming_offload_enabled(hdd_ctx)) {
-		status = hdd_wma_send_fastreassoc_cmd(adapter,
-						 bssid, (int)channel);
+		status = hdd_wma_send_fastreassoc_cmd(adapter, bssid, ch_freq);
 		if (status != QDF_STATUS_SUCCESS) {
 			hdd_err("Failed to send fast reassoc cmd");
 			ret = -EINVAL;
@@ -1393,7 +1379,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	} else {
 		tCsrHandoffRequest handoff;
 
-		handoff.ch_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, channel);
+		handoff.ch_freq = ch_freq;
 		handoff.src = src;
 		qdf_mem_copy(handoff.bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
 		sme_handoff_request(hdd_ctx->mac_handle, adapter->vdev_id,
@@ -1430,7 +1416,8 @@ static int hdd_parse_reassoc_v1(struct hdd_adapter *adapter, const char *command
 	if (ret)
 		hdd_err("Failed to parse reassoc command data");
 	else
-		ret = hdd_reassoc(adapter, bssid, channel, REASSOC);
+		ret = hdd_reassoc(adapter, bssid,
+				  wlan_chan_to_freq(channel), REASSOC);
 
 	return ret;
 }
@@ -1468,7 +1455,8 @@ static int hdd_parse_reassoc_v2(struct hdd_adapter *adapter,
 		hdd_err("MAC address parsing failed");
 		ret = -EINVAL;
 	} else {
-		ret = hdd_reassoc(adapter, bssid, params.channel, REASSOC);
+		ret = hdd_reassoc(adapter, bssid,
+				  wlan_chan_to_freq(params.channel), REASSOC);
 	}
 	return ret;
 }

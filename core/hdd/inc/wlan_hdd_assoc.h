@@ -441,7 +441,7 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS
 hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
-			     const tSirMacAddr bssid, int channel);
+			     const tSirMacAddr bssid, uint32_t ch_freq);
 /**
  * hdd_save_gtk_params() - Save GTK offload params
  * @adapter: HDD adapter
@@ -455,7 +455,7 @@ void hdd_save_gtk_params(struct hdd_adapter *adapter,
 #else
 static inline QDF_STATUS
 hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
-			     const tSirMacAddr bssid, int channel)
+			     const tSirMacAddr bssid, uint32_t ch_freq)
 {
 	return QDF_STATUS_SUCCESS;
 }

@@ -17559,32 +17559,31 @@ void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
  *
  * Return: none
  */
-void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t op_chan,
+void hdd_select_cbmode(struct hdd_adapter *adapter, uint32_t oper_freq,
 		       struct ch_params *ch_params)
 {
-	uint8_t sec_ch = 0;
+	uint32_t sec_ch_freq = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *station_ctx =
 				 WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	eConnectionState connstate;
 	bool cbmode_select = false;
-	uint32_t op_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, op_chan);
 
 	/*
 	 * CDS api expects secondary channel for calculating
 	 * the channel params
 	 */
 	if ((ch_params->ch_width == CH_WIDTH_40MHZ) &&
-	    (WLAN_REG_IS_24GHZ_CH(op_chan))) {
-		if (op_chan >= 1 && op_chan <= 5)
-			sec_ch = op_chan + 4;
-		else if (op_chan >= 6 && op_chan <= 13)
-			sec_ch = op_chan - 4;
+	    (WLAN_REG_IS_24GHZ_CH_FREQ(oper_freq))) {
+		if (oper_freq >= 2412 && oper_freq <= 2432)
+			sec_ch_freq = oper_freq + 20;
+		else if (oper_freq >= 2437 && oper_freq <= 2472)
+			sec_ch_freq = oper_freq - 20;
 	}
 
 	/* This call decides required channel bonding mode */
-	wlan_reg_set_channel_params(hdd_ctx->pdev, op_chan,
-				    sec_ch, ch_params);
+	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev, oper_freq,
+					     sec_ch_freq, ch_params);
 
 	if (adapter->device_mode == QDF_STA_MODE &&
 	    ucfg_mlme_is_change_channel_bandwidth_enabled(hdd_ctx->psoc)) {
@@ -17596,7 +17595,7 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t op_chan,
 	}
 
 	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE || cbmode_select)
-		hdd_mon_select_cbmode(adapter, op_freq, ch_params);
+		hdd_mon_select_cbmode(adapter, oper_freq, ch_params);
 }
 
 /**
@@ -17771,7 +17770,7 @@ int wlan_hdd_cfg80211_check_pmf_valid(struct csr_roam_profile *roam_profile)
 static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 				    const u8 *ssid, size_t ssid_len,
 				    const u8 *bssid, const u8 *bssid_hint,
-				    u8 operatingChannel,
+				    uint32_t oper_freq,
 				    enum nl80211_chan_width ch_width)
 {
 	int status = 0;
@@ -17787,7 +17786,6 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	uint8_t value = 0;
 	struct wlan_objmgr_vdev *vdev;
 	uint32_t channel_bonding_mode;
-	uint32_t oper_freq;
 
 	hdd_enter();
 
@@ -17914,11 +17912,9 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 					bssid_hint);
 		}
 
-		hdd_debug("vdevid %d: Connect to SSID: %.*s operating Channel: %u",
-			  adapter->vdev_id,
+		hdd_debug("Connect to SSID: %.*s operating Ch freq: %u",
 			  roam_profile->SSIDs.SSIDList->SSID.length,
-			  roam_profile->SSIDs.SSIDList->SSID.ssId,
-			  operatingChannel);
+			  roam_profile->SSIDs.SSIDList->SSID.ssId, oper_freq);
 
 		if (hdd_sta_ctx->wpa_versions) {
 			hdd_set_genie_to_csr(adapter, &rsn_auth_type);
@@ -17971,17 +17967,14 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		hdd_objmgr_put_vdev(vdev);
 		roam_profile->csrPersona = adapter->device_mode;
 
-		if (operatingChannel) {
-			oper_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
-							  operatingChannel);
+		if (oper_freq) {
 			roam_profile->ChannelInfo.freq_list = &oper_freq;
 			roam_profile->ChannelInfo.numOfChannels = 1;
 		} else {
 			roam_profile->ChannelInfo.freq_list = NULL;
 			roam_profile->ChannelInfo.numOfChannels = 0;
 		}
-		if ((QDF_IBSS_MODE == adapter->device_mode)
-		    && operatingChannel) {
+		if (QDF_IBSS_MODE == adapter->device_mode && oper_freq) {
 			/*
 			 * Need to post the IBSS power save parameters
 			 * to WMA. WMA will configure this parameters
@@ -18001,10 +17994,10 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			 * In IBSS mode while operating in 2.4 GHz,
 			 * the device supports only 20 MHz.
 			 */
-			if (WLAN_REG_IS_24GHZ_CH(operatingChannel))
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(oper_freq))
 				roam_profile->ch_params.ch_width =
 					CH_WIDTH_20MHZ;
-			hdd_select_cbmode(adapter, operatingChannel,
+			hdd_select_cbmode(adapter, oper_freq,
 					  &roam_profile->ch_params);
 		}
 
@@ -20132,7 +20125,7 @@ static int wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 {
 	int status = -EINVAL;
 	const uint8_t *bssid = NULL;
-	uint16_t channel = 0;
+	uint32_t ch_freq = 0;
 	struct hdd_station_ctx *sta_ctx;
 
 	if (req->bssid)
@@ -20141,13 +20134,13 @@ static int wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 		bssid = req->bssid_hint;
 
 	if (req->channel)
-		channel = req->channel->hw_value;
+		ch_freq = req->channel->center_freq;
 	else if (req->channel_hint)
-		channel = req->channel_hint->hw_value;
+		ch_freq = req->channel_hint->center_freq;
 
-	if (bssid && channel && req->prev_bssid) {
-		hdd_debug("REASSOC Attempt on channel %d to " QDF_MAC_ADDR_STR,
-			  channel, QDF_MAC_ADDR_ARRAY(bssid));
+	if (bssid && ch_freq && req->prev_bssid) {
+		hdd_debug("REASSOC Attempt on ch freq %d to " QDF_MAC_ADDR_STR,
+			  ch_freq, QDF_MAC_ADDR_ARRAY(bssid));
 		/*
 		 * Save BSSID in a separate variable as
 		 * roam_profile's BSSID is getting zeroed out in the
@@ -20158,8 +20151,8 @@ static int wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 		qdf_mem_copy(sta_ctx->requested_bssid.bytes, bssid,
 			     QDF_MAC_ADDR_SIZE);
 
-		status = hdd_reassoc(adapter, bssid, channel,
-				      CONNECT_CMD_USERSPACE);
+		status = hdd_reassoc(adapter, bssid, ch_freq,
+				     CONNECT_CMD_USERSPACE);
 		hdd_debug("hdd_reassoc: status: %d", status);
 	}
 	return status;
@@ -20239,7 +20232,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 				       struct cfg80211_connect_params *req)
 {
 	int status;
-	u16 channel, sap_cnt, sta_cnt;
+	uint32_t ch_freq, sap_cnt, sta_cnt;
 	const u8 *bssid = NULL;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
 	const u8 *bssid_hint = req->bssid_hint;
@@ -20370,12 +20363,12 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	if (req->channel) {
 		bool ok = false;
 
-		if (req->channel->hw_value && policy_mgr_is_chan_ok_for_dnbs(
+		if (req->channel->center_freq && policy_mgr_is_chan_ok_for_dnbs(
 						hdd_ctx->psoc,
 						req->channel->center_freq,
 						&ok)) {
-			hdd_warn("Unable to get channel:%d eligibility for DNBS",
-					req->channel->hw_value);
+			hdd_warn("Unable to get ch freq:%d eligibility for DNBS",
+				 req->channel->center_freq);
 			return -EINVAL;
 		}
 		/**
@@ -20383,13 +20376,12 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 		 * blacklist us.
 		 */
 		if (!ok) {
-			struct ieee80211_channel *chan =
-				ieee80211_get_channel(wiphy,
-				wlan_chan_to_freq(req->channel->hw_value));
+			struct ieee80211_channel *chan = ieee80211_get_channel(
+					wiphy, req->channel->center_freq);
 			struct cfg80211_bss *bss;
 
-			hdd_warn("Channel:%d not OK for DNBS",
-				req->channel->hw_value);
+			hdd_warn("Ch freq:%d not OK for DNBS",
+				 req->channel->center_freq);
 			if (chan) {
 				bss = wlan_cfg80211_get_bss(wiphy, chan,
 							    req->bssid,
@@ -20422,15 +20414,15 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	}
 
 	if (req->channel)
-		channel = req->channel->hw_value;
+		ch_freq = req->channel->center_freq;
 	else
-		channel = 0;
+		ch_freq = 0;
 
 	wlan_hdd_check_ht20_ht40_ind(hdd_ctx, adapter, req);
 
 	status = wlan_hdd_cfg80211_connect_start(adapter, req->ssid,
 						 req->ssid_len, req->bssid,
-						 bssid_hint, channel, 0);
+						 bssid_hint, ch_freq, 0);
 	if (0 > status)
 		hdd_err("connect failed");
 
@@ -22777,7 +22769,8 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
 	roam_profile.ch_params.ch_width = hdd_map_nl_chan_width(chandef->width);
-	hdd_select_cbmode(adapter, chan_num, &roam_profile.ch_params);
+	hdd_select_cbmode(adapter, chandef->chan->center_freq,
+			  &roam_profile.ch_params);
 
 	qdf_mem_copy(bssid.bytes, adapter->mac_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);

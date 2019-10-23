@@ -2906,8 +2906,20 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t vdev_id,
 					 QDF_STATUS qdf_status);
 QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id);
 
+/**
+ * hdd_reassoc() - perform a userspace-directed reassoc
+ * @adapter:    Adapter upon which the command was received
+ * @bssid:      BSSID with which to reassociate
+ * @ch_freq:    channel upon which to reassociate
+ * @src:        The source for the trigger of this action
+ *
+ * This function performs a userspace-directed reassoc operation
+ *
+ * Return: 0 for success non-zero for failure
+ */
 int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
-		uint8_t channel, const handoff_src src);
+		uint32_t ch_freq, const handoff_src src);
+
 int hdd_register_cb(struct hdd_context *hdd_ctx);
 void hdd_deregister_cb(struct hdd_context *hdd_ctx);
 int hdd_start_station_adapter(struct hdd_adapter *adapter);
