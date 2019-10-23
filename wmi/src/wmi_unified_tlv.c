@@ -6334,6 +6334,11 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->spectral_scan_bin_scale = param->bin_scale;
 	cmd->spectral_scan_dBm_adj = param->dbm_adj;
 	cmd->spectral_scan_chn_mask = param->chn_mask;
+	cmd->spectral_scan_mode = param->mode;
+	cmd->spectral_scan_center_freq = param->center_freq;
+	/* Not used, fill with zeros */
+	cmd->spectral_scan_chan_freq = 0;
+	cmd->spectral_scan_chan_width = 0;
 
 	wmi_mtrace(WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -6347,44 +6352,29 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGI("%s: Sent WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID",
 		 __func__);
 
-	WMI_LOGI("vdev_id = %u\n"
-		 "spectral_scan_count = %u\n"
-		 "spectral_scan_period = %u\n"
-		 "spectral_scan_priority = %u\n"
-		 "spectral_scan_fft_size = %u\n"
-		 "spectral_scan_gc_ena = %u\n"
-		 "spectral_scan_restart_ena = %u\n"
-		 "spectral_scan_noise_floor_ref = %u\n"
-		 "spectral_scan_init_delay = %u\n"
-		 "spectral_scan_nb_tone_thr = %u\n"
-		 "spectral_scan_str_bin_thr = %u\n"
-		 "spectral_scan_wb_rpt_mode = %u\n"
-		 "spectral_scan_rssi_rpt_mode = %u\n"
-		 "spectral_scan_rssi_thr = %u\n"
-		 "spectral_scan_pwr_format = %u\n"
-		 "spectral_scan_rpt_mode = %u\n"
-		 "spectral_scan_bin_scale = %u\n"
-		 "spectral_scan_dBm_adj = %u\n"
-		 "spectral_scan_chn_mask = %u",
-		 param->vdev_id,
-		 param->count,
-		 param->period,
-		 param->spectral_pri,
-		 param->fft_size,
-		 param->gc_enable,
-		 param->restart_enable,
-		 param->noise_floor_ref,
-		 param->init_delay,
-		 param->nb_tone_thr,
-		 param->str_bin_thr,
-		 param->wb_rpt_mode,
-		 param->rssi_rpt_mode,
-		 param->rssi_thr,
-		 param->pwr_format,
-		 param->rpt_mode,
-		 param->bin_scale,
-		 param->dbm_adj,
-		 param->chn_mask);
+	WMI_LOGI("vdev_id = %u", param->vdev_id);
+	WMI_LOGI("spectral_scan_count = %u", param->count);
+	WMI_LOGI("spectral_scan_period = %u", param->period);
+	WMI_LOGI("spectral_scan_priority = %u", param->spectral_pri);
+	WMI_LOGI("spectral_scan_fft_size = %u", param->fft_size);
+	WMI_LOGI("spectral_scan_gc_ena = %u", param->gc_enable);
+	WMI_LOGI("spectral_scan_restart_ena = %u", param->restart_enable);
+	WMI_LOGI("spectral_scan_noise_floor_ref = %u", param->noise_floor_ref);
+	WMI_LOGI("spectral_scan_init_delay = %u", param->init_delay);
+	WMI_LOGI("spectral_scan_nb_tone_thr = %u",  param->nb_tone_thr);
+	WMI_LOGI("spectral_scan_str_bin_thr = %u", param->str_bin_thr);
+	WMI_LOGI("spectral_scan_wb_rpt_mode = %u", param->wb_rpt_mode);
+	WMI_LOGI("spectral_scan_rssi_rpt_mode = %u", param->rssi_rpt_mode);
+	WMI_LOGI("spectral_scan_rssi_thr = %u", param->rssi_thr);
+	WMI_LOGI("spectral_scan_pwr_format = %u", param->pwr_format);
+	WMI_LOGI("spectral_scan_rpt_mode = %u", param->rpt_mode);
+	WMI_LOGI("spectral_scan_bin_scale = %u", param->bin_scale);
+	WMI_LOGI("spectral_scan_dBm_adj = %u", param->dbm_adj);
+	WMI_LOGI("spectral_scan_chn_mask = %u", param->chn_mask);
+	WMI_LOGI("spectral_scan_mode = %u", param->mode);
+	WMI_LOGI("spectral_scan_center_freq = %u", param->center_freq);
+	WMI_LOGI("spectral_scan_chan_freq = %u", param->chan_freq);
+	WMI_LOGI("spectral_scan_chan_width = %u", param->chan_width);
 	WMI_LOGI("%s: Status: %d", __func__, ret);
 
 	return ret;
@@ -6432,13 +6422,12 @@ static QDF_STATUS send_vdev_spectral_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	} else {
 		cmd->enable_cmd = 0; /* 0: Ignore */
 	}
+	cmd->spectral_scan_mode = param->mode;
 
-	WMI_LOGI("vdev_id = %u\n"
-				 "trigger_cmd = %u\n"
-				 "enable_cmd = %u",
-				 cmd->vdev_id,
-				 cmd->trigger_cmd,
-				 cmd->enable_cmd);
+	WMI_LOGI("vdev_id = %u", cmd->vdev_id);
+	WMI_LOGI("trigger_cmd = %u", cmd->trigger_cmd);
+	WMI_LOGI("enable_cmd = %u", cmd->enable_cmd);
+	WMI_LOGI("spectral_scan_mode = %u", cmd->spectral_scan_mode);
 
 	wmi_mtrace(WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -9760,6 +9749,15 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 
 			chainmask_table[i].cap_list[j].supports_aDFS =
 				WMI_SUPPORT_CHAIN_MASK_ADFS_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].supports_aSpectral =
+				WMI_SUPPORT_AGILE_SPECTRAL_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].supports_aSpectral_160 =
+				WMI_SUPPORT_AGILE_SPECTRAL_160_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].supports_aDFS_160 =
+				WMI_SUPPORT_ADFS_160_GET(chainmask_caps->supported_flags);
 
 			wmi_nofl_debug("supported_flags: 0x%08x  chainmasks: 0x%08x",
 				       chainmask_caps->supported_flags,

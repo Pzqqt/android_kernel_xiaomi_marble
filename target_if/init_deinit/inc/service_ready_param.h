@@ -276,6 +276,9 @@ struct wlan_psoc_host_spectral_scaling_params {
  * @supports_chan_width_80: channel width 80 support for this chain mask.
  * @supports_chan_width_160: channel width 160 support for this chain mask.
  * @supports_chan_width_80P80: channel width 80P80 support for this chain mask.
+ * @supports_aSpectral: Agile Spectral support for this chain mask.
+ * @supports_aSpectral_160: Agile Spectral support in 160 MHz.
+ * @supports_aDFS_160: Agile DFS support in 160 MHz for this chain mask.
  * @chain_mask_2G: 2G support for this chain mask.
  * @chain_mask_5G: 5G support for this chain mask.
  * @chain_mask_tx: Tx support for this chain mask.
@@ -289,7 +292,10 @@ struct wlan_psoc_host_chainmask_capabilities {
 		 supports_chan_width_80:1,
 		 supports_chan_width_160:1,
 		 supports_chan_width_80P80:1,
-		 reserved:22,
+		 supports_aSpectral:1,
+		 supports_aSpectral_160:1,
+		 supports_aDFS_160:1,
+		 reserved:19,
 		 chain_mask_2G:1,
 		 chain_mask_5G:1,
 		 chain_mask_tx:1,

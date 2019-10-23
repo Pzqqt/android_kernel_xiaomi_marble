@@ -2920,6 +2920,10 @@ struct smart_ant_enable_tx_feedback_params {
  * @bin_scale: BIN scale
  * @dbm_adj: DBM adjust
  * @chn_mask: chain mask
+ * @mode: Mode
+ * @center_freq: Center frequency
+ * @chan_freq: Primary channel frequency
+ * @chan_width: Channel width
  */
 struct vdev_spectral_configure_params {
 	uint8_t vdev_id;
@@ -2941,6 +2945,10 @@ struct vdev_spectral_configure_params {
 	uint16_t bin_scale;
 	uint16_t dbm_adj;
 	uint16_t chn_mask;
+	uint16_t mode;
+	uint16_t center_freq;
+	uint16_t chan_freq;
+	uint16_t chan_width;
 };
 
 /**
@@ -2950,6 +2958,7 @@ struct vdev_spectral_configure_params {
  * @active: active
  * @enabled_valid: Enabled valid
  * @enabled: enabled
+ * @mode: Mode
  */
 struct vdev_spectral_enable_params {
 	uint8_t vdev_id;
@@ -2957,6 +2966,7 @@ struct vdev_spectral_enable_params {
 	uint8_t active;
 	uint8_t enabled_valid;
 	uint8_t enabled;
+	uint8_t mode;
 };
 
 /**

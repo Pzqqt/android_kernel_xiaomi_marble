@@ -89,12 +89,14 @@ target_if_spectral_get_vdev(struct target_if_spectral *spectral)
  * target_if_send_vdev_spectral_configure_cmd() - Send WMI command to configure
  * spectral parameters
  * @spectral: Pointer to Spectral target_if internal private data
+ * @smode: Spectral scan mode
  * @param: Pointer to spectral_config giving the Spectral configuration
  *
  * Return: QDF_STATUS_SUCCESS on success, negative error code on failure
  */
 static int
 target_if_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
+					   enum spectral_scan_mode smode,
 					   struct spectral_config *param)
 {
 	struct vdev_spectral_configure_params sparam;
@@ -134,6 +136,8 @@ target_if_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
 	sparam.bin_scale = param->ss_bin_scale;
 	sparam.dbm_adj = param->ss_dbm_adj;
 	sparam.chn_mask = param->ss_chn_mask;
+	sparam.mode = smode;
+	sparam.center_freq = param->ss_frequency;
 
 	return spectral->param_wmi_cmd_ops.wmi_spectral_configure_cmd_send(
 				GET_WMI_HDL_FROM_PDEV(pdev), &sparam);
@@ -143,6 +147,7 @@ target_if_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
  * target_if_send_vdev_spectral_enable_cmd() - Send WMI command to
  * enable/disable Spectral
  * @spectral: Pointer to Spectral target_if internal private data
+ * @smode: Spectral scan mode
  * @is_spectral_active_valid: Flag to indicate if spectral activate (trigger) is
  * valid
  * @is_spectral_active: Value of spectral activate
@@ -153,6 +158,7 @@ target_if_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
  */
 static int
 target_if_send_vdev_spectral_enable_cmd(struct target_if_spectral *spectral,
+					enum spectral_scan_mode smode,
 					uint8_t is_spectral_active_valid,
 					uint8_t is_spectral_active,
 					uint8_t is_spectral_enabled_valid,
@@ -181,6 +187,7 @@ target_if_send_vdev_spectral_enable_cmd(struct target_if_spectral *spectral,
 	param.enabled_valid = is_spectral_enabled_valid;
 	param.active = is_spectral_active;
 	param.enabled = is_spectral_enabled;
+	param.mode = smode;
 
 	return spectral->param_wmi_cmd_ops.wmi_spectral_enable_cmd_send(
 				GET_WMI_HDL_FROM_PDEV(pdev), &param);
@@ -736,7 +743,7 @@ target_if_spectral_info_write(
 		pval = (uint8_t *)input;
 
 		qdf_spin_lock(&info->osps_lock);
-		ret = target_if_send_vdev_spectral_enable_cmd(spectral,
+		ret = target_if_send_vdev_spectral_enable_cmd(spectral, smode,
 							      1, *pval, 0, 0);
 
 		target_if_log_write_spectral_active(
@@ -766,7 +773,7 @@ target_if_spectral_info_write(
 		pval = (uint8_t *)input;
 
 		qdf_spin_lock(&info->osps_lock);
-		ret = target_if_send_vdev_spectral_enable_cmd(spectral,
+		ret = target_if_send_vdev_spectral_enable_cmd(spectral, smode,
 							      0, 0, 1, *pval);
 
 		target_if_log_write_spectral_enabled(
@@ -797,7 +804,7 @@ target_if_spectral_info_write(
 
 		qdf_spin_lock(&info->osps_lock);
 		ret = target_if_send_vdev_spectral_configure_cmd(spectral,
-								 param);
+								 smode, param);
 
 		target_if_log_write_spectral_params(
 			param,
@@ -1377,6 +1384,11 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral)
 	struct target_psoc_info *tgt_psoc_info;
 	struct wlan_psoc_host_service_ext_param *ext_svc_param;
 	struct spectral_caps *pcap = &spectral->capability;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap_arr = NULL;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap = NULL;
+	struct wlan_psoc_host_chainmask_table *table;
+	int j;
+	uint32_t table_id;
 
 	pdev = spectral->pdev_obj;
 	psoc = wlan_pdev_get_psoc(pdev);
@@ -1395,6 +1407,14 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral)
 	num_bin_scaling_params = ext_svc_param->num_bin_scaling_params;
 	scaling_params = target_psoc_get_spectral_scaling_params(tgt_psoc_info);
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	mac_phy_cap_arr = target_psoc_get_mac_phy_cap(tgt_psoc_info);
+	mac_phy_cap = &mac_phy_cap_arr[pdev_id];
+	table_id = mac_phy_cap->chainmask_table_id;
+	table =  &ext_svc_param->chainmask_table[table_id];
+	if (!table) {
+		spectral_err("chainmask table not found");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* XXX : Workaround: Set Spectral capability */
 	pcap = &spectral->capability;
@@ -1403,6 +1423,13 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral)
 	pcap->spectral_cap = 1;
 	pcap->advncd_spectral_cap = 1;
 	pcap->hw_gen = spectral->spectral_gen;
+	for (j = 0; j < table->num_valid_chainmasks; j++) {
+		pcap->agile_spectral_cap |=
+			table->cap_list[j].supports_aSpectral;
+		pcap->agile_spectral_cap_160 |=
+			table->cap_list[j].supports_aSpectral_160;
+	}
+	pcap->agile_spectral_cap_80p80 = pcap->agile_spectral_cap_160;
 
 	for (param_idx = 0; param_idx < num_bin_scaling_params; param_idx++) {
 		if (scaling_params[param_idx].pdev_id == pdev_id) {

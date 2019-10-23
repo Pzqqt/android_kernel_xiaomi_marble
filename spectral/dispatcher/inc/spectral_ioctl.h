@@ -80,6 +80,8 @@ enum spectral_params {
 	SPECTRAL_PARAM_STOP,
 	SPECTRAL_PARAM_ENABLE,
 	SPECTRAL_PARAM_FREQUENCY,
+	SPECTRAL_PARAM_CHAN_FREQUENCY,
+	SPECTRAL_PARAM_CHAN_WIDTH,
 	SPECTRAL_PARAM_MAX,
 };
 
@@ -224,7 +226,7 @@ struct spectral_config {
  * @high_level_offset: high_level_offset
  * @rssi_thr: rssi_thr
  * @default_agc_max_gain: default_agc_max_gain
- * @agile_spectral_cap: agile Spectral capability
+ * @agile_spectral_cap: agile Spectral capability for 20/40/80
  * @agile_spectral_cap_160: agile Spectral capability for 160 MHz
  * @agile_spectral_cap_80p80: agile Spectral capability for 80p80
  */
