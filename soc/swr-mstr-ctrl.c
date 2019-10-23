@@ -2880,6 +2880,12 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 						__func__, swrm->state);
 				else
 					swrm_device_suspend(&pdev->dev);
+				/*
+				 * add delay to ensure clk release happen
+				 * if interrupt triggered for clk stop,
+				 * wait for it to exit
+				 */
+				usleep_range(10000, 10500);
 			}
 			swrm->mclk_freq = *(int *)data;
 			mutex_unlock(&swrm->mlock);
