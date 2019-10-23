@@ -133,6 +133,7 @@ enum {
 	WCD_BOLERO_EVT_RX_MUTE = 1,	/* for RX mute/unmute */
 	WCD_BOLERO_EVT_IMPED_TRUE,	/* for imped true */
 	WCD_BOLERO_EVT_IMPED_FALSE,	/* for imped false */
+	WCD_BOLERO_EVT_BCS_CLK_OFF,
 };
 
 enum {
@@ -164,6 +165,9 @@ enum {
 	WCD937X_NUM_IRQS,
 };
 
+extern void wcd937x_disable_bcs_before_slow_insert(
+				struct snd_soc_component *component,
+				bool bcs_disable);
 extern struct wcd937x_mbhc *wcd937x_soc_get_mbhc(
 				struct snd_soc_component *component);
 extern int wcd937x_mbhc_micb_adjust_voltage(struct snd_soc_component *component,

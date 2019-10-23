@@ -1517,6 +1517,21 @@ int wcd937x_micbias_control(struct snd_soc_component *component,
 }
 EXPORT_SYMBOL(wcd937x_micbias_control);
 
+void wcd937x_disable_bcs_before_slow_insert(struct snd_soc_component *component,
+					    bool bcs_disable)
+{
+	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
+
+	if (wcd937x->update_wcd_event) {
+		if (bcs_disable)
+			wcd937x->update_wcd_event(wcd937x->handle,
+						WCD_BOLERO_EVT_BCS_CLK_OFF, 0);
+		else
+			wcd937x->update_wcd_event(wcd937x->handle,
+						WCD_BOLERO_EVT_BCS_CLK_OFF, 1);
+	}
+}
+
 static int wcd937x_get_logical_addr(struct swr_device *swr_dev)
 {
 	int ret = 0;
