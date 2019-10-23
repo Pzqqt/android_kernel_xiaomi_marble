@@ -20,6 +20,7 @@
 
 #include <drm/drm_crtc.h>
 #include <drm/drm_fixed.h>
+#include <drm/drm_panel.h>
 #include <linux/debugfs.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
@@ -939,6 +940,80 @@ static int _sde_kms_unmap_all_splash_regions(struct sde_kms *sde_kms)
 	return ret;
 }
 
+static int _sde_kms_get_blank(struct drm_crtc_state *crtc_state,
+		struct drm_connector_state *conn_state)
+{
+	int lp_mode, blank;
+
+	if (crtc_state->active)
+		lp_mode = sde_connector_get_property(conn_state,
+							CONNECTOR_PROP_LP);
+	else
+		lp_mode = SDE_MODE_DPMS_OFF;
+
+	switch (lp_mode) {
+	case SDE_MODE_DPMS_ON:
+		blank = DRM_PANEL_BLANK_UNBLANK;
+		break;
+	case SDE_MODE_DPMS_LP1:
+	case SDE_MODE_DPMS_LP2:
+		blank = DRM_PANEL_BLANK_LP;
+		break;
+	case SDE_MODE_DPMS_OFF:
+	default:
+		blank = DRM_PANEL_BLANK_POWERDOWN;
+		break;
+	}
+
+	return blank;
+}
+
+static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
+			unsigned long event)
+{
+	struct drm_connector *connector;
+	struct drm_connector_state *old_conn_state;
+	struct drm_crtc_state *old_crtc_state;
+	int i, old_mode, new_mode, old_fps, new_fps;
+
+	for_each_old_connector_in_state(old_state, connector,
+			old_conn_state, i) {
+		if (!connector->state->crtc)
+			continue;
+
+		new_fps = connector->state->crtc->state->mode.vrefresh;
+		new_mode = _sde_kms_get_blank(connector->state->crtc->state,
+						connector->state);
+		if (old_conn_state->crtc) {
+			old_crtc_state = drm_atomic_get_existing_crtc_state(
+					old_state, old_conn_state->crtc);
+
+			old_fps = old_crtc_state->mode.vrefresh;
+			old_mode = _sde_kms_get_blank(old_crtc_state,
+							old_conn_state);
+		} else {
+			old_fps = 0;
+			old_mode = DRM_PANEL_BLANK_POWERDOWN;
+		}
+
+		if ((old_mode != new_mode) || (old_fps != new_fps)) {
+			struct drm_panel_notifier notifier_data;
+
+			pr_debug("change detected (power mode %d->%d, fps %d->%d)\n",
+				old_mode, new_mode, old_fps, new_fps);
+
+			notifier_data.data = &new_mode;
+			notifier_data.refresh_rate = new_fps;
+			notifier_data.id = connector->base.id;
+
+			if (connector->panel)
+				drm_panel_notifier_call_chain(connector->panel,
+							event, &notifier_data);
+		}
+	}
+
+}
+
 int sde_kms_vm_primary_prepare_commit(struct sde_kms *sde_kms,
 				      struct drm_atomic_state *state)
 {
@@ -1079,6 +1154,7 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 
 	if (vm_ops->vm_prepare_commit)
 		vm_ops->vm_prepare_commit(sde_kms, state);
+	_sde_kms_drm_check_dpms(state, DRM_PANEL_EARLY_EVENT_BLANK);
 end:
 	SDE_ATRACE_END("prepare_commit");
 }
@@ -1417,6 +1493,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 			SDE_ERROR("vm post commit failed, rc = %d\n",
 				  rc);
 	}
+	_sde_kms_drm_check_dpms(old_state, DRM_PANEL_EVENT_BLANK);
 
 	pm_runtime_put_sync(sde_kms->dev->dev);
 
