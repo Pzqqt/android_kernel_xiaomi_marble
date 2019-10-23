@@ -315,6 +315,8 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 
 	pe_debug("Populate HE IEs");
 	populate_dot11f_he_caps(mac_ctx, pesession, &pr.he_cap);
+	populate_dot11f_he_6ghz_cap(mac_ctx, pesession,
+				    &pr.he_6ghz_band_cap);
 
 	if (addn_ielen && additional_ie) {
 		qdf_mem_zero((uint8_t *)&extracted_ext_cap,
@@ -627,6 +629,8 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 					&frm->he_cap);
 		populate_dot11f_he_operation(mac_ctx, pe_session,
 					     &frm->he_op);
+		populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
+					    &frm->he_6ghz_band_cap);
 	}
 
 	populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &frm->ExtCap,
@@ -2032,9 +2036,13 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,
 					&frm->he_cap);
+		populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
+					    &frm->he_6ghz_band_cap);
 	} else if (pe_session->he_with_wep_tkip) {
 		pe_debug("Populate HE IEs in Assoc Request with WEP/TKIP");
 		populate_dot11f_he_caps(mac_ctx, NULL, &frm->he_cap);
+		populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
+					    &frm->he_6ghz_band_cap);
 	}
 
 	if (pe_session->lim_join_req->is11Rconnection) {
