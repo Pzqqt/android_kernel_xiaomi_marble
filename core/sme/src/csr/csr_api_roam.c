@@ -10012,7 +10012,7 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 
 	status = policy_mgr_handle_conc_multiport(
 			mac->psoc, session_id,
-			mac->pdev, bss_node->pBssDescription->chan_freq,
+			bss_node->pBssDescription->chan_freq,
 			POLICY_MGR_UPDATE_REASON_LFR2_ROAM);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		mac->roam.neighborRoamInfo[session_id].scan_res_lfr2_roam_ap =
