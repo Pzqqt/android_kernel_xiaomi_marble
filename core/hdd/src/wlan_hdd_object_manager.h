@@ -110,19 +110,6 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx);
 int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_objmgr_create_and_store_vdev() - Create vdev and store in hdd adapter
- * @pdev: pdev pointer
- * @adapter: hdd adapter
- *
- * This API creates the vdev object and store the vdev reference to the
- * given @adapter. Also, creates a self peer for the vdev.
- *
- * Return: 0 for success, negative error code for failure
- */
-int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
-				     struct hdd_adapter *adapter);
-
-/**
  * hdd_objmgr_release_and_destroy_vdev() - Delete vdev and remove from adapter
  * @adapter: hdd adapter
  *

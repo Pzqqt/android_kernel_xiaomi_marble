@@ -773,4 +773,15 @@ void wma_update_roam_offload_flag(void *handle,
  * Return: QDF_STATUS
  */
 QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme);
+
+/**
+ * wma_cleanup_vdev() - cleanup wma layers vdev
+ * @vdev: Object manager vdev
+ *
+ * This function cleansup the wma layers vdev related data.
+ *
+ * Return: None
+ */
+void wma_cleanup_vdev(struct wlan_objmgr_vdev *vdev);
+
 #endif /* WMA_API_H */

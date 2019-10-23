@@ -1640,51 +1640,6 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *module_context)
 	return QDF_STATUS_SUCCESS;
 } /* cds_free_context() */
 
-QDF_STATUS cds_get_vdev_types(enum QDF_OPMODE mode, uint8_t *type,
-			      uint8_t *sub_type)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	*type = 0;
-	*sub_type = 0;
-
-	switch (mode) {
-	case QDF_STA_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_STA;
-		break;
-	case QDF_SAP_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_AP;
-		break;
-	case QDF_P2P_DEVICE_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_AP;
-		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE;
-		break;
-	case QDF_P2P_CLIENT_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_STA;
-		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_CLIENT;
-		break;
-	case QDF_P2P_GO_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_AP;
-		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_GO;
-		break;
-	case QDF_OCB_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_OCB;
-		break;
-	case QDF_IBSS_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_IBSS;
-		break;
-	case QDF_MONITOR_MODE:
-		*type = WMI_HOST_VDEV_TYPE_MONITOR;
-		break;
-	case QDF_NDI_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_NDI;
-		break;
-	default:
-		cds_err("Invalid device mode %d", mode);
-		status = QDF_STATUS_E_INVAL;
-		break;
-	}
-	return status;
-}
 
 /**
  * cds_flush_work() - flush pending works

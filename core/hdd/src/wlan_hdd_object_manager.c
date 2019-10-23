@@ -52,23 +52,6 @@ static void hdd_deinit_pdev_os_priv(struct wlan_objmgr_pdev *pdev)
 	os_if_spectral_netlink_deinit(pdev);
 	wlan_cfg80211_scan_priv_deinit(pdev);
 }
-
-static struct vdev_osif_priv *
-hdd_init_vdev_os_priv(struct hdd_adapter *adapter)
-{
-	struct vdev_osif_priv *os_priv;
-
-	os_priv = qdf_mem_malloc(sizeof(*os_priv));
-	if (!os_priv)
-		return NULL;
-
-	/* Initialize the vdev OS private structure*/
-	os_priv->wdev = adapter->dev->ieee80211_ptr;
-	os_priv->legacy_osif_priv = adapter;
-
-	return os_priv;
-}
-
 static void hdd_init_psoc_qdf_ctx(struct wlan_objmgr_psoc *psoc)
 {
 	qdf_device_t qdf_ctx;
@@ -231,63 +214,6 @@ int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx)
 	return qdf_status_to_os_return(status);
 }
 
-int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
-				     struct hdd_adapter *adapter)
-{
-	QDF_STATUS status;
-	int errno = 0;
-	struct wlan_objmgr_vdev *vdev;
-	struct vdev_osif_priv *osif_priv;
-	struct wlan_vdev_create_params vdev_params = {0};
-
-	QDF_BUG(pdev);
-	if (!pdev) {
-		hdd_err("pdev is null");
-		return -EINVAL;
-	}
-
-	osif_priv = hdd_init_vdev_os_priv(adapter);
-	if (!osif_priv) {
-		hdd_err("Failed to allocate osif_priv; out of memory");
-		return -ENOMEM;
-	}
-
-	vdev_params.opmode = adapter->device_mode;
-	vdev_params.osifp = osif_priv;
-	qdf_mem_copy(vdev_params.macaddr,
-		     adapter->mac_addr.bytes,
-		     QDF_NET_MAC_ADDR_MAX_LEN);
-
-	vdev = wlan_objmgr_vdev_obj_create(pdev, &vdev_params);
-	if (!vdev) {
-		hdd_err("Failed to create vdev object");
-		errno = -ENOMEM;
-		return errno;
-	}
-
-	/*
-	 * To enable legacy use cases, we need to delay physical vdev destroy
-	 * until after the sme session has been closed. We accomplish this by
-	 * getting a reference here.
-	 */
-	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to acquire vdev ref; status:%d", status);
-		errno = qdf_status_to_os_return(status);
-		goto vdev_destroy;
-	}
-
-	qdf_spin_lock_bh(&adapter->vdev_lock);
-	adapter->vdev = vdev;
-	adapter->vdev_id = wlan_vdev_get_id(vdev);
-	qdf_spin_unlock_bh(&adapter->vdev_lock);
-
-	return 0;
-
-vdev_destroy:
-	wlan_objmgr_vdev_obj_delete(vdev);
-	return errno;
-}
 
 int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter)
 {

@@ -4499,38 +4499,77 @@ release_ref:
 	return status;
 }
 
-QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
-			   struct sme_session_params *params)
+struct wlan_objmgr_vdev *sme_vdev_create(mac_handle_t mac_handle,
+				    struct wlan_vdev_create_params *vdev_params)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	uint8_t vdev_id;
-	u8 *mac_addr;
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mlme_obj *vdev_mlme;
 
-	vdev_id = wlan_vdev_get_id(params->vdev);
-	mac_addr = wlan_vdev_mlme_get_macaddr(params->vdev);
+	sme_debug("addr:%pM opmode:%d", vdev_params->macaddr,
+		  vdev_params->opmode);
 
-	sme_debug("vdev_id %d addr:%pM", vdev_id, mac_addr);
+	vdev = wlan_objmgr_vdev_obj_create(mac_ctx->pdev, vdev_params);
+	if (!vdev) {
+		sme_err("Failed to create vdev object");
+		return NULL;
+	}
 
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
+	if (wlan_objmgr_vdev_try_get_ref(vdev, WLAN_LEGACY_SME_ID) !=
+	    QDF_STATUS_SUCCESS) {
+		wlan_objmgr_vdev_obj_delete(vdev);
+		return NULL;
+	}
 
-	status = csr_create_vdev(mac_ctx, params->vdev, params);
-	if (QDF_IS_STATUS_SUCCESS(status))
-		status = mlme_vdev_self_peer_create(params->vdev);
-	sme_release_global_lock(&mac_ctx->sme);
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		sme_err("Failed to get vdev mlme obj!");
+		QDF_BUG(0);
+		goto vdev_obj_del;
+	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
+	vdev_id = wlan_vdev_get_id(vdev);
+	status = wma_post_vdev_create_setup(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to setup wma for vdev: %d", vdev_id);
+		goto vdev_obj_del;
+	}
+
+	status = csr_setup_vdev_session(vdev_mlme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to setup CSR layer for vdev: %d", vdev_id);
+		goto cleanup_wma;
+	}
+
+	status = mlme_vdev_self_peer_create(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to create vdev selfpeer for vdev:%d", vdev_id);
+		goto csr_cleanup_vdev_session;
+	}
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
 			 vdev_id, 0));
 
-	return status;
+	return vdev;
+
+csr_cleanup_vdev_session:
+	csr_cleanup_vdev_session(mac_ctx, vdev_id);
+cleanup_wma:
+	wma_cleanup_vdev(vdev);
+vdev_obj_del:
+	wlan_objmgr_vdev_obj_delete(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+	return NULL;
 }
 
-QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle, uint8_t vdev_id)
+QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle,
+			   struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_CLOSE_SESSION, vdev_id, 0));
@@ -4540,6 +4579,8 @@ QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle, uint8_t vdev_id)
 		sme_release_global_lock(&mac->sme);
 	}
 
+	/* Release the reference acquired during vdev create */
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	return status;
 }
 
@@ -4551,7 +4592,7 @@ void sme_cleanup_session(mac_handle_t mac_handle, uint8_t vdev_id)
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_ERROR(status))
 		return;
-	csr_cleanup_session(mac, vdev_id);
+	csr_cleanup_vdev_session(mac, vdev_id);
 	sme_release_global_lock(&mac->sme);
 }
 
@@ -13400,14 +13441,7 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(mac_handle_t mac_handle,
 void sme_get_vdev_type_nss(enum QDF_OPMODE dev_mode,
 			   uint8_t *nss_2g, uint8_t *nss_5g)
 {
-	struct mac_context *mac_ctx = sme_get_mac_context();
-
-	if (!mac_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-		FL("Invalid MAC context"));
-		return;
-	}
-	csr_get_vdev_type_nss(mac_ctx, dev_mode, nss_2g, nss_5g);
+	csr_get_vdev_type_nss(dev_mode, nss_2g, nss_5g);
 }
 
 /**

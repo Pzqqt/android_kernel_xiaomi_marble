@@ -2467,14 +2467,38 @@ QDF_STATUS wma_vdev_stop_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	return status;
 }
 
-static void wma_clean_up_iface(void *soc, tp_wma_handle wma_handle,
-			       struct wlan_objmgr_vdev *vdev)
+void wma_cleanup_vdev(struct wlan_objmgr_vdev *vdev)
 {
+	tp_wma_handle wma_handle;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct vdev_mlme_obj *vdev_mlme;
+
+	if (!soc) {
+		wma_err("SOC handle is NULL");
+		return;
+	}
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		wma_err("WMA context is invalid");
+		return;
+	}
+
+	if (!wma_handle->interfaces[vdev_id].vdev) {
+		wma_err("vdev is NULL");
+		return;
+	}
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		wma_err("Failed to get vdev mlme obj for vdev id %d", vdev_id);
+		return;
+	}
 
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
-	wma_handle->interfaces[vdev_id].vdev = NULL;
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+	wma_handle->interfaces[vdev_id].vdev = NULL;
 	wma_handle->interfaces[vdev_id].vdev_active = false;
 }
 
@@ -2485,12 +2509,6 @@ QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme)
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
 	struct cdp_pdev *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	tp_wma_handle wma_handle;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	if (!soc) {
-		wma_err("SOC handle is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
 
 	if (!txrx_pdev) {
 		wma_err("TXRX PDEV is NULL");
@@ -2522,10 +2540,6 @@ QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme)
 			status = QDF_STATUS_E_INVAL;
 		}
 	}
-
-	/* If error cleanup the interface */
-	if (QDF_IS_STATUS_ERROR(status))
-		wma_clean_up_iface(soc, wma_handle, vdev);
 
 	return status;
 }
@@ -2813,7 +2827,7 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 
 end:
-	wma_clean_up_iface(soc, wma_handle, vdev);
+	wma_cleanup_vdev(vdev);
 	return QDF_STATUS_E_FAILURE;
 }
 

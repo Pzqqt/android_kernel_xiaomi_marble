@@ -17199,21 +17199,16 @@ static void csr_send_set_ie(uint8_t type, uint8_t sub_type,
 		sme_err("Failed to send set IE req for vdev_%d", vdev_id);
 }
 
-/**
- * csr_get_vdev_type_nss() - gets the nss value based on vdev type
- * @mac_ctx: Pointer to Global MAC structure
- * @dev_mode: current device operating mode.
- * @nss2g: Pointer to the 2G Nss parameter.
- * @nss5g: Pointer to the 5G Nss parameter.
- *
- * Fills the 2G and 5G Nss values based on device mode.
- *
- * Return: None
- */
-void csr_get_vdev_type_nss(struct mac_context *mac_ctx,
-		enum QDF_OPMODE dev_mode,
-		uint8_t *nss_2g, uint8_t *nss_5g)
+void csr_get_vdev_type_nss(enum QDF_OPMODE dev_mode, uint8_t *nss_2g,
+			   uint8_t *nss_5g)
 {
+	struct mac_context *mac_ctx = sme_get_mac_context();
+
+	if (!mac_ctx) {
+		sme_err("Invalid MAC context");
+		return;
+	}
+
 	switch (dev_mode) {
 	case QDF_STA_MODE:
 		*nss_2g = mac_ctx->vdev_type_nss_2g.sta;
@@ -17261,19 +17256,25 @@ void csr_get_vdev_type_nss(struct mac_context *mac_ctx,
 		  dev_mode, *nss_2g, *nss_5g);
 }
 
-QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
-			   struct wlan_objmgr_vdev *vdev,
-			   struct sme_session_params *session_param)
+QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 {
 	QDF_STATUS status;
 	uint32_t existing_session_id;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct csr_roam_session *session;
 	struct mlme_vht_capabilities_info *vht_cap_info;
-	struct vdev_mlme_obj *vdev_mlme;
-	enum QDF_OPMODE op_mode;
 	u8 vdev_id;
 	struct qdf_mac_addr *mac_addr;
+	mac_handle_t mac_handle;
+	struct mac_context *mac_ctx;
+	struct wlan_objmgr_vdev *vdev;
+
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	mac_ctx = MAC_CONTEXT(mac_handle);
+	if (!mac_ctx) {
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (!(mac_ctx->mlme_cfg)) {
 		sme_err("invalid mlme cfg");
@@ -17281,28 +17282,10 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 	}
 	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		sme_err("Failed to get cmpt obj");
-		return QDF_STATUS_E_FAILURE;
-	}
+	vdev = vdev_mlme->vdev;
 
-	vdev_id = wlan_vdev_get_id(session_param->vdev);
-	mac_addr = (struct qdf_mac_addr *)
-		   wlan_vdev_mlme_get_macaddr(session_param->vdev);
-
-	op_mode = wlan_vdev_mlme_get_opmode(vdev);
-	csr_get_vdev_type_nss(mac_ctx, op_mode,
-			      &vdev_mlme->proto.generic.nss_2g,
-			      &vdev_mlme->proto.generic.nss_5g);
-
-	status = cds_get_vdev_types(op_mode,
-				    &vdev_mlme->mgmt.generic.type,
-				    &vdev_mlme->mgmt.generic.subtype);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Get vdev type failed; status:%d", status);
-		return status;
-	}
+	vdev_id = wlan_vdev_get_id(vdev);
+	mac_addr = (struct qdf_mac_addr *)wlan_vdev_mlme_get_macaddr(vdev);
 
 	/* check to see if the mac address already belongs to a session */
 	status = csr_roam_get_session_id_from_bssid(mac_ctx, mac_addr,
@@ -17393,13 +17376,6 @@ QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
 	 */
 	csr_init_session_twt_cap(session, vdev_mlme->mgmt.generic.type);
 
-	status = mlme_vdev_create_send(vdev);
-
-	if (QDF_IS_STATUS_ERROR(status)) {
-		csr_cleanup_session(mac_ctx, vdev_id);
-		return status;
-	}
-
 	csr_send_set_ie(vdev_mlme->mgmt.generic.type,
 			vdev_mlme->mgmt.generic.subtype,
 			wlan_vdev_get_id(vdev));
@@ -17435,7 +17411,7 @@ QDF_STATUS csr_process_vdev_del_rsp(struct mac_context *mac_ctx,
 	 * for this vdev. Active cmnd is e_sme_command_del_vdev and will
 	 * be removed anyway next.
 	 */
-	csr_cleanup_session(mac_ctx, vdev_id);
+	csr_cleanup_vdev_session(mac_ctx, vdev_id);
 
 	if (rsp->sme_callback) {
 		status = sme_release_global_lock(&mac_ctx->sme);
@@ -17491,7 +17467,7 @@ csr_issue_vdev_del_req(struct mac_context *mac_ctx, uint8_t vdev_id,
 	return status;
 }
 
-void csr_cleanup_session(struct mac_context *mac, uint8_t vdev_id)
+void csr_cleanup_vdev_session(struct mac_context *mac, uint8_t vdev_id)
 {
 	if (CSR_IS_SESSION_VALID(mac, vdev_id)) {
 		struct csr_roam_session *pSession = CSR_GET_SESSION(mac,
@@ -17531,7 +17507,7 @@ QDF_STATUS csr_roam_vdev_delete(struct mac_context *mac_ctx,
 	/* Vdev going down stop roaming */
 	session->fCancelRoaming = true;
 	if (cleanup) {
-		csr_cleanup_session(mac_ctx, vdev_id);
+		csr_cleanup_vdev_session(mac_ctx, vdev_id);
 		return status;
 	}
 

@@ -357,34 +357,43 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 		      uint8_t vdev_id);
 
 /**
- * sme_create_vdev() - Create vdev for given persona
+ * sme_vdev_create() - Create vdev for given persona
  * @mac_handle: The handle returned by mac_open
- * @params: to initialize the session open params
+ * @vdev_params: params required for vdev creation
  *
- * This is a synchronous API. For any protocol stack related activity
- * requires vdev to be created. This API needs to be called to create
- * vdev in SME module.
+ * This API will create the object manager vdev and in the same
+ * context vdev mlme object manager notification is invoked, which
+ * will send the vdev create to the firmware.
  *
- * Return: QDF_STATUS_SUCCESS - vdev is created
- * Other status means SME is failed to create vdev
+ * If the vdev creation is successful the following object is referenced
+ * by below modules:
+ * 1) WLAN_OBJMGR_ID
+ * 2) WLAN_LEGACY_SME_ID
+ * 3) WLAN_LEGACY_WMA_ID
+ *
+ * Return: Newly created Vdev object or NULL incase in any error
  */
-QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
-			   struct sme_session_params *params);
+struct wlan_objmgr_vdev *sme_vdev_create(mac_handle_t mac_handle,
+				  struct wlan_vdev_create_params *vdev_params);
+
 
 /**
  * sme_vdev_delete() - Delete vdev for given id
+ * @mac_handle: The handle returned by mac_open.
+ * @vdev: VDEV Object
  *
  * This is a synchronous API. This API needs to be called to delete vdev
  * in SME module before terminating the session completely.
  *
- * mac_handle: The handle returned by mac_open.
- * vdev_id: A previous created vdev id.
+ * The following modules releases their reference to the vdev object:
+ * 1) WLAN_LEGACY_WMA_ID
+ * 2) WLAN_LEGACY_SME_ID
  *
- * Return:
- * QDF_STATUS_SUCCESS - vdev is deleted.
- * Other status means SME is failed to delete vdev.
+ * Return: QDF_STATUS_SUCCESS - vdev is deleted.
+ *         QDF_STATUS_E_INVAL when failed to delete vdev.
  */
-QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle, uint8_t vdev_id);
+QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle,
+			   struct wlan_objmgr_vdev *vdev);
 
 /**
  * sme_cleanup_session() -  clean up sme session info for vdev

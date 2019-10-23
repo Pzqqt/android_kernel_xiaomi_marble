@@ -4399,7 +4399,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	qdf_event_reset(&adapter->qdf_session_close_event);
-	status = sme_vdev_delete(hdd_ctx->mac_handle, adapter->vdev_id);
+	status = sme_vdev_delete(hdd_ctx->mac_handle, vdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to delete vdev; status:%d", status);
 		goto release_vdev;
@@ -4441,13 +4441,6 @@ release_vdev:
 	return 0;
 }
 
-static int hdd_set_sme_session_param(struct hdd_adapter *adapter,
-				     struct sme_session_params *session_param)
-{
-	session_param->vdev = adapter->vdev;
-	return 0;
-}
-
 void
 hdd_store_nss_chains_cfg_in_vdev(struct hdd_adapter *adapter)
 {
@@ -4483,14 +4476,31 @@ bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter)
 	return 0;
 }
 
+static struct vdev_osif_priv *
+hdd_init_vdev_os_priv(struct hdd_adapter *adapter)
+{
+	struct vdev_osif_priv *os_priv;
+
+	os_priv = qdf_mem_malloc(sizeof(*os_priv));
+	if (!os_priv)
+		return NULL;
+
+	/* Initialize the vdev OS private structure*/
+	os_priv->wdev = adapter->dev->ieee80211_ptr;
+	os_priv->legacy_osif_priv = adapter;
+
+	return os_priv;
+}
+
 int hdd_vdev_create(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 	int errno;
 	bool bval;
 	struct hdd_context *hdd_ctx;
-	struct sme_session_params sme_session_params = {0};
 	struct wlan_objmgr_vdev *vdev;
+	struct vdev_osif_priv *osif_priv;
+	struct wlan_vdev_create_params vdev_params = {0};
 
 	hdd_info("creating new vdev");
 
@@ -4503,26 +4513,39 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		errno = qdf_status_to_os_return(status);
 		return errno;
 	}
-	errno = hdd_objmgr_create_and_store_vdev(hdd_ctx->pdev, adapter);
-	if (errno) {
-		hdd_err("failed to create objmgr vdev: %d", errno);
-		return errno;
+
+	osif_priv = hdd_init_vdev_os_priv(adapter);
+	if (!osif_priv) {
+		hdd_err("Failed to allocate osif_priv");
+		return -ENOMEM;
 	}
 
-	errno = hdd_set_sme_session_param(adapter, &sme_session_params);
-	if (errno) {
-		hdd_err("failed to populating SME params");
-		goto objmgr_vdev_destroy_procedure;
+	vdev_params.opmode = adapter->device_mode;
+	vdev_params.osifp = osif_priv;
+	qdf_mem_copy(vdev_params.macaddr,
+		     adapter->mac_addr.bytes,
+		     QDF_NET_MAC_ADDR_MAX_LEN);
+
+	vdev = sme_vdev_create(hdd_ctx->mac_handle, &vdev_params);
+	if (!vdev) {
+		hdd_err("failed to create vdev");
+		return -EINVAL;
 	}
-	status = sme_create_vdev(hdd_ctx->mac_handle,
-				 &sme_session_params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("failed to create vdev: %d", status);
-		errno = qdf_status_to_os_return(status);
-		goto objmgr_vdev_destroy_procedure;
+
+	if (wlan_objmgr_vdev_try_get_ref(vdev, WLAN_HDD_ID_OBJ_MGR) !=
+	    QDF_STATUS_SUCCESS) {
+		errno = QDF_STATUS_E_INVAL;
+		sme_vdev_delete(hdd_ctx->mac_handle, vdev);
+		wlan_objmgr_vdev_obj_delete(vdev);
+		return -EINVAL;
 	}
 
 	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
+	qdf_spin_lock_bh(&adapter->vdev_lock);
+	adapter->vdev_id = wlan_vdev_get_id(vdev);
+	adapter->vdev = vdev;
+	qdf_spin_unlock_bh(&adapter->vdev_lock);
+
 	/* firmware ready for component communication, raise vdev_ready event */
 	errno = hdd_vdev_ready(adapter);
 	if (errno) {
@@ -4561,16 +4584,6 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 	hdd_info("vdev %d created successfully", adapter->vdev_id);
 
 	return 0;
-
-	/*
-	 * Due to legacy constraints, we need to destroy in the same order as
-	 * create. So, split error handling into 2 cases to accommodate.
-	 */
-
-objmgr_vdev_destroy_procedure:
-	QDF_BUG(!hdd_objmgr_release_and_destroy_vdev(adapter));
-
-	return errno;
 
 hdd_vdev_destroy_procedure:
 	QDF_BUG(!hdd_vdev_destroy(adapter));
