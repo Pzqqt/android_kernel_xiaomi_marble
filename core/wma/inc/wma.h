@@ -716,8 +716,6 @@ struct wma_invalid_peer_params {
  * @nss: nss value
  * @is_channel_switch: is channel switch
  * @pause_bitmap: pause bitmap
- * @tx_power: tx power in dbm
- * @max_tx_power: max tx power in dbm
  * @nwType: network type (802.11a/b/g/n/ac)
  * @staKeyParams: sta key parameters
  * @ps_enabled: is powersave enable/disable
@@ -771,8 +769,6 @@ struct wma_txrx_node {
 	enum tx_rate_info rate_flags;
 	uint8_t nss;
 	uint16_t pause_bitmap;
-	int8_t tx_power;
-	int8_t max_tx_power;
 	uint32_t nwType;
 	tSetStaKeyParams *staKeyParams;
 	uint32_t peer_count;

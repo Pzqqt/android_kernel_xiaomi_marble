@@ -337,6 +337,8 @@ void wma_set_tx_power(WMA_HANDLE handle,
 	uint8_t vdev_id;
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
 	struct cdp_vdev *vdev;
+	int8_t max_reg_power;
+	struct wma_txrx_node *iface;
 
 	if (tx_pwr_params->dev_mode == QDF_SAP_MODE ||
 	    tx_pwr_params->dev_mode == QDF_P2P_GO_MODE) {
@@ -362,23 +364,25 @@ void wma_set_tx_power(WMA_HANDLE handle,
 		return;
 	}
 
+	iface = &wma_handle->interfaces[vdev_id];
 	if (tx_pwr_params->power == 0) {
 		/* set to default. Since the app does not care the tx power
 		 * we keep the previous setting
 		 */
-		wma_handle->interfaces[vdev_id].tx_power = 0;
+		mlme_set_tx_power(iface->vdev, tx_pwr_params->power);
 		ret = 0;
 		goto end;
 	}
-	if (wma_handle->interfaces[vdev_id].max_tx_power != 0) {
+
+	max_reg_power = mlme_get_max_reg_power(iface->vdev);
+
+	if (max_reg_power != 0) {
 		/* make sure tx_power less than max_tx_power */
-		if (tx_pwr_params->power >
-		    wma_handle->interfaces[vdev_id].max_tx_power) {
-			tx_pwr_params->power =
-				wma_handle->interfaces[vdev_id].max_tx_power;
+		if (tx_pwr_params->power > max_reg_power) {
+			tx_pwr_params->power = max_reg_power;
 		}
 	}
-	if (wma_handle->interfaces[vdev_id].tx_power != tx_pwr_params->power) {
+	if (mlme_get_tx_power(iface->vdev) != tx_pwr_params->power) {
 
 		/* tx_power changed, Push the tx_power to FW */
 		WMA_LOGI("%s: Set TX pwr limit [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
@@ -387,8 +391,7 @@ void wma_set_tx_power(WMA_HANDLE handle,
 					      WMI_VDEV_PARAM_TX_PWRLIMIT,
 					      tx_pwr_params->power);
 		if (ret == QDF_STATUS_SUCCESS)
-			wma_handle->interfaces[vdev_id].tx_power =
-				tx_pwr_params->power;
+			mlme_set_tx_power(iface->vdev, tx_pwr_params->power);
 	} else {
 		/* no tx_power change */
 		ret = QDF_STATUS_SUCCESS;
@@ -414,6 +417,8 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
 	struct cdp_vdev *vdev;
 	int8_t prev_max_power;
+	int8_t max_reg_power;
+	struct wma_txrx_node *iface;
 
 	vdev = wma_find_vdev_by_addr(wma_handle, tx_pwr_params->bssId.bytes,
 				     &vdev_id);
@@ -436,27 +441,30 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 		return;
 	}
 
-	if (wma_handle->interfaces[vdev_id].max_tx_power ==
-	    tx_pwr_params->power) {
+	iface = &wma_handle->interfaces[vdev_id];
+	if (mlme_get_max_reg_power(iface->vdev) == tx_pwr_params->power) {
 		ret = QDF_STATUS_SUCCESS;
 		goto end;
 	}
-	prev_max_power = wma_handle->interfaces[vdev_id].max_tx_power;
-	wma_handle->interfaces[vdev_id].max_tx_power = tx_pwr_params->power;
-	if (wma_handle->interfaces[vdev_id].max_tx_power == 0) {
+	prev_max_power = mlme_get_max_reg_power(iface->vdev);
+
+	mlme_set_max_reg_power(iface->vdev, tx_pwr_params->power);
+
+	max_reg_power = mlme_get_max_reg_power(iface->vdev);
+
+	if (max_reg_power == 0) {
 		ret = QDF_STATUS_SUCCESS;
 		goto end;
 	}
 	WMA_LOGI("Set MAX TX pwr limit [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
-		 wma_handle->interfaces[vdev_id].max_tx_power);
+		 max_reg_power);
 	ret = wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
 				WMI_VDEV_PARAM_TX_PWRLIMIT,
-				wma_handle->interfaces[vdev_id].max_tx_power);
+				max_reg_power);
 	if (ret == QDF_STATUS_SUCCESS)
-		wma_handle->interfaces[vdev_id].tx_power =
-			wma_handle->interfaces[vdev_id].max_tx_power;
+		mlme_set_tx_power(iface->vdev, max_reg_power);
 	else
-		wma_handle->interfaces[vdev_id].max_tx_power = prev_max_power;
+		mlme_set_max_reg_power(iface->vdev, prev_max_power);
 end:
 	qdf_mem_free(tx_pwr_params);
 	if (QDF_IS_STATUS_ERROR(ret))

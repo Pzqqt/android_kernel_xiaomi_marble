@@ -168,6 +168,43 @@ void mlme_get_mbssid_info(struct wlan_objmgr_vdev *vdev,
 			  struct vdev_mlme_mbss_11ax *mbss_11ax);
 
 /**
+ * mlme_set_tx_power() - set tx power
+ * @vdev: vdev pointer
+ * @tx_power: tx power to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_set_tx_power(struct wlan_objmgr_vdev *vdev,
+			     int8_t tx_power);
+
+/**
+ * mlme_get_tx_power() - get tx power
+ * @vdev: vdev pointer
+ * @tx_power: tx power info
+ *
+ * Return: None
+ */
+int8_t mlme_get_tx_power(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_get_max_reg_power() - get max reg power
+ * @vdev: vdev pointer
+ *
+ * Return: max reg power
+ */
+int8_t mlme_get_max_reg_power(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_set_max_reg_power() - set max reg power
+ * @vdev: vdev pointer
+ * @max_tx_power: max tx power to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_set_max_reg_power(struct wlan_objmgr_vdev *vdev,
+				 int8_t max_reg_power);
+
+/**
  * mlme_is_vdev_in_beaconning_mode() - check if vdev is beaconing mode
  * @vdev_opmode: vdev opmode
  *

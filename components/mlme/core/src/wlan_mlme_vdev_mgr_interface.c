@@ -834,6 +834,66 @@ void mlme_get_mbssid_info(struct wlan_objmgr_vdev *vdev,
 	mbss_11ax = &vdev_mlme->mgmt.mbss_11ax;
 }
 
+QDF_STATUS mlme_set_tx_power(struct wlan_objmgr_vdev *vdev,
+			     int8_t tx_power)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_mlme->mgmt.generic.tx_power = tx_power;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+int8_t mlme_get_tx_power(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return vdev_mlme->mgmt.generic.tx_power;
+}
+
+QDF_STATUS mlme_set_max_reg_power(struct wlan_objmgr_vdev *vdev,
+				 int8_t max_reg_power)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_mlme->mgmt.generic.maxregpower = max_reg_power;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+int8_t mlme_get_max_reg_power(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return vdev_mlme->mgmt.generic.maxregpower;
+}
+
 /**
  * vdevmgr_mlme_ext_hdl_create () - Create mlme legacy priv object
  * @vdev_mlme: vdev mlme object

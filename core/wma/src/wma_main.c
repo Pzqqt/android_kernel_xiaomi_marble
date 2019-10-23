@@ -2082,8 +2082,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			"aid %d\n"
 			"rate_flags %d\n"
 			"nss %d\n"
-			"tx_power %d\n"
-			"max_tx_power %d\n"
 			"nwType %d\n"
 			"tx_streams %d",
 			vdev_id,
@@ -2109,8 +2107,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			iface->aid,
 			rate_flag,
 			iface->nss,
-			iface->tx_power,
-			iface->max_tx_power,
 			iface->nwType,
 			iface->tx_streams);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
