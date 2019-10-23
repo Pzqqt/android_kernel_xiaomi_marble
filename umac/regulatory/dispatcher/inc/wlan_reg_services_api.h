@@ -1174,4 +1174,15 @@ bool wlan_reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev,
  */
 bool wlan_reg_is_6ghz_supported(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * reg_chan_opclass_to_freq() - Convert channel number and opclass to frequency
+ * @chan: IEEE Channel Number.
+ * @op_class: Opclass.
+ * @global_tbl_lookup: Global table lookup.
+ *
+ * Return: Channel center frequency else return 0.
+ */
+uint16_t wlan_reg_chan_opclass_to_freq(uint8_t chan,
+				       uint8_t op_class,
+				       bool global_tbl_lookup);
 #endif

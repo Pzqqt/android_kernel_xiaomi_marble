@@ -504,4 +504,48 @@ uint16_t reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
 	return 0;
 }
 
+uint16_t reg_chan_opclass_to_freq(uint8_t chan,
+				  uint8_t op_class,
+				  bool global_tbl_lookup)
+{
+	const struct reg_dmn_op_class_map_t *op_class_tbl = NULL;
+	uint8_t i = 0;
+
+	if (global_tbl_lookup) {
+		op_class_tbl = global_op_class;
+	} else {
+		if (channel_map == channel_map_global) {
+			op_class_tbl = global_op_class;
+		} else if (channel_map == channel_map_us) {
+			op_class_tbl = us_op_class;
+		} else if (channel_map == channel_map_eu) {
+			op_class_tbl = euro_op_class;
+		} else if (channel_map == channel_map_china) {
+			op_class_tbl = us_op_class;
+		} else if (channel_map == channel_map_jp) {
+			op_class_tbl = japan_op_class;
+		} else {
+			reg_err_rl("Invalid channel map");
+			return 0;
+		}
+	}
+
+	while (op_class_tbl->op_class) {
+		if  (op_class_tbl->op_class == op_class) {
+			for (i = 0; (i < REG_MAX_CHANNELS_PER_OPERATING_CLASS &&
+				     op_class_tbl->channels[i]); i++) {
+				if (op_class_tbl->channels[i] == chan) {
+					chan = op_class_tbl->channels[i];
+					return (op_class_tbl->start_freq +
+						(chan * FREQ_TO_CHAN_SCALE));
+				}
+			}
+			reg_err_rl("Channel not found");
+			return 0;
+		}
+		op_class_tbl++;
+	}
+	reg_err_rl("Invalid opclass given as input");
+	return 0;
+}
 #endif
