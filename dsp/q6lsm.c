@@ -375,10 +375,10 @@ void q6lsm_client_free(struct lsm_client *client)
 		return;
 	}
 	apr_deregister(client->apr);
+	q6lsm_mmap_apr_dereg();
 	client->mmap_apr = NULL;
 	mutex_lock(&session_lock);
 	q6lsm_session_free(client);
-	q6lsm_mmap_apr_dereg();
 	mutex_destroy(&client->cmd_lock);
 	kfree(client);
 	client = NULL;
