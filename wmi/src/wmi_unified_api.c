@@ -2977,3 +2977,28 @@ QDF_STATUS wmi_unified_extract_hw_mode_resp(wmi_unified_t wmi,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef FEATURE_ANI_LEVEL_REQUEST
+QDF_STATUS wmi_unified_ani_level_cmd_send(wmi_unified_t wmi_handle,
+					  uint32_t *freqs,
+					  uint8_t num_freqs)
+{
+	if (wmi_handle->ops->send_ani_level_cmd)
+		return wmi_handle->ops->send_ani_level_cmd(wmi_handle, freqs,
+							   num_freqs);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_extract_ani_level(wmi_unified_t wmi_handle,
+					 uint8_t *data,
+					 struct wmi_host_ani_level_event **info,
+					 uint32_t *num_channels)
+{
+	if (wmi_handle->ops->extract_ani_level)
+		return wmi_handle->ops->extract_ani_level(data, info,
+							  num_channels);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* FEATURE_ANI_LEVEL_REQUEST */

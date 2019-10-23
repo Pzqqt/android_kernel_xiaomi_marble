@@ -2046,6 +2046,15 @@ QDF_STATUS (*extract_get_elna_bypass_resp)(wmi_unified_t wmi_handle,
 					 void *resp_buf,
 					 struct get_elna_bypass_response *resp);
 #endif /* WLAN_FEATURE_ELNA */
+
+#ifdef FEATURE_ANI_LEVEL_REQUEST
+QDF_STATUS (*send_ani_level_cmd)(wmi_unified_t wmi_handle, uint32_t *freqs,
+				 uint8_t num_freqs);
+
+QDF_STATUS (*extract_ani_level)(uint8_t *evt_buf,
+				struct wmi_host_ani_level_event **info,
+				uint32_t *num_freqs);
+#endif /* FEATURE_ANI_LEVEL_REQUEST */
 };
 
 /* Forward declartion for psoc*/
