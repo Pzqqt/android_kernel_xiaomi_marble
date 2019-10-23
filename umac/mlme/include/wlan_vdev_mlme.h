@@ -509,9 +509,6 @@ struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_notify_down_complete)(
 				struct vdev_mlme_obj *vdev_mlme,
 				uint16_t event_data_len, void *event_data);
-	QDF_STATUS (*mlme_vdev_ext_delete_rsp)(
-				struct vdev_mlme_obj *vdev_mlme,
-				struct vdev_delete_response *rsp);
 	QDF_STATUS (*mlme_vdev_ext_stop_rsp)(
 				struct vdev_mlme_obj *vdev_mlme,
 				struct vdev_stop_response *rsp);

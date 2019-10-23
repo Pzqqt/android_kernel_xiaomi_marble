@@ -194,6 +194,17 @@ QDF_STATUS mlme_vdev_enqueue_exp_ser_cmd(struct vdev_mlme_obj *vdev_mlme,
 	return ret;
 }
 
+QDF_STATUS mlme_vdev_ops_ext_hdl_delete_rsp(struct wlan_objmgr_psoc *psoc,
+					    struct vdev_delete_response *rsp)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_vdev_ext_delete_rsp)
+		ret = glbl_ops->mlme_vdev_ext_delete_rsp(psoc, rsp);
+
+	return ret;
+}
+
 void mlme_set_ops_register_cb(mlme_get_global_ops_cb ops_cb)
 {
 	glbl_ops_cb = ops_cb;

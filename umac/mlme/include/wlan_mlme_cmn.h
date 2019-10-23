@@ -72,6 +72,9 @@ struct mlme_ext_ops {
 	QDF_STATUS (*mlme_vdev_enqueue_exp_cmd)(
 				struct vdev_mlme_obj *vdev_mlme,
 				uint8_t cmd_type);
+	QDF_STATUS (*mlme_vdev_ext_delete_rsp)(
+					   struct wlan_objmgr_psoc *psoc,
+					   struct vdev_delete_response *rsp);
 };
 
 /**
@@ -243,4 +246,17 @@ QDF_STATUS wlan_cmn_mlme_init(void);
  *         FAILURE, if registration fails
  */
 QDF_STATUS wlan_cmn_mlme_deinit(void);
+
+/**
+ * mlme_vdev_ops_ext_hdl_delete_rsp - Vdev Delete response ext handler
+ * @psoc: PSOC object
+ * @rsp: Vdev delete response received from the firmware
+ *
+ * API to invoke the legacy delete response handler for legacy cleanup
+ *
+ * Return: SUCCESS on successful deletion
+ *         FAILURE, if deletion fails
+ */
+QDF_STATUS mlme_vdev_ops_ext_hdl_delete_rsp(struct wlan_objmgr_psoc *psoc,
+					    struct vdev_delete_response *rsp);
 #endif

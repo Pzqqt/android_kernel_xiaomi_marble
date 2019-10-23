@@ -30,6 +30,7 @@
 #include <target_if_vdev_mgr_tx_ops.h>
 #include <wlan_psoc_mlme_main.h>
 #include <include/wlan_psoc_mlme.h>
+#include <include/wlan_mlme_cmn.h>
 
 static struct vdev_response_timer *
 tgt_vdev_mgr_get_response_timer_info(struct wlan_objmgr_psoc *psoc,
@@ -126,37 +127,8 @@ static QDF_STATUS tgt_vdev_mgr_delete_response_handler(
 					struct vdev_delete_response *rsp)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct vdev_mlme_obj *vdev_mlme;
-	struct wlan_objmgr_vdev *vdev;
 
-	if (!rsp || !psoc) {
-		mlme_err("Invalid input");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
-						    rsp->vdev_id,
-						    WLAN_VDEV_TARGET_IF_ID);
-	if (!vdev) {
-		mlme_err("VDEV is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_err("VDEV_%d: PSOC_%d VDEV_MLME is NULL", rsp->vdev_id,
-			 wlan_psoc_get_id(psoc));
-		goto tgt_vdev_mgr_delete_response_handler_end;
-	}
-
-	if ((vdev_mlme->ops) &&
-	    vdev_mlme->ops->mlme_vdev_ext_delete_rsp)
-		status = vdev_mlme->ops->mlme_vdev_ext_delete_rsp(
-								vdev_mlme,
-								rsp);
-
-tgt_vdev_mgr_delete_response_handler_end:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+	status = mlme_vdev_ops_ext_hdl_delete_rsp(psoc, rsp);
 	return status;
 }
 
