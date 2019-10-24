@@ -56,6 +56,17 @@
 #include <wlan_reg_services_api.h>
 #include "qdf_hrtimer.h"
 
+/* High/Low tx resource count in percentage */
+/* Set default high threashold to 15% */
+#ifndef TX_RESOURCE_HIGH_TH_IN_PER
+#define TX_RESOURCE_HIGH_TH_IN_PER 15
+#endif
+
+/* Set default low threshold to 5% */
+#ifndef TX_RESOURCE_LOW_TH_IN_PER
+#define TX_RESOURCE_LOW_TH_IN_PER 5
+#endif
+
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
 static u16 ol_txrx_tx_desc_alloc_table[TXRX_FC_MAX] = {
 	[TXRX_FC_5GH_80M_2x2] = 2000,
@@ -228,56 +239,14 @@ struct ol_tx_desc_t *ol_tx_hl_desc_alloc(struct ol_txrx_pdev_t *pdev,
 }
 #endif
 
-#ifdef QCA_HL_NETDEV_FLOW_CONTROL
-/**
- * ol_txrx_rsrc_threshold_lo() - set threshold low - when to start tx desc
- *				 margin replenishment
- * @desc_pool_size: tx desc pool size
- *
- * Return: threshold low
- */
 static inline uint16_t
 ol_txrx_rsrc_threshold_lo(int desc_pool_size)
 {
 	int threshold_low;
 
-	/*
-	 * 5% margin of unallocated desc is too much for per
-	 * vdev mechanism.
-	 * Define the value separately.
-	 */
-	threshold_low = TXRX_HL_TX_FLOW_CTRL_MGMT_RESERVED;
-
-	return threshold_low;
-}
-
-/**
- * ol_txrx_rsrc_threshold_hi() - set threshold high - where to stop
- *				 during tx desc margin replenishment
- * @desc_pool_size: tx desc pool size
- *
- * Return: threshold high
- */
-static inline uint16_t
-ol_txrx_rsrc_threshold_hi(int desc_pool_size)
-{
-	int threshold_high;
-	/* when freeing up descriptors,
-	 * keep going until there's a 7.5% margin
-	 */
-	threshold_high = ((15 * desc_pool_size) / 100) / 2;
-
-	return threshold_high;
-}
-
-#else
-
-static inline uint16_t
-ol_txrx_rsrc_threshold_lo(int desc_pool_size)
-{
-	int threshold_low;
 	/* always maintain a 5% margin of unallocated descriptors */
-	threshold_low = (5 * desc_pool_size) / 100;
+	threshold_low = ((TX_RESOURCE_LOW_TH_IN_PER) *
+			 desc_pool_size) / 100;
 
 	return threshold_low;
 }
@@ -289,11 +258,11 @@ ol_txrx_rsrc_threshold_hi(int desc_pool_size)
 	/* when freeing up descriptors, keep going until
 	 * there's a 15% margin
 	 */
-	threshold_high = (15 * desc_pool_size) / 100;
+	threshold_high = ((TX_RESOURCE_HIGH_TH_IN_PER) *
+			  desc_pool_size) / 100;
 
 	return threshold_high;
 }
-#endif
 
 void ol_tx_init_pdev(ol_txrx_pdev_handle pdev)
 {
