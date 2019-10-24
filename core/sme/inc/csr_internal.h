@@ -206,7 +206,7 @@ struct bss_config_param {
 	eCsrMediaAccessType qosType;
 	tSirMacSSid SSID;
 	enum csr_cfgdot11mode uCfgDot11Mode;
-	enum band_info band;
+	enum reg_wifi_band band;
 	tAniAuthType authType;
 	eCsrEncryptionType encType;
 	uint32_t uShortSlotTime;
@@ -820,9 +820,6 @@ struct csr_roamstruct {
 #define CSR_IS_OPERATING_BG_BAND(mac) \
 	(CSR_IS_OPEARTING_DUAL_BAND((mac)) || \
 		CSR_IS_RADIO_BG_ONLY((mac)) || CSR_IS_24_BAND_ONLY((mac)))
-
-#define CSR_GET_BAND(ch_freq) \
-		((wlan_reg_is_24ghz_ch_freq((ch_freq))) ? BAND_2G : BAND_5G)
 
 #define CSR_IS_ROAMING(pSession) \
 	((CSR_IS_LOSTLINK_ROAMING((pSession)->roamingReason)) || \

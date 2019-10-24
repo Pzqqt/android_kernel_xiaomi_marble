@@ -371,7 +371,7 @@ QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
 /**
  * csr_validate_mcc_beacon_interval() - to validate the mcc beacon interval
  * @mac_ctx: pointer to mac context
- * @chnl_id: channel number
+ * @ch_freq: channel frequency
  * @bcn_interval: provided beacon interval
  * @cur_session_id: current session id
  * @cur_bss_persona: Current BSS persona
@@ -381,7 +381,7 @@ QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
  * Return: QDF_STATUS
  */
 QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
-					    uint8_t chnl_id,
+					    uint32_t ch_freq,
 					    uint16_t *bcn_interval,
 					    uint32_t cur_session_id,
 					    enum QDF_OPMODE cur_bss_persona);

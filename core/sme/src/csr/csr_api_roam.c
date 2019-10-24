@@ -394,7 +394,7 @@ static void csr_roam_update_connected_profile_from_new_bss(struct mac_context *m
 							   struct new_bss_info *
 							   pNewBss);
 static ePhyChanBondState csr_get_cb_mode_from_ies(struct mac_context *mac,
-						  uint8_t primaryChn,
+						  uint32_t primary_ch_freq,
 						  tDot11fBeaconIEs *pIes);
 
 static void csr_roaming_state_config_cnf_processor(struct mac_context *mac,
@@ -440,7 +440,7 @@ static enum csr_cfgdot11mode
 csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac,
 				   struct csr_roam_profile *pProfile,
 				   uint32_t bss_op_ch_freq,
-				   enum band_info *pBand);
+				   enum reg_wifi_band *pBand);
 static QDF_STATUS csr_roam_get_qos_info_from_bss(
 struct mac_context *mac, struct bss_description *bss_desc);
 static uint32_t csr_find_session_by_type(struct mac_context *,
@@ -2681,10 +2681,11 @@ uint32_t csr_convert_phy_cb_state_to_ini_value(ePhyChanBondState phyCbState)
 }
 
 #ifdef WLAN_FEATURE_11AX
-#define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _channelid)              \
-	(_req)->he_config.bfee_sts_lt_80 = WLAN_CHAN_IS_2GHZ((_channelid)) ? \
-					(_pmac)->he_cap_2g.bfee_sts_lt_80 :  \
-					(_pmac)->he_cap_5g.bfee_sts_lt_80
+#define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _ch_freq)                \
+	(_req)->he_config.bfee_sts_lt_80 =                                   \
+				wlan_reg_is_24ghz_ch_freq((_ch_freq)) ?      \
+				(_pmac)->he_cap_2g.bfee_sts_lt_80 :          \
+				(_pmac)->he_cap_5g.bfee_sts_lt_80
 
 
 /**
@@ -2762,7 +2763,7 @@ void csr_update_session_he_cap(struct mac_context *mac_ctx,
 }
 
 #else
-#define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _channelid)   /* no op */
+#define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _ch_freq)   /* no op */
 
 static inline
 void csr_join_req_copy_he_cap(struct join_req *csr_join_req,
@@ -4188,7 +4189,6 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 {
 	enum csr_cfgdot11mode cfgDot11Mode;
 	uint32_t join_timeout;
-	uint8_t chan_id;
 
 	QDF_ASSERT(pIes);
 	if (!pIes)
@@ -4213,12 +4213,15 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 		}
 	}
 
-	chan_id = wlan_reg_freq_to_chan(mac->pdev, bss_desc->chan_freq);
-
-	if (WLAN_REG_IS_5GHZ_CH(chan_id))
-		pBssConfig->band = BAND_5G;
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq))
+		pBssConfig->band = REG_BAND_5G;
+	else if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq))
+		pBssConfig->band = REG_BAND_2G;
+	else if (WLAN_REG_IS_6GHZ_CHAN_FREQ(bss_desc->chan_freq))
+		pBssConfig->band = REG_BAND_6G;
 	else
-		pBssConfig->band = BAND_2G;
+		return QDF_STATUS_E_FAILURE;
+
 		/* phymode */
 	if (csr_is_phy_mode_match(mac, pProfile->phyMode, bss_desc,
 				  pProfile, &cfgDot11Mode, pIes)) {
@@ -4229,7 +4232,7 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 		 * 2.4Ghz and to 11a mode for 5Ghz
 		 */
 		sme_warn("Can not find match phy mode");
-		if (BAND_2G == pBssConfig->band) {
+		if (REG_BAND_2G == pBssConfig->band) {
 			if (mac->roam.configParam.phyMode &
 			    (eCSR_DOT11_MODE_11b | eCSR_DOT11_MODE_11b_ONLY)) {
 				pBssConfig->uCfgDot11Mode =
@@ -4238,8 +4241,11 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 				pBssConfig->uCfgDot11Mode =
 						eCSR_CFG_DOT11_MODE_11G;
 			}
-		} else {
+		} else if (pBssConfig->band == REG_BAND_5G) {
 			pBssConfig->uCfgDot11Mode = eCSR_CFG_DOT11_MODE_11A;
+		} else if (pBssConfig->band == REG_BAND_6G) {
+			pBssConfig->uCfgDot11Mode =
+						eCSR_CFG_DOT11_MODE_11AX_ONLY;
 		}
 	}
 
@@ -4330,12 +4336,12 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AC_ONLY) ||
 	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AX) ||
 	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AX_ONLY))
-		pBssConfig->cbMode = csr_get_cb_mode_from_ies(mac,
-							      chan_id, pIes);
+		pBssConfig->cbMode = csr_get_cb_mode_from_ies(
+					mac, bss_desc->chan_freq, pIes);
 	else
 		pBssConfig->cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 
-	if (WLAN_REG_IS_24GHZ_CH(chan_id) &&
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq) &&
 	    pProfile->force_24ghz_in_ht20) {
 		pBssConfig->cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 		sme_debug("force_24ghz_in_ht20 is set so set cbmode to 0");
@@ -4373,7 +4379,9 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	    pProfile->EncryptionType.encryptionType[0])
 		pBssConfig->BssCap.privacy = 1;
 
-	pBssConfig->band = mac->mlme_cfg->gen.band;
+	/* Update when 6G support is added for IBSS / NDI */
+	pBssConfig->band = (mac->mlme_cfg->gen.band == BAND_2G ?
+			    REG_BAND_2G : REG_BAND_5G);
 	/* phymode */
 	if (pProfile->ChannelInfo.freq_list)
 		bss_op_ch_freq = pProfile->ChannelInfo.freq_list[0];
@@ -4439,7 +4447,8 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	pBssConfig->f11hSupport = false;
 	pBssConfig->uPowerLimit = 0;
 	/* heartbeat */
-	if (BAND_5G == pBssConfig->band) {
+	if (REG_BAND_5G == pBssConfig->band ||
+	    REG_BAND_6G == pBssConfig->band) {
 		pBssConfig->uHeartBeatThresh =
 			mac->roam.configParam.HeartbeatThresh50;
 	} else {
@@ -4921,7 +4930,7 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 							SIR_MAC_RATE_5_5,
 							SIR_MAC_RATE_11} } };
 	enum csr_cfgdot11mode cfgDot11Mode;
-	enum band_info band;
+	enum reg_wifi_band band;
 	/* leave enough room for the max number of rates */
 	uint8_t OperationalRates[CSR_DOT11_SUPPORTED_RATES_MAX];
 	qdf_size_t OperationalRatesLength = 0;
@@ -4942,7 +4951,7 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 	 * into our Operational Rate set (including the basic rates, which we
 	 * have already verified are supported earlier in the roaming decision).
 	 */
-	if (BAND_5G == band) {
+	if (REG_BAND_5G == band) {
 		/* 11a rates into the Operational Rate Set. */
 		OperationalRatesLength =
 			DefaultSupportedRates11a.supportedRateSet.numRates *
@@ -8420,8 +8429,8 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 	bool fCallCallback = false;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 	struct bss_description *first_ap_profile;
-	uint8_t channel_id = 0, first_ap_chan_id;
 	enum QDF_OPMODE opmode = QDF_STA_MODE;
+	uint32_t ch_freq;
 
 	if (!pSession) {
 		sme_err("session does not exist for given sessionId: %d",
@@ -8522,9 +8531,6 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 
 			csr_get_bssdescr_from_scan_handle(hBSSList,
 							  first_ap_profile);
-			first_ap_chan_id = wlan_reg_freq_to_chan(
-					mac->pdev,
-					first_ap_profile->chan_freq);
 			status = policy_mgr_is_chan_ok_for_dnbs(
 					mac->psoc,
 					first_ap_profile->chan_freq, &ok);
@@ -8544,14 +8550,13 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 				goto error;
 			}
 
-			channel_id = csr_get_channel_for_hw_mode_change
+			ch_freq = csr_get_channel_for_hw_mode_change
 					(mac, hBSSList, sessionId);
-			if (!channel_id)
-				channel_id = first_ap_chan_id;
+			if (!ch_freq)
+				ch_freq = first_ap_profile->chan_freq;
 
 			status = policy_mgr_handle_conc_multiport(
-					mac->psoc, sessionId,
-					wlan_chan_to_freq(channel_id),
+					mac->psoc, sessionId, ch_freq,
 					POLICY_MGR_UPDATE_REASON_NORMAL_STA);
 			if ((QDF_IS_STATUS_SUCCESS(status)) &&
 				(!csr_wait_for_connection_update(mac, true))) {
@@ -13539,7 +13544,7 @@ QDF_STATUS csr_process_del_vdev_command(struct mac_context *mac_ctx,
 static void
 csr_compute_mode_and_band(struct mac_context *mac_ctx,
 			  enum csr_cfgdot11mode *dot11_mode,
-			  enum band_info *band,
+			  enum reg_wifi_band *band,
 			  uint32_t opr_ch_freq)
 {
 	bool vht_24_ghz = mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band;
@@ -13547,19 +13552,19 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 	switch (mac_ctx->roam.configParam.uCfgDot11Mode) {
 	case eCSR_CFG_DOT11_MODE_11A:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
-		*band = BAND_5G;
+		*band = REG_BAND_5G;
 		break;
 	case eCSR_CFG_DOT11_MODE_11B:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11B;
-		*band = BAND_2G;
+		*band = REG_BAND_2G;
 		break;
 	case eCSR_CFG_DOT11_MODE_11G:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11G;
-		*band = BAND_2G;
+		*band = REG_BAND_2G;
 		break;
 	case eCSR_CFG_DOT11_MODE_11N:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
-		*band = CSR_GET_BAND(opr_ch_freq);
+		*band = wlan_reg_freq_to_band(opr_ch_freq);
 		break;
 	case eCSR_CFG_DOT11_MODE_11AC:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
@@ -13576,7 +13581,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		} else {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		}
-		*band = CSR_GET_BAND(opr_ch_freq);
+		*band = wlan_reg_freq_to_band(opr_ch_freq);
 		break;
 	case eCSR_CFG_DOT11_MODE_11AC_ONLY:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
@@ -13593,7 +13598,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		} else {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		}
-		*band = CSR_GET_BAND(opr_ch_freq);
+		*band = wlan_reg_freq_to_band(opr_ch_freq);
 		break;
 	case eCSR_CFG_DOT11_MODE_11AX:
 	case eCSR_CFG_DOT11_MODE_11AX_ONLY:
@@ -13613,7 +13618,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		} else {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		}
-		*band = CSR_GET_BAND(opr_ch_freq);
+		*band = wlan_reg_freq_to_band(opr_ch_freq);
 		break;
 	case eCSR_CFG_DOT11_MODE_AUTO:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
@@ -13633,7 +13638,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		} else {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		}
-		*band = CSR_GET_BAND(opr_ch_freq);
+		*band = wlan_reg_freq_to_band(opr_ch_freq);
 		break;
 	default:
 		/*
@@ -13641,8 +13646,9 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		 * to determine the Mode setting.
 		 */
 		if (eCSR_OPERATING_CHANNEL_AUTO == opr_ch_freq) {
-			*band = mac_ctx->mlme_cfg->gen.band;
-			if (BAND_2G == *band) {
+			*band = (mac_ctx->mlme_cfg->gen.band == BAND_2G ?
+				REG_BAND_2G : REG_BAND_5G);
+			if (REG_BAND_2G == *band) {
 				/*
 				 * See reason in else if ( WLAN_REG_IS_24GHZ_CH
 				 * (opr_ch) ) to pick 11B
@@ -13650,7 +13656,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11B;
 			} else {
 				/* prefer 5GHz */
-				*band = BAND_5G;
+				*band = REG_BAND_5G;
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 			}
 		} else if (WLAN_REG_IS_24GHZ_CH_FREQ(opr_ch_freq)) {
@@ -13672,11 +13678,11 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 			 * to force it.
 			 */
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11B;
-			*band = BAND_2G;
+			*band = REG_BAND_2G;
 		} else {
 			/* else, it's a 5.0GHz channel.  Set mode to 11a. */
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
-			*band = BAND_5G;
+			*band = REG_BAND_5G;
 		}
 		break;
 	} /* switch */
@@ -13701,9 +13707,9 @@ static enum csr_cfgdot11mode
 csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 				   struct csr_roam_profile *profile,
 				   uint32_t bss_op_ch_freq,
-				   enum band_info *p_band)
+				   enum reg_wifi_band *p_band)
 {
-	enum band_info band;
+	enum reg_wifi_band band;
 	uint8_t opr_chn = eCSR_OPERATING_CHANNEL_AUTO;
 	enum csr_cfgdot11mode curr_mode =
 		mac_ctx->roam.configParam.uCfgDot11Mode;
@@ -13731,13 +13737,12 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 		/* dot11 mode is set, lets pick the band */
 		if (eCSR_OPERATING_CHANNEL_AUTO == opr_chn) {
 			/* channel is Auto also. */
-			band = mac_ctx->mlme_cfg->gen.band;
-			if (BAND_ALL == band) {
+			if (mac_ctx->mlme_cfg->gen.band == BAND_ALL) {
 				/* prefer 5GHz */
-				band = BAND_5G;
+				band = REG_BAND_5G;
 			}
 		} else{
-			band = CSR_GET_BAND(bss_op_ch_freq);
+			band = wlan_reg_freq_to_band(bss_op_ch_freq);
 		}
 	}
 	if (p_band)
@@ -13855,35 +13860,38 @@ QDF_STATUS csr_get_cfg_valid_freqs(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint8_t channel)
+int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq)
 {
 	uint32_t cfg_length = 0;
 	int8_t maxTxPwr = 0;
 	tSirMacChanInfo *pCountryInfo = NULL;
 	uint8_t count = 0;
 	uint8_t maxChannels;
-	uint8_t firstChannel;
 	int32_t rem_length = 0;
 
-	if (WLAN_REG_IS_5GHZ_CH(channel)) {
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
 		cfg_length = mac->mlme_cfg->power.max_tx_power_5.len;
-	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
+	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
 		cfg_length = mac->mlme_cfg->power.max_tx_power_24.len;
 
-	} else
+	} else if (wlan_reg_is_6ghz_chan_freq(ch_freq)) {
+		return wlan_reg_get_channel_reg_power_for_freq(mac->pdev,
+							       ch_freq);
+	} else {
 		return maxTxPwr;
+	}
 
 	pCountryInfo = qdf_mem_malloc(cfg_length);
 	if (!pCountryInfo)
 		goto error;
 
-	if (WLAN_REG_IS_5GHZ_CH(channel)) {
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
 		if (cfg_length > CFG_MAX_TX_POWER_5_LEN)
 			goto error;
 		qdf_mem_copy(pCountryInfo,
 			     mac->mlme_cfg->power.max_tx_power_5.data,
 			     cfg_length);
-	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
+	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
 		if (cfg_length > CFG_MAX_TX_POWER_2_4_LEN)
 			goto error;
 		qdf_mem_copy(pCountryInfo,
@@ -13894,16 +13902,13 @@ int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint8_t channel)
 	/* Identify the channel and maxtxpower */
 	rem_length = cfg_length;
 	while (rem_length >= (sizeof(tSirMacChanInfo))) {
-		firstChannel = wlan_reg_freq_to_chan(
-					mac->pdev,
-					pCountryInfo[count].first_freq);
 		maxChannels = pCountryInfo[count].numChannels;
 		maxTxPwr = pCountryInfo[count].maxTxPower;
 		count++;
 		rem_length -= (sizeof(tSirMacChanInfo));
 
-		if ((channel >= firstChannel) &&
-		    (channel < (firstChannel + maxChannels))) {
+		if (ch_freq >= pCountryInfo[count].first_freq &&
+		    ch_freq < (pCountryInfo[count].first_freq + maxChannels)) {
 			break;
 		}
 	}
@@ -13945,15 +13950,15 @@ bool csr_roam_is_chan_freq_valid(struct mac_context *mac, uint32_t freq)
 
 /* This function check and validate whether the NIC can do CB (40MHz) */
 static ePhyChanBondState csr_get_cb_mode_from_ies(struct mac_context *mac,
-						  uint8_t chan,
+						  uint32_t ch_freq,
 						  tDot11fBeaconIEs *pIes)
 {
 	ePhyChanBondState eRet = PHY_SINGLE_CHANNEL_CENTERED;
-	uint8_t sec_ch = 0;
+	uint32_t sec_ch_freq = 0;
 	uint32_t ChannelBondingMode;
 	struct ch_params ch_params = {0};
 
-	if (WLAN_REG_IS_24GHZ_CH(chan)) {
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
 		ChannelBondingMode =
 			mac->roam.configParam.channelBondingMode24GHz;
 	} else {
@@ -13993,10 +13998,10 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(struct mac_context *mac,
 	 * value of supported channel width and recommended tx width as per
 	 * standard
 	 */
-	sme_debug("chan %d scws %u rtws %u sco %u", chan,
-		pIes->HTCaps.supportedChannelWidthSet,
-		pIes->HTInfo.recommendedTxWidthSet,
-		pIes->HTInfo.secondaryChannelOffset);
+	sme_debug("ch freq %d scws %u rtws %u sco %u", ch_freq,
+		  pIes->HTCaps.supportedChannelWidthSet,
+		  pIes->HTInfo.recommendedTxWidthSet,
+		  pIes->HTInfo.secondaryChannelOffset);
 
 	if (pIes->HTInfo.recommendedTxWidthSet == eHT_CHANNEL_WIDTH_40MHZ)
 		eRet = (ePhyChanBondState)pIes->HTInfo.secondaryChannelOffset;
@@ -14005,10 +14010,10 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(struct mac_context *mac,
 
 	switch (eRet) {
 	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
-		sec_ch = chan + CSR_SEC_CHANNEL_OFFSET;
+		sec_ch_freq = ch_freq + CSR_SEC_CHANNEL_OFFSET;
 		break;
 	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-		sec_ch = chan - CSR_SEC_CHANNEL_OFFSET;
+		sec_ch_freq = ch_freq - CSR_SEC_CHANNEL_OFFSET;
 		break;
 	default:
 		break;
@@ -14016,12 +14021,12 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(struct mac_context *mac,
 
 	if (eRet != PHY_SINGLE_CHANNEL_CENTERED) {
 		ch_params.ch_width = CH_WIDTH_40MHZ;
-		wlan_reg_set_channel_params(mac->pdev, chan,
-					    sec_ch, &ch_params);
+		wlan_reg_set_channel_params_for_freq(mac->pdev, ch_freq,
+						     sec_ch_freq, &ch_params);
 		if (ch_params.ch_width == CH_WIDTH_20MHZ ||
 		    ch_params.sec_ch_offset != eRet) {
-			sme_err("chan %d :: Supported HT BW %d and cbmode %d, APs HT BW %d and cbmode %d, so switch to 20Mhz",
-				chan, ch_params.ch_width,
+			sme_err("ch freq %d :: Supported HT BW %d and cbmode %d, APs HT BW %d and cbmode %d, so switch to 20Mhz",
+				ch_freq, ch_params.ch_width,
 				ch_params.sec_ch_offset,
 				pIes->HTInfo.recommendedTxWidthSet, eRet);
 			eRet = PHY_SINGLE_CHANNEL_CENTERED;
@@ -14216,7 +14221,7 @@ csr_populate_basic_rates(tSirMacRateSet *rate_set, bool is_ofdm_rates,
  */
 static tSirNwType
 csr_convert_mode_to_nw_type(enum csr_cfgdot11mode dot11_mode,
-			    enum band_info band)
+			    enum reg_wifi_band band)
 {
 	switch (dot11_mode) {
 	case eCSR_CFG_DOT11_MODE_11G:
@@ -14231,7 +14236,7 @@ csr_convert_mode_to_nw_type(enum csr_cfgdot11mode dot11_mode,
 		 * Because LIM only verifies it against 11a, 11b or 11g, set
 		 * only 11g or 11a here
 		 */
-		if (BAND_2G == band)
+		if (REG_BAND_2G == band)
 			return eSIR_11G_NW_TYPE;
 		else
 			return eSIR_11A_NW_TYPE;
@@ -14306,7 +14311,7 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 			     struct csr_roamstart_bssparams *pParam,
 			     bool skip_hostapd_rate)
 {
-	enum band_info band;
+	enum reg_wifi_band band;
 	uint32_t opr_ch_freq = 0;
 	tSirNwType nw_type;
 	uint32_t tmp_opr_ch_freq = 0;
@@ -14483,9 +14488,7 @@ csr_roam_get_bss_start_parms_from_bss_desc(
 			     pParam->ssId.length);
 	}
 	pParam->cbMode =
-		csr_get_cb_mode_from_ies(mac,
-					 wlan_reg_freq_to_chan(mac->pdev,
-							       pParam->operation_chan_freq),
+		csr_get_cb_mode_from_ies(mac, pParam->operation_chan_freq,
 					 pIes);
 }
 
@@ -14515,7 +14518,7 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 					uint32_t roamId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	enum band_info band;
+	enum reg_wifi_band band;
 	/* Set the roaming substate to 'Start BSS attempt'... */
 	csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_START_BSS_REQ,
 				 sessionId);
@@ -14633,7 +14636,6 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 					struct bss_config_param *pBssConfig,
 					tDot11fBeaconIEs *pIes)
 {
-	uint32_t channel;
 	ePhyChanBondState cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 	bool skip_hostapd_rate = !pProfile->chan_switch_hostapd_rate_enabled;
@@ -14668,20 +14670,19 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 			qdf_mem_zero(&pSession->bssParams.bssid,
 				    sizeof(struct qdf_mac_addr));
 	}
-	channel = pSession->bssParams.operation_chan_freq;
 	/* Set operating frequency in pProfile which will be used */
 	/* in csr_roam_set_bss_config_cfg() to determine channel bonding */
 	/* mode and will be configured in CFG later */
-	pProfile->op_freq = channel;
+	pProfile->op_freq = pSession->bssParams.operation_chan_freq;
 
-	if (channel == 0)
+	if (pProfile->op_freq == 0)
 		sme_err("CSR cannot find a channel to start IBSS");
 	else {
 		csr_roam_determine_max_rate_for_ad_hoc(mac,
 						       &pSession->bssParams.
 						       operationalRateSet);
 		if (CSR_IS_INFRA_AP(pProfile) || CSR_IS_START_IBSS(pProfile)) {
-			if (WLAN_REG_IS_24GHZ_CH_FREQ(channel)) {
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(pProfile->op_freq)) {
 				cbMode =
 					mac->roam.configParam.
 					channelBondingMode24GHz;
@@ -15234,7 +15235,7 @@ static void csr_add_supported_5Ghz_channels(struct mac_context *mac_ctx,
  * Return: QDF_STATUS
  */
 static QDF_STATUS csr_set_ldpc_exception(struct mac_context *mac_ctx,
-			struct csr_roam_session *session, uint8_t channel,
+			struct csr_roam_session *session, uint32_t ch_freq,
 			bool usr_cfg_rx_ldpc)
 {
 	if (!mac_ctx) {
@@ -15247,16 +15248,16 @@ static QDF_STATUS csr_set_ldpc_exception(struct mac_context *mac_ctx,
 			"session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (usr_cfg_rx_ldpc && wma_is_rx_ldpc_supported_for_channel(channel)) {
+	if (usr_cfg_rx_ldpc && wma_is_rx_ldpc_supported_for_channel(ch_freq)) {
 		session->ht_config.ht_rx_ldpc = 1;
 		session->vht_config.ldpc_coding = 1;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"LDPC enable for chnl[%d]", channel);
+			"LDPC enable for ch freq[%d]", ch_freq);
 	} else {
 		session->ht_config.ht_rx_ldpc = 0;
 		session->vht_config.ldpc_coding = 0;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"LDPC disable for chnl[%d]", channel);
+			"LDPC disable for ch freq[%d]", ch_freq);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -15558,6 +15559,23 @@ csr_get_adaptive_11r_enabled(struct mac_context *mac)
 }
 #endif
 
+static QDF_STATUS csr_check_and_validate_6g_ap(struct mac_context *mac_ctx,
+					       struct bss_description *bss,
+					       struct join_req *csr_join_req,
+					       tDot11fBeaconIEs *ie)
+{
+	tDot11fIEhe_op *he_op = &ie->he_op;
+
+	if (!wlan_reg_is_6ghz_chan_freq(bss->chan_freq))
+		return QDF_STATUS_SUCCESS;
+
+	if (!he_op->oper_info_6g_present || he_op->co_located_bss) {
+		sme_err("Invalid 6GHZ AP BSS description IE");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 /**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "struct join_req".
@@ -15576,7 +15594,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t acm_mask = 0, uapsd_mask;
-	uint8_t bss_chan_id;
+	uint32_t bss_freq;
 	uint16_t msgLen, ieLen;
 	tSirMacRateSet OpRateSet;
 	tSirMacRateSet ExRateSet;
@@ -15615,10 +15633,9 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		return QDF_STATUS_E_FAILURE;
 	}
 	neigh_roam_info = &mac->roam.neighborRoamInfo[sessionId];
-	bss_chan_id = wlan_reg_freq_to_chan(mac->pdev,
-					    pBssDescription->chan_freq);
+	bss_freq = pBssDescription->chan_freq;
 	if ((eWNI_SME_REASSOC_REQ == messageType) ||
-	    WLAN_REG_IS_5GHZ_CH(bss_chan_id)) {
+	    WLAN_REG_IS_5GHZ_CH_FREQ(bss_freq)) {
 		pSession->disable_hi_rssi = true;
 		sme_debug("Disabling HI_RSSI, AP freq=%d, rssi=%d",
 			  pBssDescription->chan_freq, pBssDescription->rssi);
@@ -15665,6 +15682,11 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
 
+		status = csr_check_and_validate_6g_ap(mac, pBssDescription,
+						      csr_join_req, pIes);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			return status;
+
 		csr_join_req->messageType = messageType;
 		csr_join_req->length = msgLen;
 		csr_join_req->vdev_id = (uint8_t) sessionId;
@@ -15704,7 +15726,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		akm = pProfile->negotiatedAuthType;
 		csr_join_req->akm = csr_convert_csr_to_ani_akm_type(akm);
 
-		if (bss_chan_id <= 14 &&
+		if (bss_freq <= 2484 &&
 		    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
 		    dot11mode == MLME_DOT11_MODE_11AC) {
 			/* Need to disable VHT operation in 2.4 GHz band */
@@ -15728,11 +15750,11 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		vendor_ap_search_attr.ht_cap = pIes->HTCaps.present;
 		vendor_ap_search_attr.vht_cap = pIes->VHTCaps.present;
 		vendor_ap_search_attr.enable_2g =
-					IS_24G_CH(bss_chan_id);
+					wlan_reg_is_24ghz_ch_freq(bss_freq);
 		vendor_ap_search_attr.enable_5g =
-					IS_5G_CH(bss_chan_id);
+					wlan_reg_is_5ghz_ch_freq(bss_freq);
 
-		if (IS_5G_CH(bss_chan_id))
+		if (wlan_reg_is_5ghz_ch_freq(bss_freq))
 			vdev_type_nss = &mac->vdev_type_nss_5g;
 		else
 			vdev_type_nss = &mac->vdev_type_nss_2g;
@@ -16231,7 +16253,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			(uint8_t)mac->mlme_cfg->ht_caps.tx_ldpc_enable;
 
 		if ((csr_is11h_supported(mac)) &&
-			(WLAN_REG_IS_5GHZ_CH(bss_chan_id)) &&
+			(WLAN_REG_IS_5GHZ_CH_FREQ(bss_freq)) &&
 			(pIes->Country.present) &&
 			(!mac->mlme_cfg->sap_cfg.country_code_priority)) {
 			csr_save_to_channel_power2_g_5_g(mac,
@@ -16249,7 +16271,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (eSIR_INFRASTRUCTURE_MODE == csr_join_req->bsstype ||
 		    !policy_mgr_is_dbs_enable(mac->psoc))
 			csr_set_ldpc_exception(mac, pSession,
-					       bss_chan_id,
+					       bss_freq,
 					       mac->mlme_cfg->ht_caps.
 					       ht_cap_info.adv_coding_cap);
 		csr_join_req->ht_config = pSession->ht_config;
@@ -16265,7 +16287,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			if (!mac->usr_cfg_tx_bfee_nsts)
 				CSR_REVISE_REQ_HE_CAP_PER_BAND(csr_join_req,
 							       mac,
-							       bss_chan_id);
+							       bss_freq);
 		}
 
 		value = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
@@ -16391,7 +16413,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		 * assoc IE's to FW which is used for LFR3 roaming
 		 * ie. used in reassociation requests from FW.
 		 */
-		pwr_limit = csr_get_cfg_max_tx_power(mac, bss_chan_id);
+		pwr_limit = csr_get_cfg_max_tx_power(mac, bss_freq);
 		if (0 != pwr_limit && pwr_limit < MAX_TX_PWR_CAP)
 			csr_join_req->powerCap.maxTxPower = pwr_limit;
 		else
@@ -16422,16 +16444,15 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (mac->roam.configParam.conc_custom_rule1) {
 			if ((0 == mac->roam.configParam.
 				is_sta_connection_in_5gz_enabled) &&
-				WLAN_REG_IS_5GHZ_CH(bss_chan_id)) {
+				WLAN_REG_IS_5GHZ_CH_FREQ(bss_freq)) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_ERROR,
 					 "STA-conn on 5G isn't allowed");
 				status = QDF_STATUS_E_FAILURE;
 				break;
 			}
-			if (!WLAN_REG_IS_5GHZ_CH(bss_chan_id) &&
-			    (false == csr_is_conn_allow_2g_band(
-				mac, bss_chan_id))) {
+			if (!WLAN_REG_IS_5GHZ_CH_FREQ(bss_freq) &&
+			    csr_is_conn_allow_2g_band(mac, bss_freq) == false) {
 				status = QDF_STATUS_E_FAILURE;
 				break;
 			}
@@ -16445,8 +16466,8 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		 * by this time P2PGO's channel is same as STA's channel.
 		 */
 		if (mac->roam.configParam.conc_custom_rule2 &&
-			!WLAN_REG_IS_24GHZ_CH(bss_chan_id) &&
-			(!csr_is_conn_allow_5g_band(mac, bss_chan_id))) {
+			!WLAN_REG_IS_24GHZ_CH_FREQ(bss_freq) &&
+			(!csr_is_conn_allow_5g_band(mac, bss_freq))) {
 			status = QDF_STATUS_E_FAILURE;
 			break;
 		}
@@ -16927,7 +16948,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 		wTmp = MLME_CFG_BEACON_INTERVAL_DEF;
 
 	csr_validate_mcc_beacon_interval(mac,
-					 wlan_reg_freq_to_chan(mac->pdev, pParam->operation_chan_freq),
+					 pParam->operation_chan_freq,
 					 &wTmp, sessionId, pParam->bssPersona);
 	/* Update the beacon Interval */
 	pParam->beaconInterval = wTmp;
@@ -17014,8 +17035,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 		csr_start_bss_copy_he_cap(pMsg, pSession);
 		/* change the HE caps like sts per band */
 		CSR_REVISE_REQ_HE_CAP_PER_BAND(pMsg, mac,
-					       wlan_reg_freq_to_chan(mac->pdev,
-								     pParam->operation_chan_freq));
+					       pParam->operation_chan_freq);
 	}
 
 	pMsg->add_ie_params = pParam->add_ie_params;
@@ -18819,9 +18839,9 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 					 QCN_IE_SUBVERSION_SUPPORTED};
 
 	if (session->pConnectBssDesc)
-		max_tx_pwr_cap = csr_get_cfg_max_tx_power(mac_ctx,
-				wlan_reg_freq_to_chan(mac_ctx->pdev,
-				session->pConnectBssDesc->chan_freq));
+		max_tx_pwr_cap = csr_get_cfg_max_tx_power(
+					mac_ctx,
+					session->pConnectBssDesc->chan_freq);
 
 	if (max_tx_pwr_cap && max_tx_pwr_cap < MAX_TX_PWR_CAP)
 		power_cap_ie_data[1] = max_tx_pwr_cap;
@@ -20921,12 +20941,13 @@ csr_find_session_by_bssid(struct mac_context *mac_ctx, uint8_t *bssid)
  *
  * Return: true or false.
  **/
-static bool csr_is_conn_allow_2g_band(struct mac_context *mac_ctx, uint32_t chnl)
+static bool csr_is_conn_allow_2g_band(struct mac_context *mac_ctx,
+				      uint32_t ch_freq)
 {
 	uint32_t sap_session_id;
 	struct csr_roam_session *sap_session;
 
-	if (0 == chnl) {
+	if (0 == ch_freq) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("channel is zero, connection not allowed"));
 
@@ -20936,10 +20957,8 @@ static bool csr_is_conn_allow_2g_band(struct mac_context *mac_ctx, uint32_t chnl
 	sap_session_id = csr_find_session_by_type(mac_ctx, QDF_SAP_MODE);
 	if (WLAN_UMAC_VDEV_ID_MAX != sap_session_id) {
 		sap_session = CSR_GET_SESSION(mac_ctx, sap_session_id);
-		if ((0 != sap_session->bssParams.operation_chan_freq) &&
-			(sap_session->bssParams.operation_chan_freq !=
-			 wlan_reg_chan_to_freq(mac_ctx->pdev, chnl))) {
-
+		if (0 != sap_session->bssParams.operation_chan_freq &&
+		    sap_session->bssParams.operation_chan_freq != ch_freq) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"Can't allow STA to connect, chnls not same");
 			return false;
@@ -20961,12 +20980,13 @@ static bool csr_is_conn_allow_2g_band(struct mac_context *mac_ctx, uint32_t chnl
  *
  * Return: true or false.
  **/
-static bool csr_is_conn_allow_5g_band(struct mac_context *mac_ctx, uint32_t chnl)
+static bool csr_is_conn_allow_5g_band(struct mac_context *mac_ctx,
+				      uint32_t ch_freq)
 {
 	uint32_t p2pgo_session_id;
 	struct csr_roam_session *p2pgo_session;
 
-	if (0 == chnl) {
+	if (0 == ch_freq) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("channel is zero, connection not allowed"));
 		return false;
@@ -20975,12 +20995,10 @@ static bool csr_is_conn_allow_5g_band(struct mac_context *mac_ctx, uint32_t chnl
 	p2pgo_session_id = csr_find_session_by_type(mac_ctx, QDF_P2P_GO_MODE);
 	if (WLAN_UMAC_VDEV_ID_MAX != p2pgo_session_id) {
 		p2pgo_session = CSR_GET_SESSION(mac_ctx, p2pgo_session_id);
-		if ((0 != p2pgo_session->bssParams.operation_chan_freq) &&
-			(eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED !=
-			 p2pgo_session->connectState) &&
-			(p2pgo_session->bssParams.operation_chan_freq !=
-			 wlan_reg_chan_to_freq(mac_ctx->pdev, chnl))) {
-
+		if (0 != p2pgo_session->bssParams.operation_chan_freq &&
+		    eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED !=
+		    p2pgo_session->connectState &&
+		    p2pgo_session->bssParams.operation_chan_freq != ch_freq) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"Can't allow STA to connect, chnls not same");
 			return false;

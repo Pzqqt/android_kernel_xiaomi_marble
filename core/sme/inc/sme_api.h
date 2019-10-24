@@ -490,7 +490,7 @@ QDF_STATUS sme_scan_get_result(mac_handle_t mac_handle, uint8_t vdev_id,
 QDF_STATUS sme_get_ap_channel_from_scan_cache(
 		struct csr_roam_profile *profile,
 		tScanResultHandle *scan_cache,
-		uint8_t *ap_chnl_id);
+		uint32_t *ap_ch_freq);
 /**
  * sme_get_ap_channel_from_scan() - a wrapper function to get
  *				  AP's channel id from
@@ -2254,7 +2254,7 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
  * @bssid: bssid to look for in scan cache
  * @frame_buf: frame buffer to populate
  * @frame_len: length of constructed frame
- * @channel: Pointer to channel info to be filled
+ * @ch_freq: Pointer to channel freq info to be filled
  *
  * Return: QDF_STATUS
  */
@@ -2262,7 +2262,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 			      struct csr_roam_profile *profile,
 			      const tSirMacAddr bssid,
 			      uint8_t **frame_buf, uint32_t *frame_len,
-			      int *channel);
+			      uint32_t *ch_freq);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
@@ -2270,7 +2270,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
  * @mac_handle: handle returned by mac_open
  * @profile: current connected profile
  * @bssid: bssid to look for in scan cache
- * @channel: channel on which reassoc should be send
+ * @ch_freq: channel on which reassoc should be send
  * @vdev_id: vdev id
  * @connected_bssid: bssid of currently connected profile
  *
@@ -2278,7 +2278,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
-			    const tSirMacAddr bssid, int channel,
+			    const tSirMacAddr bssid, uint32_t ch_freq,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid);
 
 /**
@@ -2294,7 +2294,7 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id);
 static inline
 QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
-			    const tSirMacAddr bssid, int channel,
+			    const tSirMacAddr bssid, uint32_t ch_freq,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid)
 {
 	return QDF_STATUS_SUCCESS;

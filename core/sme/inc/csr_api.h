@@ -573,8 +573,9 @@ typedef enum {
  * For both 11a and 11g mode.
  */
 #define CSR_CB_CHANNEL_GAP 4
-#define CSR_CB_CENTER_CHANNEL_OFFSET    2
-#define CSR_SEC_CHANNEL_OFFSET    4
+/* Considering 5 MHz Channel BW */
+#define CSR_CB_CENTER_CHANNEL_OFFSET    10
+#define CSR_SEC_CHANNEL_OFFSET    20
 
 
 /* WEP keysize (in bits) */

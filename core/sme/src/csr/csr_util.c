@@ -1267,8 +1267,7 @@ bool csr_is_valid_mc_concurrent_session(struct mac_context *mac_ctx,
 		return false;
 	if (QDF_STATUS_SUCCESS == csr_validate_mcc_beacon_interval(
 				mac_ctx,
-				wlan_reg_freq_to_chan(mac_ctx->pdev,
-						      bss_descr->chan_freq),
+				bss_descr->chan_freq,
 				&bss_descr->beaconInterval, session_id,
 				pSession->pCurRoamProfile->csrPersona))
 		return true;
@@ -2307,7 +2306,7 @@ static uint16_t csr_calculate_mcc_beacon_interval(struct mac_context *mac,
  * Return: bool
  */
 static bool csr_validate_p2pcli_bcn_intrvl(struct mac_context *mac_ctx,
-		uint8_t chnl_id, uint16_t *bcn_interval, uint32_t session_id,
+		uint32_t ch_freq, uint16_t *bcn_interval, uint32_t session_id,
 		QDF_STATUS *status)
 {
 	struct csr_roam_session *roamsession;
@@ -2320,10 +2319,8 @@ static bool csr_validate_p2pcli_bcn_intrvl(struct mac_context *mac_ctx,
 		sme_debug("Ignore Beacon Interval Validation...");
 	} else if (roamsession->bssParams.bssPersona == QDF_P2P_GO_MODE) {
 		/* Check for P2P go scenario */
-		if ((roamsession->bssParams.operation_chan_freq !=
-		     wlan_reg_chan_to_freq(mac_ctx->pdev, chnl_id))
-			&& (roamsession->bssParams.beaconInterval !=
-				*bcn_interval)) {
+		if (roamsession->bssParams.operation_chan_freq != ch_freq &&
+		    roamsession->bssParams.beaconInterval != *bcn_interval) {
 			sme_err("BcnIntrvl is diff can't connect to P2P_GO network");
 			*status = QDF_STATUS_E_FAILURE;
 			return true;
@@ -2346,7 +2343,7 @@ static bool csr_validate_p2pcli_bcn_intrvl(struct mac_context *mac_ctx,
  * Return: bool
  */
 static bool csr_validate_p2pgo_bcn_intrvl(struct mac_context *mac_ctx,
-		uint8_t chnl_id, uint16_t *bcn_interval,
+		uint32_t ch_freq, uint16_t *bcn_interval,
 		uint32_t session_id, QDF_STATUS *status)
 {
 	struct csr_roam_session *roamsession;
@@ -2368,10 +2365,8 @@ static bool csr_validate_p2pgo_bcn_intrvl(struct mac_context *mac_ctx,
 			return false;
 
 		if (csr_is_conn_state_connected_infra(mac_ctx, session_id) &&
-			(wlan_reg_freq_to_chan(
-				mac_ctx->pdev,
-				conn_profile->op_freq) != chnl_id) &&
-			(conn_profile->beaconInterval != *bcn_interval)) {
+		    conn_profile->op_freq != ch_freq &&
+		    conn_profile->beaconInterval != *bcn_interval) {
 			/*
 			 * Updated beaconInterval should be used only when
 			 * we are starting a new BSS not incase of
@@ -2412,7 +2407,7 @@ static bool csr_validate_p2pgo_bcn_intrvl(struct mac_context *mac_ctx,
  * Return: bool
  */
 static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
-			uint8_t chnl_id, uint16_t *bcn_interval,
+			uint32_t ch_freq, uint16_t *bcn_interval,
 			uint32_t session_id, QDF_STATUS *status)
 {
 	struct csr_roam_session *roamsession;
@@ -2429,9 +2424,8 @@ static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 		sme_debug("Bcn Intrvl validation not require for STA/CLIENT");
 		return false;
 	}
-	if ((roamsession->bssParams.bssPersona == QDF_SAP_MODE) &&
-		   (roamsession->bssParams.operation_chan_freq !=
-		    wlan_reg_chan_to_freq(mac_ctx->pdev, chnl_id))) {
+	if (roamsession->bssParams.bssPersona == QDF_SAP_MODE &&
+	    roamsession->bssParams.operation_chan_freq != ch_freq) {
 		/*
 		 * IF SAP has started and STA wants to connect
 		 * on different channel MCC should
@@ -2448,10 +2442,9 @@ static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 	 * beacon interval,
 	 * change the BI of the P2P-GO
 	 */
-	if ((roamsession->bssParams.bssPersona == QDF_P2P_GO_MODE) &&
-		(roamsession->bssParams.operation_chan_freq !=
-		 wlan_reg_chan_to_freq(mac_ctx->pdev, chnl_id)) &&
-		(roamsession->bssParams.beaconInterval != *bcn_interval)) {
+	if (roamsession->bssParams.bssPersona == QDF_P2P_GO_MODE &&
+	    roamsession->bssParams.operation_chan_freq != ch_freq &&
+	    roamsession->bssParams.beaconInterval != *bcn_interval) {
 		/* if GO in MCC support diff beacon interval, return success */
 		if (cfg_param->fAllowMCCGODiffBI == 0x01) {
 			*status = QDF_STATUS_SUCCESS;
@@ -2512,7 +2505,7 @@ static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 }
 
 QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
-					    uint8_t chnl_id,
+					    uint32_t ch_freq,
 					    uint16_t *bcn_interval,
 					    uint32_t cur_session_id,
 					    enum QDF_OPMODE cur_bss_persona)
@@ -2534,15 +2527,16 @@ QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
 
 		switch (cur_bss_persona) {
 		case QDF_STA_MODE:
-			is_done = csr_validate_sta_bcn_intrvl(mac_ctx, chnl_id,
-					bcn_interval, session_id, &status);
+			is_done = csr_validate_sta_bcn_intrvl(
+						mac_ctx, ch_freq, bcn_interval,
+						session_id, &status);
 			if (true == is_done)
 				return status;
 			break;
 
 		case QDF_P2P_CLIENT_MODE:
 			is_done = csr_validate_p2pcli_bcn_intrvl(mac_ctx,
-					chnl_id, bcn_interval, session_id,
+					ch_freq, bcn_interval, session_id,
 					&status);
 			if (true == is_done)
 				return status;
@@ -2554,7 +2548,7 @@ QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
 
 		case QDF_P2P_GO_MODE:
 			is_done = csr_validate_p2pgo_bcn_intrvl(mac_ctx,
-					chnl_id, bcn_interval,
+					ch_freq, bcn_interval,
 					session_id, &status);
 			if (true == is_done)
 				return status;

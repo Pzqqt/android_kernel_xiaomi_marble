@@ -6329,12 +6329,12 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 /**
  * wma_is_rx_ldpc_supported_for_channel() - to find out if ldpc is supported
  *
- * @channel: Channel number for which it needs to check if rx ldpc is enabled
+ * @ch_freq: Channel freq for which it needs to check if rx ldpc is enabled
  *
  * This API takes channel number as argument and takes default hw mode as DBS
  * to check if rx LDPC support is enabled for that channel or no
  */
-bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
+bool wma_is_rx_ldpc_supported_for_channel(uint32_t ch_freq)
 {
 	t_wma_handle *wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	struct target_psoc_info *tgt_hdl;
@@ -6356,7 +6356,7 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 
-	if (!WLAN_REG_IS_24GHZ_CH(channel))
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq))
 		band = CDS_BAND_5GHZ;
 	else
 		band = CDS_BAND_2GHZ;
@@ -6375,7 +6375,7 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 	if (0 == num_hw_modes) {
 		status = (!!(caps_per_phy.ht_2g & WMI_HT_CAP_LDPC));
 	} else {
-		if (WLAN_REG_IS_24GHZ_CH(channel))
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq))
 			status = (!!(caps_per_phy.ht_2g & WMI_HT_CAP_RX_LDPC));
 		else
 			status = (!!(caps_per_phy.ht_5g & WMI_HT_CAP_RX_LDPC));

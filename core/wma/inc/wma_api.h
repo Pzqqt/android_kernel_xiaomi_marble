@@ -182,7 +182,7 @@ void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 void wma_set_dbs_capability_ut(uint32_t dbs);
 QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		enum hw_mode_dbs_capab hw_mode, enum cds_band_type band);
-bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel);
+bool wma_is_rx_ldpc_supported_for_channel(uint32_t ch_freq);
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 int wma_unified_radio_tx_mem_free(void *handle);

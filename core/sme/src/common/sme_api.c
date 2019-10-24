@@ -2574,14 +2574,12 @@ QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
 					tScanResultHandle *scan_cache,
 					uint32_t *ap_ch_freq)
 {
-	uint8_t ap_ch;
 	QDF_STATUS status;
 
 	status = sme_get_ap_channel_from_scan_cache((struct csr_roam_profile *)
 						  profile,
 						  scan_cache,
-						  &ap_ch);
-	*ap_ch_freq = wlan_chan_to_freq(ap_ch);
+						  ap_ch_freq);
 	return status;
 }
 
@@ -2590,7 +2588,7 @@ QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
  *                                        channel id from CSR by filtering the
  *                                        result which matches our roam profile.
  * @profile: SAP adapter
- * @ap_chnl_id: pointer to channel id of SAP. Fill the value after finding the
+ * @ap_ch_freq: pointer to channel freq of SAP. Fill the value after finding the
  *              best ap from scan cache.
  *
  * This function is written to get AP's channel id from CSR by filtering
@@ -2600,14 +2598,13 @@ QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
  */
 QDF_STATUS sme_get_ap_channel_from_scan_cache(
 	struct csr_roam_profile *profile, tScanResultHandle *scan_cache,
-	uint8_t *ap_chnl_id)
+	uint32_t *ap_ch_freq)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac_ctx = sme_get_mac_context();
 	struct scan_filter *scan_filter;
 	tScanResultHandle filtered_scan_result = NULL;
 	struct bss_description first_ap_profile;
-	uint8_t bss_chan_id;
 
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -2645,11 +2642,8 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 			csr_get_bssdescr_from_scan_handle(filtered_scan_result,
 					&first_ap_profile);
 			*scan_cache = filtered_scan_result;
-			bss_chan_id = wlan_reg_freq_to_chan(
-					mac_ctx->pdev,
-					first_ap_profile.chan_freq);
-			if (bss_chan_id) {
-				*ap_chnl_id = bss_chan_id;
+			if (first_ap_profile.chan_freq) {
+				*ap_ch_freq = first_ap_profile.chan_freq;
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_DEBUG,
 					  FL("Found best AP & its on freq[%d]"),
@@ -2660,7 +2654,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 				 * so set the channel to zero, caller should
 				 * take of zero channel id case.
 				 */
-				*ap_chnl_id = 0;
+				*ap_ch_freq = 0;
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("Scan is empty, set chnl to 0"));
@@ -13911,7 +13905,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 			      struct csr_roam_profile *profile,
 			      const tSirMacAddr bssid,
 			      uint8_t **frame_buf, uint32_t *frame_len,
-			      int *channel)
+			      uint32_t *ch_freq)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tScanResultHandle result_handle = NULL;
@@ -13920,7 +13914,6 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	struct bss_description *bss_descp;
 	struct scan_result_list *bss_list;
 	uint32_t ie_len;
-	uint8_t bss_chan_id;
 
 	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
 	if (!scan_filter) {
@@ -13971,8 +13964,6 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	 */
 	ie_len = bss_descp->length + sizeof(bss_descp->length)
 		- (uint16_t)(offsetof(struct bss_description, ieFields[0]));
-	bss_chan_id = wlan_reg_freq_to_chan(mac_ctx->pdev,
-					    bss_descp->chan_freq);
 	sme_debug("found bss_descriptor ie_len: %d frequency %d",
 		  ie_len, bss_descp->chan_freq);
 
@@ -13986,8 +13977,8 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 
 	sme_prepare_beacon_from_bss_descp(*frame_buf, bss_descp, bssid, ie_len);
 
-	if (!*channel)
-		*channel = bss_chan_id;
+	if (!*ch_freq)
+		*ch_freq = bss_descp->chan_freq;
 exit:
 	if (result_handle)
 		csr_scan_result_purge(mac_ctx, result_handle);
@@ -14080,7 +14071,7 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 
 QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
-			    const tSirMacAddr bssid, int channel,
+			    const tSirMacAddr bssid, uint32_t ch_freq,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid)
 {
 	QDF_STATUS status;
@@ -14151,9 +14142,9 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 	status = sme_get_beacon_frm(mac_handle, profile, bssid,
 				    &fastreassoc->frame_buf,
 				    &fastreassoc->frame_len,
-				    &channel);
+				    &ch_freq);
 
-	if (!channel) {
+	if (!ch_freq) {
 		sme_err("channel retrieval from BSS desc fails!");
 		qdf_mem_free(fastreassoc->frame_buf);
 		fastreassoc->frame_buf = NULL;
@@ -14163,7 +14154,7 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	fastreassoc->ch_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, channel);
+	fastreassoc->ch_freq = ch_freq;
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_warn("sme_get_beacon_frm failed");
 		qdf_mem_free(fastreassoc->frame_buf);

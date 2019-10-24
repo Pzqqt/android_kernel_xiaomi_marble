@@ -1946,7 +1946,7 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 	return bss_descr;
 }
 
-uint8_t
+uint32_t
 csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 				   tScanResultHandle result_handle,
 				   uint32_t session_id)
@@ -1955,7 +1955,7 @@ csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 	struct tag_csrscan_result *scan_result = NULL;
 	struct scan_result_list *bss_list =
 				(struct scan_result_list *)result_handle;
-	uint8_t channel_id = 0;
+	uint32_t ch_freq = 0;
 
 	if (!bss_list) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -2001,19 +2001,17 @@ csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 		scan_result = GET_BASE_ADDR(next_element,
 					    struct tag_csrscan_result,
 					    Link);
-		channel_id = wlan_reg_freq_to_chan(
-				mac_ctx->pdev,
-				scan_result->Result.BssDescriptor.chan_freq);
+		ch_freq = scan_result->Result.BssDescriptor.chan_freq;
 		if (policy_mgr_is_hw_dbs_2x2_capable(mac_ctx->psoc)) {
-			if (WLAN_REG_IS_24GHZ_CH(channel_id))
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq))
 				break;
 		} else {
-			if (WLAN_REG_IS_24GHZ_CH(channel_id) &&
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq) &&
 			    policy_mgr_is_any_mode_active_on_band_along_with_session
 				(mac_ctx->psoc,
 				 session_id, POLICY_MGR_BAND_5))
 				break;
-			if (WLAN_REG_IS_5GHZ_CH(channel_id) &&
+			if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq) &&
 			    policy_mgr_is_any_mode_active_on_band_along_with_session
 				(mac_ctx->psoc,
 				 session_id, POLICY_MGR_BAND_24))
@@ -2023,46 +2021,46 @@ csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 					   LL_ACCESS_NOLOCK);
 	}
 end:
-	return channel_id;
+	return ch_freq;
 }
 
-uint8_t
+uint32_t
 csr_scan_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 					uint32_t session_id,
 					struct csr_roam_profile *profile)
 {
 	tScanResultHandle result_handle = NULL;
 	QDF_STATUS status;
-	uint8_t first_ap_ch = 0;
-	uint8_t candidate_chan;
+	uint32_t first_ap_ch_freq = 0, candidate_ch_freq;
 
 	status = sme_get_ap_channel_from_scan_cache(profile, &result_handle,
-						    &first_ap_ch);
-	if (status != QDF_STATUS_SUCCESS || !result_handle || !first_ap_ch) {
+						    &first_ap_ch_freq);
+	if (status != QDF_STATUS_SUCCESS || !result_handle ||
+	    !first_ap_ch_freq) {
 		if (result_handle)
 			sme_scan_result_purge(result_handle);
 		sme_err("fail get scan result: status %d first ap ch %d",
-			status, first_ap_ch);
+			status, first_ap_ch_freq);
 		return 0;
 	}
 	if (!policy_mgr_check_for_session_conc(
-	    mac_ctx->psoc, session_id, wlan_chan_to_freq(first_ap_ch))) {
+	    mac_ctx->psoc, session_id, first_ap_ch_freq)) {
 		sme_scan_result_purge(result_handle);
 		sme_err("Conc not allowed for the session %d ch %d",
-			session_id, first_ap_ch);
+			session_id, first_ap_ch_freq);
 		return 0;
 	}
 
-	candidate_chan = csr_get_channel_for_hw_mode_change(mac_ctx,
-							    result_handle,
-							    session_id);
+	candidate_ch_freq = csr_get_channel_for_hw_mode_change(mac_ctx,
+							       result_handle,
+							       session_id);
 	sme_scan_result_purge(result_handle);
-	if (!candidate_chan)
-		candidate_chan = first_ap_ch;
+	if (!candidate_ch_freq)
+		candidate_ch_freq = first_ap_ch_freq;
 	sme_debug("session %d hw mode check candidate_chan %d", session_id,
-		  candidate_chan);
+		  candidate_ch_freq);
 
-	return candidate_chan;
+	return candidate_ch_freq;
 }
 
 enum wlan_auth_type csr_covert_auth_type_new(enum csr_akm_type auth)

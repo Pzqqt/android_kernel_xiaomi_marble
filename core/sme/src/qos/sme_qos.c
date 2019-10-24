@@ -7496,8 +7496,7 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 			MAC_HANDLE(mac),
 			roam_profile,
 			connected_profile.bssid.bytes,
-			wlan_reg_freq_to_chan(mac->pdev,
-					      connected_profile.op_freq),
+			connected_profile.op_freq,
 			sessionId,
 			connected_profile.bssid.bytes);
 	} else {

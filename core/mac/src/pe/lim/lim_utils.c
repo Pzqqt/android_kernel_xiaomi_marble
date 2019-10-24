@@ -5597,10 +5597,11 @@ static QDF_STATUS lim_send_ie(struct mac_context *mac_ctx, uint32_t sme_session_
  *
  * Return: true if enabled and false otherwise
  */
-static inline bool lim_get_rx_ldpc(struct mac_context *mac_ctx, enum channel_enum ch)
+static inline bool lim_get_rx_ldpc(struct mac_context *mac_ctx,
+				   enum channel_enum ch)
 {
 	if (mac_ctx->mlme_cfg->ht_caps.ht_cap_info.adv_coding_cap &&
-	    wma_is_rx_ldpc_supported_for_channel(WLAN_REG_CH_NUM(ch)))
+	    wma_is_rx_ldpc_supported_for_channel(wlan_reg_ch_to_freq(ch)))
 		return true;
 	else
 		return false;

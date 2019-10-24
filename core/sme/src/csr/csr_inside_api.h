@@ -330,7 +330,7 @@ QDF_STATUS csr_get_cfg_valid_freqs(struct mac_context *mac,
 				   uint32_t *freq_list,
 				   uint32_t *num_of_freq);
 
-int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint8_t channel);
+int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq);
 
 /* To free the last roaming profile */
 void csr_free_roam_profile(struct mac_context *mac, uint32_t sessionId);
@@ -1094,10 +1094,10 @@ static inline void csr_init_session_twt_cap(struct csr_roam_session *session,
  * This function is written to find out for any bss from scan
  * handle a HW mode change to DBS will be needed or not.
  *
- * Return: AP channel for which DBS HW mode will be needed. 0
+ * Return: AP channel freq for which DBS HW mode will be needed. 0
  * means no HW mode change is needed.
  */
-uint8_t
+uint32_t
 csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 				   tScanResultHandle result_handle,
 				   uint32_t session_id);
@@ -1117,10 +1117,10 @@ csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
  * If there is no candidate AP which requires DBS, this function will return
  * the first Candidate AP's chan.
  *
- * Return: AP channel for which HW mode change will be needed. 0
+ * Return: AP channel freq for which HW mode change will be needed. 0
  * means no candidate AP to connect.
  */
-uint8_t
+uint32_t
 csr_scan_get_channel_for_hw_mode_change(
 	struct mac_context *mac_ctx, uint32_t session_id,
 	struct csr_roam_profile *profile);
