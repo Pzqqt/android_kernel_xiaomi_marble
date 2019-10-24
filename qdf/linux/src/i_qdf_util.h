@@ -472,4 +472,17 @@ int __qdf_hex_str_to_binary(u8 *dst, const char *src, size_t count)
 	return hex2bin(dst, src, count);
 }
 
+/**
+ * __qdf_fls() - find last set bit in a given 32 bit input
+ * @x: 32 bit mask
+ *
+ * Return: zero if the input is zero, otherwise returns the bit
+ * position of the last set bit, where the LSB is 1 and MSB is 32.
+ */
+static inline
+int __qdf_fls(uint32_t x)
+{
+	return fls(x);
+}
+
 #endif /*_I_QDF_UTIL_H*/
