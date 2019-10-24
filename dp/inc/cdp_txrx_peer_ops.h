@@ -675,4 +675,49 @@ is_cdp_peer_detach_force_delete_supported(ol_txrx_soc_handle soc)
 
 	return false;
 }
+
+/*
+ * cdp_peer_set_peer_as_tdls() - To set peer as tdls peer
+ * @soc: pointer to SOC handle
+ * @peer: dp peer
+ * @var: true or false
+ *
+ * Return: void
+ */
+static inline void
+cdp_peer_set_peer_as_tdls(ol_txrx_soc_handle soc, void *peer, bool val)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->set_peer_as_tdls_peer)
+		soc->ops->peer_ops->set_peer_as_tdls_peer(peer, val);
+}
+
+/**
+ * cdp_peer_set_tdls_offchan_enabled() - Set tdls offchan operation as enabled
+ * @soc - data path soc handle
+ * @peer - peer instance pointer
+ * @val - true or false
+ *
+ * update tdls_offchan_enabled
+ *
+ * Return: none
+ */
+static inline void
+cdp_peer_set_tdls_offchan_enabled(ol_txrx_soc_handle soc, void *peer, bool val)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->set_tdls_offchan_enabled)
+		soc->ops->peer_ops->set_tdls_offchan_enabled(peer, val);
+}
+
 #endif /* _CDP_TXRX_PEER_H_ */

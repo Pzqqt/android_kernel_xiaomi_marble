@@ -1157,6 +1157,8 @@ struct cdp_peer_ops {
 	void (*update_last_real_peer)(struct cdp_pdev *pdev, void *vdev,
 			uint8_t *peer_id, bool restore_last_peer);
 	void (*peer_detach_force_delete)(void *peer);
+	void (*set_tdls_offchan_enabled)(void *peer, bool val);
+	void (*set_peer_as_tdls_peer)(void *peer, bool val);
 };
 
 /**
@@ -1281,8 +1283,10 @@ struct cdp_lflowctl_ops {
 			 unsigned int high_watermark_offset);
 	int (*ll_set_tx_pause_q_depth)(uint8_t vdev_id, int pause_q_depth);
 	void (*vdev_flush)(struct cdp_vdev *vdev);
-	void (*vdev_pause)(struct cdp_vdev *vdev, uint32_t reason);
-	void (*vdev_unpause)(struct cdp_vdev *vdev, uint32_t reason);
+	void (*vdev_pause)(struct cdp_vdev *vdev, uint32_t reason,
+			   uint32_t pause_type);
+	void (*vdev_unpause)(struct cdp_vdev *vdev, uint32_t reason,
+			     uint32_t pause_type);
 };
 
 /**

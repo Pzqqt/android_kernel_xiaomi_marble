@@ -265,7 +265,7 @@ cdp_fc_vdev_flush(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
  */
 static inline void
 cdp_fc_vdev_pause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-		uint32_t reason)
+		uint32_t reason, uint32_t pause_type)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -278,7 +278,7 @@ cdp_fc_vdev_pause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	    !soc->ops->l_flowctl_ops->vdev_pause)
 		return;
 
-	soc->ops->l_flowctl_ops->vdev_pause(vdev, reason);
+	soc->ops->l_flowctl_ops->vdev_pause(vdev, reason, pause_type);
 }
 
 /**
@@ -293,7 +293,7 @@ cdp_fc_vdev_pause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
  */
 static inline void
 cdp_fc_vdev_unpause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-		uint32_t reason)
+		uint32_t reason, uint32_t pause_type)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -305,6 +305,6 @@ cdp_fc_vdev_unpause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	    !soc->ops->l_flowctl_ops->vdev_unpause)
 		return;
 
-	soc->ops->l_flowctl_ops->vdev_unpause(vdev, reason);
+	soc->ops->l_flowctl_ops->vdev_unpause(vdev, reason, pause_type);
 }
 #endif /* _CDP_TXRX_FC_LEG_H_ */
