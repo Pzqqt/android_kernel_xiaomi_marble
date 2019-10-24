@@ -233,6 +233,16 @@ enum spectral_cp_error_code {
 };
 
 /**
+ * enum spectral_dma_debug -   Spectral DMA debug
+ * @SPECTRAL_DMA_RING_DEBUG:   Spectral DMA ring debug
+ * @SPECTRAL_DMA_BUFFER_DEBUG: Spectral DMA buffer debug
+ */
+enum spectral_dma_debug {
+	SPECTRAL_DMA_RING_DEBUG,
+	SPECTRAL_DMA_BUFFER_DEBUG,
+};
+
+/**
  * struct spectral_chan_stats - channel status info
  * @cycle_count:         Cycle count
  * @channel_load:        Channel load
@@ -379,11 +389,24 @@ struct spectral_scan_debug_request {
 };
 
 /**
+ * struct spectral_scan_dma_debug_request - DMA debug request
+ * @dma_debug_enable: Enable/disable @dma_debug_type
+ * @dma_debug_type: Type of Spectral DMA debug i.e., ring or buffer debug
+ * @sscan_err_code: Spectral scan error code
+ */
+struct spectral_scan_dma_debug_request {
+	bool dma_debug_enable;
+	enum spectral_dma_debug dma_debug_type;
+	enum spectral_cp_error_code sscan_err_code;
+};
+
+/**
  * struct spectral_cp_request - Spectral control path request
  *                              Creating request and extracting response has to
  *                              be atomic.
  * @ss_mode: Spectral scan mode
  * @req_id: Request identifier
+ * @dma_debug_req: Spectral DMA debug request
  */
 struct spectral_cp_request {
 	enum spectral_scan_mode ss_mode;
@@ -396,6 +419,7 @@ struct spectral_cp_request {
 		struct spectral_scan_get_chan_width_request chan_width_req;
 		struct spectral_scan_get_status_request status_req;
 		struct spectral_scan_debug_request debug_req;
+		struct spectral_scan_dma_debug_request dma_debug_req;
 	};
 };
 

@@ -87,6 +87,9 @@
 #define SPECTRAL_PARAM_RPT_MODE_MIN        (0)
 #define SPECTRAL_PARAM_RPT_MODE_MAX        (3)
 
+/* DBR ring debug size for Spectral */
+#define SPECTRAL_DBR_RING_DEBUG_SIZE 512
+
 #ifdef BIG_ENDIAN_HOST
 #define SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(destp, srcp, len)  do { \
 	int j; \
@@ -837,6 +840,7 @@ struct spectral_param_properties {
  * @timestamp_war_offset: Offset to be added to correct timestamp
  * @dbr_ring_debug: Whether Spectral DBR ring debug is enabled
  * @dbr_buff_debug: Whether Spectral DBR buffer debug is enabled
+ * @direct_dma_support: Whether Direct-DMA is supported on the current radio
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -953,6 +957,7 @@ struct target_if_spectral {
 	uint16_t fft_size_max;
 	bool  dbr_ring_debug;
 	bool  dbr_buff_debug;
+	bool direct_dma_support;
 };
 
 /**

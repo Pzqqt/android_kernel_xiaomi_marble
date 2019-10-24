@@ -471,6 +471,14 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 		}
 		break;
 
+	case SPECTRAL_SET_DMA_DEBUG:
+		if (sc->sptrlc_set_dma_debug)
+			sc->sptrlc_set_dma_debug(
+			     pdev,
+			     sscan_req->dma_debug_req.dma_debug_type,
+			     sscan_req->dma_debug_req.dma_debug_enable);
+		break;
+
 	default:
 		goto bad;
 		break;

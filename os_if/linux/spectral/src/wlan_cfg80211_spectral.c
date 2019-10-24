@@ -84,7 +84,11 @@ static const struct nla_policy spectral_scan_policy[
 	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY] = {
 							.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_MODE] = {
-						.type = NLA_U32},
+							.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DMA_RING_DEBUG] = {
+							.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DMA_BUFFER_DEBUG] = {
+							.type = NLA_U8},
 };
 
 static void wlan_spectral_intit_config(struct spectral_config *config_req)
@@ -181,6 +185,57 @@ convert_spectral_err_code_internal_to_nl
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef DIRECT_BUF_RX_DEBUG
+QDF_STATUS wlan_cfg80211_spectral_scan_dma_debug_config(
+	struct wlan_objmgr_pdev *pdev,
+	struct nlattr **tb,
+	enum spectral_scan_mode sscan_mode)
+{
+	struct spectral_cp_request sscan_req;
+	uint8_t dma_debug_enable;
+	QDF_STATUS status;
+
+	if (!tb || !pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DMA_RING_DEBUG]) {
+		dma_debug_enable = nla_get_u8(tb[
+		   QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DMA_RING_DEBUG]);
+		sscan_req.ss_mode = sscan_mode;
+		sscan_req.dma_debug_req.dma_debug_enable = !!dma_debug_enable;
+		sscan_req.dma_debug_req.dma_debug_type =
+				SPECTRAL_DMA_RING_DEBUG;
+		sscan_req.req_id = SPECTRAL_SET_DMA_DEBUG;
+		status = ucfg_spectral_control(pdev, &sscan_req);
+		if (status != QDF_STATUS_SUCCESS) {
+			osif_err("Could not configure dma ring debug");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DMA_BUFFER_DEBUG]) {
+		dma_debug_enable = nla_get_u8(tb[
+		   QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DMA_BUFFER_DEBUG]);
+		sscan_req.ss_mode = sscan_mode;
+		sscan_req.dma_debug_req.dma_debug_enable = !!dma_debug_enable;
+		sscan_req.dma_debug_req.dma_debug_type =
+				SPECTRAL_DMA_BUFFER_DEBUG;
+		sscan_req.req_id = SPECTRAL_SET_DMA_DEBUG;
+		return ucfg_spectral_control(pdev, &sscan_req);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS wlan_cfg80211_spectral_scan_dma_debug_config(
+	struct wlan_objmgr_pdev *pdev,
+	struct nlattr **tb,
+	enum spectral_scan_mode sscan_mode)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DIRECT_BUF_RX_DEBUG */
 
 int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 						 struct wlan_objmgr_pdev *pdev,
@@ -327,6 +382,11 @@ int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 		osif_err(" reply skb alloc failed");
 		return -ENOMEM;
 	}
+
+	status = wlan_cfg80211_spectral_scan_dma_debug_config(
+			pdev, tb, sscan_mode);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
 
 	if (CONFIG_REQUESTED(scan_req_type)) {
 		sscan_req.ss_mode = sscan_mode;

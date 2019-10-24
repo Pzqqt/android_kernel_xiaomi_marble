@@ -298,23 +298,26 @@ tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
+	struct wlan_lmac_if_sptrl_tx_ops *sptrl_tx_ops = NULL;
 	struct dbr_module_config dbr_config = {0};
-	uint32_t target_type;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
+	sptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
 	dbr_config.num_resp_per_event = DBR_NUM_RESP_PER_EVENT_SPECTRAL;
 	dbr_config.event_timeout_in_ms = DBR_EVENT_TIMEOUT_IN_MS_SPECTRAL;
-	target_type = tgt_spectral_get_target_type(psoc);
 
-	if ((target_type == TARGET_TYPE_QCA8074) ||
-	    (target_type == TARGET_TYPE_QCA8074V2) ||
-	    (target_type == TARGET_TYPE_QCA6018) ||
-	    (target_type == TARGET_TYPE_QCA6390))
+	if ((sptrl_tx_ops->sptrlto_direct_dma_support) &&
+	    (sptrl_tx_ops->sptrlto_direct_dma_support(pdev))) {
+		if (sptrl_tx_ops->sptrlto_check_and_do_dbr_buff_debug)
+			sptrl_tx_ops->sptrlto_check_and_do_dbr_buff_debug(pdev);
 		if (dbr_tx_ops->direct_buf_rx_module_register)
-			return dbr_tx_ops->direct_buf_rx_module_register
+			dbr_tx_ops->direct_buf_rx_module_register
 				(pdev, 0, &dbr_config,
 				 spectral_dbr_event_handler);
+		if (sptrl_tx_ops->sptrlto_check_and_do_dbr_ring_debug)
+			sptrl_tx_ops->sptrlto_check_and_do_dbr_ring_debug(pdev);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -324,16 +327,28 @@ tgt_spectral_unregister_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
+	struct wlan_lmac_if_sptrl_tx_ops *sptrl_tx_ops = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
+	sptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
 
-	if ((tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA8074) ||
-	    (tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA8074V2) ||
-	    (tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA6018))
-		if (dbr_tx_ops->direct_buf_rx_module_unregister)
-			return dbr_tx_ops->direct_buf_rx_module_unregister
+	if ((sptrl_tx_ops->sptrlto_direct_dma_support) &&
+	    (sptrl_tx_ops->sptrlto_direct_dma_support(pdev))) {
+		/* Stop DBR debug as the buffers itself are freed now */
+		if (dbr_tx_ops->direct_buf_rx_stop_ring_debug)
+			dbr_tx_ops->direct_buf_rx_stop_ring_debug(pdev, 0);
+
+		/*No need to zero-out as buffers are anyway getting freed*/
+		if (dbr_tx_ops->direct_buf_rx_stop_buffer_poisoning)
+			dbr_tx_ops->direct_buf_rx_stop_buffer_poisoning
 				(pdev, 0);
+		if (dbr_tx_ops->direct_buf_rx_module_unregister)
+			dbr_tx_ops->direct_buf_rx_module_unregister
+				(pdev, 0);
+
+		return QDF_STATUS_SUCCESS;
+	}
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -346,6 +361,34 @@ tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 
 QDF_STATUS
 tgt_spectral_unregister_to_dbr(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DIRECT_BUF_RX_ENABLE */
+
+#ifdef DIRECT_BUF_RX_DEBUG
+QDF_STATUS tgt_set_spectral_dma_debug(struct wlan_objmgr_pdev *pdev,
+				      enum spectral_dma_debug dma_debug_type,
+				      bool dma_debug_enable)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc) {
+		spectral_err("psoc is NULL!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_set_dma_debug(
+			pdev,
+			dma_debug_type,
+			dma_debug_enable);
+}
+#else
+QDF_STATUS tgt_set_spectral_dma_debug(struct wlan_objmgr_pdev *pdev,
+				      enum spectral_dma_debug dma_debug_type,
+				      bool dma_debug_enable)
 {
 	return QDF_STATUS_SUCCESS;
 }

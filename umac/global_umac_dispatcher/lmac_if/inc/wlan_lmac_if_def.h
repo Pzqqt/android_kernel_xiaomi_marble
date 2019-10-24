@@ -514,6 +514,12 @@ struct wmi_spectral_cmd_ops;
  * @sptrlto_use_nl_bcast: Get whether to use Netlink broadcast/unicast
  * @sptrlto_deregister_netlink_cb: De-register Spectral Netlink callbacks
  * @sptrlto_process_spectral_report: Process spectral report
+ * @sptrlto_set_dma_debug: Set DMA debug for Spectral
+ * @sptrlto_direct_dma_support: Whether Direct-DMA is supported on this radio
+ * @sptrlto_check_and_do_dbr_ring_debug: Start/Stop Spectral ring debug based
+ *                                       on the previous state
+ * @sptrlto_check_and_do_dbr_buff_debug: Start/Stop Spectral buffer debug based
+ *                                       on the previous state
  **/
 struct wlan_lmac_if_sptrl_tx_ops {
 	void *(*sptrlto_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
@@ -560,6 +566,16 @@ struct wlan_lmac_if_sptrl_tx_ops {
 	int (*sptrlto_process_spectral_report)(
 		struct wlan_objmgr_pdev *pdev,
 		void *payload);
+	QDF_STATUS (*sptrlto_set_dma_debug)(
+		struct wlan_objmgr_pdev *pdev,
+		enum spectral_dma_debug dma_debug_type,
+		bool dma_debug_enable);
+	bool (*sptrlto_direct_dma_support)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*sptrlto_check_and_do_dbr_ring_debug)(
+		struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*sptrlto_check_and_do_dbr_buff_debug)(
+		struct wlan_objmgr_pdev *pdev);
+
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
@@ -627,7 +643,7 @@ struct wlan_lmac_if_direct_buf_rx_tx_ops {
 	QDF_STATUS (*direct_buf_rx_stop_buffer_poisoning)(
 		struct wlan_objmgr_pdev *pdev, uint8_t mod_id);
 };
-#endif
+#endif /* DIRECT_BUF_RX_ENABLE */
 
 #ifdef FEATURE_WLAN_TDLS
 /* fwd declarations for tdls tx ops */

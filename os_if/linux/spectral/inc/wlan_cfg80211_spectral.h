@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -135,4 +135,17 @@ int wlan_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 					   struct wlan_objmgr_pdev *pdev,
 					   const void *data,
 					   int data_len);
+
+/**
+ * wlan_cfg80211_spectral_scan_dma_debug_config() - configure DMA debug
+ * @pdev:       Pointer to pdev
+ * @tb:         Pointer to Spectral Scan config attribute
+ * @sscan_mode: Spectral scan mode
+ *
+ * Return QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS wlan_cfg80211_spectral_scan_dma_debug_config(
+		struct wlan_objmgr_pdev *pdev,
+		struct nlattr **tb,
+		enum spectral_scan_mode sscan_mode);
 #endif

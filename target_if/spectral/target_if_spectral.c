@@ -2082,6 +2082,12 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	qdf_spinlock_create(&spectral->noise_pwr_reports_lock);
 	target_if_spectral_clear_stats(spectral);
 
+	if (target_type == TARGET_TYPE_QCA8074 ||
+	    target_type == TARGET_TYPE_QCA8074V2 ||
+	    target_type == TARGET_TYPE_QCA6018 ||
+	    target_type == TARGET_TYPE_QCA6390)
+		spectral->direct_dma_support = true;
+
 	if (target_type == TARGET_TYPE_QCA8074V2)
 		spectral->fftbin_size_war =
 			SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE;
@@ -3734,6 +3740,251 @@ target_if_is_spectral_enabled(struct wlan_objmgr_pdev *pdev,
 	return p_sops->is_spectral_enabled(spectral, smode);
 }
 
+#ifdef DIRECT_BUF_RX_DEBUG
+/**
+ * target_if_spectral_do_dbr_ring_debug() - Start/Stop Spectral DMA ring debug
+ * @pdev: Pointer to pdev object
+ * @enable: Enable/Disable Spectral DMA ring debug
+ *
+ * Start/stop Spectral DMA ring debug based on @enable.
+ * Also save the state for future use.
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+target_if_spectral_do_dbr_ring_debug(struct wlan_objmgr_pdev *pdev, bool enable)
+{
+	struct target_if_spectral *spectral;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+	tx_ops = &psoc->soc_cb.tx_ops;
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("Spectal LMAC object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* Save the state */
+	spectral->dbr_ring_debug = enable;
+
+	if (enable)
+		return tx_ops->dbr_tx_ops.direct_buf_rx_start_ring_debug(
+				pdev, 0, SPECTRAL_DBR_RING_DEBUG_SIZE);
+	else
+		return tx_ops->dbr_tx_ops.direct_buf_rx_stop_ring_debug(
+				pdev, 0);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_spectral_do_dbr_buff_debug() - Start/Stop Spectral DMA buffer debug
+ * @pdev: Pointer to pdev object
+ * @enable: Enable/Disable Spectral DMA buffer debug
+ *
+ * Start/stop Spectral DMA buffer debug based on @enable.
+ * Also save the state for future use.
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+target_if_spectral_do_dbr_buff_debug(struct wlan_objmgr_pdev *pdev, bool enable)
+{
+	struct target_if_spectral *spectral;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+	tx_ops = &psoc->soc_cb.tx_ops;
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("Spectal LMAC object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* Save the state */
+	spectral->dbr_buff_debug = enable;
+
+	if (enable)
+		return tx_ops->dbr_tx_ops.direct_buf_rx_start_buffer_poisoning(
+				pdev, 0, MEM_POISON_SIGNATURE);
+	else
+		return tx_ops->dbr_tx_ops.direct_buf_rx_stop_buffer_poisoning(
+				pdev, 0);
+}
+
+/**
+ * target_if_spectral_check_and_do_dbr_buff_debug() - Start/Stop Spectral buffer
+ * debug based on the previous state
+ * @pdev: Pointer to pdev object
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+target_if_spectral_check_and_do_dbr_buff_debug(struct wlan_objmgr_pdev *pdev)
+{
+	struct target_if_spectral *spectral;
+
+	if (!pdev) {
+		spectral_err("pdev is NULL!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("Spectal LMAC object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (spectral->dbr_buff_debug)
+		return target_if_spectral_do_dbr_buff_debug(pdev, true);
+	else
+		return target_if_spectral_do_dbr_buff_debug(pdev, false);
+}
+
+/**
+ * target_if_spectral_check_and_do_dbr_ring_debug() - Start/Stop Spectral ring
+ * debug based on the previous state
+ * @pdev: Pointer to pdev object
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+target_if_spectral_check_and_do_dbr_ring_debug(struct wlan_objmgr_pdev *pdev)
+{
+	struct target_if_spectral *spectral;
+
+	if (!pdev) {
+		spectral_err("pdev is NULL!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("Spectal LMAC object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (spectral->dbr_ring_debug)
+		return target_if_spectral_do_dbr_ring_debug(pdev, true);
+	else
+		return target_if_spectral_do_dbr_ring_debug(pdev, false);
+}
+
+/**
+ * target_if_spectral_set_dma_debug() - Set DMA debug for Spectral
+ * @pdev: Pointer to pdev object
+ * @dma_debug_type: Type of Spectral DMA debug i.e., ring or buffer debug
+ * @debug_value: Value to be set for @dma_debug_type
+ *
+ * Set DMA debug for Spectral and start/stop Spectral DMA debug function
+ * based on @debug_value
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+target_if_spectral_set_dma_debug(
+	struct wlan_objmgr_pdev *pdev,
+	enum spectral_dma_debug dma_debug_type,
+	bool debug_value)
+{
+	struct target_if_spectral_ops *p_sops;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+	struct target_if_spectral *spectral;
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+	tx_ops = &psoc->soc_cb.tx_ops;
+
+	if (!tx_ops->target_tx_ops.tgt_get_tgt_type) {
+		spectral_err("Unable to fetch target type");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("Spectal LMAC object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (spectral->direct_dma_support) {
+		p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+		if (p_sops->is_spectral_active(spectral,
+					       SPECTRAL_SCAN_MODE_NORMAL) ||
+		    p_sops->is_spectral_active(spectral,
+					       SPECTRAL_SCAN_MODE_AGILE)) {
+			spectral_err("Altering DBR debug config isn't allowed during an ongoing scan");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		switch (dma_debug_type) {
+		case SPECTRAL_DMA_RING_DEBUG:
+			target_if_spectral_do_dbr_ring_debug(pdev, debug_value);
+			break;
+
+		case SPECTRAL_DMA_BUFFER_DEBUG:
+			target_if_spectral_do_dbr_buff_debug(pdev, debug_value);
+			break;
+
+		default:
+			spectral_err("Unsupported DMA debug type : %d",
+				     dma_debug_type);
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DIRECT_BUF_RX_DEBUG */
+
+/**
+ * target_if_spectral_direct_dma_support() - Get Direct-DMA support
+ * @pdev: Pointer to pdev object
+ *
+ * Return: Whether Direct-DMA is supported on this radio
+ */
+static bool
+target_if_spectral_direct_dma_support(struct wlan_objmgr_pdev *pdev)
+{
+	struct target_if_spectral *spectral;
+
+	if (!pdev) {
+		spectral_err("pdev is NULL!");
+		return false;
+	}
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("Spectral LMAC object is NULL");
+		return false;
+	}
+	return spectral->direct_dma_support;
+}
+
 /**
  * target_if_set_debug_level() - Set debug level for Spectral
  * @pdev: Pointer to pdev object
@@ -3904,6 +4155,27 @@ target_if_process_spectral_report(struct wlan_objmgr_pdev *pdev,
 	return p_sops->process_spectral_report(pdev, payload);
 }
 
+#ifdef DIRECT_BUF_RX_DEBUG
+static inline void
+target_if_sptrl_debug_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	if (!tx_ops)
+		return;
+
+	tx_ops->sptrl_tx_ops.sptrlto_set_dma_debug =
+		target_if_spectral_set_dma_debug;
+	tx_ops->sptrl_tx_ops.sptrlto_check_and_do_dbr_ring_debug =
+		target_if_spectral_check_and_do_dbr_ring_debug;
+	tx_ops->sptrl_tx_ops.sptrlto_check_and_do_dbr_buff_debug =
+		target_if_spectral_check_and_do_dbr_buff_debug;
+}
+#else
+static inline void
+target_if_sptrl_debug_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif
+
 void
 target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -3940,7 +4212,10 @@ target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	tx_ops->sptrl_tx_ops.sptrlto_deregister_netlink_cb =
 	    target_if_deregister_netlink_cb;
 	tx_ops->sptrl_tx_ops.sptrlto_process_spectral_report =
-		target_if_process_spectral_report;
+	    target_if_process_spectral_report;
+	tx_ops->sptrl_tx_ops.sptrlto_direct_dma_support =
+		target_if_spectral_direct_dma_support;
+	target_if_sptrl_debug_register_tx_ops(tx_ops);
 }
 qdf_export_symbol(target_if_sptrl_register_tx_ops);
 

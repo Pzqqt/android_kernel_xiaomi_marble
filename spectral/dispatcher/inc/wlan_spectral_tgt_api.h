@@ -273,4 +273,16 @@ tgt_spectral_unregister_to_dbr(struct wlan_objmgr_pdev *pdev);
  */
 uint32_t
 tgt_spectral_get_target_type(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tgt_set_spectral_dma_debug() - Set DMA debug for Spectral
+ * @pdev: Pointer to pdev object
+ * @dma_debug_type: Type of Spectral DMA debug i.e., ring or buffer debug
+ * @dma_debug_enable: Value to be set for @dma_debug_type
+ *
+ * Return: QDF_STATUS of operation
+ */
+QDF_STATUS tgt_set_spectral_dma_debug(struct wlan_objmgr_pdev *pdev,
+				      enum spectral_dma_debug dma_debug_type,
+				      bool dma_debug_enable);
 #endif /* _WLAN_SPECTRAL_TGT_API_H_ */

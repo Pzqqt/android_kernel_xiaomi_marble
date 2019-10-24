@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -20,6 +20,23 @@
 #include "spectral_cmn_api_i.h"
 #include "spectral_ol_api_i.h"
 #include "../dispatcher/inc/wlan_spectral_tgt_api.h"
+
+#ifdef DIRECT_BUF_RX_DEBUG
+static void
+spectral_ctx_init_ol_dma_debug(struct spectral_context *sc)
+{
+	if (!sc) {
+		spectral_err("spectral context is null!");
+		return;
+	}
+	sc->sptrlc_set_dma_debug = tgt_set_spectral_dma_debug;
+}
+#else
+static void
+spectral_ctx_init_ol_dma_debug(struct spectral_context *sc)
+{
+}
+#endif
 
 void
 spectral_ctx_init_ol(struct spectral_context *sc)
@@ -47,4 +64,5 @@ spectral_ctx_init_ol(struct spectral_context *sc)
 	sc->sptrlc_use_nl_bcast = tgt_spectral_use_nl_bcast;
 	sc->sptrlc_deregister_netlink_cb = tgt_spectral_deregister_nl_cb;
 	sc->sptrlc_process_spectral_report = tgt_spectral_process_report;
+	spectral_ctx_init_ol_dma_debug(sc);
 }
