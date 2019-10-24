@@ -445,6 +445,15 @@ void dp_rx_pdev_detach(struct dp_pdev *pdev);
 
 void dp_print_napi_stats(struct dp_soc *soc);
 
+/**
+ * dp_rx_vdev_detach() - detach vdev from dp rx
+ * @vdev: virtual device instance
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
+ */
+QDF_STATUS dp_rx_vdev_detach(struct dp_vdev *vdev);
+
 uint32_t
 dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	      uint8_t reo_ring_num,

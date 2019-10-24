@@ -672,6 +672,14 @@ typedef bool (*ol_txrx_tx_flow_control_is_pause_fp)(void *osif_dev);
 typedef QDF_STATUS(*ol_txrx_rx_fp)(void *osif_dev, qdf_nbuf_t msdu_list);
 
 /**
+ * ol_txrx_rx_flush_fp - receive function to hand batches of data
+ * frames from txrx to OS shim
+ * @osif_dev: handle to the OSIF virtual device object
+ * @vdev_id: vdev_if of the packets to be flushed
+ */
+typedef QDF_STATUS(*ol_txrx_rx_flush_fp)(void *osif_dev, uint8_t vdev_id);
+
+/**
  * ol_txrx_rx_gro_flush_ind - function to send GRO flush indication to stack
  * for a given RX Context Id.
  * @osif_dev - handle to the OSIF virtual device object
@@ -832,6 +840,7 @@ struct ol_txrx_ops {
 	struct {
 		ol_txrx_rx_fp           rx;
 		ol_txrx_rx_fp           rx_stack;
+		ol_txrx_rx_flush_fp     rx_flush;
 		ol_txrx_rx_gro_flush_ind_fp           rx_gro_flush;
 		ol_txrx_rx_check_wai_fp wai_check;
 		ol_txrx_rx_mon_fp       mon;

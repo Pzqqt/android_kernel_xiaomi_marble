@@ -2268,8 +2268,24 @@ done:
 	return rx_bufs_used; /* Assume no scale factor for now */
 }
 
+QDF_STATUS dp_rx_vdev_detach(struct dp_vdev *vdev)
+{
+	QDF_STATUS ret;
+
+	if (vdev->osif_rx_flush) {
+		ret = vdev->osif_rx_flush(vdev->osif_vdev, vdev->vdev_id);
+		if (!ret) {
+			dp_err("Failed to flush rx pkts for vdev %d\n",
+			       vdev->vdev_id);
+			return ret;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
- * dp_rx_detach() - detach dp rx
+ * dp_rx_pdev_detach() - detach dp rx
  * @pdev: core txrx pdev context
  *
  * This function will detach DP RX into main device context
