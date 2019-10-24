@@ -9507,6 +9507,10 @@ typedef struct {
 #define  WMI_CIPHER_AES_GCM      0x9
 #define  WMI_CIPHER_AES_GMAC     0xa
 #define  WMI_CIPHER_WAPI_GCM_SM4 0xb
+#define  WMI_CIPHER_BIP_CMAC_128 0xc
+#define  WMI_CIPHER_BIP_CMAC_256 0xd
+#define  WMI_CIPHER_BIP_GMAC_128 0xe
+#define  WMI_CIPHER_BIP_GMAC_256 0xf
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_install_key_cmd_fixed_param */
@@ -28068,6 +28072,9 @@ typedef struct {
     WMI_GET_BITS(param, WMI_CFR_GROUP_NSS_BIT_POS, WMI_CFR_GROUP_NSS_MASK_NUM_BITS)
 
 typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_cfr_filter_group_config */
+    A_UINT32 tlv_header;
     /* Filter group number for which the below filters needs to be applied */
     A_UINT32 filter_group_id;
     /* Indicates which of the below filter's value is valid
