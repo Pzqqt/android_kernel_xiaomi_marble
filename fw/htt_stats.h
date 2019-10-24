@@ -4079,7 +4079,7 @@ typedef struct {
          * inconsequential.
          */
         A_UINT32 num_spatial_reuse_opportunities;
- 
+
         /* DEPRECATED: num_sr_rx_ge_pd_rssi_thr
          * This old name has been deprecated because it does not
          * clearly and accurately reflect the information stored within

@@ -3392,6 +3392,27 @@ typedef struct {
       * are used to read and write these bitfields.
       */
     A_UINT32 msdu_flow_override_config1;
+
+    /** @brief flags2 - contains flags used for the following purposes:
+     *  Configure 11ax uplink ofdma/MU-MIMO feature in FW, when chipsets
+     *  are brought up in Repeater/STA mode.
+     *
+     *  @details
+     *  Bits  3:0
+     *      Enable UL MU-OFDMA/MIMO for PDEVs WIFI0, WIFI1, WIFI2
+     *      This flags should only be set when a pdev has STA VAP
+     *      in repeater/self-organizing-network modes.
+     *      E.g. to enable UL RESP for 5G and 2G radios, value shall be
+     *      0b00000000000000000000000000000011 = 0x3.
+     *      Host shall use UCI config for a radio to populate this value,
+     *      each radio entry shall have "config re_ul_resp 1" value set.
+     *      Hence this can be configured dynamically.
+     *
+     *      Refer to the below WMI_RSRC_CFG_FLAGS2_RE_ULRESP_PDEV_CFG_GET/SET
+     *      macros.
+     *  Bits 31:4 - Reserved
+     */
+    A_UINT32 flags2;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
@@ -3575,6 +3596,11 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), BSS_MAX_IDLE_TIME_SUPPORT, (value))
 #define WMI_RSRC_CFG_FLAG_BSS_MAX_IDLE_TIME_SUPPORT_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), BSS_MAX_IDLE_TIME_SUPPORT)
+
+#define WMI_RSRC_CFG_FLAGS2_RE_ULRESP_PDEV_CFG_GET(flags2, pdev_id) \
+    WMI_GET_BITS(flags2, pdev_id, 1)
+#define WMI_RSRC_CFG_FLAGS2_RE_ULRESP_PDEV_CFG_SET(flags2, pdev_id, value) \
+    WMI_SET_BITS(flags2, pdev_id, 1, value)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
