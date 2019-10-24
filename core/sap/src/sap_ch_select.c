@@ -2423,10 +2423,8 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 	uint32_t ht40plus2gendch = 0;
 	v_REGDOMAIN_t domain;
 	uint8_t country[CDS_COUNTRY_CODE_LEN + 1];
-#ifdef SOFTAP_CHANNEL_RANGE
 	uint8_t count;
-	uint32_t start_ch_num, end_ch_num, tmp_ch_num, operating_band = 0;
-#endif
+	uint32_t tmp_ch_num, operating_band = 0;
 	struct mac_context *mac_ctx;
 	uint32_t chan_freq;
 
@@ -2441,8 +2439,7 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 	if ((!scan_list || !qdf_list_size(scan_list)) &&
 	    !(sap_ctx->auto_channel_select_weight & 0xffff00)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("No external AP present"));
-
+			  FL("No external AP present, select default channel"));
 		return sap_select_default_oper_chan(sap_ctx->acs_cfg);
 	}
 
@@ -2462,9 +2459,7 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 
 	wlan_reg_read_current_country(mac_ctx->psoc, country);
 	wlan_reg_get_domain_from_country_code(&domain, country, SOURCE_DRIVER);
-#ifdef SOFTAP_CHANNEL_RANGE
-	start_ch_num = sap_ctx->acs_cfg->start_ch;
-	end_ch_num = sap_ctx->acs_cfg->end_ch;
+
 	SET_ACS_BAND(operating_band, sap_ctx);
 
 	/* Sort the ch lst as per the computed weights, lesser weight first. */
@@ -2472,71 +2467,36 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 
 	/*Loop till get the best channel in the given range */
 	for (count = 0; count < spect_info->numSpectChans; count++) {
-		if ((start_ch_num > spect_info->pSpectCh[count].chNum) ||
-		    (end_ch_num < spect_info->pSpectCh[count].chNum))
-			continue;
 
-		if (best_ch_num == SAP_CHANNEL_NOT_SELECTED) {
-			best_ch_num = spect_info->pSpectCh[count].chNum;
-			/* check if best_ch_num is in preferred channel list */
-			best_ch_num =
-				sap_select_preferred_channel_from_channel_list(
-					best_ch_num, sap_ctx, spect_info);
-			/* if not in preferred ch lst, go to nxt best ch */
-			if (best_ch_num == SAP_CHANNEL_NOT_SELECTED)
-				continue;
+		tmp_ch_num = spect_info->pSpectCh[count].chNum;
+
+		if (!sap_select_preferred_channel_from_channel_list(tmp_ch_num,
+								    sap_ctx,
+								    spect_info))
+			continue;
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-			/*
-			 * Weight of the channels(device's AP is operating)
-			 * increased to MAX+1 so that they will be chosen only
-			 * when there is no other best channel to choose
-			 */
-			if (sap_check_in_avoid_ch_list(sap_ctx, best_ch_num)) {
-				best_ch_num = SAP_CHANNEL_NOT_SELECTED;
-				continue;
-			}
+		/*
+		 * Weight of the channels(device's AP is operating)
+		 * increased to MAX+1 so that they will be chosen only
+		 * when there is no other best channel to choose
+		 */
+		if (sap_check_in_avoid_ch_list(sap_ctx, tmp_ch_num)) {
+			sap_debug("ch %d in avoid list skipping",
+				  tmp_ch_num);
+			continue;
+		}
 #endif
 
-			best_ch_weight =
-				spect_info->pSpectCh[count].weight_copy;
-		}
-
-		if (best_ch_num == SAP_CHANNEL_NOT_SELECTED)
-			continue;
-
-		if (operating_band != eCSR_DOT11_MODE_11g) {
-			QDF_TRACE(QDF_MODULE_ID_SAP,
-				QDF_TRACE_LEVEL_INFO_HIGH,
-				"operating_band %d", operating_band);
-			continue;
-		}
-
-		/* Give preference to Non-overlap channels */
-		if (false == sap_is_ch_non_overlap(sap_ctx,
-				spect_info->pSpectCh[count].chNum)) {
-			QDF_TRACE(QDF_MODULE_ID_SAP,
-				QDF_TRACE_LEVEL_INFO_HIGH,
-				FL("ch: %d skipped as its overlapping ch"),
-				spect_info->pSpectCh[count].chNum);
-			continue;
-		}
-
-		if (wlan_reg_is_dfs_ch(mac_ctx->pdev,
-		    spect_info->pSpectCh[count].chNum) &&
-		    policy_mgr_disallow_mcc(
-		    mac_ctx->psoc, wlan_chan_to_freq(
-		    spect_info->pSpectCh[count].chNum))) {
-			QDF_TRACE(QDF_MODULE_ID_SAP,
-				QDF_TRACE_LEVEL_INFO_HIGH,
-				"No DFS MCC");
+		/* Give preference to Non-overlap if user wants */
+		if (!sap_is_ch_non_overlap(sap_ctx, tmp_ch_num)) {
+			sap_debug("Overlapping channel %d skipped", tmp_ch_num);
 			continue;
 		}
 
 		if (spect_info->pSpectCh[count].weight_copy > best_ch_weight)
 			continue;
 
-		tmp_ch_num = spect_info->pSpectCh[count].chNum;
 		chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, tmp_ch_num);
 		if (!wlansap_is_channel_present_in_acs_list(chan_freq,
 					sap_ctx->acs_cfg->freq_list,
@@ -2544,17 +2504,13 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 			continue;
 
 		best_ch_num = tmp_ch_num;
+		best_ch_weight = spect_info->pSpectCh[count].weight;
+
 		break;
 	}
-#else
-	/* Sort the ch lst as per the computed weights, lesser weight first. */
-	sap_sort_chl_weight_all(sap_ctx, mac_handle, spect_info);
-	/* Get the first channel in sorted array as best 20M Channel */
-	best_ch_num = (uint8_t) spect_info->pSpectCh[0].chNum;
-	/* Select Best Channel from Channel List if Configured */
-	best_ch_num = sap_select_preferred_channel_from_channel_list(
-					best_ch_num, sap_ctx, spect_info);
-#endif
+
+	if (best_ch_num == SAP_CHANNEL_NOT_SELECTED)
+		return SAP_CHANNEL_NOT_SELECTED;
 
 	/*
 	 * in case the best channel seleted is not in PCL and there is another
