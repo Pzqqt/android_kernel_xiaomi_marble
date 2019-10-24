@@ -89,6 +89,19 @@ QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *adapter);
 QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *adapter);
 
 /**
+ * hdd_rx_flush_packet_cbk() - flush rx packet handler
+ * @adapter_context: pointer to HDD adapter context
+ * @vdev_id: vdev_id of the packets to be flushed
+ *
+ * Flush rx packet callback registered with data path. DP will call this to
+ * notify HDD when packets for a particular vdev is to be flushed out.
+ *
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered,
+ *	   QDF_STATUS_SUCCESS otherwise
+ */
+QDF_STATUS hdd_rx_flush_packet_cbk(void *adapter_context, uint8_t vdev_id);
+
+/**
  * hdd_rx_packet_cbk() - Receive packet handler
  * @adapter_context: pointer to HDD adapter context
  * @rxBuf: pointer to rx qdf_nbuf

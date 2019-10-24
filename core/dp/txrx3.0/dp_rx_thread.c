@@ -102,7 +102,7 @@ static void dp_rx_tm_thread_dump_stats(struct dp_rx_thread *rx_thread)
 	if (!total_queued)
 		return;
 
-	dp_info("thread:%u - qlen:%u queued:(total:%u %s) dequeued:%u stack:%u gro_flushes: %u max_len:%u invalid(peer:%u vdev:%u rx-handle:%u others:%u)",
+	dp_info("thread:%u - qlen:%u queued:(total:%u %s) dequeued:%u stack:%u gro_flushes: %u rx_flushes: %u max_len:%u invalid(peer:%u vdev:%u rx-handle:%u others:%u)",
 		rx_thread->id,
 		qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue),
 		total_queued,
@@ -110,6 +110,7 @@ static void dp_rx_tm_thread_dump_stats(struct dp_rx_thread *rx_thread)
 		rx_thread->stats.nbuf_dequeued,
 		rx_thread->stats.nbuf_sent_to_stack,
 		rx_thread->stats.gro_flushes,
+		rx_thread->stats.rx_flushed,
 		rx_thread->stats.nbufq_max_len,
 		rx_thread->stats.dropped_invalid_peer,
 		rx_thread->stats.dropped_invalid_vdev,
@@ -238,16 +239,15 @@ static QDF_STATUS dp_rx_tm_thread_gro_flush_ind(struct dp_rx_thread *rx_thread)
 }
 
 /**
- * dp_rx_tm_thread_dequeue() - dequeue nbuf list from rx_thread
- * @rx_thread - rx_thread from which the nbuf needs to be dequeued
+ * dp_rx_thread_adjust_nbuf_list() - create an nbuf list from the frag list
+ * @head - nbuf list to be created
  *
- * Returns: nbuf or nbuf_list dequeued from rx_thread
+ * Returns: void
  */
-static qdf_nbuf_t dp_rx_tm_thread_dequeue(struct dp_rx_thread *rx_thread)
+static void dp_rx_thread_adjust_nbuf_list(qdf_nbuf_t head)
 {
-	qdf_nbuf_t head, next_ptr_list, nbuf_list;
+	qdf_nbuf_t next_ptr_list, nbuf_list;
 
-	head = qdf_nbuf_queue_head_dequeue(&rx_thread->nbuf_queue);
 	nbuf_list = head;
 	if (head && QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(head) > 1) {
 		/* move ext list to ->next pointer */
@@ -256,9 +256,58 @@ static qdf_nbuf_t dp_rx_tm_thread_dequeue(struct dp_rx_thread *rx_thread)
 		qdf_nbuf_set_next(nbuf_list, next_ptr_list);
 		dp_rx_tm_walk_skb_list(nbuf_list);
 	}
+}
 
-	dp_debug("Dequeued %pK nbuf_list", nbuf_list);
-	return nbuf_list;
+/**
+ * dp_rx_tm_thread_dequeue() - dequeue nbuf list from rx_thread
+ * @rx_thread - rx_thread from which the nbuf needs to be dequeued
+ *
+ * Returns: nbuf or nbuf_list dequeued from rx_thread
+ */
+static qdf_nbuf_t dp_rx_tm_thread_dequeue(struct dp_rx_thread *rx_thread)
+{
+	qdf_nbuf_t head;
+
+	head = qdf_nbuf_queue_head_dequeue(&rx_thread->nbuf_queue);
+	dp_rx_thread_adjust_nbuf_list(head);
+
+	dp_debug("Dequeued %pK nbuf_list", head);
+	return head;
+}
+
+/**
+ * dp_rx_thread_get_nbuf_vdev_handle() - get vdev handle from nbuf
+ *			                 dequeued from rx thread
+ * @soc: soc handle
+ * @pdev: pdev handle
+ * @rx_thread: rx_thread whose nbuf was dequeued
+ * @nbuf_list: nbuf list dequeued from rx_thread
+ *
+ * Returns: vdev handle on Success, NULL on failure
+ */
+static struct cdp_vdev *
+dp_rx_thread_get_nbuf_vdev_handle(ol_txrx_soc_handle soc,
+				  struct cdp_pdev *pdev,
+				  struct dp_rx_thread *rx_thread,
+				  qdf_nbuf_t nbuf_list)
+{
+	uint32_t num_list_elements = 0;
+	struct cdp_vdev *vdev;
+	uint8_t vdev_id;
+
+	vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf_list);
+	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
+	if (!vdev) {
+		num_list_elements =
+			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list);
+		rx_thread->stats.dropped_invalid_vdev +=
+						num_list_elements;
+		dp_err("vdev not found for vdev_id %u!, pkt dropped",
+		       vdev_id);
+		return NULL;
+	}
+
+	return vdev;
 }
 
 /**
@@ -271,7 +320,6 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 {
 	qdf_nbuf_t nbuf_list;
 	struct cdp_vdev *vdev;
-	uint8_t vdev_id;
 	ol_txrx_rx_fp stack_fn;
 	ol_osif_vdev_handle osif_vdev;
 	ol_txrx_soc_handle soc;
@@ -301,18 +349,12 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list);
 		rx_thread->stats.nbuf_dequeued += num_list_elements;
 
-		vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf_list);
-
-		vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
+		vdev = dp_rx_thread_get_nbuf_vdev_handle(soc, pdev, rx_thread,
+							 nbuf_list);
 		if (!vdev) {
-			rx_thread->stats.dropped_invalid_vdev +=
-							num_list_elements;
-			dp_err("vdev not found for vdev_id %u!, pkt dropped",
-			       vdev_id);
 			qdf_nbuf_list_free(nbuf_list);
 			goto dequeue_rx_thread;
 		}
-
 		cdp_get_os_rx_handles_from_vdev(soc, vdev, &stack_fn,
 						&osif_vdev);
 		if (!stack_fn || !osif_vdev) {
@@ -668,6 +710,65 @@ QDF_STATUS dp_rx_tm_suspend(struct dp_rx_tm_handle *rx_tm_hdl)
 			       rx_thread->id);
 	}
 	rx_tm_hdl->state = DP_RX_THREADS_SUSPENDED;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_rx_thread_flush_by_vdev_id() - flush rx packets by vdev_id in
+				     a particular rx thread queue
+ * @rx_thread - rx_thread pointer of the queue from which packets are
+ *              to be flushed out
+ * @vdev_id: vdev id for which packets are to be flushed
+ *
+ * Return: void
+ */
+static inline
+void dp_rx_thread_flush_by_vdev_id(struct dp_rx_thread *rx_thread,
+				   uint8_t vdev_id)
+{
+	qdf_nbuf_t nbuf_list, tmp_nbuf_list;
+	uint32_t num_list_elements = 0;
+
+	qdf_nbuf_queue_head_lock(&rx_thread->nbuf_queue);
+	QDF_NBUF_QUEUE_WALK_SAFE(&rx_thread->nbuf_queue, nbuf_list,
+				 tmp_nbuf_list) {
+		if (QDF_NBUF_CB_RX_VDEV_ID(nbuf_list) == vdev_id) {
+			qdf_nbuf_unlink_no_lock(nbuf_list,
+						&rx_thread->nbuf_queue);
+			dp_rx_thread_adjust_nbuf_list(nbuf_list);
+			num_list_elements =
+				QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list);
+			rx_thread->stats.rx_flushed += num_list_elements;
+			qdf_nbuf_list_free(nbuf_list);
+		}
+	}
+	qdf_nbuf_queue_head_unlock(&rx_thread->nbuf_queue);
+}
+
+/**
+ * dp_rx_tm_flush_by_vdev_id() - flush rx packets by vdev_id in all
+				 rx thread queues
+ * @rx_tm_hdl: dp_rx_tm_handle containing the overall thread
+ *             infrastructure
+ * @vdev_id: vdev id for which packets are to be flushed
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+QDF_STATUS dp_rx_tm_flush_by_vdev_id(struct dp_rx_tm_handle *rx_tm_hdl,
+				     uint8_t vdev_id)
+{
+	struct dp_rx_thread *rx_thread;
+	int i;
+
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
+		rx_thread = rx_tm_hdl->rx_thread[i];
+		if (!rx_thread)
+			continue;
+
+		dp_debug("thread %d", i);
+		dp_rx_thread_flush_by_vdev_id(rx_thread, vdev_id);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
