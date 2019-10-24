@@ -4713,3 +4713,50 @@ int wma_cold_boot_cal_event_handler(void *wma_ctx, uint8_t *event_buff,
 
 	return 0;
 }
+
+#ifdef FEATURE_OEM_DATA
+int wma_oem_event_handler(void *wma_ctx, uint8_t *event_buff, uint32_t len)
+{
+	WMI_OEM_DATA_EVENTID_param_tlvs *param_buf;
+	struct mac_context *pmac =
+		(struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
+	wmi_oem_data_event_fixed_param *event;
+	struct oem_data oem_event_data;
+
+	if (!pmac) {
+		wma_err("NULL mac handle");
+		return -EINVAL;
+	}
+
+	if (!pmac->sme.oem_data_event_handler_cb) {
+		wma_err("oem data handler cb is not registered");
+		return -EINVAL;
+	}
+
+	param_buf =
+		   (WMI_OEM_DATA_EVENTID_param_tlvs *)event_buff;
+	if (!param_buf) {
+		wma_err("Invalid oem data Event");
+		return -EINVAL;
+	}
+
+	event = param_buf->fixed_param;
+	if (!event) {
+		wma_err("Invalid fixed param in oem data Event");
+		return -EINVAL;
+	}
+
+	if (event->data_len > param_buf->num_data) {
+		wma_err("Invalid data len %d num_data %d", event->data_len,
+			param_buf->num_data);
+		return -EINVAL;
+	}
+
+	oem_event_data.data_len = event->data_len;
+	oem_event_data.data = param_buf->data;
+
+	pmac->sme.oem_data_event_handler_cb(&oem_event_data);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif

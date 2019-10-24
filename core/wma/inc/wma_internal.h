@@ -1902,6 +1902,18 @@ void wma_send_vdev_down(tp_wma_handle wma, struct del_bss_resp *req);
 int wma_cold_boot_cal_event_handler(void *wma_ctx, uint8_t *event_buff,
 				    uint32_t len);
 
+#ifdef FEATURE_OEM_DATA
+/**
+ * wma_oem_event_handler() - oem data event handler
+ * @wma_ctx: wma handle
+ * @event_buff: event data
+ * @len: length of event buffer
+ *
+ * Return: Success or Failure status
+ */
+int wma_oem_event_handler(void *wma_ctx, uint8_t *event_buff, uint32_t len);
+#endif
+
 /**
  * wma_set_roam_triggers() - Send roam trigger bitmap to WMI
  * @wma_handle: wma handle

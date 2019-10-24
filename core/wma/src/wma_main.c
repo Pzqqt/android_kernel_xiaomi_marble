@@ -3179,6 +3179,13 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wma_cold_boot_cal_event_handler,
 					   WMA_RX_WORK_CTX);
 
+#ifdef FEATURE_OEM_DATA
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_oem_data_event_id,
+					   wma_oem_event_handler,
+					   WMA_RX_WORK_CTX);
+#endif
+
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	/* Register event handler for processing Link Layer Stats
 	 * response from the FW

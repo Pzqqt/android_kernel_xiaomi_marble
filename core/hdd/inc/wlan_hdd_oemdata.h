@@ -25,6 +25,8 @@
 #ifndef __WLAN_HDD_OEM_DATA_H__
 #define __WLAN_HDD_OEM_DATA_H__
 
+#include "wmi_unified_param.h"
+
 struct hdd_context;
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
@@ -271,4 +273,19 @@ int wlan_hdd_cfg80211_oem_data_handler(struct wiphy *wiphy,
 #else
 #define FEATURE_OEM_DATA_VENDOR_COMMANDS
 #endif
+
+#ifdef FEATURE_OEM_DATA
+/**
+ * hdd_oem_event_handler_cb() - callback for oem data event
+ * @oem_event_data: oem data received in the event from the FW
+ *
+ * Return: None
+ */
+void hdd_oem_event_handler_cb(const struct oem_data *oem_event_data);
+#else
+static inline void hdd_oem_event_handler_cb(void *oem_event_data)
+{
+}
+#endif
+
 #endif /* __WLAN_HDD_OEM_DATA_H__ */
