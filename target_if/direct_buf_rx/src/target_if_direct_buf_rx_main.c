@@ -313,8 +313,6 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
 	struct direct_buf_rx_buf_info *dbr_buf_pool;
 
-	direct_buf_rx_enter();
-
 	dbr_ring_cfg = mod_param->dbr_ring_cfg;
 	dbr_ring_cap = mod_param->dbr_ring_cap;
 	dbr_buf_pool = mod_param->dbr_buf_pool;
@@ -361,8 +359,6 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 	WMI_HOST_DBR_RING_ADDR_HI_SET(dw_hi, (uint64_t)paddr >> 32);
 	WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_SET(dw_hi, cookie);
 	*ring_entry = (uint64_t)dw_hi << 32 | dw_lo;
-	direct_buf_rx_debug("Valid ring entry, cookie %u, dw_lo %x, dw_hi :%x",
-			    cookie, dw_lo, dw_hi);
 	hal_srng_access_end(hal_soc, srng);
 
 	return QDF_STATUS_SUCCESS;
@@ -1115,8 +1111,6 @@ static QDF_STATUS target_if_dbr_empty_ring(struct wlan_objmgr_pdev *pdev,
 			   dbr_ring_cfg, dbr_ring_cap, dbr_buf_pool);
 
 	for (idx = 0; idx < dbr_ring_cfg->num_ptr - 1; idx++) {
-		direct_buf_rx_debug("dbr buf pool unmap and free for ptr %d",
-				    idx);
 		qdf_mem_unmap_nbytes_single(dbr_psoc_obj->osdev,
 			(qdf_dma_addr_t)dbr_buf_pool[idx].paddr,
 			QDF_DMA_FROM_DEVICE,

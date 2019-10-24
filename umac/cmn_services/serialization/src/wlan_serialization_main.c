@@ -146,12 +146,13 @@ static void wlan_serialization_destroy_cmd_pool(
 	qdf_list_node_t *node = NULL;
 	struct wlan_serialization_command_list *cmd_list;
 
+	ser_debug("Destroy cmd pool list %pk, size %d",
+		  &pdev_queue->cmd_pool_list,
+		  qdf_list_size(&pdev_queue->cmd_pool_list));
 	while (!qdf_list_empty(&pdev_queue->cmd_pool_list)) {
 		qdf_list_remove_front(&pdev_queue->cmd_pool_list,
 				      &node);
 		cmd_list = (struct wlan_serialization_command_list *)node;
-		ser_debug("Node being freed from global pool %pK",
-			  cmd_list);
 		qdf_mem_free(cmd_list);
 	}
 
@@ -197,9 +198,11 @@ wlan_serialization_create_cmd_pool(
 				     &pdev_queue->cmd_pool_list,
 				     &cmd_list_ptr->pdev_node);
 		cmd_list_ptr->cmd_in_use = 0;
-		ser_debug("Created node at %pK and inserted to pool",
-			  cmd_list_ptr);
 	}
+
+	ser_debug("Create cmd pool list %pK, size %d",
+		  &pdev_queue->cmd_pool_list,
+		  qdf_list_size(&pdev_queue->cmd_pool_list));
 
 	status = QDF_STATUS_SUCCESS;
 
