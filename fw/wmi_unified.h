@@ -23340,6 +23340,10 @@ typedef enum wmi_coex_config_type {
      * config BTC separate chain mode or shared mode
      */
     WMI_COEX_CONFIG_BTCOEX_SEPARATE_CHAIN_MODE  = 44,
+    /* WMI_COEX_CONFIG_ENABLE_TPUT_SHAPING
+     * enable WLAN throughput shaping while BT scanning
+     */
+    WMI_COEX_CONFIG_ENABLE_TPUT_SHAPING = 45,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
