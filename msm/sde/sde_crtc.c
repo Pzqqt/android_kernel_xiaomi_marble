@@ -1783,6 +1783,7 @@ int sde_crtc_get_secure_transition_ops(struct drm_crtc *crtc,
 
 	smmu_state = &sde_kms->smmu_state;
 	smmu_state->prev_state = smmu_state->state;
+	smmu_state->prev_secure_level = smmu_state->secure_level;
 
 	sde_crtc = to_sde_crtc(crtc);
 	secure_level = sde_crtc_get_secure_level(crtc, crtc->state);
