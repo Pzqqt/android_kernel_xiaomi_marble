@@ -1664,7 +1664,7 @@ uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 		(freq - chan_list[count - 1].center_freq) / 5);
 
 end:
-	reg_err("invalid frequency %d", freq);
+	reg_err_rl("invalid frequency %d", freq);
 	return 0;
 }
 
@@ -2057,7 +2057,7 @@ QDF_STATUS reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
 	}
 
 	if (index == num_reg_dmn) {
-		reg_err("invalid regdomain");
+		reg_err_rl("invalid regdomain");
 		return QDF_STATUS_E_FAILURE;
 	}
 
