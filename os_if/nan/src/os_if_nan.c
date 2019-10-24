@@ -1777,6 +1777,7 @@ static void os_if_ndp_end_ind_handler(struct wlan_objmgr_vdev *vdev,
 				data_len, QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
 				GFP_ATOMIC);
 	if (!vendor_event) {
+		qdf_mem_free(ndp_instance_array);
 		osif_err("cfg80211_vendor_event_alloc failed");
 		return;
 	}
