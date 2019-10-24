@@ -3203,7 +3203,7 @@ void csr_prune_channel_list_for_mode(struct mac_context *mac_ctx,
 		csr_prune_ch_list(ch_lst, false);
 }
 
-#define INFRA_AP_DEFAULT_CHANNEL 6
+#define INFRA_AP_DEFAULT_CHAN_FREQ 2437
 QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint8_t chnNum)
 {
 	uint8_t index = 0;
@@ -14566,9 +14566,7 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 		if (csr_is_valid_channel(mac, wlan_reg_freq_to_chan(mac->pdev,
 								    pParam->operation_chan_freq)) !=
 		    QDF_STATUS_SUCCESS) {
-			pParam->operation_chan_freq =
-				wlan_reg_chan_to_freq(mac->pdev,
-						      INFRA_AP_DEFAULT_CHANNEL);
+			pParam->operation_chan_freq = INFRA_AP_DEFAULT_CHAN_FREQ;
 			pParam->ch_params.ch_width = CH_WIDTH_20MHZ;
 		}
 	}
