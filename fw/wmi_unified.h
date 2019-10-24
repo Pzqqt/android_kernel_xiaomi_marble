@@ -259,6 +259,7 @@ typedef enum {
     WMI_GRP_HPCS_PULSE,     /* 0x42 */
     WMI_GRP_AUDIO,          /* 0x43 */
     WMI_GRP_CFR_CAPTURE,    /* 0x44 */
+    WMI_GRP_ATM,            /* 0x45 ATM (Air Time Management group) */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1257,6 +1258,14 @@ typedef enum {
 
     /** WMI commands related to Channel Frequency Response Capture **/
     WMI_CFR_CAPTURE_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_CFR_CAPTURE),
+
+    /** WMI commands related to Air Time Management feature **/
+    /** ATF SSID GROUPING REQUEST command */
+    WMI_ATF_SSID_GROUPING_REQUEST_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_ATM),
+    /** WMM ATF Configuration for groups */
+    WMI_ATF_GROUP_WMM_AC_CONFIG_REQUEST_CMDID,
+    /** ATF Peer Extended Request command */
+    WMI_PEER_ATF_EXT_REQUEST_CMDID,
 } WMI_CMD_ID;
 
 typedef enum {
@@ -9955,7 +9964,8 @@ typedef enum {
     WMI_VDEV_PARAM_DISABLE_DYN_BW_RTS,                        /* 0x68 */
 
     /** per ssid (vdev) based ATF strict/fair scheduling policy
-     *  param values are WMI_ATF_SSID_FAIR_SCHED or WMI_ATF_SSID_STRICT_SCHED
+     *  param values are WMI_ATF_SSID_FAIR_SCHED, WMI_ATF_SSID_STRICT_SCHED,
+     *  or WMI_ATF_SSID_FAIR_SCHED_WITH_UB
      */
     WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY,                     /* 0x69 */
 
@@ -22506,8 +22516,9 @@ typedef struct {
 
 #define WMI_ATF_DENOMINATION   1000 /* Expressed in 1 part in 1000 (permille) */
 
-#define WMI_ATF_SSID_FAIR_SCHED     0   /** fair ATF scheduling for vdev */
-#define WMI_ATF_SSID_STRICT_SCHED   1   /** strict ATF scheduling for vdev */
+#define WMI_ATF_SSID_FAIR_SCHED         0 /** fair ATF scheduling for vdev */
+#define WMI_ATF_SSID_STRICT_SCHED       1 /** strict ATF scheduling for vdev */
+#define WMI_ATF_SSID_FAIR_SCHED_WITH_UB 2 /** fair ATF scheduling with upper bound for VDEV */
 
 typedef struct {
     /** TLV tag and len; tag equals
@@ -22529,6 +22540,104 @@ typedef struct {
      * struct wmi_atf_peer_info peer_info[num_peers];
      */
 } wmi_peer_atf_request_fixed_param;
+
+#define WMI_ATF_GROUP_SCHED_POLICY_BIT_POS        0
+#define WMI_ATF_GROUP_SCHED_POLICY_NUM_BITS       4
+
+#define WMI_ATF_GROUP_GET_GROUP_SCHED_POLICY(atf_group_flags)  \
+    WMI_GET_BITS(atf_group_flags,WMI_ATF_GROUP_SCHED_POLICY_BIT_POS,WMI_ATF_GROUP_SCHED_POLICY_NUM_BITS)
+
+#define WMI_ATF_GROUP_SET_GROUP_SCHED_POLICY(atf_group_flags,val)  \
+    WMI_SET_BITS(atf_group_flags,WMI_ATF_GROUP_SCHED_POLICY_BIT_POS,WMI_ATF_GROUP_SCHED_POLICY_NUM_BITS,val)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_atf_group_info */
+    A_UINT32 tlv_header;
+    A_UINT32 atf_group_id; /* ID of the Air Time Management group */
+    /* atf_group_units
+     * Fraction of air time allowed for the group, in per mille units
+     * (from 0-1000).
+     * For example, to indicate that the group can use 12.3% of the air time,
+     * the atf_group_units setting would be 123.
+     */
+    A_UINT32 atf_group_units;
+    /* atf_group_flags
+     *  Bits 4-31  - Reserved (Shall be zero)
+     *  Bits 0-3   - Group Schedule Policy (Fair/Strict/Fair with upper bound)
+     *               Refer to WMI_ATF_SSID_ definitions
+     */
+    A_UINT32 atf_group_flags;
+} wmi_atf_group_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_atf_ssid_grp_request_fixed_param */
+    A_UINT32 pdev_id;
+    /*
+     * Following this structure is the TLV:
+     * struct wmi_atf_group_info group_info[];
+     */
+} wmi_atf_ssid_grp_request_fixed_param;
+
+/* ATF Configurations for WMM ACs of a group, value for each AC shall be in
+ * percentage (0-100).
+ * This perecentage is relative to the residual airtime (derived by FW)
+ * configured for the group.
+ * When WMM ATF is not configured for a peer all values shall be 0.
+ */
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_atf_group_wmm_ac_info
+     */
+    A_UINT32 tlv_header;
+    A_UINT32 atf_group_id; /* ID of the Air Time Management group */
+    A_UINT32 atf_units_be;
+    A_UINT32 atf_units_bk;
+    A_UINT32 atf_units_vi;
+    A_UINT32 atf_units_vo;
+} wmi_atf_group_wmm_ac_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_atf_grp_wmm_ac_cfg_request_fixed_param */
+    A_UINT32 pdev_id;
+    /*
+     * Following this structure is the TLV:
+     * struct wmi_atf_group_wmm_ac_info group_info[];
+     */
+} wmi_atf_grp_wmm_ac_cfg_request_fixed_param;
+
+#define WMI_ATF_GROUP_CFG_PEER_BIT_POS     0
+#define WMI_ATF_GROUP_CFG_PEER_NUM_BITS    1
+
+#define WMI_ATF_GROUP_GET_CFG_PEER_BIT(atf_peer_flags) \
+    WMI_GET_BITS(atf_peer_flags,WMI_ATF_GROUP_CFG_PEER_BIT_POS,WMI_ATF_GROUP_CFG_PEER_NUM_BITS)
+
+#define WMI_ATF_GROUP_SET_CFG_PEER_BIT(atf_peer_flags,val) \
+    WMI_SET_BITS(atf_peer_flags,WMI_ATF_GROUP_CFG_PEER_BIT_POS,WMI_ATF_GROUP_CFG_PEER_NUM_BITS,val)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_peer_atf_ext_info */
+    A_UINT32 tlv_header;
+    wmi_mac_addr peer_macaddr;
+    A_UINT32 atf_group_id; /* Group Id of the peers for ATF SSID grouping */
+    /* atf_peer_flags
+     *  Bits 1-31  - Reserved (Shall be zero)
+     *  Bit  0     - Configured Peer Indication (0/1), this bit would be set by
+     *               host to indicate that the peer has airtime % configured
+     *               explicitly by user.
+     */
+    A_UINT32 atf_peer_flags;
+} wmi_peer_atf_ext_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_atf_ext_request_fixed_param */
+    A_UINT32 pdev_id;
+    /*
+     * Following this structure is the TLV:
+     * struct wmi_peer_atf_ext_info peer_ext_info[];
+     */
+} wmi_peer_atf_ext_request_fixed_param;
 
 /* Structure for Bandwidth Fairness peer information */
 typedef struct {
@@ -24747,6 +24856,9 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_SET_GROUP_RATE_CMDID);
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_SET_GROUP_RETRY_CMDID);
         WMI_RETURN_STRING(WMI_CFR_CAPTURE_FILTER_CMDID);
+        WMI_RETURN_STRING(WMI_ATF_SSID_GROUPING_REQUEST_CMDID);
+        WMI_RETURN_STRING(WMI_ATF_GROUP_WMM_AC_CONFIG_REQUEST_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_ATF_EXT_REQUEST_CMDID);
     }
 
     return "Invalid WMI cmd";
