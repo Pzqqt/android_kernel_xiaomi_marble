@@ -920,7 +920,12 @@ static bool mlme_vdev_subst_start_conn_progress_event(void *ctx,
 	case WLAN_VDEV_SM_EV_CONN_PROGRESS:
 		/* This API decides to move to DFS CAC WAIT or UP state,
 		 * for station notify connection state machine */
-		mlme_vdev_start_continue(vdev_mlme, event_data_len, event_data);
+		if (mlme_vdev_start_continue(vdev_mlme, event_data_len,
+					     event_data) != QDF_STATUS_SUCCESS)
+			mlme_vdev_sm_deliver_event(
+					vdev_mlme,
+					WLAN_VDEV_SM_EV_CONNECTION_FAIL,
+					event_data_len, event_data);
 		status = true;
 		break;
 
