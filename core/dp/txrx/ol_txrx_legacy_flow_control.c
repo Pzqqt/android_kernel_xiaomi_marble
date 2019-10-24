@@ -54,7 +54,8 @@
  * will be paused.
  *
  */
-void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
+void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason,
+			uint32_t pause_type)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 
@@ -81,7 +82,8 @@ void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
  * LL systems that use per-vdev tx queues for MCC or thermal throttling.
  *
  */
-void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
+void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason,
+			  uint32_t pause_type)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	/* TO DO: log the queue unpause */

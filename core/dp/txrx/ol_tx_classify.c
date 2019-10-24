@@ -334,33 +334,79 @@ ol_tx_tid(
 static inline
 struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 						struct ol_txrx_vdev_t *vdev,
+						uint8_t *dest_addr,
 						uint8_t *peer_id)
 {
 	struct ol_txrx_peer_t *peer = NULL;
+	uint8_t zero_mac_addr[QDF_MAC_ADDR_SIZE] = { 0, 0, 0, 0, 0, 0 };
+	enum peer_debug_id_type id_type = PEER_DEBUG_ID_OL_INTERNAL;
+
+	struct ol_txrx_peer_t *(*find_peer)(struct ol_txrx_pdev_t *pdev,
+					    uint8_t *peer_mac_addr,
+					    int mac_addr_is_aligned,
+					    u8 check_valid,
+					    enum peer_debug_id_type dbg_id)
+		= ol_txrx_peer_find_hash_find_get_ref;
 
 	if (vdev->hlTdlsFlag) {
-		peer = ol_txrx_peer_find_hash_find_get_ref(pdev,
-					vdev->hl_tdls_ap_mac_addr.raw, 0, 1,
-					PEER_DEBUG_ID_OL_INTERNAL);
+		peer = find_peer(pdev, vdev->hl_tdls_ap_mac_addr.raw,
+				 0, 1, id_type);
 
-		if (peer &&  (peer->peer_ids[0] == HTT_INVALID_PEER_ID)) {
-			ol_txrx_peer_release_ref(peer,
-						 PEER_DEBUG_ID_OL_INTERNAL);
+		if (peer && (peer->peer_ids[0] == HTT_INVALID_PEER_ID)) {
+			ol_txrx_peer_release_ref(peer, id_type);
 			peer = NULL;
 		} else {
-			if (peer)
+			if (peer) {
 				*peer_id = peer->local_id;
+				return peer;
+			}
 		}
 	}
-	if (!peer)
-		peer = ol_txrx_assoc_peer_find(vdev);
 
+	/* Packets destined to TDLS Peer or AP with 'No TDLS Link'.
+	 * Optimized to directly get the peer based on 'dest_addr'
+	 */
+	if (vdev->last_real_peer &&
+	    !qdf_mem_cmp(vdev->last_real_peer->mac_addr.raw,
+			 dest_addr, QDF_MAC_ADDR_SIZE)) {
+		ol_txrx_peer_get_ref(vdev->last_real_peer, id_type);
+		*peer_id = vdev->last_real_peer->local_id;
+		peer = vdev->last_real_peer;
+	} else {
+		/* packets destined for other peers or AP with TDLS Link */
+		if (vdev->last_real_peer &&
+		    !qdf_mem_cmp(vdev->hl_tdls_ap_mac_addr.raw,
+				 zero_mac_addr,
+				 QDF_MAC_ADDR_SIZE)) {
+		/* With No TDLS Link return last_real_peer for both AP
+		 * and other bss peer
+		 */
+			ol_txrx_peer_get_ref(vdev->last_real_peer, id_type);
+			*peer_id = vdev->last_real_peer->local_id;
+			peer = vdev->last_real_peer;
+		} else { /* packet destined for other peers and AP when
+			  * STA has TDLS link
+			  */
+			peer = find_peer(pdev, vdev->hl_tdls_ap_mac_addr.raw,
+					 0, 1, id_type);
+
+			if (peer &&
+			    (peer->peer_ids[0] == HTT_INVALID_PEER_ID)) {
+				ol_txrx_peer_release_ref(peer, id_type);
+				peer = NULL;
+			} else {
+				if (peer)
+					*peer_id = peer->local_id;
+			}
+		}
+	}
 	return peer;
 }
 
 #else
 static struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 						struct ol_txrx_vdev_t *vdev,
+						uint8_t *dest_addr,
 						uint8_t *peer_id)
 {
 	struct ol_txrx_peer_t *peer = NULL;
@@ -503,7 +549,9 @@ ol_tx_classify(
 			 * then the frame is either for the AP itself, or is
 			 * supposed to be sent to the AP for forwarding.
 			 */
-			peer = ol_tx_tdls_peer_find(pdev, vdev, &peer_id);
+			peer = ol_tx_tdls_peer_find(pdev, vdev,
+						    dest_addr,
+						    &peer_id);
 		} else {
 			peer = ol_txrx_peer_find_hash_find_get_ref(pdev,
 								   dest_addr,

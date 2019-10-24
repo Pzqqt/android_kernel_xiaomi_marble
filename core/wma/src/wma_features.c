@@ -3817,6 +3817,11 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		ret = -EIO;
 		goto end_tdls_peer_state;
 	}
+
+	cdp_peer_set_tdls_offchan_enabled(soc,
+					  peer,
+					  !!peer_cap->peer_off_chan_support);
+
 	vdev = cdp_peer_get_vdev(soc, peer);
 
 	if (wmi_unified_update_tdls_peer_state_cmd(wma_handle->wmi_handle,

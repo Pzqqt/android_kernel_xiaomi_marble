@@ -1492,8 +1492,11 @@ ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
 
 	qdf_spin_lock_bh(&pdev->last_real_peer_mutex);
 	if (!vdev->last_real_peer && peer &&
-	    (peer->peer_ids[0] != HTT_INVALID_PEER_ID))
+	    (peer->peer_ids[0] != HTT_INVALID_PEER_ID)) {
 		vdev->last_real_peer = peer;
+		qdf_mem_zero(vdev->hl_tdls_ap_mac_addr.raw,
+			     QDF_MAC_ADDR_SIZE);
+	}
 	qdf_spin_unlock_bh(&pdev->last_real_peer_mutex);
 }
 
@@ -1537,9 +1540,49 @@ void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *pvdev,
 
 	qdf_spin_lock_bh(&pdev->last_real_peer_mutex);
 	if (!vdev->last_real_peer && peer &&
-	    (peer->peer_ids[0] != HTT_INVALID_PEER_ID))
+	    (peer->peer_ids[0] != HTT_INVALID_PEER_ID)) {
 		vdev->last_real_peer = peer;
+		qdf_mem_zero(vdev->hl_tdls_ap_mac_addr.raw,
+			     QDF_MAC_ADDR_SIZE);
+	}
 	qdf_spin_unlock_bh(&pdev->last_real_peer_mutex);
+}
+
+/**
+ * ol_txrx_set_peer_as_tdls_peer() - mark peer as tdls peer
+ * @ppeer: cdp peer
+ * @value: false/true
+ *
+ * Return: None
+ */
+void ol_txrx_set_peer_as_tdls_peer(void *ppeer, bool val)
+{
+	ol_txrx_peer_handle peer = ppeer;
+
+	ol_txrx_info_high("peer %pK, peer->ref_cnt %d",
+			  peer, qdf_atomic_read(&peer->ref_cnt));
+
+	/* Mark peer as tdls */
+	peer->is_tdls_peer = val;
+}
+
+/**
+ * ol_txrx_set_tdls_offchan_enabled() - set tdls offchan enabled
+ * @ppeer: cdp peer
+ * @value: false/true
+ *
+ * Return: None
+ */
+void ol_txrx_set_tdls_offchan_enabled(void *ppeer, bool val)
+{
+	ol_txrx_peer_handle peer = ppeer;
+
+	ol_txrx_info_high("peer %pK, peer->ref_cnt %d",
+			  peer, qdf_atomic_read(&peer->ref_cnt));
+
+	/* Set TDLS Offchan operation enable/disable */
+	if (peer->is_tdls_peer)
+		peer->tdls_offchan_enabled = val;
 }
 #endif
 

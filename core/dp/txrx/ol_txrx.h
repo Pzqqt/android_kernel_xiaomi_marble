@@ -295,6 +295,8 @@ void ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
 bool is_vdev_restore_last_peer(void *ppeer);
 void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *pvdev,
 				   uint8_t *peer_id, bool restore_last_peer);
+void ol_txrx_set_peer_as_tdls_peer(void *ppeer, bool val);
+void ol_txrx_set_tdls_offchan_enabled(void *ppeer, bool val);
 #endif
 
 #if defined(FEATURE_TSO) && defined(FEATURE_TSO_DEBUG)

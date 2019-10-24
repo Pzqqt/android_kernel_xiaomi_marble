@@ -517,6 +517,25 @@ ol_txrx_peer_tid_unpause_base(
 		}
 	}
 }
+
+/**
+ * ol_txrx_peer_unpause_base() - unpause all txqs for a given peer
+ * @pdev: the physical device object
+ * @peer: peer device object
+ *
+ * Return: None
+ */
+static void
+ol_txrx_peer_unpause_base(
+	struct ol_txrx_pdev_t *pdev,
+	struct ol_txrx_peer_t *peer)
+{
+	int i;
+
+	for (i = 0; i < QDF_ARRAY_SIZE(peer->txqs); i++)
+		ol_txrx_peer_tid_unpause_base(pdev, peer, i);
+}
+
 #ifdef QCA_BAD_PEER_TX_FLOW_CL
 /**
  * ol_txrx_peer_unpause_but_no_mgmt_q_base() - unpause all txqs except
@@ -564,7 +583,8 @@ ol_txrx_peer_tid_unpause(ol_txrx_peer_handle peer, int tid)
 }
 
 void
-ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
+ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason,
+		   uint32_t pause_type)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
@@ -578,7 +598,15 @@ ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
 	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
 	qdf_spin_lock_bh(&pdev->tx_queue_spinlock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		ol_txrx_peer_pause_base(pdev, peer);
+		if (pause_type == PAUSE_TYPE_CHOP) {
+			if (!(peer->is_tdls_peer && peer->tdls_offchan_enabled))
+				ol_txrx_peer_pause_base(pdev, peer);
+		} else if (pause_type == PAUSE_TYPE_CHOP_TDLS_OFFCHAN) {
+			if (peer->is_tdls_peer && peer->tdls_offchan_enabled)
+				ol_txrx_peer_pause_base(pdev, peer);
+		} else {
+			ol_txrx_peer_pause_base(pdev, peer);
+		}
 	}
 	qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);
 	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
@@ -587,7 +615,8 @@ ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
 }
 
 
-void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
+void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason,
+			  uint32_t pause_type)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
@@ -604,10 +633,15 @@ void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
 	qdf_spin_lock_bh(&pdev->tx_queue_spinlock);
 
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		int i;
-
-		for (i = 0; i < QDF_ARRAY_SIZE(peer->txqs); i++)
-			ol_txrx_peer_tid_unpause_base(pdev, peer, i);
+		if (pause_type == PAUSE_TYPE_CHOP) {
+			if (!(peer->is_tdls_peer && peer->tdls_offchan_enabled))
+				ol_txrx_peer_unpause_base(pdev, peer);
+		} else if (pause_type == PAUSE_TYPE_CHOP_TDLS_OFFCHAN) {
+			if (peer->is_tdls_peer && peer->tdls_offchan_enabled)
+				ol_txrx_peer_unpause_base(pdev, peer);
+		} else {
+			ol_txrx_peer_unpause_base(pdev, peer);
+		}
 	}
 	qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);
 	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
@@ -1685,7 +1719,7 @@ void ol_txrx_pdev_pause(struct ol_txrx_pdev_t *pdev, uint32_t reason)
 	TAILQ_FOREACH_SAFE(vdev, &pdev->vdev_list, vdev_list_elem, tmp) {
 		cdp_fc_vdev_pause(
 			cds_get_context(QDF_MODULE_ID_SOC),
-			(struct cdp_vdev *)vdev, reason);
+			(struct cdp_vdev *)vdev, reason, 0);
 	}
 
 }
@@ -1703,7 +1737,7 @@ void ol_txrx_pdev_unpause(struct ol_txrx_pdev_t *pdev, uint32_t reason)
 
 	TAILQ_FOREACH_SAFE(vdev, &pdev->vdev_list, vdev_list_elem, tmp) {
 		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
-				    (struct cdp_vdev *)vdev, reason);
+				    (struct cdp_vdev *)vdev, reason, 0);
 	}
 
 }

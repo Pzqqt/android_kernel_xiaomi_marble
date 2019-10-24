@@ -1523,6 +1523,8 @@ struct ol_txrx_peer_t {
 	qdf_time_t last_deauth_rcvd;
 	qdf_atomic_t fw_create_pending;
 	qdf_timer_t peer_unmap_timer;
+	bool is_tdls_peer; /* Mark peer as tdls peer */
+	bool tdls_offchan_enabled; /* TDLS OffChan operation in use */
 };
 
 struct ol_rx_remote_data {

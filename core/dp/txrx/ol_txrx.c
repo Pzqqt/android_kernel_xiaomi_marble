@@ -2267,7 +2267,7 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 
 	/* store provided params */
 	peer->vdev = vdev;
-	peer->ctrl_peer = peer->ctrl_peer;
+	peer->ctrl_peer = ctrl_peer;
 	qdf_mem_copy(&peer->mac_addr.raw[0], peer_mac_addr,
 		     QDF_MAC_ADDR_SIZE);
 
@@ -5926,6 +5926,8 @@ static struct cdp_peer_ops ol_ops_peer = {
 	.add_last_real_peer = ol_txrx_add_last_real_peer,
 	.is_vdev_restore_last_peer = is_vdev_restore_last_peer,
 	.update_last_real_peer = ol_txrx_update_last_real_peer,
+	.set_tdls_offchan_enabled = ol_txrx_set_tdls_offchan_enabled,
+	.set_peer_as_tdls_peer = ol_txrx_set_peer_as_tdls_peer,
 #endif /* CONFIG_HL_SUPPORT */
 	.peer_detach_force_delete = ol_txrx_peer_detach_force_delete,
 };

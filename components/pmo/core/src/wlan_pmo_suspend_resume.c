@@ -655,7 +655,7 @@ static void pmo_unpause_all_vdev(struct wlan_objmgr_psoc *psoc,
 		if (pmo_core_vdev_get_pause_bitmap(psoc_ctx, vdev_id)) {
 			cdp_fc_vdev_unpause(pmo_core_psoc_get_dp_handle(psoc),
 					    vdev_dp,
-					    0xffffffff);
+					    0xffffffff, 0);
 			if (psoc_ctx->pause_bitmap_notifier)
 				psoc_ctx->pause_bitmap_notifier(vdev_id, 0);
 		}

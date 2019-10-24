@@ -1930,6 +1930,30 @@ static void hdd_set_peer_authorized_event(uint32_t vdev_id)
 	complete(&adapter->sta_authorized_event);
 }
 
+#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
+static inline
+void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter, void *peer)
+{
+	void *vdev;
+	unsigned long rc;
+	/* wait for event from firmware to set the event */
+	rc = wait_for_completion_timeout(
+			&adapter->sta_authorized_event,
+			msecs_to_jiffies(HDD_PEER_AUTHORIZE_WAIT));
+	if (!rc)
+		hdd_debug("timeout waiting for sta_authorized_event");
+
+	vdev = (void *)cdp_peer_get_vdev(soc, peer);
+	cdp_fc_vdev_unpause(soc, (struct cdp_vdev *)vdev,
+			    OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED,
+			    0);
+}
+#else
+static inline
+void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter, void *peer)
+{ }
+#endif
+
 QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 				 uint8_t *peer_mac,
 				 enum ol_txrx_peer_state sta_state,
@@ -1982,21 +2006,7 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 
 		if (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
-			void *vdev;
-			unsigned long rc;
-
-			/* wait for event from firmware to set the event */
-			rc = wait_for_completion_timeout(
-				&adapter->sta_authorized_event,
-				msecs_to_jiffies(HDD_PEER_AUTHORIZE_WAIT));
-			if (!rc)
-				hdd_debug("timeout waiting for sta_authorized_event");
-
-			vdev = (void *)cdp_peer_get_vdev(soc, peer);
-			cdp_fc_vdev_unpause(soc, (struct cdp_vdev *)vdev,
-					OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED);
-#endif
+			hdd_set_unpause_queue(soc, adapter, peer);
 		}
 	}
 	return QDF_STATUS_SUCCESS;

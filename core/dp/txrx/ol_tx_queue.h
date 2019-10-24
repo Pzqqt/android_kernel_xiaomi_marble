@@ -239,8 +239,10 @@ void ol_txrx_vdev_flush(struct cdp_vdev *pvdev);
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
    (defined(QCA_LL_TX_FLOW_CONTROL_V2)) || \
    defined(CONFIG_HL_SUPPORT)
-void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason);
-void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason);
+void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason,
+			uint32_t pause_type);
+void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason,
+			  uint32_t pause_type);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)

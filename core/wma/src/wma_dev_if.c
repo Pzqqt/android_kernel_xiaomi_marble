@@ -1906,6 +1906,8 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		 wma->interfaces[vdev_id].peer_count);
 
 	wlan_peer_set_dp_handle(obj_peer, peer);
+	if (peer_type == WMI_PEER_TYPE_TDLS)
+		cdp_peer_set_peer_as_tdls(dp_soc, peer, true);
 
 	if (roam_synch_in_progress) {
 		WMA_LOGD("%s: LFR3: Created peer %pK with peer_addr %pM vdev_id %d, peer_count - %d",
@@ -2178,7 +2180,7 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct del_bss_resp *resp)
 	cdp_fc_vdev_flush(soc, handle);
 	WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
 		 __func__, vdev_id);
-	cdp_fc_vdev_unpause(soc, handle, OL_TXQ_PAUSE_REASON_VDEV_STOP);
+	cdp_fc_vdev_unpause(soc, handle, OL_TXQ_PAUSE_REASON_VDEV_STOP, 0);
 	wma_vdev_clear_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 	WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
@@ -2829,6 +2831,7 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 	struct vdev_mlme_obj *mlme_obj;
 	struct wlan_objmgr_vdev *vdev = intr[vdev_id].vdev;
 	struct wlan_channel *des_chan;
+	void *dp_handle;
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!mlme_obj) {
@@ -2893,9 +2896,11 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 	if (!restart) {
 		WMA_LOGD("%s, vdev_id: %d, unpausing tx_ll_queue at VDEV_START",
 			 __func__, vdev_id);
+
+		dp_handle =
+			wlan_vdev_get_dp_handle(wma->interfaces[vdev_id].vdev);
 		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
-			wlan_vdev_get_dp_handle(wma->interfaces[vdev_id].vdev),
-			0xffffffff);
+				    dp_handle, 0xffffffff, 0);
 		wma_vdev_update_pause_bitmap(vdev_id, 0);
 	}
 
@@ -3673,7 +3678,7 @@ QDF_STATUS wma_set_cdp_vdev_pause_reason(tp_wma_handle wma, uint8_t vdev_id)
 		WMA_LOGE("%s Invalid txrx vdev", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	cdp_fc_vdev_pause(soc, vdev, OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED);
+	cdp_fc_vdev_pause(soc, vdev, OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED, 0);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4979,12 +4984,12 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id)
 
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP (del_bss)",
 		 __func__,  vdev_id);
-	cdp_fc_vdev_pause(soc, handle, OL_TXQ_PAUSE_REASON_VDEV_STOP);
+	cdp_fc_vdev_pause(soc, handle, OL_TXQ_PAUSE_REASON_VDEV_STOP, 0);
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_flush(soc, handle);
 	WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
 		 __func__,  vdev_id);
-	cdp_fc_vdev_unpause(soc, handle, OL_TXQ_PAUSE_REASON_VDEV_STOP);
+	cdp_fc_vdev_unpause(soc, handle, OL_TXQ_PAUSE_REASON_VDEV_STOP, 0);
 	wma_vdev_clear_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 	WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
@@ -5188,8 +5193,8 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 		 __func__, vdev_id);
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_pause(soc,
-		wlan_vdev_get_dp_handle(iface->vdev),
-		OL_TXQ_PAUSE_REASON_VDEV_STOP);
+			  wlan_vdev_get_dp_handle(iface->vdev),
+			  OL_TXQ_PAUSE_REASON_VDEV_STOP, 0);
 
 	if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
 		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
@@ -5403,7 +5408,7 @@ QDF_STATUS wma_send_vdev_stop(uint8_t vdev_id)
 		 __func__, vdev_id);
 	cdp_fc_vdev_pause
 		(soc, wlan_vdev_get_dp_handle(wma->interfaces[vdev_id].vdev),
-		 OL_TXQ_PAUSE_REASON_VDEV_STOP);
+		 OL_TXQ_PAUSE_REASON_VDEV_STOP, 0);
 
 	status = mlme_set_vdev_stop_type(
 				wma->interfaces[vdev_id].vdev,
