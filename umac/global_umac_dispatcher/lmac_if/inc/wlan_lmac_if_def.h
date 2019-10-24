@@ -599,6 +599,8 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
  * @direct_buf_rx_get_ring_params: Get ring parameters for module_id
  * @direct_buf_rx_start_ring_debug: Start DBR ring debug
  * @direct_buf_rx_stop_ring_debug: Stop DBR ring debug
+ * @direct_buf_rx_start_buffer_poisoning: Start DBR buffer poisoning
+ * @direct_buf_rx_stop_buffer_poisoning: Stop DBR buffer poisoning
  */
 struct wlan_lmac_if_direct_buf_rx_tx_ops {
 	QDF_STATUS (*direct_buf_rx_module_register)(
@@ -623,6 +625,10 @@ struct wlan_lmac_if_direct_buf_rx_tx_ops {
 		struct wlan_objmgr_pdev *pdev, uint8_t mod_id,
 		uint32_t num_ring_debug_entries);
 	QDF_STATUS (*direct_buf_rx_stop_ring_debug)(
+		struct wlan_objmgr_pdev *pdev, uint8_t mod_id);
+	QDF_STATUS (*direct_buf_rx_start_buffer_poisoning)(
+		struct wlan_objmgr_pdev *pdev, uint8_t mod_id, uint32_t value);
+	QDF_STATUS (*direct_buf_rx_stop_buffer_poisoning)(
 		struct wlan_objmgr_pdev *pdev, uint8_t mod_id);
 };
 #endif

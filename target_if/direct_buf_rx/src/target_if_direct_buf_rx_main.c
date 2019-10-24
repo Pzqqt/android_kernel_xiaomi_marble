@@ -472,6 +472,104 @@ QDF_STATUS target_if_dbr_start_ring_debug(struct wlan_objmgr_pdev *pdev,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS target_if_dbr_start_buffer_poisoning(struct wlan_objmgr_pdev *pdev,
+						uint8_t mod_id, uint32_t value)
+{
+	struct direct_buf_rx_module_debug *mod_debug;
+
+	mod_debug = target_if_get_dbr_mod_debug(pdev, mod_id);
+
+	if (!mod_debug)
+		return QDF_STATUS_E_INVAL;
+
+	mod_debug->poisoning_enabled = true;
+	mod_debug->poison_value = value; /* Save the poison value */
+
+	direct_buf_rx_debug("DBR buffer poisoning for module %d is now started",
+			    mod_id);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_dbr_stop_buffer_poisoning(
+	struct wlan_objmgr_pdev *pdev,
+	uint8_t mod_id)
+{
+	struct direct_buf_rx_module_debug *mod_debug;
+
+	mod_debug = target_if_get_dbr_mod_debug(pdev, mod_id);
+
+	if (!mod_debug)
+		return QDF_STATUS_E_INVAL;
+
+	mod_debug->poisoning_enabled = false;
+	mod_debug->poison_value = 0;
+
+	direct_buf_rx_debug("DBR buffer poisoning for module %d is now stopped",
+			    mod_id);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_dbr_fill_buffer_u32() - Fill buffer with an unsigned 32-bit value
+ * @buffer: pointer to the buffer
+ * @num_bytes: Size of the destination buffer in bytes
+ * @value: Unsigned 32-bit value to be copied
+ *
+ * Return : void
+ */
+static void
+target_if_dbr_fill_buffer_u32(uint8_t *buffer, uint32_t num_bytes,
+			      uint32_t value)
+{
+	uint32_t *bufp;
+	uint32_t idx;
+	uint32_t size = (num_bytes >> 2);
+
+	if (!buffer) {
+		direct_buf_rx_err("buffer empty");
+		return;
+	}
+
+	bufp = (uint32_t *)buffer;
+
+	for (idx = 0; idx < size; ++idx) {
+		*bufp = value;
+		++bufp;
+	}
+}
+
+/**
+ * target_if_dbr_debug_poison_buffer() - Poison a given DBR buffer
+ * @pdev: pointer to pdev object
+ * @mod_id: Module ID of the owner of the buffer
+ * @aligned_vaddr: Virtual address(aligned) of the buffer
+ * @size: Size of the buffer
+ *
+ * Value with which the buffers will be poisoned would have been saved
+ * while starting the buffer poisoning for the module, use that value.
+ *
+ * Return : QDF status of operation
+ */
+static QDF_STATUS target_if_dbr_debug_poison_buffer(
+	struct wlan_objmgr_pdev *pdev,
+	uint32_t mod_id, void *aligned_vaddr, uint32_t size)
+{
+	struct direct_buf_rx_module_debug *mod_debug;
+
+	mod_debug = target_if_get_dbr_mod_debug(pdev, mod_id);
+
+	if (!mod_debug)
+		return QDF_STATUS_E_INVAL;
+
+	if (mod_debug->poisoning_enabled) {
+		target_if_dbr_fill_buffer_u32(aligned_vaddr, size,
+					      mod_debug->poison_value);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #else
 QDF_STATUS target_if_dbr_stop_ring_debug(struct wlan_objmgr_pdev *pdev,
 					 uint8_t mod_id)
@@ -482,6 +580,26 @@ QDF_STATUS target_if_dbr_stop_ring_debug(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS target_if_dbr_start_ring_debug(struct wlan_objmgr_pdev *pdev,
 					  uint8_t mod_id,
 					  uint32_t num_ring_debug_entries)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_dbr_start_buffer_poisoning(struct wlan_objmgr_pdev *pdev,
+						uint8_t mod_id, uint32_t value)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_dbr_stop_buffer_poisoning(
+		struct wlan_objmgr_pdev *pdev,
+		uint8_t mod_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS target_if_dbr_debug_poison_buffer(
+	struct wlan_objmgr_pdev *pdev,
+	uint32_t mod_id, void *aligned_vaddr, uint32_t size)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -526,6 +644,10 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 		direct_buf_rx_err("aligned vaddr is null");
 		return QDF_STATUS_SUCCESS;
 	}
+
+	target_if_dbr_debug_poison_buffer(
+			pdev, mod_param->mod_id, aligned_vaddr,
+			dbr_ring_cap->min_buf_size);
 
 	map_status = qdf_mem_map_nbytes_single(dbr_psoc_obj->osdev,
 					       aligned_vaddr,
@@ -1226,6 +1348,7 @@ static void target_if_dbr_add_ring_debug_entry(
 			ring_debug->ring_debug_idx = 0;
 	}
 }
+
 #else
 static void target_if_dbr_add_ring_debug_entry(
 	struct wlan_objmgr_pdev *pdev,

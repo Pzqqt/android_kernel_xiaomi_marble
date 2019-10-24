@@ -133,9 +133,13 @@ struct direct_buf_rx_ring_debug {
 /**
  * struct direct_buf_rx_module_debug - Debug of a module subscribed to DBR
  * @dbr_ring_debug: Array of ring debug structers corresponding to each srng
+ * @poisoning_enabled: Whether buffer poisoning is enabled for this module
+ * @poison_value: Value with which buffers should be poisoned
  */
 struct direct_buf_rx_module_debug {
 	struct direct_buf_rx_ring_debug dbr_ring_debug[DBR_SRNG_NUM];
+	bool poisoning_enabled;
+	uint32_t poison_value;
 };
 
 /**
@@ -342,4 +346,27 @@ QDF_STATUS target_if_dbr_start_ring_debug(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS target_if_dbr_stop_ring_debug(struct wlan_objmgr_pdev *pdev,
 					 uint8_t mod_id);
+
+/**
+ * target_if_dbr_start_buffer_poisoning() - Start DBR buffer poisoning
+ * @pdev: pointer to pdev object
+ * @mod_id: module ID indicating the module using direct buffer rx framework
+ * @value: Value with which buffers should be poisoned
+ *
+ * Only those buffers which are going to be mapped to the device after this
+ * API call are guaranteed to be poisoned. If user wants all the buffers in
+ * the ring to be poisoned from their creation time then this API should be
+ * called before module's registration to the DBR.
+ *
+ */
+QDF_STATUS target_if_dbr_start_buffer_poisoning(struct wlan_objmgr_pdev *pdev,
+						uint8_t mod_id, uint32_t value);
+
+/**
+ * target_if_dbr_stop_buffer_poisoning() - Stop DBR buffer poisoning
+ * @pdev: pointer to pdev object
+ * @mod_id: module ID indicating the module using direct buffer rx framework
+ */
+QDF_STATUS target_if_dbr_stop_buffer_poisoning(struct wlan_objmgr_pdev *pdev,
+					       uint8_t mod_id);
 #endif /* _TARGET_IF_DIRECT_BUF_RX_MAIN_H_ */

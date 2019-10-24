@@ -172,6 +172,10 @@ target_if_direct_buf_rx_debug_register_tx_ops(
 				target_if_dbr_start_ring_debug;
 	tx_ops->dbr_tx_ops.direct_buf_rx_stop_ring_debug =
 				target_if_dbr_stop_ring_debug;
+	tx_ops->dbr_tx_ops.direct_buf_rx_start_buffer_poisoning =
+				target_if_dbr_start_buffer_poisoning;
+	tx_ops->dbr_tx_ops.direct_buf_rx_stop_buffer_poisoning =
+				target_if_dbr_stop_buffer_poisoning;
 }
 #else
 static inline void
