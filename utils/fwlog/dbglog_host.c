@@ -3592,8 +3592,9 @@ A_BOOL dbglog_coex_print_handler(uint32_t mod_id,
 			dbglog_printf_no_line_break(timestamp, vap_id, "%s: %u",
 						    dbg_id_str, args[0]);
 			for (i = 1; i < numargs; i++)
-				printk("%u", args[i]);
-			printk("\n");
+				dbglog_printf_no_line_break(timestamp, vap_id,
+							    "%u", args[i]);
+			dbglog_printf_no_line_break(timestamp, vap_id, "\n");
 		} else {
 			return false;
 		}

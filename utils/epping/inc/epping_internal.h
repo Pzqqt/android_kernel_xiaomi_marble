@@ -60,6 +60,10 @@
 #define EPPING_MAX_ADAPTERS             1
 
 #define EPPING_LOG(level, args ...) QDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
+#define EPPING_HEX_DUMP(level, data, len) qdf_trace_hex_dump( \
+						QDF_MODULE_ID_HDD, \
+						level, \
+						data, buf_len)
 
 struct epping_cookie {
 	HTC_PACKET HtcPkt;      /* HTC packet wrapper */

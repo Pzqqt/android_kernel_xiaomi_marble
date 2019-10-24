@@ -25,6 +25,7 @@
 #include <pktlog_ac.h>
 
 
+#define PKTLOG_TAG                      "ATH_PKTLOG"
 #define PKTLOG_DEFAULT_BUFSIZE          (10 * 1024 * 1024) /* 10MB */
 #define PKTLOG_DEFAULT_SACK_THR         3
 #define PKTLOG_DEFAULT_TAIL_LENGTH      100

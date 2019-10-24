@@ -366,8 +366,9 @@ void epping_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 			flushing = true;
 		}
 		if (status != QDF_STATUS_E_RESOURCES) {
-			printk("%s() -TX ERROR, status: 0x%x\n",
-			       __func__, status);
+			EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
+				   "%s() -TX ERROR, status: 0x%x",
+				   __func__, status);
 		}
 	} else {
 		EPPING_LOG(QDF_TRACE_LEVEL_INFO, "%s: OK\n", __func__);

@@ -114,7 +114,8 @@ void epping_rx(void *ctx, HTC_PACKET *pPacket)
 
 	if (status != QDF_STATUS_SUCCESS) {
 		if (status != QDF_STATUS_E_CANCELED) {
-			printk("%s: RX ERR (%d)\n", __func__, status);
+			EPPING_LOG(QDF_TRACE_LEVEL_ERROR, "%s: RX ERR (%d)",
+				   __func__, status);
 		}
 		qdf_nbuf_free(pktSkb);
 		return;
