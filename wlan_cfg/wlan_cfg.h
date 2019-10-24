@@ -38,11 +38,16 @@
 #define DP_PPDU_TXLITE_STATS_BITMASK_CFG 0x3FFF
 
 #define NUM_RXDMA_RINGS_PER_PDEV 2
+
+/*Maximum Number of LMAC instances*/
+#define MAX_NUM_LMAC_HW	2
 #else
 #define WLAN_CFG_DST_RING_CACHED_DESC 1
 #define MAX_PDEV_CNT 3
 #define WLAN_CFG_INT_NUM_CONTEXTS 11
 #define NUM_RXDMA_RINGS_PER_PDEV 1
+#define MAX_NUM_LMAC_HW	3
+
 #endif
 
 #define WLAN_CFG_INT_NUM_CONTEXTS_MAX 11
@@ -213,6 +218,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int hw_macid[MAX_PDEV_CNT];
+	int hw_macid_pdev_id_map[MAX_PDEV_CNT];
 	int base_hw_macid;
 	bool rx_hash;
 	bool tso_enabled;
@@ -486,25 +492,15 @@ int wlan_cfg_get_rxdma2host_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 					  int context);
 
 /**
- * wlan_cfg_set_hw_macid() - Set HW MAC Id for the given PDEV index
+ * wlan_cfg_set_hw_macidx() - Set HW MAC Idx for the given PDEV index
  *
  * @wlan_cfg_ctx - Configuration Handle
  * @pdev_idx - Index of SW PDEV
  * @hw_macid - HW MAC Id
  *
  */
-void wlan_cfg_set_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx,
-	int hw_macid);
-
-/**
- * wlan_cfg_get_hw_macid() - Get HW MAC Id for the given PDEV index
- *
- * @wlan_cfg_ctx - Configuration Handle
- * @pdev_idx - Index of SW PDEV
- *
- * Return: HW MAC Id
- */
-int wlan_cfg_get_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx);
+void wlan_cfg_set_hw_mac_idx
+	(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx, int hw_macid);
 
 /**
  * wlan_cfg_get_hw_mac_idx() - Get 0 based HW MAC index for the given
@@ -516,6 +512,41 @@ int wlan_cfg_get_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx);
  * Return: HW MAC index
  */
 int wlan_cfg_get_hw_mac_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx);
+
+/**
+ * wlan_cfg_get_target_pdev_id() - Get target PDEV ID for HW MAC ID
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ * @hw_macid - Index of hw mac
+ *
+ * Return: PDEV ID
+ */
+int
+wlan_cfg_get_target_pdev_id(struct wlan_cfg_dp_soc_ctxt *cfg, int hw_macid);
+
+/**
+ * wlan_cfg_set_pdev_idx() - Set 0 based host PDEV index for the given
+ * hw mac index
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ * @pdev_idx - Index of SW PDEV
+ * @hw_macid - Index of hw mac
+ *
+ * Return: PDEV index
+ */
+void wlan_cfg_set_pdev_idx
+	(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx, int hw_macid);
+
+/**
+ * wlan_cfg_get_pdev_idx() - Get 0 based PDEV index for the given
+ * hw mac index
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ * @hw_macid - Index of hw mac
+ *
+ * Return: PDEV index
+ */
+int wlan_cfg_get_pdev_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int hw_macid);
 
 /**
  * wlan_cfg_get_rx_err_ring_mask() - Return Rx monitor ring interrupt mask

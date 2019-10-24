@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1929,12 +1929,12 @@ cdp_soc_set_dp_txrx_handle(ol_txrx_soc_handle soc, void *dp_handle)
  * @soc: opaque soc handle
  * @pdev_id: id of data path pdev handle
  * @lmac_id: lmac id
- *
+ * @mode_change: flag to indicate mode change (true) or init (false)
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
 cdp_soc_map_pdev_to_lmac(ol_txrx_soc_handle soc, uint8_t pdev_id,
-			 uint32_t lmac_id)
+			 uint32_t lmac_id, bool mode_change)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -1948,7 +1948,7 @@ cdp_soc_map_pdev_to_lmac(ol_txrx_soc_handle soc, uint8_t pdev_id,
 		return QDF_STATUS_E_FAILURE;
 
 	return soc->ops->cmn_drv_ops->map_pdev_to_lmac(soc, pdev_id,
-			lmac_id);
+			lmac_id, mode_change);
 }
 
 /**

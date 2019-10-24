@@ -476,11 +476,11 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 
 	/* This is default mapping and can be overridden by HW config
 	 * received from FW */
-	wlan_cfg_set_hw_macid(wlan_cfg_ctx, 0, 1);
+	wlan_cfg_set_hw_mac_idx(wlan_cfg_ctx, 0, 0);
 	if (MAX_PDEV_CNT > 1)
-		wlan_cfg_set_hw_macid(wlan_cfg_ctx, 1, 3);
+		wlan_cfg_set_hw_mac_idx(wlan_cfg_ctx, 1, 2);
 	if (MAX_PDEV_CNT > 2)
-		wlan_cfg_set_hw_macid(wlan_cfg_ctx, 2, 2);
+		wlan_cfg_set_hw_mac_idx(wlan_cfg_ctx, 2, 1);
 
 	wlan_cfg_ctx->base_hw_macid = cfg_get(psoc, CFG_DP_BASE_HW_MAC_ID);
 
@@ -685,23 +685,45 @@ int wlan_cfg_get_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 	return cfg->int_host2rxdma_ring_mask[context];
 }
 
-void wlan_cfg_set_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx,
-	int hw_macid)
+void wlan_cfg_set_hw_mac_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx,
+			     int hw_macid)
 {
 	qdf_assert_always(pdev_idx < MAX_PDEV_CNT);
 	cfg->hw_macid[pdev_idx] = hw_macid;
 }
 
-int wlan_cfg_get_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx)
+int wlan_cfg_get_hw_mac_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx)
 {
 	qdf_assert_always(pdev_idx < MAX_PDEV_CNT);
 	return cfg->hw_macid[pdev_idx];
 }
 
-int wlan_cfg_get_hw_mac_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx)
+int wlan_cfg_get_target_pdev_id(struct wlan_cfg_dp_soc_ctxt *cfg,
+				int hw_macid)
+{
+	int idx;
+
+	for (idx = 0; idx < MAX_NUM_LMAC_HW; idx++) {
+		if (cfg->hw_macid[idx] == hw_macid)
+			return (idx + 1);
+	}
+	qdf_assert_always(idx < MAX_PDEV_CNT);
+	return WLAN_INVALID_PDEV_ID;
+}
+
+void wlan_cfg_set_pdev_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx,
+			   int hw_macid)
 {
 	qdf_assert_always(pdev_idx < MAX_PDEV_CNT);
-	return cfg->hw_macid[pdev_idx] - cfg->base_hw_macid;
+	qdf_assert_always(hw_macid < MAX_NUM_LMAC_HW);
+
+	cfg->hw_macid_pdev_id_map[hw_macid] = pdev_idx;
+}
+
+int wlan_cfg_get_pdev_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int hw_macid)
+{
+	qdf_assert_always(hw_macid < MAX_NUM_LMAC_HW);
+	return cfg->hw_macid_pdev_id_map[hw_macid];
 }
 
 void wlan_cfg_set_ce_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,

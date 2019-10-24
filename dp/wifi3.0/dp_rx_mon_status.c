@@ -1370,7 +1370,7 @@ static inline void
 dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota)
 {
-	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	struct hal_rx_ppdu_info *ppdu_info;
 	qdf_nbuf_t status_nbuf;
 	uint8_t *rx_tlv;
@@ -1522,15 +1522,14 @@ static inline uint32_t
 dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota)
 {
-	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	hal_soc_handle_t hal_soc;
 	void *mon_status_srng;
 	void *rxdma_mon_status_ring_entry;
 	QDF_STATUS status;
 	uint32_t work_done = 0;
-	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
 
-	mon_status_srng = pdev->rxdma_mon_status_ring[mac_for_pdev].hal_srng;
+	mon_status_srng = soc->rxdma_mon_status_ring[mac_id].hal_srng;
 
 	qdf_assert(mon_status_srng);
 	if (!mon_status_srng || !hal_srng_initialized(mon_status_srng)) {
@@ -1782,7 +1781,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 	void *rxdma_ring_entry;
 	union dp_rx_desc_list_elem_t *next;
 	void *rxdma_srng;
-	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(dp_soc, mac_id);
+	struct dp_pdev *dp_pdev = dp_get_pdev_for_lmac_id(dp_soc, mac_id);
 
 	rxdma_srng = dp_rxdma_srng->hal_srng;
 
@@ -1917,9 +1916,8 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 	uint32_t i;
 	struct rx_desc_pool *rx_desc_pool;
 	QDF_STATUS status;
-	int mac_for_pdev = dp_get_mac_id_for_mac(soc, ring_id);
 
-	mon_status_ring = &pdev->rxdma_mon_status_ring[mac_for_pdev];
+	mon_status_ring = &soc->rxdma_mon_status_ring[ring_id];
 
 	num_entries = mon_status_ring->num_entries;
 

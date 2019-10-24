@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1200,6 +1200,121 @@ static inline int dp_get_mac_id_for_pdev(uint32_t mac_id, uint32_t pdev_id)
 		return 0;
 	}
 	return (mac_id + pdev_id);
+}
+
+/**
+ * dp_get_lmac_id_for_pdev_id() -  Return lmac id corresponding to host pdev id
+ * @soc: soc pointer
+ * @mac_id: MAC id
+ * @pdev_id: pdev_id corresponding to pdev, 0 for MCL
+ *
+ * For MCL, Single pdev using both MACs will operate on both MAC rings.
+ *
+ * For WIN, each PDEV will operate one ring.
+ *
+ */
+static inline int
+dp_get_lmac_id_for_pdev_id
+	(struct dp_soc *soc, uint32_t mac_id, uint32_t pdev_id)
+{
+	if (!wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
+		if (mac_id && pdev_id) {
+			qdf_print("Both mac_id and pdev_id cannot be non zero");
+			QDF_BUG(0);
+			return 0;
+		}
+		return (mac_id + pdev_id);
+	}
+
+	return soc->pdev_list[pdev_id]->lmac_id;
+}
+
+/**
+ * dp_get_pdev_for_lmac_id() -  Return pdev pointer corresponding to lmac id
+ * @soc: soc pointer
+ * @lmac_id: LMAC id
+ *
+ * For MCL, Single pdev exists
+ *
+ * For WIN, each PDEV will operate one ring.
+ *
+ */
+static inline struct dp_pdev *
+	dp_get_pdev_for_lmac_id(struct dp_soc *soc, uint32_t lmac_id)
+{
+	int i = 0;
+
+	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
+		i = wlan_cfg_get_pdev_idx(soc->wlan_cfg_ctx, lmac_id);
+		qdf_assert_always(i < MAX_PDEV_CNT);
+
+		return soc->pdev_list[i];
+	}
+
+	/* Typically for MCL as there only 1 PDEV*/
+	return soc->pdev_list[0];
+}
+
+/**
+ * dp_get_target_pdev_id_for_host_pdev_id() - Return target pdev corresponding
+ *                                         to host pdev id
+ * @soc: soc pointer
+ * @mac_for_pdev: pdev_id corresponding to host pdev for WIN, mac id for MCL
+ *
+ * returns target pdev_id for host pdev id. For WIN, this is derived through
+ * a two step process:
+ * 1. Get lmac_id corresponding to host pdev_id (lmac_id can change
+ *    during mode switch)
+ * 2. Get target pdev_id (set up during WMI ready) from lmac_id
+ *
+ * For MCL, return the offset-1 translated mac_id
+ */
+static inline int
+dp_get_target_pdev_id_for_host_pdev_id
+	(struct dp_soc *soc, uint32_t mac_for_pdev)
+{
+	struct dp_pdev *pdev;
+
+	if (!wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx))
+		return DP_SW2HW_MACID(mac_for_pdev);
+
+	pdev = soc->pdev_list[mac_for_pdev];
+
+	/*non-MCL case, get original target_pdev mapping*/
+	return wlan_cfg_get_target_pdev_id(soc->wlan_cfg_ctx, pdev->lmac_id);
+}
+
+/**
+ * dp_get_host_pdev_id_for_target_pdev_id() - Return host pdev corresponding
+ *                                         to target pdev id
+ * @soc: soc pointer
+ * @pdev_id: pdev_id corresponding to target pdev
+ *
+ * returns host pdev_id for target pdev id. For WIN, this is derived through
+ * a two step process:
+ * 1. Get lmac_id corresponding to target pdev_id
+ * 2. Get host pdev_id (set up during WMI ready) from lmac_id
+ *
+ * For MCL, return the 0-offset pdev_id
+ */
+static inline int
+dp_get_host_pdev_id_for_target_pdev_id
+	(struct dp_soc *soc, uint32_t pdev_id)
+{
+	struct dp_pdev *pdev;
+	int lmac_id;
+
+	if (!wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx))
+		return DP_HW2SW_MACID(pdev_id);
+
+	/*non-MCL case, get original target_lmac mapping from target pdev*/
+	lmac_id = wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx,
+					  DP_HW2SW_MACID(pdev_id));
+
+	/*Get host pdev from lmac*/
+	pdev = dp_get_pdev_for_lmac_id(soc, lmac_id);
+
+	return pdev->pdev_id;
 }
 
 /*

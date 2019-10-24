@@ -340,23 +340,19 @@ uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx
 static void dp_service_mon_rings(void *arg)
 {
 	struct dp_soc *soc = (struct dp_soc *)arg;
-	int ring = 0, work_done, mac_id;
+	int ring = 0, work_done;
 	struct dp_pdev *pdev = NULL;
 
-	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
-		pdev = soc->pdev_list[ring];
+	for  (ring = 0 ; ring < MAX_NUM_LMAC_HW; ring++) {
+		pdev = dp_get_pdev_for_lmac_id(soc, ring);
 		if (!pdev)
 			continue;
-		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
-								pdev->pdev_id);
-			work_done = dp_mon_process(soc, mac_for_pdev,
-						   QCA_NAPI_BUDGET);
+		work_done = dp_mon_process(soc, ring,
+					   QCA_NAPI_BUDGET);
 
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  FL("Reaped %d descs from Monitor rings"),
-				  work_done);
-		}
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  FL("Reaped %d descs from Monitor rings"),
+			  work_done);
 	}
 
 	qdf_timer_mod(&soc->mon_reap_timer, DP_INTR_POLL_TIMER_MS);
@@ -486,36 +482,37 @@ uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx
 static void dp_service_lmac_rings(void *arg)
 {
 	struct dp_soc *soc = (struct dp_soc *)arg;
-	int ring = 0, mac_id, i;
+	int ring = 0, i;
 	struct dp_pdev *pdev = NULL;
 	union dp_rx_desc_list_elem_t *desc_list = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
 
 	/* Process LMAC interrupts */
-	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
-		pdev = soc->pdev_list[ring];
+	for  (ring = 0 ; ring < MAX_NUM_LMAC_HW; ring++) {
+		int mac_for_pdev = ring;
+		struct dp_srng *rx_refill_buf_ring;
+
+		pdev = dp_get_pdev_for_lmac_id(soc, mac_for_pdev);
 		if (!pdev)
 			continue;
-		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
-					pdev->pdev_id);
-			struct dp_srng *rx_refill_buf_ring =
-				&pdev->rx_refill_buf_ring;
 
-			dp_mon_process(soc, mac_for_pdev,
-				       QCA_NAPI_BUDGET);
+		rx_refill_buf_ring = &soc->rx_refill_buf_ring[mac_for_pdev];
 
-			for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
-				dp_rxdma_err_process(&soc->intr_ctx[i], soc,
-						     mac_for_pdev,
-						     QCA_NAPI_BUDGET);
+		dp_mon_process(soc, mac_for_pdev,
+			       QCA_NAPI_BUDGET);
 
-			if (!dp_soc_ring_if_nss_offloaded(soc, RXDMA_BUF, mac_id))
-				dp_rx_buffers_replenish(soc, mac_for_pdev,
-							rx_refill_buf_ring,
-							&soc->rx_desc_buf[mac_for_pdev],
-							0, &desc_list, &tail);
-		}
+		for (i = 0;
+		     i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
+			dp_rxdma_err_process(&soc->intr_ctx[i], soc,
+					     mac_for_pdev,
+					     QCA_NAPI_BUDGET);
+
+		if (!dp_soc_ring_if_nss_offloaded(soc, RXDMA_BUF,
+						  mac_for_pdev))
+			dp_rx_buffers_replenish(soc, mac_for_pdev,
+						rx_refill_buf_ring,
+						&soc->rx_desc_buf[mac_for_pdev],
+						0, &desc_list, &tail);
 	}
 
 	qdf_timer_mod(&soc->lmac_reap_timer, DP_INTR_POLL_TIMER_MS);
@@ -1513,7 +1510,6 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	uint8_t reo_status_mask = int_ctx->reo_status_ring_mask;
 	uint32_t remaining_quota = dp_budget;
 	struct dp_pdev *pdev = NULL;
-	int mac_id;
 
 	dp_verbose_debug("tx %x rx %x rx_err %x rx_wbm_rel %x reo_status %x rx_mon_ring %x host2rxdma %x rxdma2host %x\n",
 			 tx_mask, rx_mask, rx_err_mask, rx_wbm_rel_mask,
@@ -1613,52 +1609,51 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	}
 
 	/* Process LMAC interrupts */
-	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
-		pdev = soc->pdev_list[ring];
+	for  (ring = 0 ; ring < MAX_NUM_LMAC_HW; ring++) {
+		int mac_for_pdev = ring;
+
+		pdev = dp_get_pdev_for_lmac_id(soc, mac_for_pdev);
 		if (!pdev)
 			continue;
-		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
-								pdev->pdev_id);
-			if (int_ctx->rx_mon_ring_mask & (1 << mac_for_pdev)) {
-				work_done = dp_mon_process(soc, mac_for_pdev,
-							   remaining_quota);
-				if (work_done)
-					intr_stats->num_rx_mon_ring_masks++;
-				budget -= work_done;
-				if (budget <= 0)
-					goto budget_done;
-				remaining_quota = budget;
-			}
+		if (int_ctx->rx_mon_ring_mask & (1 << mac_for_pdev)) {
+			work_done = dp_mon_process(soc, mac_for_pdev,
+						   remaining_quota);
+			if (work_done)
+				intr_stats->num_rx_mon_ring_masks++;
+			budget -= work_done;
+			if (budget <= 0)
+				goto budget_done;
+			remaining_quota = budget;
+		}
 
-			if (int_ctx->rxdma2host_ring_mask &
+		if (int_ctx->rxdma2host_ring_mask &
+				(1 << mac_for_pdev)) {
+			work_done = dp_rxdma_err_process(int_ctx, soc,
+							 mac_for_pdev,
+							 remaining_quota);
+			if (work_done)
+				intr_stats->num_rxdma2host_ring_masks++;
+			budget -=  work_done;
+			if (budget <= 0)
+				goto budget_done;
+			remaining_quota = budget;
+		}
+
+		if (int_ctx->host2rxdma_ring_mask &
 					(1 << mac_for_pdev)) {
-				work_done = dp_rxdma_err_process(int_ctx, soc,
-								 mac_for_pdev,
-								 remaining_quota);
-				if (work_done)
-					intr_stats->num_rxdma2host_ring_masks++;
-				budget -=  work_done;
-				if (budget <= 0)
-					goto budget_done;
-				remaining_quota = budget;
-			}
+			union dp_rx_desc_list_elem_t *desc_list = NULL;
+			union dp_rx_desc_list_elem_t *tail = NULL;
+			struct dp_srng *rx_refill_buf_ring =
+				&soc->rx_refill_buf_ring[mac_for_pdev];
 
-			if (int_ctx->host2rxdma_ring_mask &
-						(1 << mac_for_pdev)) {
-				union dp_rx_desc_list_elem_t *desc_list = NULL;
-				union dp_rx_desc_list_elem_t *tail = NULL;
-				struct dp_srng *rx_refill_buf_ring =
-					&pdev->rx_refill_buf_ring;
+			intr_stats->num_host2rxdma_ring_masks++;
+			DP_STATS_INC(pdev, replenish.low_thresh_intrs,
+				     1);
+			dp_rx_buffers_replenish(soc, mac_for_pdev,
+						rx_refill_buf_ring,
+						&soc->rx_desc_buf[mac_for_pdev],
+						0, &desc_list, &tail);
 
-				intr_stats->num_host2rxdma_ring_masks++;
-				DP_STATS_INC(pdev, replenish.low_thresh_intrs,
-						1);
-				dp_rx_buffers_replenish(soc, mac_for_pdev,
-							rx_refill_buf_ring,
-							&soc->rx_desc_buf[mac_for_pdev],
-							0, &desc_list, &tail);
-			}
 		}
 	}
 
@@ -1849,29 +1844,24 @@ static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
 
 		if (rxdma2host_ring_mask & (1 << j)) {
 			irq_id_map[num_irq++] =
-				rxdma2host_destination_ring_mac1 -
-				wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
+				rxdma2host_destination_ring_mac1 - j;
 		}
 
 		if (host2rxdma_ring_mask & (1 << j)) {
 			irq_id_map[num_irq++] =
-				host2rxdma_host_buf_ring_mac1 -
-				wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
+				host2rxdma_host_buf_ring_mac1 -	j;
 		}
 
 		if (host2rxdma_mon_ring_mask & (1 << j)) {
 			irq_id_map[num_irq++] =
-				host2rxdma_monitor_ring1 -
-				wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
+				host2rxdma_monitor_ring1 - j;
 		}
 
 		if (rx_mon_mask & (1 << j)) {
 			irq_id_map[num_irq++] =
-				ppdu_end_interrupts_mac1 -
-				wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
+				ppdu_end_interrupts_mac1 - j;
 			irq_id_map[num_irq++] =
-				rxdma2host_monitor_status_ring_mac1 -
-				wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
+				rxdma2host_monitor_status_ring_mac1 - j;
 		}
 
 		if (rx_wbm_rel_ring_mask & (1 << j))
@@ -3009,11 +2999,9 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	entries = wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(soc_cfg_ctx);
 	/* LMAC RxDMA to SW Rings configuration */
 	if (!wlan_cfg_per_pdev_lmac_ring(soc_cfg_ctx)) {
-		/* Only valid for MCL */
-		struct dp_pdev *pdev = soc->pdev_list[0];
 
 		for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
-			if (dp_srng_setup(soc, &pdev->rxdma_err_dst_ring[i],
+			if (dp_srng_setup(soc, &soc->rxdma_err_dst_ring[i],
 					  RXDMA_DST, 0, i, entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -3394,14 +3382,14 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
 
 		if (soc->wlan_cfg_ctx->rxdma1_enable) {
 			entries =
 			   wlan_cfg_get_dma_mon_buf_ring_size(pdev_cfg_ctx);
 			if (dp_srng_setup(soc,
-					  &pdev->rxdma_mon_buf_ring[mac_id],
-					  RXDMA_MONITOR_BUF, 0, mac_for_pdev,
+					  &soc->rxdma_mon_buf_ring[lmac_id],
+					  RXDMA_MONITOR_BUF, 0,	lmac_id,
 					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -3412,8 +3400,8 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			entries =
 			   wlan_cfg_get_dma_mon_dest_ring_size(pdev_cfg_ctx);
 			if (dp_srng_setup(soc,
-					  &pdev->rxdma_mon_dst_ring[mac_id],
-					  RXDMA_MONITOR_DST, 0, mac_for_pdev,
+					  &soc->rxdma_mon_dst_ring[lmac_id],
+					  RXDMA_MONITOR_DST, 0, lmac_id,
 					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -3424,8 +3412,8 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			entries =
 			    wlan_cfg_get_dma_mon_stat_ring_size(pdev_cfg_ctx);
 			if (dp_srng_setup(soc,
-					  &pdev->rxdma_mon_status_ring[mac_id],
-					  RXDMA_MONITOR_STATUS, 0, mac_for_pdev,
+					  &soc->rxdma_mon_status_ring[lmac_id],
+					  RXDMA_MONITOR_STATUS, 0, lmac_id,
 					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -3436,8 +3424,8 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			entries =
 			   wlan_cfg_get_dma_mon_desc_ring_size(pdev_cfg_ctx);
 			if (dp_srng_setup(soc,
-					  &pdev->rxdma_mon_desc_ring[mac_id],
-					  RXDMA_MONITOR_DESC, 0, mac_for_pdev,
+				  &soc->rxdma_mon_desc_ring[lmac_id],
+					  RXDMA_MONITOR_DESC, 0, lmac_id,
 					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -3448,8 +3436,8 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			entries =
 			   wlan_cfg_get_dma_mon_stat_ring_size(pdev_cfg_ctx);
 			if (dp_srng_setup(soc,
-					  &pdev->rxdma_mon_status_ring[mac_id],
-					  RXDMA_MONITOR_STATUS, 0, mac_for_pdev,
+					  &soc->rxdma_mon_status_ring[lmac_id],
+					  RXDMA_MONITOR_STATUS, 0, lmac_id,
 					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -3651,8 +3639,8 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	ring_size =
 		wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc->wlan_cfg_ctx);
 
-	if (dp_srng_setup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0, pdev_id,
-			  ring_size, 0)) {
+	if (dp_srng_setup(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
+			  RXDMA_BUF, 0, pdev->lmac_id, ring_size, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			 FL("dp_srng_setup failed rx refill ring"));
 		goto fail1;
@@ -3672,8 +3660,10 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 
 	entries = wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(soc_cfg_ctx);
 	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
-		if (dp_srng_setup(soc, &pdev->rxdma_err_dst_ring[0], RXDMA_DST,
-				  0, pdev_id, entries, 0)) {
+		if (dp_srng_setup(soc,
+				  &soc->rxdma_err_dst_ring[pdev->lmac_id],
+				  RXDMA_DST,
+				  0, pdev->lmac_id, entries, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  FL(RNG_ERR "rxdma_err_dst_ring"));
 			goto fail1;
@@ -3871,35 +3861,35 @@ static
 void dp_mon_ring_cleanup(struct dp_soc *soc, struct dp_pdev *pdev,
 			 int mac_id)
 {
-		if (soc->wlan_cfg_ctx->rxdma1_enable) {
-			dp_srng_cleanup(soc,
-					&pdev->rxdma_mon_buf_ring[mac_id],
-					RXDMA_MONITOR_BUF, 0);
+	if (soc->wlan_cfg_ctx->rxdma1_enable) {
+		dp_srng_cleanup(soc,
+				&soc->rxdma_mon_buf_ring[mac_id],
+				RXDMA_MONITOR_BUF, 0);
 
-			dp_srng_cleanup(soc,
-					&pdev->rxdma_mon_dst_ring[mac_id],
-					RXDMA_MONITOR_DST, 0);
+		dp_srng_cleanup(soc,
+				&soc->rxdma_mon_dst_ring[mac_id],
+				RXDMA_MONITOR_DST, 0);
 
-			dp_srng_cleanup(soc,
-					&pdev->rxdma_mon_status_ring[mac_id],
-					RXDMA_MONITOR_STATUS, 0);
+		dp_srng_cleanup(soc,
+				&soc->rxdma_mon_status_ring[mac_id],
+				RXDMA_MONITOR_STATUS, 0);
 
-			dp_srng_cleanup(soc,
-					&pdev->rxdma_mon_desc_ring[mac_id],
-					RXDMA_MONITOR_DESC, 0);
+		dp_srng_cleanup(soc,
+				&soc->rxdma_mon_desc_ring[mac_id],
+				RXDMA_MONITOR_DESC, 0);
 
-			dp_srng_cleanup(soc,
-					&pdev->rxdma_err_dst_ring[mac_id],
-					RXDMA_DST, 0);
-		} else {
-			dp_srng_cleanup(soc,
-					&pdev->rxdma_mon_status_ring[mac_id],
-					RXDMA_MONITOR_STATUS, 0);
+		dp_srng_cleanup(soc,
+				&soc->rxdma_err_dst_ring[mac_id],
+				RXDMA_DST, 0);
+	} else {
+		dp_srng_cleanup(soc,
+				&soc->rxdma_mon_status_ring[mac_id],
+				RXDMA_MONITOR_STATUS, 0);
 
-			dp_srng_cleanup(soc,
-					&pdev->rxdma_err_dst_ring[mac_id],
-					RXDMA_DST, 0);
-		}
+		dp_srng_cleanup(soc,
+				&soc->rxdma_err_dst_ring[mac_id],
+				RXDMA_DST, 0);
+	}
 
 }
 #else
@@ -4039,13 +4029,18 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 			       REO_DST, pdev->pdev_id);
 	}
 
-	dp_srng_deinit(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0);
+	dp_srng_deinit(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
+		       RXDMA_BUF, 0);
 
 	dp_rxdma_ring_cleanup(soc, pdev);
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		dp_mon_ring_deinit(soc, pdev, mac_id);
-		dp_srng_deinit(soc, &pdev->rxdma_err_dst_ring[mac_id],
+		int lmac_id =
+			dp_get_lmac_id_for_pdev_id(soc, pdev->pdev_id, mac_id);
+
+		dp_mon_ring_deinit(soc, pdev, lmac_id);
+
+		dp_srng_deinit(soc, &soc->rxdma_err_dst_ring[lmac_id],
 			       RXDMA_DST, 0);
 	}
 
@@ -4120,6 +4115,7 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	struct dp_soc *soc = pdev->soc;
 	struct rx_desc_pool *rx_desc_pool;
 	int mac_id, mac_for_pdev;
+	int lmac_id;
 
 	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
 		dp_srng_cleanup(soc, &soc->tcl_data_ring[pdev->pdev_id],
@@ -4138,16 +4134,21 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	dp_rxdma_ring_cleanup(soc, pdev);
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
 
-	dp_srng_cleanup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0);
+	dp_srng_cleanup(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
+			RXDMA_BUF, 0);
 	dp_cleanup_ipa_rx_refill_buf_ring(soc, pdev);
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		dp_mon_ring_cleanup(soc, pdev, mac_id);
-		dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[mac_id],
+		lmac_id =
+			dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev->pdev_id);
+		dp_mon_ring_cleanup(soc, pdev, lmac_id);
+		dp_srng_cleanup(soc, &soc->rxdma_err_dst_ring[lmac_id],
 				RXDMA_DST, 0);
+
 		if (dp_is_soc_reinit(soc)) {
-			mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
-							      pdev->pdev_id);
+			mac_for_pdev =
+				dp_get_lmac_id_for_pdev_id(soc, mac_id,
+							   pdev->pdev_id);
 			rx_desc_pool = &soc->rx_desc_status[mac_for_pdev];
 			dp_rx_desc_pool_free(soc, rx_desc_pool);
 			rx_desc_pool = &soc->rx_desc_mon[mac_for_pdev];
@@ -4465,7 +4466,7 @@ static QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
 
 	if (soc->wlan_cfg_ctx->rxdma1_enable) {
 		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
-					pdev->rxdma_mon_buf_ring[mac_id]
+					soc->rxdma_mon_buf_ring[mac_id]
 					.hal_srng,
 					RXDMA_MONITOR_BUF);
 
@@ -4475,7 +4476,7 @@ static QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
 		}
 
 		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
-					pdev->rxdma_mon_dst_ring[mac_id]
+					soc->rxdma_mon_dst_ring[mac_id]
 					.hal_srng,
 					RXDMA_MONITOR_DST);
 
@@ -4485,7 +4486,7 @@ static QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
 		}
 
 		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
-					pdev->rxdma_mon_status_ring[mac_id]
+					soc->rxdma_mon_status_ring[mac_id]
 					.hal_srng,
 					RXDMA_MONITOR_STATUS);
 
@@ -4495,7 +4496,7 @@ static QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
 		}
 
 		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
-					pdev->rxdma_mon_desc_ring[mac_id]
+				soc->rxdma_mon_desc_ring[mac_id]
 					.hal_srng,
 					RXDMA_MONITOR_DESC);
 
@@ -4505,7 +4506,7 @@ static QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
 		}
 	} else {
 		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
-					pdev->rxdma_mon_status_ring[mac_id]
+					soc->rxdma_mon_status_ring[mac_id]
 					.hal_srng,
 					RXDMA_MONITOR_STATUS);
 
@@ -4554,10 +4555,12 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 			int max_mac_rings =
 				 wlan_cfg_get_num_mac_rings
 				(pdev->wlan_cfg_ctx);
+			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, 0, i);
 
 			htt_srng_setup(soc->htt_handle, 0,
-				 pdev->rx_refill_buf_ring.hal_srng,
-				 RXDMA_BUF);
+				       soc->rx_refill_buf_ring[lmac_id]
+				       .hal_srng,
+				       RXDMA_BUF);
 
 			if (pdev->rx_refill_buf_ring2.hal_srng)
 				htt_srng_setup(soc->htt_handle, 0,
@@ -4589,9 +4592,17 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 					 pdev->pdev_id, max_mac_rings);
 
 			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
-				int mac_for_pdev = dp_get_mac_id_for_pdev(
-							mac_id, pdev->pdev_id);
-
+				int mac_for_pdev =
+					dp_get_mac_id_for_pdev(mac_id,
+							       pdev->pdev_id);
+				/*
+				 * Obtain lmac id from pdev to access the LMAC
+				 * ring in soc context
+				 */
+				lmac_id =
+				dp_get_lmac_id_for_pdev_id(soc,
+							   mac_id,
+							   pdev->pdev_id);
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					 QDF_TRACE_LEVEL_ERROR,
 					 FL("mac_id %d"), mac_for_pdev);
@@ -4601,13 +4612,13 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 						.hal_srng,
 					 RXDMA_BUF);
 				htt_srng_setup(soc->htt_handle, mac_for_pdev,
-					pdev->rxdma_err_dst_ring[mac_id]
-						.hal_srng,
+				soc->rxdma_err_dst_ring[lmac_id]
+					.hal_srng,
 					RXDMA_DST);
 
 				/* Configure monitor mode rings */
 				status = dp_mon_htt_srng_setup(soc, pdev,
-							       mac_id,
+							       lmac_id,
 							       mac_for_pdev);
 				if (status != QDF_STATUS_SUCCESS) {
 					dp_err("Failed to send htt monitor messages to target");
@@ -4633,38 +4644,40 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 {
 	int i;
-	int mac_id;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	int mac_for_pdev;
+	int lmac_id;
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
-		struct dp_pdev *pdev = soc->pdev_list[i];
+		struct dp_pdev *pdev =  soc->pdev_list[i];
 
 		if (!pdev)
 			continue;
 
-		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, i);
+		mac_for_pdev = i;
+		lmac_id = dp_get_lmac_id_for_pdev_id(soc, 0, i);
 
-			htt_srng_setup(soc->htt_handle, mac_for_pdev,
-				pdev->rx_refill_buf_ring.hal_srng, RXDMA_BUF);
+		htt_srng_setup(soc->htt_handle, mac_for_pdev,
+			       soc->rx_refill_buf_ring[lmac_id].
+			       hal_srng, RXDMA_BUF);
 #ifndef DISABLE_MON_CONFIG
-			htt_srng_setup(soc->htt_handle, mac_for_pdev,
-				pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
-				RXDMA_MONITOR_BUF);
-			htt_srng_setup(soc->htt_handle, mac_for_pdev,
-				pdev->rxdma_mon_dst_ring[mac_id].hal_srng,
-				RXDMA_MONITOR_DST);
-			htt_srng_setup(soc->htt_handle, mac_for_pdev,
-				pdev->rxdma_mon_status_ring[mac_id].hal_srng,
-				RXDMA_MONITOR_STATUS);
-			htt_srng_setup(soc->htt_handle, mac_for_pdev,
-				pdev->rxdma_mon_desc_ring[mac_id].hal_srng,
-				RXDMA_MONITOR_DESC);
+
+		htt_srng_setup(soc->htt_handle, mac_for_pdev,
+			       soc->rxdma_mon_buf_ring[lmac_id].hal_srng,
+			       RXDMA_MONITOR_BUF);
+		htt_srng_setup(soc->htt_handle, mac_for_pdev,
+			       soc->rxdma_mon_dst_ring[lmac_id].hal_srng,
+			       RXDMA_MONITOR_DST);
+		htt_srng_setup(soc->htt_handle, mac_for_pdev,
+			       soc->rxdma_mon_status_ring[lmac_id].hal_srng,
+			       RXDMA_MONITOR_STATUS);
+		htt_srng_setup(soc->htt_handle, mac_for_pdev,
+			       soc->rxdma_mon_desc_ring[lmac_id].hal_srng,
+			       RXDMA_MONITOR_DESC);
 #endif
-			htt_srng_setup(soc->htt_handle, mac_for_pdev,
-				pdev->rxdma_err_dst_ring[mac_id].hal_srng,
-				RXDMA_DST);
-		}
+		htt_srng_setup(soc->htt_handle, mac_for_pdev,
+			       soc->rxdma_err_dst_ring[lmac_id].hal_srng,
+			       RXDMA_DST);
 	}
 
 	/* Configure LMAC rings in Polled mode */
@@ -4742,11 +4755,19 @@ dp_rxdma_ring_sel_cfg(struct dp_soc *soc)
 			continue;
 
 		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
-					pdev->pdev_id);
+			int mac_for_pdev =
+				dp_get_mac_id_for_pdev(mac_id, pdev->pdev_id);
+			/*
+			 * Obtain lmac id from pdev to access the LMAC ring
+			 * in soc context
+			 */
+			int lmac_id =
+				dp_get_lmac_id_for_pdev_id(soc, mac_id,
+							   pdev->pdev_id);
 
 			htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-					    pdev->rx_refill_buf_ring.hal_srng,
+					    soc->rx_refill_buf_ring[lmac_id].
+					    hal_srng,
 					    RXDMA_BUF, RX_BUFFER_SIZE,
 					    &htt_tlv_filter);
 		}
@@ -6494,7 +6515,7 @@ static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(
  * dp_monitor_mode_ring_config() - Send the tlv config to fw for monitor buffer
  *                                 ring based on target
  * @soc: soc handle
- * @mac_for_pdev: pdev_id
+ * @mac_for_pdev: WIN- pdev_id, MCL- mac id
  * @pdev: physical device handle
  * @ring_num: mac id
  * @htt_tlv_filter: tlv filter
@@ -6510,7 +6531,7 @@ QDF_STATUS dp_monitor_mode_ring_config(struct dp_soc *soc, uint8_t mac_for_pdev,
 
 	if (soc->wlan_cfg_ctx->rxdma1_enable)
 		status = htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-					     pdev->rxdma_mon_buf_ring[ring_num]
+					     soc->rxdma_mon_buf_ring[ring_num]
 					     .hal_srng,
 					     RXDMA_MONITOR_BUF, RX_BUFFER_SIZE,
 					     &htt_tlv_filter);
@@ -6555,9 +6576,13 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
-
+		/*
+		 * Obtain lmac id from pdev to access the ring in soc
+		 * context
+		 */
+		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
 		status = dp_monitor_mode_ring_config(soc, mac_for_pdev,
-						     pdev, mac_id,
+						     pdev, lmac_id,
 						     htt_tlv_filter);
 
 		if (status != QDF_STATUS_SUCCESS) {
@@ -6567,9 +6592,10 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 		}
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-			    pdev->rxdma_mon_status_ring[mac_id].hal_srng,
-			    RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE,
-			    &htt_tlv_filter);
+				    soc->rxdma_mon_status_ring[lmac_id]
+				    .hal_srng,
+				    RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE,
+				    &htt_tlv_filter);
 	}
 
 	pdev->monitor_vdev = NULL;
@@ -6719,9 +6745,14 @@ QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+		/*
+		 * Obtain lmac id from pdev to access the LMAC ring in soc
+		 * context
+		 */
+		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
 
 		status = dp_monitor_mode_ring_config(soc, mac_for_pdev,
-						     pdev, mac_id,
+						     pdev, lmac_id,
 						     htt_tlv_filter);
 
 		if (status != QDF_STATUS_SUCCESS) {
@@ -6778,8 +6809,13 @@ QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 	htt_tlv_filter.offset_valid = false;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
-						pdev->pdev_id);
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+		/*
+		 * Obtain lmac id from pdev to access the LMAC ring in soc
+		 * context
+		 */
+		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
+
 		/*
 		 * If two back to back HTT msg sending happened in
 		 * short time, the second HTT msg source SRNG HP
@@ -6795,8 +6831,10 @@ QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 			qdf_udelay(100);
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
-			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
+				    soc->rxdma_mon_status_ring[lmac_id]
+				    .hal_srng,
+				    RXDMA_MONITOR_STATUS,
+				    RX_BUFFER_SIZE, &htt_tlv_filter);
 	}
 
 	return status;
@@ -6906,9 +6944,14 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+		/*
+		 * Obtain lmac id from pdev to access the LMAC ring in soc
+		 * context
+		 */
+		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
 
 		status = dp_monitor_mode_ring_config(soc, mac_for_pdev,
-						     pdev, mac_id,
+						     pdev, lmac_id,
 						     htt_tlv_filter);
 
 		if (status != QDF_STATUS_SUCCESS) {
@@ -6917,7 +6960,7 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 		}
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			soc->rxdma_mon_status_ring[lmac_id].hal_srng,
 			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
 	}
 
@@ -6952,9 +6995,14 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+		/*
+		 * Obtain lmac id from pdev to access the LMAC ring in soc
+		 * context
+		 */
+		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
 
 		status = dp_monitor_mode_ring_config(soc, mac_for_pdev,
-						     pdev, mac_id,
+						     pdev, lmac_id,
 						     htt_tlv_filter);
 
 		if (status != QDF_STATUS_SUCCESS) {
@@ -6991,11 +7039,19 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	htt_tlv_filter.offset_valid = false;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
-						pdev->pdev_id);
+		int mac_for_pdev =
+			dp_get_mac_id_for_pdev(mac_id,
+					       pdev->pdev_id);
+		/*
+		 * Obtain lmac id from pdev to access the LMAC ring in soc
+		 * context
+		 */
+		int lmac_id =
+			dp_get_lmac_id_for_pdev_id(soc,
+						   mac_id, pdev->pdev_id);
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			soc->rxdma_mon_status_ring[lmac_id].hal_srng,
 			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
 	}
 
@@ -7685,11 +7741,18 @@ dp_ppdu_ring_reset(struct dp_pdev *pdev)
 	qdf_mem_zero(&(htt_tlv_filter), sizeof(htt_tlv_filter));
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
-							pdev->pdev_id);
+		int mac_for_pdev =
+			dp_get_mac_id_for_pdev(mac_id, pdev->pdev_id);
+		/*
+		 * Obtain lmac id from pdev to access the LMAC ring in soc
+		 * context
+		 */
+		int lmac_id =
+			dp_get_lmac_id_for_pdev_id(pdev->soc,
+						   mac_id, pdev->pdev_id);
 
 		htt_h2t_rx_ring_cfg(pdev->soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			pdev->soc->rxdma_mon_status_ring[lmac_id].hal_srng,
 			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
 	}
 }
@@ -7743,9 +7806,16 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
 						pdev->pdev_id);
+		/*
+		 * Obtain lmac id from pdev to access the LMAC ring in soc
+		 * context
+		 */
+		int lmac_id =
+			dp_get_lmac_id_for_pdev_id(pdev->soc,
+						   mac_id, pdev->pdev_id);
 
 		htt_h2t_rx_ring_cfg(pdev->soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			pdev->soc->rxdma_mon_status_ring[lmac_id].hal_srng,
 			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
 	}
 }
@@ -9072,24 +9142,48 @@ dp_soc_set_dp_txrx_handle(struct cdp_soc *soc_handle, void *txrx_handle)
  * @soc_hdl: datapath soc handle
  * @pdev_id: id of the datapath pdev handle
  * @lmac_id: lmac id
+ * @mode_change: flag to indicate a mode change
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-dp_soc_map_pdev_to_lmac(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
-			uint32_t lmac_id)
+dp_soc_map_pdev_to_lmac
+	(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+	 uint32_t lmac_id, bool mode_change)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc,
 								  pdev_id);
+	struct dp_vdev *vdev = NULL;
+	int hw_pdev_id;
 
 	if (qdf_unlikely(!pdev))
 		return QDF_STATUS_E_FAILURE;
 
 	pdev->lmac_id = lmac_id;
-	wlan_cfg_set_hw_macid(soc->wlan_cfg_ctx,
-			      pdev_id,
-			      (lmac_id + 1));
+	dp_info(" mode change %d %d\n", pdev->pdev_id, pdev->lmac_id);
+
+	if (!mode_change) {
+		wlan_cfg_set_hw_mac_idx(soc->wlan_cfg_ctx,
+					pdev->pdev_id,
+					lmac_id);
+	}
+
+	/*Set host PDEV ID for lmac_id*/
+	wlan_cfg_set_pdev_idx(soc->wlan_cfg_ctx,
+			      pdev->pdev_id,
+			      lmac_id);
+
+	hw_pdev_id =
+		dp_get_target_pdev_id_for_host_pdev_id(soc,
+						       pdev->pdev_id);
+
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		HTT_TX_TCL_METADATA_PDEV_ID_SET(vdev->htt_tcl_metadata,
+						hw_pdev_id);
+	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -10934,17 +11028,26 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {
+					int pdev_id = pdev->pdev_id;
 					int mac_for_pdev =
-						dp_get_mac_id_for_pdev(mac_id,
-								pdev->pdev_id);
+					dp_get_mac_id_for_pdev(mac_id,
+							       pdev_id);
+					/*
+					 * Obtain LMAC id from pdev for
+					 * accessing LMAC ring from SOC
+					 */
+					int lmac_id =
+					dp_get_lmac_id_for_pdev_id(soc,
+								   mac_id,
+								   pdev_id);
 
 					htt_h2t_rx_ring_cfg(soc->htt_handle,
-					 mac_for_pdev,
-					 pdev->rxdma_mon_status_ring[mac_id]
-					 .hal_srng,
-					 RXDMA_MONITOR_STATUS,
-					 RX_BUFFER_SIZE,
-					 &htt_tlv_filter);
+					mac_for_pdev,
+					soc->rxdma_mon_status_ring[lmac_id]
+					.hal_srng,
+					RXDMA_MONITOR_STATUS,
+					RX_BUFFER_SIZE,
+					&htt_tlv_filter);
 
 				}
 
@@ -10982,13 +11085,22 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {
+					int pdev_id = pdev->pdev_id;
 					int mac_for_pdev =
-						dp_get_mac_id_for_pdev(mac_id,
-								pdev->pdev_id);
+					dp_get_mac_id_for_pdev(mac_id,
+							       pdev_id);
+					/*
+					 * Obtain lmac id from pdev to access
+					 * the LMAC ring in soc context
+					 */
+					int lmac_id =
+					dp_get_lmac_id_for_pdev_id(soc,
+								   mac_id,
+								   pdev_id);
 
 					htt_h2t_rx_ring_cfg(soc->htt_handle,
 					mac_for_pdev,
-					pdev->rxdma_mon_status_ring[mac_id]
+					soc->rxdma_mon_status_ring[lmac_id]
 					.hal_srng,
 					RXDMA_MONITOR_STATUS,
 					RX_BUFFER_SIZE_PKTLOG_LITE,
@@ -11039,17 +11151,26 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {
+					int pdev_id = pdev->pdev_id;
 					int mac_for_pdev =
-						dp_get_mac_id_for_pdev(mac_id,
-								pdev->pdev_id);
+					dp_get_mac_id_for_pdev(mac_id,
+							       pdev_id);
+					/*
+					 * Obtain lmac id from pdev to access
+					 * the LMAC ring in soc context
+					 */
+					int lmac_id =
+					dp_get_lmac_id_for_pdev_id(soc,
+								   mac_id,
+								   pdev_id);
 
 					htt_h2t_rx_ring_cfg(soc->htt_handle,
-					  mac_for_pdev,
-					  pdev->rxdma_mon_status_ring[mac_id]
-					  .hal_srng,
-					  RXDMA_MONITOR_STATUS,
-					  RX_BUFFER_SIZE,
-					  &htt_tlv_filter);
+					mac_for_pdev,
+					soc->rxdma_mon_status_ring[lmac_id]
+					.hal_srng,
+					RXDMA_MONITOR_STATUS,
+					RX_BUFFER_SIZE,
+					&htt_tlv_filter);
 				}
 
 				if (soc->reap_timer_init)

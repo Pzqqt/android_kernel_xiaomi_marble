@@ -447,7 +447,7 @@ struct cdp_cmn_ops {
 			void *dp_txrx_handle);
 
 	QDF_STATUS (*map_pdev_to_lmac)(ol_txrx_soc_handle soc, uint8_t pdev_id,
-				       uint32_t lmac_id);
+				       uint32_t lmac_id, bool mode_change);
 
 	QDF_STATUS (*set_pdev_status_down)(struct cdp_soc_t *soc_handle,
 					   uint8_t pdev_id, bool is_pdev_down);

@@ -3722,6 +3722,7 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
  */
 QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 {
+	int pdev_id;
 	/*
 	 * Fill HTT TCL Metadata with Vdev ID and MAC ID
 	 */
@@ -3731,8 +3732,10 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 	HTT_TX_TCL_METADATA_VDEV_ID_SET(vdev->htt_tcl_metadata,
 			vdev->vdev_id);
 
-	HTT_TX_TCL_METADATA_PDEV_ID_SET(vdev->htt_tcl_metadata,
-			DP_SW2HW_MACID(vdev->pdev->pdev_id));
+	pdev_id =
+		dp_get_target_pdev_id_for_host_pdev_id(vdev->pdev->soc,
+						       vdev->pdev->pdev_id);
+	HTT_TX_TCL_METADATA_PDEV_ID_SET(vdev->htt_tcl_metadata, pdev_id);
 
 	/*
 	 * Set HTT Extension Valid bit to 0 by default

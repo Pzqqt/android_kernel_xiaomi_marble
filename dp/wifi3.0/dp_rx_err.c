@@ -1303,7 +1303,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 				reo_error[HAL_REO_ERR_PN_CHECK_FAILED],
 				1);
 			/* increment @pdev level */
-			dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 			if (dp_pdev)
 				DP_STATS_INC(dp_pdev, err.reo_error, 1);
 			count = dp_rx_pn_error_handle(soc,
@@ -1322,7 +1322,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 				reo_error[HAL_REO_ERR_REGULAR_FRAME_2K_JUMP],
 				1);
 			/* increment @pdev level */
-			dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 			if (dp_pdev)
 				DP_STATS_INC(dp_pdev, err.reo_error, 1);
 
@@ -1348,8 +1348,8 @@ done:
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		if (rx_bufs_reaped[mac_id]) {
-			dp_pdev = soc->pdev_list[mac_id];
-			dp_rxdma_srng = &dp_pdev->rx_refill_buf_ring;
+			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
+			dp_rxdma_srng = &soc->rx_refill_buf_ring[mac_id];
 			rx_desc_pool = &soc->rx_desc_buf[mac_id];
 
 			dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
@@ -1489,8 +1489,8 @@ done:
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		if (rx_bufs_reaped[mac_id]) {
-			dp_pdev = soc->pdev_list[mac_id];
-			dp_rxdma_srng = &dp_pdev->rx_refill_buf_ring;
+			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
+			dp_rxdma_srng = &soc->rx_refill_buf_ring[mac_id];
 			rx_desc_pool = &soc->rx_desc_buf[mac_id];
 
 			dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
@@ -1537,7 +1537,7 @@ done:
 					[wbm_err_info.reo_err_code], 1);
 				/* increment @pdev level */
 				pool_id = wbm_err_info.pool_id;
-				dp_pdev = dp_get_pdev_for_mac_id(soc, pool_id);
+				dp_pdev = dp_get_pdev_for_lmac_id(soc, pool_id);
 				if (dp_pdev)
 					DP_STATS_INC(dp_pdev, err.reo_error,
 						     1);
@@ -1600,7 +1600,7 @@ done:
 					[wbm_err_info.rxdma_err_code], 1);
 				/* increment @pdev level */
 				pool_id = wbm_err_info.pool_id;
-				dp_pdev = dp_get_pdev_for_mac_id(soc, pool_id);
+				dp_pdev = dp_get_pdev_for_lmac_id(soc, pool_id);
 				if (dp_pdev)
 					DP_STATS_INC(dp_pdev,
 						     err.rxdma_error, 1);
@@ -1728,7 +1728,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t push_reason;
 	uint8_t rxdma_error_code = 0;
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
-	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	hal_rxdma_desc_t ring_desc;
 
@@ -1843,8 +1843,7 @@ uint32_t
 dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		     uint32_t mac_id, uint32_t quota)
 {
-	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
-	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
+	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	hal_rxdma_desc_t rxdma_dst_ring_desc;
 	hal_soc_handle_t hal_soc;
 	void *err_dst_srng;
@@ -1858,7 +1857,7 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	if (!pdev)
 		return 0;
 
-	err_dst_srng = pdev->rxdma_err_dst_ring[mac_for_pdev].hal_srng;
+	err_dst_srng = soc->rxdma_err_dst_ring[mac_id].hal_srng;
 
 	if (!err_dst_srng) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1891,7 +1890,7 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	dp_srng_access_end(int_ctx, soc, err_dst_srng);
 
 	if (rx_bufs_used) {
-		dp_rxdma_srng = &pdev->rx_refill_buf_ring;
+		dp_rxdma_srng = &soc->rx_refill_buf_ring[mac_id];
 		rx_desc_pool = &soc->rx_desc_buf[mac_id];
 
 		dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
@@ -2044,7 +2043,7 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 
 		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED], 1);
 		dp_pdev = soc->pdev_list[pool_id];
-		dp_rxdma_srng = &dp_pdev->rx_refill_buf_ring;
+		dp_rxdma_srng = &soc->rx_refill_buf_ring[pool_id];
 		rx_desc_pool = &soc->rx_desc_buf[pool_id];
 
 		dp_rx_buffers_replenish(soc, pool_id, dp_rxdma_srng,

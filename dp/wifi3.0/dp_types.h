@@ -907,6 +907,32 @@ struct dp_soc {
 	/* PDEVs on this SOC */
 	struct dp_pdev *pdev_list[MAX_PDEV_CNT];
 
+	/* Ring used to replenish rx buffers (maybe to the firmware of MAC) */
+	struct dp_srng rx_refill_buf_ring[MAX_PDEV_CNT];
+
+	struct dp_srng rxdma_mon_desc_ring[MAX_NUM_LMAC_HW];
+
+	/* RXDMA error destination ring */
+	struct dp_srng rxdma_err_dst_ring[MAX_NUM_LMAC_HW];
+
+	/* Link descriptor memory banks */
+	struct {
+		void *base_vaddr_unaligned;
+		void *base_vaddr;
+		qdf_dma_addr_t base_paddr_unaligned;
+		qdf_dma_addr_t base_paddr;
+		uint32_t size;
+	} mon_link_desc_banks[MAX_NUM_LMAC_HW][MAX_MON_LINK_DESC_BANKS];
+
+	/* RXDMA monitor buffer replenish ring */
+	struct dp_srng rxdma_mon_buf_ring[MAX_NUM_LMAC_HW];
+
+	/* RXDMA monitor destination ring */
+	struct dp_srng rxdma_mon_dst_ring[MAX_NUM_LMAC_HW];
+
+	/* RXDMA monitor status ring. TBD: Check format of this ring */
+	struct dp_srng rxdma_mon_status_ring[MAX_NUM_LMAC_HW];
+
 	/* Number of PDEVs */
 	uint8_t pdev_count;
 
@@ -1406,32 +1432,6 @@ struct dp_pdev {
 
 	/* TXRX SOC handle */
 	struct dp_soc *soc;
-
-	/* Ring used to replenish rx buffers (maybe to the firmware of MAC) */
-	struct dp_srng rx_refill_buf_ring;
-
-	/* RXDMA error destination ring */
-	struct dp_srng rxdma_err_dst_ring[NUM_RXDMA_RINGS_PER_PDEV];
-
-	/* Link descriptor memory banks */
-	struct {
-		void *base_vaddr_unaligned;
-		void *base_vaddr;
-		qdf_dma_addr_t base_paddr_unaligned;
-		qdf_dma_addr_t base_paddr;
-		uint32_t size;
-	} link_desc_banks[NUM_RXDMA_RINGS_PER_PDEV][MAX_MON_LINK_DESC_BANKS];
-
-	/* RXDMA monitor buffer replenish ring */
-	struct dp_srng rxdma_mon_buf_ring[NUM_RXDMA_RINGS_PER_PDEV];
-
-	/* RXDMA monitor destination ring */
-	struct dp_srng rxdma_mon_dst_ring[NUM_RXDMA_RINGS_PER_PDEV];
-
-	/* RXDMA monitor status ring. TBD: Check format of this ring */
-	struct dp_srng rxdma_mon_status_ring[NUM_RXDMA_RINGS_PER_PDEV];
-
-	struct dp_srng rxdma_mon_desc_ring[NUM_RXDMA_RINGS_PER_PDEV];
 
 	/* Stuck count on monitor destination ring MPDU process */
 	uint32_t mon_dest_ring_stuck_cnt;

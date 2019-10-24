@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -96,13 +96,15 @@ static void dp_rx_return_head_frag_desc(struct dp_peer *peer,
 	struct rx_desc_pool *rx_desc_pool;
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
+	uint8_t pool_id;
 
 	pdev = peer->vdev->pdev;
 	soc = pdev->soc;
 
 	if (peer->rx_tid[tid].head_frag_desc) {
-		dp_rxdma_srng = &pdev->rx_refill_buf_ring;
-		rx_desc_pool = &soc->rx_desc_buf[pdev->pdev_id];
+		pool_id = peer->rx_tid[tid].head_frag_desc->pool_id;
+		dp_rxdma_srng = &soc->rx_refill_buf_ring[pool_id];
+		rx_desc_pool = &soc->rx_desc_buf[pool_id];
 
 		dp_rx_add_to_free_desc_list(&head, &tail,
 					    peer->rx_tid[tid].head_frag_desc);
