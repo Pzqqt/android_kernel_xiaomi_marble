@@ -116,13 +116,13 @@
  * <ini>
  * gEnableDynamicDTIM - Enable Dynamic DTIM
  * @Min: 0
- * @Max: 9
+ * @Max: 10
  * @Default: 0
  *
  * This ini is used to enable/disable dynamic DTIM.
  *
  * 0 - Disable Dynamic DTIM
- * 1 to 5 - SLM will switch to DTIM specified here when host suspends and
+ * 1 to 10 - SLM will switch to DTIM specified here when host suspends and
  *          switch DTIM1 when host resumes
  *
  * Usage: External
@@ -132,7 +132,7 @@
 #define CFG_PMO_ENABLE_DYNAMIC_DTIM CFG_INI_UINT( \
 	"gEnableDynamicDTIM", \
 	0, \
-	9, \
+	10, \
 	0, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Enable Dynamic DTIM")
