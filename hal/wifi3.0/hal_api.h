@@ -24,7 +24,8 @@
 #include "qdf_atomic.h"
 #include "hal_internal.h"
 #define MAX_UNWINDOWED_ADDRESS 0x80000
-#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490)
+#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
+	defined(QCA_WIFI_QCN9000)
 #define WINDOW_ENABLE_BIT 0x40000000
 #else
 #define WINDOW_ENABLE_BIT 0x80000000
