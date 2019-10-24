@@ -59,7 +59,9 @@
  * probably always be appropriate; it is probably not necessary to
  * determine this value dynamically.
  */
+#ifndef CFG_TGT_AST_SKID_LIMIT
 #define CFG_TGT_AST_SKID_LIMIT          6
+#endif
 /*
  * total number of peers per device.
  * currently set to 8 to bring up IP3.9 for memory size problem
