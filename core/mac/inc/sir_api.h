@@ -5689,15 +5689,29 @@ struct set_pcl_req {
 	enum band_info band;
 };
 
+#ifdef WLAN_FEATURE_MOTION_DETECTION
 /**
  * struct sir_md_evt - motion detection event status
  * @vdev_id: vdev id
  * @status: md event status
  */
-#ifdef WLAN_FEATURE_MOTION_DETECTION
 struct sir_md_evt {
 	uint8_t vdev_id;
 	uint32_t status;
+};
+
+/**
+ * struct sir_md_bl_evt - motion detection baseline event values
+ * @vdev_id: vdev id
+ * @bl_baseline_value: baseline correlation value calculated during baselining
+ * @bl_max_corr_reserved: max corr value obtained during baselining phase in %
+ * @bl_min_corr_reserved: min corr value obtained during baselining phase in %
+ */
+struct sir_md_bl_evt {
+	uint8_t vdev_id;
+	uint32_t bl_baseline_value;
+	uint32_t bl_max_corr_reserved;
+	uint32_t bl_min_corr_reserved;
 };
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 

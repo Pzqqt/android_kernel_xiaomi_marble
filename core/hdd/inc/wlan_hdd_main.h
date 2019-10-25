@@ -1306,6 +1306,8 @@ struct hdd_adapter {
 
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 	bool motion_detection_mode;
+	bool motion_det_cfg;
+	uint32_t motion_det_baseline_value;
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 };
 
@@ -3757,6 +3759,18 @@ void wlan_hdd_send_tcp_param_update_event(struct hdd_context *hdd_ctx,
  * QDF_STATUS_E_FAILURE on failure
  */
 QDF_STATUS hdd_md_host_evt_cb(void *ctx, struct sir_md_evt *event);
+
+/**
+ * hdd_md_bl_evt_cb - Callback for Motion Detection Baseline Event
+ * @ctx: HDD context
+ * @sir_md_bl_evt: motion detect baseline event
+ *
+ * Callback for Motion Detection Baseline Event
+ *
+ * Return: QDF_STATUS QDF_STATUS_SUCCESS on Success and
+ * QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS hdd_md_bl_evt_cb(void *ctx, struct sir_md_bl_evt *event);
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 
 /**

@@ -5477,6 +5477,17 @@ static int hdd_we_motion_det_start_stop(struct hdd_adapter *adapter, int value)
 		hdd_err("Invalid value %d in mt_start", value);
 		return -EINVAL;
 	}
+
+	if (!adapter->motion_det_cfg) {
+		hdd_err("Motion Detection config values not available");
+		return -EINVAL;
+	}
+
+	if (!adapter->motion_det_baseline_value) {
+		hdd_err("Motion Detection Baselining not started/completed");
+		return -EAGAIN;
+	}
+
 	motion_det.vdev_id = adapter->vdev_id;
 	motion_det.enable = value;
 
@@ -8071,6 +8082,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		motion_det_cfg.md_fine_thr_low = apps_args[13];
 		adapter->motion_detection_mode = apps_args[14];
 		sme_motion_det_config(hdd_ctx->mac_handle, &motion_det_cfg);
+		adapter->motion_det_cfg =  true;
 	}
 	break;
 	case WE_MOTION_DET_BASE_LINE_CONFIG_PARAM:

@@ -15529,6 +15529,32 @@ void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id)
 
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 /**
+ * sme_set_md_bl_evt_cb - Register/set motion detection baseline callback
+ * @mac_handle: mac handle
+ * @callback_fn: callback function pointer
+ * @hdd_ctx: hdd context
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_set_md_bl_evt_cb(
+	mac_handle_t mac_handle,
+	QDF_STATUS (*callback_fn)(void *ctx, struct sir_md_bl_evt *event),
+	void *hdd_ctx
+)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		mac->sme.md_bl_evt_cb = callback_fn;
+		mac->sme.md_ctx = hdd_ctx;
+		sme_release_global_lock(&mac->sme);
+	}
+	return qdf_status;
+}
+
+/**
  * sme_set_md_host_evt_cb - Register/set motion detection callback
  * @mac_handle: mac handle
  * @callback_fn: motion detection callback function pointer

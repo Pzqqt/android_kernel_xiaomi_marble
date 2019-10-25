@@ -7981,7 +7981,7 @@ int wma_motion_det_host_event_handler(void *handle, uint8_t *event,
 		 motion_det_event_hdr->vdev_id, motion_det_event_hdr->status);
 
 	md_event = qdf_mem_malloc(sizeof(*md_event));
-	if (!event)
+	if (!md_event)
 		return -ENOMEM;
 
 	md_event->vdev_id = motion_det_event_hdr->vdev_id;
@@ -8007,20 +8007,43 @@ int wma_motion_det_base_line_host_event_handler(void *handle,
 	wmi_motion_det_base_line_event *motion_det_base_line_event_hdr;
 	WMI_MOTION_DET_BASE_LINE_HOST_EVENTID_param_tlvs *param_buf =
 		(WMI_MOTION_DET_BASE_LINE_HOST_EVENTID_param_tlvs *)event;
+	struct sir_md_bl_evt *md_bl_event;
+	struct mac_context *pmac = (struct mac_context *)cds_get_context(
+				    QDF_MODULE_ID_PE);
 
 	if (!param_buf) {
-		WMA_LOGE("Invalid motion det base line event buffer");
+		WMA_LOGE("Invalid motion detection base line event buffer");
+		return -EINVAL;
+	}
+
+	if (!pmac || !pmac->sme.md_bl_evt_cb) {
+		WMA_LOGE("Invalid motion detection base line callback");
 		return -EINVAL;
 	}
 
 	motion_det_base_line_event_hdr = param_buf->fixed_param;
-	WMA_LOGA("motion host detect base line event received, vdev_id=%d",
+	WMA_LOGA("motion detection base line event received, vdev_id=%d",
 		 motion_det_base_line_event_hdr->vdev_id);
 	WMA_LOGA("baseline_value=%d bl_max_corr_resv=%d bl_min_corr_resv=%d",
 		 motion_det_base_line_event_hdr->bl_baseline_value,
 		 motion_det_base_line_event_hdr->bl_max_corr_reserved,
 		 motion_det_base_line_event_hdr->bl_min_corr_reserved);
 
+	md_bl_event = qdf_mem_malloc(sizeof(*md_bl_event));
+	if (!md_bl_event)
+		return -ENOMEM;
+
+	md_bl_event->vdev_id = motion_det_base_line_event_hdr->vdev_id;
+	md_bl_event->bl_baseline_value =
+			motion_det_base_line_event_hdr->bl_baseline_value;
+	md_bl_event->bl_max_corr_reserved =
+			motion_det_base_line_event_hdr->bl_max_corr_reserved;
+	md_bl_event->bl_min_corr_reserved =
+			motion_det_base_line_event_hdr->bl_min_corr_reserved;
+
+	pmac->sme.md_bl_evt_cb(pmac->sme.md_ctx, md_bl_event);
+
+	qdf_mem_free(md_bl_event);
 	return 0;
 }
 

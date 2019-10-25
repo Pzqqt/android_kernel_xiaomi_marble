@@ -12818,15 +12818,13 @@ QDF_STATUS hdd_md_host_evt_cb(void *ctx, struct sir_md_evt *event)
 {
 	struct hdd_adapter *adapter = NULL;
 	struct hdd_context *hdd_ctx;
-	QDF_STATUS status;
 	struct sme_motion_det_en motion_det;
 
 	if (!ctx || !event)
 		return QDF_STATUS_E_INVAL;
 
 	hdd_ctx = (struct hdd_context *)ctx;
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status)
+	if (wlan_hdd_validate_context(hdd_ctx))
 		return QDF_STATUS_E_INVAL;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, event->vdev_id);
@@ -12844,6 +12842,42 @@ QDF_STATUS hdd_md_host_evt_cb(void *ctx, struct sir_md_evt *event)
 		hdd_debug("Motion Detect CB -> Enable Motion Detection again");
 		sme_motion_det_enable(hdd_ctx->mac_handle, &motion_det);
 	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_md_bl_evt_cb - Callback for Motion Detection Baseline Event
+ * @ctx: HDD context
+ * @event: motion detect baseline event
+ *
+ * Callback for Motion Detection Baseline completion
+ *
+ * Return: QDF_STATUS QDF_STATUS_SUCCESS on Success and
+ * QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS hdd_md_bl_evt_cb(void *ctx, struct sir_md_bl_evt *event)
+{
+	struct hdd_adapter *adapter = NULL;
+	struct hdd_context *hdd_ctx;
+
+	if (!ctx || !event)
+		return QDF_STATUS_E_INVAL;
+
+	hdd_ctx = (struct hdd_context *)ctx;
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return QDF_STATUS_E_INVAL;
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, event->vdev_id);
+	if (!adapter || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+		hdd_err("Invalid adapter or adapter has invalid magic");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	hdd_debug("Motion Detection Baseline CB vdev id=%u, baseline val = %d",
+		  event->vdev_id, event->bl_baseline_value);
+
+	adapter->motion_det_baseline_value = event->bl_baseline_value;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -12931,6 +12965,7 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 	sme_set_md_host_evt_cb(mac_handle, hdd_md_host_evt_cb, (void *)hdd_ctx);
+	sme_set_md_bl_evt_cb(mac_handle, hdd_md_bl_evt_cb, (void *)hdd_ctx);
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 
 	hdd_exit();

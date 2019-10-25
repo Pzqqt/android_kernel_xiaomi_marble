@@ -3712,14 +3712,29 @@ QDF_STATUS sme_motion_det_base_line_enable(
  *
  * Return: QDF_STATUS_SUCCESS or non-zero on failure
  */
-
 QDF_STATUS sme_set_md_host_evt_cb
 (
 	mac_handle_t mac_handle,
 	QDF_STATUS (*callback_fn)(void *ctx, struct sir_md_evt *event),
 	void *hdd_ctx
 );
+
+/**
+ * sme_set_md_bl_evt_cb - Register/set motion detection baseline callback
+ * @mac_handle: mac handle
+ * @callback_fn: callback function pointer
+ * @hdd_ctx: hdd context
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_set_md_bl_evt_cb
+(
+	mac_handle_t mac_handle,
+	QDF_STATUS (*callback_fn)(void *ctx, struct sir_md_bl_evt *event),
+	void *hdd_ctx
+);
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+
 #ifdef FW_THERMAL_THROTTLE_SUPPORT
 /**
  * sme_set_thermal_throttle_cfg() - SME API to set the thermal throttle
