@@ -3257,13 +3257,14 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	if (rc)
 		DSI_ERR("failed to parse dfps configuration, rc=%d\n", rc);
 
-	if (!(panel->dfps_caps.dfps_support)) {
-		/* qsync and dfps are mutually exclusive features */
-		rc = dsi_panel_parse_qsync_caps(panel, of_node);
-		if (rc)
-			DSI_DEBUG("failed to parse qsync features, rc=%d\n",
-					rc);
-	}
+	rc = dsi_panel_parse_qsync_caps(panel, of_node);
+	if (rc)
+		DSI_DEBUG("failed to parse qsync features, rc=%d\n", rc);
+
+	/* allow qsync support only if DFPS is with VFP approach */
+	if ((panel->dfps_caps.dfps_support) &&
+	    !(panel->dfps_caps.type == DSI_DFPS_IMMEDIATE_VFP))
+		panel->qsync_min_fps = 0;
 
 	rc = dsi_panel_parse_dyn_clk_caps(panel);
 	if (rc)

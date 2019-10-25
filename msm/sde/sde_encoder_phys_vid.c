@@ -332,7 +332,7 @@ static void _sde_encoder_phys_vid_setup_avr(
 			return;
 		}
 
-		if (qsync_min_fps >= default_fps) {
+		if (qsync_min_fps > default_fps) {
 			SDE_ERROR_VIDENC(vid_enc,
 				"qsync fps %d must be less than default %d\n",
 				qsync_min_fps, default_fps);
@@ -977,9 +977,6 @@ static int sde_encoder_phys_vid_prepare_for_kickoff(
 		vid_enc->error_count = 0;
 	}
 
-	if (sde_connector_is_qsync_updated(phys_enc->connector))
-		_sde_encoder_phys_vid_avr_ctrl(phys_enc);
-
 	return rc;
 }
 
@@ -1124,6 +1121,20 @@ static void sde_encoder_phys_vid_handle_post_kickoff(
 	}
 }
 
+static void sde_encoder_phys_vid_prepare_for_commit(
+		struct sde_encoder_phys *phys_enc)
+{
+
+	if (!phys_enc) {
+		SDE_ERROR("invalid encoder parameters\n");
+		return;
+	}
+
+	if (sde_connector_is_qsync_updated(phys_enc->connector))
+		_sde_encoder_phys_vid_avr_ctrl(phys_enc);
+
+}
+
 static void sde_encoder_phys_vid_irq_control(struct sde_encoder_phys *phys_enc,
 		bool enable)
 {
@@ -1258,6 +1269,7 @@ static void sde_encoder_phys_vid_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->get_wr_line_count = sde_encoder_phys_vid_get_line_count;
 	ops->wait_dma_trigger = sde_encoder_phys_vid_wait_dma_trigger;
 	ops->wait_for_active = sde_encoder_phys_vid_wait_for_active;
+	ops->prepare_commit = sde_encoder_phys_vid_prepare_for_commit;
 }
 
 struct sde_encoder_phys *sde_encoder_phys_vid_init(

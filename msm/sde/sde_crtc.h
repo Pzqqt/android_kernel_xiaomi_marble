@@ -714,6 +714,25 @@ static inline int sde_crtc_get_secure_level(struct drm_crtc *crtc,
 			CRTC_PROP_SECURITY_LEVEL);
 }
 
+/** sde_crtc_atomic_check_has_modeset - checks if the new_crtc_state in the
+ *	drm_atomic_state has a modeset
+ * @state : pointer to drm_atomic_state
+ * @crtc : Pointer to drm crtc structure
+ * Returns true if crtc has modeset
+ */
+static inline bool sde_crtc_atomic_check_has_modeset(
+	struct drm_atomic_state *state, struct drm_crtc *crtc)
+{
+	struct drm_crtc_state *crtc_state;
+
+	if (!state || !crtc)
+		return false;
+
+	crtc_state = drm_atomic_get_new_crtc_state(state,
+					crtc);
+	return (crtc_state && drm_atomic_crtc_needs_modeset(crtc_state));
+}
+
 /**
  * sde_crtc_get_secure_transition - determines the operations to be
  * performed before transitioning to secure state
