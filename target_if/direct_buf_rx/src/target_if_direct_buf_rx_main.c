@@ -119,6 +119,69 @@ static QDF_STATUS populate_dbr_cap_mod_param(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+#ifdef DIRECT_BUF_RX_DEBUG
+static inline struct direct_buf_rx_module_debug *target_if_get_dbr_mod_debug(
+	struct wlan_objmgr_pdev *pdev,
+	uint8_t mod_id)
+{
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
+
+	if (!pdev) {
+		direct_buf_rx_err("pdev is null");
+		return NULL;
+	}
+
+	if (mod_id >= DBR_MODULE_MAX) {
+		direct_buf_rx_err("Invalid module id");
+		return NULL;
+	}
+
+	dbr_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj(
+				pdev, WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+
+	if (!dbr_pdev_obj) {
+		direct_buf_rx_err("dir buf rx object is null");
+		return NULL;
+	}
+
+	if (!dbr_pdev_obj->dbr_mod_debug) {
+		direct_buf_rx_err("dbr_pdev_obj->dbr_mod_debug is NULL");
+		return NULL;
+	}
+
+	if (mod_id >= dbr_pdev_obj->num_modules) {
+		direct_buf_rx_err("Module %d not supported in target", mod_id);
+		return NULL;
+	}
+	return &dbr_pdev_obj->dbr_mod_debug[mod_id];
+}
+#endif
+
+#ifdef DIRECT_BUF_RX_DEBUG
+static inline QDF_STATUS target_if_direct_buf_rx_alloc_mod_debug(
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj)
+{
+	if (!dbr_pdev_obj) {
+		direct_buf_rx_err("dir buf rx object is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+	/* Allocate the debug data structure for each module */
+	dbr_pdev_obj->dbr_mod_debug = qdf_mem_malloc(
+				dbr_pdev_obj->num_modules *
+				sizeof(struct direct_buf_rx_module_debug));
+
+	if (!dbr_pdev_obj->dbr_mod_debug)
+		return QDF_STATUS_E_NOMEM;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS target_if_direct_buf_rx_alloc_mod_debug(
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DIRECT_BUF_RX_DEBUG */
 
 QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 	struct wlan_objmgr_pdev *pdev, void *data)
@@ -176,16 +239,48 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 				sizeof(struct direct_buf_rx_module_param));
 
 	if (!dbr_pdev_obj->dbr_mod_param) {
-		 direct_buf_rx_err("alloc dbr mod param fail");
-		wlan_objmgr_pdev_component_obj_detach(pdev,
-					WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
-					dbr_pdev_obj);
-		qdf_mem_free(dbr_pdev_obj);
-		return QDF_STATUS_E_NOMEM;
+		direct_buf_rx_err("alloc dbr mod param fail");
+		goto dbr_mod_param_fail;
 	}
 
+	if (target_if_direct_buf_rx_alloc_mod_debug(dbr_pdev_obj) !=
+		QDF_STATUS_SUCCESS)
+		goto dbr_mod_debug_fail;
+
 	return QDF_STATUS_SUCCESS;
+
+dbr_mod_debug_fail:
+	qdf_mem_free(dbr_pdev_obj->dbr_mod_param);
+
+dbr_mod_param_fail:
+	wlan_objmgr_pdev_component_obj_detach(
+				pdev, WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
+				dbr_pdev_obj);
+	qdf_mem_free(dbr_pdev_obj);
+
+	return QDF_STATUS_E_NOMEM;
 }
+
+#ifdef DIRECT_BUF_RX_DEBUG
+static inline void target_if_direct_buf_rx_free_mod_debug(
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj)
+{
+	if (!dbr_pdev_obj) {
+		direct_buf_rx_err("dir buf rx object is null");
+		return;
+	}
+	/* Free the debug data structures of all modules */
+	if (dbr_pdev_obj->dbr_mod_debug) {
+		qdf_mem_free(dbr_pdev_obj->dbr_mod_debug);
+		dbr_pdev_obj->dbr_mod_debug = NULL;
+	}
+}
+#else
+static inline void target_if_direct_buf_rx_free_mod_debug(
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj)
+{
+}
+#endif /* DIRECT_BUF_RX_DEBUG */
 
 QDF_STATUS target_if_direct_buf_rx_pdev_destroy_handler(
 	struct wlan_objmgr_pdev *pdev, void *data)
@@ -209,11 +304,18 @@ QDF_STATUS target_if_direct_buf_rx_pdev_destroy_handler(
 
 	num_modules = dbr_pdev_obj->num_modules;
 	for (mod_idx = 0; mod_idx < num_modules; mod_idx++) {
+		/*
+		 * If the module didn't stop the ring debug by this time,
+		 * it will result in memory leak of its ring debug entries.
+		 * So, stop the ring debug
+		 */
+		target_if_dbr_stop_ring_debug(pdev, mod_idx);
 		for (srng_id = 0; srng_id < DBR_SRNG_NUM; srng_id++)
 			target_if_deinit_dbr_ring(pdev, dbr_pdev_obj,
 						  mod_idx, srng_id);
 	}
 
+	target_if_direct_buf_rx_free_mod_debug(dbr_pdev_obj);
 	qdf_mem_free(dbr_pdev_obj->dbr_mod_param);
 	dbr_pdev_obj->dbr_mod_param = NULL;
 
@@ -298,6 +400,92 @@ QDF_STATUS target_if_direct_buf_rx_psoc_destroy_handler(
 
 	return status;
 }
+
+#ifdef DIRECT_BUF_RX_DEBUG
+QDF_STATUS target_if_dbr_stop_ring_debug(struct wlan_objmgr_pdev *pdev,
+					 uint8_t mod_id)
+{
+	struct direct_buf_rx_module_debug *mod_debug;
+	struct direct_buf_rx_ring_debug *ring_debug;
+	uint8_t srng_id;
+
+	mod_debug = target_if_get_dbr_mod_debug(pdev, mod_id);
+	if (!mod_debug)
+		return QDF_STATUS_E_INVAL;
+
+	for (srng_id = 0; srng_id < DBR_SRNG_NUM; srng_id++) {
+		ring_debug = &mod_debug->dbr_ring_debug[srng_id];
+
+		qdf_mem_free(ring_debug->entries);
+		ring_debug->entries = NULL;
+		ring_debug->ring_debug_idx = 0;
+		ring_debug->num_ring_debug_entries = 0;
+		direct_buf_rx_info("DBR ring debug for module %d srng %d is now stopped",
+				   mod_id, srng_id);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_dbr_start_ring_debug(struct wlan_objmgr_pdev *pdev,
+					  uint8_t mod_id,
+					  uint32_t num_ring_debug_entries)
+{
+	struct direct_buf_rx_module_debug *mod_debug;
+	struct direct_buf_rx_ring_debug *ring_debug;
+	uint8_t srng_id;
+
+	mod_debug = target_if_get_dbr_mod_debug(pdev, mod_id);
+
+	if (!mod_debug)
+		return QDF_STATUS_E_INVAL;
+
+	if (num_ring_debug_entries > DIRECT_BUF_RX_MAX_RING_DEBUG_ENTRIES) {
+		direct_buf_rx_err("Requested number of ring debug entries(%d) exceed the maximum entries allowed(%d)",
+				  num_ring_debug_entries,
+				  DIRECT_BUF_RX_MAX_RING_DEBUG_ENTRIES);
+
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (srng_id = 0; srng_id < DBR_SRNG_NUM; srng_id++) {
+		ring_debug = &mod_debug->dbr_ring_debug[srng_id];
+
+		if (ring_debug->entries) {
+			direct_buf_rx_err("DBR ring debug for module %d srng %d was already enabled",
+					  mod_id, mod_debug);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		ring_debug->entries = qdf_mem_malloc(
+					num_ring_debug_entries *
+					sizeof(*ring_debug->entries));
+
+		if (!ring_debug->entries)
+			return QDF_STATUS_E_NOMEM;
+
+		ring_debug->ring_debug_idx = 0;
+		ring_debug->num_ring_debug_entries = num_ring_debug_entries;
+
+		direct_buf_rx_info("DBR ring debug for module %d srng %d is now started",
+				   mod_id, srng_id);
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS target_if_dbr_stop_ring_debug(struct wlan_objmgr_pdev *pdev,
+					 uint8_t mod_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_dbr_start_ring_debug(struct wlan_objmgr_pdev *pdev,
+					  uint8_t mod_id,
+					  uint32_t num_ring_debug_entries)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DIRECT_BUF_RX_DEBUG */
 
 static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 			struct direct_buf_rx_module_param *mod_param,
@@ -965,6 +1153,89 @@ dbr_get_pdev_and_srng_id(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 }
 #endif
 
+#ifdef DIRECT_BUF_RX_DEBUG
+/**
+ * target_if_dbr_add_ring_debug_entry() - Add a DBR ring debug entry
+ * @pdev: pointer to pdev object
+ * @mod_id: Module ID
+ * @event: ring debug event
+ *
+ * Log the given event, head and tail pointers of DBR ring of the given module
+ * into its ring debug data structure.
+ * Also, log the timestamp at the time of logging.
+ */
+static void target_if_dbr_add_ring_debug_entry(
+	struct wlan_objmgr_pdev *pdev,
+	uint32_t mod_id,
+	enum DBR_RING_DEBUG_EVENT event,
+	uint8_t srng_id)
+{
+	struct wlan_objmgr_psoc *psoc;
+	void *hal_soc, *srng;
+	uint32_t hp = 0, tp = 0;
+	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
+	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
+	struct direct_buf_rx_module_debug *mod_debug;
+	struct direct_buf_rx_module_param *mod_param;
+	struct direct_buf_rx_ring_debug *ring_debug;
+	struct direct_buf_rx_ring_debug_entry *entry;
+
+	mod_debug = target_if_get_dbr_mod_debug(pdev, mod_id);
+
+	if (!mod_debug)
+		return;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	dbr_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj(
+				pdev, WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+
+	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(
+				psoc, WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+
+	mod_param = &dbr_pdev_obj->dbr_mod_param[mod_id][srng_id];
+	if (!mod_param) {
+		direct_buf_rx_err("dir buf rx module param is null");
+		return;
+	}
+
+	hal_soc = dbr_psoc_obj->hal_soc;
+	dbr_ring_cfg = mod_param->dbr_ring_cfg;
+	srng = dbr_ring_cfg->srng;
+	ring_debug = &mod_debug->dbr_ring_debug[srng_id];
+
+	if (ring_debug->entries) {
+		if (hal_srng_access_start(hal_soc, srng)) {
+			direct_buf_rx_err("module %d - HAL srng access failed",
+					  mod_id);
+			return;
+		}
+		hal_get_sw_hptp(hal_soc, srng, &tp, &hp);
+		hal_srng_access_end(hal_soc, srng);
+		entry = &ring_debug->entries[ring_debug->ring_debug_idx];
+
+		entry->head_idx = hp;
+		entry->tail_idx = tp;
+		entry->timestamp = qdf_get_log_timestamp();
+		entry->event = event;
+
+		ring_debug->ring_debug_idx++;
+		if (ring_debug->ring_debug_idx ==
+			ring_debug->num_ring_debug_entries)
+			ring_debug->ring_debug_idx = 0;
+	}
+}
+#else
+static void target_if_dbr_add_ring_debug_entry(
+	struct wlan_objmgr_pdev *pdev,
+	uint32_t mod_id,
+	enum DBR_RING_DEBUG_EVENT event,
+	uint8_t srng_id)
+{
+}
+#endif /* DIRECT_BUF_RX_DEBUG */
+
 static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 						uint8_t *data_buf,
 						uint32_t data_len)
@@ -1074,10 +1345,20 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 				&dbr_data.meta_data) == QDF_STATUS_SUCCESS)
 				dbr_data.meta_data_valid = true;
 		}
+
+		target_if_dbr_add_ring_debug_entry(pdev, dbr_rsp.mod_id,
+						   DBR_RING_DEBUG_EVENT_RX,
+						   srng_id);
 		if (mod_param->dbr_rsp_handler(pdev, &dbr_data)) {
 			status = target_if_dbr_replenish_ring(pdev, mod_param,
 							      dbr_data.vaddr,
 							      cookie);
+
+			target_if_dbr_add_ring_debug_entry(
+				pdev, dbr_rsp.mod_id,
+				DBR_RING_DEBUG_EVENT_REPLENISH_RING,
+				srng_id);
+
 			if (QDF_IS_STATUS_ERROR(status)) {
 				direct_buf_rx_err("Ring replenish failed");
 				qdf_mem_free(dbr_rsp.dbr_entries);

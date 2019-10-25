@@ -163,6 +163,24 @@ QDF_STATUS direct_buf_rx_target_attach(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef DIRECT_BUF_RX_DEBUG
+static inline void
+target_if_direct_buf_rx_debug_register_tx_ops(
+	struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	tx_ops->dbr_tx_ops.direct_buf_rx_start_ring_debug =
+				target_if_dbr_start_ring_debug;
+	tx_ops->dbr_tx_ops.direct_buf_rx_stop_ring_debug =
+				target_if_dbr_stop_ring_debug;
+}
+#else
+static inline void
+target_if_direct_buf_rx_debug_register_tx_ops(
+	struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif /* DIRECT_BUF_RX_DEBUG */
+
 void target_if_direct_buf_rx_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	tx_ops->dbr_tx_ops.direct_buf_rx_module_register =
@@ -177,5 +195,6 @@ void target_if_direct_buf_rx_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 				target_if_direct_buf_rx_print_ring_stat;
 	tx_ops->dbr_tx_ops.direct_buf_rx_get_ring_params =
 				target_if_direct_buf_rx_get_ring_params;
+	target_if_direct_buf_rx_debug_register_tx_ops(tx_ops);
 }
 qdf_export_symbol(target_if_direct_buf_rx_register_tx_ops);

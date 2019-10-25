@@ -89,6 +89,56 @@ struct direct_buf_rx_ring_cap {
 };
 
 /**
+ * enum DBR_RING_DEBUG_EVENT - DMA ring debug event
+ * @DBR_RING_DEBUG_EVENT_NONE: Not a real value, just a place holder for
+ * no entry
+ * @DBR_RING_DEBUG_EVENT_RX: DBR Rx event
+ * @DBR_RING_DEBUG_EVENT_REPLENISH_RING: DBR replenish event
+ * @DBR_RING_DEBUG_EVENT_MAX: Not a real value, just a place holder for max
+ */
+enum DBR_RING_DEBUG_EVENT {
+	DBR_RING_DEBUG_EVENT_NONE = 0,
+	DBR_RING_DEBUG_EVENT_RX,
+	DBR_RING_DEBUG_EVENT_REPLENISH_RING,
+	DBR_RING_DEBUG_EVENT_MAX,
+};
+
+#define DIRECT_BUF_RX_MAX_RING_DEBUG_ENTRIES (1024)
+/**
+ * struct direct_buf_rx_ring_debug_entry - DBR ring debug entry
+ * @head_idx: Head index of the DMA ring
+ * @tail_idx: Tail index of the DMA ring
+ * @timestamp: Timestamp at the time of logging
+ * @event: Name of the event
+ */
+struct direct_buf_rx_ring_debug_entry {
+	uint32_t head_idx;
+	uint32_t tail_idx;
+	uint64_t timestamp;
+	enum DBR_RING_DEBUG_EVENT event;
+};
+
+/**
+ * struct direct_buf_rx_ring_debug - DMA ring debug of a module
+ * @entries: Pointer to the array of ring debug entries
+ * @ring_debug_idx: Current index in the array of ring debug entries
+ * @num_ring_debug_entries: Total ring debug entries
+ */
+struct direct_buf_rx_ring_debug {
+	struct direct_buf_rx_ring_debug_entry *entries;
+	uint32_t ring_debug_idx;
+	uint32_t num_ring_debug_entries;
+};
+
+/**
+ * struct direct_buf_rx_module_debug - Debug of a module subscribed to DBR
+ * @dbr_ring_debug: Array of ring debug structers corresponding to each srng
+ */
+struct direct_buf_rx_module_debug {
+	struct direct_buf_rx_ring_debug dbr_ring_debug[DBR_SRNG_NUM];
+};
+
+/**
  * struct direct_buf_rx_module_param - DMA module param
  * @mod_id: Module ID
  * @pdev_id: pdev ID
@@ -113,10 +163,14 @@ struct direct_buf_rx_module_param {
  * struct direct_buf_rx_pdev_obj - Direct Buf RX pdev object struct
  * @num_modules: Number of modules registered to DBR for the pdev
  * @dbr_mod_param: Pointer to direct buf rx module param struct
+ * @dbr_mod_debug: Pointer to the array of DBR module debug structures
  */
 struct direct_buf_rx_pdev_obj {
 	uint32_t num_modules;
 	struct direct_buf_rx_module_param (*dbr_mod_param)[DBR_SRNG_NUM];
+#ifdef DIRECT_BUF_RX_DEBUG
+	struct direct_buf_rx_module_debug *dbr_mod_debug;
+#endif
 };
 
 /**
@@ -271,4 +325,21 @@ target_if_direct_buf_rx_get_ring_params(struct wlan_objmgr_pdev *pdev,
 					struct module_ring_params *param,
 					uint8_t mod_id, uint8_t srng_id);
 
+/**
+ * target_if_dbr_start_ring_debug() - Start DBR ring debug
+ * @pdev: pointer to pdev object
+ * @mod_id: module ID indicating the module using direct buffer rx framework
+ * @num_ring_debug_entries: Size of the ring debug entries
+ */
+QDF_STATUS target_if_dbr_start_ring_debug(struct wlan_objmgr_pdev *pdev,
+					  uint8_t mod_id,
+					  uint32_t num_ring_debug_entries);
+
+/**
+ * target_if_dbr_stop_ring_debug() - Stop DBR ring debug
+ * @pdev: pointer to pdev object
+ * @mod_id: module ID indicating the module using direct buffer rx framework
+ */
+QDF_STATUS target_if_dbr_stop_ring_debug(struct wlan_objmgr_pdev *pdev,
+					 uint8_t mod_id);
 #endif /* _TARGET_IF_DIRECT_BUF_RX_MAIN_H_ */
