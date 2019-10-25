@@ -3182,14 +3182,13 @@ static int sde_plane_sspp_atomic_update(struct drm_plane *plane,
 	}
 
 	/* determine what needs to be refreshed */
+	mutex_lock(&psde->property_info.property_lock);
 	while ((idx = msm_property_pop_dirty(&psde->property_info,
 				&pstate->property_state)) >= 0) {
 		dirty_prop_flag = plane_prop_array[idx];
 		pstate->dirty |= dirty_prop_flag;
-
-		if (dirty_prop_flag == SDE_PLANE_DIRTY_ALL)
-			break;
 	}
+	mutex_unlock(&psde->property_info.property_lock);
 
 	/**
 	 * since plane_atomic_check is invoked before crtc_atomic_check
