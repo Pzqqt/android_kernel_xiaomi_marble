@@ -116,6 +116,17 @@
 
 #define INVALID_RSSI 255
 
+#define CDP_RSSI_MULTIPLIER BIT(8)
+#define CDP_RSSI_MUL(x, mul) ((x) * (mul))
+#define CDP_RSSI_RND(x, mul) ((((x) % (mul)) >= ((mul) / 2)) ?\
+	((x) + ((mul) - 1)) / (mul) : (x) / (mul))
+
+#define CDP_RSSI_OUT(x) (CDP_RSSI_RND((x), CDP_RSSI_MULTIPLIER))
+#define CDP_RSSI_IN(x)  (CDP_RSSI_MUL((x), CDP_RSSI_MULTIPLIER))
+#define CDP_RSSI_AVG(x, y) ((((x) << 2) + (y) - (x)) >> 2)
+
+#define CDP_RSSI_UPDATE_AVG(x, y) x = CDP_RSSI_AVG((x), CDP_RSSI_IN((y)))
+
 /*Max SU EVM count */
 #define DP_RX_MAX_SU_EVM_COUNT 32
 
