@@ -214,6 +214,12 @@ static int bolero_cdc_update_wcd_event(void *handle, u16 event, u32 data)
 				priv->component,
 				BOLERO_MACRO_EVT_RX_COMPANDER_SOFT_RST, data);
 		break;
+	case WCD_BOLERO_EVT_BCS_CLK_OFF:
+		if (priv->macro_params[TX_MACRO].event_handler)
+			priv->macro_params[TX_MACRO].event_handler(
+				priv->component,
+				BOLERO_MACRO_EVT_BCS_CLK_OFF, data);
+		break;
 	default:
 		dev_err(priv->dev, "%s: Invalid event %d trigger from wcd\n",
 			__func__, event);

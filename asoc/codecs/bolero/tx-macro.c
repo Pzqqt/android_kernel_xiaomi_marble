@@ -172,6 +172,8 @@ struct tx_macro_priv {
 	int tx_clk_status;
 	bool bcs_enable;
 	int dec_mode[NUM_DECIMATORS];
+	bool bcs_clk_en;
+	bool hs_slow_insert_complete;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -386,6 +388,15 @@ static int tx_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case BOLERO_MACRO_EVT_CLK_RESET:
 		bolero_rsc_clk_reset(tx_dev, TX_CORE_CLK);
+		break;
+	case BOLERO_MACRO_EVT_BCS_CLK_OFF:
+		if (tx_priv->bcs_clk_en)
+			snd_soc_component_update_bits(component,
+				BOLERO_CDC_TX0_TX_PATH_SEC7, 0x40, data << 6);
+		if (data)
+			tx_priv->hs_slow_insert_complete = true;
+		else
+			tx_priv->hs_slow_insert_complete = false;
 		break;
 	}
 	return 0;
@@ -902,8 +913,11 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		if (tx_priv->bcs_enable) {
 			snd_soc_component_update_bits(component, dec_cfg_reg,
 					0x01, 0x01);
-			snd_soc_component_update_bits(component,
-				BOLERO_CDC_TX0_TX_PATH_SEC7, 0x40, 0x40);
+			tx_priv->bcs_clk_en = true;
+			if (tx_priv->hs_slow_insert_complete)
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX0_TX_PATH_SEC7, 0x40,
+					0x40);
 		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
@@ -946,6 +960,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					0x01, 0x00);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_TX0_TX_PATH_SEC7, 0x40, 0x00);
+			tx_priv->bcs_clk_en = false;
 		}
 		break;
 	}
