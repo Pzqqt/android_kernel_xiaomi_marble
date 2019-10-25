@@ -815,6 +815,15 @@ static int __wcd_spi_data_xfer(struct spi_device *spi,
 		return -EINVAL;
 	}
 
+	WCD_SPI_MUTEX_LOCK(spi, wcd_spi->clk_mutex);
+	if (wcd_spi_is_suspended(wcd_spi)) {
+		dev_dbg(&spi->dev,
+			"%s: SPI suspended, cannot perform transfer\n",
+			__func__);
+		ret = -EIO;
+		goto done;
+	}
+
 	WCD_SPI_MUTEX_LOCK(spi, wcd_spi->xfer_mutex);
 	if (msg->len == WCD_SPI_WORD_BYTE_CNT) {
 		if (xfer_req == WCD_SPI_XFER_WRITE)
@@ -827,7 +836,8 @@ static int __wcd_spi_data_xfer(struct spi_device *spi,
 		ret = wcd_spi_transfer_split(spi, msg, xfer_req);
 	}
 	WCD_SPI_MUTEX_UNLOCK(spi, wcd_spi->xfer_mutex);
-
+done:
+	WCD_SPI_MUTEX_UNLOCK(spi, wcd_spi->clk_mutex);
 	return ret;
 }
 
