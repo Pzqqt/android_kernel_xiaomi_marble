@@ -28,6 +28,10 @@
 
 #define SWRM_FRAME_SYNC_SEL    4000 /* 4KHz */
 #define SWRM_FRAME_SYNC_SEL_NATIVE 3675 /* 3.675KHz */
+
+#define SWRM_PCM_OUT    0
+#define SWRM_PCM_IN     1
+
 #define SWRM_SYSTEM_RESUME_TIMEOUT_MS 700
 #define SWRM_SYS_SUSPEND_WAIT 1
 
@@ -611,8 +615,11 @@ static void copy_port_tables(struct swr_mstr_ctrl *swrm,
 		swrm->mport_cfg[i].blk_grp_count = config[i].bgp_ctrl;
 		swrm->mport_cfg[i].word_length = config[i].wd_len;
 		swrm->mport_cfg[i].lane_ctrl = config[i].lane_ctrl;
+		swrm->mport_cfg[i].dir = config[i].dir;
+		swrm->mport_cfg[i].stream_type = config[i].stream_type;
 	}
 }
+
 static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 {
 	struct port_params *params;
@@ -625,6 +632,23 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 
 	params = swrm->port_param[usecase];
 	copy_port_tables(swrm, params);
+
+	return 0;
+}
+
+static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
+				bool dir, bool enable)
+{
+	u16 reg_addr = 0;
+
+	if (!port_num || port_num > 6) {
+		dev_err(swrm->dev, "%s: invalid port: %d\n",
+			__func__, port_num);
+		return -EINVAL;
+	}
+	reg_addr = ((dir) ? SWRM_DIN_DP_PCM_PORT_CTRL(port_num) : \
+				SWRM_DOUT_DP_PCM_PORT_CTRL(port_num));
+	swr_master_write(swrm, reg_addr, enable);
 
 	return 0;
 }
@@ -653,7 +677,6 @@ found:
 	*mstr_ch_mask = swrm->port_mapping[i][j].ch_mask;
 
 	return 0;
-
 }
 
 static u32 swrm_get_packed_reg_val(u8 *cmd_id, u8 cmd_data,
@@ -1024,6 +1047,9 @@ static void swrm_disable_ports(struct swr_master *master,
 		dev_dbg(swrm->dev, "%s: mport :%d, reg: 0x%x, val: 0x%x\n",
 			__func__, i,
 			(SWRM_DP_PORT_CTRL_BANK(i+1, bank)), value);
+
+		if (mport->stream_type == SWR_PCM)
+			swrm_pcm_port_config(swrm, i, mport->dir, false);
 	}
 }
 
@@ -1091,6 +1117,9 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		mport = &(swrm->mport_cfg[i]);
 		if (!mport->port_en)
 			continue;
+
+		if (mport->stream_type == SWR_PCM)
+			swrm_pcm_port_config(swrm, i, mport->dir, true);
 
 		list_for_each_entry(port_req, &mport->port_req_list, list) {
 			slv_id = port_req->slave_port_id;

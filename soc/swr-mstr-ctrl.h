@@ -70,6 +70,11 @@ enum {
 	SWR_VISENSE_PORT,
 };
 
+enum {
+	SWR_PDM = 0,
+	SWR_PCM,
+};
+
 struct usecase {
 	u8 num_port;
 	u8 num_ch;
@@ -91,6 +96,8 @@ struct swrm_mports {
 	u8 blk_pack_mode;
 	u8 word_length;
 	u8 lane_ctrl;
+	u8 dir;
+	u8 stream_type;
 };
 
 struct swrm_port_type {

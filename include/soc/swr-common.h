@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015, 2017-2019 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _LINUX_SWR_COMMON_H
@@ -26,6 +26,8 @@ struct port_params {
 	u8 bp_mode; /* block pack mode */
 	u8 bgp_ctrl;/* block group control */
 	u8 lane_ctrl;/* lane to be used */
+	u8 dir; /* master port dir: OUT = 0 IN = 1 */
+	u8 stream_type; /* PDM = 0, PCM = 1 */
 };
 
 struct swrm_port_config {
