@@ -118,16 +118,36 @@ struct direct_buf_rx_ring_debug_entry {
 	enum DBR_RING_DEBUG_EVENT event;
 };
 
+#ifdef WLAN_DEBUGFS
+/**
+ * struct dbr_debugfs_priv - Private data for DBR ring debugfs
+ * @dbr_pdev_obj: Pointer to the pdev obj of Direct buffer rx module
+ * @mod_id: Pointer to the registered module ID
+ * @srng_id: srng ID
+ */
+struct dbr_debugfs_priv {
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
+	enum DBR_MODULE mod_id;
+	uint8_t srng_id;
+};
+#endif
+
 /**
  * struct direct_buf_rx_ring_debug - DMA ring debug of a module
  * @entries: Pointer to the array of ring debug entries
  * @ring_debug_idx: Current index in the array of ring debug entries
  * @num_ring_debug_entries: Total ring debug entries
+ * @debugfs_entry: Debugfs entry for this ring
+ * @debugfs_priv: Debugfs ops for this ring
  */
 struct direct_buf_rx_ring_debug {
 	struct direct_buf_rx_ring_debug_entry *entries;
 	uint32_t ring_debug_idx;
 	uint32_t num_ring_debug_entries;
+#ifdef WLAN_DEBUGFS
+	qdf_dentry_t debugfs_entry;
+	struct qdf_debugfs_fops *debugfs_fops;
+#endif
 };
 
 /**
@@ -135,11 +155,15 @@ struct direct_buf_rx_ring_debug {
  * @dbr_ring_debug: Array of ring debug structers corresponding to each srng
  * @poisoning_enabled: Whether buffer poisoning is enabled for this module
  * @poison_value: Value with which buffers should be poisoned
+ * @debugfs_entry: Debugfs entry for this module
  */
 struct direct_buf_rx_module_debug {
 	struct direct_buf_rx_ring_debug dbr_ring_debug[DBR_SRNG_NUM];
 	bool poisoning_enabled;
 	uint32_t poison_value;
+#ifdef WLAN_DEBUGFS
+	qdf_dentry_t debugfs_entry;
+#endif
 };
 
 /**
@@ -155,6 +179,7 @@ struct direct_buf_rx_module_debug {
 struct direct_buf_rx_module_param {
 	enum DBR_MODULE mod_id;
 	uint8_t pdev_id;
+	uint8_t srng_id;
 	struct dbr_module_config dbr_config;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
@@ -168,12 +193,16 @@ struct direct_buf_rx_module_param {
  * @num_modules: Number of modules registered to DBR for the pdev
  * @dbr_mod_param: Pointer to direct buf rx module param struct
  * @dbr_mod_debug: Pointer to the array of DBR module debug structures
+ * @debugfs_entry: DBR debugfs entry of this radio
  */
 struct direct_buf_rx_pdev_obj {
 	uint32_t num_modules;
 	struct direct_buf_rx_module_param (*dbr_mod_param)[DBR_SRNG_NUM];
 #ifdef DIRECT_BUF_RX_DEBUG
 	struct direct_buf_rx_module_debug *dbr_mod_debug;
+#ifdef WLAN_DEBUGFS
+	qdf_dentry_t debugfs_entry;
+#endif
 #endif
 };
 

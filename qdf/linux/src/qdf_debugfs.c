@@ -468,3 +468,70 @@ void qdf_debugfs_remove_file(qdf_dentry_t d)
 	debugfs_remove(d);
 }
 qdf_export_symbol(qdf_debugfs_remove_file);
+
+static int qdf_debugfs_single_show(struct seq_file *seq, void *v)
+{
+	struct qdf_debugfs_fops *fops = seq->private;
+
+	if (fops && fops->show)
+		fops->show(seq, fops->priv);
+
+	return 0;
+}
+
+/* .open() */
+static int qdf_debugfs_single_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, qdf_debugfs_single_show,
+			   inode->i_private);
+}
+
+/* File operations for the simplified version */
+static const struct file_operations qdf_debugfs_fops_simple = {
+	.owner          = THIS_MODULE,
+	.open           = qdf_debugfs_single_open,
+	.release        = single_release,
+	.read           = seq_read,
+	.llseek         = seq_lseek,
+};
+
+qdf_dentry_t qdf_debugfs_create_file_simplified(
+	const char *name, uint16_t mode,
+	qdf_dentry_t parent, struct qdf_debugfs_fops *fops)
+{
+	qdf_dentry_t file;
+	umode_t filemode;
+
+	if (!name || !fops)
+		return NULL;
+
+	if (!parent)
+		parent = qdf_debugfs_get_root();
+
+	filemode = qdf_debugfs_get_filemode(mode);
+	file = debugfs_create_file(name, filemode, parent, fops,
+				   &qdf_debugfs_fops_simple);
+
+	if (IS_ERR_OR_NULL(file)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s creation failed 0x%pK", name, file);
+		file = NULL;
+	}
+
+	return file;
+}
+qdf_export_symbol(qdf_debugfs_create_file_simplified);
+
+int qdf_debugfs_printer(void *priv, const char *fmt, ...)
+{
+	struct seq_file *file = priv;
+	va_list args;
+
+	va_start(args, fmt);
+	seq_vprintf(file, fmt, args);
+	seq_puts(file, "\n");
+	va_end(args);
+
+	return 0;
+}
+qdf_export_symbol(qdf_debugfs_printer);

@@ -25,6 +25,39 @@
 #include "target_if_direct_buf_rx_main.h"
 #include <qdf_module.h>
 
+#if defined(WLAN_DEBUGFS) && defined(DIRECT_BUF_RX_DEBUG)
+/* Base debugfs entry for DBR module */
+qdf_dentry_t dbr_debugfs_entry;
+
+static inline void
+target_if_direct_buf_rx_debugfs_init(void)
+{
+	dbr_debugfs_entry = qdf_debugfs_create_dir("dbr_ring_debug", NULL);
+
+	if (!dbr_debugfs_entry)
+		direct_buf_rx_err("error while creating direct_buf rx debugfs dir");
+}
+
+static inline void
+target_if_direct_buf_rx_debugfs_deinit(void)
+{
+	if (dbr_debugfs_entry) {
+		qdf_debugfs_remove_dir_recursive(dbr_debugfs_entry);
+		dbr_debugfs_entry = NULL;
+	}
+}
+#else
+static inline void
+target_if_direct_buf_rx_debugfs_init(void)
+{
+}
+
+static inline void
+target_if_direct_buf_rx_debugfs_deinit(void)
+{
+}
+#endif /* WLAN_DEBUGFS && DIRECT_BUF_RX_DEBUG */
+
 QDF_STATUS direct_buf_rx_init(void)
 {
 	QDF_STATUS status;
@@ -69,6 +102,8 @@ QDF_STATUS direct_buf_rx_init(void)
 		goto dbr_unreg_pdev_create;
 	}
 
+	target_if_direct_buf_rx_debugfs_init();
+
 	direct_buf_rx_info("Direct Buffer RX pdev,psoc create and destroy handlers registered");
 
 	return QDF_STATUS_SUCCESS;
@@ -98,6 +133,8 @@ qdf_export_symbol(direct_buf_rx_init);
 QDF_STATUS direct_buf_rx_deinit(void)
 {
 	QDF_STATUS status;
+
+	target_if_direct_buf_rx_debugfs_deinit();
 
 	status = wlan_objmgr_unregister_pdev_destroy_handler(
 			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,

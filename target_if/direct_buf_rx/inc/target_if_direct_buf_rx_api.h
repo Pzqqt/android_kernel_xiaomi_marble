@@ -23,6 +23,13 @@
 #include "qdf_atomic.h"
 #include "wmi_unified_api.h"
 
+#ifdef WLAN_DEBUGFS
+#ifdef DIRECT_BUF_RX_DEBUG
+/* Base debugfs entry for DBR module */
+extern qdf_dentry_t dbr_debugfs_entry;
+#endif /* DIRECT_BUF_RX_DEBUG */
+#endif /* WLAN_DEBUGFS */
+
 #define direct_buf_rx_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_DIRECT_BUF_RX, params)
 #define direct_buf_rx_err(params...) \
