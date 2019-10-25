@@ -1526,7 +1526,6 @@ static void hal_reo_setup_generic(struct hal_soc *soc,
 			  HAL_REG_READ(soc,
 				       HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR(
 				       SEQ_WCSS_UMAC_REO_REG_OFFSET)));
-
 	}
 
 

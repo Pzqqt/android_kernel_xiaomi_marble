@@ -195,9 +195,6 @@ void hal_get_shadow_config(void *hal_soc,
 	*shadow_config = hal->shadow_config;
 	*num_shadow_registers_configured =
 		hal->num_shadow_registers_configured;
-
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s", __func__);
 }
 
 qdf_export_symbol(hal_get_shadow_config);
