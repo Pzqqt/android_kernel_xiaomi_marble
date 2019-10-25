@@ -2896,6 +2896,7 @@ static int wcd_cpe_send_param_snd_model(struct wcd_cpe_core *core,
 	struct cmi_obm_msg obm_msg;
 	struct cpe_param_data *param_d;
 
+	memset(&obm_msg, 0, sizeof(obm_msg));
 
 	ret = fill_cmi_header(&obm_msg.hdr, session->id,
 			CMI_CPE_LSM_SERVICE_ID, 0, 20,
