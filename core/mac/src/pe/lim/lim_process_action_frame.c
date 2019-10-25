@@ -360,10 +360,20 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 		  status, frame_len);
 	}
 
+	if (!wlan_reg_is_6ghz_supported(mac_ctx->pdev) &&
+	    (wlan_reg_is_6ghz_op_class(mac_ctx->pdev,
+				       ext_channel_switch_frame->
+				       ext_chan_switch_ann_action.op_class))) {
+		pe_err("channel belongs to 6 ghz spectrum, abort");
+		qdf_mem_free(ext_channel_switch_frame);
+		return;
+	}
+
 	target_freq =
-	    wlan_reg_chan_opclass_to_freq(ext_channel_switch_frame->ext_chan_switch_ann_action.new_channel,
-					  ext_channel_switch_frame->ext_chan_switch_ann_action.op_class,
-					  false);
+		wlan_reg_chan_opclass_to_freq(ext_channel_switch_frame->ext_chan_switch_ann_action.new_channel,
+					      ext_channel_switch_frame->ext_chan_switch_ann_action.op_class,
+					      false);
+
 	/* Free ext_channel_switch_frame here as its no longer needed */
 	qdf_mem_free(ext_channel_switch_frame);
 	/*
@@ -1392,6 +1402,7 @@ __lim_process_neighbor_report(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		pe_debug("There were warnings while unpacking a Neighbor report response (0x%08x, %d bytes):",
 			nStatus, frameLen);
 	}
+
 	/* Call rrm function to handle the request. */
 	rrm_process_neighbor_report_response(mac, pFrm, pe_session);
 

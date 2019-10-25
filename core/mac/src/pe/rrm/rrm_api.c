@@ -372,6 +372,15 @@ rrm_process_neighbor_report_response(struct mac_context *mac,
 		fMobilityDomain =
 			pNeighborRep->NeighborReport[i].MobilityDomain;
 
+		if (!wlan_reg_is_6ghz_supported(mac->pdev) &&
+		    (wlan_reg_is_6ghz_op_class(mac->pdev,
+					       pNeighborRep->NeighborReport[i].
+					       regulatoryClass))) {
+			pe_err("channel belongs to 6 ghz spectrum, abort");
+			qdf_mem_free(pSmeNeighborRpt);
+			return QDF_STATUS_E_FAILURE;
+		}
+
 		pSmeNeighborRpt->sNeighborBssDescription[i].regClass =
 			pNeighborRep->NeighborReport[i].regulatoryClass;
 		pSmeNeighborRpt->sNeighborBssDescription[i].channel =
@@ -590,10 +599,19 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 	psbrr->msgSource = eRRM_MSG_SOURCE_11K;
 	psbrr->randomizationInterval =
 		SYS_TU_TO_MS(pBeaconReq->measurement_request.Beacon.randomization);
-	psbrr->channel_info.reg_class =
-		pBeaconReq->measurement_request.Beacon.regClass;
+
+	if (!wlan_reg_is_6ghz_supported(mac->pdev) &&
+	    (wlan_reg_is_6ghz_op_class(mac->pdev,
+			 pBeaconReq->measurement_request.Beacon.regClass))) {
+		pe_err("channel belongs to 6 ghz spectrum, abort");
+		qdf_mem_free(psbrr);
+		return eRRM_FAILURE;
+	}
+
 	psbrr->channel_info.chan_num =
 		pBeaconReq->measurement_request.Beacon.channel;
+	psbrr->channel_info.reg_class =
+		pBeaconReq->measurement_request.Beacon.regClass;
 	psbrr->channel_info.chan_freq =
 		wlan_reg_chan_opclass_to_freq(psbrr->channel_info.chan_num,
 					      psbrr->channel_info.reg_class,
@@ -616,13 +634,20 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 	pCurrentReq->token = pBeaconReq->measurement_token;
 
 	num_rpt = pBeaconReq->measurement_request.Beacon.num_APChannelReport;
-
 	for (idx_rpt = 0; idx_rpt < num_rpt; idx_rpt++) {
 		ie_ap_chan_rpt =
 			&pBeaconReq->measurement_request.Beacon.APChannelReport[idx_rpt];
 		for (tmp_idx = 0;
 		     tmp_idx < ie_ap_chan_rpt->num_channelList;
 		     tmp_idx++) {
+			if (!wlan_reg_is_6ghz_supported(mac->pdev) &&
+			    (wlan_reg_is_6ghz_op_class(mac->pdev,
+					    ie_ap_chan_rpt->regulatoryClass))) {
+				pe_err("channel belongs to 6 ghz spectrum, abort");
+				qdf_mem_free(psbrr);
+				return eRRM_FAILURE;
+			}
+
 			psbrr->channel_list.chan_freq_lst[ch_ctr++] =
 				wlan_reg_chan_opclass_to_freq(
 					ie_ap_chan_rpt->channelList[tmp_idx],
