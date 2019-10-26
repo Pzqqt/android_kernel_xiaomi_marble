@@ -998,6 +998,8 @@ typedef enum {
     WMI_SET_ELNA_BYPASS_CMDID,
     /** get ELNA BYPASS status */
     WMI_GET_ELNA_BYPASS_CMDID,
+    /** get ANI level of the channels */
+    WMI_GET_CHANNEL_ANI_CMDID,
 
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
@@ -1771,6 +1773,9 @@ typedef enum {
 
     /** event to get ELNA BYPASS status */
     WMI_GET_ELNA_BYPASS_EVENTID,
+
+    /** event to report ANI level of the channels */
+    WMI_GET_CHANNEL_ANI_EVENTID,
 
     /* GPIO Event */
     WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
@@ -24891,6 +24896,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ATF_SSID_GROUPING_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_ATF_GROUP_WMM_AC_CONFIG_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_PEER_ATF_EXT_REQUEST_CMDID);
+        WMI_RETURN_STRING(WMI_GET_CHANNEL_ANI_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -27968,6 +27974,44 @@ typedef struct {
     /** 1-Enable, 0-Disable */
     A_UINT32 en_dis;
 } wmi_get_elna_bypass_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_get_channel_ani_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /**
+     * TLV (tag length value) parameters follow the
+     * structure. The TLV's are:
+     * list of channels (center freq of primary 20 MHz of the channel, in MHz)
+     * A_UINT32 channel_list[];
+     */
+} wmi_get_channel_ani_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_get_channel_ani_event_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /**
+     * TLV (tag length value) parameters follow the
+     * structure. The TLV's are:
+     * wmi_channel_ani_info_tlv_param ani_info[];
+     */
+} wmi_get_channel_ani_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_channel_ani_info_tlv_param */
+    A_UINT32 tlv_header;
+    /** channel freq (center of 20 MHz primary channel) in MHz */
+    A_UINT32 chan_freq;
+    /**
+     * ANI (noise interference) level corresponding to the channel.
+     * Values range from [0-9], with higher values indicating more
+     * noise interference.
+     */
+    A_UINT32 ani_level;
+} wmi_channel_ani_info_tlv_param;
 
 /* This command is to specify to enable/disable audio frame aggr */
 typedef struct {

@@ -1018,6 +1018,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_atf_group_wmm_ac_info,
     WMITLV_TAG_STRUC_wmi_peer_atf_ext_request_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_atf_ext_info,
+    WMITLV_TAG_STRUC_wmi_get_channel_ani_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_channel_ani_info_tlv_param,
+    WMITLV_TAG_STRUC_wmi_get_channel_ani_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1436,6 +1439,7 @@ typedef enum {
     OP(WMI_ATF_SSID_GROUPING_REQUEST_CMDID) \
     OP(WMI_ATF_GROUP_WMM_AC_CONFIG_REQUEST_CMDID) \
     OP(WMI_PEER_ATF_EXT_REQUEST_CMDID) \
+    OP(WMI_GET_CHANNEL_ANI_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1672,6 +1676,7 @@ typedef enum {
     OP(WMI_ROAM_PREAUTH_START_EVENTID) \
     OP(WMI_GET_ELNA_BYPASS_EVENTID) \
     OP(WMI_ROAM_PMKID_REQUEST_EVENTID) \
+    OP(WMI_GET_CHANNEL_ANI_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4145,6 +4150,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SET_ELNA_BYPASS_CMDID);
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_get_elna_bypass_cmd_fixed_param, wmi_get_elna_bypass_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_GET_ELNA_BYPASS_CMDID);
 
+/* Get channel ANI level cmd */
+#define WMITLV_TABLE_WMI_GET_CHANNEL_ANI_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_get_channel_ani_cmd_fixed_param, wmi_get_channel_ani_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, channel_list, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_GET_CHANNEL_ANI_CMDID);
+
 /* Audio aggr config cmd */
 #define WMITLV_TABLE_WMI_AUDIO_AGGR_ENABLE_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_audio_aggr_enable_cmd_fixed_param, wmi_audio_aggr_enable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
@@ -5615,6 +5626,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_MGMT_OFFLOAD_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_get_elna_bypass_event_fixed_param, wmi_get_elna_bypass_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_GET_ELNA_BYPASS_EVENTID);
 
+/* channel ANI event */
+#define WMITLV_TABLE_WMI_GET_CHANNEL_ANI_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_get_channel_ani_event_fixed_param, wmi_get_channel_ani_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_channel_ani_info_tlv_param, ani_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_GET_CHANNEL_ANI_EVENTID);
 
 #ifdef __cplusplus
 }
