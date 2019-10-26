@@ -1021,6 +1021,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_get_channel_ani_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_channel_ani_info_tlv_param,
     WMITLV_TAG_STRUC_wmi_get_channel_ani_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_oem_data_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1628,6 +1629,7 @@ typedef enum {
     OP(WMI_PDEV_DIV_RSSI_ANTID_EVENTID) \
     OP(WMI_OEM_DMA_RING_CFG_RSP_EVENTID) \
     OP(WMI_OEM_DMA_BUF_RELEASE_EVENTID) \
+    OP(WMI_OEM_DATA_EVENTID) \
     OP(WMI_PDEV_BSS_CHAN_INFO_EVENTID) \
     OP(WMI_UNIT_TEST_EVENTID) \
     OP(WMI_PDEV_UPDATE_CTLTABLE_EVENTID) \
@@ -4635,6 +4637,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_OEM_RESPONSE_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_oem_dma_buf_release_fixed_param, wmi_oem_dma_buf_release_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_oem_dma_buf_release_entry, entries, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_OEM_DMA_BUF_RELEASE_EVENTID);
+
+/* oem data event */
+#define WMITLV_TABLE_WMI_OEM_DATA_EVENTID(id,op, buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_oem_data_event_fixed_param, wmi_oem_data_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_OEM_DATA_EVENTID);
 
 /* HOST SWBA Event */
 #define WMITLV_TABLE_WMI_HOST_SWBA_EVENTID(id,op,buf,len) \

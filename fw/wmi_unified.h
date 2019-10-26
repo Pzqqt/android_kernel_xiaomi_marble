@@ -1810,6 +1810,7 @@ typedef enum {
     WMI_OEM_RESPONSE_EVENTID,
     WMI_OEM_DMA_RING_CFG_RSP_EVENTID,
     WMI_OEM_DMA_BUF_RELEASE_EVENTID,
+    WMI_OEM_DATA_EVENTID,
 
     /* NAN Event */
     WMI_NAN_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_NAN),
@@ -28383,6 +28384,15 @@ typedef struct {
  * wmi_cfr_filter_group_config filter_group_config[];
  */
 } wmi_cfr_capture_filter_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_oem_data_event_fixed_param */
+    A_UINT32 data_len; /** length in byte of data[]. */
+/* Following this structure is the TLV:
+ *      A_UINT8 data[]; <-- length in byte given by field data_len.
+ * This data array contains OEM data, the payload begins with a field to tell the HOST regarding the kind of the OEM data.
+ */
+} wmi_oem_data_event_fixed_param;
 
 
 
