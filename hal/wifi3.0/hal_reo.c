@@ -529,8 +529,6 @@ inline int hal_reo_cmd_flush_cache(hal_ring_handle_t hal_ring_hdl,
 
 	reo_desc = hal_srng_src_get_next(hal_soc, hal_ring_hdl);
 	if (!reo_desc) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Out of cmd ring entries", __func__);
 		hal_srng_access_end(hal_soc, hal_ring_hdl);
 		hal_srng_dump(hal_ring_handle_to_hal_srng(hal_ring_hdl));
 		return -EBUSY;

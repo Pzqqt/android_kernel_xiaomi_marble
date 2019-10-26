@@ -155,6 +155,5 @@ irqreturn_t hif_ext_group_interrupt_handler(int irq, void *context);
 struct hif_exec_context *hif_exec_get_ctx(struct hif_opaque_softc *hif,
 					  uint8_t id);
 void hif_exec_kill(struct hif_opaque_softc *scn);
-
 #endif
 

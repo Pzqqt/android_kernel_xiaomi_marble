@@ -30,6 +30,13 @@
 #define hal_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_TXRX, params)
 #define hal_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_TXRX, params)
 #define hal_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_TXRX, params)
+
+#define hal_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_HAL, params)
+#define hal_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_HAL, params)
+#define hal_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_HAL, params)
+#define hal_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_HAL, params)
+#define hal_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HAL, params)
+
 #ifdef ENABLE_VERBOSE_DEBUG
 extern bool is_hal_verbose_debug_enabled;
 #define hal_verbose_debug(params...) \

@@ -35,8 +35,9 @@ static struct hif_exec_context *hif_exec_tasklet_create(void);
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
 struct hif_event_history hif_event_desc_history[HIF_NUM_INT_CONTEXTS];
 
-static inline int hif_get_next_record_index(qdf_atomic_t *table_index,
-					    int array_size)
+static inline
+int hif_get_next_record_index(qdf_atomic_t *table_index,
+			      int array_size)
 {
 	int record_index = qdf_atomic_inc_return(table_index);
 

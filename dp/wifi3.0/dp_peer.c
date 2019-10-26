@@ -2083,12 +2083,9 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 							&params,
 							NULL,
 							NULL)) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_ERROR,
-					"%s: fail to send CMD_CACHE_FLUSH:"
-					"tid %d desc %pK", __func__,
-					rx_tid->tid,
-					(void *)(rx_tid->hw_qdesc_paddr));
+				dp_err_log("fail to send CMD_CACHE_FLUSH:"
+					   "tid %d desc %pK", rx_tid->tid,
+					   (void *)(rx_tid->hw_qdesc_paddr));
 			}
 		}
 
@@ -2112,9 +2109,8 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 			 *
 			 * Here invoke desc_free function directly to do clean up.
 			 */
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "%s: fail to send REO cmd to flush cache: tid %d",
-				  __func__, rx_tid->tid);
+			dp_err_log("%s: fail to send REO cmd to flush cache: tid %d",
+				   __func__, rx_tid->tid);
 			qdf_mem_zero(&reo_status, sizeof(reo_status));
 			reo_status.fl_cache_status.header.status = 0;
 			dp_reo_desc_free(soc, (void *)desc, &reo_status);

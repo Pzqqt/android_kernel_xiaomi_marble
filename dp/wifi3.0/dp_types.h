@@ -109,6 +109,8 @@
 #define PCP_TID_MAP_MAX 8
 #define MAX_MU_USERS 37
 
+#define REO_CMD_EVENT_HIST_MAX 64
+
 #ifndef REMOVE_PKT_LOG
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
@@ -654,6 +656,30 @@ struct reo_desc_list_node {
 	struct dp_rx_tid rx_tid;
 };
 
+#ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+/**
+ * struct reo_cmd_event_record: Elements to record for each reo command
+ * @cmd_type: reo command type
+ * @cmd_return_status: reo command post status
+ * @timestamp: record timestamp for the reo command
+ */
+struct reo_cmd_event_record {
+	enum hal_reo_cmd_type cmd_type;
+	uint8_t cmd_return_status;
+	uint32_t timestamp;
+};
+
+/**
+ * struct reo_cmd_event_history: Account for reo cmd events
+ * @index: record number
+ * @cmd_record: list of records
+ */
+struct reo_cmd_event_history {
+	qdf_atomic_t index;
+	struct reo_cmd_event_record cmd_record[REO_CMD_EVENT_HIST_MAX];
+};
+#endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
+
 /* SoC level data path statistics */
 struct dp_soc_stats {
 	struct {
@@ -745,6 +771,10 @@ struct dp_soc_stats {
 		/* packet count per core - per ring */
 		uint64_t ring_packets[NR_CPUS][MAX_REO_DEST_RINGS];
 	} rx;
+
+#ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+	struct reo_cmd_event_history cmd_event_history;
+#endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 };
 
 union dp_align_mac_addr {

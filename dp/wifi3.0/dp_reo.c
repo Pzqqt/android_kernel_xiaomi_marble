@@ -19,6 +19,43 @@
 #include "dp_types.h"
 #include "hal_reo.h"
 #include "dp_internal.h"
+#include <qdf_time.h>
+
+#ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+/**
+ * dp_reo_cmd_srng_event_record() - Record reo cmds posted
+ * to the reo cmd ring
+ * @soc: dp soc handle
+ * @type: reo cmd type
+ * @post_status: command error status
+ *
+ * Return: None
+ */
+static
+void dp_reo_cmd_srng_event_record(struct dp_soc *soc,
+				  enum hal_reo_cmd_type type,
+				  int post_status)
+{
+	struct reo_cmd_event_history *cmd_event_history =
+					&soc->stats.cmd_event_history;
+	struct reo_cmd_event_record *record = cmd_event_history->cmd_record;
+	int record_index;
+
+	record_index = (qdf_atomic_inc_return(&cmd_event_history->index)) &
+				(REO_CMD_EVENT_HIST_MAX - 1);
+
+	record[record_index].cmd_type = type;
+	record[record_index].cmd_return_status = post_status;
+	record[record_index].timestamp  = qdf_get_log_timestamp();
+}
+#else
+static inline
+void dp_reo_cmd_srng_event_record(struct dp_soc *soc,
+				  enum hal_reo_cmd_type type,
+				  int post_status)
+{
+}
+#endif /*WLAN_FEATURE_DP_EVENT_HISTORY */
 
 QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc, enum hal_reo_cmd_type type,
 		     struct hal_reo_cmd_params *params,
@@ -53,22 +90,22 @@ QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc, enum hal_reo_cmd_type type,
 						  soc->hal_soc, params);
 		break;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid REO command type", __func__);
+		dp_err_log("Invalid REO command type: %d", type);
 		return QDF_STATUS_E_FAILURE;
 	};
 
+	dp_reo_cmd_srng_event_record(soc, type, num);
+
 	if (num < 0) {
-		qdf_print("%s: Error with sending REO command", __func__);
+		dp_err_log("Error with sending REO command type: %d", type);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (callback_fn) {
 		reo_cmd = qdf_mem_malloc(sizeof(*reo_cmd));
 		if (!reo_cmd) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: alloc failed for REO cmd:%d!!",
-				__func__, type);
+			dp_err_log("alloc failed for REO cmd:%d!!",
+				   type);
 			return QDF_STATUS_E_NOMEM;
 		}
 
