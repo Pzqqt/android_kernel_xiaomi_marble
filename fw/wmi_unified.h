@@ -5391,6 +5391,12 @@ typedef struct {
     wmi_mac_addr base_macaddr;
 } wmi_pdev_set_base_macaddr_cmd_fixed_param;
 
+
+enum wmi_spectral_scan_mode {
+    WMI_SPECTRAL_SCAN_NORMAL_MODE,
+    WMI_SPECTRAL_SCAN_AGILE_MODE,
+};
+
 /*
  * For now, the spectral configuration is global rather than
  * per-vdev.  The vdev is a placeholder and will be ignored
@@ -5417,6 +5423,14 @@ typedef struct {
     A_UINT32 spectral_scan_bin_scale;
     A_UINT32 spectral_scan_dBm_adj;
     A_UINT32 spectral_scan_chn_mask;
+    /* See enum wmi_spectral_scan_mode */
+    A_UINT32 spectral_scan_mode;
+    /* agile span center frequency (MHz), 0 for normal scan*/
+    A_UINT32 spectral_scan_center_freq;
+    /* agile span primary channel frequency (MHz), 0 for normal scan*/
+    A_UINT32 spectral_scan_chan_freq;
+    /* agile scan bandwidth (20, 40, 80, 80+80, 160), enum wmi_channel_width */
+    A_UINT32 spectral_scan_chan_width;
 } wmi_vdev_spectral_configure_cmd_fixed_param;
 
 /*
@@ -5432,6 +5446,8 @@ typedef struct {
     A_UINT32 trigger_cmd;
     /* 0 - ignore; 1 - enable, 2 - disable */
     A_UINT32 enable_cmd;
+    /* See enum wmi_spectral_scan_mode */
+    A_UINT32 spectral_scan_mode;
 } wmi_vdev_spectral_enable_cmd_fixed_param;
 
 typedef struct {
@@ -23933,6 +23949,15 @@ typedef struct {
 #define WMI_SUPPORT_CHAN_WIDTH_80P80_GET(flags) WMI_GET_BITS(flags, 4, 1)
 #define WMI_SUPPORT_CHAN_WIDTH_80P80_SET(flags, value) WMI_SET_BITS(flags, 4, 1, value)
 
+#define WMI_SUPPORT_AGILE_SPECTRAL_GET(flags) WMI_GET_BITS(flags, 5, 1)
+#define WMI_SUPPORT_AGILE_SPECTRAL_SET(flags, value) WMI_SET_BITS(flags, 5, 1, value)
+
+#define WMI_SUPPORT_AGILE_SPECTRAL_160_GET(flags) WMI_GET_BITS(flags, 6, 1)
+#define WMI_SUPPORT_AGILE_SPECTRAL_160_SET(flags, value) WMI_SET_BITS(flags, 6, 1, value)
+
+#define WMI_SUPPORT_ADFS_160_GET(flags) WMI_GET_BITS(flags, 7, 1)
+#define WMI_SUPPORT_ADFS_160_SET(flags, value) WMI_SET_BITS(flags, 7, 1, value)
+
 #define WMI_SUPPORT_CHAIN_MASK_2G_GET(flags) WMI_GET_BITS(flags, 27, 1)
 #define WMI_SUPPORT_CHAIN_MASK_2G_SET(flags, value) WMI_SET_BITS(flags, 27, 1, value)
 
@@ -23959,7 +23984,10 @@ typedef struct {
                      supports_chan_width_80:1,
                      supports_chan_width_160:1,
                      supports_chan_width_80P80:1,
-                     reserved:22, /* bits 26:5 */
+                     supports_agile_spectral:1,
+                     supports_agile_spectral_160:1,
+                     supports_aDFS_160:1,
+                     reserved:19, /* bits 26:8 */
                      chain_mask_2G:1,
                      chain_mask_5G:1,
                      chain_mask_tx:1,
