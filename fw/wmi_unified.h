@@ -587,6 +587,11 @@ typedef enum {
     /** unmap response with peer ids */
     WMI_PEER_UNMAP_RESPONSE_CMDID,
 
+    /** WMI command for per-peer configuration of VLAN header operations
+     * during TX and RX
+     */
+    WMI_PEER_CONFIG_VLAN_CMDID,
+
 
     /* beacon/management specific commands */
 
@@ -28393,6 +28398,129 @@ typedef struct {
  * This data array contains OEM data, the payload begins with a field to tell the HOST regarding the kind of the OEM data.
  */
 } wmi_oem_data_event_fixed_param;
+
+#define WMI_VLAN_TX_BIT_POS                             0
+#define WMI_VLAN_RX_BIT_POS                             1
+#define WMI_TX_INSERT_OR_STRIP_BIT_POS                  2
+#define WMI_TX_STRIP_INSERT_VLAN_INNER_BIT_POS          3
+#define WMI_TX_STRIP_INSERT_VLAN_OUTER_BIT_POS          4
+#define WMI_RX_STRIP_VLAN_C_TAG_BIT_POS                 5
+#define WMI_RX_STRIP_VLAN_S_TAG_BIT_POS                 6
+#define WMI_RX_INSERT_VLAN_C_TAG_BIT_POS                7
+#define WMI_RX_INSERT_VLAN_S_TAG_BIT_POS                8
+
+#define WMI_TX_INSERT_VLAN_INNER_TCI_NUM_BITS           16
+#define WMI_TX_INSERT_VLAN_INNER_TCI_BIT_POS            0
+
+#define WMI_TX_INSERT_VLAN_OUTER_TCI_NUM_BITS           16
+#define WMI_TX_INSERT_VLAN_OUTER_TCI_BIT_POS            16
+
+
+#define WMI_VLAN_TX_SET(param, value) \
+    WMI_SET_BITS(param, WMI_VLAN_TX_BIT_POS, 1, value)
+
+#define WMI_VLAN_TX_GET(param)     \
+    WMI_GET_BITS(param, WMI_VLAN_TX_BIT_POS, 1)
+
+#define WMI_VLAN_RX_SET(param, value) \
+    WMI_SET_BITS(param, WMI_VLAN_RX_BIT_POS, 1, value)
+
+#define WMI_VLAN_RX_GET(param)     \
+    WMI_GET_BITS(param, WMI_VLAN_RX_BIT_POS, 1)
+
+#define WMI_TX_INSERT_OR_STRIP_SET(param, value) \
+    WMI_SET_BITS(param, WMI_TX_INSERT_OR_STRIP_BIT_POS, 1, value)
+
+#define WMI_TX_INSERT_OR_STRIP_GET(param)     \
+    WMI_GET_BITS(param, WMI_TX_INSERT_OR_STRIP_BIT_POS, 1)
+
+#define WMI_TX_STRIP_INSERT_VLAN_INNER_SET(param, value) \
+    WMI_SET_BITS(param, WMI_TX_STRIP_INSERT_VLAN_INNER_BIT_POS, 1, value)
+
+#define WMI_TX_STRIP_INSERT_VLAN_INNER_GET(param)     \
+    WMI_GET_BITS(param, WMI_TX_STRIP_INSERT_VLAN_INNER_BIT_POS, 1)
+
+#define WMI_TX_STRIP_INSERT_VLAN_OUTER_SET(param, value) \
+    WMI_SET_BITS(param, WMI_TX_STRIP_INSERT_VLAN_OUTER_BIT_POS, 1, value)
+
+#define WWMI_TX_STRIP_INSERT_VLAN_OUTER_GET(param)     \
+    WMI_GET_BITS(param, WMI_TX_STRIP_INSERT_VLAN_OUTER_BIT_POS, 1)
+
+#define WMI_RX_STRIP_VLAN_C_TAG_SET(param, value) \
+    WMI_SET_BITS(param, WMI_RX_STRIP_VLAN_C_TAG_BIT_POS, 1, value)
+
+#define WMI_RX_STRIP_VLAN_C_TAG_GET(param)     \
+    WMI_GET_BITS(param, WMI_RX_STRIP_VLAN_C_TAG_BIT_POS, 1)
+
+#define WWMI_RX_STRIP_VLAN_S_TAG_SET(param, value) \
+    WMI_SET_BITS(param, WMI_RX_STRIP_VLAN_S_TAG_BIT_POS, 1, value)
+
+#define WMI_RX_STRIP_VLAN_S_TAG_GET(param)     \
+    WMI_GET_BITS(param, WMI_RX_STRIP_VLAN_S_TAG_BIT_POS, 1)
+
+#define WWMI_RX_INSERT_VLAN_C_TAG_SET(param, value) \
+    WMI_SET_BITS(param, WMI_RX_INSERT_VLAN_C_TAG_BIT_POS, 1, value)
+
+#define WMI_RX_INSERT_VLAN_C_TAG_GET(param)     \
+    WMI_GET_BITS(param, WMI_RX_INSERT_VLAN_C_TAG_BIT_POS, 1)
+
+#define WWMI_RX_INSERT_VLAN_S_TAG_SET(param, value) \
+    WMI_SET_BITS(param, WMI_RX_INSERT_VLAN_S_TAG_BIT_POS, 1, value)
+
+#define WMI_RX_INSERT_VLAN_S_TAG_GET(param)     \
+    WMI_GET_BITS(param, WMI_RX_INSERT_VLAN_S_TAG_BIT_POS, 1)
+
+#define WWMI_TX_INSERT_VLAN_INNER_TCI_SET(param, value) \
+    WMI_SET_BITS(param, WMI_TX_INSERT_VLAN_INNER_TCI_BIT_POS, WMI_TX_INSERT_VLAN_INNER_TCI_NUM_BITS, value)
+
+#define WMI_TX_INSERT_VLAN_INNER_TCI_GET(param)     \
+    WMI_GET_BITS(param, WMI_TX_INSERT_VLAN_INNER_TCI_BIT_POS, WMI_TX_INSERT_VLAN_INNER_TCI_NUM_BITS)
+
+#define WWMI_TX_INSERT_VLAN_OUTER_TCI_SET(param, value) \
+    WMI_SET_BITS(param, WMI_TX_INSERT_VLAN_OUTER_TCI_BIT_POS, WMI_TX_INSERT_VLAN_OUTER_TCI_NUM_BITS, value)
+
+#define WMI_TX_INSERT_VLAN_OUTER_TCI_GET(param)     \
+    WMI_GET_BITS(param, WMI_TX_INSERT_VLAN_OUTER_TCI_BIT_POS, WMI_TX_INSERT_VLAN_OUTER_TCI_NUM_BITS)
+
+
+
+typedef struct {
+   /** TLV tag and len; tag equals
+    * WMITLV_TAG_STRUC_wmi_peer_config_vlan_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** peer MAC address */
+    wmi_mac_addr peer_macaddr;
+    /* peer_vlan_config_mask:
+     * Field indicates VLAN settings that need to set in RX and TX peer
+     * Bit 0:    Indicates if the settings are present for TX peer
+     *           [1 - present for TX peer]
+     * Bit 1:    Indicates if the settings are present for RX peer
+     *           [1 - present for RX peer]
+     * Bit 2:    Setting the insert_or_strip bit in TX peer
+     *           [0 - Strip, 1 - Insert]
+     * Bit 3:    Setting the strip_insert_vlan_inner bit in TX peer
+     *           [0 - Strip, 1 - Insert]
+     * Bit 4:    Setting the strip_insert_vlan_outer bit in TX peer
+     *           [0 - Strip, 1 - Insert]
+     * Bit 5:    Setting the strip_vlan_c_tag_decap bit in RX peer [1 - Strip]
+     * Bit 6:    Setting the strip_vlan_s_tag_decap bit in RX peer [1 - Strip]
+     * Bit 7:    Setting the rx_insert_vlan_c_tag_padding bit in RX peer
+     *           [1 - Insert]
+     * Bit 8:    Setting the rx_insert_vlan_s_tag_padding bit in RX peer
+     *           [1 - Insert]
+     */
+    A_UINT32 peer_vlan_config_mask;
+
+    /* insert_vlan_tci:
+     * Field indicates the word that needs to be inserted in the
+     * inner or outer tag, if insertion is enabled by the
+     * TX peer strip_insert_vlan_{inner,outer} fields along with
+     * insert_or_strip field
+     * Bits 0:15  insert_vlan_inner_tci
+     * Bits 16:31 insert_vlan_outer_tci
+     */
+    A_UINT32 insert_vlan_tci;
+} wmi_peer_config_vlan_cmd_fixed_param;
 
 
 
