@@ -4823,6 +4823,7 @@ typedef enum {
 	wmi_vdev_param_mcast_rc_stale_period,
 	wmi_vdev_param_enable_multi_group_key,
 	wmi_vdev_param_max_group_keys,
+	wmi_vdev_param_enable_mcast_rc,
 } wmi_conv_vdev_param_id;
 
 /**

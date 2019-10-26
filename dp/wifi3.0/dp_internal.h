@@ -1417,6 +1417,19 @@ struct cdp_soc_t *dp_soc_to_cdp_soc_t(struct dp_soc *psoc)
 	return (struct cdp_soc_t *)psoc;
 }
 
+/**
+ * cdp_soc_t_to_dp_soc() - typecast cdp_soc_t to
+ * dp soc handle
+ * @psoc: CDP psoc handle
+ *
+ * Return: struct dp_soc pointer
+ */
+static inline
+struct dp_soc *cdp_soc_t_to_dp_soc(struct cdp_soc_t *psoc)
+{
+	return (struct dp_soc *)psoc;
+}
+
 #ifdef WLAN_SUPPORT_RX_FLOW_TAG
 /**
  * dp_rx_flow_update_fse_stats() - Update a flow's statistics
@@ -1502,4 +1515,39 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 }
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+
+/**
+ * dp_get_vdev_from_soc_vdev_id_wifi3() - Returns vdev object given the vdev id
+ * @soc: core DP soc context
+ * @vdev_id: vdev id from vdev object can be retrieved
+ *
+ * Return: struct dp_vdev*: Pointer to DP vdev object
+ */
+static inline struct dp_vdev *
+dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
+				   uint8_t vdev_id)
+{
+	if (qdf_unlikely(vdev_id >= MAX_VDEV_CNT))
+		return NULL;
+
+	return soc->vdev_id_map[vdev_id];
+}
+
+/**
+ * dp_get_pdev_from_soc_pdev_id_wifi3() - Returns pdev object given the pdev id
+ * @soc: core DP soc context
+ * @pdev_id: pdev id from pdev object can be retrieved
+ *
+ * Return: struct dp_pdev*: Pointer to DP pdev object
+ */
+static inline struct dp_pdev *
+dp_get_pdev_from_soc_pdev_id_wifi3(struct dp_soc *soc,
+				   uint8_t pdev_id)
+{
+	if (qdf_unlikely(pdev_id >= MAX_PDEV_CNT))
+		return NULL;
+
+	return soc->pdev_list[pdev_id];
+}
+
 #endif /* #ifndef _DP_INTERNAL_H_ */

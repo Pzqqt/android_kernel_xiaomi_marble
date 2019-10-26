@@ -5068,6 +5068,8 @@ void dp_print_per_ring_stats(struct dp_soc *soc)
 		total_packets = 0;
 		DP_PRINT_STATS("Packets on ring %u:", ring);
 		for (core = 0; core < num_possible_cpus(); core++) {
+			if (!soc->stats.rx.ring_packets[core][ring])
+				continue;
 			DP_PRINT_STATS("Packets arriving on core %u: %llu",
 				       core,
 				       soc->stats.rx.ring_packets[core][ring]);
@@ -5154,11 +5156,14 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 		DP_PRINT_STATS("delivered %u msdus ( %llu bytes),",
 			       pdev->stats.rx.to_stack.num,
 			       pdev->stats.rx.to_stack.bytes);
-		for (i = 0; i <  CDP_MAX_RX_RINGS; i++)
+		for (i = 0; i <  CDP_MAX_RX_RINGS; i++) {
+			if (!pdev->stats.rx.rcvd_reo[i].num)
+				continue;
 			DP_PRINT_STATS(
 				       "received on reo[%d] %u msdus( %llu bytes),",
 				       i, pdev->stats.rx.rcvd_reo[i].num,
 				       pdev->stats.rx.rcvd_reo[i].bytes);
+		}
 		DP_PRINT_STATS("intra-bss packets %u msdus ( %llu bytes),",
 			       pdev->stats.rx.intra_bss.pkts.num,
 			       pdev->stats.rx.intra_bss.pkts.bytes);
@@ -5187,6 +5192,7 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->stats.rx.err.pkt_delivered_no_peer);
 
 		DP_PRINT_STATS("Reo Statistics");
+		DP_PRINT_STATS("near_full: %u ", soc->stats.rx.near_full);
 		DP_PRINT_STATS("rbm error: %u msdus",
 			       pdev->soc->stats.rx.err.invalid_rbm);
 		DP_PRINT_STATS("hal ring access fail: %u msdus",
@@ -5597,8 +5603,12 @@ dp_print_soc_tx_stats(struct dp_soc *soc)
 		       soc->stats.tx.tcl_ring_full[2]);
 	DP_PRINT_STATS("Tx invalid completion release = %d",
 		       soc->stats.tx.invalid_release_source);
-	DP_PRINT_STATS("Tx comp wbm internal error = %d",
-		       soc->stats.tx.wbm_internal_error);
+	DP_PRINT_STATS("Tx comp wbm internal error = %d : [%d %d %d %d]",
+		       soc->stats.tx.wbm_internal_error[WBM_INT_ERROR_ALL],
+		       soc->stats.tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_BUFFER],
+		       soc->stats.tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_LINK_DESC],
+		       soc->stats.tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_MSDU_BUFF],
+		       soc->stats.tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED]);
 	DP_PRINT_STATS("Tx comp loop pkt limit hit = %d",
 		       soc->stats.tx.tx_comp_loop_pkt_limit_hit);
 	DP_PRINT_STATS("Tx comp HP out of sync2 = %d",
@@ -5613,7 +5623,7 @@ void dp_print_soc_interrupt_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("INT:     Total  |txComps|reo[0] |reo[1] |reo[2] |reo[3] |mon    |rx_err | wbm   |reo_sta|rxdm2hst|hst2rxdm|");
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
 		intr_stats = &soc->intr_ctx[i].intr_stats;
-		DP_PRINT_STATS("%3u[%d]: %7u %7u %7u %7u %7u %7u %7u %7u %7u %7u %8u %8u",
+		DP_PRINT_STATS("%3u[%3d]: %7u %7u %7u %7u %7u %7u %7u %7u %7u %7u %8u %8u",
 			       i,
 			       hif_get_int_ctx_irq_num(soc->hif_handle, i),
 			       intr_stats->num_masks,
@@ -5672,6 +5682,8 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("RX frag err: %d", soc->stats.rx.rx_frag_err);
 
 	DP_PRINT_STATS("RX HP out_of_sync: %d", soc->stats.rx.hp_oos2);
+	DP_PRINT_STATS("RX Ring Near Full: %d", soc->stats.rx.near_full);
+
 	DP_PRINT_STATS("RX Reap Loop Pkt Limit Hit: %d",
 		       soc->stats.rx.reap_loop_pkt_limit_hit);
 	DP_PRINT_STATS("RX DESC invalid magic: %u",

@@ -3267,8 +3267,9 @@ qdf_nbuf_unshare_debug(qdf_nbuf_t buf, const char *func_name, uint32_t line_num)
 	if (qdf_likely(buf != unshared_buf)) {
 		qdf_net_buf_debug_delete_node(buf);
 
-		qdf_net_buf_debug_add_node(unshared_buf, 0,
-					   func_name, line_num);
+		if (unshared_buf)
+			qdf_net_buf_debug_add_node(unshared_buf, 0,
+						   func_name, line_num);
 	}
 
 	return unshared_buf;

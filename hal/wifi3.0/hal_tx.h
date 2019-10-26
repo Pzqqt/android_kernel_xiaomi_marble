@@ -29,6 +29,8 @@
 #define WBM_RELEASE_RING_5_TX_RATE_STATS_LSB      0
 #define WBM_RELEASE_RING_5_TX_RATE_STATS_MASK     0xffffffff
 
+#define HAL_WBM_RELEASE_RING_2_BUFFER_TYPE    0
+#define HAL_WBM_RELEASE_RING_2_DESC_TYPE      1
 
 /*---------------------------------------------------------------------------
   Preprocessor definitions and constants
@@ -91,6 +93,7 @@ do {                                            \
 #define HAL_TX_COMPLETION_DESC_BASE_LEN 12
 
 #define HAL_TX_COMP_RELEASE_SOURCE_TQM 0
+#define HAL_TX_COMP_RELEASE_SOURCE_REO 2
 #define HAL_TX_COMP_RELEASE_SOURCE_FW 3
 
 /* Define a place-holder release reason for FW */

@@ -139,36 +139,24 @@ void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event)
 {
 	qdf_mem_zero(event, sizeof(struct hif_ce_desc_event));
 }
-#endif
+#endif /* HIF_CE_DEBUG_DATA_BUF */
 
-#if defined(HIF_CONFIG_SLUB_DEBUG_ON) && defined(HIF_RECORD_RX_PADDR)
-/**
- * hif_ce_desc_record_rx_paddr() - record physical address for IOMMU
- * IOVA addr and MMU virtual addr for Rx
- * @scn: hif_softc
- * @event: structure detailing a ce event
- *
- * Record physical address for ce event type HIF_RX_DESC_POST and
- * HIF_RX_DESC_COMPLETION
- *
- * Return: none
- */
+#if defined(HIF_RECORD_PADDR)
 void hif_ce_desc_record_rx_paddr(struct hif_softc *scn,
-				 struct hif_ce_desc_event *event)
+				 struct hif_ce_desc_event *event,
+				 qdf_nbuf_t memory)
 {
-	if (event->type != HIF_RX_DESC_POST &&
-	    event->type != HIF_RX_DESC_COMPLETION)
-		return;
-
-	if (event->descriptor.dest_desc.buffer_addr)
+	if (memory) {
+		event->dma_addr = QDF_NBUF_CB_PADDR(memory);
 		event->dma_to_phy = qdf_mem_paddr_from_dmaaddr(
-				scn->qdf_dev,
-				event->descriptor.dest_desc.buffer_addr);
+					scn->qdf_dev,
+					event->dma_addr);
 
-	if (event->memory)
-		event->virt_to_phy = virt_to_phys(qdf_nbuf_data(event->memory));
+		event->virt_to_phy =
+			virt_to_phys(qdf_nbuf_data(memory));
+	}
 }
-#endif
+#endif /* HIF_RECORD_RX_PADDR */
 
 /**
  * hif_record_ce_desc_event() - record ce descriptor events
@@ -217,12 +205,14 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 
 	if (descriptor)
 		qdf_mem_copy(&event->descriptor, descriptor,
-			     sizeof(union ce_srng_desc));
+			     sizeof(union ce_desc));
 
 	event->memory = memory;
 	event->index = index;
 
-	hif_ce_desc_record_rx_paddr(scn, event);
+	if (event->type == HIF_RX_DESC_POST ||
+	    event->type == HIF_RX_DESC_COMPLETION)
+		hif_ce_desc_record_rx_paddr(scn, event, memory);
 
 	if (ce_hist->data_enable[ce_id])
 		hif_ce_desc_data_record(event, len);

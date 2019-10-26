@@ -56,6 +56,7 @@
 #define CDP_BA_64_BIT_MAP_SIZE_DWORDS 2
 #define CDP_RSSI_CHAIN_LEN 8
 
+#define OL_TXRX_INVALID_PDEV_ID 0xff
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 #define CDP_INVALID_VDEV_ID 0xff
 /* Options for Dump Statistics */

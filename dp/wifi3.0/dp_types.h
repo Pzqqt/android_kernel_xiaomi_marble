@@ -78,6 +78,13 @@
 #define MAX_PDEV_CNT 3
 #endif
 
+/* Max no. of VDEV per PSOC */
+#ifdef WLAN_PSOC_MAX_VDEVS
+#define MAX_VDEV_CNT WLAN_PSOC_MAX_VDEVS
+#else
+#define MAX_VDEV_CNT 51
+#endif
+
 #define MAX_LINK_DESC_BANKS 8
 #define MAX_TXDESC_POOLS 4
 #define MAX_RXDESC_POOLS 4
@@ -87,6 +94,13 @@
 #define MAX_IDLE_SCATTER_BUFS 16
 #define DP_MAX_IRQ_PER_CONTEXT 12
 #define DEFAULT_HW_PEER_ID 0xffff
+
+#define WBM_INT_ERROR_ALL 0
+#define WBM_INT_ERROR_REO_NULL_BUFFER 1
+#define WBM_INT_ERROR_REO_NULL_LINK_DESC 2
+#define WBM_INT_ERROR_REO_NULL_MSDU_BUFF 3
+#define WBM_INT_ERROR_REO_BUFF_REAPED 4
+#define MAX_WBM_INT_ERROR_REASONS 5
 
 #define MAX_TX_HW_QUEUES MAX_TCL_DATA_RINGS
 /* Maximum retries for Delba per tid per peer */
@@ -662,7 +676,7 @@ struct dp_soc_stats {
 		/* tx completion release_src != TQM or FW */
 		uint32_t invalid_release_source;
 		/* tx completion wbm_internal_error */
-		uint32_t wbm_internal_error;
+		uint32_t wbm_internal_error[MAX_WBM_INT_ERROR_REASONS];
 		/* TX Comp loop packet limit hit */
 		uint32_t tx_comp_loop_pkt_limit_hit;
 		/* Head pointer Out of sync at the end of dp_tx_comp_handler */
@@ -686,6 +700,8 @@ struct dp_soc_stats {
 		uint32_t reap_loop_pkt_limit_hit;
 		/* Head pointer Out of sync at the end of dp_rx_process */
 		uint32_t hp_oos2;
+		/* Rx ring near full */
+		uint32_t near_full;
 		struct {
 			/* Invalid RBM error count */
 			uint32_t invalid_rbm;
@@ -972,6 +988,9 @@ struct dp_soc {
 	bool dp_soc_reinit;
 
 	uint32_t wbm_idle_scatter_buf_size;
+
+	/* VDEVs on this SOC */
+	struct dp_vdev *vdev_id_map[MAX_VDEV_CNT];
 
 	/* Tx H/W queues lock */
 	qdf_spinlock_t tx_queue_lock[MAX_TX_HW_QUEUES];

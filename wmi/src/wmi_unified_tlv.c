@@ -478,6 +478,7 @@ static const uint32_t vdev_param_tlv[] = {
 	[wmi_vdev_param_enable_multi_group_key] =
 				WMI_VDEV_PARAM_ENABLE_MULTI_GROUP_KEY,
 	[wmi_vdev_param_max_group_keys] = WMI_VDEV_PARAM_NUM_GROUP_KEYS,
+	[wmi_vdev_param_enable_mcast_rc] = WMI_VDEV_PARAM_ENABLE_MCAST_RC,
 };
 #endif
 
@@ -3036,6 +3037,40 @@ error:
 	return ret;
 }
 
+#define WMI_MAX_CHAN_INFO_LOG 192
+
+/**
+ * wmi_scan_chanlist_dump() - Dump scan channel list info
+ * @scan_chan_list: scan channel list
+ *
+ * Return: void
+ */
+static void wmi_scan_chanlist_dump(struct scan_chan_list_params *scan_chan_list)
+{
+	uint32_t i;
+	uint8_t info[WMI_MAX_CHAN_INFO_LOG];
+	int len = 0;
+	struct channel_param *chan;
+	int ret;
+
+	WMI_LOGD(FL("start (freq MHz, tx power dBm):"));
+	for (i = 0; i < scan_chan_list->nallchans; i++) {
+		chan = &scan_chan_list->ch_param[i];
+		ret = scnprintf(info + len, sizeof(info) - len, "%d %d ",
+				chan->mhz, chan->maxregpower);
+		if (ret <= 0)
+			break;
+		len += ret;
+		if (len >= (sizeof(info) - 20)) {
+			WMI_LOGD(FL("%s"), info);
+			len = 0;
+		}
+	}
+	if (len > 0)
+		WMI_LOGD(FL("%s"), info);
+	WMI_LOGD(FL("end total_count %d"), scan_chan_list->nallchans);
+}
+
 static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 				struct scan_chan_list_params *chan_list)
 {
@@ -3049,6 +3084,7 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 	uint16_t len;
 	uint16_t num_send_chans, num_sends = 0;
 
+	wmi_scan_chanlist_dump(chan_list);
 	tchan_info = &chan_list->ch_param[0];
 	while (chan_list->nallchans) {
 		len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
@@ -3153,7 +3189,6 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 						     tchan_info->maxregpower);
 			WMI_SET_CHANNEL_MAX_BANDWIDTH(chan_info,
 						      tchan_info->max_bw_supported);
-			WMI_LOGD("chan[%d] = %u", i, chan_info->mhz);
 
 			tchan_info++;
 			chan_info++;

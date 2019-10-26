@@ -1649,9 +1649,46 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 #endif
 
 /**
+ * dp_rx_srng_get_num_pending() - get number of pending entries
+ * @hal_soc: hal soc opaque pointer
+ * @hal_ring: opaque pointer to the HAL Rx Ring
+ * @num_entries: number of entries in the hal_ring.
+ * @near_full: pointer to a boolean. This is set if ring is near full.
+ *
+ * The function returns the number of entries in a destination ring which are
+ * yet to be reaped. The function also checks if the ring is near full.
+ * If more than half of the ring needs to be reaped, the ring is considered
+ * approaching full.
+ * The function useses hal_srng_dst_num_valid_locked to get the number of valid
+ * entries. It should not be called within a SRNG lock. HW pointer value is
+ * synced into cached_hp.
+ *
+ * Return: Number of pending entries if any
+ */
+static
+uint32_t dp_rx_srng_get_num_pending(hal_soc_handle_t hal_soc,
+				    hal_ring_handle_t hal_ring_hdl,
+				    uint32_t num_entries,
+				    bool *near_full)
+{
+	uint32_t num_pending = 0;
+
+	num_pending = hal_srng_dst_num_valid_locked(hal_soc,
+						    hal_ring_hdl,
+						    true);
+
+	if (num_entries && (num_pending >= num_entries >> 1))
+		*near_full = true;
+	else
+		*near_full = false;
+
+	return num_pending;
+}
+
+/**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
- * @soc: core txrx main context
+ * @int_ctx: per interrupt context
  * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
  * @reo_ring_num: ring number (0, 1, 2 or 3) of the reo ring.
  * @quota: No. of units (packets) that can be serviced in one shot.
@@ -1662,14 +1699,16 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
  * Return: uint32_t: No. of elements processed
  */
 uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
-		       uint8_t reo_ring_num, uint32_t quota)
+			    uint8_t reo_ring_num, uint32_t quota)
 {
 	hal_ring_desc_t ring_desc;
 	hal_soc_handle_t hal_soc;
 	struct dp_rx_desc *rx_desc = NULL;
 	qdf_nbuf_t nbuf, next;
+	bool near_full;
 	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT];
 	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT];
+	uint32_t num_pending;
 	uint32_t rx_bufs_used = 0, rx_buf_cookie;
 	uint32_t l2_hdr_offset = 0;
 	uint16_t msdu_len = 0;
@@ -1703,6 +1742,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	bool is_prev_msdu_last = true;
 	uint32_t num_entries_avail = 0;
 	uint32_t rx_ol_pkt_cnt = 0;
+	uint32_t num_entries = 0;
 
 	DP_HIST_INIT();
 
@@ -1713,6 +1753,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	scn = soc->hif_handle;
 	hif_pm_runtime_mark_dp_rx_busy(scn);
 	intr_id = int_ctx->dp_intr_id;
+	num_entries = hal_srng_get_num_entries(hal_soc, hal_ring_hdl);
 
 more_data:
 	/* reset local variables here to be re-used in the function */
@@ -2196,12 +2237,23 @@ done:
 				       deliver_list_tail);
 
 	if (dp_rx_enable_eol_data_check(soc) && rx_bufs_used) {
-		if (quota &&
-		    hal_srng_dst_peek_sync_locked(soc->hal_soc,
-						  hal_ring_hdl)) {
-			DP_STATS_INC(soc, rx.hp_oos2, 1);
-			if (!hif_exec_should_yield(scn, intr_id))
-				goto more_data;
+		if (quota) {
+			num_pending =
+				dp_rx_srng_get_num_pending(hal_soc,
+							   hal_ring_hdl,
+							   num_entries,
+							   &near_full);
+			if (num_pending) {
+				DP_STATS_INC(soc, rx.hp_oos2, 1);
+
+				if (!hif_exec_should_yield(scn, intr_id))
+					goto more_data;
+
+				if (qdf_unlikely(near_full)) {
+					DP_STATS_INC(soc, rx.near_full, 1);
+					goto more_data;
+				}
+			}
 		}
 
 		if (vdev && vdev->osif_gro_flush && rx_ol_pkt_cnt) {

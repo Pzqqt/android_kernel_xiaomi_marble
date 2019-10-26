@@ -1834,3 +1834,153 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 
 	return work_done;
 }
+
+static inline uint32_t
+dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
+			hal_rxdma_desc_t rxdma_dst_ring_desc,
+			union dp_rx_desc_list_elem_t **head,
+			union dp_rx_desc_list_elem_t **tail)
+{
+	void *rx_msdu_link_desc;
+	qdf_nbuf_t msdu;
+	qdf_nbuf_t last;
+	struct hal_rx_msdu_list msdu_list;
+	uint16_t num_msdus;
+	struct hal_buf_info buf_info;
+	void *p_buf_addr_info;
+	void *p_last_buf_addr_info;
+	uint32_t rx_bufs_used = 0;
+	uint32_t msdu_cnt;
+	uint32_t i;
+
+	msdu = 0;
+
+	last = NULL;
+
+	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
+				     &p_last_buf_addr_info, &msdu_cnt);
+
+	do {
+		rx_msdu_link_desc =
+			dp_rx_cookie_2_link_desc_va(soc, &buf_info);
+
+		if (!rx_msdu_link_desc) {
+			DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_LINK_DESC], 1);
+			break;
+		}
+
+		hal_rx_msdu_list_get(soc->hal_soc, rx_msdu_link_desc,
+				     &msdu_list, &num_msdus);
+
+		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
+			for (i = 0; i < num_msdus; i++) {
+				struct dp_rx_desc *rx_desc =
+					dp_rx_cookie_2_va_rxdma_buf(
+							soc,
+							msdu_list.sw_cookie[i]);
+				qdf_assert_always(rx_desc);
+				msdu = rx_desc->nbuf;
+
+				qdf_nbuf_unmap_single(soc->osdev, msdu,
+						      QDF_DMA_FROM_DEVICE);
+
+				qdf_nbuf_free(msdu);
+				rx_bufs_used++;
+				dp_rx_add_to_free_desc_list(head,
+							    tail, rx_desc);
+			}
+		}
+
+		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
+					      &p_buf_addr_info);
+
+		dp_rx_link_desc_return(soc, p_last_buf_addr_info,
+				       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
+		p_last_buf_addr_info = p_buf_addr_info;
+
+	} while (buf_info.paddr);
+
+	return rx_bufs_used;
+}
+
+/*
+ *
+ * dp_handle_wbm_internal_error() - handles wbm_internal_error case
+ *
+ * @soc: core DP main context
+ * @hal_desc: hal descriptor
+ * @buf_type: indicates if the buffer is of type link disc or msdu
+ * Return: None
+ *
+ * wbm_internal_error is seen in following scenarios :
+ *
+ * 1.  Null pointers detected in WBM_RELEASE_RING descriptors
+ * 2.  Null pointers detected during delinking process
+ *
+ * Some null pointer cases:
+ *
+ * a. MSDU buffer pointer is NULL
+ * b. Next_MSDU_Link_Desc pointer is NULL, with no last msdu flag
+ * c. MSDU buffer pointer is NULL or Next_Link_Desc pointer is NULL
+ */
+void
+dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
+			     uint32_t buf_type)
+{
+	struct hal_buf_info buf_info = {0};
+	struct dp_pdev *dp_pdev;
+	struct dp_rx_desc *rx_desc = NULL;
+	uint32_t rx_buf_cookie;
+	uint32_t rx_bufs_reaped = 0;
+	union dp_rx_desc_list_elem_t *head = NULL;
+	union dp_rx_desc_list_elem_t *tail = NULL;
+	uint8_t pool_id;
+
+	hal_rx_reo_buf_paddr_get(hal_desc, &buf_info);
+
+	if (!buf_info.paddr) {
+		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_BUFFER], 1);
+		return;
+	}
+
+	rx_buf_cookie = HAL_RX_REO_BUF_COOKIE_GET(hal_desc);
+	pool_id = DP_RX_DESC_COOKIE_POOL_ID_GET(rx_buf_cookie);
+
+	if (buf_type == HAL_WBM_RELEASE_RING_2_BUFFER_TYPE) {
+		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_MSDU_BUFF], 1);
+		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
+
+		if (rx_desc && rx_desc->nbuf) {
+			qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
+					      QDF_DMA_FROM_DEVICE);
+
+			rx_desc->unmapped = 1;
+
+			qdf_nbuf_free(rx_desc->nbuf);
+			dp_rx_add_to_free_desc_list(&head,
+						    &tail,
+						    rx_desc);
+
+			rx_bufs_reaped++;
+		}
+	} else if (buf_type == HAL_WBM_RELEASE_RING_2_DESC_TYPE) {
+		rx_bufs_reaped = dp_wbm_int_err_mpdu_pop(soc, pool_id,
+							 hal_desc,
+							 &head, &tail);
+	}
+
+	if (rx_bufs_reaped) {
+		struct rx_desc_pool *rx_desc_pool;
+		struct dp_srng *dp_rxdma_srng;
+
+		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED], 1);
+		dp_pdev = soc->pdev_list[pool_id];
+		dp_rxdma_srng = &dp_pdev->rx_refill_buf_ring;
+		rx_desc_pool = &soc->rx_desc_buf[pool_id];
+
+		dp_rx_buffers_replenish(soc, pool_id, dp_rxdma_srng,
+					rx_desc_pool,
+					rx_bufs_reaped,
+					&head, &tail);
+	}
+}

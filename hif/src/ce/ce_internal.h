@@ -427,6 +427,9 @@ union ce_srng_desc {
  * @HIF_CE_DEST_RING_BUFFER_POST: record the packet when buffer is posted to ce dst ring
  * @HIF_CE_DEST_RING_BUFFER_REAP: record the packet when buffer is reaped from ce dst ring
  * @HIF_CE_DEST_STATUS_RING_REAP: record the packet when status ring is reaped
+ * @HIF_RX_DESC_PRE_NBUF_ALLOC: record the packet before nbuf allocation
+ * @HIF_RX_DESC_PRE_NBUF_MAP: record the packet before nbuf map
+ * @HIF_RX_DESC_POST_NBUF_MAP: record the packet after nbuf map
  */
 enum hif_ce_event_type {
 	HIF_RX_DESC_POST,
@@ -461,6 +464,10 @@ enum hif_ce_event_type {
 	HIF_CE_DEST_RING_BUFFER_POST,
 	HIF_CE_DEST_RING_BUFFER_REAP,
 	HIF_CE_DEST_STATUS_RING_REAP,
+
+	HIF_RX_DESC_PRE_NBUF_ALLOC,
+	HIF_RX_DESC_PRE_NBUF_MAP,
+	HIF_RX_DESC_POST_NBUF_MAP,
 };
 
 void ce_init_ce_desc_event_log(struct hif_softc *scn, int ce_id, int size);
@@ -547,13 +554,16 @@ int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id);
 
 /**
  * struct hif_ce_desc_event - structure for detailing a ce event
+ * @index: location of the descriptor in the ce ring;
  * @type: what the event was
  * @time: when it happened
  * @current_hp: holds the current ring hp value
  * @current_tp: holds the current ring tp value
  * @descriptor: descriptor enqueued or dequeued
  * @memory: virtual address that was used
- * @index: location of the descriptor in the ce ring;
+ * @dma_addr: physical/iova address based on smmu status
+ * @dma_to_phy: physical address from iova address
+ * @virt_to_phy: physical address from virtual address
  * @actual_data_len: length of the data
  * @data: data pointed by descriptor
  */
@@ -569,19 +579,25 @@ struct hif_ce_desc_event {
 	union ce_srng_desc descriptor;
 #endif
 	void *memory;
+
+#ifdef HIF_RECORD_PADDR
+	/* iova/pa based on smmu status */
+	qdf_dma_addr_t dma_addr;
+	/* store pa from iova address */
+	qdf_dma_addr_t dma_to_phy;
+	/* store pa */
+	qdf_dma_addr_t virt_to_phy;
+#endif /* HIF_RECORD_ADDR */
+
 #ifdef HIF_CE_DEBUG_DATA_BUF
 	size_t actual_data_len;
 	uint8_t *data;
 #endif /* HIF_CE_DEBUG_DATA_BUF */
-
-#ifdef HIF_CONFIG_SLUB_DEBUG_ON
-	qdf_dma_addr_t dma_to_phy;
-	qdf_dma_addr_t virt_to_phy;
-#endif
 };
 #else
 struct hif_ce_desc_event;
 #endif /*#if defined(HIF_CONFIG_SLUB_DEBUG_ON)||defined(HIF_CE_DEBUG_DATA_BUF)*/
+
 /**
  * get_next_record_index() - get the next record index
  * @table_index: atomic index variable to increment
@@ -615,25 +631,6 @@ void hif_record_ce_srng_desc_event(struct hif_softc *scn, int ce_id,
 				   union ce_srng_desc *descriptor,
 				   void *memory, int index,
 				   int len, void *hal_ring);
-#else
-static inline
-void hif_record_ce_srng_desc_event(struct hif_softc *scn, int ce_id,
-				   enum hif_ce_event_type type,
-				   union ce_srng_desc *descriptor,
-				   void *memory, int index,
-				   int len, void *hal_ring)
-{
-}
-#endif
-
-#ifdef HIF_CE_DEBUG_DATA_BUF
-/**
- * hif_ce_desc_data_record() - Record data pointed by the CE descriptor
- * @event: structure detailing a ce event
- * @len: length of the data
- * Return:
- */
-void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len);
 
 /**
  * hif_clear_ce_desc_debug_data() - Clear the contents of hif_ce_desc_event
@@ -644,6 +641,31 @@ void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len);
  * Return: None
  */
 void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event);
+#else
+static inline
+void hif_record_ce_srng_desc_event(struct hif_softc *scn, int ce_id,
+				   enum hif_ce_event_type type,
+				   union ce_srng_desc *descriptor,
+				   void *memory, int index,
+				   int len, void *hal_ring)
+{
+}
+
+static inline
+void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event)
+{
+}
+#endif /* HIF_CONFIG_SLUB_DEBUG_ON || HIF_CE_DEBUG_DATA_BUF */
+
+#ifdef HIF_CE_DEBUG_DATA_BUF
+/**
+ * hif_ce_desc_data_record() - Record data pointed by the CE descriptor
+ * @event: structure detailing a ce event
+ * @len: length of the data
+ * Return:
+ */
+void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len);
+
 QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 #else
@@ -660,8 +682,6 @@ static inline
 void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 {
 }
-
-void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event);
 #endif /*HIF_CE_DEBUG_DATA_BUF*/
 
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
@@ -685,14 +705,14 @@ static inline void ce_validate_nbytes(uint32_t nbytes,
 				      struct CE_state *ce_state)
 {
 }
-#endif
+#endif /* HIF_CONFIG_SLUB_DEBUG_ON */
 
-#if defined(HIF_CONFIG_SLUB_DEBUG_ON) && defined(HIF_RECORD_RX_PADDR)
+#if defined(HIF_RECORD_PADDR)
 /**
  * hif_ce_desc_record_rx_paddr() - record physical address for IOMMU
  * IOVA addr and MMU virtual addr for Rx
  * @scn: hif_softc
- * @event: structure detailing a ce event
+ * @nbuf: buffer posted to fw
  *
  * record physical address for ce_event_type HIF_RX_DESC_POST and
  * HIF_RX_DESC_COMPLETION
@@ -700,12 +720,14 @@ static inline void ce_validate_nbytes(uint32_t nbytes,
  * Return: none
  */
 void hif_ce_desc_record_rx_paddr(struct hif_softc *scn,
-				 struct hif_ce_desc_event *event);
+				 struct hif_ce_desc_event *event,
+				 qdf_nbuf_t nbuf);
 #else
 static inline
 void hif_ce_desc_record_rx_paddr(struct hif_softc *scn,
-				 struct hif_ce_desc_event *event)
+				 struct hif_ce_desc_event *event,
+				 qdf_nbuf_t nbuf)
 {
 }
-#endif
+#endif /* HIF_RECORD_PADDR */
 #endif /* __COPY_ENGINE_INTERNAL_H__ */

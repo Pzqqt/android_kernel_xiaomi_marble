@@ -330,6 +330,10 @@ void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl);
 #define DP_TX_TID_OVERRIDE(_msdu_info, _nbuf)
 #endif
 
+void
+dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
+			     uint32_t buf_type);
+
 /* TODO TX_FEATURE_NOT_YET */
 static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 {
