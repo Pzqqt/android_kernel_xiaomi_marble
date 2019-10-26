@@ -478,6 +478,19 @@ typedef enum HTT_PPDU_STATS_SEQ_TYPE HTT_PPDU_STATS_SEQ_TYPE;
          ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_COMMON_TLV_PHY_PPDU_TX_TIME_US_M     0x0000ffff
+#define HTT_PPDU_STATS_COMMON_TLV_PHY_PPDU_TX_TIME_US_S              0
+
+#define HTT_PPDU_STATS_COMMON_TLV_PHY_PPDU_TX_TIME_US_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_PHY_PPDU_TX_TIME_US_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_PHY_PPDU_TX_TIME_US_S )
+
+#define HTT_PPDU_STATS_COMMON_TLV_PHY_PPDU_TX_TIME_US_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_PHY_PPDU_TX_TIME_US, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_PHY_PPDU_TX_TIME_US_S)); \
+     } while (0)
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -562,6 +575,21 @@ typedef struct {
      * latency.
      */
     A_UINT32 txfrm_delta_time_us;
+
+    /*
+     * The phy_ppdu_tx_time_us reports the time it took to transmit
+     * a PPDU by itself
+     * BIT [15 :  0] - phy_ppdu_tx_time_us reports the time it took to
+     #                 transmit by itself (not including response time)
+     * BIT [31 : 16] - reserved
+     */
+    union {
+        A_UINT32 reserved__ppdu_tx_time_us;
+        struct {
+            A_UINT32 phy_ppdu_tx_time_us:   16,
+                     reserved1:             16;
+        };
+    };
 } htt_ppdu_stats_common_tlv;
 
 #define HTT_PPDU_STATS_USER_COMMON_TLV_TID_NUM_M     0x000000ff
