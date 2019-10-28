@@ -3204,7 +3204,7 @@ void csr_prune_channel_list_for_mode(struct mac_context *mac_ctx,
 }
 
 #define INFRA_AP_DEFAULT_CHAN_FREQ 2437
-QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint8_t chnNum)
+QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint32_t freq)
 {
 	uint8_t index = 0;
 	QDF_STATUS status = QDF_STATUS_E_NOSUPPORT;
@@ -3213,7 +3213,7 @@ QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint8_t chnNum)
 	for (index = 0; index < mac->scan.base_channels.numChannels;
 	     index++) {
 		if (mac->scan.base_channels.channel_freq_list[index] ==
-				wlan_reg_chan_to_freq(mac->pdev, chnNum)) {
+				freq){
 			status = QDF_STATUS_SUCCESS;
 			break;
 		}
@@ -3221,7 +3221,7 @@ QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint8_t chnNum)
 
 	if (QDF_STATUS_SUCCESS != status) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			 FL("channel %d is not available"), chnNum);
+			 FL("freq %d is not available"), freq);
 	}
 
 	return status;
@@ -14540,8 +14540,7 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 	pParam->ApUapsdEnable = pProfile->ApUapsdEnable;
 	pParam->ssidHidden = pProfile->SSIDs.SSIDList[0].ssidHidden;
 	if (CSR_IS_INFRA_AP(pProfile) && (pParam->operation_chan_freq != 0)) {
-		if (csr_is_valid_channel(mac, wlan_reg_freq_to_chan(mac->pdev,
-								    pParam->operation_chan_freq)) !=
+		if (csr_is_valid_channel(mac, pParam->operation_chan_freq) !=
 		    QDF_STATUS_SUCCESS) {
 			pParam->operation_chan_freq = INFRA_AP_DEFAULT_CHAN_FREQ;
 			pParam->ch_params.ch_width = CH_WIDTH_20MHZ;
