@@ -312,7 +312,7 @@ static QDF_STATUS policy_mgr_modify_pcl_based_on_dnbs(
 						uint32_t *pcl_len_org)
 {
 	uint32_t i, pcl_len = 0;
-	uint8_t pcl_list[QDF_MAX_NUM_CHAN];
+	uint32_t pcl_list[QDF_MAX_NUM_CHAN];
 	uint8_t weight_list[QDF_MAX_NUM_CHAN];
 	bool ok;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;

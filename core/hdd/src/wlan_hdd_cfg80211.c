@@ -9523,9 +9523,7 @@ static uint32_t wlan_hdd_populate_weigh_pcl(
 
 	/* convert channel number to frequency */
 	for (i = 0; i < chan_weights->pcl_len; i++) {
-		if (chan_weights->pcl_list[i] <=
-		    ARRAY_SIZE(hdd_channels_2_4_ghz))
-			w_pcl[i].freq = chan_weights->pcl_list[i];
+		w_pcl[i].freq = chan_weights->pcl_list[i];
 		w_pcl[i].weight = chan_weights->weight_list[i];
 
 		if (intf_mode == PM_SAP_MODE || intf_mode == PM_P2P_GO_MODE)
@@ -9550,10 +9548,8 @@ static uint32_t wlan_hdd_populate_weigh_pcl(
 				break;
 		}
 		if (j == chan_weights->pcl_len) {
-			if (chan_weights->saved_chan_list[i] <=
-				ARRAY_SIZE(hdd_channels_2_4_ghz))
-				w_pcl[chan_idx].freq =
-					chan_weights->saved_chan_list[i];
+			w_pcl[chan_idx].freq =
+				chan_weights->saved_chan_list[i];
 
 			if (!chan_weights->weighed_valid_list[i]) {
 				w_pcl[chan_idx].flag =
@@ -9662,10 +9658,13 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 		freq_list[i] = w_pcl[i].freq;
 
 	/* send the freq_list back to supplicant */
-	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(u32) +
-					sizeof(u32) * pcl_len +
-					sizeof(struct weighed_pcl) * pcl_len +
-					NLMSG_HDRLEN);
+	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(
+			wiphy,
+			(sizeof(u32) + NLA_HDRLEN) +
+			(sizeof(u32) * pcl_len + NLA_HDRLEN) +
+			NLA_HDRLEN +
+			(NLA_HDRLEN * 4 + sizeof(u32) * 3) * pcl_len +
+			NLMSG_HDRLEN);
 
 	if (!reply_skb) {
 		hdd_err("Allocate reply_skb failed");
