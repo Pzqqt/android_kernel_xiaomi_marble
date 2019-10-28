@@ -820,7 +820,7 @@ csr_roam_chk_lnk_ibss_peer_departed_ind(struct mac_context *mac_ctx,
 }
 
 static uint32_t
-csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
+csr_roam_get_ibss_start_chan_freq50(struct mac_context *mac)
 {
 	uint32_t ch_freq = 0;
 	uint32_t idx;
@@ -873,11 +873,11 @@ csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
 		}
 	} /* if */
 
-	return wlan_reg_freq_to_chan(mac->pdev, ch_freq);
+	return ch_freq;
 }
 
 static uint32_t
-csr_roam_get_ibss_start_channel_number24(struct mac_context *mac)
+csr_roam_get_ibss_start_chan_freq24(struct mac_context *mac)
 {
 	uint32_t ch_freq = 2412;
 	uint32_t idx;
@@ -911,17 +911,17 @@ csr_roam_get_ibss_start_channel_number24(struct mac_context *mac)
 		}
 	}
 
-	return wlan_reg_freq_to_chan(mac->pdev, ch_freq);
+	return ch_freq;
 }
 #else
 static inline uint32_t
-csr_roam_get_ibss_start_channel_number50(struct mac_context *mac)
+csr_roam_get_ibss_start_chan_freq50(struct mac_context *mac)
 {
 	return 0;
 }
 
 static inline uint32_t
-csr_roam_get_ibss_start_channel_number24(struct mac_context *mac)
+csr_roam_get_ibss_start_chan_freq24(struct mac_context *mac)
 {
 	return 0;
 }
@@ -14365,9 +14365,7 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 				opr_ch_freq = tmp_opr_ch_freq;
 				break;
 			}
-			opr_ch_freq =
-				wlan_reg_chan_to_freq(mac->pdev,
-						      csr_roam_get_ibss_start_channel_number50(mac));
+			opr_ch_freq = csr_roam_get_ibss_start_chan_freq50(mac);
 			if (0 == opr_ch_freq &&
 				CSR_IS_PHY_MODE_DUAL_BAND(pProfile->phyMode) &&
 				CSR_IS_PHY_MODE_DUAL_BAND(
@@ -14380,8 +14378,7 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 				 */
 				nw_type = eSIR_11B_NW_TYPE;
 				opr_ch_freq =
-					wlan_reg_chan_to_freq(mac->pdev,
-							      csr_roam_get_ibss_start_channel_number24(mac));
+				csr_roam_get_ibss_start_chan_freq24(mac);
 				csr_populate_basic_rates(opr_rates, false, true);
 			}
 			break;
@@ -14389,8 +14386,7 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 			csr_populate_basic_rates(opr_rates, false, true);
 			if (eCSR_OPERATING_CHANNEL_ANY == tmp_opr_ch_freq)
 				opr_ch_freq =
-					wlan_reg_chan_to_freq(mac->pdev,
-							      csr_roam_get_ibss_start_channel_number24(mac));
+				csr_roam_get_ibss_start_chan_freq24(mac);
 			else
 				opr_ch_freq = tmp_opr_ch_freq;
 			break;
@@ -14409,8 +14405,7 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 			}
 			if (eCSR_OPERATING_CHANNEL_ANY == tmp_opr_ch_freq)
 				opr_ch_freq =
-					wlan_reg_chan_to_freq(mac->pdev,
-							      csr_roam_get_ibss_start_channel_number24(mac));
+				csr_roam_get_ibss_start_chan_freq24(mac);
 			else
 				opr_ch_freq = tmp_opr_ch_freq;
 			break;
