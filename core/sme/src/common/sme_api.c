@@ -9129,19 +9129,9 @@ QDF_STATUS sme_csa_restart(struct mac_context *mac_ctx, uint8_t session_id)
 	return status;
 }
 
-/**
- * sme_roam_csa_ie_request() - request CSA IE transmission from PE
- * @mac_handle: handle returned by mac_open
- * @bssid: SAP bssid
- * @targetChannel: target channel information
- * @csaIeReqd: CSA IE Request
- * @ch_params: channel information
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS sme_roam_csa_ie_request(mac_handle_t mac_handle,
 				   struct qdf_mac_addr bssid,
-				   uint8_t targetChannel, uint8_t csaIeReqd,
+				   uint32_t target_chan_freq, uint8_t csaIeReqd,
 				   struct ch_params *ch_params)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -9150,7 +9140,7 @@ QDF_STATUS sme_roam_csa_ie_request(mac_handle_t mac_handle,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_roam_send_chan_sw_ie_request(mac, bssid,
-				targetChannel, csaIeReqd, ch_params);
+				target_chan_freq, csaIeReqd, ch_params);
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
@@ -10985,7 +10975,7 @@ QDF_STATUS sme_enable_dfs_chan_scan(mac_handle_t mac_handle, uint8_t dfs_flag)
  * Return: true if there is no channel interference else return false
  */
 bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
-				     uint16_t sap_ch,
+				     uint32_t sap_ch_freq,
 				     eCsrPhyMode sap_phy_mode,
 				     uint8_t cc_switch_mode,
 				     uint8_t session_id)
@@ -11001,7 +10991,8 @@ bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
 	session->ch_switch_in_progress = true;
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		intf_channel = csr_check_concurrent_channel_overlap(mac, sap_ch,
+		intf_channel = csr_check_concurrent_channel_overlap(mac,
+								    wlan_reg_freq_to_chan(mac->pdev, sap_ch_freq),
 						sap_phy_mode,
 						cc_switch_mode);
 		sme_release_global_lock(&mac->sme);

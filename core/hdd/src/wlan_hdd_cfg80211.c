@@ -17614,9 +17614,8 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	struct hdd_adapter *ap_adapter;
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	struct hdd_hostapd_state *hostapd_state;
-	uint8_t channel = 0;
 	QDF_STATUS status;
-	uint32_t ch_freq;
+	uint32_t ch_freq = 0;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -17664,13 +17663,12 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	 */
 	status = policy_mgr_get_channel_from_scan_result(
 			hdd_ctx->psoc, roam_profile, &ch_freq);
-	channel = wlan_freq_to_chan(ch_freq);
 
 	/*
 	 * If the STA's channel is 2.4 GHz, then set pcl with only 2.4 GHz
 	 * channels for roaming case.
 	 */
-	if (WLAN_REG_IS_24GHZ_CH(channel)) {
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
 		hdd_info("sap is on dfs, new sta conn on 2.4 is allowed");
 		return true;
 	}
@@ -17681,12 +17679,10 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	 * better move SAP to STA's channel to make scc, so we have room
 	 * for 3port MCC scenario.
 	 */
-	if (!channel || wlan_reg_is_dfs_ch(hdd_ctx->pdev, channel) ||
-	    !policy_mgr_is_safe_channel(hdd_ctx->psoc,
-					wlan_chan_to_freq(channel)))
-		channel = wlan_freq_to_chan(
-			policy_mgr_get_nondfs_preferred_channel(
-			hdd_ctx->psoc, PM_SAP_MODE, true));
+	if (!ch_freq || wlan_reg_is_dfs_for_freq(hdd_ctx->pdev, ch_freq) ||
+	    !policy_mgr_is_safe_channel(hdd_ctx->psoc, ch_freq))
+		ch_freq = policy_mgr_get_nondfs_preferred_channel(
+			hdd_ctx->psoc, PM_SAP_MODE, true);
 
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 	qdf_event_reset(&hostapd_state->qdf_event);
@@ -17694,7 +17690,7 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 				    CSA_REASON_STA_CONNECT_DFS_TO_NON_DFS);
 
 	status = wlansap_set_channel_change_with_csa(
-			WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter), channel,
+			WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter), ch_freq,
 			hdd_ap_ctx->sap_config.ch_width_orig, false);
 
 	if (QDF_STATUS_SUCCESS != status) {

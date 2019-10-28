@@ -3036,7 +3036,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 
 	status = wlansap_set_channel_change_with_csa(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-		(uint32_t)target_channel,
+		wlan_reg_chan_to_freq(hdd_ctx->pdev, target_channel),
 		target_bw,
 		(forced && !scc_on_lte_coex) || is_p2p_go_session);
 

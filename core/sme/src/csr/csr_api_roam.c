@@ -20627,7 +20627,7 @@ QDF_STATUS csr_csa_restart(struct mac_context *mac_ctx, uint8_t session_id)
  * csr_roam_send_chan_sw_ie_request() - Request to transmit CSA IE
  * @mac_ctx:        Global MAC context
  * @bssid:          BSSID
- * @target_channel: Channel on which to send the IE
+ * @target_chan_freq: Channel frequency on which to send the IE
  * @csa_ie_reqd:    Include/Exclude CSA IE.
  * @ch_params:  operating Channel related information
  *
@@ -20638,7 +20638,7 @@ QDF_STATUS csr_csa_restart(struct mac_context *mac_ctx, uint8_t session_id)
  **/
 QDF_STATUS csr_roam_send_chan_sw_ie_request(struct mac_context *mac_ctx,
 					    struct qdf_mac_addr bssid,
-					    uint8_t target_channel,
+					    uint32_t target_chan_freq,
 					    uint8_t csa_ie_reqd,
 					    struct ch_params *ch_params)
 {
@@ -20652,7 +20652,7 @@ QDF_STATUS csr_roam_send_chan_sw_ie_request(struct mac_context *mac_ctx,
 	msg->msgType = eWNI_SME_DFS_BEACON_CHAN_SW_IE_REQ;
 	msg->msgLen = sizeof(tSirDfsCsaIeRequest);
 
-	msg->targetChannel = target_channel;
+	msg->target_chan_freq = target_chan_freq;
 	msg->csaIeRequired = csa_ie_reqd;
 	msg->ch_switch_beacon_cnt =
 		 mac_ctx->sap.SapDfsInfo.sap_ch_switch_beacon_cnt;

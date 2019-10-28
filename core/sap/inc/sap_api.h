@@ -563,13 +563,13 @@ typedef struct sSapDfsInfo {
 	qdf_mc_timer_t sap_dfs_cac_timer;
 	uint8_t sap_radar_found_status;
 	/*
-	 * New channel to move to when a  Radar is
+	 * New channel frequency to move to when a  Radar is
 	 * detected on current Channel
 	 */
-	uint8_t target_channel;
+	uint32_t target_chan_freq;
 	uint8_t ignore_cac;
 	eSapDfsCACState_t cac_state;
-	uint8_t user_provided_target_channel;
+	uint32_t user_provided_target_chan_freq;
 
 	/*
 	 * Requests for Channel Switch Announcement IE
@@ -917,7 +917,7 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 /**
  * wlansap_set_channel_change_with_csa() - Set channel change with CSA
  * @sap_ctx: Pointer to SAP context
- * @targetChannel: Target channel
+ * @target_chan_freq: Target channel frequncy
  * @target_bw: Target bandwidth
  * @strict: if true switch to the requested channel always, fail
  *        otherwise
@@ -928,7 +928,7 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
-					       uint32_t targetChannel,
+					       uint32_t target_chan_freq,
 					       enum phy_ch_width target_bw,
 					       bool strict);
 
@@ -1052,7 +1052,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
  *
  */
 QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
-					  uint8_t target_channel);
+					  uint32_t target_chan_freq);
 
 /**
  * wlansap_get_sec_channel() - get the secondary sap channel
@@ -1159,7 +1159,7 @@ QDF_STATUS wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle);
 /**
  * wlansap_set_dfs_target_chnl() - Set target channel
  * @mac_handle: Opaque handle for the global MAC context
- * @target_channel: target channel to be set
+ * @target_chan_freq: target channel frequency to be set
  *
  * This API is used to set next target chnl as provided channel.
  * you can provide any valid channel to this API.
@@ -1167,7 +1167,7 @@ QDF_STATUS wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle);
  * Return: The QDF_STATUS code associated with performing the operation
  */
 QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
-				       uint8_t target_channel);
+				       uint32_t target_chan_freq);
 
 /**
  * wlan_sap_get_roam_profile() - Returns sap roam profile.

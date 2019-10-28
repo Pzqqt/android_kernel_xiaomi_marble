@@ -5639,7 +5639,7 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 
 	/* target channel */
 	session_entry->gLimChannelSwitch.primaryChannel =
-		dfs_csa_ie_req->targetChannel;
+		wlan_reg_freq_to_chan(mac_ctx->pdev, dfs_csa_ie_req->target_chan_freq);
 
 	/* Channel switch announcement needs to be included in beacon */
 	session_entry->dfsIncludeChanSwIe = true;

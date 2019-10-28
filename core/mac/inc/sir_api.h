@@ -2830,7 +2830,7 @@ typedef struct sSirUpdateIEsInd {
 typedef struct sSirDfsCsaIeRequest {
 	uint16_t msgType;
 	uint16_t msgLen;
-	uint8_t targetChannel;
+	uint32_t target_chan_freq;
 	uint8_t csaIeRequired;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	struct ch_params ch_params;

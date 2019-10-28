@@ -1210,9 +1210,12 @@ QDF_STATUS sme_roam_start_beacon_req(mac_handle_t mac_handle,
 				     uint8_t dfsCacWaitStatus);
 
 /**
- * sme_csa_restart() - request CSA IE transmission from PE
- * @mac_ctx: mac context
- * @session_id: SAP session id
+ * sme_roam_csa_ie_request() - request CSA IE transmission from PE
+ * @mac_handle: handle returned by mac_open
+ * @bssid: SAP bssid
+ * @target_chan_freq: target channel frequency information
+ * @csaIeReqd: CSA IE Request
+ * @ch_params: channel information
  *
  * Return: QDF_STATUS
  */
@@ -1220,7 +1223,7 @@ QDF_STATUS sme_csa_restart(struct mac_context *mac_ctx, uint8_t session_id);
 
 QDF_STATUS sme_roam_csa_ie_request(mac_handle_t mac_handle,
 				   struct qdf_mac_addr bssid,
-				   uint8_t targetChannel, uint8_t csaIeReqd,
+				   uint32_t target_chan_freq, uint8_t csaIeReqd,
 				   struct ch_params *ch_params);
 
 /**
@@ -1774,7 +1777,7 @@ void sme_update_tgt_services(mac_handle_t mac_handle,
 			     struct wma_tgt_services *cfg);
 
 bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
-				     uint16_t sap_ch, eCsrPhyMode sap_phy_mode,
+				     uint32_t sap_ch_freq, eCsrPhyMode sap_phy_mode,
 				     uint8_t cc_switch_mode,
 				     uint8_t session_id);
 

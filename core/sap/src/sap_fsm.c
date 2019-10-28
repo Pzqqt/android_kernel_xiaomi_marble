@@ -2378,14 +2378,14 @@ static QDF_STATUS sap_fsm_handle_radar_during_cac(struct sap_context *sap_ctx,
 {
 	uint8_t intf;
 
-	if (mac_ctx->sap.SapDfsInfo.target_channel) {
-		wlan_reg_set_channel_params(mac_ctx->pdev,
-				    mac_ctx->sap.SapDfsInfo.target_channel, 0,
+	if (mac_ctx->sap.SapDfsInfo.target_chan_freq) {
+		wlan_reg_set_channel_params_for_freq(mac_ctx->pdev,
+				    mac_ctx->sap.SapDfsInfo.target_chan_freq, 0,
 				    &sap_ctx->ch_params);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid target channel %d"),
-			  mac_ctx->sap.SapDfsInfo.target_channel);
+			  FL("Invalid target channel freq %d"),
+			  mac_ctx->sap.SapDfsInfo.target_chan_freq);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2415,7 +2415,7 @@ static QDF_STATUS sap_fsm_handle_radar_during_cac(struct sap_context *sap_ctx,
 			 * sap_radar_found_status is set to 1
 			 */
 			wlansap_channel_change_request(t_sap_ctx,
-				mac_ctx->sap.SapDfsInfo.target_channel);
+				mac_ctx->sap.SapDfsInfo.target_chan_freq);
 		}
 	}
 
@@ -2579,8 +2579,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 								  mac_handle);
 	} else if (msg == eSAP_OPERATING_CHANNEL_CHANGED) {
 		/* The operating channel has changed, update hostapd */
-		sap_ctx->chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
-					mac_ctx->sap.SapDfsInfo.target_channel);
+		sap_ctx->chan_freq = mac_ctx->sap.SapDfsInfo.target_chan_freq;
 
 		sap_ctx->fsm_state = SAP_STARTED;
 
@@ -2648,10 +2647,10 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 		qdf_status = sap_goto_stopping(sap_ctx);
 	} else if (eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START == msg) {
 		uint8_t intf;
-		if (!mac_ctx->sap.SapDfsInfo.target_channel) {
+		if (!mac_ctx->sap.SapDfsInfo.target_chan_freq) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				FL("Invalid target channel %d"),
-				mac_ctx->sap.SapDfsInfo.target_channel);
+				FL("Invalid target channel freq %d"),
+				mac_ctx->sap.SapDfsInfo.target_chan_freq);
 			return qdf_status;
 		}
 

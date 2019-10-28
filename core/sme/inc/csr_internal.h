@@ -1053,7 +1053,7 @@ QDF_STATUS csr_roam_start_beacon_req(struct mac_context *mac,
 
 QDF_STATUS csr_roam_send_chan_sw_ie_request(struct mac_context *mac,
 					    struct qdf_mac_addr bssid,
-					    uint8_t targetChannel,
+					    uint32_t target_chan_freq,
 					    uint8_t csaIeReqd,
 					    struct ch_params *ch_params);
 QDF_STATUS csr_roam_modify_add_ies(struct mac_context *mac,
