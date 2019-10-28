@@ -6660,6 +6660,21 @@ enum wmi_host_hw_mode_config_type {
 	WMI_HOST_HW_MODE_DETECT,
 };
 
+/**
+ * enum wmi_host_dynamic_hw_mode_config_type - Host defined enum for
+ * dynamic mode switch
+ * @WMI_HOST_DYNAMIC_HW_MODE_DISABLED: hw mode switch is disabled
+ * @WMI_HOST_DYNAMIC_HW_MODE_SLOW: hw mode switch with interface down/up
+ * @WMI_HOST_DYNAMIC_HW_MODE_FAST: hw mode switch without interface down/up
+ * @WMI_HOST_DYNAMIC_HW_MODE_MAX: Max value to indicate invalid mode
+ */
+enum wmi_host_dynamic_hw_mode_config_type {
+	WMI_HOST_DYNAMIC_HW_MODE_DISABLED = 0,
+	WMI_HOST_DYNAMIC_HW_MODE_SLOW     = 1,
+	WMI_HOST_DYNAMIC_HW_MODE_FAST     = 2,
+	WMI_HOST_DYNAMIC_HW_MODE_MAX,
+};
+
 /*
  * struct wmi_host_peer_txmu_cnt_event
  * @tx_mu_transmitted - MU-MIMO tx count

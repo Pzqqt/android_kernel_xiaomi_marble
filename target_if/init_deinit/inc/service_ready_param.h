@@ -179,6 +179,7 @@ struct wlan_psoc_host_hal_reg_cap_ext {
  * @chainmask_table_id: chain mask table id
  * @lmac_id: hw mac id
  * @reg_cap_ext: extended regulatory capabilities
+ * @tgt_pdev_id: target pdev id assigned and used by firmware
  */
 struct wlan_psoc_host_mac_phy_caps {
 	uint32_t hw_mode_id;
@@ -217,6 +218,7 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t chainmask_table_id;
 	uint32_t lmac_id;
 	struct wlan_psoc_host_hal_reg_cap_ext reg_cap_ext;
+	uint32_t tgt_pdev_id;
 };
 
 /**
