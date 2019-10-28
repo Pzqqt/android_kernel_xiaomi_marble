@@ -13709,7 +13709,7 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 				   uint32_t bss_op_ch_freq,
 				   enum reg_wifi_band *p_band)
 {
-	enum reg_wifi_band band;
+	enum reg_wifi_band band = REG_BAND_2G;
 	uint8_t opr_chn = eCSR_OPERATING_CHANNEL_AUTO;
 	enum csr_cfgdot11mode curr_mode =
 		mac_ctx->roam.configParam.uCfgDot11Mode;

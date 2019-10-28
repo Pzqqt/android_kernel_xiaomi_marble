@@ -696,7 +696,7 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac, pe_session,
 					&frm->he_cap);
-		populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
+		populate_dot11f_he_6ghz_cap(mac, pe_session,
 					    &frm->he_6ghz_band_cap);
 	}
 
