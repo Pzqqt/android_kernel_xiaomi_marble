@@ -14824,7 +14824,8 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct wlan_mlme_mbo *mbo_cfg;
 	int8_t current_rssi_mcc_thres;
-	uint8_t bss_chan_id, conn_bss_chan_id;
+	uint32_t bss_chan_freq, conn_bss_chan_freq;
+	bool bss_chan_safe, conn_bss_chan_safe;
 
 	if (!(mac_ctx->mlme_cfg)) {
 		pe_err("mlme cfg is NULL");
@@ -14848,11 +14849,8 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 
 	if (trans_reason == MBO_TRANSITION_REASON_LOAD_BALANCING ||
 	    trans_reason == MBO_TRANSITION_REASON_TRANSITIONING_TO_PREMIUM_AP) {
-		bss_chan_id = wlan_reg_freq_to_chan(mac_ctx->pdev,
-						    bss_desc->chan_freq);
-		conn_bss_chan_id = wlan_reg_freq_to_chan(
-				mac_ctx->pdev,
-				conn_bss_desc->chan_freq);
+		bss_chan_freq = bss_desc->chan_freq;
+		conn_bss_chan_freq = conn_bss_desc->chan_freq;
 		/*
 		 * MCC rejection
 		 * If moving to candidate's channel will result in MCC scenario
@@ -14862,7 +14860,7 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		 */
 		current_rssi_mcc_thres = mbo_cfg->mbo_current_rssi_mcc_thres;
 		if ((conn_bss_desc->rssi > current_rssi_mcc_thres) &&
-		    csr_is_mcc_channel(mac_ctx, bss_chan_id)) {
+		    csr_is_mcc_channel(mac_ctx, bss_chan_freq)) {
 			sme_err("Candidate BSS "QDF_MAC_ADDR_STR" causes MCC, hence reject",
 				QDF_MAC_ADDR_ARRAY(bss_desc->bssId));
 			info->status =
@@ -14877,8 +14875,8 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		 * less than mbo_candidate_rssi_btc_thres, then reject the
 		 * candidate with MBO reason code 2.
 		 */
-		if (WLAN_REG_IS_5GHZ_CH(conn_bss_chan_id) &&
-		    WLAN_REG_IS_24GHZ_CH(bss_chan_id) &&
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(conn_bss_chan_freq) &&
+		    WLAN_REG_IS_24GHZ_CH_FREQ(bss_chan_freq) &&
 		    is_bt_in_progress &&
 		    (bss_desc->rssi < mbo_cfg->mbo_candidate_rssi_btc_thres)) {
 			sme_err("Candidate BSS "QDF_MAC_ADDR_STR" causes BT coex, hence reject",
@@ -14893,10 +14891,12 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		 * If moving to candidate's channel can cause LTE coex, then
 		 * reject the candidate with MBO reason code 5.
 		 */
-		if (policy_mgr_is_safe_channel(mac_ctx->psoc,
-		    wlan_chan_to_freq(conn_bss_chan_id)) &&
-		    !(policy_mgr_is_safe_channel(mac_ctx->psoc,
-		    wlan_chan_to_freq(bss_chan_id)))) {
+		conn_bss_chan_safe = policy_mgr_is_safe_channel(
+			mac_ctx->psoc, conn_bss_chan_freq);
+		bss_chan_safe = policy_mgr_is_safe_channel(
+			mac_ctx->psoc, bss_chan_freq);
+
+		if (conn_bss_chan_safe && !bss_chan_safe) {
 			sme_err("High interference expected if transitioned to BSS "
 				QDF_MAC_ADDR_STR" hence reject",
 				QDF_MAC_ADDR_ARRAY(bss_desc->bssId));

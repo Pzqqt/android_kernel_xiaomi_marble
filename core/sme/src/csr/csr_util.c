@@ -6374,16 +6374,18 @@ bool csr_is_ndi_started(struct mac_context *mac_ctx, uint32_t session_id)
 	return eCSR_CONNECT_STATE_TYPE_NDI_STARTED == session->connectState;
 }
 
-bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint8_t channel)
+bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint32_t chan_freq)
 {
 	struct csr_roam_session *session;
 	enum QDF_OPMODE oper_mode;
-	uint8_t oper_channel = 0;
+	uint32_t oper_chan_freq = 0;
 	uint8_t session_id;
+	bool hw_dbs_capable, same_band_freqs;
 
-	if (channel == 0)
+	if (chan_freq == 0)
 		return false;
 
+	hw_dbs_capable = policy_mgr_is_hw_dbs_capable(mac_ctx->psoc);
 	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 			session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -6398,15 +6400,14 @@ bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint8_t channel)
 			    (oper_mode == QDF_SAP_MODE))
 			    && (session->connectState !=
 			    eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)))
-				oper_channel =
-				wlan_reg_freq_to_chan(
-					mac_ctx->pdev,
-					session->connectedProfile.op_freq);
+				oper_chan_freq =
+					session->connectedProfile.op_freq;
 
-			if (oper_channel && channel != oper_channel &&
-			    (!policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) ||
-			    WLAN_REG_IS_SAME_BAND_CHANNELS(channel,
-						 oper_channel)))
+			same_band_freqs = WLAN_REG_IS_SAME_BAND_FREQS(
+				chan_freq, oper_chan_freq);
+
+			if (oper_chan_freq && chan_freq != oper_chan_freq &&
+			    (!hw_dbs_capable || same_band_freqs))
 				return true;
 		}
 	}

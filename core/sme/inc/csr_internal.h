@@ -1173,9 +1173,9 @@ QDF_STATUS csr_roam_update_config(
 /**
  * csr_is_mcc_channel() - check if using the channel results into MCC
  * @mac_ctx: pointer to global MAC context
- * @channel : channel number to check for MCC scenario
+ * @chan_freq: channel frequency to check for MCC scenario
  *
  * Return : true if channel causes MCC, else false
  */
-bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint8_t channel);
+bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint32_t chan_freq);
 #endif
