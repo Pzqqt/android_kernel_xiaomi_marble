@@ -13566,43 +13566,6 @@ end:
 	}
 }
 
-QDF_STATUS csr_process_del_vdev_command(struct mac_context *mac_ctx,
-					tSmeCmd *sme_command)
-{
-	struct del_vdev_params *del_vdev_req;
-	struct scheduler_msg msg = {0};
-	QDF_STATUS status;
-
-	del_vdev_req = qdf_mem_malloc(sizeof(struct del_vdev_params));
-	if (!del_vdev_req)
-		return QDF_STATUS_E_NOMEM;
-
-	qdf_mem_copy(del_vdev_req->self_mac_addr,
-		     sme_command->u.delStaSessionCmd.self_mac_addr,
-		     sizeof(tSirMacAddr));
-
-	del_vdev_req->vdev_id = sme_command->sessionId;
-	del_vdev_req->sme_callback =
-		sme_command->u.delStaSessionCmd.session_close_cb;
-	del_vdev_req->sme_ctx = sme_command->u.delStaSessionCmd.context;
-	msg.type = eWNI_SME_VDEV_DELETE_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = del_vdev_req;
-	msg.bodyval = 0;
-
-	sme_debug("sending eWNI_SME_VDEV_DELETE_REQ");
-	status = scheduler_post_message(
-				QDF_MODULE_ID_SME,
-				QDF_MODULE_ID_PE,
-				QDF_MODULE_ID_PE, &msg);
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("wma_post_ctrl_msg failed");
-		qdf_mem_free(del_vdev_req);
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * csr_compute_mode_and_band() - computes dot11mode
  * @mac: mac global context
@@ -17415,23 +17378,9 @@ QDF_STATUS csr_process_vdev_del_rsp(struct mac_context *mac_ctx,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct del_vdev_params *rsp;
 	uint8_t vdev_id;
-	tListElem *entry;
-	tSmeCmd *sme_command;
 
 	if (!pmsg) {
 		sme_err("msg ptr is NULL");
-		return status;
-	}
-
-	entry = csr_nonscan_active_ll_peek_head(mac_ctx, LL_ACCESS_LOCK);
-	if (!entry) {
-		sme_err("NO commands are ACTIVE");
-		return status;
-	}
-
-	sme_command = GET_BASE_ADDR(entry, tSmeCmd, Link);
-	if (e_sme_command_del_vdev != sme_command->command) {
-		sme_err("No Del vdev command ACTIVE");
 		return status;
 	}
 
@@ -17446,12 +17395,6 @@ QDF_STATUS csr_process_vdev_del_rsp(struct mac_context *mac_ctx,
 	 * be removed anyway next.
 	 */
 	csr_cleanup_session(mac_ctx, vdev_id);
-
-	/* Remove this command out of the non scan active list */
-	if (csr_nonscan_active_ll_remove_entry(mac_ctx, entry,
-					       LL_ACCESS_LOCK)) {
-		csr_release_command(mac_ctx, sme_command);
-	}
 
 	if (rsp->sme_callback) {
 		status = sme_release_global_lock(&mac_ctx->sme);
@@ -17475,23 +17418,35 @@ csr_issue_vdev_del_req(struct mac_context *mac_ctx, uint8_t vdev_id,
 		       void *context)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeCmd *sme_command;
+	struct del_vdev_params *del_vdev_req;
+	struct scheduler_msg msg = {0};
 
-	sme_command = csr_get_command_buffer(mac_ctx);
-	if (!sme_command) {
-		status = QDF_STATUS_E_RESOURCES;
-	} else {
-		sme_command->command = e_sme_command_del_vdev;
-		sme_command->sessionId = vdev_id;
-		sme_command->u.delStaSessionCmd.session_close_cb = callback;
-		sme_command->u.delStaSessionCmd.context = context;
-		qdf_mem_copy(sme_command->u.delStaSessionCmd.self_mac_addr,
-			     session_mac_addr, sizeof(tSirMacAddr));
-		status = csr_queue_sme_command(mac_ctx, sme_command, false);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			sme_err("fail to queue vdev delete command = %d",
-				status);
+	del_vdev_req = qdf_mem_malloc(sizeof(struct del_vdev_params));
+	if (!del_vdev_req)
+		return QDF_STATUS_E_NOMEM;
+
+	qdf_mem_copy(del_vdev_req->self_mac_addr,
+		     session_mac_addr, sizeof(tSirMacAddr));
+
+	del_vdev_req->vdev_id = vdev_id;
+	del_vdev_req->sme_callback = callback;
+	del_vdev_req->sme_ctx = context;
+	msg.type = eWNI_SME_VDEV_DELETE_REQ;
+	msg.reserved = 0;
+	msg.bodyptr = del_vdev_req;
+	msg.bodyval = 0;
+
+	sme_debug("sending eWNI_SME_VDEV_DELETE_REQ");
+	status = scheduler_post_message(
+				QDF_MODULE_ID_SME,
+				QDF_MODULE_ID_PE,
+				QDF_MODULE_ID_PE, &msg);
+	if (status != QDF_STATUS_SUCCESS) {
+		sme_err("wma_post_ctrl_msg failed");
+		qdf_mem_free(del_vdev_req);
+		return QDF_STATUS_E_FAILURE;
 	}
+	return QDF_STATUS_SUCCESS;
 	return status;
 }
 
@@ -20109,9 +20064,6 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
 	case eSmeCommandWmStatusChange:
 		cmd_type = WLAN_SER_CMD_WM_STATUS_CHANGE;
 		break;
-	case e_sme_command_del_vdev:
-		cmd_type = WLAN_SER_CMD_VDEV_DELETE;
-		break;
 	case eSmeCommandAddTs:
 		cmd_type = WLAN_SER_CMD_ADDTS;
 		break;
@@ -20166,9 +20118,6 @@ static void csr_fill_cmd_timeout(struct wlan_serialization_command *cmd)
 	case WLAN_SER_CMD_FORCE_DISASSOC_STA:
 	case WLAN_SER_CMD_FORCE_DEAUTH_STA:
 		cmd->cmd_timeout_duration = SME_CMD_PEER_DISCONNECT_TIMEOUT;
-		break;
-	case WLAN_SER_CMD_VDEV_DELETE:
-		cmd->cmd_timeout_duration = SME_VDEV_DELETE_CMD_TIMEOUT;
 		break;
 	case WLAN_SER_CMD_HDD_ISSUE_REASSOC_SAME_AP:
 	case WLAN_SER_CMD_SME_ISSUE_REASSOC_SAME_AP:

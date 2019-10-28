@@ -383,11 +383,6 @@ static void dump_csr_command_info(struct mac_context *mac, tSmeCmd *pCmd)
 			pCmd->u.wmStatusChangeCmd.Type);
 		break;
 
-	case e_sme_command_del_vdev:
-		sme_debug("Issue del vdev command for vdev:%d",
-			  pCmd->sessionId);
-		break;
-
 	default:
 		sme_debug("default: Unhandled command %d",
 			pCmd->command);
@@ -515,9 +510,6 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 	case eSmeCommandWmStatusChange:
 		csr_roam_process_wm_status_change_command(mac_ctx,
 					sme_cmd);
-		break;
-	case e_sme_command_del_vdev:
-		csr_process_del_vdev_command(mac_ctx, sme_cmd);
 		break;
 	case eSmeCommandAddTs:
 	case eSmeCommandDelTs:

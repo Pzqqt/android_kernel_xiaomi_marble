@@ -4400,6 +4400,9 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	ucfg_scan_vdev_set_disable(vdev, REASON_VDEV_DOWN);
 	hdd_objmgr_put_vdev(vdev);
 
+	/* Disable serialization for vdev before sending vdev delete */
+	wlan_ser_vdev_queue_disable(adapter->vdev);
+
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	qdf_event_reset(&adapter->qdf_session_close_event);
 	status = sme_vdev_delete(hdd_ctx->mac_handle, adapter->vdev_id);
