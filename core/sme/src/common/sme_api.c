@@ -7569,7 +7569,7 @@ out:
 /**
  * sme_get_roam_scan_channel_list() - To get roam scan channel list
  * @mac_handle: Opaque handle to the global MAC context
- * @pChannelList: Output channel list
+ * @freq_list: Output channel freq list
  * @pNumChannels: Output number of channels
  * @sessionId: Session Identifier
  *
@@ -7578,11 +7578,10 @@ out:
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
-			uint8_t *pChannelList, uint8_t *pNumChannels,
+			uint32_t *freq_list, uint8_t *pNumChannels,
 			uint8_t sessionId)
 {
 	int i = 0;
-	uint8_t *pOutPtr = pChannelList;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -7609,13 +7608,10 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 
 	*pNumChannels = specific_chan_info->numOfChannels;
 	for (i = 0; i < (*pNumChannels); i++)
-		pOutPtr[i] =
-		wlan_reg_freq_to_chan(
-			mac->pdev,
-			specific_chan_info->freq_list[i]);
-
-	pOutPtr[i] = '\0';
+		freq_list[i] = specific_chan_info->freq_list[i];
+	freq_list[i] = '\0';
 	sme_release_global_lock(&mac->sme);
+
 	return status;
 }
 

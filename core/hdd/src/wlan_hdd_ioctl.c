@@ -3977,15 +3977,16 @@ static int drv_cmd_get_roam_scan_channels(struct hdd_adapter *adapter,
 					  struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint32_t freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t num_channels = 0;
 	uint8_t j = 0;
 	char extra[128] = { 0 };
 	int len;
+	uint8_t chan;
 
 	if (QDF_STATUS_SUCCESS !=
 		sme_get_roam_scan_channel_list(hdd_ctx->mac_handle,
-					       channel_list,
+					       freq_list,
 					       &num_channels,
 					       adapter->vdev_id)) {
 		hdd_err("failed to get roam scan channel list");
@@ -4004,10 +4005,11 @@ static int drv_cmd_get_roam_scan_channels(struct hdd_adapter *adapter,
 	 */
 	len = scnprintf(extra, sizeof(extra), "%s %d", command,
 			num_channels);
-	for (j = 0; (j < num_channels) && len <= sizeof(extra); j++)
+	for (j = 0; (j < num_channels) && len <= sizeof(extra); j++) {
+		chan = wlan_reg_freq_to_chan(hdd_ctx->pdev, freq_list[j]);
 		len += scnprintf(extra + len, sizeof(extra) - len,
-				 " %d", channel_list[j]);
-
+				 " %d", chan);
+	}
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
 		hdd_err("failed to copy data to user buffer");
