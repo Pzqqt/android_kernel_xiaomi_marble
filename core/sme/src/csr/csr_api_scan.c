@@ -940,10 +940,10 @@ static enum csr_scancomplete_nextcommand
 csr_scan_get_next_command_state(struct mac_context *mac_ctx,
 				uint32_t session_id,
 				eCsrScanStatus scan_status,
-				uint8_t *chan)
+				uint32_t *chan_freq)
 {
 	enum csr_scancomplete_nextcommand NextCommand = eCsrNextScanNothing;
-	int8_t channel;
+	uint32_t chan_freq_ret;
 	struct csr_roam_session *session;
 
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
@@ -954,17 +954,17 @@ csr_scan_get_next_command_state(struct mac_context *mac_ctx,
 	switch (session->scan_info.scan_reason) {
 	case eCsrScanForSsid:
 		sme_debug("Resp for Scan For Ssid");
-		channel = csr_scan_get_channel_for_hw_mode_change(
+		chan_freq_ret = csr_scan_get_channel_for_hw_mode_change(
 				mac_ctx,
 				session_id,
 				session->scan_info.profile);
-		if ((!channel) && scan_status) {
+		if ((!chan_freq_ret) && scan_status) {
 			NextCommand = eCsrNexteScanForSsidFailure;
 			sme_err("next Scan For Ssid Failure %d %d",
-				channel, scan_status);
+				chan_freq_ret, scan_status);
 		} else {
 			NextCommand = eCsrNextCheckAllowConc;
-			*chan = channel;
+			*chan_freq = chan_freq_ret;
 			sme_debug("next CheckAllowConc");
 		}
 		break;
@@ -1156,7 +1156,7 @@ error:
 static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 			       enum csr_scancomplete_nextcommand nxt_cmd,
 			       uint32_t session_id,
-			       uint8_t chan)
+			       uint32_t chan_freq)
 {
 	QDF_STATUS status, ret;
 	struct csr_roam_session *session;
@@ -1171,11 +1171,10 @@ static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 		break;
 	case eCsrNextCheckAllowConc:
 		ret = policy_mgr_current_connections_update(
-				mac_ctx->psoc, session_id,
-				wlan_chan_to_freq(chan),
+				mac_ctx->psoc, session_id, chan_freq,
 				POLICY_MGR_UPDATE_REASON_HIDDEN_STA);
-		sme_debug("chan: %d session: %d status: %d",
-					chan, session_id, ret);
+		sme_debug("channel freq: %d session: %d status: %d",
+			  chan_freq, session_id, ret);
 
 		status = csr_save_profile(mac_ctx, session_id);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -1185,7 +1184,7 @@ static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 		}
 
 		if (QDF_STATUS_E_FAILURE == ret) {
-			sme_err("conn update fail %d", chan);
+			sme_err("conn update fail %d", chan_freq);
 			csr_scan_handle_search_for_ssid_failure(mac_ctx,
 								session_id);
 		} else if ((QDF_STATUS_E_NOSUPPORT == ret) ||
@@ -1214,7 +1213,7 @@ void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 	struct mac_context *mac_ctx;
 	struct csr_roam_session *session;
 	uint32_t session_id = 0;
-	uint8_t chan = 0;
+	uint32_t chan_freq = 0;
 	QDF_STATUS status;
 	bool success = false;
 
@@ -1257,10 +1256,10 @@ void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 #endif
 	NextCommand = csr_scan_get_next_command_state(mac_ctx,
 					session_id, scan_status,
-					&chan);
+					&chan_freq);
 	/* We reuse the command here instead reissue a new command */
 	csr_handle_nxt_cmd(mac_ctx, NextCommand,
-			   session_id, chan);
+			   session_id, chan_freq);
 
 	sme_release_global_lock(&mac_ctx->sme);
 }
