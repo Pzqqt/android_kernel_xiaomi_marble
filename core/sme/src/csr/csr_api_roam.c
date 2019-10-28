@@ -1173,9 +1173,11 @@ static void csr_roam_sort_channel_for_early_stop(struct mac_context *mac_ctx,
 {
 	tSirUpdateChanList *chan_list_greedy, *chan_list_non_greedy;
 	uint8_t i, j;
-	static const uint8_t fixed_greedy_chan_list[] = {1, 6, 11, 36, 48, 40,
-		44, 10, 2, 9, 149, 157, 161, 3, 4, 8, 153, 165, 7, 5, 136, 140,
-		52, 116, 56, 104, 64, 60, 100, 120, 13, 14, 112, 132, 151, 155};
+	static const uint32_t fixed_greedy_freq_list[] = {2412, 2437, 2462,
+		5180, 5240, 5200, 5220, 2457, 2417, 2452, 5745, 5785, 5805,
+		2422, 2427, 2447, 5765, 5825, 2442, 2432, 5680, 5700, 5260,
+		5580, 5280, 5520, 5320, 5300, 5500, 5600, 2472, 2484, 5560,
+		5660, 5755, 5775};
 	uint8_t num_fixed_greedy_chan;
 	uint8_t num_greedy_chan = 0;
 	uint8_t num_non_greedy_chan = 0;
@@ -1189,13 +1191,14 @@ static void csr_roam_sort_channel_for_early_stop(struct mac_context *mac_ctx,
 	if (!chan_list_greedy || !chan_list_non_greedy)
 		goto scan_list_sort_error;
 	/*
-	 * fixed_greedy_chan_list is an evaluated channel list based on most of
+	 * fixed_greedy_freq_list is an evaluated freq list based on most of
 	 * the enterprise wifi deployments and the order of the channels
 	 * determines the highest possibility of finding an AP.
 	 * chan_list is the channel list provided by upper layers based on the
 	 * regulatory domain.
 	 */
-	num_fixed_greedy_chan = sizeof(fixed_greedy_chan_list)/sizeof(uint8_t);
+	num_fixed_greedy_chan = sizeof(fixed_greedy_freq_list) /
+							sizeof(uint32_t);
 	/*
 	 * Browse through the chan_list and put all the non-greedy channels
 	 * into a separate list by name chan_list_non_greedy
@@ -1203,9 +1206,7 @@ static void csr_roam_sort_channel_for_early_stop(struct mac_context *mac_ctx,
 	for (i = 0; i < num_channel; i++) {
 		for (j = 0; j < num_fixed_greedy_chan; j++) {
 			if (chan_list->chanParam[i].freq ==
-				wlan_reg_chan_to_freq
-					(mac_ctx->pdev,
-					 fixed_greedy_chan_list[j])) {
+					 fixed_greedy_freq_list[j]) {
 				match_found = true;
 				break;
 			}
@@ -1227,8 +1228,7 @@ static void csr_roam_sort_channel_for_early_stop(struct mac_context *mac_ctx,
 	 */
 	for (i = 0; i < num_fixed_greedy_chan; i++) {
 		for (j = 0; j < num_channel; j++) {
-			if (wlan_reg_chan_to_freq(mac_ctx->pdev,
-						 fixed_greedy_chan_list[i]) ==
+			if (fixed_greedy_freq_list[i] ==
 				chan_list->chanParam[j].freq) {
 				qdf_mem_copy(
 				  &chan_list_greedy->chanParam[num_greedy_chan],
