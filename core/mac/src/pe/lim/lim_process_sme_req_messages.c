@@ -885,7 +885,9 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		if (LIM_IS_AP_ROLE(session)) {
 			mlm_start_req->dtimPeriod = session->dtimPeriod;
 			mlm_start_req->wps_state = session->wps_state;
-
+			session->cac_duration_ms =
+				mlm_start_req->cac_duration_ms;
+			session->dfs_regdomain = mlm_start_req->dfs_regdomain;
 		} else {
 			val = mac_ctx->mlme_cfg->sap_cfg.dtim_interval;
 			mlm_start_req->dtimPeriod = (uint8_t) val;
