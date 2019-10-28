@@ -3687,6 +3687,7 @@ static void csr_dump_connection_stats(struct mac_context *mac_ctx,
 	     diag_enc_type_from_csr_type(conn_profile->EncryptionType);
 	conn_stats.result_code = (u2 == eCSR_ROAM_RESULT_ASSOCIATED) ? 1 : 0;
 	conn_stats.reason_code = 0;
+	conn_stats.op_freq = conn_profile->op_freq;
 	sme_debug("+---------CONNECTION INFO START------------+");
 	sme_debug("connection stats for session-id: %d", session->sessionId);
 	sme_debug("ssid: %.*s", conn_stats.ssid_len, conn_stats.ssid);
@@ -3704,6 +3705,7 @@ static void csr_dump_connection_stats(struct mac_context *mac_ctx,
 		  csr_get_encr_type_str(conn_stats.encryption_type));
 	sme_debug("is associated?: %s",
 		  (conn_stats.result_code ? "yes" : "no"));
+	sme_debug("channel frequency: %d", conn_stats.op_freq);
 	sme_debug("+---------CONNECTION INFO END------------+");
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&conn_stats, EVENT_WLAN_CONN_STATS_V2);
@@ -7137,9 +7139,10 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 		if (bss_desc) {
 			qdf_mem_copy(ibss_log->bssid.bytes,
 				bss_desc->bssId, QDF_MAC_ADDR_SIZE);
+			ibss_log->op_freq = bss_desc->chan_freq;
 			ibss_log->operatingChannel =
 				wlan_reg_freq_to_chan(mac_ctx->pdev,
-						      bss_desc->chan_freq);
+						      ibss_log->op_freq);
 		}
 		bi = mac_ctx->mlme_cfg->sap_cfg.beacon_interval;
 			/* U8 is not enough for BI */
@@ -12539,9 +12542,10 @@ csr_roam_diag_joined_new_bss(struct mac_context *mac_ctx,
 			pNewBss->ssId.length = HOST_LOG_MAX_SSID_SIZE;
 		qdf_mem_copy(pIbssLog->ssid, pNewBss->ssId.ssId,
 			     pNewBss->ssId.length);
+		pIbssLog->op_freq = pNewBss->freq;
 		pIbssLog->operatingChannel = wlan_reg_freq_to_chan
 						(mac_ctx->pdev,
-						 pNewBss->freq);
+						 pIbssLog->op_freq);
 	}
 	bi = mac_ctx->mlme_cfg->sap_cfg.beacon_interval;
 		/* U8 is not enough for beacon interval */
@@ -14580,9 +14584,10 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 			else
 				pIbssLog->channelSetting = SPECIFIED;
 
+			pIbssLog->op_freq = pParam->operation_chan_freq;
 			pIbssLog->operatingChannel =
 				wlan_reg_freq_to_chan(mac->pdev,
-						      pParam->operation_chan_freq);
+						      pIbssLog->op_freq);
 			WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);
 		}
 	}
