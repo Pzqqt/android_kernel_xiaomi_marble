@@ -4907,13 +4907,12 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 {
 	bool filled = false;
 	int i, j = 0;
-	uint32_t channel = 0, opfreq; /* Initialization Required */
+	uint32_t opfreq = 0; /* Initialization Required */
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	sme_get_operation_channel(hdd_ctx->mac_handle, &channel,
+	sme_get_operation_channel(hdd_ctx->mac_handle, &opfreq,
 				  adapter->vdev_id);
-	opfreq = wlan_reg_chan_to_freq(hdd_ctx->pdev, channel);
 
 	mutex_lock(&hdd_ctx->chan_info_lock);
 

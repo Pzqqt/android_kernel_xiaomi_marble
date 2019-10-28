@@ -737,7 +737,7 @@ QDF_STATUS sme_set_host_offload(mac_handle_t mac_handle, uint8_t sessionId,
 QDF_STATUS sme_set_keep_alive(mac_handle_t mac_handle, uint8_t sessionId,
 		struct keep_alive_req *pRequest);
 QDF_STATUS sme_get_operation_channel(mac_handle_t mac_handle,
-				     uint32_t *pChannel,
+				     uint32_t *chan_freq,
 				     uint8_t sessionId);
 QDF_STATUS sme_register_mgmt_frame(mac_handle_t mac_handle, uint8_t sessionId,
 		uint16_t frameType, uint8_t *matchData,
