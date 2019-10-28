@@ -316,6 +316,7 @@ typedef struct {
  * @est_link_speed: link speed of connection, units in Mbps
  * @result_code: result code of connection success or failure
  * @reason_code: if failed then what is the reason
+ * @op_freq: channel frequency in MHz on which AP is connected
  */
 struct host_event_wlan_connection_stats {
 	int8_t rssi;
@@ -333,6 +334,7 @@ struct host_event_wlan_connection_stats {
 	uint32_t est_link_speed;
 	uint16_t result_code;
 	uint16_t reason_code;
+	uint32_t op_freq;
 } qdf_packed;
 
 /*-------------------------------------------------------------------------

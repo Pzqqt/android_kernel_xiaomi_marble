@@ -100,6 +100,7 @@ typedef struct {
 	uint8_t operatingChannel;
 	uint8_t beaconInterval;
 	uint8_t status;
+	uint32_t op_freq;
 } host_log_ibss_pkt_type;
 
 /*---------------------------------------------------------------------------
