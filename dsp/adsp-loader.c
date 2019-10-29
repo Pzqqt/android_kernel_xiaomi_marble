@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2014, 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -10,7 +10,7 @@
 #include <linux/string.h>
 #include <linux/delay.h>
 #include <linux/platform_device.h>
-#include <ipc/apr.h>
+#include <dsp/gecko-core.h>
 #include <linux/of_device.h>
 #include <linux/sysfs.h>
 #include <linux/workqueue.h>
@@ -23,6 +23,12 @@
 #define SSR_RESET_CMD 1
 #define IMAGE_UNLOAD_CMD 0
 #define MAX_FW_IMAGES 4
+
+enum apr_subsys_state {
+        APR_SUBSYS_DOWN,
+        APR_SUBSYS_UP,
+        APR_SUBSYS_LOADED,
+};
 
 static ssize_t adsp_boot_store(struct kobject *kobj,
 	struct kobj_attribute *attr,
@@ -95,7 +101,7 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 		/* adsp_state always returns "0". So load modem image based on
 		 * apr_modem_state to prevent loading of image twice
 		 */
-		adsp_state = apr_get_modem_state();
+		//adsp_state = apr_get_modem_state();
 		if (adsp_state == APR_SUBSYS_DOWN) {
 			priv = platform_get_drvdata(pdev);
 			if (!priv) {
@@ -112,7 +118,7 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 			}
 
 			/* Set the state of the ADSP in APR driver */
-			apr_set_modem_state(APR_SUBSYS_LOADED);
+			//apr_set_modem_state(APR_SUBSYS_LOADED);
 		} else if (adsp_state == APR_SUBSYS_LOADED) {
 			dev_dbg(&pdev->dev,
 			"%s: MDSP state = %x\n", __func__, adsp_state);
@@ -124,7 +130,7 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 
 load_adsp:
 	{
-		adsp_state = apr_get_q6_state();
+		adsp_state = gecko_core_is_apm_ready();
 		if (adsp_state == APR_SUBSYS_DOWN) {
 			priv = platform_get_drvdata(pdev);
 			if (!priv) {
