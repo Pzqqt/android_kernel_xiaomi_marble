@@ -1015,7 +1015,8 @@ static int os_if_nan_process_ndp_end_req(struct wlan_objmgr_psoc *psoc,
 }
 
 int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
-			      const void *data, int data_len)
+			      const void *data, int data_len,
+			      bool is_ndp_allowed)
 {
 	uint32_t ndp_cmd_type;
 	uint16_t transaction_id;
@@ -1058,10 +1059,22 @@ int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 	case QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE:
 		return os_if_nan_process_ndi_delete(psoc, tb);
 	case QCA_WLAN_VENDOR_ATTR_NDP_INITIATOR_REQUEST:
+		if (!is_ndp_allowed) {
+			osif_err("Unsupported concurrency for NAN datapath");
+			return -EOPNOTSUPP;
+		}
 		return os_if_nan_process_ndp_initiator_req(psoc, tb);
 	case QCA_WLAN_VENDOR_ATTR_NDP_RESPONDER_REQUEST:
+		if (!is_ndp_allowed) {
+			osif_err("Unsupported concurrency for NAN datapath");
+			return -EOPNOTSUPP;
+		}
 		return os_if_nan_process_ndp_responder_req(psoc, tb);
 	case QCA_WLAN_VENDOR_ATTR_NDP_END_REQUEST:
+		if (!is_ndp_allowed) {
+			osif_err("Unsupported concurrency for NAN datapath");
+			return -EOPNOTSUPP;
+		}
 		return os_if_nan_process_ndp_end_req(psoc, tb);
 	default:
 		osif_err("Unrecognized NDP vendor cmd %d", ndp_cmd_type);

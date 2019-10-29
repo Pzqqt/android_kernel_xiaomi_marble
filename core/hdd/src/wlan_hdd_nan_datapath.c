@@ -411,14 +411,9 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		hdd_err_rl("NAN datapath is not enabled");
 		return -EPERM;
 	}
-	/* NAN data path coexists only with STA interface */
-	if (false == hdd_is_ndp_allowed(hdd_ctx)) {
-		hdd_err_rl("Unsupported concurrency for NAN datapath");
-		return -EPERM;
-	}
 
-	return os_if_nan_process_ndp_cmd(hdd_ctx->psoc,
-					 data, data_len);
+	return os_if_nan_process_ndp_cmd(hdd_ctx->psoc, data, data_len,
+					 hdd_is_ndp_allowed(hdd_ctx));
 }
 
 /**
