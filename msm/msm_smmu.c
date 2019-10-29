@@ -94,6 +94,7 @@ static void msm_smmu_detach(struct msm_mmu *mmu, const char * const *names,
 		return;
 
 	pm_runtime_get_sync(mmu->dev);
+	msm_dma_unmap_all_for_dev(client->dev);
 	iommu_detach_device(client->domain, client->dev);
 	pm_runtime_put_sync(mmu->dev);
 
