@@ -709,7 +709,7 @@ static void hdd_send_hang_reason(void)
 	enum qdf_hang_reason reason = QDF_REASON_UNSPECIFIED;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	if (wlan_hdd_validate_context(hdd_ctx))
+	if (!hdd_ctx)
 		return;
 
 	cds_get_recovery_reason(&reason);
