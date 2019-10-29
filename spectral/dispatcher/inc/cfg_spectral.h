@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,7 +43,29 @@
 	CFG_INI_BOOL("spectral_disable", false, \
 			"Spectral disable")
 
+/*
+ * <ini>
+ * poison_spectral_bufs - enable poisoning of spectral buffers
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable the poisoning of spectral buffers.
+ *
+ * Related: None
+ *
+ * Supported Feature: Spectral
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_SPECTRAL_POISON_BUFS \
+	CFG_INI_BOOL("poison_spectral_bufs", false, \
+			"Enable spectral bufs poison at init")
+
 #define CFG_SPECTRAL_ALL \
-	CFG(CFG_SPECTRAL_DISABLE)
+	CFG(CFG_SPECTRAL_DISABLE) \
+	CFG(CFG_SPECTRAL_POISON_BUFS)
 
 #endif
