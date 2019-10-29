@@ -1506,6 +1506,39 @@ static inline void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
 #endif
 
 /**
+ * dp_tx_frame_is_drop() - checks if the packet is loopback
+ * @vdev: DP vdev handle
+ * @nbuf: skb
+ *
+ * Return: 1 if frame needs to be dropped else 0
+ */
+int dp_tx_frame_is_drop(struct dp_vdev *vdev, uint8_t *srcmac, uint8_t *dstmac)
+{
+	struct dp_pdev *pdev = NULL;
+	struct dp_ast_entry *src_ast_entry = NULL;
+	struct dp_ast_entry *dst_ast_entry = NULL;
+	struct dp_soc *soc = NULL;
+
+	qdf_assert(vdev);
+	pdev = vdev->pdev;
+	qdf_assert(pdev);
+	soc = pdev->soc;
+
+	dst_ast_entry = dp_peer_ast_hash_find_by_pdevid
+				(soc, dstmac, vdev->pdev->pdev_id);
+
+	src_ast_entry = dp_peer_ast_hash_find_by_pdevid
+				(soc, srcmac, vdev->pdev->pdev_id);
+	if (dst_ast_entry && src_ast_entry) {
+		if (dst_ast_entry->peer->peer_ids[0] ==
+				src_ast_entry->peer->peer_ids[0])
+			return 1;
+	}
+
+	return 0;
+}
+
+/**
  * dp_tx_send_msdu_single() - Setup descriptor and enqueue single MSDU to TCL
  * @vdev: DP vdev handle
  * @nbuf: skb

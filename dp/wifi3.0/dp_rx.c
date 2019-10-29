@@ -499,6 +499,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 		len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 		memset(nbuf_copy->cb, 0x0, sizeof(nbuf_copy->cb));
 
+		/* Set cb->ftype to intrabss FWD */
+		qdf_nbuf_set_tx_ftype(nbuf_copy, CB_FTYPE_INTRABSS_FWD);
 		if (dp_tx_send(dp_vdev_to_cdp_vdev(ta_peer->vdev), nbuf_copy)) {
 			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1, len);
 			tid_stats->fail_cnt[INTRABSS_DROP]++;

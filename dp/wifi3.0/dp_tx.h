@@ -216,6 +216,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 qdf_nbuf_t dp_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			 enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 #endif
+int dp_tx_frame_is_drop(struct dp_vdev *vdev, uint8_t *srcmac, uint8_t *dstmac);
 
 /**
  * dp_tx_comp_handler() - Tx completion handler
