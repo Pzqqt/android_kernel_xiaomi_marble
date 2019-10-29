@@ -152,6 +152,14 @@ static void hdd_hif_init_driver_state_callbacks(void *data,
 	cbk->is_target_ready = hdd_is_target_ready;
 }
 
+#ifdef FORCE_WAKE
+void hdd_set_hif_init_phase(struct hif_opaque_softc *hif_ctx,
+			    bool hal_init_phase)
+{
+	hif_srng_init_phase(hif_ctx, hal_init_phase);
+}
+#endif /* FORCE_WAKE */
+
 /**
  * hdd_hif_set_attribute() - API to set CE attribute if memory is limited
  * @hif_ctx: hif context
