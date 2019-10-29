@@ -5682,11 +5682,11 @@ struct sir_sae_msg {
 /**
  * struct set_pcl_req - Request message to set the PCL
  * @chan_weights: PCL channel weights
- * @band: Supported band
+ * @band_mask: Supported band mask
  */
 struct set_pcl_req {
 	struct wmi_pcl_chan_weights chan_weights;
-	enum band_info band;
+	uint32_t band_mask;
 };
 
 #ifdef WLAN_FEATURE_MOTION_DETECTION

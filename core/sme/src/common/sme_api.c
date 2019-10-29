@@ -12214,28 +12214,31 @@ QDF_STATUS sme_reset_rssi_threshold_breached_cb(mac_handle_t mac_handle)
 	return sme_set_rssi_threshold_breached_cb(mac_handle, NULL);
 }
 
-static enum band_info sme_get_connected_roaming_vdev_band(void)
+/**
+ * sme_get_connected_roaming_vdev_band_mask() - get connected vdev band mask
+ *
+ * Return: reg wifi band mask
+ */
+static uint32_t sme_get_connected_roaming_vdev_band_mask(void)
 {
-	enum band_info band = BAND_ALL;
+	uint32_t band_mask = REG_BAND_MASK_ALL;
 	struct mac_context *mac = sme_get_mac_context();
 	struct csr_roam_session *session;
-	uint8_t session_id, channel;
+	uint8_t session_id;
 
 	if (!mac) {
 		sme_debug("MAC Context is NULL");
-		return band;
+		return band_mask;
 	}
 	session_id = csr_get_roam_enabled_sta_sessionid(mac);
 	if (session_id != WLAN_UMAC_VDEV_ID_MAX) {
 		session = CSR_GET_SESSION(mac, session_id);
-		channel = wlan_reg_freq_to_chan(
-					mac->pdev,
-					session->connectedProfile.op_freq);
-		band = csr_get_rf_band(channel);
-		return band;
+		band_mask = BIT(wlan_reg_freq_to_band(
+					session->connectedProfile.op_freq));
+		return band_mask;
 	}
 
-	return band;
+	return band_mask;
 }
 
 /*
@@ -12268,10 +12271,10 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
 	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
 
-	req_msg->band = BAND_ALL;
+	req_msg->band_mask = REG_BAND_MASK_ALL;
 	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac)) {
-		req_msg->band = sme_get_connected_roaming_vdev_band();
-		sme_debug("Connected STA band %d", req_msg->band);
+		req_msg->band_mask = sme_get_connected_roaming_vdev_band_mask();
+		sme_debug("Connected STA band mask%d", req_msg->band_mask);
 	}
 	for (i = 0; i < msg->pcl_len; i++) {
 		req_msg->chan_weights.pcl_list[i] =  msg->pcl_list[i];

@@ -9079,13 +9079,13 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 				msg->chan_weights.weighed_valid_list[i]);
 		/* Dont allow roaming on 2G when 5G_ONLY configured */
 		if (((wma_handle->bandcapability == BAND_5G) ||
-		    (msg->band == BAND_5G)) &&
+		    (msg->band_mask == BIT(REG_BAND_5G))) &&
 		    (WLAN_REG_IS_24GHZ_CH_FREQ(
 		    msg->chan_weights.saved_chan_list[i]))) {
 			msg->chan_weights.weighed_valid_list[i] =
 				WEIGHT_OF_DISALLOWED_CHANNELS;
 		}
-		if ((msg->band == BAND_2G) &&
+		if (msg->band_mask == BIT(REG_BAND_2G) &&
 		    WLAN_REG_IS_5GHZ_CH_FREQ(
 		    msg->chan_weights.saved_chan_list[i]))
 			msg->chan_weights.weighed_valid_list[i] =
