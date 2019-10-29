@@ -1032,6 +1032,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_tx_comp_get_release_reason_generic,
 	hal_get_wbm_internal_error_generic,
 	hal_tx_desc_set_mesh_en_8074v2,
+	hal_tx_init_cmd_credit_ring_8074v2,
 
 	/* rx */
 	hal_rx_msdu_start_nss_get_8074v2,
@@ -1249,10 +1250,11 @@ struct hal_hw_srng_config hw_srng_table_8074v2[] = {
 			HWIO_TCL_R0_SW2TCL1_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* TCL_CMD */
+	  /* qca8074v2 and qcn9000 uses this ring for data commands */
 		.start_ring_id = HAL_SRNG_SW2TCL_CMD,
 		.max_rings = 1,
 		.entry_size = (sizeof(struct tlv_32_hdr) +
-			sizeof(struct tcl_gse_cmd)) >> 2,
+			sizeof(struct tcl_data_cmd)) >> 2,
 		.lmac_ring =  FALSE,
 		.ring_dir = HAL_SRNG_SRC_RING,
 		.reg_start = {

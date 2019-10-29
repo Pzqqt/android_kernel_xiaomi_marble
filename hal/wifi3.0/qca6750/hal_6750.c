@@ -1342,6 +1342,7 @@ struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	hal_tx_comp_get_release_reason_generic,
 	hal_get_wbm_internal_error_generic,
 	hal_tx_desc_set_mesh_en_6750,
+	hal_tx_init_cmd_credit_ring_6750,
 
 	/* rx */
 	hal_rx_msdu_start_nss_get_6750,

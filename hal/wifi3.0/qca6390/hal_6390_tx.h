@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -161,3 +161,14 @@ static void hal_tx_desc_set_lmac_id_6390(void *desc, uint8_t lmac_id)
 		HAL_TX_SM(TCL_DATA_CMD_4, LMAC_ID, lmac_id);
 }
 
+/**
+ * hal_tx_init_cmd_credit_ring_6390() - Initialize command/credit SRNG
+ * @hal_soc_hdl: Handle to HAL SoC structure
+ * @hal_srng: Handle to HAL SRNG structure
+ *
+ * Return: none
+ */
+static inline void hal_tx_init_cmd_credit_ring_6390(hal_soc_handle_t hal_soc_hdl,
+						    hal_ring_handle_t hal_ring_hdl)
+{
+}

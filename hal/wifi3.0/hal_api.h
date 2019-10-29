@@ -240,6 +240,15 @@ static inline qdf_iomem_t hal_get_window_address(struct hal_soc *hal_soc,
 	return hal_soc->ops->hal_get_window_address(hal_soc, addr);
 }
 
+static inline void hal_tx_init_cmd_credit_ring(hal_soc_handle_t hal_soc_hdl,
+					       hal_ring_handle_t hal_ring_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_tx_init_cmd_credit_ring(hal_soc_hdl,
+							 hal_ring_hdl);
+}
+
 /**
  * hal_write32_mb() - Access registers to update configuration
  * @hal_soc: hal soc handle

@@ -2948,12 +2948,6 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		soc->num_tcl_data_rings = 0;
 	}
 
-	if (dp_tx_soc_attach(soc)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("dp_tx_soc_attach failed"));
-		goto fail1;
-	}
-
 	entries = wlan_cfg_get_dp_soc_tcl_cmd_credit_ring_size(soc_cfg_ctx);
 	if (dp_srng_setup(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT, 0, 0,
 			  entries, 0)) {
@@ -2966,6 +2960,12 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			  soc->ctrl_psoc,
 			  WLAN_MD_DP_SRNG_TCL_CMD,
 			  "tcl_cmd_credit_ring");
+
+	if (dp_tx_soc_attach(soc)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("dp_tx_soc_attach failed"));
+		goto fail1;
+	}
 
 	entries = wlan_cfg_get_dp_soc_tcl_status_ring_size(soc_cfg_ctx);
 	if (dp_srng_setup(soc, &soc->tcl_status_ring, TCL_STATUS, 0, 0,

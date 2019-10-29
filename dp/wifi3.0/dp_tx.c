@@ -4336,6 +4336,13 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	}
 
 	/*
+	 * Initialize command/credit ring descriptor
+	 * Command/CREDIT ring also used for sending DATA cmds
+	 */
+	hal_tx_init_cmd_credit_ring(soc->hal_soc,
+				    soc->tcl_cmd_credit_ring.hal_srng);
+
+	/*
 	 * todo - Add a runtime config option to enable this.
 	 */
 	/*
