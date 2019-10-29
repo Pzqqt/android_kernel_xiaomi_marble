@@ -199,7 +199,7 @@ static inline void wlansap_send_acs_success_event(struct sap_context *sap_ctx,
 }
 #endif
 
-static uint8_t
+static uint32_t
 wlansap_calculate_chan_from_scan_result(mac_handle_t mac_handle,
 					struct sap_context *sap_ctx,
 					uint32_t scan_id)
@@ -207,7 +207,7 @@ wlansap_calculate_chan_from_scan_result(mac_handle_t mac_handle,
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	qdf_list_t *list = NULL;
 	struct scan_filter *filter;
-	uint8_t oper_channel = SAP_CHANNEL_NOT_SELECTED;
+	uint32_t oper_channel = SAP_CHANNEL_NOT_SELECTED;
 
 	filter = qdf_mem_malloc(sizeof(*filter));
 
@@ -254,22 +254,21 @@ wlansap_filter_unsafe_ch(struct wlan_objmgr_psoc *psoc,
 	 */
 	for (i = 0; i < sap_ctx->acs_cfg->ch_list_count; i++) {
 		if (!policy_mgr_is_safe_channel(
-				psoc, wlan_chan_to_freq(
-				sap_ctx->acs_cfg->ch_list[i]))) {
-			sap_debug("unsafe ch %d removed from acs list",
-				  sap_ctx->acs_cfg->ch_list[i]);
+				psoc, sap_ctx->acs_cfg->freq_list[i])) {
+			sap_debug("unsafe freq %d removed from acs list",
+				  sap_ctx->acs_cfg->freq_list[i]);
 			continue;
 		}
 		/* Add only safe channels to the acs cfg ch list */
-		sap_ctx->acs_cfg->ch_list[num_safe_ch++] =
-						sap_ctx->acs_cfg->ch_list[i];
+		sap_ctx->acs_cfg->freq_list[num_safe_ch++] =
+						sap_ctx->acs_cfg->freq_list[i];
 	}
 
 	sap_debug("Updated ACS ch list len %d", num_safe_ch);
 	sap_ctx->acs_cfg->ch_list_count = num_safe_ch;
 
 	for (i = 0; i < num_safe_ch; i++)
-		sap_debug("Ch %d", sap_ctx->acs_cfg->ch_list[i]);
+		sap_debug("Safe freq %d", sap_ctx->acs_cfg->freq_list[i]);
 }
 
 QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
@@ -278,7 +277,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 						   uint32_t scanid,
 						   eCsrScanStatus scan_status)
 {
-	uint8_t oper_channel = SAP_CHANNEL_NOT_SELECTED;
+	uint32_t oper_channel = SAP_CHANNEL_NOT_SELECTED;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
 	host_log_acs_scan_done(acs_scan_done_status_str(scan_status),
@@ -303,9 +302,9 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 			scan_status);
 		oper_channel =
 			sap_select_default_oper_chan(sap_ctx->acs_cfg);
-		sap_ctx->chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
-							   oper_channel);
-		sap_ctx->acs_cfg->pri_ch = oper_channel;
+		sap_ctx->chan_freq = oper_channel;
+		sap_ctx->acs_cfg->pri_ch =
+			wlan_reg_freq_to_chan(mac_ctx->pdev, oper_channel);
 		sap_config_acs_result(mac_handle, sap_ctx,
 				      sap_ctx->acs_cfg->ht_sec_ch);
 		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
@@ -324,10 +323,10 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 		oper_channel = sap_select_default_oper_chan(sap_ctx->acs_cfg);
 	}
 
-	sap_ctx->chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, oper_channel);
-	sap_ctx->acs_cfg->pri_ch = oper_channel;
-	sap_config_acs_result(mac_handle, sap_ctx,
-			sap_ctx->acs_cfg->ht_sec_ch);
+	sap_ctx->chan_freq = oper_channel;
+	sap_ctx->acs_cfg->pri_ch = wlan_reg_freq_to_chan(mac_ctx->pdev,
+							 oper_channel);
+	sap_config_acs_result(mac_handle, sap_ctx, sap_ctx->acs_cfg->ht_sec_ch);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("Channel freq selected = %d"), sap_ctx->chan_freq);

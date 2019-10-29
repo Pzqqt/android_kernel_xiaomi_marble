@@ -2483,10 +2483,10 @@ void sap_undo_acs(struct sap_context *sap_ctx, struct sap_config *sap_cfg)
 	if (!acs_cfg)
 		return;
 
-	if (acs_cfg->ch_list) {
-		sap_debug("Clearing ACS cfg channel list");
-		qdf_mem_free(acs_cfg->ch_list);
-		acs_cfg->ch_list = NULL;
+	if (acs_cfg->freq_list) {
+		sap_debug("Clearing ACS cfg ch freq list");
+		qdf_mem_free(acs_cfg->freq_list);
+		acs_cfg->freq_list = NULL;
 	}
 	if (acs_cfg->master_ch_list) {
 		sap_debug("Clearing master ACS cfg channel list");

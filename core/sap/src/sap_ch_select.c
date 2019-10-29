@@ -416,7 +416,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 	 * If Channel List is not Configured don't do anything
 	 * Else return the Best Channel from the Channel List
 	 */
-	if ((!sap_ctx->acs_cfg->ch_list) ||
+	if ((!sap_ctx->acs_cfg->freq_list) ||
 		(!spectinfo_param) ||
 		(0 == sap_ctx->acs_cfg->ch_list_count))
 		return best_chnl;
@@ -426,7 +426,8 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 
 	/* Select the best channel from allowed list */
 	for (i = 0; i < sap_ctx->acs_cfg->ch_list_count; i++) {
-		if ((sap_ctx->acs_cfg->ch_list[i] == best_chnl) &&
+		if ((sap_ctx->acs_cfg->freq_list[i] ==
+		     wlan_reg_chan_to_freq(mac_ctx->pdev, best_chnl)) &&
 		    !(wlan_reg_is_dfs_ch(mac_ctx->pdev, best_chnl) &&
 		    policy_mgr_disallow_mcc(
 		    mac_ctx->psoc, wlan_chan_to_freq(best_chnl)))) {
@@ -1354,12 +1355,12 @@ static void sap_interference_rssi_count(tSapSpectChInfo *spect_ch,
  *   true:    channel is in PCL,
  *   false:   channel is not in PCL
  */
-static bool ch_in_pcl(struct sap_context *sap_ctx, uint8_t channel)
+static bool ch_in_pcl(struct sap_context *sap_ctx, uint32_t ch_freq)
 {
 	uint32_t i;
 
 	for (i = 0; i < sap_ctx->acs_cfg->pcl_ch_count; i++) {
-		if (channel == sap_ctx->acs_cfg->pcl_channels[i])
+		if (ch_freq == sap_ctx->acs_cfg->pcl_chan_freq[i])
 			return true;
 	}
 
@@ -1546,7 +1547,8 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		 */
 
 		rssi = (int8_t) pSpectCh->rssiAgr;
-		if (ch_in_pcl(sap_ctx, pSpectCh->chNum))
+		if (ch_in_pcl(sap_ctx, wlan_reg_chan_to_freq(mac->pdev,
+							     pSpectCh->chNum)))
 			rssi -= PCL_RSSI_DISCOUNT;
 
 		if (rssi < SOFTAP_MIN_RSSI)
@@ -2442,7 +2444,7 @@ static bool sap_is_ch_non_overlap(struct sap_context *sap_ctx, uint16_t ch)
 	return false;
 }
 
-uint8_t sap_select_channel(mac_handle_t mac_handle,
+uint32_t sap_select_channel(mac_handle_t mac_handle,
 			   struct sap_context *sap_ctx,
 			   qdf_list_t *scan_list)
 {
@@ -2473,11 +2475,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("No external AP present"));
 
-#ifndef SOFTAP_CHANNEL_RANGE
-		return SAP_CHANNEL_NOT_SELECTED;
-#else
 		return sap_select_default_oper_chan(sap_ctx->acs_cfg);
-#endif
 	}
 
 	/* Initialize the structure pointed by spect_info */
@@ -2662,8 +2660,5 @@ sap_ch_sel_end:
 		  FL("Running SAP Ch select Completed, Ch=%d"), best_ch_num);
 	host_log_acs_best_chan(best_ch_num, best_ch_weight);
 
-	if (best_ch_num > 0 && best_ch_num <= 252)
-		return best_ch_num;
-	else
-		return SAP_CHANNEL_NOT_SELECTED;
+	return wlan_reg_chan_to_freq(mac_ctx->pdev, best_ch_num);
 }

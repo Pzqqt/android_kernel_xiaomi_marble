@@ -290,9 +290,9 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
  * Runs a algorithm to select the best channel to operate in based on BSS
  * rssi and bss count on each channel
  *
- * Returns: channel number if success, 0 otherwise
+ * Returns: channel frequency if success, 0 otherwise
  */
-uint8_t sap_select_channel(mac_handle_t mac_handle, struct sap_context *sap_ctx,
+uint32_t sap_select_channel(mac_handle_t mac_handle, struct sap_context *sap_ctx,
 			   qdf_list_t *scan_list);
 
 QDF_STATUS
@@ -452,9 +452,9 @@ static inline uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
  * range configuration when ACS scan fails due to some reasons, such as scan
  * timeout, etc.
  *
- * Return: Selected operating channel number
+ * Return: Selected operating channel frequency
  */
-uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg);
+uint32_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg);
 
 /*
  * sap_is_dfs_cac_wait_state() - check if sap is in cac wait state

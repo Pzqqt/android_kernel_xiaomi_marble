@@ -1871,15 +1871,11 @@ struct hdd_context {
 
 /**
  * struct hdd_vendor_acs_chan_params - vendor acs channel parameters
- * @channel_count: channel count
- * @channel_list: pointer to channel list
  * @pcl_count: pcl list count
  * @vendor_pcl_list: pointer to pcl list
  * @vendor_weight_list: pointer to pcl weight list
  */
 struct hdd_vendor_acs_chan_params {
-	uint32_t channel_count;
-	uint8_t *channel_list;
 	uint32_t pcl_count;
 	uint8_t *vendor_pcl_list;
 	uint8_t *vendor_weight_list;

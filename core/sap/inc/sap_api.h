@@ -431,7 +431,7 @@ struct sap_acs_cfg {
 	eCsrPhyMode hw_mode;
 	uint8_t    start_ch;
 	uint8_t    end_ch;
-	uint8_t    *ch_list;
+	uint32_t   *freq_list;
 	uint8_t    ch_list_count;
 	uint8_t    *master_ch_list;
 	uint8_t    master_ch_list_count;
@@ -444,7 +444,7 @@ struct sap_acs_cfg {
 #endif
 
 	uint16_t   ch_width;
-	uint8_t    pcl_channels[QDF_MAX_NUM_CHAN];
+	uint32_t   pcl_chan_freq[QDF_MAX_NUM_CHAN];
 	uint8_t    pcl_channels_weight_list[QDF_MAX_NUM_CHAN];
 	uint32_t   pcl_ch_count;
 	uint8_t    is_ht_enabled;

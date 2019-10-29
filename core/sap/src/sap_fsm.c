@@ -670,11 +670,11 @@ sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
 	return false;
 }
 
-uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg)
+uint32_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg)
 {
 	uint16_t i;
 
-	if (!acs_cfg || !acs_cfg->ch_list || !acs_cfg->ch_list_count)
+	if (!acs_cfg || !acs_cfg->freq_list || !acs_cfg->ch_list_count)
 		return 0;
 
 	/*
@@ -688,16 +688,16 @@ uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg)
 	 */
 
 	for (i = 0; i < acs_cfg->ch_list_count; i++) {
-		if (WLAN_CHAN_IS_5GHZ(acs_cfg->ch_list[i])) {
-			sap_debug("default channel chosen as %d",
-				  acs_cfg->ch_list[i]);
-			return acs_cfg->ch_list[i];
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(acs_cfg->freq_list[i])) {
+			sap_debug("default freq chosen as %d",
+				  acs_cfg->freq_list[i]);
+			return acs_cfg->freq_list[i];
 		}
 	}
 
-	sap_debug("default channel chosen as %d", acs_cfg->ch_list[0]);
+	sap_debug("default frequency chosen as %d", acs_cfg->freq_list[0]);
 
-	return acs_cfg->ch_list[0];
+	return acs_cfg->freq_list[0];
 }
 
 QDF_STATUS
@@ -967,9 +967,6 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 				  sap_context->chan_freq);
 			sap_context->chan_freq = sap_select_default_oper_chan(
 					sap_context->acs_cfg);
-			sap_context->chan_freq = wlan_reg_chan_to_freq(
-							mac_ctx->pdev,
-							sap_context->chan_freq);
 
 			if (sap_context->freq_list) {
 				sap_context->chan_freq =
@@ -3486,8 +3483,7 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	for (loop_count = 0; loop_count < ch_count; loop_count++) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			FL("channel frequency: %d"), list[loop_count]);
-		sap_ctx->acs_cfg->ch_list[loop_count] =
-			wlan_reg_freq_to_chan(mac_ctx->pdev, list[loop_count]);
+		sap_ctx->acs_cfg->freq_list[loop_count] = list[loop_count];
 	}
 	sap_ctx->acs_cfg->ch_list_count = ch_count;
 
