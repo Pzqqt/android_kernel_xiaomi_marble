@@ -104,6 +104,11 @@
 #define    COUNTRY_ERD_FLAG     0x8000
 
 extern const struct chan_map *channel_map;
+extern const struct chan_map channel_map_us[];
+extern const struct chan_map channel_map_eu[];
+extern const struct chan_map channel_map_jp[];
+extern const struct chan_map channel_map_china[];
+extern const struct chan_map channel_map_global[];
 
 #ifdef CONFIG_CHAN_NUM_API
 /**

@@ -344,6 +344,8 @@ QDF_STATUS wlan_regulatory_init(void)
 
 	reg_debug("regulatory handlers registered with obj mgr");
 
+	channel_map = channel_map_global;
+
 	return status;
 
 unreg_pdev_create:

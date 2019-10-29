@@ -169,7 +169,7 @@ static const enum phy_ch_width get_next_lower_bw[] = {
 	[CH_WIDTH_5MHZ] = CH_WIDTH_INVALID
 };
 
-static const struct chan_map channel_map_us[NUM_CHANNELS] = {
+const struct chan_map channel_map_us[NUM_CHANNELS] = {
 	[CHAN_ENUM_2412] = {2412, 1, 20, 40},
 	[CHAN_ENUM_2417] = {2417, 2, 20, 40},
 	[CHAN_ENUM_2422] = {2422, 3, 20, 40},
@@ -332,7 +332,7 @@ static const struct chan_map channel_map_us[NUM_CHANNELS] = {
 #endif /* CONFIG_BAND_6GHZ */
 };
 
-static const struct chan_map channel_map_eu[NUM_CHANNELS] = {
+const struct chan_map channel_map_eu[NUM_CHANNELS] = {
 	[CHAN_ENUM_2412] = {2412, 1, 20, 40},
 	[CHAN_ENUM_2417] = {2417, 2, 20, 40},
 	[CHAN_ENUM_2422] = {2422, 3, 20, 40},
@@ -495,7 +495,7 @@ static const struct chan_map channel_map_eu[NUM_CHANNELS] = {
 #endif /* CONFIG_BAND_6GHZ */
 };
 
-static const struct chan_map channel_map_jp[NUM_CHANNELS] = {
+const struct chan_map channel_map_jp[NUM_CHANNELS] = {
 	[CHAN_ENUM_2412] = {2412, 1, 20, 40},
 	[CHAN_ENUM_2417] = {2417, 2, 20, 40},
 	[CHAN_ENUM_2422] = {2422, 3, 20, 40},
@@ -658,7 +658,7 @@ static const struct chan_map channel_map_jp[NUM_CHANNELS] = {
 #endif /* CONFIG_BAND_6GHZ */
 };
 
-static const struct chan_map channel_map_global[NUM_CHANNELS] = {
+const struct chan_map channel_map_global[NUM_CHANNELS] = {
 	[CHAN_ENUM_2412] = {2412, 1, 20, 40},
 	[CHAN_ENUM_2417] = {2417, 2, 20, 40},
 	[CHAN_ENUM_2422] = {2422, 3, 20, 40},
@@ -821,7 +821,7 @@ static const struct chan_map channel_map_global[NUM_CHANNELS] = {
 #endif /* CONFIG_BAND_6GHZ */
 };
 
-static const struct chan_map channel_map_china[NUM_CHANNELS] = {
+const struct chan_map channel_map_china[NUM_CHANNELS] = {
 	[CHAN_ENUM_2412] = {2412, 1, 20, 40},
 	[CHAN_ENUM_2417] = {2417, 2, 20, 40},
 	[CHAN_ENUM_2422] = {2422, 3, 20, 40},
@@ -3288,6 +3288,7 @@ void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
 	enum channel_enum chan_enum;
 	struct regulatory_channel *mas_chan_list;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct wlan_objmgr_psoc *psoc;
 	uint16_t i;
 
 	if (!num_chan || !chan_freq_list) {
@@ -3295,9 +3296,11 @@ void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
+	psoc = wlan_pdev_get_psoc(pdev);
+
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 	if (!pdev_priv_obj) {
-		reg_err("reg psoc private obj is NULL");
+		reg_err("reg pdev private obj is NULL");
 		return;
 	}
 
@@ -3313,6 +3316,8 @@ void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
 	}
 
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+
+	reg_send_scheduler_msg_sb(psoc, pdev);
 }
 
 void reg_update_nol_history_ch_for_freq(struct wlan_objmgr_pdev *pdev,
