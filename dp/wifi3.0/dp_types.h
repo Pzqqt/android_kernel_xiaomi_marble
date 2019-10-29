@@ -1014,8 +1014,9 @@ struct dp_soc {
 	/* Number of TCL data rings */
 	uint8_t num_tcl_data_rings;
 
-	/* TCL command ring */
-	struct dp_srng tcl_cmd_ring;
+	/* TCL CMD_CREDIT ring */
+	/* It is used as credit based ring on QCN9000 else command ring */
+	struct dp_srng tcl_cmd_credit_ring;
 
 	/* TCL command status ring */
 	struct dp_srng tcl_status_ring;

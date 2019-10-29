@@ -342,7 +342,7 @@ void wlan_set_srng_cfg(struct wlan_srng_cfg **wlan_cfg)
 	g_wlan_srng_cfg[REO_CMD] = wlan_srng_default_cfg;
 	g_wlan_srng_cfg[REO_STATUS] = wlan_srng_default_cfg;
 	g_wlan_srng_cfg[TCL_DATA] = wlan_srng_default_cfg;
-	g_wlan_srng_cfg[TCL_CMD] = wlan_srng_default_cfg;
+	g_wlan_srng_cfg[TCL_CMD_CREDIT] = wlan_srng_default_cfg;
 	g_wlan_srng_cfg[TCL_STATUS] = wlan_srng_default_cfg;
 	g_wlan_srng_cfg[WBM_IDLE_LINK] = wlan_srng_default_cfg;
 	g_wlan_srng_cfg[SW2WBM_RELEASE] = wlan_srng_default_cfg;
@@ -516,8 +516,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 
 	wlan_cfg_ctx->wbm_release_ring = cfg_get(psoc,
 						 CFG_DP_WBM_RELEASE_RING);
-	wlan_cfg_ctx->tcl_cmd_ring = cfg_get(psoc,
-					     CFG_DP_TCL_CMD_RING);
+	wlan_cfg_ctx->tcl_cmd_credit_ring = cfg_get(psoc,
+					     CFG_DP_TCL_CMD_CREDIT_RING);
 	wlan_cfg_ctx->tcl_status_ring = cfg_get(psoc,
 						CFG_DP_TCL_STATUS_RING);
 	wlan_cfg_ctx->reo_reinject_ring = cfg_get(psoc,
@@ -1068,9 +1068,9 @@ wlan_cfg_get_dp_soc_wbm_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 }
 
 int
-wlan_cfg_get_dp_soc_tcl_cmd_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+wlan_cfg_get_dp_soc_tcl_cmd_credit_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
-	return cfg->tcl_cmd_ring;
+	return cfg->tcl_cmd_credit_ring;
 }
 
 int

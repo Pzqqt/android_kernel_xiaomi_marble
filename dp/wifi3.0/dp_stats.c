@@ -4689,8 +4689,8 @@ void dp_print_soc_cfg_params(struct dp_soc *soc)
 		       soc_cfg_ctx->rx_defrag_min_timeout);
 	DP_PRINT_STATS("WBM release ring: %u ",
 		       soc_cfg_ctx->wbm_release_ring);
-	DP_PRINT_STATS("TCL CMD ring: %u ",
-		       soc_cfg_ctx->tcl_cmd_ring);
+	DP_PRINT_STATS("TCL CMD_CREDIT ring: %u ",
+		       soc_cfg_ctx->tcl_cmd_credit_ring);
 	DP_PRINT_STATS("TCL Status ring: %u ",
 		       soc_cfg_ctx->tcl_status_ring);
 	DP_PRINT_STATS("REO Reinject ring: %u ",
@@ -4903,8 +4903,8 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 				    &pdev->soc->rx_rel_ring,
 				    WBM2SW_RELEASE);
 	dp_print_ring_stat_from_hal(pdev->soc,
-				    &pdev->soc->tcl_cmd_ring,
-				    TCL_CMD);
+				    &pdev->soc->tcl_cmd_credit_ring,
+				    TCL_CMD_CREDIT);
 	dp_print_ring_stat_from_hal(pdev->soc,
 				    &pdev->soc->tcl_status_ring,
 				    TCL_STATUS);

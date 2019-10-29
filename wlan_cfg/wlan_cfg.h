@@ -143,7 +143,7 @@ struct wlan_srng_cfg {
  * @nss_cfg: nss configuration
  * @rx_defrag_min_timeout: rx defrag minimum timeout
  * @wbm_release_ring: wbm release ring size
- * @tcl_cmd_ring: tcl cmd ring size
+ * @tcl_cmd_credit_ring: tcl command/credit ring size
  * @tcl_status_ring: tcl status ring size
  * @reo_reinject_ring: reo reinject ring
  * @rx_release_ring: rx release ring size
@@ -241,7 +241,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int rx_defrag_min_timeout;
 	int reo_dst_ring_size;
 	int wbm_release_ring;
-	int tcl_cmd_ring;
+	int tcl_cmd_credit_ring;
 	int tcl_status_ring;
 	int reo_reinject_ring;
 	int rx_release_ring;
@@ -998,13 +998,13 @@ int
 wlan_cfg_get_dp_soc_wbm_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
- * wlan_cfg_get_dp_soc_tcl_cmd_ring_size - Get tcl_cmd_ring size
+ * wlan_cfg_get_dp_soc_tcl_cmd_credit_ring_size - Get command/credit ring size
  * @wlan_cfg_soc_ctx
  *
- * Return: tcl_cmd_ring size
+ * Return: tcl_cmd_credit_ring size
  */
 int
-wlan_cfg_get_dp_soc_tcl_cmd_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+wlan_cfg_get_dp_soc_tcl_cmd_credit_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
  * wlan_cfg_get_dp_soc_tcl_status_ring_size - Get tcl_status_ring size

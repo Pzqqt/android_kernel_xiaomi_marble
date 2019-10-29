@@ -1050,7 +1050,8 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 	break;
 
 	case TCL_DATA:
-	case TCL_CMD:
+	/* CMD_CREDIT_RING is used as command in 8074 and credit in 9000 */
+	case TCL_CMD_CREDIT:
 	case REO_CMD:
 	case SW2WBM_RELEASE:
 	case WBM_IDLE_LINK:
@@ -2976,12 +2977,11 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
-	entries = wlan_cfg_get_dp_soc_tcl_cmd_ring_size(soc_cfg_ctx);
-	/* TCL command and status rings */
-	if (dp_srng_setup(soc, &soc->tcl_cmd_ring, TCL_CMD, 0, 0,
+	entries = wlan_cfg_get_dp_soc_tcl_cmd_credit_ring_size(soc_cfg_ctx);
+	if (dp_srng_setup(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT, 0, 0,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("dp_srng_setup failed for tcl_cmd_ring"));
+			FL("dp_srng_setup failed for tcl_cmd_credit_ring."));
 		goto fail2;
 	}
 
@@ -4360,8 +4360,9 @@ static void dp_soc_deinit(void *txrx_soc)
 		}
 	}
 
-	/* TCL command and status rings */
-	dp_srng_deinit(soc, &soc->tcl_cmd_ring, TCL_CMD, 0);
+	/* TCL command/credit ring */
+	dp_srng_deinit(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT, 0);
+	/* TCL status ring */
 	dp_srng_deinit(soc, &soc->tcl_status_ring, TCL_STATUS, 0);
 
 	/* Rx data rings */
@@ -4462,8 +4463,9 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 		}
 	}
 
-	/* TCL command and status rings */
-	dp_srng_cleanup(soc, &soc->tcl_cmd_ring, TCL_CMD, 0);
+	/* TCL command/credit ring */
+	dp_srng_cleanup(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT, 0);
+	/* TCL status rings */
 	dp_srng_cleanup(soc, &soc->tcl_status_ring, TCL_STATUS, 0);
 
 	/* Rx data rings */
@@ -7332,8 +7334,8 @@ char *dp_srng_get_str_from_hal_ring_type(enum hal_ring_type ring_type)
 		return "wbm2sw_release";
 	case TCL_DATA:
 		return "tcl_data";
-	case TCL_CMD:
-		return "tcl_cmd";
+	case TCL_CMD_CREDIT:
+		return "tcl_cmd_credit";
 	case TCL_STATUS:
 		return "tcl_status";
 	case SW2WBM_RELEASE:
