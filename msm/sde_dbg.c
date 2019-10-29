@@ -45,6 +45,8 @@
 #define DBGBUS_PERIPH	0x418
 
 #define TEST_MASK(id, tp)	((id << 4) | (tp << 1) | BIT(0))
+#define TEST_EXT_MASK(id, tp)	(((tp >> 3) << 24) | (id << 4) \
+		| ((tp & 0x7) << 1) | BIT(0))
 
 /* following offsets are with respect to MDP VBIF base for DBG BUS access */
 #define MMSS_VBIF_CLKON			0x4
@@ -268,6 +270,13 @@ static void _sde_debug_bus_ppb0_dump(void __iomem *mem_base,
 		return;
 
 	dev_err(sde_dbg_base.dev, "ppb0 0x%x %d %d 0x%x\n",
+			entry->wr_addr, entry->block_id, entry->test_id, val);
+}
+
+static void _sde_debug_bus_ltm_dump(void __iomem *mem_base,
+		struct sde_debug_bus_entry *entry, u32 val)
+{
+	dev_info(sde_dbg_base.dev, "ltm 0x%x %d %d 0x%x\n",
 			entry->wr_addr, entry->block_id, entry->test_id, val);
 }
 
@@ -1997,23 +2006,47 @@ static struct sde_debug_bus_entry dbg_bus_sde_kona[] = {
 	{ DBGBUS_DSPP, 9, 0},
 
 	/* ltm */
-	{ DBGBUS_DSPP, 45, 0},
-	{ DBGBUS_DSPP, 45, 1},
-	{ DBGBUS_DSPP, 45, 2},
-	{ DBGBUS_DSPP, 45, 3},
-	{ DBGBUS_DSPP, 45, 4},
-	{ DBGBUS_DSPP, 45, 5},
-	{ DBGBUS_DSPP, 45, 6},
-	{ DBGBUS_DSPP, 45, 7},
+	{ DBGBUS_DSPP, 45, 0, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 1, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 2, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 3, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 4, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 5, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 6, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 7, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 8, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 9, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 10, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 11, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 12, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 13, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 14, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 15, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 16, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 17, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 18, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 45, 31, _sde_debug_bus_ltm_dump},
 
-	{ DBGBUS_DSPP, 46, 0},
-	{ DBGBUS_DSPP, 46, 1},
-	{ DBGBUS_DSPP, 46, 2},
-	{ DBGBUS_DSPP, 46, 3},
-	{ DBGBUS_DSPP, 46, 4},
-	{ DBGBUS_DSPP, 46, 5},
-	{ DBGBUS_DSPP, 46, 6},
-	{ DBGBUS_DSPP, 46, 7},
+	{ DBGBUS_DSPP, 46, 0, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 1, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 2, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 3, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 4, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 5, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 6, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 7, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 8, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 9, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 10, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 11, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 12, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 13, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 14, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 15, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 16, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 17, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 18, _sde_debug_bus_ltm_dump},
+	{ DBGBUS_DSPP, 46, 31, _sde_debug_bus_ltm_dump},
 
 	/* blend */
 	/* LM0 */
@@ -3216,7 +3249,11 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 
 	for (i = 0; i < bus->cmn.entries_size; i++) {
 		head = bus->entries + i;
-		writel_relaxed(TEST_MASK(head->block_id, head->test_id),
+		if (head->test_id > 0x7)
+			writel_relaxed(TEST_EXT_MASK(head->block_id,
+				head->test_id), mem_base + head->wr_addr);
+		else
+			writel_relaxed(TEST_MASK(head->block_id, head->test_id),
 				mem_base + head->wr_addr);
 		wmb(); /* make sure test bits were written */
 
