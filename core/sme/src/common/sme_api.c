@@ -12274,8 +12274,7 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
 		sme_debug("Connected STA band %d", req_msg->band);
 	}
 	for (i = 0; i < msg->pcl_len; i++) {
-		req_msg->chan_weights.pcl_list[i] =  wlan_freq_to_chan(
-							msg->pcl_list[i]);
+		req_msg->chan_weights.pcl_list[i] =  msg->pcl_list[i];
 		req_msg->chan_weights.weight_list[i] =  msg->weight_list[i];
 	}
 

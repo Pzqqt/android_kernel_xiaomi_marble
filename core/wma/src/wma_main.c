@@ -9043,8 +9043,7 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 
 	for (i = 0; i < wma_handle->saved_chan.num_channels; i++) {
 		msg->chan_weights.saved_chan_list[i] =
-		  wlan_reg_freq_to_chan(wma_handle->pdev,
-					wma_handle->saved_chan.ch_freq_list[i]);
+					wma_handle->saved_chan.ch_freq_list[i];
 	}
 
 	msg->chan_weights.saved_num_chan = wma_handle->saved_chan.num_channels;
@@ -9068,7 +9067,7 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 		    msg->chan_weights.saved_chan_list[i]))
 			msg->chan_weights.weighed_valid_list[i] =
 				WEIGHT_OF_DISALLOWED_CHANNELS;
-		WMA_LOGD("%s: chan:%d weight[%d]=%d", __func__,
+		WMA_LOGD("%s: freq:%d weight[%d]=%d", __func__,
 			 msg->chan_weights.saved_chan_list[i], i,
 			 msg->chan_weights.weighed_valid_list[i]);
 	}
