@@ -990,8 +990,6 @@ struct wma_wlm_stats_data {
  * @dynamic_nss_chains_update: per vdev nss, chains update
  * @ito_repeat_count: Indicates ito repeated count
  * @wma_fw_time_sync_timer: timer used for firmware time sync
- * @critical_events_in_flight: number of suspend-preventing events
- *   in flight
  * * @fw_therm_throt_support: FW Supports thermal throttling?
  *
  * This structure is the global wma context.  It contains global wma
@@ -1126,7 +1124,6 @@ typedef struct {
 	bool dynamic_nss_chains_support;
 	uint8_t  ito_repeat_count;
 	qdf_mc_timer_t wma_fw_time_sync_timer;
-	qdf_atomic_t critical_events_in_flight;
 	bool fw_therm_throt_support;
 	bool enable_tx_compl_tsf64;
 } t_wma_handle, *tp_wma_handle;
@@ -1523,28 +1520,6 @@ struct wma_roam_invoke_cmd {
 	uint8_t is_same_bssid;
 	bool forced_roaming;
 };
-
-/**
- * struct wma_process_fw_event_params - fw event parameters
- * @wmi_handle: wmi handle
- * @evt_buf: event buffer
- */
-typedef struct {
-	void *wmi_handle;
-	void *evt_buf;
-} wma_process_fw_event_params;
-
-/**
- * wma_process_fw_event_handler() - common event handler to serialize
- *                                  event processing through mc_thread
- * @scn_handle: scn handle
- * @ev: event buffer
- * @rx_ctx: rx execution context
- *
- * Return: 0 on success, errno on failure
- */
-int wma_process_fw_event_handler(ol_scn_t scn_handle, void *ev,
-				 uint8_t rx_ctx);
 
 A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
 					 eCsrEncryptionType encr);

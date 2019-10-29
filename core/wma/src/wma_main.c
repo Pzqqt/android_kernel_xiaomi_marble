@@ -1570,57 +1570,6 @@ uint32_t wma_critical_events_in_flight(void)
 	return wmi_critical_events_in_flight(wma->wmi_handle);
 }
 
-static bool wma_event_is_critical(uint32_t event_id)
-{
-	switch (event_id) {
-	case WMI_ROAM_SYNCH_EVENTID:
-		return true;
-	default:
-		return false;
-	}
-}
-
-/**
- * wma_process_fw_event() - process any fw event
- * @wma: wma handle
- * @buf: fw event buffer
- *
- * This function process any fw event to serialize it through mc thread.
- *
- * Return: none
- */
-static int wma_process_fw_event(tp_wma_handle wma,
-				wma_process_fw_event_params *buf)
-{
-	struct wmi_unified *wmi_handle = (struct wmi_unified *)buf->wmi_handle;
-	uint32_t event_id = WMI_GET_FIELD(qdf_nbuf_data(buf->evt_buf),
-					  WMI_CMD_HDR, COMMANDID);
-
-	wmi_process_fw_event(wmi_handle, buf->evt_buf);
-
-	if (wma_event_is_critical(event_id))
-		qdf_atomic_dec(&wma->critical_events_in_flight);
-
-	return 0;
-}
-
-/**
- * wmi_process_fw_event_tasklet_ctx() - process in tasklet context
- * @ctx: handle to wmi
- * @ev: wmi event buffer
- *
- * Event process by below function will be in tasket context,
- * need to use this method only for time sensitive functions.
- *
- * Return: none
- */
-static int wma_process_fw_event_tasklet_ctx(void *ctx, void *ev)
-{
-	wmi_process_fw_event(ctx, ev);
-
-	return 0;
-}
-
 /**
  * wma_process_hal_pwr_dbg_cmd() - send hal pwr dbg cmd to fw.
  * @handle: wma handle
@@ -1660,13 +1609,6 @@ static void wma_discard_fw_event(struct scheduler_msg *msg)
 {
 	if (!msg->bodyptr)
 		return;
-
-	switch (msg->type) {
-	case WMA_PROCESS_FW_EVENT:
-		qdf_nbuf_free(((wma_process_fw_event_params *)msg->bodyptr)
-				->evt_buf);
-		break;
-	}
 
 	qdf_mem_free(msg->bodyptr);
 	msg->bodyptr = NULL;
@@ -1719,101 +1661,6 @@ wma_vdev_nss_chain_params_send(uint8_t vdev_id,
 	return wmi_unified_vdev_nss_chain_params_send(wma_handle->wmi_handle,
 						      vdev_id,
 						      &vdev_user_cfg);
-}
-
-/**
- * wma_process_fw_event_handler() - common event handler to serialize
- *                                  event processing through mc_thread
- * @ctx: wmi context
- * @ev: event buffer
- * @rx_ctx: rx execution context
- *
- * Return: 0 on success, errno on failure
- */
-static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
-{
-	wma_process_fw_event_params *params_buf;
-	struct scheduler_msg cds_msg = { 0 };
-	tp_wma_handle wma;
-	uint32_t event_id;
-
-	params_buf = qdf_mem_malloc(sizeof(wma_process_fw_event_params));
-	if (!params_buf) {
-		qdf_nbuf_free(ev);
-		return -ENOMEM;
-	}
-
-	params_buf->wmi_handle = (struct wmi_unified *)ctx;
-	params_buf->evt_buf = ev;
-
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	event_id = WMI_GET_FIELD(qdf_nbuf_data(params_buf->evt_buf),
-				 WMI_CMD_HDR, COMMANDID);
-	if (wma && wma_event_is_critical(event_id))
-		qdf_atomic_inc(&wma->critical_events_in_flight);
-
-	cds_msg.type = WMA_PROCESS_FW_EVENT;
-	cds_msg.bodyptr = params_buf;
-	cds_msg.bodyval = 0;
-	cds_msg.flush_callback = wma_discard_fw_event;
-
-	if (QDF_STATUS_SUCCESS !=
-		scheduler_post_message(QDF_MODULE_ID_WMA,
-				       QDF_MODULE_ID_WMA,
-				       QDF_MODULE_ID_WMA, &cds_msg)) {
-		qdf_nbuf_free(ev);
-		qdf_mem_free(params_buf);
-		return -EFAULT;
-	}
-	return 0;
-
-}
-
-int wma_process_fw_event_handler(ol_scn_t scn_handle, void *evt_buf,
-				 uint8_t rx_ctx)
-{
-	int err = 0;
-	struct wmi_unified *wmi_handle;
-	struct wlan_objmgr_psoc *psoc;
-	struct target_psoc_info *tgt_hdl;
-	bool is_wmi_ready = false;
-
-	psoc = target_if_get_psoc_from_scn_hdl(scn_handle);
-	if (!psoc) {
-		WMA_LOGE("psoc is null");
-		return err;
-	}
-
-	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
-	if (!wmi_handle) {
-		WMA_LOGE("wmi_handle is null");
-		return err;
-	}
-
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
-	if (!tgt_hdl) {
-		WMA_LOGE("target_psoc_info is null");
-		return err;
-	}
-
-	is_wmi_ready = target_psoc_get_wmi_ready(tgt_hdl);
-	if (!is_wmi_ready) {
-		WMA_LOGD("fw event recvd before ready event processed");
-		WMA_LOGD("therefore use worker thread");
-		wmi_process_fw_event_worker_thread_ctx(wmi_handle, evt_buf);
-		return err;
-	}
-
-	if (rx_ctx == WMA_RX_SERIALIZER_CTX) {
-		err = wma_process_fw_event_mc_thread_ctx(wmi_handle, evt_buf);
-	} else if (rx_ctx == WMA_RX_TASKLET_CTX) {
-		wma_process_fw_event_tasklet_ctx(wmi_handle, evt_buf);
-	} else {
-		WMA_LOGE("%s: invalid wmi event execution context", __func__);
-		qdf_nbuf_free(evt_buf);
-	}
-
-	return err;
 }
 
 /**
@@ -3188,21 +3035,17 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	 * Allocate locally used params with its rx_ops member,
 	 * and free it immediately after used.
 	 */
-	params = qdf_mem_malloc(sizeof(*params) + sizeof(struct wmi_rx_ops));
+	params = qdf_mem_malloc(sizeof(*params));
 	if (!params) {
 		qdf_status = QDF_STATUS_E_NOMEM;
 		goto err_wma_handle;
 	}
 
-	params->rx_ops = (struct wmi_rx_ops *)(params + 1);
 	params->osdev = NULL;
 	params->target_type = WMI_TLV_TARGET;
 	params->use_cookie = false;
 	params->psoc = psoc;
 	params->max_commands = WMI_MAX_CMDS;
-	/* Attach mc_thread context processing function */
-	params->rx_ops->wma_process_fw_event_handler_cbk =
-						wma_process_fw_event_handler;
 
 	/* initialize tlv attach */
 	wmi_tlv_init();
@@ -8433,16 +8276,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	}
 
 	switch (msg->type) {
-
-	/* Message posted by wmi for all control path related
-	 * FW events to serialize through mc_thread.
-	 */
-	case WMA_PROCESS_FW_EVENT:
-		wma_process_fw_event(wma_handle,
-				(wma_process_fw_event_params *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-
 #ifdef FEATURE_WLAN_ESE
 	case WMA_TSM_STATS_REQ:
 		WMA_LOGD("McThread: WMA_TSM_STATS_REQ");
