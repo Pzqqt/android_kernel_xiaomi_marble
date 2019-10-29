@@ -20395,13 +20395,12 @@ QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 
 	msg->messageType = eWNI_SME_CHANNEL_CHANGE_REQ;
 	msg->messageLen = sizeof(tSirChanChangeRequest);
-	msg->targetChannel = wlan_reg_freq_to_chan(
-		mac->pdev, profile->ChannelInfo.freq_list[0]);
+	msg->target_chan_freq = profile->ChannelInfo.freq_list[0];
 	msg->sec_ch_offset = ch_params->sec_ch_offset;
 	msg->ch_width = profile->ch_params.ch_width;
 	msg->dot11mode = csr_translate_to_wni_cfg_dot11_mode(mac,
 					param.uCfgDot11Mode);
-	if (IS_24G_CH(msg->targetChannel) &&
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(msg->target_chan_freq) &&
 	    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
 	    (msg->dot11mode == MLME_DOT11_MODE_11AC ||
 	    msg->dot11mode == MLME_DOT11_MODE_11AC_ONLY))
@@ -20418,8 +20417,8 @@ QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 	qdf_mem_copy(&msg->extended_rateset, &param.extendedRateSet,
 		     sizeof(msg->extended_rateset));
 
-	sme_debug("target_chan %d ch_width %d dot11mode %d",
-		  msg->targetChannel, msg->ch_width, msg->dot11mode);
+	sme_debug("target_chan_freq %d ch_width %d dot11mode %d",
+		  msg->target_chan_freq, msg->ch_width, msg->dot11mode);
 	status = umac_send_mb_message_to_mac(msg);
 
 	return status;

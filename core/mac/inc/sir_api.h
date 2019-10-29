@@ -2742,7 +2742,7 @@ typedef struct sSirSmeDfsEventInd {
 typedef struct sSirChanChangeRequest {
 	uint16_t messageType;
 	uint16_t messageLen;
-	uint8_t targetChannel;
+	uint32_t target_chan_freq;
 	uint8_t sec_ch_offset;
 	enum phy_ch_width ch_width;
 	uint8_t center_freq_seg_0;

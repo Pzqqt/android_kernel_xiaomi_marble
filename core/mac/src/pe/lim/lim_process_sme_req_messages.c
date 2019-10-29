@@ -5019,11 +5019,10 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 	}
 	ch_change_req = (tpSirChanChangeRequest)msg_buf;
 
-	target_freq = wlan_reg_chan_to_freq(
-		mac_ctx->pdev, ch_change_req->targetChannel);
+	target_freq = ch_change_req->target_chan_freq;
 
-	max_tx_pwr = lim_get_regulatory_max_transmit_power(
-				mac_ctx, ch_change_req->targetChannel);
+	max_tx_pwr = wlan_reg_get_channel_reg_power_for_freq(
+				mac_ctx->pdev, target_freq);
 
 	if ((ch_change_req->messageType != eWNI_SME_CHANNEL_CHANGE_REQ) ||
 			(max_tx_pwr == WMA_MAX_TXPOWER_INVALID)) {
