@@ -1221,12 +1221,13 @@ enum scan_mode_6ghz {
  * </ini>
  */
 #define CFG_6GHZ_SCAN_MODE CFG_INI_UINT( \
-				"scan_mode_6ghz", \
-				SCAN_MODE_6G_NO_CHANNEL, \
-				SCAN_MODE_6G_MAX, \
-				SCAN_MODE_6G_PSC_CHANNEL, \
-				CFG_VALUE_OR_DEFAULT, \
-				"6ghz scan mode")
+			"scan_mode_6ghz", \
+			SCAN_MODE_6G_NO_CHANNEL, \
+			SCAN_MODE_6G_MAX, \
+			PLATFORM_VALUE(SCAN_MODE_6G_PSC_CHANNEL, \
+				SCAN_MODE_6G_ALL_CHANNEL), \
+			CFG_VALUE_OR_DEFAULT, \
+			"6ghz scan mode")
 
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
