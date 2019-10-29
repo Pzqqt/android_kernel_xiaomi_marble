@@ -499,6 +499,13 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 	if (gpio_is_valid(panel->reset_config.lcd_mode_sel_gpio))
 		gpio_set_value(panel->reset_config.lcd_mode_sel_gpio, 0);
 
+	if (gpio_is_valid(panel->panel_test_gpio)) {
+		rc = gpio_direction_input(panel->panel_test_gpio);
+		if (rc)
+			DSI_WARN("set dir for panel test gpio failed rc=%d\n",
+				 rc);
+	}
+
 	rc = dsi_panel_set_pinctrl_state(panel, false);
 	if (rc) {
 		DSI_ERR("[%s] failed set pinctrl state, rc=%d\n", panel->name,
