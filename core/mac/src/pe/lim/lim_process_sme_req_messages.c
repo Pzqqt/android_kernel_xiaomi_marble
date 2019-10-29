@@ -6332,5 +6332,6 @@ void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
 
 		/* Add this bssid to the rssi reject ap type in blacklist mgr */
 		lim_add_bssid_to_reject_list(mac_ctx->pdev, &entry);
+		blacklist++;
 	}
 }
