@@ -5388,20 +5388,28 @@ QDF_STATUS sme_update_channel_list(mac_handle_t mac_handle)
 	return status;
 }
 
-static bool
-sme_search_in_base_ch_lst(struct mac_context *mac_ctx, uint8_t curr_ch)
+/**
+ * sme_search_in_base_ch_freq_lst() - is given ch_freq in base ch freq
+ * @mac_ctx: mac global context
+ * @chan_freq: current channel freq
+ *
+ * Return: true if given ch_freq is in base ch freq
+ */
+static bool sme_search_in_base_ch_freq_lst(
+	struct mac_context *mac_ctx, uint32_t chan_freq)
 {
 	uint8_t i;
 	struct csr_channel *ch_lst_info;
 
 	ch_lst_info = &mac_ctx->scan.base_channels;
 	for (i = 0; i < ch_lst_info->numChannels; i++) {
-		if (ch_lst_info->channel_freq_list[i] == wlan_reg_chan_to_freq(mac_ctx->pdev, curr_ch))
+		if (ch_lst_info->channel_freq_list[i] == chan_freq)
 			return true;
 	}
 
 	return false;
 }
+
 /**
  * sme_disconnect_connected_sessions() - Disconnect STA and P2P client session
  * if channel is not supported
@@ -5415,18 +5423,18 @@ sme_search_in_base_ch_lst(struct mac_context *mac_ctx, uint8_t curr_ch)
 static void sme_disconnect_connected_sessions(struct mac_context *mac_ctx)
 {
 	uint8_t session_id, found = false;
-	uint8_t curr_ch;
+	uint32_t chan_freq;
 
 	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		if (!csr_is_session_client_and_connected(mac_ctx, session_id))
 			continue;
 		found = false;
 		/* Session is connected.Check the channel */
-		curr_ch = csr_get_infra_operation_channel(mac_ctx,
-							  session_id);
+		chan_freq = csr_get_infra_operation_chan_freq(
+					mac_ctx, session_id);
 		sme_debug("Current Operating channel : %d, session :%d",
-			  curr_ch, session_id);
-		found = sme_search_in_base_ch_lst(mac_ctx, curr_ch);
+			  chan_freq, session_id);
+		found = sme_search_in_base_ch_freq_lst(mac_ctx, chan_freq);
 		if (!found) {
 			sme_debug("Disconnect Session: %d", session_id);
 			csr_roam_disconnect(mac_ctx, session_id,
@@ -15006,11 +15014,10 @@ void sme_enable_roaming_on_connected_sta(mac_handle_t mac_handle,
 
 int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)
 {
-	uint8_t vdev_id, chan;
+	uint8_t vdev_id;
 	struct csr_roam_session *session;
 	struct mac_context *mac_ctx;
 	mac_handle_t mac_handle;
-	int16_t freq = 0;
 
 	if (!vdev) {
 		sme_err("Invalid vdev id is passed");
@@ -15030,11 +15037,8 @@ int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)
 	}
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
-	chan = csr_get_infra_operation_channel(mac_ctx, vdev_id);
-	if (chan)
-		freq = cds_chan_to_freq(chan);
 
-	return freq;
+	return csr_get_infra_operation_chan_freq(mac_ctx, vdev_id);
 }
 
 enum phy_ch_width sme_get_oper_ch_width(struct wlan_objmgr_vdev *vdev)

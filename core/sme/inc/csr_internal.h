@@ -962,8 +962,18 @@ uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 void csr_set_cfg_privacy(struct mac_context *mac,
 			 struct csr_roam_profile *pProfile,
 			 bool fPrivacy);
-uint8_t csr_get_infra_operation_channel(struct mac_context *mac,
-							uint8_t sessionId);
+
+/**
+ * csr_get_infra_operation_chan_freq() - get operating chan freq of
+ * given vdev id
+ * @mac_ctx: Pointer to mac context
+ * @vdev_id: vdev id
+ *
+ * Return: chan freq of given vdev id
+ */
+uint32_t csr_get_infra_operation_chan_freq(
+	struct mac_context *mac, uint8_t vdev_id);
+
 bool csr_is_session_client_and_connected(struct mac_context *mac,
 		uint8_t sessionId);
 /**

@@ -707,19 +707,20 @@ bool csr_is_any_session_in_connect_state(struct mac_context *mac)
 	return false;
 }
 
-uint8_t csr_get_infra_operation_channel(struct mac_context *mac, uint8_t sessionId)
+uint32_t csr_get_infra_operation_chan_freq(
+	struct mac_context *mac, uint8_t vdev_id)
 {
-	uint8_t channel;
+	uint32_t chan_freq = 0;
+	struct csr_roam_session *session;
 
-	if (CSR_IS_SESSION_VALID(mac, sessionId)) {
-		channel = wlan_reg_freq_to_chan(
-				mac->pdev,
-				mac->roam.roamSession[sessionId].
-				connectedProfile.op_freq);
-	} else {
-		channel = 0;
-	}
-	return channel;
+	session = CSR_GET_SESSION(mac, vdev_id);
+	if (!session)
+		return chan_freq;
+
+	if (CSR_IS_SESSION_VALID(mac, vdev_id))
+		chan_freq = session->connectedProfile.op_freq;
+
+	return chan_freq;
 }
 
 bool csr_is_session_client_and_connected(struct mac_context *mac, uint8_t sessionId)
