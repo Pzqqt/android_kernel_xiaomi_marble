@@ -337,7 +337,7 @@ QDF_STATUS csr_scan_result_purge(struct mac_context *mac,
 
 /* Add the channel to the occupiedChannels array */
 static void csr_add_to_occupied_channels(struct mac_context *mac,
-					 uint8_t ch,
+					 uint32_t ch_freq,
 					 uint8_t sessionId,
 					 struct csr_channel *occupied_ch,
 					 bool is_init_list)
@@ -350,15 +350,15 @@ static void csr_add_to_occupied_channels(struct mac_context *mac,
 		mac->scan.roam_candidate_count[sessionId]++;
 
 	if (csr_is_channel_present_in_list(occupied_ch_lst,
-					   num_occupied_ch, wlan_reg_chan_to_freq(mac->pdev, ch)))
+					   num_occupied_ch, ch_freq))
 		return;
 
 	status = csr_add_to_channel_list_front(occupied_ch_lst,
-					       num_occupied_ch, wlan_reg_chan_to_freq(mac->pdev, ch));
+					       num_occupied_ch, ch_freq);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		occupied_ch->numChannels++;
-		sme_debug("Added channel %d to the list (count=%d)",
-			ch, occupied_ch->numChannels);
+		sme_debug("Added channel freq %d to the list (count=%d)",
+			  ch_freq, occupied_ch->numChannels);
 		if (occupied_ch->numChannels >
 		    CSR_BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN)
 			occupied_ch->numChannels =
@@ -2735,7 +2735,6 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
 		&mac_ctx->roam.neighborRoamInfo[sessionId];
 	tCsrRoamConnectedProfile *profile = NULL;
-	uint8_t ch;
 
 	if (!(mac_ctx && mac_ctx->roam.roamSession &&
 	      CSR_IS_SESSION_VALID(mac_ctx, sessionId))) {
@@ -2796,7 +2795,7 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 
 	csr_add_to_occupied_channels(
 			mac_ctx,
-			wlan_reg_freq_to_chan(mac_ctx->pdev, profile->op_freq),
+			profile->op_freq,
 			sessionId,
 			&mac_ctx->scan.occupiedChannels[sessionId],
 			true);
@@ -2816,11 +2815,8 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	while (cur_lst) {
 		cur_node = qdf_container_of(cur_lst, struct scan_cache_node,
 					    node);
-		ch = wlan_reg_freq_to_chan(
-				pdev,
-				cur_node->entry->channel.chan_freq);
 		csr_add_to_occupied_channels(
-				mac_ctx, ch,
+				mac_ctx, cur_node->entry->channel.chan_freq,
 				sessionId,
 				&mac_ctx->scan.occupiedChannels[sessionId],
 				true);
