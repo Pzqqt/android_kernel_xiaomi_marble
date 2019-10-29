@@ -963,7 +963,7 @@ dfs_mark_leaking_chan_for_freq(struct wlan_dfs *dfs,
 				 */
 				dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 					"dfs: channel: %d will have bad leakage due to channel: %d\n",
-					dfs_nol_channel, temp_freq_lst[j]);
+					nol->nol_freq, temp_freq_lst[j]);
 				temp_freq_lst[j] = 0;
 			}
 			j++;
