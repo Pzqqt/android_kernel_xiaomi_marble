@@ -1122,13 +1122,13 @@ static void ol_tx_flow_pool_update(struct ol_tx_flow_pool_t *pool,
 
 	if (qdf_unlikely(!soc)) {
 		ol_txrx_err("soc is NULL");
-		return 0;
+		return;
 	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
 		ol_txrx_err("pdev is NULL");
-		return 0;
+		return;
 	}
 	pool->flow_pool_size = new_pool_size;
 	pool->start_th = (start_threshold * new_pool_size) / 100;
@@ -1169,13 +1169,13 @@ static void ol_tx_flow_pool_resize(struct ol_tx_flow_pool_t *pool,
 
 	if (qdf_unlikely(!soc)) {
 		ol_txrx_err("soc is NULL");
-		return 0;
+		return;
 	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
 		ol_txrx_err("pdev is NULL");
-		return 0;
+		return;
 	}
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);

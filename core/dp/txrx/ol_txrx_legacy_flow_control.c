@@ -430,42 +430,6 @@ void ol_tx_vdev_ll_pause_queue_send(void *context)
 }
 
 /**
- * ol_txrx_get_vdev_from_sta_id() - get vdev from sta_id
- * @sta_id: sta_id
- *
- * Return: vdev handle
- *            NULL if not found.
- */
-static ol_txrx_vdev_handle ol_txrx_get_vdev_from_sta_id(uint8_t sta_id)
-{
-	struct ol_txrx_peer_t *peer = NULL;
-	ol_txrx_pdev_handle pdev = NULL;
-
-	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid sta id passed");
-		return NULL;
-	}
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "PDEV not found for sta_id [%d]", sta_id);
-		return NULL;
-	}
-
-	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
-
-	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "PEER [%d] not found", sta_id);
-		return NULL;
-	}
-
-	return peer->vdev;
-}
-
-/**
  * ol_txrx_register_tx_flow_control() - register tx flow control callback
  * @vdev_id: vdev_id
  * @flowControl: flow control callback
