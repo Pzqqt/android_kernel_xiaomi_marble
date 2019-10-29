@@ -28,16 +28,27 @@
 #include "sde_hdcp.h"
 #include "dp_debug.h"
 #include "dp_pll.h"
+#include "sde_dbg.h"
 
 #define DP_MST_DEBUG(fmt, ...) DP_DEBUG(fmt, ##__VA_ARGS__)
 
 #define dp_display_state_show(x) { \
 	DP_ERR("%s: state (0x%x): %s\n", x, dp->state, \
-		dp_display_state_name(dp->state)); }
+		dp_display_state_name(dp->state)); \
+	SDE_EVT32_EXTERNAL(dp->state); }
+
+#define dp_display_state_log(x) { \
+	DP_DEBUG("%s: state (0x%x): %s\n", x, dp->state, \
+		dp_display_state_name(dp->state)); \
+	SDE_EVT32_EXTERNAL(dp->state); }
 
 #define dp_display_state_is(x) (dp->state & (x))
-#define dp_display_state_add(x) (dp->state |= (x))
-#define dp_display_state_remove(x) (dp->state &= ~(x))
+#define dp_display_state_add(x) { \
+	(dp->state |= (x)); \
+	dp_display_state_log("add "#x); }
+#define dp_display_state_remove(x) { \
+	(dp->state &= ~(x)); \
+	dp_display_state_log("remove "#x); }
 
 enum dp_display_states {
 	DP_STATE_DISCONNECTED           = 0,
@@ -721,6 +732,7 @@ static int dp_display_send_hpd_notification(struct dp_display_private *dp)
 	int ret = 0;
 	bool hpd = !!dp_display_state_is(DP_STATE_CONNECTED);
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state, hpd);
 	dp->aux->state |= DP_STATE_NOTIFICATION_SENT;
 
 	if (!dp->mst.mst_active)
@@ -743,8 +755,10 @@ static int dp_display_send_hpd_notification(struct dp_display_private *dp)
 		DP_WARN("%s timeout\n", hpd ? "connect" : "disconnect");
 		ret = -EINVAL;
 	}
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state, hpd, ret);
 	return ret;
 skip_wait:
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state, hpd, ret);
 	return 0;
 }
 
@@ -818,8 +832,10 @@ static void dp_display_host_init(struct dp_display_private *dp)
 	bool flip = false;
 	bool reset;
 
-	if (dp_display_state_is(DP_STATE_INITIALIZED))
+	if (dp_display_state_is(DP_STATE_INITIALIZED)) {
+		dp_display_state_log("[already initialized]");
 		return;
+	}
 
 	if (dp->hpd->orientation == ORIENTATION_CC2)
 		flip = true;
@@ -840,39 +856,54 @@ static void dp_display_host_init(struct dp_display_private *dp)
 
 static void dp_display_host_ready(struct dp_display_private *dp)
 {
-	if (!dp_display_state_is(DP_STATE_INITIALIZED))
+	if (!dp_display_state_is(DP_STATE_INITIALIZED)) {
+		dp_display_state_show("[not initialized]");
 		return;
+	}
 
-	if (dp_display_state_is(DP_STATE_READY))
+	if (dp_display_state_is(DP_STATE_READY)) {
+		dp_display_state_log("[already ready]");
 		return;
+	}
 
 	dp->aux->init(dp->aux, dp->parser->aux_cfg);
 	dp->panel->init(dp->panel);
 
 	dp_display_state_add(DP_STATE_READY);
+	/* log this as it results from user action of cable connection */
+	DP_INFO("[OK]\n");
 }
 
 static void dp_display_host_unready(struct dp_display_private *dp)
 {
-	if (!dp_display_state_is(DP_STATE_INITIALIZED))
+	if (!dp_display_state_is(DP_STATE_INITIALIZED)) {
+		dp_display_state_show("[not initialized]");
 		return;
+	}
 
-	if (!dp_display_state_is(DP_STATE_READY))
+	if (!dp_display_state_is(DP_STATE_READY)) {
+		dp_display_state_show("[not ready]");
 		return;
+	}
 
 	dp_display_state_remove(DP_STATE_READY);
 	dp->aux->deinit(dp->aux);
+	/* log this as it results from user action of cable disconnection */
+	DP_INFO("[OK]\n");
 }
 
 static void dp_display_host_deinit(struct dp_display_private *dp)
 {
 	if (dp->active_stream_cnt) {
+		SDE_EVT32_EXTERNAL(dp->state, dp->active_stream_cnt);
 		DP_DEBUG("active stream present\n");
 		return;
 	}
 
-	if (!dp_display_state_is(DP_STATE_INITIALIZED))
+	if (!dp_display_state_is(DP_STATE_INITIALIZED)) {
+		dp_display_state_show("[not initialized]");
 		return;
+	}
 
 	dp->ctrl->deinit(dp->ctrl);
 	dp->hpd->host_deinit(dp->hpd, &dp->catalog->hpd);
@@ -890,6 +921,7 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 {
 	int rc = -EINVAL;
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
 	if (dp_display_state_is(DP_STATE_CONNECTED)) {
@@ -943,6 +975,7 @@ end:
 	if (!rc && !dp_display_state_is(DP_STATE_ABORTED))
 		dp_display_send_hpd_notification(dp);
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state, rc);
 	return rc;
 }
 
@@ -1084,6 +1117,8 @@ static void dp_display_clean(struct dp_display_private *dp)
 	struct dp_panel *dp_panel;
 	struct dp_link_hdcp_status *status = &dp->link->hdcp_status;
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
+
 	if (dp_display_is_hdcp_enabled(dp) &&
 			status->hdcp_state != HDCP_STATE_INACTIVE) {
 		cancel_delayed_work_sync(&dp->hdcp_cb_work);
@@ -1109,12 +1144,14 @@ static void dp_display_clean(struct dp_display_private *dp)
 	dp_display_state_remove(DP_STATE_ENABLED | DP_STATE_CONNECTED);
 
 	dp->ctrl->off(dp->ctrl);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 }
 
 static int dp_display_handle_disconnect(struct dp_display_private *dp)
 {
 	int rc;
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	rc = dp_display_process_hpd_low(dp);
 	if (rc) {
 		/* cancel any pending request */
@@ -1131,6 +1168,7 @@ static int dp_display_handle_disconnect(struct dp_display_private *dp)
 
 	mutex_unlock(&dp->session_lock);
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 	return rc;
 }
 
@@ -1168,6 +1206,8 @@ static int dp_display_usbpd_disconnect_cb(struct device *dev)
 		goto end;
 	}
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state,
+			dp->debug->psm_enabled);
 	dp_display_state_remove(DP_STATE_CONFIGURED);
 
 	if (dp->debug->psm_enabled && dp_display_state_is(DP_STATE_READY))
@@ -1178,6 +1218,8 @@ static int dp_display_usbpd_disconnect_cb(struct device *dev)
 	if (!dp->debug->sim_mode && !dp->parser->no_aux_switch
 	    && !dp->parser->gpio_aux_switch)
 		dp->aux->aux_switch(dp->aux, false, ORIENTATION_NONE);
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 end:
 	return rc;
 }
@@ -1226,7 +1268,9 @@ static void dp_display_attention_work(struct work_struct *work)
 	struct dp_display_private *dp = container_of(work,
 			struct dp_display_private, attention_work);
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
+	SDE_EVT32_EXTERNAL(dp->state);
 
 	if (dp->debug->mst_hpd_sim || !dp_display_state_is(DP_STATE_READY)) {
 		mutex_unlock(&dp->session_lock);
@@ -1239,8 +1283,10 @@ static void dp_display_attention_work(struct work_struct *work)
 	}
 
 	mutex_unlock(&dp->session_lock);
+	SDE_EVT32_EXTERNAL(dp->state, dp->link->sink_request);
 
 	if (dp->link->sink_request & DS_PORT_STATUS_CHANGED) {
+		SDE_EVT32_EXTERNAL(dp->state, DS_PORT_STATUS_CHANGED);
 		if (dp_display_is_sink_count_zero(dp)) {
 			dp_display_handle_disconnect(dp);
 		} else {
@@ -1252,6 +1298,7 @@ static void dp_display_attention_work(struct work_struct *work)
 	}
 
 	if (dp->link->sink_request & DP_TEST_LINK_VIDEO_PATTERN) {
+		SDE_EVT32_EXTERNAL(dp->state, DP_TEST_LINK_VIDEO_PATTERN);
 		dp_display_handle_disconnect(dp);
 
 		dp->panel->video_test = true;
@@ -1267,16 +1314,22 @@ static void dp_display_attention_work(struct work_struct *work)
 		dp_audio_enable(dp, false);
 		mutex_unlock(&dp->session_lock);
 
-		if (dp->link->sink_request & DP_TEST_LINK_PHY_TEST_PATTERN)
+		if (dp->link->sink_request & DP_TEST_LINK_PHY_TEST_PATTERN) {
+			SDE_EVT32_EXTERNAL(dp->state,
+					DP_TEST_LINK_PHY_TEST_PATTERN);
 			dp->ctrl->process_phy_test_request(dp->ctrl);
+		}
 
 		if (dp->link->sink_request & DP_TEST_LINK_TRAINING) {
+			SDE_EVT32_EXTERNAL(dp->state, DP_TEST_LINK_TRAINING);
 			dp->link->send_test_response(dp->link);
 			dp->ctrl->link_maintenance(dp->ctrl);
 		}
 
-		if (dp->link->sink_request & DP_LINK_STATUS_UPDATED)
+		if (dp->link->sink_request & DP_LINK_STATUS_UPDATED) {
+			SDE_EVT32_EXTERNAL(dp->state, DP_LINK_STATUS_UPDATED);
 			dp->ctrl->link_maintenance(dp->ctrl);
+		}
 
 		mutex_lock(&dp->session_lock);
 		dp_audio_enable(dp, true);
@@ -1292,6 +1345,7 @@ cp_irq:
 		dp->hdcp.ops->cp_irq(dp->hdcp.data);
 mst_attention:
 	dp_display_mst_attention(dp);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 }
 
 static int dp_display_usbpd_attention_cb(struct device *dev)
@@ -1311,6 +1365,9 @@ static int dp_display_usbpd_attention_cb(struct device *dev)
 
 	DP_DEBUG("hpd_irq:%d, hpd_high:%d, power_on:%d, is_connected:%d\n",
 			dp->hpd->hpd_irq, dp->hpd->hpd_high,
+			!!dp_display_state_is(DP_STATE_ENABLED),
+			!!dp_display_state_is(DP_STATE_CONNECTED));
+	SDE_EVT32_EXTERNAL(dp->state, dp->hpd->hpd_irq, dp->hpd->hpd_high,
 			!!dp_display_state_is(DP_STATE_ENABLED),
 			!!dp_display_state_is(DP_STATE_CONNECTED));
 
@@ -1697,13 +1754,18 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 
 	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
-	if (dp_display_state_is(DP_STATE_ABORTED | DP_STATE_ENABLED))
+	if (dp_display_state_is(DP_STATE_ABORTED | DP_STATE_ENABLED)) {
+		dp_display_state_show("[not initialized]");
 		goto end;
+	}
 
-	if (!dp_display_is_ready(dp))
+	if (!dp_display_is_ready(dp)) {
+		dp_display_state_show("[not ready]");
 		goto end;
+	}
 
 	/* For supporting DP_PANEL_SRC_INITIATED_POWER_DOWN case */
 	dp_display_host_init(dp);
@@ -1732,6 +1794,7 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 end:
 	mutex_unlock(&dp->session_lock);
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 	return 0;
 }
 
@@ -1813,6 +1876,7 @@ static int dp_display_enable(struct dp_display *dp_display, void *panel)
 
 	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
 	if (!dp_display_state_is(DP_STATE_READY)) {
@@ -1820,8 +1884,10 @@ static int dp_display_enable(struct dp_display *dp_display, void *panel)
 		goto end;
 	}
 
-	if (dp_display_state_is(DP_STATE_ABORTED))
+	if (dp_display_state_is(DP_STATE_ABORTED)) {
+		dp_display_state_show("[aborted]");
 		goto end;
+	}
 
 	rc = dp_display_stream_enable(dp, panel);
 	if (rc)
@@ -1831,6 +1897,7 @@ static int dp_display_enable(struct dp_display *dp_display, void *panel)
 	dp_display_state_add(DP_STATE_ENABLED);
 end:
 	mutex_unlock(&dp->session_lock);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 	return rc;
 }
 
@@ -1854,6 +1921,7 @@ static int dp_display_post_enable(struct dp_display *dp_display, void *panel)
 	dp = container_of(dp_display, struct dp_display_private, dp_display);
 	dp_panel = panel;
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
 	if (!dp_display_state_is(DP_STATE_ENABLED)) {
@@ -1861,8 +1929,10 @@ static int dp_display_post_enable(struct dp_display *dp_display, void *panel)
 		goto end;
 	}
 
-	if (dp_display_state_is(DP_STATE_ABORTED))
+	if (dp_display_state_is(DP_STATE_ABORTED)) {
+		dp_display_state_show("[aborted]");
 		goto end;
+	}
 
 	if (!dp_display_is_ready(dp) || !dp_display_state_is(DP_STATE_READY)) {
 		dp_display_state_show("[not ready]");
@@ -1884,6 +1954,7 @@ end:
 
 	complete_all(&dp->notification_comp);
 	mutex_unlock(&dp->session_lock);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 	return 0;
 }
 
@@ -1912,6 +1983,7 @@ static int dp_display_pre_disable(struct dp_display *dp_display, void *panel)
 
 	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
 	status = &dp->link->hdcp_status;
@@ -1963,6 +2035,7 @@ clean:
 
 end:
 	mutex_unlock(&dp->session_lock);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 	return 0;
 }
 
@@ -1982,6 +2055,7 @@ static int dp_display_disable(struct dp_display *dp_display, void *panel)
 	dp_panel = panel;
 	status = &dp->link->hdcp_status;
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
 	if (!dp_display_state_is(DP_STATE_ENABLED)) {
@@ -2008,6 +2082,7 @@ static int dp_display_disable(struct dp_display *dp_display, void *panel)
 	}
 end:
 	mutex_unlock(&dp->session_lock);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 	return 0;
 }
 
@@ -2069,6 +2144,7 @@ static int dp_display_unprepare(struct dp_display *dp_display, void *panel)
 
 	dp = container_of(dp_display, struct dp_display_private, dp_display);
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
 	/*
@@ -2102,6 +2178,7 @@ static int dp_display_unprepare(struct dp_display *dp_display, void *panel)
 end:
 	dp_panel->deinit(dp_panel, flags);
 	mutex_unlock(&dp->session_lock);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 
 	return 0;
 }
