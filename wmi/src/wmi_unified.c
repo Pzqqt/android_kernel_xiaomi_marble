@@ -2753,9 +2753,6 @@ void *wmi_unified_attach(void *scn_handle,
 		goto error;
 	}
 	wmi_interface_logging_init(wmi_handle, WMI_HOST_PDEV_ID_0);
-	/* Attach mc_thread context processing function */
-	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk =
-				param->rx_ops->wma_process_fw_event_handler_cbk;
 	wmi_handle->target_type = param->target_type;
 	soc->target_type = param->target_type;
 

@@ -121,19 +121,6 @@ typedef qdf_nbuf_t wmi_buf_t;
 
 struct wmi_soc;
 struct policy_mgr_dual_mac_config;
-/**
- * struct wmi_rx_ops - handle to wmi rx ops
- * @scn_handle: handle to scn
- * @ev: event buffer
- * @rx_ctx: rx execution context
- * @wma_process_fw_event_handler_cbk: generic event handler callback
- */
-struct wmi_rx_ops {
-
-	int (*wma_process_fw_event_handler_cbk)(ol_scn_t scn_handle,
-						void *ev,
-						uint8_t rx_ctx);
-};
 
 /**
  * enum wmi_target_type - type of supported wmi command
@@ -177,7 +164,6 @@ struct wmi_unified_attach_params {
 	enum wmi_target_type target_type;
 	bool use_cookie;
 	bool is_async_ep;
-	struct wmi_rx_ops *rx_ops;
 	struct wlan_objmgr_psoc *psoc;
 	uint16_t max_commands;
 	uint32_t soc_id;
