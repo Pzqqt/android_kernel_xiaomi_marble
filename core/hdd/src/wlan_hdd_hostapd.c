@@ -104,6 +104,12 @@
 
 #define HDD_MAX_CUSTOM_START_EVENT_SIZE 64
 
+#ifdef NDP_SAP_CONCURRENCY_ENABLE
+#define MAX_SAP_NUM_CONCURRENCY_WITH_NAN 2
+#else
+#define MAX_SAP_NUM_CONCURRENCY_WITH_NAN 1
+#endif
+
 /*
  * 11B, 11G Rate table include Basic rate and Extended rate
  * The IDX field is the rate index
@@ -6153,6 +6159,30 @@ wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
 	return true;
 }
 
+#ifdef NDP_SAP_CONCURRENCY_ENABLE
+/**
+ * hdd_sap_nan_check_and_disable_unsupported_ndi: Wrapper function for
+ * ucfg_nan_check_and_disable_unsupported_ndi
+ * @psoc: pointer to psoc object
+ * @force: When set forces NDI disable
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+hdd_sap_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc,
+					      bool force)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+hdd_sap_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc,
+					      bool force)
+{
+	return  ucfg_nan_check_and_disable_unsupported_ndi(psoc, force);
+}
+#endif
+
 /**
  * __wlan_hdd_cfg80211_start_ap() - start soft ap mode
  * @wiphy: Pointer to wiphy structure
@@ -6321,15 +6351,16 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	}
 
 	/* Disable NAN Disc before starting P2P GO or STA+SAP or SAP+SAP */
-	if (adapter->device_mode == QDF_P2P_GO_MODE || sta_cnt || sap_cnt) {
+	if (adapter->device_mode == QDF_P2P_GO_MODE || sta_cnt ||
+	    (sap_cnt > (MAX_SAP_NUM_CONCURRENCY_WITH_NAN - 1))) {
 		hdd_debug("Invalid NAN concurrency. SAP: %d STA: %d P2P_GO: %d",
 			  sap_cnt, sta_cnt,
 			  (adapter->device_mode == QDF_P2P_GO_MODE));
 		ucfg_nan_disable_concurrency(hdd_ctx->psoc);
 	}
 
-	/* NDI + SAP not supported */
-	ucfg_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc, true);
+	/* NDI + SAP conditional supported */
+	hdd_sap_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc, true);
 	if (!policy_mgr_nan_sap_pre_enable_conc_check(
 	    hdd_ctx->psoc, PM_SAP_MODE, wlan_chan_to_freq(channel)))
 		hdd_debug("NAN disabled due to concurrency constraints");
