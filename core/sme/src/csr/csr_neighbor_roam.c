@@ -1598,8 +1598,7 @@ QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(
 		sme_err("Received req has same BSSID as current AP!!");
 		return QDF_STATUS_E_FAILURE;
 	}
-	roam_ctrl_info->handoffReqInfo.ch_freq =
-		wlan_reg_chan_to_freq(mac_ctx->pdev, handoff_req->channel);
+	roam_ctrl_info->handoffReqInfo.ch_freq = handoff_req->ch_freq;
 	roam_ctrl_info->handoffReqInfo.src =
 		handoff_req->handoff_src;
 	qdf_mem_copy(&roam_ctrl_info->handoffReqInfo.bssid.bytes,

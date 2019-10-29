@@ -2463,7 +2463,7 @@ typedef struct sAniHandoffReq {
 	uint16_t msgLen;        /* length of the entire request */
 	uint8_t sessionId;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	uint8_t channel;
+	uint32_t ch_freq;
 	uint8_t handoff_src;
 } tAniHandoffReq, *tpAniHandoffReq;
 

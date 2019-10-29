@@ -20338,7 +20338,7 @@ QDF_STATUS csr_handoff_request(struct mac_context *mac,
 	pMsg->msgType = eWNI_SME_HANDOFF_REQ;
 	pMsg->msgLen = (uint16_t) sizeof(tAniHandoffReq);
 	pMsg->sessionId = sessionId;
-	pMsg->channel = wlan_reg_freq_to_chan(mac->pdev, pHandoffInfo->ch_freq);
+	pMsg->ch_freq = pHandoffInfo->ch_freq;
 	pMsg->handoff_src = pHandoffInfo->src;
 	qdf_mem_copy(pMsg->bssid, pHandoffInfo->bssid.bytes, QDF_MAC_ADDR_SIZE);
 	msg.type = eWNI_SME_HANDOFF_REQ;
