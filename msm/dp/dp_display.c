@@ -163,6 +163,7 @@ struct dp_display_private {
 
 	struct platform_device *pdev;
 	struct device_node *aux_switch_node;
+	struct dp_aux_bridge *aux_bridge;
 	struct dentry *root;
 	struct completion notification_comp;
 	struct completion attention_comp;
@@ -1922,7 +1923,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	}
 
 	dp->aux = dp_aux_get(dev, &dp->catalog->aux, dp->parser,
-			dp->aux_switch_node);
+			dp->aux_switch_node, dp->aux_bridge);
 	if (IS_ERR(dp->aux)) {
 		rc = PTR_ERR(dp->aux);
 		DP_ERR("failed to initialize aux, rc = %d\n", rc);
@@ -2024,7 +2025,8 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	cb->disconnect = dp_display_usbpd_disconnect_cb;
 	cb->attention  = dp_display_usbpd_attention_cb;
 
-	dp->hpd = dp_hpd_get(dev, dp->parser, &dp->catalog->hpd, cb);
+	dp->hpd = dp_hpd_get(dev, dp->parser, &dp->catalog->hpd,
+			dp->aux_bridge, cb);
 	if (IS_ERR(dp->hpd)) {
 		rc = PTR_ERR(dp->hpd);
 		DP_ERR("failed to initialize hpd, rc = %d\n", rc);
@@ -3180,6 +3182,52 @@ end:
 	return rc;
 }
 
+static int dp_display_bridge_mst_attention(void *dev, bool hpd, bool hpd_irq)
+{
+	struct dp_display_private *dp = dev;
+
+	if (!hpd_irq)
+		return -EINVAL;
+
+	dp_display_mst_attention(dp);
+
+	return 0;
+}
+
+static int dp_display_init_aux_bridge(struct dp_display_private *dp)
+{
+	int rc = 0;
+	const char *phandle = "qcom,dp-aux-bridge";
+	struct device_node *bridge_node;
+
+	if (!dp->pdev->dev.of_node) {
+		pr_err("cannot find dev.of_node\n");
+		rc = -ENODEV;
+		goto end;
+	}
+
+	bridge_node = of_parse_phandle(dp->pdev->dev.of_node,
+			phandle, 0);
+	if (!bridge_node)
+		goto end;
+
+	dp->aux_bridge = of_dp_aux_find_bridge(bridge_node);
+	if (!dp->aux_bridge) {
+		pr_err("failed to find dp aux bridge\n");
+		rc = -EPROBE_DEFER;
+		goto end;
+	}
+
+	if (dp->aux_bridge->register_hpd &&
+			(dp->aux_bridge->flag & DP_AUX_BRIDGE_MST) &&
+			!(dp->aux_bridge->flag & DP_AUX_BRIDGE_HPD))
+		dp->aux_bridge->register_hpd(dp->aux_bridge,
+				dp_display_bridge_mst_attention, dp);
+
+end:
+	return rc;
+}
+
 static int dp_display_mst_install(struct dp_display *dp_display,
 			struct dp_mst_drm_install_info *mst_install_info)
 {
@@ -3636,6 +3684,10 @@ static int dp_display_probe(struct platform_device *pdev)
 		rc = -EPROBE_DEFER;
 		goto error;
 	}
+
+	rc = dp_display_init_aux_bridge(dp);
+	if (rc)
+		goto error;
 
 	rc = dp_display_create_workqueue(dp);
 	if (rc) {

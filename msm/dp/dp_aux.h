@@ -8,6 +8,7 @@
 
 #include "dp_catalog.h"
 #include "drm/drm_dp_helper.h"
+#include "dp_aux_bridge.h"
 
 #define DP_STATE_NOTIFICATION_SENT          BIT(0)
 #define DP_STATE_TRAIN_1_STARTED            BIT(1)
@@ -57,7 +58,8 @@ struct dp_aux {
 };
 
 struct dp_aux *dp_aux_get(struct device *dev, struct dp_catalog_aux *catalog,
-		struct dp_parser *parser, struct device_node *aux_switch);
+		struct dp_parser *parser, struct device_node *aux_switch,
+		struct dp_aux_bridge *aux_bridge);
 void dp_aux_put(struct dp_aux *aux);
 
 #endif /*__DP_AUX_H_*/
