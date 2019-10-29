@@ -3211,6 +3211,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	 * Need to take care of 3 port cases with 2 STA iface in future.
 	 */
 	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sap_context);
+	intf_ch_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, intf_ch);
 	hdd_info("sap_vdev %d intf_ch: %d", vdev_id, intf_ch);
 	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
 		mcc_to_scc_switch) {
