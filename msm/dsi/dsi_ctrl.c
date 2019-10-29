@@ -847,8 +847,8 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 		bit_rate = config->bit_clk_rate_hz_override * num_of_lanes;
 	} else if (config->panel_mode == DSI_OP_CMD_MODE) {
 		/* Calculate the bit rate needed to match dsi transfer time */
-		bit_rate = mult_frac(min_dsi_clk_hz, frame_time_us,
-				dsi_transfer_time_us);
+		bit_rate = min_dsi_clk_hz * frame_time_us;
+		do_div(bit_rate, dsi_transfer_time_us);
 		bit_rate = bit_rate * num_of_lanes;
 	} else {
 		h_period = DSI_H_TOTAL_DSC(timing);

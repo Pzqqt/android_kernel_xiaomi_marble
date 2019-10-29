@@ -23,8 +23,8 @@ struct lpfr_cfg {
 struct dsi_pll_vco_clk {
 	struct clk_hw	hw;
 	unsigned long	ref_clk_rate;
-	unsigned long	min_rate;
-	unsigned long	max_rate;
+	u64	min_rate;
+	u64	max_rate;
 	u32		pll_en_seq_cnt;
 	struct lpfr_cfg *lpfr_lut;
 	u32		lpfr_lut_size;
