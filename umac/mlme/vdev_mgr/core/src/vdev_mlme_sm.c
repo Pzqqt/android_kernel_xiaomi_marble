@@ -1374,6 +1374,19 @@ static bool mlme_vdev_subst_suspend_csa_restart_event(void *ctx,
 	bool status;
 
 	switch (event) {
+	case WLAN_VDEV_SM_EV_CHAN_SWITCH_DISABLED:
+	/**
+	 * This event is sent when CSA count becomes 0 without
+	 * change in channel i.e. only Beacon Probe response template
+	 * is updated (CSA / ECSA IE is removed).
+	 */
+
+		mlme_vdev_sm_transition_to(vdev_mlme, WLAN_VDEV_S_UP);
+		mlme_vdev_sm_deliver_event(vdev_mlme,
+					   WLAN_VDEV_SM_EV_UP_HOST_RESTART,
+					   event_data_len, event_data);
+		status = true;
+		break;
 	case WLAN_VDEV_SM_EV_CSA_RESTART:
 		mlme_vdev_update_beacon(vdev_mlme, BEACON_CSA,
 					event_data_len, event_data);
@@ -1640,6 +1653,7 @@ static const char *vdev_sm_event_names[] = {
 	"EV_DOWN_COMPLETE",
 	"EV_ROAM",
 	"EV_STOP_REQ",
+	"EV_CHAN_SWITCH_DISABLED",
 };
 
 struct wlan_sm_state_info sm_info[] = {

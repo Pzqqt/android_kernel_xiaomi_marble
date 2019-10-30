@@ -116,6 +116,8 @@ enum wlan_vdev_state {
  * @WLAN_VDEV_SM_EV_DOWN_COMPLETE:       Notification of DOWN complete
  * @WLAN_VDEV_SM_EV_ROAM:                Notifiction on ROAMING
  * @WLAN_VDEV_SM_EV_STOP_REQ:            Invoke API to initiate STOP handshake
+ * @WLAN_VDEV_SM_EV_CHAN_SWITCH_DISABLED:Test only, CSA completes without
+ *					 change in channel
  */
 enum wlan_vdev_sm_evt {
 	WLAN_VDEV_SM_EV_START = 0,
@@ -148,6 +150,7 @@ enum wlan_vdev_sm_evt {
 	WLAN_VDEV_SM_EV_DOWN_COMPLETE = 27,
 	WLAN_VDEV_SM_EV_ROAM = 28,
 	WLAN_VDEV_SM_EV_STOP_REQ = 29,
+	WLAN_VDEV_SM_EV_CHAN_SWITCH_DISABLED = 30,
 };
 
 /**
