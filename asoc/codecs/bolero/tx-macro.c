@@ -161,6 +161,7 @@ struct tx_macro_priv {
 	s32 dmic_6_7_clk_cnt;
 	u16 dmic_clk_div;
 	u32 version;
+	u32 is_used_tx_swr_gpio;
 	unsigned long active_ch_mask[TX_MACRO_MAX_DAIS];
 	unsigned long active_ch_cnt[TX_MACRO_MAX_DAIS];
 	char __iomem *tx_io_base;
@@ -3061,19 +3062,21 @@ static int tx_macro_probe(struct platform_device *pdev)
 		sample_rate, tx_priv) == TX_MACRO_DMIC_SAMPLE_RATE_UNDEFINED)
 			return -EINVAL;
 	}
-	tx_priv->reset_swr = true;
-	INIT_WORK(&tx_priv->tx_macro_add_child_devices_work,
-		  tx_macro_add_child_devices);
-	tx_priv->swr_plat_data.handle = (void *) tx_priv;
-	tx_priv->swr_plat_data.read = NULL;
-	tx_priv->swr_plat_data.write = NULL;
-	tx_priv->swr_plat_data.bulk_write = NULL;
-	tx_priv->swr_plat_data.clk = tx_macro_swrm_clock;
-	tx_priv->swr_plat_data.core_vote = tx_macro_core_vote;
-	tx_priv->swr_plat_data.handle_irq = NULL;
-
+	if (is_used_tx_swr_gpio) {
+		tx_priv->reset_swr = true;
+		INIT_WORK(&tx_priv->tx_macro_add_child_devices_work,
+			  tx_macro_add_child_devices);
+		tx_priv->swr_plat_data.handle = (void *) tx_priv;
+		tx_priv->swr_plat_data.read = NULL;
+		tx_priv->swr_plat_data.write = NULL;
+		tx_priv->swr_plat_data.bulk_write = NULL;
+		tx_priv->swr_plat_data.clk = tx_macro_swrm_clock;
+		tx_priv->swr_plat_data.core_vote = tx_macro_core_vote;
+		tx_priv->swr_plat_data.handle_irq = NULL;
+		mutex_init(&tx_priv->swr_clk_lock);
+	}
+	tx_priv->is_used_tx_swr_gpio = is_used_tx_swr_gpio;
 	mutex_init(&tx_priv->mclk_lock);
-	mutex_init(&tx_priv->swr_clk_lock);
 	tx_macro_init_ops(&ops, tx_io_base);
 	ops.clk_id_req = TX_CORE_CLK;
 	ops.default_clk_id = TX_CORE_CLK;
@@ -3083,8 +3086,8 @@ static int tx_macro_probe(struct platform_device *pdev)
 			"%s: register macro failed\n", __func__);
 		goto err_reg_macro;
 	}
-
-	schedule_work(&tx_priv->tx_macro_add_child_devices_work);
+	if (is_used_tx_swr_gpio)
+		schedule_work(&tx_priv->tx_macro_add_child_devices_work);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
@@ -3094,7 +3097,8 @@ static int tx_macro_probe(struct platform_device *pdev)
 	return 0;
 err_reg_macro:
 	mutex_destroy(&tx_priv->mclk_lock);
-	mutex_destroy(&tx_priv->swr_clk_lock);
+	if (is_used_tx_swr_gpio)
+		mutex_destroy(&tx_priv->swr_clk_lock);
 	return ret;
 }
 
@@ -3108,16 +3112,20 @@ static int tx_macro_remove(struct platform_device *pdev)
 	if (!tx_priv)
 		return -EINVAL;
 
-	if (tx_priv->swr_ctrl_data)
-		kfree(tx_priv->swr_ctrl_data);
-	for (count = 0; count < tx_priv->child_count &&
-		count < TX_MACRO_CHILD_DEVICES_MAX; count++)
-		platform_device_unregister(tx_priv->pdev_child_devices[count]);
+	if (tx_priv->is_used_tx_swr_gpio) {
+		if (tx_priv->swr_ctrl_data)
+			kfree(tx_priv->swr_ctrl_data);
+		for (count = 0; count < tx_priv->child_count &&
+			count < TX_MACRO_CHILD_DEVICES_MAX; count++)
+			platform_device_unregister(
+				tx_priv->pdev_child_devices[count]);
+	}
 
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	mutex_destroy(&tx_priv->mclk_lock);
-	mutex_destroy(&tx_priv->swr_clk_lock);
+	if (tx_priv->is_used_tx_swr_gpio)
+		mutex_destroy(&tx_priv->swr_clk_lock);
 	bolero_unregister_macro(&pdev->dev, TX_MACRO);
 	return 0;
 }

@@ -13,6 +13,9 @@
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
 #include <linux/pm_runtime.h>
+#include <asoc/msm-cdc-pinctrl.h>
+#include <soc/swr-common.h>
+#include <soc/swr-wcd.h>
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
 #include "bolero-clk-rsc.h"
@@ -45,6 +48,9 @@
 
 #define BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS	40
 #define MAX_RETRY_ATTEMPTS 500
+
+#define VA_MACRO_SWR_STRING_LEN 80
+#define VA_MACRO_CHILD_DEVICES_MAX 3
 
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 1, 0);
 static int va_tx_unmute_delay = BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS;
@@ -85,6 +91,11 @@ enum {
 	SWR_MIC,
 };
 
+enum {
+	TX_MCLK,
+	VA_MCLK,
+};
+
 struct va_mute_work {
 	struct va_macro_priv *va_priv;
 	u32 decimator;
@@ -98,12 +109,31 @@ struct hpf_work {
 	struct delayed_work dwork;
 };
 
+/* Hold instance to soundwire platform device */
+struct va_macro_swr_ctrl_data {
+	struct platform_device *va_swr_pdev;
+};
+
+struct va_macro_swr_ctrl_platform_data {
+	void *handle; /* holds codec private data */
+	int (*read)(void *handle, int reg);
+	int (*write)(void *handle, int reg, int val);
+	int (*bulk_write)(void *handle, u32 *reg, u32 *val, size_t len);
+	int (*clk)(void *handle, bool enable);
+	int (*handle_irq)(void *handle,
+			  irqreturn_t (*swrm_irq_handler)(int irq,
+							  void *data),
+			  void *swrm_handle,
+			  int action);
+};
+
 struct va_macro_priv {
 	struct device *dev;
 	bool dec_active[VA_MACRO_NUM_DECIMATORS];
 	bool va_without_decimation;
 	struct clk *lpass_audio_hw_vote;
 	struct mutex mclk_lock;
+	struct mutex swr_clk_lock;
 	struct snd_soc_component *component;
 	struct hpf_work va_hpf_work[VA_MACRO_NUM_DECIMATORS];
 	struct va_mute_work va_mute_dwork[VA_MACRO_NUM_DECIMATORS];
@@ -115,16 +145,29 @@ struct va_macro_priv {
 	s32 dmic_6_7_clk_cnt;
 	u16 dmic_clk_div;
 	u16 va_mclk_users;
+	int swr_clk_users;
+	bool reset_swr;
+	struct device_node *va_swr_gpio_p;
+	struct va_macro_swr_ctrl_data *swr_ctrl_data;
+	struct va_macro_swr_ctrl_platform_data swr_plat_data;
+	struct work_struct va_macro_add_child_devices_work;
+	int child_count;
 	u16 mclk_mux_sel;
 	char __iomem *va_io_base;
 	char __iomem *va_island_mode_muxsel;
+	struct platform_device *pdev_child_devices
+			[VA_MACRO_CHILD_DEVICES_MAX];
 	struct regulator *micb_supply;
 	u32 micb_voltage;
 	u32 micb_current;
 	u32 version;
+	u32 is_used_va_swr_gpio;
 	int micb_users;
 	u16 default_clk_id;
 	u16 clk_id;
+	int tx_swr_clk_cnt;
+	int va_swr_clk_cnt;
+	int va_clk_status;
 	int tx_clk_status;
 };
 
@@ -250,10 +293,25 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 			bolero_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
 						VA_CORE_CLK, false);
+		/* reset swr after ssr/pdr */
+		va_priv->reset_swr = true;
+		if (va_priv->swr_ctrl_data)
+			swrm_wcd_notify(
+				va_priv->swr_ctrl_data[0].va_swr_pdev,
+				SWR_DEVICE_SSR_UP, NULL);
+		break;
 	case BOLERO_MACRO_EVT_CLK_RESET:
 		bolero_rsc_clk_reset(va_dev, VA_CORE_CLK);
 		break;
 	case BOLERO_MACRO_EVT_SSR_DOWN:
+		if (va_priv->swr_ctrl_data) {
+			swrm_wcd_notify(
+				va_priv->swr_ctrl_data[0].va_swr_pdev,
+				SWR_DEVICE_DOWN, NULL);
+			swrm_wcd_notify(
+				va_priv->swr_ctrl_data[0].va_swr_pdev,
+				SWR_DEVICE_SSR_DOWN, NULL);
+		}
 		if ((!pm_runtime_enabled(va_dev) ||
 		     !pm_runtime_suspended(va_dev))) {
 			ret = bolero_runtime_suspend(va_dev);
@@ -268,6 +326,54 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 		break;
 	}
 	return 0;
+}
+
+static int va_macro_swr_pwr_event_v2(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
+	int ret = 0;
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	dev_dbg(va_dev, "%s: event = %d\n", __func__, event);
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		va_priv->va_swr_clk_cnt++;
+		if (va_priv->swr_ctrl_data) {
+			ret = swrm_wcd_notify(
+				va_priv->swr_ctrl_data[0].va_swr_pdev,
+				SWR_REQ_CLK_SWITCH, NULL);
+			if (ret)
+				dev_dbg(va_dev, "%s: clock switch failed\n",
+					__func__);
+		}
+		msm_cdc_pinctrl_set_wakeup_capable(
+				va_priv->va_swr_gpio_p, false);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		msm_cdc_pinctrl_set_wakeup_capable(
+				va_priv->va_swr_gpio_p, true);
+		if (va_priv->swr_ctrl_data) {
+			ret = swrm_wcd_notify(
+				va_priv->swr_ctrl_data[0].va_swr_pdev,
+				SWR_REQ_CLK_SWITCH, NULL);
+			if (ret)
+				dev_dbg(va_dev, "%s: clock switch failed\n",
+					__func__);
+		}
+		va_priv->va_swr_clk_cnt--;
+		break;
+	default:
+		dev_err(va_priv->dev,
+			"%s: invalid DAPM event %d\n", __func__, event);
+		ret = -EINVAL;
+	}
+	return ret;
 }
 
 static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
@@ -313,6 +419,25 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 	return ret;
 }
 
+static int va_macro_tx_swr_clk_event_v2(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kcontrol, int event)
+{
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	if (SND_SOC_DAPM_EVENT_ON(event))
+		++va_priv->tx_swr_clk_cnt;
+	if (SND_SOC_DAPM_EVENT_OFF(event))
+		--va_priv->tx_swr_clk_cnt;
+
+	return 0;
+}
+
 static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			       struct snd_kcontrol *kcontrol, int event)
 {
@@ -351,6 +476,204 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			"%s: invalid DAPM event %d\n", __func__, event);
 		ret = -EINVAL;
 	}
+	return ret;
+}
+
+static int va_macro_tx_va_mclk_enable(struct va_macro_priv *va_priv,
+				      struct regmap *regmap, int clk_type,
+				      bool enable)
+{
+	int ret = 0, clk_tx_ret = 0;
+
+	dev_dbg(va_priv->dev,
+		"%s: clock type %s, enable: %s tx_mclk_users: %d\n",
+		__func__, (clk_type ? "VA_MCLK" : "TX_MCLK"),
+		(enable ? "enable" : "disable"), va_priv->va_mclk_users);
+
+	if (enable) {
+		if (va_priv->swr_clk_users == 0)
+			msm_cdc_pinctrl_select_active_state(
+						va_priv->va_swr_gpio_p);
+		clk_tx_ret = bolero_clk_rsc_request_clock(va_priv->dev,
+						   TX_CORE_CLK,
+						   TX_CORE_CLK,
+						   true);
+		if (clk_type == TX_MCLK) {
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
+							   TX_CORE_CLK,
+							   TX_CORE_CLK,
+							   true);
+			if (ret < 0) {
+				if (va_priv->swr_clk_users == 0)
+					msm_cdc_pinctrl_select_sleep_state(
+							va_priv->va_swr_gpio_p);
+				dev_err_ratelimited(va_priv->dev,
+					"%s: swr request clk failed\n",
+					__func__);
+				goto done;
+			}
+			bolero_clk_rsc_fs_gen_request(va_priv->dev,
+						  true);
+		}
+		if (clk_type == VA_MCLK) {
+			ret = va_macro_mclk_enable(va_priv, 1, true);
+			if (ret < 0) {
+				if (va_priv->swr_clk_users == 0)
+					msm_cdc_pinctrl_select_sleep_state(
+							va_priv->va_swr_gpio_p);
+				dev_err_ratelimited(va_priv->dev,
+					"%s: request clock enable failed\n",
+					__func__);
+				goto done;
+			}
+		}
+		if (va_priv->swr_clk_users == 0) {
+			dev_dbg(va_priv->dev, "%s: reset_swr: %d\n",
+				__func__, va_priv->reset_swr);
+			if (va_priv->reset_swr)
+				regmap_update_bits(regmap,
+					BOLERO_CDC_VA_CLK_RST_CTRL_SWR_CONTROL,
+					0x02, 0x02);
+			regmap_update_bits(regmap,
+				BOLERO_CDC_VA_CLK_RST_CTRL_SWR_CONTROL,
+				0x01, 0x01);
+			if (va_priv->reset_swr)
+				regmap_update_bits(regmap,
+					BOLERO_CDC_VA_CLK_RST_CTRL_SWR_CONTROL,
+					0x02, 0x00);
+			va_priv->reset_swr = false;
+		}
+		if (!clk_tx_ret)
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
+						   TX_CORE_CLK,
+						   TX_CORE_CLK,
+						   false);
+		va_priv->swr_clk_users++;
+	} else {
+		if (va_priv->swr_clk_users <= 0) {
+			dev_err_ratelimited(va_priv->dev,
+				"va swrm clock users already 0\n");
+			va_priv->swr_clk_users = 0;
+			return 0;
+		}
+		clk_tx_ret = bolero_clk_rsc_request_clock(va_priv->dev,
+						   TX_CORE_CLK,
+						   TX_CORE_CLK,
+						   true);
+		va_priv->swr_clk_users--;
+		if (va_priv->swr_clk_users == 0)
+			regmap_update_bits(regmap,
+				BOLERO_CDC_VA_CLK_RST_CTRL_SWR_CONTROL,
+				0x01, 0x00);
+		if (clk_type == VA_MCLK)
+			va_macro_mclk_enable(va_priv, 0, true);
+		if (clk_type == TX_MCLK) {
+			bolero_clk_rsc_fs_gen_request(va_priv->dev,
+						  false);
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
+							   TX_CORE_CLK,
+							   TX_CORE_CLK,
+							   false);
+			if (ret < 0) {
+				dev_err_ratelimited(va_priv->dev,
+					"%s: swr request clk failed\n",
+					__func__);
+				goto done;
+			}
+		}
+		if (!clk_tx_ret)
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
+						   TX_CORE_CLK,
+						   TX_CORE_CLK,
+						   false);
+		if (va_priv->swr_clk_users == 0)
+			msm_cdc_pinctrl_select_sleep_state(
+						va_priv->va_swr_gpio_p);
+	}
+	return 0;
+
+done:
+	if (!clk_tx_ret)
+		bolero_clk_rsc_request_clock(va_priv->dev,
+				TX_CORE_CLK,
+				TX_CORE_CLK,
+				false);
+	return ret;
+}
+
+static int va_macro_swrm_clock(void *handle, bool enable)
+{
+	struct va_macro_priv *va_priv = (struct va_macro_priv *) handle;
+	struct regmap *regmap = dev_get_regmap(va_priv->dev->parent, NULL);
+	int ret = 0;
+
+	if (regmap == NULL) {
+		dev_err(va_priv->dev, "%s: regmap is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	mutex_lock(&va_priv->swr_clk_lock);
+	dev_dbg(va_priv->dev,
+		"%s: swrm clock %s tx_swr_clk_cnt: %d va_swr_clk_cnt: %d\n",
+		__func__, (enable ? "enable" : "disable"),
+		va_priv->tx_swr_clk_cnt, va_priv->va_swr_clk_cnt);
+
+	if (enable) {
+		pm_runtime_get_sync(va_priv->dev);
+		if (va_priv->va_swr_clk_cnt && !va_priv->tx_swr_clk_cnt) {
+			ret = va_macro_tx_va_mclk_enable(va_priv, regmap,
+							VA_MCLK, enable);
+			if (ret)
+				goto done;
+			va_priv->va_clk_status++;
+		} else {
+			ret = va_macro_tx_va_mclk_enable(va_priv, regmap,
+							TX_MCLK, enable);
+			if (ret)
+				goto done;
+			va_priv->tx_clk_status++;
+		}
+		pm_runtime_mark_last_busy(va_priv->dev);
+		pm_runtime_put_autosuspend(va_priv->dev);
+	} else {
+		if (va_priv->va_clk_status && !va_priv->tx_clk_status) {
+			ret = va_macro_tx_va_mclk_enable(va_priv, regmap,
+							VA_MCLK, enable);
+			if (ret)
+				goto done;
+			--va_priv->va_clk_status;
+		} else if (!va_priv->va_clk_status && va_priv->tx_clk_status) {
+			ret = va_macro_tx_va_mclk_enable(va_priv, regmap,
+							TX_MCLK, enable);
+			if (ret)
+				goto done;
+			--va_priv->tx_clk_status;
+		} else if (va_priv->va_clk_status && va_priv->tx_clk_status) {
+			if (!va_priv->va_swr_clk_cnt && va_priv->tx_swr_clk_cnt) {
+				ret = va_macro_tx_va_mclk_enable(va_priv, regmap,
+								VA_MCLK, enable);
+				if (ret)
+					goto done;
+				--va_priv->va_clk_status;
+			} else {
+				ret = va_macro_tx_va_mclk_enable(va_priv, regmap,
+								TX_MCLK, enable);
+				if (ret)
+					goto done;
+				--va_priv->tx_clk_status;
+			}
+
+		} else {
+			dev_dbg(va_priv->dev,
+				"%s: Both clocks are disabled\n", __func__);
+		}
+	}
+	dev_dbg(va_priv->dev,
+		"%s: swrm clock users %d tx_clk_sts_cnt: %d va_clk_sts_cnt: %d\n",
+		__func__, va_priv->swr_clk_users, va_priv->tx_clk_status,
+		va_priv->va_clk_status);
+done:
+	mutex_unlock(&va_priv->swr_clk_lock);
 	return ret;
 }
 
@@ -1350,6 +1673,14 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets_v2[] = {
 	SND_SOC_DAPM_MIXER("VA_AIF3_CAP Mixer", SND_SOC_NOPM,
 		VA_MACRO_AIF3_CAP, 0,
 		va_aif3_cap_mixer_v2, ARRAY_SIZE(va_aif3_cap_mixer_v2)),
+
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
+			      va_macro_swr_pwr_event_v2,
+			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY_S("VA_TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
+			      va_macro_tx_swr_clk_event_v2,
+			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
 static const struct snd_soc_dapm_widget va_macro_dapm_widgets_v3[] = {
@@ -2196,6 +2527,156 @@ static int va_macro_deinit(struct snd_soc_component *component)
 	return 0;
 }
 
+static void va_macro_add_child_devices(struct work_struct *work)
+{
+	struct va_macro_priv *va_priv = NULL;
+	struct platform_device *pdev = NULL;
+	struct device_node *node = NULL;
+	struct va_macro_swr_ctrl_data *swr_ctrl_data = NULL, *temp = NULL;
+	int ret = 0;
+	u16 count = 0, ctrl_num = 0;
+	struct va_macro_swr_ctrl_platform_data *platdata = NULL;
+	char plat_dev_name[VA_MACRO_SWR_STRING_LEN] = "";
+	bool va_swr_master_node = false;
+
+	va_priv = container_of(work, struct va_macro_priv,
+			     va_macro_add_child_devices_work);
+	if (!va_priv) {
+		pr_err("%s: Memory for va_priv does not exist\n",
+			__func__);
+		return;
+	}
+
+	if (!va_priv->dev) {
+		pr_err("%s: VA dev does not exist\n", __func__);
+		return;
+	}
+
+	if (!va_priv->dev->of_node) {
+		dev_err(va_priv->dev,
+			"%s: DT node for va_priv does not exist\n", __func__);
+		return;
+	}
+
+	platdata = &va_priv->swr_plat_data;
+	va_priv->child_count = 0;
+
+	for_each_available_child_of_node(va_priv->dev->of_node, node) {
+		va_swr_master_node = false;
+		if (strnstr(node->name, "va_swr_master",
+                                strlen("va_swr_master")) != NULL)
+			va_swr_master_node = true;
+
+		if (va_swr_master_node)
+			strlcpy(plat_dev_name, "va_swr_ctrl",
+				(VA_MACRO_SWR_STRING_LEN - 1));
+		else
+			strlcpy(plat_dev_name, node->name,
+				(VA_MACRO_SWR_STRING_LEN - 1));
+
+		pdev = platform_device_alloc(plat_dev_name, -1);
+		if (!pdev) {
+			dev_err(va_priv->dev, "%s: pdev memory alloc failed\n",
+				__func__);
+			ret = -ENOMEM;
+			goto err;
+		}
+		pdev->dev.parent = va_priv->dev;
+		pdev->dev.of_node = node;
+
+		if (va_swr_master_node) {
+			ret = platform_device_add_data(pdev, platdata,
+						       sizeof(*platdata));
+			if (ret) {
+				dev_err(&pdev->dev,
+					"%s: cannot add plat data ctrl:%d\n",
+					__func__, ctrl_num);
+				goto fail_pdev_add;
+			}
+		}
+
+		ret = platform_device_add(pdev);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"%s: Cannot add platform device\n",
+				__func__);
+			goto fail_pdev_add;
+		}
+
+		if (va_swr_master_node) {
+			temp = krealloc(swr_ctrl_data,
+					(ctrl_num + 1) * sizeof(
+					struct va_macro_swr_ctrl_data),
+					GFP_KERNEL);
+			if (!temp) {
+				ret = -ENOMEM;
+				goto fail_pdev_add;
+			}
+			swr_ctrl_data = temp;
+			swr_ctrl_data[ctrl_num].va_swr_pdev = pdev;
+			ctrl_num++;
+			dev_dbg(&pdev->dev,
+				"%s: Added soundwire ctrl device(s)\n",
+				__func__);
+			va_priv->swr_ctrl_data = swr_ctrl_data;
+		}
+		if (va_priv->child_count < VA_MACRO_CHILD_DEVICES_MAX)
+			va_priv->pdev_child_devices[
+					va_priv->child_count++] = pdev;
+		else
+			goto err;
+	}
+	return;
+fail_pdev_add:
+	for (count = 0; count < va_priv->child_count; count++)
+		platform_device_put(va_priv->pdev_child_devices[count]);
+err:
+	return;
+}
+
+static int va_macro_set_port_map(struct snd_soc_component *component,
+				u32 usecase, u32 size, void *data)
+{
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+	struct swrm_port_config port_cfg;
+	int ret = 0;
+
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	memset(&port_cfg, 0, sizeof(port_cfg));
+	port_cfg.uc = usecase;
+	port_cfg.size = size;
+	port_cfg.params = data;
+
+	if (va_priv->swr_ctrl_data)
+		ret = swrm_wcd_notify(
+			va_priv->swr_ctrl_data[0].va_swr_pdev,
+			SWR_SET_PORT_MAP, &port_cfg);
+
+	return ret;
+}
+
+static int va_macro_reg_wake_irq(struct snd_soc_component *component,
+				 u32 data)
+{
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+	u32 ipc_wakeup = data;
+	int ret = 0;
+
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	if (va_priv->swr_ctrl_data)
+		ret = swrm_wcd_notify(
+			va_priv->swr_ctrl_data[0].va_swr_pdev,
+			SWR_REGISTER_WAKE_IRQ, &ipc_wakeup);
+
+	return ret;
+}
+
 static void va_macro_init_ops(struct macro_ops *ops,
 			      char __iomem *va_io_base,
 			      bool va_without_decimation)
@@ -2212,6 +2693,8 @@ static void va_macro_init_ops(struct macro_ops *ops,
 	ops->exit = va_macro_deinit;
 	ops->io_base = va_io_base;
 	ops->event_handler = va_macro_event_handler;
+	ops->set_port_map = va_macro_set_port_map;
+	ops->reg_wake_irq = va_macro_reg_wake_irq;
 }
 
 static int va_macro_probe(struct platform_device *pdev)
@@ -2229,6 +2712,8 @@ static int va_macro_probe(struct platform_device *pdev)
 	const char *dmic_sample_rate = "qcom,va-dmic-sample-rate";
 	u32 default_clk_id = 0;
 	struct clk *lpass_audio_hw_vote = NULL;
+	u32 is_used_va_swr_gpio = 0;
+	const char *is_used_va_swr_gpio_dt = "qcom,is-used-swr-gpio";
 
 	va_priv = devm_kzalloc(&pdev->dev, sizeof(struct va_macro_priv),
 			    GFP_KERNEL);
@@ -2257,6 +2742,31 @@ static int va_macro_probe(struct platform_device *pdev)
 		if (va_macro_validate_dmic_sample_rate(
 		sample_rate, va_priv) == VA_MACRO_DMIC_SAMPLE_RATE_UNDEFINED)
 			return -EINVAL;
+	}
+
+	if (of_find_property(pdev->dev.of_node, is_used_va_swr_gpio_dt,
+			     NULL)) {
+		ret = of_property_read_u32(pdev->dev.of_node,
+					   is_used_va_swr_gpio_dt,
+					   &is_used_va_swr_gpio);
+		if (ret) {
+			dev_err(&pdev->dev, "%s: error reading %s in dt\n",
+				__func__, is_used_va_swr_gpio_dt);
+			is_used_va_swr_gpio = 0;
+		}
+	}
+	va_priv->va_swr_gpio_p = of_parse_phandle(pdev->dev.of_node,
+					"qcom,va-swr-gpios", 0);
+	if (!va_priv->va_swr_gpio_p && is_used_va_swr_gpio) {
+		dev_err(&pdev->dev, "%s: swr_gpios handle not provided!\n",
+			__func__);
+		return -EINVAL;
+	}
+	if ((msm_cdc_pinctrl_get_state(va_priv->va_swr_gpio_p) < 0) &&
+		is_used_va_swr_gpio) {
+		dev_err(&pdev->dev, "%s: failed to get swr pin state\n",
+			__func__);
+		return -EPROBE_DEFER;
 	}
 
 	va_io_base = devm_ioremap(&pdev->dev, va_base_addr,
@@ -2318,6 +2828,20 @@ static int va_macro_probe(struct platform_device *pdev)
 	va_priv->clk_id = VA_CORE_CLK;
 	va_priv->default_clk_id = default_clk_id;
 
+	if (is_used_va_swr_gpio) {
+		va_priv->reset_swr = true;
+		INIT_WORK(&va_priv->va_macro_add_child_devices_work,
+			  va_macro_add_child_devices);
+		va_priv->swr_plat_data.handle = (void *) va_priv;
+		va_priv->swr_plat_data.read = NULL;
+		va_priv->swr_plat_data.write = NULL;
+		va_priv->swr_plat_data.bulk_write = NULL;
+		va_priv->swr_plat_data.clk = va_macro_swrm_clock;
+		va_priv->swr_plat_data.handle_irq = NULL;
+		mutex_init(&va_priv->swr_clk_lock);
+	}
+	va_priv->is_used_va_swr_gpio = is_used_va_swr_gpio;
+
 	mutex_init(&va_priv->mclk_lock);
 	dev_set_drvdata(&pdev->dev, va_priv);
 	va_macro_init_ops(&ops, va_io_base, va_without_decimation);
@@ -2328,29 +2852,46 @@ static int va_macro_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: register macro failed\n", __func__);
 		goto reg_macro_fail;
 	}
+	if (is_used_va_swr_gpio)
+		schedule_work(&va_priv->va_macro_add_child_devices_work);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, VA_AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
+	pm_suspend_ignore_children(&pdev->dev, true);
 	pm_runtime_enable(&pdev->dev);
 	return ret;
 
 reg_macro_fail:
 	mutex_destroy(&va_priv->mclk_lock);
+	if (is_used_va_swr_gpio)
+		mutex_destroy(&va_priv->swr_clk_lock);
 	return ret;
 }
 
 static int va_macro_remove(struct platform_device *pdev)
 {
 	struct va_macro_priv *va_priv;
+	int count = 0;
 
 	va_priv = dev_get_drvdata(&pdev->dev);
 
 	if (!va_priv)
 		return -EINVAL;
+	if (va_priv->is_used_va_swr_gpio) {
+		if (va_priv->swr_ctrl_data)
+			kfree(va_priv->swr_ctrl_data);
+		for (count = 0; count < va_priv->child_count &&
+			count < VA_MACRO_CHILD_DEVICES_MAX; count++)
+			platform_device_unregister(
+				va_priv->pdev_child_devices[count]);
+	}
+
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	bolero_unregister_macro(&pdev->dev, VA_MACRO);
 	mutex_destroy(&va_priv->mclk_lock);
+	if (va_priv->is_used_va_swr_gpio)
+		mutex_destroy(&va_priv->swr_clk_lock);
 	return 0;
 }
 
