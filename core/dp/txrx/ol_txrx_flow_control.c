@@ -1115,10 +1115,8 @@ static void ol_tx_flow_pool_update(struct ol_tx_flow_pool_t *pool,
 {
 	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	ol_txrx_pdev_handle pdev;
-	uint32_t stop_threshold =
-			 ol_cfg_get_tx_flow_stop_queue_th(pdev->ctrl_pdev);
-	uint32_t start_threshold = stop_threshold +
-			ol_cfg_get_tx_flow_start_queue_offset(pdev->ctrl_pdev);
+	uint32_t stop_threshold;
+	uint32_t start_threshold;
 
 	if (qdf_unlikely(!soc)) {
 		ol_txrx_err("soc is NULL");
@@ -1130,6 +1128,10 @@ static void ol_tx_flow_pool_update(struct ol_tx_flow_pool_t *pool,
 		ol_txrx_err("pdev is NULL");
 		return;
 	}
+
+	stop_threshold = ol_cfg_get_tx_flow_stop_queue_th(pdev->ctrl_pdev);
+	start_threshold = stop_threshold +
+			ol_cfg_get_tx_flow_start_queue_offset(pdev->ctrl_pdev);
 	pool->flow_pool_size = new_pool_size;
 	pool->start_th = (start_threshold * new_pool_size) / 100;
 	pool->stop_th = (stop_threshold * new_pool_size) / 100;
