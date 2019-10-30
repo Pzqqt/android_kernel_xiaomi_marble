@@ -807,6 +807,9 @@ enum reg_wifi_band {
 	REG_BAND_UNKNOWN
 };
 
+#define REG_BAND_MASK_ALL (BIT(REG_BAND_2G) | BIT(REG_BAND_5G) \
+			  | BIT(REG_BAND_6G))
+
 /* Avoid the use of band_info as it does not support 6GHz band. Use
  * reg_wifi_band, as it supports the 6GHz band
  */
