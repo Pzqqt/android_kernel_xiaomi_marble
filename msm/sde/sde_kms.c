@@ -46,6 +46,7 @@
 #include "sde_plane.h"
 #include "sde_crtc.h"
 #include "sde_reg_dma.h"
+#include "sde_connector.h"
 
 #include <soc/qcom/scm.h>
 #include "soc/qcom/secure_buffer.h"
@@ -334,88 +335,118 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 
 static int _sde_kms_detach_all_cb(struct sde_kms *sde_kms, u32 vmid)
 {
-	u32 ret = 0;
+	u32 ret;
 
 	if (atomic_inc_return(&sde_kms->detach_all_cb) > 1)
-		goto end;
+		return 0;
 
 	/* detach_all_contexts */
 	ret = sde_kms_mmu_detach(sde_kms, false);
 	if (ret) {
 		SDE_ERROR("failed to detach all cb ret:%d\n", ret);
-		goto end;
+		goto mmu_error;
 	}
 
 	ret = _sde_kms_scm_call(sde_kms, vmid);
-	if (ret)
-		goto end;
+	if (ret) {
+		SDE_ERROR("scm call failed for vmid:%d\n", vmid);
+		goto scm_error;
+	}
 
-end:
+	return 0;
+
+scm_error:
+	sde_kms_mmu_attach(sde_kms, false);
+mmu_error:
+	atomic_dec(&sde_kms->detach_all_cb);
 	return ret;
 }
 
-static int _sde_kms_attach_all_cb(struct sde_kms *sde_kms, int vmid)
+static int _sde_kms_attach_all_cb(struct sde_kms *sde_kms, u32 vmid,
+		u32 old_vmid)
 {
-	u32 ret = 0;
+	u32 ret;
 
 	if (atomic_dec_return(&sde_kms->detach_all_cb) != 0)
-		goto end;
+		return 0;
 
 	ret = _sde_kms_scm_call(sde_kms, vmid);
-	if (ret)
-		goto end;
+	if (ret) {
+		SDE_ERROR("scm call failed for vmid:%d\n", vmid);
+		goto scm_error;
+	}
 
 	/* attach_all_contexts */
 	ret = sde_kms_mmu_attach(sde_kms, false);
 	if (ret) {
 		SDE_ERROR("failed to attach all cb ret:%d\n", ret);
-		goto end;
+		goto mmu_error;
 	}
 
-end:
+	return 0;
+
+mmu_error:
+	_sde_kms_scm_call(sde_kms, old_vmid);
+scm_error:
+	atomic_inc(&sde_kms->detach_all_cb);
 	return ret;
 }
 
 static int _sde_kms_detach_sec_cb(struct sde_kms *sde_kms, int vmid)
 {
-	u32 ret = 0;
+	u32 ret;
 
 	if (atomic_inc_return(&sde_kms->detach_sec_cb) > 1)
-		goto end;
+		return 0;
 
 	/* detach secure_context */
 	ret = sde_kms_mmu_detach(sde_kms, true);
 	if (ret) {
 		SDE_ERROR("failed to detach sec cb ret:%d\n", ret);
-		goto end;
+		goto mmu_error;
 	}
 
 	ret = _sde_kms_scm_call(sde_kms, vmid);
-	if (ret)
-		goto end;
+	if (ret) {
+		SDE_ERROR("scm call failed for vmid:%d\n", vmid);
+		goto scm_error;
+	}
 
-end:
+	return 0;
+
+scm_error:
+	sde_kms_mmu_attach(sde_kms, true);
+mmu_error:
+	atomic_dec(&sde_kms->detach_sec_cb);
 	return ret;
 }
 
-static int _sde_kms_attach_sec_cb(struct sde_kms *sde_kms, int vmid)
+static int _sde_kms_attach_sec_cb(struct sde_kms *sde_kms, u32 vmid,
+		u32 old_vmid)
 {
-	u32 ret = 0;
+	u32 ret;
 
 	if (atomic_dec_return(&sde_kms->detach_sec_cb) != 0)
-		goto end;
+		return 0;
 
 	ret = _sde_kms_scm_call(sde_kms, vmid);
-	if (ret)
-		goto end;
+	if (ret) {
+		goto scm_error;
+		SDE_ERROR("scm call failed for vmid:%d\n", vmid);
+	}
 
 	ret = sde_kms_mmu_attach(sde_kms, true);
 	if (ret) {
 		SDE_ERROR("failed to attach sec cb ret:%d\n", ret);
-		goto end;
+		goto mmu_error;
 	}
 
-end:
+	return 0;
+
+mmu_error:
+	_sde_kms_scm_call(sde_kms, old_vmid);
+scm_error:
+	atomic_inc(&sde_kms->detach_sec_cb);
 	return ret;
 }
 
@@ -435,6 +466,7 @@ static int _sde_kms_sui_misr_ctrl(struct sde_kms *sde_kms,
 
 		ret = _sde_kms_secure_ctrl_xin_clients(sde_kms, crtc, true);
 		if (ret) {
+			sde_crtc_misr_setup(crtc, false, 0);
 			pm_runtime_put_sync(sde_kms->dev->dev);
 			return ret;
 		}
@@ -473,8 +505,10 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 	/* enable sui misr if requested, before the transition */
 	if (smmu_state->sui_misr_state == SUI_MISR_ENABLE_REQ) {
 		ret = _sde_kms_sui_misr_ctrl(sde_kms, crtc, true);
-		if (ret)
+		if (ret) {
+			smmu_state->sui_misr_state == NONE;
 			goto end;
+		}
 	}
 
 	mutex_lock(&sde_kms->secure_transition_lock);
@@ -486,7 +520,8 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 		break;
 
 	case ATTACH_ALL_REQ:
-		ret = _sde_kms_attach_all_cb(sde_kms, VMID_CP_PIXEL);
+		ret = _sde_kms_attach_all_cb(sde_kms, VMID_CP_PIXEL,
+				VMID_CP_SEC_DISPLAY);
 		if (!ret) {
 			smmu_state->state = ATTACHED;
 			smmu_state->secure_level = SDE_DRM_SEC_NON_SEC;
@@ -503,7 +538,9 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 		break;
 
 	case ATTACH_SEC_REQ:
-		ret = _sde_kms_attach_sec_cb(sde_kms, VMID_CP_PIXEL);
+		vmid = (smmu_state->secure_level == SDE_DRM_SEC_ONLY) ?
+				VMID_CP_SEC_DISPLAY : VMID_CP_CAMERA_PREVIEW;
+		ret = _sde_kms_attach_sec_cb(sde_kms, VMID_CP_PIXEL, vmid);
 		if (!ret) {
 			smmu_state->state = ATTACHED;
 			smmu_state->secure_level = SDE_DRM_SEC_NON_SEC;
@@ -527,28 +564,33 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 	}
 
 end:
-	smmu_state->sui_misr_state = NONE;
-	smmu_state->transition_type = NONE;
 	smmu_state->transition_error = false;
 
-	/*
-	 * If switch failed, toggling secure_level is enough since
-	 * there are only two secure levels - secure/non-secure
-	 */
 	if (ret) {
 		smmu_state->transition_error = true;
+		SDE_ERROR(
+		  "crtc%d: req_state %d, new_state %d, sec_lvl %d, ret %d\n",
+			DRMID(crtc), old_smmu_state, smmu_state->state,
+			smmu_state->secure_level, ret);
+
 		smmu_state->state = smmu_state->prev_state;
-		smmu_state->secure_level = !smmu_state->secure_level;
+		smmu_state->secure_level = smmu_state->prev_secure_level;
+
+		if (smmu_state->sui_misr_state == SUI_MISR_ENABLE_REQ)
+			_sde_kms_sui_misr_ctrl(sde_kms, crtc, false);
 	}
 
-	SDE_DEBUG(
-		"crtc %d: old_state %d, req_state %d, new_state %d, sec_lvl %d, ret %d\n",
-			DRMID(crtc), smmu_state->prev_state, old_smmu_state,
-			smmu_state->state, smmu_state->secure_level, ret);
-	SDE_EVT32(DRMID(crtc), smmu_state->prev_state,
-			smmu_state->state, smmu_state->transition_type,
-			smmu_state->transition_error, smmu_state->secure_level,
+	SDE_DEBUG("crtc %d: req_state %d, new_state %d, sec_lvl %d, ret %d\n",
+			DRMID(crtc), old_smmu_state, smmu_state->state,
+			smmu_state->secure_level, ret);
+	SDE_EVT32(DRMID(crtc), smmu_state->state, smmu_state->prev_state,
+			smmu_state->transition_type,
+			smmu_state->transition_error,
+			smmu_state->secure_level, smmu_state->prev_secure_level,
 			smmu_state->sui_misr_state, ret, SDE_EVTLOG_FUNC_EXIT);
+
+	smmu_state->sui_misr_state = NONE;
+	smmu_state->transition_type = NONE;
 
 	return ret;
 }
@@ -565,6 +607,7 @@ static int sde_kms_prepare_secure_transition(struct msm_kms *kms,
 	struct drm_device *dev = sde_kms->dev;
 	int i, ops = 0, ret = 0;
 	bool old_valid_fb = false;
+	struct sde_kms_smmu_state_data *smmu_state = &sde_kms->smmu_state;
 
 	for_each_old_crtc_in_state(state, crtc, old_crtc_state, i) {
 		if (!crtc->state || !crtc->state->active)
@@ -601,8 +644,10 @@ static int sde_kms_prepare_secure_transition(struct msm_kms *kms,
 			return ops;
 		}
 
-		if (!ops)
+		if (!ops) {
+			smmu_state->transition_error = false;
 			goto no_ops;
+		}
 
 		SDE_DEBUG("%d:secure operations(%x) started on state:%pK\n",
 				crtc->base.id, ops, crtc->state);
@@ -948,6 +993,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 	struct drm_crtc_state *old_crtc_state;
 	struct drm_connector *connector;
 	struct drm_connector_state *old_conn_state;
+	struct msm_display_conn_params params;
 	int i, rc = 0;
 
 	if (!kms || !old_state)
@@ -980,7 +1026,12 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 		c_conn = to_sde_connector(connector);
 		if (!c_conn->ops.post_kickoff)
 			continue;
-		rc = c_conn->ops.post_kickoff(connector);
+
+		memset(&params, 0, sizeof(params));
+
+		sde_connector_complete_qsync_commit(connector, &params);
+
+		rc = c_conn->ops.post_kickoff(connector, &params);
 		if (rc) {
 			pr_err("Connector Post kickoff failed rc=%d\n",
 					 rc);
@@ -2641,7 +2692,6 @@ static int sde_kms_pm_suspend(struct device *dev)
 
 	sde_kms = to_sde_kms(ddev_to_msm_kms(ddev));
 	SDE_EVT32(0);
-	pm_runtime_put_noidle(dev);
 
 	/* disable hot-plug polling */
 	drm_kms_helper_poll_disable(ddev);
@@ -2750,6 +2800,15 @@ unlock:
 	}
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
+
+	/*
+	 * pm runtime driver avoids multiple runtime_suspend API call by
+	 * checking runtime_status. However, this call helps when there is a
+	 * race condition between pm_suspend call and doze_suspend/power_off
+	 * commit. It removes the extra vote from suspend and adds it back
+	 * later to allow power collapse during pm_suspend call
+	 */
+	pm_runtime_put_sync(dev);
 	pm_runtime_get_noresume(dev);
 
 	return ret;

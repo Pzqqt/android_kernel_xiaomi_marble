@@ -31,6 +31,8 @@
  * @DSI_CTRL_CMD_NON_EMBEDDED_MODE:Transfer cmd packets in non embedded mode.
  * @DSI_CTRL_CMD_CUSTOM_DMA_SCHED: Use the dma scheduling line number defined in
  *				   display panel dtsi file instead of default.
+ * @DSI_CTRL_CMD_ASYNC_WAIT: Command flag to indicate that the wait for done
+ *			for this command is asynchronous and must be queued.
  */
 #define DSI_CTRL_CMD_READ             0x1
 #define DSI_CTRL_CMD_BROADCAST        0x2
@@ -41,6 +43,7 @@
 #define DSI_CTRL_CMD_LAST_COMMAND     0x40
 #define DSI_CTRL_CMD_NON_EMBEDDED_MODE 0x80
 #define DSI_CTRL_CMD_CUSTOM_DMA_SCHED  0x100
+#define DSI_CTRL_CMD_ASYNC_WAIT 0x200
 
 /* DSI embedded mode fifo size
  * If the command is greater than 256 bytes it is sent in non-embedded mode.
@@ -217,6 +220,13 @@ struct dsi_ctrl_interrupts {
  * @vaddr:               CPU virtual address of cmd buffer.
  * @secure_mode:         Indicates if secure-session is in progress
  * @esd_check_underway:  Indicates if esd status check is in progress
+ * @dma_cmd_wait:	Work object waiting on DMA command transfer done.
+ * @dma_cmd_workq:	Pointer to the workqueue of DMA command transfer done
+ *				wait sequence.
+ * @dma_wait_queued:	Indicates if any DMA command transfer wait work
+ *				is queued.
+ * @dma_irq_trig:		 Atomic state to indicate DMA done IRQ
+ *				triggered.
  * @debugfs_root:        Root for debugfs entries.
  * @misr_enable:         Frame MISR enable/disable
  * @misr_cache:          Cached Frame MISR value
@@ -267,6 +277,10 @@ struct dsi_ctrl {
 	void *vaddr;
 	bool secure_mode;
 	bool esd_check_underway;
+	struct work_struct dma_cmd_wait;
+	struct workqueue_struct *dma_cmd_workq;
+	bool dma_wait_queued;
+	atomic_t dma_irq_trig;
 
 	/* Debug Information */
 	struct dentry *debugfs_root;
@@ -485,15 +499,27 @@ int dsi_ctrl_host_deinit(struct dsi_ctrl *dsi_ctrl);
 int dsi_ctrl_set_ulps(struct dsi_ctrl *dsi_ctrl, bool enable);
 
 /**
- * dsi_ctrl_setup() - Setup DSI host hardware while coming out of idle screen.
+ * dsi_ctrl_timing_setup() - Setup DSI host config
  * @dsi_ctrl:        DSI controller handle.
  *
  * Initializes DSI controller hardware with host configuration provided by
- * dsi_ctrl_update_host_config(). Initialization can be performed only during
- * DSI_CTRL_POWER_CORE_CLK_ON state and after the PHY SW reset has been
- * performed.
+ * dsi_ctrl_update_host_config(). This is called while setting up DSI host
+ * through dsi_ctrl_setup() and after any ROI change.
  *
  * Also used to program the video mode timing values.
+ *
+ * Return: error code.
+ */
+int dsi_ctrl_timing_setup(struct dsi_ctrl *dsi_ctrl);
+
+/**
+ * dsi_ctrl_setup() - Setup DSI host hardware while coming out of idle screen.
+ * @dsi_ctrl:        DSI controller handle.
+ *
+ * Initialization of DSI controller hardware with host configuration and
+ * enabling required interrupts. Initialization can be performed only during
+ * DSI_CTRL_POWER_CORE_CLK_ON state and after the PHY SW reset has been
+ * performed.
  *
  * Return: error code.
  */

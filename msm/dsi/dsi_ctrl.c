@@ -258,6 +258,95 @@ dsi_ctrl_get_aspace(struct dsi_ctrl *dsi_ctrl,
 	return msm_gem_smmu_address_space_get(dsi_ctrl->drm_dev, domain);
 }
 
+static void dsi_ctrl_flush_cmd_dma_queue(struct dsi_ctrl *dsi_ctrl)
+{
+	u32 status;
+	u32 mask = DSI_CMD_MODE_DMA_DONE;
+	struct dsi_ctrl_hw_ops dsi_hw_ops = dsi_ctrl->hw.ops;
+
+	/*
+	 * If a command is triggered right after another command,
+	 * check if the previous command transfer is completed. If
+	 * transfer is done, cancel any work that has been
+	 * queued. Otherwise wait till the work is scheduled and
+	 * completed before triggering the next command by
+	 * flushing the workqueue.
+	 */
+	status = dsi_hw_ops.get_interrupt_status(&dsi_ctrl->hw);
+	if (atomic_read(&dsi_ctrl->dma_irq_trig)) {
+		cancel_work_sync(&dsi_ctrl->dma_cmd_wait);
+	} else if (status & mask) {
+		atomic_set(&dsi_ctrl->dma_irq_trig, 1);
+		status |= (DSI_CMD_MODE_DMA_DONE | DSI_BTA_DONE);
+		dsi_hw_ops.clear_interrupt_status(
+						&dsi_ctrl->hw,
+						status);
+		dsi_ctrl_disable_status_interrupt(dsi_ctrl,
+				DSI_SINT_CMD_MODE_DMA_DONE);
+		complete_all(&dsi_ctrl->irq_info.cmd_dma_done);
+		cancel_work_sync(&dsi_ctrl->dma_cmd_wait);
+		DSI_CTRL_DEBUG(dsi_ctrl,
+				"dma_tx done but irq not yet triggered\n");
+	} else {
+		flush_workqueue(dsi_ctrl->dma_cmd_workq);
+	}
+}
+
+static void dsi_ctrl_dma_cmd_wait_for_done(struct work_struct *work)
+{
+	int ret = 0;
+	struct dsi_ctrl *dsi_ctrl = NULL;
+	u32 status;
+	u32 mask = DSI_CMD_MODE_DMA_DONE;
+	struct dsi_ctrl_hw_ops dsi_hw_ops;
+
+	dsi_ctrl = container_of(work, struct dsi_ctrl, dma_cmd_wait);
+	dsi_hw_ops = dsi_ctrl->hw.ops;
+	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY);
+
+	/*
+	 * This atomic state will be set if ISR has been triggered,
+	 * so the wait is not needed.
+	 */
+	if (atomic_read(&dsi_ctrl->dma_irq_trig))
+		goto done;
+	/*
+	 * If IRQ wasn't triggered check interrupt status register for
+	 * transfer done before waiting.
+	 */
+	status = dsi_hw_ops.get_interrupt_status(&dsi_ctrl->hw);
+	if (status & mask) {
+		status |= (DSI_CMD_MODE_DMA_DONE | DSI_BTA_DONE);
+		dsi_hw_ops.clear_interrupt_status(&dsi_ctrl->hw,
+				status);
+		dsi_ctrl_disable_status_interrupt(dsi_ctrl,
+				DSI_SINT_CMD_MODE_DMA_DONE);
+		goto done;
+	}
+
+	ret = wait_for_completion_timeout(
+			&dsi_ctrl->irq_info.cmd_dma_done,
+			msecs_to_jiffies(DSI_CTRL_TX_TO_MS));
+	if (ret == 0) {
+		status = dsi_hw_ops.get_interrupt_status(&dsi_ctrl->hw);
+		if (status & mask) {
+			status |= (DSI_CMD_MODE_DMA_DONE | DSI_BTA_DONE);
+			dsi_hw_ops.clear_interrupt_status(&dsi_ctrl->hw,
+					status);
+			DSI_CTRL_WARN(dsi_ctrl,
+					"dma_tx done but irq not triggered\n");
+		} else {
+			DSI_CTRL_ERR(dsi_ctrl,
+					"Command transfer failed\n");
+		}
+		dsi_ctrl_disable_status_interrupt(dsi_ctrl,
+					DSI_SINT_CMD_MODE_DMA_DONE);
+	}
+
+done:
+	dsi_ctrl->dma_wait_queued = false;
+}
+
 static int dsi_ctrl_check_state(struct dsi_ctrl *dsi_ctrl,
 				enum dsi_ctrl_driver_ops op,
 				u32 op_state)
@@ -847,8 +936,8 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 		bit_rate = config->bit_clk_rate_hz_override * num_of_lanes;
 	} else if (config->panel_mode == DSI_OP_CMD_MODE) {
 		/* Calculate the bit rate needed to match dsi transfer time */
-		bit_rate = mult_frac(min_dsi_clk_hz, frame_time_us,
-				dsi_transfer_time_us);
+		bit_rate = min_dsi_clk_hz * frame_time_us;
+		do_div(bit_rate, dsi_transfer_time_us);
 		bit_rate = bit_rate * num_of_lanes;
 	} else {
 		h_period = DSI_H_TOTAL_DSC(timing);
@@ -1106,12 +1195,12 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 				struct dsi_ctrl_cmd_dma_info *cmd_mem,
 				u32 flags)
 {
-	int rc = 0, ret = 0;
 	u32 hw_flags = 0;
 	u32 line_no = 0x1;
 	struct dsi_mode_info *timing;
 	struct dsi_ctrl_hw_ops dsi_hw_ops = dsi_ctrl->hw.ops;
 
+	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY, flags);
 	/* check if custom dma scheduling line needed */
 	if ((dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE) &&
 		(flags & DSI_CTRL_CMD_CUSTOM_DMA_SCHED))
@@ -1156,11 +1245,13 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 
 	if (!(flags & DSI_CTRL_CMD_DEFER_TRIGGER)) {
 		dsi_ctrl_wait_for_video_done(dsi_ctrl);
-		dsi_ctrl_enable_status_interrupt(dsi_ctrl,
-					DSI_SINT_CMD_MODE_DMA_DONE, NULL);
 		if (dsi_hw_ops.mask_error_intr)
 			dsi_hw_ops.mask_error_intr(&dsi_ctrl->hw,
 					BIT(DSI_FIFO_OVERFLOW), true);
+
+		atomic_set(&dsi_ctrl->dma_irq_trig, 0);
+		dsi_ctrl_enable_status_interrupt(dsi_ctrl,
+					DSI_SINT_CMD_MODE_DMA_DONE, NULL);
 		reinit_completion(&dsi_ctrl->irq_info.cmd_dma_done);
 
 		if (flags & DSI_CTRL_CMD_FETCH_MEMORY) {
@@ -1180,34 +1271,13 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 							      cmd,
 							      hw_flags);
 		}
-
-		ret = wait_for_completion_timeout(
-				&dsi_ctrl->irq_info.cmd_dma_done,
-				msecs_to_jiffies(DSI_CTRL_TX_TO_MS));
-
-		if (ret == 0) {
-			u32 status = dsi_hw_ops.get_interrupt_status(
-								&dsi_ctrl->hw);
-			u32 mask = DSI_CMD_MODE_DMA_DONE;
-
-			if (status & mask) {
-				status |= (DSI_CMD_MODE_DMA_DONE |
-						DSI_BTA_DONE);
-				dsi_hw_ops.clear_interrupt_status(
-								&dsi_ctrl->hw,
-								status);
-				dsi_ctrl_disable_status_interrupt(dsi_ctrl,
-						DSI_SINT_CMD_MODE_DMA_DONE);
-				complete_all(&dsi_ctrl->irq_info.cmd_dma_done);
-				DSI_CTRL_WARN(dsi_ctrl,
-					"dma_tx done but irq not triggered\n");
-			} else {
-				rc = -ETIMEDOUT;
-				dsi_ctrl_disable_status_interrupt(dsi_ctrl,
-						DSI_SINT_CMD_MODE_DMA_DONE);
-				DSI_CTRL_ERR(dsi_ctrl,
-						"Command transfer failed\n");
-			}
+		if (flags & DSI_CTRL_CMD_ASYNC_WAIT) {
+			dsi_ctrl->dma_wait_queued = true;
+			queue_work(dsi_ctrl->dma_cmd_workq,
+					&dsi_ctrl->dma_cmd_wait);
+		} else {
+			dsi_ctrl->dma_wait_queued = false;
+			dsi_ctrl_dma_cmd_wait_for_done(&dsi_ctrl->dma_cmd_wait);
 		}
 
 		if (dsi_hw_ops.mask_error_intr && !dsi_ctrl->esd_check_underway)
@@ -1225,6 +1295,20 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 			dsi_ctrl->cmd_len = 0;
 		}
 	}
+}
+
+static u32 dsi_ctrl_validate_msg_flags(const struct mipi_dsi_msg *msg,
+				u32 flags)
+{
+	/*
+	 * ASYNC command wait mode is not supported for FIFO commands.
+	 * Waiting after a command is transferred cannot be guaranteed
+	 * if DSI_CTRL_CMD_ASYNC_WAIT flag is set.
+	 */
+	if ((flags & DSI_CTRL_CMD_FIFO_STORE) ||
+			msg->wait_ms)
+		flags &= ~DSI_CTRL_CMD_ASYNC_WAIT;
+	return flags;
 }
 
 static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
@@ -1251,6 +1335,11 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
 		rc = -ENOTSUPP;
 		goto error;
 	}
+
+	flags = dsi_ctrl_validate_msg_flags(msg, flags);
+
+	if (dsi_ctrl->dma_wait_queued)
+		dsi_ctrl_flush_cmd_dma_queue(dsi_ctrl);
 
 	if (flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE) {
 		cmd_mem.offset = dsi_ctrl->cmd_buffer_iova;
@@ -1793,6 +1882,9 @@ static int dsi_ctrl_dev_probe(struct platform_device *pdev)
 	dsi_ctrl->irq_info.irq_num = -1;
 	dsi_ctrl->irq_info.irq_stat_mask = 0x0;
 
+	INIT_WORK(&dsi_ctrl->dma_cmd_wait, dsi_ctrl_dma_cmd_wait_for_done);
+	atomic_set(&dsi_ctrl->dma_irq_trig, 0);
+
 	spin_lock_init(&dsi_ctrl->irq_info.irq_lock);
 
 	rc = dsi_ctrl_dts_parse(dsi_ctrl, pdev->dev.of_node);
@@ -1896,6 +1988,7 @@ static int dsi_ctrl_dev_remove(struct platform_device *pdev)
 		DSI_CTRL_ERR(dsi_ctrl,
 				"failed to deinitialize clocks, rc=%d\n", rc);
 
+	atomic_set(&dsi_ctrl->dma_irq_trig, 0);
 	mutex_unlock(&dsi_ctrl->ctrl_lock);
 
 	mutex_destroy(&dsi_ctrl->ctrl_lock);
@@ -2213,22 +2306,15 @@ exit:
 	return rc;
 }
 
-int dsi_ctrl_setup(struct dsi_ctrl *dsi_ctrl)
+int dsi_ctrl_timing_setup(struct dsi_ctrl *dsi_ctrl)
 {
 	int rc = 0;
-
 	if (!dsi_ctrl) {
 		DSI_CTRL_ERR(dsi_ctrl, "Invalid params\n");
 		return -EINVAL;
 	}
 
 	mutex_lock(&dsi_ctrl->ctrl_lock);
-
-	dsi_ctrl->hw.ops.setup_lane_map(&dsi_ctrl->hw,
-					&dsi_ctrl->host_config.lane_map);
-
-	dsi_ctrl->hw.ops.host_setup(&dsi_ctrl->hw,
-				    &dsi_ctrl->host_config.common_config);
 
 	if (dsi_ctrl->host_config.panel_mode == DSI_OP_CMD_MODE) {
 		dsi_ctrl->hw.ops.cmd_engine_setup(&dsi_ctrl->hw,
@@ -2250,8 +2336,29 @@ int dsi_ctrl_setup(struct dsi_ctrl *dsi_ctrl)
 		dsi_ctrl->hw.ops.video_engine_en(&dsi_ctrl->hw, true);
 	}
 
+	mutex_unlock(&dsi_ctrl->ctrl_lock);
+	return rc;
+}
+
+int dsi_ctrl_setup(struct dsi_ctrl *dsi_ctrl)
+{
+	int rc = 0;
+
+	rc = dsi_ctrl_timing_setup(dsi_ctrl);
+	if (rc)
+		return -EINVAL;
+
+	mutex_lock(&dsi_ctrl->ctrl_lock);
+
+	dsi_ctrl->hw.ops.setup_lane_map(&dsi_ctrl->hw,
+					&dsi_ctrl->host_config.lane_map);
+
+	dsi_ctrl->hw.ops.host_setup(&dsi_ctrl->hw,
+				    &dsi_ctrl->host_config.common_config);
+
 	dsi_ctrl->hw.ops.enable_status_interrupts(&dsi_ctrl->hw, 0x0);
 	dsi_ctrl_enable_error_interrupts(dsi_ctrl);
+
 	dsi_ctrl->hw.ops.ctrl_en(&dsi_ctrl->hw, true);
 
 	mutex_unlock(&dsi_ctrl->ctrl_lock);
@@ -2489,6 +2596,7 @@ static irqreturn_t dsi_ctrl_isr(int irq, void *ptr)
 		dsi_ctrl_handle_error_status(dsi_ctrl, errors);
 
 	if (status & DSI_CMD_MODE_DMA_DONE) {
+		atomic_set(&dsi_ctrl->dma_irq_trig, 1);
 		dsi_ctrl_disable_status_interrupt(dsi_ctrl,
 					DSI_SINT_CMD_MODE_DMA_DONE);
 		complete_all(&dsi_ctrl->irq_info.cmd_dma_done);
@@ -2603,6 +2711,7 @@ void dsi_ctrl_enable_status_interrupt(struct dsi_ctrl *dsi_ctrl,
 			intr_idx >= DSI_STATUS_INTERRUPT_COUNT)
 		return;
 
+	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY);
 	spin_lock_irqsave(&dsi_ctrl->irq_info.irq_lock, flags);
 
 	if (dsi_ctrl->irq_info.irq_stat_refcount[intr_idx] == 0) {
@@ -2632,6 +2741,7 @@ void dsi_ctrl_disable_status_interrupt(struct dsi_ctrl *dsi_ctrl,
 			intr_idx >= DSI_STATUS_INTERRUPT_COUNT)
 		return;
 
+	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY);
 	spin_lock_irqsave(&dsi_ctrl->irq_info.irq_lock, flags);
 
 	if (dsi_ctrl->irq_info.irq_stat_refcount[intr_idx])
@@ -3070,15 +3180,17 @@ error:
  */
 int dsi_ctrl_cmd_tx_trigger(struct dsi_ctrl *dsi_ctrl, u32 flags)
 {
-	int rc = 0, ret = 0;
-	u32 status = 0;
-	u32 mask = (DSI_CMD_MODE_DMA_DONE);
+	int rc = 0;
+	struct dsi_ctrl_hw_ops dsi_hw_ops;
 
 	if (!dsi_ctrl) {
 		DSI_CTRL_ERR(dsi_ctrl, "Invalid params\n");
 		return -EINVAL;
 	}
 
+	dsi_hw_ops = dsi_ctrl->hw.ops;
+
+	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY, flags);
 	/* Dont trigger the command if this is not the last ocmmand */
 	if (!(flags & DSI_CTRL_CMD_LAST_COMMAND))
 		return rc;
@@ -3086,52 +3198,37 @@ int dsi_ctrl_cmd_tx_trigger(struct dsi_ctrl *dsi_ctrl, u32 flags)
 	mutex_lock(&dsi_ctrl->ctrl_lock);
 
 	if (!(flags & DSI_CTRL_CMD_BROADCAST_MASTER))
-		dsi_ctrl->hw.ops.trigger_command_dma(&dsi_ctrl->hw);
+		dsi_hw_ops.trigger_command_dma(&dsi_ctrl->hw);
 
 	if ((flags & DSI_CTRL_CMD_BROADCAST) &&
 		(flags & DSI_CTRL_CMD_BROADCAST_MASTER)) {
 		dsi_ctrl_wait_for_video_done(dsi_ctrl);
+		if (dsi_hw_ops.mask_error_intr)
+			dsi_hw_ops.mask_error_intr(&dsi_ctrl->hw,
+					BIT(DSI_FIFO_OVERFLOW), true);
+		atomic_set(&dsi_ctrl->dma_irq_trig, 0);
 		dsi_ctrl_enable_status_interrupt(dsi_ctrl,
 					DSI_SINT_CMD_MODE_DMA_DONE, NULL);
-		if (dsi_ctrl->hw.ops.mask_error_intr)
-			dsi_ctrl->hw.ops.mask_error_intr(&dsi_ctrl->hw,
-					BIT(DSI_FIFO_OVERFLOW), true);
 		reinit_completion(&dsi_ctrl->irq_info.cmd_dma_done);
 
 		/* trigger command */
-		dsi_ctrl->hw.ops.trigger_command_dma(&dsi_ctrl->hw);
-
-		ret = wait_for_completion_timeout(
-				&dsi_ctrl->irq_info.cmd_dma_done,
-				msecs_to_jiffies(DSI_CTRL_TX_TO_MS));
-
-		if (ret == 0) {
-			status = dsi_ctrl->hw.ops.get_interrupt_status(
-								&dsi_ctrl->hw);
-			if (status & mask) {
-				status |= (DSI_CMD_MODE_DMA_DONE |
-						DSI_BTA_DONE);
-				dsi_ctrl->hw.ops.clear_interrupt_status(
-								&dsi_ctrl->hw,
-								status);
-				dsi_ctrl_disable_status_interrupt(dsi_ctrl,
-						DSI_SINT_CMD_MODE_DMA_DONE);
-				complete_all(&dsi_ctrl->irq_info.cmd_dma_done);
-				DSI_CTRL_WARN(dsi_ctrl, "dma_tx done but irq not triggered\n");
-			} else {
-				rc = -ETIMEDOUT;
-				dsi_ctrl_disable_status_interrupt(dsi_ctrl,
-						DSI_SINT_CMD_MODE_DMA_DONE);
-				DSI_CTRL_ERR(dsi_ctrl, "Command transfer failed\n");
-			}
+		dsi_hw_ops.trigger_command_dma(&dsi_ctrl->hw);
+		if (flags & DSI_CTRL_CMD_ASYNC_WAIT) {
+			dsi_ctrl->dma_wait_queued = true;
+			queue_work(dsi_ctrl->dma_cmd_workq,
+					&dsi_ctrl->dma_cmd_wait);
+		} else {
+			dsi_ctrl->dma_wait_queued = false;
+			dsi_ctrl_dma_cmd_wait_for_done(&dsi_ctrl->dma_cmd_wait);
 		}
-		if (dsi_ctrl->hw.ops.mask_error_intr &&
+
+		if (dsi_hw_ops.mask_error_intr &&
 				!dsi_ctrl->esd_check_underway)
-			dsi_ctrl->hw.ops.mask_error_intr(&dsi_ctrl->hw,
+			dsi_hw_ops.mask_error_intr(&dsi_ctrl->hw,
 					BIT(DSI_FIFO_OVERFLOW), false);
 
 		if (flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE) {
-			dsi_ctrl->hw.ops.soft_reset(&dsi_ctrl->hw);
+			dsi_hw_ops.soft_reset(&dsi_ctrl->hw);
 			dsi_ctrl->cmd_len = 0;
 		}
 	}

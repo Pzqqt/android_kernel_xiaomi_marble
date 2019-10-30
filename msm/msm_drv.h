@@ -553,12 +553,18 @@ struct msm_roi_list {
 /**
  * struct - msm_display_kickoff_params - info for display features at kickoff
  * @rois: Regions of interest structure for mapping CRTC to Connector output
- * @qsync_mode: Qsync mode, where 0: disabled 1: continuous mode
- * @qsync_update: Qsync settings were changed/updated
  */
 struct msm_display_kickoff_params {
 	struct msm_roi_list *rois;
 	struct drm_msm_ext_hdr_metadata *hdr_meta;
+};
+
+/**
+ * struct - msm_display_conn_params - info of dpu display features
+ * @qsync_mode: Qsync mode, where 0: disabled 1: continuous mode 2: oneshot
+ * @qsync_update: Qsync settings were changed/updated
+ */
+struct msm_display_conn_params {
 	uint32_t qsync_mode;
 	bool qsync_update;
 };

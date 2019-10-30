@@ -58,6 +58,7 @@ static const struct drm_prop_enum_list e_power_mode[] = {
 static const struct drm_prop_enum_list e_qsync_mode[] = {
 	{SDE_RM_QSYNC_DISABLED,	"none"},
 	{SDE_RM_QSYNC_CONTINUOUS_MODE,	"continuous"},
+	{SDE_RM_QSYNC_ONE_SHOT_MODE,	"one_shot"},
 };
 static const struct drm_prop_enum_list e_frame_trigger_mode[] = {
 	{FRAME_DONE_WAIT_DEFAULT, "default"},
@@ -621,21 +622,51 @@ void sde_connector_set_colorspace(struct sde_connector *c_conn)
 
 void sde_connector_set_qsync_params(struct drm_connector *connector)
 {
-	struct sde_connector *c_conn = to_sde_connector(connector);
-	u32 qsync_propval;
+	struct sde_connector *c_conn;
+	struct sde_connector_state *c_state;
+	u32 qsync_propval = 0;
+	bool prop_dirty;
 
 	if (!connector)
 		return;
 
+	c_conn = to_sde_connector(connector);
+	c_state = to_sde_connector_state(connector->state);
 	c_conn->qsync_updated = false;
-	qsync_propval = sde_connector_get_property(c_conn->base.state,
-			CONNECTOR_PROP_QSYNC_MODE);
 
-	if (qsync_propval != c_conn->qsync_mode) {
-		SDE_DEBUG("updated qsync mode %d -> %d\n", c_conn->qsync_mode,
-				qsync_propval);
-		c_conn->qsync_updated = true;
-		c_conn->qsync_mode = qsync_propval;
+	prop_dirty = msm_property_is_dirty(&c_conn->property_info,
+					&c_state->property_state,
+					CONNECTOR_PROP_QSYNC_MODE);
+	if (prop_dirty) {
+		qsync_propval = sde_connector_get_property(c_conn->base.state,
+						CONNECTOR_PROP_QSYNC_MODE);
+		if (qsync_propval != c_conn->qsync_mode) {
+			SDE_DEBUG("updated qsync mode %d -> %d\n",
+					c_conn->qsync_mode, qsync_propval);
+			c_conn->qsync_updated = true;
+			c_conn->qsync_mode = qsync_propval;
+		}
+	}
+}
+
+void sde_connector_complete_qsync_commit(struct drm_connector *conn,
+				struct msm_display_conn_params *params)
+{
+	struct sde_connector *c_conn;
+
+	if (!conn || !params) {
+		SDE_ERROR("invalid params\n");
+		return;
+	}
+
+	c_conn = to_sde_connector(conn);
+
+	if (c_conn && c_conn->qsync_updated &&
+		(c_conn->qsync_mode == SDE_RM_QSYNC_ONE_SHOT_MODE)) {
+		/* Reset qsync states if mode is one shot */
+		params->qsync_mode = c_conn->qsync_mode = 0;
+		params->qsync_update = true;
+		SDE_EVT32(conn->base.id, c_conn->qsync_mode);
 	}
 }
 
@@ -728,6 +759,7 @@ int sde_connector_pre_kickoff(struct drm_connector *connector)
 	struct sde_connector *c_conn;
 	struct sde_connector_state *c_state;
 	struct msm_display_kickoff_params params;
+	struct dsi_display *display;
 	int rc;
 
 	if (!connector) {
@@ -742,6 +774,15 @@ int sde_connector_pre_kickoff(struct drm_connector *connector)
 		return -EINVAL;
 	}
 
+	/*
+	 * During pre kickoff DCS commands have to have an
+	 * asynchronous wait to avoid an unnecessary stall
+	 * in pre-kickoff. This flag must be reset at the
+	 * end of display pre-kickoff.
+	 */
+	display = (struct dsi_display *)c_conn->display;
+	display->queue_cmd_waits = true;
+
 	rc = _sde_connector_update_dirty_properties(connector);
 	if (rc) {
 		SDE_EVT32(connector->base.id, SDE_EVTLOG_ERROR);
@@ -753,19 +794,50 @@ int sde_connector_pre_kickoff(struct drm_connector *connector)
 
 	params.rois = &c_state->rois;
 	params.hdr_meta = &c_state->hdr_meta;
-	params.qsync_update = false;
-
-	if (c_conn->qsync_updated) {
-		params.qsync_mode = c_conn->qsync_mode;
-		params.qsync_update = true;
-		SDE_EVT32(connector->base.id, params.qsync_mode);
-	}
 
 	SDE_EVT32_VERBOSE(connector->base.id);
 
 	rc = c_conn->ops.pre_kickoff(connector, c_conn->display, &params);
 
+	display->queue_cmd_waits = false;
 end:
+	return rc;
+}
+
+int sde_connector_prepare_commit(struct drm_connector *connector)
+{
+	struct sde_connector *c_conn;
+	struct sde_connector_state *c_state;
+	struct msm_display_conn_params params;
+	int rc;
+
+	if (!connector) {
+		SDE_ERROR("invalid argument\n");
+		return -EINVAL;
+	}
+
+	c_conn = to_sde_connector(connector);
+	c_state = to_sde_connector_state(connector->state);
+	if (!c_conn->display) {
+		SDE_ERROR("invalid connector display\n");
+		return -EINVAL;
+	}
+
+	if (!c_conn->ops.prepare_commit)
+		return 0;
+
+	memset(&params, 0, sizeof(params));
+
+	if (c_conn->qsync_updated) {
+		params.qsync_mode = c_conn->qsync_mode;
+		params.qsync_update = true;
+	}
+
+	rc = c_conn->ops.prepare_commit(c_conn->display, &params);
+
+	SDE_EVT32(connector->base.id, params.qsync_mode,
+		  params.qsync_update, rc);
+
 	return rc;
 }
 
@@ -1375,6 +1447,10 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 			c_state, (void *)(uintptr_t)val);
 		if (rc)
 			SDE_ERROR_CONN(c_conn, "cannot set hdr info %d\n", rc);
+		break;
+	case CONNECTOR_PROP_QSYNC_MODE:
+		msm_property_set_dirty(&c_conn->property_info,
+				&c_state->property_state, idx);
 		break;
 	default:
 		break;
@@ -2027,13 +2103,33 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 		struct drm_connector_state *new_conn_state)
 {
 	struct sde_connector *c_conn;
+	struct sde_connector_state *c_state;
+	bool qsync_dirty = false, has_modeset = false;
 
 	if (!connector) {
 		SDE_ERROR("invalid connector\n");
-		return 0;
+		return -EINVAL;
+	}
+
+	if (!new_conn_state) {
+		SDE_ERROR("invalid connector state\n");
+		return -EINVAL;
 	}
 
 	c_conn = to_sde_connector(connector);
+	c_state = to_sde_connector_state(new_conn_state);
+
+	has_modeset = sde_crtc_atomic_check_has_modeset(new_conn_state->state,
+						new_conn_state->crtc);
+	qsync_dirty = msm_property_is_dirty(&c_conn->property_info,
+					&c_state->property_state,
+					CONNECTOR_PROP_QSYNC_MODE);
+
+	SDE_DEBUG("has_modeset %d qsync_dirty %d\n", has_modeset, qsync_dirty);
+	if (has_modeset && qsync_dirty) {
+		SDE_ERROR("invalid qsync update during modeset\n");
+		return -EINVAL;
+	}
 
 	if (c_conn->ops.atomic_check)
 		return c_conn->ops.atomic_check(connector,

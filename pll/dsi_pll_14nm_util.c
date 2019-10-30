@@ -1062,10 +1062,11 @@ long pll_vco_round_rate_14nm(struct clk_hw *hw, unsigned long rate,
 						unsigned long *parent_rate)
 {
 	unsigned long rrate = rate;
-	u32 div;
+	u64 div;
 	struct dsi_pll_vco_clk *vco = to_vco_clk_hw(hw);
 
-	div = vco->min_rate / rate;
+	div = vco->min_rate;
+	do_div(div, rate);
 	if (div > 15) {
 		/* rate < 86.67 Mhz */
 		pr_err("rate=%lu NOT supportted\n", rate);

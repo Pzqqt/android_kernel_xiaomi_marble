@@ -1433,6 +1433,8 @@ static bool _sde_encoder_phys_cmd_needs_vsync_change(
 static int _sde_encoder_phys_cmd_wait_for_wr_ptr(
 		struct sde_encoder_phys *phys_enc)
 {
+	struct sde_encoder_phys_cmd *cmd_enc =
+			to_sde_encoder_phys_cmd(phys_enc);
 	struct sde_encoder_wait_info wait_info = {0};
 	int ret;
 	bool frame_pending = true;
@@ -1463,6 +1465,7 @@ static int _sde_encoder_phys_cmd_wait_for_wr_ptr(
 		ret = frame_pending ? ret : 0;
 	}
 
+	cmd_enc->wr_ptr_wait_success = (ret == 0) ? true : false;
 	return ret;
 }
 

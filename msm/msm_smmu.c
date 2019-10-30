@@ -94,6 +94,7 @@ static void msm_smmu_detach(struct msm_mmu *mmu, const char * const *names,
 		return;
 
 	pm_runtime_get_sync(mmu->dev);
+	msm_dma_unmap_all_for_dev(client->dev);
 	iommu_detach_device(client->domain, client->dev);
 	pm_runtime_put_sync(mmu->dev);
 
@@ -451,7 +452,7 @@ static int msm_smmu_probe(struct platform_device *pdev)
 		client->dev->dma_parms = devm_kzalloc(client->dev,
 				sizeof(*client->dev->dma_parms), GFP_KERNEL);
 	dma_set_max_seg_size(client->dev, DMA_BIT_MASK(32));
-	dma_set_seg_boundary(client->dev, DMA_BIT_MASK(64));
+	dma_set_seg_boundary(client->dev, (unsigned long)DMA_BIT_MASK(64));
 
 	iommu_set_fault_handler(client->domain,
 			msm_smmu_fault_handler, (void *)client);
