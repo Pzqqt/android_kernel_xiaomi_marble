@@ -1804,8 +1804,8 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 
 		if (acs_info && acs_info->acs_mode) {
 			for (j = 0; j < acs_info->num_of_channel; j++) {
-				if (acs_info->channel_list[j] ==
-				    chan->dfs_ch_ieee) {
+				if (acs_info->chan_freq_list[j] ==
+				    wlan_chan_to_freq(chan->dfs_ch_ieee)) {
 					found = true;
 					break;
 				}
@@ -1957,8 +1957,8 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 		}
 		if (acs_info && acs_info->acs_mode) {
 			for (j = 0; j < acs_info->num_of_channel; j++) {
-				if (acs_info->channel_list[j] ==
-				    chan->dfs_ch_ieee) {
+				if (acs_info->chan_freq_list[j] ==
+				    chan->dfs_ch_freq) {
 					found = true;
 					break;
 				}
@@ -1966,8 +1966,8 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 
 			if (!found) {
 				dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-					  "skip ch %d not in acs range",
-					  chan->dfs_ch_ieee);
+					  "skip ch freq %d not in acs range",
+					  chan->dfs_ch_freq);
 				continue;
 			}
 			found = false;
