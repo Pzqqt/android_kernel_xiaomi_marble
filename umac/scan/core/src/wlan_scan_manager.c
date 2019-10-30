@@ -918,6 +918,7 @@ scm_update_channel_list(struct scan_start_request *req,
 	bool first_scan_done = true;
 	bool p2p_search = false;
 	bool skip_dfs_ch = true;
+	uint32_t first_freq;
 
 	pdev = wlan_vdev_get_pdev(req->vdev);
 
@@ -938,10 +939,11 @@ scm_update_channel_list(struct scan_start_request *req,
 	 * No need to update channels if req is single channel* ie ROC,
 	 * Preauth or a single channel scan etc.
 	 * If the single chan in the scan channel list is an NOL channel,it is
-	 * not removed as it would reduce the number of scan channels to 0
-	 * and FW would scan all chans which is unexpected in this scenerio.
+	 * removed and it would reduce the number of scan channels to 0.
 	 */
-	if (req->scan_req.chan_list.num_chan == 1)
+	first_freq = req->scan_req.chan_list.chan[0].freq;
+	if ((req->scan_req.chan_list.num_chan == 1) &&
+	    (!utils_dfs_is_freq_in_nol(pdev, first_freq)))
 		return;
 
 	/* do this only for STA and P2P-CLI mode */
