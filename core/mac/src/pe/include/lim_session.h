@@ -192,7 +192,7 @@ struct pe_session {
 
 	/* Parameters  For Reassociation */
 	tSirMacAddr limReAssocbssId;
-	tSirMacChanNum limReassocChannelId;
+	uint32_t lim_reassoc_chan_freq;
 	/* CB paramaters required/duplicated for Reassoc since re-assoc mantains its own params in lim */
 	uint8_t reAssocHtSupportedChannelWidthSet;
 	uint8_t reAssocHtRecommendedTxWidthSet;

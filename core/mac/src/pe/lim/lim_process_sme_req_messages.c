@@ -1912,10 +1912,8 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		     session_entry->pLimReAssocReq->bssDescription.bssId,
 		     sizeof(tSirMacAddr));
 
-	session_entry->limReassocChannelId = wlan_reg_freq_to_chan(
-		mac_ctx->pdev,
-		session_entry->pLimReAssocReq->bssDescription.chan_freq);
-
+	session_entry->lim_reassoc_chan_freq =
+		session_entry->pLimReAssocReq->bssDescription.chan_freq;
 	session_entry->reAssocHtSupportedChannelWidthSet =
 		(session_entry->pLimReAssocReq->cbMode) ? 1 : 0;
 	session_entry->reAssocHtRecommendedTxWidthSet =

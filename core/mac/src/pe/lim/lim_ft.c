@@ -513,7 +513,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 	/* Copy The channel Id to the session Table */
 	bss_chan_id =
 		wlan_reg_freq_to_chan(mac->pdev, pbssDescription->chan_freq);
-	ft_session->limReassocChannelId = bss_chan_id;
+	ft_session->lim_reassoc_chan_freq = pbssDescription->chan_freq;
 	ft_session->curr_op_freq = pbssDescription->chan_freq;
 	ft_session->limRFBand = lim_get_rf_band(wlan_reg_freq_to_chan(
 					mac->pdev, ft_session->curr_op_freq));
