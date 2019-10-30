@@ -186,6 +186,8 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 		goto exit;
 
 	target_if_reg_set_offloaded_info(psoc);
+	target_if_reg_set_6ghz_info(psoc);
+
 	if (wmi_service_enabled(wmi_handle, wmi_service_ext_msg)) {
 		target_if_debug("Wait for EXT message");
 	} else {

@@ -75,3 +75,9 @@ bool tgt_reg_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc)
 {
 	return reg_get_ignore_fw_reg_offload_ind(psoc);
 }
+
+QDF_STATUS tgt_reg_set_6ghz_supported(struct wlan_objmgr_psoc *psoc,
+				      bool val)
+{
+	return reg_set_6ghz_supported(psoc, val);
+}

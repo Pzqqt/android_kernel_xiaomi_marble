@@ -51,8 +51,15 @@ QDF_STATUS target_if_register_regulatory_tx_ops(
 QDF_STATUS target_if_reg_set_offloaded_info(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * target_if_reg_set_6ghz_info() - populate 6ghz enablement info
+ * @psoc: psoc pointer
+ * Return: Success or Failure
+ */
+QDF_STATUS target_if_reg_set_6ghz_info(struct wlan_objmgr_psoc *psoc);
+
+/**
  * target_if_regulatory_get_rx_ops() - Get regdb rx ops
- * @psoc: Pointer to psoc object
+ * @psoc: pointer to psoc object
  *
  * Return: Reg rx_ops
  */

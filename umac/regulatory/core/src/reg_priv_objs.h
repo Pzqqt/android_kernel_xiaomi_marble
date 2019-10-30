@@ -89,10 +89,12 @@ struct chan_change_cbk_entry {
  * @world_country_pending: In this array, element[phy_id] is true if any world
  *	country update is pending for pdev (phy_id).
  * @ignore_fw_reg_offload_ind: Ignore FW reg offload indication
+ * @six_ghz_supported: whether 6ghz is supported
  */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
 	bool offload_enabled;
+	bool six_ghz_supported;
 	uint8_t num_phy;
 	char cur_country[REG_ALPHA2_LEN + 1];
 	char def_country[REG_ALPHA2_LEN + 1];

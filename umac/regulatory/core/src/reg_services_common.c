@@ -3433,3 +3433,45 @@ bool reg_get_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc)
 	return psoc_reg->ignore_fw_reg_offload_ind;
 }
 
+QDF_STATUS reg_set_6ghz_supported(struct wlan_objmgr_psoc *psoc, bool val)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc_priv_obj->six_ghz_supported = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev, uint8_t op_class)
+{
+	return ((op_class >= MIN_6GHZ_OPER_CLASS) &&
+		(op_class <= MAX_6GHZ_OPER_CLASS));
+}
+
+bool reg_is_6ghz_supported(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err_rl("psoc is NULL");
+		return false;
+	}
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return  false;
+	}
+
+	return psoc_priv_obj->six_ghz_supported;
+}

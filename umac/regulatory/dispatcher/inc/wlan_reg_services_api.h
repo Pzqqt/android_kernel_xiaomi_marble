@@ -1006,7 +1006,7 @@ wlan_reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 				    uint16_t freq);
 
 /**
- * wlan_reg_set_channel_params_for_freq () - Sets channel parameteres for
+ * wlan_reg_set_channel_params_for_freq() - Sets channel parameteres for
  * given bandwidth
  * @pdev: The physical dev to program country code or regdomain
  * @freq: channel center frequency.
@@ -1045,7 +1045,7 @@ void wlan_reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
 				     bool nol_ch);
 
 /**
- * wlan_reg_is_dfs_freq () - Checks the channel state for DFS
+ * wlan_reg_is_dfs_freq() - Checks the channel state for DFS
  * @freq: Channel center frequency
  *
  * Return: true or false
@@ -1053,7 +1053,7 @@ void wlan_reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
 bool wlan_reg_is_dfs_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
 
 /**
- * wlan_reg_is_dsrc_freq () - Checks if the channel is dsrc channel or not
+ * wlan_reg_is_dsrc_freq() - Checks if the channel is dsrc channel or not
  * @freq: Channel center frequency
  *
  * Return: true or false
@@ -1061,7 +1061,7 @@ bool wlan_reg_is_dfs_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
 bool wlan_reg_is_dsrc_freq(uint16_t freq);
 
 /**
- * wlan_reg_is_passive_or_disable_for_freq () - Checks chan state for passive
+ * wlan_reg_is_passive_or_disable_for_freq() - Checks chan state for passive
  * and disabled
  * @pdev: pdev ptr
  * @freq: Channel center frequency
@@ -1072,7 +1072,7 @@ bool wlan_reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 					     uint16_t freq);
 
 /**
- * wlan_reg_is_disable_for_freq () - Checks chan state for disabled
+ * wlan_reg_is_disable_for_freq() - Checks chan state for disabled
  * @pdev: pdev ptr
  * @freq: Channel center frequency
  *
@@ -1089,21 +1089,21 @@ bool wlan_reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
 enum reg_wifi_band wlan_reg_freq_to_band(uint16_t freq);
 
 /**
- * wlan_reg_min_chan_freq () - minimum channel frequency supported
+ * wlan_reg_min_chan_freq() - Minimum channel frequency supported
  *
  * Return: frequency
  */
 uint16_t wlan_reg_min_chan_freq(void);
 
 /**
- * wlan_reg_max_chan_freq () - Checks chan state f
+ * wlan_reg_max_chan_freq() - Return max. frequency
  *
  * Return: frequency
  */
 uint16_t wlan_reg_max_chan_freq(void);
 
 /**
- * wlan_reg_freq_width_to_chan_op_class () - get op class from freq
+ * wlan_reg_freq_width_to_chan_op_class() -Get op class from freq
  * @pdev: pdev ptr
  * @freq: channel frequency
  * @chan_width: channel width
@@ -1123,7 +1123,7 @@ void wlan_reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 					  uint8_t *chan_num);
 
 /**
- * wlan_reg_freq_to_chan_and_op_class () - converts freq to oper class
+ * wlan_reg_freq_to_chan_and_op_class() - Converts freq to oper class
  * @pdev: pdev ptr
  * @freq: channel frequency
  * @global_tbl_lookup: whether to look up global table
@@ -1143,7 +1143,7 @@ void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 #endif /*CONFIG_CHAN_FREQ_API */
 
 /**
- * wlan_reg_get_op_class_width () - get operating class chan width
+ * wlan_reg_get_op_class_width() - Get operating class chan width
  * @pdev: pdev ptr
  * @freq: channel frequency
  * @global_tbl_lookup: whether to look up global table
@@ -1155,5 +1155,23 @@ void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 uint16_t wlan_reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
 				     uint8_t op_class,
 				     bool global_tbl_lookup);
+
+/**
+ * wlan_reg_is_6ghz_op_class() - Whether 6ghz oper class
+ * @pdev: pdev ptr
+ * @op_class: operating class
+ *
+ * Return: bool
+ */
+bool wlan_reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev,
+			       uint8_t op_class);
+
+/**
+ * wlan_reg_is_6ghz_supported() - Whether 6ghz is supported
+ * @pdev: pdev ptr
+ *
+ * Return: bool
+ */
+bool wlan_reg_is_6ghz_supported(struct wlan_objmgr_pdev *pdev);
 
 #endif
