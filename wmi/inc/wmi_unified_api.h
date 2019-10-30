@@ -443,6 +443,14 @@ int
 wmi_stop(wmi_unified_t wmi_handle);
 
 /**
+ * generic function to start unified WMI command
+ * @param wmi_handle      : handle to WMI.
+ * @return 0  on success and -ve on failure.
+ */
+int
+wmi_start(wmi_unified_t wmi_handle);
+
+/**
  * API to flush all the previous packets  associated with the wmi endpoint
  *
  * @param wmi_handle      : handle to WMI.

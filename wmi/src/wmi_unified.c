@@ -1770,7 +1770,8 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 	}
 
 	if (wmi_handle->wmi_stopinprogress) {
-		wmi_nofl_err("%s:%d, WMI stop in progress", func, line);
+		wmi_nofl_err("%s:%d, WMI stop in progress, wmi_handle:%pK",
+			     func, line, wmi_handle);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -3126,6 +3127,21 @@ wmi_stop(wmi_unified_t wmi_handle)
 	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
 		  "WMI Stop");
 	wmi_handle->wmi_stopinprogress = 1;
+	return 0;
+}
+
+/**
+ * wmi_start() - generic function to allow unified WMI command
+ * @wmi_handle: handle to WMI.
+ *
+ * @Return: success always.
+ */
+int
+wmi_start(wmi_unified_t wmi_handle)
+{
+	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
+		  "WMI Start");
+	wmi_handle->wmi_stopinprogress = 0;
 	return 0;
 }
 
