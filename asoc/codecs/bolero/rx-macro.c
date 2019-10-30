@@ -387,6 +387,7 @@ enum {
 	RX_MACRO_AIF3_PB,
 	RX_MACRO_AIF4_PB,
 	RX_MACRO_AIF_ECHO,
+	RX_MACRO_AIF6_PB,
 	RX_MACRO_MAX_DAIS,
 };
 
@@ -715,6 +716,20 @@ static struct snd_soc_dai_driver rx_macro_dai[] = {
 			.rate_min = 8000,
 			.channels_min = 1,
 			.channels_max = 3,
+		},
+		.ops = &rx_macro_dai_ops,
+	},
+	{
+		.name = "rx_macro_rx6",
+		.id = RX_MACRO_AIF6_PB,
+		.playback = {
+			.stream_name = "RX_MACRO_AIF6 Playback",
+			.rates = RX_MACRO_RATES | RX_MACRO_FRAC_RATES,
+			.formats = RX_MACRO_FORMATS,
+			.rate_max = 384000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 4,
 		},
 		.ops = &rx_macro_dai_ops,
 	},
@@ -3156,6 +3171,9 @@ static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT("RX AIF_ECHO", "RX_AIF_ECHO Capture", 0,
 		SND_SOC_NOPM, 0, 0),
 
+	SND_SOC_DAPM_AIF_IN("RX AIF6 PB", "RX_MACRO_AIF6 Playback", 0,
+		SND_SOC_NOPM, 0, 0),
+
 	RX_MACRO_DAPM_MUX("RX_MACRO RX0 MUX", RX_MACRO_RX0, rx_macro_rx0),
 	RX_MACRO_DAPM_MUX("RX_MACRO RX1 MUX", RX_MACRO_RX1, rx_macro_rx1),
 	RX_MACRO_DAPM_MUX("RX_MACRO RX2 MUX", RX_MACRO_RX2, rx_macro_rx2),
@@ -3276,6 +3294,7 @@ static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("HPHL_OUT"),
 	SND_SOC_DAPM_OUTPUT("HPHR_OUT"),
 	SND_SOC_DAPM_OUTPUT("AUX_OUT"),
+	SND_SOC_DAPM_SINK("PCM_OUT"),
 
 	SND_SOC_DAPM_INPUT("RX_TX DEC0_INP"),
 	SND_SOC_DAPM_INPUT("RX_TX DEC1_INP"),
@@ -3291,6 +3310,9 @@ static const struct snd_soc_dapm_route rx_audio_map[] = {
 	{"RX AIF2 PB", NULL, "RX_MCLK"},
 	{"RX AIF3 PB", NULL, "RX_MCLK"},
 	{"RX AIF4 PB", NULL, "RX_MCLK"},
+
+	{"RX AIF6 PB", NULL, "RX_MCLK"},
+	{"PCM_OUT", NULL, "RX AIF6 PB"},
 
 	{"RX_MACRO RX0 MUX", "AIF1_PB", "RX AIF1 PB"},
 	{"RX_MACRO RX1 MUX", "AIF1_PB", "RX AIF1 PB"},
@@ -3815,9 +3837,11 @@ static int rx_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF2 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF3 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF4 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF6 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL_OUT");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHR_OUT");
 	snd_soc_dapm_ignore_suspend(dapm, "AUX_OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "PCM_OUT");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC0_INP");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC1_INP");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC2_INP");
