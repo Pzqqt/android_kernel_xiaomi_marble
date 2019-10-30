@@ -731,7 +731,7 @@ sap_validate_chan(struct sap_context *sap_context,
 		return QDF_STATUS_E_FAILURE;
 	}
 	go_force_scc = policy_mgr_go_scc_enforced(mac_ctx->psoc);
-	if (!go_force_scc &&
+	if (sap_context->vdev && !go_force_scc &&
 	    (wlan_vdev_mlme_get_opmode(sap_context->vdev) == QDF_P2P_GO_MODE))
 		goto validation_done;
 
