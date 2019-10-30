@@ -5313,6 +5313,23 @@ static int msm_wcn_init_lito(struct snd_soc_pcm_runtime *rtd)
 					   tx_ch, ARRAY_SIZE(rx_ch), rx_ch);
 }
 
+static struct snd_info_entry *msm_snd_info_create_subdir(struct module *mod,
+				const char *name,
+				struct snd_info_entry *parent)
+{
+	struct snd_info_entry *entry;
+
+	entry = snd_info_create_module_entry(mod, name, parent);
+	if (!entry)
+		return NULL;
+	entry->mode = S_IFDIR | 0555;
+	if (snd_info_register(entry) < 0) {
+		snd_info_free_entry(entry);
+		return NULL;
+	}
+	return entry;
+}
+
 static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 {
 	int ret = -EINVAL;
@@ -5407,7 +5424,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	}
 	card = rtd->card->snd_card;
 	if (!pdata->codec_root) {
-		entry = snd_info_create_subdir(card->module, "codecs",
+		entry = msm_snd_info_create_subdir(card->module, "codecs",
 						 card->proc_root);
 		if (!entry) {
 			pr_debug("%s: Cannot create codecs module entry\n",
@@ -7501,7 +7518,7 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 	}
 	pdata = snd_soc_card_get_drvdata(component->card);
 	if (!pdata->codec_root) {
-		entry = snd_info_create_subdir(card->module, "codecs",
+		entry = msm_snd_info_create_subdir(card->module, "codecs",
 						 card->proc_root);
 		if (!entry) {
 			pr_err("%s: Cannot create codecs module entry\n",
@@ -7539,7 +7556,7 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 
 	pdata = snd_soc_card_get_drvdata(component->card);
 	if (!pdata->codec_root) {
-		entry = snd_info_create_subdir(card->module, "codecs",
+		entry = msm_snd_info_create_subdir(card->module, "codecs",
 						 card->proc_root);
 		if (!entry) {
 			dev_dbg(component->dev, "%s: Cannot create codecs module entry\n",

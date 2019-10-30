@@ -570,12 +570,17 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 	snprintf(name, sizeof(name), "%s.%x", "wsa883x",
 		 (u32)wsa883x->swr_slave->addr);
 
-	wsa883x->entry = snd_info_create_subdir(codec_root->module,
+	wsa883x->entry = snd_info_create_module_entry(codec_root->module,
 						(const char *)name,
 						codec_root);
 	if (!wsa883x->entry) {
 		dev_dbg(component->dev, "%s: failed to create wsa883x entry\n",
 			__func__);
+		return -ENOMEM;
+	}
+	wsa883x->entry->mode = S_IFDIR | 0555;
+	if (snd_info_register(wsa883x->entry) < 0) {
+		snd_info_free_entry(wsa883x->entry);
 		return -ENOMEM;
 	}
 
@@ -585,6 +590,7 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 	if (!version_entry) {
 		dev_dbg(component->dev, "%s: failed to create wsa883x version entry\n",
 			__func__);
+		snd_info_free_entry(wsa883x->entry);
 		return -ENOMEM;
 	}
 
@@ -595,6 +601,7 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 
 	if (snd_info_register(version_entry) < 0) {
 		snd_info_free_entry(version_entry);
+		snd_info_free_entry(wsa883x->entry);
 		return -ENOMEM;
 	}
 	wsa883x->version_entry = version_entry;

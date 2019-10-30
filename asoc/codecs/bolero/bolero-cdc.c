@@ -786,19 +786,26 @@ int bolero_info_create_codec_entry(struct snd_info_entry *codec_root,
 		return 0;
 	}
 	card = component->card;
-	priv->entry = snd_info_create_subdir(codec_root->module,
+	priv->entry = snd_info_create_module_entry(codec_root->module,
 					     "bolero", codec_root);
 	if (!priv->entry) {
 		dev_dbg(component->dev, "%s: failed to create bolero entry\n",
 			__func__);
 		return -ENOMEM;
 	}
+	priv->entry->mode = S_IFDIR | 0555;
+	if (snd_info_register(priv->entry) < 0) {
+		snd_info_free_entry(priv->entry);
+		return -ENOMEM;
+	}
+
 	version_entry = snd_info_create_card_entry(card->snd_card,
 						   "version",
 						   priv->entry);
 	if (!version_entry) {
 		dev_err(component->dev, "%s: failed to create bolero version entry\n",
 			__func__);
+		snd_info_free_entry(priv->entry);
 		return -ENOMEM;
 	}
 
@@ -809,6 +816,7 @@ int bolero_info_create_codec_entry(struct snd_info_entry *codec_root,
 
 	if (snd_info_register(version_entry) < 0) {
 		snd_info_free_entry(version_entry);
+		snd_info_free_entry(priv->entry);
 		return -ENOMEM;
 	}
 	priv->version_entry = version_entry;
