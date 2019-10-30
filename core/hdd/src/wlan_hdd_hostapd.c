@@ -2523,12 +2523,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		 */
 		ap_ctx->operating_chan_freq =
 			sap_event->sapevt.sap_ch_selected.pri_ch_freq;
-		ap_ctx->sap_config.acs_cfg.pri_ch =
-			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-			sap_event->sapevt.sap_ch_selected.pri_ch_freq);
-		ap_ctx->sap_config.acs_cfg.ht_sec_ch =
-			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq);
+		ap_ctx->sap_config.acs_cfg.pri_ch_freq =
+			sap_event->sapevt.sap_ch_selected.pri_ch_freq;
+		ap_ctx->sap_config.acs_cfg.ht_sec_ch_freq =
+			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq;
 		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
 			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =
@@ -2593,12 +2591,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 					adapter->dev->ifindex);
 		clear_bit(ACS_PENDING, &adapter->event_flags);
 		clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
-		ap_ctx->sap_config.acs_cfg.pri_ch =
-			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-			sap_event->sapevt.sap_ch_selected.pri_ch_freq);
-		ap_ctx->sap_config.acs_cfg.ht_sec_ch =
-			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq);
+		ap_ctx->sap_config.acs_cfg.pri_ch_freq =
+			sap_event->sapevt.sap_ch_selected.pri_ch_freq;
+		ap_ctx->sap_config.acs_cfg.ht_sec_ch_freq =
+			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq;
 		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
 			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =

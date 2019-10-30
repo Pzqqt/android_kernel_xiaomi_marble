@@ -2537,7 +2537,8 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 		break;
 	}
 
-	sap_ctx->acs_cfg->pri_ch = best_ch_num;
+	sap_ctx->acs_cfg->pri_ch_freq =
+			wlan_reg_chan_to_freq(mac_ctx->pdev, best_ch_num);
 	/* determine secondary channel for 2.4G channel 5, 6, 7 in HT40 */
 	if ((operating_band != eCSR_DOT11_MODE_11g) ||
 	    (sap_ctx->acs_cfg->ch_width != CH_WIDTH_40MHZ))
@@ -2561,21 +2562,22 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 		}
 
 		if (weight_below < weight_above)
-			sap_ctx->acs_cfg->ht_sec_ch =
-					sap_ctx->acs_cfg->pri_ch - 4;
+			sap_ctx->acs_cfg->ht_sec_ch_freq =
+					sap_ctx->acs_cfg->pri_ch_freq - 20;
 		else
-			sap_ctx->acs_cfg->ht_sec_ch =
-					sap_ctx->acs_cfg->pri_ch + 4;
+			sap_ctx->acs_cfg->ht_sec_ch_freq =
+					sap_ctx->acs_cfg->pri_ch_freq + 20;
 	} else if (best_ch_num >= 1 && best_ch_num <= 4) {
-		sap_ctx->acs_cfg->ht_sec_ch = sap_ctx->acs_cfg->pri_ch + 4;
+		sap_ctx->acs_cfg->ht_sec_ch_freq =
+					sap_ctx->acs_cfg->pri_ch_freq + 20;
 	} else if (best_ch_num >= ht40plus2gendch && best_ch_num <=
 			HT40MINUS_2G_CH_END) {
-		sap_ctx->acs_cfg->ht_sec_ch = sap_ctx->acs_cfg->pri_ch - 4;
+		sap_ctx->acs_cfg->ht_sec_ch_freq =
+					sap_ctx->acs_cfg->pri_ch_freq - 20;
 	} else if (best_ch_num == 14) {
-		sap_ctx->acs_cfg->ht_sec_ch = 0;
+		sap_ctx->acs_cfg->ht_sec_ch_freq = 0;
 	}
-	sap_ctx->sec_ch_freq = wlan_reg_chan_to_freq(
-				mac_ctx->pdev, sap_ctx->acs_cfg->ht_sec_ch);
+	sap_ctx->sec_ch_freq = sap_ctx->acs_cfg->ht_sec_ch_freq;
 
 sap_ch_sel_end:
 	/* Free all the allocated memory */

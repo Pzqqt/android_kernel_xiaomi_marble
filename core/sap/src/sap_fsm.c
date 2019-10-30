@@ -810,7 +810,7 @@ validation_done:
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("for configured channel, Ch_freq = %d"),
 		  sap_context->chan_freq);
-	sap_ch = wlan_reg_freq_to_chan(mac_ctx->pdev, sap_context->chan_freq);
+
 	if (check_for_connection_update) {
 		/* This wait happens in the hostapd context. The event
 		 * is set in the MC thread context.
@@ -826,9 +826,9 @@ validation_done:
 
 	if (pre_start_bss) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL("ACS end due to Ch override. Sel Ch = %d"),
-			  sap_ch);
-		sap_context->acs_cfg->pri_ch = sap_ch;
+			  FL("ACS end due to Ch override. Sel Ch freq = %d"),
+			     sap_context->chan_freq);
+		sap_context->acs_cfg->pri_ch_freq = sap_context->chan_freq;
 		sap_context->acs_cfg->ch_width =
 					 sap_context->ch_width_orig;
 		sap_config_acs_result(mac_handle, sap_context, 0);
@@ -1500,10 +1500,10 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		sap_ap_event.sapHddEventCode = sap_hddevent;
 		acs_selected = &sap_ap_event.sapevt.sap_ch_selected;
 		if (eSAP_STATUS_SUCCESS == (eSapStatus)context) {
-			acs_selected->pri_ch_freq = wlan_reg_chan_to_freq(
-				mac_ctx->pdev, sap_ctx->acs_cfg->pri_ch);
-			acs_selected->ht_sec_ch_freq = wlan_reg_chan_to_freq(
-				mac_ctx->pdev, sap_ctx->acs_cfg->ht_sec_ch);
+			acs_selected->pri_ch_freq =
+						sap_ctx->acs_cfg->pri_ch_freq;
+			acs_selected->ht_sec_ch_freq =
+					sap_ctx->acs_cfg->ht_sec_ch_freq;
 			acs_selected->ch_width = sap_ctx->acs_cfg->ch_width;
 			acs_selected->vht_seg0_center_ch =
 				sap_ctx->acs_cfg->vht_seg0_center_ch;
@@ -1737,13 +1737,11 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		 * Reconfig ACS result info. For DFS AP-AP Mode Sec AP ACS
 		 * follows pri AP
 		 */
-		sap_ctx->acs_cfg->pri_ch = wlan_reg_freq_to_chan(mac_ctx->pdev,
-							sap_ctx->chan_freq);
+		sap_ctx->acs_cfg->pri_ch_freq = sap_ctx->chan_freq;
 		sap_ctx->acs_cfg->ch_width =
 				sap_ctx->csr_roamProfile.ch_params.ch_width;
 		sap_config_acs_result(MAC_HANDLE(mac_ctx), sap_ctx,
-				      wlan_reg_freq_to_chan(mac_ctx->pdev,
-							sap_ctx->sec_ch_freq));
+				      sap_ctx->sec_ch_freq);
 
 		sap_ap_event.sapHddEventCode = eSAP_CHANNEL_CHANGE_EVENT;
 

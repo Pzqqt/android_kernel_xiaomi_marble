@@ -95,12 +95,14 @@
 
 void sap_config_acs_result(mac_handle_t mac_handle,
 			   struct sap_context *sap_ctx,
-			   uint32_t sec_ch)
+			   uint32_t sec_ch_freq)
 {
-	uint32_t channel = sap_ctx->acs_cfg->pri_ch;
+	uint32_t channel = wlan_freq_to_chan(sap_ctx->acs_cfg->pri_ch_freq);
 	struct ch_params ch_params = {0};
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	uint8_t sec_ch;
 
+	sec_ch = wlan_freq_to_chan(sec_ch_freq);
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
 	wlan_reg_set_channel_params(mac_ctx->pdev, channel, sec_ch,
 			&ch_params);
@@ -118,11 +120,13 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 		sap_ctx->acs_cfg->vht_seg1_center_ch = 0;
 
 	if (ch_params.sec_ch_offset == PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
-		sap_ctx->acs_cfg->ht_sec_ch = sap_ctx->acs_cfg->pri_ch - 4;
+		sap_ctx->acs_cfg->ht_sec_ch_freq =
+				sap_ctx->acs_cfg->pri_ch_freq - 20;
 	else if (ch_params.sec_ch_offset == PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-		sap_ctx->acs_cfg->ht_sec_ch = sap_ctx->acs_cfg->pri_ch + 4;
+		sap_ctx->acs_cfg->ht_sec_ch_freq =
+				sap_ctx->acs_cfg->pri_ch_freq + 20;
 	else
-		sap_ctx->acs_cfg->ht_sec_ch = 0;
+		sap_ctx->acs_cfg->ht_sec_ch_freq = 0;
 }
 
 /**
@@ -289,7 +293,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	if (!sap_ctx->acs_cfg->ch_list_count) {
 		sap_err("No channel left for SAP operation, hotspot fail");
 		sap_ctx->chan_freq = SAP_CHANNEL_NOT_SELECTED;
-		sap_ctx->acs_cfg->pri_ch = SAP_CHANNEL_NOT_SELECTED;
+		sap_ctx->acs_cfg->pri_ch_freq = SAP_CHANNEL_NOT_SELECTED;
 		sap_config_acs_result(mac_handle, sap_ctx, 0);
 		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 		sap_ctx->sap_status = eSAP_START_BSS_CHANNEL_NOT_SELECTED;
@@ -303,10 +307,9 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 		oper_channel =
 			sap_select_default_oper_chan(sap_ctx->acs_cfg);
 		sap_ctx->chan_freq = oper_channel;
-		sap_ctx->acs_cfg->pri_ch =
-			wlan_reg_freq_to_chan(mac_ctx->pdev, oper_channel);
+		sap_ctx->acs_cfg->pri_ch_freq = oper_channel;
 		sap_config_acs_result(mac_handle, sap_ctx,
-				      sap_ctx->acs_cfg->ht_sec_ch);
+				      sap_ctx->acs_cfg->ht_sec_ch_freq);
 		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 		sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 		goto close_session;
@@ -324,9 +327,9 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	}
 
 	sap_ctx->chan_freq = oper_channel;
-	sap_ctx->acs_cfg->pri_ch = wlan_reg_freq_to_chan(mac_ctx->pdev,
-							 oper_channel);
-	sap_config_acs_result(mac_handle, sap_ctx, sap_ctx->acs_cfg->ht_sec_ch);
+	sap_ctx->acs_cfg->pri_ch_freq = oper_channel;
+	sap_config_acs_result(mac_handle, sap_ctx,
+			      sap_ctx->acs_cfg->ht_sec_ch_freq);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("Channel freq selected = %d"), sap_ctx->chan_freq);

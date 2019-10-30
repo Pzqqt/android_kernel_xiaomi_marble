@@ -450,8 +450,8 @@ struct sap_acs_cfg {
 	uint8_t    is_ht_enabled;
 	uint8_t    is_vht_enabled;
 	/* ACS Algo Output */
-	uint8_t    pri_ch;
-	uint8_t    ht_sec_ch;
+	uint32_t   pri_ch_freq;
+	uint32_t   ht_sec_ch_freq;
 	uint8_t    vht_seg0_center_ch;
 	uint8_t    vht_seg1_center_ch;
 	uint32_t   band;
@@ -1249,7 +1249,7 @@ void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
 
 void sap_config_acs_result(mac_handle_t mac_handle,
 			   struct sap_context *sap_ctx,
-			   uint32_t sec_ch);
+			   uint32_t sec_ch_freq);
 
 QDF_STATUS wlansap_update_sap_config_add_ie(struct sap_config *config,
 					    const uint8_t *pAdditionIEBuffer,
