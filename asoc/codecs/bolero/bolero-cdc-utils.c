@@ -68,12 +68,9 @@ static int regmap_bus_read(void *context, const void *reg, size_t reg_size,
 	reg_p = (u16 *)reg;
 	macro_id = bolero_get_macro_id(priv->va_without_decimation,
 					   reg_p[0]);
-	if (macro_id < 0 || !priv->macros_supported[macro_id]) {
-		dev_err_ratelimited(dev,
-			"%s: Unsupported macro %d or reg 0x%x is invalid\n",
-			__func__, macro_id, reg_p[0]);
-		return ret;
-	}
+	if (macro_id < 0 || !priv->macros_supported[macro_id])
+		return 0;
+
 	mutex_lock(&priv->io_lock);
 	for (i = 0; i < val_size; i++) {
 		__reg = (reg_p[0] + i * 4) - macro_id_base_offset[macro_id];
@@ -121,12 +118,9 @@ static int regmap_bus_gather_write(void *context,
 	reg_p = (u16 *)reg;
 	macro_id = bolero_get_macro_id(priv->va_without_decimation,
 					reg_p[0]);
-	if (macro_id < 0 || !priv->macros_supported[macro_id]) {
-		dev_err_ratelimited(dev,
-			"%s: Unsupported macro-id %d or reg 0x%x is invalid\n",
-			__func__, macro_id, reg_p[0]);
-		return ret;
-	}
+	if (macro_id < 0 || !priv->macros_supported[macro_id])
+		return 0;
+
 	mutex_lock(&priv->io_lock);
 	for (i = 0; i < val_size; i++) {
 		__reg = (reg_p[0] + i * 4) - macro_id_base_offset[macro_id];

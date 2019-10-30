@@ -20,9 +20,6 @@
 
 #define DRV_NAME "bolero_codec"
 
-#define BOLERO_VERSION_1_0 0x0001
-#define BOLERO_VERSION_1_1 0x0002
-#define BOLERO_VERSION_1_2 0x0003
 #define BOLERO_VERSION_ENTRY_SIZE 32
 #define BOLERO_CDC_STRING_LEN 80
 
@@ -513,10 +510,16 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 		priv->macro_params[macro_id].reg_evt_listener =
 							ops->reg_evt_listener;
 	}
-
+	if (priv->version == BOLERO_VERSION_2_1) {
+		if (macro_id == VA_MACRO)
+			priv->macro_params[macro_id].reg_wake_irq =
+						ops->reg_wake_irq;
+	}
 	priv->num_dais += ops->num_dais;
 	priv->num_macros_registered++;
 	priv->macros_supported[macro_id] = true;
+
+	dev_dbg(dev, "%s: register macro successful:%d\n", macro_id);
 
 	if (priv->num_macros_registered == priv->num_macros) {
 		ret = bolero_copy_dais_from_macro(priv);
@@ -610,6 +613,28 @@ void bolero_wsa_pa_on(struct device *dev)
 }
 EXPORT_SYMBOL(bolero_wsa_pa_on);
 
+int bolero_get_version(struct device *dev)
+{
+	struct bolero_priv *priv;
+
+	if (!dev) {
+		pr_err("%s: dev is null\n", __func__);
+		return -EINVAL;
+	}
+	if (!bolero_is_valid_child_dev(dev)) {
+		dev_err(dev, "%s: child device for macro not added yet\n",
+			__func__);
+		return -EINVAL;
+	}
+	priv = dev_get_drvdata(dev->parent);
+	if (!priv) {
+		dev_err(dev, "%s: priv is null\n", __func__);
+		return -EINVAL;
+	}
+	return priv->version;
+}
+EXPORT_SYMBOL(bolero_get_version);
+
 static ssize_t bolero_version_read(struct snd_info_entry *entry,
 				   void *file_private_data,
 				   struct file *file,
@@ -635,6 +660,9 @@ static ssize_t bolero_version_read(struct snd_info_entry *entry,
 		break;
 	case BOLERO_VERSION_1_2:
 		len = snprintf(buffer, sizeof(buffer), "BOLERO_1_2\n");
+		break;
+	case BOLERO_VERSION_2_1:
+		len = snprintf(buffer, sizeof(buffer), "BOLERO_2_1\n");
 		break;
 	default:
 		len = snprintf(buffer, sizeof(buffer), "VER_UNDEFINED\n");
@@ -800,9 +828,15 @@ int bolero_register_wake_irq(struct snd_soc_component *component,
 		return -EINVAL;
 	}
 
-	if (priv->macro_params[TX_MACRO].reg_wake_irq)
-		priv->macro_params[TX_MACRO].reg_wake_irq(
-				component, ipc_wakeup);
+	if (priv->version == BOLERO_VERSION_2_1) {
+		if (priv->macro_params[VA_MACRO].reg_wake_irq)
+			priv->macro_params[VA_MACRO].reg_wake_irq(
+					component, ipc_wakeup);
+	} else {
+		if (priv->macro_params[TX_MACRO].reg_wake_irq)
+			priv->macro_params[TX_MACRO].reg_wake_irq(
+					component, ipc_wakeup);
+	}
 
 	return 0;
 }
@@ -881,6 +915,29 @@ static int bolero_soc_codec_probe(struct snd_soc_component *component)
 
 	snd_soc_component_init_regmap(component, priv->regmap);
 
+	if (!priv->version) {
+		/*
+		 * In order for the ADIE RTC to differentiate between targets
+		 * version info is used.
+		 * Assign 1.0 for target with only one macro
+		 * Assign 1.1 for target with two macros
+		 * Assign 1.2 for target with more than two macros
+		 */
+		if (priv->num_macros_registered == 1)
+			priv->version = BOLERO_VERSION_1_0;
+		else if (priv->num_macros_registered == 2)
+			priv->version = BOLERO_VERSION_1_1;
+		else if (priv->num_macros_registered > 2)
+			priv->version = BOLERO_VERSION_1_2;
+	}
+
+	/* Assign bolero version 2.1 for bolero 2.1 */
+	if ((snd_soc_component_read32(component,
+		BOLERO_CDC_VA_TOP_CSR_CORE_ID_0) == 0x2) &&
+		(snd_soc_component_read32(component,
+			BOLERO_CDC_VA_TOP_CSR_CORE_ID_1) == 0xE))
+		priv->version = BOLERO_VERSION_2_1;
+
 	/* call init for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
 		if (priv->macro_params[macro_idx].init) {
@@ -894,19 +951,6 @@ static int bolero_soc_codec_probe(struct snd_soc_component *component)
 		}
 	}
 	priv->component = component;
-	/*
-	 * In order for the ADIE RTC to differentiate between targets
-	 * version info is used.
-	 * Assign 1.0 for target with only one macro
-	 * Assign 1.1 for target with two macros
-	 * Assign 1.2 for target with more than two macros
-	 */
-	if (priv->num_macros_registered == 1)
-		priv->version = BOLERO_VERSION_1_0;
-	else if (priv->num_macros_registered == 2)
-		priv->version = BOLERO_VERSION_1_1;
-	else if (priv->num_macros_registered > 2)
-		priv->version = BOLERO_VERSION_1_2;
 
 	ret = snd_event_client_register(priv->dev, &bolero_ssr_ops, priv);
 	if (!ret) {
@@ -1050,6 +1094,13 @@ static int bolero_probe(struct platform_device *pdev)
 	if (priv->va_without_decimation)
 		bolero_reg_access[VA_MACRO] = bolero_va_top_reg_access;
 
+	ret = of_property_read_u32(pdev->dev.of_node,
+				"qcom,bolero-version", &priv->version);
+	if (ret) {
+		dev_dbg(&pdev->dev, "%s:bolero version not specified\n",
+			__func__);
+		ret = 0;
+	}
 	priv->dev = &pdev->dev;
 	priv->dev_up = true;
 	priv->initial_boot = true;

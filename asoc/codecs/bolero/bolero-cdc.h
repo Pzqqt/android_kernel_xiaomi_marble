@@ -8,6 +8,12 @@
 #include <sound/soc.h>
 #include <linux/regmap.h>
 
+#define BOLERO_VERSION_1_0 0x0001
+#define BOLERO_VERSION_1_1 0x0002
+#define BOLERO_VERSION_1_2 0x0003
+#define BOLERO_VERSION_2_0 0x0004
+#define BOLERO_VERSION_2_1 0x0005
+
 enum {
 	START_MACRO,
 	TX_MACRO = START_MACRO,
@@ -86,6 +92,7 @@ int bolero_register_event_listener(struct snd_soc_component *component,
 				   bool enable);
 void bolero_wsa_pa_on(struct device *dev);
 bool bolero_check_core_votes(struct device *dev);
+int bolero_get_version(struct device *dev);
 #else
 static inline int bolero_register_res_clk(struct device *dev, rsc_clk_cb_t cb)
 {
@@ -164,6 +171,11 @@ static void bolero_wsa_pa_on(struct device *dev)
 static inline bool bolero_check_core_votes(struct device *dev)
 {
 	return false;
+}
+
+static int bolero_get_version(struct device *dev)
+{
+	return 0;
 }
 #endif /* CONFIG_SND_SOC_BOLERO */
 #endif /* BOLERO_CDC_H */
