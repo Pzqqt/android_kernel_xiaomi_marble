@@ -121,6 +121,7 @@
 #define WLAN_IBSS_IE_MAX_LEN                     2
 #define WLAN_REQUEST_IE_MAX_LEN                  255
 #define WLAN_RM_CAPABILITY_IE_MAX_LEN            5
+#define WLAN_RNR_IE_MIN_LEN                      5
 
 /* HT capability flags */
 #define WLAN_HTCAP_C_ADVCODING             0x0001
@@ -392,6 +393,7 @@ enum element_ie {
 	WLAN_ELEMID_AID              = 197,
 	WLAN_ELEMID_QUIET_CHANNEL    = 198,
 	WLAN_ELEMID_OP_MODE_NOTIFY   = 199,
+	WLAN_ELEMID_REDUCED_NEIGHBOR_REPORT = 201,
 	WLAN_ELEMID_VENDOR           = 221,
 	WLAN_ELEMID_FILS_INDICATION  = 240,
 	WLAN_ELEMID_EXTN_ELEM        = 255,

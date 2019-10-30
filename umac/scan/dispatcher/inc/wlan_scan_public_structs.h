@@ -35,6 +35,7 @@ typedef uint32_t wlan_scan_id;
 
 #define WLAN_SCAN_MAX_NUM_SSID          16
 #define WLAN_SCAN_MAX_NUM_BSSID         4
+#define MAX_RNR_BSS 5
 
 #define SCM_CANCEL_SCAN_WAIT_TIME 50
 #define SCM_CANCEL_SCAN_WAIT_ITERATION 600
@@ -154,6 +155,7 @@ struct element_info {
  * @fils_indication: pointer to FILS indication ie
  * @esp: pointer to ESP indication ie
  * @mbo_oce: pointer to mbo/oce indication ie
+ * @rnrie: reduced neighbor report IE
  * @adaptive_11r: pointer to adaptive 11r IE
  */
 struct ie_list {
@@ -203,6 +205,7 @@ struct ie_list {
 	uint8_t *esp;
 	uint8_t *mbo_oce;
 	uint8_t *muedca;
+	uint8_t *rnrie;
 	uint8_t *extender;
 	uint8_t *adaptive_11r;
 };
@@ -279,6 +282,82 @@ struct scan_mbssid_info {
 };
 
 /**
+ * struct rnr_bss_info - Reduced Neighbor Report BSS information
+ * @neighbor_ap_tbtt_offset: Neighbor AP TBTT offset
+ * @channel_number: channel number
+ * @operating_class: operting class
+ * @bssid: BSS MAC address
+ * @short_ssid: short ssid
+ * @bss_params: BSS parameters
+ */
+struct rnr_bss_info {
+	uint8_t neighbor_ap_tbtt_offset;
+	uint32_t channel_number;
+	uint32_t operating_class;
+	struct qdf_mac_addr bssid;
+	uint32_t short_ssid;
+	uint8_t bss_params;
+};
+
+/**
+ * struct tbtt_information_header - TBTT information header
+ * @tbbt_info_fieldtype: TBTT information field type
+ * @filter_neighbor_ap: filtered neighbor ap
+ * @tbbt_info_count: TBTT information count
+ * @tbtt_info_length: TBTT informaiton length
+ */
+struct tbtt_information_header {
+	uint16_t tbbt_info_fieldtype:2;
+	uint16_t filtered_neighbor_ap:1;
+	uint16_t reserved:1;
+	uint16_t tbtt_info_count:4;
+	uint16_t tbtt_info_length:8;
+};
+
+/**
+ * struct neighbor_ap_info_field - Neighbor information field
+ * @tbtt_info_header: TBTT information header
+ * @operting_class: operating class
+ * @channel_number: channel number
+ */
+struct neighbor_ap_info_field {
+	struct tbtt_information_header tbtt_header;
+	uint8_t operting_class;
+	uint8_t channel_number;
+};
+
+/**
+ * enum tbtt_information_field - TBTT information field
+ * @TBTT_NEIGHBOR_AP_OFFSET_ONLY: TBTT information field type
+ * @TBTT_NEIGHBOR_AP_BSS_PARAM: neighbor AP and bss param
+ * @TBTT_NEIGHBOR_AP_SHORTSSID: neighbor AP and Short ssid
+ * @TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM: neighbor AP, short ssid and bss param
+ * @TBTT_NEIGHBOR_AP_BSSID: neighbor AP and bssid
+ * @TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM: neighbor AP, bssid and bss param
+ * @TBTT_NEIGHBOR_AP_BSSSID_S_SSID: neighbor AP, bssid and short ssid
+ * @TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM: neighbor AP, bssid, short ssid
+ * and bss params
+ */
+enum tbtt_information_field {
+	TBTT_NEIGHBOR_AP_OFFSET_ONLY = 1,
+	TBTT_NEIGHBOR_AP_BSS_PARAM = 2,
+	TBTT_NEIGHBOR_AP_SHORTSSID = 5,
+	TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM = 6,
+	TBTT_NEIGHBOR_AP_BSSID = 7,
+	TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM = 8,
+	TBTT_NEIGHBOR_AP_BSSSID_S_SSID = 11,
+	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM = 12
+};
+
+/**
+ * struct reduced_neighbor_report - Reduced Neighbor Report
+ * @bss_info: RNR BSS Information
+ */
+struct reduced_neighbor_report {
+	struct rnr_bss_info bss_info[MAX_RNR_BSS];
+};
+
+/**
  * struct scan_cache_entry: structure containing scan entry
  * @frm_subtype: updated from beacon/probe
  * @bssid: bssid
@@ -306,6 +385,7 @@ struct scan_mbssid_info {
  * @hidden_ssid_timestamp: boottime in microsec when hidden
  *                         ssid was received
  * @mbssid_info: Multi bssid information
+ * @rnr: Reduced neighbor report information
  * @channel: channel info on which AP is present
  * @channel_mismatch: if channel received in metadata
  *                    doesnot match the one in beacon
@@ -350,6 +430,7 @@ struct scan_cache_entry {
 	qdf_time_t rssi_timestamp;
 	qdf_time_t hidden_ssid_timestamp;
 	struct scan_mbssid_info mbssid_info;
+	struct reduced_neighbor_report rnr;
 	struct channel_info channel;
 	bool channel_mismatch;
 	struct mlme_info mlme_info;

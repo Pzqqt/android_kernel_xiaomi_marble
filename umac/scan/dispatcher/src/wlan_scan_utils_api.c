@@ -28,6 +28,9 @@
 #include <wlan_reg_services_api.h>
 
 #define MAX_IE_LEN 1024
+#define SHORT_SSID_LEN 4
+#define NEIGHBOR_AP_LEN 1
+#define BSS_PARAMS_LEN 1
 
 const char*
 util_scan_get_ev_type_name(enum scan_event_type type)
@@ -560,6 +563,116 @@ util_scan_is_hidden_ssid(struct ie_ssid *ssid)
 }
 
 static QDF_STATUS
+util_scan_update_rnr(struct rnr_bss_info *rnr,
+		     struct neighbor_ap_info_field *ap_info,
+		     uint8_t **data)
+{
+	uint16_t fieldtype;
+	uint8_t *tmp = *data;
+
+	fieldtype = ap_info->tbtt_header.tbbt_info_fieldtype;
+
+	switch (fieldtype) {
+	case TBTT_NEIGHBOR_AP_OFFSET_ONLY:
+		/* Dont store it skip*/
+		*data = tmp + NEIGHBOR_AP_LEN;
+		break;
+
+	case TBTT_NEIGHBOR_AP_BSS_PARAM:
+		/* Dont store it skip*/
+		break;
+
+	case TBTT_NEIGHBOR_AP_SHORTSSID:
+		rnr->channel_number = ap_info->channel_number;
+		rnr->operating_class = ap_info->operting_class;
+		qdf_mem_copy(&rnr->short_ssid, &tmp[1], SHORT_SSID_LEN);
+		*data = tmp + NEIGHBOR_AP_LEN + SHORT_SSID_LEN;
+		break;
+
+	case TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM:
+		rnr->channel_number = ap_info->channel_number;
+		rnr->operating_class = ap_info->operting_class;
+		qdf_mem_copy(&rnr->short_ssid, &tmp[1], SHORT_SSID_LEN);
+		rnr->bss_params = tmp[5];
+		*data = tmp + NEIGHBOR_AP_LEN + SHORT_SSID_LEN + BSS_PARAMS_LEN;
+		break;
+
+	case TBTT_NEIGHBOR_AP_BSSID:
+		rnr->channel_number = ap_info->channel_number;
+		rnr->operating_class = ap_info->operting_class;
+		qdf_mem_copy(&rnr->bssid, &tmp[1], QDF_MAC_ADDR_SIZE);
+		*data = tmp + NEIGHBOR_AP_LEN + QDF_MAC_ADDR_SIZE;
+		break;
+
+	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM:
+		rnr->channel_number = ap_info->channel_number;
+		rnr->operating_class = ap_info->operting_class;
+		qdf_mem_copy(&rnr->bssid, &tmp[1], QDF_MAC_ADDR_SIZE);
+		rnr->bss_params = tmp[7];
+		*data = tmp + NEIGHBOR_AP_LEN + QDF_MAC_ADDR_SIZE
+			+ BSS_PARAMS_LEN;
+		break;
+
+	case TBTT_NEIGHBOR_AP_BSSSID_S_SSID:
+		rnr->channel_number = ap_info->channel_number;
+		rnr->operating_class = ap_info->operting_class;
+		qdf_mem_copy(&rnr->bssid, &tmp[1], QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(&rnr->short_ssid, &tmp[7], SHORT_SSID_LEN);
+		*data = tmp + NEIGHBOR_AP_LEN + QDF_MAC_ADDR_SIZE
+			+ SHORT_SSID_LEN;
+		break;
+
+	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM:
+		rnr->channel_number = ap_info->channel_number;
+		rnr->operating_class = ap_info->operting_class;
+		qdf_mem_copy(&rnr->bssid, &tmp[1], QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(&rnr->short_ssid, &tmp[7], SHORT_SSID_LEN);
+		rnr->bss_params = tmp[11];
+		*data = tmp + NEIGHBOR_AP_LEN + QDF_MAC_ADDR_SIZE
+			+ SHORT_SSID_LEN + BSS_PARAMS_LEN;
+		break;
+
+	default:
+		scm_debug("Wrong fieldtype");
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+util_scan_parse_rnr_ie(struct scan_cache_entry *scan_entry,
+		       struct ie_header *ie)
+{
+	uint32_t rnr_ie_len;
+	uint16_t tbtt_count, tbtt_length, i, fieldtype;
+	uint8_t *data;
+	struct neighbor_ap_info_field *neighbor_ap_info;
+
+	rnr_ie_len = ie->ie_len;
+	data = (uint8_t *)ie + sizeof(struct ie_header);
+
+	while (data < (uint8_t *)ie + rnr_ie_len + 2) {
+		neighbor_ap_info = (struct neighbor_ap_info_field *)data;
+		tbtt_count = neighbor_ap_info->tbtt_header.tbtt_info_count;
+		tbtt_length = neighbor_ap_info->tbtt_header.tbtt_info_length;
+		fieldtype = neighbor_ap_info->tbtt_header.tbbt_info_fieldtype;
+		scm_debug("channel number %d, op class %d",
+			  neighbor_ap_info->channel_number,
+			  neighbor_ap_info->operting_class);
+		scm_debug("tbtt_count %d, tbtt_length %d, fieldtype %d",
+			  tbtt_count, tbtt_length, fieldtype);
+		for (i = 0; i < tbtt_count && i < MAX_RNR_BSS; i++) {
+			data = data + sizeof(struct neighbor_ap_info_field);
+			util_scan_update_rnr(&scan_entry->rnr.bss_info[i],
+					     neighbor_ap_info,
+					     &data);
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
 util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 	struct ie_header *ie)
 {
@@ -874,6 +987,14 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params,
 			break;
 		case WLAN_ELEMID_EXTN_ELEM:
 			status = util_scan_parse_extn_ie(scan_params, ie);
+			if (QDF_IS_STATUS_ERROR(status))
+				goto err_status;
+			break;
+		case WLAN_ELEMID_REDUCED_NEIGHBOR_REPORT:
+			if (ie->ie_len < WLAN_RNR_IE_MIN_LEN)
+				goto err;
+			scan_params->ie_list.rnrie = (uint8_t *)ie;
+			status = util_scan_parse_rnr_ie(scan_params, ie);
 			if (QDF_IS_STATUS_ERROR(status))
 				goto err_status;
 			break;
