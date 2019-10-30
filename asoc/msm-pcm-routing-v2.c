@@ -29110,6 +29110,11 @@ static int msm_routing_put_port_chmap_mixer(struct snd_kcontrol *kcontrol,
 	uint32_t be_idx = ucontrol->value.integer.value[0];
 	int i;
 
+	if (be_idx >= MSM_BACKEND_DAI_MAX) {
+		pr_err("%s: Invalid Backend index %d\n",  __func__, be_idx);
+		return -EINVAL;
+	}
+
 	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++) {
 		channel_map[i] = (char)(ucontrol->value.integer.value[i + 1]);
 		if (channel_map[i] > PCM_MAX_CHMAP_ID) {
