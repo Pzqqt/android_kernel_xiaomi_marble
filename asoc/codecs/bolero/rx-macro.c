@@ -1350,10 +1350,8 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 			goto done;
 		reg = BOLERO_CDC_RX_COMPANDER0_CTL0 +
 				(rx_idx * RX_MACRO_COMP_OFFSET);
-		snd_soc_component_update_bits(component, reg,
-				0x20, 0x20);
-		snd_soc_component_update_bits(component, reg,
-				0x20, 0x00);
+		snd_soc_component_write(component, reg,
+				snd_soc_component_read32(component, reg));
 		break;
 	case BOLERO_MACRO_EVT_IMPED_TRUE:
 		rx_macro_wcd_clsh_imped_config(component, data, true);
