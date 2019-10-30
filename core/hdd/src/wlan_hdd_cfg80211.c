@@ -22666,8 +22666,6 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	uint8_t channel;
-	uint16_t freq;
 	int ret;
 	enum phy_ch_width ch_width;
 
@@ -22689,12 +22687,12 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 	wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, adapter->vdev_id,
 				    CSA_REASON_USER_INITIATED);
 
-	freq = csa_params->chandef.chan->center_freq;
-	channel = cds_freq_to_chan(freq);
-
 	ch_width = hdd_map_nl_chan_width(csa_params->chandef.width);
 
-	ret = hdd_softap_set_channel_change(dev, channel, ch_width, false);
+	ret =
+	    hdd_softap_set_channel_change(dev,
+					  csa_params->chandef.chan->center_freq,
+					  ch_width, false);
 	return ret;
 }
 

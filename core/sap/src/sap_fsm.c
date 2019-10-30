@@ -1767,8 +1767,8 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 				"In %s, SAP event callback event = %s",
 				__func__, "eSAP_ECSA_CHANGE_CHAN_IND");
 		sap_ap_event.sapHddEventCode = eSAP_ECSA_CHANGE_CHAN_IND;
-		sap_ap_event.sapevt.sap_chan_cng_ind.new_chan =
-					   csr_roaminfo->target_channel;
+		sap_ap_event.sapevt.sap_chan_cng_ind.new_chan_freq =
+					   csr_roaminfo->target_chan_freq;
 		break;
 	case eSAP_DFS_NEXT_CHANNEL_REQ:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,

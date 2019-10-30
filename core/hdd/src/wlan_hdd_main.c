@@ -778,76 +778,11 @@ uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBU
 uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR PANIC_ON_BUG_STR;
 #endif
 
-/**
- * hdd_get_valid_chan() - return current chan list from regulatory.
- * @hdd_ctx: HDD context
- * @chan_list: buf hold returned chan list
- * @chan_num: input buf size and output returned chan num
- *
- * This function helps get current available chan list from regulatory
- * module. It excludes the "disabled" and "invalid" channels.
- *
- * Return: 0 for success.
- */
-static int hdd_get_valid_chan(struct hdd_context *hdd_ctx,
-			      uint8_t *chan_list,
-			      uint32_t *chan_num)
-{
-	int i = 0, j = 0;
-	struct regulatory_channel *cur_chan_list;
-	struct wlan_objmgr_pdev *pdev;
-
-	if (!hdd_ctx || !hdd_ctx->pdev || !chan_list || !chan_num)
-		return -EINVAL;
-
-	pdev = hdd_ctx->pdev;
-	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
-			sizeof(struct regulatory_channel));
-	if (!cur_chan_list)
-		return -ENOMEM;
-
-	if (wlan_reg_get_current_chan_list(pdev, cur_chan_list) !=
-					   QDF_STATUS_SUCCESS) {
-		qdf_mem_free(cur_chan_list);
-		return -EINVAL;
-	}
-
-	for (i = 0; i < NUM_CHANNELS; i++) {
-		uint32_t ch = cur_chan_list[i].chan_num;
-		enum channel_state state = wlan_reg_get_channel_state(pdev,
-								      ch);
-
-		if (state != CHANNEL_STATE_DISABLE &&
-		    state != CHANNEL_STATE_INVALID &&
-		    j < *chan_num) {
-			chan_list[j] = (uint8_t)ch;
-			j++;
-		}
-	}
-	*chan_num = j;
-	qdf_mem_free(cur_chan_list);
-	return 0;
-}
-
-/**
- * hdd_validate_channel_and_bandwidth() - Validate the channel-bandwidth combo
- * @adapter: HDD adapter
- * @chan_number: Channel number
- * @chan_bw: Bandwidth
- *
- * Checks if the given bandwidth is valid for the given channel number.
- *
- * Return: 0 for success, non-zero for failure
- */
 int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
-		uint32_t chan_number,
-		enum phy_ch_width chan_bw)
+				       uint32_t chan_freq,
+				       enum phy_ch_width chan_bw)
 {
-	uint8_t chan[NUM_CHANNELS];
-	uint32_t len = NUM_CHANNELS, i;
-	bool found = false;
 	mac_handle_t mac_handle;
-	int ret;
 
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 	if (!mac_handle) {
@@ -855,39 +790,26 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	ret = hdd_get_valid_chan(adapter->hdd_ctx, chan,
-				 &len);
-	if (ret) {
-		hdd_err("error %d in getting valid channel list", ret);
-		return ret;
-	}
-
-	for (i = 0; i < len; i++) {
-		if (chan[i] == chan_number) {
-			found = true;
-			break;
-		}
-	}
-
-	if (found == false) {
-		hdd_err("Channel not in driver's valid channel list");
+	if (INVALID_CHANNEL == wlan_reg_get_chan_enum_for_freq(chan_freq)) {
+		hdd_err("Channel freq %d not in driver's valid channel list", chan_freq);
 		return -EOPNOTSUPP;
 	}
 
-	if ((!WLAN_REG_IS_24GHZ_CH(chan_number)) &&
-			(!WLAN_REG_IS_5GHZ_CH(chan_number))) {
-		hdd_err("CH %d is not in 2.4GHz or 5GHz", chan_number);
+	if ((!WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) &&
+	    (!WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq)) &&
+	    (!WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq))) {
+		hdd_err("CH %d is not in 2.4GHz or 5GHz or 6GHz", chan_freq);
 		return -EINVAL;
 	}
 
-	if (WLAN_REG_IS_24GHZ_CH(chan_number)) {
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) {
 		if (chan_bw == CH_WIDTH_80MHZ) {
 			hdd_err("BW80 not possible in 2.4GHz band");
 			return -EINVAL;
 		}
-		if ((chan_bw != CH_WIDTH_20MHZ) && (chan_number == 14) &&
-				(chan_bw != CH_WIDTH_MAX)) {
-			hdd_err("Only BW20 possible on channel 14");
+		if ((chan_bw != CH_WIDTH_20MHZ) && (chan_freq == 2484) &&
+		    (chan_bw != CH_WIDTH_MAX)) {
+			hdd_err("Only BW20 possible on channel freq 2484");
 			return -EINVAL;
 		}
 	}

@@ -4427,11 +4427,11 @@ struct sir_sme_ext_cng_chan_req {
 /**
  * struct sir_sme_ext_change_chan_ind.
  * @session_id: session id
- * @new_channel: new channel to change
+ * @new_chan_freq: new channel frequency to change to
  */
 struct sir_sme_ext_cng_chan_ind {
 	uint8_t  session_id;
-	uint8_t  new_channel;
+	uint32_t  new_chan_freq;
 };
 
 /**

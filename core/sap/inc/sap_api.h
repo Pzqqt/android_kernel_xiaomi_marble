@@ -369,10 +369,10 @@ struct sap_acs_scan_complete_event {
 
 /**
  * struct sap_ch_change_ind - channel change indication
- * @new_chan: channel to change
+ * @new_chan_freq: channel frequency to change to
  */
 struct sap_ch_change_ind {
-	uint16_t new_chan;
+	uint32_t new_chan_freq;
 };
 
 /*

@@ -1083,7 +1083,7 @@ struct csr_roam_info {
 	uint8_t subnet_change_status;
 #endif
 	struct oem_channel_info chan_info;
-	uint8_t target_channel;
+	uint32_t target_chan_freq;
 
 #ifdef WLAN_FEATURE_NAN
 	union {

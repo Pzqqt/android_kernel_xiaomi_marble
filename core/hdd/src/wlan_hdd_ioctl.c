@@ -7145,7 +7145,9 @@ static int drv_cmd_set_channel_switch(struct hdd_adapter *adapter,
 
 	wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, adapter->vdev_id,
 				    CSA_REASON_USER_INITIATED);
-	status = hdd_softap_set_channel_change(dev, chan_number, width, true);
+	status = hdd_softap_set_channel_change(dev,
+					       wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev, chan_number),
+					       width, true);
 	if (status) {
 		hdd_err("Set channel change fail");
 		return status;

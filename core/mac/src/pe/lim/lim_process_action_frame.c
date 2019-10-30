@@ -333,7 +333,6 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 	tDot11fext_channel_switch_action_frame *ext_channel_switch_frame;
 	uint32_t                frame_len;
 	uint32_t                status;
-	uint8_t                 target_channel;
 	uint32_t                target_freq;
 
 	hdr = WMA_GET_RX_MAC_HEADER(rx_packet_info);
@@ -361,9 +360,10 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 		  status, frame_len);
 	}
 
-	target_channel =
-	 ext_channel_switch_frame->ext_chan_switch_ann_action.new_channel;
-	target_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, target_channel);
+	target_freq =
+	    wlan_reg_chan_opclass_to_freq(ext_channel_switch_frame->ext_chan_switch_ann_action.new_channel,
+					  ext_channel_switch_frame->ext_chan_switch_ann_action.op_class,
+					  false);
 	/* Free ext_channel_switch_frame here as its no longer needed */
 	qdf_mem_free(ext_channel_switch_frame);
 	/*
@@ -372,13 +372,13 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 	 * and no concurrent session is running.
 	 */
 	if (!(session_entry->curr_op_freq != target_freq &&
-	      ((wlan_reg_get_channel_state(mac_ctx->pdev, target_channel) ==
+	      ((wlan_reg_get_channel_state_for_freq(mac_ctx->pdev, target_freq) ==
 		  CHANNEL_STATE_ENABLE) ||
-	       (wlan_reg_get_channel_state(mac_ctx->pdev, target_channel) ==
+	       (wlan_reg_get_channel_state_for_freq(mac_ctx->pdev, target_freq) ==
 		  CHANNEL_STATE_DFS &&
 		!policy_mgr_concurrent_open_sessions_running(
 			mac_ctx->psoc))))) {
-		pe_err("Channel: %d is not valid", target_channel);
+		pe_err("Channel freq: %d is not valid", target_freq);
 		return;
 	}
 
@@ -397,7 +397,7 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 		/* No need to extract op mode as BW will be decided in
 		 *  in SAP FSM depending on previous BW.
 		 */
-		ext_cng_chan_ind->new_channel = target_channel;
+		ext_cng_chan_ind->new_chan_freq = target_freq;
 
 		mmh_msg.type = eWNI_SME_EXT_CHANGE_CHANNEL_IND;
 		mmh_msg.bodyptr = ext_cng_chan_ind;

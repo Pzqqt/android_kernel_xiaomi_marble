@@ -1147,8 +1147,7 @@ static void __wlan_hdd_sap_pre_cac_success(struct hdd_adapter *adapter)
 	wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, ap_adapter->vdev_id,
 				    CSA_REASON_PRE_CAC_SUCCESS);
 	i = hdd_softap_set_channel_change(ap_adapter->dev,
-			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-					      ap_adapter->pre_cac_freq),
+					  ap_adapter->pre_cac_freq,
 			CH_WIDTH_MAX, false);
 	if (0 != i) {
 		hdd_err("failed to change channel");
@@ -2615,12 +2614,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 		return QDF_STATUS_SUCCESS;
 	case eSAP_ECSA_CHANGE_CHAN_IND:
-		hdd_debug("Channel change indication from peer for channel %d",
-			  sap_event->sapevt.sap_chan_cng_ind.new_chan);
+		hdd_debug("Channel change indication from peer for channel freq %d",
+			  sap_event->sapevt.sap_chan_cng_ind.new_chan_freq);
 		wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, adapter->vdev_id,
 					    CSA_REASON_PEER_ACTION_FRAME);
 		if (hdd_softap_set_channel_change(dev,
-			 sap_event->sapevt.sap_chan_cng_ind.new_chan,
+			 sap_event->sapevt.sap_chan_cng_ind.new_chan_freq,
 			 CH_WIDTH_MAX, false))
 			return QDF_STATUS_E_FAILURE;
 		else
@@ -2896,21 +2895,8 @@ static bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx)
 	return false;
 }
 
-/**
- * hdd_softap_set_channel_change() -
- * This function to support SAP channel change with CSA IE
- * set in the beacons.
- *
- * @dev: pointer to the net device.
- * @target_channel: target channel number.
- * @target_bw: Target bandwidth to move.
- * If no bandwidth is specified, the value is CH_WIDTH_MAX
- * @forced: Force to switch channel, ignore SCC/MCC check
- *
- * Return: 0 for success, non zero for failure
- */
-int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
-				 enum phy_ch_width target_bw, bool forced)
+int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
+				  enum phy_ch_width target_bw, bool forced)
 {
 	QDF_STATUS status;
 	int ret = 0;
@@ -2946,7 +2932,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	}
 
 	ret = hdd_validate_channel_and_bandwidth(adapter,
-						target_channel, target_bw);
+						 target_chan_freq, target_bw);
 	if (ret) {
 		hdd_err("Invalid CH and BW combo");
 		return ret;
@@ -2998,7 +2984,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 				hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
-				wlan_chan_to_freq(target_channel),
+				target_chan_freq,
 				adapter->vdev_id,
 				forced,
 				sap_ctx->csa_reason)) {
@@ -3046,13 +3032,13 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 
 	status = wlansap_set_channel_change_with_csa(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-		wlan_reg_chan_to_freq(hdd_ctx->pdev, target_channel),
+		target_chan_freq,
 		target_bw,
 		(forced && !scc_on_lte_coex) || is_p2p_go_session);
 
 	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("SAP set channel failed for channel: %d, bw: %d",
-		       target_channel, target_bw);
+		hdd_err("SAP set channel failed for channel freq: %d, bw: %d",
+		        target_chan_freq, target_bw);
 		/*
 		 * If channel change command fails then clear the
 		 * radar found flag and also restart the netif
@@ -3074,19 +3060,8 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-/**
- * hdd_sap_restart_with_channel_switch() - SAP channel change with E/CSA
- * @ap_adapter: HDD adapter
- * @target_channel: Channel to which switch must happen
- * @target_bw: Bandwidth of the target channel
- * @forced: Force to switch channel, ignore SCC/MCC check
- *
- * Invokes the necessary API to perform channel switch for the SAP or GO
- *
- * Return: None
- */
 void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
-					uint32_t target_channel,
+					uint32_t target_chan_freq,
 					uint32_t target_bw,
 					bool forced)
 {
@@ -3100,7 +3075,7 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
 		return;
 	}
 
-	ret = hdd_softap_set_channel_change(dev, target_channel,
+	ret = hdd_softap_set_channel_change(dev, target_chan_freq,
 					    target_bw, forced);
 	if (ret) {
 		hdd_err("channel switch failed");
@@ -3121,7 +3096,7 @@ void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 	hdd_sap_restart_with_channel_switch(ap_adapter,
-					    wlan_freq_to_chan(ch_freq),
+					    ch_freq,
 					    channel_bw, forced);
 }
 

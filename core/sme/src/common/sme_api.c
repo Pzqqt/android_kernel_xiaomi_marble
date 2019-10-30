@@ -1395,7 +1395,7 @@ static QDF_STATUS sme_extended_change_channel_ind(struct mac_context *mac_ctx,
 	if (!roam_info)
 		return QDF_STATUS_E_NOMEM;
 	session_id = ext_chan_ind->session_id;
-	roam_info->target_channel = ext_chan_ind->new_channel;
+	roam_info->target_chan_freq = ext_chan_ind->new_chan_freq;
 	roam_status = eCSR_ROAM_EXT_CHG_CHNL_IND;
 	roam_result = eCSR_ROAM_EXT_CHG_CHNL_UPDATE_IND;
 	sme_debug("sapdfs: Received eWNI_SME_EXT_CHANGE_CHANNEL_IND for session id [%d]",

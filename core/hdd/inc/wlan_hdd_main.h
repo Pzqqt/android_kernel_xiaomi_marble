@@ -1946,9 +1946,19 @@ struct hdd_channel_info {
  * Function declarations and documentation
  */
 
+/**
+ * hdd_validate_channel_and_bandwidth() - Validate the channel-bandwidth combo
+ * @adapter: HDD adapter
+ * @chan_freq: Channel frequency
+ * @chan_bw: Bandwidth
+ *
+ * Checks if the given bandwidth is valid for the given channel number.
+ *
+ * Return: 0 for success, non-zero for failure
+ */
 int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
-				uint32_t chan_number,
-				enum phy_ch_width chan_bw);
+				       uint32_t chan_freq,
+				       enum phy_ch_width chan_bw);
 
 /**
  * hdd_get_front_adapter() - Get the first adapter from the adapter list

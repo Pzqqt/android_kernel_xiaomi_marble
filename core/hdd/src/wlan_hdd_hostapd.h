@@ -43,14 +43,38 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 enum csr_akm_type
 hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4]);
 
+/**
+ * hdd_softap_set_channel_change() -
+ * This function to support SAP channel change with CSA IE
+ * set in the beacons.
+ *
+ * @dev: pointer to the net device.
+ * @target_chan_freq: target channel frequency.
+ * @target_bw: Target bandwidth to move.
+ * If no bandwidth is specified, the value is CH_WIDTH_MAX
+ * @forced: Force to switch channel, ignore SCC/MCC check
+ *
+ * Return: 0 for success, non zero for failure
+ */
 int hdd_softap_set_channel_change(struct net_device *dev,
-					int target_channel,
+					int target_chan_freq,
 					enum phy_ch_width target_bw,
 					bool forced);
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/**
+ * hdd_sap_restart_with_channel_switch() - SAP channel change with E/CSA
+ * @ap_adapter: HDD adapter
+ * @target_chan_freq: Channel frequency to which switch must happen
+ * @target_bw: Bandwidth of the target channel
+ * @forced: Force to switch channel, ignore SCC/MCC check
+ *
+ * Invokes the necessary API to perform channel switch for the SAP or GO
+ *
+ * Return: None
+ */
 void hdd_sap_restart_with_channel_switch(struct hdd_adapter *adapter,
-				uint32_t target_channel,
+				uint32_t target_chan_freq,
 				uint32_t target_bw,
 				bool forced);
 /**
