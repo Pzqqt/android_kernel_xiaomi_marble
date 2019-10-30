@@ -433,7 +433,7 @@ struct sap_acs_cfg {
 	uint8_t    end_ch;
 	uint32_t   *freq_list;
 	uint8_t    ch_list_count;
-	uint8_t    *master_ch_list;
+	uint32_t   *master_freq_list;
 	uint8_t    master_ch_list_count;
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	uint8_t    skip_scan_status;
@@ -983,6 +983,18 @@ QDF_STATUS wlansap_get_acl_accept_list(struct sap_context *sap_ctx,
 				       uint8_t *nAcceptList);
 
 /**
+ * wlansap_is_channel_present_in_acs_list() - Freq present in ACS list or not
+ * @freq: Frequency to be searched
+ * @ch_freq_list: channel frequency list.
+ * @ch_count: Channel frequency list count
+ *
+ * Return: True is found, false otherwise
+ */
+bool wlansap_is_channel_present_in_acs_list(uint32_t freq,
+					    uint32_t *ch_freq_list,
+					    uint8_t ch_count);
+
+/**
  * wlansap_get_acl_deny_list() - Get ACL deny list
  * @sap_ctx: Pointer to the SAP context
  * @pDenyList: Pointer to the buffer to store the ACL deny list
@@ -1424,13 +1436,13 @@ QDF_STATUS wlansap_update_owe_info(struct sap_context *sap_ctx,
 /**
  * wlansap_filter_ch_based_acs() -filter out channel based on acs
  * @sap_ctx: sap context
- * @ch_list: pointer to channel list
+ * @ch_freq_list: pointer to channel frequency list
  * @ch_cnt: channel number of channel list
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
-				       uint8_t *ch_list,
+				       uint32_t *ch_freq_list,
 				       uint32_t *ch_cnt);
 
 /**
@@ -1442,10 +1454,10 @@ QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
  * unsafe channels. So, the PCL is validated with the ACS range to provide
  * a safe channel for the SAP to restart.
  *
- * Return: Channel number to restart SAP in case of success. In case of any
+ * Return: Chan freq num to restart SAP in case of success. In case of any
  * failure, the channel number returned is zero.
  */
-uint8_t
+uint32_t
 wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx);
 #ifdef __cplusplus
 }

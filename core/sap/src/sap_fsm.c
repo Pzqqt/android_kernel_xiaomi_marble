@@ -218,7 +218,7 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 	ch_params->ch_width = ch_wd;
 	if (sap_ctx->acs_cfg) {
 		acs_info.acs_mode = sap_ctx->acs_cfg->acs_mode;
-		acs_info.channel_list = sap_ctx->acs_cfg->master_ch_list;
+		acs_info.chan_freq_list = sap_ctx->acs_cfg->master_freq_list;
 		acs_info.num_of_channel =
 					sap_ctx->acs_cfg->master_ch_list_count;
 	} else {
@@ -3256,7 +3256,6 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	uint8_t end_ch_num, band_end_ch;
 	uint32_t en_lte_coex;
 	struct mac_context *mac_ctx;
-	tSapChSelSpectInfo spect_info_obj = { NULL, 0 };
 	uint16_t ch_width;
 	uint8_t normalize_factor = 100;
 	uint32_t chan_freq;
@@ -3321,6 +3320,9 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	ch_count = 0;
 	for (loop_count = band_start_ch; loop_count <= band_end_ch;
 	     loop_count++) {
+		chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
+						  WLAN_REG_CH_NUM(loop_count));
+
 		/* go to next channel if rf_channel is out of range */
 		if ((start_ch_num > WLAN_REG_CH_NUM(loop_count)) ||
 		    (end_ch_num < WLAN_REG_CH_NUM(loop_count)))
@@ -3363,10 +3365,9 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		 * Skip the channels which are not in ACS config from user
 		 * space
 		 */
-		if (SAP_CHANNEL_NOT_SELECTED ==
-			sap_channel_in_acs_channel_list(
-				WLAN_REG_CH_NUM(loop_count),
-				sap_ctx, &spect_info_obj))
+		if (!wlansap_is_channel_present_in_acs_list(chan_freq,
+					sap_ctx->acs_cfg->freq_list,
+					sap_ctx->acs_cfg->ch_list_count))
 			continue;
 		/* Dont scan DFS channels in case of MCC disallowed
 		 * As it can result in SAP starting on DFS channel
@@ -3388,8 +3389,6 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 						WLAN_REG_CH_NUM(loop_count)))
 			continue;
 
-		chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
-						  WLAN_REG_CH_NUM(loop_count));
 		/* Check if the freq is present in range list */
 		for (i = 0; i < mac_ctx->mlme_cfg->acs.num_weight_range; i++) {
 			if (chan_freq >= range_list[i].start_freq &&

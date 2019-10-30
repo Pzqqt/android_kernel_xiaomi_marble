@@ -2841,21 +2841,23 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			sap_config->acs_cfg.freq_list = qdf_mem_malloc(
 					sap_config->acs_cfg.ch_list_count *
 					sizeof(uint32_t));
-			sap_config->acs_cfg.master_ch_list = qdf_mem_malloc(
-					sap_config->acs_cfg.ch_list_count);
+			sap_config->acs_cfg.master_freq_list = qdf_mem_malloc(
+					sap_config->acs_cfg.ch_list_count *
+					sizeof(uint32_t));
 			if (!sap_config->acs_cfg.freq_list ||
-			    !sap_config->acs_cfg.master_ch_list) {
+			    !sap_config->acs_cfg.master_freq_list) {
 				ret = -ENOMEM;
 				goto out;
 			}
 
 			/* convert frequency to channel */
-			for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++)
+			for (i = 0; i < sap_config->acs_cfg.ch_list_count;
+			     i++) {
 				sap_config->acs_cfg.freq_list[i] =
 				wlan_reg_chan_to_freq(hdd_ctx->pdev, tmp[i]);
-
-			qdf_mem_copy(sap_config->acs_cfg.master_ch_list, tmp,
-				     sap_config->acs_cfg.ch_list_count);
+				sap_config->acs_cfg.master_freq_list[i] =
+					sap_config->acs_cfg.freq_list[i];
+			}
 			sap_config->acs_cfg.master_ch_list_count =
 					sap_config->acs_cfg.ch_list_count;
 		}
@@ -2869,10 +2871,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			sap_config->acs_cfg.freq_list = qdf_mem_malloc(
 				sap_config->acs_cfg.ch_list_count *
 				sizeof(uint32_t));
-			sap_config->acs_cfg.master_ch_list = qdf_mem_malloc(
-					sap_config->acs_cfg.ch_list_count);
+			sap_config->acs_cfg.master_freq_list = qdf_mem_malloc(
+				sap_config->acs_cfg.ch_list_count *
+				sizeof(uint32_t));
 			if (!sap_config->acs_cfg.freq_list ||
-			    !sap_config->acs_cfg.master_ch_list) {
+			    !sap_config->acs_cfg.master_freq_list) {
 				ret = -ENOMEM;
 				goto out;
 			}
@@ -2880,8 +2883,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			/* convert frequency to channel */
 			for (i = 0; i < sap_config->acs_cfg.ch_list_count;
 			     i++) {
-				sap_config->acs_cfg.master_ch_list[i] =
-					ieee80211_frequency_to_channel(freq[i]);
+				sap_config->acs_cfg.master_freq_list[i] =
+									freq[i];
 				sap_config->acs_cfg.freq_list[i] = freq[i];
 			}
 			sap_config->acs_cfg.master_ch_list_count =
@@ -2962,7 +2965,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	}
 
 	ret = wlan_hdd_set_acs_ch_range(sap_config, hw_mode,
-					   ht_enabled, vht_enabled);
+					ht_enabled, vht_enabled);
 	if (ret) {
 		hdd_err("set acs channel range failed");
 		goto out;

@@ -2488,10 +2488,10 @@ void sap_undo_acs(struct sap_context *sap_ctx, struct sap_config *sap_cfg)
 		qdf_mem_free(acs_cfg->freq_list);
 		acs_cfg->freq_list = NULL;
 	}
-	if (acs_cfg->master_ch_list) {
-		sap_debug("Clearing master ACS cfg channel list");
-		qdf_mem_free(acs_cfg->master_ch_list);
-		acs_cfg->master_ch_list = NULL;
+	if (acs_cfg->master_freq_list) {
+		sap_debug("Clearing master ACS cfg chan freq list");
+		qdf_mem_free(acs_cfg->master_freq_list);
+		acs_cfg->master_freq_list = NULL;
 	}
 	if (sap_ctx->freq_list) {
 		sap_debug("Clearing sap context ch freq list");
@@ -2841,18 +2841,20 @@ QDF_STATUS wlansap_update_owe_info(struct sap_context *sap_ctx,
 	return status;
 }
 
-static bool wlansap_is_channel_present_in_acs_list(uint8_t ch, uint8_t *ch_list,
-						   uint8_t ch_count)
+bool wlansap_is_channel_present_in_acs_list(uint32_t freq,
+					    uint32_t *ch_freq_list,
+					    uint8_t ch_count)
 {
 	uint8_t i;
 
 	for(i = 0; i < ch_count; i++) {
-		if (ch_list[i] == ch) {
+		if (ch_freq_list[i] == freq) {
 			/*
 			 * channel was given by hostpad for ACS, and is present
 			 * in PCL.
 			 */
-			sap_debug("channel present in ACS channel list %d", ch);
+			sap_debug("channel present in ACS channel list %d",
+				  freq);
 			return true;
 		}
 	}
@@ -2861,24 +2863,25 @@ static bool wlansap_is_channel_present_in_acs_list(uint8_t ch, uint8_t *ch_list,
 }
 
 QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
-				       uint8_t *ch_list,
+				       uint32_t *ch_freq_list,
 				       uint32_t *ch_cnt)
 {
 	size_t ch_index;
 	size_t target_ch_cnt = 0;
 
-	if (!sap_ctx || !ch_list || !ch_cnt ||
-	    !sap_ctx->acs_cfg->master_ch_list ||
+	if (!sap_ctx || !ch_freq_list || !ch_cnt ||
+	    !sap_ctx->acs_cfg->master_freq_list ||
 	    !sap_ctx->acs_cfg->master_ch_list_count) {
 		sap_err("NULL parameters");
 		return QDF_STATUS_E_FAULT;
 	}
 
 	for (ch_index = 0; ch_index < *ch_cnt; ch_index++) {
-		if (wlansap_is_channel_present_in_acs_list(ch_list[ch_index],
-					sap_ctx->acs_cfg->master_ch_list,
+		if (wlansap_is_channel_present_in_acs_list(
+					ch_freq_list[ch_index],
+					sap_ctx->acs_cfg->master_freq_list,
 					sap_ctx->acs_cfg->master_ch_list_count))
-			ch_list[target_ch_cnt++] = ch_list[ch_index];
+			ch_freq_list[target_ch_cnt++] = ch_freq_list[ch_index];
 	}
 
 	*ch_cnt = target_ch_cnt;
@@ -2894,17 +2897,17 @@ QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
  * This function is used to get safe channel from current regulatory valid
  * channels to restart SAP if failed to get safe channel from PCL.
  *
- * Return: Channel number to restart SAP in case of success. In case of any
+ * Return: Chan freq num to restart SAP in case of success. In case of any
  * failure, the channel number returned is zero.
  */
-static uint8_t
+static uint32_t
 wlansap_get_safe_channel(struct sap_context *sap_ctx)
 {
 	struct mac_context *mac;
-	struct sir_pcl_list pcl = {0};
-	uint32_t i, pcl_freqs[QDF_MAX_NUM_CHAN];
+	uint32_t pcl_freqs[QDF_MAX_NUM_CHAN];
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
+	uint32_t pcl_len = 0;
 
 	if (!sap_ctx) {
 		sap_err("NULL parameter");
@@ -2919,39 +2922,33 @@ wlansap_get_safe_channel(struct sap_context *sap_ctx)
 	mac_handle = MAC_HANDLE(mac);
 
 	/* get the channel list for current domain */
-	status = policy_mgr_get_valid_chans(mac->psoc,
-					    pcl_freqs,
-					    &pcl.pcl_len);
+	status = policy_mgr_get_valid_chans(mac->psoc, pcl_freqs, &pcl_len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sap_err("Error in getting valid channels");
 		return INVALID_CHANNEL_ID;
 	}
-	for (i = 0; i < pcl.pcl_len; i++)
-		pcl.pcl_list[i] = wlan_freq_to_chan(pcl_freqs[i]);
-	status = wlansap_filter_ch_based_acs(sap_ctx,
-					     pcl.pcl_list,
-					     &pcl.pcl_len);
+
+	status = wlansap_filter_ch_based_acs(sap_ctx, pcl_freqs, &pcl_len);
+
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sap_err("failed to filter ch from acs %d", status);
 		return INVALID_CHANNEL_ID;
 	}
-	for (i = 0; i < pcl.pcl_len; i++)
-		pcl_freqs[i] = wlan_chan_to_freq(pcl.pcl_list[i]);
 
-	if (pcl.pcl_len) {
+	if (pcl_len) {
 		status = policy_mgr_get_valid_chans_from_range(mac->psoc,
 							       pcl_freqs,
-							       &pcl.pcl_len,
+							       &pcl_len,
 							       PM_SAP_MODE);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			sap_err("failed to get valid channel: %d", status);
 			return INVALID_CHANNEL_ID;
 		}
 
-		if (pcl.pcl_len) {
+		if (pcl_len) {
 			sap_debug("select %d from valid channel list",
 				  pcl_freqs[0]);
-			return wlan_freq_to_chan(pcl_freqs[0]);
+			return pcl_freqs[0];
 		}
 	}
 
@@ -2975,14 +2972,15 @@ wlansap_get_safe_channel(struct sap_context *sap_ctx)
 }
 #endif
 
-uint8_t
+uint32_t
 wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx)
 {
 	struct mac_context *mac;
 	struct sir_pcl_list pcl = {0};
-	uint32_t i, pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
+	uint32_t pcl_len = 0;
 
 	if (!sap_ctx) {
 		sap_err("NULL parameter");
@@ -2997,29 +2995,26 @@ wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx)
 	mac_handle = MAC_HANDLE(mac);
 
 	status = policy_mgr_get_pcl_for_existing_conn(
-			mac->psoc, PM_SAP_MODE, pcl_freqs, &pcl.pcl_len,
+			mac->psoc, PM_SAP_MODE, pcl_freqs, &pcl_len,
 			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list),
 			false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sap_err("Get PCL failed");
 		return INVALID_CHANNEL_ID;
 	}
-	for (i = 0; i < pcl.pcl_len; i++)
-		pcl.pcl_list[i] = wlan_freq_to_chan(pcl_freqs[i]);
 
-	if (pcl.pcl_len) {
-		status = wlansap_filter_ch_based_acs(sap_ctx,
-						     pcl.pcl_list,
-						     &pcl.pcl_len);
+	if (pcl_len) {
+		status = wlansap_filter_ch_based_acs(sap_ctx, pcl_freqs,
+						     &pcl_len);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			sap_err("failed to filter ch from acs %d", status);
 			return INVALID_CHANNEL_ID;
 		}
 
-		if (pcl.pcl_len) {
-			sap_debug("select %d from valid channel list",
-				  pcl.pcl_list[0]);
-			return pcl.pcl_list[0];
+		if (pcl_len) {
+			sap_debug("select %d from valid ch freq list",
+				  pcl_freqs[0]);
+			return pcl_freqs[0];
 		}
 		sap_debug("no safe channel from PCL found in ACS range");
 	} else {

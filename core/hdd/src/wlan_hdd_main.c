@@ -9266,6 +9266,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 	uint8_t restart_chan_store[SAP_MAX_NUM_SESSION] = {0};
 	uint8_t restart_chan, ap_chan;
 	uint8_t scc_on_lte_coex = 0;
+	uint32_t restart_freq;
 	bool value;
 	QDF_STATUS status;
 	bool is_acs_support_for_dfs_ltecoex = cfg_default(CFG_USER_ACS_DFS_LTE);
@@ -9354,11 +9355,13 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 				break;
 			}
 		}
-		if (!restart_chan)
-			restart_chan =
+		if (!restart_chan) {
+			restart_freq =
 				wlansap_get_safe_channel_from_pcl_and_acs_range(
 					WLAN_HDD_GET_SAP_CTX_PTR(adapter));
-
+			restart_chan = wlan_reg_freq_to_chan(hdd_ctxt->pdev,
+							     restart_freq);
+		}
 		if (!restart_chan) {
 			hdd_err("fail to restart SAP");
 		} else {
@@ -9430,9 +9433,14 @@ static void hdd_lte_coex_restart_sap(struct hdd_adapter *adapter,
 				     struct hdd_context *hdd_ctx)
 {
 	uint8_t restart_chan;
+	uint32_t restart_freq;
 
-	restart_chan = wlansap_get_safe_channel_from_pcl_and_acs_range(
+	restart_freq = wlansap_get_safe_channel_from_pcl_and_acs_range(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+
+	restart_chan = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+					     restart_freq);
+
 	if (!restart_chan) {
 		hdd_alert("fail to restart SAP");
 		return;
@@ -15646,6 +15654,7 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 	struct hdd_context *hdd_ctx;
 	struct cds_context *cds_ctx;
 	uint8_t restart_chan;
+	uint32_t restart_freq;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -15676,9 +15685,12 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 			return;
 		hdd_warn("STA-AP Mode DFS not supported, Switch SAP channel to Non DFS");
 
-		restart_chan =
+		restart_freq =
 			wlansap_get_safe_channel_from_pcl_and_acs_range(
 				WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter));
+
+		restart_chan = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+						     restart_freq);
 		if (!restart_chan ||
 		    wlan_reg_is_dfs_ch(hdd_ctx->pdev, restart_chan))
 			restart_chan = SAP_DEFAULT_5GHZ_CHANNEL;

@@ -465,21 +465,6 @@ uint32_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg);
 bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx);
 
 /**
- * sap_channel_in_acs_channel_list() - check if channel in acs channel list
- * @channel_num: channel to check
- * @sap_ctx: struct ptSapContext
- * @spect_info_params: strcut tSapChSelSpectInfo
- *
- * This function checks if specified channel is in the configured ACS channel
- * list.
- *
- * Return: channel number if in acs channel list or SAP_CHANNEL_NOT_SELECTED
- */
-uint8_t sap_channel_in_acs_channel_list(uint8_t channel_num,
-					struct sap_context *sap_ctx,
-					tSapChSelSpectInfo *spect_info_params);
-
-/**
  * sap_chan_bond_dfs_sub_chan - check bonded channel includes dfs sub chan
  * @sap_context: Handle to SAP context.
  * @channel_number: chan whose bonded chan will be checked

@@ -354,39 +354,6 @@ static void sap_process_avoid_ie(mac_handle_t mac_handle,
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 /**
- * sap_channel_in_acs_channel_list() - check if channel in acs channel list
- * @channel_num: channel to check
- * @sap_ctx: struct ptSapContext
- * @spect_info_params: strcut tSapChSelSpectInfo
- *
- * This function checks if specified channel is in the configured ACS channel
- * list.
- *
- * Return: channel number if in acs channel list or SAP_CHANNEL_NOT_SELECTED
- */
-uint8_t sap_channel_in_acs_channel_list(uint8_t channel_num,
-					struct sap_context *sap_ctx,
-					tSapChSelSpectInfo *spect_info_params)
-{
-	uint8_t i = 0;
-
-	if ((!sap_ctx->acs_cfg->master_ch_list) ||
-	    (!spect_info_params))
-		return channel_num;
-
-	if (channel_num > 0 && channel_num <= 252) {
-		for (i = 0; i < sap_ctx->acs_cfg->master_ch_list_count; i++) {
-			if ((sap_ctx->acs_cfg->master_ch_list[i]) ==
-			     channel_num)
-				return channel_num;
-		}
-		return SAP_CHANNEL_NOT_SELECTED;
-	} else {
-		return SAP_CHANNEL_NOT_SELECTED;
-	}
-}
-
-/**
  * sap_select_preferred_channel_from_channel_list() - to calc best cahnnel
  * @best_chnl: best channel already calculated among all the chanels
  * @sap_ctx: sap context
@@ -2461,6 +2428,7 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 	uint32_t start_ch_num, end_ch_num, tmp_ch_num, operating_band = 0;
 #endif
 	struct mac_context *mac_ctx;
+	uint32_t chan_freq;
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -2569,9 +2537,10 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 			continue;
 
 		tmp_ch_num = spect_info->pSpectCh[count].chNum;
-		tmp_ch_num = sap_channel_in_acs_channel_list(
-					tmp_ch_num, sap_ctx, spect_info);
-		if (tmp_ch_num == SAP_CHANNEL_NOT_SELECTED)
+		chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, tmp_ch_num);
+		if (!wlansap_is_channel_present_in_acs_list(chan_freq,
+					sap_ctx->acs_cfg->freq_list,
+					sap_ctx->acs_cfg->ch_list_count))
 			continue;
 
 		best_ch_num = tmp_ch_num;
