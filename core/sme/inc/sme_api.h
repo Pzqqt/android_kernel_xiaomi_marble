@@ -1038,7 +1038,7 @@ QDF_STATUS sme_get_roam_rssi_diff(mac_handle_t mac_handle, uint8_t vdev_id,
 				  uint8_t *rssi_diff);
 QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 					     uint8_t sessionId,
-					     uint8_t *pChannelList,
+					     uint32_t *channel_freq_list,
 					     uint8_t numChannels);
 
 /**
@@ -1060,7 +1060,7 @@ sme_update_roam_scan_freq_list(mac_handle_t mac_handle, uint8_t vdev_id,
 			       uint32_t freq_list_type);
 QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 					      uint8_t sessionId,
-					      uint8_t *pChannelList,
+					      uint32_t *chan_freq_list,
 					      uint8_t numChannels);
 QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 					  uint8_t *pChannelList,
@@ -3355,7 +3355,7 @@ bool sme_is_sta_key_exchange_in_progress(mac_handle_t mac_handle,
 /*
  * sme_validate_channel_list() - Validate the given channel list
  * @mac_handle: Opaque handle to the global MAC context
- * @chan_list: Pointer to the channel list
+ * @chan_freq_list: Pointer to the channel list
  * @num_channels: number of channels present in the chan_list
  *
  * Validates the given channel list with base channels in mac context
@@ -3363,7 +3363,7 @@ bool sme_is_sta_key_exchange_in_progress(mac_handle_t mac_handle,
  * Return: True if all channels in the list are valid, false otherwise
  */
 bool sme_validate_channel_list(mac_handle_t mac_handle,
-			       uint8_t *chan_list,
+			       uint32_t *chan_freq_list,
 			       uint8_t num_channels);
 /**
  * sme_set_amsdu() - set amsdu enable/disable based on user cfg

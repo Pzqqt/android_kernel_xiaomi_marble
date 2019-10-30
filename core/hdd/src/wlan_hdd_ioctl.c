@@ -1808,8 +1808,9 @@ hdd_parse_sendactionframe(struct hdd_adapter *adapter, const char *command,
 
 /**
  * hdd_parse_channellist() - HDD Parse channel list
+ * @hdd_ctx: hdd context
  * @command: Pointer to input channel list
- * @channel_list: Pointer to local output array to record
+ * @channel_freq_list: Pointer to local output array to record
  *                channel list
  * @num_channels: Pointer to number of roam scan channels
  *
@@ -1826,7 +1827,9 @@ hdd_parse_sendactionframe(struct hdd_adapter *adapter, const char *command,
  * Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
+hdd_parse_channellist(struct hdd_context *hdd_ctx,
+		      const uint8_t *command,
+		      uint32_t *channel_freq_list,
 		      uint8_t *num_channels)
 {
 	const uint8_t *in_ptr = command;
@@ -1907,10 +1910,11 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 		    (temp_int > WNI_CFG_CURRENT_CHANNEL_STAMAX)) {
 			return -EINVAL;
 		}
-		channel_list[j] = temp_int;
+		channel_freq_list[j] =
+			wlan_reg_chan_to_freq(hdd_ctx->pdev, temp_int);
 
 		hdd_debug("Channel %d added to preferred channel list",
-			  channel_list[j]);
+			  channel_freq_list[j]);
 	}
 
 	return 0;
@@ -1937,14 +1941,21 @@ static int
 hdd_parse_set_roam_scan_channels_v1(struct hdd_adapter *adapter,
 				    const char *command)
 {
-	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t num_chan = 0;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 	mac_handle_t mac_handle;
 
-	ret = hdd_parse_channellist(command, channel_list, &num_chan);
+	if (!hdd_ctx) {
+		hdd_err("invalid hdd ctx");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	ret = hdd_parse_channellist(hdd_ctx, command, channel_freq_list,
+				    &num_chan);
 	if (ret) {
 		hdd_err("Failed to parse channel list information");
 		goto exit;
@@ -1962,7 +1973,8 @@ hdd_parse_set_roam_scan_channels_v1(struct hdd_adapter *adapter,
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
-	if (!sme_validate_channel_list(mac_handle, channel_list, num_chan)) {
+	if (!sme_validate_channel_list(mac_handle,
+				       channel_freq_list, num_chan)) {
 		hdd_err("List contains invalid channel(s)");
 		ret = -EINVAL;
 		goto exit;
@@ -1970,7 +1982,8 @@ hdd_parse_set_roam_scan_channels_v1(struct hdd_adapter *adapter,
 
 	status = sme_change_roam_scan_channel_list(mac_handle,
 						   adapter->vdev_id,
-						   channel_list, num_chan);
+						   channel_freq_list,
+						   num_chan);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to update channel list information");
 		ret = -EINVAL;
@@ -2003,7 +2016,7 @@ hdd_parse_set_roam_scan_channels_v2(struct hdd_adapter *adapter,
 				    const char *command)
 {
 	const uint8_t *value;
-	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t channel;
 	uint8_t num_chan;
 	int i;
@@ -2043,11 +2056,13 @@ hdd_parse_set_roam_scan_channels_v2(struct hdd_adapter *adapter,
 			ret = -EINVAL;
 			goto exit;
 		}
-		channel_list[i] = channel;
+		channel_freq_list[i] = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+							     channel);
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
-	if (!sme_validate_channel_list(mac_handle, channel_list, num_chan)) {
+	if (!sme_validate_channel_list(mac_handle, channel_freq_list,
+				       num_chan)) {
 		hdd_err("List contains invalid channel(s)");
 		ret = -EINVAL;
 		goto exit;
@@ -2055,7 +2070,7 @@ hdd_parse_set_roam_scan_channels_v2(struct hdd_adapter *adapter,
 
 	status = sme_change_roam_scan_channel_list(mac_handle,
 						   adapter->vdev_id,
-						   channel_list, num_chan);
+						   channel_freq_list, num_chan);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to update channel list information");
 		ret = -EINVAL;
@@ -5520,12 +5535,19 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t num_channels = 0;
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 
-	ret = hdd_parse_channellist(value, channel_list, &num_channels);
+	if (!hdd_ctx) {
+		hdd_err("invalid hdd ctx");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	ret = hdd_parse_channellist(hdd_ctx, value, channel_freq_list,
+				    &num_channels);
 	if (ret) {
 		hdd_err("Failed to parse channel list information");
 		goto exit;
@@ -5539,7 +5561,7 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
-	if (!sme_validate_channel_list(mac_handle, channel_list,
+	if (!sme_validate_channel_list(mac_handle, channel_freq_list,
 				       num_channels)) {
 		hdd_err("List contains invalid channel(s)");
 		ret = -EINVAL;
@@ -5548,7 +5570,7 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 
 	status = sme_set_ese_roam_scan_channel_list(mac_handle,
 						    adapter->vdev_id,
-						    channel_list,
+						    channel_freq_list,
 						    num_channels);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to update channel list information");

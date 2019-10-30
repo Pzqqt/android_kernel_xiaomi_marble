@@ -1726,7 +1726,7 @@ QDF_STATUS sme_get_tsm_stats(mac_handle_t mac_handle,
  * sme_set_ese_roam_scan_channel_list() - To set ese roam scan channel list
  * @mac_handle: Opaque handle to the global MAC context
  * @sessionId: sme session id
- * @pChannelList: Output channel list
+ * @chan_freq_list: Output channel list
  * @numChannels: Output number of channels
  *
  * This routine is called to set ese roam scan channel list.
@@ -1736,15 +1736,15 @@ QDF_STATUS sme_get_tsm_stats(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 					      uint8_t sessionId,
-					      uint8_t *pChannelList,
+					      uint32_t *chan_freq_list,
 					      uint8_t numChannels)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 	tpCsrChannelInfo curchnl_list_info = NULL;
-	uint8_t oldChannelList[CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
-	uint8_t newChannelList[128] = { 0 };
+	uint8_t oldChannelList[CFG_VALID_CHANNEL_LIST_LEN * 5] = { 0 };
+	uint8_t newChannelList[CFG_VALID_CHANNEL_LIST_LEN * 5] = { 0 };
 	uint8_t i = 0, j = 0;
 	enum band_info band = -1;
 
@@ -1771,7 +1771,7 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 	}
         ucfg_reg_get_band(mac->pdev, &band);
 	status = csr_create_roam_scan_channel_list(mac, sessionId,
-				pChannelList, numChannels,
+				chan_freq_list, numChannels,
 				band);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (curchnl_list_info->freq_list) {
@@ -7425,19 +7425,13 @@ sme_update_roam_scan_channel_list(mac_handle_t mac_handle, uint8_t vdev_id,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	uint8_t *channel_list;
-
-	channel_list = qdf_mem_malloc(SIR_MAX_SUPPORTED_CHANNEL_LIST);
-	if (!channel_list)
-		return QDF_STATUS_E_NOMEM;
 
 	if (chan_info->numOfChannels) {
 		sme_debug("Current channels:");
 		sme_dump_freq_list(chan_info);
 	}
 	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
-	sme_freq_to_chan_list(mac->pdev, channel_list, freq_list, num_chan);
-	csr_create_bg_scan_roam_channel_list(mac, chan_info, channel_list,
+	csr_create_bg_scan_roam_channel_list(mac, chan_info, freq_list,
 					     num_chan);
 	sme_debug("New channels:");
 	sme_dump_freq_list(chan_info);
@@ -7448,8 +7442,6 @@ sme_update_roam_scan_channel_list(mac_handle_t mac_handle, uint8_t vdev_id,
 		status = csr_roam_update_cfg(mac, vdev_id,
 					     REASON_CHANNEL_LIST_CHANGED);
 
-	qdf_mem_free(channel_list);
-
 	return status;
 }
 
@@ -7457,7 +7449,7 @@ sme_update_roam_scan_channel_list(mac_handle_t mac_handle, uint8_t vdev_id,
  * sme_change_roam_scan_channel_list() - to change scan channel list
  * @mac_handle: Opaque handle to the global MAC context
  * @sessionId: sme session id
- * @channel_list: Output channel list
+ * @channel_freq_list: Output channel list
  * @numChannels: Output number of channels
  *
  * This routine is called to Change roam scan channel list.
@@ -7467,14 +7459,14 @@ sme_update_roam_scan_channel_list(mac_handle_t mac_handle, uint8_t vdev_id,
  */
 QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 					     uint8_t sessionId,
-					     uint8_t *channel_list,
+					     uint32_t *channel_freq_list,
 					     uint8_t numChannels)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
-	uint8_t oldChannelList[CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
-	uint8_t newChannelList[CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
+	uint8_t oldChannelList[CFG_VALID_CHANNEL_LIST_LEN * 5] = { 0 };
+	uint8_t newChannelList[CFG_VALID_CHANNEL_LIST_LEN * 5] = { 0 };
 	uint8_t i = 0, j = 0;
 	tCsrChannelInfo *chan_info;
 
@@ -7497,14 +7489,14 @@ QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 			if (j < sizeof(oldChannelList))
 				j += snprintf(oldChannelList + j,
 					sizeof(oldChannelList) -
-					j, "%d",
+					j, " %d",
 					chan_info->freq_list[i]);
 			else
 				break;
 		}
 	}
 	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
-	csr_create_bg_scan_roam_channel_list(mac, chan_info, channel_list,
+	csr_create_bg_scan_roam_channel_list(mac, chan_info, channel_freq_list,
 					     numChannels);
 	sme_set_roam_scan_control(mac_handle, sessionId, 1);
 	if (chan_info->freq_list) {
@@ -15208,7 +15200,7 @@ bool sme_is_sta_key_exchange_in_progress(mac_handle_t mac_handle,
 }
 
 bool sme_validate_channel_list(mac_handle_t mac_handle,
-			       uint8_t *chan_list,
+			       uint32_t *chan_freq_list,
 			       uint8_t num_channels)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
@@ -15217,8 +15209,9 @@ bool sme_validate_channel_list(mac_handle_t mac_handle,
 	bool found;
 	struct csr_channel *ch_lst_info = &mac_ctx->scan.base_channels;
 
-	if (!chan_list || !num_channels) {
-		sme_err("Chan list empty %pK or num_channels is 0", chan_list);
+	if (!chan_freq_list || !num_channels) {
+		sme_err("Chan list empty %pK or num_channels is 0",
+			chan_freq_list);
 		return false;
 	}
 
@@ -15226,14 +15219,14 @@ bool sme_validate_channel_list(mac_handle_t mac_handle,
 		found = false;
 		for (j = 0; j < ch_lst_info->numChannels; j++) {
 			if (ch_lst_info->channel_freq_list[j] ==
-				wlan_reg_chan_to_freq(mac_ctx->pdev, chan_list[i])) {
+					chan_freq_list[i]) {
 				found = true;
 				break;
 			}
 		}
 
 		if (!found) {
-			sme_debug("Invalid channel %d", chan_list[i]);
+			sme_debug("Invalid channel %d", chan_freq_list[i]);
 			return false;
 		}
 

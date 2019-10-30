@@ -2063,18 +2063,20 @@ csr_flush_roam_scan_chan_lists(struct mac_context *mac, uint8_t vdev_id)
 
 QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
 						tCsrChannelInfo *channel_info,
-						const uint8_t *chan_list,
+						const uint32_t *chan_freq_list,
 						const uint8_t num_chan)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t i;
 
 	channel_info->freq_list = qdf_mem_malloc(sizeof(uint32_t) * num_chan);
 	if (!channel_info->freq_list)
 		return QDF_STATUS_E_NOMEM;
 
 	channel_info->numOfChannels = num_chan;
-	sme_chan_to_freq_list(mac->pdev, channel_info->freq_list,
-			      chan_list, num_chan);
+	for (i = 0; i < num_chan; i++)
+		channel_info->freq_list[i] = chan_freq_list[i];
+
 	return status;
 }
 
@@ -2169,7 +2171,7 @@ is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
  * csr_create_roam_scan_channel_list() - create roam scan channel list
  * @mac: Global mac pointer
  * @sessionId: session id
- * @chan_list: pointer to channel list
+ * @chan_freq_list: pointer to channel list
  * @numChannels: number of channels
  * @band: band enumeration
  *
@@ -2185,7 +2187,7 @@ is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
  */
 QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 					     uint8_t sessionId,
-					     uint8_t *chan_list,
+					     uint32_t *chan_freq_list,
 					     uint8_t numChannels,
 					     const enum band_info band)
 {
@@ -2195,10 +2197,10 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 		= &mac->roam.neighborRoamInfo[sessionId];
 	uint8_t out_num_chan = 0;
 	uint8_t inNumChannels = numChannels;
-	uint8_t *in_ptr = chan_list;
+	uint32_t *in_ptr = chan_freq_list;
 	uint8_t i = 0;
-	uint8_t ChannelList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint8_t tmp_chan_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint32_t csr_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint32_t tmp_chan_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t mergedOutputNumOfChannels = 0;
 
 	tpCsrChannelInfo currChannelListInfo
@@ -2221,25 +2223,25 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 	}
 	if (BAND_2G == band) {
 		for (i = 0; i < inNumChannels; i++) {
-			if (WLAN_REG_IS_24GHZ_CH(in_ptr[i])
-			    && csr_roam_is_channel_valid(mac, in_ptr[i])) {
-				ChannelList[out_num_chan++] = in_ptr[i];
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(in_ptr[i]) &&
+			    csr_roam_is_chan_freq_valid(mac, in_ptr[i])) {
+				csr_freq_list[out_num_chan++] = in_ptr[i];
 			}
 		}
 	} else if (BAND_5G == band) {
 		for (i = 0; i < inNumChannels; i++) {
 			/* Add 5G Non-DFS channel */
-			if (WLAN_REG_IS_5GHZ_CH(in_ptr[i]) &&
-			    csr_roam_is_channel_valid(mac, in_ptr[i]) &&
-			    !wlan_reg_is_dfs_ch(mac->pdev, in_ptr[i])) {
-				ChannelList[out_num_chan++] = in_ptr[i];
+			if (WLAN_REG_IS_5GHZ_CH_FREQ(in_ptr[i]) &&
+			    csr_roam_is_chan_freq_valid(mac, in_ptr[i]) &&
+			    !wlan_reg_is_dfs_for_freq(mac->pdev, in_ptr[i])) {
+				csr_freq_list[out_num_chan++] = in_ptr[i];
 			}
 		}
 	} else if (BAND_ALL == band) {
 		for (i = 0; i < inNumChannels; i++) {
-			if (csr_roam_is_channel_valid(mac, in_ptr[i]) &&
-			    !wlan_reg_is_dfs_ch(mac->pdev, in_ptr[i])) {
-				ChannelList[out_num_chan++] = in_ptr[i];
+			if (csr_roam_is_chan_freq_valid(mac, in_ptr[i]) &&
+			    !wlan_reg_is_dfs_for_freq(mac->pdev, in_ptr[i])) {
+				csr_freq_list[out_num_chan++] = in_ptr[i];
 			}
 		}
 	} else {
@@ -2256,14 +2258,13 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 	 * list are already filtered for 2.4G channels, hence ignore this check
 	 */
 	if ((BAND_ALL == band) && CSR_IS_ROAM_INTRA_BAND_ENABLED(mac)) {
-		csr_neighbor_roam_channels_filter_by_current_band(mac,
-								  sessionId,
-								  ChannelList,
-								  out_num_chan,
-								  tmp_chan_list,
-							          &out_num_chan
-								  );
-		qdf_mem_copy(ChannelList, tmp_chan_list, out_num_chan);
+		csr_neighbor_roam_channels_filter_by_current_band(
+						mac,
+						sessionId,
+						csr_freq_list,
+						out_num_chan,
+						tmp_chan_freq_list,
+						&out_num_chan);
 	}
 	/* Prepare final roam scan channel list */
 	if (out_num_chan) {
@@ -2279,9 +2280,10 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 			currChannelListInfo->numOfChannels = 0;
 			return QDF_STATUS_E_NOMEM;
 		}
-		sme_chan_to_freq_list(mac->pdev,
-				      currChannelListInfo->freq_list,
-				      ChannelList, out_num_chan);
+		for (i = 0; i < out_num_chan; i++)
+			currChannelListInfo->freq_list[i] =
+				tmp_chan_freq_list[i];
+
 		currChannelListInfo->numOfChannels = out_num_chan;
 	}
 	return status;
