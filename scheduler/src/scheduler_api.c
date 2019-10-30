@@ -19,6 +19,7 @@
 #include <scheduler_api.h>
 #include <scheduler_core.h>
 #include <qdf_atomic.h>
+#include <qdf_module.h>
 
 QDF_STATUS scheduler_disable(void)
 {
@@ -698,3 +699,5 @@ QDF_STATUS scheduler_post_message_debug(QDF_MODULE_ID src_id,
 
 	return status;
 }
+
+qdf_export_symbol(scheduler_post_message_debug);
