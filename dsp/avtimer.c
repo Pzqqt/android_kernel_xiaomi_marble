@@ -271,6 +271,7 @@ int avcs_core_disable_power_collapse(int enable)
 				rc = avcs_core_disable_avtimer(
 				avtimer.timer_handle);
 				avtimer.timer_handle = 0;
+				atomic_set(&avtimer.adsp_ready, 0);
 			}
 		}
 	}
