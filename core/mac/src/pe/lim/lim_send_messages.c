@@ -473,9 +473,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	struct obss_ht40_scanind *ht40_obss_scanind;
 	uint32_t channelnum, chan_freq;
 	struct scheduler_msg msg = {0};
-	uint8_t chan_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t channel24gnum, count;
-	uint8_t i;
 
 	ht40_obss_scanind = qdf_mem_malloc(sizeof(struct obss_ht40_scanind));
 	if (!ht40_obss_scanind)
@@ -507,17 +505,13 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 			mac_ctx->pdev, session->curr_op_freq),
 			session->ch_width);
 	channelnum = mac_ctx->mlme_cfg->reg.valid_channel_list_num;
-	for (i = 0; i < channelnum; i++) {
-		chan_list[i] = wlan_reg_freq_to_chan(mac_ctx->pdev,
-						     mac_ctx->mlme_cfg->reg.valid_channel_freq_list[i]);
-	}
 
 	/* Extract 24G channel list */
 	channel24gnum = 0;
 	for (count = 0; count < channelnum &&
 		(channel24gnum < SIR_ROAM_MAX_CHANNELS); count++) {
-		chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev,
-						  chan_list[count]);
+		chan_freq =
+			mac_ctx->mlme_cfg->reg.valid_channel_freq_list[count];
 		if (wlan_reg_is_24ghz_ch_freq(chan_freq)) {
 			ht40_obss_scanind->chan_freq_list[channel24gnum] =
 				chan_freq;
