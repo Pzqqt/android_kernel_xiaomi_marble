@@ -144,7 +144,7 @@ qdf_export_symbol(tgt_dfs_set_current_channel_for_freq);
 #endif
 
 QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
-				int no_cac, uint32_t opmode)
+				int no_cac, uint32_t opmode, bool enable)
 {
 	struct wlan_dfs *dfs;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
@@ -158,8 +158,14 @@ QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
 	}
 
 	if (!dfs->dfs_is_offload_enabled) {
-		dfs_radar_enable(dfs, no_cac, opmode);
-		return QDF_STATUS_SUCCESS;
+		if (enable) {
+			dfs_radar_enable(dfs, no_cac, opmode);
+			return QDF_STATUS_SUCCESS;
+		} else {
+			dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				  "Disabling dfs not allowed for non-offload chips");
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
 
 	psoc = wlan_pdev_get_psoc(pdev);
@@ -174,7 +180,7 @@ QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
 		return  QDF_STATUS_E_FAILURE;
 	}
 
-	status = dfs_tx_ops->dfs_send_offload_enable_cmd(pdev, true);
+	status = dfs_tx_ops->dfs_send_offload_enable_cmd(pdev, enable);
 	if (QDF_IS_STATUS_ERROR(status))
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			"Failed to enable dfs offload, pdev_id: %d",

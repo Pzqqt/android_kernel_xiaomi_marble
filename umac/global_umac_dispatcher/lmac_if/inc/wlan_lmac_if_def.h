@@ -1298,9 +1298,11 @@ struct wlan_lmac_if_dfs_rx_ops {
 			uint32_t r_rs_tstamp,
 			uint64_t r_fulltsf);
 	QDF_STATUS (*dfs_destroy_object)(struct wlan_objmgr_pdev *pdev);
-	QDF_STATUS (*dfs_radar_enable)(struct wlan_objmgr_pdev *pdev,
+	QDF_STATUS (*dfs_radar_enable)(
+			struct wlan_objmgr_pdev *pdev,
 			int no_cac,
-			uint32_t opmode);
+			uint32_t opmode,
+			bool enable);
 	void (*dfs_is_radar_enabled)(struct wlan_objmgr_pdev *pdev,
 				     int *ignore_dfs);
 	QDF_STATUS (*dfs_control)(struct wlan_objmgr_pdev *pdev,

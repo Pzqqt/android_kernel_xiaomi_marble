@@ -163,12 +163,14 @@ tgt_dfs_set_current_channel_for_freq(struct wlan_objmgr_pdev *pdev,
  * tgt_dfs_radar_enable() - Enables the radar.
  * @pdev: Pointer to DFS pdev object.
  * @no_cac: If no_cac is 0, it cancels the CAC.
+ * @enable: disable/enable radar
  *
  * This is called each time a channel change occurs, to (potentially) enable
  * the radar code.
  */
-QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
-	int no_cac, uint32_t opmode);
+QDF_STATUS tgt_dfs_radar_enable(
+	struct wlan_objmgr_pdev *pdev,
+	int no_cac, uint32_t opmode, bool enable);
 
 /**
  * tgt_dfs_control()- Used to process ioctls related to DFS.
@@ -220,8 +222,9 @@ static inline QDF_STATUS tgt_dfs_set_current_channel(
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
-	int no_cac, uint32_t opmode)
+static inline QDF_STATUS tgt_dfs_radar_enable(
+	struct wlan_objmgr_pdev *pdev,
+	int no_cac, uint32_t opmode, bool enable)
 {
 	return QDF_STATUS_SUCCESS;
 }
