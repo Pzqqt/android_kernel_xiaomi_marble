@@ -1642,17 +1642,29 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 		switch (w->shift) {
 		case 0:
 			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_0_1, 0x0F,
+				0x00);
+			snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x10, 0x00);
 			break;
 		case 1:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_0_1, 0xF0,
+				0x00);
 			snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x20, 0x00);
 			break;
 		case 2:
 			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_2_3, 0x0F,
+				0x00);
+			snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x40, 0x00);
 			break;
 		case 3:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_2_3, 0xF0,
+				0x00);
 			snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x00);
 			break;
