@@ -267,6 +267,7 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 	struct s_ext_cap *ext_cap;
 	uint8_t chan_center_freq_seg1;
 	tDot11fIEVHTCaps *vht_caps;
+	uint8_t channel = 0;
 
 	beacon_struct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (!beacon_struct)
@@ -387,6 +388,8 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 		 */
 		session->ch_center_freq_seg0 = vht_op->chan_center_freq_seg0;
 		session->ch_center_freq_seg1 = chan_center_freq_seg1;
+		channel = wlan_reg_freq_to_chan(mac_ctx->pdev,
+						beacon_struct->chan_freq);
 		if (vht_ch_wd == WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ) {
 			/* DUT or AP supports only 160MHz */
 			if (ap_bcon_ch_width ==
@@ -396,8 +399,7 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 					session->ch_center_freq_seg1 =
 						vht_op->chan_center_freq_seg0;
 					session->ch_center_freq_seg0 =
-						lim_get_80Mhz_center_channel(
-						beacon_struct->channelNumber);
+						lim_get_80Mhz_center_channel(channel);
 				}
 			} else {
 				/* DUT supports only 160MHz and AP is
@@ -413,8 +415,7 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 					!new_ch_width_dfn)
 				/* AP is in 160MHz mode */
 				session->ch_center_freq_seg0 =
-					lim_get_80Mhz_center_channel(
-						beacon_struct->channelNumber);
+					lim_get_80Mhz_center_channel(channel);
 			else
 				session->ch_center_freq_seg1 = 0;
 		}

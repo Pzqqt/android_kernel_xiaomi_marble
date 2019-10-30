@@ -4497,30 +4497,20 @@ lim_prepare_for11h_channel_switch(struct mac_context *mac, struct pe_session *pe
 	lim_stop_tx_and_switch_channel(mac, pe_session->peSessionId);
 }
 
-/**----------------------------------------------------
-   \fn        lim_get_nw_type
-
-   \brief    Get type of the network from data packet or beacon
-   \param mac
-   \param channelNum - Channel number
-   \param type - Type of packet.
-   \param pBeacon - Pointer to beacon or probe response
-
-   \return Network type a/b/g.
-   -----------------------------------------------------*/
-tSirNwType lim_get_nw_type(struct mac_context *mac, uint8_t channelNum, uint32_t type,
+tSirNwType lim_get_nw_type(struct mac_context *mac, uint32_t chan_freq, uint32_t type,
 			   tpSchBeaconStruct pBeacon)
 {
 	tSirNwType nwType = eSIR_11B_NW_TYPE;
 
+	/* Logic to be cleaned up for 11AC & 11AX */
 	if (type == SIR_MAC_DATA_FRAME) {
-		if ((channelNum > 0) && (channelNum < 15)) {
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) {
 			nwType = eSIR_11G_NW_TYPE;
 		} else {
 			nwType = eSIR_11A_NW_TYPE;
 		}
 	} else {
-		if ((channelNum > 0) && (channelNum < 15)) {
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) {
 			int i;
 			/* 11b or 11g packet */
 			/* 11g iff extended Rate IE is present or */
@@ -4546,26 +4536,23 @@ tSirNwType lim_get_nw_type(struct mac_context *mac, uint8_t channelNum, uint32_t
 	return nwType;
 }
 
-/**---------------------------------------------------------
-   \fn        lim_get_channel_from_beacon
-   \brief    To extract channel number from beacon
-
-   \param mac
-   \param pBeacon - Pointer to beacon or probe rsp
-   \return channel number
-   -----------------------------------------------------------*/
-uint8_t lim_get_channel_from_beacon(struct mac_context *mac, tpSchBeaconStruct pBeacon)
+uint32_t lim_get_channel_from_beacon(struct mac_context *mac, tpSchBeaconStruct pBeacon)
 {
-	uint8_t channelNum = 0;
+	uint8_t chan_freq = 0;
 
-	if (pBeacon->dsParamsPresent)
-		channelNum = pBeacon->channelNumber;
+	if (pBeacon->he_op.oper_info_6g_present)
+		chan_freq = wlan_reg_chan_band_to_freq(mac->pdev,
+						   pBeacon->he_op.oper_info_6g.info.primary_ch,
+						   BIT(REG_BAND_6G));
+	else if (pBeacon->dsParamsPresent)
+		chan_freq = pBeacon->chan_freq;
 	else if (pBeacon->HTInfo.present)
-		channelNum = pBeacon->HTInfo.primaryChannel;
+		chan_freq = wlan_reg_legacy_chan_to_freq(mac->pdev,
+							 pBeacon->HTInfo.primaryChannel);
 	else
-		channelNum = pBeacon->channelNumber;
+		chan_freq = pBeacon->chan_freq;
 
-	return channelNum;
+	return chan_freq;
 }
 
 void lim_set_tspec_uapsd_mask_per_session(struct mac_context *mac,

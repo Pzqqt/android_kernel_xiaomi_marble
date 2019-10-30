@@ -108,6 +108,7 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 	tSirProbeRespBeacon *probe_rsp;
 	uint8_t qos_enabled = false;
 	uint8_t wme_enabled = false;
+	uint32_t chan_freq = 0;
 
 	if (!session_entry) {
 		pe_err("session_entry is NULL");
@@ -204,14 +205,16 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 		}
 		if (!LIM_IS_CONNECTION_ACTIVE(session_entry)) {
 			pe_warn("Recved Probe Resp from AP,AP-alive");
-			if (probe_rsp->HTInfo.present)
+			if (probe_rsp->HTInfo.present) {
+				chan_freq =
+				    wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
+								 probe_rsp->HTInfo.primaryChannel);
+				lim_received_hb_handler(mac_ctx, chan_freq,
+							session_entry);
+			} else
 				lim_received_hb_handler(mac_ctx,
-					probe_rsp->HTInfo.primaryChannel,
-					session_entry);
-			else
-				lim_received_hb_handler(mac_ctx,
-					(uint8_t)probe_rsp->channelNumber,
-					session_entry);
+							probe_rsp->chan_freq,
+							session_entry);
 		}
 		if (LIM_IS_STA_ROLE(session_entry) &&
 				!wma_is_csa_offload_enabled()) {

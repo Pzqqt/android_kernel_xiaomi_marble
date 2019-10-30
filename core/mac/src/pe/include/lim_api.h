@@ -235,7 +235,18 @@ static inline tLimSmeStates lim_get_sme_state(struct mac_context *mac)
 	return mac->lim.gLimSmeState;
 }
 
-void lim_received_hb_handler(struct mac_context *, uint8_t,
+/**
+ * lim_received_hb_handler() - This function is called by
+ * sch_beacon_process() upon receiving a Beacon on STA. This
+ * also gets called upon receiving Probe Response after heat
+ * beat failure is detected.
+ *
+ * @mac - global mac structure
+ * @chan_freq - channel frequency indicated in Beacon, Probe
+ *
+ * Response return - none
+ */
+void lim_received_hb_handler(struct mac_context *, uint32_t,
 			     struct pe_session *);
 
 /* / Function that triggers STA context deletion */

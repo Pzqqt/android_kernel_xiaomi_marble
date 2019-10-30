@@ -2447,11 +2447,17 @@ QDF_STATUS sir_convert_probe_frame2_struct(struct mac_context *mac,
 			     sizeof(tDot11fIEHTInfo));
 	}
 
-	if (pr->DSParams.present) {
+	if (pr->he_op.oper_info_6g_present) {
+		pProbeResp->chan_freq = wlan_reg_chan_band_to_freq(mac->pdev,
+						pr->he_op.oper_info_6g.info.primary_ch,
+						BIT(REG_BAND_6G));
+	} else if (pr->DSParams.present) {
 		pProbeResp->dsParamsPresent = 1;
-		pProbeResp->channelNumber = pr->DSParams.curr_channel;
+		pProbeResp->chan_freq =
+		    wlan_reg_legacy_chan_to_freq(mac->pdev, pr->DSParams.curr_channel);
 	} else if (pr->HTInfo.present) {
-		pProbeResp->channelNumber = pr->HTInfo.primaryChannel;
+		pProbeResp->chan_freq =
+		    wlan_reg_legacy_chan_to_freq(mac->pdev, pr->HTInfo.primaryChannel);
 	}
 
 	if (pr->RSNOpaque.present) {
@@ -3893,11 +3899,19 @@ sir_parse_beacon_ie(struct mac_context *mac,
 			     sizeof(tDot11fIEHTInfo));
 	}
 
-	if (pBies->DSParams.present) {
+	if (pBies->he_op.oper_info_6g_present) {
+		pBeaconStruct->chan_freq = wlan_reg_chan_band_to_freq(mac->pdev,
+						pBies->he_op.oper_info_6g.info.primary_ch,
+						BIT(REG_BAND_6G));
+	} else if (pBies->DSParams.present) {
 		pBeaconStruct->dsParamsPresent = 1;
-		pBeaconStruct->channelNumber = pBies->DSParams.curr_channel;
+		pBeaconStruct->chan_freq =
+		    wlan_reg_legacy_chan_to_freq(mac->pdev,
+						 pBies->DSParams.curr_channel);
 	} else if (pBies->HTInfo.present) {
-		pBeaconStruct->channelNumber = pBies->HTInfo.primaryChannel;
+		pBeaconStruct->chan_freq =
+		    wlan_reg_legacy_chan_to_freq(mac->pdev,
+						 pBies->HTInfo.primaryChannel);
 	}
 
 	if (pBies->RSN.present) {
@@ -4214,15 +4228,21 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
 
 	}
 
-	if (pBeacon->DSParams.present) {
+	if (pBeacon->he_op.oper_info_6g_present) {
+		pBeaconStruct->chan_freq = wlan_reg_chan_band_to_freq(mac->pdev,
+						pBeacon->he_op.oper_info_6g.info.primary_ch,
+						BIT(REG_BAND_6G));
+	} else if (pBeacon->DSParams.present) {
 		pBeaconStruct->dsParamsPresent = 1;
-		pBeaconStruct->channelNumber = pBeacon->DSParams.curr_channel;
+		pBeaconStruct->chan_freq =
+		    wlan_reg_legacy_chan_to_freq(mac->pdev,
+						 pBeacon->DSParams.curr_channel);
 	} else if (pBeacon->HTInfo.present) {
-		pBeaconStruct->channelNumber = pBeacon->HTInfo.primaryChannel;
+		pBeaconStruct->chan_freq =
+		    wlan_reg_legacy_chan_to_freq(mac->pdev,
+						 pBeacon->HTInfo.primaryChannel);
 	} else {
-		pBeaconStruct->channelNumber =
-			wlan_reg_freq_to_chan(mac->pdev,
-					      WMA_GET_RX_FREQ(pFrame));
+		pBeaconStruct->chan_freq = WMA_GET_RX_FREQ(pFrame);
 		pe_debug_rl("In Beacon No Channel info");
 	}
 

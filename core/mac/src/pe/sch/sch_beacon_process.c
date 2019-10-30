@@ -57,8 +57,7 @@ ap_beacon_process_5_ghz(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	if (!session->htCapability)
 		return;
 
-	if (bcn_struct->channelNumber != wlan_reg_freq_to_chan(
-		mac_ctx->pdev, session->curr_op_freq))
+	if (bcn_struct->chan_freq != session->curr_op_freq)
 		return;
 
 	/* 11a (non HT) AP  overlaps or */
@@ -101,8 +100,7 @@ ap_beacon_process_24_ghz(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	/* We are 11G AP. */
 	if ((phy_mode == WNI_CFG_PHY_MODE_11G) &&
 	    (false == session->htCapability)) {
-		if (bcn_struct->channelNumber != wlan_reg_freq_to_chan(
-			mac_ctx->pdev, session->curr_op_freq))
+		if (bcn_struct->chan_freq != session->curr_op_freq)
 			return;
 
 		tmp_exp = (!bcn_struct->erpPresent &&
@@ -131,8 +129,7 @@ ap_beacon_process_24_ghz(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	if (!session->htCapability)
 		return;
 
-	if (bcn_struct->channelNumber != wlan_reg_freq_to_chan(
-		mac_ctx->pdev, session->curr_op_freq))
+	if (bcn_struct->chan_freq != session->curr_op_freq)
 		return;
 
 	tmp_exp = (!bcn_struct->erpPresent && !bcn_struct->HTInfo.present) ||
@@ -351,12 +348,9 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 	 * This is the Beacon received from the AP  we're currently associated
 	 * with. Check if there are any changes in AP's capabilities
 	 */
-	if (bcn->channelNumber != wlan_reg_freq_to_chan(
-		mac_ctx->pdev, session->curr_op_freq)) {
+	if (bcn->chan_freq != session->curr_op_freq) {
 		pe_err("Channel Change freq from %d --> %d - Ignoring beacon!",
-		       session->curr_op_freq,
-		       wlan_reg_chan_to_freq(
-				mac_ctx->pdev, bcn->channelNumber));
+		       session->curr_op_freq, bcn->chan_freq);
 		return false;
 	}
 
@@ -810,6 +804,7 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	tpSirMacMgmtHdr pMh = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	int8_t regMax = 0, maxTxPower = 0, local_constraint;
 	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
+	uint32_t chan_freq = 0;
 
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
 	beaconParams.paramChangeBitmap = 0;
@@ -901,12 +896,12 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	}
 
 	/* Indicate to LIM that Beacon is received */
-	if (bcn->HTInfo.present)
-		lim_received_hb_handler(mac_ctx,
-				(uint8_t) bcn->HTInfo.primaryChannel, session);
-	else
-		lim_received_hb_handler(mac_ctx, (uint8_t) bcn->channelNumber,
-				session);
+	if (bcn->HTInfo.present) {
+		chan_freq = wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
+							 bcn->HTInfo.primaryChannel);
+		lim_received_hb_handler(mac_ctx, chan_freq, session);
+	} else
+		lim_received_hb_handler(mac_ctx, bcn->chan_freq, session);
 
 	/*
 	 * I don't know if any additional IE is required here. Currently, not
@@ -1108,8 +1103,7 @@ void sch_send_beacon_report(struct mac_context *mac_ctx,
 		qdf_mem_copy(&beacon_report.time_stamp,
 			     &beacon_struct->timeStamp, sizeof(qdf_time_t));
 		beacon_report.beacon_interval = beacon_struct->beaconInterval;
-		beacon_report.frequency =
-				cds_chan_to_freq(beacon_struct->channelNumber);
+		beacon_report.frequency = beacon_struct->chan_freq;
 
 		beacon_report.ssid.length = beacon_struct->ssId.length;
 		qdf_mem_copy(&beacon_report.ssid.ssid,

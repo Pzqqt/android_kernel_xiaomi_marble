@@ -69,7 +69,7 @@ lim_collect_bss_description(struct mac_context *mac,
 	uint8_t *pBody;
 	uint32_t ieLen = 0;
 	tpSirMacMgmtHdr pHdr;
-	uint8_t channel_num;
+	uint32_t chan_freq;
 	uint8_t rfBand = 0;
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
@@ -130,12 +130,12 @@ lim_collect_bss_description(struct mac_context *mac,
 	 * This fix will work for 5Ghz 11n devices, but for 11a devices, we have to rely on RXP routing flag to get the correct channel.
 	 * So The problem of incorrect channel reporting in 5Ghz will still remain for 11a devices.
 	 */
-	channel_num = lim_get_channel_from_beacon(mac, pBPR);
-	pBssDescr->chan_freq = wlan_reg_chan_to_freq(mac->pdev, channel_num);
+	chan_freq = lim_get_channel_from_beacon(mac, pBPR);
+	pBssDescr->chan_freq = chan_freq;
 
 	/* set the network type in bss description */
 	pBssDescr->nwType =
-		lim_get_nw_type(mac, channel_num, SIR_MAC_MGMT_FRAME, pBPR);
+		lim_get_nw_type(mac, chan_freq, SIR_MAC_MGMT_FRAME, pBPR);
 
 	/* Copy RSSI & SINR from BD */
 	pBssDescr->rssi = (int8_t) WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo);
@@ -189,7 +189,7 @@ lim_collect_bss_description(struct mac_context *mac,
 		     pBody + SIR_MAC_B_PR_SSID_OFFSET, ieLen);
 
 	/*set channel number in beacon in case it is not present */
-	pBPR->channelNumber = channel_num;
+	pBPR->chan_freq = chan_freq;
 	mac->lim.beacon_probe_rsp_cnt_per_scan++;
 
 	return;

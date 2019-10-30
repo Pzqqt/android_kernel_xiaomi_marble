@@ -201,7 +201,7 @@ typedef struct sSirProbeRespBeacon {
 	tSirMacSSid ssId;
 	tSirMacRateSet supportedRates;
 	tSirMacRateSet extendedRates;
-	tSirMacChanNum channelNumber;
+	uint32_t chan_freq;
 	tSirMacCfParamSet cfParamSet;
 	tSirMacTim tim;
 	tSirMacEdcaParamSetIE edcaParams;

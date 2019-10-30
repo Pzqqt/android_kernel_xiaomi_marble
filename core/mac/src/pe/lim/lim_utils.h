@@ -501,10 +501,30 @@ void lim_delete_dialogue_token_list(struct mac_context *mac);
 void lim_add_channel_status_info(struct mac_context *p_mac,
 				 struct lim_channel_status *channel_stat,
 				 uint8_t channel_id);
-uint8_t lim_get_channel_from_beacon(struct mac_context *mac,
-		tpSchBeaconStruct pBeacon);
-tSirNwType lim_get_nw_type(struct mac_context *mac, uint8_t channelNum,
-		uint32_t type, tpSchBeaconStruct pBeacon);
+
+/**
+ * lim_get_channel_from_beacon() - extract channel number
+ * from beacon and convert to channel frequency
+ * @mac: Pointer to Global MAC structure
+ * @pBeacon: Pointer to beacon or probe rsp
+ *
+ * Return: channel frequency
+ */
+uint32_t lim_get_channel_from_beacon(struct mac_context *mac,
+				     tpSchBeaconStruct pBeacon);
+
+/**
+ * lim_get_nw_type() - Get type of the network from
+ * data packet or beacon
+ * @mac: Pointer to Global MAC structure
+ * @chan_freq: Channel frequency
+ * @type: Type of packet
+ * @pBeacon: Pointer to beacon or probe response
+ *
+ * Return: Network type a/b/g
+ */
+tSirNwType lim_get_nw_type(struct mac_context *mac, uint32_t chan_freq,
+			   uint32_t type, tpSchBeaconStruct pBeacon);
 
 void lim_set_tspec_uapsd_mask_per_session(struct mac_context *mac,
 		struct pe_session *pe_session,
