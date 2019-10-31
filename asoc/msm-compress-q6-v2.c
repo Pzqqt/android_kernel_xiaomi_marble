@@ -1503,6 +1503,7 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 	struct audio_client *ac = prtd->audio_client;
 	uint32_t stream_index;
 	uint32_t enc_cfg_id = ENC_CFG_ID_NONE;
+	bool compress_ts = false;
 
 	switch (prtd->codec_param.codec.format) {
 	case SNDRV_PCM_FORMAT_S24_LE:
@@ -1552,22 +1553,19 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 			return ret;
 		}
 	} else {
-		if (prtd->codec_param.codec.flags & COMPRESSED_TIMESTAMP_FLAG) {
+		if (prtd->codec_param.codec.flags & COMPRESSED_TIMESTAMP_FLAG)
+			compress_ts = true;
+
+		if (q6core_get_avcs_api_version_per_service(
+				APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+				ADSP_ASM_API_VERSION_V2)
+			ret = q6asm_open_read_v5(prtd->audio_client,
+					prtd->codec, bits_per_sample,
+					compress_ts, enc_cfg_id);
+		else
 			ret = q6asm_open_read_v4(prtd->audio_client,
-					prtd->codec,
-					bits_per_sample, true, enc_cfg_id);
-		} else {
-			if (q6core_get_avcs_api_version_per_service(
-					APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
-					ADSP_ASM_API_VERSION_V2)
-				ret = q6asm_open_read_v5(prtd->audio_client,
-						prtd->codec, bits_per_sample,
-						false, enc_cfg_id);
-			else
-				ret = q6asm_open_read_v4(prtd->audio_client,
-						prtd->codec, bits_per_sample,
-						false, enc_cfg_id);
-		}
+					prtd->codec, bits_per_sample,
+					compress_ts, enc_cfg_id);
 		if (ret < 0) {
 			pr_err("%s: q6asm_open_read failed:%d\n",
 					__func__, ret);
