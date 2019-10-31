@@ -1036,12 +1036,14 @@ void lim_log_he_6g_cap(struct mac_context *mac,
  * lim_log_he_op() - Print HE Operation
  * @mac: pointer to MAC context
  * @he_op: pointer to HE Operation
+ * @session: pointer to PE session
  *
  * Print HE operation stored as dot11f structure
  *
  * Return: None
  */
-void lim_log_he_op(struct mac_context *mac, tDot11fIEhe_op *he_ops);
+void lim_log_he_op(struct mac_context *mac, tDot11fIEhe_op *he_ops,
+		   struct pe_session *session);
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 /**
@@ -1270,7 +1272,8 @@ static inline void lim_copy_join_req_he_cap(struct pe_session *session,
 }
 
 static inline void lim_log_he_op(struct mac_context *mac,
-	tDot11fIEhe_op *he_ops)
+				 tDot11fIEhe_op *he_ops,
+				 struct pe_session *session)
 {
 }
 
