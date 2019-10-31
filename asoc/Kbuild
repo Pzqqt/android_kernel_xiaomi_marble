@@ -104,6 +104,8 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 
 ############ ASoC Drivers ############
 
+MACHINE_OBJS += msm_common.o
+
 # for SM8150 sound card driver
 ifdef CONFIG_SND_SOC_SM8150
 	MACHINE_OBJS += sm8150.o
