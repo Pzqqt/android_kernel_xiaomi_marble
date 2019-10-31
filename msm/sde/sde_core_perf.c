@@ -992,6 +992,7 @@ static ssize_t _sde_core_perf_mode_write(struct file *file,
 	struct sde_perf_cfg *cfg = &perf->catalog->perf;
 	u32 perf_mode = 0;
 	char buf[10];
+	int ret = 0;
 
 	if (!perf)
 		return -ENODEV;
@@ -1017,6 +1018,13 @@ static ssize_t _sde_core_perf_mode_write(struct file *file,
 		perf->perf_tune.min_core_clk = perf->max_core_clk_rate;
 		perf->perf_tune.min_bus_vote =
 				(u64) cfg->max_bw_high * 1000;
+
+		ret = sde_power_clk_set_rate(perf->phandle,
+				perf->clk_name, perf->max_core_clk_rate);
+		if (ret)
+			SDE_ERROR("failed to set %s clock rate %llu\n",
+					perf->clk_name,
+					perf->max_core_clk_rate);
 		DRM_INFO("minimum performance mode\n");
 	} else if (perf_mode == SDE_PERF_MODE_NORMAL) {
 		/* reset the perf tune params to 0 */
