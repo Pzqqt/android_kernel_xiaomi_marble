@@ -12833,6 +12833,10 @@ QDF_STATUS hdd_md_host_evt_cb(void *ctx, struct sir_md_evt *event)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	/* When motion is detected, reset the motion_det_in_progress flag */
+	if (event->status)
+		adapter->motion_det_in_progress = false;
+
 	hdd_debug("Motion Detection CB vdev_id=%u, status=%u",
 		  event->vdev_id, event->status);
 

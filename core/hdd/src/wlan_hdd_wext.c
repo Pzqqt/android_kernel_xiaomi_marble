@@ -5491,8 +5491,14 @@ static int hdd_we_motion_det_start_stop(struct hdd_adapter *adapter, int value)
 	motion_det.vdev_id = adapter->vdev_id;
 	motion_det.enable = value;
 
-	if (!value)
+	if (value) {
+		/* For motion detection start, set motion_det_in_progress */
+		adapter->motion_det_in_progress = true;
+	} else {
+		/* For motion detection stop, reset motion_det_in_progress */
+		adapter->motion_det_in_progress = false;
 		adapter->motion_detection_mode = 0;
+	}
 
 	sme_motion_det_enable(hdd_ctx->mac_handle, &motion_det);
 
@@ -5515,6 +5521,12 @@ static int hdd_we_motion_det_base_line_start_stop(struct hdd_adapter *adapter,
 	if (value < 0 || value > 1) {
 		hdd_err("Invalid value %d in mt_bl_start", value);
 		return -EINVAL;
+	}
+
+	/* Do not send baselining start/stop during motion detection phase */
+	if (adapter->motion_det_in_progress) {
+		hdd_err("Motion detection still in progress, try later");
+		return -EAGAIN;
 	}
 
 	motion_det_base_line.vdev_id = adapter->vdev_id;

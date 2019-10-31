@@ -1307,6 +1307,7 @@ struct hdd_adapter {
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 	bool motion_detection_mode;
 	bool motion_det_cfg;
+	bool motion_det_in_progress;
 	uint32_t motion_det_baseline_value;
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 };
