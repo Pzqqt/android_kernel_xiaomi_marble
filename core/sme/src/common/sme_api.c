@@ -5223,7 +5223,7 @@ QDF_STATUS sme_set_tsf_gpio(mac_handle_t mac_handle, uint32_t pinvalue)
 }
 #endif
 
-QDF_STATUS sme_get_cfg_valid_channels(uint8_t *valid_ch, uint32_t *len)
+QDF_STATUS sme_get_cfg_valid_channels(uint32_t *valid_ch_freq, uint32_t *len)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac_ctx = sme_get_mac_context();
@@ -5249,8 +5249,7 @@ QDF_STATUS sme_get_cfg_valid_channels(uint8_t *valid_ch, uint32_t *len)
 	}
 
 	for (i = 0; i < *len; i++)
-		valid_ch[i] =
-		   wlan_reg_freq_to_chan(mac_ctx->pdev, valid_ch_freq_list[i]);
+		valid_ch_freq[i] = valid_ch_freq_list[i];
 
 	qdf_mem_free(valid_ch_freq_list);
 
@@ -9753,119 +9752,111 @@ QDF_STATUS sme_abort_roam_scan(mac_handle_t mac_handle, uint8_t sessionId)
 	return status;
 }
 
-/**
- * sme_get_valid_channels_by_band() - to fetch valid channels filtered by band
- * @mac_handle: Opaque handle to the global MAC context
- * @wifiBand: RF band information
- * @aValidChannels: output array to store channel info
- * @pNumChannels: output number of channels
- *
- *  SME API to fetch all valid channels filtered by band
- *
- *  Return: QDF_STATUS
- */
 QDF_STATUS sme_get_valid_channels_by_band(mac_handle_t mac_handle,
-					  uint8_t wifiBand,
-					  uint32_t *aValidChannels,
-					  uint8_t *pNumChannels)
+					  uint8_t wifi_band,
+					  uint32_t *valid_chan_list,
+					  uint8_t *valid_chan_len)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t chanList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint8_t numChannels = 0;
+	uint32_t chan_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t num_channels = 0;
 	uint8_t i = 0;
-	uint32_t totValidChannels = CFG_VALID_CHANNEL_LIST_LEN;
+	uint32_t valid_channels = CFG_VALID_CHANNEL_LIST_LEN;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
-	if (!aValidChannels || !pNumChannels) {
+	if (!valid_chan_list || !valid_chan_len) {
 		sme_err("Output channel list/NumChannels is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (wifiBand >= WIFI_BAND_MAX) {
-		sme_err("Invalid wifiBand: %d", wifiBand);
+	if (wifi_band >= WIFI_BAND_MAX) {
+		sme_err("Invalid wifi Band: %d", wifi_band);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = sme_get_cfg_valid_channels(&chanList[0],
-			&totValidChannels);
+	status = sme_get_cfg_valid_channels(&chan_freq_list[0],
+					    &valid_channels);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Fail to get valid channel list (err=%d)", status);
 		return status;
 	}
 
-	switch (wifiBand) {
+	switch (wifi_band) {
 	case WIFI_BAND_UNSPECIFIED:
 		sme_debug("Unspec Band, return all %d valid channels",
-			  totValidChannels);
-		numChannels = totValidChannels;
-		for (i = 0; i < totValidChannels; i++)
-			aValidChannels[i] = cds_chan_to_freq(chanList[i]);
+			  valid_channels);
+		num_channels = valid_channels;
+		for (i = 0; i < valid_channels; i++)
+			valid_chan_list[i] = chan_freq_list[i];
 		break;
 
 	case WIFI_BAND_BG:
 		sme_debug("WIFI_BAND_BG (2.4 GHz)");
-		for (i = 0; i < totValidChannels; i++) {
-			if (WLAN_REG_IS_24GHZ_CH(chanList[i]))
-				aValidChannels[numChannels++] =
-					cds_chan_to_freq(chanList[i]);
+		for (i = 0; i < valid_channels; i++) {
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq_list[i]))
+				valid_chan_list[num_channels++] =
+					chan_freq_list[i];
 		}
 		break;
 
 	case WIFI_BAND_A:
 		sme_debug("WIFI_BAND_A (5 GHz without DFS)");
-		for (i = 0; i < totValidChannels; i++) {
-			if (WLAN_REG_IS_5GHZ_CH(chanList[i]) &&
-			    !wlan_reg_is_dfs_ch(mac_ctx->pdev, chanList[i]))
-				aValidChannels[numChannels++] =
-					cds_chan_to_freq(chanList[i]);
+		for (i = 0; i < valid_channels; i++) {
+			if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq_list[i]) &&
+			    !wlan_reg_is_dfs_for_freq(mac_ctx->pdev,
+						      chan_freq_list[i]))
+				valid_chan_list[num_channels++] =
+					chan_freq_list[i];
 		}
 		break;
 
 	case WIFI_BAND_ABG:
 		sme_debug("WIFI_BAND_ABG (2.4 GHz + 5 GHz; no DFS)");
-		for (i = 0; i < totValidChannels; i++) {
-			if ((WLAN_REG_IS_24GHZ_CH(chanList[i]) ||
-			     WLAN_REG_IS_5GHZ_CH(chanList[i])) &&
-			    !wlan_reg_is_dfs_ch(mac_ctx->pdev, chanList[i]))
-				aValidChannels[numChannels++] =
-					cds_chan_to_freq(chanList[i]);
+		for (i = 0; i < valid_channels; i++) {
+			if ((WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq_list[i]) ||
+			     WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq_list[i])) &&
+			    !wlan_reg_is_dfs_for_freq(mac_ctx->pdev,
+						      chan_freq_list[i]))
+				valid_chan_list[num_channels++] =
+					chan_freq_list[i];
 		}
 		break;
 
 	case WIFI_BAND_A_DFS_ONLY:
 		sme_debug("WIFI_BAND_A_DFS (5 GHz DFS only)");
-		for (i = 0; i < totValidChannels; i++) {
-			if (WLAN_REG_IS_5GHZ_CH(chanList[i]) &&
-			    wlan_reg_is_dfs_ch(mac_ctx->pdev, chanList[i]))
-				aValidChannels[numChannels++] =
-					cds_chan_to_freq(chanList[i]);
+		for (i = 0; i < valid_channels; i++) {
+			if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq_list[i]) &&
+			    wlan_reg_is_dfs_for_freq(mac_ctx->pdev,
+						     chan_freq_list[i]))
+				valid_chan_list[num_channels++] =
+					chan_freq_list[i];
 		}
 		break;
 
 	case WIFI_BAND_A_WITH_DFS:
 		sme_debug("WIFI_BAND_A_WITH_DFS (5 GHz with DFS)");
-		for (i = 0; i < totValidChannels; i++) {
-			if (WLAN_REG_IS_5GHZ_CH(chanList[i]))
-				aValidChannels[numChannels++] =
-					cds_chan_to_freq(chanList[i]);
+		for (i = 0; i < valid_channels; i++) {
+			if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq_list[i]))
+				valid_chan_list[num_channels++] =
+					chan_freq_list[i];
 		}
 		break;
 
 	case WIFI_BAND_ABG_WITH_DFS:
 		sme_debug("WIFI_BAND_ABG_WITH_DFS (2.4 GHz+5 GHz with DFS)");
-		for (i = 0; i < totValidChannels; i++) {
-			if (WLAN_REG_IS_24GHZ_CH(chanList[i]) ||
-			    WLAN_REG_IS_5GHZ_CH(chanList[i]))
-				aValidChannels[numChannels++] =
-					cds_chan_to_freq(chanList[i]);
+		for (i = 0; i < valid_channels; i++) {
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq_list[i]) ||
+			    WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq_list[i]))
+				valid_chan_list[num_channels++] =
+					chan_freq_list[i];
 		}
 		break;
 
 	default:
-		sme_err("Unknown wifiBand: %d", wifiBand);
+		sme_err("Unknown wifi Band: %d", wifi_band);
 		return QDF_STATUS_E_INVAL;
 	}
-	*pNumChannels = numChannels;
+	*valid_chan_len = num_channels;
 
 	return status;
 }

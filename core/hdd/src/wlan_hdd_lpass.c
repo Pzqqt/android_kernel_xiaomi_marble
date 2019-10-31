@@ -88,6 +88,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 	uint8_t buflen = WLAN_SVC_COUNTRY_CODE_LEN;
 	int i;
 	uint32_t chan_id;
+	uint32_t *chan_freq_list, chan_freq_len;
 	struct svc_channel_info *chan_info;
 	bool lpass_support;
 	QDF_STATUS status;
@@ -122,16 +123,29 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		data->lpss_support = 1;
 	else
 		data->lpss_support = 0;
-	data->numChannels = WLAN_SVC_MAX_NUM_CHAN;
-	sme_get_cfg_valid_channels(data->channel_list,
-				   &data->numChannels);
+
+	chan_freq_list =
+		qdf_mem_malloc(sizeof(uint32_t) * WLAN_SVC_MAX_NUM_CHAN);
+	if (!chan_freq_list)
+		return -ENOMEM;
+
+	chan_freq_len = WLAN_SVC_MAX_NUM_CHAN;
+	sme_get_cfg_valid_channels(chan_freq_list, &chan_freq_len);
+
+	data->numChannels = chan_freq_len;
 
 	for (i = 0; i < data->numChannels; i++) {
 		chan_info = &data->channel_info[i];
+		data->channel_list[i] =
+			wlan_reg_freq_to_chan(hdd_ctx->pdev, chan_freq_list[i]);
 		chan_id = data->channel_list[i];
 		chan_info->chan_id = chan_id;
-		wlan_hdd_get_channel_info(hdd_ctx, chan_info, chan_id);
+		wlan_hdd_get_channel_info(hdd_ctx,
+					  chan_info,
+					  chan_freq_list[i]);
 	}
+
+	qdf_mem_free(chan_freq_list);
 
 	sme_get_country_code(hdd_ctx->mac_handle, data->country_code, &buflen);
 	data->is_on = is_on;

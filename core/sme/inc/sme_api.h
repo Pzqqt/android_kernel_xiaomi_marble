@@ -772,8 +772,16 @@ uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
 					      eCsrPhyMode sapPhyMode,
 					      uint8_t cc_switch_mode);
 #endif
-QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
-		uint32_t *len);
+
+/**
+ * sme_get_cfg_valid_channels() - To get valid channel list
+ * @valid_ch_freq: pointer to array which save the valid channel list
+ * @len: the length of the valid channel list
+ *
+ * Return: QDF status
+ */
+QDF_STATUS sme_get_cfg_valid_channels(uint32_t *valid_ch_freq, uint32_t *len);
+
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 		tpSirRcvFltMcAddrList pMulticastAddrs);
@@ -1346,10 +1354,21 @@ QDF_STATUS sme_update_dfs_scan_mode(mac_handle_t mac_handle,
 		uint8_t allowDFSChannelRoam);
 uint8_t sme_get_dfs_scan_mode(mac_handle_t mac_handle);
 
+/**
+ * sme_get_valid_channels_by_band() - to fetch valid channels filtered by band
+ * @mac_handle: Opaque handle to the global MAC context
+ * @wifi_band: RF band information
+ * @valid_chan_list: output array to store channel info
+ * @valid_chan_len: output number of channels
+ *
+ *  SME API to fetch all valid channels filtered by band
+ *
+ *  Return: QDF_STATUS
+ */
 QDF_STATUS sme_get_valid_channels_by_band(mac_handle_t mac_handle,
-					  uint8_t wifiBand,
-					  uint32_t *aValidChannels,
-					  uint8_t *pNumChannels);
+					  uint8_t wifi_band,
+					  uint32_t *valid_chan_list,
+					  uint8_t *valid_chan_len);
 
 #ifdef FEATURE_WLAN_EXTSCAN
 /**

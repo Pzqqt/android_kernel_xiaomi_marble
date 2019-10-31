@@ -58,8 +58,8 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 {
 	QDF_STATUS status;
 	struct hdd_config *config;
-	uint32_t num_chan;
-	uint8_t *chan_list;
+	uint32_t num_chan, i;
+	uint32_t *chan_freq_list;
 	uint8_t band_capability;
 	uint16_t neighbor_scan_min_chan_time;
 	uint16_t neighbor_scan_max_chan_time;
@@ -77,11 +77,10 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 		return -EIO;
 	}
 
-	chan_list = qdf_mem_malloc(sizeof(uint8_t) * OEM_CAP_MAX_NUM_CHANNELS);
-	if (!chan_list) {
-		hdd_err("Memory allocation failed");
+	chan_freq_list =
+		qdf_mem_malloc(sizeof(uint32_t) * OEM_CAP_MAX_NUM_CHANNELS);
+	if (!chan_freq_list)
 		return -ENOMEM;
-	}
 
 	strlcpy(data_cap->oem_target_signature, OEM_TARGET_SIGNATURE,
 		OEM_TARGET_SIGNATURE_LEN);
@@ -107,27 +106,28 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 
 	/* request for max num of channels */
 	num_chan = OEM_CAP_MAX_NUM_CHANNELS;
-	status = sme_get_cfg_valid_channels(
-					    &chan_list[0], &num_chan);
+	status = sme_get_cfg_valid_channels(&chan_freq_list[0], &num_chan);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("failed to get valid channel list, status: %d", status);
-		qdf_mem_free(chan_list);
+		qdf_mem_free(chan_freq_list);
 		return -EINVAL;
 	}
 
 	/* make sure num channels is not more than chan list array */
 	if (num_chan > OEM_CAP_MAX_NUM_CHANNELS) {
-		hdd_err("Num of channels-%d > length-%d of chan_list",
+		hdd_err("Num of channels-%d > length-%d of chan_freq_list",
 			num_chan, OEM_CAP_MAX_NUM_CHANNELS);
-		qdf_mem_free(chan_list);
+		qdf_mem_free(chan_freq_list);
 		return -ENOMEM;
 	}
 
 	data_cap->num_channels = num_chan;
-	qdf_mem_copy(data_cap->channel_list, chan_list,
-		     sizeof(uint8_t) * num_chan);
+	for (i = 0; i < num_chan; i++) {
+		data_cap->channel_list[i] =
+			wlan_reg_freq_to_chan(hdd_ctx->pdev, chan_freq_list[i]);
+	}
 
-	qdf_mem_free(chan_list);
+	qdf_mem_free(chan_freq_list);
 	return 0;
 }
 
