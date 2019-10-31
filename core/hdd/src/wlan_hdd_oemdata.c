@@ -381,43 +381,28 @@ static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
 	return status;
 }
 
-/**
- * update_channel_bw_info() - set bandwidth info for the chan
- * @hdd_ctx: hdd context
- * @chan: channel for which info are required
- * @chan_info: struct where the bandwidth info is filled
- *
- * This function find the maximum bandwidth allowed, secondary
- * channel offset and center freq for the channel as per regulatory
- * domain and using these info calculate the phy mode for the
- * channel.
- *
- * Return: void
- */
 void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
-				uint16_t chan, void *chan_info)
+				uint32_t chan_freq, void *chan_info)
 {
 	struct ch_params ch_params = {0};
-	uint16_t sec_ch_2g = 0;
 	enum wlan_phymode phy_mode;
 	uint16_t fw_phy_mode;
 	uint32_t wni_dot11_mode;
 	struct hdd_channel_info *hdd_chan_info = chan_info;
-	uint32_t freq;
 
 	wni_dot11_mode = sme_get_wni_dot11_mode(hdd_ctx->mac_handle);
 
 	/* Passing CH_WIDTH_MAX will give the max bandwidth supported */
 	ch_params.ch_width = CH_WIDTH_MAX;
 
-	wlan_reg_set_channel_params(hdd_ctx->pdev, chan, sec_ch_2g, &ch_params);
+	wlan_reg_set_channel_params_for_freq(
+		hdd_ctx->pdev, chan_freq, 0, &ch_params);
 	if (ch_params.center_freq_seg0)
 		hdd_chan_info->band_center_freq1 =
 			cds_chan_to_freq(ch_params.center_freq_seg0);
 
 	if (ch_params.ch_width < CH_WIDTH_INVALID) {
-		freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, chan);
-		phy_mode = wma_chan_phy_mode(freq, ch_params.ch_width,
+		phy_mode = wma_chan_phy_mode(chan_freq, ch_params.ch_width,
 					     wni_dot11_mode);
 	}
 	else
@@ -431,9 +416,9 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 	fw_phy_mode = wma_host_to_fw_phymode(phy_mode);
 
 	hdd_debug("chan %d dot11_mode %d ch_width %d sec offset %d freq_seg0 %d phy_mode %d fw_phy_mode %d",
-		chan, wni_dot11_mode, ch_params.ch_width,
-		ch_params.sec_ch_offset,
-		hdd_chan_info->band_center_freq1, phy_mode, fw_phy_mode);
+		  chan_freq, wni_dot11_mode, ch_params.ch_width,
+		  ch_params.sec_ch_offset,
+		  hdd_chan_info->band_center_freq1, phy_mode, fw_phy_mode);
 
 	WMI_SET_CHANNEL_MODE(hdd_chan_info, fw_phy_mode);
 }
@@ -454,12 +439,12 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 	tAniMsgHdr *ani_hdr;
 	struct hdd_channel_info *pHddChanInfo;
 	struct hdd_channel_info hddChanInfo;
-	uint8_t chanId;
 	uint32_t reg_info_1;
 	uint32_t reg_info_2;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int i;
 	uint8_t *buf;
+	uint32_t chan_freq;
 
 	/* OEM msg is always to a specific process and cannot be a broadcast */
 	if (p_hdd_ctx->oem_pid == 0) {
@@ -498,24 +483,26 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 						    i *
 						    sizeof(*pHddChanInfo));
 
-		chanId = chanList[i];
-		status = sme_get_reg_info(p_hdd_ctx->mac_handle, chanId,
+		chan_freq = wlan_reg_legacy_chan_to_freq(
+				p_hdd_ctx->pdev, chanList[i]);
+		status = sme_get_reg_info(p_hdd_ctx->mac_handle, chan_freq,
 					  &reg_info_1, &reg_info_2);
 		if (QDF_STATUS_SUCCESS == status) {
 			/* copy into hdd chan info struct */
 			hddChanInfo.reserved0 = 0;
-			hddChanInfo.mhz = wlan_reg_chan_to_freq(p_hdd_ctx->pdev, chanId);
+			hddChanInfo.mhz = chan_freq;
 			hddChanInfo.band_center_freq1 = hddChanInfo.mhz;
 			hddChanInfo.band_center_freq2 = 0;
 
 			hddChanInfo.info = 0;
 			if (CHANNEL_STATE_DFS ==
-			    wlan_reg_get_channel_state(p_hdd_ctx->pdev, chanId))
+			    wlan_reg_get_channel_state_for_freq(
+				p_hdd_ctx->pdev, chan_freq))
 				WMI_SET_CHANNEL_FLAG(&hddChanInfo,
 						     WMI_CHAN_FLAG_DFS);
 
 			hdd_update_channel_bw_info(p_hdd_ctx,
-						chanId, &hddChanInfo);
+						chan_freq, &hddChanInfo);
 			hddChanInfo.reg_info_1 = reg_info_1;
 			hddChanInfo.reg_info_2 = reg_info_2;
 		} else {
@@ -523,9 +510,9 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 			 * channel info struct
 			 */
 			hdd_debug("sme_get_reg_info failed for chan: %d, fill 0s",
-				   chanId);
+				   chan_freq);
 			hddChanInfo.reserved0 = 0;
-			hddChanInfo.mhz = wlan_reg_chan_to_freq(p_hdd_ctx->pdev, chanId);
+			hddChanInfo.mhz = chan_freq;
 			hddChanInfo.band_center_freq1 = 0;
 			hddChanInfo.band_center_freq2 = 0;
 			hddChanInfo.info = 0;

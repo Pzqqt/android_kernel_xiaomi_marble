@@ -1177,7 +1177,19 @@ QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle,
 QDF_STATUS sme_set_ht2040_mode(mac_handle_t mac_handle, uint8_t sessionId,
 			       uint8_t channel_type, bool obssEnabled);
 #endif
-QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint8_t chanId,
+
+/**
+ * sme_get_reg_info() - To get tx power information
+ * @mac_handle: Opaque handle to the global MAC context
+ * @chan_freq: channel freq
+ * @regInfo1: first reg info to fill
+ * @regInfo2: second reg info to fill
+ *
+ * This routine will give you tx power information
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint32_t chan_freq,
 			    uint32_t *regInfo1, uint32_t *regInfo2);
 
 #ifdef FEATURE_WLAN_CH_AVOID

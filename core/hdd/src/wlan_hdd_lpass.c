@@ -34,33 +34,32 @@
  * wlan_hdd_get_channel_info() - Get channel info
  * @hdd_ctx: HDD context
  * @chan_info: Pointer to the structure that stores channel info
- * @chan_id: Channel ID
+ * @chan_freq: Channel freq
  *
  * Fill in the channel info to chan_info structure.
  */
 static void wlan_hdd_get_channel_info(struct hdd_context *hdd_ctx,
 				      struct svc_channel_info *chan_info,
-				      uint32_t chan_id)
+				      uint32_t chan_freq)
 {
 	uint32_t reg_info_1;
 	uint32_t reg_info_2;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	status = sme_get_reg_info(hdd_ctx->mac_handle, chan_id,
+	status = sme_get_reg_info(hdd_ctx->mac_handle, chan_freq,
 				  &reg_info_1, &reg_info_2);
 	if (status != QDF_STATUS_SUCCESS)
 		return;
 
-	chan_info->mhz = cds_chan_to_freq(chan_id);
+	chan_info->mhz = chan_freq;
 	chan_info->band_center_freq1 = chan_info->mhz;
 	chan_info->band_center_freq2 = 0;
 	chan_info->info = 0;
 	if (CHANNEL_STATE_DFS ==
-	    wlan_reg_get_channel_state(hdd_ctx->pdev,
-				       chan_id))
+	    wlan_reg_get_channel_state_for_freq(hdd_ctx->pdev, chan_freq))
 		WMI_SET_CHANNEL_FLAG(chan_info,
 				     WMI_CHAN_FLAG_DFS);
-	hdd_update_channel_bw_info(hdd_ctx, chan_id,
+	hdd_update_channel_bw_info(hdd_ctx, chan_freq,
 				   chan_info);
 	chan_info->reg_info_1 = reg_info_1;
 	chan_info->reg_info_2 = reg_info_2;

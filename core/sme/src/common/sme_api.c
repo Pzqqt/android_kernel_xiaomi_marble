@@ -8764,18 +8764,7 @@ QDF_STATUS sme_update_sta_inactivity_timeout(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sme_get_reg_info() - To get registration info
- * @mac_handle: Opaque handle to the global MAC context
- * @chanId: channel id
- * @regInfo1: first reg info to fill
- * @regInfo2: second reg info to fill
- *
- * This routine will give you reg info
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint8_t chanId,
+QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint32_t chan_freq,
 			    uint32_t *regInfo1, uint32_t *regInfo2)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -8790,8 +8779,7 @@ QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint8_t chanId,
 		return status;
 
 	for (i = 0; i < CFG_VALID_CHANNEL_LIST_LEN; i++) {
-		if (mac->scan.defaultPowerTable[i].center_freq ==
-		    wlan_reg_chan_to_freq(mac->pdev, chanId)) {
+		if (mac->scan.defaultPowerTable[i].center_freq == chan_freq) {
 			SME_SET_CHANNEL_REG_POWER(*regInfo1,
 				mac->scan.defaultPowerTable[i].tx_power);
 
