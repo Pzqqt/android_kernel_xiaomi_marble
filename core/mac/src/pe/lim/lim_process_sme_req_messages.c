@@ -768,15 +768,10 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 				sme_start_bss_req->vht_channel_width,
 				session->htSupportedChannelWidthSet);
 			session->ch_width = chanwidth;
-			if (session->htSupportedChannelWidthSet) {
-				session->ch_center_freq_seg0 =
-					sme_start_bss_req->center_freq_seg0;
-				session->ch_center_freq_seg1 =
-					sme_start_bss_req->center_freq_seg1;
-			} else {
-				session->ch_center_freq_seg0 = 0;
-				session->ch_center_freq_seg1 = 0;
-			}
+			session->ch_center_freq_seg0 =
+				sme_start_bss_req->center_freq_seg0;
+			session->ch_center_freq_seg1 =
+				sme_start_bss_req->center_freq_seg1;
 		}
 
 		pe_debug("vht su tx bformer %d",

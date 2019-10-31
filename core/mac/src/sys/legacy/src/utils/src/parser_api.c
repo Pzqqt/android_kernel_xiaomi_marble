@@ -6083,19 +6083,15 @@ populate_dot11f_he_operation(struct mac_context *mac_ctx,
 		}
 	} else {
 		he_op->oper_info_6g_present = 1;
-		if (session->ch_width > CH_WIDTH_40MHZ) {
-			he_op->oper_info_6g.info.ch_width = 1;
-			he_op->oper_info_6g.info.center_freq_seg0 =
-				session->ch_center_freq_seg0;
-			if (session->ch_width == CH_WIDTH_80P80MHZ ||
-			    session->ch_width == CH_WIDTH_160MHZ)
-				he_op->oper_info_6g.info.center_freq_seg1 =
-					session->ch_center_freq_seg1;
-			else
-				he_op->oper_info_6g.info.center_freq_seg1 = 0;
+		he_op->oper_info_6g.info.ch_width = session->ch_width;
+		he_op->oper_info_6g.info.center_freq_seg0 =
+					session->ch_center_freq_seg0;
+		if (session->ch_width == CH_WIDTH_80P80MHZ ||
+		    session->ch_width == CH_WIDTH_160MHZ) {
+			he_op->oper_info_6g.info.center_freq_seg1 =
+				session->ch_center_freq_seg1;
+			he_op->oper_info_6g.info.ch_width = CH_WIDTH_160MHZ;
 		} else {
-			he_op->oper_info_6g.info.ch_width = 0;
-			he_op->oper_info_6g.info.center_freq_seg0 = 0;
 			he_op->oper_info_6g.info.center_freq_seg1 = 0;
 		}
 		he_op->oper_info_6g.info.primary_ch =

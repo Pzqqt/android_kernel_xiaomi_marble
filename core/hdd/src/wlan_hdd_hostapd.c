@@ -3220,10 +3220,9 @@ sap_restart:
 		hdd_ap_ctx->sap_context->csa_reason =
 			CSA_REASON_CONCURRENT_STA_CHANGED_CHANNEL;
 
-	wlan_reg_set_channel_params(hdd_ctx->pdev,
-				    intf_ch,
-				    0,
-				    &ch_params);
+	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev,
+					     intf_ch_freq, 0,
+					     &ch_params);
 
 	*ch_freq = wlan_chan_to_freq(intf_ch);
 	hdd_info("SAP channel change with CSA/ECSA");
