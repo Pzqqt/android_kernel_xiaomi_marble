@@ -1071,7 +1071,8 @@ struct peer_assoc_params {
 		 auth_flag:1,
 		 safe_mode_enabled:1,
 		 amsdu_disable:1,
-		 p2p_capable_sta:1;
+		 p2p_capable_sta:1,
+		 inter_bss_peer:1;
 	/* Use common structure */
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	bool he_flag;
