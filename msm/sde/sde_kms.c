@@ -2934,6 +2934,9 @@ static int _sde_kms_mmu_init(struct sde_kms *sde_kms)
 	int i, ret;
 	int early_map = 0;
 
+	if (!sde_kms || !sde_kms->dev || !sde_kms->dev->dev)
+		return -EINVAL;
+
 	for (i = 0; i < MSM_SMMU_DOMAIN_MAX; i++) {
 		struct msm_gem_address_space *aspace;
 
