@@ -346,7 +346,8 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t *mac_cap,
  * Return: none
  */
 static void wma_derive_ext_he_cap(tDot11fIEhe_cap *he_cap,
-				  tDot11fIEhe_cap *new_cap)
+				  tDot11fIEhe_cap *new_cap,
+				  bool is_5g_cap)
 {
 	uint16_t mcs_1, mcs_2;
 
@@ -516,22 +517,24 @@ static void wma_derive_ext_he_cap(tDot11fIEhe_cap *he_cap,
 	mcs_1 = he_cap->tx_he_mcs_map_lt_80;
 	mcs_2 = new_cap->tx_he_mcs_map_lt_80;
 	he_cap->tx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(mcs_1, mcs_2);
-	mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_160);
-	mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_160);
-	*((uint16_t *)he_cap->rx_he_mcs_map_160) =
-		HE_INTERSECT_MCS(mcs_1, mcs_2);
-	mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_160);
-	mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_160);
-	*((uint16_t *)he_cap->tx_he_mcs_map_160) =
-		HE_INTERSECT_MCS(mcs_1, mcs_2);
-	mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_80_80);
-	mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_80_80);
-	*((uint16_t *)he_cap->rx_he_mcs_map_80_80) =
-		HE_INTERSECT_MCS(mcs_1, mcs_2);
-	mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_80_80);
-	mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_80_80);
-	*((uint16_t *)he_cap->tx_he_mcs_map_80_80) =
-		HE_INTERSECT_MCS(mcs_1, mcs_2);
+	if (is_5g_cap) {
+		mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_160);
+		mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_160);
+		*((uint16_t *)he_cap->rx_he_mcs_map_160) =
+			HE_INTERSECT_MCS(mcs_1, mcs_2);
+		mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_160);
+		mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_160);
+		*((uint16_t *)he_cap->tx_he_mcs_map_160) =
+			HE_INTERSECT_MCS(mcs_1, mcs_2);
+		mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_80_80);
+		mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_80_80);
+		*((uint16_t *)he_cap->rx_he_mcs_map_80_80) =
+			HE_INTERSECT_MCS(mcs_1, mcs_2);
+		mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_80_80);
+		mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_80_80);
+		*((uint16_t *)he_cap->tx_he_mcs_map_80_80) =
+			HE_INTERSECT_MCS(mcs_1, mcs_2);
+	}
 }
 
 void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
@@ -898,6 +901,7 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 	struct wlan_psoc_host_mac_phy_caps *mac_cap, *mac_phy_cap;
 	tDot11fIEhe_cap he_cap_mac;
 	tDot11fIEhe_cap tmp_he_cap = {0};
+	bool is_5g_cap;
 
 	qdf_mem_zero(&tgt_cfg->he_cap_2g, sizeof(tgt_cfg->he_cap_2g));
 	qdf_mem_zero(&tgt_cfg->he_cap_5g, sizeof(tgt_cfg->he_cap_5g));
@@ -921,6 +925,7 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 		qdf_mem_zero(&he_cap_mac,
 				sizeof(tDot11fIEhe_cap));
 		mac_cap = &mac_phy_cap[i];
+		is_5g_cap = false;
 		if (mac_cap->supported_bands & WLAN_2G_CAPABILITY) {
 			wma_convert_he_cap(&he_cap_mac,
 					mac_cap->he_cap_info_2G,
@@ -938,9 +943,11 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 
 		if (he_cap_mac.present) {
 			wma_derive_ext_he_cap(&tmp_he_cap,
-					      &he_cap_mac);
+					      &he_cap_mac,
+					      is_5g_cap);
 			wma_derive_ext_he_cap(&tgt_cfg->he_cap_2g,
-					      &he_cap_mac);
+					      &he_cap_mac,
+					      is_5g_cap);
 		}
 
 		qdf_mem_zero(&he_cap_mac,
@@ -953,17 +960,20 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 					mac_cap->tx_chain_mask_5G,
 					mac_cap->rx_chain_mask_5G);
 			WMA_LOGD(FL("5g phy: nss: %d, ru_idx_msk: %d"),
-					mac_cap->he_ppet2G.numss_m1,
-					mac_cap->he_ppet2G.ru_bit_mask);
+					mac_cap->he_ppet5G.numss_m1,
+					mac_cap->he_ppet5G.ru_bit_mask);
 			wma_convert_he_ppet(tgt_cfg->ppet_5g,
 					(struct wmi_host_ppe_threshold *)
 					&mac_cap->he_ppet5G);
+			is_5g_cap = true;
 		}
 		if (he_cap_mac.present) {
 			wma_derive_ext_he_cap(&tmp_he_cap,
-					      &he_cap_mac);
+					      &he_cap_mac,
+					      is_5g_cap);
 			wma_derive_ext_he_cap(&tgt_cfg->he_cap_5g,
-					      &he_cap_mac);
+					      &he_cap_mac,
+					      is_5g_cap);
 		}
 	}
 

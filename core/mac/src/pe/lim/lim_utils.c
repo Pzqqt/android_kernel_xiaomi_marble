@@ -6850,30 +6850,6 @@ void lim_copy_join_req_he_cap(struct pe_session *session,
 {
 	qdf_mem_copy(&(session->he_config), &(sme_join_req->he_config),
 		     sizeof(session->he_config));
-
-	if (session->ch_width <= CH_WIDTH_80MHZ) {
-		*(uint16_t *)session->he_config.rx_he_mcs_map_160 =
-							HE_MCS_ALL_DISABLED;
-		*(uint16_t *)session->he_config.tx_he_mcs_map_160 =
-							HE_MCS_ALL_DISABLED;
-		*(uint16_t *)session->he_config.rx_he_mcs_map_80_80 =
-							HE_MCS_ALL_DISABLED;
-		*(uint16_t *)session->he_config.tx_he_mcs_map_80_80 =
-							HE_MCS_ALL_DISABLED;
-	}
-	/* Reset the > 20MHz caps for 20MHz connection */
-	if (session->ch_width == CH_WIDTH_20MHZ) {
-		session->he_config.chan_width_0 = 0;
-		session->he_config.chan_width_1 = 0;
-		session->he_config.chan_width_2 = 0;
-		session->he_config.chan_width_3 = 0;
-		session->he_config.chan_width_4 = 0;
-		session->he_config.chan_width_5 = 0;
-		session->he_config.chan_width_6 = 0;
-		session->he_config.he_ppdu_20_in_40Mhz_2G = 0;
-		session->he_config.he_ppdu_20_in_160_80p80Mhz = 0;
-		session->he_config.he_ppdu_80_in_160_80p80Mhz = 0;
-	}
 }
 
 void lim_log_he_cap(struct mac_context *mac, tDot11fIEhe_cap *he_cap)
