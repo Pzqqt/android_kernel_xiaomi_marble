@@ -1398,9 +1398,12 @@ static bool _sde_encoder_phys_cmd_needs_vsync_change(
 		    "time_diff:%llu, prev:%llu, cur:%llu, jitter:%llu/%llu\n",
 			time_diff, prev->timestamp, cur->timestamp,
 			l_bound, u_bound);
+		time_diff = div_s64(time_diff, 1000);
+
 		SDE_EVT32(DRMID(phys_enc->parent),
-			(u32) (l_bound / 1000), (u32) (u_bound / 1000),
-			(u32) (time_diff / 1000), SDE_EVTLOG_ERROR);
+			(u32) (do_div(l_bound, 1000)),
+			(u32) (do_div(u_bound, 1000)),
+			(u32) (time_diff), SDE_EVTLOG_ERROR);
 	}
 
 	return ret;
