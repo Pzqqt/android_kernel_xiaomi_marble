@@ -363,6 +363,22 @@ struct spectral_classifier_params {
  *                            if this is set. Applicable only if smode =
  *                            SPECTRAL_SCAN_MODE_NORMAL and for 160/80+80 MHz
  *                            Spectral operation.
+ * @last_raw_timestamp:       Previous FFT report's raw timestamp. In case of
+ *                            160Mhz it will be primary 80 segment's timestamp
+ *                            as both primary & secondary segment's timestamp
+ *                            are expected to be almost equal.
+ * @timestamp_war_offset:     Offset calculated based on reset_delay and
+ *                            last_raw_timestamp. It will be added to
+ *                            raw_timestamp to get spectral_tstamp.
+ * @raw_timestamp:            Actual FFT timestamp reported by HW on primary
+ *                            segment.
+ * @raw_timestamp_sec80:      Actual FFT timestamp reported by HW on sec80 MHz
+ *                            segment.
+ * @reset_delay:              Time gap between the last spectral report before
+ *                            reset and the end of reset. It is provided by FW
+ *                            via direct DMA framework.
+ * @target_reset_count:       Indicates the number of times target went through
+ *                            reset routine after spectral was enabled.
  */
 struct spectral_samp_data {
 	int16_t spectral_data_len;
@@ -422,6 +438,12 @@ struct spectral_samp_data {
 	enum spectral_scan_mode spectral_mode;
 	uint8_t spectral_pri80ind;
 	uint8_t spectral_pri80ind_sec80;
+	uint32_t last_raw_timestamp;
+	uint32_t timestamp_war_offset;
+	uint32_t raw_timestamp;
+	uint32_t raw_timestamp_sec80;
+	uint32_t reset_delay;
+	uint32_t target_reset_count;
 } __packed;
 
 /**

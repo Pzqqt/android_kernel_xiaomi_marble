@@ -843,6 +843,7 @@ struct spectral_param_properties {
  * @direct_dma_support: Whether Direct-DMA is supported on the current radio
  * @prev_tstamp: Timestamp of the previously received sample, which has to be
  * compared with the current tstamp to check descrepancy
+ * @target_reset_count: Number of times target excercised the reset routine
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -957,10 +958,11 @@ struct target_if_spectral {
 	uint32_t timestamp_war_offset[SPECTRAL_SCAN_MODE_MAX];
 	uint16_t fft_size_min;
 	uint16_t fft_size_max;
-	bool  dbr_ring_debug;
-	bool  dbr_buff_debug;
+	bool dbr_ring_debug;
+	bool dbr_buff_debug;
 	bool direct_dma_support;
 	uint32_t prev_tstamp;
+	uint32_t target_reset_count;
 };
 
 /**
@@ -1012,6 +1014,17 @@ struct target_if_spectral {
  * channel switch - Software may choose to ignore the sample if this is set.
  * Applicable only if smode = SPECTRAL_SCAN_MODE_NORMAL and for 160/80+80 MHz
  * Spectral operation.
+ * @last_raw_timestamp: Previous FFT report's raw timestamp. In case of 160MHz
+ * it will be primary 80 segment's timestamp as both primary & secondary
+ * segment's timestamps are expected to be almost equal
+ * @timestamp_war_offset: Offset calculated based on reset_delay and
+ * last_raw_stamp. It will be added to raw_timestamp to get tstamp.
+ * @raw_timestamp: FFT timestamp reported by HW on primary segment.
+ * @raw_timestamp_sec80: FFT timestamp reported by HW on secondary 80 segment.
+ * @reset_delay: Time gap between the last spectral report before reset and the
+ * end of reset.
+ * @target_reset_count: Indicates the the number of times the target went
+ * through reset routine after spectral was enabled.
  */
 struct target_if_samp_msg_params {
 	int8_t      rssi;
@@ -1056,6 +1069,12 @@ struct target_if_samp_msg_params {
 	enum spectral_scan_mode smode;
 	uint8_t pri80ind;
 	uint8_t pri80ind_sec80;
+	uint32_t last_raw_timestamp;
+	uint32_t timestamp_war_offset;
+	uint32_t raw_timestamp;
+	uint32_t raw_timestamp_sec80;
+	uint32_t reset_delay;
+	uint32_t target_reset_count;
 };
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE

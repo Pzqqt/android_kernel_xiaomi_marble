@@ -2147,6 +2147,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	target_if_init_spectral_ops(spectral);
 
 	/* Spectral mode specific init */
+	spectral->target_reset_count = 0;
 	for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++) {
 		spectral->last_fft_timestamp[smode] = 0;
 		spectral->timestamp_war_offset[smode] = 0;

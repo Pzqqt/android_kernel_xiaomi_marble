@@ -82,6 +82,11 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		samp_data->spectral_agc_total_gain = params->agc_total_gain;
 		samp_data->spectral_gainchange = params->gainchange;
 		samp_data->spectral_pri80ind = params->pri80ind;
+		samp_data->last_raw_timestamp = params->last_raw_timestamp;
+		samp_data->timestamp_war_offset = params->timestamp_war_offset;
+		samp_data->raw_timestamp = params->raw_timestamp;
+		samp_data->reset_delay = params->reset_delay;
+		samp_data->target_reset_count = params->target_reset_count;
 
 		samp_data->spectral_combined_rssi =
 		    (uint8_t)params->rssi;
@@ -191,6 +196,8 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		    params->max_index_sec80;
 		samp_data->spectral_max_mag_sec80 =
 		    params->max_mag_sec80;
+
+		samp_data->raw_timestamp_sec80 = params->raw_timestamp_sec80;
 
 		/*
 		 * Currently, we compute pwr_count_sec80 considering the size of

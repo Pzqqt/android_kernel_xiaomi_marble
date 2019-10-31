@@ -1792,6 +1792,10 @@ target_if_consume_spectral_report_gen3(
 			}
 		}
 
+		params.last_raw_timestamp =
+				spectral->last_fft_timestamp[params.smode];
+		params.reset_delay = 0;
+
 		if (report->reset_delay) {
 			enum spectral_scan_mode mode =
 						SPECTRAL_SCAN_MODE_NORMAL;
@@ -1805,8 +1809,14 @@ target_if_consume_spectral_report_gen3(
 				spectral->timestamp_war_offset[mode] +=
 					(report->reset_delay +
 					 spectral->last_fft_timestamp[mode]);
+			params.reset_delay = report->reset_delay;
+			spectral->target_reset_count++;
 		}
+		params.target_reset_count = spectral->target_reset_count;
+		params.timestamp_war_offset =
+				   spectral->timestamp_war_offset[params.smode];
 		tsf64 = p_sfft->timestamp;
+		params.raw_timestamp = tsf64;
 		spectral->last_fft_timestamp[params.smode] = p_sfft->timestamp;
 		tsf64 += spectral->timestamp_war_offset[params.smode];
 
@@ -1951,6 +1961,8 @@ target_if_consume_spectral_report_gen3(
 				fft_bin_len >>= 1;
 			}
 		}
+
+		params.raw_timestamp_sec80 = p_sfft->timestamp;
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
 		if (spectral->ch_width == CH_WIDTH_160MHZ) {
