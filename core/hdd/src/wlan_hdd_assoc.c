@@ -3090,6 +3090,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 
 		reqRsnIe = qdf_mem_malloc(sizeof(uint8_t) *
 					  DOT11F_IE_RSN_MAX_LEN);
+		if (!reqRsnIe)
+			return QDF_STATUS_E_NOMEM;
+
 		/*
 		 * For reassoc, the station is already registered, all we need
 		 * is to change the state of the STA in TL.
@@ -3103,10 +3106,15 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			u8 *assoc_req = NULL;
 			unsigned int assoc_req_len = 0;
 			struct ieee80211_channel *chan;
+			uint32_t rsp_rsn_lemgth = DOT11F_IE_RSN_MAX_LEN;
 			uint8_t *rsp_rsn_ie =
 				qdf_mem_malloc(sizeof(uint8_t) *
 					       DOT11F_IE_RSN_MAX_LEN);
-			uint32_t rsp_rsn_lemgth = DOT11F_IE_RSN_MAX_LEN;
+			if (!rsp_rsn_ie) {
+				qdf_mem_free(reqRsnIe);
+				return QDF_STATUS_E_NOMEM;
+			}
+
 
 			/* add bss_id to cfg80211 data base */
 			bss =
