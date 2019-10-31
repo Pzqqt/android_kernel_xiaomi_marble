@@ -7315,10 +7315,10 @@ static int hdd_config_latency_level(struct hdd_adapter *adapter,
 	/* Map the latency value to the level which fw expected
 	 * 0 - normal, 1 - moderate, 2 - low, 3 - ultralow
 	 */
-	latency_level = latency_level - 1;
+	adapter->latency_level = latency_level - 1;
 	status = sme_set_wlm_latency_level(hdd_ctx->mac_handle,
 					   adapter->vdev_id,
-					   latency_level);
+					   adapter->latency_level);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("set latency level failed, %u", status);
 
