@@ -480,12 +480,15 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 			      tDot11fIEMeasurementRequest *pBeaconReq,
 			      struct pe_session *pe_session)
 {
-	struct scheduler_msg mmhMsg = {0};
-	tpSirBeaconReportReqInd pSmeBcnReportReq;
-	uint8_t num_channels = 0, num_APChanReport;
+	struct scheduler_msg mmh_msg = {0};
+	tpSirBeaconReportReqInd psbrr;
+	uint8_t num_rpt, idx_rpt;
 	uint16_t measDuration, maxMeasduration;
 	int8_t maxDuration;
 	uint8_t sign;
+	tDot11fIEAPChannelReport *ie_ap_chan_rpt;
+	uint8_t tmp_idx;
+	uint16_t ch_ctr = 0;
 
 	if (pBeaconReq->measurement_request.Beacon.BeaconReporting.present &&
 	    (pBeaconReq->measurement_request.Beacon.BeaconReporting.
@@ -573,80 +576,72 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 			     pCurrentReq->request.Beacon.reqIes.num);
 	}
 
-	if (pBeaconReq->measurement_request.Beacon.num_APChannelReport) {
-		for (num_APChanReport = 0;
-		     num_APChanReport <
-		     pBeaconReq->measurement_request.Beacon.num_APChannelReport;
-		     num_APChanReport++)
-			num_channels +=
-				pBeaconReq->measurement_request.Beacon.
-				APChannelReport[num_APChanReport].num_channelList;
-	}
 	/* Prepare the request to send to SME. */
-	pSmeBcnReportReq = qdf_mem_malloc(sizeof(tSirBeaconReportReqInd));
-	if (!pSmeBcnReportReq)
+	psbrr = qdf_mem_malloc(sizeof(tSirBeaconReportReqInd));
+	if (!psbrr)
 		return eRRM_FAILURE;
 
 	/* Alloc memory for pSmeBcnReportReq, will be freed by other modules */
-	qdf_mem_copy(pSmeBcnReportReq->bssId, pe_session->bssId,
+	qdf_mem_copy(psbrr->bssId, pe_session->bssId,
 		     sizeof(tSirMacAddr));
-	pSmeBcnReportReq->messageType = eWNI_SME_BEACON_REPORT_REQ_IND;
-	pSmeBcnReportReq->length = sizeof(tSirBeaconReportReqInd);
-	pSmeBcnReportReq->uDialogToken = pBeaconReq->measurement_token;
-	pSmeBcnReportReq->msgSource = eRRM_MSG_SOURCE_11K;
-	pSmeBcnReportReq->randomizationInterval =
+	psbrr->messageType = eWNI_SME_BEACON_REPORT_REQ_IND;
+	psbrr->length = sizeof(tSirBeaconReportReqInd);
+	psbrr->uDialogToken = pBeaconReq->measurement_token;
+	psbrr->msgSource = eRRM_MSG_SOURCE_11K;
+	psbrr->randomizationInterval =
 		SYS_TU_TO_MS(pBeaconReq->measurement_request.Beacon.randomization);
-	pSmeBcnReportReq->channelInfo.regulatoryClass =
+	psbrr->channel_info.reg_class =
 		pBeaconReq->measurement_request.Beacon.regClass;
-	pSmeBcnReportReq->channelInfo.channelNum =
+	psbrr->channel_info.chan_num =
 		pBeaconReq->measurement_request.Beacon.channel;
-	pSmeBcnReportReq->measurementDuration[0] = measDuration;
-	pSmeBcnReportReq->fMeasurementtype[0] =
+	psbrr->channel_info.chan_freq =
+		wlan_reg_chan_opclass_to_freq(psbrr->channel_info.chan_num,
+					      psbrr->channel_info.reg_class,
+					      false);
+	psbrr->measurementDuration[0] = measDuration;
+	psbrr->fMeasurementtype[0] =
 		pBeaconReq->measurement_request.Beacon.meas_mode;
-	qdf_mem_copy(pSmeBcnReportReq->macaddrBssid,
+	qdf_mem_copy(psbrr->macaddrBssid,
 		     pBeaconReq->measurement_request.Beacon.BSSID,
 		     sizeof(tSirMacAddr));
 
 	if (pBeaconReq->measurement_request.Beacon.SSID.present) {
-		pSmeBcnReportReq->ssId.length =
+		psbrr->ssId.length =
 			pBeaconReq->measurement_request.Beacon.SSID.num_ssid;
-		qdf_mem_copy(pSmeBcnReportReq->ssId.ssId,
+		qdf_mem_copy(psbrr->ssId.ssId,
 			     pBeaconReq->measurement_request.Beacon.SSID.ssid,
-			     pSmeBcnReportReq->ssId.length);
+			     psbrr->ssId.length);
 	}
 
 	pCurrentReq->token = pBeaconReq->measurement_token;
 
-	pSmeBcnReportReq->channelList.numChannels = num_channels;
-	if (pBeaconReq->measurement_request.Beacon.num_APChannelReport) {
-		uint8_t *ch_lst = pSmeBcnReportReq->channelList.channelNumber;
-		uint8_t len;
-		uint16_t ch_ctr = 0;
+	num_rpt = pBeaconReq->measurement_request.Beacon.num_APChannelReport;
 
-		for (num_APChanReport = 0;
-		     num_APChanReport <
-		     pBeaconReq->measurement_request.Beacon.num_APChannelReport;
-		     num_APChanReport++) {
-			len = pBeaconReq->measurement_request.Beacon.
-			    APChannelReport[num_APChanReport].num_channelList;
-			if (ch_ctr + len >
-			   sizeof(pSmeBcnReportReq->channelList.channelNumber))
+	for (idx_rpt = 0; idx_rpt < num_rpt; idx_rpt++) {
+		ie_ap_chan_rpt =
+			&pBeaconReq->measurement_request.Beacon.APChannelReport[idx_rpt];
+		for (tmp_idx = 0;
+		     tmp_idx < ie_ap_chan_rpt->num_channelList;
+		     tmp_idx++) {
+			psbrr->channel_list.chan_freq_lst[ch_ctr++] =
+				wlan_reg_chan_opclass_to_freq(
+					ie_ap_chan_rpt->channelList[tmp_idx],
+					ie_ap_chan_rpt->regulatoryClass,
+					false);
+			if (ch_ctr >= QDF_ARRAY_SIZE(psbrr->channel_list.chan_freq_lst))
 				break;
-
-			qdf_mem_copy(&ch_lst[ch_ctr],
-				     pBeaconReq->measurement_request.Beacon.
-				     APChannelReport[num_APChanReport].
-				     channelList, len);
-
-			ch_ctr += len;
 		}
+		if (ch_ctr >= QDF_ARRAY_SIZE(psbrr->channel_list.chan_freq_lst))
+			break;
 	}
+	psbrr->channel_list.num_channels = ch_ctr;
+
 	/* Send request to SME. */
-	mmhMsg.type = eWNI_SME_BEACON_REPORT_REQ_IND;
-	mmhMsg.bodyptr = pSmeBcnReportReq;
+	mmh_msg.type = eWNI_SME_BEACON_REPORT_REQ_IND;
+	mmh_msg.bodyptr = psbrr;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
-			 pe_session->peSessionId, mmhMsg.type));
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
+			 pe_session->peSessionId, mmh_msg.type));
+	lim_sys_process_mmh_msg_api(mac, &mmh_msg);
 	return eRRM_SUCCESS;
 }
 

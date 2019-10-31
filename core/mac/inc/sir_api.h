@@ -726,8 +726,8 @@ struct start_bss_rsp {
 };
 
 struct report_channel_list {
-	uint8_t numChannels;
-	uint8_t channelNumber[SIR_ESE_MAX_MEAS_IE_REQS];
+	uint8_t num_channels;
+	uint32_t chan_freq_lst[SIR_ESE_MAX_MEAS_IE_REQS];
 };
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
