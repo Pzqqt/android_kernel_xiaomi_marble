@@ -102,29 +102,14 @@ typedef enum {
 #define SAP_40MHZ_MASK_L   0x03
 #define SAP_40MHZ_MASK_H   0x0C
 
-/*
- * structs for holding channel bonding bitmap
- * used for finding new channel when SAP is on
- * DFS channel and radar is detected.
- */
-typedef struct sChannelBondingInfo {
-	uint8_t channelMap:4;
-	uint8_t rsvd:4;
-	uint8_t startChannel;
-} tChannelBondingInfo;
-
-typedef struct __chan_bonding_bitmap {
-	tChannelBondingInfo chanBondingSet[MAX_80MHZ_BANDS];
-} chan_bonding_bitmap;
-
 typedef struct {
-	uint16_t chNum;         /* Channel Number */
-	uint16_t channelWidth;  /* Channel Width */
+	uint32_t chan_freq;
 	uint16_t bssCount;      /* bss found in scanresult for this channel */
 	int32_t rssiAgr;        /* Max value of rssi among all BSS(es) from scanresult for this channel */
 	uint32_t weight;        /* Weightage of this channel */
 	uint32_t weight_copy;   /* copy of the orignal weight */
 	bool valid;             /* Is this a valid center frequency for regulatory domain */
+	bool weight_calc_done;
 } tSapSpectChInfo;              /* tDfsSpectChInfo; */
 
 /**

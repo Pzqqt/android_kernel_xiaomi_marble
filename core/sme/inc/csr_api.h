@@ -1446,12 +1446,12 @@ void csr_packetdump_timer_stop(void);
 /**
  * csr_get_channel_status() - get chan info via channel number
  * @mac: Pointer to Global MAC structure
- * @channel_id: channel id
+ * @chan_freq: channel frequency
  *
  * Return: chan status info
  */
 struct lim_channel_status *
-csr_get_channel_status(struct mac_context *mac, uint32_t channel_id);
+csr_get_channel_status(struct mac_context *mac, uint32_t chan_freq);
 
 /**
  * csr_clear_channel_status() - clear chan info

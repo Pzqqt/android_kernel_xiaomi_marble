@@ -6207,7 +6207,7 @@ uint16_t sme_chn_to_freq(uint8_t chanNum)
 }
 
 struct lim_channel_status *
-csr_get_channel_status(struct mac_context *mac, uint32_t channel_id)
+csr_get_channel_status(struct mac_context *mac, uint32_t chan_freq)
 {
 	uint8_t i;
 	struct lim_scan_channel_status *channel_status;
@@ -6219,10 +6219,10 @@ csr_get_channel_status(struct mac_context *mac, uint32_t channel_id)
 	channel_status = &mac->lim.scan_channel_status;
 	for (i = 0; i < channel_status->total_channel; i++) {
 		entry = &channel_status->channel_status_list[i];
-		if (entry->channel_id == channel_id)
+		if (entry->channelfreq == chan_freq)
 			return entry;
 	}
-	sme_err("Channel %d status info not exist", channel_id);
+	sme_err("Channel %d status info not exist", chan_freq);
 
 	return NULL;
 }
