@@ -4552,6 +4552,7 @@ typedef enum {
 	wmi_get_ani_level_event_id,
 	wmi_peer_tx_pn_response_event_id,
 	wmi_roam_stats_event_id,
+	wmi_oem_data_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
