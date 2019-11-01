@@ -1450,7 +1450,6 @@ void pmo_core_psoc_handle_initial_wake_up(void *cb_ctx)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	struct wlan_objmgr_psoc *psoc = (struct wlan_objmgr_psoc *)cb_ctx;
-	QDF_STATUS status;
 
 	pmo_enter();
 	if (!psoc) {
@@ -1458,16 +1457,8 @@ void pmo_core_psoc_handle_initial_wake_up(void *cb_ctx)
 		goto out;
 	}
 
-	status = pmo_psoc_get_ref(psoc);
-	if (status != QDF_STATUS_SUCCESS) {
-		pmo_err("Failed to get psoc reference");
-		goto out;
-	}
-
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 	pmo_core_update_wow_initial_wake_up(psoc_ctx, true);
-
-	pmo_psoc_put_ref(psoc);
 
 out:
 	pmo_exit();
