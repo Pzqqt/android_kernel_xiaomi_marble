@@ -6161,6 +6161,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t index = 0;
 	struct hdd_station_info *sta_info;
+	struct hdd_sta_info_entry *tmp;
 
 	hdd_enter();
 
@@ -6273,8 +6274,8 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 					  &adapter->event_flags);
 
 			/* Loop over and deregister every registered peer */
-			hdd_for_each_station(adapter->sta_info_list, sta_info,
-					     index) {
+			hdd_for_each_station_safe(adapter->sta_info_list,
+						  sta_info, index, tmp) {
 				hdd_debug("[SSR] deregister STA MAC:"
 					  QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(
 					  sta_info->sta_mac.bytes));
