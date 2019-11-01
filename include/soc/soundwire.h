@@ -7,7 +7,7 @@
 #define _LINUX_SOUNDWIRE_H
 #include <linux/device.h>
 #include <linux/mutex.h>
-#include <linux/mod_devicetable.h>
+#include "audio_mod_devicetable.h"
 #include <linux/irqdomain.h>
 
 extern struct bus_type soundwire_type;
