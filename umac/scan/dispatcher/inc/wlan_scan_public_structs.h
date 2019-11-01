@@ -33,9 +33,11 @@
 typedef uint16_t wlan_scan_requester;
 typedef uint32_t wlan_scan_id;
 
+#define WLAN_SCAN_MAX_HINT_S_SSID        10
+#define WLAN_SCAN_MAX_HINT_BSSID         10
+#define MAX_RNR_BSS			5
 #define WLAN_SCAN_MAX_NUM_SSID          16
 #define WLAN_SCAN_MAX_NUM_BSSID         4
-#define MAX_RNR_BSS 5
 
 #define SCM_CANCEL_SCAN_WAIT_TIME 50
 #define SCM_CANCEL_SCAN_WAIT_ITERATION 600
@@ -860,6 +862,30 @@ struct chan_list {
 };
 
 /**
+ * struct hint_short_ssid - short SSID hint
+ *  and their phymode
+ * @freq_flags: freq unit: MHz (upper 16bits)
+ *              flags (lower 16bits)
+ * @short_ssid: short SSID
+ */
+struct hint_short_ssid {
+	uint32_t freq_flags;
+	uint32_t short_ssid;
+};
+
+/**
+ * struct hint_bssid - BSSID hint
+ *  and their phymode
+ * @freq_flags: freq unit: MHz (upper 16bits)
+ *              flags (lower 16bits)
+ * @bssid: BSSID
+ */
+struct hint_bssid {
+	uint32_t freq_flags;
+	struct qdf_mac_addr bssid;
+};
+
+/**
  * enum scan_request_type: scan type
  * @SCAN_TYPE_DEFAULT: Def scan
  * @SCAN_TYPE_P2P_SEARCH: P2P Search
@@ -949,6 +975,10 @@ enum scan_request_type {
  * @htcap: htcap ie
  * @vhtcap: vhtcap ie
  * @scan_ctrl_flags_ext: scan control flag extended
+ * @num_hint_s_ssid: number of short SSID hints
+ * @num_hint_bssid: number of BSSID hints
+ * @hint_s_ssid: short SSID hints
+ * @hint_bssid: BSSID hints
  */
 
 struct scan_req_params {
@@ -1042,6 +1072,10 @@ struct scan_req_params {
 	struct element_info htcap;
 	struct element_info vhtcap;
 	uint32_t scan_ctrl_flags_ext;
+	uint32_t num_hint_s_ssid;
+	uint32_t num_hint_bssid;
+	struct hint_short_ssid hint_s_ssid[WLAN_SCAN_MAX_HINT_S_SSID];
+	struct hint_bssid hint_bssid[WLAN_SCAN_MAX_HINT_BSSID];
 };
 
 /**

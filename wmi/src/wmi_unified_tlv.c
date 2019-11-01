@@ -2802,6 +2802,8 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	uint16_t extraie_len_with_pad = 0;
 	uint8_t phymode_roundup = 0;
 	struct probe_req_whitelist_attr *ie_whitelist = &params->ie_whitelist;
+	wmi_hint_freq_short_ssid *s_ssid = NULL;
+	wmi_hint_freq_bssid *hint_bssid = NULL;
 
 	/* Length TLV placeholder for array of uint32_t */
 	len += WMI_TLV_HDR_SIZE;
@@ -2836,6 +2838,14 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 			qdf_roundup(params->chan_list.num_chan * sizeof(uint8_t),
 					sizeof(uint32_t));
 	len += phymode_roundup;
+
+	len += WMI_TLV_HDR_SIZE;
+	if (params->num_hint_bssid)
+		len += params->num_hint_bssid * sizeof(wmi_hint_freq_bssid);
+
+	len += WMI_TLV_HDR_SIZE;
+	if (params->num_hint_s_ssid)
+		len += params->num_hint_s_ssid * sizeof(wmi_hint_freq_short_ssid);
 
 	/* Allocate the memory */
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
@@ -2964,6 +2974,33 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	} else {
 		/* Add ZERO legth phy mode TLV */
 		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, 0);
+		buf_ptr += WMI_TLV_HDR_SIZE;
+	}
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
+		       (params->num_hint_s_ssid * sizeof(wmi_hint_freq_short_ssid)));
+	if (params->num_hint_s_ssid) {
+		s_ssid = (wmi_hint_freq_short_ssid *)(buf_ptr + WMI_TLV_HDR_SIZE);
+		for (i = 0; i < params->num_hint_s_ssid; ++i) {
+			s_ssid->freq_flags = params->hint_s_ssid[i].freq_flags;
+			s_ssid->short_ssid = params->hint_s_ssid[i].short_ssid;
+			s_ssid++;
+		}
+	}
+	buf_ptr += WMI_TLV_HDR_SIZE +
+		(params->num_hint_s_ssid * sizeof(wmi_hint_freq_short_ssid));
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
+		       (params->num_hint_bssid * sizeof(wmi_hint_freq_bssid)));
+	if (params->num_hint_bssid) {
+		hint_bssid = (wmi_hint_freq_bssid *)(buf_ptr + WMI_TLV_HDR_SIZE);
+		for (i = 0; i < params->num_hint_bssid; ++i) {
+			hint_bssid->freq_flags =
+				params->hint_bssid[i].freq_flags;
+			WMI_CHAR_ARRAY_TO_MAC_ADDR(&params->hint_bssid[i].bssid.bytes[0],
+						   &hint_bssid->bssid);
+			hint_bssid++;
+		}
 	}
 
 	wmi_mtrace(WMI_START_SCAN_CMDID, cmd->vdev_id, 0);
