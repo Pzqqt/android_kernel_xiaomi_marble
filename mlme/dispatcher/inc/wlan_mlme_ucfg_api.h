@@ -2610,19 +2610,6 @@ ucfg_mlme_set_11d_enabled(struct wlan_objmgr_psoc *psoc, bool value)
 }
 
 /**
- * ucfg_mlme_is_change_channel_bandwidth_enabled() - ucfg api to get the
- * enable_change_channel_bandwidth flag
- * @psoc: psoc context
- *
- * Return: true if enabled
- */
-static inline bool
-ucfg_mlme_is_change_channel_bandwidth_enabled(struct wlan_objmgr_psoc *psoc)
-{
-	return wlan_mlme_is_change_channel_bandwidth_enabled(psoc);
-}
-
-/**
  * ucfg_mlme_get_opr_rate_set() - Get operational rate set
  * @psoc: pointer to psoc object
  * @buf: buffer to get rates set

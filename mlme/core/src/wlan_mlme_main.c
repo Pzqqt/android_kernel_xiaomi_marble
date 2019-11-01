@@ -352,8 +352,6 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_ENABLE_BEACON_RECEPTION_STATS);
 	gen->enable_remove_time_stamp_sync_cmd =
 		cfg_get(psoc, CFG_REMOVE_TIME_STAMP_SYNC_CMD);
-	gen->enable_change_channel_bandwidth =
-		cfg_get(psoc, CFG_CHANGE_CHANNEL_BANDWIDTH);
 	gen->disable_4way_hs_offload =
 		cfg_get(psoc, CFG_DISABLE_4WAY_HS_OFFLOAD);
 }
