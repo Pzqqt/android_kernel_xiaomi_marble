@@ -71,6 +71,13 @@ QDF_STATUS wlan_coex_psoc_destroyed_notification(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_coex_psoc_init(struct wlan_objmgr_psoc *psoc)
 {
+	struct coex_psoc_obj *coex_obj;
+
+	coex_obj = wlan_psoc_get_coex_obj(psoc);
+	if (!coex_obj)
+		return QDF_STATUS_E_INVAL;
+
+	coex_obj->btc_chain_mode = WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -123,4 +130,36 @@ wlan_coex_config_updated(struct wlan_objmgr_vdev *vdev, uint8_t type)
 		status = coex_obj->coex_config_updated[type](vdev);
 
 	return status;
+}
+
+QDF_STATUS
+wlan_coex_psoc_set_btc_chain_mode(struct wlan_objmgr_psoc *psoc, uint8_t val)
+{
+	struct coex_psoc_obj *coex_obj;
+
+	coex_obj = wlan_psoc_get_coex_obj(psoc);
+	if (!coex_obj)
+		return QDF_STATUS_E_INVAL;
+
+	coex_obj->btc_chain_mode = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_coex_psoc_get_btc_chain_mode(struct wlan_objmgr_psoc *psoc, uint8_t *val)
+{
+	struct coex_psoc_obj *coex_obj;
+
+	if (!val) {
+		coex_err("invalid param for getting btc chain mode");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	coex_obj = wlan_psoc_get_coex_obj(psoc);
+	if (!coex_obj)
+		return QDF_STATUS_E_INVAL;
+
+	*val = coex_obj->btc_chain_mode;
+	return QDF_STATUS_SUCCESS;
 }

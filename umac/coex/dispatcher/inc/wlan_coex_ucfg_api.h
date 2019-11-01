@@ -24,6 +24,11 @@
 #include "qdf_status.h"
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_psoc_obj.h>
+#include "qca_vendor.h"
+
+#define WLAN_COEX_BTC_CHAIN_MODE_SHARED QCA_BTC_CHAIN_SHARED
+#define WLAN_COEX_BTC_CHAIN_MODE_SEPARATED QCA_BTC_CHAIN_SEPARATED
+#define WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED 0xFF
 
 /**
  * enum coex_config_type - coex config type definitions
@@ -58,11 +63,56 @@ QDF_STATUS
 ucfg_coex_register_cfg_updated_handler(struct wlan_objmgr_psoc *psoc,
 				       enum coex_config_type type,
 				       update_coex_cb handler);
+
+/**
+ * ucfg_coex_psoc_set_btc_chain_mode() - API to set BT coex chain mode for psoc
+ * @psoc: pointer to psoc object
+ * @val: BT coex chain mode
+ *
+ * Return : status of operation
+ */
+QDF_STATUS
+ucfg_coex_psoc_set_btc_chain_mode(struct wlan_objmgr_psoc *psoc, uint8_t val);
+
+/**
+ * ucfg_coex_psoc_get_btc_chain_mode() - API to get BT coex chain mode from psoc
+ * @psoc: pointer to psoc object
+ * @val: pointer to BT coex chain mode
+ *
+ * Return : status of operation
+ */
+QDF_STATUS
+ucfg_coex_psoc_get_btc_chain_mode(struct wlan_objmgr_psoc *psoc, uint8_t *val);
+
+/**
+ * ucfg_coex_send_btc_chain_mode() - API to send BT coex config to target if
+ * @vdev: pointer to vdev object
+ * @mode: BT coex chain mode
+ *
+ * Return: status of operation
+ */
+QDF_STATUS
+ucfg_coex_send_btc_chain_mode(struct wlan_objmgr_vdev *vdev, uint8_t mode);
 #else
 static inline QDF_STATUS
 ucfg_coex_register_cfg_updated_handler(struct wlan_objmgr_psoc *psoc,
 				       enum coex_config_type type,
 				       update_coex_cb handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_coex_psoc_get_btc_chain_mode(struct wlan_objmgr_psoc *psoc, uint8_t *val)
+{
+	if (val)
+		*val = WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_coex_send_btc_chain_mode(struct wlan_objmgr_vdev *vdev, uint8_t mode)
 {
 	return QDF_STATUS_SUCCESS;
 }

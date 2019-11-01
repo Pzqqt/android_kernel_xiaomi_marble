@@ -20,6 +20,7 @@
 
 #include <wlan_coex_main.h>
 #include <wlan_coex_ucfg_api.h>
+#include "wmi_unified.h"
 
 QDF_STATUS
 ucfg_coex_register_cfg_updated_handler(struct wlan_objmgr_psoc *psoc,
@@ -40,4 +41,34 @@ ucfg_coex_register_cfg_updated_handler(struct wlan_objmgr_psoc *psoc,
 	coex_obj->coex_config_updated[type] = handler;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_coex_psoc_set_btc_chain_mode(struct wlan_objmgr_psoc *psoc, uint8_t val)
+{
+	return wlan_coex_psoc_set_btc_chain_mode(psoc, val);
+}
+
+QDF_STATUS
+ucfg_coex_psoc_get_btc_chain_mode(struct wlan_objmgr_psoc *psoc, uint8_t *val)
+{
+	return wlan_coex_psoc_get_btc_chain_mode(psoc, val);
+}
+
+QDF_STATUS
+ucfg_coex_send_btc_chain_mode(struct wlan_objmgr_vdev *vdev, uint8_t mode)
+{
+	struct coex_config_params param = {0};
+
+	if (mode != WLAN_COEX_BTC_CHAIN_MODE_SHARED &&
+	    mode != WLAN_COEX_BTC_CHAIN_MODE_SEPARATED)
+		return QDF_STATUS_E_INVAL;
+
+	param.vdev_id = wlan_vdev_get_id(vdev);
+	param.config_type = WMI_COEX_CONFIG_BTCOEX_SEPARATE_CHAIN_MODE;
+	param.config_arg1 = mode;
+
+	coex_debug("send btc chain mode %d for vdev %d", mode, param.vdev_id);
+
+	return wlan_coex_config_send(vdev, &param);
 }

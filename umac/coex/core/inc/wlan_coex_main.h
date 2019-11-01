@@ -36,10 +36,12 @@
 
 /**
  * struct coex_psoc_obj - coex object definition
+ * @btc_chain_mode: BT Coex chain mode.
  * @coex_config_updated: callback functions for each config type, which will
  *  be called when config is updated.
  */
 struct coex_psoc_obj {
+	uint8_t btc_chain_mode;
 	update_coex_cb coex_config_updated[COEX_CONFIG_TYPE_MAX];
 };
 
@@ -132,5 +134,27 @@ QDF_STATUS wlan_coex_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_coex_psoc_destroyed_notification(struct wlan_objmgr_psoc *psoc,
 						 void *arg_list);
+
+/**
+ * wlan_coex_psoc_set_btc_chain_mode() - private API to set BT coex chain mode
+ * for psoc
+ * @psoc: pointer to psoc object
+ * @val: BT coex chain mode
+ *
+ * Return : status of operation
+ */
+QDF_STATUS
+wlan_coex_psoc_set_btc_chain_mode(struct wlan_objmgr_psoc *psoc, uint8_t val);
+
+/**
+ * wlan_coex_psoc_get_btc_chain_mode() - private API to get BT coex chain mode
+ * from psoc
+ * @psoc: pointer to psoc object
+ * @val: pointer to BT coex chain mode
+ *
+ * Return : status of operation
+ */
+QDF_STATUS
+wlan_coex_psoc_get_btc_chain_mode(struct wlan_objmgr_psoc *psoc, uint8_t *val);
 #endif
 #endif
