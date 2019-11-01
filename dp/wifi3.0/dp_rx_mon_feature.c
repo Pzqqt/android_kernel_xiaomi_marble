@@ -97,12 +97,12 @@ dp_rx_populate_cdp_indication_mpdu_info(
 		rx_user_status =  &ppdu_info->rx_user_status[user];
 		cdp_mpdu_info->nss = rx_user_status->nss;
 		cdp_mpdu_info->mcs = rx_user_status->mcs;
-		cdp_mpdu_info->ofdma_info_valid =
-				rx_user_status->ofdma_info_valid;
+		cdp_mpdu_info->mu_ul_info_valid =
+				rx_user_status->mu_ul_info_valid;
 		cdp_mpdu_info->ofdma_ru_start_index =
-				rx_user_status->dl_ofdma_ru_start_index;
+				rx_user_status->ofdma_ru_start_index;
 		cdp_mpdu_info->ofdma_ru_width =
-				rx_user_status->dl_ofdma_ru_width;
+				rx_user_status->ofdma_ru_width;
 
 	} else {
 		cdp_mpdu_info->nss = ppdu_info->rx_status.nss;
