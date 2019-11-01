@@ -2037,16 +2037,6 @@ QDF_STATUS
 wlan_mlme_set_11d_enabled(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
- * wlan_mlme_is_change_channel_bandwidth_enabled() - get the
- * enable_change_channel_bandwidth flag
- * @psoc: psoc context
- *
- * Return: true if enabled
- */
-bool
-wlan_mlme_is_change_channel_bandwidth_enabled(struct wlan_objmgr_psoc *psoc);
-
-/**
  * wlan_mlme_get_sta_miracast_mcc_rest_time() - Get STA/MIRACAST MCC rest time
  *
  * @psoc: pointer to psoc object

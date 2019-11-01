@@ -3537,16 +3537,6 @@ static inline int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
 #endif
 
 /**
- * sme_find_session_by_bssid() - checks whether has session
- * with given bssid
- * @mac_handle: Opaque handle to the global MAC context
- * @bssid: bssid
- * Return: true - if has the session
- *         false - if not has the session
- */
-bool sme_find_session_by_bssid(mac_handle_t mac_handle, uint8_t *bssid);
-
-/**
  * sme_get_roam_scan_stats() - Send roam scan stats cmd to wma
  * @mac_handle: handle returned by mac_open
  * @cb: call-back invoked for roam scan stats response

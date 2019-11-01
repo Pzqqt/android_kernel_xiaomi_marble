@@ -1140,7 +1140,6 @@ struct wlan_mlme_generic {
 	bool enable_beacon_reception_stats;
 	bool enable_remove_time_stamp_sync_cmd;
 	bool data_stall_recovery_fw_support;
-	bool enable_change_channel_bandwidth;
 	bool disable_4way_hs_offload;
 	bool as_enabled;
 };

@@ -597,36 +597,6 @@
 
 /*
  * <ini>
- * gEnableChangeChannelBandWidth  Enable/Disable change
- * channel&bandwidth in the mission mode
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * 0  not allow change channel&bandwidth by setMonChan
- * 1  allow change channel&bandwidth by setMonChan
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#ifdef FEATURE_MONITOR_MODE_SUPPORT
-#define CFG_CHANGE_CHANNEL_BANDWIDTH_DEFAULT true
-#else
-#define CFG_CHANGE_CHANNEL_BANDWIDTH_DEFAULT false
-#endif
-
-#define CFG_CHANGE_CHANNEL_BANDWIDTH CFG_INI_BOOL( \
-		"gEnableChangeChannelBandWidth", \
-		CFG_CHANGE_CHANNEL_BANDWIDTH_DEFAULT, \
-		"enable change channel bw")
-
-/*
- * <ini>
  * disable_4way_hs_offload - Enable/Disable 4 way handshake offload to firmware
  * @Min: 0
  * @Max: 1
@@ -674,6 +644,5 @@
 	CFG(CFG_ITO_REPEAT_COUNT) \
 	CFG(CFG_ENABLE_BEACON_RECEPTION_STATS) \
 	CFG(CFG_REMOVE_TIME_STAMP_SYNC_CMD) \
-	CFG(CFG_CHANGE_CHANNEL_BANDWIDTH)
 
 #endif /* __CFG_MLME_GENERIC_H */

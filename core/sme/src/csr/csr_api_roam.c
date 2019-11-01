@@ -20903,26 +20903,6 @@ csr_find_session_by_type(struct mac_context *mac_ctx, enum QDF_OPMODE type)
 	}
 	return session_id;
 }
-/**
- * csr_find_session_by_bssid() - This function will find given bssid from
- * all sessions.
- * @mac_ctx: pointer to mac context.
- * @bssid: session bssid
- * Return: false or true.
- **/
-bool
-csr_find_session_by_bssid(struct mac_context *mac_ctx, uint8_t *bssid)
-{
-	struct pe_session *session_entry;
-	uint8_t session_id;      /* PE session_id */
-
-	session_entry = pe_find_session_by_bssid(mac_ctx,
-						 bssid, &session_id);
-	if (session_entry)
-		return true;
-	else
-		return false;
-}
 
 /**
  * csr_is_conn_allow_2g_band() - This function will check if station's conn

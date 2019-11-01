@@ -1103,7 +1103,6 @@ static inline void csr_roaming_report_diag_event(
 {}
 #endif
 
-bool csr_find_session_by_bssid(struct mac_context *mac_ctx, uint8_t *bssid);
 QDF_STATUS csr_get_channels_and_power(struct mac_context *mac);
 
 bool csr_nonscan_active_ll_is_list_empty(

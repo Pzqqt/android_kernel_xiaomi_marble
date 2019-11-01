@@ -15324,16 +15324,6 @@ uint8_t sme_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 			       nss, dcm, guard_interval, mcs_rate_flags);
 }
 
-bool sme_find_session_by_bssid(mac_handle_t mac_handle, uint8_t *bssid)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	bool ret;
-
-	ret = csr_find_session_by_bssid(mac_ctx, bssid);
-
-	return ret;
-}
-
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 QDF_STATUS sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
 				char *buf, uint32_t buf_sz)
