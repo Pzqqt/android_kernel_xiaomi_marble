@@ -104,21 +104,25 @@ static int __bolero_reg_read(struct bolero_priv *priv,
 	if (priv->macro_params[VA_MACRO].dev)
 		pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
 
-	/* Request Clk before register access */
-	ret = bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
+	if (priv->version < BOLERO_VERSION_2_0) {
+		/* Request Clk before register access */
+		ret = bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
 				priv->macro_params[macro_id].default_clk_id,
 				priv->macro_params[macro_id].clk_id_req,
 				true);
-	if (ret < 0) {
-		dev_err_ratelimited(priv->dev,
-			"%s: Failed to enable clock, ret:%d\n", __func__, ret);
-		goto err;
+		if (ret < 0) {
+			dev_err_ratelimited(priv->dev,
+				"%s: Failed to enable clock, ret:%d\n",
+				__func__, ret);
+			goto err;
+		}
 	}
 
 	bolero_ahb_read_device(
 		priv->macro_params[macro_id].io_base, reg, val);
 
-	bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
+	if (priv->version < BOLERO_VERSION_2_0)
+		bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
 				priv->macro_params[macro_id].default_clk_id,
 				priv->macro_params[macro_id].clk_id_req,
 				false);
@@ -148,21 +152,25 @@ static int __bolero_reg_write(struct bolero_priv *priv,
 	if (priv->macro_params[VA_MACRO].dev)
 		pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
 
-	/* Request Clk before register access */
-	ret = bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
+	if (priv->version < BOLERO_VERSION_2_0) {
+		/* Request Clk before register access */
+		ret = bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
 				priv->macro_params[macro_id].default_clk_id,
 				priv->macro_params[macro_id].clk_id_req,
 				true);
-	if (ret < 0) {
-		dev_err_ratelimited(priv->dev,
-			"%s: Failed to enable clock, ret:%d\n", __func__, ret);
-		goto err;
+		if (ret < 0) {
+			dev_err_ratelimited(priv->dev,
+				"%s: Failed to enable clock, ret:%d\n",
+				__func__, ret);
+			goto err;
+		}
 	}
 
 	bolero_ahb_write_device(
 			priv->macro_params[macro_id].io_base, reg, val);
 
-	bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
+	if (priv->version < BOLERO_VERSION_2_0)
+		bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
 				priv->macro_params[macro_id].default_clk_id,
 				priv->macro_params[macro_id].clk_id_req,
 				false);
