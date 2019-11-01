@@ -2131,12 +2131,6 @@ static bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *p
 				 wmi_service_sta_plus_sta_support))
 		return false;
 
-	if (second_sta_freq && second_sta_freq != first_sta_freq &&
-	    wlan_reg_is_same_band_freqs(second_sta_freq, first_sta_freq)) {
-		policy_mgr_err("STA+STA MCC isn't permitted");
-		return false;
-	}
-
 	return true;
 }
 
