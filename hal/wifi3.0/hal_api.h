@@ -71,6 +71,41 @@ hal_set_verbose_debug(bool flag)
 }
 #endif
 
+#ifdef HAL_REGISTER_WRITE_DEBUG
+/**
+ * hal_reg_write_result_check() - check register writing result
+ * @hal_soc: HAL soc handle
+ * @offset: register offset to read
+ * @exp_val: the expected value of register
+ * @ret_confirm: result confirm flag
+ *
+ * Return: none
+ */
+static inline void hal_reg_write_result_check(struct hal_soc *hal_soc,
+					      uint32_t offset,
+					      uint32_t exp_val,
+					      bool ret_confirm)
+{
+	uint32_t value;
+
+	if (!ret_confirm)
+		return;
+
+	value = qdf_ioread32(hal_soc->dev_base_addr + offset);
+	if (exp_val != value) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "register offset 0x%x write failed!\n", offset);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "the expectation 0x%x, actual value 0x%x\n",
+			  exp_val,
+			  value);
+	}
+}
+#else
+/* no op */
+#define hal_reg_write_result_check(_hal_soc, _offset, _exp_val, _ret_confirm)
+#endif
+
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
 static inline int hal_force_wake_request(struct hal_soc *soc)
 {
@@ -138,22 +173,34 @@ static inline void hal_unlock_reg_access(struct hal_soc *soc,
 #endif
 
 #ifdef PCIE_REG_WINDOW_LOCAL_NO_CACHE
-static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
+static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset,
+				     bool ret_confirm)
 {
 	uint32_t window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
 
 	qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_REG_ADDRESS,
 		      WINDOW_ENABLE_BIT | window);
 	hal_soc->register_window = window;
+
+	hal_reg_write_result_check(hal_soc, WINDOW_REG_ADDRESS,
+				   WINDOW_ENABLE_BIT | window,
+				   ret_confirm);
 }
 #else
-static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
+static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset,
+				     bool ret_confirm)
 {
 	uint32_t window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
 	if (window != hal_soc->register_window) {
 		qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_REG_ADDRESS,
 			      WINDOW_ENABLE_BIT | window);
 		hal_soc->register_window = window;
+
+		hal_reg_write_result_check(
+					hal_soc,
+					WINDOW_REG_ADDRESS,
+					WINDOW_ENABLE_BIT | window,
+					ret_confirm);
 	}
 }
 #endif
@@ -166,24 +213,31 @@ static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
  */
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
-				  uint32_t value)
+				  uint32_t value, bool ret_confirm)
 {
 	unsigned long flags;
 
 	if (!hal_soc->use_register_windowing ||
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
+		hal_reg_write_result_check(hal_soc, offset,
+					   value, ret_confirm);
 	} else {
 		hal_lock_reg_access(hal_soc, &flags);
-		hal_select_window(hal_soc, offset);
+		hal_select_window(hal_soc, offset, ret_confirm);
 		qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_START +
 			  (offset & WINDOW_RANGE_MASK), value);
+
+		hal_reg_write_result_check(
+				hal_soc,
+				WINDOW_START + (offset & WINDOW_RANGE_MASK),
+				value, ret_confirm);
 		hal_unlock_reg_access(hal_soc, &flags);
 	}
 }
 #else
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
-				  uint32_t value)
+				  uint32_t value, bool ret_confirm)
 {
 	int ret;
 	unsigned long flags;
@@ -202,11 +256,19 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 	if (!hal_soc->use_register_windowing ||
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
+		hal_reg_write_result_check(hal_soc, offset,
+					   value, ret_confirm);
 	} else {
 		hal_lock_reg_access(hal_soc, &flags);
-		hal_select_window(hal_soc, offset);
+		hal_select_window(hal_soc, offset, ret_confirm);
 		qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_START +
 			  (offset & WINDOW_RANGE_MASK), value);
+
+		hal_reg_write_result_check(
+				hal_soc,
+				WINDOW_START + (offset & WINDOW_RANGE_MASK),
+				value,
+				ret_confirm);
 		hal_unlock_reg_access(hal_soc, &flags);
 	}
 
@@ -231,7 +293,7 @@ static inline void hal_write_address_32_mb(struct hal_soc *hal_soc,
 		return qdf_iowrite32(addr, value);
 
 	offset = addr - hal_soc->dev_base_addr;
-	hal_write32_mb(hal_soc, offset, value);
+	hal_write32_mb(hal_soc, offset, value, false);
 }
 
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
@@ -246,7 +308,7 @@ static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 	}
 
 	hal_lock_reg_access(hal_soc, &flags);
-	hal_select_window(hal_soc, offset);
+	hal_select_window(hal_soc, offset, false);
 	ret = qdf_ioread32(hal_soc->dev_base_addr + WINDOW_START +
 		       (offset & WINDOW_RANGE_MASK));
 	hal_unlock_reg_access(hal_soc, &flags);
@@ -293,7 +355,7 @@ static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 	}
 
 	hal_lock_reg_access(hal_soc, &flags);
-	hal_select_window(hal_soc, offset);
+	hal_select_window(hal_soc, offset, false);
 	ret = qdf_ioread32(hal_soc->dev_base_addr + WINDOW_START +
 		       (offset & WINDOW_RANGE_MASK));
 	hal_unlock_reg_access(hal_soc, &flags);
