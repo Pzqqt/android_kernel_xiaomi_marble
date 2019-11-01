@@ -18712,16 +18712,20 @@ csr_roam_send_rso_cmd(struct mac_context *mac_ctx,
 		      struct roam_offload_scan_req *request_buf)
 {
 	QDF_STATUS status;
+	struct scheduler_msg message = {0};
 
-	request_buf->message_type = eWNI_SME_ROAM_SCAN_OFFLOAD_REQ;
-	request_buf->length = sizeof(*request_buf);
+	message.bodyptr = request_buf;
+	message.type = eWNI_SME_ROAM_SCAN_OFFLOAD_REQ;
 
-	status = umac_send_mb_message_to_mac(request_buf);
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &message);
+
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("Send RSO from CSR failed");
-		return status;
+		qdf_mem_free(request_buf);
 	}
-	return QDF_STATUS_SUCCESS;
+
+	return status;
 }
 
 /**
@@ -21981,21 +21985,22 @@ csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
 	params->vdev_id = vdev_id;
 	params->enable = enable;
 
-	sme_debug("Post roam init to WMA for vdev %d", vdev_id);
+	/*
+	 * Post to lim and then to wma to keep the same path as that of RSO
+	 * stop command, otherwise due to a race if deinit RSO goes first
+	 * without RSO stop , firmware will assert.
+	 */
+	sme_debug("Post roam init to LIM for vdev %d", vdev_id);
 	message.bodyptr = params;
-	message.type = WMA_ROAM_INIT_PARAM;
-	status = scheduler_post_message(QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_WMA,
-					QDF_MODULE_ID_WMA,
-					&message);
-
+	message.type = eWNI_SME_ROAM_INIT_PARAM;
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &message);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("ROAM: Failed to post ROAM_TRIGGERS msg");
 		qdf_mem_free(params);
-		return QDF_STATUS_E_FAILURE;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 QDF_STATUS
