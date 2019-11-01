@@ -1809,7 +1809,10 @@ static ssize_t _sde_debugfs_conn_cmd_tx_sts_read(struct file *file,
 		return 0;
 	}
 
-	blen = min_t(size_t, MAX_CMD_PAYLOAD_SIZE, count);
+	if (blen > count)
+		blen = count;
+
+	blen = min_t(size_t, blen, MAX_CMD_PAYLOAD_SIZE);
 	if (copy_to_user(buf, buffer, blen)) {
 		SDE_ERROR("copy to user buffer failed\n");
 		return -EFAULT;

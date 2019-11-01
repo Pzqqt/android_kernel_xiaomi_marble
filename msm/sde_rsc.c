@@ -1184,7 +1184,10 @@ end:
 	if (blen <= 0)
 		return 0;
 
-	blen = min_t(size_t, MAX_BUFFER_SIZE, count);
+	if (blen > count)
+		blen = count;
+
+	blen = min_t(size_t, blen, MAX_BUFFER_SIZE);
 	if (copy_to_user(buf, buffer, blen))
 		return -EFAULT;
 
@@ -1278,7 +1281,10 @@ end:
 	if (blen <= 0)
 		return 0;
 
-	blen = min_t(size_t, MAX_BUFFER_SIZE, count);
+	if (blen > count)
+		blen = count;
+
+	blen = min_t(size_t, blen, MAX_BUFFER_SIZE);
 	if (copy_to_user(buf, buffer, blen))
 		return -EFAULT;
 
