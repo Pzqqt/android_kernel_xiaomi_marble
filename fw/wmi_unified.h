@@ -28267,7 +28267,8 @@ typedef struct {
 #define WMI_CFR_NDPA_NDP_ALL_EN_SET(param, value) \
     WMI_SET_BITS(param, WMI_CFR_NDPA_NDP_ALL_EN_BIT_POS, 1, value)
 
-#define WWMI_CFR_NDPA_NDP_ALL_EN_GET(param)     \
+#define WWMI_CFR_NDPA_NDP_ALL_EN_GET WMI_CFR_NDPA_NDP_ALL_EN_GET
+#define WMI_CFR_NDPA_NDP_ALL_EN_GET(param)     \
     WMI_GET_BITS(param, WMI_CFR_NDPA_NDP_ALL_EN_BIT_POS, 1)
 
 #define WMI_CFR_TA_RA_TYPE_FILTER_EN_SET(param, value) \
@@ -28276,7 +28277,8 @@ typedef struct {
 #define WMI_CFR_TA_RA_TYPE_FILTER_EN_GET(param)     \
     WMI_GET_BITS(param, WMI_CFR_TA_RA_TYPE_FILTER_EN_BIT_POS, 1)
 
-#define WWMI_CFR_ALL_PACKET_EN_SET(param, value) \
+#define WWMI_CFR_ALL_PACKET_EN_SET WMI_CFR_ALL_PACKET_EN_SET
+#define WMI_CFR_ALL_PACKET_EN_SET(param, value) \
     WMI_SET_BITS(param, WMI_CFR_ALL_PACKET_EN_BIT_POS, 1, value)
 
 #define WMI_CFR_ALL_PACKET_EN_GET(param)     \
@@ -28443,7 +28445,7 @@ typedef struct {
 #define WMI_TX_STRIP_INSERT_VLAN_OUTER_SET(param, value) \
     WMI_SET_BITS(param, WMI_TX_STRIP_INSERT_VLAN_OUTER_BIT_POS, 1, value)
 
-#define WWMI_TX_STRIP_INSERT_VLAN_OUTER_GET(param)     \
+#define WMI_TX_STRIP_INSERT_VLAN_OUTER_GET(param)     \
     WMI_GET_BITS(param, WMI_TX_STRIP_INSERT_VLAN_OUTER_BIT_POS, 1)
 
 #define WMI_RX_STRIP_VLAN_C_TAG_SET(param, value) \
@@ -28452,37 +28454,35 @@ typedef struct {
 #define WMI_RX_STRIP_VLAN_C_TAG_GET(param)     \
     WMI_GET_BITS(param, WMI_RX_STRIP_VLAN_C_TAG_BIT_POS, 1)
 
-#define WWMI_RX_STRIP_VLAN_S_TAG_SET(param, value) \
+#define WMI_RX_STRIP_VLAN_S_TAG_SET(param, value) \
     WMI_SET_BITS(param, WMI_RX_STRIP_VLAN_S_TAG_BIT_POS, 1, value)
 
 #define WMI_RX_STRIP_VLAN_S_TAG_GET(param)     \
     WMI_GET_BITS(param, WMI_RX_STRIP_VLAN_S_TAG_BIT_POS, 1)
 
-#define WWMI_RX_INSERT_VLAN_C_TAG_SET(param, value) \
+#define WMI_RX_INSERT_VLAN_C_TAG_SET(param, value) \
     WMI_SET_BITS(param, WMI_RX_INSERT_VLAN_C_TAG_BIT_POS, 1, value)
 
 #define WMI_RX_INSERT_VLAN_C_TAG_GET(param)     \
     WMI_GET_BITS(param, WMI_RX_INSERT_VLAN_C_TAG_BIT_POS, 1)
 
-#define WWMI_RX_INSERT_VLAN_S_TAG_SET(param, value) \
+#define WMI_RX_INSERT_VLAN_S_TAG_SET(param, value) \
     WMI_SET_BITS(param, WMI_RX_INSERT_VLAN_S_TAG_BIT_POS, 1, value)
 
 #define WMI_RX_INSERT_VLAN_S_TAG_GET(param)     \
     WMI_GET_BITS(param, WMI_RX_INSERT_VLAN_S_TAG_BIT_POS, 1)
 
-#define WWMI_TX_INSERT_VLAN_INNER_TCI_SET(param, value) \
+#define WMI_TX_INSERT_VLAN_INNER_TCI_SET(param, value) \
     WMI_SET_BITS(param, WMI_TX_INSERT_VLAN_INNER_TCI_BIT_POS, WMI_TX_INSERT_VLAN_INNER_TCI_NUM_BITS, value)
 
 #define WMI_TX_INSERT_VLAN_INNER_TCI_GET(param)     \
     WMI_GET_BITS(param, WMI_TX_INSERT_VLAN_INNER_TCI_BIT_POS, WMI_TX_INSERT_VLAN_INNER_TCI_NUM_BITS)
 
-#define WWMI_TX_INSERT_VLAN_OUTER_TCI_SET(param, value) \
+#define WMI_TX_INSERT_VLAN_OUTER_TCI_SET(param, value) \
     WMI_SET_BITS(param, WMI_TX_INSERT_VLAN_OUTER_TCI_BIT_POS, WMI_TX_INSERT_VLAN_OUTER_TCI_NUM_BITS, value)
 
 #define WMI_TX_INSERT_VLAN_OUTER_TCI_GET(param)     \
     WMI_GET_BITS(param, WMI_TX_INSERT_VLAN_OUTER_TCI_BIT_POS, WMI_TX_INSERT_VLAN_OUTER_TCI_NUM_BITS)
-
-
 
 typedef struct {
    /** TLV tag and len; tag equals
@@ -28520,6 +28520,8 @@ typedef struct {
      * Bits 16:31 insert_vlan_outer_tci
      */
     A_UINT32 insert_vlan_tci;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
 } wmi_peer_config_vlan_cmd_fixed_param;
 
 
