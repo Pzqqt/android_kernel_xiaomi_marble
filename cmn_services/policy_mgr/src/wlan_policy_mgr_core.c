@@ -566,23 +566,6 @@ QDF_STATUS policy_mgr_get_old_and_new_hw_index(
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * policy_mgr_update_conc_list() - Update the concurrent connection list
- * @conn_index: Connection index
- * @mode: Mode
- * @ch_freq: channel frequency
- * @bw: Bandwidth
- * @mac: Mac id
- * @chain_mask: Chain mask
- * @vdev_id: vdev id
- * @in_use: Flag to indicate if the index is in use or not
- * @update_conn: Flag to indicate if mode change event should
- *  be sent or not
- *
- * Updates the index value of the concurrent connection list
- *
- * Return: None
- */
 void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		uint32_t conn_index,
 		enum policy_mgr_con_mode mode,
@@ -593,7 +576,8 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		uint32_t original_nss,
 		uint32_t vdev_id,
 		bool in_use,
-		bool update_conn)
+		bool update_conn,
+		uint16_t ch_flagext)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	bool mcc_mode;
@@ -619,6 +603,7 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 	pm_conc_connection_list[conn_index].original_nss = original_nss;
 	pm_conc_connection_list[conn_index].vdev_id = vdev_id;
 	pm_conc_connection_list[conn_index].in_use = in_use;
+	pm_conc_connection_list[conn_index].ch_flagext = ch_flagext;
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	/*
@@ -2539,6 +2524,7 @@ static bool policy_mgr_is_multi_ap_plus_sta_3vif_conc(
  * @mode: policy_mgr_con_mode of new connection,
  * @channel: channel on which new connection is coming up
  * @num_connections: number of current connections
+ * @is_dfs_ch: DFS channel or not
  *
  * When a new connection is about to come up check if current
  * concurrency combination including the new connection is
@@ -2548,7 +2534,7 @@ static bool policy_mgr_is_multi_ap_plus_sta_3vif_conc(
  */
 bool policy_mgr_allow_new_home_channel(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode,
-	uint32_t ch_freq, uint32_t num_connections)
+	uint32_t ch_freq, uint32_t num_connections, bool is_dfs_ch)
 {
 	bool status = true;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -2567,11 +2553,11 @@ bool policy_mgr_allow_new_home_channel(
 	/* No SCC or MCC combination is allowed with / on DFS channel */
 		if ((mcc_to_scc_switch ==
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) &&
-		wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq) &&
-		(wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
-				      pm_conc_connection_list[0].freq) ||
-		wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
-					 pm_conc_connection_list[1].freq))) {
+		is_dfs_ch &&
+		((pm_conc_connection_list[0].ch_flagext &
+		  (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)) ||
+		 (pm_conc_connection_list[1].ch_flagext &
+		  (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)))) {
 			policy_mgr_err("Existing DFS connection, new 3-port DFS connection is not allowed");
 			status = false;
 
@@ -2651,9 +2637,9 @@ bool policy_mgr_allow_new_home_channel(
 	} else if ((num_connections == 1) &&
 		   (mcc_to_scc_switch ==
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) &&
-		wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq) &&
-		wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
-					 pm_conc_connection_list[0].freq)) {
+		is_dfs_ch &&
+		(pm_conc_connection_list[0].ch_flagext &
+		 (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2))) {
 
 		policy_mgr_err("Existing DFS connection, new 2-port DFS connection is not allowed");
 		status = false;
@@ -2679,9 +2665,8 @@ bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
 	count = policy_mgr_mode_specific_connection_count(psoc, mode, list);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	while (index < count) {
-		if (wlan_reg_is_dfs_for_freq(
-			pm_ctx->pdev,
-			pm_conc_connection_list[list[index]].freq) &&
+		if ((pm_conc_connection_list[list[index]].ch_flagext &
+		     (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)) &&
 		    WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq) &&
 		    (ch_freq != pm_conc_connection_list[list[index]].freq)) {
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);

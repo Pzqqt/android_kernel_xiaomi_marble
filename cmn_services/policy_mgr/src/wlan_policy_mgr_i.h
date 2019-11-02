@@ -25,6 +25,7 @@
 #include "qdf_lock.h"
 #include "qdf_defer.h"
 #include "wlan_reg_services_api.h"
+#include "cds_ieee80211_common_i.h"
 
 #define DBS_OPPORTUNISTIC_TIME   5
 
@@ -446,6 +447,25 @@ QDF_STATUS policy_mgr_get_old_and_new_hw_index(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t *old_hw_mode_index,
 		uint32_t *new_hw_mode_index);
+
+/**
+ * policy_mgr_update_conc_list() - Update the concurrent connection list
+ * @conn_index: Connection index
+ * @mode: Mode
+ * @ch_freq: channel frequency
+ * @bw: Bandwidth
+ * @mac: Mac id
+ * @chain_mask: Chain mask
+ * @vdev_id: vdev id
+ * @in_use: Flag to indicate if the index is in use or not
+ * @update_conn: Flag to indicate if mode change event should
+ *  be sent or not
+ * @ch_flagext: channel state flags
+ *
+ * Updates the index value of the concurrent connection list
+ *
+ * Return: None
+ */
 void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		uint32_t conn_index,
 		enum policy_mgr_con_mode mode,
@@ -456,7 +476,9 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		uint32_t original_nss,
 		uint32_t vdev_id,
 		bool in_use,
-		bool update_conn);
+		bool update_conn,
+		uint16_t ch_flagext);
+
 void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 				enum policy_mgr_con_mode mode,
 				bool all_matching_cxn_to_del,
@@ -559,6 +581,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
  * @mode: Connection mode
  * @ch_freq: channel frequency on which new connection is coming up
  * @num_connections: number of current connections
+ * @is_dfs_ch: DFS channel or not
  *
  * When a new connection is about to come up check if current
  * concurrency combination including the new connection is
@@ -568,7 +591,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
  */
 bool policy_mgr_allow_new_home_channel(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode,
-	uint32_t ch_freq, uint32_t num_connections);
+	uint32_t ch_freq, uint32_t num_connections, bool is_dfs_ch);
 
 /**
  * policy_mgr_is_5g_channel_allowed() - check if 5g channel is allowed
