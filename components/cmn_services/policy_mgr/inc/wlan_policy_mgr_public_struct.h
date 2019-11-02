@@ -988,6 +988,7 @@ enum dbs_support {
  * @original_nss: nss negotiated at connection time
  * @vdev_id: vdev id of the connection
  * @in_use: if the table entry is active
+ * @ch_flagext: Channel extension flags.
  */
 struct policy_mgr_conc_connection_info {
 	enum policy_mgr_con_mode mode;
@@ -998,6 +999,7 @@ struct policy_mgr_conc_connection_info {
 	uint32_t      original_nss;
 	uint32_t      vdev_id;
 	bool          in_use;
+	uint16_t      ch_flagext;
 };
 
 /**
@@ -1109,6 +1111,7 @@ struct policy_mgr_pcl_chan_weights {
  * @mhz: channel frequency in MHz
  * @chan_width: channel bandwidth
  * @mac_id: the mac on which vdev is on
+ * @ch_flagext: Channel extension flags.
  */
 struct policy_mgr_vdev_entry_info {
 	uint32_t type;
@@ -1116,6 +1119,7 @@ struct policy_mgr_vdev_entry_info {
 	uint32_t mhz;
 	uint32_t chan_width;
 	uint32_t mac_id;
+	uint16_t ch_flagext;
 };
 
 /**

@@ -3415,6 +3415,7 @@ QDF_STATUS wma_get_connection_info(uint8_t vdev_id,
 	conn_table_entry->mhz = wma_conn_table_entry->mhz;
 	conn_table_entry->sub_type = wma_conn_table_entry->sub_type;
 	conn_table_entry->type = wma_conn_table_entry->type;
+	conn_table_entry->ch_flagext = wma_conn_table_entry->ch_flagext;
 
 	return QDF_STATUS_SUCCESS;
 }

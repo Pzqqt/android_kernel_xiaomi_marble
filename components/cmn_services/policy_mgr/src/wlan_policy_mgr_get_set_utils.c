@@ -1507,9 +1507,8 @@ bool policy_mgr_is_sap_p2pgo_on_dfs(struct wlan_objmgr_psoc *psoc)
 							  PM_SAP_MODE,
 							  list);
 	while (index < count) {
-		if (wlan_reg_is_dfs_for_freq(
-				pm_ctx->pdev,
-				pm_conc_connection_list[list[index]].freq)){
+		if (pm_conc_connection_list[list[index]].ch_flagext &
+		    (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)) {
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 			return true;
 		}
@@ -1520,9 +1519,8 @@ bool policy_mgr_is_sap_p2pgo_on_dfs(struct wlan_objmgr_psoc *psoc)
 							  list);
 	index = 0;
 	while (index < count) {
-		if (wlan_reg_is_dfs_for_freq(
-				pm_ctx->pdev,
-				pm_conc_connection_list[list[index]].freq)){
+		if (pm_conc_connection_list[list[index]].ch_flagext &
+		    (IEEE80211_CHAN_DFS | IEEE80211_CHAN_DFS_CFREQ2)) {
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 			return true;
 		}
@@ -1850,7 +1848,8 @@ QDF_STATUS policy_mgr_incr_connection_count(
 			policy_mgr_get_bw(conn_table_entry.chan_width),
 			conn_table_entry.mac_id,
 			chain_mask,
-			nss, vdev_id, true, update_conn);
+			nss, vdev_id, true, update_conn,
+			conn_table_entry.ch_flagext);
 	policy_mgr_debug("Add at idx:%d vdev %d mac=%d",
 		conn_index, vdev_id,
 		conn_table_entry.mac_id);
@@ -1905,6 +1904,8 @@ QDF_STATUS policy_mgr_decr_connection_count(struct wlan_objmgr_psoc *psoc,
 			pm_conc_connection_list[next_conn_index].original_nss;
 		pm_conc_connection_list[conn_index].in_use =
 			pm_conc_connection_list[next_conn_index].in_use;
+		pm_conc_connection_list[conn_index].ch_flagext =
+			pm_conc_connection_list[next_conn_index].ch_flagext;
 		conn_index++;
 		next_conn_index++;
 	}
@@ -2176,6 +2177,8 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	bool sta_sap_scc_on_dfs_chan;
 	uint32_t sta_freq;
+	enum channel_state chan_state;
+	bool is_dfs_ch = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2198,9 +2201,15 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (ch_freq) {
+		chan_state = wlan_reg_get_5g_bonded_channel_state_for_freq(
+					pm_ctx->pdev, ch_freq,
+					policy_mgr_get_ch_width(bw));
+		if (chan_state == CHANNEL_STATE_DFS)
+			is_dfs_ch = true;
 		/* don't allow 3rd home channel on same MAC */
 		if (!policy_mgr_allow_new_home_channel(psoc, mode, ch_freq,
-						       num_connections))
+						       num_connections,
+						       is_dfs_ch))
 			goto done;
 
 		/*
@@ -2230,7 +2239,7 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 
 		if (!sta_sap_scc_on_dfs_chan && ((mode == PM_P2P_GO_MODE) ||
 		    (mode == PM_SAP_MODE))) {
-			if (wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq))
+			if (is_dfs_ch)
 				match = policy_mgr_disallow_mcc(psoc,
 								ch_freq);
 		}
@@ -3188,7 +3197,7 @@ void policy_mgr_dump_connection_status_info(struct wlan_objmgr_psoc *psoc)
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
-		policy_mgr_debug("%d: use:%d vdev:%d mode:%d mac:%d freq:%d orig chainmask:%d orig nss:%d bw:%d",
+		policy_mgr_debug("%d: use:%d vdev:%d mode:%d mac:%d freq:%d orig chainmask:%d orig nss:%d bw:%d, ch_flags %0X",
 				 i, pm_conc_connection_list[i].in_use,
 				 pm_conc_connection_list[i].vdev_id,
 				 pm_conc_connection_list[i].mode,
@@ -3196,7 +3205,8 @@ void policy_mgr_dump_connection_status_info(struct wlan_objmgr_psoc *psoc)
 				 pm_conc_connection_list[i].freq,
 				 pm_conc_connection_list[i].chain_mask,
 				 pm_conc_connection_list[i].original_nss,
-				 pm_conc_connection_list[i].bw);
+				 pm_conc_connection_list[i].bw,
+				 pm_conc_connection_list[i].ch_flagext);
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 }

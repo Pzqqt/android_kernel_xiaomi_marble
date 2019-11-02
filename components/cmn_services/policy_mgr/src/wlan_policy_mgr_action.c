@@ -372,7 +372,7 @@ QDF_STATUS policy_mgr_update_connection_info(struct wlan_objmgr_psoc *psoc,
 			psoc, conn_index, mode, ch_freq,
 			policy_mgr_get_bw(conn_table_entry.chan_width),
 			conn_table_entry.mac_id, chain_mask,
-			nss, vdev_id, true, true);
+			nss, vdev_id, true, true, conn_table_entry.ch_flagext);
 
 	/* do we need to change the HW mode */
 	policy_mgr_check_n_start_opportunistic_timer(psoc);
@@ -2575,6 +2575,7 @@ QDF_STATUS policy_mgr_update_connection_info_utfw(
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t conn_index = 0, found = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint16_t ch_flagext = 0;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2600,10 +2601,14 @@ QDF_STATUS policy_mgr_update_connection_info_utfw(
 	}
 	policy_mgr_debug("--> updating entry at index[%d]", conn_index);
 
+	if (wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq))
+		ch_flagext |= IEEE80211_CHAN_DFS;
+
 	policy_mgr_update_conc_list(psoc, conn_index,
 			policy_mgr_get_mode(type, sub_type),
 			ch_freq, HW_MODE_20_MHZ,
-			mac_id, chain_mask, 0, vdev_id, true, true);
+			mac_id, chain_mask, 0, vdev_id, true, true,
+			ch_flagext);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2618,6 +2623,8 @@ QDF_STATUS policy_mgr_incr_connection_count_utfw(
 	uint32_t conn_index = 0;
 	bool update_conn = true;
 	enum policy_mgr_con_mode mode;
+	uint16_t ch_flagext = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	conn_index = policy_mgr_get_connection_count(psoc);
 	if (MAX_NUMBER_OF_CONC_CONNECTIONS <= conn_index) {
@@ -2632,11 +2639,17 @@ QDF_STATUS policy_mgr_incr_connection_count_utfw(
 	if (mode == PM_STA_MODE || mode == PM_P2P_CLIENT_MODE)
 		update_conn = false;
 
-	policy_mgr_update_conc_list(psoc, conn_index,
-				mode,
-				ch_freq, HW_MODE_20_MHZ,
-				mac_id, chain_mask, 0, vdev_id, true,
-				update_conn);
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid pm context");
+		return false;
+	}
+	if (wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq))
+		ch_flagext |= IEEE80211_CHAN_DFS;
+
+	policy_mgr_update_conc_list(psoc, conn_index, mode, ch_freq,
+				    HW_MODE_20_MHZ, mac_id, chain_mask,
+				    0, vdev_id, true, update_conn, ch_flagext);
 
 	return QDF_STATUS_SUCCESS;
 }
