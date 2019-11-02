@@ -462,6 +462,8 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 		ret = va_macro_mclk_enable(va_priv, 1, true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		if (bolero_tx_clk_switch(component))
+			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		va_macro_mclk_enable(va_priv, 0, true);
 		if (va_priv->tx_clk_status > 0) {
 			bolero_clk_rsc_request_clock(va_priv->dev,
@@ -1103,6 +1105,8 @@ static int va_macro_enable_tx(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
+		if (bolero_tx_clk_switch(component))
+			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		if (va_priv->tx_clk_status > 0) {
 			ret = bolero_clk_rsc_request_clock(va_priv->dev,
 						   va_priv->default_clk_id,
