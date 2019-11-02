@@ -883,7 +883,8 @@ static bool wcd_mbhc_moisture_detect(struct wcd_mbhc *mbhc, bool detection_type)
 					detection_type);
 		ret = true;
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
-		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_GND_DET_EN, 1);
+		if (mbhc->mbhc_cfg->gnd_det_en)
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_GND_DET_EN, 1);
 	} else {
 		mbhc->mbhc_cb->mbhc_moisture_polling_ctrl(mbhc, false);
 		mbhc->mbhc_cb->mbhc_moisture_detect_en(mbhc, false);
@@ -1023,7 +1024,7 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 					mbhc->component, false);
 		}
 
-		if (mbhc->mbhc_cfg->moisture_en &&
+		if (mbhc->mbhc_cfg->moisture_en ||
 		    mbhc->mbhc_cfg->moisture_duty_cycle_en) {
 			if (mbhc->mbhc_cb->mbhc_moisture_polling_ctrl)
 				mbhc->mbhc_cb->mbhc_moisture_polling_ctrl(mbhc,
