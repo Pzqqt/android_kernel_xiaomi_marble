@@ -2696,7 +2696,7 @@ static int swrm_probe(struct platform_device *pdev)
 
 	INIT_WORK(&swrm->dc_presence_work, swrm_notify_work_fn);
 	swrm->event_notifier.notifier_call  = swrm_event_notify;
-	msm_aud_evt_register_client(&swrm->event_notifier);
+	//msm_aud_evt_register_client(&swrm->event_notifier);
 
 	return 0;
 err_irq_wakeup_fail:
@@ -2741,7 +2741,7 @@ static int swrm_remove(struct platform_device *pdev)
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	swr_unregister_master(&swrm->master);
-	msm_aud_evt_unregister_client(&swrm->event_notifier);
+	//msm_aud_evt_unregister_client(&swrm->event_notifier);
 	device_init_wakeup(swrm->dev, false);
 	mutex_destroy(&swrm->irq_lock);
 	mutex_destroy(&swrm->mlock);
@@ -2816,8 +2816,9 @@ static int swrm_runtime_resume(struct device *dev)
 				mutex_unlock(&swrm->irq_lock);
 			}
 			if (swrm->ipc_wakeup)
-				msm_aud_evt_blocking_notifier_call_chain(
-					SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
+				dev_err(dev, "%s:notifications disabled\n", __func__);
+			//	msm_aud_evt_blocking_notifier_call_chain(
+			//		SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
 		}
 
 		if (swrm_clk_request(swrm, true)) {
@@ -3004,8 +3005,9 @@ static int swrm_runtime_suspend(struct device *dev)
 			if (swrm->wake_irq > 0) {
 				enable_irq(swrm->wake_irq);
 			} else if (swrm->ipc_wakeup) {
-				msm_aud_evt_blocking_notifier_call_chain(
-					SWR_WAKE_IRQ_REGISTER, (void *)swrm);
+				//msm_aud_evt_blocking_notifier_call_chain(
+				//	SWR_WAKE_IRQ_REGISTER, (void *)swrm);
+				dev_err(dev, "%s:notifications disabled\n", __func__);
 				swrm->ipc_wakeup_triggered = false;
 			}
 		}
@@ -3346,12 +3348,12 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 		}
 		break;
 	case SWR_REGISTER_WAKEUP:
-		msm_aud_evt_blocking_notifier_call_chain(
-					SWR_WAKE_IRQ_REGISTER, (void *)swrm);
+		//msm_aud_evt_blocking_notifier_call_chain(
+		//			SWR_WAKE_IRQ_REGISTER, (void *)swrm);
 		break;
 	case SWR_DEREGISTER_WAKEUP:
-		msm_aud_evt_blocking_notifier_call_chain(
-					SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
+		//msm_aud_evt_blocking_notifier_call_chain(
+		//			SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
 		break;
 	case SWR_SET_PORT_MAP:
 		if (!data) {
