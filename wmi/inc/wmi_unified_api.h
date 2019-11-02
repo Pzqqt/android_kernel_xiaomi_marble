@@ -2502,6 +2502,32 @@ QDF_STATUS
 wmi_extract_vdev_scan_ev_param(wmi_unified_t wmi_handle, void *evt_buf,
 			       struct scan_event *param);
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * wmi_extract_nlo_match_ev_param() - extract NLO match param from event
+ * @wmi_handle: pointer to WMI handle
+ * @evt_buf: pointer to WMI event buffer
+ * @param: pointer to scan event param for NLO match
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_extract_nlo_match_ev_param(wmi_unified_t wmi_handle, void *evt_buf,
+			       struct scan_event *param);
+
+/**
+ * wmi_extract_nlo_complete_ev_param() - extract NLO complete param from event
+ * @wmi_handle: pointer to WMI handle
+ * @evt_buf: pointer to WMI event buffer
+ * @param: pointer to scan event param for NLO complete
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_extract_nlo_complete_ev_param(wmi_unified_t wmi_handle, void *evt_buf,
+				  struct scan_event *param);
+#endif
+
 /**
  * wmi_extract_mu_ev_param() - extract mu param from event
  * @wmi_handle: wmi handle

@@ -8946,6 +8946,54 @@ static QDF_STATUS extract_vdev_scan_ev_param_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * extract_nlo_match_ev_param_tlv() - extract NLO match param from event
+ * @wmi_handle: pointer to WMI handle
+ * @evt_buf: pointer to WMI event buffer
+ * @param: pointer to scan event param for NLO match
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_nlo_match_ev_param_tlv(wmi_unified_t wmi_handle,
+						 void *evt_buf,
+						 struct scan_event *param)
+{
+	WMI_NLO_MATCH_EVENTID_param_tlvs *param_buf = evt_buf;
+	wmi_nlo_event *evt = param_buf->fixed_param;
+
+	qdf_mem_zero(param, sizeof(*param));
+
+	param->type = SCAN_EVENT_TYPE_NLO_MATCH;
+	param->vdev_id = evt->vdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_nlo_complete_ev_param_tlv() - extract NLO complete param from event
+ * @wmi_handle: pointer to WMI handle
+ * @evt_buf: pointer to WMI event buffer
+ * @param: pointer to scan event param for NLO complete
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_nlo_complete_ev_param_tlv(wmi_unified_t wmi_handle,
+						    void *evt_buf,
+						    struct scan_event *param)
+{
+	WMI_NLO_SCAN_COMPLETE_EVENTID_param_tlvs *param_buf = evt_buf;
+	wmi_nlo_event *evt = param_buf->fixed_param;
+
+	qdf_mem_zero(param, sizeof(*param));
+
+	param->type = SCAN_EVENT_TYPE_NLO_COMPLETE;
+	param->vdev_id = evt->vdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * extract_all_stats_counts_tlv() - extract all stats count from event
  * @wmi_handle: wmi handle
@@ -12978,6 +13026,10 @@ struct wmi_ops tlv_ops =  {
 	.extract_mgmt_rx_params = extract_mgmt_rx_params_tlv,
 	.extract_vdev_roam_param = extract_vdev_roam_param_tlv,
 	.extract_vdev_scan_ev_param = extract_vdev_scan_ev_param_tlv,
+#ifdef FEATURE_WLAN_SCAN_PNO
+	.extract_nlo_match_ev_param = extract_nlo_match_ev_param_tlv,
+	.extract_nlo_complete_ev_param = extract_nlo_complete_ev_param_tlv,
+#endif
 	.extract_all_stats_count = extract_all_stats_counts_tlv,
 	.extract_pdev_stats = extract_pdev_stats_tlv,
 	.extract_unit_test = extract_unit_test_tlv,

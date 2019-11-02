@@ -1437,6 +1437,16 @@ QDF_STATUS (*extract_vdev_roam_param)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*extract_vdev_scan_ev_param)(wmi_unified_t wmi_handle,
 		void *evt_buf, struct scan_event *param);
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+QDF_STATUS (*extract_nlo_match_ev_param)(wmi_unified_t wmi_handle,
+					 void *evt_buf,
+					 struct scan_event *param);
+
+QDF_STATUS (*extract_nlo_complete_ev_param)(wmi_unified_t wmi_handle,
+					    void *evt_buf,
+					    struct scan_event *param);
+#endif
+
 QDF_STATUS (*extract_mu_ev_param)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_mu_report_event *param);
 

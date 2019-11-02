@@ -1903,6 +1903,30 @@ wmi_extract_vdev_scan_ev_param(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+QDF_STATUS
+wmi_extract_nlo_match_ev_param(wmi_unified_t wmi_handle, void *evt_buf,
+			       struct scan_event *param)
+{
+	if (wmi_handle->ops->extract_nlo_match_ev_param)
+		return wmi_handle->ops->extract_nlo_match_ev_param(wmi_handle,
+			evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_nlo_complete_ev_param(wmi_unified_t wmi_handle, void *evt_buf,
+				  struct scan_event *param)
+{
+	if (wmi_handle->ops->extract_nlo_complete_ev_param)
+		return wmi_handle->ops->extract_nlo_complete_ev_param(
+			wmi_handle, evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 QDF_STATUS
 wmi_extract_mu_ev_param(wmi_unified_t wmi_handle, void *evt_buf,
 			wmi_host_mu_report_event *param)

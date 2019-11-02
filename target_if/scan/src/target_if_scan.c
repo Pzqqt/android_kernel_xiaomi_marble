@@ -28,9 +28,6 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_scan_tgt_api.h>
 #include <target_if.h>
-#ifdef FEATURE_WLAN_SCAN_PNO
-#include "wmi.h"
-#endif
 
 static inline struct wlan_lmac_if_scan_rx_ops *
 target_if_scan_get_rx_ops(struct wlan_objmgr_psoc *psoc)
@@ -95,12 +92,10 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
 	uint32_t len)
 {
-	wmi_nlo_event *nlo_event;
 	struct scan_event_info *event_info;
 	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
 	struct wlan_lmac_if_scan_rx_ops *scan_rx_ops;
-	WMI_NLO_MATCH_EVENTID_param_tlvs *param_buf =
-		(WMI_NLO_MATCH_EVENTID_param_tlvs *) data;
 	QDF_STATUS status;
 
 	if (!scn || !data) {
@@ -114,16 +109,25 @@ int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is NULL");
+		return -EINVAL;
+	}
+
 	event_info = qdf_mem_malloc(sizeof(*event_info));
 	if (!event_info)
 		return -ENOMEM;
 
-	nlo_event = param_buf->fixed_param;
-	target_if_debug("PNO complete event received for vdev %d",
-			nlo_event->vdev_id);
+	if (wmi_extract_nlo_complete_ev_param(wmi_handle, data,
+					      &event_info->event)) {
+		target_if_err("Failed to extract WMI PNO complete event");
+		qdf_mem_free(event_info);
+		return -EINVAL;
+	}
 
-	event_info->event.type = SCAN_EVENT_TYPE_NLO_COMPLETE;
-	event_info->event.vdev_id = nlo_event->vdev_id;
+	target_if_debug("PNO complete event received for vdev %d",
+			event_info->event.vdev_id);
 
 	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
 	if (scan_rx_ops->scan_ev_handler) {
@@ -143,12 +147,10 @@ int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
 int target_if_nlo_match_event_handler(ol_scn_t scn, uint8_t *data,
 	uint32_t len)
 {
-	wmi_nlo_event *nlo_event;
 	struct scan_event_info *event_info;
 	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
 	struct wlan_lmac_if_scan_rx_ops *scan_rx_ops;
-	WMI_NLO_MATCH_EVENTID_param_tlvs *param_buf =
-		(WMI_NLO_MATCH_EVENTID_param_tlvs *) data;
 	QDF_STATUS status;
 
 	if (!scn || !data) {
@@ -162,16 +164,25 @@ int target_if_nlo_match_event_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is NULL");
+		return -EINVAL;
+	}
+
 	event_info = qdf_mem_malloc(sizeof(*event_info));
 	if (!event_info)
 		return -ENOMEM;
 
-	nlo_event = param_buf->fixed_param;
-	target_if_debug("PNO match event received for vdev %d",
-			nlo_event->vdev_id);
+	if (wmi_extract_nlo_match_ev_param(wmi_handle, data,
+					   &event_info->event)) {
+		target_if_err("Failed to extract WMI PNO match event");
+		qdf_mem_free(event_info);
+		return -EINVAL;
+	}
 
-	event_info->event.type = SCAN_EVENT_TYPE_NLO_MATCH;
-	event_info->event.vdev_id = nlo_event->vdev_id;
+	target_if_debug("PNO match event received for vdev %d",
+			event_info->event.vdev_id);
 
 	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
 	if (scan_rx_ops->scan_ev_handler) {
