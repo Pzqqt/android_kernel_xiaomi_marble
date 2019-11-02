@@ -2007,6 +2007,88 @@ error:
 	return err;
 }
 
+#ifdef REO_DESC_DEFER_FREE
+/*
+ * dp_reo_desc_clean_up() - If cmd to flush base desc fails add
+ * desc back to freelist and defer the deletion
+ *
+ * @soc: DP SOC handle
+ * @desc: Base descriptor to be freed
+ * @reo_status: REO command status
+ */
+static void dp_reo_desc_clean_up(struct dp_soc *soc,
+				 struct reo_desc_list_node *desc,
+				 union hal_reo_status *reo_status)
+{
+	desc->free_ts = qdf_get_system_timestamp();
+	DP_STATS_INC(soc, rx.err.reo_cmd_send_fail, 1);
+	qdf_list_insert_back(&soc->reo_desc_freelist,
+			     (qdf_list_node_t *)desc);
+}
+
+#else
+/*
+ * dp_reo_desc_clean_up() - If send cmd to REO inorder to flush
+ * cache fails free the base REO desc anyway
+ *
+ * @soc: DP SOC handle
+ * @desc: Base descriptor to be freed
+ * @reo_status: REO command status
+ */
+static void dp_reo_desc_clean_up(struct dp_soc *soc,
+				 struct reo_desc_list_node *desc,
+				 union hal_reo_status *reo_status)
+{
+	if (reo_status) {
+		qdf_mem_zero(reo_status, sizeof(*reo_status));
+		reo_status->fl_cache_status.header.status = 0;
+		dp_reo_desc_free(soc, (void *)desc, reo_status);
+	}
+}
+#endif
+
+/*
+ * dp_resend_update_reo_cmd() - Resend the UPDATE_REO_QUEUE
+ * cmd and re-insert desc into free list if send fails.
+ *
+ * @soc: DP SOC handle
+ * @desc: desc with resend update cmd flag set
+ * @rx_tid: Desc RX tid associated with update cmd for resetting
+ * valid field to 0 in h/w
+ */
+static void dp_resend_update_reo_cmd(struct dp_soc *soc,
+				     struct reo_desc_list_node *desc,
+				     struct dp_rx_tid *rx_tid)
+{
+	struct hal_reo_cmd_params params;
+
+	qdf_mem_zero(&params, sizeof(params));
+	params.std.need_status = 1;
+	params.std.addr_lo =
+		rx_tid->hw_qdesc_paddr & 0xffffffff;
+	params.std.addr_hi =
+		(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
+	params.u.upd_queue_params.update_vld = 1;
+	params.u.upd_queue_params.vld = 0;
+	desc->resend_update_reo_cmd = false;
+	/*
+	 * If the cmd send fails then set resend_update_reo_cmd flag
+	 * and insert the desc at the end of the free list to retry.
+	 */
+	if (dp_reo_send_cmd(soc,
+			    CMD_UPDATE_RX_REO_QUEUE,
+			    &params,
+			    dp_rx_tid_delete_cb,
+			    (void *)desc)
+	    != QDF_STATUS_SUCCESS) {
+		desc->resend_update_reo_cmd = true;
+		desc->free_ts = qdf_get_system_timestamp();
+		qdf_list_insert_back(&soc->reo_desc_freelist,
+				     (qdf_list_node_t *)desc);
+		DP_STATS_INC(soc, rx.err.reo_cmd_send_fail, 1);
+	}
+}
+
 /*
  * dp_rx_tid_delete_cb() - Callback to flush reo descriptor HW cache
  * after deleting the entries (ie., setting valid=0)
@@ -2015,8 +2097,8 @@ error:
  * @cb_ctxt: Callback context
  * @reo_status: REO command status
  */
-static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
-	union hal_reo_status *reo_status)
+void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
+			 union hal_reo_status *reo_status)
 {
 	struct reo_desc_list_node *freedesc =
 		(struct reo_desc_list_node *)cb_ctxt;
@@ -2054,13 +2136,20 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 	while ((qdf_list_peek_front(&soc->reo_desc_freelist,
 		(qdf_list_node_t **)&desc) == QDF_STATUS_SUCCESS) &&
 		((list_size >= REO_DESC_FREELIST_SIZE) ||
-		((curr_ts - desc->free_ts) > REO_DESC_FREE_DEFER_MS))) {
+		(curr_ts > (desc->free_ts + REO_DESC_FREE_DEFER_MS)) ||
+		(desc->resend_update_reo_cmd && list_size))) {
 		struct dp_rx_tid *rx_tid;
 
 		qdf_list_remove_front(&soc->reo_desc_freelist,
 				(qdf_list_node_t **)&desc);
 		list_size--;
 		rx_tid = &desc->rx_tid;
+
+		/* First process descs with resend_update_reo_cmd set */
+		if (desc->resend_update_reo_cmd) {
+			dp_resend_update_reo_cmd(soc, desc, rx_tid);
+			continue;
+		}
 
 		/* Flush and invalidate REO descriptor from HW cache: Base and
 		 * extension descriptors should be flushed separately */
@@ -2108,12 +2197,13 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 			 * TID queue desc also need to be freed accordingly.
 			 *
 			 * Here invoke desc_free function directly to do clean up.
+			 *
+			 * In case of MCL path add the desc back to the free
+			 * desc list and defer deletion.
 			 */
 			dp_err_log("%s: fail to send REO cmd to flush cache: tid %d",
 				   __func__, rx_tid->tid);
-			qdf_mem_zero(&reo_status, sizeof(reo_status));
-			reo_status.fl_cache_status.header.status = 0;
-			dp_reo_desc_free(soc, (void *)desc, &reo_status);
+			dp_reo_desc_clean_up(soc, desc, &reo_status);
 		}
 	}
 	qdf_spin_unlock_bh(&soc->reo_desc_freelist_lock);
@@ -2142,6 +2232,7 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 	}
 
 	freedesc->rx_tid = *rx_tid;
+	freedesc->resend_update_reo_cmd = false;
 
 	qdf_mem_zero(&params, sizeof(params));
 
@@ -2151,8 +2242,19 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 	params.u.upd_queue_params.update_vld = 1;
 	params.u.upd_queue_params.vld = 0;
 
-	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
-		dp_rx_tid_delete_cb, (void *)freedesc);
+	if (dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
+			    dp_rx_tid_delete_cb, (void *)freedesc)
+		!= QDF_STATUS_SUCCESS) {
+		/* Defer the clean up to the call back context */
+		qdf_spin_lock_bh(&soc->reo_desc_freelist_lock);
+		freedesc->free_ts = qdf_get_system_timestamp();
+		freedesc->resend_update_reo_cmd = true;
+		qdf_list_insert_front(&soc->reo_desc_freelist,
+				      (qdf_list_node_t *)freedesc);
+		DP_STATS_INC(soc, rx.err.reo_cmd_send_fail, 1);
+		qdf_spin_unlock_bh(&soc->reo_desc_freelist_lock);
+		dp_info("Failed to send CMD_UPDATE_RX_REO_QUEUE");
+	}
 
 	rx_tid->hw_qdesc_vaddr_unaligned = NULL;
 	rx_tid->hw_qdesc_alloc_size = 0;

@@ -250,4 +250,16 @@ dp_peer_update_pkt_capture_params(struct cdp_pdev *pdev,
 				  bool is_rx_pkt_cap_enable,
 				  bool is_tx_pkt_cap_enable,
 				  uint8_t *peer_mac);
+
+/*
+ * dp_rx_tid_delete_cb() - Callback to flush reo descriptor HW cache
+ * after deleting the entries (ie., setting valid=0)
+ *
+ * @soc: DP SOC handle
+ * @cb_ctxt: Callback context
+ * @reo_status: REO command status
+ */
+void dp_rx_tid_delete_cb(struct dp_soc *soc,
+			 void *cb_ctxt,
+			 union hal_reo_status *reo_status);
 #endif /* _DP_PEER_H_ */

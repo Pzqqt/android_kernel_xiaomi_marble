@@ -5757,6 +5757,8 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 				" %d", soc->stats.rx.err.reo_error[i]);
 	}
 	DP_PRINT_STATS("REO Error(0-14):%s", reo_error);
+	DP_PRINT_STATS("REO CMD SEND FAIL: %d",
+		       soc->stats.rx.err.reo_cmd_send_fail);
 }
 
 #ifdef FEATURE_TSO_STATS

@@ -654,6 +654,7 @@ struct reo_desc_list_node {
 	qdf_list_node_t node;
 	unsigned long free_ts;
 	struct dp_rx_tid rx_tid;
+	bool resend_update_reo_cmd;
 };
 
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
@@ -768,6 +769,8 @@ struct dp_soc_stats {
 			uint32_t hal_wbm_rel_dup;
 			/* HAL RXDMA error Duplicate count */
 			uint32_t hal_rxdma_err_dup;
+			/* REO cmd send fail/requeue count */
+			uint32_t reo_cmd_send_fail;
 		} err;
 
 		/* packet count per core - per ring */
