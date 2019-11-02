@@ -1408,7 +1408,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 {
 	struct dp_rx_reorder_array_elem *rx_reorder_array_elem;
 	struct dp_pdev *pdev;
-	struct dp_peer *peer;
+	struct dp_peer *peer = NULL;
 	uint16_t peer_id;
 	uint8_t fragno, more_frag, all_frag_present = 0;
 	uint16_t rxseq = mpdu_desc_info->mpdu_seq;
@@ -1417,6 +1417,20 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	uint8_t mpdu_sequence_control_valid;
 	uint8_t mpdu_frame_control_valid;
 	qdf_nbuf_t frag = rx_desc->nbuf;
+	uint32_t msdu_len;
+
+	if (qdf_nbuf_len(frag) > 0) {
+		dp_info("Dropping unexpected packet with skb_len: %d,"
+			"data len: %d, cookie: %d",
+			qdf_nbuf_len(frag), frag->data_len, rx_desc->cookie);
+		DP_STATS_INC(soc, rx.rx_frag_err_len_error, 1);
+		goto discard_frag;
+	}
+
+	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_desc->rx_buf_start);
+
+	qdf_nbuf_set_pktlen(frag, (msdu_len + RX_PKT_TLVS_LEN));
+	qdf_nbuf_append_ext_list(frag, NULL, 0);
 
 	/* Check if the packet is from a valid peer */
 	peer_id = DP_PEER_METADATA_PEER_ID_GET(
@@ -1676,7 +1690,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 {
 	uint32_t rx_bufs_used = 0;
 	qdf_nbuf_t msdu = NULL;
-	uint32_t tid, msdu_len;
+	uint32_t tid;
 	int rx_bfs = 0;
 	struct dp_pdev *pdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1706,11 +1720,6 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	rx_desc->unmapped = 1;
 
 	rx_desc->rx_buf_start = qdf_nbuf_data(msdu);
-
-	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_desc->rx_buf_start);
-
-	qdf_nbuf_set_pktlen(msdu, (msdu_len + RX_PKT_TLVS_LEN));
-	qdf_nbuf_append_ext_list(msdu, NULL, 0);
 
 	tid = hal_rx_mpdu_start_tid_get(soc->hal_soc, rx_desc->rx_buf_start);
 
