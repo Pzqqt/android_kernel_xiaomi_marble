@@ -160,16 +160,19 @@ static u8 audio_ext_clk_get_parent(struct clk_hw *hw)
 
 static int lpass_hw_vote_prepare(struct clk_hw *hw)
 {
-#if 0
-	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
-	int ret;
 
+        struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
+        int ret;
 	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE)  {
-		trace_printk("%s: vote for %d clock\n",
-			__func__, clk_priv->clk_src);
+#ifdef CONFIG_AUDIO_PRM
+		pr_debug("%s: clk_id %d ",__func__, clk_priv->prm_clk_cfg.clk_id);
+		ret = audio_prm_set_lpass_hw_core_req(&clk_priv->prm_clk_cfg,
+			HW_CORE_ID_LPASS, 1);
+#else
 		ret = afe_vote_lpass_core_hw(AFE_LPASS_CORE_HW_MACRO_BLOCK,
 			"LPASS_HW_MACRO",
 			&clk_priv->lpass_core_hwvote_client_handle);
+#endif
 		if (ret < 0) {
 			pr_err("%s lpass core hw vote failed %d\n",
 				__func__, ret);
@@ -178,33 +181,40 @@ static int lpass_hw_vote_prepare(struct clk_hw *hw)
 	}
 
 	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_AUDIO_HW_VOTE)  {
-		trace_printk("%s: vote for %d clock\n",
-			__func__, clk_priv->clk_src);
+#ifdef CONFIG_AUDIO_PRM
+		pr_debug("%s: clk_id %d ",__func__, clk_priv->prm_clk_cfg.clk_id);
+		ret = audio_prm_set_lpass_hw_core_req(&clk_priv->prm_clk_cfg,
+			HW_CORE_ID_DCODEC, 1);
+#else
 		ret = afe_vote_lpass_core_hw(AFE_LPASS_CORE_HW_DCODEC_BLOCK,
 			"LPASS_HW_DCODEC",
 			&clk_priv->lpass_audio_hwvote_client_handle);
+#endif
 		if (ret < 0) {
 			pr_err("%s lpass audio hw vote failed %d\n",
 				__func__, ret);
 			return ret;
 		}
 	}
-#endif
+
 	return 0;
 }
 
 static void lpass_hw_vote_unprepare(struct clk_hw *hw)
 {
-#if 0
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	int ret = 0;
 
 	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE) {
-		trace_printk("%s: unvote for %d clock\n",
-			__func__, clk_priv->clk_src);
+#ifdef CONFIG_AUDIO_PRM
+                pr_debug("%s: clk_id %d ",__func__, clk_priv->prm_clk_cfg.clk_id);
+                ret = audio_prm_set_lpass_hw_core_req(&clk_priv->prm_clk_cfg,
+                        HW_CORE_ID_LPASS, 0);
+#else
 		ret = afe_unvote_lpass_core_hw(
 			AFE_LPASS_CORE_HW_MACRO_BLOCK,
 			clk_priv->lpass_core_hwvote_client_handle);
+#endif
 		if (ret < 0) {
 			pr_err("%s lpass core hw vote failed %d\n",
 				__func__, ret);
@@ -212,17 +222,21 @@ static void lpass_hw_vote_unprepare(struct clk_hw *hw)
 	}
 
 	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_AUDIO_HW_VOTE) {
-		trace_printk("%s: unvote for %d clock\n",
-			__func__, clk_priv->clk_src);
+
+#ifdef CONFIG_AUDIO_PRM
+                pr_debug("%s: clk_id %d ",__func__, clk_priv->prm_clk_cfg.clk_id);
+                ret = audio_prm_set_lpass_hw_core_req(&clk_priv->prm_clk_cfg,
+                        HW_CORE_ID_DCODEC, 0);
+#else
 		ret = afe_unvote_lpass_core_hw(
 			AFE_LPASS_CORE_HW_DCODEC_BLOCK,
 			clk_priv->lpass_audio_hwvote_client_handle);
+#endif
 		if (ret < 0) {
 			pr_err("%s lpass audio hw unvote failed %d\n",
 				__func__, ret);
 		}
 	}
-#endif
 }
 
 static const struct clk_ops audio_ext_clk_ops = {
@@ -583,7 +597,7 @@ static int audio_ref_clk_probe(struct platform_device *pdev)
 		clk_priv->clk_cfg.clk_id = clk_id;
 #ifdef CONFIG_AUDIO_PRM
 		clk_priv->prm_clk_cfg.clk_id = clk_id;
-		dev_info(&pdev->dev, "%s: ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
+		dev_info(&pdev->dev, "%s: PRM ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
 			__func__, clk_priv->prm_clk_cfg.clk_freq_in_hz,
 			clk_priv->prm_clk_cfg.clk_id, clk_priv->clk_src);
 #endif
@@ -592,6 +606,11 @@ static int audio_ref_clk_probe(struct platform_device *pdev)
 	dev_info(&pdev->dev, "%s: ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
 			__func__, clk_priv->clk_cfg.clk_freq_in_hz,
 			clk_priv->clk_cfg.clk_id, clk_priv->clk_src);
+
+        dev_info(&pdev->dev, "%s: PRM2 ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
+                        __func__, clk_priv->prm_clk_cfg.clk_freq_in_hz,
+                        clk_priv->prm_clk_cfg.clk_id, clk_priv->clk_src);
+
 	platform_set_drvdata(pdev, clk_priv);
 
 	ret = of_property_read_string(pdev->dev.of_node, "pmic-clock-names",

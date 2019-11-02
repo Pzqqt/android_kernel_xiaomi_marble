@@ -181,6 +181,13 @@ typedef struct prm_cmd_release_rsc_t
 	audio_hw_clk_rel_cfg_t clock_ids_t[MAX_AUD_HW_CLK_NUM_REQ];
 }prm_cmd_release_rsc_t;
 
+typedef struct prm_cmd_request_hw_core_t
+{
+        apm_cmd_header_t payload_header;
+        apm_module_param_data_t module_payload_0;
+        uint32_t hw_core_id;
+}prm_cmd_request_hw_core_t;
+
 
 #define PRM_CMD_REQUEST_HW_RSC 0x0100100F
 
@@ -197,6 +204,7 @@ typedef struct prm_cmd_release_rsc_t
 /* Param ID for lpass core clock */
 
 #define PARAM_ID_RSC_LPASS_CORE 0x0800102B
+#define PARAM_ID_RSC_HW_CORE 0x08001032
 
 #define HW_RSC_ID_AUDIO_HW_CLK 0x0800102C
 
@@ -494,6 +502,13 @@ typedef struct prm_cmd_release_rsc_t
 /** Default root clock source. */
 #define CLOCK_ROOT_DEFAULT 0x0
 
+/** Hardware core identifier for LPASS. */
+#define HW_CORE_ID_LPASS 0x1
+
+/** Hardware core identifier for digital codec. */
+#define HW_CORE_ID_DCODEC 0x2
+
 int audio_prm_set_lpass_clk_cfg(struct clk_cfg *cfg, uint8_t enable);
+int audio_prm_set_lpass_hw_core_req(struct clk_cfg *cfg, uint32_t hw_core_id, uint8_t enable);
 
 #endif
