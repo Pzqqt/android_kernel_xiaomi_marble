@@ -5726,8 +5726,9 @@ void sde_encoder_helper_get_jitter_bounds_ns(struct drm_encoder *drm_enc,
 	info = &sde_enc->mode_info;
 
 	frametime_ns = (1 * 1000000000) / info->frame_rate;
-	jitter_ns =  (info->jitter_numer * frametime_ns) /
-				(info->jitter_denom * 100);
+	jitter_ns =  info->jitter_numer * frametime_ns;
+	do_div(jitter_ns, info->jitter_denom * 100);
+
 	*l_bound = frametime_ns - jitter_ns;
 	*u_bound = frametime_ns + jitter_ns;
 }
