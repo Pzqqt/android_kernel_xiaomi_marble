@@ -41,6 +41,7 @@
 
 #include <spectral_defs_i.h>
 
+#define FREQ_OFFSET_10MHZ 10
 #ifndef SPECTRAL_USE_NL_BCAST
 #define SPECTRAL_USE_NL_BCAST  (0)
 #endif

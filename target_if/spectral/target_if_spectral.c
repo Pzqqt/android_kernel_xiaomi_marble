@@ -2322,7 +2322,6 @@ target_if_calculate_center_freq(struct target_if_spectral *spectral,
 	struct wlan_objmgr_vdev *vdev;
 	enum phy_ch_width ch_width;
 	enum phy_ch_width agile_ch_width;
-	uint16_t chan_num;
 
 	if (!spectral) {
 		spectral_err("spectral target if object is null");
@@ -2333,8 +2332,6 @@ target_if_calculate_center_freq(struct target_if_spectral *spectral,
 		spectral_err("center_freq argument is null");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	chan_num = wlan_reg_freq_to_chan(spectral->pdev_obj, chan_freq);
 
 	vdev = target_if_spectral_get_vdev(spectral);
 	if (!vdev) {
@@ -2350,19 +2347,17 @@ target_if_calculate_center_freq(struct target_if_spectral *spectral,
 	} else {
 		uint16_t start_freq;
 		uint16_t end_freq;
-		const struct bonded_channel *bonded_chan_ptr = NULL;
+		const struct bonded_channel_freq *bonded_chan_ptr = NULL;
 
-		wlan_reg_get_5g_bonded_channel_and_state
-			(spectral->pdev_obj, chan_num, agile_ch_width,
+		wlan_reg_get_5g_bonded_channel_and_state_for_freq
+			(spectral->pdev_obj, chan_freq, agile_ch_width,
 			 &bonded_chan_ptr);
 		if (!bonded_chan_ptr) {
 			spectral_err("Bonded channel is not found");
 			return QDF_STATUS_E_FAILURE;
 		}
-		start_freq = wlan_reg_chan_to_freq(spectral->pdev_obj,
-						   bonded_chan_ptr->start_ch);
-		end_freq = wlan_reg_chan_to_freq(spectral->pdev_obj,
-						 bonded_chan_ptr->end_ch);
+		start_freq = bonded_chan_ptr->start_freq;
+		end_freq = bonded_chan_ptr->end_freq;
 		*center_freq = (start_freq + end_freq) >> 1;
 	}
 
@@ -2387,7 +2382,6 @@ target_if_validate_center_freq(struct target_if_spectral *spectral,
 	struct wlan_objmgr_vdev *vdev;
 	enum phy_ch_width ch_width;
 	enum phy_ch_width agile_ch_width;
-	uint16_t chan_num;
 	struct wlan_objmgr_pdev *pdev;
 	QDF_STATUS status;
 
@@ -2419,30 +2413,28 @@ target_if_validate_center_freq(struct target_if_spectral *spectral,
 	} else {
 		uint16_t start_freq;
 		uint16_t end_freq;
-		const struct bonded_channel *bonded_chan_ptr = NULL;
+		const struct bonded_channel_freq *bonded_chan_ptr = NULL;
 		bool is_chan;
 
 		status = target_if_is_center_freq_of_any_chan
-				(pdev, center_freq + 10, &is_chan);
+				(pdev, center_freq + FREQ_OFFSET_10MHZ,
+				 &is_chan);
 		if (QDF_IS_STATUS_ERROR(status))
 			return QDF_STATUS_E_FAILURE;
 
 		if (is_chan) {
 			uint32_t calulated_center_freq;
 
-			chan_num = wlan_reg_freq_to_chan(pdev,
-							 center_freq + 10);
-			wlan_reg_get_5g_bonded_channel_and_state
-				(pdev, chan_num, agile_ch_width,
+			wlan_reg_get_5g_bonded_channel_and_state_for_freq
+				(pdev, center_freq + FREQ_OFFSET_10MHZ,
+				 agile_ch_width,
 				 &bonded_chan_ptr);
 			if (!bonded_chan_ptr) {
 				spectral_err("Bonded channel is not found");
 				return QDF_STATUS_E_FAILURE;
 			}
-			start_freq = wlan_reg_chan_to_freq
-				(pdev, bonded_chan_ptr->start_ch);
-			end_freq = wlan_reg_chan_to_freq
-				(pdev, bonded_chan_ptr->end_ch);
+			start_freq = bonded_chan_ptr->start_freq;
+			end_freq = bonded_chan_ptr->end_freq;
 			calulated_center_freq = (start_freq + end_freq) >> 1;
 			*is_valid = (center_freq == calulated_center_freq);
 		} else {
@@ -2472,10 +2464,9 @@ target_if_is_agile_span_overlap_with_operating_span
 			 uint32_t ss_frequency,
 			 bool *is_overlapping)
 {
-	uint32_t chan_num;
 	enum phy_ch_width ch_width;
 	enum phy_ch_width agile_ch_width;
-	const struct bonded_channel *bonded_chan_ptr = NULL;
+	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
 	int16_t chan_freq;
@@ -2513,24 +2504,18 @@ target_if_is_agile_span_overlap_with_operating_span
 	if (cfreq2 < 0)
 		return QDF_STATUS_E_FAILURE;
 
-	chan_num = wlan_reg_freq_to_chan(pdev, chan_freq);
-
 	if (ch_width == CH_WIDTH_20MHZ) {
-		op_start_freq = chan_freq - 10;
-		op_end_freq = chan_freq + 10;
+		op_start_freq = chan_freq - FREQ_OFFSET_10MHZ;
+		op_end_freq = chan_freq + FREQ_OFFSET_10MHZ;
 	} else {
-		wlan_reg_get_5g_bonded_channel_and_state
-			(pdev, chan_num, ch_width, &bonded_chan_ptr);
+		wlan_reg_get_5g_bonded_channel_and_state_for_freq
+			(pdev, chan_freq, ch_width, &bonded_chan_ptr);
 		if (!bonded_chan_ptr) {
 			spectral_err("Bonded channel is not found");
 			return QDF_STATUS_E_FAILURE;
 		}
-		op_start_freq =
-			wlan_reg_chan_to_freq(pdev,
-					      bonded_chan_ptr->start_ch) - 10;
-		op_end_freq =
-			wlan_reg_chan_to_freq(pdev,
-					      bonded_chan_ptr->end_ch) + 10;
+		op_start_freq = bonded_chan_ptr->start_freq - FREQ_OFFSET_10MHZ;
+		op_end_freq = bonded_chan_ptr->end_freq - FREQ_OFFSET_10MHZ;
 	}
 
 	agile_ch_width = target_if_spectral_find_agile_width(ch_width);
@@ -3269,29 +3254,27 @@ target_if_is_aspectral_prohibited_by_adfs(struct wlan_objmgr_psoc *psoc,
  *
  * API to get current operating band of a given pdev.
  *
- * Return: if success enum band_info, BAND_UNKNOWN in case of failure
+ * Return: if success enum reg_wifi_band, REG_BAND_UNKNOWN in case of failure
  */
-static enum band_info
+static enum reg_wifi_band
 target_if_get_curr_band(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_vdev *vdev;
 	int16_t chan_freq;
-	enum band_info cur_band;
-	uint32_t chan_num;
+	enum reg_wifi_band cur_band;
 
 	if (!pdev) {
 		spectral_err("pdev is NULL");
-		return BAND_UNKNOWN;
+		return REG_BAND_UNKNOWN;
 	}
 
 	vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_SPECTRAL_ID);
 	if (!vdev) {
 		spectral_debug("vdev is NULL");
-		return BAND_UNKNOWN;
+		return REG_BAND_UNKNOWN;
 	}
 	chan_freq = target_if_vdev_get_chan_freq(vdev);
-	chan_num = wlan_reg_freq_to_chan(pdev, chan_freq);
-	cur_band = wlan_reg_chan_to_band(chan_num);
+	cur_band = wlan_reg_freq_to_band(chan_freq);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
 
 	return cur_band;
@@ -3311,7 +3294,7 @@ static void
 target_if_is_agile_scan_active_in_5g(struct wlan_objmgr_psoc *psoc,
 				     void *object, void *arg)
 {
-	enum band_info band;
+	enum reg_wifi_band band;
 	bool *is_agile_scan_inprog_5g_pdev = arg;
 	struct target_if_spectral *spectral;
 	struct wlan_objmgr_pdev *cur_pdev = object;
@@ -3328,12 +3311,12 @@ target_if_is_agile_scan_active_in_5g(struct wlan_objmgr_psoc *psoc,
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 
 	band = target_if_get_curr_band(cur_pdev);
-	if (band == BAND_UNKNOWN) {
+	if (band == REG_BAND_UNKNOWN) {
 		spectral_debug("Failed to get current band");
 		return;
 	}
 
-	if (band == BAND_5G &&
+	if (band == REG_BAND_5G &&
 	    p_sops->is_spectral_active(spectral, SPECTRAL_SCAN_MODE_AGILE))
 		*is_agile_scan_inprog_5g_pdev = true;
 }
@@ -3474,7 +3457,7 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 	struct target_if_spectral_ops *p_sops;
 	struct target_if_spectral *spectral;
 	struct wlan_objmgr_psoc *psoc;
-	enum band_info band;
+	enum reg_wifi_band band;
 
 	if (!err) {
 		spectral_err("Error code argument is null");
@@ -3525,11 +3508,11 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 	}
 
 	band = target_if_get_curr_band(spectral->pdev_obj);
-	if (band == BAND_UNKNOWN) {
+	if (band == REG_BAND_UNKNOWN) {
 		spectral_err("Failed to get current band");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if ((band == BAND_5G) && (smode == SPECTRAL_SCAN_MODE_AGILE)) {
+	if ((band == REG_BAND_5G) && (smode == SPECTRAL_SCAN_MODE_AGILE)) {
 		struct target_psoc_info *tgt_hdl;
 		enum wmi_host_hw_mode_config_type mode;
 		bool is_agile_scan_inprog_5g_pdev;
