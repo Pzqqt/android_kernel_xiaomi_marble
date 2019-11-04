@@ -2399,8 +2399,9 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 			    content > WNI_CFG_CURRENT_CHANNEL_STAMAX)
 				return QDF_STATUS_E_FAILURE;
 
-			req->plm_ch_list[count] = content;
-			hdd_debug(" ch- %d", req->plm_ch_list[count]);
+			req->plm_ch_freq_list[count] =
+				cds_chan_to_freq(content);
+			hdd_debug(" ch-freq- %d", req->plm_ch_freq_list[count]);
 		}
 	}
 	/* If PLM START */

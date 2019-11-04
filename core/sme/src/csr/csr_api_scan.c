@@ -849,14 +849,13 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 	qdf_mem_free(ch_info_start);
 }
 
-bool csr_is_supported_channel(struct mac_context *mac, uint8_t channelId)
+bool csr_is_supported_channel(struct mac_context *mac, uint32_t chan_freq)
 {
 	bool fRet = false;
 	uint32_t i;
 
 	for (i = 0; i < mac->scan.base_channels.numChannels; i++) {
-		if (wlan_reg_chan_to_freq(mac->pdev, channelId) ==
-		    mac->scan.base_channels.channel_freq_list[i]) {
+		if (chan_freq == mac->scan.base_channels.channel_freq_list[i]) {
 			fRet = true;
 			break;
 		}

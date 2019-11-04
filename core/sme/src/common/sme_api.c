@@ -1466,11 +1466,12 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle,
 	QDF_STATUS status;
 	bool ret = false;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	uint8_t ch_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint32_t ch_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t count, valid_count = 0;
 	struct scheduler_msg msg = {0};
 	struct csr_roam_session *session;
 	struct plm_req_params *body;
+	uint32_t ch_freq;
 
 	if (!req)
 		return QDF_STATUS_E_FAILURE;
@@ -1507,20 +1508,20 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle,
 		goto send_plm_start;
 	/* validating channel numbers */
 	for (count = 0; count < body->plm_num_ch; count++) {
-		uint8_t ch = body->plm_ch_list[count];
-
-		ret = csr_is_supported_channel(mac, ch);
+		ch_freq = body->plm_ch_freq_list[count];
+		ret = csr_is_supported_channel(mac, ch_freq);
 		if (!ret) {
 			/* Not supported, ignore the channel */
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  FL("Unsupported channel %d ignored for PLM"),
-				  ch);
+				  FL("Unsupported freq %d ignored for PLM"),
+				  ch_freq);
 			continue;
 		}
 
-		if (ch > 14) {
+		if (ch_freq > 2477) {
 			enum channel_state state =
-				wlan_reg_get_channel_state(mac->pdev, ch);
+				wlan_reg_get_channel_state_for_freq(
+					mac->pdev, ch_freq);
 
 			if (state == CHANNEL_STATE_DFS) {
 				/* DFS channel is provided, no PLM bursts can be
@@ -1529,17 +1530,17 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle,
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_DEBUG,
 					  FL("DFS channel %d ignored for PLM"),
-					  ch);
+					  ch_freq);
 				continue;
 			}
 		}
-		ch_list[valid_count++] = ch;
+		ch_freq_list[valid_count++] = ch_freq;
 	} /* End of for () */
 
 	/* Copying back the valid channel list to plm struct */
-	qdf_mem_zero(body->plm_ch_list, body->plm_num_ch);
+	qdf_mem_zero(body->plm_ch_freq_list, body->plm_num_ch);
 	if (valid_count)
-		qdf_mem_copy(body->plm_ch_list, ch_list, valid_count);
+		qdf_mem_copy(body->plm_ch_freq_list, ch_freq_list, valid_count);
 	/* All are invalid channels, FW need to send the PLM
 	 *  report with "incapable" bit set.
 	 */
