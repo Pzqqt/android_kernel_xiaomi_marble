@@ -625,6 +625,33 @@
 	96, \
 	CFG_VALUE_OR_DEFAULT, \
 	"TDLS peer kick out threshold to firmware")
+/*
+ * <ini>
+ * gTDLSDiscoveryWakeTimeout - TDLS discovery WAKE timeout in ms.
+ * @Min: 10
+ * @Max: 5000
+ * @Default: 96
+ *
+ * DUT will wake until this timeout to receive TDLS discovery response
+ * from peer. If tdls_discovery_wake_timeout is 0x0, the DUT will
+ * choose autonomously what wake timeout value to use.
+ *
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+ #define CFG_TDLS_DISCOVERY_WAKE_TIMEOUT CFG_INI_UINT( \
+	"gTDLSDiscoveryWakeTimeout", \
+	0, \
+	2000, \
+	200, \
+	CFG_VALUE_OR_DEFAULT, \
+	"TDLS peer kick out threshold to firmware")
 
 /*
  * <ini>
@@ -676,6 +703,7 @@
 	CFG(CFG_TDLS_WMM_MODE_ENABLE) \
 	CFG(CFG_TDLS_SCAN_ENABLE) \
 	CFG(CFG_TDLS_PEER_KICKOUT_THRESHOLD) \
+	CFG(CFG_TDLS_DISCOVERY_WAKE_TIMEOUT) \
 	CFG(CFG_TDLS_ENABLE_DEFER_TIMER)
 
 #endif
