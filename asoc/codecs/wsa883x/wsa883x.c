@@ -1055,12 +1055,39 @@ static int wsa883x_gpio_ctrl(struct wsa883x_priv *wsa883x, bool enable)
 	return ret;
 }
 
+static int wsa883x_event_notify(struct notifier_block *nb,
+				unsigned long val, void *ptr)
+{
+	u16 event = (val & 0xffff);
+	struct wsa883x_priv *wsa883x = container_of(nb, struct wsa883x_priv,
+						    parent_nblock);
+
+	if (!wsa883x)
+		return -EINVAL;
+
+	switch (event) {
+	case BOLERO_WSA_EVT_PA_OFF_PRE_SSR:
+		snd_soc_component_update_bits(wsa883x->component,
+					      WSA883X_SPKR_DRV_GAIN,
+					      0xF0, 0xC0);
+		snd_soc_component_update_bits(wsa883x->component,
+					      WSA883X_SPKR_DRV_EN,
+					      0x80, 0x00);
+		break;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 static int wsa883x_swr_probe(struct swr_device *pdev)
 {
 	int ret = 0;
 	struct wsa883x_priv *wsa883x;
 	u8 devnum = 0;
 	bool pin_state_current = false;
+	struct wsa_ctrl_platform_data *plat_data = NULL;
 
 	wsa883x = devm_kzalloc(&pdev->dev, sizeof(struct wsa883x_priv),
 			    GFP_KERNEL);
@@ -1156,6 +1183,37 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 			__func__);
 		goto err_irq;
 	}
+
+	wsa883x->parent_np = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,bolero-handle", 0);
+	if (wsa883x->parent_np) {
+		wsa883x->parent_dev =
+				of_find_device_by_node(wsa883x->parent_np);
+		if (wsa883x->parent_dev) {
+			plat_data = dev_get_platdata(&wsa883x->parent_dev->dev);
+			if (plat_data) {
+				wsa883x->parent_nblock.notifier_call =
+							wsa883x_event_notify;
+				if (plat_data->register_notifier)
+					plat_data->register_notifier(
+						plat_data->handle,
+						&wsa883x->parent_nblock,
+						true);
+				wsa883x->register_notifier =
+						plat_data->register_notifier;
+				wsa883x->handle = plat_data->handle;
+			} else {
+				dev_err(&pdev->dev, "%s: plat data not found\n",
+					__func__);
+			}
+		} else {
+			dev_err(&pdev->dev, "%s: parent dev not found\n",
+				__func__);
+		}
+	} else {
+		dev_info(&pdev->dev, "%s: parent node not found\n", __func__);
+	}
+
 	mutex_init(&wsa883x->res_lock);
 
 #ifdef CONFIG_DEBUG_FS
@@ -1230,6 +1288,10 @@ static int wsa883x_swr_remove(struct swr_device *pdev)
 	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_INTR_PIN, NULL);
 	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO, NULL);
 	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR, NULL);
+
+	if (wsa883x->register_notifier)
+		wsa883x->register_notifier(wsa883x->handle,
+				&wsa883x->parent_nblock, false);
 #ifdef CONFIG_DEBUG_FS
 	debugfs_remove_recursive(wsa883x->debugfs_dent);
 	wsa883x->debugfs_dent = NULL;
