@@ -882,6 +882,7 @@ scm_update_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 					chan_list_6g[i].center_freq;
 			}
 		}
+		qdf_mem_free(chan_list_6g);
 	}
 	scm_debug("Number of channels to scan %d", num_scan_channels);
 	for (i = 0; i < num_scan_channels; i++)
