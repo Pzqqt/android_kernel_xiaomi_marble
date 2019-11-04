@@ -617,8 +617,7 @@ QDF_STATUS (*send_plm_stop_cmd)(wmi_unified_t wmi_handle,
 		 const struct plm_req_params *plm);
 
 QDF_STATUS (*send_plm_start_cmd)(wmi_unified_t wmi_handle,
-		  const struct plm_req_params *plm,
-		  uint32_t *gchannel_list);
+				 const struct plm_req_params *plm);
 #endif /* FEATURE_WLAN_ESE */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

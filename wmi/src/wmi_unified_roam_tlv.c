@@ -592,8 +592,7 @@ static QDF_STATUS send_plm_stop_cmd_tlv(wmi_unified_t wmi_handle,
  * Return: CDF status
  */
 static QDF_STATUS send_plm_start_cmd_tlv(wmi_unified_t wmi_handle,
-			  const struct plm_req_params *plm,
-			  uint32_t *gchannel_list)
+					 const struct plm_req_params *plm)
 {
 	wmi_vdev_plmreq_start_cmd_fixed_param *cmd;
 	uint32_t *channel_list;
@@ -650,10 +649,7 @@ static QDF_STATUS send_plm_start_cmd_tlv(wmi_unified_t wmi_handle,
 	if (cmd->num_chans) {
 		channel_list = (uint32_t *) buf_ptr;
 		for (count = 0; count < cmd->num_chans; count++) {
-			channel_list[count] = plm->plm_ch_list[count];
-			if (channel_list[count] < WMI_NLO_FREQ_THRESH)
-				channel_list[count] =
-					gchannel_list[count];
+			channel_list[count] = plm->plm_ch_freq_list[count];
 			WMI_LOGD("Ch[%d]: %d MHz", count, channel_list[count]);
 		}
 		buf_ptr += cmd->num_chans * sizeof(uint32_t);

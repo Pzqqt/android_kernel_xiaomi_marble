@@ -119,15 +119,13 @@ QDF_STATUS wmi_unified_plm_stop_cmd(wmi_unified_t wmi_handle,
  * wmi_unified_plm_start_cmd() - plm start request
  * @wmi_handle: wmi handle
  * @plm: plm request parameters
- * @gchannel_list: gchannel list
  *
  * This function request FW to start PLM.
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_plm_start_cmd(wmi_unified_t wmi_handle,
-				     const struct plm_req_params *plm,
-				     uint32_t *gchannel_list);
+				     const struct plm_req_params *plm);
 #endif /* FEATURE_WLAN_ESE */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

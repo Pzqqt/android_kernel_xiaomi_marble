@@ -245,7 +245,7 @@ struct roam_scan_filter_params {
  * @desired_tx_pwr: desired tx power
  * @mac_addr: MC dest addr
  * @plm_num_ch: channel numbers
- * @plm_ch_list: channel list
+ * @plm_ch_freq_list: channel frequency list
  * @vdev_id: vdev id
  * @enable:  enable/disable
  */
@@ -261,8 +261,8 @@ struct plm_req_params {
 	struct qdf_mac_addr mac_addr;
 	/* no of channels */
 	uint8_t plm_num_ch;
-	/* channel numbers */
-	uint8_t plm_ch_list[WMI_CFG_VALID_CHANNEL_LIST_LEN];
+	/* channel frequency list */
+	uint32_t plm_ch_freq_list[WMI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t vdev_id;
 	bool enable;
 };

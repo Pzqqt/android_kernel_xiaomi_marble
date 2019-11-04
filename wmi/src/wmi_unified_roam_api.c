@@ -93,13 +93,10 @@ QDF_STATUS wmi_unified_plm_stop_cmd(wmi_unified_t wmi_handle,
 }
 
 QDF_STATUS wmi_unified_plm_start_cmd(wmi_unified_t wmi_handle,
-				     const struct plm_req_params *plm,
-				     uint32_t *gchannel_list)
+				     const struct plm_req_params *plm)
 {
 	if (wmi_handle->ops->send_plm_start_cmd)
-		return wmi_handle->ops->send_plm_start_cmd(wmi_handle,
-							   plm,
-							   gchannel_list);
+		return wmi_handle->ops->send_plm_start_cmd(wmi_handle, plm);
 
 	return QDF_STATUS_E_FAILURE;
 }
