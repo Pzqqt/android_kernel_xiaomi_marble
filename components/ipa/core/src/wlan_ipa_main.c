@@ -388,7 +388,7 @@ void ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 
-	wlan_ipa_uc_disable_pipes(ipa_obj);
+	wlan_ipa_uc_disable_pipes(ipa_obj, true);
 }
 
 void ipa_flush(struct wlan_objmgr_pdev *pdev)
@@ -462,6 +462,20 @@ QDF_STATUS ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
 	}
 
 	return wlan_ipa_uc_ol_init(ipa_obj, osdev);
+}
+
+bool ipa_is_tx_pending(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+
+	return wlan_ipa_is_tx_pending(ipa_obj);
 }
 
 QDF_STATUS ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)

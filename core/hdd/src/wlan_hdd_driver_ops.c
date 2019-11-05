@@ -1010,6 +1010,12 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 		return err;
 	}
 
+	if (ucfg_ipa_is_tx_pending(hdd_ctx->pdev)) {
+		hdd_err("failed due to pending IPA TX comps");
+		err = -EBUSY;
+		goto resume_cdp;
+	}
+
 	err = hif_bus_early_suspend(hif_ctx);
 	if (err) {
 		hdd_err("Failed hif bus early suspend");
