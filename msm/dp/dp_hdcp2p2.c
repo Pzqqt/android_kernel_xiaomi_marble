@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -44,7 +44,8 @@ struct dp_hdcp2p2_ctrl {
 	struct hdcp2_buffer response;
 	struct hdcp2_buffer request;
 	uint32_t total_message_length;
-	uint32_t timeout;
+	uint32_t transaction_delay;
+	uint32_t transaction_timeout;
 	struct sde_hdcp_2x_msg_part msg_part[HDCP_MAX_MESSAGE_PARTS];
 	u8 sink_rx_status;
 	u8 rx_status;
@@ -108,7 +109,6 @@ static int dp_hdcp2p2_copy_buf(struct dp_hdcp2p2_ctrl *ctrl,
 
 	mutex_lock(&ctrl->msg_lock);
 
-	ctrl->timeout = data->timeout;
 	num_messages = data->message_data->num_messages;
 	ctrl->total_message_length = 0; /* Total length of all messages */
 
@@ -131,6 +131,9 @@ static int dp_hdcp2p2_copy_buf(struct dp_hdcp2p2_ctrl *ctrl,
 	ctrl->response.length = ctrl->total_message_length;
 	ctrl->request.data = data->buf;
 	ctrl->request.length = ctrl->total_message_length;
+
+	ctrl->transaction_delay = data->transaction_delay;
+	ctrl->transaction_timeout = data->transaction_timeout;
 
 	mutex_unlock(&ctrl->msg_lock);
 
@@ -170,7 +173,6 @@ static void dp_hdcp2p2_set_interrupts(struct dp_hdcp2p2_ctrl *ctrl, bool enable)
 static int dp_hdcp2p2_wakeup(struct hdcp_transport_wakeup_data *data)
 {
 	struct dp_hdcp2p2_ctrl *ctrl;
-	u32 const default_timeout_us = 500;
 
 	if (!data) {
 		DP_ERR("invalid input\n");
@@ -182,11 +184,6 @@ static int dp_hdcp2p2_wakeup(struct hdcp_transport_wakeup_data *data)
 		DP_ERR("invalid ctrl\n");
 		return -EINVAL;
 	}
-
-	if (data->timeout)
-		ctrl->timeout = (data->timeout) * 2;
-	else
-		ctrl->timeout = default_timeout_us;
 
 	if (dp_hdcp2p2_copy_buf(ctrl, data))
 		goto exit;
@@ -364,6 +361,8 @@ static int dp_hdcp2p2_aux_read_message(struct dp_hdcp2p2_ctrl *ctrl)
 	int rc = 0, max_size = 16, read_size = 0, bytes_read = 0;
 	int size = ctrl->request.length, offset = ctrl->msg_part->offset;
 	u8 *buf = ctrl->request.data;
+	s64 diff_ms;
+	ktime_t start_read, finish_read;
 
 	if (atomic_read(&ctrl->auth_state) == HDCP_STATE_INACTIVE ||
 		atomic_read(&ctrl->auth_state) == HDCP_STATE_AUTH_FAIL) {
@@ -380,6 +379,7 @@ static int dp_hdcp2p2_aux_read_message(struct dp_hdcp2p2_ctrl *ctrl)
 
 	DP_DEBUG("offset(0x%x), size(%d)\n", offset, size);
 
+	start_read = ktime_get();
 	do {
 		read_size = min(size, max_size);
 
@@ -396,7 +396,14 @@ static int dp_hdcp2p2_aux_read_message(struct dp_hdcp2p2_ctrl *ctrl)
 		offset += read_size;
 		size -= read_size;
 	} while (size > 0);
+	finish_read = ktime_get();
+	diff_ms = ktime_ms_delta(finish_read, start_read);
 
+	if (ctrl->transaction_timeout && diff_ms > ctrl->transaction_timeout) {
+		DP_ERR("HDCP read timeout exceeded (%dms > %dms)\n", diff_ms,
+				ctrl->transaction_timeout);
+		rc = -ETIMEDOUT;
+	}
 exit:
 	return rc;
 }
@@ -485,7 +492,7 @@ static void dp_hdcp2p2_send_msg(struct dp_hdcp2p2_ctrl *ctrl)
 
 	rc = dp_hdcp2p2_aux_write_message(ctrl, ctrl->response.data,
 			ctrl->response.length, ctrl->msg_part->offset,
-			ctrl->timeout);
+			ctrl->transaction_delay);
 	if (rc) {
 		DP_ERR("Error sending msg to sink %d\n", rc);
 		mutex_unlock(&ctrl->msg_lock);
@@ -493,7 +500,7 @@ static void dp_hdcp2p2_send_msg(struct dp_hdcp2p2_ctrl *ctrl)
 	}
 
 	cdata.cmd = HDCP_2X_CMD_MSG_SEND_SUCCESS;
-	cdata.timeout = ctrl->timeout;
+	cdata.timeout = ctrl->transaction_delay;
 	mutex_unlock(&ctrl->msg_lock);
 
 exit:
@@ -519,7 +526,7 @@ static int dp_hdcp2p2_get_msg_from_sink(struct dp_hdcp2p2_ctrl *ctrl)
 	}
 
 	cdata.total_message_length = ctrl->total_message_length;
-	cdata.timeout = ctrl->timeout;
+	cdata.timeout = ctrl->transaction_delay;
 exit:
 	if (rc == -ETIMEDOUT)
 		cdata.cmd = HDCP_2X_CMD_MSG_RECV_TIMEOUT;
@@ -543,6 +550,9 @@ static void dp_hdcp2p2_recv_msg(struct dp_hdcp2p2_ctrl *ctrl)
 		DP_ERR("hdcp is off\n");
 		return;
 	}
+
+	if (ctrl->transaction_delay)
+		msleep(ctrl->transaction_delay);
 
 	dp_hdcp2p2_get_msg_from_sink(ctrl);
 }

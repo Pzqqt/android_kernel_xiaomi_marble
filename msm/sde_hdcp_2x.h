@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_HDCP_2X_H__
@@ -114,32 +114,37 @@ struct sde_hdcp_2x_msg_part {
 
 /**
  * struct sde_hdcp_2x_msg_data - HDCP 2.2 message containing one or more parts
- * @num_messages:   total number of parts in a full message
- * @messages:       array containing num_messages parts
- * @rx_status:      value of rx_status register
+ * @num_messages:          total number of parts in a full message
+ * @messages:              array containing num_messages parts
+ * @rx_status:             value of rx_status register
+ * @transaction_timeout:   maximum duration to read/write message from/to sink
  */
 struct sde_hdcp_2x_msg_data {
 	uint32_t num_messages;
 	struct sde_hdcp_2x_msg_part messages[HDCP_MAX_MESSAGE_PARTS];
 	uint8_t rx_status;
+	uint32_t transaction_timeout;
 };
 
 /**
  * struct hdcp_transport_wakeup_data - data sent to display transport layer
- * @cmd:            command type
- * @context:        void pointer to the display transport layer
- * @send_msg_buf:   buffer containing message to be sent to sink
- * @send_msg_len:   length of the message to be sent to sink
- * @timeout:        timeout value for timed transactions
- * @abort_mask:     mask used to determine whether HDCP link is valid
- * @message_data:   a pointer to the message description
+ * @cmd:                  command type
+ * @context:              void pointer to the display transport layer
+ * @send_msg_buf:         buffer containing message to be sent to sink
+ * @send_msg_len:         length of the message to be sent to sink
+ * @timeout:              timeout value for timed transactions
+ * @abort_mask:           mask used to determine whether HDCP link is valid
+ * @message_data:         a pointer to the message description
+ * @transaction_delay:    amount of time to delay before performing transaction
+ * @transaction_timeout:  maximum duration to read/write message from/to sink
  */
 struct hdcp_transport_wakeup_data {
 	enum hdcp_transport_wakeup_cmd cmd;
 	void *context;
 	unsigned char *buf;
 	u32 buf_len;
-	u32 timeout;
+	u32 transaction_delay;
+	u32 transaction_timeout;
 	u8 abort_mask;
 	const struct sde_hdcp_2x_msg_data *message_data;
 };
