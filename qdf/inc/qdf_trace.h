@@ -195,6 +195,7 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_ICMPv6_PACKET_RECORD - record ICMPv6 packet
  * @QDF_DP_TRACE_HDD_TX_TIMEOUT - HDD tx timeout
  * @QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT- SOFTAP HDD tx timeout
+ * @QDF_DP_TRACE_TX_CREDIT_RECORD - credit update record
  * @QDF_DP_TRACE_ULTRA_LOW_VERBOSITY - Below this is not logged for >4PPS
  * @QDF_DP_TRACE_TX_PACKET_RECORD - record 32 bytes of tx pkt at any layer
  * @QDF_DP_TRACE_RX_PACKET_RECORD - record 32 bytes of rx pkt at any layer
@@ -241,6 +242,7 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_ICMPv6_PACKET_RECORD,
 	QDF_DP_TRACE_HDD_TX_TIMEOUT,
 	QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT,
+	QDF_DP_TRACE_TX_CREDIT_RECORD,
 	QDF_DP_TRACE_ULTRA_LOW_VERBOSITY,
 	QDF_DP_TRACE_TX_PACKET_RECORD,
 	QDF_DP_TRACE_RX_PACKET_RECORD,
@@ -286,6 +288,36 @@ enum qdf_proto_dir {
 };
 
 /**
+ * QDF_CREDIT_UPDATE_SOURCE - source of credit record
+ * @QDF_TX_SCHED: Tx scheduler
+ * @QDF_TX_COMP: TX completion
+ * @QDF_TX_CREDIT_UPDATE: credit update indication
+ * @QDF_HTT_ATTACH: HTT attach
+ * @QDF_TX_HTT_MSG: HTT TX message
+ */
+enum QDF_CREDIT_UPDATE_SOURCE {
+	QDF_TX_SCHED,
+	QDF_TX_COMP,
+	QDF_TX_CREDIT_UPDATE,
+	QDF_HTT_ATTACH,
+	QDF_TX_HTT_MSG
+};
+
+/**
+ * QDF_CREDIT_OPERATION - operation on credit
+ * @QDF_CREDIT_INC: credit increment
+ * @QDF_CREDIT_DEC: credit decrement
+ * @QDF_CREDIT_ABS: Abosolute credit
+ * @QDF_OP_NA: Not applicable
+ */
+enum QDF_CREDIT_OPERATION {
+	QDF_CREDIT_INC,
+	QDF_CREDIT_DEC,
+	QDF_CREDIT_ABS,
+	QDF_OP_NA
+};
+
+/**
  * struct qdf_dp_trace_ptr_buf - pointer record buffer
  * @cookie: cookie value
  * @msdu_id: msdu_id
@@ -325,6 +357,24 @@ struct qdf_dp_trace_mgmt_buf {
 	uint8_t vdev_id;
 	uint8_t type;
 	uint8_t subtype;
+};
+
+/**
+ * struct qdf_dp_trace_credit_record - tx credit record
+ * @source: credit record source
+ * @operation: credit operation
+ * @delta: delta of credit
+ * @total_credits: total credit
+ * @g0_credit: group 0 credit
+ * @g1_credit: group 1 credit
+ */
+struct qdf_dp_trace_credit_record {
+	enum QDF_CREDIT_UPDATE_SOURCE source;
+	enum QDF_CREDIT_OPERATION operation;
+	int delta;
+	int total_credits;
+	int g0_credit;
+	int g1_credit;
 };
 
 /**
@@ -414,7 +464,7 @@ struct s_qdf_dp_trace_data {
 	uint32_t head;
 	uint32_t tail;
 	uint32_t num;
-	uint8_t proto_bitmap;
+	uint32_t proto_bitmap;
 	uint8_t no_of_record;
 	uint16_t num_records_to_dump;
 	uint16_t dump_counter;
@@ -608,11 +658,11 @@ bool qdf_dp_trace_log_pkt(uint8_t vdev_id, struct sk_buff *skb,
 
 void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 				uint16_t time_limit, uint8_t verbosity,
-				uint8_t proto_bitmap);
+				uint32_t proto_bitmap);
 void qdf_dp_trace_deinit(void);
 void qdf_dp_trace_spin_lock_init(void);
-void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_records,
-			 uint8_t verbosity);
+void qdf_dp_trace_set_value(uint32_t proto_bitmap, uint8_t no_of_records,
+			    uint8_t verbosity);
 void qdf_dp_trace_set_track(qdf_nbuf_t nbuf, enum qdf_proto_dir dir);
 void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 			uint8_t *data, uint8_t size, enum qdf_proto_dir dir);
@@ -737,7 +787,7 @@ void qdf_dp_trace_data_pkt(qdf_nbuf_t nbuf, uint8_t pdev_id,
 			   enum QDF_DP_TRACE_ID code, uint16_t msdu_id,
 			   enum qdf_proto_dir dir);
 
-uint8_t qdf_dp_get_proto_bitmap(void);
+uint32_t qdf_dp_get_proto_bitmap(void);
 uint8_t qdf_dp_get_verbosity(void);
 uint8_t qdf_dp_get_no_of_record(void);
 
@@ -779,6 +829,20 @@ void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 			   enum qdf_proto_subtype subtype);
 
 /**
+ * qdf_dp_trace_credit_record() - record credit update
+ * @source: source of record
+ * @operation: credit operation
+ * @delta: credit delta
+ * @total_credits: total credit
+ * @g0_credit: group 0 credit
+ * @g1_credit: group 1 credit
+ */
+void qdf_dp_trace_credit_record(enum QDF_CREDIT_UPDATE_SOURCE source,
+				enum QDF_CREDIT_OPERATION operation,
+				int delta, int total_credits,
+				int g0_credit, int g1_credit);
+
+/**
  * qdf_dp_display_mgmt_pkt() - display proto packet
  * @record: dptrace record
  * @index: index
@@ -789,6 +853,17 @@ void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
  */
 void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
 			     uint16_t index, uint8_t pdev_id, uint8_t info);
+
+/**
+ * qdf_dp_display_credit_record() - display credit record
+ * @record: dptrace record
+ * @index: index
+ * @pdev_id: pdev id
+ * @info: metadeta info
+ */
+void qdf_dp_display_credit_record(struct qdf_dp_trace_record_s *record,
+				  uint16_t index, uint8_t pdev_id,
+				  uint8_t info);
 
 /**
  * qdf_dp_display_event_record() - display event records
@@ -815,7 +890,7 @@ bool qdf_dp_trace_log_pkt(uint8_t vdev_id, struct sk_buff *skb,
 static inline
 void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 				uint16_t time_limit, uint8_t verbosity,
-				uint8_t proto_bitmap)
+				uint32_t proto_bitmap)
 {
 }
 
@@ -829,8 +904,8 @@ void qdf_dp_trace_set_track(qdf_nbuf_t nbuf, enum qdf_proto_dir dir)
 {
 }
 static inline
-void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_records,
-			 uint8_t verbosity)
+void qdf_dp_trace_set_value(uint32_t proto_bitmap, uint8_t no_of_records,
+			    uint8_t verbosity)
 {
 }
 
