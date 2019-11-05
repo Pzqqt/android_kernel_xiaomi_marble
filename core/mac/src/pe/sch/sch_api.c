@@ -110,7 +110,7 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 	}
 	beaconParams->p2pIeOffset = mac->sch.p2p_ie_offset;
 
-	if (size >= SIR_MAX_BEACON_SIZE) {
+	if (size > SIR_MAX_BEACON_SIZE) {
 		pe_err("beacon size (%d) exceed host limit %d",
 		       size, SIR_MAX_BEACON_SIZE);
 		QDF_ASSERT(0);
@@ -265,13 +265,6 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 		}
 	}
 
-	if (addnIEPresent) {
-		if ((nBytes + addn_ielen) <= SIR_MAX_PACKET_SIZE)
-			nBytes += addn_ielen;
-		else
-			addnIEPresent = false;  /* Dont include the IE. */
-	}
-
 	/*
 	 * Extcap IE now support variable length, merge Extcap IE from addn_ie
 	 * may change the frame size. Therefore, MUST merge ExtCap IE before
@@ -296,6 +289,13 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 	}
 
 	nBytes += nPayload + sizeof(tSirMacMgmtHdr);
+
+	if (addnIEPresent) {
+		if ((nBytes + addn_ielen) <= SIR_MAX_PROBE_RESP_SIZE)
+			nBytes += addn_ielen;
+		else
+			addnIEPresent = false;  /* Dont include the IE. */
+	}
 
 	/* Make sure we are not exceeding allocated len */
 	if (nBytes > SIR_MAX_PROBE_RESP_SIZE) {

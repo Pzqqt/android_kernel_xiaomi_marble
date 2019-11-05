@@ -89,7 +89,7 @@ static QDF_STATUS sch_get_p2p_ie_offset(uint8_t *pextra_ie,
  * @mac_ctx:       mac global context
  * @session:       pe session pointer
  * @frm:           frame where additional IE is to be added
- * @max_bcn_size:  max beacon size
+ * @bcn_size_left: beacon size left
  * @num_bytes:     final size
  * @addn_ie:       pointer to additional IE
  * @addn_ielen:    length of additional IE
@@ -98,8 +98,8 @@ static QDF_STATUS sch_get_p2p_ie_offset(uint8_t *pextra_ie,
  */
 static QDF_STATUS
 sch_append_addn_ie(struct mac_context *mac_ctx, struct pe_session *session,
-		   uint8_t *frm, uint32_t max_bcn_size, uint32_t *num_bytes,
-		   uint8_t *addn_ie, uint16_t addn_ielen)
+		   uint8_t *frm, uint32_t bcn_size_left,
+		   uint32_t *num_bytes, uint8_t *addn_ie, uint16_t addn_ielen)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint8_t add_ie[WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN];
@@ -110,7 +110,7 @@ sch_append_addn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 	bool valid_ie;
 
 	valid_ie = (addn_ielen <= WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN &&
-		    addn_ielen && ((addn_ielen + *num_bytes) <= max_bcn_size));
+		    addn_ielen && (addn_ielen <= bcn_size_left));
 
 	if (!valid_ie)
 		return status;
@@ -226,7 +226,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 	tpAniBeaconStruct bcn_struct = (tpAniBeaconStruct)
 						session->pSchBeaconFrameBegin;
 	tpSirMacMgmtHdr mac;
-	uint16_t offset;
+	uint16_t offset, bcn_size_left;
 	uint8_t *ptr;
 	tDot11fBeacon1 *bcn_1;
 	tDot11fBeacon2 *bcn_2;
@@ -340,7 +340,8 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 			n_status);
 	}
 	session->schBeaconOffsetBegin = offset + (uint16_t) n_bytes;
-	pe_debug("Initialized beacon begin, offset %d", offset);
+	pe_debug("Initialized beacon begin, offset %d fixed size %d", offset,
+		 session->schBeaconOffsetBegin);
 
 	/* Initialize the 'new' fields at the end of the beacon */
 
@@ -609,6 +610,8 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 	}
 
 	/* Fill the CSA/ECSA count offsets if the IEs are present */
+	mac_ctx->sch.ecsa_count_offset = 0;
+	mac_ctx->sch.csa_count_offset = 0;
 	if (session->dfsIncludeChanSwIe)
 		sch_get_csa_ecsa_count_offset(session->pSchBeaconFrameEnd,
 					      n_bytes,
@@ -631,11 +634,20 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 	extra_ie = session->pSchBeaconFrameEnd + n_bytes;
 	extra_ie_offset = n_bytes;
 
+	/*
+	 * Max size left to append additional IE.= (MAX beacon size - TIM IE -
+	 * beacon fix size (bcn_1 + header) - beacon variable size (bcn_1).
+	 */
+	bcn_size_left = SIR_MAX_BEACON_SIZE - TIM_IE_SIZE -
+				session->schBeaconOffsetBegin -
+				(uint16_t)n_bytes;
+	pe_debug("max_bcn_size_left %d and addn_ielen %d", bcn_size_left,
+		 addn_ielen);
 	/* TODO: Append additional IE here. */
 	if (addn_ielen > 0)
 		sch_append_addn_ie(mac_ctx, session,
 				   session->pSchBeaconFrameEnd + n_bytes,
-				   SIR_MAX_BEACON_SIZE, &n_bytes,
+				   bcn_size_left, &n_bytes,
 				   addn_ie, addn_ielen);
 
 	session->schBeaconOffsetEnd = (uint16_t) n_bytes;
@@ -940,12 +952,6 @@ static QDF_STATUS write_beacon_to_memory(struct mac_context *mac, uint16_t size,
 	if (!mac->sch.beacon_changed)
 		return QDF_STATUS_E_FAILURE;
 
-	/*
-	 * Copy beacon data to SoftMAC shared memory...
-	 * Do this by sending a message to HAL
-	 */
-
-	size = (size + 3) & (~3);
 	status = sch_send_beacon_req(mac, pe_session->pSchBeaconFrameBegin,
 				     size, pe_session, reason);
 	if (QDF_IS_STATUS_ERROR(status))
