@@ -5833,6 +5833,8 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	int rc = 0;
 	u32 mi2s_audio_intf = 0;
 	u32 auxpcm_audio_intf = 0;
+	u32 rxtx_bolero_codec = 0;
+	u32 va_bolero_codec = 0;
 	u32 val = 0;
 	u32 wcn_btfm_intf = 0;
 	const struct of_device_id *match;
@@ -5862,17 +5864,37 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		       sizeof(msm_common_be_dai_links));
 		total_links += ARRAY_SIZE(msm_common_be_dai_links);
 
-		memcpy(msm_bengal_dai_links + total_links,
-		       msm_rx_tx_cdc_dma_be_dai_links,
-		       sizeof(msm_rx_tx_cdc_dma_be_dai_links));
-		total_links +=
-			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links);
+		rc = of_property_read_u32(dev->of_node,
+					  "qcom,rxtx-bolero-codec",
+					  &rxtx_bolero_codec);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match RXTX Macro codec\n",
+				__func__);
+		} else {
+			if (rxtx_bolero_codec) {
+				memcpy(msm_bengal_dai_links + total_links,
+				       msm_rx_tx_cdc_dma_be_dai_links,
+				       sizeof(msm_rx_tx_cdc_dma_be_dai_links));
+				total_links +=
+					ARRAY_SIZE(
+						msm_rx_tx_cdc_dma_be_dai_links);
+			}
+		}
 
-		memcpy(msm_bengal_dai_links + total_links,
-		       msm_va_cdc_dma_be_dai_links,
-		       sizeof(msm_va_cdc_dma_be_dai_links));
-		total_links +=
-			ARRAY_SIZE(msm_va_cdc_dma_be_dai_links);
+		rc = of_property_read_u32(dev->of_node, "qcom,va-bolero-codec",
+					  &va_bolero_codec);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match VA Macro codec\n",
+				__func__);
+		} else {
+			if (va_bolero_codec) {
+				memcpy(msm_bengal_dai_links + total_links,
+				       msm_va_cdc_dma_be_dai_links,
+				       sizeof(msm_va_cdc_dma_be_dai_links));
+				total_links +=
+					ARRAY_SIZE(msm_va_cdc_dma_be_dai_links);
+			}
+		}
 
 		rc = of_property_read_u32(dev->of_node, "qcom,mi2s-audio-intf",
 					  &mi2s_audio_intf);
