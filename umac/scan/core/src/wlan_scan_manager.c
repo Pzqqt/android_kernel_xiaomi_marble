@@ -864,7 +864,7 @@ scm_update_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 
 		/* Add the 6Ghz channels based on config*/
 		channel_count = wlan_reg_get_band_channel_list(pdev,
-							       REG_BAND_6G,
+							       BIT(REG_BAND_6G),
 							       chan_list_6g);
 		scm_debug("Number of 6G channels %d", channel_count);
 		for (i = 0; i < channel_count; i++) {
