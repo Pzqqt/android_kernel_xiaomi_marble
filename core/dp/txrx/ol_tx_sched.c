@@ -1526,6 +1526,13 @@ ol_tx_sched(struct ol_txrx_pdev_t *pdev)
 				  qdf_atomic_read(&pdev->target_tx_credit) -
 				  num_credits);
 #endif
+			DPTRACE(qdf_dp_trace_credit_record(QDF_TX_SCHED,
+				QDF_CREDIT_DEC, num_credits,
+				qdf_atomic_read(&pdev->target_tx_credit) -
+				num_credits,
+				qdf_atomic_read(&pdev->txq_grps[0].credit),
+				qdf_atomic_read(&pdev->txq_grps[1].credit)));
+
 			qdf_atomic_add(-num_credits, &pdev->target_tx_credit);
 		}
 		qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);

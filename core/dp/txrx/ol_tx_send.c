@@ -400,7 +400,14 @@ int ol_tx_deduct_one_credit(struct ol_txrx_pdev_t *pdev)
 	if (!pdev->cfg.default_tx_comp_req) {
 		ol_tx_target_credit_update(pdev, -1);
 		ol_tx_deduct_one_any_group_credit(pdev);
+
+		DPTRACE(qdf_dp_trace_credit_record(QDF_TX_HTT_MSG,
+			QDF_CREDIT_DEC, 1,
+			qdf_atomic_read(&pdev->target_tx_credit),
+			qdf_atomic_read(&pdev->txq_grps[0].credit),
+			qdf_atomic_read(&pdev->txq_grps[1].credit)));
 	}
+
 	return 0;
 }
 #endif /* CONFIG_HL_SUPPORT */

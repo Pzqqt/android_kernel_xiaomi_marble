@@ -12488,7 +12488,7 @@ void hdd_dp_trace_init(struct hdd_config *config)
 	uint8_t thresh = DP_TRACE_CONFIG_DEFAULT_THRESH;
 	uint16_t thresh_time_limit = DP_TRACE_CONFIG_DEFAULT_THRESH_TIME_LIMIT;
 	uint8_t verbosity = DP_TRACE_CONFIG_DEFAULT_VERBOSTY;
-	uint8_t proto_bitmap = DP_TRACE_CONFIG_DEFAULT_BITMAP;
+	uint32_t proto_bitmap = DP_TRACE_CONFIG_DEFAULT_BITMAP;
 	uint8_t config_params[DP_TRACE_CONFIG_NUM_PARAMS];
 	uint8_t num_entries = 0;
 	uint32_t bw_compute_interval;
@@ -12803,6 +12803,8 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	hdd_driver_memdump_init();
 	hdd_bus_bandwidth_init(hdd_ctx);
 
+	hdd_dp_trace_init(hdd_ctx->config);
+
 	errno = hdd_wlan_start_modules(hdd_ctx, false);
 	if (errno) {
 		hdd_err("Failed to start modules; errno:%d", errno);
@@ -12825,8 +12827,6 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 		hdd_err("Failed to initialize wiphy; errno:%d", errno);
 		goto stop_modules;
 	}
-
-	hdd_dp_trace_init(hdd_ctx->config);
 
 	errno = hdd_initialize_mac_address(hdd_ctx);
 	if (errno) {

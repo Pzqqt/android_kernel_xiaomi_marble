@@ -38,6 +38,7 @@
 #include <cds_api.h>
 #include "hif.h"
 #include <cdp_txrx_handle.h>
+#include <ol_txrx_peer_find.h>
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 100  /* enough for a large A-MPDU */
 
@@ -570,6 +571,13 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 		ol_tx_target_credit_update(
 				pdev->txrx_pdev, ol_cfg_target_tx_credit(
 					pdev->ctrl_pdev));
+		DPTRACE(qdf_dp_trace_credit_record(QDF_HTT_ATTACH,
+			QDF_CREDIT_INC,
+			ol_cfg_target_tx_credit(pdev->ctrl_pdev),
+			qdf_atomic_read(&pdev->txrx_pdev->target_tx_credit),
+			qdf_atomic_read(&pdev->txrx_pdev->txq_grps[0].credit),
+			qdf_atomic_read(&pdev->txrx_pdev->txq_grps[1].credit)));
+
 	} else {
 		enum wlan_frm_fmt frm_type;
 

@@ -484,6 +484,11 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 			pdev->txrx_pdev, compl_msg->desc_id, 1,
 			0, compl_msg->status);
 
+		DPTRACE(qdf_dp_trace_credit_record(QDF_TX_COMP, QDF_CREDIT_INC,
+			1, qdf_atomic_read(&pdev->txrx_pdev->target_tx_credit),
+			qdf_atomic_read(&pdev->txrx_pdev->txq_grps[0].credit),
+			qdf_atomic_read(&pdev->txrx_pdev->txq_grps[1].credit)));
+
 		if (!ol_tx_get_is_mgmt_over_wmi_enabled()) {
 			ol_tx_single_completion_handler(pdev->txrx_pdev,
 							compl_msg->status,
@@ -553,6 +558,13 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		htt_credit_delta =
 		htt_t2h_adjust_bus_target_delta(pdev, htt_credit_delta);
 		htt_tx_group_credit_process(pdev, msg_word);
+		DPTRACE(qdf_dp_trace_credit_record(QDF_TX_CREDIT_UPDATE,
+			QDF_CREDIT_INC,	htt_credit_delta,
+			qdf_atomic_read(&pdev->txrx_pdev->target_tx_credit) +
+			htt_credit_delta,
+			qdf_atomic_read(&pdev->txrx_pdev->txq_grps[0].credit),
+			qdf_atomic_read(&pdev->txrx_pdev->txq_grps[1].credit)));
+
 		ol_tx_credit_completion_handler(pdev->txrx_pdev,
 						htt_credit_delta);
 		break;
