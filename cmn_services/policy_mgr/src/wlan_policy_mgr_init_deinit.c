@@ -420,7 +420,8 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	/* init PCL table & function pointers based on HW capability */
-	if (policy_mgr_is_hw_dbs_2x2_capable(psoc))
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
+	    policy_mgr_is_hw_dbs_required_for_band(psoc, HW_MODE_MAC_BAND_2G))
 		policy_mgr_get_current_pref_hw_mode_ptr =
 		policy_mgr_get_current_pref_hw_mode_dbs_2x2;
 	else if (policy_mgr_is_2x2_1x1_dbs_capable(psoc))
@@ -431,6 +432,8 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_get_current_pref_hw_mode_dbs_1x1;
 
 	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
+	    policy_mgr_is_hw_dbs_required_for_band(psoc,
+						   HW_MODE_MAC_BAND_2G) ||
 	    policy_mgr_is_2x2_1x1_dbs_capable(psoc))
 		second_connection_pcl_dbs_table =
 		&pm_second_connection_pcl_dbs_2x2_table;
@@ -439,6 +442,8 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		&pm_second_connection_pcl_dbs_1x1_table;
 
 	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
+	    policy_mgr_is_hw_dbs_required_for_band(psoc,
+						   HW_MODE_MAC_BAND_2G) ||
 	    policy_mgr_is_2x2_1x1_dbs_capable(psoc))
 		third_connection_pcl_dbs_table =
 		&pm_third_connection_pcl_dbs_2x2_table;
@@ -446,7 +451,9 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		third_connection_pcl_dbs_table =
 		&pm_third_connection_pcl_dbs_1x1_table;
 
-	if (policy_mgr_is_hw_dbs_2x2_capable(psoc)) {
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
+	    policy_mgr_is_hw_dbs_required_for_band(psoc,
+						   HW_MODE_MAC_BAND_2G)) {
 		next_action_two_connection_table =
 		&pm_next_action_two_connection_dbs_2x2_table;
 	} else if (policy_mgr_is_2x2_1x1_dbs_capable(psoc)) {
@@ -459,7 +466,9 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		&pm_next_action_two_connection_dbs_1x1_table;
 	}
 
-	if (policy_mgr_is_hw_dbs_2x2_capable(psoc)) {
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
+	    policy_mgr_is_hw_dbs_required_for_band(psoc,
+						   HW_MODE_MAC_BAND_2G)) {
 		next_action_three_connection_table =
 		&pm_next_action_three_connection_dbs_2x2_table;
 	} else if (policy_mgr_is_2x2_1x1_dbs_capable(psoc)) {
@@ -474,8 +483,10 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	policy_mgr_debug("is DBS Capable %d, is SBS Capable %d",
 			 policy_mgr_is_hw_dbs_capable(psoc),
 			 policy_mgr_is_hw_sbs_capable(psoc));
-	policy_mgr_debug("is2x2 %d, is2x2+1x1 %d, is2x2_5g+1x1_2g %d, is2x2_2g+1x1_5g %d",
+	policy_mgr_debug("is2x2 %d, 2g-on-dbs %d is2x2+1x1 %d, is2x2_5g+1x1_2g %d, is2x2_2g+1x1_5g %d",
 			 policy_mgr_is_hw_dbs_2x2_capable(psoc),
+			 policy_mgr_is_hw_dbs_required_for_band(
+				psoc, HW_MODE_MAC_BAND_2G),
 			 policy_mgr_is_2x2_1x1_dbs_capable(psoc),
 			 policy_mgr_is_2x2_5G_1x1_2G_dbs_capable(psoc),
 			 policy_mgr_is_2x2_2G_1x1_5G_dbs_capable(psoc));

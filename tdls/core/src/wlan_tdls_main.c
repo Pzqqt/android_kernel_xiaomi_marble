@@ -988,6 +988,8 @@ tdls_process_decrement_active_session(struct wlan_objmgr_psoc *psoc)
 	if (!psoc)
 		return QDF_STATUS_E_NULL_VALUE;
 	if(!policy_mgr_is_hw_dbs_2x2_capable(psoc) &&
+	   !policy_mgr_is_hw_dbs_required_for_band(
+				psoc, HW_MODE_MAC_BAND_2G) &&
 	   policy_mgr_is_current_hwmode_dbs(psoc)) {
 		tdls_err("Current HW mode is 1*1 DBS. Wait for Opportunistic timer to expire to enable TDLS in FW");
 		return QDF_STATUS_SUCCESS;

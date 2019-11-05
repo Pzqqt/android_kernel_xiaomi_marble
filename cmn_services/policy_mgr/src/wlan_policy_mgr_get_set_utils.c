@@ -1152,7 +1152,7 @@ bool policy_mgr_is_dbs_enable(struct wlan_objmgr_psoc *psoc)
 
 bool policy_mgr_is_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc)
 {
-	struct dbs_nss nss_dbs;
+	struct dbs_nss nss_dbs = {0};
 	uint32_t nss;
 
 	nss = policy_mgr_get_hw_dbs_nss(psoc, &nss_dbs);
@@ -1160,6 +1160,27 @@ bool policy_mgr_is_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc)
 		return true;
 	else
 		return false;
+}
+
+bool policy_mgr_is_hw_dbs_required_for_band(struct wlan_objmgr_psoc *psoc,
+					    enum hw_mode_mac_band_cap band)
+{
+	struct dbs_nss nss_dbs = {0};
+	uint32_t nss;
+
+	nss = policy_mgr_get_hw_dbs_nss(psoc, &nss_dbs);
+	if (nss >= HW_MODE_SS_1x1 && nss_dbs.mac0_ss == nss_dbs.mac1_ss &&
+	    !(nss_dbs.single_mac0_band_cap & band))
+		return true;
+	else
+		return false;
+}
+
+bool policy_mgr_is_dp_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc)
+{
+	return policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
+		policy_mgr_is_hw_dbs_required_for_band(psoc,
+						       HW_MODE_MAC_BAND_2G);
 }
 
 /*
@@ -3546,7 +3567,7 @@ uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
 				   struct dbs_nss *nss_dbs)
 {
 	int i, param;
-	uint32_t dbs, tx_chain0, rx_chain0, tx_chain1, rx_chain1;
+	uint32_t dbs, sbs, tx_chain0, rx_chain0, tx_chain1, rx_chain1;
 	uint32_t min_mac0_rf_chains, min_mac1_rf_chains;
 	uint32_t max_rf_chains, final_max_rf_chains = HW_MODE_SS_0x0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -3557,9 +3578,15 @@ uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
 		return final_max_rf_chains;
 	}
 
+	nss_dbs->single_mac0_band_cap = 0;
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
 		dbs = POLICY_MGR_HW_MODE_DBS_MODE_GET(param);
+		sbs = POLICY_MGR_HW_MODE_SBS_MODE_GET(param);
+
+		if (!dbs && !sbs && !nss_dbs->single_mac0_band_cap)
+			nss_dbs->single_mac0_band_cap =
+				POLICY_MGR_HW_MODE_MAC0_BAND_GET(param);
 
 		if (dbs) {
 			tx_chain0
