@@ -2270,6 +2270,16 @@ bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_is_current_hwmode_dbs(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_is_dp_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2
+ * for Data Path.
+ * @psoc: PSOC object information
+ * This API is for Data Path to get HW dbs 2x2 capable.
+ *
+ * Return: true - DBS2x2, false - DBS1x1
+ */
+bool policy_mgr_is_dp_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_is_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2
  * @psoc: PSOC object information
  * This function checks if hw_modes supported are always capable of
@@ -2281,6 +2291,22 @@ bool policy_mgr_is_current_hwmode_dbs(struct wlan_objmgr_psoc *psoc);
  * Return: true - DBS2x2, false - DBS1x1
  */
 bool policy_mgr_is_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_is_hw_dbs_required_for_band() - Check whether hardware needs DBS
+ * mode to support the given band
+ * @psoc: PSOC object information
+ * @band: band
+ *
+ * The function checks whether DBS mode switching required or not to support
+ * given band based on target capability.
+ * Any HW which doesn't support given band on PHY A will need DBS HW mode when a
+ * connection is coming up on that band.
+ *
+ * Return: true - DBS mode required for requested band
+ */
+bool policy_mgr_is_hw_dbs_required_for_band(struct wlan_objmgr_psoc *psoc,
+					    enum hw_mode_mac_band_cap band);
 
 /*
  * policy_mgr_is_2x2_1x1_dbs_capable() - check 2x2+1x1 DBS supported or not

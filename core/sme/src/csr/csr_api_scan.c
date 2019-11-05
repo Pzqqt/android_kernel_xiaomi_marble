@@ -1981,6 +1981,8 @@ csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 	}
 
 	if (!policy_mgr_is_hw_dbs_2x2_capable(mac_ctx->psoc) &&
+	    !policy_mgr_is_hw_dbs_required_for_band(mac_ctx->psoc,
+		HW_MODE_MAC_BAND_2G) &&
 	    !policy_mgr_get_connection_count(mac_ctx->psoc)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("1x1 DBS HW with no prior connection"));
@@ -2000,7 +2002,9 @@ csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 					    struct tag_csrscan_result,
 					    Link);
 		ch_freq = scan_result->Result.BssDescriptor.chan_freq;
-		if (policy_mgr_is_hw_dbs_2x2_capable(mac_ctx->psoc)) {
+		if (policy_mgr_is_hw_dbs_required_for_band(
+				mac_ctx->psoc,
+				HW_MODE_MAC_BAND_2G)) {
 			if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq))
 				break;
 		} else {

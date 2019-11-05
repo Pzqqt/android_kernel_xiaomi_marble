@@ -1208,10 +1208,12 @@ struct policy_mgr_user_cfg {
  * struct dbs_nss - Number of spatial streams in DBS mode
  * @mac0_ss: Number of spatial streams on MAC0
  * @mac1_ss: Number of spatial streams on MAC1
+ * @single_mac0_band_cap: Mac0 band capability for single mac hw mode
  */
 struct dbs_nss {
 	enum hw_mode_ss_config mac0_ss;
 	enum hw_mode_ss_config mac1_ss;
+	uint32_t single_mac0_band_cap;
 };
 
 /**
