@@ -153,6 +153,7 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 	qdf_nbuf_t head_ptr, next_ptr_list;
 	uint32_t temp_qlen;
 	uint32_t num_elements_in_nbuf;
+	uint32_t nbuf_queued;
 	struct dp_rx_tm_handle_cmn *tm_handle_cmn;
 	uint8_t reo_ring_num = QDF_NBUF_CB_RX_CTX_ID(nbuf_list);
 	qdf_wait_queue_head_t *wait_q_ptr;
@@ -174,6 +175,7 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 	}
 
 	num_elements_in_nbuf = QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list);
+	nbuf_queued = num_elements_in_nbuf;
 
 	dp_rx_tm_walk_skb_list(nbuf_list);
 
@@ -193,6 +195,8 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 	if (!head_ptr)
 		goto enq_done;
 
+	QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(head_ptr) = num_elements_in_nbuf;
+
 	next_ptr_list = head_ptr->next;
 
 	if (next_ptr_list) {
@@ -209,7 +213,7 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 enq_done:
 	temp_qlen = qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue);
 
-	rx_thread->stats.nbuf_queued[reo_ring_num] += num_elements_in_nbuf;
+	rx_thread->stats.nbuf_queued[reo_ring_num] += nbuf_queued;
 
 	if (temp_qlen > rx_thread->stats.nbufq_max_len)
 		rx_thread->stats.nbufq_max_len = temp_qlen;
