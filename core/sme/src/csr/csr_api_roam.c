@@ -13817,48 +13817,25 @@ QDF_STATUS csr_roam_issue_stop_bss(struct mac_context *mac,
 	return status;
 }
 
-/* pNumChan is a caller allocated space with the sizeof pChannels */
 QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac,
 				      uint32_t *ch_freq_list,
 				      uint32_t *num_ch_freq)
 {
 	uint8_t num_chan_temp = 0;
 	int i;
-	uint8_t chan;
 	uint32_t *valid_ch_freq_list =
 				mac->mlme_cfg->reg.valid_channel_freq_list;
 
 	*num_ch_freq = mac->mlme_cfg->reg.valid_channel_list_num;
 
 	for (i = 0; i < *num_ch_freq; i++) {
-		chan = wlan_reg_freq_to_chan(mac->pdev, valid_ch_freq_list[i]);
-		if (!wlan_reg_is_dsrc_chan(mac->pdev, chan)) {
+		if (!wlan_reg_is_dsrc_freq(valid_ch_freq_list[i])) {
 			ch_freq_list[num_chan_temp] = valid_ch_freq_list[i];
 			num_chan_temp++;
 		}
 	}
 
 	*num_ch_freq = num_chan_temp;
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS csr_get_cfg_valid_freqs(struct mac_context *mac,
-				   uint32_t *freq_list,
-				   uint32_t *num_of_freq)
-{
-	uint8_t num_chan_temp = 0;
-	int i;
-	uint32_t chan;
-
-	for (i = 0; i < mac->mlme_cfg->reg.valid_channel_list_num; i++) {
-		chan = mac->mlme_cfg->reg.valid_channel_freq_list[i];
-		if (!wlan_reg_is_dsrc_chan(mac->pdev, wlan_reg_freq_to_chan(mac->pdev, chan))) {
-			freq_list[num_chan_temp] = chan;
-			num_chan_temp++;
-		}
-	}
-
-	*num_of_freq = num_chan_temp;
 	return QDF_STATUS_SUCCESS;
 }
 

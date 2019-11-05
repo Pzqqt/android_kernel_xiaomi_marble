@@ -312,23 +312,19 @@ bool csr_roam_is_channel_valid(struct mac_context *mac, uint8_t ch_freq);
  */
 bool csr_roam_is_chan_freq_valid(struct mac_context *mac, uint32_t freq);
 
-/* pNumChan is a caller allocated space with the sizeof pChannels */
-QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac,
-				      uint32_t *ch_freq_list,
-				      uint32_t *num_ch_freq);
 /**
- * csr_get_cfg_valid_freqs() - Get valid channel frequency list
+ * csr_get_cfg_valid_channels() - Get valid channel frequency list
  * @mac: mac context
- * @freq_list: valid channel frequencies
- * @num_of_freq: valid channel nummber
+ * @ch_freq_list: valid channel frequencies
+ * @num_ch_freq: valid channel nummber
  *
  * This function returns the valid channel frequencies.
  *
  * Return: QDF_STATUS_SUCCESS for success.
  */
-QDF_STATUS csr_get_cfg_valid_freqs(struct mac_context *mac,
-				   uint32_t *freq_list,
-				   uint32_t *num_of_freq);
+QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac,
+				      uint32_t *ch_freq_list,
+				      uint32_t *num_ch_freq);
 
 int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq);
 

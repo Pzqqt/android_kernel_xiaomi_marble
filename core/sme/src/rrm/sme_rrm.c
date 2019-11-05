@@ -1084,9 +1084,8 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 			pSmeRrmContext->channelList.numOfChannels = 0;
 			goto cleanup;
 		}
-		csr_get_cfg_valid_freqs(mac,
-					pSmeRrmContext->channelList.freq_list,
-					&len);
+		csr_get_cfg_valid_channels(
+			mac, pSmeRrmContext->channelList.freq_list, &len);
 
 		if (pBeaconReq->channelInfo.regulatoryClass) {
 			if (sme_rrm_fill_scan_channels(mac, country,
