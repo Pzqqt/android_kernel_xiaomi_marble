@@ -180,6 +180,18 @@ enum policy_mgr_pcl_channel_order {
 };
 
 /**
+ * policy_mgr_pcl_band_priority - Band priority between 5G and 6G channel
+ * @POLICY_MGR_PCL_BAND_5G_THEN_6G: 5 Ghz channel followed by 6 Ghz channel
+ * @POLICY_MGR_PCL_BAND_6G_THEN_5G: 6 Ghz channel followed by 5 Ghz channel
+ *
+ *  Band priority between 5G and 6G
+ */
+enum policy_mgr_pcl_band_priority {
+	POLICY_MGR_PCL_BAND_5G_THEN_6G = 0,
+	POLICY_MGR_PCL_BAND_6G_THEN_5G,
+};
+
+/**
  * enum policy_mgr_max_rx_ss - Maximum number of receive spatial streams
  * @POLICY_MGR_RX_NSS_1: Receive Nss = 1
  * @POLICY_MGR_RX_NSS_2: Receive Nss = 2

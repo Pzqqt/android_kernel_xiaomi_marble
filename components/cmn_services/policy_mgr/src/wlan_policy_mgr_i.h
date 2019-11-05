@@ -247,6 +247,7 @@ struct sta_ap_intf_check_work_ctx {
  * @enable_mcc_adaptive_sch: Enable/Disable MCC adaptive scheduler
  * @enable_sta_cxn_5g_band: Enable/Disable STA connection in 5G band
  * @go_force_scc: Enable/Disable P2P GO force SCC
+ * @pcl_band_priority: PCL channel order between 5G and 6G.
  */
 struct policy_mgr_cfg {
 	uint8_t mcc_to_scc_switch;
@@ -269,6 +270,7 @@ struct policy_mgr_cfg {
 	uint32_t vdev_priority_list;
 	uint32_t chnl_select_plcy;
 	uint8_t go_force_scc;
+	enum policy_mgr_pcl_band_priority pcl_band_priority;
 };
 
 /**
