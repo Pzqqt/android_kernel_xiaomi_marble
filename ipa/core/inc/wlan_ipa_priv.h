@@ -607,12 +607,25 @@ struct wlan_ipa_priv {
 	qdf_work_t pm_work;
 	qdf_spinlock_t pm_lock;
 	bool suspended;
-
 	qdf_spinlock_t q_lock;
-
-	qdf_spinlock_t pipes_down_lock;
+	qdf_spinlock_t enable_disable_lock;
+	/* Flag to indicate wait on pending TX completions */
+	qdf_atomic_t waiting_on_pending_tx;
+	/* Timer ticks to keep track of time after which pipes are disabled */
+	uint64_t pending_tx_start_ticks;
+	/* Indicates if cdp_ipa_disable_autonomy is called for IPA pipes */
+	qdf_atomic_t autonomy_disabled;
+	/* Indicates if cdp_disable_ipa_pipes has been called for IPA pipes */
+	qdf_atomic_t pipes_disabled;
+	/*
+	 * IPA pipes are considered "down" when both autonomy_disabled and
+	 * ipa_pipes_disabled are set
+	 */
+	bool ipa_pipes_down;
+	/* Flag for mutual exclusion during IPA disable pipes */
 	bool pipes_down_in_progress;
-
+	/* Flag for mutual exclusion during IPA enable pipes */
+	bool pipes_enable_in_progress;
 	qdf_list_node_t pend_desc_head;
 	struct wlan_ipa_tx_desc *tx_desc_pool;
 	qdf_list_t tx_desc_free_list;
@@ -633,7 +646,6 @@ struct wlan_ipa_priv {
 	struct ipa_uc_stas_map assoc_stas_map[WLAN_IPA_MAX_STA_COUNT];
 	qdf_list_t pending_event;
 	qdf_mutex_t event_lock;
-	bool ipa_pipes_down;
 	uint32_t ipa_tx_packets_diff;
 	uint32_t ipa_rx_packets_diff;
 	uint32_t ipa_p_tx_packets;
