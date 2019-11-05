@@ -178,6 +178,12 @@ static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset,
 }
 #endif
 
+static inline qdf_iomem_t hal_get_window_address(struct hal_soc *hal_soc,
+						 qdf_iomem_t addr)
+{
+	return hal_soc->ops->hal_get_window_address(hal_soc, addr);
+}
+
 /**
  * hal_write32_mb() - Access registers to update configuration
  * @hal_soc: hal soc handle
@@ -209,12 +215,17 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 				  uint32_t value, bool ret_confirm)
 {
 	unsigned long flags;
+	qdf_iomem_t new_addr;
 
 	if (!hal_soc->use_register_windowing ||
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
 		hal_reg_write_result_check(hal_soc, offset,
 					   value, ret_confirm);
+	} else if (hal_soc->static_window_map) {
+		new_addr = hal_get_window_address(hal_soc,
+				hal_soc->dev_base_addr + offset);
+		qdf_iowrite32(new_addr, value);
 	} else {
 		hal_lock_reg_access(hal_soc, &flags);
 		hal_select_window(hal_soc, offset, ret_confirm);
@@ -227,6 +238,28 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 				value, ret_confirm);
 		hal_unlock_reg_access(hal_soc, &flags);
 	}
+}
+
+/**
+ * hal_write_address_32_mb - write a value to a register
+ *
+ */
+static inline
+void hal_write_address_32_mb(struct hal_soc *hal_soc,
+			     qdf_iomem_t addr, uint32_t value)
+{
+	uint32_t offset;
+	qdf_iomem_t new_addr;
+
+	if (!hal_soc->use_register_windowing)
+		return qdf_iowrite32(addr, value);
+
+	offset = addr - hal_soc->dev_base_addr;
+	if (hal_soc->static_window_map) {
+		new_addr = hal_get_window_address(hal_soc, addr);
+		return qdf_iowrite32(new_addr, value);
+	}
+	hal_write32_mb(hal_soc, offset, value, false);
 }
 #else
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
@@ -279,7 +312,6 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 		}
 	}
 }
-#endif
 
 /**
  * hal_write_address_32_mb - write a value to a register
@@ -287,7 +319,7 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
  */
 static inline
 void hal_write_address_32_mb(struct hal_soc *hal_soc,
-			     void __iomem *addr, uint32_t value)
+			     qdf_iomem_t addr, uint32_t value)
 {
 	uint32_t offset;
 
@@ -297,6 +329,14 @@ void hal_write_address_32_mb(struct hal_soc *hal_soc,
 	offset = addr - hal_soc->dev_base_addr;
 	hal_write32_mb(hal_soc, offset, value, false);
 }
+#endif
+
+#ifdef DP_HAL_MULTIWINDOW_DIRECT_ACCESS
+#define hal_srng_write_address_32_mb(_a, _b, _c) qdf_iowrite32(_b, _c)
+#else
+#define hal_srng_write_address_32_mb(_a, _b, _c) \
+		hal_write_address_32_mb(_a, _b, _c)
+#endif
 
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
 /**
@@ -325,10 +365,14 @@ uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 {
 	uint32_t ret;
 	unsigned long flags;
+	qdf_iomem_t new_addr;
 
 	if (!hal_soc->use_register_windowing ||
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		return qdf_ioread32(hal_soc->dev_base_addr + offset);
+	} else if (hal_soc->static_window_map) {
+		new_addr = hal_get_window_address(hal_soc, hal_soc->dev_base_addr + offset);
+		return qdf_ioread32(new_addr);
 	}
 
 	hal_lock_reg_access(hal_soc, &flags);
@@ -388,15 +432,21 @@ uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
  */
 static inline
 uint32_t hal_read_address_32_mb(struct hal_soc *soc,
-				void __iomem *addr)
+				qdf_iomem_t addr)
 {
 	uint32_t offset;
 	uint32_t ret;
+	qdf_iomem_t new_addr;
 
 	if (!soc->use_register_windowing)
 		return qdf_ioread32(addr);
 
 	offset = addr - soc->dev_base_addr;
+	if (soc->static_window_map) {
+		new_addr = hal_get_window_address(soc, addr);
+		return qdf_ioread32(new_addr);
+	}
+
 	ret = hal_read32_mb(soc, offset);
 	return ret;
 }
@@ -1267,13 +1317,13 @@ hal_srng_access_end_unlocked(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 		}
 	} else {
 		if (srng->ring_dir == HAL_SRNG_SRC_RING)
-			hal_write_address_32_mb(hal_soc,
-				srng->u.src_ring.hp_addr,
-				srng->u.src_ring.hp);
+			hal_srng_write_address_32_mb(hal_soc,
+						     srng->u.src_ring.hp_addr,
+						     srng->u.src_ring.hp);
 		else
-			hal_write_address_32_mb(hal_soc,
-				srng->u.dst_ring.tp_addr,
-				srng->u.dst_ring.tp);
+			hal_srng_write_address_32_mb(hal_soc,
+						     srng->u.dst_ring.tp_addr,
+						     srng->u.dst_ring.tp);
 	}
 }
 

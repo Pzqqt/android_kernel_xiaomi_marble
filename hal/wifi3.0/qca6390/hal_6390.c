@@ -973,6 +973,19 @@ uint16_t hal_rx_get_rx_sequence_6390(uint8_t *buf)
 	return HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info);
 }
 
+/**
+ * hal_get_window_address_6390(): Function to get hp/tp address
+ * @hal_soc: Pointer to hal_soc
+ * @addr: address offset of register
+ *
+ * Return: modified address offset of register
+ */
+static inline qdf_iomem_t hal_get_window_address_6390(struct hal_soc *hal_soc,
+						      qdf_iomem_t addr)
+{
+	return addr;
+}
+
 struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -980,6 +993,7 @@ struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	hal_get_hw_hptp_generic,
 	hal_reo_setup_generic,
 	hal_setup_link_idle_list_generic,
+	hal_get_window_address_6390,
 
 	/* tx */
 	hal_tx_desc_set_dscp_tid_table_id_6390,

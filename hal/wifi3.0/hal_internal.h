@@ -353,6 +353,8 @@ struct hal_hw_txrx_ops {
 				uint32_t scatter_buf_size,
 				uint32_t last_buf_end_offset,
 				uint32_t num_entries);
+	qdf_iomem_t (*hal_get_window_address)(struct hal_soc *hal_soc,
+					      qdf_iomem_t addr);
 
 	/* tx */
 	void (*hal_tx_desc_set_dscp_tid_table_id)(void *desc, uint8_t id);
@@ -497,6 +499,9 @@ struct hal_soc {
 	bool use_register_windowing;
 	uint32_t register_window;
 	qdf_spinlock_t register_access_lock;
+
+	/* Static window map configuration for multiple window write*/
+	bool static_window_map;
 
 	/* srng table */
 	struct hal_hw_srng_config *hw_srng_table;

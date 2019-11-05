@@ -273,6 +273,11 @@ static void hal_target_based_configure(struct hal_soc *hal)
 #ifdef QCA_WIFI_QCN9000
 	case TARGET_TYPE_QCN9000:
 		hal->use_register_windowing = true;
+		/*
+		 * Static window map  is enabled for qcn9000 to use 2mb bar
+		 * size and use multiple windows to write into registers.
+		 */
+		hal->static_window_map = true;
 		hal_qcn9000_attach(hal);
 	break;
 #endif
@@ -676,7 +681,9 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 					HAL_SRNG_LMAC1_ID_START]);
 			srng->flags |= HAL_SRNG_LMAC_RING;
 		} else if (ignore_shadow || (srng->u.src_ring.hp_addr == 0)) {
-			srng->u.src_ring.hp_addr = SRNG_SRC_ADDR(srng, HP);
+			srng->u.src_ring.hp_addr =
+				hal_get_window_address(hal,
+						SRNG_SRC_ADDR(srng, HP));
 
 			if (CHECK_SHADOW_REGISTERS) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
@@ -711,7 +718,9 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 				HAL_SRNG_LMAC1_ID_START]);
 			srng->flags |= HAL_SRNG_LMAC_RING;
 		} else if (ignore_shadow || srng->u.dst_ring.tp_addr == 0) {
-			srng->u.dst_ring.tp_addr = SRNG_DST_ADDR(srng, TP);
+			srng->u.dst_ring.tp_addr =
+				hal_get_window_address(hal,
+						SRNG_DST_ADDR(srng, TP));
 
 			if (CHECK_SHADOW_REGISTERS) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,

@@ -101,6 +101,17 @@
 #define UNIFIED_WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_LSB \
 	WBM_RELEASE_RING_6_TX_RATE_STATS_TSF_DIRECTLY_AFTER_PPDU_TRANSMISSION_LSB
 
+#define CE_WINDOW_ADDRESS_9000 \
+		((CE_WFSS_CE_REG_BASE >> WINDOW_SHIFT) & WINDOW_VALUE_MASK)
+
+#define UMAC_WINDOW_ADDRESS_9000 \
+		((SEQ_WCSS_UMAC_OFFSET >> WINDOW_SHIFT) & WINDOW_VALUE_MASK)
+
+#define WINDOW_CONFIGURATION_VALUE_9000 \
+		((CE_WINDOW_ADDRESS_9000 << 6) |\
+		 (UMAC_WINDOW_ADDRESS_9000 << 12) | \
+		 WINDOW_ENABLE_BIT)
+
 /* Including hkv2 files as the functions between hkv2 and pine are exactly
  * similar
  */
@@ -979,6 +990,49 @@ uint16_t hal_rx_get_rx_sequence_9000(uint8_t *buf)
 	return HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info);
 }
 
+/**
+ * hal_get_window_address_9000(): Function to get hp/tp address
+ * @hal_soc: Pointer to hal_soc
+ * @addr: address offset of register
+ *
+ * Return: modified address offset of register
+ */
+static inline qdf_iomem_t hal_get_window_address_9000(struct hal_soc *hal_soc,
+						      qdf_iomem_t addr)
+{
+	uint32_t offset = addr - hal_soc->dev_base_addr;
+	qdf_iomem_t new_offset;
+
+	/*
+	 * If offset lies within DP register range, use 3rd window to write
+	 * into DP region.
+	 */
+	if ((offset ^ SEQ_WCSS_UMAC_OFFSET) < WINDOW_RANGE_MASK) {
+		new_offset = (hal_soc->dev_base_addr + (3 * WINDOW_START) +
+			  (offset & WINDOW_RANGE_MASK));
+	/*
+	 * If offset lies within CE register range, use 2nd window to write
+	 * into CE region.
+	 */
+	} else if ((offset ^ CE_WFSS_CE_REG_BASE) < WINDOW_RANGE_MASK) {
+		new_offset = (hal_soc->dev_base_addr + (2 * WINDOW_START) +
+			  (offset & WINDOW_RANGE_MASK));
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: ERROR: Accessing Wrong register\n", __func__);
+		qdf_assert_always(0);
+		return 0;
+	}
+	return new_offset;
+}
+
+static inline void hal_write_window_register(struct hal_soc *hal_soc)
+{
+	/* Write value into window configuration register */
+	qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_REG_ADDRESS,
+		      WINDOW_CONFIGURATION_VALUE_9000);
+}
+
 struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -987,6 +1041,7 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	hal_get_hw_hptp_generic,
 	hal_reo_setup_generic,
 	hal_setup_link_idle_list_generic,
+	hal_get_window_address_9000,
 
 	/* tx */
 	hal_tx_desc_set_dscp_tid_table_id_8074v2,
@@ -1511,7 +1566,6 @@ int32_t hal_hw_reg_offset_qcn9000[] = {
 	REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX1),
 };
 
-
 /**
  * hal_qcn9000_attach()- Attach 9000 target specific hal_soc ops,
  *			  offset and srng table
@@ -1522,4 +1576,6 @@ void hal_qcn9000_attach(struct hal_soc *hal_soc)
 	hal_soc->hw_srng_table = hw_srng_table_9000;
 	hal_soc->hal_hw_reg_offset = hal_hw_reg_offset_qcn9000;
 	hal_soc->ops = &qcn9000_hal_hw_txrx_ops;
+	if (hal_soc->static_window_map)
+		hal_write_window_register(hal_soc);
 }

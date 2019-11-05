@@ -274,7 +274,7 @@ typedef struct __qdf_device *__qdf_device_t;
 
 typedef size_t __qdf_size_t;
 typedef off_t __qdf_off_t;
-typedef uint8_t __iomem *__qdf_iomem_t;
+typedef void __iomem* __qdf_iomem_t;
 
 typedef uint32_t ath_dma_addr_t;
 

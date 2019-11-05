@@ -190,7 +190,7 @@ typedef struct qdf_shared_mem {
 	qdf_dma_mem_context(memctx);
 } qdf_shared_mem_t;
 
-#define qdf_iomem_t __qdf_iomem_t;
+#define qdf_iomem_t __qdf_iomem_t
 
 /**
  * typedef enum QDF_TIMER_TYPE - QDF timer type
