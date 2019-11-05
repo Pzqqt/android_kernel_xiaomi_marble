@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _BOLERO_CDC_REGISTERS_H
@@ -715,6 +715,11 @@
 #define VA_TOP_MAX_OFFSET			(VA_START_OFFSET + 0x00CC)
 
 #define BOLERO_CDC_VA_MACRO_TOP_MAX 0x34 /* 0x0CC/4 = 0x33 + 1 = 0x34 */
+
+#define BOLERO_CDC_VA_TOP_CSR_SWR_MIC_CTL0	(VA_START_OFFSET + 0x00D0)
+#define BOLERO_CDC_VA_TOP_CSR_SWR_MIC_CTL1	(VA_START_OFFSET + 0x00D4)
+#define BOLERO_CDC_VA_TOP_CSR_SWR_MIC_CTL2	(VA_START_OFFSET + 0x00D8)
+#define BOLERO_CDC_VA_TOP_CSR_SWR_CTRL		(VA_START_OFFSET + 0x00DC)
 
 #define BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0	(VA_START_OFFSET + 0x0100)
 #define BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG1	(VA_START_OFFSET + 0x0104)
