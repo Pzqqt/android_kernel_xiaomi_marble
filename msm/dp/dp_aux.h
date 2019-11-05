@@ -53,7 +53,8 @@ struct dp_aux {
 	void (*reconfig)(struct dp_aux *aux);
 	void (*abort)(struct dp_aux *aux, bool abort);
 	void (*dpcd_updated)(struct dp_aux *aux);
-	void (*set_sim_mode)(struct dp_aux *aux, bool en, u8 *edid, u8 *dpcd);
+	void (*set_sim_mode)(struct dp_aux *aux, bool en, u8 *edid, u8 *dpcd,
+		struct dp_aux_bridge *sim_bridge);
 	int (*aux_switch)(struct dp_aux *aux, bool enable, int orientation);
 };
 

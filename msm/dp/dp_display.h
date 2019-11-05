@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_DISPLAY_H_
@@ -18,23 +18,12 @@ enum dp_drv_state {
 	PM_SUSPEND,
 };
 
-struct dp_mst_hpd_info {
-	bool mst_protocol;
-	bool mst_hpd_sim;
-	u32 mst_port_cnt;
-	u8 *edid;
-	bool mst_sim_add_con;
-	bool mst_sim_remove_con;
-	int mst_sim_remove_con_id;
-};
-
 struct dp_mst_drm_cbs {
 	void (*hpd)(void *display, bool hpd_status);
-	void (*hpd_irq)(void *display, struct dp_mst_hpd_info *info);
+	void (*hpd_irq)(void *display);
 	void (*set_drv_state)(void *dp_display,
 			enum dp_drv_state mst_state);
-	int (*set_mgr_state)(void *dp_display, bool state,
-			struct dp_mst_hpd_info *info);
+	int (*set_mgr_state)(void *dp_display, bool state);
 };
 
 struct dp_mst_drm_install_info {

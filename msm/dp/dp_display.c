@@ -992,19 +992,11 @@ static void dp_display_mst_init(struct dp_display_private *dp)
 static void dp_display_set_mst_mgr_state(struct dp_display_private *dp,
 					bool state)
 {
-	struct dp_mst_hpd_info info = {0};
-
 	if (!dp->mst.mst_active)
 		return;
 
-	info.mst_protocol = dp->parser->has_mst_sideband;
-	if (state) {
-		info.mst_port_cnt = dp->debug->mst_port_cnt;
-		info.edid = dp->debug->get_edid(dp->debug);
-	}
-
 	if (dp->mst.cbs.set_mgr_state)
-		dp->mst.cbs.set_mgr_state(&dp->dp_display, state, &info);
+		dp->mst.cbs.set_mgr_state(&dp->dp_display, state);
 
 	DP_MST_DEBUG("mst_mgr_state: %d\n", state);
 }
@@ -1585,19 +1577,8 @@ static int dp_display_stream_enable(struct dp_display_private *dp,
 
 static void dp_display_mst_attention(struct dp_display_private *dp)
 {
-	struct dp_mst_hpd_info hpd_irq = {0};
-
-	if (dp->mst.mst_active && dp->mst.cbs.hpd_irq) {
-		hpd_irq.mst_hpd_sim = dp->debug->mst_hpd_sim;
-		hpd_irq.mst_sim_add_con = dp->debug->mst_sim_add_con;
-		hpd_irq.mst_sim_remove_con = dp->debug->mst_sim_remove_con;
-		hpd_irq.mst_sim_remove_con_id = dp->debug->mst_sim_remove_con_id;
-		hpd_irq.edid = dp->debug->get_edid(dp->debug);
-		dp->mst.cbs.hpd_irq(&dp->dp_display, &hpd_irq);
-		dp->debug->mst_hpd_sim = false;
-		dp->debug->mst_sim_add_con = false;
-		dp->debug->mst_sim_remove_con = false;
-	}
+	if (dp->mst.mst_active && dp->mst.cbs.hpd_irq)
+		dp->mst.cbs.hpd_irq(&dp->dp_display);
 
 	DP_MST_DEBUG("mst_attention_work. mst_active:%d\n", dp->mst.mst_active);
 }
