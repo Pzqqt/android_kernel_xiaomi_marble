@@ -3155,6 +3155,27 @@ QDF_STATUS policy_mgr_get_hw_mode_from_idx(
 		uint32_t idx,
 		struct policy_mgr_hw_mode_params *hw_mode);
 
+#if defined(CONFIG_BAND_6GHZ) && defined(WLAN_FEATURE_11AX)
+/**
+ * policy_mgr_is_6ghz_conc_mode_supported() - Check connection mode supported
+ * on 6ghz or not
+ * @psoc: Pointer to soc
+ * @mode: new connection mode
+ *
+ * Current PORed 6ghz connection is STA, SAP.
+ *
+ * Return: true if supports else false.
+ */
+bool policy_mgr_is_6ghz_conc_mode_supported(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
+#else
+static inline bool policy_mgr_is_6ghz_conc_mode_supported(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode)
+{
+	return false;
+}
+#endif
+
 /**
  * policy_mgr_update_nan_vdev_mac_info() - Update the NAN vdev id and MAC id in
  * policy manager
