@@ -1475,10 +1475,6 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_v2[] = {
 	SND_SOC_DAPM_MIXER("TX_AIF3_CAP Mixer", SND_SOC_NOPM,
 		TX_MACRO_AIF3_CAP, 0,
 		tx_aif3_cap_mixer_v2, ARRAY_SIZE(tx_aif3_cap_mixer_v2)),
-
-	SND_SOC_DAPM_SUPPLY_S("TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
-			tx_macro_tx_swr_clk_event,
-			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
 static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_v3[] = {
@@ -1527,6 +1523,10 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_v3[] = {
 			   &tx_dec7_mux, tx_macro_enable_dec,
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY_S("TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
+			tx_macro_tx_swr_clk_event,
+			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
 			tx_macro_va_swr_clk_event,
@@ -1921,6 +1921,15 @@ static const struct snd_soc_dapm_route tx_audio_map_v3[] = {
 	{"TX SMIC MUX7", "SWR_MIC9", "TX SWR_MIC9"},
 	{"TX SMIC MUX7", "SWR_MIC10", "TX SWR_MIC10"},
 	{"TX SMIC MUX7", "SWR_MIC11", "TX SWR_MIC11"},
+
+	{"TX SMIC MUX0", NULL, "TX_SWR_CLK"},
+	{"TX SMIC MUX1", NULL, "TX_SWR_CLK"},
+	{"TX SMIC MUX2", NULL, "TX_SWR_CLK"},
+	{"TX SMIC MUX3", NULL, "TX_SWR_CLK"},
+	{"TX SMIC MUX4", NULL, "TX_SWR_CLK"},
+	{"TX SMIC MUX5", NULL, "TX_SWR_CLK"},
+	{"TX SMIC MUX6", NULL, "TX_SWR_CLK"},
+	{"TX SMIC MUX7", NULL, "TX_SWR_CLK"},
 };
 
 static const struct snd_soc_dapm_route tx_audio_map[] = {
