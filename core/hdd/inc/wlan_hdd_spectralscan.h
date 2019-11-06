@@ -207,8 +207,22 @@ int wlan_hdd_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 						struct wireless_dev *wdev,
 						const void *data,
 						int data_len);
+
+/**
+ * hdd_spectral_register_to_dbr() - Register spectral to DBR
+ * @hdd_ctx: pointer to hdd context
+ *
+ * This function is that register spectral to Direct Buffer RX component.
+ *
+ * Return: None
+ */
+void hdd_spectral_register_to_dbr(struct hdd_context *hdd_ctx);
 #else
 #define FEATURE_SPECTRAL_SCAN_VENDOR_COMMANDS
+static inline void
+hdd_spectral_register_to_dbr(struct hdd_context *hdd_ctx)
+{
+}
 #endif
 
 #if defined(CNSS_GENL) && defined(WLAN_CONV_SPECTRAL_ENABLE)

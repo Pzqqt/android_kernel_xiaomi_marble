@@ -395,6 +395,11 @@ int wlan_hdd_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 	return errno;
 }
 
+void hdd_spectral_register_to_dbr(struct hdd_context *hdd_ctx)
+{
+	ucfg_spectral_register_to_dbr(hdd_ctx->pdev);
+}
+
 #if defined(CNSS_GENL) && defined(WLAN_CONV_SPECTRAL_ENABLE)
 static void spectral_get_version(struct wlan_objmgr_pdev *pdev,
 				 uint32_t *version,
