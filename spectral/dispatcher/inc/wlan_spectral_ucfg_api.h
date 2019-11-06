@@ -74,4 +74,14 @@ QDF_STATUS ucfg_spectral_create_cp_req(struct spectral_cp_request *sscan_req,
  */
 QDF_STATUS ucfg_spectral_extract_response(struct spectral_cp_request *sscan_req,
 					  void *outdata, u_int32_t *outsize);
+
+/**
+ * ucfg_spectral_register_to_dbr() - Register spectral to DBR
+ * @pdev: Pointer to pdev object
+ *
+ * Register spectral to Direct Buffer RX component
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS ucfg_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_SPECTRAL_UCFG_API_H_ */

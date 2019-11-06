@@ -217,3 +217,7 @@ bad:
 
 qdf_export_symbol(ucfg_spectral_extract_response);
 
+QDF_STATUS ucfg_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
+{
+	return spectral_pdev_open(pdev);
+}

@@ -252,8 +252,7 @@ static QDF_STATUS dispatcher_regulatory_psoc_close(struct wlan_objmgr_psoc
 	return regulatory_psoc_close(psoc);
 }
 
-#ifdef WLAN_CONV_SPECTRAL_ENABLE
-#ifdef SPECTRAL_MODULIZED_ENABLE
+#if defined(WLAN_CONV_SPECTRAL_ENABLE) && defined(SPECTRAL_MODULIZED_ENABLE)
 QDF_STATUS dispatcher_register_spectral_pdev_open_handler(
 			spectral_pdev_open_handler handler)
 {
@@ -273,18 +272,6 @@ static QDF_STATUS dispatcher_spectral_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
-						  *pdev)
-{
-	return spectral_pdev_open(pdev);
-}
-
-static QDF_STATUS dispatcher_spectral_pdev_close(struct wlan_objmgr_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 #else
 static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
 						  *pdev)
