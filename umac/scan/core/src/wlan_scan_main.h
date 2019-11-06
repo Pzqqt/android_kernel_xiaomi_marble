@@ -131,6 +131,21 @@ struct probe_time_dwell_time {
  */
 #define SCAN_FLAG_EXT_FILTER_PUBLIC_ACTION_FRAME 0x4
 
+/* Indicate to scan all PSC channel */
+#define SCAN_FLAG_EXT_6GHZ_SCAN_ALL_PSC_CH 0x8
+
+/* Indicate to scan all NON-PSC channel */
+#define SCAN_FLAG_EXT_6GHZ_SCAN_ALL_NON_PSC_CH 0x10
+
+/* Indicate to save scan result matching hint from scan client */
+#define SCAN_FLAG_EXT_6GHZ_MATCH_HINT 0x20
+
+/* Skip any channel on which RNR information is not received */
+#define SCAN_FLAG_EXT_6GHZ_SKIP_NON_RNR_CH 0x40
+
+/* Indicate client hint req is high priority than FW rnr or FILS discovery */
+#define SCAN_FLAG_EXT_6GHZ_CLIENT_HIGH_PRIORITY 0x80
+
 /* Passive dwell time if bt_a2dp is enabled. Time in msecs*/
 #define PASSIVE_DWELL_TIME_BT_A2DP_ENABLED 28
 
