@@ -12695,10 +12695,8 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 			 * to start OBSS Scan
 			 */
 			if (mac_ctx->obss_scan_offload &&
-			    CSR_IS_CHANNEL_24GHZ(
-				wlan_reg_freq_to_chan(
-					mac_ctx->pdev,
-					session->connectedProfile.op_freq))
+			    wlan_reg_is_24ghz_ch_freq(
+					session->connectedProfile.op_freq)
 				&& (session->connectState ==
 					eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)
 				&& session->pCurRoamProfile
