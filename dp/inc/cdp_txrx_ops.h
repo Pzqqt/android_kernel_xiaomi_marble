@@ -386,8 +386,9 @@ struct cdp_cmn_ops {
 	void (*hmmc_tid_override_en)(struct cdp_pdev *pdev, bool val);
 	void (*set_hmmc_tid_val)(struct cdp_pdev *pdev, uint8_t tid);
 
-	QDF_STATUS (*txrx_stats_request)(struct cdp_vdev *vdev,
-					 struct cdp_txrx_stats_req *req);
+	QDF_STATUS(*txrx_stats_request)(struct cdp_soc_t *soc_handle,
+					uint8_t vdev_id,
+					struct cdp_txrx_stats_req *req);
 
 	QDF_STATUS (*display_stats)(void *psoc, uint16_t value,
 				    enum qdf_stats_verbosity_level level);

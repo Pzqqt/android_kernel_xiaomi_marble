@@ -8280,20 +8280,26 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
 
 /**
  * dp_txrx_stats_request - function to map to firmware and host stats
- * @vdev: virtual handle
+ * @soc: soc handle
+ * @vdev_id: virtual device ID
  * @req: stats request
  *
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS dp_txrx_stats_request(struct cdp_vdev *vdev,
+QDF_STATUS dp_txrx_stats_request(struct cdp_soc_t *soc_handle,
+				 uint8_t vdev_id,
 				 struct cdp_txrx_stats_req *req)
 {
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_handle);
+	struct cdp_vdev *vdev;
 	int host_stats;
 	int fw_stats;
 	enum cdp_stats stats;
 	int num_stats;
 
+	vdev = dp_vdev_to_cdp_vdev(dp_get_vdev_from_soc_vdev_id_wifi3(soc,
+								      vdev_id));
 	if (!vdev || !req) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"Invalid vdev/req instance");
