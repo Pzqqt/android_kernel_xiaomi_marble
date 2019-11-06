@@ -41,7 +41,7 @@ static int audio_prm_callback(struct gpr_device *adev, void *data)
 	struct gpr_hdr *hdr = (struct gpr_hdr *)data;
 	uint32_t *payload =  GPR_PKT_GET_PAYLOAD(uint32_t, data);
 
-	dev_err(&adev->dev, "%s: Payload %x", __func__, hdr->opcode);
+	//dev_err(&adev->dev, "%s: Payload %x", __func__, hdr->opcode);
 	switch (hdr->opcode) {
 	case GPR_IBASIC_RSP_RESULT:
 		pr_err("%s: Failed response received",__func__);
@@ -120,8 +120,6 @@ static int prm_gpr_send_pkt(struct gpr_pkt *pkt, wait_queue_head_t *wait)
 				atomic_read(&g_prm.status));
 			ret = -EINVAL;
 		} else {
-			pr_err("%s: DSP returned %d\n", __func__,
-				atomic_read(&g_prm.state));
 			ret = 0;
 		}
 	}
@@ -158,7 +156,7 @@ int audio_prm_set_lpass_hw_core_req(struct clk_cfg *cfg, uint32_t hw_core_id, ui
 	else
 		pkt->hdr.opcode = PRM_CMD_RELEASE_HW_RSC;
 
-        pr_err("%s: clk_id %d size of cmd_req %ld \n",__func__, cfg->clk_id, sizeof(prm_cmd_request_hw_core_t));
+        //pr_err("%s: clk_id %d size of cmd_req %ld \n",__func__, cfg->clk_id, sizeof(prm_cmd_request_hw_core_t));
 
         prm_rsc_request.payload_header.payload_address_lsw = 0;
         prm_rsc_request.payload_header.payload_address_msw = 0;
@@ -212,7 +210,7 @@ static int audio_prm_set_lpass_clk_cfg_req(struct clk_cfg *cfg)
 	pkt->hdr.token = 0; /* TBD */
 	pkt->hdr.opcode = PRM_CMD_REQUEST_HW_RSC;
 
-	pr_err("%s: clk_id %d size of cmd_req %ld \n",__func__, cfg->clk_id, sizeof(prm_cmd_request_rsc_t));
+	//pr_err("%s: clk_id %d size of cmd_req %ld \n",__func__, cfg->clk_id, sizeof(prm_cmd_request_rsc_t));
 
 	prm_rsc_request.payload_header.payload_address_lsw = 0;
 	prm_rsc_request.payload_header.payload_address_msw = 0;
@@ -265,7 +263,7 @@ static int audio_prm_set_lpass_clk_cfg_rel(struct clk_cfg *cfg)
         pkt->hdr.token = 0; /* TBD */
         pkt->hdr.opcode = PRM_CMD_RELEASE_HW_RSC;
 
-        pr_err("%s: clk_id %d size of cmd_req %ld \n",__func__, cfg->clk_id, sizeof(prm_cmd_release_rsc_t));
+        //pr_err("%s: clk_id %d size of cmd_req %ld \n",__func__, cfg->clk_id, sizeof(prm_cmd_release_rsc_t));
 
         prm_rsc_release.payload_header.payload_address_lsw = 0;
         prm_rsc_release.payload_header.payload_address_msw = 0;
