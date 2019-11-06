@@ -66,10 +66,13 @@
 
 #define SET_ACS_BAND(acs_band, sap_ctx) \
 { \
-	if (sap_ctx->acs_cfg->start_ch <= 14 && \
-		sap_ctx->acs_cfg->end_ch <= 14) \
+	if (sap_ctx->acs_cfg->start_ch_freq <= \
+	    WLAN_REG_CH_TO_FREQ(CHAN_ENUM_2484) && \
+	    sap_ctx->acs_cfg->end_ch_freq <= \
+			WLAN_REG_CH_TO_FREQ(CHAN_ENUM_2484)) \
 		acs_band = eCSR_DOT11_MODE_11g; \
-	else if (sap_ctx->acs_cfg->start_ch >= 14)\
+	else if (sap_ctx->acs_cfg->start_ch_freq >= \
+		 WLAN_REG_CH_TO_FREQ(CHAN_ENUM_2484))\
 		acs_band = eCSR_DOT11_MODE_11a; \
 	else \
 		acs_band = eCSR_DOT11_MODE_abg; \

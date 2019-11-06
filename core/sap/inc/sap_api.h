@@ -429,18 +429,18 @@ struct sap_acs_cfg {
 	/* ACS Algo Input */
 	uint8_t    acs_mode;
 	eCsrPhyMode hw_mode;
-	uint8_t    start_ch;
-	uint8_t    end_ch;
+	uint32_t    start_ch_freq;
+	uint32_t    end_ch_freq;
 	uint32_t   *freq_list;
 	uint8_t    ch_list_count;
 	uint32_t   *master_freq_list;
 	uint8_t    master_ch_list_count;
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	uint8_t    skip_scan_status;
-	uint8_t    skip_scan_range1_stch;
-	uint8_t    skip_scan_range1_endch;
-	uint8_t    skip_scan_range2_stch;
-	uint8_t    skip_scan_range2_endch;
+	uint32_t    skip_scan_range1_stch;
+	uint32_t    skip_scan_range1_endch;
+	uint32_t    skip_scan_range2_stch;
+	uint32_t    skip_scan_range2_endch;
 #endif
 
 	uint16_t   ch_width;
@@ -1260,10 +1260,10 @@ QDF_STATUS wlansap_reset_sap_config_add_ie(struct sap_config *config,
 					   eUpdateIEsType updateType);
 
 void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
-				 uint8_t *startChannelNum,
-				 uint8_t *endChannelNum,
-				 uint8_t *bandStartChannel,
-				 uint8_t *bandEndChannel);
+				 uint32_t *start_ch_freq,
+				 uint32_t *end_ch_freq,
+				 uint32_t *bandStartChannel,
+				 uint32_t *bandEndChannel);
 
 /**
  * wlansap_set_dfs_nol() - Set dfs nol

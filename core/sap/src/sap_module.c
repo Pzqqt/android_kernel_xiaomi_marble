@@ -2300,6 +2300,42 @@ wlansap_reset_sap_config_add_ie(struct sap_config *config,
 	return QDF_STATUS_SUCCESS;
 }
 
+#define ACS_WLAN_20M_CH_INC 20
+#define ACS_2G_EXTEND ACS_WLAN_20M_CH_INC
+#define ACS_5G_EXTEND (ACS_WLAN_20M_CH_INC * 3)
+
+#ifdef CONFIG_BAND_6GHZ
+static void wlansap_update_start_range_6ghz(
+	uint32_t *start_ch_freq, uint32_t *bandStartChannel)
+{
+	*bandStartChannel = CHAN_ENUM_5945;
+	*start_ch_freq = (*start_ch_freq - ACS_5G_EXTEND) >
+				wlan_reg_ch_to_freq(CHAN_ENUM_5945) ?
+			   (*start_ch_freq - ACS_5G_EXTEND) :
+				wlan_reg_ch_to_freq(CHAN_ENUM_5945);
+}
+
+static void wlansap_update_end_range_6ghz(
+	uint32_t *end_ch_freq, uint32_t *bandEndChannel)
+{
+	*bandEndChannel = CHAN_ENUM_7105;
+	*end_ch_freq = (*end_ch_freq + ACS_5G_EXTEND) <=
+			     wlan_reg_ch_to_freq(CHAN_ENUM_7105) ?
+			     (*end_ch_freq + ACS_5G_EXTEND) :
+			     wlan_reg_ch_to_freq(CHAN_ENUM_7105);
+}
+#else
+static void wlansap_update_start_range_6ghz(
+	uint32_t *start_ch_freq, uint32_t *bandStartChannel)
+{
+}
+
+static void wlansap_update_end_range_6ghz(
+	uint32_t *end_ch_freq, uint32_t *bandEndChannel)
+{
+}
+#endif
+
 /*==========================================================================
    FUNCTION  wlansap_extend_to_acs_range
 
@@ -2308,26 +2344,22 @@ wlansap_reset_sap_config_add_ie(struct sap_config *config,
    DEPENDENCIES PARAMETERS
 
    IN /OUT
-   *startChannelNum : ACS extend start ch
-   *endChannelNum   : ACS extended End ch
-   *bandStartChannel: Band start ch
-   *bandEndChannel  : Band end ch
+   * start_ch_freq : ACS extend start ch
+   * end_ch_freq   : ACS extended End ch
+   * bandStartChannel: Band start ch
+   * bandEndChannel  : Band end ch
 
    RETURN VALUE NONE
 
    SIDE EFFECTS
    ============================================================================*/
 void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
-				 uint8_t *startChannelNum,
-				 uint8_t *endChannelNum,
-				 uint8_t *bandStartChannel,
-				 uint8_t *bandEndChannel)
+				 uint32_t *start_ch_freq,
+				 uint32_t *end_ch_freq,
+				 uint32_t *bandStartChannel,
+				 uint32_t *bandEndChannel)
 {
-#define ACS_WLAN_20M_CH_INC 4
-#define ACS_2G_EXTEND ACS_WLAN_20M_CH_INC
-#define ACS_5G_EXTEND (ACS_WLAN_20M_CH_INC * 3)
-
-	uint8_t tmp_startChannelNum = 0, tmp_endChannelNum = 0;
+	uint32_t tmp_start_ch_freq = 0, tmp_end_ch_freq = 0;
 	struct mac_context *mac_ctx;
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
@@ -2336,53 +2368,83 @@ void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
 			"%s: Invalid mac_ctx", __func__);
 		return;
 	}
-	if (*startChannelNum <= 14 && *endChannelNum <= 14) {
+	if (*start_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484)) {
 		*bandStartChannel = CHAN_ENUM_2412;
-		*bandEndChannel = CHAN_ENUM_2484;
-		tmp_startChannelNum = *startChannelNum > 5 ?
-				   (*startChannelNum - ACS_2G_EXTEND) : 1;
-		tmp_endChannelNum = (*endChannelNum + ACS_2G_EXTEND) <= 14 ?
-				 (*endChannelNum + ACS_2G_EXTEND) : 14;
-	} else if (*startChannelNum >= 36 && *endChannelNum >= 36) {
+		tmp_start_ch_freq = *start_ch_freq >
+					wlan_reg_ch_to_freq(CHAN_ENUM_2432) ?
+					(*start_ch_freq - ACS_2G_EXTEND) :
+					wlan_reg_ch_to_freq(CHAN_ENUM_2412);
+	} else if (*start_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_5865)) {
 		*bandStartChannel = CHAN_ENUM_5180;
-		*bandEndChannel = CHAN_ENUM_5865;
-		tmp_startChannelNum = (*startChannelNum - ACS_5G_EXTEND) > 36 ?
-				   (*startChannelNum - ACS_5G_EXTEND) : 36;
-		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <=
-				     WNI_CFG_CURRENT_CHANNEL_STAMAX ?
-				     (*endChannelNum + ACS_5G_EXTEND) :
-				     WNI_CFG_CURRENT_CHANNEL_STAMAX;
+		tmp_start_ch_freq = (*start_ch_freq - ACS_5G_EXTEND) >
+					wlan_reg_ch_to_freq(CHAN_ENUM_5180) ?
+				   (*start_ch_freq - ACS_5G_EXTEND) :
+					wlan_reg_ch_to_freq(CHAN_ENUM_5180);
+	} else if (WLAN_REG_IS_6GHZ_CHAN_FREQ(*start_ch_freq)) {
+		tmp_start_ch_freq = *start_ch_freq;
+		wlansap_update_start_range_6ghz(&tmp_start_ch_freq,
+						bandStartChannel);
 	} else {
 		*bandStartChannel = CHAN_ENUM_2412;
-		*bandEndChannel = CHAN_ENUM_5865;
-		tmp_startChannelNum = *startChannelNum > 5 ?
-			(*startChannelNum - ACS_2G_EXTEND) : 1;
-		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <=
-				     WNI_CFG_CURRENT_CHANNEL_STAMAX ?
-				     (*endChannelNum + ACS_5G_EXTEND) :
-				     WNI_CFG_CURRENT_CHANNEL_STAMAX;
+		tmp_start_ch_freq = *start_ch_freq >
+					wlan_reg_ch_to_freq(CHAN_ENUM_2432) ?
+					(*start_ch_freq - ACS_2G_EXTEND) :
+					wlan_reg_ch_to_freq(CHAN_ENUM_2412);
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: unexpected start freq %d",
+			  __func__, *start_ch_freq);
 	}
 
+	if (*end_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484)) {
+		*bandEndChannel = CHAN_ENUM_2484;
+		tmp_end_ch_freq = (*end_ch_freq + ACS_2G_EXTEND) <=
+					wlan_reg_ch_to_freq(CHAN_ENUM_2484) ?
+					(*end_ch_freq + ACS_2G_EXTEND) :
+					wlan_reg_ch_to_freq(CHAN_ENUM_2484);
+	} else if (*end_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_5865)) {
+		*bandEndChannel = CHAN_ENUM_5865;
+		tmp_end_ch_freq = (*end_ch_freq + ACS_5G_EXTEND) <=
+				     wlan_reg_ch_to_freq(CHAN_ENUM_5865) ?
+				     (*end_ch_freq + ACS_5G_EXTEND) :
+				     wlan_reg_ch_to_freq(CHAN_ENUM_5865);
+	} else if (WLAN_REG_IS_6GHZ_CHAN_FREQ(*end_ch_freq)) {
+		tmp_end_ch_freq = *end_ch_freq;
+		wlansap_update_end_range_6ghz(&tmp_end_ch_freq,
+					      bandEndChannel);
+	} else {
+		*bandEndChannel = CHAN_ENUM_5865;
+		tmp_end_ch_freq = (*end_ch_freq + ACS_5G_EXTEND) <=
+				     wlan_reg_ch_to_freq(CHAN_ENUM_5865) ?
+				     (*end_ch_freq + ACS_5G_EXTEND) :
+				     wlan_reg_ch_to_freq(CHAN_ENUM_5865);
+
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: unexpected end freq %d", __func__, *end_ch_freq);
+	}
+	*start_ch_freq = tmp_start_ch_freq;
+	*end_ch_freq = tmp_end_ch_freq;
 	/* Note if the ACS range include only DFS channels, do not cross range
 	* Active scanning in adjacent non DFS channels results in transmission
 	* spikes in DFS specturm channels which is due to emission spill.
 	* Remove the active channels from extend ACS range for DFS only range
 	*/
-	if (wlan_reg_is_dfs_ch(mac_ctx->pdev, *startChannelNum)) {
-		while (!wlan_reg_is_dfs_ch(mac_ctx->pdev,
-					tmp_startChannelNum) &&
-			tmp_startChannelNum < *startChannelNum)
-			tmp_startChannelNum += ACS_WLAN_20M_CH_INC;
+	if (wlan_reg_is_dfs_for_freq(mac_ctx->pdev, *start_ch_freq)) {
+		while (!wlan_reg_is_dfs_for_freq(
+				mac_ctx->pdev,
+				tmp_start_ch_freq) &&
+		       tmp_start_ch_freq < *start_ch_freq)
+			tmp_start_ch_freq += ACS_WLAN_20M_CH_INC;
 
-		*startChannelNum = tmp_startChannelNum;
+		*start_ch_freq = tmp_start_ch_freq;
 	}
-	if (wlan_reg_is_dfs_ch(mac_ctx->pdev, *endChannelNum)) {
-		while (!wlan_reg_is_dfs_ch(mac_ctx->pdev,
-					tmp_endChannelNum) &&
-				 tmp_endChannelNum > *endChannelNum)
-			tmp_endChannelNum -= ACS_WLAN_20M_CH_INC;
+	if (wlan_reg_is_dfs_for_freq(mac_ctx->pdev, *end_ch_freq)) {
+		while (!wlan_reg_is_dfs_for_freq(
+				mac_ctx->pdev,
+				tmp_end_ch_freq) &&
+		       tmp_end_ch_freq > *end_ch_freq)
+			tmp_end_ch_freq -= ACS_WLAN_20M_CH_INC;
 
-		*endChannelNum = tmp_endChannelNum;
+		*end_ch_freq = tmp_end_ch_freq;
 	}
 }
 

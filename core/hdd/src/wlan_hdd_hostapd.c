@@ -4334,71 +4334,78 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,
 			hdd_ctx->skip_acs_scan_status == eSAP_SKIP_ACS_SCAN &&
 			con_sap_config->acs_cfg.hw_mode ==
 						sap_config->acs_cfg.hw_mode) {
-			uint8_t con_sap_st_ch, con_sap_end_ch;
-			uint8_t cur_sap_st_ch, cur_sap_end_ch;
-			uint8_t bandStartChannel, bandEndChannel;
+			uint32_t con_sap_st_ch_freq, con_sap_end_ch_freq;
+			uint32_t cur_sap_st_ch_freq, cur_sap_end_ch_freq;
+			uint32_t bandStartChannel, bandEndChannel;
 
-			con_sap_st_ch =
-					con_sap_config->acs_cfg.start_ch;
-			con_sap_end_ch =
-					con_sap_config->acs_cfg.end_ch;
-			cur_sap_st_ch = sap_config->acs_cfg.start_ch;
-			cur_sap_end_ch = sap_config->acs_cfg.end_ch;
+			con_sap_st_ch_freq =
+					con_sap_config->acs_cfg.start_ch_freq;
+			con_sap_end_ch_freq =
+					con_sap_config->acs_cfg.end_ch_freq;
+			cur_sap_st_ch_freq =
+					sap_config->acs_cfg.start_ch_freq;
+			cur_sap_end_ch_freq =
+					sap_config->acs_cfg.end_ch_freq;
 
-			wlansap_extend_to_acs_range(mac_handle, &cur_sap_st_ch,
-					&cur_sap_end_ch, &bandStartChannel,
-					&bandEndChannel);
-
-			wlansap_extend_to_acs_range(mac_handle,
-					&con_sap_st_ch, &con_sap_end_ch,
+			wlansap_extend_to_acs_range(
+					mac_handle, &cur_sap_st_ch_freq,
+					&cur_sap_end_ch_freq,
 					&bandStartChannel, &bandEndChannel);
 
-			if (con_sap_st_ch <= cur_sap_st_ch &&
-					con_sap_end_ch >= cur_sap_end_ch) {
+			wlansap_extend_to_acs_range(
+					mac_handle, &con_sap_st_ch_freq,
+					&con_sap_end_ch_freq,
+					&bandStartChannel, &bandEndChannel);
+
+			if (con_sap_st_ch_freq <= cur_sap_st_ch_freq &&
+			    con_sap_end_ch_freq >= cur_sap_end_ch_freq) {
 				sap_config->acs_cfg.skip_scan_status =
 							eSAP_SKIP_ACS_SCAN;
 
-			} else if (con_sap_st_ch >= cur_sap_st_ch &&
-					con_sap_end_ch >= cur_sap_end_ch) {
+			} else if (con_sap_st_ch_freq >= cur_sap_st_ch_freq &&
+				   con_sap_end_ch_freq >=
+						cur_sap_end_ch_freq) {
 				sap_config->acs_cfg.skip_scan_status =
 							eSAP_DO_PAR_ACS_SCAN;
 
 				sap_config->acs_cfg.skip_scan_range1_stch =
-							cur_sap_st_ch;
+							cur_sap_st_ch_freq;
 				sap_config->acs_cfg.skip_scan_range1_endch =
-							con_sap_st_ch - 1;
+							con_sap_st_ch_freq - 5;
 				sap_config->acs_cfg.skip_scan_range2_stch =
 							0;
 				sap_config->acs_cfg.skip_scan_range2_endch =
 							0;
 
-			} else if (con_sap_st_ch <= cur_sap_st_ch &&
-				con_sap_end_ch <= cur_sap_end_ch) {
+			} else if (con_sap_st_ch_freq <= cur_sap_st_ch_freq &&
+				   con_sap_end_ch_freq <=
+						cur_sap_end_ch_freq) {
 				sap_config->acs_cfg.skip_scan_status =
 							eSAP_DO_PAR_ACS_SCAN;
 
 				sap_config->acs_cfg.skip_scan_range1_stch =
-							con_sap_end_ch + 1;
+							con_sap_end_ch_freq + 5;
 				sap_config->acs_cfg.skip_scan_range1_endch =
-							cur_sap_end_ch;
+							cur_sap_end_ch_freq;
 				sap_config->acs_cfg.skip_scan_range2_stch =
 							0;
 				sap_config->acs_cfg.skip_scan_range2_endch =
 							0;
 
-			} else if (con_sap_st_ch >= cur_sap_st_ch &&
-				con_sap_end_ch <= cur_sap_end_ch) {
+			} else if (con_sap_st_ch_freq >= cur_sap_st_ch_freq &&
+				   con_sap_end_ch_freq <=
+						cur_sap_end_ch_freq) {
 				sap_config->acs_cfg.skip_scan_status =
 							eSAP_DO_PAR_ACS_SCAN;
 
 				sap_config->acs_cfg.skip_scan_range1_stch =
-							cur_sap_st_ch;
+							cur_sap_st_ch_freq;
 				sap_config->acs_cfg.skip_scan_range1_endch =
-							con_sap_st_ch - 1;
+							con_sap_st_ch_freq - 5;
 				sap_config->acs_cfg.skip_scan_range2_stch =
-							con_sap_end_ch;
+							con_sap_end_ch_freq;
 				sap_config->acs_cfg.skip_scan_range2_endch =
-							cur_sap_end_ch + 1;
+						cur_sap_end_ch_freq + 5;
 
 			} else
 				sap_config->acs_cfg.skip_scan_status =
