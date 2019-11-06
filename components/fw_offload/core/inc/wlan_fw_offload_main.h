@@ -177,7 +177,6 @@ struct wlan_fwol_neighbor_report_cfg {
  * @enable_rts_sifsbursting: Enable RTS SIFS Bursting
  * @enable_sifs_burst: Enable SIFS burst
  * @max_mpdus_inampdu: Max number of MPDUS
- * @arp_ac_category: ARP AC category
  * @enable_phy_reg_retention: Enable PHY reg retention
  * @upper_brssi_thresh: Upper BRSSI threshold
  * @lower_brssi_thresh: Lower BRSSI threshold
@@ -213,7 +212,6 @@ struct wlan_fwol_cfg {
 	bool enable_rts_sifsbursting;
 	uint8_t enable_sifs_burst;
 	uint8_t max_mpdus_inampdu;
-	uint32_t arp_ac_category;
 	uint8_t enable_phy_reg_retention;
 	uint16_t upper_brssi_thresh;
 	uint16_t lower_brssi_thresh;

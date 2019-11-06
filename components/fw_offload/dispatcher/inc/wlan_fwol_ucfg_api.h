@@ -180,15 +180,6 @@ QDF_STATUS ucfg_get_max_mpdus_inampdu(struct wlan_objmgr_psoc *psoc,
 				      uint8_t *max_mpdus_inampdu);
 
 /**
- * ucfg_get_arp_ac_category() - Assigns the arp_ac_category value
- * @psoc: pointer to the psoc object
- *
- * Return: QDF Status
- */
-QDF_STATUS ucfg_get_arp_ac_category(struct wlan_objmgr_psoc *psoc,
-				    uint32_t *arp_ac_category);
-
-/**
  * ucfg_get_enable_phy_reg_retention() - Assigns enable_phy_reg_retention value
  * @psoc: pointer to the psoc object
  *
@@ -636,13 +627,6 @@ ucfg_get_enable_rts_sifsbursting(struct wlan_objmgr_psoc *psoc,
 static inline QDF_STATUS
 ucfg_get_max_mpdus_inampdu(struct wlan_objmgr_psoc *psoc,
 			   uint8_t *max_mpdus_inampdu)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-
-static inline QDF_STATUS
-ucfg_get_arp_ac_category(struct wlan_objmgr_psoc *psoc,
-			 uint32_t *arp_ac_category)
 {
 	return QDF_STATUS_E_FAILURE;
 }

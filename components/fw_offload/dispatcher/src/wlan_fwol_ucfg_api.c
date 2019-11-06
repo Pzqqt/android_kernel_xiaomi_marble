@@ -331,21 +331,6 @@ QDF_STATUS ucfg_get_max_mpdus_inampdu(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS ucfg_get_arp_ac_category(struct wlan_objmgr_psoc *psoc,
-				    uint32_t *arp_ac_category)
-{
-	struct wlan_fwol_psoc_obj *fwol_obj;
-
-	fwol_obj = fwol_get_psoc_obj(psoc);
-	if (!fwol_obj) {
-		fwol_err("Failed to get FWOL obj");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	*arp_ac_category = fwol_obj->cfg.arp_ac_category;
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS ucfg_get_enable_phy_reg_retention(struct wlan_objmgr_psoc *psoc,
 					     uint8_t *enable_phy_reg_retention)
 {

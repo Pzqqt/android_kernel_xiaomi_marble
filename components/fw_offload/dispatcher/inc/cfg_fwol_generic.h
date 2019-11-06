@@ -120,35 +120,6 @@
 
 /*
  * <ini>
- * arp_ac_category - ARP access category
- * @Min: 0
- * @Max: 3
- * @Default: 3
- *
- * Firmware by default categorizes ARP packets with VOICE TID.
- * This ini shall be used to override the default configuration.
- * Access category enums are referenced in qca-vendor.h
- * QCA_WLAN_AC_BE = 0 (Best effort)
- * QCA_WLAN_AC_BK = 1 (Background)
- * QCA_WLAN_AC_VI = 2 (Video)
- * QCA_WLAN_AC_VO = 3 (Voice)
- *
- * Related: none
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ARP_AC_CATEGORY CFG_INI_INT( \
-		"arp_ac_category", \
-		0, \
-		3, \
-		3, \
-		CFG_VALUE_OR_DEFAULT, \
-		"Override the default ARP AC configuration")
-
-/*
- * <ini>
  * gEnableFastPwrTransition - Configuration for fast power transition
  * @Min: 0
  * @Max: 2
@@ -740,7 +711,6 @@
 	CFG(CFG_SET_RTS_FOR_SIFS_BURSTING) \
 	CFG(CFG_SET_SIFS_BURST) \
 	CFG(CFG_MAX_MPDUS_IN_AMPDU) \
-	CFG(CFG_ARP_AC_CATEGORY) \
 	CFG(CFG_ENABLE_PHY_REG) \
 	CFG(CFG_UPPER_BRSSI_THRESH) \
 	CFG(CFG_LOWER_BRSSI_THRESH) \
