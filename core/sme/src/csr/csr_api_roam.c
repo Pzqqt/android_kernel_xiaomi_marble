@@ -13710,7 +13710,7 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 				   enum reg_wifi_band *p_band)
 {
 	enum reg_wifi_band band = REG_BAND_2G;
-	uint8_t opr_chn = eCSR_OPERATING_CHANNEL_AUTO;
+	uint8_t opr_freq = 0;
 	enum csr_cfgdot11mode curr_mode =
 		mac_ctx->roam.configParam.uCfgDot11Mode;
 	enum csr_cfgdot11mode cfg_dot11_mode =
@@ -13720,7 +13720,7 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 			mac_ctx->roam.configParam.ProprietaryRatesEnabled);
 
 	if (bss_op_ch_freq)
-		opr_chn = wlan_reg_freq_to_chan(mac_ctx->pdev, bss_op_ch_freq);
+		opr_freq = bss_op_ch_freq;
 	/*
 	 * If the global setting for dot11Mode is set to auto/abg, we overwrite
 	 * the setting in the profile.
@@ -13735,7 +13735,7 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 	} /* if( eCSR_CFG_DOT11_MODE_ABG == cfg_dot11_mode ) */
 	else {
 		/* dot11 mode is set, lets pick the band */
-		if (eCSR_OPERATING_CHANNEL_AUTO == opr_chn) {
+		if (0 == opr_freq) {
 			/* channel is Auto also. */
 			if (mac_ctx->mlme_cfg->gen.band == BAND_ALL) {
 				/* prefer 5GHz */
@@ -13748,7 +13748,7 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 	if (p_band)
 		*p_band = band;
 
-	if (opr_chn == 14 && wlan_reg_is_24ghz_ch_freq(bss_op_ch_freq)) {
+	if (opr_freq == 2484 && wlan_reg_is_24ghz_ch_freq(bss_op_ch_freq)) {
 		sme_err("Switching to Dot11B mode");
 		cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11B;
 	}
