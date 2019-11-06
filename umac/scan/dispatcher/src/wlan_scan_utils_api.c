@@ -183,23 +183,24 @@ static bool util_is_pureg_rate(uint8_t *rates, uint8_t nrates)
 
 #ifdef CONFIG_BAND_6GHZ
 static enum wlan_phymode
-util_scan_get_phymode_6g(struct scan_cache_entry *scan_params)
+util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
+			 struct scan_cache_entry *scan_params)
 {
 	uint8_t len;
 	struct he_oper_6g_param *he_6g_params;
 	uint32_t he_oper_params;
 	enum wlan_phymode phymode = WLAN_PHYMODE_11AXA_HE20;
 	uint8_t *he_ops;
+	uint8_t band_mask = BIT(REG_BAND_6G);
 
 	he_ops = util_scan_entry_heop(scan_params);
 	if (!util_scan_entry_hecap(scan_params) || !he_ops)
 		return phymode;
 
 	len = he_ops[1];
-	he_ops += 2;
+	he_ops += sizeof(struct ie_header);
 
-	/* Length less than fixed params length */
-	if (len < 7)
+	if (len < WLAN_HEOP_FIXED_PARAM_LENGTH)
 		return phymode;
 
 	/* element id extension */
@@ -210,27 +211,27 @@ util_scan_get_phymode_6g(struct scan_cache_entry *scan_params)
 	if (!(he_oper_params & WLAN_HEOP_6GHZ_INFO_PRESENT_MASK))
 		return phymode;
 
-	/* fixed params */
-	he_ops += 6;
-	len -= 6;
+	/* fixed params - element id extension */
+	he_ops += WLAN_HEOP_FIXED_PARAM_LENGTH - 1;
+	len -= WLAN_HEOP_FIXED_PARAM_LENGTH - 1;
 
 	if (!len)
 		return phymode;
 
 	/* vht oper params */
 	if (he_oper_params & WLAN_HEOP_VHTOP_PRESENT_MASK) {
-		if (len < 3)
+		if (len < WLAN_HEOP_VHTOP_LENGTH)
 			return phymode;
-		he_ops += 3;
-		len -= 3;
+		he_ops += WLAN_HEOP_VHTOP_LENGTH;
+		len -= WLAN_HEOP_VHTOP_LENGTH;
 	}
 
 	if (!len)
 		return phymode;
 
 	if (he_oper_params & WLAN_HEOP_CO_LOCATED_BSS_MASK) {
-		he_ops += 1;
-		len -= 1;
+		he_ops += WLAN_HEOP_CO_LOCATED_BSS_LENGTH;
+		len -= WLAN_HEOP_CO_LOCATED_BSS_LENGTH;
 	}
 
 	if (len < sizeof(*he_6g_params))
@@ -262,24 +263,50 @@ util_scan_get_phymode_6g(struct scan_cache_entry *scan_params)
 		break;
 	}
 
+	if (he_6g_params->chan_freq_seg0)
+		scan_params->channel.cfreq0 =
+			wlan_reg_chan_band_to_freq(pdev,
+					he_6g_params->chan_freq_seg0,
+					band_mask);
+	if (he_6g_params->chan_freq_seg1)
+		scan_params->channel.cfreq1 =
+			wlan_reg_chan_band_to_freq(pdev,
+					he_6g_params->chan_freq_seg1,
+					band_mask);
+
 	return phymode;
 }
 #else
 static inline enum wlan_phymode
-util_scan_get_phymode_6g(struct scan_cache_entry *scan_params)
+util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
+			 struct scan_cache_entry *scan_params)
 {
 	return WLAN_PHYMODE_AUTO;
 }
 #endif
 
+static inline
+uint32_t util_scan_sec_chan_freq_from_htinfo(struct wlan_ie_htinfo_cmn *htinfo,
+					     uint32_t primary_chan_freq)
+{
+	if (htinfo->hi_extchoff == WLAN_HTINFO_EXTOFFSET_ABOVE)
+		return primary_chan_freq + WLAN_CHAN_SPACING_20MHZ;
+	else if (htinfo->hi_extchoff == WLAN_HTINFO_EXTOFFSET_BELOW)
+		return primary_chan_freq - WLAN_CHAN_SPACING_20MHZ;
+
+	return 0;
+}
+
 static enum wlan_phymode
-util_scan_get_phymode_5g(struct scan_cache_entry *scan_params)
+util_scan_get_phymode_5g(struct wlan_objmgr_pdev *pdev,
+			 struct scan_cache_entry *scan_params)
 {
 	enum wlan_phymode phymode = WLAN_PHYMODE_AUTO;
 	uint16_t ht_cap = 0;
 	struct htcap_cmn_ie *htcap;
 	struct wlan_ie_htinfo_cmn *htinfo;
 	struct wlan_ie_vhtop *vhtop;
+	uint8_t band_mask = BIT(REG_BAND_5G);
 
 	htcap = (struct htcap_cmn_ie *)
 		util_scan_entry_htcap(scan_params);
@@ -298,6 +325,10 @@ util_scan_get_phymode_5g(struct scan_cache_entry *scan_params)
 		phymode = WLAN_PHYMODE_11NA_HT40;
 	else
 		phymode = WLAN_PHYMODE_11NA_HT20;
+
+	scan_params->channel.cfreq0 =
+		util_scan_sec_chan_freq_from_htinfo(htinfo,
+						scan_params->channel.chan_freq);
 
 	if (util_scan_entry_vhtcap(scan_params) && vhtop) {
 		switch (vhtop->vht_op_chwidth) {
@@ -327,6 +358,16 @@ util_scan_get_phymode_5g(struct scan_cache_entry *scan_params)
 			phymode = WLAN_PHYMODE_11AC_VHT20;
 			break;
 		}
+		if (vhtop->vht_op_ch_freq_seg1)
+			scan_params->channel.cfreq0 =
+				wlan_reg_chan_band_to_freq(pdev,
+						vhtop->vht_op_ch_freq_seg1,
+						band_mask);
+		if (vhtop->vht_op_ch_freq_seg2)
+			scan_params->channel.cfreq1 =
+				wlan_reg_chan_band_to_freq(pdev,
+						vhtop->vht_op_ch_freq_seg2,
+						band_mask);
 	}
 
 	if (!util_scan_entry_hecap(scan_params))
@@ -408,6 +449,10 @@ util_scan_get_phymode_2g(struct scan_cache_entry *scan_params)
 	if (!IS_WLAN_PHYMODE_HT(phymode))
 		return phymode;
 
+	scan_params->channel.cfreq0 =
+		util_scan_sec_chan_freq_from_htinfo(htinfo,
+						scan_params->channel.chan_freq);
+
 	if (util_scan_entry_vhtcap(scan_params) && vhtop) {
 		switch (vhtop->vht_op_chwidth) {
 		case WLAN_VHTOP_CHWIDTH_2040:
@@ -443,14 +488,15 @@ util_scan_get_phymode_2g(struct scan_cache_entry *scan_params)
 }
 
 static enum wlan_phymode
-util_scan_get_phymode(struct scan_cache_entry *scan_params)
+util_scan_get_phymode(struct wlan_objmgr_pdev *pdev,
+		      struct scan_cache_entry *scan_params)
 {
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(scan_params->channel.chan_freq))
 		return util_scan_get_phymode_2g(scan_params);
 	else if (WLAN_REG_IS_6GHZ_CHAN_FREQ(scan_params->channel.chan_freq))
-		return util_scan_get_phymode_6g(scan_params);
+		return util_scan_get_phymode_6g(pdev, scan_params);
 	else
-		return util_scan_get_phymode_5g(scan_params);
+		return util_scan_get_phymode_5g(pdev, scan_params);
 }
 
 static QDF_STATUS
@@ -1322,7 +1368,7 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_copy(&scan_entry->mbssid_info, mbssid_info,
 		     sizeof(scan_entry->mbssid_info));
 
-	scan_entry->phy_mode = util_scan_get_phymode(scan_entry);
+	scan_entry->phy_mode = util_scan_get_phymode(pdev, scan_entry);
 
 	scan_entry->nss = util_scan_scm_calc_nss_supported_by_ap(scan_entry);
 	scm_fill_adaptive_11r_cap(scan_entry);

@@ -165,6 +165,10 @@
 /* 80 + 80 MHz Operating Channel  (revised signalling) */
 #define WLAN_VHTOP_CHWIDTH_REVSIG_80_80  1
 
+#define WLAN_HEOP_FIXED_PARAM_LENGTH       7
+#define WLAN_HEOP_VHTOP_LENGTH             3
+#define WLAN_HEOP_CO_LOCATED_BSS_LENGTH    1
+
 #define WLAN_HEOP_VHTOP_PRESENT_MASK       0x00004000  /* B14 */
 #define WLAN_HEOP_CO_LOCATED_BSS_MASK      0x00008000  /* B15 */
 #define WLAN_HEOP_6GHZ_INFO_PRESENT_MASK   0X00020000  /* B17 */
