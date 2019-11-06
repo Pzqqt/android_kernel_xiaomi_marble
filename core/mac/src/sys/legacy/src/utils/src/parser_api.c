@@ -265,7 +265,7 @@ populate_dot11_supp_operating_classes(struct mac_context *mac_ptr,
 void
 populate_dot11f_vht_tx_power_env(struct mac_context *mac,
 				 tDot11fIEvht_transmit_power_env *pDot11f,
-				 enum phy_ch_width ch_width, uint8_t chan)
+				 enum phy_ch_width ch_width, uint32_t chan_freq)
 {
 	uint8_t num_tx_power, i, tx_power;
 	int reg_max;
@@ -292,7 +292,7 @@ populate_dot11f_vht_tx_power_env(struct mac_context *mac,
 		return;
 	}
 
-	reg_max = lim_get_regulatory_max_transmit_power(mac, chan);
+	reg_max = wlan_reg_get_channel_reg_power_for_freq(mac->pdev, chan_freq);
 
 	/* in 0.5 dB steps */
 	reg_max *= 2;
@@ -1761,9 +1761,8 @@ populate_dot11f_tpc_report(struct mac_context *mac,
 			nSirStatus);
 		return QDF_STATUS_E_FAILURE;
 	}
-	tx_power = lim_get_regulatory_max_transmit_power(
-				mac, wlan_reg_freq_to_chan(
-				mac->pdev, pe_session->curr_op_freq));
+	tx_power = wlan_reg_get_channel_reg_power_for_freq(
+				mac->pdev, pe_session->curr_op_freq);
 	pDot11f->tx_power = tx_power;
 	pDot11f->link_margin = 0;
 	pDot11f->present = 1;

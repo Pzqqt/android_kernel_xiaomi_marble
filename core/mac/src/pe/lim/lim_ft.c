@@ -611,11 +611,11 @@ void lim_fill_ft_session(struct mac_context *mac,
 		ft_session->shortSlotTimeSupported = true;
 	}
 
-	regMax = lim_get_regulatory_max_transmit_power(
-		mac, wlan_reg_freq_to_chan(mac->pdev,
-					   ft_session->curr_op_freq));
+	regMax = wlan_reg_get_channel_reg_power_for_freq(
+		mac->pdev, ft_session->curr_op_freq);
 	localPowerConstraint = regMax;
 	lim_extract_ap_capability(mac, (uint8_t *) pbssDescription->ieFields,
+
 		lim_get_ielen_from_bss_description(pbssDescription),
 		&ft_session->limCurrentBssQosCaps,
 		&currentBssUapsd,

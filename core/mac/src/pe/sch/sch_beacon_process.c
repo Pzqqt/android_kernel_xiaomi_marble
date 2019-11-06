@@ -854,9 +854,8 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 					rx_pkt_info, session,
 					&beaconParams, &sendProbeReq, pMh);
 	/* Obtain the Max Tx power for the current regulatory  */
-	regMax = lim_get_regulatory_max_transmit_power(
-				mac_ctx, wlan_reg_freq_to_chan(
-				mac_ctx->pdev, session->curr_op_freq));
+	regMax = wlan_reg_get_channel_reg_power_for_freq(
+				mac_ctx->pdev, session->curr_op_freq);
 
 	local_constraint = regMax;
 

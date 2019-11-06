@@ -460,9 +460,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 		populate_dot11f_vht_tx_power_env(mac_ctx,
 						 &bcn_2->vht_transmit_power_env,
 						 session->ch_width,
-						 wlan_reg_freq_to_chan(
-						 mac_ctx->pdev,
-						 session->curr_op_freq));
+						 session->curr_op_freq);
 		populate_dot11f_qcn_ie(mac_ctx, &bcn_2->qcn_ie,
 				       QCN_IE_ATTR_ID_ALL);
 	}

@@ -634,10 +634,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		/* Update the phymode */
 		session->gLimPhyMode = sme_start_bss_req->nwType;
 
-		session->maxTxPower =
-			lim_get_regulatory_max_transmit_power(mac_ctx,
-				wlan_reg_freq_to_chan(
-				mac_ctx->pdev, session->curr_op_freq));
+		session->maxTxPower = wlan_reg_get_channel_reg_power_for_freq(
+			mac_ctx->pdev, session->curr_op_freq);
 		/* Store the dot 11 mode in to the session Table */
 		session->dot11mode = sme_start_bss_req->dot11mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -1591,9 +1589,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		session->limCurrentBssCaps =
 			session->lim_join_req->bssDescription.capabilityInfo;
 
-		reg_max = lim_get_regulatory_max_transmit_power(
-			mac_ctx, wlan_reg_freq_to_chan(mac_ctx->pdev,
-						       session->curr_op_freq));
+		reg_max = wlan_reg_get_channel_reg_power_for_freq(
+			mac_ctx->pdev, session->curr_op_freq);
 		local_power_constraint = reg_max;
 
 		lim_extract_ap_capability(mac_ctx,
@@ -1919,9 +1916,8 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 
 	session_entry->limReassocBssCaps =
 		session_entry->pLimReAssocReq->bssDescription.capabilityInfo;
-	reg_max = lim_get_regulatory_max_transmit_power(
-		mac_ctx, wlan_reg_freq_to_chan(
-		mac_ctx->pdev, session_entry->curr_op_freq));
+	reg_max = wlan_reg_get_channel_reg_power_for_freq(
+		mac_ctx->pdev, session_entry->curr_op_freq);
 	local_pwr_constraint = reg_max;
 
 	lim_extract_ap_capability(mac_ctx,

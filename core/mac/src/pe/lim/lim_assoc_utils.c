@@ -4485,9 +4485,8 @@ QDF_STATUS lim_is_dot11h_power_capabilities_in_range(struct mac_context *mac,
 	int8_t localMaxTxPower;
 	uint8_t local_pwr_constraint;
 
-	localMaxTxPower = lim_get_regulatory_max_transmit_power(
-					mac, wlan_reg_freq_to_chan(
-					mac->pdev, pe_session->curr_op_freq));
+	localMaxTxPower = wlan_reg_get_channel_reg_power_for_freq(
+					mac->pdev, pe_session->curr_op_freq);
 
 	local_pwr_constraint = mac->mlme_cfg->power.local_power_constraint;
 	localMaxTxPower -= (int8_t)local_pwr_constraint;
