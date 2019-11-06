@@ -141,9 +141,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
 	struct hdd_context *hdd_ctx;
-	struct cdp_vdev *vdev = NULL;
-	struct cdp_pdev *pdev = NULL;
-	void *soc = NULL;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct cdp_txrx_stats_req req = {0};
 	uint8_t index = 0;
 	struct hdd_station_info *sta_info;
@@ -159,15 +157,14 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	if (qdf_unlikely(!soc)) {
+		hdd_err("soc is NULL");
+		return -EINVAL;
+	}
+
 	switch (sub_cmd) {
 	case QCSAP_PARAM_SET_TXRX_STATS:
 	{
-		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
-				 adapter->vdev_id);
-		if (ret != 0) {
-			hdd_err("Invalid Handles");
-			break;
-		}
 		req.stats = value[1];
 		req.mac_id = value[2];
 		hdd_info("QCSAP_PARAM_SET_TXRX_STATS stats_id: %d mac_id: %d",
@@ -175,7 +172,8 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 
 		if (value[1] == CDP_TXRX_STATS_28) {
 			req.peer_addr = (char *)&adapter->mac_addr;
-			ret = cdp_txrx_stats_request(soc, vdev, &req);
+			ret = cdp_txrx_stats_request(soc, adapter->vdev_id,
+						     &req);
 
 			hdd_for_each_station(adapter->sta_info_list, sta_info,
 					     index) {
@@ -186,10 +184,11 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 				req.peer_addr = (char *)
 					&sta_info->sta_mac;
 				ret = cdp_txrx_stats_request(
-					soc, vdev, &req);
+					soc, adapter->vdev_id, &req);
 			}
 		} else {
-			ret = cdp_txrx_stats_request(soc, vdev, &req);
+			ret = cdp_txrx_stats_request(soc, adapter->vdev_id,
+						     &req);
 		}
 
 		break;
@@ -233,12 +232,6 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 	case QCSAP_SET_BA_AGEING_TIMEOUT:
 		hdd_info("QCSAP_SET_BA_AGEING_TIMEOUT: AC[%d] timeout[%d]",
 			 value[1], value[2]);
-		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
-					       adapter->vdev_id);
-		if (ret != 0) {
-			hdd_err("Invalid Handles");
-			break;
-		}
 		/*
 		 *  value[1] : suppose to be access class, value between[0-3]
 		 *  value[2]: suppose to be duration in seconds

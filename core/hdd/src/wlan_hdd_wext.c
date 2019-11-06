@@ -7827,7 +7827,6 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	int ret, num_args;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct cdp_vdev *vdev = NULL;
 	struct cdp_txrx_stats_req req = {0};
 
 	hdd_enter_dev(dev);
@@ -8064,7 +8063,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 					(char *)&sta_ctx->conn_info.bssid;
 			}
 		}
-		ret = cdp_txrx_stats_request(soc, vdev, &req);
+		ret = cdp_txrx_stats_request(soc, adapter->vdev_id, &req);
 		break;
 	}
 #ifdef WLAN_FEATURE_MOTION_DETECTION
