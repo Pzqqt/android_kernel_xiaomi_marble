@@ -5782,7 +5782,7 @@ void dp_print_tso_stats(struct dp_soc *soc,
 		for (id = 0; id < CDP_MAX_TSO_PACKETS; id++) {
 			/* TSO LEVEL 1 - PACKET INFO */
 			DP_PRINT_STATS(
-				  "Packet_Id:[%u]: Packet Length %lu | No. of segments: %u",
+				  "Packet_Id:[%u]: Packet Length %zu | No. of segments: %u",
 				  id,
 				  pdev->stats.tso_stats.tso_info
 				  .tso_packet_info[id].tso_packet_len,
