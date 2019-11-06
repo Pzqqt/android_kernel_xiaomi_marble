@@ -1885,9 +1885,9 @@ QDF_STATUS tdls_process_remove_force_peer(struct tdls_oper_request *req)
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
 	}
-
-	tdls_set_peer_link_status(peer, TDLS_LINK_TEARING,
-				  TDLS_LINK_UNSPECIFIED);
+	if (peer->link_status == TDLS_LINK_CONNECTED)
+		tdls_set_peer_link_status(peer, TDLS_LINK_TEARING,
+					  TDLS_LINK_UNSPECIFIED);
 
 	if (soc_obj->tdls_dp_vdev_update)
 		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
