@@ -324,14 +324,14 @@ static int adsp_loader_probe(struct platform_device *pdev)
 {
 	struct adsp_loader_private *priv = NULL;
 	struct nvmem_cell *cell;
-	ssize_t len;
+	size_t len;
 	u32 *buf;
 	const char **adsp_fw_name_array = NULL;
 	int adsp_fw_cnt;
 	u32* adsp_fw_bit_values = NULL;
 	int i;
 	int fw_name_size;
-	u32 adsp_var_idx;
+	u32 adsp_var_idx = 0;
 	int ret = 0;
 
 	ret = adsp_loader_init_sysfs(pdev);
@@ -349,11 +349,11 @@ static int adsp_loader_probe(struct platform_device *pdev)
 	}
 	buf = nvmem_cell_read(cell, &len);
 	nvmem_cell_put(cell);
-	if (IS_ERR_OR_NULL(buf)) {
+	if (IS_ERR_OR_NULL(buf) || len <= 0 || len > sizeof(u32)) {
 		dev_dbg(&pdev->dev, "%s: FAILED to read nvmem cell \n", __func__);
 		goto wqueue;
 	}
-	adsp_var_idx = (*buf);
+	memcpy(&adsp_var_idx, buf, len);
 	kfree(buf);
 
 	/* Get count of fw images */
