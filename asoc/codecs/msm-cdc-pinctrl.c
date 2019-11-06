@@ -196,7 +196,8 @@ static int msm_cdc_pinctrl_probe(struct platform_device *pdev)
 	struct msm_cdc_pinctrl_info *gpio_data;
 	u32 tlmm_gpio[MAX_GPIOS] = {0};
 	u32 chip_wakeup_reg[MAX_GPIOS] = {0};
-	u32 i = 0;
+	u32 chip_wakeup_default_val[MAX_GPIOS] = {0};
+	u32 i = 0, temp = 0;
 	int count = 0;
 
 	gpio_data = devm_kzalloc(&pdev->dev,
@@ -257,6 +258,20 @@ static int msm_cdc_pinctrl_probe(struct platform_device *pdev)
 		for (i = 0; i < count; i++) {
 			gpio_data->chip_wakeup_register[i] =
 				devm_ioremap(&pdev->dev, chip_wakeup_reg[i], 0x4);
+		}
+		if (of_property_read_u32_array(pdev->dev.of_node,
+					"qcom,chip-wakeup-default-val",
+					chip_wakeup_default_val, count)) {
+			for (i = 0; i < count; i++) {
+				temp = ioread32(gpio_data->chip_wakeup_register[i]);
+				if (chip_wakeup_default_val[i])
+					temp |= (1 <<
+						 gpio_data->chip_wakeup_maskbit[i]);
+				else
+					temp &= ~(1 <<
+						  gpio_data->chip_wakeup_maskbit[i]);
+				iowrite32(temp, gpio_data->chip_wakeup_register[i]);
+			}
 		}
 		gpio_data->wakeup_reg_count = count;
 	}
