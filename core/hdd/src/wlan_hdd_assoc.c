@@ -5395,6 +5395,25 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * hdd_set_def_mfp_cap: Set default value for MFPCapable
+ * @profile: Source profile
+ *
+ * Return: None
+ */
+static void hdd_set_def_mfp_cap(
+	struct csr_roam_profile *roam_profile)
+{
+	roam_profile->MFPCapable = roam_profile->MFPEnabled;
+}
+#else
+static void hdd_set_def_mfp_cap(
+	struct csr_roam_profile *roam_profile)
+{
+}
+#endif
+
 /**
  * hdd_set_def_rsne_override() - set default encryption type and auth type
  * in profile.
@@ -5411,9 +5430,8 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 static void hdd_set_def_rsne_override(
 	struct csr_roam_profile *roam_profile, enum csr_akm_type *auth_type)
 {
-
 	hdd_debug("Set def values in roam profile");
-	roam_profile->MFPCapable = roam_profile->MFPEnabled;
+	hdd_set_def_mfp_cap(roam_profile);
 	roam_profile->EncryptionType.numEntries = 2;
 	roam_profile->mcEncryptionType.numEntries = 2;
 		/* Use the cipher type in the RSN IE */
@@ -5425,6 +5443,57 @@ static void hdd_set_def_rsne_override(
 		eCSR_ENCRYPT_TYPE_TKIP;
 	*auth_type = eCSR_AUTH_TYPE_RSN_PSK;
 }
+
+#ifdef WLAN_FEATURE_11W
+/**
+ * hdd_update_values_mfp_cap: Update values for MFPCapable,MFPEnabled
+ * @profile: Source profile
+ *
+ * Return: None
+ */
+static void hdd_update_values_mfp_cap(
+	struct csr_roam_profile *roam_profile,
+	uint8_t mfp_required, uint8_t mfp_capable )
+{
+	hdd_debug("mfp_required = %d, mfp_capable = %d",
+		 mfp_required, mfp_capable);
+	roam_profile->MFPRequired = mfp_required;
+	roam_profile->MFPCapable = mfp_capable;
+}
+#else
+static void hdd_update_values_mfp_cap(
+	struct csr_roam_profile *roam_profile,
+	uint8_t mfp_required, uint8_t mfp_capable )
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_11W
+/**
+ * hdd_set_mfp_enable: Set value for MFPEnabled
+ * @profile: Source profile
+ *
+ * Return: None
+ */
+static void hdd_set_mfp_enable(struct csr_roam_profile *roam_profile)
+{
+	hdd_debug("MFPEnabled %d", roam_profile->MFPEnabled);
+	/*
+	 * Reset MFPEnabled if testmode RSNE passed doesn't have MFPR
+	 * or MFPC bit set
+	 */
+	if (roam_profile->MFPEnabled &&
+		!(roam_profile->MFPRequired ||
+		  roam_profile->MFPCapable)) {
+		hdd_debug("Reset MFPEnabled");
+		roam_profile->MFPEnabled = 0;
+	}
+}
+#else
+static void hdd_set_mfp_enable(struct csr_roam_profile *roam_profile)
+{
+}
+#endif
 
 /**
  * hdd_set_genie_to_csr() - set genie to csr
@@ -5442,10 +5511,8 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 	eCsrEncryptionType rsn_encrypt_type;
 	eCsrEncryptionType mc_rsn_encrypt_type;
 	struct hdd_context *hdd_ctx;
-#ifdef WLAN_FEATURE_11W
 	uint8_t mfp_required = 0;
 	uint8_t mfp_capable = 0;
-#endif
 	u8 bssid[ETH_ALEN];        /* MAC address of assoc peer */
 
 	roam_profile = hdd_roam_profile(adapter);
@@ -5466,9 +5533,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 	status = hdd_process_genie(adapter, bssid,
 				   &rsn_encrypt_type,
 				   &mc_rsn_encrypt_type, rsn_auth_type,
-#ifdef WLAN_FEATURE_11W
 				   &mfp_required, &mfp_capable,
-#endif
 				   security_ie[1] + 2,
 				   security_ie);
 
@@ -5503,12 +5568,10 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 			roam_profile->EncryptionType.encryptionType[0]
 				= mc_rsn_encrypt_type;
 		}
-#ifdef WLAN_FEATURE_11W
-		hdd_debug("mfp_required = %d, mfp_capable = %d",
-			 mfp_required, mfp_capable);
-		roam_profile->MFPRequired = mfp_required;
-		roam_profile->MFPCapable = mfp_capable;
-#endif
+
+		hdd_update_values_mfp_cap(roam_profile, mfp_required,
+					  mfp_capable);
+
 		hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
 			 *rsn_auth_type, rsn_encrypt_type, mc_rsn_encrypt_type);
 	}
@@ -5529,17 +5592,8 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 
 		roam_profile->force_rsne_override = true;
 
-		hdd_debug("MFPEnabled %d", roam_profile->MFPEnabled);
-		/*
-		 * Reset MFPEnabled if testmode RSNE passed doesn't have MFPR
-		 * or MFPC bit set
-		 */
-		if (roam_profile->MFPEnabled &&
-		    !(roam_profile->MFPRequired ||
-		      roam_profile->MFPCapable)) {
-			hdd_debug("Reset MFPEnabled");
-			roam_profile->MFPEnabled = 0;
-		}
+		hdd_set_mfp_enable(roam_profile);
+
 		/* If parsing failed set the def value for the roam profile */
 		if (status)
 			hdd_set_def_rsne_override(roam_profile, rsn_auth_type);
