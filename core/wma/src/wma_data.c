@@ -1451,15 +1451,11 @@ static void wma_process_vdev_tx_pause_evt(void *soc,
 					  wmi_tx_pause_event_fixed_param *event,
 					  uint8_t vdev_id)
 {
-	struct cdp_vdev *dp_handle =
-			wlan_vdev_get_dp_handle(wma->interfaces[vdev_id].vdev);
-
 	/* PAUSE action, add bitmap */
 	if (event->action == ACTION_PAUSE) {
 		/* Exclude TDLS_OFFCHAN_CHOP from vdev based pauses */
 		if (event->pause_type == PAUSE_TYPE_CHOP_TDLS_OFFCHAN) {
-			cdp_fc_vdev_pause(soc,
-					  dp_handle,
+			cdp_fc_vdev_pause(soc, vdev_id,
 					  OL_TXQ_PAUSE_REASON_FW,
 					  event->pause_type);
 		} else {
@@ -1468,8 +1464,7 @@ static void wma_process_vdev_tx_pause_evt(void *soc,
 			 * necessary to pause a paused queue again.
 			 */
 			if (!wma_vdev_get_pause_bitmap(vdev_id))
-				cdp_fc_vdev_pause(soc,
-						  dp_handle,
+				cdp_fc_vdev_pause(soc, vdev_id,
 						  OL_TXQ_PAUSE_REASON_FW,
 						  event->pause_type);
 
@@ -1481,8 +1476,7 @@ static void wma_process_vdev_tx_pause_evt(void *soc,
 	else if (event->action == ACTION_UNPAUSE) {
 		/* Exclude TDLS_OFFCHAN_CHOP from vdev based pauses */
 		if (event->pause_type == PAUSE_TYPE_CHOP_TDLS_OFFCHAN) {
-			cdp_fc_vdev_unpause(soc,
-					    dp_handle,
+			cdp_fc_vdev_unpause(soc, vdev_id,
 					    OL_TXQ_PAUSE_REASON_FW,
 					    event->pause_type);
 		} else {
@@ -1497,7 +1491,7 @@ static void wma_process_vdev_tx_pause_evt(void *soc,
 				/* PAUSE BIT MAP is cleared
 				 * UNPAUSE VDEV
 				 */
-				cdp_fc_vdev_unpause(soc, dp_handle,
+				cdp_fc_vdev_unpause(soc, vdev_id,
 						    OL_TXQ_PAUSE_REASON_FW,
 						    event->pause_type);
 			}
@@ -3074,7 +3068,6 @@ void wma_tx_abort(uint8_t vdev_id)
 	uint32_t peer_tid_bitmap = PEER_ALL_TID_BITMASK;
 	struct wma_txrx_node *iface;
 	uint8_t *bssid;
-	struct cdp_vdev *handle;
 	struct peer_flush_params param = {0};
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -3086,11 +3079,7 @@ void wma_tx_abort(uint8_t vdev_id)
 		WMA_LOGE("%s: iface->vdev is NULL", __func__);
 		return;
 	}
-	handle = wlan_vdev_get_dp_handle(iface->vdev);
-	if (!handle) {
-		WMA_LOGE("%s: Failed to get dp handle", __func__);
-		return;
-	}
+
 	bssid = wma_get_vdev_bssid(iface->vdev);
 	if (!bssid) {
 		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
@@ -3100,10 +3089,8 @@ void wma_tx_abort(uint8_t vdev_id)
 
 	WMA_LOGD("%s: vdevid %d bssid %pM", __func__, vdev_id, bssid);
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
-	cdp_fc_vdev_pause(cds_get_context(QDF_MODULE_ID_SOC),
-			  handle,
-			  OL_TXQ_PAUSE_REASON_TX_ABORT,
-			  0);
+	cdp_fc_vdev_pause(cds_get_context(QDF_MODULE_ID_SOC), vdev_id,
+			  OL_TXQ_PAUSE_REASON_TX_ABORT, 0);
 
 	/* Flush all TIDs except MGMT TID for this peer in Target */
 	peer_tid_bitmap &= ~(0x1 << WMI_MGMT_TID);

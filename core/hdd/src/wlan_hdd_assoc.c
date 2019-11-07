@@ -1934,7 +1934,6 @@ static void hdd_set_peer_authorized_event(uint32_t vdev_id)
 static inline
 void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter, void *peer)
 {
-	void *vdev;
 	unsigned long rc;
 	/* wait for event from firmware to set the event */
 	rc = wait_for_completion_timeout(
@@ -1943,8 +1942,7 @@ void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter, void *peer)
 	if (!rc)
 		hdd_debug("timeout waiting for sta_authorized_event");
 
-	vdev = (void *)cdp_peer_get_vdev(soc, peer);
-	cdp_fc_vdev_unpause(soc, (struct cdp_vdev *)vdev,
+	cdp_fc_vdev_unpause(soc, adapter->vdev_id,
 			    OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED,
 			    0);
 }

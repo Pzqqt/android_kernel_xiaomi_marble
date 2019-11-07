@@ -2352,7 +2352,7 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 			if (adapter->txrx_vdev)
 				cdp_fc_vdev_flush(
 					cds_get_context(QDF_MODULE_ID_SOC),
-					adapter->txrx_vdev);
+					adapter->vdev_id);
 		}
 	}
 

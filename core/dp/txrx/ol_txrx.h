@@ -226,20 +226,49 @@ void htt_pkt_log_init(struct cdp_pdev *pdev_handle, void *scn);
 void peer_unmap_timer_handler(void *data);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-int ol_txrx_register_tx_flow_control(uint8_t vdev_id,
+/**
+ * ol_txrx_register_tx_flow_control() - register tx flow control callback
+ * @soc_hdl: soc handle
+ * @vdev_id: vdev_id
+ * @flowControl: flow control callback
+ * @osif_fc_ctx: callback context
+ * @flow_control_is_pause: is vdev paused by flow control
+ *
+ * Return: 0 for success or error code
+ */
+int ol_txrx_register_tx_flow_control(struct cdp_soc_t *soc_hdl,
+				     uint8_t vdev_id,
 				     ol_txrx_tx_flow_control_fp flow_control,
 				     void *osif_fc_ctx,
 				     ol_txrx_tx_flow_control_is_pause_fp
 				     flow_control_is_pause);
 
-int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id);
+/**
+ * ol_txrx_de_register_tx_flow_control_cb() - deregister tx flow control
+ *                                            callback
+ * @soc_hdl: soc handle
+ * @vdev_id: vdev_id
+ *
+ * Return: 0 for success or error code
+ */
+int ol_txrx_deregister_tx_flow_control_cb(struct cdp_soc_t *soc_hdl,
+					  uint8_t vdev_id);
 
-bool ol_txrx_get_tx_resource(struct cdp_pdev *pdev,
+bool ol_txrx_get_tx_resource(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 			     struct qdf_mac_addr peer_addr,
 			     unsigned int low_watermark,
 			     unsigned int high_watermark_offset);
 
-int ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth);
+/**
+ * ol_txrx_ll_set_tx_pause_q_depth() - set pause queue depth
+ * @soc_hdl: soc handle
+ * @vdev_id: vdev id
+ * @pause_q_depth: pause queue depth
+ *
+ * Return: 0 for success or error code
+ */
+int ol_txrx_ll_set_tx_pause_q_depth(struct cdp_soc_t *soc_hdl,
+				    uint8_t vdev_id, int pause_q_depth);
 #endif
 
 void ol_tx_init_pdev(ol_txrx_pdev_handle pdev);
@@ -517,10 +546,38 @@ struct ol_txrx_stats_req_internal
 				       uint8_t desc_id);
 
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
-int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc,
+/**
+ * ol_txrx_register_hl_flow_control() -register hl netdev flow control callback
+ * @soc_hdl: soc handle
+ * @vdev_id: vdev_id
+ * @flowControl: flow control callback
+ *
+ * Return: 0 for success or error code
+ */
+int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc_hdl,
 				     tx_pause_callback flowcontrol);
-int ol_txrx_set_vdev_os_queue_status(u8 vdev_id, enum netif_action_type action);
-int ol_txrx_set_vdev_tx_desc_limit(u8 vdev_id, u8 chan);
+
+/**
+ * ol_txrx_set_vdev_os_queue_status() - Set OS queue status for a vdev
+ * @soc_hdl: soc handle
+ * @vdev_id: vdev id for the vdev under consideration.
+ * @action: action to be done on queue for vdev
+ *
+ * Return: 0 on success, -EINVAL on failure
+ */
+int ol_txrx_set_vdev_os_queue_status(struct cdp_soc_t *soc_hdl, u8 vdev_id,
+				     enum netif_action_type action);
+
+/**
+ * ol_txrx_set_vdev_tx_desc_limit() - Set TX descriptor limits for a vdev
+ * @soc_hdl: soc handle
+ * @vdev_id: vdev id for the vdev under consideration.
+ * @chan: Channel on which the vdev has been started.
+ *
+ * Return: 0 on success, -EINVAL on failure
+ */
+int ol_txrx_set_vdev_tx_desc_limit(struct cdp_soc_t *soc_hdl, u8 vdev_id,
+				   u8 chan);
 #endif
 
 /**

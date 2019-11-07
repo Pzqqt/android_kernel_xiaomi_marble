@@ -225,7 +225,7 @@ ol_txrx_vdev_handle
 ol_txrx_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
 			      struct qdf_mac_addr peer_addr)
 {
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_pdev_t *pdev = cdp_pdev_to_ol_txrx_pdev_t(ppdev);
 	struct ol_txrx_peer_t *peer = NULL;
 	ol_txrx_vdev_handle vdev;
 	/* peer_id to be removed PEER_ID_CLEANUP */

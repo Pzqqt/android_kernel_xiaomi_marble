@@ -38,26 +38,16 @@
 #include <ol_cfg.h>
 #include <cdp_txrx_handle.h>
 
-/**
- * ol_txrx_vdev_pause- Suspend all tx data for the specified virtual device
- *
- * @data_vdev - the virtual device being paused
- * @reason - the reason for which vdev queue is getting paused
- *
- * This function applies primarily to HL systems, but also
- * applies to LL systems that use per-vdev tx queues for MCC or
- * thermal throttling. As an example, this function could be
- * used when a single-channel physical device supports multiple
- * channels by jumping back and forth between the channels in a
- * time-shared manner.  As the device is switched from channel A
- * to channel B, the virtual devices that operate on channel A
- * will be paused.
- *
- */
-void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason,
-			uint32_t pause_type)
+void ol_txrx_vdev_pause(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			uint32_t reason, uint32_t pause_type)
 {
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+
+	if (qdf_unlikely(!vdev)) {
+		ol_txrx_err("vdev is NULL");
+		return;
+	}
 
 	/* TO DO: log the queue pause */
 	/* acquire the mutex lock, since we'll be modifying the queues */
@@ -72,20 +62,17 @@ void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason,
 	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
 }
 
-/**
- * ol_txrx_vdev_unpause - Resume tx for the specified virtual device
- *
- * @data_vdev - the virtual device being unpaused
- * @reason - the reason for which vdev queue is getting unpaused
- *
- * This function applies primarily to HL systems, but also applies to
- * LL systems that use per-vdev tx queues for MCC or thermal throttling.
- *
- */
-void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason,
-			  uint32_t pause_type)
+void ol_txrx_vdev_unpause(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			  uint32_t reason, uint32_t pause_type)
 {
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+
+	if (qdf_unlikely(!vdev)) {
+		ol_txrx_err("vdev is NULL");
+		return;
+	}
+
 	/* TO DO: log the queue unpause */
 	/* acquire the mutex lock, since we'll be modifying the queues */
 	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
@@ -107,22 +94,15 @@ void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason,
 	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
 }
 
-/**
- * ol_txrx_vdev_flush - Drop all tx data for the specified virtual device
- *
- * @data_vdev - the virtual device being flushed
- *
- *  This function applies primarily to HL systems, but also applies to
- *  LL systems that use per-vdev tx queues for MCC or thermal throttling.
- *  This function would typically be used by the ctrl SW after it parks
- *  a STA vdev and then resumes it, but to a new AP.  In this case, though
- *  the same vdev can be used, any old tx frames queued inside it would be
- *  stale, and would need to be discarded.
- *
- */
-void ol_txrx_vdev_flush(struct cdp_vdev *pvdev)
+void ol_txrx_vdev_flush(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+
+	if (qdf_unlikely(!vdev)) {
+		ol_txrx_err("vdev is NULL");
+		return;
+	}
 
 	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	qdf_timer_stop(&vdev->ll_pause.timer);
@@ -431,16 +411,8 @@ void ol_tx_vdev_ll_pause_queue_send(void *context)
 	ol_tx_vdev_ll_pause_queue_send_base(vdev);
 }
 
-/**
- * ol_txrx_register_tx_flow_control() - register tx flow control callback
- * @vdev_id: vdev_id
- * @flowControl: flow control callback
- * @osif_fc_ctx: callback context
- * @flow_control_is_pause: is vdev paused by flow control
- *
- * Return: 0 for success or error code
- */
-int ol_txrx_register_tx_flow_control(uint8_t vdev_id,
+int ol_txrx_register_tx_flow_control(struct cdp_soc_t *soc_hdl,
+				     uint8_t vdev_id,
 				     ol_txrx_tx_flow_control_fp flowControl,
 				     void *osif_fc_ctx,
 				     ol_txrx_tx_flow_control_is_pause_fp
@@ -463,14 +435,8 @@ int ol_txrx_register_tx_flow_control(uint8_t vdev_id,
 	return 0;
 }
 
-/**
- * ol_txrx_de_register_tx_flow_control_cb() - deregister tx flow control
- *                                            callback
- * @vdev_id: vdev_id
- *
- * Return: 0 for success or error code
- */
-int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id)
+int ol_txrx_deregister_tx_flow_control_cb(struct cdp_soc_t *soc_hdl,
+					  uint8_t vdev_id)
 {
 	struct ol_txrx_vdev_t *vdev =
 		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
@@ -491,7 +457,8 @@ int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id)
 
 /**
  * ol_txrx_get_tx_resource() - if tx resource less than low_watermark
- * @pdev: datapath pdev instance
+ * soc_hdl: soc handle
+ * @pdev_id: datapath pdev identifier
  * @peer_addr: peer mac address
  * @low_watermark: low watermark
  * @high_watermark_offset: high watermark offset value
@@ -499,14 +466,23 @@ int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id)
  * Return: true/false
  */
 bool
-ol_txrx_get_tx_resource(struct cdp_pdev *pdev,
+ol_txrx_get_tx_resource(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 			struct qdf_mac_addr peer_addr,
 			unsigned int low_watermark,
 			unsigned int high_watermark_offset)
 {
-	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_by_peer_addr(pdev,
-								 peer_addr);
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev =
+				ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
+	ol_txrx_vdev_handle vdev;
 
+	if (qdf_unlikely(!pdev)) {
+		ol_txrx_err("pdev is NULL");
+		return true;
+	}
+
+	vdev = ol_txrx_get_vdev_by_peer_addr(ol_txrx_pdev_t_to_cdp_pdev(pdev),
+					     peer_addr);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Invalid peer address: " QDF_MAC_ADDR_STR,
@@ -535,14 +511,8 @@ ol_txrx_get_tx_resource(struct cdp_pdev *pdev,
 	return true;
 }
 
-/**
- * ol_txrx_ll_set_tx_pause_q_depth() - set pause queue depth
- * @vdev_id: vdev id
- * @pause_q_depth: pause queue depth
- *
- * Return: 0 for success or error code
- */
-int ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth)
+int ol_txrx_ll_set_tx_pause_q_depth(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+				    int pause_q_depth)
 {
 	struct ol_txrx_vdev_t *vdev =
 		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
@@ -560,9 +530,16 @@ int ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth)
 	return 0;
 }
 
-void ol_txrx_flow_control_cb(struct cdp_vdev *pvdev, bool tx_resume)
+void ol_txrx_flow_control_cb(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			     bool tx_resume)
 {
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+
+	if (qdf_unlikely(!vdev)) {
+		ol_txrx_err("vdev is NULL");
+		return;
+	}
 
 	qdf_spin_lock_bh(&vdev->flow_control_lock);
 	if ((vdev->osif_flow_control_cb) && (vdev->osif_fc_ctx))
@@ -596,6 +573,7 @@ static bool ol_txrx_flow_control_is_pause(ol_txrx_vdev_handle vdev)
 void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
 {
 	struct ol_txrx_vdev_t *vdev;
+	struct cdp_soc_t *soc_hdl = ol_txrx_soc_t_to_cdp_soc_t(pdev->soc);
 
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		if ((qdf_atomic_read(&vdev->os_q_paused) &&
@@ -605,8 +583,8 @@ void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
 			if (pdev->tx_desc.num_free > vdev->tx_fl_hwm) {
 				qdf_atomic_set(&vdev->os_q_paused, 0);
 				qdf_spin_unlock(&pdev->tx_mutex);
-				ol_txrx_flow_control_cb((struct cdp_vdev *)vdev,
-							true);
+				ol_txrx_flow_control_cb(soc_hdl,
+							vdev->vdev_id, true);
 			} else {
 				qdf_spin_unlock(&pdev->tx_mutex);
 			}

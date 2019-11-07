@@ -147,12 +147,14 @@ ol_tx_delay_hist(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 
 /**
  * ol_txrx_flow_control_cb() - call osif flow control callback
- * @vdev: vdev handle
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: id of vdev
  * @tx_resume: tx resume flag
  *
  * Return: none
  */
-void ol_txrx_flow_control_cb(struct cdp_vdev *vdev, bool tx_resume);
+void ol_txrx_flow_control_cb(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			     bool tx_resume);
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || (defined(CONFIG_HL_SUPPORT) && \
 	 defined(QCA_HL_NETDEV_FLOW_CONTROL))

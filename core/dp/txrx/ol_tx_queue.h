@@ -229,20 +229,65 @@ ol_tx_queue_discard(
 
 #if (!defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)) && (!defined(CONFIG_HL_SUPPORT))
 static inline
-void ol_txrx_vdev_flush(struct cdp_vdev *data_vdev)
+void ol_txrx_vdev_flush(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
 }
 #else
-void ol_txrx_vdev_flush(struct cdp_vdev *pvdev);
+/**
+ * ol_txrx_vdev_flush() - Drop all tx data for the specified virtual device
+ * @soc_hdl: soc handle
+ * @vdev_id: vdev id
+ *
+ * Returns: none
+ *
+ * This function applies primarily to HL systems, but also applies to
+ * LL systems that use per-vdev tx queues for MCC or thermal throttling.
+ * This function would typically be used by the ctrl SW after it parks
+ * a STA vdev and then resumes it, but to a new AP.  In this case, though
+ * the same vdev can be used, any old tx frames queued inside it would be
+ * stale, and would need to be discarded.
+ */
+void ol_txrx_vdev_flush(struct cdp_soc_t *soc_hdl, uint8_t vdev_id);
 #endif
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
    (defined(QCA_LL_TX_FLOW_CONTROL_V2)) || \
    defined(CONFIG_HL_SUPPORT)
-void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason,
-			uint32_t pause_type);
-void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason,
-			  uint32_t pause_type);
+/**
+ * ol_txrx_vdev_pause- Suspend all tx data for the specified virtual device
+ * soc_hdl: Datapath soc handle
+ * @vdev_id: id of vdev
+ * @reason: the reason for which vdev queue is getting paused
+ * @pause_type: type of pause
+ *
+ * Return: none
+ *
+ * This function applies primarily to HL systems, but also
+ * applies to LL systems that use per-vdev tx queues for MCC or
+ * thermal throttling. As an example, this function could be
+ * used when a single-channel physical device supports multiple
+ * channels by jumping back and forth between the channels in a
+ * time-shared manner.  As the device is switched from channel A
+ * to channel B, the virtual devices that operate on channel A
+ * will be paused.
+ */
+void ol_txrx_vdev_pause(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			uint32_t reason, uint32_t pause_type);
+
+/**
+ * ol_txrx_vdev_unpause - Resume tx for the specified virtual device
+ * soc_hdl: Datapath soc handle
+ * @vdev_id: id of vdev being unpaused
+ * @reason: the reason for which vdev queue is getting unpaused
+ * @pause_type: type of pause
+ *
+ * Return: none
+ *
+ * This function applies primarily to HL systems, but also applies to
+ * LL systems that use per-vdev tx queues for MCC or thermal throttling.
+ */
+void ol_txrx_vdev_unpause(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			  uint32_t reason, uint32_t pause_type);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)

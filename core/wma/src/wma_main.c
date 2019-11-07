@@ -4363,10 +4363,8 @@ QDF_STATUS wma_stop(void)
 		if (!vdev)
 			continue;
 		if (wlan_vdev_get_dp_handle(vdev) && wma_is_vdev_up(i)) {
-			cdp_fc_vdev_flush
-			(cds_get_context(QDF_MODULE_ID_SOC),
-			 wlan_vdev_get_dp_handle
-				(wma_handle->interfaces[i].vdev));
+			cdp_fc_vdev_flush(cds_get_context(QDF_MODULE_ID_SOC),
+					  i);
 		}
 	}
 

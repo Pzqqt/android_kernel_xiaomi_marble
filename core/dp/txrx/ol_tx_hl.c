@@ -1922,17 +1922,12 @@ int ol_txrx_distribute_group_credits(struct ol_txrx_pdev_t *pdev,
 	*/
 
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
-/**
- * ol_txrx_register_hl_flow_control() -register hl netdev flow control callback
- * @vdev_id: vdev_id
- * @flowControl: flow control callback
- *
- * Return: 0 for success or error code
- */
-int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc,
+int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc_hdl,
 				     tx_pause_callback flowcontrol)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	uint8_t pdev_id = OL_TXRX_PDEV_ID;
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 	u32 desc_pool_size = ol_tx_desc_pool_size_hl(pdev->ctrl_pdev);
 
 	/*
@@ -1953,7 +1948,7 @@ int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc,
 	return 0;
 }
 
-int ol_txrx_set_vdev_os_queue_status(u8 vdev_id,
+int ol_txrx_set_vdev_os_queue_status(struct cdp_soc_t *soc_hdl, u8 vdev_id,
 				     enum netif_action_type action)
 {
 	struct ol_txrx_vdev_t *vdev =
@@ -1982,12 +1977,8 @@ int ol_txrx_set_vdev_os_queue_status(u8 vdev_id,
 	return 0;
 }
 
-/**
- * ol_txrx_set_vdev_tx_desc_limit() - Set TX descriptor limits for a vdev
- * @vdev_id: vdev id for the vdev under consideration.
- * @chan: Channel on which the vdev has been started.
- */
-int ol_txrx_set_vdev_tx_desc_limit(u8 vdev_id, u8 chan)
+int ol_txrx_set_vdev_tx_desc_limit(struct cdp_soc_t *soc_hdl, u8 vdev_id,
+				   u8 chan)
 {
 	struct ol_txrx_vdev_t *vdev =
 	(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);

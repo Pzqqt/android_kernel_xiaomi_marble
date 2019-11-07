@@ -60,6 +60,7 @@
 
 #include "wlan_hdd_nud_tracking.h"
 #include "dp_txrx.h"
+#include <ol_defines.h>
 #include "cfg_ucfg_api.h"
 #include "target_type.h"
 #include "wlan_hdd_object_manager.h"
@@ -358,7 +359,7 @@ void hdd_get_tx_resource(struct hdd_adapter *adapter,
 {
 	if (false ==
 	    cdp_fc_get_tx_resource(cds_get_context(QDF_MODULE_ID_SOC),
-				   cds_get_context(QDF_MODULE_ID_TXRX),
+				   OL_TXRX_PDEV_ID,
 				   *mac_addr,
 				   adapter->tx_flow_low_watermark,
 				   adapter->tx_flow_hi_watermark_offset)) {
