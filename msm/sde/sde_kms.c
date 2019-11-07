@@ -272,6 +272,7 @@ static int _sde_kms_secure_ctrl_xin_clients(struct sde_kms *sde_kms,
  */
 static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 {
+	struct drm_device *dev;
 	struct scm_desc desc = {0};
 	uint32_t num_sids;
 	uint32_t *sec_sid;
@@ -280,6 +281,8 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 	int ret = 0, i;
 	struct qtee_shm shm;
 	bool qtee_en = qtee_shmbridge_is_enabled();
+
+	dev = sde_kms->dev;
 
 	num_sids = sde_cfg->sec_sid_mask_count;
 	if (!num_sids) {
@@ -313,7 +316,8 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 		sec_sid[i] = sde_cfg->sec_sid_mask[i];
 		SDE_DEBUG("sid_mask[%d]: %d\n", i, sec_sid[i]);
 	}
-	dmac_flush_range(sec_sid, sec_sid + num_sids);
+	dma_map_single(dev->dev, sec_sid, num_sids *sizeof(uint32_t),
+			DMA_TO_DEVICE);
 
 	SDE_DEBUG("calling scm_call for vmid 0x%x, num_sids %d, qtee_en %d",
 				vmid, num_sids, qtee_en);
