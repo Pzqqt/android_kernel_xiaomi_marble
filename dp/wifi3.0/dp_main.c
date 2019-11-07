@@ -9555,6 +9555,105 @@ static uint32_t dp_tx_get_success_ack_stats(struct cdp_soc_t *soc_hdl,
 	return tx_success;
 }
 
+#ifdef WLAN_SUPPORT_DATA_STALL
+/**
+ * dp_register_data_stall_detect_cb() - register data stall callback
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ * @data_stall_detect_callback: data stall callback function
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+static
+QDF_STATUS dp_register_data_stall_detect_cb(
+			struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			data_stall_detect_cb data_stall_detect_callback)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev->data_stall_detect_callback = data_stall_detect_callback;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_deregister_data_stall_detect_cb() - de-register data stall callback
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ * @data_stall_detect_callback: data stall callback function
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+static
+QDF_STATUS dp_deregister_data_stall_detect_cb(
+			struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			data_stall_detect_cb data_stall_detect_callback)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev->data_stall_detect_callback = NULL;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_txrx_post_data_stall_event() - post data stall event
+ * @soc_hdl: Datapath soc handle
+ * @indicator: Module triggering data stall
+ * @data_stall_type: data stall event type
+ * @pdev_id: pdev id
+ * @vdev_id_bitmap: vdev id bitmap
+ * @recovery_type: data stall recovery type
+ *
+ * Return: None
+ */
+static void
+dp_txrx_post_data_stall_event(struct cdp_soc_t *soc_hdl,
+			      enum data_stall_log_event_indicator indicator,
+			      enum data_stall_log_event_type data_stall_type,
+			      uint32_t pdev_id, uint32_t vdev_id_bitmap,
+			      enum data_stall_log_recovery_type recovery_type)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct data_stall_event_info data_stall_info;
+	struct dp_pdev *pdev;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev NULL!");
+		return;
+	}
+
+	if (!pdev->data_stall_detect_callback) {
+		dp_err("data stall cb not registered!");
+		return;
+	}
+
+	dp_info("data_stall_type: %x pdev_id: %d",
+		data_stall_type, pdev_id);
+
+	data_stall_info.indicator = indicator;
+	data_stall_info.data_stall_type = data_stall_type;
+	data_stall_info.vdev_id_bitmap = vdev_id_bitmap;
+	data_stall_info.pdev_id = pdev_id;
+	data_stall_info.recovery_type = recovery_type;
+
+	pdev->data_stall_detect_callback(&data_stall_info);
+}
+#endif /* WLAN_SUPPORT_DATA_STALL */
+
 #ifdef DP_PEER_EXTENDED_API
 static struct cdp_misc_ops dp_ops_misc = {
 #ifdef FEATURE_WLAN_TDLS
@@ -9569,6 +9668,11 @@ static struct cdp_misc_ops dp_ops_misc = {
 	.pkt_log_con_service = dp_pkt_log_con_service,
 	.get_num_rx_contexts = dp_get_num_rx_contexts,
 	.get_tx_ack_stats = dp_tx_get_success_ack_stats,
+#ifdef WLAN_SUPPORT_DATA_STALL
+	.txrx_data_stall_cb_register = dp_register_data_stall_detect_cb,
+	.txrx_data_stall_cb_deregister = dp_deregister_data_stall_detect_cb,
+	.txrx_post_data_stall_event = dp_txrx_post_data_stall_event,
+#endif
 };
 #endif
 

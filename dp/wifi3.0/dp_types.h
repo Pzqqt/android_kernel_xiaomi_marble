@@ -1738,6 +1738,10 @@ struct dp_pdev {
 	/* TSO Id to index into TSO packet information */
 	qdf_atomic_t tso_idx;
 #endif /* FEATURE_TSO_STATS */
+
+#ifdef WLAN_SUPPORT_DATA_STALL
+	data_stall_detect_cb data_stall_detect_callback;
+#endif /* WLAN_SUPPORT_DATA_STALL */
 };
 
 struct dp_peer;
