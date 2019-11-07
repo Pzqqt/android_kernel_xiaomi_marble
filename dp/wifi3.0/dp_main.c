@@ -6241,6 +6241,13 @@ QDF_STATUS dp_monitor_mode_ring_config(struct dp_soc *soc, uint8_t mac_for_pdev,
 	return status;
 }
 
+static inline void
+dp_pdev_disable_mcopy_code(struct dp_pdev *pdev)
+{
+	pdev->mcopy_mode = 0;
+	qdf_nbuf_queue_free(&pdev->rx_ppdu_buf_q);
+}
+
 /**
  * dp_reset_monitor_mode() - Disable monitor mode
  * @pdev_handle: Datapath PDEV handle
@@ -6283,7 +6290,8 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 	}
 
 	pdev->monitor_vdev = NULL;
-	pdev->mcopy_mode = 0;
+	if (pdev->mcopy_mode)
+		dp_pdev_disable_mcopy_code(pdev);
 	pdev->monitor_configured = false;
 
 	qdf_spin_unlock_bh(&pdev->mon_lock);
@@ -7488,12 +7496,6 @@ dp_pdev_tid_stats_osif_drop(struct cdp_pdev *pdev, uint32_t val)
 	dp_pdev->stats.tid_stats.osif_drop += val;
 }
 
-static inline void
-dp_pdev_disable_mcopy_code(struct dp_pdev *pdev)
-{
-	pdev->mcopy_mode = 0;
-	qdf_nbuf_queue_free(&pdev->rx_ppdu_buf_q);
-}
 
 /*
  * dp_config_debug_sniffer()- API to enable/disable debug sniffer
@@ -7514,8 +7516,6 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 	switch (val) {
 	case 0:
 		pdev->tx_sniffer_enable = 0;
-		if (pdev->mcopy_mode)
-			dp_pdev_disable_mcopy_code(pdev);
 
 		pdev->monitor_configured = false;
 
@@ -7539,8 +7539,6 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 
 	case 1:
 		pdev->tx_sniffer_enable = 1;
-		if (pdev->mcopy_mode)
-			dp_pdev_disable_mcopy_code(pdev);
 		pdev->monitor_configured = false;
 
 		if (!pdev->pktlog_ppdu_stats)
