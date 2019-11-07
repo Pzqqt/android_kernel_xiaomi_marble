@@ -810,6 +810,15 @@ static void wcd937x_mbhc_moisture_polling_ctrl(struct wcd_mbhc *mbhc,
 			0x04, (enable << 2));
 }
 
+static void wcd937x_mbhc_bcs_enable(struct wcd_mbhc *mbhc,
+						  bool bcs_enable)
+{
+	if (bcs_enable)
+		wcd937x_disable_bcs_before_slow_insert(mbhc->component, false);
+	else
+		wcd937x_disable_bcs_before_slow_insert(mbhc->component, true);
+}
+
 static const struct wcd_mbhc_cb mbhc_cb = {
 	.request_irq = wcd937x_mbhc_request_irq,
 	.irq_control = wcd937x_mbhc_irq_control,
@@ -834,6 +843,7 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 	.mbhc_get_moisture_status = wcd937x_mbhc_get_moisture_status,
 	.mbhc_moisture_polling_ctrl = wcd937x_mbhc_moisture_polling_ctrl,
 	.mbhc_moisture_detect_en = wcd937x_mbhc_moisture_detect_en,
+	.bcs_enable = wcd937x_mbhc_bcs_enable,
 };
 
 static int wcd937x_get_hph_type(struct snd_kcontrol *kcontrol,
