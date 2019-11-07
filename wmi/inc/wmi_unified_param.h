@@ -6466,6 +6466,7 @@ typedef struct {
  * @rx_clear_ext20_count: ext20 frame count
  * @rx_clear_ext40_count: ext40 frame count
  * @rx_clear_ext80_count: ext80 frame count
+ * @per_chain_noise_floor: Per chain NF value in dBm
  */
 typedef struct {
 	uint32_t pdev_id;
@@ -6487,6 +6488,7 @@ typedef struct {
 	uint32_t rx_clear_ext20_count;
 	uint32_t rx_clear_ext40_count;
 	uint32_t rx_clear_ext80_count;
+	uint32_t per_chain_noise_floor[WMI_HOST_MAX_CHAINS];
 } wmi_host_chan_info_event;
 
 /**
