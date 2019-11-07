@@ -1263,39 +1263,50 @@ struct cdp_flowctl_ops {
 
 /**
  * struct cdp_lflowctl_ops - mcl legacy flow control ops
- * @register_tx_flow_control:
- * @deregister_tx_flow_control_cb:
- * @flow_control_cb:
- * @get_tx_resource:
- * @ll_set_tx_pause_q_depth:
- * @vdev_flush:
- * @vdev_pause:
- * @vdev_unpause:
+ * @register_tx_flow_control: Register tx flow control callback
+ * @set_vdev_tx_desc_limit:  Set tx descriptor limit for a vdev
+ * @set_vdev_os_queue_status: Set vdev queue status
+ * @deregister_tx_flow_control_cb: Deregister tx flow control callback
+ * @flow_control_cb: Call osif flow control callback
+ * @get_tx_resource: Get tx resources and comapre with watermark
+ * @ll_set_tx_pause_q_depth: set pause queue depth
+ * @vdev_flush: Flush all packets on a particular vdev
+ * @vdev_pause: Pause a particular vdev
+ * @vdev_unpause: Unpause a particular vdev
+ *
+ * Function pointers for operations related to flow control
  */
 struct cdp_lflowctl_ops {
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
-	int (*register_tx_flow_control)(struct cdp_soc_t *soc,
+	int (*register_tx_flow_control)(struct cdp_soc_t *soc_hdl,
 					tx_pause_callback flowcontrol);
-	int (*set_vdev_tx_desc_limit)(uint8_t vdev_id, uint8_t chan);
-	int (*set_vdev_os_queue_status)(uint8_t vdev_id,
+	int (*set_vdev_tx_desc_limit)(struct cdp_soc_t *soc_hdl,
+				      uint8_t vdev_id, uint8_t chan);
+	int (*set_vdev_os_queue_status)(struct cdp_soc_t *soc_hdl,
+					uint8_t vdev_id,
 					enum netif_action_type action);
 #else
-	int (*register_tx_flow_control)(uint8_t vdev_id,
+	int (*register_tx_flow_control)(
+		struct cdp_soc_t *soc_hdl,
+		uint8_t vdev_id,
 		ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause);
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */
-	int (*deregister_tx_flow_control_cb)(uint8_t vdev_id);
-	void (*flow_control_cb)(struct cdp_vdev *vdev, bool tx_resume);
-	bool (*get_tx_resource)(struct cdp_pdev *pdev,
-			 struct qdf_mac_addr peer_addr,
-			 unsigned int low_watermark,
-			 unsigned int high_watermark_offset);
-	int (*ll_set_tx_pause_q_depth)(uint8_t vdev_id, int pause_q_depth);
-	void (*vdev_flush)(struct cdp_vdev *vdev);
-	void (*vdev_pause)(struct cdp_vdev *vdev, uint32_t reason,
-			   uint32_t pause_type);
-	void (*vdev_unpause)(struct cdp_vdev *vdev, uint32_t reason,
-			     uint32_t pause_type);
+	int (*deregister_tx_flow_control_cb)(struct cdp_soc_t *soc_hdl,
+					     uint8_t vdev_id);
+	void (*flow_control_cb)(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+				bool tx_resume);
+	bool (*get_tx_resource)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				struct qdf_mac_addr peer_addr,
+				unsigned int low_watermark,
+				unsigned int high_watermark_offset);
+	int (*ll_set_tx_pause_q_depth)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				       int pause_q_depth);
+	void (*vdev_flush)(struct cdp_soc_t *soc_hdl, uint8_t vdev_id);
+	void (*vdev_pause)(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			   uint32_t reason, uint32_t pause_type);
+	void (*vdev_unpause)(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			     uint32_t reason, uint32_t pause_type);
 };
 
 /**

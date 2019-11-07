@@ -59,7 +59,8 @@ static inline int cdp_hl_fc_set_td_limit(ol_txrx_soc_handle soc,
 	if (!soc->ops->l_flowctl_ops->set_vdev_tx_desc_limit)
 		return 0;
 
-	return soc->ops->l_flowctl_ops->set_vdev_tx_desc_limit(vdev_id, chan);
+	return soc->ops->l_flowctl_ops->set_vdev_tx_desc_limit(soc, vdev_id,
+							       chan);
 }
 
 static inline int cdp_hl_fc_set_os_queue_status(ol_txrx_soc_handle soc,
@@ -69,7 +70,8 @@ static inline int cdp_hl_fc_set_os_queue_status(ol_txrx_soc_handle soc,
 	if (!soc->ops->l_flowctl_ops->set_vdev_os_queue_status)
 		return -EINVAL;
 
-	return soc->ops->l_flowctl_ops->set_vdev_os_queue_status(vdev_id,
+	return soc->ops->l_flowctl_ops->set_vdev_os_queue_status(soc,
+								 vdev_id,
 								 action);
 }
 #else
@@ -109,7 +111,7 @@ static inline int cdp_hl_fc_set_os_queue_status(ol_txrx_soc_handle soc,
  */
 static inline int
 cdp_fc_register(ol_txrx_soc_handle soc, uint8_t vdev_id,
-		ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx,
+		ol_txrx_tx_flow_control_fp flowcontrol, void *osif_fc_ctx,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause)
 {
 	if (!soc || !soc->ops) {
@@ -124,7 +126,7 @@ cdp_fc_register(ol_txrx_soc_handle soc, uint8_t vdev_id,
 		return 0;
 
 	return soc->ops->l_flowctl_ops->register_tx_flow_control(
-			vdev_id, flowControl, osif_fc_ctx,
+			soc, vdev_id, flowcontrol, osif_fc_ctx,
 			flow_control_is_pause);
 }
 #else
@@ -160,16 +162,16 @@ cdp_fc_deregister(ol_txrx_soc_handle soc, uint8_t vdev_id)
 		return 0;
 
 	return soc->ops->l_flowctl_ops->deregister_tx_flow_control_cb(
-			vdev_id);
+			soc, vdev_id);
 }
 
 /**
  * cdp_fc_get_tx_resource() - get data path resource count
- * @soc - data path soc handle
- * @pdev - datapath pdev instance
- * @peer_addr - peer mac address
- * @low_watermark - low resource threshold
- * @high_watermark_offset - high resource threshold
+ * @soc: data path soc handle
+ * @pdev_id: datapath pdev ID
+ * @peer_addr: peer mac address
+ * @low_watermark: low resource threshold
+ * @high_watermark_offset: high resource threshold
  *
  * get data path resource count
  *
@@ -177,7 +179,7 @@ cdp_fc_deregister(ol_txrx_soc_handle soc, uint8_t vdev_id)
  *        false resource is not avaialbe
  */
 static inline bool
-cdp_fc_get_tx_resource(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+cdp_fc_get_tx_resource(ol_txrx_soc_handle soc, uint8_t pdev_id,
 		       struct qdf_mac_addr peer_addr,
 		       unsigned int low_watermark,
 		       unsigned int high_watermark_offset)
@@ -193,8 +195,9 @@ cdp_fc_get_tx_resource(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	    !soc->ops->l_flowctl_ops->get_tx_resource)
 		return false;
 
-	return soc->ops->l_flowctl_ops->get_tx_resource(pdev, peer_addr,
-			low_watermark, high_watermark_offset);
+	return soc->ops->l_flowctl_ops->get_tx_resource(soc, pdev_id, peer_addr,
+							low_watermark,
+							high_watermark_offset);
 }
 
 /**
@@ -223,21 +226,21 @@ cdp_fc_ll_set_tx_pause_q_depth(ol_txrx_soc_handle soc,
 		return 0;
 
 	return soc->ops->l_flowctl_ops->ll_set_tx_pause_q_depth(
-			vdev_id, pause_q_depth);
+			soc, vdev_id, pause_q_depth);
 
 }
 
 /**
  * cdp_fc_vdev_flush() - flush tx queue
- * @soc - data path soc handle
- * @vdev - virtual interface context pointer
+ * @soc: data path soc handle
+ * @vdev_id: id of vdev
  *
  * flush tx queue
  *
  * return None
  */
 static inline void
-cdp_fc_vdev_flush(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+cdp_fc_vdev_flush(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -250,22 +253,23 @@ cdp_fc_vdev_flush(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 	    !soc->ops->l_flowctl_ops->vdev_flush)
 		return;
 
-	soc->ops->l_flowctl_ops->vdev_flush(vdev);
+	soc->ops->l_flowctl_ops->vdev_flush(soc, vdev_id);
 }
 
 /**
  * cdp_fc_vdev_pause() - pause tx scheduler on vdev
- * @soc - data path soc handle
- * @vdev - virtual interface context pointer
- * @reason - pause reason
+ * @soc: data path soc handle
+ * @vdev_id: id of vdev
+ * @reason: pause reason
+ * @pause_type: type of pause
  *
  * pause tx scheduler on vdev
  *
  * return None
  */
 static inline void
-cdp_fc_vdev_pause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-		uint32_t reason, uint32_t pause_type)
+cdp_fc_vdev_pause(ol_txrx_soc_handle soc, uint8_t vdev_id,
+		  uint32_t reason, uint32_t pause_type)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -278,22 +282,23 @@ cdp_fc_vdev_pause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	    !soc->ops->l_flowctl_ops->vdev_pause)
 		return;
 
-	soc->ops->l_flowctl_ops->vdev_pause(vdev, reason, pause_type);
+	soc->ops->l_flowctl_ops->vdev_pause(soc, vdev_id, reason, pause_type);
 }
 
 /**
  * cdp_fc_vdev_unpause() - resume tx scheduler on vdev
- * @soc - data path soc handle
- * @vdev - virtual interface context pointer
- * @reason - pause reason
+ * @soc: data path soc handle
+ * @vdev_id: id of vdev
+ * @reason: pause reason
+ * @pause_type: type of pause
  *
  * resume tx scheduler on vdev
  *
  * return None
  */
 static inline void
-cdp_fc_vdev_unpause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-		uint32_t reason, uint32_t pause_type)
+cdp_fc_vdev_unpause(ol_txrx_soc_handle soc, uint8_t vdev_id,
+		    uint32_t reason, uint32_t pause_type)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -305,6 +310,7 @@ cdp_fc_vdev_unpause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	    !soc->ops->l_flowctl_ops->vdev_unpause)
 		return;
 
-	soc->ops->l_flowctl_ops->vdev_unpause(vdev, reason, pause_type);
+	soc->ops->l_flowctl_ops->vdev_unpause(soc, vdev_id, reason,
+					      pause_type);
 }
 #endif /* _CDP_TXRX_FC_LEG_H_ */
