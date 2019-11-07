@@ -414,9 +414,9 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 		filter->num_of_channels = num_ch;
 		if (filter->num_of_channels > QDF_MAX_NUM_CHAN)
 			filter->num_of_channels = QDF_MAX_NUM_CHAN;
-		sme_freq_to_chan_list(mac->pdev, filter->channel_list,
-				      chan_info->freq_list,
-				      filter->num_of_channels);
+		qdf_mem_copy(filter->chan_freq_list, chan_info->freq_list,
+			     filter->num_of_channels *
+			     sizeof(filter->chan_freq_list[0]));
 	}
 
 	if (nbr_roam_info->is11rAssoc)

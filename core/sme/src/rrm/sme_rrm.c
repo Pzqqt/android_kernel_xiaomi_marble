@@ -467,8 +467,9 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 	filter->num_of_channels = num_chan;
 	if (filter->num_of_channels > QDF_MAX_NUM_CHAN)
 		filter->num_of_channels = QDF_MAX_NUM_CHAN;
-	sme_freq_to_chan_list(mac_ctx->pdev, filter->channel_list,
-			      freq_list, filter->num_of_channels);
+	qdf_mem_copy(filter->chan_freq_list, freq_list,
+		     filter->num_of_channels *
+		     sizeof(filter->chan_freq_list[0]));
 	filter->rrm_measurement_filter = true;
 	/*
 	 * In case this is beacon report request from last AP (before roaming)
