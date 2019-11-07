@@ -106,7 +106,8 @@
 #define __QDF_TRACE_RL_NO_FL(log_level, module_id, format, args...) \
 	__QDF_TRACE_RATE_LIMITED(module_id, log_level, format, ## args)
 
-static inline void __qdf_trace_noop(QDF_MODULE_ID module, char *format, ...) { }
+static inline void __qdf_trace_noop(QDF_MODULE_ID module,
+				    const char *format, ...) { }
 
 #ifdef WLAN_LOG_FATAL
 #define QDF_TRACE_FATAL(params...) \
@@ -117,11 +118,14 @@ static inline void __qdf_trace_noop(QDF_MODULE_ID module, char *format, ...) { }
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_FATAL, ## params)
 #define QDF_TRACE_FATAL_RL_NO_FL(params...) \
 	__QDF_TRACE_RL_NO_FL(QDF_TRACE_LEVEL_FATAL, ## params)
+#define QDF_VTRACE_FATAL(module_id, fmt, args) \
+	QDF_VTRACE(module_id, QDF_TRACE_LEVEL_FATAL, fmt, args)
 #else
 #define QDF_TRACE_FATAL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_FATAL_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_FATAL_RL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_FATAL_RL_NO_FL(params...) __qdf_trace_noop(params)
+#define QDF_VTRACE_FATAL(params...) __qdf_trace_noop(params)
 #endif
 
 #ifdef WLAN_LOG_ERROR
@@ -133,11 +137,14 @@ static inline void __qdf_trace_noop(QDF_MODULE_ID module, char *format, ...) { }
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_ERROR, ## params)
 #define QDF_TRACE_ERROR_RL_NO_FL(params...) \
 	__QDF_TRACE_RL_NO_FL(QDF_TRACE_LEVEL_ERROR, ## params)
+#define QDF_VTRACE_ERROR(module_id, fmt, args) \
+	QDF_VTRACE(module_id, QDF_TRACE_LEVEL_ERROR, fmt, args)
 #else
 #define QDF_TRACE_ERROR(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_ERROR_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_ERROR_RL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_ERROR_RL_NO_FL(params...) __qdf_trace_noop(params)
+#define QDF_VTRACE_ERROR(params...) __qdf_trace_noop(params)
 #endif
 
 #ifdef WLAN_LOG_WARN
@@ -149,11 +156,14 @@ static inline void __qdf_trace_noop(QDF_MODULE_ID module, char *format, ...) { }
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_WARN, ## params)
 #define QDF_TRACE_WARN_RL_NO_FL(params...) \
 	__QDF_TRACE_RL_NO_FL(QDF_TRACE_LEVEL_WARN, ## params)
+#define QDF_VTRACE_WARN(module_id, fmt, args) \
+	QDF_VTRACE(module_id, QDF_TRACE_LEVEL_WARN, fmt, args)
 #else
 #define QDF_TRACE_WARN(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_WARN_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_WARN_RL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_WARN_RL_NO_FL(params...) __qdf_trace_noop(params)
+#define QDF_VTRACE_WARN(params...) __qdf_trace_noop(params)
 #endif
 
 #ifdef WLAN_LOG_INFO
@@ -165,11 +175,14 @@ static inline void __qdf_trace_noop(QDF_MODULE_ID module, char *format, ...) { }
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_INFO, ## params)
 #define QDF_TRACE_INFO_RL_NO_FL(params...) \
 	__QDF_TRACE_RL_NO_FL(QDF_TRACE_LEVEL_INFO, ## params)
+#define QDF_VTRACE_INFO(module_id, fmt, args) \
+	QDF_VTRACE(module_id, QDF_TRACE_LEVEL_INFO, fmt, args)
 #else
 #define QDF_TRACE_INFO(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_INFO_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_INFO_RL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_INFO_RL_NO_FL(params...) __qdf_trace_noop(params)
+#define QDF_VTRACE_INFO(params...) __qdf_trace_noop(params)
 #endif
 
 #ifdef WLAN_LOG_DEBUG
@@ -181,11 +194,14 @@ static inline void __qdf_trace_noop(QDF_MODULE_ID module, char *format, ...) { }
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_DEBUG, ## params)
 #define QDF_TRACE_DEBUG_RL_NO_FL(params...) \
 	__QDF_TRACE_RL_NO_FL(QDF_TRACE_LEVEL_DEBUG, ## params)
+#define QDF_VTRACE_DEBUG(module_id, fmt, args) \
+	QDF_VTRACE(module_id, QDF_TRACE_LEVEL_DEBUG, fmt, args)
 #else
 #define QDF_TRACE_DEBUG(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_DEBUG_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_DEBUG_RL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_DEBUG_RL_NO_FL(params...) __qdf_trace_noop(params)
+#define QDF_VTRACE_DEBUG(params...) __qdf_trace_noop(params)
 #endif
 
 #ifdef WLAN_LOG_ENTER
@@ -269,6 +285,18 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 
 #define QDF_ASSERT(_condition)
 
+#endif
+
+#ifdef QDF_TRACE_PRINT_ENABLE
+static inline void qdf_vprint(const char *fmt, va_list args)
+{
+	QDF_VTRACE_INFO(QDF_MODULE_ID_ANY, fmt, args);
+}
+#else /* QDF_TRACE_PRINT_ENABLE */
+static inline void qdf_vprint(const char *fmt, va_list args)
+{
+	QDF_VTRACE_ERROR(QDF_MODULE_ID_QDF, fmt, args);
+}
 #endif
 
 #ifdef PANIC_ON_BUG
