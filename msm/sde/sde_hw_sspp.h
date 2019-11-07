@@ -237,6 +237,7 @@ enum {
  */
 enum {
 	SDE_PIPE_SC_RD_OP_TYPE_CACHEABLE,
+	SDE_PIPE_SC_RD_OP_TYPE_RESERVED,
 	SDE_PIPE_SC_RD_OP_TYPE_INVALIDATE,
 	SDE_PIPE_SC_RD_OP_TYPE_EVICTION,
 };
@@ -249,6 +250,7 @@ enum {
  * @rd_noallocate: system cache read no allocate attribute
  * @rd_op_type: system cache read operation type
  * @flags: dirty flags to change the configuration
+ * @type: sys cache type
  */
 struct sde_hw_pipe_sc_cfg {
 	u32 op_mode;
@@ -257,6 +259,7 @@ struct sde_hw_pipe_sc_cfg {
 	bool rd_noallocate;
 	u32 rd_op_type;
 	u32 flags;
+	enum sde_sys_cache_type type;
 };
 
 /**
