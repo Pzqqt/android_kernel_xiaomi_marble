@@ -1142,7 +1142,6 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	bool match = false;
 	struct scan_default_params *def_param;
 	struct wlan_country_ie *cc_ie;
-	struct wlan_objmgr_pdev *pdev = NULL;
 
 	def_param = wlan_scan_psoc_get_def_params(psoc);
 	if (!def_param)
@@ -1193,24 +1192,15 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (!match && filter->num_of_bssid)
 		return false;
 
-	pdev = wlan_objmgr_get_pdev_by_id(psoc, db_entry->pdev_id,
-					  WLAN_SCAN_ID);
-	if (!pdev) {
-		scm_err("pdev is NULL");
-		return false;
-	}
-
 	match = false;
 	for (i = 0; i < filter->num_of_channels; i++) {
-		if (!filter->channel_list[i] || (
-		   (filter->channel_list[i] ==
-		   wlan_reg_freq_to_chan(pdev,
-					 db_entry->channel.chan_freq)))) {
+		if (!filter->chan_freq_list[i] ||
+		    filter->chan_freq_list[i] ==
+		    db_entry->channel.chan_freq) {
 			match = true;
 			break;
 		}
 	}
-	wlan_objmgr_pdev_release_ref(pdev, WLAN_SCAN_ID);
 
 	if (!match && filter->num_of_channels)
 		return false;

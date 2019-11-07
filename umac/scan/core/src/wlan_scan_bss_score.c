@@ -851,10 +851,10 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	return score;
 }
 
-bool scm_get_pcl_weight_of_channel(int channel_id,
-		struct scan_filter *filter,
-		int *pcl_chan_weight,
-		uint8_t *weight_list)
+bool scm_get_pcl_weight_of_channel(uint32_t chan_freq,
+				   struct scan_filter *filter,
+				   int *pcl_chan_weight,
+				   uint8_t *weight_list)
 {
 	int i;
 	bool found = false;
@@ -863,7 +863,7 @@ bool scm_get_pcl_weight_of_channel(int channel_id,
 		return found;
 
 	for (i = 0; i < filter->num_of_pcl_channels; i++) {
-		if (filter->pcl_channel_list[i] == channel_id) {
+		if (filter->pcl_freq_list[i] == chan_freq) {
 			*pcl_chan_weight = filter->pcl_weight_list[i];
 			found = true;
 			break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -117,7 +117,7 @@ wlan_pdev_get_scan_db(struct wlan_objmgr_psoc *psoc,
 
 /**
  * scm_get_pcl_weight_of_channel() - Get PCL weight if channel is present in pcl
- * @channel_id: channel of bss
+ * @chan_freq: channel frequency of bss, unit: MHz
  * @filter: filter
  * @pcl_chan_weight: Get PCL weight for corresponding channel
  * @weight_list: Weight list for all the pcl channels.
@@ -126,8 +126,8 @@ wlan_pdev_get_scan_db(struct wlan_objmgr_psoc *psoc,
  *
  * Return: true or false
  */
-bool scm_get_pcl_weight_of_channel(int channel_id,
-		struct scan_filter *filter,
-		int *pcl_chan_weight,
-		uint8_t *weight_list);
+bool scm_get_pcl_weight_of_channel(uint32_t chan_freq,
+				   struct scan_filter *filter,
+				   int *pcl_chan_weight,
+				   uint8_t *weight_list);
 #endif

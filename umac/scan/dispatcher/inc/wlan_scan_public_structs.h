@@ -627,11 +627,11 @@ struct fils_filter_info {
  * @country[3]: Ap with specific country code
  * @bssid_list: bssid list
  * @ssid_list: ssid list
- * @channel_list: channel list
+ * @chan_freq_list: channel frequency list, frequency unit: MHz
  * @auth_type: auth type list
  * @enc_type: unicast enc type list
  * @mc_enc_type: multicast cast enc type list
- * @pcl_channel_list: PCL channel list
+ * @pcl_freq_list: PCL channel frequency list, frequency unit: MHz
  * @fils_scan_filter: FILS info
  * @pcl_weight_list: PCL Weight list
  * @bssid_hint: Mac address of bssid_hint
@@ -662,11 +662,11 @@ struct scan_filter {
 	uint8_t country[3];
 	struct qdf_mac_addr bssid_list[WLAN_SCAN_FILTER_NUM_BSSID];
 	struct wlan_ssid ssid_list[WLAN_SCAN_FILTER_NUM_SSID];
-	uint8_t channel_list[QDF_MAX_NUM_CHAN];
+	uint32_t chan_freq_list[QDF_MAX_NUM_CHAN];
 	enum wlan_auth_type auth_type[WLAN_NUM_OF_SUPPORT_AUTH_TYPE];
 	enum wlan_enc_type enc_type[WLAN_NUM_OF_ENCRYPT_TYPE];
 	enum wlan_enc_type mc_enc_type[WLAN_NUM_OF_ENCRYPT_TYPE];
-	uint8_t pcl_channel_list[QDF_MAX_NUM_CHAN];
+	uint32_t pcl_freq_list[QDF_MAX_NUM_CHAN];
 	struct fils_filter_info fils_scan_filter;
 	uint8_t pcl_weight_list[QDF_MAX_NUM_CHAN];
 	struct qdf_mac_addr bssid_hint;

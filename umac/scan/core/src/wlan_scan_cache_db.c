@@ -910,27 +910,16 @@ static void scm_list_insert_sorted(struct wlan_objmgr_psoc *psoc,
 	qdf_list_node_t *cur_lst = NULL, *next_lst = NULL;
 	struct scan_default_params *params;
 	int pcl_chan_weight = 0;
-	struct wlan_objmgr_pdev *pdev = NULL;
 
 	params = wlan_scan_psoc_get_def_params(psoc);
 	if (!params) {
 		scm_err("wlan_scan_psoc_get_def_params failed");
 		return;
 	}
-
-	pdev = wlan_objmgr_get_pdev_by_id(psoc, scan_node->entry->pdev_id,
-					  WLAN_SCAN_ID);
-	if (!pdev) {
-		scm_err("pdev is NULL");
-		return;
-	}
-
 	if (filter->num_of_pcl_channels > 0 &&
 			(scan_node->entry->rssi_raw > SCM_PCL_RSSI_THRESHOLD)) {
 		if (scm_get_pcl_weight_of_channel(
-				wlan_reg_freq_to_chan(
-					pdev,
-					scan_node->entry->channel.chan_freq),
+					scan_node->entry->channel.chan_freq,
 					filter, &pcl_chan_weight,
 					filter->pcl_weight_list)) {
 			scm_debug("pcl freq %d pcl_chan_weight %d",
@@ -938,8 +927,6 @@ static void scm_list_insert_sorted(struct wlan_objmgr_psoc *psoc,
 				  pcl_chan_weight);
 		}
 	}
-	wlan_objmgr_pdev_release_ref(pdev, WLAN_SCAN_ID);
-
 	if (params->is_bssid_hint_priority &&
 	    !qdf_mem_cmp(filter->bssid_hint.bytes,
 			 scan_node->entry->bssid.bytes,
