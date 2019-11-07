@@ -11876,6 +11876,12 @@ typedef struct {
 /* Per peer MISC stats enable or disable */
 #define  WMI_PEER_PARAM_MISC_STATS_ENABLE               0x22
 
+/* Per peer FW congestion enable or disable:
+ * A parameter value of 1 will disable FW tx congestion control for the peer,
+ * a parameter value 0f 0 will enable FW tx congestion control for the peer.
+ */
+#define  WMI_PEER_PARAM_FW_CONGESTION_DISABLE           0x23
+
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
 #define WMI_PEER_MIMO_PS_STATIC                        0x1
