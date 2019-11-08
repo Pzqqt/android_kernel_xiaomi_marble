@@ -1596,8 +1596,8 @@ static void dp_debug_set_sim_mode(struct dp_debug_private *debug, bool sim)
 			debug->hpd->simulate_connect(debug->hpd, false);
 			debug->hotplug = false;
 		}
-		debug->aux->abort(debug->aux);
-		debug->ctrl->abort(debug->ctrl);
+		debug->aux->abort(debug->aux, true);
+		debug->ctrl->abort(debug->ctrl, true);
 
 		debug->aux->set_sim_mode(debug->aux, false, NULL, NULL);
 		debug->dp_debug.sim_mode = false;

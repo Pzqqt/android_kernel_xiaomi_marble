@@ -310,7 +310,7 @@ static void dp_aux_reconfig(struct dp_aux *dp_aux)
 	aux->catalog->reset(aux->catalog);
 }
 
-static void dp_aux_abort_transaction(struct dp_aux *dp_aux)
+static void dp_aux_abort_transaction(struct dp_aux *dp_aux, bool abort)
 {
 	struct dp_aux_private *aux;
 
@@ -321,7 +321,7 @@ static void dp_aux_abort_transaction(struct dp_aux *dp_aux)
 
 	aux = container_of(dp_aux, struct dp_aux_private, dp_aux);
 
-	atomic_set(&aux->aborted, 1);
+	atomic_set(&aux->aborted, abort);
 }
 
 static void dp_aux_update_offset_and_segment(struct dp_aux_private *aux,
