@@ -1630,6 +1630,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 
 	if (sta_ds->mlmStaContext.vhtCapability &&
 	    IS_DOT11_MODE_VHT(session->dot11mode)) {
+		sta_ds->htMaxRxAMpduFactor =
+				vht_caps->maxAMPDULenExp;
 		sta_ds->vhtLdpcCapable =
 			(uint8_t)vht_caps->ldpcCodingCap;
 		if (session->vht_config.su_beam_formee &&
