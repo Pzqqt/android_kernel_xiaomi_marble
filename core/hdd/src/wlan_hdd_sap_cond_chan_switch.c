@@ -84,7 +84,7 @@ static int wlan_hdd_set_chan_before_pre_cac(struct hdd_adapter *ap_adapter,
  * @hdd_ctx: HDD context
  * @ap_adapter: AP adapter
  * @channel: Channel requested by userspace
- * @pre_cac_chan: Pointer to the pre CAC channel
+ * @pre_cac_chan_freq: Pointer to the pre CAC channel freq
  *
  * Validates the channel provided by userspace. If user provided channel 0,
  * a valid outdoor channel must be selected from the regulatory channel.
@@ -94,7 +94,7 @@ static int wlan_hdd_set_chan_before_pre_cac(struct hdd_adapter *ap_adapter,
 static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 						struct hdd_adapter *ap_adapter,
 						uint8_t channel,
-						uint8_t *pre_cac_chan)
+						uint32_t *pre_cac_chan_freq)
 {
 	uint32_t i;
 	QDF_STATUS status;
@@ -125,12 +125,11 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 		for (i = 0; i < len; i++) {
 			if (wlan_reg_is_dfs_for_freq(hdd_ctx->pdev,
 						     freq_list[i])) {
-				*pre_cac_chan =
-					wlan_freq_to_chan(freq_list[i]);
+				*pre_cac_chan_freq = freq_list[i];
 				break;
 			}
 		}
-		if (*pre_cac_chan == 0) {
+		if (*pre_cac_chan_freq == 0) {
 			hdd_err("unable to find outdoor channel");
 			return -EINVAL;
 		}
@@ -145,9 +144,10 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 			hdd_err("Invalid channel for pre cac:%d", channel);
 			return -EINVAL;
 		}
-		*pre_cac_chan = channel;
+		*pre_cac_chan_freq = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+								  channel);
 	}
-	hdd_debug("selected pre cac channel:%d", *pre_cac_chan);
+	hdd_debug("selected pre cac channel:%d", *pre_cac_chan_freq);
 	return 0;
 }
 
@@ -166,7 +166,8 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 				      uint8_t channel,
 				      struct hdd_adapter **out_adapter)
 {
-	uint8_t pre_cac_chan = 0, *mac_addr;
+	uint8_t *mac_addr;
+	uint32_t pre_cac_chan_freq = 0;
 	int ret;
 	struct hdd_adapter *ap_adapter, *pre_cac_adapter;
 	struct hdd_ap_ctx *hdd_ap_ctx;
@@ -226,7 +227,7 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	hdd_debug("channel:%d", channel);
 
 	ret = wlan_hdd_validate_and_get_pre_cac_ch(hdd_ctx, ap_adapter, channel,
-						   &pre_cac_chan);
+						   &pre_cac_chan_freq);
 	if (ret != 0) {
 		hdd_err("can't validate pre-cac channel");
 		goto release_intf_addr_and_return_failure;
@@ -311,7 +312,7 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		break;
 	}
 
-	freq = cds_chan_to_freq(pre_cac_chan);
+	freq = pre_cac_chan_freq;
 	chan = ieee80211_get_channel(wiphy, freq);
 	if (!chan) {
 		hdd_err("channel converion failed");
@@ -331,8 +332,7 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	 * connection update should result in DBS mode
 	 */
 	status = policy_mgr_update_and_wait_for_connection_update(
-			hdd_ctx->psoc, ap_adapter->vdev_id,
-			wlan_chan_to_freq(pre_cac_chan),
+			hdd_ctx->psoc, ap_adapter->vdev_id, pre_cac_chan_freq,
 			POLICY_MGR_UPDATE_REASON_PRE_CAC);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("error in moving to DBS mode");
@@ -374,8 +374,7 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		goto stop_close_pre_cac_adapter;
 	}
 
-	ap_adapter->pre_cac_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
-							 pre_cac_chan);
+	ap_adapter->pre_cac_freq = pre_cac_chan_freq;
 
 	*out_adapter = pre_cac_adapter;
 
