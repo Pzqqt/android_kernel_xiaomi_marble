@@ -7912,8 +7912,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		for (i = 0; i < len; i++) {
 			pr_info("|table_index[%d]\t\t\n", i);
 			pr_info("|\t|vdev_id - %-10d|\n", conn_info->vdev_id);
-			pr_info("|\t|chan    - %-10d|\n",
-				wlan_freq_to_chan(conn_info->freq));
+			pr_info("|\t|freq    - %-10d|\n", conn_info->freq);
 			pr_info("|\t|bw      - %-10d|\n", conn_info->bw);
 			pr_info("|\t|mode    - %-10d|\n", conn_info->mode);
 			pr_info("|\t|mac     - %-10d|\n", conn_info->mac);

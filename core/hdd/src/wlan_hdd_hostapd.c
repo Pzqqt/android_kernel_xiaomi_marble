@@ -5941,7 +5941,7 @@ static void hdd_update_beacon_rate(struct hdd_adapter *adapter,
 /**
  * wlan_hdd_ap_ap_force_scc_override() - force Same band SCC chan override
  * @adapter: SAP adapter pointer
- * @channel: SAP starting channel
+ * @freq: SAP starting channel freq
  * @new_chandef: new override SAP channel
  *
  * The function will override the second SAP chan to the first SAP's home
@@ -5951,19 +5951,18 @@ static void hdd_update_beacon_rate(struct hdd_adapter *adapter,
  */
 static bool
 wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
-				  uint8_t channel,
+				  uint32_t freq,
 				  struct cfg80211_chan_def *new_chandef)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint32_t cc_count, i;
-	uint8_t op_ch[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t op_freq[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	struct ch_params ch_params;
 	enum nl80211_channel_type channel_type;
 	struct hdd_adapter *con_adapter;
 	uint8_t con_vdev_id;
-	uint8_t con_chan;
+	uint32_t con_freq;
 	uint8_t mcc_to_scc_switch;
 	struct ieee80211_channel *ieee_chan;
 
@@ -5996,25 +5995,23 @@ wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
 					&vdev_id[cc_count],
 					PM_P2P_GO_MODE);
 	for (i = 0 ; i < cc_count; i++) {
-		op_ch[i] = wlan_freq_to_chan(op_freq[i]);
-
-		if (channel == op_ch[i])
+		if (freq == op_freq[i])
 			continue;
 		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc))
 			break;
-		if (wlan_reg_is_same_band_channels(channel,
-						   op_ch[i]))
+		if (wlan_reg_is_same_band_freqs(freq,
+						op_freq[i]))
 			break;
 	}
 	if (i >= cc_count)
 		return false;
-	con_chan = op_ch[i];
+	con_freq = op_freq[i];
 	con_vdev_id = vdev_id[i];
 	con_adapter = hdd_get_adapter_by_vdev(hdd_ctx, con_vdev_id);
 	if (!con_adapter)
 		return false;
 	ieee_chan = ieee80211_get_channel(hdd_ctx->wiphy,
-					  cds_chan_to_freq(con_chan));
+					  con_freq);
 	if (!ieee_chan) {
 		hdd_err("channel converion failed");
 		return false;
@@ -6022,9 +6019,9 @@ wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
 
 	if (!wlan_sap_get_ch_params(WLAN_HDD_GET_SAP_CTX_PTR(con_adapter),
 				    &ch_params))
-		wlan_reg_set_channel_params(hdd_ctx->pdev,
-					    con_chan, 0,
-					    &ch_params);
+		wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev,
+						     con_freq, 0,
+						     &ch_params);
 	switch (ch_params.sec_ch_offset) {
 	case PHY_SINGLE_CHANNEL_CENTERED:
 		channel_type = NL80211_CHAN_HT20;
@@ -6046,9 +6043,8 @@ wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
 		break;
 	case CH_WIDTH_80P80MHZ:
 		new_chandef->width = NL80211_CHAN_WIDTH_80P80;
-		if (ch_params.center_freq_seg1)
-			new_chandef->center_freq2 = cds_chan_to_freq(
-				ch_params.center_freq_seg1);
+		if (ch_params.mhz_freq_seg1)
+			new_chandef->center_freq2 = ch_params.mhz_freq_seg1;
 		break;
 	case CH_WIDTH_160MHZ:
 		new_chandef->width = NL80211_CHAN_WIDTH_160;
@@ -6059,13 +6055,12 @@ wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
 	if ((ch_params.ch_width == CH_WIDTH_80MHZ) ||
 	    (ch_params.ch_width == CH_WIDTH_80P80MHZ) ||
 	    (ch_params.ch_width == CH_WIDTH_160MHZ)) {
-		if (ch_params.center_freq_seg0)
-			new_chandef->center_freq1 = cds_chan_to_freq(
-				ch_params.center_freq_seg0);
+		if (ch_params.mhz_freq_seg0)
+			new_chandef->center_freq1 = ch_params.mhz_freq_seg0;
 	}
 
-	hdd_debug("override AP ch %d to first AP(vdev_id %d) chan:%d width:%d freq1:%d freq2:%d ",
-		  channel, con_vdev_id, new_chandef->chan->center_freq,
+	hdd_debug("override AP freq %d to first AP(vdev_id %d) center_freq:%d width:%d freq1:%d freq2:%d ",
+		  freq, con_vdev_id, new_chandef->chan->center_freq,
 		  new_chandef->width, new_chandef->center_freq1,
 		  new_chandef->center_freq2);
 	return true;
@@ -6169,7 +6164,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	chandef = &params->chandef;
 	if ((adapter->device_mode == QDF_SAP_MODE ||
 	     adapter->device_mode == QDF_P2P_GO_MODE) &&
-	    wlan_hdd_ap_ap_force_scc_override(adapter, channel,
+	    wlan_hdd_ap_ap_force_scc_override(adapter,
+					      chandef->chan->center_freq,
 					      &new_chandef)) {
 		chandef = &new_chandef;
 		channel = ieee80211_frequency_to_channel(
