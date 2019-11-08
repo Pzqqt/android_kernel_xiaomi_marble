@@ -232,7 +232,6 @@
 /* Invalid VDEV identifier */
 #define WLAN_INVALID_VDEV_ID 255
 
-
 /**
  * struct wlan_vdev_create_params - Create params, HDD/OSIF passes this
  *				    structure While creating VDEV
@@ -576,34 +575,6 @@ static inline struct wlan_objmgr_vdev *wlan_pdev_vdev_list_peek_head(
 	return vdev;
 }
 
-/**
- * wlan_pdev_peek_active_first_vdev() - get first active vdev from pdev list
- * @pdev: PDEV object
- * @dbg_id: id of the caller
- *
- * API to get the head active vdev of given pdev (of pdev's vdev list)
- *
- * Return:
- */
-struct wlan_objmgr_vdev *wlan_pdev_peek_active_first_vdev(
-		struct wlan_objmgr_pdev *pdev,
-		wlan_objmgr_ref_dbgid dbg_id);
-
-/**
- * wlan_pdev_vdev_list_peek_active_head() - get first active vdev from pdev list
- * @vdev: VDEV object
- * @vdev_list: qdf_list_t
- * @dbg_id: id of the caller
- *
- * API to get the head active vdev of given vdev (of pdev's vdev list)
- *
- * Return:
- * @peer: head peer
- */
-struct wlan_objmgr_vdev *wlan_pdev_vdev_list_peek_active_head(
-				struct wlan_objmgr_pdev *pdev,
-				qdf_list_t *vdev_list,
-				wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_vdev_get_next_vdev_of_pdev() - get next vdev
@@ -637,23 +608,6 @@ static inline struct wlan_objmgr_vdev *wlan_vdev_get_next_vdev_of_pdev(
 	return vdev_next;
 }
 
-/**
- * wlan_vdev_get_next_active_vdev_of_pdev() - get next active vdev
- * @pdev: PDEV object
- * @vdev_list: qdf_list_t
- * @vdev: VDEV object
- * @dbg_id: id of the caller
- *
- * API to get next active vdev object pointer of vdev
- *
- * Return:
- * @vdev_next: VDEV object
- */
-struct wlan_objmgr_vdev *wlan_vdev_get_next_active_vdev_of_pdev(
-					struct wlan_objmgr_pdev *pdev,
-					qdf_list_t *vdev_list,
-					struct wlan_objmgr_vdev *vdev,
-					wlan_objmgr_ref_dbgid dbg_id);
 
 
 /**
@@ -1265,8 +1219,17 @@ static inline uint16_t wlan_vdev_get_peer_count(struct wlan_objmgr_vdev *vdev)
  *
  * Return: void
  */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+void wlan_objmgr_vdev_get_ref_debug(struct wlan_objmgr_vdev *vdev,
+				    wlan_objmgr_ref_dbgid id,
+				    const char *func, int line);
+
+#define wlan_objmgr_vdev_get_ref(vdev, dbgid) \
+		wlan_objmgr_vdev_get_ref_debug(vdev, dbgid, __func__, __LINE__)
+#else
 void wlan_objmgr_vdev_get_ref(struct wlan_objmgr_vdev *vdev,
 				wlan_objmgr_ref_dbgid id);
+#endif
 
 /**
  * wlan_objmgr_vdev_try_get_ref() - increment ref count, if allowed
@@ -1277,8 +1240,18 @@ void wlan_objmgr_vdev_get_ref(struct wlan_objmgr_vdev *vdev,
  *
  * Return: void
  */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+QDF_STATUS wlan_objmgr_vdev_try_get_ref_debug(struct wlan_objmgr_vdev *vdev,
+					      wlan_objmgr_ref_dbgid id,
+					      const char *func, int line);
+
+#define wlan_objmgr_vdev_try_get_ref(vdev, dbgid) \
+		wlan_objmgr_vdev_try_get_ref_debug(vdev, dbgid, \
+		__func__, __LINE__)
+#else
 QDF_STATUS wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *vdev,
 						wlan_objmgr_ref_dbgid id);
+#endif
 
 /**
  * wlan_objmgr_vdev_release_ref() - decrement ref count
@@ -1290,8 +1263,101 @@ QDF_STATUS wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *vdev,
  *
  * Return: void
  */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+void wlan_objmgr_vdev_release_ref_debug(struct wlan_objmgr_vdev *vdev,
+					wlan_objmgr_ref_dbgid id,
+					const char *func, int line);
+
+#define wlan_objmgr_vdev_release_ref(vdev, dbgid)\
+		wlan_objmgr_vdev_release_ref_debug(vdev, dbgid, \
+		__func__, __LINE__)
+#else
 void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
 						wlan_objmgr_ref_dbgid id);
+#endif
+
+/**
+ * wlan_vdev_get_next_active_vdev_of_pdev() - get next active vdev
+ * @pdev: PDEV object
+ * @vdev_list: qdf_list_t
+ * @vdev: VDEV object
+ * @dbg_id: id of the caller
+ *
+ * API to get next active vdev object pointer of vdev
+ *
+ * Return:
+ * @vdev_next: VDEV object
+ */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_vdev *wlan_vdev_get_next_active_vdev_of_pdev_debug(
+					struct wlan_objmgr_pdev *pdev,
+					qdf_list_t *vdev_list,
+					struct wlan_objmgr_vdev *vdev,
+					wlan_objmgr_ref_dbgid dbg_id,
+					const char *func, int line);
+
+#define wlan_vdev_get_next_active_vdev_of_pdev(pdev, vdev_list, vdev, dbgid) \
+		wlan_vdev_get_next_active_vdev_of_pdev_debug(pdev, vdev_list, \
+		vdev, dbgid, __func__, __LINE__)
+#else
+struct wlan_objmgr_vdev *wlan_vdev_get_next_active_vdev_of_pdev(
+					struct wlan_objmgr_pdev *pdev,
+					qdf_list_t *vdev_list,
+					struct wlan_objmgr_vdev *vdev,
+					wlan_objmgr_ref_dbgid dbg_id);
+#endif
+
+/**
+ * wlan_pdev_peek_active_first_vdev() - get first active vdev from pdev list
+ * @pdev: PDEV object
+ * @dbg_id: id of the caller
+ *
+ * API to get the head active vdev of given pdev (of pdev's vdev list)
+ *
+ * Return:
+ */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_vdev *wlan_pdev_peek_active_first_vdev_debug(
+		struct wlan_objmgr_pdev *pdev,
+		wlan_objmgr_ref_dbgid dbg_id,
+		const char *func, int line);
+
+#define wlan_pdev_peek_active_first_vdev(pdev, dbgid) \
+		wlan_pdev_peek_active_first_vdev_debug(pdev, dbgid, \
+		__func__, __LINE__)
+#else
+struct wlan_objmgr_vdev *wlan_pdev_peek_active_first_vdev(
+		struct wlan_objmgr_pdev *pdev,
+		wlan_objmgr_ref_dbgid dbg_id);
+#endif
+
+/**
+ * wlan_pdev_vdev_list_peek_active_head() - get first active vdev from pdev list
+ * @vdev: VDEV object
+ * @vdev_list: qdf_list_t
+ * @dbg_id: id of the caller
+ *
+ * API to get the head active vdev of given vdev (of pdev's vdev list)
+ *
+ * Return:
+ * @peer: head peer
+ */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_vdev *wlan_pdev_vdev_list_peek_active_head_debug(
+				struct wlan_objmgr_pdev *pdev,
+				qdf_list_t *vdev_list,
+				wlan_objmgr_ref_dbgid dbg_id,
+				const char *func, int line);
+
+#define wlan_pdev_vdev_list_peek_active_head(pdev, vdev_list, dbgid) \
+		wlan_pdev_vdev_list_peek_active_head_debug(pdev, vdev_list, \
+		dbgid, __func__, __LINE__)
+#else
+struct wlan_objmgr_vdev *wlan_pdev_vdev_list_peek_active_head(
+				struct wlan_objmgr_pdev *pdev,
+				qdf_list_t *vdev_list,
+				wlan_objmgr_ref_dbgid dbg_id);
+#endif
 
 /**
  * wlan_objmgr_vdev_peer_freed_notify() - Notifies modules about peer freed

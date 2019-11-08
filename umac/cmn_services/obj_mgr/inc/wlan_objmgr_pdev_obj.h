@@ -354,13 +354,24 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_deletion(
  * Return: vdev pointer
  *         NULL on FAILURE
  */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev_debug(
+			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id,
+			const char *func, int line);
+
+#define wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id, dbgid) \
+		wlan_objmgr_get_vdev_by_id_from_pdev_debug(pdev, \
+		vdev_id, dbgid, __func__, __LINE__)
+#else
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev(
 			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			wlan_objmgr_ref_dbgid dbg_id);
+#endif
 
 /**
- * wlan_objmgr_get_vdev_by_id_from_pdev_no_state() - find vdev using id from
- *                                                      pdev
+ * wlan_objmgr_get_vdev_by_id_from_pdev_no_state() - find vdev using id
+ *                                                         from pdev
  * @pdev: PDEV object
  * @vdev_id: vdev id
  * @dbg_id: id of the caller
@@ -374,9 +385,21 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev(
  * Return: vdev pointer
  *         NULL on FAILURE
  */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev_no_state_debug(
+			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id,
+			const char *func, int line);
+
+#define wlan_objmgr_get_vdev_by_id_from_pdev_no_state(pdev, \
+	vdev_id, dbgid) \
+		wlan_objmgr_get_vdev_by_id_from_pdev_no_state_debug(pdev, \
+		vdev_id, dbgid, __func__, __LINE__)
+#else
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev_no_state(
 			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			wlan_objmgr_ref_dbgid dbg_id);
+#endif
 
 /**
  * wlan_objmgr_get_vdev_by_macaddr_from_pdev() - find vdev using macaddr
@@ -393,9 +416,20 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev_no_state(
  * Return: vdev pointer
  *         NULL on FAILURE
  */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev_debug(
+		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id,
+		const char *fnc, int ln);
+
+#define wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, macaddr, dbgid) \
+		wlan_objmgr_get_vdev_by_macaddr_from_pdev_debug(pdev, macaddr, \
+		dbgid, __func__, __LINE__)
+#else
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev(
 		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
 		wlan_objmgr_ref_dbgid dbg_id);
+#endif
 
 /**
  * wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state() - find vdev using
@@ -413,9 +447,46 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev(
  * Return: vdev pointer
  *         NULL on FAILURE
  */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_vdev
+	*wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state_debug(
+		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id,
+		const char *func, int line);
+
+#define wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state(pdev, macaddr, \
+	dbgid) \
+		wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state_debug(pdev, \
+		macaddr, dbgid, __func__, __LINE__)
+#else
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state(
 		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
 		wlan_objmgr_ref_dbgid dbg_id);
+#endif
+
+/**
+ * wlan_objmgr_pdev_get_first_vdev() - Get first vdev of pdev
+ * @pdev: PDEV object
+ * @dbg_id:   Object Manager ref debug id
+ *
+ * API to get reference to first vdev of pdev.
+ *
+ * Return: reference to first vdev
+ */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_vdev *wlan_objmgr_pdev_get_first_vdev_debug(
+		struct wlan_objmgr_pdev *pdev,
+		wlan_objmgr_ref_dbgid dbg_id,
+		const char *func, int line);
+
+#define wlan_objmgr_pdev_get_first_vdev(pdev, dbgid) \
+		wlan_objmgr_pdev_get_first_vdev_debug(pdev, dbgid, \
+		__func__, __LINE__)
+#else
+struct wlan_objmgr_vdev *wlan_objmgr_pdev_get_first_vdev(
+		struct wlan_objmgr_pdev *pdev,
+		wlan_objmgr_ref_dbgid dbg_id);
+#endif
 
 /**
  * wlan_objmgr_pdev_get_comp_private_obj() - get pdev component private object
@@ -794,19 +865,6 @@ QDF_STATUS wlan_objmgr_pdev_try_get_ref(struct wlan_objmgr_pdev *pdev,
  */
 void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 						wlan_objmgr_ref_dbgid id);
-
-/**
- * wlan_objmgr_pdev_get_first_vdev() - Get first vdev of pdev
- * @pdev: PDEV object
- * @dbg_id:   Object Manager ref debug id
- *
- * API to get reference to first vdev of pdev.
- *
- * Return: reference to first vdev
- */
-struct wlan_objmgr_vdev *wlan_objmgr_pdev_get_first_vdev(
-		struct wlan_objmgr_pdev *pdev,
-		wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_pdev_get_pdev_id() - get pdev id
