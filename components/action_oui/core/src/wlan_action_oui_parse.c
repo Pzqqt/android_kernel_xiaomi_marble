@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -846,16 +846,12 @@ check_for_vendor_ap_capabilities(struct action_oui_extension *extension,
 		}
 	}
 
-	if (extension->info_mask & ACTION_OUI_INFO_AP_CAPABILITY_BAND) {
-		if ((*extension->capability &
-		    ACTION_OUI_CAPABILITY_2G_BAND_MASK) &&
-		    !attr->enable_2g)
-			return false;
-		if ((*extension->capability &
-		    ACTION_CAPABILITY_5G_BAND_MASK) &&
-		    !attr->enable_5g)
-			return false;
-	}
+	if (extension->info_mask & ACTION_OUI_INFO_AP_CAPABILITY_BAND &&
+	    ((attr->enable_5g &&
+	    !(*extension->capability & ACTION_CAPABILITY_5G_BAND_MASK)) ||
+	    (attr->enable_2g &&
+	    !(*extension->capability & ACTION_OUI_CAPABILITY_2G_BAND_MASK))))
+		return false;
 
 	return true;
 }
