@@ -6157,9 +6157,6 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	struct qdf_mac_addr peer_macaddr;
 	bool value;
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t index = 0;
-	struct hdd_station_info *sta_info;
-	struct hdd_sta_info_entry *tmp;
 
 	hdd_enter();
 
@@ -6197,19 +6194,19 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 						&adapter->acs_pending_work);
 				clear_bit(ACS_PENDING, &adapter->event_flags);
 			}
-
-			if (test_bit(SOFTAP_BSS_STARTED,
-						&adapter->event_flags)) {
-				hdd_sap_indicate_disconnect_for_sta(adapter);
-				clear_bit(SOFTAP_BSS_STARTED,
-					  &adapter->event_flags);
-			}
-
 		} else {
 			wlan_hdd_netif_queue_control(adapter,
 					   WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					   WLAN_CONTROL_PATH);
 		}
+
+		if ((adapter->device_mode == QDF_P2P_GO_MODE ||
+		     adapter->device_mode == QDF_SAP_MODE) &&
+		    test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+			hdd_sap_indicate_disconnect_for_sta(adapter);
+			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
+		}
+
 		/*
 		 * Clear fc flag if it was set before SSR to avoid TX queues
 		 * permanently stopped after SSR.
@@ -6260,26 +6257,6 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			qdf_copy_macaddr(&peer_macaddr,
 					 &sta_ctx->conn_info.bssid);
 
-		} else if (adapter->device_mode == QDF_P2P_GO_MODE ||
-			   adapter->device_mode == QDF_SAP_MODE) {
-
-			/*
-			 * Clear SOFTAP_BSS_STARTED bit only in case of P2P GO
-			 * as SAP is restarted after SSR.
-			 */
-			if (adapter->device_mode == QDF_P2P_GO_MODE)
-				clear_bit(SOFTAP_BSS_STARTED,
-					  &adapter->event_flags);
-
-			/* Loop over and deregister every registered peer */
-			hdd_for_each_station_safe(adapter->sta_info_list,
-						  sta_info, index, tmp) {
-				hdd_debug("[SSR] deregister STA MAC:"
-					  QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(
-					  sta_info->sta_mac.bytes));
-
-				hdd_softap_deregister_sta(adapter, sta_info);
-			}
 		}
 
 		hdd_nud_ignore_tracking(adapter, true);

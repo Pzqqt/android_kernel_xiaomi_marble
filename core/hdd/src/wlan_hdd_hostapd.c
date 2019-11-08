@@ -6595,6 +6595,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 	uint8_t index = 0;
 	struct sap_context *sap_ctx;
 	struct hdd_station_info *sta_info;
+	struct hdd_sta_info_entry *tmp;
 
 	hdd_enter();
 
@@ -6604,12 +6605,15 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 		return;
 	}
 
-	hdd_for_each_station(adapter->sta_info_list, sta_info, index) {
+	hdd_for_each_station_safe(adapter->sta_info_list, sta_info, index,
+				  tmp) {
 		hdd_debug("sta_mac: " QDF_MAC_ADDR_STR,
 			  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
 
-		if (qdf_is_macaddr_broadcast(&sta_info->sta_mac))
+		if (qdf_is_macaddr_broadcast(&sta_info->sta_mac)) {
+			hdd_softap_deregister_sta(adapter, sta_info);
 			continue;
+		}
 
 		sap_event.sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
 
