@@ -200,6 +200,30 @@ QDF_STATUS scm_db_init(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS scm_db_deinit(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * scm_channel_list_db_init() - API to init scan list priority list db
+ * @psoc: psoc
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scm_channel_list_db_init(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * scm_channel_list_db_deinit() - API to deinit scan list priority list db
+ * @psoc: psoc
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scm_channel_list_db_deinit(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * scm_get_chan_meta() - API to return channel meta
+ * @freq: channel frequency
+ *
+ * Return: channel meta information
+ */
+struct meta_rnr_channel *scm_get_chan_meta(uint32_t freq);
+
+/**
  * scm_validate_scoring_config() - validate score config
  * @score_cfg: config to be validated
  *

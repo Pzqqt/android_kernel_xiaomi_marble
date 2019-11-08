@@ -1643,6 +1643,7 @@ ucfg_scan_psoc_open(struct wlan_objmgr_psoc *psoc)
 	qdf_spinlock_create(&scan_obj->lock);
 	ucfg_scan_register_pmo_handler();
 	scm_db_init(psoc);
+	scm_channel_list_db_init(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1666,6 +1667,7 @@ ucfg_scan_psoc_close(struct wlan_objmgr_psoc *psoc)
 	ucfg_scan_unregister_pmo_handler();
 	qdf_spinlock_destroy(&scan_obj->lock);
 	wlan_scan_global_deinit(psoc);
+	scm_channel_list_db_deinit(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }

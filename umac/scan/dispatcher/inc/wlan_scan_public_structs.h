@@ -35,7 +35,7 @@ typedef uint32_t wlan_scan_id;
 
 #define WLAN_SCAN_MAX_HINT_S_SSID        10
 #define WLAN_SCAN_MAX_HINT_BSSID         10
-#define MAX_RNR_BSS			5
+#define MAX_RNR_BSS                      5
 #define WLAN_SCAN_MAX_NUM_SSID          16
 #define WLAN_SCAN_MAX_NUM_BSSID         4
 
@@ -1470,4 +1470,59 @@ enum ext_cap_bit_field {
 	OBSS_NARROW_BW_RU_IN_ULOFDMA_TOLERENT_SUPPORT = 79,
 };
 
+/**
+ * scan_rnr_info - RNR information
+ * @timestamp: time stamp of beacon/probe
+ * @short_ssid: Short SSID
+ * @bssid: BSSID
+ */
+struct scan_rnr_info {
+	qdf_time_t timestamp;
+	uint32_t short_ssid;
+	struct qdf_mac_addr bssid;
+};
+
+/**
+ * struct scan_rnr_node - Scan RNR entry node
+ * @node: node pointers
+ * @entry: scan RNR entry pointer
+ */
+struct scan_rnr_node {
+	qdf_list_node_t node;
+	struct scan_rnr_info entry;
+};
+
+/**
+ * meta_rnr_channel - Channel information for scan priority algorithm
+ * @chan_freq: channel frequency
+ * @bss_beacon_probe_count: Beacon and probe request count
+ * @saved_profile_count: Saved profile count
+ * @beacon_probe_last_time_found: Timestamp of beacon/probe observed
+ * @rnr_list: RNR list to store RNR IE information
+ */
+struct meta_rnr_channel {
+	uint32_t chan_freq;
+	uint32_t bss_beacon_probe_count;
+	uint32_t saved_profile_count;
+	qdf_time_t beacon_probe_last_time_found;
+	qdf_list_t rnr_list;
+};
+
+/**
+ * channel_list_db - Database for channel information
+ * @channel: channel meta information
+ */
+struct channel_list_db {
+	struct meta_rnr_channel channel[NUM_6GHZ_CHANNELS];
+};
+
+/**
+ * rnr_chan_weight - RNR channel weightage
+ * @chan_freq: channel frequency
+ * @weight: weightage of the channel
+ */
+struct rnr_chan_weight {
+	uint32_t chan_freq;
+	uint32_t weight;
+};
 #endif
