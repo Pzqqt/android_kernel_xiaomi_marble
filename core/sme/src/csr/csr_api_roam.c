@@ -11215,7 +11215,7 @@ void csr_update_connect_n_roam_cmn_filter(struct mac_context *mac_ctx,
 					  enum QDF_OPMODE opmode)
 {
 	enum policy_mgr_con_mode pm_mode;
-	uint32_t len = 0, i, pcl_freq_list[NUM_CHANNELS] = {0};
+	uint32_t num_entries = 0, pcl_freq_list[NUM_CHANNELS] = {0};
 	QDF_STATUS status;
 
 	/* enable bss scoring for only STA mode */
@@ -11229,17 +11229,14 @@ void csr_update_connect_n_roam_cmn_filter(struct mac_context *mac_ctx,
 
 	if (policy_mgr_map_concurrency_mode(&opmode, &pm_mode)) {
 		status = policy_mgr_get_pcl(mac_ctx->psoc, pm_mode,
-					    pcl_freq_list, &len,
+					    pcl_freq_list, &num_entries,
 					    filter->pcl_weight_list,
 					    QDF_MAX_NUM_CHAN);
 		if (QDF_IS_STATUS_ERROR(status))
 			return;
-		for (i = 0; i < len; i++) {
-			filter->pcl_channel_list[i] =
-				wlan_reg_freq_to_chan(mac_ctx->pdev,
-						      pcl_freq_list[i]);
-		}
-		filter->num_of_pcl_channels = len;
+		qdf_mem_copy(filter->pcl_freq_list, pcl_freq_list,
+			     num_entries * sizeof(pcl_freq_list[0]));
+		filter->num_of_pcl_channels = num_entries;
 	}
 }
 
@@ -11402,9 +11399,8 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 			}
 			if (csr_roam_is_chan_freq_valid(mac_ctx,
 						ch_info->freq_list[i])) {
-				filter->channel_list[filter->num_of_channels] =
-				  (uint8_t)wlan_reg_freq_to_chan(mac_ctx->pdev,
-							ch_info->freq_list[i]);
+				filter->chan_freq_list[filter->num_of_channels] =
+							ch_info->freq_list[i];
 				filter->num_of_channels++;
 			} else {
 				sme_debug("freq (%d) is invalid",
