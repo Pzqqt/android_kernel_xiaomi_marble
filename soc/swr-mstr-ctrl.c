@@ -44,6 +44,7 @@
 #define ERR_AUTO_SUSPEND_TIMER_VAL 0x1
 
 #define SWRM_INTERRUPT_STATUS_MASK 0x1FDFD
+#define SWRM_LINK_STATUS_RETRY_CNT 0x5
 
 #define SWRM_ROW_48    48
 #define SWRM_ROW_50    50
@@ -492,6 +493,31 @@ static int swr_master_bulk_write(struct swr_mstr_ctrl *swrm, u32 *reg_addr,
 		mutex_unlock(&swrm->iolock);
 	}
 	return 0;
+}
+
+static bool swrm_check_link_status(struct swr_mstr_ctrl *swrm, bool active)
+{
+	int retry = SWRM_LINK_STATUS_RETRY_CNT;
+	int ret = false;
+	int status = active ? 0x1 : 0x0;
+
+	if ((swrm->version <= SWRM_VERSION_1_5_1))
+		return true;
+
+	do {
+		if (swr_master_read(swrm, SWRM_COMP_STATUS) & status) {
+			ret = true;
+			break;
+		}
+		retry--;
+		usleep_range(500, 510);
+	} while (retry);
+
+	if (retry == 0)
+		dev_err(swrm->dev, "%s: link status not %s\n", __func__,
+			active ? "connected" : "disconnected");
+
+	return ret;
 }
 
 static bool swrm_is_port_en(struct swr_master *mstr)
@@ -1795,6 +1821,7 @@ handle_irq:
 		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_TABLE_IS_FULL_V2:
 			break;
 		case SWRM_INTERRUPT_STATUS_BUS_RESET_FINISHED_V2:
+			swrm_check_link_status(swrm, 0x1);
 			break;
 		case SWRM_INTERRUPT_STATUS_CLK_STOP_FINISHED_V2:
 			break;
@@ -2615,6 +2642,8 @@ static int swrm_runtime_resume(struct device *dev)
 			swrm_master_init(swrm);
 			/* wait for hw enumeration to complete */
 			usleep_range(100, 105);
+			if (!swrm_check_link_status(swrm, 0x1))
+				goto exit;
 			swrm_cmd_fifo_wr_cmd(swrm, 0x4, 0xF, 0x0,
 						SWRS_SCP_INT_STATUS_MASK_1);
 			if (swrm->state == SWR_MSTR_SSR) {
@@ -2626,6 +2655,8 @@ static int swrm_runtime_resume(struct device *dev)
 			/*wake up from clock stop*/
 			swr_master_write(swrm, SWRM_MCP_BUS_CTRL_ADDR, 0x2);
 			usleep_range(100, 105);
+			if (!swrm_check_link_status(swrm, 0x1))
+				goto exit;
 		}
 		swrm->state = SWR_MSTR_UP;
 	}
@@ -2726,6 +2757,8 @@ static int swrm_runtime_suspend(struct device *dev)
 					SWR_WAKE_IRQ_REGISTER, (void *)swrm);
 				swrm->ipc_wakeup_triggered = false;
 			}
+			if (!swrm_check_link_status(swrm, 0x0))
+				goto exit;
 		}
 
 	}
