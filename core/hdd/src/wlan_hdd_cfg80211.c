@@ -2957,9 +2957,17 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 					wlan_reg_freq_to_chan(hdd_ctx->pdev,
 					sap_config->acs_cfg.ht_sec_ch_freq);
 			sap_config->ch_params.center_freq_seg0 =
-					sap_config->acs_cfg.vht_seg0_center_ch;
+			wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				sap_config->acs_cfg.vht_seg0_center_ch_freq);
 			sap_config->ch_params.center_freq_seg1 =
-					sap_config->acs_cfg.vht_seg1_center_ch;
+			wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				sap_config->acs_cfg.vht_seg1_center_ch_freq);
+			sap_config->ch_params.mhz_freq_seg0 =
+				sap_config->acs_cfg.vht_seg0_center_ch_freq;
+			sap_config->ch_params.mhz_freq_seg1 =
+				sap_config->acs_cfg.vht_seg1_center_ch_freq;
 			/*notify hostapd about channel override */
 			wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
 			ret = 0;
@@ -3157,6 +3165,7 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 	uint16_t ch_width;
 	uint8_t pri_channel;
 	uint8_t ht_sec_channel;
+	uint8_t vht_seg0_center_ch, vht_seg1_center_ch;
 
 	vendor_event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
 			&(adapter->wdev),
@@ -3192,19 +3201,23 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 		kfree_skb(vendor_event);
 		return;
 	}
-
+	vht_seg0_center_ch = wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				sap_cfg->acs_cfg.vht_seg0_center_ch_freq);
 	ret_val = nla_put_u8(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG0_CENTER_CHANNEL,
-			sap_cfg->acs_cfg.vht_seg0_center_ch);
+			vht_seg0_center_ch);
 	if (ret_val) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG0_CENTER_CHANNEL put fail");
 		kfree_skb(vendor_event);
 		return;
 	}
-
+	vht_seg1_center_ch = wlan_reg_freq_to_chan(
+				hdd_ctx->pdev,
+				sap_cfg->acs_cfg.vht_seg1_center_ch_freq);
 	ret_val = nla_put_u8(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG1_CENTER_CHANNEL,
-			sap_cfg->acs_cfg.vht_seg1_center_ch);
+			vht_seg1_center_ch);
 	if (ret_val) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR_ACS_VHT_SEG1_CENTER_CHANNEL put fail");
 		kfree_skb(vendor_event);
@@ -3246,8 +3259,8 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 	hdd_debug("ACS result for %s: PRI_CH_FREQ: %d SEC_CH_FREQ: %d VHT_SEG0: %d VHT_SEG1: %d ACS_BW: %d",
 		adapter->dev->name, sap_cfg->acs_cfg.pri_ch_freq,
 		sap_cfg->acs_cfg.ht_sec_ch_freq,
-		sap_cfg->acs_cfg.vht_seg0_center_ch,
-		sap_cfg->acs_cfg.vht_seg1_center_ch, ch_width);
+		sap_cfg->acs_cfg.vht_seg0_center_ch_freq,
+		sap_cfg->acs_cfg.vht_seg1_center_ch_freq, ch_width);
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 	/* ***Note*** As already mentioned Completion variable usage is not
@@ -10964,10 +10977,13 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 	sap_config->acs_cfg.pri_ch_freq =
 		wlan_reg_chan_to_freq(hdd_ctx->pdev, channel_list->pri_ch);
 	sap_config->acs_cfg.ch_width = channel_list->chan_width;
-	sap_config->acs_cfg.vht_seg0_center_ch =
-				channel_list->vht_seg0_center_ch;
-	sap_config->acs_cfg.vht_seg1_center_ch =
-				channel_list->vht_seg1_center_ch;
+	sap_config->acs_cfg.vht_seg0_center_ch_freq =
+			wlan_reg_chan_to_freq(
+			hdd_ctx->pdev, channel_list->vht_seg0_center_ch);
+	sap_config->acs_cfg.vht_seg1_center_ch_freq =
+			wlan_reg_chan_to_freq(
+			hdd_ctx->pdev, channel_list->vht_seg1_center_ch);
+
 	sap_config->acs_cfg.ht_sec_ch_freq =
 		wlan_reg_chan_to_freq(hdd_ctx->pdev, channel_list->ht_sec_ch);
 }

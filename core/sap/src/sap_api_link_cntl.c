@@ -97,27 +97,26 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 			   struct sap_context *sap_ctx,
 			   uint32_t sec_ch_freq)
 {
-	uint32_t channel = wlan_freq_to_chan(sap_ctx->acs_cfg->pri_ch_freq);
 	struct ch_params ch_params = {0};
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	uint8_t sec_ch;
 
-	sec_ch = wlan_freq_to_chan(sec_ch_freq);
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
-	wlan_reg_set_channel_params(mac_ctx->pdev, channel, sec_ch,
-			&ch_params);
+	wlan_reg_set_channel_params_for_freq(
+			mac_ctx->pdev, sap_ctx->acs_cfg->pri_ch_freq,
+			sec_ch_freq, &ch_params);
 	sap_ctx->acs_cfg->ch_width = ch_params.ch_width;
-	if (sap_ctx->acs_cfg->ch_width > CH_WIDTH_40MHZ)
-		sap_ctx->acs_cfg->vht_seg0_center_ch =
-						ch_params.center_freq_seg0;
+	if (sap_ctx->acs_cfg->ch_width > CH_WIDTH_40MHZ ||
+	    WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ctx->acs_cfg->pri_ch_freq))
+		sap_ctx->acs_cfg->vht_seg0_center_ch_freq =
+						ch_params.mhz_freq_seg0;
 	else
-		sap_ctx->acs_cfg->vht_seg0_center_ch = 0;
+		sap_ctx->acs_cfg->vht_seg0_center_ch_freq = 0;
 
 	if (sap_ctx->acs_cfg->ch_width == CH_WIDTH_80P80MHZ)
-		sap_ctx->acs_cfg->vht_seg1_center_ch =
-						ch_params.center_freq_seg1;
+		sap_ctx->acs_cfg->vht_seg1_center_ch_freq =
+						ch_params.mhz_freq_seg1;
 	else
-		sap_ctx->acs_cfg->vht_seg1_center_ch = 0;
+		sap_ctx->acs_cfg->vht_seg1_center_ch_freq = 0;
 
 	if (ch_params.sec_ch_offset == PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
 		sap_ctx->acs_cfg->ht_sec_ch_freq =

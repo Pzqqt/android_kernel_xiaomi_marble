@@ -2527,24 +2527,28 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			sap_event->sapevt.sap_ch_selected.pri_ch_freq;
 		ap_ctx->sap_config.acs_cfg.ht_sec_ch_freq =
 			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq;
-		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
-			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
-		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =
-			sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch;
+		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch_freq =
+		sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch_freq;
+		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch_freq =
+		sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch_freq;
 		ap_ctx->sap_config.acs_cfg.ch_width =
 			sap_event->sapevt.sap_ch_selected.ch_width;
 
 		sap_ch_param.ch_width =
 			sap_event->sapevt.sap_ch_selected.ch_width;
 		sap_ch_param.center_freq_seg0 =
-			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
+		wlan_reg_freq_to_chan(
+			hdd_ctx->pdev,
+		sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch_freq);
+
 		sap_ch_param.center_freq_seg1 =
-			sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch;
-		wlan_reg_set_channel_params(hdd_ctx->pdev,
-			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-			sap_event->sapevt.sap_ch_selected.pri_ch_freq),
-			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq),
+		wlan_reg_freq_to_chan(
+			hdd_ctx->pdev,
+		sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch_freq);
+		wlan_reg_set_channel_params_for_freq(
+			hdd_ctx->pdev,
+			sap_event->sapevt.sap_ch_selected.pri_ch_freq,
+			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq,
 			&sap_ch_param);
 
 		cdp_hl_fc_set_td_limit(cds_get_context(QDF_MODULE_ID_SOC),
@@ -2577,9 +2581,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		chan_change.chan_params.sec_ch_offset =
 			sap_ch_param.sec_ch_offset;
 		chan_change.chan_params.center_freq_seg0 =
-			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
+		wlan_reg_freq_to_chan(
+			hdd_ctx->pdev,
+		sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch_freq);
 		chan_change.chan_params.center_freq_seg1 =
-			sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch;
+		wlan_reg_freq_to_chan(
+			hdd_ctx->pdev,
+		sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch_freq);
 
 		return hdd_chan_change_notify(adapter, dev,
 					      chan_change, legacy_phymode);
@@ -2595,10 +2603,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			sap_event->sapevt.sap_ch_selected.pri_ch_freq;
 		ap_ctx->sap_config.acs_cfg.ht_sec_ch_freq =
 			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq;
-		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
-			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
-		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =
-			sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch;
+		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch_freq =
+		sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch_freq;
+		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch_freq =
+		sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch_freq;
 		ap_ctx->sap_config.acs_cfg.ch_width =
 			sap_event->sapevt.sap_ch_selected.ch_width;
 		wlan_hdd_cfg80211_acs_ch_select_evt(adapter);

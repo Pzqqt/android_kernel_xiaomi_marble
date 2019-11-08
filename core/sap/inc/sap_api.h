@@ -350,8 +350,8 @@ typedef struct sap_MaxAssocExceededEvent_s {
 struct sap_ch_selected_s {
 	uint32_t pri_ch_freq;
 	uint32_t ht_sec_ch_freq;
-	uint16_t vht_seg0_center_ch;
-	uint16_t vht_seg1_center_ch;
+	uint16_t vht_seg0_center_ch_freq;
+	uint16_t vht_seg1_center_ch_freq;
 	uint16_t ch_width;
 };
 
@@ -452,8 +452,8 @@ struct sap_acs_cfg {
 	/* ACS Algo Output */
 	uint32_t   pri_ch_freq;
 	uint32_t   ht_sec_ch_freq;
-	uint8_t    vht_seg0_center_ch;
-	uint8_t    vht_seg1_center_ch;
+	uint32_t    vht_seg0_center_ch_freq;
+	uint32_t    vht_seg1_center_ch_freq;
 	uint32_t   band;
 };
 
