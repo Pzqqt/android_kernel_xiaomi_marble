@@ -517,12 +517,6 @@ int sde_power_resource_init(struct platform_device *pdev,
 		}
 	}
 
-	if (of_find_property(pdev->dev.of_node, "qcom,dss-cx-ipeak", NULL))
-		phandle->dss_cx_ipeak = cx_ipeak_register(pdev->dev.of_node,
-						"qcom,dss-cx-ipeak");
-	else
-		pr_debug("cx ipeak client parse failed\n");
-
 	INIT_LIST_HEAD(&phandle->event_list);
 
 	phandle->rsc_client = NULL;
@@ -575,9 +569,6 @@ void sde_power_resource_deinit(struct platform_device *pdev,
 		list_del(&curr_event->list);
 	}
 	mutex_unlock(&phandle->phandle_lock);
-
-	if (phandle->dss_cx_ipeak)
-		cx_ipeak_unregister(phandle->dss_cx_ipeak);
 
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
 		sde_power_data_bus_unregister(&phandle->data_bus_handle[i]);
@@ -757,47 +748,11 @@ vreg_err:
 	return rc;
 }
 
-int sde_cx_ipeak_vote(struct sde_power_handle *phandle, struct dss_clk *clock,
-		u64 requested_clk_rate, u64 prev_clk_rate, bool enable_vote)
-{
-	int ret = 0;
-	u64 curr_core_clk_rate, max_core_clk_rate, prev_core_clk_rate;
-
-	if (!phandle->dss_cx_ipeak) {
-		pr_debug("%pS->%s: Invalid input\n",
-				__builtin_return_address(0), __func__);
-		return -EOPNOTSUPP;
-	}
-
-	if (strcmp("core_clk", clock->clk_name)) {
-		pr_debug("Not a core clk , cx_ipeak vote not needed\n");
-		return -EOPNOTSUPP;
-	}
-
-	curr_core_clk_rate = clock->rate;
-	max_core_clk_rate = clock->max_rate;
-	prev_core_clk_rate = prev_clk_rate;
-
-	if (enable_vote && requested_clk_rate == max_core_clk_rate &&
-				curr_core_clk_rate != requested_clk_rate)
-		ret = cx_ipeak_update(phandle->dss_cx_ipeak, true);
-	else if (!enable_vote && requested_clk_rate != max_core_clk_rate &&
-				prev_core_clk_rate == max_core_clk_rate)
-		ret = cx_ipeak_update(phandle->dss_cx_ipeak, false);
-
-	if (ret)
-		SDE_EVT32(ret, enable_vote, requested_clk_rate,
-					curr_core_clk_rate, prev_core_clk_rate);
-
-	return ret;
-}
-
 int sde_power_clk_set_rate(struct sde_power_handle *phandle, char *clock_name,
 	u64 rate)
 {
 	int i, rc = -EINVAL;
 	struct dss_module_power *mp;
-	u64 prev_clk_rate, requested_clk_rate;
 
 	if (!phandle) {
 		pr_err("invalid input power handle\n");
@@ -811,15 +766,8 @@ int sde_power_clk_set_rate(struct sde_power_handle *phandle, char *clock_name,
 					(rate > mp->clk_config[i].max_rate))
 				rate = mp->clk_config[i].max_rate;
 
-			prev_clk_rate = mp->clk_config[i].rate;
-			requested_clk_rate = rate;
-			sde_cx_ipeak_vote(phandle, &mp->clk_config[i],
-				requested_clk_rate, prev_clk_rate, true);
 			mp->clk_config[i].rate = rate;
 			rc = msm_dss_single_clk_set_rate(&mp->clk_config[i]);
-			if (!rc)
-				sde_cx_ipeak_vote(phandle, &mp->clk_config[i],
-				   requested_clk_rate, prev_clk_rate, false);
 			break;
 		}
 	}

@@ -19,7 +19,6 @@
 
 #include <linux/sde_io_util.h>
 #include <linux/interconnect.h>
-#include <soc/qcom/cx_ipeak.h>
 
 /* event will be triggered before power handler disable */
 #define SDE_POWER_EVENT_PRE_DISABLE	0x1
@@ -144,7 +143,6 @@ struct sde_power_event {
  * @event_list: current power handle event list
  * @rsc_client: sde rsc client pointer
  * @rsc_client_init: boolean to control rsc client create
- * @dss_cx_ipeak: client pointer for cx ipeak driver
  */
 struct sde_power_handle {
 	struct dss_module_power mp;
@@ -158,7 +156,6 @@ struct sde_power_handle {
 	struct list_head event_list;
 	struct sde_rsc_client *rsc_client;
 	bool rsc_client_init;
-	struct cx_ipeak_client *dss_cx_ipeak;
 };
 
 /**
