@@ -15423,34 +15423,45 @@ static inline void csr_update_sae_config(struct join_req *csr_join_req,
  */
 static uint8_t csr_get_nss_supported_by_sta_and_ap(tDot11fIEVHTCaps *vht_caps,
 						   tDot11fIEHTCaps *ht_caps,
+						   tDot11fIEhe_cap *he_cap,
 						   uint32_t dot11_mode)
 {
-	bool vht_capability, ht_capability;
+	bool vht_capability, ht_capability, he_capability;
 
 	vht_capability = IS_DOT11_MODE_VHT(dot11_mode);
 	ht_capability = IS_DOT11_MODE_HT(dot11_mode);
+	he_capability = IS_DOT11_MODE_HE(dot11_mode);
 
-	if (vht_capability && vht_caps->present) {
+	if (he_capability && he_cap->present) {
+		if ((he_cap->rx_he_mcs_map_lt_80 & 0xC0) != 0xC0)
+			return NSS_4x4_MODE;
+
+		if ((he_cap->rx_he_mcs_map_lt_80 & 0x30) != 0x30)
+			return NSS_3x3_MODE;
+
+		if ((he_cap->rx_he_mcs_map_lt_80 & 0x0C) != 0x0C)
+			return NSS_2x2_MODE;
+	} else if (vht_capability && vht_caps->present) {
 		if ((vht_caps->rxMCSMap & 0xC0) != 0xC0)
-			return 4;
+			return NSS_4x4_MODE;
 
 		if ((vht_caps->rxMCSMap & 0x30) != 0x30)
-			return 3;
+			return NSS_3x3_MODE;
 
 		if ((vht_caps->rxMCSMap & 0x0C) != 0x0C)
-			return 2;
+			return NSS_2x2_MODE;
 	} else if (ht_capability && ht_caps->present) {
 		if (ht_caps->supportedMCSSet[3])
-			return 4;
+			return NSS_4x4_MODE;
 
 		if (ht_caps->supportedMCSSet[2])
-			return 3;
+			return NSS_3x3_MODE;
 
 		if (ht_caps->supportedMCSSet[1])
-			return 2;
+			return NSS_2x2_MODE;
 	}
 
-	return 1;
+	return NSS_1x1_MODE;
 }
 
 /**
@@ -15785,7 +15796,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		vendor_ap_search_attr.mac_addr = &pBssDescription->bssId[0];
 		vendor_ap_search_attr.nss = csr_get_nss_supported_by_sta_and_ap(
 						&pIes->VHTCaps, &pIes->HTCaps,
-						dot11mode);
+						&pIes->he_cap, dot11mode);
 		vendor_ap_search_attr.ht_cap = pIes->HTCaps.present;
 		vendor_ap_search_attr.vht_cap = pIes->VHTCaps.present;
 		vendor_ap_search_attr.enable_2g =
@@ -15816,7 +15827,9 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (!force_max_nss)
 			ap_nss = csr_get_nss_supported_by_sta_and_ap(
 						&pIes->VHTCaps,
-						&pIes->HTCaps, dot11mode);
+						&pIes->HTCaps,
+						&pIes->he_cap,
+						dot11mode);
 		if (!force_max_nss && pSession->nss > ap_nss) {
 			pSession->nss = ap_nss;
 			pSession->vdev_nss = pSession->nss;

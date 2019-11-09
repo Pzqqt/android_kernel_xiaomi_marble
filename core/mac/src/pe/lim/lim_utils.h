@@ -1030,6 +1030,17 @@ void lim_copy_bss_he_cap(struct pe_session *session,
 			 struct start_bss_req *sme_start_bss_req);
 
 /**
+ * lim_update_he_6gop_assoc_resp() - Update HE 6GHz op info to BSS params
+ * @add_bss: pointer to add bss params
+ * @he_op: Pointer to HE operation info IE
+ * @session: Pointer to Session entry struct
+ *
+ * Return: None
+ */
+void lim_update_he_6gop_assoc_resp(struct bss_params *pAddBssParams,
+				   tDot11fIEhe_op *he_op,
+				   struct pe_session *pe_session);
+/**
  * lim_copy_join_req_he_cap() - Copy HE capability to PE session from Join req
  * and update as per bandwidth supported
  * @session: pointer to PE session
@@ -1144,6 +1155,19 @@ static inline bool lim_is_session_he_capable(struct pe_session *session)
 }
 
 /**
+ * lim_update_he_bw_cap_mcs(): Update he mcs map per bandwidth
+ * @session_entry: pointer to PE session
+ *
+ * Return: None
+ */
+void lim_update_he_bw_cap_mcs(struct pe_session *session);
+
+static inline bool lim_is_he_6ghz_band(struct pe_session *session)
+{
+	return session->he_6ghz_band;
+}
+
+/**
  * lim_get_session_he_frag_cap(): Get session HE fragmentation cap
  * @session: pointer to session
  *
@@ -1252,6 +1276,13 @@ static inline void lim_add_bss_he_cfg(struct bss_params *add_bss,
 {
 }
 
+static inline void lim_update_he_6gop_assoc_resp(
+					struct bss_params *pAddBssParams,
+					tDot11fIEhe_op *he_op,
+					struct pe_session *pe_session)
+{
+}
+
 static inline void lim_intersect_ap_he_caps(struct pe_session *session,
 		struct bss_params *add_bss,	tSchBeaconStruct *pBeaconStruct,
 		tpSirAssocRsp assoc_rsp)
@@ -1309,6 +1340,15 @@ static inline void lim_update_sta_he_capable(struct mac_context *mac,
 }
 
 static inline bool lim_is_session_he_capable(struct pe_session *session)
+{
+	return false;
+}
+
+static inline void lim_update_he_bw_cap_mcs(struct pe_session *session)
+{
+}
+
+static inline bool lim_is_he_6ghz_band(struct pe_session *session)
 {
 	return false;
 }

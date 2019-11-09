@@ -6718,6 +6718,27 @@ void lim_add_bss_he_cfg(struct bss_params *add_bss, struct pe_session *session)
 	add_bss->he_sta_obsspd = session->he_sta_obsspd;
 }
 
+void lim_update_he_6gop_assoc_resp(struct bss_params *pAddBssParams,
+				   tDot11fIEhe_op *he_op,
+				   struct pe_session *pe_session)
+{
+	if (!pe_session->he_6ghz_band)
+		return;
+
+	if (!he_op->oper_info_6g_present) {
+		pe_debug("6G operation info not present in beacon");
+		return;
+	}
+	if (!pe_session->ch_width)
+		return;
+
+	pAddBssParams->ch_width = QDF_MIN(he_op->oper_info_6g.info.ch_width,
+					  pe_session->ch_width);
+
+	if (pAddBssParams->ch_width == CH_WIDTH_160MHZ)
+		pAddBssParams->ch_width = pe_session->ch_width;
+}
+
 void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 			      struct pe_session *session_entry)
 {

@@ -1264,6 +1264,10 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 			params->supportedRates.tx_he_mcs_map_80_80;
 	}
 
+#define HE2x2MCSMASK 0xc
+
+	peer->peer_nss = ((params->supportedRates.rx_he_mcs_map_lt_80 &
+			 HE2x2MCSMASK) == HE2x2MCSMASK) ? 1 : 2;
 	for (i = 0; i < peer->peer_he_mcs_count; i++)
 		WMA_LOGD(FL("[HE - MCS Map: %d] rx_mcs: 0x%x, tx_mcs: 0x%x"), i,
 			peer->peer_he_rx_mcs_set[i],

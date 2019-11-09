@@ -519,9 +519,20 @@ lim_handle_assoc_reject_status(struct mac_context *mac_ctx,
  * Return: nss advertised by AP in beacon
  */
 static uint8_t lim_get_nss_supported_by_ap(tDot11fIEVHTCaps *vht_caps,
-					   tDot11fIEHTCaps *ht_caps)
+					   tDot11fIEHTCaps *ht_caps,
+					   tDot11fIEhe_cap *he_caps)
 {
-	if (vht_caps->present) {
+
+	if (he_caps->present) {
+		if ((he_caps->rx_he_mcs_map_lt_80 & 0xC0) != 0xC0)
+			return NSS_4x4_MODE;
+
+		if ((he_caps->rx_he_mcs_map_lt_80 & 0x30) != 0x30)
+			return NSS_3x3_MODE;
+
+		if ((he_caps->rx_he_mcs_map_lt_80 & 0x0C) != 0x0C)
+			return NSS_2x2_MODE;
+	} else if (vht_caps->present) {
 		if ((vht_caps->rxMCSMap & 0xC0) != 0xC0)
 			return NSS_4x4_MODE;
 
@@ -859,7 +870,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 			       QDF_STATUS_SUCCESS), assoc_rsp->status_code);
 
 	ap_nss = lim_get_nss_supported_by_ap(&assoc_rsp->VHTCaps,
-					     &assoc_rsp->HTCaps);
+					     &assoc_rsp->HTCaps,
+					     &assoc_rsp->he_cap);
 
 	if (subtype == LIM_REASSOC) {
 		pe_debug("Successfully Reassociated with BSS");

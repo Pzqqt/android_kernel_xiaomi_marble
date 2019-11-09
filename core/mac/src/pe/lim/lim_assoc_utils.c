@@ -1761,6 +1761,8 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 	tSirMacRateSet tempRateSet2;
 	uint32_t i, j, val, min, isArate = 0;
 	qdf_size_t val_len;
+	uint8_t aRateIndex = 0;
+	uint8_t bRateIndex = 0;
 
 	/* copy operational rate set from pe_session */
 	if (pe_session->rateSet.numRates <= WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
@@ -1806,42 +1808,31 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 	 * Sort rates in tempRateSet (they are likely to be already sorted)
 	 * put the result in pSupportedRates
 	 */
-	{
-		uint8_t aRateIndex = 0;
-		uint8_t bRateIndex = 0;
 
-		qdf_mem_zero(pRates, sizeof(*pRates));
-		for (i = 0; i < tempRateSet.numRates; i++) {
-			min = 0;
-			val = 0xff;
-			isArate = 0;
-			for (j = 0;
-			     (j < tempRateSet.numRates)
-			     && (j < WLAN_SUPPORTED_RATES_IE_MAX_LEN); j++) {
-				if ((uint32_t) (tempRateSet.rate[j] & 0x7f) <
-				    val) {
-					val = tempRateSet.rate[j] & 0x7f;
-					min = j;
-				}
+	qdf_mem_zero(pRates, sizeof(*pRates));
+	for (i = 0; i < tempRateSet.numRates; i++) {
+		min = 0;
+		val = 0xff;
+		isArate = 0;
+		for (j = 0; (j < tempRateSet.numRates) &&
+		     (j < WLAN_SUPPORTED_RATES_IE_MAX_LEN); j++) {
+			if ((uint32_t)(tempRateSet.rate[j] & 0x7f) <
+					val) {
+				val = tempRateSet.rate[j] & 0x7f;
+				min = j;
 			}
-			if (sirIsArate(tempRateSet.rate[min] & 0x7f))
-				isArate = 1;
-			/*
-			 * HAL needs to know whether the rate is basic rate or not, as it needs to
-			 * update the response rate table accordingly. e.g. if one of the 11a rates is
-			 * basic rate, then that rate can be used for sending control frames.
-			 * HAL updates the response rate table whenever basic rate set is changed.
-			 */
-			if (basicOnly) {
-				if (tempRateSet.rate[min] & 0x80) {
-					if (isArate)
-						pRates->llaRates[aRateIndex++] =
-							tempRateSet.rate[min];
-					else
-						pRates->llbRates[bRateIndex++] =
-							tempRateSet.rate[min];
-				}
-			} else {
+		}
+		if (sirIsArate(tempRateSet.rate[min] & 0x7f))
+			isArate = 1;
+		/*
+		 * HAL needs to know whether the rate is basic rate or not,
+		 * as it needs to update the response rate table accordingly.
+		 * e.g. if one of the 11a rates is basic rate, then that rate
+		 * can be used for sending control frames. HAL updates the
+		 * response rate table whenever basic rate set is changed.
+		 */
+		if (basicOnly) {
+			if (tempRateSet.rate[min] & 0x80) {
 				if (isArate)
 					pRates->llaRates[aRateIndex++] =
 						tempRateSet.rate[min];
@@ -1849,11 +1840,19 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 					pRates->llbRates[bRateIndex++] =
 						tempRateSet.rate[min];
 			}
-			tempRateSet.rate[min] = 0xff;
+		} else {
+			if (isArate)
+				pRates->llaRates[aRateIndex++] =
+					tempRateSet.rate[min];
+			else
+				pRates->llbRates[bRateIndex++] =
+					tempRateSet.rate[min];
 		}
+		tempRateSet.rate[min] = 0xff;
 	}
 
-	if (IS_DOT11_MODE_HT(pe_session->dot11mode)) {
+	if (IS_DOT11_MODE_HT(pe_session->dot11mode) &&
+	    !lim_is_he_6ghz_band(pe_session)) {
 		val_len = SIZE_OF_SUPPORTED_MCS_SET;
 		if (wlan_mlme_get_cfg_str(
 			pRates->supportedMCSSet,
@@ -3667,6 +3666,8 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			(pAssocRsp->he_cap.present)) {
 		lim_add_bss_he_cap(pAddBssParams, pAssocRsp);
 		lim_add_bss_he_cfg(pAddBssParams, pe_session);
+		lim_update_he_6gop_assoc_resp(pAddBssParams, &pAssocRsp->he_op,
+					      pe_session);
 	}
 	/*
 	 * Populate the STA-related parameters here
@@ -3875,6 +3876,16 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 				pAddBssParams->staContext.maxAmpduSize,
 				pAddBssParams->staContext.htLdpcCapable,
 				pAddBssParams->staContext.vhtLdpcCapable);
+	}
+	if (lim_is_he_6ghz_band(pe_session)) {
+		if (lim_is_session_he_capable(pe_session) &&
+		    pAssocRsp->he_cap.present) {
+			lim_intersect_ap_he_caps(pe_session,
+						 pAddBssParams,
+						 NULL,
+						 pAssocRsp);
+			lim_update_he_stbc_capable(&pAddBssParams->staContext);
+		}
 	}
 	pAddBssParams->staContext.smesessionId =
 		pe_session->smeSessionId;
