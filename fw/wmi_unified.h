@@ -12263,6 +12263,11 @@ typedef struct {
     A_UINT32 mac_clk_mhz;
     /** unique id identifying the VDEV */
     A_UINT32 vdev_id;
+    /**
+     * Noise Floor value for all chain in dBm.
+     * If per_chain_noise_floor value is 0 then it should be ignored.
+     */
+    A_UINT32 per_chain_noise_floor[WMI_MAX_CHAINS];
 } wmi_chan_info_event_fixed_param;
 
 /**
