@@ -22,7 +22,10 @@
  * WLAN Host Device Driver Data Stall detection API implementation
  */
 
+#include <wlan_qct_sys.h>
+#include <scheduler_api.h>
 #include "wlan_hdd_data_stall_detection.h"
+#include "wlan_hdd_main.h"
 #include "cdp_txrx_cmn.h"
 #include "cdp_txrx_misc.h"
 #include "ol_txrx_types.h"
@@ -47,6 +50,7 @@ static void hdd_data_stall_send_event(uint32_t reason)
 				struct host_event_wlan_datastall);
 	qdf_mem_zero(&sta_data_stall, sizeof(sta_data_stall));
 	sta_data_stall.reason = reason;
+	hdd_debug("Posting data stall event %x", reason);
 	WLAN_HOST_DIAG_EVENT_REPORT(&sta_data_stall, EVENT_WLAN_STA_DATASTALL);
 }
 #else
@@ -54,6 +58,20 @@ static inline void hdd_data_stall_send_event(uint32_t reason)
 {
 }
 #endif
+
+/**
+ * hdd_data_stall_process_event() - Process data stall event
+ * @message: data stall message
+ *
+ * Process data stall message
+ *
+ * Return: void
+ */
+static void hdd_data_stall_process_event(
+			struct data_stall_event_info *data_stall_info)
+{
+	hdd_data_stall_send_event(data_stall_info->data_stall_type);
+}
 
 /**
  * hdd_data_stall_process_cb() - Process data stall message
@@ -64,9 +82,34 @@ static inline void hdd_data_stall_send_event(uint32_t reason)
  * Return: void
  */
 static void hdd_data_stall_process_cb(
-			struct data_stall_event_info *data_stall_info)
+			struct data_stall_event_info *info)
 {
-	hdd_data_stall_send_event(data_stall_info->data_stall_type);
+	struct scheduler_msg msg = {0};
+	struct data_stall_event_info *data_stall_event_info;
+	QDF_STATUS status;
+
+	data_stall_event_info = qdf_mem_malloc(sizeof(*data_stall_event_info));
+	if (!data_stall_event_info)
+		return;
+
+	data_stall_event_info->data_stall_type = info->data_stall_type;
+	data_stall_event_info->indicator = info->indicator;
+	data_stall_event_info->pdev_id = info->pdev_id;
+	data_stall_event_info->recovery_type = info->recovery_type;
+	data_stall_event_info->vdev_id_bitmap = info->vdev_id_bitmap;
+
+	sys_build_message_header(SYS_MSG_ID_DATA_STALL_MSG, &msg);
+	/* Save callback and data */
+	msg.callback = hdd_data_stall_process_event;
+	msg.bodyptr = data_stall_event_info;
+	msg.bodyval = 0;
+
+	status = scheduler_post_message(QDF_MODULE_ID_HDD,
+					QDF_MODULE_ID_HDD,
+					QDF_MODULE_ID_SYS, &msg);
+
+	if (status != QDF_STATUS_SUCCESS)
+		qdf_mem_free(data_stall_event_info);
 }
 
 int hdd_register_data_stall_detect_cb(void)
@@ -75,6 +118,7 @@ int hdd_register_data_stall_detect_cb(void)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* Register the data stall callback */
+	hdd_debug("Register data stall detect callback");
 	status = cdp_data_stall_cb_register(soc, OL_TXRX_PDEV_ID,
 					    hdd_data_stall_process_cb);
 	return qdf_status_to_os_return(status);
@@ -86,6 +130,7 @@ int hdd_deregister_data_stall_detect_cb(void)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* De-Register the data stall callback */
+	hdd_debug("De-Register data stall detect callback");
 	status = cdp_data_stall_cb_deregister(soc, OL_TXRX_PDEV_ID,
 					      hdd_data_stall_process_cb);
 	return qdf_status_to_os_return(status);

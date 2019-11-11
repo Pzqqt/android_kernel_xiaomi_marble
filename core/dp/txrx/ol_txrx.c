@@ -5318,9 +5318,7 @@ static void ol_txrx_post_data_stall_event(
 				enum data_stall_log_recovery_type recovery_type)
 {
 	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
-	struct scheduler_msg msg = {0};
-	QDF_STATUS status;
-	struct data_stall_event_info *data_stall_info;
+	struct data_stall_event_info data_stall_info;
 	ol_txrx_pdev_handle pdev;
 
 	if (qdf_unlikely(!soc)) {
@@ -5335,32 +5333,27 @@ static void ol_txrx_post_data_stall_event(
 		return;
 	}
 
-	data_stall_info = qdf_mem_malloc(sizeof(*data_stall_info));
-	if (!data_stall_info)
+	if (!pdev->data_stall_detect_callback) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: data stall cb not registered", __func__);
 		return;
+	}
 
-	data_stall_info->indicator = indicator;
-	data_stall_info->data_stall_type = data_stall_type;
-	data_stall_info->vdev_id_bitmap = vdev_id_bitmap;
-	data_stall_info->pdev_id = pdev_id;
-	data_stall_info->recovery_type = recovery_type;
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: data_stall_type: %x pdev_id: %d",
+		  __func__, data_stall_type, pdev_id);
 
-	if (data_stall_info->data_stall_type ==
+	data_stall_info.indicator = indicator;
+	data_stall_info.data_stall_type = data_stall_type;
+	data_stall_info.vdev_id_bitmap = vdev_id_bitmap;
+	data_stall_info.pdev_id = pdev_id;
+	data_stall_info.recovery_type = recovery_type;
+
+	if (data_stall_info.data_stall_type ==
 				DATA_STALL_LOG_FW_RX_REFILL_FAILED)
 		htt_log_rx_ring_info(pdev->htt_pdev);
 
-	sys_build_message_header(SYS_MSG_ID_DATA_STALL_MSG, &msg);
-	/* Save callback and data */
-	msg.callback = pdev->data_stall_detect_callback;
-	msg.bodyptr = data_stall_info;
-	msg.bodyval = 0;
-
-	status = scheduler_post_message(QDF_MODULE_ID_TXRX,
-					QDF_MODULE_ID_HDD,
-					QDF_MODULE_ID_SYS, &msg);
-
-	if (status != QDF_STATUS_SUCCESS)
-		qdf_mem_free(data_stall_info);
+	pdev->data_stall_detect_callback(&data_stall_info);
 }
 
 void
