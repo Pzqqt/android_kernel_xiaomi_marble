@@ -247,6 +247,23 @@ int htc_runtime_resume(HTC_HANDLE htc_ctx)
 static inline void htc_runtime_pm_init(HTC_TARGET *target) { }
 #endif
 
+#if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
+static
+void htc_update_rx_bundle_stats(void *ctx, uint8_t no_of_pkt_in_bundle)
+{
+	HTC_TARGET *target = (HTC_TARGET *)ctx;
+
+	no_of_pkt_in_bundle--;
+	if (target && (no_of_pkt_in_bundle < HTC_MAX_MSG_PER_BUNDLE_RX))
+		target->rx_bundle_stats[no_of_pkt_in_bundle]++;
+}
+#else
+static
+void htc_update_rx_bundle_stats(void *ctx, uint8_t no_of_pkt_in_bundle)
+{
+}
+#endif
+
 /* registered target arrival callback from the HIF layer */
 HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 			qdf_device_t osdev, uint32_t con_mode)
@@ -316,6 +333,7 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 		htcCallbacks.txResourceAvailHandler =
 						 htc_tx_resource_avail_handler;
 		htcCallbacks.fwEventHandler = htc_fw_event_handler;
+		htcCallbacks.update_bundle_stats = htc_update_rx_bundle_stats;
 		target->hif_dev = ol_sc;
 
 		/* Get HIF default pipe for HTC message exchange */

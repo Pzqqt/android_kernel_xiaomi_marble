@@ -679,6 +679,11 @@ static void usb_hif_usb_recv_complete(struct urb *urb)
 		}
 		/* note: queue implements a lock */
 		skb_queue_tail(&pipe->io_comp_queue, buf);
+
+		if (pipe->device->htc_callbacks.update_bundle_stats)
+			pipe->device->htc_callbacks.update_bundle_stats
+				(pipe->device->htc_callbacks.Context, 1);
+
 		HIF_USB_SCHEDULE_WORK(pipe);
 	} while (false);
 
@@ -722,6 +727,7 @@ static void usb_hif_usb_recv_bundle_complete(struct urb *urb)
 	HTC_FRAME_HDR *HtcHdr;
 	uint16_t payloadLen;
 	qdf_nbuf_t new_skb = NULL;
+	uint8_t no_of_pkt_in_bundle;
 
 	HIF_DBG("+%s: recv pipe: %d, stat:%d,len:%d urb:0x%pK",
 		__func__,
@@ -769,6 +775,7 @@ static void usb_hif_usb_recv_bundle_complete(struct urb *urb)
 
 		qdf_nbuf_peek_header(buf, &netdata, &netlen);
 		netlen = urb->actual_length;
+		no_of_pkt_in_bundle = 0;
 
 		do {
 			uint16_t frame_len;
@@ -818,7 +825,14 @@ static void usb_hif_usb_recv_bundle_complete(struct urb *urb)
 			new_skb = NULL;
 			netdata += frame_len;
 			netlen -= frame_len;
+			no_of_pkt_in_bundle++;
 		} while (netlen);
+
+		if (pipe->device->htc_callbacks.update_bundle_stats)
+			pipe->device->htc_callbacks.update_bundle_stats
+				(pipe->device->htc_callbacks.Context,
+				 no_of_pkt_in_bundle);
+
 		HIF_USB_SCHEDULE_WORK(pipe);
 	} while (false);
 

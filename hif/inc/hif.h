@@ -672,6 +672,7 @@ struct hif_msg_callbacks {
 					uint8_t pipeID);
 	void (*txResourceAvailHandler)(void *context, uint8_t pipe);
 	void (*fwEventHandler)(void *context, QDF_STATUS status);
+	void (*update_bundle_stats)(void *context, uint8_t no_of_pkt_in_bundle);
 };
 
 enum hif_target_status {

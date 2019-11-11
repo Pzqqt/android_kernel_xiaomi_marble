@@ -295,8 +295,10 @@ htc_send_update_tx_bundle_stats(HTC_TARGET *target,
 				qdf_size_t data_len,
 				int TxCreditSize)
 {
-	if ((data_len / TxCreditSize) <= HTC_MAX_MSG_PER_BUNDLE_TX)
-		target->tx_bundle_stats[(data_len / TxCreditSize) - 1]++;
+	int index = ((data_len + TxCreditSize - 1) / TxCreditSize) - 1;
+
+	if (index < HTC_MAX_MSG_PER_BUNDLE_TX)
+		target->tx_bundle_stats[index]++;
 }
 
 /**
