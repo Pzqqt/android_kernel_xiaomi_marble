@@ -731,7 +731,6 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(struct hdd_context *hdd_ctx,
 						 data)
 {
 	struct sk_buff *skb;
-	struct timespec ts;
 	struct hdd_ext_scan_context *context;
 
 	int flags = cds_get_gfp_flags();
@@ -767,8 +766,7 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(struct hdd_context *hdd_ctx,
 	 * Android does not want the time stamp from the frame.
 	 * Instead it wants a monotonic increasing value since boot
 	 */
-	get_monotonic_boottime(&ts);
-	data->ap.ts = ((u64)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+	data->ap.ts = qdf_get_monotonic_boottime();
 
 	hdd_debug("Req Id %u More Data %u", data->requestId,
 		  data->moreData);
