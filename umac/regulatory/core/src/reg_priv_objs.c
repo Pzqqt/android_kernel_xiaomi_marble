@@ -32,6 +32,7 @@
 #include "reg_services_common.h"
 #include "reg_build_chan_list.h"
 #include "reg_host_11d.h"
+#include "reg_callbacks.h"
 
 struct wlan_regulatory_psoc_priv_obj *reg_get_psoc_obj(
 		struct wlan_objmgr_psoc *psoc)
@@ -102,6 +103,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	for (pdev_cnt = 0; pdev_cnt < PSOC_MAX_PHY_REG_CAP; pdev_cnt++) {
 		mas_chan_list =
 			soc_reg_obj->mas_chan_params[pdev_cnt].mas_chan_list;
+		soc_reg_obj->chan_list_recvd[pdev_cnt] = false;
 
 		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
 			mas_chan_list[chan_enum].chan_flags |=
@@ -232,6 +234,8 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 
 	psoc_reg_rules = &psoc_priv_obj->mas_chan_params[pdev_id].reg_rules;
 	reg_save_reg_rules_to_pdev(psoc_reg_rules, pdev_priv_obj);
+	pdev_priv_obj->chan_list_recvd =
+		psoc_priv_obj->chan_list_recvd[pdev_id];
 
 	status = wlan_objmgr_pdev_component_obj_attach(
 			pdev, WLAN_UMAC_COMP_REGULATORY, pdev_priv_obj,
@@ -243,6 +247,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	}
 
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+	reg_send_scheduler_msg_nb(parent_psoc, pdev);
 
 	if (!psoc_priv_obj->is_11d_offloaded)
 		reg_11d_host_scan_init(parent_psoc);

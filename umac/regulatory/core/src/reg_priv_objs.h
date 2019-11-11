@@ -80,6 +80,7 @@ struct chan_change_cbk_entry {
 
 /**
  * struct wlan_regulatory_psoc_priv_obj - wlan regulatory psoc private object
+ * @chan_list_recvd: whether channel list has been received
  * @new_user_ctry_pending: In this array, element[phy_id] is true if any user
  *	country update is pending for pdev (phy_id), used in case of MCL.
  * @new_init_ctry_pending: In this array, element[phy_id] is true if any user
@@ -93,6 +94,7 @@ struct chan_change_cbk_entry {
  */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
+	bool chan_list_recvd[PSOC_MAX_PHY_REG_CAP];
 	bool offload_enabled;
 	bool six_ghz_supported;
 	uint8_t num_phy;
@@ -172,6 +174,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	bool sap_state;
 	struct reg_rule_info reg_rules;
 	qdf_spinlock_t reg_rules_lock;
+	bool chan_list_recvd;
 };
 
 /**

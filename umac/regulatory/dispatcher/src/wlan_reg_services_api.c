@@ -344,8 +344,6 @@ QDF_STATUS wlan_regulatory_init(void)
 
 	reg_debug("regulatory handlers registered with obj mgr");
 
-	channel_map = channel_map_global;
-
 	return status;
 
 unreg_pdev_create:
@@ -438,21 +436,6 @@ QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
 		tx_ops->unregister_ch_avoid_event_handler(psoc, NULL);
 
 	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS regulatory_pdev_open(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_objmgr_psoc *parent_psoc;
-	QDF_STATUS status;
-
-	parent_psoc = wlan_pdev_get_psoc(pdev);
-
-	status = reg_send_scheduler_msg_sb(parent_psoc, pdev);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		reg_err("scheduler send msg failed");
-
-	return status;
 }
 
 QDF_STATUS regulatory_pdev_close(struct wlan_objmgr_pdev *pdev)

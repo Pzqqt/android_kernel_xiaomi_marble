@@ -719,6 +719,8 @@ void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	psoc_reg_rules = &psoc_priv_obj->mas_chan_params[pdev_id].reg_rules;
 	reg_save_reg_rules_to_pdev(psoc_reg_rules, pdev_priv_obj);
 	reg_modify_chan_list_for_japan(pdev);
+	pdev_priv_obj->chan_list_recvd =
+		psoc_priv_obj->chan_list_recvd[pdev_id];
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
 	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
@@ -930,6 +932,7 @@ QDF_STATUS reg_process_master_chan_list(
 					      mas_chan_list);
 	}
 
+	soc_reg->chan_list_recvd[phy_id] = true;
 	if (soc_reg->new_user_ctry_pending[phy_id]) {
 		soc_reg->new_user_ctry_pending[phy_id] = false;
 		soc_reg->cc_src = SOURCE_USERSPACE;
