@@ -1081,12 +1081,11 @@ static QDF_STATUS mon_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-vdevmgr_vdev_delete_rsp_handle(struct vdev_mlme_obj *vdev_mlme,
+vdevmgr_vdev_delete_rsp_handle(struct wlan_objmgr_psoc *psoc,
 			       struct vdev_delete_response *rsp)
 {
-	mlme_legacy_debug("vdev id = %d ",
-			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
-	return wma_vdev_detach_callback(vdev_mlme, rsp);
+	mlme_legacy_debug("vdev id = %d ", rsp->vdev_id);
+	return wma_vdev_detach_callback(rsp);
 }
 
 /**
@@ -1319,7 +1318,6 @@ static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_stop_continue = vdevmgr_mlme_stop_continue,
 	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
-	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
 	.mlme_vdev_ext_stop_rsp = vdevmgr_vdev_stop_rsp_handle,
 	.mlme_vdev_ext_start_rsp = vdevmgr_vdev_start_rsp_handle,
 };
@@ -1370,7 +1368,6 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
 	.mlme_vdev_is_newchan_no_cac = ap_mlme_vdev_is_newchan_no_cac,
-	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
 	.mlme_vdev_ext_stop_rsp = vdevmgr_vdev_stop_rsp_handle,
 	.mlme_vdev_ext_start_rsp = vdevmgr_vdev_start_rsp_handle,
 };
@@ -1383,7 +1380,6 @@ static struct vdev_mlme_ops mon_mlme_ops = {
 	.mlme_vdev_disconnect_peers = mon_mlme_vdev_disconnect_peers,
 	.mlme_vdev_stop_send = mon_mlme_vdev_stop_send,
 	.mlme_vdev_down_send = mon_mlme_vdev_down_send,
-	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
 	.mlme_vdev_ext_start_rsp = vdevmgr_vdev_start_rsp_handle,
 };
 
@@ -1393,4 +1389,5 @@ static struct mlme_ext_ops ext_ops = {
 	.mlme_vdev_ext_hdl_create = vdevmgr_mlme_ext_hdl_create,
 	.mlme_vdev_ext_hdl_destroy = vdevmgr_mlme_ext_hdl_destroy,
 	.mlme_vdev_ext_hdl_post_create = vdevmgr_mlme_ext_post_hdl_create,
+	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
 };

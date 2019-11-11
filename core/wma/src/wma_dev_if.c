@@ -439,9 +439,7 @@ static inline void wma_send_vdev_del_resp(struct del_vdev_params *param)
 		qdf_mem_free(param);
 }
 
-QDF_STATUS wma_vdev_detach_callback(
-				struct vdev_mlme_obj *vdev_mlme,
-				struct vdev_delete_response *rsp)
+QDF_STATUS wma_vdev_detach_callback(struct vdev_delete_response *rsp)
 {
 	tp_wma_handle wma;
 	struct wma_txrx_node *iface = NULL;
@@ -454,7 +452,15 @@ QDF_STATUS wma_vdev_detach_callback(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	iface = &wma->interfaces[vdev_mlme->vdev->vdev_objmgr.vdev_id];
+	/* Sanitize the vdev id*/
+	if (rsp->vdev_id > wma->max_bssid) {
+		wma_err("vdev delete response with invalid vdev_id :%d",
+			rsp->vdev_id);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	iface = &wma->interfaces[rsp->vdev_id];
 
 	if (!iface->del_staself_req) {
 		wma_err(" iface handle is NULL for VDEV_%d", rsp->vdev_id);
