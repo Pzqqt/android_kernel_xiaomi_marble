@@ -424,8 +424,28 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 				 struct csr_roam_info *roam_info,
 				 struct bss_description *bss_desc);
 
+/**
+ * hdd_save_peer() - Save peer MAC address in adapter peer table.
+ * @sta_ctx: pointer to hdd station context
+ * @peer_mac_addr: mac address of new peer
+ *
+ * This information is passed to iwconfig later. The peer that joined
+ * last is passed as information to iwconfig.
+
+ * Return: true if success, false otherwise
+ */
 bool hdd_save_peer(struct hdd_station_ctx *sta_ctx,
 		   struct qdf_mac_addr *peer_mac_addr);
+
+/**
+ * hdd_delete_peer() - removes peer from hdd station context peer table
+ * @sta_ctx: pointer to hdd station context
+ * @peer_mac_addr: mac address of peer to be deleted
+ *
+ * Return: None
+ */
+void hdd_delete_peer(struct hdd_station_ctx *sta_ctx,
+		     struct qdf_mac_addr *peer_mac_addr);
 
 /**
  * hdd_roam_deregister_sta() - deregister station

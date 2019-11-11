@@ -3699,34 +3699,38 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_save_peer() - Save peer MAC address in adapter peer table.
- * @sta_ctx: pointer to hdd station context
- * @sta_id: station ID
- * @peer_mac_addr: mac address of new peer
- *
- * This information is passed to iwconfig later. The peer that joined
- * last is passed as information to iwconfig.
-
- * Return: true if success, false otherwise
- */
 bool hdd_save_peer(struct hdd_station_ctx *sta_ctx,
 		   struct qdf_mac_addr *peer_mac_addr)
 {
 	int idx;
+	struct qdf_mac_addr *mac_addr;
 
 	for (idx = 0; idx < SIR_MAX_NUM_STA_IN_IBSS; idx++) {
-		if (hdd_is_valid_mac_address(
-		    sta_ctx->conn_info.peer_macaddr[idx].bytes)) {
+		mac_addr = &sta_ctx->conn_info.peer_macaddr[idx];
+		if (qdf_is_macaddr_zero(mac_addr)) {
 			hdd_debug("adding peer: %pM at idx: %d",
 				  peer_mac_addr, idx);
-			qdf_copy_macaddr(
-				&sta_ctx->conn_info.peer_macaddr[idx],
-				peer_mac_addr);
+			qdf_copy_macaddr(mac_addr, peer_mac_addr);
 			return true;
 		}
 	}
+
 	return false;
+}
+
+void hdd_delete_peer(struct hdd_station_ctx *sta_ctx,
+		     struct qdf_mac_addr *peer_mac_addr)
+{
+	int i;
+	struct qdf_mac_addr *mac_addr;
+
+	for (i = 0; i < SIR_MAX_NUM_STA_IN_IBSS; i++) {
+		mac_addr = &sta_ctx->conn_info.peer_macaddr[i];
+		if (qdf_is_macaddr_equal(mac_addr, peer_mac_addr)) {
+			qdf_zero_macaddr(mac_addr);
+			return;
+		}
+	}
 }
 
 /**
