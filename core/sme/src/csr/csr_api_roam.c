@@ -5043,8 +5043,9 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 				       bool resetCountry)
 {
 	uint32_t cfgCb = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-	uint8_t channel = 0;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+	uint32_t chan_freq = 0;
+
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
 		return QDF_STATUS_E_FAILURE;
@@ -5088,13 +5089,12 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	/* CB */
 
 	if (CSR_IS_INFRA_AP(pProfile) || CSR_IS_IBSS(pProfile))
-		channel = wlan_reg_freq_to_chan(mac->pdev, pProfile->op_freq);
+		chan_freq = pProfile->op_freq;
 	else if (bss_desc)
-		channel = wlan_reg_freq_to_chan(mac->pdev,
-						bss_desc->chan_freq);
-	if (0 != channel) {
+		chan_freq = bss_desc->chan_freq;
+	if (0 != chan_freq) {
 		/* for now if we are on 2.4 Ghz, CB will be always disabled */
-		if (WLAN_REG_IS_24GHZ_CH(channel))
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
 			cfgCb = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 		else
 			cfgCb = pBssConfig->cbMode;
