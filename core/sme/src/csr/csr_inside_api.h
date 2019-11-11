@@ -298,19 +298,18 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 			   struct csr_roam_profile *pProfile,
 			   enum csr_cfgdot11mode *pReturnCfgDot11Mode,
 			   tDot11fBeaconIEs *pIes);
-bool csr_roam_is_channel_valid(struct mac_context *mac, uint8_t ch_freq);
 
 /**
- * csr_roam_is_chan_freq_valid() - validate channel frequency
+ * csr_roam_is_channel_valid() - validate channel frequency
  * @mac: mac context
- * @freq: channel frequency
+ * @chan_freq: channel frequency
  *
  * This function validates channel frequency present in valid channel
  * list or not.
  *
  * Return: true or false
  */
-bool csr_roam_is_chan_freq_valid(struct mac_context *mac, uint32_t freq);
+bool csr_roam_is_channel_valid(struct mac_context *mac, uint32_t chan_freq);
 
 /**
  * csr_get_cfg_valid_channels() - Get valid channel frequency list

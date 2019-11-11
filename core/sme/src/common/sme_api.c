@@ -5504,16 +5504,7 @@ QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 }
 #endif /* WLAN_FEATURE_PACKET_FILTERING */
 
-/*
- * sme_is_channel_valid() -
- * To check if the channel is valid for currently established domain
- *   This is a synchronous API.
- *
- * mac_handle - The handle returned by mac_open.
- * channel - channel to verify
- * Return true/false, true if channel is valid
- */
-bool sme_is_channel_valid(mac_handle_t mac_handle, uint8_t channel)
+bool sme_is_channel_valid(mac_handle_t mac_handle, uint32_t chan_freq)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	bool valid = false;
@@ -5522,7 +5513,7 @@ bool sme_is_channel_valid(mac_handle_t mac_handle, uint8_t channel)
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 
-		valid = csr_roam_is_channel_valid(mac, channel);
+		valid = csr_roam_is_channel_valid(mac, chan_freq);
 
 		sme_release_global_lock(&mac->sme);
 	}

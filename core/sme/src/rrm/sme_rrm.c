@@ -1128,7 +1128,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 
 		if (beacon_req->channel_info.chan_num != 255) {
 			chan_valid =
-				csr_roam_is_chan_freq_valid(mac, bcn_chan_freq);
+				csr_roam_is_channel_valid(mac, bcn_chan_freq);
 
 			if (chan_valid) {
 				rrm_freq_list[num_chan] = bcn_chan_freq;
@@ -1143,8 +1143,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 			bcn_chan_freq =
 				beacon_req->channel_list.chan_freq_lst[i];
 			chan_valid =
-				csr_roam_is_chan_freq_valid(mac,
-							    bcn_chan_freq);
+				csr_roam_is_channel_valid(mac, bcn_chan_freq);
 
 			if (chan_valid) {
 				rrm_freq_list[num_chan] = bcn_chan_freq;

@@ -4546,19 +4546,18 @@ void hdd_check_and_disconnect_sta_on_invalid_channel(
 		struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *sta_adapter;
-	uint8_t sta_chan;
+	uint32_t sta_chan_freq;
 
-	sta_chan = hdd_get_operating_channel(hdd_ctx, QDF_STA_MODE);
-
-	if (!sta_chan) {
+	sta_chan_freq = hdd_get_operating_chan_freq(hdd_ctx, QDF_STA_MODE);
+	if (!sta_chan_freq) {
 		hdd_err("STA not connected");
 		return;
 	}
 
-	hdd_err("STA connected on chan %d", sta_chan);
+	hdd_err("STA connected on %d", sta_chan_freq);
 
-	if (sme_is_channel_valid(hdd_ctx->mac_handle, sta_chan)) {
-		hdd_err("STA connected on chan %d and it is valid", sta_chan);
+	if (sme_is_channel_valid(hdd_ctx->mac_handle, sta_chan_freq)) {
+		hdd_err("STA connected on %d and it is valid", sta_chan_freq);
 		return;
 	}
 
@@ -4569,7 +4568,7 @@ void hdd_check_and_disconnect_sta_on_invalid_channel(
 		return;
 	}
 
-	hdd_err("chan %d not valid, issue disconnect", sta_chan);
+	hdd_err("chan %d not valid, issue disconnect", sta_chan_freq);
 	/* Issue Disconnect request */
 	wlan_hdd_disconnect(sta_adapter, eCSR_DISCONNECT_REASON_DEAUTH);
 }

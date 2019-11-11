@@ -830,7 +830,7 @@ csr_roam_get_ibss_start_chan_freq50(struct mac_context *mac)
 
 	if (mac->roam.configParam.ad_hoc_ch_freq_5g) {
 		ch_freq = mac->roam.configParam.ad_hoc_ch_freq_5g;
-		if (!csr_roam_is_chan_freq_valid(mac, ch_freq))
+		if (!csr_roam_is_channel_valid(mac, ch_freq))
 			ch_freq = 0;
 	}
 	if (0 == ch_freq
@@ -887,7 +887,7 @@ csr_roam_get_ibss_start_chan_freq24(struct mac_context *mac)
 
 	if (mac->roam.configParam.ad_hoc_ch_freq_2g) {
 		ch_freq = mac->roam.configParam.ad_hoc_ch_freq_2g;
-		if (!csr_roam_is_chan_freq_valid(mac, ch_freq))
+		if (!csr_roam_is_channel_valid(mac, ch_freq))
 			ch_freq = 0;
 	}
 
@@ -2224,7 +2224,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 	if (BAND_2G == band) {
 		for (i = 0; i < inNumChannels; i++) {
 			if (WLAN_REG_IS_24GHZ_CH_FREQ(in_ptr[i]) &&
-			    csr_roam_is_chan_freq_valid(mac, in_ptr[i])) {
+			    csr_roam_is_channel_valid(mac, in_ptr[i])) {
 				csr_freq_list[out_num_chan++] = in_ptr[i];
 			}
 		}
@@ -2232,14 +2232,14 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 		for (i = 0; i < inNumChannels; i++) {
 			/* Add 5G Non-DFS channel */
 			if (WLAN_REG_IS_5GHZ_CH_FREQ(in_ptr[i]) &&
-			    csr_roam_is_chan_freq_valid(mac, in_ptr[i]) &&
+			    csr_roam_is_channel_valid(mac, in_ptr[i]) &&
 			    !wlan_reg_is_dfs_for_freq(mac->pdev, in_ptr[i])) {
 				csr_freq_list[out_num_chan++] = in_ptr[i];
 			}
 		}
 	} else if (BAND_ALL == band) {
 		for (i = 0; i < inNumChannels; i++) {
-			if (csr_roam_is_chan_freq_valid(mac, in_ptr[i]) &&
+			if (csr_roam_is_channel_valid(mac, in_ptr[i]) &&
 			    !wlan_reg_is_dfs_for_freq(mac->pdev, in_ptr[i])) {
 				csr_freq_list[out_num_chan++] = in_ptr[i];
 			}
@@ -11433,8 +11433,8 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 					filter->num_of_channels);
 				break;
 			}
-			if (csr_roam_is_chan_freq_valid(mac_ctx,
-						ch_info->freq_list[i])) {
+			if (csr_roam_is_channel_valid(mac_ctx,
+						      ch_info->freq_list[i])) {
 				filter->chan_freq_list[filter->num_of_channels] =
 							ch_info->freq_list[i];
 				filter->num_of_channels++;
@@ -13966,32 +13966,25 @@ error:
 	return maxTxPwr;
 }
 
-bool csr_roam_is_channel_valid(struct mac_context *mac, uint8_t channel)
+bool csr_roam_is_channel_valid(struct mac_context *mac, uint32_t chan_freq)
 {
-	bool fValid = false;
-	uint32_t id_Valid_ch;
+	bool valid = false;
+	uint32_t id_valid_ch;
 	uint32_t len = sizeof(mac->roam.valid_ch_freq_list);
 
 	if (QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels(mac,
 					mac->roam.valid_ch_freq_list, &len))) {
-		for (id_Valid_ch = 0; (id_Valid_ch < len);
-		     id_Valid_ch++) {
-			if (channel == wlan_reg_freq_to_chan(mac->pdev,
-			    mac->roam.valid_ch_freq_list[id_Valid_ch])) {
-				fValid = true;
+		for (id_valid_ch = 0; (id_valid_ch < len);
+		     id_valid_ch++) {
+			if (chan_freq ==
+			    mac->roam.valid_ch_freq_list[id_valid_ch]) {
+				valid = true;
 				break;
 			}
 		}
 	}
 	mac->roam.numValidChannels = len;
-	return fValid;
-}
-
-bool csr_roam_is_chan_freq_valid(struct mac_context *mac, uint32_t freq)
-{
-	return csr_roam_is_channel_valid(
-		mac,
-		(uint8_t)wlan_reg_freq_to_chan(mac->pdev, freq));
+	return valid;
 }
 
 /* This function check and validate whether the NIC can do CB (40MHz) */

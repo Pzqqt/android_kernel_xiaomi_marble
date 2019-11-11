@@ -778,9 +778,20 @@ QDF_STATUS sme_get_cfg_valid_channels(uint32_t *valid_ch_freq, uint32_t *len);
 QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 		tpSirRcvFltMcAddrList pMulticastAddrs);
 #endif /* WLAN_FEATURE_PACKET_FILTERING */
-bool sme_is_channel_valid(mac_handle_t mac_handle, uint8_t channel);
 uint16_t sme_chn_to_freq(uint8_t chanNum);
-bool sme_is_channel_valid(mac_handle_t mac_handle, uint8_t channel);
+
+/*
+ * sme_is_channel_valid() - validate a channel against current regdmn
+ * To check if the channel is valid for currently established domain
+ *   This is a synchronous API.
+ *
+ * mac_handle - The handle returned by mac_open.
+ * chan_freq - channel to verify
+ *
+ * Return: true/false, true if channel is valid
+ */
+bool sme_is_channel_valid(mac_handle_t mac_handle, uint32_t chan_freq);
+
 QDF_STATUS sme_set_max_tx_power(mac_handle_t mac_handle,
 				struct qdf_mac_addr pBssid,
 				struct qdf_mac_addr pSelfMacAddress, int8_t dB);

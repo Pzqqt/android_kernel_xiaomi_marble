@@ -2248,7 +2248,7 @@ struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
  *
  * Return: home channel if connected/started or invalid channel 0
  */
-uint8_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter);
+uint32_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter);
 
 /*
  * hdd_get_adapter_by_rand_macaddr() - find Random mac adapter
@@ -2324,8 +2324,24 @@ uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx,
 				enum QDF_OPMODE interface_type);
 void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
 				uint8_t *releaseAddr);
-uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
-			enum QDF_OPMODE mode);
+
+/**
+ * hdd_get_operating_chan_freq() - return operating channel of the device mode
+ * @hdd_ctx:	Pointer to the HDD context.
+ * @mode:	Device mode for which operating channel is required.
+ *              Supported modes:
+ *			QDF_STA_MODE,
+ *			QDF_P2P_CLIENT_MODE,
+ *			QDF_SAP_MODE,
+ *			QDF_P2P_GO_MODE.
+ *
+ * This API returns the operating channel of the requested device mode
+ *
+ * Return: channel frequency, or
+ *         0 if the requested device mode is not found.
+ */
+uint32_t hdd_get_operating_chan_freq(struct hdd_context *hdd_ctx,
+				     enum QDF_OPMODE mode);
 
 void hdd_set_conparam(int32_t con_param);
 enum QDF_GLOBAL_MODE hdd_get_conparam(void);

@@ -856,9 +856,9 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 	return 0;
 }
 
-uint8_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
+uint32_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
 {
-	uint8_t home_channel = 0;
+	uint32_t home_chan_freq = 0;
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -870,20 +870,15 @@ uint8_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
 	if ((adapter->device_mode == QDF_SAP_MODE ||
 	     adapter->device_mode == QDF_P2P_GO_MODE) &&
 	    test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		home_channel = wlan_reg_freq_to_chan(
-				hdd_ctx->pdev,
-				adapter->session.ap.operating_chan_freq);
+		home_chan_freq = adapter->session.ap.operating_chan_freq;
 	} else if ((adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
 		   adapter->session.station.conn_info.conn_state ==
 		   eConnectionState_Associated) {
-		home_channel =
-			wlan_reg_freq_to_chan(
-				hdd_ctx->pdev,
-				adapter->session.station.conn_info.chan_freq);
+		home_chan_freq = adapter->session.station.conn_info.chan_freq;
 	}
 
-	return home_channel;
+	return home_chan_freq;
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
@@ -7323,36 +7318,21 @@ enum QDF_OPMODE hdd_get_device_mode(uint32_t vdev_id)
 	return adapter->device_mode;
 }
 
-/**
- * hdd_get_operating_channel() - return operating channel of the device mode
- * @hdd_ctx:	Pointer to the HDD context.
- * @mode:	Device mode for which operating channel is required.
- *              Supported modes:
- *			QDF_STA_MODE,
- *			QDF_P2P_CLIENT_MODE,
- *			QDF_SAP_MODE,
- *			QDF_P2P_GO_MODE.
- *
- * This API returns the operating channel of the requested device mode
- *
- * Return: channel number. "0" id the requested device is not found OR it is
- *	   not connected.
- */
-uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
-			enum QDF_OPMODE mode)
+uint32_t hdd_get_operating_chan_freq(struct hdd_context *hdd_ctx,
+				     enum QDF_OPMODE mode)
 {
 	struct hdd_adapter *adapter;
-	uint8_t operatingChannel = 0;
+	uint32_t oper_chan_freq = 0;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (mode == adapter->device_mode) {
-			operatingChannel =
+			oper_chan_freq =
 				hdd_get_adapter_home_channel(adapter);
 			break;
 		}
 	}
 
-	return operatingChannel;
+	return oper_chan_freq;
 }
 
 static inline QDF_STATUS hdd_unregister_wext_all_adapters(struct hdd_context *

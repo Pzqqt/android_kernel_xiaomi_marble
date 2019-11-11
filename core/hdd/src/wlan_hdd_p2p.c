@@ -1269,16 +1269,18 @@ static uint32_t set_first_connection_operating_channel(
 		enum QDF_OPMODE dev_mode)
 {
 	uint8_t operating_channel;
+	uint32_t oper_chan_freq;
 
-	operating_channel = hdd_get_operating_channel(
-					hdd_ctx, dev_mode);
-	if (!operating_channel) {
+	oper_chan_freq = hdd_get_operating_chan_freq(hdd_ctx, dev_mode);
+	if (!oper_chan_freq) {
 		hdd_err(" First adpter operating channel is invalid");
 		return -EINVAL;
 	}
+	operating_channel = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+						  oper_chan_freq);
 
 	hdd_info("First connection channel No.:%d and quota:%dms",
-			operating_channel, set_value);
+		 operating_channel, set_value);
 	/* Move the time quota for first channel to bits 15-8 */
 	set_value = set_value << 8;
 
