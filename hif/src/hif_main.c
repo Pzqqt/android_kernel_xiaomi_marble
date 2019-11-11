@@ -1283,6 +1283,8 @@ irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 	if (hif_is_ut_suspended(scn))
 		hif_ut_fw_resume(scn);
 
+	qdf_pm_system_wakeup();
+
 	return IRQ_HANDLED;
 }
 

@@ -494,6 +494,8 @@ QDF_STATUS qdf_wake_lock_release(qdf_wake_lock_t *lock, uint32_t reason);
 
 QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock);
 
+void qdf_pm_system_wakeup(void);
+
 QDF_STATUS qdf_runtime_pm_get(void);
 QDF_STATUS qdf_runtime_pm_put(void);
 QDF_STATUS qdf_runtime_pm_prevent_suspend(qdf_runtime_lock_t *lock);

@@ -28,6 +28,7 @@
 #include <hif.h>
 #endif
 #include <i_qdf_lock.h>
+#include <linux/suspend.h>
 
 /**
  * qdf_mutex_create() - Initialize a mutex
@@ -385,6 +386,18 @@ QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock)
 }
 #endif
 qdf_export_symbol(qdf_wake_lock_destroy);
+
+/**
+ * qdf_pm_system_wakeup() - wakeup system
+ *
+ * Return: None
+ */
+void qdf_pm_system_wakeup(void)
+{
+	pm_system_wakeup();
+}
+
+qdf_export_symbol(qdf_pm_system_wakeup);
 
 #ifdef FEATURE_RUNTIME_PM
 /**
