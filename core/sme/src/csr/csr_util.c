@@ -1933,7 +1933,8 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 			   tDot11fBeaconIEs *pIes)
 {
 	bool fMatch = false;
-	eCsrPhyMode phyModeInBssDesc = eCSR_DOT11_MODE_AUTO, phyMode2;
+	eCsrPhyMode phyModeInBssDesc = eCSR_DOT11_MODE_AUTO;
+	eCsrPhyMode phyMode2 = eCSR_DOT11_MODE_AUTO;
 	enum csr_cfgdot11mode cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_AUTO;
 	uint32_t bitMask, loopCount;
 	uint8_t bss_chan_id;
