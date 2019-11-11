@@ -986,50 +986,85 @@ static inline int hal_srng_access_start(hal_soc_handle_t hal_soc_hdl,
 }
 
 /**
- * hal_srng_dst_get_next - Get next entry from a destination ring and move
- * cached tail pointer
- *
+ * hal_srng_dst_get_next - Get next entry from a destination ring
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring_hdl: Destination ring pointer
  *
- * Return: Opaque pointer for next ring entry; NULL on failire
+ * Return: Opaque pointer for next ring entry; NULL on failure
  */
 static inline
 void *hal_srng_dst_get_next(void *hal_soc,
 			    hal_ring_handle_t hal_ring_hdl)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 	uint32_t *desc;
-	uint32_t *desc_next;
-	uint32_t tp;
 
-	if (srng->u.dst_ring.tp != srng->u.dst_ring.cached_hp) {
-		desc = &(srng->ring_base_vaddr[srng->u.dst_ring.tp]);
-		/* TODO: Using % is expensive, but we have to do this since
-		 * size of some SRNG rings is not power of 2 (due to descriptor
-		 * sizes). Need to create separate API for rings used
-		 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
-		 * SW2RXDMA and CE rings)
-		 */
-		srng->u.dst_ring.tp = (srng->u.dst_ring.tp + srng->entry_size) %
-			srng->ring_size;
+	if (srng->u.dst_ring.tp == srng->u.dst_ring.cached_hp)
+		return NULL;
 
-		if (srng->flags & HAL_SRNG_CACHED_DESC) {
-			tp = srng->u.dst_ring.tp;
-			desc_next = &srng->ring_base_vaddr[tp];
-			qdf_mem_dma_cache_sync(soc->qdf_dev,
-					       qdf_mem_virt_to_phys(desc_next),
-					       QDF_DMA_FROM_DEVICE,
-					       (srng->entry_size *
-						sizeof(uint32_t)));
-			qdf_prefetch(desc_next);
-		}
+	desc = &srng->ring_base_vaddr[srng->u.dst_ring.tp];
+	/* TODO: Using % is expensive, but we have to do this since
+	 * size of some SRNG rings is not power of 2 (due to descriptor
+	 * sizes). Need to create separate API for rings used
+	 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
+	 * SW2RXDMA and CE rings)
+	 */
+	srng->u.dst_ring.tp = (srng->u.dst_ring.tp + srng->entry_size);
+	if (srng->u.dst_ring.tp == srng->ring_size)
+		srng->u.dst_ring.tp = 0;
 
-		return (void *)desc;
+	if (srng->flags & HAL_SRNG_CACHED_DESC) {
+		struct hal_soc *soc = (struct hal_soc *)hal_soc;
+		uint32_t *desc_next;
+		uint32_t tp;
+
+		tp = srng->u.dst_ring.tp;
+		desc_next = &srng->ring_base_vaddr[srng->u.dst_ring.tp];
+		qdf_mem_dma_cache_sync(soc->qdf_dev,
+				       qdf_mem_virt_to_phys(desc_next),
+				       QDF_DMA_FROM_DEVICE,
+				       (srng->entry_size *
+					sizeof(uint32_t)));
+		qdf_prefetch(desc_next);
 	}
 
-	return NULL;
+	return (void *)desc;
+}
+
+/**
+ * hal_srng_dst_get_next_cached - Get cached next entry
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring_hdl: Destination ring pointer
+ *
+ * Get next entry from a destination ring and move cached tail pointer
+ *
+ * Return: Opaque pointer for next ring entry; NULL on failure
+ */
+static inline
+void *hal_srng_dst_get_next_cached(void *hal_soc,
+				   hal_ring_handle_t hal_ring_hdl)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+	uint32_t *desc;
+	uint32_t *desc_next;
+
+	if (srng->u.dst_ring.tp == srng->u.dst_ring.cached_hp)
+		return NULL;
+
+	desc = &srng->ring_base_vaddr[srng->u.dst_ring.tp];
+	/* TODO: Using % is expensive, but we have to do this since
+	 * size of some SRNG rings is not power of 2 (due to descriptor
+	 * sizes). Need to create separate API for rings used
+	 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
+	 * SW2RXDMA and CE rings)
+	 */
+	srng->u.dst_ring.tp = (srng->u.dst_ring.tp + srng->entry_size);
+	if (srng->u.dst_ring.tp == srng->ring_size)
+		srng->u.dst_ring.tp = 0;
+
+	desc_next = &srng->ring_base_vaddr[srng->u.dst_ring.tp];
+	qdf_prefetch(desc_next);
+	return (void *)desc;
 }
 
 /**
@@ -1148,8 +1183,70 @@ uint32_t hal_srng_dst_num_valid(void *hal_soc,
 
 	if (hp >= tp)
 		return (hp - tp) / srng->entry_size;
-	else
-		return (srng->ring_size - tp + hp) / srng->entry_size;
+
+	return (srng->ring_size - tp + hp) / srng->entry_size;
+}
+
+/**
+ * hal_srng_dst_inv_cached_descs - API to invalidate descriptors in batch mode
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring_hdl: Destination ring pointer
+ * @entry_count: Number of descriptors to be invalidated
+ *
+ * Invalidates a set of cached descriptors starting from tail to
+ * provided count worth
+ *
+ * Return - None
+ */
+static inline void hal_srng_dst_inv_cached_descs(void *hal_soc,
+						 hal_ring_handle_t hal_ring_hdl,
+						 uint32_t entry_count)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+	uint32_t hp = srng->u.dst_ring.cached_hp;
+	uint32_t tp = srng->u.dst_ring.tp;
+	uint32_t sync_p = 0;
+
+	/*
+	 * If SRNG does not have cached descriptors this
+	 * API call should be a no op
+	 */
+	if (!(srng->flags & HAL_SRNG_CACHED_DESC))
+		return;
+
+	if (qdf_unlikely(entry_count == 0))
+		return;
+
+	sync_p = (entry_count - 1) * srng->entry_size;
+
+	if (hp > tp) {
+		qdf_nbuf_dma_inv_range(&srng->ring_base_vaddr[tp],
+				       &srng->ring_base_vaddr[tp + sync_p]
+				       + (srng->entry_size * sizeof(uint32_t)));
+	} else {
+		/*
+		 * We have wrapped around
+		 */
+		uint32_t wrap_cnt = ((srng->ring_size - tp) / srng->entry_size);
+
+		if (entry_count <= wrap_cnt) {
+			qdf_nbuf_dma_inv_range(&srng->ring_base_vaddr[tp],
+					       &srng->ring_base_vaddr[tp + sync_p] +
+					       (srng->entry_size * sizeof(uint32_t)));
+			return;
+		}
+
+		entry_count -= wrap_cnt;
+		sync_p = (entry_count - 1) * srng->entry_size;
+
+		qdf_nbuf_dma_inv_range(&srng->ring_base_vaddr[tp],
+				       &srng->ring_base_vaddr[srng->ring_size - srng->entry_size] +
+				       (srng->entry_size * sizeof(uint32_t)));
+
+		qdf_nbuf_dma_inv_range(&srng->ring_base_vaddr[0],
+				       &srng->ring_base_vaddr[sync_p]
+				       + (srng->entry_size * sizeof(uint32_t)));
+	}
 }
 
 /**

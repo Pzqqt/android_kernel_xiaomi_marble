@@ -3599,6 +3599,7 @@ uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
 	struct dp_tx_desc_s *tail_desc = NULL;
 	uint32_t num_processed = 0;
 	uint32_t count = 0;
+	uint32_t num_avail_for_reap = 0;
 	bool force_break = false;
 
 	DP_HIST_INIT();
@@ -3612,9 +3613,18 @@ more_data:
 		return 0;
 	}
 
+	num_avail_for_reap = hal_srng_dst_num_valid(soc->hal_soc, hal_ring_hdl, 0);
+
+	if (num_avail_for_reap >= quota)
+		num_avail_for_reap = quota;
+
+	dp_srng_dst_inv_cached_descs(soc, hal_ring_hdl, num_avail_for_reap);
+
 	/* Find head descriptor from completion ring */
-	while (qdf_likely(tx_comp_hal_desc =
-			hal_srng_dst_get_next(soc->hal_soc, hal_ring_hdl))) {
+	while (qdf_likely(num_avail_for_reap)) {
+		tx_comp_hal_desc =  dp_srng_dst_get_next(soc, hal_ring_hdl);
+		if (qdf_unlikely(!tx_comp_hal_desc))
+			break;
 
 		buffer_src = hal_tx_comp_get_buffer_source(tx_comp_hal_desc);
 
@@ -3756,10 +3766,6 @@ more_data:
 		 * Processed packet count is more than given quota
 		 * stop to processing
 		 */
-		if (num_processed >= quota) {
-			force_break = true;
-			break;
-		}
 
 		count++;
 
@@ -3774,6 +3780,10 @@ more_data:
 		dp_tx_comp_process_desc_list(soc, head_desc, ring_id);
 
 	if (dp_tx_comp_enable_eol_data_check(soc)) {
+
+		if (num_processed >= quota)
+			force_break = true;
+
 		if (!force_break &&
 		    hal_srng_dst_peek_sync_locked(soc->hal_soc,
 						  hal_ring_hdl)) {

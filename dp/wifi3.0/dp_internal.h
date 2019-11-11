@@ -1761,6 +1761,55 @@ static inline void dp_srng_access_end(struct dp_intr *int_ctx,
 }
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 
+#ifdef QCA_CACHED_RING_DESC
+/**
+ * dp_srng_dst_get_next() - Wrapper function to get next ring desc
+ * @dp_socsoc: DP Soc handle
+ * @hal_ring: opaque pointer to the HAL Destination Ring
+ *
+ * Return: HAL ring descriptor
+ */
+static inline void *dp_srng_dst_get_next(struct dp_soc *dp_soc,
+					 hal_ring_handle_t hal_ring_hdl)
+{
+	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
+
+	return hal_srng_dst_get_next_cached(hal_soc, hal_ring_hdl);
+}
+
+/**
+ * dp_srng_dst_inv_cached_descs() - Wrapper function to invalidate cached
+ * descriptors
+ * @dp_socsoc: DP Soc handle
+ * @hal_ring: opaque pointer to the HAL Rx Destination ring
+ * @num_entries: Entry count
+ *
+ * Return: None
+ */
+static inline void dp_srng_dst_inv_cached_descs(struct dp_soc *dp_soc,
+						hal_ring_handle_t hal_ring_hdl,
+						uint32_t num_entries)
+{
+	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
+
+	hal_srng_dst_inv_cached_descs(soc->hal_soc, hal_ring_hdl, num_entries);
+}
+#else
+static inline void *dp_srng_dst_get_next(struct dp_soc *dp_soc,
+					 hal_ring_handle_t hal_ring_hdl)
+{
+	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
+
+	return hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
+}
+
+static inline void dp_srng_dst_inv_cached_descs(struct dp_soc *dp_soc,
+						hal_ring_handle_t hal_ring_hdl,
+						uint32_t num_entries)
+{
+}
+#endif /* QCA_CACHED_RING_DESC */
+
 #ifdef QCA_ENH_V3_STATS_SUPPORT
 /**
  * dp_pdev_print_delay_stats(): Print pdev level delay stats
