@@ -252,11 +252,7 @@ static inline bool __qdf_system_time_after_eq(__qdf_time_t a, __qdf_time_t b)
  */
 static inline uint64_t __qdf_get_monotonic_boottime(void)
 {
-	struct timespec ts;
-
-	get_monotonic_boottime(&ts);
-
-	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+	return (uint64_t)ktime_to_us(ktime_get_boottime());
 }
 
 #if defined (MSM_PLATFORM)
@@ -308,7 +304,13 @@ static inline uint64_t __qdf_get_log_timestamp(void)
  * The time since system booted in nanoseconds
  */
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0))
+static inline uint64_t __qdf_get_bootbased_boottime_ns(void)
+{
+	return ktime_get_boottime_ns();
+}
+
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
 static inline uint64_t __qdf_get_bootbased_boottime_ns(void)
 {
 	return ktime_get_boot_ns();
