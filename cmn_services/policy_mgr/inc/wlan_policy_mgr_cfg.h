@@ -387,7 +387,7 @@ CFG_INI_UINT("gDualMacFeatureDisable", 0, 6, 0, CFG_VALUE_OR_DEFAULT, \
  * mode support disabled.
  * @Min: 0
  * @Max: 2
- * @Default: 0
+ * @Default: 2
  *
  * This ini is used to allow STA+SAP SCC on DFS channel with master mode
  * support disabled, the value is defined by enum PM_AP_DFS_MASTER_MODE.
@@ -408,7 +408,7 @@ CFG_INI_UINT("gDualMacFeatureDisable", 0, 6, 0, CFG_VALUE_OR_DEFAULT, \
  */
 
 #define CFG_STA_SAP_SCC_ON_DFS_CHAN \
-CFG_INI_UINT("g_sta_sap_scc_on_dfs_chan", 0, 2, 0, CFG_VALUE_OR_DEFAULT, \
+CFG_INI_UINT("g_sta_sap_scc_on_dfs_chan", 0, 2, 2, CFG_VALUE_OR_DEFAULT, \
 	     "Allow STA+SAP SCC on DFS channel with master mode disable")
 
 /*
