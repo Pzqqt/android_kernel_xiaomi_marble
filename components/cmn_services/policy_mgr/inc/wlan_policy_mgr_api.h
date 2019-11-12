@@ -151,6 +151,19 @@ policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_get_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
 					   uint8_t *dual_mac_feature);
+
+/**
+ * policy_mgr_set_dual_mac_feature() - to set the dual mac feature value
+ * @psoc: pointer to psoc
+ * @dual_mac_feature: value to be updated
+ *
+ * This API is used to update the dual mac (dual radio) specific feature value
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_set_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
+					   uint8_t dual_mac_feature);
+
 /**
  * policy_mgr_get_force_1x1() - to find out if 1x1 connection is enforced
  *
