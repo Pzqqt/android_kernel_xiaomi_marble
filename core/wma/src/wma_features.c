@@ -1553,6 +1553,12 @@ static void wma_print_wow_stats(t_wma_handle *wma,
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
 						    wake_info->vdev_id,
 						    WLAN_LEGACY_WMA_ID);
+	if (!vdev) {
+		WMA_LOGE("%s, vdev_id: %d, failed to get vdev from psoc",
+			 __func__, wake_info->vdev_id);
+		return;
+	}
+
 	ucfg_mc_cp_stats_get_vdev_wake_lock_stats(vdev, &stats);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	wma_wow_stats_display(&stats);
