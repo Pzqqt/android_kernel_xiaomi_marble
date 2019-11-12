@@ -3805,7 +3805,7 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 	struct csr_roam_session *pSession;
 	tDot11fBeaconIEs *beacon_ies = NULL;
 	uint8_t chan1, chan2;
-	uint8_t chan_id;
+	uint32_t chan_freq;
 
 	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
 		sme_err("Session ID: %d is not valid", sessionId);
@@ -3846,11 +3846,11 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 			roam_info->chan_info.info = 0;
 		}
 		roam_info->chan_info.mhz = roam_info->u.pConnectedProfile->op_freq;
-		chan_id = wlan_reg_freq_to_chan(mac->pdev, roam_info->chan_info.mhz);
+		chan_freq = roam_info->chan_info.mhz;
 		roam_info->chan_info.reg_info_1 =
-			(csr_get_cfg_max_tx_power(mac, chan_id) << 16);
+			(csr_get_cfg_max_tx_power(mac, chan_freq) << 16);
 		roam_info->chan_info.reg_info_2 =
-			(csr_get_cfg_max_tx_power(mac, chan_id) << 8);
+			(csr_get_cfg_max_tx_power(mac, chan_freq) << 8);
 		qdf_mem_free(beacon_ies);
 	} else if ((u1 == eCSR_ROAM_FT_REASSOC_FAILED)
 			&& (pSession->bRefAssocStartCnt)) {
