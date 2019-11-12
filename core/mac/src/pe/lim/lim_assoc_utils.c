@@ -1625,7 +1625,8 @@ QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
 	    (self_sta_dot11mode == MLME_DOT11_MODE_11AC) ||
 	    (self_sta_dot11mode == MLME_DOT11_MODE_11N) ||
 	    (self_sta_dot11mode == MLME_DOT11_MODE_11G) ||
-	    (self_sta_dot11mode == MLME_DOT11_MODE_11B)) {
+	    (self_sta_dot11mode == MLME_DOT11_MODE_11B) ||
+	    (self_sta_dot11mode == MLME_DOT11_MODE_11AX)) {
 		val_len = mac_ctx->mlme_cfg->rates.supported_11b.len;
 		wlan_mlme_get_cfg_str((uint8_t *)&temp_rate_set.rate,
 				      &mac_ctx->mlme_cfg->rates.supported_11b,
@@ -1774,7 +1775,8 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 	if ((pe_session->dot11mode == MLME_DOT11_MODE_11G) ||
 		(pe_session->dot11mode == MLME_DOT11_MODE_11A) ||
 		(pe_session->dot11mode == MLME_DOT11_MODE_11AC) ||
-		(pe_session->dot11mode == MLME_DOT11_MODE_11N)) {
+		(pe_session->dot11mode == MLME_DOT11_MODE_11N) ||
+		(pe_session->dot11mode == MLME_DOT11_MODE_11AX)) {
 		if (pe_session->extRateSet.numRates <=
 		    WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
 			qdf_mem_copy((uint8_t *) tempRateSet2.rate,
