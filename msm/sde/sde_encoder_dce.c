@@ -465,8 +465,9 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 					&cfg,
 					active);
 
-		if (hw_ctl->ops.update_bitmask_dsc)
-			hw_ctl->ops.update_bitmask_dsc(hw_ctl,
+		if (hw_ctl->ops.update_bitmask)
+			hw_ctl->ops.update_bitmask(hw_ctl,
+					SDE_HW_FLUSH_DSC,
 					hw_dsc[i]->idx, active);
 
 		SDE_DEBUG_DCE(sde_enc,
@@ -486,9 +487,9 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 						&cfg,
 						!disable_merge_3d);
 
-			if (hw_ctl->ops.update_bitmask_merge3d)
-				hw_ctl->ops.update_bitmask_merge3d(
-						hw_ctl,
+			if (hw_ctl->ops.update_bitmask)
+				hw_ctl->ops.update_bitmask(
+						hw_ctl, SDE_HW_FLUSH_MERGE_3D,
 						hw_pp[i]->merge_3d->idx, true);
 
 			SDE_DEBUG("mode_3d %s, on CTL_%d PP-%d merge3d:%d\n",
@@ -635,8 +636,9 @@ static int _dce_vdc_setup(struct sde_encoder_virt *sde_enc,
 					&cfg,
 					active);
 
-		if (hw_ctl->ops.update_bitmask_vdc)
-			hw_ctl->ops.update_bitmask_vdc(hw_ctl,
+		if (hw_ctl->ops.update_bitmask)
+			hw_ctl->ops.update_bitmask(hw_ctl,
+					SDE_HW_FLUSH_VDC,
 					hw_vdc[i]->idx, active);
 
 		SDE_DEBUG_DCE(sde_enc,
@@ -656,9 +658,9 @@ static int _dce_vdc_setup(struct sde_encoder_virt *sde_enc,
 						&cfg,
 						!disable_merge_3d);
 
-			if (hw_ctl->ops.update_bitmask_merge3d)
-				hw_ctl->ops.update_bitmask_merge3d(
-						hw_ctl,
+			if (hw_ctl->ops.update_bitmask)
+				hw_ctl->ops.update_bitmask(
+						hw_ctl, SDE_HW_FLUSH_MERGE_3D,
 						hw_pp[i]->merge_3d->idx, true);
 
 			SDE_DEBUG("mode_3d %s, on CTL_%d PP-%d merge3d:%d\n",
@@ -815,8 +817,9 @@ static void _dce_helper_flush_dsc(struct sde_encoder_virt *sde_enc)
 
 	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
 		dsc_idx = sde_enc->dirty_dsc_ids[i];
-		if (dsc_idx && hw_ctl && hw_ctl->ops.update_bitmask_dsc)
-			hw_ctl->ops.update_bitmask_dsc(hw_ctl, dsc_idx, 1);
+		if (dsc_idx && hw_ctl && hw_ctl->ops.update_bitmask)
+			hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_DSC,
+					dsc_idx, 1);
 
 		sde_enc->dirty_dsc_ids[i] = DSC_NONE;
 	}
@@ -833,8 +836,9 @@ void _dce_helper_flush_vdc(struct sde_encoder_virt *sde_enc)
 
 	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
 		vdc_idx = sde_enc->dirty_vdc_ids[i];
-		if (vdc_idx && hw_ctl && hw_ctl->ops.update_bitmask_vdc)
-			hw_ctl->ops.update_bitmask_vdc(hw_ctl, vdc_idx, 1);
+		if (vdc_idx && hw_ctl && hw_ctl->ops.update_bitmask)
+			hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_VDC,
+					vdc_idx, 1);
 
 		sde_enc->dirty_vdc_ids[i] = VDC_NONE;
 	}

@@ -39,6 +39,29 @@ enum sde_ctl_rot_op_mode {
 	SDE_CTL_ROT_OP_MODE_INLINE_ASYNC,
 };
 
+/**
+ * ctl_hw_flush_type - active ctl hw types
+ * SDE_HW_FLUSH_WB: WB block
+ * SDE_HW_FLUSH_DSC: DSC block
+ * SDE_HW_FLUSH_VDC: VDC bits of DSC block
+ * SDE_HW_FLUSH_MERGE_3D: Merge 3D block
+ * SDE_HW_FLUSH_CDM: CDM block
+ * SDE_HW_FLUSH_CWB: CWB block
+ * SDE_HW_FLUSH_PERIPH: Peripheral
+ * SDE_HW_FLUSH_INTF: Interface
+ */
+enum ctl_hw_flush_type {
+	SDE_HW_FLUSH_WB,
+	SDE_HW_FLUSH_DSC,
+	SDE_HW_FLUSH_VDC,
+	SDE_HW_FLUSH_MERGE_3D,
+	SDE_HW_FLUSH_CDM,
+	SDE_HW_FLUSH_CWB,
+	SDE_HW_FLUSH_PERIPH,
+	SDE_HW_FLUSH_INTF,
+	SDE_HW_FLUSH_MAX
+};
+
 struct sde_hw_ctl;
 /**
  * struct sde_hw_stage_cfg - blending stage cfg
@@ -128,24 +151,12 @@ struct sde_hw_intf_cfg_v1 {
  * CTL path version SDE_CTL_CFG_VERSION_1_0_0 has * two level flush mechanism
  * for lower pipe controls. individual control should be flushed before
  * exercising top level flush
- * @pending_intf_flush_mask: pending INTF flush
- * @pending_cdm_flush_mask: pending CDWN block flush
- * @pending_wb_flush_mask: pending writeback flush
- * @pending_dsc_flush_mask: pending dsc flush
- * @pending_merge_3d_flush_mask: pending 3d merge block flush
- * @pending_cwb_flush_mask: pending flush for concurrent writeback
- * @pending_periph_flush_mask: pending flush for peripheral module
+ * @pending_hw_flush_mask: pending flush mask for each active HW blk
  * @pending_dspp_flush_masks: pending flush masks for sub-blks of each DSPP
  */
 struct sde_ctl_flush_cfg {
 	u32 pending_flush_mask;
-	u32 pending_intf_flush_mask;
-	u32 pending_cdm_flush_mask;
-	u32 pending_wb_flush_mask;
-	u32 pending_dsc_flush_mask;
-	u32 pending_merge_3d_flush_mask;
-	u32 pending_cwb_flush_mask;
-	u32 pending_periph_flush_mask;
+	u32 pending_hw_flush_mask[SDE_HW_FLUSH_MAX];
 	u32 pending_dspp_flush_masks[CTL_MAX_DSPP_COUNT];
 };
 
@@ -357,72 +368,17 @@ struct sde_hw_ctl_ops {
 	 * @blk               : blk id
 	 * @enable            : true to enable, 0 to disable
 	 */
-	int (*update_bitmask_intf)(struct sde_hw_ctl *ctx,
-		enum sde_intf blk, bool enable);
-
-	/**
-	 * update_bitmask_sspp: updates mask corresponding to sspp
-	 * @blk               : blk id
-	 * @enable            : true to enable, 0 to disable
-	 */
-	int (*update_bitmask_cdm)(struct sde_hw_ctl *ctx,
-		enum sde_cdm blk, bool enable);
-
-	/**
-	 * update_bitmask_sspp: updates mask corresponding to sspp
-	 * @blk               : blk id
-	 * @enable            : true to enable, 0 to disable
-	 */
-	int (*update_bitmask_wb)(struct sde_hw_ctl *ctx,
-		enum sde_wb blk, bool enable);
-
-	/**
-	 * update_bitmask_sspp: updates mask corresponding to sspp
-	 * @blk               : blk id
-	 * @enable            : true to enable, 0 to disable
-	 */
 	int (*update_bitmask_rot)(struct sde_hw_ctl *ctx,
 		enum sde_rot blk, bool enable);
 
 	/**
-	 * update_bitmask_dsc: updates mask corresponding to dsc
-	 * @blk               : blk id
+	 * update_bitmask: updates flush mask
+	 * @type              : blk type to flush
+	 * @blk_idx           : blk idx
 	 * @enable            : true to enable, 0 to disable
 	 */
-	int (*update_bitmask_dsc)(struct sde_hw_ctl *ctx,
-		enum sde_dsc blk, bool enable);
-
-	/**
-	 * update_bitmask_vdc: updates mask corresponding to vdc
-	 * @blk               : blk id
-	 * @enable            : true to enable, 0 to disable
-	 */
-	int (*update_bitmask_vdc)(struct sde_hw_ctl *ctx,
-		enum sde_vdc blk, bool enable);
-
-	/**
-	 * update_bitmask_merge3d: updates mask corresponding to merge_3d
-	 * @blk               : blk id
-	 * @enable            : true to enable, 0 to disable
-	 */
-	int (*update_bitmask_merge3d)(struct sde_hw_ctl *ctx,
-		enum sde_merge_3d blk, bool enable);
-
-	/**
-	 * update_bitmask_cwb: updates mask corresponding to cwb
-	 * @blk               : blk id
-	 * @enable            : true to enable, 0 to disable
-	 */
-	int (*update_bitmask_cwb)(struct sde_hw_ctl *ctx,
-		enum sde_cwb blk, bool enable);
-
-	/**
-	 * update_bitmask_periph: updates mask corresponding to peripheral
-	 * @blk               : blk id
-	 * @enable            : true to enable, 0 to disable
-	 */
-	int (*update_bitmask_periph)(struct sde_hw_ctl *ctx,
-		enum sde_intf blk, bool enable);
+	int (*update_bitmask)(struct sde_hw_ctl *ctx,
+			enum ctl_hw_flush_type type, u32 blk_idx, bool enable);
 
 	/**
 	 * read CTL_TOP register value and return

@@ -126,17 +126,15 @@ static void _sde_encoder_phys_cmd_update_flush_mask(
 	if (!ctl)
 		return;
 
-	if (!ctl->ops.update_bitmask_intf ||
-		(test_bit(SDE_CTL_ACTIVE_CFG, &ctl->caps->features) &&
-		!ctl->ops.update_bitmask_merge3d)) {
+	if (!ctl->ops.update_bitmask) {
 		SDE_ERROR("invalid hw_ctl ops %d\n", ctl->idx);
 		return;
 	}
 
-	ctl->ops.update_bitmask_intf(ctl, phys_enc->intf_idx, 1);
+	ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_INTF, phys_enc->intf_idx, 1);
 
-	if (ctl->ops.update_bitmask_merge3d && phys_enc->hw_pp->merge_3d)
-		ctl->ops.update_bitmask_merge3d(ctl,
+	if (phys_enc->hw_pp->merge_3d)
+		ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_MERGE_3D,
 			phys_enc->hw_pp->merge_3d->idx, 1);
 
 	SDE_DEBUG_CMDENC(cmd_enc, "update pending flush ctl %d intf_idx %x\n",
