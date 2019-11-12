@@ -201,6 +201,7 @@ endif
 ifeq ($(CONFIG_ARCH_KONA), y)
 CONFIG_QCACLD_FEATURE_METERING := y
 CONFIG_WDI3_STATS_UPDATE := y
+CONFIG_WLAN_SYNC_TSF_TIMER := y
 endif
 
 #Flag to enable Fast Transition (11r) feature

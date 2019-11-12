@@ -149,7 +149,8 @@ static bool hdd_tsf_is_initialized(struct hdd_adapter *adapter)
 
 #if (defined(WLAN_FEATURE_TSF_PLUS_NOIRQ) && \
 	defined(WLAN_FEATURE_TSF_PLUS)) || \
-	defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC)
+	defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC) || \
+	defined(WLAN_FEATURE_TSF_TIMER_SYNC)
 /**
  * hdd_tsf_reset_gpio() - Reset TSF GPIO used for host timer sync
  * @adapter: pointer to adapter
@@ -1827,6 +1828,18 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 	return HDD_TSF_OP_SUCC;
 }
 
+#elif defined(WLAN_FEATURE_TSF_TIMER_SYNC)
+static inline
+enum hdd_tsf_op_result wlan_hdd_tsf_plus_init(struct hdd_context *hdd_ctx)
+{
+	return HDD_TSF_OP_SUCC;
+}
+
+static inline
+enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
+{
+	return HDD_TSF_OP_SUCC;
+}
 #else
 static inline
 enum hdd_tsf_op_result wlan_hdd_tsf_plus_init(struct hdd_context *hdd_ctx)
