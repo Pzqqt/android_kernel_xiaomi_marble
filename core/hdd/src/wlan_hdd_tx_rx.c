@@ -2018,34 +2018,28 @@ static bool hdd_is_gratuitous_arp_unsolicited_na(struct sk_buff *skb)
 
 QDF_STATUS hdd_rx_flush_packet_cbk(void *adapter_context, uint8_t vdev_id)
 {
-	struct hdd_adapter *adapter = NULL;
-	struct hdd_context *hdd_ctx = NULL;
+	struct hdd_adapter *adapter;
+	struct hdd_context *hdd_ctx;
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	/* Sanity check on inputs */
-	if (unlikely(!adapter_context)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Null params being passed", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	adapter = (struct hdd_adapter *)adapter_context;
-	if (unlikely(adapter->magic != WLAN_HDD_ADAPTER_MAGIC)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "Magic cookie(%x) for adapter sanity verification is invalid",
-			  adapter->magic);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (unlikely(!hdd_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	adapter = hdd_adapter_get_by_reference(hdd_ctx, adapter_context);
+	if (!adapter) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Adapter reference is Null", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_flush_pkts_by_vdev_id(soc, vdev_id);
+
+	hdd_adapter_put(adapter);
 
 	return QDF_STATUS_SUCCESS;
 }
