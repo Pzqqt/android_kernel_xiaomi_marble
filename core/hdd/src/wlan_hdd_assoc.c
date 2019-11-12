@@ -2920,7 +2920,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	tSirResultCodes timeout_reason = 0;
 	bool ok;
 	mac_handle_t mac_handle;
-	uint8_t conn_info_channel;
+	uint32_t conn_info_freq;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!hdd_ctx) {
@@ -3068,15 +3068,11 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, false);
 #endif
 
-		conn_info_channel =
-			wlan_reg_freq_to_chan(hdd_ctx->pdev,
-					      sta_ctx->conn_info.chan_freq);
+		conn_info_freq = sta_ctx->conn_info.chan_freq;
 
 		hdd_debug("check if STA chan ok for DNBS");
-		if (policy_mgr_is_chan_ok_for_dnbs(
-					hdd_ctx->psoc,
-					wlan_chan_to_freq(conn_info_channel),
-					&ok)) {
+		if (policy_mgr_is_chan_ok_for_dnbs(hdd_ctx->psoc,
+						   conn_info_freq, &ok)) {
 			hdd_err("Unable to check DNBS eligibility for chan(freq):%u",
 				sta_ctx->conn_info.chan_freq);
 			return QDF_STATUS_E_FAILURE;
@@ -3279,8 +3275,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							pConnectedProfile->SSID.length);
 
 						cdp_hl_fc_set_td_limit(soc,
-						adapter->vdev_id,
-						conn_info_channel);
+							adapter->vdev_id,
+							conn_info_freq);
 
 						hdd_send_roamed_ind(
 								dev,
@@ -3327,8 +3323,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					hdd_debug("ft_carrier_on is %d, sending connect indication",
 						 ft_carrier_on);
 					cdp_hl_fc_set_td_limit(soc,
-					adapter->vdev_id,
-					conn_info_channel);
+							       adapter->vdev_id,
+							       conn_info_freq);
 					hdd_connect_result(dev,
 							   roam_info->
 							   bssid.bytes,
@@ -3386,8 +3382,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 								   roam_info->status_code);
 					}
 					cdp_hl_fc_set_td_limit(soc,
-					adapter->vdev_id,
-					conn_info_channel);
+							       adapter->vdev_id,
+							       conn_info_freq);
 				}
 			}
 			if (!hddDisconInProgress) {
@@ -3422,9 +3418,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						adapter->vdev_id,
 						&reqRsnLength, reqRsnIe);
 
-			cdp_hl_fc_set_td_limit(soc,
-				adapter->vdev_id,
-				conn_info_channel);
+			cdp_hl_fc_set_td_limit(soc, adapter->vdev_id,
+					       conn_info_freq);
 			hdd_send_re_assoc_event(dev, adapter, roam_info,
 						reqRsnIe, reqRsnLength);
 			/* Reassoc successfully */

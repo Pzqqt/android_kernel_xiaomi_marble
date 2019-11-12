@@ -570,12 +570,12 @@ int ol_txrx_set_vdev_os_queue_status(struct cdp_soc_t *soc_hdl, u8 vdev_id,
  * ol_txrx_set_vdev_tx_desc_limit() - Set TX descriptor limits for a vdev
  * @soc_hdl: soc handle
  * @vdev_id: vdev id for the vdev under consideration.
- * @chan: Channel on which the vdev has been started.
+ * @chan_freq: channel frequency on which the vdev has been started.
  *
  * Return: 0 on success, -EINVAL on failure
  */
 int ol_txrx_set_vdev_tx_desc_limit(struct cdp_soc_t *soc_hdl, u8 vdev_id,
-				   u8 chan);
+				   u32 chan_freq);
 #endif
 
 /**

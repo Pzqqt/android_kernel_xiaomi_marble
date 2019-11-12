@@ -1860,8 +1860,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			cdp_hl_fc_set_td_limit(
 				cds_get_context(QDF_MODULE_ID_SOC),
 				adapter->vdev_id,
-				wlan_reg_freq_to_chan(hdd_ctx->pdev,
-				ap_ctx->operating_chan_freq));
+				ap_ctx->operating_chan_freq);
 
 			hdd_register_tx_flow_control(adapter,
 				hdd_softap_tx_resume_timer_expired_handler,
@@ -2525,8 +2524,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 		cdp_hl_fc_set_td_limit(cds_get_context(QDF_MODULE_ID_SOC),
 				       adapter->vdev_id,
-				       wlan_reg_freq_to_chan(hdd_ctx->pdev,
-				       ap_ctx->operating_chan_freq));
+				       ap_ctx->operating_chan_freq);
 
 		phy_mode = wlan_sap_get_phymode(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));

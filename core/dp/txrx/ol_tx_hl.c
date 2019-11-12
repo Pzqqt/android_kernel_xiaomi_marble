@@ -2245,7 +2245,7 @@ int ol_txrx_set_vdev_os_queue_status(struct cdp_soc_t *soc_hdl, u8 vdev_id,
 }
 
 int ol_txrx_set_vdev_tx_desc_limit(struct cdp_soc_t *soc_hdl, u8 vdev_id,
-				   u8 chan)
+				   u32 chan_freq)
 {
 	struct ol_txrx_vdev_t *vdev =
 	(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
@@ -2259,7 +2259,7 @@ int ol_txrx_set_vdev_tx_desc_limit(struct cdp_soc_t *soc_hdl, u8 vdev_id,
 	}
 
 	/* TODO: Handle no of spatial streams and channel BW */
-	if (WLAN_REG_IS_5GHZ_CH(chan))
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq))
 		fc_limit_id = TXRX_FC_5GH_80M_2x2;
 	else
 		fc_limit_id = TXRX_FC_2GH_40M_2x2;
