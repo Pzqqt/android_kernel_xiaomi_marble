@@ -71,6 +71,22 @@ policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS policy_mgr_set_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
+					   uint8_t dual_mac_feature)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pm_ctx->cfg.dual_mac_feature = dual_mac_feature;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_get_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
 					   uint8_t *dual_mac_feature)
 {
@@ -856,7 +872,7 @@ bool policy_mgr_find_if_fw_supports_dbs(struct wlan_objmgr_psoc *psoc)
 	return true;
 }
 
-static bool policy_mgr_find_if_hwlist_has_dbs(struct wlan_objmgr_psoc *psoc)
+bool policy_mgr_find_if_hwlist_has_dbs(struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t param, i, found = 0;
