@@ -3912,6 +3912,10 @@ typedef struct {
      * as a passive channel
      */
     A_UINT32 dwell_time_passive_6ghz;
+    /**
+     * Offset time is in milliseconds per channel.
+     */
+    A_UINT32 scan_start_offset;
 
 /**
  * TLV (tag length value) parameters follow the scan_cmd
