@@ -483,10 +483,14 @@ void afe_register_wakeup_irq_callback(
 int afe_get_doa_tracking_mon(u16 port_id,
 	struct doa_tracking_mon_param *doa_tracking_data);
 
-#define AFE_LPASS_CORE_HW_BLOCK_ID_NONE                        0
-#define AFE_LPASS_CORE_HW_BLOCK_ID_AVTIMER                     2
-#define AFE_LPASS_CORE_HW_MACRO_BLOCK                          3
-#define AFE_LPASS_CORE_HW_DCODEC_BLOCK                         4
+enum {
+	AFE_LPASS_CORE_HW_BLOCK_ID_NONE,
+	AFE_LPASS_CORE_HW_RSVD,
+	AFE_LPASS_CORE_HW_BLOCK_ID_AVTIMER,
+	AFE_LPASS_CORE_HW_MACRO_BLOCK,
+	AFE_LPASS_CORE_HW_DCODEC_BLOCK,
+	AFE_LPASS_CORE_HW_VOTE_MAX
+};
 
 /* Handles audio-video timer (avtimer) and BTSC vote requests from clients.
  */
