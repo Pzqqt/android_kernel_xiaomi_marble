@@ -312,32 +312,33 @@ static int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter)
  * Called when, 1. bss stopped, 2. channel switch
  *
  * @adapter: pointer to hdd adapter
- * @channel: current channel
+ * @chan_freq: current channel frequency
  *
  * Return: None
  */
 static void hdd_hostapd_channel_allow_suspend(struct hdd_adapter *adapter,
-					      uint8_t channel)
+					      uint32_t chan_freq)
 {
 
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_hostapd_state *hostapd_state =
 		WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-	hdd_debug("bss_state: %d, channel: %d, dfs_ref_cnt: %d",
-	       hostapd_state->bss_state, channel,
-	       atomic_read(&hdd_ctx->sap_dfs_ref_cnt));
+	hdd_debug("bss_state: %d, chan_freq: %d, dfs_ref_cnt: %d",
+		  hostapd_state->bss_state, chan_freq,
+		  atomic_read(&hdd_ctx->sap_dfs_ref_cnt));
 
 	/* Return if BSS is already stopped */
 	if (hostapd_state->bss_state == BSS_STOP)
 		return;
 
-	if (!wlan_reg_chan_has_dfs_attribute(hdd_ctx->pdev, channel))
+	if (!wlan_reg_chan_has_dfs_attribute_for_freq(hdd_ctx->pdev,
+						      chan_freq))
 		return;
 
 	/* Release wakelock when no more DFS channels are used */
 	if (atomic_dec_and_test(&hdd_ctx->sap_dfs_ref_cnt)) {
-		hdd_err("DFS: allowing suspend (chan: %d)", channel);
+		hdd_err("DFS: allowing suspend (chan_freq: %d)", chan_freq);
 		qdf_wake_lock_release(&hdd_ctx->sap_dfs_wakelock,
 				      WIFI_POWER_EVENT_WAKELOCK_DFS);
 		qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.dfs);
@@ -350,31 +351,32 @@ static void hdd_hostapd_channel_allow_suspend(struct hdd_adapter *adapter,
  * Called when, 1. bss started, 2. channel switch
  *
  * @adapter: pointer to hdd adapter
- * @channel: current channel
+ * @chna_freq: current channel frequency
  *
  * Return - None
  */
 static void hdd_hostapd_channel_prevent_suspend(struct hdd_adapter *adapter,
-						uint8_t channel)
+						uint32_t chan_freq)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_hostapd_state *hostapd_state =
 		WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-	hdd_debug("bss_state: %d, channel: %d, dfs_ref_cnt: %d",
-	       hostapd_state->bss_state, channel,
-	       atomic_read(&hdd_ctx->sap_dfs_ref_cnt));
+	hdd_debug("bss_state: %d, chan_freq: %d, dfs_ref_cnt: %d",
+		  hostapd_state->bss_state, chan_freq,
+		  atomic_read(&hdd_ctx->sap_dfs_ref_cnt));
 	/* Return if BSS is already started && wakelock is acquired */
 	if ((hostapd_state->bss_state == BSS_START) &&
 		(atomic_read(&hdd_ctx->sap_dfs_ref_cnt) >= 1))
 		return;
 
-	if (!wlan_reg_chan_has_dfs_attribute(hdd_ctx->pdev, channel))
+	if (!wlan_reg_chan_has_dfs_attribute_for_freq(hdd_ctx->pdev,
+						      chan_freq))
 		return;
 
 	/* Acquire wakelock if we have at least one DFS channel in use */
 	if (atomic_inc_return(&hdd_ctx->sap_dfs_ref_cnt) == 1) {
-		hdd_err("DFS: preventing suspend (chan: %d)", channel);
+		hdd_err("DFS: preventing suspend (chan_freq: %d)", chan_freq);
 		qdf_runtime_pm_prevent_suspend(&hdd_ctx->runtime_context.dfs);
 		qdf_wake_lock_acquire(&hdd_ctx->sap_dfs_wakelock,
 				      WIFI_POWER_EVENT_WAKELOCK_DFS);
@@ -1896,9 +1898,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
 #endif
 		hdd_hostapd_channel_prevent_suspend(adapter,
-						    wlan_reg_freq_to_chan(
-						    hdd_ctx->pdev,
-						    ap_ctx->operating_chan_freq));
+			ap_ctx->operating_chan_freq);
 
 		hostapd_state->bss_state = BSS_START;
 		hdd_start_tsf_sync(adapter);
@@ -1963,9 +1963,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		       status ? "eSAP_STATUS_FAILURE" : "eSAP_STATUS_SUCCESS");
 
 		hdd_hostapd_channel_allow_suspend(adapter,
-						  wlan_reg_freq_to_chan(
-						  hdd_ctx->pdev,
-						  ap_ctx->operating_chan_freq));
+						  ap_ctx->operating_chan_freq);
 
 		/* Invalidate the channel info. */
 		ap_ctx->operating_chan_freq = 0;
@@ -2481,17 +2479,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		hdd_debug("Received eSAP_CHANNEL_CHANGE_EVENT event");
 		if (hostapd_state->bss_state != BSS_STOP) {
 			/* Allow suspend for old channel */
-			hdd_hostapd_channel_allow_suspend(
-				adapter,
-				wlan_reg_freq_to_chan(
-				hdd_ctx->pdev,
-				ap_ctx->operating_chan_freq));
+			hdd_hostapd_channel_allow_suspend(adapter,
+				ap_ctx->operating_chan_freq);
 			/* Prevent suspend for new channel */
-			hdd_hostapd_channel_prevent_suspend(
-				adapter,
-				wlan_reg_freq_to_chan(
-				hdd_ctx->pdev,
-				sap_event->sapevt.sap_ch_selected.pri_ch_freq));
+			hdd_hostapd_channel_prevent_suspend(adapter,
+				sap_event->sapevt.sap_ch_selected.pri_ch_freq);
 		}
 		/* SME/PE is already updated for new operation
 		 * channel. So update HDD layer also here. This
