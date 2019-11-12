@@ -802,7 +802,7 @@ static inline void dp_tx_ext_desc_free_multiple(struct dp_soc *soc,
 	uint8_t freed = num_free;
 
 	/* caller should always guarantee atleast list of num_free nodes */
-	qdf_assert_always(head);
+	qdf_assert_always(elem);
 
 	head = elem;
 	c_elem = head;

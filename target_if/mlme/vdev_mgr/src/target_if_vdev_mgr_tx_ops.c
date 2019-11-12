@@ -844,8 +844,8 @@ static int32_t target_if_vdev_mgr_multi_vdev_restart_get_ref(
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
-	if (!rx_ops && !rx_ops->vdev_mgr_get_response_timer_info) {
-		mlme_err("VDEV_%d: No Rx Ops", vdev_idx);
+	if (!(rx_ops && rx_ops->vdev_mgr_get_response_timer_info)) {
+		mlme_err("No Rx Ops");
 		return last_vdev_idx;
 	}
 
