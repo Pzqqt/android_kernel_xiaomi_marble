@@ -5492,7 +5492,7 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		enum csr_join_state *roam_state,
 		struct scan_result_list *bss_list)
 {
-	uint8_t conc_channel = 0, chan_id;
+	uint32_t conc_freq = 0, chan_freq;
 	bool status = false;
 	struct tag_csrscan_result *scan_result = NULL;
 	tCsrScanResultInfo *result = NULL;
@@ -5522,17 +5522,15 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		 */
 		result = &scan_result->Result;
 
-		chan_id = wlan_reg_freq_to_chan(
-				mac_ctx->pdev,
-				result->BssDescriptor.chan_freq);
+		chan_freq = result->BssDescriptor.chan_freq;
 		mode = policy_mgr_convert_device_mode_to_qdf_type(op_mode);
 		/* If concurrency is not allowed select next bss */
 		if (!policy_mgr_is_concurrency_allowed(mac_ctx->psoc,
 						       mode,
-						       chan_id,
+						       chan_freq,
 						       HW_MODE_20_MHZ)) {
-			sme_err("Concurrency not allowed for this channel %d bssid %pM, selecting next",
-				chan_id, result->BssDescriptor.bssId);
+			sme_err("Concurrency not allowed for this channel freq %d bssid %pM, selecting next",
+				chan_freq, result->BssDescriptor.bssId);
 			*roam_state = eCsrStopRoamingDueToConcurrency;
 			status = true;
 			*roam_bss_entry = csr_ll_next(&bss_list->List,
@@ -5560,31 +5558,32 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		if (policy_mgr_concurrent_open_sessions_running(mac_ctx->psoc)
 			&& !csr_is_valid_mc_concurrent_session(mac_ctx,
 					session_id, &result->BssDescriptor)) {
-			conc_channel = csr_get_concurrent_operation_channel(
+			conc_freq = csr_get_concurrent_operation_freq(
 					mac_ctx);
-			sme_debug("csr Conc Channel: %d", conc_channel);
+			sme_debug("csr Conc Channel freq: %d", conc_freq);
 
-			if (conc_channel) {
-				if ((conc_channel == chan_id) ||
+			if (conc_freq) {
+				if ((conc_freq == chan_freq) ||
 				    (policy_mgr_is_hw_dbs_capable(mac_ctx->psoc)
-				    && !WLAN_REG_IS_SAME_BAND_CHANNELS(
-				    conc_channel, chan_id))) {
+				    && !WLAN_REG_IS_SAME_BAND_FREQS(
+				    conc_freq, chan_freq))) {
 				/*
 				 * make this 0 because we do not want the below
 				 * check to pass as we don't want to connect on
 				 * other channel
 				 */
-					sme_debug("Conc chnl match: %d",
-								conc_channel);
-					conc_channel = 0;
+					sme_debug("Conc chnl freq match: %d",
+						  conc_freq);
+					conc_freq = 0;
 				}
 			}
 		}
 
 		/* Ok to roam this */
-		if (!conc_channel &&
-			QDF_IS_STATUS_SUCCESS(csr_roam_should_roam(mac_ctx,
-				session_id, &result->BssDescriptor, roam_id))) {
+		if (!conc_freq &&
+		    QDF_IS_STATUS_SUCCESS(csr_roam_should_roam(mac_ctx,
+					  session_id, &result->BssDescriptor,
+					  roam_id))) {
 			status = false;
 			break;
 		}

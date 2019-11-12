@@ -741,7 +741,7 @@ bool csr_is_session_client_and_connected(struct mac_context *mac, uint8_t sessio
 	return false;
 }
 
-uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx)
+uint32_t csr_get_concurrent_operation_freq(struct mac_context *mac_ctx)
 {
 	struct csr_roam_session *session = NULL;
 	uint8_t i = 0;
@@ -762,10 +762,7 @@ uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx)
 				(persona == QDF_SAP_MODE))
 				 && (session->connectState !=
 					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)))
-			return wlan_reg_freq_to_chan(
-					mac_ctx->pdev,
-					session->connectedProfile.op_freq);
-
+			return session->connectedProfile.op_freq;
 	}
 	return 0;
 }

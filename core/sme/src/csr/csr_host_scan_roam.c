@@ -133,7 +133,7 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 		&mac_ctx->roam.neighborRoamInfo[sessionid];
 	tpCsrNeighborRoamBSSInfo bss_info;
 	uint64_t age = 0;
-	uint8_t bss_chan_id;
+	uint32_t bss_chan_freq;
 	uint8_t num_candidates = 0;
 	uint8_t num_dropped = 0;
 	/*
@@ -167,8 +167,7 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 			if (!scan_result)
 				break;
 			descr = &scan_result->BssDescriptor;
-			bss_chan_id = wlan_reg_freq_to_chan(mac_ctx->pdev,
-							    descr->chan_freq);
+			bss_chan_freq = descr->chan_freq;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Scan result: BSSID " QDF_MAC_ADDR_STR
 				     " (Rssi %d, Ch:%d)"),
@@ -195,12 +194,12 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 			if (policy_mgr_concurrent_open_sessions_running(
 				mac_ctx->psoc) &&
 				!mac_ctx->roam.configParam.fenableMCCMode) {
-				uint8_t conc_channel;
+				uint32_t conc_freq;
 
-				conc_channel =
-				  csr_get_concurrent_operation_channel(mac_ctx);
-				if (conc_channel &&
-				   (conc_channel != bss_chan_id)) {
+				conc_freq =
+				  csr_get_concurrent_operation_freq(mac_ctx);
+				if (conc_freq &&
+				    (conc_freq != bss_chan_freq)) {
 					sme_debug("MCC not supported so Ignore AP on channel %d",
 						  descr->chan_freq);
 					continue;
