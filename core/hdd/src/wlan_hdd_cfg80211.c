@@ -20810,31 +20810,25 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 
 	status = sme_roam_disconnect(mac_handle,
 				     adapter->vdev_id, reason);
-	if ((QDF_STATUS_CMD_NOT_QUEUED == status) &&
-			prev_conn_state != eConnectionState_Connecting) {
-		hdd_debug("status = %d, already disconnected", status);
-		result = 0;
-		/*
-		 * Wait here instead of returning directly. This will block the
-		 * next connect command and allow processing of the disconnect
-		 * in SME else we might hit some race conditions leading to SME
-		 * and HDD out of sync. As disconnect is already in progress,
-		 * wait here for 1 sec instead of 5 sec.
-		 */
-		wait_time = WLAN_WAIT_DISCONNECT_ALREADY_IN_PROGRESS;
-	} else if (QDF_STATUS_CMD_NOT_QUEUED == status) {
+	if (QDF_STATUS_CMD_NOT_QUEUED == status &&
+	    prev_conn_state == eConnectionState_Connecting) {
 		/*
 		 * Wait here instead of returning directly, this will block the
 		 * next connect command and allow processing of the scan for
-		 * ssid and the previous connect command in CSR. Else we might
-		 * hit some race conditions leading to SME and HDD out of sync.
+		 * ssid and the previous connect command in CSR.
 		 */
-		hdd_debug("Already disconnected or connect was in sme/roam pending list and removed by disconnect");
-	} else if (0 != status) {
-		hdd_err("csr_roam_disconnect failure, status: %d", (int)status);
-		sta_ctx->sta_debug_state = status;
-		result = -EINVAL;
-		goto disconnected;
+		hdd_debug("CSR is not in connected state but scan for SSID is in progress, wait for scan to be aborted or completed.");
+	} else if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_debug("status = %d, already disconnect in progress or SME is disconencted OR connect removed from pending queue",
+			  status);
+		/*
+		 * Wait here instead of returning directly. This will block the
+		 * next connect command and allow processing of the disconnect
+		 * in SME. As disconnect is already in progress, wait here for
+		 * WLAN_WAIT_DISCONNECT_ALREADY_IN_PROGRESS instead of
+		 * SME_DISCONNECT_TIMEOUT.
+		 */
+		wait_time = WLAN_WAIT_DISCONNECT_ALREADY_IN_PROGRESS;
 	}
 wait_for_disconnect:
 	rc = wait_for_completion_timeout(&adapter->disconnect_comp_var,
@@ -20844,7 +20838,6 @@ wait_for_disconnect:
 		hdd_err("Failed to disconnect, timed out");
 		result = -ETIMEDOUT;
 	}
-disconnected:
 	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
 	/* Sending disconnect event to userspace for kernel version < 3.11

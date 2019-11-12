@@ -9010,7 +9010,7 @@ QDF_STATUS csr_roam_issue_stop_bss_cmd(struct mac_context *mac, uint32_t session
 QDF_STATUS csr_roam_disconnect_internal(struct mac_context *mac, uint32_t sessionId,
 					eCsrRoamDisconnectReason reason)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (!pSession) {
@@ -9026,7 +9026,7 @@ QDF_STATUS csr_roam_disconnect_internal(struct mac_context *mac, uint32_t sessio
 		sme_debug("called");
 		status = csr_roam_issue_disassociate_cmd(mac, sessionId,
 							 reason);
-	} else {
+	} else if (pSession->scan_info.profile) {
 		mac->roam.roamSession[sessionId].connectState =
 			eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING;
 		csr_scan_abort_mac_scan(mac, sessionId, INVAL_SCAN_ID);
@@ -9034,6 +9034,7 @@ QDF_STATUS csr_roam_disconnect_internal(struct mac_context *mac, uint32_t sessio
 		sme_debug("Disconnect cmd not queued, Roam command is not present return with status: %d",
 			status);
 	}
+
 	return status;
 }
 
