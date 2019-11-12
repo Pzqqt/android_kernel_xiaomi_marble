@@ -131,7 +131,6 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 	int i, len;
 	struct scan_chan_list_params *scan_ch_param;
 	struct channel_param *chan_p;
-	uint16_t channel;
 	struct ch_params ch_params;
 
 	len = sizeof(struct channel_param) * chan_list->numChan +
@@ -153,8 +152,6 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 		chan_p->mhz = chan_list->chanParam[i].freq;
 		chan_p->cfreq1 = chan_p->mhz;
 		chan_p->cfreq2 = 0;
-		channel = wlan_reg_freq_to_chan(wma_handle->pdev,
-						chan_list->chanParam[i].freq);
 		wma_handle->saved_chan.ch_freq_list[i] =
 					chan_list->chanParam[i].freq;
 
@@ -199,8 +196,10 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 		chan_p->maxregpower = chan_list->chanParam[i].pwr;
 
 		ch_params.ch_width = CH_WIDTH_160MHZ;
-		wlan_reg_set_channel_params(wma_handle->pdev, channel, 0,
-					    &ch_params);
+		wlan_reg_set_channel_params_for_freq(wma_handle->pdev,
+						     chan_p->mhz, 0,
+						     &ch_params);
+
 		chan_p->max_bw_supported =
 		     wma_map_phy_ch_bw_to_wmi_channel_width(ch_params.ch_width);
 		chan_p++;

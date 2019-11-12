@@ -4505,17 +4505,9 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		 * is not there as BAND_6G works only on frequencies and channel
 		 * numbers can be treated as unique.
 		 */
-		if (mgmt_rx_params->channel >= WLAN_REG_MIN_24GHZ_CH_NUM &&
-		    mgmt_rx_params->channel <= WLAN_REG_MAX_24GHZ_CH_NUM)
-			mgmt_rx_params->chan_freq =
-					wlan_reg_chan_to_freq(
-						wma_handle->pdev,
-						mgmt_rx_params->channel);
-		else
-			mgmt_rx_params->chan_freq =
-					wlan_reg_chan_to_freq(
-						wma_handle->pdev,
-						mgmt_rx_params->channel);
+		mgmt_rx_params->chan_freq = wlan_reg_legacy_chan_to_freq(
+					    wma_handle->pdev,
+					    mgmt_rx_params->channel);
 	}
 
 	mgmt_rx_params->pdev_id = 0;
