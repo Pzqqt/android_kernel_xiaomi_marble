@@ -1517,9 +1517,7 @@ QDF_STATUS scm_scan_update_mlme_by_bssinfo(struct wlan_objmgr_pdev *pdev,
 		entry = cur_node->entry;
 		if (qdf_is_macaddr_equal(&bss_info->bssid, &entry->bssid) &&
 			(util_is_ssid_match(&bss_info->ssid, &entry->ssid)) &&
-			(bss_info->chan == wlan_reg_freq_to_chan(
-						pdev,
-						entry->channel.chan_freq))) {
+			(bss_info->freq == entry->channel.chan_freq)) {
 			/* Acquire db lock to prevent simultaneous update */
 			qdf_spin_lock_bh(&scan_db->scan_db_lock);
 			qdf_mem_copy(&entry->mlme_info, mlme,

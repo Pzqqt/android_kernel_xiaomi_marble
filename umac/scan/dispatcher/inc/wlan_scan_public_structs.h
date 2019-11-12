@@ -240,12 +240,12 @@ struct mlme_info {
 
 /**
  * struct bss_info - information required to uniquely define a bss
- * @chan: bss operating primary channel index
+ * @freq: freq of operating primary channel
  * @ssid: ssid of bss
  * @bssid: bssid of bss
  */
 struct bss_info {
-	uint8_t chan;
+	uint32_t freq;
 	struct wlan_ssid ssid;
 	struct qdf_mac_addr bssid;
 };
