@@ -220,7 +220,7 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ol_txrx_htt_cfr_rx_ind_handler);
+qdf_export_symbol(ol_txrx_htt_cfr_rx_ind_handler);
 
 QDF_STATUS
 cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
