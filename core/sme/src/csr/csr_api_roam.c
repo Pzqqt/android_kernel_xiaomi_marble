@@ -6648,13 +6648,13 @@ void csr_update_scan_entry_associnfo(struct mac_context *mac_ctx,
 	}
 
 	qdf_copy_macaddr(&bss.bssid, &conn_profile->bssid);
-	bss.chan = wlan_reg_freq_to_chan(mac_ctx->pdev, conn_profile->op_freq);
+	bss.freq = conn_profile->op_freq;
 	bss.ssid.length = conn_profile->SSID.length;
 	qdf_mem_copy(&bss.ssid.ssid, &conn_profile->SSID.ssId,
 		     bss.ssid.length);
 
-	sme_debug("Update MLME info in scan database. bssid %pM ssid:%.*s chan %d state: %d",
-		  bss.bssid.bytes, bss.ssid.length, bss.ssid.ssid, bss.chan,
+	sme_debug("Update MLME info in scan database. bssid %pM ssid:%.*s freq %d state: %d",
+		  bss.bssid.bytes, bss.ssid.length, bss.ssid.ssid, bss.freq,
 		  state);
 	mlme.assoc_state = state;
 	status = ucfg_scan_update_mlme_by_bssinfo(mac_ctx->pdev, &bss, &mlme);
