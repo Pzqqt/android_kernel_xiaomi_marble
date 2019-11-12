@@ -1401,7 +1401,7 @@ struct cdp_lflowctl_ops {
 					uint8_t pdev_id,
 					tx_pause_callback flowcontrol);
 	int (*set_vdev_tx_desc_limit)(struct cdp_soc_t *soc_hdl,
-				      uint8_t vdev_id, uint8_t chan);
+				      uint8_t vdev_id, uint32_t chan_freq);
 	int (*set_vdev_os_queue_status)(struct cdp_soc_t *soc_hdl,
 					uint8_t vdev_id,
 					enum netif_action_type action);

@@ -58,13 +58,13 @@ cdp_hl_fc_register(ol_txrx_soc_handle soc, uint8_t pdev_id,
 }
 
 static inline int cdp_hl_fc_set_td_limit(ol_txrx_soc_handle soc,
-					 uint8_t vdev_id, uint8_t chan)
+					 uint8_t vdev_id, uint32_t chan_freq)
 {
 	if (!soc->ops->l_flowctl_ops->set_vdev_tx_desc_limit)
 		return 0;
 
 	return soc->ops->l_flowctl_ops->set_vdev_tx_desc_limit(soc, vdev_id,
-							       chan);
+							       chan_freq);
 }
 
 static inline int cdp_hl_fc_set_os_queue_status(ol_txrx_soc_handle soc,
@@ -87,7 +87,7 @@ cdp_hl_fc_register(ol_txrx_soc_handle soc, uint8_t pdev_id,
 }
 
 static inline int cdp_hl_fc_set_td_limit(ol_txrx_soc_handle soc,
-					 uint8_t vdev_id, uint8_t chan)
+					 uint8_t vdev_id, uint32_t chan_freq)
 {
 	return 0;
 }
