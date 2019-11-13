@@ -1422,7 +1422,8 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	if (qdf_nbuf_len(frag) > 0) {
 		dp_info("Dropping unexpected packet with skb_len: %d,"
 			"data len: %d, cookie: %d",
-			qdf_nbuf_len(frag), frag->data_len, rx_desc->cookie);
+			(uint32_t)qdf_nbuf_len(frag), frag->data_len,
+			rx_desc->cookie);
 		DP_STATS_INC(soc, rx.rx_frag_err_len_error, 1);
 		goto discard_frag;
 	}

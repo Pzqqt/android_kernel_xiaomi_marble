@@ -1051,7 +1051,8 @@ void dp_print_ast_stats(struct dp_soc *soc)
 					    ase->ast_idx,
 					    ase->ast_hash_value,
 					    ase->delete_in_progress,
-					    ase->pdev_id);
+					    ase->pdev_id,
+					    vdev->vdev_id);
 				}
 			}
 		}
