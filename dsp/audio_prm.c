@@ -66,7 +66,6 @@ static int audio_prm_callback(struct gpr_device *adev, void *data)
 				pr_err("%s: PRM command failed with error %d\n",
 					__func__, payload[1]);
 			atomic_set(&g_prm.state, payload[1]);
-			wake_up(&g_prm.wait);
 			break;
 		default:
 			pr_err("%s: hit default case",__func__);
@@ -101,6 +100,7 @@ static int prm_gpr_send_pkt(struct gpr_pkt *pkt, wait_queue_head_t *wait)
 		mutex_unlock(&g_prm.lock);
 		return -ENODEV;
 	}
+	g_prm.resp_received = false;
 	ret = gpr_send_pkt(g_prm.adev, pkt);
 	if (ret < 0) {
 		pr_err("%s: packet not transmitted %d\n", __func__, ret);
@@ -109,7 +109,6 @@ static int prm_gpr_send_pkt(struct gpr_pkt *pkt, wait_queue_head_t *wait)
 	}
 
 	if (wait) {
-		g_prm.resp_received = false;
 		ret = wait_event_timeout(g_prm.wait,
 				(g_prm.resp_received),
 				msecs_to_jiffies(2 * TIMEOUT_MS));
