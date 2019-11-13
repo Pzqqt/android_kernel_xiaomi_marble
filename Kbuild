@@ -1631,6 +1631,26 @@ WLAN_NAN_OBJS := $(NAN_CORE_DIR)/nan_main.o \
 endif
 #######################################################
 
+###### COEX ########
+COEX_OS_IF_SRC      := $(WLAN_COMMON_ROOT)/os_if/linux/coex/src
+COEX_TGT_SRC        := $(WLAN_COMMON_ROOT)/target_if/coex/src
+COEX_CORE_SRC       := $(WLAN_COMMON_ROOT)/umac/coex/core/src
+COEX_DISPATCHER_SRC := $(WLAN_COMMON_ROOT)/umac/coex/dispatcher/src
+
+COEX_OS_IF_INC      := -I$(WLAN_COMMON_INC)/os_if/linux/coex/inc
+COEX_TGT_INC        := -I$(WLAN_COMMON_INC)/target_if/coex/inc
+COEX_DISPATCHER_INC := -I$(WLAN_COMMON_INC)/umac/coex/dispatcher/inc
+COEX_CORE_INC       := -I$(WLAN_COMMON_INC)/umac/coex/core/inc
+
+ifeq ($(CONFIG_FEATURE_COEX), y)
+COEX_OBJS := $(COEX_TGT_SRC)/target_if_coex.o                 \
+		 $(COEX_CORE_SRC)/wlan_coex_main.o                 \
+		 $(COEX_OS_IF_SRC)/wlan_cfg80211_coex.o           \
+		 $(COEX_DISPATCHER_SRC)/wlan_coex_tgt_api.o       \
+		 $(COEX_DISPATCHER_SRC)/wlan_coex_utils_api.o       \
+		 $(COEX_DISPATCHER_SRC)/wlan_coex_ucfg_api.o
+endif
+
 ############## HTC ##########
 HTC_DIR := htc
 HTC_INC := -I$(WLAN_COMMON_INC)/$(HTC_DIR)
@@ -2062,6 +2082,11 @@ INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
 INCS +=		$(UMAC_DBR_INC)
 INCS +=		$(UMAC_CRYPTO_INC)
 
+INCS +=		$(COEX_OS_IF_INC)
+INCS +=		$(COEX_TGT_INC)
+INCS +=		$(COEX_DISPATCHER_INC)
+INCS +=		$(COEX_CORE_INC)
+
 OBJS :=		$(HDD_OBJS) \
 		$(SYNC_OBJS) \
 		$(DSC_OBJS) \
@@ -2133,6 +2158,7 @@ ifeq ($(CONFIG_WLAN_FW_OFFLOAD), y)
 OBJS +=		$(FWOL_OBJS)
 endif
 OBJS +=		$(BLM_OBJS)
+OBJS +=		$(COEX_OBJS)
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 OBJS +=		$(OCB_OBJS)
@@ -2246,6 +2272,7 @@ cppflags-$(CONFIG_FEATURE_OEM_DATA) += -DFEATURE_OEM_DATA
 cppflags-$(CONFIG_FEATURE_MOTION_DETECTION) += -DWLAN_FEATURE_MOTION_DETECTION
 cppflags-$(CONFIG_WLAN_FW_OFFLOAD) += -DWLAN_FW_OFFLOAD
 cppflags-$(CONFIG_WLAN_FEATURE_ELNA) += -DWLAN_FEATURE_ELNA
+cppflags-$(CONFIG_FEATURE_COEX) += -DFEATURE_COEX
 
 cppflags-$(CONFIG_PLD_IPCI_ICNSS_FLAG) += -DCONFIG_PLD_IPCI_ICNSS
 cppflags-$(CONFIG_PLD_SDIO_CNSS_FLAG) += -DCONFIG_PLD_SDIO_CNSS
