@@ -1114,6 +1114,13 @@ struct cdp_misc_ops {
 					       uint32_t time_in_ms,
 					       uint32_t high_th,
 					       uint32_t low_th);
+	void (*vdev_set_bundle_require_flag)(uint8_t vdev_id,
+					     unsigned long tx_bytes,
+					     uint32_t time_in_ms,
+					     uint32_t high_th,
+					     uint32_t low_th);
+	void (*pdev_reset_bundle_require_flag)(struct cdp_soc_t *soc_hdl,
+					       uint8_t pdev_id);
 };
 
 /**

@@ -313,6 +313,11 @@ struct txrx_pdev_cfg_param_t {
 	bool enable_data_stall_detection;
 	bool enable_flow_steering;
 	bool disable_intra_bss_fwd;
+
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+	uint16_t bundle_timer_value;
+	uint16_t bundle_size;
+#endif
 };
 
 #ifdef IPA_OFFLOAD
