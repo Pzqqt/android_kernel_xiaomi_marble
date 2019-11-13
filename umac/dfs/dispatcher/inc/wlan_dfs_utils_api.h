@@ -472,7 +472,7 @@ QDF_STATUS utils_dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
 #endif
 
 /**
- * utils_dfs_get_random_channel() - Get random channel.
+ * utils_dfs_get_random_channel_for_freq() - Get random channel.
  * @pdev: Pointer to DFS pdev object.
  * @flags: random channel selection flags.
  * @ch_params: current channel params.

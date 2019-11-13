@@ -81,6 +81,9 @@
 /* Number of 20MHz channels in bitmap */
 #define DFS_MAX_20M_SUB_CH                      8
 
+/* Frequency difference between 80+80 MHz */
+#define DFS_80P80M_FREQ_DIFF                    40
+
 /* Number of 80MHz channels in 5GHz band */
 #define DFS_MAX_80MHZ_BANDS                     6
 

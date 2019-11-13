@@ -20,6 +20,7 @@
 #include "../dfs_random_chan_sel.h"
 #include <qdf_mc_timer.h>
 #include <wlan_utility.h>
+#include "../dfs_process_radar_found_ind.h"
 
 #ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 /*
@@ -1648,7 +1649,7 @@ static uint16_t dfs_find_ch_with_fallback_for_freq(struct wlan_dfs *dfs,
 		index = (rand_byte + qdf_mc_timer_get_system_ticks()) %
 			final_cnt;
 		target_channel = final_lst[index];
-		index -= (index % DFS_80_NUM_SUB_CHANNEL_FREQ);
+		index -= (index % DFS_80_NUM_SUB_CHANNEL);
 		primary_seg_start_ch = final_lst[index];
 
 		/* reset channels associate with primary 80Mhz */
@@ -1656,12 +1657,12 @@ static uint16_t dfs_find_ch_with_fallback_for_freq(struct wlan_dfs *dfs,
 			final_lst[i + index] = 0;
 		/* select and calculate center freq for secondary segment */
 		for (i = 0; i < final_cnt / DFS_80_NUM_SUB_CHANNEL; i++) {
-			if (final_lst[i * DFS_80_NUM_SUB_CHANNEL_FREQ] &&
+			if (final_lst[i * DFS_80_NUM_SUB_CHANNEL] &&
 			    (abs(primary_seg_start_ch -
-				 final_lst[i * DFS_80_NUM_SUB_CHANNEL_FREQ]) >
-			     (DFS_MAX_20M_SUB_CH * 2))) {
+				 final_lst[i * DFS_80_NUM_SUB_CHANNEL]) >
+			     (DFS_80P80M_FREQ_DIFF * 2))) {
 				sec_seg_ch = final_lst[i *
-					DFS_80_NUM_SUB_CHANNEL_FREQ] +
+					DFS_80_NUM_SUB_CHANNEL] +
 					DFS_80MHZ_START_CENTER_CH_FREQ_DIFF;
 				break;
 			}
@@ -1686,27 +1687,6 @@ static uint16_t dfs_find_ch_with_fallback_for_freq(struct wlan_dfs *dfs,
 	return target_channel;
 }
 #endif
-
-/**
- * dfs_remove_cur_ch_from_list()- remove current operating channels
- * @ch_list: list of avilable channel list
- * @ch_cnt: number of channels.
- * @ch_wd: channel width.
- * @cur_chan: current channel.
- *
- * Remove current channels from list of available channels.
- *
- * Return: channel number
- */
-static void dfs_remove_cur_ch_from_list(
-	struct dfs_channel *ch_list,
-	uint32_t *ch_cnt,
-	uint8_t *ch_wd,
-	struct dfs_channel *cur_chan)
-{
-	/* TODO */
-	return;
-}
 
 bool dfs_is_freq_in_nol(struct wlan_dfs *dfs, uint32_t freq)
 {
@@ -1920,6 +1900,8 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 	int i;
 	bool found = false;
 	uint16_t j;
+	uint16_t freq_list[NUM_CHANNELS_160MHZ];
+	uint8_t num_channels;
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN, "flags %d", flags);
 	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
@@ -1935,8 +1917,15 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 	flag_no_2g_chan  = flags & DFS_RANDOM_CH_FLAG_NO_2GHZ_CH;
 	flag_no_5g_chan  = flags & DFS_RANDOM_CH_FLAG_NO_5GHZ_CH;
 
+	if (flags & DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH) {
+		num_channels =
+			dfs_get_bonding_channel_without_seg_info_for_freq
+			(dfs->dfs_curchan, freq_list);
+	}
+
 	for (i = 0; i < chan_cnt; i++) {
 		chan = &chan_list[i];
+		found = false;
 
 		if ((chan->dfs_ch_ieee == 0) ||
 		    (chan->dfs_ch_ieee > MAX_CHANNEL_NUM)) {
@@ -1946,15 +1935,21 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 		}
 
 		if (flags & DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH) {
-			/* TODO : Skip all HT20 channels in the given mode */
-			if (chan->dfs_ch_freq ==
-					dfs->dfs_curchan->dfs_ch_freq) {
-				dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-					  "skip %d current operating channel",
-					  chan->dfs_ch_ieee);
-				continue;
+			for (j = 0; j < num_channels; j++) {
+				if (chan->dfs_ch_freq == freq_list[j]) {
+					dfs_debug(dfs,
+						  WLAN_DEBUG_DFS_RANDOM_CHAN,
+						  "skip %d current operating channel",
+						  chan->dfs_ch_freq);
+					found = true;
+					break;
+				}
 			}
+
+			if (found)
+				continue;
 		}
+
 		if (acs_info && acs_info->acs_mode) {
 			for (j = 0; j < acs_info->num_of_channel; j++) {
 				if (acs_info->chan_freq_list[j] ==
@@ -2074,9 +2069,6 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	if (!random_chan_list)
 		return 0;
 
-	if (flags & DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH)
-		dfs_remove_cur_ch_from_list(ch_list, &ch_cnt, ch_wd, cur_chan);
-
 	dfs_apply_rules(dfs, flags, random_chan_list, &random_chan_cnt,
 		    ch_list, ch_cnt, dfs_region, acs_info);
 
@@ -2190,13 +2182,9 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 	if (!random_chan_freq_list)
 		return 0;
 
-	if (flags & DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH)
-		dfs_remove_cur_ch_from_list(chan_list, &chan_cnt, chan_wd, cur_chan);
-
 	dfs_apply_rules_for_freq(dfs, flags, random_chan_freq_list,
 				 &random_chan_cnt, chan_list, chan_cnt,
 				 dfs_region, acs_info);
-
 	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
 		flags & DFS_RANDOM_CH_FLAG_NO_WEATHER_CH : 0;
 
