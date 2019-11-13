@@ -194,6 +194,31 @@ static inline bool qdf_ptr_hash_empty(struct qdf_ptr_hash *ht)
 	return true;
 }
 
+#ifdef ENABLE_QDF_PTR_HASH_DEBUG
+/**
+ * qdf_ptr_hash_dup_check_in_bucket() - check if a hash_entry is duplicated
+					in hash_bucket
+ * @bucket: qdf_ptr_hash_bucket pointer
+ * cmp_entry: the hash_entry to be checked
+ *
+ * if the cmp_entry is found in bucket list, then trigger
+ * assert to report duplication.
+ *
+ * Return: None
+ */
+static inline void qdf_ptr_hash_dup_check_in_bucket(
+				struct qdf_ptr_hash_bucket *bucket,
+				struct qdf_ptr_hash_entry *cmp_entry)
+{
+	struct qdf_ptr_hash_entry *tmp_entry;
+
+	qdf_slist_for_each(&bucket->list, tmp_entry, node)
+		qdf_assert_always(tmp_entry != cmp_entry);
+}
+#else
+#define qdf_ptr_hash_dup_check_in_bucket(_bucket, _cmp_entry) /* no op */
+#endif
+
 static inline struct qdf_ptr_hash_bucket *
 __qdf_ptr_hash_get_bucket(struct qdf_ptr_hash *ht, uintptr_t key)
 {
@@ -216,6 +241,9 @@ static inline void __qdf_ptr_hash_add(struct qdf_ptr_hash *ht, uintptr_t key,
 				      struct qdf_ptr_hash_entry *entry)
 {
 	entry->key = key;
+	/* check hash_enrty exist or not before push */
+	qdf_ptr_hash_dup_check_in_bucket(__qdf_ptr_hash_get_bucket(ht, key),
+					 entry);
 	qdf_slist_push(&__qdf_ptr_hash_get_bucket(ht, key)->list, entry, node);
 }
 
@@ -245,6 +273,8 @@ __qdf_ptr_hash_remove(struct qdf_ptr_hash *ht, uintptr_t key)
 	qdf_slist_for_each_del(&bucket->list, prev, entry, node) {
 		if (entry->key == key) {
 			qdf_slist_remove(&bucket->list, prev, node);
+			/* check hash_enrty exist or not after remove */
+			qdf_ptr_hash_dup_check_in_bucket(bucket, entry);
 			entry->key = 0;
 			return entry;
 		}
