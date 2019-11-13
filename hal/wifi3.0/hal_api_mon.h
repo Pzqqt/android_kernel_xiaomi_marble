@@ -486,6 +486,8 @@ struct hal_rx_ppdu_info {
 	uint32_t hdr_len;
 	/* MPDU FCS error */
 	bool fcs_err;
+	/* Id to indicate how to process mpdu */
+	uint8_t sw_frame_group_id;
 	struct hal_rx_ppdu_msdu_info rx_msdu_info[HAL_MAX_UL_MU_USERS];
 	/* first msdu payload for all mpdus in ppdu */
 	struct hal_rx_msdu_payload_info ppdu_msdu_info[HAL_RX_MAX_MPDU];

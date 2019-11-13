@@ -270,6 +270,9 @@
 #define HAL_RX_GET_PPDU_ID(rx_mpdu_start)	\
 	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0, PHY_PPDU_ID)
 
+#define HAL_RX_GET_SW_FRAME_GROUP_ID(rx_mpdu_start)	\
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0, SW_FRAME_GROUP_ID)
+
 #define HAL_REO_R0_CONFIG(soc, reg_val, reo_params)	\
 	do { \
 		reg_val &= \

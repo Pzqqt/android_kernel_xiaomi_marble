@@ -485,14 +485,18 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_10,
 					OTHER_MSDU_COUNT);
 
-		ppdu_info->rx_status.frame_control_info_valid =
-			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
-					FRAME_CONTROL_INFO_VALID);
+		if (ppdu_info->sw_frame_group_id
+		    != HAL_MPDU_SW_FRAME_GROUP_NULL_DATA) {
+			ppdu_info->rx_status.frame_control_info_valid =
+				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
+					   FRAME_CONTROL_INFO_VALID);
 
-		if (ppdu_info->rx_status.frame_control_info_valid)
-			ppdu_info->rx_status.frame_control =
-				 HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_4,
-					    FRAME_CONTROL_FIELD);
+			if (ppdu_info->rx_status.frame_control_info_valid)
+				ppdu_info->rx_status.frame_control =
+					HAL_RX_GET(rx_tlv,
+						   RX_PPDU_END_USER_STATS_4,
+						   FRAME_CONTROL_FIELD);
+		}
 
 		ppdu_info->rx_status.data_sequence_control_info_valid =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
@@ -1367,6 +1371,17 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			HAL_RX_GET(rx_mpdu_start,
 				   RX_MPDU_INFO_14,
 				   MPDU_FRAME_CONTROL_FIELD);
+
+		ppdu_info->sw_frame_group_id =
+			HAL_RX_GET_SW_FRAME_GROUP_ID(rx_mpdu_start);
+
+		if (ppdu_info->sw_frame_group_id ==
+		    HAL_MPDU_SW_FRAME_GROUP_NULL_DATA) {
+			ppdu_info->rx_status.frame_control_info_valid =
+				ppdu_info->nac_info.fc_valid;
+			ppdu_info->rx_status.frame_control =
+				ppdu_info->nac_info.frame_control;
+		}
 
 		ppdu_info->nac_info.mac_addr2_valid =
 				HAL_RX_GET_MAC_ADDR2_VALID(rx_mpdu_start);
