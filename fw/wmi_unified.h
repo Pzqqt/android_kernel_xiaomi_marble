@@ -2179,6 +2179,20 @@ typedef enum {
  */
 #define WMI_HE_MAX_MCS_4_SS_MASK(r,ss)      ((3 & (r)) << (((ss) - 1) << 1))
 
+/*
+ * index ranges from 0 to 15, and is used for checking if MCS 12/13 is enabled
+ * for a particular NSS.
+ * The lower 8 bits (indices 0-7) within the 16 bits indicate MCS 12/13
+ * enablement for BW <= 80MHz; the upper 8 bits (indices 8-15) within
+ * the 16 bits indicate MCS 12/13 enablement for BW > 80MHz.
+ * The 16 bits for the index values are within the upper bits (bits 31:16)
+ * of a 32-bit word.
+ */
+#define WMI_HE_EXTRA_MCS_SS_GET(he_mcs_map_ext, index) \
+    WMI_GET_BITS(he_mcs_map_ext, 16 + index, 1)
+#define WMI_HE_EXTRA_MCS_SS_SET(he_mcs_map_ext, index, value) \
+    WMI_SET_BITS(he_mcs_map_ext, 16 + index, 1, value)
+
 /* fragmentation support field value */
 enum {
     WMI_HE_FRAG_SUPPORT_LEVEL0, /* No Fragmentation support */
@@ -12031,7 +12045,16 @@ typedef struct {
      *    value 1 - MCS 0-9 enabled for this NSS
      *    value 2 - MCS 0-11 enabled for this NSS
      *    value 3 - NSS disabled
-     * - WMI_HE_MAX_MCS_4_SS_MASK macro can be used for encoding this info
+     *   WMI_HE_MAX_MCS_4_SS_MASK macro can be used for encoding this info
+     *
+     * - 8 bits x 2 are used for each Nss value for 2 categories of bandwidths,
+     *   to indicate whether MCS 12 and 13 are enabled.
+     *    Bits [16:23] used for checking if MCS 12/13 is enabled for a
+     *        particular NSS (BW <= 80MHz)
+     *    Bits [24:31] used for checking if MCS 12/13 is enabled for a
+     *        particular NSS (BW > 80MHz)
+     *   The WMI_HE_EXTRA_MCS_SS_[GET,SET] macros can be used for accessing
+     *   these bit-fields.
      */
     A_UINT32 tx_mcs_set; /* Negotiated TX HE rates(i.e. rate this node can TX to peer) */
 } wmi_he_rate_set;
