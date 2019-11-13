@@ -698,7 +698,7 @@ static struct CE_attr host_ce_config_wlan_qca8074[] = {
 	/* host->target WMI (mac1) */
 	{ /* CE7 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
 	/* Target to uMC */
-	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	{ /* CE8 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0, 0, 0, 0, NULL,},
 	/* host->target WMI (mac2) */
 	{ /* CE9 */ CE_ATTR_FLAGS, 0, 32,  2048, 0, NULL,},
 	/* target->host HTT */
