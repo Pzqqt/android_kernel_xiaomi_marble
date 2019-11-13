@@ -311,7 +311,7 @@ QDF_STATUS policy_mgr_get_conc_rule2(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
-						uint32_t *chnl_select_plcy)
+					   uint32_t *chnl_select_plcy)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
@@ -321,6 +321,21 @@ QDF_STATUS policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 	*chnl_select_plcy = pm_ctx->cfg.chnl_select_plcy;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS policy_mgr_set_ch_select_plcy(struct wlan_objmgr_psoc *psoc,
+					 uint32_t ch_select_policy)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	pm_ctx->cfg.chnl_select_plcy = ch_select_policy;
 
 	return QDF_STATUS_SUCCESS;
 }
