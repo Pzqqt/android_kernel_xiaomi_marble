@@ -15575,8 +15575,9 @@ static QDF_STATUS csr_check_and_validate_6g_ap(struct mac_context *mac_ctx,
 	if (!wlan_reg_is_6ghz_chan_freq(bss->chan_freq))
 		return QDF_STATUS_SUCCESS;
 
-	if (!he_op->oper_info_6g_present || he_op->co_located_bss) {
-		sme_err("Invalid 6GHZ AP BSS description IE");
+	if (!he_op->oper_info_6g_present) {
+		sme_err("%pM Invalid 6GHZ AP BSS description IE",
+			bss->bssId);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -15691,7 +15692,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		status = csr_check_and_validate_6g_ap(mac, pBssDescription,
 						      csr_join_req, pIes);
 		if (!QDF_IS_STATUS_SUCCESS(status))
-			return status;
+			break;
 
 		csr_join_req->messageType = messageType;
 		csr_join_req->length = msgLen;
