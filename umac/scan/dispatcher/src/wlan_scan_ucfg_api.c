@@ -1011,6 +1011,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_HONOUR_NL_SCAN_POLICY_FLAGS);
 	scan_obj->scan_def.enable_mac_spoofing =
 			cfg_get(psoc, CFG_ENABLE_MAC_ADDR_SPOOFING);
+	scan_obj->scan_def.is_bssid_hint_priority =
+			cfg_get(psoc, CFG_IS_BSSID_HINT_PRIORITY);
 	scan_obj->scan_def.extscan_adaptive_dwell_mode =
 			cfg_get(psoc, CFG_ADAPTIVE_EXTSCAN_DWELL_MODE);
 
