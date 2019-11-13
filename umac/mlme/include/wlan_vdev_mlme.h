@@ -31,6 +31,7 @@ struct vdev_mlme_obj;
 #define MULTIPLE_VDEV_RESTART_REQ_ID 0x1234
 
 /* values for vdev_type */
+#define WLAN_VDEV_MLME_TYPE_UNKNOWN   0x0
 #define WLAN_VDEV_MLME_TYPE_AP   0x1
 #define WLAN_VDEV_MLME_TYPE_STA  0x2
 #define WLAN_VDEV_MLME_TYPE_IBSS 0x3
@@ -40,6 +41,7 @@ struct vdev_mlme_obj;
 #define WLAN_VDEV_MLME_TYPE_NDI 0x7
 
 /* values for vdev_subtype */
+#define WLAN_VDEV_MLME_SUBTYPE_UNKNOWN   0x0
 #define WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE 0x1
 #define WLAN_VDEV_MLME_SUBTYPE_P2P_CLIENT 0x2
 #define WLAN_VDEV_MLME_SUBTYPE_P2P_GO 0x3
