@@ -2236,6 +2236,21 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 							   leakage_adjusted_lst,
 							   random_chan_cnt);
 
+		/* Since notion of 80+80 is not present in the regulatory
+		 * channel the function may return invalid 80+80 channels for
+		 * some devices (e.g. Pine). Therefore, check if we need to
+		 * correct it by checking the following condition.
+		 */
+		if ((*chan_wd == DFS_CH_WIDTH_80P80MHZ) &&
+		    (flags & DFS_RANDOM_CH_FLAG_RESTRICTED_80P80_ENABLED) &&
+		    !(CHAN_WITHIN_RESTRICTED_80P80(target_freq,
+				*dfs_cfreq_seg2))) {
+			*chan_wd = DFS_CH_WIDTH_160MHZ;
+			target_freq = dfs_find_ch_with_fallback_for_freq(
+					dfs, chan_wd, dfs_cfreq_seg2,
+					leakage_adjusted_lst, random_chan_cnt);
+		}
+
 		/*
 		 * When flag_no_weather is set, avoid usage of Adjacent
 		 * weather radar channel in HT40 mode as extension channel

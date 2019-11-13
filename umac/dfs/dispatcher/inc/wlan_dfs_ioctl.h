@@ -57,6 +57,18 @@
 #define DFS_ALLOW_HW_PULSES 28
 #define DFS_SET_PRI_MULTIPILER   29
 
+#define RESTRICTED_80P80_START_CHAN 132
+#define RESTRICTED_80P80_END_CHAN 161
+
+/* Check if the given channels are within restricted 80P80 start chan(132) and
+ * end chan (161).
+ */
+#define CHAN_WITHIN_RESTRICTED_80P80(chan, cfreq_seg2) \
+	((((chan) >= RESTRICTED_80P80_START_CHAN) && \
+	  ((chan) <= RESTRICTED_80P80_END_CHAN) && \
+	  ((cfreq_seg2) >= RESTRICTED_80P80_START_CHAN) && \
+	  ((cfreq_seg2) <= RESTRICTED_80P80_END_CHAN)) ? true : false)
+
 /*
  * Spectral IOCTLs use DFS_LAST_IOCTL as the base.
  * This must always be the last IOCTL in DFS and have
@@ -192,6 +204,10 @@ struct dfs_bangradar_params {
 
 /* Flag to exclude Japan W53 channnels */
 #define DFS_RANDOM_CH_FLAG_NO_JAPAN_W53_CH      0x0100 /* 0000 0001 0000 0000 */
+
+/* Restricted 80P80 MHz is enabled */
+#define DFS_RANDOM_CH_FLAG_RESTRICTED_80P80_ENABLED 0x0200
+						       /* 0000 0010 0000 0000 */
 
 /**
  * struct wlan_dfs_caps - DFS capability structure.
