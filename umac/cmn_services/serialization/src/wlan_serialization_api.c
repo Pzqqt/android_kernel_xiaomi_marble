@@ -910,3 +910,47 @@ void wlan_serialization_purge_all_scan_cmd_by_vdev_id(
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
 }
+
+QDF_STATUS wlan_ser_vdev_queue_disable(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_ser_vdev_obj *ser_vdev_obj;
+	struct wlan_serialization_vdev_queue *vdev_queue;
+	struct wlan_ser_pdev_obj *ser_pdev_obj;
+	struct wlan_serialization_pdev_queue *pdev_q;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		ser_err("invalid PDEV object");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ser_pdev_obj = wlan_serialization_get_pdev_obj(pdev);
+	if (!ser_pdev_obj) {
+		ser_err("invalid ser_pdev_obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ser_vdev_obj = wlan_serialization_get_vdev_obj(vdev);
+	if (!ser_vdev_obj) {
+		ser_err("invalid ser_vdev_obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev_q = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
+
+	vdev_queue = wlan_serialization_get_vdev_queue_obj(
+			ser_vdev_obj, WLAN_SER_CMD_NONSCAN);
+	if (!vdev_queue) {
+		ser_err("invalid vdev_queue object");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
+	vdev_queue->queue_disable = true;
+	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
+	ser_info("Disabling the serialization for vdev:%d",
+		 wlan_vdev_get_id(vdev));
+
+	return QDF_STATUS_SUCCESS;
+}

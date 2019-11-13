@@ -701,4 +701,14 @@ void wlan_serialization_purge_all_pending_cmd_by_vdev_id(
 void wlan_serialization_purge_all_scan_cmd_by_vdev_id(
 					struct wlan_objmgr_pdev *pdev,
 					uint8_t vdev_id);
+
+/**
+ * wlan_ser_vdev_queue_disable -Disable vdev specific serialization queue
+ * @vdev: Vdev Object
+ *
+ * This function disables the serialization for the vdev queue
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_ser_vdev_queue_disable(struct wlan_objmgr_vdev *vdev);
 #endif
