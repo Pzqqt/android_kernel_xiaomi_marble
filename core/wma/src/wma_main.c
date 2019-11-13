@@ -6732,10 +6732,12 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	WMA_LOGD("WMA --> WMI_INIT_CMDID");
 
 	if (wma_is_dbs_mandatory(wma_handle->psoc, tgt_hdl) &&
-	   (policy_mgr_is_dual_mac_disabled_in_ini(wma_handle->psoc)))
+	   (policy_mgr_is_dual_mac_disabled_in_ini(wma_handle->psoc))) {
 		policy_mgr_set_dual_mac_feature(wma_handle->psoc,
 				ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN);
-
+		policy_mgr_set_ch_select_plcy(wma_handle->psoc,
+					      POLICY_MGR_CH_SELECT_POLICY_DEF);
+	}
 	wma_init_scan_fw_mode_config(wma_handle->psoc, conc_scan_config_bits,
 				     fw_config_bits);
 

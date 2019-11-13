@@ -331,6 +331,18 @@ QDF_STATUS policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
 					   uint32_t *chnl_select_plcy);
 
 /**
+ * policy_mgr_set_ch_select_plcy() - to set channel selection policy
+ * @psoc: pointer to psoc
+ * @ch_select_policy: value to be set
+ *
+ * This API is used to set the ch selection policy.
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_set_ch_select_plcy(struct wlan_objmgr_psoc *psoc,
+					 uint32_t ch_select_policy);
+
+/**
  * policy_mgr_get_mcc_adaptive_sch() - to get mcc adaptive scheduler
  * @psoc: pointer to psoc
  * @enable_mcc_adaptive_sch: value to be filled

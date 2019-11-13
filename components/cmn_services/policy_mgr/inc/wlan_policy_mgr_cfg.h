@@ -98,6 +98,9 @@
 					1, 4, 3, \
 					CFG_VALUE_OR_DEFAULT, \
 					"Config max num allowed connections")
+
+#define POLICY_MGR_CH_SELECT_POLICY_DEF         0x00000003
+
 /*
  * <ini>
  * channel_select_logic_conc - Set channel selection logic
@@ -121,12 +124,12 @@
  * </ini>
  */
 #define CFG_CHNL_SELECT_LOGIC_CONC CFG_INI_UINT(\
-						"channel_select_logic_conc",\
-						0x00000000, \
-						0xFFFFFFFF, \
-						0x00000003, \
-						CFG_VALUE_OR_DEFAULT, \
-						"Set channel selection policy for various concurrency")
+					"channel_select_logic_conc",\
+					0x00000000, \
+					0xFFFFFFFF, \
+					POLICY_MGR_CH_SELECT_POLICY_DEF, \
+					CFG_VALUE_OR_DEFAULT, \
+					"Set channel selection policy for various concurrency")
 /*
  * <ini>
  * dbs_selection_policy - Configure dbs selection policy.
