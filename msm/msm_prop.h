@@ -162,7 +162,9 @@ bool msm_property_get_is_active(struct msm_property_info *info)
 
 /**
  * msm_property_pop_dirty - determine next dirty property and clear
- *                          its dirty flag
+ *                          its dirty flag. Caller needs to acquire property
+ *			  lock before calling this function and release
+ *			  the lock when finished.
  * @info: Pointer to property info container struct
  * @property_state: Pointer to property state container struct
  * Returns: Valid msm property index on success,

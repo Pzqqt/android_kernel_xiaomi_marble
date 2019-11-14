@@ -1928,11 +1928,13 @@ static int _sde_encoder_update_rsc_client(
 	struct drm_crtc *crtc;
 	enum sde_rsc_state rsc_state = SDE_RSC_IDLE_STATE;
 	struct sde_rsc_cmd_config *rsc_config;
-	int ret, prefill_lines;
+	int ret;
 	struct msm_display_info *disp_info;
 	struct msm_mode_info *mode_info;
 	int wait_vblank_crtc_id = SDE_RSC_INVALID_CRTC_ID;
-	u32 qsync_mode = 0;
+	u32 qsync_mode = 0, v_front_porch;
+	struct drm_display_mode *mode;
+	bool is_vid_mode;
 
 	if (!drm_enc || !drm_enc->dev) {
 		SDE_ERROR("invalid encoder arguments\n");
@@ -1977,17 +1979,31 @@ static int _sde_encoder_update_rsc_client(
 
 	SDE_EVT32(rsc_state, qsync_mode);
 
-	prefill_lines = mode_info->prefill_lines;
+	is_vid_mode = sde_encoder_check_curr_mode(&sde_enc->base,
+				MSM_DISPLAY_VIDEO_MODE);
+	mode = &sde_enc->crtc->state->mode;
+	v_front_porch = mode->vsync_start - mode->vdisplay;
 
 	/* compare specific items and reconfigure the rsc */
 	if ((rsc_config->fps != mode_info->frame_rate) ||
 	    (rsc_config->vtotal != mode_info->vtotal) ||
-	    (rsc_config->prefill_lines != prefill_lines) ||
+	    (rsc_config->prefill_lines != mode_info->prefill_lines) ||
 	    (rsc_config->jitter_numer != mode_info->jitter_numer) ||
 	    (rsc_config->jitter_denom != mode_info->jitter_denom)) {
+
 		rsc_config->fps = mode_info->frame_rate;
 		rsc_config->vtotal = mode_info->vtotal;
-		rsc_config->prefill_lines = prefill_lines;
+		/*
+		 * for video mode, prefill lines should not go beyond vertical
+		 * front porch for RSCC configuration. This will ensure bw
+		 * downvotes are not sent within the active region. Additional
+		 * -1 is to give one line time for rscc mode min_threshold.
+		 */
+		if (is_vid_mode && (mode_info->prefill_lines >= v_front_porch))
+			rsc_config->prefill_lines = v_front_porch - 1;
+		else
+			rsc_config->prefill_lines = mode_info->prefill_lines;
+
 		rsc_config->jitter_numer = mode_info->jitter_numer;
 		rsc_config->jitter_denom = mode_info->jitter_denom;
 		sde_enc->rsc_state_init = false;
@@ -5726,8 +5742,9 @@ void sde_encoder_helper_get_jitter_bounds_ns(struct drm_encoder *drm_enc,
 	info = &sde_enc->mode_info;
 
 	frametime_ns = (1 * 1000000000) / info->frame_rate;
-	jitter_ns =  (info->jitter_numer * frametime_ns) /
-				(info->jitter_denom * 100);
+	jitter_ns =  info->jitter_numer * frametime_ns;
+	do_div(jitter_ns, info->jitter_denom * 100);
+
 	*l_bound = frametime_ns - jitter_ns;
 	*u_bound = frametime_ns + jitter_ns;
 }

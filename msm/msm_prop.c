@@ -77,7 +77,8 @@ int msm_property_pop_dirty(struct msm_property_info *info,
 		return -EINVAL;
 	}
 
-	mutex_lock(&info->property_lock);
+	WARN_ON(!mutex_is_locked(&info->property_lock));
+
 	if (list_empty(&property_state->dirty_list)) {
 		rc = -EAGAIN;
 	} else {
@@ -87,7 +88,6 @@ int msm_property_pop_dirty(struct msm_property_info *info,
 			- property_state->values;
 		DRM_DEBUG_KMS("property %d dirty\n", rc);
 	}
-	mutex_unlock(&info->property_lock);
 
 	return rc;
 }

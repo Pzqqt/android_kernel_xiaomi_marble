@@ -26,6 +26,9 @@
 #define SDE_PERF_MODE_STRING_SIZE	128
 #define SDE_PERF_THRESHOLD_HIGH_MIN     12800000
 
+#define GET_H32(val) (val >> 32)
+#define GET_L32(val) (val & 0xffffffff)
+
 static DEFINE_MUTEX(sde_core_perf_lock);
 
 /**
@@ -150,7 +153,20 @@ static void _sde_core_perf_calc_crtc(struct sde_kms *kms,
 						perf->core_clk_rate);
 	}
 
-	SDE_EVT32(crtc->base.id, perf->core_clk_rate);
+	SDE_EVT32(DRMID(crtc), perf->core_clk_rate,
+		GET_H32(perf->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_MNOC]),
+		GET_L32(perf->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_MNOC]),
+		GET_H32(perf->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_LLCC]),
+		GET_L32(perf->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_LLCC]),
+		GET_H32(perf->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_EBI]),
+		GET_L32(perf->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_EBI]));
+	SDE_EVT32(DRMID(crtc),
+		GET_H32(perf->max_per_pipe_ib[SDE_POWER_HANDLE_DBUS_ID_MNOC]),
+		GET_L32(perf->max_per_pipe_ib[SDE_POWER_HANDLE_DBUS_ID_MNOC]),
+		GET_H32(perf->max_per_pipe_ib[SDE_POWER_HANDLE_DBUS_ID_LLCC]),
+		GET_L32(perf->max_per_pipe_ib[SDE_POWER_HANDLE_DBUS_ID_LLCC]),
+		GET_H32(perf->max_per_pipe_ib[SDE_POWER_HANDLE_DBUS_ID_EBI]),
+		GET_L32(perf->max_per_pipe_ib[SDE_POWER_HANDLE_DBUS_ID_EBI]));
 	trace_sde_perf_calc_crtc(crtc->base.id,
 			perf->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_MNOC],
 			perf->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_LLCC],
@@ -992,6 +1008,7 @@ static ssize_t _sde_core_perf_mode_write(struct file *file,
 	struct sde_perf_cfg *cfg = &perf->catalog->perf;
 	u32 perf_mode = 0;
 	char buf[10];
+	int ret = 0;
 
 	if (!perf)
 		return -ENODEV;
@@ -1017,6 +1034,13 @@ static ssize_t _sde_core_perf_mode_write(struct file *file,
 		perf->perf_tune.min_core_clk = perf->max_core_clk_rate;
 		perf->perf_tune.min_bus_vote =
 				(u64) cfg->max_bw_high * 1000;
+
+		ret = sde_power_clk_set_rate(perf->phandle,
+				perf->clk_name, perf->max_core_clk_rate);
+		if (ret)
+			SDE_ERROR("failed to set %s clock rate %llu\n",
+					perf->clk_name,
+					perf->max_core_clk_rate);
 		DRM_INFO("minimum performance mode\n");
 	} else if (perf_mode == SDE_PERF_MODE_NORMAL) {
 		/* reset the perf tune params to 0 */

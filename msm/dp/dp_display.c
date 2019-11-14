@@ -859,7 +859,7 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 
 	dp->dp_display.max_pclk_khz = min(dp->parser->max_pclk_khz,
 					dp->debug->max_pclk_khz);
-
+	dp_display_host_init(dp);
 	dp_display_host_ready(dp);
 
 	dp->link->psm_config(dp->link, &dp->panel->link_info, false);
@@ -1084,6 +1084,7 @@ static int dp_display_handle_disconnect(struct dp_display_private *dp)
 		dp_display_clean(dp);
 
 	dp_display_host_unready(dp);
+	dp_display_host_deinit(dp);
 
 	mutex_unlock(&dp->session_lock);
 
@@ -1130,10 +1131,6 @@ static int dp_display_usbpd_disconnect_cb(struct device *dev)
 		dp->link->psm_config(dp->link, &dp->panel->link_info, true);
 
 	dp_display_disconnect_sync(dp);
-
-	mutex_lock(&dp->session_lock);
-	dp_display_host_deinit(dp);
-	mutex_unlock(&dp->session_lock);
 
 	if (!dp->debug->sim_mode && !dp->parser->no_aux_switch
 	    && !dp->parser->gpio_aux_switch)

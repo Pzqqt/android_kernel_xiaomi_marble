@@ -35,7 +35,7 @@ TRACE_EVENT(sde_perf_set_qos_luts,
 			__entry->lut = lut;
 			__entry->lut_usage = lut_usage;
 	),
-	TP_printk("pnum=%d fmt=%x rt=%d fl=%d lut=0x%llx lut_usage=%d",
+	TP_printk("pnum=%d fmt=0x%x rt=%d fl=%d lut=0x%llx lut_usage=%d",
 			__entry->pnum, __entry->fmt,
 			__entry->rt, __entry->fl,
 			__entry->lut, __entry->lut_usage)
@@ -59,7 +59,7 @@ TRACE_EVENT(sde_perf_set_danger_luts,
 			__entry->danger_lut = danger_lut;
 			__entry->safe_lut = safe_lut;
 	),
-	TP_printk("pnum=%d fmt=%x mode=%d luts[0x%x, 0x%x]",
+	TP_printk("pnum=%d fmt=0x%x mode=%d luts[0x%x, 0x%x]",
 			__entry->pnum, __entry->fmt,
 			__entry->mode, __entry->danger_lut,
 			__entry->safe_lut)
@@ -174,7 +174,7 @@ TRACE_EVENT(sde_evtlog,
 			memset(&__entry->data[cnt], 0,
 				(SDE_TRACE_EVTLOG_SIZE - cnt) * sizeof(u32));
 	),
-	TP_printk("%d|%s:%d|%x|%x|%x|%x|%x|%x|%x|%x|%x|%x|%x|%x|%x|%x|%x",
+	TP_printk("%d|%s:%d|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x",
 			__entry->pid, __get_str(evtlog_tag),
 			__entry->tag_id,
 			__entry->data[0], __entry->data[1],
@@ -336,7 +336,7 @@ TRACE_EVENT(sde_perf_uidle_cntr,
 			__entry->max_gate_cntr = max_gate_cntr;
 	),
 	 TP_printk(
-		"crtc:%d gate:fal1=%d fal10=%d wait=%d min=%d max=%d trns:fal1=%d fal10=%d",
+		"crtc:%d gate:fal1=0x%x fal10=0x%x wait=0x%x min=0x%x max=0x%x trns:fal1=0x%x fal10=0x%x",
 			__entry->crtc,
 			__entry->fal1_gate_cntr,
 			__entry->fal10_gate_cntr,
@@ -396,7 +396,7 @@ TRACE_EVENT(sde_perf_uidle_status,
 			__entry->uidle_status = uidle_status;
 			__entry->uidle_en_fal10 = uidle_en_fal10;),
 	 TP_printk(
-		"crtc:%d danger[%d, %d] safe[%d, %d] idle[%d, %d] fal[%d, %d] status:%d en_fal10:%d",
+		"crtc:%d danger[0x%x, 0x%x] safe[0x%x, 0x%x] idle[0x%x, 0x%x] fal[0x%x, 0x%x] status:0x%x en_fal10:0x%x",
 			__entry->crtc,
 			__entry->uidle_danger_status_0,
 			__entry->uidle_danger_status_1,

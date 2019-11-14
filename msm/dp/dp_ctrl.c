@@ -1280,10 +1280,13 @@ static int dp_ctrl_on(struct dp_ctrl *dp_ctrl, bool mst_mode,
 
 	ctrl = container_of(dp_ctrl, struct dp_ctrl_private, dp_ctrl);
 
-	atomic_set(&ctrl->aborted, 0);
-
 	if (ctrl->power_on)
 		goto end;
+
+	if (atomic_read(&ctrl->aborted)) {
+		rc = -EPERM;
+		goto end;
+	}
 
 	ctrl->mst_mode = mst_mode;
 	if (fec_mode) {
