@@ -714,6 +714,8 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 					   old_ptr, new_ptr);
 	ie_lst->esp = conv_ptr(ie_lst->esp, old_ptr, new_ptr);
 	ie_lst->mbo_oce = conv_ptr(ie_lst->mbo_oce, old_ptr, new_ptr);
+	ie_lst->muedca = conv_ptr(ie_lst->muedca, old_ptr, new_ptr);
+	ie_lst->rnrie = conv_ptr(ie_lst->rnrie, old_ptr, new_ptr);
 	ie_lst->extender = conv_ptr(ie_lst->extender, old_ptr, new_ptr);
 	ie_lst->adaptive_11r = conv_ptr(ie_lst->adaptive_11r, old_ptr, new_ptr);
 
