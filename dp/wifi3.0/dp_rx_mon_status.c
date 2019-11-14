@@ -482,10 +482,11 @@ static void dp_rx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 	DP_STATS_UPD(peer, rx.rssi, (ppdu->rssi + pkt_bw_offset));
 
 	if (peer->stats.rx.avg_rssi == INVALID_RSSI)
-		peer->stats.rx.avg_rssi = ppdu->rssi;
+		peer->stats.rx.avg_rssi = peer->stats.rx.rssi;
 	else
 		peer->stats.rx.avg_rssi =
-			DP_GET_AVG_RSSI(peer->stats.rx.avg_rssi, ppdu->rssi);
+			DP_GET_AVG_RSSI(peer->stats.rx.avg_rssi,
+					peer->stats.rx.rssi);
 
 	if ((preamble == DOT11_A) || (preamble == DOT11_B))
 		ppdu->u.nss = 1;
