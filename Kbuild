@@ -1160,7 +1160,8 @@ TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/crypto/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/regulatory/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/mlme/vdev_mgr/inc \
-		 -I$(WLAN_COMMON_INC)/target_if/dispatcher/inc
+		 -I$(WLAN_COMMON_INC)/target_if/dispatcher/inc \
+		 -I$(WLAN_COMMON_INC)/target_if/mlme/psoc/inc
 
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o \
@@ -1171,7 +1172,8 @@ TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_event_handler.o \
 		$(TARGET_IF_DIR)/init_deinit/src/service_ready_util.o \
 		$(TARGET_IF_DIR)/mlme/vdev_mgr/src/target_if_vdev_mgr_tx_ops.o \
-		$(TARGET_IF_DIR)/mlme/vdev_mgr/src/target_if_vdev_mgr_rx_ops.o
+		$(TARGET_IF_DIR)/mlme/vdev_mgr/src/target_if_vdev_mgr_rx_ops.o \
+		$(TARGET_IF_DIR)/mlme/psoc/src/target_if_psoc_timer_tx_ops.o
 
 ifeq ($(CONFIG_FEATURE_VDEV_RSP_WAKELOCK), y)
 TARGET_IF_OBJ += $(TARGET_IF_DIR)/mlme/vdev_mgr/src/target_if_vdev_mgr_wake_lock.o

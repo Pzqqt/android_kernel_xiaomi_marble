@@ -99,6 +99,7 @@
 #include "wma_coex.h"
 #include "target_if_vdev_mgr_rx_ops.h"
 #include "wlan_policy_mgr_i.h"
+#include "target_if_psoc_timer_tx_ops.h"
 
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
@@ -1692,7 +1693,7 @@ wma_cleanup_vdev_resp_and_hold_req(struct scheduler_msg *msg)
 	}
 
 	wma = msg->bodyptr;
-	target_if_flush_vdev_timers(wma->pdev);
+	target_if_flush_psoc_vdev_timers(wma->psoc);
 	wma_cleanup_hold_req(wma);
 
 	return QDF_STATUS_SUCCESS;
