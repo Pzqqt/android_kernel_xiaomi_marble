@@ -2714,6 +2714,16 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
+	if (!wma_is_vdev_valid(ht_info->vdevid)) {
+		wma_err("Invalid vdevid %d", ht_info->vdevid);
+		return -EINVAL;
+	}
+
+	if (!intr[ht_info->vdevid].vdev) {
+		wma_err("Vdev is NULL");
+		return -EINVAL;
+	}
+
 	status = wma_get_vdev_rate_flag(intr[ht_info->vdevid].vdev, &rate_flag);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s: Failed to get rate flag",	__func__);
