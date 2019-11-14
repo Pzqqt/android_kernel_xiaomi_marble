@@ -1395,6 +1395,7 @@ static int wsa881x_event_notify(struct notifier_block *nb,
 			snd_soc_component_update_bits(wsa881x->component,
 					      WSA881X_SPKR_DRV_EN,
 					      0x80, 0x80);
+		break;
 	default:
 		break;
 	}
