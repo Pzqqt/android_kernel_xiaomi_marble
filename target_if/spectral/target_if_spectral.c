@@ -1407,14 +1407,6 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral)
 	num_bin_scaling_params = ext_svc_param->num_bin_scaling_params;
 	scaling_params = target_psoc_get_spectral_scaling_params(tgt_psoc_info);
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
-	mac_phy_cap_arr = target_psoc_get_mac_phy_cap(tgt_psoc_info);
-	mac_phy_cap = &mac_phy_cap_arr[pdev_id];
-	table_id = mac_phy_cap->chainmask_table_id;
-	table =  &ext_svc_param->chainmask_table[table_id];
-	if (!table) {
-		spectral_err("chainmask table not found");
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	/* XXX : Workaround: Set Spectral capability */
 	pcap = &spectral->capability;
@@ -1423,13 +1415,38 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral)
 	pcap->spectral_cap = 1;
 	pcap->advncd_spectral_cap = 1;
 	pcap->hw_gen = spectral->spectral_gen;
-	for (j = 0; j < table->num_valid_chainmasks; j++) {
-		pcap->agile_spectral_cap |=
-			table->cap_list[j].supports_aSpectral;
-		pcap->agile_spectral_cap_160 |=
-			table->cap_list[j].supports_aSpectral_160;
+	if (spectral->spectral_gen >= SPECTRAL_GEN3) {
+		mac_phy_cap_arr = target_psoc_get_mac_phy_cap(tgt_psoc_info);
+		if (!mac_phy_cap_arr) {
+			spectral_err("mac phy cap array is null");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		mac_phy_cap = &mac_phy_cap_arr[pdev_id];
+		if (!mac_phy_cap) {
+			spectral_err("mac phy cap is null");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		table_id = mac_phy_cap->chainmask_table_id;
+		table =  &ext_svc_param->chainmask_table[table_id];
+		if (!table) {
+			spectral_err("chainmask table not found");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		for (j = 0; j < table->num_valid_chainmasks; j++) {
+			pcap->agile_spectral_cap |=
+				table->cap_list[j].supports_aSpectral;
+			pcap->agile_spectral_cap_160 |=
+				table->cap_list[j].supports_aSpectral_160;
+		}
+		pcap->agile_spectral_cap_80p80 = pcap->agile_spectral_cap_160;
+	} else {
+		pcap->agile_spectral_cap = false;
+		pcap->agile_spectral_cap_160 = false;
+		pcap->agile_spectral_cap_80p80 = false;
 	}
-	pcap->agile_spectral_cap_80p80 = pcap->agile_spectral_cap_160;
 
 	for (param_idx = 0; param_idx < num_bin_scaling_params; param_idx++) {
 		if (scaling_params[param_idx].pdev_id == pdev_id) {
