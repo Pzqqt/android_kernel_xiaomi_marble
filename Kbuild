@@ -2493,8 +2493,10 @@ CONFIG_FEATURE_SG := y
 endif
 
 ifeq ($(CONFIG_ARCH_MSM8996), y)
+ifneq ($(CONFIG_QCN7605_SUPPORT), y)
 CONFIG_FEATURE_SG := y
 CONFIG_RX_THREAD_PRIORITY := y
+endif
 endif
 
 ifeq ($(CONFIG_FEATURE_SG), y)
