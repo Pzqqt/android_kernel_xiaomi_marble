@@ -381,7 +381,7 @@ static int check_for_probe_defer(int ret)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
 static void hdd_abort_system_suspend(struct device *dev)
 {
-	pm_wakeup_hard_event(dev);
+	qdf_pm_system_wakeup();
 }
 #else
 static void hdd_abort_system_suspend(struct device *dev)
