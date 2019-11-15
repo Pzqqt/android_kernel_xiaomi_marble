@@ -103,8 +103,12 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 	} else {
 		/* For HKv2 Source port learing is not needed in STA mode
 		 * as we have support in HW
+		 *
+		 * if sa_valid bit is set there is a AST entry added on AP VAP
+		 * and this peer has roamed behind ROOT AP in this case proceed
+		 * further to check for roaming
 		 */
-		if (soc->ast_override_support)
+		if (soc->ast_override_support && !is_sa_valid)
 			return;
 	}
 
@@ -226,7 +230,15 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 				 * same radio.
 				 */
 				qdf_spin_lock_bh(&soc->ast_lock);
-				dp_peer_update_ast(soc, ta_peer, ast, flags);
+				/* For HKv2 do not update the AST entry if
+				 * new ta_peer is on STA vap as SRC port
+				 * learning is disable on STA vap
+				 */
+				if (soc->ast_override_support &&
+				    (ta_peer->vdev->opmode == wlan_op_mode_sta))
+					dp_peer_del_ast(soc, ast);
+				else
+					dp_peer_update_ast(soc, ta_peer, ast, flags);
 				qdf_spin_unlock_bh(&soc->ast_lock);
 				return;
 			}
