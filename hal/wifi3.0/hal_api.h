@@ -42,7 +42,13 @@
  * OFFSET = 4K - 32 bytes = 0x4063
  */
 #define MAPPED_REF_OFF 0x4063
+
+#ifdef HAL_CONFIG_SLUB_DEBUG_ON
+#define FORCE_WAKE_DELAY_TIMEOUT 100
+#else
 #define FORCE_WAKE_DELAY_TIMEOUT 50
+#endif /* HAL_CONFIG_SLUB_DEBUG_ON */
+
 #define FORCE_WAKE_DELAY_MS 5
 
 /**
