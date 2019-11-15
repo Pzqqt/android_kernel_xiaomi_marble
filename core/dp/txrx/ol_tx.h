@@ -81,6 +81,31 @@ qdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 #define OL_TX_LL ol_tx_ll_wrapper
 #endif
 
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+void ol_tx_hl_vdev_bundle_timer(void *context);
+
+void ol_tx_hl_queue_flush_all(struct ol_txrx_vdev_t *vdev);
+qdf_nbuf_t
+ol_tx_hl_pdev_queue_send_all(struct ol_txrx_pdev_t *pdev);
+#else
+static inline
+void ol_tx_hl_vdev_bundle_timer(void *context)
+{
+}
+
+static inline
+void ol_tx_hl_queue_flush_all(struct ol_txrx_vdev_t *vdev)
+{
+}
+
+static inline
+qdf_nbuf_t
+ol_tx_hl_pdev_queue_send_all(struct ol_txrx_pdev_t *pdev)
+{
+	return NULL;
+}
+#endif
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 void ol_tx_vdev_ll_pause_queue_send(void *context);
 void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev);

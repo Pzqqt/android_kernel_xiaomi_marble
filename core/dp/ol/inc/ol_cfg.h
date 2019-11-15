@@ -128,6 +128,11 @@ struct txrx_pdev_cfg_t {
 	/* the maximum number of replaced tcp ack frames */
 	uint16_t del_ack_pkt_count;
 #endif
+
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+	uint16_t bundle_timer_value;
+	uint16_t bundle_size;
+#endif
 };
 
 /**
@@ -779,6 +784,11 @@ void ol_cfg_update_del_ack_params(struct txrx_pdev_cfg_t *cfg_ctx,
 }
 #endif
 
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+int ol_cfg_get_bundle_timer_value(struct cdp_cfg *cfg_pdev);
+int ol_cfg_get_bundle_size(struct cdp_cfg *cfg_pdev);
+#else
+#endif
 /**
  * ol_cfg_get_wrr_skip_weight() - brief Query for the param of wrr_skip_weight
  * @pdev: handle to the physical device.

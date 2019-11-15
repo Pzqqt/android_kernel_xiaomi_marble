@@ -1794,6 +1794,17 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 	vdev->txrx_stats.txack_success = 0;
 	vdev->txrx_stats.txack_failed = 0;
 
+	vdev->bundling_required = false;
+	qdf_spinlock_create(&vdev->bundle_queue.mutex);
+	vdev->bundle_queue.txq.head = NULL;
+	vdev->bundle_queue.txq.tail = NULL;
+	vdev->bundle_queue.txq.depth = 0;
+	qdf_timer_init(
+		pdev->osdev,
+		&vdev->bundle_queue.timer,
+		ol_tx_hl_vdev_bundle_timer,
+		vdev, QDF_TIMER_TYPE_SW);
+
 	/* Default MAX Q depth for every VDEV */
 	vdev->ll_pause.max_q_depth =
 		ol_tx_cfg_max_tx_queue_depth_ll(vdev->pdev->ctrl_pdev);
@@ -1997,6 +2008,9 @@ ol_txrx_vdev_detach(struct cdp_vdev *pvdev,
 	 */
 	qdf_timer_free(&vdev->ll_pause.timer);
 	qdf_spinlock_destroy(&vdev->ll_pause.mutex);
+
+	qdf_timer_free(&vdev->bundle_queue.timer);
+	qdf_spinlock_destroy(&vdev->bundle_queue.mutex);
 
 	qdf_spin_lock_bh(&vdev->flow_control_lock);
 	vdev->osif_flow_control_cb = NULL;
@@ -5905,6 +5919,10 @@ static struct cdp_misc_ops ol_ops_misc = {
 #ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
 	.pdev_reset_driver_del_ack = ol_tx_pdev_reset_driver_del_ack,
 	.vdev_set_driver_del_ack_enable = ol_tx_vdev_set_driver_del_ack_enable
+#endif
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+	.vdev_set_bundle_require_flag = ol_tx_vdev_set_bundle_require,
+	.pdev_reset_bundle_require_flag = ol_tx_pdev_reset_bundle_require,
 #endif
 };
 

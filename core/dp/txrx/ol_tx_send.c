@@ -120,6 +120,7 @@ static inline void ol_tx_desc_update_comp_ts(struct ol_tx_desc_t *tx_desc)
 void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
 {
 	struct ol_txrx_vdev_t *vdev;
+	bool trigger_unpause = false;
 
 	qdf_spin_lock_bh(&pdev->tx_mutex);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
@@ -143,9 +144,12 @@ void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
 				       WLAN_WAKE_NON_PRIORITY_QUEUE,
 				       WLAN_DATA_FLOW_CONTROL);
 			qdf_atomic_set(&vdev->os_q_paused, 0);
+			trigger_unpause = true;
 		}
 	}
 	qdf_spin_unlock_bh(&pdev->tx_mutex);
+	if (trigger_unpause)
+		ol_tx_hl_pdev_queue_send_all(pdev);
 }
 #endif
 

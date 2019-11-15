@@ -1422,6 +1422,269 @@ ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 }
 #else
 
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+void
+ol_tx_pdev_reset_bundle_require(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	struct ol_txrx_pdev_t *pdev = ol_txrx_get_pdev_from_pdev_id(soc,
+								    pdev_id);
+	struct ol_txrx_vdev_t *vdev;
+
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		vdev->bundling_required = false;
+		ol_txrx_info("vdev_id %d bundle_require %d\n",
+			     vdev->vdev_id, vdev->bundling_required);
+	}
+}
+
+void
+ol_tx_vdev_set_bundle_require(uint8_t vdev_id, unsigned long tx_bytes,
+			      uint32_t time_in_ms, uint32_t high_th,
+			      uint32_t low_th)
+{
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)
+				ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	bool old_bundle_required;
+
+	if ((!vdev) || (low_th > high_th))
+		return;
+
+	old_bundle_required = vdev->bundling_required;
+	if (tx_bytes > ((high_th * time_in_ms * 1500) / 1000))
+		vdev->bundling_required = true;
+	else if (tx_bytes < ((low_th * time_in_ms * 1500) / 1000))
+		vdev->bundling_required = false;
+
+	if (old_bundle_required != vdev->bundling_required)
+		ol_txrx_info("vdev_id %d bundle_require %d tx_bytes %ld time_in_ms %d high_th %d low_th %d\n",
+			     vdev->vdev_id, vdev->bundling_required, tx_bytes,
+			     time_in_ms, high_th, low_th);
+}
+
+/**
+ * ol_tx_hl_queue_flush_all() - drop all packets in vdev bundle queue
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+void
+ol_tx_hl_queue_flush_all(struct ol_txrx_vdev_t *vdev)
+{
+	qdf_spin_lock_bh(&vdev->bundle_queue.mutex);
+	if (vdev->bundle_queue.txq.depth != 0) {
+		qdf_timer_stop(&vdev->bundle_queue.timer);
+		vdev->pdev->total_bundle_queue_length -=
+				vdev->bundle_queue.txq.depth;
+		qdf_nbuf_tx_free(vdev->bundle_queue.txq.head, 1/*error*/);
+		vdev->bundle_queue.txq.depth = 0;
+		vdev->bundle_queue.txq.head = NULL;
+		vdev->bundle_queue.txq.tail = NULL;
+	}
+	qdf_spin_unlock_bh(&vdev->bundle_queue.mutex);
+}
+
+/**
+ * ol_tx_hl_vdev_queue_append() - append pkt in tx queue
+ * @vdev: vdev handle
+ * @msdu_list: msdu list
+ *
+ * Return: none
+ */
+static void
+ol_tx_hl_vdev_queue_append(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu_list)
+{
+	qdf_spin_lock_bh(&vdev->bundle_queue.mutex);
+
+	if (!vdev->bundle_queue.txq.head) {
+		qdf_timer_start(
+			&vdev->bundle_queue.timer,
+			ol_cfg_get_bundle_timer_value(vdev->pdev->ctrl_pdev));
+		vdev->bundle_queue.txq.head = msdu_list;
+		vdev->bundle_queue.txq.tail = msdu_list;
+	} else {
+		qdf_nbuf_set_next(vdev->bundle_queue.txq.tail, msdu_list);
+	}
+
+	while (qdf_nbuf_next(msdu_list)) {
+		vdev->bundle_queue.txq.depth++;
+		vdev->pdev->total_bundle_queue_length++;
+		msdu_list = qdf_nbuf_next(msdu_list);
+	}
+
+	vdev->bundle_queue.txq.depth++;
+	vdev->pdev->total_bundle_queue_length++;
+	vdev->bundle_queue.txq.tail = msdu_list;
+	qdf_spin_unlock_bh(&vdev->bundle_queue.mutex);
+}
+
+/**
+ * ol_tx_hl_vdev_queue_send_all() - send all packets in vdev bundle queue
+ * @vdev: vdev handle
+ * @call_sched: invoke scheduler
+ *
+ * Return: NULL for success
+ */
+static qdf_nbuf_t
+ol_tx_hl_vdev_queue_send_all(struct ol_txrx_vdev_t *vdev, bool call_sched,
+			     bool in_timer_context)
+{
+	qdf_nbuf_t msdu_list = NULL;
+	qdf_nbuf_t skb_list_head, skb_list_tail;
+	struct ol_txrx_pdev_t *pdev = vdev->pdev;
+	int tx_comp_req = pdev->cfg.default_tx_comp_req ||
+				pdev->cfg.request_tx_comp;
+	int pkt_to_sent;
+
+	qdf_spin_lock_bh(&vdev->bundle_queue.mutex);
+
+	if (!vdev->bundle_queue.txq.depth) {
+		qdf_spin_unlock_bh(&vdev->bundle_queue.mutex);
+		return msdu_list;
+	}
+
+	if (likely((qdf_atomic_read(&vdev->tx_desc_count) +
+		    vdev->bundle_queue.txq.depth) <
+		    vdev->queue_stop_th)) {
+		qdf_timer_stop(&vdev->bundle_queue.timer);
+		vdev->pdev->total_bundle_queue_length -=
+				vdev->bundle_queue.txq.depth;
+		msdu_list = ol_tx_hl_base(vdev, OL_TX_SPEC_STD,
+					  vdev->bundle_queue.txq.head,
+					  tx_comp_req, call_sched);
+		vdev->bundle_queue.txq.depth = 0;
+		vdev->bundle_queue.txq.head = NULL;
+		vdev->bundle_queue.txq.tail = NULL;
+	} else {
+		pkt_to_sent = vdev->queue_stop_th -
+			qdf_atomic_read(&vdev->tx_desc_count);
+
+		if (pkt_to_sent) {
+			skb_list_head = vdev->bundle_queue.txq.head;
+
+			while (pkt_to_sent) {
+				skb_list_tail =
+					vdev->bundle_queue.txq.head;
+				vdev->bundle_queue.txq.head =
+				    qdf_nbuf_next(vdev->bundle_queue.txq.head);
+				vdev->pdev->total_bundle_queue_length--;
+				vdev->bundle_queue.txq.depth--;
+				pkt_to_sent--;
+				if (!vdev->bundle_queue.txq.head) {
+					qdf_timer_stop(
+						&vdev->bundle_queue.timer);
+					break;
+				}
+			}
+
+			qdf_nbuf_set_next(skb_list_tail, NULL);
+			msdu_list = ol_tx_hl_base(vdev, OL_TX_SPEC_STD,
+						  skb_list_head, tx_comp_req,
+						  call_sched);
+		}
+
+		if (in_timer_context &&	vdev->bundle_queue.txq.head) {
+			qdf_timer_start(
+				&vdev->bundle_queue.timer,
+				ol_cfg_get_bundle_timer_value(
+					vdev->pdev->ctrl_pdev));
+		}
+	}
+	qdf_spin_unlock_bh(&vdev->bundle_queue.mutex);
+
+	return msdu_list;
+}
+
+/**
+ * ol_tx_hl_pdev_queue_send_all() - send all packets from all vdev bundle queue
+ * @pdev: pdev handle
+ *
+ * Return: NULL for success
+ */
+qdf_nbuf_t
+ol_tx_hl_pdev_queue_send_all(struct ol_txrx_pdev_t *pdev)
+{
+	struct ol_txrx_vdev_t *vdev;
+	qdf_nbuf_t msdu_list;
+
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		msdu_list = ol_tx_hl_vdev_queue_send_all(vdev, false, false);
+		if (msdu_list)
+			qdf_nbuf_tx_free(msdu_list, 1/*error*/);
+	}
+	ol_tx_sched(pdev);
+	return NULL; /* all msdus were accepted */
+}
+
+/**
+ * ol_tx_hl_vdev_bundle_timer() - bundle timer function
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+void
+ol_tx_hl_vdev_bundle_timer(struct timer_list *t)
+{
+	qdf_nbuf_t msdu_list;
+	struct ol_txrx_vdev_t *vdev = from_timer(vdev, t, bundle_queue.timer);
+
+	vdev->no_of_bundle_sent_in_timer++;
+	msdu_list = ol_tx_hl_vdev_queue_send_all(vdev, true, true);
+	if (msdu_list)
+		qdf_nbuf_tx_free(msdu_list, 1/*error*/);
+}
+#else
+void
+ol_tx_hl_vdev_bundle_timer(void *ctx)
+{
+	qdf_nbuf_t msdu_list;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)ctx;
+
+	vdev->no_of_bundle_sent_in_timer++;
+	msdu_list = ol_tx_hl_vdev_queue_send_all(vdev, true, true);
+	if (msdu_list)
+		qdf_nbuf_tx_free(msdu_list, 1/*error*/);
+}
+#endif
+
+qdf_nbuf_t
+ol_tx_hl(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu_list)
+{
+	struct ol_txrx_pdev_t *pdev = vdev->pdev;
+	int tx_comp_req = pdev->cfg.default_tx_comp_req ||
+				pdev->cfg.request_tx_comp;
+
+	/* No queuing for high priority packets */
+	if (ol_tx_desc_is_high_prio(msdu_list)) {
+		vdev->no_of_pkt_not_added_in_queue++;
+		return ol_tx_hl_base(vdev, OL_TX_SPEC_STD, msdu_list,
+					     tx_comp_req, true);
+	} else if (vdev->bundling_required &&
+	    (ol_cfg_get_bundle_size(vdev->pdev->ctrl_pdev) > 1)) {
+		ol_tx_hl_vdev_queue_append(vdev, msdu_list);
+
+		if (pdev->total_bundle_queue_length >=
+		    ol_cfg_get_bundle_size(vdev->pdev->ctrl_pdev)) {
+			vdev->no_of_bundle_sent_after_threshold++;
+			return ol_tx_hl_pdev_queue_send_all(pdev);
+		}
+	} else {
+		if (vdev->bundle_queue.txq.depth != 0) {
+			ol_tx_hl_vdev_queue_append(vdev, msdu_list);
+			return ol_tx_hl_vdev_queue_send_all(vdev, true, false);
+		} else {
+			vdev->no_of_pkt_not_added_in_queue++;
+			return ol_tx_hl_base(vdev, OL_TX_SPEC_STD, msdu_list,
+					     tx_comp_req, true);
+		}
+	}
+
+	return NULL; /* all msdus were accepted */
+}
+
+#else
+
 qdf_nbuf_t
 ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
@@ -1432,6 +1695,7 @@ ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 	return ol_tx_hl_base(vdev, OL_TX_SPEC_STD,
 			     msdu_list, tx_comp_req, true);
 }
+#endif
 #endif
 
 qdf_nbuf_t ol_tx_non_std_hl(struct ol_txrx_vdev_t *vdev,
@@ -2084,6 +2348,12 @@ void ol_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl)
 		txrx_nofl_info("q_paused %d prio_q_paused %d",
 			       qdf_atomic_read(&vdev->os_q_paused),
 			       vdev->prio_q_paused);
+		txrx_nofl_info("no_of_bundle_sent_after_threshold %lld",
+			       vdev->no_of_bundle_sent_after_threshold);
+		txrx_nofl_info("no_of_bundle_sent_in_timer %lld",
+			       vdev->no_of_bundle_sent_in_timer);
+		txrx_nofl_info("no_of_pkt_not_added_in_queue %lld",
+			       vdev->no_of_pkt_not_added_in_queue);
 	}
 	qdf_spin_unlock_bh(&pdev->tx_mutex);
 }

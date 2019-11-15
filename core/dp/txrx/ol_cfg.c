@@ -136,6 +136,22 @@ void ol_cfg_update_del_ack_params(struct txrx_pdev_cfg_t *cfg_ctx,
 }
 #endif
 
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+static inline
+void ol_cfg_update_bundle_params(struct txrx_pdev_cfg_t *cfg_ctx,
+				 struct txrx_pdev_cfg_param_t *cfg_param)
+{
+	cfg_ctx->bundle_timer_value = cfg_param->bundle_timer_value;
+	cfg_ctx->bundle_size = cfg_param->bundle_size;
+}
+#else
+static inline
+void ol_cfg_update_bundle_params(struct txrx_pdev_cfg_t *cfg_ctx,
+				 struct txrx_pdev_cfg_param_t *cfg_param)
+{
+}
+#endif
+
 /* FIX THIS -
  * For now, all these configuration parameters are hardcoded.
  * Many of these should actually be determined dynamically instead.
@@ -195,6 +211,8 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 
 	ol_cfg_update_del_ack_params(cfg_ctx, cfg_param);
 
+	ol_cfg_update_bundle_params(cfg_ctx, cfg_param);
+
 	ol_tx_set_flow_control_parameters((struct cdp_cfg *)cfg_ctx, cfg_param);
 
 	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
@@ -212,6 +230,23 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 
 	return (struct cdp_cfg *)cfg_ctx;
 }
+
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+
+int ol_cfg_get_bundle_timer_value(struct cdp_cfg *cfg_pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
+
+	return cfg->bundle_timer_value;
+}
+
+int ol_cfg_get_bundle_size(struct cdp_cfg *cfg_pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
+
+	return cfg->bundle_size;
+}
+#endif
 
 #ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
 /**

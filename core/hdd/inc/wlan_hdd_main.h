@@ -1213,6 +1213,7 @@ struct hdd_adapter {
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 	unsigned long prev_rx_packets;
 	unsigned long prev_tx_packets;
+	unsigned long prev_tx_bytes;
 	uint64_t prev_fwd_tx_packets;
 	uint64_t prev_fwd_rx_packets;
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/

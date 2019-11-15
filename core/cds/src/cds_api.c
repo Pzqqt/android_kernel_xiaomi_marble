@@ -368,6 +368,24 @@ cds_cdp_update_del_ack_params(struct wlan_objmgr_psoc *psoc,
 {}
 #endif
 
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+static inline void
+cds_cdp_update_bundle_params(struct wlan_objmgr_psoc *psoc,
+			     struct txrx_pdev_cfg_param_t *cdp_cfg)
+{
+	cdp_cfg->bundle_timer_value =
+		cfg_get(psoc, CFG_DP_HL_BUNDLE_TIMER_VALUE);
+	cdp_cfg->bundle_size =
+		cfg_get(psoc, CFG_DP_HL_BUNDLE_SIZE);
+}
+#else
+static inline void
+cds_cdp_update_bundle_params(struct wlan_objmgr_psoc *psoc,
+			     struct txrx_pdev_cfg_param_t *cdp_cfg)
+{
+}
+#endif
+
 /**
  * cds_cdp_cfg_attach() - attach data path config module
  * @cds_cfg: generic platform level config instance
@@ -406,6 +424,8 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
 
 	cds_cdp_update_del_ack_params(psoc, &cdp_cfg);
+
+	cds_cdp_update_bundle_params(psoc, &cdp_cfg);
 
 	gp_cds_context->cfg_ctx = cdp_cfg_attach(soc, gp_cds_context->qdf_ctx,
 					(void *)(&cdp_cfg));

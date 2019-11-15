@@ -226,6 +226,13 @@ struct hdd_config {
 #ifdef WLAN_FEATURE_TSF_PLUS
 	uint8_t tsf_ptp_options;
 #endif /* WLAN_FEATURE_TSF_PLUS */
+
+#ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
+	uint32_t pkt_bundle_threshold_high;
+	uint32_t pkt_bundle_threshold_low;
+	uint16_t pkt_bundle_timer_value;
+	uint16_t pkt_bundle_size;
+#endif
 };
 
 /**
