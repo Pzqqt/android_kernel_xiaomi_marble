@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,8 +60,9 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 	      peer_mac[3],
 	      peer_mac[4],
 	      peer_mac[5]);
-	PRINT("\tpeer cookie: %016lx\n", (peer_cookie & 0xFFFFFFFF00000000)
-					>> WLANSTATS_PEER_COOKIE_LSB);
+	PRINT("\tpeer cookie: %016"PRIx64"\n",
+					(peer_cookie & 0xFFFFFFFF00000000) >>
+					WLANSTATS_PEER_COOKIE_LSB);
 	is_lithium =  (peer_cookie & WLANSTATS_COOKIE_PLATFORM_OFFSET)
 					>> WLANSTATS_PEER_COOKIE_LSB;
 	if (is_lithium) {
@@ -243,7 +244,7 @@ dp_peer_tx_sojourn_stats_print(uint8_t *peer_mac,
 	      peer_mac[3],
 	      peer_mac[4],
 	      peer_mac[5]);
-	PRINT("\tPEER Cookie: %016lx\n", peer_cookie);
+	PRINT("\tPEER Cookie: %016"PRIx64"\n", peer_cookie);
 	PRINT("\n...........................................");
 	PRINT("...................................");
 	PRINT("..................................");
@@ -259,7 +260,8 @@ dp_peer_tx_sojourn_stats_print(uint8_t *peer_mac,
 		      sojourn_stats->sum_sojourn_msdu[tid],
 		      sojourn_stats->num_msdus[tid]);
 	}
-	PRINT("sizeof(avg): %lu", sizeof(sojourn_stats->avg_sojourn_msdu[tid]));
+	PRINT("sizeof(avg): %"PRIu32,
+				sizeof(sojourn_stats->avg_sojourn_msdu[tid]));
 	PRINT("\n...........................................");
 	PRINT("...................................");
 	PRINT("...................................");
@@ -293,7 +295,7 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 	      peer_mac[3],
 	      peer_mac[4],
 	      peer_mac[5]);
-	PRINT("\tPEER Cookie: %016lx", peer_cookie);
+	PRINT("\tPEER Cookie: %016"PRIx64, peer_cookie);
 	PRINT("\n...........................................");
 	PRINT("...................................");
 	PRINT("...................................");
@@ -318,7 +320,7 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 			      tx_stats->mpdu_attempts,
 			      tx_stats->mpdu_success,
 			      tx_stats->num_ppdus);
-			PRINT(" %10u | %10u | %10lu |\n",
+			PRINT(" %10u | %10u | %10u |\n",
 			      tx_stats->num_msdus,
 			      tx_stats->num_bytes,
 			      tx_stats->num_retries);
