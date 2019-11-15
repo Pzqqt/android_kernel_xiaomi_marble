@@ -5463,6 +5463,10 @@ static int get_ec_ref_port_id(int value, int *index)
 		*index = 37;
 		port_id = AFE_PORT_ID_HDMI_OVER_DP_RX;
 		break;
+	case 38:
+		*index = 38;
+		port_id = AFE_PORT_ID_SENARY_MI2S_RX;
+		break;
 	default:
 		*index = 0; /* NONE */
 		pr_err("%s: Invalid value %d\n", __func__, value);
@@ -5520,7 +5524,7 @@ static const char *const ec_ref_rx[] = { "None", "SLIM_RX", "I2S_RX",
 	"WSA_CDC_DMA_TX_0", "WSA_CDC_DMA_TX_1", "WSA_CDC_DMA_TX_2",
 	"SLIM_7_RX", "RX_CDC_DMA_RX_0", "RX_CDC_DMA_RX_1", "RX_CDC_DMA_RX_2",
 	"RX_CDC_DMA_RX_3", "TX_CDC_DMA_TX_0", "TERT_TDM_RX_2", "SEC_TDM_TX_0",
-	"DISPLAY_PORT1",
+	"DISPLAY_PORT1", "SEN_MI2S_RX",
 };
 
 static const struct soc_enum msm_route_ec_ref_rx_enum[] = {
