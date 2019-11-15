@@ -1540,9 +1540,17 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 		for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 			iface_context = &(ipa_ctx->iface_context[i]);
 			if (iface_context->dev == net_dev) {
-				ipa_debug("found iface %u device_mode %u",
-					 i, device_mode);
-				return QDF_STATUS_SUCCESS;
+				if (iface_context->device_mode ==
+				    device_mode) {
+					ipa_debug("found iface %u device_mode %u",
+						  i, device_mode);
+					return QDF_STATUS_SUCCESS;
+				}
+
+				ipa_err("Obsolete iface %u found, device_mode %u, will remove it.",
+					i,
+					iface_context->device_mode);
+				wlan_ipa_cleanup_iface(iface_context);
 			}
 		}
 	}
