@@ -21,9 +21,6 @@
 
 #define STREAMFS_MAX_SUBBUF_8S 8500
 #define STREAMFS_NUM_SUBBUF_8S 255
-#define PEER_CFR_CAPTURE_EVT_STATUS_MASK 0x80000000
-#define PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK 0x40000000
-#define CFR_TX_EVT_STATUS_MASK           0x00000003
 
 /* Values used for computing number of tones */
 #define TONES_IN_20MHZ  256
@@ -31,15 +28,6 @@
 #define TONES_IN_80MHZ  1024
 #define TONES_IN_160MHZ 2048 /* 160 MHz isn't supported yet */
 #define TONES_INVALID   0
-
-/* Status codes used by correlate and relay function */
-#define STATUS_STREAM_AND_RELEASE 0
-#define STATUS_HOLD               1
-#define STATUS_ERROR             -1
-
-/* Module IDs using corrlation function */
-#define CORRELATE_DBR_MODULE_ID   0
-#define CORRELATE_TX_EV_MODULE_ID 1
 
 /**
  * cfr_8074v2_init_pdev() - Inits cfr pdev and registers necessary handlers.

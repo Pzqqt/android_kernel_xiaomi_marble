@@ -29,6 +29,7 @@
 #include <wlan_cfr_utils_api.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <target_if_cfr_8074v2.h>
+#include <target_if_cfr_6018.h>
 
 int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 			       struct wlan_objmgr_peer *peer)
@@ -66,7 +67,8 @@ int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 		return -EINVAL;
 	}
 	cfr_err("CFR capture stats for this capture:");
-	cfr_err("DBR event count = %u, Tx event count = %u Release count = %u",
+	cfr_err("DBR event count = %llu, Tx event count = %llu "
+		"Release count = %llu",
 		pdev_cfrobj->dbr_evt_cnt, pdev_cfrobj->tx_evt_cnt,
 		pdev_cfrobj->release_cnt);
 
@@ -199,6 +201,9 @@ int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 		pa->is_cfr_capable = cfr_sc->is_cfr_capable;
 
 		return cfr_wifi2_0_init_pdev(psoc, pdev);
+	} else if (target_type == TARGET_TYPE_QCA6018) {
+		pa->is_cfr_capable = cfr_sc->is_cfr_capable;
+		return cfr_6018_init_pdev(psoc, pdev);
 	} else
 		return QDF_STATUS_E_NOSUPPORT;
 }
@@ -217,6 +222,8 @@ int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 		   (target_type == TARGET_TYPE_QCA9888)) {
 
 		return cfr_wifi2_0_deinit_pdev(psoc, pdev);
+	} else if (target_type == TARGET_TYPE_QCA6018) {
+		return cfr_6018_deinit_pdev(psoc, pdev);
 	} else
 		return QDF_STATUS_E_NOSUPPORT;
 }
