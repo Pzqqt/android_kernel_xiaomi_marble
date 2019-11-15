@@ -2921,7 +2921,6 @@ static inline void wlan_hdd_mod_fc_timer(struct hdd_adapter *adapter,
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
 int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value);
-void wlan_hdd_deinit_tx_rx_histogram(struct hdd_context *hdd_ctx);
 void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx);
 void wlan_hdd_clear_tx_rx_histogram(struct hdd_context *hdd_ctx);
 

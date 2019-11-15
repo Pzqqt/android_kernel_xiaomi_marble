@@ -3107,6 +3107,38 @@ static int hdd_update_country_code(struct hdd_context *hdd_ctx)
 	return hdd_reg_set_country(hdd_ctx, country_code);
 }
 
+/**
+ * wlan_hdd_init_tx_rx_histogram() - init tx/rx histogram stats
+ * @hdd_ctx: hdd context
+ *
+ * Return: 0 for success or error code
+ */
+static int wlan_hdd_init_tx_rx_histogram(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->hdd_txrx_hist = qdf_mem_malloc(
+		(sizeof(struct hdd_tx_rx_histogram) * NUM_TX_RX_HISTOGRAM));
+	if (!hdd_ctx->hdd_txrx_hist) {
+		hdd_err("failed to alloc memory");
+		return -ENOMEM;
+	}
+	return 0;
+}
+
+/**
+ * wlan_hdd_deinit_tx_rx_histogram() - deinit tx/rx histogram stats
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
+static void wlan_hdd_deinit_tx_rx_histogram(struct hdd_context *hdd_ctx)
+{
+	if (!hdd_ctx || !hdd_ctx->hdd_txrx_hist)
+		return;
+
+	qdf_mem_free(hdd_ctx->hdd_txrx_hist);
+	hdd_ctx->hdd_txrx_hist = NULL;
+}
+
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 {
 	int ret = 0;
@@ -3292,6 +3324,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		hdd_enable_power_management();
 
 		hdd_skip_acs_scan_timer_init(hdd_ctx);
+
+		wlan_hdd_init_tx_rx_histogram(hdd_ctx);
 
 		break;
 
@@ -7691,7 +7725,6 @@ void hdd_context_destroy(struct hdd_context *hdd_ctx)
 	cds_set_context(QDF_MODULE_ID_HDD, NULL);
 
 	hdd_exit_netlink_services(hdd_ctx);
-	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 
 	hdd_context_deinit(hdd_ctx);
 
@@ -8714,36 +8747,6 @@ void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
 	hdd_exit();
 }
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
-
-/**
- * wlan_hdd_init_tx_rx_histogram() - init tx/rx histogram stats
- * @hdd_ctx: hdd context
- *
- * Return: 0 for success or error code
- */
-static int wlan_hdd_init_tx_rx_histogram(struct hdd_context *hdd_ctx)
-{
-	hdd_ctx->hdd_txrx_hist = qdf_mem_malloc(
-		(sizeof(struct hdd_tx_rx_histogram) * NUM_TX_RX_HISTOGRAM));
-	if (!hdd_ctx->hdd_txrx_hist)
-		return -ENOMEM;
-	return 0;
-}
-
-/**
- * wlan_hdd_deinit_tx_rx_histogram() - deinit tx/rx histogram stats
- * @hdd_ctx: hdd context
- *
- * Return: none
- */
-void wlan_hdd_deinit_tx_rx_histogram(struct hdd_context *hdd_ctx)
-{
-	if (!hdd_ctx || !hdd_ctx->hdd_txrx_hist)
-		return;
-
-	qdf_mem_free(hdd_ctx->hdd_txrx_hist);
-	hdd_ctx->hdd_txrx_hist = NULL;
-}
 
 static uint8_t *convert_level_to_string(uint32_t level)
 {
@@ -10356,14 +10359,9 @@ struct hdd_context *hdd_context_create(struct device *dev)
 		goto skip_multicast_logging;
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
-
-	ret = wlan_hdd_init_tx_rx_histogram(hdd_ctx);
-	if (ret)
-		goto err_deinit_hdd_context;
-
 	ret = hdd_init_netlink_services(hdd_ctx);
 	if (ret)
-		goto err_deinit_txrx_histogram;
+		goto err_deinit_hdd_context;
 
 	hdd_set_wlan_logging(hdd_ctx);
 
@@ -10375,9 +10373,6 @@ skip_multicast_logging:
 	hdd_exit();
 
 	return hdd_ctx;
-
-err_deinit_txrx_histogram:
-	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 
 err_deinit_hdd_context:
 	hdd_context_deinit(hdd_ctx);
@@ -12130,6 +12125,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
 		    hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE)
 			break;
+
+		wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 
 		hdd_skip_acs_scan_timer_deinit(hdd_ctx);
 
