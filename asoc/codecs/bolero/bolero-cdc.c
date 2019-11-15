@@ -1109,6 +1109,13 @@ static int bolero_probe(struct platform_device *pdev)
 			__func__);
 		ret = 0;
 	}
+	if (priv->version == BOLERO_VERSION_2_1) {
+		bolero_reg_access[TX_MACRO] = bolero_tx_reg_access_v2;
+		bolero_reg_access[VA_MACRO] = bolero_va_reg_access_v2;
+	} else if (priv->version == BOLERO_VERSION_2_0) {
+		bolero_reg_access[VA_MACRO] = bolero_va_reg_access_v3;
+	}
+
 	priv->dev = &pdev->dev;
 	priv->dev_up = true;
 	priv->initial_boot = true;

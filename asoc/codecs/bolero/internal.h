@@ -91,6 +91,9 @@ int bolero_get_macro_id(bool va_no_dec_flag, u16 reg);
 extern const struct regmap_config bolero_regmap_config;
 extern u8 *bolero_reg_access[MAX_MACRO];
 extern u8 bolero_va_top_reg_access[BOLERO_CDC_VA_MACRO_TOP_MAX];
+extern u8 bolero_va_reg_access_v2[BOLERO_CDC_VA_MACRO_MAX];
+extern u8 bolero_va_reg_access_v3[BOLERO_CDC_VA_MACRO_MAX];
+extern u8 bolero_tx_reg_access_v2[BOLERO_CDC_TX_MACRO_MAX];
 extern const u16 macro_id_base_offset[MAX_MACRO];
 
 #endif
