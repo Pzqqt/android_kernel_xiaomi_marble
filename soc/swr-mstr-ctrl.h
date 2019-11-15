@@ -25,7 +25,7 @@
 
 #define SWR_ROW_48		0
 #define SWR_ROW_50		1
-#define SWR_ROW_64		2
+#define SWR_ROW_64		3
 #define SWR_MAX_COL		7 /* Cols = 16 */
 #define SWR_MIN_COL		0 /* Cols = 2 */
 
