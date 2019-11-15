@@ -1071,6 +1071,32 @@ int wma_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id)
 }
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
+static uint8_t *
+wma_parse_ch_switch_wrapper_ie(uint8_t *ch_wr_ie, uint8_t sub_ele_id)
+{
+	uint8_t len = 0, sub_ele_len = 0;
+	struct ie_header *ele;
+
+	ele = (struct ie_header *)ch_wr_ie;
+	if (ele->ie_id != WLAN_ELEMID_CHAN_SWITCH_WRAP ||
+	    ele->ie_len == 0)
+		return NULL;
+
+	len = ele->ie_len;
+	ele = (struct ie_header *)(ch_wr_ie + sizeof(struct ie_header));
+
+	while (len > 0) {
+		sub_ele_len = sizeof(struct ie_header) + ele->ie_len;
+		len -= sub_ele_len;
+		if (ele->ie_id == sub_ele_id)
+			return (uint8_t *)ele;
+
+		ele = (struct ie_header *)((uint8_t *)ele + sub_ele_len);
+	}
+
+	return NULL;
+}
+
 /**
  * wma_csa_offload_handler() - CSA event handler
  * @handle: wma handle
@@ -1148,12 +1174,32 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 		csa_offload_event->new_ch_width = wb_ie->new_ch_width;
 		csa_offload_event->new_ch_freq_seg1 = wb_ie->new_ch_freq_seg1;
 		csa_offload_event->new_ch_freq_seg2 = wb_ie->new_ch_freq_seg2;
+	} else if (csa_event->ies_present_flag &
+		   WMI_CSWRAP_IE_EXTENDED_PRESENT) {
+		wb_ie = (struct ieee80211_ie_wide_bw_switch *)
+				wma_parse_ch_switch_wrapper_ie(
+				(uint8_t *)&csa_event->cswrap_ie_extended,
+				WLAN_ELEMID_WIDE_BAND_CHAN_SWITCH);
+		if (wb_ie) {
+			csa_offload_event->new_ch_width = wb_ie->new_ch_width;
+			csa_offload_event->new_ch_freq_seg1 =
+						wb_ie->new_ch_freq_seg1;
+			csa_offload_event->new_ch_freq_seg2 =
+						wb_ie->new_ch_freq_seg2;
+			csa_event->ies_present_flag |= WMI_WBW_IE_PRESENT;
+		}
 	}
 
 	csa_offload_event->ies_present_flag = csa_event->ies_present_flag;
 
 	WMA_LOGD("CSA: New Channel = %d BSSID:%pM",
 		 csa_offload_event->channel, csa_offload_event->bssId);
+	WMA_LOGD("CSA: IEs Present Flag = 0x%x new ch width = %d ch center freq1 = %d ch center freq2 = %d new op class = %d",
+		 csa_event->ies_present_flag,
+		 csa_offload_event->new_ch_width,
+		 csa_offload_event->new_ch_freq_seg1,
+		 csa_offload_event->new_ch_freq_seg2,
+		 csa_offload_event->new_op_class);
 
 	cur_chan = cds_freq_to_chan(intr[vdev_id].mhz);
 	/*
