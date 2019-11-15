@@ -28,6 +28,19 @@
 #define PEER_CFR_CAPTURE_ENABLE   1
 #define PEER_CFR_CAPTURE_DISABLE  0
 
+#define PEER_CFR_CAPTURE_EVT_STATUS_MASK 0x80000000
+#define PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK 0x40000000
+#define CFR_TX_EVT_STATUS_MASK           0x00000003
+
+/* Status codes used by correlate and relay function */
+#define STATUS_STREAM_AND_RELEASE 0
+#define STATUS_HOLD               1
+#define STATUS_ERROR             -1
+
+/* Module IDs using corrlation function */
+#define CORRELATE_DBR_MODULE_ID   0
+#define CORRELATE_TX_EV_MODULE_ID 1 /* HKV2 */
+#define CORRELATE_TXRX_EV_MODULE_ID 1 /* Cypress */
 
 /**
  * target_if_cfr_init_pdev() - Inits cfr pdev and registers necessary handlers.
