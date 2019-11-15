@@ -2129,8 +2129,6 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 {
 	struct HIF_CE_pipe_info *pipe_info =
 		(struct HIF_CE_pipe_info *)ce_context;
-	struct HIF_CE_state *hif_state = pipe_info->HIF_CE_state;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
 	unsigned int sw_idx = sw_index, hw_idx = hw_index;
 	struct hif_msg_callbacks *msg_callbacks =
 		&pipe_info->pipe_callbacks;
@@ -2140,19 +2138,11 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 		 * The upper layer callback will be triggered
 		 * when last fragment is complteted.
 		 */
-		if (transfer_context != CE_SENDLIST_ITEM_CTXT) {
-			if (scn->target_status == TARGET_STATUS_RESET) {
-
-				qdf_nbuf_unmap_single(scn->qdf_dev,
-						      transfer_context,
-						      QDF_DMA_TO_DEVICE);
-				qdf_nbuf_free(transfer_context);
-			} else
-				msg_callbacks->txCompletionHandler(
-					msg_callbacks->Context,
-					transfer_context, transfer_id,
-					toeplitz_hash_result);
-		}
+		if (transfer_context != CE_SENDLIST_ITEM_CTXT)
+			msg_callbacks->txCompletionHandler(
+				msg_callbacks->Context,
+				transfer_context, transfer_id,
+				toeplitz_hash_result);
 
 		qdf_spin_lock_bh(&pipe_info->completion_freeq_lock);
 		pipe_info->num_sends_allowed++;
