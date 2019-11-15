@@ -364,6 +364,9 @@ wlan_ser_move_non_scan_pending_to_active(
 		qdf_atomic_set_bit(CMD_MARKED_FOR_ACTIVATION,
 				   &active_cmd_list->cmd_in_use);
 
+		if (active_cmd_list->cmd.is_blocking)
+			pdev_queue->blocking_cmd_waiting--;
+
 		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
 		wlan_serialization_activate_cmd(active_cmd_list, ser_pdev_obj,
@@ -371,15 +374,11 @@ wlan_ser_move_non_scan_pending_to_active(
 
 		wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 
-		if (vdev_queue_lookup)
+		if (vdev_queue_lookup || pdev_queue->blocking_cmd_active)
 			break;
 
 		pending_node = NULL;
 
-		if (active_cmd_list->cmd.is_blocking) {
-			pdev_queue->blocking_cmd_waiting--;
-			break;
-		}
 	}
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
