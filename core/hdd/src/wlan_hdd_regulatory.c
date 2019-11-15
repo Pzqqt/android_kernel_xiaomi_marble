@@ -1458,10 +1458,18 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 				hdd_ctx->reg.alpha2);
 }
 
+int hdd_update_regulatory_config(struct hdd_context *hdd_ctx)
+{
+	struct reg_config_vars config_vars;
+
+	reg_program_config_vars(hdd_ctx, &config_vars);
+	ucfg_reg_set_config_vars(hdd_ctx->psoc, config_vars);
+	return 0;
+}
+
 int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 {
 	bool offload_enabled;
-	struct reg_config_vars config_vars;
 	struct regulatory_channel *cur_chan_list;
 	enum country_src cc_src;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
@@ -1471,12 +1479,10 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 		return -ENOMEM;
 	}
 
-	reg_program_config_vars(hdd_ctx, &config_vars);
 	ucfg_reg_register_chan_change_callback(hdd_ctx->psoc,
 					       hdd_regulatory_dyn_cbk,
 					       NULL);
 
-	ucfg_reg_set_config_vars(hdd_ctx->psoc, config_vars);
 
 	wiphy->regulatory_flags |= REGULATORY_WIPHY_SELF_MANAGED;
 	/* Check the kernel version for upstream commit aced43ce780dc5 that

@@ -32,6 +32,14 @@ struct hdd_context;
 #define IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
 #endif
 
+/**
+ * hdd_update_regulatory_config() - API to update regulatory config parameters
+ * @hdd_ctx: HDD context
+ *
+ * Return: 0 on success, err on failure
+ */
+int hdd_update_regulatory_config(struct hdd_context *hdd_ctx);
+
 int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy);
 void hdd_program_country_code(struct hdd_context *hdd_ctx);
 void hdd_reset_global_reg_params(void);

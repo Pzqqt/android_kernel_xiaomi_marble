@@ -15442,6 +15442,10 @@ int hdd_update_components_config(struct hdd_context *hdd_ctx)
 		return ret;
 
 	ret = hdd_update_dfs_config(hdd_ctx);
+	if (ret)
+		return ret;
+
+	ret = hdd_update_regulatory_config(hdd_ctx);
 
 	return ret;
 }
