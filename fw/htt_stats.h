@@ -672,6 +672,10 @@ typedef struct {
     A_UINT32 next_seq_cancel;
     /* Num of times fes offset was misaligned */
     A_UINT32 fes_offsets_err_cnt;
+    /* Num of times peer blacklisted for MU-MIMO transmission */
+    A_UINT32 num_mu_peer_blacklisted;
+    /* Num of times mu_ofdma seq posted */
+    A_UINT32 mu_ofdma_seq_posted;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
