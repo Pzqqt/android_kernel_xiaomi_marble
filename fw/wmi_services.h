@@ -416,6 +416,7 @@ typedef  enum  {
     WMI_SERVICE_CFR_CAPTURE_FILTER_SUPPORT = 226, /* Indicate FW Supports Channel Frequency Response (CFR) via WMI_CFR_CAPTURE_FILTER_CMDID */
     WMI_SERVICE_STA_BSS_MAX_IDLE_TIME = 227, /* Indicate FW supports BSS Max Idle time feature via WMI_VDEV_BSS_MAX_IDLE_TIME_CMDID */
     WMI_SERVICE_BIP_CIPHER_SUPPORT = 228, /* FW supports new BIP_CIPHER suites (WMI_CIPHER_BIP_xxx) */
+    WMI_SERVICE_BW_165MHZ_SUPPORT = 229, /* Indicate FW supports bandwidth 165MHz (i.e. 6 GHz in addition to 2.4 and 5) */
 
 
     /******* ADD NEW SERVICES HERE *******/
