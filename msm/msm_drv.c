@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -299,6 +299,28 @@ u32 msm_readl(const void __iomem *addr)
 	if (reglog)
 		pr_err("IO:R %pK %08x\n", addr, val);
 	return val;
+}
+
+int msm_get_src_bpc(int chroma_format,
+	int bpc)
+{
+	int src_bpp;
+
+	switch (chroma_format) {
+	case MSM_CHROMA_444:
+		src_bpp = bpc * 3;
+		break;
+	case MSM_CHROMA_422:
+		src_bpp = bpc * 2;
+		break;
+	case MSM_CHROMA_420:
+		src_bpp = mult_frac(bpc, 3, 2);
+		break;
+	default:
+		src_bpp = bpc * 3;
+		break;
+	}
+	return src_bpp;
 }
 
 struct vblank_work {

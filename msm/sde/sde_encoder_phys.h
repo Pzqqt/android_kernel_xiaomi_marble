@@ -310,7 +310,7 @@ struct sde_encoder_phys {
 	struct sde_hw_intf_cfg intf_cfg;
 	struct sde_hw_intf_cfg_v1 intf_cfg_v1;
 	enum msm_display_compression_type comp_type;
-	enum msm_display_compression_ratio comp_ratio;
+	u32 comp_ratio;
 	u32 dsc_extra_pclk_cycle_cnt;
 	u32 dsc_extra_disp_width;
 	bool wide_bus_en;

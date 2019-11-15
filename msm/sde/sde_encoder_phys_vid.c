@@ -50,8 +50,6 @@ static void drm_mode_to_intf_timing_params(
 		struct intf_timing_params *timing)
 {
 	const struct sde_encoder_phys *phys_enc = &vid_enc->base;
-	enum msm_display_compression_ratio comp_ratio =
-				MSM_DISPLAY_COMPRESSION_RATIO_NONE;
 
 	memset(timing, 0, sizeof(*timing));
 
@@ -82,17 +80,12 @@ static void drm_mode_to_intf_timing_params(
 	 */
 	timing->width = mode->hdisplay;	/* active width */
 
-	if (phys_enc->hw_intf->cap->type != INTF_DP &&
-		vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_DSC) {
-		comp_ratio = vid_enc->base.comp_ratio;
-		if (comp_ratio == MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1)
-			timing->width = DIV_ROUND_UP(timing->width, 2);
-		else
-			timing->width = DIV_ROUND_UP(timing->width, 3);
-	} else if (phys_enc->hw_intf->cap->type != INTF_DP &&
-		vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_VDC) {
-		comp_ratio = vid_enc->base.comp_ratio;
-		timing->width = DIV_ROUND_UP(timing->width, comp_ratio);
+	if (phys_enc->hw_intf->cap->type != INTF_DP) {
+		if ((vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_DSC) ||
+				(vid_enc->base.comp_type ==
+				MSM_DISPLAY_COMPRESSION_VDC))
+			timing->width = DIV_ROUND_UP(timing->width,
+					vid_enc->base.comp_ratio);
 	}
 
 	timing->height = mode->vdisplay;	/* active height */

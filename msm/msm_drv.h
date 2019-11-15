@@ -228,20 +228,8 @@ enum msm_display_compression_type {
 	MSM_DISPLAY_COMPRESSION_VDC
 };
 
-/**
- * enum msm_display_compression_ratio - compression ratio
- * @MSM_DISPLAY_COMPRESSION_NONE: no compression
- * @MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1: 2 to 1 compression
- * @MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1: 3 to 1 compression
- * @MSM_DISPLAY_COMPRESSION_RATIO_4_TO_1: 4 to 1 compression
- */
-enum msm_display_compression_ratio {
-	MSM_DISPLAY_COMPRESSION_RATIO_NONE,
-	MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1,
-	MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1,
-	MSM_DISPLAY_COMPRESSION_RATIO_4_TO_1,
-	MSM_DISPLAY_COMPRESSION_RATIO_MAX,
-};
+#define MSM_DISPLAY_COMPRESSION_RATIO_NONE 1
+#define MSM_DISPLAY_COMPRESSION_RATIO_MAX 5
 
 /**
  * enum msm_display_caps - features/capabilities supported by displays
@@ -606,7 +594,7 @@ struct msm_display_vdc_info {
  */
 struct msm_compression_info {
 	enum msm_display_compression_type comp_type;
-	enum msm_display_compression_ratio comp_ratio;
+	u32 comp_ratio;
 
 	union{
 		struct msm_display_dsc_info dsc_info;
@@ -1230,5 +1218,7 @@ static inline unsigned long timeout_to_jiffies(const ktime_t *timeout)
 int msm_get_mixer_count(struct msm_drm_private *priv,
 		const struct drm_display_mode *mode,
 		const struct msm_resource_caps_info *res, u32 *num_lm);
+
+int msm_get_src_bpc(int chroma_format, int bpc);
 
 #endif /* __MSM_DRV_H__ */
