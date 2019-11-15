@@ -607,6 +607,7 @@ static QDF_STATUS p2p_populate_mac_header(
 	seq_ctl->seq_num_lo = (seq_num & WLAN_LOW_SEQ_NUM_MASK);
 	seq_ctl->seq_num_hi = ((seq_num & WLAN_HIGH_SEQ_NUM_MASK) >>
 				WLAN_HIGH_SEQ_NUM_OFFSET);
+	p2p_debug("seq num: %d", seq_num);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_P2P_ID);
 
@@ -2918,6 +2919,7 @@ QDF_STATUS p2p_process_mgmt_tx_cancel(
 					cancel_tx->p2p_soc_obj;
 			cancel_roc.cookie =
 					cur_tx_ctx->roc_cookie;
+			p2p_remove_tx_context(cur_tx_ctx);
 			return p2p_process_cancel_roc_req(&cancel_roc);
 		}
 		if (is_ack_q) {
