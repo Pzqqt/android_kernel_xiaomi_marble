@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2015, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2017-2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -457,8 +457,7 @@ int msm_dss_enable_clk(struct dss_clk *clk_arry, int num_clk, int enable)
 			}
 
 			if (rc) {
-				msm_dss_enable_clk(&clk_arry[i],
-					i, false);
+				msm_dss_enable_clk(clk_arry, i, false);
 				break;
 			}
 		}
