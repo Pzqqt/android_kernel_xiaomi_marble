@@ -220,6 +220,8 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 			   &params.key_rsc_ctr, sizeof(uint64_t));
 	status = wmi_unified_setup_install_key_cmd(pdev_wmi_handle, &params);
 
+	/* Zero-out local key variables */
+	qdf_mem_zero(&params, sizeof(struct set_key_params));
 	return status;
 }
 

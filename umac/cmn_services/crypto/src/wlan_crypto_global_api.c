@@ -1104,6 +1104,9 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 				qdf_mem_free(key->private);
 		}
 	}
+
+	/* Zero-out local key variables */
+	qdf_mem_zero(key, sizeof(struct wlan_crypto_key));
 	qdf_mem_free(key);
 
 	return QDF_STATUS_SUCCESS;
