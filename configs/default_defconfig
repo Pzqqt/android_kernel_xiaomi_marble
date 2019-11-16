@@ -983,4 +983,10 @@ CONFIG_BAND_6GHZ := y
 
 endif
 
+ifeq ($(CONFIG_BAND_6GHZ), y)
+
+CONFIG_6G_SCAN_CHAN_SORT_ALGO := y
+
+endif
+
 CONFIG_SAP_DHCP_FW_IND := y
