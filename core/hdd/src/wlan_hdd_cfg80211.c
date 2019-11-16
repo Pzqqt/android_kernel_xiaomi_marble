@@ -3140,6 +3140,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		 * Since this CFG80211 call lock rtnl mutex, we cannot hold on
 		 * for this long. So we split up the scanning part.
 		 */
+		INIT_DELAYED_WORK(&adapter->acs_pending_work,
+				  wlan_hdd_cfg80211_start_pending_acs);
 		set_bit(ACS_PENDING, &adapter->event_flags);
 		hdd_debug("ACS Pending for %s", adapter->dev->name);
 		ret = 0;
@@ -3472,8 +3474,6 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 	con_sap_adapter = hdd_get_con_sap_adapter(adapter, false);
 	if (con_sap_adapter &&
 		test_bit(ACS_PENDING, &con_sap_adapter->event_flags)) {
-		INIT_DELAYED_WORK(&con_sap_adapter->acs_pending_work,
-				      wlan_hdd_cfg80211_start_pending_acs);
 		/* Lets give 1500ms for OBSS + START_BSS to complete */
 		schedule_delayed_work(&con_sap_adapter->acs_pending_work,
 					msecs_to_jiffies(1500));
