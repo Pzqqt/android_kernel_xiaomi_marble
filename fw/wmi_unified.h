@@ -6624,6 +6624,14 @@ typedef struct {
      * the noise floor.
      */
     A_UINT32    ack_rssi;
+    /* xmit rate in kbps */
+    A_UINT32 tx_rate;
+    /* phy mode WLAN_PHY_MODE of the channel defined in wlan_defs.h */
+    A_UINT32 peer_phymode;
+    A_UINT32 retries_count;
+    /* current 64 bit TSF timestamp */
+    A_UINT32 tx_tsf_l32;
+    A_UINT32 tx_tsf_u32;
 } wmi_mgmt_tx_compl_event_fixed_param;
 
 typedef struct {
