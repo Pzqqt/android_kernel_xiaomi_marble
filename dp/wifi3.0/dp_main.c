@@ -5852,31 +5852,55 @@ static void dp_peer_authorize(struct cdp_peer *peer_handle, uint32_t authorize)
 	}
 }
 
-static void dp_reset_and_release_peer_mem(struct dp_soc *soc,
-					  struct dp_pdev *pdev,
-					  struct dp_peer *peer,
-					  struct dp_vdev *vdev)
+/*
+ * dp_vdev_reset_peer() - Update peer related member in vdev
+			  as peer is going to free
+ * @vdev: datapath vdev handle
+ * @peer: dataptah peer handle
+ *
+ * Return: None
+ */
+static void dp_vdev_reset_peer(struct dp_vdev *vdev,
+			       struct dp_peer *peer)
 {
 	struct dp_peer *bss_peer = NULL;
-	uint8_t *m_addr = NULL;
 
 	if (!vdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "vdev is NULL");
+		dp_err("vdev is NULL");
 	} else {
 		if (vdev->vap_bss_peer == peer)
 		    vdev->vap_bss_peer = NULL;
-		m_addr = peer->mac_addr.raw;
-		if (soc->cdp_soc.ol_ops->peer_unref_delete)
-			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
-				m_addr, vdev->mac_addr.raw, vdev->opmode,
-				peer->ctrl_peer, NULL);
 
 		if (vdev && vdev->vap_bss_peer) {
 		    bss_peer = vdev->vap_bss_peer;
 		    DP_UPDATE_STATS(vdev, peer);
 		}
 	}
+}
+
+/*
+ * dp_peer_release_mem() - free dp peer handle memory
+ * @soc: dataptah soc handle
+ * @pdev: datapath pdev handle
+ * @peer: datapath peer handle
+ * @vdev_opmode: Vdev operation mode
+ * @vdev_mac_addr: Vdev Mac address
+ *
+ * Return: None
+ */
+static void dp_peer_release_mem(struct dp_soc *soc,
+				struct dp_pdev *pdev,
+				struct dp_peer *peer,
+				enum wlan_op_mode vdev_opmode,
+				uint8_t *vdev_mac_addr)
+{
+	if (soc->cdp_soc.ol_ops->peer_unref_delete)
+		soc->cdp_soc.ol_ops->peer_unref_delete(
+				pdev->ctrl_pdev,
+				peer->mac_addr.raw, vdev_mac_addr,
+				vdev_opmode, peer->ctrl_peer,
+				NULL);
+
 	/*
 	 * Peer AST list hast to be empty here
 	 */
@@ -5943,8 +5967,11 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 	int found = 0;
 	uint16_t peer_id;
 	uint16_t vdev_id;
-	bool delete_vdev;
+	bool vdev_delete = false;
 	struct cdp_peer_cookie peer_cookie;
+	enum wlan_op_mode vdev_opmode;
+	uint8_t vdev_mac_addr[QDF_MAC_ADDR_SIZE];
+
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -6016,31 +6043,37 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 
 		/* cleanup the peer data */
 		dp_peer_cleanup(vdev, peer, false);
+		/* reset this peer related info in vdev */
+		dp_vdev_reset_peer(vdev, peer);
+		/* save vdev related member in case vdev freed */
+		vdev_opmode = vdev->opmode;
+		qdf_mem_copy(vdev_mac_addr, vdev->mac_addr.raw,
+			     QDF_MAC_ADDR_SIZE);
+		/*
+		 * check whether the parent vdev is pending for deleting
+		 * and no peers left.
+		 */
+		if (vdev->delete.pending && TAILQ_EMPTY(&vdev->peer_list))
+			vdev_delete = true;
+		/*
+		 * Now that there are no references to the peer, we can
+		 * release the peer reference lock.
+		 */
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
-		dp_reset_and_release_peer_mem(soc, pdev, peer, vdev);
-		qdf_spin_lock_bh(&soc->peer_ref_mutex);
 
-		/* check whether the parent vdev has no peers left */
-		if (TAILQ_EMPTY(&vdev->peer_list)) {
-			/*
-			 * capture vdev delete pending flag's status
-			 * while holding peer_ref_mutex lock
-			 */
-			delete_vdev = vdev->delete.pending;
-			/*
-			 * Now that there are no references to the peer, we can
-			 * release the peer reference lock.
-			 */
-			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
-			/*
-			 * Check if the parent vdev was waiting for its peers
-			 * to be deleted, in order for it to be deleted too.
-			 */
-			if (delete_vdev)
-				dp_delete_pending_vdev(pdev, vdev, vdev_id);
-		} else {
-			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
-		}
+		/*
+		 * Invoke soc.ol_ops->peer_unref_delete out of
+		 * peer_ref_mutex in case deadlock issue.
+		 */
+		dp_peer_release_mem(soc, pdev, peer,
+				    vdev_opmode,
+				    vdev_mac_addr);
+		/*
+		 * Delete the vdev if it's waiting all peer deleted
+		 * and it's chance now.
+		 */
+		if (vdev_delete)
+			dp_delete_pending_vdev(pdev, vdev, vdev_id);
 
 	} else {
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
