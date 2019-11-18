@@ -2242,6 +2242,27 @@ pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+static void
+lim_fill_fils_ft(struct pe_session *src_session,
+		 struct pe_session *dst_session)
+{
+      if (src_session->fils_info &&
+          src_session->fils_info->fils_ft_len) {
+              dst_session->fils_info->fils_ft_len =
+                      src_session->fils_info->fils_ft_len;
+              qdf_mem_copy(dst_session->fils_info->fils_ft,
+                           src_session->fils_info->fils_ft,
+                           src_session->fils_info->fils_ft_len);
+      }
+}
+#else
+static inline void
+lim_fill_fils_ft(struct pe_session *src_session,
+		 struct pe_session *dst_session)
+{}
+#endif
+
 QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
@@ -2351,17 +2372,8 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 	/* Next routine may update nss based on dot11Mode */
 	lim_ft_prepare_add_bss_req(mac_ctx, ft_session_ptr, bss_desc);
-	if (session_ptr->is11Rconnection) {
-		ft_session_ptr->is11Rconnection = session_ptr->is11Rconnection;
-		if (session_ptr->fils_info &&
-		    session_ptr->fils_info->fils_ft_len) {
-			ft_session_ptr->fils_info->fils_ft_len =
-			       session_ptr->fils_info->fils_ft_len;
-			qdf_mem_copy(ft_session_ptr->fils_info->fils_ft,
-				     session_ptr->fils_info->fils_ft,
-				     session_ptr->fils_info->fils_ft_len);
-		}
-	}
+	if (session_ptr->is11Rconnection)
+		lim_fill_fils_ft(session_ptr, ft_session_ptr);
 
 	roam_sync_ind_ptr->add_bss_params =
 		(struct bss_params *) ft_session_ptr->ftPEContext.pAddBssReq;
