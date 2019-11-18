@@ -5739,6 +5739,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_err("qdf wait for single_event failed!!");
+				hdd_sap_indicate_disconnect_for_sta(adapter);
 				QDF_ASSERT(0);
 			}
 		}
