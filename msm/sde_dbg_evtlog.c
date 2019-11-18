@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"sde_dbg:[%s] " fmt, __func__
@@ -80,7 +80,7 @@ void sde_evtlog_log(struct sde_dbg_evtlog *evtlog, const char *name, int line,
 	log->line = line;
 	log->data_cnt = 0;
 	log->pid = current->pid;
-	log->cpu = current->cpu;
+	log->cpu = raw_smp_processor_id();
 
 	va_start(args, flag);
 	for (i = 0; i < SDE_EVTLOG_MAX_DATA; i++) {
