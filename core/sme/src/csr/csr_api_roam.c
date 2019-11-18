@@ -5193,6 +5193,41 @@ error:
 	return is_null_ssid_match;
 }
 
+/**
+ * csr_check_for_allowed_ssid() - Function to check if the roamed
+ * SSID is present in the configured Allowed SSID list
+ * @mac: Pointer to global mac_ctx
+ * @bss_desc: bss descriptor pointer
+ * @roamed_bss_ies: Pointer to roamed BSS IEs
+ *
+ * Return: True if SSID match found else False
+ */
+static bool
+csr_check_for_allowed_ssid(struct mac_context *mac,
+			   struct bss_description *bss_desc,
+			   tDot11fBeaconIEs *roamed_bss_ies)
+{
+	uint8_t i;
+	tSirMacSSid *ssid_list =
+		mac->roam.configParam.roam_params.ssid_allowed_list;
+	uint8_t num_ssid_allowed_list =
+		mac->roam.configParam.roam_params.num_ssid_allowed_list;
+
+	if (!roamed_bss_ies) {
+		sme_info(" Roamed BSS IEs NULL");
+		return false;
+	}
+
+	for (i = 0; i < num_ssid_allowed_list; i++) {
+		if (ssid_list[i].length == roamed_bss_ies->SSID.num_ssid &&
+		    !qdf_mem_cmp(ssid_list[i].ssId, roamed_bss_ies->SSID.ssid,
+				 ssid_list[i].length))
+			return true;
+	}
+
+	return false;
+}
+
 static
 QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
 				 struct csr_roam_profile *roam_profile,
@@ -5245,8 +5280,9 @@ QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
 			 * Not worry about WDS connection for now
 			 */
 			ssid_match =
-				csr_check_for_hidden_ssid_match(mac, pSession,
-								bss_desc, pIes);
+			    (csr_check_for_allowed_ssid(mac, bss_desc, pIes) ||
+			     csr_check_for_hidden_ssid_match(mac, pSession,
+							     bss_desc, pIes));
 			if (!ssid_match)
 				ssid_match = csr_is_ssid_equal(
 						mac, pSession->pConnectBssDesc,
