@@ -335,7 +335,7 @@ sap_process_avoid_ie(mac_handle_t mac_handle, struct sap_context *sap_ctx,
 			 * Mark weight of these channel present in IE to MAX
 			 * so that ACS logic will to avoid thse channels
 			 */
-			for (i = 0; i < spect_info->numSpectChans; i++)
+			for (i = 0; i < spect_info->numSpectChans; i++) {
 				if (spect_ch[i].chan_freq != chan_freq)
 					continue;
 				/*
@@ -349,6 +349,7 @@ sap_process_avoid_ie(mac_handle_t mac_handle, struct sap_context *sap_ctx,
 				spect_ch[i].weight_copy =
 							SAP_ACS_WEIGHT_MAX + 1;
 				break;
+			}
 		}
 
 		qdf_list_peek_next(scan_list, cur_lst, &next_lst);
