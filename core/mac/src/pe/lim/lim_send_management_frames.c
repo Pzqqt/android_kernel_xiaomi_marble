@@ -2779,9 +2779,8 @@ alloc_packet:
 			   frame, frame_len);
 
 	if ((session->ftPEContext.pFTPreAuthReq) &&
-	    (lim_get_rf_band(
-	     session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)) ==
-				BAND_5G)
+	    (!wlan_reg_is_24ghz_ch_freq(
+	     session->ftPEContext.pFTPreAuthReq->pre_auth_channel_freq)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	else if (wlan_reg_is_5ghz_ch_freq(session->curr_op_freq) ||
 		 session->opmode == QDF_P2P_CLIENT_MODE ||
@@ -2801,8 +2800,8 @@ alloc_packet:
 				      session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 
 	if (session->ftPEContext.pFTPreAuthReq)
-		ch_freq_tx_frame = cds_chan_to_freq(
-			session->ftPEContext.pFTPreAuthReq->preAuthchannelNum);
+		ch_freq_tx_frame = session->ftPEContext.
+				pFTPreAuthReq->pre_auth_channel_freq;
 
 	qdf_status = wma_tx_frameWithTxComplete(mac_ctx, packet,
 				 (uint16_t)frame_len,

@@ -190,8 +190,8 @@ int lim_process_ft_pre_auth_req(struct mac_context *mac_ctx,
 	 * Dont need to suspend if APs are in same channel and DUT
 	 * is not in MCC state
 	 */
-	if ((wlan_reg_freq_to_chan(mac_ctx->pdev, session->curr_op_freq) !=
-	    session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)
+	if ((session->curr_op_freq !=
+	     session->ftPEContext.pFTPreAuthReq->pre_auth_channel_freq)
 	    || lim_is_in_mcc(mac_ctx)) {
 		/* Need to suspend link only if the channels are different */
 		pe_debug("Performing pre-auth on diff channel(session %pK)",
@@ -468,11 +468,11 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 		ft_session->ht_config = pe_session->ht_config;
 		ft_session->limSmeState = eLIM_SME_WT_REASSOC_STATE;
 
-		if (IS_5G_CH(pe_session->ftPEContext.pFTPreAuthReq->
-			preAuthchannelNum))
-			ft_session->vdev_nss = mac->vdev_type_nss_5g.sta;
-		else
+		if (wlan_reg_is_24ghz_ch_freq(pe_session->ftPEContext.
+		    pFTPreAuthReq->pre_auth_channel_freq))
 			ft_session->vdev_nss = mac->vdev_type_nss_2g.sta;
+		else
+			ft_session->vdev_nss = mac->vdev_type_nss_5g.sta;
 
 		pe_debug("created session (%pK) with id = %d",
 			ft_session, ft_session->peSessionId);
@@ -483,18 +483,17 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 		lim_print_mac_addr(mac, pe_session->limReAssocbssId, LOGD);
 	}
 send_rsp:
-	if ((wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq) !=
-	     pe_session->ftPEContext.pFTPreAuthReq->preAuthchannelNum) ||
+	if ((pe_session->curr_op_freq !=
+	     pe_session->ftPEContext.pFTPreAuthReq->pre_auth_channel_freq) ||
 	    lim_is_in_mcc(mac)) {
 		/* Need to move to the original AP channel */
 		lim_process_abort_scan_ind(mac, pe_session->smeSessionId,
 			pe_session->ftPEContext.pFTPreAuthReq->scan_id,
 			mac->lim.req_id | PREAUTH_REQUESTOR_ID);
 	} else {
-		pe_debug("Pre auth on same channel as connected AP channel %d\
-			and no mcc pe sessions exist",
-			pe_session->ftPEContext.pFTPreAuthReq->
-			preAuthchannelNum);
+		pe_debug("Pre auth on same freq as connected AP freq %d and no mcc pe sessions exist",
+			 pe_session->ftPEContext.pFTPreAuthReq->
+			 pre_auth_channel_freq);
 		lim_ft_process_pre_auth_result(mac, pe_session);
 	}
 }
@@ -718,7 +717,7 @@ QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 
 	req->scan_req.chan_list.num_chan = 1;
 	req->scan_req.chan_list.chan[0].freq =
-			cds_chan_to_freq(ft_preauth_req->preAuthchannelNum);
+			ft_preauth_req->pre_auth_channel_freq;
 
 	req->scan_req.dwell_time_active = LIM_FT_PREAUTH_SCAN_TIME;
 	req->scan_req.dwell_time_passive = LIM_FT_PREAUTH_SCAN_TIME;

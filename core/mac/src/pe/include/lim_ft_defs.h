@@ -51,7 +51,7 @@ typedef struct sSirFTPreAuthReq {
 	 * We expect only one response per request.
 	 */
 	bool bPreAuthRspProcessed;
-	uint8_t preAuthchannelNum;
+	uint16_t pre_auth_channel_freq;
 	/* BSSID currently associated to suspend the link */
 	tSirMacAddr currbssId;
 	tSirMacAddr preAuthbssId;       /* BSSID to preauth to */

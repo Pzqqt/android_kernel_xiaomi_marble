@@ -556,8 +556,7 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 	/* Save the SME Session ID. We need it while processing preauth resp */
 	csr_session->ftSmeContext.smeSessionId = session_id;
 	preauth_req->messageType = eWNI_SME_FT_PRE_AUTH_REQ;
-	preauth_req->preAuthchannelNum =
-		wlan_reg_freq_to_chan(mac_ctx->pdev, bss_desc->chan_freq);
+	preauth_req->pre_auth_channel_freq = bss_desc->chan_freq;
 	preauth_req->dot11mode = dot11mode;
 
 	qdf_mem_copy((void *)&preauth_req->currbssId,

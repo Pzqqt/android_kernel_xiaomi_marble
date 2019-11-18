@@ -409,9 +409,8 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 			   (uint8_t *) frame, (bytes + ft_ies_length));
 
 	if ((pe_session->ftPEContext.pFTPreAuthReq) &&
-	    (lim_get_rf_band(
-	     pe_session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)) ==
-							BAND_5G)
+	    (!wlan_reg_is_24ghz_ch_freq(
+	     pe_session->ftPEContext.pFTPreAuthReq->pre_auth_channel_freq)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	else if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
 		 pe_session->opmode == QDF_P2P_CLIENT_MODE ||
