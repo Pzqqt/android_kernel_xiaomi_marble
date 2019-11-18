@@ -18029,7 +18029,6 @@ csr_fetch_ch_lst_from_occupied_lst(struct mac_context *mac_ctx,
 	uint8_t i = 0;
 	uint8_t num_channels = 0;
 	uint32_t op_freq;
-	uint8_t op_chan;
 	struct csr_roam_session *session;
 	uint32_t *ch_lst;
 	enum band_info band = BAND_ALL;
@@ -18043,8 +18042,12 @@ csr_fetch_ch_lst_from_occupied_lst(struct mac_context *mac_ctx,
 		mac_ctx->scan.occupiedChannels[session_id].numChannels);
 
 	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
-		op_chan = wlan_reg_freq_to_chan(mac_ctx->pdev, op_freq);
-		band = csr_get_rf_band(op_chan);
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(op_freq))
+			band = BAND_5G;
+		else if (WLAN_REG_IS_24GHZ_CH_FREQ(op_freq))
+			band = BAND_2G;
+		else
+			band = BAND_UNKNOWN;
 	}
 	for (i = 0; i < mac_ctx->scan.occupiedChannels[session_id].numChannels;
 	     i++) {
@@ -18057,8 +18060,8 @@ csr_fetch_ch_lst_from_occupied_lst(struct mac_context *mac_ctx,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"DFSRoam=%d, ChnlState=%d, Chnl freq=%d, num_ch=%d",
 				mac_ctx->mlme_cfg->lfr.roaming_dfs_channel,
-				wlan_reg_get_channel_state(mac_ctx->pdev,
-					wlan_reg_freq_to_chan(mac_ctx->pdev, *ch_lst)),
+				wlan_reg_get_channel_state_for_freq(
+				mac_ctx->pdev, *ch_lst),
 				*ch_lst,
 				num_channels);
 		ch_lst++;
