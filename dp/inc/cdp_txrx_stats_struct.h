@@ -1869,6 +1869,12 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_CHAN_COEX = 427,
 	/* Out of Band Advertisement feature */
 	OL_ATH_PARAM_OOB_ENABLE = 428,
+	/* set/get opmode-notification timer for hw-mode switch */
+	OL_ATH_PARAM_HW_MODE_SWITCH_OMN_TIMER = 429,
+	/* enable opmode-notification when doing hw-mode switch */
+	OL_ATH_PARAM_HW_MODE_SWITCH_OMN_ENABLE = 430,
+	/* set primary interface for hw-mode switch */
+	OL_ATH_PARAM_HW_MODE_SWITCH_PRIMARY_IF = 431,
 };
 #endif
 /* Bitmasks for stats that can block */
