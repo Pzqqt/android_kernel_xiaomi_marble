@@ -17038,8 +17038,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	if (eSIR_IBSS_MODE == pMsg->bssType ||
 		!policy_mgr_is_dbs_enable(mac->psoc))
 		csr_set_ldpc_exception(mac, pSession,
-				       wlan_reg_freq_to_chan(mac->pdev,
-						pParam->operation_chan_freq),
+				       pParam->operation_chan_freq,
 				       mac->mlme_cfg->ht_caps.
 				       ht_cap_info.adv_coding_cap);
 
