@@ -821,7 +821,8 @@ static int32_t hdd_add_sta_info_sap(struct sk_buff *skb, int8_t rssi,
 	if (!nla_attr)
 		goto fail;
 
-	if (nla_put_u8(skb, NL80211_STA_INFO_SIGNAL, rssi)) {
+	if (nla_put_u8(skb, NL80211_STA_INFO_SIGNAL,
+		       rssi - HDD_NOISE_FLOOR_DBM)) {
 		hdd_err("put fail");
 		goto fail;
 	}
