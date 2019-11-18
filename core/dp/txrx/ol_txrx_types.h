@@ -1106,6 +1106,9 @@ struct ol_txrx_pdev_t {
 	bool enable_tx_compl_tsf64;
 	uint64_t last_host_time;
 	uint64_t last_tsf64_time;
+
+	/* Current noise-floor reading for the pdev channel */
+	int16_t chan_noise_floor;
 };
 
 #define OL_TX_HL_DEL_ACK_HASH_SIZE    256

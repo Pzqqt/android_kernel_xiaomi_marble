@@ -489,6 +489,8 @@ static void htt_rx_mon_get_rx_status(htt_pdev_handle pdev,
 
 	rx_status->chan_flags = channel_flags;
 	rx_status->ant_signal_db = rx_desc->ppdu_start.rssi_comb;
+	rx_status->rssi_comb = rx_desc->ppdu_start.rssi_comb;
+	rx_status->chan_noise_floor = pdev->txrx_pdev->chan_noise_floor;
 }
 
 /**

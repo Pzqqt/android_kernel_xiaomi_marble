@@ -834,6 +834,9 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc,
 		pdev->peer_id_unmap_ref_cnt =
 			TXRX_RFS_DISABLE_PEER_ID_UNMAP_COUNT;
 
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+		pdev->chan_noise_floor = NORMALIZED_TO_NOISE_FLOOR;
+
 	ol_txrx_debugfs_init(pdev);
 
 	return (struct cdp_pdev *)pdev;
