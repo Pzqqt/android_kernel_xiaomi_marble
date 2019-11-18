@@ -903,131 +903,6 @@ static void sap_update_rssi_bsscount(tSapSpectChInfo *pSpectCh, int32_t offset,
 }
 
 /**
- * sap_upd_chan_spec_params() - sap_upd_chan_spec_params
- *                              updates channel parameters obtained from Beacon
- * @pBeaconStruct Beacon strucutre populated by parse_beacon function
- * @channelWidth Channel width
- * @secondaryChannelOffset Secondary Channel Offset
- * @vhtSupport If channel supports VHT
- * @centerFreq Central frequency for the given channel.
- *
- * sap_upd_chan_spec_params updates the spectrum channels based on the
- * pBeaconStruct obtained from Beacon IE
- *
- * Return: NA.
- */
-
-static void sap_upd_chan_spec_params(tSirProbeRespBeacon *ap_beacon,
-				     tSirMacHTChannelWidth *ch_width,
-				     uint16_t *sec_ch_offset,
-				     uint16_t *centerFreq,
-				     uint32_t ap_chan_freq)
-{
-
-	uint32_t ch_segment_0;
-	uint32_t ch_segment_1;
-	struct mac_context * mac_ctx;
-	uint8_t band_mask;
-
-	mac_ctx = sap_get_mac_context();
-
-	if (ap_beacon->HTCaps.present && ap_beacon->HTInfo.present) {
-		*ch_width = ap_beacon->HTCaps.supportedChannelWidthSet;
-		*sec_ch_offset =
-			ap_beacon->HTInfo.secondaryChannelOffset;
-	}
-
-	if (ap_beacon->VHTOperation.present &&
-	    ap_beacon->VHTOperation.chanWidth) {
-		ch_segment_0 = ap_beacon->VHTOperation.chan_center_freq_seg0;
-		ch_segment_1 = ap_beacon->VHTOperation.chan_center_freq_seg1;
-
-		sap_debug("vht ch width %d seg0 %d seg1 %d",
-			  ap_beacon->VHTOperation.chanWidth, ch_segment_0,
-			  ch_segment_1);
-
-		switch(ap_beacon->VHTOperation.chanWidth) {
-		case WLAN_VHTOP_CHWIDTH_80:
-			if (!ch_segment_1) {
-				*ch_width = eHT_CHANNEL_WIDTH_80MHZ;
-				*centerFreq =
-				    wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
-								 ch_segment_0);
-				break;
-			}
-
-			/* This means the channels are 40 Mhz apart */
-			if ((ch_segment_0 - ch_segment_1 == 8) ||
-			    (ch_segment_1 - ch_segment_0 == 8)) {
-				*ch_width = eHT_CHANNEL_WIDTH_160MHZ;
-				*centerFreq =
-				    wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
-								 ch_segment_1);
-				break;
-			}
-		case WLAN_VHTOP_CHWIDTH_160:
-			*ch_width = eHT_CHANNEL_WIDTH_160MHZ;
-			*centerFreq =
-			    wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
-							 ch_segment_0);
-		default:
-			return;
-		}
-	}
-
-	if (!(WLAN_REG_IS_6GHZ_CHAN_FREQ(ap_chan_freq) &&
-	     ap_beacon->he_op.present &&
-	     ap_beacon->he_op.oper_info_6g_present))
-		return;
-
-	switch(ap_beacon->he_op.oper_info_6g.info.ch_width) {
-	case 0:
-		*ch_width = eHT_CHANNEL_WIDTH_20MHZ;
-		*centerFreq = ap_chan_freq;
-		break;
-	case 1:
-		*ch_width = eHT_CHANNEL_WIDTH_40MHZ;
-		ch_segment_0 =
-		    ap_beacon->he_op.oper_info_6g.info.center_freq_seg0;
-
-		if (ch_segment_0 > ap_chan_freq)
-			*sec_ch_offset = PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
-		else
-			*sec_ch_offset =
-					PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
-		break;
-	case 2:
-		ch_segment_0 =
-		    ap_beacon->he_op.oper_info_6g.info.center_freq_seg0;
-		*ch_width = eHT_CHANNEL_WIDTH_80MHZ;
-		band_mask = 1 << REG_BAND_6G;
-		*centerFreq = wlan_reg_chan_band_to_freq(mac_ctx->pdev,
-							 ch_segment_0,
-							 band_mask);
-		break;
-	case 3:
-	ch_segment_0 =
-		ap_beacon->he_op.oper_info_6g.info.center_freq_seg0;
-	ch_segment_1 =
-		ap_beacon->he_op.oper_info_6g.info.center_freq_seg1;
-
-	/* This means the channels are 40 Mhz apart */
-	if ((ch_segment_0 - ch_segment_1 == 8) ||
-	    (ch_segment_1 - ch_segment_0 == 8)) {
-		*ch_width = eHT_CHANNEL_WIDTH_160MHZ;
-		band_mask = 1 << REG_BAND_6G;
-		*centerFreq = wlan_reg_chan_band_to_freq(mac_ctx->pdev,
-							 ch_segment_1,
-							 band_mask);
-		break;
-	}
-
-	default:
-		return;
-	}
-}
-
-/**
  * sap_update_rssi_bsscount_vht_5G() - updates bss count and rssi effect.
  *
  * @spect_ch:     Channel Information
@@ -1086,7 +961,8 @@ static void sap_update_rssi_bsscount_vht_5G(tSapSpectChInfo *spect_ch,
 static void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
 					   uint16_t chan_width,
 					   uint16_t sec_chan_offset,
-					   uint32_t centre_ch_freq,
+					   uint32_t ch_freq0,
+					   uint32_t ch_freq1,
 					   uint32_t op_chan_freq,
 					   tSapSpectChInfo *spectch_start,
 					   tSapSpectChInfo *spectch_end)
@@ -1094,8 +970,8 @@ static void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
 	uint16_t num_ch;
 	int32_t offset = 0;
 
-	sap_debug("AP freq = %d, max ch width = %d, centre freq = %d",
-		  op_chan_freq, chan_width, centre_ch_freq);
+	sap_debug("freq = %d, ch width = %d, ch_freq0 = %d ch_freq1 = %d",
+		  op_chan_freq, chan_width, ch_freq0, ch_freq1);
 
 	switch (chan_width) {
 	case eHT_CHANNEL_WIDTH_40MHZ:
@@ -1113,35 +989,36 @@ static void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
 			return;
 		}
 		return;
-	case eHT_CHANNEL_WIDTH_80MHZ:   /* VHT80 */
+	case eHT_CHANNEL_WIDTH_80MHZ:
+	case eHT_CHANNEL_WIDTH_80P80MHZ:
 		num_ch = 3;
-		if ((centre_ch_freq - op_chan_freq) == 30) {
+		if ((ch_freq0 - op_chan_freq) == 30) {
 			offset = 1;
-		} else if ((centre_ch_freq - op_chan_freq) == 10) {
+		} else if ((ch_freq0 - op_chan_freq) == 10) {
 			offset = -1;
-		} else if ((centre_ch_freq - op_chan_freq) == -10) {
+		} else if ((ch_freq0 - op_chan_freq) == -10) {
 			offset = -2;
-		} else if ((centre_ch_freq - op_chan_freq) == -30) {
+		} else if ((ch_freq0 - op_chan_freq) == -30) {
 			offset = -3;
 		}
 		break;
-	case eHT_CHANNEL_WIDTH_160MHZ:   /* VHT160 */
+	case eHT_CHANNEL_WIDTH_160MHZ:
 		num_ch = 7;
-		if ((centre_ch_freq - op_chan_freq) == 70)
+		if ((ch_freq0 - op_chan_freq) == 70)
 			offset = 1;
-		else if ((centre_ch_freq - op_chan_freq) == 50)
+		else if ((ch_freq0 - op_chan_freq) == 50)
 			offset = -1;
-		else if ((centre_ch_freq - op_chan_freq) == 30)
+		else if ((ch_freq0 - op_chan_freq) == 30)
 			offset = -2;
-		else if ((centre_ch_freq - op_chan_freq) == 10)
+		else if ((ch_freq0 - op_chan_freq) == 10)
 			offset = -3;
-		else if ((centre_ch_freq - op_chan_freq) == -10)
+		else if ((ch_freq0 - op_chan_freq) == -10)
 			offset = -4;
-		else if ((centre_ch_freq - op_chan_freq) == -30)
+		else if ((ch_freq0 - op_chan_freq) == -30)
 			offset = -5;
-		else if ((centre_ch_freq - op_chan_freq) == -50)
+		else if ((ch_freq0 - op_chan_freq) == -50)
 			offset = -6;
-		else if ((centre_ch_freq - op_chan_freq) == -70)
+		else if ((ch_freq0 - op_chan_freq) == -70)
 			offset = -7;
 		break;
 	default:
@@ -1340,6 +1217,62 @@ static bool ch_in_pcl(struct sap_context *sap_ctx, uint32_t ch_freq)
 }
 
 /**
+ * sap_upd_chan_spec_params() - sap_upd_chan_spec_params
+ *  updates channel parameters obtained from Beacon
+ * @scan_entry: Beacon strucutre populated by scan
+ * @ch_width: Channel width
+ * @sec_ch_offset: Secondary Channel Offset
+ * @center_freq0: Central frequency 0 for the given channel
+ * @center_freq1: Central frequency 1 for the given channel
+ *
+ * sap_upd_chan_spec_params updates the spectrum channels based on the
+ * scan_entry
+ *
+ * Return: NA.
+ */
+static void
+sap_upd_chan_spec_params(struct scan_cache_node *scan_entry,
+			 tSirMacHTChannelWidth *ch_width,
+			 uint16_t *sec_ch_offset,
+			 uint32_t *center_freq0,
+			 uint32_t *center_freq1)
+{
+	enum wlan_phymode phy_mode;
+	struct channel_info *chan;
+
+	phy_mode = util_scan_entry_phymode(scan_entry->entry);
+	chan = util_scan_entry_channel(scan_entry->entry);
+
+	if (IS_WLAN_PHYMODE_160MHZ(phy_mode)) {
+		if (phy_mode == WLAN_PHYMODE_11AC_VHT80_80 ||
+		    phy_mode == WLAN_PHYMODE_11AXA_HE80_80) {
+			*ch_width = eHT_CHANNEL_WIDTH_80P80MHZ;
+			*center_freq0 = chan->cfreq0;
+			*center_freq1 = chan->cfreq1;
+		} else {
+			*ch_width = eHT_CHANNEL_WIDTH_160MHZ;
+			if (chan->cfreq1)
+				*center_freq0 = chan->cfreq1;
+			else
+				*center_freq0 = chan->cfreq0;
+		}
+
+	} else if (IS_WLAN_PHYMODE_80MHZ(phy_mode)) {
+		*ch_width = eHT_CHANNEL_WIDTH_80MHZ;
+		*center_freq0 = chan->cfreq0;
+	} else if (IS_WLAN_PHYMODE_40MHZ(phy_mode)) {
+		if (chan->cfreq0 > chan->chan_freq)
+			*sec_ch_offset = PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
+		else
+			*sec_ch_offset = PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
+		*ch_width = eHT_CHANNEL_WIDTH_40MHZ;
+		*center_freq0 = chan->cfreq0;
+	} else {
+		*ch_width = eHT_CHANNEL_WIDTH_20MHZ;
+	}
+}
+
+/**
  * sap_compute_spect_weight() - Compute spectrum weight
  * @pSpectInfoParams: Pointer to the tSpectInfoParams structure
  * @mac_handle: Opaque handle to the global MAC context
@@ -1358,14 +1291,11 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	int8_t rssi = 0;
 	uint8_t chn_num = 0;
 	tSapSpectChInfo *pSpectCh = pSpectInfoParams->pSpectCh;
-	uint32_t operatingBand;
 	tSirMacHTChannelWidth ch_width = 0;
 	uint16_t secondaryChannelOffset;
-	uint16_t centerFreq;
+	uint32_t center_freq0, center_freq1;
 	uint8_t i;
 	bool found;
-	uint16_t vhtSupport;
-	tSirProbeRespBeacon *bcn_struct;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	tSapSpectChInfo *spectch_start = pSpectInfoParams->pSpectCh;
 	tSapSpectChInfo *spectch_end = pSpectInfoParams->pSpectCh +
@@ -1381,44 +1311,27 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 				mac->mlme_cfg->acs.normalize_weight_range;
 	bool freq_present_in_list = false;
 
-	bcn_struct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
-	if (!bcn_struct)
-		return;
-
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "In %s, Computing spectral weight", __func__);
-
-	/**
-	 * Soft AP specific channel weight calculation using DFS formula
-	 */
-	SET_ACS_BAND(operatingBand, sap_ctx);
 
 	if (scan_list)
 		qdf_list_peek_front(scan_list, &cur_lst);
 	while (cur_lst) {
-		uint32_t ie_len = 0;
-		uint8_t *ie_ptr;
-
 		cur_node = qdf_container_of(cur_lst, struct scan_cache_node,
 					    node);
 		pSpectCh = pSpectInfoParams->pSpectCh;
 		/* Defining the default values, so that any value will hold the default values */
 
 		secondaryChannelOffset = PHY_SINGLE_CHANNEL_CENTERED;
-		vhtSupport = 0;
-		centerFreq = 0;
-
-		ie_len = util_scan_entry_ie_len(cur_node->entry);
-		ie_ptr = util_scan_entry_ie_data(cur_node->entry);
+		center_freq0 = 0;
+		center_freq1 = 0;
 
 		chan_freq =
 		    util_scan_entry_channel_frequency(cur_node->entry);
 
-		if ((sir_parse_beacon_ie(mac, bcn_struct, ie_ptr, ie_len)) ==
-		     QDF_STATUS_SUCCESS)
-			sap_upd_chan_spec_params(bcn_struct, &ch_width,
-						 &secondaryChannelOffset,
-						 &centerFreq, chan_freq);
+		sap_upd_chan_spec_params(cur_node, &ch_width,
+					 &secondaryChannelOffset,
+					 &center_freq0, &center_freq1);
 
 		/* Processing for each tCsrScanResultInfo in the tCsrScanResult DLink list */
 		for (chn_num = 0; chn_num < pSpectInfoParams->numSpectChans;
@@ -1440,7 +1353,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 			else
 				sap_interference_rssi_count_5G(
 				    pSpectCh, ch_width, secondaryChannelOffset,
-				    centerFreq, chan_freq,
+				    center_freq0, center_freq1, chan_freq,
 				    spectch_start, spectch_end);
 
 			sap_debug("freq = %d, rssi aggr = %d, bss count yet = %d",
@@ -1456,8 +1369,6 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		cur_lst = next_lst;
 		next_lst = NULL;
 	}
-
-	qdf_mem_free(bcn_struct);
 
 	/* Calculate the weights for all channels in the spectrum pSpectCh */
 	pSpectCh = pSpectInfoParams->pSpectCh;
