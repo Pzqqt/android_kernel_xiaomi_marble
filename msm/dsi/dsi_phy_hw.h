@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_PHY_HW_H_
@@ -31,6 +31,7 @@
  * @DSI_PHY_VERSION_3_0:        10nm
  * @DSI_PHY_VERSION_4_0:        7nm
  * @DSI_PHY_VERSION_4_1:	7nm
+ * @DSI_PHY_VERSION_4_2:        5nm
  * @DSI_PHY_VERSION_MAX:
  */
 enum dsi_phy_version {
@@ -42,6 +43,7 @@ enum dsi_phy_version {
 	DSI_PHY_VERSION_3_0, /* 10nm */
 	DSI_PHY_VERSION_4_0, /* 7nm  */
 	DSI_PHY_VERSION_4_1, /* 7nm */
+	DSI_PHY_VERSION_4_2, /* 5nm */
 	DSI_PHY_VERSION_MAX
 };
 

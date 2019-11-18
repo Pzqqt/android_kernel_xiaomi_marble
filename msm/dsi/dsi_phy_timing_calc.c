@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "dsi_phy_timing_calc.h"
@@ -788,6 +788,7 @@ int dsi_phy_timing_calc_init(struct dsi_phy_hw *phy,
 		break;
 	case DSI_PHY_VERSION_4_0:
 	case DSI_PHY_VERSION_4_1:
+	case DSI_PHY_VERSION_4_2:
 		ops->get_default_phy_params =
 			dsi_phy_hw_v4_0_get_default_phy_params;
 		ops->calc_clk_zero =

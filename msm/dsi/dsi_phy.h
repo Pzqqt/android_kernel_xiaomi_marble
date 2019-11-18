@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_PHY_H_
@@ -10,6 +10,7 @@
 #include "dsi_clk.h"
 #include "dsi_pwr.h"
 #include "dsi_phy_hw.h"
+#include "dsi_pll.h"
 
 struct dsi_ver_spec_info {
 	enum dsi_phy_version version;
@@ -70,6 +71,7 @@ enum phy_ulps_return_type {
  * @mode:              Current mode.
  * @data_lanes:        Number of data lanes used.
  * @dst_format:        Destination format.
+ * @pll:	       Pointer to PLL resource.
  * @allow_phy_power_off: True if PHY is allowed to power off when idle
  * @regulator_min_datarate_bps: Minimum per lane data rate to turn on regulator
  * @regulator_required: True if phy regulator is required
@@ -94,6 +96,8 @@ struct msm_dsi_phy {
 	struct dsi_mode_info mode;
 	enum dsi_data_lanes data_lanes;
 	enum dsi_pixel_format dst_format;
+
+	struct dsi_pll_resource *pll;
 
 	bool allow_phy_power_off;
 	u32 regulator_min_datarate_bps;

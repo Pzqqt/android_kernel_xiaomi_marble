@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_device.h>
@@ -83,6 +83,14 @@ static const struct dsi_ver_spec_info dsi_phy_v4_1 = {
 	.timing_cfg_count = 14,
 };
 
+static const struct dsi_ver_spec_info dsi_phy_v4_2 = {
+	.version = DSI_PHY_VERSION_4_2,
+	.lane_cfg_count = 4,
+	.strength_cfg_count = 2,
+	.regulator_cfg_count = 0,
+	.timing_cfg_count = 14,
+};
+
 static const struct of_device_id msm_dsi_phy_of_match[] = {
 	{ .compatible = "qcom,dsi-phy-v0.0-hpm",
 	  .data = &dsi_phy_v0_0_hpm,},
@@ -98,6 +106,8 @@ static const struct of_device_id msm_dsi_phy_of_match[] = {
 	  .data = &dsi_phy_v4_0,},
 	{ .compatible = "qcom,dsi-phy-v4.1",
 	  .data = &dsi_phy_v4_1,},
+	{ .compatible = "qcom,dsi-phy-v4.2",
+	  .data = &dsi_phy_v4_2,},
 	{}
 };
 
@@ -422,6 +432,12 @@ static int dsi_phy_driver_probe(struct platform_device *pdev)
 		goto fail_supplies;
 	}
 
+	rc = dsi_pll_init(pdev, &dsi_phy->pll);
+	if (rc) {
+		DSI_PHY_ERR(dsi_phy, "Failed to initialize DSI PLL, rc=%d\n", rc);
+		goto fail_settings;
+	}
+
 	item->phy = dsi_phy;
 
 	mutex_lock(&dsi_phy_list_lock);
@@ -435,6 +451,8 @@ static int dsi_phy_driver_probe(struct platform_device *pdev)
 	DSI_PHY_INFO(dsi_phy, "Probe successful\n");
 	return 0;
 
+fail_settings:
+	(void)dsi_phy_settings_deinit(dsi_phy);
 fail_supplies:
 	(void)dsi_phy_supplies_deinit(dsi_phy);
 fail_regmap:

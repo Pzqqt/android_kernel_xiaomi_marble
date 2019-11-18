@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_device.h>
@@ -53,6 +53,7 @@ static const enum dsi_ctrl_version dsi_ctrl_v2_0 = DSI_CTRL_VERSION_2_0;
 static const enum dsi_ctrl_version dsi_ctrl_v2_2 = DSI_CTRL_VERSION_2_2;
 static const enum dsi_ctrl_version dsi_ctrl_v2_3 = DSI_CTRL_VERSION_2_3;
 static const enum dsi_ctrl_version dsi_ctrl_v2_4 = DSI_CTRL_VERSION_2_4;
+static const enum dsi_ctrl_version dsi_ctrl_v2_5 = DSI_CTRL_VERSION_2_5;
 
 static const struct of_device_id msm_dsi_of_match[] = {
 	{
@@ -74,6 +75,10 @@ static const struct of_device_id msm_dsi_of_match[] = {
 	{
 		.compatible = "qcom,dsi-ctrl-hw-v2.4",
 		.data = &dsi_ctrl_v2_4,
+	},
+	{
+		.compatible = "qcom,dsi-ctrl-hw-v2.5",
+		.data = &dsi_ctrl_v2_5,
 	},
 	{}
 };
@@ -559,6 +564,7 @@ static int dsi_ctrl_init_regmap(struct platform_device *pdev,
 	case DSI_CTRL_VERSION_2_2:
 	case DSI_CTRL_VERSION_2_3:
 	case DSI_CTRL_VERSION_2_4:
+	case DSI_CTRL_VERSION_2_5:
 		ptr = msm_ioremap(pdev, "disp_cc_base", ctrl->name);
 		if (IS_ERR(ptr)) {
 			DSI_CTRL_ERR(ctrl, "disp_cc base address not found for\n");
@@ -1867,18 +1873,18 @@ static int dsi_ctrl_dev_probe(struct platform_device *pdev)
 		goto fail;
 	}
 
-	rc = dsi_ctrl_clocks_init(pdev, dsi_ctrl);
-	if (rc) {
-		DSI_CTRL_ERR(dsi_ctrl, "Failed to parse clock information, rc = %d\n",
-				rc);
-		goto fail;
-	}
-
 	rc = dsi_ctrl_supplies_init(pdev, dsi_ctrl);
 	if (rc) {
 		DSI_CTRL_ERR(dsi_ctrl, "Failed to parse voltage supplies, rc = %d\n",
 				rc);
-		goto fail_clks;
+		goto fail;
+	}
+
+	rc = dsi_ctrl_clocks_init(pdev, dsi_ctrl);
+	if (rc) {
+		DSI_CTRL_ERR(dsi_ctrl, "Failed to parse clock information, rc = %d\n",
+				rc);
+		goto fail_supplies;
 	}
 
 	rc = dsi_catalog_ctrl_setup(&dsi_ctrl->hw, dsi_ctrl->version,
@@ -1887,7 +1893,7 @@ static int dsi_ctrl_dev_probe(struct platform_device *pdev)
 	if (rc) {
 		DSI_CTRL_ERR(dsi_ctrl, "Catalog does not support version (%d)\n",
 		       dsi_ctrl->version);
-		goto fail_supplies;
+		goto fail_clks;
 	}
 
 	item->ctrl = dsi_ctrl;
@@ -1905,10 +1911,10 @@ static int dsi_ctrl_dev_probe(struct platform_device *pdev)
 
 	return 0;
 
-fail_supplies:
-	(void)dsi_ctrl_supplies_deinit(dsi_ctrl);
 fail_clks:
 	(void)dsi_ctrl_clocks_deinit(dsi_ctrl);
+fail_supplies:
+	(void)dsi_ctrl_supplies_deinit(dsi_ctrl);
 fail:
 	return rc;
 }

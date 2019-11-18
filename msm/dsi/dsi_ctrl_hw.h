@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_CTRL_HW_H_
@@ -36,6 +36,7 @@
  * @DSI_CTRL_VERSION_2_2:     DSI host v2.2 controller
  * @DSI_CTRL_VERSION_2_3:     DSI host v2.3 controller
  * @DSI_CTRL_VERSION_2_4:     DSI host v2.4 controller
+ * @DSI_CTRL_VERSION_2_5:     DSI host v2.5 controller
  * @DSI_CTRL_VERSION_MAX:     max version
  */
 enum dsi_ctrl_version {
@@ -45,6 +46,7 @@ enum dsi_ctrl_version {
 	DSI_CTRL_VERSION_2_2,
 	DSI_CTRL_VERSION_2_3,
 	DSI_CTRL_VERSION_2_4,
+	DSI_CTRL_VERSION_2_5,
 	DSI_CTRL_VERSION_MAX
 };
 

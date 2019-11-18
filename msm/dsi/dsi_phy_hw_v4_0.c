@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/math64.h>
@@ -156,7 +156,8 @@ static void dsi_phy_hw_v4_0_lane_settings(struct dsi_phy_hw *phy,
 	u8 tx_dctrl_v4_1[] = {0x40, 0x40, 0x40, 0x46, 0x41};
 	u8 *tx_dctrl;
 
-	if (phy->version == DSI_PHY_VERSION_4_1)
+	if ((phy->version == DSI_PHY_VERSION_4_1) ||
+			(phy->version == DSI_PHY_VERSION_4_2))
 		tx_dctrl = &tx_dctrl_v4_1[0];
 	else
 		tx_dctrl = &tx_dctrl_v4[0];
@@ -241,7 +242,13 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 	if (cfg->bit_clk_rate_hz <= 1500000000)
 		less_than_1500_mhz = true;
 
-	if (phy->version == DSI_PHY_VERSION_4_1) {
+	if (phy->version == DSI_PHY_VERSION_4_2) {
+		vreg_ctrl_0 = 0x58;
+		glbl_rescode_top_ctrl = 0x03;
+		glbl_rescode_bot_ctrl = 0x3c;
+		glbl_str_swi_cal_sel_ctrl = 0x00;
+		glbl_hstx_str_ctrl_0 = 0x88;
+	} else if (phy->version == DSI_PHY_VERSION_4_1) {
 		vreg_ctrl_0 = less_than_1500_mhz ? 0x53 : 0x52;
 		glbl_rescode_top_ctrl = less_than_1500_mhz ? 0x3d :  0x00;
 		glbl_rescode_bot_ctrl = less_than_1500_mhz ? 0x39 :  0x3c;

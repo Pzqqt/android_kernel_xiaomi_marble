@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/errno.h>
@@ -100,6 +100,7 @@ static void dsi_catalog_cmn_init(struct dsi_ctrl_hw *ctrl,
 	case DSI_CTRL_VERSION_2_2:
 	case DSI_CTRL_VERSION_2_3:
 	case DSI_CTRL_VERSION_2_4:
+	case DSI_CTRL_VERSION_2_5:
 		ctrl->ops.phy_reset_config = dsi_ctrl_hw_22_phy_reset_config;
 		ctrl->ops.config_clk_gating = dsi_ctrl_hw_22_config_clk_gating;
 		ctrl->ops.setup_lane_map = dsi_ctrl_hw_20_setup_lane_map;
@@ -163,6 +164,7 @@ int dsi_catalog_ctrl_setup(struct dsi_ctrl_hw *ctrl,
 	case DSI_CTRL_VERSION_2_2:
 	case DSI_CTRL_VERSION_2_3:
 	case DSI_CTRL_VERSION_2_4:
+	case DSI_CTRL_VERSION_2_5:
 		ctrl->phy_isolation_enabled = phy_isolation_enabled;
 		dsi_catalog_cmn_init(ctrl, version);
 		break;
@@ -302,6 +304,7 @@ int dsi_catalog_phy_setup(struct dsi_phy_hw *phy,
 		break;
 	case DSI_PHY_VERSION_4_0:
 	case DSI_PHY_VERSION_4_1:
+	case DSI_PHY_VERSION_4_2:
 		dsi_catalog_phy_4_0_init(phy);
 		break;
 	case DSI_PHY_VERSION_0_0_HPM:
