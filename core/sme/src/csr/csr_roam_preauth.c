@@ -241,12 +241,11 @@ QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(struct mac_context *mac_ctx,
 				NULL);
 	if ((QDF_STATUS_SUCCESS == lim_status) && (preauth_rsp_node)) {
 		sme_debug("Preauth completed successfully after %d tries",
-			neighbor_roam_info->FTRoamInfo.numPreAuthRetries);
-		sme_debug("After Pre-Auth: BSSID " QDF_MAC_ADDR_STR ", Ch:%d",
-			QDF_MAC_ADDR_ARRAY(
+			  neighbor_roam_info->FTRoamInfo.numPreAuthRetries);
+		sme_debug("After Pre-Auth: BSSID " QDF_MAC_ADDR_STR ", ChFq:%d",
+			  QDF_MAC_ADDR_ARRAY(
 				preauth_rsp_node->pBssDescription->bssId),
-			(int)wlan_reg_freq_to_chan(mac_ctx->pdev,
-				preauth_rsp_node->pBssDescription->chan_freq));
+			  preauth_rsp_node->pBssDescription->chan_freq);
 
 		csr_neighbor_roam_send_lfr_metric_event(mac_ctx, session_id,
 			preauth_rsp_node->pBssDescription->bssId,
@@ -463,7 +462,6 @@ static uint32_t csr_get_dot11_mode(struct mac_context *mac_ctx,
 				session_id);
 	enum csr_cfgdot11mode ucfg_dot11_mode, cfg_dot11_mode;
 	QDF_STATUS status;
-	uint8_t bss_chan_id;
 	tDot11fBeaconIEs *ies_local = NULL;
 	uint32_t dot11mode = 0;
 
@@ -486,8 +484,6 @@ static uint32_t csr_get_dot11_mode(struct mac_context *mac_ctx,
 		return 0;
 	}
 
-	bss_chan_id = wlan_reg_freq_to_chan(mac_ctx->pdev,
-					    bss_desc->chan_freq);
 	if (csr_is_phy_mode_match(mac_ctx,
 			csr_session->pCurRoamProfile->phyMode,
 			bss_desc, csr_session->pCurRoamProfile,
@@ -495,7 +491,7 @@ static uint32_t csr_get_dot11_mode(struct mac_context *mac_ctx,
 		ucfg_dot11_mode = cfg_dot11_mode;
 	else {
 		sme_err("Can not find match phy mode");
-		if (WLAN_REG_IS_5GHZ_CH(bss_chan_id))
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq))
 			ucfg_dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 		else
 			ucfg_dot11_mode = eCSR_CFG_DOT11_MODE_11G;
@@ -507,7 +503,7 @@ static uint32_t csr_get_dot11_mode(struct mac_context *mac_ctx,
 	sme_debug("dot11mode %d ucfg_dot11_mode %d",
 			dot11mode, ucfg_dot11_mode);
 
-	if (bss_chan_id <= 14 &&
+	if (bss_desc->chan_freq <= CDS_CHAN_14_FREQ &&
 	    !mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
 	    MLME_DOT11_MODE_11AC == dot11mode) {
 		/* Need to disable VHT operation in 2.4 GHz band */
