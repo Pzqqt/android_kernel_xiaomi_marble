@@ -1363,6 +1363,19 @@ target_if_init_spectral_param_properties(struct target_if_spectral *spectral)
 		}
 	}
 
+	/* Once FW advertisement is in place remove this hard coding */
+	smode = SPECTRAL_SCAN_MODE_NORMAL;
+	spectral->properties[SPECTRAL_SCAN_MODE_NORMAL]
+			[SPECTRAL_PARAM_FREQUENCY].supported = false;
+	for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++) {
+		spectral->properties[smode]
+			[SPECTRAL_PARAM_SPECT_PRI].common_all_modes = true;
+		spectral->properties[smode]
+			[SPECTRAL_PARAM_SCAN_PERIOD].common_all_modes = true;
+		spectral->properties[smode]
+			[SPECTRAL_PARAM_INIT_DELAY].common_all_modes = true;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
