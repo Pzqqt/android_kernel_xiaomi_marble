@@ -1297,7 +1297,7 @@ QDF_STATUS tdls_process_send_mgmt_rsp(struct tdls_send_mgmt_rsp *rsp)
 	struct tdls_osif_indication ind;
 
 	psoc = rsp->psoc;
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, rsp->session_id,
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, rsp->vdev_id,
 						    WLAN_TDLS_SB_ID);
 	if (!vdev) {
 		tdls_err("invalid vdev");
@@ -1350,7 +1350,7 @@ QDF_STATUS tdls_send_mgmt_tx_completion(
 
 	psoc = tx_complete->psoc;
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
-						    tx_complete->session_id,
+						    tx_complete->vdev_id,
 						    WLAN_TDLS_SB_ID);
 
 	if (!vdev) {

@@ -1185,24 +1185,24 @@ enum legacy_result_code {
 
 /**
  * struct tdls_send_mgmt_rsp - TDLS Response struct PE --> TDLS module
- * @session_id: session id
+ * @vdev_id: vdev id
  * @status_code: status code as tSirResultCodes
  * @psoc: soc object
  */
 struct tdls_send_mgmt_rsp {
-	uint8_t session_id;
+	uint8_t vdev_id;
 	enum legacy_result_code status_code;
 	struct wlan_objmgr_psoc *psoc;
 };
 
 /**
  * struct tdls_mgmt_tx_completion_ind - TDLS TX completion PE --> TDLS module
- * @session_id: session id
+ * @vdev_id: vdev_id
  * @tx_complete_status: tx complete status
  * @psoc: soc object
  */
 struct tdls_mgmt_tx_completion_ind {
-	uint8_t session_id;      /* Session ID */
+	uint8_t vdev_id;
 	uint32_t tx_complete_status;
 	struct wlan_objmgr_psoc *psoc;
 };
