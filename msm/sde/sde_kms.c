@@ -2068,13 +2068,13 @@ static int _sde_kms_helper_reset_custom_properties(struct sde_kms *sde_kms,
 	return ret;
 }
 
-static void sde_kms_lastclose(struct msm_kms *kms,
-		struct drm_modeset_acquire_ctx *ctx)
+static void sde_kms_lastclose(struct msm_kms *kms)
 {
 	struct sde_kms *sde_kms;
 	struct drm_device *dev;
 	struct drm_atomic_state *state;
-	int ret, i;
+	struct drm_modeset_acquire_ctx ctx;
+	int ret;
 
 	if (!kms) {
 		SDE_ERROR("invalid argument\n");
@@ -2083,32 +2083,45 @@ static void sde_kms_lastclose(struct msm_kms *kms,
 
 	sde_kms = to_sde_kms(kms);
 	dev = sde_kms->dev;
+	drm_modeset_acquire_init(&ctx, 0);
 
 	state = drm_atomic_state_alloc(dev);
-	if (!state)
-		return;
-
-	state->acquire_ctx = ctx;
-
-	for (i = 0; i < TEARDOWN_DEADLOCK_RETRY_MAX; i++) {
-		/* add reset of custom properties to the state */
-		ret = _sde_kms_helper_reset_custom_properties(sde_kms, state);
-		if (ret)
-			break;
-
-		ret = drm_atomic_commit(state);
-		if (ret != -EDEADLK)
-			break;
-
-		drm_atomic_state_clear(state);
-		drm_modeset_backoff(ctx);
-		SDE_DEBUG("deadlock backoff on attempt %d\n", i);
+	if (!state) {
+		ret = -ENOMEM;
+		goto out_ctx;
 	}
 
+	state->acquire_ctx = &ctx;
+
+retry:
+	ret = drm_modeset_lock_all_ctx(dev, &ctx);
 	if (ret)
-		SDE_ERROR("failed to run last close: %d\n", ret);
+		goto out_state;
+
+	ret = _sde_kms_helper_reset_custom_properties(sde_kms, state);
+	if (ret)
+		goto out_state;
+
+	ret = drm_atomic_commit(state);
+out_state:
+	if (ret == -EDEADLK)
+		goto backoff;
 
 	drm_atomic_state_put(state);
+out_ctx:
+	drm_modeset_drop_locks(&ctx);
+	drm_modeset_acquire_fini(&ctx);
+
+	if (ret)
+		SDE_ERROR("kms lastclose failed: %d\n", ret);
+
+	return;
+
+backoff:
+	drm_atomic_state_clear(state);
+	drm_modeset_backoff(&ctx);
+
+	goto retry;
 }
 
 static int sde_kms_check_secure_transition(struct msm_kms *kms,
