@@ -34,7 +34,7 @@
 		"EDCA ANI ACBK LOCAL")
 
 #define STR_EDCA_ANI_ACBE_LOCAL "0x0, 0x2, 0x0, 0xf, 0x3, 0xff, 0x64, 0x0, 0x1f, 0x3, 0xff, 0x64, 0x0, 0xf, 0x3, 0xff, 0x64"
-#define STR_EDCA_ANI_ACBE_LOCAL_LEN (sizeof(STR_EDCA_ANI_ACBK_LOCAL) - 1)
+#define STR_EDCA_ANI_ACBE_LOCAL_LEN (sizeof(STR_EDCA_ANI_ACBE_LOCAL) - 1)
 
 #define CFG_EDCA_ANI_ACBE_LOCAL CFG_STRING( \
 		"edca_ani_acbe_local", \
@@ -44,7 +44,7 @@
 		"EDCA ANI ACBE LOCAL")
 
 #define STR_EDCA_ANI_ACVI_LOCAL "0x0, 0x2, 0x0, 0x7, 0x0, 0xf, 0xc8, 0x0, 0xf, 0x0, 0x1f, 0xbc, 0x0, 0x7, 0x0, 0xf, 0xc8"
-#define STR_EDCA_ANI_ACVI_LOCAL_LEN (sizeof(STR_EDCA_ANI_ACBK_LOCAL) - 1)
+#define STR_EDCA_ANI_ACVI_LOCAL_LEN (sizeof(STR_EDCA_ANI_ACVI_LOCAL) - 1)
 
 #define CFG_EDCA_ANI_ACVI_LOCAL CFG_STRING( \
 		"edca_ani_acvi_local",\
@@ -54,7 +54,7 @@
 		"EDCA ANI ACVI LOCAL")
 
 #define STR_EDCA_ANI_ACVO_LOCAL "0x0, 0x2, 0x0, 0x3, 0x0, 0x7, 0x64, 0x0, 0x7, 0x0, 0xf, 0x66, 0x0, 0x3, 0x0, 0x7, 0x64"
-#define STR_EDCA_ANI_ACVO_LOCAL_LEN (sizeof(STR_EDCA_ANI_ACBK_LOCAL) - 1)
+#define STR_EDCA_ANI_ACVO_LOCAL_LEN (sizeof(STR_EDCA_ANI_ACVO_LOCAL) - 1)
 
 #define CFG_EDCA_ANI_ACVO_LOCAL CFG_STRING( \
 		"edca_ani_acvo_local", \
@@ -64,7 +64,7 @@
 		"EDCA ANI ACVO LOCAL")
 
 #define STR_EDCA_ANI_ACBK "0x0, 0x7, 0x0, 0xf, 0x3, 0xff, 0x0, 0x0, 0x1f, 0x3, 0xff, 0x0, 0x0, 0xf, 0x3, 0xff, 0x0"
-#define STR_EDCA_ANI_ACBK_LEN (sizeof(STR_EDCA_ANI_ACBK_LOCAL) - 1)
+#define STR_EDCA_ANI_ACBK_LEN (sizeof(STR_EDCA_ANI_ACBK) - 1)
 
 #define CFG_EDCA_ANI_ACBK CFG_STRING( \
 		"edca_ani_acbk", \
@@ -74,7 +74,7 @@
 		"EDCA ANI ACBK BROADCAST")
 
 #define STR_EDCA_ANI_ACBE "0x0, 0x2, 0x0, 0xf, 0x3, 0xff, 0x64, 0x0, 0x1f, 0x3, 0xff, 0x64, 0x0, 0xf, 0x3, 0xff, 0x64"
-#define STR_EDCA_ANI_ACBE_LEN (sizeof(STR_EDCA_ANI_ACBK_LOCAL) - 1)
+#define STR_EDCA_ANI_ACBE_LEN (sizeof(STR_EDCA_ANI_ACBE) - 1)
 
 #define CFG_EDCA_ANI_ACBE CFG_STRING( \
 		"edca_ani_acbe", \
@@ -84,7 +84,7 @@
 		"EDCA ANI ACBE BROADCAST")
 
 #define STR_EDCA_ANI_ACVI "0x0, 0x2, 0x0, 0x7, 0x0, 0xf, 0xc8, 0x0, 0xf, 0x0, 0x1f, 0xbc, 0x0, 0x7, 0x0, 0xf, 0xc8"
-#define STR_EDCA_ANI_ACVI_LEN (sizeof(STR_EDCA_ANI_ACBK_LOCAL) - 1)
+#define STR_EDCA_ANI_ACVI_LEN (sizeof(STR_EDCA_ANI_ACVI) - 1)
 
 #define CFG_EDCA_ANI_ACVI CFG_STRING( \
 		"edca_ani_acvi", \
@@ -94,7 +94,7 @@
 		"EDCA ANI ACVI BROADCAST")
 
 #define STR_EDCA_ANI_ACVO "0x0, 0x2, 0x0, 0x3, 0x0, 0x7, 0x64, 0x0, 0x7, 0x0, 0xf, 0x66, 0x0, 0x3, 0x0, 0x7, 0x64"
-#define STR_EDCA_ANI_ACVO_LEN (sizeof(STR_EDCA_ANI_ACBK_LOCAL) - 1)
+#define STR_EDCA_ANI_ACVO_LEN (sizeof(STR_EDCA_ANI_ACVO) - 1)
 
 #define CFG_EDCA_ANI_ACVO CFG_STRING( \
 		"edca_ani_acvo", \
