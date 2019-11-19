@@ -402,8 +402,11 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				PHY_PPDU_ID);
 		/* channel number is set in PHY meta data */
 		ppdu_info->rx_status.chan_num =
-			HAL_RX_GET(rx_tlv, RX_PPDU_START_1,
-				SW_PHY_META_DATA);
+			(HAL_RX_GET(rx_tlv, RX_PPDU_START_1,
+				SW_PHY_META_DATA) & 0x0000FFFF);
+		ppdu_info->rx_status.chan_freq =
+			(HAL_RX_GET(rx_tlv, RX_PPDU_START_1,
+				SW_PHY_META_DATA) & 0xFFFF0000)>>16;
 		ppdu_info->com_info.ppdu_timestamp =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START_2,
 				PPDU_START_TIMESTAMP);

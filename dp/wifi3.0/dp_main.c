@@ -7017,6 +7017,21 @@ void dp_pdev_set_monitor_channel(struct cdp_pdev *pdev_handle, int chan_num)
 }
 
 /**
+ * dp_pdev_set_monitor_frequency() - set monitor frequency in pdev
+ * @pdev_handle: Datapath PDEV handle
+ * @chan_freq: Channel frequency
+ *
+ * Return: None
+ */
+static
+void dp_pdev_set_monitor_frequency(struct cdp_pdev *pdev_handle, qdf_freq_t chan_freq)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	pdev->mon_chan_freq = chan_freq;
+}
+
+/**
  * dp_deliver_tx_mgmt() - Deliver mgmt frame for tx capture
  * @pdev_handle: Datapath PDEV handle
  * @nbuf: Management frame buffer
@@ -9817,6 +9832,7 @@ static struct cdp_mon_ops dp_ops_mon = {
 	/* Added support for HK advance filter */
 	.txrx_set_advance_monitor_filter = dp_pdev_set_advance_monitor_filter,
 	.txrx_monitor_record_channel = dp_pdev_set_monitor_channel,
+	.txrx_monitor_record_frequency = dp_pdev_set_monitor_frequency,
 	.txrx_deliver_tx_mgmt = dp_deliver_tx_mgmt,
 	.txrx_set_bsscolor = dp_mon_set_bsscolor,
 };

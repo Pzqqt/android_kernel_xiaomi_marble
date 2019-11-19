@@ -1494,6 +1494,9 @@ struct dp_pdev {
 	/* Monitor mode operation channel */
 	int mon_chan_num;
 
+	/* Monitor mode operation frequency */
+	qdf_freq_t mon_chan_freq;
+
 	/* monitor mode lock */
 	qdf_spinlock_t mon_lock;
 

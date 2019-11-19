@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -246,7 +246,7 @@ struct mon_rx_status {
 	uint64_t tsft;
 	uint32_t ppdu_timestamp;
 	uint32_t preamble_type;
-	uint16_t chan_freq;
+	qdf_freq_t chan_freq;
 	uint16_t chan_num;
 	uint16_t chan_flags;
 	uint16_t ht_flags;

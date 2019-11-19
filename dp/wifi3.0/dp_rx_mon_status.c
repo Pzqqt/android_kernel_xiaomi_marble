@@ -1482,6 +1482,22 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 				dp_rx_handle_cfr(soc, pdev, ppdu_info);
 
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
+
+			/*
+			* if chan_num is not fetched correctly from ppdu RX TLV,
+			 * get it from pdev saved.
+			 */
+			if (qdf_unlikely(pdev->ppdu_info.rx_status.chan_num == 0))
+				pdev->ppdu_info.rx_status.chan_num = pdev->mon_chan_num;
+			/*
+			 * if chan_freq is not fetched correctly from ppdu RX TLV,
+			 * get it from pdev saved.
+			 */
+			if (qdf_unlikely(pdev->ppdu_info.rx_status.chan_freq == 0)) {
+				pdev->ppdu_info.rx_status.chan_freq =
+					pdev->mon_chan_freq;
+			}
+
 			dp_rx_mon_dest_process(soc, mac_id, quota);
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 		}

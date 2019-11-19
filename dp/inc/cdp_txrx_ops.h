@@ -792,7 +792,10 @@ struct cdp_mon_ops {
 		(struct cdp_pdev *pdev, struct cdp_monitor_filter *filter_val);
 
 	void (*txrx_monitor_record_channel)
-		(struct cdp_pdev *, int val);
+		(struct cdp_pdev *pdev, int val);
+
+	void (*txrx_monitor_record_frequency)
+		(struct cdp_pdev *pdev, qdf_freq_t val);
 
 	void (*txrx_deliver_tx_mgmt)
 		(struct cdp_pdev *pdev, qdf_nbuf_t nbuf);
