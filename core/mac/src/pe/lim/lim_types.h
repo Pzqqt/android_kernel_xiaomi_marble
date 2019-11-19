@@ -728,10 +728,8 @@ QDF_STATUS lim_process_sme_tdls_add_sta_req(struct mac_context *mac,
 QDF_STATUS lim_process_sme_tdls_del_sta_req(struct mac_context *mac,
 					    void *msg);
 
-void lim_send_sme_mgmt_tx_completion(
-		struct mac_context *mac,
-		uint32_t sme_session_id,
-		uint32_t txCompleteStatus);
+void lim_send_sme_mgmt_tx_completion(struct mac_context *mac, uint32_t vdev_id,
+				     uint32_t txCompleteStatus);
 QDF_STATUS lim_delete_tdls_peers(struct mac_context *mac_ctx,
 				    struct pe_session *session_entry);
 QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *);

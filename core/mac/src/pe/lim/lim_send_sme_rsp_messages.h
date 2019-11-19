@@ -42,7 +42,7 @@
  * @msg_type:       Indicates message type
  * @result_code:    Indicates the result of previously issued
  *                  eWNI_SME_msg_type_REQ message
- * @sme_session_id: SME session associated with the request
+ * @vdev_id: vdev_id
  *
  * This function is called by lim_process_sme_req_messages() to send
  * eWNI_SME_START_RSP, eWNI_SME_STOP_BSS_RSP
@@ -52,7 +52,7 @@
  * Return: None
  */
 void lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
-		      tSirResultCodes result_code, uint8_t sme_session_id);
+		      tSirResultCodes result_code, uint8_t vdev_id);
 
 /**
  * lim_send_sme_start_bss_rsp() - Send Start BSS response
@@ -78,7 +78,7 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
  * @result_code: Indicates the result of previously issued request
  * @prot_status_code: Protocol Status Code
  * @session_entry: PE Session Info
- * @sme_session_id: SME Session ID
+ * @vdev_id: vdev_id
  *
  * This function is called by lim_process_sme_req_messages() to send
  * eWNI_SME_JOIN_RSP or eWNI_SME_REASSOC_RSP messages to applications
@@ -91,7 +91,7 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 				   tSirResultCodes result_code,
 				   uint16_t prot_status_code,
 				   struct pe_session *session_entry,
-				   uint8_t sme_session_id);
+				   uint8_t vdev_id);
 
 /**
  * lim_prepare_disconnect_done_ind() - Prepares the disconnect done ind message
@@ -140,7 +140,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
  * @reasonCode: the reason for Deauthetication
  * @deauthTrigger: the trigger for Deauthetication
  * @aid: the STAID. This parameter is present only on AP.
- * @smesessionId: ID of the SME session associated with the notification
+ * @vdev_id: vdev id
  *
  * This function is used for sending eWNI_SME_DEAUTH_RSP or
  * eWNI_SME_DEAUTH_IND to upper layers depending on deauthentication
@@ -150,7 +150,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
  */
 void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 			     tSirResultCodes reasonCode, uint16_t deauthTrigger,
-			     uint16_t aid, uint8_t smesessionId);
+			     uint16_t aid, uint8_t vdev_id);
 
 void lim_send_sme_disassoc_ind(struct mac_context *, tpDphHashNode, struct pe_session *);
 void lim_send_sme_deauth_ind(struct mac_context *, tpDphHashNode,

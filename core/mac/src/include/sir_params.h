@@ -161,13 +161,13 @@ typedef struct sSirMbMsg {
  * struct sir_mgmt_msg - Structure used to send auth frame from CSR to LIM
  * @type: Message type
  * @msg_len: Message length
- * @session_id: session id
+ * @vdev_id: vdev id
  * @data: Pointer to data tobe transmitted
  */
 struct sir_mgmt_msg {
 	uint16_t type;
 	uint16_t msg_len;
-	uint8_t session_id;
+	uint8_t vdev_id;
 	uint8_t *data;
 };
 

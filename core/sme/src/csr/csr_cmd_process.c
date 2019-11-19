@@ -39,16 +39,15 @@ QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirSmeRsp *sme_rsp = (tSirSmeRsp *) msg_buf;
-	uint8_t session_id = sme_rsp->sessionId;
+	uint8_t vdev_id = sme_rsp->vdev_id;
 	enum csr_roam_state cur_state;
 
-	cur_state = sme_get_current_roam_state(MAC_HANDLE(mac_ctx), session_id);
+	cur_state = sme_get_current_roam_state(MAC_HANDLE(mac_ctx), vdev_id);
 	sme_debug("msg %d[0x%04X] recvd in curstate %s & substate %s id(%d)",
 		sme_rsp->messageType, sme_rsp->messageType,
 		mac_trace_getcsr_roam_state(cur_state),
 		mac_trace_getcsr_roam_sub_state(
-			mac_ctx->roam.curSubState[session_id]),
-		session_id);
+			mac_ctx->roam.curSubState[vdev_id]), vdev_id);
 
 	/* Process the message based on the state of the roaming states... */
 	switch (cur_state) {
@@ -91,19 +90,19 @@ QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 		} else {
 			sme_err("Message 0x%04X is not handled by CSR state is %d session Id %d",
 				sme_rsp->messageType, cur_state,
-				session_id);
+				vdev_id);
 
 			if (eWNI_SME_FT_PRE_AUTH_RSP ==
 					sme_rsp->messageType) {
 				sme_err("Dequeue eSmeCommandRoam command with reason eCsrPerformPreauth");
 				csr_dequeue_roam_command(mac_ctx,
-					eCsrPerformPreauth, session_id);
+					eCsrPerformPreauth, vdev_id);
 			} else if (eWNI_SME_REASSOC_RSP ==
 					sme_rsp->messageType) {
 				sme_err("Dequeue eSmeCommandRoam command with reason eCsrSmeIssuedFTReassoc");
 				csr_dequeue_roam_command(mac_ctx,
 					eCsrSmeIssuedFTReassoc,
-					session_id);
+					vdev_id);
 			}
 		}
 		break;

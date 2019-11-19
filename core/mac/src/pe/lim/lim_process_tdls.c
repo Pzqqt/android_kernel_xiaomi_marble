@@ -2755,6 +2755,7 @@ add_sta_error:
  * @msg_type:         Indicates message type
  * @result_code:       Indicates the result of previously issued
  *                    eWNI_SME_msg_type_REQ message
+ * @vdev_id: vdev id
  *
  * This function is called by lim_process_sme_req_messages() to send
  * eWNI_SME_START_RSP, eWNI_SME_STOP_BSS_RSP
@@ -2766,7 +2767,7 @@ add_sta_error:
 
 static void
 lim_send_tdls_comp_mgmt_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
-	 tSirResultCodes result_code, uint8_t sme_session_id)
+	 tSirResultCodes result_code, uint8_t vdev_id)
 {
 	struct scheduler_msg msg = {0};
 	struct tdls_send_mgmt_rsp *sme_rsp;
@@ -2780,7 +2781,7 @@ lim_send_tdls_comp_mgmt_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 		return;
 
 	sme_rsp->status_code = (enum legacy_result_code)result_code;
-	sme_rsp->session_id = sme_session_id;
+	sme_rsp->vdev_id = vdev_id;
 	sme_rsp->psoc = mac_ctx->psoc;
 
 	msg.type = msg_type;

@@ -533,7 +533,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 			      uint8_t *bssid,
 			      uint8_t *sessionId,
 			      uint16_t numSta, enum bss_type bssType,
-			      uint8_t sme_session_id)
+			      uint8_t vdev_id)
 {
 	QDF_STATUS status;
 	uint8_t i;
@@ -632,14 +632,14 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	 * reference count.
 	 */
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
-						    sme_session_id,
+						    vdev_id,
 						    WLAN_LEGACY_MAC_ID);
 	if (!vdev) {
-		pe_err("vdev is NULL for vdev_id: %u", sme_session_id);
+		pe_err("vdev is NULL for vdev_id: %u", vdev_id);
 		goto free_session_attrs;
 	}
 	session_ptr->vdev = vdev;
-	session_ptr->smeSessionId = sme_session_id;
+	session_ptr->vdev_id = vdev_id;
 	session_ptr->mac_ctx = mac;
 
 	if (eSIR_INFRASTRUCTURE_MODE == bssType)

@@ -57,7 +57,7 @@
 #include "wma.h"
 
 void lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
-		      tSirResultCodes result_code, uint8_t sme_session_id)
+		      tSirResultCodes result_code, uint8_t vdev_id)
 {
 	struct scheduler_msg msg = {0};
 	tSirSmeRsp *sme_rsp;
@@ -72,13 +72,12 @@ void lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	sme_rsp->messageType = msg_type;
 	sme_rsp->length = sizeof(tSirSmeRsp);
 	sme_rsp->status_code = result_code;
-	sme_rsp->sessionId = sme_session_id;
+	sme_rsp->vdev_id = vdev_id;
 
 	msg.type = msg_type;
 	msg.bodyptr = sme_rsp;
 	msg.bodyval = 0;
-	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TX_SME_MSG,
-			 sme_session_id, msg.type));
+	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TX_SME_MSG, vdev_id, msg.type));
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	switch (msg_type) {
@@ -392,7 +391,7 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 				   tSirResultCodes result_code,
 				   uint16_t prot_status_code,
 				   struct pe_session *session_entry,
-				   uint8_t sme_session_id)
+				   uint8_t vdev_id)
 {
 	struct join_rsp *sme_join_rsp;
 	uint32_t rsp_len;
@@ -484,7 +483,7 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 	sme_join_rsp->status_code = result_code;
 	sme_join_rsp->protStatusCode = prot_status_code;
 
-	sme_join_rsp->sessionId = sme_session_id;
+	sme_join_rsp->vdev_id = vdev_id;
 
 	lim_send_sme_join_reassoc_rsp_after_resume(mac_ctx, QDF_STATUS_SUCCESS,
 						   sme_join_rsp);
@@ -748,7 +747,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			 reasonCode, QDF_MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDisassocInd->messageType = eWNI_SME_DISASSOC_IND;
 		pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
-		pSirSmeDisassocInd->sessionId = smesessionId;
+		pSirSmeDisassocInd->vdev_id = smesessionId;
 		pSirSmeDisassocInd->reasonCode = reasonCode;
 		pSirSmeDisassocInd->status_code = reasonCode;
 		qdf_mem_copy(pSirSmeDisassocInd->bssid.bytes,
@@ -801,7 +800,7 @@ lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode sta,
 	pSirSmeDisassocInd->messageType = eWNI_SME_DISASSOC_IND;
 	pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
 
-	pSirSmeDisassocInd->sessionId = pe_session->smeSessionId;
+	pSirSmeDisassocInd->vdev_id = pe_session->smeSessionId;
 	pSirSmeDisassocInd->status_code = eSIR_SME_DEAUTH_STATUS;
 	pSirSmeDisassocInd->reasonCode = sta->mlmStaContext.disassocReason;
 
@@ -852,7 +851,7 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode sta,
 	pSirSmeDeauthInd->messageType = eWNI_SME_DEAUTH_IND;
 	pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
 
-	pSirSmeDeauthInd->sessionId = pe_session->smeSessionId;
+	pSirSmeDeauthInd->vdev_id = pe_session->smeSessionId;
 	if (eSIR_INFRA_AP_MODE == pe_session->bssType) {
 		pSirSmeDeauthInd->status_code =
 			(tSirResultCodes) sta->mlmStaContext.cleanupTrigger;
@@ -946,7 +945,7 @@ lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode sta,
  */
 void
 lim_send_sme_mgmt_tx_completion(struct mac_context *mac,
-				uint32_t sme_session_id,
+				uint32_t vdev_id,
 				uint32_t txCompleteStatus)
 {
 	struct scheduler_msg msg = {0};
@@ -959,7 +958,7 @@ lim_send_sme_mgmt_tx_completion(struct mac_context *mac,
 		return;
 
 	/* sessionId */
-	mgmt_tx_completion_ind->session_id = sme_session_id;
+	mgmt_tx_completion_ind->vdev_id = vdev_id;
 
 	mgmt_tx_completion_ind->tx_complete_status = txCompleteStatus;
 
@@ -1083,7 +1082,7 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		pSirSmeDeauthInd->messageType = eWNI_SME_DEAUTH_IND;
 		pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
 		pSirSmeDeauthInd->reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
-		pSirSmeDeauthInd->sessionId = smesessionId;
+		pSirSmeDeauthInd->vdev_id = smesessionId;
 		pSirSmeDeauthInd->status_code = reasonCode;
 		qdf_mem_copy(pSirSmeDeauthInd->bssid.bytes, pe_session->bssId,
 			     sizeof(tSirMacAddr));

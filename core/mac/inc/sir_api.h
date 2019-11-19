@@ -368,7 +368,7 @@ struct register_mgmt_frame {
 typedef struct sSirSmeRsp {
 	uint16_t messageType;   /* eWNI_SME_*_RSP */
 	uint16_t length;
-	uint8_t sessionId;
+	uint8_t vdev_id;
 	tSirResultCodes status_code;
 	struct wlan_objmgr_psoc *psoc;
 } tSirSmeRsp, *tpSirSmeRsp;
@@ -574,7 +574,7 @@ struct add_ie_params {
 struct start_bss_req {
 	uint16_t messageType;   /* eWNI_SME_START_BSS_REQ */
 	uint16_t length;
-	uint8_t sessionId;
+	uint8_t vdev_id;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr self_macaddr;
 	uint16_t beaconInterval;
@@ -984,7 +984,7 @@ struct join_req {
 struct join_rsp {
 	uint16_t messageType;   /* eWNI_SME_JOIN_RSP */
 	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
+	uint8_t vdev_id;      /* Session ID */
 	tSirResultCodes status_code;
 	tAniAuthType authType;
 	uint32_t vht_channel_width;
@@ -1241,7 +1241,7 @@ struct disassoc_rsp {
 struct disassoc_ind {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_IND */
 	uint16_t length;
-	uint8_t sessionId;      /* Session Identifier */
+	uint8_t vdev_id;
 	tSirResultCodes status_code;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_macaddr;
@@ -1254,7 +1254,7 @@ struct disassoc_ind {
 struct disassoc_cnf {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_CNF */
 	uint16_t length;
-	uint8_t sme_session_id;
+	uint8_t vdev_id;
 	tSirResultCodes status_code;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_macaddr;
@@ -1280,7 +1280,7 @@ struct sir_sme_discon_done_ind {
 struct deauth_req {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_REQ */
 	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
+	uint8_t vdev_id;      /* Session ID */
 	struct qdf_mac_addr bssid;      /* AP BSSID */
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
@@ -1299,7 +1299,7 @@ struct deauth_rsp {
 struct deauth_ind {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_IND */
 	uint16_t length;
-	uint8_t sessionId;      /* Added for BT-AMP */
+	uint8_t vdev_id;
 	tSirResultCodes status_code;
 	struct qdf_mac_addr bssid;      /* AP BSSID */
 	struct qdf_mac_addr peer_macaddr;
@@ -1313,7 +1313,7 @@ struct deauth_ind {
 struct deauth_cnf {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_CNF */
 	uint16_t length;
-	uint8_t sme_session_id;
+	uint8_t vdev_id;
 	tSirResultCodes status_code;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_macaddr;
