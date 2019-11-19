@@ -1229,8 +1229,8 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 
 	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
 
-	replenish_size = (num_entries < MON_BUF_MIN_ALLOC_ENTRIES) ?
-			  num_entries : MON_BUF_MIN_ALLOC_ENTRIES;
+	replenish_size = ((num_entries - 1) < MON_BUF_MIN_ALLOC_ENTRIES) ?
+			  (num_entries - 1) : MON_BUF_MIN_ALLOC_ENTRIES;
 	status = dp_pdev_rx_buffers_attach(soc, mac_id, mon_buf_ring,
 					   rx_desc_pool, replenish_size);
 
