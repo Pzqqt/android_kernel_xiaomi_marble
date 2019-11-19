@@ -607,7 +607,7 @@ void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 			qdf_mem_free(ft_pre_auth_rsp);
 			return;
 		}
-		ft_pre_auth_rsp->smeSessionId = session->smeSessionId;
+		ft_pre_auth_rsp->vdev_id = session->vdev_id;
 		/* The bssid of the AP we are sending Auth1 to. */
 		if (session->ftPEContext.pFTPreAuthReq)
 			sir_copy_mac_addr(ft_pre_auth_rsp->preAuthbssId,

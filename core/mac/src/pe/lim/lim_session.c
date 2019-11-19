@@ -248,8 +248,8 @@ static void pe_reset_protection_callback(void *ptr)
 					fLsigTXOPProtectionFullSupport;
 		beacon_params.fRIFSMode =
 				pe_session_entry->beaconParams.fRIFSMode;
-		beacon_params.smeSessionId =
-				pe_session_entry->smeSessionId;
+		beacon_params.vdev_id =
+				pe_session_entry->vdev_id;
 		beacon_params.paramChangeBitmap |= PARAM_llBCOEXIST_CHANGED;
 		bcn_prms_changed = true;
 	}

@@ -77,7 +77,7 @@ QDF_STATUS lim_send_beacon_params(struct mac_context *mac,
 					pe_session->peSessionId,
 					msgQ.type));
 	}
-	pBcnParams->smeSessionId = pe_session->smeSessionId;
+	pBcnParams->vdev_id = pe_session->vdev_id;
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pBcnParams);

@@ -20508,7 +20508,7 @@ csr_roam_modify_add_ies(struct mac_context *mac,
 
 	qdf_copy_macaddr(&pModifyAddIEInd->modifyIE.bssid, &pModifyIE->bssid);
 
-	pModifyAddIEInd->modifyIE.smeSessionId = pModifyIE->smeSessionId;
+	pModifyAddIEInd->modifyIE.vdev_id = pModifyIE->vdev_id;
 	pModifyAddIEInd->modifyIE.notify = pModifyIE->notify;
 	pModifyAddIEInd->modifyIE.ieID = pModifyIE->ieID;
 	pModifyAddIEInd->modifyIE.ieIDLen = pModifyIE->ieIDLen;
@@ -20571,7 +20571,7 @@ csr_roam_update_add_ies(struct mac_context *mac,
 
 	qdf_copy_macaddr(&pUpdateAddIEs->updateIE.bssid, &pUpdateIE->bssid);
 
-	pUpdateAddIEs->updateIE.smeSessionId = pUpdateIE->smeSessionId;
+	pUpdateAddIEs->updateIE.vdev_id = pUpdateIE->vdev_id;
 	pUpdateAddIEs->updateIE.append = pUpdateIE->append;
 	pUpdateAddIEs->updateIE.notify = pUpdateIE->notify;
 	pUpdateAddIEs->updateIE.ieBufferlength = pUpdateIE->ieBufferlength;

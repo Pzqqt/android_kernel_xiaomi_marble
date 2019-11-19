@@ -224,7 +224,7 @@ void sme_set_ft_ies(mac_handle_t mac_handle, uint32_t session_id,
 /**
  * sme_ft_send_update_key_ind() - To send key update indication for FT session
  * @mac: pointer to MAC context
- * @session_id: sme session id
+ * @vdev_id: vdev_id
  * @ftkey_info: FT key information
  *
  * To send key update indication for FT session
@@ -232,7 +232,7 @@ void sme_set_ft_ies(mac_handle_t mac_handle, uint32_t session_id,
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS sme_ft_send_update_key_ind(struct mac_context *mac, uint32_t session_id,
+QDF_STATUS sme_ft_send_update_key_ind(struct mac_context *mac, uint32_t vdev_id,
 				      tCsrRoamSetKey *ftkey_info)
 {
 	tSirFTUpdateKeyInfo *msg;
@@ -275,7 +275,7 @@ QDF_STATUS sme_ft_send_update_key_ind(struct mac_context *mac, uint32_t session_
 				ftkey_info->keyLength);
 
 	qdf_copy_macaddr(&msg->bssid, &ftkey_info->peerMac);
-	msg->smeSessionId = session_id;
+	msg->vdev_id = vdev_id;
 	sme_debug("BSSID = " QDF_MAC_ADDR_STR,
 		  QDF_MAC_ADDR_ARRAY(msg->bssid.bytes));
 	status = umac_send_mb_message_to_mac(msg);

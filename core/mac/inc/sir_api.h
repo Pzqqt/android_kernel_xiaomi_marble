@@ -2785,7 +2785,7 @@ typedef enum tUpdateIEsType {
 /* Modify particular IE in addition IE for prob resp Bcn */
 typedef struct sSirModifyIE {
 	struct qdf_mac_addr bssid;
-	uint16_t smeSessionId;
+	uint16_t vdev_id;
 	bool notify;
 	uint8_t ieID;
 	uint8_t ieIDLen;        /*ie length as per spec */
@@ -2811,7 +2811,7 @@ typedef struct sSirModifyIEsInd {
 /* Message format for Update IE message sent to PE  */
 typedef struct sSirUpdateIE {
 	struct qdf_mac_addr bssid;
-	uint16_t smeSessionId;
+	uint16_t vdev_id;
 	bool append;
 	bool notify;
 	uint16_t ieBufferlength;

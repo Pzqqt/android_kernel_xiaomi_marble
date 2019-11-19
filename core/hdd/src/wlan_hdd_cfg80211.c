@@ -20066,7 +20066,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	/* Clearing add IE of beacon */
 	qdf_mem_copy(update_ie.bssid.bytes, adapter->mac_addr.bytes,
 		     sizeof(tSirMacAddr));
-	update_ie.smeSessionId = adapter->vdev_id;
+	update_ie.vdev_id = adapter->vdev_id;
 	update_ie.ieBufferlength = 0;
 	update_ie.pAdditionIEBuffer = NULL;
 	update_ie.append = true;

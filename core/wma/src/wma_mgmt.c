@@ -1841,22 +1841,22 @@ wma_process_update_beacon_params(tp_wma_handle wma,
 		return;
 	}
 
-	if (bcn_params->smeSessionId >= wma->max_bssid) {
-		WMA_LOGE("Invalid vdev id %d", bcn_params->smeSessionId);
+	if (bcn_params->vdev_id >= wma->max_bssid) {
+		WMA_LOGE("Invalid vdev id %d", bcn_params->vdev_id);
 		return;
 	}
 
 	if (bcn_params->paramChangeBitmap & PARAM_BCN_INTERVAL_CHANGED) {
-		wma_update_beacon_interval(wma, bcn_params->smeSessionId,
+		wma_update_beacon_interval(wma, bcn_params->vdev_id,
 					   bcn_params->beaconInterval);
 	}
 
 	if (bcn_params->paramChangeBitmap & PARAM_llBCOEXIST_CHANGED)
-		wma_update_protection_mode(wma, bcn_params->smeSessionId,
+		wma_update_protection_mode(wma, bcn_params->vdev_id,
 					   bcn_params->llbCoexist);
 
 	if (bcn_params->paramChangeBitmap & PARAM_BSS_COLOR_CHANGED)
-		wma_update_bss_color(wma, bcn_params->smeSessionId,
+		wma_update_bss_color(wma, bcn_params->vdev_id,
 				     bcn_params);
 }
 

@@ -660,7 +660,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 	qdf_copy_macaddr(&modify_ie.bssid,
 		     roam_profile->BSSIDs.bssid);
 
-	modify_ie.smeSessionId = adapter->vdev_id;
+	modify_ie.vdev_id = adapter->vdev_id;
 	modify_ie.notify = true;
 	modify_ie.ieID = WLAN_ELEMID_VENDOR;
 	modify_ie.ieIDLen = ibss_ie_length;

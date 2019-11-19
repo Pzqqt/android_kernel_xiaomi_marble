@@ -5717,7 +5717,7 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 	}
 
 	qdf_copy_macaddr(&update_ie.bssid, bssid);
-	update_ie.smeSessionId = adapter->vdev_id;
+	update_ie.vdev_id = adapter->vdev_id;
 	update_ie.ieBufferlength = 0;
 	update_ie.pAdditionIEBuffer = NULL;
 	update_ie.append = true;
@@ -5992,7 +5992,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 
 			qdf_copy_macaddr(&update_ie.bssid,
 					 &adapter->mac_addr);
-			update_ie.smeSessionId = adapter->vdev_id;
+			update_ie.vdev_id = adapter->vdev_id;
 			update_ie.ieBufferlength = 0;
 			update_ie.pAdditionIEBuffer = NULL;
 			update_ie.append = false;
