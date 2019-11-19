@@ -1978,7 +1978,7 @@ struct hdd_channel_info {
  * Return: 0 for success, non-zero for failure
  */
 int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
-				       uint32_t chan_freq,
+				       qdf_freq_t chan_freq,
 				       enum phy_ch_width chan_bw);
 
 /**
@@ -3807,16 +3807,16 @@ void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool disconnecting);
 /**
  * wlan_hdd_set_mon_chan() - Set capture channel on the monitor mode interface.
  * @adapter: Handle to adapter
- * @chan: Monitor mode channel
+ * @freq: Monitor mode frequency (MHz)
  * @bandwidth: Capture channel bandwidth
  *
  * Return: 0 on success else error code.
  */
-int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
+int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, qdf_freq_t freq,
 			  uint32_t bandwidth);
 #else
 static inline
-int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
+int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, qdf_freq_t freq,
 			  uint32_t bandwidth)
 {
 	return 0;

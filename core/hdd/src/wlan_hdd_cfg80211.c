@@ -17433,12 +17433,12 @@ void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
 /**
  * hdd_select_cbmode() - select channel bonding mode
  * @adapter: Pointer to adapter
- * @operatingChannel: Operating channel
+ * @oper_freq: Operating frequency (MHz)
  * @ch_params: channel info struct to populate
  *
  * Return: none
  */
-void hdd_select_cbmode(struct hdd_adapter *adapter, uint32_t oper_freq,
+void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
 		       struct ch_params *ch_params)
 {
 	uint32_t sec_ch_freq = 0;
@@ -22526,8 +22526,8 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	mac_handle_t mac_handle;
 	struct qdf_mac_addr bssid;
 	struct csr_roam_profile roam_profile;
+	struct ch_params ch_params;
 	int ret;
-	uint16_t chan_num = cds_freq_to_chan(chandef->chan->center_freq);
 	enum channel_state chan_freq_state;
 	uint8_t max_fw_bw;
 	enum phy_ch_width ch_width;
@@ -22544,8 +22544,8 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	if (!adapter)
 		return -EIO;
 
-	hdd_debug("%s: set monitor mode Channel %d and freq %d",
-		 adapter->dev->name, chan_num, chandef->chan->center_freq);
+	hdd_debug("%s: set monitor mode freq %d",
+		  adapter->dev->name, chandef->chan->center_freq);
 
 	/* Verify channel state before accepting this request */
 	chan_freq_state =
@@ -22588,8 +22588,14 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	qdf_mem_copy(bssid.bytes, adapter->mac_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
-	if (wlan_hdd_change_hw_mode_for_given_chnl(adapter, chan_num,
-				POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN)) {
+	ch_params.ch_width = ch_width;
+	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev,
+					     chandef->chan->center_freq,
+					     0, &ch_params);
+
+	if (wlan_hdd_change_hw_mode_for_given_chnl(adapter,
+						   chandef->chan->center_freq,
+						   POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN)) {
 		hdd_err("Failed to change hw mode");
 		return -EINVAL;
 	}

@@ -4289,6 +4289,7 @@ QDF_STATUS wma_post_chan_switch_setup(uint8_t vdev_id)
 	if (intr->type == WMI_VDEV_TYPE_MONITOR) {
 		des_chan = intr->vdev->vdev_mlme.des_chan;
 		cdp_record_monitor_chan_num(soc, pdev, des_chan->ch_ieee);
+		cdp_record_monitor_chan_freq(soc, pdev, des_chan->ch_freq);
 	}
 	return QDF_STATUS_SUCCESS;
 }
