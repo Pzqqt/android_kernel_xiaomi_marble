@@ -15547,116 +15547,160 @@ bool hdd_is_roaming_in_progress(struct hdd_context *hdd_ctx)
 	return hdd_ctx->roaming_in_progress;
 }
 
-bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
-				   enum scan_reject_states *out_reason)
+/**
+ * struct hdd_is_connection_in_progress_priv - adapter connection info
+ * @out_vdev_id: id of vdev where connection is occurring
+ * @out_reason: scan reject reason
+ */
+struct hdd_is_connection_in_progress_priv {
+	uint8_t out_vdev_id;
+	enum scan_reject_states out_reason;
+	bool connection_in_progress;
+};
+
+/**
+ * hdd_is_connection_in_progress_iterator() - Check adapter connection based
+ * on device mode
+ * @adapter: current adapter of interest
+ * @context: user context supplied
+ *
+ * Check if connection is in progress for the current adapter according to the
+ * device mode
+ *
+ * Return:
+ * * QDF_STATUS_SUCCESS if iteration should continue
+ * * QDF_STATUS_E_ABORTED if iteration should be aborted
+ */
+static QDF_STATUS hdd_is_connection_in_progress_iterator(
+					struct hdd_adapter *adapter,
+					void *ctx)
 {
-	struct hdd_station_ctx *hdd_sta_ctx = NULL;
-	struct hdd_adapter *adapter = NULL;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	uint8_t index = 0;
-	uint8_t *sta_mac = NULL;
+	uint8_t *sta_mac;
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
-	struct hdd_station_info *sta_info = NULL;
+	struct hdd_station_info *sta_info;
+	struct hdd_is_connection_in_progress_priv *context = ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
-		return false;
+		return QDF_STATUS_E_ABORTED;
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
 
-	hdd_for_each_adapter(hdd_ctx, adapter) {
-		hdd_debug("Adapter with device mode %s(%d) exists",
-			  qdf_opmode_str(adapter->device_mode),
-			  adapter->device_mode);
-		if (((QDF_STA_MODE == adapter->device_mode)
-			|| (QDF_P2P_CLIENT_MODE == adapter->device_mode)
-			|| (QDF_P2P_DEVICE_MODE == adapter->device_mode))
-			&& (eConnectionState_Connecting ==
-				(WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
-					conn_info.conn_state)) {
-			hdd_debug("%pK(%d) Connection is in progress",
-				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
-				adapter->vdev_id);
-			if (out_vdev_id && out_reason) {
-				*out_vdev_id = adapter->vdev_id;
-				*out_reason = CONNECTION_IN_PROGRESS;
-			}
-			return true;
+	hdd_debug("Adapter with device mode %s(%d) exists",
+		  qdf_opmode_str(adapter->device_mode),
+		  adapter->device_mode);
+	if (((QDF_STA_MODE == adapter->device_mode)
+		|| (QDF_P2P_CLIENT_MODE == adapter->device_mode)
+		|| (QDF_P2P_DEVICE_MODE == adapter->device_mode))
+		&& (eConnectionState_Connecting ==
+			(WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
+				conn_info.conn_state)) {
+		hdd_debug("%pK(%d) Connection is in progress",
+			  WLAN_HDD_GET_STATION_CTX_PTR(adapter),
+			  adapter->vdev_id);
+
+		context->out_vdev_id = adapter->vdev_id;
+		context->out_reason = CONNECTION_IN_PROGRESS;
+		context->connection_in_progress = true;
+
+		return QDF_STATUS_E_ABORTED;
+	}
+	/*
+	 * sme_neighbor_middle_of_roaming is for LFR2
+	 * hdd_is_roaming_in_progress is for LFR3
+	 */
+	if (((QDF_STA_MODE == adapter->device_mode) &&
+	     sme_neighbor_middle_of_roaming(
+		     mac_handle,
+		     adapter->vdev_id)) ||
+		     hdd_is_roaming_in_progress(hdd_ctx)) {
+		hdd_debug("%pK(%d) Reassociation in progress",
+			  WLAN_HDD_GET_STATION_CTX_PTR(adapter),
+			  adapter->vdev_id);
+
+		context->out_vdev_id = adapter->vdev_id;
+		context->out_reason = REASSOC_IN_PROGRESS;
+		context->connection_in_progress = true;
+		return QDF_STATUS_E_ABORTED;
+	}
+
+	if ((QDF_STA_MODE == adapter->device_mode) ||
+		(QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
+		(QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
+		hdd_sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		if ((eConnectionState_Associated ==
+		    hdd_sta_ctx->conn_info.conn_state)
+		    && sme_is_sta_key_exchange_in_progress(
+		    mac_handle, adapter->vdev_id)) {
+			sta_mac = (uint8_t *)&(adapter->mac_addr.bytes[0]);
+			hdd_debug("client " QDF_MAC_ADDR_STR
+				  " is in middle of WPS/EAPOL exchange.",
+				  QDF_MAC_ADDR_ARRAY(sta_mac));
+
+			context->out_vdev_id = adapter->vdev_id;
+			context->out_reason = EAPOL_IN_PROGRESS;
+			context->connection_in_progress = true;
+
+			return QDF_STATUS_E_ABORTED;
 		}
-		/*
-		 * sme_neighbor_middle_of_roaming is for LFR2
-		 * hdd_is_roaming_in_progress is for LFR3
-		 */
-		if (((QDF_STA_MODE == adapter->device_mode) &&
-		     sme_neighbor_middle_of_roaming(
-			     mac_handle,
-			     adapter->vdev_id)) ||
-		    hdd_is_roaming_in_progress(hdd_ctx)) {
-			hdd_debug("%pK(%d) Reassociation in progress",
-				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
-				adapter->vdev_id);
-			if (out_vdev_id && out_reason) {
-				*out_vdev_id = adapter->vdev_id;
-				*out_reason = REASSOC_IN_PROGRESS;
-			}
-			return true;
+	} else if ((QDF_SAP_MODE == adapter->device_mode) ||
+			(QDF_P2P_GO_MODE == adapter->device_mode)) {
+		hdd_for_each_station(adapter->sta_info_list, sta_info,
+				     index) {
+			if (sta_info->peer_state !=
+				OL_TXRX_PEER_STATE_CONN)
+				continue;
+
+			sta_mac = sta_info->sta_mac.bytes;
+			hdd_debug("client " QDF_MAC_ADDR_STR
+				  " of SAP/GO is in middle of WPS/EAPOL exchange",
+				  QDF_MAC_ADDR_ARRAY(sta_mac));
+
+			context->out_vdev_id = adapter->vdev_id;
+			context->out_reason = SAP_EAPOL_IN_PROGRESS;
+			context->connection_in_progress = true;
+
+			return QDF_STATUS_E_ABORTED;
 		}
+		if (hdd_ctx->connection_in_progress) {
+			hdd_debug("AP/GO: connection is in progress");
+			context->out_reason = SAP_CONNECTION_IN_PROGRESS;
+			context->out_vdev_id = adapter->vdev_id;
+			context->connection_in_progress = true;
 
-		if ((QDF_STA_MODE == adapter->device_mode) ||
-			(QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
-			(QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
-			hdd_sta_ctx =
-				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-			if ((eConnectionState_Associated ==
-			    hdd_sta_ctx->conn_info.conn_state)
-			    && sme_is_sta_key_exchange_in_progress(
-			    mac_handle, adapter->vdev_id)) {
-				sta_mac = (uint8_t *)
-					&(adapter->mac_addr.bytes[0]);
-				hdd_debug("client " QDF_MAC_ADDR_STR
-					" is in middle of WPS/EAPOL exchange.",
-					QDF_MAC_ADDR_ARRAY(sta_mac));
-				if (out_vdev_id && out_reason) {
-					*out_vdev_id = adapter->vdev_id;
-					*out_reason = EAPOL_IN_PROGRESS;
-				}
-				return true;
-			}
-		} else if ((QDF_SAP_MODE == adapter->device_mode) ||
-				(QDF_P2P_GO_MODE == adapter->device_mode)) {
-			hdd_for_each_station(adapter->sta_info_list, sta_info,
-					     index) {
-				if (sta_info->peer_state !=
-					OL_TXRX_PEER_STATE_CONN)
-					continue;
-
-				sta_mac = sta_info->sta_mac.bytes;
-				hdd_debug("client " QDF_MAC_ADDR_STR
-					  " of SAP/GO is in middle of WPS/EAPOL exchange",
-					  QDF_MAC_ADDR_ARRAY(sta_mac));
-				if (out_vdev_id && out_reason) {
-					*out_vdev_id = adapter->vdev_id;
-					*out_reason =
-						SAP_EAPOL_IN_PROGRESS;
-				}
-
-				return true;
-			}
-			if (hdd_ctx->connection_in_progress) {
-				hdd_debug("AP/GO: connection is in progress");
-				if (out_vdev_id && out_reason) {
-					*out_reason =
-						SAP_CONNECTION_IN_PROGRESS;
-					*out_vdev_id = adapter->vdev_id;
-				}
-				return true;
-			}
+			return QDF_STATUS_E_ABORTED;
 		}
 	}
 
-	return false;
+	return QDF_STATUS_SUCCESS;
+}
+
+bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
+				   enum scan_reject_states *out_reason)
+{
+	struct hdd_is_connection_in_progress_priv hdd_conn;
+	hdd_adapter_iterate_cb cb;
+
+	hdd_conn.out_vdev_id = 0;
+	hdd_conn.out_reason = SCAN_REJECT_DEFAULT;
+	hdd_conn.connection_in_progress = false;
+
+	cb = hdd_is_connection_in_progress_iterator;
+
+	hdd_adapter_iterate(cb, &hdd_conn);
+
+	if (hdd_conn.connection_in_progress && out_vdev_id && out_reason) {
+		*out_vdev_id = hdd_conn.out_vdev_id;
+		*out_reason = hdd_conn.out_reason;
+	}
+
+	return hdd_conn.connection_in_progress;
 }
 
 /**
