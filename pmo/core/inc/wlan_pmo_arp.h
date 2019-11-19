@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,6 +35,18 @@
  * Return: QDF_STATUS_SUCCESS in case of success else return error
  */
 QDF_STATUS pmo_core_cache_arp_offload_req(struct pmo_arp_req *arp_req);
+
+/**
+ * pmo_core_arp_check_offload(): API to check if arp offload cache/send is req
+ * @psoc: objmgr psoc handle
+ * @trigger: trigger reason
+ * @vdev_id: vdev id
+ *
+ * Return QDF_STATUS_SUCCESS -in case of success else return error
+ */
+QDF_STATUS pmo_core_arp_check_offload(struct wlan_objmgr_psoc *psoc,
+				      enum pmo_offload_trigger trigger,
+				      uint8_t vdev_id);
 
 /**
  * pmo_core_flush_arp_offload_req() - API to flush arp req from pmo vdev ctx
