@@ -291,6 +291,18 @@ void ucfg_pmo_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_pmo_cache_arp_offload_req(struct pmo_arp_req *arp_req);
 
 /**
+ * ucfg_pmo_check_arp_offload(): API to check if arp offload cache/send is req
+ * @psoc: objmgr psoc handle
+ * @trigger: trigger reason
+ * @vdev_id: vdev_id
+ *
+ * Return QDF_STATUS -in case of success else return error
+ */
+QDF_STATUS ucfg_pmo_check_arp_offload(struct wlan_objmgr_psoc *psoc,
+				      enum pmo_offload_trigger trigger,
+				      uint8_t vdev_id);
+
+/**
  * ucfg_pmo_flush_arp_offload_req(): API to flush arp req from pmo vdev priv ctx
  * @vdev: objmgr vdev param
  *
@@ -341,6 +353,18 @@ ucfg_pmo_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
  * Return QDF_STATUS -in case of success else return error
  */
 QDF_STATUS ucfg_pmo_cache_ns_offload_req(struct pmo_ns_req *ns_req);
+
+/**
+ * ucfg_pmo_ns_offload_check(): API to check if offload cache/send is required
+ * @psoc: pbjmgr psoc handle
+ * @trigger: trigger reason to enable ns offload
+ * @vdev_id: vdev id
+ *
+ * Return QDF_STATUS -in case of success else return error
+ */
+QDF_STATUS ucfg_pmo_ns_offload_check(struct wlan_objmgr_psoc *psoc,
+				     enum pmo_offload_trigger trigger,
+				     uint8_t vdev_id);
 
 /**
  * ucfg_pmo_flush_ns_offload_req(): API to flush ns req from pmo vdev priv ctx
@@ -1171,6 +1195,14 @@ ucfg_pmo_cache_arp_offload_req(struct pmo_arp_req *arp_req)
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline
+QDF_STATUS ucfg_pmo_check_arp_offload(struct wlan_objmgr_psoc *psoc,
+				      enum pmo_offload_trigger trigger,
+				      uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 static inline QDF_STATUS
 ucfg_pmo_flush_arp_offload_req(struct wlan_objmgr_vdev *vdev)
 {
@@ -1202,6 +1234,13 @@ ucfg_pmo_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
 
 static inline QDF_STATUS
 ucfg_pmo_cache_ns_offload_req(struct pmo_ns_req *ns_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_pmo_ns_offload_check(struct wlan_objmgr_psoc *psoc,
+				     enum pmo_offload_trigger trigger,
+				     uint8_t vdev_id)
 {
 	return QDF_STATUS_SUCCESS;
 }

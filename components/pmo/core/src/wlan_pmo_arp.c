@@ -134,12 +134,6 @@ pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
 		status = pmo_tgt_enable_arp_offload_req(vdev, vdev_id);
 		break;
 	case pmo_apps_suspend:
-		if (psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_debug("active offload is enabled, skip in mode %d",
-				  trigger);
-			status = QDF_STATUS_SUCCESS;
-			goto out;
-		}
 		/* enable arp when active offload is false (apps suspend) */
 		status = pmo_tgt_enable_arp_offload_req(vdev, vdev_id);
 		break;
@@ -174,12 +168,6 @@ static QDF_STATUS pmo_core_do_disable_arp_offload(struct wlan_objmgr_vdev *vdev,
 
 	switch (trigger) {
 	case pmo_apps_resume:
-		if (psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_debug("active offload is enabled, skip in mode: %d",
-				trigger);
-			status = QDF_STATUS_SUCCESS;
-			goto out;
-		}
 		/* disable arp on apps resume when active offload is disable */
 		status = pmo_tgt_disable_arp_offload_req(vdev, vdev_id);
 		break;
@@ -220,6 +208,51 @@ static QDF_STATUS pmo_core_arp_offload_sanity(
 		return QDF_STATUS_E_INVAL;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS pmo_core_arp_check_offload(struct wlan_objmgr_psoc *psoc,
+				      enum pmo_offload_trigger trigger,
+				      uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct wlan_objmgr_vdev *vdev;
+	bool active_offload_cond, is_applied_cond;
+
+	pmo_enter();
+
+	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
+	if (!vdev) {
+		pmo_err("vdev is NULL");
+		status = QDF_STATUS_E_INVAL;
+		goto out;
+	}
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto out;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	psoc_ctx = vdev_ctx->pmo_psoc_ctx;
+
+	if (trigger == pmo_apps_suspend || trigger == pmo_apps_resume) {
+		active_offload_cond = psoc_ctx->psoc_cfg.active_mode_offload;
+
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		is_applied_cond = vdev_ctx->vdev_arp_req.enable &&
+				  vdev_ctx->vdev_arp_req.is_offload_applied;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+		if (active_offload_cond && is_applied_cond) {
+			pmo_debug("active offload is enabled and offload already sent");
+			pmo_vdev_put_ref(vdev);
+			return QDF_STATUS_E_INVAL;
+		}
+	}
+	pmo_vdev_put_ref(vdev);
+out:
+	return status;
 }
 
 QDF_STATUS pmo_core_cache_arp_offload_req(struct pmo_arp_req *arp_req)

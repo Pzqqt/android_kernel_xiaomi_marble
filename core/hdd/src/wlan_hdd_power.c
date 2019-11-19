@@ -403,6 +403,13 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 	ns_req->trigger = trigger;
 	ns_req->count = 0;
 
+	/* check if offload cache and send is required or not */
+	status = ucfg_pmo_ns_offload_check(psoc, trigger, adapter->vdev_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_info("NS offload is not required");
+		goto free_req;
+	}
+
 	/* Unicast Addresses */
 	errno = hdd_fill_ipv6_uc_addr(in6_dev, ns_req->ipv6_addr,
 				      ns_req->ipv6_addr_type, ns_req->scope,
@@ -450,8 +457,17 @@ void hdd_disable_ns_offload(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)
 {
 	QDF_STATUS status;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_enter();
+
+	status = ucfg_pmo_ns_offload_check(hdd_ctx->psoc, trigger,
+					   adapter->vdev_id);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Flushing of NS offload not required");
+		goto out;
+	}
+
 	status = ucfg_pmo_flush_ns_offload_req(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to flush NS Offload");
@@ -938,6 +954,12 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 	arp_req->vdev_id = adapter->vdev_id;
 	arp_req->trigger = trigger;
 
+	status = ucfg_pmo_check_arp_offload(psoc, trigger, adapter->vdev_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_info("ARP offload not required");
+		goto free_req;
+	}
+
 	ifa = hdd_get_ipv4_local_interface(adapter);
 	if (!ifa || !ifa->ifa_local) {
 		hdd_info("IP Address is not assigned");
@@ -972,8 +994,17 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)
 {
 	QDF_STATUS status;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_enter();
+
+	status = ucfg_pmo_check_arp_offload(hdd_ctx->psoc, trigger,
+					    adapter->vdev_id);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Flushing of ARP offload not required");
+		goto out;
+	}
+
 	status = ucfg_pmo_flush_arp_offload_req(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to flush arp Offload");
