@@ -20,7 +20,6 @@ endif
 
 obj-m := ipc/
 obj-m += dsp/
-obj-m += dsp/codecs/
 obj-m += soc/
 obj-m += asoc/
 obj-m += asoc/codecs/
