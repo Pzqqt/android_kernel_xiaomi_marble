@@ -1328,7 +1328,6 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
 	mac_handle_t mac_handle;
 	QDF_STATUS status;
-	struct qdf_op_sync *op_sync;
 
 	/*
 	 * It may happen that the SAP was deleted before the scan
@@ -1363,11 +1362,7 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	if (success)
 		scan_status = eCSR_SCAN_SUCCESS;
 
-	if (qdf_op_protect(&op_sync))
-		return;
-
 	wlansap_pre_start_bss_acs_scan_callback(mac_handle,
 						arg, session_id,
 						scan_id, scan_status);
-	qdf_op_unprotect(op_sync);
 }
