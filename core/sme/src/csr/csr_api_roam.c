@@ -18139,15 +18139,18 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 	uint32_t *ch_freq_list = NULL;
 	uint8_t i = 0, num_channels = 0;
 	enum band_info band = BAND_ALL;
-	uint8_t op_chan;
 	uint32_t op_freq;
 	struct csr_roam_session *session;
 
 	session = &mac_ctx->roam.roamSession[session_id];
 	op_freq = session->connectedProfile.op_freq;
 	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
-		op_chan = wlan_reg_freq_to_chan(mac_ctx->pdev, op_freq);
-		band = csr_get_rf_band(op_chan);
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(op_freq))
+			band = BAND_5G;
+		else if (WLAN_REG_IS_24GHZ_CH_FREQ(op_freq))
+			band = BAND_2G;
+		else
+			band = BAND_UNKNOWN;
 	}
 	host_channels = sizeof(mac_ctx->roam.valid_ch_freq_list);
 	status = csr_get_cfg_valid_channels(mac_ctx,
@@ -19678,7 +19681,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	struct roam_ext_params *roam_params_dst;
 	struct roam_ext_params *roam_params_src;
 	uint8_t i, temp_session_id;
-	uint8_t op_channel;
 	bool prev_roaming_state;
 	enum csr_akm_type roam_profile_akm = eCSR_AUTH_TYPE_UNKNOWN;
 	uint32_t fw_akm_bitmap;
@@ -19903,9 +19905,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 			QDF_MAC_ADDR_ARRAY(roam_params_dst->bssid_favored[i].bytes),
 			roam_params_dst->bssid_favored_factor[i]);
 	}
-
-	op_channel = wlan_reg_freq_to_chan(mac_ctx->pdev,
-					   session->connectedProfile.op_freq);
 	req_buf->hi_rssi_scan_max_count =
 		roam_info->cfgParams.hi_rssi_scan_max_count;
 	req_buf->hi_rssi_scan_delay =
