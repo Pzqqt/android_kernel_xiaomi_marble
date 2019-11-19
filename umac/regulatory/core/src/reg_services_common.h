@@ -742,6 +742,21 @@ QDF_STATUS reg_disable_chan_coex(struct wlan_objmgr_pdev *pdev,
 
 #ifdef CONFIG_CHAN_FREQ_API
 /**
+ * reg_is_freq_present_in_cur_chan_list() - Check the input frequency
+ * @pdev: Pointer to pdev
+ * @freq: Channel center frequency in MHz
+ *
+ * Check if the input channel center frequency is present in the current
+ * channel list
+ *
+ * Return: Return true if channel center frequency is present in the current
+ * channel list, else return false.
+ */
+bool
+reg_is_freq_present_in_cur_chan_list(struct wlan_objmgr_pdev *pdev,
+				     qdf_freq_t freq);
+
+/**
  * reg_get_chan_enum_for_freq() - Get channel enum for given channel frequency
  * @freq: Channel Frequency
  *
@@ -934,6 +949,15 @@ reg_get_5g_bonded_channel_for_freq(struct wlan_objmgr_pdev *pdev,
 				   const struct bonded_channel_freq
 				   **bonded_chan_ptr_ptr);
 #endif /* CONFIG_CHAN_FREQ_API */
+
+/**
+ * reg_get_max_tx_power() - Get maximum tx power from the current channel list
+ * @pdev: Pointer to pdev
+ *
+ * Return: return the value of the maximum tx power in the current channel list
+ *
+ */
+uint8_t reg_get_max_tx_power(struct wlan_objmgr_pdev *pdev);
 
 /**
  * reg_set_ignore_fw_reg_offload_ind() - Set if regdb offload indication

@@ -590,8 +590,8 @@ uint16_t reg_chan_opclass_to_freq(uint8_t chan,
 				     op_class_tbl->channels[i]); i++) {
 				if (op_class_tbl->channels[i] == chan) {
 					chan = op_class_tbl->channels[i];
-					return (op_class_tbl->start_freq +
-						(chan * FREQ_TO_CHAN_SCALE));
+					return op_class_tbl->start_freq +
+						(chan * FREQ_TO_CHAN_SCALE);
 				}
 			}
 			reg_err_rl("Channel not found");
@@ -601,5 +601,123 @@ uint16_t reg_chan_opclass_to_freq(uint8_t chan,
 	}
 	reg_err_rl("Invalid opclass given as input");
 	return 0;
+}
+
+static void
+reg_get_op_class_tbl_by_chan_map(const struct
+				 reg_dmn_op_class_map_t **op_class_tbl)
+{
+	if (channel_map == channel_map_us)
+		*op_class_tbl = us_op_class;
+	else if (channel_map == channel_map_eu)
+		*op_class_tbl = euro_op_class;
+	else if (channel_map == channel_map_china)
+		*op_class_tbl = us_op_class;
+	else if (channel_map == channel_map_jp)
+		*op_class_tbl = japan_op_class;
+	else
+		*op_class_tbl = global_op_class;
+}
+
+/**
+ * reg_get_channels_from_opclassmap()- Get channels from the opclass map
+ * @pdev: Pointer to pdev
+ * @reg_ap_cap: Pointer to reg_ap_cap
+ * @index: Pointer to index of reg_ap_cap
+ * @op_class_tbl: Pointer to op_class_tbl
+ * @is_opclass_operable: Set true if opclass is operable, else set false
+ *
+ * Populate channels from opclass map to reg_ap_cap as supported and
+ * non-supported channels.
+ *
+ * Return: void.
+ */
+static void
+reg_get_channels_from_opclassmap(
+		struct wlan_objmgr_pdev *pdev,
+		struct regdmn_ap_cap_opclass_t *reg_ap_cap,
+		uint8_t index,
+		const struct reg_dmn_op_class_map_t *op_class_tbl,
+		bool *is_opclass_operable)
+{
+	uint8_t op_cls_chan;
+	qdf_freq_t search_freq;
+	bool is_freq_present;
+	uint8_t chan_idx = 0, n_sup_chans = 0, n_unsup_chans = 0;
+
+	while (op_class_tbl->channels[chan_idx]) {
+		op_cls_chan = op_class_tbl->channels[chan_idx];
+		search_freq = op_class_tbl->start_freq +
+					(FREQ_TO_CHAN_SCALE * op_cls_chan);
+		is_freq_present =
+			reg_is_freq_present_in_cur_chan_list(pdev, search_freq);
+
+		if (!is_freq_present) {
+			reg_ap_cap[index].
+					non_sup_chan_list[n_unsup_chans++] =
+					op_class_tbl->channels[chan_idx];
+			reg_ap_cap[index].num_non_supported_chan++;
+		} else {
+			reg_ap_cap[index].sup_chan_list[n_sup_chans++] =
+					op_class_tbl->channels[chan_idx];
+			reg_ap_cap[index].num_supported_chan++;
+		}
+
+		chan_idx++;
+	}
+
+	if (reg_ap_cap[index].num_supported_chan >= 1)
+		*is_opclass_operable = true;
+}
+
+QDF_STATUS reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
+				   struct regdmn_ap_cap_opclass_t *reg_ap_cap,
+				   uint8_t *n_opclasses,
+				   uint8_t max_supp_op_class,
+				   bool global_tbl_lookup)
+{
+	uint8_t max_reg_power = 0;
+	const struct reg_dmn_op_class_map_t *op_class_tbl;
+	uint8_t index = 0;
+
+	if (global_tbl_lookup)
+		op_class_tbl = global_op_class;
+	else
+		reg_get_op_class_tbl_by_chan_map(&op_class_tbl);
+
+	max_reg_power = reg_get_max_tx_power(pdev);
+
+	while (op_class_tbl->op_class && (index < max_supp_op_class)) {
+		bool is_opclass_operable = false;
+
+		qdf_mem_zero(reg_ap_cap[index].sup_chan_list,
+			     REG_MAX_CHANNELS_PER_OPERATING_CLASS);
+		reg_ap_cap[index].num_supported_chan = 0;
+		qdf_mem_zero(reg_ap_cap[index].non_sup_chan_list,
+			     REG_MAX_CHANNELS_PER_OPERATING_CLASS);
+		reg_ap_cap[index].num_non_supported_chan = 0;
+		reg_get_channels_from_opclassmap(pdev,
+						 reg_ap_cap,
+						 index,
+						 op_class_tbl,
+						 &is_opclass_operable);
+		if (is_opclass_operable) {
+			reg_ap_cap[index].op_class = op_class_tbl->op_class;
+			reg_ap_cap[index].ch_width =
+						op_class_tbl->chan_spacing;
+			reg_ap_cap[index].start_freq =
+						op_class_tbl->start_freq;
+			reg_ap_cap[index].max_tx_pwr_dbm = max_reg_power;
+			reg_ap_cap[index].behav_limit =
+						op_class_tbl->behav_limit;
+			index++;
+		}
+
+		op_class_tbl++;
+	}
+
+	*n_opclasses = index;
+
+	return QDF_STATUS_SUCCESS;
 }
 #endif

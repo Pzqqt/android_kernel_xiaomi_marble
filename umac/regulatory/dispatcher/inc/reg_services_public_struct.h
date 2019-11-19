@@ -598,6 +598,30 @@ struct reg_dmn_op_class_map_t {
 };
 
 /**
+ * struct regdmn_ap_cap_opclass_t: AP Cap operation class table
+ * @op_class: operating class number
+ * @ch_width: channel width in MHz
+ * @start_freq: Starting Frequency in MHz
+ * @behav_limit: OR of bitmaps of enum behav_limit
+ * @max_tx_pwr_dbm: Maximum tx power in dbm
+ * @num_supported_chan: Number of supported channels
+ * @num_non_supported_chan: Number of non-supported channels
+ * @sup_chan_list: Array of supported channel numbers
+ * @non_sup_chan_list: Array of non supported channel numbers
+ */
+struct regdmn_ap_cap_opclass_t {
+	uint8_t op_class;
+	uint8_t ch_width;
+	qdf_freq_t start_freq;
+	uint16_t behav_limit;
+	uint8_t max_tx_pwr_dbm;
+	uint8_t num_supported_chan;
+	uint8_t num_non_supported_chan;
+	uint8_t sup_chan_list[REG_MAX_CHANNELS_PER_OPERATING_CLASS];
+	uint8_t non_sup_chan_list[REG_MAX_CHANNELS_PER_OPERATING_CLASS];
+};
+
+/**
  * struct reg_dmn_supp_op_classes: operating classes
  * @num_classes: number of classes
  * @classes: classes

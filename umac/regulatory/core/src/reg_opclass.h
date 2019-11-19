@@ -89,6 +89,21 @@ uint16_t reg_dmn_set_curr_opclasses(uint8_t num_classes, uint8_t *class);
  */
 uint16_t reg_dmn_get_curr_opclasses(uint8_t *num_classes, uint8_t *class);
 
+/**
+ * reg_get_opclass_details() - Get details about the current opclass table.
+ * @pdev: Pointer to pdev.
+ * @reg_ap_cap: Pointer to reg_ap_cap.
+ * @n_opclasses: Pointer to number of opclasses.
+ * @max_supp_op_class: Maximum number of operating classes supported.
+ * @global_tbl_lookup: Whether to lookup global op class table.
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else return QDF_STATUS_FAILURE.
+ */
+QDF_STATUS reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
+				   struct regdmn_ap_cap_opclass_t *reg_ap_cap,
+				   uint8_t *n_opclasses,
+				   uint8_t max_supp_op_class,
+				   bool global_tbl_lookup);
 #ifdef CONFIG_CHAN_FREQ_API
 
 /**
@@ -193,6 +208,16 @@ uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
 static inline void reg_dmn_print_channels_in_opclass(uint8_t *country,
 						     uint8_t op_class)
 {
+}
+
+static inline
+QDF_STATUS reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
+				   struct regdmn_ap_cap_opclass_t *reg_ap_cap,
+				   uint8_t *n_opclasses,
+				   uint8_t max_supp_op_class,
+				   bool global_tbl_lookup)
+{
+	return QDF_STATUS_E_FAILURE;
 }
 
 #ifdef CONFIG_CHAN_FREQ_API

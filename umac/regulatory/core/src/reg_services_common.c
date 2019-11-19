@@ -2853,6 +2853,36 @@ enum channel_enum reg_get_chan_enum_for_freq(qdf_freq_t freq)
 	return INVALID_CHANNEL;
 }
 
+bool
+reg_is_freq_present_in_cur_chan_list(struct wlan_objmgr_pdev *pdev,
+				     qdf_freq_t freq)
+{
+	enum channel_enum chan_enum;
+	struct regulatory_channel *cur_chan_list;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err_rl("pdev reg obj is NULL");
+		return false;
+	}
+
+	cur_chan_list = pdev_priv_obj->cur_chan_list;
+
+	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++)
+		if (cur_chan_list[chan_enum].center_freq == freq)
+			if ((cur_chan_list[chan_enum].state !=
+			     CHANNEL_STATE_DISABLE) &&
+			    !(cur_chan_list[chan_enum].chan_flags &
+			      REGULATORY_CHAN_DISABLED))
+				return true;
+
+	reg_debug_rl("Channel center frequency %d not found", freq);
+
+	return false;
+}
+
 enum channel_state reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 						  qdf_freq_t freq)
 {
@@ -3474,7 +3504,37 @@ enum reg_wifi_band reg_freq_to_band(qdf_freq_t freq)
 		return REG_BAND_6G;
 	return REG_BAND_UNKNOWN;
 }
+
 #endif /* CONFIG_CHAN_FREQ_API */
+
+uint8_t  reg_get_max_tx_power(struct wlan_objmgr_pdev *pdev)
+{
+	struct regulatory_channel *cur_chan_list;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint8_t i, max_tx_power = 0;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cur_chan_list = pdev_priv_obj->cur_chan_list;
+
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		if (cur_chan_list[i].state != CHANNEL_STATE_DISABLE &&
+		    cur_chan_list[i].chan_flags != REGULATORY_CHAN_DISABLED) {
+			if (cur_chan_list[i].tx_power > max_tx_power)
+				max_tx_power = cur_chan_list[i].tx_power;
+		}
+	}
+
+	if (!max_tx_power)
+		reg_err_rl("max_tx_power is zero");
+
+	return max_tx_power;
+}
 
 QDF_STATUS reg_set_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc)
 {

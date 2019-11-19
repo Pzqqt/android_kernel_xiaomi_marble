@@ -606,6 +606,23 @@ uint16_t wlan_reg_dmn_get_curr_opclasses(uint8_t *num_classes,
 
 
 /**
+ * wlan_reg_get_opclass_details() - Get details about the current opclass table.
+ * @pdev: Pointer to pdev.
+ * @reg_ap_cap: Pointer to reg_ap_cap.
+ * @n_opclasses: Pointer to number of opclasses.
+ * @max_supp_op_class: Maximum number of operating classes supported.
+ * @global_tbl_lookup: Whether to lookup global op class tbl.
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else return QDF_STATUS_FAILURE.
+ */
+QDF_STATUS
+wlan_reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
+			     struct regdmn_ap_cap_opclass_t *reg_ap_cap,
+			     uint8_t *n_opclasses,
+			     uint8_t max_supp_op_class,
+			     bool global_tbl_lookup);
+
+/**
  * wlan_regulatory_init() - init regulatory component
  *
  * Return: Success or Failure
