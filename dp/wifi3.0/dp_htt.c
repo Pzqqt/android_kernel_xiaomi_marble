@@ -2597,8 +2597,7 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 	ppdu_user_desc->peer_id = peer_id;
 
 	tag_buf++;
-	ppdu_user_desc->tid =
-		HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_TID_NUM_GET(*tag_buf);
+	/* not to update ppdu_desc->tid from this TLV */
 	ppdu_user_desc->num_mpdu =
 		HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_NUM_MPDU_GET(*tag_buf);
 
