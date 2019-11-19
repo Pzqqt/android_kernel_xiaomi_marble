@@ -34,7 +34,9 @@
 typedef struct {
 	union {
 		struct hrtimer hrtimer;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0))
 		struct tasklet_hrtimer tasklet_hrtimer;
+#endif
 	} u;
 	enum qdf_context_mode ctx;
 } __qdf_hrtimer_data_t;
@@ -63,6 +65,16 @@ enum hrtimer_mode __qdf_hrtimer_get_mode(enum qdf_hrtimer_mode mode)
  *
  * Return: void
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline
+void __qdf_hrtimer_start(__qdf_hrtimer_data_t *timer, ktime_t interval,
+			 enum qdf_hrtimer_mode mode)
+{
+	enum hrtimer_mode hrt_mode = __qdf_hrtimer_get_mode(mode);
+
+	hrtimer_start(&timer->u.hrtimer, interval, hrt_mode);
+}
+#else
 static inline
 void __qdf_hrtimer_start(__qdf_hrtimer_data_t *timer, ktime_t interval,
 			 enum qdf_hrtimer_mode mode)
@@ -75,6 +87,7 @@ void __qdf_hrtimer_start(__qdf_hrtimer_data_t *timer, ktime_t interval,
 		tasklet_hrtimer_start(&timer->u.tasklet_hrtimer,
 				      interval, hrt_mode);
 }
+#endif
 
 /**
  * __qdf_hrtimer_cancel() - cancels hrtimer in given context
@@ -84,6 +97,16 @@ void __qdf_hrtimer_start(__qdf_hrtimer_data_t *timer, ktime_t interval,
  *
  * Return: int
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline
+int __qdf_hrtimer_cancel(__qdf_hrtimer_data_t *timer)
+{
+	if (timer->ctx == QDF_CONTEXT_HARDWARE)
+		return hrtimer_cancel(&timer->u.hrtimer);
+
+	return 0;
+}
+#else
 static inline
 int __qdf_hrtimer_cancel(__qdf_hrtimer_data_t *timer)
 {
@@ -94,6 +117,7 @@ int __qdf_hrtimer_cancel(__qdf_hrtimer_data_t *timer)
 
 	return 0;
 }
+#endif
 
 /**
  * __qdf_hrtimer_init() - init hrtimer in a given context
@@ -106,6 +130,26 @@ int __qdf_hrtimer_cancel(__qdf_hrtimer_data_t *timer)
  *
  * Return: void
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline void  __qdf_hrtimer_init(__qdf_hrtimer_data_t *timer,
+				       void *cback,
+				       enum qdf_clock_id clock,
+				       enum qdf_hrtimer_mode mode,
+				       enum qdf_context_mode ctx)
+{
+	struct hrtimer *hrtimer = &timer->u.hrtimer;
+	enum hrtimer_mode hrt_mode = __qdf_hrtimer_get_mode(mode);
+
+	timer->ctx = ctx;
+
+	if (timer->ctx == QDF_CONTEXT_HARDWARE) {
+		hrtimer_init(hrtimer, clock, hrt_mode);
+		hrtimer->function = cback;
+	} else if (timer->ctx == QDF_CONTEXT_TASKLET) {
+		QDF_BUG(0);
+	}
+}
+#else
 static inline void  __qdf_hrtimer_init(__qdf_hrtimer_data_t *timer,
 				       void *cback,
 				       enum qdf_clock_id clock,
@@ -125,6 +169,7 @@ static inline void  __qdf_hrtimer_init(__qdf_hrtimer_data_t *timer,
 		tasklet_hrtimer_init(tasklet_hrtimer, cback, clock, hrt_mode);
 	}
 }
+#endif
 
 /**
  * __qdf_hrtimer_kill() - kills hrtimer in given context
@@ -134,6 +179,13 @@ static inline void  __qdf_hrtimer_init(__qdf_hrtimer_data_t *timer,
  *
  * Return: void
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline
+void __qdf_hrtimer_kill(__qdf_hrtimer_data_t *timer)
+{
+	hrtimer_cancel(&timer->u.hrtimer);
+}
+#else
 static inline
 void __qdf_hrtimer_kill(__qdf_hrtimer_data_t *timer)
 {
@@ -142,6 +194,7 @@ void __qdf_hrtimer_kill(__qdf_hrtimer_data_t *timer)
 	else if (timer->ctx == QDF_CONTEXT_TASKLET)
 		tasklet_hrtimer_cancel(&timer->u.tasklet_hrtimer);
 }
+#endif
 
 /**
  * __qdf_hrtimer_get_remaining() - check remaining time in the timer
@@ -151,6 +204,14 @@ void __qdf_hrtimer_kill(__qdf_hrtimer_data_t *timer)
  *
  * Return: remaining time as ktime object
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline ktime_t __qdf_hrtimer_get_remaining(__qdf_hrtimer_data_t *timer)
+{
+	struct hrtimer *hrtimer = &timer->u.hrtimer;
+
+	return hrtimer_get_remaining(hrtimer);
+}
+#else
 static inline ktime_t __qdf_hrtimer_get_remaining(__qdf_hrtimer_data_t *timer)
 {
 	struct hrtimer *hrtimer = &timer->u.hrtimer;
@@ -161,6 +222,7 @@ static inline ktime_t __qdf_hrtimer_get_remaining(__qdf_hrtimer_data_t *timer)
 	else
 		return hrtimer_get_remaining(&tasklet_hrtimer->timer);
 }
+#endif
 
 /**
  * __qdf_hrtimer_is_queued() - check whether the timer is on one of the queues
@@ -171,6 +233,14 @@ static inline ktime_t __qdf_hrtimer_get_remaining(__qdf_hrtimer_data_t *timer)
  * Return: false when the timer was not in queue
  *         true when the timer was in queue
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline bool __qdf_hrtimer_is_queued(__qdf_hrtimer_data_t *timer)
+{
+	struct hrtimer *hrtimer = &timer->u.hrtimer;
+
+	return hrtimer_is_queued(hrtimer);
+}
+#else
 static inline bool __qdf_hrtimer_is_queued(__qdf_hrtimer_data_t *timer)
 {
 	struct hrtimer *hrtimer = &timer->u.hrtimer;
@@ -181,6 +251,7 @@ static inline bool __qdf_hrtimer_is_queued(__qdf_hrtimer_data_t *timer)
 	else
 		return hrtimer_is_queued(&tasklet_hrtimer->timer);
 }
+#endif
 
 /**
  * __qdf_hrtimer_callback_running() - check if callback is running
@@ -191,6 +262,14 @@ static inline bool __qdf_hrtimer_is_queued(__qdf_hrtimer_data_t *timer)
  * Return: false when callback is not running
  *         true when callback is running
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline bool __qdf_hrtimer_callback_running(__qdf_hrtimer_data_t *timer)
+{
+	struct hrtimer *hrtimer = &timer->u.hrtimer;
+
+	return hrtimer_callback_running(hrtimer);
+}
+#else
 static inline bool __qdf_hrtimer_callback_running(__qdf_hrtimer_data_t *timer)
 {
 	struct hrtimer *hrtimer = &timer->u.hrtimer;
@@ -201,6 +280,7 @@ static inline bool __qdf_hrtimer_callback_running(__qdf_hrtimer_data_t *timer)
 	else
 		return hrtimer_callback_running(&tasklet_hrtimer->timer);
 }
+#endif
 
 /**
  * __qdf_hrtimer_active() - check if timer is active
@@ -212,6 +292,14 @@ static inline bool __qdf_hrtimer_callback_running(__qdf_hrtimer_data_t *timer)
  * Return: false if timer is not active
  *         true if timer is active
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline bool __qdf_hrtimer_active(__qdf_hrtimer_data_t *timer)
+{
+	struct hrtimer *hrtimer = &timer->u.hrtimer;
+
+	return hrtimer_active(hrtimer);
+}
+#else
 static inline bool __qdf_hrtimer_active(__qdf_hrtimer_data_t *timer)
 {
 	struct hrtimer *hrtimer = &timer->u.hrtimer;
@@ -222,6 +310,7 @@ static inline bool __qdf_hrtimer_active(__qdf_hrtimer_data_t *timer)
 	else
 		return hrtimer_active(&tasklet_hrtimer->timer);
 }
+#endif
 
 /**
  * __qdf_hrtimer_cb_get_time() - get remaining time in callback
@@ -231,6 +320,14 @@ static inline bool __qdf_hrtimer_active(__qdf_hrtimer_data_t *timer)
  *
  * Return: time remaining as ktime object
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline ktime_t __qdf_hrtimer_cb_get_time(__qdf_hrtimer_data_t *timer)
+{
+	struct hrtimer *hrtimer = &timer->u.hrtimer;
+
+	return hrtimer_cb_get_time(hrtimer);
+}
+#else
 static inline ktime_t __qdf_hrtimer_cb_get_time(__qdf_hrtimer_data_t *timer)
 {
 	struct hrtimer *hrtimer = &timer->u.hrtimer;
@@ -241,6 +338,7 @@ static inline ktime_t __qdf_hrtimer_cb_get_time(__qdf_hrtimer_data_t *timer)
 	else
 		return hrtimer_cb_get_time(&tasklet_hrtimer->timer);
 }
+#endif
 
 /**
  * __qdf_hrtimer_forward() - forward the hrtimer
@@ -252,6 +350,16 @@ static inline ktime_t __qdf_hrtimer_cb_get_time(__qdf_hrtimer_data_t *timer)
  *
  * Return:the number of overruns
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+static inline uint64_t __qdf_hrtimer_forward(__qdf_hrtimer_data_t *timer,
+					     ktime_t now,
+					     ktime_t interval)
+{
+	struct hrtimer *hrtimer = &timer->u.hrtimer;
+
+	return hrtimer_forward(hrtimer, now, interval);
+}
+#else
 static inline uint64_t __qdf_hrtimer_forward(__qdf_hrtimer_data_t *timer,
 					     ktime_t now,
 					     ktime_t interval)
@@ -264,5 +372,6 @@ static inline uint64_t __qdf_hrtimer_forward(__qdf_hrtimer_data_t *timer,
 	else
 		return hrtimer_forward(&tasklet_hrtimer->timer, now, interval);
 }
+#endif
 
 #endif /* _I_QDF_HRTIMER_H */
