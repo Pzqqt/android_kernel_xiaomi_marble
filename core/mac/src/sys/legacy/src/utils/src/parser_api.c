@@ -386,7 +386,7 @@ populate_dot11f_country(struct mac_context *mac,
 			tDot11fIECountry *pDot11f, struct pe_session *pe_session)
 {
 	uint32_t len, j = 0;
-	enum band_info rfBand;
+	enum reg_wifi_band rfBand;
 	uint8_t temp[CFG_MAX_STR_LEN], code[3];
 	tSirMacChanInfo *max_tx_power_data;
 	uint32_t rem_length = 0, copied_length = 0;
@@ -395,7 +395,7 @@ populate_dot11f_country(struct mac_context *mac,
 		return QDF_STATUS_SUCCESS;
 
 	lim_get_rf_band_new(mac, &rfBand, pe_session);
-	if (rfBand == BAND_5G) {
+	if (rfBand == REG_BAND_5G) {
 		len = mac->mlme_cfg->power.max_tx_power_5.len;
 		max_tx_power_data =
 		(tSirMacChanInfo *)mac->mlme_cfg->power.max_tx_power_5.data;
@@ -563,10 +563,10 @@ populate_dot11f_erp_info(struct mac_context *mac,
 			 tDot11fIEERPInfo *pDot11f, struct pe_session *pe_session)
 {
 	uint32_t val;
-	enum band_info rfBand = BAND_UNKNOWN;
+	enum reg_wifi_band rfBand = REG_BAND_UNKNOWN;
 
 	lim_get_rf_band_new(mac, &rfBand, pe_session);
-	if (BAND_2G == rfBand) {
+	if (REG_BAND_2G == rfBand) {
 		pDot11f->present = 1;
 
 		val = pe_session->cfgProtection.fromllb;

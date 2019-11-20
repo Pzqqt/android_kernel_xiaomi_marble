@@ -375,17 +375,18 @@ lim_assoc_rej_get_remaining_delta(struct sir_rssi_disallow_lst *node);
 QDF_STATUS
 lim_rem_blacklist_entry_with_lowest_delta(qdf_list_t *list);
 
-static inline enum band_info lim_get_rf_band(uint8_t channel)
+static inline enum reg_wifi_band lim_get_rf_band(uint32_t chan_freq)
 {
-	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&
-			(channel <= SIR_11A_CHANNEL_END))
-		return BAND_5G;
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq))
+		return REG_BAND_6G;
 
-	if ((channel >= SIR_11B_CHANNEL_BEGIN) &&
-			(channel <= SIR_11B_CHANNEL_END))
-		return BAND_2G;
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq))
+		return REG_BAND_5G;
 
-	return BAND_UNKNOWN;
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
+		return REG_BAND_2G;
+
+	return REG_BAND_UNKNOWN;
 }
 
 static inline QDF_STATUS

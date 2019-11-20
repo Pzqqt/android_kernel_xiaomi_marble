@@ -406,10 +406,10 @@ static inline void lim_get_phy_mode(struct mac_context *mac, uint32_t *phyMode,
 
 /* ----------------------------------------------------------------------- */
 static inline void lim_get_rf_band_new(struct mac_context *mac,
-				       enum band_info *band,
+				       enum reg_wifi_band *band,
 				       struct pe_session *pe_session)
 {
-	*band = pe_session ? pe_session->limRFBand : BAND_UNKNOWN;
+	*band = pe_session ? pe_session->limRFBand : REG_BAND_UNKNOWN;
 }
 
 /**

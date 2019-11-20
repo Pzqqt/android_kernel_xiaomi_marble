@@ -824,7 +824,7 @@ lim_ibss_decide_protection(struct mac_context *mac, tpDphHashNode sta,
 			   tpUpdateBeaconParams pBeaconParams,
 			   struct pe_session *pe_session)
 {
-	enum band_info rfBand = BAND_UNKNOWN;
+	enum reg_wifi_band rfBand = REG_BAND_UNKNOWN;
 	uint32_t phyMode;
 	tLimProtStaCacheType protStaCacheType =
 		eLIM_PROT_STA_CACHE_TYPE_INVALID;
@@ -837,7 +837,7 @@ lim_ibss_decide_protection(struct mac_context *mac, tpDphHashNode sta,
 	}
 
 	lim_get_rf_band_new(mac, &rfBand, pe_session);
-	if (BAND_2G == rfBand) {
+	if (REG_BAND_2G == rfBand) {
 		lim_get_phy_mode(mac, &phyMode, pe_session);
 
 		/* We are 11G or 11n. Check if we need protection from 11b Stations. */
@@ -1576,14 +1576,14 @@ void lim_ibss_decide_protection_on_delete(struct mac_context *mac_ctx,
 {
 	uint32_t phymode;
 	tHalBitVal erpenabled = eHAL_CLEAR;
-	enum band_info rfband = BAND_UNKNOWN;
+	enum reg_wifi_band rfband = REG_BAND_UNKNOWN;
 	uint32_t i;
 
 	if (!stads)
 		return;
 
 	lim_get_rf_band_new(mac_ctx, &rfband, session);
-	if (BAND_2G != rfband)
+	if (REG_BAND_2G != rfband)
 		return;
 
 	lim_get_phy_mode(mac_ctx, &phymode, session);

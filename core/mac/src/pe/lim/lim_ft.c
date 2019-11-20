@@ -403,7 +403,7 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 	}
 	self_dot11_mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
 	pe_debug("selfDot11Mode: %d", self_dot11_mode);
-	if (ft_session->limRFBand == BAND_2G)
+	if (ft_session->limRFBand == REG_BAND_2G)
 		ft_session->dot11mode = MLME_DOT11_MODE_11G;
 	else
 		ft_session->dot11mode = MLME_DOT11_MODE_11A;
@@ -515,8 +515,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 		wlan_reg_freq_to_chan(mac->pdev, pbssDescription->chan_freq);
 	ft_session->lim_reassoc_chan_freq = pbssDescription->chan_freq;
 	ft_session->curr_op_freq = pbssDescription->chan_freq;
-	ft_session->limRFBand = lim_get_rf_band(wlan_reg_freq_to_chan(
-					mac->pdev, ft_session->curr_op_freq));
+	ft_session->limRFBand = lim_get_rf_band(ft_session->curr_op_freq);
 
 	lim_fill_dot11mode(mac, ft_session, pe_session, pBeaconStruct);
 
@@ -536,7 +535,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 
 	ft_session->nss = ft_session ->vdev_nss;
 
-	if (ft_session->limRFBand == BAND_2G) {
+	if (ft_session->limRFBand == REG_BAND_2G) {
 		cbEnabledMode = mac->roam.configParam.channelBondingMode24GHz;
 	} else {
 		cbEnabledMode = mac->roam.configParam.channelBondingMode5GHz;
@@ -663,7 +662,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 #ifdef WLAN_FEATURE_11W
 	ft_session->limRmfEnabled = pe_session->limRmfEnabled;
 #endif
-	if ((ft_session->limRFBand == BAND_2G) &&
+	if ((ft_session->limRFBand == REG_BAND_2G) &&
 		(ft_session->htSupportedChannelWidthSet ==
 		eHT_CHANNEL_WIDTH_40MHZ))
 		lim_init_obss_params(mac, ft_session);

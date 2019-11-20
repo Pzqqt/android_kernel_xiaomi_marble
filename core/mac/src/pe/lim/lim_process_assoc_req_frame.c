@@ -65,6 +65,7 @@ static void lim_convert_supported_channels(struct mac_context *mac_ctx,
 	uint8_t chn_count;
 	uint8_t next_ch_no;
 	uint8_t channel_offset = 0;
+	uint32_t chan_freq;
 
 	if (assoc_req->supportedChannels.length >=
 		SIR_MAX_SUPPORTED_CHANNEL_LIST) {
@@ -93,9 +94,12 @@ static void lim_convert_supported_channels(struct mac_context *mac_ctx,
 		if (chn_count <= 1)
 			continue;
 		next_ch_no = first_ch_no;
-		if (BAND_5G == lim_get_rf_band(first_ch_no))
+		chan_freq = wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
+			first_ch_no);
+
+		if (REG_BAND_5G == lim_get_rf_band(chan_freq))
 			channel_offset =  SIR_11A_FREQUENCY_OFFSET;
-		else if (BAND_2G == lim_get_rf_band(first_ch_no))
+		else if (REG_BAND_2G == lim_get_rf_band(chan_freq))
 			channel_offset = SIR_11B_FREQUENCY_OFFSET;
 		else
 			continue;
@@ -2498,7 +2502,7 @@ static void lim_fill_assoc_ind_vht_info(struct mac_context *mac_ctx,
 	uint8_t i;
 	bool nw_type_11b = true;
 
-	if (session_entry->limRFBand == BAND_2G) {
+	if (session_entry->limRFBand == REG_BAND_2G) {
 		if (session_entry->vhtCapability && assoc_req->VHTCaps.present)
 			assoc_ind->chan_info.info = MODE_11AC_VHT20_2G;
 		else if (session_entry->htCapability

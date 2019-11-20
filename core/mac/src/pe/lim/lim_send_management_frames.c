@@ -190,6 +190,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	tDot11fIEExtCap extracted_ext_cap;
 	QDF_STATUS sir_status;
 	const uint8_t *qcn_ie = NULL;
+	uint32_t chan_freq;
 
 	if (additional_ielen)
 		addn_ielen = *additional_ielen;
@@ -406,10 +407,12 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 		payload += addn_ielen;
 	}
 
+	chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, channel);
+
 	/* If this probe request is sent during P2P Search State, then we need
 	 * to send it at OFDM rate.
 	 */
-	if ((BAND_5G == lim_get_rf_band(channel)) ||
+	if ((REG_BAND_5G == lim_get_rf_band(chan_freq)) ||
 		/*
 		 * For unicast probe req mgmt from Join function we don't set
 		 * above variables. So we need to add one more check whether it

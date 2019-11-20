@@ -912,13 +912,14 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		mlm_start_req->txChannelWidthSet =
 			session->htRecommendedTxWidthSet;
 
-		session->limRFBand = lim_get_rf_band(channel_number);
+		session->limRFBand = lim_get_rf_band(
+			sme_start_bss_req->oper_ch_freq);
 
 		/* Initialize 11h Enable Flag */
 		session->lim11hEnable = 0;
 		if (mlm_start_req->bssType != eSIR_IBSS_MODE &&
 		    (CHAN_HOP_ALL_BANDS_ENABLE ||
-		     BAND_5G == session->limRFBand)) {
+		     REG_BAND_5G == session->limRFBand)) {
 			session->lim11hEnable =
 				mac_ctx->mlme_cfg->gen.enabled_11h;
 
@@ -1632,12 +1633,10 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			session->gUapsdPerAcTriggerEnableMask = 0;
 		}
 
-		session->limRFBand = lim_get_rf_band(
-			wlan_reg_freq_to_chan(mac_ctx->pdev,
-					      session->curr_op_freq));
+		session->limRFBand = lim_get_rf_band(session->curr_op_freq);
 
 		/* Initialize 11h Enable Flag */
-		if (session->limRFBand == BAND_5G)
+		if (session->limRFBand == REG_BAND_5G)
 			session->lim11hEnable =
 				mac_ctx->mlme_cfg->gen.enabled_11h;
 		else
@@ -5094,8 +5093,7 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 		session_entry->htSupportedChannelWidthSet;
 	session_entry->curr_op_freq = target_freq;
 	session_entry->limRFBand = lim_get_rf_band(
-		wlan_reg_freq_to_chan(
-		mac_ctx->pdev, session_entry->curr_op_freq));
+		session_entry->curr_op_freq);
 	session_entry->cac_duration_ms = ch_change_req->cac_duration_ms;
 	session_entry->dfs_regdomain = ch_change_req->dfs_regdomain;
 	session_entry->maxTxPower = max_tx_pwr;
@@ -5105,7 +5103,7 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 
 	/* Initialize 11h Enable Flag */
 	if (CHAN_HOP_ALL_BANDS_ENABLE ||
-	    session_entry->limRFBand == BAND_5G)
+	    session_entry->limRFBand == REG_BAND_5G)
 		session_entry->lim11hEnable =
 			mac_ctx->mlme_cfg->gen.enabled_11h;
 	else
