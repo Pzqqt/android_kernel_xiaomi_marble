@@ -1720,6 +1720,33 @@ ucfg_mlme_set_obss_color_collision_offload_enabled(
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS ucfg_mlme_set_restricted_80p80_bw_supp(struct wlan_objmgr_psoc *psoc,
+						  bool restricted_80p80_supp)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.vht_caps.vht_cap_info.restricted_80p80_bw_supp =
+					restricted_80p80_supp;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_mlme_get_restricted_80p80_bw_supp(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj)
+		return true;
+
+	return mlme_obj->cfg.vht_caps.vht_cap_info.restricted_80p80_bw_supp;
+}
+
 QDF_STATUS
 ucfg_mlme_get_channel_bonding_24ghz(struct wlan_objmgr_psoc *psoc,
 				    uint32_t *val)

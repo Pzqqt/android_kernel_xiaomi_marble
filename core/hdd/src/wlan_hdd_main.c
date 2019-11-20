@@ -2207,6 +2207,11 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		hdd_err("set tx_bfee_ant_supp failed");
 	}
 
+	status = ucfg_mlme_set_restricted_80p80_bw_supp(hdd_ctx->psoc,
+							cfg->restricted_80p80_bw_supp);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set MLME restircted 80p80 BW support");
+
 	if ((value > MLME_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF) &&
 	    !cfg->tx_bfee_8ss_enabled) {
 		status = ucfg_mlme_cfg_set_vht_tx_bfee_ant_supp(hdd_ctx->psoc,

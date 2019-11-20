@@ -315,6 +315,7 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 	uint8_t chan_center_freq_seg1;
 	tDot11fIEVHTCaps *vht_caps;
 	uint8_t channel = 0;
+	struct mlme_vht_capabilities_info *mlme_vht_cap;
 
 	beacon_struct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (!beacon_struct)
@@ -332,6 +333,7 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 		return;
 	}
 
+	mlme_vht_cap = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 	if (beacon_struct->wmeInfoPresent ||
 	    beacon_struct->wmeEdcaPresent ||
 	    beacon_struct->HTCaps.present)
@@ -405,6 +407,21 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 
 		fw_vht_ch_wd = wma_get_vht_ch_width();
 		vht_ch_wd = QDF_MIN(fw_vht_ch_wd, ap_bcon_ch_width);
+
+		if ((vht_ch_wd > WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) &&
+		    (ap_bcon_ch_width ==
+		     WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ) &&
+		    mlme_vht_cap->restricted_80p80_bw_supp) {
+			if ((chan_center_freq_seg1 == 138 &&
+			     vht_op->chan_center_freq_seg0 == 155) ||
+			    (vht_op->chan_center_freq_seg0 == 138 &&
+			     chan_center_freq_seg1 == 155))
+				vht_ch_wd =
+					WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ;
+			else
+				vht_ch_wd =
+					WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
+		}
 		/*
 		 * If the supported channel width is greater than 80MHz and
 		 * AP supports Nss > 1 in 160MHz mode then connect the STA

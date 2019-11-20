@@ -3712,6 +3712,8 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		sap_config = &((WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config);
 		sap_config->chan_freq = chandef->chan->center_freq;
 		sap_config->ch_params.center_freq_seg1 = channel_seg2;
+		sap_config->ch_params.center_freq_seg0 =
+			ieee80211_frequency_to_channel(chandef->center_freq1);
 
 		if (QDF_SAP_MODE == adapter->device_mode) {
 			/* set channel to what hostapd configured */
@@ -5433,6 +5435,18 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	config->ch_params.ch_width = config->ch_width_orig;
+	if ((config->ch_params.ch_width == CH_WIDTH_80P80MHZ) &&
+	    ucfg_mlme_get_restricted_80p80_bw_supp(hdd_ctx->psoc)) {
+		if (!((config->ch_params.center_freq_seg0 == 138 &&
+		    config->ch_params.center_freq_seg1 == 155) ||
+		    (config->ch_params.center_freq_seg1 == 138 &&
+		     config->ch_params.center_freq_seg0 == 155))) {
+			config->ch_params.center_freq_seg1 = 0;
+			config->ch_width_orig = CH_WIDTH_80MHZ;
+			config->ch_params.ch_width = config->ch_width_orig;
+		}
+	}
+
 	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev, config->chan_freq,
 					     config->sec_ch_freq,
 					     &config->ch_params);

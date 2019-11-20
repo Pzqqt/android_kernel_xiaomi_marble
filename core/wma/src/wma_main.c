@@ -5177,6 +5177,25 @@ static void wma_update_obss_color_collision_support(tp_wma_handle wh,
 		tgt_cfg->obss_color_collision_offloaded = false;
 }
 
+/**
+ * wma_update_restricted_80p80_bw_support() - update restricted 80+80 supprot
+ * @wh: wma handle
+ * @tgt_cfg: target configuration to be updated
+ *
+ * Update restricted 80+80MHz (165MHz) BW support based on service bit.
+ *
+ * Return: None
+ */
+static void wma_update_restricted_80p80_bw_support(tp_wma_handle wh,
+						   struct wma_tgt_cfg *tgt_cfg)
+{
+	if (wmi_service_enabled(wh->wmi_handle,
+				wmi_service_bw_165mhz_support))
+		tgt_cfg->restricted_80p80_bw_supp = true;
+	else
+		tgt_cfg->restricted_80p80_bw_supp = false;
+}
+
 #ifdef WLAN_SUPPORT_GREEN_AP
 static void wma_green_ap_register_handlers(tp_wma_handle wma_handle)
 {
@@ -5421,7 +5440,7 @@ static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
 	wma_update_nan_target_caps(wma_handle, &tgt_cfg);
 	wma_update_bcast_twt_support(wma_handle, &tgt_cfg);
-
+	wma_update_restricted_80p80_bw_support(wma_handle, &tgt_cfg);
 	/* Take the max of chains supported by FW, which will limit nss */
 	for (i = 0; i < tgt_hdl->info.total_mac_phy_cnt; i++)
 		wma_fill_chain_cfg(tgt_hdl, i);
