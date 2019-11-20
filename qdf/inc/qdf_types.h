@@ -105,6 +105,15 @@ typedef void *qdf_pm_t;
 typedef void *qdf_handle_t;
 
 /**
+ * typedef qdf_freq_t - define frequency as a 16 bit/32 bit
+ * unsigned integer depending on the requirement
+ */
+#ifdef CONFIG_16_BIT_FREQ_TYPE
+typedef uint16_t qdf_freq_t;
+#else
+typedef uint32_t qdf_freq_t;
+#endif
+/**
  * typedef qdf_device_t - Platform/bus generic handle.
  * Used for bus specific functions.
  */
