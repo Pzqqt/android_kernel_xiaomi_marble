@@ -1009,6 +1009,12 @@ end:
 	mutex_unlock(&dp->session_lock);
 
 	/*
+	 * Delay the HPD connect notification to see if sink generates any
+	 * IRQ HPDs immediately after the HPD high.
+	 */
+	usleep_range(10000, 10100);
+
+	/*
 	 * If an IRQ HPD is pending, then do not send a connect notification.
 	 * Once this work returns, the IRQ HPD would be processed and any
 	 * required actions (such as link maintenance) would be done which
