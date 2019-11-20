@@ -33,7 +33,7 @@
  * Return: Minimum 2.4GHz channel number
  */
 #define WLAN_REG_MIN_24GHZ_CH_NUM wlan_reg_min_24ghz_ch_num()
-uint32_t wlan_reg_min_24ghz_ch_num(void);
+uint8_t wlan_reg_min_24ghz_ch_num(void);
 
 /**
  * wlan_reg_max_24ghz_ch_num() - Get maximum 2.4GHz channel number
@@ -41,7 +41,7 @@ uint32_t wlan_reg_min_24ghz_ch_num(void);
  * Return: Maximum 2.4GHz channel number
  */
 #define WLAN_REG_MAX_24GHZ_CH_NUM wlan_reg_max_24ghz_ch_num()
-uint32_t wlan_reg_max_24ghz_ch_num(void);
+uint8_t wlan_reg_max_24ghz_ch_num(void);
 
 /**
  * wlan_reg_min_5ghz_ch_num() - Get minimum 5GHz channel number
@@ -49,7 +49,7 @@ uint32_t wlan_reg_max_24ghz_ch_num(void);
  * Return: Minimum 5GHz channel number
  */
 #define WLAN_REG_MIN_5GHZ_CH_NUM wlan_reg_min_5ghz_ch_num()
-uint32_t wlan_reg_min_5ghz_ch_num(void);
+uint8_t wlan_reg_min_5ghz_ch_num(void);
 
 /**
  * wlan_reg_max_5ghz_ch_num() - Get maximum 5GHz channel number
@@ -57,7 +57,7 @@ uint32_t wlan_reg_min_5ghz_ch_num(void);
  * Return: Maximum 5GHz channel number
  */
 #define WLAN_REG_MAX_5GHZ_CH_NUM wlan_reg_max_5ghz_ch_num()
-uint32_t wlan_reg_max_5ghz_ch_num(void);
+uint8_t wlan_reg_max_5ghz_ch_num(void);
 #endif /* CONFIG_CHAN_NUM_API */
 
 #ifdef CONFIG_CHAN_FREQ_API
@@ -67,7 +67,7 @@ uint32_t wlan_reg_max_5ghz_ch_num(void);
  * Return: Minimum 2.4GHz channel frequency
  */
 #define WLAN_REG_MIN_24GHZ_CHAN_FREQ wlan_reg_min_24ghz_chan_freq()
-uint16_t wlan_reg_min_24ghz_chan_freq(void);
+qdf_freq_t wlan_reg_min_24ghz_chan_freq(void);
 
 /**
  * wlan_reg_max_24ghz_chan_freq() - Get maximum 2.4GHz channel frequency
@@ -75,7 +75,7 @@ uint16_t wlan_reg_min_24ghz_chan_freq(void);
  * Return: Maximum 2.4GHz channel frequency
  */
 #define WLAN_REG_MAX_24GHZ_CHAN_FREQ wlan_reg_max_24ghz_chan_freq()
-uint16_t wlan_reg_max_24ghz_chan_freq(void);
+qdf_freq_t wlan_reg_max_24ghz_chan_freq(void);
 
 /**
  * wlan_reg_min_5ghz_chan_freq() - Get minimum 5GHz channel frequency
@@ -83,7 +83,7 @@ uint16_t wlan_reg_max_24ghz_chan_freq(void);
  * Return: Minimum 5GHz channel frequency
  */
 #define WLAN_REG_MIN_5GHZ_CHAN_FREQ wlan_reg_min_5ghz_chan_freq()
-uint16_t wlan_reg_min_5ghz_chan_freq(void);
+qdf_freq_t wlan_reg_min_5ghz_chan_freq(void);
 
 /**
  * wlan_reg_max_5ghz_chan_freq() - Get maximum 5GHz channel frequency
@@ -91,7 +91,7 @@ uint16_t wlan_reg_min_5ghz_chan_freq(void);
  * Return: Maximum 5GHz channel frequency
  */
 #define WLAN_REG_MAX_5GHZ_CHAN_FREQ wlan_reg_max_5ghz_chan_freq()
-uint16_t wlan_reg_max_5ghz_chan_freq(void);
+qdf_freq_t wlan_reg_max_5ghz_chan_freq(void);
 #endif /* CONFIG_CHAN_FREQ_API */
 
 #ifdef CONFIG_CHAN_NUM_API
@@ -102,7 +102,7 @@ uint16_t wlan_reg_max_5ghz_chan_freq(void);
  * Return: true if channel number is 2.4GHz, else false
  */
 #define WLAN_REG_IS_24GHZ_CH(chan) wlan_reg_is_24ghz_ch(chan)
-bool wlan_reg_is_24ghz_ch(uint32_t chan);
+bool wlan_reg_is_24ghz_ch(uint8_t chan);
 
 /**
  * wlan_reg_is_5ghz_ch() - Check if the given channel number is 5GHz
@@ -111,7 +111,7 @@ bool wlan_reg_is_24ghz_ch(uint32_t chan);
  * Return: true if channel number is 5GHz, else false
  */
 #define WLAN_REG_IS_5GHZ_CH(chan) wlan_reg_is_5ghz_ch(chan)
-bool wlan_reg_is_5ghz_ch(uint32_t chan);
+bool wlan_reg_is_5ghz_ch(uint8_t chan);
 #endif /* CONFIG_CHAN_NUM_API */
 
 /**
@@ -121,7 +121,7 @@ bool wlan_reg_is_5ghz_ch(uint32_t chan);
  * Return: true if channel frequency is 2.4GHz, else false
  */
 #define WLAN_REG_IS_24GHZ_CH_FREQ(freq) wlan_reg_is_24ghz_ch_freq(freq)
-bool wlan_reg_is_24ghz_ch_freq(uint32_t freq);
+bool wlan_reg_is_24ghz_ch_freq(qdf_freq_t freq);
 
 /**
  * wlan_reg_is_5ghz_ch_freq() - Check if the given channel frequency is 5GHz
@@ -130,7 +130,7 @@ bool wlan_reg_is_24ghz_ch_freq(uint32_t freq);
  * Return: true if channel frequency is 5GHz, else false
  */
 #define WLAN_REG_IS_5GHZ_CH_FREQ(freq) wlan_reg_is_5ghz_ch_freq(freq)
-bool wlan_reg_is_5ghz_ch_freq(uint32_t freq);
+bool wlan_reg_is_5ghz_ch_freq(qdf_freq_t freq);
 
 #ifdef CONFIG_BAND_6GHZ
 /**
@@ -225,9 +225,9 @@ wlan_reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
  * supported only for 2.4Ghz and 5Ghz bands. For other bands the following
  * priority is given: 1) 6Ghz 2) 5Ghz 3) 2.4Ghz.
  */
-uint16_t wlan_reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
-				    uint8_t chan,
-				    uint8_t band_mask);
+qdf_freq_t wlan_reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
+				      uint8_t chan,
+				      uint8_t band_mask);
 
 /**
  * wlan_reg_is_49ghz_freq() - Check if the given channel frequency is 4.9GHz
@@ -236,7 +236,7 @@ uint16_t wlan_reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
  * Return: true if channel frequency is 4.9GHz, else false
  */
 #define WLAN_REG_IS_49GHZ_FREQ(freq) wlan_reg_is_49ghz_freq(freq)
-bool wlan_reg_is_49ghz_freq(uint32_t freq);
+bool wlan_reg_is_49ghz_freq(qdf_freq_t freq);
 
 /**
  * wlan_reg_ch_num() - Get channel number from channel enum
@@ -245,7 +245,7 @@ bool wlan_reg_is_49ghz_freq(uint32_t freq);
  * Return: channel number
  */
 #define WLAN_REG_CH_NUM(ch_enum) wlan_reg_ch_num(ch_enum)
-uint32_t wlan_reg_ch_num(uint32_t ch_enum);
+uint8_t wlan_reg_ch_num(uint32_t ch_enum);
 
 /**
  * wlan_reg_ch_to_freq() - Get channel frequency from channel enum
@@ -254,7 +254,7 @@ uint32_t wlan_reg_ch_num(uint32_t ch_enum);
  * Return: channel frequency
  */
 #define WLAN_REG_CH_TO_FREQ(ch_enum) wlan_reg_ch_to_freq(ch_enum)
-uint32_t wlan_reg_ch_to_freq(uint32_t ch_enum);
+qdf_freq_t wlan_reg_ch_to_freq(uint32_t ch_enum);
 
 #ifdef CONFIG_CHAN_NUM_API
 /**
@@ -267,7 +267,7 @@ uint32_t wlan_reg_ch_to_freq(uint32_t ch_enum);
  */
 #define WLAN_REG_IS_SAME_BAND_CHANNELS(chan_num1, chan_num2) \
 	wlan_reg_is_same_band_channels(chan_num1, chan_num2)
-bool wlan_reg_is_same_band_channels(uint32_t chan_num1, uint32_t chan_num2);
+bool wlan_reg_is_same_band_channels(uint8_t chan_num1, uint8_t chan_num2);
 
 /**
  * wlan_reg_is_channel_valid_5g_sbs() Check if the given channel is 5G SBS.
@@ -278,7 +278,7 @@ bool wlan_reg_is_same_band_channels(uint32_t chan_num1, uint32_t chan_num2);
  */
 #define WLAN_REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan) \
 	wlan_reg_is_channel_valid_5g_sbs(curchan, newchan)
-bool wlan_reg_is_channel_valid_5g_sbs(uint32_t curchan, uint32_t newchan);
+bool wlan_reg_is_channel_valid_5g_sbs(uint8_t curchan, uint8_t newchan);
 #endif /* CONFIG_CHAN_NUM_API */
 
 
@@ -290,7 +290,7 @@ bool wlan_reg_is_channel_valid_5g_sbs(uint32_t curchan, uint32_t newchan);
  * Return: band info
  */
 #define WLAN_REG_CHAN_TO_BAND(chan_num)  wlan_reg_chan_to_band(chan_num)
-enum band_info wlan_reg_chan_to_band(uint32_t chan_num);
+enum band_info wlan_reg_chan_to_band(uint8_t chan_num);
 
 /**
  * wlan_reg_get_channel_list_with_power() - Provide the channel list with power
@@ -341,7 +341,7 @@ QDF_STATUS wlan_reg_read_current_country(struct wlan_objmgr_psoc *psoc,
  * Return: true if chan is dfs, otherwise false
  */
 bool
-wlan_reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch);
+wlan_reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch);
 
 /**
  * wlan_reg_is_etsi13_srd_chan () - Checks if the ch is ETSI13 srd ch or not
@@ -364,7 +364,7 @@ bool wlan_reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
  * Return: true or false
  */
 bool wlan_reg_is_etsi13_srd_chan_for_freq(struct wlan_objmgr_pdev *pdev,
-					  uint16_t freq);
+					  qdf_freq_t freq);
 #endif /*CONFIG_CHAN_FREQ_API*/
 
 /**
@@ -402,7 +402,7 @@ bool wlan_reg_is_world(uint8_t *country);
  *
  * Return: Channel enum
  */
-enum channel_enum wlan_reg_get_chan_enum(uint32_t chan_num);
+enum channel_enum wlan_reg_get_chan_enum(uint8_t chan_num);
 
 /**
  * wlan_reg_get_channel_state() - Get channel state from regulatory
@@ -411,7 +411,7 @@ enum channel_enum wlan_reg_get_chan_enum(uint32_t chan_num);
  * Return: channel state
  */
 enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
-					      uint32_t ch);
+					      uint8_t ch);
 
 /**
  * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
@@ -468,7 +468,7 @@ QDF_STATUS wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
  * Return: int
  */
 uint32_t wlan_reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
-					uint32_t chan_num);
+					uint8_t chan_num);
 
 /**
  * wlan_reg_get_channel_freq() - provide the channel center freq
@@ -476,8 +476,8 @@ uint32_t wlan_reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
  *
  * Return: int
  */
-uint32_t wlan_reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
-				   uint32_t chan_num);
+qdf_freq_t wlan_reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
+				     uint8_t chan_num);
 #endif /* CONFIG_CHAN_NUM_API */
 
 /**
@@ -657,7 +657,7 @@ void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
  *
  * Return: true or false
  */
-bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
 
 /**
  * wlan_reg_is_dsrc_chan () - Checks if the channel is dsrc channel or not
@@ -677,7 +677,7 @@ bool wlan_reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan_num);
  * Return: true or false
  */
 bool wlan_reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
-				       uint32_t chan);
+				       uint8_t chan);
 
 /**
  * wlan_reg_is_disable_ch () - Checks chan state for disabled
@@ -686,7 +686,7 @@ bool wlan_reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
  *
  * Return: true or false
  */
-bool wlan_reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+bool wlan_reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
 #endif /* CONFIG_CHAN_NUM_API */
 
 /**
@@ -696,8 +696,8 @@ bool wlan_reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
  *
  * Return: true or false
  */
-uint32_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
-			       uint32_t freq);
+uint8_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
+			      qdf_freq_t freq);
 
 /**
  * wlan_reg_chan_to_freq () - convert channel number to frequency
@@ -705,8 +705,8 @@ uint32_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
  *
  * Return: true or false
  */
-uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
-			       uint32_t chan);
+qdf_freq_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
+				 uint8_t chan);
 
 /**
  * wlan_reg_legacy_chan_to_freq () - convert chan to freq, for 2G and 5G
@@ -714,8 +714,8 @@ uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
  *
  * Return: frequency
  */
-uint16_t wlan_reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
-				      uint8_t chan);
+qdf_freq_t wlan_reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
+					uint8_t chan);
 
 /**
  * wlan_reg_is_us() - reg is us country
@@ -822,10 +822,10 @@ bool wlan_reg_is_11d_scan_inprogress(struct wlan_objmgr_psoc *psoc);
  * Return: QDF status
  */
 QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
-		uint32_t *low_2g,
-		uint32_t *high_2g,
-		uint32_t *low_5g,
-		uint32_t *high_5g);
+		qdf_freq_t *low_2g,
+		qdf_freq_t *high_2g,
+		qdf_freq_t *low_5g,
+		qdf_freq_t *high_5g);
 /**
  * wlan_reg_get_tx_ops () - get regulatory tx ops
  * @psoc: psoc ptr
@@ -912,7 +912,7 @@ wlan_reg_disable_chan_coex(struct wlan_objmgr_pdev *pdev,
  */
 #define WLAN_REG_IS_SAME_BAND_FREQS(freq1, freq2) \
 	wlan_reg_is_same_band_freqs(freq1, freq2)
-bool wlan_reg_is_same_band_freqs(uint16_t freq1, uint16_t freq2);
+bool wlan_reg_is_same_band_freqs(qdf_freq_t freq1, qdf_freq_t freq2);
 
 /**
  * wlan_reg_get_chan_enum_for_freq() - Get channel enum for given channel center
@@ -921,7 +921,7 @@ bool wlan_reg_is_same_band_freqs(uint16_t freq1, uint16_t freq2);
  *
  * Return: Channel enum
  */
-enum channel_enum wlan_reg_get_chan_enum_for_freq(uint16_t freq);
+enum channel_enum wlan_reg_get_chan_enum_for_freq(qdf_freq_t freq);
 
 /**
  * wlan_reg_update_nol_history_ch_for_freq() - Set nol-history flag for the
@@ -947,7 +947,7 @@ void wlan_reg_update_nol_history_ch_for_freq(struct wlan_objmgr_pdev *pdev,
  */
 #define WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(curfreq, newfreq) \
 	wlan_reg_is_frequency_valid_5g_sbs(curfreq, newfreq)
-bool wlan_reg_is_frequency_valid_5g_sbs(uint16_t curfreq, uint16_t newfreq);
+bool wlan_reg_is_frequency_valid_5g_sbs(qdf_freq_t curfreq, qdf_freq_t newfreq);
 
 /**
  * wlan_reg_chan_has_dfs_attribute_for_freq() - check channel has dfs
@@ -960,7 +960,7 @@ bool wlan_reg_is_frequency_valid_5g_sbs(uint16_t curfreq, uint16_t newfreq);
  */
 bool
 wlan_reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
-					 uint16_t freq);
+					 qdf_freq_t freq);
 
 /**
  * wlan_reg_get_channel_list_with_power_for_freq() - Provide the channel list
@@ -984,7 +984,7 @@ wlan_reg_get_channel_list_with_power_for_freq(struct wlan_objmgr_pdev *pdev,
  */
 enum channel_state
 wlan_reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
-					      uint16_t freq,
+					      qdf_freq_t freq,
 					      enum phy_ch_width bw);
 /**
  * wlan_reg_get_2g_bonded_channel_state_for_freq() - Get 2G bonded channel state
@@ -997,8 +997,8 @@ wlan_reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
  */
 enum channel_state
 wlan_reg_get_2g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
-					      uint16_t freq,
-					      uint16_t sec_ch_freq,
+					      qdf_freq_t freq,
+					      qdf_freq_t sec_ch_freq,
 					      enum phy_ch_width bw);
 
 /**
@@ -1010,7 +1010,7 @@ wlan_reg_get_2g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
  */
 enum channel_state
 wlan_reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
-				    uint16_t freq);
+				    qdf_freq_t freq);
 
 /**
  * wlan_reg_set_channel_params_for_freq() - Sets channel parameteres for
@@ -1023,8 +1023,8 @@ wlan_reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
  * Return: None
  */
 void wlan_reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
-					  uint16_t freq,
-					  uint16_t sec_ch_2g_freq,
+					  qdf_freq_t freq,
+					  qdf_freq_t sec_ch_2g_freq,
 					  struct ch_params *ch_params);
 
 /**
@@ -1035,7 +1035,7 @@ void wlan_reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
  * Return: int
  */
 uint8_t wlan_reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
-						uint16_t freq);
+						qdf_freq_t freq);
 
 /**
  * wlan_reg_update_nol_ch_for_freq () - set nol channel
@@ -1057,7 +1057,7 @@ void wlan_reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
  *
  * Return: true or false
  */
-bool wlan_reg_is_dfs_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
+bool wlan_reg_is_dfs_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
 /**
  * wlan_reg_is_dsrc_freq() - Checks if the channel is dsrc channel or not
@@ -1065,7 +1065,7 @@ bool wlan_reg_is_dfs_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
  *
  * Return: true or false
  */
-bool wlan_reg_is_dsrc_freq(uint16_t freq);
+bool wlan_reg_is_dsrc_freq(qdf_freq_t freq);
 
 /**
  * wlan_reg_is_passive_or_disable_for_freq() - Checks chan state for passive
@@ -1076,7 +1076,7 @@ bool wlan_reg_is_dsrc_freq(uint16_t freq);
  * Return: true or false
  */
 bool wlan_reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
-					     uint16_t freq);
+					     qdf_freq_t freq);
 
 /**
  * wlan_reg_is_disable_for_freq() - Checks chan state for disabled
@@ -1085,7 +1085,8 @@ bool wlan_reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
  *
  * Return: true or false
  */
-bool wlan_reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
+bool wlan_reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev,
+				  qdf_freq_t freq);
 
 /**
  * wlan_reg_chan_to_band() - Get band from channel number
@@ -1093,21 +1094,21 @@ bool wlan_reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, uint16_t freq);
  *
  * Return: wifi band
  */
-enum reg_wifi_band wlan_reg_freq_to_band(uint16_t freq);
+enum reg_wifi_band wlan_reg_freq_to_band(qdf_freq_t freq);
 
 /**
  * wlan_reg_min_chan_freq() - Minimum channel frequency supported
  *
  * Return: frequency
  */
-uint16_t wlan_reg_min_chan_freq(void);
+qdf_freq_t wlan_reg_min_chan_freq(void);
 
 /**
  * wlan_reg_max_chan_freq() - Return max. frequency
  *
  * Return: frequency
  */
-uint16_t wlan_reg_max_chan_freq(void);
+qdf_freq_t wlan_reg_max_chan_freq(void);
 
 /**
  * wlan_reg_freq_width_to_chan_op_class() -Get op class from freq
@@ -1122,7 +1123,7 @@ uint16_t wlan_reg_max_chan_freq(void);
  * Return: void
  */
 void wlan_reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
-					  uint16_t freq,
+					  qdf_freq_t freq,
 					  uint16_t chan_width,
 					  bool global_tbl_lookup,
 					  uint16_t behav_limit,
@@ -1141,7 +1142,7 @@ void wlan_reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
  * Return: void
  */
 void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
-				    uint16_t freq,
+				    qdf_freq_t freq,
 				    bool global_tbl_lookup,
 				    uint16_t behav_limit,
 				    uint8_t *op_class,

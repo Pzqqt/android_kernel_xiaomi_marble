@@ -360,13 +360,13 @@ static void reg_modify_chan_list_for_nol_list(
  * Return: None
  */
 static void reg_find_low_limit_chan_enum(
-		struct regulatory_channel *chan_list, uint32_t low_freq,
+		struct regulatory_channel *chan_list, qdf_freq_t low_freq,
 		uint32_t *low_limit)
 {
 	enum channel_enum chan_enum;
 	uint16_t min_bw;
 	uint16_t max_bw;
-	uint32_t center_freq;
+	qdf_freq_t center_freq;
 
 	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
 		min_bw = chan_list[chan_enum].min_bw;
@@ -396,13 +396,13 @@ static void reg_find_low_limit_chan_enum(
  * Return: None
  */
 static void reg_find_high_limit_chan_enum(
-		struct regulatory_channel *chan_list, uint32_t high_freq,
+		struct regulatory_channel *chan_list, qdf_freq_t high_freq,
 		uint32_t *high_limit)
 {
 	enum channel_enum chan_enum;
 	uint16_t min_bw;
 	uint16_t max_bw;
-	uint32_t center_freq;
+	qdf_freq_t center_freq;
 
 	for (chan_enum = NUM_CHANNELS - 1; chan_enum >= 0; chan_enum--) {
 		min_bw = chan_list[chan_enum].min_bw;
@@ -471,10 +471,10 @@ reg_modify_chan_list_for_japan(struct wlan_objmgr_pdev *pdev)
  */
 static void
 reg_modify_chan_list_for_freq_range(struct regulatory_channel *chan_list,
-				    uint32_t low_freq_2g,
-				    uint32_t high_freq_2g,
-				    uint32_t low_freq_5g,
-				    uint32_t high_freq_5g)
+				    qdf_freq_t low_freq_2g,
+				    qdf_freq_t high_freq_2g,
+				    qdf_freq_t low_freq_5g,
+				    qdf_freq_t high_freq_5g)
 {
 	uint32_t low_limit_2g = NUM_CHANNELS;
 	uint32_t high_limit_2g = NUM_CHANNELS;

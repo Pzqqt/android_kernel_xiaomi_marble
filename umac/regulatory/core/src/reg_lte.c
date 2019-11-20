@@ -48,8 +48,8 @@ static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
 	enum channel_enum ch_loop;
 	enum channel_enum start_ch_idx;
 	enum channel_enum end_ch_idx;
-	uint16_t start_channel;
-	uint16_t end_channel;
+	uint8_t start_channel;
+	uint8_t end_channel;
 	uint32_t i;
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	struct ch_avoid_freq_type *range;

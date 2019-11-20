@@ -36,7 +36,7 @@
 #define REG_MAX_CHAN_CHANGE_CBKS 30
 #define MAX_STA_VDEV_CNT 4
 #define INVALID_VDEV_ID 0xFF
-#define INVALID_CHANNEL_NUM 0xBAD
+#define INVALID_CHANNEL_NUM 0x0
 #define CH_AVOID_MAX_RANGE   4
 #define REG_ALPHA2_LEN 2
 #define MAX_REG_RULES 10
@@ -74,6 +74,7 @@
  * detection.
  * @DFS_UNDEF_REGION: Undefined region
  */
+
 enum dfs_reg {
 	DFS_UNINIT_REGION = 0,
 	DFS_FCC_REGION = 1,
@@ -527,10 +528,10 @@ enum ctl_value {
 struct ch_params {
 	enum phy_ch_width ch_width;
 	uint8_t sec_ch_offset;
-	uint8_t center_freq_seg0;
-	uint8_t center_freq_seg1;
-	uint16_t mhz_freq_seg0;
-	uint16_t mhz_freq_seg1;
+	qdf_freq_t center_freq_seg0;
+	qdf_freq_t center_freq_seg1;
+	qdf_freq_t mhz_freq_seg0;
+	qdf_freq_t mhz_freq_seg1;
 };
 
 /**
@@ -540,8 +541,8 @@ struct ch_params {
  * @tx_power: TX power
  */
 struct channel_power {
-	uint32_t center_freq;
-	uint32_t chan_num;
+	qdf_freq_t center_freq;
+	uint8_t chan_num;
 	uint32_t tx_power;
 };
 
@@ -592,7 +593,7 @@ struct reg_dmn_op_class_map_t {
 	uint8_t chan_spacing;
 	enum offset_t offset;
 	uint16_t behav_limit;
-	uint16_t start_freq;
+	qdf_freq_t start_freq;
 	uint8_t channels[REG_MAX_CHANNELS_PER_OPERATING_CLASS];
 };
 
@@ -664,8 +665,8 @@ enum country_src {
  * @nol_history: Set NOL-History when STA vap detects RADAR.
  */
 struct regulatory_channel {
-	uint32_t center_freq;
-	uint32_t chan_num;
+	qdf_freq_t center_freq;
+	uint8_t chan_num;
 	enum channel_state state;
 	uint32_t chan_flags;
 	uint32_t tx_power;
@@ -710,8 +711,8 @@ struct regulatory {
  * @max_bw: max bw
  */
 struct chan_map {
-	uint32_t center_freq;
-	uint32_t chan_num;
+	qdf_freq_t center_freq;
+	uint8_t chan_num;
 	uint16_t min_bw;
 	uint16_t max_bw;
 };
@@ -722,8 +723,8 @@ struct chan_map {
  * @end_ch: end channel
  */
 struct bonded_channel {
-	uint16_t start_ch;
-	uint16_t end_ch;
+	uint8_t start_ch;
+	uint8_t end_ch;
 };
 
 /**
@@ -1033,8 +1034,8 @@ struct cur_regdmn_info {
  * @end_freq: end freq
  */
 struct ch_avoid_freq_type {
-	uint32_t start_freq;
-	uint32_t end_freq;
+	qdf_freq_t start_freq;
+	qdf_freq_t end_freq;
 };
 
 /**

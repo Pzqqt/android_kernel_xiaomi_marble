@@ -90,7 +90,7 @@ uint16_t reg_dmn_get_curr_opclasses(uint8_t *num_classes, uint8_t *class);
  * Return: Void.
  */
 void reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
-				     uint16_t freq,
+				     qdf_freq_t freq,
 				     uint16_t chan_width,
 				     bool global_tbl_lookup,
 				     uint16_t behav_limit,
@@ -110,7 +110,7 @@ void reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
  * Return: Void.
  */
 void reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
-			       uint16_t freq,
+			       qdf_freq_t freq,
 			       bool global_tbl_lookup,
 			       uint16_t behav_limit,
 			       uint8_t *op_class,
@@ -175,7 +175,7 @@ static inline void reg_dmn_print_channels_in_opclass(uint8_t *country,
 
 static inline void
 reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
-				uint16_t freq,
+				qdf_freq_t freq,
 				uint16_t chan_width,
 				bool global_tbl_lookup,
 				uint16_t behav_limit,
@@ -186,7 +186,7 @@ reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 
 static inline void
 reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
-			  uint16_t freq,
+			  qdf_freq_t freq,
 			  bool global_tbl_lookup,
 			  uint16_t behav_limit,
 			  uint8_t *op_class,
