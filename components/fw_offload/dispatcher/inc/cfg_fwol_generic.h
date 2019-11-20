@@ -432,7 +432,7 @@
 #define CFG_SET_TSF_GPIO_PIN CFG_INI_INT( \
 		"gtsf_gpio_pin", \
 		0, \
-		254, \
+		255, \
 		255, \
 		CFG_VALUE_OR_DEFAULT, \
 		"GPIO pin to toggle when capture tsf")
@@ -455,7 +455,7 @@
 #define CFG_SET_TSF_IRQ_HOST_GPIO_PIN CFG_INI_INT( \
 		"gtsf_irq_host_gpio_pin", \
 		0, \
-		254, \
+		255, \
 		255, \
 		CFG_VALUE_OR_DEFAULT, \
 		"TSF irq GPIO pin of host platform")
