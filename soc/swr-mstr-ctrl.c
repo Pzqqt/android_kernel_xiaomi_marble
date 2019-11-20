@@ -2131,6 +2131,12 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 
 	swr_master_bulk_write(swrm, reg, value, len);
 
+	if (!swrm_check_link_status(swrm, 0x1)) {
+		dev_err(swrm->dev,
+			"%s: swr link failed to connect\n",
+			__func__);
+		return -EINVAL;
+	}
 	/*
 	 * For SWR master version 1.5.1, continue
 	 * execute on command ignore.
@@ -2742,6 +2748,8 @@ static int swrm_runtime_suspend(struct device *dev)
 			mutex_lock(&swrm->reslock);
 			usleep_range(100, 105);
 		}
+		if (!swrm_check_link_status(swrm, 0x0))
+			goto exit;
 		ret = swrm_clk_request(swrm, false);
 		if (ret) {
 			dev_err(dev, "%s: swrmn clk failed\n", __func__);
@@ -2757,8 +2765,6 @@ static int swrm_runtime_suspend(struct device *dev)
 					SWR_WAKE_IRQ_REGISTER, (void *)swrm);
 				swrm->ipc_wakeup_triggered = false;
 			}
-			if (!swrm_check_link_status(swrm, 0x0))
-				goto exit;
 		}
 
 	}
