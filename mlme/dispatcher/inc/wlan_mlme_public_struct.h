@@ -844,6 +844,7 @@ struct mlme_vht_capabilities_info {
 	uint8_t extended_nss_bw_supp;
 	uint8_t vht_extended_nss_bw_cap;
 	uint8_t max_nsts_total;
+	bool restricted_80p80_bw_supp;
 };
 
 /**

@@ -3834,6 +3834,24 @@ ucfg_mlme_set_obss_color_collision_offload_enabled(
 		struct wlan_objmgr_psoc *psoc, uint8_t value);
 
 /**
+ * ucfg_mlme_set_restricted_80p80_bw_supp() - Set the restricted 80p80 support
+ * @psoc: pointer to psoc object
+ * @restricted_80p80_supp: Value to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_mlme_set_restricted_80p80_bw_supp(struct wlan_objmgr_psoc *psoc,
+						  bool restricted_80p80_supp);
+
+/**
+ * ucfg_mlme_get_restricted_80p80_bw_supp() - Get the restricted 80p80 support
+ * @psoc: pointer to psoc object
+ *
+ * Return: true or false
+ */
+bool ucfg_mlme_get_restricted_80p80_bw_supp(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_mlme_get_channel_bonding_24ghz() - get channel bonding mode of 24ghz
  * @psoc:   pointer to psoc object
  * @value:  pointer to the value which will be filled for the caller
