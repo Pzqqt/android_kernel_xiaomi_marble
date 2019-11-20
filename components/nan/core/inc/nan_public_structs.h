@@ -532,9 +532,11 @@ struct nan_event_params {
  * struct nan_msg_params - NAN request params
  * @request_data_len: request data length
  * @request_data: request data
+ * @rtt_cap: indicate if responder/initiator role is supported
  */
 struct nan_msg_params {
 	uint16_t request_data_len;
+	uint32_t rtt_cap;
 	/* Variable length, do not add anything after this */
 	uint8_t request_data[];
 };

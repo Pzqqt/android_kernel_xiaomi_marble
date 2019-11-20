@@ -1232,29 +1232,6 @@ struct dhcp_server {
 
 /*
  * <ini>
- * gEnableRTTsupport
- *
- * @Min: 0 - Disabled
- * @Max: 1 - Enabled
- * @Default: 1 - Enabled
- *
- * The param is used to enable/disable support for RTT
- *
- * Related: None.
- *
- * Supported Feature: RTT
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_RTT_SUPPORT CFG_INI_BOOL( \
-		"gEnableRTTSupport", \
-		1, \
-		"The param is used to enable/disable support for RTT")
-
-/*
- * <ini>
  * gAdvertiseConcurrentOperation - Iface combination advertising
  * @Min: 0
  * @Max: 1
@@ -1499,7 +1476,6 @@ enum host_log_level {
 	CFG(CFG_ENABLE_MAC_PROVISION) \
 	CFG_ENABLE_MTRACE_ALL \
 	CFG(CFG_ENABLE_RAMDUMP_COLLECTION) \
-	CFG(CFG_ENABLE_RTT_SUPPORT) \
 	CFG(CFG_ENABLE_UNIT_TEST_FRAMEWORK) \
 	CFG(CFG_INTERFACE_CHANGE_WAIT) \
 	CFG(CFG_INFORM_BSS_RSSI_RAW) \

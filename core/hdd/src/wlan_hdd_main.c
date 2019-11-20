@@ -4643,6 +4643,7 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	mac_handle_t mac_handle;
 	bool bval = false;
 	uint8_t enable_sifs_burst = 0;
+	uint32_t fine_time_meas_cap = 0;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle = hdd_ctx->mac_handle;
@@ -4717,9 +4718,23 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	/* rcpi info initialization */
 	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
 
-	if (adapter->device_mode == QDF_STA_MODE)
+	if (adapter->device_mode == QDF_STA_MODE) {
 		mlme_set_roam_trigger_bitmap(hdd_ctx->psoc, adapter->vdev_id,
 					     DEFAULT_ROAM_TRIGGER_BITMAP);
+
+		ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc,
+						 &fine_time_meas_cap);
+		sme_cli_set_command(
+			adapter->vdev_id,
+			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,
+			(bool)(fine_time_meas_cap & WMI_FW_STA_RTT_RESPR),
+			VDEV_CMD);
+		sme_cli_set_command(
+			adapter->vdev_id,
+			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_INITIATOR_ROLE,
+			(bool)(fine_time_meas_cap & WMI_FW_STA_RTT_INITR),
+			VDEV_CMD);
+	}
 
 	return QDF_STATUS_SUCCESS;
 
@@ -10304,7 +10319,6 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 		      cfg_get(psoc,
 			      CFG_ACTION_OUI_DISABLE_AGGRESSIVE_EDCA),
 			      ACTION_OUI_MAX_STR_LEN);
-	config->enable_rtt_support = cfg_get(psoc, CFG_ENABLE_RTT_SUPPORT);
 	config->is_unit_test_framework_enabled =
 			cfg_get(psoc, CFG_ENABLE_UNIT_TEST_FRAMEWORK);
 	config->disable_channel = cfg_get(psoc, CFG_ENABLE_DISABLE_CHANNEL);
@@ -10524,9 +10538,15 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 	if (adapter->device_mode == QDF_SAP_MODE) {
 		ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc,
 						 &fine_time_meas_cap);
-		sme_cli_set_command(adapter->vdev_id,
+		sme_cli_set_command(
+			adapter->vdev_id,
 			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,
 			(bool)(fine_time_meas_cap & WMI_FW_AP_RTT_RESPR),
+			VDEV_CMD);
+		sme_cli_set_command(
+			adapter->vdev_id,
+			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_INITIATOR_ROLE,
+			(bool)(fine_time_meas_cap & WMI_FW_AP_RTT_INITR),
 			VDEV_CMD);
 	}
 

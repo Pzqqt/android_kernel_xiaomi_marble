@@ -35,6 +35,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_utility.h"
 #include "wlan_osif_request_manager.h"
+#include "wlan_mlme_ucfg_api.h"
 
 #define NAN_CMD_MAX_SIZE 2048
 
@@ -2634,6 +2635,7 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 	uint32_t chan_freq_2g, chan_freq_5g = 0;
 	uint32_t buf_len;
 	QDF_STATUS status;
+	uint32_t fine_time_meas_cap;
 	struct nan_enable_req *nan_req;
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NAN_DISC_24GHZ_BAND_FREQ]) {
@@ -2667,6 +2669,9 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 		nan_req->social_chan_5g_freq = chan_freq_5g;
 	nan_req->psoc = psoc;
 	nan_req->params.request_data_len = buf_len;
+
+	ucfg_mlme_get_fine_time_meas_cap(psoc, &fine_time_meas_cap);
+	nan_req->params.rtt_cap = fine_time_meas_cap;
 
 	nla_memcpy(nan_req->params.request_data,
 		   tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA], buf_len);

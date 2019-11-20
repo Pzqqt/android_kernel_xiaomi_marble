@@ -219,7 +219,6 @@ struct hdd_config {
 	bool mac_provision;
 	uint32_t provisioned_intf_pool;
 	uint32_t derived_intf_pool;
-	uint8_t enable_rtt_support;
 	uint32_t cfg_wmi_credit_cnt;
 	uint32_t sar_version;
 	bool is_wow_disabled;

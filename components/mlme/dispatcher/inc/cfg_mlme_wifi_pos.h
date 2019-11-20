@@ -33,12 +33,12 @@
  * fine timing measurement capability information
  *
  * <----- fine_time_meas_cap (in bits) ----->
- * +----------+-----+-----+------+------+-------+-------+-----+-----+
- * |   8-31   |  7  |  6  |   5  |   4  |   3   |   2   |  1  |  0  |
- * +----------+-----+-----+------+------+-------+-------+-----+-----+
- * | reserved | SAP | SAP |P2P-GO|P2P-GO|P2P-CLI|P2P-CLI| STA | STA |
- * |          |resp |init |resp  |init  |resp   |init   |resp |init |
- * +----------+-----+-----+------+------+-------+-------+-----+-----+
+ * +---------+-----+-----+-----+-----+------+------+-------+-------+-----+-----+
+ * |  10-31  |  9  |  8  |  7  |  6  |   5  |   4  |   3   |   2   |  1  |  0  |
+ * +---------+-----+-----+-----+-----+------+------+-------+-------+-----+-----+
+ * | reserved| NAN | NAN | SAP | SAP |P2P-GO|P2P-GO|P2P-CLI|P2P-CLI| STA | STA |
+ * |         | resp|init |resp |init |resp  |init  |resp   |init   |resp |init |
+ * +---------+-----+-----+-----+-----+------+------+-------+-------+-----+-----+
  *
  * resp - responder role; init- initiator role
  *
@@ -63,8 +63,8 @@
 #define CFG_FINE_TIME_MEAS_CAPABILITY CFG_INI_UINT( \
 			"gfine_time_meas_cap", \
 			0x0000, \
-			0x00BD, \
-			0x000D, \
+			0x003BD, \
+			0x0030D, \
 			CFG_VALUE_OR_DEFAULT, \
 			"fine timing measurement capability")
 
