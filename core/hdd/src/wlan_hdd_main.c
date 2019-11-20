@@ -1896,7 +1896,7 @@ static void hdd_update_vhtcap_2g(struct hdd_context *hdd_ctx)
 	if (wmi_service_enabled(wmi_handle, wmi_service_ext_msg)) {
 		status = wma_get_caps_for_phyidx_hwmode(&caps_per_phy,
 							HW_MODE_DBS_NONE,
-							CDS_BAND_ALL);
+							CDS_BAND_2GHZ);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("Failed to get phy caps");
 			return;

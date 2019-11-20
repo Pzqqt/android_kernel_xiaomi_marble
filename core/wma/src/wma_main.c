@@ -5947,7 +5947,7 @@ static QDF_STATUS wma_get_phyid_for_given_band(
 			struct target_psoc_info *tgt_hdl,
 			enum cds_band_type band, uint8_t *phyid)
 {
-	uint8_t idx, i, num_radios;
+	uint8_t idx, i, total_mac_phy_cnt;
 	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
 
 	if (!wma_handle) {
@@ -5957,10 +5957,10 @@ static QDF_STATUS wma_get_phyid_for_given_band(
 
 	idx = 0;
 	*phyid = idx;
-	num_radios = target_psoc_get_num_radios(tgt_hdl);
+	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 
-	for (i = 0; i < num_radios; i++) {
+	for (i = 0; i < total_mac_phy_cnt; i++) {
 		if ((band == CDS_BAND_2GHZ) &&
 		(WLAN_2G_CAPABILITY == mac_phy_cap[idx + i].supported_bands)) {
 			*phyid = idx + i;
@@ -5973,7 +5973,8 @@ static QDF_STATUS wma_get_phyid_for_given_band(
 			return QDF_STATUS_SUCCESS;
 		}
 	}
-	WMA_LOGD("Using default single hw mode phyid[%d]", *phyid);
+	WMA_LOGD("Using default single hw mode phyid[%d] total_mac_phy_cnt %d",
+		 *phyid, total_mac_phy_cnt);
 	return QDF_STATUS_SUCCESS;
 }
 
