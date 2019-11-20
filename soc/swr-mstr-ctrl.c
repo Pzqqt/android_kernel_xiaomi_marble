@@ -500,12 +500,15 @@ static bool swrm_check_link_status(struct swr_mstr_ctrl *swrm, bool active)
 	int retry = SWRM_LINK_STATUS_RETRY_CNT;
 	int ret = false;
 	int status = active ? 0x1 : 0x0;
+	int comp_sts = 0x0;
 
 	if ((swrm->version <= SWRM_VERSION_1_5_1))
 		return true;
 
 	do {
-		if (swr_master_read(swrm, SWRM_COMP_STATUS) & status) {
+		comp_sts = swr_master_read(swrm, SWRM_COMP_STATUS) & 0x01;
+		/* check comp status and status requested met */
+		if ((comp_sts && status) || (!comp_sts && !status)) {
 			ret = true;
 			break;
 		}
