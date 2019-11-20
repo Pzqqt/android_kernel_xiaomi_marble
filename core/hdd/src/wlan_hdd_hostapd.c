@@ -2596,8 +2596,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	case eSAP_ACS_CHANNEL_SELECTED:
 		hdd_debug("ACS Completed for wlan%d",
 					adapter->dev->ifindex);
-		clear_bit(ACS_PENDING, &adapter->event_flags);
-		clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 		ap_ctx->sap_config.acs_cfg.pri_ch_freq =
 			sap_event->sapevt.sap_ch_selected.pri_ch_freq;
 		ap_ctx->sap_config.acs_cfg.ht_sec_ch_freq =
@@ -4986,9 +4984,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-
-	clear_bit(ACS_PENDING, &adapter->event_flags);
-	clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 
 	config = &adapter->session.ap.sap_config;
 	if (!config->chan_freq) {

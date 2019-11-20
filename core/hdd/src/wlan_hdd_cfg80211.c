@@ -926,10 +926,6 @@ static inline uint8_t hdd_get_bw_offset(uint32_t ch_width)
 
 #endif /* FEATURE_WLAN_TDLS */
 
-#ifdef QCA_HT_2040_COEX
-static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work);
-#endif
-
 int wlan_hdd_merge_avoid_freqs(struct ch_avoid_ind_type *destFreqList,
 		struct ch_avoid_ind_type *srcFreqList)
 {
@@ -1836,10 +1832,6 @@ static int wlan_hdd_set_acs_ch_range(
 	return 0;
 }
 
-
-static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work);
-
-
 static void hdd_update_acs_channel_list(struct sap_config *sap_config,
 					enum band_info band)
 {
@@ -1880,12 +1872,12 @@ static void hdd_update_acs_channel_list(struct sap_config *sap_config,
  */
 int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 {
-
 	struct hdd_context *hdd_ctx;
 	struct sap_config *sap_config;
 	sap_event_cb acs_event_callback;
 	uint8_t mcc_to_scc_switch = 0;
 	int status;
+	QDF_STATUS qdf_status;
 
 	if (!adapter) {
 		hdd_err("adapter is NULL");
@@ -1922,7 +1914,6 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 		if (status > 0) {
 			/*notify hostapd about channel override */
 			wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
-			clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 			return 0;
 		}
 	}
@@ -1963,18 +1954,17 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 	qdf_mem_copy(sap_config->self_macaddr.bytes,
 		adapter->mac_addr.bytes, sizeof(struct qdf_mac_addr));
 	hdd_info("ACS Started for %s", adapter->dev->name);
-	status = wlansap_acs_chselect(
-		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-		acs_event_callback, sap_config, adapter->dev);
 
+	qdf_status = wlansap_acs_chselect(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+				      acs_event_callback,
+				      sap_config, adapter->dev);
 
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		hdd_err("ACS channel select failed");
 		return -EINVAL;
 	}
 	if (sap_is_auto_channel_select(WLAN_HDD_GET_SAP_CTX_PTR(adapter)))
 		sap_config->acs_cfg.acs_mode = true;
-	set_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 
 	return 0;
 }
@@ -2801,10 +2791,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	enum qca_wlan_vendor_acs_hw_mode hw_mode;
 	enum policy_mgr_con_mode pm_mode;
 	QDF_STATUS qdf_status;
-	bool is_vendor_acs_support =
-		cfg_default(CFG_USER_AUTO_CHANNEL_SELECTION);
-	bool is_external_acs_policy =
-		cfg_default(CFG_EXTERNAL_ACS_POLICY);
+	bool is_vendor_acs_support = false;
+	bool is_external_acs_policy = false;
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
 	bool go_11ac_override = 0;
@@ -3132,34 +3120,16 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			hdd_debug("%d ", sap_config->acs_cfg.freq_list[i]);
 	}
 
-	if (test_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags)) {
-		/* ***Note*** Completion variable usage is not allowed
-		 * here since ACS scan operation may take max 2.2 sec
-		 * for 5G band:
-		 *   9 Active channel X 40 ms active scan time +
-		 *   16 Passive channel X 110ms passive scan time
-		 * Since this CFG80211 call lock rtnl mutex, we cannot hold on
-		 * for this long. So we split up the scanning part.
-		 */
-		INIT_DELAYED_WORK(&adapter->acs_pending_work,
-				  wlan_hdd_cfg80211_start_pending_acs);
-		set_bit(ACS_PENDING, &adapter->event_flags);
-		hdd_debug("ACS Pending for %s", adapter->dev->name);
-		ret = 0;
-	} else {
-		qdf_status =
-			ucfg_mlme_get_vendor_acs_support(
-					hdd_ctx->psoc,
-					&is_vendor_acs_support);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			hdd_err("get_vendor_acs_support failed, set default");
+	qdf_status = ucfg_mlme_get_vendor_acs_support(hdd_ctx->psoc,
+						&is_vendor_acs_support);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		hdd_err("get_vendor_acs_support failed, set default");
 
-		/* Check if vendor specific acs is enabled */
-		if (is_vendor_acs_support)
-			ret = hdd_start_vendor_acs(adapter);
-		else
-			ret = wlan_hdd_cfg80211_start_acs(adapter);
-	}
+	/* Check if vendor specific acs is enabled */
+	if (is_vendor_acs_support)
+		ret = hdd_start_vendor_acs(adapter);
+	else
+		ret = wlan_hdd_cfg80211_start_acs(adapter);
 
 out:
 	if (ret == 0) {
@@ -3169,7 +3139,6 @@ out:
 			return cfg80211_vendor_cmd_reply(temp_skbuff);
 	}
 	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
-	clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 
 	return ret;
 }
@@ -3218,30 +3187,6 @@ void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
 {
 	sap_undo_acs(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 		     &adapter->session.ap.sap_config);
-}
-
-/**
- * wlan_hdd_cfg80211_start_pending_acs : Start pending ACS procedure for SAP
- * @work:  Linux workqueue struct pointer for ACS work
- *
- * This function starts the ACS procedure which was marked pending when an ACS
- * procedure was in progress for a concurrent SAP interface.
- *
- * Return: None
- */
-static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work)
-{
-	struct hdd_adapter *adapter = container_of(work, struct hdd_adapter,
-						   acs_pending_work.work);
-	struct osif_vdev_sync *vdev_sync;
-
-	if (osif_vdev_sync_op_start(adapter->dev, &vdev_sync))
-		return;
-
-	wlan_hdd_cfg80211_start_acs(adapter);
-	clear_bit(ACS_PENDING, &adapter->event_flags);
-
-	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 /**
@@ -3347,7 +3292,6 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 				&(WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config;
 	struct sk_buff *vendor_event;
 	int ret_val;
-	struct hdd_adapter *con_sap_adapter;
 	uint16_t ch_width;
 	uint8_t pri_channel;
 	uint8_t ht_sec_channel;
@@ -3456,29 +3400,6 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 		sap_cfg->acs_cfg.vht_seg1_center_ch_freq, ch_width);
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
-	/* ***Note*** As already mentioned Completion variable usage is not
-	 * allowed here since ACS scan operation may take max 2.2 sec.
-	 * Further in AP-AP mode pending ACS is resumed here to serailize ACS
-	 * operation.
-	 * TODO: Delayed operation is used since SME-PMAC strut is global. Thus
-	 * when Primary AP ACS is complete and secondary AP ACS is started here
-	 * immediately, Primary AP start_bss may come inbetween ACS operation
-	 * and overwrite Sec AP ACS parameters. Thus Sec AP ACS is executed with
-	 * delay. This path and below constraint will be removed on sessionizing
-	 * SAP acs parameters and decoupling SAP from PMAC (WIP).
-	 * As per design constraint user space control application must take
-	 * care of serailizing hostapd start for each VIF in AP-AP mode to avoid
-	 * this code path. Sec AP hostapd should be started after Primary AP
-	 * start beaconing which can be confirmed by getchannel iwpriv command
-	 */
-
-	con_sap_adapter = hdd_get_con_sap_adapter(adapter, false);
-	if (con_sap_adapter &&
-		test_bit(ACS_PENDING, &con_sap_adapter->event_flags)) {
-		/* Lets give 1500ms for OBSS + START_BSS to complete */
-		schedule_delayed_work(&con_sap_adapter->acs_pending_work,
-					msecs_to_jiffies(1500));
-	}
 }
 
 /**

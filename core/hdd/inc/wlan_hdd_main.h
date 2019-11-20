@@ -208,7 +208,6 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
  * @WMM_INIT_DONE: Adapter is initialized
  * @SOFTAP_BSS_STARTED: Software Access Point (SAP) is running
  * @DEVICE_IFACE_OPENED: Adapter has been "opened" via the kernel
- * @ACS_PENDING: Auto Channel Selection (ACS) is pending
  * @SOFTAP_INIT_DONE: Software Access Point (SAP) is initialized
  * @VENDOR_ACS_RESPONSE_PENDING: Waiting for event for vendor acs
  * @DOWN_DURING_SSR: Mark interface is down during SSR
@@ -220,18 +219,9 @@ enum hdd_adapter_flags {
 	WMM_INIT_DONE,
 	SOFTAP_BSS_STARTED,
 	DEVICE_IFACE_OPENED,
-	ACS_PENDING,
 	SOFTAP_INIT_DONE,
 	VENDOR_ACS_RESPONSE_PENDING,
 	DOWN_DURING_SSR,
-};
-
-/**
- * enum hdd_driver_flags - HDD global event bitmap flags
- * @ACS_IN_PROGRESS: Auto Channel Selection (ACS) in progress
- */
-enum hdd_driver_flags {
-	ACS_IN_PROGRESS,
 };
 
 #define WLAN_WAIT_DISCONNECT_ALREADY_IN_PROGRESS  1000
