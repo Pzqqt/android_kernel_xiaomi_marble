@@ -733,6 +733,24 @@ static int dp_display_send_hpd_notification(struct dp_display_private *dp)
 	bool hpd = !!dp_display_state_is(DP_STATE_CONNECTED);
 
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state, hpd);
+
+	/*
+	 * Send the notification only if there is any change. This check is
+	 * necessary since it is possible that the connect_work may or may not
+	 * skip sending the notification in order to respond to a pending
+	 * attention message. Attention work thread will always attempt to
+	 * send the notification after successfully handling the attention
+	 * message. This check here will avoid any unintended duplicate
+	 * notifications.
+	 */
+	if (dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) && hpd) {
+		DP_DEBUG("connection notified already, skip notification\n");
+		goto skip_wait;
+	} else if (dp_display_state_is(DP_STATE_DISCONNECT_NOTIFIED) && !hpd) {
+		DP_DEBUG("disonnect notified already, skip notification\n");
+		goto skip_wait;
+	}
+
 	dp->aux->state |= DP_STATE_NOTIFICATION_SENT;
 
 	if (!dp->mst.mst_active)
@@ -990,9 +1008,30 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 end:
 	mutex_unlock(&dp->session_lock);
 
+	/*
+	 * If an IRQ HPD is pending, then do not send a connect notification.
+	 * Once this work returns, the IRQ HPD would be processed and any
+	 * required actions (such as link maintenance) would be done which
+	 * will subsequently send the HPD notification. To keep things simple,
+	 * do this only for SST use-cases. MST use cases require additional
+	 * care in order to handle the side-band communications as well.
+	 *
+	 * One of the main motivations for this is DP LL 1.4 CTS use case
+	 * where it is possible that we could get a test request right after
+	 * a connection, and the strict timing requriements of the test can
+	 * only be met if we do not wait for the e2e connection to be set up.
+	 */
+	if (!dp->mst.mst_active &&
+		(work_busy(&dp->attention_work) == WORK_BUSY_PENDING)) {
+		SDE_EVT32_EXTERNAL(dp->state, 99);
+		DP_DEBUG("Attention pending, skip HPD notification\n");
+		goto skip_notify;
+	}
+
 	if (!rc && !dp_display_state_is(DP_STATE_ABORTED))
 		dp_display_send_hpd_notification(dp);
 
+skip_notify:
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state, rc);
 	return rc;
 }
@@ -1311,6 +1350,10 @@ static void dp_display_attention_work(struct work_struct *work)
 		if (dp_display_is_sink_count_zero(dp)) {
 			dp_display_handle_disconnect(dp);
 		} else {
+			/*
+			 * connect work should take care of sending
+			 * the HPD notification.
+			 */
 			if (!dp->mst.mst_active)
 				queue_work(dp->wq, &dp->connect_work);
 		}
@@ -1323,6 +1366,10 @@ static void dp_display_attention_work(struct work_struct *work)
 		dp_display_handle_disconnect(dp);
 
 		dp->panel->video_test = true;
+		/*
+		 * connect work should take care of sending
+		 * the HPD notification.
+		 */
 		queue_work(dp->wq, &dp->connect_work);
 
 		goto mst_attention;
@@ -1355,8 +1402,18 @@ static void dp_display_attention_work(struct work_struct *work)
 		mutex_unlock(&dp->session_lock);
 
 		if (dp->link->sink_request & (DP_TEST_LINK_PHY_TEST_PATTERN |
-			DP_TEST_LINK_TRAINING))
+			DP_TEST_LINK_TRAINING)) {
 			goto mst_attention;
+		} else {
+			/*
+			 * It is possible that the connect_work skipped sending
+			 * the HPD notification if the attention message was
+			 * already pending. Send the notification here to
+			 * account for that. This is not needed if this
+			 * attention work was handling a test request
+			 */
+			dp_display_send_hpd_notification(dp);
+		}
 	}
 
 cp_irq:
