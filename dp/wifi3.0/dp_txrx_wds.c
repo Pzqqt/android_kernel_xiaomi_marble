@@ -488,6 +488,7 @@ uint8_t dp_tx_need_multipass_process(struct dp_soc *soc, struct dp_vdev *vdev,
 		return DP_VLAN_TAGGED_UNICAST;
 	}
 
+	dp_peer_unref_delete(peer);
 	return DP_VLAN_UNTAGGED;
 }
 
