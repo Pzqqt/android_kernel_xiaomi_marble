@@ -95,6 +95,27 @@ void qdf_update_dbl(uint8_t *d)
 		d[AES_BLOCK_SIZE - 1] ^= 0x87;
 }
 
+/**
+ * set_desc_flags() - set flags variable in the shash_desc struct
+ * @desc: pointer to shash_desc struct
+ * @tfm: pointer to crypto_shash struct
+ *
+ * Set the flags variable in the shash_desc struct by getting the flag
+ * from the crypto_hash struct. The flag is not actually used, prompting
+ * its removal from kernel code in versions 5.2 and above. Thus, for
+ * versions 5.2 and above, do not set the flag variable of shash_desc.
+ */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0))
+static void set_desc_flags(struct shash_desc *desc, struct crypto_shash *tfm)
+{
+	desc->flags = crypto_shash_get_flags(tfm);
+}
+#else
+static void set_desc_flags(struct shash_desc *desc, struct crypto_shash *tfm)
+{
+}
+#endif
+
 int qdf_get_keyed_hash(const char *alg, const uint8_t *key,
 			unsigned int key_len, const uint8_t *src[],
 			size_t *src_len, size_t num_elements, uint8_t *out)
@@ -124,7 +145,7 @@ int qdf_get_keyed_hash(const char *alg, const uint8_t *key,
 	do {
 		SHASH_DESC_ON_STACK(desc, tfm);
 		desc->tfm = tfm;
-		desc->flags = crypto_shash_get_flags(tfm);
+		set_desc_flags(desc, tfm);
 
 		ret = crypto_shash_init(desc);
 		if (ret) {
