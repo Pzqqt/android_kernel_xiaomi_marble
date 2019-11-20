@@ -168,7 +168,7 @@
  * btm_sticky_time - Stick time after roaming to new AP by BTM
  * @Min: 0
  * @Max: 0x0000FFFF
- * @Default: 300
+ * @Default: 0
  *
  * This ini is used to configure Stick time after roaming to new AP by BTM.
  * Unit: seconds
@@ -183,7 +183,7 @@
 	"btm_sticky_time", \
 	0, \
 	0x0000FFFF, \
-	300, \
+	0, \
 	CFG_VALUE_OR_DEFAULT, \
 	"configure Stick time after roaming to new AP by BTM")
 
