@@ -1778,8 +1778,22 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
-	if (dp_display_state_is(DP_STATE_ABORTED | DP_STATE_ENABLED)) {
-		dp_display_state_show("[not initialized]");
+	/*
+	 * If the physical connection to the sink is already lost by the time
+	 * we try to set up the connection, we can just skip all the steps
+	 * here safely.
+	 */
+	if (dp_display_state_is(DP_STATE_ABORTED)) {
+		dp_display_state_log("[aborted]");
+		goto end;
+	}
+
+	/*
+	 * If DP_STATE_ENABLED, there is nothing left to do.
+	 * However, this should not happen ideally. So, log this.
+	 */
+	if (dp_display_state_is(DP_STATE_ENABLED)) {
+		dp_display_state_show("[already enabled]");
 		goto end;
 	}
 
@@ -1900,15 +1914,25 @@ static int dp_display_enable(struct dp_display *dp_display, void *panel)
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
+	/*
+	 * If DP_STATE_READY is not set, we should not do any HW
+	 * programming.
+	 */
 	if (!dp_display_state_is(DP_STATE_READY)) {
 		dp_display_state_show("[host not ready]");
 		goto end;
 	}
 
-	if (dp_display_state_is(DP_STATE_ABORTED)) {
-		dp_display_state_show("[aborted]");
-		goto end;
-	}
+	/*
+	 * It is possible that by the time we get call back to establish
+	 * the DP pipeline e2e, the physical DP connection to the sink is
+	 * already lost. In such cases, the DP_STATE_ABORTED would be set.
+	 * However, it is necessary to NOT abort the display setup here so as
+	 * to ensure that the rest of the system is in a stable state prior to
+	 * handling the disconnect notification.
+	 */
+	if (dp_display_state_is(DP_STATE_ABORTED))
+		dp_display_state_log("[aborted, but continue on]");
 
 	rc = dp_display_stream_enable(dp, panel);
 	if (rc)
@@ -1945,13 +1969,22 @@ static int dp_display_post_enable(struct dp_display *dp_display, void *panel)
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
 
+	/*
+	 * If DP_STATE_READY is not set, we should not do any HW
+	 * programming.
+	 */
 	if (!dp_display_state_is(DP_STATE_ENABLED)) {
 		dp_display_state_show("[not enabled]");
 		goto end;
 	}
 
+	/*
+	 * If the physical connection to the sink is already lost by the time
+	 * we try to set up the connection, we can just skip all the steps
+	 * here safely.
+	 */
 	if (dp_display_state_is(DP_STATE_ABORTED)) {
-		dp_display_state_show("[aborted]");
+		dp_display_state_log("[aborted]");
 		goto end;
 	}
 
