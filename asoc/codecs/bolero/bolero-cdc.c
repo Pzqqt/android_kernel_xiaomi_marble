@@ -1049,10 +1049,9 @@ static void bolero_add_child_devices(struct work_struct *work)
 		pdev->dev.parent = priv->dev;
 		pdev->dev.of_node = node;
 
-		if (split_codec) {
-			priv->dev->platform_data = platdata;
+		priv->dev->platform_data = platdata;
+		if (split_codec)
 			priv->wcd_dev = &pdev->dev;
-		}
 
 		ret = platform_device_add(pdev);
 		if (ret) {
