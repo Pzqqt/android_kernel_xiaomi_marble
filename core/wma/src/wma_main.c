@@ -5933,56 +5933,6 @@ free_hw_mode_list:
 }
 
 /**
- * wma_get_phyid_for_given_band() - to get phyid for band
- *
- * @wma_handle: Pointer to wma handle
-*  @tgt_hdl: target psoc information
- * @band: enum value of for 2G or 5G band
- * @phyid: Pointer to phyid which needs to be filled
- *
- * This API looks in to the map to find out which particular phy supports
- * provided band and return the idx (also called phyid) of that phy. Caller
- * use this phyid to fetch various caps of that phy
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS wma_get_phyid_for_given_band(
-			tp_wma_handle wma_handle,
-			struct target_psoc_info *tgt_hdl,
-			enum cds_band_type band, uint8_t *phyid)
-{
-	uint8_t idx, i, total_mac_phy_cnt;
-	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
-
-	if (!wma_handle) {
-		WMA_LOGE("Invalid wma handle");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	idx = 0;
-	*phyid = idx;
-	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
-	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
-
-	for (i = 0; i < total_mac_phy_cnt; i++) {
-		if ((band == CDS_BAND_2GHZ) &&
-		(WLAN_2G_CAPABILITY == mac_phy_cap[idx + i].supported_bands)) {
-			*phyid = idx + i;
-			WMA_LOGD("Select 2G capable phyid[%d]", *phyid);
-			return QDF_STATUS_SUCCESS;
-		} else if ((band == CDS_BAND_5GHZ) &&
-		(WLAN_5G_CAPABILITY == mac_phy_cap[idx + i].supported_bands)) {
-			*phyid = idx + i;
-			WMA_LOGD("Select 5G capable phyid[%d]", *phyid);
-			return QDF_STATUS_SUCCESS;
-		}
-	}
-	WMA_LOGD("Using default single hw mode phyid[%d] total_mac_phy_cnt %d",
-		 *phyid, total_mac_phy_cnt);
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_get_caps_for_phyidx_hwmode() - to fetch caps for given hw mode and band
  * @caps_per_phy: Pointer to capabilities structure which needs to be filled
  * @hw_mode: Provided hardware mode
@@ -6000,9 +5950,10 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	t_wma_handle *wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	struct target_psoc_info *tgt_hdl;
 	int ht_cap_info, vht_cap_info;
-	uint8_t phyid, our_hw_mode = hw_mode, num_hw_modes;
+	uint8_t our_hw_mode = hw_mode, num_hw_modes;
 	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
 	struct wlan_psoc_target_capability_info *tgt_cap_info;
+	uint8_t total_mac_phy_cnt, i;
 
 	if (!wma_handle) {
 		WMA_LOGE("Invalid wma handle");
@@ -6013,6 +5964,10 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	if (!tgt_hdl) {
 		WMA_LOGE("%s: target psoc info is NULL", __func__);
 		return -EINVAL;
+	}
+	if (!caps_per_phy) {
+		WMA_LOGE("Invalid caps pointer");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ht_cap_info = target_if_get_ht_cap_info(tgt_hdl);
@@ -6047,30 +6002,55 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	if (!policy_mgr_is_dbs_enable(wma_handle->psoc))
 		our_hw_mode = HW_MODE_DBS_NONE;
 
-	if (!caps_per_phy) {
-		WMA_LOGE("Invalid caps pointer");
-		return QDF_STATUS_E_FAILURE;
+	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
+	for (i = 0; i < total_mac_phy_cnt; i++) {
+		if (our_hw_mode == HW_MODE_DBS &&
+		    mac_phy_cap[i].hw_mode_config_type != WMI_HW_MODE_DBS)
+			continue;
+
+		if ((band == CDS_BAND_2GHZ || band == CDS_BAND_ALL) &&
+		    (WLAN_2G_CAPABILITY & mac_phy_cap[i].supported_bands) &&
+		    !caps_per_phy->tx_chain_mask_2G) {
+			caps_per_phy->ht_2g = mac_phy_cap[i].ht_cap_info_2G;
+			caps_per_phy->vht_2g = mac_phy_cap[i].vht_cap_info_2G;
+			qdf_mem_copy(caps_per_phy->he_2g,
+				     mac_phy_cap[i].he_cap_info_2G,
+				     sizeof(caps_per_phy->he_2g));
+
+			caps_per_phy->tx_chain_mask_2G =
+					mac_phy_cap[i].tx_chain_mask_2G;
+			caps_per_phy->rx_chain_mask_2G =
+					mac_phy_cap[i].rx_chain_mask_2G;
+
+			WMA_LOGD("Select 2G capable phyid[%d] chain %d %d ht 0x%x vht 0x%x",
+				 i,
+				 caps_per_phy->tx_chain_mask_2G,
+				 caps_per_phy->rx_chain_mask_2G,
+				 caps_per_phy->ht_2g,
+				 caps_per_phy->vht_2g);
+		}
+		if ((band == CDS_BAND_5GHZ || band == CDS_BAND_ALL) &&
+		    (WLAN_5G_CAPABILITY & mac_phy_cap[i].supported_bands) &&
+		    !caps_per_phy->tx_chain_mask_5G) {
+			caps_per_phy->ht_5g = mac_phy_cap[i].ht_cap_info_5G;
+			caps_per_phy->vht_5g = mac_phy_cap[i].vht_cap_info_5G;
+			qdf_mem_copy(caps_per_phy->he_5g,
+				     mac_phy_cap[i].he_cap_info_5G,
+				     sizeof(caps_per_phy->he_5g));
+
+			caps_per_phy->tx_chain_mask_5G =
+					mac_phy_cap[i].tx_chain_mask_5G;
+			caps_per_phy->rx_chain_mask_5G =
+					mac_phy_cap[i].rx_chain_mask_5G;
+
+			WMA_LOGD("Select 5G capable phyid[%d] chain %d %d ht 0x%x vht 0x%x",
+				 i,
+				 caps_per_phy->tx_chain_mask_5G,
+				 caps_per_phy->rx_chain_mask_5G,
+				 caps_per_phy->ht_5g,
+				 caps_per_phy->vht_5g);
+		}
 	}
-
-	if (QDF_STATUS_SUCCESS !=
-		wma_get_phyid_for_given_band(wma_handle, tgt_hdl, band, &phyid)) {
-		WMA_LOGE("Invalid phyid");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	caps_per_phy->ht_2g = mac_phy_cap[phyid].ht_cap_info_2G;
-	caps_per_phy->ht_5g = mac_phy_cap[phyid].ht_cap_info_5G;
-	caps_per_phy->vht_2g = mac_phy_cap[phyid].vht_cap_info_2G;
-	caps_per_phy->vht_5g = mac_phy_cap[phyid].vht_cap_info_5G;
-	qdf_mem_copy(caps_per_phy->he_2g, mac_phy_cap[phyid].he_cap_info_2G,
-		     sizeof(caps_per_phy->he_2g));
-	qdf_mem_copy(caps_per_phy->he_5g, mac_phy_cap[phyid].he_cap_info_5G,
-		     sizeof(caps_per_phy->he_5g));
-
-	caps_per_phy->tx_chain_mask_2G = mac_phy_cap->tx_chain_mask_2G;
-	caps_per_phy->rx_chain_mask_2G = mac_phy_cap->rx_chain_mask_2G;
-	caps_per_phy->tx_chain_mask_5G = mac_phy_cap->tx_chain_mask_5G;
-	caps_per_phy->rx_chain_mask_5G = mac_phy_cap->rx_chain_mask_5G;
 
 	return QDF_STATUS_SUCCESS;
 }
