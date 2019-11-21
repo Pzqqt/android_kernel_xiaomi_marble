@@ -2383,7 +2383,7 @@ QDF_STATUS wlan_crypto_wpaie_check(struct wlan_crypto_params *crypto_params,
 		frm += 2, len -= 2;
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
