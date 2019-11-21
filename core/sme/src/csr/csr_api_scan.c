@@ -2846,7 +2846,7 @@ QDF_STATUS csr_scan_filter_results(struct mac_context *mac_ctx)
 	struct wlan_objmgr_pdev *pdev = NULL;
 	uint32_t i;
 	uint32_t ch_freq;
-	uint8_t valid_ch_list[CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t valid_ch_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 
 	pdev = wlan_objmgr_get_pdev_by_id(mac_ctx->psoc,
 		0, WLAN_LEGACY_MAC_ID);
@@ -2869,13 +2869,11 @@ QDF_STATUS csr_scan_filter_results(struct mac_context *mac_ctx)
 	/* This is a temporary conversion till the scm handles freq */
 
 	for (i = 0; i < len; i++) {
-		ch_freq =
-		    wlan_reg_freq_to_chan(pdev,
-					  mac_ctx->roam.valid_ch_freq_list[i]);
-		valid_ch_list[i] = ch_freq;
+		ch_freq = mac_ctx->roam.valid_ch_freq_list[i];
+		valid_ch_freq_list[i] = ch_freq;
 	}
 
-	ucfg_scan_filter_valid_channel(pdev, valid_ch_list, len);
+	ucfg_scan_filter_valid_channel(pdev, valid_ch_freq_list, len);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
 	return QDF_STATUS_SUCCESS;
