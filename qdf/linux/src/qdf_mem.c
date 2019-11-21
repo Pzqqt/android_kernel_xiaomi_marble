@@ -43,14 +43,14 @@
 #include <net/cnss_prealloc.h>
 #endif
 
-#ifdef MEMORY_DEBUG
-#include "qdf_debug_domain.h"
-#include <qdf_list.h>
-
 /* Preprocessor Definitions and Constants */
 #define QDF_MEM_MAX_MALLOC (4096 * 1024) /* 4 Mega Bytes */
 #define QDF_MEM_WARN_THRESHOLD 300 /* ms */
 #define QDF_DEBUG_STRING_SIZE 512
+
+#ifdef MEMORY_DEBUG
+#include "qdf_debug_domain.h"
+#include <qdf_list.h>
 
 static qdf_list_t qdf_mem_domains[QDF_DEBUG_DOMAIN_COUNT];
 static qdf_spinlock_t qdf_mem_list_lock;
@@ -1235,6 +1235,12 @@ static void qdf_mem_debug_exit(void) {}
 void *qdf_mem_malloc_fl(size_t size, const char *func, uint32_t line)
 {
 	void *ptr;
+
+	if (!size || size > QDF_MEM_MAX_MALLOC) {
+		qdf_nofl_err("Cannot malloc %zu bytes @ %s:%d", size, func,
+			     line);
+		return NULL;
+	}
 
 	ptr = qdf_mem_prealloc_get(size);
 	if (ptr)
