@@ -310,6 +310,24 @@ uint64_t hdd_get_monotonic_host_time(struct hdd_context *hdd_ctx)
 
 #if defined(WLAN_FEATURE_TSF_PLUS) && \
 	defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC)
+#define MAX_CONTINUOUS_RETRY_CNT 10
+static uint32_t
+hdd_wlan_retry_tsf_cap(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hddctx;
+	int count = adapter->continuous_cap_retry_count;
+
+	hddctx = WLAN_HDD_GET_CTX(adapter);
+	if (count == MAX_CONTINUOUS_RETRY_CNT) {
+		hdd_debug("Max retry countr reached");
+		return 0;
+	}
+	qdf_atomic_set(&hddctx->cap_tsf_flag, 0);
+	count++;
+	adapter->continuous_cap_retry_count = count;
+	return (count * WLAN_HDD_CAPTURE_TSF_REQ_TIMEOUT_MS);
+}
+
 static void
 hdd_update_host_time(struct hdd_adapter *adapter)
 {
@@ -395,6 +413,12 @@ static bool hdd_tsf_cap_sync_send(struct hdd_adapter *adapter)
 }
 #elif defined(WLAN_FEATURE_TSF_PLUS) && \
 	!defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC)
+static uint32_t
+hdd_wlan_retry_tsf_cap(struct hdd_adapter *adapter)
+{
+	return 0;
+}
+
 static void
 hdd_tsf_gpio_sync_work_init(struct hdd_adapter *adapter)
 {
@@ -1066,6 +1090,7 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter)
 			    CAP_TSF_TIMER_FIX_SEC) * MSEC_PER_SEC;
 
 		adapter->continuous_error_count = 0;
+		adapter->continuous_cap_retry_count = 0;
 		hdd_debug("ts-pair updated: interval: %d",
 			  interval);
 		break;
@@ -1220,12 +1245,16 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter,
 		}
 
 		adapter->continuous_error_count = 0;
+		adapter->continuous_cap_retry_count = 0;
 		hdd_debug("ts-pair updated: interval: %d",
 			  interval);
 		break;
 	case HDD_TS_STATUS_WAITING:
 		interval = 0;
 		hdd_warn("TS status is waiting due to one or more pair not updated");
+
+		if (!target_time && !host_time)
+			interval = hdd_wlan_retry_tsf_cap(adapter);
 		break;
 	}
 	qdf_spin_unlock_bh(&adapter->host_target_sync_lock);

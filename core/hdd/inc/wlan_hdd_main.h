@@ -1182,6 +1182,8 @@ struct hdd_adapter {
 	uint64_t last_target_time;
 	/* to store the count of continuous invalid tstamp-pair */
 	int continuous_error_count;
+	/* to store the count of continuous capture retry */
+	int continuous_cap_retry_count;
 	/* to indicate whether tsf_sync has been initialized */
 	qdf_atomic_t tsf_sync_ready_flag;
 #ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC
