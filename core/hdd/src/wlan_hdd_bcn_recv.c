@@ -126,15 +126,20 @@ static void hdd_send_bcn_recv_info(hdd_handle_t hdd_handle,
 	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	uint32_t data_len;
 	int flags = cds_get_gfp_flags();
+	struct hdd_adapter *adapter;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
 	data_len = get_beacon_report_data_len(beacon_report);
 
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, beacon_report->vdev_id);
+	if (hdd_validate_adapter(adapter))
+		return;
+
 	vendor_event =
 		cfg80211_vendor_event_alloc(
-			hdd_ctx->wiphy, NULL,
+			hdd_ctx->wiphy, &(adapter->wdev),
 			data_len,
 			QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING_INDEX,
 			flags);
@@ -423,7 +428,7 @@ void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
 
 	vendor_event =
 		cfg80211_vendor_event_alloc(
-			hdd_ctx->wiphy, NULL,
+			hdd_ctx->wiphy, &(adapter->wdev),
 			data_len,
 			QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING_INDEX,
 			flags);
