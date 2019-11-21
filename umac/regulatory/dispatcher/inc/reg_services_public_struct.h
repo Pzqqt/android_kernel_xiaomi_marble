@@ -435,6 +435,18 @@ enum channel_enum {
 
 	INVALID_CHANNEL = 0xBAD,
 
+#ifdef DISABLE_UNII_SHARED_BANDS
+	MIN_UNII_1_BAND_CHANNEL = CHAN_ENUM_5180,
+	MAX_UNII_1_BAND_CHANNEL = CHAN_ENUM_5240,
+	NUM_UNII_1_BAND_CHANNELS = (MAX_UNII_1_BAND_CHANNEL -
+				    MIN_UNII_1_BAND_CHANNEL + 1),
+
+	MIN_UNII_2A_BAND_CHANNEL = CHAN_ENUM_5260,
+	MAX_UNII_2A_BAND_CHANNEL = CHAN_ENUM_5320,
+	NUM_UNII_2A_BAND_CHANNELS = (MAX_UNII_2A_BAND_CHANNEL -
+				     MIN_UNII_2A_BAND_CHANNEL + 1),
+#endif
+
 #ifdef CONFIG_BAND_6GHZ
 	MIN_6GHZ_CHANNEL = CHAN_ENUM_5945,
 	MAX_6GHZ_CHANNEL = CHAN_ENUM_7105,
@@ -659,7 +671,6 @@ struct regulatory_channel {
 	bool nol_history;
 };
 
-
 /**
  * struct regulatory: regulatory information
  * @reg_domain: regulatory domain pair
@@ -832,6 +843,18 @@ enum reg_wifi_band {
 	REG_BAND_6G,
 	REG_BAND_UNKNOWN
 };
+
+#ifdef DISABLE_UNII_SHARED_BANDS
+/**
+ * enum reg_unii_band
+ * @REG_UNII_BAND_1: Disable UNII-1 band channels
+ * @REG_UNII_BAND_2A: Disable UNII-2A band channels
+ */
+enum reg_unii_band {
+	REG_UNII_BAND_1 = 0x0,
+	REG_UNII_BAND_2A = 0x1,
+};
+#endif
 
 #define REG_BAND_MASK_ALL (BIT(REG_BAND_2G) | BIT(REG_BAND_5G) \
 			  | BIT(REG_BAND_6G))

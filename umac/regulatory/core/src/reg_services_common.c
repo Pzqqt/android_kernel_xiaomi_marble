@@ -2731,6 +2731,75 @@ QDF_STATUS reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev)
 	return status;
 }
 
+#ifdef DISABLE_UNII_SHARED_BANDS
+/**
+ * reg_is_reg_unii_band_1_or_reg_unii_band_2a() - Check the input bitmap
+ * @unii_5g_bitmap: 5G UNII band bitmap
+ *
+ * This function checks if either REG_UNII_BAND_1 or REG_UNII_BAND_2A,
+ * are present in the 5G UNII band bitmap.
+ *
+ * Return: Return true if REG_UNII_BAND_1 or REG_UNII_BAND_2A, are present in
+ * the UNII 5g bitmap else return false.
+ */
+static bool
+reg_is_reg_unii_band_1_or_reg_unii_band_2a(uint8_t unii_5g_bitmap)
+{
+	if (!unii_5g_bitmap)
+		return false;
+
+	return ((unii_5g_bitmap & (BIT(REG_UNII_BAND_1) |
+		 BIT(REG_UNII_BAND_2A))) ==  unii_5g_bitmap);
+}
+
+QDF_STATUS reg_disable_chan_coex(struct wlan_objmgr_pdev *pdev,
+				 uint8_t unii_5g_bitmap)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err_rl("reg pdev priv obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (unii_5g_bitmap &&
+	    !reg_is_reg_unii_band_1_or_reg_unii_band_2a(unii_5g_bitmap)) {
+		reg_err_rl("Invalid unii_5g_bitmap =  %d", unii_5g_bitmap);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (pdev_priv_obj->unii_5g_bitmap == unii_5g_bitmap) {
+		reg_debug_rl("UNII bitmask for 5G channels is already set  %d",
+			    unii_5g_bitmap);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	reg_debug_rl("Setting UNII bitmask for 5G: %d", unii_5g_bitmap);
+	pdev_priv_obj->unii_5g_bitmap = unii_5g_bitmap;
+
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+
+	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
+
+	if (reg_tx_ops->fill_umac_legacy_chanlist) {
+		reg_tx_ops->fill_umac_legacy_chanlist(pdev,
+				pdev_priv_obj->cur_chan_list);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS reg_get_channel_list_with_power_for_freq(struct wlan_objmgr_pdev
 						    *pdev,

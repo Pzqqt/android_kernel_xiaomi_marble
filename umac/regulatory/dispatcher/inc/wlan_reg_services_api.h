@@ -894,6 +894,26 @@ bool wlan_reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS wlan_reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * wlan_reg_disable_chan_coex() - Disable Coexisting channels based on the input
+ * bitmask
+ * @pdev: pointer to wlan_objmgr_pdev.
+ * unii_5g_bitmap: UNII 5G bitmap.
+ *
+ * Return : QDF_STATUS
+ */
+#ifdef DISABLE_UNII_SHARED_BANDS
+QDF_STATUS wlan_reg_disable_chan_coex(struct wlan_objmgr_pdev *pdev,
+				      uint8_t unii_5g_bitmap);
+#else
+static inline QDF_STATUS
+wlan_reg_disable_chan_coex(struct wlan_objmgr_pdev *pdev,
+			   uint8_t unii_5g_bitmap)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef CONFIG_CHAN_FREQ_API
 /**
  * wlan_reg_is_same_band_freqs() - Check if two channel frequencies

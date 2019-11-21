@@ -734,6 +734,19 @@ bool reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev);
 
+#ifdef DISABLE_UNII_SHARED_BANDS
+/**
+ * reg_disable_chan_coex() - Disable Coexisting channels based on the input
+ * bitmask.
+ * @pdev: pointer to wlan_objmgr_pdev.
+ * unii_5g_bitmap: UNII 5G bitmap.
+ *
+ * Return : QDF_STATUS
+ */
+QDF_STATUS reg_disable_chan_coex(struct wlan_objmgr_pdev *pdev,
+				 uint8_t unii_5g_bitmap);
+#endif
+
 #ifdef CONFIG_CHAN_FREQ_API
 /**
  * reg_get_chan_enum_for_freq() - Get channel enum for given channel frequency
