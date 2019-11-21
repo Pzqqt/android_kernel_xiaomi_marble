@@ -3143,6 +3143,9 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 		sde_encoder_trigger_kickoff_pending(encoder);
 	}
 
+	/* update performance setting */
+	sde_core_perf_crtc_update(crtc, 1, false);
+
 	/*
 	 * If no mixers have been allocated in sde_crtc_atomic_check(),
 	 * it means we are trying to flush a CRTC whose state is disabled:
@@ -3289,9 +3292,6 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 		}
 		cstate->rsc_update = true;
 	}
-
-	/* update performance setting before crtc kickoff */
-	sde_core_perf_crtc_update(crtc, 1, false);
 
 	/*
 	 * Final plane updates: Give each plane a chance to complete all
