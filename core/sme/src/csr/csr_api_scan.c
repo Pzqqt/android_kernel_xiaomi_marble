@@ -2362,11 +2362,9 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	enum channel_state ap_channel_state;
 
 	ap_channel_state =
-		wlan_reg_get_channel_state(
+		wlan_reg_get_channel_state_for_freq(
 				mac_ctx->pdev,
-				wlan_reg_freq_to_chan(
-					mac_ctx->pdev,
-					scan_entry->channel.chan_freq));
+				scan_entry->channel.chan_freq);
 	if (ap_channel_state == CHANNEL_STATE_DISABLE ||
 	    ap_channel_state == CHANNEL_STATE_INVALID) {
 		sme_err("BSS %pM channel %d invalid, not populating this BSSID",
