@@ -704,27 +704,6 @@ enum scan_priority {
 	SCAN_PRIORITY_COUNT,
 };
 
-
-/**
- * enum scan_type - type of scan
- * @SCAN_TYPE_BACKGROUND: background scan
- * @SCAN_TYPE_FOREGROUND: foregrounc scan
- * @SCAN_TYPE_SPECTRAL: spectral scan
- * @SCAN_TYPE_REPEATER_BACKGROUND: background scan in repeater
- * @SCAN_TYPE_REPEATER_EXT_BACKGROUND: background scan in extended repeater
- * @SCAN_TYPE_RADIO_MEASUREMENTS: redio measurement
- * @SCAN_TYPE_COUNT: number of scan types supported
- */
-enum scan_type {
-	SCAN_TYPE_BACKGROUND,
-	SCAN_TYPE_FOREGROUND,
-	SCAN_TYPE_SPECTRAL,
-	SCAN_TYPE_REPEATER_BACKGROUND,
-	SCAN_TYPE_REPEATER_EXT_BACKGROUND,
-	SCAN_TYPE_RADIO_MEASUREMENTS,
-	SCAN_TYPE_COUNT,
-};
-
 /**
  * enum scan_phy_mode - phymode used for scan
  * @SCAN_PHY_MODE_11A: 11a mode
@@ -781,21 +760,6 @@ enum scan_phy_mode {
 	SCAN_PHY_MODE_11AX_HE80_2G = 23,
 	SCAN_PHY_MODE_UNKNOWN = 24,
 	SCAN_PHY_MODE_MAX = 24
-};
-
-/**
- * struct scan_extra_params_legacy
- * extra parameters required for legacy DA scan module
- * @scan_type: type of scan
- * @min_dwell_active: min active dwell time
- * @min_dwell_passive: min passive dwell time
- * @init_rest_time: init rest time for enhanced independent repeater
- */
-struct scan_extra_params_legacy {
-	enum scan_type scan_type;
-	uint32_t min_dwell_active;
-	uint32_t min_dwell_passive;
-	uint32_t init_rest_time;
 };
 
 /**
@@ -1081,12 +1045,10 @@ struct scan_req_params {
 /**
  * struct scan_start_request - scan request config
  * @vdev: vdev
- * @legacy_params: extra parameters required for legacy DA arch
  * @scan_req: common scan start request parameters
  */
 struct scan_start_request {
 	struct wlan_objmgr_vdev *vdev;
-	struct scan_extra_params_legacy legacy_params;
 	struct scan_req_params scan_req;
 };
 
