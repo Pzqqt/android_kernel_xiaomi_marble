@@ -533,6 +533,67 @@ wmi_unified_extract_hw_mode_resp(wmi_unified_t wmi,
 				 uint32_t *cmd_status);
 
 /**
+ * wmi_unified_extract_roam_trigger_stats() - Extract roam trigger related
+ * stats
+ * @wmi:        wmi handle
+ * @evt_buf:    Pointer to the event buffer
+ * @trig:       Pointer to destination structure to fill data
+ * @idx:        TLV id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_extract_roam_trigger_stats(wmi_unified_t wmi, void *evt_buf,
+				       struct wmi_roam_trigger_info *trig,
+				       uint8_t idx);
+
+/**
+ * wmi_unified_extract_roam_scan_stats() - Extract roam scan stats from
+ * firmware
+ * @wmi:        wmi handle
+ * @evt_buf:    Pointer to the event buffer
+ * @dst:        Pointer to destination structure to fill data
+ * @idx:        TLV id
+ * @chan_idx:   Index of the channel frequency for this roam trigger
+ * @ap_idx:     Index of the candidate AP for this roam trigger
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_extract_roam_scan_stats(wmi_unified_t wmi, void *evt_buf,
+				    struct wmi_roam_scan_data *dst, uint8_t idx,
+				    uint8_t chan_idx, uint8_t ap_idx);
+
+/**
+ * wmi_unified_extract_roam_result_stats() - Extract roam result related stats
+ * @wmi:        wmi handle
+ * @evt_buf:    Pointer to the event buffer
+ * @dst:        Pointer to destination structure to fill data
+ * @idx:        TLV id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_extract_roam_result_stats(wmi_unified_t wmi, void *evt_buf,
+				      struct wmi_roam_result *dst,
+				      uint8_t idx);
+
+/**
+ * wmi_unified_extract_roam_11kv_stats() - Extract BTM/Neigh report stats
+ * @wmi:       wmi handle
+ * @evt_buf:   Pointer to the event buffer
+ * @dst:       Pointer to destination structure to fill data
+ * @idx:       TLV id
+ * @rpt_idx:   index of the current channel
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_extract_roam_11kv_stats(wmi_unified_t wmi, void *evt_buf,
+				    struct wmi_neighbor_report_data *dst,
+				    uint8_t idx, uint8_t rpt_idx);
+
+/**
  * wmi_unified_vdev_create_send() - send VDEV create command to fw
  * @wmi_handle: wmi handle
  * @param: pointer to hold vdev create parameter

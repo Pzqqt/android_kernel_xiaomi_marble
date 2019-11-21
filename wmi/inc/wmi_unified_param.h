@@ -4551,6 +4551,7 @@ typedef enum {
 	wmi_motion_det_base_line_host_eventid,
 	wmi_get_ani_level_event_id,
 	wmi_peer_tx_pn_response_event_id,
+	wmi_roam_stats_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -7470,6 +7471,152 @@ struct wmi_roam_scan_stats_params {
 struct wmi_roam_scan_stats_res {
 	uint32_t num_roam_scans;
 	struct wmi_roam_scan_stats_params roam_scan[0];
+};
+
+#define MAX_ROAM_CANDIDATE_AP      8
+#define MAX_ROAM_SCAN_CHAN         38
+
+/**
+ * struct wmi_roam_btm_trigger_data - BTM roam trigger related information
+ * @btm_request_mode:      BTM request mode - solicited/unsolicited
+ * @disassoc_timer:        Number of TBTT before AP disassociates the STA in ms
+ * @validity_interval:     Preferred candidate list validity interval in ms
+ * @candidate_list_count:  Number of candidates in BTM request.
+ * @btm_resp_status:       Status code of the BTM response.
+ */
+struct wmi_roam_btm_trigger_data {
+	uint32_t btm_request_mode;
+	uint32_t disassoc_timer;
+	uint32_t validity_interval;
+	uint32_t candidate_list_count;
+	uint32_t btm_resp_status;
+};
+
+/**
+ * struct wmi_roam_cu_trigger_data - BSS Load roam trigger parameters
+ * @cu_load: Connected AP CU load percentage
+ */
+struct wmi_roam_cu_trigger_data {
+	uint32_t cu_load;
+	/* TODO: Add threshold value */
+};
+
+/**
+ * Struct wmi_roam_rssi_trigger_data - RSSI roam trigger related
+ * parameters
+ * @threshold: RSSI threshold value in dBm for LOW rssi roam trigger
+ */
+struct wmi_roam_rssi_trigger_data {
+	uint32_t threshold;
+};
+
+/**
+ * struct wmi_roam_deauth_trigger_data - Deauth roaming trigger related
+ * parameters
+ * @type:   1- Deauthentication 2- Disassociation
+ * @reason: Status code of the Deauth/Disassoc received
+ */
+struct wmi_roam_deauth_trigger_data {
+	uint32_t type;
+	uint32_t reason;
+};
+
+/**
+ *  struct wmi_roam_candidate_info - Roam scan candidate APs related info
+ *  @timestamp:   Host timestamp in millisecs
+ *  @type:        0 - Candidate AP; 1 - Current connected AP.
+ *  @bssid:       AP bssid.
+ *  @freq:        Channel frquency
+ *  @cu_load:     Channel utilization load of the AP.
+ *  @cu_score:    Channel Utilization score.
+ *  @rssi:        Candidate AP rssi
+ *  @rssi_score:  AP RSSI score
+ *  @total_score: Total score of the candidate AP.
+ *  @etp:         Estimated throughput value of the AP in Mbps
+ */
+struct wmi_roam_candidate_info {
+	uint32_t timestamp;
+	uint8_t type;
+	struct qdf_mac_addr bssid;
+	uint16_t freq;
+	uint32_t cu_load;
+	uint32_t cu_score;
+	uint32_t rssi;
+	uint32_t rssi_score;
+	uint32_t total_score;
+	uint32_t etp;
+};
+
+/**
+ * struct wmi_roam_scan_data - Roam scan event details
+ * @type:      0 - Partial roam scan; 1 - Full roam scan
+ * @num_ap:    Number of candidate APs.
+ * @num_chan:  Number of channels.
+ * @next_rssi_threshold: Next roam can trigger rssi threshold
+ * @chan_freq: List of frequencies scanned as part of roam scan
+ * @ap: List of candidate AP info
+ */
+struct wmi_roam_scan_data {
+	uint16_t type;
+	uint16_t num_ap;
+	uint16_t num_chan;
+	uint32_t next_rssi_threshold;
+	uint16_t chan_freq[MAX_ROAM_SCAN_CHAN];
+	struct wmi_roam_candidate_info ap[MAX_ROAM_CANDIDATE_AP];
+};
+
+/**
+ * struct wmi_roam_result - Roam result related info.
+ * @timestamp:          Host timestamp in millisecs
+ * @status:             0 - Roaming is success ; 1 - Roaming failed
+ * @fail_reason:        One of WMI_ROAM_FAIL_REASON_ID
+ */
+struct wmi_roam_result {
+	uint32_t timestamp;
+	bool status;
+	uint32_t fail_reason;
+};
+
+/**
+ *  struct wmi_neighbor_report_data - Neighbor report/BTM request related
+ *  data.
+ *  @timestamp:  Host timestamp in millisecs
+ *  @req_type:   1 - BTM query ; 2 - 11K neighbor report request
+ *  @req_time:   Request timestamp in ms
+ *  @resp_time:  Response timestamp in ms
+ *  @freq:       Channel frequency in Mhz
+ */
+struct wmi_neighbor_report_data {
+	uint32_t timestamp;
+	uint8_t req_type;
+	uint32_t req_time;
+	uint32_t resp_time;
+	uint8_t num_freq;
+	uint32_t freq[MAX_ROAM_SCAN_CHAN];
+};
+
+/**
+ * struct wmi_roam_trigger_info() - Roam trigger related details
+ * @trigger_reason:     Roam trigger reason(enum WMI_ROAM_TRIGGER_REASON_ID)
+ * @trigger_sub_reason: Sub reason for roam trigger if multiple roam scans
+ * @current_rssi:       Connected AP RSSI
+ * @timestamp:          Host timestamp in millisecs when roam scan was triggered
+ * @btm_trig_data:      BTM roam trigger parameters.
+ * @cu_trig_data:       BSS Load roam trigger parameters.
+ * @rssi_trig_data:     RSSI trigger related info.
+ * @deauth_trig_data:   Deauth roam trigger related info
+ */
+struct wmi_roam_trigger_info {
+	uint32_t trigger_reason;
+	uint32_t trigger_sub_reason;
+	uint32_t current_rssi;
+	uint32_t timestamp;
+	union {
+		struct wmi_roam_btm_trigger_data btm_trig_data;
+		struct wmi_roam_cu_trigger_data cu_trig_data;
+		struct wmi_roam_rssi_trigger_data rssi_trig_data;
+		struct wmi_roam_deauth_trigger_data deauth_trig_data;
+	};
 };
 
 /* End of roam scan stats definitions */
