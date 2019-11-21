@@ -71,9 +71,9 @@ QDF_STATUS ucfg_scan_flush_results(struct wlan_objmgr_pdev *pdev,
 }
 
 void ucfg_scan_filter_valid_channel(struct wlan_objmgr_pdev *pdev,
-	uint8_t *chan_list, uint32_t num_chan)
+	uint32_t *chan_freq_list, uint32_t num_chan)
 {
-	scm_filter_valid_channel(pdev, chan_list, num_chan);
+	scm_filter_valid_channel(pdev, chan_freq_list, num_chan);
 }
 
 QDF_STATUS ucfg_scan_init(void)

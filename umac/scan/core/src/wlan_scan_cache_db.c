@@ -1463,7 +1463,7 @@ QDF_STATUS scm_flush_results(struct wlan_objmgr_pdev *pdev,
  * scm_filter_channels() - Remove entries not belonging to channel list
  * @scan_db: scan db
  * @db_node: node on which filters are applied
- * @chan_list: valid channel list
+ * @chan_freq_list: valid channel frequency (in MHz) list
  * @num_chan: number of channels
  *
  * Return: QDF_STATUS
@@ -1471,17 +1471,14 @@ QDF_STATUS scm_flush_results(struct wlan_objmgr_pdev *pdev,
 static void scm_filter_channels(struct wlan_objmgr_pdev *pdev,
 				struct scan_dbs *scan_db,
 				struct scan_cache_node *db_node,
-				uint8_t *chan_list, uint32_t num_chan)
+				uint32_t *chan_freq_list, uint32_t num_chan)
 {
 	int i;
 	bool match = false;
 
 	for (i = 0; i < num_chan; i++) {
-		if (chan_list[i] ==
-			wlan_reg_freq_to_chan(
-				pdev,
-				util_scan_entry_channel_frequency(
-							db_node->entry))) {
+		if (chan_freq_list[i] == util_scan_entry_channel_frequency(
+							db_node->entry)) {
 			match = true;
 			break;
 		}
@@ -1495,7 +1492,7 @@ static void scm_filter_channels(struct wlan_objmgr_pdev *pdev,
 }
 
 void scm_filter_valid_channel(struct wlan_objmgr_pdev *pdev,
-	uint8_t *chan_list, uint32_t num_chan)
+	uint32_t *chan_freq_list, uint32_t num_chan)
 {
 	int i;
 	struct wlan_objmgr_psoc *psoc;
@@ -1527,7 +1524,7 @@ void scm_filter_valid_channel(struct wlan_objmgr_pdev *pdev,
 			   &scan_db->scan_hash_tbl[i], NULL);
 		while (cur_node) {
 			scm_filter_channels(pdev, scan_db,
-					    cur_node, chan_list, num_chan);
+					    cur_node, chan_freq_list, num_chan);
 			next_node = scm_get_next_node(scan_db,
 				&scan_db->scan_hash_tbl[i], cur_node);
 			cur_node = next_node;
