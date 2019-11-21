@@ -2738,6 +2738,14 @@ static int swrm_runtime_resume(struct device *dev)
 		} else {
 			/*wake up from clock stop*/
 			swr_master_write(swrm, SWRM_MCP_BUS_CTRL_ADDR, 0x2);
+			/* clear and enable bus clash interrupt */
+			swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, 0x08);
+			swrm->intr_mask |= 0x08;
+			swr_master_write(swrm, SWRM_INTERRUPT_MASK_ADDR,
+					 swrm->intr_mask);
+			swr_master_write(swrm,
+					 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN,
+					 swrm->intr_mask);
 			usleep_range(100, 105);
 			if (!swrm_check_link_status(swrm, 0x1))
 				goto exit;
@@ -2819,6 +2827,13 @@ static int swrm_runtime_suspend(struct device *dev)
 				}
 			}
 		} else {
+			/* Mask bus clash interrupt */
+			swrm->intr_mask &= ~((u32)0x08);
+			swr_master_write(swrm, SWRM_INTERRUPT_MASK_ADDR,
+					 swrm->intr_mask);
+			swr_master_write(swrm,
+					 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN,
+					 swrm->intr_mask);
 			mutex_unlock(&swrm->reslock);
 			/* clock stop sequence */
 			swrm_cmd_fifo_wr_cmd(swrm, 0x2, 0xF, 0xF,
