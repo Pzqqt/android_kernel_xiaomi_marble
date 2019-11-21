@@ -876,7 +876,7 @@ QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 {
 	int ret_val;
 	uint8_t ch_msk_val;
-	struct wma_caps_per_phy non_dbs_phy_cap;
+	struct wma_caps_per_phy non_dbs_phy_cap = {0};
 	struct wlan_mlme_psoc_ext_obj *mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	QDF_STATUS status;
 	bool enable2x2, as_enabled, enable_bt_chain_sep;
