@@ -1930,10 +1930,21 @@ static irqreturn_t swrm_wakeup_interrupt(int irq, void *dev)
 		pr_err("%s: swrm or dev is null\n", __func__);
 		return IRQ_NONE;
 	}
+
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up) {
-		if (swrm->wake_irq > 0)
-			disable_irq_nosync(swrm->wake_irq);
+		if (swrm->wake_irq > 0) {
+			if (unlikely(!irq_get_irq_data(swrm->wake_irq))) {
+				pr_err("%s: irq data is NULL\n", __func__);
+				mutex_unlock(&swrm->devlock);
+				return IRQ_NONE;
+			}
+			mutex_lock(&swrm->irq_lock);
+			if (!irqd_irq_disabled(
+			    irq_get_irq_data(swrm->wake_irq)))
+				disable_irq_nosync(swrm->wake_irq);
+			mutex_unlock(&swrm->irq_lock);
+		}
 		mutex_unlock(&swrm->devlock);
 		return ret;
 	}
@@ -1942,8 +1953,17 @@ static irqreturn_t swrm_wakeup_interrupt(int irq, void *dev)
 		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
 		goto exit;
 	}
-	if (swrm->wake_irq > 0)
-		disable_irq_nosync(swrm->wake_irq);
+	if (swrm->wake_irq > 0) {
+		if (unlikely(!irq_get_irq_data(swrm->wake_irq))) {
+			pr_err("%s: irq data is NULL\n", __func__);
+			return IRQ_NONE;
+		}
+		mutex_lock(&swrm->irq_lock);
+		if (!irqd_irq_disabled(
+		    irq_get_irq_data(swrm->wake_irq)))
+			disable_irq_nosync(swrm->wake_irq);
+		mutex_unlock(&swrm->irq_lock);
+	}
 	pm_runtime_get_sync(swrm->dev);
 	pm_runtime_mark_last_busy(swrm->dev);
 	pm_runtime_put_autosuspend(swrm->dev);
@@ -2423,6 +2443,7 @@ static int swrm_probe(struct platform_device *pdev)
 	init_completion(&swrm->reset);
 	init_completion(&swrm->broadcast);
 	init_completion(&swrm->clk_off_complete);
+	mutex_init(&swrm->irq_lock);
 	mutex_init(&swrm->mlock);
 	mutex_init(&swrm->reslock);
 	mutex_init(&swrm->force_down_lock);
@@ -2569,6 +2590,7 @@ err_mstr_fail:
 	else if (swrm->irq)
 		free_irq(swrm->irq, swrm);
 err_irq_fail:
+	mutex_destroy(&swrm->irq_lock);
 	mutex_destroy(&swrm->mlock);
 	mutex_destroy(&swrm->reslock);
 	mutex_destroy(&swrm->force_down_lock);
@@ -2601,6 +2623,7 @@ static int swrm_remove(struct platform_device *pdev)
 	swr_unregister_master(&swrm->master);
 	msm_aud_evt_unregister_client(&swrm->event_notifier);
 	device_init_wakeup(swrm->dev, false);
+	mutex_destroy(&swrm->irq_lock);
 	mutex_destroy(&swrm->mlock);
 	mutex_destroy(&swrm->reslock);
 	mutex_destroy(&swrm->iolock);
@@ -2655,6 +2678,20 @@ static int swrm_runtime_resume(struct device *dev)
 	if ((swrm->state == SWR_MSTR_DOWN) ||
 	    (swrm->state == SWR_MSTR_SSR && swrm->dev_up)) {
 		if (swrm->clk_stop_mode0_supp) {
+			if (swrm->wake_irq > 0) {
+				if (unlikely(!irq_get_irq_data
+				    (swrm->wake_irq))) {
+					pr_err("%s: irq data is NULL\n",
+						__func__);
+					mutex_unlock(&swrm->reslock);
+					return IRQ_NONE;
+				}
+				mutex_lock(&swrm->irq_lock);
+				if (!irqd_irq_disabled(
+				    irq_get_irq_data(swrm->wake_irq)))
+					disable_irq_nosync(swrm->wake_irq);
+				mutex_unlock(&swrm->irq_lock);
+			}
 			if (swrm->ipc_wakeup)
 				msm_aud_evt_blocking_notifier_call_chain(
 					SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);

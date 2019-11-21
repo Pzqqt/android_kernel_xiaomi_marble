@@ -124,6 +124,7 @@ struct swr_mstr_ctrl {
 	struct mutex mlock;
 	struct mutex reslock;
 	struct mutex pm_lock;
+	struct mutex irq_lock;
 	u32 swrm_base_reg;
 	char __iomem *swrm_dig_base;
 	char __iomem *swrm_hctl_reg;
