@@ -354,6 +354,9 @@ htt_t2h_stats_pdev_stats_print(struct wlan_dbg_stats *wlan_pdev_stats,
 	qdf_nofl_info("phy_errs dropped  :%d", rx->phy_err_drop);
 	/* Number of mpdu errors - FCS, MIC, ENC etc. */
 	qdf_nofl_info("mpdu_errs         :%d", rx->mpdu_errs);
+#if defined(AR900B)
+	qdf_nofl_info("rx_ovfl_errs      :%d", rx->rx_ovfl_errs);
+#endif
 
 }
 
