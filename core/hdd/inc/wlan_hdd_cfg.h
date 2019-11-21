@@ -195,6 +195,7 @@ struct hdd_config {
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 	uint32_t napi_cpu_affinity_mask;
 	/* CPU affinity mask for rx_thread */
+	uint32_t rx_thread_ul_affinity_mask;
 	uint32_t rx_thread_affinity_mask;
 	uint8_t cpu_map_list[CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST_LEN];
 	bool multicast_replay_filter;

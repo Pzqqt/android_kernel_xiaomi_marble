@@ -135,6 +135,10 @@ typedef struct _cds_sched_context {
 
 	/* high throughput required */
 	bool high_throughput_required;
+
+	/* affinity requied during uplink traffic*/
+	bool rx_affinity_required;
+	uint8_t conf_rx_thread_ul_affinity;
 #endif
 } cds_sched_context, *p_cds_sched_context;
 
@@ -220,6 +224,25 @@ int cds_sched_handle_cpu_hot_plug(void);
 int cds_sched_handle_throughput_req(bool high_tput_required);
 
 /**
+ * cds_sched_handle_rx_thread_affinity_req - rx thread affinity req handler
+ * @high_tput_required: high throughput is required or not
+ *
+ * rx thread affinity handler will find online cores and
+ * will assign proper core based on perf requirement
+ *
+ * Return: None
+ */
+void cds_sched_handle_rx_thread_affinity_req(bool high_throughput);
+
+/**
+ * cds_set_rx_thread_ul_cpu_mask() - Rx_thread affinity for UL from INI
+ * @cpu_affinity_mask: CPU affinity bitmap
+ *
+ * Return:None
+ */
+void cds_set_rx_thread_ul_cpu_mask(uint8_t cpu_affinity_mask);
+
+/**
  * cds_set_rx_thread_cpu_mask() - Rx_thread affinity from INI
  * @cpu_affinity_mask: CPU affinity bitmap
  *
@@ -296,6 +319,26 @@ void cds_free_ol_rx_pkt(p_cds_sched_context pSchedContext,
    -------------------------------------------------------------------------*/
 void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
 #else
+/**
+ * cds_sched_handle_rx_thread_affinity_req - rx thread affinity req handler
+ * @high_tput_required: high throughput is required or not
+ *
+ * rx thread affinity handler will find online cores and
+ * will assign proper core based on perf requirement
+ *
+ * Return: None
+ */
+static inline void cds_sched_handle_rx_thread_affinity_req(
+	bool high_throughput) {}
+
+/**
+ * cds_set_rx_thread_ul_cpu_mask() - Rx_thread affinity for UL from INI
+ * @cpu_affinity_mask: CPU affinity bitmap
+ *
+ * Return:None
+ */
+static inline void cds_set_rx_thread_ul_cpu_mask(uint8_t cpu_affinity_mask) {}
+
 /**
  * cds_set_rx_thread_cpu_mask() - Rx_thread affinity from INI
  * @cpu_affinity_mask: CPU affinity bitmap

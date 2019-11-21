@@ -93,6 +93,17 @@ void cds_set_rx_thread_cpu_mask(uint8_t cpu_affinity_mask)
 	sched_context->conf_rx_thread_cpu_mask = cpu_affinity_mask;
 }
 
+void cds_set_rx_thread_ul_cpu_mask(uint8_t cpu_affinity_mask)
+{
+	p_cds_sched_context sched_context = get_cds_sched_ctxt();
+
+	if (!sched_context) {
+		qdf_err("invalid context");
+		return;
+	}
+	sched_context->conf_rx_thread_ul_affinity = cpu_affinity_mask;
+}
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 /**
  * cds_rx_thread_log_cpu_affinity_change - Log Rx thread affinity change
@@ -234,6 +245,62 @@ int cds_sched_handle_cpu_hot_plug(void)
 	}
 	mutex_unlock(&pSchedContext->affinity_lock);
 	return 0;
+}
+
+void cds_sched_handle_rx_thread_affinity_req(bool high_throughput)
+{
+	p_cds_sched_context pschedcontext = get_cds_sched_ctxt();
+	unsigned long cpus;
+	qdf_cpu_mask new_mask;
+	unsigned char core_affine_count = 0;
+
+	if (!pschedcontext || !pschedcontext->ol_rx_thread)
+		return;
+
+	if (cds_is_load_or_unload_in_progress()) {
+		cds_err("load or unload in progress");
+		return;
+	}
+
+	if (pschedcontext->rx_affinity_required == high_throughput)
+		return;
+
+	pschedcontext->rx_affinity_required = high_throughput;
+	qdf_cpumask_clear(&new_mask);
+	if (!high_throughput) {
+		/* Attach to all cores, let scheduler decide */
+		qdf_cpumask_setall(&new_mask);
+		goto affine_thread;
+	}
+	for_each_online_cpu(cpus) {
+		if (topology_physical_package_id(cpus) >
+		    CDS_MAX_CPU_CLUSTERS) {
+			cds_err("can handle max %d clusters ",
+				CDS_MAX_CPU_CLUSTERS);
+			return;
+		}
+		if (pschedcontext->conf_rx_thread_ul_affinity &&
+		    (pschedcontext->conf_rx_thread_ul_affinity &
+				 (1 << cpus)))
+			qdf_cpumask_set_cpu(cpus, &new_mask);
+
+		core_affine_count++;
+	}
+
+affine_thread:
+	cds_rx_thread_log_cpu_affinity_change(
+		core_affine_count,
+		(int)pschedcontext->rx_affinity_required,
+		&pschedcontext->rx_thread_cpu_mask,
+		&new_mask);
+
+	mutex_lock(&pschedcontext->affinity_lock);
+	if (!cpumask_equal(&pschedcontext->rx_thread_cpu_mask, &new_mask)) {
+		cpumask_copy(&pschedcontext->rx_thread_cpu_mask, &new_mask);
+		cds_set_cpus_allowed_ptr_with_mask(pschedcontext->ol_rx_thread,
+						   &new_mask);
+	}
+	mutex_unlock(&pschedcontext->affinity_lock);
 }
 
 /**
@@ -438,6 +505,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 			   cds_cpu_before_offline_cb);
 	mutex_init(&pSchedContext->affinity_lock);
 	pSchedContext->high_throughput_required = false;
+	pSchedContext->rx_affinity_required = false;
 #endif
 	gp_cds_sched_context = pSchedContext;
 

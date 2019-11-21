@@ -867,6 +867,31 @@
 
 /*
  * <ini>
+ * RX_THREAD_UL_CPU_AFFINITY_MASK - CPU mask to affine Rx_thread
+ *
+ * @Min: 0
+ * @Max: 0xFF
+ * @Default: 0x0
+ *
+ * This ini is used to set Rx_thread CPU affinity for uplink traffic
+ *
+ * Supported Feature: Rx_thread
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_RX_THREAD_UL_CPU_MASK \
+		CFG_INI_UINT( \
+		"RX_THREAD_UL_CPU_AFFINITY_MASK", \
+		0, \
+		0xFF, \
+		0x0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"CPU mask to affine Rx_thread for uplink traffic")
+
+/*
+ * <ini>
  * rpsRxQueueCpuMapList - RPS map for different RX queues
  *
  * @Default: e
@@ -1354,6 +1379,7 @@
 #define CFG_HDD_DP_ALL \
 	CFG(CFG_DP_NAPI_CE_CPU_MASK) \
 	CFG(CFG_DP_RX_THREAD_CPU_MASK) \
+	CFG(CFG_DP_RX_THREAD_UL_CPU_MASK) \
 	CFG(CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST) \
 	CFG(CFG_DP_TX_ORPHAN_ENABLE) \
 	CFG(CFG_DP_RX_MODE) \
