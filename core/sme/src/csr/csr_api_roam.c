@@ -3987,39 +3987,117 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 	return status;
 }
 
+static bool csr_peer_mac_match_cmd(tSmeCmd *sme_cmd,
+				   struct qdf_mac_addr peer_macaddr)
+{
+	if (sme_cmd->command == eSmeCommandRoam &&
+	    (sme_cmd->u.roamCmd.roamReason == eCsrForcedDisassocSta ||
+	     sme_cmd->u.roamCmd.roamReason == eCsrForcedDeauthSta) &&
+	    !qdf_mem_cmp(peer_macaddr.bytes, sme_cmd->u.roamCmd.peerMac,
+			 QDF_MAC_ADDR_SIZE))
+		return true;
+
+	if (sme_cmd->command == eSmeCommandWmStatusChange) {
+		struct wmstatus_changecmd *wms_cmd;
+
+		wms_cmd = &sme_cmd->u.wmStatusChangeCmd;
+		if (wms_cmd->Type == eCsrDisassociated &&
+		    !qdf_mem_cmp(peer_macaddr.bytes,
+				 wms_cmd->u.DisassocIndMsg.peer_macaddr.bytes,
+				 QDF_MAC_ADDR_SIZE))
+			return true;
+
+		if (wms_cmd->Type == eCsrDeauthenticated &&
+		    !qdf_mem_cmp(peer_macaddr.bytes,
+				 wms_cmd->u.DeauthIndMsg.peer_macaddr.bytes,
+				 QDF_MAC_ADDR_SIZE))
+			return true;
+	}
+
+	return false;
+}
+
+static bool
+csr_is_deauth_disassoc_in_pending_q(struct mac_context *mac_ctx,
+				    uint8_t vdev_id,
+				    struct qdf_mac_addr peer_macaddr)
+{
+	tListElem *entry = NULL;
+	tSmeCmd *sme_cmd;
+
+	entry = csr_nonscan_pending_ll_peek_head(mac_ctx, LL_ACCESS_NOLOCK);
+	while (entry) {
+		sme_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
+		if ((sme_cmd->sessionId == vdev_id) &&
+		    csr_peer_mac_match_cmd(sme_cmd, peer_macaddr))
+			return true;
+		entry = csr_nonscan_pending_ll_next(mac_ctx, entry,
+						    LL_ACCESS_NOLOCK);
+	}
+
+	return false;
+}
+
+static bool
+csr_is_deauth_disassoc_in_active_q(struct mac_context *mac_ctx,
+				   uint8_t vdev_id,
+				   struct qdf_mac_addr peer_macaddr)
+{
+	tSmeCmd *sme_cmd;
+
+	sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc, vdev_id,
+						WLAN_SER_CMD_FORCE_DEAUTH_STA);
+
+	if (sme_cmd && csr_peer_mac_match_cmd(sme_cmd, peer_macaddr))
+		return true;
+
+	sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc, vdev_id,
+					WLAN_SER_CMD_FORCE_DISASSOC_STA);
+
+	if (sme_cmd && csr_peer_mac_match_cmd(sme_cmd, peer_macaddr))
+		return true;
+
+	/*
+	 * WLAN_SER_CMD_WM_STATUS_CHANGE is of two type, the handling
+	 * should take care of both the types.
+	 */
+	sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc, vdev_id,
+						WLAN_SER_CMD_WM_STATUS_CHANGE);
+	if (sme_cmd && csr_peer_mac_match_cmd(sme_cmd, peer_macaddr))
+		return true;
+
+	return false;
+}
+
 /*
  * csr_is_deauth_disassoc_already_active() - Function to check if deauth or
  *  disassoc is already in progress.
  * @mac_ctx: Global MAC context
- * @session_id: session id
+ * @vdev_id: vdev id
  * @peer_macaddr: Peer MAC address
  *
  * Return: True if deauth/disassoc indication can be dropped
  *  else false
  */
-static bool csr_is_deauth_disassoc_already_active(struct mac_context *mac_ctx,
-						  uint8_t session_id,
-					       struct qdf_mac_addr peer_macaddr)
+static bool
+csr_is_deauth_disassoc_already_active(struct mac_context *mac_ctx,
+				      uint8_t vdev_id,
+				      struct qdf_mac_addr peer_macaddr)
 {
-	bool ret = false;
-	tSmeCmd *sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc,
-							     session_id,
-						 WLAN_SER_CMD_FORCE_DEAUTH_STA);
-	if (!sme_cmd)
-		sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc,
-							    session_id,
-					       WLAN_SER_CMD_FORCE_DISASSOC_STA);
-	if (!sme_cmd)
-		sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc,
-							    session_id,
-						 WLAN_SER_CMD_WM_STATUS_CHANGE);
+	bool ret = csr_is_deauth_disassoc_in_pending_q(mac_ctx,
+						      vdev_id,
+						      peer_macaddr);
+	if (!ret)
+		/**
+		 * commands are not found in pending queue, check in active
+		 * queue as well
+		 */
+		ret = csr_is_deauth_disassoc_in_active_q(mac_ctx,
+							  vdev_id,
+							  peer_macaddr);
 
-	if (sme_cmd && !qdf_mem_cmp(peer_macaddr.bytes,
-			sme_cmd->u.roamCmd.peerMac, QDF_MAC_ADDR_SIZE)) {
-		sme_debug("Ignore DEAUTH_IND/DIASSOC_IND as Deauth/Disassoc already in progress for %pM",
-			  peer_macaddr.bytes);
-		ret = true;
-	}
+	sme_debug("Deauth/Disassoc %s in progress for %pM",
+		  (ret ? "already" : "not"), peer_macaddr.bytes);
 
 	return ret;
 }
