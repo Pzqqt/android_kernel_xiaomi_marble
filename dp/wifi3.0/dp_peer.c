@@ -3131,46 +3131,6 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 }
 
 /**
- * dp_local_peer_id() - Find local peer id within peer instance
- * @peer - peer instance
- *
- * Find local peer id within peer instance
- *
- * Return: local peer id
- */
-uint16_t dp_local_peer_id(void *peer)
-{
-	return ((struct dp_peer *)peer)->local_id;
-}
-
-/**
- * dp_peer_find_by_local_id() - Find peer by local peer id
- * @pdev - data path device instance
- * @local_peer_id - local peer id want to find
- *
- * Find peer by local peer id within physical device
- *
- * Return: peer instance void pointer
- *         NULL cannot find target peer
- */
-void *dp_peer_find_by_local_id(struct cdp_pdev *pdev_handle, uint8_t local_id)
-{
-	struct dp_peer *peer;
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-
-	if (local_id >= OL_TXRX_NUM_LOCAL_PEER_IDS) {
-		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP,
-				   "Incorrect local id %u", local_id);
-		return NULL;
-	}
-	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
-	peer = pdev->local_peer_ids.map[local_id];
-	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
-	DP_TRACE(DEBUG, "peer %pK local id %d", peer, local_id);
-	return peer;
-}
-
-/**
  * dp_peer_state_update() - update peer local state
  * @pdev - data path device instance
  * @peer_addr - peer mac address

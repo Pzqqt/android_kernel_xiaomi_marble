@@ -279,34 +279,6 @@ static inline void
 }
 
 /**
- * cdp_peer_find_by_local_id() - Find peer by local peer id
- * @soc - data path soc handle
- * @pdev - data path device instance
- * @local_peer_id - local peer id want to find
- *
- * Find peer by local peer id within physical device
- *
- * Return: peer instance void pointer
- *         NULL cannot find target peer
- */
-static inline void
-*cdp_peer_find_by_local_id(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-		uint8_t local_peer_id)
-{
-	if (!soc || !soc->ops || !soc->ops->peer_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-			"%s invalid instance", __func__);
-		return NULL;
-	}
-
-	if (soc->ops->peer_ops->peer_find_by_local_id)
-		return soc->ops->peer_ops->peer_find_by_local_id(
-			pdev, local_peer_id);
-
-	return NULL;
-}
-
-/**
  * cdp_peer_state_update() - update peer local state
  * @soc - data path soc handle
  * @pdev - data path device instance
@@ -357,31 +329,6 @@ cdp_peer_state_get(ol_txrx_soc_handle soc, void *peer)
 		return soc->ops->peer_ops->get_peer_state(peer);
 
 	return 0;
-}
-
-/**
- * cdp_peer_get_local_peer_id() - Find local peer id within peer instance
- * @soc - data path soc handle
- * @peer - peer instance
- *
- * Find local peer id within peer instance
- *
- * Return: local peer id
- *         HTT_INVALID_PEER Invalid peer
- */
-static inline uint16_t
-cdp_peer_get_local_peer_id(ol_txrx_soc_handle soc, void *peer)
-{
-	if (!soc || !soc->ops || !soc->ops->peer_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-			"%s invalid instance", __func__);
-		return HTT_INVALID_PEER;
-	}
-
-	if (soc->ops->peer_ops->local_peer_id)
-		return soc->ops->peer_ops->local_peer_id(peer);
-
-	return HTT_INVALID_PEER;
 }
 
 /**

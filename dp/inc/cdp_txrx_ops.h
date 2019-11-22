@@ -1197,9 +1197,6 @@ struct cdp_peer_ops {
 	void * (*find_peer_by_addr_and_vdev)(struct cdp_pdev *pdev,
 			struct cdp_vdev *vdev,
 			uint8_t *peer_addr, uint8_t *peer_id);
-	uint16_t (*local_peer_id)(void *peer);
-	void * (*peer_find_by_local_id)(struct cdp_pdev *pdev,
-			uint8_t local_peer_id);
 	QDF_STATUS (*peer_state_update)(struct cdp_pdev *pdev,
 			uint8_t *peer_addr,
 			enum ol_txrx_peer_state state);
