@@ -7336,7 +7336,7 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx, struct pe_session *s
  * Return: status of operation
  */
 static QDF_STATUS lim_populate_he_mcs_per_bw(struct mac_context *mac_ctx,
-				uint16_t *self_rx, uint16_t *self_tx,
+				uint16_t *supp_rx_mcs, uint16_t *supp_tx_mcs,
 				uint16_t peer_rx, uint16_t peer_tx, uint8_t nss,
 				uint16_t rx_mcs, uint16_t tx_mcs)
 {
@@ -7344,20 +7344,22 @@ static QDF_STATUS lim_populate_he_mcs_per_bw(struct mac_context *mac_ctx,
 	pe_debug("peer rates: rx_mcs - 0x%04x tx_mcs - 0x%04x",
 		 peer_rx, peer_tx);
 
-	*self_rx = rx_mcs;
-	*self_tx = tx_mcs;
+	*supp_rx_mcs = rx_mcs;
+	*supp_tx_mcs = tx_mcs;
 
-	*self_rx = HE_INTERSECT_MCS(*self_rx, peer_tx);
-	*self_tx = HE_INTERSECT_MCS(*self_tx, peer_rx);
+	*supp_tx_mcs = HE_INTERSECT_MCS(*supp_rx_mcs, peer_tx);
+	*supp_rx_mcs = HE_INTERSECT_MCS(*supp_tx_mcs, peer_rx);
 
 	if (nss == NSS_1x1_MODE) {
-		*self_rx |= HE_MCS_INV_MSK_4_NSS(1);
-		*self_tx |= HE_MCS_INV_MSK_4_NSS(1);
+		*supp_rx_mcs |= HE_MCS_INV_MSK_4_NSS(1);
+		*supp_tx_mcs |= HE_MCS_INV_MSK_4_NSS(1);
 	}
 	/* if nss is 2, disable higher NSS */
 	if (nss == NSS_2x2_MODE) {
-		*self_rx |= (HE_MCS_INV_MSK_4_NSS(1) & HE_MCS_INV_MSK_4_NSS(2));
-		*self_tx |= (HE_MCS_INV_MSK_4_NSS(1) & HE_MCS_INV_MSK_4_NSS(2));
+		*supp_rx_mcs |= (HE_MCS_INV_MSK_4_NSS(1) &
+				 HE_MCS_INV_MSK_4_NSS(2));
+		*supp_tx_mcs |= (HE_MCS_INV_MSK_4_NSS(1) &
+				 HE_MCS_INV_MSK_4_NSS(2));
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -7408,22 +7410,35 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 		peer_he_caps->tx_he_mcs_map_lt_80, nss,
 		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80,
 		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80);
-	lim_populate_he_mcs_per_bw(mac_ctx,
-		&rates->rx_he_mcs_map_160, &rates->tx_he_mcs_map_160,
-		*((uint16_t *)peer_he_caps->rx_he_mcs_map_160),
-		*((uint16_t *)peer_he_caps->tx_he_mcs_map_160), nss,
-		*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
-		rx_he_mcs_map_160),
-		*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
-		tx_he_mcs_map_160));
-	lim_populate_he_mcs_per_bw(mac_ctx,
-		&rates->rx_he_mcs_map_80_80, &rates->tx_he_mcs_map_80_80,
-		*((uint16_t *)peer_he_caps->rx_he_mcs_map_80_80),
-		*((uint16_t *)peer_he_caps->tx_he_mcs_map_80_80), nss,
-		*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
-		rx_he_mcs_map_80_80),
-		*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
-		tx_he_mcs_map_80_80));
+	if (session_entry->ch_width == CH_WIDTH_160MHZ) {
+		lim_populate_he_mcs_per_bw(
+			mac_ctx, &rates->rx_he_mcs_map_160,
+			&rates->tx_he_mcs_map_160,
+			*((uint16_t *)peer_he_caps->rx_he_mcs_map_160),
+			*((uint16_t *)peer_he_caps->tx_he_mcs_map_160),
+			nss,
+			*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+				rx_he_mcs_map_160),
+			*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+					tx_he_mcs_map_160));
+	} else {
+		rates->tx_he_mcs_map_160 = HE_MCS_ALL_DISABLED;
+		rates->rx_he_mcs_map_160 = HE_MCS_ALL_DISABLED;
+	}
+	if (session_entry->ch_width == CH_WIDTH_80P80MHZ) {
+		lim_populate_he_mcs_per_bw(
+			mac_ctx, &rates->rx_he_mcs_map_80_80,
+			&rates->tx_he_mcs_map_80_80,
+			*((uint16_t *)peer_he_caps->rx_he_mcs_map_80_80),
+			*((uint16_t *)peer_he_caps->tx_he_mcs_map_80_80), nss,
+			*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+					rx_he_mcs_map_80_80),
+			*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+					tx_he_mcs_map_80_80));
+	} else {
+		rates->tx_he_mcs_map_80_80 = HE_MCS_ALL_DISABLED;
+		rates->rx_he_mcs_map_80_80 = HE_MCS_ALL_DISABLED;
+	}
 	if (!support_2x2) {
 		/* disable 2 and higher NSS MCS sets */
 		rates->rx_he_mcs_map_lt_80 |= HE_MCS_INV_MSK_4_NSS(1);

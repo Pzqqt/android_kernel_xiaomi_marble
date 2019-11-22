@@ -1741,10 +1741,41 @@ static void lim_calculate_he_nss(struct supported_rates *rates,
 {
 	HE_GET_NSS(rates->rx_he_mcs_map_lt_80, session->nss);
 }
+
+static bool lim_check_valid_mcs_for_nss(struct pe_session *session,
+					tDot11fIEhe_cap *he_caps)
+{
+	uint16_t mcs_map;
+	uint8_t mcs_count = 2, i;
+
+	if (!session->he_capable || !he_caps)
+		return true;
+
+	mcs_map = he_caps->rx_he_mcs_map_lt_80;
+
+	do {
+		for (i = 0; i < session->nss; i++) {
+			if (((mcs_map >> (i * 2)) & 0x3) == 0x3)
+				return false;
+		}
+
+		mcs_map = he_caps->tx_he_mcs_map_lt_80;
+		mcs_count--;
+	} while (mcs_count);
+
+	return true;
+
+}
 #else
 static void lim_calculate_he_nss(struct supported_rates *rates,
 				 struct pe_session *session)
 {
+}
+
+static bool lim_check_valid_mcs_for_nss(struct pe_session *session,
+					tDot11fIEhe_cap *he_caps)
+{
+	return true;
 }
 #endif
 
@@ -1763,6 +1794,10 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 	qdf_size_t val_len;
 	uint8_t aRateIndex = 0;
 	uint8_t bRateIndex = 0;
+	tDot11fIEhe_cap *peer_he_caps;
+	struct bss_description *bssDescription =
+		&pe_session->lim_join_req->bssDescription;
+	tSchBeaconStruct *pBeaconStruct;
 
 	/* copy operational rate set from pe_session */
 	if (pe_session->rateSet.numRates <= WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
@@ -1889,7 +1924,22 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 	lim_populate_vht_mcs_set(mac, pRates, pVHTCaps, pe_session,
 				 pe_session->nss, sta_ds);
 
-	lim_populate_he_mcs_set(mac, pRates, he_caps,
+	if (lim_check_valid_mcs_for_nss(pe_session, he_caps)) {
+		peer_he_caps = he_caps;
+	} else {
+		bssDescription = &pe_session->lim_join_req->bssDescription;
+		pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
+		if (!pBeaconStruct)
+			return QDF_STATUS_E_NOMEM;
+		lim_extract_ap_capabilities(mac,
+				(uint8_t *)bssDescription->ieFields,
+				lim_get_ielen_from_bss_description(
+					bssDescription),
+				pBeaconStruct);
+		peer_he_caps = &pBeaconStruct->he_cap;
+	}
+
+	lim_populate_he_mcs_set(mac, pRates, peer_he_caps,
 			pe_session, pe_session->nss);
 
 	if (IS_DOT11_MODE_HE(pe_session->dot11mode) && he_caps) {
