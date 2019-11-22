@@ -78,7 +78,6 @@ struct wsa883x_priv {
 	bool visense_enable;
 	bool ext_vdd_spk;
 	struct swr_port port[WSA883X_MAX_SWR_PORTS];
-	int pd_gpio;
 	int global_pa_cnt;
 	int dev_mode;
 	struct mutex res_lock;
@@ -87,6 +86,9 @@ struct wsa883x_priv {
 	struct device_node *wsa_rst_np;
 	int pa_mute;
 	int curr_temp;
+	int variant;
+	struct irq_domain *virq;
+	struct wcd_irq_info irq_info;
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *debugfs_dent;
 	struct dentry *debugfs_peek;

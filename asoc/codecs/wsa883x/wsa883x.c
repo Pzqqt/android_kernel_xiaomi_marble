@@ -53,6 +53,51 @@ struct wsa_temp_register {
 
 static int wsa883x_get_temperature(struct snd_soc_component *component,
 				   int *temp);
+enum {
+	WSA8830 = 0,
+	WSA8835,
+};
+
+enum {
+	WSA883X_IRQ_INT_SAF2WAR = 0,
+	WSA883X_IRQ_INT_WAR2SAF,
+	WSA883X_IRQ_INT_DISABLE,
+	WSA883X_IRQ_INT_OCP,
+	WSA883X_IRQ_INT_CLIP,
+	WSA883X_IRQ_INT_PDM_WD,
+	WSA883X_IRQ_INT_CLK_WD,
+	WSA883X_IRQ_INT_INTR_PIN,
+	WSA883X_IRQ_INT_UVLO,
+	WSA883X_IRQ_INT_PA_ON_ERR,
+};
+
+static const struct regmap_irq wsa883x_irqs[WSA883X_NUM_IRQS] = {
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_SAF2WAR, 0, 0x01),
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_WAR2SAF, 0, 0x02),
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_DISABLE, 0, 0x04),
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_OCP, 0, 0x08),
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_CLIP, 0, 0x10),
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_PDM_WD, 0, 0x20),
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_CLK_WD, 0, 0x40),
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_INTR_PIN, 0, 0x80),
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_UVLO, 1, 0x01),
+	REGMAP_IRQ_REG(WSA883X_IRQ_INT_PA_ON_ERR, 1, 0x02),
+};
+
+static struct regmap_irq_chip wsa883x_regmap_irq_chip = {
+	.name = "wsa883x",
+	.irqs = wsa883x_irqs,
+	.num_irqs = ARRAY_SIZE(wsa883x_irqs),
+	.num_regs = 2,
+	.status_base = WSA883X_INTR_STATUS0,
+	.mask_base = WSA883X_INTR_MASK0,
+	.type_base = WSA883X_INTR_LEVEL0,
+	.ack_base = WSA883X_INTR_CLEAR0,
+	.use_ack = 1,
+	.runtime_pm = false,
+	.irq_drv_data = NULL,
+};
+
 #ifdef CONFIG_DEBUG_FS
 static int codec_debug_open(struct inode *inode, struct file *file)
 {
@@ -288,6 +333,76 @@ static const struct file_operations codec_debug_dump_ops = {
 	.read = codec_debug_dump,
 };
 #endif
+
+static irqreturn_t wsa883x_saf2war_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wsa883x_war2saf_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wsa883x_otp_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wsa883x_ocp_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wsa883x_clip_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wsa883x_pdm_wd_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wsa883x_clk_wd_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wsa883x_ext_int_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wsa883x_uvlo_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
+
+static irqreturn_t wsa883x_pa_on_err_handle_irq(int irq, void *data)
+{
+	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
+			   __func__, irq);
+	return IRQ_HANDLED;
+}
 
 static const char * const wsa_dev_mode_text[] = {
 	"speaker", "receiver", "ultrasound"
@@ -986,39 +1101,87 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 		goto dev_err;
 	}
 
+	/* Set all interrupts as edge triggered */
+	for (i = 0; i < wsa883x_regmap_irq_chip.num_regs; i++)
+		regmap_write(wsa883x->regmap, (WSA883X_INTR_LEVEL0 + i), 0);
+
+	wsa883x_regmap_irq_chip.irq_drv_data = wsa883x;
+	wsa883x->irq_info.wcd_regmap_irq_chip = &wsa883x_regmap_irq_chip;
+	wsa883x->irq_info.codec_name = "WSA883X";
+	wsa883x->irq_info.regmap = wsa883x->regmap;
+	wsa883x->irq_info.dev = dev;
+	ret = wcd_irq_init(&wsa883x->irq_info, &wsa883x->virq);
+
+	if (ret) {
+		dev_err(wsa883x->dev, "%s: IRQ init failed: %d\n",
+			__func__, ret);
+		goto dev_err;
+	}
+
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR,
+			"WSA SAF2WAR", wsa883x_saf2war_handle_irq, NULL);
+
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF,
+			"WSA WAR2SAF", wsa883x_war2saf_handle_irq, NULL);
+
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_DISABLE,
+			"WSA OTP", wsa883x_otp_handle_irq, NULL);
+
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_OCP,
+			"WSA OCP", wsa883x_ocp_handle_irq, NULL);
+
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLIP,
+			"WSA CLIP", wsa883x_clip_handle_irq, NULL);
+
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD,
+			"WSA PDM WD", wsa883x_pdm_wd_handle_irq, NULL);
+
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLK_WD,
+			"WSA CLK WD", wsa883x_clk_wd_handle_irq, NULL);
+
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_INTR_PIN,
+			"WSA EXT INT", wsa883x_ext_int_handle_irq, NULL);
+
+	/* Under Voltage Lock out (UVLO) interrupt handle */
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO,
+			"WSA UVLO", wsa883x_uvlo_handle_irq, NULL);
+
+	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR,
+			"WSA PA ERR", wsa883x_pa_on_err_handle_irq, NULL);
+
 	ret = snd_soc_register_component(&pdev->dev, &soc_codec_dev_wsa883x,
 				     NULL, 0);
 	if (ret) {
 		dev_err(&pdev->dev, "%s: Codec registration failed\n",
 			__func__);
-		goto dev_err;
+		goto err_irq;
 	}
 	mutex_init(&wsa883x->res_lock);
 
 #ifdef CONFIG_DEBUG_FS
-	if (!wcd938x->debugfs_dent) {
-		wcd938x->debugfs_dent = debugfs_create_dir(
+	if (!wsa883x->debugfs_dent) {
+		wsa883x->debugfs_dent = debugfs_create_dir(
 					dev_name(&pdev->dev), 0);
-		if (!IS_ERR(wcd938x->debugfs_dent)) {
-			wcd938x->debugfs_peek =
+		if (!IS_ERR(wsa883x->debugfs_dent)) {
+			wsa883x->debugfs_peek =
 				debugfs_create_file("swrslave_peek",
 				S_IFREG | 0444,
-				wcd938x->debugfs_dent,
+				wsa883x->debugfs_dent,
 				(void *) pdev,
 				&codec_debug_read_ops);
 
-		wcd938x->debugfs_poke =
+		wsa883x->debugfs_poke =
 				debugfs_create_file("swrslave_poke",
 				S_IFREG | 0444,
-				wcd938x->debugfs_dent,
+				wsa883x->debugfs_dent,
 				(void *) pdev,
 				&codec_debug_write_ops);
 
-		wcd938x->debugfs_reg_dump =
+		wsa883x->debugfs_reg_dump =
 				debugfs_create_file(
 				"swrslave_reg_dump",
 				S_IFREG | 0444,
-				wcd938x->debugfs_dent,
+				wsa883x->debugfs_dent,
 				(void *) pdev,
 				&codec_debug_dump_ops);
 	}
@@ -1027,6 +1190,18 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 
 	return 0;
 
+err_irq:
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_DISABLE, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_OCP, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLIP, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLK_WD, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_INTR_PIN, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR, NULL);
+	wcd_irq_exit(&wsa883x->irq_info, wsa883x->virq);
 dev_err:
 	if (pin_state_current == false)
 		wsa883x_gpio_ctrl(wsa883x, false);
@@ -1044,6 +1219,17 @@ static int wsa883x_swr_remove(struct swr_device *pdev)
 		dev_err(&pdev->dev, "%s: wsa883x is NULL\n", __func__);
 		return -EINVAL;
 	}
+
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_DISABLE, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_OCP, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLIP, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLK_WD, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_INTR_PIN, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO, NULL);
+	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR, NULL);
 #ifdef CONFIG_DEBUG_FS
 	debugfs_remove_recursive(wsa883x->debugfs_dent);
 	wsa883x->debugfs_dent = NULL;
