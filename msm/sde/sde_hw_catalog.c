@@ -797,9 +797,9 @@ static struct sde_prop_type intf_prop[] = {
 };
 
 static struct sde_prop_type wb_prop[] = {
-	{WB_OFF, "qcom,sde-wb-off", true, PROP_TYPE_U32_ARRAY},
+	{WB_OFF, "qcom,sde-wb-off", false, PROP_TYPE_U32_ARRAY},
 	{WB_LEN, "qcom,sde-wb-size", false, PROP_TYPE_U32},
-	{WB_ID, "qcom,sde-wb-id", true, PROP_TYPE_U32_ARRAY},
+	{WB_ID, "qcom,sde-wb-id", false, PROP_TYPE_U32_ARRAY},
 	{WB_XIN_ID, "qcom,sde-wb-xin-id", false, PROP_TYPE_U32_ARRAY},
 	{WB_CLK_CTRL, "qcom,sde-wb-clk-ctrl", false,
 		PROP_TYPE_BIT_OFFSET_ARRAY},
