@@ -15675,6 +15675,14 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 		}
 	}
 
+	if (ucfg_nan_is_enable_disable_in_progress(hdd_ctx->psoc)) {
+		context->out_reason = NAN_ENABLE_DISABLE_IN_PROGRESS;
+		context->out_vdev_id = NAN_PSEUDO_VDEV_ID;
+		context->connection_in_progress = true;
+
+		return QDF_STATUS_E_ABORTED;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 

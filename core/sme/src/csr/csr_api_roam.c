@@ -21128,22 +21128,6 @@ void csr_process_set_hw_mode(struct mac_context *mac, tSmeCmd *command)
 		}
 	}
 
-	if ((POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC ==
-		command->u.set_hw_mode_cmd.reason) &&
-		(true == mac->sme.get_connection_info_cb(NULL, NULL))) {
-		sme_err("Set HW mode refused: conn in progress");
-		policy_mgr_restart_opportunistic_timer(mac->psoc, false);
-		goto fail;
-	}
-
-	if ((POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC ==
-		command->u.set_hw_mode_cmd.reason) &&
-		(!command->u.set_hw_mode_cmd.hw_mode_index &&
-		!policy_mgr_need_opportunistic_upgrade(mac->psoc, NULL))) {
-		sme_err("Set HW mode to SMM not needed anymore");
-		goto fail;
-	}
-
 	hw_mode = policy_mgr_get_hw_mode_change_from_hw_mode_index(
 			mac->psoc, command->u.set_hw_mode_cmd.hw_mode_index);
 
@@ -21153,6 +21137,22 @@ void csr_process_set_hw_mode(struct mac_context *mac, tSmeCmd *command)
 	}
 
 	policy_mgr_set_hw_mode_change_in_progress(mac->psoc, hw_mode);
+
+	if ((POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC ==
+	     command->u.set_hw_mode_cmd.reason) &&
+	    (true == mac->sme.get_connection_info_cb(NULL, NULL))) {
+		sme_err("Set HW mode refused: conn in progress");
+		policy_mgr_restart_opportunistic_timer(mac->psoc, false);
+		goto reset_state;
+	}
+
+	if ((POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC ==
+	     command->u.set_hw_mode_cmd.reason) &&
+	    (!command->u.set_hw_mode_cmd.hw_mode_index &&
+	     !policy_mgr_need_opportunistic_upgrade(mac->psoc, NULL))) {
+		sme_err("Set HW mode to SMM not needed anymore");
+		goto reset_state;
+	}
 
 	cmd->messageType = eWNI_SME_SET_HW_MODE_REQ;
 	cmd->length = len;
@@ -21171,13 +21171,15 @@ void csr_process_set_hw_mode(struct mac_context *mac, tSmeCmd *command)
 
 	status = umac_send_mb_message_to_mac(cmd);
 	if (QDF_STATUS_SUCCESS != status) {
-		policy_mgr_set_hw_mode_change_in_progress(mac->psoc,
-			POLICY_MGR_HW_MODE_NOT_IN_PROGRESS);
 		sme_err("Posting to PE failed");
 		cmd = NULL;
-		goto fail;
+		goto reset_state;
 	}
 	return;
+
+reset_state:
+	policy_mgr_set_hw_mode_change_in_progress(mac->psoc,
+			POLICY_MGR_HW_MODE_NOT_IN_PROGRESS);
 fail:
 	if (cmd)
 		qdf_mem_free(cmd);

@@ -951,3 +951,18 @@ QDF_STATUS ucfg_ndi_remove_entry_from_policy_mgr(struct wlan_objmgr_vdev *vdev)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+bool ucfg_nan_is_enable_disable_in_progress(struct wlan_objmgr_psoc *psoc)
+{
+	enum nan_disc_state nan_state;
+
+	nan_state = nan_get_discovery_state(psoc);
+	if (nan_state == NAN_DISC_ENABLE_IN_PROGRESS ||
+	    nan_state == NAN_DISC_DISABLE_IN_PROGRESS) {
+		nan_info("NAN enable/disable is in progress, state: %u",
+			 nan_state);
+		return true;
+	}
+
+	return false;
+}

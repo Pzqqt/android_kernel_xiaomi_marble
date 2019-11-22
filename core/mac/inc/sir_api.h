@@ -5532,6 +5532,7 @@ struct sme_rcpi_req {
  * @EAPOL_IN_PROGRESS: STA/P2P-CLI is in middle of EAPOL/WPS exchange
  * @SAP_EAPOL_IN_PROGRESS: SAP/P2P-GO is in middle of EAPOL/WPS exchange
  * @SAP_CONNECTION_IN_PROGRESS: SAP/P2P-GO is in middle of connection.
+ * @NAN_ENABLE_DISABLE_IN_PROGRESS: NAN is in middle of enable/disable discovery
  */
 enum scan_reject_states {
 	SCAN_REJECT_DEFAULT = 0,
@@ -5540,6 +5541,7 @@ enum scan_reject_states {
 	EAPOL_IN_PROGRESS,
 	SAP_EAPOL_IN_PROGRESS,
 	SAP_CONNECTION_IN_PROGRESS,
+	NAN_ENABLE_DISABLE_IN_PROGRESS,
 };
 
 /**
