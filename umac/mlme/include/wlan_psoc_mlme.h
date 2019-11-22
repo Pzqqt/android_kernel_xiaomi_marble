@@ -29,11 +29,15 @@
  * @psoc:                  PSoC object
  * @ext_psoc_ptr:        PSoC legacy pointer
  * @psoc_vdev_rt:       PSoC Vdev response timer
+ * @psoc_mlme_wakelock:     Wakelock to prevent system going to suspend
  */
 struct psoc_mlme_obj {
 	struct wlan_objmgr_psoc *psoc;
 	mlme_psoc_ext_t *ext_psoc_ptr;
 	struct vdev_response_timer psoc_vdev_rt[WLAN_UMAC_PSOC_MAX_VDEVS];
+#ifdef FEATURE_VDEV_RSP_WAKELOCK
+	struct psoc_mlme_wakelock psoc_mlme_wakelock;
+#endif
 };
 
 #endif

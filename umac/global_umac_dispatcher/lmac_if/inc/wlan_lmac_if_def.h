@@ -210,6 +210,8 @@ enum wlan_mlme_cfg_id;
  * @psoc_vdev_rsp_timer_inuse: function to determine whether the vdev rsp
  * timer is inuse or not
  * @psoc_vdev_rsp_timer_mod: function to modify the time of vdev rsp timer
+ * @psoc_wake_lock_init: Initialize psoc wake lock for vdev response timer
+ * @psoc_wake_lock_deinit: De-Initialize psoc wake lock for vdev response timer
  */
 struct wlan_lmac_if_mlme_tx_ops {
 	uint32_t (*get_wifi_iface_id) (struct wlan_objmgr_pdev *pdev);
@@ -281,7 +283,10 @@ struct wlan_lmac_if_mlme_tx_ops {
 					struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id,
 					int mseconds);
-
+	void (*psoc_wake_lock_init)(
+				struct wlan_objmgr_psoc *psoc);
+	void (*psoc_wake_lock_deinit)(
+				struct wlan_objmgr_psoc *psoc);
 };
 
 /**
@@ -1507,7 +1512,7 @@ struct wlan_lmac_if_dfs_rx_ops {
  * @vdev_mgr_tbttoffset_update_handle: function to handle tbtt offset event
  * @vdev_mgr_peer_delete_all_response: function to handle vdev delete all peer
  * event
- * @vdev_mgr_get_wakelock_info: function to get wakelock info
+ * @psoc_get_wakelock_info: function to get wakelock info
  * @psoc_get_vdev_response_timer_info: function to get vdev response timer
  * structure for a specific vdev id
  */
@@ -1531,8 +1536,8 @@ struct wlan_lmac_if_mlme_rx_ops {
 					struct wlan_objmgr_psoc *psoc,
 					struct peer_delete_all_response *rsp);
 #ifdef FEATURE_VDEV_RSP_WAKELOCK
-	struct vdev_mlme_wakelock *(*vdev_mgr_get_wakelock_info)(
-					struct wlan_objmgr_vdev *vdev);
+	struct vdev_mlme_wakelock *(*psoc_get_wakelock_info)(
+				    struct wlan_objmgr_psoc *psoc);
 #endif
 	struct vdev_response_timer *(*psoc_get_vdev_response_timer_info)(
 						struct wlan_objmgr_psoc *psoc,

@@ -527,22 +527,6 @@ struct vdev_mlme_ops {
 				struct peer_delete_all_response *rsp);
 };
 
-#ifdef FEATURE_VDEV_RSP_WAKELOCK
-/**
- *  struct wlan_vdev_wakelock - vdev wake lock sub structure
- *  @start_wakelock: wakelock for vdev start
- *  @stop_wakelock: wakelock for vdev stop
- *  @delete_wakelock: wakelock for vdev delete
- *  @wmi_cmd_rsp_runtime_lock: run time lock
- */
-struct vdev_mlme_wakelock {
-	qdf_wake_lock_t start_wakelock;
-	qdf_wake_lock_t stop_wakelock;
-	qdf_wake_lock_t delete_wakelock;
-	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
-};
-#endif
-
 /**
  * struct vdev_mlme_obj - VDEV MLME component object
  * @proto: VDEV MLME proto substructure
@@ -567,9 +551,6 @@ struct vdev_mlme_obj {
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_mlme_ops *ops;
 	mlme_vdev_ext_t *ext_vdev_ptr;
-#ifdef FEATURE_VDEV_RSP_WAKELOCK
-	struct vdev_mlme_wakelock vdev_wakelock;
-#endif
 };
 
 /**

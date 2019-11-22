@@ -28,7 +28,6 @@
 #include <init_deinit_lmac.h>
 #include <target_if_vdev_mgr_tx_ops.h>
 #include <target_if_vdev_mgr_rx_ops.h>
-#include <target_if_vdev_mgr_wake_lock.h>
 #include <target_if.h>
 #include <target_type.h>
 #include <wlan_mlme_dbg.h>
@@ -38,6 +37,7 @@
 #include <wmi_unified_vdev_api.h>
 #include <cdp_txrx_ctrl.h>
 #include <target_if_psoc_timer_tx_ops.h>
+#include <target_if_psoc_wake_lock.h>
 
 static QDF_STATUS target_if_vdev_mgr_register_event_handler(
 					struct wlan_objmgr_psoc *psoc)
@@ -444,7 +444,7 @@ static QDF_STATUS target_if_vdev_mgr_start_send(
 	}
 
 	vdev_rsp->expire_time = START_RESPONSE_TIMER;
-	target_if_wake_lock_timeout_acquire(vdev, START_WAKELOCK);
+	target_if_wake_lock_timeout_acquire(psoc, START_WAKELOCK);
 
 	if (param->is_restart)
 		target_if_vdev_mgr_rsp_timer_start(psoc, vdev_rsp,
@@ -457,7 +457,7 @@ static QDF_STATUS target_if_vdev_mgr_start_send(
 	if (QDF_IS_STATUS_ERROR(status)) {
 		vdev_rsp->timer_status = QDF_STATUS_E_CANCELED;
 		vdev_rsp->expire_time = 0;
-		target_if_wake_lock_timeout_release(vdev, START_WAKELOCK);
+		target_if_wake_lock_timeout_release(psoc, START_WAKELOCK);
 		if (param->is_restart)
 			target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp,
 							  RESTART_RESPONSE_BIT);
@@ -478,7 +478,7 @@ static QDF_STATUS target_if_vdev_mgr_delete_response_send(
 
 	rsp.vdev_id = wlan_vdev_get_id(vdev);
 	status = rx_ops->vdev_mgr_delete_response(psoc, &rsp);
-	target_if_wake_lock_timeout_release(vdev, DELETE_WAKELOCK);
+	target_if_wake_lock_timeout_release(psoc, DELETE_WAKELOCK);
 
 	return status;
 }
@@ -521,10 +521,10 @@ static QDF_STATUS target_if_vdev_mgr_delete_send(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	target_if_wake_lock_timeout_acquire(vdev, DELETE_WAKELOCK);
 	vdev_rsp->expire_time = DELETE_RESPONSE_TIMER;
 	target_if_vdev_mgr_rsp_timer_start(psoc, vdev_rsp,
 					   DELETE_RESPONSE_BIT);
+	target_if_wake_lock_timeout_acquire(psoc, DELETE_WAKELOCK);
 
 	status = wmi_unified_vdev_delete_send(wmi_handle, param->vdev_id);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -540,11 +540,11 @@ static QDF_STATUS target_if_vdev_mgr_delete_send(
 			target_if_vdev_mgr_delete_response_send(vdev, rx_ops);
 		}
 	} else {
-		target_if_wake_lock_timeout_release(vdev, DELETE_WAKELOCK);
 		vdev_rsp->expire_time = 0;
 		vdev_rsp->timer_status = QDF_STATUS_E_CANCELED;
 		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp,
 						  DELETE_RESPONSE_BIT);
+		target_if_wake_lock_timeout_release(psoc, DELETE_WAKELOCK);
 	}
 	return status;
 }
@@ -588,17 +588,17 @@ static QDF_STATUS target_if_vdev_mgr_stop_send(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	target_if_wake_lock_timeout_acquire(vdev, STOP_WAKELOCK);
 	vdev_rsp->expire_time = STOP_RESPONSE_TIMER;
 	target_if_vdev_mgr_rsp_timer_start(psoc, vdev_rsp, STOP_RESPONSE_BIT);
+	target_if_wake_lock_timeout_acquire(psoc, STOP_WAKELOCK);
 
 	status = wmi_unified_vdev_stop_send(wmi_handle, param->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		vdev_rsp->expire_time = 0;
 		vdev_rsp->timer_status = QDF_STATUS_E_CANCELED;
-		target_if_wake_lock_timeout_release(vdev, STOP_WAKELOCK);
 		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp,
 						  STOP_RESPONSE_BIT);
+		target_if_wake_lock_timeout_release(psoc, STOP_WAKELOCK);
 	}
 	return status;
 }
@@ -609,6 +609,7 @@ static QDF_STATUS target_if_vdev_mgr_down_send(
 {
 	QDF_STATUS status;
 	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (!vdev || !param) {
 		mlme_err("Invalid input");
@@ -621,8 +622,14 @@ static QDF_STATUS target_if_vdev_mgr_down_send(
 		return QDF_STATUS_E_INVAL;
 	}
 
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("Failed to get PSOC Object");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	status = wmi_unified_vdev_down_send(wmi_handle, param->vdev_id);
-	target_if_wake_lock_timeout_release(vdev, START_WAKELOCK);
+	target_if_wake_lock_timeout_release(psoc, START_WAKELOCK);
 
 	return status;
 }
@@ -636,6 +643,7 @@ static QDF_STATUS target_if_vdev_mgr_up_send(
 	struct vdev_set_params sparam = {0};
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (!vdev || !param) {
 		mlme_err("Invalid input");
@@ -645,6 +653,12 @@ static QDF_STATUS target_if_vdev_mgr_up_send(
 	wmi_handle = target_if_vdev_mgr_wmi_handle_get(vdev);
 	if (!wmi_handle) {
 		mlme_err("Failed to get WMI handle!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("Failed to get PSOC Object");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -661,7 +675,7 @@ static QDF_STATUS target_if_vdev_mgr_up_send(
 	ucfg_wlan_vdev_mgr_get_param_bssid(vdev, bssid);
 
 	status = wmi_unified_vdev_up_send(wmi_handle, bssid, param);
-	target_if_wake_lock_timeout_release(vdev, START_WAKELOCK);
+	target_if_wake_lock_timeout_release(psoc, START_WAKELOCK);
 
 	return status;
 }
@@ -1174,5 +1188,9 @@ target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 			target_if_psoc_vdev_rsp_timer_deinit;
 	mlme_tx_ops->psoc_vdev_rsp_timer_inuse =
 			target_if_psoc_vdev_rsp_timer_inuse;
+	mlme_tx_ops->psoc_wake_lock_init =
+			target_if_wake_lock_init;
+	mlme_tx_ops->psoc_wake_lock_deinit =
+			target_if_wake_lock_deinit;
 	return QDF_STATUS_SUCCESS;
 }

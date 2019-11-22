@@ -17,13 +17,29 @@
  */
 
 /**
- * DOC: target_if_vdev_mgr_wake_lock.h
+ * DOC: target_if_psoc_wake_lock.h
  *
  * This file provides declaration for wakelock APIs
  */
 
-#ifndef __TARGET_IF_VDEV_MGR_WAKE_LOCK_H__
-#define __TARGET_IF_VDEV_MGR_WAKE_LOCK_H__
+#ifndef __TARGET_IF_PSOC_WAKE_LOCK_H__
+#define __TARGET_IF_PSOC_WAKE_LOCK_H__
+
+#ifdef FEATURE_VDEV_RSP_WAKELOCK
+/**
+ *  struct wlan_vdev_wakelock - vdev wake lock sub structure
+ *  @start_wakelock: wakelock for vdev start
+ *  @stop_wakelock: wakelock for vdev stop
+ *  @delete_wakelock: wakelock for vdev delete
+ *  @wmi_cmd_rsp_runtime_lock: run time lock
+ */
+struct psoc_mlme_wakelock {
+	qdf_wake_lock_t start_wakelock;
+	qdf_wake_lock_t stop_wakelock;
+	qdf_wake_lock_t delete_wakelock;
+	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
+};
+#endif
 
 enum wakelock_mode {
 	START_WAKELOCK,
@@ -37,65 +53,65 @@ enum wakelock_mode {
  * target_if_wake_lock_init() - API to initialize
 				wakelocks:start,
 				stop and delete.
- * @vdev: pointer to vdev
+ * @psoc: pointer to psoc
  *
  * This also initialize the runtime lock
  *
  * Return: None
  */
-void target_if_wake_lock_init(struct wlan_objmgr_vdev *vdev);
+void target_if_wake_lock_init(struct wlan_objmgr_psoc *psoc);
 
 /**
  * target_if_wake_lock_deinit() - API to destroy
 			wakelocks:start, stop and delete.
- * @vdev: pointer to vdev
+ * @psoc: pointer to psoc
  *
  * This also destroy the runtime lock
  *
  * Return: None
  */
-void target_if_wake_lock_deinit(struct wlan_objmgr_vdev *vdev);
+void target_if_wake_lock_deinit(struct wlan_objmgr_psoc *psoc);
 
 /**
  * target_if_start_wake_lock_timeout_acquire() - acquire the
 					vdev start wakelock
- * @vdev: pointer to vdev
+ * @psoc: pointer to psoc
  *
  * This also acquires the target_if runtime pm lock.
  *
  * Return: Success/Failure
  */
-QDF_STATUS target_if_wake_lock_timeout_acquire(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS target_if_wake_lock_timeout_acquire(struct wlan_objmgr_psoc *psoc,
 					       enum wakelock_mode mode);
 /**
  * target_if_start_wake_lock_timeout_release() - release the
 						start wakelock
- * @vdev: pointer to vdev
+ * @psoc: pointer to psoc
  *
  * This also release the target_if runtime pm lock.
  *
  * Return: Success/Failure
  */
-QDF_STATUS target_if_wake_lock_timeout_release(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS target_if_wake_lock_timeout_release(struct wlan_objmgr_psoc *psoc,
 					       enum wakelock_mode mode);
 #else
-static inline void target_if_wake_lock_init(struct wlan_objmgr_vdev *vdev)
+static inline void target_if_wake_lock_init(struct wlan_objmgr_psoc *psoc)
 {
 }
 
-static inline void target_if_wake_lock_deinit(struct wlan_objmgr_vdev *vdev)
+static inline void target_if_wake_lock_deinit(struct wlan_objmgr_psoc *psoc)
 {
 }
 
 static inline QDF_STATUS target_if_wake_lock_timeout_acquire(
-					struct wlan_objmgr_vdev *vdev,
+					struct wlan_objmgr_psoc *psoc,
 					enum wakelock_mode mode)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS target_if_wake_lock_timeout_release(
-				struct wlan_objmgr_vdev *vdev,
+				struct wlan_objmgr_psoc *psoc,
 				enum wakelock_mode mode)
 {
 	return QDF_STATUS_SUCCESS;

@@ -225,30 +225,30 @@ tgt_vdev_mgr_ext_tbttoffset_update_handle(uint32_t num_vdevs, bool is_ext)
 }
 
 #ifdef FEATURE_VDEV_RSP_WAKELOCK
-static struct vdev_mlme_wakelock *
-tgt_vdev_mgr_get_wakelock_info(struct wlan_objmgr_vdev *vdev)
+static struct psoc_mlme_wakelock *
+tgt_psoc_get_wakelock_info(struct wlan_objmgr_psoc *psoc)
 {
-	struct vdev_mlme_obj *vdev_mlme;
+	struct psoc_mlme_obj *psoc_mlme;
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_err("VDEV_%d: VDEV_MLME is NULL", wlan_vdev_get_id(vdev));
+	psoc_mlme = mlme_psoc_get_priv(psoc);
+	if (!psoc_mlme) {
+		mlme_err("VDEV_%d: VDEV_MLME is NULL", wlan_vdev_get_id(psoc));
 		return NULL;
 	}
 
-	return &vdev_mlme->vdev_wakelock;
+	return &psoc_mlme->psoc_wakelock;
 }
 
 static inline void
-tgt_vdev_mgr_reg_wakelock_info_rx_op(struct wlan_lmac_if_mlme_rx_ops
+tgt_psoc_reg_wakelock_info_rx_op(struct wlan_lmac_if_mlme_rx_ops
 				     *mlme_rx_ops)
 {
-	mlme_rx_ops->vdev_mgr_get_wakelock_info =
-		tgt_vdev_mgr_get_wakelock_info;
+	mlme_rx_ops->psoc_get_wakelock_info =
+		tgt_psoc_get_wakelock_info;
 }
 #else
 static inline void
-tgt_vdev_mgr_reg_wakelock_info_rx_op(struct wlan_lmac_if_mlme_rx_ops
+tgt_psoc_reg_wakelock_info_rx_op(struct wlan_lmac_if_mlme_rx_ops
 				     *mlme_rx_ops)
 {
 }
@@ -272,5 +272,5 @@ void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 		tgt_vdev_mgr_peer_delete_all_response_handler;
 	mlme_rx_ops->psoc_get_vdev_response_timer_info =
 		tgt_vdev_mgr_get_response_timer_info;
-	tgt_vdev_mgr_reg_wakelock_info_rx_op(&rx_ops->mops);
+	tgt_psoc_reg_wakelock_info_rx_op(&rx_ops->mops);
 }

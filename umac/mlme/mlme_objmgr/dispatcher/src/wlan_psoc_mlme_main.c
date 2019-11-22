@@ -25,6 +25,7 @@
 #include <include/wlan_psoc_mlme.h>
 #include <wlan_psoc_mlme_main.h>
 #include <wlan_psoc_mlme_api.h>
+#include <target_if_psoc_wake_lock.h>
 
 struct psoc_mlme_obj *mlme_psoc_get_priv(struct wlan_objmgr_psoc *psoc)
 {
@@ -69,7 +70,8 @@ static QDF_STATUS mlme_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc,
 		goto init_failed;
 	}
 
-	return status;
+	target_if_wake_lock_init(psoc);
+	return QDF_STATUS_SUCCESS;
 init_failed:
 	qdf_mem_free(psoc_mlme);
 
@@ -87,6 +89,7 @@ static QDF_STATUS mlme_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	target_if_wake_lock_deinit(psoc);
 	wlan_objmgr_psoc_component_obj_detach(psoc, WLAN_UMAC_COMP_MLME,
 					      psoc_mlme);
 
