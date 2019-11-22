@@ -23058,6 +23058,9 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	uint8_t sec_ch = 0;
 	int ret;
 	uint16_t chan_num = cds_freq_to_chan(chandef->chan->center_freq);
+	enum channel_state chan_freq_state;
+	uint8_t max_fw_bw;
+	enum phy_ch_width ch_width;
 
 	hdd_enter();
 
@@ -23074,19 +23077,42 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	hdd_debug("%s: set monitor mode Channel %d and freq %d",
 		 adapter->dev->name, chan_num, chandef->chan->center_freq);
 
+	/* Verify channel state before accepting this request */
+	chan_freq_state =
+		wlan_reg_get_channel_state_for_freq(hdd_ctx->pdev,
+						    chandef->chan->center_freq);
+	if (chan_freq_state == CHANNEL_STATE_DISABLE ||
+	    chan_freq_state == CHANNEL_STATE_INVALID) {
+		hdd_err("Invalid chan freq received for monitor mode aborting");
+		return -EINVAL;
+	}
+
+	/* Verify the BW before accepting this request */
+	ch_width = hdd_map_nl_chan_width(chandef->width);
+
+	max_fw_bw = sme_get_vht_ch_width();
+
+	if ((ch_width == CH_WIDTH_160MHZ &&
+	    max_fw_bw <= WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) ||
+	    (ch_width == CH_WIDTH_80P80MHZ &&
+	    max_fw_bw <= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)) {
+		hdd_err("FW does not support this BW %d max BW supported %d",
+			ch_width, max_fw_bw);
+		return -EINVAL;
+	}
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	ch_info = &sta_ctx->ch_info;
 	roam_profile.ChannelInfo.freq_list = &ch_info->freq;
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
-	roam_profile.ch_params.ch_width = hdd_map_nl_chan_width(chandef->width);
+	roam_profile.ch_params.ch_width = ch_width;
 	hdd_select_cbmode(adapter, chandef->chan->center_freq,
 			  &roam_profile.ch_params);
 
 	qdf_mem_copy(bssid.bytes, adapter->mac_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
-	ch_params.ch_width = hdd_map_nl_chan_width(chandef->width);
+	ch_params.ch_width = ch_width;
 	/*
 	 * CDS api expects secondary channel for calculating
 	 * the channel params

@@ -1532,6 +1532,14 @@ QDF_STATUS sme_ext_scan_register_callback(mac_handle_t mac_handle,
 }
 #endif /* FEATURE_WLAN_EXTSCAN */
 QDF_STATUS sme_abort_roam_scan(mac_handle_t mac_handle, uint8_t sessionId);
+
+/**
+ * sme_get_vht_ch_width() - SME API to get the max supported FW chan width
+ *
+ * Return: Max channel width supported by FW (eg. 20, 40, 80, 160, 80+80)
+ */
+uint32_t sme_get_vht_ch_width(void);
+
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 QDF_STATUS sme_ll_stats_clear_req(mac_handle_t mac_handle,
 		tSirLLStatsClearReq * pclearStatsReq);

@@ -3239,6 +3239,11 @@ QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 	return status;
 }
 
+uint32_t sme_get_vht_ch_width(void)
+{
+	return wma_get_vht_ch_width();
+}
+
 /*
  * sme_get_modify_profile_fields() -
  * HDD or SME - QOS calls this function to get the current values of
