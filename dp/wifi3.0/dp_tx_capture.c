@@ -1477,6 +1477,7 @@ void dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 	dp_tx_update_user_mpdu_info(ppdu_id,
 				    &tx_capture_info.mpdu_info,
 				    &ppdu_desc->user[0]);
+	tx_capture_info.ppdu_desc = ppdu_desc;
 
 	tx_capture_info.mpdu_info.channel_num =
 		pdev->operating_channel;
@@ -1903,6 +1904,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 			dp_tx_update_user_mpdu_info(ppdu_id,
 						    &tx_capture_info.mpdu_info,
 						    &ppdu_desc->user[0]);
+			tx_capture_info.ppdu_desc = ppdu_desc;
 
 			tx_capture_info.mpdu_info.channel_num =
 				pdev->operating_channel;
