@@ -102,6 +102,8 @@ enum {
 };
 
 struct cdp_mon_status {
+	/* bss color value 1-63 used for update on ppdu_desc bsscolor */
+	uint8_t bsscolor;
 	int rs_numchains;
 	int rs_flags;
 #define IEEE80211_RX_FCS_ERROR      0x01

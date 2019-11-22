@@ -2107,6 +2107,10 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 
 	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);
 
+	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(RESV_NUM_UL_BEAM);
+	ppdu_desc->beam_change =
+		HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_GET(*tag_buf);
+
 	dp_tx_capture_htt_frame_counter(pdev, frame_type);
 
 	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(START_TSTMP_U32_US);
@@ -3313,6 +3317,9 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 		ppdu_info = dp_get_ppdu_desc(pdev, ppdu_id, tlv_type);
 		if (!ppdu_info)
 			return NULL;
+		ppdu_info->ppdu_desc->bss_color =
+			pdev->rx_mon_recv_status.bsscolor;
+
 		ppdu_info->ppdu_id = ppdu_id;
 		ppdu_info->tlv_bitmap |= (1 << tlv_type);
 

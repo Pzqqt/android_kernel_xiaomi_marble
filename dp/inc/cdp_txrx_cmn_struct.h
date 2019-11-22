@@ -154,6 +154,36 @@
 #define FILTER_DATA_DATA		0x0001
 #define FILTER_DATA_NULL		0x0008
 
+/*
+ * Multiply rate by 2 to avoid float point
+ * and get rate in units of 500kbps
+ */
+#define CDP_11B_RATE_0MCS (11 * 2)
+#define CDP_11B_RATE_1MCS (5.5 * 2)
+#define CDP_11B_RATE_2MCS (2 * 2)
+#define CDP_11B_RATE_3MCS (1 * 2)
+#define CDP_11B_RATE_4MCS (11 * 2)
+#define CDP_11B_RATE_5MCS (5.5 * 2)
+#define CDP_11B_RATE_6MCS (2 * 2)
+
+#define CDP_11A_RATE_0MCS (48 * 2)
+#define CDP_11A_RATE_1MCS (24 * 2)
+#define CDP_11A_RATE_2MCS (12 * 2)
+#define CDP_11A_RATE_3MCS (6 * 2)
+#define CDP_11A_RATE_4MCS (54 * 2)
+#define CDP_11A_RATE_5MCS (36 * 2)
+#define CDP_11A_RATE_6MCS (18 * 2)
+#define CDP_11A_RATE_7MCS (9 * 2)
+
+#define CDP_LEGACY_MCS0  0
+#define CDP_LEGACY_MCS1  1
+#define CDP_LEGACY_MCS2  2
+#define CDP_LEGACY_MCS3  3
+#define CDP_LEGACY_MCS4  4
+#define CDP_LEGACY_MCS5  5
+#define CDP_LEGACY_MCS6  6
+#define CDP_LEGACY_MCS7  7
+
 QDF_DECLARE_EWMA(tx_lag, 1024, 8)
 struct cdp_stats_cookie;
 
@@ -164,6 +194,32 @@ enum cdp_cfg_param_type {
 	CDP_CFG_MAX_PEER_ID,
 	CDP_CFG_CCE_DISABLE,
 	CDP_CFG_NUM_PARAMS
+};
+
+/*
+ * PPDU TYPE from FW -
+ * @CDP_PPDU_STATS_PPDU_TYPE_SU: single user type
+ * @CDP_PPDU_STATS_PPDU_TYPE_MU_MIMO: multi user mu-mimo
+ * @CDP_PPDU_STATS_PPDU_TYPE_MU_OFDMA: multi user ofdma
+ * @CDP_PPDU_STATS_PPDU_TYPE_MU_MIMO_OFDMA: multi user mu-mimo ofdma
+ * @CDP_PPDU_STATS_PPDU_TYPE_UL_TRIG: ul trigger ppdu
+ * @CDP_PPDU_STATS_PPDU_TYPE_BURST_BCN: burst beacon
+ * @CDP_PPDU_STATS_PPDU_TYPE_UL_BSR_RESP: bsr respond
+ * @CDP_PPDU_STATS_PPDU_TYPE_UL_BSR_TRIG: bsr trigger
+ * @CDP_PPDU_STATS_PPDU_TYPE_UL_RESP: ul response
+ * @CDP_PPDU_STATS_PPDU_TYPE_UNKNOWN
+ */
+enum CDP_PPDU_STATS_PPDU_TYPE {
+	CDP_PPDU_STATS_PPDU_TYPE_SU = 0,
+	CDP_PPDU_STATS_PPDU_TYPE_MU_MIMO = 1,
+	CDP_PPDU_STATS_PPDU_TYPE_MU_OFDMA = 2,
+	CDP_PPDU_STATS_PPDU_TYPE_MU_MIMO_OFDMA = 4,
+	CDP_PPDU_STATS_PPDU_TYPE_UL_TRIG = 5,
+	CDP_PPDU_STATS_PPDU_TYPE_BURST_BCN = 6,
+	CDP_PPDU_STATS_PPDU_TYPE_UL_BSR_RESP = 7,
+	CDP_PPDU_STATS_PPDU_TYPE_UL_BSR_TRIG = 8,
+	CDP_PPDU_STATS_PPDU_TYPE_UL_RESP = 9,
+	CDP_PPDU_STATS_PPDU_TYPE_UNKNOWN = 0x1F,
 };
 
 /*
@@ -1495,10 +1551,12 @@ struct cdp_tx_indication_mpdu_info {
  * struct cdp_tx_indication_info - Tx capture information
  * @mpdu_info: Tx MPDU completion information
  * @mpdu_nbuf: reconstructed mpdu packet
+ * @ppdu_desc: tx completion ppdu
  */
 struct cdp_tx_indication_info {
 	struct cdp_tx_indication_mpdu_info mpdu_info;
 	qdf_nbuf_t mpdu_nbuf;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
 };
 
 /**
@@ -1545,6 +1603,8 @@ struct cdp_tx_mgmt_comp_info {
  * @ppdu_end_timestamp: TSF at PPDU end
  * @ack_timestamp: TSF at the reception of ACK
  * @delayed_ba: Delayed ba flag
+ * @beam_change: beam change bit in ppdu for he-information
+ * @bss_color: 6 bit value for full bss color
  * @user: per-User stats (array of per-user structures)
  * @mpdu_q: queue of mpdu in a ppdu
  * @mpdus: MPDU list based on enqueue sequence bitmap
@@ -1582,6 +1642,8 @@ struct cdp_tx_completion_ppdu {
 	uint64_t ppdu_end_timestamp;
 	uint64_t ack_timestamp;
 	bool delayed_ba;
+	uint8_t beam_change;
+	uint8_t bss_color;
 	struct cdp_tx_completion_ppdu_user user[CDP_MU_MAX_USERS];
 	qdf_nbuf_queue_t mpdu_q;
 	qdf_nbuf_t *mpdus;

@@ -191,6 +191,24 @@ cdp_deliver_tx_mgmt(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	soc->ops->mon_ops->txrx_deliver_tx_mgmt(pdev, nbuf);
 }
 
+static inline void
+cdp_set_bsscolor(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+		 uint8_t bsscolor)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_set_bsscolor)
+		return;
+
+	soc->ops->mon_ops->txrx_set_bsscolor(pdev, bsscolor);
+}
+
 #ifdef WLAN_FEATURE_PKT_CAPTURE
 static inline void
 cdp_pktcapture_record_channel(
