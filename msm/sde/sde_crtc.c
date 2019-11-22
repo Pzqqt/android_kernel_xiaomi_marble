@@ -3527,7 +3527,7 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	struct sde_crtc_state *cstate;
-	bool is_error = false, reset_req;
+	bool is_error = false;
 	unsigned long flags;
 	enum sde_crtc_idle_pc_state idle_pc_state;
 	struct sde_encoder_kickoff_params params = { 0 };
@@ -3539,7 +3539,6 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 	dev = crtc->dev;
 	sde_crtc = to_sde_crtc(crtc);
 	sde_kms = _sde_crtc_get_kms(crtc);
-	reset_req = false;
 
 	if (!sde_kms || !sde_kms->dev || !sde_kms->dev->dev_private) {
 		SDE_ERROR("invalid argument\n");
@@ -3572,7 +3571,7 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		params.affected_displays = _sde_crtc_get_displays_affected(crtc,
 				crtc->state);
 		if (sde_encoder_prepare_for_kickoff(encoder, &params))
-			reset_req = true;
+			sde_crtc->needs_hw_reset = true;
 
 		if (idle_pc_state != IDLE_PC_NONE)
 			sde_encoder_control_idle_pc(encoder,
@@ -3583,13 +3582,14 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 	 * Optionally attempt h/w recovery if any errors were detected while
 	 * preparing for the kickoff
 	 */
-	if (reset_req) {
+	if (sde_crtc->needs_hw_reset) {
 		sde_crtc->frame_trigger_mode = params.frame_trigger_mode;
 		if (sde_crtc->frame_trigger_mode
 					!= FRAME_DONE_WAIT_POSTED_START &&
 		    sde_crtc_reset_hw(crtc, old_state,
 						params.recovery_events_enabled))
 			is_error = true;
+		sde_crtc->needs_hw_reset = false;
 	}
 
 	sde_crtc_calc_fps(sde_crtc);

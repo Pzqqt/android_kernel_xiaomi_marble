@@ -252,6 +252,7 @@ struct sde_crtc_misr_info {
  * @ltm_hist_en     : flag to indicate whether LTM hist is enabled or not
  * @ltm_buffer_lock : muttx to protect ltm_buffers allcation and free
  * @ltm_lock        : Spinlock to protect ltm buffer_cnt, hist_en and ltm lists
+ * @needs_hw_reset  : Initiate a hw ctl reset
  */
 struct sde_crtc {
 	struct drm_crtc base;
@@ -330,6 +331,7 @@ struct sde_crtc {
 	struct drm_msm_ltm_cfg_param ltm_cfg;
 	struct mutex ltm_buffer_lock;
 	spinlock_t ltm_lock;
+	bool needs_hw_reset;
 };
 
 #define to_sde_crtc(x) container_of(x, struct sde_crtc, base)
@@ -492,6 +494,22 @@ static inline int sde_crtc_frame_pending(struct drm_crtc *crtc)
 
 	sde_crtc = to_sde_crtc(crtc);
 	return atomic_read(&sde_crtc->frame_pending);
+}
+
+/**
+ * sde_crtc_set_needs_hw_reset - set hw reset flag, to handle reset during
+ *                               commit kickoff
+ * @crtc: Pointer to DRM crtc instance
+ */
+static inline void sde_crtc_set_needs_hw_reset(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc;
+
+	if (!crtc)
+		return;
+
+	sde_crtc = to_sde_crtc(crtc);
+	sde_crtc->needs_hw_reset = true;
 }
 
 /**

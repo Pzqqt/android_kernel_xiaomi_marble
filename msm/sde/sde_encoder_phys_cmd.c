@@ -1625,7 +1625,7 @@ wait_for_idle:
 		SDE_ERROR("pp:%d failed wait_for_idle: %d\n",
 				phys_enc->hw_pp->idx - PINGPONG_0, rc);
 		if (phys_enc->enable_state == SDE_ENC_ERR_NEEDS_HW_RESET)
-			sde_encoder_helper_needs_hw_reset(phys_enc->parent);
+			sde_encoder_needs_hw_reset(phys_enc->parent);
 	}
 
 	return rc;
@@ -1729,6 +1729,8 @@ static void sde_encoder_phys_cmd_prepare_commit(
 				> (KICKOFF_TIMEOUT_MS * USEC_PER_MSEC)) {
 			SDE_ERROR_CMDENC(cmd_enc,
 					"disable autorefresh failed\n");
+
+			phys_enc->enable_state = SDE_ENC_ERR_NEEDS_HW_RESET;
 			break;
 		}
 

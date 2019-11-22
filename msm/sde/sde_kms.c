@@ -885,7 +885,12 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 			if (encoder->crtc != crtc)
 				continue;
 
-			sde_encoder_prepare_commit(encoder);
+			if (sde_encoder_prepare_commit(encoder) == -ETIMEDOUT) {
+				SDE_ERROR("crtc:%d, initiating hw reset\n",
+						DRMID(crtc));
+				sde_encoder_needs_hw_reset(encoder);
+				sde_crtc_set_needs_hw_reset(crtc);
+			}
 		}
 	}
 
