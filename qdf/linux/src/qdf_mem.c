@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,6 +41,13 @@
 
 #ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
 #include <net/cnss_prealloc.h>
+#endif
+
+#if defined(MEMORY_DEBUG) || defined(NBUF_MEMORY_DEBUG)
+static bool mem_debug_disabled;
+qdf_declare_param(mem_debug_disabled, bool);
+qdf_export_symbol(mem_debug_disabled);
+static bool is_initial_mem_debug_disabled;
 #endif
 
 /* Preprocessor Definitions and Constants */
@@ -571,6 +578,9 @@ static const struct file_operations fops_qdf_mem_debugfs = {
 
 static QDF_STATUS qdf_mem_debug_debugfs_init(void)
 {
+	if (is_initial_mem_debug_disabled)
+		return QDF_STATUS_SUCCESS;
+
 	if (!qdf_mem_debugfs_root)
 		return QDF_STATUS_E_FAILURE;
 
@@ -893,6 +903,15 @@ static int qdf_mem_malloc_flags(void)
 
 /* External Function implementation */
 #ifdef MEMORY_DEBUG
+/**
+ * qdf_mem_debug_config_get() - Get the user configuration of mem_debug_disabled
+ *
+ * Return: value of mem_debug_disabled qdf module argument
+ */
+bool qdf_mem_debug_config_get(void)
+{
+	return mem_debug_disabled;
+}
 
 /**
  * qdf_mem_debug_init() - initialize qdf memory debug functionality
@@ -902,6 +921,11 @@ static int qdf_mem_malloc_flags(void)
 static void qdf_mem_debug_init(void)
 {
 	int i;
+
+	is_initial_mem_debug_disabled = qdf_mem_debug_config_get();
+
+	if (is_initial_mem_debug_disabled)
+		return;
 
 	/* Initalizing the list with maximum size of 60000 */
 	for (i = 0; i < QDF_DEBUG_DOMAIN_COUNT; ++i)
@@ -918,6 +942,9 @@ static uint32_t
 qdf_mem_domain_check_for_leaks(enum qdf_debug_domain domain,
 			       qdf_list_t *mem_list)
 {
+	if (is_initial_mem_debug_disabled)
+		return 0;
+
 	if (qdf_list_empty(mem_list))
 		return 0;
 
@@ -932,6 +959,9 @@ static void qdf_mem_domain_set_check_for_leaks(qdf_list_t *domains)
 {
 	uint32_t leak_count = 0;
 	int i;
+
+	if (is_initial_mem_debug_disabled)
+		return;
 
 	/* detect and print leaks */
 	for (i = 0; i < QDF_DEBUG_DOMAIN_COUNT; ++i)
@@ -950,6 +980,9 @@ static void qdf_mem_domain_set_check_for_leaks(qdf_list_t *domains)
 static void qdf_mem_debug_exit(void)
 {
 	int i;
+
+	if (is_initial_mem_debug_disabled)
+		return;
 
 	/* mem */
 	qdf_mem_domain_set_check_for_leaks(qdf_mem_domains);
@@ -974,6 +1007,9 @@ void *qdf_mem_malloc_debug(size_t size, const char *func, uint32_t line,
 	struct qdf_mem_header *header;
 	void *ptr;
 	unsigned long start, duration;
+
+	if (is_initial_mem_debug_disabled)
+		return __qdf_mem_malloc(size, func, line);
 
 	if (!size || size > QDF_MEM_MAX_MALLOC) {
 		qdf_err("Cannot malloc %zu bytes @ %s:%d", size, func, line);
@@ -1022,6 +1058,11 @@ void qdf_mem_free_debug(void *ptr, const char *func, uint32_t line)
 	struct qdf_mem_header *header;
 	enum qdf_mem_validation_bitmap error_bitmap;
 
+	if (is_initial_mem_debug_disabled) {
+		__qdf_mem_free(ptr);
+		return;
+	}
+
 	/* freeing a null pointer is valid */
 	if (qdf_unlikely(!ptr))
 		return;
@@ -1061,6 +1102,9 @@ void qdf_mem_check_for_leaks(void)
 	qdf_list_t *mem_list = qdf_mem_list_get(current_domain);
 	qdf_list_t *dma_list = qdf_mem_dma_list(current_domain);
 	uint32_t leaks_count = 0;
+
+	if (is_initial_mem_debug_disabled)
+		return;
 
 	leaks_count += qdf_mem_domain_check_for_leaks(current_domain, mem_list);
 	leaks_count += qdf_mem_domain_check_for_leaks(current_domain, dma_list);
@@ -1232,33 +1276,6 @@ static void qdf_mem_debug_init(void) {}
 
 static void qdf_mem_debug_exit(void) {}
 
-void *qdf_mem_malloc_fl(size_t size, const char *func, uint32_t line)
-{
-	void *ptr;
-
-	if (!size || size > QDF_MEM_MAX_MALLOC) {
-		qdf_nofl_err("Cannot malloc %zu bytes @ %s:%d", size, func,
-			     line);
-		return NULL;
-	}
-
-	ptr = qdf_mem_prealloc_get(size);
-	if (ptr)
-		return ptr;
-
-	ptr = kzalloc(size, qdf_mem_malloc_flags());
-	if (!ptr) {
-		qdf_nofl_err("Failed to malloc %zuB @ %s:%d",
-			     size, func, line);
-		return NULL;
-	}
-
-	qdf_mem_kmalloc_inc(ksize(ptr));
-
-	return ptr;
-}
-qdf_export_symbol(qdf_mem_malloc_fl);
-
 void *qdf_mem_malloc_atomic_fl(size_t size, const char *func, uint32_t line)
 {
 	void *ptr;
@@ -1279,29 +1296,6 @@ void *qdf_mem_malloc_atomic_fl(size_t size, const char *func, uint32_t line)
 	return ptr;
 }
 qdf_export_symbol(qdf_mem_malloc_atomic_fl);
-
-/**
- * qdf_mem_free() - free QDF memory
- * @ptr: Pointer to the starting address of the memory to be free'd.
- *
- * This function will free the memory pointed to by 'ptr'.
- *
- * Return: None
- */
-void qdf_mem_free(void *ptr)
-{
-	if (!ptr)
-		return;
-
-	if (qdf_mem_prealloc_put(ptr))
-		return;
-
-	qdf_mem_kmalloc_dec(ksize(ptr));
-
-	kfree(ptr);
-}
-
-qdf_export_symbol(qdf_mem_free);
 
 /**
  * qdf_mem_multi_pages_alloc() - allocate large size of kernel memory
@@ -1443,6 +1437,46 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 }
 qdf_export_symbol(qdf_mem_multi_pages_free);
 #endif
+
+void __qdf_mem_free(void *ptr)
+{
+	if (!ptr)
+		return;
+
+	if (qdf_mem_prealloc_put(ptr))
+		return;
+
+	qdf_mem_kmalloc_dec(ksize(ptr));
+
+	kfree(ptr);
+}
+
+qdf_export_symbol(__qdf_mem_free);
+
+void *__qdf_mem_malloc(size_t size, const char *func, uint32_t line)
+{
+	void *ptr;
+
+	if (!size || size > QDF_MEM_MAX_MALLOC) {
+		qdf_nofl_err("Cannot malloc %zu bytes @ %s:%d", size, func,
+			     line);
+		return NULL;
+	}
+
+	ptr = qdf_mem_prealloc_get(size);
+	if (ptr)
+		return ptr;
+
+	ptr = kzalloc(size, qdf_mem_malloc_flags());
+	if (!ptr)
+		return NULL;
+
+	qdf_mem_kmalloc_inc(ksize(ptr));
+
+	return ptr;
+}
+
+qdf_export_symbol(__qdf_mem_malloc);
 
 void *qdf_aligned_malloc_fl(uint32_t *size,
 			    void **vaddr_unaligned,
@@ -1797,6 +1831,11 @@ void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
 	struct qdf_mem_header *header;
 	void *vaddr;
 
+	if (is_initial_mem_debug_disabled)
+		return __qdf_mem_alloc_consistent(osdev, dev,
+						  size, paddr,
+						  func, line);
+
 	if (!size || size > QDF_MEM_MAX_MALLOC) {
 		qdf_err("Cannot malloc %zu bytes @ %s:%d", size, func, line);
 		return NULL;
@@ -1840,6 +1879,14 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 	struct qdf_mem_header *header;
 	enum qdf_mem_validation_bitmap error_bitmap;
 
+	if (is_initial_mem_debug_disabled) {
+		__qdf_mem_free_consistent(
+					  osdev, dev,
+					  size, vaddr,
+					  paddr, memctx);
+		return;
+	}
+
 	/* freeing a null pointer is valid */
 	if (qdf_unlikely(!vaddr))
 		return;
@@ -1867,31 +1914,39 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 	qdf_mem_dma_free(dev, size + QDF_DMA_MEM_DEBUG_SIZE, vaddr, paddr);
 }
 qdf_export_symbol(qdf_mem_free_consistent_debug);
+#endif /* MEMORY_DEBUG */
 
-#else
-
-void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev,
-			       qdf_size_t size, qdf_dma_addr_t *paddr)
+void __qdf_mem_free_consistent(qdf_device_t osdev, void *dev,
+			       qdf_size_t size, void *vaddr,
+			       qdf_dma_addr_t paddr, qdf_dma_context_t memctx)
 {
-	void *vaddr = qdf_mem_dma_alloc(osdev, dev, size, paddr);
+	qdf_mem_dma_dec(size);
+	qdf_mem_dma_free(dev, size, vaddr, paddr);
+}
+
+qdf_export_symbol(__qdf_mem_free_consistent);
+
+void *__qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev,
+				 qdf_size_t size, qdf_dma_addr_t *paddr,
+				 const char *func, uint32_t line)
+{
+	void *vaddr;
+
+	if (!size || size > QDF_MEM_MAX_MALLOC) {
+		qdf_nofl_err("Cannot malloc %zu bytes @ %s:%d",
+			     size, func, line);
+		return NULL;
+	}
+
+	vaddr = qdf_mem_dma_alloc(osdev, dev, size, paddr);
 
 	if (vaddr)
 		qdf_mem_dma_inc(size);
 
 	return vaddr;
 }
-qdf_export_symbol(qdf_mem_alloc_consistent);
 
-void qdf_mem_free_consistent(qdf_device_t osdev, void *dev,
-			     qdf_size_t size, void *vaddr,
-			     qdf_dma_addr_t paddr, qdf_dma_context_t memctx)
-{
-	qdf_mem_dma_dec(size);
-	qdf_mem_dma_free(dev, size, vaddr, paddr);
-}
-qdf_export_symbol(qdf_mem_free_consistent);
-
-#endif /* MEMORY_DEBUG */
+qdf_export_symbol(__qdf_mem_alloc_consistent);
 
 void *qdf_aligned_mem_alloc_consistent_fl(
 	qdf_device_t osdev, uint32_t *size,

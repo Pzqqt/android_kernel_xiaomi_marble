@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -90,6 +90,13 @@ void qdf_mem_exit(void);
 #define QDF_MEM_FUNC_NAME_SIZE 48
 
 #ifdef MEMORY_DEBUG
+/**
+ * qdf_mem_debug_config_get() - Get the user configuration of mem_debug_disabled
+ *
+ * Return: value of mem_debug_disabled qdf module argument
+ */
+bool qdf_mem_debug_config_get(void);
+
 /**
  * qdf_mem_malloc_debug() - debug version of QDF memory allocation API
  * @size: Number of bytes of memory to allocate.
@@ -226,6 +233,10 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 	qdf_mem_free_consistent_debug(osdev, dev, size, vaddr, paddr, memctx, \
 				  __func__, __LINE__)
 #else
+static inline bool qdf_mem_debug_config_get(void)
+{
+	return false;
+}
 
 /**
  * qdf_mem_malloc() - allocation QDF memory
@@ -240,9 +251,10 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
  * specified (for any reason) it returns NULL.
  */
 #define qdf_mem_malloc(size) \
-	qdf_mem_malloc_fl(size, __func__, __LINE__)
+	__qdf_mem_malloc(size, __func__, __LINE__)
 
-void *qdf_mem_malloc_fl(qdf_size_t size, const char *func, uint32_t line);
+#define qdf_mem_malloc_fl(size, func, line) \
+	__qdf_mem_malloc(size, func, line)
 
 /**
  * qdf_mem_malloc_atomic() - allocation QDF memory atomically
@@ -263,22 +275,16 @@ void *qdf_mem_malloc_atomic_fl(qdf_size_t size,
 			       const char *func,
 			       uint32_t line);
 
-/**
- * qdf_mem_free() - free QDF memory
- * @ptr: Pointer to the starting address of the memory to be freed.
- *
- * Return: None
- */
-void qdf_mem_free(void *ptr);
+#define qdf_mem_free(ptr) \
+	__qdf_mem_free(ptr)
 
 static inline void qdf_mem_check_for_leaks(void) { }
 
-void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev,
-			       qdf_size_t size, qdf_dma_addr_t *paddr);
+#define qdf_mem_alloc_consistent(osdev, dev, size, paddr) \
+	__qdf_mem_alloc_consistent(osdev, dev, size, paddr, __func__, __LINE__)
 
-void qdf_mem_free_consistent(qdf_device_t osdev, void *dev,
-			     qdf_size_t size, void *vaddr,
-			     qdf_dma_addr_t paddr, qdf_dma_context_t memctx);
+#define qdf_mem_free_consistent(osdev, dev, size, vaddr, paddr, memctx) \
+	__qdf_mem_free_consistent(osdev, dev, size, vaddr, paddr, memctx)
 
 void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 			       struct qdf_mem_multi_page_t *pages,

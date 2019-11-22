@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -111,6 +111,10 @@ static uint32_t nbuf_tx_data[QDF_NBUF_TX_PKT_STATE_MAX];
 #ifdef QDF_NBUF_GLOBAL_COUNT
 #define NBUF_DEBUGFS_NAME      "nbuf_counters"
 static qdf_atomic_t nbuf_count;
+#endif
+
+#if defined(NBUF_MEMORY_DEBUG)
+static bool is_initial_mem_debug_disabled;
 #endif
 
 /**
@@ -616,6 +620,9 @@ qdf_nbuf_track_map(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 {
 	QDF_STATUS status;
 
+	if (is_initial_mem_debug_disabled)
+		return QDF_STATUS_SUCCESS;
+
 	status = qdf_tracker_track(&qdf_nbuf_map_tracker, nbuf, func, line);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
@@ -628,6 +635,9 @@ qdf_nbuf_track_map(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 static void
 qdf_nbuf_untrack_map(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 {
+	if (is_initial_mem_debug_disabled)
+		return;
+
 	qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_UNMAP);
 	qdf_tracker_untrack(&qdf_nbuf_map_tracker, nbuf, func, line);
 }
@@ -2325,6 +2335,11 @@ void qdf_net_buf_debug_init(void)
 {
 	uint32_t i;
 
+	is_initial_mem_debug_disabled = qdf_mem_debug_config_get();
+
+	if (is_initial_mem_debug_disabled)
+		return;
+
 	qdf_atomic_set(&qdf_nbuf_history_index, -1);
 
 	qdf_nbuf_map_tracking_init();
@@ -2353,6 +2368,9 @@ void qdf_net_buf_debug_exit(void)
 	unsigned long irq_flag;
 	QDF_NBUF_TRACK *p_node;
 	QDF_NBUF_TRACK *p_prev;
+
+	if (is_initial_mem_debug_disabled)
+		return;
 
 	for (i = 0; i < QDF_NET_BUF_TRACK_MAX_SIZE; i++) {
 		spin_lock_irqsave(&g_qdf_net_buf_track_lock[i], irq_flag);
@@ -2433,6 +2451,9 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 	QDF_NBUF_TRACK *p_node;
 	QDF_NBUF_TRACK *new_node;
 
+	if (is_initial_mem_debug_disabled)
+		return;
+
 	new_node = qdf_nbuf_track_alloc();
 
 	i = qdf_net_buf_debug_hash(net_buf);
@@ -2473,6 +2494,9 @@ void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, const char *func_name,
 	unsigned long irq_flag;
 	QDF_NBUF_TRACK *p_node;
 
+	if (is_initial_mem_debug_disabled)
+		return;
+
 	i = qdf_net_buf_debug_hash(net_buf);
 	spin_lock_irqsave(&g_qdf_net_buf_track_lock[i], irq_flag);
 
@@ -2501,6 +2525,9 @@ void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf)
 	QDF_NBUF_TRACK *p_node = NULL;
 	unsigned long irq_flag;
 	QDF_NBUF_TRACK *p_prev;
+
+	if (is_initial_mem_debug_disabled)
+		return;
 
 	i = qdf_net_buf_debug_hash(net_buf);
 	spin_lock_irqsave(&g_qdf_net_buf_track_lock[i], irq_flag);
@@ -2547,6 +2574,9 @@ void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
 {
 	qdf_nbuf_t ext_list = qdf_nbuf_get_ext_list(net_buf);
 
+	if (is_initial_mem_debug_disabled)
+		return;
+
 	while (ext_list) {
 		/*
 		 * Take care to add if it is Jumbo packet connected using
@@ -2575,6 +2605,9 @@ qdf_export_symbol(qdf_net_buf_debug_acquire_skb);
 void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf)
 {
 	qdf_nbuf_t ext_list = qdf_nbuf_get_ext_list(net_buf);
+
+	if (is_initial_mem_debug_disabled)
+		return;
 
 	while (ext_list) {
 		/*
@@ -2607,6 +2640,11 @@ qdf_nbuf_t qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size,
 {
 	qdf_nbuf_t nbuf;
 
+	if (is_initial_mem_debug_disabled)
+		return __qdf_nbuf_alloc(osdev, size,
+					reserve, align,
+					prio, func, line);
+
 	nbuf = __qdf_nbuf_alloc(osdev, size, reserve, align, prio, func, line);
 
 	/* Store SKB in internal QDF tracking table */
@@ -2627,6 +2665,9 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 
 	if (qdf_unlikely(!nbuf))
 		return;
+
+	if (is_initial_mem_debug_disabled)
+		goto free_buf;
 
 	if (qdf_nbuf_get_users(nbuf) > 1)
 		goto free_buf;
@@ -2656,6 +2697,9 @@ qdf_nbuf_t qdf_nbuf_clone_debug(qdf_nbuf_t buf, const char *func, uint32_t line)
 {
 	qdf_nbuf_t cloned_buf = __qdf_nbuf_clone(buf);
 
+	if (is_initial_mem_debug_disabled)
+		return cloned_buf;
+
 	if (qdf_unlikely(!cloned_buf))
 		return NULL;
 
@@ -2670,6 +2714,9 @@ qdf_export_symbol(qdf_nbuf_clone_debug);
 qdf_nbuf_t qdf_nbuf_copy_debug(qdf_nbuf_t buf, const char *func, uint32_t line)
 {
 	qdf_nbuf_t copied_buf = __qdf_nbuf_copy(buf);
+
+	if (is_initial_mem_debug_disabled)
+		return copied_buf;
 
 	if (qdf_unlikely(!copied_buf))
 		return NULL;
@@ -2690,6 +2737,9 @@ qdf_nbuf_copy_expand_debug(qdf_nbuf_t buf, int headroom, int tailroom,
 
 	if (qdf_unlikely(!copied_buf))
 		return NULL;
+
+	if (is_initial_mem_debug_disabled)
+		return copied_buf;
 
 	/* Store SKB in internal QDF tracking table */
 	qdf_net_buf_debug_add_node(copied_buf, 0, func, line);
