@@ -438,6 +438,17 @@ QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS regulatory_pdev_open(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *parent_psoc;
+
+	parent_psoc = wlan_pdev_get_psoc(pdev);
+
+	reg_send_scheduler_msg_nb(parent_psoc, pdev);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS regulatory_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;

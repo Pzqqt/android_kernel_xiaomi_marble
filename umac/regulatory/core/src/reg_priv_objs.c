@@ -247,7 +247,6 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	}
 
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
-	reg_send_scheduler_msg_nb(parent_psoc, pdev);
 
 	if (!psoc_priv_obj->is_11d_offloaded)
 		reg_11d_host_scan_init(parent_psoc);
