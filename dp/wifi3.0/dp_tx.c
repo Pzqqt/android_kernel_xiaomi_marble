@@ -3495,9 +3495,7 @@ more_data:
 		head_desc = NULL;
 		tail_desc = NULL;
 	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s %d : HAL RING Access Failed -- %pK",
-				__func__, __LINE__, hal_ring_hdl);
+		dp_err("HAL RING Access Failed -- %pK", hal_ring_hdl);
 		return 0;
 	}
 
@@ -3513,10 +3511,9 @@ more_data:
 				(buffer_src != HAL_TX_COMP_RELEASE_SOURCE_FW)) {
 			uint8_t wbm_internal_error;
 
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				  QDF_TRACE_LEVEL_FATAL,
-				  "Tx comp release_src != TQM | FW but from %d",
-				  buffer_src);
+			dp_err_rl(
+				"Tx comp release_src != TQM | FW but from %d",
+				buffer_src);
 			hal_dump_comp_desc(tx_comp_hal_desc);
 			DP_STATS_INC(soc, tx.invalid_release_source, 1);
 
@@ -3533,9 +3530,7 @@ more_data:
 			hal_get_wbm_internal_error(tx_comp_hal_desc);
 
 			if (wbm_internal_error) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "Tx comp wbm_internal_error!!!\n");
+				dp_err_rl("Tx comp wbm_internal_error!!");
 				DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_ALL], 1);
 
 				if (HAL_TX_COMP_RELEASE_SOURCE_REO ==
@@ -3546,10 +3541,11 @@ more_data:
 						hal_tx_comp_get_buffer_type(
 							tx_comp_hal_desc));
 
-				continue;
 			} else {
-				qdf_assert_always(0);
+				dp_err_rl("Tx comp wbm_internal_error false");
+				DP_STATS_INC(soc, tx.non_wbm_internal_err, 1);
 			}
+			continue;
 		}
 
 		/* Get descriptor id */

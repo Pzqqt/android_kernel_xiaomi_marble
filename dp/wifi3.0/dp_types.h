@@ -704,6 +704,8 @@ struct dp_soc_stats {
 		uint32_t invalid_release_source;
 		/* tx completion wbm_internal_error */
 		uint32_t wbm_internal_error[MAX_WBM_INT_ERROR_REASONS];
+		/* tx completion non_wbm_internal_error */
+		uint32_t non_wbm_internal_err;
 		/* TX Comp loop packet limit hit */
 		uint32_t tx_comp_loop_pkt_limit_hit;
 		/* Head pointer Out of sync at the end of dp_tx_comp_handler */

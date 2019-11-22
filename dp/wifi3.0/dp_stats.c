@@ -5815,6 +5815,8 @@ dp_print_soc_tx_stats(struct dp_soc *soc)
 		       soc->stats.tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_LINK_DESC],
 		       soc->stats.tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_MSDU_BUFF],
 		       soc->stats.tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED]);
+	DP_PRINT_STATS("Tx comp non wbm internal error = %d",
+		       soc->stats.tx.non_wbm_internal_err);
 	DP_PRINT_STATS("Tx comp loop pkt limit hit = %d",
 		       soc->stats.tx.tx_comp_loop_pkt_limit_hit);
 	DP_PRINT_STATS("Tx comp HP out of sync2 = %d",
