@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -89,6 +89,30 @@ QDF_STATUS wmi_unified_twt_resume_dialog_cmd(
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_SUPPORT_BCAST_TWT
+QDF_STATUS wmi_unified_twt_btwt_invite_sta_cmd(
+			wmi_unified_t wmi_handle,
+			struct wmi_twt_btwt_invite_sta_cmd_param *params)
+{
+	if (wmi_handle->ops->send_twt_btwt_invite_sta_cmd)
+		return wmi_handle->ops->send_twt_btwt_invite_sta_cmd(
+				wmi_handle, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_twt_btwt_remove_sta_cmd(
+			wmi_unified_t wmi_handle,
+			struct wmi_twt_btwt_remove_sta_cmd_param *params)
+{
+	if (wmi_handle->ops->send_twt_btwt_remove_sta_cmd)
+		return wmi_handle->ops->send_twt_btwt_remove_sta_cmd(
+				wmi_handle, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 QDF_STATUS wmi_extract_twt_enable_comp_event(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
@@ -160,3 +184,29 @@ QDF_STATUS wmi_extract_twt_resume_dialog_comp_event(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_SUPPORT_BCAST_TWT
+QDF_STATUS wmi_extract_twt_btwt_invite_sta_comp_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_btwt_invite_sta_complete_event_param *params)
+{
+	if (wmi_handle->ops->extract_twt_btwt_invite_sta_comp_event)
+		return wmi_handle->ops->extract_twt_btwt_invite_sta_comp_event(
+				wmi_handle, evt_buf, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_twt_btwt_remove_sta_comp_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_btwt_remove_sta_complete_event_param *params)
+{
+	if (wmi_handle->ops->extract_twt_btwt_remove_sta_comp_event)
+		return wmi_handle->ops->extract_twt_btwt_remove_sta_comp_event(
+				wmi_handle, evt_buf, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif

@@ -1996,6 +1996,14 @@ QDF_STATUS (*send_twt_pause_dialog_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_twt_resume_dialog_cmd)(wmi_unified_t wmi_handle,
 			struct wmi_twt_resume_dialog_cmd_param *params);
 
+#ifdef WLAN_SUPPORT_BCAST_TWT
+QDF_STATUS (*send_twt_btwt_invite_sta_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_twt_btwt_invite_sta_cmd_param *params);
+
+QDF_STATUS (*send_twt_btwt_remove_sta_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_twt_btwt_remove_sta_cmd_param *params);
+#endif
+
 QDF_STATUS (*extract_twt_enable_comp_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_enable_complete_event_param *params);
@@ -2019,6 +2027,17 @@ QDF_STATUS (*extract_twt_pause_dialog_comp_event)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_twt_resume_dialog_comp_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_resume_dialog_complete_event_param *params);
+
+#ifdef WLAN_SUPPORT_BCAST_TWT
+QDF_STATUS (*extract_twt_btwt_invite_sta_comp_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_btwt_invite_sta_complete_event_param *params);
+
+QDF_STATUS (*extract_twt_btwt_remove_sta_comp_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_btwt_remove_sta_complete_event_param *params);
+#endif
+
 #endif
 
 #ifdef QCA_SUPPORT_CP_STATS

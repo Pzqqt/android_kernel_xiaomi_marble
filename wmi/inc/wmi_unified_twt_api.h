@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,6 +92,31 @@ QDF_STATUS wmi_unified_twt_resume_dialog_cmd(
 			wmi_unified_t wmi_handle,
 			struct wmi_twt_resume_dialog_cmd_param *params);
 
+#ifdef WLAN_SUPPORT_BCAST_TWT
+/**
+ * wmi_unified_twt_btwt_invite_sta_cmd() - Send WMI command for bTWT sta
+ *                               invitation
+ * @wmi_handle: wmi handle
+ * @params: Parameters to be configured
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_twt_btwt_invite_sta_cmd(
+			wmi_unified_t wmi_handle,
+			struct wmi_twt_btwt_invite_sta_cmd_param *params);
+
+/**
+ * wmi_unified_twt_btwt_remove_sta_cmd() - Send WMI command for bTWT sta kickoff
+ * @wmi_handle: wmi handle
+ * @params: Parameters to be configured
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_twt_btwt_remove_sta_cmd(
+			wmi_unified_t wmi_handle,
+			struct wmi_twt_btwt_remove_sta_cmd_param *params);
+#endif
+
 /**
  * wmi_extract_twt_enable_comp_event() - Extract WMI event params for TWT enable
  *                               completion event
@@ -175,6 +200,36 @@ QDF_STATUS wmi_extract_twt_resume_dialog_comp_event(
 		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_resume_dialog_complete_event_param *params);
+
+#ifdef WLAN_SUPPORT_BCAST_TWT
+/**
+ * wmi_extract_twt_btwt_invite_sta_comp_event() - Extract WMI event params for
+ *                          BTWT sta invitation completion event
+ * @wmi_handle: wmi handle
+ * @evt_buf: Pointer event buffer
+ * @params: Parameters to extract
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_twt_btwt_invite_sta_comp_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_btwt_invite_sta_complete_event_param *params);
+
+/**
+ * wmi_extract_twt_btwt_remove_sta_comp_event() - Extract WMI event params for
+ *                          BTWT sta kickoff completion event
+ * @wmi_handle: wmi handle
+ * @evt_buf: Pointer event buffer
+ * @params: Parameters to extract
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_twt_btwt_remove_sta_comp_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_btwt_remove_sta_complete_event_param *params);
+#endif
 
 #ifdef WLAN_SUPPORT_TWT
 void wmi_twt_attach_tlv(struct wmi_unified *wmi_handle);
