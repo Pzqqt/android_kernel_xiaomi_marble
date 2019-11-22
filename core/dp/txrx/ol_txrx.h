@@ -144,9 +144,6 @@ void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
 
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 ol_txrx_peer_handle
-ol_txrx_peer_find_by_local_id(struct cdp_pdev *pdev,
-			      uint8_t local_peer_id);
-ol_txrx_peer_handle
 ol_txrx_peer_get_ref_by_local_id(struct cdp_pdev *ppdev,
 				 uint8_t local_peer_id,
 				 enum peer_debug_id_type dbg_id);

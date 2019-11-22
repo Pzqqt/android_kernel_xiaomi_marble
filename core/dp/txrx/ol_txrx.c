@@ -341,44 +341,6 @@ ol_txrx_peer_handle ol_txrx_peer_get_ref_by_addr(ol_txrx_pdev_handle pdev,
 	return peer;
 }
 
-static uint16_t ol_txrx_local_peer_id(void *ppeer)
-{
-	ol_txrx_peer_handle peer = ppeer;
-
-	return peer->local_id;
-}
-
-/**
- * @brief Find a txrx peer handle from a peer's local ID
- * @details
- *  The control SW typically uses the txrx peer handle to refer to the peer.
- *  In unusual circumstances, if it is infeasible for the control SW maintain
- *  the txrx peer handle but it can maintain a small integer local peer ID,
- *  this function allows the peer handled to be retrieved, based on the local
- *  peer ID.
- *
- * @param pdev - the data physical device object
- * @param local_peer_id - the ID txrx assigned locally to the peer in question
- * @return handle to the txrx peer object
- */
-ol_txrx_peer_handle
-ol_txrx_peer_find_by_local_id(struct cdp_pdev *ppdev,
-			      uint8_t local_peer_id)
-{
-	struct ol_txrx_peer_t *peer;
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-
-	if ((local_peer_id == OL_TXRX_INVALID_LOCAL_PEER_ID) ||
-	    (local_peer_id >= OL_TXRX_NUM_LOCAL_PEER_IDS)) {
-		return NULL;
-	}
-
-	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
-	peer = pdev->local_peer_ids.map[local_peer_id];
-	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
-	return peer;
-}
-
 /**
  * @brief Find a txrx peer handle from a peer's local ID
  * @param pdev - the data physical device object
@@ -5564,27 +5526,6 @@ static QDF_STATUS ol_txrx_wrapper_register_peer(struct cdp_pdev *pdev,
 }
 
 /**
- * ol_txrx_wrapper_peer_find_by_local_id() - Find a txrx peer handle
- * @pdev - the data physical device object
- * @local_peer_id - the ID txrx assigned locally to the peer in question
- *
- * The control SW typically uses the txrx peer handle to refer to the peer.
- * In unusual circumstances, if it is infeasible for the control SW maintain
- * the txrx peer handle but it can maintain a small integer local peer ID,
- * this function allows the peer handled to be retrieved, based on the local
- * peer ID.
- *
- * @return handle to the txrx peer object
- */
-static void *
-ol_txrx_wrapper_peer_find_by_local_id(struct cdp_pdev *pdev,
-				      uint8_t local_peer_id)
-{
-	return (void *)ol_txrx_peer_find_by_local_id(
-		pdev, local_peer_id);
-}
-
-/**
  * ol_txrx_wrapper_cfg_is_high_latency() - device is high or low latency device
  * @pdev: pdev handle
  *
@@ -6017,8 +5958,6 @@ static struct cdp_peer_ops ol_ops_peer = {
 	.peer_release_ref = ol_txrx_wrapper_peer_release_ref,
 	.find_peer_by_addr = ol_txrx_wrapper_find_peer_by_addr,
 	.find_peer_by_addr_and_vdev = ol_txrx_find_peer_by_addr_and_vdev,
-	.local_peer_id = ol_txrx_local_peer_id,
-	.peer_find_by_local_id = ol_txrx_wrapper_peer_find_by_local_id,
 	.peer_state_update = ol_txrx_wrapper_peer_state_update,
 	.get_vdevid = ol_txrx_get_vdevid,
 	.get_vdev_by_peer_addr = ol_txrx_wrapper_get_vdev_by_peer_addr,
