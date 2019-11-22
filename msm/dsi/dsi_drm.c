@@ -426,6 +426,7 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 	/* Reject seamless transition when active changed */
 	if (crtc_state->active_changed &&
 		((dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR) ||
+		(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS) ||
 		(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK))) {
 		DSI_ERR("seamless upon active changed 0x%x %d\n",
 			dsi_mode.dsi_mode_flags, crtc_state->active_changed);
