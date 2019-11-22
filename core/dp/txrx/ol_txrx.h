@@ -67,9 +67,8 @@ enum ol_txrx_fc_limit_id {
 
 ol_txrx_peer_handle ol_txrx_peer_get_ref_by_addr(ol_txrx_pdev_handle pdev,
 						 u8 *peer_addr,
-						 u8 *peer_id,
 						 enum peer_debug_id_type
-									dbg_id);
+						 dbg_id);
 
 int  ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 			      enum peer_debug_id_type dbg_id);
@@ -218,8 +217,7 @@ ol_txrx_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
 			      struct qdf_mac_addr peer_addr);
 
 void *ol_txrx_find_peer_by_addr(struct cdp_pdev *pdev,
-				uint8_t *peer_addr,
-				uint8_t *peer_id);
+				uint8_t *peer_addr);
 
 void htt_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn);
 void peer_unmap_timer_handler(void *data);
@@ -317,10 +315,10 @@ ol_txrx_pdev_grp_stat_destroy(struct ol_txrx_pdev_t *pdev) {}
 #if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
 void ol_txrx_copy_mac_addr_raw(struct cdp_vdev *pvdev, uint8_t *bss_addr);
 void ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
-				struct cdp_vdev *pvdev, uint8_t *peer_id);
+				struct cdp_vdev *pvdev);
 bool is_vdev_restore_last_peer(void *ppeer);
 void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *pvdev,
-				   uint8_t *peer_id, bool restore_last_peer);
+				   bool restore_last_peer);
 void ol_txrx_set_peer_as_tdls_peer(void *ppeer, bool val);
 void ol_txrx_set_tdls_offchan_enabled(void *ppeer, bool val);
 #endif

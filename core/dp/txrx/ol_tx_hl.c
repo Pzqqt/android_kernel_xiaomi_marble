@@ -1741,13 +1741,12 @@ void ol_txrx_copy_mac_addr_raw(struct cdp_vdev *pvdev, uint8_t *bss_addr)
  * ol_txrx_add_last_real_peer() - add last peer
  * @pdev: the data physical device
  * @vdev: virtual device
- * @peer_id: peer id
  *
  * Return: None
  */
 void
 ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
-			   struct cdp_vdev *pvdev, uint8_t *peer_id)
+			   struct cdp_vdev *pvdev)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
@@ -1755,8 +1754,7 @@ ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
 
 	peer = ol_txrx_find_peer_by_addr(
 		(struct cdp_pdev *)pdev,
-		vdev->hl_tdls_ap_mac_addr.raw,
-		peer_id);
+		vdev->hl_tdls_ap_mac_addr.raw);
 
 	qdf_spin_lock_bh(&pdev->last_real_peer_mutex);
 	if (!vdev->last_real_peer && peer &&
@@ -1787,13 +1785,12 @@ bool is_vdev_restore_last_peer(void *ppeer)
  * ol_txrx_update_last_real_peer() - check for vdev last peer
  * @pdev: the data physical device
  * @peer: peer device
- * @peer_id: peer id
  * @restore_last_peer: restore last peer flag
  *
  * Return: None
  */
 void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *pvdev,
-				   uint8_t *peer_id, bool restore_last_peer)
+				   bool restore_last_peer)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
@@ -1803,8 +1800,7 @@ void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *pvdev,
 		return;
 
 	peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
-					 vdev->hl_tdls_ap_mac_addr.raw,
-					 peer_id);
+					 vdev->hl_tdls_ap_mac_addr.raw);
 
 	qdf_spin_lock_bh(&pdev->last_real_peer_mutex);
 	if (!vdev->last_real_peer && peer &&

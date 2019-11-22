@@ -194,7 +194,7 @@ uint8_t ol_tx_get_is_mgmt_over_wmi_enabled(void)
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 static void *
 ol_txrx_find_peer_by_addr_and_vdev(struct cdp_pdev *ppdev,
-	struct cdp_vdev *pvdev, uint8_t *peer_addr, uint8_t *peer_id)
+	struct cdp_vdev *pvdev, uint8_t *peer_addr)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
@@ -203,7 +203,6 @@ ol_txrx_find_peer_by_addr_and_vdev(struct cdp_pdev *ppdev,
 	peer = ol_txrx_peer_vdev_find_hash(pdev, vdev, peer_addr, 0, 1);
 	if (!peer)
 		return NULL;
-	*peer_id = peer->local_id;
 	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 	return peer;
 }
@@ -229,8 +228,6 @@ ol_txrx_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
 	struct ol_txrx_pdev_t *pdev = cdp_pdev_to_ol_txrx_pdev_t(ppdev);
 	struct ol_txrx_peer_t *peer = NULL;
 	ol_txrx_vdev_handle vdev;
-	/* peer_id to be removed PEER_ID_CLEANUP */
-	uint8_t peer_id;
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -239,7 +236,7 @@ ol_txrx_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
 		return NULL;
 	}
 
-	peer = ol_txrx_peer_get_ref_by_addr(pdev, peer_addr.bytes, &peer_id,
+	peer = ol_txrx_peer_get_ref_by_addr(pdev, peer_addr.bytes,
 					    PEER_DEBUG_ID_OL_INTERNAL);
 
 	if (!peer) {
@@ -277,7 +274,6 @@ ol_txrx_wrapper_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
  * ol_txrx_find_peer_by_addr() - find peer via peer mac addr and peer_id
  * @ppdev: pointer of type cdp_pdev
  * @peer_addr: peer mac addr
- * @peer_id: pointer to fill in the value of peer->local_id for caller
  *
  * This function finds a peer with given mac address and returns its peer_id.
  * Note that this function does not increment the peer->ref_cnt.
@@ -287,8 +283,7 @@ ol_txrx_wrapper_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
  * Return: peer handle if peer is found, NULL if peer is not found.
  */
 void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
-				uint8_t *peer_addr,
-				uint8_t *peer_id)
+				uint8_t *peer_addr)
 {
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
@@ -297,7 +292,6 @@ void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
 						   PEER_DEBUG_ID_OL_INTERNAL);
 	if (!peer)
 		return NULL;
-	*peer_id = peer->local_id;
 	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 	return peer;
 }
@@ -306,7 +300,6 @@ void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
  * ol_txrx_peer_get_ref_by_addr() - get peer ref via peer mac addr and peer_id
  * @pdev: pointer of type ol_txrx_pdev_handle
  * @peer_addr: peer mac addr
- * @peer_id: pointer to fill in the value of peer->local_id for caller
  *
  * This function finds the peer with given mac address and returns its peer_id.
  * Note that this function increments the peer->ref_cnt.
@@ -328,7 +321,6 @@ void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
  */
 ol_txrx_peer_handle ol_txrx_peer_get_ref_by_addr(ol_txrx_pdev_handle pdev,
 						 u8 *peer_addr,
-						 u8 *peer_id,
 						 enum peer_debug_id_type dbg_id)
 {
 	struct ol_txrx_peer_t *peer;
@@ -337,7 +329,7 @@ ol_txrx_peer_handle ol_txrx_peer_get_ref_by_addr(ol_txrx_pdev_handle pdev,
 						   dbg_id);
 	if (!peer)
 		return NULL;
-	*peer_id = peer->local_id;
+
 	return peer;
 }
 
@@ -3234,15 +3226,13 @@ ol_txrx_clear_peer(struct cdp_pdev *ppdev,
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	QDF_STATUS status;
-	/* peer_id to be removed */
-	uint8_t peer_id;
 
 	if (!pdev) {
 		ol_txrx_err("Unable to find pdev!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	peer = ol_txrx_peer_get_ref_by_addr(pdev, peer_addr.bytes, &peer_id,
+	peer = ol_txrx_peer_get_ref_by_addr(pdev, peer_addr.bytes,
 					    PEER_DEBUG_ID_OL_INTERNAL);
 
 	/* Return success, if the peer is already cleared by
@@ -4910,7 +4900,6 @@ static QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	union ol_txrx_peer_update_param_t param;
 	struct privacy_exemption privacy_filter;
-	uint8_t peer_id;
 
 	if (!pdev) {
 		ol_txrx_err("Pdev is NULL");
@@ -4918,8 +4907,7 @@ static QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 	}
 
 	peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
-					 sta_desc->peer_addr.bytes,
-					 &peer_id);
+					 sta_desc->peer_addr.bytes);
 
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
@@ -4947,12 +4935,10 @@ static QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 /**
  * ol_txrx_register_ocb_peer - Function to register the OCB peer
  * @mac_addr: MAC address of the self peer
- * @peer_id: Pointer to the peer ID
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
  */
-static QDF_STATUS ol_txrx_register_ocb_peer(uint8_t *mac_addr,
-				     uint8_t *peer_id)
+static QDF_STATUS ol_txrx_register_ocb_peer(uint8_t *mac_addr)
 {
 	ol_txrx_pdev_handle pdev;
 	ol_txrx_peer_handle peer;
@@ -4964,7 +4950,7 @@ static QDF_STATUS ol_txrx_register_ocb_peer(uint8_t *mac_addr,
 	}
 
 	peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
-					 mac_addr, peer_id);
+					 mac_addr);
 	if (!peer) {
 		ol_txrx_err("Unable to find OCB peer!");
 		return QDF_STATUS_E_FAILURE;
@@ -5563,33 +5549,31 @@ static QDF_STATUS ol_txrx_wrapper_peer_state_update(struct cdp_pdev *pdev,
  * ol_txrx_wrapper_find_peer_by_addr() - find peer instance by address
  * @pdev: pdev handle
  * @peer_addr: peer address want to find
- * @peer_id: peer id
  *
  * Return: peer instance pointer
  */
 static void *ol_txrx_wrapper_find_peer_by_addr(struct cdp_pdev *pdev,
-		uint8_t *peer_addr, uint8_t *peer_id)
+		uint8_t *peer_addr)
 {
 	return ol_txrx_find_peer_by_addr(pdev,
-				peer_addr, peer_id);
+				peer_addr);
 }
 
 /**
  * ol_txrx_wrapper_peer_get_ref_by_addr() - get peer reference by address
  * @pdev: pdev handle
  * @peer_addr: peer address we want to find
- * @peer_id: peer id
  * @debug_id: peer debug id for tracking
  *
  * Return: peer instance pointer
  */
 static void *
 ol_txrx_wrapper_peer_get_ref_by_addr(struct cdp_pdev *pdev,
-				     u8 *peer_addr, uint8_t *peer_id,
+				     u8 *peer_addr,
 				     enum peer_debug_id_type debug_id)
 {
 	return ol_txrx_peer_get_ref_by_addr((ol_txrx_pdev_handle)pdev,
-					    peer_addr, peer_id, debug_id);
+					    peer_addr, debug_id);
 }
 
 /**
