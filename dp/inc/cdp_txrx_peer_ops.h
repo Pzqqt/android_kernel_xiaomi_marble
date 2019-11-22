@@ -85,7 +85,6 @@ cdp_clear_peer(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  * @soc - data path soc handle
  * @cds_ctx - cds void context
  * @mac_addr - mac address for ocb self peer
- * @peer_id - local peer id
  *
  * register ocb peer from physical device
  *
@@ -94,7 +93,7 @@ cdp_clear_peer(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  */
 static inline QDF_STATUS
 cdp_peer_register_ocb_peer(ol_txrx_soc_handle soc,
-		uint8_t *mac_addr, uint8_t *peer_id)
+		uint8_t *mac_addr)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -103,7 +102,7 @@ cdp_peer_register_ocb_peer(ol_txrx_soc_handle soc,
 	}
 
 	if (soc->ops->peer_ops->register_ocb_peer)
-		return soc->ops->peer_ops->register_ocb_peer(mac_addr, peer_id);
+		return soc->ops->peer_ops->register_ocb_peer(mac_addr);
 
 	return QDF_STATUS_E_NOSUPPORT;
 }
@@ -171,7 +170,6 @@ cdp_peer_remove_for_vdev_no_lock(ol_txrx_soc_handle soc,
  * @soc - data path soc handle
  * @pdev - data path device instance
  * @peer_addr - peer mac address
- * @peer_id - local peer id with target mac address
  * @debug_id - debug_id to track caller
  *
  * To release the peer ref, cdp_peer_release_ref needs to be called.
@@ -181,7 +179,7 @@ cdp_peer_remove_for_vdev_no_lock(ol_txrx_soc_handle soc,
  */
 static inline void
 *cdp_peer_get_ref_by_addr(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-			  uint8_t *peer_addr, uint8_t *peer_id,
+			  uint8_t *peer_addr,
 			  enum peer_debug_id_type debug_id)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
@@ -192,7 +190,7 @@ static inline void
 
 	if (soc->ops->peer_ops->peer_get_ref_by_addr)
 		return soc->ops->peer_ops->peer_get_ref_by_addr(
-			pdev, peer_addr, peer_id, debug_id);
+			pdev, peer_addr, debug_id);
 
 	return NULL;
 }
@@ -224,7 +222,6 @@ cdp_peer_release_ref(ol_txrx_soc_handle soc, void *peer,
  * @soc - data path soc handle
  * @pdev - data path device instance
  * @peer_addr - peer mac address
- * @peer_id - local peer id with target mac address
  *
  * Find peer and local peer id by peer mac address
  *
@@ -233,7 +230,7 @@ cdp_peer_release_ref(ol_txrx_soc_handle soc, void *peer,
  */
 static inline void
 *cdp_peer_find_by_addr(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-		uint8_t *peer_addr, uint8_t *peer_id)
+		uint8_t *peer_addr)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -243,7 +240,7 @@ static inline void
 
 	if (soc->ops->peer_ops->find_peer_by_addr)
 		return soc->ops->peer_ops->find_peer_by_addr(
-			pdev, peer_addr, peer_id);
+			pdev, peer_addr);
 
 	return NULL;
 }
@@ -254,7 +251,6 @@ static inline void
  * @pdev - data path device instance
  * @vdev - virtual interface instance
  * @peer_addr - peer mac address
- * @peer_id - local peer id with target mac address
  *
  * Find peer by peer mac address within vdev
  *
@@ -263,7 +259,7 @@ static inline void
  */
 static inline void
 *cdp_peer_find_by_addr_and_vdev(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-		struct cdp_vdev *vdev, uint8_t *peer_addr, uint8_t *peer_id)
+		struct cdp_vdev *vdev, uint8_t *peer_addr)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -273,7 +269,7 @@ static inline void
 
 	if (soc->ops->peer_ops->find_peer_by_addr_and_vdev)
 		return soc->ops->peer_ops->find_peer_by_addr_and_vdev(
-			pdev, vdev, peer_addr, peer_id);
+			pdev, vdev, peer_addr);
 
 	return NULL;
 }
@@ -494,7 +490,6 @@ cdp_peer_copy_mac_addr_raw(ol_txrx_soc_handle soc,
  * @soc - data path soc handle
  * @pdev - data path device instance
  * @vdev - virtual interface instance
- * @peer_id - local peer id
  *
  * copy peer mac address
  *
@@ -502,7 +497,7 @@ cdp_peer_copy_mac_addr_raw(ol_txrx_soc_handle soc,
  */
 static inline void
 cdp_peer_add_last_real_peer(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev, struct cdp_vdev *vdev, uint8_t *peer_id)
+		struct cdp_pdev *pdev, struct cdp_vdev *vdev)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -512,7 +507,7 @@ cdp_peer_add_last_real_peer(ol_txrx_soc_handle soc,
 
 	if (soc->ops->peer_ops->add_last_real_peer)
 		return soc->ops->peer_ops->add_last_real_peer(
-			pdev, vdev, peer_id);
+			pdev, vdev);
 	return;
 }
 
@@ -546,7 +541,6 @@ cdp_peer_is_vdev_restore_last_peer(ol_txrx_soc_handle soc, void *peer)
  * @soc - data path soc handle
  * @pdev - data path device instance
  * @peer - peer instance pointer
- * @peer_id - local peer id
  * @restore_last_peer - restore last peer or not
  *
  * update last real peer
@@ -555,7 +549,7 @@ cdp_peer_is_vdev_restore_last_peer(ol_txrx_soc_handle soc, void *peer)
  */
 static inline void
 cdp_peer_update_last_real_peer(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-		void *vdev, uint8_t *peer_id, bool restore_last_peer)
+		void *vdev, bool restore_last_peer)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -565,7 +559,7 @@ cdp_peer_update_last_real_peer(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 
 	if (soc->ops->peer_ops->update_last_real_peer)
 		return soc->ops->peer_ops->update_last_real_peer(pdev, vdev,
-			peer_id, restore_last_peer);
+			restore_last_peer);
 
 	return;
 }

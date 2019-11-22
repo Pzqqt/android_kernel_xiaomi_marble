@@ -599,7 +599,6 @@ dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
 					      uint8_t *rx_tlv_hdr,
 					      qdf_nbuf_t nbuf)
 {
-	uint8_t local_id;
 	struct dp_peer *peer = NULL;
 	uint8_t *rx_pkt_hdr = hal_rx_pkt_hdr_get(rx_tlv_hdr);
 	struct dp_pdev *pdev = soc->pdev_list[pool_id];
@@ -612,7 +611,7 @@ dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
 	 */
 	if (wh)
 		peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev,
-					    wh->i_addr2, &local_id);
+					    wh->i_addr2);
 	if (peer) {
 		dp_verbose_debug("MPDU sw_peer_id & ast_idx is corrupted");
 		hal_rx_dump_pkt_tlvs(soc->hal_soc, rx_tlv_hdr,

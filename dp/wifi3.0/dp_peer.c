@@ -1679,12 +1679,10 @@ static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
  * dp_find_peer_by_addr - find peer instance by mac address
  * @dev: physical device instance
  * @peer_mac_addr: peer mac address
- * @local_id: local id for the peer
  *
  * Return: peer instance pointer
  */
-void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
-		uint8_t *local_id)
+void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)dev;
 	struct dp_peer *peer;
@@ -1694,9 +1692,8 @@ void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 	if (!peer)
 		return NULL;
 
-	/* Multiple peer ids? How can know peer id? */
-	*local_id = peer->local_id;
-	dp_verbose_debug("peer %pK id %d", peer, *local_id);
+	dp_verbose_debug("peer %pK mac: %pM", peer,
+			 peer->mac_addr.raw);
 
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
@@ -3040,11 +3037,9 @@ QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
 {
 	struct dp_peer *peer;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	uint8_t peer_id;
 
 	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev,
-				    sta_desc->peer_addr.bytes,
-				    &peer_id);
+				    sta_desc->peer_addr.bytes);
 
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
@@ -3073,11 +3068,8 @@ dp_clear_peer(struct cdp_pdev *pdev_handle, struct qdf_mac_addr peer_addr)
 {
 	struct dp_peer *peer;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	/* peer_id to be removed */
-	uint8_t peer_id;
 
-	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, peer_addr.bytes,
-				    &peer_id);
+	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, peer_addr.bytes);
 	if (!peer)
 		return QDF_STATUS_E_FAULT;
 
@@ -3095,7 +3087,6 @@ dp_clear_peer(struct cdp_pdev *pdev_handle, struct qdf_mac_addr peer_addr)
  * @pdev - data path device instance
  * @vdev - virtual interface instance
  * @peer_addr - peer mac address
- * @peer_id - local peer id with target mac address
  *
  * Find peer by peer mac address within vdev
  *
@@ -3104,7 +3095,7 @@ dp_clear_peer(struct cdp_pdev *pdev_handle, struct qdf_mac_addr peer_addr)
  */
 void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 		struct cdp_vdev *vdev_handle,
-		uint8_t *peer_addr, uint8_t *local_id)
+		uint8_t *peer_addr)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
@@ -3119,8 +3110,6 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 		dp_peer_unref_delete(peer);
 		return NULL;
 	}
-
-	*local_id = peer->local_id;
 
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
@@ -3188,8 +3177,6 @@ dp_get_vdev_by_peer_addr(struct cdp_pdev *pdev_handle,
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct dp_peer *peer = NULL;
-	/* peer_id to be removed PEER_ID_CLEANUP */
-	uint8_t peer_id;
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -3198,8 +3185,7 @@ dp_get_vdev_by_peer_addr(struct cdp_pdev *pdev_handle,
 		return NULL;
 	}
 
-	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, peer_addr.bytes,
-				    &peer_id);
+	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, peer_addr.bytes);
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "PDEV not found for peer_addr:" QDF_MAC_ADDR_STR,

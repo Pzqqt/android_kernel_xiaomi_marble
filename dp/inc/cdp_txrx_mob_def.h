@@ -232,13 +232,11 @@ enum peer_debug_id_type {
 
 /**
  * struct ol_txrx_desc_type - txrx descriptor type
- * @sta_id: sta id
  * @is_qos_enabled: is station qos enabled
  * @is_wapi_supported: is station wapi supported
  * @peer_addr: peer mac address
  */
 struct ol_txrx_desc_type {
-	uint8_t sta_id;
 	uint8_t is_qos_enabled;
 	uint8_t is_wapi_supported;
 	struct qdf_mac_addr peer_addr;

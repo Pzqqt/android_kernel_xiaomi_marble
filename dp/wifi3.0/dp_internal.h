@@ -900,7 +900,7 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer,
 			bool reuse);
 void dp_peer_unref_delete(struct dp_peer *peer);
 extern void *dp_find_peer_by_addr(struct cdp_pdev *dev,
-	uint8_t *peer_mac_addr, uint8_t *peer_id);
+	uint8_t *peer_mac_addr);
 extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, int mac_addr_is_aligned, uint8_t vdev_id);
 
@@ -911,7 +911,7 @@ QDF_STATUS dp_clear_peer(struct cdp_pdev *pdev_handle,
 			 struct qdf_mac_addr peer_addr);
 void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 		struct cdp_vdev *vdev,
-		uint8_t *peer_addr, uint8_t *local_id);
+		uint8_t *peer_addr);
 QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 		enum ol_txrx_peer_state state);
 QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id);

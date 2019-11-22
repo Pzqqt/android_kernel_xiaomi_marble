@@ -7200,7 +7200,6 @@ static void
 dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 {
 	struct dp_peer *peer;
-	uint8_t local_id;
 
 	if (!mac_addr) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -7208,8 +7207,7 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 		return;
 	}
 
-	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev_handle, mac_addr,
-			&local_id);
+	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev_handle, mac_addr);
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -7958,10 +7956,9 @@ dp_peer_update_pkt_capture_params(struct cdp_pdev *pdev,
 
 {
 	struct dp_peer *peer;
-	uint8_t local_id;
 
 	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev,
-			peer_mac, &local_id);
+			peer_mac);
 
 	if (!peer) {
 		dp_err("Invalid Peer");
@@ -8808,11 +8805,10 @@ dp_enable_peer_based_pktlog(
 	char *mac_addr, uint8_t enb_dsb)
 {
 	struct dp_peer *peer;
-	uint8_t local_id;
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev_handle;
 
 	peer = (struct dp_peer *)dp_find_peer_by_addr(txrx_pdev_handle,
-			mac_addr, &local_id);
+			mac_addr);
 
 	if (!peer) {
 		dp_err("Invalid Peer");
@@ -9753,14 +9749,12 @@ static struct cdp_mob_stats_ops dp_ops_mob_stats = {
  * dp_peer_get_ref_find_by_addr - get peer with addr by ref count inc
  * @dev: physical device instance
  * @peer_mac_addr: peer mac address
- * @local_id: local id for the peer
  * @debug_id: to track enum peer access
  *
  * Return: peer instance pointer
  */
 static inline void *
 dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
-			     uint8_t *local_id,
 			     enum peer_debug_id_type debug_id)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)dev;
@@ -9771,8 +9765,8 @@ dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 	if (!peer)
 		return NULL;
 
-	*local_id = peer->local_id;
-	DP_TRACE(INFO, "%s: peer %pK id %d", __func__, peer, *local_id);
+	DP_TRACE(INFO, "%s: peer %pK mac: %pM", __func__, peer,
+		 peer->mac_addr.raw);
 
 	return peer;
 }
