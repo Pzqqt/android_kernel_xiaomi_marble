@@ -2201,7 +2201,8 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 		flags & DFS_RANDOM_CH_FLAG_NO_WEATHER_CH : 0;
 
 	/* list adjusted after leakage has been marked */
-	leakage_adjusted_lst = qdf_mem_malloc(random_chan_cnt);
+	leakage_adjusted_lst = qdf_mem_malloc(random_chan_cnt *
+					      sizeof(*leakage_adjusted_lst));
 	if (!leakage_adjusted_lst) {
 		qdf_mem_free(random_chan_freq_list);
 		return 0;
@@ -2211,7 +2212,7 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 		int ret;
 
 		qdf_mem_copy(leakage_adjusted_lst, random_chan_freq_list,
-			     random_chan_cnt);
+			     random_chan_cnt * sizeof(*leakage_adjusted_lst));
 		ret = dfs_mark_leaking_chan_for_freq(dfs, *chan_wd,
 						   random_chan_cnt,
 						   leakage_adjusted_lst);
