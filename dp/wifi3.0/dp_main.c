@@ -2861,7 +2861,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed for tcl_cmd_ring"));
-		goto fail1;
+		goto fail2;
 	}
 
 	entries = wlan_cfg_get_dp_soc_tcl_status_ring_size(soc_cfg_ctx);
@@ -2869,7 +2869,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed for tcl_status_ring"));
-		goto fail1;
+		goto fail2;
 	}
 
 	reo_dst_ring_size = wlan_cfg_get_reo_dst_ring_size(soc->wlan_cfg_ctx);
@@ -2897,7 +2897,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "reo_dest_ring [%d]"), i);
-				goto fail1;
+				goto fail2;
 			}
 		}
 	} else {
@@ -2917,7 +2917,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "rxdma_err_dst_ring"));
-				goto fail1;
+				goto fail2;
 			}
 		}
 	}
@@ -2929,7 +2929,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("dp_srng_setup failed for reo_reinject_ring"));
-		goto fail1;
+		goto fail2;
 	}
 
 
@@ -2939,7 +2939,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			  0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("dp_srng_setup failed for rx_rel_ring"));
-		goto fail1;
+		goto fail2;
 	}
 
 
@@ -2949,7 +2949,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			  REO_EXCEPTION, 0, MAX_REO_DEST_RINGS, entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("dp_srng_setup failed for reo_exception_ring"));
-		goto fail1;
+		goto fail2;
 	}
 
 
@@ -2959,7 +2959,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			  0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed for reo_cmd_ring"));
-		goto fail1;
+		goto fail2;
 	}
 
 	hal_reo_init_cmd_ring(soc->hal_soc, soc->reo_cmd_ring.hal_srng);
@@ -2971,7 +2971,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			  0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed for reo_status_ring"));
-		goto fail1;
+		goto fail2;
 	}
 
 	/*
@@ -3028,6 +3028,8 @@ out:
 
 	qdf_nbuf_queue_init(&soc->htt_stats.msg);
 	return 0;
+fail2:
+	dp_tx_soc_detach(soc);
 fail1:
 	/*
 	 * Cleanup will be done as part of soc_detach, which will
@@ -3049,6 +3051,8 @@ fail1:
  */
 static void dp_soc_cmn_cleanup(struct dp_soc *soc)
 {
+	dp_tx_soc_detach(soc);
+
 	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
 
 	dp_reo_cmdlist_destroy(soc);
@@ -4233,8 +4237,6 @@ static void dp_soc_detach(void *txrx_soc)
 	/* Common rings */
 	qdf_minidump_remove(soc->wbm_desc_rel_ring.base_vaddr_unaligned);
 	dp_srng_cleanup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
-
-	dp_tx_soc_detach(soc);
 
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
