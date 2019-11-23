@@ -1176,7 +1176,7 @@ TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/mlme/psoc/src/target_if_psoc_timer_tx_ops.o
 
 ifeq ($(CONFIG_FEATURE_VDEV_RSP_WAKELOCK), y)
-TARGET_IF_OBJ += $(TARGET_IF_DIR)/mlme/vdev_mgr/src/target_if_vdev_mgr_wake_lock.o
+TARGET_IF_OBJ += $(TARGET_IF_DIR)/mlme/psoc/src/target_if_psoc_wake_lock.o
 endif
 
 ifeq ($(CONFIG_CRYPTO_COMPONENT), y)
