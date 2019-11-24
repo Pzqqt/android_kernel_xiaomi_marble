@@ -279,6 +279,18 @@ exit:
 	return ret;
 }
 
+static int __tx_macro_mclk_enable(struct snd_soc_component *component,
+				  bool enable)
+{
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	return tx_macro_mclk_enable(tx_priv, enable);
+}
+
 static int tx_macro_va_swr_clk_event(struct snd_soc_dapm_widget *w,
 			       struct snd_kcontrol *kcontrol, int event)
 {
@@ -2428,7 +2440,7 @@ static int tx_macro_register_event_listener(struct snd_soc_component *component,
 			"%s: priv is null for macro!\n", __func__);
 		return -EINVAL;
 	}
-	if (tx_priv->swr_ctrl_data) {
+	if (tx_priv->swr_ctrl_data && !tx_priv->tx_swr_clk_cnt) {
 		if (enable) {
 			ret = swrm_wcd_notify(
 				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
@@ -3131,6 +3143,7 @@ static void tx_macro_init_ops(struct macro_ops *ops,
 	ops->clk_div_get = tx_macro_clk_div_get;
 	ops->clk_switch = tx_macro_clk_switch;
 	ops->reg_evt_listener = tx_macro_register_event_listener;
+	ops->clk_enable = __tx_macro_mclk_enable;
 }
 
 static int tx_macro_probe(struct platform_device *pdev)

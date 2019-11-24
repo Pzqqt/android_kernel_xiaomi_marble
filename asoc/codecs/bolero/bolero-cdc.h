@@ -71,6 +71,7 @@ struct macro_ops {
 	int (*clk_switch)(struct snd_soc_component *component);
 	int (*clk_div_get)(struct snd_soc_component *component);
 	int (*reg_evt_listener)(struct snd_soc_component *component, bool en);
+	int (*clk_enable)(struct snd_soc_component *c, bool en);
 	char __iomem *io_base;
 	u16 clk_id_req;
 	u16 default_clk_id;
@@ -99,6 +100,7 @@ int bolero_register_event_listener(struct snd_soc_component *component,
 				   bool enable);
 void bolero_wsa_pa_on(struct device *dev);
 bool bolero_check_core_votes(struct device *dev);
+int bolero_tx_mclk_enable(struct snd_soc_component *c, bool enable);
 int bolero_get_version(struct device *dev);
 int bolero_dmic_clk_enable(struct snd_soc_component *component,
 			   u32 dmic, u32 tx_mode, bool enable);
@@ -189,6 +191,10 @@ static int bolero_get_version(struct device *dev)
 
 static int bolero_dmic_clk_enable(struct snd_soc_component *component,
 			   u32 dmic, u32 tx_mode, bool enable)
+{
+	return 0;
+}
+static int bolero_tx_mclk_enable(struct snd_soc_component *c, bool enable)
 {
 	return 0;
 }

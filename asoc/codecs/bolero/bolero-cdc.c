@@ -646,6 +646,7 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 		priv->macro_params[macro_id].clk_switch = ops->clk_switch;
 		priv->macro_params[macro_id].reg_evt_listener =
 							ops->reg_evt_listener;
+		priv->macro_params[macro_id].clk_enable = ops->clk_enable;
 	}
 	if (macro_id == TX_MACRO || macro_id == VA_MACRO)
 		priv->macro_params[macro_id].clk_div_get = ops->clk_div_get;
@@ -719,6 +720,7 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 		priv->macro_params[macro_id].reg_wake_irq = NULL;
 		priv->macro_params[macro_id].clk_switch = NULL;
 		priv->macro_params[macro_id].reg_evt_listener = NULL;
+		priv->macro_params[macro_id].clk_enable = NULL;
 	}
 	if (macro_id == TX_MACRO || macro_id == VA_MACRO)
 		priv->macro_params[macro_id].clk_div_get = NULL;
@@ -1028,6 +1030,40 @@ int bolero_tx_clk_switch(struct snd_soc_component *component)
 	return ret;
 }
 EXPORT_SYMBOL(bolero_tx_clk_switch);
+
+/**
+ * bolero_tx_mclk_enable - Enable/Disable TX Macro mclk
+ *
+ * @component: pointer to codec component instance.
+ * @enable: set true to enable, otherwise false.
+ *
+ * Returns 0 on success or -EINVAL on error.
+ */
+int bolero_tx_mclk_enable(struct snd_soc_component *component,
+			  bool enable)
+{
+	struct bolero_priv *priv = NULL;
+	int ret = 0;
+
+	if (!component)
+		return -EINVAL;
+
+	priv = snd_soc_component_get_drvdata(component);
+	if (!priv)
+		return -EINVAL;
+
+	if (!bolero_is_valid_codec_dev(priv->dev)) {
+		dev_err(component->dev, "%s: invalid codec\n", __func__);
+		return -EINVAL;
+	}
+
+	if (priv->macro_params[TX_MACRO].clk_enable)
+		ret = priv->macro_params[TX_MACRO].clk_enable(component,
+								enable);
+
+	return ret;
+}
+EXPORT_SYMBOL(bolero_tx_mclk_enable);
 
 /**
  * bolero_register_event_listener - Register/Deregister to event listener
