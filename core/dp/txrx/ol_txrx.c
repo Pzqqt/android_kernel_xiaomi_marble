@@ -2472,13 +2472,18 @@ ol_txrx_get_pn_info(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
  * @soc_hdl: Datapath soc handle
  * @vdev_id: id of vdev
  *
- * Return: operation mode.
+ * Return: interface opmode if SUCCESS,
+ *	   0 if interface does not exist.
  */
 static int ol_txrx_get_opmode(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
 	struct ol_txrx_vdev_t *vdev;
 
 	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	if (!vdev) {
+		ol_txrx_err("vdev for id %d is NULL", vdev_id);
+		return 0;
+	}
 
 	return vdev->opmode;
 }
