@@ -8156,7 +8156,7 @@ void sme_get_command_q_status(mac_handle_t mac_handle)
 	} /* if(pTempCmd) */
 
 	sme_err("Currently smeCmdPendingList has %d commands",
-			csr_nonscan_pending_ll_count(mac));
+		wlan_serialization_get_pending_list_count(mac->psoc, false));
 
 }
 

@@ -436,28 +436,6 @@ void csr_purge_pdev_all_ser_cmd_list(struct mac_context *mac_ctx)
 	wlan_serialization_purge_all_pdev_cmd(mac_ctx->pdev);
 }
 
-uint32_t csr_nonscan_active_ll_count(struct mac_context *mac_ctx)
-{
-	return wlan_serialization_get_active_list_count(mac_ctx->psoc, false);
-}
-
-uint32_t csr_nonscan_pending_ll_count(struct mac_context *mac_ctx)
-{
-	return wlan_serialization_get_pending_list_count(mac_ctx->psoc, false);
-}
-
-bool csr_nonscan_active_ll_is_list_empty(struct mac_context *mac_ctx,
-					 bool inter_locked)
-{
-	return !wlan_serialization_get_active_list_count(mac_ctx->psoc, false);
-}
-
-bool csr_nonscan_pending_ll_is_list_empty(struct mac_context *mac_ctx,
-					  bool inter_locked)
-{
-	return !wlan_serialization_get_pending_list_count(mac_ctx->psoc, false);
-}
-
 tListElem *csr_nonscan_active_ll_peek_head(struct mac_context *mac_ctx,
 					   bool inter_locked)
 {
@@ -501,18 +479,6 @@ bool csr_nonscan_active_ll_remove_entry(struct mac_context *mac_ctx,
 	return true;
 
 	return false;
-}
-
-tListElem *csr_nonscan_active_ll_remove_head(struct mac_context *mac_ctx,
-					     bool inter_locked)
-{
-	return csr_nonscan_active_ll_peek_head(mac_ctx, inter_locked);
-}
-
-tListElem *csr_nonscan_pending_ll_remove_head(struct mac_context *mac_ctx,
-					      bool inter_locked)
-{
-	return csr_nonscan_pending_ll_peek_head(mac_ctx, inter_locked);
 }
 
 tListElem *csr_nonscan_pending_ll_next(struct mac_context *mac_ctx,
