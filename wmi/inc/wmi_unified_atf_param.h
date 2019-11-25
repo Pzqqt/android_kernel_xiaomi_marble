@@ -100,10 +100,12 @@ struct set_atf_params {
 /**
  * struct atf_peer_request_params - ATF peer req params
  * @num_peers: number of peers
+ * @pdev_id: Associated pdev id
  * @atf_peer_ext_info: ATF peer ext info
  */
 struct atf_peer_request_params {
 	uint32_t num_peers;
+	uint32_t pdev_id;
 	atf_peer_ext_info peer_ext_info[ATF_ACTIVED_MAX_CLIENTS];
 };
 
@@ -122,10 +124,12 @@ typedef struct {
 /**
  * struct atf_grouping_params - ATF grouping params
  * @num_groups: number of groups
+ * @pdev_id: Associated pdev id
  * @group_inf: Group informaition
  */
 struct atf_grouping_params {
 	uint32_t num_groups;
+	uint32_t pdev_id;
 	atf_group_info group_info[ATF_ACTIVED_MAX_ATFGROUPS];
 };
 
@@ -148,10 +152,12 @@ struct atf_group_wmm_ac_info {
 /**
  * struct atf_grp_ac_params - ATF group AC config params
  * @num_groups: number of groups
+ * @pdev_id: Associated pdev id
  * @group_inf: Group informaition
  */
 struct atf_group_ac_params {
 	uint32_t num_groups;
+	uint32_t pdev_id;
 	struct atf_group_wmm_ac_info group_info[ATF_ACTIVED_MAX_ATFGROUPS];
 };
 
