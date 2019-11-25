@@ -10689,6 +10689,7 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	struct hdd_ap_ctx *ap_ctx;
 	int ret;
 	uint32_t chan_freq = 0;
+	bool chan_freq_present = false;
 	QDF_STATUS status;
 
 	hdd_enter();
@@ -10712,15 +10713,17 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_FREQUENCY]) {
 		chan_freq = nla_get_u32(
 				tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_FREQUENCY]);
+		chan_freq_present = true;
 	} else if (tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL]) {
 		uint32_t config_channel =
 			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL]);
 
 		chan_freq = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
 							 config_channel);
+		chan_freq_present = true;
 	}
 
-	if (chan_freq) {
+	if (chan_freq_present) {
 		if (!test_bit(SOFTAP_BSS_STARTED,
 					&hostapd_adapter->event_flags)) {
 			hdd_err("SAP is not started yet. Restart sap will be invalid");
