@@ -1182,7 +1182,7 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 
 	for (i = 0; i < unsafe_chan_list->chan_cnt; i++) {
 		hdd_ctxt->unsafe_channel_list[i] =
-			wlan_reg_freq_to_chan(hdd_ctxt->pdev, unsafe_chan_list->chan_freq_list[i]);
+				unsafe_chan_list->chan_freq_list[i];
 	}
 	hdd_debug("number of unsafe channels is %d ",
 	       hdd_ctxt->unsafe_channel_count);

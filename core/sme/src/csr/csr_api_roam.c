@@ -1388,7 +1388,6 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 	uint16_t unsafe_chan[NUM_CHANNELS];
 	uint16_t unsafe_chan_cnt = 0;
 	uint16_t cnt = 0;
-	uint8_t  channel;
 	uint32_t  channel_freq;
 	bool is_unsafe_chan;
 	bool is_same_band;
@@ -1421,8 +1420,6 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 			csr_emu_chan_req(pScan->base_channels.channel_freq_list[i]))
 			continue;
 
-		channel = wlan_reg_freq_to_chan(mac->pdev,
-						pScan->base_channels.channel_freq_list[i]);
 		channel_freq = pScan->base_channels.channel_freq_list[i];
 		/* Scan is not performed on DSRC channels*/
 		if (wlan_reg_is_dsrc_freq(channel_freq))
@@ -1438,8 +1435,8 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 				(channel_state == CHANNEL_STATE_DFS)) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					QDF_TRACE_LEVEL_DEBUG,
-					FL("skip dfs channel %d"),
-					channel);
+					FL("skip dfs channel frequency %d"),
+					channel_freq);
 				continue;
 			}
 			if (mac->roam.configParam.sta_roam_policy.
@@ -1447,7 +1444,7 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 					unsafe_chan_cnt) {
 				is_unsafe_chan = false;
 				for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
-					if (unsafe_chan[cnt] == channel) {
+					if (unsafe_chan[cnt] == channel_freq) {
 						is_unsafe_chan = true;
 						break;
 					}
@@ -2145,8 +2142,7 @@ is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
 	    unsafe_chan_cnt) {
 		is_unsafe_chan = false;
 		for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
-			if (unsafe_chan[cnt] ==
-			    wlan_reg_freq_to_chan(mac_ctx->pdev, freq)) {
+			if (unsafe_chan[cnt] == freq) {
 				is_unsafe_chan = true;
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_DEBUG,

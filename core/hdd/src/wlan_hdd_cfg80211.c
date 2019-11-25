@@ -10468,6 +10468,7 @@ static int hdd_validate_avoid_freq_chanlist(
 	unsigned int range_idx, ch_idx;
 	unsigned int unsafe_channel_index, unsafe_channel_count = 0;
 	bool ch_found = false;
+	uint32_t ch_idx_freq;
 
 	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctx->unsafe_channel_count,
 				       (uint16_t)NUM_CHANNELS);
@@ -10489,21 +10490,23 @@ static int hdd_validate_avoid_freq_chanlist(
 		     ch_idx++) {
 			if (INVALID_CHANNEL == wlan_reg_get_chan_enum(ch_idx))
 				continue;
+			ch_idx_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+							    ch_idx);
 			for (unsafe_channel_index = 0;
 			     unsafe_channel_index < unsafe_channel_count;
 			     unsafe_channel_index++) {
-				if (ch_idx ==
+				if (ch_idx_freq ==
 					hdd_ctx->unsafe_channel_list[
 					unsafe_channel_index]) {
-					hdd_info("Duplicate channel %d",
-						 ch_idx);
+					hdd_info("Duplicate channel freq %d",
+						 ch_idx_freq);
 					ch_found = true;
 					break;
 				}
 			}
 			if (!ch_found) {
 				hdd_ctx->unsafe_channel_list[
-				unsafe_channel_count++] = ch_idx;
+				unsafe_channel_count++] = (uint16_t)ch_idx_freq;
 			}
 			ch_found = false;
 		}
@@ -10617,7 +10620,7 @@ process_unsafe_channel:
 	for (unsafe_channel_index = 0;
 	     unsafe_channel_index < unsafe_channel_count;
 	     unsafe_channel_index++) {
-		hdd_debug("Channel %d is not safe",
+		hdd_debug("Channel frequency %d is not safe",
 			  hdd_ctx->unsafe_channel_list[unsafe_channel_index]);
 	}
 	if (hdd_local_unsafe_channel_updated(hdd_ctx, local_unsafe_list,

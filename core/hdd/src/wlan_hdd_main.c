@@ -9316,7 +9316,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 	uint8_t restart_chan_store[SAP_MAX_NUM_SESSION] = {0};
 	uint8_t restart_chan, ap_chan;
 	uint8_t scc_on_lte_coex = 0;
-	uint32_t restart_freq;
+	uint32_t restart_freq, ap_chan_freq;
 	bool value;
 	QDF_STATUS status;
 	bool is_acs_support_for_dfs_ltecoex = cfg_default(CFG_USER_ACS_DFS_LTE);
@@ -9336,6 +9336,8 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 		ap_chan = wlan_reg_freq_to_chan(
 				hdd_ctxt->pdev,
 				adapter->session.ap.operating_chan_freq);
+		ap_chan_freq = adapter->session.ap.operating_chan_freq;
+
 		found = false;
 		status =
 		ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(hdd_ctxt->psoc,
@@ -9356,11 +9358,11 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			hdd_debug("SAP allowed in unsafe SCC channel");
 		} else {
 			for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
-				if (ap_chan ==
+				if (ap_chan_freq ==
 				    hdd_ctxt->unsafe_channel_list[i]) {
 					found = true;
-					hdd_debug("operating ch:%d is unsafe",
-						  ap_chan);
+					hdd_debug("op ch freq:%d is unsafe",
+						  ap_chan_freq);
 					break;
 				}
 			}
@@ -9473,8 +9475,8 @@ static void hdd_init_channel_avoidance(struct hdd_context *hdd_ctx)
 				       (uint16_t)NUM_CHANNELS);
 
 	for (index = 0; index < unsafe_channel_count; index++) {
-		hdd_debug("channel %d is not safe",
-		       hdd_ctx->unsafe_channel_list[index]);
+		hdd_debug("channel frequency %d is not safe",
+			  hdd_ctx->unsafe_channel_list[index]);
 
 	}
 
