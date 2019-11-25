@@ -1296,7 +1296,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hdd_bus_bw_compute_timer_stop(hdd_ctx);
 	hdd_set_connection_in_progress(false);
 	policy_mgr_clear_concurrent_session_count(hdd_ctx->psoc);
 
@@ -1346,7 +1345,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
-	hdd_bus_bandwidth_deinit(hdd_ctx);
 	hdd_lpass_notify_stop(hdd_ctx);
 
 	hdd_info("WLAN driver shutdown complete");
