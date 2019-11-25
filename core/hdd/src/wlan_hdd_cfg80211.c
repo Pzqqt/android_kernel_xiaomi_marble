@@ -7510,13 +7510,7 @@ static int hdd_config_rsn_ie(struct hdd_adapter *adapter,
 			     const struct nlattr *attr)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	bool override_enabled;
 	uint8_t force_rsne_override;
-
-	/* ignore unless support explicitly enabled */
-	ucfg_mlme_get_force_rsne_override(hdd_ctx->psoc, &override_enabled);
-	if (!override_enabled)
-		return 0;
 
 	force_rsne_override = nla_get_u8(attr);
 	if (force_rsne_override > 1) {

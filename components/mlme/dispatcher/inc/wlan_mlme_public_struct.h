@@ -1338,7 +1338,6 @@ struct wlan_mlme_sta_cfg {
 	bool deauth_before_connection;
 	bool enable_go_cts2self_for_sta;
 	bool qcn_ie_support;
-	bool force_rsne_override;
 	bool single_tid;
 	bool allow_tpc_from_ap;
 	enum station_keepalive_method sta_keepalive_method;

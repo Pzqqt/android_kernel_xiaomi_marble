@@ -983,17 +983,6 @@ ucfg_mlme_get_go_cts2self_for_sta(struct wlan_objmgr_psoc *psoc,
 				  bool *val);
 
 /**
- * ucfg_mlme_get_force_rsne_override() - Force rsnie override from user
- * @psoc: pointer to psoc object
- * @val:  Pointer to the value which will be filled for the caller
- *
- * Return: QDF Status
- */
-QDF_STATUS
-ucfg_mlme_get_force_rsne_override(struct wlan_objmgr_psoc *psoc,
-				  bool *val);
-
-/**
  * ucfg_mlme_get_qcn_ie_support() - QCN IE support or not
  * @psoc: pointer to psoc object
  * @val:  Pointer to the value which will be filled for the caller
