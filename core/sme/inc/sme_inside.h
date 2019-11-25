@@ -84,7 +84,7 @@ typedef struct tagSmeCmd {
 	tListElem Link;
 	eSmeCommandType command;
 	uint32_t cmd_id;
-	uint32_t sessionId;
+	uint32_t vdev_id;
 	union {
 		struct roam_cmd roamCmd;
 		struct wmstatus_changecmd wmStatusChangeCmd;

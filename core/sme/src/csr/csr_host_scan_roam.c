@@ -115,7 +115,7 @@ csr_roam_issue_reassociate_cmd(struct mac_context *mac,	uint32_t sessionId)
 						 sessionId);
 		}
 		pCommand->command = eSmeCommandRoam;
-		pCommand->sessionId = (uint8_t) sessionId;
+		pCommand->vdev_id = (uint8_t) sessionId;
 		pCommand->u.roamCmd.roamReason = eCsrSmeIssuedFTReassoc;
 		status = csr_queue_sme_command(mac, pCommand, fHighPriority);
 		if (!QDF_IS_STATUS_SUCCESS(status))

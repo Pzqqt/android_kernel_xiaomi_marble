@@ -116,7 +116,7 @@ QDF_STATUS csr_roam_enqueue_preauth(struct mac_context *mac_ctx,
 	} else {
 		if (bss_desc) {
 			command->command = eSmeCommandRoam;
-			command->sessionId = (uint8_t) session_id;
+			command->vdev_id = (uint8_t) session_id;
 			command->u.roamCmd.roamReason = reason;
 			command->u.roamCmd.pLastRoamBss = bss_desc;
 			status = csr_queue_sme_command(mac_ctx, command,

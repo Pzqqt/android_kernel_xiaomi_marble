@@ -3408,7 +3408,7 @@ QDF_STATUS csr_init_channel_power_list(struct mac_context *mac,
  * list
  *
  * @mac_ctx: pointer to global mac
- * @session_id: session id for the cmd
+ * @vdev_id: vdev_id for the cmd
  * @list: pending list from which cmd needs to be removed
  * @command: cmd to be removed, can be NULL
  * @roam_reason: cmd with reason to be removed
@@ -3419,7 +3419,7 @@ QDF_STATUS csr_init_channel_power_list(struct mac_context *mac,
  */
 static void csr_roam_remove_duplicate_pending_cmd_from_list(
 			struct mac_context *mac_ctx,
-			uint32_t session_id,
+			uint32_t vdev_id,
 			tSmeCmd *command, enum csr_roam_reason roam_reason)
 {
 	tListElem *entry, *next_entry;
@@ -3444,7 +3444,7 @@ static void csr_roam_remove_duplicate_pending_cmd_from_list(
 		 * eCsrHddIssued (connect) remove all connect (non disconenct)
 		 * commands.
 		 */
-		if ((command && (command->sessionId == dup_cmd->sessionId) &&
+		if ((command && (command->vdev_id == dup_cmd->vdev_id) &&
 			((command->command == dup_cmd->command) &&
 			/*
 			 * This peermac check is required for Softap/GO
@@ -3462,7 +3462,7 @@ static void csr_roam_remove_duplicate_pending_cmd_from_list(
 				(eCsrHddIssued ==
 					command->u.roamCmd.roamReason)))) ||
 			/* OR if pCommand is NULL */
-			((session_id == dup_cmd->sessionId) &&
+			((vdev_id == dup_cmd->vdev_id) &&
 			(eSmeCommandRoam == dup_cmd->command) &&
 			((eCsrForcedDisassoc == roam_reason) ||
 			(eCsrHddIssued == roam_reason &&
@@ -3479,7 +3479,7 @@ static void csr_roam_remove_duplicate_pending_cmd_from_list(
 	while ((entry = csr_ll_remove_head(&local_list, LL_ACCESS_NOLOCK))) {
 		dup_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
 		/* Tell caller that the command is cancelled */
-		csr_roam_call_callback(mac_ctx, dup_cmd->sessionId, NULL,
+		csr_roam_call_callback(mac_ctx, dup_cmd->vdev_id, NULL,
 				dup_cmd->u.roamCmd.roamId,
 				eCSR_ROAM_CANCELLED, eCSR_ROAM_RESULT_NONE);
 		csr_release_command(mac_ctx, dup_cmd);
@@ -4028,7 +4028,7 @@ csr_is_deauth_disassoc_in_pending_q(struct mac_context *mac_ctx,
 	entry = csr_nonscan_pending_ll_peek_head(mac_ctx, LL_ACCESS_NOLOCK);
 	while (entry) {
 		sme_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
-		if ((sme_cmd->sessionId == vdev_id) &&
+		if ((sme_cmd->vdev_id == vdev_id) &&
 		    csr_peer_mac_match_cmd(sme_cmd, peer_macaddr))
 			return true;
 		entry = csr_nonscan_pending_ll_next(mac_ctx, entry,
@@ -4131,7 +4131,7 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(struct mac_context *mac,
 			break;
 		}
 		pCommand->command = eSmeCommandRoam;
-		pCommand->sessionId = (uint8_t) sessionId;
+		pCommand->vdev_id = (uint8_t) sessionId;
 		pCommand->u.roamCmd.roamReason = eCsrForcedDisassocSta;
 		qdf_mem_copy(pCommand->u.roamCmd.peerMac,
 				p_del_sta_params->peerMacAddr.bytes,
@@ -4173,7 +4173,7 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 			break;
 		}
 		pCommand->command = eSmeCommandRoam;
-		pCommand->sessionId = (uint8_t) sessionId;
+		pCommand->vdev_id = (uint8_t) sessionId;
 		pCommand->u.roamCmd.roamReason = eCsrForcedDeauthSta;
 		qdf_mem_copy(pCommand->u.roamCmd.peerMac,
 			     pDelStaParams->peerMacAddr.bytes,
@@ -5100,7 +5100,7 @@ static void csr_roam_ccm_cfg_set_callback(struct mac_context *mac,
 		return;
 	}
 	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-	sessionId = pCommand->sessionId;
+	sessionId = pCommand->vdev_id;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	pSession = &mac->roam.roamSession[sessionId];
 	if (pSession->roam_synch_in_progress) {
@@ -5908,7 +5908,7 @@ static enum csr_join_state csr_roam_join_next_bss(struct mac_context *mac_ctx,
 		(struct scan_result_list *) cmd->u.roamCmd.hBSSList;
 	bool done = false;
 	struct csr_roam_info *roam_info = NULL;
-	uint32_t session_id = cmd->sessionId;
+	uint32_t session_id = cmd->vdev_id;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	struct csr_roam_joinstatus *join_status;
@@ -5998,7 +5998,7 @@ static QDF_STATUS csr_roam(struct mac_context *mac, tSmeCmd *pCommand)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	enum csr_join_state RoamState;
 	enum csr_roam_substate substate;
-	uint32_t sessionId = pCommand->sessionId;
+	uint32_t sessionId = pCommand->vdev_id;
 
 	/* Attept to join a Bss... */
 	RoamState = csr_roam_join_next_bss(mac, pCommand, false);
@@ -6083,7 +6083,7 @@ QDF_STATUS csr_process_ft_reassoc_roam_command(struct mac_context *mac,
 	struct bss_description *bss_desc = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	sessionId = pCommand->sessionId;
+	sessionId = pCommand->vdev_id;
 	pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (!pSession) {
@@ -6224,7 +6224,7 @@ bool csr_allow_concurrent_sta_connections(struct mac_context *mac,
 QDF_STATUS csr_roam_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 {
 	QDF_STATUS lock_status, status = QDF_STATUS_SUCCESS;
-	uint32_t sessionId = pCommand->sessionId;
+	uint32_t sessionId = pCommand->vdev_id;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (!pSession) {
@@ -6885,7 +6885,7 @@ static void csr_roam_process_results_default(struct mac_context *mac_ctx,
 		     tSmeCmd *cmd, void *context, enum csr_roamcomplete_result
 			res)
 {
-	uint32_t session_id = cmd->sessionId;
+	uint32_t session_id = cmd->vdev_id;
 	struct csr_roam_session *session;
 	struct csr_roam_info *roam_info;
 	QDF_STATUS status;
@@ -7112,7 +7112,7 @@ static void csr_roam_process_results_default(struct mac_context *mac_ctx,
 static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 		     tSmeCmd *cmd, void *context)
 {
-	uint32_t session_id = cmd->sessionId;
+	uint32_t session_id = cmd->vdev_id;
 	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	struct csr_roam_session *session;
 	struct bss_description *bss_desc = NULL;
@@ -7487,7 +7487,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 	sme_QosAssocInfo assoc_info;
 	uint32_t key_timeout_interval = 0;
 	uint8_t acm_mask = 0;   /* HDD needs ACM mask in assoc rsp callback */
-	uint32_t session_id = cmd->sessionId;
+	uint32_t session_id = cmd->vdev_id;
 	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	struct csr_roam_session *session;
 	struct bss_description *bss_desc = NULL;
@@ -7901,7 +7901,7 @@ static bool csr_roam_process_results(struct mac_context *mac_ctx, tSmeCmd *cmd,
 	bool release_cmd = true;
 	struct bss_description *bss_desc = NULL;
 	struct csr_roam_info *roam_info;
-	uint32_t session_id = cmd->sessionId;
+	uint32_t session_id = cmd->vdev_id;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	eRoamCmdStatus roam_status;
@@ -8446,7 +8446,7 @@ QDF_STATUS csr_roam_issue_connect(struct mac_context *mac, uint32_t sessionId,
 		}
 
 		pCommand->command = eSmeCommandRoam;
-		pCommand->sessionId = (uint8_t) sessionId;
+		pCommand->vdev_id = (uint8_t) sessionId;
 		pCommand->u.roamCmd.hBSSList = hBSSList;
 		pCommand->u.roamCmd.roamId = roamId;
 		pCommand->u.roamCmd.roamReason = reason;
@@ -8503,7 +8503,7 @@ QDF_STATUS csr_roam_issue_reassoc(struct mac_context *mac, uint32_t sessionId,
 		if (QDF_IS_STATUS_SUCCESS(status))
 			pCommand->u.roamCmd.fReleaseProfile = true;
 		pCommand->command = eSmeCommandRoam;
-		pCommand->sessionId = (uint8_t) sessionId;
+		pCommand->vdev_id = (uint8_t) sessionId;
 		pCommand->u.roamCmd.roamId = roamId;
 		pCommand->u.roamCmd.roamReason = reason;
 		/* We need to free the BssList when the command is done */
@@ -8903,7 +8903,7 @@ QDF_STATUS csr_roam_process_disassoc_deauth(struct mac_context *mac,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool fComplete = false;
 	enum csr_roam_substate NewSubstate;
-	uint32_t sessionId = pCommand->sessionId;
+	uint32_t sessionId = pCommand->vdev_id;
 
 	if (CSR_IS_WAIT_FOR_KEY(mac, sessionId)) {
 		sme_debug("Stop Wait for key timer and change substate to eCSR_ROAM_SUBSTATE_NONE");
@@ -9013,7 +9013,7 @@ QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
 						 sessionId);
 		}
 		pCommand->command = eSmeCommandRoam;
-		pCommand->sessionId = (uint8_t) sessionId;
+		pCommand->vdev_id = (uint8_t) sessionId;
 		sme_debug(
 			"Disassociate reason: %d, sessionId: %d",
 			reason, sessionId);
@@ -9076,7 +9076,7 @@ QDF_STATUS csr_roam_issue_stop_bss_cmd(struct mac_context *mac, uint32_t session
 						 sessionId);
 		}
 		pCommand->command = eSmeCommandRoam;
-		pCommand->sessionId = (uint8_t) sessionId;
+		pCommand->vdev_id = (uint8_t) sessionId;
 		pCommand->u.roamCmd.roamReason = eCsrStopBss;
 		status = csr_queue_sme_command(mac, pCommand, fHighPriority);
 		if (!QDF_IS_STATUS_SUCCESS(status))
@@ -9301,8 +9301,7 @@ csr_roam_save_connected_information(struct mac_context *mac,
 }
 
 
-bool is_disconnect_pending(struct mac_context *pmac,
-				uint8_t sessionid)
+bool is_disconnect_pending(struct mac_context *pmac, uint8_t vdev_id)
 {
 	tListElem *entry = NULL;
 	tListElem *next_entry = NULL;
@@ -9316,7 +9315,7 @@ bool is_disconnect_pending(struct mac_context *pmac,
 
 		command = GET_BASE_ADDR(entry, tSmeCmd, Link);
 		if (command && CSR_IS_DISCONNECT_COMMAND(command) &&
-				command->sessionId == sessionid){
+				command->vdev_id == vdev_id){
 			disconnect_cmd_exist = true;
 			break;
 		}
@@ -9530,7 +9529,7 @@ csr_roam_reissue_roam_command(struct mac_context *mac, uint8_t session_id)
 		sme_err("Active cmd, is not a roaming CMD");
 		return;
 	}
-	sessionId = pCommand->sessionId;
+	sessionId = pCommand->vdev_id;
 	pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (!pSession) {
@@ -9579,7 +9578,7 @@ csr_roam_reissue_roam_command(struct mac_context *mac, uint8_t session_id)
 }
 
 bool csr_is_roam_command_waiting_for_session(struct mac_context *mac,
-						uint32_t sessionId)
+						uint32_t vdev_id)
 {
 	bool fRet = false;
 	tListElem *pEntry;
@@ -9589,7 +9588,7 @@ bool csr_is_roam_command_waiting_for_session(struct mac_context *mac,
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if ((eSmeCommandRoam == pCommand->command)
-		    && (sessionId == pCommand->sessionId)) {
+		    && (vdev_id == pCommand->vdev_id)) {
 			fRet = true;
 		}
 	}
@@ -9599,7 +9598,7 @@ bool csr_is_roam_command_waiting_for_session(struct mac_context *mac,
 		while (pEntry) {
 			pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 			if ((eSmeCommandRoam == pCommand->command)
-			    && (sessionId == pCommand->sessionId)) {
+			    && (vdev_id == pCommand->vdev_id)) {
 				fRet = true;
 				break;
 			}
@@ -9627,7 +9626,7 @@ csr_roaming_state_config_cnf_processor(struct mac_context *mac_ctx,
 		sme_err("given sme cmd is null");
 		return;
 	}
-	session_id = cmd->sessionId;
+	session_id = cmd->vdev_id;
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (!session) {
@@ -11623,7 +11622,7 @@ bool csr_roam_issue_wm_status_change(struct mac_context *mac, uint32_t sessionId
 						 sessionId);
 		}
 		pCommand->command = eSmeCommandWmStatusChange;
-		pCommand->sessionId = (uint8_t) sessionId;
+		pCommand->vdev_id = (uint8_t) sessionId;
 		pCommand->u.wmStatusChangeCmd.Type = Type;
 		if (eCsrDisassociated == Type) {
 			qdf_mem_copy(&pCommand->u.wmStatusChangeCmd.u.
@@ -12266,7 +12265,7 @@ csr_roam_chk_lnk_disassoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		 * deauth commands in sme pending list
 		 */
 		cmd->command = eSmeCommandRoam;
-		cmd->sessionId = (uint8_t) sessionId;
+		cmd->vdev_id = (uint8_t) sessionId;
 		cmd->u.roamCmd.roamReason = eCsrForcedDeauthSta;
 		qdf_mem_copy(cmd->u.roamCmd.peerMac,
 			     pDisassocInd->peer_macaddr.bytes,
@@ -13445,30 +13444,30 @@ QDF_STATUS csr_roam_stop_wait_for_key_timer(struct mac_context *mac)
 	return qdf_mc_timer_stop(&mac->roam.hTimerWaitForKey);
 }
 
-void csr_roam_completion(struct mac_context *mac, uint32_t sessionId,
+void csr_roam_completion(struct mac_context *mac, uint32_t vdev_id,
 			 struct csr_roam_info *roam_info, tSmeCmd *pCommand,
 			 eCsrRoamResult roamResult, bool fSuccess)
 {
 	eRoamCmdStatus roamStatus = csr_get_roam_complete_status(mac,
-								sessionId);
+								vdev_id);
 	uint32_t roamId = 0;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, vdev_id);
 
 	if (!pSession) {
-		sme_err("session: %d not found ", sessionId);
+		sme_err("session: %d not found ", vdev_id);
 		return;
 	}
 
 	if (pCommand) {
 		roamId = pCommand->u.roamCmd.roamId;
-		if (sessionId != pCommand->sessionId) {
-			QDF_ASSERT(sessionId == pCommand->sessionId);
+		if (vdev_id != pCommand->vdev_id) {
+			QDF_ASSERT(vdev_id == pCommand->vdev_id);
 			return;
 		}
 	}
 	if (eCSR_ROAM_ROAMING_COMPLETION == roamStatus)
 		/* if success, force roaming completion */
-		csr_roam_complete_roaming(mac, sessionId, fSuccess,
+		csr_roam_complete_roaming(mac, vdev_id, fSuccess,
 								roamResult);
 	else {
 		if (pSession->bRefAssocStartCnt != 0) {
@@ -13477,7 +13476,7 @@ void csr_roam_completion(struct mac_context *mac, uint32_t sessionId,
 		}
 		sme_debug("indicates association completion roamResult: %d",
 			roamResult);
-		csr_roam_call_callback(mac, sessionId, roam_info, roamId,
+		csr_roam_call_callback(mac, vdev_id, roam_info, roamId,
 				       roamStatus, roamResult);
 	}
 }
@@ -13637,14 +13636,14 @@ void csr_roam_process_wm_status_change_command(
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tSirSmeRsp *pSirSmeMsg;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac,
-						pCommand->sessionId);
+						pCommand->vdev_id);
 
 	if (!pSession) {
-		sme_err("session %d not found", pCommand->sessionId);
+		sme_err("session %d not found", pCommand->vdev_id);
 		goto end;
 	}
 	sme_debug("session:%d, CmdType : %d",
-		pCommand->sessionId, pCommand->u.wmStatusChangeCmd.Type);
+		pCommand->vdev_id, pCommand->u.wmStatusChangeCmd.Type);
 
 	switch (pCommand->u.wmStatusChangeCmd.Type) {
 	case eCsrDisassociated:
@@ -13652,7 +13651,7 @@ void csr_roam_process_wm_status_change_command(
 			(tSirSmeRsp *) &pCommand->u.wmStatusChangeCmd.u.
 			DisassocIndMsg;
 		status =
-			csr_roam_lost_link(mac, pCommand->sessionId,
+			csr_roam_lost_link(mac, pCommand->vdev_id,
 					   eWNI_SME_DISASSOC_IND, pSirSmeMsg);
 		break;
 	case eCsrDeauthenticated:
@@ -13660,7 +13659,7 @@ void csr_roam_process_wm_status_change_command(
 			(tSirSmeRsp *) &pCommand->u.wmStatusChangeCmd.u.
 			DeauthIndMsg;
 		status =
-			csr_roam_lost_link(mac, pCommand->sessionId,
+			csr_roam_lost_link(mac, pCommand->vdev_id,
 					   eWNI_SME_DEAUTH_IND, pSirSmeMsg);
 		break;
 	default:
@@ -13675,7 +13674,7 @@ end:
 		 * As status returned is not success, there is nothing else
 		 * left to do so release WM status change command here.
 		 */
-		csr_roam_wm_status_change_complete(mac, pCommand->sessionId);
+		csr_roam_wm_status_change_complete(mac, pCommand->vdev_id);
 	}
 }
 
@@ -20055,7 +20054,7 @@ void csr_release_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd)
 		return;
 	}
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
-			sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
+			sme_cmd->vdev_id, WLAN_LEGACY_SME_ID);
 	if (!vdev) {
 		sme_err("Invalid vdev");
 		return;
@@ -20277,9 +20276,9 @@ QDF_STATUS csr_set_serialization_params_to_cmd(struct mac_context *mac_ctx,
 		return status;
 	}
 	cmd->vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
-				sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
+				sme_cmd->vdev_id, WLAN_LEGACY_SME_ID);
 	if (!cmd->vdev) {
-		sme_err("vdev is NULL for sme_session:%d", sme_cmd->sessionId);
+		sme_err("vdev is NULL for vdev_id:%d", sme_cmd->vdev_id);
 		return status;
 	}
 	cmd->umac_cmd = sme_cmd;
@@ -20307,7 +20306,7 @@ QDF_STATUS csr_queue_sme_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd,
 		goto error;
 	}
 
-	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, sme_cmd->sessionId)) {
+	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, sme_cmd->vdev_id)) {
 		if (!CSR_IS_DISCONNECT_COMMAND(sme_cmd)) {
 			sme_err("Can't process cmd(%d), waiting for key",
 				sme_cmd->command);
@@ -21351,11 +21350,11 @@ void csr_process_nss_update_req(struct mac_context *mac, tSmeCmd *command)
 	struct csr_roam_session *session;
 
 
-	if (!CSR_IS_SESSION_VALID(mac, command->sessionId)) {
-		sme_err("Invalid session id %d", command->sessionId);
+	if (!CSR_IS_SESSION_VALID(mac, command->vdev_id)) {
+		sme_err("Invalid session id %d", command->vdev_id);
 		goto fail;
 	}
-	session = CSR_GET_SESSION(mac, command->sessionId);
+	session = CSR_GET_SESSION(mac, command->vdev_id);
 
 	len = sizeof(*msg);
 	msg = qdf_mem_malloc(len);

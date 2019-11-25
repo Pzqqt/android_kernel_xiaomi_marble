@@ -458,8 +458,8 @@ tSmeCmd *sme_get_command_buffer(struct mac_context *mac)
 	if (pRetCmd) {
 		qdf_mem_zero((uint8_t *)&pRetCmd->command,
 			    sizeof(pRetCmd->command));
-		qdf_mem_zero((uint8_t *)&pRetCmd->sessionId,
-			    sizeof(pRetCmd->sessionId));
+		qdf_mem_zero((uint8_t *)&pRetCmd->vdev_id,
+			    sizeof(pRetCmd->vdev_id));
 		qdf_mem_zero((uint8_t *)&pRetCmd->u, sizeof(pRetCmd->u));
 	}
 
@@ -592,27 +592,27 @@ QDF_STATUS sme_ser_cmd_callback(struct wlan_serialization_command *cmd,
 
 #ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 /**
- * sme_get_sessionid_from_activelist() - gets session id
+ * sme_get_sessionid_from_activelist() - gets vdev_id
  * @mac: mac context
  *
  * This function is used to get session id from sme command
  * active list
  *
- * Return: returns session id
+ * Return: returns vdev_id
  */
 static uint32_t sme_get_sessionid_from_activelist(struct mac_context *mac)
 {
 	tListElem *entry;
 	tSmeCmd *command;
-	uint32_t session_id = WLAN_UMAC_VDEV_ID_MAX;
+	uint32_t vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 
 	entry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (entry) {
 		command = GET_BASE_ADDR(entry, tSmeCmd, Link);
-		session_id = command->sessionId;
+		vdev_id = command->vdev_id;
 	}
 
-	return session_id;
+	return vdev_id;
 }
 
 /**
@@ -12328,7 +12328,7 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 	}
 
 	cmd->command = e_sme_command_set_hw_mode;
-	cmd->sessionId = msg.session_id;
+	cmd->vdev_id = msg.session_id;
 	cmd->u.set_hw_mode_cmd.hw_mode_index = msg.hw_mode_index;
 	cmd->u.set_hw_mode_cmd.set_hw_mode_cb = msg.set_hw_mode_cb;
 	cmd->u.set_hw_mode_cmd.reason = msg.reason;
@@ -12384,7 +12384,7 @@ QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 		}
 		cmd->command = e_sme_command_nss_update;
 		/* Sessionized modules may require this info */
-		cmd->sessionId = vdev_id;
+		cmd->vdev_id = vdev_id;
 		cmd->u.nss_update_cmd.new_nss = new_nss;
 		cmd->u.nss_update_cmd.ch_width = ch_width;
 		cmd->u.nss_update_cmd.session_id = vdev_id;

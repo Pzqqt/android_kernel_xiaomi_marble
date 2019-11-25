@@ -1711,7 +1711,7 @@ QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac_ctx,
 	return status;
 }
 QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(struct mac_context *mac,
-						    uint8_t sessionId,
+						    uint8_t vdev_id,
 						    eSmeCommandType commandType)
 {
 	tDblLinkList localList;
@@ -1739,7 +1739,7 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(struct mac_context *mac,
 		pCommand = GET_BASE_ADDR(pEntryToRemove, tSmeCmd, Link);
 
 		if ((pCommand->command == commandType) &&
-		    (pCommand->sessionId == sessionId)) {
+		    (pCommand->vdev_id == vdev_id)) {
 			/* Insert to localList and remove later */
 			csr_ll_insert_tail(&localList, pEntryToRemove,
 					   LL_ACCESS_NOLOCK);
@@ -1750,8 +1750,7 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(struct mac_context *mac,
 
 	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		sme_debug("Sending abort for command ID %d",
-			sessionId);
+		sme_debug("Sending abort for command ID %d", vdev_id);
 		csr_release_command(mac, pCommand);
 	}
 

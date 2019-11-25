@@ -7233,7 +7233,7 @@ static bool sme_qos_validate_requested_params(struct mac_context *mac,
 	return true;
 }
 
-static QDF_STATUS qos_issue_command(struct mac_context *mac, uint8_t sessionId,
+static QDF_STATUS qos_issue_command(struct mac_context *mac, uint8_t vdev_id,
 				    eSmeCommandType cmdType,
 				    struct sme_qos_wmmtspecinfo *pQoSInfo,
 				    enum qca_wlan_ac_type ac, uint8_t tspec_mask)
@@ -7250,7 +7250,7 @@ static QDF_STATUS qos_issue_command(struct mac_context *mac, uint8_t sessionId,
 			break;
 		}
 		pCommand->command = cmdType;
-		pCommand->sessionId = sessionId;
+		pCommand->vdev_id = vdev_id;
 		switch (cmdType) {
 		case eSmeCommandAddTs:
 			if (pQoSInfo) {
@@ -7296,7 +7296,7 @@ bool qos_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 		case eSmeCommandAddTs:
 			status =
 				sme_qos_add_ts_req(mac, (uint8_t)
-						pCommand->sessionId,
+						pCommand->vdev_id,
 						  &pCommand->u.qosCmd.tspecInfo,
 						   pCommand->u.qosCmd.ac);
 			if (QDF_IS_STATUS_SUCCESS(status))
@@ -7305,7 +7305,7 @@ bool qos_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 		case eSmeCommandDelTs:
 			status =
 				sme_qos_del_ts_req(mac, (uint8_t)
-						pCommand->sessionId,
+						pCommand->vdev_id,
 						   pCommand->u.qosCmd.ac,
 						 pCommand->u.qosCmd.tspec_mask);
 			if (QDF_IS_STATUS_SUCCESS(status))
