@@ -80,24 +80,6 @@ wlan_serialization_get_pending_list_next_node_using_psoc(
 		struct wlan_serialization_command *prev_cmd,
 		uint8_t is_cmd_for_pending_scan_queue);
 /**
- * wlan_serialization_get_active_list_next_node_using_psoc() - Return next
- *				scan or non-scan pending command from queue
- * @psoc: pointer to psoc
- * @prev_cmd: previous command given by caller, find next command after this
- * @is_cmd_for_active_scan_queue: to find from active scan or non-scan queue
- *
- * This API finds the first active pdev, and loops through scan or non-scan
- * pending queue (based on is_cmd_from_pending_scan_queue flag) and fetches
- * next pending command after prev_cmd
- *
- * Return: pointer to serialization command
- */
-struct wlan_serialization_command*
-wlan_serialization_get_active_list_next_node_using_psoc(
-		struct wlan_objmgr_psoc *psoc,
-		struct wlan_serialization_command *prev_cmd,
-		uint8_t is_cmd_for_active_scan_queue);
-/**
  * wlan_serialization_get_active_list_count() - Return Active list count
  * @psoc: pointer to soc
  * @is_cmd_from_active_scan_queue: flag to determine whether command needed

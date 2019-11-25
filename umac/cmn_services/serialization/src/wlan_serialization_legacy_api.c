@@ -207,12 +207,15 @@ wlan_serialization_peek_head_pending_cmd_using_psoc(
 		goto end;
 	}
 
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 	if (QDF_STATUS_SUCCESS != wlan_serialization_get_cmd_from_queue(
 							queue,
 							&nnode)) {
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		ser_err("Can't get command from queue");
 		goto end;
 	}
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 	cmd_list = qdf_container_of(nnode,
 			struct wlan_serialization_command_list, pdev_node);
 	cmd = &cmd_list->cmd;
@@ -284,37 +287,6 @@ wlan_serialization_get_list_next_node(qdf_list_t *queue,
 }
 
 struct wlan_serialization_command*
-wlan_serialization_get_active_list_next_node_using_psoc(
-			struct wlan_objmgr_psoc *psoc,
-			struct wlan_serialization_command *prev_cmd,
-			uint8_t is_cmd_for_active_scan_queue)
-{
-	struct wlan_ser_pdev_obj *ser_pdev_obj;
-	qdf_list_t *queue;
-	struct wlan_serialization_pdev_queue  *pdev_queue;
-
-	if (!prev_cmd) {
-		ser_err("invalid prev_cmd");
-		return NULL;
-	}
-
-	ser_pdev_obj = wlan_serialization_get_pdev_priv_obj_using_psoc(psoc);
-	if (!ser_pdev_obj) {
-		ser_err("invalid ser_pdev_obj");
-		return NULL;
-	}
-
-	if (is_cmd_for_active_scan_queue)
-		pdev_queue = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
-	else
-		pdev_queue =
-		&ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
-	queue = &pdev_queue->active_list;
-	return wlan_serialization_get_list_next_node(queue, prev_cmd,
-						     ser_pdev_obj);
-}
-
-struct wlan_serialization_command*
 wlan_serialization_get_pending_list_next_node_using_psoc(
 			struct wlan_objmgr_psoc *psoc,
 			struct wlan_serialization_command *prev_cmd,
@@ -323,6 +295,7 @@ wlan_serialization_get_pending_list_next_node_using_psoc(
 	struct wlan_ser_pdev_obj *ser_pdev_obj;
 	qdf_list_t *queue;
 	struct wlan_serialization_pdev_queue  *pdev_queue;
+	struct wlan_serialization_command *cmd;
 
 	if (!prev_cmd) {
 		ser_err("invalid prev_cmd");
@@ -340,6 +313,11 @@ wlan_serialization_get_pending_list_next_node_using_psoc(
 		pdev_queue =
 		&ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
 	queue = &pdev_queue->pending_list;
-	return wlan_serialization_get_list_next_node(queue, prev_cmd,
-						     ser_pdev_obj);
+
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
+	cmd = wlan_serialization_get_list_next_node(queue, prev_cmd,
+						    ser_pdev_obj);
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+
+	return cmd;
 }
