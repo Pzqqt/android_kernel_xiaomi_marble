@@ -47,6 +47,9 @@
 
 #define HTT_MGMT_CTRL_TLV_HDR_RESERVERD_LEN 16
 
+#define HTT_SHIFT_UPPER_TIMESTAMP 32
+#define HTT_MASK_UPPER_TIMESTAMP 0xFFFFFFFF00000000
+
 /*
  * dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap() - Get ppdu stats tlv
  * bitmap for sniffer mode
@@ -2044,15 +2047,19 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	uint16_t freq;
 	struct dp_soc *soc = NULL;
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
+	uint64_t ppdu_start_timestamp;
+	uint32_t *start_tag_buf;
 
+	start_tag_buf = tag_buf;
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
 
-	tag_buf += 2;
+	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(RING_ID_SCH_CMD_ID);
 	ppdu_info->sched_cmdid =
 		HTT_PPDU_STATS_COMMON_TLV_SCH_CMDID_GET(*tag_buf);
 	ppdu_desc->num_users =
 		HTT_PPDU_STATS_COMMON_TLV_NUM_USERS_GET(*tag_buf);
-	tag_buf++;
+
+	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(QTYPE_FRM_TYPE);
 	frame_type = HTT_PPDU_STATS_COMMON_TLV_FRM_TYPE_GET(*tag_buf);
 	ppdu_desc->htt_frame_type = frame_type;
 
@@ -2081,23 +2088,13 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	break;
 	}
 
-	tag_buf += 2;
+	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(FES_DUR_US);
 	ppdu_desc->tx_duration = *tag_buf;
-	tag_buf += 3;
+
+	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(START_TSTMP_L32_US);
 	ppdu_desc->ppdu_start_timestamp = *tag_buf;
 
-	ppdu_desc->ppdu_end_timestamp = ppdu_desc->ppdu_start_timestamp +
-					ppdu_desc->tx_duration;
-
-	ppdu_desc->bar_ppdu_start_timestamp = ppdu_desc->ppdu_start_timestamp;
-	ppdu_desc->bar_ppdu_end_timestamp = ppdu_desc->ppdu_end_timestamp;
-	ppdu_desc->bar_tx_duration = ppdu_desc->tx_duration;
-
-	/* Ack time stamp is same as end time stamp*/
-	ppdu_desc->ack_timestamp = ppdu_desc->ppdu_end_timestamp;
-
-	tag_buf++;
-
+	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(CHAN_MHZ_PHY_MODE);
 	freq = HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_GET(*tag_buf);
 	if (freq != ppdu_desc->channel) {
 		soc = pdev->soc;
@@ -2111,6 +2108,27 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);
 
 	dp_tx_capture_htt_frame_counter(pdev, frame_type);
+
+	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(START_TSTMP_U32_US);
+	ppdu_start_timestamp = *tag_buf;
+	ppdu_desc->ppdu_start_timestamp |= ((ppdu_start_timestamp <<
+					     HTT_SHIFT_UPPER_TIMESTAMP) &
+					    HTT_MASK_UPPER_TIMESTAMP);
+
+	ppdu_desc->ppdu_end_timestamp = ppdu_desc->ppdu_start_timestamp +
+					ppdu_desc->tx_duration;
+	/* Ack time stamp is same as end time stamp*/
+	ppdu_desc->ack_timestamp = ppdu_desc->ppdu_end_timestamp;
+
+	ppdu_desc->ppdu_end_timestamp = ppdu_desc->ppdu_start_timestamp +
+					ppdu_desc->tx_duration;
+
+	ppdu_desc->bar_ppdu_start_timestamp = ppdu_desc->ppdu_start_timestamp;
+	ppdu_desc->bar_ppdu_end_timestamp = ppdu_desc->ppdu_end_timestamp;
+	ppdu_desc->bar_tx_duration = ppdu_desc->tx_duration;
+
+	/* Ack time stamp is same as end time stamp*/
+	ppdu_desc->ack_timestamp = ppdu_desc->ppdu_end_timestamp;
 }
 
 /*

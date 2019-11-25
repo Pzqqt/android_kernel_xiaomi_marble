@@ -1477,8 +1477,8 @@ struct cdp_tx_indication_mpdu_info {
 	uint32_t tx_rate;
 	uint8_t mac_address[QDF_MAC_ADDR_SIZE];
 	uint8_t bss_mac_address[QDF_MAC_ADDR_SIZE];
-	uint32_t ppdu_start_timestamp;
-	uint32_t ppdu_end_timestamp;
+	uint64_t ppdu_start_timestamp;
+	uint64_t ppdu_end_timestamp;
 	uint32_t ba_start_seq;
 	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint16_t ppdu_cookie;
@@ -1570,9 +1570,9 @@ struct cdp_tx_completion_ppdu {
 	uint16_t phy_mode;
 	uint32_t ack_rssi;
 	uint32_t tx_duration;
-	uint32_t ppdu_start_timestamp;
-	uint32_t ppdu_end_timestamp;
-	uint32_t ack_timestamp;
+	uint64_t ppdu_start_timestamp;
+	uint64_t ppdu_end_timestamp;
+	uint64_t ack_timestamp;
 	bool delayed_ba;
 	struct cdp_tx_completion_ppdu_user user[CDP_MU_MAX_USERS];
 	qdf_nbuf_queue_t mpdu_q;
