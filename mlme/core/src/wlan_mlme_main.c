@@ -1411,8 +1411,6 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_QCN_IE_SUPPORT);
 	sta->fils_max_chan_guard_time =
 		cfg_get(psoc, CFG_FILS_MAX_CHAN_GUARD_TIME);
-	sta->force_rsne_override =
-		cfg_get(psoc, CFG_FORCE_RSNE_OVERRIDE);
 	sta->single_tid =
 		cfg_get(psoc, CFG_SINGLE_TID_RC);
 	sta->sta_miracast_mcc_rest_time =
