@@ -234,7 +234,8 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_STATUS ret;
 	wmi_nan_cmd_param *cmd;
 	wmi_buf_t buf;
-	uint16_t len = sizeof(*cmd);
+	wmi_nan_host_config_param *cfg;
+	uint16_t len = sizeof(*cmd) + sizeof(*cfg) + 2 * WMI_TLV_HDR_SIZE;
 	uint16_t nan_data_len, nan_data_len_aligned;
 	uint8_t *buf_ptr;
 
@@ -243,6 +244,11 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 	 *    +------------+----------+-----------------------+--------------+
 	 *    | tlv_header | data_len | WMITLV_TAG_ARRAY_BYTE | nan_msg_data |
 	 *    +------------+----------+-----------------------+--------------+
+	 *
+	 *    <-- WMI_TLV_HDR_SIZE --><------nan host config params-------->
+	 *    +-----------------------+------------------------------------+
+	 *    | WMITLV_TAG_ARRAY_STRUC| tlv_header | disable flags | flags |
+	 *    +-----------------------+------------------------------------+
 	 */
 	if (!nan_msg) {
 		WMI_LOGE("%s:nan req is not valid", __func__);
@@ -263,7 +269,7 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	len += WMI_TLV_HDR_SIZE + nan_data_len_aligned;
+	len += nan_data_len_aligned;
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
 		return QDF_STATUS_E_NOMEM;
@@ -280,12 +286,26 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, nan_data_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	qdf_mem_copy(buf_ptr, nan_msg->request_data, cmd->data_len);
+	buf_ptr += nan_data_len_aligned;
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_nan_host_config_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	cfg = (wmi_nan_host_config_param *)buf_ptr;
+	WMITLV_SET_HDR(&cfg->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_nan_host_config_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_nan_host_config_param));
+
+	WMI_NAN_SET_RANGING_INITIATOR_ROLE(cfg->flags, !!(nan_msg->rtt_cap &
+					   WMI_FW_NAN_RTT_INITR));
+	WMI_NAN_SET_RANGING_RESPONDER_ROLE(cfg->flags, !!(nan_msg->rtt_cap &
+					   WMI_FW_NAN_RTT_RESPR));
 
 	wmi_mtrace(WMI_NAN_CMDID, NO_SESSION, 0);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				   WMI_NAN_CMDID);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_NAN_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s Failed to send set param command ret = %d",
+		WMI_LOGE("%s Failed to send NAN req command ret = %d",
 			 __func__, ret);
 		wmi_buf_free(buf);
 	}
