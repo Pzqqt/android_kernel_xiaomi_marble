@@ -1047,7 +1047,8 @@ void dp_print_ast_stats(struct dp_soc *soc)
 					    " ast_idx = %d"
 					    " ast_hash = %d"
 					    " delete_in_progress = %d"
-					    " pdev_id = %d",
+					    " pdev_id = %d"
+					    " vdev_id = %d",
 					    ++num_entries,
 					    ase->mac_addr.raw,
 					    ase->peer->mac_addr.raw,
