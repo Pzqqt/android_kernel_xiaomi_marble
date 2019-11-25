@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s] " fmt, __func__
@@ -1862,15 +1862,19 @@ static struct sde_rm_rsvp *_sde_rm_get_rsvp_nxt(
 static struct drm_connector *_sde_rm_get_connector(
 		struct drm_encoder *enc)
 {
-	struct drm_connector *conn = NULL;
-	struct list_head *connector_list =
-			&enc->dev->mode_config.connector_list;
+	struct drm_connector *conn = NULL, *conn_search;
+	struct drm_connector_list_iter conn_iter;
 
-	list_for_each_entry(conn, connector_list, head)
-		if (conn->encoder == enc)
-			return conn;
+	drm_connector_list_iter_begin(enc->dev, &conn_iter);
+	drm_for_each_connector_iter(conn_search, &conn_iter) {
+		if (conn_search->encoder == enc) {
+			conn = conn_search;
+			break;
+		}
+	}
+	drm_connector_list_iter_end(&conn_iter);
 
-	return NULL;
+	return conn;
 }
 
 int sde_rm_update_topology(struct drm_connector_state *conn_state,

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/list.h>
@@ -5463,10 +5463,11 @@ static struct dsi_display_ext_bridge *dsi_display_ext_get_bridge(
 {
 	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
-	struct list_head *connector_list;
-	struct drm_connector *conn_iter;
+	struct drm_connector *conn;
+	struct drm_connector_list_iter conn_iter;
 	struct sde_connector *sde_conn;
 	struct dsi_display *display;
+	struct dsi_display_ext_bridge *dsi_bridge = NULL;
 	int i;
 
 	if (!bridge || !bridge->encoder) {
@@ -5476,20 +5477,23 @@ static struct dsi_display_ext_bridge *dsi_display_ext_get_bridge(
 
 	priv = bridge->dev->dev_private;
 	sde_kms = to_sde_kms(priv->kms);
-	connector_list = &sde_kms->dev->mode_config.connector_list;
 
-	list_for_each_entry(conn_iter, connector_list, head) {
-		sde_conn = to_sde_connector(conn_iter);
+	drm_connector_list_iter_begin(sde_kms->dev, &conn_iter);
+	drm_for_each_connector_iter(conn, &conn_iter) {
+		sde_conn = to_sde_connector(conn);
 		if (sde_conn->encoder == bridge->encoder) {
 			display = sde_conn->display;
 			display_for_each_ctrl(i, display) {
-				if (display->ext_bridge[i].bridge == bridge)
-					return &display->ext_bridge[i];
+				if (display->ext_bridge[i].bridge == bridge) {
+					dsi_bridge = &display->ext_bridge[i];
+					break;
+				}
 			}
 		}
 	}
+	drm_connector_list_iter_end(&conn_iter);
 
-	return NULL;
+	return dsi_bridge;
 }
 
 static void dsi_display_drm_ext_adjust_timing(

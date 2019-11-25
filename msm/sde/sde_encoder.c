@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -2768,8 +2768,8 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	struct sde_encoder_virt *sde_enc;
 	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
-	struct list_head *connector_list;
-	struct drm_connector *conn = NULL, *conn_iter;
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *conn = NULL, *conn_search;
 	struct sde_rm_hw_iter dsc_iter, pp_iter, qdss_iter;
 	struct sde_rm_hw_request request_hw;
 	enum sde_intf_mode intf_mode;
@@ -2794,7 +2794,6 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 
 	priv = drm_enc->dev->dev_private;
 	sde_kms = to_sde_kms(priv->kms);
-	connector_list = &sde_kms->dev->mode_config.connector_list;
 
 	SDE_EVT32(DRMID(drm_enc));
 
@@ -2808,9 +2807,14 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	}
 	sde_enc->crtc = drm_enc->crtc;
 
-	list_for_each_entry(conn_iter, connector_list, head)
-		if (conn_iter->encoder == drm_enc)
-			conn = conn_iter;
+	drm_connector_list_iter_begin(sde_kms->dev, &conn_iter);
+	drm_for_each_connector_iter(conn_search, &conn_iter) {
+		if (conn_search->encoder == drm_enc) {
+			conn = conn_search;
+			break;
+		}
+	}
+	drm_connector_list_iter_end(&conn_iter);
 
 	if (!conn) {
 		SDE_ERROR_ENC(sde_enc, "failed to find attached connector\n");
