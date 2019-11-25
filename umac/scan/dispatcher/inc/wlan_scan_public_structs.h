@@ -810,7 +810,7 @@ struct probe_req_whitelist_attr {
  * @phymode: phymode in which @frequency should be scanned
  */
 struct chan_info {
-	uint32_t freq;
+	qdf_freq_t freq;
 	uint32_t phymode;
 };
 
@@ -821,7 +821,7 @@ struct chan_info {
  * @chan: channel parameters used for this scan
  */
 struct chan_list {
-	uint32_t num_chan;
+	uint8_t num_chan;
 	struct chan_info chan[NUM_CHANNELS];
 };
 

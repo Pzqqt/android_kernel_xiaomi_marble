@@ -1278,8 +1278,8 @@ ucfg_scan_init_bssid_params(struct scan_start_request *req,
  */
 static bool
 is_chan_enabled_for_scan(struct regulatory_channel *reg_chan,
-		uint32_t low_2g, uint32_t high_2g, uint32_t low_5g,
-		uint32_t high_5g)
+		qdf_freq_t low_2g, qdf_freq_t high_2g, qdf_freq_t low_5g,
+		qdf_freq_t high_5g)
 {
 	if (reg_chan->state == CHANNEL_STATE_DISABLE)
 		return false;
@@ -1307,7 +1307,7 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 	uint32_t idx;
 	QDF_STATUS status;
 	struct regulatory_channel *reg_chan_list = NULL;
-	uint32_t low_2g, high_2g, low_5g, high_5g;
+	qdf_freq_t low_2g, high_2g, low_5g, high_5g;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	uint32_t *scan_freqs = NULL;
 	uint32_t max_chans = sizeof(req->scan_req.chan_list.chan) /
