@@ -519,17 +519,15 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 		 * Now set the inter-channel offset based on the frequency band
 		 * the channel set lies in
 		 */
-		if ((WLAN_REG_IS_24GHZ_CH_FREQ(pChannelSet->first_chan_freq)) &&
-		    ((wlan_reg_freq_to_chan(mac->pdev, pChannelSet->first_chan_freq) +
-		      (pChannelSet->numChannels - 1)) <=
-		     WLAN_REG_MAX_24GHZ_CH_NUM)) {
-			pChannelSet->interChannelOffset = 1;
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(pChannelSet->first_chan_freq) &&
+		    (pChannelSet->first_chan_freq + 5 * (pChannelSet->numChannels - 1) <=
+		     WLAN_REG_MAX_24GHZ_CHAN_FREQ)) {
+			pChannelSet->interChannelOffset = 5;
 			f2GHzInfoFound = true;
-		} else if ((WLAN_REG_IS_5GHZ_CH_FREQ(pChannelSet->first_chan_freq)) &&
-			   ((wlan_reg_freq_to_chan(mac->pdev, pChannelSet->first_chan_freq) +
-			   ((pChannelSet->numChannels - 1) * 4)) <=
-			   WLAN_REG_MAX_5GHZ_CH_NUM)) {
-			pChannelSet->interChannelOffset = 4;
+		} else if (WLAN_REG_IS_5GHZ_CH_FREQ(pChannelSet->first_chan_freq) &&
+			   (pChannelSet->first_chan_freq + 20 * (pChannelSet->numChannels - 1) <=
+			   WLAN_REG_MAX_5GHZ_CHAN_FREQ)) {
+			pChannelSet->interChannelOffset = 20;
 			f2GHzInfoFound = false;
 		} else {
 			sme_warn("Invalid Channel freq %d Present in Country IE",
@@ -702,8 +700,10 @@ static void csr_get_channel_power_info(struct mac_context *mac,
 		for (idx = 0; (idx < ch_set->numChannels)
 				&& (chn_idx < *num_ch); idx++) {
 			chn_pwr_info[chn_idx].chan_num =
-				(uint8_t)(wlan_reg_freq_to_chan(mac->pdev, ch_set->first_chan_freq)
-				 + (idx * ch_set->interChannelOffset));
+				(uint8_t)wlan_reg_freq_to_chan(
+					mac->pdev,
+					ch_set->first_chan_freq +
+					idx * ch_set->interChannelOffset);
 			chn_pwr_info[chn_idx++].tx_power = ch_set->txPower;
 		}
 		entry = csr_ll_next(list, entry, LL_ACCESS_LOCK);
@@ -1507,7 +1507,6 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	uint32_t idx, count = 0;
 	tSirMacChanInfo *ch_pwr_set;
 	uint8_t *p_buf = NULL;
-	uint8_t chan;
 
 	/* allocate maximum space for all channels */
 	dataLen = CFG_VALID_CHANNEL_LIST_LEN * sizeof(tSirMacChanInfo);
@@ -1524,7 +1523,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	while (pEntry) {
 		ch_set = GET_BASE_ADDR(pEntry,
 				struct csr_channel_powerinfo, link);
-		if (1 != ch_set->interChannelOffset) {
+		if (ch_set->interChannelOffset != 5) {
 			/*
 			 * we keep the 5G channel sets internally with an
 			 * interchannel offset of 4. Expand these to the right
@@ -1547,8 +1546,6 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 			}
 
 			for (idx = 0; idx < ch_set->numChannels; idx++) {
-				chan = (wlan_reg_freq_to_chan(mac->pdev, ch_set->first_chan_freq)
-						+ (idx * ch_set->interChannelOffset));
 				ch_pwr_set->first_freq =
 					ch_set->first_chan_freq;
 				sme_debug(

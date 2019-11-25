@@ -21585,9 +21585,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		mac_ctx->sme.set_connection_info_cb(false);
 		session->roam_synch_in_progress = false;
 
-		if (WLAN_REG_IS_5GHZ_CH(
-			wlan_reg_freq_to_chan(mac_ctx->pdev,
-					      bss_desc->chan_freq))) {
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq)) {
 			session->disable_hi_rssi = true;
 			sme_debug("Disabling HI_RSSI, AP freq=%d, rssi=%d",
 				  bss_desc->chan_freq, bss_desc->rssi);
