@@ -182,7 +182,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	uint8_t sessionid;
 	const uint8_t *p2pie = NULL;
 	uint8_t txflag = 0;
-	uint8_t sme_sessionid = 0;
+	uint8_t vdev_id = 0;
 	bool is_vht_enabled = false;
 	uint8_t txPower;
 	uint16_t addn_ielen = 0;
@@ -220,7 +220,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	pesession = pe_find_session_by_bssid(mac_ctx, bssid, &sessionid);
 
 	if (pesession)
-		sme_sessionid = pesession->smeSessionId;
+		vdev_id = pesession->vdev_id;
 
 	/* The scheme here is to fill out a 'tDot11fProbeRequest' structure */
 	/* and then hand it off to 'dot11f_pack_probe_request' (for */
@@ -425,7 +425,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 		wma_tx_frame(mac_ctx, packet,
 			   (uint16_t) sizeof(tSirMacMgmtHdr) + payload,
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
-			   lim_tx_complete, frame, txflag, sme_sessionid,
+			   lim_tx_complete, frame, txflag, vdev_id,
 			   0, RATEID_DEFAULT);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pe_err("could not send Probe Request frame!");
@@ -511,7 +511,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	uint8_t total_noalen = 0;
 	uint8_t noa_stream[SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN];
 	uint8_t noa_ie[SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN];
-	uint8_t sme_sessionid = 0;
+	uint8_t vdev_id = 0;
 	bool is_vht_enabled = false;
 	tDot11fIEExtCap extracted_ext_cap = {0};
 	bool extracted_ext_cap_flag = false;
@@ -534,7 +534,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			  FL("CAC timer is running, probe response dropped"));
 		return;
 	}
-	sme_sessionid = pe_session->smeSessionId;
+	vdev_id = pe_session->vdev_id;
 	frm = qdf_mem_malloc(sizeof(tDot11fProbeResponse));
 	if (!frm)
 		return;
@@ -795,7 +795,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 				  TXRX_FRM_802_11_MGMT,
 				  ANI_TXDIR_TODS,
 				  7, lim_tx_complete, frame, tx_flag,
-				  sme_sessionid, 0, RATEID_DEFAULT);
+				  vdev_id, 0, RATEID_DEFAULT);
 
 	/* Pkt will be freed up by the callback */
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -1803,7 +1803,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	const uint8_t *wps_ie = NULL;
 	uint8_t power_caps = false;
 	uint8_t tx_flag = 0;
-	uint8_t sme_sessionid = 0;
+	uint8_t vdev_id = 0;
 	bool vht_enabled = false;
 	tDot11fIEExtCap extr_ext_cap;
 	bool extr_ext_flag = true;
@@ -1825,7 +1825,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		return;
 	}
 
-	sme_sessionid = pe_session->smeSessionId;
+	vdev_id = pe_session->vdev_id;
 
 	/* check this early to avoid unncessary operation */
 	if (!pe_session->lim_join_req) {
@@ -2344,7 +2344,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			   (uint16_t) (sizeof(tSirMacMgmtHdr) + payload),
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, frame, lim_assoc_tx_complete_cnf,
-			   tx_flag, sme_sessionid, false, 0, min_rid);
+			   tx_flag, vdev_id, false, 0, min_rid);
 	MTRACE(qdf_trace
 		       (QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		       pe_session->peSessionId, qdf_status));
@@ -2510,7 +2510,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 	void *packet;
 	QDF_STATUS qdf_status;
 	uint8_t tx_flag = 0;
-	uint8_t sme_sessionid = 0;
+	uint8_t vdev_id = 0;
 	uint16_t ft_ies_length = 0;
 	bool challenge_req = false;
 	enum rateid min_rid = RATEID_DEFAULT;
@@ -2521,7 +2521,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 		return;
 	}
 
-	sme_sessionid = session->smeSessionId;
+	vdev_id = session->vdev_id;
 
 	if (wep_challenge_len) {
 		/*
@@ -2811,7 +2811,7 @@ alloc_packet:
 				 TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
 				 7, lim_tx_complete, frame,
 				 lim_auth_tx_complete_cnf,
-				 tx_flag, sme_sessionid, false,
+				 tx_flag, vdev_id, false,
 				 ch_freq_tx_frame, min_rid);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		session->peSessionId, qdf_status));
@@ -4898,7 +4898,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	void *pkt_ptr = NULL;
 	QDF_STATUS qdf_status;
 	uint8_t tx_flag = 0;
-	uint8_t sme_sessionid = 0;
+	uint8_t vdev_id = 0;
 	uint16_t buff_size, status_code, batimeout;
 	uint8_t peer_id, dialog_token;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -4908,7 +4908,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	uint16_t aid;
 	bool he_cap = false;
 
-	sme_sessionid = session->smeSessionId;
+	vdev_id = session->vdev_id;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
@@ -5061,7 +5061,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 						ANI_TXDIR_TODS, 7,
 						NULL, frame_ptr,
 						lim_addba_rsp_tx_complete_cnf,
-						tx_flag, sme_sessionid,
+						tx_flag, vdev_id,
 						false, 0, RATEID_DEFAULT);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 			 session->peSessionId, qdf_status));

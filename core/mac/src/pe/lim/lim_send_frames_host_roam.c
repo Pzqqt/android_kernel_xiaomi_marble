@@ -80,7 +80,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	uint8_t *add_ie;
 	const uint8_t *wps_ie = NULL;
 	uint8_t tx_flag = 0;
-	uint8_t sme_sessionid = 0;
+	uint8_t vdev_id = 0;
 	bool vht_enabled = false;
 	tpSirMacMgmtHdr mac_hdr;
 	tftSMEContext *ft_sme_context;
@@ -88,7 +88,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	if (!pe_session)
 		return;
 
-	sme_sessionid = pe_session->smeSessionId;
+	vdev_id = pe_session->vdev_id;
 
 	/* check this early to avoid unncessary operation */
 	if (!pe_session->pLimReAssocReq)
@@ -278,7 +278,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 #endif
 	}
 
-	ft_sme_context = &mac_ctx->roam.roamSession[sme_sessionid].ftSmeContext;
+	ft_sme_context = &mac_ctx->roam.roamSession[vdev_id].ftSmeContext;
 	if (pe_session->htCapability &&
 	    mac_ctx->lim.htCapabilityPresentInBeacon) {
 		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm->HTCaps);
@@ -450,7 +450,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	qdf_status = wma_tx_frame(mac_ctx, packet,
 				(uint16_t) (bytes + ft_ies_length),
 				TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
-				lim_tx_complete, frame, tx_flag, sme_sessionid,
+				lim_tx_complete, frame, tx_flag, vdev_id,
 				0, RATEID_DEFAULT);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		       pe_session->peSessionId, qdf_status));

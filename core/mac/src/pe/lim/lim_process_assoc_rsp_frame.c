@@ -583,7 +583,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	tLimMlmAssocCnf assoc_cnf;
 	tSchBeaconStruct *beacon;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint8_t sme_sessionid = 0;
+	uint8_t vdev_id = 0;
 	struct csr_roam_session *roam_session;
 #endif
 	uint8_t ap_nss;
@@ -594,7 +594,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	else
 		hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	sme_sessionid = session_entry->smeSessionId;
+	vdev_id = session_entry->vdev_id;
 #endif
 	assoc_cnf.resultCode = eSIR_SME_SUCCESS;
 	/* Update PE session Id */
@@ -736,7 +736,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	roam_session =
-		&mac_ctx->roam.roamSession[sme_sessionid];
+		&mac_ctx->roam.roamSession[vdev_id];
 	if (assoc_rsp->sha384_ft_subelem.r0kh_id.present) {
 		roam_session->ftSmeContext.r0kh_id_len =
 			assoc_rsp->sha384_ft_subelem.r0kh_id.num_PMK_R0_ID;
