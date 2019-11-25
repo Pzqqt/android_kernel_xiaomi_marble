@@ -331,6 +331,18 @@ QDF_STATUS policy_mgr_psoc_open(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	pm_ctx->sta_ap_intf_check_work_info = qdf_mem_malloc(
+		sizeof(struct sta_ap_intf_check_work_ctx));
+	if (!pm_ctx->sta_ap_intf_check_work_info) {
+		qdf_mutex_destroy(&pm_ctx->qdf_conc_list_lock);
+		policy_mgr_err("Failed to alloc sta_ap_intf_check_work_info");
+		return QDF_STATUS_E_FAILURE;
+	}
+	pm_ctx->sta_ap_intf_check_work_info->psoc = psoc;
+	qdf_create_work(0, &pm_ctx->sta_ap_intf_check_work,
+			policy_mgr_check_sta_ap_concurrent_ch_intf,
+			pm_ctx->sta_ap_intf_check_work_info);
+
 	return QDF_STATUS_SUCCESS;
 }
 
