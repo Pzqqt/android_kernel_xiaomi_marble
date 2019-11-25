@@ -441,7 +441,8 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 			pe_create_session(mac, pbssDescription->bssId,
 					  &sessionId, mac->lim.maxStation,
 					  pe_session->bssType,
-					  pe_session->smeSessionId);
+					  pe_session->vdev_id,
+					  pe_session->opmode);
 		if (!ft_session) {
 			pe_err("Session not created for pre-auth 11R AP");
 			status = QDF_STATUS_E_FAILURE;

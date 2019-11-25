@@ -575,7 +575,7 @@ void lim_rx_invalid_peer_process(struct mac_context *mac_ctx,
 	}
 
 	/* only if SAP mode */
-	if (session_entry->operMode == BSS_OPERATIONAL_MODE_AP) {
+	if (session_entry->bssType == eSIR_INFRA_AP_MODE) {
 		pe_debug("send deauth frame to non-assoc STA");
 		lim_send_deauth_mgmt_frame(mac_ctx,
 					   reason_code,
