@@ -505,6 +505,8 @@ struct cdp_tso_info {
  * @num_tso_pkts: Total number of TSO Packets
  * @tso_comp: Total tso packet completions
  * @dropped_host: TSO packets dropped by host
+ * @tso_no_mem_dropped: TSO packets dropped by host due to descriptor
+			unavailablity
  * @dropped_target: TSO packets_dropped by target
  * @tso_info: Per TSO packet counters
  * @seg_histogram: TSO histogram stats
@@ -513,6 +515,7 @@ struct cdp_tso_stats {
 	struct cdp_pkt_info num_tso_pkts;
 	uint32_t tso_comp;
 	struct cdp_pkt_info dropped_host;
+	struct cdp_pkt_info tso_no_mem_dropped;
 	uint32_t dropped_target;
 #ifdef FEATURE_TSO_STATS
 	struct cdp_tso_info tso_info;

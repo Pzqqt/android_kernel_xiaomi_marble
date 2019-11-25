@@ -585,8 +585,10 @@ static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
 			tso_info->tso_seg_list = tso_seg;
 			num_seg--;
 		} else {
-			DP_TRACE(ERROR, "%s: Failed to alloc tso seg desc",
-				 __func__);
+			dp_err_rl("Failed to alloc tso seg desc");
+			DP_STATS_INC_PKT(vdev->pdev,
+					 tso_stats.tso_no_mem_dropped, 1,
+					 qdf_nbuf_len(msdu));
 			dp_tx_free_remaining_tso_desc(soc, msdu_info, false);
 
 			return QDF_STATUS_E_NOMEM;
