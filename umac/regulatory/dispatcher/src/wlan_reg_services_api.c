@@ -341,7 +341,7 @@ QDF_STATUS wlan_regulatory_init(void)
 		reg_err("failed to register reg psoc obj create handler");
 		goto unreg_pdev_create;
 	}
-
+	channel_map = channel_map_global;
 	reg_debug("regulatory handlers registered with obj mgr");
 
 	return status;

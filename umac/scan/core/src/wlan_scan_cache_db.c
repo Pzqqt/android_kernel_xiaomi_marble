@@ -182,9 +182,11 @@ static void scm_del_rnr_channel_db(struct scan_cache_entry *entry)
 			return;
 		}
 		channel->bss_beacon_probe_count--;
+		cur_node = NULL;
 		qdf_list_peek_front(&channel->rnr_list, &cur_node);
 		/* Free the Node */
 		while (cur_node) {
+			next_node = NULL;
 			qdf_list_peek_next(&channel->rnr_list, cur_node,
 					   &next_node);
 			rnr_node = qdf_container_of(cur_node,
@@ -1616,20 +1618,22 @@ QDF_STATUS scm_db_deinit(struct wlan_objmgr_psoc *psoc)
 #ifdef FEATURE_6G_SCAN_CHAN_SORT_ALGO
 QDF_STATUS scm_channel_list_db_init(struct wlan_objmgr_psoc *psoc)
 {
-	uint8_t i, j = 0;
+	uint32_t i, j;
 	uint32_t min_freq, max_freq;
 
 	min_freq = wlan_reg_min_6ghz_chan_freq();
 	max_freq = wlan_reg_max_6ghz_chan_freq();
 
 	scm_debug("min_freq %d max_freq %d", min_freq, max_freq);
-	for (i = min_freq; i <= max_freq; i += 20, j++) {
-		rnr_channel_db.channel[j].chan_freq = i;
+	i = min_freq;
+	for (j = 0; j < NUM_6GHZ_CHANNELS; j++) {
+		if (i >= min_freq && i <= max_freq)
+			rnr_channel_db.channel[j].chan_freq = i;
 		qdf_list_create(&rnr_channel_db.channel[j].rnr_list,
 				WLAN_MAX_RNR_COUNT);
 		scm_debug("freq %d", i);
+		i += 20;
 	}
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1640,11 +1644,13 @@ QDF_STATUS scm_channel_list_db_deinit(struct wlan_objmgr_psoc *psoc)
 	struct meta_rnr_channel *channel;
 	struct scan_rnr_node *rnr_node;
 
-	for (i = 0; i <= MAX_6GHZ_CHANNEL; i++) {
+	for (i = 0; i < NUM_6GHZ_CHANNELS; i++) {
 		channel = &rnr_channel_db.channel[i];
 		channel->chan_freq = 0;
+		cur_node = NULL;
 		qdf_list_peek_front(&channel->rnr_list, &cur_node);
 		while (cur_node) {
+			next_node = NULL;
 			qdf_list_peek_next(&channel->rnr_list, cur_node,
 					   &next_node);
 			rnr_node = qdf_container_of(cur_node,
