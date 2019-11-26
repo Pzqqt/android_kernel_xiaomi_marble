@@ -269,10 +269,6 @@ dsi_ctrl_get_aspace(struct dsi_ctrl *dsi_ctrl,
 
 static void dsi_ctrl_flush_cmd_dma_queue(struct dsi_ctrl *dsi_ctrl)
 {
-	u32 status;
-	u32 mask = DSI_CMD_MODE_DMA_DONE;
-	struct dsi_ctrl_hw_ops dsi_hw_ops = dsi_ctrl->hw.ops;
-
 	/*
 	 * If a command is triggered right after another command,
 	 * check if the previous command transfer is completed. If
@@ -281,21 +277,8 @@ static void dsi_ctrl_flush_cmd_dma_queue(struct dsi_ctrl *dsi_ctrl)
 	 * completed before triggering the next command by
 	 * flushing the workqueue.
 	 */
-	status = dsi_hw_ops.get_interrupt_status(&dsi_ctrl->hw);
 	if (atomic_read(&dsi_ctrl->dma_irq_trig)) {
 		cancel_work_sync(&dsi_ctrl->dma_cmd_wait);
-	} else if (status & mask) {
-		atomic_set(&dsi_ctrl->dma_irq_trig, 1);
-		status |= (DSI_CMD_MODE_DMA_DONE | DSI_BTA_DONE);
-		dsi_hw_ops.clear_interrupt_status(
-						&dsi_ctrl->hw,
-						status);
-		dsi_ctrl_disable_status_interrupt(dsi_ctrl,
-				DSI_SINT_CMD_MODE_DMA_DONE);
-		complete_all(&dsi_ctrl->irq_info.cmd_dma_done);
-		cancel_work_sync(&dsi_ctrl->dma_cmd_wait);
-		DSI_CTRL_DEBUG(dsi_ctrl,
-				"dma_tx done but irq not yet triggered\n");
 	} else {
 		flush_workqueue(dsi_ctrl->dma_cmd_workq);
 	}
@@ -319,24 +302,11 @@ static void dsi_ctrl_dma_cmd_wait_for_done(struct work_struct *work)
 	 */
 	if (atomic_read(&dsi_ctrl->dma_irq_trig))
 		goto done;
-	/*
-	 * If IRQ wasn't triggered check interrupt status register for
-	 * transfer done before waiting.
-	 */
-	status = dsi_hw_ops.get_interrupt_status(&dsi_ctrl->hw);
-	if (status & mask) {
-		status |= (DSI_CMD_MODE_DMA_DONE | DSI_BTA_DONE);
-		dsi_hw_ops.clear_interrupt_status(&dsi_ctrl->hw,
-				status);
-		dsi_ctrl_disable_status_interrupt(dsi_ctrl,
-				DSI_SINT_CMD_MODE_DMA_DONE);
-		goto done;
-	}
 
 	ret = wait_for_completion_timeout(
 			&dsi_ctrl->irq_info.cmd_dma_done,
 			msecs_to_jiffies(DSI_CTRL_TX_TO_MS));
-	if (ret == 0) {
+	if (ret == 0 && !atomic_read(&dsi_ctrl->dma_irq_trig)) {
 		status = dsi_hw_ops.get_interrupt_status(&dsi_ctrl->hw);
 		if (status & mask) {
 			status |= (DSI_CMD_MODE_DMA_DONE | DSI_BTA_DONE);
