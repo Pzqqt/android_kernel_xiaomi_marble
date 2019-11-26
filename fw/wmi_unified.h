@@ -18095,6 +18095,7 @@ typedef struct {
     A_UINT32 mac_id; /* MAC ID associated with NAN primary discovery channel; Valid only for NAN enable resp message identified by NAN_MSG_ID_ENABLE_RSP */
     A_UINT32 status:1; /** This bit when set to 0 indicates status is successful; Valid only for NAN enable resp message identified by NAN_MSG_ID_ENABLE_RSP */
     A_UINT32 reserved:31;
+    A_UINT32 vdev_id; /** Unique id identifying the vdev with type OPMODE_NAN; Valid only for NAN enable resp message identified by NAN_MSG_ID_ENABLE_RSP */
 } wmi_nan_event_info_PROTOTYPE;
 
 #define wmi_nan_event_info wmi_nan_event_info_PROTOTYPE
