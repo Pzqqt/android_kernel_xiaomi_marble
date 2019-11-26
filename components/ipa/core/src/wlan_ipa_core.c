@@ -3020,27 +3020,33 @@ QDF_STATUS wlan_ipa_setup(struct wlan_ipa_priv *ipa_ctx,
 		qdf_atomic_set(&ipa_ctx->pipes_disabled, 1);
 		qdf_atomic_set(&ipa_ctx->autonomy_disabled, 1);
 		ipa_ctx->wdi_enabled = false;
-		/* Setup IPA system pipes */
-		if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
-			ret = wlan_ipa_setup_sys_pipe(ipa_ctx);
-			if (ret)
-				goto fail_create_sys_pipe;
-
-			qdf_create_work(0, &ipa_ctx->mcc_work,
-					wlan_ipa_mcc_work_handler, ipa_ctx);
-		}
 
 		status = wlan_ipa_wdi_init(ipa_ctx);
-		if (status == QDF_STATUS_E_BUSY)
-			status = wlan_ipa_uc_send_wdi_control_msg(false);
-		if (status != QDF_STATUS_SUCCESS) {
+		if (status == QDF_STATUS_SUCCESS) {
+			/* Setup IPA system pipes */
+			if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
+				ret = wlan_ipa_setup_sys_pipe(ipa_ctx);
+				if (ret)
+					goto ipa_wdi_destroy;
+
+				qdf_create_work(0, &ipa_ctx->mcc_work,
+						wlan_ipa_mcc_work_handler,
+						ipa_ctx);
+			}
+		} else if (status == QDF_STATUS_E_BUSY) {
+			ret = wlan_ipa_uc_send_wdi_control_msg(false);
+			if (ret) {
+				ipa_err("IPA WDI msg send failed: ret=%d", ret);
+				goto ipa_wdi_destroy;
+			}
+		} else {
 			ipa_err("IPA WDI init failed: ret=%d", status);
-			goto fail_create_sys_pipe;
+			goto ipa_wdi_destroy;
 		}
 	} else {
 		ret = wlan_ipa_setup_sys_pipe(ipa_ctx);
 		if (ret)
-			goto fail_create_sys_pipe;
+			goto ipa_wdi_destroy;
 	}
 
 	qdf_event_create(&ipa_ctx->ipa_resource_comp);
@@ -3049,7 +3055,7 @@ QDF_STATUS wlan_ipa_setup(struct wlan_ipa_priv *ipa_ctx,
 
 	return QDF_STATUS_SUCCESS;
 
-fail_create_sys_pipe:
+ipa_wdi_destroy:
 	wlan_ipa_wdi_destroy_rm(ipa_ctx);
 
 fail_setup_rm:
@@ -3212,6 +3218,18 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 		ipa_err("qdf_dev is null");
 		return;
 	}
+
+	if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
+		/* Setup IPA system pipes */
+		status = wlan_ipa_setup_sys_pipe(ipa_ctx);
+		if (status) {
+			ipa_err("Fail to setup sys pipes (status=%d)", status);
+			return;
+		}
+		qdf_create_work(0, &ipa_ctx->mcc_work,
+				wlan_ipa_mcc_work_handler, ipa_ctx);
+	}
+
 	/* Connect pipe */
 	status = wlan_ipa_wdi_setup(ipa_ctx, qdf_dev);
 	if (status) {
