@@ -1574,6 +1574,8 @@ typedef enum {
     WMI_ROAM_PREAUTH_START_EVENTID,
     /** Roaming PMKID request event */
     WMI_ROAM_PMKID_REQUEST_EVENTID,
+    /** roam stats */
+    WMI_ROAM_STATS_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -26404,6 +26406,164 @@ typedef struct {
      *       and the last 3 elements from the second scan.
      */
 } wmi_roam_scan_stats_event_fixed_param;
+
+typedef enum {
+    WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER = 1, /* Roam scan triggered due to periodic timer expiry */
+    WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER,   /* Roam scan triggered due to inactivity detection */
+    WMI_ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER,       /* Roam scan triggered due to BTM Disassoc Imminent timeout */
+    WMI_ROAM_TRIGGER_SUB_REASON_FULL_SCAN,          /* Roam scan triggered due to partial scan failure */
+} WMI_ROAM_TRIGGER_SUB_REASON_ID;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_reason_tlv_param */
+    /*
+     * timestamp is the absolute time w.r.t host timer which is synchronized
+     * between the host and target.
+     * This timestamp indicates the time when roam trigger happened.
+     */
+    A_UINT32 timestamp;      /* Timestamp in milli seconds */
+    /* trigger_reason:
+     * Roam trigger reason from WMI_ROAM_TRIGGER_REASON_ID
+     */
+    A_UINT32 trigger_reason;
+    /* trigger_sub_reason:
+     * Reason for each roam scan from WMI_ROAM_TRIGGER_SUB_REASON_ID,
+     * if multiple scans are triggered for a single roam trigger.
+     */
+    A_UINT32 trigger_sub_reason;
+    A_UINT32 current_rssi;   /* Connected AP rssi in dBm */
+    /* roam_rssi_threshold:
+     * RSSI threshold value in dBm for low RSSI roam trigger.
+     */
+    A_UINT32 roam_rssi_threshold;
+    A_UINT32 cu_load;        /* Connected AP CU load percentage (0-100) */
+    /* deauth_type:
+     * 1 -> De-authentication
+     * 2 -> Disassociation
+     */
+    A_UINT32 deauth_type;
+    /* deauth_reason:
+     * De-authentication or disassociation reason.
+     * De-authentication / disassociation Values are enumerated in the
+     * 802.11 spec.
+     */
+    A_UINT32 deauth_reason;
+    /* btm_request_mode:
+     * Mode Values are enumerated in the 802.11 spec.
+     */
+    A_UINT32 btm_request_mode;
+    A_UINT32 disassoc_imminent_timer;  /* in Milli seconds */
+    /* validity_internal:
+     * Preferred candidate list validity interval in Milli seconds.
+     */
+    A_UINT32 validity_internal;
+    /* candidate_list_count:
+     * Number of preferred candidates from BTM request.
+     */
+    A_UINT32 candidate_list_count;
+    /* btm_response_status_code:
+     * Response status Values are enumerated in the 802.11 spec.
+     */
+    A_UINT32 btm_response_status_code;
+} wmi_roam_trigger_reason;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_info_tlv_param */
+    /* roam_scan_type:
+     * 0 -> Partial roam scan
+     * 1 -> Full roam scan
+     */
+    A_UINT32 roam_scan_type;
+    /* next_rssi_trigger_threshold:
+     * Updated RSSI threshold value in dBm for next roam trigger.
+     */
+    A_UINT32 next_rssi_trigger_threshold;
+} wmi_roam_scan_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_channel_info_tlv_param */
+    A_UINT32 channel;    /* Channel frequency in MHz */
+} wmi_roam_scan_channel_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_ap_info_tlv_param */
+    /*
+     * timestamp is the absolute time w.r.t host timer which is synchronized
+     * between the host and target.
+     * This timestamp indicates the time when candidate AP is found
+     * during roam scan.
+     */
+    A_UINT32 timestamp;      /* Timestamp in milli seconds */
+    A_UINT32 candidate_type; /* 0 - Candidate AP, 1 - Connected AP */
+    wmi_mac_addr bssid;      /* AP MAC address */
+    A_UINT32 channel;        /* AP channel frequency in MHz */
+    A_UINT32 rssi;           /* AP current rssi in dBm */
+    A_UINT32 cu_load;        /* AP current cu load percentage (0-100) */
+    /*
+     * The score fields below don't have a pre-determined range,
+     * but use the sense that a higher score indicates a better
+     * roam candidate.
+     */
+    A_UINT32 rssi_score;     /* AP current rssi score */
+    A_UINT32 cu_score;       /* AP current cu score */
+    A_UINT32 total_score;    /* AP total score */
+    A_UINT32 etp;            /* AP Estimated Throughput (ETP) value in mbps */
+} wmi_roam_ap_info;
+
+typedef enum {
+    /* Failures for not triggering roam scan */
+    WMI_ROAM_FAIL_REASON_NO_SCAN_START = 1,
+    WMI_ROAM_FAIL_REASON_NO_AP_FOUND,
+    WMI_ROAM_FAIL_REASON_NO_CAND_AP_FOUND,
+
+    /* Roam scan is triggered but roaming failed reasons */
+    WMI_ROAM_FAIL_REASON_AP_REJECT,
+    WMI_ROAM_FAIL_REASON_HANDSHAKE_TIMEOUT,
+
+    WMI_ROAM_FAIL_REASON_UNKNOWN,
+} WMI_ROAM_FAIL_REASON_ID;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_result_tlv_param */
+    /*
+     * timestamp is the absolute time w.r.t host timer which is synchronized
+     * between the host and target.
+     * This timestamp indicates the time when roaming is completed.
+     */
+    A_UINT32 timestamp;     /* Timestamp in milli seconds */
+    A_UINT32 roam_status;   /* 0 - Roaming is success, 1 - Roaming is failed */
+    A_UINT32 roam_fail_reason; /* from WMI_ROAM_FAIL_REASON_ID */
+} wmi_roam_result;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_neighbor_report_info_tlv_param */
+    /* request_type:
+     * 1 -> BTM query
+     * 2 -> 11K neighbor report request
+     */
+    A_UINT32 request_type;
+    /* neighbor_report_request_timestamp:
+     * timestamp is the absolute time w.r.t host timer which is synchronized
+     * between the host and target.
+     * This timestamp indicates the time when neighbor report request
+     * is received.
+     */
+    A_UINT32 neighbor_report_request_timestamp;  /* in milli seconds */
+    /* neighbor_report_response_timestamp:
+     * This timestamp indicates the time when neighbor report response is sent.
+     */
+    A_UINT32 neighbor_report_response_timestamp; /* in milli seconds */
+} wmi_roam_neighbor_report_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_neighbor_report_channel_info_tlv_param */
+    A_UINT32 channel;    /* Channel frequency in MHz */
+} wmi_roam_neighbor_report_channel_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_stats_event_fixed_param */
+    A_UINT32 vdev_id;
+} wmi_roam_stats_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_txpower_query_cmd_fixed_param  */
