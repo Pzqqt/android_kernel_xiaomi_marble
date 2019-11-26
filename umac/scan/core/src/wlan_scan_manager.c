@@ -1107,9 +1107,13 @@ scm_update_channel_list(struct scan_start_request *req,
 	}
 
 	req->scan_req.chan_list.num_chan = num_scan_channels;
-	scm_update_6ghz_channel_list(req->vdev, &req->scan_req.chan_list,
-				     scan_obj);
-	scm_sort_6ghz_channel_list(req->vdev, &req->scan_req.chan_list);
+	/* Dont upadte the channel list for SAP mode */
+	if (wlan_vdev_mlme_get_opmode(req->vdev) != QDF_SAP_MODE) {
+		scm_update_6ghz_channel_list(req->vdev,
+					     &req->scan_req.chan_list,
+					     scan_obj);
+		scm_sort_6ghz_channel_list(req->vdev, &req->scan_req.chan_list);
+	}
 	scm_scan_chlist_concurrency_modify(req->vdev, req);
 }
 
