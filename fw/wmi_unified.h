@@ -1005,6 +1005,8 @@ typedef enum {
     WMI_GET_ELNA_BYPASS_CMDID,
     /** get ANI level of the channels */
     WMI_GET_CHANNEL_ANI_CMDID,
+    /** set OCL (One Chain Listen) mode */
+    WMI_SET_OCL_CMDID,
 
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
@@ -24960,6 +24962,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ATF_GROUP_WMM_AC_CONFIG_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_PEER_ATF_EXT_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_GET_CHANNEL_ANI_CMDID);
+        WMI_RETURN_STRING(WMI_SET_OCL_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -28273,6 +28276,16 @@ typedef struct {
     A_UINT32 group_id;
     A_UINT32 retry_thresh;
 } wmi_audio_aggr_set_group_retry_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_set_ocl_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /** enable/disable OCL, 1 - enable, 0 - disable*/
+    A_UINT32 en_dis_chain;
+} wmi_set_ocl_cmd_fixed_param;
 
 
 #define WMI_CFR_GROUP_TA_ADDR_VALID_BIT_POS           0

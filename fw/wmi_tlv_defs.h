@@ -1031,6 +1031,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_result_tlv_param,
     WMITLV_TAG_STRUC_wmi_roam_neighbor_report_info_tlv_param,
     WMITLV_TAG_STRUC_wmi_roam_neighbor_report_channel_info_tlv_param,
+    WMITLV_TAG_STRUC_wmi_set_ocl_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1451,6 +1452,7 @@ typedef enum {
     OP(WMI_PEER_ATF_EXT_REQUEST_CMDID) \
     OP(WMI_GET_CHANNEL_ANI_CMDID) \
     OP(WMI_PEER_CONFIG_VLAN_CMDID) \
+    OP(WMI_SET_OCL_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4164,6 +4166,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_RAP_CONFIG_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_oem_data_cmd_fixed_param, wmi_oem_data_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, oem_data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_OEM_DATA_CMDID);
+
+/* Set OCL cmd */
+#define WMITLV_TABLE_WMI_SET_OCL_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_set_ocl_cmd_fixed_param, wmi_set_ocl_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SET_OCL_CMDID);
 
 /* Set ELNA BYPASS cmd */
 #define WMITLV_TABLE_WMI_SET_ELNA_BYPASS_CMDID(id,op,buf,len) \
