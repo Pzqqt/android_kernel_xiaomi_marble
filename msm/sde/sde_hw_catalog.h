@@ -1271,11 +1271,6 @@ struct sde_limit_cfg {
  * @vbif_qos_nlvl      number of vbif QoS priority level
  * @ts_prefill_rev     prefill traffic shaper feature revision
  * @true_inline_rot_rev	inline rotator feature revision
- * @true_inline_dwnscale_rt_num    true inline rotator downscale ratio for rt
- *                                       - numerator
- * @true_inline_dwnscale_rt_denom    true inline rot downscale ratio for rt
- *                                       - denominator
- * @true_inline_dwnscale_nrt    true inline rotator downscale ratio for nrt
  * @macrotile_mode     UBWC parameter for macro tile channel distribution
  * @pipe_order_type    indicate if it is required to specify pipe order
  * @delay_prg_fetch_start indicates if throttling the fetch start is required
@@ -1333,9 +1328,6 @@ struct sde_mdss_cfg {
 	u32 vbif_qos_nlvl;
 	u32 ts_prefill_rev;
 	u32 true_inline_rot_rev;
-	u32 true_inline_dwnscale_rt_num;
-	u32 true_inline_dwnscale_rt_denom;
-	u32 true_inline_dwnscale_nrt;
 	u32 macrotile_mode;
 	u32 pipe_order_type;
 	bool delay_prg_fetch_start;
