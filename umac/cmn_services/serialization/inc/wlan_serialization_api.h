@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -191,6 +191,7 @@ typedef QDF_STATUS (*wlan_ser_umac_cmd_cb)(void *umac_cmd);
  * @WLAN_SER_CMD_VDEV_DISCONNECT: Cmd to stop a STA VDEV
  * @WLAN_SER_CMD_VDEV_RESTART: Cmd to restart a VDEV
  * @WLAN_SER_CMD_PDEV_RESTART: Cmd to restart all VDEVs of a PDEV
+ * @WLAN_SER_CMD_PDEV_CSA_RESTART: Cmd to CSA restart all AP VDEVs of a PDEV
  */
 enum wlan_serialization_cmd_type {
 	/* all scan command before non-scan */
@@ -227,6 +228,7 @@ enum wlan_serialization_cmd_type {
 	WLAN_SER_CMD_VDEV_DISCONNECT,
 	WLAN_SER_CMD_VDEV_RESTART,
 	WLAN_SER_CMD_PDEV_RESTART,
+	WLAN_SER_CMD_PDEV_CSA_RESTART,
 	WLAN_SER_CMD_MAX
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -266,6 +266,96 @@ wlan_vdev_mlme_ser_disconnect(struct wlan_serialization_command *cmd)
 	}
 
 	return wlan_serialization_request(cmd);
+}
+
+static void
+wlan_mlme_cancel_pending_csa_restart(struct wlan_objmgr_pdev *pdev,
+				     void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = object;
+	bool *csa_restart_pending = arg;
+	struct wlan_serialization_command cmd = {0};
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	cmd.vdev = vdev;
+	cmd.cmd_id = vdev_id;
+	cmd.cmd_type = WLAN_SER_CMD_PDEV_CSA_RESTART;
+	if (wlan_serialization_is_cmd_present_in_pending_queue(NULL, &cmd)) {
+		mlme_debug("Cmd already exist in the pending queue vdev:%u",
+			   vdev_id);
+		*csa_restart_pending = true;
+	}
+
+	wlan_vdev_mlme_ser_cancel_request(
+			vdev,
+			WLAN_SER_CMD_PDEV_CSA_RESTART,
+			WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE);
+}
+
+static void
+wlan_mlme_check_pdev_restart(struct wlan_objmgr_pdev *pdev,
+			     void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = object;
+	bool *pdev_restart_pending  = arg;
+	struct wlan_serialization_command cmd = {0};
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	cmd.vdev = vdev;
+	cmd.cmd_id = vdev_id;
+	cmd.cmd_type = WLAN_SER_CMD_PDEV_RESTART;
+	if (wlan_serialization_is_cmd_present_in_active_queue(NULL, &cmd)) {
+		mlme_debug("Pdev restart already in the active queue vdev:%u",
+			   vdev_id);
+		*pdev_restart_pending = true;
+	}
+}
+
+enum wlan_serialization_status
+wlan_vdev_mlme_ser_pdev_csa_restart(struct wlan_serialization_command *cmd)
+{
+	struct wlan_objmgr_pdev *pdev;
+	bool csa_restart_pending = false;
+	bool pdev_restart_pending = false;
+	enum wlan_serialization_status ret;
+
+	if (!cmd || !cmd->vdev) {
+		mlme_err("Null input");
+		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
+	}
+
+	if (!wlan_ser_is_vdev_queue_enabled(cmd->vdev))
+		return WLAN_SER_CMD_QUEUE_DISABLED;
+
+	/*
+	 * Serialization command filtering logic
+	 * a. Cancel any existing PDEV CSA restart cmd in the pending queue
+	 * b. If there exists PDEV RESTART command in the active queue
+	 *    then deny this request
+	 * c. If PDEV CSA RESTART cmd already existed in pending queue
+	 *    then enqueue and return already exists
+	 * d. Else enqueue this PDEV CSA RESTART cmd
+	 */
+	pdev = wlan_vdev_get_pdev(cmd->vdev);
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  wlan_mlme_cancel_pending_csa_restart,
+					  &csa_restart_pending, 0,
+					  WLAN_MLME_SER_IF_ID);
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  wlan_mlme_check_pdev_restart,
+					  &pdev_restart_pending, 0,
+					  WLAN_MLME_SER_IF_ID);
+
+	if (pdev_restart_pending)
+		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
+
+	ret = wlan_serialization_request(cmd);
+
+	if (csa_restart_pending && ret == WLAN_SER_CMD_PENDING)
+		return WLAN_SER_CMD_ALREADY_EXISTS;
+
+	return ret;
 }
 
 void
