@@ -4719,6 +4719,54 @@ static QDF_STATUS sme_qos_process_reassoc_failure_ev(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifdef FEATURE_WLAN_ESE
+static bool sme_qos_ft_handoff_required(struct mac_context *mac,
+					uint8_t session_id)
+{
+	struct csr_roam_session *csr_roam_session;
+
+	if (csr_roam_is11r_assoc(mac, session_id))
+		return true;
+
+	csr_roam_session = CSR_GET_SESSION(mac, session_id);
+
+	if (csr_roam_session->roam_synch_in_progress &&
+	    csr_roam_is_ese_assoc(mac, session_id) &&
+	    csr_roam_session->connectedInfo.nTspecIeLength)
+		return true;
+
+	return false;
+}
+#else
+static inline bool sme_qos_ft_handoff_required(struct mac_context *mac,
+					       uint8_t session_id)
+{
+	return csr_roam_is11r_assoc(mac, session_id) ? true : false;
+}
+#endif
+#else
+static inline bool sme_qos_ft_handoff_required(struct mac_context *mac,
+					       uint8_t session_id)
+{
+	return false;
+}
+#endif
+
+#ifdef FEATURE_WLAN_ESE
+static inline bool sme_qos_legacy_handoff_required(struct mac_context *mac,
+						   uint8_t session_id)
+{
+	return csr_roam_is_ese_assoc(mac, session_id) ? false : true;
+}
+#else
+static inline bool sme_qos_legacy_handoff_required(struct mac_context *mac,
+						   uint8_t session_id)
+{
+	return true;
+}
+#endif
+
 /*
  * sme_qos_process_handoff_assoc_req_ev() - Function to process the
  *  SME_QOS_CSR_HANDOFF_ASSOC_REQ event indication from CSR
@@ -4767,16 +4815,13 @@ static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(struct mac_context *mac,
 			break;
 		}
 	}
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (csr_roam_is11r_assoc(mac, sessionId))
+
+	if (sme_qos_ft_handoff_required(mac, sessionId))
 		pSession->ftHandoffInProgress = true;
-#endif
+
 	/* If FT handoff/ESE in progress, legacy handoff need not be enabled */
-	if (!pSession->ftHandoffInProgress
-#ifdef FEATURE_WLAN_ESE
-	    && !csr_roam_is_ese_assoc(mac, sessionId)
-#endif
-	   )
+	if (!pSession->ftHandoffInProgress &&
+	    sme_qos_legacy_handoff_required(mac, sessionId))
 		pSession->handoffRequested = true;
 
 	/* this session no longer needs UAPSD */
