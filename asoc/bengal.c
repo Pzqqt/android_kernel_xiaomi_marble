@@ -4835,7 +4835,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 };
 
 static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
-	{/* hw:x,34 */
+	{/* hw:x,33 */
 		.name = MSM_DAILINK_NAME(ASM Loopback),
 		.stream_name = "MultiMedia6",
 		.cpu_dai_name = "MultiMedia6",
@@ -4852,7 +4852,7 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.ignore_pmdown_time = 1,
 		.id = MSM_FRONTEND_DAI_MULTIMEDIA6,
 	},
-	{/* hw:x,35 */
+	{/* hw:x,34 */
 		.name = "USB Audio Hostless",
 		.stream_name = "USB Audio Hostless",
 		.cpu_dai_name = "USBAUDIO_HOSTLESS",
@@ -4868,7 +4868,7 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
 	},
-	{/* hw:x,36 */
+	{/* hw:x,35 */
 		.name = "SLIMBUS_7 Hostless",
 		.stream_name = "SLIMBUS_7 Hostless",
 		.cpu_dai_name = "SLIMBUS7_HOSTLESS",
@@ -4884,7 +4884,7 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
 	},
-	{/* hw:x,37 */
+	{/* hw:x,36 */
 		.name = "Compress Capture",
 		.stream_name = "Compress9",
 		.cpu_dai_name = "MultiMedia17",
@@ -4899,7 +4899,7 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.ignore_pmdown_time = 1,
 		.id = MSM_FRONTEND_DAI_MULTIMEDIA17,
 	},
-	{/* hw:x,38 */
+	{/* hw:x,37 */
 		.name = "SLIMBUS_8 Hostless",
 		.stream_name = "SLIMBUS_8 Hostless",
 		.cpu_dai_name = "SLIMBUS8_HOSTLESS",
@@ -4915,7 +4915,7 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
 	},
-	{/* hw:x,39 */
+	{/* hw:x,38 */
 		.name = LPASS_BE_TX_CDC_DMA_TX_5,
 		.stream_name = "TX CDC DMA5 Capture",
 		.cpu_dai_name = "msm-dai-cdc-dma-dev.45115",
