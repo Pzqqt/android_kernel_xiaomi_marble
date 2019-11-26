@@ -26524,6 +26524,8 @@ typedef struct {
      * Updated RSSI threshold value in dBm for next roam trigger.
      */
     A_UINT32 next_rssi_trigger_threshold;
+    A_UINT32 roam_scan_channel_count; /* Number of channels scanned during roam scan */
+    A_UINT32 roam_ap_count; /* Number of roamable APs */
 } wmi_roam_scan_info;
 
 typedef struct {
@@ -26557,16 +26559,25 @@ typedef struct {
 } wmi_roam_ap_info;
 
 typedef enum {
-    /* Failures for not triggering roam scan */
-    WMI_ROAM_FAIL_REASON_NO_SCAN_START = 1,
-    WMI_ROAM_FAIL_REASON_NO_AP_FOUND,
-    WMI_ROAM_FAIL_REASON_NO_CAND_AP_FOUND,
+    /* Failures reasons for not triggering roaming */
+    WMI_ROAM_FAIL_REASON_NO_SCAN_START = 1, /* Roam scan not started */
+    WMI_ROAM_FAIL_REASON_NO_AP_FOUND,       /* No roamable APs found during roam scan */
+    WMI_ROAM_FAIL_REASON_NO_CAND_AP_FOUND,  /* No candidate APs found during roam scan */
 
-    /* Roam scan is triggered but roaming failed reasons */
-    WMI_ROAM_FAIL_REASON_AP_REJECT,
-    WMI_ROAM_FAIL_REASON_HANDSHAKE_TIMEOUT,
+    /* Failure reasons after roaming is triggered */
+    WMI_ROAM_FAIL_REASON_HOST,              /* Roam fail due to VDEV STOP issued from Host */
+    WMI_ROAM_FAIL_REASON_AUTH_SEND,         /* Unable to send auth request frame */
+    WMI_ROAM_FAIL_REASON_AUTH_RECV,         /* Received auth response with error status code */
+    WMI_ROAM_FAIL_REASON_NO_AUTH_RESP,      /* Not receiving auth response frame */
+    WMI_ROAM_FAIL_REASON_REASSOC_SEND,      /* Unable to send reassoc request frame */
+    WMI_ROAM_FAIL_REASON_REASSOC_RECV,      /* Received reassoc response with error status code */
+    WMI_ROAM_FAIL_REASON_NO_REASSOC_RESP,   /* Not receiving reassoc response frame */
+    WMI_ROAM_FAIL_REASON_EAPOL_TIMEOUT,     /* EAPOL TIMEOUT */
+    WMI_ROAM_FAIL_REASON_MLME,              /* MLME internal error */
+    WMI_ROAM_FAIL_REASON_INTERNAL_ABORT,    /* Internal abort */
 
-    WMI_ROAM_FAIL_REASON_UNKNOWN,
+
+    WMI_ROAM_FAIL_REASON_UNKNOWN = 255,
 } WMI_ROAM_FAIL_REASON_ID;
 
 typedef struct {
@@ -26599,6 +26610,7 @@ typedef struct {
      * This timestamp indicates the time when neighbor report response is sent.
      */
     A_UINT32 neighbor_report_response_timestamp; /* in milli seconds */
+    A_UINT32 neighbor_report_channel_count; /* Number of channels received in neighbor report response */
 } wmi_roam_neighbor_report_info;
 
 typedef struct {
@@ -26609,6 +26621,7 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_stats_event_fixed_param */
     A_UINT32 vdev_id;
+    A_UINT32 roam_scan_trigger_count; /* Number of roam scans triggered */
 } wmi_roam_stats_event_fixed_param;
 
 typedef struct {
