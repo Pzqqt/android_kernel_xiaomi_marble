@@ -324,7 +324,7 @@ static void csr_neighbor_roam_reset_init_state_control_info(struct mac_context *
 }
 
 #ifdef WLAN_FEATURE_11W
-static void
+void
 csr_update_pmf_cap_from_connected_profile(tCsrRoamConnectedProfile *profile,
 					  struct scan_filter *filter)
 {
@@ -333,11 +333,6 @@ csr_update_pmf_cap_from_connected_profile(tCsrRoamConnectedProfile *profile,
 	if (profile->MFPRequired)
 		filter->pmf_cap = WLAN_PMF_REQUIRED;
 }
-#else
-static inline void
-csr_update_pmf_cap_from_connected_profile(tCsrRoamConnectedProfile *profile,
-					  struct scan_filter *filter)
-{}
 #endif
 
 QDF_STATUS

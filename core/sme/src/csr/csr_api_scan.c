@@ -2778,6 +2778,7 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	filter->ssid_list[0].length = profile->SSID.length;
 	qdf_mem_copy(filter->ssid_list[0].ssid, profile->SSID.ssId,
 		     profile->SSID.length);
+	csr_update_pmf_cap_from_connected_profile(profile, filter);
 
 	pdev = wlan_objmgr_get_pdev_by_id(mac_ctx->psoc, 0, WLAN_LEGACY_MAC_ID);
 
