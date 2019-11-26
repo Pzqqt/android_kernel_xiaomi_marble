@@ -2365,19 +2365,17 @@ uint16_t reg_max_6ghz_chan_freq(void)
 
 bool reg_is_6ghz_psc_chan_freq(uint16_t freq)
 {
-	uint8_t count;
-
 	if (!REG_IS_6GHZ_FREQ(freq)) {
 		reg_debug(" Channel frequency is not a 6GHz frequency");
 		return false;
 	}
-	for (count = 1; count <= NUM_PSC_FREQ; count++) {
-		if (count ==
-		    (((freq - SIXG_STARTING_FREQ) + (FREQ_LEFT_SHIFT)) /
-		    (FREQ_TO_CHAN_SCALE * NUM_80MHZ_BAND_IN_6G)))
-			return true;
+
+	if (!(((freq - SIXG_STARTING_FREQ) + (FREQ_LEFT_SHIFT)) %
+	      (FREQ_TO_CHAN_SCALE * NUM_80MHZ_BAND_IN_6G))) {
+		return true;
 	}
-	reg_debug(" Channel frequency is not a 6GHz PSC frequency");
+
+	reg_debug_rl("Channel freq %d MHz is not a 6GHz PSC frequency", freq);
 
 	return false;
 }
