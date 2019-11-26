@@ -5551,8 +5551,10 @@ typedef enum {
     WMI_CSA_IE_PRESENT    = 0x00000001,
     WMI_XCSA_IE_PRESENT   = 0x00000002,
     WMI_WBW_IE_PRESENT    = 0x00000004,
-    WMI_CSWARP_IE_PRESENT = 0x00000008,
+    WMI_CSWRAP_IE_PRESENT = 0x00000008,
+    WMI_CSWARP_IE_PRESENT = WMI_CSWRAP_IE_PRESENT, /* deprecated: typo */
     WMI_QSBW_ISE_PRESENT  = 0x00000010,
+    WMI_CSWRAP_IE_EXTENDED_PRESENT = 0x00000020, /* Added bitmask to verify if the additional information is filled in */
 } WMI_CSA_EVENT_IES_PRESENT_FLAG;
 
 /* wmi CSA receive event from beacon frame */
@@ -5566,9 +5568,23 @@ typedef struct {
     A_UINT32 csa_ie[2];
     A_UINT32 xcsa_ie[2];
     A_UINT32 wb_ie[2];
-    A_UINT32 cswarp_ie;
+    union {
+        A_UINT32 cswrap_ie; /* use this */
+        A_UINT32 cswarp_ie; /* deprecated (typo) */
+    };
     A_UINT32 ies_present_flag; /* WMI_CSA_EVENT_IES_PRESENT_FLAG */
     A_UINT32 qsbw_ise;
+    /* cswrap_ie_extended:
+     * Stores full IEEE80211_ELEMID_CHAN_SWITCH_WRAP information element.
+     * The first two octets host the Element ID and Length fields.
+     * The IE comprises New Country Subelement (optional and max length 6),
+     * Wide Bandwidth Channel Subelement (optional and max length 5) and
+     * New Transmit Power Envelope subelement (optional and max length 7)
+     * The 4-byte words within cswrap_ie_extended[] use little endian ordering;
+     * the first octect of the IE resides in bits 7:0 of cswrap_ie_extended[0],
+     * the second octet resides in bits 15:8 of cswrap_ie_extended[0] and so on.
+     */
+    A_UINT32 cswrap_ie_extended[5];
 } wmi_csa_event_fixed_param;
 
 typedef enum {
