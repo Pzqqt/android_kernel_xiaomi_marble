@@ -1002,6 +1002,14 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 			pr_debug("change detected (power mode %d->%d, fps %d->%d)\n",
 				old_mode, new_mode, old_fps, new_fps);
 
+			/* If suspend resume and fps change are happening
+			 * at the same time, give preference to power mode
+			 * changes rather than fps change.
+			 */
+
+			if ((old_mode == new_mode) && (old_fps != new_fps))
+				new_mode = DRM_PANEL_BLANK_FPS_CHANGE;
+
 			notifier_data.data = &new_mode;
 			notifier_data.refresh_rate = new_fps;
 			notifier_data.id = connector->base.id;
