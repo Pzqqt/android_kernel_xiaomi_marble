@@ -627,9 +627,6 @@ struct sde_qos_lut_tbl {
  * @in_rot_minpredwnscale_num: min downscale ratio to enable pre-downscale
  * @in_rot_minpredwnscale_denom: min downscale ratio to enable pre-downscale
  * @in_rot_maxheight: max pre rotated height for inline rotation
- * @in_rot_prefill_fudge_lines: prefill fudge lines for inline rotation
- * @in_rot_prefill_lines_mv12: prefill lines for nv12 format inline rotation
- * @in_rot_prefill_lines: prefill lines for inline rotation
  * @llcc_scid: scid for the system cache
  * @llcc_slice size: slice size of the system cache
  */
@@ -668,9 +665,6 @@ struct sde_sspp_sub_blks {
 	u32 in_rot_minpredwnscale_num;
 	u32 in_rot_minpredwnscale_denom;
 	u32 in_rot_maxheight;
-	u32 in_rot_prefill_fudge_lines;
-	u32 in_rot_prefill_lines_nv12;
-	u32 in_rot_prefill_lines;
 	int llcc_scid;
 	size_t llcc_slice_size;
 };
@@ -1282,9 +1276,6 @@ struct sde_limit_cfg {
  * @true_inline_dwnscale_rt_denom    true inline rot downscale ratio for rt
  *                                       - denominator
  * @true_inline_dwnscale_nrt    true inline rotator downscale ratio for nrt
- * @true_inline_prefill_fudge_lines    true inline rotator prefill fudge lines
- * @true_inline_prefill_lines_nv12    true inline prefill lines for nv12 format
- * @true_inline_prefill_lines    true inline prefill lines
  * @macrotile_mode     UBWC parameter for macro tile channel distribution
  * @pipe_order_type    indicate if it is required to specify pipe order
  * @delay_prg_fetch_start indicates if throttling the fetch start is required
@@ -1345,9 +1336,6 @@ struct sde_mdss_cfg {
 	u32 true_inline_dwnscale_rt_num;
 	u32 true_inline_dwnscale_rt_denom;
 	u32 true_inline_dwnscale_nrt;
-	u32 true_inline_prefill_fudge_lines;
-	u32 true_inline_prefill_lines_nv12;
-	u32 true_inline_prefill_lines;
 	u32 macrotile_mode;
 	u32 pipe_order_type;
 	bool delay_prg_fetch_start;
