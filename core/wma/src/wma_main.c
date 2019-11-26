@@ -9337,8 +9337,9 @@ QDF_STATUS wma_get_rx_chainmask(uint8_t pdev_id, uint32_t *chainmask_2g,
 				uint32_t *chainmask_5g)
 {
 	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
-	uint8_t total_mac_phy_cnt;
+	uint8_t total_mac_phy_cnt, idx;
 	struct target_psoc_info *tgt_hdl;
+	uint32_t hw_mode_idx = 0, num_hw_modes = 0;
 
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
@@ -9353,17 +9354,28 @@ QDF_STATUS wma_get_rx_chainmask(uint8_t pdev_id, uint32_t *chainmask_2g,
 	}
 
 	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
+	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 	if (total_mac_phy_cnt <= pdev_id) {
 		WMA_LOGE("%s: mac phy cnt %d, pdev id %d", __func__,
 			 total_mac_phy_cnt, pdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if ((wma_handle->new_hw_mode_index != WMA_DEFAULT_HW_MODE_INDEX) &&
+	    (num_hw_modes > 0) &&
+	    (wma_handle->new_hw_mode_index < num_hw_modes))
+		hw_mode_idx = wma_handle->new_hw_mode_index;
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
-	*chainmask_2g = mac_phy_cap[pdev_id].rx_chain_mask_2G;
-	*chainmask_5g = mac_phy_cap[pdev_id].rx_chain_mask_5G;
-	WMA_LOGD("%s, pdev id: %d, rx chainmask 2g:%d, rx chainmask 5g:%d",
-		 __func__, pdev_id, *chainmask_2g, *chainmask_5g);
+	for (idx = 0; idx < total_mac_phy_cnt; idx++) {
+		if (mac_phy_cap[idx].hw_mode_id != hw_mode_idx)
+			continue;
+		if (mac_phy_cap[idx].supported_bands & WLAN_2G_CAPABILITY)
+			*chainmask_2g = mac_phy_cap[idx].rx_chain_mask_2G;
+		if (mac_phy_cap[idx].supported_bands & WLAN_5G_CAPABILITY)
+			*chainmask_5g = mac_phy_cap[idx].rx_chain_mask_5G;
+	}
+	WMA_LOGD("%s, pdev id: %d, hw_mode_idx: %d, rx chainmask 2g:%d, 5g:%d",
+		 __func__, pdev_id, hw_mode_idx, *chainmask_2g, *chainmask_5g);
 
 	return QDF_STATUS_SUCCESS;
 }
