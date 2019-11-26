@@ -6478,6 +6478,7 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header; /* WMITLV_TAG_STRUC_wmi_pdev_bss_chan_info_request_fixed_param */
     A_UINT32 param;   /* 1 = read only, 2= read and clear */
+    A_UINT32 pdev_id; /* pdev_id for identifying mac */
 } wmi_pdev_bss_chan_info_request_fixed_param;
 
 typedef struct {
@@ -6774,6 +6775,7 @@ typedef struct {
 
     A_UINT32 rx_bss_cycle_count_low;    /* low 31 bits of rx cycle cnt for my bss in 64bits format */
     A_UINT32 rx_bss_cycle_count_high;   /* high 31 bits of rx_cycle cnt for my bss in 64bits format */
+    A_UINT32 pdev_id;                   /* pdev_id for identifying the MAC */
 } wmi_pdev_bss_chan_info_event_fixed_param;
 
 typedef struct {
