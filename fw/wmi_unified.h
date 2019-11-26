@@ -9641,9 +9641,9 @@ typedef enum {
 /* Control to enable/disable FILS discovery frame tx in non-HT duplicate */
 #define WMI_VDEV_6GHZ_BITMAP_NON_HT_DUPLICATE_FD_FRAME                  0x4
 /* Control to enable/disable periodic FILS discovery frame transmission */
-#define WMI_VDEV_6GHZ_BITMAP_FD_FRAME                                   0x8
+#define WMI_VDEV_6GHZ_BITMAP_FD_FRAME                                   0x8  /* deprecated */
 /* Control to enable/disable periodic broadcast probe response transmission */
-#define WMI_VDEV_6GHZ_BITMAP_BCAST_PROBE_RSP                            0x10
+#define WMI_VDEV_6GHZ_BITMAP_BCAST_PROBE_RSP                            0x10 /* deprecated */
 
 /** the definition of different VDEV parameters */
 typedef enum {
@@ -13198,13 +13198,22 @@ typedef struct wmi_fd_send_from_host {
 } wmi_fd_send_from_host_cmd_fixed_param;
 
 /*
+ * Control to send broadcast probe response instead of FD frames.
+ * When this flag is not set then FD frame will be transmitted when
+ * fd_period is non-zero
+ */
+#define WMI_FILS_FLAGS_BITMAP_BCAST_PROBE_RSP   0x1
+
+/*
  * WMI command structure for FILS feature enable/disable
  */
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_enable_fils_cmd_fixed_param  */
     /* VDEV identifier */
     A_UINT32 vdev_id;
-    A_UINT32 fd_period; /* non-zero - enable Fils Discovery frames with this period (in TU), 0 - disable FD frames */
+    A_UINT32 fd_period; /* non-zero - enable Fils Discovery frames or broadcast probe response with this period (in TU),
+                         * 0 - disable FD and broadcast probe response frames */
+    A_UINT32 flags; /* WMI_FILS_FLAGS_BITMAP flags */
 } wmi_enable_fils_cmd_fixed_param;
 
 /*
