@@ -76,6 +76,7 @@ typedef const enum policy_mgr_conc_next_action
  * @CSA_REASON_UNSAFE_CHANNEL: Unsafe channel.
  * @CSA_REASON_LTE_COEX: LTE coex.
  * @CSA_REASON_CONCURRENT_NAN_EVENT: NAN concurrency.
+ * @CSA_REASON_BAND_RESTRICTED: band disabled or re-enabled
  *
  */
 enum sap_csa_reason_code {
@@ -87,7 +88,8 @@ enum sap_csa_reason_code {
 	CSA_REASON_CONCURRENT_STA_CHANGED_CHANNEL,
 	CSA_REASON_UNSAFE_CHANNEL,
 	CSA_REASON_LTE_COEX,
-	CSA_REASON_CONCURRENT_NAN_EVENT
+	CSA_REASON_CONCURRENT_NAN_EVENT,
+	CSA_REASON_BAND_RESTRICTED
 };
 
 /**
