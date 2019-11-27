@@ -2266,6 +2266,9 @@ static QDF_STATUS extract_chan_info_event_tlv(wmi_unified_t wmi_handle,
 	chan_info->rx_frame_count = ev->rx_frame_count;
 	chan_info->mac_clk_mhz = ev->mac_clk_mhz;
 	chan_info->vdev_id = ev->vdev_id;
+	qdf_mem_copy(chan_info->per_chain_noise_floor,
+		     ev->per_chain_noise_floor,
+		     sizeof(chan_info->per_chain_noise_floor));
 
 	return QDF_STATUS_SUCCESS;
 }
