@@ -602,6 +602,9 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_rx_msdu_start_offset_get)(void);
 	uint32_t (*hal_rx_mpdu_start_offset_get)(void);
 	uint32_t (*hal_rx_mpdu_end_offset_get)(void);
+	void * (*hal_rx_flow_setup_fse)(uint8_t *rx_fst,
+					uint32_t table_offset,
+					uint8_t *rx_flow);
 };
 
 /**

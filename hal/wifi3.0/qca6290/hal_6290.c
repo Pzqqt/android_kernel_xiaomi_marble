@@ -1100,7 +1100,8 @@ struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	hal_rx_attn_offset_get_generic,
 	hal_rx_msdu_start_offset_get_generic,
 	hal_rx_mpdu_start_offset_get_generic,
-	hal_rx_mpdu_end_offset_get_generic
+	hal_rx_mpdu_end_offset_get_generic,
+	NULL
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {

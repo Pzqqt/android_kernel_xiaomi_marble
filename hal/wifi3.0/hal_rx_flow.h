@@ -23,9 +23,9 @@
 #include "hal_api.h"
 #include "qdf_mem.h"
 #include "rx_flow_search_entry.h"
+#include "hal_rx_flow_info.h"
 
 #define HAL_FST_HASH_KEY_SIZE_BITS 315
-#define HAL_FST_HASH_KEY_SIZE_BYTES 40
 #define HAL_FST_HASH_KEY_SIZE_WORDS 10
 #define HAL_FST_HASH_DATA_SIZE 37
 #define HAL_FST_HASH_MASK 0x7ffff
@@ -52,20 +52,6 @@
 #define HAL_REO_DEST_IND_START_OFFSET 0x10
 
 /**
- * struct hal_rx_flow - Rx Flow parameters to be sent to HW
- * @tuple_info: Rx Flow 5-tuple (src & dest IP, src & dest ports, L4 protocol)
- * @reo_destination_handler: REO destination for this flow
- * @reo_destination_indication: REO indication for this flow
- * @fse_metadata: Flow metadata or tag passed to HW for marking packets
- */
-struct hal_rx_flow {
-	struct hal_flow_tuple_info tuple_info;
-	uint8_t reo_destination_handler;
-	uint8_t reo_destination_indication;
-	uint32_t fse_metadata;
-};
-
-/**
  * enum hal_rx_fse_reo_destination_handler
  * @HAL_RX_FSE_REO_DEST_FT: Use this entry's destination indication
  * @HAL_RX_FSE_REO_DEST_ASPT: Use Address Search + Peer Table's entry
@@ -80,30 +66,6 @@ enum hal_rx_fse_reo_destination_handler {
 };
 
 /**
- * struct hal_rx_fst - HAL RX Flow search table context
- * @base_vaddr: Virtual Base address of HW FST
- * @base_paddr: Physical Base address of HW FST
- * @key: Pointer to 320-bit Key read from cfg
- * @shifted_key: Pointer to left-shifted 320-bit Key used for Toeplitz Hash
- * @max_entries : Max number of entries in flow searchh  table
- * @max_skid_length : Max search length if there is hash collision
- * @hash_mask: Hash mask to apply to index into FST
- * @key_cache: Toepliz Key Cache configured key
- */
-struct hal_rx_fst {
-	uint8_t *base_vaddr;
-	qdf_dma_addr_t base_paddr;
-	uint8_t *key;
-	uint8_t  shifted_key[HAL_FST_HASH_KEY_SIZE_BYTES];
-	uint16_t max_entries;
-	uint16_t max_skid_length;
-	uint16_t hash_mask;
-	uint32_t key_cache[HAL_FST_HASH_KEY_SIZE_BYTES][1 << 8];
-	uint32_t add_flow_count;
-	uint32_t del_flow_count;
-};
-
-/**
  * hal_rx_flow_setup_fse() - Setup a flow search entry in HW FST
  * @fst: Pointer to the Rx Flow Search Table
  * @table_offset: offset into the table where the flow is to be setup
@@ -111,9 +73,10 @@ struct hal_rx_fst {
  *
  * Return: Success/Failure
  */
-void *hal_rx_flow_setup_fse(struct hal_rx_fst *fst,
-			    uint32_t table_offset,
-			    struct hal_rx_flow *flow);
+void *
+hal_rx_flow_setup_fse(hal_soc_handle_t hal_soc_hdl,
+		      struct hal_rx_fst *fst, uint32_t table_offset,
+		      struct hal_rx_flow *flow);
 
 /**
  * hal_rx_flow_delete_entry() - Delete a flow from the Rx Flow Search Table
