@@ -2675,6 +2675,20 @@ lim_add_sta(struct mac_context *mac_ctx,
 			add_sta_params->stbc_capable = 0;
 	}
 
+	if (session_entry->opmode == QDF_SAP_MODE ||
+	    session_entry->opmode == QDF_P2P_GO_MODE) {
+		if (session_entry->parsedAssocReq) {
+			uint16_t aid = sta_ds->assocId;
+			/* Get a copy of the already parsed Assoc Request */
+			assoc_req =
+			(tpSirAssocReq) session_entry->parsedAssocReq[aid];
+
+			add_sta_params->wpa_rsn = assoc_req->rsnPresent;
+			add_sta_params->wpa_rsn |=
+				(assoc_req->wpaPresent << 1);
+		}
+	}
+
 	lim_update_he_stbc_capable(add_sta_params);
 
 	msg_q.type = WMA_ADD_STA_REQ;
