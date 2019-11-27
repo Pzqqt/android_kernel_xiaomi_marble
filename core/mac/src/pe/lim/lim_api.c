@@ -1769,7 +1769,8 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 		pe_find_session_by_vdev_id(mac, missed_beacon_ind->bss_idx);
 
 	if (!pe_session) {
-		pe_err("session does not exist for given BSSId");
+		pe_err("session does not exist for vdev_id %d",
+			missed_beacon_ind->bss_idx);
 		return;
 	}
 
@@ -2433,6 +2434,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	curr_sta_ds->nss = ft_session_ptr->nss;
 	roam_sync_ind_ptr->nss = ft_session_ptr->nss;
 	ft_session_ptr->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
+	ft_session_ptr->limPrevMlmState = ft_session_ptr->limMlmState;
 	lim_init_tdls_data(mac_ctx, ft_session_ptr);
 	join_rsp_len = ft_session_ptr->RICDataLen +
 			sizeof(struct join_rsp) - sizeof(uint8_t);
@@ -2486,8 +2488,8 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	lim_set_tdls_flags(roam_sync_ind_ptr, ft_session_ptr);
 	roam_sync_ind_ptr->join_rsp->aid = ft_session_ptr->limAID;
 	lim_fill_join_rsp_ht_caps(ft_session_ptr, roam_sync_ind_ptr->join_rsp);
-	ft_session_ptr->limPrevSmeState = ft_session_ptr->limSmeState;
 	ft_session_ptr->limSmeState = eLIM_SME_LINK_EST_STATE;
+	ft_session_ptr->limPrevSmeState = ft_session_ptr->limSmeState;
 	ft_session_ptr->bRoamSynchInProgress = false;
 	if (mac_ctx->roam.pReassocResp)
 		qdf_mem_free(mac_ctx->roam.pReassocResp);

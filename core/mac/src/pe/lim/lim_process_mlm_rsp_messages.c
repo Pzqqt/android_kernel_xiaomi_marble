@@ -2447,7 +2447,22 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 	vdev_id = set_key_params->vdev_id;
 	session_entry = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session_entry) {
-		pe_err("session does not exist for given session_id");
+		pe_err("session does not exist for given vdev_id %d", vdev_id);
+		qdf_mem_zero(msg->bodyptr, sizeof(*set_key_params));
+		qdf_mem_free(msg->bodyptr);
+		msg->bodyptr = NULL;
+		lim_send_sme_set_context_rsp(mac_ctx,
+					     mlm_set_key_cnf.peer_macaddr,
+					     0, eSIR_SME_INVALID_SESSION, NULL,
+					     vdev_id);
+		return;
+	}
+
+	if (!lim_is_set_key_req_converged() &&
+	    (session_entry->limMlmState != eLIM_MLM_WT_SET_STA_KEY_STATE)) {
+		pe_err("Received in unexpected limMlmState %X vdev %d pe_session_id %d",
+			session_entry->limMlmState, session_entry->vdev_id,
+			session_entry->peSessionId);
 		qdf_mem_zero(msg->bodyptr, sizeof(*set_key_params));
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
@@ -2461,14 +2476,7 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 	pe_debug("PE session ID %d, vdev_id %d", session_id, vdev_id);
 	result_status = set_key_params->status;
 	if (!lim_is_set_key_req_converged()) {
-		if (eLIM_MLM_WT_SET_STA_KEY_STATE !=
-				session_entry->limMlmState) {
-			pe_err("Received unexpected [Mesg Id - %d] in state %X",
-			       msg->type, session_entry->limMlmState);
-			resp_reqd = 0;
-		} else {
-			mlm_set_key_cnf.resultCode = result_status;
-		}
+		mlm_set_key_cnf.resultCode = result_status;
 		/* Restore MLME state */
 		session_entry->limMlmState = session_entry->limPrevMlmState;
 	}
@@ -2552,8 +2560,24 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 					     vdev_id);
 		return;
 	}
+	if (!lim_is_set_key_req_converged() &&
+	    (session_entry->limMlmState != eLIM_MLM_WT_SET_BSS_KEY_STATE) &&
+	    (session_entry->limMlmState !=
+	     eLIM_MLM_WT_SET_STA_BCASTKEY_STATE)) {
+		pe_err("Received in unexpected limMlmState %X vdev %d pe_session_id %d",
+			session_entry->limMlmState, session_entry->vdev_id,
+			session_entry->peSessionId);
+		qdf_mem_zero(msg->bodyptr, sizeof(tSetBssKeyParams));
+		qdf_mem_free(msg->bodyptr);
+		msg->bodyptr = NULL;
+		lim_send_sme_set_context_rsp(mac_ctx, set_key_cnf.peer_macaddr,
+					     0, eSIR_SME_INVALID_SESSION, NULL,
+					     vdev_id);
+		return;
+	}
+
 	session_id = session_entry->peSessionId;
-	pe_debug("PE session ID %d, SME vdev_id %d", session_id, vdev_id);
+	pe_debug("PE session ID %d, vdev_id %d", session_id, vdev_id);
 	if (eLIM_MLM_WT_SET_BSS_KEY_STATE == session_entry->limMlmState) {
 		result_status =
 			(uint16_t)(((tpSetBssKeyParams)msg->bodyptr)->status);
@@ -2581,15 +2605,7 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 		set_key_cnf.key_len_nonzero = false;
 
 	if (!lim_is_set_key_req_converged()) {
-		if (eLIM_MLM_WT_SET_BSS_KEY_STATE !=
-				session_entry->limMlmState &&
-				eLIM_MLM_WT_SET_STA_BCASTKEY_STATE !=
-				session_entry->limMlmState) {
-			pe_err("Received unexpected [Mesg Id - %d] in state %X",
-			       msg->type, session_entry->limMlmState);
-		} else {
-			set_key_cnf.resultCode = result_status;
-		}
+		set_key_cnf.resultCode = result_status;
 		session_entry->limMlmState = session_entry->limPrevMlmState;
 	}
 
