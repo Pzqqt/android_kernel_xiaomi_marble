@@ -13378,6 +13378,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_WPA3_OWE_ROAM_SUPPORT;
 	wmi_service[wmi_service_6ghz_support] =
 			WMI_SERVICE_6GHZ_SUPPORT;
+	wmi_service[wmi_service_bw_165mhz_support] =
+			WMI_SERVICE_BW_165MHZ_SUPPORT;
 }
 
 /**

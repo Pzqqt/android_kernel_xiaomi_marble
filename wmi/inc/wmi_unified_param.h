@@ -5038,6 +5038,7 @@ typedef enum {
 	wmi_service_owe_roam_support,
 	wmi_service_ext2_msg,
 	wmi_service_6ghz_support,
+	wmi_service_bw_165mhz_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
