@@ -26,6 +26,8 @@
 #include "swr-slave-registers.h"
 #include "swr-mstr-ctrl.h"
 
+#define SWR_NUM_PORTS    4 /* TODO - Get this info from DT */
+
 #define SWRM_FRAME_SYNC_SEL    4000 /* 4KHz */
 #define SWRM_FRAME_SYNC_SEL_NATIVE 3675 /* 3.675KHz */
 
@@ -65,10 +67,12 @@
 #define SWRM_MCP_SLV_STATUS_MASK    0x03
 #define SWRM_ROW_CTRL_MASK    0xF8
 #define SWRM_COL_CTRL_MASK    0x07
+#define SWRM_CLK_DIV_MASK     0x700
 #define SWRM_SSP_PERIOD_MASK  0xff0000
 #define SWRM_NUM_PINGS_MASK   0x3E0000
 #define SWRM_MCP_FRAME_CTRL_BANK_ROW_CTRL_SHFT    3
 #define SWRM_MCP_FRAME_CTRL_BANK_COL_CTRL_SHFT    0
+#define SWRM_MCP_FRAME_CTRL_BANK_CLK_DIV_VALUE_SHFT 8
 #define SWRM_MCP_FRAME_CTRL_BANK_SSP_PERIOD_SHFT  16
 #define SWRM_NUM_PINGS_POS    0x11
 
@@ -116,6 +120,42 @@ static bool swrm_lock_sleep(struct swr_mstr_ctrl *swrm);
 static void swrm_unlock_sleep(struct swr_mstr_ctrl *swrm);
 static u32 swr_master_read(struct swr_mstr_ctrl *swrm, unsigned int reg_addr);
 static void swr_master_write(struct swr_mstr_ctrl *swrm, u16 reg_addr, u32 val);
+
+
+static u8 swrm_get_clk_div(int mclk_freq, int bus_clk_freq)
+{
+	int clk_div = 0;
+	u8 div_val = 0;
+
+	if (!mclk_freq || !bus_clk_freq)
+		return 0;
+
+	clk_div = (mclk_freq / bus_clk_freq);
+
+	switch (clk_div) {
+	case 32:
+		div_val = 5;
+		break;
+	case 16:
+		div_val = 4;
+		break;
+	case 8:
+		div_val = 3;
+		break;
+	case 4:
+		div_val = 2;
+		break;
+	case 2:
+		div_val = 1;
+		break;
+	case 1:
+	default:
+		div_val = 0;
+		break;
+	}
+
+	return div_val;
+}
 
 static bool swrm_is_msm_variant(int val)
 {
@@ -996,6 +1036,49 @@ end:
 	return is_removed;
 }
 
+int swrm_get_clk_div_rate(int mclk_freq, int bus_clk_freq)
+{
+	if (!bus_clk_freq)
+		return mclk_freq;
+
+	if (mclk_freq == SWR_CLK_RATE_9P6MHZ) {
+		if (bus_clk_freq <= SWR_CLK_RATE_0P6MHZ)
+			bus_clk_freq = SWR_CLK_RATE_0P6MHZ;
+		else if (bus_clk_freq <= SWR_CLK_RATE_1P2MHZ)
+			bus_clk_freq = SWR_CLK_RATE_1P2MHZ;
+		else if (bus_clk_freq <= SWR_CLK_RATE_2P4MHZ)
+			bus_clk_freq = SWR_CLK_RATE_2P4MHZ;
+		else if(bus_clk_freq <= SWR_CLK_RATE_4P8MHZ)
+			bus_clk_freq = SWR_CLK_RATE_4P8MHZ;
+		else if(bus_clk_freq <= SWR_CLK_RATE_9P6MHZ)
+			bus_clk_freq = SWR_CLK_RATE_9P6MHZ;
+	} else if (mclk_freq == SWR_CLK_RATE_11P2896MHZ)
+		bus_clk_freq = SWR_CLK_RATE_11P2896MHZ;
+
+	return bus_clk_freq;
+}
+
+static int swrm_update_bus_clk(struct swr_mstr_ctrl *swrm)
+{
+	int ret = 0;
+	int agg_clk = 0;
+	int i;
+
+	for (i = 0; i < SWR_MSTR_PORT_LEN; i++)
+		agg_clk += swrm->mport_cfg[i].ch_rate;
+
+	if (agg_clk)
+		swrm->bus_clk = swrm_get_clk_div_rate(swrm->mclk_freq,
+							agg_clk);
+	else
+		swrm->bus_clk = swrm->mclk_freq;
+
+	dev_dbg(swrm->dev, "%s: all_port_clk: %d, bus_clk: %d\n",
+		__func__, agg_clk, swrm->bus_clk);
+
+	return ret;
+}
+
 static void swrm_disable_ports(struct swr_master *master,
 					     u8 bank)
 {
@@ -1268,13 +1351,14 @@ static void swrm_apply_port_config(struct swr_master *master)
 static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 {
 	u8 bank;
-	u32 value, n_row, n_col;
+	u32 value = 0, n_row = 0, n_col = 0;
 	u32 row = 0, col = 0;
+	int bus_clk_div_factor;
 	int ret;
 	u8 ssp_period = 0;
 	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(master);
 	int mask = (SWRM_ROW_CTRL_MASK | SWRM_COL_CTRL_MASK |
-		    SWRM_SSP_PERIOD_MASK);
+		    SWRM_CLK_DIV_MASK | SWRM_SSP_PERIOD_MASK);
 	u8 inactive_bank;
 	int frame_sync = SWRM_FRAME_SYNC_SEL;
 
@@ -1334,13 +1418,17 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 		clear_bit(DISABLE_PENDING, &swrm->port_req_pending);
 		swrm_disable_ports(master, bank);
 	}
-	dev_dbg(swrm->dev, "%s: enable: %d, cfg_devs: %d\n",
-		__func__, enable, swrm->num_cfg_devs);
+	dev_dbg(swrm->dev, "%s: enable: %d, cfg_devs: %d freq %d\n",
+		__func__, enable, swrm->num_cfg_devs, swrm->mclk_freq);
 
 	if (enable) {
 		/* set col = 16 */
 		n_col = SWR_MAX_COL;
 		col = SWRM_COL_16;
+		if (swrm->bus_clk == MCLK_FREQ_LP) {
+			n_col = SWR_MIN_COL;
+			col = SWRM_COL_02;
+		}
 	} else {
 		/*
 		 * Do not change to col = 2 if there are still active ports
@@ -1355,25 +1443,26 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 	}
 	/* Use default 50 * x, frame shape. Change based on mclk */
 	if (swrm->mclk_freq == MCLK_FREQ_NATIVE) {
-		dev_dbg(swrm->dev, "setting 64 x %d frameshape\n",
-			n_col ? 16 : 2);
+		dev_dbg(swrm->dev, "setting 64 x %d frameshape\n", col);
 		n_row = SWR_ROW_64;
 		row = SWRM_ROW_64;
 		frame_sync = SWRM_FRAME_SYNC_SEL_NATIVE;
 	} else {
-		dev_dbg(swrm->dev, "setting 50 x %d frameshape\n",
-			n_col ? 16 : 2);
+		dev_dbg(swrm->dev, "setting 50 x %d frameshape\n", col);
 		n_row = SWR_ROW_50;
 		row = SWRM_ROW_50;
 		frame_sync = SWRM_FRAME_SYNC_SEL;
 	}
 	ssp_period = swrm_get_ssp_period(swrm, row, col, frame_sync);
-	dev_dbg(swrm->dev, "%s: ssp_period: %d\n", __func__, ssp_period);
-
+	bus_clk_div_factor = swrm_get_clk_div(swrm->mclk_freq, swrm->bus_clk);
+	dev_dbg(swrm->dev, "%s: ssp_period: %d, bus_clk_div:%d \n", __func__,
+					ssp_period, bus_clk_div_factor);
 	value = swr_master_read(swrm, SWRM_MCP_FRAME_CTRL_BANK(bank));
 	value &= (~mask);
 	value |= ((n_row << SWRM_MCP_FRAME_CTRL_BANK_ROW_CTRL_SHFT) |
 		  (n_col << SWRM_MCP_FRAME_CTRL_BANK_COL_CTRL_SHFT) |
+		  (bus_clk_div_factor <<
+			SWRM_MCP_FRAME_CTRL_BANK_CLK_DIV_VALUE_SHFT) |
 		  ((ssp_period - 1) << SWRM_MCP_FRAME_CTRL_BANK_SSP_PERIOD_SHFT));
 	swr_master_write(swrm, SWRM_MCP_FRAME_CTRL_BANK(bank), value);
 
@@ -1477,6 +1566,11 @@ static int swrm_connect_port(struct swr_master *master,
 		mport->port_en = true;
 		mport->req_ch |= mstr_ch_msk;
 		master->port_en_mask |= (1 << mstr_port_id);
+		if (swrm->clk_stop_mode0_supp &&
+			(mport->ch_rate < portinfo->ch_rate[i])) {
+			mport->ch_rate = portinfo->ch_rate[i];
+			swrm_update_bus_clk(swrm);
+		}
 	}
 	master->num_port += portinfo->num_port;
 	set_bit(ENABLE_PENDING, &swrm->port_req_pending);
@@ -1539,6 +1633,10 @@ static int swrm_disconnect_port(struct swr_master *master,
 		}
 		port_req->req_ch &= ~portinfo->ch_en[i];
 		mport->req_ch &= ~mstr_ch_mask;
+		if (swrm->clk_stop_mode0_supp && !mport->req_ch) {
+			mport->ch_rate = 0;
+			swrm_update_bus_clk(swrm);
+		}
 	}
 	master->num_port -= portinfo->num_port;
 	set_bit(DISABLE_PENDING, &swrm->port_req_pending);

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _LINUX_SOUNDWIRE_H
@@ -10,6 +10,13 @@
 #include <linux/irqdomain.h>
 #include <linux/regmap.h>
 #include "audio_mod_devicetable.h"
+
+#define SWR_CLK_RATE_0P6MHZ       600000
+#define SWR_CLK_RATE_1P2MHZ      1200000
+#define SWR_CLK_RATE_2P4MHZ      2400000
+#define SWR_CLK_RATE_4P8MHZ      4800000
+#define SWR_CLK_RATE_9P6MHZ      9600000
+#define SWR_CLK_RATE_11P2896MHZ  1128960
 
 extern struct bus_type soundwire_type;
 struct swr_device;
