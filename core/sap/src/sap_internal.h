@@ -171,7 +171,8 @@ struct sap_context {
 	uint8_t num_of_channel;
 	uint16_t ch_width_orig;
 	struct ch_params ch_params;
-
+	uint32_t chan_freq_before_switch_band;
+	enum phy_ch_width chan_width_before_switch_band;
 	uint32_t auto_channel_select_weight;
 	bool enableOverLapCh;
 	struct sap_acs_cfg *acs_cfg;

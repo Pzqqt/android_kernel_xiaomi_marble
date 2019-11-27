@@ -1425,6 +1425,9 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	struct hdd_context *hdd_ctx;
 	enum country_src cc_src;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
+	struct hdd_adapter *adapter = NULL;
+	struct hdd_ap_ctx *ap_ctx;
+	enum band_info current_band;
 
 	pdev_priv = wlan_pdev_get_ospriv(pdev);
 	wiphy = pdev_priv->wiphy;
@@ -1456,6 +1459,21 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	else
 		sme_generic_change_country_code(hdd_ctx->mac_handle,
 				hdd_ctx->reg.alpha2);
+
+	if (ucfg_reg_get_curr_band(hdd_ctx->pdev, &current_band) !=
+	    QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to get current band config");
+		return;
+	}
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		ap_ctx = &adapter->session.ap;
+		if ((adapter->device_mode == QDF_SAP_MODE ||
+		     adapter->device_mode == QDF_P2P_GO_MODE)) {
+			wlansap_set_band_csa(ap_ctx->sap_context,
+					     &ap_ctx->sap_config,
+					     current_band);
+		}
+	}
 }
 
 int hdd_update_regulatory_config(struct hdd_context *hdd_ctx)
