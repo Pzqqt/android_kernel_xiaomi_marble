@@ -141,11 +141,13 @@ dp_tx_limit_check(struct dp_vdev *vdev)
 static inline void
 dp_tx_outstanding_inc(struct dp_pdev *pdev)
 {
+	qdf_atomic_inc(&pdev->num_tx_outstanding);
 }
 
 static inline void
 dp_tx_outstanding_dec(struct dp_pdev *pdev)
 {
+	qdf_atomic_dec(&pdev->num_tx_outstanding);
 }
 #endif //QCA_TX_LIMIT_CHECK
 
