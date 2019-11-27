@@ -329,6 +329,22 @@ hdd_wlan_retry_tsf_cap(struct hdd_adapter *adapter)
 }
 
 static void
+hdd_wlan_restart_tsf_cap(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hddctx;
+	int count = adapter->continuous_cap_retry_count;
+
+	hddctx = WLAN_HDD_GET_CTX(adapter);
+	if (count == MAX_CONTINUOUS_RETRY_CNT) {
+		hdd_debug("Restart TSF CAP");
+		qdf_atomic_set(&hddctx->cap_tsf_flag, 0);
+		adapter->continuous_cap_retry_count = 0;
+		qdf_mc_timer_start(&adapter->host_target_sync_timer,
+				   WLAN_HDD_CAPTURE_TSF_INIT_INTERVAL_MS);
+	}
+}
+
+static void
 hdd_update_host_time(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx;
@@ -417,6 +433,11 @@ static uint32_t
 hdd_wlan_retry_tsf_cap(struct hdd_adapter *adapter)
 {
 	return 0;
+}
+
+static void
+hdd_wlan_restart_tsf_cap(struct hdd_adapter *adapter)
+{
 }
 
 static void
@@ -805,6 +826,7 @@ static inline int32_t hdd_get_hosttime_from_targettime(
 	if (in_cap_state)
 		qdf_spin_lock_bh(&adapter->host_target_sync_lock);
 
+	hdd_wlan_restart_tsf_cap(adapter);
 	/* at present, target_time is only 32bit in fact */
 	delta32_target = (int64_t)((target_time & U32_MAX) -
 			(adapter->last_target_time & U32_MAX));
