@@ -1162,6 +1162,17 @@ wmi_unified_setup_install_key_cmd(wmi_unified_t wmi_handle,
 				  struct set_key_params *key_params);
 
 /**
+ * wmi_unified_get_pn_send_cmd() - send command to fw get PN for peer
+ * @wmi_handle: wmi handle
+ * @pn_params: PN parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_get_pn_send_cmd(wmi_unified_t wmi_hdl,
+			    struct peer_request_pn_param *pn_params);
+
+/**
  * wmi_unified_p2p_go_set_beacon_ie_cmd() - set beacon IE for p2p go
  * @wmi_handle: wmi handle
  * @vdev_id: vdev id
@@ -2339,6 +2350,17 @@ QDF_STATUS wmi_unified_lci_set_cmd_send(wmi_unified_t wmi_handle,
  */
 QDF_STATUS wmi_unified_lcr_set_cmd_send(wmi_unified_t wmi_handle,
 					struct lcr_set_params *param);
+
+/**
+ * wmi_unified_extract_pn() - extract pn event data
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: pointer to get pn event param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_extract_pn(wmi_unified_t wmi_hdl, void *evt_buf,
+			  struct wmi_host_get_pn_event *param);
 
 /**
  * wmi_unified_send_periodic_chan_stats_config_cmd() - send periodic chan

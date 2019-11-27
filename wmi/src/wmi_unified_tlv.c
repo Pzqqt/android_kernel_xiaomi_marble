@@ -4349,6 +4349,8 @@ static QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
 		     sizeof(wmi_key_seq_counter));
 	cmd->key_len = key_params->key_len;
 
+	qdf_mem_copy(&cmd->key_tsc_counter, &key_params->key_tsc_counter,
+		     sizeof(wmi_key_seq_counter));
 	wmi_mtrace(WMI_VDEV_INSTALL_KEY_CMDID, cmd->vdev_id, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 					      WMI_VDEV_INSTALL_KEY_CMDID);
@@ -10512,6 +10514,73 @@ static QDF_STATUS fips_conv_data_be(uint32_t data_len, uint8_t *data)
 #endif
 
 /**
+* send_pdev_get_pn_cmd_tlv() - send get PN request params to fw
+* @wmi_handle - wmi handle
+* @params - PN request params for peer
+*
+* Return: QDF_STATUS - success or error status
+*/
+static QDF_STATUS
+send_pdev_get_pn_cmd_tlv(wmi_unified_t wmi_handle,
+			 struct peer_request_pn_param *params)
+{
+	wmi_peer_tx_pn_request_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t len = sizeof(wmi_peer_tx_pn_request_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_peer_tx_pn_request_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_tx_pn_request_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_peer_tx_pn_request_cmd_fixed_param));
+
+	cmd->vdev_id = params->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->peer_macaddr, &cmd->peer_macaddr);
+	cmd->key_type = params->key_type;
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PEER_TX_PN_REQUEST_CMDID)) {
+		WMI_LOGE("%s:Failed to send WMI command\n", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+* extract_get_pn_data_tlv() - extract pn resp
+* @wmi_handle - wmi handle
+* @params - PN response params for peer
+*
+* Return: QDF_STATUS - success or error status
+*/
+static QDF_STATUS
+extract_get_pn_data_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			struct wmi_host_get_pn_event *param)
+{
+	WMI_PEER_TX_PN_RESPONSE_EVENTID_param_tlvs *param_buf;
+	wmi_peer_tx_pn_response_event_fixed_param *event = NULL;
+
+	param_buf = (WMI_PEER_TX_PN_RESPONSE_EVENTID_param_tlvs *)evt_buf;
+	event =
+	(wmi_peer_tx_pn_response_event_fixed_param *)param_buf->fixed_param;
+
+	param->vdev_id = event->vdev_id;
+	param->key_type = event->key_type;
+	qdf_mem_copy(param->pn, event->pn, sizeof(event->pn));
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->peer_macaddr, param->mac_addr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_fips_event_data_tlv() - extract fips event data
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -12663,6 +12732,8 @@ struct wmi_ops tlv_ops =  {
 				extract_encrypt_decrypt_resp_event_tlv,
 #endif
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_tlv,
+	.extract_get_pn_data = extract_get_pn_data_tlv,
+	.send_pdev_get_pn_cmd = send_pdev_get_pn_cmd_tlv,
 #ifdef WLAN_FEATURE_DISA
 	.send_encrypt_decrypt_send_cmd = send_encrypt_decrypt_send_cmd_tlv,
 #endif
@@ -13102,6 +13173,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_motion_det_base_line_host_eventid] =
 				WMI_MOTION_DET_BASE_LINE_HOST_EVENTID;
 	event_ids[wmi_get_ani_level_event_id] = WMI_GET_CHANNEL_ANI_EVENTID;
+	event_ids[wmi_peer_tx_pn_response_event_id] =
+		WMI_PEER_TX_PN_RESPONSE_EVENTID;
 }
 
 /**

@@ -3651,6 +3651,18 @@ struct rtt_meas_req_test_params {
 };
 
 /**
+ * struct peer_request_pn_param - PN request params
+ * @vdev_id: vdev id
+ * @peer_macaddr: Peer mac address
+ * @key_type: key type
+ */
+struct peer_request_pn_param {
+	uint32_t vdev_id;
+	uint8_t  peer_macaddr[QDF_MAC_ADDR_SIZE];
+	uint32_t key_type;
+};
+
+/**
  * struct rtt_meas_req_params - RTT measurement request params
  * @req_id: Request id
  * @vdev_id: vdev id
@@ -4538,6 +4550,7 @@ typedef enum {
 	wmi_motion_det_host_eventid,
 	wmi_motion_det_base_line_host_eventid,
 	wmi_get_ani_level_event_id,
+	wmi_peer_tx_pn_response_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -7076,6 +7089,22 @@ enum wmi_host_fatal_condition_subtype_packet_log_config {
 };
 
 #endif /* OL_ATH_SMART_LOGGING */
+
+#define GET_PN_MAX_LEN 16
+
+/**
+ * struct wmi_host_get_pn_event - PN event params
+ * @vdev_id: vdev id
+ * @peer_macaddr: Peer mac address
+ * @key_type: key type
+ * @pn : pn value
+ */
+struct wmi_host_get_pn_event {
+	uint32_t vdev_id;
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+	uint32_t key_type;
+	uint8_t pn[GET_PN_MAX_LEN];
+};
 
 /**
  * struct wmi_init_cmd_param - INIT command params

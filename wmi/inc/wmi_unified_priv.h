@@ -192,6 +192,7 @@ struct wmi_command_header {
 	uint32_t sub_type:4;
 
 #endif
+
 };
 
 /**
@@ -2053,6 +2054,11 @@ QDF_STATUS (*extract_get_elna_bypass_resp)(wmi_unified_t wmi_handle,
 					 struct get_elna_bypass_response *resp);
 #endif /* WLAN_FEATURE_ELNA */
 
+QDF_STATUS (*send_pdev_get_pn_cmd)(wmi_unified_t wmi_handle,
+				   struct peer_request_pn_param *pn_params);
+QDF_STATUS (*extract_get_pn_data)(wmi_unified_t wmi_handle,
+				  void *evt_buf,
+				  struct wmi_host_get_pn_event *param);
 #ifdef FEATURE_ANI_LEVEL_REQUEST
 QDF_STATUS (*send_ani_level_cmd)(wmi_unified_t wmi_handle, uint32_t *freqs,
 				 uint8_t num_freqs);

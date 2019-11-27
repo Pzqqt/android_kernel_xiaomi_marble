@@ -1400,6 +1400,23 @@ QDF_STATUS wmi_unified_remove_beacon_filter_cmd_send(
 }
 
 /**
+ * wmi_unified_get_pn_send_cmd() - send command to get PN for peer
+ * @wmi_hdl: wmi handle
+ * @wmi_peer_tx_pn_request_cmd_fixed_param: pn request params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_get_pn_send_cmd(wmi_unified_t wmi_hdl,
+				       struct peer_request_pn_param *pn_params)
+{
+	if (wmi_hdl->ops->send_pdev_get_pn_cmd)
+		return wmi_hdl->ops->send_pdev_get_pn_cmd(wmi_hdl,
+							     pn_params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  *  wmi_unified_mgmt_cmd_send() - WMI mgmt cmd function
  *  @param wmi_handle      : handle to WMI.
  *  @param macaddr        : MAC address
@@ -1815,6 +1832,23 @@ wmi_extract_fips_event_data(wmi_unified_t wmi_handle, void *evt_buf,
 		return wmi_handle->ops->extract_fips_event_data(wmi_handle,
 			evt_buf, param);
 	}
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_extract_pn() - extract pn event data
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: pointer to get pn event param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_extract_pn(wmi_unified_t wmi_hdl, void *evt_buf,
+				  struct wmi_host_get_pn_event *param)
+{
+	if (wmi_hdl->ops->extract_get_pn_data)
+		return wmi_hdl->ops->extract_get_pn_data(wmi_hdl,
+							 evt_buf, param);
 	return QDF_STATUS_E_FAILURE;
 }
 
