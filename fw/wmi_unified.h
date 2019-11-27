@@ -12233,6 +12233,12 @@ typedef struct {
     /* min data rate to be used in Mbps */
     A_UINT32 min_data_rate;
 
+    /** HE 6 GHz Band Capabilities of the peer.
+     * (Defined in 9.4.2.261 HE 6GHz Band Capabilities element in 802.11ax_D5.0)
+     * valid when WMI_PEER_HE is set and WMI_PEER_VHT/HT are not set.
+     */
+    A_UINT32 peer_he_caps_6ghz;
+
 /* Following this struct are the TLV's:
  *     A_UINT8 peer_legacy_rates[];
  *     A_UINT8 peer_ht_rates[];
