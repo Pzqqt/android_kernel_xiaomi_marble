@@ -54,6 +54,7 @@ struct dp_pdev_tx_capture {
 	uint32_t ppdu_dropped;
 	qdf_nbuf_queue_t ctl_mgmt_q[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
 	qdf_spinlock_t ctl_mgmt_lock[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
+	qdf_spinlock_t config_lock;
 };
 
 /* Tx TID */
@@ -65,6 +66,8 @@ struct dp_tx_tid {
 	/* tx_tid lock */
 	qdf_spinlock_t tid_lock;
 	qdf_nbuf_queue_t msdu_comp_q;
+	qdf_nbuf_queue_t pending_ppdu_q;
+	struct cdp_tx_completion_ppdu xretry_ppdu;
 };
 
 struct dp_peer_tx_capture {
