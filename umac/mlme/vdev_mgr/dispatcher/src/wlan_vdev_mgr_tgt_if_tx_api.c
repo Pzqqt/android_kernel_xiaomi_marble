@@ -479,6 +479,33 @@ QDF_STATUS tgt_vdev_mgr_beacon_tmpl_send(
 	return QDF_STATUS_SUCCESS;
 }
 
+#if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
+QDF_STATUS tgt_vdev_mgr_fils_enable_send(
+				struct vdev_mlme_obj *mlme_obj,
+				struct config_fils_params *param)
+{
+	QDF_STATUS status;
+	struct wlan_lmac_if_mlme_tx_ops *txops;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t vdev_id;
+
+	vdev = mlme_obj->vdev;
+	vdev_id = wlan_vdev_get_id(vdev);
+	txops = wlan_vdev_mlme_get_lmac_txops(vdev);
+	if (!txops || !txops->vdev_fils_enable_send) {
+		mlme_err("VDEV_%d: No Tx Ops fils Enable", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = txops->vdev_fils_enable_send(vdev, param);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("VDEV_%d: Tx Ops fils Enable Error : %d",
+			 vdev_id, status);
+
+	return status;
+}
+#endif
+
 QDF_STATUS tgt_vdev_mgr_multiple_vdev_restart_send(
 				struct wlan_objmgr_pdev *pdev,
 				struct multiple_vdev_restart_params *param)

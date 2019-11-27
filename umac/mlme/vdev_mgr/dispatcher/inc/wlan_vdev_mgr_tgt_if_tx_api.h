@@ -221,6 +221,33 @@ QDF_STATUS tgt_vdev_mgr_beacon_tmpl_send(
 				struct vdev_mlme_obj *mlme_obj,
 				struct beacon_tmpl_params *param);
 
+#if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
+/**
+ * tgt_vdev_mgr_fils_enable_send()- API to send fils enable command
+ * @mlme_obj: pointer to vdev_mlme_obj
+ * @param: pointer to config_fils_params struct
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS tgt_vdev_mgr_fils_enable_send(
+				struct vdev_mlme_obj *mlme_obj,
+				struct config_fils_params *param);
+#else
+/**
+ * tgt_vdev_mgr_fils_enable_send()- API to send fils enable command
+ * @mlme_obj: pointer to vdev_mlme_obj
+ * @param: pointer to config_fils_params struct
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+static inline QDF_STATUS tgt_vdev_mgr_fils_enable_send(
+				struct vdev_mlme_obj *mlme_obj,
+				struct config_fils_params *param)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * tgt_vdev_mgr_multiple_vdev_restart_send() – API to send multiple vdev
  * restart

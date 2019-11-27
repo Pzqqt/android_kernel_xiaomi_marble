@@ -262,6 +262,10 @@ struct wlan_lmac_if_mlme_tx_ops {
 				      struct beacon_params *param);
 	QDF_STATUS (*beacon_tmpl_send)(struct wlan_objmgr_vdev *vdev,
 				       struct beacon_tmpl_params *param);
+#if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
+	QDF_STATUS (*vdev_fils_enable_send)(struct wlan_objmgr_vdev *vdev,
+					    struct config_fils_params *param);
+#endif
 	QDF_STATUS (*vdev_bcn_miss_offload_send)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*vdev_sta_ps_param_send)(struct wlan_objmgr_vdev *vdev,
 					     struct sta_ps_params *param);

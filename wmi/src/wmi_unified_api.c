@@ -2655,6 +2655,19 @@ QDF_STATUS wmi_unified_extract_obss_detection_info(
 	return QDF_STATUS_E_FAILURE;
 }
 
+#if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
+QDF_STATUS
+wmi_unified_vdev_fils_enable_cmd_send(struct wmi_unified *wmi_handle,
+				      struct config_fils_params *param)
+{
+	if (wmi_handle->ops->send_vdev_fils_enable_cmd)
+		return wmi_handle->ops->send_vdev_fils_enable_cmd(
+							wmi_handle, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 #ifdef WLAN_SUPPORT_GREEN_AP
 QDF_STATUS wmi_extract_green_ap_egap_status_info(
 	wmi_unified_t wmi_handle, uint8_t *evt_buf,

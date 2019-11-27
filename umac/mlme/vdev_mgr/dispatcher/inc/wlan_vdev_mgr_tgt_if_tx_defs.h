@@ -267,6 +267,21 @@ struct peer_flush_params {
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 };
 
+/* Default FILS DISCOVERY sent in period of 20TU */
+#define DEFAULT_FILS_DISCOVERY_PERIOD 20
+
+/**
+ * struct config_fils_params - FILS config params
+ * @vdev_id:  vdev id
+ * @fd_period:  0 - Disabled, non-zero - Period in ms (mili seconds)
+ * @send_prb_rsp_frame: send broadcast prb resp frame
+ */
+struct config_fils_params {
+	uint8_t vdev_id;
+	uint32_t fd_period;
+	uint32_t send_prb_rsp_frame: 1;
+};
+
 /**
  * struct config_ratemask_params - ratemask config parameters
  * @vdev_id: vdev id

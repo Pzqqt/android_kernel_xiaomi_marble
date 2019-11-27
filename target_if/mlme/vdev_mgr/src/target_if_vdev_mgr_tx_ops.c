@@ -1062,6 +1062,43 @@ static QDF_STATUS target_if_vdev_mgr_peer_delete_all_send(
 	return status;
 }
 
+#if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
+static QDF_STATUS target_if_vdev_mgr_fils_enable_send(
+					struct wlan_objmgr_vdev *vdev,
+					struct config_fils_params *param)
+{
+	QDF_STATUS status;
+	struct wmi_unified *wmi_handle;
+
+	if (!vdev || !param) {
+		mlme_err("Invalid input");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = target_if_vdev_mgr_wmi_handle_get(vdev);
+	if (!wmi_handle) {
+		mlme_err("Failed to get WMI handle!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_vdev_fils_enable_cmd_send(wmi_handle, param);
+
+	return status;
+}
+
+static void target_if_vdev_register_tx_fils(
+		struct wlan_lmac_if_mlme_tx_ops *mlme_tx_ops)
+{
+	mlme_tx_ops->vdev_fils_enable_send =
+		target_if_vdev_mgr_fils_enable_send;
+}
+#else
+static void target_if_vdev_register_tx_fils(
+		struct wlan_lmac_if_mlme_tx_ops *mlme_tx_ops)
+{
+}
+#endif
+
 QDF_STATUS
 target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -1116,6 +1153,7 @@ target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 			target_if_vdev_mgr_rsp_timer_mod;
 	mlme_tx_ops->peer_delete_all_send =
 			target_if_vdev_mgr_peer_delete_all_send;
+	target_if_vdev_register_tx_fils(mlme_tx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

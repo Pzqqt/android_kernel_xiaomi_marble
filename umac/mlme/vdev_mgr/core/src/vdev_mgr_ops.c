@@ -343,6 +343,7 @@ QDF_STATUS vdev_mgr_up_send(struct vdev_mlme_obj *mlme_obj)
 	struct beacon_tmpl_params bcn_tmpl_param = {0};
 	enum QDF_OPMODE opmode;
 	struct wlan_objmgr_vdev *vdev;
+	struct config_fils_params fils_param = {0};
 
 	if (!mlme_obj) {
 		mlme_err("VDEV_MLME is NULL");
@@ -370,6 +371,17 @@ QDF_STATUS vdev_mgr_up_send(struct vdev_mlme_obj *mlme_obj)
 		return status;
 
 	status = tgt_vdev_mgr_up_send(mlme_obj, &param);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	if (opmode == QDF_SAP_MODE && mlme_obj->vdev->vdev_mlme.des_chan &&
+	    WLAN_REG_IS_6GHZ_CHAN_FREQ(
+			mlme_obj->vdev->vdev_mlme.des_chan->ch_freq)) {
+		fils_param.vdev_id = wlan_vdev_get_id(mlme_obj->vdev);
+		fils_param.fd_period = DEFAULT_FILS_DISCOVERY_PERIOD;
+		status = tgt_vdev_mgr_fils_enable_send(mlme_obj,
+						       &fils_param);
+	}
 
 	return status;
 }

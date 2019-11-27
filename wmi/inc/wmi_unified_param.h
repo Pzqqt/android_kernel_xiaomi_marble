@@ -2792,16 +2792,6 @@ struct peer_chan_width_switch_params {
 };
 
 /**
- * struct config_fils_params - FILS config params
- * @vdev_id:  vdev id
- * @fd_period:  0 - Disabled, non-zero - Period in ms (mili seconds)
- */
-struct config_fils_params {
-	uint8_t vdev_id;
-	uint32_t fd_period;
-};
-
-/**
  * struct peer_add_wds_entry_params - WDS peer entry add params
  * @dest_addr: Pointer to destination macaddr
  * @peer_addr: Pointer to peer mac addr

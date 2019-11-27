@@ -1900,6 +1900,19 @@ QDF_STATUS wmi_unified_vdev_spectral_enable_cmd_send(
 			wmi_unified_t wmi_handle,
 			struct vdev_spectral_enable_params *param);
 
+#if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
+/**
+ *  wmi_unified_vdev_fils_enable_cmd_send() - WMI send fils enable command
+ *  @param wmi_handle: handle to WMI.
+ *  @param config_fils_params: fils enable parameters
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_vdev_fils_enable_cmd_send(struct wmi_unified *wmi_handle,
+				      struct config_fils_params *param);
+#endif
+
 /**
  *  wmi_unified_bss_chan_info_request_cmd_send() - WMI bss chan info
  *  request function
