@@ -159,7 +159,7 @@ wlan_serialization_peek_head_active_cmd_using_psoc(
 		&ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
 	queue = &pdev_queue->active_list;
 	if (wlan_serialization_list_empty(queue)) {
-		ser_err("Empty Queue");
+		ser_debug_rl("Empty Queue");
 		goto end;
 	}
 

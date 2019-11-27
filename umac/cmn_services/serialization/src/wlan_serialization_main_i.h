@@ -77,6 +77,8 @@
  */
 #define ser_err_rl(params...) \
 	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_SERIALIZATION, params)
+#define ser_debug_rl(params...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_SERIALIZATION, params)
 
 /**
  * struct serialization_legacy_callback - to handle legacy serialization cb
