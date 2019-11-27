@@ -76,6 +76,12 @@ typedef struct hal_link_desc *hal_link_desc_t;
 struct hal_rxdma_desc;
 typedef struct hal_rxdma_desc *hal_rxdma_desc_t;
 
+/**
+ * hal_buff_addrinfo - opaque handle for DP buffer address info
+ */
+struct hal_buff_addrinfo;
+typedef struct hal_buff_addrinfo *hal_buff_addrinfo_t;
+
 #ifdef ENABLE_VERBOSE_DEBUG
 static inline void
 hal_set_verbose_debug(bool flag)

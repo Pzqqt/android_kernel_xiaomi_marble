@@ -265,7 +265,6 @@ bool HAL_RX_HW_DESC_MPDU_VALID(void *hw_desc_addr)
 static inline
 void hal_rx_reo_ent_buf_paddr_get(hal_rxdma_desc_t rx_desc,
 				  struct hal_buf_info *buf_info,
-				  void **pp_buf_addr_info,
 				  uint32_t *msdu_cnt
 )
 {
@@ -292,18 +291,17 @@ void hal_rx_reo_ent_buf_paddr_get(hal_rxdma_desc_t rx_desc,
 		(HAL_RX_BUFFER_ADDR_39_32_GET(buf_addr_info)) << 32));
 
 	buf_info->sw_cookie = HAL_RX_BUF_COOKIE_GET(buf_addr_info);
+	buf_info->rbm = HAL_RX_BUF_RBM_GET(buf_addr_info);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"[%s][%d] ReoAddr=%pK, addrInfo=%pK, paddr=0x%llx, loopcnt=%d",
 		__func__, __LINE__, reo_ent_ring, buf_addr_info,
 	(unsigned long long)buf_info->paddr, loop_cnt);
-
-	*pp_buf_addr_info = (void *)buf_addr_info;
 }
 
 static inline
 void hal_rx_mon_next_link_desc_get(void *rx_msdu_link_desc,
-	struct hal_buf_info *buf_info, void **pp_buf_addr_info)
+			struct hal_buf_info *buf_info)
 {
 	struct rx_msdu_link *msdu_link =
 		(struct rx_msdu_link *)rx_msdu_link_desc;
@@ -317,8 +315,7 @@ void hal_rx_mon_next_link_desc_get(void *rx_msdu_link_desc,
 		(HAL_RX_BUFFER_ADDR_39_32_GET(buf_addr_info)) << 32));
 
 	buf_info->sw_cookie = HAL_RX_BUF_COOKIE_GET(buf_addr_info);
-
-	*pp_buf_addr_info = (void *)buf_addr_info;
+	buf_info->rbm = HAL_RX_BUF_RBM_GET(buf_addr_info);
 }
 
 /**
@@ -334,7 +331,7 @@ void hal_rx_mon_next_link_desc_get(void *rx_msdu_link_desc,
 static inline
 void hal_rx_mon_msdu_link_desc_set(hal_soc_handle_t hal_soc_hdl,
 				   void *src_srng_desc,
-				   void *buf_addr_info)
+				   hal_buff_addrinfo_t buf_addr_info)
 {
 	struct buffer_addr_info *wbm_srng_buffer_addr_info =
 			(struct buffer_addr_info *)src_srng_desc;

@@ -1702,6 +1702,7 @@ struct hal_rx_msdu_list {
 struct hal_buf_info {
 	uint64_t paddr;
 	uint32_t sw_cookie;
+	uint8_t rbm;
 };
 
 /**
@@ -2096,7 +2097,7 @@ static inline void hal_dump_wbm_rel_desc(void *src_srng_desc)
 static inline
 void hal_rx_msdu_link_desc_set(hal_soc_handle_t hal_soc_hdl,
 			       void *src_srng_desc,
-			       hal_link_desc_t buf_addr_info,
+			       hal_buff_addrinfo_t buf_addr_info,
 			       uint8_t bm_action)
 {
 	struct wbm_release_ring *wbm_rel_srng =

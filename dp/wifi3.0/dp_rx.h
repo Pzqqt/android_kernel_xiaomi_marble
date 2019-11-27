@@ -978,7 +978,7 @@ dp_rx_link_desc_return(struct dp_soc *soc, hal_ring_desc_t ring_desc,
  */
 QDF_STATUS
 dp_rx_link_desc_return_by_addr(struct dp_soc *soc,
-			       hal_link_desc_t link_desc_addr,
+			       hal_buff_addrinfo_t link_desc_addr,
 			       uint8_t bm_action);
 
 /**

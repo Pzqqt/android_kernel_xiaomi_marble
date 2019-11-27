@@ -165,7 +165,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
  */
 QDF_STATUS
 dp_rx_link_desc_return_by_addr(struct dp_soc *soc,
-			       hal_link_desc_t link_desc_addr,
+			       hal_buff_addrinfo_t link_desc_addr,
 			       uint8_t bm_action)
 {
 	struct dp_srng *wbm_desc_rel_ring = &soc->wbm_desc_rel_ring;
@@ -1719,8 +1719,6 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	struct hal_rx_msdu_list msdu_list;
 	uint16_t num_msdus;
 	struct hal_buf_info buf_info;
-	void *p_buf_addr_info;
-	void *p_last_buf_addr_info;
 	uint32_t rx_bufs_used = 0;
 	uint32_t msdu_cnt;
 	uint32_t i;
@@ -1728,6 +1726,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t rxdma_error_code = 0;
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	hal_rxdma_desc_t ring_desc;
 
 	msdu = 0;
@@ -1735,7 +1734,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	last = NULL;
 
 	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
-		&p_last_buf_addr_info, &msdu_cnt);
+					&msdu_cnt);
 
 	push_reason =
 		hal_rx_reo_ent_rxdma_push_reason_get(rxdma_dst_ring_desc);
@@ -1811,12 +1810,18 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			rxdma_error_code = HAL_RXDMA_ERR_WAR;
 		}
 
-		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
-			&p_buf_addr_info);
+		/*
+		 * Store the current link buffer into to the local structure
+		 * to be used for release purpose.
+		 */
+		hal_rxdma_buff_addr_info_set(rx_link_buf_info, buf_info.paddr,
+					     buf_info.sw_cookie, buf_info.rbm);
 
-		dp_rx_link_desc_return(soc, p_last_buf_addr_info, bm_action);
-		p_last_buf_addr_info = p_buf_addr_info;
-
+		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info);
+		dp_rx_link_desc_return_by_addr(soc,
+					       (hal_buff_addrinfo_t)
+						rx_link_buf_info,
+						bm_action);
 	} while (buf_info.paddr);
 
 	DP_STATS_INC(soc, rx.err.rxdma_error[rxdma_error_code], 1);
@@ -1907,18 +1912,15 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	struct hal_rx_msdu_list msdu_list;
 	uint16_t num_msdus;
 	struct hal_buf_info buf_info;
-	void *p_buf_addr_info;
-	void *p_last_buf_addr_info;
-	uint32_t rx_bufs_used = 0;
-	uint32_t msdu_cnt;
-	uint32_t i;
+	uint32_t rx_bufs_used = 0, msdu_cnt, i;
+	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 
 	msdu = 0;
 
 	last = NULL;
 
 	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
-				     &p_last_buf_addr_info, &msdu_cnt);
+				     &msdu_cnt);
 
 	do {
 		rx_msdu_link_desc =
@@ -1951,13 +1953,17 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			}
 		}
 
-		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
-					      &p_buf_addr_info);
+		/*
+		 * Store the current link buffer into to the local structure
+		 * to be used for release purpose.
+		 */
+		hal_rxdma_buff_addr_info_set(rx_link_buf_info, buf_info.paddr,
+					     buf_info.sw_cookie, buf_info.rbm);
 
-		dp_rx_link_desc_return(soc, p_last_buf_addr_info,
+		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info);
+		dp_rx_link_desc_return_by_addr(soc, (hal_buff_addrinfo_t)
+					rx_link_buf_info,
 				       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
-		p_last_buf_addr_info = p_buf_addr_info;
-
 	} while (buf_info.paddr);
 
 	return rx_bufs_used;

@@ -55,7 +55,7 @@
  */
 static QDF_STATUS
 dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
-	void *buf_addr_info, int mac_id)
+	hal_buff_addrinfo_t buf_addr_info, int mac_id)
 {
 	struct dp_srng *dp_srng;
 	hal_ring_handle_t hal_ring_hdl;
@@ -153,14 +153,15 @@ void *dp_rx_cookie_2_mon_link_desc(struct dp_pdev *pdev,
  */
 static inline
 QDF_STATUS dp_rx_monitor_link_desc_return(struct dp_pdev *pdev,
-					  void *p_last_buf_addr_info,
+					  hal_buff_addrinfo_t
+					  p_last_buf_addr_info,
 					  uint8_t mac_id, uint8_t bm_action)
 {
 	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
 		return dp_rx_mon_link_desc_return(pdev, p_last_buf_addr_info,
 						  mac_id);
 
-	return dp_rx_link_desc_return(pdev->soc, p_last_buf_addr_info,
+	return dp_rx_link_desc_return_by_addr(pdev->soc, p_last_buf_addr_info,
 				      bm_action);
 }
 
@@ -269,8 +270,6 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint16_t num_msdus;
 	uint32_t rx_buf_size, rx_pkt_offset;
 	struct hal_buf_info buf_info;
-	void *p_buf_addr_info;
-	void *p_last_buf_addr_info;
 	uint32_t rx_bufs_used = 0;
 	uint32_t msdu_ppdu_id, msdu_cnt;
 	uint8_t *data;
@@ -280,13 +279,13 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	bool drop_mpdu = false;
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
 	uint64_t nbuf_paddr = 0;
+	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 
 	msdu = 0;
 
 	last = NULL;
 
-	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
-		&p_last_buf_addr_info, &msdu_cnt);
+	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info, &msdu_cnt);
 
 	if ((hal_rx_reo_ent_rxdma_push_reason_get(rxdma_dst_ring_desc) ==
 		HAL_RX_WBM_RXDMA_PSH_RSN_ERROR)) {
@@ -505,19 +504,22 @@ next_msdu:
 				tail, rx_desc);
 		}
 
-		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
-			&p_buf_addr_info);
+		/*
+		 * Store the current link buffer into to the local
+		 * structure to be  used for release purpose.
+		 */
+		hal_rxdma_buff_addr_info_set(rx_link_buf_info, buf_info.paddr,
+					     buf_info.sw_cookie, buf_info.rbm);
 
+		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info);
 		if (dp_rx_monitor_link_desc_return(dp_pdev,
-						   p_last_buf_addr_info,
+						   (hal_buff_addrinfo_t)
+						   rx_link_buf_info,
 						   mac_id,
 						   bm_action)
 						   != QDF_STATUS_SUCCESS)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  "dp_rx_monitor_link_desc_return failed");
-
-		p_last_buf_addr_info = p_buf_addr_info;
-
 	} while (buf_info.paddr && msdu_cnt);
 
 	if (last)
