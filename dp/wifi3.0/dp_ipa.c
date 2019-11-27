@@ -42,6 +42,54 @@
  * this issue.
  */
 #define DP_IPA_WAR_WBM2SW_REL_RING_NO_BUF_ENTRIES 16
+/**
+ *struct dp_ipa_reo_remap_record - history for dp ipa reo remaps
+ * @ix0_reg: reo destination ring IX0 value
+ * @ix2_reg: reo destination ring IX2 value
+ * @ix3_reg: reo destination ring IX3 value
+ */
+struct dp_ipa_reo_remap_record {
+	uint64_t timestamp;
+	uint32_t ix0_reg;
+	uint32_t ix2_reg;
+	uint32_t ix3_reg;
+};
+
+#define REO_REMAP_HISTORY_SIZE 32
+
+struct dp_ipa_reo_remap_record dp_ipa_reo_remap_history[REO_REMAP_HISTORY_SIZE];
+
+static qdf_atomic_t dp_ipa_reo_remap_history_index;
+static int dp_ipa_reo_remap_record_index_next(qdf_atomic_t *index)
+{
+	int next = qdf_atomic_inc_return(index);
+
+	if (next == REO_REMAP_HISTORY_SIZE)
+		qdf_atomic_sub(REO_REMAP_HISTORY_SIZE, index);
+
+	return next % REO_REMAP_HISTORY_SIZE;
+}
+
+/**
+ * dp_ipa_reo_remap_history_add() - Record dp ipa reo remap values
+ * @ix0_val: reo destination ring IX0 value
+ * @ix2_val: reo destination ring IX2 value
+ * @ix3_val: reo destination ring IX3 value
+ *
+ * Return: None
+ */
+static void dp_ipa_reo_remap_history_add(uint32_t ix0_val, uint32_t ix2_val,
+					 uint32_t ix3_val)
+{
+	int idx = dp_ipa_reo_remap_record_index_next(
+				&dp_ipa_reo_remap_history_index);
+	struct dp_ipa_reo_remap_record *record = &dp_ipa_reo_remap_history[idx];
+
+	record->timestamp = qdf_get_log_timestamp();
+	record->ix0_reg = ix0_val;
+	record->ix2_reg = ix2_val;
+	record->ix3_reg = ix3_val;
+}
 
 static QDF_STATUS __dp_ipa_handle_buf_smmu_mapping(struct dp_soc *soc,
 						   qdf_nbuf_t nbuf,
@@ -788,9 +836,11 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 
 		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
 					   &ix2, &ix2);
+		dp_ipa_reo_remap_history_add(ix0, ix2, ix2);
 	} else {
 		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
 					   NULL, NULL);
+		dp_ipa_reo_remap_history_add(ix0, 0, 0);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -831,9 +881,11 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 
 		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
 					   &ix2, &ix3);
+		dp_ipa_reo_remap_history_add(ix0, ix2, ix3);
 	} else {
 		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
 					   NULL, NULL);
+		dp_ipa_reo_remap_history_add(ix0, 0, 0);
 	}
 
 	return QDF_STATUS_SUCCESS;
