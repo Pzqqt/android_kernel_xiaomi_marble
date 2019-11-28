@@ -28,12 +28,6 @@
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 
-#define SPECTRAL_VERSION_1                              1
-#define SPECTRAL_VERSION_2                              2
-#define SPECTRAL_VERSION_3                              3
-#define SPECTRAL_SUB_VERSION_0                          0
-#define SPECTRAL_SUB_VERSION_1                          1
-
 /*
  * enum spectral_scan_msg_type - spectral scan registration
  * @SPECTRAL_SCAN_REGISTER_REQ: spectral scan app register request
