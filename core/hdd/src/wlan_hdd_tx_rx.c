@@ -3218,7 +3218,7 @@ bool wlan_hdd_rx_rpm_mark_last_busy(struct hdd_context *hdd_ctx,
 				      current_us + 1);
 	rpm_delay_ms = ucfg_pmo_get_runtime_pm_delay(hdd_ctx->psoc);
 
-	if ((duration_us / 1000) < rpm_delay_ms)
+	if (duration_us < (rpm_delay_ms * 1000))
 		return true;
 	else
 		return false;
