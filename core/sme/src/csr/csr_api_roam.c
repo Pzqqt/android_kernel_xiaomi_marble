@@ -20915,35 +20915,29 @@ csr_update_op_class_array(struct mac_context *mac_ctx,
 	uint8_t j = 0, idx = 0, class = 0;
 	bool found = false;
 	uint8_t num_channels = channel_info->numChannels;
-	uint8_t ch_bandwidth;
+	uint8_t ch_num;
 
-	sme_debug("Num of %s channels,  %d",
-		ch_name, num_channels);
+	sme_debug("Num of %s channels,  %d", ch_name, num_channels);
 
 	for (idx = 0; idx < num_channels &&
-			*i < (REG_MAX_SUPP_OPER_CLASSES - 1); idx++) {
-		for (ch_bandwidth = BW20; ch_bandwidth < BWALL;
-			ch_bandwidth++) {
-			class = wlan_reg_dmn_get_opclass_from_channel(
-					mac_ctx->scan.countryCodeCurrent,
-					wlan_reg_freq_to_chan(mac_ctx->pdev, channel_info->channel_freq_list[idx]),
-					ch_bandwidth);
-			sme_debug("for chan freq %d, op class: %d",
-				  channel_info->channel_freq_list[idx], class);
+		*i < (REG_MAX_SUPP_OPER_CLASSES - 1); idx++) {
+		wlan_reg_freq_to_chan_op_class(
+			mac_ctx->pdev, channel_info->channel_freq_list[idx],
+			false, BIT(BEHAV_NONE), &class, &ch_num);
+		sme_debug("for chan freq %d, op class: %d",
+			  channel_info->channel_freq_list[idx], class);
 
-			found = false;
-			for (j = 0; j < REG_MAX_SUPP_OPER_CLASSES - 1;
-				j++) {
-				if (op_classes[j] == class) {
-					found = true;
-					break;
-				}
+		found = false;
+		for (j = 0; j < REG_MAX_SUPP_OPER_CLASSES - 1; j++) {
+			if (op_classes[j] == class) {
+				found = true;
+				break;
 			}
+		}
 
-			if (!found) {
-				op_classes[*i] = class;
-				*i = *i + 1;
-			}
+		if (!found) {
+			op_classes[*i] = class;
+			*i = *i + 1;
 		}
 	}
 }
