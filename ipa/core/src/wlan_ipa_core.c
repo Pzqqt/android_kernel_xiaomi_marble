@@ -2053,7 +2053,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		 * This is Roaming scenario
 		 */
 		if (ipa_ctx->sta_connected) {
-			iface_ctx = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
+			iface_ctx = wlan_ipa_get_iface_by_mode_netdev(
+					ipa_ctx, net_dev, QDF_STA_MODE);
 			if (iface_ctx)
 				wlan_ipa_cleanup_iface(iface_ctx);
 		}
@@ -2101,7 +2102,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			}
 		}
 
-		ipa_ctx->sta_connected = 1;
+		ipa_ctx->sta_connected++;
 
 		qdf_mutex_release(&ipa_ctx->event_lock);
 
@@ -2160,14 +2161,16 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			ipa_err("%s: Evt: %d, STA already disconnected",
 				msg_ex->name, QDF_IPA_MSG_META_MSG_TYPE(&meta));
 
-			iface = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
-			if (iface && (iface->dev == net_dev))
+			iface = wlan_ipa_get_iface_by_mode_netdev(ipa_ctx,
+								  net_dev,
+								  QDF_STA_MODE);
+			if (iface)
 				wlan_ipa_cleanup_iface(iface);
 
 			return QDF_STATUS_E_INVAL;
 		}
 
-		ipa_ctx->sta_connected = 0;
+		ipa_ctx->sta_connected--;
 
 		if (!wlan_ipa_uc_is_enabled(ipa_ctx->config)) {
 			ipa_debug("%s: IPA UC OFFLOAD NOT ENABLED",
@@ -2215,13 +2218,10 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		ipa_debug("vdev_to_iface[%u]=%u", session_id,
 			  ipa_ctx->vdev_to_iface[session_id]);
 
-		for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
-			iface_ctx = &ipa_ctx->iface_context[i];
-
-			if (iface_ctx->dev == net_dev)
-				break;
-		}
-		if (i < WLAN_IPA_MAX_IFACE)
+		iface_ctx = wlan_ipa_get_iface_by_mode_netdev(ipa_ctx,
+							      net_dev,
+							      QDF_STA_MODE);
+		if (iface_ctx)
 			wlan_ipa_cleanup_iface(iface_ctx);
 
 		qdf_mutex_release(&ipa_ctx->event_lock);
@@ -3150,6 +3150,23 @@ struct wlan_ipa_iface_context
 		iface_ctx = &ipa_ctx->iface_context[i];
 
 		if (iface_ctx->device_mode == mode)
+			return iface_ctx;
+	}
+
+	return NULL;
+}
+
+struct wlan_ipa_iface_context *
+wlan_ipa_get_iface_by_mode_netdev(struct wlan_ipa_priv *ipa_ctx,
+				  qdf_netdev_t ndev, uint8_t mode)
+{
+	struct wlan_ipa_iface_context *iface_ctx = NULL;
+	int i;
+
+	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
+		iface_ctx = &ipa_ctx->iface_context[i];
+
+		if (iface_ctx->device_mode == mode && iface_ctx->dev == ndev)
 			return iface_ctx;
 	}
 
