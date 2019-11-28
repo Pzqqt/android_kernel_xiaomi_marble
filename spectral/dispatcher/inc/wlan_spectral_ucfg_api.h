@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -84,4 +84,18 @@ QDF_STATUS ucfg_spectral_extract_response(struct spectral_cp_request *sscan_req,
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
  */
 QDF_STATUS ucfg_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_spectral_get_version() - ucfg API to get spectral version
+ * @pdev: Pointer to pdev object
+ * @version: Pointer to return version
+ * @sub_version: Pointer to return sub version
+ *
+ * Since struct spectral_samp_msg may be modified, so provide API to get
+ * version information and make sure spectraltool compatible with host.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS ucfg_spectral_get_version(struct wlan_objmgr_pdev *pdev,
+				     uint32_t *version, uint32_t *sub_version);
 #endif /* _WLAN_SPECTRAL_UCFG_API_H_ */

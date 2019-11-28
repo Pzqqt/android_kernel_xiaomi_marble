@@ -54,6 +54,12 @@
 #define SPECTRAL_SET_DMA_DEBUG           (DFS_LAST_IOCTL + 24)
 
 /*
+ * Increase spectral sub version if struct spectral_samp_msg updated.
+ */
+#define SPECTRAL_VERSION     (3)
+#define SPECTRAL_SUB_VERSION (1)
+
+/*
  * ioctl parameter types
  */
 enum spectral_params {

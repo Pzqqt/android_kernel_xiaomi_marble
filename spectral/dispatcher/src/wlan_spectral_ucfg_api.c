@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -220,4 +220,19 @@ qdf_export_symbol(ucfg_spectral_extract_response);
 QDF_STATUS ucfg_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	return spectral_pdev_open(pdev);
+}
+
+QDF_STATUS ucfg_spectral_get_version(struct wlan_objmgr_pdev *pdev,
+				     uint32_t *version, uint32_t *sub_version)
+{
+	if (!pdev || !version || !sub_version) {
+		spectral_err("invalid param");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*version = SPECTRAL_VERSION;
+	*sub_version = SPECTRAL_SUB_VERSION;
+	spectral_debug("Spectral get version %d:%d", *version, *sub_version);
+
+	return QDF_STATUS_SUCCESS;
 }
