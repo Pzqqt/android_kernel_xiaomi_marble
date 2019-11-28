@@ -629,13 +629,18 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 		req->scan_req.adaptive_dwell_time_mode =
 			scan_obj->scan_def.adaptive_dwell_time_mode_nc;
 	/*
-	 * If AP/GO is active and has connected clients set min rest time
-	 * same as max rest time, so that firmware spends more time on home
-	 * channel which will increase the probability of sending beacon at TBTT
+	 * If AP/GO is active and has connected clients :
+	 * 1.set min rest time same as max rest time, so that
+	 * firmware spends more time on home channel which will
+	 * increase the probability of sending beacon at TBTT
+	 * 2.if DBS is supported and SAP is not on 2g,
+	 * do not reset active dwell time for 2g.
 	 */
 	if ((ap_present && sap_peer_count) ||
 	    (go_present && go_peer_count)) {
-		req->scan_req.dwell_time_active_2g = 0;
+		if (policy_mgr_is_hw_dbs_capable(psoc) &&
+		    policy_mgr_is_sap_go_on_2g(psoc))
+			req->scan_req.dwell_time_active_2g = 0;
 		req->scan_req.min_rest_time = req->scan_req.max_rest_time;
 	}
 
