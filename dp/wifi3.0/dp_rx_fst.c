@@ -303,7 +303,7 @@ QDF_STATUS dp_rx_flow_add_entry(struct dp_pdev *pdev,
 
 	flow.reo_destination_handler = HAL_RX_FSE_REO_DEST_FT;
 	flow.fse_metadata = rx_flow_info->fse_metadata;
-	fse->hal_rx_fse = hal_rx_flow_setup_fse(fst->hal_rx_fst,
+	fse->hal_rx_fse = hal_rx_flow_setup_fse(soc->hal_soc, fst->hal_rx_fst,
 						fse->flow_id, &flow);
 	if (qdf_unlikely(!fse->hal_rx_fse)) {
 		dp_err("Unable to alloc FSE entry");
