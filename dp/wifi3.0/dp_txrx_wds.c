@@ -27,7 +27,7 @@
 #include "dp_txrx_wds.h"
 
 /* Generic AST entry aging timer value */
-#define DP_AST_AGING_TIMER_DEFAULT_MS	1000
+#define DP_AST_AGING_TIMER_DEFAULT_MS	5000
 #define DP_VLAN_UNTAGGED 0
 #define DP_VLAN_TAGGED_MULTICAST 1
 #define DP_VLAN_TAGGED_UNICAST 2
