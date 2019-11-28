@@ -3184,4 +3184,13 @@ uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 						uint32_t *ch_freq_list,
 						uint8_t *vdev_id,
 						enum policy_mgr_con_mode mode);
+
+/**
+ * policy_mgr_is_sap_go_on_2g() - check if sap/go is on 2g
+ * @psoc: PSOC object information
+ *
+ * Return: true or false
+ */
+bool policy_mgr_is_sap_go_on_2g(struct wlan_objmgr_psoc *psoc);
+
 #endif /* __WLAN_POLICY_MGR_API_H */
