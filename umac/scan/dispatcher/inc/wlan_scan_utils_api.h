@@ -266,20 +266,10 @@ util_scan_entry_reset_timestamp(struct scan_cache_entry *scan_entry)
  *
  * Return: rssi
  */
-static inline uint8_t
+static inline int32_t
 util_scan_entry_rssi(struct scan_cache_entry *scan_entry)
 {
-	uint32_t rssi = WLAN_RSSI_OUT(scan_entry->avg_rssi);
-	/*
-	 * An entry is in the BSS list means we've received at least one beacon
-	 * from the corresponding AP, so the rssi must be initialized.
-	 *
-	 * If the RSSI is not initialized, return 0 (i.e. RSSI == Noise Floor).
-	 * Once se_avgrssi field has been initialized, ATH_RSSI_OUT always
-	 * returns values that fit in an 8-bit variable
-	 * (RSSI values are typically 0-90).
-	 */
-	return (rssi >= WLAN_RSSI_DUMMY_MARKER) ? 0 : (uint8_t) rssi;
+	return WLAN_RSSI_OUT(scan_entry->avg_rssi);
 }
 
 /**
