@@ -333,3 +333,11 @@ QDF_STATUS ucfg_set_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc)
 {
 	return reg_set_ignore_fw_reg_offload_ind(psoc);
 }
+
+#ifdef DISABLE_UNII_SHARED_BANDS
+QDF_STATUS
+ucfg_reg_get_unii_5g_bitmap(struct wlan_objmgr_pdev *pdev, uint8_t *bitmap)
+{
+	return reg_get_unii_5g_bitmap(pdev, bitmap);
+}
+#endif

@@ -968,4 +968,16 @@ bool reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev,
  */
 bool reg_is_6ghz_supported(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * reg_get_unii_5g_bitmap() - get unii_5g_bitmap value
+ * @pdev: pdev pointer
+ * @bitmap: Pointer to retrieve the unii_5g_bitmap of enum reg_unii_band
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef DISABLE_UNII_SHARED_BANDS
+QDF_STATUS
+reg_get_unii_5g_bitmap(struct wlan_objmgr_pdev *pdev, uint8_t *bitmap);
+#endif
+
 #endif

@@ -3544,3 +3544,20 @@ bool reg_is_6ghz_supported(struct wlan_objmgr_pdev *pdev)
 
 	return psoc_priv_obj->six_ghz_supported;
 }
+
+#ifdef DISABLE_UNII_SHARED_BANDS
+QDF_STATUS
+reg_get_unii_5g_bitmap(struct wlan_objmgr_pdev *pdev, uint8_t *bitmap)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err_rl("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*bitmap =  pdev_priv_obj->unii_5g_bitmap;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
