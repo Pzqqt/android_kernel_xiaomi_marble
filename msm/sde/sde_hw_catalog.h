@@ -1417,6 +1417,7 @@ struct sde_limit_cfg {
  * @vbif_disable_inner_outer_shareable     VBIF requires disabling shareables
  * @inline_disable_const_clr     Disable constant color during inline rotate
  * @dither_luma_mode_support   Enables dither luma mode
+ * @has_base_layer     Supports staging layer as base layer
  * @sc_cfg: system cache configuration
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
@@ -1478,6 +1479,7 @@ struct sde_mdss_cfg {
 	bool vbif_disable_inner_outer_shareable;
 	bool inline_disable_const_clr;
 	bool dither_luma_mode_support;
+	bool has_base_layer;
 
 	struct sde_sc_cfg sc_cfg;
 

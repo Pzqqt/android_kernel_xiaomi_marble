@@ -2479,7 +2479,7 @@ static void _sde_crtc_set_dim_layer_v1(struct sde_crtc_state *cstate,
 		user_cfg = &dim_layer_v1.layer_cfg[i];
 
 		dim_layer[i].flags = user_cfg->flags;
-		dim_layer[i].stage = user_cfg->stage + SDE_STAGE_0;
+		dim_layer[i].stage = user_cfg->stage;
 
 		dim_layer[i].rect.x = user_cfg->rect.x1;
 		dim_layer[i].rect.y = user_cfg->rect.y1;
@@ -4122,7 +4122,7 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 
 /* no input validation - caller API has all the checks */
 static int _sde_crtc_excl_dim_layer_check(struct drm_crtc_state *state,
-		struct plane_state pstates[], int cnt)
+		struct plane_state pstates[], int cnt, bool base_layer_staged)
 {
 	struct sde_crtc_state *cstate = to_sde_crtc_state(state);
 	struct drm_display_mode *mode = &state->adjusted_mode;
@@ -4149,6 +4149,8 @@ static int _sde_crtc_excl_dim_layer_check(struct drm_crtc_state *state,
 					mode->vdisplay);
 			rc = -E2BIG;
 			goto end;
+		} else if (!base_layer_staged) {
+			cstate->dim_layer[i].stage += SDE_STAGE_0;
 		}
 	}
 
@@ -4241,9 +4243,12 @@ static int _sde_crtc_check_secure_blend_config(struct drm_crtc *crtc,
 			int sec_stage = cnt ? pstates[0].sde_pstate->stage :
 						cstate->dim_layer[0].stage;
 
+			if (!sde_kms->catalog->has_base_layer)
+				sec_stage -= SDE_STAGE_0;
+
 			if ((!cnt && !cstate->num_dim_layers) ||
 				(sde_kms->catalog->sui_supported_blendstage
-						!= (sec_stage - SDE_STAGE_0))) {
+						!= sec_stage)) {
 				SDE_ERROR(
 				  "crtc%d: empty cnt%d/dim%d or bad stage%d\n",
 					DRMID(crtc), cnt,
@@ -4429,7 +4434,7 @@ static int _sde_crtc_check_get_pstates(struct drm_crtc *crtc,
 		/* check dim layer stage with every plane */
 		for (i = 0; i < cstate->num_dim_layers; i++) {
 			if (cstate->dim_layer[i].stage ==
-					(pstates[*cnt].stage + SDE_STAGE_0)) {
+					pstates[*cnt].stage) {
 				SDE_ERROR(
 					"plane:%d/dim_layer:%i-same stage:%d\n",
 					plane->base.id, i,
@@ -4505,10 +4510,21 @@ static int _sde_crtc_check_zpos(struct drm_crtc_state *state,
 {
 	int rc = 0, i, z_pos;
 	u32 zpos_cnt = 0;
+	struct drm_crtc *crtc;
+	struct sde_kms *kms;
+
+	crtc = &sde_crtc->base;
+	kms = _sde_crtc_get_kms(crtc);
+
+	if (!kms || !kms->catalog) {
+		SDE_ERROR("Invalid kms\n");
+		return -EINVAL;
+	}
 
 	sort(pstates, cnt, sizeof(pstates[0]), pstate_cmp, NULL);
 
-	rc = _sde_crtc_excl_dim_layer_check(state, pstates, cnt);
+	rc = _sde_crtc_excl_dim_layer_check(state, pstates, cnt,
+				kms->catalog->has_base_layer);
 	if (rc)
 		return rc;
 
@@ -4544,7 +4560,11 @@ static int _sde_crtc_check_zpos(struct drm_crtc_state *state,
 			zpos_cnt++;
 		}
 
-		pstates[i].sde_pstate->stage = z_pos + SDE_STAGE_0;
+		if (!kms->catalog->has_base_layer)
+			pstates[i].sde_pstate->stage = z_pos + SDE_STAGE_0;
+		else
+			pstates[i].sde_pstate->stage = z_pos;
+
 		SDE_DEBUG("%s: zpos %d", sde_crtc->name, z_pos);
 	}
 	return rc;

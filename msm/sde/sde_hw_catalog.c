@@ -194,6 +194,7 @@ enum sde_prop {
 	PIPE_ORDER_VERSION,
 	SEC_SID_MASK,
 	SDE_LIMITS,
+	BASE_LAYER,
 	SDE_PROP_MAX,
 };
 
@@ -547,6 +548,7 @@ static struct sde_prop_type sde_prop[] = {
 			PROP_TYPE_U32},
 	{SEC_SID_MASK, "qcom,sde-secure-sid-mask", false, PROP_TYPE_U32_ARRAY},
 	{SDE_LIMITS, "qcom,sde-limits", false, PROP_TYPE_NODE},
+	{BASE_LAYER, "qcom,sde-mixer-stage-base-layer", false, PROP_TYPE_BOOL},
 };
 
 static struct sde_prop_type sde_perf_prop[] = {
@@ -3854,6 +3856,7 @@ static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
 	cfg->has_idle_pc = PROP_VALUE_ACCESS(prop_value, IDLE_PC, 0);
 	cfg->pipe_order_type = PROP_VALUE_ACCESS(prop_value,
 		PIPE_ORDER_VERSION, 0);
+	cfg->has_base_layer = PROP_VALUE_ACCESS(prop_value, BASE_LAYER, 0);
 
 	rc = sde_limit_parse_dt(np, cfg);
 	if (rc)
