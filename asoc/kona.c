@@ -4435,6 +4435,8 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		break;
 
 	case MSM_BACKEND_DAI_SLIMBUS_7_TX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				slim_tx_cfg[SLIM_TX_7].bit_format);
 		rate->min = rate->max = slim_tx_cfg[SLIM_TX_7].sample_rate;
 		channels->min = channels->max =
 			slim_tx_cfg[SLIM_TX_7].channels;
