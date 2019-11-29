@@ -768,6 +768,17 @@ QDF_STATUS sme_configure_app_type2_params(mac_handle_t mac_handle,
 uint32_t sme_get_beaconing_concurrent_operation_channel(mac_handle_t mac_handle,
 						       uint8_t vdev_id_to_skip);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/**
+ * sme_check_concurrent_channel_overlap() - Get interfering concurrent channel
+ * @mac_handle: SAP context pointer
+ * @sap_ch_freq: SAP home channel frequency
+ * @sapPhyMode: sap phymode
+ * @cc_switch_mode: force scc channel switch mode
+ *
+ * Determine if a concurrent channel is interfering.
+ *
+ * Return: Channel freq (Mhz) of the interfering channel, or 0 if none.
+ */
 uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
 					      uint16_t sap_ch_freq,
 					      eCsrPhyMode sapPhyMode,

@@ -3086,7 +3086,6 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 {
 	mac_handle_t mac_handle;
 	struct hdd_ap_ctx *hdd_ap_ctx;
-	uint8_t intf_ch = 0, sap_ch = 0;
 	struct hdd_context *hdd_ctx;
 	uint8_t mcc_to_scc_switch = 0;
 	struct ch_params ch_params;
@@ -3130,9 +3129,8 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	 */
 	if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	    psoc, vdev_id, &intf_ch_freq)) {
-		intf_ch = wlan_freq_to_chan(intf_ch_freq);
 		hdd_debug("Move the sap (vdev %d) to user configured channel %u",
-			  vdev_id, intf_ch);
+			  vdev_id, intf_ch_freq);
 		goto sap_restart;
 	}
 
@@ -3144,11 +3142,10 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	 * supported, return from here if DBS is not supported.
 	 * Need to take care of 3 port cases with 2 STA iface in future.
 	 */
-	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sap_context);
-	intf_ch_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, intf_ch);
+	intf_ch_freq = wlansap_check_cc_intf(hdd_ap_ctx->sap_context);
 	policy_mgr_get_chan_by_session_id(psoc, vdev_id, &sap_ch_freq);
 	hdd_info("sap_vdev %d intf_ch: %d, orig freq: %d",
-		 vdev_id, intf_ch, sap_ch_freq);
+		 vdev_id, intf_ch_freq, sap_ch_freq);
 	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
 		mcc_to_scc_switch) {
 		if (QDF_IS_STATUS_ERROR(
@@ -3158,8 +3155,6 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				  intf_ch_freq);
 			return QDF_STATUS_E_FAILURE;
 		}
-		sap_ch = wlan_freq_to_chan(sap_ch_freq);
-		intf_ch = wlan_freq_to_chan(intf_ch_freq);
 	}
 
 sap_restart:

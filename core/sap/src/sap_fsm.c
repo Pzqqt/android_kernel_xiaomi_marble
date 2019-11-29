@@ -708,13 +708,12 @@ sap_validate_chan(struct sap_context *sap_context,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac_ctx;
 	mac_handle_t mac_handle;
-	uint8_t con_ch;
+	uint32_t con_ch_freq;
 	bool sta_sap_scc_on_dfs_chan;
 	uint32_t sta_go_bit_mask = QDF_STA_MASK | QDF_P2P_GO_MASK;
 	uint32_t sta_sap_bit_mask = QDF_STA_MASK | QDF_SAP_MASK;
 	uint32_t concurrent_state;
 	bool go_force_scc;
-	uint8_t sap_ch;
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 	mac_ctx = MAC_CONTEXT(mac_handle);
@@ -735,13 +734,13 @@ sap_validate_chan(struct sap_context *sap_context,
 	    (wlan_vdev_mlme_get_opmode(sap_context->vdev) == QDF_P2P_GO_MODE))
 		goto validation_done;
 
-	sap_ch = wlan_reg_freq_to_chan(mac_ctx->pdev, sap_context->chan_freq);
 	concurrent_state = policy_mgr_get_concurrency_mode(mac_ctx->psoc);
 	if (policy_mgr_concurrent_beaconing_sessions_running(mac_ctx->psoc) ||
 	    ((concurrent_state & sta_sap_bit_mask) == sta_sap_bit_mask) ||
 	    ((concurrent_state & sta_go_bit_mask) == sta_go_bit_mask)) {
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
-		if (wlan_reg_is_dfs_ch(mac_ctx->pdev, sap_ch)) {
+		if (wlan_reg_is_dfs_for_freq(mac_ctx->pdev,
+					     sap_context->chan_freq)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_WARN,
 				  FL("DFS not supported in STA_AP Mode"));
 			return QDF_STATUS_E_ABORTED;
@@ -754,18 +753,16 @@ sap_validate_chan(struct sap_context *sap_context,
 				FL("check for overlap: chan freq:%d mode:%d"),
 				sap_context->chan_freq,
 				sap_context->csr_roamProfile.phyMode);
-			con_ch = sme_check_concurrent_channel_overlap(
+			con_ch_freq = sme_check_concurrent_channel_overlap(
 					mac_handle,
 					sap_context->chan_freq,
 					sap_context->csr_roamProfile.phyMode,
 					sap_context->cc_switch_mode);
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("After check overlap: con_ch:%d"),
-				  con_ch);
+				  con_ch_freq);
 			if (sap_context->cc_switch_mode !=
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) {
-				uint32_t con_ch_freq =
-				wlan_reg_chan_to_freq(mac_ctx->pdev, con_ch);
 				if (QDF_IS_STATUS_ERROR(
 					policy_mgr_valid_sap_conc_channel_check(
 						mac_ctx->psoc, &con_ch_freq,
@@ -776,33 +773,31 @@ sap_validate_chan(struct sap_context *sap_context,
 						FL("SAP can't start (no MCC)"));
 					return QDF_STATUS_E_ABORTED;
 				}
-				con_ch = wlan_freq_to_chan(con_ch_freq);
 			}
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("After check concurrency: con_ch:%d"),
-				  con_ch);
+				  con_ch_freq);
 			sta_sap_scc_on_dfs_chan =
 				policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 						mac_ctx->psoc);
-			if (con_ch &&
+			if (con_ch_freq &&
 			    (policy_mgr_sta_sap_scc_on_lte_coex_chan(
-			    mac_ctx->psoc) ||
-			    policy_mgr_is_safe_channel(
-			    mac_ctx->psoc, wlan_chan_to_freq(con_ch))) &&
-			    (!wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch) ||
+						mac_ctx->psoc) ||
+			     policy_mgr_is_safe_channel(
+						mac_ctx->psoc, con_ch_freq)) &&
+			    (!wlan_reg_is_dfs_for_freq(
+					mac_ctx->pdev, con_ch_freq) ||
 			    sta_sap_scc_on_dfs_chan)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_ERROR,
 					"%s: Override ch freq %d to %d due to CC Intf",
 					__func__, sap_context->chan_freq,
-					con_ch);
-				sap_context->chan_freq = wlan_reg_chan_to_freq(
-							mac_ctx->pdev, con_ch);
+					con_ch_freq);
+				sap_context->chan_freq = con_ch_freq;
 				if (WLAN_REG_IS_24GHZ_CH_FREQ(
 				    sap_context->chan_freq))
 					sap_context->ch_params.ch_width =
 							CH_WIDTH_20MHZ;
-
 				wlan_reg_set_channel_params_for_freq(
 					mac_ctx->pdev,
 					sap_context->chan_freq,

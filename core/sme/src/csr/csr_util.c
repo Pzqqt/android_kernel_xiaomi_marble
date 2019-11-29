@@ -764,19 +764,19 @@ uint32_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
 
 /* calculation of center channel based on V/HT BW and WIFI channel bw=5MHz) */
 
-#define CSR_GET_HT40_PLUS_CCH(och) ((och)+2)
-#define CSR_GET_HT40_MINUS_CCH(och) ((och)-2)
+#define CSR_GET_HT40_PLUS_CCH(och) ((och) + 10)
+#define CSR_GET_HT40_MINUS_CCH(och) ((och) - 10)
 
-#define CSR_GET_HT80_PLUS_LL_CCH(och) ((och)+6)
-#define CSR_GET_HT80_PLUS_HL_CCH(och) ((och)+2)
-#define CSR_GET_HT80_MINUS_LH_CCH(och) ((och)-2)
-#define CSR_GET_HT80_MINUS_HH_CCH(och) ((och)-6)
+#define CSR_GET_HT80_PLUS_LL_CCH(och) ((och) + 30)
+#define CSR_GET_HT80_PLUS_HL_CCH(och) ((och) + 30)
+#define CSR_GET_HT80_MINUS_LH_CCH(och) ((och) - 10)
+#define CSR_GET_HT80_MINUS_HH_CCH(och) ((och) - 30)
 
 /**
  * csr_get_ch_from_ht_profile() - to get channel from HT profile
  * @mac: pointer to Mac context
  * @htp: pointer to HT profile
- * @och: operating channel
+ * @och_freq: operating channel frequency
  * @cfreq: channel frequency
  * @hbw: half bandwidth
  *
@@ -787,17 +787,17 @@ uint32_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
  */
 static void csr_get_ch_from_ht_profile(struct mac_context *mac,
 				       tCsrRoamHTProfile *htp,
-				       uint16_t och, uint16_t *cfreq,
-				       uint16_t *hbw)
+				       uint32_t och_freq, uint32_t *cfreq,
+				       uint32_t *hbw)
 {
-	uint16_t cch, ch_bond;
+	uint32_t ch_bond;
+	struct ch_params chan_params = {0};
 
-	if (och > 14)
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(och_freq))
 		ch_bond = mac->roam.configParam.channelBondingMode5GHz;
 	else
 		ch_bond = mac->roam.configParam.channelBondingMode24GHz;
 
-	cch = och;
 	*hbw = HALF_BW_OF(eCSR_BW_20MHz_VAL);
 
 	if (!ch_bond)
@@ -811,7 +811,6 @@ static void csr_get_ch_from_ht_profile(struct mac_context *mac,
 	       );
 
 	if (htp->vhtCapability) {
-		cch = htp->apCenterChan;
 		if (htp->apChanWidth == WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ)
 			*hbw = HALF_BW_OF(eCSR_BW_80MHz_VAL);
 		else if (htp->apChanWidth == WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
@@ -828,20 +827,29 @@ static void csr_get_ch_from_ht_profile(struct mac_context *mac,
 		if (htp->htSupportedChannelWidthSet ==
 					eHT_CHANNEL_WIDTH_40MHZ) {
 			*hbw = HALF_BW_OF(eCSR_BW_40MHz_VAL);
-			if (htp->htSecondaryChannelOffset ==
-					PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-				cch = CSR_GET_HT40_PLUS_CCH(och);
-			else if (htp->htSecondaryChannelOffset ==
-					PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
-				cch = CSR_GET_HT40_MINUS_CCH(och);
 		} else {
-			cch = och;
 			*hbw = HALF_BW_OF(eCSR_BW_20MHz_VAL);
 		}
 	}
-
 ret:
-	*cfreq = cds_chan_to_freq(cch);
+	switch (*hbw * 2) {
+	case eCSR_BW_40MHz_VAL:
+		chan_params.ch_width = CH_WIDTH_40MHZ;
+		break;
+	case eCSR_BW_80MHz_VAL:
+		chan_params.ch_width = CH_WIDTH_80MHZ;
+		break;
+	case eCSR_BW_160MHz_VAL:
+		chan_params.ch_width = CH_WIDTH_160MHZ;
+		break;
+	default:
+		chan_params.ch_width = CH_WIDTH_20MHZ;
+		break;
+	}
+	wlan_reg_set_channel_params_for_freq(mac->pdev, och_freq, 0,
+					     &chan_params);
+
+	*cfreq = chan_params.mhz_freq_seg0;
 }
 
 /**
@@ -858,8 +866,8 @@ ret:
  * Return: none
  */
 static void csr_calc_chb_for_sap_phymode(struct mac_context *mac_ctx,
-		uint16_t *sap_ch, eCsrPhyMode *sap_phymode,
-		uint16_t *sap_cch, uint16_t *sap_hbw, uint8_t *chb)
+		uint32_t *sap_ch, eCsrPhyMode *sap_phymode,
+		uint32_t *sap_cch, uint32_t *sap_hbw, uint8_t *chb)
 {
 	if (*sap_phymode == eCSR_DOT11_MODE_11n ||
 			*sap_phymode == eCSR_DOT11_MODE_11n_ONLY) {
@@ -918,10 +926,10 @@ static void csr_calc_chb_for_sap_phymode(struct mac_context *mac_ctx,
  * csr_handle_conc_chnl_overlap_for_sap_go - To handle overlap for AP+AP
  * @mac_ctx: pointer to mac context
  * @session: Current session
- * @sap_ch: SAP/GO operating channel
+ * @sap_ch_freq: SAP/GO operating channel frequency
  * @sap_hbw: SAP/GO half bw
  * @sap_cfreq: SAP/GO channel frequency
- * @intf_ch: concurrent SAP/GO operating channel
+ * @intf_ch_freq: concurrent SAP/GO operating channel frequency
  * @intf_hbw: concurrent SAP/GO half bw
  * @intf_cfreq: concurrent SAP/GO channel frequency
  *
@@ -930,15 +938,16 @@ static void csr_calc_chb_for_sap_phymode(struct mac_context *mac_ctx,
  *
  * Return: none
  */
-static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
+static void csr_handle_conc_chnl_overlap_for_sap_go(
+		struct mac_context *mac_ctx,
 		struct csr_roam_session *session,
-		uint16_t *sap_ch, uint16_t *sap_hbw, uint16_t *sap_cfreq,
-		uint16_t *intf_ch, uint16_t *intf_hbw, uint16_t *intf_cfreq)
+		uint32_t *sap_ch_freq, uint32_t *sap_hbw, uint32_t *sap_cfreq,
+		uint32_t *intf_ch_freq, uint32_t *intf_hbw,
+		uint32_t *intf_cfreq)
 {
-	uint8_t op_chan;
+	uint32_t op_chan_freq;
 
-	op_chan = wlan_reg_freq_to_chan(mac_ctx->pdev,
-					session->connectedProfile.op_freq);
+	op_chan_freq = session->connectedProfile.op_freq;
 	/*
 	 * if conc_custom_rule1 is defined then we don't
 	 * want p2pgo to follow SAP's channel or SAP to
@@ -946,24 +955,24 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
 	 */
 	if (0 == mac_ctx->roam.configParam.conc_custom_rule1 &&
 		0 == mac_ctx->roam.configParam.conc_custom_rule2) {
-		if (*sap_ch == 0) {
-			*sap_ch = op_chan;
+		if (*sap_ch_freq == 0) {
+			*sap_ch_freq = op_chan_freq;
 			csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.ht_profile,
-				*sap_ch, sap_cfreq, sap_hbw);
-		} else if (*sap_ch != op_chan) {
-			*intf_ch = op_chan;
+				*sap_ch_freq, sap_cfreq, sap_hbw);
+		} else if (*sap_ch_freq != op_chan_freq) {
+			*intf_ch_freq = op_chan_freq;
 			csr_get_ch_from_ht_profile(mac_ctx,
 					&session->connectedProfile.ht_profile,
-					*intf_ch, intf_cfreq, intf_hbw);
+					*intf_ch_freq, intf_cfreq, intf_hbw);
 		}
-	} else if (*sap_ch == 0 &&
+	} else if (*sap_ch_freq == 0 &&
 			(session->pCurRoamProfile->csrPersona ==
 					QDF_SAP_MODE)) {
-		*sap_ch = op_chan;
+		*sap_ch_freq = op_chan_freq;
 		csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.ht_profile,
-				*sap_ch, sap_cfreq, sap_hbw);
+				*sap_ch_freq, sap_cfreq, sap_hbw);
 	}
 }
 
@@ -980,40 +989,39 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
  * Return: uint16_t
  */
 uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
-			uint16_t sap_ch, eCsrPhyMode sap_phymode,
+			uint32_t sap_ch_freq, eCsrPhyMode sap_phymode,
 			uint8_t cc_switch_mode)
 {
 	struct csr_roam_session *session = NULL;
 	uint8_t i = 0, chb = PHY_SINGLE_CHANNEL_CENTERED;
-	uint16_t intf_ch = 0, sap_hbw = 0, intf_hbw = 0, intf_cfreq = 0;
-	uint16_t sap_cfreq = 0;
-	uint16_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq, sap_cch = 0;
+	uint32_t intf_ch_freq = 0, sap_hbw = 0, intf_hbw = 0, intf_cfreq = 0;
+	uint32_t sap_cfreq = 0;
+	uint32_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq;
 	QDF_STATUS status;
-	uint32_t intf_ch_freq;
 
-	sme_debug("sap_ch: %d sap_phymode: %d", sap_ch, sap_phymode);
+	sme_debug("sap_ch_freq: %d sap_phymode: %d", sap_ch_freq, sap_phymode);
 
 	if (mac_ctx->roam.configParam.cc_switch_mode ==
 			QDF_MCC_TO_SCC_SWITCH_DISABLE)
 		return 0;
 
-	if (sap_ch != 0) {
-		sap_cch = sap_ch;
+	if (sap_ch_freq != 0) {
+		sap_cfreq = sap_ch_freq;
 		sap_hbw = HALF_BW_OF(eCSR_BW_20MHz_VAL);
 
-		if (sap_ch > 14)
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(sap_ch_freq))
 			chb = mac_ctx->roam.configParam.channelBondingMode5GHz;
 		else
 			chb = mac_ctx->roam.configParam.channelBondingMode24GHz;
 
 		if (chb)
-			csr_calc_chb_for_sap_phymode(mac_ctx, &sap_ch,
-					&sap_phymode, &sap_cch, &sap_hbw, &chb);
-		sap_cfreq = cds_chan_to_freq(sap_cch);
+			csr_calc_chb_for_sap_phymode(mac_ctx, &sap_ch_freq,
+						     &sap_phymode, &sap_cfreq,
+						     &sap_hbw, &chb);
 	}
 
 	sme_debug("sap_ch:%d sap_phymode:%d sap_cch:%d sap_hbw:%d chb:%d",
-		sap_ch, sap_phymode, sap_cch, sap_hbw, chb);
+		sap_ch_freq, sap_phymode, sap_cfreq, sap_hbw, chb);
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
@@ -1027,14 +1035,12 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 				QDF_P2P_CLIENT_MODE)) &&
 			(session->connectState ==
 				eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)) {
-			intf_ch = wlan_reg_freq_to_chan(
-					mac_ctx->pdev,
-					session->connectedProfile.op_freq);
+			intf_ch_freq = session->connectedProfile.op_freq;
 			csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.ht_profile,
-				intf_ch, &intf_cfreq, &intf_hbw);
+				intf_ch_freq, &intf_cfreq, &intf_hbw);
 			sme_debug("%d: intf_ch:%d intf_cfreq:%d intf_hbw:%d",
-				i, intf_ch, intf_cfreq, intf_hbw);
+				i, intf_ch_freq, intf_cfreq, intf_hbw);
 		} else if (((session->pCurRoamProfile->csrPersona ==
 					QDF_P2P_GO_MODE) ||
 				(session->pCurRoamProfile->csrPersona ==
@@ -1045,49 +1051,55 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 				continue;
 
 			csr_handle_conc_chnl_overlap_for_sap_go(mac_ctx,
-					session, &sap_ch, &sap_hbw, &sap_cfreq,
-					&intf_ch, &intf_hbw, &intf_cfreq);
+					session, &sap_ch_freq, &sap_hbw,
+					&sap_cfreq, &intf_ch_freq, &intf_hbw,
+					&intf_cfreq);
 
-			sme_debug("%d: sap_ch:%d sap_hbw:%d sap_cfreq:%d intf_ch:%d intf_hbw:%d, intf_cfreq:%d",
-					i, sap_ch, sap_hbw, sap_cfreq,
-					intf_ch, intf_hbw, intf_cfreq);
+			sme_debug("%d: sap_ch:%d sap_hbw:%d sap_cfreq:%d"
+				  " intf_ch:%d intf_hbw:%d, intf_cfreq:%d",
+				  i, sap_ch_freq, sap_hbw, sap_cfreq,
+				  intf_ch_freq, intf_hbw, intf_cfreq);
 		}
-		if (intf_ch && ((intf_ch > 14 && sap_ch > 14) ||
-				(intf_ch <= 14 && sap_ch <= 14)))
+		if (intf_ch_freq &&
+		    ((intf_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484) &&
+		     sap_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484)) ||
+		    (intf_ch_freq > wlan_reg_ch_to_freq(CHAN_ENUM_2484) &&
+		     sap_ch_freq > wlan_reg_ch_to_freq(CHAN_ENUM_2484))))
 			break;
 	}
 
 	sme_debug("intf_ch:%d sap_ch:%d cc_switch_mode:%d, dbs:%d",
-			intf_ch, sap_ch, cc_switch_mode,
+			intf_ch_freq, sap_ch_freq, cc_switch_mode,
 			policy_mgr_is_dbs_enable(mac_ctx->psoc));
 
-	if (intf_ch && sap_ch != intf_ch &&
+	if (intf_ch_freq && sap_ch_freq != intf_ch_freq &&
 	    !policy_mgr_is_force_scc(mac_ctx->psoc)) {
 		sap_lfreq = sap_cfreq - sap_hbw;
 		sap_hfreq = sap_cfreq + sap_hbw;
 		intf_lfreq = intf_cfreq - intf_hbw;
 		intf_hfreq = intf_cfreq + intf_hbw;
 
-		sme_err("SAP:  OCH: %03d OCF: %d CCH: %03d CF: %d BW: %d LF: %d HF: %d INTF: OCH: %03d OCF: %d CCH: %03d CF: %d BW: %d LF: %d HF: %d",
-			sap_ch, cds_chan_to_freq(sap_ch),
-			cds_freq_to_chan(sap_cfreq), sap_cfreq, sap_hbw * 2,
-			sap_lfreq, sap_hfreq, intf_ch,
-			cds_chan_to_freq(intf_ch), cds_freq_to_chan(intf_cfreq),
+		sme_err("SAP:  OCH: %03d CCH: %03d BW: %d LF: %d HF: %d"
+			" INTF: OCH: %03d CF: %d BW: %d LF: %d HF: %d",
+			sap_ch_freq, sap_cfreq, sap_hbw * 2,
+			sap_lfreq, sap_hfreq, intf_ch_freq,
 			intf_cfreq, intf_hbw * 2, intf_lfreq, intf_hfreq);
 
 		if (!(((sap_lfreq > intf_lfreq && sap_lfreq < intf_hfreq) ||
 			(sap_hfreq > intf_lfreq && sap_hfreq < intf_hfreq)) ||
 			((intf_lfreq > sap_lfreq && intf_lfreq < sap_hfreq) ||
 			(intf_hfreq > sap_lfreq && intf_hfreq < sap_hfreq))))
-			intf_ch = 0;
-	} else if (intf_ch && sap_ch != intf_ch &&
-		  (policy_mgr_is_force_scc(mac_ctx->psoc))) {
-		if (!((intf_ch <= 14 && sap_ch <= 14) ||
-			(intf_ch > 14 && sap_ch > 14))) {
+			intf_ch_freq = 0;
+	} else if (intf_ch_freq && sap_ch_freq != intf_ch_freq &&
+		   (policy_mgr_is_force_scc(mac_ctx->psoc))) {
+		if (!((intf_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484) &&
+		       sap_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484)) ||
+		     (intf_ch_freq > wlan_reg_ch_to_freq(CHAN_ENUM_2484) &&
+		      sap_ch_freq > wlan_reg_ch_to_freq(CHAN_ENUM_2484)))) {
 			if (policy_mgr_is_dbs_enable(mac_ctx->psoc) ||
 			    cc_switch_mode ==
 			    QDF_MCC_TO_SCC_WITH_PREFERRED_BAND)
-				intf_ch = 0;
+				intf_ch_freq = 0;
 		} else if (cc_switch_mode ==
 			   QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
 			status = policy_mgr_get_sap_mandatory_channel(
@@ -1095,26 +1107,25 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 					&intf_ch_freq);
 			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
-			intf_ch = wlan_freq_to_chan(intf_ch_freq);
 		}
-	} else if ((intf_ch == sap_ch) && (cc_switch_mode ==
+	} else if ((intf_ch_freq == sap_ch_freq) && (cc_switch_mode ==
 				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)) {
-		if (cds_chan_to_band(intf_ch) == CDS_BAND_2GHZ) {
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(intf_ch_freq)) {
 			status =
 				policy_mgr_get_sap_mandatory_channel(
 					mac_ctx->psoc, &intf_ch_freq);
 			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
-			intf_ch = wlan_freq_to_chan(intf_ch_freq);
 		}
 	}
 
-	if (intf_ch == sap_ch)
-		intf_ch = 0;
+	if (intf_ch_freq == sap_ch_freq)
+		intf_ch_freq = 0;
 
 	sme_err("##Concurrent Channels %s Interfering",
-		intf_ch == 0 ? "Not" : "Are");
-	return intf_ch;
+		intf_ch_freq == 0 ? "Not" : "Are");
+
+	return intf_ch_freq;
 }
 #endif
 

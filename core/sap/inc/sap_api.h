@@ -865,9 +865,9 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(mac_handle_t handle, uint8_t *vdev_id);
  * wlansap_check_cc_intf() - Get interfering concurrent channel
  * @sap_ctx: SAP context pointer
  *
- * Determine if a Concurrent Channel is interfering.
+ * Determine if a concurrent channel is interfering.
  *
- * Return: Channel number of the interfering channel, or 0 if none.
+ * Return: Channel freq (Mhz) of the interfering channel, or 0 if none.
  */
 uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx);
 #endif

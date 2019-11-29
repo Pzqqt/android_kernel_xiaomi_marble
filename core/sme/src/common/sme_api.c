@@ -5141,20 +5141,16 @@ uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	uint16_t channel = 0;
+	uint16_t intf_ch_freq = 0;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		channel = csr_check_concurrent_channel_overlap(mac,
-							wlan_reg_freq_to_chan(
-								mac->pdev,
-								sap_ch_freq),
-							sapPhyMode,
-							cc_switch_mode);
+		intf_ch_freq = csr_check_concurrent_channel_overlap(
+			mac, sap_ch_freq, sapPhyMode, cc_switch_mode);
 		sme_release_global_lock(&mac->sme);
 	}
 
-	return channel;
+	return intf_ch_freq;
 }
 #endif
 
@@ -10971,7 +10967,7 @@ bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
-	uint16_t intf_channel = 0;
+	uint16_t intf_channel_freq = 0;
 
 	if (!session)
 		return false;
@@ -10979,10 +10975,8 @@ bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
 	session->ch_switch_in_progress = true;
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		intf_channel = csr_check_concurrent_channel_overlap(mac,
-								    wlan_reg_freq_to_chan(mac->pdev, sap_ch_freq),
-						sap_phy_mode,
-						cc_switch_mode);
+		intf_channel_freq = csr_check_concurrent_channel_overlap(
+			mac, sap_ch_freq, sap_phy_mode, cc_switch_mode);
 		sme_release_global_lock(&mac->sme);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -10992,7 +10986,7 @@ bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
 	}
 
 	session->ch_switch_in_progress = false;
-	return (intf_channel == 0) ? true : false;
+	return (intf_channel_freq == 0) ? true : false;
 }
 #endif
 

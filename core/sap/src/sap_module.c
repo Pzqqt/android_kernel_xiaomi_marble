@@ -485,7 +485,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
 uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 {
 	struct mac_context *mac;
-	uint16_t intf_ch;
+	uint16_t intf_ch_freq;
 	eCsrPhyMode phy_mode;
 
 	mac = sap_get_mac_context();
@@ -494,11 +494,12 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 		return 0;
 	}
 	phy_mode = sap_ctx->csr_roamProfile.phyMode;
-	intf_ch = sme_check_concurrent_channel_overlap(MAC_HANDLE(mac),
-						       sap_ctx->chan_freq,
-						       phy_mode,
-						       sap_ctx->cc_switch_mode);
-	return intf_ch;
+	intf_ch_freq = sme_check_concurrent_channel_overlap(
+						MAC_HANDLE(mac),
+						sap_ctx->chan_freq,
+						phy_mode,
+						sap_ctx->cc_switch_mode);
+	return intf_ch_freq;
 }
 #endif
 
@@ -3153,10 +3154,9 @@ err:
 
 qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx)
 {
-	uint8_t restart_chan;
 	uint32_t restart_freq;
 	enum phy_ch_width restart_ch_width;
-	uint8_t intf_ch;
+	uint16_t intf_ch_freq;
 	uint32_t phy_mode;
 	struct mac_context *mac;
 	uint8_t cc_mode;
@@ -3204,20 +3204,18 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx)
 		return 0;
 	}
 
-	restart_chan = wlan_reg_freq_to_chan(mac->pdev, restart_freq);
 	cc_mode = sap_ctx->cc_switch_mode;
 	phy_mode = sap_ctx->csr_roamProfile.phyMode;
-	intf_ch = sme_check_concurrent_channel_overlap(MAC_HANDLE(mac),
+	intf_ch_freq = sme_check_concurrent_channel_overlap(
+						       MAC_HANDLE(mac),
 						       restart_freq,
 						       phy_mode,
 						       cc_mode);
-	if (intf_ch)
-		restart_chan = intf_ch;
+	if (intf_ch_freq)
+		restart_freq = intf_ch_freq;
 	vdev_id = sap_ctx->vdev->vdev_objmgr.vdev_id;
-	restart_freq = wlan_reg_chan_to_freq(mac->pdev, restart_chan);
 	sap_debug("vdev: %d, CSA target freq: %d", vdev_id, restart_freq);
 	sap_ctx->csa_reason = CSA_REASON_BAND_RESTRICTED;
-
 	return restart_freq;
 }
 

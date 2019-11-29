@@ -1004,7 +1004,7 @@ uint32_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t csr_check_concurrent_channel_overlap(
 		struct mac_context *mac,
-		uint16_t sap_ch, eCsrPhyMode sap_phymode,
+		uint32_t sap_ch_freq, eCsrPhyMode sap_phymode,
 		uint8_t cc_switch_mode);
 #endif
 QDF_STATUS csr_roam_copy_connect_profile(struct mac_context *mac,
