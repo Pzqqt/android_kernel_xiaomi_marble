@@ -31,6 +31,16 @@
 #include "wlan_dfs_lmac_api.h"
 #include "../dfs_partial_offload_radar.h"
 
+#ifdef DFS_FCC_TYPE4_DURATION_CHECK
+#define DFS_WAR_30_MHZ_SEPARATION   30
+#define DFS_WAR_PEAK_INDEX_ZERO 0
+#define DFS_TYPE4_WAR_PULSE_DURATION_LOWER_LIMIT 11
+#define DFS_TYPE4_WAR_PULSE_DURATION_UPPER_LIMIT 33
+#define DFS_TYPE4_WAR_PRI_LOWER_LIMIT 200
+#define DFS_TYPE4_WAR_PRI_UPPER_LIMIT 500
+#define DFS_TYPE4_WAR_VALID_PULSE_DURATION 12
+#endif
+
 #define FREQ_5500_MHZ  5500
 #define FREQ_5500_MHZ       5500
 
@@ -92,6 +102,58 @@ static inline uint8_t dfs_process_pulse_dur(struct wlan_dfs *dfs,
 	/* Convert 0.8us durations to TSF ticks (usecs) */
 	return (uint8_t)dfs_round((int32_t)((dfs->dur_multiplier)*re_dur));
 }
+
+#ifdef DFS_FCC_TYPE4_DURATION_CHECK
+/*
+ * dfs_dur_check() - Modify the pulse duration for FCC Type 4 and JAPAN W56
+ *                   Type 8 radar pulses when the conditions mentioned in the
+ *                   function body are reported in the radar summary report.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Current  channel.
+ * @re: Pointer to dfs_event.
+ * @diff_ts: timestamp of current pulse - timestamp of last pulse.
+ *
+ * return: Void
+ */
+static inline void dfs_dur_check(
+	struct wlan_dfs *dfs,
+	struct dfs_channel *chan,
+	struct dfs_event *re,
+	uint32_t diff_ts)
+{
+	if ((dfs->dfsdomain == DFS_FCC_DOMAIN ||
+	     dfs->dfsdomain == DFS_MKK4_DOMAIN) &&
+	    ((chan->dfs_ch_flags & WLAN_CHAN_VHT80) == WLAN_CHAN_VHT80) &&
+	    (DFS_DIFF(chan->dfs_ch_freq, chan->dfs_ch_mhz_freq_seg1) ==
+	    DFS_WAR_30_MHZ_SEPARATION) &&
+	    re->re_sidx == DFS_WAR_PEAK_INDEX_ZERO &&
+	    (re->re_dur > DFS_TYPE4_WAR_PULSE_DURATION_LOWER_LIMIT &&
+	    re->re_dur < DFS_TYPE4_WAR_PULSE_DURATION_UPPER_LIMIT) &&
+	    (diff_ts > DFS_TYPE4_WAR_PRI_LOWER_LIMIT &&
+	    diff_ts < DFS_TYPE4_WAR_PRI_UPPER_LIMIT)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "chan flags=%llu, Pri Chan %d MHz center %d MHZ",
+			  chan->dfs_ch_flags,
+			  chan->dfs_ch_freq, chan->dfs_ch_mhz_freq_seg1);
+
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Report Peak Index = %d,re.re_dur = %d,diff_ts = %d",
+			  re->re_sidx, re->re_dur, diff_ts);
+
+		re->re_dur = DFS_TYPE4_WAR_VALID_PULSE_DURATION;
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Modifying the pulse duration to %d", re->re_dur);
+	}
+}
+#else
+static inline void dfs_dur_check(
+	struct wlan_dfs *dfs,
+	struct dfs_channel *chan,
+	struct dfs_event *re,
+	uint32_t diff_ts)
+{
+}
+#endif
 
 /*
  * dfs_print_radar_events() - Prints the Radar events.
@@ -1301,6 +1363,8 @@ static inline int dfs_process_each_radarevent(
 
 		dfs_add_to_pulseline(dfs, &re, &this_ts, &test_ts, &diff_ts,
 				&index);
+
+		dfs_dur_check(dfs, chan, &re, diff_ts);
 
 		dfs_log_event(dfs, &re, this_ts, diff_ts, index);
 
