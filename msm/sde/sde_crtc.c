@@ -5075,6 +5075,9 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 	msm_property_install_blob(&sde_crtc->property_info, "capabilities",
 		DRM_MODE_PROP_IMMUTABLE, CRTC_PROP_INFO);
 
+	sde_kms_info_add_keyint(info, "use_baselayer_for_stage",
+			 catalog->has_base_layer);
+
 	msm_property_set_blob(&sde_crtc->property_info, &sde_crtc->blob_info,
 			info->data, SDE_KMS_INFO_DATALEN(info),
 			CRTC_PROP_INFO);
