@@ -5036,9 +5036,6 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 
 	soc->vdev_id_map[vdev->vdev_id] = NULL;
 
-	if (wlan_op_mode_monitor == vdev->opmode)
-		goto free_vdev;
-
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_delete_wifi3(vdev->vap_self_peer, 0);
 
@@ -5069,6 +5066,9 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	}
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
+	if (wlan_op_mode_monitor == vdev->opmode)
+		goto free_vdev;
+
 	qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
 	if (!soc->hw_nac_monitor_support) {
 		TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
@@ -5092,14 +5092,13 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	dp_rx_vdev_detach(vdev);
 	/* remove the vdev from its parent pdev's list */
 	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		FL("deleting vdev object %pK (%pM)"), vdev, vdev->mac_addr.raw);
-
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+
 free_vdev:
 	if (wlan_op_mode_monitor == vdev->opmode)
 		pdev->monitor_vdev = NULL;
 
+	dp_info("deleting vdev object %pK (%pM)", vdev, vdev->mac_addr.raw);
 	qdf_mem_free(vdev);
 
 	if (callback)
@@ -5927,9 +5926,8 @@ static void dp_delete_pending_vdev(struct dp_pdev *pdev, struct dp_vdev *vdev,
 	vdev_delete_cb = vdev->delete.callback;
 	vdev_delete_context = vdev->delete.context;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("deleting vdev object %pK (%pM)- its last peer is done"),
-		  vdev, vdev->mac_addr.raw);
+	dp_info("deleting vdev object %pK (%pM)- its last peer is done",
+		vdev, vdev->mac_addr.raw);
 	/* all peers are gone, go ahead and delete it */
 	dp_tx_flow_pool_unmap_handler(pdev, vdev_id,
 			FLOW_TYPE_VDEV, vdev_id);
@@ -5937,13 +5935,16 @@ static void dp_delete_pending_vdev(struct dp_pdev *pdev, struct dp_vdev *vdev,
 
 	pdev->soc->vdev_id_map[vdev_id] = NULL;
 
-	qdf_spin_lock_bh(&pdev->vdev_list_lock);
-	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
-	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+	if (wlan_op_mode_monitor == vdev->opmode) {
+		pdev->monitor_vdev = NULL;
+	} else {
+		qdf_spin_lock_bh(&pdev->vdev_list_lock);
+		TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
+		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("deleting vdev object %pK (%pM)"),
-		  vdev, vdev->mac_addr.raw);
+	dp_info("deleting vdev object %pK (%pM)",
+		vdev, vdev->mac_addr.raw);
 	qdf_mem_free(vdev);
 	vdev = NULL;
 
