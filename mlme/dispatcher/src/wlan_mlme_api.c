@@ -3545,3 +3545,103 @@ wlan_mlme_get_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc,
 	*disabled = mlme_obj->cfg.reg.ignore_fw_reg_offload_ind;
 	return QDF_STATUS_SUCCESS;
 }
+
+char *mlme_get_roam_trigger_str(uint32_t roam_scan_trigger)
+{
+	switch (roam_scan_trigger) {
+	case WMI_ROAM_TRIGGER_REASON_PER:
+		return "PER";
+	case WMI_ROAM_TRIGGER_REASON_BMISS:
+		return "BEACON MISS";
+	case WMI_ROAM_TRIGGER_REASON_LOW_RSSI:
+		return "LOW RSSI";
+	case WMI_ROAM_TRIGGER_REASON_HIGH_RSSI:
+		return "HIGH RSSI";
+	case WMI_ROAM_TRIGGER_REASON_PERIODIC:
+		return "PERIODIC SCAN";
+	case WMI_ROAM_TRIGGER_REASON_MAWC:
+		return "MAWC";
+	case WMI_ROAM_TRIGGER_REASON_DENSE:
+		return "DENSE ENVIRONMENT";
+	case WMI_ROAM_TRIGGER_REASON_BACKGROUND:
+		return "BACKGROUND SCAN";
+	case WMI_ROAM_TRIGGER_REASON_FORCED:
+		return "FORCED SCAN";
+	case WMI_ROAM_TRIGGER_REASON_BTM:
+		return "BTM TRIGGER";
+	case WMI_ROAM_TRIGGER_REASON_UNIT_TEST:
+		return "TEST COMMMAND";
+	case WMI_ROAM_TRIGGER_REASON_BSS_LOAD:
+		return "HIGH BSS LOAD";
+	case WMI_ROAM_TRIGGER_REASON_DEAUTH:
+		return "DEAUTH RECEIVED";
+	case WMI_ROAM_TRIGGER_REASON_IDLE:
+		return "IDLE STATE SCAN";
+	case WMI_ROAM_TRIGGER_REASON_NONE:
+		return "NONE";
+	default:
+		return "UNKNOWN";
+	}
+}
+
+void mlme_get_converted_timestamp(uint32_t timestamp, char *time)
+{
+	uint32_t hr, mins, secs;
+
+	secs = timestamp / 1000;
+	mins = secs / 60;
+	hr = mins / 60;
+	qdf_snprintf(time, TIME_STRING_LEN, "[%02d:%02d:%02d.%06u]",
+		     (hr % 24), (mins % 60), (secs % 60),
+		     (timestamp % 1000) * 1000);
+}
+
+char *mlme_get_roam_fail_reason_str(uint32_t result)
+{
+	switch (result) {
+	case WMI_ROAM_FAIL_REASON_NO_SCAN_START:
+		return "SCAN NOT STARTED";
+	case WMI_ROAM_FAIL_REASON_NO_AP_FOUND:
+		return "NO AP FOUND";
+	case WMI_ROAM_FAIL_REASON_NO_CAND_AP_FOUND:
+		return "NO CANDIDATE FOUND";
+	case WMI_ROAM_FAIL_REASON_HOST:
+		return "HOST ABORTED";
+	case WMI_ROAM_FAIL_REASON_AUTH_SEND:
+		return "Send AUTH Failed";
+	case WMI_ROAM_FAIL_REASON_AUTH_RECV:
+		return "Received AUTH with FAILURE Status";
+	case WMI_ROAM_FAIL_REASON_NO_AUTH_RESP:
+		return "No Auth response from AP";
+	case WMI_ROAM_FAIL_REASON_REASSOC_SEND:
+		return "Send Re-assoc request failed";
+	case WMI_ROAM_FAIL_REASON_REASSOC_RECV:
+		return "Received Re-Assoc resp with Failure status";
+	case WMI_ROAM_FAIL_REASON_NO_REASSOC_RESP:
+		return "No Re-assoc response from AP";
+	case WMI_ROAM_FAIL_REASON_EAPOL_TIMEOUT:
+		return "EAPOL timed out";
+	case WMI_ROAM_FAIL_REASON_MLME:
+		return "MLME error";
+	case WMI_ROAM_FAIL_REASON_INTERNAL_ABORT:
+		return "Target aborted roam";
+	default:
+		return "NONE";
+	}
+}
+
+char *mlme_get_sub_reason_str(uint32_t sub_reason)
+{
+	switch (sub_reason) {
+	case WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER:
+		return "PERIODIC TIMER";
+	case WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER:
+		return "INACTIVITY TIMER";
+	case WMI_ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER:
+		return "BTM DISASSOC TIMER";
+	case WMI_ROAM_TRIGGER_SUB_REASON_FULL_SCAN:
+		return "FULL SCAN";
+	default:
+		return "NONE";
+	}
+}
