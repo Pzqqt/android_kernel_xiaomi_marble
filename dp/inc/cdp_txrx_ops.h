@@ -821,6 +821,12 @@ struct cdp_host_stats_ops {
 					  uint8_t pdev_id, void *data,
 					  uint16_t stats_id);
 	QDF_STATUS
+		(*txrx_get_peer_stats_param)(struct cdp_soc_t *soc,
+					     uint8_t vdev_id,
+					     uint8_t *peer_mac,
+					     enum cdp_peer_stats_type type,
+					     cdp_peer_stats_param_t *buf);
+	QDF_STATUS
 		(*txrx_get_peer_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
 				       uint8_t *peer_mac,
 				       struct cdp_peer_stats *peer_stats);

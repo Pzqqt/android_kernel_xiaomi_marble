@@ -477,6 +477,40 @@ cdp_update_vdev_host_stats(ol_txrx_soc_handle soc,
 }
 
 /**
+ * @brief Call to get specified peer stats
+ *
+ * @param soc - soc handle
+ * @param vdev_id - vdev_id of vdev object
+ * @param peer_mac - mac address of the peer
+ * @param type - enum of required stats
+ * @param buf - buffer to hold the value
+ * @return - QDF_STATUS
+ */
+static inline QDF_STATUS
+cdp_txrx_get_peer_stats_param(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			      uint8_t *peer_mac,
+			      enum cdp_peer_stats_type type,
+			      cdp_peer_stats_param_t *buf)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_get_peer_stats_param)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->host_stats_ops->txrx_get_peer_stats_param(soc,
+								   vdev_id,
+								   peer_mac,
+								   type,
+								   buf);
+}
+
+/**
  * @brief Call to get peer stats
  *
  * @param soc - soc handle

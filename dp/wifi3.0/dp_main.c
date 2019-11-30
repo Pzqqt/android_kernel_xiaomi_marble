@@ -73,6 +73,14 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #endif
 #endif
 
+/*
+ * The max size of cdp_peer_stats_param_t is limited to 16 bytes.
+ * If the buffer size is exceeding this size limit,
+ * dp_txrx_get_peer_stats is to be used instead.
+ */
+QDF_COMPILE_TIME_ASSERT(cdp_peer_stats_param_t_max_size,
+			(sizeof(cdp_peer_stats_param_t) <= 16));
+
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
 /*
  * If WLAN_CFG_INT_NUM_CONTEXTS is changed, HIF_NUM_INT_CONTEXTS
@@ -8696,16 +8704,97 @@ dp_txrx_get_peer_stats(struct cdp_soc_t *soc, uint8_t vdev_id,
 
 	if (!peer || peer->delete_in_progress) {
 		status = QDF_STATUS_E_FAILURE;
-		goto fail;
 	} else
 		qdf_mem_copy(peer_stats, &peer->stats,
 			     sizeof(struct cdp_peer_stats));
 
-fail:
 	if (peer)
 		dp_peer_unref_delete(peer);
 
 	return status;
+}
+
+/* dp_txrx_get_peer_stats_param - will return specified cdp_peer_stats
+ * @param soc - soc handle
+ * @param vdev_id - vdev_id of vdev object
+ * @param peer_mac - mac address of the peer
+ * @param type - enum of required stats
+ * @param buf - buffer to hold the value
+ * return : status success/failure
+ */
+static QDF_STATUS
+dp_txrx_get_peer_stats_param(struct cdp_soc_t *soc, uint8_t vdev_id,
+			     uint8_t *peer_mac, enum cdp_peer_stats_type type,
+			     cdp_peer_stats_param_t *buf)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+						      peer_mac, 0, vdev_id);
+
+	if (!peer || peer->delete_in_progress) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid Peer for Mac %pM", peer_mac);
+		ret = QDF_STATUS_E_FAILURE;
+	} else if (type < cdp_peer_stats_max) {
+		switch (type) {
+		case cdp_peer_tx_ucast:
+			buf->tx_ucast = peer->stats.tx.ucast;
+			break;
+		case cdp_peer_tx_mcast:
+			buf->tx_mcast = peer->stats.tx.mcast;
+			break;
+		case cdp_peer_tx_rate:
+			buf->tx_rate = peer->stats.tx.tx_rate;
+			break;
+		case cdp_peer_tx_last_tx_rate:
+			buf->last_tx_rate = peer->stats.tx.last_tx_rate;
+			break;
+		case cdp_peer_tx_inactive_time:
+			buf->tx_inactive_time = peer->stats.tx.inactive_time;
+			break;
+		case cdp_peer_tx_ratecode:
+			buf->tx_ratecode = peer->stats.tx.tx_ratecode;
+			break;
+		case cdp_peer_tx_flags:
+			buf->tx_flags = peer->stats.tx.tx_flags;
+			break;
+		case cdp_peer_tx_power:
+			buf->tx_power = peer->stats.tx.tx_power;
+			break;
+		case cdp_peer_rx_rate:
+			buf->rx_rate = peer->stats.rx.rx_rate;
+			break;
+		case cdp_peer_rx_last_rx_rate:
+			buf->last_rx_rate = peer->stats.rx.last_rx_rate;
+			break;
+		case cdp_peer_rx_ratecode:
+			buf->rx_ratecode = peer->stats.rx.rx_ratecode;
+			break;
+		case cdp_peer_rx_ucast:
+			buf->rx_ucast = peer->stats.rx.unicast;
+			break;
+		case cdp_peer_rx_flags:
+			buf->rx_flags = peer->stats.rx.rx_flags;
+			break;
+		case cdp_peer_rx_avg_rssi:
+			buf->rx_avg_rssi = peer->stats.rx.avg_rssi;
+			break;
+		default:
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "Invalid value");
+			ret = QDF_STATUS_E_FAILURE;
+			break;
+		}
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid value");
+		ret = QDF_STATUS_E_FAILURE;
+	}
+
+	if (peer)
+		dp_peer_unref_delete(peer);
+
+	return ret;
 }
 
 /* dp_txrx_reset_peer_stats - reset cdp_peer_stats for particular peer
@@ -10090,6 +10179,7 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_stats_publish = dp_txrx_stats_publish,
 	.txrx_get_vdev_stats  = dp_txrx_get_vdev_stats,
 	.txrx_get_peer_stats = dp_txrx_get_peer_stats,
+	.txrx_get_peer_stats_param = dp_txrx_get_peer_stats_param,
 	.txrx_reset_peer_stats = dp_txrx_reset_peer_stats,
 	.txrx_get_pdev_stats = dp_txrx_get_pdev_stats,
 	.txrx_get_ratekbps = dp_txrx_get_ratekbps,

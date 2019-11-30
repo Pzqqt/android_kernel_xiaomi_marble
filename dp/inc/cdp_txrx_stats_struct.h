@@ -617,6 +617,56 @@ struct cdp_tso_stats {
 #endif /* FEATURE_TSO_STATS */
 };
 
+#define CDP_PEER_STATS_START 0
+
+enum cdp_peer_stats_type {
+	cdp_peer_stats_min = CDP_PEER_STATS_START,
+
+	/* Tx types */
+	cdp_peer_tx_ucast = cdp_peer_stats_min,
+	cdp_peer_tx_mcast,
+	cdp_peer_tx_rate,
+	cdp_peer_tx_last_tx_rate,
+	cdp_peer_tx_inactive_time,
+	cdp_peer_tx_ratecode,
+	cdp_peer_tx_flags,
+	cdp_peer_tx_power,
+
+	/* Rx types */
+	cdp_peer_rx_rate,
+	cdp_peer_rx_last_rx_rate,
+	cdp_peer_rx_ratecode,
+	cdp_peer_rx_ucast,
+	cdp_peer_rx_flags,
+	cdp_peer_rx_avg_rssi,
+	cdp_peer_stats_max,
+};
+
+/*
+ * The max size of cdp_peer_stats_param_t is limited to 16 bytes.
+ * If the buffer size is exceeding this size limit,
+ * dp_txrx_get_peer_stats is to be used instead.
+ */
+typedef union cdp_peer_stats_buf {
+	/* Tx types */
+	struct cdp_pkt_info tx_ucast;
+	struct cdp_pkt_info tx_mcast;
+	uint32_t tx_rate;
+	uint32_t last_tx_rate;
+	uint32_t tx_inactive_time;
+	uint32_t tx_flags;
+	uint32_t tx_power;
+	uint16_t tx_ratecode;
+
+	/* Rx types */
+	struct cdp_pkt_info rx_ucast;
+	uint32_t rx_rate;
+	uint32_t last_rx_rate;
+	uint32_t rx_ratecode;
+	uint32_t rx_flags;
+	uint32_t rx_avg_rssi;
+} cdp_peer_stats_param_t; /* Max union size 16 bytes */
+
 /* struct cdp_tx_stats - tx stats
  * @cdp_pkt_info comp_pkt: Pkt Info for which completions were received
  * @cdp_pkt_info ucast: Unicast Packet Count
