@@ -259,7 +259,7 @@ static int msm_cdc_pinctrl_probe(struct platform_device *pdev)
 			gpio_data->chip_wakeup_register[i] =
 				devm_ioremap(&pdev->dev, chip_wakeup_reg[i], 0x4);
 		}
-		if (of_property_read_u32_array(pdev->dev.of_node,
+		if (!of_property_read_u32_array(pdev->dev.of_node,
 					"qcom,chip-wakeup-default-val",
 					chip_wakeup_default_val, count)) {
 			for (i = 0; i < count; i++) {
