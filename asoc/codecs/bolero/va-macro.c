@@ -119,8 +119,8 @@ struct va_macro_swr_ctrl_platform_data {
 	int (*read)(void *handle, int reg);
 	int (*write)(void *handle, int reg, int val);
 	int (*bulk_write)(void *handle, u32 *reg, u32 *val, size_t len);
-	int (*core_vote)(void *handle, bool enable);
 	int (*clk)(void *handle, bool enable);
+	int (*core_vote)(void *handle, bool enable);
 	int (*handle_irq)(void *handle,
 			  irqreturn_t (*swrm_irq_handler)(int irq,
 							  void *data),
@@ -2540,6 +2540,15 @@ static int va_macro_init(struct snd_soc_component *component)
 			  va_macro_mute_update_callback);
 	}
 	va_priv->component = component;
+
+	if (va_priv->version == BOLERO_VERSION_2_1) {
+		snd_soc_component_update_bits(component,
+			BOLERO_CDC_VA_TOP_CSR_SWR_MIC_CTL0, 0xEE, 0xCC);
+		snd_soc_component_update_bits(component,
+			BOLERO_CDC_VA_TOP_CSR_SWR_MIC_CTL1, 0xEE, 0xCC);
+		snd_soc_component_update_bits(component,
+			BOLERO_CDC_VA_TOP_CSR_SWR_MIC_CTL2, 0xEE, 0xCC);
+	}
 
 	return 0;
 }

@@ -2538,6 +2538,7 @@ static int swrm_probe(struct platform_device *pdev)
 	swr_master_add_boarddevices(&swrm->master);
 	mutex_lock(&swrm->mlock);
 	swrm_clk_request(swrm, true);
+	swrm->version = swr_master_read(swrm, SWRM_COMP_HW_VERSION);
 	ret = swrm_master_init(swrm);
 	if (ret < 0) {
 		dev_err(&pdev->dev,
@@ -2546,7 +2547,6 @@ static int swrm_probe(struct platform_device *pdev)
 		mutex_unlock(&swrm->mlock);
 		goto err_mstr_fail;
 	}
-	swrm->version = swr_master_read(swrm, SWRM_COMP_HW_VERSION);
 
 	mutex_unlock(&swrm->mlock);
 	INIT_WORK(&swrm->wakeup_work, swrm_wakeup_work);
