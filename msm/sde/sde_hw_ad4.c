@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 #include <drm/msm_drm_pp.h>
 #include "sde_hw_catalog.h"
@@ -299,7 +299,7 @@ static int ad4_params_check(struct sde_hw_dspp *dspp,
 	}
 
 	if (!cfg->hw_cfg->num_of_mixers ||
-	    cfg->hw_cfg->num_of_mixers > CRTC_DUAL_MIXERS) {
+	    cfg->hw_cfg->num_of_mixers > CRTC_DUAL_MIXERS_ONLY) {
 		DRM_ERROR("invalid mixer cnt %d\n",
 				cfg->hw_cfg->num_of_mixers);
 		return -EINVAL;

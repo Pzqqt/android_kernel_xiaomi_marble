@@ -37,7 +37,7 @@
 #endif
 
 #define MAX_DSI_DISPLAYS		2
-#define MAX_DATA_PATH_PER_DSIPLAY	2
+#define MAX_DATA_PATH_PER_DSIPLAY	4
 
 enum sde_format_flags {
 	SDE_FORMAT_FLAG_YUV_BIT,

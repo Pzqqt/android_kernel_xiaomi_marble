@@ -924,7 +924,7 @@ static int _sde_crtc_check_rois_centered_and_symmetric(struct drm_crtc *crtc,
 {
 	struct sde_crtc *sde_crtc;
 	struct sde_crtc_state *crtc_state;
-	const struct sde_rect *roi[CRTC_DUAL_MIXERS];
+	const struct sde_rect *roi[MAX_MIXERS_PER_CRTC];
 
 	if (!crtc || !state)
 		return -EINVAL;
@@ -932,7 +932,7 @@ static int _sde_crtc_check_rois_centered_and_symmetric(struct drm_crtc *crtc,
 	sde_crtc = to_sde_crtc(crtc);
 	crtc_state = to_sde_crtc_state(state);
 
-	if (sde_crtc->num_mixers > CRTC_DUAL_MIXERS) {
+	if (sde_crtc->num_mixers > MAX_MIXERS_PER_CRTC) {
 		SDE_ERROR("%s: unsupported number of mixers: %d\n",
 				sde_crtc->name, sde_crtc->num_mixers);
 		return -EINVAL;
@@ -971,7 +971,7 @@ static int _sde_crtc_check_rois_centered_and_symmetric(struct drm_crtc *crtc,
 	 * On certain HW, if using 2 LM, ROIs must be split evenly between the
 	 * LMs and be of equal width.
 	 */
-	if (sde_crtc->num_mixers < 2)
+	if (sde_crtc->num_mixers < CRTC_DUAL_MIXERS_ONLY)
 		return 0;
 
 	roi[0] = &crtc_state->lm_roi[0];
@@ -1563,7 +1563,7 @@ static void _sde_crtc_swap_mixers_for_right_partial_update(
 	sde_crtc = to_sde_crtc(crtc);
 	cstate = to_sde_crtc_state(crtc->state);
 
-	if (sde_crtc->num_mixers != CRTC_DUAL_MIXERS)
+	if (sde_crtc->num_mixers != CRTC_DUAL_MIXERS_ONLY)
 		return;
 
 	drm_for_each_encoder_mask(drm_enc, crtc->dev,
@@ -1638,7 +1638,7 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 
 	SDE_DEBUG("%s\n", sde_crtc->name);
 
-	if (sde_crtc->num_mixers > CRTC_DUAL_MIXERS) {
+	if (sde_crtc->num_mixers > MAX_MIXERS_PER_CRTC) {
 		SDE_ERROR("invalid number mixers: %d\n", sde_crtc->num_mixers);
 		return;
 	}
@@ -2054,7 +2054,7 @@ static int _sde_validate_hw_resources(struct sde_crtc *sde_crtc)
 	}
 
 	if (!sde_crtc->num_mixers ||
-		sde_crtc->num_mixers > CRTC_DUAL_MIXERS) {
+		sde_crtc->num_mixers > MAX_MIXERS_PER_CRTC) {
 		SDE_ERROR("%s: invalid number mixers: %d\n",
 			sde_crtc->name, sde_crtc->num_mixers);
 		SDE_EVT32(DRMID(&sde_crtc->base), sde_crtc->num_mixers,
@@ -2137,7 +2137,7 @@ static void _sde_crtc_dest_scaler_setup(struct drm_crtc *crtc)
 
 			if ((i == count-1) && hw_ds->ops.setup_opmode) {
 				op_mode |= (cstate->num_ds_enabled ==
-					CRTC_DUAL_MIXERS) ?
+					CRTC_DUAL_MIXERS_ONLY) ?
 					SDE_DS_OP_MODE_DUAL : 0;
 				hw_ds->ops.setup_opmode(hw_ds, op_mode);
 				SDE_EVT32_VERBOSE(DRMID(crtc), op_mode);
@@ -2823,7 +2823,7 @@ static int _sde_crtc_check_dest_scaler_validate_ds(struct drm_crtc *crtc,
 			max_in_width = hw_ds->scl->top->maxinputwidth;
 			max_out_width = hw_ds->scl->top->maxoutputwidth;
 
-			if (cstate->num_ds == CRTC_DUAL_MIXERS)
+			if (cstate->num_ds == CRTC_DUAL_MIXERS_ONLY)
 				max_in_width -= SDE_DS_OVERFETCH_SIZE;
 
 			SDE_DEBUG("max DS width [%d,%d] for num_ds = %d\n",
