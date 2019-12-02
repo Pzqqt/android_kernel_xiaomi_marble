@@ -933,6 +933,12 @@ static QDF_STATUS write_beacon_to_memory(struct mac_context *mac, uint16_t size,
 
 	/* copy end of beacon only if length > 0 */
 	if (length > 0) {
+		if (size + pe_session->schBeaconOffsetEnd >
+		    SIR_MAX_BEACON_SIZE) {
+			pe_err("beacon tmp fail size %d BeaconOffsetEnd %d",
+			       size, pe_session->schBeaconOffsetEnd);
+			return QDF_STATUS_E_FAILURE;
+		}
 		for (i = 0; i < pe_session->schBeaconOffsetEnd; i++)
 			pe_session->pSchBeaconFrameBegin[size++] =
 				pe_session->pSchBeaconFrameEnd[i];
