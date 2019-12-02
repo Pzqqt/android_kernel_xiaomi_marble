@@ -9218,7 +9218,8 @@ dp_soc_map_pdev_to_lmac
 	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc,
 								  pdev_id);
 	struct dp_vdev *vdev = NULL;
-	int hw_pdev_id;
+	uint8_t hw_pdev_id, mac_id;
+	int nss_config = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
 
 	if (qdf_unlikely(!pdev))
 		return QDF_STATUS_E_FAILURE;
@@ -9240,6 +9241,21 @@ dp_soc_map_pdev_to_lmac
 	hw_pdev_id =
 		dp_get_target_pdev_id_for_host_pdev_id(soc,
 						       pdev->pdev_id);
+
+	if (mode_change) {
+		/*
+		 * When NSS offload is enabled, send pdev_id->lmac_id
+		 * and pdev_id to hw_pdev_id to NSS FW
+		 */
+		if (nss_config) {
+			mac_id = pdev->lmac_id;
+			if (soc->cdp_soc.ol_ops->pdev_update_lmac_n_target_pdev_id)
+				soc->cdp_soc.ol_ops->
+					pdev_update_lmac_n_target_pdev_id(
+					soc->ctrl_psoc,
+					&pdev_id, &mac_id, &hw_pdev_id);
+		}
+	}
 
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
