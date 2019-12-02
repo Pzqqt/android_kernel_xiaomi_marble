@@ -27,6 +27,9 @@ ifndef CONFIG_ROME_IF
 endif
 endif
 
+# Enable FCC TYPE4 DURATION CHECK
+CONFIG_DFS_FCC_TYPE4_DURATION_CHECK := y
+
 # Make WLAN as open-source driver by default
 WLAN_OPEN_SOURCE := y
 
