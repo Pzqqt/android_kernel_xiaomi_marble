@@ -6252,9 +6252,17 @@ QDF_STATUS sme_set_roam_scan_control(mac_handle_t mac_handle, uint8_t sessionId,
 		specific_channel_info =
 			&neighbor_roam_info->cfgParams.specific_chan_info;
 		csr_flush_cfg_bg_scan_roam_channel_list(specific_channel_info);
-		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
+		/** Clear the static channel in FW by REASON_FLUSH_CHANNEL_LIST
+		 *  and then append channel list with dynamic channels in the FW
+		 *  using REASON_CHANNEL_LIST_CHANGED.
+		 */
 			csr_roam_update_cfg(mac, sessionId,
 					    REASON_FLUSH_CHANNEL_LIST);
+
+			csr_roam_update_cfg(mac, sessionId,
+					    REASON_CHANNEL_LIST_CHANGED);
+		}
 	}
 	mac->roam.configParam.nRoamScanControl = roamScanControl;
 	sme_release_global_lock(&mac->sme);

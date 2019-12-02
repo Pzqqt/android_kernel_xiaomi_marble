@@ -18448,13 +18448,16 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 			status = csr_fetch_ch_lst_from_ini(mac_ctx,
 							   roam_info,
 							   req_buf);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME,
-				  QDF_TRACE_LEVEL_DEBUG,
-				  "Fetch channel list from ini failed");
-			qdf_mem_free(req_buf);
-			return NULL;
-		}
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					  QDF_TRACE_LEVEL_DEBUG,
+					  "Fetch channel list from ini failed");
+				qdf_mem_free(req_buf);
+				return NULL;
+			}
+		} else if (reason == REASON_FLUSH_CHANNEL_LIST) {
+			req_buf->ChannelCacheType = CHANNEL_LIST_STATIC;
+			req_buf->ConnectedNetwork.ChannelCount = 0;
 		} else {
 			csr_fetch_ch_lst_from_occupied_lst(mac_ctx, session_id,
 							   reason, req_buf,
@@ -18480,7 +18483,8 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 						    curr_ch_lst_info, req_buf);
 	}
 #endif
-	if (req_buf->ConnectedNetwork.ChannelCount == 0) {
+	if (req_buf->ConnectedNetwork.ChannelCount == 0 &&
+	    reason != REASON_FLUSH_CHANNEL_LIST) {
 		/* Maintain the Valid Channels List */
 		status = csr_fetch_valid_ch_lst(mac_ctx, req_buf, session_id);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
