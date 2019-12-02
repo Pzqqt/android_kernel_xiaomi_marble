@@ -1901,7 +1901,7 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 	bool found = false;
 	uint16_t j;
 	uint16_t freq_list[NUM_CHANNELS_160MHZ];
-	uint8_t num_channels;
+	uint8_t num_channels = 0;
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN, "flags %d", flags);
 	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
