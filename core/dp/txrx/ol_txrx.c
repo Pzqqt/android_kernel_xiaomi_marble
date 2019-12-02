@@ -5817,7 +5817,7 @@ static struct cdp_misc_ops ol_ops_misc = {
 	.unregister_pktdump_cb = ol_deregister_packetdump_callback,
 #ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
 	.pdev_reset_driver_del_ack = ol_tx_pdev_reset_driver_del_ack,
-	.vdev_set_driver_del_ack_enable = ol_tx_vdev_set_driver_del_ack_enable
+	.vdev_set_driver_del_ack_enable = ol_tx_vdev_set_driver_del_ack_enable,
 #endif
 #ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
 	.vdev_set_bundle_require_flag = ol_tx_vdev_set_bundle_require,
