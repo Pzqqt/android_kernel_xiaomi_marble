@@ -5592,7 +5592,7 @@ static void csr_roam_assign_default_param(struct mac_context *mac,
  * @roam_bss_entry:      The next BSS to join
  * @csr_result_info:     Result of join
  * @csr_scan_result:     Global scan result
- * @session_id:          SME Session ID
+ * @vdev_id:             SME Session ID
  * @roam_id:             Roaming ID
  * @roam_state:          Current roaming state
  * @bss_list:            BSS List
@@ -5602,20 +5602,21 @@ static void csr_roam_assign_default_param(struct mac_context *mac,
 static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		tListElem **roam_bss_entry, tCsrScanResultInfo **csr_result_info,
 		struct tag_csrscan_result **csr_scan_result,
-		uint32_t session_id, uint32_t roam_id,
+		uint32_t vdev_id, uint32_t roam_id,
 		enum csr_join_state *roam_state,
 		struct scan_result_list *bss_list)
 {
-	uint32_t conc_freq = 0, chan_freq;
+	uint32_t conc_freq = 0, chan_freq, temp_vdev_id;
 	bool status = false;
 	struct tag_csrscan_result *scan_result = NULL;
 	tCsrScanResultInfo *result = NULL;
 	enum QDF_OPMODE op_mode;
 	struct wlan_objmgr_vdev *vdev;
 	enum policy_mgr_con_mode mode;
+	QDF_STATUS qdf_status;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
-						    session_id,
+						    vdev_id,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev) {
 		sme_err("Vdev ref error");
@@ -5635,6 +5636,24 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		 * sessions exempted
 		 */
 		result = &scan_result->Result;
+		/*
+		 * Ignore the BSS if any other vdev is already connected
+		 * to it.
+		 */
+		qdf_status = csr_roam_get_session_id_from_bssid(mac_ctx,
+				(struct qdf_mac_addr *)
+				&result->BssDescriptor.bssId, &temp_vdev_id);
+		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			sme_info("vdev_id %d already connected to %pM. select next bss for vdev_id %d",
+				 temp_vdev_id, result->BssDescriptor.bssId,
+				 vdev_id);
+			*roam_state = eCsrStopRoamingDueToConcurrency;
+			status = true;
+			*roam_bss_entry = csr_ll_next(&bss_list->List,
+						      *roam_bss_entry,
+						      LL_ACCESS_LOCK);
+			continue;
+		}
 
 		chan_freq = result->BssDescriptor.chan_freq;
 		mode = policy_mgr_convert_device_mode_to_qdf_type(op_mode);
@@ -5671,7 +5690,7 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		}
 		if (policy_mgr_concurrent_open_sessions_running(mac_ctx->psoc)
 			&& !csr_is_valid_mc_concurrent_session(mac_ctx,
-					session_id, &result->BssDescriptor)) {
+					vdev_id, &result->BssDescriptor)) {
 			conc_freq = csr_get_concurrent_operation_freq(
 					mac_ctx);
 			sme_debug("csr Conc Channel freq: %d", conc_freq);
@@ -5696,7 +5715,7 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		/* Ok to roam this */
 		if (!conc_freq &&
 		    QDF_IS_STATUS_SUCCESS(csr_roam_should_roam(mac_ctx,
-					  session_id, &result->BssDescriptor,
+					  vdev_id, &result->BssDescriptor,
 					  roam_id))) {
 			status = false;
 			break;
@@ -10369,14 +10388,16 @@ csr_roam_send_disconnect_done_indication(struct mac_context *mac_ctx,
 	struct csr_roam_info *roam_info;
 	struct csr_roam_session *session;
 	struct wlan_objmgr_vdev *vdev;
+	uint8_t vdev_id;
 
+	vdev_id = discon_ind->session_id;
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (!roam_info)
 		return;
 
 	sme_debug("DISCONNECT_DONE_IND RC:%d", discon_ind->reason_code);
 
-	if (CSR_IS_SESSION_VALID(mac_ctx, discon_ind->session_id)) {
+	if (CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
 		roam_info->reasonCode = discon_ind->reason_code;
 		roam_info->status_code = eSIR_SME_STA_NOT_ASSOCIATED;
 		qdf_mem_copy(roam_info->peerMac.bytes, discon_ind->peer_mac,
@@ -10388,34 +10409,42 @@ csr_roam_send_disconnect_done_indication(struct mac_context *mac_ctx,
 		roam_info->disassoc_reason = discon_ind->reason_code;
 		roam_info->rx_mc_bc_cnt = mac_ctx->rx_mc_bc_cnt;
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
-							discon_ind->session_id,
-							WLAN_LEGACY_SME_ID);
+							    vdev_id,
+							    WLAN_LEGACY_SME_ID);
 		if (vdev)
 			roam_info->disconnect_ies =
 				mlme_get_peer_disconnect_ies(vdev);
 
-		csr_roam_call_callback(mac_ctx, discon_ind->session_id,
+		csr_roam_call_callback(mac_ctx, vdev_id,
 				       roam_info, 0, eCSR_ROAM_LOSTLINK,
 				       eCSR_ROAM_RESULT_DISASSOC_IND);
 		if (vdev) {
 			mlme_free_peer_disconnect_ies(vdev);
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		}
-		session = CSR_GET_SESSION(mac_ctx, discon_ind->session_id);
-		if (session &&
-		   !CSR_IS_INFRA_AP(&session->connectedProfile))
+		session = CSR_GET_SESSION(mac_ctx, vdev_id);
+		if (!CSR_IS_INFRA_AP(&session->connectedProfile))
 			csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_IDLE,
-				discon_ind->session_id);
+					      vdev_id);
+
+		if (CSR_IS_INFRASTRUCTURE(&session->connectedProfile)) {
+			csr_free_roam_profile(mac_ctx, vdev_id);
+			csr_free_connect_bss_desc(mac_ctx, vdev_id);
+			csr_roam_free_connect_profile(
+						&session->connectedProfile);
+			csr_roam_free_connected_info(mac_ctx,
+						     &session->connectedInfo);
+		}
 
 	} else {
-		sme_err("Inactive session %d", discon_ind->session_id);
+		sme_err("Inactive vdev_id %d", vdev_id);
 	}
 
 	/*
 	 * Release WM status change command as eWNI_SME_DISCONNECT_DONE_IND
 	 * has been sent to HDD and there is nothing else left to do.
 	 */
-	csr_roam_wm_status_change_complete(mac_ctx, discon_ind->session_id);
+	csr_roam_wm_status_change_complete(mac_ctx, vdev_id);
 	qdf_mem_free(roam_info);
 }
 
