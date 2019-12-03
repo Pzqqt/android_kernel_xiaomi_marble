@@ -407,7 +407,7 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 	/* check if offload cache and send is required or not */
 	status = ucfg_pmo_ns_offload_check(psoc, trigger, adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_info("NS offload is not required");
+		hdd_debug("NS offload is not required");
 		goto free_req;
 	}
 
@@ -465,7 +465,7 @@ void hdd_disable_ns_offload(struct hdd_adapter *adapter,
 	status = ucfg_pmo_ns_offload_check(hdd_ctx->psoc, trigger,
 					   adapter->vdev_id);
 	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("Flushing of NS offload not required");
+		hdd_debug("Flushing of NS offload not required");
 		goto out;
 	}
 
@@ -957,7 +957,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 
 	status = ucfg_pmo_check_arp_offload(psoc, trigger, adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_info("ARP offload not required");
+		hdd_debug("ARP offload not required");
 		goto free_req;
 	}
 
@@ -1002,7 +1002,7 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 	status = ucfg_pmo_check_arp_offload(hdd_ctx->psoc, trigger,
 					    adapter->vdev_id);
 	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("Flushing of ARP offload not required");
+		hdd_debug("Flushing of ARP offload not required");
 		goto out;
 	}
 
