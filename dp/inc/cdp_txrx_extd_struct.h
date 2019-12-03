@@ -42,7 +42,7 @@
  *       <enum 1 bw_40_MHz>
  *       <enum 2 bw_80_MHz>
  *       <enum 3 bw_160_MHz>
- * @ofdma_info_valid: RU info valid
+ * @mu_ul_info_valid: RU info valid
  * @ofdma_ru_start_index: RU index number(0-73)
  * @ofdma_ru_width: size of RU in units of 1(26tone)RU
  * @nss: NSS 1,2, ...8
@@ -68,7 +68,7 @@ struct cdp_rx_indication_mpdu_info {
 	uint32_t ppdu_id;
 	uint16_t duration;
 	uint64_t bw:4,
-		 ofdma_info_valid:1,
+		 mu_ul_info_valid:1,
 		 ofdma_ru_start_index:7,
 		 ofdma_ru_width:7,
 		 nss:4,
