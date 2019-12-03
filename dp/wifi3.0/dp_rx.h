@@ -36,8 +36,11 @@
 
 #ifdef QCA_HOST2FW_RXBUF_RING
 #define DP_WBM2SW_RBM HAL_RX_BUF_RBM_SW1_BM
+/* RBM value used for re-injecting defragmented packets into REO */
+#define DP_DEFRAG_RBM HAL_RX_BUF_RBM_SW3_BM
 #else
 #define DP_WBM2SW_RBM HAL_RX_BUF_RBM_SW3_BM
+#define DP_DEFRAG_RBM DP_WBM2SW_RBM
 #endif /* QCA_HOST2FW_RXBUF_RING */
 
 #define RX_BUFFER_RESERVATION   0

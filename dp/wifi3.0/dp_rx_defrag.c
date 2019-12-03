@@ -237,8 +237,8 @@ static void dp_rx_defrag_waitlist_add(struct dp_peer *peer, unsigned tid)
 	struct dp_soc *psoc = peer->vdev->pdev->soc;
 	struct dp_rx_tid *rx_reorder = &peer->rx_tid[tid];
 
-	dp_info("Adding TID %u to waitlist for peer %pK at MAC address %pM",
-		tid, peer, peer->mac_addr.raw);
+	dp_debug("Adding TID %u to waitlist for peer %pK at MAC address %pM",
+		 tid, peer, peer->mac_addr.raw);
 
 	/* TODO: use LIST macros instead of TAIL macros */
 	qdf_spin_lock_bh(&psoc->rx.defrag.defrag_lock);
@@ -266,11 +266,11 @@ void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid)
 	struct dp_rx_tid *rx_reorder;
 	struct dp_rx_tid *tmp;
 
-	dp_info("Removing TID %u to waitlist for peer %pK at MAC address %pM",
-		tid, peer, peer->mac_addr.raw);
+	dp_debug("Removing TID %u to waitlist for peer %pK at MAC address %pM",
+		 tid, peer, peer->mac_addr.raw);
 
 	if (tid >= DP_MAX_TIDS) {
-		dp_info("TID out of bounds: %d", tid);
+		dp_err("TID out of bounds: %d", tid);
 		qdf_assert_always(0);
 	}
 
@@ -1109,7 +1109,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hal_rxdma_buff_addr_info_set(msdu0, paddr, cookie, DP_WBM2SW_RBM);
+	hal_rxdma_buff_addr_info_set(msdu0, paddr, cookie, DP_DEFRAG_RBM);
 
 	/* Lets fill entrance ring now !!! */
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
@@ -1141,12 +1141,10 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
 			MSDU_COUNT, 0x1);
 	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
-			MPDU_SEQUENCE_NUMBER, seq_no);
-
+				  MPDU_SEQUENCE_NUMBER, seq_no);
 	/* unset frag bit */
 	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
 			FRAGMENT_FLAG, 0x0);
-
 	/* set sa/da valid bits */
 	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
 			SA_IS_VALID, 0x1);
@@ -1696,9 +1694,8 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	qdf_assert(mpdu_desc_info);
 	qdf_assert(rx_desc);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"Number of MSDUs to process, num_msdus: %d",
-		mpdu_desc_info->msdu_count);
+	dp_debug("Number of MSDUs to process, num_msdus: %d",
+		 mpdu_desc_info->msdu_count);
 
 
 	if (qdf_unlikely(mpdu_desc_info->msdu_count == 0)) {
