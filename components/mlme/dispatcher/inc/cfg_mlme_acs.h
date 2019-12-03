@@ -176,7 +176,7 @@
 		"normalize_acs_weight", \
 		0, \
 		ACS_WEIGHT_MAX_STR_LEN, \
-		"", \
+		"5940-7105=0, 5965=100, 6045=100, 6125=100, 6205=100, 6285=100, 6365=100, 6605=100, 6685=100, 6765=100, 6845=100", \
 		"Used to specify the channel weights")
 
 #define CFG_ACS_ALL \
