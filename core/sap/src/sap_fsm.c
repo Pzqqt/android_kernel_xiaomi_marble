@@ -3419,6 +3419,7 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		if (freq_present_in_list && !normalize_factor) {
 			sap_debug("chan_freq %d ecluded normalize weight 0",
 				  chan_freq);
+			freq_present_in_list = false;
 			continue;
 		}
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
