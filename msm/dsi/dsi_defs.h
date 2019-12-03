@@ -450,6 +450,7 @@ struct dsi_split_link_config {
  * @ext_bridge_mode:     External bridge is connected.
  * @force_hs_clk_lane:   Send continuous clock to the panel.
  * @dsi_split_link_config:  Split Link Configuration.
+ * @byte_intf_clk_div:   Determines the factor for calculating byte intf clock.
  */
 struct dsi_host_common_cfg {
 	enum dsi_pixel_format dst_format;
@@ -473,6 +474,7 @@ struct dsi_host_common_cfg {
 	bool ext_bridge_mode;
 	bool force_hs_clk_lane;
 	struct dsi_split_link_config split_link;
+	u32 byte_intf_clk_div;
 };
 
 /**
