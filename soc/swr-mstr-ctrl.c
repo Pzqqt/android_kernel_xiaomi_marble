@@ -2734,7 +2734,8 @@ static int swrm_runtime_resume(struct device *dev)
 			/* wait for hw enumeration to complete */
 			usleep_range(100, 105);
 			if (!swrm_check_link_status(swrm, 0x1))
-				goto exit;
+				dev_dbg(dev, "%s:failed in connecting, ssr?\n",
+					__func__);
 			swrm_cmd_fifo_wr_cmd(swrm, 0x4, 0xF, 0x0,
 						SWRS_SCP_INT_STATUS_MASK_1);
 			if (swrm->state == SWR_MSTR_SSR) {
@@ -2755,7 +2756,8 @@ static int swrm_runtime_resume(struct device *dev)
 					 swrm->intr_mask);
 			usleep_range(100, 105);
 			if (!swrm_check_link_status(swrm, 0x1))
-				goto exit;
+				dev_dbg(dev, "%s:failed in connecting, ssr?\n",
+					__func__);
 		}
 		swrm->state = SWR_MSTR_UP;
 	}
@@ -2849,7 +2851,8 @@ static int swrm_runtime_suspend(struct device *dev)
 			usleep_range(100, 105);
 		}
 		if (!swrm_check_link_status(swrm, 0x0))
-			goto exit;
+			dev_dbg(dev, "%s:failed in disconnecting, ssr?\n",
+				__func__);
 		ret = swrm_clk_request(swrm, false);
 		if (ret) {
 			dev_err(dev, "%s: swrmn clk failed\n", __func__);
