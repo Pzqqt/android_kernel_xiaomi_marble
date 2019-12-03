@@ -30,6 +30,7 @@
 #include "osif_sync.h"
 #include "wlan_hdd_bcn_recv.h"
 #include <linux/limits.h>
+#include <wlan_hdd_object_manager.h>
 
 #define SET_BIT(value, mask) ((value) |= (1 << (mask)))
 
@@ -312,6 +313,8 @@ static int __wlan_hdd_cfg80211_bcn_rcv_op(struct wiphy *wiphy,
 	uint32_t bcn_report, nth_value = 1;
 	int errno;
 	bool active_report, do_not_resume;
+	struct wlan_objmgr_vdev *vdev;
+	enum scm_scan_status scan_req_status;
 
 	hdd_enter_dev(dev);
 
@@ -327,6 +330,19 @@ static int __wlan_hdd_cfg80211_bcn_rcv_op(struct wiphy *wiphy,
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 		hdd_err("STA not in connected state");
 		return -EINVAL;
+	}
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	scan_req_status = ucfg_scan_get_pdev_status(wlan_vdev_get_pdev(vdev));
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+
+	if (scan_req_status != SCAN_NOT_IN_PROGRESS) {
+		hdd_debug("Scan in progress: %d, bcn rpt start OP not allowed",
+			  scan_req_status);
+		return -EBUSY;
 	}
 
 	errno =
