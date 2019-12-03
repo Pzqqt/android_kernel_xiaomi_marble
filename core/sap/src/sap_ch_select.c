@@ -1653,11 +1653,11 @@ static void sap_sort_chl_weight_80_mhz(struct mac_context *mac_ctx,
 		minIdx = 0;
 
 		for (i = 0; i < 4; i++) {
-			pSpectInfo[j + i].weight = SAP_ACS_WEIGHT_MAX * 4;
 			if (min_ch_weight > pSpectInfo[j + i].weight) {
 				min_ch_weight = pSpectInfo[j + i].weight;
 				minIdx = i;
 			}
+			pSpectInfo[j + i].weight = SAP_ACS_WEIGHT_MAX * 4;
 		}
 
 		pSpectInfo[j + minIdx].weight = combined_weight;
@@ -1818,12 +1818,11 @@ static void sap_sort_chl_weight_160_mhz(struct mac_context *mac_ctx,
 		minIdx = 0;
 
 		for (i = 0; i < 8; i++) {
-			pSpectInfo[j + i].weight = SAP_ACS_WEIGHT_MAX * 8;
-
 			if (min_ch_weight > pSpectInfo[j + i].weight) {
 				min_ch_weight = pSpectInfo[j + i].weight;
 				minIdx = i;
 			}
+			pSpectInfo[j + i].weight = SAP_ACS_WEIGHT_MAX * 8;
 		}
 
 		pSpectInfo[j + minIdx].weight = combined_weight;
@@ -2118,11 +2117,11 @@ static void sap_sort_chl_weight_40_mhz(struct mac_context *mac_ctx,
 		minIdx = 0;
 
 		for (i = 0; i < 2; i++) {
-			pSpectInfo[j + i].weight = SAP_ACS_WEIGHT_MAX * 2;
 			if (min_ch_weight > pSpectInfo[j + i].weight) {
 				min_ch_weight = pSpectInfo[j + i].weight;
 				minIdx = i;
 			}
+			pSpectInfo[j + i].weight = SAP_ACS_WEIGHT_MAX * 2;
 		}
 
 		pSpectInfo[j + minIdx].weight = combined_weight;
