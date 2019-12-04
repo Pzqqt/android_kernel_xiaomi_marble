@@ -1339,10 +1339,15 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 					WMI_LOGI("LFR3:PMKSA caching disabled");
 				}
 
+				roam_offload_11i->pmk_len = roam_req->pmk_len >
+					ROAM_OFFLOAD_PMK_BYTES ?
+					ROAM_OFFLOAD_PMK_BYTES :
+					roam_req->pmk_len;
+
 				qdf_mem_copy(roam_offload_11i->pmk,
 					     roam_req->psk_pmk,
-					     sizeof(roam_offload_11i->pmk));
-				roam_offload_11i->pmk_len = roam_req->pmk_len;
+					     roam_offload_11i->pmk_len);
+
 				WMITLV_SET_HDR(&roam_offload_11i->tlv_header,
 				WMITLV_TAG_STRUC_wmi_roam_11i_offload_tlv_param,
 				WMITLV_GET_STRUCT_TLVLEN
