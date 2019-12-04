@@ -2498,6 +2498,44 @@ static int _sde_atomic_check_excl_rect(struct sde_plane *psde,
 	return ret;
 }
 
+
+static int _sde_plane_validate_shared_crtc(struct sde_plane *psde,
+				struct drm_plane_state *state)
+{
+	struct sde_kms *sde_kms;
+	struct sde_splash_display *splash_display;
+	int i, j;
+
+	sde_kms = _sde_plane_get_kms(&psde->base);
+
+	if (!sde_kms || !state->crtc)
+		return 0;
+
+	for (i = 0; i < MAX_DSI_DISPLAYS; i++) {
+		splash_display = &sde_kms->splash_data.splash_display[i];
+
+		if (splash_display && splash_display->cont_splash_enabled &&
+			splash_display->encoder &&
+			state->crtc != splash_display->encoder->crtc) {
+
+			for (j = 0; j < MAX_DATA_PATH_PER_DSIPLAY; j++) {
+
+				if (splash_display->pipes[j].sspp ==
+						psde->pipe) {
+					SDE_ERROR_PLANE(psde,
+					"pipe:%d used in cont-splash on crtc:%d\n",
+					psde->pipe,
+					splash_display->encoder->crtc->base.id);
+					return -EINVAL;
+				}
+			}
+		}
+	}
+
+	return 0;
+
+}
+
 static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 		struct drm_plane_state *state)
 {
@@ -2597,6 +2635,11 @@ static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 
 	ret = _sde_atomic_check_excl_rect(psde, pstate,
 		&src, fmt, ret);
+
+	if (ret)
+		return ret;
+
+	ret = _sde_plane_validate_shared_crtc(psde, state);
 
 	if (ret)
 		return ret;
