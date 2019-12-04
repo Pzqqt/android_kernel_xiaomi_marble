@@ -170,6 +170,7 @@
 #include <wlan_interop_issues_ap_ucfg_api.h>
 #include <target_type.h>
 #include <wlan_hdd_debugfs_coex.h>
+#include <wlan_hdd_debugfs_config.h>
 #include "wlan_blm_ucfg_api.h"
 #include "ol_txrx.h"
 #include "wlan_hdd_sta_info.h"
@@ -7724,6 +7725,7 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
+	hdd_debugfs_ini_config_deinit(hdd_ctx);
 	hdd_debugfs_mws_coex_info_deinit(hdd_ctx);
 	hdd_psoc_idle_timer_stop(hdd_ctx);
 
@@ -12751,6 +12753,7 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	ucfg_mlme_is_imps_enabled(hdd_ctx->psoc, &is_imps_enabled);
 	hdd_set_idle_ps_config(hdd_ctx, is_imps_enabled);
 	hdd_debugfs_mws_coex_info_init(hdd_ctx);
+	hdd_debugfs_ini_config_init(hdd_ctx);
 	wlan_cfg80211_init_interop_issues_ap(hdd_ctx->pdev);
 
 	hdd_exit();
