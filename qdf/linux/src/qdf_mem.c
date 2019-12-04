@@ -248,7 +248,7 @@ qdf_mem_header_assert_valid(struct qdf_mem_header *header,
 			qdf_debug_domain_name(header->domain), header->domain,
 			qdf_debug_domain_name(current_domain), current_domain);
 
-	QDF_DEBUG_PANIC("Fatal memory error detected @ %s:%d", func, line);
+	QDF_MEMDEBUG_PANIC("Fatal memory error detected @ %s:%d", func, line);
 }
 #endif /* MEMORY_DEBUG */
 
@@ -968,8 +968,8 @@ static void qdf_mem_domain_set_check_for_leaks(qdf_list_t *domains)
 		leak_count += qdf_mem_domain_check_for_leaks(i, domains + i);
 
 	if (leak_count)
-		QDF_DEBUG_PANIC("%u fatal memory leaks detected!",
-				leak_count);
+		QDF_MEMDEBUG_PANIC("%u fatal memory leaks detected!",
+				   leak_count);
 }
 
 /**
@@ -1071,8 +1071,8 @@ void qdf_mem_free_debug(void *ptr, const char *func, uint32_t line)
 		return;
 
 	if (qdf_unlikely((qdf_size_t)ptr <= sizeof(*header)))
-		QDF_DEBUG_PANIC("Failed to free invalid memory location %pK",
-				ptr);
+		QDF_MEMDEBUG_PANIC("Failed to free invalid memory location %pK",
+				   ptr);
 
 	qdf_talloc_assert_no_children_fl(ptr, func, line);
 
@@ -1110,8 +1110,8 @@ void qdf_mem_check_for_leaks(void)
 	leaks_count += qdf_mem_domain_check_for_leaks(current_domain, dma_list);
 
 	if (leaks_count)
-		QDF_DEBUG_PANIC("%u fatal memory leaks detected!",
-				leaks_count);
+		QDF_MEMDEBUG_PANIC("%u fatal memory leaks detected!",
+				   leaks_count);
 }
 
 /**

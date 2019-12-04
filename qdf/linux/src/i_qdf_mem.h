@@ -100,6 +100,16 @@ typedef struct __qdf_mempool_ctxt {
 
 #define __qdf_align(a, mask) ALIGN(a, mask)
 
+#ifdef DISABLE_MEMDEBUG_PANIC
+#define QDF_MEMDEBUG_PANIC(reason_fmt, args...) \
+	do { \
+		/* no-op */ \
+	} while (false)
+#else
+#define QDF_MEMDEBUG_PANIC(reason_fmt, args...) \
+	QDF_DEBUG_PANIC(reason_fmt, ## args)
+#endif
+
 /* typedef for dma_data_direction */
 typedef enum dma_data_direction __dma_data_direction;
 

@@ -794,8 +794,8 @@ static void qdf_nbuf_panic_on_free_if_mapped(qdf_nbuf_t nbuf,
 				&map_func, &map_line))
 		return;
 
-	QDF_DEBUG_PANIC("Nbuf freed @ %s:%u while mapped from %s:%u",
-			func, line, map_func, map_line);
+	QDF_MEMDEBUG_PANIC("Nbuf freed @ %s:%u while mapped from %s:%u",
+			   func, line, map_func, map_line);
 }
 #else
 static inline void qdf_nbuf_map_tracking_init(void)
