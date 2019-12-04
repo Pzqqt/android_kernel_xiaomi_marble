@@ -10627,16 +10627,22 @@ typedef struct {
 
 /** Upto 8 bits are available for Roaming module to be sent along with
 WMI_VDEV_PARAM_ROAM_FW_OFFLOAD WMI_VDEV_PARAM **/
-/* Enable Roaming FW offload LFR1.5/LFR2.0 implementation */
+/* Bit 0: Enable Roaming FW offload LFR1.5/LFR2.0 implementation */
 #define WMI_ROAM_FW_OFFLOAD_ENABLE_FLAG                          0x1
-/* Enable Roaming module in FW to do scan based on Final BMISS */
+/* Bit 1: Enable Roaming module in FW to do scan based on Final BMISS */
 #define WMI_ROAM_BMISS_FINAL_SCAN_ENABLE_FLAG                    0x2
-/**
+/* Bit 2:
  * To enable/disable EAPOL_4WAY_HANDSHAKE process while roaming.
  * param value = 0 --> Enable EAPOL 4way handshake
  * param value = 1 --> Skip EAPOL 4way handshake
  */
 #define WMI_VDEV_PARAM_SKIP_ROAM_EAPOL_4WAY_HANDSHAKE            0x4
+/* Bit 3:
+ * Scan type when WMI_ROAM_BMISS_FINAL_SCAN_ENABLE_FLAG is set:
+ * value = 0 --> Chanmap scan followed by one full scan if no candidate found.
+ * value = 1 --> Chanmap scan only
+ */
+#define WMI_ROAM_BMISS_FINAL_SCAN_TYPE_FLAG                      0x8
 
 /** slot time long */
 #define WMI_VDEV_SLOT_TIME_LONG                                  0x1
