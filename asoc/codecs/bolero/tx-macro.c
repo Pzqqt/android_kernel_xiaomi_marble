@@ -2637,7 +2637,7 @@ static int tx_macro_clk_div_get(struct snd_soc_component *component)
 	return tx_priv->dmic_clk_div;
 }
 
-static int tx_macro_clk_switch(struct snd_soc_component *component)
+static int tx_macro_clk_switch(struct snd_soc_component *component, int clk_src)
 {
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
@@ -2661,7 +2661,7 @@ static int tx_macro_clk_switch(struct snd_soc_component *component)
 	if (tx_priv->swr_ctrl_data) {
 		ret = swrm_wcd_notify(
 			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-			SWR_REQ_CLK_SWITCH, NULL);
+			SWR_REQ_CLK_SWITCH, &clk_src);
 	}
 
 	return ret;
