@@ -3101,9 +3101,18 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 		 * next activity on soundwire will request clock from new clock
 		 * source.
 		 */
+		if (!data) {
+			dev_err(swrm->dev, "%s: data is NULL for id:%d\n",
+				__func__, id);
+			ret = -EINVAL;
+			break;
+		}
 		mutex_lock(&swrm->mlock);
-		if (swrm->state == SWR_MSTR_UP)
-			swrm_device_suspend(&pdev->dev);
+		if (swrm->clk_src != *(int *)data) {
+			if (swrm->state == SWR_MSTR_UP)
+				swrm_device_suspend(&pdev->dev);
+			swrm->clk_src = *(int *)data;
+		}
 		mutex_unlock(&swrm->mlock);
 		break;
 	case SWR_CLK_FREQ:

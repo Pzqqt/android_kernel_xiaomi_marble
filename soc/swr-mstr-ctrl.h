@@ -187,6 +187,7 @@ struct swr_mstr_ctrl {
 	u32 swr_irq_wakeup_capable;
 	int hw_core_clk_en;
 	int aud_core_clk_en;
+	int clk_src;
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *debugfs_swrm_dent;
 	struct dentry *debugfs_peek;
