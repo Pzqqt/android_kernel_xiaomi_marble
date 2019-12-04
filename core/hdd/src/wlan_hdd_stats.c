@@ -4409,6 +4409,36 @@ static void hdd_fill_fcs_and_mpdu_count(struct hdd_adapter *adapter,
 #endif
 
 /**
+ * hdd_check_and_update_nss() - Check and update NSS as per DBS capability
+ * @hdd_ctx: HDD Context pointer
+ * @tx_nss: pointer to variable storing the tx_nss
+ * @rx_nss: pointer to variable storing the rx_nss
+ *
+ * The parameters include the NSS obtained from the FW or static NSS. This NSS
+ * could be invalid in the case the current HW mode is DBS where the connection
+ * are 1x1. Rectify these NSS values as per the current HW mode.
+ *
+ * Return: none
+ */
+static void hdd_check_and_update_nss(struct hdd_context *hdd_ctx,
+				     uint8_t *tx_nss, uint8_t *rx_nss)
+{
+	if ((*tx_nss > 1) &&
+	    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
+	    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc)) {
+		hdd_debug("Hw mode is DBS, Reduce tx nss(%d) to 1", *tx_nss);
+		(*tx_nss)--;
+	}
+
+	if ((*rx_nss > 1) &&
+	    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
+	    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc)) {
+		hdd_debug("Hw mode is DBS, Reduce tx nss(%d) to 1", *rx_nss);
+		(*rx_nss)--;
+	}
+}
+
+/**
  * wlan_hdd_get_sta_stats() - get aggregate STA stats
  * @wiphy: wireless phy
  * @adapter: STA adapter to get stats for
@@ -4523,21 +4553,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 		tx_nss = adapter->hdd_stats.class_a_stat.tx_nss;
 		rx_nss = adapter->hdd_stats.class_a_stat.rx_nss;
 
-		if ((tx_nss > 1) &&
-		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
-		    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc)) {
-			hdd_debug("Hw mode is DBS, Reduce nss(%d) to 1",
-				  tx_nss);
-			tx_nss--;
-		}
-
-		if ((rx_nss > 1) &&
-		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
-		    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc)) {
-			hdd_debug("Hw mode is DBS, Reduce nss(%d) to 1",
-				  rx_nss);
-			rx_nss--;
-		}
+		hdd_check_and_update_nss(hdd_ctx, &tx_nss, &rx_nss);
 
 		if (ucfg_mlme_stats_is_link_speed_report_actual(
 					hdd_ctx->psoc)) {
@@ -4576,24 +4592,32 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	hdd_debug("guard interval: TX: %d, RX: %d", (int)tx_gi, (int)rx_gi);
 
 	if (!ucfg_mlme_stats_is_link_speed_report_actual(hdd_ctx->psoc)) {
-		bool tx_rate_calc;
-		bool rx_rate_calc;
+		bool tx_rate_calc, rx_rate_calc;
+		uint8_t tx_nss_max, rx_nss_max;
+
+		/*
+		 * Take static NSS for reporting max rates. NSS from the FW
+		 * is not reliable as it changes as per the environment
+		 * quality.
+		 */
+		tx_nss_max = wlan_vdev_mlme_get_nss(adapter->vdev);
+		rx_nss_max = wlan_vdev_mlme_get_nss(adapter->vdev);
+
+		hdd_check_and_update_nss(hdd_ctx, &tx_nss_max, &rx_nss_max);
 
 		tx_rate_calc = hdd_report_max_rate(mac_handle, &sinfo->txrate,
 						   sinfo->signal,
 						   tx_rate_flags,
 						   tx_mcs_index,
 						   my_tx_rate,
-						   wlan_vdev_mlme_get_nss(
-						   adapter->vdev));
+						   tx_nss_max);
 
 		rx_rate_calc = hdd_report_max_rate(mac_handle, &sinfo->rxrate,
 						   sinfo->signal,
 						   rx_rate_flags,
 						   rx_mcs_index,
 						   my_rx_rate,
-						   wlan_vdev_mlme_get_nss(
-						   adapter->vdev));
+						   rx_nss_max);
 
 		if (!tx_rate_calc || !rx_rate_calc)
 			/* Keep GUI happy */
