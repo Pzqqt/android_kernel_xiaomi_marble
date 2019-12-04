@@ -15938,24 +15938,26 @@ static void sme_scan_event_handler(struct wlan_objmgr_vdev *vdev,
 				   void *arg)
 {
 	struct mac_context *mac = arg;
-	struct csr_roam_session *session;
+	uint8_t vdev_id;
 
 	if (!mac) {
 		sme_err("Invalid mac context");
 		return;
 	}
 
-	if (!CSR_IS_SESSION_VALID(mac, vdev->vdev_objmgr.vdev_id)) {
-		sme_err("Invalid vdev_id: %d", vdev->vdev_objmgr.vdev_id);
+	if (!mac->sme.beacon_pause_cb)
 		return;
-	}
 
-	session = CSR_GET_SESSION(mac, vdev->vdev_objmgr.vdev_id);
+	if (event->type != SCAN_EVENT_TYPE_STARTED)
+		return;
 
-	if (event->type == SCAN_EVENT_TYPE_STARTED) {
-		if (mac->sme.beacon_pause_cb)
-			mac->sme.beacon_pause_cb(mac->hdd_handle,
-				vdev->vdev_objmgr.vdev_id, event->type, false);
+	for (vdev_id = 0 ; vdev_id < WLAN_MAX_VDEVS ; vdev_id++) {
+		if (CSR_IS_SESSION_VALID(mac, vdev_id) &&
+		    sme_is_beacon_report_started(MAC_HANDLE(mac), vdev_id)) {
+			sme_debug("Send pause ind for vdev_id : %d", vdev_id);
+			mac->sme.beacon_pause_cb(mac->hdd_handle, vdev_id,
+						 event->type, false);
+		}
 	}
 }
 

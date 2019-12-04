@@ -1801,16 +1801,15 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	mac_handle = hdd_ctx->mac_handle;
 	sme_ft_reset(mac_handle, adapter->vdev_id);
 	sme_reset_key(mac_handle, adapter->vdev_id);
-	if (!hdd_remove_beacon_filter(adapter)) {
-		if (sme_is_beacon_report_started(mac_handle,
-						 adapter->vdev_id)) {
-			hdd_beacon_recv_pause_indication((hdd_handle_t)hdd_ctx,
-							 adapter->vdev_id,
-							 SCAN_EVENT_TYPE_MAX,
-							 true);
-		}
-	}
+	if (!hdd_remove_beacon_filter(adapter))
+		hdd_err("hdd_remove_beacon_filter() failed");
 
+	if (sme_is_beacon_report_started(mac_handle, adapter->vdev_id)) {
+		hdd_debug("Sending beacon pause indication to userspace");
+		hdd_beacon_recv_pause_indication((hdd_handle_t)hdd_ctx,
+						 adapter->vdev_id,
+						 SCAN_EVENT_TYPE_MAX, true);
+	}
 	if (eCSR_ROAM_IBSS_LEAVE == roam_status) {
 		uint8_t i;
 
