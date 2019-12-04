@@ -522,6 +522,18 @@ typedef enum HTT_PPDU_STATS_SEQ_TYPE HTT_PPDU_STATS_SEQ_TYPE;
       ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_NUM_UL_EXPECTED_USERS_S)); \
    } while(0);
 
+#define HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_M    0x01000000
+#define HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_S            24
+
+#define HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_S)); \
+     } while (0)
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -616,7 +628,13 @@ typedef struct {
      *                 transmit by itself (not including response time)
      * BIT [23 : 16] - num_ul_expected_users reports the number of users
      *                 that are expected to respond to this transmission
-     * BIT [31 : 24] - reserved
+     * BIT [24 : 24] - beam_change reports the beam forming pattern
+     *                 between non-HE and HE portion.
+     *                 If we apply TxBF starting from legacy preamble,
+     *                 then beam_change = 0.
+     *                 If we apply TxBF only starting from HE portion,
+     *                 then beam_change = 1.
+     * BIT [31 : 25] - reserved
      */
     union {
         A_UINT32 reserved__ppdu_tx_time_us;
@@ -624,7 +642,8 @@ typedef struct {
         struct {
             A_UINT32 phy_ppdu_tx_time_us:   16,
                      num_ul_expected_users:  8,
-                     reserved1:              8;
+                     beam_change:            1,
+                     reserved1:              7;
         };
     };
     /* ppdu_start_tstmp_u32_us:
