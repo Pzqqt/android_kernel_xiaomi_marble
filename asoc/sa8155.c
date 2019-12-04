@@ -4791,11 +4791,13 @@ static int sa8155_tdm_snd_startup(struct snd_pcm_substream *substream)
 	mutex_lock(&intf_conf->lock);
 	if (++intf_conf->ref_cnt == 1) {
 		pinctrl_info = &pdata->pinctrl_info[index];
-		ret_pinctrl = msm_set_pinctrl(pinctrl_info,
-					      STATE_ACTIVE);
-		if (ret_pinctrl)
-			pr_err("%s: TDM TLMM pinctrl set failed with %d\n",
-				__func__, ret_pinctrl);
+		if (pinctrl_info->pinctrl) {
+			ret_pinctrl = msm_set_pinctrl(pinctrl_info,
+						      STATE_ACTIVE);
+			if (ret_pinctrl)
+				pr_err("%s: TDM TLMM pinctrl set failed with %d\n",
+					__func__, ret_pinctrl);
+		}
 	}
 	mutex_unlock(&intf_conf->lock);
 
@@ -4828,11 +4830,13 @@ static void sa8155_tdm_snd_shutdown(struct snd_pcm_substream *substream)
 	mutex_lock(&intf_conf->lock);
 	if (--intf_conf->ref_cnt == 0) {
 		pinctrl_info = &pdata->pinctrl_info[index];
-		ret_pinctrl = msm_set_pinctrl(pinctrl_info,
-					      STATE_SLEEP);
-		if (ret_pinctrl)
-			pr_err("%s: TDM TLMM pinctrl set failed with %d\n",
-				__func__, ret_pinctrl);
+		if (pinctrl_info->pinctrl) {
+			ret_pinctrl = msm_set_pinctrl(pinctrl_info,
+						      STATE_SLEEP);
+			if (ret_pinctrl)
+				pr_err("%s: TDM TLMM pinctrl set failed with %d\n",
+					__func__, ret_pinctrl);
+		}
 	}
 	mutex_unlock(&intf_conf->lock);
 }
@@ -4921,11 +4925,13 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		}
 
 		pinctrl_info = &pdata->pinctrl_info[index];
-		ret_pinctrl = msm_set_pinctrl(pinctrl_info,
-					      STATE_ACTIVE);
-		if (ret_pinctrl)
-			pr_err("%s: MI2S TLMM pinctrl set failed with %d\n",
-				__func__, ret_pinctrl);
+		if (pinctrl_info->pinctrl) {
+			ret_pinctrl = msm_set_pinctrl(pinctrl_info,
+						      STATE_ACTIVE);
+			if (ret_pinctrl)
+				pr_err("%s: MI2S TLMM pinctrl set failed with %d\n",
+					__func__, ret_pinctrl);
+		}
 	}
 clk_off:
 	if (ret < 0)
@@ -4965,11 +4971,13 @@ static void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 				__func__, index, ret);
 
 		pinctrl_info = &pdata->pinctrl_info[index];
-		ret_pinctrl = msm_set_pinctrl(pinctrl_info,
-					      STATE_SLEEP);
-		if (ret_pinctrl)
-			pr_err("%s: MI2S TLMM pinctrl set failed with %d\n",
-				__func__, ret_pinctrl);
+		if (pinctrl_info->pinctrl) {
+			ret_pinctrl = msm_set_pinctrl(pinctrl_info,
+						      STATE_SLEEP);
+			if (ret_pinctrl)
+				pr_err("%s: MI2S TLMM pinctrl set failed with %d\n",
+					__func__, ret_pinctrl);
+		}
 	}
 	mutex_unlock(&intf_conf->lock);
 }
