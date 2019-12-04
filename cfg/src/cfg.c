@@ -569,9 +569,94 @@ cfg_store_print(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS
+cfg_ini_config_print(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
+		     ssize_t *plen, ssize_t buflen)
+{
+	struct cfg_value_store *store;
+	struct cfg_psoc_ctx *psoc_ctx;
+	ssize_t len;
+	ssize_t total_len = buflen;
+
+	cfg_enter();
+
+	psoc_ctx = cfg_psoc_get_ctx(psoc);
+	if (!psoc_ctx)
+		return QDF_STATUS_E_FAILURE;
+
+	store = psoc_ctx->store;
+	if (!store)
+		return QDF_STATUS_E_FAILURE;
+
+#undef __CFG_INI_MAC
+#define __CFG_INI_MAC(id, mtype, ctype, name, desc, def...) \
+	do { \
+		len = qdf_scnprintf(buf, buflen, "%s %pM\n", name, \
+				    (&store->values.id##_internal)->bytes); \
+		buf += len; \
+		buflen -= len; \
+	} while (0);
+
+#undef __CFG_INI_IPV4
+#define __CFG_INI_IPV4(id, mtype, ctype, name, desc, def...) \
+	do { \
+		len = qdf_scnprintf(buf, buflen, "%s %pI4\n", name, \
+				    (&store->values.id##_internal)->bytes); \
+		buf += len; \
+		buflen -= len; \
+	} while (0);
+
+#undef __CFG_INI_IPV6
+#define __CFG_INI_IPV6(id, mtype, ctype, name, desc, def...) \
+	do { \
+		len = qdf_scnprintf(buf, buflen, "%s %pI6c\n", name, \
+				    (&store->values.id##_internal)->bytes); \
+		buf += len; \
+		buflen -= len; \
+	} while (0);
+
+#undef __CFG_INI
+#define __CFG_INI(id, mtype, ctype, name, min, max, fallback, desc, def...) \
+	do { \
+		len = qdf_scnprintf(buf, buflen, "%s %u\n", name, \
+				    *(ctype *)&store->values.id##_internal); \
+		buf += len; \
+		buflen -= len; \
+	} while (0);
+
+#undef __CFG_INI_STRING
+#define __CFG_INI_STRING(id, mtype, ctype, name, min_len, max_len, ...) \
+	do { \
+		len = qdf_scnprintf(buf, buflen, "%s %s\n", name, \
+				    (char *)&store->values.id##_internal); \
+		buf += len; \
+		buflen -= len; \
+	} while (0);
+
+	CFG_ALL
+
+#undef __CFG_INI_MAC
+#undef __CFG_INI_IPV4
+#undef __CFG_INI_IPV6
+#undef __CFG_INI
+#undef __CFG_INI_STRING
+
+	*plen = total_len - buflen;
+	cfg_exit();
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS ucfg_cfg_store_print(struct wlan_objmgr_psoc *psoc)
 {
 	return cfg_store_print(psoc);
+}
+
+QDF_STATUS ucfg_cfg_ini_config_print(struct wlan_objmgr_psoc *psoc,
+				     uint8_t *buf, ssize_t *plen,
+				     ssize_t buflen)
+{
+	return cfg_ini_config_print(psoc, buf, plen, buflen);
 }
 
 static QDF_STATUS

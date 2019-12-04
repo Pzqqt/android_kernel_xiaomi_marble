@@ -182,6 +182,19 @@ QDF_STATUS cfg_parse_to_global_store(const char *path);
 QDF_STATUS ucfg_cfg_store_print(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_cfg_ini_config_print() prints the cfg ini/non ini to buffer
+ * @psoc: psoc
+ * @buf: cache to save ini config
+ * @plen: the pointer to length
+ * @buflen: total buf length
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_cfg_ini_config_print(struct wlan_objmgr_psoc *psoc,
+				     uint8_t *buf, ssize_t *plen,
+				     ssize_t buflen);
+
+/**
  * cfg_get() - lookup the configured value for @id from @psoc
  * @psoc: The psoc from which to lookup the configured value
  * @id: The id of the configured value to lookup
