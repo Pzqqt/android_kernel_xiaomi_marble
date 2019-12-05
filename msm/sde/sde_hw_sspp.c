@@ -3,7 +3,6 @@
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
-#include "sde_hw_util.h"
 #include "sde_hwio.h"
 #include "sde_hw_catalog.h"
 #include "sde_hw_lm.h"
@@ -299,7 +298,7 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 	u32 opmode = 0;
 	u32 alpha_en_mask = 0, color_en_mask = 0;
 	u32 op_mode_off, unpack_pat_off, format_off;
-	u32 idx, core_rev;
+	u32 idx;
 	bool const_color_en = true;
 
 	if (_sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx) || !fmt)
@@ -316,7 +315,6 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 	}
 
 	c = &ctx->hw;
-	core_rev = readl_relaxed(c->base_off + 0x0);
 	opmode = SDE_REG_READ(c, op_mode_off + idx);
 	opmode &= ~(MDSS_MDP_OP_FLIP_LR | MDSS_MDP_OP_FLIP_UD |
 			MDSS_MDP_OP_BWC_EN | MDSS_MDP_OP_PE_OVERRIDE);
@@ -354,10 +352,9 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 		(fmt->unpack_align_msb << 18) |
 		((fmt->bpp - 1) << 9);
 
-	if(IS_SDE_MAJOR_SAME(core_rev, SDE_HW_VER_600)) {
-		if(flags & SDE_SSPP_ROT_90)
-			const_color_en = false;
-	}
+	if ((flags & SDE_SSPP_ROT_90) && test_bit(SDE_SSPP_INLINE_CONST_CLR,
+			&ctx->cap->features))
+		const_color_en = false;
 
 	if (fmt->fetch_mode != SDE_FETCH_LINEAR) {
 		if (SDE_FORMAT_IS_UBWC(fmt))
