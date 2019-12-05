@@ -481,6 +481,7 @@ static void csr_purge_channel_power(struct mac_context *mac,
 	 * Remove the channel sets from the learned list and put them
 	 * in the free list
 	 */
+	csr_ll_lock(pChannelList);
 	while ((pEntry = csr_ll_remove_head(pChannelList,
 					    LL_ACCESS_NOLOCK)) != NULL) {
 		pChannelSet = GET_BASE_ADDR(pEntry,
@@ -488,6 +489,7 @@ static void csr_purge_channel_power(struct mac_context *mac,
 		if (pChannelSet)
 			qdf_mem_free(pChannelSet);
 	}
+	csr_ll_unlock(pChannelList);
 }
 
 /*
@@ -693,7 +695,8 @@ static void csr_get_channel_power_info(struct mac_context *mac,
 	struct csr_channel_powerinfo *ch_set;
 
 	/* Get 2.4Ghz first */
-	entry = csr_ll_peek_head(list, LL_ACCESS_LOCK);
+	csr_ll_lock(list);
+	entry = csr_ll_peek_head(list, LL_ACCESS_NOLOCK);
 	while (entry && (chn_idx < *num_ch)) {
 		ch_set = GET_BASE_ADDR(entry,
 				struct csr_channel_powerinfo, link);
@@ -706,8 +709,9 @@ static void csr_get_channel_power_info(struct mac_context *mac,
 					idx * ch_set->interChannelOffset);
 			chn_pwr_info[chn_idx++].tx_power = ch_set->txPower;
 		}
-		entry = csr_ll_next(list, entry, LL_ACCESS_LOCK);
+		entry = csr_ll_next(list, entry, LL_ACCESS_NOLOCK);
 	}
+	csr_ll_unlock(list);
 	*num_ch = chn_idx;
 }
 
@@ -1515,7 +1519,8 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 		return;
 
 	ch_pwr_set = (tSirMacChanInfo *)(p_buf);
-	pEntry = csr_ll_peek_head(pList, LL_ACCESS_LOCK);
+	csr_ll_lock(pList);
+	pEntry = csr_ll_peek_head(pList, LL_ACCESS_NOLOCK);
 	/*
 	 * write the tuples (startChan, numChan, txPower) for each channel found
 	 * in the channel power list.
@@ -1585,8 +1590,9 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 			ch_pwr_set++;
 			count++;
 		}
-		pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_LOCK);
+		pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
 	}
+	csr_ll_unlock(pList);
 	if (band == BAND_2G) {
 		mac->mlme_cfg->power.max_tx_power_24.len =
 					sizeof(tSirMacChanInfo) * count;
