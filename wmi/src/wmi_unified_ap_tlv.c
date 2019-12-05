@@ -1731,6 +1731,7 @@ send_vdev_fils_enable_cmd_tlv(wmi_unified_t wmi_handle,
 		       wmi_enable_fils_cmd_fixed_param));
 	cmd->vdev_id = param->vdev_id;
 	cmd->fd_period = param->fd_period;
+	cmd->flags = param->send_prb_rsp_frame;
 	WMI_LOGI("Setting FD period to %d vdev id : %d",
 		 param->fd_period, param->vdev_id);
 
