@@ -262,8 +262,9 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 			sa_peer->delete_in_progress = true;
 			if (soc->cdp_soc.ol_ops->peer_sta_kickout) {
 				soc->cdp_soc.ol_ops->peer_sta_kickout(
-						sa_peer->vdev->pdev->ctrl_pdev,
-						wds_src_mac);
+					soc->ctrl_psoc,
+					sa_peer->vdev->pdev->pdev_id,
+					wds_src_mac);
 			}
 		}
 	}

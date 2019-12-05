@@ -513,8 +513,9 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
-	if (!wlan_psoc_nif_fw_ext_cap_get((void *)pdev->ctrl_pdev,
-					  WLAN_SOC_CEXT_RX_FSE_SUPPORT)) {
+	if (!wlan_psoc_nif_fw_ext_cap_get(
+				(struct wlan_objmgr_psoc *)soc->ctrl_psoc,
+				WLAN_SOC_CEXT_RX_FSE_SUPPORT)) {
 		QDF_TRACE(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_ERROR,
 			  "rx fse disabled in FW\n");
 		wlan_cfg_set_rx_flow_tag_enabled(cfg, false);
