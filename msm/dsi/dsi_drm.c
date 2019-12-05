@@ -314,8 +314,8 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 }
 
 static void dsi_bridge_mode_set(struct drm_bridge *bridge,
-				struct drm_display_mode *mode,
-				struct drm_display_mode *adjusted_mode)
+				const struct drm_display_mode *mode,
+				const struct drm_display_mode *adjusted_mode)
 {
 	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
 

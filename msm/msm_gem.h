@@ -19,7 +19,7 @@
 #define __MSM_GEM_H__
 
 #include <linux/kref.h>
-#include <linux/reservation.h>
+#include <linux/dma-resv.h>
 #include "msm_drv.h"
 
 /* Additional internal-use only BO flags: */
@@ -82,6 +82,8 @@ struct msm_gem_vma {
 	uint64_t iova;
 	struct msm_gem_address_space *aspace;
 	struct list_head list;    /* node in msm_gem_object::vmas */
+	bool mapped;
+	int inuse;
 };
 
 struct msm_gem_object {
@@ -124,8 +126,8 @@ struct msm_gem_object {
 	struct list_head vmas;    /* list of msm_gem_vma */
 
 	/* normally (resv == &_resv) except for imported bo's */
-	struct reservation_object *resv;
-	struct reservation_object _resv;
+	struct dma_resv *resv;
+	struct dma_resv _resv;
 
 	/* For physically contiguous buffers.  Used when we don't have
 	 * an IOMMU.  Also used for stolen/splashscreen buffer.
@@ -136,6 +138,7 @@ struct msm_gem_object {
 
 	struct msm_gem_address_space *aspace;
 	bool in_active_list;
+	char name[32]; /* Identifier to print for the debugfs files */
 };
 #define to_msm_bo(x) container_of(x, struct msm_gem_object, base)
 
@@ -195,6 +198,7 @@ struct msm_gem_submit {
 	struct msm_ringbuffer *ring;
 	unsigned int nr_cmds;
 	unsigned int nr_bos;
+	u32 ident;	   /* A "identifier" for the submit for logging */
 	struct {
 		uint32_t type;
 		uint32_t size;  /* in dwords */

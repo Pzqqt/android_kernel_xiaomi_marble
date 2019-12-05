@@ -295,7 +295,7 @@ struct sde_connector_ops {
 	 */
 	int (*atomic_check)(struct drm_connector *connector,
 			void *display,
-			struct drm_connector_state *c_state);
+			struct drm_atomic_state *state);
 
 	/**
 	 * pre_destroy - handle pre destroy operations for the connector
