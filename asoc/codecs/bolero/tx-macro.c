@@ -2845,10 +2845,10 @@ static int tx_macro_init(struct snd_soc_component *component)
 
 	if (tx_priv->version == BOLERO_VERSION_2_1)
 		snd_soc_component_update_bits(component,
-			BOLERO_CDC_VA_TOP_CSR_SWR_CTRL, 0xF0, 0xA0);
+			BOLERO_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F, 0x0A);
 	else if (tx_priv->version == BOLERO_VERSION_2_0)
 		snd_soc_component_update_bits(component,
-			BOLERO_CDC_TX_TOP_CSR_SWR_CTRL, 0xF0, 0xA0);
+			BOLERO_CDC_TX_TOP_CSR_SWR_CTRL, 0x0F, 0x0A);
 
 	return 0;
 }
