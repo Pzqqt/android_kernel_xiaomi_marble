@@ -4874,8 +4874,6 @@ static int dsi_display_bind(struct device *dev,
 				sizeof(struct dsi_link_lp_clk_info));
 
 		info.c_clks[i].drm = drm;
-		info.bus_handle[i] =
-			display_ctrl->ctrl->axi_bus_info.bus_handle;
 		info.ctrl_index[i] = display_ctrl->ctrl->cell_index;
 	}
 

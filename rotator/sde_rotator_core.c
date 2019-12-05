@@ -13,8 +13,6 @@
 #include <linux/of.h>
 #include <linux/clk.h>
 #include <linux/debugfs.h>
-#include <linux/msm-bus.h>
-#include <linux/msm-bus-board.h>
 #include <linux/regulator/consumer.h>
 #include <linux/dma-direction.h>
 #include <soc/qcom/scm.h>
@@ -69,50 +67,20 @@
  */
 #define ROT_MAX_HW_BLOCKS 2
 
-#define SDE_REG_BUS_VECTOR_ENTRY(ab_val, ib_val)	\
-	{						\
-		.src = MSM_BUS_MASTER_AMPSS_M0,		\
-		.dst = MSM_BUS_SLAVE_DISPLAY_CFG,	\
-		.ab = (ab_val),				\
-		.ib = (ib_val),				\
-	}
-
 #define BUS_VOTE_19_MHZ 153600000
 
 /* forward prototype */
 static int sde_rotator_update_perf(struct sde_rot_mgr *mgr);
 
-#ifdef CONFIG_QCOM_BUS_SCALING
-static struct msm_bus_vectors rot_reg_bus_vectors[] = {
-	SDE_REG_BUS_VECTOR_ENTRY(0, 0),
-	SDE_REG_BUS_VECTOR_ENTRY(0, BUS_VOTE_19_MHZ),
-};
-static struct msm_bus_paths rot_reg_bus_usecases[ARRAY_SIZE(
-		rot_reg_bus_vectors)];
-static struct msm_bus_scale_pdata rot_reg_bus_scale_table = {
-	.usecase = rot_reg_bus_usecases,
-	.num_usecases = ARRAY_SIZE(rot_reg_bus_usecases),
-	.name = "mdss_rot_reg",
-	.active_only = 1,
-};
-
 static int sde_rotator_bus_scale_set_quota(struct sde_rot_bus_data_type *bus,
 		u64 quota)
 {
-	int new_uc_idx;
-	int ret;
+	int ret = 0, i = 0, j = 0;
+	u64 ab = 0;
 
-	if (!bus) {
-		SDEROT_ERR("null parameter\n");
-		return -EINVAL;
-	}
-
-	if (!bus->bus_hdl) {
-		SDEROT_DBG("bus scaling not enabled\n");
+	if (!bus || !bus->data_paths_cnt) {
+		SDEROT_DBG("bus scaling not register\n");
 		return 0;
-	} else if (bus->bus_hdl < 0) {
-		SDEROT_ERR("invalid bus handle %d\n", bus->bus_hdl);
-		return -EINVAL;
 	}
 
 	if (bus->curr_quota_val == quota) {
@@ -120,46 +88,31 @@ static int sde_rotator_bus_scale_set_quota(struct sde_rot_bus_data_type *bus,
 		return 0;
 	}
 
-	if (!bus->bus_scale_pdata || !bus->bus_scale_pdata->num_usecases) {
-		SDEROT_ERR("invalid bus scale data\n");
-		return -EINVAL;
-	}
+	SDEROT_EVTLOG(quota);
+	SDEROT_DBG("quota=%llu\n", quota);
+	ATRACE_BEGIN("msm_bus_scale_req_rot");
+	ab = div_u64(quota, bus->data_paths_cnt);
 
-	if (!quota) {
-		new_uc_idx = 0;
-	} else {
-		struct msm_bus_vectors *vect = NULL;
-		struct msm_bus_scale_pdata *bw_table =
-			bus->bus_scale_pdata;
-		u64 port_quota = quota;
-		u32 total_axi_port_cnt;
-		int i;
-
-		new_uc_idx = (bus->curr_bw_uc_idx %
-			(bw_table->num_usecases - 1)) + 1;
-
-		total_axi_port_cnt = bw_table->usecase[new_uc_idx].num_paths;
-		if (total_axi_port_cnt == 0) {
-			SDEROT_ERR("Number of bw paths is 0\n");
-			return -ENODEV;
-		}
-		do_div(port_quota, total_axi_port_cnt);
-
-		for (i = 0; i < total_axi_port_cnt; i++) {
-			vect = &bw_table->usecase[new_uc_idx].vectors[i];
-			vect->ab = port_quota;
-			vect->ib = 0;
+	for (i = 0; i < bus->data_paths_cnt; i++) {
+		if (bus->data_bus_hdl[i]) {
+			ret = icc_set_bw(bus->data_bus_hdl[i], ab, ab);
+			if (ret)
+				goto err;
 		}
 	}
-	bus->curr_bw_uc_idx = new_uc_idx;
+
+	ATRACE_END("msm_bus_scale_req_rot");
 	bus->curr_quota_val = quota;
 
-	SDEROT_EVTLOG(new_uc_idx, quota);
-	SDEROT_DBG("uc_idx=%d quota=%llu\n", new_uc_idx, quota);
-	ATRACE_BEGIN("msm_bus_scale_req_rot");
-	ret = msm_bus_scale_client_update_request(bus->bus_hdl,
-		new_uc_idx);
+	return 0;
+err:
+	ab = div_u64(bus->curr_quota_val, bus->data_paths_cnt);
+	for (j = 0; j < i; j++)
+		icc_set_bw(bus->data_bus_hdl[j], ab, ab);
 	ATRACE_END("msm_bus_scale_req_rot");
+	pr_err("failed to set data bus quota %llu\n", quota);
+	if (!bus->curr_quota_val) {
+		pr_err("rotator: data bus was set to 0\n");
 
 	return ret;
 }
@@ -168,43 +121,40 @@ static int sde_rotator_enable_reg_bus(struct sde_rot_mgr *mgr, u64 quota)
 {
 	int ret = 0, changed = 0;
 	u32 usecase_ndx = 0;
+	const struct sde_rot_bus_data *reg_bus_value = NULL;
 
-	if (!mgr || !mgr->reg_bus.bus_hdl)
+	if (!mgr || !mgr->reg_bus.data_paths_cnt)
 		return 0;
 
 	if (quota)
-		usecase_ndx = 1;
+		usecase_ndx = VOTE_INDEX_76_MHZ;
 
-	if (usecase_ndx != mgr->reg_bus.curr_bw_uc_idx) {
-		mgr->reg_bus.curr_bw_uc_idx = usecase_ndx;
+	if (usecase_ndx != mgr->reg_bus.curr_bw_uc_idx)
 		changed++;
-	}
 
 	SDEROT_DBG("%s, changed=%d register bus %s\n", __func__, changed,
 		quota ? "Enable":"Disable");
 
 	if (changed) {
 		ATRACE_BEGIN("msm_bus_scale_req_rot_reg");
-		ret = msm_bus_scale_client_update_request(mgr->reg_bus.bus_hdl,
-			usecase_ndx);
+
+		reg_bus_value = sde_get_rot_reg_bus_value(usecase_ndx);
+		ret = icc_set_bw(mgr->reg_bus.data_bus_hdl[0],
+			reg_bus_value->ab, reg_bus_value->ib);
 		ATRACE_END("msm_bus_scale_req_rot_reg");
+
+	}
+	if (ret) {
+		pr_err("rotator: set reg bus failed ab=%llu, lb=%llu\n",
+		       reg_bus_value->ab, reg_bus_value->ib);
+		if (mgr->reg_bus.curr_bw_uc_idx == VOTE_INDEX_DISABLE)
+			pr_err("rotator: reg bus was disabled\n");
+	} else {
+		mgr->reg_bus.curr_bw_uc_idx = usecase_ndx;
 	}
 
 	return ret;
 }
-#else
-static inline int sde_rotator_enable_reg_bus(struct sde_rot_mgr *mgr, u64 quota)
-{
-	return 0;
-}
-
-static inline int sde_rotator_bus_scale_set_quota(
-		struct sde_rot_bus_data_type *bus, u64 quota)
-{
-	return 0;
-}
-#endif
-
 /*
  * Clock rate of all open sessions working a particular hw block
  * are added together to get the required rate for that hw block.
@@ -375,6 +325,7 @@ int sde_rotator_clk_ctrl(struct sde_rot_mgr *mgr, int enable)
 {
 	int ret = 0;
 	int changed = 0;
+	int i = 0, bus_cnt = 0;
 
 	if (enable) {
 		if (mgr->rot_enable_clk_cnt == 0)
@@ -425,9 +376,15 @@ int sde_rotator_clk_ctrl(struct sde_rot_mgr *mgr, int enable)
 				goto error_rot_sub;
 
 			/* Active+Sleep */
-			msm_bus_scale_client_update_context(
-				mgr->data_bus.bus_hdl, false,
-				mgr->data_bus.curr_bw_uc_idx);
+			if (mgr->data_bus.bus_active_only) {
+				bus_cnt = mgr->data_bus.data_paths_cnt;
+				for (i = 0; i < bus_cnt; i++) {
+					icc_set_tag(
+						mgr->data_bus.data_bus_hdl[i],
+						(QCOM_ICC_TAG_ACTIVE_ONLY |
+						 QCOM_ICC_TAG_SLEEP));
+				}
+			}
 			trace_rot_bw_ao_as_context(0);
 		} else {
 			sde_rotator_disable_clk(mgr,
@@ -440,9 +397,15 @@ int sde_rotator_clk_ctrl(struct sde_rot_mgr *mgr, int enable)
 			sde_rotator_disable_clk(mgr, SDE_ROTATOR_CLK_MNOC_AHB);
 
 			/* Active Only */
-			msm_bus_scale_client_update_context(
-				mgr->data_bus.bus_hdl, true,
-				mgr->data_bus.curr_bw_uc_idx);
+			if (mgr->data_bus.bus_active_only) {
+				bus_cnt = mgr->data_bus.data_paths_cnt;
+				for (i = 0; i < bus_cnt; i++) {
+					icc_set_tag(
+						mgr->data_bus.data_bus_hdl[i],
+						QCOM_ICC_TAG_ACTIVE_ONLY);
+				}
+			}
+
 			trace_rot_bw_ao_as_context(1);
 		}
 	}
@@ -2766,56 +2729,67 @@ static struct attribute_group sde_rotator_fs_attr_group = {
 	.attrs = sde_rotator_fs_attrs
 };
 
-#ifdef CONFIG_QCOM_BUS_SCALING
 static int sde_rotator_parse_dt_bus(struct sde_rot_mgr *mgr,
 	struct platform_device *dev)
 {
-	int ret = 0, i;
-	int usecases;
-	struct device_node *node;
+	char bus_name[32];
+	int ret = 0, i = 0;
 
-	mgr->data_bus.bus_scale_pdata = msm_bus_cl_get_pdata(dev);
-	if (IS_ERR_OR_NULL(mgr->data_bus.bus_scale_pdata)) {
-		ret = PTR_ERR(mgr->data_bus.bus_scale_pdata);
-		if (ret) {
-			SDEROT_ERR("msm_bus_cl_get_pdata failed. ret=%d\n",
-					ret);
-			mgr->data_bus.bus_scale_pdata = NULL;
+	mgr->reg_bus.data_bus_hdl[0] = of_icc_get(&dev->dev,
+						  "qcom,sde-reg-bus");
+
+	if (mgr->reg_bus.data_bus_hdl[0] == NULL) {
+		mgr->reg_bus.data_paths_cnt = 0;
+		pr_debug("rotator: reg bus dt node missing\n");
+		goto data_bus;
+	} else if (IS_ERR(mgr->reg_bus.data_bus_hdl[0])) {
+		SDEROT_ERR("sde rotator parse reg bus failed. ret=%d\n",
+			   ret);
+		mgr->reg_bus.data_bus_hdl[0] = NULL;
+		ret = -EINVAL;
+		return ret;
+	}
+	mgr->reg_bus.data_paths_cnt = 1;
+
+data_bus:
+	for (i = 0; i < SDE_ROTATION_BUS_PATH_MAX; i++) {
+		snprintf(bus_name, 32, "%s%d", "qcom,rot-data-bus", i);
+		ret = of_property_match_string(pdev->dev.of_node,
+			"interconnect-names", bus_name);
+		if (ret < 0) {
+			if (!mgr->data_bus.data_paths_cnt) {
+				pr_debug("rotator: bus %s dt node missing\n", bus_name);
+				return 0;
+			} else
+				goto end;
+		} else
+			mgr->data_bus.data_bus_hdl[i] = of_icc_get(&pdev->dev, bus_name);
+
+		if (IS_ERR_OR_NULL(mgr->data_bus.data_bus_hdl[i])) {
+			SDEROT_ERR("rotator: get data bus %s failed\n",
+				   bus_name);
+			break;
+		}
+		mgr->data_bus.data_paths_cnt++;
+	}
+
+	if (!mgr->data_bus.data_paths_cnt) {
+		pr_err("rotator: get none data bus path\n");
+		return -EINVAL;
+	}
+
+end:
+	if (of_find_property(dev->dev.of_node,
+			     "qcom,msm-bus,active-only", NULL)) {
+		mgr->data_bus.bus_active_only = true;
+		for (i = 0; i < mgr->data_bus.data_paths_cnt; i++) {
+			icc_set_tag(mgr->data_bus.data_bus_hdl[i],
+				    QCOM_ICC_TAG_ACTIVE_ONLY);
 		}
 	}
 
-	node = of_get_child_by_name(dev->dev.of_node, "qcom,rot-reg-bus");
-	if (node) {
-		mgr->reg_bus.bus_scale_pdata
-				= msm_bus_pdata_from_node(dev, node);
-		if (IS_ERR_OR_NULL(mgr->reg_bus.bus_scale_pdata)) {
-			SDEROT_ERR("reg bus pdata parsing failed\n");
-			ret = PTR_ERR(mgr->reg_bus.bus_scale_pdata);
-			if (!mgr->reg_bus.bus_scale_pdata)
-				ret = -EINVAL;
-			mgr->reg_bus.bus_scale_pdata = NULL;
-		}
-	} else {
-		SDEROT_DBG(
-			"no DT entries, configuring default reg bus table\n");
-		mgr->reg_bus.bus_scale_pdata = &rot_reg_bus_scale_table;
-		usecases = mgr->reg_bus.bus_scale_pdata->num_usecases;
-		for (i = 0; i < usecases; i++) {
-			rot_reg_bus_usecases[i].num_paths = 1;
-			rot_reg_bus_usecases[i].vectors =
-				&rot_reg_bus_vectors[i];
-		}
-	}
-
-	return ret;
-}
-#else
-static inline int sde_rotator_parse_dt_bus(struct sde_rot_mgr *mgr,
-	struct platform_device *dev)
-{
 	return 0;
 }
-#endif
 
 static int sde_rotator_parse_dt(struct sde_rot_mgr *mgr,
 	struct platform_device *dev)
@@ -2920,59 +2894,19 @@ error:
 	return rc;
 }
 
-#ifdef CONFIG_QCOM_BUS_SCALING
 static void sde_rotator_bus_scale_unregister(struct sde_rot_mgr *mgr)
 {
-	SDEROT_DBG("unregister bus_hdl=%x, reg_bus_hdl=%x\n",
-		mgr->data_bus.bus_hdl, mgr->reg_bus.bus_hdl);
+	int i = 0;
 
-	if (mgr->data_bus.bus_hdl)
-		msm_bus_scale_unregister_client(mgr->data_bus.bus_hdl);
-
-	if (mgr->reg_bus.bus_hdl)
-		msm_bus_scale_unregister_client(mgr->reg_bus.bus_hdl);
-}
-
-static int sde_rotator_bus_scale_register(struct sde_rot_mgr *mgr)
-{
-	if (!mgr->data_bus.bus_scale_pdata) {
-		SDEROT_DBG("Bus scaling is not enabled\n");
-		return 0;
+	SDEROT_DBG("unregister sde rotator bus\n");
+	for (i = 0; i < mgr->data_bus.data_paths_cnt; i++) {
+		if (mgr->data_bus.data_bus_hdl[i])
+			icc_put(mgr->data_bus.data_bus_hdl[i]);
 	}
 
-	mgr->data_bus.bus_hdl =
-		msm_bus_scale_register_client(
-		mgr->data_bus.bus_scale_pdata);
-	if (!mgr->data_bus.bus_hdl) {
-		SDEROT_ERR("bus_client register failed\n");
-		return -EINVAL;
-	}
-	SDEROT_DBG("registered bus_hdl=%x\n", mgr->data_bus.bus_hdl);
-
-	if (mgr->reg_bus.bus_scale_pdata) {
-		mgr->reg_bus.bus_hdl =
-			msm_bus_scale_register_client(
-			mgr->reg_bus.bus_scale_pdata);
-		if (!mgr->reg_bus.bus_hdl) {
-			SDEROT_ERR("register bus_client register failed\n");
-			sde_rotator_bus_scale_unregister(mgr);
-		} else {
-			SDEROT_DBG("registered register bus_hdl=%x\n",
-					mgr->reg_bus.bus_hdl);
-		}
-	}
-
-	return 0;
+	if (mgr->reg_bus.data_bus_hdl[0])
+		icc_put(mgr->reg_bus.data_bus_hdl[0]);
 }
-#else
-static inline void sde_rotator_bus_scale_unregister(struct sde_rot_mgr *mgr)
-{
-}
-static inline int sde_rotator_bus_scale_register(struct sde_rot_mgr *mgr)
-{
-	return 0;
-}
-#endif
 
 static inline int sde_rotator_search_dt_clk(struct platform_device *pdev,
 		struct sde_rot_mgr *mgr, char *clk_name, int clk_idx,
@@ -3089,10 +3023,6 @@ static int sde_rotator_res_init(struct platform_device *pdev,
 	}
 
 	ret = sde_rotator_register_clk(pdev, mgr);
-	if (ret)
-		goto error;
-
-	ret = sde_rotator_bus_scale_register(mgr);
 	if (ret)
 		goto error;
 

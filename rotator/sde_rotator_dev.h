@@ -12,7 +12,6 @@
 #include <linux/ktime.h>
 #include <linux/iommu.h>
 #include <linux/dma-buf.h>
-#include <linux/msm-bus.h>
 #include <linux/platform_device.h>
 #include <linux/soc/qcom/llcc-qcom.h>
 #include <linux/kthread.h>

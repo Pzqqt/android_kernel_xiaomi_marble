@@ -19,6 +19,7 @@
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 #include <linux/kthread.h>
 #include <linux/debugfs.h>
+#include <linux/input.h>
 #include <linux/seq_file.h>
 #include <linux/sde_rsc.h>
 

@@ -14,8 +14,6 @@
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
-#include <linux/msm-bus.h>
-#include <linux/msm-bus-board.h>
 #include <linux/regulator/consumer.h>
 
 #define CREATE_TRACE_POINTS
@@ -25,6 +23,13 @@
 #include "sde_rotator_debug.h"
 #include "sde_rotator_dev.h"
 #include "sde_rotator_vbif.h"
+
+static const struct sde_rot_bus_data sde_rot_reg_bus_table[] = {
+	{0, 0},
+	{0, 76800},
+	{0, 150000},
+	{0, 300000},
+};
 
 static inline u64 fudge_factor(u64 val, u32 numer, u32 denom)
 {
@@ -49,6 +54,11 @@ static inline u64 apply_inverse_fudge_factor(u64 val,
 static inline bool validate_comp_ratio(struct sde_mult_factor *factor)
 {
 	return factor->numer && factor->denom;
+}
+
+const struct sde_rot_bus_data *sde_get_rot_reg_bus_value(u32 usecase_ndx)
+{
+	return &sde_rot_reg_bus_table[usecase_ndx];
 }
 
 u32 sde_apply_comp_ratio_factor(u32 quota,
@@ -471,6 +481,7 @@ int sde_update_reg_bus_vote(struct reg_bus_client *bus_client, u32 usecase_ndx)
 	int ret = 0;
 	bool changed = false;
 	u32 max_usecase_ndx = VOTE_INDEX_DISABLE;
+	const struct sde_rot_bus_data *reg_bus_value = NULL;
 	struct reg_bus_client *client, *temp_client;
 	struct sde_rot_data_type *sde_res = sde_rot_get_mdata();
 
@@ -487,19 +498,27 @@ int sde_update_reg_bus_vote(struct reg_bus_client *bus_client, u32 usecase_ndx)
 			max_usecase_ndx = client->usecase_ndx;
 	}
 
-	if (sde_res->reg_bus_usecase_ndx != max_usecase_ndx) {
+	if (sde_res->reg_bus_usecase_ndx != max_usecase_ndx)
 		changed = true;
-		sde_res->reg_bus_usecase_ndx = max_usecase_ndx;
-	}
 
 	SDEROT_DBG(
 		"%pS: changed=%d current idx=%d request client %s id:%u idx:%d\n",
 		__builtin_return_address(0), changed, max_usecase_ndx,
 		bus_client->name, bus_client->id, usecase_ndx);
-	if (changed)
-		ret = msm_bus_scale_client_update_request(sde_res->reg_bus_hdl,
-			max_usecase_ndx);
+	if (changed) {
+		reg_bus_value = sde_get_rot_reg_bus_value(max_usecase_ndx);
+		ret = icc_set_bw(sde_res->reg_bus_hdl, reg_bus_value->ab,
+			reg_bus_value->ib);
+	}
 
+	if (ret) {
+		pr_err("rotator: reg_bus_hdl set failed ab=%llu, ib=%llu\n",
+		       reg_bus_value->ab, reg_bus_value->ib);
+		if (sde_res->reg_bus_usecase_ndx == VOTE_INDEX_DISABLE)
+			pr_err("rotator: reg_bus_hdl was disabled\n");
+	} else {
+		sde_res->reg_bus_usecase_ndx = max_usecase_ndx;
+	}
 	mutex_unlock(&sde_res->reg_bus_lock);
 	return ret;
 }
@@ -820,74 +839,33 @@ static void sde_mdp_destroy_dt_misc(struct platform_device *pdev,
 	mdata->vbif_nrt_qos = NULL;
 }
 
-#define MDP_REG_BUS_VECTOR_ENTRY(ab_val, ib_val)	\
-	{						\
-		.src = MSM_BUS_MASTER_AMPSS_M0,		\
-		.dst = MSM_BUS_SLAVE_DISPLAY_CFG,	\
-		.ab = (ab_val),				\
-		.ib = (ib_val),				\
-	}
-
-#define BUS_VOTE_19_MHZ 153600000
-#define BUS_VOTE_40_MHZ 320000000
-#define BUS_VOTE_80_MHZ 640000000
-
-#ifdef CONFIG_QCOM_BUS_SCALING
-
-static struct msm_bus_vectors mdp_reg_bus_vectors[] = {
-	MDP_REG_BUS_VECTOR_ENTRY(0, 0),
-	MDP_REG_BUS_VECTOR_ENTRY(0, BUS_VOTE_19_MHZ),
-	MDP_REG_BUS_VECTOR_ENTRY(0, BUS_VOTE_40_MHZ),
-	MDP_REG_BUS_VECTOR_ENTRY(0, BUS_VOTE_80_MHZ),
-};
-static struct msm_bus_paths mdp_reg_bus_usecases[ARRAY_SIZE(
-		mdp_reg_bus_vectors)];
-static struct msm_bus_scale_pdata mdp_reg_bus_scale_table = {
-	.usecase = mdp_reg_bus_usecases,
-	.num_usecases = ARRAY_SIZE(mdp_reg_bus_usecases),
-	.name = "sde_reg",
-	.active_only = true,
-};
-
 static int sde_mdp_bus_scale_register(struct sde_rot_data_type *mdata)
 {
-	struct msm_bus_scale_pdata *reg_bus_pdata;
-	int i;
+	int rc = 0;
 
-	if (!mdata->reg_bus_hdl) {
-		reg_bus_pdata = &mdp_reg_bus_scale_table;
-		for (i = 0; i < reg_bus_pdata->num_usecases; i++) {
-			mdp_reg_bus_usecases[i].num_paths = 1;
-			mdp_reg_bus_usecases[i].vectors =
-				&mdp_reg_bus_vectors[i];
-		}
+	mdata->reg_bus_hdl = of_icc_get(&mdata->pdev->dev, "qcom,sde-reg-bus");
 
-		mdata->reg_bus_hdl =
-			msm_bus_scale_register_client(reg_bus_pdata);
-		if (!mdata->reg_bus_hdl) {
-			/* Continue without reg_bus scaling */
-			SDEROT_WARN("reg_bus_client register failed\n");
-		} else
-			SDEROT_DBG("register reg_bus_hdl=%x\n",
-					mdata->reg_bus_hdl);
+	if (mdata->reg_bus_hdl == NULL) {
+		pr_err("rotator: reg bus dt node missing\n");
+		return 0;
+	} else if (IS_ERR(mdata->reg_bus_hdl)) {
+		SDEROT_ERR("reg bus handle parsing failed\n");
+		mdata->reg_bus_hdl = NULL;
+		rc = -EINVAL;
+	} else {
+		SDEROT_DBG("rotator reg_bus_hdl parsing success\n");
 	}
 
-	return 0;
+	return rc;
 }
-#else
-static inline int sde_mdp_bus_scale_register(struct sde_rot_data_type *mdata)
-{
-	return 0;
-}
-#endif
 
 static void sde_mdp_bus_scale_unregister(struct sde_rot_data_type *mdata)
 {
-	SDEROT_DBG("unregister reg_bus_hdl=%x\n", mdata->reg_bus_hdl);
+	SDEROT_DBG("unregister reg_bus_hdl\n");
 
 	if (mdata->reg_bus_hdl) {
-		msm_bus_scale_unregister_client(mdata->reg_bus_hdl);
-		mdata->reg_bus_hdl = 0;
+		icc_put(mdata->reg_bus_hdl);
+		mdata->reg_bus_hdl = NULL;
 	}
 }
 

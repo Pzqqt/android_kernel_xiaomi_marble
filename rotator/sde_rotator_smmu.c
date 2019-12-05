@@ -164,7 +164,7 @@ static int sde_smmu_enable_power(struct sde_smmu_client *sde_smmu,
 			goto end;
 		}
 		sde_update_reg_bus_vote(sde_smmu->reg_bus_clt,
-			VOTE_INDEX_19_MHZ);
+			VOTE_INDEX_76_MHZ);
 		rc = sde_rot_enable_clk(mp->clk_config, mp->num_clk, true);
 		if (rc) {
 			SDEROT_ERR("clock enable failed - rc:%d\n", rc);

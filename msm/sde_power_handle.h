@@ -18,6 +18,7 @@
 #define SDE_POWER_HANDLE_CONT_SPLASH_BUS_AB_QUOTA	3000000000ULL
 
 #include <linux/sde_io_util.h>
+#include <linux/interconnect.h>
 #include <soc/qcom/cx_ipeak.h>
 
 /* event will be triggered before power handler disable */
@@ -31,6 +32,23 @@
 
 /* event will be triggered after power handler enable */
 #define SDE_POWER_EVENT_POST_ENABLE	0x8
+#define DATA_BUS_PATH_MAX	0x2
+
+/*
+ * The AMC bucket denotes constraints that are applied to hardware when
+ * icc_set_bw() completes, whereas the WAKE and SLEEP constraints are applied
+ * when the execution environment transitions between active and low power mode.
+ */
+#define QCOM_ICC_BUCKET_AMC            0
+#define QCOM_ICC_BUCKET_WAKE           1
+#define QCOM_ICC_BUCKET_SLEEP          2
+#define QCOM_ICC_NUM_BUCKETS           3
+#define QCOM_ICC_TAG_AMC               BIT(QCOM_ICC_BUCKET_AMC)
+#define QCOM_ICC_TAG_WAKE              BIT(QCOM_ICC_BUCKET_WAKE)
+#define QCOM_ICC_TAG_SLEEP             BIT(QCOM_ICC_BUCKET_SLEEP)
+#define QCOM_ICC_TAG_ACTIVE_ONLY       (QCOM_ICC_TAG_AMC | QCOM_ICC_TAG_WAKE)
+#define QCOM_ICC_TAG_ALWAYS            (QCOM_ICC_TAG_AMC | QCOM_ICC_TAG_WAKE |\
+                                        QCOM_ICC_TAG_SLEEP)
 
 /**
  * mdss_bus_vote_type: register bus vote type
@@ -74,29 +92,26 @@ enum SDE_POWER_HANDLE_DBUS_ID {
 };
 
 /**
+ * struct sde_power_bus_scaling_data: struct for bus setting
+ * @ab: average bandwidth in kilobytes per second
+ * @ib: peak bandwidth in kilobytes per second
+ */
+struct sde_power_bus_scaling_data {
+	uint64_t ab; /* Arbitrated bandwidth */
+	uint64_t ib; /* Instantaneous bandwidth */
+};
+
+/**
  * struct sde_power_data_handle: power handle struct for data bus
- * @data_bus_scale_table: pointer to bus scaling table
  * @data_bus_hdl: current data bus handle
+ * @curr_val : save the current bus value
  * @data_paths_cnt: number of rt data path ports
- * @curr_bw_uc_idx: current use case index of data bus
- * @ao_bw_uc_idx: active only use case index of data bus
- * @ab_rt: realtime ab quota
- * @ib_rt: realtime ib quota
- * @ab_nrt: non-realtime ab quota
- * @ib_nrt: non-realtime ib quota
- * @enable: true if bus is enabled
  */
 struct sde_power_data_bus_handle {
-	struct msm_bus_scale_pdata *data_bus_scale_table;
-	u32 data_bus_hdl;
+	struct icc_path *data_bus_hdl[DATA_BUS_PATH_MAX];
+	struct sde_power_bus_scaling_data curr_val;
 	u32 data_paths_cnt;
-	u32 curr_bw_uc_idx;
-	u32 ao_bw_uc_idx;
-	u64 ab_rt;
-	u64 ib_rt;
-	u64 ab_nrt;
-	u64 ib_nrt;
-	bool enable;
+	bool bus_active_only;
 };
 
 /*
@@ -124,6 +139,7 @@ struct sde_power_event {
  * @dev: pointer to device structure
  * @usecase_ndx: current usecase index
  * @reg_bus_hdl: current register bus handle
+ * @reg_bus_curr_val: save currecnt reg bus value
  * @data_bus_handle: context structure for data bus control
  * @event_list: current power handle event list
  * @rsc_client: sde rsc client pointer
@@ -135,7 +151,8 @@ struct sde_power_handle {
 	struct mutex phandle_lock;
 	struct device *dev;
 	u32 current_usecase_ndx;
-	u32 reg_bus_hdl;
+	struct icc_path *reg_bus_hdl;
+	struct sde_power_bus_scaling_data reg_bus_curr_val;
 	struct sde_power_data_bus_handle data_bus_handle
 		[SDE_POWER_HANDLE_DBUS_ID_MAX];
 	struct list_head event_list;
