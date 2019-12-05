@@ -11493,9 +11493,16 @@ typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tbtt_offset_event_fixed_param  */
     /** bimtap of VDEVs that has tbtt offset updated */
     A_UINT32 vdev_map;
-/* The TLVs for tbttoffset_list will follow this TLV.
- *     tbtt offset list in the order of the LSB to MSB in the vdev_map bitmap
+/* The TLVs for tbttoffset_list, tbtt_qtime_low_us_list, and
+ * tbtt_qtime_high_us_list will follow this TLV.
+ *   - tbtt offset list in the order of the LSb to MSb in the vdev_map bitmap
  *     A_UINT32 tbttoffset_list[WMI_MAX_AP_VDEV];
+ *   - tbtt qtime_low_us list(Lower 32 bit of qtime us) in the order of the
+ *     LSb to MSb in the vdev_map bitmap
+ *     A_UINT32 tbtt_qtime_low_us_list[WMI_MAX_AP_VDEV];
+ *   - tbtt qtime_high_us list(Higher 32 bit of qtime us) in the order of the
+ *     LSb to MSb in the vdev_map bitmap
+ *     A_UINT32 tbtt_qtime_high_us_list[WMI_MAX_AP_VDEV];
  */
 } wmi_tbtt_offset_event_fixed_param;
 
@@ -11505,6 +11512,9 @@ typedef struct {
     A_UINT32 vdev_id;
     /** tbttoffset in TUs */
     A_UINT32 tbttoffset;
+    /** absolute tbtt time in qtime us */
+    A_UINT32 tbtt_qtime_low_us;  /* bits 31:0 of qtime */
+    A_UINT32 tbtt_qtime_high_us; /* bits 63:32 of qtime */
 } wmi_tbtt_offset_info;
 
 /** Use this event if number of vdevs > 32 */

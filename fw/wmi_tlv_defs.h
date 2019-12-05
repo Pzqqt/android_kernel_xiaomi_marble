@@ -4451,7 +4451,9 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_EVENTID);
 /* TBTT offset Event */
 #define WMITLV_TABLE_WMI_TBTTOFFSET_UPDATE_EVENTID(id,op,buf,len)                                                         \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_tbtt_offset_event_fixed_param, wmi_tbtt_offset_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_FXAR(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tbttoffset_list, WMITLV_SIZE_FIX, WMI_MAX_AP_VDEV)
+    WMITLV_FXAR(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tbttoffset_list, WMITLV_SIZE_FIX, WMI_MAX_AP_VDEV) \
+    WMITLV_FXAR(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tbtt_qtime_low_us_list, WMITLV_SIZE_FIX, WMI_MAX_AP_VDEV) \
+    WMITLV_FXAR(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, tbtt_qtime_high_us_list, WMITLV_SIZE_FIX, WMI_MAX_AP_VDEV)
 WMITLV_CREATE_PARAM_STRUC(WMI_TBTTOFFSET_UPDATE_EVENTID);
 
 /* TBTT EXT offset Event */
