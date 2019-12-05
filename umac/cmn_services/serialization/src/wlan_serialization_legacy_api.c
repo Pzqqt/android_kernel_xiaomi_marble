@@ -77,35 +77,6 @@ wlan_serialization_get_pdev_priv_obj_using_psoc(struct wlan_objmgr_psoc *psoc)
 	return ser_pdev_obj;
 }
 
-uint32_t wlan_serialization_get_active_list_count(
-			struct wlan_objmgr_psoc *psoc,
-			uint8_t is_cmd_from_active_scan_queue)
-{
-	struct wlan_ser_pdev_obj *ser_pdev_obj;
-	qdf_list_t *queue;
-	struct wlan_serialization_pdev_queue  *pdev_queue;
-	uint32_t count;
-
-	ser_pdev_obj = wlan_serialization_get_pdev_priv_obj_using_psoc(psoc);
-	if (!ser_pdev_obj) {
-		ser_err("invalid ser_pdev_obj");
-		return 0;
-	}
-
-	if (is_cmd_from_active_scan_queue)
-		pdev_queue = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
-	else
-		pdev_queue =
-		&ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
-
-	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
-	queue = &pdev_queue->active_list;
-	count = qdf_list_size(queue);
-	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
-
-	return count;
-}
-
 uint32_t wlan_serialization_get_pending_list_count(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t is_cmd_from_pending_scan_queue)
