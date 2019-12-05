@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2008 Atheros Communications, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -36,6 +36,7 @@
  * @DFS_MKK4_DOMAIN: MKK domain
  * @DFS_CN_DOMAIN: China domain
  * @DFS_KR_DOMAIN: Korea domain
+ * @DFS_MKKN_DOMAIN: MKKN domain
  * @DFS_UNDEF_DOMAIN: Undefined domain
  */
 enum DFS_DOMAIN {
@@ -45,6 +46,7 @@ enum DFS_DOMAIN {
 	DFS_MKK4_DOMAIN   = 3,
 	DFS_CN_DOMAIN     = 4,
 	DFS_KR_DOMAIN     = 5,
+	DFS_MKKN_DOMAIN   = 6,
 	DFS_UNDEF_DOMAIN
 };
 

@@ -1480,7 +1480,7 @@ const struct regdomain regdomains_5g[] = {
 
 	[MKK16] = {CTL_MKK, DFS_MKK_REGION, 2, 0, 1, {CHAN_5490_5710_6} },
 
-	[MKK17] = {CTL_MKK, DFS_MKK_REGION, 2, 0, 3, {CHAN_5170_5250_8,
+	[MKK17] = {CTL_MKK, DFS_MKKN_REGION, 2, 0, 3, {CHAN_5170_5250_8,
 						      CHAN_5250_5330_12,
 						      CHAN_5490_5730_6} },
 

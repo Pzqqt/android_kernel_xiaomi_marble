@@ -68,6 +68,9 @@
  * @DFS_MKK_REGION: MKK region
  * @DFS_CN_REGION: China region
  * @DFS_KR_REGION: Korea region
+ * @DFS_MKK_REGION: MKKN region
+ * that supports updated W53 RADAR pattern
+ * detection.
  * @DFS_UNDEF_REGION: Undefined region
  */
 enum dfs_reg {
@@ -77,6 +80,7 @@ enum dfs_reg {
 	DFS_MKK_REGION = 3,
 	DFS_CN_REGION = 4,
 	DFS_KR_REGION = 5,
+	DFS_MKKN_REGION = 6,
 	DFS_UNDEF_REGION = 0xFFFF,
 };
 
