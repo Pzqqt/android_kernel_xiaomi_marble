@@ -1166,8 +1166,8 @@ ol_rx_filter(struct ol_txrx_vdev_t *vdev,
 
 #ifdef WLAN_FEATURE_TSF_PLUS
 #ifdef CONFIG_HL_SUPPORT
-static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
-				   void *rx_desc, qdf_nbuf_t msdu)
+void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
+		     void *rx_desc, qdf_nbuf_t msdu)
 {
 	struct htt_rx_ppdu_desc_t *rx_ppdu_desc;
 
@@ -1198,8 +1198,8 @@ static inline void ol_rx_timestamp_update(ol_txrx_pdev_handle pdev,
 	}
 }
 #else
-static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
-				   void *rx_desc, qdf_nbuf_t msdu)
+void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
+		     void *rx_desc, qdf_nbuf_t msdu)
 {
 	struct htt_host_rx_desc_base *rx_mpdu_desc = rx_desc;
 	uint32_t tsf64_low32, tsf64_high32;
@@ -1271,8 +1271,8 @@ static inline void ol_rx_timestamp_update(ol_txrx_pdev_handle pdev,
 }
 #endif
 #else
-static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
-				   void *rx_desc, qdf_nbuf_t msdu)
+void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
+		     void *rx_desc, qdf_nbuf_t msdu)
 {
 }
 

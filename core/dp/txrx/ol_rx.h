@@ -117,4 +117,6 @@ ol_rx_mic_error_handler(
 
 void htt_rx_fill_ring_count(htt_pdev_handle pdev);
 
+void ol_rx_timestamp(struct cdp_cfg *cfg_pdev, void *rx_desc, qdf_nbuf_t msdu);
+
 #endif /* _OL_RX__H_ */

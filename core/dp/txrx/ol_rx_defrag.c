@@ -306,6 +306,7 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 	uint8_t pktlog_bit;
 	uint32_t msdu_count = 0;
 	int ret;
+	void *rx_desc;
 
 	if (tid >= OL_TXRX_NUM_EXT_TIDS) {
 		ol_txrx_err("%s:  invalid tid, %u\n", __FUNCTION__, tid);
@@ -359,6 +360,8 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 		OL_RX_ERR_STATISTICS_1(pdev, peer->vdev, peer, rx_mpdu_desc,
 				       OL_RX_ERR_NONE_FRAG);
 		ol_rx_send_pktlog_event(pdev, peer, head_msdu, pktlog_bit);
+		rx_desc = htt_rx_msdu_desc_retrieve(pdev->htt_pdev, head_msdu);
+		ol_rx_timestamp(pdev->ctrl_pdev, rx_desc, head_msdu);
 		ol_rx_reorder_store_frag(pdev, peer, tid, seq_num, head_msdu);
 	} else {
 		/* invalid frame - discard it */
