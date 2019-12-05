@@ -1231,7 +1231,7 @@ struct hdd_adapter {
 	bool offloads_configured;
 
 	/* DSCP to UP QoS Mapping */
-	enum sme_qos_wmmuptype dscp_to_up_map[WLAN_HDD_MAX_DSCP + 1];
+	enum sme_qos_wmmuptype dscp_to_up_map[WLAN_MAX_DSCP + 1];
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	bool is_link_layer_stats_set;

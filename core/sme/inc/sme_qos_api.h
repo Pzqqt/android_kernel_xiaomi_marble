@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -132,6 +132,8 @@ enum sme_qos_statustype {
 	SME_QOS_STATUS_INTO_APSD_POWER_MODE_IND,
 
 };
+
+#define WLAN_MAX_DSCP 0x3f
 
 /*
  * Enumeration of the various User priority (UP) types

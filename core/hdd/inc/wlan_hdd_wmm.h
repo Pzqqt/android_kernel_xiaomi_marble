@@ -194,8 +194,6 @@ extern const uint8_t hdd_qdisc_ac_to_tl_ac[];
 extern const uint8_t hdd_wmm_up_to_ac_map[];
 extern const uint8_t hdd_linux_up_to_ac_map[];
 
-#define WLAN_HDD_MAX_DSCP 0x3f
-
 /**
  * hdd_wmmps_helper() - Function to set uapsd psb dynamically
  *

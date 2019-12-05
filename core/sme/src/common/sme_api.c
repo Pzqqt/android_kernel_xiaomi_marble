@@ -9703,24 +9703,15 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 		sme_release_global_lock(&mac->sme);
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	for (i = 0; i < SME_QOS_WMM_UP_MAX; i++) {
 		for (j = pSession->QosMapSet.dscp_range[i][0];
-			j <= pSession->QosMapSet.dscp_range[i][1];
-			j++) {
-			if ((pSession->QosMapSet.dscp_range[i][0] == 255)
-				&& (pSession->QosMapSet.dscp_range[i][1] ==
-							255)) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_DEBUG,
-					FL("User Priority %d isn't used"), i);
-				break;
-			} else {
+			j <= pSession->QosMapSet.dscp_range[i][1] &&
+			j <= WLAN_MAX_DSCP; j++)
 				dscpmapping[j] = i;
-			}
-		}
 	}
 	for (i = 0; i < pSession->QosMapSet.num_dscp_exceptions; i++)
-		if (pSession->QosMapSet.dscp_exceptions[i][0] != 255)
+		if (pSession->QosMapSet.dscp_exceptions[i][0] <= WLAN_MAX_DSCP)
 			dscpmapping[pSession->QosMapSet.dscp_exceptions[i][0]] =
 				pSession->QosMapSet.dscp_exceptions[i][1];
 
