@@ -426,22 +426,27 @@ static int dp_get_num_rx_contexts(struct cdp_soc_t *soc_hdl)
 
 /**
  * dp_pktlogmod_exit() - API to cleanup pktlog info
- * @handle: Pdev handle
+ * @pdev: Pdev handle
  *
  * Return: none
  */
-static void dp_pktlogmod_exit(struct dp_pdev *handle)
+static void dp_pktlogmod_exit(struct dp_pdev *pdev)
 {
-	struct hif_opaque_softc *scn = (void *)handle->soc->hif_handle;
+	struct dp_soc *soc = pdev->soc;
+	struct hif_opaque_softc *scn = soc->hif_handle;
 
 	if (!scn) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid hif(scn) handle", __func__);
+		dp_err("Invalid hif(scn) handle");
 		return;
 	}
 
+	/* stop mon_reap_timer if it has been started */
+	if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED &&
+	    soc->reap_timer_init)
+		qdf_timer_sync_cancel(&soc->mon_reap_timer);
+
 	pktlogmod_exit(scn);
-	handle->pkt_log_init = false;
+	pdev->pkt_log_init = false;
 }
 #endif
 #else
@@ -3695,7 +3700,10 @@ static void dp_rxdma_ring_cleanup(struct dp_soc *soc,
 		dp_srng_cleanup(soc, &pdev->rx_mac_buf_ring[i],
 			 RXDMA_BUF, 1);
 
-	qdf_timer_free(&soc->mon_reap_timer);
+	if (soc->reap_timer_init) {
+		qdf_timer_free(&soc->mon_reap_timer);
+		soc->reap_timer_init = 0;
+	}
 }
 #else
 static void dp_rxdma_ring_cleanup(struct dp_soc *soc,
