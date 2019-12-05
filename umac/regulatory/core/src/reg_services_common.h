@@ -51,13 +51,6 @@
 	((freq) <= REG_MAX_24GHZ_CH_FREQ))
 
 #ifdef CONFIG_CHAN_FREQ_API
-#define FIVEG_STARTING_FREQ     5000
-#define TWOG_STARTING_FREQ      2407
-#define TWOG_CHAN_14_IN_MHZ     2484
-#define TWOG_CHAN_1_IN_MHZ      2412
-#define TWOG_CHAN_5_IN_MHZ      2432
-#define TWOG_CHAN_6_IN_MHZ      2437
-#define TWOG_CHAN_13_IN_MHZ     2472
 #define REG_MIN_5GHZ_CH_FREQ channel_map[MIN_5GHZ_CHANNEL].center_freq
 #define REG_MAX_5GHZ_CH_FREQ channel_map[MAX_5GHZ_CHANNEL].center_freq
 #endif /* CONFIG_CHAN_FREQ_API */
