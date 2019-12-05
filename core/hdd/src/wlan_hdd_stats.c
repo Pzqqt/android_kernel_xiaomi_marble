@@ -3073,13 +3073,17 @@ wlan_hdd_cfg80211_stats_ext2_callback(hdd_handle_t hdd_handle,
  * wlan_hdd_fill_summary_stats() - populate station_info summary stats
  * @stats: summary stats to use as a source
  * @info: kernel station_info struct to use as a destination
+ * @vdev_id: stats get from which vdev id
  *
  * Return: None
  */
 static void wlan_hdd_fill_summary_stats(tCsrSummaryStatsInfo *stats,
-					struct station_info *info)
+					struct station_info *info,
+					uint8_t vdev_id)
 {
 	int i;
+	struct cds_vdev_dp_stats dp_stats;
+	uint32_t orig_cnt;
 
 	info->rx_packets = stats->rx_frm_cnt;
 	info->tx_packets = 0;
@@ -3090,6 +3094,13 @@ static void wlan_hdd_fill_summary_stats(tCsrSummaryStatsInfo *stats,
 		info->tx_packets += stats->tx_frm_cnt[i];
 		info->tx_retries += stats->multiple_retry_cnt[i];
 		info->tx_failed += stats->fail_cnt[i];
+	}
+
+	if (cds_dp_get_vdev_stats(vdev_id, &dp_stats)) {
+		orig_cnt = info->tx_retries;
+		info->tx_retries = dp_stats.tx_retries;
+		hdd_debug("vdev %d tx retries adjust from %d to %d",
+			  vdev_id, orig_cnt, info->tx_retries);
 	}
 
 	info->filled |= HDD_INFO_TX_PACKETS |
@@ -3120,7 +3131,9 @@ wlan_hdd_get_sap_stats(struct hdd_adapter *adapter, struct station_info *info)
 		return ret;
 	}
 
-	wlan_hdd_fill_summary_stats(&adapter->hdd_stats.summary_stat, info);
+	wlan_hdd_fill_summary_stats(&adapter->hdd_stats.summary_stat,
+				    info,
+				    adapter->vdev_id);
 
 	return 0;
 }
@@ -4599,7 +4612,9 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 				       rx_nss, rx_dcm, rx_gi);
 	}
 
-	wlan_hdd_fill_summary_stats(&adapter->hdd_stats.summary_stat, sinfo);
+	wlan_hdd_fill_summary_stats(&adapter->hdd_stats.summary_stat,
+				    sinfo,
+				    adapter->vdev_id);
 	sinfo->tx_bytes = adapter->stats.tx_bytes;
 	sinfo->rx_bytes = adapter->stats.rx_bytes;
 	sinfo->rx_packets = adapter->stats.rx_packets;

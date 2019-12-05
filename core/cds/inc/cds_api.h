@@ -73,6 +73,15 @@ enum cds_driver_state {
 	CDS_DRIVER_STATE_MODULE_STOPPING        = BIT(6),
 };
 
+/**
+ * struce cds_vdev_dp_stats - vdev stats populated from DP
+ * @tx_retries: packet number of successfully transmitted after more
+ *              than one retransmission attempt
+ */
+struct cds_vdev_dp_stats {
+	uint32_t tx_retries;
+};
+
 #define __CDS_IS_DRIVER_STATE(_state, _mask) (((_state) & (_mask)) == (_mask))
 
 void cds_set_driver_state(enum cds_driver_state);
@@ -501,6 +510,23 @@ uint32_t cds_get_arp_stats_gw_ip(void *context);
 uint32_t cds_get_connectivity_stats_pkt_bitmap(void *context);
 void cds_incr_arp_stats_tx_tgt_delivered(void);
 void cds_incr_arp_stats_tx_tgt_acked(void);
+
+#ifdef FEATURE_ALIGN_STATS_FROM_DP
+/**
+ * cds_dp_get_vdev_stats() - get vdev stats from DP
+ * @vdev_id: vdev id
+ * @stats: structure of counters which CP is interested in
+ *
+ * Return: if get vdev stats from DP success, return true otherwise false
+ */
+bool cds_dp_get_vdev_stats(uint8_t vdev_id, struct cds_vdev_dp_stats *stats);
+#else
+static inline bool
+cds_dp_get_vdev_stats(uint8_t vdev_id, struct cds_vdev_dp_stats *stats)
+{
+	return false;
+}
+#endif
 
 /**
  * cds_smmu_mem_map_setup() - Check SMMU S1 stage enable
