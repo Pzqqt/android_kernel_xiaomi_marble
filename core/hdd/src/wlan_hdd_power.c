@@ -1806,8 +1806,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam() ||
 	    QDF_GLOBAL_MONITOR_MODE == hdd_get_conparam()) {
-		hdd_err("Command not allowed in mode %d",
-			hdd_get_conparam());
+		hdd_err_rl("Command not allowed in mode %d",
+			   hdd_get_conparam());
 		return -EINVAL;
 	}
 
