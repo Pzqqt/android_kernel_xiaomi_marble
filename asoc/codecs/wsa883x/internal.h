@@ -55,6 +55,20 @@ enum {
 	SWR_VISENSE_PORT,
 };
 
+enum {
+	BOLERO_WSA_EVT_TX_CH_HOLD_CLEAR = 1,
+	BOLERO_WSA_EVT_PA_OFF_PRE_SSR,
+	BOLERO_WSA_EVT_SSR_DOWN,
+	BOLERO_WSA_EVT_SSR_UP,
+};
+
+struct wsa_ctrl_platform_data {
+	void *handle,
+	int (*update_wsa_event)(void *handle, u16 event, u32 data);
+	int (*register_notifier)(void *handle, struct notifer_block *nblock,
+				bool enable);
+};
+
 struct swr_port {
 	u8 port_id;
 	u8 ch_mask;
@@ -96,6 +110,12 @@ struct wsa883x_priv {
 	struct dentry *debugfs_reg_dump;
 	unsigned int read_data;
 #endif
+	struct device_node *parent_np;
+	struct platform_device *parent_dev;
+	struct notifier_block parent_nblock;
+	void *handle;
+	int (*register_notifier)(void *handle,
+				struct notifier_block *nblock, bool enable);
 };
 
 static int32_t wsa883x_resource_acquire(struct snd_soc_component *component,
