@@ -47,9 +47,6 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <net/cfg80211.h>
-#ifdef CLD_PM_QOS
-#include <linux/pm_qos.h>
-#endif
 #include <linux/ieee80211.h>
 #include <qdf_delayed_work.h>
 #include <qdf_list.h>
@@ -110,6 +107,11 @@
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 #include "qdf_periodic_work.h"
+#endif
+
+#if defined(CLD_PM_QOS) && \
+	(LINUX_VERSION_CODE <= KERNEL_VERSION(4, 19, 0))
+#include <linux/pm_qos.h>
 #endif
 
 #include "wlan_hdd_sta_info.h"
@@ -1869,7 +1871,8 @@ struct hdd_context {
 
 	qdf_time_t runtime_resume_start_time_stamp;
 	qdf_time_t runtime_suspend_done_time_stamp;
-#ifdef CLD_PM_QOS
+#if defined(CLD_PM_QOS) && \
+	(LINUX_VERSION_CODE <= KERNEL_VERSION(4, 19, 0))
 	struct pm_qos_request pm_qos_req;
 #endif
 };
