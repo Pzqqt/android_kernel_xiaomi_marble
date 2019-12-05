@@ -1939,6 +1939,46 @@ static void hdd_extract_fw_version_info(struct hdd_context *hdd_ctx)
 			HDD_FW_VER_REL_ID(hdd_ctx->target_fw_vers_ext);
 }
 
+#if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
+		      (KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
+static void
+hdd_update_wiphy_he_caps_6ghz(struct hdd_context *hdd_ctx)
+{
+	struct ieee80211_supported_band *band_6g =
+		   hdd_ctx->wiphy->bands[HDD_NL80211_BAND_6GHZ];
+	uint8_t *phy_info =
+		    hdd_ctx->iftype_data_6g->he_cap.he_cap_elem.phy_cap_info;
+	uint8_t max_fw_bw = sme_get_vht_ch_width();
+
+	if (!band_6g || !phy_info) {
+		hdd_debug("6ghz not supported in wiphy");
+		return;
+	}
+
+	hdd_ctx->iftype_data_6g->types_mask =
+		(BIT(NL80211_IFTYPE_STATION) | BIT(NL80211_IFTYPE_AP));
+	hdd_ctx->iftype_data_6g->he_cap.has_he = true;
+	band_6g->n_iftype_data = 1;
+
+	if (max_fw_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ)
+		phy_info[0] |=
+		      IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_80MHZ_IN_5G;
+	if (max_fw_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
+		phy_info[0] |=
+			IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_160MHZ_IN_5G;
+	if (max_fw_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ)
+		phy_info[0] |=
+		     IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G;
+
+	band_6g->iftype_data = hdd_ctx->iftype_data_6g;
+}
+#else
+static inline void
+hdd_update_wiphy_he_caps_6ghz(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 #if defined(WLAN_FEATURE_11AX) && \
 	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)
@@ -1969,6 +2009,7 @@ static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)
 		band_5g->n_iftype_data = 1;
 		band_5g->iftype_data = hdd_ctx->iftype_data_5g;
 	}
+	hdd_update_wiphy_he_caps_6ghz(hdd_ctx);
 }
 #else
 static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)

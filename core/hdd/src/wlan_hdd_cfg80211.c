@@ -395,19 +395,6 @@ static struct ieee80211_supported_band wlan_hdd_band_6_ghz = {
 	.band = HDD_NL80211_BAND_6GHZ,
 	.bitrates = a_mode_rates,
 	.n_bitrates = a_mode_rates_size,
-	.ht_cap.ht_supported = 1,
-	.ht_cap.cap = IEEE80211_HT_CAP_SGI_20
-		      | IEEE80211_HT_CAP_GRN_FLD
-		      | IEEE80211_HT_CAP_DSSSCCK40
-		      | IEEE80211_HT_CAP_LSIG_TXOP_PROT
-		      | IEEE80211_HT_CAP_SGI_40
-		      | IEEE80211_HT_CAP_SUP_WIDTH_20_40,
-	.ht_cap.ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K,
-	.ht_cap.ampdu_density = IEEE80211_HT_MPDU_DENSITY_16,
-	.ht_cap.mcs.rx_mask = {0xff, 0, 0, 0, 0, 0, 0, 0, 0, 0,},
-	.ht_cap.mcs.rx_highest = cpu_to_le16(72),
-	.ht_cap.mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED,
-	.vht_cap.vht_supported = 1,
 };
 
 #define HDD_SET_6GHZCHAN(ch, freq, chan, flag)   {     \
@@ -14969,6 +14956,27 @@ wlan_hdd_populate_srd_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
 
 #endif
 
+#if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
+	   (KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
+static QDF_STATUS
+wlan_hdd_iftype_data_alloc_6ghz(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->iftype_data_6g =
+			qdf_mem_malloc(sizeof(*hdd_ctx->iftype_data_6g));
+
+	if (!hdd_ctx->iftype_data_6g)
+		return QDF_STATUS_E_NOMEM;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+wlan_hdd_iftype_data_alloc_6ghz(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 static QDF_STATUS
 wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
@@ -14990,6 +14998,15 @@ wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	if (QDF_IS_STATUS_ERROR(wlan_hdd_iftype_data_alloc_6ghz(hdd_ctx))) {
+		hdd_err("mem alloc failed for 6g iftype data");
+		qdf_mem_free(hdd_ctx->iftype_data_5g);
+		qdf_mem_free(hdd_ctx->iftype_data_2g);
+		hdd_ctx->iftype_data_2g = NULL;
+		hdd_ctx->iftype_data_5g = NULL;
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 #else
@@ -15000,10 +15017,26 @@ wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
+	   (KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
+static void
+wlan_hdd_iftype_data_mem_free_6ghz(struct hdd_context *hdd_ctx)
+{
+	qdf_mem_free(hdd_ctx->iftype_data_6g);
+	hdd_ctx->iftype_data_6g = NULL;
+}
+#else
+static inline void
+wlan_hdd_iftype_data_mem_free_6ghz(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 static void
 wlan_hdd_iftype_data_mem_free(struct hdd_context *hdd_ctx)
 {
+	wlan_hdd_iftype_data_mem_free_6ghz(hdd_ctx);
 	qdf_mem_free(hdd_ctx->iftype_data_5g);
 	qdf_mem_free(hdd_ctx->iftype_data_2g);
 	hdd_ctx->iftype_data_5g = NULL;

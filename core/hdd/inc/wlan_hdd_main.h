@@ -1603,6 +1603,11 @@ struct hdd_context {
 	struct ieee80211_sband_iftype_data *iftype_data_5g;
 #endif
 
+#if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
+		(KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
+
+	struct ieee80211_sband_iftype_data *iftype_data_6g;
+#endif
 	/* Completion  variable to indicate Mc Thread Suspended */
 	struct completion mc_sus_event_var;
 
