@@ -348,6 +348,7 @@ static struct msm_gem_vma *add_vma(struct drm_gem_object *obj,
 		return ERR_PTR(-ENOMEM);
 
 	vma->aspace = aspace;
+	msm_obj->aspace = aspace;
 
 	list_add_tail(&vma->list, &msm_obj->vmas);
 
