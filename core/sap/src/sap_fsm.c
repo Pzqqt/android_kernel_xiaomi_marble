@@ -2497,7 +2497,9 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 	tSapDfsInfo *sap_dfs_info;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint8_t is_dfs = false;
-	uint8_t sap_chan;
+	uint32_t sap_chan_freq;
+	uint32_t ch_cfreq1 = 0;
+	enum reg_wifi_band band;
 
 	if (msg == eSAP_MAC_START_BSS_SUCCESS) {
 		/*
@@ -2514,13 +2516,18 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 		qdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
 				eSAP_START_BSS_EVENT,
 				(void *) eSAP_STATUS_SUCCESS);
-		sap_chan = wlan_reg_freq_to_chan(mac_ctx->pdev,
-						 sap_ctx->chan_freq);
+		sap_chan_freq = sap_ctx->chan_freq;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("ap_ctx->ch_params.ch_width %d, channel %d"),
 			     sap_ctx->ch_params.ch_width,
-			     wlan_reg_get_channel_state(mac_ctx->pdev,
-							sap_chan));
+			     wlan_reg_get_channel_state_for_freq(
+					mac_ctx->pdev, sap_chan_freq));
+		band = wlan_reg_freq_to_band(sap_ctx->chan_freq);
+		if (sap_ctx->ch_params.center_freq_seg1)
+			ch_cfreq1 = wlan_reg_chan_band_to_freq(
+					mac_ctx->pdev,
+					sap_ctx->ch_params.center_freq_seg1,
+					BIT(band));
 
 		/*
 		 * The upper layers have been informed that AP is up and
@@ -2530,20 +2537,24 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 		if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
 			is_dfs = true;
 		} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
-			if (wlan_reg_get_channel_state(mac_ctx->pdev,
-						       sap_chan) ==
+			if (wlan_reg_get_channel_state_for_freq(
+							mac_ctx->pdev,
+							sap_chan_freq) ==
 			    CHANNEL_STATE_DFS ||
-			    wlan_reg_get_channel_state(mac_ctx->pdev,
-				    sap_ctx->ch_params.center_freq_seg1 -
-				SIR_80MHZ_START_CENTER_CH_DIFF) ==
+			    wlan_reg_get_channel_state_for_freq(
+							mac_ctx->pdev,
+							ch_cfreq1) ==
 					CHANNEL_STATE_DFS)
 				is_dfs = true;
 		} else {
-			if (wlan_reg_get_channel_state(mac_ctx->pdev,
-						       sap_chan) ==
+			if (wlan_reg_get_channel_state_for_freq(
+							mac_ctx->pdev,
+							sap_chan_freq) ==
 			    CHANNEL_STATE_DFS)
 				is_dfs = true;
 		}
+		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ctx->chan_freq))
+			is_dfs = false;
 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("is_dfs %d"), is_dfs);

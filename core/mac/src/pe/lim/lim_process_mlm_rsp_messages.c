@@ -153,8 +153,9 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *msg_buf)
 	struct pe_session *pe_session = NULL;
 	tLimMlmStartCnf *pLimMlmStartCnf;
 	uint8_t smesessionId;
-	uint8_t channelId;
+	uint32_t chan_freq, ch_cfreq1 = 0;
 	uint8_t send_bcon_ind = false;
+	enum reg_wifi_band band;
 
 	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
@@ -207,8 +208,6 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *msg_buf)
 				pe_session, smesessionId);
 	if (pe_session &&
 	    (((tLimMlmStartCnf *)msg_buf)->resultCode == eSIR_SME_SUCCESS)) {
-		channelId = wlan_reg_freq_to_chan(mac->pdev,
-				pe_session->pLimStartBssReq->oper_ch_freq);
 		lim_ndi_mlme_vdev_up_transition(pe_session);
 
 		/* We should start beacon transmission only if the channel
@@ -216,24 +215,36 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *msg_buf)
 		 * availability check is done. The PE will receive an explicit
 		 * request from upper layers to start the beacon transmission
 		 */
+		chan_freq = pe_session->curr_op_freq;
+		band = wlan_reg_freq_to_band(pe_session->curr_op_freq);
+		if (pe_session->ch_center_freq_seg1)
+			ch_cfreq1 = wlan_reg_chan_band_to_freq(
+					mac->pdev,
+					pe_session->ch_center_freq_seg1,
+					BIT(band));
+
 		if (!(LIM_IS_IBSS_ROLE(pe_session) ||
 			(LIM_IS_AP_ROLE(pe_session))))
 				return;
 		if (pe_session->ch_width == CH_WIDTH_160MHZ) {
 			send_bcon_ind = false;
 		} else if (pe_session->ch_width == CH_WIDTH_80P80MHZ) {
-			if ((wlan_reg_get_channel_state(mac->pdev, channelId)
-						!= CHANNEL_STATE_DFS) &&
-			    (wlan_reg_get_channel_state(mac->pdev,
-					pe_session->ch_center_freq_seg1 -
-					SIR_80MHZ_START_CENTER_CH_DIFF) !=
-						CHANNEL_STATE_DFS))
+			if ((wlan_reg_get_channel_state_for_freq(
+					mac->pdev, chan_freq) !=
+					CHANNEL_STATE_DFS) &&
+			    (wlan_reg_get_channel_state_for_freq(
+					mac->pdev, ch_cfreq1) !=
+					CHANNEL_STATE_DFS))
 				send_bcon_ind = true;
 		} else {
-			if (wlan_reg_get_channel_state(mac->pdev, channelId)
+			if (wlan_reg_get_channel_state_for_freq(mac->pdev,
+								chan_freq)
 					!= CHANNEL_STATE_DFS)
 				send_bcon_ind = true;
 		}
+		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(pe_session->curr_op_freq))
+			send_bcon_ind = true;
+
 		if (send_bcon_ind) {
 			/* Configure beacon and send beacons to HAL */
 			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
