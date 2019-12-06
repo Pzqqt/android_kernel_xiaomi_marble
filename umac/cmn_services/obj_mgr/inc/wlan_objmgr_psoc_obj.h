@@ -136,6 +136,8 @@
 #define WLAN_SOC_CEXT_RX_FSE_SUPPORT   0x00040000
 	/* Dynamic HW Mode Switch Support */
 #define WLAN_SOC_CEXT_DYNAMIC_HW_MODE  0x00080000
+	/* Restricted 80+80 MHz support */
+#define WLAN_SOC_RESTRICTED_80P80_SUPPORT 0x00100000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */
