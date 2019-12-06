@@ -131,6 +131,8 @@ struct nan_psoc_priv_obj {
  * @ndi_delete_rsp_status: status for ndi_delete rsp
  * @primary_peer_mac: Primary NDP Peer mac address for the vdev
  * @disable_context: Disable all NDP's operation context
+ * @ndp_init_done: Flag to indicate NDP initialization complete after first peer
+ *		   connection.
  */
 struct nan_vdev_priv_obj {
 	qdf_spinlock_t lock;
@@ -142,6 +144,7 @@ struct nan_vdev_priv_obj {
 	uint32_t ndi_delete_rsp_status;
 	struct qdf_mac_addr primary_peer_mac;
 	void *disable_context;
+	bool ndp_init_done;
 };
 
 /**
