@@ -10099,12 +10099,6 @@ QDF_STATUS csr_roam_lfr2_issue_connect(struct mac_context *mac,
 				      NULL);
 		csr_roam_copy_profile(mac, cur_roam_profile,
 				      session->pCurRoamProfile);
-		/*
-		 * After ensuring that the roam profile is in the scan
-		 * result list, and session->pCurRoamProfile is saved,
-		 * dequeue the command from the active list.
-		 */
-		csr_dequeue_command(mac);
 		/* make sure to put it at the head of the cmd queue */
 		status = csr_roam_issue_connect(mac, session_id,
 				cur_roam_profile, hbss_list,
@@ -10176,6 +10170,7 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 	struct sCsrNeighborRoamBSSInfo *bss_node;
 	QDF_STATUS status;
 
+	csr_dequeue_command(mac);
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (!roam_info)
 		return;
