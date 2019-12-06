@@ -106,7 +106,7 @@ void qdf_busy_wait(uint32_t us_interval)
 }
 qdf_export_symbol(qdf_busy_wait);
 
-#ifdef MSM_PLATFORM
+#ifdef PF_WAKE_UP_IDLE
 void qdf_set_wake_up_idle(bool idle)
 {
 	set_wake_up_idle(idle);
@@ -115,7 +115,7 @@ void qdf_set_wake_up_idle(bool idle)
 void qdf_set_wake_up_idle(bool idle)
 {
 }
-#endif /* MSM_PLATFORM */
+#endif /* PF_WAKE_UP_IDLE */
 
 qdf_export_symbol(qdf_set_wake_up_idle);
 
