@@ -32,6 +32,7 @@ static char clk_src_name[MAX_CLK][BOLERO_CLK_NAME_LENGTH] = {
 struct bolero_clk_rsc {
 	struct device *dev;
 	struct mutex rsc_clk_lock;
+	struct mutex fs_gen_lock;
 	struct clk *clk[MAX_CLK];
 	int clk_cnt[MAX_CLK];
 	int reg_seq_en_cnt;
@@ -422,6 +423,7 @@ void bolero_clk_rsc_fs_gen_request(struct device *dev, bool enable)
 		pr_err("%s: regmap is null\n", __func__);
 		return;
 	}
+	mutex_lock(&priv->fs_gen_lock);
 	if (enable) {
 		if (priv->reg_seq_en_cnt++ == 0) {
 			for (i = 0; i < (priv->num_fs_reg * 2); i += 2) {
@@ -439,6 +441,7 @@ void bolero_clk_rsc_fs_gen_request(struct device *dev, bool enable)
 			dev_err_ratelimited(priv->dev, "%s: req_seq_cnt: %d is already disabled\n",
 				__func__, priv->reg_seq_en_cnt);
 			priv->reg_seq_en_cnt = 0;
+			mutex_unlock(&priv->fs_gen_lock);
 			return;
 		}
 		if (--priv->reg_seq_en_cnt == 0) {
@@ -451,6 +454,7 @@ void bolero_clk_rsc_fs_gen_request(struct device *dev, bool enable)
 			}
 		}
 	}
+	mutex_unlock(&priv->fs_gen_lock);
 }
 EXPORT_SYMBOL(bolero_clk_rsc_fs_gen_request);
 
@@ -665,6 +669,7 @@ static int bolero_clk_rsc_probe(struct platform_device *pdev)
 	priv->dev = &pdev->dev;
 	priv->dev_up = true;
 	mutex_init(&priv->rsc_clk_lock);
+	mutex_init(&priv->fs_gen_lock);
 	dev_set_drvdata(&pdev->dev, priv);
 
 err:
@@ -680,6 +685,7 @@ static int bolero_clk_rsc_remove(struct platform_device *pdev)
 	if (!priv)
 		return -EINVAL;
 	mutex_destroy(&priv->rsc_clk_lock);
+	mutex_destroy(&priv->fs_gen_lock);
 
 	return 0;
 }
