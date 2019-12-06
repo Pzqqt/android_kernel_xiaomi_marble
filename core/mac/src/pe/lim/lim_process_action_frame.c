@@ -1682,16 +1682,24 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 			addba_req->addba_param_set.buff_size,
 			addba_req->ba_start_seq_ctrl.ssn);
 
-	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_ADDBA_REQ);
-
 	if (QDF_STATUS_SUCCESS == qdf_status) {
-		lim_send_addba_response_frame(mac_ctx, mac_hdr->sa,
-			addba_req->addba_param_set.tid, session,
+		qdf_status = lim_send_addba_response_frame(mac_ctx,
+			mac_hdr->sa,
+			addba_req->addba_param_set.tid,
+			session,
 			addba_req->addba_extn_element.present,
 			addba_req->addba_param_set.amsdu_supp);
+		if (qdf_status != QDF_STATUS_SUCCESS) {
+			pe_err("Failed to send addba response frame");
+			cdp_addba_resp_tx_completion(soc, peer,
+				addba_req->addba_param_set.tid,
+				WMI_MGMT_TX_COMP_TYPE_DISCARD);
+		}
 	} else {
-		pe_err("Failed to process addba request");
+		pe_err_rl("Failed to process addba request");
 	}
+
+	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_ADDBA_REQ);
 
 error:
 	qdf_mem_free(addba_req);
