@@ -85,7 +85,6 @@
 #define MAX_VDEV_CNT 51
 #endif
 
-#define MAX_LINK_DESC_BANKS 8
 #define MAX_TXDESC_POOLS 4
 #define MAX_RXDESC_POOLS 4
 #define MAX_REO_DEST_RINGS 4
@@ -961,14 +960,8 @@ struct dp_soc {
 	/* Device ID coming from Bus sub-system */
 	uint32_t device_id;
 
-	/* Link descriptor memory banks */
-	struct {
-		void *base_vaddr_unaligned;
-		void *base_vaddr;
-		qdf_dma_addr_t base_paddr_unaligned;
-		qdf_dma_addr_t base_paddr;
-		uint32_t size;
-	} link_desc_banks[MAX_LINK_DESC_BANKS];
+	/* Link descriptor pages */
+	struct qdf_mem_multi_page_t link_desc_pages;
 
 	/* Link descriptor Idle list for HW internal use (SRNG mode) */
 	struct dp_srng wbm_idle_link_ring;
@@ -1280,19 +1273,35 @@ struct dp_ipa_resources {
 #define DP_NAC_MAX_CLIENT  24
 
 /*
- * Macros to setup link descriptor cookies - for link descriptors, we just
- * need first 3 bits to store bank ID. The remaining bytes will be used set a
- * unique ID, which will be useful in debugging
+ * 24 bits cookie size
+ * 10 bits page id 0 ~ 1023 for MCL
+ * 3 bits page id 0 ~ 7 for WIN
+ * WBM Idle List Desc size = 128,
+ * Num descs per page = 4096/128 = 32 for MCL
+ * Num descs per page = 2MB/128 = 16384 for WIN
  */
-#define LINK_DESC_BANK_ID_MASK 0x7
-#define LINK_DESC_ID_SHIFT 3
+/*
+ * Macros to setup link descriptor cookies - for link descriptors, we just
+ * need first 3 bits to store bank/page ID for WIN. The
+ * remaining bytes will be used to set a unique ID, which will
+ * be useful in debugging
+ */
+#ifdef MAX_ALLOC_PAGE_SIZE
+#define LINK_DESC_PAGE_ID_MASK  0x007FE0
+#define LINK_DESC_ID_SHIFT      5
+#define LINK_DESC_COOKIE(_desc_id, _page_id) \
+	((((_page_id) + LINK_DESC_ID_START) << LINK_DESC_ID_SHIFT) | (_desc_id))
+#define LINK_DESC_COOKIE_PAGE_ID(_cookie) \
+	(((_cookie) & LINK_DESC_PAGE_ID_MASK) >> LINK_DESC_ID_SHIFT)
+#else
+#define LINK_DESC_PAGE_ID_MASK  0x7
+#define LINK_DESC_ID_SHIFT      3
+#define LINK_DESC_COOKIE(_desc_id, _page_id) \
+	((((_desc_id) + LINK_DESC_ID_START) << LINK_DESC_ID_SHIFT) | (_page_id))
+#define LINK_DESC_COOKIE_PAGE_ID(_cookie) \
+	((_cookie) & LINK_DESC_PAGE_ID_MASK)
+#endif
 #define LINK_DESC_ID_START 0x8000
-
-#define LINK_DESC_COOKIE(_desc_id, _bank_id) \
-	((((_desc_id) + LINK_DESC_ID_START) << LINK_DESC_ID_SHIFT) | (_bank_id))
-
-#define LINK_DESC_COOKIE_BANK_ID(_cookie) \
-	((_cookie) & LINK_DESC_BANK_ID_MASK)
 
 /* same as ieee80211_nac_param */
 enum dp_nac_param_cmd {

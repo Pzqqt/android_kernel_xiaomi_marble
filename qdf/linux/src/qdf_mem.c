@@ -1343,10 +1343,13 @@ void qdf_mem_multi_pages_alloc_debug(qdf_device_t osdev,
 	void **cacheable_pages = NULL;
 	uint16_t i;
 
-	pages->num_element_per_page = PAGE_SIZE / element_size;
+	if (!pages->page_size)
+		pages->page_size = qdf_page_size;
+
+	pages->num_element_per_page = pages->page_size / element_size;
 	if (!pages->num_element_per_page) {
 		qdf_print("Invalid page %d or element size %d",
-			  (int)PAGE_SIZE, (int)element_size);
+			  (int)pages->page_size, (int)element_size);
 		goto out_fail;
 	}
 
@@ -1365,7 +1368,7 @@ void qdf_mem_multi_pages_alloc_debug(qdf_device_t osdev,
 		cacheable_pages = pages->cacheable_pages;
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
 			cacheable_pages[page_idx] = qdf_mem_malloc_debug(
-					PAGE_SIZE, func, line, caller, 0);
+				pages->page_size, func, line, caller, 0);
 			if (!cacheable_pages[page_idx])
 				goto page_alloc_fail;
 		}
@@ -1381,7 +1384,7 @@ void qdf_mem_multi_pages_alloc_debug(qdf_device_t osdev,
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
 			dma_pages->page_v_addr_start =
 				qdf_mem_alloc_consistent_debug(
-					osdev, osdev->dev, PAGE_SIZE,
+					osdev, osdev->dev, pages->page_size,
 					&dma_pages->page_p_addr,
 					func, line, caller);
 			if (!dma_pages->page_v_addr_start) {
@@ -1390,7 +1393,7 @@ void qdf_mem_multi_pages_alloc_debug(qdf_device_t osdev,
 				goto page_alloc_fail;
 			}
 			dma_pages->page_v_addr_end =
-				dma_pages->page_v_addr_start + PAGE_SIZE;
+				dma_pages->page_v_addr_start + pages->page_size;
 			dma_pages++;
 		}
 		pages->cacheable_pages = NULL;
@@ -1408,7 +1411,7 @@ page_alloc_fail:
 		for (i = 0; i < page_idx; i++) {
 			qdf_mem_free_consistent_debug(
 				osdev, osdev->dev,
-				PAGE_SIZE, dma_pages->page_v_addr_start,
+				pages->page_size, dma_pages->page_v_addr_start,
 				dma_pages->page_p_addr, memctxt, func, line);
 			dma_pages++;
 		}
@@ -1444,6 +1447,9 @@ void qdf_mem_multi_pages_free_debug(qdf_device_t osdev,
 	unsigned int page_idx;
 	struct qdf_mem_dma_page_t *dma_pages;
 
+	if (!pages->page_size)
+		pages->page_size = qdf_page_size;
+
 	if (cacheable) {
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++)
 			qdf_mem_free_debug(pages->cacheable_pages[page_idx],
@@ -1453,7 +1459,7 @@ void qdf_mem_multi_pages_free_debug(qdf_device_t osdev,
 		dma_pages = pages->dma_pages;
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
 			qdf_mem_free_consistent_debug(
-				osdev, osdev->dev, PAGE_SIZE,
+				osdev, osdev->dev, pages->page_size,
 				dma_pages->page_v_addr_start,
 				dma_pages->page_p_addr, memctxt, func, line);
 			dma_pages++;
@@ -1520,10 +1526,13 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 	void **cacheable_pages = NULL;
 	uint16_t i;
 
-	pages->num_element_per_page = PAGE_SIZE / element_size;
+	if (!pages->page_size)
+		pages->page_size = qdf_page_size;
+
+	pages->num_element_per_page = pages->page_size / element_size;
 	if (!pages->num_element_per_page) {
 		qdf_print("Invalid page %d or element size %d",
-			  (int)PAGE_SIZE, (int)element_size);
+			  (int)pages->page_size, (int)element_size);
 		goto out_fail;
 	}
 
@@ -1540,7 +1549,8 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 
 		cacheable_pages = pages->cacheable_pages;
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
-			cacheable_pages[page_idx] = qdf_mem_malloc(PAGE_SIZE);
+			cacheable_pages[page_idx] =
+				qdf_mem_malloc(pages->page_size);
 			if (!cacheable_pages[page_idx])
 				goto page_alloc_fail;
 		}
@@ -1555,7 +1565,7 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
 			dma_pages->page_v_addr_start =
 				qdf_mem_alloc_consistent(osdev, osdev->dev,
-					 PAGE_SIZE,
+					 pages->page_size,
 					&dma_pages->page_p_addr);
 			if (!dma_pages->page_v_addr_start) {
 				qdf_print("dmaable page alloc fail pi %d",
@@ -1563,7 +1573,7 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 				goto page_alloc_fail;
 			}
 			dma_pages->page_v_addr_end =
-				dma_pages->page_v_addr_start + PAGE_SIZE;
+				dma_pages->page_v_addr_start + pages->page_size;
 			dma_pages++;
 		}
 		pages->cacheable_pages = NULL;
@@ -1578,7 +1588,8 @@ page_alloc_fail:
 	} else {
 		dma_pages = pages->dma_pages;
 		for (i = 0; i < page_idx; i++) {
-			qdf_mem_free_consistent(osdev, osdev->dev, PAGE_SIZE,
+			qdf_mem_free_consistent(
+				osdev, osdev->dev, pages->page_size,
 				dma_pages->page_v_addr_start,
 				dma_pages->page_p_addr, memctxt);
 			dma_pages++;
@@ -1612,6 +1623,9 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 	unsigned int page_idx;
 	struct qdf_mem_dma_page_t *dma_pages;
 
+	if (!pages->page_size)
+		pages->page_size = qdf_page_size;
+
 	if (cacheable) {
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++)
 			qdf_mem_free(pages->cacheable_pages[page_idx]);
@@ -1619,7 +1633,8 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 	} else {
 		dma_pages = pages->dma_pages;
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
-			qdf_mem_free_consistent(osdev, osdev->dev, PAGE_SIZE,
+			qdf_mem_free_consistent(
+				osdev, osdev->dev, pages->page_size,
 				dma_pages->page_v_addr_start,
 				dma_pages->page_p_addr, memctxt);
 			dma_pages++;
