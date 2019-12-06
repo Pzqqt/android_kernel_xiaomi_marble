@@ -5585,12 +5585,16 @@ typedef struct {
  * @status: WMI_MGMT_TX_COMP_STATUS_TYPE
  * @pdev_id: pdev_id
  * @ppdu_id: ppdu_id
+ * @retries_count: retries count
+ * @tx_tsf: 64 bits completion timestamp
  */
 typedef struct {
 	uint32_t	desc_id;
 	uint32_t	status;
 	uint32_t	pdev_id;
 	uint32_t        ppdu_id;
+	uint32_t	retries_count;
+	uint64_t	tx_tsf;
 } wmi_host_mgmt_tx_compl_event;
 
 /**

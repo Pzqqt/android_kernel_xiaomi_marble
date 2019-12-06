@@ -1502,6 +1502,20 @@ struct cdp_tx_indication_info {
 };
 
 /**
+ * struct cdp_tx_mgmt_comp_info - Tx mgmt comp info
+ * @ppdu_id: ppdu_id
+ * @is_sgen_pkt: payload recevied from wmi or htt path
+ * @retries_count: retries count
+ * @tx_tsf: 64 bit timestamp
+ */
+struct cdp_tx_mgmt_comp_info {
+	uint32_t ppdu_id;
+	bool is_sgen_pkt;
+	uint16_t retries_count;
+	uint64_t tx_tsf;
+};
+
+/**
  * struct cdp_tx_completion_ppdu - Tx PPDU completion information
  * @completion_status: completion status - OK/Filter/Abort/Timeout
  * @ppdu_id: PPDU Id

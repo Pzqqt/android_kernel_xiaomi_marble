@@ -2772,6 +2772,8 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 {
 	uint32_t *nbuf_ptr;
 	uint8_t trim_size;
+	size_t head_size;
+	struct cdp_tx_mgmt_comp_info *ptr_mgmt_comp_info;
 
 	if ((!pdev->tx_sniffer_enable) && (!pdev->mcopy_mode) &&
 	    (!pdev->bpr_enable) && (!pdev->tx_capture_enabled))
@@ -2787,9 +2789,24 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 	qdf_nbuf_trim_tail(tag_buf, qdf_nbuf_len(tag_buf) -
 			    pdev->mgmtctrl_frm_info.mgmt_buf_len);
 
-	nbuf_ptr = (uint32_t *)qdf_nbuf_push_head(
-				tag_buf, sizeof(ppdu_id));
-	*nbuf_ptr = ppdu_id;
+	if (pdev->tx_capture_enabled) {
+		head_size = sizeof(struct cdp_tx_mgmt_comp_info);
+		if (qdf_unlikely(qdf_nbuf_headroom(tag_buf) < head_size)) {
+			qdf_err("Fail to get headroom h_sz %d h_avail %d\n",
+				head_size, qdf_nbuf_headroom(tag_buf));
+			qdf_assert_always(0);
+			return QDF_STATUS_E_NOMEM;
+		}
+		ptr_mgmt_comp_info = (struct cdp_tx_mgmt_comp_info *)
+					qdf_nbuf_push_head(tag_buf, head_size);
+		qdf_assert_always(ptr_mgmt_comp_info);
+		ptr_mgmt_comp_info->ppdu_id = ppdu_id;
+		ptr_mgmt_comp_info->is_sgen_pkt = true;
+	} else {
+		head_size = sizeof(ppdu_id);
+		nbuf_ptr = (uint32_t *)qdf_nbuf_push_head(tag_buf, head_size);
+		*nbuf_ptr = ppdu_id;
+	}
 
 	if (pdev->bpr_enable) {
 		dp_wdi_event_handler(WDI_EVENT_TX_BEACON, pdev->soc,
