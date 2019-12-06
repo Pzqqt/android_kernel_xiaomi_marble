@@ -213,7 +213,7 @@ static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported,
 static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported,
 						 uint8_t num_vdevs)
 {
-	return (8 * no_of_peers_supported + num_vdevs + 2);
+	return 2 * (no_of_peers_supported + num_vdevs + 2);
 }
 #endif
 
