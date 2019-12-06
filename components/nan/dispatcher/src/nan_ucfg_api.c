@@ -966,3 +966,69 @@ bool ucfg_nan_is_enable_disable_in_progress(struct wlan_objmgr_psoc *psoc)
 
 	return false;
 }
+
+#ifdef NDP_SAP_CONCURRENCY_ENABLE
+/**
+ * is_sap_ndp_concurrency_allowed() - Is SAP+NDP allowed
+ *
+ * Return: True if the NDP_SAP_CONCURRENCY_ENABLE feature define
+ *	   is enabled, false otherwise.
+ */
+static inline bool is_sap_ndp_concurrency_allowed(void)
+{
+	return true;
+}
+#else
+static inline bool is_sap_ndp_concurrency_allowed(void)
+{
+	return false;
+}
+#endif
+
+bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
+					     struct wlan_objmgr_vdev *vdev)
+{
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t ndi_cnt, sta_cnt, id;
+
+	sta_cnt = policy_mgr_mode_specific_connection_count(psoc,
+							    PM_STA_MODE, NULL);
+	/* Allow if STA is not in connected state */
+	if (!sta_cnt)
+		return true;
+
+	/* Reject if STA+STA is present */
+	if (sta_cnt > 1) {
+		nan_err("STA+STA+NDP concurrency is not allowed");
+		return false;
+	}
+
+	/*
+	 * SAP+NDP concurrency is already validated in hdd_is_ndp_allowed().
+	 * If SAP+NDP concurrency is enabled, return true from here to avoid
+	 * failure.
+	 */
+	if (is_sap_ndp_concurrency_allowed())
+		return true;
+
+	ndi_cnt = policy_mgr_get_mode_specific_conn_info(psoc,
+							 freq_list,
+							 vdev_id_list,
+							 PM_NDI_MODE);
+
+	/* Allow if no other NDP peers are present on the NDIs */
+	if (!ndi_cnt)
+		return true;
+
+	/*
+	 * Allow NDP creation if the current NDP request is on
+	 * the NDI which already has an NDP by checking the vdev id of
+	 * the NDIs
+	 */
+	for (id = 0; id < ndi_cnt; id++)
+		if (wlan_vdev_get_id(vdev) == vdev_id_list[id])
+			return true;
+
+	return false;
+}

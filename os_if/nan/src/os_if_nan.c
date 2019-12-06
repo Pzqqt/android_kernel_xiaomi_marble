@@ -624,6 +624,12 @@ static int __os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 		goto initiator_req_failed;
 	}
 
+	if (!ucfg_nan_is_sta_ndp_concurrency_allowed(psoc, nan_vdev)) {
+		osif_err("NDP creation not allowed");
+		ret = -EOPNOTSUPP;
+		goto initiator_req_failed;
+	}
+
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
 		osif_err("Transaction ID is unavailable");
 		ret = -EINVAL;
@@ -788,6 +794,12 @@ static int __os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 		if (nan_vdev->vdev_mlme.vdev_opmode != QDF_NDI_MODE) {
 			osif_err("Interface found is not NDI");
 			ret = -ENODEV;
+			goto responder_req_failed;
+		}
+
+		if (!ucfg_nan_is_sta_ndp_concurrency_allowed(psoc, nan_vdev)) {
+			osif_err("NDP creation not allowed");
+			ret = -EOPNOTSUPP;
 			goto responder_req_failed;
 		}
 	} else {
