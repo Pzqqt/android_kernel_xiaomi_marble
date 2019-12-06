@@ -299,7 +299,12 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 
 		sec_sid = (uint32_t *) shm.vaddr;
 		mem_addr = shm.paddr;
-		mem_size = shm.size;
+		/**
+		 * SMMUSecureModeSwitch requires the size to be number of SID's
+		 * but shm allocates size in pages. Modify the args as per
+		 * client requirement.
+		 */
+		mem_size = sizeof(uint32_t) * num_sids;
 	} else {
 		sec_sid = kcalloc(num_sids, sizeof(uint32_t), GFP_KERNEL);
 		if (!sec_sid)
