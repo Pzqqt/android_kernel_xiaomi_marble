@@ -4043,6 +4043,28 @@ static void sde_plane_destroy(struct drm_plane *plane)
 	}
 }
 
+void sde_plane_destroy_fb(struct drm_plane_state *state)
+{
+	struct sde_plane_state *pstate;
+
+	if (!state) {
+		SDE_ERROR("invalid arg state %d\n", !state);
+		return;
+	}
+
+	pstate = to_sde_plane_state(state);
+
+	if (sde_plane_get_property(pstate, PLANE_PROP_FB_TRANSLATION_MODE) ==
+			SDE_DRM_FB_SEC) {
+		/* remove ref count for frame buffers */
+		if (state->fb) {
+			drm_framebuffer_put(state->fb);
+			state->fb = NULL;
+		}
+	}
+
+}
+
 static void sde_plane_destroy_state(struct drm_plane *plane,
 		struct drm_plane_state *state)
 {
