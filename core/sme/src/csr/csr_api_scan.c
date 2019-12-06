@@ -2754,15 +2754,6 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (!csr_neighbor_roam_is_new_connected_profile(mac_ctx, sessionId)) {
-		/*
-		 * Do not flush occupied list since current roam profile matches
-		 * previous
-		 */
-		sme_debug("Current roam profile matches prev");
-		return;
-	}
-
 	profile = &mac_ctx->roam.roamSession[sessionId].connectedProfile;
 	if (!profile)
 		return;
