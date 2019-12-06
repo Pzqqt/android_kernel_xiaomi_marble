@@ -448,6 +448,7 @@ ndi_remove_and_update_primary_connection(struct wlan_objmgr_psoc *psoc,
 	if (!peer && psoc_nan_obj->nan_caps.ndi_dbs_supported) {
 		policy_mgr_decr_session_set_pcl(psoc, QDF_NDI_MODE,
 						wlan_vdev_get_id(vdev));
+		vdev_nan_obj->ndp_init_done = false;
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -570,7 +571,7 @@ static QDF_STATUS nan_handle_confirm(
 						     NDP_CONFIRM, confirm);
 
 	if (confirm->rsp_code == NAN_DATAPATH_RESPONSE_ACCEPT &&
-	    vdev_nan_obj->active_ndp_peers == 1) {
+	    !vdev_nan_obj->ndp_init_done) {
 		/*
 		 * If this is the NDI's first NDP, store the NDP instance in
 		 * vdev object as its primary connection. If this instance ends
@@ -609,6 +610,7 @@ static QDF_STATUS nan_handle_confirm(
 
 			policy_mgr_incr_active_session(psoc, QDF_NDI_MODE,
 						       vdev_id);
+			vdev_nan_obj->ndp_init_done = true;
 		}
 	}
 
