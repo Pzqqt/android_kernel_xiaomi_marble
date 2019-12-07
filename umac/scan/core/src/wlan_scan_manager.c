@@ -639,8 +639,12 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 	if ((ap_present && sap_peer_count) ||
 	    (go_present && go_peer_count)) {
 		if (policy_mgr_is_hw_dbs_capable(psoc) &&
-		    policy_mgr_is_sap_go_on_2g(psoc))
-			req->scan_req.dwell_time_active_2g = 0;
+		    policy_mgr_is_sap_go_on_2g(psoc)) {
+			req->scan_req.dwell_time_active_2g =
+				QDF_MIN(req->scan_req.dwell_time_active,
+					(SCAN_CTS_DURATION_MS_MAX -
+					SCAN_ROAM_SCAN_CHANNEL_SWITCH_TIME));
+		}
 		req->scan_req.min_rest_time = req->scan_req.max_rest_time;
 	}
 
@@ -730,21 +734,28 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (ap_present) {
-		uint8_t ap_chan_freq;
+		uint16_t ap_chan_freq;
 		struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 
 		ap_chan_freq = policy_mgr_get_channel(psoc, PM_SAP_MODE, NULL);
 		/*
 		 * P2P/STA scan while SoftAP is sending beacons.
 		 * Max duration of CTS2self is 32 ms, which limits the
-		 * dwell time. If DBS is supported and if SAP is on 2G channel
-		 * then keep passive dwell time default.
+		 * dwell time.
+		 * If DBS is supported and:
+		 * 1.if SAP is on 2G channel then keep passive
+		 * dwell time default.
+		 * 2.if SAP is on 5G/6G channel then update dwell time active.
 		 */
 		if (sap_peer_count) {
-			req->scan_req.dwell_time_active =
-				QDF_MIN(req->scan_req.dwell_time_active,
-					(SCAN_CTS_DURATION_MS_MAX -
+			if (policy_mgr_is_hw_dbs_capable(psoc) &&
+			    (WLAN_REG_IS_5GHZ_CH_FREQ(ap_chan_freq) ||
+			    WLAN_REG_IS_6GHZ_CHAN_FREQ(ap_chan_freq))) {
+				req->scan_req.dwell_time_active =
+					QDF_MIN(req->scan_req.dwell_time_active,
+						(SCAN_CTS_DURATION_MS_MAX -
 					SCAN_ROAM_SCAN_CHANNEL_SWITCH_TIME));
+			}
 			if (!policy_mgr_is_hw_dbs_capable(psoc) ||
 			    (policy_mgr_is_hw_dbs_capable(psoc) &&
 			     WLAN_REG_IS_5GHZ_CH_FREQ(ap_chan_freq))) {
@@ -752,6 +763,7 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 					req->scan_req.dwell_time_active;
 			}
 		}
+
 		if (scan_obj->scan_def.ap_scan_burst_duration) {
 			req->scan_req.burst_duration =
 				scan_obj->scan_def.ap_scan_burst_duration;
