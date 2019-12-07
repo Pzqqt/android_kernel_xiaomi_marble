@@ -713,6 +713,11 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_STATE_HPHR,
 			     hph_mode);
 		wcd_clsh_set_hph_mode(component, CLS_H_HIFI);
+		if (hph_mode == CLS_H_LP || hph_mode == CLS_H_LOHIFI ||
+		    hph_mode == CLS_H_ULP) {
+			snd_soc_component_update_bits(component,
+				WCD938X_HPH_REFBUFF_LP_CTL, 0x01, 0x01);
+		}
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
 					      0x10, 0x10);
 		wcd_clsh_set_hph_mode(component, hph_mode);
@@ -733,6 +738,12 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 				usleep_range(20000, 20100);
 			else
 				usleep_range(7000, 7100);
+			if (hph_mode == CLS_H_LP ||
+			    hph_mode == CLS_H_LOHIFI ||
+			    hph_mode == CLS_H_ULP)
+				snd_soc_component_update_bits(component,
+					WCD938X_HPH_REFBUFF_LP_CTL, 0x01,
+					0x00);
 			clear_bit(HPH_PA_DELAY, &wcd938x->status_mask);
 		}
 		snd_soc_component_update_bits(component,
@@ -838,6 +849,11 @@ static int wcd938x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_STATE_HPHL,
 			     hph_mode);
 		wcd_clsh_set_hph_mode(component, CLS_H_HIFI);
+		if (hph_mode == CLS_H_LP || hph_mode == CLS_H_LOHIFI ||
+		    hph_mode == CLS_H_ULP) {
+			snd_soc_component_update_bits(component,
+				WCD938X_HPH_REFBUFF_LP_CTL, 0x01, 0x01);
+		}
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
 						0x20, 0x20);
 		wcd_clsh_set_hph_mode(component, hph_mode);
@@ -858,6 +874,12 @@ static int wcd938x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 				usleep_range(20000, 20100);
 			else
 				usleep_range(7000, 7100);
+			if (hph_mode == CLS_H_LP ||
+			    hph_mode == CLS_H_LOHIFI ||
+			    hph_mode == CLS_H_ULP)
+				snd_soc_component_update_bits(component,
+					WCD938X_HPH_REFBUFF_LP_CTL,
+					0x01, 0x00);
 			clear_bit(HPH_PA_DELAY, &wcd938x->status_mask);
 		}
 		snd_soc_component_update_bits(component,
