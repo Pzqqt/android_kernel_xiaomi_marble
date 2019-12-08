@@ -904,8 +904,10 @@ static int sde_hdcp_2x_wakeup(struct sde_hdcp_2x_wakeup_data *data)
 		break;
 	case HDCP_2X_CMD_MIN_ENC_LEVEL:
 		hdcp->min_enc_level = data->min_enc_level;
-		kfifo_put(&hdcp->cmd_q, data->cmd);
-		wake_up(&hdcp->wait_q);
+		if (hdcp->authenticated) {
+			kfifo_put(&hdcp->cmd_q, data->cmd);
+			wake_up(&hdcp->wait_q);
+		}
 		break;
 	default:
 		kfifo_put(&hdcp->cmd_q, data->cmd);

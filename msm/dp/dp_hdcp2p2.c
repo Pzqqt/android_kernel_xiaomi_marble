@@ -346,11 +346,6 @@ static void dp_hdcp2p2_min_level_change(void *client_ctx,
 		return;
 	}
 
-	if (!dp_hdcp2p2_is_valid_state(ctrl)) {
-		DP_ERR("invalid state\n");
-		return;
-	}
-
 	cdata.context = ctrl->lib_ctx;
 	cdata.min_enc_level = min_enc_level;
 	dp_hdcp2p2_wakeup_lib(ctrl, &cdata);
