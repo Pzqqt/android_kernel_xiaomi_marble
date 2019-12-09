@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -51,6 +51,7 @@
  * @PLD_BUS_TYPE_USB : USB bus
  * @PLD_BUS_TYPE_SNOC_FW_SIM : SNOC FW SIM bus
  * @PLD_BUS_TYPE_PCIE_FW_SIM : PCIE FW SIM bus
+ * @PLD_BUS_TYPE_IPCI : IPCI bus
  */
 enum pld_bus_type {
 	PLD_BUS_TYPE_NONE = -1,
@@ -60,6 +61,7 @@ enum pld_bus_type {
 	PLD_BUS_TYPE_USB,
 	PLD_BUS_TYPE_SNOC_FW_SIM,
 	PLD_BUS_TYPE_PCIE_FW_SIM,
+	PLD_BUS_TYPE_IPCI,
 };
 
 #define PLD_MAX_FIRMWARE_SIZE (1 * 1024 * 1024)
