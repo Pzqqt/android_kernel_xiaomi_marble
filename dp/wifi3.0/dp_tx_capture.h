@@ -15,7 +15,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
 #ifndef _DP_TX_CAPTURE_H_
 #define _DP_TX_CAPTURE_H_
 
@@ -29,10 +28,13 @@ struct dp_vdev;
 struct dp_peer;
 struct dp_tx_desc_s;
 
+#define TX_CAP_HTT_MAX_FTYPE 19
+
 #define TXCAP_MAX_TYPE \
 	((IEEE80211_FC0_TYPE_CTL >> IEEE80211_FC0_TYPE_SHIFT) + 1)
 #define TXCAP_MAX_SUBTYPE \
 	((IEEE80211_FC0_SUBTYPE_MASK >> IEEE80211_FC0_SUBTYPE_SHIFT) + 1)
+
 struct dp_pdev_tx_capture {
 	/* For deferred PPDU status processing */
 	qdf_spinlock_t ppdu_stats_lock;
@@ -55,6 +57,7 @@ struct dp_pdev_tx_capture {
 	qdf_nbuf_queue_t ctl_mgmt_q[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
 	qdf_spinlock_t ctl_mgmt_lock[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
 	qdf_spinlock_t config_lock;
+	uint32_t htt_frame_type[TX_CAP_HTT_MAX_FTYPE];
 };
 
 /* Tx TID */
@@ -219,6 +222,24 @@ void dp_tx_ppdu_stats_process(void *context);
  */
 void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 			  struct ppdu_info *ppdu_info);
+
+/*
+ * dp_tx_capture_htt_frame_counter: increment counter for htt_frame_type
+ * pdev: DP pdev handle
+ * htt_frame_type: htt frame type received from fw
+ *
+ * return: void
+ */
+void dp_tx_capture_htt_frame_counter(struct dp_pdev *pdev,
+				     uint32_t htt_frame_type);
+
+/*
+ * dp_print_pdev_tx_capture_stats: print tx capture stats
+ * @pdev: DP PDEV handle
+ *
+ * return: void
+ */
+void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev);
 
 #endif
 #endif

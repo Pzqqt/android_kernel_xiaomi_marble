@@ -59,6 +59,53 @@
 	SEQ_SEG_BIT(SEQ_SEG(_seqarr, (_seqno)), (_seqno))
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
+
+/*
+ * dp_tx_capture_htt_frame_counter: increment counter for htt_frame_type
+ * pdev: DP pdev handle
+ * htt_frame_type: htt frame type received from fw
+ *
+ * return: void
+ */
+void dp_tx_capture_htt_frame_counter(struct dp_pdev *pdev,
+				     uint32_t htt_frame_type)
+{
+	if (htt_frame_type >= TX_CAP_HTT_MAX_FTYPE)
+		return;
+
+	pdev->tx_capture.htt_frame_type[htt_frame_type]++;
+}
+
+/*
+ * dp_tx_cature_stats: print tx capture stats
+ * @pdev: DP PDEV handle
+ *
+ * return: void
+ */
+void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
+{
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+	uint8_t i = 0, j = 0;
+
+	ptr_tx_cap = &(pdev->tx_capture);
+
+	DP_PRINT_STATS("tx capture stats\n");
+	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
+		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
+			if (ptr_tx_cap->ctl_mgmt_q[i][j].qlen)
+				DP_PRINT_STATS(" ctl_mgmt_q[%d][%d] = queue_len[%d]\n",
+				       i, j, ptr_tx_cap->ctl_mgmt_q[i][j].qlen);
+		}
+	}
+
+	for (i = 0; i < TX_CAP_HTT_MAX_FTYPE; i++) {
+		if (!ptr_tx_cap->htt_frame_type[i])
+			continue;
+		DP_PRINT_STATS(" sgen htt frame type[%d] = %d",
+			       i, ptr_tx_cap->htt_frame_type[i]);
+	}
+}
+
 /**
  * dp_peer_or_pdev_tx_cap_enabled - Returns status of tx_cap_enabled
  * based on global per-pdev setting or per-peer setting
