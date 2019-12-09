@@ -3239,6 +3239,10 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 	}
 
 	cdp_ipa_set_doorbell_paddr(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id);
+	wlan_ipa_init_metering(ipa_ctx);
+
+	if (QDF_IS_STATUS_ERROR(wlan_ipa_init_perf_level(ipa_ctx)))
+		ipa_err("Failed to init perf level");
 
 	/*
 	 * Enable IPA/FW PIPEs if
