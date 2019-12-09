@@ -3296,6 +3296,9 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 	uint32_t id = QCA_NL80211_VENDOR_SUBCMD_DO_ACS_INDEX;
 	uint32_t len = hdd_get_acs_evt_data_len();
 
+	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
+	qdf_event_set(&adapter->acs_complete_event);
+
 	vendor_event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
 						   &adapter->wdev, len, id,
 						   GFP_KERNEL);
