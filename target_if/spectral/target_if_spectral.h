@@ -932,6 +932,7 @@ struct target_if_spectral {
 					param_info[SPECTRAL_SCAN_MODE_MAX];
 #endif
 	uint32_t                               ch_width;
+	uint32_t                               agile_ch_width;
 	struct spectral_diag_stats              diag_stats;
 	bool                                    is_160_format;
 	bool                                    is_lb_edge_extrabins_format;

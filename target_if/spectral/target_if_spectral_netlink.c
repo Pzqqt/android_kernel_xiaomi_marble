@@ -79,6 +79,7 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		samp_data->spectral_data_len = params->datalen;
 		samp_data->spectral_rssi = params->rssi;
 		samp_data->ch_width = spectral->ch_width;
+		samp_data->agile_ch_width = spectral->agile_ch_width;
 		samp_data->spectral_agc_total_gain = params->agc_total_gain;
 		samp_data->spectral_gainchange = params->gainchange;
 		samp_data->spectral_pri80ind = params->pri80ind;

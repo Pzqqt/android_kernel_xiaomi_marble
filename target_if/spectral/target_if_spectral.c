@@ -2954,6 +2954,9 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 	if (spectral->ch_width == CH_WIDTH_INVALID)
 		return 1;
 
+	spectral->agile_ch_width =
+			target_if_spectral_find_agile_width(spectral->ch_width);
+
 	if (spectral->capability.advncd_spectral_cap) {
 		spectral->lb_edge_extrabins = 0;
 		spectral->rb_edge_extrabins = 0;

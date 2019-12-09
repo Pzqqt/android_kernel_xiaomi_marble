@@ -444,6 +444,7 @@ struct spectral_samp_data {
 	uint32_t raw_timestamp_sec80;
 	uint32_t reset_delay;
 	uint32_t target_reset_count;
+	uint32_t agile_ch_width;
 } __packed;
 
 /**
