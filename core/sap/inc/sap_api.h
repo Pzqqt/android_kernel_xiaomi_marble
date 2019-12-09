@@ -1472,6 +1472,29 @@ wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx);
  */
 qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx);
 
+/**
+ * sap_acquire_vdev_ref() - Increment reference count for vdev object
+ * @psoc: Object Manager PSoC object
+ * @sap_ctx: to store vdev object pointer
+ * @session_id: used to get vdev object
+ *
+ * This function is used to increment vdev object reference count and store
+ * vdev pointer in sap_ctx.
+ *
+ * Return: QDF_STATUS_SUCCESS - If able to get vdev object reference
+ *				else qdf status failure codes
+ */
+QDF_STATUS sap_acquire_vdev_ref(struct wlan_objmgr_psoc *psoc,
+				struct sap_context *sap_ctx,
+				uint8_t session_id);
+
+/**
+ * sap_release_vdev_ref() - Decrement reference count for vdev object
+ * @sap_ctx: for which vdev reference is to be decremented
+ *
+ * Return: None
+ */
+void sap_release_vdev_ref(struct sap_context *sap_ctx);
 #ifdef __cplusplus
 }
 #endif

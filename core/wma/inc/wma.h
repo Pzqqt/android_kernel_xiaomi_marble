@@ -2669,18 +2669,6 @@ QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id);
 QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
 				    struct bss_params *add_bss);
 
-/**
- * wma_release_pending_vdev_refs() - release vdev ref taken by interface txrx
- * node and delete all the peers attached to this vdev.
- *
- * This API loop and release vdev ref taken by all iface and all the peers
- * attached to the vdev, this need to be called on recovery to flush vdev
- * and peer.
- *
- * Return: void.
- */
-void wma_release_pending_vdev_refs(void);
-
 #ifdef FEATURE_ANI_LEVEL_REQUEST
 /**
  * wma_send_ani_level_request() - Send get ani level cmd to WMI

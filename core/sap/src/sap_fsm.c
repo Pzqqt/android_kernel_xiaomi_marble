@@ -1083,7 +1083,7 @@ static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sap_acquire_vdev_ref(struct mac_context *mac,
+QDF_STATUS sap_acquire_vdev_ref(struct wlan_objmgr_psoc *psoc,
 				struct sap_context *sap_ctx,
 				uint8_t session_id)
 {
@@ -1095,8 +1095,7 @@ QDF_STATUS sap_acquire_vdev_ref(struct mac_context *mac,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
-						    session_id,
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, session_id,
 						    WLAN_LEGACY_SAP_ID);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1112,10 +1111,16 @@ void sap_release_vdev_ref(struct sap_context *sap_ctx)
 {
 	struct wlan_objmgr_vdev *vdev;
 
+	if (!sap_ctx) {
+		sap_err("Invalid SAP pointer");
+		return;
+	}
+
 	vdev = sap_ctx->vdev;
-	sap_ctx->vdev = NULL;
-	if (vdev)
+	if (vdev) {
+		sap_ctx->vdev = NULL;
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SAP_ID);
+	}
 }
 
 QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
@@ -1124,7 +1129,6 @@ QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	int i;
-	QDF_STATUS status;
 
 	sapctx->sessionId = session_id;
 	sapctx->is_pre_cac_on = false;
@@ -1135,14 +1139,6 @@ QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
 	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
 		if (mac_ctx->sap.sapCtxList[i].sap_context == sapctx)
 			mac_ctx->sap.sapCtxList[i].sap_context = NULL;
-	}
-
-	status = sap_acquire_vdev_ref(mac_ctx, sapctx, session_id);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("sap context init failed for session_id: %u"),
-			  session_id);
-		return status;
 	}
 
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sap_context = sapctx;
@@ -1163,8 +1159,6 @@ QDF_STATUS sap_clear_session_param(mac_handle_t mac_handle,
 
 	if (sapctx->sessionId >= SAP_MAX_NUM_SESSION)
 		return QDF_STATUS_E_FAILURE;
-
-	sap_release_vdev_ref(sapctx);
 
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sap_context = NULL;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =

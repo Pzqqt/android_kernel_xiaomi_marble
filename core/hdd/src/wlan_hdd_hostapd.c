@@ -3303,19 +3303,19 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	status = qdf_event_create(&phostapdBuf->qdf_event);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Hostapd HDD qdf event init failed!!");
-		goto error_release_sap_session;
+		goto error_deinit_sap_session;
 	}
 
 	status = qdf_event_create(&phostapdBuf->qdf_stop_bss_event);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Hostapd HDD stop bss event init failed!!");
-		goto error_release_sap_session;
+		goto error_deinit_sap_session;
 	}
 
 	status = qdf_event_create(&phostapdBuf->qdf_sta_disassoc_event);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Hostapd HDD sta disassoc event init failed!!");
-		goto error_release_sap_session;
+		goto error_deinit_sap_session;
 	}
 
 	/* Register as a wireless device */
@@ -3383,13 +3383,11 @@ error_release_wmm:
 error_release_sta_info:
 	hdd_sta_info_deinit(&adapter->sta_info_list);
 error_release_softap_tx_rx:
-	hdd_softap_deinit_tx_rx(adapter);
-error_release_sap_session:
 	hdd_unregister_wext(adapter->dev);
+	hdd_softap_deinit_tx_rx(adapter);
+error_deinit_sap_session:
 	hdd_hostapd_deinit_sap_session(adapter);
 error_release_vdev:
-	QDF_BUG(!hdd_vdev_destroy(adapter));
-
 	hdd_exit();
 	return status;
 }

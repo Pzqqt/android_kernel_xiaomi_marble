@@ -601,9 +601,6 @@ out:
 	wma_vdev_deinit(iface);
 	qdf_mem_zero(iface, sizeof(*iface));
 	wma_vdev_init(iface);
-
-	del_vdev_req_param->status = status;
-	wma_send_vdev_del_resp(del_vdev_req_param);
 	return status;
 }
 
@@ -677,95 +674,6 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 
 error:
 	return qdf_status;
-}
-
-/**
- * wma_force_objmgr_vdev_peer_cleanup() - Cleanup ObjMgr Vdev peers during SSR
- * @wma_handle: WMA handle
- * @iface: wma interface txrx node
- *
- * Return: none
- */
-static void wma_force_objmgr_vdev_peer_cleanup(tp_wma_handle wma,
-					       struct wma_txrx_node *iface)
-{
-	struct wlan_objmgr_vdev *vdev;
-	struct wlan_objmgr_peer *peer = NULL;
-	struct wlan_objmgr_peer *peer_next = NULL;
-	qdf_list_t *peer_list;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	if (!iface->vdev)
-		return;
-
-	/*
-	 * No need to take ref as if iface->vdev is valid then WMA already hold
-	 * ref and this can be used diretly. ALso this API may get called after
-	 * vdev deleted logically so taking ref for vdev will fail and peer
-	 * wont be deleted for the vdev.
-	 */
-	vdev = iface->vdev;
-
-	wma_cdp_vdev_detach(soc, wma, wlan_vdev_get_id(vdev));
-
-	WMA_LOGI("%s: SSR: force cleanup peers in vdev(%d)", __func__,
-		 wlan_vdev_get_id(vdev));
-	iface->vdev_active = false;
-
-	peer_list = &vdev->vdev_objmgr.wlan_peer_list;
-	if (!peer_list) {
-		WMA_LOGE("%s: peer_list is NULL", __func__);
-		return;
-	}
-
-	/*
-	 * We get refcount for each peer first, logically delete it and
-	 * then release the refcount so that the peer is physically
-	 * deleted.
-	 */
-	peer = wlan_vdev_peer_list_peek_active_head(vdev, peer_list,
-						    WLAN_LEGACY_WMA_ID);
-	while (peer) {
-		WMA_LOGD("%s: Deleting Peer %pM",
-			 __func__, peer->macaddr);
-		wlan_objmgr_peer_obj_delete(peer);
-		peer_next = wlan_peer_get_next_active_peer_of_vdev(vdev,
-					peer_list, peer, WLAN_LEGACY_WMA_ID);
-		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
-		peer = peer_next;
-	}
-
-	/* Force delete all the peers, set the wma interface peer_count to 0 */
-	iface->peer_count = 0;
-}
-
-static void
-wma_release_vdev_and_peer_ref(tp_wma_handle wma,
-			      struct wma_txrx_node *iface)
-{
-	if (!iface) {
-		WMA_LOGE("iface is NULL");
-		return;
-	}
-
-	wma_force_objmgr_vdev_peer_cleanup(wma, iface);
-	wma_release_vdev_ref(iface);
-}
-
-void wma_release_pending_vdev_refs(void)
-{
-	int i;
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-
-	/* validate the wma_handle */
-	if (!wma) {
-		WMA_LOGE("%s: Invalid wma handle", __func__);
-		return;
-	}
-
-	for (i = 0; i < wma->max_bssid; i++)
-		/* Release peer and vdev ref hold by wma if not already done */
-		wma_release_vdev_and_peer_ref(wma, &wma->interfaces[i]);
 }
 
 static bool wma_vdev_uses_self_peer(uint32_t vdev_type, uint32_t vdev_subtype)
@@ -908,18 +816,6 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 		goto send_rsp;
 	}
 
-	/*
-	 * In SSR case or if FW is down we only need to clean up the host.
-	 * There is no need to destroy vdev in firmware since it
-	 * has already asserted.
-	 * Cleanup the ObjMgr Peers for the current vdev and detach the
-	 * CDP Vdev.
-	 */
-	if (!cds_is_target_ready()) {
-		wma_release_vdev_and_peer_ref(wma_handle, iface);
-		goto send_rsp;
-	}
-
 	status = wma_check_for_deffered_peer_delete(wma_handle,
 						    pdel_vdev_req_param);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -934,7 +830,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("Failed to send self peer delete:%d", status);
-		return status;
+		goto send_rsp;
 	}
 
 	if (iface->type != WMI_VDEV_TYPE_MONITOR)
@@ -946,6 +842,9 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 		status = wma_handle_vdev_detach(wma_handle,
 						pdel_vdev_req_param);
 	}
+
+	if (QDF_IS_STATUS_ERROR(status))
+		goto send_rsp;
 
 	return status;
 
@@ -5254,6 +5153,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 	if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
 		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
 		status = QDF_STATUS_E_FAILURE;
+		qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 		goto detach_peer;
 	}
 	WMA_LOGD("%s: bssid %pM vdev_id %d",

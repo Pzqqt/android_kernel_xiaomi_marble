@@ -479,29 +479,4 @@ bool
 sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
 			   uint8_t channel_number,
 			   ePhyChanBondState bond_state);
-
-/**
- * sap_acquire_vdev_ref() - Increment reference count for vdev object
- * @mac: mac handle
- * @sap_ctx: to store vdev object pointer
- * @session_id: used to get vdev object
- *
- * This function is used to increment vdev object reference count and store
- * vdev pointer in sap_ctx.
- *
- * Return: QDF_STATUS_SUCCESS - If able to get vdev object reference
- *				else qdf status failure codes
- */
-QDF_STATUS sap_acquire_vdev_ref(struct mac_context *mac,
-				struct sap_context *sap_ctx,
-				uint8_t session_id);
-
-/**
- * sap_release_vdev_ref() - Decrement reference count for vdev object
- * @sap_ctx: for which vdev reference is to be decremented
- *
- * Return: None
- */
-void sap_release_vdev_ref(struct sap_context *sap_ctx);
-
 #endif

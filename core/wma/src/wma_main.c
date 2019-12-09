@@ -2618,11 +2618,6 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 		vdev->staKeyParams = NULL;
 	}
 
-	if (vdev->del_staself_req) {
-		qdf_mem_free(vdev->del_staself_req);
-		vdev->del_staself_req = NULL;
-	}
-
 	if (vdev->psnr_req) {
 		qdf_mem_free(vdev->psnr_req);
 		vdev->psnr_req = NULL;
@@ -4303,7 +4298,7 @@ QDF_STATUS wma_wmi_service_close(void)
 {
 	void *cds_ctx;
 	tp_wma_handle wma_handle;
-	int i;
+	uint8_t i;
 
 	WMA_LOGD("%s: Enter", __func__);
 
