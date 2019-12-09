@@ -1098,6 +1098,12 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			usleep_range(1000, 1010);
 			snd_soc_component_update_bits(component,
 				hpf_gate_reg, 0x02, 0x00);
+			snd_soc_component_update_bits(component,
+				hpf_gate_reg, 0x01, 0x01);
+			/*
+			 * 6ms delay is required as per HW spec
+			 */
+			usleep_range(6000, 6010);
 		}
 		/* schedule work queue to Remove Mute */
 		schedule_delayed_work(&va_priv->va_mute_dwork[decimator].dwork,
