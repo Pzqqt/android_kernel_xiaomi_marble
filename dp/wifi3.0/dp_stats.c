@@ -5648,6 +5648,8 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 			DP_PRINT_STATS("Wdi msgs received from fw[%d]:%d",
 				       i, pdev->stats.wdi_event[i]);
 	}
+
+	dp_print_pdev_tx_capture_stats(pdev);
 }
 
 void

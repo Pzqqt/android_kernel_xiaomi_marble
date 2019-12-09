@@ -2108,6 +2108,8 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	}
 
 	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);
+
+	dp_tx_capture_htt_frame_counter(pdev, frame_type);
 }
 
 /*
