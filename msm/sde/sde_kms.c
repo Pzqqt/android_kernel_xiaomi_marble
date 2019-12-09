@@ -51,7 +51,7 @@
 
 #include <soc/qcom/scm.h>
 #include "soc/qcom/secure_buffer.h"
-#include "soc/qcom/qtee_shmbridge.h"
+#include <linux/qtee_shmbridge.h>
 
 #define CREATE_TRACE_POINTS
 #include "sde_trace.h"
