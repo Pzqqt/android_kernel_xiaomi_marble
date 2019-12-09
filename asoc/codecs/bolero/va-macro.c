@@ -170,6 +170,8 @@ struct va_macro_priv {
 	int va_swr_clk_cnt;
 	int va_clk_status;
 	int tx_clk_status;
+	bool lpi_enable;
+	bool register_event_listener;
 };
 
 static bool va_macro_get_data(struct snd_soc_component *component,
@@ -403,10 +405,16 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 			if (bolero_tx_clk_switch(component))
 				dev_dbg(va_dev, "%s: clock switch failed\n",
 					__func__);
-		bolero_register_event_listener(component, true);
+		if (va_priv->lpi_enable) {
+			bolero_register_event_listener(component, true);
+			va_priv->register_event_listener = true;
+		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		bolero_register_event_listener(component, false);
+		if (va_priv->register_event_listener) {
+			va_priv->register_event_listener = false;
+			bolero_register_event_listener(component, false);
+		}
 		if (bolero_tx_clk_switch(component))
 			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		if (va_priv->lpass_audio_hw_vote)
@@ -850,6 +858,38 @@ static int va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	}
 
 	return snd_soc_dapm_put_enum_double(kcontrol, ucontrol);
+}
+
+static int va_macro_lpi_get(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = va_priv->lpi_enable;
+
+	return 0;
+}
+
+static int va_macro_lpi_put(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	va_priv->lpi_enable = ucontrol->value.integer.value[0];
+
+	return 0;
 }
 
 static int va_macro_tx_mixer_get(struct snd_kcontrol *kcontrol,
@@ -2295,6 +2335,8 @@ static const struct snd_kcontrol_new va_macro_snd_controls[] = {
 	SOC_SINGLE_SX_TLV("VA_DEC7 Volume",
 			  BOLERO_CDC_VA_TX7_TX_VOL_CTL,
 			  0, -84, 40, digital_gain),
+	SOC_SINGLE_EXT("LPI Enable", 0, 0, 1, 0,
+		va_macro_lpi_get, va_macro_lpi_put),
 };
 
 static const struct snd_kcontrol_new va_macro_snd_controls_common[] = {
@@ -2385,6 +2427,9 @@ static int va_macro_init(struct snd_soc_component *component)
 			"%s: priv is null for macro!\n", __func__);
 		return -EINVAL;
 	}
+
+	va_priv->lpi_enable = false;
+	va_priv->register_event_listener = false;
 
 	if (va_priv->va_without_decimation) {
 		ret = snd_soc_dapm_new_controls(dapm, va_macro_wod_dapm_widgets,
