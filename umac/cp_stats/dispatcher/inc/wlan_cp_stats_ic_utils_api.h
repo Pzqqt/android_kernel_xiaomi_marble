@@ -66,6 +66,7 @@ PEER_CP_STATS_SET_FUNCS(is_tx_nobuf);
 #ifdef ATH_SUPPORT_IQUE
 PEER_CP_STATS_SET_FUNCS(tx_dropblock);
 #endif
+PEER_CP_STATS_SET_FUNCS(rx_decryptcrc);
 
 #define PEER_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
@@ -78,6 +79,7 @@ PEER_CP_STATS_GET_FUNCS(rx_mgmt_rate);
 #ifdef ATH_SUPPORT_IQUE
 PEER_CP_STATS_GET_FUNCS(tx_dropblock);
 #endif
+PEER_CP_STATS_GET_FUNCS(rx_decryptcrc);
 
 static inline void
 peer_cp_stats_rx_mgmt_rssi_update(struct wlan_objmgr_peer *peer,

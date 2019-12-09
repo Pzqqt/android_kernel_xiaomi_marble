@@ -446,6 +446,7 @@ struct vdev_ic_cp_stats {
  *  @cs_tx_dropblock: tx dropblock
  *  @cs_tx_assoc: tx assoc success
  *  @cs_tx_assoc_fail: tx assoc failure
+ *  @cs_rx_decryptcrc: rx decrypt errors
  */
 struct peer_ic_cp_stats {
 	int8_t   cs_rx_mgmt_rssi;
@@ -466,6 +467,7 @@ struct peer_ic_cp_stats {
 	uint32_t cs_tx_assoc;
 	uint32_t cs_tx_assoc_fail;
 	uint32_t cs_is_tx_nobuf;
+	uint32_t cs_rx_decryptcrc;
 };
 
 #endif /* QCA_SUPPORT_CP_STATS */

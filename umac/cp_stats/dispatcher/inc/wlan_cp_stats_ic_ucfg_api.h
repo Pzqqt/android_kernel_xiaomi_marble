@@ -620,6 +620,7 @@ UCFG_PEER_CP_STATS_SET_FUNCS(is_tx_nobuf);
 #ifdef ATH_SUPPORT_IQUE
 UCFG_PEER_CP_STATS_SET_FUNCS(tx_dropblock);
 #endif
+UCFG_PEER_CP_STATS_SET_FUNCS(rx_decryptcrc);
 
 static inline
 void ucfg_peer_cp_stats_rx_mgmt_rssi_update(struct wlan_objmgr_peer *peer,
@@ -680,6 +681,7 @@ UCFG_PEER_CP_STATS_GET_FUNCS(rx_mgmt_rate);
 #ifdef ATH_SUPPORT_IQUE
 UCFG_PEER_CP_STATS_GET_FUNCS(tx_dropblock);
 #endif
+UCFG_PEER_CP_STATS_GET_FUNCS(rx_decryptcrc);
 
 /**
  * wlan_ucfg_get_peer_cp_stats() - ucfg API to get peer cp stats
