@@ -126,10 +126,10 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT TX SUPP DATA RATE")
 
-#define CFG_TX_BF_CAP CFG_INT( \
+#define CFG_TX_BF_CAP CFG_UINT( \
 		"tx_bf_cap", \
 		0, \
-		-1, \
+		4294967295, \
 		0, \
 		CFG_VALUE_OR_DEFAULT, \
 		"TX BF CAP")
