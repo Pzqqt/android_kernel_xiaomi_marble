@@ -9774,8 +9774,7 @@ dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 	if (!peer)
 		return NULL;
 
-	DP_TRACE(INFO, "%s: peer %pK mac: %pM", __func__, peer,
-		 peer->mac_addr.raw);
+	dp_info_rl("peer %pK mac: %pM", peer, peer->mac_addr.raw);
 
 	return peer;
 }
