@@ -798,10 +798,16 @@ sap_validate_chan(struct sap_context *sap_context,
 					con_ch);
 				sap_context->chan_freq = wlan_reg_chan_to_freq(
 							mac_ctx->pdev, con_ch);
+				if (WLAN_REG_IS_24GHZ_CH_FREQ(
+				    sap_context->chan_freq))
+					sap_context->ch_params.ch_width =
+							CH_WIDTH_20MHZ;
+
 				wlan_reg_set_channel_params_for_freq(
-						mac_ctx->pdev,
-						sap_context->chan_freq, 0,
-						&sap_context->ch_params);
+					mac_ctx->pdev,
+					sap_context->chan_freq,
+					0,
+					&sap_context->ch_params);
 			}
 		}
 #endif
