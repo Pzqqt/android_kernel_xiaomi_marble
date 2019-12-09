@@ -90,6 +90,7 @@ extract_nan_event_rsp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		evt_params->evt_type = nan_event_id_enable_rsp;
 		evt_params->mac_id = nan_evt_info->mac_id;
 		evt_params->is_nan_enable_success = (nan_evt_info->status == 0);
+		evt_params->vdev_id = nan_evt_info->vdev_id;
 		break;
 	case NAN_MSG_ID_DISABLE_IND:
 		evt_params->evt_type = nan_event_id_disable_ind;
