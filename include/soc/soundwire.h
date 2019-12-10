@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _LINUX_SOUNDWIRE_H
@@ -200,7 +200,7 @@ struct swr_device {
 	struct list_head dev_list;
 	u8               dev_num;
 	struct device    dev;
-	unsigned long    addr;
+	u64 addr;
 	u8 group_id;
 	struct irq_domain *slave_irq;
 	bool slave_irq_pending;
