@@ -37,7 +37,8 @@
 #define DFS_MAX_FREQ_SPREAD            (1375 * 1)
 #define DFS_LARGE_PRI_MULTIPLIER       4
 #define DFS_W53_DEFAULT_PRI_MULTIPLIER 2
-#define DFS_INVALID_PRI_LIMIT 100  /* should we use 135? */
+//#define DFS_INVALID_PRI_LIMIT 100  /* should we use 135? */
+#define DFS_INVALID_PRI_LIMIT 15  /* should we use 135? */
 #define DFS_BIG_SIDX          10000
 
 #define FRAC_PRI_SCORE_ARRAY_SIZE 40
@@ -138,6 +139,28 @@ static void dfs_print_radar_events(struct wlan_dfs *dfs)
 }
 
 /**
+ * dfs_get_durmargin() - Find duration margin
+ * @rf: Pointer to dfs_filter structure.
+ * @durmargin: Duration margin
+ */
+static inline void dfs_get_durmargin(struct dfs_filter *rf,
+				     uint32_t *durmargin)
+{
+#define DUR_THRESH 10
+#define LOW_MARGIN 4
+#define HIGH_MARGIN 6
+
+	if (rf->rf_maxdur < DUR_THRESH)
+		*durmargin = LOW_MARGIN;
+	else
+		*durmargin = HIGH_MARGIN;
+
+#undef DUR_THRESH
+#undef LOW_MARGIN
+#undef HIGH_MARGIN
+}
+
+/**
  * dfs_confirm_radar() - This function checks for fractional PRI and jitter in
  * sidx index to determine if the radar is real or not.
  * @dfs: Pointer to dfs structure.
@@ -163,6 +186,12 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 	unsigned char max_score = 0;
 	int max_score_index = 0;
 
+	uint32_t min_searchdur = 0xFFFFFFFF;
+	uint32_t max_searchdur = 0x0;
+	uint32_t durmargin = 0;
+	uint32_t this_dur;
+	uint32_t this_deltadur;
+
 	pl = dfs->pulses;
 
 	OS_MEMZERO(scores, sizeof(scores));
@@ -170,6 +199,8 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 
 	pri_margin = dfs_get_pri_margin(dfs, ext_chan_flag,
 			(rf->rf_patterntype == 1));
+	dfs_get_durmargin(rf, &durmargin);
+
 
 	/*
 	 * Look for the entry that matches dl_seq_num_second.
@@ -181,6 +212,12 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 		de = &dl->dl_elems[index];
 		if (dl->dl_seq_num_second == de->de_seq_num)
 			target_ts = de->de_ts - de->de_time;
+
+		if (de->de_dur < min_searchdur)
+			min_searchdur = de->de_dur;
+
+		if (de->de_dur > max_searchdur)
+			max_searchdur = de->de_dur;
 	}
 
 	if (dfs->dfs_debug_mask & WLAN_DEBUG_DFS2) {
@@ -226,6 +263,10 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 		this_diff_ts = pl->pl_elems[next_index].p_time -
 			pl->pl_elems[current_index].p_time;
 
+		this_dur =  pl->pl_elems[next_index].p_dur;
+		this_deltadur = DFS_MIN(DFS_DIFF(this_dur, min_searchdur),
+					DFS_DIFF(this_dur, max_searchdur));
+
 		/* Now update the score for this diff_ts */
 		for (i = 1; i < FRAC_PRI_SCORE_ARRAY_SIZE; i++) {
 			search_bin = dl->dl_search_pri / (i + 1);
@@ -242,8 +283,8 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 			 * search_bin +/- margin.
 			 */
 			if ((this_diff_ts >= (search_bin - pri_margin)) &&
-					(this_diff_ts <=
-					 (search_bin + pri_margin))) {
+				(this_diff_ts <= (search_bin + pri_margin)) &&
+				(this_deltadur < durmargin)) {
 				/*increment score */
 				scores[i]++;
 			}
