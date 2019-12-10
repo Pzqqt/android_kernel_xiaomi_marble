@@ -1043,6 +1043,7 @@ static ssize_t _sde_core_perf_mode_write(struct file *file,
 					perf->max_core_clk_rate);
 		else
 			DRM_INFO("minimum performance mode\n");
+		SDE_EVT32(perf->max_core_clk_rate, ret);
 	} else if (perf_mode == SDE_PERF_MODE_NORMAL) {
 		/* reset the perf tune params to 0 */
 		perf->perf_tune.min_core_clk = 0;

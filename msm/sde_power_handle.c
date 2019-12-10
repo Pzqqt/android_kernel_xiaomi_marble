@@ -47,10 +47,10 @@ static void sde_power_event_trigger_locked(struct sde_power_handle *phandle,
 {
 	struct sde_power_event *event;
 
+	phandle->last_event_handled = event_type;
 	list_for_each_entry(event, &phandle->event_list, list) {
 		if (event->event_type & event_type) {
 			event->cb_fnc(event_type, event->usr);
-			phandle->last_event_handled = event_type;
 		}
 	}
 }
@@ -775,6 +775,7 @@ int sde_power_clk_set_rate(struct sde_power_handle *phandle, char *clock_name,
 	if (phandle->last_event_handled & SDE_POWER_EVENT_POST_DISABLE) {
 		pr_debug("invalid power state %u\n",
 				phandle->last_event_handled);
+		SDE_EVT32(phandle->last_event_handled, SDE_EVTLOG_ERROR);
 		mutex_unlock(&phandle->phandle_lock);
 		return -EINVAL;
 	}
