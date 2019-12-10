@@ -329,6 +329,18 @@ htt_t2h_stats_pdev_stats_print(struct wlan_dbg_stats *wlan_pdev_stats,
 	qdf_nofl_info("pdev resets       :%d", tx->pdev_resets);
 	/* PPDU > txop duration  */
 	qdf_nofl_info("ppdu txop ovf     :%d", tx->txop_ovf);
+#if defined(AR900B)
+	qdf_nofl_info("seq_posted        :%d", tx->seq_posted);
+	qdf_nofl_info("seq_failed_queueing      :%d", tx->seq_failed_queueing);
+	qdf_nofl_info("seq_completed     :%d", tx->seq_completed);
+	qdf_nofl_info("seq_restarted     :%d", tx->seq_restarted);
+	qdf_nofl_info("mu_seq_posted     :%d", tx->mu_seq_posted);
+	qdf_nofl_info("mpdus_sw_flush    :%d", tx->mpdus_sw_flush);
+	qdf_nofl_info("mpdus_hw_filter   :%d", tx->mpdus_hw_filter);
+	qdf_nofl_info("mpdus_truncated   :%d", tx->mpdus_truncated);
+	qdf_nofl_info("mpdus_ack_failed  :%d", tx->mpdus_ack_failed);
+	qdf_nofl_info("mpdus_expired     :%d", tx->mpdus_expired);
+#endif
 
 	qdf_nofl_info("### Rx ###");
 	/* Cnts any change in ring routing mid-ppdu */
