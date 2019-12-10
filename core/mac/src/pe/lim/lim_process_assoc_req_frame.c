@@ -1704,6 +1704,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			((sta_ds->supportedRates.vhtRxMCSMap & MCSMAPMASK2x2)
 				== MCSMAPMASK2x2) ? 1 : 2;
 	}
+	lim_update_stads_he_6ghz_op(session, sta_ds);
 
 	/* Add STA context at MAC HW (BMU, RHP & TFP) */
 	sta_ds->qosMode = false;

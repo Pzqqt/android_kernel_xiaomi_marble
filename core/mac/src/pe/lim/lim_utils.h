@@ -1255,6 +1255,17 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 				   struct pe_session *session_entry,
 				   uint8_t nss);
 
+/**
+ * lim_update_stads_he_6ghz_op() - Update sta ds channel info
+ * @session: pe session
+ * @sta_ds: pointer to sta ds struct
+
+ * Update sta_ds channel width.
+ *
+ * Return: void
+ */
+void lim_update_stads_he_6ghz_op(struct pe_session *session,
+				 tpDphHashNode sta_ds);
 #else
 static inline void lim_add_he_cap(tpAddStaParams add_sta_params,
 				  tpSirAssocReq assoc_req)
@@ -1401,6 +1412,11 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline void
+lim_update_stads_he_6ghz_op(struct pe_session *session,
+			    tpDphHashNode sta_ds)
+{
+}
 #endif
 
 /**

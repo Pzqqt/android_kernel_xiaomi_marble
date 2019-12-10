@@ -6737,6 +6737,7 @@ void lim_update_he_6gop_assoc_resp(struct bss_params *pAddBssParams,
 
 	if (pAddBssParams->ch_width == CH_WIDTH_160MHZ)
 		pAddBssParams->ch_width = pe_session->ch_width;
+	pAddBssParams->staContext.ch_width = pAddBssParams->ch_width;
 }
 
 void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
@@ -6752,6 +6753,33 @@ void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 
 	qdf_mem_copy(&sta_ds->he_config, he_cap, sizeof(*he_cap));
 
+}
+
+void lim_update_stads_he_6ghz_op(struct pe_session *session,
+				 tpDphHashNode sta_ds)
+{
+	tDot11fIEhe_cap *peer_he = &sta_ds->he_config;
+	enum phy_ch_width ch_width;
+
+	if (!session->he_6ghz_band)
+		return;
+
+	if (!peer_he->present) {
+		pe_debug("HE cap not present in peer");
+		return;
+	}
+
+	if (peer_he->chan_width_3)
+		ch_width = CH_WIDTH_80P80MHZ;
+	else if (peer_he->chan_width_2)
+		ch_width = CH_WIDTH_160MHZ;
+	else if (peer_he->chan_width_1)
+		ch_width = CH_WIDTH_80MHZ;
+	else
+		ch_width = CH_WIDTH_20MHZ;
+	if (ch_width > session->ch_width)
+		ch_width = session->ch_width;
+	sta_ds->ch_width = ch_width;
 }
 
 void lim_update_usr_he_cap(struct mac_context *mac_ctx, struct pe_session *session)

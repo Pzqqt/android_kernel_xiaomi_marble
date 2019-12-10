@@ -3722,15 +3722,10 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 					vht_caps, pe_session);
 	}
 
-	pe_debug("vhtCapable %d ch_width %d", pAddBssParams->vhtCapable,
-		 pAddBssParams->ch_width);
-
 	if (lim_is_session_he_capable(pe_session) &&
 			(pAssocRsp->he_cap.present)) {
 		lim_add_bss_he_cap(pAddBssParams, pAssocRsp);
 		lim_add_bss_he_cfg(pAddBssParams, pe_session);
-		lim_update_he_6gop_assoc_resp(pAddBssParams, &pAssocRsp->he_op,
-					      pe_session);
 	}
 	/*
 	 * Populate the STA-related parameters here
@@ -3948,6 +3943,9 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 						 NULL,
 						 pAssocRsp);
 			lim_update_he_stbc_capable(&pAddBssParams->staContext);
+			lim_update_he_6gop_assoc_resp(pAddBssParams,
+						      &pAssocRsp->he_op,
+						      pe_session);
 		}
 	}
 	pAddBssParams->staContext.smesessionId =
@@ -4049,6 +4047,8 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 
 	if (lim_is_fils_connection(pe_session))
 		pAddBssParams->no_ptk_4_way = true;
+	pe_debug("vhtCapable %d ch_width %d", pAddBssParams->vhtCapable,
+		 pAddBssParams->staContext.ch_width);
 
 	retCode = wma_send_peer_assoc_req(pAddBssParams);
 	if (QDF_IS_STATUS_ERROR(retCode)) {
