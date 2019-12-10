@@ -3190,7 +3190,7 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 	for (i = 0; i < INVALID_PEER_MAX_NUM; i++) {
 		if (qdf_mem_cmp
 			      (iface->invalid_peers[i].rx_macaddr,
-			      rx_inv_msg->ra,
+			      rx_inv_msg->ta,
 			      QDF_MAC_ADDR_SIZE) == 0) {
 			invalid_peer_found = true;
 			break;
@@ -3199,7 +3199,7 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 
 	if (!invalid_peer_found) {
 		qdf_mem_copy(iface->invalid_peers[index].rx_macaddr,
-			     rx_inv_msg->ra,
+			     rx_inv_msg->ta,
 			    QDF_MAC_ADDR_SIZE);
 
 		/* reset count if reached max */
@@ -3219,7 +3219,7 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 	} else {
 		wma_debug_rl("Ignore invalid peer indication as received more than once "
 			QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(rx_inv_msg->ra));
+			QDF_MAC_ADDR_ARRAY(rx_inv_msg->ta));
 		qdf_mem_free(rx_inv_msg);
 	}
 
