@@ -3058,6 +3058,11 @@ wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx)
 	}
 	mac_handle = MAC_HANDLE(mac);
 
+	if (policy_mgr_get_connection_count(mac->psoc) == 1) {
+		sap_debug("only SAP present return best channel from ACS list");
+		return wlansap_get_safe_channel(sap_ctx);
+	}
+
 	status = policy_mgr_get_pcl_for_existing_conn(
 			mac->psoc, PM_SAP_MODE, pcl_freqs, &pcl_len,
 			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list),
