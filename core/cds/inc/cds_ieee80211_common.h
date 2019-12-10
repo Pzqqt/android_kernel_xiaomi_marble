@@ -56,6 +56,16 @@ struct ieee80211_qosframe {
 	/* see below */
 } __packed;
 
+struct ieee80211_frame_bar {
+	uint8_t    i_fc[2];
+	uint8_t    i_dur[2];
+	uint8_t    i_ra[QDF_MAC_ADDR_SIZE];
+	uint8_t    i_ta[QDF_MAC_ADDR_SIZE];
+	uint8_t   i_ctl;
+	uint8_t   i_seq;
+/* FCS */
+} __packed;
+
 struct ieee80211_qoscntl {
 	uint8_t i_qos[2];
 };
