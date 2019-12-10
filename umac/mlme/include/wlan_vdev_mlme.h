@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -273,6 +273,7 @@ struct vdev_mlme_inactivity_params {
  * @max_rate: max bandwidth rate
  * @tx_mgmt_rate: Tx Mgmt rate
  * @bcn_tx_rate: beacon Tx rate
+ * @bcn_tx_rate_code: beacon Tx rate code
  * @type: Type of ratemask configuration
  * @lower32: Lower 32 bits in the 1st 64-bit value
  * @higher32: Higher 32 bits in the 1st 64-bit value
@@ -286,6 +287,9 @@ struct vdev_mlme_rate_info {
 	uint32_t max_rate;
 	uint32_t tx_mgmt_rate;
 	uint32_t bcn_tx_rate;
+#ifdef WLAN_BCN_RATECODE_ENABLE
+	uint32_t bcn_tx_rate_code;
+#endif
 	uint8_t  type;
 	uint32_t lower32;
 	uint32_t higher32;

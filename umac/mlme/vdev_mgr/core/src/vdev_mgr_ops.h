@@ -239,4 +239,15 @@ QDF_STATUS vdev_mgr_multiple_restart_send(
  */
 QDF_STATUS vdev_mgr_peer_delete_all_send(struct vdev_mlme_obj *mlme_obj);
 
+#ifdef WLAN_BCN_RATECODE_ENABLE
+static inline uint32_t vdev_mgr_fetch_ratecode(struct vdev_mlme_obj *mlme_obj)
+{
+	return mlme_obj->mgmt.rate_info.bcn_tx_rate_code;
+}
+#else
+static inline uint32_t vdev_mgr_fetch_ratecode(struct vdev_mlme_obj *mlme_obj)
+{
+	return mlme_obj->mgmt.rate_info.bcn_tx_rate;
+}
+#endif
 #endif /* __VDEV_MGR_OPS_H__ */

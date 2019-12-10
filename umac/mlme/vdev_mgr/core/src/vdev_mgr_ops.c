@@ -168,7 +168,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	param->channel.maxregpower = mlme_obj->mgmt.generic.maxregpower;
 	param->channel.antennamax = mlme_obj->mgmt.generic.antennamax;
 	param->channel.reg_class_id = mlme_obj->mgmt.generic.reg_class_id;
-	param->bcn_tx_rate_code = mlme_obj->mgmt.rate_info.bcn_tx_rate;
+	param->bcn_tx_rate_code = vdev_mgr_fetch_ratecode(mlme_obj);
 	param->ldpc_rx_enabled = mlme_obj->proto.generic.ldpc;
 	if (mlme_obj->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_AP) {
 		param->hidden_ssid = mlme_obj->mgmt.ap.hidden_ssid;
