@@ -866,6 +866,25 @@ static void dp_display_host_ready(struct dp_display_private *dp)
 		return;
 	}
 
+	/*
+	 * Reset the aborted state for AUX and CTRL modules. This will
+	 * allow these modules to execute normally in response to the
+	 * cable connection event.
+	 *
+	 * One corner case still exists. While the execution flow ensures
+	 * that cable disconnection flushes all pending work items on the DP
+	 * workqueue, and waits for the user module to clean up the DP
+	 * connection session, it is possible that the system delays can
+	 * lead to timeouts in the connect path. As a result, the actual
+	 * connection callback from user modules can come in late and can
+	 * race against a subsequent connection event here which would have
+	 * reset the aborted flags. There is no clear solution for this since
+	 * the connect/disconnect notifications do not currently have any
+	 * sessions IDs.
+	 */
+	dp->aux->abort(dp->aux, false);
+	dp->ctrl->abort(dp->ctrl, false);
+
 	dp->aux->init(dp->aux, dp->parser->aux_cfg);
 	dp->panel->init(dp->panel);
 
@@ -934,7 +953,6 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 
 	dp->dp_display.max_pclk_khz = min(dp->parser->max_pclk_khz,
 					dp->debug->max_pclk_khz);
-	dp_display_host_init(dp);
 	dp_display_host_ready(dp);
 
 	dp->link->psm_config(dp->link, &dp->panel->link_info, false);
@@ -1164,7 +1182,6 @@ static int dp_display_handle_disconnect(struct dp_display_private *dp)
 		dp_display_clean(dp);
 
 	dp_display_host_unready(dp);
-	dp_display_host_deinit(dp);
 
 	mutex_unlock(&dp->session_lock);
 
@@ -1214,6 +1231,10 @@ static int dp_display_usbpd_disconnect_cb(struct device *dev)
 		dp->link->psm_config(dp->link, &dp->panel->link_info, true);
 
 	dp_display_disconnect_sync(dp);
+
+	mutex_lock(&dp->session_lock);
+	dp_display_host_deinit(dp);
+	mutex_unlock(&dp->session_lock);
 
 	if (!dp->debug->sim_mode && !dp->parser->no_aux_switch
 	    && !dp->parser->gpio_aux_switch)
