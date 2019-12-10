@@ -1658,6 +1658,7 @@ static void sap_sort_chl_weight_80_mhz(struct mac_context *mac_ctx,
 				minIdx = i;
 			}
 			pSpectInfo[j + i].weight = SAP_ACS_WEIGHT_MAX * 4;
+			pSpectInfo[j + i].weight_calc_done = true;
 		}
 
 		pSpectInfo[j + minIdx].weight = combined_weight;
@@ -1823,6 +1824,7 @@ static void sap_sort_chl_weight_160_mhz(struct mac_context *mac_ctx,
 				minIdx = i;
 			}
 			pSpectInfo[j + i].weight = SAP_ACS_WEIGHT_MAX * 8;
+			pSpectInfo[j + i].weight_calc_done = true;
 		}
 
 		pSpectInfo[j + minIdx].weight = combined_weight;
@@ -2122,6 +2124,7 @@ static void sap_sort_chl_weight_40_mhz(struct mac_context *mac_ctx,
 				minIdx = i;
 			}
 			pSpectInfo[j + i].weight = SAP_ACS_WEIGHT_MAX * 2;
+			pSpectInfo[j + i].weight_calc_done = true;
 		}
 
 		pSpectInfo[j + minIdx].weight = combined_weight;
