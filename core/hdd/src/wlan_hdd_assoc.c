@@ -2050,23 +2050,26 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
  * @adapter: pointer to adapter
  * @roam_info: pointer to roam info
  * @mac_addr: peer mac address
+ * @sta_state: peer state
  *
  * Return: QDF_STATUS enumeration
  */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS hdd_conn_change_peer_state(struct hdd_adapter *adapter,
 					     struct csr_roam_info *roam_info,
-					     uint8_t *mac_addr)
+					     uint8_t *mac_addr,
+					     enum ol_txrx_peer_state sta_state)
 {
-	return hdd_change_peer_state(adapter, mac_addr, OL_TXRX_PEER_STATE_AUTH,
+	return hdd_change_peer_state(adapter, mac_addr, sta_state,
 				     roam_info->roamSynchInProgress);
 }
 #else
 static QDF_STATUS hdd_conn_change_peer_state(struct hdd_adapter *adapter,
 					     struct csr_roam_info *roam_info,
-					     uint8_t *mac_addr)
+					     uint8_t *mac_addr,
+					     enum ol_txrx_peer_state sta_state)
 {
-	return hdd_change_peer_state(adapter, mac_addr, OL_TXRX_PEER_STATE_AUTH,
+	return hdd_change_peer_state(adapter, mac_addr, sta_state,
 				     false);
 }
 #endif
@@ -2162,7 +2165,8 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 		 */
 		qdf_status = hdd_conn_change_peer_state(
 						adapter, roam_info,
-						txrx_desc.peer_addr.bytes);
+						txrx_desc.peer_addr.bytes,
+						OL_TXRX_PEER_STATE_AUTH);
 
 		hdd_conn_set_authenticated(adapter, true);
 		hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, true);
@@ -2173,7 +2177,8 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 
 		qdf_status = hdd_conn_change_peer_state(
 						adapter, roam_info,
-						txrx_desc.peer_addr.bytes);
+						txrx_desc.peer_addr.bytes,
+						OL_TXRX_PEER_STATE_CONN);
 
 		hdd_conn_set_authenticated(adapter, false);
 		hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, false);
