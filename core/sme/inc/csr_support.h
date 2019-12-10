@@ -259,8 +259,6 @@ bool csr_is_ibss_bss_desc(struct bss_description *pSirBssDesc)
 	return false;
 }
 #endif
-
-bool csr_is_privacy(struct bss_description *pSirBssDesc);
 tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx);
@@ -322,16 +320,6 @@ bool csr_rates_is_dot11_rate11b_supported_rate(uint8_t dot11Rate);
 bool csr_rates_is_dot11_rate11a_supported_rate(uint8_t dot11Rate);
 tAniEdType csr_translate_encrypt_type_to_ed_type(
 		eCsrEncryptionType EncryptType);
-/*
- * pIes shall contain IEs from pSirBssDesc.
- * It shall be returned from function csr_get_parsed_bss_description_ies
- */
-bool csr_is_security_match(struct mac_context *mac_ctx, tCsrAuthList *auth_type,
-			   tCsrEncryptionList *uc_enc_type,
-			   tCsrEncryptionList *mc_enc_type, bool *mfp_enabled,
-			   uint8_t *mfp_required, uint8_t *mfp_capable,
-			   struct bss_description *bss_desc,
-			   tDot11fBeaconIEs *ies_ptr, uint8_t session_id);
 
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 			struct qdf_mac_addr *BssBssid);
