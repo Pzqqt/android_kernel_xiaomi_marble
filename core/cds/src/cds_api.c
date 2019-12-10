@@ -2772,17 +2772,12 @@ void cds_incr_arp_stats_tx_tgt_acked(void)
 static bool
 cds_get_cdp_vdev_stats(uint8_t vdev_id, struct cdp_vdev_stats *vdev_stats)
 {
-	void *soc;
-	struct cdp_pdev *pdev;
-	struct cdp_vdev *vdev;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!vdev_stats)
 		return false;
 
-	if (cds_get_datapath_handles(&soc, &pdev, &vdev, vdev_id))
-		return false;
-
-	if (cdp_host_get_vdev_stats(soc, vdev, vdev_stats, true))
+	if (cdp_host_get_vdev_stats(soc, vdev_id, vdev_stats, true))
 		return false;
 
 	return true;
