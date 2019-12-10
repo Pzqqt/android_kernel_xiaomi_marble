@@ -5562,6 +5562,12 @@ static const struct snd_kcontrol_new ec_ref_param_controls[] = {
 	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch6", SND_SOC_NOPM,
 		5, 16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, NULL,
 		msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch7", SND_SOC_NOPM,
+		6, 16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, NULL,
+		msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch8", SND_SOC_NOPM,
+		7, 16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, NULL,
+		msm_ec_ref_chmixer_weights_put),
 	SOC_ENUM_EXT("AFE_LOOPBACK_TX Port", msm_route_ec_ref_rx_enum[0],
 		msm_routing_afe_lb_tx_port_get, msm_routing_afe_lb_tx_port_put),
 };
