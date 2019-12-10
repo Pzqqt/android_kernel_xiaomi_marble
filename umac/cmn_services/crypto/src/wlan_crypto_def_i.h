@@ -171,6 +171,8 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 		(psoc->soc_cb.tx_ops.crypto_tx_ops.defaultkey)
 #define WLAN_CRYPTO_TX_OPS_SET_KEY(psoc) \
 		((psoc)->soc_cb.tx_ops.crypto_tx_ops.set_key)
+#define WLAN_CRYPTO_TX_OPS_GETPN(psoc) \
+		((psoc)->soc_cb.tx_ops.crypto_tx_ops.getpn)
 
 /* unalligned little endian access */
 #ifndef LE_READ_2

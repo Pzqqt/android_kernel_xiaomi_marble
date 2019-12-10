@@ -968,6 +968,10 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_NOENT;
 		}
 		key = wlan_crypto_peer_getkey(peer, req_key->keyix);
+		if (WLAN_CRYPTO_TX_OPS_GETPN(psoc) &&
+		    (req_key->flags & WLAN_CRYPTO_KEY_GET_PN))
+			WLAN_CRYPTO_TX_OPS_GETPN(psoc)(vdev, mac_addr,
+						       req_key->type);
 		wlan_objmgr_peer_release_ref(peer, WLAN_CRYPTO_ID);
 		if (!key)
 			return QDF_STATUS_E_INVAL;

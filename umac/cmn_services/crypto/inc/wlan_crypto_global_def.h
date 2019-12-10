@@ -94,6 +94,8 @@
 #define WLAN_CRYPTO_KEY_SWDECRYPT    (0x100)
 /* host-based demic */
 #define WLAN_CRYPTO_KEY_SWDEMIC      (0x200)
+/* get pn from fw for key */
+#define WLAN_CRYPTO_KEY_GET_PN       (0x400)
 
 #define WLAN_CRYPTO_KEY_SWCRYPT      (WLAN_CRYPTO_KEY_SWENCRYPT \
 						| WLAN_CRYPTO_KEY_SWDECRYPT)
@@ -352,6 +354,7 @@ struct wlan_crypto_req_key {
  * @delkey: function pointer to delkey in hw
  * @defaultkey: function pointer to set default key
  * @set_key: converged function pointer to set key in hw
+ * @getpn: function pointer to get current pn value of peer
  */
 
 struct wlan_lmac_if_crypto_tx_ops {
@@ -369,6 +372,8 @@ struct wlan_lmac_if_crypto_tx_ops {
 	QDF_STATUS (*set_key)(struct wlan_objmgr_vdev *vdev,
 			      struct wlan_crypto_key *key,
 			      enum wlan_crypto_key_type key_type);
+	QDF_STATUS(*getpn)(struct wlan_objmgr_vdev *vdev,
+			   uint8_t *macaddr, uint32_t key_type);
 };
 
 /**
