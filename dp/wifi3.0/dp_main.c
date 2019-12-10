@@ -3055,7 +3055,9 @@ fail1:
  */
 static void dp_soc_cmn_cleanup(struct dp_soc *soc)
 {
-	dp_tx_soc_detach(soc);
+	if (!dp_is_soc_reinit(soc)) {
+		dp_tx_soc_detach(soc);
+	}
 
 	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
 
@@ -4242,6 +4244,10 @@ static void dp_soc_detach(void *txrx_soc)
 	/* Common rings */
 	qdf_minidump_remove(soc->wbm_desc_rel_ring.base_vaddr_unaligned);
 	dp_srng_cleanup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
+
+	if (dp_is_soc_reinit(soc)) {
+		dp_tx_soc_detach(soc);
+	}
 
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
