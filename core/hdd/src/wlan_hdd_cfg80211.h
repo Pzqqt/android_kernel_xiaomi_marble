@@ -213,7 +213,6 @@ typedef enum {
 
 #define CFG_NON_AGG_RETRY_MAX                  (31)
 #define CFG_AGG_RETRY_MAX                      (31)
-#define CFG_MGMT_RETRY_MAX                     (31)
 #define CFG_CTRL_RETRY_MAX                     (31)
 #define CFG_PROPAGATION_DELAY_MAX              (63)
 #define CFG_PROPAGATION_DELAY_BASE             (64)

@@ -7087,10 +7087,12 @@ static int hdd_config_mgmt_retry(struct hdd_adapter *adapter,
 {
 	uint8_t retry;
 	int param_id;
+	uint8_t max_mgmt_retry;
 
 	retry = nla_get_u8(attr);
-	retry = retry > CFG_MGMT_RETRY_MAX ?
-		CFG_MGMT_RETRY_MAX : retry;
+	max_mgmt_retry = (cfg_max(CFG_MGMT_RETRY_MAX));
+	retry = retry > max_mgmt_retry ?
+		max_mgmt_retry : retry;
 	param_id = WMI_PDEV_PARAM_MGMT_RETRY_LIMIT;
 
 	return wma_cli_set_command(adapter->vdev_id, param_id,

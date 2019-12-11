@@ -617,6 +617,29 @@
 						 0, \
 						 "Enable/disable 4 way handshake offload to firmware")
 
+/*
+ * <ini>
+ * mgmt_retry_max - Maximum Retries for mgmt frames
+ * @Min: 0
+ * @Max: 31
+ * @Default: 15
+ *
+ * This ini is used to set maximum retries for mgmt frames
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_MGMT_RETRY_MAX CFG_INI_UINT( \
+	"mgmt_retry_max", \
+	0, \
+	31, \
+	15, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Max retries for mgmt frames")
+
 #define CFG_GENERIC_ALL \
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
@@ -644,5 +667,6 @@
 	CFG(CFG_ITO_REPEAT_COUNT) \
 	CFG(CFG_ENABLE_BEACON_RECEPTION_STATS) \
 	CFG(CFG_REMOVE_TIME_STAMP_SYNC_CMD) \
+	CFG(CFG_MGMT_RETRY_MAX) \
 
 #endif /* __CFG_MLME_GENERIC_H */

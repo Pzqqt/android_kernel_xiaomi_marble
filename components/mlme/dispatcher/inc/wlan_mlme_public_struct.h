@@ -1120,6 +1120,7 @@ struct wlan_mlme_chainmask {
  * mode
  * @disable_4way_hs_offload: enable/disable 4 way handshake offload to firmware
  * @as_enabled: antenna sharing enabled or not (FW capability)
+ * @mgmt_retry_max: maximum retries for management frame
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1151,6 +1152,7 @@ struct wlan_mlme_generic {
 	bool data_stall_recovery_fw_support;
 	bool disable_4way_hs_offload;
 	bool as_enabled;
+	uint8_t mgmt_retry_max;
 };
 
 /*
