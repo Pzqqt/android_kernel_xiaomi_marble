@@ -409,7 +409,9 @@ static void hdd_nud_process_failure_event(struct hdd_adapter *adapter)
 			qdf_sched_work(0, &adapter
 					->nud_tracking.nud_event_work);
 		} else {
-			hdd_nud_set_tracking(adapter, NUD_NONE, false);
+			hdd_debug("NUD_START [0x%x]", NUD_INCOMPLETE);
+			hdd_nud_capture_stats(adapter, NUD_INCOMPLETE);
+			hdd_nud_set_tracking(adapter, NUD_INCOMPLETE, true);
 		}
 	} else {
 		hdd_debug("NUD FAILED -> Current State [0x%x]", curr_state);
