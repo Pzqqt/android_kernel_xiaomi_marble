@@ -1806,7 +1806,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	uint8_t vdev_id = 0;
 	bool vht_enabled = false;
 	tDot11fIEExtCap extr_ext_cap;
-	bool extr_ext_flag = true;
+	bool extr_ext_flag = true, is_open_auth = false;
 	tpSirMacMgmtHdr mac_hdr;
 	uint32_t ie_offset = 0;
 	uint8_t *p_ext_cap = NULL;
@@ -2180,19 +2180,27 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 
 		/* Include the EID and length fields */
 		mbo_ie_len = mbo_ie[1] + 2;
-		pe_debug("Stripped MBO IE of length %d", mbo_ie_len);
 
-		peer = wlan_objmgr_get_peer_by_mac(mac_ctx->psoc,
-						   mlm_assoc_req->peerMacAddr,
-						   WLAN_MBO_ID);
-		if (peer && !mlme_get_peer_pmf_status(peer)) {
-			pe_debug("Peer doesn't support PMF, Don't add MBO IE");
-			qdf_mem_free(mbo_ie);
-			mbo_ie = NULL;
-			mbo_ie_len = 0;
+		if (pe_session->connected_akm == ANI_AKM_TYPE_NONE)
+			is_open_auth = true;
+
+		pe_debug("Stripped MBO IE of length %d is_open_auth:%d",
+			 mbo_ie_len, is_open_auth);
+
+		if (!is_open_auth) {
+			peer = wlan_objmgr_get_peer_by_mac(
+						mac_ctx->psoc,
+						mlm_assoc_req->peerMacAddr,
+						WLAN_MBO_ID);
+			if (peer && !mlme_get_peer_pmf_status(peer)) {
+				pe_debug("Peer doesn't support PMF, Don't add MBO IE");
+				qdf_mem_free(mbo_ie);
+				mbo_ie = NULL;
+				mbo_ie_len = 0;
+			}
+			if (peer)
+				wlan_objmgr_peer_release_ref(peer, WLAN_MBO_ID);
 		}
-		if (peer)
-			wlan_objmgr_peer_release_ref(peer, WLAN_MBO_ID);
 	}
 
 	/*

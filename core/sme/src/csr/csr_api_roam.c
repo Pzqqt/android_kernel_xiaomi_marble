@@ -11840,6 +11840,7 @@ csr_convert_csr_to_ani_akm_type(enum csr_akm_type akm_type)
 	enum ani_akm_type ani_akm;
 
 	switch (akm_type) {
+	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
 	case eCSR_AUTH_TYPE_NONE:
 		return ANI_AKM_TYPE_NONE;
 	case eCSR_AUTH_TYPE_WPA:
