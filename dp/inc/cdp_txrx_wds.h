@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,24 +30,24 @@
  *  This flag sets the wds rx policy on the vdev. Rx frames not compliant
  *  with the policy will be dropped.
  *
- * @param vdev - the data virtual device object
+ * @param vdev_id - id of the data virtual device object
  * @param val - the wds rx policy bitmask
- * @return - void
+ * @return - QDF_STATUS
  */
-static inline void
+static inline QDF_STATUS
 cdp_set_wds_rx_policy(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev,
+	uint8_t vdev_id,
 	u_int32_t val)
 {
 	if (!soc || !soc->ops || !soc->ops->wds_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->wds_ops->txrx_set_wds_rx_policy)
-		return soc->ops->wds_ops->txrx_set_wds_rx_policy(vdev, val);
-	return;
+		soc->ops->wds_ops->txrx_set_wds_rx_policy(soc, vdev_id, val);
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -56,31 +56,34 @@ cdp_set_wds_rx_policy(ol_txrx_soc_handle soc,
  *  This flag sets the wds rx policy on the vdev. Rx frames not compliant
  *  with the policy will be dropped.
  *
- * @param vdev - the data virtual device object
+ * @param psoc - psoc object
+ * @param vdev_id - id of the data virtual device object
+ * @param peer_mac - peer mac address
  * @param val - the wds rx policy bitmask
- * @return - void
+ * @return - QDF_STATUS
  */
-static inline void
+static inline QDF_STATUS
 cdp_set_wds_tx_policy_update(ol_txrx_soc_handle soc,
-	struct cdp_peer *peer,
+	uint8_t vdev_id, uint8_t *peer_mac,
 	int wds_tx_ucast, int wds_tx_mcast)
 {
 	if (!soc || !soc->ops || !soc->ops->wds_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (soc->ops->wds_ops->txrx_wds_peer_tx_policy_update)
-		return soc->ops->wds_ops->txrx_wds_peer_tx_policy_update(
-				peer, wds_tx_ucast, wds_tx_mcast);
-	return;
+		soc->ops->wds_ops->txrx_wds_peer_tx_policy_update(
+				soc, vdev_id, peer_mac, wds_tx_ucast,
+				wds_tx_mcast);
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * cdp_vdev_set_wds() - Set/unset wds_enable flag in vdev
  * @soc - data path soc handle
- * @vdev - data path vap handle
+ * @vdev_id - id of data path vap handle
  * @val - value to be set in wds_en flag
  *
  *  This flag enables WDS source port learning feature on a vdev
@@ -88,10 +91,10 @@ cdp_set_wds_tx_policy_update(ol_txrx_soc_handle soc,
  * return 1 on success
  */
 static inline int
-cdp_vdev_set_wds(ol_txrx_soc_handle soc, void *vdev, uint32_t val)
+cdp_vdev_set_wds(ol_txrx_soc_handle soc, uint8_t vdev_id, uint32_t val)
 {
 	if (soc->ops->wds_ops->vdev_set_wds)
-		return soc->ops->wds_ops->vdev_set_wds(vdev, val);
+		return soc->ops->wds_ops->vdev_set_wds(soc, vdev_id, val);
 	return 0;
 }
 #endif

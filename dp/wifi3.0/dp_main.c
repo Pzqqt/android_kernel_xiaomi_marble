@@ -6144,17 +6144,23 @@ static uint8 *dp_get_vdev_mac_addr_wifi3(struct cdp_vdev *pvdev)
 
 /*
  * dp_vdev_set_wds() - Enable per packet stats
- * @vdev_handle: DP VDEV handle
+ * @soc: DP soc handle
+ * @vdev_id: id of DP VDEV handle
  * @val: value
  *
  * Return: none
  */
-static int dp_vdev_set_wds(void *vdev_handle, uint32_t val)
+static int dp_vdev_set_wds(struct cdp_soc_t *soc, uint8_t vdev_id, uint32_t val)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
+
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
 
 	vdev->wds_enabled = val;
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -6992,8 +6998,8 @@ void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
  *
  * Return: void
  */
-static void dp_vdev_getstats(void *vdev_handle,
-		struct cdp_dev_stats *stats)
+static void dp_vdev_getstats(struct cdp_vdev *vdev_handle,
+			     struct cdp_dev_stats *stats)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev;
@@ -7047,8 +7053,8 @@ static void dp_vdev_getstats(void *vdev_handle,
  *
  * Return: void
  */
-static void dp_pdev_getstats(void *pdev_handle,
-		struct cdp_dev_stats *stats)
+static void dp_pdev_getstats(struct cdp_pdev *pdev_handle,
+			     struct cdp_dev_stats *stats)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
@@ -7163,15 +7169,15 @@ void dp_print_napi_stats(struct dp_soc *soc)
  * dp_txrx_host_stats_clr(): Reinitialize the txrx stats
  * @vdev: DP_VDEV handle
  *
- * Return:void
+ * Return: QDF_STATUS
  */
-static inline void
+static inline QDF_STATUS
 dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 {
 	struct dp_peer *peer = NULL;
 
 	if (!vdev || !vdev->pdev)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
 	DP_STATS_CLR(vdev->pdev);
 	DP_STATS_CLR(vdev->pdev->soc);
@@ -7181,7 +7187,7 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		if (!peer)
-			return;
+			return QDF_STATUS_E_FAILURE;
 		DP_STATS_CLR(peer);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
@@ -7196,43 +7202,37 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 			     &vdev->stats,  vdev->vdev_id,
 			     UPDATE_VDEV_STATS, vdev->pdev->pdev_id);
 #endif
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
  * dp_get_host_peer_stats()- function to print peer stats
- * @pdev_handle: DP_PDEV handle
+ * @soc: dp_soc handle
  * @mac_addr: mac address of the peer
  *
- * Return: void
+ * Return: QDF_STATUS
  */
-static void
-dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
+static QDF_STATUS
+dp_get_host_peer_stats(struct cdp_soc_t *soc, uint8_t *mac_addr)
 {
-	struct dp_peer *peer;
-
-	if (!mac_addr) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid MAC address\n");
-		return;
-	}
-
-	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev_handle, mac_addr);
-
-	if (!peer) {
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+						      mac_addr, 0,
+						      DP_VDEV_ALL);
+	if (!peer || peer->delete_in_progress) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid peer\n", __func__);
-		return;
-	}
-
-	/* Making sure the peer is for the specific pdev */
-	if ((struct dp_pdev *)pdev_handle != peer->vdev->pdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Peer is not for this pdev\n", __func__);
-		return;
+		status = QDF_STATUS_E_FAILURE;
+		goto fail;
 	}
 
 	dp_print_peer_stats(peer);
 	dp_peer_rxtid_stats(peer, dp_rx_tid_stats_cb, NULL);
+fail:
+	if (peer)
+		dp_peer_unref_delete(peer);
+
+	return status;
 }
 
 /**
@@ -7283,10 +7283,9 @@ static void dp_txrx_stats_help(void)
  * Return: 0 on success, print error message in case of failure
  */
 static int
-dp_print_host_stats(struct cdp_vdev *vdev_handle,
+dp_print_host_stats(struct dp_vdev *vdev,
 		    struct cdp_txrx_stats_req *req)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
 	enum cdp_host_txrx_stats type =
 			dp_stats_mapping_table[req->stats][STATS_HOST];
@@ -7322,7 +7321,8 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle,
 		dp_print_pdev_rx_mon_stats(pdev);
 		break;
 	case TXRX_REO_QUEUE_STATS:
-		dp_get_host_peer_stats((struct cdp_pdev *)pdev, req->peer_addr);
+		dp_get_host_peer_stats((struct cdp_soc_t *)pdev->soc,
+				       req->peer_addr);
 		break;
 	case TXRX_SOC_CFG_PARAMS:
 		dp_print_soc_cfg_params(pdev->soc);
@@ -7499,11 +7499,9 @@ dp_set_bpr_enable(struct cdp_pdev *pdev_handle, int val)
  * Return: void
  */
 static void
-dp_pdev_tid_stats_ingress_inc(struct cdp_pdev *pdev, uint32_t val)
+dp_pdev_tid_stats_ingress_inc(struct dp_pdev *pdev, uint32_t val)
 {
-	struct dp_pdev *dp_pdev = (struct dp_pdev *)pdev;
-
-	dp_pdev->stats.tid_stats.ingress_stack += val;
+	pdev->stats.tid_stats.ingress_stack += val;
 }
 
 /*
@@ -7514,11 +7512,9 @@ dp_pdev_tid_stats_ingress_inc(struct cdp_pdev *pdev, uint32_t val)
  * Return: void
  */
 static void
-dp_pdev_tid_stats_osif_drop(struct cdp_pdev *pdev, uint32_t val)
+dp_pdev_tid_stats_osif_drop(struct dp_pdev *pdev, uint32_t val)
 {
-	struct dp_pdev *dp_pdev = (struct dp_pdev *)pdev;
-
-	dp_pdev->stats.tid_stats.osif_drop += val;
+	pdev->stats.tid_stats.osif_drop += val;
 }
 
 
@@ -7596,14 +7592,20 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 
 /*
  * dp_enable_enhanced_stats()- API to enable enhanced statistcs
- * @pdev_handle: DP_PDEV handle
+ * @soc_handle: DP_SOC handle
+ * @pdev_id: id of DP_PDEV handle
  *
- * Return: void
+ * Return: QDF_STATUS
  */
-static void
-dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
+static QDF_STATUS
+dp_enable_enhanced_stats(struct cdp_soc_t *soc, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
 
 	if (pdev->enhanced_stats_en == 0)
 		dp_cal_client_timer_start(pdev->cal_client_ctx);
@@ -7621,18 +7623,26 @@ dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 					  DP_PPDU_STATS_CFG_BPR_ENH,
 					  pdev->pdev_id);
 	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
  * dp_disable_enhanced_stats()- API to disable enhanced statistcs
- * @pdev_handle: DP_PDEV handle
  *
- * Return: void
+ * @param soc - the soc handle
+ * @param pdev_id - pdev_id of pdev
+ * @return - QDF_STATUS
  */
-static void
-dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
+static QDF_STATUS
+dp_disable_enhanced_stats(struct cdp_soc_t *soc, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
 
 	if (pdev->enhanced_stats_en == 1)
 		dp_cal_client_timer_stop(pdev->cal_client_ctx);
@@ -7650,11 +7660,14 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added &&
 	    !pdev->monitor_vdev)
 		dp_ppdu_ring_reset(pdev);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
  * dp_get_fw_peer_stats()- function to print peer stats
- * @pdev_handle: DP_PDEV handle
+ * @soc: soc handle
+ * @pdev_id : id of the pdev handle
  * @mac_addr: mac address of the peer
  * @cap: Type of htt stats requested
  * @is_wait: if set, wait on completion from firmware response
@@ -7664,18 +7677,24 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
  *	2: HTT_PEER_STATS_REQ_MODE_QUERY_TQM
  *	3: HTT_PEER_STATS_REQ_MODE_FLUSH_TQM
  *
- * Return: void
+ * Return: QDF_STATUS
  */
-static void
-dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
-		uint32_t cap, uint32_t is_wait)
+static QDF_STATUS
+dp_get_fw_peer_stats(struct cdp_soc_t *soc, uint8_t pdev_id,
+		     uint8_t *mac_addr,
+		     uint32_t cap, uint32_t is_wait)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	int i;
 	uint32_t config_param0 = 0;
 	uint32_t config_param1 = 0;
 	uint32_t config_param2 = 0;
 	uint32_t config_param3 = 0;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
 
 	HTT_DBG_EXT_STATS_PEER_INFO_IS_MAC_ADDR_SET(config_param0, 1);
 	config_param0 |= (1 << (cap + 1));
@@ -7707,6 +7726,8 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 					  0, 0, 0);
 	}
 
+	return QDF_STATUS_SUCCESS;
+
 }
 
 /* This struct definition will be removed from here
@@ -7722,23 +7743,32 @@ struct httstats_cmd_req {
 
 /*
  * dp_get_htt_stats: function to process the httstas request
- * @pdev_handle: DP pdev handle
+ * @soc: DP soc handle
+ * @pdev_id: id of pdev handle
  * @data: pointer to request data
  * @data_len: length for request data
  *
- * return: void
+ * return: QDF_STATUS
  */
-static void
-dp_get_htt_stats(struct cdp_pdev *pdev_handle, void *data, uint32_t data_len)
+static QDF_STATUS
+dp_get_htt_stats(struct cdp_soc_t *soc, uint8_t pdev_id, void *data,
+		 uint32_t data_len)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct httstats_cmd_req *req = (struct httstats_cmd_req *)data;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
 
 	QDF_ASSERT(data_len == sizeof(struct httstats_cmd_req));
 	dp_h2t_ext_stats_msg_send(pdev, req->stats_id,
 				req->config_param0, req->config_param1,
 				req->config_param2, req->config_param3,
 				req->cookie, 0, 0);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -7769,10 +7799,10 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 			pdev->latency_capture_enable = false;
 		break;
 	case CDP_INGRESS_STATS:
-		dp_pdev_tid_stats_ingress_inc(pdev_handle, val);
+		dp_pdev_tid_stats_ingress_inc(pdev, val);
 		break;
 	case CDP_OSIF_DROP:
-		dp_pdev_tid_stats_osif_drop(pdev_handle, val);
+		dp_pdev_tid_stats_osif_drop(pdev, val);
 		break;
 	case CDP_CONFIG_ENH_RX_CAPTURE:
 		return dp_config_enh_rx_capture(pdev_handle, val);
@@ -8015,18 +8045,26 @@ static int dp_txrx_get_ratekbps(int preamb, int mcs,
 #endif
 
 /* dp_txrx_get_pdev_stats - Returns cdp_pdev_stats
- * @peer_handle: DP pdev handle
+ * @soc: DP soc handle
+ * @pdev_id: id of DP pdev handle
+ * @pdev_stats: buffer to copy to
  *
- * return : cdp_pdev_stats pointer
+ * return : status success/failure
  */
-static struct cdp_pdev_stats*
-dp_txrx_get_pdev_stats(struct cdp_pdev *pdev_handle)
+static QDF_STATUS
+dp_txrx_get_pdev_stats(struct cdp_soc_t *soc, uint8_t pdev_id,
+		       struct cdp_pdev_stats *pdev_stats)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
 
 	dp_aggregate_pdev_stats(pdev);
 
-	return &pdev->stats;
+	qdf_mem_copy(pdev_stats, &pdev->stats, sizeof(struct cdp_pdev_stats));
+	return QDF_STATUS_SUCCESS;
 }
 
 /* dp_txrx_update_vdev_me_stats(): Update vdev ME stats sent from CDP
@@ -8035,18 +8073,10 @@ dp_txrx_get_pdev_stats(struct cdp_pdev *pdev_handle)
  *
  * Returns: void
  */
-static void dp_txrx_update_vdev_me_stats(struct cdp_vdev *vdev_handle,
+static void dp_txrx_update_vdev_me_stats(struct dp_vdev *vdev,
 					 void *buf)
 {
-	struct dp_vdev *vdev = NULL;
 	struct cdp_tx_ingress_stats *host_stats = NULL;
-
-	if (!vdev_handle) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid vdev handle");
-		return;
-	}
-	vdev = (struct dp_vdev *)vdev_handle;
 
 	if (!buf) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -8073,55 +8103,96 @@ static void dp_txrx_update_vdev_me_stats(struct cdp_vdev *vdev_handle,
 }
 
 /* dp_txrx_update_vdev_host_stats(): Update stats sent through CDP
- * @vdev_handle: DP vdev handle
+ * @soc: DP soc handle
+ * @vdev_id: id of DP vdev handle
  * @buf: buffer containing specific stats structure
  * @stats_id: stats type
  *
- * Returns: void
+ * Returns: QDF_STATUS
  */
-static void dp_txrx_update_vdev_host_stats(struct cdp_vdev *vdev_handle,
-					   void *buf,
-					   uint16_t stats_id)
+static QDF_STATUS dp_txrx_update_vdev_host_stats(struct cdp_soc_t *soc,
+						 uint8_t vdev_id,
+						 void *buf,
+						 uint16_t stats_id)
 {
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid vdev handle");
+		return QDF_STATUS_E_FAILURE;
+	}
 	switch (stats_id) {
 	case DP_VDEV_STATS_PKT_CNT_ONLY:
 		break;
 	case DP_VDEV_STATS_TX_ME:
-		dp_txrx_update_vdev_me_stats(vdev_handle, buf);
+		dp_txrx_update_vdev_me_stats(vdev, buf);
 		break;
 	default:
 		qdf_info("Invalid stats_id %d", stats_id);
 		break;
 	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /* dp_txrx_get_peer_stats - will return cdp_peer_stats
- * @peer_handle: DP_PEER handle
- *
- * return : cdp_peer_stats pointer
+ * @soc: soc handle
+ * @vdev_id: id of vdev handle
+ * @peer_mac: mac of DP_PEER handle
+ * @peer_stats: buffer to copy to
+ * return : status success/failure
  */
-static struct cdp_peer_stats*
-		dp_txrx_get_peer_stats(struct cdp_peer *peer_handle)
+static QDF_STATUS
+dp_txrx_get_peer_stats(struct cdp_soc_t *soc, uint8_t vdev_id,
+		       uint8_t *peer_mac, struct cdp_peer_stats *peer_stats)
 {
-	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+						       peer_mac, 0, vdev_id);
 
-	qdf_assert(peer);
+	if (!peer || peer->delete_in_progress) {
+		status = QDF_STATUS_E_FAILURE;
+		goto fail;
+	} else
+		qdf_mem_copy(peer_stats, &peer->stats,
+			     sizeof(struct cdp_peer_stats));
 
-	return &peer->stats;
+fail:
+	if (peer)
+		dp_peer_unref_delete(peer);
+
+	return status;
 }
 
 /* dp_txrx_reset_peer_stats - reset cdp_peer_stats for particular peer
- * @peer_handle: DP_PEER handle
+ * @soc: soc handle
+ * @vdev_id: id of vdev handle
+ * @peer_mac: mac of DP_PEER handle
  *
- * return : void
+ * return : QDF_STATUS
  */
-static void dp_txrx_reset_peer_stats(struct cdp_peer *peer_handle)
+static QDF_STATUS
+dp_txrx_reset_peer_stats(struct cdp_soc_t *soc, uint8_t vdev_id,
+			 uint8_t *peer_mac)
 {
-	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+						       peer_mac, 0, vdev_id);
 
-	qdf_assert(peer);
+	if (!peer || peer->delete_in_progress) {
+		status = QDF_STATUS_E_FAILURE;
+		goto fail;
+	}
 
 	qdf_mem_zero(&peer->stats, sizeof(peer->stats));
+
+fail:
+	if (peer)
+		dp_peer_unref_delete(peer);
+
+	return status;
 }
 
 /* dp_txrx_get_vdev_stats - Update buffer with cdp_vdev_stats
@@ -8130,13 +8201,14 @@ static void dp_txrx_reset_peer_stats(struct cdp_peer *peer_handle)
  *
  * return : int
  */
-static int  dp_txrx_get_vdev_stats(struct cdp_vdev *vdev_handle, void *buf,
-				   bool is_aggregate)
+static int  dp_txrx_get_vdev_stats(struct cdp_soc_t *soc, uint8_t vdev_id,
+				   void *buf, bool is_aggregate)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
 	struct cdp_vdev_stats *vdev_stats;
 	struct dp_pdev *pdev;
-	struct dp_soc *soc;
 
 	if (!vdev)
 		return 1;
@@ -8145,13 +8217,12 @@ static int  dp_txrx_get_vdev_stats(struct cdp_vdev *vdev_handle, void *buf,
 	if (!pdev)
 		return 1;
 
-	soc = pdev->soc;
 	vdev_stats = (struct cdp_vdev_stats *)buf;
 
 	if (is_aggregate) {
-		qdf_spin_lock_bh(&soc->peer_ref_mutex);
+		qdf_spin_lock_bh(&((struct dp_soc *)soc)->peer_ref_mutex);
 		dp_aggregate_vdev_stats(vdev, buf);
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+		qdf_spin_unlock_bh(&((struct dp_soc *)soc)->peer_ref_mutex);
 	} else {
 		qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
 	}
@@ -8178,17 +8249,23 @@ static int dp_get_total_per(struct cdp_pdev *pdev_handle)
 
 /*
  * dp_txrx_stats_publish(): publish pdev stats into a buffer
- * @pdev_handle: DP_PDEV handle
+ * @pdev_handle: DP soc handle
+ * @pdev_id: id of DP_PDEV handle
  * @buf: to hold pdev_stats
  *
  * Return: int
  */
 static int
-dp_txrx_stats_publish(struct cdp_pdev *pdev_handle, struct cdp_stats_extd *buf)
+dp_txrx_stats_publish(struct cdp_soc_t *soc, uint8_t pdev_id,
+		      struct cdp_stats_extd *buf)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	struct cdp_pdev_stats *buffer = (struct cdp_pdev_stats *) buf;
 	struct cdp_txrx_stats_req req = {0,};
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+
+	if (!pdev)
+		return TXRX_STATS_LEVEL_OFF;
 
 	dp_aggregate_pdev_stats(pdev);
 	req.stats = (enum cdp_stats)HTT_DBG_EXT_STATS_PDEV_TX;
@@ -8206,7 +8283,7 @@ dp_txrx_stats_publish(struct cdp_pdev *pdev_handle, struct cdp_stats_extd *buf)
 				req.cookie_val, 0);
 
 	msleep(DP_MAX_SLEEP_TIME);
-	qdf_mem_copy(buffer, &pdev->stats, sizeof(pdev->stats));
+	qdf_mem_copy(buf, &pdev->stats, sizeof(struct cdp_stats_extd));
 
 	return TXRX_STATS_LEVEL;
 }
@@ -8276,10 +8353,9 @@ static void dp_set_hmmc_tid_val_wifi3(struct cdp_pdev *pdev_handle,
  *
  * return: int
  */
-static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
-		struct cdp_txrx_stats_req *req)
+static int dp_fw_stats_process(struct dp_vdev *vdev,
+			       struct cdp_txrx_stats_req *req)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev = NULL;
 	uint32_t stats = req->stats;
 	uint8_t mac_id = req->mac_id;
@@ -8376,12 +8452,12 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_soc_t *soc_handle,
 	if (fw_stats != TXRX_FW_STATS_INVALID) {
 		/* update request with FW stats type */
 		req->stats = fw_stats;
-		return dp_fw_stats_process(vdev, req);
+		return dp_fw_stats_process((struct dp_vdev *)vdev, req);
 	}
 
 	if ((host_stats != TXRX_HOST_STATS_INVALID) &&
 			(host_stats <= TXRX_HOST_STATS_MAX))
-		return dp_print_host_stats(vdev, req);
+		return dp_print_host_stats((struct dp_vdev *)vdev, req);
 	else
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"Wrong Input for TxRx Stats");
@@ -8883,7 +8959,6 @@ dp_set_rx_flow_tag(struct cdp_pdev *pdev_handle,
 {
 	return QDF_STATUS_SUCCESS;
 }
-
 /**
  * dp_dump_rx_flow_tag_stats - dump the number of packets tagged for
  * given flow 5-tuple
@@ -8921,12 +8996,14 @@ static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void dp_set_rate_stats_cap(struct cdp_soc_t *soc_hdl,
-				  uint8_t val)
+static QDF_STATUS dp_set_rate_stats_cap(struct cdp_soc_t *soc_hdl,
+					uint8_t val)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
 	soc->wlanstats_enabled = val;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static void dp_soc_set_rate_stats_ctx(struct cdp_soc_t *soc_handle,
@@ -9043,7 +9120,8 @@ static uint32_t dp_get_cfg(void *soc, enum cdp_dp_cfg cfg)
 #ifdef PEER_FLOW_CONTROL
 /**
  * dp_tx_flow_ctrl_configure_pdev() - Configure flow control params
- * @pdev_hdl: datapath pdev handle
+ * @soc_handle: datapath soc handle
+ * @pdev_id: id of datapath pdev handle
  * @param: ol ath params
  * @value: value of the flag
  * @buff: Buffer to be passed
@@ -9053,12 +9131,15 @@ static uint32_t dp_get_cfg(void *soc, enum cdp_dp_cfg cfg)
  *
  * Return: 0 for success. nonzero for failure.
  */
-static uint32_t dp_tx_flow_ctrl_configure_pdev(void *pdev_handle,
+static uint32_t dp_tx_flow_ctrl_configure_pdev(struct cdp_soc_t *soc_handle,
+					       uint8_t pdev_id,
 					       enum _ol_ath_param_t param,
 					       uint32_t value, void *buff)
 {
-	struct dp_soc *soc = NULL;
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
 
 	if (qdf_unlikely(!pdev))
 		return 1;
@@ -9774,8 +9855,7 @@ dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 	if (!peer)
 		return NULL;
 
-	DP_TRACE(INFO, "%s: peer %pK mac: %pM", __func__, peer,
-		 peer->mac_addr.raw);
+	dp_info_rl("peer %pK mac: %pM", peer, peer->mac_addr.raw);
 
 	return peer;
 }

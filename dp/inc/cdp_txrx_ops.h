@@ -29,6 +29,8 @@
 #include "cdp_txrx_handle.h"
 #include <cdp_txrx_mon_struct.h>
 #include "wlan_objmgr_psoc_obj.h"
+#include <wmi_unified_api.h>
+#include <wdi_event_api.h>
 
 #ifdef IPA_OFFLOAD
 #ifdef CONFIG_IPA_WDI_UNIFIED_API
@@ -791,137 +793,155 @@ struct cdp_pktcapture_ops {
 #endif /* #ifdef WLAN_FEATURE_PKT_CAPTURE */
 
 struct cdp_host_stats_ops {
-	int (*txrx_host_stats_get)(struct cdp_vdev *vdev,
-			struct ol_txrx_stats_req *req);
+	int (*txrx_host_stats_get)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				   struct ol_txrx_stats_req *req);
 
-	void (*txrx_host_stats_clr)(struct cdp_vdev *vdev);
+	QDF_STATUS (*txrx_host_stats_clr)(struct cdp_soc_t *soc,
+					  uint8_t vdev_id);
 
-	void (*txrx_host_ce_stats)(struct cdp_vdev *vdev);
+	QDF_STATUS
+	(*txrx_host_ce_stats)(struct cdp_soc_t *soc, uint8_t vdev_id);
 
-	int (*txrx_stats_publish)(struct cdp_pdev *pdev,
-			struct cdp_stats_extd *buf);
+	int (*txrx_stats_publish)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				  struct cdp_stats_extd *buf);
 	/**
 	 * @brief Enable enhanced stats functionality.
 	 *
-	 * @param pdev - the physical device object
-	 * @return - void
+	 * @param soc - the soc handle
+	 * @param pdev_id - pdev_id of pdev
+	 * @return - QDF_STATUS
 	 */
-	void (*txrx_enable_enhanced_stats)(struct cdp_pdev *pdev);
+	QDF_STATUS (*txrx_enable_enhanced_stats)(struct cdp_soc_t *soc,
+						 uint8_t pdev_id);
 
 	/**
 	 * @brief Disable enhanced stats functionality.
 	 *
-	 * @param pdev - the physical device object
-	 * @return - void
+	 * @param soc - the soc handle
+	 * @param pdev_id - pdev_id of pdev
+	 * @return - QDF_STATUS
 	 */
-	void (*txrx_disable_enhanced_stats)(struct cdp_pdev *pdev);
+	QDF_STATUS (*txrx_disable_enhanced_stats)(struct cdp_soc_t *soc,
+						  uint8_t pdev_id);
 
-	/**
-	 * @brief Get the desired stats from the message.
-	 *
-	 * @param pdev - the physical device object
-	 * @param stats_base - stats buffer received from FW
-	 * @param type - stats type.
-	 * @return - pointer to requested stat identified by type
-	 */
-	uint32_t * (*txrx_get_stats_base)(struct cdp_pdev *pdev,
-			uint32_t *stats_base, uint32_t msg_len, uint8_t type);
-	void
-		(*tx_print_tso_stats)(struct cdp_vdev *vdev);
+	QDF_STATUS
+		(*tx_print_tso_stats)(struct cdp_soc_t *soc, uint8_t vdev_id);
 
-	void
-		(*tx_rst_tso_stats)(struct cdp_vdev *vdev);
+	QDF_STATUS
+		(*tx_rst_tso_stats)(struct cdp_soc_t *soc, uint8_t vdev_id);
 
-	void
-		(*tx_print_sg_stats)(struct cdp_vdev *vdev);
+	QDF_STATUS
+		(*tx_print_sg_stats)(struct cdp_soc_t *soc, uint8_t vdev_id);
 
-	void
-		(*tx_rst_sg_stats)(struct cdp_vdev *vdev);
+	QDF_STATUS
+		(*tx_rst_sg_stats)(struct cdp_soc_t *soc, uint8_t vdev_id);
 
-	void
-		(*print_rx_cksum_stats)(struct cdp_vdev *vdev);
+	QDF_STATUS
+		(*print_rx_cksum_stats)(struct cdp_soc_t *soc, uint8_t vdev_id);
 
-	void
-		(*rst_rx_cksum_stats)(struct cdp_vdev *vdev);
+	QDF_STATUS
+		(*rst_rx_cksum_stats)(struct cdp_soc_t *soc, uint8_t vdev_id);
 
-	A_STATUS
-		(*txrx_host_me_stats)(struct cdp_vdev *vdev);
+	QDF_STATUS
+		(*txrx_host_me_stats)(struct cdp_soc_t *soc, uint8_t vdev_id);
 
-	void
-		(*txrx_per_peer_stats)(struct cdp_pdev *pdev, char *addr);
+	QDF_STATUS
+		(*txrx_per_peer_stats)(struct cdp_soc_t *soc, uint8_t *addr);
 
-	int (*txrx_host_msdu_ttl_stats)(struct cdp_vdev *vdev,
-			struct ol_txrx_stats_req *req);
+	int (*txrx_host_msdu_ttl_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
+					struct ol_txrx_stats_req *req);
 
-	void
-		(*print_lro_stats)(struct cdp_vdev *vdev);
+	int (*ol_txrx_update_peer_stats)(struct cdp_soc_t *soc,
+					 uint8_t pdev_id,
+					 uint8_t *addr, void *stats,
+					 uint32_t last_tx_rate_mcs,
+					 uint32_t stats_id);
 
-	void
-		(*reset_lro_stats)(struct cdp_vdev *vdev);
+	QDF_STATUS
+		(*get_fw_peer_stats)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				     uint8_t *addr,
+				     uint32_t cap, uint32_t copy_stats);
 
-	void
-		(*get_fw_peer_stats)(struct cdp_pdev *pdev, uint8_t *addr,
-				uint32_t cap, uint32_t copy_stats);
-	void
-		(*get_htt_stats)(struct cdp_pdev *pdev, void *data,
-				uint32_t data_len);
-	void
-		(*txrx_update_pdev_stats)(struct cdp_pdev *pdev, void *data,
+	QDF_STATUS
+		(*get_htt_stats)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				 void *data,
+				 uint32_t data_len);
+	QDF_STATUS
+		(*txrx_update_pdev_stats)(struct cdp_soc_t *soc,
+					  uint8_t pdev_id, void *data,
 					  uint16_t stats_id);
-	struct cdp_peer_stats*
-		(*txrx_get_peer_stats)(struct cdp_peer *peer);
-	void
-		(*txrx_reset_peer_ald_stats)(struct cdp_peer *peer);
-	void
-		(*txrx_reset_peer_stats)(struct cdp_peer *peer);
+	QDF_STATUS
+		(*txrx_get_peer_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				       uint8_t *peer_mac,
+				       struct cdp_peer_stats *peer_stats);
+	QDF_STATUS
+		(*txrx_reset_peer_ald_stats)(struct cdp_soc_t *soc,
+					     uint8_t vdev_id,
+					     uint8_t *peer_mac);
+	QDF_STATUS
+		(*txrx_reset_peer_stats)(struct cdp_soc_t *soc,
+					 uint8_t vdev_id, uint8_t *peer_mac);
 	int
-		(*txrx_get_vdev_stats)(struct cdp_vdev *vdev, void *buf,
-				       bool is_aggregate);
+		(*txrx_get_vdev_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				       void *buf, bool is_aggregate);
 	int
 		(*txrx_process_wmi_host_vdev_stats)(ol_txrx_soc_handle soc,
 						    void *data, uint32_t len,
 						    uint32_t stats_id);
 	int
-		(*txrx_get_vdev_extd_stats)(struct cdp_vdev *vdev_handle,
-					    void *buffer);
-	void
-		(*txrx_update_vdev_stats)(struct cdp_vdev *vdev, void *buf,
+		(*txrx_get_vdev_extd_stats)(struct cdp_soc_t *soc,
+					    uint8_t vdev_id,
+					    wmi_host_vdev_extd_stats *buffer);
+	QDF_STATUS
+		(*txrx_update_vdev_stats)(struct cdp_soc_t *soc,
+					  uint8_t vdev_id, void *buf,
 					  uint16_t stats_id);
 	int
-		(*txrx_get_radio_stats)(struct cdp_pdev *pdev,
+		(*txrx_get_radio_stats)(struct cdp_soc_t *soc, uint8_t pdev_id,
 					void *buf);
-	struct cdp_pdev_stats*
-		(*txrx_get_pdev_stats)(struct cdp_pdev *pdev);
+	QDF_STATUS
+		(*txrx_get_pdev_stats)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				       struct cdp_pdev_stats *buf);
 	int
 		(*txrx_get_ratekbps)(int preamb, int mcs,
 				     int htflag, int gintval);
-	void
-		(*configure_rate_stats)(struct cdp_soc_t *soc,
-					uint8_t val);
+
+	QDF_STATUS
+	(*configure_rate_stats)(struct cdp_soc_t *soc, uint8_t val);
+
+	QDF_STATUS
+	(*txrx_update_peer_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				  uint8_t *peer_mac, void *stats,
+				  uint32_t last_tx_rate_mcs,
+				  uint32_t stats_id);
 };
 
 struct cdp_wds_ops {
-	void
-		(*txrx_set_wds_rx_policy)(struct cdp_vdev *vdev,
-				u_int32_t val);
-	void
-		(*txrx_wds_peer_tx_policy_update)(struct cdp_peer *peer,
-				int wds_tx_ucast, int wds_tx_mcast);
-	int (*vdev_set_wds)(void *vdev, uint32_t val);
+	QDF_STATUS
+	(*txrx_set_wds_rx_policy)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				  u_int32_t val);
+	QDF_STATUS
+	(*txrx_wds_peer_tx_policy_update)(struct cdp_soc_t *soc,
+					  uint8_t vdev_id, uint8_t *peer_mac,
+					  int wds_tx_ucast, int wds_tx_mcast);
+	int (*vdev_set_wds)(struct cdp_soc_t *soc, uint8_t vdev_id,
+			    uint32_t val);
 };
 
 struct cdp_raw_ops {
-	int (*txrx_get_nwifi_mode)(struct cdp_vdev *vdev);
+	int (*txrx_get_nwifi_mode)(struct cdp_soc_t *soc, uint8_t vdev_id);
 
-	void (*rsim_get_astentry)(struct cdp_vdev *vdev,
-				qdf_nbuf_t *pnbuf,
-				struct cdp_raw_ast *raw_ast);
+	QDF_STATUS
+	(*rsim_get_astentry)(struct cdp_soc_t *soc, uint8_t vdev_id,
+			     qdf_nbuf_t *pnbuf, struct cdp_raw_ast *raw_ast);
 };
 
 #ifdef PEER_FLOW_CONTROL
 struct cdp_pflow_ops {
-	uint32_t(*pflow_update_pdev_params)(void *,
-			enum _ol_ath_param_t, uint32_t, void *);
+	uint32_t (*pflow_update_pdev_params)(struct cdp_soc_t *soc,
+					     uint8_t pdev_id,
+					     enum _ol_ath_param_t,
+					     uint32_t, void *);
 };
 #endif /* PEER_FLOW_CONTROL */
 

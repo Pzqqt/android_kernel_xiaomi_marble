@@ -80,19 +80,6 @@ wlan_serialization_get_pending_list_next_node_using_psoc(
 		struct wlan_serialization_command *prev_cmd,
 		uint8_t is_cmd_for_pending_scan_queue);
 /**
- * wlan_serialization_get_active_list_count() - Return Active list count
- * @psoc: pointer to soc
- * @is_cmd_from_active_scan_queue: flag to determine whether command needed
- *				from scan or non-scan active queue
- *
- * Get the number of nodes present in active list
- *
- * Return: count number of active commands in queue
- */
-
-uint32_t wlan_serialization_get_active_list_count(struct wlan_objmgr_psoc *psoc,
-		uint8_t is_cmd_from_active_scan_queue);
-/**
  * wlan_serialization_get_pending_list_count() - Return pending list count
  * @psoc: pointer to soc
  * @is_cmd_from_pending_scan_queue: flag to determine whether command needed

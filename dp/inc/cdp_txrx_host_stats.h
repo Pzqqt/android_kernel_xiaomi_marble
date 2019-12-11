@@ -24,15 +24,17 @@
 #ifndef _CDP_TXRX_HOST_STATS_H_
 #define _CDP_TXRX_HOST_STATS_H_
 #include "cdp_txrx_handle.h"
+#include <wmi_unified_api.h>
 /**
  * cdp_host_stats_get: cdp call to get host stats
  * @soc: SOC handle
+ * @vdev_id: vdev id of vdev
  * @req: Requirement type
  *
  * return: 0 for Success, Failure returns error message
  */
 static inline int cdp_host_stats_get(ol_txrx_soc_handle soc,
-		struct cdp_vdev *vdev,
+		uint8_t vdev_id,
 		struct ol_txrx_stats_req *req)
 {
 	if (!soc || !soc->ops) {
@@ -46,7 +48,7 @@ static inline int cdp_host_stats_get(ol_txrx_soc_handle soc,
 	    !soc->ops->host_stats_ops->txrx_host_stats_get)
 		return 0;
 
-	return soc->ops->host_stats_ops->txrx_host_stats_get(vdev, req);
+	return soc->ops->host_stats_ops->txrx_host_stats_get(soc, vdev_id, req);
 }
 
 /**
@@ -81,46 +83,47 @@ static inline int cdp_host_stats_get_ratekbps(ol_txrx_soc_handle soc,
 
 /**
  * cdp_host_stats_clr: cdp call to clear host stats
- * @vdev: vdev handle
+ * @soc: soc handle
+ * @vdev_id: vdev handle id
  *
- * return: void
+ * return: QDF_STATUS
  */
-static inline void
-cdp_host_stats_clr(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+static inline QDF_STATUS
+cdp_host_stats_clr(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_host_stats_clr)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->txrx_host_stats_clr(vdev);
+	return soc->ops->host_stats_ops->txrx_host_stats_clr(soc, vdev_id);
 }
 
-static inline void
-cdp_host_ce_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+static inline QDF_STATUS
+cdp_host_ce_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_host_ce_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->txrx_host_ce_stats(vdev);
+	return soc->ops->host_stats_ops->txrx_host_ce_stats(soc, vdev_id);
 }
 
 static inline int cdp_stats_publish
-	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+	(ol_txrx_soc_handle soc, uint8_t pdev_id,
 	struct cdp_stats_extd *buf)
 {
 	if (!soc || !soc->ops) {
@@ -134,204 +137,176 @@ static inline int cdp_stats_publish
 	    !soc->ops->host_stats_ops->txrx_stats_publish)
 		return 0;
 
-	return soc->ops->host_stats_ops->txrx_stats_publish(pdev, buf);
+	return soc->ops->host_stats_ops->txrx_stats_publish(soc, pdev_id, buf);
 }
 
 /**
  * @brief Enable enhanced stats functionality.
  *
- * @param pdev - the physical device object
- * @return - void
+ * @param soc - the soc object
+ * @param pdev_id - id of the physical device object
+ * @return - QDF_STATUS
  */
-static inline void
-cdp_enable_enhanced_stats(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+static inline QDF_STATUS
+cdp_enable_enhanced_stats(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_enable_enhanced_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->txrx_enable_enhanced_stats
-			(pdev);
+	return soc->ops->host_stats_ops->txrx_enable_enhanced_stats
+			(soc, pdev_id);
 }
 
 /**
  * @brief Disable enhanced stats functionality.
  *
- * @param pdev - the physical device object
- * @return - void
+ * @param soc - the soc object
+ * @param pdev_id - id of the physical device object
+ * @return - QDF_STATUS
  */
-static inline void
-cdp_disable_enhanced_stats(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+static inline QDF_STATUS
+cdp_disable_enhanced_stats(ol_txrx_soc_handle soc, uint8_t pdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_disable_enhanced_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->txrx_disable_enhanced_stats
-			(pdev);
+	return soc->ops->host_stats_ops->txrx_disable_enhanced_stats
+			(soc, pdev_id);
 }
 
-/**
- * @brief Get the desired stats from the message.
- *
- * @param pdev - the physical device object
- * @param stats_base - stats buffer received from FW
- * @param type - stats type.
- * @return - pointer to requested stat identified by type
- */
-static inline uint32_t *cdp_get_stats_base
-	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-	uint32_t *stats_base, uint32_t msg_len, uint8_t type)
+static inline QDF_STATUS
+cdp_tx_print_tso_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return 0;
-	}
-
-	if (!soc->ops->host_stats_ops ||
-	    !soc->ops->host_stats_ops->txrx_get_stats_base)
-		return 0;
-
-	return (uint32_t *)soc->ops->host_stats_ops->txrx_get_stats_base
-			(pdev, stats_base, msg_len, type);
-}
-
-static inline void
-cdp_tx_print_tso_stats(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance", __func__);
-		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->tx_print_tso_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->tx_print_tso_stats(vdev);
+	return soc->ops->host_stats_ops->tx_print_tso_stats(soc, vdev_id);
 }
 
-static inline void
-cdp_tx_rst_tso_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+static inline QDF_STATUS
+cdp_tx_rst_tso_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->tx_rst_tso_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->tx_rst_tso_stats(vdev);
+	return soc->ops->host_stats_ops->tx_rst_tso_stats(soc, vdev_id);
 }
 
-static inline void
-cdp_tx_print_sg_stats(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev)
+static inline QDF_STATUS
+cdp_tx_print_sg_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->tx_print_sg_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->tx_print_sg_stats(vdev);
+	return soc->ops->host_stats_ops->tx_print_sg_stats(soc, vdev_id);
 }
 
-static inline void
-cdp_tx_rst_sg_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+static inline QDF_STATUS
+cdp_tx_rst_sg_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->tx_rst_sg_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->tx_rst_sg_stats(vdev);
+	return soc->ops->host_stats_ops->tx_rst_sg_stats(soc, vdev_id);
 }
 
-static inline void
-cdp_print_rx_cksum_stats(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev)
+static inline QDF_STATUS
+cdp_print_rx_cksum_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->print_rx_cksum_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->print_rx_cksum_stats(vdev);
+	return soc->ops->host_stats_ops->print_rx_cksum_stats(soc, vdev_id);
 }
 
-static inline void
-cdp_rst_rx_cksum_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+static inline QDF_STATUS
+cdp_rst_rx_cksum_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->rst_rx_cksum_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->rst_rx_cksum_stats(vdev);
+	return soc->ops->host_stats_ops->rst_rx_cksum_stats(soc, vdev_id);
 }
 
-static inline A_STATUS
-cdp_host_me_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+static inline QDF_STATUS
+cdp_host_me_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return 0;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_host_me_stats)
-		return 0;
+		return QDF_STATUS_E_FAILURE;
 
-	return soc->ops->host_stats_ops->txrx_host_me_stats(vdev);
+	return soc->ops->host_stats_ops->txrx_host_me_stats(soc, vdev_id);
 }
 
 /**
@@ -342,25 +317,25 @@ cdp_host_me_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
  *
  * return: status
  */
-static inline void cdp_per_peer_stats(ol_txrx_soc_handle soc,
-				      struct cdp_pdev *pdev, char *addr)
+static inline QDF_STATUS cdp_per_peer_stats(ol_txrx_soc_handle soc,
+					    uint8_t *addr)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_per_peer_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->txrx_per_peer_stats(pdev, addr);
+	return soc->ops->host_stats_ops->txrx_per_peer_stats(soc, addr);
 }
 
 static inline int cdp_host_msdu_ttl_stats(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev,
+	uint8_t vdev_id,
 	struct ol_txrx_stats_req *req)
 {
 	if (!soc || !soc->ops) {
@@ -375,106 +350,113 @@ static inline int cdp_host_msdu_ttl_stats(ol_txrx_soc_handle soc,
 		return 0;
 
 	return soc->ops->host_stats_ops->txrx_host_msdu_ttl_stats
-			(vdev, req);
+			(soc, vdev_id, req);
 }
 
-static inline void
-cdp_print_lro_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+static inline QDF_STATUS cdp_update_peer_stats(ol_txrx_soc_handle soc,
+					       uint8_t vdev_id, uint8_t *mac,
+					       void *stats,
+					       uint32_t last_tx_rate_mcs,
+					       uint32_t stats_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
-	    !soc->ops->host_stats_ops->print_lro_stats)
-		return;
+	    !soc->ops->host_stats_ops->txrx_update_peer_stats)
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->print_lro_stats(vdev);
+	return soc->ops->host_stats_ops->txrx_update_peer_stats
+			(soc, vdev_id, mac, stats, last_tx_rate_mcs, stats_id);
 }
 
-static inline void
-cdp_reset_lro_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+static inline QDF_STATUS cdp_get_dp_fw_peer_stats(ol_txrx_soc_handle soc,
+						  uint8_t pdev_id,
+						  uint8_t *mac, uint32_t caps,
+						  uint32_t copy_stats)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
-	}
-
-	if (!soc->ops->host_stats_ops ||
-	    !soc->ops->host_stats_ops->reset_lro_stats)
-		return;
-
-	soc->ops->host_stats_ops->reset_lro_stats(vdev);
-}
-
-static inline void cdp_get_dp_fw_peer_stats(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev, uint8_t *mac, uint32_t caps,
-		uint32_t copy_stats)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance", __func__);
-		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->get_fw_peer_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->host_stats_ops->get_fw_peer_stats
-			(pdev, mac, caps, copy_stats);
+	return soc->ops->host_stats_ops->get_fw_peer_stats
+			(soc, pdev_id, mac, caps, copy_stats);
 }
 
-static inline void cdp_get_dp_htt_stats(ol_txrx_soc_handle soc,
-					struct cdp_pdev *pdev,
-					void *data, uint32_t data_len)
+static inline QDF_STATUS cdp_get_dp_htt_stats(ol_txrx_soc_handle soc,
+					      uint8_t pdev_id,
+					      void *data, uint32_t data_len)
 {
-	if (soc && soc->ops && soc->ops->host_stats_ops &&
-		soc->ops->host_stats_ops->get_htt_stats)
-		return soc->ops->host_stats_ops->get_htt_stats
-			(pdev, data, data_len);
-	return;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->get_htt_stats)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->host_stats_ops->get_htt_stats(soc, pdev_id, data,
+						       data_len);
 }
 
 /**
  * @brief Update pdev host stats received from firmware
  * (wmi_host_pdev_stats and wmi_host_pdev_ext_stats) into dp
  *
- * @param pdev - the physical device object
+ * @param soc - soc handle
+ * @param pdev_id - id of the physical device object
  * @param data - pdev stats
- * @return - void
+ * @return - QDF_STATUS
  */
-static inline void
+static inline QDF_STATUS
 cdp_update_pdev_host_stats(ol_txrx_soc_handle soc,
-			   struct cdp_pdev *pdev,
+			   uint8_t pdev_id,
 			   void *data,
 			   uint16_t stats_id)
 {
-	if (soc && soc->ops && soc->ops->host_stats_ops &&
-	    soc->ops->host_stats_ops->txrx_update_pdev_stats)
-		return soc->ops->host_stats_ops->txrx_update_pdev_stats
-			(pdev, data, stats_id);
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_update_pdev_stats)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->host_stats_ops->txrx_update_pdev_stats(soc, pdev_id,
+								data,
+								stats_id);
 }
 
 /**
  * @brief Update vdev host stats
  *
  * @param soc	   - soc handle
- * @param vdev     - the physical device object
+ * @param vdev_id  - id of the virtual device object
  * @param data     - pdev stats
  * @param stats_id - type of stats
  *
- * @return - void
+ * @return - QDF_STATUS
  */
-static inline void
+static inline QDF_STATUS
 cdp_update_vdev_host_stats(ol_txrx_soc_handle soc,
-			   struct cdp_vdev *vdev,
+			   uint8_t vdev_id,
 			   void *data,
 			   uint16_t stats_id)
 {
@@ -482,98 +464,114 @@ cdp_update_vdev_host_stats(ol_txrx_soc_handle soc,
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_update_vdev_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	return soc->ops->host_stats_ops->txrx_update_vdev_stats(vdev, data,
+	return soc->ops->host_stats_ops->txrx_update_vdev_stats(soc, vdev_id,
+								data,
 								stats_id);
 }
 
 /**
  * @brief Call to get peer stats
  *
- * @param peer - dp peer object
+ * @param soc - soc handle
+ * @param vdev_id - vdev_id of vdev object
+ * @param peer_mac - mac address of the peer
  * @return - struct cdp_peer_stats
  */
-static inline struct cdp_peer_stats *
-cdp_host_get_peer_stats(ol_txrx_soc_handle soc, struct cdp_peer *peer)
+static inline QDF_STATUS
+cdp_host_get_peer_stats(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			uint8_t *peer_mac,
+			struct cdp_peer_stats *peer_stats)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_get_peer_stats)
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 
-	return soc->ops->host_stats_ops->txrx_get_peer_stats(peer);
+	return soc->ops->host_stats_ops->txrx_get_peer_stats(soc, vdev_id,
+							     peer_mac,
+							     peer_stats);
 }
 
 /**
  * @brief Call to reset ald stats
  *
- * @param peer - dp peer object
+ * @param soc - soc handle
+ * @param vdev_id - vdev_id of vdev object
+ * @param peer_mac - mac address of the peer
  * @return - void
  */
-static inline void
-cdp_host_reset_peer_ald_stats(ol_txrx_soc_handle soc,
-			      struct cdp_peer *peer)
+static inline QDF_STATUS
+cdp_host_reset_peer_ald_stats(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			      uint8_t *peer_mac)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_reset_peer_ald_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	return soc->ops->host_stats_ops->txrx_reset_peer_ald_stats(peer);
+	return soc->ops->host_stats_ops->txrx_reset_peer_ald_stats(soc,
+							    vdev_id,
+							    peer_mac);
 }
 
 /**
  * @brief Call to reset peer stats
  *
- * @param peer - dp peer object
- * @return - void
+ * @param soc - soc handle
+ * @param vdev_id - vdev_id of vdev object
+ * @param peer_mac - mac address of the peer
+ * @return - QDF_STATUS
  */
-static inline void
+static inline QDF_STATUS
 cdp_host_reset_peer_stats(ol_txrx_soc_handle soc,
-			  struct cdp_peer *peer)
+			  uint8_t vdev_id, uint8_t *peer_mac)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->txrx_reset_peer_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	return soc->ops->host_stats_ops->txrx_reset_peer_stats(peer);
+	return soc->ops->host_stats_ops->txrx_reset_peer_stats(soc,
+							vdev_id,
+							peer_mac);
 }
 
 /**
  * @brief Call to get vdev stats
  *
- * @param vdev - dp vdev object
+ * @param soc - dp soc object
+ * @param vdev_id - id of dp vdev object
  * @param buf - buffer
  * @return - int
  */
 static inline int
 cdp_host_get_vdev_stats(ol_txrx_soc_handle soc,
-			struct cdp_vdev *vdev,
+			uint8_t vdev_id,
 			struct cdp_vdev_stats *buf,
 			bool is_aggregate)
 {
@@ -588,7 +586,7 @@ cdp_host_get_vdev_stats(ol_txrx_soc_handle soc,
 	    !soc->ops->host_stats_ops->txrx_get_vdev_stats)
 		return 0;
 
-	return soc->ops->host_stats_ops->txrx_get_vdev_stats(vdev,
+	return soc->ops->host_stats_ops->txrx_get_vdev_stats(soc, vdev_id,
 							     buf,
 							     is_aggregate);
 }
@@ -629,14 +627,15 @@ cdp_update_host_vdev_stats(ol_txrx_soc_handle soc,
 /**
  * @brief Call to get vdev extd stats
  *
- * @param vdev - dp vdev object
+ * @param soc - soc handle
+ * @param vdev_id - id of dp vdev object
  * @param buf - buffer
  * @return - int
  */
 static inline int
 cdp_get_vdev_extd_stats(ol_txrx_soc_handle soc,
-			struct cdp_vdev *vdev,
-			void *buf)
+			uint8_t vdev_id,
+			wmi_host_vdev_extd_stats *buf)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -649,18 +648,21 @@ cdp_get_vdev_extd_stats(ol_txrx_soc_handle soc,
 	    !soc->ops->host_stats_ops->txrx_get_vdev_extd_stats)
 		return 0;
 
-	return soc->ops->host_stats_ops->txrx_get_vdev_extd_stats(vdev, buf);
+	return soc->ops->host_stats_ops->txrx_get_vdev_extd_stats(soc, vdev_id,
+								  buf);
 }
 
 /**
  * @brief Call to get cdp_pdev_stats
  *
- * @param pdev - dp pdev object
- * @return - cdp_pdev_stats
+ * @param soc - soc handle
+ * @param pdev_id - id of dp pdev object
+ * @param buf - buffer to hold cdp_pdev_stats
+ * @return - success/failure
  */
-static inline struct cdp_pdev_stats*
+static inline int
 cdp_host_get_pdev_stats(ol_txrx_soc_handle soc,
-			struct cdp_pdev *pdev)
+			uint8_t pdev_id, struct cdp_pdev_stats *buf)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -673,19 +675,20 @@ cdp_host_get_pdev_stats(ol_txrx_soc_handle soc,
 	    !soc->ops->host_stats_ops->txrx_get_pdev_stats)
 		return 0;
 
-	return soc->ops->host_stats_ops->txrx_get_pdev_stats(pdev);
+	return soc->ops->host_stats_ops->txrx_get_pdev_stats(soc, pdev_id, buf);
 }
 
 /**
  * @brief Call to get radio stats
  *
- * @param pdev - dp pdev object
+ * @param soc - soc handle
+ * @param pdev_id - id of dp pdev object
  * @param scn_stats_user - stats buffer
  * @return - int
  */
 static inline int
 cdp_host_get_radio_stats(ol_txrx_soc_handle soc,
-			 struct cdp_pdev *pdev,
+			 uint8_t pdev_id,
 			 void *buf)
 {
 	if (!soc || !soc->ops) {
@@ -699,7 +702,7 @@ cdp_host_get_radio_stats(ol_txrx_soc_handle soc,
 	    !soc->ops->host_stats_ops->txrx_get_radio_stats)
 		return 0;
 
-	return soc->ops->host_stats_ops->txrx_get_radio_stats(pdev,
+	return soc->ops->host_stats_ops->txrx_get_radio_stats(soc, pdev_id,
 							      buf);
 }
 
@@ -707,39 +710,24 @@ cdp_host_get_radio_stats(ol_txrx_soc_handle soc,
  * @brief confgure rate stats at soc
  *
  * @param soc - opaque soc handle
- * @param vap - capabilities
- * @return - void
+ * @param val - capabilities
+ * @return - QDF_STATUS
  */
-static inline void
+static inline QDF_STATUS
 cdp_soc_configure_rate_stats(ol_txrx_soc_handle soc, uint8_t val)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->host_stats_ops ||
 	    !soc->ops->host_stats_ops->configure_rate_stats)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
 	return soc->ops->host_stats_ops->configure_rate_stats(soc, val);
 }
 
-/**
- * @brief Parse the stats header and get the payload from the message.
- *
- * @param pdev - the physical device object
- * @param msg_word - stats buffer received from FW
- * @param msg_len - length of the message
- * @param type - place holder for parsed message type
- * @param status - place holder for parsed message status
- * @return - pointer to received stat payload
- */
-
-#if defined(QCA_SUPPORT_SON) || defined(ENHANCED_STATS)
-uint32_t *ol_txrx_get_en_stats_base(struct cdp_pdev *pdev, uint32_t *msg_word,
-    uint32_t msg_len, enum htt_cmn_t2h_en_stats_type *type,  enum htt_cmn_t2h_en_stats_status *status);
-#endif
 #endif /* _CDP_TXRX_HOST_STATS_H_ */

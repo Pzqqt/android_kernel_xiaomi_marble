@@ -2537,7 +2537,6 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_rx_tid *rx_tid = NULL;
-	QDF_STATUS qdf_status;
 
 	if (!peer || peer->delete_in_progress) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -2548,10 +2547,9 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	if (status) {
 		rx_tid->num_addba_rsp_failed++;
-		qdf_status = dp_rx_tid_update_wifi3(peer, tid, 1,
-						    IEEE80211_SEQ_MAX);
-		if (qdf_status == QDF_STATUS_SUCCESS)
-			rx_tid->ba_status = DP_RX_BA_INACTIVE;
+		dp_rx_tid_update_wifi3(peer, tid, 1,
+				       IEEE80211_SEQ_MAX);
+		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		dp_err("RxTid- %d addba rsp tx completion failed", tid);
 		return QDF_STATUS_SUCCESS;

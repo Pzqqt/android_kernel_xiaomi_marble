@@ -2906,7 +2906,17 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->n_probes = params->n_probes;
 	cmd->scan_ctrl_flags_ext = params->scan_ctrl_flags_ext;
 
-	WMI_LOGD("scan_ctrl_flags_ext = %x", cmd->scan_ctrl_flags_ext);
+	WMI_LOGD("%s scan_ctrl_flags_ext = %x, n_probe %d burst_dur %d",
+		 __func__,
+		 cmd->scan_ctrl_flags_ext,
+		 cmd->n_probes,
+		 cmd->burst_duration);
+	WMI_LOGD("active: %d, passive: %d, active_2g %d, active_6g %d, passive_6g: %d",
+		 cmd->dwell_time_active,
+		 cmd->dwell_time_passive,
+		 cmd->dwell_time_active_2g,
+		 cmd->dwell_time_active_6ghz,
+		 cmd->dwell_time_passive_6ghz);
 
 	if (params->scan_random.randomize)
 		wmi_copy_scan_random_mac(params->scan_random.mac_addr,

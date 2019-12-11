@@ -3673,7 +3673,7 @@ static void dp_htt_bkp_event_alert(u_int32_t *msg_word, struct htt_soc *soc)
 		if (!time_allow_print(radio_tt->umac_ttt, ring_id))
 			return;
 		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
-				   bkp_time, "HTT_SW_RING_TYPE_LMAC");
+				   bkp_time, "HTT_SW_RING_TYPE_UMAC");
 	break;
 	case HTT_SW_RING_TYPE_LMAC:
 		if (!time_allow_print(radio_tt->lmac_ttt, ring_id))

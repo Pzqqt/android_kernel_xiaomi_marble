@@ -513,7 +513,7 @@ const struct country_code_to_reg_domain g_all_countries[] = {
 	{CTRY_YEMEN, NULL1_WORLD, "YE", 40, 0, 0},
 	{CTRY_ZIMBABWE, ETSI1_WORLD, "ZW", 40, 160, 0},
 	{CTRY_JAPAN, MKK17_MKKC, "JP", 40, 160, 0},
-	{CTRY_JAPAN15, MKK5_MKKC, "JP", 40, 160, 0},
+	{CTRY_JAPAN15, MKK17_MKKC, "JP", 40, 160, 0},
 };
 #else
 #ifdef WLAN_FEATURE_DSRC

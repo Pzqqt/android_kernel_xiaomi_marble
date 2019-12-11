@@ -625,9 +625,9 @@ void pktlog_init(struct hif_opaque_softc *scn)
 	pktlog_callback_registration(pl_dev->callback_type);
 }
 
-static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
-		 bool ini_triggered, uint8_t user_triggered,
-		 uint32_t is_iwpriv_command)
+int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
+		    bool ini_triggered, uint8_t user_triggered,
+		    uint32_t is_iwpriv_command)
 {
 	struct pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;

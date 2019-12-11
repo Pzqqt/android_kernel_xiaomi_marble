@@ -711,14 +711,13 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev(
 	/* Iterate through pdev's vdev list, till vdev macaddr matches with
 	entry of vdev list */
 	while (vdev) {
-		if (WLAN_ADDR_EQ(wlan_vdev_mlme_get_macaddr(vdev), macaddr)
-					== QDF_STATUS_SUCCESS) {
-			if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) !=
-							QDF_STATUS_SUCCESS)
-				vdev = NULL;
-
-			wlan_pdev_obj_unlock(pdev);
-			return vdev;
+		if (QDF_IS_STATUS_SUCCESS(
+		    WLAN_ADDR_EQ(wlan_vdev_mlme_get_macaddr(vdev), macaddr))) {
+			if (QDF_IS_STATUS_SUCCESS(
+				wlan_objmgr_vdev_try_get_ref(vdev, dbg_id))) {
+				wlan_pdev_obj_unlock(pdev);
+				return vdev;
+			}
 		}
 		/* get next vdev */
 		vdev_next = wlan_vdev_get_next_vdev_of_pdev(vdev_list, vdev);

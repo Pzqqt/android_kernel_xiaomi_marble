@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,7 +28,7 @@
 #include "cdp_txrx_ops.h"
 /* TODO: adf need to be replaced with qdf */
 static inline int cdp_get_nwifi_mode(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev)
+	uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -41,7 +41,7 @@ static inline int cdp_get_nwifi_mode(ol_txrx_soc_handle soc,
 	    !soc->ops->raw_ops->txrx_get_nwifi_mode)
 		return 0;
 
-	return soc->ops->raw_ops->txrx_get_nwifi_mode(vdev);
+	return soc->ops->raw_ops->txrx_get_nwifi_mode(soc, vdev_id);
 }
 
 /**
@@ -49,15 +49,16 @@ static inline int cdp_get_nwifi_mode(ol_txrx_soc_handle soc,
  * @details: Finds the ast entry i.e 4th address for the packet based on the
  *               details in the netbuf.
  *
- * @param vdev - the data virtual device object
+ * @param soc - soc handle
+ * @param vdev_id - id of the data virtual device object
  * @param pnbuf - pointer to nbuf
  * @param raw_ast - pointer to fill ast information
  *
  * @return - 0 on success, -1 on error, 1 if more nbufs need to be consumed.
  */
 
-static inline void
-cdp_rawsim_get_astentry (ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+static inline QDF_STATUS
+cdp_rawsim_get_astentry(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			qdf_nbuf_t *pnbuf, struct cdp_raw_ast *raw_ast)
 {
 
@@ -65,14 +66,15 @@ cdp_rawsim_get_astentry (ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->raw_ops ||
 	    !soc->ops->raw_ops->rsim_get_astentry)
-		return;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->raw_ops->rsim_get_astentry(vdev, pnbuf, raw_ast);
+	return soc->ops->raw_ops->rsim_get_astentry(soc, vdev_id,
+						    pnbuf, raw_ast);
 }
 
 #endif

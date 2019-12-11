@@ -1160,6 +1160,24 @@ void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 				    uint8_t *op_class,
 				    uint8_t *chan_num);
 
+/**
+ * wlan_reg_get_5g_bonded_channel_and_state_for_freq()- Return the channel
+ * state for a 5G or 6G channel frequency based on the channel width and
+ * bonded channel.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel center frequency.
+ * @bw Channel Width.
+ * @bonded_chan_ptr_ptr: Pointer to bonded_channel_freq.
+ *
+ * Return: Channel State
+ */
+enum channel_state
+wlan_reg_get_5g_bonded_channel_and_state_for_freq(struct wlan_objmgr_pdev *pdev,
+						  uint16_t freq,
+						  enum phy_ch_width bw,
+						  const
+						  struct bonded_channel_freq
+						  **bonded_chan_ptr_ptr);
 #endif /*CONFIG_CHAN_FREQ_API */
 
 /**
