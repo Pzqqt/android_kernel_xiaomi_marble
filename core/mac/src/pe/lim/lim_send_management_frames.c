@@ -486,6 +486,73 @@ static QDF_STATUS lim_get_addn_ie_for_probe_resp(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * lim_add_additional_ie() - Add additional IE to management frame
+ * @frame:          pointer to frame
+ * @frame_offset:   current offset of frame
+ * @add_ie:         pointer to addtional ie
+ * @add_ie_len:     length of addtional ie
+ * @p2p_ie:         pointer to p2p ie
+ * @noa_ie:         pointer to noa ie, this is seperate p2p ie
+ * @noa_ie_len:     length of noa ie
+ * @noa_stream:     pointer to noa stream, this is noa attribute only
+ * @noa_stream_len: length of noa stream
+ *
+ * This function adds additional IE to management frame.
+ *
+ * Return: None
+ */
+static void lim_add_additional_ie(uint8_t *frame, uint32_t frame_offset,
+				  uint8_t *add_ie, uint32_t add_ie_len,
+				  uint8_t *p2p_ie, uint8_t *noa_ie,
+				  uint32_t noa_ie_len, uint8_t *noa_stream,
+				  uint32_t noa_stream_len) {
+	uint16_t p2p_ie_offset;
+
+	if (!add_ie_len || !add_ie) {
+		pe_debug("no valid addtional ie");
+		return;
+	}
+
+	if (!noa_stream_len) {
+		qdf_mem_copy(frame + frame_offset, &add_ie[0], add_ie_len);
+		return;
+	}
+
+	if (noa_ie_len > (SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN)) {
+		pe_err("Not able to insert NoA, len=%d", noa_ie_len);
+		return;
+	} else if (noa_ie_len > 0) {
+		pe_debug("new p2p ie for noa attr");
+		qdf_mem_copy(frame + frame_offset, &add_ie[0], add_ie_len);
+		frame_offset += add_ie_len;
+		qdf_mem_copy(frame + frame_offset, &noa_ie[0], noa_ie_len);
+	} else {
+		if (!p2p_ie || (p2p_ie < add_ie) ||
+		    (p2p_ie > (add_ie + add_ie_len))) {
+			pe_err("invalid p2p ie");
+			return;
+		}
+		p2p_ie_offset = p2p_ie - add_ie + p2p_ie[1] + 2;
+		if (p2p_ie_offset > add_ie_len) {
+			pe_err("Invalid p2p ie");
+			return;
+		}
+		pe_debug("insert noa attr to existed p2p ie");
+		p2p_ie[1] = p2p_ie[1] + noa_stream_len;
+		qdf_mem_copy(frame + frame_offset, &add_ie[0], p2p_ie_offset);
+		frame_offset += p2p_ie_offset;
+		qdf_mem_copy(frame + frame_offset, &noa_stream[0],
+			     noa_stream_len);
+		if (p2p_ie_offset < add_ie_len) {
+			frame_offset += noa_stream_len;
+			qdf_mem_copy(frame + frame_offset,
+				     &add_ie[p2p_ie_offset],
+				     add_ie_len - p2p_ie_offset);
+		}
+	}
+}
+
 void
 lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			      tSirMacAddr peer_macaddr,
@@ -506,7 +573,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	bool wps_ap = 0;
 	uint8_t tx_flag = 0;
 	uint8_t *add_ie = NULL;
-	const uint8_t *p2p_ie = NULL;
+	uint8_t *p2p_ie = NULL;
 	uint8_t noalen = 0;
 	uint8_t total_noalen = 0;
 	uint8_t noa_stream[SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN];
@@ -696,18 +763,25 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 		bytes = bytes + addn_ie_len;
 
 		if (preq_p2pie)
-			p2p_ie = limGetP2pIEPtr(mac_ctx, &add_ie[0],
-					addn_ie_len);
+			p2p_ie = (uint8_t *)limGetP2pIEPtr(mac_ctx, &add_ie[0],
+							   addn_ie_len);
 
 		if (p2p_ie) {
 			/* get NoA attribute stream P2P IE */
 			noalen = lim_get_noa_attr_stream(mac_ctx,
 					noa_stream, pe_session);
-			if (noalen != 0) {
-				total_noalen =
-					lim_build_p2p_ie(mac_ctx, &noa_ie[0],
-						&noa_stream[0], noalen);
-				bytes = bytes + total_noalen;
+			if (noalen) {
+				if ((p2p_ie[1] + noalen) >
+				    WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN) {
+					total_noalen = lim_build_p2p_ie(
+								mac_ctx,
+								&noa_ie[0],
+								&noa_stream[0],
+								noalen);
+					bytes = bytes + total_noalen;
+				} else {
+					bytes = bytes + noalen;
+				}
 			}
 		}
 	}
@@ -768,21 +842,9 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	pe_debug("Sending Probe Response frame to");
 	lim_print_mac_addr(mac_ctx, peer_macaddr, LOGD);
 
-	if (addn_ie_present)
-		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
-			     &add_ie[0], addn_ie_len);
-
-	if (noalen != 0) {
-		if (total_noalen >
-		    (SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN)) {
-			pe_err("Not able to insert NoA, total len=%d",
-				total_noalen);
-			goto err_ret;
-		} else {
-			qdf_mem_copy(&frame[bytes - (total_noalen)],
-				     &noa_ie[0], total_noalen);
-		}
-	}
+	lim_add_additional_ie(frame, sizeof(tSirMacMgmtHdr) + payload, add_ie,
+			      addn_ie_len, p2p_ie, noa_ie, total_noalen,
+			      noa_stream, noalen);
 
 	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
