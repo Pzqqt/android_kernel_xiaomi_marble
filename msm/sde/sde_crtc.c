@@ -429,6 +429,7 @@ static bool sde_crtc_mode_fixup(struct drm_crtc *crtc,
 {
 	SDE_DEBUG("\n");
 
+	sde_cp_mode_switch_prop_dirty(crtc);
 	if ((msm_is_mode_seamless(adjusted_mode) ||
 	     (msm_is_mode_seamless_vrr(adjusted_mode) ||
 	      msm_is_mode_seamless_dyn_clk(adjusted_mode))) &&

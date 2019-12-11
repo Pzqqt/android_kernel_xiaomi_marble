@@ -3933,3 +3933,26 @@ int sde_cp_ltm_off_event_handler(struct drm_crtc *crtc_drm, bool en,
 {
 	return 0;
 }
+
+void sde_cp_mode_switch_prop_dirty(struct drm_crtc *crtc_drm)
+{
+	struct sde_cp_node *prop_node = NULL, *n = NULL;
+	struct sde_crtc *crtc;
+
+	if (!crtc_drm) {
+		DRM_ERROR("invalid crtc handle");
+		return;
+	}
+	crtc = to_sde_crtc(crtc_drm);
+	mutex_lock(&crtc->crtc_cp_lock);
+	list_for_each_entry_safe(prop_node, n, &crtc->active_list,
+				 active_list) {
+		if (prop_node->feature == SDE_CP_CRTC_DSPP_LTM_INIT ||
+			prop_node->feature == SDE_CP_CRTC_DSPP_LTM_VLUT) {
+			list_del_init(&prop_node->active_list);
+			list_add_tail(&prop_node->dirty_list,
+				&crtc->dirty_list);
+		}
+	}
+	mutex_unlock(&crtc->crtc_cp_lock);
+}
