@@ -1262,8 +1262,14 @@ QDF_STATUS (*extract_fw_abi_version)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_hal_reg_cap)(wmi_unified_t wmi_handle, void *evt_buf,
 	struct wlan_psoc_hal_reg_capability *hal_reg_cap);
 
-host_mem_req * (*extract_host_mem_req)(wmi_unified_t wmi_handle,
-	void *evt_buf, uint8_t *num_entries);
+uint32_t (*extract_num_mem_reqs)(wmi_unified_t wmi_handle,
+				 void *evt_buf);
+
+QDF_STATUS (*extract_host_mem_req)(wmi_unified_t wmi_handle,
+				   void *evt_buf, host_mem_req *mem_reqs,
+				   uint32_t num_active_peers,
+				   uint32_t num_peers,
+				   enum wmi_fw_mem_prio fw_prio, uint16_t idx);
 
 QDF_STATUS (*init_cmd_send)(wmi_unified_t wmi_handle,
 				struct wmi_init_cmd_param *param);

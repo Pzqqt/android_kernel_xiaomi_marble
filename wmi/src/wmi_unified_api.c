@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1636,17 +1636,33 @@ wmi_extract_hal_reg_cap(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-host_mem_req
-*wmi_extract_host_mem_req_from_service_ready(
+uint32_t
+wmi_extract_num_mem_reqs_from_service_ready(
 		wmi_unified_t wmi_handle,
-		void *evt_buf, uint8_t *num_entries)
+		void *evt_buf)
+{
+	if (wmi_handle->ops->extract_num_mem_reqs)
+		return wmi_handle->ops->extract_num_mem_reqs(wmi_handle,
+				evt_buf);
+
+	return 0;
+}
+
+QDF_STATUS
+wmi_extract_host_mem_req_from_service_ready(wmi_unified_t wmi_handle,
+					    void *evt_buf,
+					    host_mem_req *mem_reqs,
+					    uint32_t num_active_peers,
+					    uint32_t num_peers,
+					    enum wmi_fw_mem_prio fw_prio,
+					    uint16_t idx)
 {
 	if (wmi_handle->ops->extract_host_mem_req)
 		return wmi_handle->ops->extract_host_mem_req(wmi_handle,
-			evt_buf, num_entries);
+				evt_buf, mem_reqs, num_active_peers,
+				num_peers, fw_prio, idx);
 
-	*num_entries = 0;
-	return NULL;
+	return QDF_STATUS_E_FAILURE;
 }
 
 uint32_t wmi_ready_extract_init_status(wmi_unified_t wmi_handle, void *ev)

@@ -149,6 +149,18 @@ enum wmi_rx_exec_ctx {
 };
 
 /**
+ * enum wmi_fw_mem_prio - defines FW Memory requirement type
+ * @WMI_FW_MEM_HIGH_PRIORITY:   Memory requires contiguous memory allocation
+ * @WMI_FW_MEM_LOW_PRIORITY:    Memory can be fragmented
+ * @WMI_FW_PRIORITY_MAX:        Invalid type
+ */
+enum wmi_fw_mem_prio {
+	WMI_FW_MEM_HIGH_PRIORITY = 0,
+	WMI_FW_MEM_LOW_PRIORITY,
+	WMI_FW_PRIORITY_MAX
+};
+
+/**
  * struct wmi_unified_attach_params - wmi init parameters
  *  @osdev: NIC device
  *  @target_type: type of supported wmi command
@@ -2252,17 +2264,34 @@ wmi_extract_hal_reg_cap(wmi_unified_t wmi_handle, void *evt_buf,
 			struct wlan_psoc_hal_reg_capability *hal_reg_cap);
 
 /**
+ * wmi_extract_num_mem_reqs_from_service_ready() - Extract number of memory
+ *                                                 entries requested
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ *
+ * Return: Number of entries requested
+ */
+uint32_t wmi_extract_num_mem_reqs_from_service_ready(
+		wmi_unified_t wmi_handle,
+		void *evt_buf);
+
+/**
  * wmi_extract_host_mem_req_from_service_ready() - Extract host memory
  *                                                 request event
  * @wmi_handle: wmi handle
  * @evt_buf: pointer to event buffer
- * @num_entries: pointer to hold number of entries requested
+ * @mem_reqs: pointer to host memory request structure
+ * @num_active_peers: number of active peers for peer cache
+ * @num_peers: number of peers
+ * @fw_prio: FW priority
+ * @idx: Index for memory request
  *
- * Return: Number of entries requested
+ * Return: Host memory request parameters requested by target
  */
-host_mem_req *wmi_extract_host_mem_req_from_service_ready(
-		wmi_unified_t wmi_handle,
-		void *evt_buf, uint8_t *num_entries);
+QDF_STATUS wmi_extract_host_mem_req_from_service_ready(
+		wmi_unified_t wmi_handle, void *evt_buf, host_mem_req *mem_reqs,
+		uint32_t num_active_peers, uint32_t num_peers,
+		enum wmi_fw_mem_prio fw_prio, uint16_t idx);
 
 /**
  * wmi_ready_extract_init_status() - Extract init status from ready event

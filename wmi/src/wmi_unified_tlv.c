@@ -8651,15 +8651,14 @@ static QDF_STATUS extract_hal_reg_cap_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * extract_host_mem_req_tlv() - Extract host memory request event
+ * extract_num_mem_reqs_tlv() - Extract number of memory entries requested
  * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param num_entries: pointer to hold number of entries requested
+ * @evt_buf: pointer to event buffer
  *
  * Return: Number of entries requested
  */
-static host_mem_req *extract_host_mem_req_tlv(wmi_unified_t wmi_handle,
-		void *evt_buf, uint8_t *num_entries)
+static uint32_t extract_num_mem_reqs_tlv(wmi_unified_t wmi_handle,
+					 void *evt_buf)
 {
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
 	wmi_service_ready_event_fixed_param *ev;
@@ -8669,18 +8668,97 @@ static host_mem_req *extract_host_mem_req_tlv(wmi_unified_t wmi_handle,
 	ev = (wmi_service_ready_event_fixed_param *) param_buf->fixed_param;
 	if (!ev) {
 		qdf_print("%s: wmi_buf_alloc failed", __func__);
-		return NULL;
+		return 0;
 	}
 
 	if (ev->num_mem_reqs > param_buf->num_mem_reqs) {
 		WMI_LOGE("Invalid num_mem_reqs %d:%d",
 			 ev->num_mem_reqs, param_buf->num_mem_reqs);
-		return NULL;
+		return 0;
 	}
 
-	*num_entries = ev->num_mem_reqs;
+	return ev->num_mem_reqs;
+}
 
-	return (host_mem_req *)param_buf->mem_reqs;
+/**
+ * extract_host_mem_req_tlv() - Extract host memory required from
+ *				service ready event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @mem_reqs: pointer to host memory request structure
+ * @num_active_peers: number of active peers for peer cache
+ * @num_peers: number of peers
+ * @fw_prio: FW priority
+ * @idx: index for memory request
+ *
+ * Return: Host memory request parameters requested by target
+ */
+static QDF_STATUS extract_host_mem_req_tlv(wmi_unified_t wmi_handle,
+					   void *evt_buf,
+					   host_mem_req *mem_reqs,
+					   uint32_t num_active_peers,
+					   uint32_t num_peers,
+					   enum wmi_fw_mem_prio fw_prio,
+					   uint16_t idx)
+{
+	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
+
+	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *)evt_buf;
+
+	mem_reqs->req_id = (uint32_t)param_buf->mem_reqs[idx].req_id;
+	mem_reqs->unit_size = (uint32_t)param_buf->mem_reqs[idx].unit_size;
+	mem_reqs->num_unit_info =
+		(uint32_t)param_buf->mem_reqs[idx].num_unit_info;
+	mem_reqs->num_units = (uint32_t)param_buf->mem_reqs[idx].num_units;
+	mem_reqs->tgt_num_units = 0;
+
+	if (((fw_prio == WMI_FW_MEM_HIGH_PRIORITY) &&
+	     (mem_reqs->num_unit_info &
+	      REQ_TO_HOST_FOR_CONT_MEMORY)) ||
+	    ((fw_prio == WMI_FW_MEM_LOW_PRIORITY) &&
+	     (!(mem_reqs->num_unit_info &
+	      REQ_TO_HOST_FOR_CONT_MEMORY)))) {
+		/* First allocate the memory that requires contiguous memory */
+		mem_reqs->tgt_num_units = mem_reqs->num_units;
+		if (mem_reqs->num_unit_info) {
+			if (mem_reqs->num_unit_info &
+					NUM_UNITS_IS_NUM_PEERS) {
+				/*
+				 * number of units allocated is equal to number
+				 * of peers, 1 extra for self peer on target.
+				 * this needs to be fixed, host and target can
+				 * get out of sync
+				 */
+				mem_reqs->tgt_num_units = num_peers + 1;
+			}
+			if (mem_reqs->num_unit_info &
+					NUM_UNITS_IS_NUM_ACTIVE_PEERS) {
+				/*
+				 * Requesting allocation of memory using
+				 * num_active_peers in qcache. if qcache is
+				 * disabled in host, then it should allocate
+				 * memory for num_peers instead of
+				 * num_active_peers.
+				 */
+				if (num_active_peers)
+					mem_reqs->tgt_num_units =
+						num_active_peers + 1;
+				else
+					mem_reqs->tgt_num_units =
+						num_peers + 1;
+			}
+		}
+
+		WMI_LOGI("idx %d req %d  num_units %d num_unit_info %d"
+			 "unit size %d actual units %d",
+			 idx, mem_reqs->req_id,
+			 mem_reqs->num_units,
+			 mem_reqs->num_unit_info,
+			 mem_reqs->unit_size,
+			 mem_reqs->tgt_num_units);
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -13006,6 +13084,7 @@ struct wmi_ops tlv_ops =  {
 	.send_addba_clearresponse_cmd = send_addba_clearresponse_cmd_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_tlv,
+	.extract_num_mem_reqs = extract_num_mem_reqs_tlv,
 	.extract_host_mem_req = extract_host_mem_req_tlv,
 	.save_service_bitmap = save_service_bitmap_tlv,
 	.save_ext_service_bitmap = save_ext_service_bitmap_tlv,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,18 +32,6 @@
 #define TXBF_CV_POOL1 3
 #define TXBF_CV_POOL2 4
 #define HOST_CONTIGUOUS_MEM_CHUNK_REQUIRED 0x8
-
-/**
- * enum wlan_fw_mem_prio - defines FW Memory requirement type
- * @FW_MEM_HIGH_PRIORITY:   Memory requires contiguous memory allocation
- * @FW_MEM_LOW_PRIORITY:    Memory can be fragmented
- * @FW_PRIORITY_MAX:        Invalid type
- */
-enum wlan_fw_mem_prio {
-	FW_MEM_HIGH_PRIORITY = 0,
-	FW_MEM_LOW_PRIORITY,
-	FW_PRIORITY_MAX
-};
 
 /**
  * init_deinit_handle_host_mem_req() - handle host memory request

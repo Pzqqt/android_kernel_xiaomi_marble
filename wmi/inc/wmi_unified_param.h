@@ -2606,12 +2606,14 @@ struct extscan_bssid_hotlist_set_params {
  * @unit_size: Size of single unit requested.
  * @num_unit_info: Memory chunk info
  * @num_units: number of units requested.
+ * @tgt_num_units: number of units request by target.
  */
 typedef struct {
 	uint32_t	req_id;
 	uint32_t	unit_size;
 	uint32_t	num_unit_info;
 	uint32_t	num_units;
+	uint32_t	tgt_num_units;
 } host_mem_req;
 
 #define WMI_HOST_DSCP_MAP_MAX	(64)
