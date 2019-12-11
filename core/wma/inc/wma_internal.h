@@ -111,12 +111,14 @@ struct index_vht_data_rate_type {
  * @supported_he80_rate: he80 rate
  * @supported_he40_rate: he40 rate
  * @supported_he20_rate: he20 rate
+ * @supported_he160_rate: he160 rate
  */
 struct index_he_data_rate_type {
 	uint8_t beacon_rate_index;
 	uint16_t supported_he20_rate[MAX_HE_DCM_INDEX][3];
 	uint16_t supported_he40_rate[MAX_HE_DCM_INDEX][3];
 	uint16_t supported_he80_rate[MAX_HE_DCM_INDEX][3];
+	uint16_t supported_he160_rate[MAX_HE_DCM_INDEX][3];
 };
 #endif
 

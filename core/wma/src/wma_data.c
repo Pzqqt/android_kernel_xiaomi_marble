@@ -777,23 +777,34 @@ static QDF_STATUS wma_set_bss_rate_flags_he(enum tx_rate_info *rate_flags,
 
 	/*extend TX_RATE_HE160 in future*/
 	if (add_bss->ch_width == CH_WIDTH_160MHZ ||
-	    add_bss->ch_width == CH_WIDTH_80P80MHZ ||
-	    add_bss->ch_width == CH_WIDTH_80MHZ)
+	    add_bss->ch_width == CH_WIDTH_80P80MHZ)
+		*rate_flags |= TX_RATE_HE160;
+	else if (add_bss->ch_width == CH_WIDTH_80MHZ)
 		*rate_flags |= TX_RATE_HE80;
-
 	else if (add_bss->ch_width)
 		*rate_flags |= TX_RATE_HE40;
 	else
 		*rate_flags |= TX_RATE_HE20;
 
-	wma_debug("he_capable %d", add_bss->he_capable);
+	wma_debug("he_capable %d rate_flags 0x%x", add_bss->he_capable,
+		  *rate_flags);
 	return QDF_STATUS_SUCCESS;
+}
+
+static bool wma_get_bss_he_capable(struct bss_params *add_bss)
+{
+	return add_bss->he_capable;
 }
 #else
 static QDF_STATUS wma_set_bss_rate_flags_he(enum tx_rate_info *rate_flags,
 					    struct bss_params *add_bss)
 {
 	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static bool wma_get_bss_he_capable(struct bss_params *add_bss)
+{
+	return false;
 }
 #endif
 
@@ -841,7 +852,8 @@ void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 	    add_bss->staContext.fShortGI40Mhz)
 		*rate_flags |= TX_RATE_SGI;
 
-	if (!add_bss->htCapable && !add_bss->vhtCapable)
+	if (!add_bss->htCapable && !add_bss->vhtCapable &&
+	    !wma_get_bss_he_capable(add_bss))
 		*rate_flags = TX_RATE_LEGACY;
 
 	wma_debug("capable: vht %u, ht %u, rate_flags %x, ch_width %d",

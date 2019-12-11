@@ -347,7 +347,8 @@ enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx)
 
 	if (wlan_reg_is_24ghz_ch_freq(sta_freq))
 		return BAND_2G;
-	else if (wlan_reg_is_5ghz_ch_freq(sta_freq))
+	else if (wlan_reg_is_5ghz_ch_freq(sta_freq) ||
+		 wlan_reg_is_6ghz_chan_freq(sta_freq))
 		return BAND_5G;
 	else   /* If station is not connected return as BAND_ALL */
 		return BAND_ALL;
