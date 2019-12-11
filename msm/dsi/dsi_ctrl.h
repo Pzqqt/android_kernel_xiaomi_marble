@@ -137,16 +137,6 @@ struct dsi_ctrl_clk_info {
 };
 
 /**
- * struct dsi_ctrl_bus_scale_info - Bus scale info for msm-bus bandwidth voting
- * @bus_scale_table:        Bus scale voting usecases.
- * @bus_handle:             Handle used for voting bandwidth.
- */
-struct dsi_ctrl_bus_scale_info {
-	struct msm_bus_scale_pdata *bus_scale_table;
-	u32 bus_handle;
-};
-
-/**
  * struct dsi_ctrl_state_info - current driver state information
  * @power_state:        Status of power states on DSI controller.
  * @cmd_engine_state:   Status of DSI command engine.
@@ -208,7 +198,6 @@ struct dsi_ctrl_interrupts {
  * @clk_info:            Clock information.
  * @clk_freq:            DSi Link clock frequency information.
  * @pwr_info:            Power information.
- * @axi_bus_info:        AXI bus information.
  * @host_config:         Current host configuration.
  * @mode_bounds:         Boundaries of the default mode ROI.
  *                       Origin is at top left of all CTRLs.
@@ -263,7 +252,6 @@ struct dsi_ctrl {
 	struct dsi_ctrl_clk_info clk_info;
 	struct link_clk_freq clk_freq;
 	struct dsi_ctrl_power_info pwr_info;
-	struct dsi_ctrl_bus_scale_info axi_bus_info;
 
 	struct dsi_host_config host_config;
 	struct dsi_rect mode_bounds;

@@ -25,7 +25,8 @@
 #include <linux/of_irq.h>
 #include <linux/dma-buf.h>
 #include <linux/memblock.h>
-#include <linux/bootmem.h>
+#include <drm/drm_atomic_uapi.h>
+#include <drm/drm_probe_helper.h>
 
 #include "msm_drv.h"
 #include "msm_mmu.h"
@@ -50,7 +51,7 @@
 
 #include <soc/qcom/scm.h>
 #include "soc/qcom/secure_buffer.h"
-#include "soc/qcom/qtee_shmbridge.h"
+#include <linux/qtee_shmbridge.h>
 
 #define CREATE_TRACE_POINTS
 #include "sde_trace.h"
@@ -271,6 +272,7 @@ static int _sde_kms_secure_ctrl_xin_clients(struct sde_kms *sde_kms,
  */
 static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 {
+	struct drm_device *dev;
 	struct scm_desc desc = {0};
 	uint32_t num_sids;
 	uint32_t *sec_sid;
@@ -279,6 +281,8 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 	int ret = 0, i;
 	struct qtee_shm shm;
 	bool qtee_en = qtee_shmbridge_is_enabled();
+
+	dev = sde_kms->dev;
 
 	num_sids = sde_cfg->sec_sid_mask_count;
 	if (!num_sids) {
@@ -312,7 +316,8 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 		sec_sid[i] = sde_cfg->sec_sid_mask[i];
 		SDE_DEBUG("sid_mask[%d]: %d\n", i, sec_sid[i]);
 	}
-	dmac_flush_range(sec_sid, sec_sid + num_sids);
+	dma_map_single(dev->dev, sec_sid, num_sids *sizeof(uint32_t),
+			DMA_TO_DEVICE);
 
 	SDE_DEBUG("calling scm_call for vmid 0x%x, num_sids %d, qtee_en %d",
 				vmid, num_sids, qtee_en);
@@ -506,7 +511,7 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 	if (smmu_state->sui_misr_state == SUI_MISR_ENABLE_REQ) {
 		ret = _sde_kms_sui_misr_ctrl(sde_kms, crtc, true);
 		if (ret) {
-			smmu_state->sui_misr_state == NONE;
+			smmu_state->sui_misr_state = NONE;
 			goto end;
 		}
 	}
@@ -1862,141 +1867,6 @@ static void sde_kms_destroy(struct msm_kms *kms)
 	kfree(sde_kms);
 }
 
-static void _sde_kms_plane_force_remove(struct drm_plane *plane,
-			struct drm_atomic_state *state)
-{
-	struct drm_plane_state *plane_state;
-	int ret = 0;
-
-	plane_state = drm_atomic_get_plane_state(state, plane);
-	if (IS_ERR(plane_state)) {
-		ret = PTR_ERR(plane_state);
-		SDE_ERROR("error %d getting plane %d state\n",
-				ret, plane->base.id);
-		return;
-	}
-
-	plane->old_fb = plane->fb;
-
-	SDE_DEBUG("disabling plane %d\n", plane->base.id);
-
-	ret = __drm_atomic_helper_disable_plane(plane, plane_state);
-	if (ret != 0)
-		SDE_ERROR("error %d disabling plane %d\n", ret,
-				plane->base.id);
-}
-
-static int _sde_kms_remove_fbs(struct sde_kms *sde_kms, struct drm_file *file,
-		struct drm_atomic_state *state)
-{
-	struct drm_device *dev = sde_kms->dev;
-	struct drm_framebuffer *fb, *tfb;
-	struct list_head fbs;
-	struct drm_plane *plane;
-	int ret = 0;
-	u32 plane_mask = 0;
-
-	INIT_LIST_HEAD(&fbs);
-
-	list_for_each_entry_safe(fb, tfb, &file->fbs, filp_head) {
-		if (drm_framebuffer_read_refcount(fb) > 1) {
-			list_move_tail(&fb->filp_head, &fbs);
-
-			drm_for_each_plane(plane, dev) {
-				if (plane->fb == fb) {
-					plane_mask |=
-						1 << drm_plane_index(plane);
-					 _sde_kms_plane_force_remove(
-								plane, state);
-				}
-			}
-		} else {
-			list_del_init(&fb->filp_head);
-			drm_framebuffer_put(fb);
-		}
-	}
-
-	if (list_empty(&fbs)) {
-		SDE_DEBUG("skip commit as no fb(s)\n");
-		drm_atomic_state_put(state);
-		return 0;
-	}
-
-	SDE_DEBUG("committing after removing all the pipes\n");
-	ret = drm_atomic_commit(state);
-
-	if (ret) {
-		/*
-		 * move the fbs back to original list, so it would be
-		 * handled during drm_release
-		 */
-		list_for_each_entry_safe(fb, tfb, &fbs, filp_head)
-			list_move_tail(&fb->filp_head, &file->fbs);
-
-		SDE_ERROR("atomic commit failed in preclose, ret:%d\n", ret);
-		goto end;
-	}
-
-	while (!list_empty(&fbs)) {
-		fb = list_first_entry(&fbs, typeof(*fb), filp_head);
-
-		list_del_init(&fb->filp_head);
-		drm_framebuffer_put(fb);
-	}
-
-end:
-	return ret;
-}
-
-static void sde_kms_preclose(struct msm_kms *kms, struct drm_file *file)
-{
-	struct sde_kms *sde_kms = to_sde_kms(kms);
-	struct drm_device *dev = sde_kms->dev;
-	struct msm_drm_private *priv = dev->dev_private;
-	unsigned int i;
-	struct drm_atomic_state *state = NULL;
-	struct drm_modeset_acquire_ctx ctx;
-	int ret = 0;
-
-	/* cancel pending flip event */
-	for (i = 0; i < priv->num_crtcs; i++)
-		sde_crtc_complete_flip(priv->crtcs[i], file);
-
-	drm_modeset_acquire_init(&ctx, 0);
-retry:
-	ret = drm_modeset_lock_all_ctx(dev, &ctx);
-	if (ret == -EDEADLK) {
-		drm_modeset_backoff(&ctx);
-		goto retry;
-	} else if (WARN_ON(ret)) {
-		goto end;
-	}
-
-	state = drm_atomic_state_alloc(dev);
-	if (!state) {
-		ret = -ENOMEM;
-		goto end;
-	}
-
-	state->acquire_ctx = &ctx;
-
-	for (i = 0; i < TEARDOWN_DEADLOCK_RETRY_MAX; i++) {
-		ret = _sde_kms_remove_fbs(sde_kms, file, state);
-		if (ret != -EDEADLK)
-			break;
-		drm_atomic_state_clear(state);
-		drm_modeset_backoff(&ctx);
-	}
-
-end:
-	if (state)
-		drm_atomic_state_put(state);
-
-	SDE_DEBUG("sde preclose done, ret:%d\n", ret);
-	drm_modeset_drop_locks(&ctx);
-	drm_modeset_acquire_fini(&ctx);
-}
-
 static int _sde_kms_helper_reset_custom_properties(struct sde_kms *sde_kms,
 		struct drm_atomic_state *state)
 {
@@ -2067,13 +1937,13 @@ static int _sde_kms_helper_reset_custom_properties(struct sde_kms *sde_kms,
 	return ret;
 }
 
-static void sde_kms_lastclose(struct msm_kms *kms,
-		struct drm_modeset_acquire_ctx *ctx)
+static void sde_kms_lastclose(struct msm_kms *kms)
 {
 	struct sde_kms *sde_kms;
 	struct drm_device *dev;
 	struct drm_atomic_state *state;
-	int ret, i;
+	struct drm_modeset_acquire_ctx ctx;
+	int ret;
 
 	if (!kms) {
 		SDE_ERROR("invalid argument\n");
@@ -2082,32 +1952,45 @@ static void sde_kms_lastclose(struct msm_kms *kms,
 
 	sde_kms = to_sde_kms(kms);
 	dev = sde_kms->dev;
+	drm_modeset_acquire_init(&ctx, 0);
 
 	state = drm_atomic_state_alloc(dev);
-	if (!state)
-		return;
-
-	state->acquire_ctx = ctx;
-
-	for (i = 0; i < TEARDOWN_DEADLOCK_RETRY_MAX; i++) {
-		/* add reset of custom properties to the state */
-		ret = _sde_kms_helper_reset_custom_properties(sde_kms, state);
-		if (ret)
-			break;
-
-		ret = drm_atomic_commit(state);
-		if (ret != -EDEADLK)
-			break;
-
-		drm_atomic_state_clear(state);
-		drm_modeset_backoff(ctx);
-		SDE_DEBUG("deadlock backoff on attempt %d\n", i);
+	if (!state) {
+		ret = -ENOMEM;
+		goto out_ctx;
 	}
 
+	state->acquire_ctx = &ctx;
+
+retry:
+	ret = drm_modeset_lock_all_ctx(dev, &ctx);
 	if (ret)
-		SDE_ERROR("failed to run last close: %d\n", ret);
+		goto out_state;
+
+	ret = _sde_kms_helper_reset_custom_properties(sde_kms, state);
+	if (ret)
+		goto out_state;
+
+	ret = drm_atomic_commit(state);
+out_state:
+	if (ret == -EDEADLK)
+		goto backoff;
 
 	drm_atomic_state_put(state);
+out_ctx:
+	drm_modeset_drop_locks(&ctx);
+	drm_modeset_acquire_fini(&ctx);
+
+	if (ret)
+		SDE_ERROR("kms lastclose failed: %d\n", ret);
+
+	return;
+
+backoff:
+	drm_atomic_state_clear(state);
+	drm_modeset_backoff(&ctx);
+
+	goto retry;
 }
 
 static int sde_kms_check_secure_transition(struct msm_kms *kms,
@@ -2467,9 +2350,9 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 		/* currently consider modes[0] as the preferred mode */
 		drm_mode = list_first_entry(&connector->modes,
 				struct drm_display_mode, head);
-		SDE_DEBUG("drm_mode->name = %s, id=%d, type=0x%x, flags=0x%x\n",
-				drm_mode->name, drm_mode->base.id,
-				drm_mode->type, drm_mode->flags);
+		SDE_DEBUG("drm_mode->name = %s, type=0x%x, flags=0x%x\n",
+				drm_mode->name, drm_mode->type,
+				drm_mode->flags);
 
 		/* Update CRTC drm structure */
 		crtc->state->active = true;
@@ -2881,7 +2764,6 @@ static const struct msm_kms_funcs kms_funcs = {
 	.irq_postinstall = sde_irq_postinstall,
 	.irq_uninstall   = sde_irq_uninstall,
 	.irq             = sde_irq,
-	.preclose        = sde_kms_preclose,
 	.lastclose       = sde_kms_lastclose,
 	.prepare_fence   = sde_kms_prepare_fence,
 	.prepare_commit  = sde_kms_prepare_commit,

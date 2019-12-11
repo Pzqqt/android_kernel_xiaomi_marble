@@ -10,7 +10,6 @@
 #include <linux/bug.h>
 #include <linux/bitmap.h>
 #include <linux/err.h>
-#include <linux/msm-bus.h>
 #include <linux/of_fdt.h>
 #include <drm/drmP.h>
 #include "sde_hw_mdss.h"
@@ -31,28 +30,25 @@
 #define SDE_HW_STEP(rev)		((rev) & 0xFFFF)
 #define SDE_HW_MAJOR_MINOR(rev)		((rev) >> 16)
 
-#define IS_SDE_MAJOR_SAME(rev1, rev2)   \
-	(SDE_HW_MAJOR((rev1)) == SDE_HW_MAJOR((rev2)))
-
-#define IS_SDE_MAJOR_MINOR_SAME(rev1, rev2)   \
-	(SDE_HW_MAJOR_MINOR((rev1)) == SDE_HW_MAJOR_MINOR((rev2)))
-
-#define SDE_HW_VER_170	SDE_HW_VER(1, 7, 0) /* 8996 v1.0 */
-#define SDE_HW_VER_171	SDE_HW_VER(1, 7, 1) /* 8996 v2.0 */
-#define SDE_HW_VER_172	SDE_HW_VER(1, 7, 2) /* 8996 v3.0 */
-#define SDE_HW_VER_300	SDE_HW_VER(3, 0, 0) /* 8998 v1.0 */
-#define SDE_HW_VER_301	SDE_HW_VER(3, 0, 1) /* 8998 v1.1 */
-#define SDE_HW_VER_400	SDE_HW_VER(4, 0, 0) /* sdm845 v1.0 */
-#define SDE_HW_VER_401	SDE_HW_VER(4, 0, 1) /* sdm845 v2.0 */
-#define SDE_HW_VER_410	SDE_HW_VER(4, 1, 0) /* sdm670 v1.0 */
-#define SDE_HW_VER_500	SDE_HW_VER(5, 0, 0) /* sm8150 v1.0 */
-#define SDE_HW_VER_501	SDE_HW_VER(5, 0, 1) /* sm8150 v2.0 */
-#define SDE_HW_VER_510	SDE_HW_VER(5, 1, 0) /* sdmshrike v1.0 */
-#define SDE_HW_VER_520	SDE_HW_VER(5, 2, 0) /* sdmmagpie v1.0 */
-#define SDE_HW_VER_530	SDE_HW_VER(5, 3, 0) /* sm6150 v1.0 */
-#define SDE_HW_VER_540	SDE_HW_VER(5, 4, 0) /* sdmtrinket v1.0 */
+#define SDE_HW_VER_170	SDE_HW_VER(1, 7, 0) /* 8996 */
+#define SDE_HW_VER_300	SDE_HW_VER(3, 0, 0) /* 8998 */
+#define SDE_HW_VER_400	SDE_HW_VER(4, 0, 0) /* sdm845 */
+#define SDE_HW_VER_410	SDE_HW_VER(4, 1, 0) /* sdm670 */
+#define SDE_HW_VER_500	SDE_HW_VER(5, 0, 0) /* sm8150 */
+#define SDE_HW_VER_510	SDE_HW_VER(5, 1, 0) /* sdmshrike */
+#define SDE_HW_VER_520	SDE_HW_VER(5, 2, 0) /* sdmmagpie */
+#define SDE_HW_VER_530	SDE_HW_VER(5, 3, 0) /* sm6150 */
+#define SDE_HW_VER_540	SDE_HW_VER(5, 4, 0) /* sdmtrinket */
 #define SDE_HW_VER_600	SDE_HW_VER(6, 0, 0) /* kona */
 #define SDE_HW_VER_610	SDE_HW_VER(6, 1, 0) /* sm7250 */
+#define SDE_HW_VER_630	SDE_HW_VER(6, 3, 0) /* bengal */
+#define SDE_HW_VER_700	SDE_HW_VER(7, 0, 0) /* lahaina */
+
+/* Avoid using below IS_XXX macros outside catalog, use feature bit instead */
+#define IS_SDE_MAJOR_SAME(rev1, rev2)   \
+		(SDE_HW_MAJOR((rev1)) == SDE_HW_MAJOR((rev2)))
+#define IS_SDE_MAJOR_MINOR_SAME(rev1, rev2)   \
+		(SDE_HW_MAJOR_MINOR((rev1)) == SDE_HW_MAJOR_MINOR((rev2)))
 
 #define IS_MSM8996_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_170)
 #define IS_MSM8998_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_300)
@@ -65,6 +61,8 @@
 #define IS_SDMTRINKET_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_540)
 #define IS_KONA_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_600)
 #define IS_SAIPAN_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_610)
+#define IS_BENGAL_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_630)
+#define IS_LAHAINA_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_700)
 
 #define SDE_HW_BLK_NAME_LEN	16
 
@@ -137,26 +135,30 @@ enum {
 #define SSPP_SYS_CACHE_NO_ALLOC	BIT(4)
 
 /**
- * SDE INTERRUPTS - maintains the possible hw irq's allowed by HW
- * The order in this enum must match the order of the irqs defined
- * by 'sde_irq_map'
+ * All INTRs relevant for a specific target should be enabled via
+ * _add_to_irq_offset_list()
  */
-enum sde_intr_enum {
-	MDSS_INTR_SSPP_TOP0_INTR,
-	MDSS_INTR_SSPP_TOP0_INTR2,
-	MDSS_INTF_TEAR_1_INTR,
-	MDSS_INTF_TEAR_2_INTR,
-	MDSS_INTR_SSPP_TOP0_HIST_INTR,
-	MDSS_INTR_INTF_0_INTR,
-	MDSS_INTR_INTF_1_INTR,
-	MDSS_INTR_INTF_2_INTR,
-	MDSS_INTR_INTF_3_INTR,
-	MDSS_INTR_INTF_4_INTR,
-	MDSS_INTR_AD4_0_INTR,
-	MDSS_INTR_AD4_1_INTR,
-	MDSS_INTR_LTM_0_INTR,
-	MDSS_INTR_LTM_1_INTR,
-	MDSS_INTR_MAX
+enum sde_intr_hwblk_type {
+	SDE_INTR_HWBLK_TOP,
+	SDE_INTR_HWBLK_INTF,
+	SDE_INTR_HWBLK_AD4,
+	SDE_INTR_HWBLK_INTF_TEAR,
+	SDE_INTR_HWBLK_LTM,
+	SDE_INTR_HWBLK_MAX
+};
+
+enum sde_intr_top_intr {
+	SDE_INTR_TOP_INTR = 1,
+	SDE_INTR_TOP_INTR2,
+	SDE_INTR_TOP_HIST_INTR,
+	SDE_INTR_TOP_MAX
+};
+
+struct sde_intr_irq_offsets {
+	struct list_head list;
+	enum sde_intr_hwblk_type type;
+	u32 instance_idx;
+	u32 base_offset;
 };
 
 /**
@@ -210,6 +212,7 @@ enum {
  * @SDE_SSPP_BLOCK_SEC_UI    Blocks secure-ui layers
  * @SDE_SSPP_SCALER_QSEED3LITE Qseed3lite algorithm support
  * @SDE_SSPP_TRUE_INLINE_ROT_V1, Support of SSPP true inline rotation v1
+ * @SDE_SSPP_INLINE_CONST_CLR Inline rotation requires const clr disabled
  * @SDE_SSPP_MAX             maximum value
  */
 enum {
@@ -238,6 +241,7 @@ enum {
 	SDE_SSPP_BLOCK_SEC_UI,
 	SDE_SSPP_SCALER_QSEED3LITE,
 	SDE_SSPP_TRUE_INLINE_ROT_V1,
+	SDE_SSPP_INLINE_CONST_CLR,
 	SDE_SSPP_MAX
 };
 
@@ -274,6 +278,7 @@ enum {
  * @SDE_DISP_CWB_PREF         Layer mixer preferred for CWB
  * @SDE_DISP_PRIMARY_PREF     Layer mixer preferred for primary display
  * @SDE_DISP_SECONDARY_PREF   Layer mixer preferred for secondary display
+ * @SDE_MIXER_COMBINED_ALPHA  Layer mixer bg and fg alpha in single register
  * @SDE_MIXER_MAX             maximum value
  */
 enum {
@@ -284,6 +289,7 @@ enum {
 	SDE_DISP_PRIMARY_PREF,
 	SDE_DISP_SECONDARY_PREF,
 	SDE_DISP_CWB_PREF,
+	SDE_MIXER_COMBINED_ALPHA,
 	SDE_MIXER_MAX
 };
 
@@ -458,11 +464,13 @@ enum {
  * VBIF sub-blocks and features
  * @SDE_VBIF_QOS_OTLIM        VBIF supports OT Limit
  * @SDE_VBIF_QOS_REMAP        VBIF supports QoS priority remap
+ * @SDE_VBIF_DISABLE_SHAREABLE: VBIF requires inner/outer shareables disabled
  * @SDE_VBIF_MAX              maximum value
  */
 enum {
 	SDE_VBIF_QOS_OTLIM = 0x1,
 	SDE_VBIF_QOS_REMAP,
+	SDE_VBIF_DISABLE_SHAREABLE,
 	SDE_VBIF_MAX
 };
 
@@ -946,12 +954,14 @@ struct sde_cdm_cfg   {
  * @type:              Interface type(DSI, DP, HDMI)
  * @controller_id:     Controller Instance ID in case of multiple of intf type
  * @prog_fetch_lines_worst_case	Worst case latency num lines needed to prefetch
+ * @te_irq_offset:     Register offset for INTF TE IRQ block
  */
 struct sde_intf_cfg  {
 	SDE_HW_BLK_INFO;
 	u32 type;   /* interface type*/
 	u32 controller_id;
 	u32 prog_fetch_lines_worst_case;
+	u32 te_irq_offset;
 };
 
 /**
@@ -1271,6 +1281,9 @@ struct sde_limit_cfg {
  * @has_3d_merge_reset Supports 3D merge reset
  * @has_decimation     Supports decimation
  * @has_qos_fl_nocalc  flag to indicate QoS fill level needs no calculation
+ * @has_mixer_combined_alpha     Mixer has single register for FG & BG alpha
+ * @vbif_disable_inner_outer_shareable     VBIF requires disabling shareables
+ * @inline_disable_const_clr     Disable constant color during inline rotate
  * @sc_cfg: system cache configuration
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
@@ -1286,7 +1299,7 @@ struct sde_limit_cfg {
  * @has_cursor    indicates if hardware cursor is supported
  * @has_vig_p010  indicates if vig pipe supports p010 format
  * @inline_rot_formats	formats supported by the inline rotator feature
- * @mdss_irqs	  bitmap with the irqs supported by the target
+ * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
  */
 struct sde_mdss_cfg {
 	u32 hwversion;
@@ -1331,6 +1344,9 @@ struct sde_mdss_cfg {
 	bool has_3d_merge_reset;
 	bool has_decimation;
 	bool has_qos_fl_nocalc;
+	bool has_mixer_combined_alpha;
+	bool vbif_disable_inner_outer_shareable;
+	bool inline_disable_const_clr;
 
 	struct sde_sc_cfg sc_cfg;
 
@@ -1416,7 +1432,7 @@ struct sde_mdss_cfg {
 	struct sde_format_extended *virt_vig_formats;
 	struct sde_format_extended *inline_rot_formats;
 
-	DECLARE_BITMAP(mdss_irqs, MDSS_INTR_MAX);
+	struct list_head irq_offset_list;
 };
 
 struct sde_mdss_hw_cfg_handler {
@@ -1471,6 +1487,22 @@ struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev);
 void sde_hw_catalog_deinit(struct sde_mdss_cfg *sde_cfg);
 
 /**
+ * sde_hw_catalog_irq_offset_list_delete - delete the irq_offset_list
+ *                                         maintained by the catalog
+ * @head:      pointer to the catalog's irq_offset_list
+ */
+static inline void sde_hw_catalog_irq_offset_list_delete(
+		struct list_head *head)
+{
+	struct sde_intr_irq_offsets *item, *tmp;
+
+	list_for_each_entry_safe(item, tmp, head, list) {
+		list_del(&item->list);
+		kfree(item);
+	}
+}
+
+/**
  * sde_hw_sspp_multirect_enabled - check multirect enabled for the sspp
  * @cfg:          pointer to sspp cfg
  */
@@ -1479,10 +1511,5 @@ static inline bool sde_hw_sspp_multirect_enabled(const struct sde_sspp_cfg *cfg)
 	return test_bit(SDE_SSPP_SMART_DMA_V1, &cfg->features) ||
 			 test_bit(SDE_SSPP_SMART_DMA_V2, &cfg->features) ||
 			 test_bit(SDE_SSPP_SMART_DMA_V2p5, &cfg->features);
-}
-
-static inline bool sde_hw_intf_te_supported(const struct sde_mdss_cfg *sde_cfg)
-{
-	return test_bit(SDE_INTF_TE, &(sde_cfg->intf[0].features));
 }
 #endif /* _SDE_HW_CATALOG_H */

@@ -703,8 +703,8 @@ static int sde_encoder_phys_wb_atomic_check(
 	const struct drm_display_mode *mode = &crtc_state->mode;
 	int rc;
 
-	SDE_DEBUG("[atomic_check:%d,%d,\"%s\",%d,%d]\n",
-			hw_wb->idx - WB_0, mode->base.id, mode->name,
+	SDE_DEBUG("[atomic_check:%d,\"%s\",%d,%d]\n",
+			hw_wb->idx - WB_0, mode->name,
 			mode->hdisplay, mode->vdisplay);
 
 	if (!conn_state || !conn_state->connector) {
@@ -962,8 +962,8 @@ static void sde_encoder_phys_wb_setup(
 	struct drm_framebuffer *fb;
 	struct sde_rect *wb_roi = &wb_enc->wb_roi;
 
-	SDE_DEBUG("[mode_set:%d,%d,\"%s\",%d,%d]\n",
-			hw_wb->idx - WB_0, mode.base.id, mode.name,
+	SDE_DEBUG("[mode_set:%d,\"%s\",%d,%d]\n",
+			hw_wb->idx - WB_0, mode.name,
 			mode.hdisplay, mode.vdisplay);
 
 	memset(wb_roi, 0, sizeof(struct sde_rect));
@@ -1150,9 +1150,9 @@ static void sde_encoder_phys_wb_mode_set(
 	phys_enc->cached_mode = *adj_mode;
 	instance = phys_enc->split_role == ENC_ROLE_SLAVE ? 1 : 0;
 
-	SDE_DEBUG("[mode_set_cache:%d,%d,\"%s\",%d,%d]\n",
-			hw_wb->idx - WB_0, mode->base.id,
-			mode->name, mode->hdisplay, mode->vdisplay);
+	SDE_DEBUG("[mode_set_cache:%d,\"%s\",%d,%d]\n",
+			hw_wb->idx - WB_0, mode->name,
+			mode->hdisplay, mode->vdisplay);
 
 	phys_enc->hw_ctl = NULL;
 	phys_enc->hw_cdm = NULL;
@@ -1401,6 +1401,7 @@ static int _sde_encoder_phys_wb_init_internal_fb(
 	uint32_t size;
 	int nplanes, i, ret;
 	struct msm_gem_address_space *aspace;
+	const struct drm_format_info *info;
 
 	if (!wb_enc || !wb_enc->base.parent || !wb_enc->base.sde_kms) {
 		SDE_ERROR("invalid params\n");
@@ -1434,7 +1435,8 @@ static int _sde_encoder_phys_wb_init_internal_fb(
 	}
 
 	/* allocate gem tracking object */
-	nplanes = drm_format_num_planes(pixel_format);
+	info = drm_get_format_info(dev, &mode_cmd);
+	nplanes = info->num_planes;
 	if (nplanes >= SDE_MAX_PLANES) {
 		SDE_ERROR("requested format has too many planes\n");
 		return -EINVAL;
@@ -1452,8 +1454,7 @@ static int _sde_encoder_phys_wb_init_internal_fb(
 
 	for (i = 0; i < nplanes; ++i) {
 		wb_enc->bo_disable[i] = wb_enc->bo_disable[0];
-		mode_cmd.pitches[i] = width *
-			drm_format_plane_cpp(pixel_format, i);
+		mode_cmd.pitches[i] = width * info->cpp[i];
 	}
 
 	fb = msm_framebuffer_init(dev, &mode_cmd, wb_enc->bo_disable);

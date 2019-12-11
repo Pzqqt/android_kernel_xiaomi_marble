@@ -1951,7 +1951,7 @@ static void _sde_rm_release_rsvp(
 void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 {
 	struct sde_rm_rsvp *rsvp;
-	struct drm_connector *conn;
+	struct drm_connector *conn = NULL;
 	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	uint64_t top_ctrl;

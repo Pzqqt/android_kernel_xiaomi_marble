@@ -1423,7 +1423,7 @@ static ssize_t debugfs_read_esd_check_mode(struct file *file,
 	struct drm_panel_esd_config *esd_config;
 	char *buf;
 	int rc = 0;
-	size_t len;
+	size_t len = 0;
 
 	if (!display)
 		return -ENODEV;
@@ -4874,8 +4874,6 @@ static int dsi_display_bind(struct device *dev,
 				sizeof(struct dsi_link_lp_clk_info));
 
 		info.c_clks[i].drm = drm;
-		info.bus_handle[i] =
-			display_ctrl->ctrl->axi_bus_info.bus_handle;
 		info.ctrl_index[i] = display_ctrl->ctrl->cell_index;
 	}
 
@@ -5382,12 +5380,15 @@ static enum drm_mode_status dsi_display_drm_ext_mode_valid(
 
 static int dsi_display_drm_ext_atomic_check(struct drm_connector *connector,
 		void *disp,
-		struct drm_connector_state *c_state)
+		struct drm_atomic_state *state)
 {
 	struct dsi_display *display = disp;
+	struct drm_connector_state *c_state;
+
+	c_state = drm_atomic_get_new_connector_state(state, connector);
 
 	return display->ext_conn->helper_private->atomic_check(
-			display->ext_conn, c_state);
+			display->ext_conn, state);
 }
 
 static int dsi_display_ext_get_info(struct drm_connector *connector,
@@ -5538,8 +5539,8 @@ static bool dsi_display_drm_ext_bridge_mode_fixup(
 
 static void dsi_display_drm_ext_bridge_mode_set(
 		struct drm_bridge *bridge,
-		struct drm_display_mode *mode,
-		struct drm_display_mode *adjusted_mode)
+		const struct drm_display_mode *mode,
+		const struct drm_display_mode *adjusted_mode)
 {
 	struct dsi_display_ext_bridge *ext_bridge;
 	struct drm_display_mode tmp;

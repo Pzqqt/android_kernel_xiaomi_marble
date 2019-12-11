@@ -18,8 +18,6 @@
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/iopoll.h>
-#include <linux/msm-bus.h>
-#include <linux/msm-bus-board.h>
 #include <linux/regulator/consumer.h>
 #include <media/msm_media_info.h>
 #include <linux/videodev2.h>

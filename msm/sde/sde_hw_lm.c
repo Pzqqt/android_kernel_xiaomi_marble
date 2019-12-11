@@ -110,8 +110,9 @@ static void sde_hw_lm_setup_border_color(struct sde_hw_mixer *ctx,
 	}
 }
 
-static void sde_hw_lm_setup_blend_config_sdm845(struct sde_hw_mixer *ctx,
-	u32 stage, u32 fg_alpha, u32 bg_alpha, u32 blend_op)
+static void sde_hw_lm_setup_blend_config_combined_alpha(
+	struct sde_hw_mixer *ctx, u32 stage,
+	u32 fg_alpha, u32 bg_alpha, u32 blend_op)
 {
 	struct sde_hw_blk_reg_map *c = &ctx->hw;
 	int stage_off;
@@ -280,15 +281,9 @@ static void _setup_mixer_ops(struct sde_mdss_cfg *m,
 		unsigned long features)
 {
 	ops->setup_mixer_out = sde_hw_lm_setup_out;
-	if (IS_SDM845_TARGET(m->hwversion) || IS_SDM670_TARGET(m->hwversion) ||
-			IS_SM8150_TARGET(m->hwversion) ||
-			IS_SDMSHRIKE_TARGET(m->hwversion) ||
-			IS_SM6150_TARGET(m->hwversion) ||
-			IS_SDMMAGPIE_TARGET(m->hwversion) ||
-			IS_KONA_TARGET(m->hwversion) ||
-			IS_SAIPAN_TARGET(m->hwversion) ||
-			IS_SDMTRINKET_TARGET(m->hwversion))
-		ops->setup_blend_config = sde_hw_lm_setup_blend_config_sdm845;
+	if (test_bit(SDE_MIXER_COMBINED_ALPHA, &features))
+		ops->setup_blend_config =
+				sde_hw_lm_setup_blend_config_combined_alpha;
 	else
 		ops->setup_blend_config = sde_hw_lm_setup_blend_config;
 	ops->setup_alpha_out = sde_hw_lm_setup_color3;

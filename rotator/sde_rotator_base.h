@@ -13,6 +13,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
+#include <linux/interconnect.h>
 
 #include "sde_rotator_hwio.h"
 #include "sde_rotator_io_util.h"
@@ -45,6 +46,7 @@
 #define SDE_MDP_HW_REV_530	SDE_MDP_REV(5, 3, 0)	/* sm6150 v1.0 */
 #define SDE_MDP_HW_REV_540	SDE_MDP_REV(5, 4, 0)	/* sdmtrinket v1.0 */
 #define SDE_MDP_HW_REV_600	SDE_MDP_REV(6, 0, 0)    /* msmnile+ v1.0 */
+#define SDE_MDP_HW_REV_630	SDE_MDP_REV(6, 3, 0)	/* bengal v1.0 */
 
 #define SDE_MDP_VBIF_4_LEVEL_REMAPPER	4
 #define SDE_MDP_VBIF_8_LEVEL_REMAPPER	8
@@ -89,9 +91,9 @@ struct sde_mdp_vbif_halt_params {
 
 enum sde_bus_vote_type {
 	VOTE_INDEX_DISABLE,
-	VOTE_INDEX_19_MHZ,
-	VOTE_INDEX_40_MHZ,
-	VOTE_INDEX_80_MHZ,
+	VOTE_INDEX_76_MHZ,
+	VOTE_INDEX_150_MHZ,
+	VOTE_INDEX_300_MHZ,
 	VOTE_INDEX_MAX,
 };
 
@@ -192,6 +194,16 @@ struct sde_smmu_client {
 };
 
 /*
+ * struct sde_rot_bus_data: struct for bus setting
+ * @ab: average bandwidth in kilobytes per second
+ * @ib: peak bandwidth in kilobytes per second
+ */
+struct sde_rot_bus_data {
+	uint64_t ab; /* Arbitrated bandwidth */
+	uint64_t ib; /* Instantaneous bandwidth */
+};
+
+/*
  * struct sde_rot_debug_bus: rotator debugbus header structure
  * @wr_addr: write address for debugbus controller
  * @block_id: rotator debugbus block id
@@ -250,7 +262,7 @@ struct sde_rot_data_type {
 	u32 rot_block_size;
 
 	/* register bus (AHB) */
-	u32 reg_bus_hdl;
+	struct icc_path *reg_bus_hdl;
 	u32 reg_bus_usecase_ndx;
 	struct list_head reg_bus_clist;
 	struct mutex reg_bus_lock;
@@ -319,6 +331,7 @@ void vbif_unlock(struct platform_device *parent_pdev);
 void sde_mdp_halt_vbif_xin(struct sde_mdp_vbif_halt_params *params);
 
 int sde_mdp_init_vbif(void);
+const struct sde_rot_bus_data *sde_get_rot_reg_bus_value(u32 usecase_ndx);
 
 #define SDE_VBIF_WRITE(mdata, offset, value) \
 		(sde_reg_w(&mdata->vbif_nrt_io, offset, value, 0))

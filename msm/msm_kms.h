@@ -93,10 +93,8 @@ struct msm_kms_funcs {
 			struct drm_encoder *slave_encoder,
 			bool is_cmd_mode);
 	void (*postopen)(struct msm_kms *kms, struct drm_file *file);
-	void (*preclose)(struct msm_kms *kms, struct drm_file *file);
 	void (*postclose)(struct msm_kms *kms, struct drm_file *file);
-	void (*lastclose)(struct msm_kms *kms,
-			struct drm_modeset_acquire_ctx *ctx);
+	void (*lastclose)(struct msm_kms *kms);
 	int (*register_events)(struct msm_kms *kms,
 			struct drm_mode_object *obj, u32 event, bool en);
 	void (*set_encoder_mode)(struct msm_kms *kms,
@@ -136,6 +134,9 @@ struct msm_kms {
 
 	/* mapper-id used to request GEM buffer mapped for scanout: */
 	struct msm_gem_address_space *aspace;
+
+	/* DRM client used for lastclose cleanup */
+	struct drm_client_dev client;
 };
 
 /**

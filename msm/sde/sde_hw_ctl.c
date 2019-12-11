@@ -36,6 +36,7 @@
 #define   CTL_CWB_ACTIVE                0x0F0
 #define   CTL_INTF_ACTIVE               0x0F4
 #define   CTL_CDM_ACTIVE                0x0F8
+#define   CTL_FETCH_PIPE_ACTIVE         0x0FC
 
 #define   CTL_MERGE_3D_FLUSH           0x100
 #define   CTL_DSC_FLUSH                0x104
@@ -60,6 +61,8 @@
 
 #define UPDATE_MASK(m, idx, en)           \
 	((m) = (en) ? ((m) | BIT((idx))) : ((m) & ~BIT((idx))))
+
+#define CTL_INVALID_BIT                0xffff
 
 /**
  * List of SSPP bits in CTL_FLUSH
@@ -109,6 +112,13 @@ static const u32 intf_tbl[INTF_MAX] = {SDE_NONE, 31, 30, 29, 28};
  * for such blocks flush is done by flushing individual control and
  * top level control.
  */
+
+/**
+ * List of SSPP bits in CTL_FETCH_PIPE_ACTIVE
+ */
+static const u32 fetch_tbl[SSPP_MAX] = {CTL_INVALID_BIT, 16, 17, 18, 19,
+	CTL_INVALID_BIT, CTL_INVALID_BIT, CTL_INVALID_BIT, CTL_INVALID_BIT, 0,
+	1, 2, 3, CTL_INVALID_BIT, CTL_INVALID_BIT};
 
 /**
  * list of WB bits in CTL_WB_FLUSH
@@ -764,6 +774,7 @@ static void sde_hw_ctl_clear_all_blendstages(struct sde_hw_ctl *ctx)
 		SDE_REG_WRITE(c, CTL_LAYER_EXT2(mixer_id), 0);
 		SDE_REG_WRITE(c, CTL_LAYER_EXT3(mixer_id), 0);
 	}
+	SDE_REG_WRITE(c, CTL_FETCH_PIPE_ACTIVE, 0);
 }
 
 static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
@@ -772,6 +783,7 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 	struct sde_hw_blk_reg_map *c;
 	u32 mixercfg = 0, mixercfg_ext = 0, mix, ext;
 	u32 mixercfg_ext2 = 0, mixercfg_ext3 = 0;
+	u32 active_fetch_pipes = 0;
 	int i, j;
 	u8 stages;
 	int pipes_per_stage;
@@ -801,10 +813,11 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 		ext = i >= 7;
 
 		for (j = 0 ; j < pipes_per_stage; j++) {
+			enum sde_sspp pipe = stage_cfg->stage[i][j];
 			enum sde_sspp_multirect_index rect_index =
 				stage_cfg->multirect_index[i][j];
 
-			switch (stage_cfg->stage[i][j]) {
+			switch (pipe) {
 			case SSPP_VIG0:
 				if (rect_index == SDE_SSPP_RECT_1) {
 					mixercfg_ext3 |= ((i + 1) & 0xF) << 0;
@@ -894,6 +907,9 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 			default:
 				break;
 			}
+
+			if (fetch_tbl[pipe] != CTL_INVALID_BIT)
+				active_fetch_pipes |= BIT(fetch_tbl[pipe]);
 		}
 	}
 
@@ -902,6 +918,7 @@ exit:
 	SDE_REG_WRITE(c, CTL_LAYER_EXT(lm), mixercfg_ext);
 	SDE_REG_WRITE(c, CTL_LAYER_EXT2(lm), mixercfg_ext2);
 	SDE_REG_WRITE(c, CTL_LAYER_EXT3(lm), mixercfg_ext3);
+	SDE_REG_WRITE(c, CTL_FETCH_PIPE_ACTIVE, active_fetch_pipes);
 }
 
 static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
@@ -958,7 +975,7 @@ static int sde_hw_ctl_intf_cfg_v1(struct sde_hw_ctl *ctx,
 	u32 wb_active = 0;
 	u32 merge_3d_active = 0;
 	u32 cwb_active = 0;
-	u32 mode_sel = 0;
+	u32 mode_sel = 0xf0000000;
 	u32 cdm_active = 0;
 	u32 intf_master = 0;
 	u32 i;

@@ -14,14 +14,19 @@
 #include <linux/mutex.h>
 #include <linux/of_platform.h>
 
-#include <linux/msm-bus.h>
-#include <linux/msm-bus-board.h>
 #include <linux/sde_io_util.h>
 #include <linux/sde_rsc.h>
 
 #include "sde_power_handle.h"
 #include "sde_trace.h"
 #include "sde_dbg.h"
+
+static const struct sde_power_bus_scaling_data sde_reg_bus_table[] = {
+	{0, 0},
+	{0, 76800},
+	{0, 150000},
+	{0, 300000},
+};
 
 static const char *data_bus_name[SDE_POWER_HANDLE_DBUS_ID_MAX] = {
 	[SDE_POWER_HANDLE_DBUS_ID_MNOC] = "qcom,sde-data-bus",
@@ -277,67 +282,49 @@ clk_err:
 	return rc;
 }
 
-#ifdef CONFIG_QCOM_BUS_SCALING
-
 #define MAX_AXI_PORT_COUNT 3
 
 static int _sde_power_data_bus_set_quota(
 	struct sde_power_data_bus_handle *pdbus,
 	u64 in_ab_quota, u64 in_ib_quota)
 {
-	int new_uc_idx;
-	u64 ab_quota[MAX_AXI_PORT_COUNT] = {0, 0};
-	u64 ib_quota[MAX_AXI_PORT_COUNT] = {0, 0};
-	int rc;
+	int rc = 0, i = 0, j = 0;
 
-	if (pdbus->data_bus_hdl < 1) {
-		pr_err("invalid bus handle %d\n", pdbus->data_bus_hdl);
+	if (!pdbus->data_paths_cnt) {
+		pr_err("invalid data bus handle\n");
 		return -EINVAL;
 	}
 
-	if (!in_ab_quota && !in_ib_quota)  {
-		new_uc_idx = 0;
-	} else {
-		int i;
-		struct msm_bus_vectors *vect = NULL;
-		struct msm_bus_scale_pdata *bw_table =
-			pdbus->data_bus_scale_table;
-		u32 total_data_paths_cnt = pdbus->data_paths_cnt;
+	pr_debug("ab=%llu ib=%llu\n", in_ab_quota, in_ib_quota);
 
-		if (!bw_table || !total_data_paths_cnt ||
-		    total_data_paths_cnt > MAX_AXI_PORT_COUNT) {
-			pr_err("invalid input\n");
-			return -EINVAL;
-		}
-
-		ab_quota[0] = div_u64(in_ab_quota, total_data_paths_cnt);
-		ib_quota[0] = div_u64(in_ib_quota, total_data_paths_cnt);
-
-		for (i = 1; i < total_data_paths_cnt; i++) {
-			ab_quota[i] = ab_quota[0];
-			ib_quota[i] = ib_quota[0];
-		}
-
-		new_uc_idx = (pdbus->curr_bw_uc_idx %
-			(bw_table->num_usecases - 1)) + 1;
-
-		for (i = 0; i < total_data_paths_cnt; i++) {
-			vect = &bw_table->usecase[new_uc_idx].vectors[i];
-			vect->ab = ab_quota[i];
-			vect->ib = ib_quota[i];
-
-			pr_debug(
-				"%s uc_idx=%d idx=%d ab=%llu ib=%llu\n",
-				bw_table->name, new_uc_idx, i, vect->ab,
-				vect->ib);
-		}
-	}
-	pdbus->curr_bw_uc_idx = new_uc_idx;
+	in_ab_quota = div_u64(in_ab_quota, pdbus->data_paths_cnt);
 
 	SDE_ATRACE_BEGIN("msm_bus_scale_req");
-	rc = msm_bus_scale_client_update_request(pdbus->data_bus_hdl,
-			new_uc_idx);
+	for (i = 0; i < pdbus->data_paths_cnt; i++) {
+		if (pdbus->data_bus_hdl[i]) {
+			rc = icc_set_bw(pdbus->data_bus_hdl[i],
+				in_ab_quota, in_ib_quota);
+			if (rc)
+				goto err;
+		}
+	}
+
+	pdbus->curr_val.ab = in_ab_quota;
+	pdbus->curr_val.ib = in_ib_quota;
+
 	SDE_ATRACE_END("msm_bus_scale_req");
+
+	return rc;
+err:
+	for (j = 0; j < i; j++)
+		if (pdbus->data_bus_hdl[j])
+			icc_set_bw(pdbus->data_bus_hdl[j],
+				   pdbus->curr_val.ab,
+				   pdbus->curr_val.ib);
+
+	SDE_ATRACE_END("msm_bus_scale_req");
+	pr_err("failed to set data bus vote ab=%llu ib=%llu rc=%d\n",
+	       rc, in_ab_quota, in_ib_quota);
 
 	return rc;
 }
@@ -356,7 +343,7 @@ int sde_power_data_bus_set_quota(struct sde_power_handle *phandle,
 
 	trace_sde_perf_update_bus(bus_id, ab_quota, ib_quota);
 
-	if (phandle->data_bus_handle[bus_id].data_bus_hdl)
+	if (phandle->data_bus_handle[bus_id].data_paths_cnt > 0)
 		rc = _sde_power_data_bus_set_quota(
 			&phandle->data_bus_handle[bus_id], ab_quota, ib_quota);
 
@@ -368,96 +355,96 @@ int sde_power_data_bus_set_quota(struct sde_power_handle *phandle,
 static void sde_power_data_bus_unregister(
 		struct sde_power_data_bus_handle *pdbus)
 {
-	if (pdbus->data_bus_hdl) {
-		msm_bus_scale_unregister_client(pdbus->data_bus_hdl);
-		pdbus->data_bus_hdl = 0;
+	int i = 0;
+
+	for (i = 0; i < pdbus->data_paths_cnt; i++) {
+		if (pdbus->data_bus_hdl[i]) {
+			icc_put(pdbus->data_bus_hdl[i]);
+			pdbus->data_bus_hdl[i] = NULL;
+		}
 	}
 }
 
 static int sde_power_data_bus_parse(struct platform_device *pdev,
 	struct sde_power_data_bus_handle *pdbus, const char *name)
 {
-	struct device_node *node;
-	int rc = 0;
-	int paths;
+	char bus_name[32];
+	int i = 0, ret = 0;
 
-	node = of_get_child_by_name(pdev->dev.of_node, name);
-	if (!node)
-		goto end;
+	for (i = 0; i < DATA_BUS_PATH_MAX; i++) {
+		snprintf(bus_name, sizeof(bus_name), "%s%d", name, i);
+		ret = of_property_match_string(pdev->dev.of_node,
+			"interconnect-names", bus_name);
+		if (ret < 0) {
+			if (!pdbus->data_paths_cnt) {
+				pr_debug("sde: bus %s dt node missing\n", bus_name);
+				return 0;
+			} else
+				goto end;
+		} else
+			pdbus->data_bus_hdl[i] = of_icc_get(&pdev->dev, bus_name);
 
-	rc = of_property_read_u32(node, "qcom,msm-bus,num-paths", &paths);
-	if (rc) {
-		pr_err("Error. qcom,msm-bus,num-paths not found\n");
-		return rc;
+		if (IS_ERR_OR_NULL(pdbus->data_bus_hdl[i])) {
+			pr_debug("icc get path failed for %s\n", bus_name);
+			break;
+		}
+		pdbus->data_paths_cnt++;
 	}
-	pdbus->data_paths_cnt = paths;
 
-	pdbus->data_bus_scale_table = msm_bus_pdata_from_node(pdev, node);
-	if (IS_ERR_OR_NULL(pdbus->data_bus_scale_table)) {
-		pr_err("reg bus handle parsing failed\n");
-		rc = PTR_ERR(pdbus->data_bus_scale_table);
-		if (!pdbus->data_bus_scale_table)
-			rc = -EINVAL;
-		goto end;
+	if (!pdbus->data_paths_cnt) {
+		pr_err("get none data bus path for %s\n", name);
+		return -EINVAL;
 	}
-	pdbus->data_bus_hdl = msm_bus_scale_register_client(
-			pdbus->data_bus_scale_table);
-	if (!pdbus->data_bus_hdl) {
-		pr_err("data_bus_client register failed\n");
-		rc = -EINVAL;
-		goto end;
-	}
-	pr_debug("register %s data_bus_hdl=%x\n", name, pdbus->data_bus_hdl);
 
 end:
-	return rc;
+	if (of_find_property(pdev->dev.of_node,
+			     "qcom,msm-bus,active-only", NULL)) {
+		pdbus->bus_active_only = true;
+		for (i = 0; i < pdbus->data_paths_cnt; i++) {
+			icc_set_tag(pdbus->data_bus_hdl[i],
+				    QCOM_ICC_TAG_ACTIVE_ONLY);
+		}
+	}
+
+	pr_debug("register %s data_bus success, path number=%d\n",
+		name, pdbus->data_paths_cnt);
+
+	return 0;
 }
 
 static int sde_power_reg_bus_parse(struct platform_device *pdev,
 	struct sde_power_handle *phandle)
 {
-	struct device_node *node;
-	struct msm_bus_scale_pdata *bus_scale_table;
 	int rc = 0;
 
-	node = of_get_child_by_name(pdev->dev.of_node, "qcom,sde-reg-bus");
-	if (node) {
-		bus_scale_table = msm_bus_pdata_from_node(pdev, node);
-		if (IS_ERR_OR_NULL(bus_scale_table)) {
-			pr_err("reg bus handle parsing failed\n");
-			rc = PTR_ERR(bus_scale_table);
-			if (!bus_scale_table)
-				rc = -EINVAL;
-			goto end;
-		}
-		phandle->reg_bus_hdl = msm_bus_scale_register_client(
-			      bus_scale_table);
-		if (!phandle->reg_bus_hdl) {
-			pr_err("reg_bus_client register failed\n");
-			rc = -EINVAL;
-			goto end;
-		}
-		pr_debug("register reg_bus_hdl=%x\n", phandle->reg_bus_hdl);
+	phandle->reg_bus_hdl = of_icc_get(&pdev->dev, "qcom,sde-reg-bus");
+	if (IS_ERR_OR_NULL(phandle->reg_bus_hdl)) {
+		pr_err("reg bus handle parsing failed\n");
+		phandle->reg_bus_hdl = NULL;
+		rc = -EINVAL;
+	} else {
+		pr_debug("reg_bus_hdl parsing success\n");
 	}
 
-end:
 	return rc;
 }
 
-static void sde_power_reg_bus_unregister(u32 reg_bus_hdl)
+static void sde_power_reg_bus_unregister(struct icc_path *reg_bus_hdl)
 {
 	if (reg_bus_hdl)
-		msm_bus_scale_unregister_client(reg_bus_hdl);
+		icc_put(reg_bus_hdl);
 }
 
-static int sde_power_reg_bus_update(u32 reg_bus_hdl, u32 usecase_ndx)
+static int sde_power_reg_bus_update(struct icc_path *reg_bus_hdl,
+	u32 usecase_ndx)
 {
 	int rc = 0;
 
 	if (reg_bus_hdl) {
 		SDE_ATRACE_BEGIN("msm_bus_scale_req");
-		rc = msm_bus_scale_client_update_request(reg_bus_hdl,
-								usecase_ndx);
+		rc = icc_set_bw(reg_bus_hdl,
+			sde_reg_bus_table[usecase_ndx].ab,
+			sde_reg_bus_table[usecase_ndx].ib);
 		SDE_ATRACE_END("msm_bus_scale_req");
 	}
 
@@ -466,52 +453,6 @@ static int sde_power_reg_bus_update(u32 reg_bus_hdl, u32 usecase_ndx)
 
 	return rc;
 }
-#else
-static int _sde_power_data_bus_set_quota(
-	struct sde_power_data_bus_handle *pdbus,
-	u64 in_ab_quota, u64 in_ib_quota)
-{
-	return 0;
-}
-
-static int sde_power_data_bus_parse(struct platform_device *pdev,
-		struct sde_power_data_bus_handle *pdbus, const char *name)
-{
-	return 0;
-}
-
-static void sde_power_data_bus_unregister(
-		struct sde_power_data_bus_handle *pdbus)
-{
-}
-
-int sde_power_data_bus_set_quota(struct sde_power_handle *phandle,
-	u32 bus_id, u64 ab_quota, u64 ib_quota)
-{
-	return 0;
-}
-
-static int sde_power_reg_bus_parse(struct platform_device *pdev,
-	struct sde_power_handle *phandle)
-{
-	return 0;
-}
-
-static void sde_power_reg_bus_unregister(u32 reg_bus_hdl)
-{
-}
-
-static int sde_power_reg_bus_update(u32 reg_bus_hdl, u32 usecase_ndx)
-{
-	return 0;
-}
-
-int sde_power_data_bus_state_update(struct sde_power_handle *phandle,
-							bool enable)
-{
-	return 0;
-}
-#endif
 
 int sde_power_resource_init(struct platform_device *pdev,
 	struct sde_power_handle *phandle)
@@ -576,12 +517,6 @@ int sde_power_resource_init(struct platform_device *pdev,
 		}
 	}
 
-	if (of_find_property(pdev->dev.of_node, "qcom,dss-cx-ipeak", NULL))
-		phandle->dss_cx_ipeak = cx_ipeak_register(pdev->dev.of_node,
-						"qcom,dss-cx-ipeak");
-	else
-		pr_debug("cx ipeak client parse failed\n");
-
 	INIT_LIST_HEAD(&phandle->event_list);
 
 	phandle->rsc_client = NULL;
@@ -635,9 +570,6 @@ void sde_power_resource_deinit(struct platform_device *pdev,
 	}
 	mutex_unlock(&phandle->phandle_lock);
 
-	if (phandle->dss_cx_ipeak)
-		cx_ipeak_unregister(phandle->dss_cx_ipeak);
-
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
 		sde_power_data_bus_unregister(&phandle->data_bus_handle[i]);
 
@@ -675,6 +607,13 @@ int sde_power_scale_reg_bus(struct sde_power_handle *phandle,
 						usecase_ndx);
 	if (rc)
 		pr_err("failed to set reg bus vote rc=%d\n", rc);
+	else {
+		phandle->reg_bus_curr_val.ab =
+			sde_reg_bus_table[usecase_ndx].ab;
+		phandle->reg_bus_curr_val.ib =
+			sde_reg_bus_table[usecase_ndx].ib;
+		phandle->current_usecase_ndx = usecase_ndx;
+	}
 
 	if (!skip_lock)
 		mutex_unlock(&phandle->phandle_lock);
@@ -723,7 +662,7 @@ int sde_power_resource_enable(struct sde_power_handle *phandle, bool enable)
 				SDE_POWER_EVENT_PRE_ENABLE);
 
 		for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX &&
-		     phandle->data_bus_handle[i].data_bus_hdl; i++) {
+			phandle->data_bus_handle[i].data_paths_cnt > 0; i++) {
 			rc = _sde_power_data_bus_set_quota(
 				&phandle->data_bus_handle[i],
 				SDE_POWER_HANDLE_ENABLE_BUS_AB_QUOTA,
@@ -777,7 +716,7 @@ int sde_power_resource_enable(struct sde_power_handle *phandle, bool enable)
 		msm_dss_enable_vreg(mp->vreg_config, mp->num_vreg, enable);
 
 		for (i = SDE_POWER_HANDLE_DBUS_ID_MAX - 1; i >= 0; i--)
-			if (phandle->data_bus_handle[i].data_bus_hdl)
+			if (phandle->data_bus_handle[i].data_paths_cnt > 0)
 				_sde_power_data_bus_set_quota(
 					&phandle->data_bus_handle[i],
 					SDE_POWER_HANDLE_DISABLE_BUS_AB_QUOTA,
@@ -799,7 +738,7 @@ rsc_err:
 reg_bus_hdl_err:
 	msm_dss_enable_vreg(mp->vreg_config, mp->num_vreg, 0);
 vreg_err:
-	for (i-- ; i >= 0 && phandle->data_bus_handle[i].data_bus_hdl; i--)
+	for (i-- ; i >= 0 && phandle->data_bus_handle[i].data_paths_cnt > 0; i--)
 		_sde_power_data_bus_set_quota(
 			&phandle->data_bus_handle[i],
 			SDE_POWER_HANDLE_DISABLE_BUS_AB_QUOTA,
@@ -809,47 +748,11 @@ vreg_err:
 	return rc;
 }
 
-int sde_cx_ipeak_vote(struct sde_power_handle *phandle, struct dss_clk *clock,
-		u64 requested_clk_rate, u64 prev_clk_rate, bool enable_vote)
-{
-	int ret = 0;
-	u64 curr_core_clk_rate, max_core_clk_rate, prev_core_clk_rate;
-
-	if (!phandle->dss_cx_ipeak) {
-		pr_debug("%pS->%s: Invalid input\n",
-				__builtin_return_address(0), __func__);
-		return -EOPNOTSUPP;
-	}
-
-	if (strcmp("core_clk", clock->clk_name)) {
-		pr_debug("Not a core clk , cx_ipeak vote not needed\n");
-		return -EOPNOTSUPP;
-	}
-
-	curr_core_clk_rate = clock->rate;
-	max_core_clk_rate = clock->max_rate;
-	prev_core_clk_rate = prev_clk_rate;
-
-	if (enable_vote && requested_clk_rate == max_core_clk_rate &&
-				curr_core_clk_rate != requested_clk_rate)
-		ret = cx_ipeak_update(phandle->dss_cx_ipeak, true);
-	else if (!enable_vote && requested_clk_rate != max_core_clk_rate &&
-				prev_core_clk_rate == max_core_clk_rate)
-		ret = cx_ipeak_update(phandle->dss_cx_ipeak, false);
-
-	if (ret)
-		SDE_EVT32(ret, enable_vote, requested_clk_rate,
-					curr_core_clk_rate, prev_core_clk_rate);
-
-	return ret;
-}
-
 int sde_power_clk_set_rate(struct sde_power_handle *phandle, char *clock_name,
 	u64 rate)
 {
 	int i, rc = -EINVAL;
 	struct dss_module_power *mp;
-	u64 prev_clk_rate, requested_clk_rate;
 
 	if (!phandle) {
 		pr_err("invalid input power handle\n");
@@ -863,15 +766,8 @@ int sde_power_clk_set_rate(struct sde_power_handle *phandle, char *clock_name,
 					(rate > mp->clk_config[i].max_rate))
 				rate = mp->clk_config[i].max_rate;
 
-			prev_clk_rate = mp->clk_config[i].rate;
-			requested_clk_rate = rate;
-			sde_cx_ipeak_vote(phandle, &mp->clk_config[i],
-				requested_clk_rate, prev_clk_rate, true);
 			mp->clk_config[i].rate = rate;
 			rc = msm_dss_single_clk_set_rate(&mp->clk_config[i]);
-			if (!rc)
-				sde_cx_ipeak_vote(phandle, &mp->clk_config[i],
-				   requested_clk_rate, prev_clk_rate, false);
 			break;
 		}
 	}
@@ -945,30 +841,6 @@ struct clk *sde_power_clk_get_clk(struct sde_power_handle *phandle,
 	}
 
 	return clk;
-}
-
-int sde_power_clk_set_flags(struct sde_power_handle *phandle,
-		char *clock_name, unsigned long flags)
-{
-	struct clk *clk;
-
-	if (!phandle) {
-		pr_err("invalid input power handle\n");
-		return -EINVAL;
-	}
-
-	if (!clock_name) {
-		pr_err("invalid input clock name\n");
-		return -EINVAL;
-	}
-
-	clk = sde_power_clk_get_clk(phandle, clock_name);
-	if (!clk) {
-		pr_err("get_clk failed for clk: %s\n", clock_name);
-		return -EINVAL;
-	}
-
-	return clk_set_flags(clk, flags);
 }
 
 struct sde_power_event *sde_power_handle_register_event(

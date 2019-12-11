@@ -76,7 +76,7 @@ void msm_gem_prime_unpin(struct drm_gem_object *obj)
 		msm_gem_put_pages(obj);
 }
 
-struct reservation_object *msm_gem_prime_res_obj(struct drm_gem_object *obj)
+struct dma_resv *msm_gem_prime_res_obj(struct drm_gem_object *obj)
 {
 	struct msm_gem_object *msm_obj = to_msm_bo(obj);
 

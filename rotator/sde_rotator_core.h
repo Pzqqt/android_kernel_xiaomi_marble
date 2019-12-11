@@ -60,6 +60,23 @@
 
 /* use client provided clock/bandwidth parameters */
 #define SDE_ROTATION_EXT_PERF		0x100000
+#define SDE_ROTATION_BUS_PATH_MAX	0x2
+
+/*
+ * The AMC bucket denotes constraints that are applied to hardware when
+ * icc_set_bw() completes, whereas the WAKE and SLEEP constraints are applied
+ * when the execution environment transitions between active and low power mode.
+ */
+#define QCOM_ICC_BUCKET_AMC            0
+#define QCOM_ICC_BUCKET_WAKE           1
+#define QCOM_ICC_BUCKET_SLEEP          2
+#define QCOM_ICC_NUM_BUCKETS           3
+#define QCOM_ICC_TAG_AMC               BIT(QCOM_ICC_BUCKET_AMC)
+#define QCOM_ICC_TAG_WAKE              BIT(QCOM_ICC_BUCKET_WAKE)
+#define QCOM_ICC_TAG_SLEEP             BIT(QCOM_ICC_BUCKET_SLEEP)
+#define QCOM_ICC_TAG_ACTIVE_ONLY       (QCOM_ICC_TAG_AMC | QCOM_ICC_TAG_WAKE)
+#define QCOM_ICC_TAG_ALWAYS            (QCOM_ICC_TAG_AMC | QCOM_ICC_TAG_WAKE |\
+                                        QCOM_ICC_TAG_SLEEP)
 
 /**********************************************************************
  * configuration structures
@@ -374,18 +391,19 @@ struct sde_rot_file_private {
 	struct sde_rot_queue_v1 *fenceq;
 };
 
-/*
- * struct sde_rot_bus_data_type - rotator bus scaling configuration
- * @bus_cale_pdata: pointer to bus scaling configuration table
- * @bus_hdl: msm bus scaling handle
- * @curr_bw_uc_idx; current usecase index into configuration table
- * @curr_quota_val: current bandwidth request in byte per second
+/**
+ * struct sde_rot_bus_data_type: power handle struct for data bus
+ * @data_paths_cnt: number of rt data path ports
+ * @curr_quota_val: save the current bus value
+ * @curr_bw_uc_idx: current reg bus value index
+ * @bus_active_only: AMC support, can set the bus path WAKE/SLEEP
  */
 struct sde_rot_bus_data_type {
-	struct msm_bus_scale_pdata *bus_scale_pdata;
-	u32 bus_hdl;
-	u32 curr_bw_uc_idx;
+	struct icc_path *data_bus_hdl[SDE_ROTATION_BUS_PATH_MAX];
+	u32 data_paths_cnt;
 	u64 curr_quota_val;
+	u32 curr_bw_uc_idx;
+	bool bus_active_only;
 };
 
 /*

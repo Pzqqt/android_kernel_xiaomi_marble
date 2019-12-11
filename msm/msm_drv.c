@@ -41,8 +41,10 @@
 #include <linux/kthread.h>
 #include <uapi/linux/sched/types.h>
 #include <drm/drm_of.h>
+#include <drm/drm_probe_helper.h>
 
 #include "msm_drv.h"
+#include "msm_gem.h"
 #include "msm_kms.h"
 #include "msm_mmu.h"
 #include "sde_wb.h"
@@ -56,9 +58,11 @@
  * - 1.3.0 - adds GMEM_BASE + NR_RINGS params, SUBMITQUEUE_NEW +
  *           SUBMITQUEUE_CLOSE ioctls, and MSM_INFO_IOVA flag for
  *           MSM_GEM_INFO ioctl.
+ * - 1.4.0 - softpin, MSM_RELOC_BO_DUMP, and GEM_INFO support to set/get
+ *           GEM object's debug name
  */
 #define MSM_VERSION_MAJOR	1
-#define MSM_VERSION_MINOR	3
+#define MSM_VERSION_MINOR	4
 #define MSM_VERSION_PATCHLEVEL	0
 
 static void msm_fb_output_poll_changed(struct drm_device *dev)
@@ -349,6 +353,13 @@ static int msm_drm_uninit(struct device *dev)
 	struct msm_kms *kms = priv->kms;
 	int i;
 
+	/* We must cancel and cleanup any pending vblank enable/disable
+	 * work before drm_irq_uninstall() to avoid work re-enabling an
+	 * irq after uninstall has disabled it.
+	 */
+
+	flush_workqueue(priv->wq);
+	destroy_workqueue(priv->wq);
 	/* clean up display commit/event worker threads */
 	for (i = 0; i < priv->num_crtcs; i++) {
 		if (priv->disp_thread[i].thread) {
@@ -377,14 +388,12 @@ static int msm_drm_uninit(struct device *dev)
 	if (fbdev && priv->fbdev)
 		msm_fbdev_free(ddev);
 #endif
+	drm_atomic_helper_shutdown(ddev);
 	drm_mode_config_cleanup(ddev);
 
 	pm_runtime_get_sync(dev);
 	drm_irq_uninstall(ddev);
 	pm_runtime_put_sync(dev);
-
-	flush_workqueue(priv->wq);
-	destroy_workqueue(priv->wq);
 
 	if (kms && kms->funcs)
 		kms->funcs->destroy(kms);
@@ -702,9 +711,9 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 	struct drm_crtc *crtc;
 
 	ddev = drm_dev_alloc(drv, dev);
-	if (!ddev) {
+	if (IS_ERR(ddev)) {
 		dev_err(dev, "failed to allocate drm_device\n");
-		return -ENOMEM;
+		return PTR_ERR(ddev);
 	}
 
 	drm_mode_config_init(ddev);
@@ -804,6 +813,18 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 		priv->fbdev = msm_fbdev_init(ddev);
 #endif
 
+	/* create drm client only when fbdev is not supported */
+	if (!priv->fbdev) {
+		ret = drm_client_init(ddev, &kms->client, "kms_client", NULL);
+		if (ret) {
+			DRM_ERROR("failed to init kms_client: %d\n", ret);
+			kms->client.dev = NULL;
+			goto fail;
+		}
+
+		drm_client_register(&kms->client);
+	}
+
 	priv->debug_root = debugfs_create_dir("debug",
 					ddev->primary->debugfs_root);
 	if (IS_ERR_OR_NULL(priv->debug_root)) {
@@ -886,15 +907,6 @@ static void context_close(struct msm_file_private *ctx)
 	kfree(ctx);
 }
 
-static void msm_preclose(struct drm_device *dev, struct drm_file *file)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-
-	if (kms && kms->funcs && kms->funcs->preclose)
-		kms->funcs->preclose(kms, file);
-}
-
 static void msm_postclose(struct drm_device *dev, struct drm_file *file)
 {
 	struct msm_drm_private *priv = dev->dev_private;
@@ -919,101 +931,10 @@ static void msm_postclose(struct drm_device *dev, struct drm_file *file)
 	context_close(ctx);
 }
 
-static int msm_disable_all_modes_commit(
-		struct drm_device *dev,
-		struct drm_atomic_state *state)
-{
-	struct drm_plane *plane;
-	struct drm_crtc *crtc;
-	unsigned int plane_mask;
-	int ret;
-
-	plane_mask = 0;
-	drm_for_each_plane(plane, dev) {
-		struct drm_plane_state *plane_state;
-
-		plane_state = drm_atomic_get_plane_state(state, plane);
-		if (IS_ERR(plane_state)) {
-			ret = PTR_ERR(plane_state);
-			goto fail;
-		}
-
-		plane_state->rotation = 0;
-
-		plane->old_fb = plane->fb;
-		plane_mask |= 1 << drm_plane_index(plane);
-
-		/* disable non-primary: */
-		if (plane->type == DRM_PLANE_TYPE_PRIMARY)
-			continue;
-
-		DRM_DEBUG("disabling plane %d\n", plane->base.id);
-
-		ret = __drm_atomic_helper_disable_plane(plane, plane_state);
-		if (ret != 0)
-			DRM_ERROR("error %d disabling plane %d\n", ret,
-					plane->base.id);
-	}
-
-	drm_for_each_crtc(crtc, dev) {
-		struct drm_mode_set mode_set;
-
-		memset(&mode_set, 0, sizeof(struct drm_mode_set));
-		mode_set.crtc = crtc;
-
-		DRM_DEBUG("disabling crtc %d\n", crtc->base.id);
-
-		ret = __drm_atomic_helper_set_config(&mode_set, state);
-		if (ret != 0)
-			DRM_ERROR("error %d disabling crtc %d\n", ret,
-					crtc->base.id);
-	}
-
-	DRM_DEBUG("committing disables\n");
-	ret = drm_atomic_commit(state);
-
-fail:
-	DRM_DEBUG("disables result %d\n", ret);
-	return ret;
-}
-
-/**
- * msm_clear_all_modes - disables all planes and crtcs via an atomic commit
- *	based on restore_fbdev_mode_atomic in drm_fb_helper.c
- * @dev: device pointer
- * @Return: 0 on success, otherwise -error
- */
-static int msm_disable_all_modes(
-		struct drm_device *dev,
-		struct drm_modeset_acquire_ctx *ctx)
-{
-	struct drm_atomic_state *state;
-	int ret, i;
-
-	state = drm_atomic_state_alloc(dev);
-	if (!state)
-		return -ENOMEM;
-
-	state->acquire_ctx = ctx;
-
-	for (i = 0; i < TEARDOWN_DEADLOCK_RETRY_MAX; i++) {
-		ret = msm_disable_all_modes_commit(dev, state);
-		if (ret != -EDEADLK || ret != -ERESTARTSYS)
-			break;
-		drm_atomic_state_clear(state);
-		drm_modeset_backoff(ctx);
-	}
-
-	drm_atomic_state_put(state);
-
-	return ret;
-}
-
 static void msm_lastclose(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_kms *kms = priv->kms;
-	struct drm_modeset_acquire_ctx ctx;
 	int i, rc;
 
 	/* check for splash status before triggering cleanup
@@ -1039,32 +960,17 @@ static void msm_lastclose(struct drm_device *dev)
 	flush_workqueue(priv->wq);
 
 	if (priv->fbdev) {
-		drm_fb_helper_restore_fbdev_mode_unlocked(priv->fbdev);
-		return;
+		rc = drm_fb_helper_restore_fbdev_mode_unlocked(priv->fbdev);
+		if (rc)
+			DRM_ERROR("restore FBDEV mode failed: %d\n", rc);
+	} else if (kms->client.dev) {
+		rc = drm_client_modeset_commit_force(&kms->client);
+		if (rc)
+			DRM_ERROR("client modeset commit failed: %d\n", rc);
 	}
-
-	drm_modeset_acquire_init(&ctx, 0);
-retry:
-	rc = drm_modeset_lock_all_ctx(dev, &ctx);
-	if (rc)
-		goto fail;
-
-	rc = msm_disable_all_modes(dev, &ctx);
-	if (rc)
-		goto fail;
 
 	if (kms && kms->funcs && kms->funcs->lastclose)
-		kms->funcs->lastclose(kms, &ctx);
-
-fail:
-	if (rc == -EDEADLK) {
-		drm_modeset_backoff(&ctx);
-		goto retry;
-	} else if (rc) {
-		pr_err("last close failed: %d\n", rc);
-	}
-	drm_modeset_drop_locks(&ctx);
-	drm_modeset_acquire_fini(&ctx);
+		kms->funcs->lastclose(kms);
 }
 
 static irqreturn_t msm_irq(int irq, void *arg)
@@ -1089,7 +995,11 @@ static int msm_irq_postinstall(struct drm_device *dev)
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_kms *kms = priv->kms;
 	BUG_ON(!kms);
-	return kms->funcs->irq_postinstall(kms);
+
+	if (kms->funcs->irq_postinstall)
+		return kms->funcs->irq_postinstall(kms);
+
+	return 0;
 }
 
 static void msm_irq_uninstall(struct drm_device *dev)
@@ -1135,7 +1045,7 @@ static int msm_ioctl_gem_new(struct drm_device *dev, void *data,
 	}
 
 	return msm_gem_new_handle(dev, file, args->size,
-			args->flags, &args->handle);
+			args->flags, &args->handle, NULL);
 }
 
 static inline ktime_t to_ktime(struct drm_msm_timespec timeout)
@@ -1640,14 +1550,11 @@ static const struct file_operations fops = {
 };
 
 static struct drm_driver msm_driver = {
-	.driver_features    = DRIVER_HAVE_IRQ |
-				DRIVER_GEM |
-				DRIVER_PRIME |
+	.driver_features    = DRIVER_GEM |
 				DRIVER_RENDER |
 				DRIVER_ATOMIC |
 				DRIVER_MODESET,
 	.open               = msm_open,
-	.preclose           = msm_preclose,
 	.postclose          = msm_postclose,
 	.lastclose          = msm_lastclose,
 	.irq_handler        = msm_irq,
@@ -1664,7 +1571,6 @@ static struct drm_driver msm_driver = {
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_export   = drm_gem_prime_export,
 	.gem_prime_import   = msm_gem_prime_import,
-	.gem_prime_res_obj  = msm_gem_prime_res_obj,
 	.gem_prime_pin      = msm_gem_prime_pin,
 	.gem_prime_unpin    = msm_gem_prime_unpin,
 	.gem_prime_get_sg_table = msm_gem_prime_get_sg_table,
@@ -2074,7 +1980,7 @@ static void __exit msm_drm_unregister(void)
 	msm_smmu_driver_cleanup();
 }
 
-module_init(msm_drm_register);
+late_initcall(msm_drm_register);
 module_exit(msm_drm_unregister);
 
 MODULE_AUTHOR("Rob Clark <robdclark@gmail.com");
