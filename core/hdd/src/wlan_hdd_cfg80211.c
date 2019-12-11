@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15091,6 +15091,28 @@ wlan_hdd_iftype_data_mem_free(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#if defined(WLAN_FEATURE_NAN) && \
+	   (KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE)
+static void wlan_hdd_set_nan_if_mode(struct wiphy *wiphy)
+{
+	wiphy->interface_modes |= BIT(NL80211_IFTYPE_NAN);
+}
+
+static void wlan_hdd_set_nan_supported_bands(struct wiphy *wiphy)
+{
+	wiphy->nan_supported_bands =
+		BIT(NL80211_BAND_2GHZ) | BIT(NL80211_BAND_5GHZ);
+}
+#else
+static void wlan_hdd_set_nan_if_mode(struct wiphy *wiphy)
+{
+}
+
+static void wlan_hdd_set_nan_supported_bands(struct wiphy *wiphy)
+{
+}
+#endif
+
 /*
  * FUNCTION: wlan_hdd_cfg80211_init
  * This function is called by hdd_wlan_startup()
@@ -15154,6 +15176,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 				 | BIT(NL80211_IFTYPE_AP)
 				 | BIT(NL80211_IFTYPE_MONITOR);
 
+	wlan_hdd_set_nan_if_mode(wiphy);
 
 	/*
 	 * In case of static linked driver at the time of driver unload,
@@ -15232,6 +15255,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	hdd_add_channel_switch_support(&wiphy->flags);
 	wiphy->max_num_csa_counters = WLAN_HDD_MAX_NUM_CSA_COUNTERS;
 	wlan_hdd_cfg80211_action_frame_randomization_init(wiphy);
+
+	wlan_hdd_set_nan_supported_bands(wiphy);
 
 	hdd_exit();
 	return 0;
@@ -23664,6 +23689,42 @@ wlan_hdd_cfg80211_external_auth(struct wiphy *wiphy,
 }
 #endif
 
+#if defined(WLAN_FEATURE_NAN) && \
+	   (KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE)
+static int
+wlan_hdd_cfg80211_start_nan(struct wiphy *wiphy, struct wireless_dev *wdev,
+			    struct cfg80211_nan_conf *conf)
+{
+	return -EOPNOTSUPP;
+}
+
+static void
+wlan_hdd_cfg80211_stop_nan(struct wiphy *wiphy, struct wireless_dev *wdev)
+{
+}
+
+static int wlan_hdd_cfg80211_add_nan_func(struct wiphy *wiphy,
+					  struct wireless_dev *wdev,
+					  struct cfg80211_nan_func *nan_func)
+{
+	return -EOPNOTSUPP;
+}
+
+static void wlan_hdd_cfg80211_del_nan_func(struct wiphy *wiphy,
+					   struct wireless_dev *wdev,
+					   u64 cookie)
+{
+}
+
+static int wlan_hdd_cfg80211_nan_change_conf(struct wiphy *wiphy,
+					     struct wireless_dev *wdev,
+					     struct cfg80211_nan_conf *conf,
+					     u32 changes)
+{
+	return -EOPNOTSUPP;
+}
+#endif
+
 /**
  * wlan_hdd_chan_info_cb() - channel info callback
  * @chan_info: struct scan_chan_info
@@ -23992,4 +24053,13 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 		defined(CFG80211_EXTERNAL_AUTH_SUPPORT)
 	.external_auth = wlan_hdd_cfg80211_external_auth,
 #endif
+#if defined(WLAN_FEATURE_NAN) && \
+	   (KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE)
+	.start_nan = wlan_hdd_cfg80211_start_nan,
+	.stop_nan = wlan_hdd_cfg80211_stop_nan,
+	.add_nan_func = wlan_hdd_cfg80211_add_nan_func,
+	.del_nan_func = wlan_hdd_cfg80211_del_nan_func,
+	.nan_change_conf = wlan_hdd_cfg80211_nan_change_conf,
+#endif
+
 };
