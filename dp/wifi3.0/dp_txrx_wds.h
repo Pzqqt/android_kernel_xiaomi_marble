@@ -54,10 +54,11 @@ static inline bool dp_tx_da_search_override(struct dp_vdev *vdev)
 #endif
 #ifdef WDS_VENDOR_EXTENSION
 void
-dp_txrx_peer_wds_tx_policy_update(struct cdp_peer *peer_handle,
-				  int wds_tx_ucast, int wds_tx_mcast);
+dp_txrx_peer_wds_tx_policy_update(struct cdp_soc_t *cdp_soc,  uint8_t vdev_id,
+				  uint8_t *peer_mac, int wds_tx_ucast,
+				  int wds_tx_mcast)
 void
-dp_txrx_set_wds_rx_policy(struct cdp_vdev *vdev_handle,
+dp_txrx_set_wds_rx_policy(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 			  u_int32_t val);
 #endif
 
