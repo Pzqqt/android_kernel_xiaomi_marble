@@ -417,6 +417,7 @@ typedef  enum  {
     WMI_SERVICE_STA_BSS_MAX_IDLE_TIME = 227, /* Indicate FW supports BSS Max Idle time feature via WMI_VDEV_BSS_MAX_IDLE_TIME_CMDID */
     WMI_SERVICE_BIP_CIPHER_SUPPORT = 228, /* FW supports new BIP_CIPHER suites (WMI_CIPHER_BIP_xxx) */
     WMI_SERVICE_BW_165MHZ_SUPPORT = 229, /* Indicate FW supports bandwidth 165MHz (i.e. 6 GHz in addition to 2.4 and 5) */
+    WMI_SERVICE_BW_RESTRICTED_80P80_SUPPORT = WMI_SERVICE_BW_165MHZ_SUPPORT,
     WMI_SERVICE_NAN_NDI_SAP_SAP_SCC_SUPPORT = 230, /* Support SAP + SAP + NAN discovery + NDI concurrency in SCC mode */
     WMI_SERVICE_NAN_VDEV_SUPPORT = 231, /* indicates firmware is dependent on host to create NAN vdev */
 
