@@ -67,6 +67,8 @@ enum stats_req_type {
  * @TX_RATE_HE20: HE 20 rates
  * @TX_RATE_HE40: HE 40 rates
  * @TX_RATE_HE80: HE 80 rates
+ * @TX_RATE_HE160: HE 160 rates
+ * @TX_RATE_VHT160: VHT 160 rates
  */
 enum tx_rate_info {
 	TX_RATE_LEGACY = 0x1,
@@ -80,6 +82,8 @@ enum tx_rate_info {
 	TX_RATE_HE20 = 0x100,
 	TX_RATE_HE40 = 0x200,
 	TX_RATE_HE80 = 0x400,
+	TX_RATE_HE160 = 0x800,
+	TX_RATE_VHT160 = 0x1000,
 };
 
 /**
