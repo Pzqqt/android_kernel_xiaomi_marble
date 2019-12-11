@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,7 +20,6 @@
 #include "wmi_unified_priv.h"
 #include "target_type.h"
 #include <qdf_module.h>
-
 #if defined(WMI_NON_TLV_SUPPORT) || defined(WMI_TLV_AND_NON_TLV_SUPPORT)
 #include "wmi.h"
 #include "wmi_unified.h"
@@ -7030,22 +7029,100 @@ static QDF_STATUS extract_hal_reg_cap_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * extract_host_mem_req_non_tlv() - Extract host memory request event
+ * extract_num_mem_reqs_non_tlv() - Extract number of memory entries requested
  * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param num_entries: pointer to hold number of entries requested
+ * @evt_buf: pointer to event buffer
  *
  * Return: Number of entries requested
  */
-static host_mem_req *extract_host_mem_req_non_tlv(wmi_unified_t wmi_handle,
-		void *evt_buf, uint8_t *num_entries)
+static uint32_t extract_num_mem_reqs_non_tlv(wmi_unified_t wmi_handle,
+					     void *evt_buf)
 {
 	wmi_service_ready_event *ev;
 
 	ev = (wmi_service_ready_event *) evt_buf;
 
-	*num_entries = ev->num_mem_reqs;
-	return (host_mem_req *)ev->mem_reqs;
+	return ev->num_mem_reqs;
+}
+
+/**
+ * extract_host_mem_req_non_tlv() - Extract host memory required from
+ *                                  service ready event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @mem_reqs: pointer to host memory request structure
+ * @num_active_peers: number of active peers for peer cache
+ * @num_peers: number of peers
+ * @fw_prio: FW priority
+ * @idx: index for memory request
+ *
+ * Return: Host memory request parameters requested by target
+ */
+static QDF_STATUS extract_host_mem_req_non_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf, host_mem_req *mem_reqs,
+		uint32_t num_active_peers, uint32_t num_peers,
+		enum wmi_fw_mem_prio fw_prio, uint16_t idx)
+{
+	wmi_service_ready_event *ev;
+
+	ev = (wmi_service_ready_event *) evt_buf;
+
+	mem_reqs->req_id = (uint32_t)ev->mem_reqs[idx].req_id;
+	mem_reqs->unit_size = (uint32_t)ev->mem_reqs[idx].unit_size;
+	mem_reqs->num_unit_info =
+		(uint32_t)ev->mem_reqs[idx].num_unit_info;
+	mem_reqs->num_units = (uint32_t)ev->mem_reqs[idx].num_units;
+	mem_reqs->tgt_num_units = 0;
+
+	if (((fw_prio == WMI_FW_MEM_HIGH_PRIORITY) &&
+	     (mem_reqs->num_unit_info &
+	      REQ_TO_HOST_FOR_CONT_MEMORY)) ||
+	    ((fw_prio == WMI_FW_MEM_LOW_PRIORITY) &&
+	     (!(mem_reqs->num_unit_info &
+	      REQ_TO_HOST_FOR_CONT_MEMORY)))) {
+		/* First allocate the memory that requires contiguous memory */
+		mem_reqs->tgt_num_units = mem_reqs->num_units;
+		if (mem_reqs->num_unit_info) {
+			if (mem_reqs->num_unit_info &
+					NUM_UNITS_IS_NUM_PEERS) {
+				/*
+				 * number of units allocated is equal to number
+				 * of peers, 1 extra for self peer on target.
+				 * this needs to be fixed, host and target can
+				 * get out of sync
+				 */
+				mem_reqs->tgt_num_units =
+					num_peers + 1;
+			}
+			if (mem_reqs->num_unit_info &
+					NUM_UNITS_IS_NUM_ACTIVE_PEERS) {
+				/*
+				 * Requesting allocation of memory using
+				 * num_active_peers in qcache. if qcache is
+				 * disabled in host, then it should allocate
+				 * memory for num_peers instead of
+				 * num_active_peers.
+				 */
+				if (num_active_peers)
+					mem_reqs->tgt_num_units =
+						num_active_peers + 1;
+				else
+					mem_reqs->tgt_num_units =
+						num_peers + 1;
+			}
+		}
+
+		WMI_LOGI("idx %d req %d  num_units %d num_unit_info %d"
+				"unit size %d actual units %d",
+				idx, mem_reqs->req_id,
+				mem_reqs->num_units,
+				mem_reqs->num_unit_info,
+				mem_reqs->unit_size,
+				mem_reqs->tgt_num_units);
+
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -10103,6 +10180,7 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_fw_version = extract_fw_version_non_tlv,
 	.extract_fw_abi_version = extract_fw_abi_version_non_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_non_tlv,
+	.extract_num_mem_reqs = extract_num_mem_reqs_non_tlv,
 	.extract_host_mem_req = extract_host_mem_req_non_tlv,
 	.save_service_bitmap = save_service_bitmap_non_tlv,
 	.is_service_enabled = is_service_enabled_non_tlv,
