@@ -3645,3 +3645,20 @@ char *mlme_get_sub_reason_str(uint32_t sub_reason)
 		return "NONE";
 	}
 }
+
+QDF_STATUS
+wlan_mlme_get_mgmt_max_retry(struct wlan_objmgr_psoc *psoc,
+			     uint8_t *max_retry)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*max_retry = cfg_default(CFG_MGMT_RETRY_MAX);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*max_retry = mlme_obj->cfg.gen.mgmt_retry_max;
+	return QDF_STATUS_SUCCESS;
+}
