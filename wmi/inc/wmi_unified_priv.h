@@ -1916,6 +1916,30 @@ QDF_STATUS
 				     void *evt_buf, uint32_t *vdev_id,
 				     uint32_t *tx_status);
 
+QDF_STATUS
+(*extract_roam_trigger_stats)(wmi_unified_t wmi_handle,
+			      void *evt_buf,
+			      struct wmi_roam_trigger_info *trig,
+			      uint8_t idx);
+
+QDF_STATUS
+(*extract_roam_scan_stats)(wmi_unified_t wmi_handle,
+			   void *evt_buf,
+			   struct wmi_roam_scan_data *dst, uint8_t idx,
+			   uint8_t chan_idx, uint8_t ap_idx);
+
+QDF_STATUS
+(*extract_roam_result_stats)(wmi_unified_t wmi_handle,
+			     void *evt_buf,
+			     struct wmi_roam_result *dst,
+			     uint8_t idx);
+
+QDF_STATUS
+(*extract_roam_11kv_stats)(wmi_unified_t wmi_handle,
+			   void *evt_buf,
+			   struct wmi_neighbor_report_data *dst,
+			   uint8_t idx, uint8_t rpt_idx);
+
 void (*wmi_pdev_id_conversion_enable)(wmi_unified_t wmi_handle,
 				      uint32_t *pdev_map, uint8_t size);
 void (*send_time_stamp_sync_cmd)(wmi_unified_t wmi_handle);

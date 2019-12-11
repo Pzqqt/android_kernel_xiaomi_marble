@@ -3062,3 +3062,51 @@ QDF_STATUS wmi_unified_extract_ani_level(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif /* FEATURE_ANI_LEVEL_REQUEST */
+
+QDF_STATUS
+wmi_unified_extract_roam_trigger_stats(wmi_unified_t wmi,
+				       void *evt_buf,
+				       struct wmi_roam_trigger_info *trig,
+				       uint8_t idx)
+{
+	if (wmi->ops->extract_roam_trigger_stats)
+		return wmi->ops->extract_roam_trigger_stats(wmi, evt_buf, trig,
+							    idx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_extract_roam_scan_stats(wmi_unified_t wmi, void *evt_buf,
+				    struct wmi_roam_scan_data *dst, uint8_t idx,
+				    uint8_t chan_idx, uint8_t ap_idx)
+{
+	if (wmi->ops->extract_roam_scan_stats)
+		return wmi->ops->extract_roam_scan_stats(wmi, evt_buf, dst,
+							 idx, chan_idx, ap_idx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_extract_roam_result_stats(wmi_unified_t wmi, void *buf,
+				      struct wmi_roam_result *dst,
+				      uint8_t idx)
+{
+	if (wmi->ops->extract_roam_result_stats)
+		return wmi->ops->extract_roam_result_stats(wmi, buf, dst, idx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_extract_roam_11kv_stats(wmi_unified_t wmi, void *evt_buf,
+				    struct wmi_neighbor_report_data *dst,
+				    uint8_t idx, uint8_t rpt_idx)
+{
+	if (wmi->ops->extract_roam_11kv_stats)
+		return wmi->ops->extract_roam_11kv_stats(wmi, evt_buf, dst, idx,
+							 rpt_idx);
+
+	return QDF_STATUS_E_FAILURE;
+}
