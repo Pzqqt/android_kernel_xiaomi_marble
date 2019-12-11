@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,6 +29,8 @@
 #include <net/netlink.h>
 #include <net/cfg80211.h>
 #include <qca_vendor.h>
+#include <qdf_nbuf.h>
+#include "qal_devcfg.h"
 
 #define osif_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_OS_IF, params)
@@ -55,6 +57,94 @@
 	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_OS_IF, params)
 #define osif_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_OS_IF, params)
+
+#if defined(NBUF_MEMORY_DEBUG) && defined(NETLINK_BUF_TRACK)
+#define wlan_cfg80211_vendor_free_skb(skb) \
+	qdf_nbuf_free(skb)
+
+#define wlan_cfg80211_vendor_event(skb, gfp) \
+{ \
+	qdf_nbuf_count_dec(skb); \
+	qdf_net_buf_debug_release_skb(skb); \
+	cfg80211_vendor_event(skb, gfp); \
+}
+
+#define wlan_cfg80211_vendor_cmd_reply(skb) \
+{ \
+	qdf_nbuf_count_dec(skb); \
+	qdf_net_buf_debug_release_skb(skb); \
+	cfg80211_vendor_cmd_reply(skb); \
+}
+
+static inline QDF_STATUS wlan_cfg80211_qal_devcfg_send_response(qdf_nbuf_t skb)
+{
+	qdf_nbuf_count_dec(skb);
+	qdf_net_buf_debug_release_skb(skb);
+	return qal_devcfg_send_response(skb);
+}
+
+static inline struct sk_buff *
+__cfg80211_vendor_cmd_alloc_reply_skb(struct wiphy *wiphy, int len,
+				      const char *func, uint32_t line)
+{
+	struct sk_buff *skb;
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, len);
+	if (skb) {
+		qdf_nbuf_count_inc(skb);
+		qdf_net_buf_debug_acquire_skb(skb, func, line);
+	}
+	return skb;
+}
+#define wlan_cfg80211_vendor_cmd_alloc_reply_skb(wiphy, len) \
+	__cfg80211_vendor_cmd_alloc_reply_skb(wiphy, len, __func__, __LINE__)
+
+static inline struct sk_buff *
+__cfg80211_vendor_event_alloc(struct wiphy *wiphy,
+			      struct wireless_dev *wdev,
+			      int approxlen,
+			      int event_idx,
+			      gfp_t gfp,
+			      const char *func,
+			      uint32_t line)
+{
+	struct sk_buff *skb;
+
+	skb = cfg80211_vendor_event_alloc(wiphy, wdev,
+					  approxlen,
+					  event_idx,
+					  gfp);
+	if (skb) {
+		qdf_nbuf_count_inc(skb);
+		qdf_net_buf_debug_acquire_skb(skb, func, line);
+	}
+	return skb;
+}
+#define wlan_cfg80211_vendor_event_alloc(wiphy, wdev, len, idx, gfp) \
+	__cfg80211_vendor_event_alloc(wiphy, wdev, len, \
+				      idx, gfp, \
+				      __func__, __LINE__)
+#else /* NBUF_MEMORY_DEBUG && NETLINK_BUF_TRACK */
+#define wlan_cfg80211_vendor_free_skb(skb) \
+	kfree_skb(skb)
+
+#define wlan_cfg80211_vendor_event(skb, gfp) \
+	cfg80211_vendor_event(skb, gfp)
+
+#define wlan_cfg80211_vendor_cmd_reply(skb) \
+	cfg80211_vendor_cmd_reply(skb)
+
+#define wlan_cfg80211_vendor_cmd_alloc_reply_skb(wiphy, len) \
+	cfg80211_vendor_cmd_alloc_reply_skb(wiphy, len)
+
+#define wlan_cfg80211_vendor_event_alloc(wiphy, wdev, len, idx, gfp) \
+	cfg80211_vendor_event_alloc(wiphy, wdev, len, idx, gfp)
+
+static inline QDF_STATUS wlan_cfg80211_qal_devcfg_send_response( qdf_nbuf_t skb)
+{
+	return qal_devcfg_send_response(skb);
+}
+#endif /* NBUF_MEMORY_DEBUG && NETLINK_BUF_TRACK */
 
 #undef nla_parse
 #undef nla_parse_nested
@@ -111,5 +201,4 @@ wlan_cfg80211_nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)
 	return nla_put_u64_64bit(skb, attrtype, value, NL80211_ATTR_PAD);
 }
 #endif
-
 #endif

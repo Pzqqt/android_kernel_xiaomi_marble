@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -839,11 +839,13 @@ static void wlan_vendor_scan_callback(struct cfg80211_scan_request *req,
 	int i;
 	uint8_t scan_status;
 	uint64_t cookie;
+	int index = QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE_INDEX;
 
-	skb = cfg80211_vendor_event_alloc(req->wdev->wiphy, req->wdev,
-			SCAN_DONE_EVENT_BUF_SIZE + 4 + NLMSG_HDRLEN,
-			QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE_INDEX,
-			GFP_ATOMIC);
+	skb = wlan_cfg80211_vendor_event_alloc(req->wdev->wiphy, req->wdev,
+					       SCAN_DONE_EVENT_BUF_SIZE + 4 +
+					       NLMSG_HDRLEN,
+					       index,
+					       GFP_ATOMIC);
 
 	if (!skb) {
 		osif_err("skb alloc failed");
@@ -889,13 +891,13 @@ static void wlan_vendor_scan_callback(struct cfg80211_scan_request *req,
 	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_SCAN_STATUS, scan_status))
 		goto nla_put_failure;
 
-	cfg80211_vendor_event(skb, GFP_ATOMIC);
+	wlan_cfg80211_vendor_event(skb, GFP_ATOMIC);
 	qdf_mem_free(req);
 
 	return;
 
 nla_put_failure:
-	kfree_skb(skb);
+	wlan_cfg80211_vendor_free_skb(skb);
 	qdf_mem_free(req);
 }
 
