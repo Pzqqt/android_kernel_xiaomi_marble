@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -496,7 +496,7 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 /**
  * wlan_hdd_change_hw_mode_for_given_chnl() - change HW mode for given channel
  * @adapter: pointer to adapter
- * @channel: given channel number
+ * @chan_freq: given channel frequency
  * @reason: reason for HW mode change is needed
  *
  * This API decides and sets hardware mode to DBS based on given channel.
@@ -506,8 +506,8 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
  * Return: 0 for success and non-zero for failure
  */
 int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
-				uint8_t channel,
-				enum policy_mgr_conn_update_reason reason);
+					   uint32_t chan_freq,
+					   enum policy_mgr_conn_update_reason reason);
 
 /**
  * hdd_rate_info_bw: an HDD internal rate bandwidth representation

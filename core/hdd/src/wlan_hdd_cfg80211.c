@@ -9889,7 +9889,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	int ret = 0;
 	enum policy_mgr_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_MAX + 1];
-	uint32_t ch_freq, channel_hint;
+	uint32_t ch_freq;
 
 	hdd_enter_dev(ndev);
 
@@ -9925,7 +9925,6 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 
 	ch_freq = nla_get_u32(tb[
 			      QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_FREQ]);
-	channel_hint = cds_freq_to_chan(ch_freq);
 	/* check pcl table */
 	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc, intf_mode,
 					  ch_freq, HW_MODE_20_MHZ)) {
@@ -9936,7 +9935,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	if (0 != wlan_hdd_check_remain_on_channel(adapter))
 		hdd_warn("Remain On Channel Pending");
 
-	if (wlan_hdd_change_hw_mode_for_given_chnl(adapter, channel_hint,
+	if (wlan_hdd_change_hw_mode_for_given_chnl(adapter, ch_freq,
 				POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN)) {
 		hdd_err("Failed to change hw mode");
 		return -EINVAL;
@@ -22452,8 +22451,8 @@ static int wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 #endif
 
 int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
-			uint8_t channel,
-			enum policy_mgr_conn_update_reason reason)
+					   uint32_t chan_freq,
+					   enum policy_mgr_conn_update_reason reason)
 {
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -22466,7 +22465,7 @@ int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
 
 	status = policy_mgr_current_connections_update(
 			hdd_ctx->psoc, adapter->vdev_id,
-			wlan_chan_to_freq(channel), reason);
+			chan_freq, reason);
 	switch (status) {
 	case QDF_STATUS_E_FAILURE:
 		/*
@@ -22488,7 +22487,7 @@ int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
 			return -EINVAL;
 		}
 		if (QDF_MONITOR_MODE == adapter->device_mode)
-			hdd_info("Monitor mode:channel:%d (SMM->DBS)", channel);
+			hdd_info("Monitor mode:channel freq:%d (SMM->DBS)", chan_freq);
 		break;
 
 	default:
