@@ -22,6 +22,8 @@ msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_usbpd.o \
 	dp/dp_drm.o \
 	dp/dp_hdcp2p2.o \
 	dp/dp_mst_drm.o \
+	sde_hdcp_1x.o \
+	sde_hdcp_2x.o \
 
 msm_drm-$(CONFIG_DRM_MSM_SDE) += sde/sde_crtc.o \
 	sde/sde_encoder.o \
@@ -45,8 +47,6 @@ msm_drm-$(CONFIG_DRM_MSM_SDE) += sde/sde_crtc.o \
 	sde/sde_hw_ad4.o \
 	sde/sde_hw_uidle.o \
 	sde_edid_parser.o \
-	sde_hdcp_1x.o \
-	sde_hdcp_2x.o \
 	sde/sde_hw_catalog.o \
 	sde/sde_hw_cdm.o \
 	sde/sde_hw_dspp.o \

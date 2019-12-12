@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
-#include <uapi/drm/drm_fourcc.h>
-#include <uapi/media/msm_media_info.h>
+#include <drm/drm_fourcc.h>
+#include <media/mmm_color_fmt.h>
 
 #include "sde_kms.h"
 #include "sde_formats.h"
@@ -686,11 +686,11 @@ static void _sde_get_v_h_subsample_rate(
 static int _sde_format_get_media_color_ubwc(const struct sde_format *fmt)
 {
 	static const struct sde_media_color_map sde_media_ubwc_map[] = {
-		{DRM_FORMAT_ABGR8888, COLOR_FMT_RGBA8888_UBWC},
-		{DRM_FORMAT_XBGR8888, COLOR_FMT_RGBA8888_UBWC},
-		{DRM_FORMAT_ABGR2101010, COLOR_FMT_RGBA1010102_UBWC},
-		{DRM_FORMAT_XBGR2101010, COLOR_FMT_RGBA1010102_UBWC},
-		{DRM_FORMAT_BGR565, COLOR_FMT_RGB565_UBWC},
+		{DRM_FORMAT_ABGR8888, MMM_COLOR_FMT_RGBA8888_UBWC},
+		{DRM_FORMAT_XBGR8888, MMM_COLOR_FMT_RGBA8888_UBWC},
+		{DRM_FORMAT_ABGR2101010, MMM_COLOR_FMT_RGBA1010102_UBWC},
+		{DRM_FORMAT_XBGR2101010, MMM_COLOR_FMT_RGBA1010102_UBWC},
+		{DRM_FORMAT_BGR565, MMM_COLOR_FMT_RGB565_UBWC},
 	};
 	int color_fmt = -1;
 	int i;
@@ -698,11 +698,11 @@ static int _sde_format_get_media_color_ubwc(const struct sde_format *fmt)
 	if (fmt->base.pixel_format == DRM_FORMAT_NV12) {
 		if (SDE_FORMAT_IS_DX(fmt)) {
 			if (fmt->unpack_tight)
-				color_fmt = COLOR_FMT_NV12_BPP10_UBWC;
+				color_fmt = MMM_COLOR_FMT_NV12_BPP10_UBWC;
 			else
-				color_fmt = COLOR_FMT_P010_UBWC;
+				color_fmt = MMM_COLOR_FMT_P010_UBWC;
 		} else
-			color_fmt = COLOR_FMT_NV12_UBWC;
+			color_fmt = MMM_COLOR_FMT_NV12_UBWC;
 		return color_fmt;
 	}
 
@@ -743,28 +743,36 @@ static int _sde_format_get_plane_sizes_ubwc(
 		uint32_t uv_meta_scanlines = 0;
 
 		layout->num_planes = 2;
-		layout->plane_pitch[0] = VENUS_Y_STRIDE(color, width);
-		y_sclines = VENUS_Y_SCANLINES(color, height);
-		layout->plane_size[0] = MSM_MEDIA_ALIGN(layout->plane_pitch[0] *
+		layout->plane_pitch[0] = MMM_COLOR_FMT_Y_STRIDE(color, width);
+		y_sclines = MMM_COLOR_FMT_Y_SCANLINES(color, height);
+		layout->plane_size[0] =
+			MMM_COLOR_FMT_ALIGN(layout->plane_pitch[0] *
 			y_sclines, SDE_UBWC_PLANE_SIZE_ALIGNMENT);
 
-		layout->plane_pitch[1] = VENUS_UV_STRIDE(color, width);
-		uv_sclines = VENUS_UV_SCANLINES(color, height);
-		layout->plane_size[1] = MSM_MEDIA_ALIGN(layout->plane_pitch[1] *
+		layout->plane_pitch[1] = MMM_COLOR_FMT_UV_STRIDE(color, width);
+		uv_sclines = MMM_COLOR_FMT_UV_SCANLINES(color, height);
+		layout->plane_size[1] =
+			MMM_COLOR_FMT_ALIGN(layout->plane_pitch[1] *
 			uv_sclines, SDE_UBWC_PLANE_SIZE_ALIGNMENT);
 
 		if (!meta)
 			goto done;
 
 		layout->num_planes += 2;
-		layout->plane_pitch[2] = VENUS_Y_META_STRIDE(color, width);
-		y_meta_scanlines = VENUS_Y_META_SCANLINES(color, height);
-		layout->plane_size[2] = MSM_MEDIA_ALIGN(layout->plane_pitch[2] *
+		layout->plane_pitch[2] =
+			MMM_COLOR_FMT_Y_META_STRIDE(color, width);
+		y_meta_scanlines =
+			MMM_COLOR_FMT_Y_META_SCANLINES(color, height);
+		layout->plane_size[2] =
+			MMM_COLOR_FMT_ALIGN(layout->plane_pitch[2] *
 			y_meta_scanlines, SDE_UBWC_PLANE_SIZE_ALIGNMENT);
 
-		layout->plane_pitch[3] = VENUS_UV_META_STRIDE(color, width);
-		uv_meta_scanlines = VENUS_UV_META_SCANLINES(color, height);
-		layout->plane_size[3] = MSM_MEDIA_ALIGN(layout->plane_pitch[3] *
+		layout->plane_pitch[3] =
+			MMM_COLOR_FMT_UV_META_STRIDE(color, width);
+		uv_meta_scanlines =
+			MMM_COLOR_FMT_UV_META_SCANLINES(color, height);
+		layout->plane_size[3] =
+			MMM_COLOR_FMT_ALIGN(layout->plane_pitch[3] *
 			uv_meta_scanlines, SDE_UBWC_PLANE_SIZE_ALIGNMENT);
 
 	} else {
@@ -772,17 +780,22 @@ static int _sde_format_get_plane_sizes_ubwc(
 
 		layout->num_planes = 1;
 
-		layout->plane_pitch[0] = VENUS_RGB_STRIDE(color, width);
-		rgb_scanlines = VENUS_RGB_SCANLINES(color, height);
-		layout->plane_size[0] = MSM_MEDIA_ALIGN(layout->plane_pitch[0] *
+		layout->plane_pitch[0] =
+			MMM_COLOR_FMT_RGB_STRIDE(color, width);
+		rgb_scanlines = MMM_COLOR_FMT_RGB_SCANLINES(color, height);
+		layout->plane_size[0] =
+			MMM_COLOR_FMT_ALIGN(layout->plane_pitch[0] *
 			rgb_scanlines, SDE_UBWC_PLANE_SIZE_ALIGNMENT);
 
 		if (!meta)
 			goto done;
 		layout->num_planes += 2;
-		layout->plane_pitch[2] = VENUS_RGB_META_STRIDE(color, width);
-		rgb_meta_scanlines = VENUS_RGB_META_SCANLINES(color, height);
-		layout->plane_size[2] = MSM_MEDIA_ALIGN(layout->plane_pitch[2] *
+		layout->plane_pitch[2] =
+			MMM_COLOR_FMT_RGB_META_STRIDE(color, width);
+		rgb_meta_scanlines =
+			MMM_COLOR_FMT_RGB_META_SCANLINES(color, height);
+		layout->plane_size[2] =
+			MMM_COLOR_FMT_ALIGN(layout->plane_pitch[2] *
 			rgb_meta_scanlines, SDE_UBWC_PLANE_SIZE_ALIGNMENT);
 	}
 

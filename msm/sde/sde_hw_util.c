@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
-#include <uapi/drm/sde_drm.h>
+#include <drm/sde_drm.h>
 #include "msm_drv.h"
 #include "sde_kms.h"
 #include "sde_hw_mdss.h"

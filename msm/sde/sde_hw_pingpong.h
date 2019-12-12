@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_PINGPONG_H
@@ -10,7 +10,7 @@
 #include "sde_hw_mdss.h"
 #include "sde_hw_util.h"
 #include "sde_hw_blk.h"
-#include <uapi/drm/msm_drm_pp.h>
+#include <drm/msm_drm_pp.h>
 
 struct sde_hw_pingpong;
 struct sde_hw_merge_3d;

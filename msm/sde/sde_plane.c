@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2014-2020 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -20,8 +20,8 @@
 
 #include <linux/debugfs.h>
 #include <linux/dma-buf.h>
-#include <uapi/drm/sde_drm.h>
-#include <uapi/drm/msm_drm_pp.h>
+#include <drm/sde_drm.h>
+#include <drm/msm_drm_pp.h>
 
 #include "msm_prop.h"
 #include "msm_drv.h"
