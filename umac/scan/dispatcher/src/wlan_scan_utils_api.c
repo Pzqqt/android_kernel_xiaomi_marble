@@ -694,7 +694,7 @@ util_scan_parse_rnr_ie(struct scan_cache_entry *scan_entry,
 			  neighbor_ap_info->operting_class);
 		scm_debug("tbtt_count %d, tbtt_length %d, fieldtype %d",
 			  tbtt_count, tbtt_length, fieldtype);
-		for (i = 0; i < tbtt_count && i < MAX_RNR_BSS; i++) {
+		for (i = 0; i < (tbtt_count + 1) && i < MAX_RNR_BSS; i++) {
 			data = data + sizeof(struct neighbor_ap_info_field);
 			util_scan_update_rnr(&scan_entry->rnr.bss_info[i],
 					     neighbor_ap_info,
