@@ -3590,6 +3590,7 @@ QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id)
 	struct wma_txrx_node *intr = &wma->interfaces[vdev_id];
 	struct vdev_mlme_obj *mlme_obj;
 	struct wlan_objmgr_vdev *vdev = intr->vdev;
+	uint8_t bss_power;
 
 	if (!vdev) {
 		wma_err("vdev is NULL");
@@ -3609,12 +3610,14 @@ QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	bss_power = wlan_reg_get_channel_reg_power_for_freq(wma->pdev,
+							    vdev->vdev_mlme.bss_chan->ch_freq);
 	wma_vdev_set_bss_params(wma, vdev_id,
 				mlme_obj->proto.generic.beacon_interval,
 				mlme_obj->proto.generic.dtim_period,
 				mlme_obj->proto.generic.slot_time,
 				mlme_obj->proto.generic.protection_mode,
-				mlme_obj->mgmt.generic.maxpower);
+				bss_power);
 
 	wma_vdev_set_he_bss_params(wma, vdev_id,
 				   &mlme_obj->proto.he_ops_info);
