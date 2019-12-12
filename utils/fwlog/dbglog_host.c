@@ -54,12 +54,10 @@
 #include <a_debug.h>
 #define FWLOG_DEBUG   ATH_DEBUG_MAKE_MODULE_MASK(0)
 
-#ifdef WLAN_DEBUG
-
 static int get_version;
 static int gprint_limiter;
 static bool tgt_assert_enable;
-
+#ifdef WLAN_DEBUG
 static ATH_DEBUG_MASK_DESCRIPTION g_fwlog_debug_description[] = {
 	{FWLOG_DEBUG, "fwlog"},
 };

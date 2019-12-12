@@ -63,9 +63,9 @@
 #define QDF_VTRACE qdf_vtrace_msg
 #define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
 #else
-#define QDF_TRACE(arg ...)
-#define QDF_VTRACE(arg ...)
-#define QDF_TRACE_HEX_DUMP(arg ...)
+#define QDF_TRACE(arg ...) __qdf_trace_dummy(arg)
+#define QDF_VTRACE(arg ...) __qdf_vtrace_dummy(arg)
+#define QDF_TRACE_HEX_DUMP(arg ...) __qdf_trace_hexdump_dummy(arg)
 #endif
 
 #if defined(WLAN_DEBUG) || defined(DEBUG) || defined(QDF_TRACE_PRINT_ENABLE)
@@ -108,6 +108,16 @@
 
 static inline void __qdf_trace_noop(QDF_MODULE_ID module,
 				    const char *format, ...) { }
+static inline void __qdf_trace_dummy(QDF_MODULE_ID module,
+				     QDF_TRACE_LEVEL level,
+				     const char *format, ...) { }
+static inline void __qdf_vtrace_dummy(QDF_MODULE_ID module,
+				      QDF_TRACE_LEVEL level,
+				      const char *str_format, va_list val) { }
+static inline void __qdf_trace_hexdump_dummy(QDF_MODULE_ID module,
+					     QDF_TRACE_LEVEL level,
+					     void *data, int buf_len) { }
+
 
 #ifdef WLAN_LOG_FATAL
 #define QDF_TRACE_FATAL(params...) \

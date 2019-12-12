@@ -196,9 +196,9 @@ reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 
 #endif
 
-uint16_t reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
-				uint8_t op_class,
-				bool global_tbl_lookup)
+static inline uint16_t reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
+					      uint8_t op_class,
+					      bool global_tbl_lookup)
 {
 	return 0;
 }

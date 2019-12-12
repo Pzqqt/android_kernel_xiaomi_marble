@@ -574,7 +574,7 @@ void qdf_trace_dump_all(void *p_mac, uint8_t code, uint8_t session,
 static inline
 QDF_STATUS qdf_trace_spin_lock_init(void)
 {
-	return QDF_STATUS_E_INVAL;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 #endif

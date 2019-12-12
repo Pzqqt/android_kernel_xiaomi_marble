@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -159,6 +159,14 @@ wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
 }
 
 static inline void wlan_roam_debug_dump_table(void)
+{
+}
+
+static inline void wlan_roam_debug_init(void)
+{
+}
+
+static inline void wlan_roam_debug_deinit(void)
 {
 }
 #endif /* FEATURE_ROAM_DEBUG */

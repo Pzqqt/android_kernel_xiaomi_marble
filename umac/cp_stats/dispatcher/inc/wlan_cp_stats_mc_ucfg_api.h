@@ -228,5 +228,56 @@ void static inline ucfg_mc_cp_stats_register_pmo_handler(void) { };
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 #else
 void static inline ucfg_mc_cp_stats_register_pmo_handler(void) { };
+static inline QDF_STATUS ucfg_mc_cp_stats_send_stats_request(
+				struct wlan_objmgr_vdev *vdev,
+				enum stats_req_type type,
+				struct request_info *info)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS ucfg_mc_cp_stats_set_rate_flags(
+				struct wlan_objmgr_vdev *vdev,
+				enum tx_rate_info flags)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS ucfg_mc_cp_stats_get_psoc_wake_lock_stats(
+						struct wlan_objmgr_psoc *psoc,
+						struct wake_lock_stats *stats)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats_by_protocol(
+					struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id,
+					enum qdf_proto_subtype protocol)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id,
+				uint32_t reason)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats_by_dst_addr(
+					struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id, uint8_t *dest_mac)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS ucfg_mc_cp_stats_get_vdev_wake_lock_stats(
+						struct wlan_objmgr_vdev *vdev,
+						struct wake_lock_stats *stats)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */
