@@ -1437,9 +1437,9 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 		 * however, that might happen while we are in the monitor mode.
 		 * We don't need to handle that here
 		 */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"Unknown peer, dropping the fragment");
-
+		dp_info_rl("Unknown peer with peer_id %d, dropping fragment",
+			   peer_id);
+		DP_STATS_INC(soc, rx.rx_frag_err_no_peer, 1);
 		goto discard_frag;
 	}
 
@@ -1728,11 +1728,10 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 		rx_bufs_used++;
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Rx Defrag err seq#:0x%x msdu_count:%d flags:%d",
-			  mpdu_desc_info->mpdu_seq,
-			  mpdu_desc_info->msdu_count,
-			  mpdu_desc_info->mpdu_flags);
+		dp_info_rl("Rx Defrag err seq#:0x%x msdu_count:%d flags:%d",
+			   mpdu_desc_info->mpdu_seq,
+			   mpdu_desc_info->msdu_count,
+			   mpdu_desc_info->mpdu_flags);
 
 	return rx_bufs_used;
 }

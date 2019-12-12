@@ -725,6 +725,8 @@ struct dp_soc_stats {
 		uint32_t rx_frag_err;
 		/* Fragments dropped due to len errors in skb */
 		uint32_t rx_frag_err_len_error;
+		/* Fragments dropped due to no peer found */
+		uint32_t rx_frag_err_no_peer;
 		/* No of reinjected packets */
 		uint32_t reo_reinject;
 		/* Reap loop packet limit hit */
