@@ -4798,30 +4798,6 @@ static void wlan_hdd_dhcp_offload_enable(struct hdd_context *hdd_ctx,
 }
 #endif /* DHCP_SERVER_OFFLOAD */
 
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
-/**
- * hdd_set_vdev_crypto_prarams_from_ie - Sets vdev crypto params from IE info
- * @vdev: vdev pointer
- * @ie_ptr: pointer to IE
- * @ie_len: IE length
- *
- * Return: QDF_STATUS_SUCCESS or error code
- */
-static QDF_STATUS
-hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
-				    uint8_t *ie_ptr, uint16_t ie_len)
-{
-	return wlan_set_vdev_crypto_prarams_from_ie(vdev, ie_ptr, ie_len);
-}
-#else
-static QDF_STATUS
-hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
-				    uint8_t *ie_ptr, uint16_t ie_len)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 static void wlan_hdd_set_sap_mcc_chnl_avoid(struct hdd_context *hdd_ctx)
 {
@@ -5251,12 +5227,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		ret = -EINVAL;
 		goto error;
 	}
-	status = hdd_set_vdev_crypto_prarams_from_ie(adapter->vdev,
-						     config->RSNWPAReqIE,
-						     config->RSNWPAReqIELength
-						     );
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("Failed to set crypto params from IE");
 
 	config->SSIDinfo.ssidHidden = false;
 
