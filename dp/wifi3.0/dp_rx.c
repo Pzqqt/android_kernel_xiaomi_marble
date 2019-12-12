@@ -335,7 +335,7 @@ dp_get_vdev_from_peer(struct dp_soc *soc,
 
 	if (unlikely(!peer)) {
 		if (peer_id != HTT_INVALID_PEER) {
-			vdev_id = DP_PEER_METADATA_ID_GET(
+			vdev_id = DP_PEER_METADATA_VDEV_ID_GET(
 					mpdu_desc_info.peer_meta_data);
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_DEBUG,
@@ -1593,7 +1593,6 @@ bool dp_is_special_data(qdf_nbuf_t nbuf)
 static inline
 void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 {
-	uint32_t peer_mdata;
 	uint16_t peer_id;
 	uint8_t vdev_id;
 	struct dp_vdev *vdev;
@@ -1602,13 +1601,11 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 	uint32_t pkt_len = 0;
 	uint8_t *rx_tlv_hdr;
 
-	peer_mdata =  QDF_NBUF_CB_RX_PEER_ID(nbuf);
-
-	peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
+	peer_id = QDF_NBUF_CB_RX_PEER_ID(nbuf);
 	if (peer_id > soc->max_peers)
 		goto deliver_fail;
 
-	vdev_id = DP_PEER_METADATA_ID_GET(peer_mdata);
+	vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf);
 	vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 	if (!vdev || !vdev->osif_rx)
 		goto deliver_fail;
@@ -1717,6 +1714,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	uint32_t l2_hdr_offset = 0;
 	uint16_t msdu_len = 0;
 	uint16_t peer_id;
+	uint8_t vdev_id;
 	struct dp_peer *peer;
 	struct dp_vdev *vdev;
 	uint32_t pkt_len = 0;
@@ -1897,6 +1895,8 @@ more_data:
 		peer_mdata = mpdu_desc_info.peer_meta_data;
 		QDF_NBUF_CB_RX_PEER_ID(rx_desc->nbuf) =
 			DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
+		QDF_NBUF_CB_RX_VDEV_ID(rx_desc->nbuf) =
+			DP_PEER_METADATA_VDEV_ID_GET(peer_mdata);
 
 		/*
 		 * save msdu flags first, last and continuation msdu in
@@ -1985,12 +1985,20 @@ done:
 	while (nbuf) {
 		next = nbuf->next;
 		rx_tlv_hdr = qdf_nbuf_data(nbuf);
+		vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf);
+
+		if (deliver_list_head && vdev && (vdev->vdev_id != vdev_id)) {
+			dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
+					       deliver_list_tail);
+			deliver_list_head = NULL;
+			deliver_list_tail = NULL;
+		}
+
 		/* Get TID from struct cb->tid_val, save to tid */
 		if (qdf_nbuf_is_rx_chfrag_start(nbuf))
 			tid = qdf_nbuf_get_tid_val(nbuf);
 
-		peer_mdata =  QDF_NBUF_CB_RX_PEER_ID(nbuf);
-		peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
+		peer_id =  QDF_NBUF_CB_RX_PEER_ID(nbuf);
 		peer = dp_peer_find_by_id(soc, peer_id);
 
 		if (peer) {
@@ -2002,13 +2010,6 @@ done:
 		}
 
 		rx_bufs_used++;
-
-		if (deliver_list_head && peer && (vdev != peer->vdev)) {
-			dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
-					deliver_list_tail);
-			deliver_list_head = NULL;
-			deliver_list_tail = NULL;
-		}
 
 		if (qdf_likely(peer)) {
 			vdev = peer->vdev;
