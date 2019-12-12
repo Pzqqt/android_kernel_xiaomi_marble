@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -286,7 +286,7 @@ void pktlog_callback(void *pdev, enum WDI_EVENT event, void *log_data,
 	switch (event) {
 	case WDI_EVENT_OFFLOAD_ALL:
 	{
-		if (process_offload_pktlog(pdev, log_data)) {
+		if (process_offload_pktlog_wifi3(pdev, log_data)) {
 			qdf_print("Unable to process offload info");
 			return;
 		}
@@ -370,7 +370,7 @@ lit_pktlog_callback(void *context, enum WDI_EVENT event, void *log_data,
 	switch (event) {
 	case WDI_EVENT_RX_DESC:
 	{
-		if (process_rx_desc_remote(context, log_data)) {
+		if (process_rx_desc_remote_wifi3(context, log_data)) {
 			qdf_print("Unable to process RX info");
 			return;
 		}
@@ -378,8 +378,8 @@ lit_pktlog_callback(void *context, enum WDI_EVENT event, void *log_data,
 	}
 	case WDI_EVENT_LITE_T2H:
 	{
-		if (process_pktlog_lite(context, log_data,
-					PKTLOG_TYPE_LITE_T2H)) {
+		if (process_pktlog_lite_wifi3(context, log_data,
+					      PKTLOG_TYPE_LITE_T2H)) {
 			qdf_print("Unable to process lite_t2h");
 			return;
 		}
@@ -387,8 +387,8 @@ lit_pktlog_callback(void *context, enum WDI_EVENT event, void *log_data,
 	}
 	case WDI_EVENT_LITE_RX:
 	{
-		if (process_pktlog_lite(context, log_data,
-					PKTLOG_TYPE_LITE_RX)) {
+		if (process_pktlog_lite_wifi3(context, log_data,
+					      PKTLOG_TYPE_LITE_RX)) {
 			qdf_print("Unable to process lite_rx");
 			return;
 		}
