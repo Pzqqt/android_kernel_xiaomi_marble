@@ -223,19 +223,19 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 
 	mutex_lock(&tx_priv->mclk_lock);
 	if (mclk_enable) {
+		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+						TX_CORE_CLK,
+						TX_CORE_CLK,
+						true);
+		if (ret < 0) {
+			dev_err_ratelimited(tx_priv->dev,
+				"%s: request clock enable failed\n",
+				__func__);
+			goto exit;
+		}
+		bolero_clk_rsc_fs_gen_request(tx_priv->dev,
+					true);
 		if (tx_priv->tx_mclk_users == 0) {
-			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
-							   TX_CORE_CLK,
-							   TX_CORE_CLK,
-							   true);
-			if (ret < 0) {
-				dev_err_ratelimited(tx_priv->dev,
-					"%s: request clock enable failed\n",
-					__func__);
-				goto exit;
-			}
-			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
-						  true);
 			regcache_mark_dirty(regmap);
 			regcache_sync_region(regmap,
 					TX_START_OFFSET,
@@ -266,14 +266,14 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 			regmap_update_bits(regmap,
 				BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x00);
-			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
-						  false);
-
-			bolero_clk_rsc_request_clock(tx_priv->dev,
-						 TX_CORE_CLK,
-						 TX_CORE_CLK,
-						 false);
 		}
+
+		bolero_clk_rsc_fs_gen_request(tx_priv->dev,
+				false);
+		bolero_clk_rsc_request_clock(tx_priv->dev,
+				 TX_CORE_CLK,
+				 TX_CORE_CLK,
+				 false);
 	}
 exit:
 	mutex_unlock(&tx_priv->mclk_lock);
@@ -2460,12 +2460,13 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 					BOLERO_CDC_TX_TOP_CSR_FREQ_MCLK,
 					0x01, 0x01);
 				regmap_update_bits(regmap,
-				BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
+					BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
 					0x01, 0x01);
 				regmap_update_bits(regmap,
-			      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
+					BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
 					0x01, 0x01);
 			}
+			tx_priv->tx_mclk_users++;
 		}
 		if (tx_priv->swr_clk_users == 0) {
 			dev_dbg(tx_priv->dev, "%s: reset_swr: %d\n",
@@ -2508,16 +2509,24 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 		if (clk_type == TX_MCLK)
 			tx_macro_mclk_enable(tx_priv, 0);
 		if (clk_type == VA_MCLK) {
+			if (tx_priv->tx_mclk_users <= 0) {
+				dev_err(tx_priv->dev, "%s: clock already disabled\n",
+						__func__);
+				tx_priv->tx_mclk_users = 0;
+				goto tx_clk;
+			}
+			tx_priv->tx_mclk_users--;
 			if (tx_priv->tx_mclk_users == 0) {
 				regmap_update_bits(regmap,
-			      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
+					BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
 					0x01, 0x00);
 				regmap_update_bits(regmap,
-				BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
+					BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
 					0x01, 0x00);
 			}
+
 			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
-						  false);
+						false);
 			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 							   TX_CORE_CLK,
 							   VA_CORE_CLK,
@@ -2529,6 +2538,7 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 				goto done;
 			}
 		}
+tx_clk:
 		if (!clk_tx_ret)
 			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 						   TX_CORE_CLK,
