@@ -32,20 +32,6 @@
 #include "lim_global.h"
 #include "mac_trace.h"
 #include "qdf_trace.h"
-#ifdef LIM_TRACE_RECORD
-
-#define LIM_TRACE_GET_SSN(data)    (((data) >> 16) & 0xff)
-#define LIM_TRACE_GET_SUBTYPE(data)    (data & 0xff)
-#define LIM_TRACE_GET_DEFRD_OR_DROPPED(data) (data & 0xc0000000)
-
-#define LIM_MSG_PROCESSED 0
-#define LIM_MSG_DEFERRED   1
-#define LIM_MSG_DROPPED     2
-
-#define LIM_TRACE_MAKE_RXMGMT(type, ssn) \
-	((ssn << 16) | (type))
-#define LIM_TRACE_MAKE_RXMSG(msg, action) \
-	((msg) | (action << 30))
 
 enum {
 	TRACE_CODE_MLM_STATE,
@@ -66,6 +52,21 @@ enum {
 	TRACE_CODE_TIMER_DEACTIVATE,
 	TRACE_CODE_INFO_LOG
 };
+
+#ifdef LIM_TRACE_RECORD
+
+#define LIM_TRACE_GET_SSN(data)    (((data) >> 16) & 0xff)
+#define LIM_TRACE_GET_SUBTYPE(data)    ((data) & 0xff)
+#define LIM_TRACE_GET_DEFRD_OR_DROPPED(data) ((data) & 0xc0000000)
+
+#define LIM_MSG_PROCESSED 0
+#define LIM_MSG_DEFERRED   1
+#define LIM_MSG_DROPPED     2
+
+#define LIM_TRACE_MAKE_RXMGMT(type, ssn) \
+	(((ssn) << 16) | (type))
+#define LIM_TRACE_MAKE_RXMSG(msg, action) \
+	((msg) | ((action) << 30))
 
 void lim_trace_init(struct mac_context *mac);
 uint8_t *lim_trace_get_mlm_state_string(uint32_t mlmState);

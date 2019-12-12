@@ -430,12 +430,6 @@ static bool hdd_tsf_cap_sync_send(struct hdd_adapter *adapter)
 }
 #elif defined(WLAN_FEATURE_TSF_PLUS) && \
 	!defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC)
-static uint32_t
-hdd_wlan_retry_tsf_cap(struct hdd_adapter *adapter)
-{
-	return 0;
-}
-
 static void
 hdd_wlan_restart_tsf_cap(struct hdd_adapter *adapter)
 {

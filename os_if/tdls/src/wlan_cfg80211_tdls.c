@@ -34,6 +34,7 @@
 #include <wlan_utility.h>
 #include <wlan_reg_services_api.h>
 #include "wlan_cfg80211_mc_cp_stats.h"
+#include "sir_api.h"
 
 
 #define TDLS_MAX_NO_OF_2_4_CHANNELS 14
