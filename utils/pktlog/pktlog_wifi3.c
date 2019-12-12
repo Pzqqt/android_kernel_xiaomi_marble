@@ -27,7 +27,6 @@ process_offload_pktlog_wifi3(struct cdp_pdev *pdev, void *data)
 	uint32_t *pl_tgt_hdr;
 	void *txdesc_hdr_ctl = NULL;
 	size_t log_size = 0;
-	size_t tmp_log_size = 0;
 
 	if (!pl_dev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -56,9 +55,8 @@ process_offload_pktlog_wifi3(struct cdp_pdev *pdev, void *data)
 			ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
 
-	pktlog_hdr_set_specific_data(&pl_hdr,
-				     *(pl_tgt_hdr +
-				     ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET));
+	pl_hdr.type_specific_data = *(pl_tgt_hdr +
+				    ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET);
 
 	if (pl_hdr.size > MAX_PKTLOG_RECV_BUF_SIZE) {
 		pl_dev->invalid_packets++;
@@ -70,7 +68,6 @@ process_offload_pktlog_wifi3(struct cdp_pdev *pdev, void *data)
 	 *  TX_CTL, TX_STATUS, TX_MSDU_ID, TX_FRM_HDR
 	 */
 	pl_info = pl_dev->pl_info;
-	tmp_log_size = sizeof(frm_hdr) + pl_hdr.size;
 	log_size = pl_hdr.size;
 	txdesc_hdr_ctl =
 		(void *)pktlog_getbuf(pl_dev, pl_info, log_size, &pl_hdr);
