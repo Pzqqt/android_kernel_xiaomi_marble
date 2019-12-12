@@ -38,9 +38,39 @@
  * Return: 0 - success/non-zero - failure
  */
 A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data);
+
+/**
+ * process_rx_info_remote() - process rx pktlog buffers
+ * @txrx_pdev: ol pdev handle
+ * @data: pktlog buffer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+A_STATUS process_rx_info_remote(void *pdev, void *data);
+
+/**
+ * process_tx_info() - process rx pktlog buffers
+ * @txrx_pdev: ol pdev handle
+ * @data: pktlog buffer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+A_STATUS process_rx_info(void *pdev, void *data);
 #else
 static inline
 A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
+{
+	return 0;
+}
+
+static inline
+A_STATUS process_rx_info_remote(void *pdev, void *data)
+{
+	return 0;
+}
+
+static inline
+A_STATUS process_rx_info(void *pdev, void *data)
 {
 	return 0;
 }
