@@ -3544,9 +3544,9 @@ more_data:
 			 * completion ring. These errors are not related to
 			 * Tx completions, and should just be ignored
 			 */
-
-			wbm_internal_error =
-			hal_get_wbm_internal_error(tx_comp_hal_desc);
+			wbm_internal_error = hal_get_wbm_internal_error(
+							soc->hal_soc,
+							tx_comp_hal_desc);
 
 			if (wbm_internal_error) {
 				dp_err_rl("Tx comp wbm_internal_error!!");

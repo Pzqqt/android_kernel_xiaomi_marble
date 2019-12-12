@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -804,7 +804,6 @@ uint8_t hal_tx_comp_get_release_reason(void *hal_desc,
 	return hal_soc->ops->hal_tx_comp_get_release_reason(hal_desc);
 }
 
-
 /**
  * hal_tx_comp_desc_sync() - collect hardware descriptor contents
  * @hal_desc: hardware descriptor pointer
@@ -1124,13 +1123,12 @@ void hal_tx_set_tidmap_prty(hal_soc_handle_t hal_soc_hdl, uint8_t val)
  *
  * Return: buffer type
  */
-static inline uint8_t hal_get_wbm_internal_error(void *hal_desc)
+static inline
+uint8_t hal_get_wbm_internal_error(hal_soc_handle_t hal_soc_hdl, void *hal_desc)
 {
-	uint32_t comp_desc =
-		*(uint32_t *)(((uint8_t *)hal_desc) +
-			      WBM_RELEASE_RING_2_WBM_INTERNAL_ERROR_OFFSET);
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	return (comp_desc & WBM_RELEASE_RING_2_WBM_INTERNAL_ERROR_MASK) >>
-		WBM_RELEASE_RING_2_WBM_INTERNAL_ERROR_LSB;
+	return hal_soc->ops->hal_get_wbm_internal_error(hal_desc);
 }
+
 #endif /* HAL_TX_H */

@@ -1862,6 +1862,24 @@ static inline uint8_t hal_tx_comp_get_release_reason_generic(void *hal_desc)
 }
 
 /**
+ * hal_get_wbm_internal_error_generic() - is WBM internal error
+ * @hal_desc: completion ring descriptor pointer
+ *
+ * This function will return 0 or 1  - is it WBM internal error or not
+ *
+ * Return: uint8_t
+ */
+static inline uint8_t hal_get_wbm_internal_error_generic(void *hal_desc)
+{
+	uint32_t comp_desc =
+		*(uint32_t *)(((uint8_t *)hal_desc) +
+			      WBM_RELEASE_RING_2_WBM_INTERNAL_ERROR_OFFSET);
+
+	return (comp_desc & WBM_RELEASE_RING_2_WBM_INTERNAL_ERROR_MASK) >>
+		WBM_RELEASE_RING_2_WBM_INTERNAL_ERROR_LSB;
+}
+
+/**
  * hal_rx_dump_mpdu_start_tlv_generic: dump RX mpdu_start TLV in structured
  *			       human readable format.
  * @mpdu_start: pointer the rx_attention TLV in pkt.

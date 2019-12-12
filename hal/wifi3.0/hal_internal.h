@@ -372,6 +372,7 @@ struct hal_hw_txrx_ops {
 	void (*hal_tx_comp_get_status)(void *desc, void *ts,
 				       struct hal_soc *hal);
 	uint8_t (*hal_tx_comp_get_release_reason)(void *hal_desc);
+	uint8_t (*hal_get_wbm_internal_error)(void *hal_desc);
 	void (*hal_tx_desc_set_mesh_en)(void *desc, uint8_t en);
 
 	/* rx */

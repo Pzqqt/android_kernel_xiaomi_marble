@@ -1004,6 +1004,7 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_tx_desc_set_cache_set_num_generic,
 	hal_tx_comp_get_status_generic,
 	hal_tx_comp_get_release_reason_generic,
+	hal_get_wbm_internal_error_generic,
 	hal_tx_desc_set_mesh_en_8074v2,
 
 	/* rx */
