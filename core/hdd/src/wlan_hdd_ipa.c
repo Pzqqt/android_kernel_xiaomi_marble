@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -355,6 +355,28 @@ static void hdd_ipa_set_wake_up_idle(bool wake_up_idle)
 }
 #endif
 
+/**
+ * hdd_ipa_send_to_nw_stack() - Check if IPA supports NAPI
+ * polling during RX
+ * @skb : data buffer sent to network stack
+ *
+ * If IPA LAN RX supports NAPI polling mechanism use
+ * netif_receive_skb instead of netif_rx_ni to forward the skb
+ * to network stack.
+ *
+ * Return: Return value from netif_rx_ni/netif_receive_skb
+ */
+static int hdd_ipa_send_to_nw_stack(qdf_nbuf_t skb)
+{
+	int result;
+
+	if (qdf_ipa_get_lan_rx_napi())
+		result = netif_receive_skb(skb);
+	else
+		result = netif_rx_ni(skb);
+	return result;
+}
+
 #ifdef QCA_CONFIG_SMP
 
 /**
@@ -367,13 +389,16 @@ static void hdd_ipa_set_wake_up_idle(bool wake_up_idle)
  * In this manner, UDP/TCP packets are sent in an aggregated way to the stack.
  * For IP/ICMP packets, simply call netif_rx_ni.
  *
+ * Check if IPA supports NAPI polling then use netif_receive_skb
+ * instead of netif_rx_ni.
+ *
  * Return: return value from the netif_rx_ni/netif_rx api.
  */
 static int hdd_ipa_aggregated_rx_ind(qdf_nbuf_t skb)
 {
 	int ret;
 
-	ret =  netif_rx_ni(skb);
+	ret =  hdd_ipa_send_to_nw_stack(skb);
 	return ret;
 }
 #else
@@ -387,13 +412,13 @@ static int hdd_ipa_aggregated_rx_ind(qdf_nbuf_t skb)
 	ip_h = (struct iphdr *)(skb->data);
 	if ((skb->protocol == htons(ETH_P_IP)) &&
 		(ip_h->protocol == IPPROTO_ICMP)) {
-		result = netif_rx_ni(skb);
+		result = hdd_ipa_send_to_nw_stack(skb);
 	} else {
 		/* Call netif_rx_ni for every IPA_WLAN_RX_SOFTIRQ_THRESH packets
 		 * to avoid excessive softirq's.
 		 */
 		if (atomic_dec_and_test(&softirq_mitigation_cntr)) {
-			result = netif_rx_ni(skb);
+			result = hdd_ipa_send_to_nw_stack(skb);
 			atomic_set(&softirq_mitigation_cntr,
 					IPA_WLAN_RX_SOFTIRQ_THRESH);
 		} else {
