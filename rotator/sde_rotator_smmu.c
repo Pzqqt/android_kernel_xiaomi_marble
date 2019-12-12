@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"%s: " fmt, __func__
@@ -601,17 +601,6 @@ int sde_smmu_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	if (smmu_domain.domain == SDE_IOMMU_DOMAIN_ROT_SECURE) {
-		int secure_vmid = VMID_CP_PIXEL;
-
-		rc = iommu_domain_set_attr(sde_smmu->rot_domain,
-			DOMAIN_ATTR_SECURE_VMID, &secure_vmid);
-		if (rc) {
-			SDEROT_ERR("couldn't set secure pixel vmid\n");
-			goto release_mapping;
-		}
-	}
-
 	if (!dev->dma_parms)
 		dev->dma_parms = devm_kzalloc(dev,
 				sizeof(*dev->dma_parms), GFP_KERNEL);
@@ -629,8 +618,6 @@ int sde_smmu_probe(struct platform_device *pdev)
 			smmu_domain.domain);
 	return 0;
 
-release_mapping:
-	sde_smmu->rot_domain = NULL;
 bus_client_destroy:
 	sde_reg_bus_vote_client_destroy(sde_smmu->reg_bus_clt);
 	sde_smmu->reg_bus_clt = NULL;
