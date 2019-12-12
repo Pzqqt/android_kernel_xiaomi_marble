@@ -74,6 +74,15 @@ A_STATUS process_rate_find(void *pdev, void *data);
  * Return: 0 - success/non-zero - failure
  */
 A_STATUS process_rate_update(void *pdev, void *data);
+
+/**
+ * process_sw_event() - process sw event pktlog buffers
+ * @txrx_pdev: ol pdev handle
+ * @data: pktlog buffer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+A_STATUS process_sw_event(void *pdev, void *data);
 #else
 static inline
 A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
@@ -104,4 +113,52 @@ A_STATUS process_rate_update(void *pdev, void *data)
 {
 	return 0;
 }
+
+static inline
+A_STATUS process_sw_event(void *pdev, void *data)
+{
+	return 0;
+}
 #endif /* REMOVE_PKT_LOG */
+
+/**
+ * process_offload_pktlog_wifi3() - Process full pktlog events
+ * pdev: abstract pdev handle
+ * data: pktlog buffer
+ *
+ * Return: zero on success, non-zero on failure
+ */
+static inline A_STATUS
+process_offload_pktlog_wifi3(struct cdp_pdev *pdev, void *data)
+{
+	return 0;
+}
+
+/**
+ * process_rx_desc_remote_wifi3() - Process pktlog buffers received
+ *                                  from monitor status ring
+ * @pdev: pdev handle
+ * @data: pktlog buffer pointer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+static inline int
+process_rx_desc_remote_wifi3(void *pdev, void *data)
+{
+	return 0;
+}
+
+/**
+ * process_pktlog_lite_wifi3() - Process pktlog buffers received
+ *                               from monitor status ring
+ * @pdev: pdev handle
+ * @data: pktlog buffer pointer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+static inline int
+process_pktlog_lite_wifi3(void *context, void *log_data,
+			  uint16_t log_type)
+{
+	return 0;
+}

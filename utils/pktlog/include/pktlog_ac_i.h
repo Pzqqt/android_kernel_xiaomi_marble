@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,14 +60,72 @@ char *pktlog_getbuf(struct pktlog_dev_t *pl_dev,
 		    struct ath_pktlog_info *pl_info,
 		    size_t log_size, struct ath_pktlog_hdr *pl_hdr);
 
-A_STATUS process_tx_info(struct cdp_pdev *pdev, void *data);
-A_STATUS process_rx_info(void *pdev, void *data);
-A_STATUS process_rx_info_remote(void *pdev, void *data);
-A_STATUS process_rate_find(void *pdev, void *data);
-A_STATUS process_rate_update(void *pdev, void *data);
-A_STATUS process_sw_event(void *pdev, void *data);
-int process_pktlog_lite(void *context, void *log_data, uint16_t log_type);
-int process_rx_desc_remote(void *pdev, void *data);
-A_STATUS process_offload_pktlog(struct cdp_pdev *pdev, void *data);
+#ifdef PKTLOG_HAS_SPECIFIC_DATA
+/**
+ * pktlog_hdr_set_specific_data() - set type specific data
+ * @log_hdr: pktlog header
+ * @type_specific_data: type specific data
+ *
+ * Return: None
+ */
+void
+pktlog_hdr_set_specific_data(struct ath_pktlog_hdr *log_hdr,
+			     uint32_t type_specific_data);
+
+/**
+ * pktlog_hdr_get_specific_data() - get type specific data
+ * @log_hdr: pktlog header
+ * @type_specific_data: type specific data
+ *
+ * Return: pktlog subtype
+ */
+uint32_t
+pktlog_hdr_get_specific_data(struct ath_pktlog_hdr *log_hdr);
+
+/**
+ * pktlog_arg_set_specific_data() - set type specific data
+ * @log_hdr: pktlog arg
+ * @type_specific_data: type specific data
+ *
+ * Return: None
+ */
+void
+pktlog_arg_set_specific_data(struct ath_pktlog_arg *plarg,
+			     uint32_t type_specific_data);
+
+/**
+ * pktlog_arg_get_specific_data() - set type specific data
+ * @log_hdr: pktlog arg
+ * @type_specific_data: type specific data
+ *
+ * Return: pktlog subtype
+ */
+uint32_t
+pktlog_arg_get_specific_data(struct ath_pktlog_arg *plarg);
+#else
+static inline void
+pktlog_hdr_set_specific_data(struct ath_pktlog_hdr *log_hdr,
+			     uint32_t type_specific_data)
+{
+}
+
+static inline uint32_t
+pktlog_hdr_get_specific_data(struct ath_pktlog_hdr *log_hdr)
+{
+	return 0;
+}
+
+static inline void
+pktlog_arg_set_specific_data(struct ath_pktlog_arg *plarg,
+			     uint32_t type_specific_data)
+{
+}
+
+static inline uint32_t
+pktlog_arg_get_specific_data(struct ath_pktlog_arg *plarg)
+{
+	return 0;
+}
+#endif /* PKTLOG_HAS_SPECIFIC_DATA */
 #endif /* REMOVE_PKT_LOG */
 #endif

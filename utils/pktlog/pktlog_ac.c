@@ -41,6 +41,11 @@
 #include "htc.h"
 #include <cdp_txrx_cmn_struct.h>
 #include <cdp_txrx_ctrl.h>
+#ifdef PKTLOG_LEGACY
+#include "pktlog_wifi2.h"
+#else
+#include "pktlog_wifi3.h"
+#endif /* PKTLOG_LEGACY */
 
 wdi_event_subscribe PKTLOG_TX_SUBSCRIBER;
 wdi_event_subscribe PKTLOG_RX_SUBSCRIBER;

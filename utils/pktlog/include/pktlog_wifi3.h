@@ -68,3 +68,81 @@ process_pktlog_lite_wifi3(void *context, void *log_data,
 	return 0;
 }
 #endif /* REMOVE_PKT_LOG */
+
+/**
+ * process_tx_info() - process tx pktlog buffers
+ * @txrx_pdev: ol pdev handle
+ * @data: pktlog buffer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+static inline
+A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
+{
+	return 0;
+}
+
+/**
+ * process_rx_info_remote() - process rx pktlog buffers
+ * @txrx_pdev: ol pdev handle
+ * @data: pktlog buffer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+static inline
+A_STATUS process_rx_info_remote(void *pdev, void *data)
+{
+	return 0;
+}
+
+/**
+ * process_rx_remote() - process rx pktlog buffers
+ * @txrx_pdev: ol pdev handle
+ * @data: pktlog buffer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+static inline
+A_STATUS process_rx_info(void *pdev, void *data)
+{
+	return 0;
+}
+
+/**
+ * process_rate_find() - process rate event pktlog buffers
+ * @txrx_pdev: ol pdev handle
+ * @data: pktlog buffer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+static inline
+A_STATUS process_rate_find(void *pdev, void *data)
+{
+	return 0;
+}
+
+/**
+ * process_rate_update() - process rate event pktlog buffers
+ * @txrx_pdev: ol pdev handle
+ * @data: pktlog buffer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+static inline
+A_STATUS process_rate_update(void *pdev, void *data)
+{
+	return 0;
+}
+
+/**
+ * process_sw_event() - process sw event pktlog buffers
+ * @txrx_pdev: ol pdev handle
+ * @data: pktlog buffer
+ *
+ * Return: 0 - success/non-zero - failure
+ */
+static inline
+A_STATUS process_sw_event(void *pdev, void *data)
+{
+	return 0;
+}
