@@ -544,6 +544,21 @@ void lim_process_mlm_auth_cnf(struct mac_context *mac_ctx, uint32_t *msg)
 			MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 				session_entry->peSessionId,
 				session_entry->limMlmState));
+
+			/* WAR for some IOT issue on specific AP:
+			 * STA failed to connect to SAE AP due to incorrect
+			 * password is used. Then AP will still reject the
+			 * authentication even correct password is used unless
+			 * STA send deauth to AP upon authentication failure.
+			 */
+			if (auth_type == eSIR_AUTH_TYPE_SAE) {
+				pe_debug("Send deauth for SAE auth failure");
+				lim_send_deauth_mgmt_frame(mac_ctx,
+						       auth_cnf->protStatusCode,
+						       auth_cnf->peerMacAddr,
+						       session_entry, false);
+			}
+
 			/*
 			 * Need to send Join response with
 			 * auth failure to Host.
