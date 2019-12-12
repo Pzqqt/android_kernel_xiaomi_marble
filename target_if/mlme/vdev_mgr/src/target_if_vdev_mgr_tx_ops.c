@@ -876,8 +876,9 @@ static int32_t target_if_vdev_mgr_multi_vdev_restart_get_ref(
 			return last_vdev_idx;
 		}
 
-		vdev_rsp = rx_ops->psoc_get_vdev_response_timer_info(psoc,
-								     vdev_idx);
+		vdev_rsp = rx_ops->psoc_get_vdev_response_timer_info(
+						psoc,
+						wlan_vdev_get_id(tvdev));
 		if (!vdev_rsp) {
 			mlme_err("VDEV_%d PSOC_%d No vdev rsp timer",
 				 vdev_idx, wlan_psoc_get_id(psoc));
