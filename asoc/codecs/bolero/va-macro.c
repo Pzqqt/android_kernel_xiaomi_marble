@@ -44,16 +44,18 @@
 #define VA_MACRO_TX_DMIC_CLK_DIV_MASK 0x0E
 #define VA_MACRO_TX_DMIC_CLK_DIV_SHFT 0x01
 #define VA_MACRO_SWR_MIC_MUX_SEL_MASK 0xF
-#define VA_MACRO_ADC_MUX_CFG_OFFSET 0x2
+#define VA_MACRO_ADC_MUX_CFG_OFFSET 0x8
 
-#define BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS	40
+#define BOLERO_CDC_VA_TX_DMIC_UNMUTE_DELAY_MS       40
+#define BOLERO_CDC_VA_TX_AMIC_UNMUTE_DELAY_MS       100
+#define BOLERO_CDC_VA_TX_DMIC_HPF_DELAY_MS       300
+#define BOLERO_CDC_VA_TX_AMIC_HPF_DELAY_MS       300
 #define MAX_RETRY_ATTEMPTS 500
-
 #define VA_MACRO_SWR_STRING_LEN 80
 #define VA_MACRO_CHILD_DEVICES_MAX 3
 
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 1, 0);
-static int va_tx_unmute_delay = BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS;
+static int va_tx_unmute_delay = BOLERO_CDC_VA_TX_DMIC_UNMUTE_DELAY_MS;
 module_param(va_tx_unmute_delay, int, 0664);
 MODULE_PARM_DESC(va_tx_unmute_delay, "delay to unmute the tx path");
 
@@ -708,6 +710,25 @@ done:
 	return ret;
 }
 
+static int is_amic_enabled(struct snd_soc_component *component, int decimator)
+{
+	u16 adc_mux_reg = 0, adc_reg = 0;
+	u16 adc_n = BOLERO_ADC_MAX;
+
+	adc_mux_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
+			VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
+	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+		adc_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
+			VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
+		adc_n = snd_soc_component_read32(component, adc_reg) &
+				VA_MACRO_SWR_MIC_MUX_SEL_MASK;
+		if (adc_n >= BOLERO_ADC_MAX)
+			adc_n = BOLERO_ADC_MAX;
+	}
+
+	return adc_n;
+}
+
 static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 {
 	struct delayed_work *hpf_delayed_work;
@@ -716,7 +737,7 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	struct snd_soc_component *component;
 	u16 dec_cfg_reg, hpf_gate_reg;
 	u8 hpf_cut_off_freq;
-	u16 adc_mux_reg = 0, adc_n = 0, adc_reg = 0;
+	u16 adc_n = 0;
 
 	hpf_delayed_work = to_delayed_work(work);
 	hpf_work = container_of(hpf_delayed_work, struct hpf_work, dwork);
@@ -732,26 +753,30 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	dev_dbg(va_priv->dev, "%s: decimator %u hpf_cut_of_freq 0x%x\n",
 		__func__, hpf_work->decimator, hpf_cut_off_freq);
 
-	adc_mux_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
-			VA_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
-		adc_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
-			VA_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
-				VA_MACRO_SWR_MIC_MUX_SEL_MASK;
-		if (adc_n >= BOLERO_ADC_MAX)
-			goto va_hpf_set;
+	adc_n = is_amic_enabled(component, hpf_work->decimator);
+	if (adc_n < BOLERO_ADC_MAX) {
 		/* analog mic clear TX hold */
 		bolero_clear_amic_tx_hold(component->dev, adc_n);
+		snd_soc_component_update_bits(component,
+				dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
+				hpf_cut_off_freq << 5);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+					      0x03, 0x02);
+		/* Minimum 1 clk cycle delay is required as per HW spec */
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+					      0x03, 0x01);
+	} else {
+		snd_soc_component_update_bits(component,
+				dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
+				hpf_cut_off_freq << 5);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+					      0x02, 0x02);
+		/* Minimum 1 clk cycle delay is required as per HW spec */
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+					      0x02, 0x00);
 	}
-va_hpf_set:
-	snd_soc_component_update_bits(component,
-			dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
-			hpf_cut_off_freq << 5);
-	snd_soc_component_update_bits(component, hpf_gate_reg, 0x02, 0x02);
-	/* Minimum 1 clk cycle delay is required as per HW spec */
-	usleep_range(1000, 1010);
-	snd_soc_component_update_bits(component, hpf_gate_reg, 0x02, 0x00);
 }
 
 static void va_macro_mute_update_callback(struct work_struct *work)
@@ -1045,6 +1070,8 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u8 hpf_cut_off_freq;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
+	int hpf_delay = BOLERO_CDC_VA_TX_DMIC_HPF_DELAY_MS;
+	int unmute_delay = BOLERO_CDC_VA_TX_DMIC_UNMUTE_DELAY_MS;
 
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
@@ -1090,21 +1117,27 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			snd_soc_component_update_bits(component, dec_cfg_reg,
 					    TX_HPF_CUT_OFF_FREQ_MASK,
 					    CF_MIN_3DB_150HZ << 5);
-			snd_soc_component_update_bits(component,
-					hpf_gate_reg, 0x03, 0x03);
-			/*
-			 * Minimum 1 clk cycle delay is required as per HW spec
-			 */
-			usleep_range(1000, 1010);
-			snd_soc_component_update_bits(component,
-				hpf_gate_reg, 0x02, 0x00);
-			snd_soc_component_update_bits(component,
-				hpf_gate_reg, 0x01, 0x01);
-			/*
-			 * 6ms delay is required as per HW spec
-			 */
-			usleep_range(6000, 6010);
 		}
+		if (is_amic_enabled(component, decimator) < BOLERO_ADC_MAX) {
+			hpf_delay = BOLERO_CDC_VA_TX_AMIC_HPF_DELAY_MS;
+			unmute_delay = BOLERO_CDC_VA_TX_AMIC_UNMUTE_DELAY_MS;
+			if (va_tx_unmute_delay < unmute_delay)
+				va_tx_unmute_delay = unmute_delay;
+		}
+		snd_soc_component_update_bits(component,
+				hpf_gate_reg, 0x03, 0x03);
+		/*
+		 * Minimum 1 clk cycle delay is required as per HW spec
+		 */
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component,
+			hpf_gate_reg, 0x02, 0x00);
+		snd_soc_component_update_bits(component,
+			hpf_gate_reg, 0x01, 0x01);
+		/*
+		 * 6ms delay is required as per HW spec
+		 */
+		usleep_range(6000, 6010);
 		/* schedule work queue to Remove Mute */
 		schedule_delayed_work(&va_priv->va_mute_dwork[decimator].dwork,
 				      msecs_to_jiffies(va_tx_unmute_delay));
@@ -1112,7 +1145,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 							CF_MIN_3DB_150HZ)
 			schedule_delayed_work(
 					&va_priv->va_hpf_work[decimator].dwork,
-					msecs_to_jiffies(50));
+					msecs_to_jiffies(hpf_delay));
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
 			snd_soc_component_read32(component, tx_gain_ctl_reg));
