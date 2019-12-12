@@ -1599,6 +1599,48 @@ static inline QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev,
 }
 
 #endif /* CONFIG_WIN */
+
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+/**
+ * dp_vdev_peer_stats_update_protocol_cnt() - update per-peer protocol counters
+ * @vdev: VDEV DP object
+ * @nbuf: data packet
+ * @peer: Peer DP object
+ * @is_egress: whether egress or ingress
+ * @is_rx: whether rx or tx
+ *
+ * This function updates the per-peer protocol counters
+ * Return: void
+ */
+void dp_vdev_peer_stats_update_protocol_cnt(struct dp_vdev *vdev,
+					    qdf_nbuf_t nbuf,
+					    struct dp_peer *peer,
+					    bool is_egress,
+					    bool is_rx);
+
+/**
+ * dp_vdev_peer_stats_update_protocol_cnt() - update per-peer protocol counters
+ * @soc: SOC DP object
+ * @vdev_id: vdev_id
+ * @nbuf: data packet
+ * @is_egress: whether egress or ingress
+ * @is_rx: whether rx or tx
+ *
+ * This function updates the per-peer protocol counters
+ * Return: void
+ */
+
+void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc,
+				       int8_t vdev_id,
+				       qdf_nbuf_t nbuf,
+				       bool is_egress,
+				       bool is_rx);
+
+#else
+#define dp_vdev_peer_stats_update_protocol_cnt(vdev, nbuf, peer, \
+					       is_egress, is_rx)
+#endif
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 void dp_tx_dump_flow_pool_info(struct cdp_soc_t *soc_hdl);
 int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,

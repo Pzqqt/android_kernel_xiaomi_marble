@@ -1970,6 +1970,21 @@ struct dp_vdev {
 #endif
 	/* Extended data path handle */
 	struct cdp_ext_vdev *vdev_dp_ext_handle;
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+	/*
+	 * Rx-Ingress and Tx-Egress are in the lower level DP layer
+	 * Rx-Egress and Tx-ingress are handled in osif layer for DP
+	 * So
+	 * Rx-Egress and Tx-ingress mask definitions are in OSIF layer
+	 * Rx-Ingress and Tx-Egress definitions are here below
+	 */
+#define VDEV_PEER_PROTOCOL_RX_INGRESS_MASK 1
+#define VDEV_PEER_PROTOCOL_TX_INGRESS_MASK 2
+#define VDEV_PEER_PROTOCOL_RX_EGRESS_MASK 4
+#define VDEV_PEER_PROTOCOL_TX_EGRESS_MASK 8
+	bool peer_protocol_count_track;
+	int peer_protocol_count_dropmask;
+#endif
 };
 
 

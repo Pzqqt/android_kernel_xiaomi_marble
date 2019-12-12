@@ -6967,6 +6967,57 @@ void dp_peer_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
 }
 #endif
 
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+static void dp_enable_vdev_peer_protocol_count(struct cdp_soc_t *soc,
+					       int8_t vdev_id,
+					       bool enable)
+{
+	struct dp_vdev *vdev;
+
+	vdev = dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						  vdev_id);
+	dp_info("enable %d vdev_id %d", enable, vdev_id);
+	vdev->peer_protocol_count_track = enable;
+}
+
+static void dp_enable_vdev_peer_protocol_drop_mask(struct cdp_soc_t *soc,
+						   int8_t vdev_id,
+						   int drop_mask)
+{
+	struct dp_vdev *vdev;
+
+	vdev = dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						  vdev_id);
+	dp_info("drop_mask %d vdev_id %d", drop_mask, vdev_id);
+	vdev->peer_protocol_count_dropmask = drop_mask;
+}
+
+static int dp_is_vdev_peer_protocol_count_enabled(struct cdp_soc_t *soc,
+						  int8_t vdev_id)
+{
+	struct dp_vdev *vdev;
+
+	vdev = dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						  vdev_id);
+	dp_info("enable %d vdev_id %d", vdev->peer_protocol_count_track,
+		vdev_id);
+	return vdev->peer_protocol_count_track;
+}
+
+static int dp_get_vdev_peer_protocol_drop_mask(struct cdp_soc_t *soc,
+					       int8_t vdev_id)
+{
+	struct dp_vdev *vdev;
+
+	vdev = dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						  vdev_id);
+	dp_info("drop_mask %d vdev_id %d", vdev->peer_protocol_count_dropmask,
+		vdev_id);
+	return vdev->peer_protocol_count_dropmask;
+}
+
+#endif
+
 bool dp_check_pdev_exists(struct dp_soc *soc, struct dp_pdev *data)
 {
 	uint8_t pdev_count;
@@ -9902,6 +9953,14 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_peer_authorize = dp_peer_authorize,
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+	.txrx_enable_peer_protocol_count = dp_enable_vdev_peer_protocol_count,
+	.txrx_set_peer_protocol_drop_mask =
+		dp_enable_vdev_peer_protocol_drop_mask,
+	.txrx_is_peer_protocol_count_enabled =
+		dp_is_vdev_peer_protocol_count_enabled,
+	.txrx_get_peer_protocol_drop_mask = dp_get_vdev_peer_protocol_drop_mask,
+#endif
 	.txrx_set_vdev_param = dp_set_vdev_param,
 	.txrx_set_psoc_param = dp_set_psoc_param,
 	.txrx_get_psoc_param = dp_get_psoc_param,
@@ -9921,6 +9980,9 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_get_pdev_param = dp_get_pdev_param,
 	.txrx_set_peer_param = dp_set_peer_param,
 	.txrx_get_peer_param = dp_get_peer_param,
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+	.txrx_peer_protocol_cnt = dp_peer_stats_update_protocol_cnt,
+#endif
 #ifdef ATH_SUPPORT_NAC_RSSI
 	.txrx_vdev_config_for_nac_rssi = dp_config_for_nac_rssi,
 	.txrx_vdev_get_neighbour_rssi = dp_vdev_get_neighbour_rssi,

@@ -57,6 +57,31 @@ enum cdp_nac_param_cmd {
 	/* IEEE80211_NAC_PARAM_LIST */
 	CDP_NAC_PARAM_LIST,
 };
+
+/**
+ * enum vdev_peer_protocol_enter_exit - whether ingress or egress
+ * @CDP_VDEV_PEER_PROTOCOL_IS_INGRESS: ingress
+ * @CDP_VDEV_PEER_PROTOCOL_IS_EGRESS: egress
+ *
+ * whether ingress or egress
+ */
+enum vdev_peer_protocol_enter_exit {
+	CDP_VDEV_PEER_PROTOCOL_IS_INGRESS,
+	CDP_VDEV_PEER_PROTOCOL_IS_EGRESS
+};
+
+/**
+ * enum vdev_peer_protocol_tx_rx - whether tx or rx
+ * @CDP_VDEV_PEER_PROTOCOL_IS_TX: tx
+ * @CDP_VDEV_PEER_PROTOCOL_IS_RX: rx
+ *
+ * whether tx or rx
+ */
+enum vdev_peer_protocol_tx_rx {
+	CDP_VDEV_PEER_PROTOCOL_IS_TX,
+	CDP_VDEV_PEER_PROTOCOL_IS_RX
+};
+
 /******************************************************************************
  *
  * Control Interface (A Interface)
@@ -617,7 +642,13 @@ struct cdp_ctrl_ops {
 					  cdp_config_param_type *val);
 
 	void * (*txrx_get_pldev)(struct cdp_soc_t *soc, uint8_t pdev_id);
-
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+	void (*txrx_peer_protocol_cnt)(struct cdp_soc_t *soc,
+				       int8_t vdev_id,
+				       qdf_nbuf_t nbuf,
+				       bool is_egress,
+				       bool is_rx);
+#endif
 #ifdef ATH_SUPPORT_NAC_RSSI
 	QDF_STATUS (*txrx_vdev_config_for_nac_rssi)(struct cdp_soc_t *cdp_soc,
 						    uint8_t vdev_id,
@@ -684,6 +715,20 @@ struct cdp_ctrl_ops {
 	QDF_STATUS (*txrx_get_psoc_param)(ol_txrx_soc_handle soc,
 					  enum cdp_psoc_param_type type,
 					  cdp_config_param_type *val);
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+	/*
+	 * Enable per-peer protocol counters
+	 */
+	void (*txrx_enable_peer_protocol_count)(struct cdp_soc_t *soc,
+						int8_t vdev_id, bool enable);
+	void (*txrx_set_peer_protocol_drop_mask)(struct cdp_soc_t *soc,
+						 int8_t vdev_id, int mask);
+	int (*txrx_is_peer_protocol_count_enabled)(struct cdp_soc_t *soc,
+						   int8_t vdev_id);
+	int (*txrx_get_peer_protocol_drop_mask)(struct cdp_soc_t *soc,
+						int8_t vdev_id);
+
+#endif
 };
 
 struct cdp_me_ops {

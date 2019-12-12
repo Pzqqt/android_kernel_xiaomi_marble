@@ -284,6 +284,144 @@ cdp_txrx_get_psoc_param(ol_txrx_soc_handle soc,
 	return soc->ops->ctrl_ops->txrx_get_psoc_param(soc, type, val);
 }
 
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+/**
+ * cdp_set_vdev_peer_protocol_count() - set per-peer protocol count tracking
+ *
+ * @soc - pointer to the soc
+ * @vdev - the data virtual device object
+ * @enable - enable per-peer protocol count
+ *
+ * Set per-peer protocol count feature enable
+ *
+ * Return: void
+ */
+static inline
+void cdp_set_vdev_peer_protocol_count(ol_txrx_soc_handle soc, int8_t vdev_id,
+				      bool enable)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_enable_peer_protocol_count)
+		return;
+
+	soc->ops->ctrl_ops->txrx_enable_peer_protocol_count(soc, vdev_id,
+							    enable);
+}
+
+/**
+ * cdp_set_vdev_peer_protocol_drop_mask() - set per-peer protocol drop mask
+ *
+ * @soc - pointer to the soc
+ * @vdev - the data virtual device object
+ * @drop_mask - drop_mask
+ *
+ * Set per-peer protocol drop_mask
+ *
+ * Return - void
+ */
+static inline
+void cdp_set_vdev_peer_protocol_drop_mask(ol_txrx_soc_handle soc,
+					  int8_t vdev_id, int drop_mask)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_peer_protocol_drop_mask)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_peer_protocol_drop_mask(soc, vdev_id,
+							 drop_mask);
+}
+
+/**
+ * cdp_is_vdev_peer_protocol_count_enabled() - whether peer-protocol tracking
+ *                                             enabled
+ *
+ * @soc - pointer to the soc
+ * @vdev - the data virtual device object
+ *
+ * Get whether peer protocol count feature enabled or not
+ *
+ * Return: whether feature enabled or not
+ */
+static inline
+int cdp_is_vdev_peer_protocol_count_enabled(ol_txrx_soc_handle soc,
+					    int8_t vdev_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_is_peer_protocol_count_enabled)
+		return 0;
+
+	return soc->ops->ctrl_ops->txrx_is_peer_protocol_count_enabled(soc,
+								   vdev_id);
+}
+
+/**
+ * cdp_get_peer_protocol_drop_mask() - get per-peer protocol count drop-mask
+ *
+ * @soc - pointer to the soc
+ * @vdev - the data virtual device object
+ *
+ * Get peer-protocol-count drop-mask
+ *
+ * Return: peer-protocol-count drop-mask
+ */
+static inline
+int cdp_get_peer_protocol_drop_mask(ol_txrx_soc_handle soc, int8_t vdev_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_get_peer_protocol_drop_mask)
+		return 0;
+
+	return soc->ops->ctrl_ops->txrx_get_peer_protocol_drop_mask(soc,
+								    vdev_id);
+}
+
+/*
+ * Rx-Ingress and Tx-Egress are in the lower level DP layer
+ * Rx-Egress and Tx-ingress are handled in osif layer for DP
+ * So
+ * Rx-Ingress and Tx-Egress definitions are in DP layer
+ * Rx-Egress and Tx-ingress mask definitions are here below
+ */
+#define VDEV_PEER_PROTOCOL_RX_INGRESS_MASK 1
+#define VDEV_PEER_PROTOCOL_TX_INGRESS_MASK 2
+#define VDEV_PEER_PROTOCOL_RX_EGRESS_MASK 4
+#define VDEV_PEER_PROTOCOL_TX_EGRESS_MASK 8
+
+#else
+#define cdp_set_vdev_peer_protocol_count(soc, vdev_id, enable)
+#define cdp_set_vdev_peer_protocol_drop_mask(soc, vdev_id, drop_mask)
+#define cdp_is_vdev_peer_protocol_count_enabled(soc, vdev_id) 0
+#define cdp_get_peer_protocol_drop_mask(soc, vdev_id) 0
+#endif
+
 /**
  * cdp_txrx_set_pdev_param() - set pdev parameter
  * @soc: opaque soc handle
@@ -424,6 +562,42 @@ static inline QDF_STATUS cdp_txrx_get_pdev_param(ol_txrx_soc_handle soc,
 	return soc->ops->ctrl_ops->txrx_get_pdev_param
 			(soc, pdev_id, type, value);
 }
+
+/**
+ * cdp_txrx_peer_protocol_cnt() - set peer protocol count
+ * @soc: opaque soc handle
+ * @vdev: opaque vdev handle
+ * @nbuf: data packet
+ * @is_egress: whether egress or ingress
+ * @is_rx: whether tx or rx
+ *
+ * Return: void
+ */
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+static inline void
+cdp_txrx_peer_protocol_cnt(ol_txrx_soc_handle soc,
+			   int8_t vdev_id,
+			   qdf_nbuf_t nbuf,
+			   enum vdev_peer_protocol_enter_exit is_egress,
+			   enum vdev_peer_protocol_tx_rx is_rx)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_peer_protocol_cnt)
+		return;
+
+	soc->ops->ctrl_ops->txrx_peer_protocol_cnt(soc, vdev_id, nbuf,
+						   is_egress, is_rx);
+}
+#else
+#define cdp_txrx_peer_protocol_cnt(soc, vdev_id, nbuf, is_egress, is_rx)
+#endif
 
 /**
  * cdp_enable_peer_based_pktlog()- Set flag in peer structure

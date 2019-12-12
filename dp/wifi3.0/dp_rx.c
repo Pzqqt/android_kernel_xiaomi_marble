@@ -1379,6 +1379,30 @@ static inline void dp_rx_cksum_offload(struct dp_pdev *pdev,
 	}
 }
 
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+#define dp_rx_msdu_stats_update_prot_cnts(vdev_hdl, nbuf, peer) \
+{ \
+	qdf_nbuf_t nbuf_local; \
+	struct dp_peer *peer_local; \
+	struct dp_vdev *vdev_local = vdev_hdl; \
+	do { \
+		if (qdf_likely(!((vdev_local)->peer_protocol_count_track))) \
+			break; \
+		nbuf_local = nbuf; \
+		peer_local = peer; \
+		if (qdf_unlikely(qdf_nbuf_is_frag((nbuf_local)))) \
+			break; \
+		else if (qdf_unlikely(qdf_nbuf_is_raw_frame((nbuf_local)))) \
+			break; \
+		dp_vdev_peer_stats_update_protocol_cnt((vdev_local), \
+						       (nbuf_local), \
+						       (peer_local), 0, 1); \
+	} while (0); \
+}
+#else
+#define dp_rx_msdu_stats_update_prot_cnts(vdev_hdl, nbuf, peer)
+#endif
+
 /**
  * dp_rx_msdu_stats_update() - update per msdu stats.
  * @soc: core txrx main context
@@ -1404,6 +1428,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	qdf_ether_header_t *eh;
 	uint16_t msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 
+	dp_rx_msdu_stats_update_prot_cnts(vdev, nbuf, peer);
 	is_not_amsdu = qdf_nbuf_is_rx_chfrag_start(nbuf) &
 			qdf_nbuf_is_rx_chfrag_end(nbuf);
 

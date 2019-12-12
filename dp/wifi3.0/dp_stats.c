@@ -4041,6 +4041,118 @@ void dp_htt_stats_copy_tag(struct dp_pdev *pdev, uint8_t tag_type, uint32_t *tag
 		qdf_mem_copy(dest_ptr, tag_buf, size);
 }
 
+#ifdef VDEV_PEER_PROTOCOL_COUNT
+#ifdef VDEV_PEER_PROTOCOL_COUNT_TESTING
+static QDF_STATUS dp_peer_stats_update_protocol_test_cnt(struct dp_vdev *vdev,
+							 bool is_egress,
+							 bool is_rx)
+{
+	int mask;
+
+	if (is_egress)
+		if (is_rx)
+			mask = VDEV_PEER_PROTOCOL_RX_EGRESS_MASK;
+		else
+			mask = VDEV_PEER_PROTOCOL_TX_EGRESS_MASK;
+	else
+		if (is_rx)
+			mask = VDEV_PEER_PROTOCOL_RX_INGRESS_MASK;
+		else
+			mask = VDEV_PEER_PROTOCOL_TX_INGRESS_MASK;
+
+	if (qdf_unlikely(vdev->peer_protocol_count_dropmask & mask)) {
+		dp_info("drop mask set %x", vdev->peer_protocol_count_dropmask);
+		return QDF_STATUS_SUCCESS;
+	}
+	return QDF_STATUS_E_FAILURE;
+}
+
+#else
+static QDF_STATUS dp_peer_stats_update_protocol_test_cnt(struct dp_vdev *vdev,
+							 bool is_egress,
+							 bool is_rx)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
+void dp_vdev_peer_stats_update_protocol_cnt(struct dp_vdev *vdev,
+					    qdf_nbuf_t nbuf,
+					    struct dp_peer *peer,
+					    bool is_egress,
+					    bool is_rx)
+{
+	struct cdp_peer_stats *peer_stats;
+	struct protocol_trace_count *protocol_trace_cnt;
+	enum cdp_protocol_trace prot;
+	struct dp_soc *soc;
+	struct ether_header *eh;
+	char *mac;
+	bool new_peer_ref = false;
+
+	if (qdf_likely(!vdev->peer_protocol_count_track))
+		return;
+	if (qdf_unlikely(dp_peer_stats_update_protocol_test_cnt(vdev,
+								is_egress,
+								is_rx) ==
+					       QDF_STATUS_SUCCESS))
+		return;
+
+	soc = vdev->pdev->soc;
+	eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+	if (is_rx)
+		mac = eh->ether_shost;
+	else
+		mac = eh->ether_dhost;
+
+	if (!peer) {
+		peer = dp_peer_find_hash_find(soc, mac, 0, vdev->vdev_id);
+		new_peer_ref = true;
+		if (!peer)
+			return;
+	}
+	peer_stats = &peer->stats;
+
+	if (qdf_nbuf_is_icmp_pkt(nbuf) == true)
+		prot = CDP_TRACE_ICMP;
+	else if (qdf_nbuf_is_ipv4_arp_pkt(nbuf) == true)
+		prot = CDP_TRACE_ARP;
+	else if (qdf_nbuf_is_ipv4_eapol_pkt(nbuf) == true)
+		prot = CDP_TRACE_EAP;
+	else
+		goto dp_vdev_peer_stats_update_protocol_cnt_free_peer;
+
+	if (is_rx)
+		protocol_trace_cnt = peer_stats->rx.protocol_trace_cnt;
+	else
+		protocol_trace_cnt = peer_stats->tx.protocol_trace_cnt;
+
+	if (is_egress)
+		protocol_trace_cnt[prot].egress_cnt++;
+	else
+		protocol_trace_cnt[prot].ingress_cnt++;
+dp_vdev_peer_stats_update_protocol_cnt_free_peer:
+	if (new_peer_ref)
+		dp_peer_unref_delete(peer);
+}
+
+void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc,
+				       int8_t vdev_id,
+				       qdf_nbuf_t nbuf,
+				       bool is_egress,
+				       bool is_rx)
+{
+	struct dp_vdev *vdev;
+
+	vdev = dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						  vdev_id);
+	if (qdf_likely(!vdev->peer_protocol_count_track))
+		return;
+	dp_vdev_peer_stats_update_protocol_cnt(vdev, nbuf, NULL, is_egress,
+					       is_rx);
+}
+#endif
+
 QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
 {
 	struct cdp_interface_peer_stats peer_stats_intf;
