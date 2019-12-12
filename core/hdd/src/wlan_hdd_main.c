@@ -359,6 +359,7 @@ QDF_STATUS hdd_common_roam_callback(struct wlan_objmgr_psoc *psoc,
 {
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	adapter = wlan_hdd_get_adapter_from_vdev(psoc, session_id);
 	if (!adapter)
@@ -373,21 +374,21 @@ QDF_STATUS hdd_common_roam_callback(struct wlan_objmgr_psoc *psoc,
 	case QDF_NDI_MODE:
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
-		hdd_sme_roam_callback(adapter, roam_info, roam_id, roam_status,
-				      roam_result);
+		status = hdd_sme_roam_callback(adapter, roam_info, roam_id,
+					       roam_status, roam_result);
 		break;
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
-		wlansap_roam_callback(adapter->session.ap.sap_context,
-				      roam_info, roam_id, roam_status,
-				      roam_result);
+		status = wlansap_roam_callback(adapter->session.ap.sap_context,
+					       roam_info, roam_id, roam_status,
+					       roam_result);
 		break;
 	default:
 		hdd_err("Wrong device mode");
 		break;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 /**
  * hdd_mic_flush_work() - disable and flush pending mic work
