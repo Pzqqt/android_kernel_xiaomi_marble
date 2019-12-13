@@ -2337,7 +2337,8 @@ static void sde_crtc_frame_event_work(struct kthread_work *work)
 
 	SDE_EVT32_VERBOSE(DRMID(crtc), fevent->event, SDE_EVTLOG_FUNC_ENTRY);
 
-	in_clone_mode = sde_encoder_in_clone_mode(fevent->connector->encoder);
+	in_clone_mode = (fevent->event & SDE_ENCODER_FRAME_EVENT_CWB_DONE) ?
+			true : false;
 
 	if (!in_clone_mode && (fevent->event & (SDE_ENCODER_FRAME_EVENT_ERROR
 					| SDE_ENCODER_FRAME_EVENT_PANEL_DEAD
