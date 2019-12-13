@@ -1421,6 +1421,12 @@ PKTLOG_OBJS :=	$(PKTLOG_DIR)/pktlog_ac.o \
 		$(PKTLOG_DIR)/pktlog_internal.o \
 		$(PKTLOG_DIR)/linux_ac.o
 
+ifeq ($(CONFIG_PKTLOG_LEGACY), y)
+	PKTLOG_OBJS  += $(PKTLOG_DIR)/pktlog_wifi2.o
+else
+	PKTLOG_OBJS  += $(PKTLOG_DIR)/pktlog_wifi3.o
+endif
+
 ############ HTT ############
 HTT_DIR :=      core/dp/htt
 HTT_INC :=      -I$(WLAN_ROOT)/$(HTT_DIR)
