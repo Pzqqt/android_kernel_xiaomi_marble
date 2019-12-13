@@ -2542,6 +2542,9 @@ static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 		if (lp != SDE_MODE_DPMS_LP2)
 			continue;
 
+		if (sde_encoder_in_clone_mode(conn->encoder))
+			continue;
+
 		ret = sde_encoder_wait_for_event(conn->encoder,
 						MSM_ENC_TX_COMPLETE);
 		if (ret && ret != -EWOULDBLOCK)
@@ -2628,7 +2631,8 @@ retry:
 		uint64_t lp;
 
 		if (!conn->state || !conn->state->crtc ||
-				conn->dpms != DRM_MODE_DPMS_ON)
+			conn->dpms != DRM_MODE_DPMS_ON ||
+			sde_encoder_in_clone_mode(conn->encoder))
 			continue;
 
 		lp = sde_connector_get_lp(conn);
