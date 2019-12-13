@@ -3158,6 +3158,9 @@ void wlansap_set_band_csa(struct sap_context *sap_ctx,
 	uint8_t vdev_id;
 	enum reg_wifi_band sap_band;
 
+	if (cds_is_driver_recovering())
+		return;
+
 	sap_band = wlan_reg_freq_to_band(sap_ctx->chan_freq);
 	sap_debug("SAP/Go current band: %d, pdev band capability: %d",
 		  sap_band, band);
