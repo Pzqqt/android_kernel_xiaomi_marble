@@ -2149,6 +2149,8 @@ struct wlan_mlme_mwc {
  * during acs
  * @avoid_acs_freq_list_num: Number of the frequencies to be avoided during acs
  * @ignore_fw_reg_offload_ind: Ignore fw regulatory offload indication
+ * @enable_pending_chan_list_req: enables/disables scan channel
+ * list command to FW till the current scan is complete.
  */
 struct wlan_mlme_reg {
 	uint32_t self_gen_frm_pwr;
@@ -2167,6 +2169,7 @@ struct wlan_mlme_reg {
 	uint8_t avoid_acs_freq_list_num;
 #endif
 	bool ignore_fw_reg_offload_ind;
+	bool enable_pending_chan_list_req;
 };
 
 /**

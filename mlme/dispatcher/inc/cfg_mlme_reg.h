@@ -274,8 +274,32 @@
 		0, \
 		"Ignore Regulatory offloads Indication from FW")
 
+/*
+ * <ini>
+ * enable_pending_list_req - Sets Pending channel List Req.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This option enables/disables SCAN_CHAN_LIST_CMDID channel list command to FW
+ * till the current scan is complete.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_PENDING_CHAN_LIST_REQ CFG_INI_BOOL( \
+			"enable_pending_list_req", \
+			0, \
+			"Enable Pending list req")
+
 #define CFG_REG_ALL \
 	CFG(CFG_SELF_GEN_FRM_PWR) \
+	CFG(CFG_ENABLE_PENDING_CHAN_LIST_REQ) \
 	CFG(CFG_ENABLE_11D_IN_WORLD_MODE) \
 	CFG(CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE) \
 	CFG(CFG_RESTART_BEACONING_ON_CH_AVOID) \
