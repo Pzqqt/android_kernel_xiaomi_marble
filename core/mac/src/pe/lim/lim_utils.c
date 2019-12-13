@@ -7409,6 +7409,11 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 		return QDF_STATUS_SUCCESS;
 	}
 
+	if (!session_entry) {
+		pe_err("session is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	pe_debug("peer rates lt 80: rx_mcs - 0x%04x tx_mcs - 0x%04x",
 		peer_he_caps->rx_he_mcs_map_lt_80,
 		peer_he_caps->tx_he_mcs_map_lt_80);
@@ -7419,7 +7424,7 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 		(*(uint16_t *)peer_he_caps->rx_he_mcs_map_80_80),
 		(*(uint16_t *)peer_he_caps->tx_he_mcs_map_80_80));
 
-	if (session_entry && session_entry->nss == NSS_2x2_MODE) {
+	if (session_entry->nss == NSS_2x2_MODE) {
 		if (mac_ctx->lteCoexAntShare &&
 		    wlan_reg_is_24ghz_ch_freq(session_entry->curr_op_freq)) {
 			if (IS_2X2_CHAIN(session_entry->chainMask))
