@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -133,15 +133,26 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 	}
 
 	if (flags & ION_FLAG_SECURE) {
-		if (flags & ION_FLAG_CP_PIXEL)
+		if (flags & ION_FLAG_CP_PIXEL) {
 			attach_dev = kms->funcs->get_address_space_device(kms,
 						MSM_SMMU_DOMAIN_SECURE);
+			/*
+			 * While transitioning from secure use-cases, the
+			 * secure-cb might still not be attached back, while
+			 * the prime_fd_to_handle call is made for the next
+			 * frame. Attach those buffers to default drm device
+			 * and reattaching with the correct context-bank
+			 * will be handled in msm_gem_delayed_import
+			 */
+			if (!attach_dev)
+				attach_dev = dev->dev;
 
-		else if ((flags & ION_FLAG_CP_SEC_DISPLAY)
-				|| (flags & ION_FLAG_CP_CAMERA_PREVIEW))
+		} else if ((flags & ION_FLAG_CP_SEC_DISPLAY)
+				|| (flags & ION_FLAG_CP_CAMERA_PREVIEW)) {
 			attach_dev = dev->dev;
-		else
+		} else {
 			DRM_ERROR("invalid ion secure flag: 0x%lx\n", flags);
+		}
 	} else {
 		attach_dev = kms->funcs->get_address_space_device(kms,
 						MSM_SMMU_DOMAIN_UNSECURE);
