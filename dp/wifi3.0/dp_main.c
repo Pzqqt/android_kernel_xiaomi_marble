@@ -1696,7 +1696,7 @@ static void dp_soc_set_interrupt_mode(struct dp_soc *soc)
 	uint32_t msi_base_data, msi_vector_start;
 	int msi_vector_count, ret;
 
-	soc->intr_mode = DP_INTR_LEGACY;
+	soc->intr_mode = DP_INTR_INTEGRATED;
 
 	if (!(soc->wlan_cfg_ctx->napi_enabled) ||
 	    (soc->cdp_soc.ol_ops->get_con_mode &&
@@ -1784,7 +1784,7 @@ static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
 	int host2rxdma_mon_ring_mask = wlan_cfg_get_host2rxdma_mon_ring_mask(
 					soc->wlan_cfg_ctx, intr_ctx_num);
 
-	soc->intr_mode = DP_INTR_LEGACY;
+	soc->intr_mode = DP_INTR_INTEGRATED;
 
 	for (j = 0; j < HIF_MAX_GRP_IRQ; j++) {
 
@@ -10606,6 +10606,7 @@ void *dp_soc_init(struct dp_soc *dpsoc, HTC_HANDLE htc_handle,
 	}
 
 	dp_soc_set_interrupt_mode(soc);
+	wlan_cfg_fill_interrupt_mask(soc->wlan_cfg_ctx, soc->intr_mode);
 	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx,
 			     cfg_get(soc->ctrl_psoc, CFG_DP_RX_HASH));
 	soc->cce_disable = false;

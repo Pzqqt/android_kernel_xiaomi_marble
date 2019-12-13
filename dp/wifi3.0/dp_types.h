@@ -200,12 +200,12 @@ enum dp_fl_ctrl_threshold {
 
 /**
  * enum dp_intr_mode
- * @DP_INTR_LEGACY: Legacy/Line interrupts, for WIN
- * @DP_INTR_MSI: MSI interrupts, for MCL
+ * @DP_INTR_INTEGRATED: Line interrupts
+ * @DP_INTR_MSI: MSI interrupts
  * @DP_INTR_POLL: Polling
  */
 enum dp_intr_mode {
-	DP_INTR_LEGACY = 0,
+	DP_INTR_INTEGRATED = 0,
 	DP_INTR_MSI,
 	DP_INTR_POLL,
 };
