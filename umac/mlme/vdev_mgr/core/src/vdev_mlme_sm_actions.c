@@ -524,9 +524,6 @@ static QDF_STATUS mlme_vdev_stop_send_cb(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* if restart is pending on this VDEV, clear the bitmap */
-	mlme_stop_pending_restart(pdev, vdev);
-
 	error = mlme_vdev_ops_stop_fw_send(vdev);
 
 	return error;
