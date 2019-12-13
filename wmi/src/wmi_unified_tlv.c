@@ -13470,6 +13470,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_peer_tx_pn_response_event_id] =
 		WMI_PEER_TX_PN_RESPONSE_EVENTID;
 	event_ids[wmi_roam_stats_event_id] = WMI_ROAM_STATS_EVENTID;
+	event_ids[wmi_oem_data_event_id] = WMI_OEM_DATA_EVENTID;
 }
 
 /**
