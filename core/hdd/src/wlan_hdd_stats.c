@@ -4049,9 +4049,11 @@ static void wlan_hdd_fill_os_rate_info(enum tx_rate_info rate_flags,
 
 	wlan_hdd_fill_os_he_rateflags(os_rate, rate_flags, dcm, guard_interval);
 
-	if (rate_flags & (TX_RATE_VHT80 | TX_RATE_VHT40 |
+	if (rate_flags & (TX_RATE_VHT160 | TX_RATE_VHT80 | TX_RATE_VHT40 |
 	    TX_RATE_VHT20)) {
-		if (rate_flags & TX_RATE_VHT80)
+		if (rate_flags & TX_RATE_VHT160)
+			hdd_set_rate_bw(os_rate, HDD_RATE_BW_160);
+		else if (rate_flags & TX_RATE_VHT80)
 			hdd_set_rate_bw(os_rate, HDD_RATE_BW_80);
 		else if (rate_flags & TX_RATE_VHT40)
 			hdd_set_rate_bw(os_rate, HDD_RATE_BW_40);
@@ -4200,7 +4202,7 @@ bool hdd_report_max_rate(mac_handle_t mac_handle,
 		rate_flag = 0;
 
 		if (rate_flags & (TX_RATE_VHT80 | TX_RATE_HE80 |
-				TX_RATE_HE160))
+				TX_RATE_HE160 | TX_RATE_VHT160))
 			mode = 2;
 		else if (rate_flags & (TX_RATE_HT40 |
 			 TX_RATE_VHT40 | TX_RATE_HE40))
@@ -4210,7 +4212,7 @@ bool hdd_report_max_rate(mac_handle_t mac_handle,
 
 		if (rate_flags & (TX_RATE_VHT20 | TX_RATE_VHT40 |
 		    TX_RATE_VHT80 | TX_RATE_HE20 | TX_RATE_HE40 |
-		    TX_RATE_HE80 | TX_RATE_HE160)) {
+		    TX_RATE_HE80 | TX_RATE_HE160 | TX_RATE_VHT160)) {
 			stat = ucfg_mlme_cfg_get_vht_tx_mcs_map(hdd_ctx->psoc,
 								&vht_mcs_map);
 			if (QDF_IS_STATUS_ERROR(stat))

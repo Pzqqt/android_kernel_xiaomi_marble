@@ -95,32 +95,32 @@ static struct index_data_rate_type mcs_nss2[] = {
 /* MCS Based VHT rate table */
 /* MCS parameters with Nss = 1*/
 static struct index_vht_data_rate_type vht_mcs_nss1[] = {
-	/* MCS L20  S20    L40   S40    L80   S80 */
-	{0,  {65,   72 }, {135,  150},  {293,  325} },
-	{1,  {130,  144}, {270,  300},  {585,  650} },
-	{2,  {195,  217}, {405,  450},  {878,  975} },
-	{3,  {260,  289}, {540,  600},  {1170, 1300} },
-	{4,  {390,  433}, {810,  900},  {1755, 1950} },
-	{5,  {520,  578}, {1080, 1200}, {2340, 2600} },
-	{6,  {585,  650}, {1215, 1350}, {2633, 2925} },
-	{7,  {650,  722}, {1350, 1500}, {2925, 3250} },
-	{8,  {780,  867}, {1620, 1800}, {3510, 3900} },
-	{9,  {865,  960}, {1800, 2000}, {3900, 4333} }
+	/* MCS L20  S20    L40   S40    L80   S80    L160  S160*/
+	{0,  {65,   72 }, {135,  150},  {293,  325}, {585, 650} },
+	{1,  {130,  144}, {270,  300},  {585,  650}, {1170, 1300} },
+	{2,  {195,  217}, {405,  450},  {878,  975}, {1755, 1950} },
+	{3,  {260,  289}, {540,  600},  {1170, 1300}, {2340, 2600} },
+	{4,  {390,  433}, {810,  900},  {1755, 1950}, {3510, 3900} },
+	{5,  {520,  578}, {1080, 1200}, {2340, 2600}, {4680, 5200} },
+	{6,  {585,  650}, {1215, 1350}, {2633, 2925}, {5265, 5850} },
+	{7,  {650,  722}, {1350, 1500}, {2925, 3250}, {5850, 6500} },
+	{8,  {780,  867}, {1620, 1800}, {3510, 3900}, {7020, 7800} },
+	{9,  {865,  960}, {1800, 2000}, {3900, 4333}, {7800, 8667} }
 };
 
 /*MCS parameters with Nss = 2*/
 static struct index_vht_data_rate_type vht_mcs_nss2[] = {
-	/* MCS L20  S20    L40    S40    L80    S80 */
-	{0,  {130,  144},  {270,  300},  { 585,  650} },
-	{1,  {260,  289},  {540,  600},  {1170, 1300} },
-	{2,  {390,  433},  {810,  900},  {1755, 1950} },
-	{3,  {520,  578},  {1080, 1200}, {2340, 2600} },
-	{4,  {780,  867},  {1620, 1800}, {3510, 3900} },
-	{5,  {1040, 1156}, {2160, 2400}, {4680, 5200} },
-	{6,  {1170, 1300}, {2430, 2700}, {5265, 5850} },
-	{7,  {1300, 1444}, {2700, 3000}, {5850, 6500} },
-	{8,  {1560, 1733}, {3240, 3600}, {7020, 7800} },
-	{9,  {1730, 1920}, {3600, 4000}, {7800, 8667} }
+	/* MCS L20  S20    L40    S40    L80    S80    L160   S160*/
+	{0,  {130,  144},  {270,  300},  { 585,  650}, {1170, 1300} },
+	{1,  {260,  289},  {540,  600},  {1170, 1300}, {2340, 2600} },
+	{2,  {390,  433},  {810,  900},  {1755, 1950}, {3510, 3900} },
+	{3,  {520,  578},  {1080, 1200}, {2340, 2600}, {4680, 5200} },
+	{4,  {780,  867},  {1620, 1800}, {3510, 3900}, {7020, 7800} },
+	{5,  {1040, 1156}, {2160, 2400}, {4680, 5200}, {9360, 10400} },
+	{6,  {1170, 1300}, {2430, 2700}, {5265, 5850}, {10530, 11700} },
+	{7,  {1300, 1444}, {2700, 3000}, {5850, 6500}, {11700, 13000} },
+	{8,  {1560, 1733}, {3240, 3600}, {7020, 7800}, {14040, 15600} },
+	{9,  {1730, 1920}, {3600, 4000}, {7800, 8667}, {15600, 17333} }
 };
 
 #ifdef WLAN_FEATURE_11AX
@@ -472,10 +472,10 @@ uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 		goto rate_found;
 
 	for (index = 0; index < MAX_VHT_MCS_IDX; index++) {
-		if (rate_flags & TX_RATE_VHT80) {
-			nss1_rate = &vht_mcs_nss1[index].ht80_rate[0];
-			nss2_rate = &vht_mcs_nss2[index].ht80_rate[0];
-			/* check for vht80 nss1/2 rate set */
+		if (rate_flags & TX_RATE_VHT160) {
+			nss1_rate = &vht_mcs_nss1[index].ht160_rate[0];
+			nss2_rate = &vht_mcs_nss2[index].ht160_rate[0];
+			/* check for vht160 nss1/2 rate set */
 			match_rate = wma_mcs_rate_match(raw_rate, 0,
 							nss1_rate,
 							nss2_rate,
@@ -483,7 +483,21 @@ uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 			if (match_rate)
 				goto rate_found;
 		}
-		if (rate_flags & (TX_RATE_VHT40 | TX_RATE_VHT80)) {
+		if (rate_flags & (TX_RATE_VHT80 | TX_RATE_VHT160)) {
+			nss1_rate = &vht_mcs_nss1[index].ht80_rate[0];
+			nss2_rate = &vht_mcs_nss2[index].ht80_rate[0];
+			/* check for vht80 nss1/2 rate set */
+			match_rate = wma_mcs_rate_match(raw_rate, 0,
+							nss1_rate,
+							nss2_rate,
+							nss, guard_interval);
+			if (match_rate) {
+				*mcs_rate_flag &= ~TX_RATE_VHT160;
+				goto rate_found;
+			}
+		}
+		if (rate_flags & (TX_RATE_VHT40 | TX_RATE_VHT80 |
+				TX_RATE_VHT160)) {
 			nss1_rate = &vht_mcs_nss1[index].ht40_rate[0];
 			nss2_rate = &vht_mcs_nss2[index].ht40_rate[0];
 			/* check for vht40 nss1/2 rate set */
@@ -497,7 +511,7 @@ uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 			}
 		}
 		if (rate_flags & (TX_RATE_VHT20 | TX_RATE_VHT40 |
-			TX_RATE_VHT80)) {
+			TX_RATE_VHT80 | TX_RATE_VHT160)) {
 			nss1_rate = &vht_mcs_nss1[index].ht20_rate[0];
 			nss2_rate = &vht_mcs_nss2[index].ht20_rate[0];
 			/* check for vht20 nss1/2 rate set */

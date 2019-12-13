@@ -95,12 +95,14 @@ struct index_data_rate_type {
  * @ht20_rate: VHT20 supported rate table
  * @ht40_rate: VHT40 supported rate table
  * @ht80_rate: VHT80 supported rate table
+ * @ht160_rate: VHT160 supported rate table
  */
 struct index_vht_data_rate_type {
 	uint8_t mcs_index;
 	uint16_t ht20_rate[2];
 	uint16_t ht40_rate[2];
 	uint16_t ht80_rate[2];
+	uint16_t ht160_rate[2];
 };
 
 #ifdef WLAN_FEATURE_11AX

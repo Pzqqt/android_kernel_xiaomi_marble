@@ -3581,8 +3581,25 @@ static void lim_update_vht_oper_assoc_resp(struct mac_context *mac_ctx,
 		struct bss_params *pAddBssParams,
 		tDot11fIEVHTOperation *vht_oper, struct pe_session *pe_session)
 {
-	if (vht_oper->chanWidth && pe_session->ch_width)
-		pAddBssParams->ch_width = vht_oper->chanWidth + 1;
+	int16_t ccfs0 = vht_oper->chan_center_freq_seg0;
+	int16_t ccfs1 = vht_oper->chan_center_freq_seg1;
+	int16_t offset = abs((ccfs0 -  ccfs1));
+	uint8_t ch_width;
+
+	ch_width = pAddBssParams->ch_width;
+	if (vht_oper->chanWidth && pe_session->ch_width) {
+		ch_width = CH_WIDTH_80MHZ;
+		if (ccfs1 && offset == 8)
+			ch_width = CH_WIDTH_160MHZ;
+		else if (ccfs1 && offset > 16)
+			ch_width = CH_WIDTH_80P80MHZ;
+	}
+	if (ch_width > pe_session->ch_width)
+		ch_width = pe_session->ch_width;
+	pAddBssParams->ch_width = ch_width;
+	pAddBssParams->staContext.ch_width = ch_width;
+	pe_debug("ch_width %d, pe chanWidth %d ccfs0 %d, ccfs1 %d",
+		 pAddBssParams->ch_width, pe_session->ch_width, ccfs0, ccfs1);
 }
 
 #ifdef WLAN_SUPPORT_TWT
@@ -3838,18 +3855,21 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 		if (chan_width_support &&
 		    ((pAssocRsp->HTCaps.supportedChannelWidthSet) ||
 		    (pBeaconStruct->HTCaps.supportedChannelWidthSet))) {
+			pAddBssParams->ch_width =
+					pe_session->ch_width;
 			pAddBssParams->staContext.ch_width =
 					pe_session->ch_width;
 		} else {
+			pAddBssParams->ch_width = CH_WIDTH_20MHZ;
 			sta_context->ch_width =	CH_WIDTH_20MHZ;
 			if (!vht_cap_info->enable_txbf_20mhz)
 				sta_context->vhtTxBFCapable = 0;
 		}
 
-		pe_debug("StaCtx: vhtCap %d ChBW %d TxBF %d",
+		pe_debug("StaCtx: vhtCap %d ChBW %d TxBF %d ch_width %d",
 			 pAddBssParams->staContext.vhtCapable,
 			 pAddBssParams->staContext.ch_width,
-			 sta_context->vhtTxBFCapable);
+			 sta_context->vhtTxBFCapable, pAddBssParams->ch_width);
 		pe_debug("StaContext su_tx_bfer %d, vht_mcs11 %d",
 			 sta_context->enable_su_tx_bformer,
 			 pAddBssParams->staContext.vht_mcs_10_11_supp);
