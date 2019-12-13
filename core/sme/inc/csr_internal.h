@@ -446,6 +446,7 @@ struct csr_scanstruct {
 	int8_t roam_candidate_count[WLAN_MAX_VDEVS];
 	int8_t inScanResultBestAPRssi;
 	bool fcc_constraint;
+	bool pending_channel_list_req;
 	wlan_scan_requester requester_id;
 };
 
