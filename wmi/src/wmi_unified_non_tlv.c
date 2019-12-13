@@ -9873,10 +9873,41 @@ QDF_STATUS send_multiple_vdev_restart_req_cmd_non_tlv(
 		WMI_LOGE("Failed to send WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID");
 		wmi_buf_free(buf);
 	}
+
 	return ret;
+}
 
+/*
+ * extract_multi_vdev_restart_resp_event_non_tlv() -
+ * extract multiple vdev restart response event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: Pointer to hold vdev_id of multiple vdev restart response
+ *
+ * Return: QDF_STATUS_SUCCESS for success or QDF_STATUS_E_FAILURE on error
+ */
+static QDF_STATUS extract_multi_vdev_restart_resp_event_non_tlv(
+		wmi_unified_t wmi_hdl, void *evt_buf,
+		struct multi_vdev_restart_resp *param)
+{
+	wmi_vdev_multi_vdev_restart_response_event *ev;
 
+	ev = (wmi_vdev_multi_vdev_restart_response_event *)evt_buf;
+	if (!ev) {
+		WMI_LOGE("Invalid multi_vdev restart response");
+		return QDF_STATUS_E_FAILURE;
+	}
 
+	/* For legacy platforms, pdev_id is set to 0 by default */
+	param->pdev_id = 0;
+	param->status = ev->status;
+	qdf_mem_copy(param->vdev_id_bmap, &ev->requestor_id,
+		     sizeof(uint32_t));
+
+	WMI_LOGD("vdev_id_bmap :0x%x%x", param->vdev_id_bmap[1],
+		 param->vdev_id_bmap[0]);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -10231,6 +10262,8 @@ struct wmi_ops non_tlv_ops =  {
 	.send_vdev_tidmap_prec_cmd = send_vdev_tidmap_prec_cmd_non_tlv,
 	.send_multiple_vdev_restart_req_cmd =
 			send_multiple_vdev_restart_req_cmd_non_tlv,
+	.extract_multi_vdev_restart_resp_event =
+		extract_multi_vdev_restart_resp_event_non_tlv,
 };
 
 /**
@@ -10549,6 +10582,8 @@ static void populate_non_tlv_events_id(uint32_t *event_ids)
 					WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID;
 	event_ids[wmi_peer_delete_all_response_event_id] =
 					WMI_VDEV_DELETE_ALL_PEER_RESP_EVENTID;
+	event_ids[wmi_pdev_multi_vdev_restart_response_event_id] =
+				WMI_PDEV_MULTIPLE_VDEV_RESTART_RESP_EVENTID;
 }
 #endif
 
