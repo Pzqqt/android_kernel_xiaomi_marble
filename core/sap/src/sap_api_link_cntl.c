@@ -113,8 +113,7 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 		sap_ctx->acs_cfg->vht_seg0_center_ch_freq = 0;
 
 	if (sap_ctx->acs_cfg->ch_width == CH_WIDTH_80P80MHZ ||
-	   (sap_ctx->acs_cfg->ch_width == CH_WIDTH_160MHZ &&
-	    WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ctx->acs_cfg->pri_ch_freq)))
+	   (sap_ctx->acs_cfg->ch_width == CH_WIDTH_160MHZ))
 		sap_ctx->acs_cfg->vht_seg1_center_ch_freq =
 						ch_params.mhz_freq_seg1;
 	else
