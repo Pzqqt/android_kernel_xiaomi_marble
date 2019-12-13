@@ -468,6 +468,9 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		     (uint8_t *)pe_session->self_mac_addr,
 		     sizeof(tSirMacAddr));
 
+	qdf_mem_copy((uint8_t *)pAddStaParams->bssId,
+		     pe_session->bssId, sizeof(tSirMacAddr));
+
 	pAddStaParams->staType = STA_ENTRY_SELF;
 	pAddStaParams->status = QDF_STATUS_SUCCESS;
 
