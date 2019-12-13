@@ -3100,7 +3100,6 @@ HAL_RX_DESC_GET_80211_HDR(void *hw_desc_addr) {
 }
 #endif
 
-#ifdef NO_RX_PKT_HDR_TLV
 static inline
 bool HAL_IS_DECAP_FORMAT_RAW(hal_soc_handle_t hal_soc_hdl,
 			     uint8_t *rx_tlv_hdr)
@@ -3115,14 +3114,6 @@ bool HAL_IS_DECAP_FORMAT_RAW(hal_soc_handle_t hal_soc_hdl,
 
 	return false;
 }
-#else
-static inline
-bool HAL_IS_DECAP_FORMAT_RAW(hal_soc_handle_t hal_soc_hdl,
-			     uint8_t *rx_tlv_hdr)
-{
-	return true;
-}
-#endif
 
 /**
  * hal_rx_msdu_fse_metadata_get: API to get FSE metadata
