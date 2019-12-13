@@ -185,13 +185,80 @@ static bool util_is_pureg_rate(uint8_t *rates, uint8_t nrates)
 }
 
 #ifdef CONFIG_BAND_6GHZ
+static struct he_oper_6g_param *util_scan_get_he_6g_params(uint8_t *he_ops)
+{
+	uint8_t len;
+	uint32_t he_oper_params;
+
+	if (!he_ops)
+		return NULL;
+
+	len = he_ops[1];
+	he_ops += sizeof(struct ie_header);
+
+	if (len < WLAN_HEOP_FIXED_PARAM_LENGTH)
+		return NULL;
+
+	/* element id extension */
+	he_ops++;
+	len--;
+
+	he_oper_params = LE_READ_4(he_ops);
+	if (!(he_oper_params & WLAN_HEOP_6GHZ_INFO_PRESENT_MASK))
+		return NULL;
+
+	/* fixed params - element id extension */
+	he_ops += WLAN_HEOP_FIXED_PARAM_LENGTH - 1;
+	len -= WLAN_HEOP_FIXED_PARAM_LENGTH - 1;
+
+	if (!len)
+		return NULL;
+
+	/* vht oper params */
+	if (he_oper_params & WLAN_HEOP_VHTOP_PRESENT_MASK) {
+		if (len < WLAN_HEOP_VHTOP_LENGTH)
+			return NULL;
+		he_ops += WLAN_HEOP_VHTOP_LENGTH;
+		len -= WLAN_HEOP_VHTOP_LENGTH;
+	}
+
+	if (!len)
+		return NULL;
+
+	if (he_oper_params & WLAN_HEOP_CO_LOCATED_BSS_MASK) {
+		he_ops += WLAN_HEOP_CO_LOCATED_BSS_LENGTH;
+		len -= WLAN_HEOP_CO_LOCATED_BSS_LENGTH;
+	}
+
+	if (len < sizeof(struct he_oper_6g_param))
+		return NULL;
+
+	return (struct he_oper_6g_param *)he_ops;
+}
+
+static void
+util_scan_get_chan_from_he_6g_params(struct scan_cache_entry *scan_params,
+				     uint8_t *chan_idx)
+{
+	struct he_oper_6g_param *he_6g_params;
+	uint8_t *he_ops;
+
+	he_ops = util_scan_entry_heop(scan_params);
+	if (!util_scan_entry_hecap(scan_params) || !he_ops)
+		return;
+
+	he_6g_params = util_scan_get_he_6g_params(he_ops);
+	if (!he_6g_params)
+		return;
+
+	*chan_idx = he_6g_params->primary_channel;
+}
+
 static enum wlan_phymode
 util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
 			 struct scan_cache_entry *scan_params)
 {
-	uint8_t len;
 	struct he_oper_6g_param *he_6g_params;
-	uint32_t he_oper_params;
 	enum wlan_phymode phymode = WLAN_PHYMODE_11AXA_HE20;
 	uint8_t *he_ops;
 	uint8_t band_mask = BIT(REG_BAND_6G);
@@ -200,47 +267,9 @@ util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
 	if (!util_scan_entry_hecap(scan_params) || !he_ops)
 		return phymode;
 
-	len = he_ops[1];
-	he_ops += sizeof(struct ie_header);
-
-	if (len < WLAN_HEOP_FIXED_PARAM_LENGTH)
+	he_6g_params = util_scan_get_he_6g_params(he_ops);
+	if (!he_6g_params)
 		return phymode;
-
-	/* element id extension */
-	he_ops++;
-	len--;
-
-	he_oper_params = LE_READ_4(he_ops);
-	if (!(he_oper_params & WLAN_HEOP_6GHZ_INFO_PRESENT_MASK))
-		return phymode;
-
-	/* fixed params - element id extension */
-	he_ops += WLAN_HEOP_FIXED_PARAM_LENGTH - 1;
-	len -= WLAN_HEOP_FIXED_PARAM_LENGTH - 1;
-
-	if (!len)
-		return phymode;
-
-	/* vht oper params */
-	if (he_oper_params & WLAN_HEOP_VHTOP_PRESENT_MASK) {
-		if (len < WLAN_HEOP_VHTOP_LENGTH)
-			return phymode;
-		he_ops += WLAN_HEOP_VHTOP_LENGTH;
-		len -= WLAN_HEOP_VHTOP_LENGTH;
-	}
-
-	if (!len)
-		return phymode;
-
-	if (he_oper_params & WLAN_HEOP_CO_LOCATED_BSS_MASK) {
-		he_ops += WLAN_HEOP_CO_LOCATED_BSS_LENGTH;
-		len -= WLAN_HEOP_CO_LOCATED_BSS_LENGTH;
-	}
-
-	if (len < sizeof(*he_6g_params))
-		return phymode;
-
-	he_6g_params = (struct he_oper_6g_param *)he_ops;
 
 	switch (he_6g_params->width) {
 	case WLAN_HE_6GHZ_CHWIDTH_20:
@@ -280,6 +309,10 @@ util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
 	return phymode;
 }
 #else
+static void
+util_scan_get_chan_from_he_6g_params(struct scan_cache_entry *scan_params,
+				     uint8_t *chan_idx)
+{}
 static inline enum wlan_phymode
 util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
 			 struct scan_cache_entry *scan_params)
@@ -1457,6 +1490,9 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 
 	if (scan_entry->ie_list.p2p)
 		scan_entry->is_p2p = true;
+
+	if (!chan_idx && util_scan_entry_hecap(scan_entry))
+		util_scan_get_chan_from_he_6g_params(scan_entry, &chan_idx);
 
 	if (chan_idx) {
 		uint8_t band_mask = BIT(wlan_reg_freq_to_band(
