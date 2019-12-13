@@ -85,7 +85,34 @@ enum wlan_mlme_host_vdev_start_status {
 	WLAN_MLME_HOST_VDEV_START_CHAN_INVALID_REGDOMAIN,
 	WLAN_MLME_HOST_VDEV_START_CHAN_INVALID_BAND,
 	WLAN_MLME_HOST_VDEV_START_TIMEOUT,
+	/* Add new response status code from here */
+	WLAN_MLME_HOST_VDEV_START_MAX_REASON,
 };
+
+/**
+ * string_from_start_rsp_status() - Convert start response status to string
+ * @start_rsp - start response status
+ *
+ * Please note to add new string in the array at index equal to
+ * its enum value in wlan_mlme_host_vdev_start_status.
+ */
+static inline char *string_from_start_rsp_status(
+			enum wlan_mlme_host_vdev_start_status start_rsp)
+{
+	static const char *strings[] = { "START_OK",
+					"CHAN_INVALID",
+					"CHAN_BLOCKED",
+					"CHAN_DFS_VIOLATION",
+					"CHAN_INVALID_REGDOMAIN",
+					"CHAN_INVALID_BAND",
+					"START_RESPONSE_TIMEOUT",
+					"START_RESPONSE_UNKNOWN"};
+
+	if (start_rsp >= WLAN_MLME_HOST_VDEV_START_MAX_REASON)
+		start_rsp = WLAN_MLME_HOST_VDEV_START_MAX_REASON;
+
+	return (char *)strings[start_rsp];
+}
 
 /**
  * enum wlan_mlme_host_start_event_param - start/restart resp event
