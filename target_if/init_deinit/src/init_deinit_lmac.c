@@ -68,20 +68,12 @@ target_resource_config *lmac_get_tgt_res_cfg(struct wlan_objmgr_psoc *psoc)
 
 int32_t lmac_get_pdev_idx(struct wlan_objmgr_pdev *pdev)
 {
-	struct target_pdev_info *tgt_hdl;
-
 	if (!pdev) {
 		target_if_err("pdev is null");
 		return 0xffffffff;
 	}
 
-	tgt_hdl = wlan_pdev_get_tgt_if_handle(pdev);
-	if (!tgt_hdl) {
-		target_if_err("target_pdev_info is null");
-		return 0xffffffff;
-	}
-
-	return target_pdev_get_pdev_idx(tgt_hdl);
+	return wlan_objmgr_pdev_get_pdev_id(pdev);
 }
 
 uint32_t lmac_get_tgt_type(struct wlan_objmgr_psoc *psoc)
