@@ -1524,6 +1524,10 @@ struct cdp_tx_mgmt_comp_info {
  * @bar_num_users: BA response user count, based on completion common TLV
  * @num_users: Number of users
  * @pending_retries: pending MPDUs (retries)
+ * @drop_reason: drop reason from flush status
+ * @is_flush: is_flush is set based on flush tlv
+ * @flow_type: tx flow type from flush status
+ * @queue_type: queue type from flush status
  * @num_mpdu: Number of MPDUs in PPDU
  * @num_msdu: Number of MSDUs in PPDU
  * @frame_type: frame SU or MU
@@ -1557,6 +1561,10 @@ struct cdp_tx_completion_ppdu {
 	uint32_t num_users;
 	uint8_t last_usr_index;
 	uint32_t pending_retries;
+	uint32_t drop_reason;
+	uint32_t is_flush:1,
+		 flow_type:8,
+		 queue_type:8;
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
 	uint16_t frame_type;

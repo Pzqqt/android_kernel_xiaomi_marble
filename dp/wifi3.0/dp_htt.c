@@ -2720,37 +2720,50 @@ static void dp_process_ppdu_stats_user_common_array_tlv(
  * htt_ppdu_stats_flush_tlv
  * @pdev: DP PDEV handle
  * @tag_buf: buffer containing the htt_ppdu_stats_flush_tlv
+ * @ppdu_info: per ppdu tlv structure
  *
  * return:void
  */
-static void dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
-						uint32_t *tag_buf)
+static void
+dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
+					     uint32_t *tag_buf,
+					     struct ppdu_info *ppdu_info)
 {
+	struct cdp_tx_completion_ppdu *ppdu_desc;
 	uint32_t peer_id;
-	uint32_t drop_reason;
 	uint8_t tid;
-	uint32_t num_msdu;
 	struct dp_peer *peer;
 
-	tag_buf++;
-	drop_reason = *tag_buf;
+	ppdu_desc = (struct cdp_tx_completion_ppdu *)
+				qdf_nbuf_data(ppdu_info->nbuf);
+	ppdu_desc->is_flush = 1;
 
 	tag_buf++;
-	num_msdu = HTT_PPDU_STATS_FLUSH_TLV_NUM_MSDU_GET(*tag_buf);
+	ppdu_desc->drop_reason = *tag_buf;
 
 	tag_buf++;
-	peer_id =
-		HTT_PPDU_STATS_FLUSH_TLV_SW_PEER_ID_GET(*tag_buf);
+	ppdu_desc->num_msdu = HTT_PPDU_STATS_FLUSH_TLV_NUM_MSDU_GET(*tag_buf);
+	ppdu_desc->num_mpdu = HTT_PPDU_STATS_FLUSH_TLV_NUM_MPDU_GET(*tag_buf);
+	ppdu_desc->flow_type = HTT_PPDU_STATS_FLUSH_TLV_FLOW_TYPE_GET(*tag_buf);
+
+	tag_buf++;
+	peer_id = HTT_PPDU_STATS_FLUSH_TLV_SW_PEER_ID_GET(*tag_buf);
+	tid = HTT_PPDU_STATS_FLUSH_TLV_TID_NUM_GET(*tag_buf);
+
+	ppdu_desc->user[0].peer_id = peer_id;
+	ppdu_desc->user[0].tid = tid;
+
+	ppdu_desc->queue_type =
+			HTT_PPDU_STATS_FLUSH_TLV_QUEUE_TYPE_GET(*tag_buf);
 
 	peer = dp_peer_find_by_id(pdev->soc, peer_id);
 	if (!peer)
 		return;
 
-	tid = HTT_PPDU_STATS_FLUSH_TLV_TID_NUM_GET(*tag_buf);
-
-	if (drop_reason == HTT_FLUSH_EXCESS_RETRIES) {
-		DP_STATS_INC(peer, tx.excess_retries_per_ac[TID_TO_WME_AC(tid)],
-					num_msdu);
+	if (ppdu_desc->drop_reason == HTT_FLUSH_EXCESS_RETRIES) {
+		DP_STATS_INC(peer,
+			     tx.excess_retries_per_ac[TID_TO_WME_AC(tid)],
+			     ppdu_desc->num_msdu);
 	}
 
 	dp_peer_unref_del_find_by_id(peer);
@@ -2966,8 +2979,8 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 		tlv_expected_size = sizeof(htt_ppdu_stats_flush_tlv);
 		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
 						    tlv_expected_size, tlv_len);
-		dp_process_ppdu_stats_user_compltn_flush_tlv(
-				pdev, tlv_desc);
+		dp_process_ppdu_stats_user_compltn_flush_tlv(pdev, tlv_desc,
+							     ppdu_info);
 		break;
 	default:
 		break;
@@ -3421,9 +3434,12 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	 * tlv_bitmap_expected can't be available for different frame type.
 	 * But STATS COMMON TLV is the last TLV from the FW for a ppdu.
 	 * apart from ACK BA TLV, FW sends other TLV in sequential order.
+	 * flush tlv comes separate.
 	 */
-	if (ppdu_info->tlv_bitmap != 0 &&
-	    (ppdu_info->tlv_bitmap & (1 << HTT_PPDU_STATS_COMMON_TLV)))
+	if ((ppdu_info->tlv_bitmap != 0 &&
+	     (ppdu_info->tlv_bitmap & (1 << HTT_PPDU_STATS_COMMON_TLV))) ||
+	    (ppdu_info->tlv_bitmap &
+	     (1 << HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV)))
 		return ppdu_info;
 
 	return NULL;
