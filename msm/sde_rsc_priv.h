@@ -193,6 +193,7 @@ struct sde_rsc_bw_config {
  * resource_refcount:	Track rsc resource refcount
  * profiling_supp:	Indicates if HW has support for profiling counters
  * profiling_en:	Flag for rsc lpm profiling counters, true=enabled
+ * post_poms:		bool if a panel mode change occurred
  */
 struct sde_rsc_priv {
 	u32 version;
@@ -236,6 +237,8 @@ struct sde_rsc_priv {
 	atomic_t resource_refcount;
 	bool profiling_supp;
 	bool profiling_en;
+
+	bool post_poms;
 };
 
 /**
