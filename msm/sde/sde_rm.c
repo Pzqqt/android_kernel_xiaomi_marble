@@ -2141,6 +2141,7 @@ void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 	top_ctrl = sde_connector_get_property(conn->state,
 			CONNECTOR_PROP_TOPOLOGY_CONTROL);
 
+	SDE_EVT32(enc->base.id, conn->base.id, rsvp->seq, top_ctrl, nxt);
 	if (top_ctrl & BIT(SDE_RM_TOPCTL_RESERVE_LOCK)) {
 		SDE_DEBUG("rsvp[s%de%d] not releasing locked resources\n",
 				rsvp->seq, rsvp->enc_id);
@@ -2230,6 +2231,23 @@ int sde_rm_reserve(
 
 	rsvp_cur = _sde_rm_get_rsvp(rm, enc);
 	rsvp_nxt = _sde_rm_get_rsvp_nxt(rm, enc);
+
+	/*
+	 * RM currently relies on rsvp_nxt assigned to the hw blocks to
+	 * commit rsvps. This rsvp_nxt can be cleared by a back to back
+	 * check_only commit with modeset when its predecessor atomic
+	 * commit is delayed / not committed the reservation yet.
+	 * Bail out in such cases so that check only commit
+	 * comes again after earlier commit gets processed.
+	 */
+
+	if (test_only && rsvp_nxt) {
+		SDE_ERROR("cur %d nxt %d enc %d conn %d\n", rsvp_cur->seq,
+			 rsvp_nxt->seq, enc->base.id,
+			 conn_state->connector->base.id);
+		ret = -EINVAL;
+		goto end;
+	}
 
 	if (!test_only && rsvp_nxt)
 		goto commit_rsvp;
