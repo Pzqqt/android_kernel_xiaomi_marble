@@ -3514,13 +3514,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 		return NULL;
 	}
 
-	qdf_status = qdf_event_create(
-			&adapter->qdf_session_close_event);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("failed to create session close QDF event!");
-		free_netdev(adapter->dev);
-		return NULL;
-	}
+	init_completion(&adapter->vdev_destroy_event);
 
 	SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
 	spin_lock_init(&adapter->pause_map_lock);

@@ -4287,9 +4287,7 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		goto free_net_dev;
 
-	qdf_status = qdf_event_create(&adapter->qdf_session_close_event);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		goto free_net_dev;
+	init_completion(&adapter->vdev_destroy_event);
 
 	adapter->offloads_configured = false;
 	adapter->is_link_up_service_needed = false;
@@ -4408,7 +4406,7 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id)
 	 * valid, before signaling completion
 	 */
 	if (WLAN_HDD_ADAPTER_MAGIC == adapter->magic)
-		qdf_event_set(&adapter->qdf_session_close_event);
+		complete(&adapter->vdev_destroy_event);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4451,6 +4449,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx;
 	uint8_t vdev_id;
 	struct wlan_objmgr_vdev *vdev;
+	long rc;
 
 	vdev_id = adapter->vdev_id;
 	hdd_info("destroying vdev %d", vdev_id);
@@ -4488,7 +4487,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	wlan_ser_vdev_queue_disable(adapter->vdev);
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
-	qdf_event_reset(&adapter->qdf_session_close_event);
+	INIT_COMPLETION(adapter->vdev_destroy_event);
 	status = sme_vdev_delete(hdd_ctx->mac_handle, vdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to delete vdev; status:%d", status);
@@ -4496,11 +4495,9 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	}
 
 	/* block on a completion variable until sme session is closed */
-	status = qdf_wait_for_event_completion(
-			&adapter->qdf_session_close_event,
-			SME_CMD_VDEV_CREATE_DELETE_TIMEOUT);
-
-	if (QDF_IS_STATUS_ERROR(status)) {
+	rc = wait_for_completion_timeout(&adapter->vdev_destroy_event,
+					 SME_CMD_VDEV_CREATE_DELETE_TIMEOUT);
+	if (rc) {
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 
 		if (adapter->device_mode == QDF_NDI_MODE)
@@ -4509,11 +4506,6 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 		if (status == QDF_STATUS_E_TIMEOUT) {
 			hdd_err("timed out waiting for sme vdev delete");
 			sme_cleanup_session(hdd_ctx->mac_handle, vdev_id);
-		} else if (adapter->qdf_session_close_event.force_set) {
-			hdd_info("SSR occurred during sme vdev delete");
-		} else {
-			hdd_err("failed to wait for sme vdev delete; status:%u",
-				status);
 		}
 	}
 

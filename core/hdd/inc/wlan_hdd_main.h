@@ -1103,8 +1103,17 @@ struct hdd_adapter {
 	/* estimated link speed */
 	uint32_t estimated_linkspeed;
 
-	/* QDF event for session close */
-	qdf_event_t qdf_session_close_event;
+	/**
+	 * vdev_destroy_event is moved from the qdf_event to linux event
+	 * consciously, Lets take example when sap interface is waiting on the
+	 * session_close event and then there is a SSR the wait event is
+	 * completed the interface down is returned and the next command to the
+	 * driver will  hdd_hostapd_uinit-->vhdd_deinit_ap_mode-->
+	 * hdd_hostapd_deinit_sap_session where in the sap_ctx would be freed.
+	 * During the SSR if the same sap context is used it would result
+	 * in null pointer de-reference.
+	 */
+	struct completion vdev_destroy_event;
 
 	/* QDF event for session open */
 	qdf_event_t qdf_session_open_event;
