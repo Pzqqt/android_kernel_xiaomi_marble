@@ -3187,7 +3187,6 @@ typedef struct {
 #define HTT_RX_PDEV_STATS_NUM_GI_COUNTERS 4
 #define HTT_RX_PDEV_STATS_NUM_DCM_COUNTERS 5
 #define HTT_RX_PDEV_STATS_NUM_BW_COUNTERS 4
-#define HTT_RX_PDEV_STATS_NUM_BW_EXT_COUNTERS 4
 #define HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS 8
 #define HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS 8
 #define HTT_RX_PDEV_STATS_NUM_PREAMBLE_TYPES HTT_STATS_PREAM_COUNT
@@ -3315,11 +3314,6 @@ typedef struct {
     A_UINT32 rx_ulmumimo_mpdu_fail[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];     /* mpdu level */
     A_UINT32 rx_ulofdma_non_data_nusers[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
     A_UINT32 rx_ulofdma_data_nusers[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
-
-    A_UINT8  rssi_chain_ext[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_COUNTERS]; /* units = dB above noise floor */
-    A_INT8   rx_per_chain_rssi_ext_in_dbm[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_COUNTERS];
-    A_INT32  rssi_mcast_in_dbm; /* rx mcast signal strength value in dBm unit */
-    A_INT32  rssi_mgmt_in_dbm; /* rx mgmt packet signal Strength value in dBm unit */
 
     /*
      * NOTE - this TLV is already large enough that it causes the HTT message
