@@ -53,6 +53,18 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 }
 #endif
 
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+#include "dp_rx_mon_feature.h"
+#else
+static QDF_STATUS
+dp_send_ack_frame_to_stack(struct dp_soc *soc,
+			   struct dp_pdev *pdev,
+			   struct hal_rx_ppdu_info *ppdu_info)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef FEATURE_PERPKT_INFO
 static inline void
 dp_rx_populate_rx_rssi_chain(struct hal_rx_ppdu_info *ppdu_info,
@@ -1219,6 +1231,12 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		} else if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
 			rx_mon_stats->status_ppdu_done++;
 			dp_rx_mon_handle_mu_ul_info(ppdu_info);
+
+			if (pdev->tx_capture_enabled
+			    != CDP_TX_ENH_CAPTURE_DISABLED)
+				dp_send_ack_frame_to_stack(soc, pdev,
+							   ppdu_info);
+
 			if (pdev->enhanced_stats_en ||
 			    pdev->mcopy_mode || pdev->neighbour_peers_added)
 				dp_rx_handle_ppdu_stats(soc, pdev, ppdu_info);
