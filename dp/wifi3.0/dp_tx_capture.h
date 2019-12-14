@@ -243,5 +243,17 @@ void dp_tx_capture_htt_frame_counter(struct dp_pdev *pdev,
  */
 void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev);
 
+/**
+ * dp_send_ack_frame_to_stack(): Function to generate BA or ACK frame and
+ * send to upper layer on received unicast frame
+ * @soc: core txrx main context
+ * @pdev: DP pdev object
+ * @ppdu_info: HAL RX PPDU info retrieved from status ring TLV
+ *
+ * return: status
+ */
+QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
+				      struct dp_pdev *pdev,
+				      struct hal_rx_ppdu_info *ppdu_info);
 #endif
 #endif

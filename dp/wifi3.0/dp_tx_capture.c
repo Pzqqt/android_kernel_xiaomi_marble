@@ -33,6 +33,15 @@
 
 #define MAX_MONITOR_HEADER (512)
 #define MAX_DUMMY_FRM_BODY (128)
+#define DP_BA_ACK_FRAME_SIZE (sizeof(struct ieee80211_ctlframe_addr2) + 36)
+#define DP_ACK_FRAME_SIZE (struct ieee80211_frame_min_one)
+#define DP_MAX_MPDU_64 64
+#define DP_NUM_WORDS_PER_PPDU_BITMAP_64 (DP_MAX_MPDU_64 >> 5)
+#define DP_NUM_BYTES_PER_PPDU_BITMAP_64 (DP_MAX_MPDU_64 >> 3)
+#define DP_NUM_BYTES_PER_PPDU_BITMAP (HAL_RX_MAX_MPDU >> 3)
+#define DP_IEEE80211_BAR_CTL_TID_S 12
+#define DP_IEEE80211_BA_S_SEQ_S 4
+#define DP_IEEE80211_BAR_CTL_COMBA 0x0004
 
 /* Macros to handle sequence number bitmaps */
 
@@ -2937,4 +2946,225 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 	}
 }
 
+static void set_mpdu_info(
+	struct cdp_tx_indication_info *tx_capture_info,
+	struct mon_rx_status *rx_status,
+	struct mon_rx_user_status *rx_user_status)
+{
+	struct cdp_tx_indication_mpdu_info *mpdu_info;
+
+	qdf_mem_set(tx_capture_info,
+		    sizeof(struct cdp_tx_indication_info), 0);
+
+	mpdu_info = &tx_capture_info->mpdu_info;
+	mpdu_info->ppdu_start_timestamp = rx_status->tsft + 16;
+	mpdu_info->channel_num = rx_status->chan_num;
+	mpdu_info->bw = 0;
+
+	if  (mpdu_info->channel_num < 20)
+		mpdu_info->preamble = DOT11_B;
+	else
+		mpdu_info->preamble = DOT11_A;
+}
+
+static void dp_gen_ack_frame(struct hal_rx_ppdu_info *ppdu_info,
+			     struct dp_peer *peer,
+			     qdf_nbuf_t mpdu_nbuf)
+{
+	struct ieee80211_frame_min_one *wh_addr1;
+
+	wh_addr1 = (struct ieee80211_frame_min_one *)
+		qdf_nbuf_data(mpdu_nbuf);
+
+	wh_addr1->i_fc[0] = 0;
+	wh_addr1->i_fc[1] = 0;
+	wh_addr1->i_fc[0] =  IEEE80211_FC0_VERSION_0 |
+		IEEE80211_FC0_TYPE_CTL |
+		IEEE80211_FC0_SUBTYPE_ACK;
+	if (peer) {
+		qdf_mem_copy(wh_addr1->i_addr1,
+			     &peer->mac_addr.raw[0],
+			     QDF_MAC_ADDR_SIZE);
+	} else {
+		qdf_mem_copy(wh_addr1->i_addr1,
+			     &ppdu_info->nac_info.mac_addr2[0],
+			     QDF_MAC_ADDR_SIZE);
+	}
+	*(u_int16_t *)(&wh_addr1->i_dur) = qdf_cpu_to_le16(0x0000);
+	qdf_nbuf_set_pktlen(mpdu_nbuf, sizeof(*wh_addr1));
+}
+
+static void dp_gen_block_ack_frame(
+	struct mon_rx_user_status *rx_user_status,
+	struct dp_peer *peer,
+	qdf_nbuf_t mpdu_nbuf)
+{
+	struct dp_vdev *vdev = NULL;
+	struct ieee80211_ctlframe_addr2 *wh_addr2;
+	uint8_t *frm;
+
+	wh_addr2 = (struct ieee80211_ctlframe_addr2 *)
+			qdf_nbuf_data(mpdu_nbuf);
+
+	qdf_mem_zero(wh_addr2, DP_BA_ACK_FRAME_SIZE);
+
+	wh_addr2->i_fc[0] = 0;
+	wh_addr2->i_fc[1] = 0;
+	wh_addr2->i_fc[0] =  IEEE80211_FC0_VERSION_0 |
+		IEEE80211_FC0_TYPE_CTL |
+		IEEE80211_FC0_BLOCK_ACK;
+	*(u_int16_t *)(&wh_addr2->i_aidordur) = qdf_cpu_to_le16(0x0000);
+
+	vdev = peer->vdev;
+	if (vdev)
+		qdf_mem_copy(wh_addr2->i_addr2, vdev->mac_addr.raw,
+			     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(wh_addr2->i_addr1, &peer->mac_addr.raw[0],
+		     QDF_MAC_ADDR_SIZE);
+
+	frm = (uint8_t *)&wh_addr2[1];
+	*((uint16_t *)frm) =
+		qdf_cpu_to_le16((rx_user_status->tid <<
+		DP_IEEE80211_BAR_CTL_TID_S) |
+		DP_IEEE80211_BAR_CTL_COMBA);
+	frm += 2;
+	*((uint16_t *)frm) =
+		rx_user_status->first_data_seq_ctrl;
+	frm += 2;
+	if ((rx_user_status->mpdu_cnt_fcs_ok +
+		rx_user_status->mpdu_cnt_fcs_err)
+		> DP_MAX_MPDU_64) {
+		qdf_mem_copy(frm,
+			     rx_user_status->mpdu_fcs_ok_bitmap,
+			     HAL_RX_NUM_WORDS_PER_PPDU_BITMAP *
+			     sizeof(rx_user_status->mpdu_fcs_ok_bitmap[0]));
+		frm += DP_NUM_BYTES_PER_PPDU_BITMAP;
+	} else {
+		qdf_mem_copy(frm,
+			     rx_user_status->mpdu_fcs_ok_bitmap,
+			     DP_NUM_WORDS_PER_PPDU_BITMAP_64 *
+			     sizeof(rx_user_status->mpdu_fcs_ok_bitmap[0]));
+		frm += DP_NUM_BYTES_PER_PPDU_BITMAP_64;
+	}
+	qdf_nbuf_set_pktlen(mpdu_nbuf,
+			    (frm - (uint8_t *)qdf_nbuf_data(mpdu_nbuf)));
+}
+
+/**
+ * dp_send_ack_frame_to_stack(): Function to generate BA or ACK frame and
+ * send to upper layer on received unicast frame
+ * @soc: core txrx main context
+ * @pdev: DP pdev object
+ * @ppdu_info: HAL RX PPDU info retrieved from status ring TLV
+ *
+ * return: status
+ */
+QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
+				      struct dp_pdev *pdev,
+				      struct hal_rx_ppdu_info *ppdu_info)
+{
+	struct cdp_tx_indication_info tx_capture_info;
+	struct dp_peer *peer;
+	struct dp_ast_entry *ast_entry;
+	uint32_t peer_id;
+	struct mon_rx_status *rx_status;
+	struct mon_rx_user_status *rx_user_status;
+	uint32_t ast_index;
+	uint32_t i;
+
+	rx_status = &ppdu_info->rx_status;
+
+	if (!rx_status->rxpcu_filter_pass)
+		return QDF_STATUS_SUCCESS;
+
+	if (ppdu_info->sw_frame_group_id ==
+	    HAL_MPDU_SW_FRAME_GROUP_MGMT_BEACON)
+		return QDF_STATUS_SUCCESS;
+
+	for (i = 0; i < ppdu_info->com_info.num_users; i++) {
+		if (i > OFDMA_NUM_USERS)
+			return QDF_STATUS_E_FAULT;
+
+		rx_user_status =  &ppdu_info->rx_user_status[i];
+
+		ast_index = rx_user_status->ast_index;
+		if (ast_index >=
+		    wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
+			set_mpdu_info(&tx_capture_info,
+				      rx_status, rx_user_status);
+			tx_capture_info.mpdu_nbuf =
+				qdf_nbuf_alloc(pdev->soc->osdev,
+					       MAX_MONITOR_HEADER +
+					       DP_BA_ACK_FRAME_SIZE,
+					       MAX_MONITOR_HEADER,
+					       4, FALSE);
+			if (!tx_capture_info.mpdu_nbuf)
+				continue;
+			dp_gen_ack_frame(ppdu_info, NULL,
+					 tx_capture_info.mpdu_nbuf);
+			dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
+					     &tx_capture_info, HTT_INVALID_PEER,
+					     WDI_NO_VAL, pdev->pdev_id);
+			continue;
+		}
+
+		qdf_spin_lock_bh(&soc->ast_lock);
+		ast_entry = soc->ast_table[ast_index];
+		if (!ast_entry) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			continue;
+		}
+
+		peer = ast_entry->peer;
+		if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			continue;
+		}
+		peer_id = peer->peer_ids[0];
+		qdf_spin_unlock_bh(&soc->ast_lock);
+
+		peer = dp_peer_find_by_id(soc, peer_id);
+		if (!peer)
+			continue;
+
+		if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
+						    peer)) {
+			dp_peer_unref_del_find_by_id(peer);
+			continue;
+		}
+
+		set_mpdu_info(&tx_capture_info,
+			      rx_status, rx_user_status);
+
+		tx_capture_info.mpdu_nbuf =
+			qdf_nbuf_alloc(pdev->soc->osdev,
+				       MAX_MONITOR_HEADER +
+				       DP_BA_ACK_FRAME_SIZE,
+				       MAX_MONITOR_HEADER,
+				       4, FALSE);
+
+		if (!tx_capture_info.mpdu_nbuf) {
+			dp_peer_unref_del_find_by_id(peer);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		if (rx_status->rs_flags & IEEE80211_AMPDU_FLAG) {
+			dp_gen_block_ack_frame(
+					       rx_user_status, peer,
+					       tx_capture_info.mpdu_nbuf);
+			tx_capture_info.mpdu_info.tid = rx_user_status->tid;
+
+		} else {
+			dp_gen_ack_frame(ppdu_info, peer,
+					 tx_capture_info.mpdu_nbuf);
+		}
+		dp_peer_unref_del_find_by_id(peer);
+		dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
+				     &tx_capture_info, HTT_INVALID_PEER,
+				     WDI_NO_VAL, pdev->pdev_id);
+
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
