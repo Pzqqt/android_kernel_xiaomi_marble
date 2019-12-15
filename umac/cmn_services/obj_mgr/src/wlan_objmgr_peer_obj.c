@@ -129,6 +129,8 @@ static QDF_STATUS wlan_objmgr_peer_obj_free(struct wlan_objmgr_peer *peer)
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_OBJMGR_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_objmgr_peer_trace_del_ref_list(peer);
+	wlan_objmgr_peer_trace_deinit_lock(peer);
 	qdf_spinlock_destroy(&peer->peer_lock);
 	qdf_mem_free(peer);
 
@@ -203,6 +205,7 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 	peer->peer_objmgr.print_cnt = 0;
 
 	qdf_spinlock_create(&peer->peer_lock);
+	wlan_objmgr_peer_trace_init_lock(peer);
 	/* Attach peer to psoc, psoc maintains the node table for the device */
 	if (wlan_objmgr_psoc_peer_attach(psoc, peer) !=
 					QDF_STATUS_SUCCESS) {
@@ -211,6 +214,7 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 				macaddr[0], macaddr[1], macaddr[2],
 				macaddr[3], macaddr[4], macaddr[5]);
 		qdf_spinlock_destroy(&peer->peer_lock);
+		wlan_objmgr_peer_trace_deinit_lock(peer);
 		qdf_mem_free(peer);
 		return NULL;
 	}
@@ -224,6 +228,7 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 		/* if attach fails, detach from psoc table before free */
 		wlan_objmgr_psoc_peer_detach(psoc, peer);
 		qdf_spinlock_destroy(&peer->peer_lock);
+		wlan_objmgr_peer_trace_deinit_lock(peer);
 		qdf_mem_free(peer);
 		return NULL;
 	}
@@ -641,6 +646,13 @@ wlan_objmgr_peer_ref_trace(struct wlan_objmgr_peer *peer,
 			   wlan_objmgr_ref_dbgid id,
 			   const char *func, int line)
 {
+	struct wlan_objmgr_trace *trace;
+
+	trace = &peer->peer_objmgr.trace;
+
+	if (func)
+		wlan_objmgr_trace_ref(&trace->references[id].head,
+				      trace, func, line);
 }
 
 static inline void
@@ -648,6 +660,12 @@ wlan_objmgr_peer_deref_trace(struct wlan_objmgr_peer *peer,
 			     wlan_objmgr_ref_dbgid id,
 			     const char *func, int line)
 {
+	struct wlan_objmgr_trace *trace;
+
+	trace = &peer->peer_objmgr.trace;
+	if (func)
+		wlan_objmgr_trace_ref(&trace->dereferences[id].head,
+				      trace, func, line);
 }
 #endif
 

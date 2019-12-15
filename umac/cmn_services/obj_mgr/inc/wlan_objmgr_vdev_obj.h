@@ -335,6 +335,7 @@ struct wlan_objmgr_vdev_nif {
  *  @c_flags:           creation specific flags
  *  @ref_cnt:           Ref count
  *  @ref_id_dbg:        Array to track Ref count
+ *  @wlan_objmgr_trace: Trace ref and deref
  */
 struct wlan_objmgr_vdev_objmgr {
 	uint8_t vdev_id;
@@ -348,6 +349,9 @@ struct wlan_objmgr_vdev_objmgr {
 	uint32_t c_flags;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+	struct wlan_objmgr_trace trace;
+#endif
 };
 
 /**
@@ -1442,6 +1446,63 @@ static inline void *wlan_vdev_get_dp_handle(struct wlan_objmgr_vdev *vdev)
 void wlan_print_vdev_info(struct wlan_objmgr_vdev *vdev);
 #else
 static inline void wlan_print_vdev_info(struct wlan_objmgr_vdev *vdev) {}
+#endif
+
+/**
+ * wlan_objmgr_vdev_trace_init_lock() - Initialize trace lock
+ * @vdev: vdev object pointer
+ *
+ * Return: void
+ */
+#ifdef WLAN_OBJMGR_TRACE
+static inline void
+wlan_objmgr_vdev_trace_init_lock(struct wlan_objmgr_vdev *vdev)
+{
+	wlan_objmgr_trace_init_lock(&vdev->vdev_objmgr.trace);
+}
+#else
+static inline void
+wlan_objmgr_vdev_trace_init_lock(struct wlan_objmgr_vdev *vdev)
+{
+}
+#endif
+
+/**
+ * wlan_objmgr_vdev_trace_deinit_lock() - Deinitialize trace lock
+ * @vdev: vdev object pointer
+ *
+ * Return: void
+ */
+#ifdef WLAN_OBJMGR_TRACE
+static inline void
+wlan_objmgr_vdev_trace_deinit_lock(struct wlan_objmgr_vdev *vdev)
+{
+	wlan_objmgr_trace_deinit_lock(&vdev->vdev_objmgr.trace);
+}
+#else
+static inline void
+wlan_objmgr_vdev_trace_deinit_lock(struct wlan_objmgr_vdev *vdev)
+{
+}
+#endif
+
+/**
+ * wlan_objmgr_vdev_trace_del_ref_list() - Delete trace ref list
+ * @vdev: vdev object pointer
+ *
+ * Return: void
+ */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+static inline void
+wlan_objmgr_vdev_trace_del_ref_list(struct wlan_objmgr_vdev *vdev)
+{
+	wlan_objmgr_trace_del_ref_list(&vdev->vdev_objmgr.trace);
+}
+#else
+static inline void
+wlan_objmgr_vdev_trace_del_ref_list(struct wlan_objmgr_vdev *vdev)
+{
+}
 #endif
 
 #endif /* _WLAN_OBJMGR_VDEV_OBJ_H_*/

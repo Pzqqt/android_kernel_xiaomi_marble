@@ -27,6 +27,7 @@
 #include "wlan_objmgr_global_obj_i.h"
 #include <qdf_mem.h>
 #include <qdf_platform.h>
+#include <qdf_str.h>
 
 /*
  * Default TTL (of FW) for mgmt frames is 5 sec, by considering all the other
@@ -351,6 +352,84 @@ static void wlan_objmgr_print_pending_refs(union wlan_objmgr_del_obj *obj,
 	}
 }
 
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+static void
+wlan_objmgr_print_ref_func_line(struct wlan_objmgr_trace_func *func_head,
+				uint32_t id)
+{
+	uint32_t ref_cnt;
+	struct wlan_objmgr_line_ref_node *tmp_ln_node;
+
+	obj_mgr_debug("ID: %s", string_from_dbgid(id));
+	while (func_head) {
+		obj_mgr_debug("Func: %s", func_head->func);
+		tmp_ln_node = func_head->line_head;
+		while (tmp_ln_node) {
+			ref_cnt = qdf_atomic_read(&tmp_ln_node->line_ref.cnt);
+			obj_mgr_debug("line: %d cnt: %d",
+				      tmp_ln_node->line_ref.line,
+				      ref_cnt);
+			tmp_ln_node = tmp_ln_node->next;
+		}
+		func_head = func_head->next;
+	}
+}
+
+static void
+wlan_objmgr_trace_print_ref(union wlan_objmgr_del_obj *obj,
+			    enum wlan_objmgr_obj_type obj_type)
+{
+	uint32_t id;
+	struct wlan_objmgr_trace_func *func_head;
+	struct wlan_objmgr_trace *trace;
+	struct wlan_objmgr_vdev_objmgr *vdev_obj;
+	struct wlan_objmgr_peer_objmgr *peer_obj;
+
+	switch (obj_type) {
+	case WLAN_VDEV_OP:
+		vdev_obj = &obj->obj_vdev->vdev_objmgr;
+		trace = &vdev_obj->trace;
+		for (id = 0; id < WLAN_REF_ID_MAX; id++) {
+			if (qdf_atomic_read(&vdev_obj->ref_id_dbg[id])) {
+				obj_mgr_debug("Reference:");
+
+				func_head = trace->references[id].head;
+				wlan_objmgr_print_ref_func_line(func_head, id);
+
+				obj_mgr_debug("Dereference:");
+				func_head = trace->dereferences[id].head;
+				wlan_objmgr_print_ref_func_line(func_head, id);
+			}
+		}
+		break;
+	case WLAN_PEER_OP:
+		peer_obj = &obj->obj_peer->peer_objmgr;
+		trace = &peer_obj->trace;
+		for (id = 0; id < WLAN_REF_ID_MAX; id++) {
+			if (qdf_atomic_read(&vdev_obj->ref_id_dbg[id])) {
+				obj_mgr_debug("Reference:");
+
+				func_head = trace->references[id].head;
+				wlan_objmgr_print_ref_func_line(func_head, id);
+
+				obj_mgr_debug("Dereference:");
+				func_head = trace->dereferences[id].head;
+				wlan_objmgr_print_ref_func_line(func_head, id);
+			}
+		}
+		break;
+	default:
+		break;
+	}
+}
+#else
+static void
+wlan_objmgr_trace_print_ref(union wlan_objmgr_del_obj *obj,
+			    enum wlan_objmgr_obj_type obj_type)
+{
+}
+#endif
+
 /* timeout handler for iterating logically deleted object */
 
 static void wlan_objmgr_iterate_log_del_obj_handler(void *timer_arg)
@@ -417,6 +496,7 @@ static void wlan_objmgr_iterate_log_del_obj_handler(void *timer_arg)
 			      obj_name, QDF_MAC_ADDR_ARRAY(macaddr));
 		wlan_objmgr_print_pending_refs(&del_obj->obj, obj_type);
 
+		wlan_objmgr_trace_print_ref(&del_obj->obj, obj_type);
 		if (cur_tstamp > del_obj->tstamp +
 		    LOG_DEL_OBJ_DESTROY_ASSERT_DURATION_SEC) {
 			if (!qdf_is_recovering() && !qdf_is_fw_down())
@@ -512,3 +592,163 @@ void wlan_objmgr_debug_info_init(void)
 	g_umac_glb_obj->debug_info = debug_info;
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 }
+
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+void
+wlan_objmgr_trace_init_lock(struct wlan_objmgr_trace *trace)
+{
+	qdf_spinlock_create(&trace->trace_lock);
+}
+
+void
+wlan_objmgr_trace_deinit_lock(struct wlan_objmgr_trace *trace)
+{
+	qdf_spinlock_destroy(&trace->trace_lock);
+}
+#endif
+
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+static inline struct wlan_objmgr_line_ref_node*
+wlan_objmgr_trace_line_node_alloc(int line)
+{
+	struct wlan_objmgr_line_ref_node *line_node;
+
+	line_node = qdf_mem_malloc_atomic(sizeof(*line_node));
+	if (!line_node)
+		return NULL;
+
+	line_node->line_ref.line = line;
+	qdf_atomic_set(&line_node->line_ref.cnt, 1);
+	line_node->next = NULL;
+
+	return line_node;
+}
+
+static inline struct wlan_objmgr_trace_func*
+wlan_objmgr_trace_ref_node_alloc(const char *func, int line)
+{
+	struct wlan_objmgr_trace_func *func_node;
+	struct wlan_objmgr_line_ref_node *line_node;
+
+	func_node = qdf_mem_malloc_atomic(sizeof(*func_node));
+	if (!func_node)
+		return NULL;
+
+	line_node = wlan_objmgr_trace_line_node_alloc(line);
+	if (!line_node) {
+		qdf_mem_free(func_node);
+		return NULL;
+	}
+
+	func_node->line_head = line_node;
+	qdf_str_lcopy(func_node->func, func, WLAN_OBJMGR_TRACE_FUNC_SIZE);
+	func_node->next = NULL;
+
+	return func_node;
+}
+
+static inline void
+wlan_objmgr_trace_check_line(struct wlan_objmgr_trace_func *tmp_func_node,
+			     struct wlan_objmgr_trace *trace, int line)
+{
+	struct wlan_objmgr_line_ref_node *line_node;
+	struct wlan_objmgr_line_ref_node *tmp_ln_node;
+
+	tmp_ln_node = tmp_func_node->line_head;
+	while (tmp_ln_node) {
+		line_node = tmp_ln_node;
+		if (tmp_ln_node->line_ref.line == line) {
+			qdf_atomic_inc(&tmp_ln_node->line_ref.cnt);
+			break;
+		}
+		tmp_ln_node = tmp_ln_node->next;
+	}
+	if (!tmp_ln_node) {
+		tmp_ln_node = wlan_objmgr_trace_line_node_alloc(line);
+		if (tmp_ln_node)
+			line_node->next = tmp_ln_node;
+	}
+}
+
+void
+wlan_objmgr_trace_ref(struct wlan_objmgr_trace_func **func_head,
+		      struct wlan_objmgr_trace *trace,
+		      const char *func, int line)
+{
+	struct wlan_objmgr_trace_func *tmp_func_node;
+	struct wlan_objmgr_trace_func *func_node;
+
+	qdf_spin_lock_bh(&trace->trace_lock);
+	if (!*func_head) {
+		tmp_func_node = wlan_objmgr_trace_ref_node_alloc(func, line);
+		if (tmp_func_node)
+			*func_head = tmp_func_node;
+	} else {
+		tmp_func_node = *func_head;
+		while (tmp_func_node) {
+			func_node = tmp_func_node;
+			if (!qdf_str_ncmp(tmp_func_node->func, func,
+					  WLAN_OBJMGR_TRACE_FUNC_SIZE - 1)) {
+				wlan_objmgr_trace_check_line(tmp_func_node,
+							     trace, line);
+				break;
+			}
+			tmp_func_node = tmp_func_node->next;
+		}
+
+		if (!tmp_func_node) {
+			tmp_func_node = wlan_objmgr_trace_ref_node_alloc(func,
+									 line);
+			if (tmp_func_node)
+				func_node->next = tmp_func_node;
+		}
+	}
+	qdf_spin_unlock_bh(&trace->trace_lock);
+}
+
+void
+wlan_objmgr_trace_del_line(struct wlan_objmgr_line_ref_node **line_head)
+{
+	struct wlan_objmgr_line_ref_node *del_tmp_node;
+	struct wlan_objmgr_line_ref_node *line_node;
+
+	line_node = *line_head;
+	while (line_node) {
+		del_tmp_node = line_node;
+		line_node = line_node->next;
+		qdf_mem_free(del_tmp_node);
+	}
+	*line_head = NULL;
+}
+
+void
+wlan_objmgr_trace_del_ref_list(struct wlan_objmgr_trace *trace)
+{
+	struct wlan_objmgr_trace_func *func_node;
+	struct wlan_objmgr_trace_func *del_tmp_node;
+	uint32_t id;
+
+	qdf_spin_lock_bh(&trace->trace_lock);
+	for (id = 0; id < WLAN_REF_ID_MAX; id++) {
+		func_node = trace->references[id].head;
+		while (func_node) {
+			del_tmp_node = func_node;
+			wlan_objmgr_trace_del_line(&del_tmp_node->line_head);
+			func_node = func_node->next;
+			qdf_mem_free(del_tmp_node);
+		}
+		trace->references[id].head = NULL;
+	}
+	for (id = 0; id < WLAN_REF_ID_MAX; id++) {
+		func_node = trace->dereferences[id].head;
+		while (func_node) {
+			del_tmp_node = func_node;
+			wlan_objmgr_trace_del_line(&del_tmp_node->line_head);
+			func_node = func_node->next;
+			qdf_mem_free(del_tmp_node);
+		}
+		trace->dereferences[id].head = NULL;
+	}
+	qdf_spin_unlock_bh(&trace->trace_lock);
+}
+#endif

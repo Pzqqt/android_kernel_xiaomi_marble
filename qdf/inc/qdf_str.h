@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -152,6 +152,22 @@ static inline char *qdf_str_trim(char *str)
 static inline qdf_size_t qdf_str_nlen(const char *str, qdf_size_t limit)
 {
 	return __qdf_str_nlen(str, limit);
+}
+
+/**
+ * qdf_str_ncmp - Compare two strings
+ * @str1: First string
+ * @str2: Second string
+ * @limit: the maximum number of characters to check
+ * Return:
+ *	 0 - strings are equal
+ *	<0 - str1 sorts lexicographically before str2
+ *	>0 - str1 sorts lexicographically after str2
+ */
+static inline int32_t
+qdf_str_ncmp(const char *str1, const char *str2, qdf_size_t limit)
+{
+	return __qdf_str_ncmp(str1, str2, limit);
 }
 
 #endif /* __QDF_STR_H */

@@ -1,5 +1,5 @@
  /*
-  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
   *
   * Permission to use, copy, modify, and/or distribute this software for
   * any purpose with or without fee is hereby granted, provided that the
@@ -92,5 +92,54 @@ wlan_objmgr_debug_info_deinit(void)
 }
 
 #endif /*WLAN_OBJMGR_DEBUG*/
+
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+/**
+ * wlan_objmgr_trace_ref() - Save trace info to list
+ * @func_head: head object of function list
+ * @trace: trace object
+ * @func: function name
+ * @line: line number
+ *
+ * API to trace func and line information for reference
+ * and dereference
+ *
+ * Return: void
+ */
+void
+wlan_objmgr_trace_ref(struct wlan_objmgr_trace_func **func_head,
+		      struct wlan_objmgr_trace *trace,
+		      const char *func, int line);
+
+/**
+ * wlan_objmgr_trace_init_lock() - Initialize trace spinlock
+ * @trace: trace object
+ *
+ * API to initialize trace spin lock
+ *
+ * Return: void
+ */
+void wlan_objmgr_trace_init_lock(struct wlan_objmgr_trace *trace);
+
+/**
+ * wlan_objmgr_trace_deinit_lock() - Deinitialize trace spinlock
+ * @trace: trace object
+ *
+ * API to deinitialize trace spin lock
+ *
+ * Return: void
+ */
+void wlan_objmgr_trace_deinit_lock(struct wlan_objmgr_trace *trace);
+
+/**
+ * wlan_objmgr_trace_del_ref_list() - Delete reference trace list
+ * @trace: trace object
+ *
+ * API to delete trace list
+ *
+ * Return: void
+ */
+void wlan_objmgr_trace_del_ref_list(struct wlan_objmgr_trace *trace);
+#endif /*WLAN_OBJMGR_REF_ID_TRACE*/
 
 #endif /*_WLAN_OBJMGR_DEBUG_H_*/

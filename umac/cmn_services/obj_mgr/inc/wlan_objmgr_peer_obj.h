@@ -143,6 +143,7 @@ struct wlan_objmgr_peer_mlme {
  * @ref_cnt:           Ref count
  * @ref_id_dbg:        Array to track Ref count
  * @print_cnt:         Count to throttle Logical delete prints
+ * @wlan_objmgr_trace: Trace ref and deref
  */
 struct wlan_objmgr_peer_objmgr {
 	struct wlan_objmgr_vdev *vdev;
@@ -151,6 +152,9 @@ struct wlan_objmgr_peer_objmgr {
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
 #endif
 	uint8_t print_cnt;
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+	struct wlan_objmgr_trace trace;
+#endif
 };
 
 /**
@@ -1153,5 +1157,62 @@ void wlan_objmgr_print_peer_ref_ids(struct wlan_objmgr_peer *peer,
 uint32_t
 wlan_objmgr_peer_get_comp_ref_cnt(struct wlan_objmgr_peer *peer,
 				  enum wlan_umac_comp_id id);
+
+/**
+ * wlan_objmgr_peer_trace_init_lock() - Initialize peer trace lock
+ * @peer: peer object pointer
+ *
+ * Return: void
+ */
+#ifdef WLAN_OBJMGR_TRACE
+static inline void
+wlan_objmgr_peer_trace_init_lock(struct wlan_objmgr_peer *peer)
+{
+	wlan_objmgr_trace_init_lock(&peer->peer_objmgr.trace);
+}
+#else
+static inline void
+wlan_objmgr_peer_trace_init_lock(struct wlan_objmgr_peer *peer)
+{
+}
+#endif
+
+/**
+ * wlan_objmgr_peer_trace_deinit_lock() - Deinitialize peer trace lock
+ * @peer: peer object pointer
+ *
+ * Return: void
+ */
+#ifdef WLAN_OBJMGR_TRACE
+static inline void
+wlan_objmgr_peer_trace_deinit_lock(struct wlan_objmgr_peer *peer)
+{
+	wlan_objmgr_trace_deinit_lock(&peer->peer_objmgr.trace);
+}
+#else
+static inline void
+wlan_objmgr_peer_trace_deinit_lock(struct wlan_objmgr_peer *peer)
+{
+}
+#endif
+
+/**
+ * wlan_objmgr_peer_trace_del_ref_list() - Delete peer trace reference list
+ * @peer: peer object pointer
+ *
+ * Return: void
+ */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+static inline void
+wlan_objmgr_peer_trace_del_ref_list(struct wlan_objmgr_peer *peer)
+{
+	wlan_objmgr_trace_del_ref_list(&peer->peer_objmgr.trace);
+}
+#else
+static inline void
+wlan_objmgr_peer_trace_del_ref_list(struct wlan_objmgr_peer *peer)
+{
+}
+#endif
 
 #endif /* _WLAN_OBJMGR_PEER_OBJ_H_*/

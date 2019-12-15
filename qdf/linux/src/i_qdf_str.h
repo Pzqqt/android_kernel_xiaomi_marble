@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,5 +33,6 @@
 #define __qdf_str_len(str) strlen(str)
 #define __qdf_str_trim(str) strim(str)
 #define __qdf_str_nlen(str, limit) strnlen(str, limit)
+#define __qdf_str_ncmp(left, right, limit) strncmp(left, right, limit)
 
 #endif /* __I_QDF_STR_H */

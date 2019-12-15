@@ -103,6 +103,8 @@ static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 					 QDF_STATUS_E_FAILURE)
 		return QDF_STATUS_E_FAILURE;
 
+	wlan_objmgr_vdev_trace_del_ref_list(vdev);
+	wlan_objmgr_vdev_trace_deinit_lock(vdev);
 	qdf_spinlock_destroy(&vdev->vdev_lock);
 
 	qdf_mem_free(vdev->vdev_mlme.bss_chan);
@@ -157,6 +159,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		return NULL;
 	}
 
+	wlan_objmgr_vdev_trace_init_lock(vdev);
 	/* Initialize spinlock */
 	qdf_spinlock_create(&vdev->vdev_lock);
 	/* Attach VDEV to PSOC VDEV's list */
@@ -167,6 +170,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		qdf_mem_free(vdev->vdev_mlme.bss_chan);
 		qdf_mem_free(vdev->vdev_mlme.des_chan);
 		qdf_spinlock_destroy(&vdev->vdev_lock);
+		wlan_objmgr_vdev_trace_deinit_lock(vdev);
 		qdf_mem_free(vdev);
 		return NULL;
 	}
@@ -181,6 +185,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		qdf_mem_free(vdev->vdev_mlme.bss_chan);
 		qdf_mem_free(vdev->vdev_mlme.des_chan);
 		qdf_spinlock_destroy(&vdev->vdev_lock);
+		wlan_objmgr_vdev_trace_deinit_lock(vdev);
 		qdf_mem_free(vdev);
 		return NULL;
 	}
@@ -975,6 +980,13 @@ wlan_objmgr_vdev_ref_trace(struct wlan_objmgr_vdev *vdev,
 			   wlan_objmgr_ref_dbgid id,
 			   const char *func, int line)
 {
+	struct wlan_objmgr_trace *trace;
+
+	trace = &vdev->vdev_objmgr.trace;
+
+	if (func)
+		wlan_objmgr_trace_ref(&trace->references[id].head,
+				      trace, func, line);
 }
 
 static inline void
@@ -982,6 +994,13 @@ wlan_objmgr_vdev_deref_trace(struct wlan_objmgr_vdev *vdev,
 			     wlan_objmgr_ref_dbgid id,
 			     const char *func, int line)
 {
+	struct wlan_objmgr_trace *trace;
+
+	trace = &vdev->vdev_objmgr.trace;
+
+	if (func)
+		wlan_objmgr_trace_ref(&trace->dereferences[id].head,
+				      trace, func, line);
 }
 #endif
 
