@@ -22,6 +22,7 @@
 
 #include <qdf_list.h>
 #include <qdf_status.h>
+#include <qdf_module.h>
 #include <linux/wireless.h>
 #include <linux/netdevice.h>
 #include <net/cfg80211.h>
@@ -1695,6 +1696,8 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 
 	return status;
 }
+
+qdf_export_symbol(wlan_abort_scan);
 
 int wlan_cfg80211_abort_scan(struct wlan_objmgr_pdev *pdev)
 {
