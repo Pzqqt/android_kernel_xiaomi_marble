@@ -880,7 +880,7 @@ void wlan_tasklet(unsigned long data)
 		goto end;
 
 	if (!ADRASTEA_BU) {
-		(irqreturn_t) hif_fw_interrupt_handler(sc->irq_event, scn);
+		hif_fw_interrupt_handler(sc->irq_event, scn);
 		if (scn->target_status == TARGET_STATUS_RESET)
 			goto end;
 	}
