@@ -398,39 +398,11 @@ static void hdd_abort_system_suspend(struct device *dev)
 }
 #endif
 
-/* Total wait time for pm freeze is 10 seconds */
-#define HDD_SLEEP_FOR_PM_FREEZE_TIME (500)
-#define HDD_MAX_ATTEMPT_SLEEP_FOR_PM_FREEZE_TIME (20)
-
-static int hdd_wait_for_pm_freeze(void)
-{
-	uint8_t count = 0;
-
-	while (pm_freezing) {
-		hdd_info("pm freezing wait for %d ms",
-			 HDD_SLEEP_FOR_PM_FREEZE_TIME);
-		msleep(HDD_SLEEP_FOR_PM_FREEZE_TIME);
-		count++;
-		if (count > HDD_MAX_ATTEMPT_SLEEP_FOR_PM_FREEZE_TIME) {
-			hdd_err("timeout occurred for pm freezing");
-			return -EBUSY;
-		}
-	}
-
-	return 0;
-}
-
 int hdd_soc_idle_restart_lock(struct device *dev)
 {
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART);
 
 	hdd_abort_system_suspend(dev);
-
-	if (hdd_wait_for_pm_freeze()) {
-		hdd_allow_suspend(
-			WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART);
-		return -EBUSY;
-	}
 
 	return 0;
 }
