@@ -4920,6 +4920,10 @@ static void sde_crtc_setup_capabilities_blob(struct sde_kms_info *info,
 	sde_kms_info_add_keyint(info, "has_hdr", catalog->has_hdr);
 	sde_kms_info_add_keyint(info, "has_hdr_plus", catalog->has_hdr_plus);
 
+	if (catalog->uidle_cfg.uidle_rev)
+		sde_kms_info_add_keyint(info, "has_uidle",
+			true);
+
 	for (i = 0; i < catalog->limit_count; i++) {
 		sde_kms_info_add_keyint(info,
 			catalog->limit_cfg[i].name,
