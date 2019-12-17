@@ -631,7 +631,6 @@ static void __hdd_soc_remove(struct device *dev)
 
 	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE) {
 		hdd_wlan_stop_modules(hdd_ctx, false);
-		hdd_bus_bandwidth_deinit(hdd_ctx);
 		qdf_nbuf_deinit_replenish_timer();
 	} else {
 		hdd_wlan_exit(hdd_ctx);
@@ -747,7 +746,6 @@ static void __hdd_soc_recovery_shutdown(void)
 	/* cancel/flush any pending/active idle shutdown work */
 	hdd_psoc_idle_timer_stop(hdd_ctx);
 	hdd_bus_bw_compute_timer_stop(hdd_ctx);
-	hdd_bus_bandwidth_deinit(hdd_ctx);
 
 	/* nothing to do if the soc is already unloaded */
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
