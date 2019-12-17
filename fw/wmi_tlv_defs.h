@@ -1032,6 +1032,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_neighbor_report_info_tlv_param,
     WMITLV_TAG_STRUC_wmi_roam_neighbor_report_channel_info_tlv_param,
     WMITLV_TAG_STRUC_wmi_set_ocl_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_audio_aggr_set_group_auto_rate,
+    WMITLV_TAG_STRUC_wmi_audio_aggr_set_group_probe,
 } WMITLV_TAG_ID;
 
 /*
@@ -1453,6 +1455,8 @@ typedef enum {
     OP(WMI_GET_CHANNEL_ANI_CMDID) \
     OP(WMI_PEER_CONFIG_VLAN_CMDID) \
     OP(WMI_SET_OCL_CMDID) \
+    OP(WMI_AUDIO_AGGR_SET_GROUP_AUTO_RATE_CMDID) \
+    OP(WMI_AUDIO_AGGR_SET_GROUP_PROBE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4210,6 +4214,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_AUDIO_AGGR_SET_GROUP_RATE_CMDID);
 #define WMITLV_TABLE_WMI_AUDIO_AGGR_SET_GROUP_RETRY_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_audio_aggr_set_group_retry, wmi_audio_aggr_set_group_retry_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_AUDIO_AGGR_SET_GROUP_RETRY_CMDID);
+
+#define WMITLV_TABLE_WMI_AUDIO_AGGR_SET_GROUP_AUTO_RATE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_audio_aggr_set_group_auto_rate, wmi_audio_aggr_set_group_auto_rate_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_AUDIO_AGGR_SET_GROUP_AUTO_RATE_CMDID);
+
+#define WMITLV_TABLE_WMI_AUDIO_AGGR_SET_GROUP_PROBE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_audio_aggr_set_group_probe, wmi_audio_aggr_set_group_probe_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_AUDIO_AGGR_SET_GROUP_PROBE_CMDID);
 
 /* CFR Capture Filter cmd */
 #define WMITLV_TABLE_WMI_CFR_CAPTURE_FILTER_CMDID(id,op,buf,len) \

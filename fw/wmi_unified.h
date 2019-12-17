@@ -1264,6 +1264,8 @@ typedef enum {
     WMI_AUDIO_AGGR_DEL_GROUP_CMDID,
     WMI_AUDIO_AGGR_SET_GROUP_RATE_CMDID,
     WMI_AUDIO_AGGR_SET_GROUP_RETRY_CMDID,
+    WMI_AUDIO_AGGR_SET_GROUP_AUTO_RATE_CMDID,
+    WMI_AUDIO_AGGR_SET_GROUP_PROBE_CMDID,
 
     /** WMI commands related to Channel Frequency Response Capture **/
     WMI_CFR_CAPTURE_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_CFR_CAPTURE),
@@ -25024,6 +25026,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_ATF_EXT_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_GET_CHANNEL_ANI_CMDID);
         WMI_RETURN_STRING(WMI_SET_OCL_CMDID);
+        WMI_RETURN_STRING(WMI_AUDIO_AGGR_SET_GROUP_AUTO_RATE_CMDID);
+        WMI_RETURN_STRING(WMI_AUDIO_AGGR_SET_GROUP_PROBE_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -28316,28 +28320,33 @@ typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_audio_aggr_enable_cmd_fixed_param */
     A_UINT32 aggr_enable; /* enable aggregation for audio frame */
     A_UINT32 tbd_enable;  /* enable time_based discarding for audio frame */
+    A_UINT32 vdev_id;
 } wmi_audio_aggr_enable_cmd_fixed_param;
 
 typedef struct wmi_audio_aggr_rate_set_s {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_audio_aggr_rate_set */
     A_UINT32 mcs;
     A_UINT32 bandwidth; /* 0 for 20M, 1 for 40M and 2 for 80M, etc. */
+    A_UINT32 vdev_id;
 } WMI_AUDIO_AGGR_RATE_SET_T;
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_audio_aggr_add_group */
     A_UINT32 group_id;      /* id of audio group */
     wmi_mac_addr multicast_addr; /* multicast address of audio group */
+    A_UINT32 vdev_id;
 } wmi_audio_aggr_add_group_cmd_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_audio_aggr_del_group */
     A_UINT32 group_id;
+    A_UINT32 vdev_id;
 } wmi_audio_aggr_del_group_cmd_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_audio_aggr_set_group_rate */
     A_UINT32 group_id;
+    A_UINT32 vdev_id;
     /**
      * TLV (tag length value) parameters follow the
      * structure. The TLV's are:
@@ -28349,7 +28358,35 @@ typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_audio_aggr_set_group_retry */
     A_UINT32 group_id;
     A_UINT32 retry_thresh;
+    A_UINT32 vdev_id;
 } wmi_audio_aggr_set_group_retry_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 group_id;
+    /*
+     * bit0: if set, Enable HT20
+     * bit1: if set, Enable HT40
+     * bit2, bit3: Reserved
+     * bit4: if set, Enable VHT20
+     * bit5: if set, Enable VHT40
+     * bit6: if set, Enable VHT80
+     * bit7 ~ bit31: Reserved
+     */
+    A_UINT32 bw;
+    A_UINT32 mcs_min;
+    A_UINT32 mcs_max;
+    A_UINT32 mcs_offset;
+    A_UINT32 nss;
+} wmi_audio_aggr_set_group_auto_rate_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id;
+    A_UINT32 group_id;
+    A_UINT32 interval;
+} wmi_audio_aggr_set_group_probe_cmd_fixed_param;
 
 typedef struct {
     /** TLV tag and len; tag equals
