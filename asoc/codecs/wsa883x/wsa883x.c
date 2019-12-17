@@ -16,6 +16,7 @@
 #include <linux/kernel.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
+#include <linux/of_platform.h>
 #include <linux/regmap.h>
 #include <linux/debugfs.h>
 #include <soc/soundwire.h>
@@ -35,6 +36,8 @@
 #define TEMP_INVALID	0xFFFF
 #define WSA883X_TEMP_RETRY 3
 
+#define DRV_NAME "wsa-codec"
+
 enum {
 	WSA_4OHMS =4,
 	WSA_8OHMS = 8,
@@ -49,6 +52,56 @@ struct wsa_temp_register {
 	u8 d2_lsb;
 	u8 dmeas_msb;
 	u8 dmeas_lsb;
+};
+
+struct wsa_reg_mask_val {
+	u16 reg;
+	u8 mask;
+	u8 val;
+};
+
+static const struct wsa_reg_mask_val reg_init[] = {
+	{WSA883X_PA_FSM_BYP, 0x01, 0x00},
+	{WSA883X_CDC_SPK_DSM_A2_0, 0xFF, 0x0A},
+	{WSA883X_CDC_SPK_DSM_A2_1, 0x0F, 0x08},
+	{WSA883X_CDC_SPK_DSM_A3_0, 0xFF, 0xF3},
+	{WSA883X_CDC_SPK_DSM_A3_1, 0x07, 0x07},
+	{WSA883X_CDC_SPK_DSM_A4_0, 0xFF, 0x79},
+	{WSA883X_CDC_SPK_DSM_A4_1, 0x03, 0x02},
+	{WSA883X_CDC_SPK_DSM_A5_0, 0xFF, 0x0B},
+	{WSA883X_CDC_SPK_DSM_A5_1, 0x03, 0x02},
+	{WSA883X_CDC_SPK_DSM_A6_0, 0xFF, 0x8A},
+	{WSA883X_CDC_SPK_DSM_A7_0, 0xFF, 0x9B},
+	{WSA883X_CDC_SPK_DSM_C_0, 0xFF, 0x68},
+	{WSA883X_CDC_SPK_DSM_C_1, 0xFF, 0x54},
+	{WSA883X_CDC_SPK_DSM_C_2, 0xFF, 0xF2},
+	{WSA883X_CDC_SPK_DSM_C_3, 0x3F, 0x20},
+	{WSA883X_CDC_SPK_DSM_R1, 0xFF, 0x83},
+	{WSA883X_CDC_SPK_DSM_R2, 0xFF, 0x7F},
+	{WSA883X_CDC_SPK_DSM_R3, 0xFF, 0x9D},
+	{WSA883X_CDC_SPK_DSM_R4, 0xFF, 0x82},
+	{WSA883X_CDC_SPK_DSM_R5, 0xFF, 0x8B},
+	{WSA883X_CDC_SPK_DSM_R6, 0xFF, 0x9B},
+	{WSA883X_CDC_SPK_DSM_R7, 0xFF, 0x3F},
+	{WSA883X_DRE_CTL_0, 0xF0, 0x90},
+	{WSA883X_DRE_IDLE_DET_CTL, 0x10, 0x00},
+	{WSA883X_PDM_WD_CTL, 0x01, 0x01},
+	{WSA883X_CURRENT_LIMIT, 0x78, 0x40},
+	{WSA883X_DRE_CTL_0, 0x07, 0x02},
+	{WSA883X_VAGC_TIME, 0x03, 0x02},
+	{WSA883X_VAGC_CTL, 0x01, 0x01},
+	{WSA883X_TAGC_CTL, 0x0E, 0x0A},
+	{WSA883X_TAGC_TIME, 0x0C, 0x0C},
+	{WSA883X_TAGC_E2E_GAIN, 0x1F, 0x02},
+	{WSA883X_TEMP_CONFIG0, 0x07, 0x02},
+	{WSA883X_TEMP_CONFIG1, 0x07, 0x02},
+	{WSA883X_OTP_REG_1, 0xFF, 0x49},
+	{WSA883X_OTP_REG_2, 0xC0, 0x80},
+	{WSA883X_OTP_REG_3, 0xFF, 0xC9},
+	{WSA883X_OTP_REG_4, 0xC0, 0x40},
+	{WSA883X_TAGC_CTL, 0x01, 0x01},
+	{WSA883X_CKWD_CTL_0, 0x60, 0x00},
+	{WSA883X_CKWD_CTL_1, 0x1F, 0x1B},
 };
 
 static int wsa883x_get_temperature(struct snd_soc_component *component,
@@ -69,6 +122,7 @@ enum {
 	WSA883X_IRQ_INT_INTR_PIN,
 	WSA883X_IRQ_INT_UVLO,
 	WSA883X_IRQ_INT_PA_ON_ERR,
+	WSA883X_NUM_IRQS,
 };
 
 static const struct regmap_irq wsa883x_irqs[WSA883X_NUM_IRQS] = {
@@ -826,12 +880,12 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 			snd_soc_dapm_to_component(w->dapm);
 	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
-	int min_gain, max_gain;
 
 	dev_dbg(component->dev, "%s: %s %d\n", __func__, w->name, event);
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		/* TODO Vote for Global PA */
+		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
+				0x01, 0x01);
 		break;
 
 	case SND_SOC_DAPM_POST_PMU:
@@ -840,7 +894,8 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 				      wsa883x->swr_slave->dev_num);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		/* TODO Unvote for Global PA */
+		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
+				0x01, 0x00);
 		break;
 	}
 	return 0;
@@ -891,10 +946,14 @@ EXPORT_SYMBOL(wsa883x_set_channel_map);
 static void wsa883x_codec_init(struct snd_soc_component *component)
 {
 	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
+	int i;
 
 	if (!wsa883x)
 		return;
 
+	for (i = 0; i < ARRAY_SIZE(reg_init); i++)
+		snd_soc_component_update_bits(component, reg_init[i].reg,
+					reg_init[i].mask, reg_init[i].val);
 }
 
 static int32_t wsa883x_temp_reg_read(struct snd_soc_component *component,
@@ -936,7 +995,6 @@ static int32_t wsa883x_temp_reg_read(struct snd_soc_component *component,
 static int wsa883x_get_temperature(struct snd_soc_component *component,
 				   int *temp)
 {
-	struct snd_soc_component *component;
 	struct wsa_temp_register reg;
 	int dmeas, d1, d2;
 	int ret = 0;
@@ -950,7 +1008,7 @@ static int wsa883x_get_temperature(struct snd_soc_component *component,
 		return -EINVAL;
 
 	do {
-		ret = wsa883x_temp_reg_read(component, &reg)
+		ret = wsa883x_temp_reg_read(component, &reg);
 		if (ret) {
 			pr_err("%s: temp read failed: %d, current temp: %d\n",
 				__func__, ret, wsa883x->curr_temp);
@@ -1075,13 +1133,12 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 	switch (event) {
 	case BOLERO_WSA_EVT_PA_OFF_PRE_SSR:
 		snd_soc_component_update_bits(wsa883x->component,
-					      WSA883X_SPKR_DRV_GAIN,
-					      0xF0, 0xC0);
-		snd_soc_component_update_bits(wsa883x->component,
-					      WSA883X_SPKR_DRV_EN,
-					      0x80, 0x00);
+					WSA883X_PA_FSM_CTL,
+					0x01, 0x00);
 		break;
 	default:
+		dev_dbg(wsa883x->dev, "%s: unknown event %d\n",
+			__func__, event);
 		break;
 	}
 
@@ -1090,7 +1147,7 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 
 static int wsa883x_swr_probe(struct swr_device *pdev)
 {
-	int ret = 0;
+	int ret = 0, i = 0;
 	struct wsa883x_priv *wsa883x;
 	u8 devnum = 0;
 	bool pin_state_current = false;
@@ -1143,7 +1200,7 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	wsa883x->irq_info.wcd_regmap_irq_chip = &wsa883x_regmap_irq_chip;
 	wsa883x->irq_info.codec_name = "WSA883X";
 	wsa883x->irq_info.regmap = wsa883x->regmap;
-	wsa883x->irq_info.dev = dev;
+	wsa883x->irq_info.dev = &pdev->dev;
 	ret = wcd_irq_init(&wsa883x->irq_info, &wsa883x->virq);
 
 	if (ret) {

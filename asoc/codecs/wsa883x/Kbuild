@@ -51,7 +51,6 @@ ifdef CONFIG_SND_SOC_WSA883X
 	WSA883X_OBJS += wsa883x.o
 	WSA883X_OBJS += wsa883x-regmap.o
 	WSA883X_OBJS += wsa883x-tables.o
-	WSA883X_OBJS += wsa883x-temp-sensor.o
 endif
 
 LINUX_INC +=	-Iinclude/linux
@@ -93,6 +92,7 @@ KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/dsp/Module
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/Module.symvers
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/Module.symvers
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/soc/Module.symvers
+KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/wsa883x/Module.symvers
 endif
 
 # Module information used by KBuild framework

@@ -6,6 +6,7 @@
 #ifndef WSA883X_INTERNAL_H
 #define WSA883X_INTERNAL_H
 
+#include <asoc/wcd-irq.h>
 #include "wsa883x.h"
 #include "wsa883x-registers.h"
 
@@ -63,9 +64,9 @@ enum {
 };
 
 struct wsa_ctrl_platform_data {
-	void *handle,
+	void *handle;
 	int (*update_wsa_event)(void *handle, u16 event, u32 data);
-	int (*register_notifier)(void *handle, struct notifer_block *nblock,
+	int (*register_notifier)(void *handle, struct notifier_block *nblock,
 				bool enable);
 };
 
@@ -101,6 +102,7 @@ struct wsa883x_priv {
 	int pa_mute;
 	int curr_temp;
 	int variant;
+	u8 pa_gain;
 	struct irq_domain *virq;
 	struct wcd_irq_info irq_info;
 #ifdef CONFIG_DEBUG_FS
