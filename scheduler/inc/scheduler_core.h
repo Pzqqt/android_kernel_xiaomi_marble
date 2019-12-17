@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -95,11 +95,11 @@ struct scheduler_mq_ctx {
  * @resume_sch_event: scheduler resume wait event
  * @sch_thread_lock: scheduler thread lock
  * @sch_last_qidx: scheduler last qidx allocation
+ * @watchdog_msg_type: 'type' of the current msg being processed
  * @hdd_callback: os if suspend callback
  * @legacy_wma_handler: legacy wma message handler
  * @legacy_sys_handler: legacy sys message handler
  * @watchdog_timer: timer for triggering a scheduler watchdog bite
- * @watchdog_msg_type: 'type' of the current msg being processed
  * @watchdog_callback: the callback of the current msg being processed
  */
 struct scheduler_ctx {
@@ -112,11 +112,11 @@ struct scheduler_ctx {
 	qdf_event_t resume_sch_event;
 	qdf_spinlock_t sch_thread_lock;
 	uint8_t sch_last_qidx;
+	uint16_t watchdog_msg_type;
 	hdd_suspend_callback hdd_callback;
 	scheduler_msg_process_fn_t legacy_wma_handler;
 	scheduler_msg_process_fn_t legacy_sys_handler;
 	qdf_timer_t watchdog_timer;
-	uint16_t watchdog_msg_type;
 	void *watchdog_callback;
 };
 
