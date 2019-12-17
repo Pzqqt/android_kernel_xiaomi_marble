@@ -230,6 +230,7 @@ struct sde_drm_de_v1 {
 
 #define SDE_DRM_QSEED3LITE
 #define SDE_DRM_QSEED4
+#define SDE_DRM_INLINE_PREDOWNSCALE
 
 /**
  * struct sde_drm_scaler_v2 - version 2 of struct sde_drm_scaler
@@ -263,6 +264,10 @@ struct sde_drm_de_v1 {
  * @unsharp_mask_blend: Unsharp Blend Filter Ratio
  * @de_blend:          Ratio of two unsharp mask filters
  * @flags:             Scaler configuration flags
+ * @pre_downscale_x_0  Pre-downscale ratio, x-direction, plane 0(Y/RGB)
+ * @pre_downscale_x_1  Pre-downscale ratio, x-direction, plane 1(UV)
+ * @pre_downscale_y_0  Pre-downscale ratio, y-direction, plane 0(Y/RGB)
+ * @pre_downscale_y_1  Pre-downscale ratio, y-direction, plane 1(UV)
  */
 struct sde_drm_scaler_v2 {
 	/*
@@ -320,6 +325,14 @@ struct sde_drm_scaler_v2 {
 	uint32_t unsharp_mask_blend;
 	uint32_t de_blend;
 	uint32_t flags;
+
+	/*
+	 * Inline pre-downscale settings
+	 */
+	uint32_t pre_downscale_x_0;
+	uint32_t pre_downscale_x_1;
+	uint32_t pre_downscale_y_0;
+	uint32_t pre_downscale_y_1;
 };
 
 /* Number of dest scalers supported */

@@ -160,6 +160,13 @@ struct sde_hw_scaler3_lut_cfg {
 	size_t sep_len;
 };
 
+struct sde_hw_inline_pre_downscale_cfg {
+	u32 pre_downscale_x_0;
+	u32 pre_downscale_x_1;
+	u32 pre_downscale_y_0;
+	u32 pre_downscale_y_1;
+};
+
 u32 *sde_hw_util_get_log_mask_ptr(void);
 
 void sde_reg_write(struct sde_hw_blk_reg_map *c,

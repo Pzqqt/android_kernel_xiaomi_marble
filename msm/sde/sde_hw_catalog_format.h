@@ -53,6 +53,8 @@
 
 #define P010_FMTS	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_DX}
 
+#define P010_UBWC_FMTS	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_DX | \
+		DRM_FORMAT_MOD_QCOM_COMPRESSED}
 
 static const struct sde_format_extended plane_formats[] = {
 	RGB_FMTS,
@@ -146,13 +148,19 @@ static const struct sde_format_extended wb2_formats[] = {
 };
 
 static const struct sde_format_extended p010_ubwc_formats[] = {
-	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_DX |
-		DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	P010_UBWC_FMTS,
 };
 
 static const struct sde_format_extended true_inline_rot_v1_fmts[] = {
 	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_COMPRESSED},
-	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_COMPRESSED |
-		DRM_FORMAT_MOD_QCOM_DX | DRM_FORMAT_MOD_QCOM_TIGHT}, /* tp10 */
+	TP10_UBWC_FMTS,
+	{0, 0},
+};
+
+static const struct sde_format_extended true_inline_rot_v2_fmts[] = {
+	{DRM_FORMAT_ABGR8888, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	TP10_UBWC_FMTS,
+	P010_UBWC_FMTS,
 	{0, 0},
 };

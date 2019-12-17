@@ -67,7 +67,8 @@
 #define SSPP_SRC_CONSTANT_COLOR            0x3c
 #define SSPP_EXCL_REC_CTL                  0x40
 #define SSPP_UBWC_STATIC_CTRL              0x44
-#define SSPP_FETCH_CONFIG                  0x048
+#define SSPP_FETCH_CONFIG                  0x48
+#define SSPP_PRE_DOWN_SCALE                0x50
 #define SSPP_DANGER_LUT                    0x60
 #define SSPP_SAFE_LUT                      0x64
 #define SSPP_CREQ_LUT                      0x68
@@ -594,6 +595,22 @@ static void _sde_hw_sspp_setup_scaler3(struct sde_hw_pipe *ctx,
 
 	sde_hw_setup_scaler3(&ctx->hw, scaler3_cfg,
 		ctx->cap->sblk->scaler_blk.version, idx, sspp->layout.format);
+}
+
+static void sde_hw_sspp_setup_pre_downscale(struct sde_hw_pipe *ctx,
+		struct sde_hw_inline_pre_downscale_cfg *pre_down)
+{
+	u32 idx, val;
+
+	if (!ctx || !pre_down || _sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx))
+		return;
+
+	val = pre_down->pre_downscale_x_0 |
+			(pre_down->pre_downscale_x_1 << 4) |
+			(pre_down->pre_downscale_y_0 << 8) |
+			(pre_down->pre_downscale_y_1 << 12);
+
+	SDE_REG_WRITE(&ctx->hw, SSPP_PRE_DOWN_SCALE + idx, val);
 }
 
 static u32 _sde_hw_sspp_get_scaler3_ver(struct sde_hw_pipe *ctx)
@@ -1241,6 +1258,9 @@ static void _setup_layer_ops(struct sde_hw_pipe *c,
 		if (!ret)
 			c->ops.setup_scaler = reg_dmav1_setup_vig_qseed3;
 	}
+
+	if (test_bit(SDE_SSPP_PREDOWNSCALE, &features))
+		c->ops.setup_pre_downscale = sde_hw_sspp_setup_pre_downscale;
 
 	if (test_bit(SDE_PERF_SSPP_SYS_CACHE, &perf_features))
 		c->ops.setup_sys_cache = sde_hw_sspp_setup_sys_cache;
