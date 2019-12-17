@@ -2541,6 +2541,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 				sizeof(param->peer_he_cap_phyinfo));
 	qdf_mem_copy(&cmd->peer_ppet, &param->peer_ppet,
 				sizeof(param->peer_ppet));
+	cmd->peer_he_caps_6ghz = param->peer_he_caps_6ghz;
 
 	/* Update peer legacy rate information */
 	buf_ptr += sizeof(*cmd);
