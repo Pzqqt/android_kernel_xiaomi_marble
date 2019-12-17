@@ -1250,7 +1250,8 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 	}
 }
 
-static u32 dsi_ctrl_validate_msg_flags(const struct mipi_dsi_msg *msg,
+static u32 dsi_ctrl_validate_msg_flags(struct dsi_ctrl *dsi_ctrl,
+				const struct mipi_dsi_msg *msg,
 				u32 flags)
 {
 	/*
@@ -1260,11 +1261,13 @@ static u32 dsi_ctrl_validate_msg_flags(const struct mipi_dsi_msg *msg,
 	 *    - DCS commands sent in non-embedded mode
 	 *    - whenever an explicit wait time is specificed for the command
 	 *      since the wait time cannot be guaranteed in async mode
+	 *    - video mode panels
 	 */
 	if ((flags & DSI_CTRL_CMD_FIFO_STORE) ||
 		flags & DSI_CTRL_CMD_READ ||
 		flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE ||
-		msg->wait_ms)
+		msg->wait_ms ||
+		(dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE))
 		flags &= ~DSI_CTRL_CMD_ASYNC_WAIT;
 
 	return flags;
@@ -1295,7 +1298,7 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
 		goto error;
 	}
 
-	flags = dsi_ctrl_validate_msg_flags(msg, flags);
+	flags = dsi_ctrl_validate_msg_flags(dsi_ctrl, msg, flags);
 
 	if (dsi_ctrl->dma_wait_queued)
 		dsi_ctrl_flush_cmd_dma_queue(dsi_ctrl);
