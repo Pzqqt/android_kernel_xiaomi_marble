@@ -15786,6 +15786,42 @@ static QDF_STATUS csr_check_and_validate_6g_ap(struct mac_context *mac_ctx,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_11AX
+static void csr_handle_iot_ap_no_common_he_rates(struct mac_context *mac,
+					struct csr_roam_session *session,
+					tDot11fBeaconIEs *ies,
+					uint32_t *dot11mode)
+{
+	uint16_t int_mcs;
+
+	/* if the connection is not 11AX mode then return */
+	if (*dot11mode != MLME_DOT11_MODE_11AX)
+		return;
+
+	int_mcs = HE_INTERSECT_MCS(session->he_config.tx_he_mcs_map_lt_80,
+				   ies->he_cap.rx_he_mcs_map_lt_80);
+	sme_debug("HE self rates %x AP rates %x int_mcs %x vendorIE %d",
+		  session->he_config.rx_he_mcs_map_lt_80,
+		  ies->he_cap.rx_he_mcs_map_lt_80, int_mcs,
+		  ies->vendor_vht_ie.present);
+	if (ies->he_cap.present)
+		if ((int_mcs == 0xFFFF) &&
+		    (ies->vendor_vht_ie.present ||
+		     ies->VHTCaps.present)) {
+			*dot11mode = MLME_DOT11_MODE_11AC;
+			sme_debug("No common 11AX rate. Force 11AC connection");
+	}
+}
+#else
+static void csr_handle_iot_ap_no_common_he_rates(struct mac_context *mac,
+					struct csr_roam_session *session,
+					tDot11fBeaconIEs *ies,
+					uint32_t *dot11mode)
+{
+}
+#endif
+
 /**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "struct join_req".
@@ -15942,6 +15978,13 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			/* Need to disable VHT operation in 2.4 GHz band */
 			dot11mode = MLME_DOT11_MODE_11N;
 		}
+		/*
+		 * FIX IOT AP:
+		 * AP capable of HE but doesn't advertize MCS rates for 1x1/2x2.
+		 * In such scenario, associate to AP in VHT mode
+		 */
+		csr_handle_iot_ap_no_common_he_rates(mac, pSession, pIes,
+						     &dot11mode);
 
 		ieLen = csr_get_ielen_from_bss_description(pBssDescription);
 
