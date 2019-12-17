@@ -1783,6 +1783,9 @@ static void sde_encoder_phys_cmd_trigger_start(
 	} else {
 		sde_encoder_helper_trigger_start(phys_enc);
 	}
+
+	/* wr_ptr_wait_success is set true when wr_ptr arrives */
+	cmd_enc->wr_ptr_wait_success = false;
 }
 
 static void sde_encoder_phys_cmd_setup_vsync_source(
