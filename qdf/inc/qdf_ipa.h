@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -665,5 +665,22 @@ static inline bool qdf_get_ipa_smmu_enabled(void)
 }
 #endif
 
+#ifdef IPA_LAN_RX_NAPI_SUPPORT
+/**
+ * qdf_ipa_get_lan_rx_napi() - Check if NAPI is enabled in LAN
+ * RX DP
+ *
+ * Returns: true if enabled, false otherwise
+ */
+static inline bool qdf_ipa_get_lan_rx_napi(void)
+{
+	return __qdf_ipa_get_lan_rx_napi();
+}
+#else
+static inline bool qdf_ipa_get_lan_rx_napi(void)
+{
+	return false;
+}
+#endif /* IPA_LAN_RX_NAPI_SUPPORT */
 #endif /* IPA_OFFLOAD */
 #endif /* _QDF_IPA_H */

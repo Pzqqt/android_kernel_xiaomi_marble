@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #ifdef IPA_OFFLOAD
 
 #include <linux/ipa.h>
+#include <linux/version.h>
 
 /**
  * __qdf_ipa_wdi_meter_evt_type_t - type of event client callback is
@@ -554,6 +555,10 @@ typedef struct ipa_wlan_hdr_attrib_val __qdf_ipa_wlan_hdr_attrib_val_t;
 #define __QDF_IPA_CLIENT_WLAN3_CONS IPA_CLIENT_WLAN3_CONS
 #define __QDF_IPA_CLIENT_WLAN4_CONS IPA_CLIENT_WLAN4_CONS
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+#define IPA_LAN_RX_NAPI_SUPPORT
+#endif
+
 /*
  * Resume / Suspend
  */
@@ -967,5 +972,16 @@ static bool __qdf_get_ipa_smmu_enabled(void)
 }
 #endif
 
+#ifdef IPA_LAN_RX_NAPI_SUPPORT
+/**
+ * ipa_get_lan_rx_napi() - Check if NAPI is enabled in LAN RX DP
+ *
+ * Returns: true if enabled, false otherwise
+ */
+static inline bool __qdf_ipa_get_lan_rx_napi(void)
+{
+	return ipa_get_lan_rx_napi();
+}
+#endif /* IPA_LAN_RX_NAPI_SUPPORT */
 #endif /* IPA_OFFLOAD */
 #endif /* _I_QDF_IPA_H */
