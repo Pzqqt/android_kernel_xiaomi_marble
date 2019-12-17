@@ -36,6 +36,18 @@
 
 /* Macros to handle sequence number bitmaps */
 
+/* HW generated rts frame flag */
+#define SEND_WIFIRTS_LEGACY_E 1
+
+/* HW generated 11 AC static bw flag */
+#define SEND_WIFIRTS_11AC_STATIC_BW_E 2
+
+/* HW generated 11 AC dynamic bw flag */
+#define SEND_WIFIRTS_11AC_DYNAMIC_BW_E 3
+
+/* HW generated cts frame flag */
+#define SEND_WIFICTS2SELF_E 4
+
 /* Size (in bits) of a segment of sequence number bitmap */
 #define SEQ_SEG_SZ_BITS(_seqarr) (sizeof(_seqarr[0]) << 3)
 
@@ -295,6 +307,8 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 				&pdev->tx_capture.ctl_mgmt_lock[i][j]);
 		}
 	}
+	qdf_mem_zero(&pdev->tx_capture.dummy_ppdu_desc,
+		     sizeof(struct cdp_tx_completion_ppdu));
 }
 
 /**
@@ -1338,6 +1352,14 @@ void dp_update_frame_ctrl_from_frame_type(void *desc)
 	}
 }
 
+/**
+ * dp_send_dummy_mpdu_info_to_stack(): send dummy payload to stack
+ * to upper layer if complete
+ * @pdev: DP pdev handle
+ * @desc: cdp tx completion ppdu desc
+ *
+ * return: status
+ */
 static inline
 QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 					  void *desc)
@@ -1456,6 +1478,87 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 }
 
 /**
+ * dp_send_dummy_rts_cts_frame(): send dummy rts and cts frame out
+ * to upper layer if complete
+ * @pdev: DP pdev handle
+ * @cur_ppdu_desc: cdp tx completion ppdu desc
+ *
+ * return: void
+ */
+static
+void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
+				 struct cdp_tx_completion_ppdu *cur_ppdu_desc)
+{
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+	struct dp_peer *peer;
+	uint8_t rts_send;
+
+	rts_send = 0;
+	ptr_tx_cap = &pdev->tx_capture;
+	ppdu_desc = &ptr_tx_cap->dummy_ppdu_desc;
+
+	ppdu_desc->channel = cur_ppdu_desc->channel;
+	ppdu_desc->num_mpdu = 1;
+	ppdu_desc->num_msdu = 1;
+	ppdu_desc->user[0].ppdu_type = HTT_PPDU_STATS_PPDU_TYPE_SU;
+	ppdu_desc->bar_num_users = 0;
+	ppdu_desc->num_users = 1;
+
+	if (cur_ppdu_desc->mprot_type == SEND_WIFIRTS_LEGACY_E ||
+	    cur_ppdu_desc->mprot_type == SEND_WIFIRTS_11AC_DYNAMIC_BW_E ||
+	    cur_ppdu_desc->mprot_type == SEND_WIFIRTS_11AC_STATIC_BW_E) {
+		rts_send = 1;
+		/*
+		 *  send dummy RTS frame followed by CTS
+		 *  update frame_ctrl and htt_frame_type
+		 */
+		ppdu_desc->htt_frame_type = HTT_STATS_FTYPE_SGEN_RTS;
+		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
+		ppdu_desc->ppdu_start_timestamp =
+				cur_ppdu_desc->ppdu_start_timestamp;
+		ppdu_desc->ppdu_end_timestamp =
+				cur_ppdu_desc->ppdu_end_timestamp;
+		ppdu_desc->user[0].peer_id = cur_ppdu_desc->user[0].peer_id;
+		ppdu_desc->frame_ctrl = (IEEE80211_FC0_SUBTYPE_RTS |
+					 IEEE80211_FC0_TYPE_CTL);
+		qdf_mem_copy(&ppdu_desc->user[0].mac_addr,
+			     &cur_ppdu_desc->user[0].mac_addr,
+			     QDF_MAC_ADDR_SIZE);
+
+		dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc);
+	}
+
+	if ((rts_send && cur_ppdu_desc->rts_success) ||
+	    cur_ppdu_desc->mprot_type == SEND_WIFICTS2SELF_E) {
+		/* send dummy CTS frame */
+		ppdu_desc->htt_frame_type = HTT_STATS_FTYPE_SGEN_CTS;
+		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
+		ppdu_desc->frame_ctrl = (IEEE80211_FC0_SUBTYPE_CTS |
+					 IEEE80211_FC0_TYPE_CTL);
+		ppdu_desc->ppdu_start_timestamp =
+				cur_ppdu_desc->ppdu_start_timestamp;
+		ppdu_desc->ppdu_end_timestamp =
+				cur_ppdu_desc->ppdu_end_timestamp;
+		ppdu_desc->user[0].peer_id = cur_ppdu_desc->user[0].peer_id;
+		peer = dp_peer_find_by_id(pdev->soc,
+					  cur_ppdu_desc->user[0].peer_id);
+		if (peer) {
+			struct dp_vdev *vdev = NULL;
+
+			vdev = peer->vdev;
+			if (vdev)
+				qdf_mem_copy(&ppdu_desc->user[0].mac_addr,
+					     vdev->mac_addr.raw,
+					     QDF_MAC_ADDR_SIZE);
+			dp_peer_unref_del_find_by_id(peer);
+		}
+
+		dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc);
+	}
+}
+
+/**
  * dp_send_data_to_stack(): Function to deliver mpdu info to stack
  * to upper layer
  * @pdev: DP pdev handle
@@ -1502,6 +1605,9 @@ void dp_send_data_to_stack(struct dp_pdev *pdev,
 
 	tx_capture_info.mpdu_info.channel_num =
 		pdev->operating_channel;
+
+	if (ppdu_desc->mprot_type)
+		dp_send_dummy_rts_cts_frame(pdev, ppdu_desc);
 
 	start_seq = ppdu_desc->user[0].start_seq;
 	for (i = 0; i < ppdu_desc->user[0].ba_size; i++) {
@@ -2411,6 +2517,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 			nbuf_ppdu_desc_list[i]);
 		if (!cur_ppdu_desc)
 			continue;
+
 		peer = dp_peer_find_by_id(pdev->soc,
 					  cur_ppdu_desc->user[0].peer_id);
 		if (!peer) {
