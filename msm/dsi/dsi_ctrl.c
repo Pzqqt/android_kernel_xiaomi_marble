@@ -1254,13 +1254,19 @@ static u32 dsi_ctrl_validate_msg_flags(const struct mipi_dsi_msg *msg,
 				u32 flags)
 {
 	/*
-	 * ASYNC command wait mode is not supported for FIFO commands.
-	 * Waiting after a command is transferred cannot be guaranteed
-	 * if DSI_CTRL_CMD_ASYNC_WAIT flag is set.
+	 * ASYNC command wait mode is not supported for
+	 *    - commands sent using DSI FIFO memory
+	 *    - DSI read commands
+	 *    - DCS commands sent in non-embedded mode
+	 *    - whenever an explicit wait time is specificed for the command
+	 *      since the wait time cannot be guaranteed in async mode
 	 */
 	if ((flags & DSI_CTRL_CMD_FIFO_STORE) ||
-			msg->wait_ms)
+		flags & DSI_CTRL_CMD_READ ||
+		flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE ||
+		msg->wait_ms)
 		flags &= ~DSI_CTRL_CMD_ASYNC_WAIT;
+
 	return flags;
 }
 
