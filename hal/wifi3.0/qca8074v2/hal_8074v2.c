@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1071,6 +1071,14 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_msdu_get_flow_params_8074v2,
 	hal_rx_tlv_get_tcp_chksum_8074v2,
 	hal_rx_get_rx_sequence_8074v2,
+#if defined(QCA_WIFI_QCA6018) && defined(WLAN_CFR_ENABLE) && \
+	defined(WLAN_ENH_CFR_ENABLE)
+	hal_rx_get_bb_info_8074v2,
+	hal_rx_get_rtt_info_8074v2,
+#else
+	NULL,
+	NULL,
+#endif
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

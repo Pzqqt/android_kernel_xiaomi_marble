@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -466,6 +466,83 @@ struct hal_rx_ppdu_msdu_info {
 	uint32_t flow_idx;
 };
 
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+/**
+ * struct hal_rx_ppdu_cfr_user_info - struct for storing peer info extracted
+ * from HW TLVs, this will be used for correlating CFR data with multiple peers
+ * in MU PPDUs
+ *
+ * @peer_macaddr: macaddr of the peer
+ * @ast_index: AST index of the peer
+ */
+struct hal_rx_ppdu_cfr_user_info {
+	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
+	uint32_t ast_index;
+};
+
+/**
+ * struct hal_rx_ppdu_cfr_info - struct for storing ppdu info extracted from HW
+ * TLVs, this will be used for CFR correlation
+ *
+ * @bb_captured_channel : Set by RXPCU when MACRX_FREEZE_CAPTURE_CHANNEL TLV is
+ * sent to PHY, SW checks it to correlate current PPDU TLVs with uploaded
+ * channel information.
+ *
+ * @bb_captured_timeout : Set by RxPCU to indicate channel capture condition is
+ * met, but MACRX_FREEZE_CAPTURE_CHANNEL is not sent to PHY due to AST delay,
+ * which means the rx_frame_falling edge to FREEZE TLV ready time exceeds
+ * the threshold time defined by RXPCU register FREEZE_TLV_DELAY_CNT_THRESH.
+ * Bb_captured_reason is still valid in this case.
+ *
+ * @rx_location_info_valid: Indicates whether CFR DMA address in the PPDU TLV
+ * is valid
+ * <enum 0 rx_location_info_is_not_valid>
+ * <enum 1 rx_location_info_is_valid>
+ * <legal all>
+ *
+ * @bb_captured_reason : Copy capture_reason of MACRX_FREEZE_CAPTURE_CHANNEL
+ * TLV to here for FW usage. Valid when bb_captured_channel or
+ * bb_captured_timeout is set.
+ * <enum 0 freeze_reason_TM>
+ * <enum 1 freeze_reason_FTM>
+ * <enum 2 freeze_reason_ACK_resp_to_TM_FTM>
+ * <enum 3 freeze_reason_TA_RA_TYPE_FILTER>
+ * <enum 4 freeze_reason_NDPA_NDP>
+ * <enum 5 freeze_reason_ALL_PACKET>
+ * <legal 0-5>
+ *
+ * @rtt_che_buffer_pointer_low32 : The low 32 bits of the 40 bits pointer to
+ * external RTT channel information buffer
+ *
+ * @rtt_che_buffer_pointer_high8 : The high 8 bits of the 40 bits pointer to
+ * external RTT channel information buffer
+ *
+ * @chan_capture_status : capture status reported by ucode
+ * a. CAPTURE_IDLE: FW has disabled "REPETITIVE_CHE_CAPTURE_CTRL"
+ * b. CAPTURE_BUSY: previous PPDU’s channel capture upload DMA ongoing. (Note
+ * that this upload is triggered after receiving freeze_channel_capture TLV
+ * after last PPDU is rx)
+ * c. CAPTURE_ACTIVE: channel capture is enabled and no previous channel
+ * capture ongoing
+ * d. CAPTURE_NO_BUFFER: next buffer in IPC ring not available
+ *
+ * @cfr_user_info: Peer mac for upto 4 MU users
+ */
+
+struct hal_rx_ppdu_cfr_info {
+	bool bb_captured_channel;
+	bool bb_captured_timeout;
+	uint8_t bb_captured_reason;
+	bool rx_location_info_valid;
+	uint8_t chan_capture_status;
+	uint8_t rtt_che_buffer_pointer_high8;
+	uint32_t rtt_che_buffer_pointer_low32;
+	struct hal_rx_ppdu_cfr_user_info cfr_user_info[HAL_MAX_UL_MU_USERS];
+};
+#else
+struct hal_rx_ppdu_cfr_info {};
+#endif
+
 struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;
 	struct mon_rx_status rx_status;
@@ -490,6 +567,11 @@ struct hal_rx_ppdu_info {
 	struct hal_rx_msdu_payload_info ppdu_msdu_info[HAL_RX_MAX_MPDU];
 	/* evm info */
 	struct hal_rx_su_evm_info evm_info;
+	/**
+	 * Will be used to store ppdu info extracted from HW TLVs,
+	 * and for CFR correlation as well
+	 */
+	struct hal_rx_ppdu_cfr_info cfr_info;
 };
 
 static inline uint32_t

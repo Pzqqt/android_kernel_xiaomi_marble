@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3367,5 +3367,27 @@ uint16_t hal_rx_get_rx_sequence(hal_soc_handle_t hal_soc_hdl,
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
 	return hal_soc->ops->hal_rx_get_rx_sequence(buf);
+}
+
+static inline void
+hal_rx_get_bb_info(hal_soc_handle_t hal_soc_hdl,
+		   void *rx_tlv,
+		   void *ppdu_info)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_rx_get_bb_info)
+		hal_soc->ops->hal_rx_get_bb_info(rx_tlv, ppdu_info);
+}
+
+static inline void
+hal_rx_get_rtt_info(hal_soc_handle_t hal_soc_hdl,
+		    void *rx_tlv,
+		    void *ppdu_info)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_rx_get_rtt_info)
+		hal_soc->ops->hal_rx_get_rtt_info(rx_tlv, ppdu_info);
 }
 #endif /* _HAL_RX_H */

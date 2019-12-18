@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -439,6 +439,10 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		ppdu_info->rx_state = HAL_RX_MON_PPDU_END;
 		break;
 
+	case WIFIPHYRX_PKT_END_E:
+		hal_rx_get_rtt_info(hal_soc_hdl, rx_tlv, ppdu_info);
+		break;
+
 	case WIFIRXPCU_PPDU_END_INFO_E:
 		ppdu_info->rx_status.rx_antenna =
 			HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_2, RX_ANTENNA);
@@ -451,6 +455,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		ppdu_info->rx_status.duration =
 			HAL_RX_GET(rx_tlv, UNIFIED_RXPCU_PPDU_END_INFO_8,
 				RX_PPDU_DURATION);
+		hal_rx_get_bb_info(hal_soc_hdl, rx_tlv, ppdu_info);
 		break;
 
 	/*
