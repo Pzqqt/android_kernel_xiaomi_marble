@@ -1734,8 +1734,6 @@ ol_txrx_vdev_attach(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	TAILQ_INIT(&vdev->peer_list);
 	vdev->last_real_peer = NULL;
 
-	ol_txrx_hl_tdls_flag_reset(soc_hdl, vdev_id, false);
-
 #ifdef QCA_IBSS_SUPPORT
 	vdev->ibss_peer_num = 0;
 	vdev->ibss_peer_heart_beat_timer = 0;
@@ -1790,6 +1788,8 @@ ol_txrx_vdev_attach(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	TAILQ_INSERT_TAIL(&pdev->vdev_list, vdev, vdev_list_elem);
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
 		pdev->monitor_vdev = vdev;
+
+	ol_txrx_hl_tdls_flag_reset(soc_hdl, vdev_id, false);
 
 	ol_txrx_dbg(
 		   "Created vdev %pK ("QDF_MAC_ADDR_STR")\n",

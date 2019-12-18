@@ -37,7 +37,7 @@
 
 #endif
 
-#ifndef CONFIG_PLD_PCIE_CNSS
+#if !defined(HIF_PCI) || defined(CONFIG_PLD_PCIE_FW_SIM)
 static inline int pld_pcie_register_driver(void)
 {
 	return 0;
