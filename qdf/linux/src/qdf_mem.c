@@ -59,6 +59,39 @@ static bool is_initial_mem_debug_disabled;
 #include "qdf_debug_domain.h"
 #include <qdf_list.h>
 
+enum list_type {
+	LIST_TYPE_MEM = 0,
+	LIST_TYPE_DMA = 1,
+	LIST_TYPE_MAX,
+};
+
+/**
+ * major_alloc_priv: private data registered to debugfs entry created to list
+ *                   the list major allocations
+ * @type:            type of the list to be parsed
+ * @threshold:       configured by user by overwriting the respective debugfs
+ *                   sys entry. This is to list the functions which requested
+ *                   memory/dma allocations more than threshold nubmer of times.
+ */
+struct major_alloc_priv {
+	enum list_type type;
+	uint32_t threshold;
+};
+
+static struct major_alloc_priv mem_priv = {
+	/* List type set to mem */
+	LIST_TYPE_MEM,
+	/* initial threshold to list APIs which allocates mem >= 50 times */
+	50
+};
+
+static struct major_alloc_priv dma_priv = {
+	/* List type set to DMA */
+	LIST_TYPE_DMA,
+	/* initial threshold to list APIs which allocates dma >= 50 times */
+	50
+};
+
 static qdf_list_t qdf_mem_domains[QDF_DEBUG_DOMAIN_COUNT];
 static qdf_spinlock_t qdf_mem_list_lock;
 
@@ -353,15 +386,20 @@ struct __qdf_mem_info {
 #define QDF_MEM_STAT_TABLE_SIZE 8
 
 /**
- * qdf_mem_domain_print_header() - memory domain header print logic
+ * qdf_mem_debug_print_header() - memory debug header print logic
  * @print: the print adapter function
  * @print_priv: the private data to be consumed by @print
+ * @threshold: the threshold value set by user to list top allocations
  *
  * Return: None
  */
-static void qdf_mem_domain_print_header(qdf_abstract_print print,
-					void *print_priv)
+static void qdf_mem_debug_print_header(qdf_abstract_print print,
+				       void *print_priv,
+				       uint32_t threshold)
 {
+	if (threshold)
+		print(print_priv, "APIs requested allocations >= %u no of time",
+		      threshold);
 	print(print_priv,
 	      "--------------------------------------------------------------");
 	print(print_priv,
@@ -375,12 +413,14 @@ static void qdf_mem_domain_print_header(qdf_abstract_print print,
  * @table: the memory metadata table to print
  * @print: the print adapter function
  * @print_priv: the private data to be consumed by @print
+ * @threshold: the threshold value set by user to list top allocations
  *
  * Return: None
  */
 static void qdf_mem_meta_table_print(struct __qdf_mem_info *table,
 				     qdf_abstract_print print,
-				     void *print_priv)
+				     void *print_priv,
+				     uint32_t threshold)
 {
 	int i;
 	char debug_str[QDF_DEBUG_STRING_SIZE];
@@ -410,6 +450,37 @@ static void qdf_mem_meta_table_print(struct __qdf_mem_info *table,
 				     table[i].caller);
 	}
 	print(print_priv, "%s", debug_str);
+}
+
+/**
+ * qdf_print_major_alloc() - memory metadata table print logic
+ * @table: the memory metadata table to print
+ * @print: the print adapter function
+ * @print_priv: the private data to be consumed by @print
+ * @threshold: the threshold value set by uset to list top allocations
+ *
+ * Return: None
+ */
+static void qdf_print_major_alloc(struct __qdf_mem_info *table,
+				  qdf_abstract_print print,
+				  void *print_priv,
+				  uint32_t threshold)
+{
+	int i;
+
+	for (i = 0; i < QDF_MEM_STAT_TABLE_SIZE; i++) {
+		if (!table[i].count)
+			break;
+		if (table[i].count >= threshold)
+			print(print_priv,
+			      "%6u x %5u = %7uB @ %s:%u   %pS %llu",
+			      table[i].count,
+			      table[i].size,
+			      table[i].count * table[i].size,
+			      table[i].func,
+			      table[i].line, table[i].caller,
+			      table[i].time);
+	}
 }
 
 /**
@@ -454,19 +525,25 @@ static bool qdf_mem_meta_table_insert(struct __qdf_mem_info *table,
  * @domain: the memory domain to print
  * @print: the print adapter function
  * @print_priv: the private data to be consumed by @print
+ * @threshold: the threshold value set by uset to list top allocations
+ * @mem_print: pointer to function which prints the memory allocation data
  *
  * Return: None
  */
 static void qdf_mem_domain_print(qdf_list_t *domain,
 				 qdf_abstract_print print,
-				 void *print_priv)
+				 void *print_priv,
+				 uint32_t threshold,
+				 void (*mem_print)(struct __qdf_mem_info *,
+						   qdf_abstract_print,
+						   void *, uint32_t))
 {
 	QDF_STATUS status;
 	struct __qdf_mem_info table[QDF_MEM_STAT_TABLE_SIZE];
 	qdf_list_node_t *node;
 
 	qdf_mem_zero(table, sizeof(table));
-	qdf_mem_domain_print_header(print, print_priv);
+	qdf_mem_debug_print_header(print, print_priv, threshold);
 
 	/* hold lock while inserting to avoid use-after free of the metadata */
 	qdf_spin_lock(&qdf_mem_list_lock);
@@ -478,7 +555,7 @@ static void qdf_mem_domain_print(qdf_list_t *domain,
 		qdf_spin_unlock(&qdf_mem_list_lock);
 
 		if (is_full) {
-			qdf_mem_meta_table_print(table, print, print_priv);
+			(*mem_print)(table, print, print_priv, threshold);
 			qdf_mem_zero(table, sizeof(table));
 		}
 
@@ -487,7 +564,7 @@ static void qdf_mem_domain_print(qdf_list_t *domain,
 	}
 	qdf_spin_unlock(&qdf_mem_list_lock);
 
-	qdf_mem_meta_table_print(table, print, print_priv);
+	(*mem_print)(table, print, print_priv, threshold);
 }
 
 /**
@@ -548,7 +625,10 @@ static int qdf_mem_seq_show(struct seq_file *seq, void *v)
 	seq_printf(seq, "\n%s Memory Domain (Id %d)\n",
 		   qdf_debug_domain_name(domain_id), domain_id);
 	qdf_mem_domain_print(qdf_mem_list_get(domain_id),
-			     seq_printf_printer, seq);
+			     seq_printf_printer,
+			     seq,
+			     0,
+			     qdf_mem_meta_table_print);
 
 	return 0;
 }
@@ -566,6 +646,99 @@ static int qdf_mem_debugfs_open(struct inode *inode, struct file *file)
 {
 	return seq_open(file, &qdf_mem_seq_ops);
 }
+
+/**
+ * qdf_major_alloc_show() - print sequential callback
+ * @seq: seq_file handle
+ * @v: current iterator
+ *
+ * Return: 0 - success
+ */
+static int qdf_major_alloc_show(struct seq_file *seq, void *v)
+{
+	enum qdf_debug_domain domain_id = *(enum qdf_debug_domain *)v;
+	struct major_alloc_priv *priv;
+	qdf_list_t *list;
+
+	priv = (struct major_alloc_priv *)seq->private;
+	seq_printf(seq, "\n%s Memory Domain (Id %d)\n",
+		   qdf_debug_domain_name(domain_id), domain_id);
+
+	switch (priv->type) {
+	case LIST_TYPE_MEM:
+		list = qdf_mem_list_get(domain_id);
+		break;
+	case LIST_TYPE_DMA:
+		list = qdf_mem_dma_list(domain_id);
+		break;
+	default:
+		list = NULL;
+		break;
+	}
+
+	if (list)
+		qdf_mem_domain_print(list,
+				     seq_printf_printer,
+				     seq,
+				     priv->threshold,
+				     qdf_print_major_alloc);
+
+	return 0;
+}
+
+/* sequential file operation table created to track major allocs */
+static const struct seq_operations qdf_major_allocs_seq_ops = {
+	.start = qdf_mem_seq_start,
+	.next = qdf_mem_seq_next,
+	.stop = qdf_mem_seq_stop,
+	.show = qdf_major_alloc_show,
+};
+
+static int qdf_major_allocs_open(struct inode *inode, struct file *file)
+{
+	void *private = inode->i_private;
+	struct seq_file *seq;
+	int rc;
+
+	rc = seq_open(file, &qdf_major_allocs_seq_ops);
+	if (rc == 0) {
+		seq = file->private_data;
+		seq->private = private;
+	}
+	return rc;
+}
+
+static ssize_t qdf_major_alloc_set_threshold(struct file *file,
+					     const char __user *user_buf,
+					     size_t count,
+					     loff_t *pos)
+{
+	char buf[32];
+	ssize_t buf_size;
+	uint32_t threshold;
+	struct seq_file *seq = file->private_data;
+	struct major_alloc_priv *priv = (struct major_alloc_priv *)seq->private;
+
+	buf_size = min(count, (sizeof(buf) - 1));
+	if (buf_size <= 0)
+		return 0;
+	if (copy_from_user(buf, user_buf, buf_size))
+		return -EFAULT;
+	buf[buf_size] = '\0';
+	if (!kstrtou32(buf, 10, &threshold))
+		priv->threshold = threshold;
+	return buf_size;
+}
+
+/* file operation table for listing major allocs */
+static const struct file_operations fops_qdf_major_allocs = {
+	.owner = THIS_MODULE,
+	.open = qdf_major_allocs_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = seq_release,
+	.write = qdf_major_alloc_set_threshold,
+};
 
 /* debugfs file operation table */
 static const struct file_operations fops_qdf_mem_debugfs = {
@@ -589,6 +762,18 @@ static QDF_STATUS qdf_mem_debug_debugfs_init(void)
 			    qdf_mem_debugfs_root,
 			    NULL,
 			    &fops_qdf_mem_debugfs);
+
+	debugfs_create_file("major_mem_allocs",
+			    0600,
+			    qdf_mem_debugfs_root,
+			    &mem_priv,
+			    &fops_qdf_major_allocs);
+
+	debugfs_create_file("major_dma_allocs",
+			    0600,
+			    qdf_mem_debugfs_root,
+			    &dma_priv,
+			    &fops_qdf_major_allocs);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -950,7 +1135,11 @@ qdf_mem_domain_check_for_leaks(enum qdf_debug_domain domain,
 
 	qdf_err("Memory leaks detected in %s domain!",
 		qdf_debug_domain_name(domain));
-	qdf_mem_domain_print(mem_list, qdf_err_printer, NULL);
+	qdf_mem_domain_print(mem_list,
+			     qdf_err_printer,
+			     NULL,
+			     0,
+			     qdf_mem_meta_table_print);
 
 	return mem_list->count;
 }
