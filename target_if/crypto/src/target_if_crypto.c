@@ -114,7 +114,6 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	enum cdp_sec_type sec_type = cdp_sec_type_none;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct cdp_pdev *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	struct cdp_vdev *txrx_vdev;
 	uint32_t pn[4] = {0, 0, 0, 0};
 	struct cdp_peer *peer = NULL;
 	uint8_t def_tx_idx;
@@ -157,15 +156,8 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	}
 	qdf_mem_copy(&params.key_rsc_ctr,
 		     &req->keyrsc[0], sizeof(uint64_t));
-	txrx_vdev = (struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-				(struct cdp_pdev *)txrx_pdev, params.vdev_id);
+
 	peer = cdp_peer_find_by_addr(soc, txrx_pdev, req->macaddr);
-
-	if (!txrx_vdev) {
-		target_if_err("Invalid txrx vdev");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	target_if_debug("key_type %d, mac: %02x:%02x:%02x:%02x:%02x:%02x",
 			key_type, req->macaddr[0], req->macaddr[1],
 			req->macaddr[2], req->macaddr[3], req->macaddr[4],
@@ -206,7 +198,8 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	if (peer) {
 		/* Set PN check & security type in data path */
 		qdf_mem_copy(&pn[0], &params.key_rsc_ctr, sizeof(pn));
-		cdp_set_pn_check(soc, txrx_vdev, peer, sec_type, pn);
+		cdp_set_pn_check(soc, vdev->vdev_objmgr.vdev_id, req->macaddr,
+				 sec_type, pn);
 		cdp_set_key(soc, peer, pairwise, (uint32_t *)(req->keyval +
 			    WLAN_CRYPTO_IV_SIZE + WLAN_CRYPTO_MIC_LEN));
 	} else {

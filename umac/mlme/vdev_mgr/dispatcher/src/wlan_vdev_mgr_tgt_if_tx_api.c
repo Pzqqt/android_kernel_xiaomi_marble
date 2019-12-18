@@ -57,7 +57,6 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_vdev *vdev;
 	ol_txrx_soc_handle soc_txrx_handle;
-	struct cdp_pdev *pdev_txrx_handle;
 	struct cdp_vdev *vdev_txrx_handle;
 	enum wlan_op_mode cdp_txrx_opmode;
 	enum wlan_op_subtype cdp_txrx_subtype;
@@ -95,12 +94,11 @@ QDF_STATUS tgt_vdev_mgr_create_send(
 	vdev_addr = wlan_vdev_mlme_get_macaddr(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
 	soc_txrx_handle = wlan_psoc_get_dp_handle(psoc);
-	pdev_txrx_handle = wlan_pdev_get_dp_handle(pdev);
-	if (!soc_txrx_handle || !pdev_txrx_handle)
+	if (!soc_txrx_handle)
 		return QDF_STATUS_E_FAILURE;
 
 	vdev_txrx_handle = cdp_vdev_attach(soc_txrx_handle,
-					   pdev_txrx_handle,
+					   wlan_objmgr_pdev_get_pdev_id(pdev),
 					   vdev_addr, vdev_id,
 					   cdp_txrx_opmode,
 					   cdp_txrx_subtype);

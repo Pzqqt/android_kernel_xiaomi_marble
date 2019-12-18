@@ -138,7 +138,6 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 	struct vdev_mlme_obj *vdev_mlme;
 	struct wlan_objmgr_psoc *psoc;
 	struct cdp_soc_t *soc_txrx_handle;
-	struct cdp_vdev *vdev_txrx_handle;
 
 	if (!vdev) {
 		mlme_err(" VDEV is NULL");
@@ -153,10 +152,9 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	soc_txrx_handle = (struct cdp_soc_t *)wlan_psoc_get_dp_handle(psoc);
-	vdev_txrx_handle = wlan_vdev_get_dp_handle(vdev);
-	if (soc_txrx_handle && vdev_txrx_handle) {
+	if (soc_txrx_handle) {
 		wlan_vdev_set_dp_handle(vdev, NULL);
-		cdp_vdev_detach(soc_txrx_handle, vdev_txrx_handle,
+		cdp_vdev_detach(soc_txrx_handle, wlan_vdev_get_id(vdev),
 				NULL, NULL);
 	}
 
