@@ -881,13 +881,13 @@ struct pdev_params {
 /**
  * struct fd_params - FD cmd parameter
  * @vdev_id: vdev id
- * @wbuf: FD buffer
  * @frame_ctrl: frame control field
+ * @wbuf: FD buffer
  */
 struct fd_params {
 	uint8_t vdev_id;
-	qdf_nbuf_t wbuf;
 	uint16_t frame_ctrl;
+	qdf_nbuf_t wbuf;
 };
 
 /**
@@ -1276,30 +1276,30 @@ struct tx_send_params {
  * @tx_frame: management tx frame
  * @frm_len: frame length
  * @vdev_id: vdev id
+ * @tx_type: type of management frame (determines what callback to use)
  * @chanfreq: channel frequency
- * @pdata: frame data
  * @desc_id: descriptor id relyaed back by target
+ * @pdata: frame data
  * @macaddr: macaddr of peer
  * @qdf_ctx: qdf context for qdf_nbuf_map
  * @tx_param: TX send parameters
  * @tx_params_valid: Flag that indicates if TX params are valid
  * @use_6mbps: specify whether management frame to transmit should
  *  use 6 Mbps rather than 1 Mbps min rate(for 5GHz band or P2P)
- * @tx_type: type of management frame (determines what callback to use)
  */
 struct wmi_mgmt_params {
 	void *tx_frame;
 	uint16_t frm_len;
 	uint8_t vdev_id;
+	uint8_t tx_type;
 	uint16_t chanfreq;
-	void *pdata;
 	uint16_t desc_id;
+	void *pdata;
 	uint8_t *macaddr;
 	void *qdf_ctx;
 	struct tx_send_params tx_param;
 	bool tx_params_valid;
 	uint8_t use_6mbps;
-	uint8_t tx_type;
 };
 
 /**
@@ -1307,25 +1307,25 @@ struct wmi_mgmt_params {
  * @tx_frame: management tx frame
  * @frm_len: frame length
  * @vdev_id: vdev id
+ * @tx_params_valid: Flag that indicates if TX params are valid
  * @chanfreq: channel frequency
- * @pdata: frame data
  * @desc_id: descriptor id relyaed back by target
+ * @pdata: frame data
  * @macaddr: macaddr of peer
  * @qdf_ctx: qdf context for qdf_nbuf_map
  * @tx_param: TX send parameters
- * @tx_params_valid: Flag that indicates if TX params are valid
  */
 struct wmi_offchan_data_tx_params {
 	void *tx_frame;
 	uint16_t frm_len;
 	uint8_t vdev_id;
+	bool tx_params_valid;
 	uint16_t chanfreq;
-	void *pdata;
 	uint16_t desc_id;
+	void *pdata;
 	uint8_t *macaddr;
 	void *qdf_ctx;
 	struct tx_send_params tx_param;
-	bool tx_params_valid;
 };
 
 /**
@@ -1348,14 +1348,14 @@ struct sta_uapsd_params {
  * struct ta_uapsd_trig_params - uapsd trigger parameter
  * @vdevid: vdev id
  * @peer_addr: peer address
- * @auto_triggerparam: trigger parameters
  * @num_ac: no of access category
+ * @auto_triggerparam: trigger parameters
  */
 struct sta_uapsd_trig_params {
-		uint32_t vdevid;
-		uint8_t peer_addr[QDF_MAC_ADDR_SIZE];
-		struct sta_uapsd_params *auto_triggerparam;
-		uint32_t num_ac;
+	uint32_t vdevid;
+	uint8_t peer_addr[QDF_MAC_ADDR_SIZE];
+	uint32_t num_ac;
+	struct sta_uapsd_params *auto_triggerparam;
 };
 
 #define WMI_NUM_AC                     (4)
@@ -1531,14 +1531,15 @@ struct scan_mac_oui {
  * struct wifi_passpoint_network_param - passpoint network block
  * @id: identifier of this network block
  * @realm: null terminated UTF8 encoded realm, 0 if unspecified
- * @roaming_consortium_ids: roaming consortium ids to match, 0s if unspecified
  * @plmn: mcc/mnc combination as per rules, 0s if unspecified
+ * @roaming_consortium_ids: roaming consortium ids to match, 0s if unspecified
  */
 struct wifi_passpoint_network_param {
 	uint32_t id;
 	uint8_t  realm[WMI_PASSPOINT_REALM_LEN];
-	int64_t  roaming_consortium_ids[WMI_PASSPOINT_ROAMING_CONSORTIUM_ID_NUM];
 	uint8_t  plmn[WMI_PASSPOINT_PLMN_LEN];
+	int64_t  roaming_consortium_ids[
+			WMI_PASSPOINT_ROAMING_CONSORTIUM_ID_NUM];
 };
 
 /**
@@ -3241,13 +3242,16 @@ struct ratepwr_table_params {
  * struct ctl_table_params - Ctl table params
  * @ctl_array: pointer to ctl array
  * @ctl_cmd_len: ctl command length
- * @is_acfg_ctl: is acfg_ctl table
+ * @is_2g: is 2G
+ * @target_type: target type
+ * @ctl_band: ctl band
+ * @pdev_id: pdev id
  */
 struct ctl_table_params {
 	uint8_t *ctl_array;
 	uint16_t ctl_cmd_len;
-	uint32_t target_type;
 	bool is_2g;
+	uint32_t target_type;
 	uint32_t ctl_band;
 	uint32_t pdev_id;
 };
@@ -3375,29 +3379,29 @@ struct disa_encrypt_decrypt_req_params {
  * @wildcard: iwldcard table entry?
  * @mcast_ip_addr: mcast ip address to be updated
  * @mcast_ip_addr_bytes: mcast ip addr bytes
- * @ucast_mac_addr: ucast peer mac subscribed to mcast ip
- * @filter_mode: filter mode
  * @nsrcs: number of entries in source list
+ * @filter_mode: filter mode
+ * @is_action_delete: is delete
+ * @is_filter_mode_snoop: is filter mode snoop
+ * @ucast_mac_addr: ucast peer mac subscribed to mcast ip
  * @srcs: source mac accpted
  * @mask: mask
  * @vap_id: vdev id
- * @is_action_delete: is delete
- * @is_filter_mode_snoop:
- * @is_mcast_addr_len:
+ * @is_mcast_addr_len: is mcast address length
  */
 struct mcast_group_update_params {
 	int action;
 	int wildcard;
 	uint8_t *mcast_ip_addr;
 	int mcast_ip_addr_bytes;
-	uint8_t *ucast_mac_addr;
-	uint8_t filter_mode;
 	uint8_t nsrcs;
+	uint8_t filter_mode;
+	bool is_action_delete;
+	bool is_filter_mode_snoop;
+	uint8_t *ucast_mac_addr;
 	uint8_t *srcs;
 	uint8_t *mask;
 	uint8_t vap_id;
-	bool is_action_delete;
-	bool is_filter_mode_snoop;
 	bool is_mcast_addr_len;
 };
 
@@ -3644,26 +3648,26 @@ struct peer_request_pn_param {
  * struct rtt_meas_req_params - RTT measurement request params
  * @req_id: Request id
  * @vdev_id: vdev id
- * @sta_mac_addr: pointer to station mac address
- * @spoof_mac_addr: pointer to spoof mac address
  * @is_mode_na: 11NA
  * @is_mode_ac: AC
  * @is_bw_20: 20
  * @is_bw_40: 40
  * @is_bw_80: 80
+ * @sta_mac_addr: pointer to station mac address
+ * @spoof_mac_addr: pointer to spoof mac address
  * @num_probe_rqst: number of probe request
  * @channel_param: channel param
  */
 struct rtt_meas_req_params {
 	uint8_t req_id;
 	uint8_t vdev_id;
-	uint8_t *sta_mac_addr;
-	uint8_t *spoof_mac_addr;
 	bool is_mode_na;
 	bool is_mode_ac;
 	bool is_bw_20;
 	bool is_bw_40;
 	bool is_bw_80;
+	uint8_t *sta_mac_addr;
+	uint8_t *spoof_mac_addr;
 	uint32_t num_probe_rqst;
 	struct channel_param channel;
 };
@@ -3841,14 +3845,14 @@ typedef struct {
  * struct wmi_host_peer_adv_stats - peer adv stats event structure
  * @peer_macaddr: mac address
  * @fcs_count: fcs count
- * @rx_bytes: rx bytes
  * @rx_count: rx count
+ * @rx_bytes: rx bytes
  */
 struct wmi_host_peer_adv_stats {
 	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
 	uint32_t fcs_count;
-	uint64_t rx_bytes;
 	uint32_t rx_count;
+	uint64_t rx_bytes;
 };
 
 /**
@@ -6874,13 +6878,13 @@ struct wmi_host_dcs_interference_param {
 /**
  * struct wmi_host_rf_characterization_event_param - rf characterization table
  * @freq: center frequency of primary channel (in MHz)
- * @bw: bandwidth of primary channel (in MHz)
  * @chan_metric: primary channel-specific metric
+ * @bw: bandwidth of primary channel (in MHz)
  */
 struct wmi_host_rf_characterization_event_param {
 	uint16_t freq;
-	wmi_host_channel_width bw;
 	uint8_t chan_metric;
+	wmi_host_channel_width bw;
 };
 
 /*
@@ -7779,27 +7783,27 @@ typedef struct {
 /**
  * struct wmi_host_oem_indirect_data - Indirect OEM data
  * @pdev_id: pdev id
- * @addr: 36 bit address
  * @len: length of data in bytes
+ * @addr: 36 bit address
  */
 struct wmi_host_oem_indirect_data {
 	uint32_t pdev_id;
-	uint64_t addr;
 	uint32_t len;
+	uint64_t addr;
 };
 
 /**
  * struct wmi_oem_response_param - OEM response info
  * @num_data1: First data response length
- * @data_1: First data
  * @num_data2: Second data response length
+ * @data_1: First data
  * @data_2: Second data
  * @indirect_data: Indirect data
  */
 struct wmi_oem_response_param {
 	uint32_t num_data1;
-	uint8_t  *data_1;
 	uint32_t num_data2;
+	uint8_t  *data_1;
 	uint8_t  *data_2;
 	struct wmi_host_oem_indirect_data indirect_data;
 };
