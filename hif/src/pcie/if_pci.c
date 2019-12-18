@@ -2344,6 +2344,7 @@ static int hif_ce_srng_msi_free_irq(struct hif_softc *scn)
 	uint32_t msi_data_count;
 	uint32_t msi_irq_start;
 	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
+	struct CE_attr *host_ce_conf = ce_sc->host_ce_config;
 
 	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
 					    &msi_data_count, &msi_data_start,
@@ -2356,6 +2357,9 @@ static int hif_ce_srng_msi_free_irq(struct hif_softc *scn)
 	 */
 	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
 		unsigned int msi_data;
+
+		if (host_ce_conf[ce_id].flags & CE_ATTR_DISABLE_INTR)
+			continue;
 
 		if (!ce_sc->tasklets[ce_id].inited)
 			continue;
@@ -3354,6 +3358,7 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	uint32_t msi_irq_start;
 	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
 	struct hif_pci_softc *pci_sc = HIF_GET_PCI_SOFTC(scn);
+	struct CE_attr *host_ce_conf = ce_sc->host_ce_config;
 
 	/* do wake irq assignment */
 	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "WAKE",
@@ -3391,6 +3396,8 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
 		unsigned int msi_data = (ce_id % msi_data_count) +
 			msi_irq_start;
+		if (host_ce_conf[ce_id].flags & CE_ATTR_DISABLE_INTR)
+			continue;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
 		HIF_DBG("%s: (ce_id %d, msi_data %d, irq %d tasklet %pK)",
 			 __func__, ce_id, msi_data, irq,
