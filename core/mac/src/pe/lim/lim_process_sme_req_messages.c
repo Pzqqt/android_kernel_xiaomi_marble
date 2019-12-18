@@ -3658,7 +3658,7 @@ static void __lim_process_roam_scan_offload_req(struct mac_context *mac_ctx,
 	}
 }
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * lim_send_roam_offload_init() - Process Roam offload flag from csr
  * @mac_ctx: Pointer to Global MAC structure
@@ -3681,7 +3681,15 @@ static void lim_send_roam_offload_init(struct mac_context *mac_ctx,
 		qdf_mem_free(msg_buf);
 	}
 }
+#else
+static void lim_send_roam_offload_init(struct mac_context *mac_ctx,
+				       uint32_t *msg_buf)
+{
+	qdf_mem_free(msg_buf);
+}
+#endif
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * lim_process_roam_invoke() - process the Roam Invoke req
  * @mac_ctx: Pointer to Global MAC structure
@@ -3707,11 +3715,6 @@ static void lim_process_roam_invoke(struct mac_context *mac_ctx,
 		pe_err("Not able to post SIR_HAL_ROAM_INVOKE to WMA");
 }
 #else
-static void lim_send_roam_offload_init(struct mac_context *mac_ctx,
-				       uint32_t *msg_buf)
-{
-	qdf_mem_free(msg_buf);
-}
 static void lim_process_roam_invoke(struct mac_context *mac_ctx,
 				    uint32_t *msg_buf)
 {
