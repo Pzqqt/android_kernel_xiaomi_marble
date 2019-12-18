@@ -1817,6 +1817,18 @@ wmi_unified_wlan_profile_trigger_cmd_send(wmi_unified_t wmi_handle,
 					  struct wlan_profile_params *param);
 
 /**
+ *  wmi_unified_wlan_profile_hist_intvl_cmd_send() - WMI wlan profile history
+ *						  cmd function
+ *  @wmi_handle: handle to WMI.
+ *  @param: pointer to hold wlan profile param
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_wlan_profile_hist_intvl_cmd_send(wmi_unified_t wmi_handle,
+					     struct wlan_profile_params *param);
+
+/**
  *  wmi_unified_set_chan_cmd_send() - WMI set channel cmd function
  *  @wmi_handle: handle to WMI.
  *  @param: pointer to hold channel param

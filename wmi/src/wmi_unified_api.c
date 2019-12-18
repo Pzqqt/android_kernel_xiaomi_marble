@@ -1147,6 +1147,17 @@ wmi_unified_wlan_profile_trigger_cmd_send(wmi_unified_t wmi_handle,
 }
 
 QDF_STATUS
+wmi_unified_wlan_profile_hist_intvl_cmd_send(wmi_unified_t wmi_handle,
+					     struct wlan_profile_params *param)
+{
+	if (wmi_handle->ops->send_wlan_profile_hist_intvl_cmd)
+		return wmi_handle->ops->send_wlan_profile_hist_intvl_cmd(
+					wmi_handle, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
 wmi_unified_set_chan_cmd_send(wmi_unified_t wmi_handle,
 			      struct channel_param *param)
 {

@@ -7661,6 +7661,142 @@ send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_wlan_profile_enable_cmd_tlv() - send wlan profile enable command
+ * to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to wlan profile param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_wlan_profile_enable_cmd_tlv(wmi_unified_t wmi_handle,
+				 struct wlan_profile_params *param)
+{
+	wmi_buf_t buf;
+	uint16_t len;
+	QDF_STATUS ret;
+	wmi_wlan_profile_enable_profile_id_cmd_fixed_param *profile_enable_cmd;
+
+	len = sizeof(wmi_wlan_profile_enable_profile_id_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("Failed to send WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	profile_enable_cmd =
+		(wmi_wlan_profile_enable_profile_id_cmd_fixed_param *)
+			wmi_buf_data(buf);
+	WMITLV_SET_HDR(&profile_enable_cmd->tlv_header,
+	    WMITLV_TAG_STRUC_wmi_wlan_profile_enable_profile_id_cmd_fixed_param,
+	    WMITLV_GET_STRUCT_TLVLEN
+	    (wmi_wlan_profile_enable_profile_id_cmd_fixed_param));
+
+	profile_enable_cmd->profile_id = param->profile_id;
+	profile_enable_cmd->enable = param->enable;
+	wmi_mtrace(WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
+		   NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID);
+	if (ret) {
+		WMI_LOGE("Failed to send PROFILE_ENABLE_PROFILE_ID_CMDID");
+		wmi_buf_free(buf);
+	}
+	return ret;
+}
+
+/**
+ * send_wlan_profile_trigger_cmd_tlv() - send wlan profile trigger command
+ * to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to wlan profile param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_wlan_profile_trigger_cmd_tlv(wmi_unified_t wmi_handle,
+				  struct wlan_profile_params *param)
+{
+	wmi_buf_t buf;
+	uint16_t len;
+	QDF_STATUS ret;
+	wmi_wlan_profile_trigger_cmd_fixed_param *prof_trig_cmd;
+
+	len = sizeof(wmi_wlan_profile_trigger_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("Failed to send WMI_WLAN_PROFILE_TRIGGER_CMDID");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	prof_trig_cmd =
+		(wmi_wlan_profile_trigger_cmd_fixed_param *)
+			wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&prof_trig_cmd->tlv_header,
+	     WMITLV_TAG_STRUC_wmi_wlan_profile_trigger_cmd_fixed_param,
+	     WMITLV_GET_STRUCT_TLVLEN
+			(wmi_wlan_profile_trigger_cmd_fixed_param));
+
+	prof_trig_cmd->enable = param->enable;
+	wmi_mtrace(WMI_WLAN_PROFILE_TRIGGER_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_WLAN_PROFILE_TRIGGER_CMDID);
+	if (ret) {
+		WMI_LOGE("Failed to send WMI_WLAN_PROFILE_TRIGGER_CMDID");
+		wmi_buf_free(buf);
+	}
+	return ret;
+}
+
+/**
+ * send_wlan_profile_hist_intvl_cmd_tlv() - send wlan profile interval command
+ * to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to wlan profile param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_wlan_profile_hist_intvl_cmd_tlv(wmi_unified_t wmi_handle,
+				     struct wlan_profile_params *param)
+{
+	wmi_buf_t buf;
+	int32_t len = 0;
+	QDF_STATUS ret;
+	wmi_wlan_profile_set_hist_intvl_cmd_fixed_param *hist_intvl_cmd;
+
+	len = sizeof(wmi_wlan_profile_set_hist_intvl_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("Failed to send WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	hist_intvl_cmd =
+		(wmi_wlan_profile_set_hist_intvl_cmd_fixed_param *)
+			wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&hist_intvl_cmd->tlv_header,
+	      WMITLV_TAG_STRUC_wmi_wlan_profile_set_hist_intvl_cmd_fixed_param,
+	      WMITLV_GET_STRUCT_TLVLEN
+	      (wmi_wlan_profile_set_hist_intvl_cmd_fixed_param));
+
+	hist_intvl_cmd->profile_id = param->profile_id;
+	hist_intvl_cmd->value = param->enable;
+	wmi_mtrace(WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
+		   NO_SESSION, 0);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID);
+	if (ret) {
+		WMI_LOGE("Failed to send PROFILE_SET_HIST_INTVL_CMDID");
+		wmi_buf_free(buf);
+	}
+	return ret;
+}
+
+/**
  * send_fw_test_cmd_tlv() - send fw test command to fw.
  * @wmi_handle: wmi handle
  * @wmi_fwtest: fw test command
@@ -9975,6 +10111,26 @@ static QDF_STATUS extract_mib_stats_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS extract_profile_ctx_tlv(wmi_unified_t wmi_handle,
 	void *evt_buf, wmi_host_wlan_profile_ctx_t *profile_ctx)
 {
+	WMI_WLAN_PROFILE_DATA_EVENTID_param_tlvs *param_buf;
+
+	wmi_wlan_profile_ctx_t *ev;
+
+	param_buf = (WMI_WLAN_PROFILE_DATA_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("%s: Invalid profile data event buf", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ev = param_buf->profile_ctx;
+
+	profile_ctx->tot = ev->tot;
+	profile_ctx->tx_msdu_cnt = ev->tx_msdu_cnt;
+	profile_ctx->tx_mpdu_cnt = ev->tx_mpdu_cnt;
+	profile_ctx->tx_ppdu_cnt = ev->tx_ppdu_cnt;
+	profile_ctx->rx_msdu_cnt = ev->rx_msdu_cnt;
+	profile_ctx->rx_mpdu_cnt = ev->rx_mpdu_cnt;
+	profile_ctx->bin_count   = ev->bin_count;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -9989,6 +10145,29 @@ static QDF_STATUS extract_profile_ctx_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS extract_profile_data_tlv(wmi_unified_t wmi_handle,
 	void *evt_buf, uint8_t idx, wmi_host_wlan_profile_t *profile_data)
 {
+	WMI_WLAN_PROFILE_DATA_EVENTID_param_tlvs *param_buf;
+	wmi_wlan_profile_t *ev;
+	uint8_t *buf_ptr;
+
+	param_buf = (WMI_WLAN_PROFILE_DATA_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("%s: Invalid profile data event buf", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	buf_ptr = (uint8_t *)param_buf->profile_ctx;
+	buf_ptr = buf_ptr + sizeof(wmi_wlan_profile_ctx_t) + WMI_TLV_HDR_SIZE;
+
+	buf_ptr = buf_ptr + (sizeof(wmi_wlan_profile_t) * idx);
+	ev = (wmi_wlan_profile_t *)buf_ptr;
+
+	profile_data->id  = ev->id;
+	profile_data->cnt = ev->cnt;
+	profile_data->tot = ev->tot;
+	profile_data->min = ev->min;
+	profile_data->max = ev->max;
+	profile_data->hist_intvl = ev->hist_intvl;
+	qdf_mem_copy(profile_data->hist, ev->hist, sizeof(profile_data->hist));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -13400,9 +13579,13 @@ struct wmi_ops tlv_ops =  {
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_tlv,
 	.extract_get_pn_data = extract_get_pn_data_tlv,
 	.send_pdev_get_pn_cmd = send_pdev_get_pn_cmd_tlv,
+	.send_wlan_profile_enable_cmd = send_wlan_profile_enable_cmd_tlv,
 #ifdef WLAN_FEATURE_DISA
 	.send_encrypt_decrypt_send_cmd = send_encrypt_decrypt_send_cmd_tlv,
 #endif
+	.send_wlan_profile_trigger_cmd = send_wlan_profile_trigger_cmd_tlv,
+	.send_wlan_profile_hist_intvl_cmd =
+				send_wlan_profile_hist_intvl_cmd_tlv,
 	.is_management_record = is_management_record_tlv,
 	.is_diag_event = is_diag_event_tlv,
 #ifdef WLAN_FEATURE_ACTION_OUI
