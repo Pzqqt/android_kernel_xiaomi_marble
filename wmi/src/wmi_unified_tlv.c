@@ -486,6 +486,7 @@ static const uint32_t vdev_param_tlv[] = {
 				WMI_VDEV_PARAM_ENABLE_MULTI_GROUP_KEY,
 	[wmi_vdev_param_max_group_keys] = WMI_VDEV_PARAM_NUM_GROUP_KEYS,
 	[wmi_vdev_param_enable_mcast_rc] = WMI_VDEV_PARAM_ENABLE_MCAST_RC,
+	[wmi_vdev_param_6ghz_params] = WMI_VDEV_PARAM_6GHZ_PARAMS,
 };
 #endif
 
