@@ -7313,6 +7313,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	{
 		int8_t s7snr = 0;
 		int status = 0;
+		bool enable_snr_monitoring;
 		struct hdd_context *hdd_ctx;
 		struct hdd_station_ctx *sta_ctx;
 
@@ -7322,12 +7323,14 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			return status;
 
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if (!hdd_ctx->config->enable_snr_monitoring ||
+		enable_snr_monitoring =
+				ucfg_scan_is_snr_monitor_enabled(hdd_ctx->psoc);
+		if (!enable_snr_monitoring ||
 		    eConnectionState_Associated !=
 		    sta_ctx->conn_info.conn_state) {
 			hdd_err("getSNR failed: Enable SNR Monitoring-%d, ConnectionState-%d",
-			       hdd_ctx->config->enable_snr_monitoring,
-			       sta_ctx->conn_info.conn_state);
+				enable_snr_monitoring,
+				sta_ctx->conn_info.conn_state);
 			return -ENONET;
 		}
 		wlan_hdd_get_snr(adapter, &s7snr);

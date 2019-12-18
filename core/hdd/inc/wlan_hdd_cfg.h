@@ -110,7 +110,6 @@ struct hdd_config {
 #ifdef ENABLE_MTRACE_LOG
 	bool enable_mtrace;
 #endif
-	bool enable_snr_monitoring;
 	bool advertise_concurrent_operation;
 #ifdef DHCP_SERVER_OFFLOAD
 	struct dhcp_server dhcp_server_ip;
