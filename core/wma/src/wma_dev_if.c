@@ -2591,6 +2591,7 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	struct wlan_mlme_qos *qos_aggr;
 	struct vdev_mlme_obj *vdev_mlme;
 	tp_wma_handle wma_handle;
+	uint8_t amsdu_val;
 
 	if (!mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
@@ -2642,6 +2643,18 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("failed to set aggregation sizes(status = %d)",
 			 status);
+
+	status = wlan_mlme_get_max_amsdu_num(wma_handle->psoc, &amsdu_val);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("failed to get amsdu aggr.size %d", status);
+	} else {
+		status = wma_set_tx_rx_aggr_size(vdev_id, amsdu_val,
+						 amsdu_val,
+					    WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			WMA_LOGE("failed to set amsdu aggr.size %d", status);
+		}
+	}
 
 	if (vdev_mlme->mgmt.generic.type == WMI_VDEV_TYPE_STA) {
 		status = wma_set_tx_rx_aggr_size_per_ac(

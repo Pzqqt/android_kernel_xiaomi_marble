@@ -5143,7 +5143,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
 	bool bval = false;
-	uint8_t max_amsdu_len, enable_tx_sch_delay;
+	uint8_t enable_tx_sch_delay;
 	uint32_t dtim_sel_diversity, enable_secondary_rate;
 
 	hdd_enter_dev(adapter->dev);
@@ -5294,23 +5294,6 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 				  VDEV_CMD);
 	if (ret) {
 		hdd_err("FAILED TO SET RTSCTS Profile ret:%d", ret);
-		goto error;
-	}
-
-	status = ucfg_mlme_get_max_amsdu_num(hdd_ctx->psoc, &max_amsdu_len);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to get Max AMSDU Num");
-		goto error;
-	}
-
-	hdd_debug("SET AMSDU num %d", max_amsdu_len);
-
-	ret = wma_cli_set_command(adapter->vdev_id,
-				  GEN_VDEV_PARAM_AMSDU,
-				  max_amsdu_len,
-				  GEN_CMD);
-	if (ret != 0) {
-		hdd_err("GEN_VDEV_PARAM_AMSDU set failed %d", ret);
 		goto error;
 	}
 
