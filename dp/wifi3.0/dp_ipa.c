@@ -770,22 +770,22 @@ QDF_STATUS dp_ipa_get_stat(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_tx_send_ipa_data_frame() - send IPA data frame
+ * @soc_hdl: datapath soc handle
+ * @vdev_id: id of the virtual device
+ * @skb: skb to transmit
+ *
+ * Return: skb/ NULL is for success
+ */
 qdf_nbuf_t dp_tx_send_ipa_data_frame(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 				     qdf_nbuf_t skb)
 {
-	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev =
-		dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 	qdf_nbuf_t ret;
-
-	if (!vdev) {
-		dp_err("%s invalid instance", __func__);
-		return skb;
-	}
 
 	/* Terminate the (single-element) list of tx frames */
 	qdf_nbuf_set_next(skb, NULL);
-	ret = dp_tx_send(dp_vdev_to_cdp_vdev(vdev), skb);
+	ret = dp_tx_send(soc_hdl, vdev_id, skb);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to tx", __func__);
@@ -1699,7 +1699,7 @@ static qdf_nbuf_t dp_ipa_intrabss_send(struct dp_pdev *pdev,
 	qdf_mem_zero(nbuf->cb, sizeof(nbuf->cb));
 	len = qdf_nbuf_len(nbuf);
 
-	if (dp_tx_send(dp_vdev_to_cdp_vdev(vdev), nbuf)) {
+	if (dp_tx_send((struct cdp_soc_t *)pdev->soc, vdev->vdev_id, nbuf)) {
 		DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.fail, 1, len);
 		return nbuf;
 	}

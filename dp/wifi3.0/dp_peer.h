@@ -193,14 +193,15 @@ void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
 
 /**
  * dp_set_vlan_groupkey: set vlan map for vdev
- * @vdev_handle: pointer to vdev
- * @vlan_id: vlan_id
+ * @cdp_soc: soc handle
+ * @vdev_id: vdev_id
+ * @vlan_id: vlan_id of peer
  * @group_key: group key for vlan
  *
  * return: set success/failure
  */
 static inline
-QDF_STATUS dp_set_vlan_groupkey(struct cdp_vdev *vdev_handle,
+QDF_STATUS dp_set_vlan_groupkey(struct cdp_soc_t *soc, uint8_t vdev_id,
 				uint16_t vlan_id, uint16_t group_key)
 {
 	return QDF_STATUS_SUCCESS;
@@ -231,7 +232,7 @@ void dp_peer_multipass_list_remove(struct dp_peer *peer)
 void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
 			 struct cdp_vdev *vdev_handle, uint8_t *peer_mac,
 			 uint16_t vlan_id);
-QDF_STATUS dp_set_vlan_groupkey(struct cdp_vdev *vdev_handle,
+QDF_STATUS dp_set_vlan_groupkey(struct cdp_soc_t *soc, uint8_t vdev_id,
 				uint16_t vlan_id, uint16_t group_key);
 void dp_peer_multipass_list_init(struct dp_vdev *vdev);
 void dp_peer_multipass_list_remove(struct dp_peer *peer);

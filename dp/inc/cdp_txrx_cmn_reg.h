@@ -71,7 +71,8 @@ dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		    struct hif_opaque_softc *hif_handle,
 		    HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 		    struct ol_if_ops *ol_ops, uint16_t device_id);
-void *dp_soc_init_wifi3(void *soc, struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+void *dp_soc_init_wifi3(struct cdp_soc_t *soc,
+			struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 			struct hif_opaque_softc *hif_handle,
 			HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			struct ol_if_ops *ol_ops, uint16_t device_id);
@@ -88,7 +89,8 @@ struct cdp_soc_t *dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 }
 
 static inline
-void *dp_soc_init_wifi3(void *soc, struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+void *dp_soc_init_wifi3(struct cdp_soc_t *soc,
+			struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 			struct hif_opaque_softc *hif_handle,
 			HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			struct ol_if_ops *ol_ops, uint16_t device_id)

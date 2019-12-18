@@ -676,10 +676,11 @@ typedef void
 
 /**
  * ol_txrx_tx_fp - top-level transmit function
- * @data_vdev - handle to the virtual device object
+ * @soc - dp soc handle
+ * @vdev_id - handle to the virtual device object
  * @msdu_list - list of network buffers
  */
-typedef qdf_nbuf_t (*ol_txrx_tx_fp)(struct cdp_vdev *data_vdev,
+typedef qdf_nbuf_t (*ol_txrx_tx_fp)(struct cdp_soc_t *soc, uint8_t vdev_id,
 				    qdf_nbuf_t msdu_list);
 
 /**
@@ -2026,17 +2027,18 @@ enum cdp_dp_cfg {
 
 /**
  * struct cdp_peer_cookie - cookie used when creating peer
+ * @ctx: context passed to be used by consumer
+ * @mac_addr: MAC address of peer
  * @peer_id: peer id
  * @pdev_id: pdev_id
- * @mac_addr: MAC address of peer
  * @cookie: cookie to be used by consumer
- * @ctx: context passed to be used by consumer
  */
 struct cdp_peer_cookie {
+	struct cdp_stats_cookie *ctx;
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 	uint8_t peer_id;
+	uint8_t pdev_id;
 	uint8_t cookie;
-	struct cdp_stats_cookie *ctx;
 };
 
 /**

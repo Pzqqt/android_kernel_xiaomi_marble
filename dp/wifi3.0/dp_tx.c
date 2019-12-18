@@ -2158,7 +2158,8 @@ fail:
 
 /**
  * dp_tx_send_mesh() - Transmit mesh frame on a given VAP
- * @vap_dev: DP vdev handle
+ * @soc: DP soc handle
+ * @vdev_id: DP vdev handle
  * @nbuf: skb
  *
  * Entry point for Core Tx layer (DP_TX) invoked from
@@ -2168,12 +2169,13 @@ fail:
  *         nbuf when it fails to send
  */
 #ifdef MESH_MODE_SUPPORT
-qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
+qdf_nbuf_t dp_tx_send_mesh(struct cdp_soc_t *soc, uint8_t vdev_id,
+			   qdf_nbuf_t nbuf)
 {
 	struct meta_hdr_s *mhdr;
 	qdf_nbuf_t nbuf_mesh = NULL;
 	qdf_nbuf_t nbuf_clone = NULL;
-	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
+	struct dp_vdev *vdev;
 	uint8_t no_enc_frame = 0;
 
 	nbuf_mesh = qdf_nbuf_unshare(nbuf);
@@ -2182,6 +2184,15 @@ qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
 				"qdf_nbuf_unshare failed");
 		return nbuf;
 	}
+
+	vdev = dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						  vdev_id);
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"vdev is NULL for vdev_id %d", vdev_id);
+		return nbuf;
+	}
+
 	nbuf = nbuf_mesh;
 
 	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(nbuf);
@@ -2205,7 +2216,7 @@ qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
 	}
 
 	if (nbuf_clone) {
-		if (!dp_tx_send(vap_dev, nbuf_clone)) {
+		if (!dp_tx_send(soc, vdev_id, nbuf_clone)) {
 			DP_STATS_INC(vdev, tx_i.mesh.exception_fw, 1);
 		} else {
 			qdf_nbuf_free(nbuf_clone);
@@ -2217,7 +2228,7 @@ qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
 	else
 		qdf_nbuf_set_tx_ftype(nbuf, CB_FTYPE_INVALID);
 
-	nbuf = dp_tx_send(vap_dev, nbuf);
+	nbuf = dp_tx_send(soc, vdev_id, nbuf);
 	if ((!nbuf) && no_enc_frame) {
 		DP_STATS_INC(vdev, tx_i.mesh.exception_fw, 1);
 	}
@@ -2227,16 +2238,18 @@ qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
 
 #else
 
-qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
+qdf_nbuf_t dp_tx_send_mesh(struct cdp_soc_t *soc, uint8_t vdev_id,
+			   qdf_nbuf_t nbuf)
 {
-	return dp_tx_send(vap_dev, nbuf);
+	return dp_tx_send(soc, vdev_id, nbuf);
 }
 
 #endif
 
 /**
  * dp_tx_send() - Transmit a frame on a given VAP
- * @vap_dev: DP vdev handle
+ * @soc: DP soc handle
+ * @vdev_id: id of DP vdev handle
  * @nbuf: skb
  *
  * Entry point for Core Tx layer (DP_TX) invoked from
@@ -2246,14 +2259,19 @@ qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
  * Return: NULL on success,
  *         nbuf when it fails to send
  */
-qdf_nbuf_t dp_tx_send(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
+qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf)
 {
 	qdf_ether_header_t *eh = NULL;
 	struct dp_tx_msdu_info_s msdu_info;
 	struct dp_tx_seg_info_s seg_info;
-	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
 	uint16_t peer_id = HTT_INVALID_PEER;
 	qdf_nbuf_t nbuf_mesh = NULL;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
+
+	if (qdf_unlikely(!vdev))
+		return nbuf;
 
 	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
 	qdf_mem_zero(&seg_info, sizeof(seg_info));
@@ -3691,7 +3709,7 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	if (tx_spec & OL_TX_SPEC_NO_FREE)
 		vdev->is_tdls_frame = true;
 
-	return dp_tx_send(dp_vdev_to_cdp_vdev(vdev), msdu_list);
+	return dp_tx_send(soc_hdl, vdev_id, msdu_list);
 }
 #endif
 
@@ -4099,7 +4117,7 @@ QDF_STATUS dp_tso_detach_wifi3(void *txrx_soc)
 }
 #endif
 
-QDF_STATUS dp_tso_soc_detach(void *txrx_soc)
+QDF_STATUS dp_tso_soc_detach(struct cdp_soc_t *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	uint8_t i;
@@ -4133,7 +4151,7 @@ QDF_STATUS dp_tso_soc_detach(void *txrx_soc)
  * Return: QDF_STATUS_E_FAILURE on failure or
  * QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS dp_tso_soc_attach(void *txrx_soc)
+QDF_STATUS dp_tso_soc_attach(struct cdp_soc_t *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	uint8_t i;

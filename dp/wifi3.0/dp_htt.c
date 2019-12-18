@@ -3957,8 +3957,10 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			 * using just 8 bits
 			 */
 			if (peer) {
-				status = dp_addba_requestprocess_wifi3(peer,
-						0, tid, 0, win_sz + 1, 0xffff);
+				status = dp_addba_requestprocess_wifi3(
+					(struct cdp_soc_t *)soc->dp_soc,
+					peer->mac_addr.raw, peer->vdev->vdev_id,
+					0, tid, 0, win_sz + 1, 0xffff);
 
 				/*
 				 * If PEER_LOCK_REF_PROTECT enbled dec ref

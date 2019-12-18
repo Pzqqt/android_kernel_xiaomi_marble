@@ -169,7 +169,7 @@ QDF_STATUS dp_tx_soc_detach(struct dp_soc *soc);
  * Return: QDF_STATUS_E_FAILURE on failure or
  * QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS dp_tso_soc_attach(void *txrx_soc);
+QDF_STATUS dp_tso_soc_attach(struct cdp_soc_t *txrx_soc);
 
 /**
  * dp_tso_detach() - TSO Detach handler
@@ -180,15 +180,16 @@ QDF_STATUS dp_tso_soc_attach(void *txrx_soc);
  * Return: QDF_STATUS_E_FAILURE on failure or
  * QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS dp_tso_soc_detach(void *txrx_soc);
+QDF_STATUS dp_tso_soc_detach(struct cdp_soc_t *txrx_soc);
 
 QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev);
 QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev);
 
-qdf_nbuf_t dp_tx_send(struct cdp_vdev *data_vdev, qdf_nbuf_t nbuf);
+qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf);
 qdf_nbuf_t dp_tx_send_exception(struct cdp_vdev *data_vdev, qdf_nbuf_t nbuf,
 				struct cdp_tx_exception_metadata *tx_exc);
-qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *data_vdev, qdf_nbuf_t nbuf);
+qdf_nbuf_t dp_tx_send_mesh(struct cdp_soc_t *soc, uint8_t vdev_id,
+			   qdf_nbuf_t nbuf);
 qdf_nbuf_t
 dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		       struct dp_tx_msdu_info_s *msdu_info, uint16_t peer_id,

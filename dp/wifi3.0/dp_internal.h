@@ -944,30 +944,44 @@ void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer)
 {
 }
 #endif
-int dp_addba_resp_tx_completion_wifi3(void *peer_handle, uint8_t tid,
-	int status);
-extern int dp_addba_requestprocess_wifi3(void *peer_handle,
-	uint8_t dialogtoken, uint16_t tid, uint16_t batimeout,
-	uint16_t buffersize, uint16_t startseqnum);
-extern void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
-	uint8_t *dialogtoken, uint16_t *statuscode,
-	uint16_t *buffersize, uint16_t *batimeout);
-extern void dp_set_addba_response(void *peer_handle, uint8_t tid,
-	uint16_t statuscode);
-extern int dp_delba_process_wifi3(void *peer_handle,
-	int tid, uint16_t reasoncode);
+int dp_addba_resp_tx_completion_wifi3(struct cdp_soc_t *cdp_soc,
+				      uint8_t *peer_mac, uint16_t vdev_id,
+				      uint8_t tid,
+				      int status);
+int dp_addba_requestprocess_wifi3(struct cdp_soc_t *cdp_soc,
+				  uint8_t *peer_mac, uint16_t vdev_id,
+				  uint8_t dialogtoken, uint16_t tid,
+				  uint16_t batimeout,
+				  uint16_t buffersize,
+				  uint16_t startseqnum);
+QDF_STATUS dp_addba_responsesetup_wifi3(struct cdp_soc_t *cdp_soc,
+					uint8_t *peer_mac, uint16_t vdev_id,
+					uint8_t tid, uint8_t *dialogtoken,
+					uint16_t *statuscode,
+					uint16_t *buffersize,
+					uint16_t *batimeout);
+QDF_STATUS dp_set_addba_response(struct cdp_soc_t *cdp_soc,
+				 uint8_t *peer_mac,
+				 uint16_t vdev_id, uint8_t tid,
+				 uint16_t statuscode);
+int dp_delba_process_wifi3(struct cdp_soc_t *cdp_soc, uint8_t *peer_mac,
+			   uint16_t vdev_id, int tid,
+			   uint16_t reasoncode);
 /*
  * dp_delba_tx_completion_wifi3() -  Handle delba tx completion
  *
- * @peer_handle: Peer handle
+ * @cdp_soc: soc handle
+ * @vdev_id: id of the vdev handle
+ * @peer_mac: peer mac address
  * @tid: Tid number
  * @status: Tx completion status
  * Indicate status of delba Tx to DP for stats update and retry
  * delba if tx failed.
  *
  */
-int dp_delba_tx_completion_wifi3(void *peer_handle, uint8_t tid,
-				  int status);
+int dp_delba_tx_completion_wifi3(struct cdp_soc_t *cdp_soc, uint8_t *peer_mac,
+				 uint16_t vdev_id, uint8_t tid,
+				 int status);
 extern QDF_STATUS dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 					uint32_t ba_window_size,
 					uint32_t start_seq);
@@ -1003,9 +1017,10 @@ void dp_htt_stats_print_tag(struct dp_pdev *pdev,
 void dp_htt_stats_copy_tag(struct dp_pdev *pdev, uint8_t tag_type, uint32_t *tag_buf);
 void dp_peer_rxtid_stats(struct dp_peer *peer, void (*callback_fn),
 		void *cb_ctxt);
-void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
-	struct cdp_peer *peer_handle, enum cdp_sec_type sec_type,
-	 uint32_t *rx_pn);
+QDF_STATUS
+dp_set_pn_check_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
+		      uint8_t *peer_mac, enum cdp_sec_type sec_type,
+		      uint32_t *rx_pn);
 
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
 void dp_set_michael_key(struct cdp_peer *peer_handle,

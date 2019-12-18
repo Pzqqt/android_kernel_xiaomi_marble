@@ -342,7 +342,7 @@ dp_get_vdev_from_peer(struct dp_soc *soc,
 				FL("PeerID %d not found use vdevID %d"),
 				peer_id, vdev_id);
 			vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc,
-							vdev_id);
+								  vdev_id);
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_DEBUG,
@@ -466,8 +466,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 				}
 			}
 
-			if (!dp_tx_send(dp_vdev_to_cdp_vdev(ta_peer->vdev),
-					nbuf)) {
+			if (!dp_tx_send((struct cdp_soc_t *)soc,
+					ta_peer->vdev->vdev_id, nbuf)) {
 				DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1,
 						 len);
 				return true;
@@ -501,7 +501,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 
 		/* Set cb->ftype to intrabss FWD */
 		qdf_nbuf_set_tx_ftype(nbuf_copy, CB_FTYPE_INTRABSS_FWD);
-		if (dp_tx_send(dp_vdev_to_cdp_vdev(ta_peer->vdev), nbuf_copy)) {
+		if (dp_tx_send((struct cdp_soc_t *)soc,
+			       ta_peer->vdev->vdev_id, nbuf_copy)) {
 			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1, len);
 			tid_stats->fail_cnt[INTRABSS_DROP]++;
 			qdf_nbuf_free(nbuf_copy);
