@@ -879,7 +879,7 @@ void sde_core_perf_crtc_update(struct drm_crtc *crtc,
 
 		if ((params_changed &&
 				(new->core_clk_rate > old->core_clk_rate)) ||
-				(!params_changed &&
+				(!params_changed && new->core_clk_rate &&
 				(new->core_clk_rate < old->core_clk_rate))) {
 			old->core_clk_rate = new->core_clk_rate;
 			update_clk = 1;
@@ -1037,12 +1037,17 @@ static ssize_t _sde_core_perf_mode_write(struct file *file,
 
 		ret = sde_power_clk_set_rate(perf->phandle,
 				perf->clk_name, perf->max_core_clk_rate);
-		if (ret)
+		if (ret) {
 			SDE_ERROR("failed to set %s clock rate %llu\n",
 					perf->clk_name,
 					perf->max_core_clk_rate);
-		else
+
+			perf->perf_tune.min_core_clk = 0;
+			perf->perf_tune.min_bus_vote = 0;
+			perf_mode = SDE_PERF_MODE_NORMAL;
+		} else {
 			DRM_INFO("minimum performance mode\n");
+		}
 		SDE_EVT32(perf->max_core_clk_rate, ret);
 	} else if (perf_mode == SDE_PERF_MODE_NORMAL) {
 		/* reset the perf tune params to 0 */
