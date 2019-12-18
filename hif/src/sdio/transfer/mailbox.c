@@ -313,8 +313,8 @@ QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_dev *pdev, uint16_t svc,
 		break;
 
 	default:
-		HIF_ERROR("%s: Err : Invalid service (%d)",
-			  __func__, svc);
+		hif_err("%s: Err : Invalid service (%d)",
+			__func__, svc);
 		status = QDF_STATUS_E_INVAL;
 		break;
 	}
@@ -337,13 +337,13 @@ int hif_dev_setup_device(struct hif_sdio_device *pdev)
 				      sizeof(pdev->MailBoxInfo));
 
 	if (status != QDF_STATUS_SUCCESS)
-		HIF_ERROR("%s: HIF_DEVICE_GET_MBOX_ADDR failed", __func__);
+		hif_err("%s: HIF_DEVICE_GET_MBOX_ADDR failed", __func__);
 
 	status = hif_configure_device(NULL, pdev->HIFDevice,
 				      HIF_DEVICE_GET_BLOCK_SIZE,
 				      blocksizes, sizeof(blocksizes));
 	if (status != QDF_STATUS_SUCCESS)
-		HIF_ERROR("%s: HIF_DEVICE_GET_MBOX_BLOCK_SIZE fail", __func__);
+		hif_err("%s: HIF_DEVICE_GET_MBOX_BLOCK_SIZE fail", __func__);
 
 	pdev->BlockSize = blocksizes[MAILBOX_FOR_BLOCK_SIZE];
 
@@ -376,7 +376,7 @@ void hif_dev_mask_interrupts(struct hif_sdio_device *pdev)
 				HIF_WR_SYNC_BYTE_INC, NULL);
 
 	if (status != QDF_STATUS_SUCCESS)
-		HIF_ERROR("%s: Err updating intr reg: %d", __func__, status);
+		hif_err("%s: Err updating intr reg: %d", __func__, status);
 }
 
 /** hif_dev_unmask_interrupts() - Enable the interrupts in the device
@@ -432,7 +432,7 @@ void hif_dev_unmask_interrupts(struct hif_sdio_device *pdev)
 				NULL);
 
 	if (status != QDF_STATUS_SUCCESS)
-		HIF_ERROR("%s: Err updating intr reg: %d", __func__, status);
+		hif_err("%s: Err updating intr reg: %d", __func__, status);
 }
 
 void hif_dev_dump_registers(struct hif_sdio_device *pdev,
@@ -442,37 +442,38 @@ void hif_dev_dump_registers(struct hif_sdio_device *pdev,
 {
 	int i = 0;
 
-	HIF_DBG("%s: Mailbox registers:", __func__);
+	hif_debug("%s: Mailbox registers:", __func__);
 
 	if (irq_proc) {
-		HIF_DBG("HostIntStatus: 0x%x ", irq_proc->host_int_status);
-		HIF_DBG("CPUIntStatus: 0x%x ", irq_proc->cpu_int_status);
-		HIF_DBG("ErrorIntStatus: 0x%x ", irq_proc->error_int_status);
-		HIF_DBG("CounterIntStat: 0x%x ", irq_proc->counter_int_status);
-		HIF_DBG("MboxFrame: 0x%x ", irq_proc->mbox_frame);
-		HIF_DBG("RxLKAValid: 0x%x ", irq_proc->rx_lookahead_valid);
-		HIF_DBG("RxLKA0: 0x%x", irq_proc->rx_lookahead[0]);
-		HIF_DBG("RxLKA1: 0x%x ", irq_proc->rx_lookahead[1]);
-		HIF_DBG("RxLKA2: 0x%x ", irq_proc->rx_lookahead[2]);
-		HIF_DBG("RxLKA3: 0x%x", irq_proc->rx_lookahead[3]);
+		hif_debug("HostIntStatus: 0x%x ", irq_proc->host_int_status);
+		hif_debug("CPUIntStatus: 0x%x ", irq_proc->cpu_int_status);
+		hif_debug("ErrorIntStatus: 0x%x ", irq_proc->error_int_status);
+		hif_debug("CounterIntStat: 0x%x ",
+			  irq_proc->counter_int_status);
+		hif_debug("MboxFrame: 0x%x ", irq_proc->mbox_frame);
+		hif_debug("RxLKAValid: 0x%x ", irq_proc->rx_lookahead_valid);
+		hif_debug("RxLKA0: 0x%x", irq_proc->rx_lookahead[0]);
+		hif_debug("RxLKA1: 0x%x ", irq_proc->rx_lookahead[1]);
+		hif_debug("RxLKA2: 0x%x ", irq_proc->rx_lookahead[2]);
+		hif_debug("RxLKA3: 0x%x", irq_proc->rx_lookahead[3]);
 
 		if (pdev->MailBoxInfo.gmbox_address != 0) {
-			HIF_DBG("GMBOX-HostIntStatus2:  0x%x ",
-				irq_proc->host_int_status2);
-			HIF_DBG("GMBOX-RX-Avail: 0x%x ",
-				irq_proc->gmbox_rx_avail);
+			hif_debug("GMBOX-HostIntStatus2:  0x%x ",
+				  irq_proc->host_int_status2);
+			hif_debug("GMBOX-RX-Avail: 0x%x ",
+				  irq_proc->gmbox_rx_avail);
 		}
 	}
 
 	if (irq_en) {
-		HIF_DBG("IntStatusEnable: 0x%x\n",
-			irq_en->int_status_enable);
-		HIF_DBG("CounterIntStatus: 0x%x\n",
-			irq_en->counter_int_status_enable);
+		hif_debug("IntStatusEnable: 0x%x\n",
+			  irq_en->int_status_enable);
+		hif_debug("CounterIntStatus: 0x%x\n",
+			  irq_en->counter_int_status_enable);
 	}
 
 	for (i = 0; mbox_regs && i < 4; i++)
-		HIF_DBG("Counter[%d]: 0x%x\n", i, mbox_regs->counter[i]);
+		hif_debug("Counter[%d]: 0x%x\n", i, mbox_regs->counter[i]);
 }
 
 /* under HL SDIO, with Interface Memory support, we have
@@ -503,7 +504,7 @@ static uint8_t hif_dev_map_pipe_to_mail_box(struct hif_sdio_device *pdev,
 	else if (0 == pipeid || 1 == pipeid)
 		return 0;
 
-	HIF_ERROR("%s: pipeid=%d invalid", __func__, pipeid);
+	hif_err("%s: pipeid=%d invalid", __func__, pipeid);
 
 	qdf_assert(0);
 
@@ -526,8 +527,8 @@ static uint8_t hif_dev_map_mail_box_to_pipe(struct hif_sdio_device *pdev,
 	else if (mbox_index == 1)
 		return upload ? 3 : 2;
 
-	HIF_ERROR("%s: mbox_index=%d, upload=%d invalid",
-		  __func__, mbox_index, upload);
+	hif_err("%s: mbox_index=%d, upload=%d invalid",
+		__func__, mbox_index, upload);
 
 	qdf_assert(0);
 
@@ -589,14 +590,14 @@ void hif_fixup_write_param(struct hif_sdio_dev *pdev, uint32_t req,
 	} else if (taddr == mboxinfo.mbox_prop[1].extended_address) {
 		mboxlen = mboxinfo.mbox_prop[1].extended_size;
 	} else {
-		HIF_ERROR("%s: Invalid write addr: 0x%08x\n", __func__, taddr);
+		hif_err("%s: Invalid write addr: 0x%08x\n", __func__, taddr);
 		return;
 	}
 
 	if (mboxlen != 0) {
 		if (*length > mboxlen) {
-			HIF_ERROR("%s: Error (%u > %u)",
-				  __func__, *length, mboxlen);
+			hif_err("%s: Error (%u > %u)",
+				__func__, *length, mboxlen);
 			return;
 		}
 
@@ -629,9 +630,9 @@ static QDF_STATUS hif_dev_recv_packet(struct hif_sdio_device *pdev,
 	padded_length = DEV_CALC_RECV_PADDED_LEN(pdev, recv_length);
 
 	if (padded_length > packet->BufferLength) {
-		HIF_ERROR("%s: No space for padlen:%d recvlen:%d bufferlen:%d",
-			  __func__, padded_length,
-			  recv_length, packet->BufferLength);
+		hif_err("%s: No space for padlen:%d recvlen:%d bufferlen:%d",
+			__func__, padded_length,
+			recv_length, packet->BufferLength);
 		if (packet->Completion) {
 			COMPLETE_HTC_PACKET(packet, QDF_STATUS_E_INVAL);
 			return QDF_STATUS_SUCCESS;
@@ -640,9 +641,9 @@ static QDF_STATUS hif_dev_recv_packet(struct hif_sdio_device *pdev,
 	}
 
 	/* mailbox index is saved in Endpoint member */
-	HIF_INFO_HI("%s : hdr:0x%x, len:%d, padded length: %d Mbox:0x%x",
-		    __func__, packet->PktInfo.AsRx.ExpectedHdr, recv_length,
-		    padded_length, mbox_index);
+	hif_debug("%s : hdr:0x%x, len:%d, padded length: %d Mbox:0x%x",
+		  __func__, packet->PktInfo.AsRx.ExpectedHdr, recv_length,
+		  padded_length, mbox_index);
 
 	status = hif_read_write(pdev->HIFDevice,
 				pdev->MailBoxInfo.mbox_addresses[mbox_index],
@@ -651,18 +652,18 @@ static QDF_STATUS hif_dev_recv_packet(struct hif_sdio_device *pdev,
 				req, sync ? NULL : packet);
 
 	if (status != QDF_STATUS_SUCCESS && status != QDF_STATUS_E_PENDING)
-		HIF_ERROR("%s : Failed %d", __func__, status);
+		hif_err("%s : Failed %d", __func__, status);
 
 	if (sync) {
 		packet->Status = status;
 		if (status == QDF_STATUS_SUCCESS) {
 			HTC_FRAME_HDR *hdr = (HTC_FRAME_HDR *) packet->pBuffer;
 
-			HIF_INFO_HI("%s:EP:%d,Len:%d,Flg:%d,CB:0x%02X,0x%02X\n",
-				    __func__,
-				    hdr->EndpointID, hdr->PayloadLen,
-				    hdr->Flags, hdr->ControlBytes0,
-				    hdr->ControlBytes1);
+			hif_debug("%s:EP:%d,Len:%d,Flg:%d,CB:0x%02X,0x%02X\n",
+				  __func__,
+				  hdr->EndpointID, hdr->PayloadLen,
+				  hdr->Flags, hdr->ControlBytes0,
+				  hdr->ControlBytes1);
 		}
 	}
 
@@ -692,7 +693,7 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle
 	if ((HTC_PACKET_QUEUE_DEPTH(recv_pkt_queue) -
 	     HTC_MAX_MSG_PER_BUNDLE_RX) > 0) {
 		partial_bundle = true;
-		HIF_WARN("%s, partial bundle detected num: %d, %d\n",
+		hif_warn("%s, partial bundle detected num: %d, %d\n",
 			 __func__,
 			 HTC_PACKET_QUEUE_DEPTH(recv_pkt_queue),
 			 HTC_MAX_MSG_PER_BUNDLE_RX);
@@ -702,7 +703,7 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle
 		HTC_MAX_MSG_PER_BUNDLE_RX * target->TargetCreditSize;
 	packet_rx_bundle = allocate_htc_bundle_packet(target);
 	if (!packet_rx_bundle) {
-		HIF_ERROR("%s: packet_rx_bundle is NULL\n", __func__);
+		hif_err("%s: packet_rx_bundle is NULL\n", __func__);
 		qdf_sleep(NBUF_ALLOC_FAIL_WAIT_TIME);  /* 100 msec sleep */
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -753,8 +754,8 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle
 				HIF_RD_SYNC_BLOCK_FIX, NULL);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s, hif_send Failed status:%d\n",
-			  __func__, status);
+		hif_err("%s, hif_send Failed status:%d\n",
+			__func__, status);
 	} else {
 		unsigned char *buffer = bundle_buffer;
 		*num_packets_fetched = i;
@@ -799,7 +800,7 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 	HTC_PACKET_QUEUE recv_q, sync_comp_q;
 	QDF_STATUS (*rxCompletion)(void *, qdf_nbuf_t,	uint8_t);
 
-	HIF_INFO_HI("%s: NumLookAheads: %d\n", __func__, num_look_aheads);
+	hif_debug("%s: NumLookAheads: %d\n", __func__, num_look_aheads);
 
 	if (num_pkts_fetched)
 		*num_pkts_fetched = 0;
@@ -841,8 +842,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 		id = ((HTC_FRAME_HDR *)&look_aheads[0])->EndpointID;
 
 		if (id >= ENDPOINT_MAX) {
-			HIF_ERROR("%s: Invalid Endpoint in lookahead: %d\n",
-				  __func__, id);
+			hif_err("%s: Invalid Endpoint in lookahead: %d\n",
+				__func__, id);
 			status = QDF_STATUS_E_PROTO;
 			break;
 		}
@@ -1028,7 +1029,7 @@ static QDF_STATUS hif_dev_service_cpu_interrupt(struct hif_sdio_device *pdev)
 	cpu_int_status = mboxProcRegs(pdev).cpu_int_status &
 			 mboxEnaRegs(pdev).cpu_int_status_enable;
 
-	HIF_ERROR("%s: 0x%x", __func__, (uint32_t)cpu_int_status);
+	hif_err("%s: 0x%x", __func__, (uint32_t)cpu_int_status);
 
 	/* Clear the interrupt */
 	mboxProcRegs(pdev).cpu_int_status &= ~cpu_int_status;
@@ -1064,7 +1065,7 @@ static QDF_STATUS hif_dev_service_cpu_interrupt(struct hif_sdio_device *pdev)
 				pdev->hif_callbacks.Context,
 				QDF_STATUS_E_FAILURE);
 	} else {
-		HIF_ERROR("%s: Unrecognized CPU event", __func__);
+		hif_err("%s: Unrecognized CPU event", __func__);
 	}
 
 	return status;
@@ -1085,16 +1086,16 @@ static QDF_STATUS hif_dev_service_error_interrupt(struct hif_sdio_device *pdev)
 	uint8_t error_int_status = 0;
 
 	error_int_status = mboxProcRegs(pdev).error_int_status & 0x0F;
-	HIF_ERROR("%s: 0x%x", __func__, error_int_status);
+	hif_err("%s: 0x%x", __func__, error_int_status);
 
 	if (ERROR_INT_STATUS_WAKEUP_GET(error_int_status))
-		HIF_ERROR("%s: Error : Wakeup", __func__);
+		hif_err("%s: Error : Wakeup", __func__);
 
 	if (ERROR_INT_STATUS_RX_UNDERFLOW_GET(error_int_status))
-		HIF_ERROR("%s: Error : Rx Underflow", __func__);
+		hif_err("%s: Error : Rx Underflow", __func__);
 
 	if (ERROR_INT_STATUS_TX_OVERFLOW_GET(error_int_status))
-		HIF_ERROR("%s: Error : Tx Overflow", __func__);
+		hif_err("%s: Error : Tx Overflow", __func__);
 
 	/* Clear the interrupt */
 	mboxProcRegs(pdev).error_int_status &= ~error_int_status;
@@ -1134,7 +1135,7 @@ static QDF_STATUS hif_dev_service_debug_interrupt(struct hif_sdio_device *pdev)
 	QDF_STATUS status;
 
 	/* Send a target failure event to the application */
-	HIF_ERROR("%s: Target debug interrupt", __func__);
+	hif_err("%s: Target debug interrupt", __func__);
 
 	/* clear the interrupt , the debug error interrupt is counter 0
 	 * read counter to clear interrupt
@@ -1447,7 +1448,7 @@ QDF_STATUS hif_dev_dsr_handler(void *context)
 			 * could be more pending messages. The HIF layer
 			 * must ACK the interrupt on behalf of HTC
 			 */
-			HIF_INFO("%s:  Yield (RX count: %d)",
+			hif_info("%s:  Yield (RX count: %d)",
 				 __func__, pdev->CurrentDSRRecvCount);
 		} else {
 			hif_ack_interrupt(pdev->HIFDevice);
@@ -1479,9 +1480,9 @@ hif_read_write(struct hif_sdio_dev *device,
 
 	AR_DEBUG_ASSERT(device);
 	AR_DEBUG_ASSERT(device->func);
-	HIF_TRACE("%s: device 0x%pK addr 0x%lX buffer 0x%pK",
+	hif_debug("%s: device 0x%pK addr 0x%lX buffer 0x%pK",
 		  __func__, device, address, buffer);
-	HIF_TRACE("%s: len %d req 0x%X context 0x%pK",
+	hif_debug("%s: len %d req 0x%X context 0x%pK",
 		  __func__, length, request, context);
 
 	/*sdio r/w action is not needed when suspend, so just return */
@@ -1500,10 +1501,10 @@ hif_read_write(struct hif_sdio_dev *device,
 					 : "Synch"));
 			busrequest = hif_allocate_bus_request(device);
 			if (!busrequest) {
-				HIF_ERROR("%s:bus requests unavail", __func__);
-				HIF_ERROR("%s, addr:0x%lX, len:%d",
-					  request & HIF_SDIO_READ ? "READ" :
-					  "WRITE", address, length);
+				hif_err("%s:bus requests unavail", __func__);
+				hif_err("%s, addr:0x%lX, len:%d",
+					request & HIF_SDIO_READ ? "READ" :
+					"WRITE", address, length);
 				return QDF_STATUS_E_FAILURE;
 			}
 			busrequest->address = address;
@@ -1526,11 +1527,11 @@ hif_read_write(struct hif_sdio_dev *device,
 				    0) {
 					QDF_STATUS status = busrequest->status;
 
-					HIF_TRACE("%s: sync freeing 0x%lX:0x%X",
+					hif_debug("%s: sync freeing 0x%lX:0x%X",
 						  __func__,
 						  (unsigned long)busrequest,
 						  busrequest->status);
-					HIF_TRACE("%s: freeing req: 0x%X",
+					hif_debug("%s: freeing req: 0x%X",
 						  __func__,
 						  (unsigned int)request);
 					hif_free_bus_request(device,
@@ -1541,14 +1542,14 @@ hif_read_write(struct hif_sdio_dev *device,
 					return QDF_STATUS_E_FAILURE;
 				}
 			} else {
-				HIF_TRACE("%s: queued async req: 0x%lX",
+				hif_debug("%s: queued async req: 0x%lX",
 					  __func__, (unsigned long)busrequest);
 				up(&device->sem_async);
 				return QDF_STATUS_E_PENDING;
 			}
 		} else {
-			HIF_ERROR("%s: Invalid execution mode: 0x%08x",
-				  __func__, (unsigned int)request);
+			hif_err("%s: Invalid execution mode: 0x%08x",
+				__func__, (unsigned int)request);
 			status = QDF_STATUS_E_INVAL;
 			break;
 		}
@@ -1576,8 +1577,8 @@ static int hif_sdio_func_enable(struct hif_softc *ol_sc,
 
 		ret = hif_sdio_quirk_async_intr(ol_sc, func);
 		if (ret) {
-			HIF_ERROR("%s: Error setting async intr:%d",
-				  __func__, ret);
+			hif_err("%s: Error setting async intr:%d",
+				__func__, ret);
 			sdio_release_host(func);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -1585,24 +1586,24 @@ static int hif_sdio_func_enable(struct hif_softc *ol_sc,
 		func->enable_timeout = 100;
 		ret = sdio_enable_func(func);
 		if (ret) {
-			HIF_ERROR("%s: Unable to enable function: %d",
-				  __func__, ret);
+			hif_err("%s: Unable to enable function: %d",
+				__func__, ret);
 			sdio_release_host(func);
 			return QDF_STATUS_E_FAILURE;
 		}
 
 		ret = sdio_set_block_size(func, HIF_BLOCK_SIZE);
 		if (ret) {
-			HIF_ERROR("%s: Unable to set block size 0x%X : %d\n",
-				  __func__, HIF_BLOCK_SIZE, ret);
+			hif_err("%s: Unable to set block size 0x%X : %d\n",
+				__func__, HIF_BLOCK_SIZE, ret);
 			sdio_release_host(func);
 			return QDF_STATUS_E_FAILURE;
 		}
 
 		ret = hif_sdio_quirk_mod_strength(ol_sc, func);
 		if (ret) {
-			HIF_ERROR("%s: Error setting mod strength : %d\n",
-				  __func__, ret);
+			hif_err("%s: Error setting mod strength : %d\n",
+				__func__, ret);
 			sdio_release_host(func);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -1636,26 +1637,26 @@ __hif_read_write(struct hif_sdio_dev *device,
 	bool bounced = false;
 
 	if (!device) {
-		HIF_ERROR("%s: device null!", __func__);
+		hif_err("%s: device null!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!device->func) {
-		HIF_ERROR("%s: func null!", __func__);
+		hif_err("%s: func null!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	HIF_INFO_HI("%s: addr:0X%06X, len:%08d, %s, %s", __func__,
-		    address, length,
-		    request & HIF_SDIO_READ ? "Read " : "Write",
-		    request & HIF_ASYNCHRONOUS ? "Async" : "Sync ");
+	hif_debug("%s: addr:0X%06X, len:%08d, %s, %s", __func__,
+		  address, length,
+		  request & HIF_SDIO_READ ? "Read " : "Write",
+		  request & HIF_ASYNCHRONOUS ? "Async" : "Sync ");
 
 	do {
 		if (request & HIF_EXTENDED_IO) {
-			HIF_INFO_HI("%s: Command type: CMD53\n", __func__);
+			//HIF_INFO_HI("%s: Command type: CMD53\n", __func__);
 		} else {
-			HIF_ERROR("%s: Invalid command type: 0x%08x\n",
-				  __func__, request);
+			hif_err("%s: Invalid command type: 0x%08x\n",
+				__func__, request);
 			status = QDF_STATUS_E_INVAL;
 			break;
 		}
@@ -1665,14 +1666,14 @@ __hif_read_write(struct hif_sdio_dev *device,
 			length =
 				(length / HIF_BLOCK_SIZE) *
 				HIF_BLOCK_SIZE;
-			HIF_INFO_HI("%s: Block mode (BlockLen: %d)\n",
-				    __func__, length);
+			hif_debug("%s: Block mode (BlockLen: %d)\n",
+				  __func__, length);
 		} else if (request & HIF_BYTE_BASIS) {
-			HIF_INFO_HI("%s: Byte mode (BlockLen: %d)\n",
-				    __func__, length);
+			hif_debug("%s: Byte mode (BlockLen: %d)\n",
+				  __func__, length);
 		} else {
-			HIF_ERROR("%s: Invalid data mode: 0x%08x\n",
-				  __func__, request);
+			hif_err("%s: Invalid data mode: 0x%08x\n",
+				__func__, request);
 			status = QDF_STATUS_E_INVAL;
 			break;
 		}
@@ -1680,22 +1681,22 @@ __hif_read_write(struct hif_sdio_dev *device,
 			hif_fixup_write_param(device, request,
 					      &length, &address);
 
-			HIF_INFO_HI("addr:%08X, len:0x%08X, dummy:0x%04X\n",
-				    address, length,
-				    (request & HIF_DUMMY_SPACE_MASK) >> 16);
+			hif_debug("addr:%08X, len:0x%08X, dummy:0x%04X\n",
+				  address, length,
+				  (request & HIF_DUMMY_SPACE_MASK) >> 16);
 		}
 
 		if (request & HIF_FIXED_ADDRESS) {
 			opcode = CMD53_FIXED_ADDRESS;
-			HIF_INFO_HI("%s: Addr mode: fixed 0x%X\n",
-				    __func__, address);
+			hif_debug("%s: Addr mode: fixed 0x%X\n",
+				  __func__, address);
 		} else if (request & HIF_INCREMENTAL_ADDRESS) {
 			opcode = CMD53_INCR_ADDRESS;
-			HIF_INFO_HI("%s: Address mode: Incremental 0x%X\n",
-				    __func__, address);
+			hif_debug("%s: Address mode: Incremental 0x%X\n",
+				  __func__, address);
 		} else {
-			HIF_ERROR("%s: Invalid address mode: 0x%08x\n",
-				  __func__, request);
+			hif_err("%s: Invalid address mode: 0x%08x\n",
+				__func__, request);
 			status = QDF_STATUS_E_INVAL;
 			break;
 		}
@@ -1708,8 +1709,8 @@ __hif_read_write(struct hif_sdio_dev *device,
 				/* copy the write data to the dma buffer */
 				AR_DEBUG_ASSERT(length <= HIF_DMA_BUFFER_SIZE);
 				if (length > HIF_DMA_BUFFER_SIZE) {
-					HIF_ERROR("%s: Invalid write len: %d\n",
-						  __func__, length);
+					hif_err("%s: Invalid write len: %d\n",
+						__func__, length);
 					status = QDF_STATUS_E_INVAL;
 					break;
 				}
@@ -1724,15 +1725,15 @@ __hif_read_write(struct hif_sdio_dev *device,
 			if (opcode == CMD53_FIXED_ADDRESS  && tbuffer) {
 				ret = sdio_writesb(device->func, address,
 						   tbuffer, length);
-				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
-					    __func__, ret, address, length,
-					    *(int *)tbuffer);
+				hif_debug("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					  __func__, ret, address, length,
+					  *(int *)tbuffer);
 			} else if (tbuffer) {
 				ret = sdio_memcpy_toio(device->func, address,
 						       tbuffer, length);
-				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
-					    __func__, ret, address, length,
-					    *(int *)tbuffer);
+				hif_debug("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					  __func__, ret, address, length,
+					  *(int *)tbuffer);
 			}
 		} else if (request & HIF_SDIO_READ) {
 #if HIF_USE_DMA_BOUNCE_BUFFER
@@ -1740,8 +1741,8 @@ __hif_read_write(struct hif_sdio_dev *device,
 				AR_DEBUG_ASSERT(device->dma_buffer);
 				AR_DEBUG_ASSERT(length <= HIF_DMA_BUFFER_SIZE);
 				if (length > HIF_DMA_BUFFER_SIZE) {
-					HIF_ERROR("%s: Invalid read len: %d\n",
-						  __func__, length);
+					hif_err("%s: Invalid read len: %d\n",
+						__func__, length);
 					status = QDF_STATUS_E_INVAL;
 					break;
 				}
@@ -1756,35 +1757,35 @@ __hif_read_write(struct hif_sdio_dev *device,
 			if (opcode == CMD53_FIXED_ADDRESS && tbuffer) {
 				ret = sdio_readsb(device->func, tbuffer,
 						  address, length);
-				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
-					    __func__, ret, address, length,
-					    *(int *)tbuffer);
+				hif_debug("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					  __func__, ret, address, length,
+					  *(int *)tbuffer);
 			} else if (tbuffer) {
 				ret = sdio_memcpy_fromio(device->func,
 							 tbuffer, address,
 							 length);
-				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
-					    __func__, ret, address, length,
-					    *(int *)tbuffer);
+				hif_debug("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					  __func__, ret, address, length,
+					  *(int *)tbuffer);
 			}
 #if HIF_USE_DMA_BOUNCE_BUFFER
 			if (bounced && tbuffer)
 				memcpy(buffer, tbuffer, length);
 #endif
 		} else {
-			HIF_ERROR("%s: Invalid dir: 0x%08x", __func__, request);
+			hif_err("%s: Invalid dir: 0x%08x", __func__, request);
 			status = QDF_STATUS_E_INVAL;
 			return status;
 		}
 
 		if (ret) {
-			HIF_ERROR("%s: SDIO bus operation failed!", __func__);
-			HIF_ERROR("%s: MMC stack returned : %d", __func__, ret);
-			HIF_ERROR("%s: addr:0X%06X, len:%08d, %s, %s",
-				  __func__, address, length,
-				  request & HIF_SDIO_READ ? "Read " : "Write",
-				  request & HIF_ASYNCHRONOUS ?
-				  "Async" : "Sync");
+			hif_err("%s: SDIO bus operation failed!", __func__);
+			hif_err("%s: MMC stack returned : %d", __func__, ret);
+			hif_err("%s: addr:0X%06X, len:%08d, %s, %s",
+				__func__, address, length,
+				request & HIF_SDIO_READ ? "Read " : "Write",
+				request & HIF_ASYNCHRONOUS ?
+				"Async" : "Sync");
 			status = QDF_STATUS_E_FAILURE;
 		}
 	} while (false);
@@ -1836,7 +1837,7 @@ static int async_task(void *param)
 			else
 				device->asyncreq = NULL;
 			qdf_spin_unlock_irqrestore(&device->asynclock);
-			HIF_TRACE("%s: processing req: 0x%lX",
+			hif_debug("%s: processing req: 0x%lX",
 				  __func__, (unsigned long)request);
 
 			if (!claimed) {
@@ -1866,18 +1867,11 @@ static int async_task(void *param)
 				if (request->request & HIF_ASYNCHRONOUS) {
 					void *context = request->context;
 
-					HIF_TRACE("%s: freeing req: 0x%lX",
-						  __func__,
-						  (unsigned long)request);
 					hif_free_bus_request(device, request);
-
-					HIF_TRACE("%s: completion req 0x%lX",
-						  __func__,
-						  (unsigned long)request);
 					device->htc_callbacks.
 					rw_compl_handler(context, status);
 				} else {
-					HIF_TRACE("%s: upping req: 0x%lX",
+					hif_debug("%s: upping req: 0x%lX",
 						  __func__,
 						  (unsigned long)request);
 					request->status = status;
@@ -1952,7 +1946,7 @@ QDF_STATUS hif_enable_func(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 	HIF_ENTER();
 
 	if (!device) {
-		HIF_ERROR("%s: HIF device is NULL", __func__);
+		hif_err("%s: HIF device is NULL", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1966,8 +1960,8 @@ QDF_STATUS hif_enable_func(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 						    (void *)device,
 						    "AR6K Async");
 		if (IS_ERR(device->async_task)) {
-			HIF_ERROR("%s: Error creating async task",
-				  __func__);
+			hif_err("%s: Error creating async task",
+				__func__);
 			return QDF_STATUS_E_FAILURE;
 		}
 		device->is_disabled = false;

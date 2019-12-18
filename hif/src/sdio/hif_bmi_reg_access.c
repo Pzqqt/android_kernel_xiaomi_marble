@@ -25,6 +25,7 @@
 #include "htc_api.h"
 #include "if_sdio.h"
 #include "regtable_sdio.h"
+#include "hif_sdio_dev.h"
 
 #define BMI_COMMUNICATION_TIMEOUT       100000
 
