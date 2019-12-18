@@ -23,6 +23,7 @@
 #ifndef _WLAN_OCB_STRUCTS_H_
 #define _WLAN_OCB_STRUCTS_H_
 #include <qdf_status.h>
+#include "qca_vendor.h"
 
 /* Don't add the RX stats header to packets received on this channel */
 #define OCB_CHANNEL_FLAG_DISABLE_RX_STATS_HDR	(1 << 0)
