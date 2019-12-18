@@ -26,6 +26,8 @@
 #include "cds_utils.h"
 #include "cds_api.h"
 #include "wlan_ocb_ucfg_api.h"
+#include "lim_utils.h"
+#include "../../core/src/vdev_mgr_ops.h"
 
 /**
  * wma_start_ocb_vdev() - start OCB vdev

@@ -160,7 +160,7 @@ static QDF_STATUS ocb_channel_config_status(struct ocb_rx_event *evt)
 		/* Sync channel status to data path */
 		if (config_rsp.status == OCB_CHANNEL_CONFIG_SUCCESS)
 			ocb_set_chan_info(ocb_obj->dp_soc,
-					  ocb_obj->dp_pdev,
+					  ocb_obj->pdev,
 					  vdev_id,
 					  ocb_obj->channel_config);
 		qdf_mem_free(ocb_obj->channel_config);

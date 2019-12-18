@@ -216,7 +216,6 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type sta_desc = {0};
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -1941,7 +1940,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 		tb[QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_ACTIVE_STATE_ARRAY]);
 
 	/* Check channel count. Per 11p spec, max 2 channels allowed */
-	if (!channel_count || channel_count > TGT_NUM_OCB_CHANNELS) {
+	if (!channel_count || channel_count > CFG_TGT_NUM_OCB_CHANNELS) {
 		hdd_err("Invalid channel_count %d", channel_count);
 		return -EINVAL;
 	}

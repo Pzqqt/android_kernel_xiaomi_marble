@@ -22,6 +22,7 @@
 
 #include <scheduler_api.h>
 #include <wlan_defs.h>
+#include <wlan_objmgr_pdev_obj.h>
 #include <wlan_reg_services_api.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_global_obj.h>
@@ -279,7 +280,7 @@ QDF_STATUS ucfg_ocb_set_channel_config(struct wlan_objmgr_vdev *vdev,
 	ocb_cbs->ocb_set_config_context = arg;
 
 	state = wlan_vdev_mlme_get_state(vdev);
-	if (state != WLAN_VDEV_S_RUN) {
+	if (state != WLAN_VDEV_S_START) {
 		/* Vdev is not started, start it */
 		ocb_debug("OCB vdev%d is not up", config->vdev_id);
 		status = ocb_vdev_start(ocb_obj);
