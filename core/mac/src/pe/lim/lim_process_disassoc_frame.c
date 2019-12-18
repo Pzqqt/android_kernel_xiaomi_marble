@@ -156,15 +156,6 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DISASSOC_FRAME_EVENT,
 		pe_session, 0, reasonCode);
 
-	if (mac->mlme_cfg->gen.fatal_event_trigger &&
-	    (reasonCode != eSIR_MAC_UNSPEC_FAILURE_REASON &&
-	    reasonCode != eSIR_MAC_DEAUTH_LEAVING_BSS_REASON &&
-	    reasonCode != eSIR_MAC_DISASSOC_LEAVING_BSS_REASON)) {
-		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
-			       WLAN_LOG_INDICATOR_HOST_DRIVER,
-			       WLAN_LOG_REASON_DISCONNECT,
-			       true, false);
-	}
 	/**
 	 * Extract 'associated' context for STA, if any.
 	 * This is maintained by DPH and created by LIM.
@@ -315,6 +306,15 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	lim_perform_disassoc(mac, frame_rssi, reasonCode,
 			     pe_session, pHdr->sa);
 
+	if (mac->mlme_cfg->gen.fatal_event_trigger &&
+	    (reasonCode != eSIR_MAC_UNSPEC_FAILURE_REASON &&
+	    reasonCode != eSIR_MAC_DEAUTH_LEAVING_BSS_REASON &&
+	    reasonCode != eSIR_MAC_DISASSOC_LEAVING_BSS_REASON)) {
+		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+			       WLAN_LOG_INDICATOR_HOST_DRIVER,
+			       WLAN_LOG_REASON_DISCONNECT,
+			       true, false);
+	}
 } /*** end lim_process_disassoc_frame() ***/
 
 #ifdef FEATURE_WLAN_TDLS

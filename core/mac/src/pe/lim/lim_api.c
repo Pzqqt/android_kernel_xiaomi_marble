@@ -2610,8 +2610,8 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 				  curr_seq_num);
 			return eMGMT_DROP_DUPLICATE_AUTH_FRAME;
 		}
-	} else if ((subType == SIR_MAC_MGMT_ASSOC_REQ) &&
-		   (subType == SIR_MAC_MGMT_DISASSOC) &&
+	} else if ((subType == SIR_MAC_MGMT_ASSOC_REQ) ||
+		   (subType == SIR_MAC_MGMT_DISASSOC) ||
 		   (subType == SIR_MAC_MGMT_DEAUTH)) {
 		uint16_t assoc_id;
 		struct dph_hash_table *dph_table;
@@ -2622,7 +2622,7 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 		pe_session = pe_find_session_by_bssid(mac, pHdr->bssId,
 				&sessionId);
 		if (!pe_session)
-			return eMGMT_DROP_NO_DROP;
+			return eMGMT_DROP_SPURIOUS_FRAME;
 		dph_table = &pe_session->dph.dphHashTable;
 		sta_ds = dph_lookup_hash_entry(mac, pHdr->sa, &assoc_id,
 					       dph_table);
@@ -2630,7 +2630,7 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 			if (subType == SIR_MAC_MGMT_ASSOC_REQ)
 				return eMGMT_DROP_NO_DROP;
 			else
-				return eMGMT_DROP_EXCESSIVE_MGMT_FRAME;
+				return eMGMT_DROP_SPURIOUS_FRAME;
 		}
 
 		if (subType == SIR_MAC_MGMT_ASSOC_REQ)
