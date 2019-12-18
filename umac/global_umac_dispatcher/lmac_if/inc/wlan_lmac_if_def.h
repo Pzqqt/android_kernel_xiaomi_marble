@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -912,6 +912,19 @@ struct wlan_lmac_if_green_ap_tx_ops {
 };
 #endif
 
+#ifdef FEATURE_COEX
+struct coex_config_params;
+
+/**
+ * struct wlan_lmac_if_coex_tx_ops - south bound tx function pointers for coex
+ * @coex_config_send: function pointer to send coex config to fw
+ */
+struct wlan_lmac_if_coex_tx_ops {
+	QDF_STATUS (*coex_config_send)(struct wlan_objmgr_pdev *pdev,
+				       struct coex_config_params *param);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
@@ -919,9 +932,10 @@ struct wlan_lmac_if_green_ap_tx_ops {
  * @dfs_tx_ops: dfs tx ops.
  * @green_ap_tx_ops: green_ap tx_ops
  * @cp_stats_tx_ops: cp stats tx_ops
+ * @coex_ops: coex tx_ops
  *
  * Callback function tabled to be registered with umac.
- * umac will use the functional table to send events/frames to lmac/wmi
+ * umac will use the functional table to send events/frames to wmi
  */
 
 struct wlan_lmac_if_tx_ops {
@@ -990,6 +1004,10 @@ struct wlan_lmac_if_tx_ops {
 #endif
 
 	struct wlan_lmac_if_ftm_tx_ops ftm_tx_ops;
+
+#ifdef FEATURE_COEX
+	struct wlan_lmac_if_coex_tx_ops coex_ops;
+#endif
 };
 
 /**

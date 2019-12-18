@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -79,6 +79,10 @@
 #include <target_if_crypto.h>
 #endif
 #include <target_if_vdev_mgr_tx_ops.h>
+
+#ifdef FEATURE_COEX
+#include <target_if_coex.h>
+#endif
 
 static struct target_if_ctx *g_target_if_ctx;
 
@@ -338,6 +342,20 @@ static inline void target_if_crypto_tx_ops_register(
 }
 #endif
 
+#ifdef FEATURE_COEX
+static QDF_STATUS
+target_if_coex_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	return target_if_coex_register_tx_ops(tx_ops);
+}
+#else
+static inline QDF_STATUS
+target_if_coex_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 static void target_if_target_tx_ops_register(
 		struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -440,6 +458,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_crypto_tx_ops_register(tx_ops);
 
 	target_if_vdev_mgr_tx_ops_register(tx_ops);
+
+	target_if_coex_tx_ops_register(tx_ops);
 
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -70,6 +70,10 @@
 
 #ifdef WLAN_CFR_ENABLE
 #include <wlan_cfr_utils_api.h>
+#endif
+
+#ifdef FEATURE_COEX
+#include <wlan_coex_utils_api.h>
 #endif
 
 /**
@@ -707,6 +711,50 @@ static QDF_STATUS fd_psoc_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif /* WLAN_SUPPORT_FILS */
 
+#ifdef FEATURE_COEX
+static QDF_STATUS dispatcher_coex_init(void)
+{
+	return wlan_coex_init();
+}
+
+static QDF_STATUS dispatcher_coex_deinit(void)
+{
+	return wlan_coex_deinit();
+}
+
+static QDF_STATUS dispatcher_coex_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_coex_psoc_open(psoc);
+}
+
+static QDF_STATUS dispatcher_coex_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_coex_psoc_close(psoc);
+}
+#else
+static inline QDF_STATUS dispatcher_coex_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS dispatcher_coex_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+dispatcher_coex_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+dispatcher_coex_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_COEX */
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -772,6 +820,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_init_cfr())
 		goto cfr_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_coex_init())
+		goto coex_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -783,6 +834,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	dispatcher_coex_deinit();
+coex_init_fail:
 	dispatcher_deinit_cfr();
 cfr_init_fail:
 	wlan_cmn_mlme_deinit();
@@ -835,6 +888,8 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_STATUS status;
 
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_coex_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_cfr());
 
@@ -924,8 +979,13 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != dispatcher_ftm_psoc_open(psoc))
 		goto ftm_psoc_open_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_coex_psoc_open(psoc))
+		goto coex_psoc_open_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+coex_psoc_open_fail:
+	dispatcher_ftm_psoc_close(psoc);
 ftm_psoc_open_fail:
 	son_psoc_close(psoc);
 psoc_son_fail:
@@ -946,6 +1006,8 @@ qdf_export_symbol(dispatcher_psoc_open);
 
 QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_coex_psoc_close(psoc));
+
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_ftm_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == son_psoc_close(psoc));
