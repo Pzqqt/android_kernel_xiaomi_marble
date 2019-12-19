@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -199,7 +199,8 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		 * needs to be handled after the response of set hw
 		 * mode
 		 */
-		if (param->status == SET_HW_MODE_STATUS_OK) {
+		if (param->status == SET_HW_MODE_STATUS_OK ||
+		    param->status == SET_HW_MODE_STATUS_ALREADY) {
 			sme_debug("search for ssid success");
 			csr_scan_handle_search_for_ssid(mac,
 					session_id);
@@ -12332,6 +12333,7 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 	cmd->u.set_hw_mode_cmd.reason = msg.reason;
 	cmd->u.set_hw_mode_cmd.session_id = msg.session_id;
 	cmd->u.set_hw_mode_cmd.next_action = msg.next_action;
+	cmd->u.set_hw_mode_cmd.action = msg.action;
 	cmd->u.set_hw_mode_cmd.context = msg.context;
 
 	sme_debug("Queuing set hw mode to CSR, session: %d reason: %d",

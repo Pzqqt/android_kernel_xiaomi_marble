@@ -21223,6 +21223,9 @@ void csr_process_set_hw_mode(struct mac_context *mac, tSmeCmd *command)
 	struct scheduler_msg msg = {0};
 	struct sir_set_hw_mode_resp *param;
 	enum policy_mgr_hw_mode_change hw_mode;
+	enum policy_mgr_conc_next_action action;
+	enum set_hw_mode_status hw_mode_change_status =
+						SET_HW_MODE_STATUS_ECANCELED;
 
 	/* Setting HW mode is for the entire system.
 	 * So, no need to check session
@@ -21241,6 +21244,7 @@ void csr_process_set_hw_mode(struct mac_context *mac, tSmeCmd *command)
 		 */
 		goto fail;
 
+	action = command->u.set_hw_mode_cmd.action;
 	/* For hidden SSID case, if there is any scan command pending
 	 * it needs to be cleared before issuing set HW mode
 	 */
@@ -21253,6 +21257,15 @@ void csr_process_set_hw_mode(struct mac_context *mac, tSmeCmd *command)
 			sme_err("Failed to clear scan cmd");
 			goto fail;
 		}
+	}
+
+	status = policy_mgr_validate_dbs_switch(mac->psoc, action);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Hw mode change not sent to FW status = %d", status);
+		if (status == QDF_STATUS_E_ALREADY)
+			hw_mode_change_status = SET_HW_MODE_STATUS_ALREADY;
+		goto fail;
 	}
 
 	hw_mode = policy_mgr_get_hw_mode_change_from_hw_mode_index(
@@ -21315,7 +21328,7 @@ fail:
 		return;
 
 	sme_err("Sending set HW fail response to SME");
-	param->status = SET_HW_MODE_STATUS_ECANCELED;
+	param->status = hw_mode_change_status;
 	param->cfgd_hw_mode_index = 0;
 	param->num_vdev_mac_entries = 0;
 	msg.type = eWNI_SME_SET_HW_MODE_RESP;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -7509,6 +7509,7 @@ hdd_policy_mgr_set_hw_mode_ut(struct hdd_context *hdd_ctx,
 	enum hw_mode_bandwidth mac1_bw;
 	enum hw_mode_mac_band_cap mac0_band_cap;
 	enum hw_mode_dbs_capab dbs;
+	enum policy_mgr_conc_next_action action;
 
 	switch (cmd) {
 	case 0:
@@ -7519,6 +7520,7 @@ hdd_policy_mgr_set_hw_mode_ut(struct hdd_context *hdd_ctx,
 		mac1_bw = HW_MODE_BW_NONE;
 		mac0_band_cap = HW_MODE_MAC_BAND_NONE;
 		dbs = HW_MODE_DBS_NONE;
+		action = PM_SINGLE_MAC;
 		break;
 	case 1:
 		hdd_debug("set hw mode for dual mac");
@@ -7528,6 +7530,7 @@ hdd_policy_mgr_set_hw_mode_ut(struct hdd_context *hdd_ctx,
 		mac1_bw = HW_MODE_40_MHZ;
 		mac0_band_cap = HW_MODE_MAC_BAND_NONE;
 		dbs = HW_MODE_DBS;
+		action = PM_DBS;
 		break;
 	case 2:
 		hdd_debug("set hw mode for 2x2 5g + 1x1 2g");
@@ -7537,6 +7540,7 @@ hdd_policy_mgr_set_hw_mode_ut(struct hdd_context *hdd_ctx,
 		mac1_bw = HW_MODE_40_MHZ;
 		mac0_band_cap = HW_MODE_MAC_BAND_5G;
 		dbs = HW_MODE_DBS;
+		action = PM_DBS1;
 		break;
 	case 3:
 		hdd_debug("set hw mode for 2x2 2g + 1x1 5g");
@@ -7546,6 +7550,7 @@ hdd_policy_mgr_set_hw_mode_ut(struct hdd_context *hdd_ctx,
 		mac1_bw = HW_MODE_40_MHZ;
 		mac0_band_cap = HW_MODE_MAC_BAND_2G;
 		dbs = HW_MODE_DBS;
+		action = PM_DBS2;
 		break;
 	default:
 		hdd_err("unknown cmd %d", cmd);
@@ -7555,7 +7560,8 @@ hdd_policy_mgr_set_hw_mode_ut(struct hdd_context *hdd_ctx,
 				    mac0_ss, mac0_bw, mac1_ss, mac1_bw,
 				    mac0_band_cap, dbs, HW_MODE_AGILE_DFS_NONE,
 				    HW_MODE_SBS_NONE,
-				    POLICY_MGR_UPDATE_REASON_UT, PM_NOP);
+				    POLICY_MGR_UPDATE_REASON_UT, PM_NOP,
+				    action);
 }
 
 static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
