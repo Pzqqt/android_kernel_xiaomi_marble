@@ -9788,7 +9788,7 @@ QDF_STATUS send_peer_del_all_wds_entries_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_multiple_vdev_restart_req_cmd_non_tlv() - send multi vdev restart req
+ * send_mvr_cmd() - send multi vdev restart req
  * @wmi_handle: wmi handle
  * @param: wmi multiple vdev restart req param
  *
@@ -9796,7 +9796,7 @@ QDF_STATUS send_peer_del_all_wds_entries_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
-QDF_STATUS send_multiple_vdev_restart_req_cmd_non_tlv(
+static QDF_STATUS send_mvr_cmd(
 		wmi_unified_t wmi_handle,
 		struct multiple_vdev_restart_params *param)
 {
@@ -9808,16 +9808,13 @@ QDF_STATUS send_multiple_vdev_restart_req_cmd_non_tlv(
 	wmi_pdev_multiple_vdev_restart_request_cmd *cmd;
 	uint16_t len = sizeof(*cmd);
 
-	if (param->num_vdevs)
-		len += sizeof(uint32_t) * param->num_vdevs;
-
+	len += sizeof(uint32_t) * param->num_vdevs;
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
 		WMI_LOGE("Failed to allocate memory");
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	cmd = (wmi_pdev_multiple_vdev_restart_request_cmd *)wmi_buf_data(buf);
+	cmd = (wmi_pdev_multiple_vdev_restart_request_cmd *) wmi_buf_data(buf);
 
 	cmd->requestor_id = param->requestor_id;
 	cmd->disable_hw_ack = param->disable_hw_ack;
@@ -9869,12 +9866,151 @@ QDF_STATUS send_multiple_vdev_restart_req_cmd_non_tlv(
 	ret = wmi_unified_cmd_send(
 			wmi_handle, buf, len,
 			WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
+
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMI_LOGE("Failed to send WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID");
 		wmi_buf_free(buf);
 	}
 
 	return ret;
+}
+
+/**
+ * send_mvr_ext_cmd() - send multi vdev restart req extension
+ * @wmi_handle: wmi handle
+ * @param: wmi multiple vdev restart req ext param
+ *
+ * Send WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_EXT_ CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+static QDF_STATUS send_mvr_ext_cmd(
+		wmi_unified_t wmi_handle,
+		struct multiple_vdev_restart_params *param)
+{
+	int i;
+	wmi_buf_t buf_ptr;
+	QDF_STATUS ret;
+	wmi_channel *chan_info;
+	struct mlme_channel_param *tchan_info;
+	wmi_pdev_multiple_vdev_restart_request_ext_cmd *cmd;
+	uint8_t *buf;
+	uint16_t len = sizeof(*cmd);
+	wmi_vdev_param *vdev_param;
+
+	/*
+	 * vdev_id & phymode are expected in TAG, VALUE format
+	 * The vdev_param structure contains one "uint32_t" member.
+	 * Hence, while calcuating the required buffer-length,
+	 * the same needs to be excluded.The requirement is to
+	 * send "num_vdev" count of (tag,value) parameters, e.g.
+	 * vdev_id, phymode.
+	 */
+	len += 2 * ((sizeof(*vdev_param) - sizeof(uint32_t)) +
+			((param->num_vdevs) * sizeof(uint32_t)));
+	buf_ptr = wmi_buf_alloc(wmi_handle, len);
+	if (!buf_ptr) {
+		WMI_LOGE("Failed to allocate memory");
+		return QDF_STATUS_E_NOMEM;
+	}
+	buf = (uint8_t *)wmi_buf_data(buf_ptr);
+	cmd = (wmi_pdev_multiple_vdev_restart_request_ext_cmd *)buf;
+	cmd->requestor_id = param->requestor_id;
+	cmd->disable_hw_ack = param->disable_hw_ack;
+
+	WMI_LOGI("req_id:%d dis_hw_ack:%d",
+		 cmd->requestor_id, cmd->disable_hw_ack);
+
+	chan_info = &cmd->chan;
+	tchan_info = &param->ch_param;
+	chan_info->mhz = tchan_info->mhz;
+	chan_info->band_center_freq1 = tchan_info->cfreq1;
+	chan_info->band_center_freq2 = tchan_info->cfreq2;
+
+	if (tchan_info->is_chan_passive)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_PASSIVE);
+
+	if (tchan_info->dfs_set)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_DFS);
+
+	if (tchan_info->dfs_set_cfreq2)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_DFS_CFREQ2);
+
+	if (tchan_info->allow_vht)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_ALLOW_VHT);
+	else  if (tchan_info->allow_ht)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_ALLOW_HT);
+
+	WMI_SET_CHANNEL_MODE(chan_info, tchan_info->phy_mode);
+	WMI_SET_CHANNEL_MIN_POWER(chan_info, tchan_info->minpower);
+	WMI_SET_CHANNEL_MAX_POWER(chan_info, tchan_info->maxpower);
+	WMI_SET_CHANNEL_REG_POWER(chan_info, tchan_info->maxregpower);
+	WMI_SET_CHANNEL_ANTENNA_MAX(chan_info, tchan_info->antennamax);
+	WMI_SET_CHANNEL_REG_CLASSID(chan_info, tchan_info->reg_class_id);
+	WMI_SET_CHANNEL_MAX_TX_POWER(chan_info, tchan_info->maxregpower);
+
+	WMI_LOGI("is_chan_passive:%d dfs_set:%d allow_vht:%d allow_ht:%d",
+		 tchan_info->is_chan_passive, tchan_info->dfs_set,
+		 tchan_info->allow_vht, tchan_info->allow_ht);
+	WMI_LOGI("antennamax:%d phy_mode:%d minpower:%d maxpower:%d",
+		 tchan_info->antennamax, tchan_info->phy_mode,
+		 tchan_info->minpower, tchan_info->maxpower);
+	WMI_LOGI("maxregpower:%d reg_class_id:%d",
+		 tchan_info->maxregpower, tchan_info->reg_class_id);
+
+	/* To fill the Tag,Value pairs, move the buf accordingly */
+	buf += sizeof(*cmd);
+
+	vdev_param = (wmi_vdev_param *)buf;
+	vdev_param->tag = WMI_VDEV_PARAM_TAG_VDEV_ID;
+	vdev_param->num_param_values = param->num_vdevs;
+	for (i = 0; i < param->num_vdevs; i++)
+		vdev_param->param_value[i] = param->vdev_ids[i];
+
+	buf += sizeof(*vdev_param);
+	vdev_param = (wmi_vdev_param *)buf;
+	vdev_param->tag = WMI_VDEV_PARAM_TAG_PHYMODE_ID;
+	vdev_param->num_param_values = param->num_vdevs;
+	for (i = 0; i < param->num_vdevs; i++)
+		vdev_param->param_value[i] = param->mvr_param[i].phymode;
+
+	ret = wmi_unified_cmd_send(
+			wmi_handle, buf_ptr, len,
+			WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_EXT_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID");
+		wmi_buf_free(buf_ptr);
+	}
+	return ret;
+}
+
+/**
+ * send_multiple_vdev_restart_req_cmd_non_tlv() - send multi vdev restart
+ * @wmi_handle: wmi handle
+ * @param: wmi multiple vdev restart req param
+ *
+ * Send mvr or mvr_ext parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS send_multiple_vdev_restart_req_cmd_non_tlv(
+		wmi_unified_t wmi_handle,
+		struct multiple_vdev_restart_params *param)
+{
+	bool mvr_ext;
+
+	if (!param->num_vdevs) {
+		WMI_LOGE("vdev's not found for MVR cmd");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	mvr_ext = is_service_enabled_non_tlv(wmi_handle,
+				WMI_SERVICE_MULTI_VDEV_RESTART_EXT_COMMAND);
+
+	if (mvr_ext)
+		return send_mvr_ext_cmd(wmi_handle, param);
+	else
+		return send_mvr_cmd(wmi_handle, param);
 }
 
 /*
@@ -9906,7 +10042,6 @@ static QDF_STATUS extract_multi_vdev_restart_resp_event_non_tlv(
 
 	WMI_LOGD("vdev_id_bmap :0x%x%x", param->vdev_id_bmap[1],
 		 param->vdev_id_bmap[0]);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -10414,6 +10549,8 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_mawc] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_multiple_vdev_restart] =
 				WMI_SERVICE_MULTIPLE_VDEV_RESTART;
+	wmi_service[wmi_service_multiple_vdev_restart_ext] =
+				WMI_SERVICE_MULTI_VDEV_RESTART_EXT_COMMAND;
 	wmi_service[wmi_service_peer_assoc_conf] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_egap] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_sta_pmf_offload] = WMI_SERVICE_UNAVAILABLE;
