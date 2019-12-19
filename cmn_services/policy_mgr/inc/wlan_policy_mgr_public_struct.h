@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -949,6 +949,7 @@ enum hw_mode_bandwidth {
  * enum set_hw_mode_status - Status of set HW mode command
  * @SET_HW_MODE_STATUS_OK: command successful
  * @SET_HW_MODE_STATUS_EINVAL: Requested invalid hw_mode
+ * @SET_HW_MODE_STATUS_ALREADY: Requested hw mode is already applied to FW.
  * @SET_HW_MODE_STATUS_ECANCELED: HW mode change cancelled
  * @SET_HW_MODE_STATUS_ENOTSUP: HW mode not supported
  * @SET_HW_MODE_STATUS_EHARDWARE: HW mode change prevented by hardware
@@ -958,6 +959,7 @@ enum hw_mode_bandwidth {
 enum set_hw_mode_status {
 	SET_HW_MODE_STATUS_OK,
 	SET_HW_MODE_STATUS_EINVAL,
+	SET_HW_MODE_STATUS_ALREADY,
 	SET_HW_MODE_STATUS_ECANCELED,
 	SET_HW_MODE_STATUS_ENOTSUP,
 	SET_HW_MODE_STATUS_EHARDWARE,
@@ -1123,6 +1125,7 @@ struct policy_mgr_dual_mac_config {
  * @reason: Reason for HW mode change
  * @session_id: Session id
  * @next_action: next action to happen at policy mgr
+ * @action: current hw change action to be done
  * @context: psoc context
  */
 struct policy_mgr_hw_mode {
@@ -1131,6 +1134,7 @@ struct policy_mgr_hw_mode {
 	enum policy_mgr_conn_update_reason reason;
 	uint32_t session_id;
 	uint8_t next_action;
+	enum policy_mgr_conc_next_action action;
 	struct wlan_objmgr_psoc *context;
 };
 

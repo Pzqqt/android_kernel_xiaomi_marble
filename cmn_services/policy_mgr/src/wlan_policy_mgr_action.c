@@ -131,7 +131,7 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs,
 		enum policy_mgr_conn_update_reason reason,
-		uint8_t next_action)
+		uint8_t next_action, enum policy_mgr_conc_next_action action)
 {
 	int8_t hw_mode_index;
 	struct policy_mgr_hw_mode msg;
@@ -181,10 +181,11 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 	msg.reason = reason;
 	msg.session_id = session_id;
 	msg.next_action = next_action;
+	msg.action = action;
 	msg.context = psoc;
 
-	policy_mgr_debug("set hw mode to sme: hw_mode_index: %d session:%d reason:%d",
-		msg.hw_mode_index, msg.session_id, msg.reason);
+	policy_mgr_debug("set hw mode to sme: hw_mode_index: %d session:%d reason:%d action %d",
+			 msg.hw_mode_index, msg.session_id, msg.reason, action);
 
 	status = pm_ctx->sme_cbacks.sme_pdev_set_hw_mode(msg);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -932,29 +933,9 @@ policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-/**
- * policy_mgr_validate_dbs_switch() - Check DBS action valid or not
- * @psoc: Pointer to psoc
- * @session_id: vdev id
- * @action: action requested
- * @reason: reason of hw mode change
- *
- * This routine will check the current hw mode with requested action.
- * If we are already in the mode, the caller will do nothing.
- * This will be called by policy_mgr_next_actions to check the action needed
- * or not.
- *
- * return : QDF_STATUS_SUCCESS, action is allowed.
- *          QDF_STATUS_E_ALREADY, action is not needed.
- *          QDF_STATUS_E_FAILURE, error happens.
- *          QDF_STATUS_E_NOSUPPORT, the requested mode not supported.
- */
-static
-QDF_STATUS policy_mgr_validate_dbs_switch(
-		struct wlan_objmgr_psoc *psoc,
-		uint32_t session_id,
-		enum policy_mgr_conc_next_action action,
-		enum policy_mgr_conn_update_reason reason)
+QDF_STATUS
+policy_mgr_validate_dbs_switch(struct wlan_objmgr_psoc *psoc,
+			       enum policy_mgr_conc_next_action action)
 {
 	QDF_STATUS status;
 	struct policy_mgr_hw_mode_params hw_mode;
@@ -1046,15 +1027,6 @@ QDF_STATUS policy_mgr_next_actions(
 		return status;
 	}
 
-	/* check for the current HW index to see if really need any action */
-	status = policy_mgr_validate_dbs_switch(psoc, session_id, action,
-						reason);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		policy_mgr_err(" not take action %d reason %d session %d status %d",
-			       action, reason, session_id, status);
-		return status;
-	}
-
 	switch (action) {
 	case PM_DBS_DOWNGRADE:
 		/*
@@ -1077,7 +1049,7 @@ QDF_STATUS policy_mgr_next_actions(
 						     HW_MODE_DBS,
 						     HW_MODE_AGILE_DFS_NONE,
 						     HW_MODE_SBS_NONE,
-						     reason, PM_NOP);
+						     reason, PM_NOP, PM_DBS);
 		break;
 	case PM_SINGLE_MAC_UPGRADE:
 		/*
@@ -1091,7 +1063,8 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_DBS_NONE,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
-						reason, PM_UPGRADE);
+						reason, PM_UPGRADE,
+						PM_SINGLE_MAC_UPGRADE);
 		break;
 	case PM_SINGLE_MAC:
 		status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
@@ -1102,7 +1075,7 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_DBS_NONE,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
-						reason, PM_NOP);
+						reason, PM_NOP, PM_SINGLE_MAC);
 		break;
 	case PM_DBS_UPGRADE:
 		status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
@@ -1113,7 +1086,8 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
-						reason, PM_UPGRADE);
+						reason, PM_UPGRADE,
+						PM_DBS_UPGRADE);
 		break;
 	case PM_SBS_DOWNGRADE:
 		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_1,
@@ -1128,7 +1102,7 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS,
-						reason, PM_NOP);
+						reason, PM_NOP, PM_SBS);
 		break;
 	case PM_DOWNGRADE:
 		/*
@@ -1178,7 +1152,7 @@ QDF_STATUS policy_mgr_next_actions(
 					HW_MODE_DBS,
 					HW_MODE_AGILE_DFS_NONE,
 					HW_MODE_SBS_NONE,
-					reason, next_action);
+					reason, next_action, PM_DBS1);
 		break;
 	case PM_DBS2:
 		/*
@@ -1200,7 +1174,7 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
-						reason, next_action);
+						reason, next_action, PM_DBS2);
 		break;
 	case PM_UPGRADE_5G:
 		status = policy_mgr_nss_update(
@@ -2483,9 +2457,14 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 		return;
 	}
 
-	if (QDF_TIMER_STATE_RUNNING ==
-		pm_ctx->dbs_opportunistic_timer.state)
+	if (QDF_TIMER_STATE_RUNNING == pm_ctx->dbs_opportunistic_timer.state)
 		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
+
+	if (policy_mgr_is_hw_dbs_required_for_band(psoc, HW_MODE_MAC_BAND_2G) &&
+	    (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq))) {
+		policy_mgr_debug("DBS required for new connection");
+		return;
+	}
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
@@ -2498,9 +2477,8 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 			}
 			if (policy_mgr_is_hw_dbs_required_for_band(
 					psoc, HW_MODE_MAC_BAND_2G) &&
-			    (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq) ||
 			    WLAN_REG_IS_24GHZ_CH_FREQ(
-					pm_conc_connection_list[i].freq))) {
+					pm_conc_connection_list[i].freq)) {
 				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 				policy_mgr_debug("DBS required");
 				return;
