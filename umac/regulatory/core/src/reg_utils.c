@@ -333,7 +333,7 @@ bool reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 #ifdef CONFIG_CHAN_FREQ_API
 bool reg_is_dsrc_freq(qdf_freq_t freq)
 {
-	if (!REG_IS_5GHZ_FREQ(chan))
+	if (!REG_IS_5GHZ_FREQ(freq))
 		return false;
 
 	if (!(freq >= REG_DSRC_START_FREQ && freq <= REG_DSRC_END_FREQ))
