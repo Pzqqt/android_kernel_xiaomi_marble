@@ -2093,6 +2093,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 
 	num_channels = 0;
 	sbs_num_channels = 0;
+	i = 0;
 	/* In the below switch case, the channel list is populated based on the
 	 * pcl. e.g., if the pcl is PM_SCC_CH_24G, the SCC channel group is
 	 * populated first followed by the 2.4GHz channel group. Along with
