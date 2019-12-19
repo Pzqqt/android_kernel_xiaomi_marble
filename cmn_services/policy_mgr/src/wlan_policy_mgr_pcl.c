@@ -49,8 +49,9 @@ first_connection_pcl_table[PM_MAX_NUM_OF_MODE]
 	[PM_NAN_DISC_MODE] = {PM_5G, PM_5G, PM_5G},
 };
 
-pm_dbs_pcl_second_connection_table_type
-		*second_connection_pcl_dbs_table;
+enum policy_mgr_pcl_type
+	(*second_connection_pcl_dbs_table)[PM_MAX_ONE_CONNECTION_MODE]
+			[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE];
 pm_dbs_pcl_third_connection_table_type
 		*third_connection_pcl_dbs_table;
 policy_mgr_next_action_two_connection_table_type

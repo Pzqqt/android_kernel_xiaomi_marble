@@ -28,8 +28,9 @@
  * This table consolidates selection for P2PCLI, P2PGO, STA, SAP
  * into the single set of STA entries for 2.4G and 5G.
  */
-static pm_dbs_pcl_second_connection_table_type
-pm_second_connection_pcl_dbs_2x2_table = {
+static enum policy_mgr_pcl_type
+	pm_second_connection_pcl_dbs_2x2_table[PM_MAX_ONE_CONNECTION_MODE]
+		[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE] = {
 	[PM_STA_24_1x1] = {
 	[PM_STA_MODE] = {PM_5G_SCC_CH, PM_5G_SCC_CH, PM_5G_SCC_CH},
 	[PM_SAP_MODE] = {PM_5G_SCC_CH, PM_5G_SCC_CH, PM_5G_SCC_CH},
