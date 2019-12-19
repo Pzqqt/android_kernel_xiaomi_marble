@@ -770,15 +770,10 @@ struct msm_display_conn_params {
  * struct msm_drm_event - defines custom event notification struct
  * @base: base object required for event notification by DRM framework.
  * @event: event object required for event notification by DRM framework.
- * @info: contains information of DRM object for which events has been
- *        requested.
- * @data: memory location which contains response payload for event.
  */
 struct msm_drm_event {
 	struct drm_pending_event base;
-	struct drm_event event;
-	struct drm_msm_event_req info;
-	u8 data[];
+	struct drm_msm_event_resp event;
 };
 
 /* Commit/Event thread specific structure */

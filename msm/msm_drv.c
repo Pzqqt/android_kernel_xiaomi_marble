@@ -1235,8 +1235,8 @@ static int msm_event_client_count(struct drm_device *dev,
 	if (!locked)
 		spin_lock_irqsave(&dev->event_lock, flag);
 	list_for_each_entry(node, &priv->client_event_list, base.link) {
-		if (node->event.type == req_event->event &&
-			node->info.object_id == req_event->object_id)
+		if (node->event.base.type == req_event->event &&
+			node->event.info.object_id == req_event->object_id)
 			count++;
 	}
 	if (!locked)
@@ -1267,10 +1267,11 @@ static int msm_ioctl_register_event(struct drm_device *dev, void *data,
 	list_for_each_entry(node, &priv->client_event_list, base.link) {
 		if (node->base.file_priv != file)
 			continue;
-		if (node->event.type == req_event->event &&
-			node->info.object_id == req_event->object_id) {
+		if (node->event.base.type == req_event->event &&
+			node->event.info.object_id == req_event->object_id) {
 			DRM_DEBUG("duplicate request for event %x obj id %d\n",
-				node->event.type, node->info.object_id);
+				node->event.base.type,
+				node->event.info.object_id);
 			dup_request = true;
 			break;
 		}
@@ -1285,9 +1286,9 @@ static int msm_ioctl_register_event(struct drm_device *dev, void *data,
 		return -ENOMEM;
 
 	client->base.file_priv = file;
-	client->base.event = &client->event;
-	client->event.type = req_event->event;
-	memcpy(&client->info, req_event, sizeof(client->info));
+	client->base.event = &client->event.base;
+	client->event.base.type = req_event->event;
+	memcpy(&client->event.info, req_event, sizeof(client->event.info));
 
 	/* Get the count of clients that have registered for event.
 	 * Event should be enabled for first client, for subsequent enable
@@ -1337,8 +1338,8 @@ static int msm_ioctl_deregister_event(struct drm_device *dev, void *data,
 	spin_lock_irqsave(&dev->event_lock, flag);
 	list_for_each_entry_safe(node, temp, &priv->client_event_list,
 			base.link) {
-		if (node->event.type == req_event->event &&
-		    node->info.object_id == req_event->object_id &&
+		if (node->event.base.type == req_event->event &&
+		    node->event.info.object_id == req_event->object_id &&
 		    node->base.file_priv == file) {
 			client = node;
 			list_del(&client->base.link);
@@ -1381,8 +1382,8 @@ void msm_mode_object_event_notify(struct drm_mode_object *obj,
 
 	spin_lock_irqsave(&dev->event_lock, flags);
 	list_for_each_entry(node, &priv->client_event_list, base.link) {
-		if (node->event.type != event->type ||
-			obj->id != node->info.object_id)
+		if (node->event.base.type != event->type ||
+			obj->id != node->event.info.object_id)
 			continue;
 		len = event->length + sizeof(struct msm_drm_event);
 		if (node->base.file_priv->event_space < len) {
@@ -1395,14 +1396,15 @@ void msm_mode_object_event_notify(struct drm_mode_object *obj,
 		if (!notify)
 			continue;
 		notify->base.file_priv = node->base.file_priv;
-		notify->base.event = &notify->event;
-		notify->event.type = node->event.type;
-		notify->event.length = event->length +
+		notify->base.event = &notify->event.base;
+		notify->event.base.type = node->event.base.type;
+		notify->event.base.length = event->length +
 					sizeof(struct drm_msm_event_resp);
-		memcpy(&notify->info, &node->info, sizeof(notify->info));
-		memcpy(notify->data, payload, event->length);
+		memcpy(&notify->event.info, &node->event.info,
+			sizeof(notify->event.info));
+		memcpy(notify->event.data, payload, event->length);
 		ret = drm_event_reserve_init_locked(dev, node->base.file_priv,
-			&notify->base, &notify->event);
+			&notify->base, &notify->event.base);
 		if (ret) {
 			kfree(notify);
 			continue;
@@ -1436,16 +1438,18 @@ static int msm_release(struct inode *inode, struct file *filp)
 	list_for_each_entry_safe(node, temp, &tmp_head,
 			base.link) {
 		list_del(&node->base.link);
-		count = msm_event_client_count(dev, &node->info, false);
+		count = msm_event_client_count(dev, &node->event.info, false);
 
 		list_for_each_entry(tmp_node, &tmp_head, base.link) {
-			if (tmp_node->event.type == node->info.event &&
-				tmp_node->info.object_id ==
-					node->info.object_id)
+			if (tmp_node->event.base.type ==
+					node->event.info.event &&
+					tmp_node->event.info.object_id ==
+					node->event.info.object_id)
 				count++;
 		}
 		if (!count)
-			msm_register_event(dev, &node->info, file_priv, false);
+			msm_register_event(dev, &node->event.info, file_priv,
+						false);
 		kfree(node);
 	}
 
