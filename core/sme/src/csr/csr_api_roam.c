@@ -9341,6 +9341,8 @@ csr_roam_save_connected_information(struct mac_context *mac,
 				p_ext_cap->proxy_arp_service;
 		}
 
+		qdf_mem_zero(pConnectProfile->country_code,
+			     WNI_CFG_COUNTRY_CODE_LEN);
 		if (pIesTemp->Country.present) {
 			qdf_mem_copy(pConnectProfile->country_code,
 				     pIesTemp->Country.country,
