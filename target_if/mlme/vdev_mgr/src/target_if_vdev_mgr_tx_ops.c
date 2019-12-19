@@ -643,9 +643,7 @@ static QDF_STATUS target_if_vdev_mgr_up_send(
 {
 	QDF_STATUS status;
 	struct wmi_unified *wmi_handle;
-	struct vdev_set_params sparam = {0};
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
 
 	if (!vdev || !param) {
@@ -664,17 +662,6 @@ static QDF_STATUS target_if_vdev_mgr_up_send(
 		mlme_err("Failed to get PSOC Object");
 		return QDF_STATUS_E_INVAL;
 	}
-
-	vdev_id = wlan_vdev_get_id(vdev);
-	sparam.vdev_id = vdev_id;
-
-	sparam.param_id = WLAN_MLME_CFG_BEACON_INTERVAL;
-	wlan_util_vdev_get_param(vdev, WLAN_MLME_CFG_BEACON_INTERVAL,
-				 &sparam.param_value);
-	status = target_if_vdev_mgr_set_param_send(vdev, &sparam);
-	if (QDF_IS_STATUS_ERROR(status))
-		mlme_err("VDEV_%d: Failed to set beacon interval!", vdev_id);
-
 	ucfg_wlan_vdev_mgr_get_param_bssid(vdev, bssid);
 
 	status = wmi_unified_vdev_up_send(wmi_handle, bssid, param);
