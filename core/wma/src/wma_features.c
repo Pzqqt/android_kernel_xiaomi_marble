@@ -36,6 +36,7 @@
 #include "wni_cfg.h"
 #include <cdp_txrx_tx_delay.h>
 #include <cdp_txrx_peer_ops.h>
+#include "cdp_txrx_misc.h"
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
@@ -3387,12 +3388,16 @@ QDF_STATUS wma_stats_ext_req(void *wma_ptr, tpStatsExtRequest preq)
 	tp_wma_handle wma = (tp_wma_handle) wma_ptr;
 	struct stats_ext_params *params;
 	size_t params_len;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	QDF_STATUS status;
 
 	if (!wma) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* Request RX HW stats */
+	cdp_request_rx_hw_stats(soc, preq->vdev_id);
 
 	params_len = sizeof(*params) + preq->request_data_len;
 	params = qdf_mem_malloc(params_len);

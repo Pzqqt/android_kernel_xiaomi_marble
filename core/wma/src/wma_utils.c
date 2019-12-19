@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +64,7 @@
 #include "host_diag_core_log.h"
 #include <wlan_mlme_api.h>
 #include <../../core/src/vdev_mgr_ops.h>
+#include "cdp_txrx_misc.h"
 
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
@@ -668,6 +669,7 @@ int wma_smps_mode_to_force_mode_param(uint8_t smps_mode)
 }
 
 #ifdef WLAN_FEATURE_STATS_EXT
+#ifdef FEATURE_STATS_EXT_V2
 /**
  * wma_stats_ext_event_handler() - extended stats event handler
  * @handle:     wma handle
@@ -686,17 +688,90 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	struct scheduler_msg cds_msg = {0};
 	uint8_t *buf_ptr;
 	uint32_t alloc_len;
+	struct cdp_txrx_ext_stats ext_stats = {0};
+	struct cdp_soc_t *soc_hdl = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("%s: Posting stats ext event to SME", __func__);
 
-	param_buf = (WMI_STATS_EXT_EVENTID_param_tlvs *) event_buf;
+	param_buf = (WMI_STATS_EXT_EVENTID_param_tlvs *)event_buf;
 	if (!param_buf) {
 		WMA_LOGE("%s: Invalid stats ext event buf", __func__);
 		return -EINVAL;
 	}
 
 	stats_ext_info = param_buf->fixed_param;
-	buf_ptr = (uint8_t *) stats_ext_info;
+	buf_ptr = (uint8_t *)stats_ext_info;
+
+	alloc_len = sizeof(tSirStatsExtEvent);
+	alloc_len += stats_ext_info->data_len;
+	alloc_len += sizeof(struct cdp_txrx_ext_stats);
+
+	if (stats_ext_info->data_len > (WMI_SVC_MSG_MAX_SIZE -
+	    WMI_TLV_HDR_SIZE - sizeof(*stats_ext_info)) ||
+	    stats_ext_info->data_len > param_buf->num_data) {
+		WMA_LOGE("Excess data_len:%d, num_data:%d",
+			 stats_ext_info->data_len, param_buf->num_data);
+		return -EINVAL;
+	}
+	stats_ext_event = qdf_mem_malloc(alloc_len);
+	if (!stats_ext_event)
+		return -ENOMEM;
+
+	buf_ptr += sizeof(wmi_stats_ext_event_fixed_param) + WMI_TLV_HDR_SIZE;
+
+	stats_ext_event->vdev_id = stats_ext_info->vdev_id;
+	stats_ext_event->event_data_len = stats_ext_info->data_len;
+	qdf_mem_copy(stats_ext_event->event_data,
+		     buf_ptr, stats_ext_event->event_data_len);
+
+	status = cdp_wait_for_ext_rx_stats(soc_hdl);
+	if (status != QDF_STATUS_SUCCESS)
+		WMA_LOGE("%s: Timeout for ext hw stats", __func__);
+
+	cdp_txrx_ext_stats_request(soc_hdl, OL_TXRX_PDEV_ID, &ext_stats);
+	qdf_mem_copy(stats_ext_event->event_data +
+		     stats_ext_event->event_data_len,
+		     &ext_stats, sizeof(struct cdp_txrx_ext_stats));
+
+	stats_ext_event->event_data_len += sizeof(struct cdp_txrx_ext_stats);
+
+	cds_msg.type = eWNI_SME_STATS_EXT_EVENT;
+	cds_msg.bodyptr = (void *)stats_ext_event;
+	cds_msg.bodyval = 0;
+
+	status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &cds_msg);
+	if (status != QDF_STATUS_SUCCESS) {
+		qdf_mem_free(stats_ext_event);
+		return -EFAULT;
+	}
+
+	WMA_LOGD("%s: stats ext event Posted to SME", __func__);
+	return 0;
+}
+#else
+int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
+				uint32_t len)
+{
+	WMI_STATS_EXT_EVENTID_param_tlvs *param_buf;
+	tSirStatsExtEvent *stats_ext_event;
+	wmi_stats_ext_event_fixed_param *stats_ext_info;
+	QDF_STATUS status;
+	struct scheduler_msg cds_msg = {0};
+	uint8_t *buf_ptr;
+	uint32_t alloc_len;
+
+	WMA_LOGD("%s: Posting stats ext event to SME", __func__);
+
+	param_buf = (WMI_STATS_EXT_EVENTID_param_tlvs *)event_buf;
+	if (!param_buf) {
+		WMA_LOGE("%s: Invalid stats ext event buf", __func__);
+		return -EINVAL;
+	}
+
+	stats_ext_info = param_buf->fixed_param;
+	buf_ptr = (uint8_t *)stats_ext_info;
 
 	alloc_len = sizeof(tSirStatsExtEvent);
 	alloc_len += stats_ext_info->data_len;
@@ -734,8 +809,8 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	WMA_LOGD("%s: stats ext event Posted to SME", __func__);
 	return 0;
 }
+#endif
 #endif /* WLAN_FEATURE_STATS_EXT */
-
 
 /**
  * wma_profile_data_report_event_handler() - fw profiling handler
