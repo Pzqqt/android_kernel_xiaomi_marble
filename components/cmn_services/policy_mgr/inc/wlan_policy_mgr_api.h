@@ -35,11 +35,6 @@
 struct target_psoc_info;
 
 typedef const enum policy_mgr_pcl_type
-	pm_dbs_pcl_second_connection_table_type
-	[PM_MAX_ONE_CONNECTION_MODE][PM_MAX_NUM_OF_MODE]
-	[PM_MAX_CONC_PRIORITY_MODE];
-
-typedef const enum policy_mgr_pcl_type
 	pm_dbs_pcl_third_connection_table_type
 	[PM_MAX_TWO_CONNECTION_MODE][PM_MAX_NUM_OF_MODE]
 	[PM_MAX_CONC_PRIORITY_MODE];
@@ -3289,5 +3284,17 @@ uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
  * Return: true or false
  */
 bool policy_mgr_is_sap_go_on_2g(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_get_5g_scc_prefer() - Prefer 5G SCC
+ * @psoc: psoc object
+ * @mode: Connection Mode
+ *
+ * This function checks if 5G SCC is preferred.
+ *
+ * Return: True if 5G SCC is preferred
+ */
+bool policy_mgr_get_5g_scc_prefer(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
 
 #endif /* __WLAN_POLICY_MGR_API_H */
