@@ -253,6 +253,7 @@ static void dsi_bridge_enable(struct drm_bridge *bridge)
 static void dsi_bridge_disable(struct drm_bridge *bridge)
 {
 	int rc = 0;
+	int private_flags;
 	struct dsi_display *display;
 	struct dsi_bridge *c_bridge = to_dsi_bridge(bridge);
 
@@ -261,18 +262,14 @@ static void dsi_bridge_disable(struct drm_bridge *bridge)
 		return;
 	}
 	display = c_bridge->display;
+	private_flags =
+		bridge->encoder->crtc->state->adjusted_mode.private_flags;
 
 	if (display && display->drm_conn) {
-		if (bridge->encoder->crtc->state->adjusted_mode.private_flags &
-			MSM_MODE_FLAG_SEAMLESS_POMS) {
-			display->poms_pending = true;
-			/* Disable ESD thread, during panel mode switch */
-			sde_connector_schedule_status_work(display->drm_conn,
-				false);
-		} else {
-			display->poms_pending = false;
-			sde_connector_helper_bridge_disable(display->drm_conn);
-		}
+		display->poms_pending =
+			private_flags & MSM_MODE_FLAG_SEAMLESS_POMS;
+
+		sde_connector_helper_bridge_disable(display->drm_conn);
 	}
 
 	rc = dsi_display_pre_disable(c_bridge->display);
