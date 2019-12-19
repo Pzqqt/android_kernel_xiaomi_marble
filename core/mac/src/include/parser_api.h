@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -358,6 +358,7 @@ typedef struct sSirAssocReq {
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	tDot11fIEhe_cap he_cap;
+	tDot11fIEhe_6ghz_band_cap he_6ghz_band_cap;
 	tDot11fIEqcn_ie qcn_ie;
 	bool is_sae_authenticated;
 } tSirAssocReq, *tpSirAssocReq;
@@ -460,6 +461,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIEqcn_ie qcn_ie;
 	tDot11fIEhe_cap he_cap;
 	tDot11fIEhe_op he_op;
+	tDot11fIEhe_6ghz_band_cap he_6ghz_band_cap;
 	bool mu_edca_present;
 	tSirMacEdcaParamSetIE mu_edca;
 #ifdef WLAN_FEATURE_FILS_SK

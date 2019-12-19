@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1290,6 +1290,9 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	wma_print_he_mac_cap_w2(mac_cap[1]);
 	wma_print_he_ppet(&peer->peer_ppet);
 
+	qdf_mem_copy(&peer->peer_he_caps_6ghz,
+		     ((uint16_t *)&params->he_6ghz_band_caps) + 1,
+		     sizeof(peer->peer_he_caps_6ghz));
 	return;
 }
 

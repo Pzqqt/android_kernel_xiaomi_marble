@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -6644,13 +6644,30 @@ void lim_ap_check_6g_compatible_peer(struct mac_context *mac_ctx,
 #endif
 
 #ifdef WLAN_FEATURE_11AX
-void lim_add_he_cap(tpAddStaParams add_sta_params, tpSirAssocReq assoc_req)
+void lim_update_he_6ghz_band_caps(struct mac_context *mac,
+				  tDot11fIEhe_6ghz_band_cap *he_6ghz_band_cap,
+				  tpAddStaParams params)
+{
+	qdf_mem_copy(&params->he_6ghz_band_caps, he_6ghz_band_cap,
+		     sizeof(tDot11fIEhe_6ghz_band_cap));
+
+	lim_log_he_6g_cap(mac, &params->he_6ghz_band_caps);
+}
+
+void lim_add_he_cap(struct mac_context *mac_ctx, struct pe_session *pe_session,
+		    tpAddStaParams add_sta_params, tpSirAssocReq assoc_req)
 {
 	if (!add_sta_params->he_capable || !assoc_req)
 		return;
 
 	qdf_mem_copy(&add_sta_params->he_config, &assoc_req->he_cap,
 		     sizeof(add_sta_params->he_config));
+
+	if (lim_is_he_6ghz_band(pe_session))
+		lim_update_he_6ghz_band_caps(mac_ctx,
+					     &assoc_req->he_6ghz_band_cap,
+					     add_sta_params);
+
 }
 
 void lim_add_self_he_cap(tpAddStaParams add_sta_params, struct pe_session *session)

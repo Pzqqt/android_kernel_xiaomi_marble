@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2529,7 +2529,8 @@ lim_add_sta(struct mac_context *mac_ctx,
 				lim_populate_vht_caps(vht_caps);
 		}
 
-		lim_add_he_cap(add_sta_params, assoc_req);
+		lim_add_he_cap(mac_ctx, session_entry,
+			       add_sta_params, assoc_req);
 
 	} else if (LIM_IS_IBSS_ROLE(session_entry)) {
 
@@ -3970,6 +3971,9 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			lim_update_he_6gop_assoc_resp(pAddBssParams,
 						      &pAssocRsp->he_op,
 						      pe_session);
+			lim_update_he_6ghz_band_caps(mac,
+						&pAssocRsp->he_6ghz_band_cap,
+						&pAddBssParams->staContext);
 		}
 	}
 	pAddBssParams->staContext.smesessionId =

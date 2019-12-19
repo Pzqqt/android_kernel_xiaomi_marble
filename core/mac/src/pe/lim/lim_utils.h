@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -986,12 +986,15 @@ void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, struct pe_session *sessi
 
 /**
  * lim_add_he_cap() - Copy HE capability into Add sta params
+ * @mac_ctx: Global MAC context
+ * @pe_session: pe session entry
  * @add_sta_params: pointer to add sta params
  * @assoc_req: pointer to Assoc request
  *
  * Return: None
  */
-void lim_add_he_cap(tpAddStaParams add_sta_params, tpSirAssocReq assoc_req);
+void lim_add_he_cap(struct mac_context *mac_ctx, struct pe_session *pe_session,
+		    tpAddStaParams add_sta_params, tpSirAssocReq assoc_req);
 
 /**
  * lim_add_self_he_cap() - Copy HE capability into add sta from PE session
@@ -1266,8 +1269,25 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
  */
 void lim_update_stads_he_6ghz_op(struct pe_session *session,
 				 tpDphHashNode sta_ds);
+
+/**
+ * lim_update_he_6ghz_band_caps() - Update he 6ghz band caps
+ * @mac_ctx: Global MAC context
+ * @pAssocRsp: contains the structured assoc/reassoc Response got from AP
+ * @add_bss: pointer to ADD BSS params
+ *
+ * Update 6ghz band caps based on HE capability
+ *
+ * Return: none
+ */
+void lim_update_he_6ghz_band_caps(struct mac_context *mac,
+				  tDot11fIEhe_6ghz_band_cap *he_6ghz_band_cap,
+				  tpAddStaParams params);
+
 #else
-static inline void lim_add_he_cap(tpAddStaParams add_sta_params,
+static inline void lim_add_he_cap(struct mac_context *mac_ctx,
+				  struct pe_session *pe_session,
+				  tpAddStaParams add_sta_params,
 				  tpSirAssocReq assoc_req)
 {
 }
@@ -1415,6 +1435,13 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 static inline void
 lim_update_stads_he_6ghz_op(struct pe_session *session,
 			    tpDphHashNode sta_ds)
+{
+}
+
+static inline void
+lim_update_he_6ghz_band_caps(struct mac_context *mac,
+			     tDot11fIEhe_6ghz_band_cap *he_6ghz_band_cap,
+			     tpAddStaParams params)
 {
 }
 #endif
