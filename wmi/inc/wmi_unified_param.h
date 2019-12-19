@@ -5041,6 +5041,7 @@ typedef enum {
 	wmi_service_bw_165mhz_support,
 	wmi_service_packet_capture_support,
 	wmi_service_nan_vdev,
+	wmi_service_multiple_vdev_restart_ext,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

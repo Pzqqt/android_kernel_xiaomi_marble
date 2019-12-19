@@ -13806,6 +13806,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_packet_capture_support] =
 			WMI_SERVICE_PACKET_CAPTURE_SUPPORT;
 	wmi_service[wmi_service_nan_vdev] = WMI_SERVICE_NAN_VDEV_SUPPORT;
+	wmi_service[wmi_service_multiple_vdev_restart_ext] =
+			WMI_SERVICE_UNAVAILABLE;
 }
 
 /**
