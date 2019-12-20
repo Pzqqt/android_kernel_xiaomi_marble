@@ -29,6 +29,7 @@
 #include "pld_internal.h"
 #include "pld_pcie.h"
 #include "osif_psoc_sync.h"
+#include <cds_api.h>
 
 #ifdef CONFIG_PCI
 
@@ -91,6 +92,10 @@ static void pld_pcie_remove(struct pci_dev *pdev)
 		return;
 
 	osif_psoc_sync_unregister(&pdev->dev);
+
+	cds_set_driver_loaded(false);
+	cds_set_unload_in_progress(true);
+
 	osif_psoc_sync_wait_for_ops(psoc_sync);
 
 	pld_context = pld_get_global_context();

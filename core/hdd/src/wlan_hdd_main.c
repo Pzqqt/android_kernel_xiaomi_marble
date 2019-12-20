@@ -14766,9 +14766,6 @@ static void hdd_driver_unload(void)
 	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
-	cds_set_driver_loaded(false);
-	cds_set_unload_in_progress(true);
-
 	if (hdd_ctx)
 		hdd_psoc_idle_timer_stop(hdd_ctx);
 
@@ -14784,6 +14781,9 @@ static void hdd_driver_unload(void)
 
 	osif_driver_sync_unregister();
 	osif_driver_sync_wait_for_ops(driver_sync);
+
+	cds_set_driver_loaded(false);
+	cds_set_unload_in_progress(true);
 
 	hdd_driver_mode_change_unregister();
 	pld_deinit();
