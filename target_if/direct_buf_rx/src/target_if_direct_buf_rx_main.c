@@ -354,6 +354,7 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 	struct wlan_objmgr_pdev *pdev, void *data)
 {
 	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
+	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t num_modules;
 	QDF_STATUS status;
@@ -372,12 +373,19 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 		return QDF_STATUS_E_INVAL;
 	}
 
+	dbr_psoc_obj =
+	wlan_objmgr_psoc_get_comp_private_obj(psoc,
+					      WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+
+	if (!dbr_psoc_obj) {
+		direct_buf_rx_err("dir buf rx psoc object is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	dbr_pdev_obj = qdf_mem_malloc(sizeof(*dbr_pdev_obj));
 
 	if (!dbr_pdev_obj)
 		return QDF_STATUS_E_NOMEM;
-
-	direct_buf_rx_info("Dbr pdev obj %pK", dbr_pdev_obj);
 
 	status = wlan_objmgr_pdev_component_obj_attach(pdev,
 					WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
@@ -390,9 +398,13 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 		return status;
 	}
 
+	dbr_psoc_obj->dbr_pdev_obj[wlan_objmgr_pdev_get_pdev_id(pdev)] =
+								dbr_pdev_obj;
+
 	num_modules = get_num_dbr_modules_per_pdev(pdev);
-	direct_buf_rx_info("Number of modules = %d pdev %d", num_modules,
-			   wlan_objmgr_pdev_get_pdev_id(pdev));
+	direct_buf_rx_info("Number of modules = %d pdev %d DBR pdev obj %pK",
+			   num_modules, wlan_objmgr_pdev_get_pdev_id(pdev),
+			   dbr_pdev_obj);
 	dbr_pdev_obj->num_modules = num_modules;
 
 	if (!dbr_pdev_obj->num_modules) {

@@ -210,10 +210,12 @@ struct direct_buf_rx_pdev_obj {
  * struct direct_buf_rx_psoc_obj - Direct Buf RX psoc object struct
  * @hal_soc: Opaque HAL SOC handle
  * @osdev: QDF os device handle
+ * @dbr_pdev_objs: array of DBR pdev objects
  */
 struct direct_buf_rx_psoc_obj {
 	void *hal_soc;
 	qdf_device_t osdev;
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj[WLAN_UMAC_MAX_PDEVS];
 };
 
 /**
