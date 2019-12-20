@@ -351,7 +351,7 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (ts->tid > DP_NON_QOS_TID) {
+	if (ts->tid > DP_MAX_TIDS) {
 		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d peer_id %d, tid %d > NON_QOS_TID!",
 			  __func__, __LINE__, ts->peer_id, ts->tid);
@@ -728,7 +728,7 @@ QDF_STATUS dp_tx_print_bitmap(struct dp_pdev *pdev,
 	start_seq = user->start_seq;
 	num_mpdu = user->mpdu_success;
 
-	if (user->tid > DP_NON_QOS_TID) {
+	if (user->tid > DP_MAX_TIDS) {
 		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
 			  "%s: ppdu[%d] peer_id[%d] TID[%d] > NON_QOS_TID!",
 			  __func__, ppdu_id, user->peer_id, user->tid);
@@ -1834,7 +1834,9 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 
 		ppdu_id = ppdu_desc->ppdu_id;
 
-		if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_CTRL) {
+		if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_CTRL ||
+		    ppdu_desc->htt_frame_type ==
+			HTT_STATS_FTYPE_SGEN_QOS_NULL) {
 			struct cdp_tx_indication_info tx_capture_info;
 			struct cdp_tx_indication_mpdu_info *mpdu_info;
 			qdf_nbuf_t mgmt_ctl_nbuf;
@@ -2332,7 +2334,7 @@ void dp_tx_ppdu_stats_process(void *context)
 				/* print the bit map */
 				dp_tx_print_bitmap(pdev, ppdu_desc,
 						   0, ppdu_desc->ppdu_id);
-				if (ppdu_desc->user[0].tid > DP_NON_QOS_TID) {
+				if (ppdu_desc->user[0].tid > DP_MAX_TIDS) {
 					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 						  QDF_TRACE_LEVEL_ERROR,
 						  "%s: ppdu[%d] peer_id[%d] TID[%d] > NON_QOS_TID!",
