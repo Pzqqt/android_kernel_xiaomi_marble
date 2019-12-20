@@ -329,6 +329,15 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS = 29,
 
+    /* HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_rx_pdev_rate_ext_stats_t
+     */
+    HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT    = 30,
+
+
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
 };
@@ -1269,6 +1278,7 @@ typedef enum {
  * bw index 7 (bw ext index 3): rssi_ext80_high20_chain0
  */
 #define HTT_RX_PEER_STATS_NUM_BW_EXT_COUNTERS 4
+#define HTT_RX_PDEV_STATS_NUM_BW_EXT_COUNTERS 4
 #define HTT_TX_PEER_STATS_NUM_SPATIAL_STREAMS 8
 #define HTT_TX_PEER_STATS_NUM_PREAMBLE_TYPES HTT_STATS_PREAM_COUNT
 
@@ -3371,6 +3381,26 @@ typedef struct {
 typedef struct {
     htt_rx_pdev_rate_stats_tlv rate_tlv;
 } htt_rx_pdev_rate_stats_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT8  rssi_chain_ext[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_COUNTERS]; /* units = dB above noise floor */
+    A_INT8   rx_per_chain_rssi_ext_in_dbm[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_EXT_COUNTERS];
+    A_INT32  rssi_mcast_in_dbm; /* rx mcast signal strength value in dBm unit */
+    A_INT32  rssi_mgmt_in_dbm; /* rx mgmt packet signal Strength value in dBm unit */
+} htt_rx_pdev_rate_ext_stats_tlv;
+
+/* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT
+ * TLV_TAGS:
+ *      - HTT_STATS_RX_PDEV_RATE_EXT_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_rx_pdev_rate_ext_stats_tlv rate_tlv;
+} htt_rx_pdev_rate_ext_stats_t;
 
 #define HTT_STATS_CMN_MAC_ID_M 0x000000ff
 #define HTT_STATS_CMN_MAC_ID_S 0
