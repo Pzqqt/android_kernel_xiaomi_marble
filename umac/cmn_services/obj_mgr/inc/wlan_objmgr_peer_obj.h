@@ -154,20 +154,11 @@ struct wlan_objmgr_peer_objmgr {
 };
 
 /**
- * struct wlan_peer_activity -- peer inactivity info
- *
- */
-struct wlan_peer_activity {  /*TODO */
-
-};
-
-/**
  * struct wlan_objmgr_peer -  PEER common object
  * @psoc_peer:        peer list node for psoc's qdf list
  * @vdev_peer:        peer list node for vdev's qdf list
  * @macaddr[]:        Peer MAC address
  * @peer_mlme:	      Peer MLME common structure
- * @peer_activity:    peer activity
  * @peer_objmgr:      Peer Object manager common structure
  * @peer_comp_priv_obj[]:  Component's private object pointers
  * @obj_status[]:     status of each component object
@@ -182,7 +173,6 @@ struct wlan_objmgr_peer {
 	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
 	uint8_t pdev_id;
 	struct wlan_objmgr_peer_mlme peer_mlme;
-	struct wlan_peer_activity peer_activity;
 	struct wlan_objmgr_peer_objmgr peer_objmgr;
 	void *peer_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
