@@ -564,8 +564,8 @@ struct cdp_tso_stats {
  * @cdp_pkt_info mcast: Multicast Packet Count
  * @cdp_pkt_info bcast: Broadcast Packet Count
  * @cdp_pkt_info nawds_mcast: NAWDS  Multicast Packet Count
- * @nawds_mcast_drop: NAWDS  Multicast Drop Count
  * @cdp_pkt_info tx_success: Successful Tx Packets
+ * @nawds_mcast_drop: NAWDS  Multicast Drop Count
  * @tx_failed: Total Tx failure
  * @ofdma: Total Packets as ofdma
  * @stbc: Packets in STBC
@@ -591,6 +591,7 @@ struct cdp_tso_stats {
  * @bw[MAX_BW]: Packet Count for different bandwidths
  * @wme_ac_type[WME_AC_MAX]: Wireless Multimedia type Count
  * @excess_retries_per_ac[WME_AC_MAX]: Wireless Multimedia type Count
+ * @dot11_tx_pkts: dot11 tx packets
  * @fw_rem: Discarded by firmware
  * @fw_rem_notx: firmware_discard_untransmitted
  * @fw_rem_tx: firmware_discard_transmitted
@@ -599,7 +600,6 @@ struct cdp_tso_stats {
  * @fw_reason2: discarded by firmware reason 2
  * @fw_reason3: discarded by firmware reason 3
  * @mcs_count: MCS Count
- * @dot11_tx_pkts: dot11 tx packets
  * @an_tx_cnt: ald tx count
  * @an_tx_rates_used: ald rx rate used
  * @an_tx_bytes: ald tx bytes
@@ -612,10 +612,10 @@ struct cdp_tso_stats {
  * @ald_ac_excretries: #pkts dropped after excessive retries per node per AC
  * @rssi_chain: rssi chain
  * @inactive_time: inactive time in secs
- * @tx_ratecode: Tx rate code of last frame
  * @tx_flags: tx flags
  * @tx_power: Tx power latest
  * @is_tx_no_ack: no ack received
+ * @tx_ratecode: Tx rate code of last frame
  * @is_tx_nodefkey: tx failed 'cuz no defkey
  * @is_tx_noheadroom: tx failed 'cuz no space
  * @is_crypto_enmicfail:
@@ -640,8 +640,8 @@ struct cdp_tx_stats {
 	struct cdp_pkt_info mcast;
 	struct cdp_pkt_info bcast;
 	struct cdp_pkt_info nawds_mcast;
-	uint32_t nawds_mcast_drop;
 	struct cdp_pkt_info tx_success;
+	uint32_t nawds_mcast_drop;
 	uint32_t tx_failed;
 	uint32_t ofdma;
 	uint32_t stbc;
@@ -674,6 +674,7 @@ struct cdp_tx_stats {
 	uint32_t wme_ac_type[WME_AC_MAX];
 
 	uint32_t excess_retries_per_ac[WME_AC_MAX];
+	struct cdp_pkt_info dot11_tx_pkts;
 
 	struct {
 		struct cdp_pkt_info fw_rem;
@@ -685,10 +686,8 @@ struct cdp_tx_stats {
 		uint32_t fw_reason3;
 	} dropped;
 
-	struct cdp_pkt_info dot11_tx_pkts;
 
 	uint32_t fw_tx_cnt;
-	uint32_t fw_tx_rates_used;
 	uint32_t fw_tx_bytes;
 	uint32_t fw_txcount;
 	uint32_t fw_max4msframelen;
@@ -698,12 +697,12 @@ struct cdp_tx_stats {
 	uint32_t rssi_chain[WME_AC_MAX];
 	uint32_t inactive_time;
 
-	uint32_t tx_ratecode;
 	uint32_t tx_flags;
 	uint32_t tx_power;
 
 	/* MSDUs which the target sent but couldn't get an ack for */
 	struct cdp_pkt_info is_tx_no_ack;
+	uint16_t tx_ratecode;
 
 	/*add for peer and upadted from ppdu*/
 	uint32_t ampdu_cnt;
@@ -754,8 +753,6 @@ struct cdp_tx_stats {
  * @non_amsdu_cnt: Number of MSDUs with no MSDU level aggregation
  * @amsdu_cnt: Number of MSDUs part of AMSDU
  * @bar_recv_cnt: Number of bar received
- * @rssi: RSSI of received signal
- * @last_rssi: Previous rssi
  * @avg_rssi: Average rssi
  * @rx_rate: Rx rate
  * @last_rx_rate: Previous rx rate
@@ -781,6 +778,8 @@ struct cdp_tx_stats {
  * @rx_ratecode: Rx rate code of last frame
  * @rx_flags: rx flags
  * @rx_rssi_measured_time: Time at which rssi is measured
+ * @rssi: RSSI of received signal
+ * @last_rssi: Previous rssi
  */
 struct cdp_rx_stats {
 	struct cdp_pkt_info to_stack;
@@ -820,8 +819,6 @@ struct cdp_rx_stats {
 	uint32_t non_amsdu_cnt;
 	uint32_t amsdu_cnt;
 	uint32_t bar_recv_cnt;
-	uint32_t rssi;
-	uint32_t last_rssi;
 	uint32_t avg_rssi;
 	uint32_t rx_rate;
 	uint32_t last_rx_rate;
@@ -844,6 +841,8 @@ struct cdp_rx_stats {
 	uint32_t rx_ratecode;
 	uint32_t rx_flags;
 	uint32_t rx_rssi_measured_time;
+	uint8_t rssi;
+	uint8_t last_rssi;
 };
 
 /* struct cdp_tx_ingress_stats - Tx ingress Stats
