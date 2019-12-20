@@ -17,13 +17,12 @@ endif
 
 # Use USERINCLUDE when you must reference the UAPI directories only.
 USERINCLUDE     += \
-                -I$(srctree)/techpack/audio/include/uapi \
-                -I$(srctree)/techpack/audio/include
+                -I$(srctree)/techpack/audio/include/uapi/audio
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
 LINUXINCLUDE    += \
-                -I$(srctree)/techpack/audio/include/uapi \
+                -I$(srctree)/techpack/audio/include/uapi/audio \
                 -I$(srctree)/techpack/audio/include
 
 ifeq ($(CONFIG_ARCH_SDXPOORWILLS), y)
