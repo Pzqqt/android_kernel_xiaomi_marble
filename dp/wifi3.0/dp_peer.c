@@ -1193,16 +1193,9 @@ struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	index = dp_peer_find_hash_index(soc, mac_addr);
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	TAILQ_FOREACH(peer, &soc->peer_hash.bins[index], hash_list_elem) {
-#if ATH_SUPPORT_WRAP
-		/* ProxySTA may have multiple BSS peer with same MAC address,
-		 * modified find will take care of finding the correct BSS peer.
-		 */
 		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0 &&
 			((peer->vdev->vdev_id == vdev_id) ||
 			 (vdev_id == DP_VDEV_ALL))) {
-#else
-		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0) {
-#endif
 			/* found it - increment the ref count before releasing
 			 * the lock
 			 */
@@ -3189,7 +3182,7 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_peer *peer;
 
-	peer = dp_peer_find_hash_find(pdev->soc, peer_addr, 0, 0);
+	peer = dp_peer_find_hash_find(pdev->soc, peer_addr, 0, DP_VDEV_ALL);
 
 	if (!peer)
 		return NULL;
