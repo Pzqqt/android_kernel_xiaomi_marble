@@ -1166,7 +1166,7 @@ static void dp_audio_enable(struct dp_display_private *dp, bool enable)
 					dp->link->link_params.bw_code;
 				dp_panel->audio->lane_count =
 					dp->link->link_params.lane_count;
-				dp_panel->audio->on(dp->panel->audio);
+				dp_panel->audio->on(dp_panel->audio);
 			} else {
 				dp_panel->audio->off(dp_panel->audio);
 			}
