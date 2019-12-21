@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -166,6 +166,8 @@
 #define WLAN_VDEV_FEXT_MAT                  0x20000000
 	/* VDEV is wired PSTA*/
 #define WLAN_VDEV_FEXT_WIRED_PSTA           0x40000000
+	/* Fils discovery on 6G SAP*/
+#define WLAN_VDEV_FEXT_FILS_DISC_6G_SAP     0x80000000
 
 /* VDEV OP flags  */
   /* if the vap destroyed by user */
