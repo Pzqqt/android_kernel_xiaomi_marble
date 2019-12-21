@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -576,6 +576,18 @@ wlan_mlme_get_sap_bcast_deauth_enabled(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_get_sap_allow_all_channels(struct wlan_objmgr_psoc *psoc,
 						bool *value);
+
+/**
+ * wlan_mlme_is_6g_sap_fd_enabled() - get the enable/disable value
+ *                                     for 6g sap fils discovery
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to get from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_is_6g_sap_fd_enabled(struct wlan_objmgr_psoc *psoc,
+			       bool *value);
 
 /**
  * wlan_mlme_get_sap_allow_all_channels() - get the value sap max peers

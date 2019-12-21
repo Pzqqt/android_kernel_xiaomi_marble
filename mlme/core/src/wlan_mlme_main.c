@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1204,6 +1204,8 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 	sap_cfg->sap_sae_enabled = is_sae_sap_enabled(psoc);
 	sap_cfg->is_sap_bcast_deauth_enabled =
 		cfg_get(psoc, CFG_IS_SAP_BCAST_DEAUTH_ENABLED);
+	sap_cfg->is_6g_sap_fd_enabled =
+		cfg_get(psoc, CFG_6G_SAP_FILS_DISCOVERY_ENABLED);
 }
 
 static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,

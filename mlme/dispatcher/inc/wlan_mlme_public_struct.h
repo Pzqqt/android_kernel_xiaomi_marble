@@ -661,6 +661,7 @@ struct wlan_mlme_wps_params {
  * @go_11ac_override: Override GO bandwidth to 11ac
  * @sap_sae_enabled: enable sae in sap mode
  * @is_sap_bcast_deauth_enabled: enable bcast deauth for sap
+ * @is_6g_sap_fd_enabled: enable fils discovery on sap
  */
 struct wlan_mlme_cfg_sap {
 	uint8_t cfg_ssid[WLAN_SSID_MAX_LEN];
@@ -698,6 +699,7 @@ struct wlan_mlme_cfg_sap {
 	bool go_11ac_override;
 	bool sap_sae_enabled;
 	bool is_sap_bcast_deauth_enabled;
+	bool is_6g_sap_fd_enabled;
 };
 
 /**
