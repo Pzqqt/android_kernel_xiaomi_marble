@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1424,6 +1424,23 @@ ucfg_mlme_get_sap_bcast_deauth_enabled(struct wlan_objmgr_psoc *psoc,
 				       bool *value)
 {
 	return wlan_mlme_get_sap_bcast_deauth_enabled(psoc, value);
+}
+
+/**
+ * ucfg_mlme_is_6g_sap_fd_enabled() - get the sap fils discovery
+ *                                           enabled value
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be get from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_is_6g_sap_fd_enabled(struct wlan_objmgr_psoc *psoc,
+			       bool *value)
+{
+	return wlan_mlme_is_6g_sap_fd_enabled(psoc, value);
 }
 
 /**

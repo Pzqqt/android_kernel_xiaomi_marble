@@ -3368,6 +3368,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	enum dfs_mode acs_dfs_mode;
 	bool acs_with_more_param = 0;
 	uint8_t enable_sifs_burst = 0;
+	bool is_6g_sap_fd_enabled = 0;
 
 	hdd_enter();
 
@@ -3467,6 +3468,11 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 		adapter->dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 	adapter->dev->features |= NETIF_F_RXCSUM;
 
+	ucfg_mlme_is_6g_sap_fd_enabled(hdd_ctx->psoc, &is_6g_sap_fd_enabled);
+	hdd_debug("6g sap fd enabled %d", is_6g_sap_fd_enabled);
+	if (is_6g_sap_fd_enabled)
+		wlan_vdev_mlme_feat_ext_cap_set(adapter->vdev,
+						WLAN_VDEV_FEXT_FILS_DISC_6G_SAP);
 	hdd_set_tso_flags(hdd_ctx, adapter->dev);
 
 	if (!reinit) {

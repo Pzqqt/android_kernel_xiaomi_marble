@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -741,6 +741,29 @@
 #define CFG_SAP_SAE
 #endif /* WLAN_FEATURE_SAE */
 
+/*
+ *
+ * <ini>
+ * enable_sap_fils_discovery - Enable/Disable fils discovery for 6Ghz SAP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Enable: 6Ghz SAP transmits fils discovery frame at every 20ms
+ * Disable: 6Ghz SAP transmits probe response frame at every 20ms
+ *
+ * Related: None
+ *
+ * Supported Feature: SAP
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_6G_SAP_FILS_DISCOVERY_ENABLED CFG_INI_BOOL( \
+					"enable_6g_sap_fils_discovery", \
+					1, \
+					"Enable/Disable fils discovery for SAP")
+
 #define CFG_SAP_ALL \
 	CFG_SAP_SAE \
 	CFG(CFG_AP_ENABLE_RANDOM_BSSID) \
@@ -775,6 +798,7 @@
 	CFG(CFG_SAP_11AC_OVERRIDE) \
 	CFG(CFG_GO_FORCE_11N_FOR_11AC) \
 	CFG(CFG_GO_11AC_OVERRIDE) \
-	CFG(CFG_IS_SAP_BCAST_DEAUTH_ENABLED)
+	CFG(CFG_IS_SAP_BCAST_DEAUTH_ENABLED) \
+	CFG(CFG_6G_SAP_FILS_DISCOVERY_ENABLED)
 
 #endif /* __CFG_MLME_SAP_H */
