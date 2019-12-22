@@ -360,6 +360,14 @@ bool ucfg_nan_is_enable_disable_in_progress(struct wlan_objmgr_psoc *psoc);
  */
 bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_nan_is_vdev_creation_allowed()- Get support for NAN vdev creation
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if NAN vdev creation is allowed else false
+ */
+bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc);
 #else /* WLAN_FEATURE_NAN */
 
 static inline
@@ -408,6 +416,12 @@ bool ucfg_nan_is_enable_disable_in_progress(struct wlan_objmgr_psoc *psoc)
 static inline
 bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline
+bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }
