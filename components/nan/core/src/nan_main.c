@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -813,6 +813,7 @@ static QDF_STATUS nan_handle_enable_rsp(struct nan_event_params *nan_event)
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
 	void (*call_back)(void *cookie);
+	uint8_t vdev_id;
 
 	psoc = nan_event->psoc;
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
@@ -822,17 +823,20 @@ static QDF_STATUS nan_handle_enable_rsp(struct nan_event_params *nan_event)
 	}
 
 	if (nan_event->is_nan_enable_success) {
-		status = nan_set_discovery_state(nan_event->psoc,
-						 NAN_DISC_ENABLED);
+		status = nan_set_discovery_state(psoc, NAN_DISC_ENABLED);
 
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			psoc_nan_obj->nan_disc_mac_id = nan_event->mac_id;
-			policy_mgr_update_nan_vdev_mac_info(nan_event->psoc,
-							    NAN_PSEUDO_VDEV_ID,
-							    nan_event->mac_id);
-
+			vdev_id = nan_event->vdev_id;
+			if (!ucfg_nan_is_vdev_creation_allowed(psoc)) {
+				vdev_id = NAN_PSEUDO_VDEV_ID;
+			} else if (vdev_id >= WLAN_MAX_VDEVS) {
+				nan_err("Invalid NAN vdev_id: %u", vdev_id);
+				goto fail;
+			}
+			nan_debug("NAN vdev_id: %u", vdev_id);
 			policy_mgr_incr_active_session(psoc, QDF_NAN_DISC_MODE,
-						       NAN_PSEUDO_VDEV_ID);
+						       vdev_id);
 			policy_mgr_nan_sap_post_enable_conc_check(psoc);
 
 		} else {
@@ -844,14 +848,19 @@ static QDF_STATUS nan_handle_enable_rsp(struct nan_event_params *nan_event)
 			psoc_nan_obj->nan_social_ch_5g_freq = 0;
 			policy_mgr_check_n_start_opportunistic_timer(psoc);
 		}
+		goto done;
 	} else {
+		nan_info("NAN enable has failed");
 		/* NAN Enable has failed, restore changes */
-		psoc_nan_obj->nan_social_ch_2g_freq = 0;
-		psoc_nan_obj->nan_social_ch_5g_freq = 0;
-		nan_set_discovery_state(nan_event->psoc, NAN_DISC_DISABLED);
-		policy_mgr_check_n_start_opportunistic_timer(psoc);
+		goto fail;
 	}
+fail:
+	psoc_nan_obj->nan_social_ch_2g_freq = 0;
+	psoc_nan_obj->nan_social_ch_5g_freq = 0;
+	nan_set_discovery_state(psoc, NAN_DISC_DISABLED);
+	policy_mgr_check_n_start_opportunistic_timer(psoc);
 
+done:
 	call_back = psoc_nan_obj->cb_obj.ucfg_nan_request_process_cb;
 	if (call_back)
 		call_back(psoc_nan_obj->request_context);
@@ -864,6 +873,7 @@ static QDF_STATUS nan_handle_disable_ind(struct nan_event_params *nan_event)
 	struct nan_psoc_priv_obj *psoc_nan_obj;
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+	uint8_t vdev_id;
 
 	psoc = nan_event->psoc;
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
@@ -872,18 +882,18 @@ static QDF_STATUS nan_handle_disable_ind(struct nan_event_params *nan_event)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	status = nan_set_discovery_state(nan_event->psoc,
-					 NAN_DISC_DISABLED);
+	status = nan_set_discovery_state(psoc, NAN_DISC_DISABLED);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		void (*call_back)(void *cookie);
 
 		call_back = psoc_nan_obj->cb_obj.ucfg_nan_request_process_cb;
+		vdev_id = policy_mgr_mode_specific_vdev_id(psoc,
+							   PM_NAN_DISC_MODE);
+		nan_debug("NAN vdev_id: %u", vdev_id);
 		policy_mgr_decr_session_set_pcl(psoc, QDF_NAN_DISC_MODE,
-						NAN_PSEUDO_VDEV_ID);
-		if (psoc_nan_obj->is_explicit_disable) {
-			if (call_back)
-				call_back(psoc_nan_obj->request_context);
-		}
+						vdev_id);
+		if (psoc_nan_obj->is_explicit_disable && call_back)
+			call_back(psoc_nan_obj->request_context);
 
 		policy_mgr_nan_sap_post_disable_conc_check(psoc);
 	} else {

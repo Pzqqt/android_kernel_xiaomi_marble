@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1668,7 +1668,7 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 
 	policy_mgr_debug("No.# of active sessions for mode %d = %d",
 		mode, pm_ctx->no_of_active_sessions[mode]);
-	policy_mgr_incr_connection_count(psoc, session_id);
+	policy_mgr_incr_connection_count(psoc, session_id, mode);
 	if ((policy_mgr_mode_specific_connection_count(
 		psoc, PM_STA_MODE, NULL) > 0) && (mode != QDF_STA_MODE)) {
 		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
@@ -1805,8 +1805,9 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	return qdf_status;
 }
 
-QDF_STATUS policy_mgr_incr_connection_count(
-		struct wlan_objmgr_psoc *psoc, uint32_t vdev_id)
+QDF_STATUS policy_mgr_incr_connection_count(struct wlan_objmgr_psoc *psoc,
+					    uint32_t vdev_id,
+					    enum QDF_OPMODE op_mode)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t conn_index;
@@ -1832,7 +1833,7 @@ QDF_STATUS policy_mgr_incr_connection_count(
 		return status;
 	}
 
-	if (vdev_id == NAN_PSEUDO_VDEV_ID) {
+	if (op_mode == QDF_NAN_DISC_MODE) {
 		status = wlan_nan_get_connection_info(psoc, &conn_table_entry);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			policy_mgr_err("Can't get NAN Connection info");
