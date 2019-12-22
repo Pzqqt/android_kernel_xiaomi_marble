@@ -791,6 +791,7 @@ struct wlan_nan_rx_ops {
  * @ndi_dbs_supported: Target supports NAN Datapath with DBS
  * @nan_sap_supported: Target supports NAN Discovery with SAP concurrency
  * @ndi_sap_supported: Target supports NAN Datapth with SAP concurrency
+ * @nan_vdev_allowed: Allow separate vdev creation for NAN discovery
  */
 struct nan_tgt_caps {
 	uint32_t nan_disable_supported:1;
@@ -798,6 +799,7 @@ struct nan_tgt_caps {
 	uint32_t ndi_dbs_supported:1;
 	uint32_t nan_sap_supported:1;
 	uint32_t ndi_sap_supported:1;
+	uint32_t nan_vdev_allowed:1;
 };
 
 #endif
