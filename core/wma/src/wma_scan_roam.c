@@ -79,6 +79,10 @@
 #include <wlan_crypto_global_api.h>
 #include <cdp_txrx_mon.h>
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT    /* FEATURE_WLAN_DIAG_SUPPORT */
+#include "host_diag_core_log.h"
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
+
 #ifdef FEATURE_WLAN_EXTSCAN
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION WAKELOCK_DURATION_RECOMMENDED
 
@@ -3310,26 +3314,273 @@ int wma_roam_auth_offload_event_handler(WMA_HANDLE handle, uint8_t *event,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * wma_diag_log_roam_trigger_info  - Send diag log for roam trigger related
+ * data
+ * @src:     Source roam trigger related data
+ * @vdev_id: Vdev id
+ *
+ * Return: None
+ */
 static void
-wma_get_trigger_detail_str(struct wmi_roam_trigger_info roam_info, char *buf)
+wma_diag_log_roam_trigger_info(struct wmi_roam_trigger_info *src,
+			       uint8_t vdev_id)
+{
+	struct host_log_wlan_roam_trigger_info *roam_trigger_evt = NULL;
+
+	WLAN_HOST_DIAG_LOG_ALLOC(roam_trigger_evt,
+				 struct host_log_wlan_roam_trigger_info,
+				 LOG_WLAN_ROAM_TRIGGER_INFO_C);
+	if (!roam_trigger_evt)
+		return;
+
+	roam_trigger_evt->version = 1;
+	roam_trigger_evt->vdev_id = vdev_id;
+	roam_trigger_evt->trigger_reason = src->trigger_reason;
+	roam_trigger_evt->trigger_sub_reason = src->trigger_sub_reason;
+	roam_trigger_evt->current_rssi = src->current_rssi;
+	roam_trigger_evt->timestamp = src->timestamp;
+
+	switch (src->trigger_reason) {
+	case WMI_ROAM_TRIGGER_REASON_PER:
+	case WMI_ROAM_TRIGGER_REASON_BMISS:
+	case WMI_ROAM_TRIGGER_REASON_HIGH_RSSI:
+	case WMI_ROAM_TRIGGER_REASON_PERIODIC:
+	case WMI_ROAM_TRIGGER_REASON_MAWC:
+	case WMI_ROAM_TRIGGER_REASON_DENSE:
+	case WMI_ROAM_TRIGGER_REASON_BACKGROUND:
+	case WMI_ROAM_TRIGGER_REASON_IDLE:
+	case WMI_ROAM_TRIGGER_REASON_FORCED:
+	case WMI_ROAM_TRIGGER_REASON_UNIT_TEST:
+		break;
+	case WMI_ROAM_TRIGGER_REASON_BTM:
+		roam_trigger_evt->btm_trig_data.btm_request_mode =
+			src->btm_trig_data.btm_request_mode;
+		roam_trigger_evt->btm_trig_data.disassoc_timer =
+			src->btm_trig_data.disassoc_timer;
+		roam_trigger_evt->btm_trig_data.validity_interval =
+			src->btm_trig_data.validity_interval;
+		roam_trigger_evt->btm_trig_data.candidate_list_count =
+			src->btm_trig_data.candidate_list_count;
+		roam_trigger_evt->btm_trig_data.btm_resp_status =
+			src->btm_trig_data.btm_resp_status;
+		break;
+	case WMI_ROAM_TRIGGER_REASON_DEAUTH:
+		roam_trigger_evt->deauth_trig_data.type =
+				src->deauth_trig_data.type;
+		roam_trigger_evt->deauth_trig_data.reason =
+				src->deauth_trig_data.reason;
+		break;
+	case WMI_ROAM_TRIGGER_REASON_BSS_LOAD:
+		roam_trigger_evt->cu_load_data.cu_load =
+				src->cu_trig_data.cu_load;
+		break;
+	case WMI_ROAM_TRIGGER_REASON_LOW_RSSI:
+		roam_trigger_evt->rssi_trig_data.threshold =
+				src->rssi_trig_data.threshold;
+		break;
+	default:
+		break;
+	}
+
+	WLAN_HOST_DIAG_LOG_REPORT(roam_trigger_evt);
+}
+
+/**
+ * wma_diag_log_roam_scan_info  - Send diag log for roam scan related info
+ * @scan:  Pointer to source roam scan data
+ * @vdev_id: vdev id
+ * @trigger_reason: Roaming trigger reason
+ * @timestamp: Time of the day in millisecs
+ *
+ * Return: None
+ */
+static void
+wma_diag_log_roam_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
+			    uint32_t trigger_reason, uint32_t timestamp)
+{
+	struct host_log_wlan_roam_scan_data *scan_data = NULL;
+	uint8_t i;
+
+	WLAN_HOST_DIAG_LOG_ALLOC(scan_data,
+				 struct host_log_wlan_roam_scan_data,
+				 LOG_WLAN_ROAM_SCAN_INFO_C);
+	if (!scan_data)
+		return;
+
+	scan_data->version = 1;
+	scan_data->type = scan->type;
+	scan_data->num_ap = scan->num_ap;
+	scan_data->num_chan = scan->num_chan;
+	scan_data->next_rssi_threshold = scan->next_rssi_threshold;
+	scan_data->vdev_id = vdev_id;
+	scan_data->timestamp = timestamp;
+	for (i = 0; i < scan_data->num_chan; i++)
+		scan_data->chan_freq[i] = scan->chan_freq[i];
+
+	for (i = 0; i < scan_data->num_ap; i++) {
+		scan_data->ap[i].version = 1;
+		scan_data->ap[i].timestamp = scan->ap[i].timestamp;
+		scan_data->ap[i].type = scan->ap[i].type;
+		scan_data->ap[i].freq = scan->ap[i].freq;
+		scan_data->ap[i].cu_load = scan->ap[i].cu_load;
+		scan_data->ap[i].cu_score = scan->ap[i].cu_score;
+		scan_data->ap[i].rssi = scan->ap[i].rssi;
+		scan_data->ap[i].rssi_score = scan->ap[i].rssi_score;
+		scan_data->ap[i].total_score = scan->ap[i].total_score;
+		scan_data->ap[i].etp = scan->ap[i].etp;
+		qdf_mem_copy(scan_data->ap[i].bssid, scan->ap[i].bssid.bytes,
+			     QDF_MAC_ADDR_SIZE);
+	}
+
+	WLAN_HOST_DIAG_LOG_REPORT(scan_data);
+}
+
+/**
+ * wma_diag_log_roam_result  - Send diag log for roaming result
+ * @res:    Pointer to the source roam result data
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+static void
+wma_diag_log_roam_result(struct wmi_roam_result *res, uint8_t vdev_id)
+{
+	struct host_log_wlan_roam_result_info *roam_result = NULL;
+
+	WLAN_HOST_DIAG_LOG_ALLOC(roam_result,
+				 struct host_log_wlan_roam_result_info,
+				 LOG_WLAN_ROAM_RESULT_INFO_C);
+	if (!roam_result)
+		return;
+
+	roam_result->version = 1;
+	roam_result->vdev_id = vdev_id;
+	if (res->status)
+		roam_result->status = true;
+	else
+		roam_result->status = false;
+
+	roam_result->timestamp = res->timestamp;
+	roam_result->fail_reason = res->fail_reason;
+
+	WLAN_HOST_DIAG_LOG_REPORT(roam_result);
+}
+
+/**
+ * wma_diag_log_11kv_info  - Send diag log for 11kv neighbor/btm
+ * report/request.
+ * @neigh_rpt: Pointer to the source 11kv data structure
+ * @vdev_id:   Vdev id
+ * @is_roam_success: Roaming success or failure
+ *
+ * Return: None
+ */
+static void
+wma_diag_log_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
+		       uint8_t vdev_id, bool is_roam_success)
+{
+	struct host_log_wlan_rrm_tx_rx_info *rrm_tx = NULL;
+	struct host_log_wlan_rrm_tx_rx_info *rrm_rx = NULL;
+	uint8_t i;
+
+	WLAN_HOST_DIAG_LOG_ALLOC(rrm_rx, struct host_log_wlan_rrm_tx_rx_info,
+				 LOG_WLAN_RRM_TX_RX_INFO_C);
+	if (!rrm_rx)
+		return;
+
+	WLAN_HOST_DIAG_LOG_ALLOC(rrm_tx, struct host_log_wlan_rrm_tx_rx_info,
+				 LOG_WLAN_RRM_TX_RX_INFO_C);
+	if (!rrm_tx) {
+		qdf_mem_free(rrm_rx);
+		return;
+	}
+
+	rrm_rx->version = 1;
+	rrm_rx->vdev_id = vdev_id;
+	rrm_rx->origin = FW;
+	rrm_rx->is_tx = false;
+	rrm_rx->timestamp = neigh_rpt->req_time;
+	rrm_rx->roam_result = is_roam_success;
+
+	if (neigh_rpt->req_type) {
+		rrm_rx->action_category = ACTION_CATEGORY_WNM;
+		rrm_rx->rrm_action_code = WNM_BSS_TM_REQUEST;
+	} else {
+		rrm_rx->action_category = ACTION_CATEGORY_RRM;
+		rrm_rx->rrm_action_code = RRM_NEIGHBOR_REQ;
+	}
+
+	rrm_rx->req_num_freq = neigh_rpt->num_freq;
+	for (i = 0; i < neigh_rpt->num_freq; i++)
+		rrm_rx->req_freq[i] = neigh_rpt->freq[i];
+
+	WLAN_HOST_DIAG_LOG_REPORT(rrm_rx);
+
+	rrm_tx->version = 1;
+	rrm_tx->vdev_id = vdev_id;
+	rrm_tx->is_tx = true;
+	rrm_tx->origin = FW;
+	rrm_tx->timestamp = neigh_rpt->resp_time;
+	rrm_tx->roam_result = is_roam_success;
+
+	if (neigh_rpt->req_type) {
+		rrm_tx->action_category = ACTION_CATEGORY_WNM;
+		rrm_tx->rrm_action_code = WNM_BSS_TM_RESPONSE;
+	} else {
+		rrm_tx->action_category = ACTION_CATEGORY_RRM;
+		rrm_tx->rrm_action_code = RRM_NEIGHBOR_RPT;
+	}
+
+	WLAN_HOST_DIAG_LOG_REPORT(rrm_tx);
+}
+#else
+static inline void
+wma_diag_log_roam_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
+			    uint32_t trigger_reason, uint32_t timestamp)
+{
+}
+
+static inline void
+wma_diag_log_roam_trigger_info(struct wmi_roam_trigger_info *src,
+			       uint8_t vdev_id)
+{
+}
+
+static inline void
+wma_diag_log_roam_result(struct wmi_roam_result *res, uint8_t vdev_id)
+{
+}
+
+static void
+wma_diag_log_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
+		       uint8_t vdev_id, bool is_roam_success)
+{
+}
+#endif
+
+static void
+wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf)
 {
 	uint16_t buf_cons, buf_left = MAX_ROAM_DEBUG_BUF_SIZE;
 	char *temp = buf;
 
 	buf_cons = qdf_snprint(temp, buf_left, "Reason: \"%s\" ",
-			mlme_get_roam_trigger_str(roam_info.trigger_reason));
+			mlme_get_roam_trigger_str(roam_info->trigger_reason));
 	temp += buf_cons;
 	buf_left -= buf_cons;
 
-	if (roam_info.trigger_sub_reason) {
+	if (roam_info->trigger_sub_reason) {
 		buf_cons = qdf_snprint(
 			    temp, buf_left, "Sub-Reason: %s",
-			    mlme_get_sub_reason_str(roam_info.trigger_sub_reason));
+			    mlme_get_sub_reason_str(roam_info->trigger_sub_reason));
 		temp += buf_cons;
 		buf_left -= buf_cons;
 	}
 
-	switch (roam_info.trigger_reason) {
+	switch (roam_info->trigger_reason) {
 	case WMI_ROAM_TRIGGER_REASON_PER:
 	case WMI_ROAM_TRIGGER_REASON_BMISS:
 	case WMI_ROAM_TRIGGER_REASON_HIGH_RSSI:
@@ -3344,35 +3595,35 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info roam_info, char *buf)
 	case WMI_ROAM_TRIGGER_REASON_BTM:
 		buf_cons = qdf_snprint(temp, buf_left,
 				       "Req_mode: %d Disassoc_timer: %d",
-				       roam_info.btm_trig_data.btm_request_mode,
-				       roam_info.btm_trig_data.disassoc_timer);
+				       roam_info->btm_trig_data.btm_request_mode,
+				       roam_info->btm_trig_data.disassoc_timer);
 		temp += buf_cons;
 		buf_left -= buf_cons;
 
 		buf_cons = qdf_snprint(temp, buf_left,
 			    "validity_interval: %d candidate_list_cnt: %d resp_status: %d",
-			    roam_info.btm_trig_data.validity_interval,
-			    roam_info.btm_trig_data.candidate_list_count,
-			    roam_info.btm_trig_data.btm_resp_status);
+			    roam_info->btm_trig_data.validity_interval,
+			    roam_info->btm_trig_data.candidate_list_count,
+			    roam_info->btm_trig_data.btm_resp_status);
 		buf_left -= buf_cons;
 		temp += buf_cons;
 		return;
 	case WMI_ROAM_TRIGGER_REASON_BSS_LOAD:
 		buf_cons = qdf_snprint(temp, buf_left, "CU: %d %% ",
-				       roam_info.cu_trig_data.cu_load);
+				       roam_info->cu_trig_data.cu_load);
 		temp += buf_cons;
 		buf_left -= buf_cons;
 		return;
 	case WMI_ROAM_TRIGGER_REASON_DEAUTH:
 		buf_cons = qdf_snprint(temp, buf_left, "Type: %d Reason: %d ",
-				       roam_info.deauth_trig_data.type,
-				       roam_info.deauth_trig_data.reason);
+				       roam_info->deauth_trig_data.type,
+				       roam_info->deauth_trig_data.reason);
 		temp += buf_cons;
 		buf_left -= buf_cons;
 		return;
 	case WMI_ROAM_TRIGGER_REASON_LOW_RSSI:
 		buf_cons = qdf_snprint(temp, buf_left, "Low_rssi_threshold: %d",
-				       roam_info.rssi_trig_data.threshold);
+				       roam_info->rssi_trig_data.threshold);
 		temp += buf_cons;
 		buf_left -= buf_cons;
 		return;
@@ -3382,7 +3633,7 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info roam_info, char *buf)
 }
 
 static void
-wma_rso_print_trigger_info(struct wmi_roam_trigger_info data, uint8_t vdev_id)
+wma_rso_print_trigger_info(struct wmi_roam_trigger_info *data, uint8_t vdev_id)
 {
 	char *buf;
 	char time[TIME_STRING_LEN];
@@ -3392,9 +3643,9 @@ wma_rso_print_trigger_info(struct wmi_roam_trigger_info data, uint8_t vdev_id)
 		return;
 
 	wma_get_trigger_detail_str(data, buf);
-	mlme_get_converted_timestamp(data.timestamp, time);
-	WMA_LOGI("[ROAM_DEBUG] %s [ROAM_TRIGGER]: VDEV[%d] Current_rssi: %d dBm %s",
-		 time, vdev_id, data.current_rssi, buf);
+	mlme_get_converted_timestamp(data->timestamp, time);
+	WMA_LOGD("[ROAM_DEBUG] %s [ROAM_TRIGGER]: VDEV[%d] Current_rssi: %d dBm %s",
+		 time, vdev_id, data->current_rssi, buf);
 
 	qdf_mem_free(buf);
 }
@@ -3406,18 +3657,18 @@ wma_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 	uint16_t i;
 	char time[TIME_STRING_LEN];
 
-	WMA_LOGI("%40s%40s%40s", LINE_STR, LINE_STR, LINE_STR);
-	WMA_LOGI("%13s %20s %11s %6s %12s %8s %12s %8s %10s %13s",
+	WMA_LOGD("%40s%40s%40s", LINE_STR, LINE_STR, LINE_STR);
+	WMA_LOGD("%13s %20s %11s %6s %12s %8s %12s %8s %10s %13s",
 		 "AP BSSID", "TIMESTAMP", "CHANNEL", "TYPE", "ETP", "RSSI",
 		 "RSSI_SCORE", "CU_LOAD", "CU_SCORE", "TOTAL_SCORE");
-	WMA_LOGI("%40s%40s%40s", LINE_STR, LINE_STR, LINE_STR);
+	WMA_LOGD("%40s%40s%40s", LINE_STR, LINE_STR, LINE_STR);
 
 	if (num_entries > MAX_ROAM_CANDIDATE_AP)
 		num_entries = MAX_ROAM_CANDIDATE_AP;
 
 	for (i = 0; i < num_entries; i++) {
 		mlme_get_converted_timestamp(ap->timestamp, time);
-		WMA_LOGI(QDF_MAC_ADDR_STR " %20s %5d  %-12s %4d(Mbps) %3d(dBm) %6d %7d %% %10d %12d",
+		WMA_LOGD(QDF_MAC_ADDR_STR " %20s %5d  %-12s %4d(Mbps) %3d(dBm) %6d %7d %% %10d %12d",
 			 QDF_MAC_ADDR_ARRAY(ap->bssid.bytes), time, ap->freq,
 			 ((ap->type == 0) ? "CANDIDATE_AP" :
 			  ((ap->type == 2) ? "ROAMED_AP" : "PREVIOUS_AP")),
@@ -3428,10 +3679,10 @@ wma_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 }
 
 static void
-wma_rso_print_scan_info(struct wmi_roam_scan_data scan, uint8_t vdev_id,
+wma_rso_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 			uint32_t trigger, uint32_t timestamp)
 {
-	uint16_t num_ch = scan.num_chan;
+	uint16_t num_ch = scan->num_chan;
 	uint16_t buf_cons = 0, buf_left = ROAM_CHANNEL_BUF_SIZE;
 	uint8_t i;
 	char *buf, *buf1, *tmp;
@@ -3443,14 +3694,14 @@ wma_rso_print_scan_info(struct wmi_roam_scan_data scan, uint8_t vdev_id,
 
 	tmp = buf;
 	/* For partial scans, print the channel info */
-	if (!scan.type) {
+	if (!scan->type) {
 		buf_cons = qdf_snprint(tmp, buf_left, "{");
 		buf_left -= buf_cons;
 		tmp += buf_cons;
 
 		for (i = 0; i < num_ch; i++) {
 			buf_cons = qdf_snprint(tmp, buf_left, "%d ",
-					       scan.chan_freq[i]);
+					       scan->chan_freq[i]);
 			buf_left -= buf_cons;
 			tmp += buf_cons;
 		}
@@ -3465,24 +3716,23 @@ wma_rso_print_scan_info(struct wmi_roam_scan_data scan, uint8_t vdev_id,
 		return;
 	}
 
-	if (WMI_ROAM_TRIGGER_REASON_LOW_RSSI == trigger) {
+	if (WMI_ROAM_TRIGGER_REASON_LOW_RSSI == trigger)
 		qdf_snprint(buf1, ROAM_FAILURE_BUF_SIZE,
 			    "next_rssi_threshold: %d dBm",
-			    scan.next_rssi_threshold);
-	}
+			    scan->next_rssi_threshold);
 
 	mlme_get_converted_timestamp(timestamp, time);
-	WMA_LOGI("[ROAM_DEBUG] %s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
-		 time, vdev_id, (scan.type ? "FULL" : "PARTIAL"),
+	WMA_LOGD("[ROAM_DEBUG] %s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
+		 time, vdev_id, (scan->type ? "FULL" : "PARTIAL"),
 		 buf1, buf);
-	wma_log_roam_scan_candidates(scan.ap, scan.num_ap);
+	wma_log_roam_scan_candidates(scan->ap, scan->num_ap);
 
 	qdf_mem_free(buf);
 	qdf_mem_free(buf1);
 }
 
 static void
-wma_rso_print_roam_result(struct wmi_roam_result res,
+wma_rso_print_roam_result(struct wmi_roam_result *res,
 			  uint8_t vdev_id)
 {
 	char *buf;
@@ -3492,32 +3742,32 @@ wma_rso_print_roam_result(struct wmi_roam_result res,
 	if (!buf)
 		return;
 
-	if (!res.status)
+	if (!res->status)
 		qdf_snprint(buf, ROAM_FAILURE_BUF_SIZE, "Fail-Reason: %s",
-			    mlme_get_roam_fail_reason_str(res.fail_reason));
+			    mlme_get_roam_fail_reason_str(res->fail_reason));
 
-	mlme_get_converted_timestamp(res.timestamp, time);
-	WMA_LOGI("[ROAM_DEBUG] %s [ROAM_RESULT]: VDEV[%d] status:%s %s",
-		 time, vdev_id, (res.status) ? "SUCCESS" : "FAILED", buf);
+	mlme_get_converted_timestamp(res->timestamp, time);
+	WMA_LOGD("[ROAM_DEBUG] %s [ROAM_RESULT]: VDEV[%d] status:%s %s",
+		 time, vdev_id, (res->status) ? "SUCCESS" : "FAILED", buf);
 
 	qdf_mem_free(buf);
 }
 
 static void
-wma_rso_print_11kv_info(struct wmi_neighbor_report_data neigh_rpt,
+wma_rso_print_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
 			uint8_t vdev_id, bool is_roam_success)
 {
 	char time[TIME_STRING_LEN], time1[TIME_STRING_LEN];
 	char *buf, *tmp;
-	uint8_t type = neigh_rpt.req_type, i;
+	uint8_t type = neigh_rpt->req_type, i;
 	uint16_t buf_left = ROAM_CHANNEL_BUF_SIZE, buf_cons;
-	uint8_t num_ch = neigh_rpt.num_freq;
+	uint8_t num_ch = neigh_rpt->num_freq;
 
 	if (!is_roam_success)
 		return;
 
 	if (!type) {
-		WMA_LOGI("[ROAM_DEBUG] AP doesn't support neighbor rpt/BTM");
+		WMA_LOGD("[ROAM_DEBUG] AP doesn't support neighbor rpt/BTM");
 		return;
 	}
 
@@ -3532,7 +3782,7 @@ wma_rso_print_11kv_info(struct wmi_neighbor_report_data neigh_rpt,
 		tmp += buf_cons;
 
 		buf_cons = qdf_snprint(tmp, buf_left, "%d ",
-				       neigh_rpt.freq[i]);
+				       neigh_rpt->freq[i]);
 		buf_left -= buf_cons;
 		tmp += buf_cons;
 
@@ -3540,12 +3790,12 @@ wma_rso_print_11kv_info(struct wmi_neighbor_report_data neigh_rpt,
 		buf_left -= buf_cons;
 		tmp += buf_cons;
 	}
-	mlme_get_converted_timestamp(neigh_rpt.req_time, time);
-	WMA_LOGI("[ROAM_DEBUG] %s [%s] RX: VDEV[%d] %s", time,
+	mlme_get_converted_timestamp(neigh_rpt->req_time, time);
+	WMA_LOGD("[ROAM_DEBUG] %s [%s] RX: VDEV[%d] %s", time,
 		 (type == 1) ? "BTM" : "NEIGH_RPT", vdev_id, buf);
 
-	mlme_get_converted_timestamp(neigh_rpt.resp_time, time1);
-	WMA_LOGI("[ROAM_DEBUG] %s [%s] TX: VDEV[%d]", time1,
+	mlme_get_converted_timestamp(neigh_rpt->resp_time, time1);
+	WMA_LOGD("[ROAM_DEBUG] %s [%s] TX: VDEV[%d]", time1,
 		 (type == 1) ? "BTM" : "NEIGH_RPT", vdev_id);
 	qdf_mem_free(buf);
 }
@@ -3652,8 +3902,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 		 * details.
 		 */
 		status = wmi_unified_extract_roam_trigger_stats(
-				wma->wmi_handle, event,
-				&roam_info->trigger, i);
+						wma->wmi_handle, event,
+						&roam_info->trigger, i);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("%s: Extract roam trigger stats failed vdev%d",
 				 __func__, vdev_id);
@@ -3663,8 +3913,9 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 
 		/* Roam scan related details - Scan channel, scan type .. */
 		status = wmi_unified_extract_roam_scan_stats(
-				wma->wmi_handle, event, &roam_info->scan, i,
-				num_chan, num_ap);
+							wma->wmi_handle, event,
+							&roam_info->scan, i,
+							num_chan, num_ap);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("%s: Roam scan stats extract failed vdev %d",
 				 __func__, vdev_id);
@@ -3676,8 +3927,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 
 		/* Roam result - Success/Failure status, failure reason */
 		status = wmi_unified_extract_roam_result_stats(
-						wma->wmi_handle, event,
-						&roam_info->result, i);
+							wma->wmi_handle, event,
+							&roam_info->result, i);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("%s: Roam result stats extract failed vdev %d",
 				 __func__, vdev_id);
@@ -3697,13 +3948,24 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 		}
 		num_rpt += roam_info->data_11kv.num_freq;
 
-		wma_rso_print_trigger_info(roam_info->trigger, vdev_id);
-		wma_rso_print_scan_info(roam_info->scan, vdev_id,
+		/* Driver debug logs */
+		wma_rso_print_trigger_info(&roam_info->trigger, vdev_id);
+		wma_rso_print_scan_info(&roam_info->scan, vdev_id,
 					roam_info->trigger.trigger_reason,
 					roam_info->trigger.timestamp);
-		wma_rso_print_roam_result(roam_info->result, vdev_id);
-		wma_rso_print_11kv_info(roam_info->data_11kv, vdev_id,
+		wma_rso_print_roam_result(&roam_info->result, vdev_id);
+		wma_rso_print_11kv_info(&roam_info->data_11kv, vdev_id,
 					roam_info->result.status);
+
+		/* CNSS diag log*/
+		wma_diag_log_roam_trigger_info(&roam_info->trigger, vdev_id);
+		wma_diag_log_roam_scan_info(&roam_info->scan, vdev_id,
+					    roam_info->trigger.trigger_reason,
+					    roam_info->trigger.timestamp);
+		wma_diag_log_roam_result(&roam_info->result, vdev_id);
+		if (roam_info->result.status)
+			wma_diag_log_11kv_info(&roam_info->data_11kv, vdev_id,
+					       roam_info->result.status);
 
 		qdf_mem_free(roam_info);
 	}
