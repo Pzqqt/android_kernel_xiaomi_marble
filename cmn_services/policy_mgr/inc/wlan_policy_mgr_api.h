@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -867,7 +867,7 @@ enum policy_mgr_three_connection_mode
  * the current connections list
  * @psoc: PSOC object information
  * @vdev_id: vdev id
- *
+ * @mode: Operating mode
  *
  * This function adds the new connection to the current
  * connections list
@@ -875,7 +875,8 @@ enum policy_mgr_three_connection_mode
  * Return: QDF_STATUS
  */
 QDF_STATUS policy_mgr_incr_connection_count(struct wlan_objmgr_psoc *psoc,
-		uint32_t vdev_id);
+					    uint32_t vdev_id,
+					    enum QDF_OPMODE mode);
 
 /**
  * policy_mgr_update_connection_info() - updates the existing

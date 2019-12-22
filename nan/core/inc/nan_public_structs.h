@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -515,6 +515,7 @@ enum nan_event_id_types {
  * @evt_type: NAN Discovery event type
  * @is_nan_enable_success: Status from the NAN Enable Response event
  * @mac_id: MAC ID associated with NAN Discovery from NAN Enable Response event
+ * @vdev_id: vdev id of the interface created for NAN discovery
  * @buf_len: Event buffer length
  * @buf: Event buffer starts here
  */
@@ -523,6 +524,7 @@ struct nan_event_params {
 	enum nan_event_id_types evt_type;
 	bool is_nan_enable_success;
 	uint8_t mac_id;
+	uint8_t vdev_id;
 	uint32_t buf_len;
 	/* Variable length, do not add anything after this */
 	uint8_t buf[];
