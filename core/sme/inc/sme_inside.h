@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -147,8 +147,6 @@ void csr_roam_process_wm_status_change_command(struct mac_context *mac,
 void csr_reinit_roam_cmd(struct mac_context *mac, tSmeCmd *pCommand);
 void csr_reinit_wm_status_change_cmd(struct mac_context *mac,
 				     tSmeCmd *pCommand);
-QDF_STATUS csr_roam_send_set_key_cmd(struct mac_context *mac_ctx,
-		uint32_t session_id, struct setkey_cmd *set_key_cmd);
 QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint32_t freq);
 
 QDF_STATUS sme_acquire_global_lock(struct sme_context *sme);

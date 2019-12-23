@@ -362,8 +362,6 @@ void csr_reset_pmkid_candidate_list(struct mac_context *mac, uint32_t sessionId)
 QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 					uint32_t tableSize, tSirMacChanInfo
 					*channelTable);
-QDF_STATUS csr_roam_set_key(struct mac_context *mac, uint32_t sessionId,
-			    tCsrRoamSetKey *pSetKey, uint32_t roamId);
 
 /*
  * csr_roam_vdev_delete() - CSR api to delete vdev

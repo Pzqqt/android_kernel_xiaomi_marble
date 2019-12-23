@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -221,68 +221,6 @@ void sme_set_ft_ies(mac_handle_t mac_handle, uint32_t session_id,
 	sme_release_global_lock(&mac_ctx->sme);
 }
 
-/**
- * sme_ft_send_update_key_ind() - To send key update indication for FT session
- * @mac: pointer to MAC context
- * @vdev_id: vdev_id
- * @ftkey_info: FT key information
- *
- * To send key update indication for FT session
- *
- * Return: QDF_STATUS
- */
-static
-QDF_STATUS sme_ft_send_update_key_ind(struct mac_context *mac, uint32_t vdev_id,
-				      tCsrRoamSetKey *ftkey_info)
-{
-	tSirFTUpdateKeyInfo *msg;
-	uint16_t msglen;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tSirKeyMaterial *keymaterial = NULL;
-	tAniEdType ed_type;
-
-	sme_debug("keyLength: %d", ftkey_info->keyLength);
-
-	if (ftkey_info->keyLength > CSR_MAX_KEY_LEN) {
-		sme_err("invalid keyLength: %d", ftkey_info->keyLength);
-		return QDF_STATUS_E_FAILURE;
-	}
-	msglen  = sizeof(tSirFTUpdateKeyInfo);
-
-	msg = qdf_mem_malloc(msglen);
-	if (!msg)
-		return QDF_STATUS_E_NOMEM;
-
-	msg->messageType = eWNI_SME_FT_UPDATE_KEY;
-	msg->length = msglen;
-
-	keymaterial = &msg->keyMaterial;
-	keymaterial->length = ftkey_info->keyLength;
-	ed_type = csr_translate_encrypt_type_to_ed_type(ftkey_info->encType);
-	keymaterial->edType = ed_type;
-	keymaterial->numKeys = 1;
-	keymaterial->key[0].keyId = ftkey_info->keyId;
-	keymaterial->key[0].unicast = (uint8_t) true;
-	keymaterial->key[0].keyDirection = ftkey_info->keyDirection;
-
-	qdf_mem_copy(&keymaterial->key[0].keyRsc,
-			ftkey_info->keyRsc, WLAN_CRYPTO_RSC_SIZE);
-	keymaterial->key[0].paeRole = ftkey_info->paeRole;
-	keymaterial->key[0].keyLength = ftkey_info->keyLength;
-
-	if (ftkey_info->keyLength)
-		qdf_mem_copy(&keymaterial->key[0].key, ftkey_info->Key,
-				ftkey_info->keyLength);
-
-	qdf_copy_macaddr(&msg->bssid, &ftkey_info->peerMac);
-	msg->vdev_id = vdev_id;
-	sme_debug("BSSID = " QDF_MAC_ADDR_STR,
-		  QDF_MAC_ADDR_ARRAY(msg->bssid.bytes));
-	status = umac_send_mb_message_to_mac(msg);
-
-	return status;
-}
-
 bool sme_get_ftptk_state(mac_handle_t mac_handle, uint32_t sessionId)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -340,63 +278,6 @@ QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id)
 		}
 	default:
 		sme_debug("Unhandled state:%d", session->ftSmeContext.FTState);
-		status = QDF_STATUS_E_FAILURE;
-		break;
-	}
-	sme_release_global_lock(&mac->sme);
-
-	return status;
-}
-
-QDF_STATUS sme_ft_update_key(mac_handle_t mac_handle, uint32_t sessionId,
-			     tCsrRoamSetKey *pFTKeyInfo)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	if (!pSession) {
-		sme_err("pSession is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!pFTKeyInfo) {
-		sme_err("pFTKeyInfo is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (!(QDF_IS_STATUS_SUCCESS(status)))
-		return QDF_STATUS_E_FAILURE;
-
-	sme_debug("FT update key is received in state %d",
-		  pSession->ftSmeContext.FTState);
-
-	/* Global Station FT State */
-	switch (pSession->ftSmeContext.FTState) {
-	case eFT_SET_KEY_WAIT:
-		if (sme_get_ft_pre_auth_state(mac_handle, sessionId) == true) {
-			status = sme_ft_send_update_key_ind(mac, sessionId,
-								pFTKeyInfo);
-			if (status != 0) {
-				sme_err("Key set failure: %d", status);
-				pSession->ftSmeContext.setFTPTKState = false;
-				status = QDF_STATUS_FT_PREAUTH_KEY_FAILED;
-			} else {
-				pSession->ftSmeContext.setFTPTKState = true;
-				status = QDF_STATUS_FT_PREAUTH_KEY_SUCCESS;
-				sme_debug("Key set success");
-			}
-			sme_set_ft_pre_auth_state(mac_handle, sessionId, false);
-		}
-
-		pSession->ftSmeContext.FTState = eFT_START_READY;
-		sme_debug("state changed to %d status %d",
-			  pSession->ftSmeContext.FTState, status);
-		break;
-
-	default:
-		sme_debug("Unhandled state:%d", pSession->ftSmeContext.FTState);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	}

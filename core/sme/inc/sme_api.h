@@ -664,8 +664,6 @@ void sme_deregister_oem_data_rsp_callback(mac_handle_t mac_handle)
 
 #endif
 
-QDF_STATUS sme_roam_set_key(mac_handle_t mac_handle, uint8_t sessionId,
-			    tCsrRoamSetKey *pSetKey, uint32_t *pRoamId);
 QDF_STATUS sme_get_country_code(mac_handle_t mac_handle, uint8_t *pBuf,
 				uint8_t *pbLen);
 
