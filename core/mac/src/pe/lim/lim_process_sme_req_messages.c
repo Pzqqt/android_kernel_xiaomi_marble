@@ -1165,7 +1165,6 @@ static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 }
 
 #ifdef WLAN_FEATURE_11W
-#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
 /**
  * lim_set_rmf_enabled() - set rmf enabled
  * @mac: mac context
@@ -1205,30 +1204,6 @@ static void lim_set_rmf_enabled(struct mac_context *mac,
 		 csr_join_req->vdev_id, session->limRmfEnabled,
 		 rsn_caps);
 }
-#else
-/**
- * lim_set_rmf_enabled() - set rmf enabled
- * @mac: mac context
- * @session: pe session
- * @csr_join_req: csr join req
- *
- * Return: void
- */
-static void lim_set_rmf_enabled(struct mac_context *mac,
-				struct pe_session *session,
-				struct join_req *csr_join_req)
-{
-	if ((eSIR_ED_AES_128_CMAC == csr_join_req->MgmtEncryptionType) ||
-	    (eSIR_ED_AES_GMAC_128 == csr_join_req->MgmtEncryptionType) ||
-	    (eSIR_ED_AES_GMAC_256 == csr_join_req->MgmtEncryptionType))
-		session->limRmfEnabled = 1;
-	else
-		session->limRmfEnabled = 0;
-
-	pe_debug("mgmt encryption type %d limRmfEnabled %d",
-		 csr_join_req->MgmtEncryptionType, session->limRmfEnabled);
-}
-#endif
 #else
 /**
  * lim_set_rmf_enabled() - set rmf enabled

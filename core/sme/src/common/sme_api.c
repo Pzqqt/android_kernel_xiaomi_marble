@@ -3056,49 +3056,6 @@ void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile)
 	csr_roam_free_connect_profile(profile);
 }
 
-/*
- * sme_roam_set_pmkid_cache() -
- * A wrapper function to request CSR to return the PMKID candidate list
- * This is a synchronous call.
-
- * pPMKIDCache - caller allocated buffer point to an array of
- *			 tPmkidCacheInfo
- * numItems - a variable that has the number of tPmkidCacheInfo
- *		      allocated when retruning, this is either the number needed
- *		      or number of items put into pPMKIDCache
- * update_entire_cache - this bool value specifies if the entire pmkid
- *				 cache should be overwritten or should it be
- *				 updated entry by entry.
- * Return QDF_STATUS - when fail, it usually means the buffer allocated is not
- *			 big enough and pNumItems has the number of
- *			 tPmkidCacheInfo.
- *   \Note: pNumItems is a number of tPmkidCacheInfo,
- *	   not sizeof(tPmkidCacheInfo) * something
- */
-QDF_STATUS sme_roam_set_pmkid_cache(mac_handle_t mac_handle, uint8_t sessionId,
-				    tPmkidCacheInfo *pPMKIDCache,
-				    uint32_t numItems, bool update_entire_cache)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_ROAM_SET_PMKIDCACHE, sessionId,
-			 numItems));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			status = csr_roam_set_pmkid_cache(mac, sessionId,
-						pPMKIDCache,
-						numItems, update_entire_cache);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
 QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t mac_handle,
 					 uint8_t sessionId,
 					 tPmkidCacheInfo *pmksa,

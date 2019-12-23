@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -728,23 +728,6 @@ QDF_STATUS csr_roam_reassoc(struct mac_context *mac, uint32_t sessionId,
 			    struct csr_roam_profile *pProfile,
 			    tCsrRoamModifyProfileFields modProfileFields,
 			    uint32_t *pRoamId);
-
-/*
- * csr_roam_set_pmkid_cache() -
- * return the PMKID candidate list
- *
- * pPMKIDCache - caller allocated buffer point to an array of tPmkidCacheInfo
- * numItems - a variable that has the number of tPmkidCacheInfo allocated
- * when retruning, this is either the number needed or number of items put
- * into pPMKIDCache
- * Return QDF_STATUS - when fail, it usually means the buffer allocated is not
- * big enough and pNumItems has the number of tPmkidCacheInfo.
- * \Note: pNumItems is a number of tPmkidCacheInfo, not
- * sizeof(tPmkidCacheInfo) * something
- */
-QDF_STATUS csr_roam_set_pmkid_cache(struct mac_context *mac, uint32_t sessionId,
-				    tPmkidCacheInfo *pPMKIDCache,
-				   uint32_t numItems, bool update_entire_cache);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /*

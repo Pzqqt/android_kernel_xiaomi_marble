@@ -21727,7 +21727,6 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 	return errno;
 }
 
-#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
 static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 					   tPmkidCacheInfo *pmk_cache)
 {
@@ -21791,34 +21790,6 @@ QDF_STATUS wlan_hdd_flush_pmksa_cache(struct hdd_adapter *adapter)
 
 	return result;
 }
-#else
-static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
-					   tPmkidCacheInfo *pmk_cache)
-{
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	return sme_roam_set_pmkid_cache(
-		hdd_ctx->mac_handle, adapter->vdev_id, pmk_cache, 1, false);
-}
-
-static QDF_STATUS wlan_hdd_del_pmksa_cache(struct hdd_adapter *adapter,
-					   tPmkidCacheInfo *pmk_cache)
-{
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	return sme_roam_del_pmkid_from_cache(
-			hdd_ctx->mac_handle, adapter->vdev_id, pmk_cache,
-			false);
-}
-
-QDF_STATUS wlan_hdd_flush_pmksa_cache(struct hdd_adapter *adapter)
-{
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	return sme_roam_del_pmkid_from_cache(
-		hdd_ctx->mac_handle, adapter->vdev_id, NULL, true);
-}
-#endif
 
 #if defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 	 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))

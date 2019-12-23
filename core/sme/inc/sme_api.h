@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -549,10 +549,6 @@ QDF_STATUS sme_roam_get_connect_profile(mac_handle_t mac_handle,
 					uint8_t sessionId,
 					tCsrRoamConnectedProfile *pProfile);
 void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
-QDF_STATUS sme_roam_set_pmkid_cache(mac_handle_t mac_handle, uint8_t sessionId,
-		tPmkidCacheInfo *pPMKIDCache,
-		uint32_t numItems,
-		bool update_entire_cache);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -829,7 +829,6 @@ static void lim_print_ht_cap(struct mac_context *mac_ctx, struct pe_session *ses
 	}
 }
 
-#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
 static
 enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
 				      struct mac_context *mac_ctx,
@@ -895,27 +894,6 @@ static enum mac_status_code lim_check_wpa_ie(struct pe_session *session,
 
 	return eSIR_MAC_INVALID_IE_STATUS;
 }
-#else
-static enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
-					     struct mac_context *mac_ctx,
-					     tpSirAssocReq assoc_req,
-					     tDot11fIERSN *rsn,
-					     bool *pmf_connection)
-{
-	return lim_check_rx_rsn_ie_match(mac_ctx, rsn, session,
-					 assoc_req->HTCaps.present,
-					 pmf_connection);
-}
-
-static enum mac_status_code lim_check_wpa_ie(struct pe_session *session,
-					     struct mac_context *mac_ctx,
-					     tpSirAssocReq assoc_req,
-					     tDot11fIEWPA *wpa)
-{
-	return lim_check_rx_wpa_ie_match(mac_ctx, wpa, session,
-					 assoc_req->HTCaps.present);
-}
-#endif
 
 /**
   * lim_check_sae_pmf_cap() - check pmf capability for SAE STA
