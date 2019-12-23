@@ -472,6 +472,52 @@ uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx
 {
 	return wlan_cfg_get_rx_mon_ring_mask(soc->wlan_cfg_ctx, intr_ctx_num);
 }
+
+/*
+ * dp_service_lmac_rings()- timer to reap lmac rings
+ * @arg: SoC Handle
+ *
+ * Return:
+ *
+ */
+static void dp_service_lmac_rings(void *arg)
+{
+	struct dp_soc *soc = (struct dp_soc *)arg;
+	int ring = 0, mac_id, i;
+	struct dp_pdev *pdev = NULL;
+	union dp_rx_desc_list_elem_t *desc_list = NULL;
+	union dp_rx_desc_list_elem_t *tail = NULL;
+
+	/* Process LMAC interrupts */
+	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
+		pdev = soc->pdev_list[ring];
+		if (!pdev)
+			continue;
+		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+					pdev->pdev_id);
+			struct dp_srng *rx_refill_buf_ring =
+				&pdev->rx_refill_buf_ring;
+
+			dp_mon_process(soc, mac_for_pdev,
+				       QCA_NAPI_BUDGET);
+
+			for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
+				dp_rxdma_err_process(&soc->intr_ctx[i], soc,
+						     mac_for_pdev,
+						     QCA_NAPI_BUDGET);
+
+			if (!dp_soc_ring_if_nss_offloaded(soc, RXDMA_BUF, mac_id))
+				dp_rx_buffers_replenish(soc, mac_for_pdev,
+							rx_refill_buf_ring,
+							&soc->rx_desc_buf[mac_for_pdev],
+							0, &desc_list, &tail);
+		}
+	}
+
+	qdf_timer_mod(&soc->lmac_reap_timer, DP_INTR_POLL_TIMER_MS);
+}
+
 #endif
 
 static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
@@ -3762,6 +3808,11 @@ static void dp_rxdma_ring_cleanup(struct dp_soc *soc,
 static void dp_rxdma_ring_cleanup(struct dp_soc *soc,
 	 struct dp_pdev *pdev)
 {
+	if (soc->lmac_timer_init) {
+		qdf_timer_stop(&soc->lmac_reap_timer);
+		qdf_timer_free(&soc->lmac_reap_timer);
+		soc->lmac_timer_init = 0;
+	}
 }
 #endif
 
@@ -4611,6 +4662,18 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 				pdev->rxdma_err_dst_ring[mac_id].hal_srng,
 				RXDMA_DST);
 		}
+	}
+
+	/* Configure LMAC rings in Polled mode */
+	if (soc->lmac_polled_mode) {
+		/*
+		 * Timer to reap lmac rings.
+		 */
+		qdf_timer_init(soc->osdev, &soc->lmac_reap_timer,
+			       dp_service_lmac_rings, (void *)soc,
+			       QDF_TIMER_TYPE_WAKE_APPS);
+		soc->lmac_timer_init = 1;
+		qdf_timer_mod(&soc->lmac_reap_timer, DP_INTR_POLL_TIMER_MS);
 	}
 	return status;
 }
@@ -10598,6 +10661,7 @@ void *dp_soc_init(struct dp_soc *dpsoc, HTC_HANDLE htc_handle,
 		soc->hw_nac_monitor_support = 1;
 		soc->per_tid_basize_max_tid = 8;
 		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
+		soc->lmac_polled_mode = 1;
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);

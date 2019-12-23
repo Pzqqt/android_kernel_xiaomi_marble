@@ -1115,8 +1115,11 @@ struct dp_soc {
 	/*interrupt timer*/
 	qdf_timer_t mon_reap_timer;
 	uint8_t reap_timer_init;
+	qdf_timer_t lmac_reap_timer;
+	uint8_t lmac_timer_init;
 	qdf_timer_t int_timer;
 	uint8_t intr_mode;
+	uint8_t lmac_polled_mode;
 
 	qdf_list_t reo_desc_freelist;
 	qdf_spinlock_t reo_desc_freelist_lock;
