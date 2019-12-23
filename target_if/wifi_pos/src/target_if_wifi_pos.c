@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,8 @@
  * target if layer.
  */
 #include "../../../../umac/wifi_pos/src/wifi_pos_utils_i.h"
+#include "wifi_pos_utils_pub.h"
+
 #include "wmi_unified_api.h"
 #include "wlan_lmac_if_def.h"
 #include "target_if_wifi_pos.h"

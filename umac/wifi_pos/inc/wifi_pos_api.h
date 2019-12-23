@@ -24,9 +24,7 @@
 #define _WIFI_POS_API_H_
 
 /* Include files */
-#include "qdf_types.h"
-#include "qdf_status.h"
-#include "qdf_trace.h"
+#include "wifi_pos_utils_pub.h"
 
 /* forward reference */
 struct wlan_objmgr_psoc;
@@ -113,7 +111,7 @@ struct qdf_packed wifi_pos_ch_info_rsp {
 };
 
 /**
- * struct wmi_pos_peer_status_info - Status information for a given peer
+ * struct wifi_pos_peer_status_info - Status information for a given peer
  * @peer_mac_addr: peer mac address
  * @peer_status: peer status: 1: CONNECTED, 2: DISCONNECTED
  * @vdev_id: vdev_id for the peer mac
@@ -121,7 +119,7 @@ struct qdf_packed wifi_pos_ch_info_rsp {
  * @reserved0: reserved0
  * @peer_chan_info: channel info on which peer is connected
  */
-struct qdf_packed wmi_pos_peer_status_info {
+struct qdf_packed wifi_pos_peer_status_info {
 	uint8_t peer_mac_addr[ETH_ALEN];
 	uint8_t peer_status;
 	uint8_t vdev_id;
@@ -138,15 +136,17 @@ struct qdf_packed wmi_pos_peer_status_info {
  * @buf_len: request buffer length
  * @field_info_buf: buffer containing field info
  * @field_info_buf_len: length of field info buffer
+ * @rsp_version: nl type or ani type
  *
  */
 struct wifi_pos_req_msg {
-	uint32_t msg_type;
+	enum wifi_pos_cmd_ids msg_type;
 	uint32_t pid;
 	uint8_t *buf;
 	uint32_t buf_len;
 	struct wifi_pos_field_info *field_info_buf;
 	uint32_t field_info_buf_len;
+	uint32_t rsp_version;
 };
 
 /**
@@ -339,6 +339,14 @@ void ucfg_wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val);
  */
 void ucfg_wifi_pos_set_oem_6g_supported(struct wlan_objmgr_psoc *psoc,
 					bool val);
+
+/**
+ * ucfg_wifi_pos_is_nl_rsp: API to check if response is nl or ani type
+ * @psoc: psoc object
+ *
+ * Return: true if response is nl type
+ */
+bool ucfg_wifi_pos_is_nl_rsp(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wifi_pos_get_app_pid: returns oem app pid.

@@ -31,6 +31,7 @@
 #include "ol_defines.h"
 #include "qdf_trace.h"
 #include "qdf_module.h"
+#include "wifi_pos_utils_pub.h"
 
 struct wlan_objmgr_psoc;
 struct wifi_pos_req_msg;
@@ -59,11 +60,6 @@ struct wifi_pos_req_msg;
 
 #define OEM_APP_SIGNATURE_LEN      16
 #define OEM_APP_SIGNATURE_STR      "QUALCOMM-OEM-APP"
-
-#define OEM_TARGET_SIGNATURE_LEN   8
-#define OEM_TARGET_SIGNATURE       "QUALCOMM"
-
-#define OEM_CAP_MAX_NUM_CHANNELS   128
 
 #ifndef OEM_DATA_RSP_SIZE
 #define OEM_DATA_RSP_SIZE 1724
@@ -119,73 +115,6 @@ struct oem_data_rsp {
 	uint8_t *data_2;
 	uint32_t dma_len;
 	void *vaddr;
-};
-
-/**
- * struct wifi_pos_driver_version - Driver version identifier (w.x.y.z)
- * @major: Version ID major number
- * @minor: Version ID minor number
- * @patch: Version ID patch number
- * @build: Version ID build number
- */
-struct qdf_packed wifi_pos_driver_version {
-	uint8_t major;
-	uint8_t minor;
-	uint8_t patch;
-	uint8_t build;
-};
-
-/**
- * struct wifi_pos_driver_caps - OEM Data Capabilities
- * @oem_target_signature: Signature of chipset vendor, e.g. QUALCOMM
- * @oem_target_type: Chip type
- * @oem_fw_version: Firmware version
- * @driver_version: Host software version
- * @allowed_dwell_time_min: Channel dwell time - allowed minimum
- * @allowed_dwell_time_max: Channel dwell time - allowed maximum
- * @curr_dwell_time_min: Channel dwell time - current minimim
- * @curr_dwell_time_max: Channel dwell time - current maximum
- * @supported_bands: Supported bands, 2.4G or 5G Hz
- * @num_channels: Num of channels IDs to follow
- * @channel_list: List of channel IDs
- */
-struct qdf_packed wifi_pos_driver_caps {
-	uint8_t oem_target_signature[OEM_TARGET_SIGNATURE_LEN];
-	uint32_t oem_target_type;
-	uint32_t oem_fw_version;
-	struct wifi_pos_driver_version driver_version;
-	uint16_t allowed_dwell_time_min;
-	uint16_t allowed_dwell_time_max;
-	uint16_t curr_dwell_time_min;
-	uint16_t curr_dwell_time_max;
-	uint16_t supported_bands;
-	uint16_t num_channels;
-	uint8_t channel_list[OEM_CAP_MAX_NUM_CHANNELS];
-};
-
-/**
- * struct wifi_pos_user_defined_caps - OEM capability to be exchanged between
- * host and userspace
- * @ftm_rr: FTM range report capability bit
- * @lci_capability: LCI capability bit
- * @reserved1: reserved
- * @reserved2: reserved
- */
-struct wifi_pos_user_defined_caps {
-	uint32_t ftm_rr:1;
-	uint32_t lci_capability:1;
-	uint32_t reserved1:30;
-	uint32_t reserved2;
-};
-
-/**
- * struct wifi_pos_oem_get_cap_rsp - capabilities set by userspace and target.
- * @driver_cap: target capabilities
- * @user_defined_cap: capabilities set by userspace via set request
- */
-struct qdf_packed wifi_pos_oem_get_cap_rsp {
-	struct wifi_pos_driver_caps driver_cap;
-	struct wifi_pos_user_defined_caps user_defined_cap;
 };
 
 /**
@@ -310,6 +239,7 @@ struct wifi_pos_dma_rings_cfg {
  *                                     for given freq and channel width
  * @wifi_pos_send_action: function pointer to send registered action frames
  *                        to userspace APP
+ * @rsp_version: rsp version
  *
  * wifi pos request messages
  * <----- fine_time_meas_cap (in bits) ----->
@@ -348,13 +278,15 @@ struct wifi_pos_psoc_priv_obj {
 	bool oem_6g_support_disable;
 	QDF_STATUS (*wifi_pos_req_handler)(struct wlan_objmgr_psoc *psoc,
 				    struct wifi_pos_req_msg *req);
-	void (*wifi_pos_send_rsp)(uint32_t, uint32_t, uint32_t, uint8_t *);
+	void (*wifi_pos_send_rsp)(uint32_t, enum wifi_pos_cmd_ids,
+				  uint32_t, uint8_t *);
 	void (*wifi_pos_get_phy_mode)(uint8_t, uint32_t, uint32_t *);
 	void (*wifi_pos_get_fw_phy_mode_for_freq)(uint32_t, uint32_t,
 						  uint32_t *);
 	void (*wifi_pos_send_action)(struct wlan_objmgr_psoc *psoc,
 				     uint32_t oem_subtype, uint8_t *buf,
 				     uint32_t len);
+	uint32_t rsp_version;
 };
 
 /**

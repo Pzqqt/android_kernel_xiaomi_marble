@@ -216,7 +216,7 @@ static QDF_STATUS wifi_pos_process_set_cap_req(struct wlan_objmgr_psoc *psoc,
 	wifi_pos_obj->lci_capability = caps->lci_capability;
 	error_code = qdf_status_to_os_return(QDF_STATUS_SUCCESS);
 	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,
-					ANI_MSG_SET_OEM_CAP_RSP,
+					WIFI_POS_CMD_SET_CAPS,
 					sizeof(error_code),
 					(uint8_t *)&error_code);
 
@@ -236,13 +236,14 @@ static QDF_STATUS wifi_pos_process_get_cap_req(struct wlan_objmgr_psoc *psoc,
 	}
 
 	wifi_pos_debug("Received get cap req pid(%d), len(%d)",
-			req->pid, req->buf_len);
+		       req->pid, req->buf_len);
 
 	wifi_pos_populate_caps(psoc, &cap_rsp.driver_cap);
 	cap_rsp.user_defined_cap.ftm_rr = wifi_pos_obj->ftm_rr;
 	cap_rsp.user_defined_cap.lci_capability = wifi_pos_obj->lci_capability;
+
 	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,
-					ANI_MSG_GET_OEM_CAP_RSP,
+					WIFI_POS_CMD_GET_CAPS,
 					sizeof(cap_rsp),
 					(uint8_t *)&cap_rsp);
 
@@ -276,7 +277,7 @@ QDF_STATUS wifi_pos_send_report_resp(struct wlan_objmgr_psoc *psoc,
 	memcpy(&err_report.err_rpt.dest_mac, dest_mac, QDF_MAC_ADDR_SIZE);
 
 	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,
-			ANI_MSG_OEM_DATA_RSP,
+			WIFI_POS_CMD_OEM_DATA,
 			sizeof(err_report),
 			(uint8_t *)&err_report);
 
@@ -548,7 +549,7 @@ static QDF_STATUS wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 		wifi_pos_debug("no active vdev");
 
 	vdev_idx = 0;
-	wifi_pos_obj->wifi_pos_send_rsp(req->pid, ANI_MSG_APP_REG_RSP,
+	wifi_pos_obj->wifi_pos_send_rsp(req->pid, WIFI_POS_CMD_REGISTRATION,
 					rsp_len, (uint8_t *)app_reg_rsp);
 
 	qdf_mem_free(app_reg_rsp);
@@ -556,7 +557,7 @@ static QDF_STATUS wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 
 app_reg_failed:
 
-	wifi_pos_obj->wifi_pos_send_rsp(req->pid, ANI_MSG_OEM_ERROR,
+	wifi_pos_obj->wifi_pos_send_rsp(req->pid, WIFI_POS_CMD_ERROR,
 					sizeof(err), &err);
 	return ret;
 }
@@ -572,15 +573,15 @@ static QDF_STATUS wifi_pos_tlv_callback(struct wlan_objmgr_psoc *psoc,
 {
 	wifi_pos_debug("enter: msg_type: %d", req->msg_type);
 	switch (req->msg_type) {
-	case ANI_MSG_APP_REG_REQ:
+	case WIFI_POS_CMD_REGISTRATION:
 		return wifi_pos_process_app_reg_req(psoc, req);
-	case ANI_MSG_OEM_DATA_REQ:
+	case WIFI_POS_CMD_OEM_DATA:
 		return wifi_pos_process_data_req(psoc, req);
-	case ANI_MSG_CHANNEL_INFO_REQ:
+	case WIFI_POS_CMD_GET_CH_INFO:
 		return wifi_pos_process_ch_info_req(psoc, req);
-	case ANI_MSG_SET_OEM_CAP_REQ:
+	case WIFI_POS_CMD_SET_CAPS:
 		return wifi_pos_process_set_cap_req(psoc, req);
-	case ANI_MSG_GET_OEM_CAP_REQ:
+	case WIFI_POS_CMD_GET_CAPS:
 		return wifi_pos_process_get_cap_req(psoc, req);
 	default:
 		wifi_pos_err("invalid request type");
@@ -740,10 +741,10 @@ int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
 		qdf_mem_copy(&data[oem_rsp->rsp_len_1 + oem_rsp->dma_len],
 			     oem_rsp->data_2, oem_rsp->rsp_len_2);
 
-		wifi_pos_send_rsp(app_pid, ANI_MSG_OEM_DATA_RSP, len, data);
+		wifi_pos_send_rsp(app_pid, WIFI_POS_CMD_OEM_DATA, len, data);
 		qdf_mem_free(data);
 	} else {
-		wifi_pos_send_rsp(app_pid, ANI_MSG_OEM_DATA_RSP,
+		wifi_pos_send_rsp(app_pid, WIFI_POS_CMD_OEM_DATA,
 				  oem_rsp->rsp_len_1, oem_rsp->data_1);
 	}
 
