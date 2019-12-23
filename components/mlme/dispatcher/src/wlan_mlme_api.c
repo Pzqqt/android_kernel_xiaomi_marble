@@ -3680,3 +3680,20 @@ wlan_mlme_get_mgmt_max_retry(struct wlan_objmgr_psoc *psoc,
 	*max_retry = mlme_obj->cfg.gen.mgmt_retry_max;
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+wlan_mlme_get_status_ring_buffer(struct wlan_objmgr_psoc *psoc,
+				 bool *enable_ring_buffer)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*enable_ring_buffer = cfg_default(CFG_ENABLE_RING_BUFFER);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_ring_buffer = mlme_obj->cfg.gen.enable_ring_buffer;
+	return QDF_STATUS_SUCCESS;
+}
