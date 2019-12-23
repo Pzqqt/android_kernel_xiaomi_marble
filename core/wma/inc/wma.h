@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2429,8 +2429,6 @@ bool wma_is_roam_in_progress(uint32_t vdev_id);
  */
 struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle);
 
-#ifdef CRYPTO_SET_KEY_CONVERGED
-
 /**
  * wma_set_peer_ucast_cipher() - Update unicast cipher fof the peer
  * @mac_addr: peer mac address
@@ -2453,7 +2451,6 @@ void wma_set_peer_ucast_cipher(uint8_t *mac_addr,
 void wma_update_set_key(uint8_t session_id, bool pairwise,
 			uint8_t key_index,
 			enum wlan_crypto_cipher_type cipher_type);
-#endif
 
 /**
  * wma_get_igtk() - Get the IGTK that was stored in the session earlier

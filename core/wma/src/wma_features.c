@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5291,7 +5291,6 @@ int wma_vdev_obss_detection_info_handler(void *handle, uint8_t *event,
 	return 0;
 }
 
-#ifdef CRYPTO_SET_KEY_CONVERGED
 static void wma_send_set_key_rsp(uint8_t vdev_id, bool pairwise,
 				 uint8_t key_index)
 {
@@ -5443,7 +5442,6 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
 
 	wma_send_set_key_rsp(session_id, pairwise, key_index);
 }
-#endif /* CRYPTO_SET_KEY_CONVERGED */
 
 int wma_vdev_bss_color_collision_info_handler(void *handle,
 					      uint8_t *event,

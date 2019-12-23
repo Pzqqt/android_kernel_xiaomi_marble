@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2374,7 +2374,6 @@ static void wma_update_tx_send_params(struct tx_send_params *tx_param,
 		     tx_param->preamble_type);
 }
 
-#ifdef CRYPTO_SET_KEY_CONVERGED
 uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len)
 {
 	struct wlan_crypto_key *crypto_key;
@@ -2389,13 +2388,6 @@ uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len)
 
 	return &crypto_key->keyval[0];
 }
-#else
-uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len)
-{
-	*key_len = iface->key.key_length;
-	return iface->key.key;
-}
-#endif
 
 QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 eFrameType frmType, eFrameTxDir txDir, uint8_t tid,

@@ -1890,8 +1890,6 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		qdf_mem_copy(key_info->peer_macaddr.bytes, peer_addr,
 				QDF_MAC_ADDR_SIZE);
 		key_info->sendRsp = false;
-
-		wma_set_stakey(wma, key_info);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -4448,15 +4446,6 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		if (params->rmfEnabled) {
 			wma_set_mgmt_frame_protection(wma);
 			wma_set_peer_pmf_status(wma, params->bssId, true);
-		}
-
-		/*
-		 * Set the PTK in 11r mode because we already have it.
-		 */
-		if (iface->staKeyParams) {
-			wma_set_stakey(wma,
-				       (tpSetStaKeyParams) iface->staKeyParams);
-			iface->staKeyParams = NULL;
 		}
 	}
 	maxTxPower = params->maxTxPower;

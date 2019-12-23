@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -8255,12 +8255,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 			wma_handle,
 			(struct send_peer_unmap_conf_params *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_SET_BSSKEY_REQ:
-		wma_set_bsskey(wma_handle, (tpSetBssKeyParams) msg->bodyptr);
-		break;
-	case WMA_SET_STAKEY_REQ:
-		wma_set_stakey(wma_handle, (tpSetStaKeyParams) msg->bodyptr);
 		break;
 	case WMA_DELETE_STA_REQ:
 		wma_delete_sta(wma_handle, (tpDeleteStaParams) msg->bodyptr);
