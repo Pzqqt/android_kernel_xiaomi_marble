@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -284,6 +284,272 @@ struct host_log_cold_boot_cal_data_type {
 	uint32_t cb_cal_data_len;
 	uint8_t cb_cal_data[HOST_LOG_MAX_COLD_BOOT_CAL_DATA_SIZE];
 };
+
+#define WLAN_MAX_ROAM_CANDIDATE_AP      8
+#define WLAN_MAX_ROAM_SCAN_CHAN         38
+#define WLAN_MAX_SSID_SIZE              32
+#define WLAN_MAC_ADDR_SIZE              6
+
+/**
+ * host_log_wlan_mgmt_tx_rx_info: To capture TX/RX mgmt frames' payload
+ * @hdr: Log header
+ * @version: Version number of the payload
+ * @vdev_id: Vdev id
+ * @is_tx: 1 - TX frame, 0 - RX frame
+ * @mgmt_type: type of frames, value: enum wifi_frm_type
+ * @mgmt_subtype: subtype of mgmt frame, value: enum mgmt_frm_subtype
+ * @mgmt_frame_seq_num: Frame sequence number in 802.11 header
+ * @operating_freq: operating frequency of AP
+ * @ssid_len: length of SSID, max 32 bytes long as per standard
+ * @ssid: SSID of connected AP
+ * @self_mac_addr: mac address of self interface
+ * @bssid: BSSID for which frame is received
+ * @mac_failure_reason: Internal driver failure reason
+ * @mgmt_status_code: 802.11 management frame response status code from
+ * section 9.4.1.9 IEEE 802.11 - 2016
+ * @auth_algo: Authentication algorithm number
+ * @auth_transaction_num: Authentication transaction sequence number
+ * @is_retry: Is retry frame
+ * @rssi: RSSI for the received frame
+ * @origin: 1- Sent by host. 2- sent by firmware
+ */
+struct host_log_wlan_mgmt_tx_rx_info {
+	log_hdr_type hdr;
+	uint8_t version;
+	uint8_t vdev_id;
+	bool is_tx;
+	uint8_t mgmt_type;
+	uint8_t mgmt_subtype;
+	uint16_t mgmt_frame_seq_num;
+	uint8_t operating_freq;
+	uint8_t ssid_len;
+	char ssid[WLAN_MAX_SSID_SIZE];
+	uint8_t self_mac_addr[WLAN_MAC_ADDR_SIZE];
+	uint8_t bssid[WLAN_MAC_ADDR_SIZE];
+	uint16_t mac_failure_reason;
+	uint16_t mgmt_status_code;
+	uint8_t auth_algo;
+	uint8_t auth_transaction_num;
+	uint8_t is_retry;
+	uint32_t rssi;
+	uint8_t origin;
+} qdf_packed;
+
+/**
+ * struct wlan_roam_btm_trigger_data - BTM roam trigger related information
+ * @btm_request_mode:      BTM request mode - solicited/unsolicited
+ * @disassoc_timer:        Number of TBTT before AP disassociates the STA in ms
+ * @validity_interval:     Preferred candidate list validity interval in ms
+ * @candidate_list_count:  Number of candidates in BTM request.
+ * @btm_resp_status:       Status code of the BTM response.
+ */
+struct wlan_roam_btm_trigger_data {
+	uint8_t btm_request_mode;
+	uint32_t disassoc_timer;
+	uint32_t validity_interval;
+	uint16_t candidate_list_count;
+	uint16_t btm_resp_status;
+} qdf_packed;
+
+/**
+ * struct wlan_roam_cu_trigger_data - BSS Load roam trigger parameters
+ * @cu_load: Connected AP CU load percentage
+ */
+struct wlan_roam_cu_trigger_data {
+	uint16_t cu_load;
+} qdf_packed;
+
+/**
+ * Struct wlan_roam_rssi_trigger_data - RSSI roam trigger related
+ * parameters
+ * @threshold: RSSI threshold value in dBm for LOW rssi roam trigger
+ */
+struct wlan_roam_rssi_trigger_data {
+	uint32_t threshold;
+} qdf_packed;
+
+/**
+ * struct wlan_roam_deauth_trigger_data - Deauth roaming trigger related
+ * parameters
+ * @type:   1- Deauthentication 2- Disassociation
+ * @reason: Status code of the Deauth/Disassoc received
+ */
+struct wlan_roam_deauth_trigger_data {
+	uint8_t type;
+	uint32_t reason;
+} qdf_packed;
+
+/**
+ * struct host_log_wlan_roam_trigger_info - Roam trigger
+ * related info
+ * @hdr: Log header
+ * @version: Version number of the payload
+ * @vdev_id: Vdev id
+ * @trigger_reason: Roaming trigger reason
+ * @trigger_sub_reason: Roaming trigger sub reason
+ * @current_rssi:  Current connected AP RSSI
+ * @timestamp: Host driver timestamp in msecs
+ * @btm_trig_data: BTM trigger related data
+ * @cu_load_data: CU load trigger related data
+ * @rssi_trig_data: RSSI roam trigger related data
+ * @deauth_trig_data: Deauth Roam trigger related data
+ */
+struct host_log_wlan_roam_trigger_info {
+	log_hdr_type hdr;
+	uint8_t version;
+	uint8_t vdev_id;
+	uint32_t trigger_reason;
+	uint32_t trigger_sub_reason;
+	uint32_t current_rssi;
+	uint32_t timestamp;
+	union {
+		struct wlan_roam_btm_trigger_data btm_trig_data;
+		struct wlan_roam_cu_trigger_data cu_load_data;
+		struct wlan_roam_rssi_trigger_data rssi_trig_data;
+		struct wlan_roam_deauth_trigger_data deauth_trig_data;
+	};
+} qdf_packed;
+
+/**
+ *  struct host_log_wlan_roam_candidate_info - Roam scan candidate APs related
+ *  info
+ *  @version:     Payload structure version
+ *  @timestamp:   Host timestamp in millisecs
+ *  @type:        0 - Candidate AP; 1 - Current connected AP.
+ *  @bssid:       AP bssid.
+ *  @freq:        Channel frquency
+ *  @cu_load:     Channel utilization load of the AP.
+ *  @cu_score:    Channel Utilization score.
+ *  @rssi:        Candidate AP rssi
+ *  @rssi_score:  AP RSSI score
+ *  @total_score: Total score of the candidate AP.
+ *  @etp:         Estimated throughput value of the AP in Mbps
+ */
+struct host_log_wlan_roam_candidate_info {
+	uint8_t version;
+	uint32_t timestamp;
+	uint8_t type;
+	uint8_t bssid[WLAN_MAC_ADDR_SIZE];
+	uint16_t freq;
+	uint32_t cu_load;
+	uint32_t cu_score;
+	uint32_t rssi;
+	uint32_t rssi_score;
+	uint32_t total_score;
+	uint32_t etp;
+} qdf_packed;
+
+/**
+ * struct host_log_wlan_roam_scan_data - Roam scan event details
+ * @hdr: Log header
+ * @version:   Version number of the diag log payload
+ * @vdev_id:   Vdev ID
+ * @type:      0 - Partial roam scan; 1 - Full roam scan
+ * @num_ap:    Number of candidate APs.
+ * @num_chan:  Number of channels.
+ * @timestamp: Time of day in milliseconds at which scan was triggered
+ * @trigger_reason: Roam scan trigger reason
+ * @next_rssi_threshold: Next roam can trigger rssi threshold
+ * @chan_freq: List of frequencies scanned as part of roam scan
+ * @ap: List of candidate AP info
+ */
+struct host_log_wlan_roam_scan_data {
+	log_hdr_type hdr;
+	uint8_t version;
+	uint8_t vdev_id;
+	uint16_t type;
+	uint8_t num_ap;
+	uint8_t num_chan;
+	uint32_t timestamp;
+	uint32_t trigger_reason;
+	uint32_t next_rssi_threshold;
+	uint16_t chan_freq[WLAN_MAX_ROAM_SCAN_CHAN];
+	struct host_log_wlan_roam_candidate_info ap[WLAN_MAX_ROAM_CANDIDATE_AP];
+} qdf_packed;
+
+/**
+ * struct host_log_wlan_roam_result_info - Roam result related info.
+ * @hdr:                Log header
+ * @version:            Payload strcuture version
+ * @vdev_id:            Vdev Id
+ * @status:             0 - Roaming is success ; 1 - Roaming failed
+ * @timestamp:          Host timestamp in millisecs
+ * @fail_reason:        One of WMI_ROAM_FAIL_REASON_ID
+ */
+struct host_log_wlan_roam_result_info {
+	log_hdr_type hdr;
+	uint8_t version;
+	uint8_t vdev_id;
+	bool status;
+	uint32_t timestamp;
+	uint32_t fail_reason;
+} qdf_packed;
+
+/**
+ * struct wlan_rrm_beacon_report - RRM beacon report related
+ * parameters
+ * @req_bssid: beacon report requestor BSSID
+ * @req_ssid: Requested SSID for beacon report
+ * @is_wildcard_bssid: Is the BSSID FF:FF:FF:FF:FF:FF
+ * @req_reg_class: Regulatory class mentioned in the request
+ * @req_measurement_mode: Measurement mode. Active/Passive/Beacon report Table
+ * @req_measurement_duration: Measurement duration requested.
+ * @num_reports_in_frame: Number of BSS scanned
+ * @is_last_frame_in_req: True if this frame is the last frame sent for the
+ * request
+ */
+struct wlan_rrm_beacon_report {
+	uint8_t req_bssid[WLAN_MAC_ADDR_SIZE];
+	uint8_t req_ssid[WLAN_MAX_SSID_SIZE];
+	bool is_wildcard_bssid;
+	uint8_t req_reg_class;
+	uint16_t req_measurement_mode;
+	uint16_t req_measurement_duration;
+	uint8_t num_reports_in_frame;
+	bool is_last_frame_in_req;
+} qdf_packed;
+
+/**
+ * struct host_log_wlan_rrm_tx_rx_info - RRM frame related details
+ * @hdr:     Log header
+ * @version: Version of the payload struture
+ * @vdev_id: Vdev id
+ * @orgin:   Sent by host or firmware
+ * @is_tx:   Is Tx frame or RX frame
+ * @roam_result: Roaming result
+ * @timestamp: Time of the day in milliseconds
+ * @mgmt_frame_seq_num: Frame sequence number
+ * @received_chan_freq: Frame received channel frequency
+ * @action_category: Action frame category
+ * @rrm_action_code: Radio measurement/Noise measurement
+ * @radio_measurement_type: Neighbor report/Beacon report
+ * @bssid: BSSID field in frame
+ * @req_num_freq: Number of frequencies provided in request
+ * @req_freq: Frequencies requested
+ * @fail_reason_code: response TX failure status code
+ * @rssi: Rx frame rssi
+ * @bcn_rpt: Beacon report related parameters
+ */
+struct host_log_wlan_rrm_tx_rx_info {
+	log_hdr_type hdr;
+	uint8_t version;
+	uint8_t vdev_id;
+	uint8_t origin;
+	bool is_tx;
+	bool roam_result;
+	uint32_t timestamp;
+	uint16_t mgmt_frame_seq_num;
+	uint16_t received_chan_freq;
+	uint8_t action_category;
+	uint8_t rrm_action_code;
+	uint8_t radio_measurement_type;
+	uint8_t bssid[WLAN_MAC_ADDR_SIZE];
+	uint8_t req_num_freq;
+	uint16_t req_freq[WLAN_MAX_ROAM_SCAN_CHAN];
+	uint8_t fail_reason_code;
+	uint32_t rssi;
+	struct wlan_rrm_beacon_report bcn_rpt;
+} qdf_packed;
 
 /*-------------------------------------------------------------------------
    Function declarations and documenation
