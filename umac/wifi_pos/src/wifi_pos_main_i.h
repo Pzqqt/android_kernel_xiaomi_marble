@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,11 @@
 
 #ifndef _WIFI_POS_MAIN_H_
 #define _WIFI_POS_MAIN_H_
+
+#ifdef CNSS_GENL
+#define ENHNC_FLAGS_LEN 4
+#define NL_ENABLE_OEM_REQ_RSP 0x00000001
+#endif
 
 /* forward reference */
 struct wlan_objmgr_psoc;
