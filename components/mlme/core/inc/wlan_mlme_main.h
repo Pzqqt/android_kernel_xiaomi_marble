@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -149,49 +149,6 @@ struct mlme_legacy_priv {
 	struct wlan_mlme_roam mlme_roam;
 };
 
-#ifndef CRYPTO_SET_KEY_CONVERGED
-/**
- * wlan_peer_set_unicast_cipher() - set unicast cipher
- * @peer: PEER object
- * @value: value to be set
- *
- * Return: void
- */
-static inline
-void wlan_peer_set_unicast_cipher(struct wlan_objmgr_peer *peer, uint32_t value)
-{
-	struct peer_mlme_priv_obj *peer_priv;
-
-	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
-							  WLAN_UMAC_COMP_MLME);
-	if (!peer_priv) {
-		mlme_legacy_err(" peer mlme component object is NULL");
-		return;
-	}
-	peer_priv->ucast_key_cipher  = value;
-}
-
-/**
- * wlan_peer_get_unicast_cipher() - get unicast cipher
- * @peer: PEER object
- *
- * Return: ucast_key_cipher value
- */
-static inline
-uint32_t wlan_peer_get_unicast_cipher(struct wlan_objmgr_peer *peer)
-{
-	struct peer_mlme_priv_obj *peer_priv;
-
-	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
-							  WLAN_UMAC_COMP_MLME);
-	if (!peer_priv) {
-		mlme_legacy_err("peer mlme component object is NULL");
-		return 0;
-	}
-
-	return peer_priv->ucast_key_cipher;
-}
-#endif
 /**
  * wma_get_peer_mic_len() - get mic hdr len and mic length for peer
  * @psoc: psoc

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -103,7 +103,6 @@ static inline unsigned int is_auth_valid(struct mac_context *mac,
  *
  * Return: QDF_STATUS
  */
-#ifdef CRYPTO_SET_KEY_CONVERGED
 static QDF_STATUS lim_get_wep_key_sap(struct pe_session *pe_session,
 				      struct wlan_mlme_wep_cfg *wep_params,
 				      uint8_t key_id,
@@ -116,20 +115,6 @@ static QDF_STATUS lim_get_wep_key_sap(struct pe_session *pe_session,
 				default_key,
 				key_len);
 }
-#else
-static QDF_STATUS lim_get_wep_key_sap(struct pe_session *pe_session,
-				      struct wlan_mlme_wep_cfg *wep_params,
-				      uint8_t key_id,
-				      uint8_t *default_key,
-				      qdf_size_t *key_len)
-{
-	*key_len = pe_session->WEPKeyMaterial[key_id].key[0].keyLength;
-	qdf_mem_copy(default_key, pe_session->WEPKeyMaterial[key_id].key[0].key,
-		     *key_len);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,

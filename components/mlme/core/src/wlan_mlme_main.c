@@ -94,7 +94,6 @@ uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
 	return &mlme_priv->sta_dynamic_oce_value;
 }
 
-#ifdef CRYPTO_SET_KEY_CONVERGED
 QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 				 uint8_t *peer_mac, uint8_t *mic_len,
 				 uint8_t *mic_hdr_len)
@@ -132,43 +131,6 @@ QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 
 	return QDF_STATUS_SUCCESS;
 }
-
-#else
-
-QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
-				 uint8_t *peer_mac, uint8_t *mic_len,
-				 uint8_t *mic_hdr_len)
-{
-	struct wlan_objmgr_peer *peer;
-	uint32_t key_cipher;
-
-	if (!psoc || !mic_len || !mic_hdr_len || !peer_mac) {
-		mlme_legacy_debug("psoc/mic_len/mic_hdr_len/peer_mac null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	peer = wlan_objmgr_get_peer(psoc, pdev_id,
-				    peer_mac, WLAN_LEGACY_MAC_ID);
-	if (!peer) {
-		mlme_legacy_debug("Peer of peer_mac %pM not found", peer_mac);
-		return QDF_STATUS_E_INVAL;
-	}
-	key_cipher = wlan_peer_get_unicast_cipher(peer);
-	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
-
-	if (key_cipher == WMI_CIPHER_AES_GCM) {
-		*mic_hdr_len = WLAN_IEEE80211_GCMP_HEADERLEN;
-		*mic_len = WLAN_IEEE80211_GCMP_MICLEN;
-	} else {
-		*mic_hdr_len = IEEE80211_CCMP_HEADERLEN;
-		*mic_len = IEEE80211_CCMP_MICLEN;
-	}
-	mlme_legacy_debug("peer %pM hdr_len %d mic_len %d key_cipher %d",
-			  peer_mac, *mic_hdr_len, *mic_len, key_cipher);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 QDF_STATUS
 mlme_peer_object_created_notification(struct wlan_objmgr_peer *peer,

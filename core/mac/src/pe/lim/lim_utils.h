@@ -1852,29 +1852,6 @@ QDF_STATUS lim_ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_mon_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 					uint16_t data_len, void *event);
 
-#ifdef CRYPTO_SET_KEY_CONVERGED
-static inline bool lim_is_set_key_req_converged(void)
-{
-	return true;
-}
-
-static inline void lim_copy_set_key_req_mac_addr(struct qdf_mac_addr *dst,
-						 struct qdf_mac_addr *src)
-{
-	qdf_copy_macaddr(dst, src);
-}
-#else
-static inline bool lim_is_set_key_req_converged(void)
-{
-	return false;
-}
-
-static inline void lim_copy_set_key_req_mac_addr(struct qdf_mac_addr *dst,
-						 struct qdf_mac_addr *src)
-{
-}
-#endif
-
 /**
  * lim_get_capability_info() - Get capability information
  * @mac:        pointer to mac data
