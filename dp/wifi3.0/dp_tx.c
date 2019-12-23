@@ -3196,8 +3196,7 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	qdf_nbuf_t nbuf = tx_desc->nbuf;
 
 	if (!vdev || !nbuf) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"invalid tx descriptor. vdev or nbuf NULL");
+		dp_info_rl("invalid tx descriptor. vdev or nbuf NULL");
 		goto out;
 	}
 
