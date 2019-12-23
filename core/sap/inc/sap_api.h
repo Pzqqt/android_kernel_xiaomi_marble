@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -932,18 +932,6 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 					       enum phy_ch_width target_bw,
 					       bool strict);
 
-/**
- * wlansap_set_key_sta() - set keys for a stations.
- * @sap_ctx: Pointer to the SAP context
- * @key_info : tCsrRoamSetKey structure for the station
- *
- * This api function provides for Ap App/HDD to set key for a station.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success
- */
-QDF_STATUS wlansap_set_key_sta(struct sap_context *sap_ctx,
-			       tCsrRoamSetKey *key_info);
 
 /**
  * wlan_sap_getstation_ie_information() - RSNIE Population

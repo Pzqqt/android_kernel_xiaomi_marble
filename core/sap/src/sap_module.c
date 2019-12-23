@@ -1594,59 +1594,6 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CRYPTO_SET_KEY_CONVERGED
-static QDF_STATUS wlan_sap_set_key_helper(struct sap_context *sap_ctx,
-					  tCsrRoamSetKey *set_key_info)
-{
-	struct wlan_crypto_key *crypto_key;
-
-	crypto_key = wlan_crypto_get_key(sap_ctx->vdev, 0);
-	if (!crypto_key) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				"Crypto KEY is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return ucfg_crypto_set_key_req(sap_ctx->vdev, crypto_key,
-				       WLAN_CRYPTO_KEY_TYPE_UNICAST);
-}
-#else
-static QDF_STATUS wlan_sap_set_key_helper(struct sap_context *sap_ctx,
-					  tCsrRoamSetKey *set_key_info)
-{
-	uint32_t roam_id = INVALID_ROAM_ID;
-	struct mac_context *mac;
-
-	mac = sap_get_mac_context();
-	if (!mac) {
-		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
-		return QDF_STATUS_E_FAULT;
-	}
-
-	return sme_roam_set_key(MAC_HANDLE(mac), sap_ctx->sessionId,
-				set_key_info, &roam_id);
-}
-#endif
-
-QDF_STATUS wlansap_set_key_sta(struct sap_context *sap_ctx,
-			       tCsrRoamSetKey *set_key_info)
-{
-	QDF_STATUS qdf_status;
-
-	if (!sap_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer",
-			  __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	qdf_status = wlan_sap_set_key_helper(sap_ctx, set_key_info);
-	if (qdf_status != QDF_STATUS_SUCCESS)
-		qdf_status = QDF_STATUS_E_FAULT;
-
-	return qdf_status;
-}
-
 QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,
 					      uint32_t *len, uint8_t *buf)
 {

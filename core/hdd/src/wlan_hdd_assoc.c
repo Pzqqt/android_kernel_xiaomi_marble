@@ -3883,7 +3883,6 @@ hdd_roam_mic_error_indication_handler(struct hdd_adapter *adapter,
 				     GFP_KERNEL);
 }
 
-#ifdef CRYPTO_SET_KEY_CONVERGED
 static QDF_STATUS wlan_hdd_set_key_helper(struct hdd_adapter *adapter,
 					  uint32_t *roam_id)
 {
@@ -3903,20 +3902,6 @@ static QDF_STATUS wlan_hdd_set_key_helper(struct hdd_adapter *adapter,
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static QDF_STATUS wlan_hdd_set_key_helper(struct hdd_adapter *adapter,
-					  uint32_t *roam_id)
-{
-	struct hdd_station_ctx *sta_ctx =
-		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	return sme_roam_set_key(hdd_ctx->mac_handle,
-				adapter->vdev_id,
-				&sta_ctx->ibss_enc_key,
-				roam_id);
-}
-#endif
 
 /**
  * roam_roam_connect_status_update_handler() - IBSS connect status update
