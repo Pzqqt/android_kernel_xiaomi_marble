@@ -12644,6 +12644,8 @@ void hdd_dp_trace_init(struct hdd_config *config)
 	uint8_t num_entries = 0;
 	uint32_t bw_compute_interval;
 
+	qdf_dp_set_proto_event_bitmap(config->dp_proto_event_bitmap);
+
 	if (!config->enable_dp_trace) {
 		hdd_err("dp trace is disabled from ini");
 		return;

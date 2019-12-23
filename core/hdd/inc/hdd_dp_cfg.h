@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1207,9 +1207,41 @@
 		20, \
 		"1, 6, 2, 126", \
 		"dp trace configuration string")
+
+/*
+ * <ini>
+ * dp_proto_event_bitmap - Control for which protocol packet diag event should
+ *  be sent to user space.
+ * @Min: 0
+ * @Max: 0x17
+ * @Default: 0x6
+ *
+ * This ini is used to control for which protocol packet diag event should be
+ * sent to user space.
+ *
+ * QDF_NBUF_PKT_TRAC_TYPE_DNS       0x01
+ * QDF_NBUF_PKT_TRAC_TYPE_EAPOL     0x02
+ * QDF_NBUF_PKT_TRAC_TYPE_DHCP      0x04
+ * QDF_NBUF_PKT_TRAC_TYPE_ARP       0x10
+ *
+ * Related: None
+ *
+ * Supported Feature: STA, SAP
+ *
+ * Usage: Internal
+ *
+ * <ini>
+ */
+#define CFG_DP_PROTO_EVENT_BITMAP \
+		CFG_INI_UINT("dp_proto_event_bitmap", \
+		0, 0x17, 0x6, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Control for which protocol type diag log should be sent")
+
 #define CFG_DP_CONFIG_DP_TRACE_ALL \
 		CFG(CFG_DP_ENABLE_DP_TRACE) \
-		CFG(CFG_DP_DP_TRACE_CONFIG)
+		CFG(CFG_DP_DP_TRACE_CONFIG) \
+		CFG(CFG_DP_PROTO_EVENT_BITMAP)
 #else
 #define CFG_DP_CONFIG_DP_TRACE_ALL
 #endif

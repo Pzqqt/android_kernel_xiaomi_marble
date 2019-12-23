@@ -492,10 +492,14 @@ void hdd_ipa_send_nbuf_to_network(qdf_nbuf_t nbuf, qdf_netdev_t dev)
 	adapter->stats.rx_bytes += nbuf->len;
 
 	result = hdd_ipa_aggregated_rx_ind(nbuf);
-	if (result == NET_RX_SUCCESS)
+	if (result == NET_RX_SUCCESS) {
 		++adapter->hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
-	else
+	} else {
 		++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
+		DPTRACE(qdf_dp_log_proto_pkt_info(NULL, NULL, 0, 0, QDF_RX,
+						  QDF_TRACE_DEFAULT_MSDU_ID,
+						  QDF_TX_RX_STATUS_DROP));
+	}
 
 	/*
 	 * Restore PF_WAKE_UP_IDLE flag in the task structure

@@ -232,6 +232,7 @@ struct hdd_config {
 	uint16_t pkt_bundle_timer_value;
 	uint16_t pkt_bundle_size;
 #endif
+	uint32_t dp_proto_event_bitmap;
 };
 
 /**
