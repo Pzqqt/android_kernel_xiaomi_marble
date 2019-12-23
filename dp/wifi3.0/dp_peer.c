@@ -677,8 +677,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			 * can take care of adding HMWDS ast enty on delete
 			 * confirmation from target
 			 */
-			if ((type == CDP_TXRX_AST_TYPE_WDS_HM) &&
-			    soc->is_peer_map_unmap_v2) {
+			if (type == CDP_TXRX_AST_TYPE_WDS_HM) {
 				struct dp_ast_free_cb_params *param = NULL;
 
 				if (ast_entry->type ==
@@ -836,6 +835,67 @@ add_ast_entry:
 }
 
 /*
+ * dp_peer_free_ast_entry() - Free up the ast entry memory
+ * @soc: SoC handle
+ * @ast_entry: Address search entry
+ *
+ * This API is used to free up the memory associated with
+ * AST entry.
+ *
+ * Return: None
+ */
+void dp_peer_free_ast_entry(struct dp_soc *soc,
+			    struct dp_ast_entry *ast_entry)
+{
+	/*
+	 * NOTE: Ensure that call to this API is done
+	 * after soc->ast_lock is taken
+	 */
+	ast_entry->callback = NULL;
+	ast_entry->cookie = NULL;
+
+	DP_STATS_INC(soc, ast.deleted, 1);
+	dp_peer_ast_hash_remove(soc, ast_entry);
+	dp_peer_ast_cleanup(soc, ast_entry);
+	qdf_mem_free(ast_entry);
+	soc->num_ast_entries--;
+}
+
+/*
+ * dp_peer_unlink_ast_entry() - Free up the ast entry memory
+ * @soc: SoC handle
+ * @ast_entry: Address search entry
+ *
+ * This API is used to remove/unlink AST entry from the peer list
+ * and hash list.
+ *
+ * Return: None
+ */
+void dp_peer_unlink_ast_entry(struct dp_soc *soc,
+			      struct dp_ast_entry *ast_entry)
+{
+	/*
+	 * NOTE: Ensure that call to this API is done
+	 * after soc->ast_lock is taken
+	 */
+	struct dp_peer *peer = ast_entry->peer;
+
+	TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
+
+	if (ast_entry == peer->self_ast_entry)
+		peer->self_ast_entry = NULL;
+
+	/*
+	 * release the reference only if it is mapped
+	 * to ast_table
+	 */
+	if (ast_entry->is_mapped)
+		soc->ast_table[ast_entry->ast_idx] = NULL;
+
+	ast_entry->peer = NULL;
+}
+
+/*
  * dp_peer_del_ast() - Delete and free AST entry
  * @soc: SoC handle
  * @ast_entry: AST entry of the node
@@ -853,45 +913,45 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	if (!ast_entry)
 		return;
 
-	peer =  ast_entry->peer;
+	if (ast_entry->delete_in_progress)
+		return;
 
+	ast_entry->delete_in_progress = true;
+
+	peer = ast_entry->peer;
 	dp_peer_ast_send_wds_del(soc, ast_entry);
 
-	/*
-	 * release the reference only if it is mapped
-	 * to ast_table
-	 */
+	/* Remove SELF and STATIC entries in teardown itself */
+	if (!ast_entry->next_hop)
+		dp_peer_unlink_ast_entry(soc, ast_entry);
+
 	if (ast_entry->is_mapped)
 		soc->ast_table[ast_entry->ast_idx] = NULL;
 
-	/*
-	 * if peer map v2 is enabled we are not freeing ast entry
+	/* if peer map v2 is enabled we are not freeing ast entry
 	 * here and it is supposed to be freed in unmap event (after
 	 * we receive delete confirmation from target)
 	 *
 	 * if peer_id is invalid we did not get the peer map event
 	 * for the peer free ast entry from here only in this case
 	 */
-	if (soc->is_peer_map_unmap_v2) {
 
-		/*
-		 * For HM_SEC and SELF type we do not receive unmap event
-		 * free ast_entry from here it self
-		 */
-		if ((ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC) &&
-		    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF))
-			return;
-	}
+	/* For HM_SEC and SELF type we do not receive unmap event
+	 * free ast_entry from here it self
+	 */
+	if ((ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC) &&
+	    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF))
+		return;
 
-	/* SELF and STATIC entries are removed in teardown itself */
-	if (ast_entry->next_hop)
-		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
+	/* for WDS secondary entry ast_entry->next_hop would be set so
+	 * unlinking has to be done explicitly here.
+	 * As this entry is not a mapped entry unmap notification from
+	 * FW wil not come. Hence unlinkling is done right here.
+	 */
+	if (ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC)
+		dp_peer_unlink_ast_entry(soc, ast_entry);
 
-	DP_STATS_INC(soc, ast.deleted, 1);
-	dp_peer_ast_hash_remove(soc, ast_entry);
-	dp_peer_ast_cleanup(soc, ast_entry);
-	qdf_mem_free(ast_entry);
-	soc->num_ast_entries--;
+	dp_peer_free_ast_entry(soc, ast_entry);
 }
 
 /*
@@ -1088,9 +1148,6 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 	struct dp_peer *peer = ast_entry->peer;
 	struct cdp_soc_t *cdp_soc = &soc->cdp_soc;
 
-	if (ast_entry->delete_in_progress)
-		return;
-
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_TRACE,
 		  "%s: ast_entry->type: %d pdevid: %u vdev: %u mac_addr: %pM next_hop: %u peer_mac: %pM\n",
 		  __func__, ast_entry->type, peer->vdev->pdev->pdev_id,
@@ -1104,14 +1161,6 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 						    ast_entry->type);
 	}
 
-	/* Remove SELF and STATIC entries in teardown itself */
-	if (!ast_entry->next_hop) {
-		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
-		peer->self_ast_entry = NULL;
-		ast_entry->peer = NULL;
-	}
-
-	ast_entry->delete_in_progress = true;
 }
 
 /**
@@ -1148,19 +1197,13 @@ static int dp_peer_ast_free_entry_by_mac(struct dp_soc *soc,
 		soc->ast_table[ast_entry->ast_idx] = NULL;
 	}
 
-	TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
-	DP_STATS_INC(soc, ast.deleted, 1);
-	dp_peer_ast_hash_remove(soc, ast_entry);
-
 	cb = ast_entry->callback;
 	cookie = ast_entry->cookie;
-	ast_entry->callback = NULL;
-	ast_entry->cookie = NULL;
 
-	if (ast_entry == peer->self_ast_entry)
-		peer->self_ast_entry = NULL;
 
-	soc->num_ast_entries--;
+	dp_peer_unlink_ast_entry(soc, ast_entry);
+	dp_peer_free_ast_entry(soc, ast_entry);
+
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	if (cb) {
@@ -1169,7 +1212,6 @@ static int dp_peer_ast_free_entry_by_mac(struct dp_soc *soc,
 		   cookie,
 		   CDP_TXRX_AST_DELETED);
 	}
-	qdf_mem_free(ast_entry);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1602,7 +1644,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 
 	/* If V2 Peer map messages are enabled AST entry has to be freed here
 	 */
-	if (soc->is_peer_map_unmap_v2 && is_wds) {
+	if (is_wds) {
 		if (!dp_peer_ast_free_entry_by_mac(soc, peer, mac_addr))
 			return;
 

@@ -148,6 +148,12 @@ void dp_peer_free_hmwds_cb(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 void dp_peer_ast_hash_remove(struct dp_soc *soc,
 			     struct dp_ast_entry *ase);
 
+void dp_peer_free_ast_entry(struct dp_soc *soc,
+			    struct dp_ast_entry *ast_entry);
+
+void dp_peer_unlink_ast_entry(struct dp_soc *soc,
+			      struct dp_ast_entry *ast_entry);
+
 /*
  * dp_peer_find_by_id_exist - check if peer exists for given id
  * @soc: core DP soc context
