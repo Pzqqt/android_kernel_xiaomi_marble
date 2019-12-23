@@ -1123,6 +1123,7 @@ struct wlan_mlme_chainmask {
  * @mgmt_retry_max: maximum retries for management frame
  * @bmiss_skip_full_scan: Decide if full scan can be skipped in firmware if no
  * candidate is found in partial scan based on channel map
+ * @enable_ring_buffer: Decide to enable/disable ring buffer for bug report
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1156,6 +1157,7 @@ struct wlan_mlme_generic {
 	bool as_enabled;
 	uint8_t mgmt_retry_max;
 	bool bmiss_skip_full_scan;
+	bool enable_ring_buffer;
 };
 
 /*
