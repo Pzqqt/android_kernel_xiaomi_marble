@@ -2468,7 +2468,6 @@ QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CRYPTO_SET_KEY_CONVERGED
 QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
 			    struct wlan_mlme_wep_cfg *wep_params,
 			    enum wep_key_id wep_keyid, uint8_t *default_key,
@@ -2495,45 +2494,6 @@ QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
-			    struct wlan_mlme_wep_cfg *wep_params,
-			    enum wep_key_id wep_keyid, uint8_t *default_key,
-			    qdf_size_t *key_len)
-{
-	switch (wep_keyid) {
-	case MLME_WEP_DEFAULT_KEY_1:
-		wlan_mlme_get_cfg_str(default_key,
-				      &wep_params->wep_default_key_1,
-				      key_len);
-		break;
-
-	case MLME_WEP_DEFAULT_KEY_2:
-		wlan_mlme_get_cfg_str(default_key,
-				      &wep_params->wep_default_key_2,
-				      key_len);
-		break;
-
-	case MLME_WEP_DEFAULT_KEY_3:
-		wlan_mlme_get_cfg_str(default_key,
-				      &wep_params->wep_default_key_3,
-				      key_len);
-		break;
-
-	case MLME_WEP_DEFAULT_KEY_4:
-		wlan_mlme_get_cfg_str(default_key,
-				      &wep_params->wep_default_key_4,
-				      key_len);
-		break;
-
-	default:
-		mlme_legacy_err("Invalid key id:%d", wep_keyid);
-		return QDF_STATUS_E_INVAL;
-	}
-	mlme_legacy_debug("key_id:%d key_len:%zd", wep_keyid, *key_len);
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* CRYPTO_SET_KEY_CONVERGED */
 
 QDF_STATUS mlme_set_wep_key(struct wlan_mlme_wep_cfg *wep_params,
 			    enum wep_key_id wep_keyid, uint8_t *key_to_set,
