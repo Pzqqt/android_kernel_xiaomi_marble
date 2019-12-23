@@ -16,7 +16,7 @@
 #include <linux/platform_device.h>
 #include <linux/of_device.h>
 #include <linux/export.h>
-#include <linux/ion_kernel.h>
+#include <linux/ion.h>
 #include <ipc/apr.h>
 #include <dsp/msm_audio_ion.h>
 
