@@ -56,12 +56,14 @@
 #define HDD_INFO_RX_BITRATE             STATION_INFO_RX_BITRATE
 #define HDD_INFO_TX_BYTES               STATION_INFO_TX_BYTES
 #define HDD_INFO_CHAIN_SIGNAL_AVG       STATION_INFO_CHAIN_SIGNAL_AVG
+#define HDD_INFO_EXPECTED_THROUGHPUT    0
 #define HDD_INFO_RX_BYTES               STATION_INFO_RX_BYTES
 #define HDD_INFO_RX_PACKETS             STATION_INFO_RX_PACKETS
 #define HDD_INFO_TX_BYTES64             0
 #define HDD_INFO_RX_BYTES64             0
 #define HDD_INFO_INACTIVE_TIME          0
 #define HDD_INFO_CONNECTED_TIME         0
+#define HDD_INFO_STA_FLAGS              0
 #define HDD_INFO_RX_MPDUS               0
 #define HDD_INFO_FCS_ERROR_COUNT        0
 #else
@@ -74,12 +76,14 @@
 #define HDD_INFO_RX_BITRATE             BIT(NL80211_STA_INFO_RX_BITRATE)
 #define HDD_INFO_TX_BYTES               BIT(NL80211_STA_INFO_TX_BYTES)
 #define HDD_INFO_CHAIN_SIGNAL_AVG       BIT(NL80211_STA_INFO_CHAIN_SIGNAL_AVG)
+#define HDD_INFO_EXPECTED_THROUGHPUT  BIT(NL80211_STA_INFO_EXPECTED_THROUGHPUT)
 #define HDD_INFO_RX_BYTES               BIT(NL80211_STA_INFO_RX_BYTES)
 #define HDD_INFO_RX_PACKETS             BIT(NL80211_STA_INFO_RX_PACKETS)
 #define HDD_INFO_TX_BYTES64             BIT(NL80211_STA_INFO_TX_BYTES64)
 #define HDD_INFO_RX_BYTES64             BIT(NL80211_STA_INFO_RX_BYTES64)
 #define HDD_INFO_INACTIVE_TIME          BIT(NL80211_STA_INFO_INACTIVE_TIME)
 #define HDD_INFO_CONNECTED_TIME         BIT(NL80211_STA_INFO_CONNECTED_TIME)
+#define HDD_INFO_STA_FLAGS              BIT(NL80211_STA_INFO_STA_FLAGS)
 #define HDD_INFO_RX_MPDUS             BIT_ULL(NL80211_STA_INFO_RX_MPDUS)
 #define HDD_INFO_FCS_ERROR_COUNT      BIT_ULL(NL80211_STA_INFO_FCS_ERROR_COUNT)
 #endif /* kernel version less than 4.0.0 && no_backport */
@@ -3710,7 +3714,7 @@ static void hdd_get_max_rate_vht(struct hdd_station_info *stainfo,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0))
 /**
  * hdd_fill_bw_mcs() - fill ch width and mcs flags
- * @stainfo: stainfo pointer
+ * @rate_info: pointer to struct rate_info
  * @rate_flags: HDD rate flags
  * @mcsidx: mcs index
  * @nss: number of streams
@@ -3720,34 +3724,34 @@ static void hdd_get_max_rate_vht(struct hdd_station_info *stainfo,
  *
  * Return: None
  */
-static void hdd_fill_bw_mcs(struct station_info *sinfo,
+static void hdd_fill_bw_mcs(struct rate_info *rate_info,
 			    enum tx_rate_info rate_flags,
 			    uint8_t mcsidx,
 			    uint8_t nss,
 			    bool vht)
 {
 	if (vht) {
-		sinfo->txrate.nss = nss;
-		sinfo->txrate.mcs = mcsidx;
-		sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
+		rate_info->nss = nss;
+		rate_info->mcs = mcsidx;
+		rate_info->flags |= RATE_INFO_FLAGS_VHT_MCS;
 		if (rate_flags & TX_RATE_VHT80)
-			sinfo->txrate.bw = RATE_INFO_BW_80;
+			rate_info->bw = RATE_INFO_BW_80;
 		else if (rate_flags & TX_RATE_VHT40)
-			sinfo->txrate.bw = RATE_INFO_BW_40;
+			rate_info->bw = RATE_INFO_BW_40;
 		else if (rate_flags & TX_RATE_VHT20)
-			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
+			rate_info->flags |= RATE_INFO_FLAGS_VHT_MCS;
 	} else {
-		sinfo->txrate.mcs = (nss - 1) << 3;
-		sinfo->txrate.mcs |= mcsidx;
-		sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
+		rate_info->mcs = (nss - 1) << 3;
+		rate_info->mcs |= mcsidx;
+		rate_info->flags |= RATE_INFO_FLAGS_MCS;
 		if (rate_flags & TX_RATE_HT40)
-			sinfo->txrate.bw = RATE_INFO_BW_40;
+			rate_info->bw = RATE_INFO_BW_40;
 	}
 }
 #else
 /**
  * hdd_fill_bw_mcs() - fill ch width and mcs flags
- * @stainfo: stainfo pointer
+ * @rate_info: pointer to struct rate_info
  * @rate_flags: HDD rate flags
  * @mcsidx: mcs index
  * @nss: number of streams
@@ -3757,35 +3761,35 @@ static void hdd_fill_bw_mcs(struct station_info *sinfo,
  *
  * Return: None
  */
-static void hdd_fill_bw_mcs(struct station_info *sinfo,
+static void hdd_fill_bw_mcs(struct rate_info *rate_info,
 			    enum tx_rate_info rate_flags,
 			    uint8_t mcsidx,
 			    uint8_t nss,
 			    bool vht)
 {
 	if (vht) {
-		sinfo->txrate.nss = nss;
-		sinfo->txrate.mcs = mcsidx;
-		sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
+		rate_info->nss = nss;
+		rate_info->mcs = mcsidx;
+		rate_info->flags |= RATE_INFO_FLAGS_VHT_MCS;
 		if (rate_flags & TX_RATE_VHT80)
-			sinfo->txrate.flags |= RATE_INFO_FLAGS_80_MHZ_WIDTH;
+			rate_info->flags |= RATE_INFO_FLAGS_80_MHZ_WIDTH;
 		else if (rate_flags & TX_RATE_VHT40)
-			sinfo->txrate.flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
+			rate_info->flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
 		else if (rate_flags & TX_RATE_VHT20)
-			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
+			rate_info->flags |= RATE_INFO_FLAGS_VHT_MCS;
 	} else {
-		sinfo->txrate.mcs = (nss - 1) << 3;
-		sinfo->txrate.mcs |= mcsidx;
-		sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
+		rate_info->mcs = (nss - 1) << 3;
+		rate_info->mcs |= mcsidx;
+		rate_info->flags |= RATE_INFO_FLAGS_MCS;
 		if (rate_flags & TX_RATE_HT40)
-			sinfo->txrate.flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
+			rate_info->flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
 	}
 }
 #endif
 
 /**
  * hdd_fill_bw_mcs_vht() - fill ch width and mcs flags for VHT mode
- * @stainfo: stainfo pointer
+ * @rate_info: pointer to struct rate_info
  * @rate_flags: HDD rate flags
  * @mcsidx: mcs index
  * @nss: number of streams
@@ -3794,21 +3798,22 @@ static void hdd_fill_bw_mcs(struct station_info *sinfo,
  *
  * Return: None
  */
-static void hdd_fill_bw_mcs_vht(struct station_info *sinfo,
+static void hdd_fill_bw_mcs_vht(struct rate_info *rate_info,
 				enum tx_rate_info rate_flags,
 				uint8_t mcsidx,
 				uint8_t nss)
 {
-	hdd_fill_bw_mcs(sinfo, rate_flags, mcsidx, nss, true);
+	hdd_fill_bw_mcs(rate_info, rate_flags, mcsidx, nss, true);
 }
 
 /**
  * hdd_fill_sinfo_rate_info() - fill rate info of sinfo struct
- * @sinfo: station_info struct pointer
+ * @sinfo: pointer to struct station_info
  * @rate_flags: HDD rate flags
  * @mcsidx: mcs index
  * @nss: number of streams
- * @maxrate: data rate (kbps)
+ * @rate: data rate (kbps)
+ * @is_tx: flag to indicate whether it is tx or rx
  *
  * This function will fill rate info of sinfo struct
  *
@@ -3818,58 +3823,103 @@ static void hdd_fill_sinfo_rate_info(struct station_info *sinfo,
 				     uint32_t rate_flags,
 				     uint8_t mcsidx,
 				     uint8_t nss,
-				     uint32_t maxrate)
+				     uint32_t rate,
+				     bool is_tx)
 {
+	struct rate_info *rate_info;
+
+	if (is_tx)
+		rate_info = &sinfo->txrate;
+	else
+		rate_info = &sinfo->rxrate;
+
 	if (rate_flags & TX_RATE_LEGACY) {
 		/* provide to the UI in units of 100kbps */
-		sinfo->txrate.legacy = maxrate;
+		rate_info->legacy = rate;
 	} else {
 		/* must be MCS */
 		if (rate_flags &
 				(TX_RATE_VHT80 |
 				 TX_RATE_VHT40 |
 				 TX_RATE_VHT20))
-			hdd_fill_bw_mcs_vht(sinfo, rate_flags, mcsidx, nss);
+			hdd_fill_bw_mcs_vht(rate_info, rate_flags, mcsidx, nss);
 
 		if (rate_flags & (TX_RATE_HT20 | TX_RATE_HT40))
-			hdd_fill_bw_mcs(sinfo, rate_flags, mcsidx, nss, false);
+			hdd_fill_bw_mcs(rate_info, rate_flags, mcsidx, nss,
+					false);
 
 		if (rate_flags & TX_RATE_SGI) {
-			if (!(sinfo->txrate.flags & RATE_INFO_FLAGS_VHT_MCS))
-				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
-			sinfo->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
+			if (!(rate_info->flags & RATE_INFO_FLAGS_VHT_MCS))
+				rate_info->flags |= RATE_INFO_FLAGS_MCS;
+			rate_info->flags |= RATE_INFO_FLAGS_SHORT_GI;
 		}
 	}
 
 	hdd_info("flag %x mcs %d legacy %d nss %d",
-		 sinfo->txrate.flags,
-		 sinfo->txrate.mcs,
-		 sinfo->txrate.legacy,
-		 sinfo->txrate.nss);
+		 rate_info->flags,
+		 rate_info->mcs,
+		 rate_info->legacy,
+		 rate_info->nss);
+
+	if (is_tx)
+		sinfo->filled |= HDD_INFO_TX_BITRATE;
+	else
+		sinfo->filled |= HDD_INFO_RX_BITRATE;
 }
 
 /**
- * hdd_fill_station_info_flags() - fill flags of sinfo struct
+ * hdd_fill_sta_flags() - fill sta flags of sinfo
  * @sinfo: station_info struct pointer
+ * @stainfo: stainfo pointer
  *
- * This function will fill flags of sinfo struct
+ * This function will fill sta flags of sinfo
  *
  * Return: None
  */
-static void hdd_fill_station_info_flags(struct station_info *sinfo)
+static void hdd_fill_sta_flags(struct station_info *sinfo,
+			       struct hdd_station_info *stainfo)
 {
-	sinfo->filled |= HDD_INFO_SIGNAL        |
-			 HDD_INFO_TX_BYTES      |
-			 HDD_INFO_TX_BYTES64    |
-			 HDD_INFO_TX_BITRATE    |
-			 HDD_INFO_TX_PACKETS    |
-			 HDD_INFO_TX_RETRIES    |
-			 HDD_INFO_TX_FAILED     |
-			 HDD_INFO_RX_BYTES      |
-			 HDD_INFO_RX_BYTES64    |
-			 HDD_INFO_RX_PACKETS    |
-			 HDD_INFO_INACTIVE_TIME |
-			 HDD_INFO_CONNECTED_TIME;
+	sinfo->sta_flags.mask = NL80211_STA_FLAG_WME;
+
+	if (stainfo->is_qos_enabled)
+		sinfo->sta_flags.set |= NL80211_STA_FLAG_WME;
+	else
+		sinfo->sta_flags.set &= ~NL80211_STA_FLAG_WME;
+
+	sinfo->filled |= HDD_INFO_STA_FLAGS;
+}
+
+/**
+ * hdd_fill_per_chain_avg_signal() - fill per chain avg rssi of sinfo
+ * @sinfo: station_info struct pointer
+ * @stainfo: stainfo pointer
+ *
+ * This function will fill per chain avg rssi of sinfo
+ *
+ * Return: None
+ */
+static void hdd_fill_per_chain_avg_signal(struct station_info *sinfo,
+					  struct hdd_station_info *stainfo)
+{
+	bool rssi_stats_valid = false;
+	uint8_t i;
+
+	sinfo->signal_avg = WLAN_HDD_TGT_NOISE_FLOOR_DBM;
+	for (i = 0; i < IEEE80211_MAX_CHAINS; i++) {
+		sinfo->chain_signal_avg[i] = stainfo->peer_rssi_per_chain[i];
+		sinfo->chains |= 1 << i;
+		if (sinfo->chain_signal_avg[i] > sinfo->signal_avg &&
+		    sinfo->chain_signal_avg[i] != 0)
+			sinfo->signal_avg = sinfo->chain_signal_avg[i];
+
+		if (sinfo->chain_signal_avg[i])
+			rssi_stats_valid = true;
+	}
+
+	if (rssi_stats_valid) {
+		sinfo->filled |= HDD_INFO_CHAIN_SIGNAL_AVG;
+		sinfo->filled |= HDD_INFO_SIGNAL_AVG;
+	}
 }
 
 /**
@@ -3890,7 +3940,7 @@ static void hdd_fill_rate_info(struct wlan_objmgr_psoc *psoc,
 {
 	enum tx_rate_info rate_flags;
 	uint8_t mcsidx = 0xff;
-	uint32_t myrate, maxrate, tmprate;
+	uint32_t tx_rate, rx_rate, maxrate, tmprate;
 	int rssidx;
 	int nss = 1;
 	int link_speed_rssi_high = 0;
@@ -3905,8 +3955,9 @@ static void hdd_fill_rate_info(struct wlan_objmgr_psoc *psoc,
 				       &link_speed_rssi_report);
 
 	hdd_info("reportMaxLinkSpeed %d", link_speed_rssi_report);
+
 	/* convert to 100kbps expected in rate table */
-	myrate = stats->tx_rate.rate / 100;
+	tx_rate = stats->tx_rate.rate / 100;
 	rate_flags = stainfo->rate_flags;
 	if (!(rate_flags & TX_RATE_LEGACY)) {
 		nss = stainfo->nss;
@@ -3984,7 +4035,7 @@ static void hdd_fill_rate_info(struct wlan_objmgr_psoc *psoc,
 			    mcsidx != INVALID_MCS_IDX)
 				maxrate = tmprate;
 		} else if (!(rate_flags & TX_RATE_LEGACY)) {
-			maxrate = myrate;
+			maxrate = tx_rate;
 			mcsidx = stats->tx_rate.mcs;
 		}
 
@@ -3992,8 +4043,8 @@ static void hdd_fill_rate_info(struct wlan_objmgr_psoc *psoc,
 		 * make sure we report a value at least as big as our
 		 * current rate
 		 */
-		if ((maxrate < myrate) || (maxrate == 0)) {
-			maxrate = myrate;
+		if (maxrate < tx_rate || maxrate == 0) {
+			maxrate = tx_rate;
 			if (!(rate_flags & TX_RATE_LEGACY)) {
 				mcsidx = stats->tx_rate.mcs;
 				/*
@@ -4011,16 +4062,34 @@ static void hdd_fill_rate_info(struct wlan_objmgr_psoc *psoc,
 		}
 	} else {
 		/* report current rate instead of max rate */
-		maxrate = myrate;
+		maxrate = tx_rate;
 		if (!(rate_flags & TX_RATE_LEGACY))
 			mcsidx = stats->tx_rate.mcs;
 	}
 
-	hdd_fill_sinfo_rate_info(sinfo,
-				 rate_flags,
-				 mcsidx,
-				 nss,
-				 maxrate);
+	hdd_fill_sinfo_rate_info(sinfo, rate_flags, mcsidx, nss,
+				 maxrate, true);
+
+	/* convert to 100kbps expected in rate table */
+	rx_rate = stats->rx_rate.rate / 100;
+
+	/* report current rx rate*/
+	rate_flags = stainfo->rate_flags;
+	if (!(rate_flags & TX_RATE_LEGACY)) {
+		if (stats->rx_rate.rate_flags)
+			rate_flags = stats->rx_rate.rate_flags;
+		nss = stats->rx_rate.nss;
+		if (stats->rx_rate.mcs == INVALID_MCS_IDX)
+			rate_flags = TX_RATE_LEGACY;
+	}
+	if (!(rate_flags & TX_RATE_LEGACY))
+		mcsidx = stats->rx_rate.mcs;
+
+	hdd_fill_sinfo_rate_info(sinfo, rate_flags, mcsidx, nss,
+				 rx_rate, false);
+
+	sinfo->expected_throughput = stainfo->max_phy_rate;
+	sinfo->filled |= HDD_INFO_EXPECTED_THROUGHPUT;
 }
 
 /**
@@ -4044,20 +4113,36 @@ static void wlan_hdd_fill_station_info(struct wlan_objmgr_psoc *psoc,
 	curr_time = qdf_system_ticks();
 	dur = curr_time - stainfo->assoc_ts;
 	sinfo->connected_time = qdf_system_ticks_to_msecs(dur) / 1000;
+	sinfo->filled |= HDD_INFO_CONNECTED_TIME;
 	dur = curr_time - stainfo->last_tx_rx_ts;
 	sinfo->inactive_time = qdf_system_ticks_to_msecs(dur);
+	sinfo->filled |= HDD_INFO_INACTIVE_TIME;
 	sinfo->signal = stats->rssi;
+	sinfo->filled |= HDD_INFO_SIGNAL;
 	sinfo->tx_bytes = stats->tx_bytes;
+	sinfo->filled |= HDD_INFO_TX_BYTES | HDD_INFO_TX_BYTES64;
 	sinfo->tx_packets = stats->tx_packets;
+	sinfo->filled |= HDD_INFO_TX_PACKETS;
 	sinfo->rx_bytes = stats->rx_bytes;
+	sinfo->filled |= HDD_INFO_RX_BYTES | HDD_INFO_RX_BYTES64;
 	sinfo->rx_packets = stats->rx_packets;
+	sinfo->filled |= HDD_INFO_RX_PACKETS;
 	sinfo->tx_failed = stats->tx_failed;
+	sinfo->filled |= HDD_INFO_TX_FAILED;
 	sinfo->tx_retries = stats->tx_retries;
 
-	/* tx rate info */
+	/* sta flags */
+	hdd_fill_sta_flags(sinfo, stainfo);
+
+	/* per chain avg rssi */
+	hdd_fill_per_chain_avg_signal(sinfo, stainfo);
+
+	/* tx / rx rate info */
 	hdd_fill_rate_info(psoc, sinfo, stainfo, stats);
 
-	hdd_fill_station_info_flags(sinfo);
+	/* assoc req ies */
+	sinfo->assoc_req_ies = stainfo->assoc_req_ies.data;
+	sinfo->assoc_req_ies_len = stainfo->assoc_req_ies.len;
 
 	/* dump sta info*/
 	hdd_info("dump stainfo");
@@ -4067,10 +4152,13 @@ static void wlan_hdd_fill_station_info(struct wlan_objmgr_psoc *psoc,
 	hdd_info("failed %d retries %d tx_bytes %lld rx_bytes %lld",
 		 sinfo->tx_failed, sinfo->tx_retries,
 		 sinfo->tx_bytes, sinfo->rx_bytes);
-	hdd_info("rssi %d mcs %d legacy %d nss %d flags %x",
+	hdd_info("rssi %d tx mcs %d legacy %d nss %d flags %x",
 		 sinfo->signal, sinfo->txrate.mcs,
 		 sinfo->txrate.legacy, sinfo->txrate.nss,
 		 sinfo->txrate.flags);
+	hdd_info("rx mcs %d legacy %d nss %d flags %x",
+		 sinfo->rxrate.mcs, sinfo->rxrate.legacy,
+		 sinfo->rxrate.nss, sinfo->rxrate.flags);
 }
 
 /**
@@ -4282,7 +4370,7 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	struct hdd_station_info *stainfo = NULL;
 	struct stats_event *stats;
 	struct hdd_fw_txrx_stats txrx_stats;
-	int status;
+	int i, status;
 
 	status = wlan_hdd_validate_context(hddctx);
 	if (status != 0)
@@ -4306,6 +4394,11 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 		hdd_err("fail to get peer info from fw");
 		return -EPERM;
 	}
+
+	for (i = 0; i < WMI_MAX_CHAINS; i++)
+		stainfo->peer_rssi_per_chain[i] =
+			    stats->peer_stats_info_ext->peer_rssi_per_chain[i] +
+			    WLAN_HDD_TGT_NOISE_FLOOR_DBM;
 
 	qdf_mem_zero(&txrx_stats, sizeof(txrx_stats));
 	txrx_stats.tx_packets = stats->peer_stats_info_ext->tx_packets;

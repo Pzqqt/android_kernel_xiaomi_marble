@@ -217,6 +217,7 @@ char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id);
  * @ref_cnt_dbgid: Reference count to debug sta_info synchronization issues
  * @pending_eap_frm_type: EAP frame type in tx queue without tx completion
  * @is_attached: Flag to check if the stainfo is attached/detached
+ * @peer_rssi_per_chain: Average value of RSSI (dbm) per chain
  */
 struct hdd_station_info {
 	bool in_use;
@@ -270,6 +271,7 @@ struct hdd_station_info {
 	qdf_atomic_t ref_cnt_dbgid[STA_INFO_ID_MAX];
 	unsigned long pending_eap_frm_type;
 	bool is_attached;
+	int32_t peer_rssi_per_chain[WMI_MAX_CHAINS];
 };
 
 /**
