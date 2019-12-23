@@ -14998,6 +14998,8 @@ wlan_hdd_populate_srd_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
 
 #endif
 
+#if (defined(CONFIG_BAND_6GHZ) && defined(CFG80211_6GHZ_BAND_SUPPORTED)) || \
+	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 #if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
 	   (KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
 static QDF_STATUS
@@ -15011,15 +15013,26 @@ wlan_hdd_iftype_data_alloc_6ghz(struct hdd_context *hdd_ctx)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static void
+wlan_hdd_iftype_data_mem_free_6ghz(struct hdd_context *hdd_ctx)
+{
+	qdf_mem_free(hdd_ctx->iftype_data_6g);
+	hdd_ctx->iftype_data_6g = NULL;
+}
 #else
 static inline QDF_STATUS
 wlan_hdd_iftype_data_alloc_6ghz(struct hdd_context *hdd_ctx)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline void
+wlan_hdd_iftype_data_mem_free_6ghz(struct hdd_context *hdd_ctx)
+{
+}
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 static QDF_STATUS
 wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
 {
@@ -15051,30 +15064,7 @@ wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static inline QDF_STATUS
-wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
-#if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
-	   (KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
-static void
-wlan_hdd_iftype_data_mem_free_6ghz(struct hdd_context *hdd_ctx)
-{
-	qdf_mem_free(hdd_ctx->iftype_data_6g);
-	hdd_ctx->iftype_data_6g = NULL;
-}
-#else
-static inline void
-wlan_hdd_iftype_data_mem_free_6ghz(struct hdd_context *hdd_ctx)
-{
-}
-#endif
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 static void
 wlan_hdd_iftype_data_mem_free(struct hdd_context *hdd_ctx)
 {
@@ -15085,6 +15075,13 @@ wlan_hdd_iftype_data_mem_free(struct hdd_context *hdd_ctx)
 	hdd_ctx->iftype_data_2g = NULL;
 }
 #else
+static QDF_STATUS
+wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
+
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 static inline void
 wlan_hdd_iftype_data_mem_free(struct hdd_context *hdd_ctx)
 {

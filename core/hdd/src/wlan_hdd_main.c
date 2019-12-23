@@ -1992,6 +1992,8 @@ static void hdd_extract_fw_version_info(struct hdd_context *hdd_ctx)
 			HDD_FW_VER_REL_ID(hdd_ctx->target_fw_vers_ext);
 }
 
+#if (defined(CONFIG_BAND_6GHZ) && defined(CFG80211_6GHZ_BAND_SUPPORTED)) || \
+	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 #if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
 		      (KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
 static void
@@ -2032,8 +2034,6 @@ hdd_update_wiphy_he_caps_6ghz(struct hdd_context *hdd_ctx)
 }
 #endif
 
-#if defined(WLAN_FEATURE_11AX) && \
-	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
 static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)
 {
 	tDot11fIEhe_cap he_cap_cfg;
