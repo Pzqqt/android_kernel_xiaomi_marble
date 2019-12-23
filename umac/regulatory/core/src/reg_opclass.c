@@ -342,6 +342,34 @@ uint16_t reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
 	return 0;
 }
 
+uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
+					    qdf_freq_t freq,
+					    uint8_t ch_width,
+					    uint16_t behav_limit)
+{
+	const struct reg_dmn_op_class_map_t *op_class_tbl = NULL;
+	uint16_t i = 0;
+
+	op_class_tbl = reg_get_class_from_country(country);
+
+	while (op_class_tbl && op_class_tbl->op_class) {
+		if (op_class_tbl->chan_spacing == ch_width) {
+			for (i = 0; (i < REG_MAX_CHANNELS_PER_OPERATING_CLASS &&
+				     op_class_tbl->channels[i]); i++) {
+				if ((op_class_tbl->start_freq +
+				     (FREQ_TO_CHAN_SCALE *
+				      op_class_tbl->channels[i]) == freq) &&
+				    (behav_limit & op_class_tbl->behav_limit)) {
+					return op_class_tbl->op_class;
+				}
+			}
+		}
+		op_class_tbl++;
+	}
+
+	return 0;
+}
+
 void reg_dmn_print_channels_in_opclass(uint8_t *country, uint8_t op_class)
 {
 	const struct reg_dmn_op_class_map_t *class = NULL;

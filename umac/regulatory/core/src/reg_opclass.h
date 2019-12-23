@@ -47,6 +47,21 @@ uint16_t reg_dmn_get_chanwidth_from_opclass(uint8_t *country, uint8_t channel,
  */
 uint16_t reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
 					  uint8_t offset);
+
+/**
+ * reg_dmn_get_opclass_from_freq_width() - Get operating class from frequency
+ * @country: Country code.
+ * @freq: Channel center frequency.
+ * @ch_width: Channel width.
+ * @behav_limit: Behaviour limit.
+ *
+ * Return: Error code.
+ */
+uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
+					    qdf_freq_t freq,
+					    uint8_t ch_width,
+					    uint16_t behav_limit);
+
 /**
  * reg_dmn_get_opclass_from_channe() - Print channels in op class.
  * @country: Country code.
@@ -162,6 +177,15 @@ static inline uint16_t reg_dmn_get_curr_opclasses(
 
 static inline uint16_t reg_dmn_get_opclass_from_channel(
 		uint8_t *country, uint8_t channel, uint8_t offset)
+{
+	return 0;
+}
+
+static inline
+uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
+					    qdf_freq_t freq,
+					    uint8_t ch_width,
+					    uint16_t behav_limit)
 {
 	return 0;
 }
