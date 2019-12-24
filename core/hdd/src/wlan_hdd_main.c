@@ -1702,9 +1702,10 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 	/*
 	 * MPDU density:
 	 * override user's setting if value is larger
-	 * than the one supported by target
+	 * than the one supported by target,
+	 * if target value is 0, then follow user's setting.
 	 */
-	if (mpdu_density > cfg->mpdu_density) {
+	if (cfg->mpdu_density && mpdu_density > cfg->mpdu_density) {
 		status = ucfg_mlme_set_ht_mpdu_density(hdd_ctx->psoc,
 						       cfg->mpdu_density);
 		if (QDF_IS_STATUS_ERROR(status))
