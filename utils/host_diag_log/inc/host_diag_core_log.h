@@ -551,6 +551,34 @@ struct host_log_wlan_rrm_tx_rx_info {
 	struct wlan_rrm_beacon_report bcn_rpt;
 } qdf_packed;
 
+/**
+ * struct host_event_proto_pkt_info - DP protocol pkt info
+ * @hdr: Log header
+ * @version: version
+ * @type: data pkt type
+ * @subtype: data pkt subtype
+ * @dir: tx or rx
+ * @sa: source MAC address
+ * @da: destination MAC address
+ * @msdu_id: MSDU id
+ * @status: status
+ *
+ * Structure containing the protocol data pkt info
+ *
+ * LOG_WLAN_DP_PROTO_PKT_INFO_C          0x1A1E
+ */
+struct host_event_proto_pkt_info {
+	log_hdr_type hdr;
+	uint32_t version;
+	uint8_t type;
+	uint8_t subtype;
+	uint8_t dir;
+	uint8_t sa[QDF_MAC_ADDR_SIZE];
+	uint8_t da[QDF_MAC_ADDR_SIZE];
+	uint16_t msdu_id;
+	uint8_t status;
+};
+
 /*-------------------------------------------------------------------------
    Function declarations and documenation
    ------------------------------------------------------------------------*/

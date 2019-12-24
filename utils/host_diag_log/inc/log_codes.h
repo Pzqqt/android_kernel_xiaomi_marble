@@ -2009,6 +2009,8 @@
 #define LOG_WLAN_ROAM_RESULT_INFO_C                   ((0x1A1C) + LOG_1X_BASE_C)
 #define LOG_WLAN_RRM_TX_RX_INFO_C                     ((0x1A1D) + LOG_1X_BASE_C)
 
+#define LOG_WLAN_DP_PROTO_PKT_INFO_C                   ((0xA1E) + LOG_1X_BASE_C)
+
 /* This is only here for old (pre equipment ID update) logging code */
 #define LOG_LAST_C                                      (LOG_1X_LAST_C & 0xFFF)
 
