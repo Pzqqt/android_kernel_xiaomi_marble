@@ -518,7 +518,7 @@ wlansap_set_scan_acs_channel_params(struct sap_config *config,
 	}
 
 	/* Channel selection is auto or configured */
-	psap_ctx->chan_freq = config->chan_freq;
+	wlansap_set_acs_ch_freq(psap_ctx, config->chan_freq);
 	psap_ctx->dfs_mode = config->acs_dfs_mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	psap_ctx->cc_switch_mode = config->cc_switch_mode;
@@ -1317,6 +1317,8 @@ static char *sap_get_csa_reason_str(enum sap_csa_reason_code reason)
 		return "CONCURRENT_NAN_EVENT";
 	case CSA_REASON_BAND_RESTRICTED:
 		return "BAND_RESTRICTED";
+	case CSA_REASON_DCS:
+		return "DCS";
 	default:
 		return "UNKNOWN";
 	}
@@ -2385,6 +2387,7 @@ void sap_undo_acs(struct sap_context *sap_ctx, struct sap_config *sap_cfg)
 	acs_cfg->master_ch_list_count = 0;
 	acs_cfg->acs_mode = false;
 	sap_ctx->num_of_channel = 0;
+	wlansap_dcs_set_vdev_wlan_interference_mitigation(sap_ctx, false);
 }
 
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
@@ -3036,3 +3039,150 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx)
 	return restart_freq;
 }
 
+#ifdef DCS_INTERFERENCE_DETECTION
+QDF_STATUS wlansap_dcs_set_vdev_wlan_interference_mitigation(
+				struct sap_context *sap_context,
+				bool wlan_interference_mitigation_enable)
+{
+	struct mac_context *mac;
+
+	if (!sap_context) {
+		sap_err("Invalid SAP context pointer");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	mac = sap_get_mac_context();
+	if (!mac) {
+		sap_err("Invalid MAC context");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	mac->sap.dcs_info.
+		wlan_interference_mitigation_enable[sap_context->sessionId] =
+					wlan_interference_mitigation_enable;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlansap_dcs_set_wlan_interference_mitigation_on_band(
+					struct sap_context *sap_context,
+					struct sap_config *sap_cfg)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	bool wlan_interference_mitigation_enable = false;
+
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(sap_cfg->acs_cfg.pri_ch_freq))
+		wlan_interference_mitigation_enable = true;
+
+	status = wlansap_dcs_set_vdev_wlan_interference_mitigation(
+					sap_context,
+					wlan_interference_mitigation_enable);
+	return status;
+}
+
+QDF_STATUS wlansap_dcs_set_vdev_starting(struct sap_context *sap_context,
+					 bool vdev_starting)
+{
+	struct mac_context *mac;
+
+	if (!sap_context) {
+		sap_err("Invalid SAP context pointer");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	mac = sap_get_mac_context();
+	if (!mac) {
+		sap_err("Invalid MAC context");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	mac->sap.dcs_info.is_vdev_starting[sap_context->sessionId] =
+							vdev_starting;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool wlansap_dcs_is_wlan_interference_mitigation_enabled(
+					struct sap_context *sap_context)
+{
+	struct mac_context *mac;
+
+	if (!sap_context) {
+		sap_err("Invalid SAP context pointer");
+		return false;
+	}
+
+	mac = sap_get_mac_context();
+	if (!mac) {
+		sap_err("Invalid MAC context");
+		return false;
+	}
+
+	return mac->sap.dcs_info.
+		wlan_interference_mitigation_enable[sap_context->sessionId];
+}
+
+qdf_freq_t wlansap_dcs_get_freq(struct sap_context *sap_context)
+{
+	if (!sap_context) {
+		sap_err("Invalid SAP context pointer");
+		return false;
+	}
+
+	return sap_context->dcs_ch_freq;
+}
+
+void wlansap_dump_acs_ch_freq(struct sap_context *sap_context)
+{
+	if (!sap_context) {
+		sap_err("Invalid sap_debug");
+		return;
+	}
+
+	if (sap_context->fsm_state == SAP_STARTED)
+		sap_info("ACS dump DCS freq=%d", sap_context->dcs_ch_freq);
+	else
+		sap_info("ACS dump ch_freq=%d", sap_context->chan_freq);
+}
+
+void wlansap_set_acs_ch_freq(struct sap_context *sap_context,
+			     qdf_freq_t ch_freq)
+{
+	if (!sap_context) {
+		sap_err("Invalid sap_debug");
+		return;
+	}
+
+	if (sap_context->fsm_state == SAP_STARTED) {
+		sap_context->dcs_ch_freq = ch_freq;
+		sap_debug("ACS configuring dcs_ch_freq=%d",
+			  sap_context->dcs_ch_freq);
+	} else {
+		sap_context->chan_freq = ch_freq;
+		sap_debug("ACS configuring ch_freq=%d",
+			  sap_context->chan_freq);
+	}
+}
+#else
+void wlansap_dump_acs_ch_freq(struct sap_context *sap_context)
+{
+	if (!sap_context) {
+		sap_err("Invalid sap_debug");
+		return;
+	}
+
+	sap_info("ACS dump ch_freq=%d", sap_context->chan_freq);
+}
+
+void wlansap_set_acs_ch_freq(struct sap_context *sap_context,
+			     qdf_freq_t ch_freq)
+{
+	if (!sap_context) {
+		sap_err("Invalid sap_debug");
+		return;
+	}
+
+	sap_context->chan_freq = ch_freq;
+	sap_debug("ACS configuring ch_freq=%d", sap_context->chan_freq);
+}
+#endif

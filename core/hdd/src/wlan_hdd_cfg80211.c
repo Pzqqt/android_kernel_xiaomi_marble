@@ -1950,6 +1950,9 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 		if (status > 0) {
 			/*notify hostapd about channel override */
 			wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
+			wlansap_dcs_set_wlan_interference_mitigation_on_band(
+						WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+						sap_config);
 			return 0;
 		}
 	}
@@ -2000,6 +2003,8 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 	}
 	if (sap_is_auto_channel_select(WLAN_HDD_GET_SAP_CTX_PTR(adapter)))
 		sap_config->acs_cfg.acs_mode = true;
+
+	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 1);
 
 	return 0;
 }
@@ -3141,6 +3146,9 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				sap_config->acs_cfg.vht_seg1_center_ch_freq;
 			/*notify hostapd about channel override */
 			wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
+			wlansap_dcs_set_wlan_interference_mitigation_on_band(
+					WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					sap_config);
 			ret = 0;
 			goto out;
 		}
@@ -3358,7 +3366,7 @@ static int hdd_get_acs_evt_data_len(void)
  * @pri_channel: SAP ACS procedure selected Primary channel
  * @sec_channel: SAP ACS procedure selected secondary channel
  *
- * This is a callback function from SAP module on ACS procedure is completed.
+ * This is a callback function on ACS procedure is completed.
  * This function send the ACS selected channel information to hostapd
  *
  * Return: None

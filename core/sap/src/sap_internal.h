@@ -126,6 +126,10 @@ struct sap_context {
 	uint32_t chan_freq;
 	uint32_t sec_ch_freq;
 
+#ifdef DCS_INTERFERENCE_DETECTION
+	qdf_freq_t dcs_ch_freq;
+#endif
+
 	/* Include the SME(CSR) sessionId here */
 	uint8_t sessionId;
 

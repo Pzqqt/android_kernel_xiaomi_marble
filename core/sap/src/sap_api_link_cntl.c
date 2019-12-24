@@ -334,7 +334,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 			scan_status);
 		oper_channel =
 			sap_select_default_oper_chan(sap_ctx->acs_cfg);
-		sap_ctx->chan_freq = oper_channel;
+		wlansap_set_acs_ch_freq(sap_ctx, oper_channel);
 		sap_ctx->acs_cfg->pri_ch_freq = oper_channel;
 		sap_config_acs_result(mac_handle, sap_ctx,
 				      sap_ctx->acs_cfg->ht_sec_ch_freq);
@@ -354,10 +354,12 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 		oper_channel = sap_select_default_oper_chan(sap_ctx->acs_cfg);
 	}
 
-	sap_ctx->chan_freq = oper_channel;
+	wlansap_set_acs_ch_freq(sap_ctx, oper_channel);
 	sap_ctx->acs_cfg->pri_ch_freq = oper_channel;
 	sap_config_acs_result(mac_handle, sap_ctx,
 			      sap_ctx->acs_cfg->ht_sec_ch_freq);
+
+	wlansap_dump_acs_ch_freq(sap_ctx);
 
 	sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 	sap_ctx->sap_status = eSAP_STATUS_SUCCESS;

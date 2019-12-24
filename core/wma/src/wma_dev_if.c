@@ -87,6 +87,10 @@
 #include "wlan_utility.h"
 #include "wlan_coex_ucfg_api.h"
 
+#ifdef DCS_INTERFERENCE_DETECTION
+#include <wlan_dcs_ucfg_api.h>
+#endif
+
 QDF_STATUS wma_find_vdev_id_by_addr(tp_wma_handle wma, uint8_t *addr,
 				    uint8_t *vdev_id)
 {
@@ -1183,6 +1187,81 @@ QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef DCS_INTERFERENCE_DETECTION
+/**
+ * wma_dcs_clear_vdev_starting() - clear vdev starting within dcs information
+ * @mac_ctx: mac context
+ * @vdev_id: vdev id
+ *
+ * This function is used to clear vdev starting within dcs information
+ *
+ * Return: None
+ */
+static void wma_dcs_clear_vdev_starting(struct mac_context *mac_ctx,
+					uint32_t vdev_id)
+{
+	mac_ctx->sap.dcs_info.is_vdev_starting[vdev_id] = false;
+}
+
+/**
+ * wma_dcs_wlan_interference_mitigation_enable() - enable wlan
+ * interference mitigation
+ * @mac_ctx: mac context
+ * @mac_id: mac id
+ * @vdev_id: vdev id
+ *
+ * This function is used to enable wlan interference mitigation through
+ * send dcs command
+ *
+ * Return: None
+ */
+static void wma_dcs_wlan_interference_mitigation_enable(
+					struct mac_context *mac_ctx,
+					uint32_t mac_id,
+					uint32_t vdev_id)
+{
+	int vdev_index;
+	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t count;
+	bool wlan_interference_mitigation_enable =
+			mac_ctx->sap.dcs_info.
+				wlan_interference_mitigation_enable[vdev_id];
+
+	count = policy_mgr_get_sap_go_count_on_mac(
+			mac_ctx->psoc, list, mac_id);
+
+	for (vdev_index = 0; vdev_index < count; vdev_index++) {
+		if (mac_ctx->sap.dcs_info.is_vdev_starting[list[vdev_index]]) {
+			WMA_LOGE("vdev %d: does not finish restart",
+				 list[vdev_index]);
+			return;
+		}
+		wlan_interference_mitigation_enable =
+			wlan_interference_mitigation_enable ||
+		mac_ctx->sap.dcs_info.
+			wlan_interference_mitigation_enable[list[vdev_index]];
+	}
+
+	if (wlan_interference_mitigation_enable)
+		ucfg_config_dcs_enable(
+			mac_ctx->psoc, mac_id, CAP_DCS_WLANIM);
+	ucfg_wlan_dcs_cmd(mac_ctx->psoc, mac_id, true);
+}
+#else
+static void wma_dcs_wlan_interference_mitigation_enable(
+					struct mac_context *mac_ctx,
+					uint32_t mac_id,
+					uint32_t vdev_id)
+{
+}
+
+
+static void wma_dcs_clear_vdev_starting(struct mac_context *mac_ctx,
+					uint32_t vdev_id)
+{
+}
+#endif
+
 QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 				       struct vdev_start_response *rsp)
 {
@@ -1190,9 +1269,7 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	struct wma_txrx_node *iface;
 	target_resource_config *wlan_res_cfg;
 	struct wlan_objmgr_psoc *psoc;
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-#endif
 	QDF_STATUS status;
 	enum vdev_assoc_type assoc_type = VDEV_ASSOC;
 	struct vdev_mlme_obj *mlme_obj;
@@ -1208,14 +1285,12 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	if (!mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
 		policy_mgr_set_do_hw_mode_change_flag(
 			psoc, false);
 		return QDF_STATUS_E_FAILURE;
 	}
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 	wlan_res_cfg = lmac_get_tgt_res_cfg(psoc);
 	if (!wlan_res_cfg) {
@@ -1257,6 +1332,12 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	}
 
 	iface = &wma->interfaces[rsp->vdev_id];
+	if (wma_is_vdev_in_ap_mode(wma, rsp->vdev_id)) {
+		wma_dcs_clear_vdev_starting(mac_ctx, rsp->vdev_id);
+		wma_dcs_wlan_interference_mitigation_enable(mac_ctx,
+							    iface->mac_id,
+							    rsp->vdev_id);
+	}
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	if (rsp->status == QDF_STATUS_SUCCESS

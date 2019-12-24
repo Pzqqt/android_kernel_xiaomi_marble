@@ -180,6 +180,7 @@
 #include <wlan_hdd_sar_limits.h>
 #include "cfg_nan_api.h"
 #include "wlan_hdd_btc_chain_mode.h"
+#include <wlan_hdd_dcs.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -342,6 +343,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_CMN_MLME] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_NAN] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_CP_STATS] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_DCS] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_INTEROP_ISSUES_AP] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_BLACKLIST_MGR] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_DIRECT_BUF_RX] = {QDF_TRACE_LEVEL_ALL},
@@ -13396,6 +13398,7 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 					   hdd_lost_link_info_cb);
 
 	wlan_hdd_register_cp_stats_cb(hdd_ctx);
+	hdd_dcs_register_cb(hdd_ctx);
 
 	/* print error and not block the startup process */
 	if (!QDF_IS_STATUS_SUCCESS(status))

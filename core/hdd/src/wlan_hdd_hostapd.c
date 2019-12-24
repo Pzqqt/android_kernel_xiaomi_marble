@@ -93,6 +93,7 @@
 #include <wlan_reg_services_api.h>
 #include "wlan_hdd_sta_info.h"
 #include "ftm_time_sync_ucfg_api.h"
+#include <wlan_hdd_dcs.h>
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -2586,7 +2587,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			      ap_ctx->sap_config.acs_cfg.pri_ch_freq,
 			      ap_ctx->sap_config.acs_cfg.ch_width);
 
-		wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
+		if (qdf_atomic_read(&adapter->session.ap.acs_in_progress) &&
+		    test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+			hdd_dcs_chan_select_complete(adapter);
+		} else {
+			wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
+			wlansap_dcs_set_wlan_interference_mitigation_on_band(
+					WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					&ap_ctx->sap_config);
+		}
 
 		return QDF_STATUS_SUCCESS;
 	case eSAP_ECSA_CHANGE_CHAN_IND:
@@ -2630,6 +2639,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		if (ap_ctx->sap_context->csa_reason ==
 		    CSA_REASON_UNSAFE_CHANNEL)
 			hdd_unsafe_channel_restart_sap(hdd_ctx);
+		else if (ap_ctx->sap_context->csa_reason == CSA_REASON_DCS)
+			hdd_dcs_hostapd_set_chan(
+				hdd_ctx, adapter->vdev_id,
+				adapter->session.ap.operating_chan_freq);
+
 		return QDF_STATUS_SUCCESS;
 
 	default:
@@ -2883,6 +2897,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	uint8_t scc_on_lte_coex = 0;
 	bool is_p2p_go_session = false;
 	struct wlan_objmgr_vdev *vdev;
+	bool strict;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -3004,11 +3019,20 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 		is_p2p_go_session = true;
 	hdd_objmgr_put_vdev(vdev);
 
+	strict = is_p2p_go_session;
+	/*
+	 * scc_on_lte_coex should be considered only when csa is triggered
+	 * by unsafe channel.
+	 */
+	if (sap_ctx->csa_reason == CSA_REASON_UNSAFE_CHANNEL)
+		strict = strict || (forced && !scc_on_lte_coex);
+	else
+		strict = strict || forced;
 	status = wlansap_set_channel_change_with_csa(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 		target_chan_freq,
 		target_bw,
-		(forced && !scc_on_lte_coex) || is_p2p_go_session);
+		strict);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("SAP set channel failed for channel freq: %d, bw: %d",
@@ -3372,7 +3396,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	struct hdd_hostapd_state *phostapdBuf;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct sap_context *sap_context = NULL;
+	struct sap_context *sap_ctx;
 	int ret;
 	enum dfs_mode acs_dfs_mode;
 	bool acs_with_more_param = 0;
@@ -3384,8 +3408,8 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	hdd_debug("SSR in progress: %d", reinit);
 	qdf_atomic_init(&adapter->session.ap.acs_in_progress);
 
-	sap_context = hdd_hostapd_init_sap_session(adapter, reinit);
-	if (!sap_context) {
+	sap_ctx = hdd_hostapd_init_sap_session(adapter, reinit);
+	if (!sap_ctx) {
 		hdd_err("Invalid sap_ctx");
 		goto error_release_vdev;
 	}
@@ -3474,6 +3498,9 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	if (!reinit) {
 		adapter->session.ap.sap_config.acs_cfg.acs_mode = false;
+		wlansap_dcs_set_vdev_wlan_interference_mitigation(sap_ctx,
+								  false);
+		wlansap_dcs_set_vdev_starting(sap_ctx, false);
 		qdf_mem_zero(&adapter->session.ap.sap_config.acs_cfg,
 			     sizeof(struct sap_acs_cfg));
 	}
@@ -5746,6 +5773,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	tSirUpdateIE update_ie;
 	int ret;
 	mac_handle_t mac_handle;
+	struct sap_context *sap_ctx;
 
 	hdd_enter();
 
@@ -5811,6 +5839,9 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	cds_flush_work(&adapter->sap_stop_bss_work);
 	adapter->session.ap.sap_config.acs_cfg.acs_mode = false;
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	wlansap_dcs_set_vdev_wlan_interference_mitigation(sap_ctx, false);
+	wlansap_dcs_set_vdev_starting(sap_ctx, false);
 	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,

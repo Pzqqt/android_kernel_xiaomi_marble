@@ -846,6 +846,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	uint8_t vdev_id;
 	uint32_t scan_id;
 	uint8_t *self_mac;
+	uint32_t default_op_freq;
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 	if (!mac_handle) {
@@ -861,7 +862,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 			  FL("Invalid MAC context"));
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (sap_context->chan_freq)
+	if (sap_context->fsm_state != SAP_STARTED && sap_context->chan_freq)
 		return sap_validate_chan(sap_context, true, false);
 
 	if (policy_mgr_concurrent_beaconing_sessions_running(mac_ctx->psoc) ||
@@ -956,12 +957,13 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("SAP Configuring default ch, Ch_freq=%d"),
 				  sap_context->chan_freq);
-			sap_context->chan_freq = sap_select_default_oper_chan(
-					sap_context->acs_cfg);
+			default_op_freq = sap_select_default_oper_chan(
+						sap_context->acs_cfg);
+			wlansap_set_acs_ch_freq(sap_context, default_op_freq);
 
 			if (sap_context->freq_list) {
-				sap_context->chan_freq =
-					sap_context->freq_list[0];
+				wlansap_set_acs_ch_freq(
+					sap_context, sap_context->freq_list[0]);
 				qdf_mem_free(sap_context->freq_list);
 				sap_context->freq_list = NULL;
 				sap_context->num_of_channel = 0;
@@ -974,6 +976,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 			qdf_ret_status = QDF_STATUS_E_FAILURE;
 			goto release_vdev_ref;
 		} else {
+			wlansap_dump_acs_ch_freq(sap_context);
 			host_log_acs_scan_start(scan_id, vdev_id);
 		}
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -989,6 +992,8 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 				eCSR_SCAN_SUCCESS);
 	}
 #endif
+
+	wlansap_dump_acs_ch_freq(sap_context);
 
 	qdf_ret_status = QDF_STATUS_SUCCESS;
 

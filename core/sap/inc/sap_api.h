@@ -619,6 +619,19 @@ typedef struct sSapDfsInfo {
 	uint16_t reduced_beacon_interval;
 } tSapDfsInfo;
 
+#ifdef DCS_INTERFERENCE_DETECTION
+/**
+ * struct sap_dcs_info - record sap dcs information.
+ * @wlan_interference_mitigation_enable: wlan interference mitigation
+ *                                       is enabled per vdev.
+ * @is_vdev_starting: is vdev doing restart because of dcs.
+ */
+struct sap_dcs_info {
+	bool wlan_interference_mitigation_enable[WLAN_MAX_VDEVS];
+	bool is_vdev_starting[WLAN_MAX_VDEVS];
+};
+#endif
+
 struct sap_ctx_list {
 	void *sap_context;
 	enum QDF_OPMODE sapPersona;
@@ -633,6 +646,9 @@ typedef struct tagSapStruct {
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	bool acs_with_more_param;
 	bool enable_dfs_phy_error_logs;
+#ifdef DCS_INTERFERENCE_DETECTION
+	struct sap_dcs_info dcs_info;
+#endif
 } tSapStruct, *tpSapStruct;
 
 /**
@@ -1468,6 +1484,127 @@ wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx);
  * Return - restart channel in MHZ
  */
 qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx);
+
+#ifdef DCS_INTERFERENCE_DETECTION
+/**
+ * wlansap_dcs_set_vdev_wlan_interference_mitigation() - set wlan
+ * interference mitigation enable information per vdev
+ * @sap_context: sap context
+ * @wlan_interference_mitigation_enable: wlan interference mitigation
+ *                                       enable or not
+ *
+ * This function is used to set whether wlan interference mitigation
+ * enable or not
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_dcs_set_vdev_wlan_interference_mitigation(
+				struct sap_context *sap_context,
+				bool wlan_interference_mitigation_enable);
+
+/**
+ * wlansap_dcs_set_wlan_interference_mitigation_on_band() - set wlan
+ * interference mitigation enable information based on band information
+ * @sap_context: sap context
+ * @sap_cfg: sap config
+ *
+ * This function is used to set whether wlan interference mitigation
+ * enable or not based on band information
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_dcs_set_wlan_interference_mitigation_on_band(
+					struct sap_context *sap_context,
+					struct sap_config *sap_cfg);
+
+/**
+ * wlansap_dcs_set_vdev_starting() - set vdev starting
+ * @sap_context: sap context
+ * @vdev_starting: vdev in starting states
+ *
+ * This function is used to set whether vdev starting or not
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_dcs_set_vdev_starting(struct sap_context *sap_context,
+					 bool vdev_starting);
+
+/**
+ * wlansap_dcs_is_wlan_interference_mitigation_enabled() - get wlan interference
+ * mitigation enabled information
+ * @sap_context: sap context
+ *
+ * This function is used to get wlan interference mitigation enabled information
+ * with given sap
+ *
+ * Return: true if wlan interference mitigation is enabled with given sap
+ */
+bool wlansap_dcs_is_wlan_interference_mitigation_enabled(
+					struct sap_context *sap_context);
+
+/**
+ * wlansap_dcs_get_freq() - get dcs channel frequency
+ * @sap_context: sap context
+ *
+ * This function is used to get dcs channel frequency with give sap
+ *
+ * Return: sap dcs channel frequency
+ */
+qdf_freq_t wlansap_dcs_get_freq(struct sap_context *sap_context);
+#else
+static inline QDF_STATUS wlansap_dcs_set_vdev_wlan_interference_mitigation(
+				struct sap_context *sap_context,
+				bool wlan_interference_mitigation_enable)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS wlansap_dcs_set_wlan_interference_mitigation_on_band(
+						struct sap_context *sap_context,
+						struct sap_config *sap_cfg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS wlansap_dcs_set_vdev_starting(
+	struct sap_context *sap_context, bool vdev_starting)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool wlansap_dcs_is_wlan_interference_mitigation_enabled(
+					struct sap_context *sap_context)
+{
+	return false;
+}
+
+static inline qdf_freq_t wlansap_dcs_get_freq(struct sap_context *sap_context)
+{
+	return 0;
+}
+#endif
+
+/**
+ * wlansap_dump_acs_ch_freq() - print acs channel frequency
+ * @sap_ctx: sap context
+ *
+ * This function is used to print acs channel frequecny
+ *
+ * Return: None
+ */
+void wlansap_dump_acs_ch_freq(struct sap_context *sap_context);
+
+/**
+ * wlansap_set_acs_ch_freq() - set acs channel frequency
+ * @sap_ctx: sap context
+ * @ch_freq: ch_freq to be set
+ *
+ * This function is used to set acs channel frequency
+ *
+ * Return: None
+ */
+void wlansap_set_acs_ch_freq(struct sap_context *sap_context,
+			     qdf_freq_t ch_freq);
 
 /**
  * sap_acquire_vdev_ref() - Increment reference count for vdev object
