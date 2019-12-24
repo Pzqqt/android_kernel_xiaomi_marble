@@ -64,7 +64,6 @@ static bool __lim_process_sme_start_bss_req(struct mac_context *,
 static void __lim_process_sme_disassoc_req(struct mac_context *, uint32_t *);
 static void __lim_process_sme_disassoc_cnf(struct mac_context *, uint32_t *);
 static void __lim_process_sme_deauth_req(struct mac_context *, uint32_t *);
-static void __lim_process_sme_set_context_req(struct mac_context *, uint32_t *);
 static bool __lim_process_sme_stop_bss_req(struct mac_context *,
 					   struct scheduler_msg *pMsg);
 static void lim_process_sme_channel_change_request(struct mac_context *mac,
@@ -2590,148 +2589,6 @@ send_deauth:
 }
 
 /**
- * __lim_process_sme_set_context_req()
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: pointer to the SME message buffer
- *
- * This function is called to process SME_SETCONTEXT_REQ message
- * from HDD or upper layer application.
- *
- * Return: None
- */
-
-static void
-__lim_process_sme_set_context_req(struct mac_context *mac_ctx,
-				  uint32_t *msg_buf)
-{
-	struct set_context_req *set_context_req;
-	tLimMlmSetKeysReq *mlm_set_key_req;
-	struct pe_session *session_entry;
-	uint8_t session_id;      /* PE sessionID */
-	uint8_t vdev_id;
-
-	if (!msg_buf) {
-		pe_err("Buffer is Pointing to NULL");
-		return;
-	}
-
-	set_context_req = qdf_mem_malloc(sizeof(*set_context_req));
-	if (!set_context_req)
-		return;
-	qdf_mem_copy(set_context_req, msg_buf,
-			sizeof(*set_context_req));
-
-	qdf_mem_zero(msg_buf, sizeof(*set_context_req));
-	vdev_id = set_context_req->vdev_id;
-
-	if ((!lim_is_sme_set_context_req_valid(mac_ctx, set_context_req))) {
-		pe_warn("received invalid SME_SETCONTEXT_REQ message");
-		goto end;
-	}
-
-	if (set_context_req->keyMaterial.numKeys >
-			SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS) {
-		pe_err("numKeys:%d is more than SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS",
-					set_context_req->keyMaterial.numKeys);
-		lim_send_sme_set_context_rsp(mac_ctx,
-				set_context_req->peer_macaddr, 1,
-				eSIR_SME_INVALID_PARAMETERS, NULL,
-				vdev_id);
-		goto end;
-	}
-
-	session_entry = pe_find_session_by_bssid(mac_ctx,
-			set_context_req->bssid.bytes, &session_id);
-	if (!session_entry) {
-		pe_err("Session does not exist for given BSSID");
-		lim_send_sme_set_context_rsp(mac_ctx,
-				set_context_req->peer_macaddr, 1,
-				eSIR_SME_INVALID_PARAMETERS, NULL,
-				vdev_id);
-		goto end;
-	}
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_SETCONTEXT_REQ_EVENT,
-			      session_entry, 0, 0);
-#endif /* FEATURE_WLAN_DIAG_SUPPORT */
-
-	if ((LIM_IS_STA_ROLE(session_entry) &&
-	    (session_entry->limSmeState == eLIM_SME_LINK_EST_STATE)) ||
-	    ((LIM_IS_IBSS_ROLE(session_entry) ||
-	    LIM_IS_AP_ROLE(session_entry)) &&
-	    (session_entry->limSmeState == eLIM_SME_NORMAL_STATE))) {
-		/* Trigger MLM_SETKEYS_REQ */
-		mlm_set_key_req = qdf_mem_malloc(sizeof(tLimMlmSetKeysReq));
-		if (!mlm_set_key_req)
-			goto end;
-		mlm_set_key_req->edType = set_context_req->keyMaterial.edType;
-		mlm_set_key_req->numKeys =
-			set_context_req->keyMaterial.numKeys;
-		if (mlm_set_key_req->numKeys >
-				SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS) {
-			pe_err("no.of keys exceeded max num of default keys limit");
-			qdf_mem_free(mlm_set_key_req);
-			goto end;
-		}
-		qdf_copy_macaddr(&mlm_set_key_req->peer_macaddr,
-				 &set_context_req->peer_macaddr);
-
-		qdf_mem_copy((uint8_t *) &mlm_set_key_req->key,
-			     (uint8_t *) &set_context_req->keyMaterial.key,
-			     sizeof(tSirKeys) *
-			     (mlm_set_key_req->numKeys ? mlm_set_key_req->
-			      numKeys : 1));
-
-		mlm_set_key_req->sessionId = session_id;
-		mlm_set_key_req->vdev_id = vdev_id;
-		pe_debug("received SETCONTEXT_REQ message sessionId=%d",
-					mlm_set_key_req->sessionId);
-
-		if (((set_context_req->keyMaterial.edType == eSIR_ED_WEP40) ||
-		    (set_context_req->keyMaterial.edType == eSIR_ED_WEP104)) &&
-		    LIM_IS_AP_ROLE(session_entry)) {
-			if (set_context_req->keyMaterial.key[0].keyLength) {
-				uint8_t key_id;
-
-				key_id =
-					set_context_req->keyMaterial.key[0].keyId;
-				qdf_mem_copy((uint8_t *)
-					&session_entry->WEPKeyMaterial[key_id],
-					(uint8_t *) &set_context_req->keyMaterial,
-					sizeof(tSirKeyMaterial));
-			} else {
-				uint32_t i;
-
-				for (i = 0; i < SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS;
-				     i++) {
-					qdf_mem_copy((uint8_t *)
-						&mlm_set_key_req->key[i],
-						(uint8_t *)session_entry->WEPKeyMaterial[i].key,
-						sizeof(tSirKeys));
-				}
-			}
-		}
-		lim_post_mlm_message(mac_ctx, LIM_MLM_SETKEYS_REQ,
-				     (uint32_t *) mlm_set_key_req);
-	} else {
-		pe_err("rcvd unexpected SME_SETCONTEXT_REQ for role %d, state=%X",
-				GET_LIM_SYSTEM_ROLE(session_entry),
-				session_entry->limSmeState);
-		lim_print_sme_state(mac_ctx, LOGE, session_entry->limSmeState);
-
-		lim_send_sme_set_context_rsp(mac_ctx,
-				set_context_req->peer_macaddr, 1,
-				eSIR_SME_UNEXPECTED_REQ_RESULT_CODE,
-				session_entry, vdev_id);
-	}
-end:
-	qdf_mem_zero(set_context_req, sizeof(*set_context_req));
-	qdf_mem_free(set_context_req);
-	return;
-}
-
-/**
  * __lim_counter_measures()
  *
  * FUNCTION:
@@ -4761,10 +4618,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		__lim_process_send_disassoc_frame(mac, msg_buf);
 		break;
 
-	case eWNI_SME_SETCONTEXT_REQ:
-		__lim_process_sme_set_context_req(mac, msg_buf);
-		break;
-
 	case eWNI_SME_STOP_BSS_REQ:
 		bufConsumed = __lim_process_sme_stop_bss_req(mac, pMsg);
 		break;
@@ -4834,9 +4687,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 
 	case eWNI_SME_FT_PRE_AUTH_REQ:
 		bufConsumed = (bool) lim_process_ft_pre_auth_req(mac, pMsg);
-		break;
-	case eWNI_SME_FT_UPDATE_KEY:
-		lim_process_ft_update_key(mac, msg_buf);
 		break;
 
 	case eWNI_SME_FT_AGGR_QOS_REQ:

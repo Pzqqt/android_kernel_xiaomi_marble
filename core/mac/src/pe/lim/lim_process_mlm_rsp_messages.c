@@ -1421,8 +1421,6 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 	tpDphHashNode sta_ds;
 	uint32_t msg_type = LIM_MLM_ASSOC_CNF;
 	tpAddStaParams add_sta_params = (tpAddStaParams) msg->bodyptr;
-	struct pe_session *ft_session = NULL;
-	uint8_t ft_session_id;
 
 	if (!add_sta_params) {
 		pe_err("Encountered NULL Pointer");
@@ -1464,23 +1462,6 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 			mlm_assoc_cnf.resultCode =
 				(tSirResultCodes) eSIR_SME_REFUSED;
 			goto end;
-		}
-		if (session_entry->limSmeState == eLIM_SME_WT_REASSOC_STATE) {
-			/* check if we have keys(PTK)to install in case of 11r */
-			tpftPEContext ft_ctx = &session_entry->ftPEContext;
-
-			ft_session = pe_find_session_by_bssid(mac_ctx,
-				session_entry->limReAssocbssId, &ft_session_id);
-			if (ft_session &&
-				ft_ctx->PreAuthKeyInfo.extSetStaKeyParamValid
-				== true) {
-				tpLimMlmSetKeysReq pMlmStaKeys =
-					&ft_ctx->PreAuthKeyInfo.extSetStaKeyParam;
-				lim_send_set_sta_key_req(mac_ctx, pMlmStaKeys,
-					0, ft_session, false);
-				ft_ctx->PreAuthKeyInfo.extSetStaKeyParamValid =
-					false;
-			}
 		}
 		/*
 		 * Update the DPH Hash Entry for this STA

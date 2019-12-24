@@ -1721,7 +1721,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case eWNI_SME_START_BSS_REQ:
 	case eWNI_SME_STOP_BSS_REQ:
 	case eWNI_SME_SWITCH_CHL_IND:
-	case eWNI_SME_SETCONTEXT_REQ:
 	case eWNI_SME_DISASSOC_CNF:
 	case eWNI_SME_DEAUTH_CNF:
 	case eWNI_SME_ASSOC_CNF:
@@ -1734,7 +1733,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 #if defined FEATURE_WLAN_ESE
 	case eWNI_SME_ESE_ADJACENT_AP_REPORT:
 #endif
-	case eWNI_SME_FT_UPDATE_KEY:
 	case eWNI_SME_FT_PRE_AUTH_REQ:
 	case eWNI_SME_FT_AGGR_QOS_REQ:
 	case eWNI_SME_REGISTER_MGMT_FRAME_REQ:

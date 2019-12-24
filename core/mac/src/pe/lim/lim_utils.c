@@ -272,8 +272,6 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_SME_JOIN_REQ";
 	case eWNI_SME_JOIN_RSP:
 		return "eWNI_SME_JOIN_RSP";
-	case eWNI_SME_SETCONTEXT_REQ:
-		return "eWNI_SME_SETCONTEXT_REQ";
 	case eWNI_SME_SETCONTEXT_RSP:
 		return "eWNI_SME_SETCONTEXT_RSP";
 	case eWNI_SME_REASSOC_REQ:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,9 +129,7 @@
 #define WMA_ROAM_BLACLIST_MSG          SIR_HAL_ROAM_BLACKLIST_MSG
 #define WMA_SEND_PEER_UNMAP_CONF       SIR_HAL_SEND_PEER_UNMAP_CONF
 
-#define WMA_SET_BSSKEY_REQ             SIR_HAL_SET_BSSKEY_REQ
 #define WMA_SET_BSSKEY_RSP             SIR_HAL_SET_BSSKEY_RSP
-#define WMA_SET_STAKEY_REQ             SIR_HAL_SET_STAKEY_REQ
 #define WMA_SET_STAKEY_RSP             SIR_HAL_SET_STAKEY_RSP
 #define WMA_UPDATE_EDCA_PROFILE_IND    SIR_HAL_UPDATE_EDCA_PROFILE_IND
 
@@ -153,7 +151,6 @@
 #define WMA_IBSS_STA_ADD               SIR_HAL_IBSS_STA_ADD
 #define WMA_TIMER_ADJUST_ADAPTIVE_THRESHOLD_IND SIR_HAL_TIMER_ADJUST_ADAPTIVE_THRESHOLD_IND
 #define WMA_SET_LINK_STATE             SIR_HAL_SET_LINK_STATE
-#define WMA_SET_STA_BCASTKEY_REQ       SIR_HAL_SET_STA_BCASTKEY_REQ
 #define WMA_SET_STA_BCASTKEY_RSP       SIR_HAL_SET_STA_BCASTKEY_RSP
 #define WMA_ADD_TS_RSP                 SIR_HAL_ADD_TS_RSP
 #define WMA_DPU_MIC_ERROR              SIR_HAL_DPU_MIC_ERROR

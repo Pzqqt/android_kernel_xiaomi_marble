@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,10 +73,6 @@ void lim_encrypt_auth_frame(struct mac_context *, uint8_t, uint8_t *, uint8_t *,
 uint8_t lim_decrypt_auth_frame(struct mac_context *, uint8_t *, uint8_t *,
 			       uint8_t *, uint32_t, uint16_t);
 
-void lim_send_set_bss_key_req(struct mac_context *, tLimMlmSetKeysReq *,
-			      struct pe_session *);
-void lim_send_set_sta_key_req(struct mac_context *, tLimMlmSetKeysReq *,
-			      uint8_t, struct pe_session *, bool sendRsp);
 void lim_post_sme_set_keys_cnf(struct mac_context *, tLimMlmSetKeysReq *,
 			       tLimMlmSetKeysCnf *);
 

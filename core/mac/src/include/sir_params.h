@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -221,9 +221,7 @@ struct sir_cfg_action_frm_tb_ppdu {
  */
 #define SIR_HAL_SEND_BEACON_REQ            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 17)
 
-#define SIR_HAL_SET_BSSKEY_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 18)
 #define SIR_HAL_SET_BSSKEY_RSP             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 19)
-#define SIR_HAL_SET_STAKEY_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 20)
 #define SIR_HAL_SET_STAKEY_RSP             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 21)
 #define SIR_HAL_UPDATE_EDCA_PROFILE_IND    (SIR_HAL_ITC_MSG_TYPES_BEGIN + 22)
 
@@ -249,7 +247,6 @@ struct sir_cfg_action_frm_tb_ppdu {
  * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 57) are unused
  */
 
-#define SIR_HAL_SET_STA_BCASTKEY_REQ       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 58)
 #define SIR_HAL_SET_STA_BCASTKEY_RSP       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 59)
 #define SIR_HAL_ADD_TS_RSP                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 60)
 #define SIR_HAL_DPU_MIC_ERROR              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 61)

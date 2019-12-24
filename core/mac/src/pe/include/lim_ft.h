@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -170,7 +170,6 @@ static inline void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 {}
 #endif
 
-bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *msg_buf);
 QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
 		uint32_t *msg_buf);
 void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -684,95 +684,6 @@ void lim_fill_ft_session(struct mac_context *mac,
 	qdf_mem_free(pBeaconStruct);
 }
 #endif
-
-/*------------------------------------------------------------------
- *
- * This function is called to process the update key request from SME
- *
- *------------------------------------------------------------------*/
-bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *msg_buf)
-{
-	struct bss_params *pAddBssParams;
-	tSirFTUpdateKeyInfo *pKeyInfo;
-	struct pe_session *pe_session;
-	uint8_t sessionId;
-
-	/* Sanity Check */
-	if (!mac || !msg_buf)
-		return false;
-
-	pKeyInfo = (tSirFTUpdateKeyInfo *)msg_buf;
-
-	pe_session = pe_find_session_by_bssid(mac, pKeyInfo->bssid.bytes,
-					      &sessionId);
-	if (!pe_session) {
-		pe_err("%s: Unable to find session for the following bssid",
-			       __func__);
-		lim_print_mac_addr(mac, pKeyInfo->bssid.bytes, LOGE);
-		return false;
-	}
-
-	/* Nothing to be done if the session is not in STA mode */
-	if (!LIM_IS_STA_ROLE(pe_session)) {
-		pe_err("pe_session is not in STA mode");
-		return false;
-	}
-
-	if (!pe_session->ftPEContext.pAddBssReq) {
-		/* AddBss Req is NULL, save the keys to configure them later. */
-		tpLimMlmSetKeysReq pMlmSetKeysReq =
-			&pe_session->ftPEContext.PreAuthKeyInfo.
-			extSetStaKeyParam;
-
-		qdf_mem_zero(pMlmSetKeysReq, sizeof(tLimMlmSetKeysReq));
-		qdf_copy_macaddr(&pMlmSetKeysReq->peer_macaddr,
-				 &pKeyInfo->bssid);
-		pMlmSetKeysReq->sessionId = pe_session->peSessionId;
-		pMlmSetKeysReq->vdev_id = pe_session->vdev_id;
-		pMlmSetKeysReq->edType = pKeyInfo->keyMaterial.edType;
-		pMlmSetKeysReq->numKeys = pKeyInfo->keyMaterial.numKeys;
-		qdf_mem_copy((uint8_t *) &pMlmSetKeysReq->key,
-			     (uint8_t *) &pKeyInfo->keyMaterial.key,
-			     sizeof(tSirKeys));
-
-		pe_session->ftPEContext.PreAuthKeyInfo.
-		extSetStaKeyParamValid = true;
-
-		if (!pe_session->ftPEContext.pAddStaReq) {
-			pe_err("pAddStaReq is NULL");
-			lim_send_set_sta_key_req(mac, pMlmSetKeysReq, 0,
-						 pe_session, false);
-			pe_session->ftPEContext.PreAuthKeyInfo.
-			extSetStaKeyParamValid = false;
-		}
-	} else {
-		pAddBssParams = pe_session->ftPEContext.pAddBssReq;
-
-		/* Store the key information in the ADD BSS parameters */
-		pAddBssParams->extSetStaKeyParamValid = 1;
-		pAddBssParams->extSetStaKeyParam.encType =
-			pKeyInfo->keyMaterial.edType;
-		qdf_mem_copy((uint8_t *) &pAddBssParams->extSetStaKeyParam.key,
-			     (uint8_t *) &pKeyInfo->keyMaterial.key,
-			     sizeof(tSirKeys));
-
-		pAddBssParams->extSetStaKeyParam.singleTidRc =
-			(uint8_t)mac->mlme_cfg->sta.single_tid;
-		pe_debug("Key valid: %d keyLength: %d",
-			pAddBssParams->extSetStaKeyParamValid,
-			pAddBssParams->extSetStaKeyParam.key[0].keyLength);
-
-		pe_debug("BSSID: " QDF_MAC_ADDR_STR,
-			       QDF_MAC_ADDR_ARRAY(pKeyInfo->bssid.bytes));
-
-		qdf_copy_macaddr(&pAddBssParams->extSetStaKeyParam.peer_macaddr,
-				 &pKeyInfo->bssid);
-
-		pAddBssParams->extSetStaKeyParam.sendRsp = false;
-
-	}
-	return true;
-}
 
 static void
 lim_ft_send_aggr_qos_rsp(struct mac_context *mac, uint8_t rspReqd,

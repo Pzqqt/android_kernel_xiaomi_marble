@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,7 +74,6 @@
 #define LIM_MLM_TSPEC_REQ           (LIM_MLM_MSG_START + 20)
 #define LIM_MLM_TSPEC_CNF           (LIM_MLM_MSG_START + 21)
 #define LIM_MLM_TSPEC_IND           (LIM_MLM_MSG_START + 22)
-#define LIM_MLM_SETKEYS_REQ         (LIM_MLM_MSG_START + 23)
 #define LIM_MLM_SETKEYS_CNF         (LIM_MLM_MSG_START + 24)
 #define LIM_MLM_LINK_TEST_STOP_REQ  (LIM_MLM_MSG_START + 30)
 #define LIM_MLM_PURGE_STA_IND       (LIM_MLM_MSG_START + 31)
