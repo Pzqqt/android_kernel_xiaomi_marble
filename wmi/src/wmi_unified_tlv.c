@@ -6810,6 +6810,64 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		WMI_SET_BITS(resource_cfg->flags2, 0, 4,
 			     tgt_res_cfg->re_ul_resp);
 
+
+	/*
+	 * Enable ast flow override per peer
+	 */
+	resource_cfg->msdu_flow_override_config0 = 0;
+	WMI_MSDU_FLOW_AST_ENABLE_SET(
+			resource_cfg->msdu_flow_override_config0,
+			WMI_CONFIG_MSDU_AST_INDEX_1,
+			tgt_res_cfg->ast_1_valid_mask_enable);
+
+	WMI_MSDU_FLOW_AST_ENABLE_SET(
+			resource_cfg->msdu_flow_override_config0,
+			WMI_CONFIG_MSDU_AST_INDEX_2,
+			tgt_res_cfg->ast_2_valid_mask_enable);
+
+	WMI_MSDU_FLOW_AST_ENABLE_SET(
+			resource_cfg->msdu_flow_override_config0,
+			WMI_CONFIG_MSDU_AST_INDEX_3,
+			tgt_res_cfg->ast_3_valid_mask_enable);
+
+	/*
+	 * Enable ast flow mask and TID valid mask configurations
+	 */
+	resource_cfg->msdu_flow_override_config1 = 0;
+
+	/*Enable UDP flow for Ast index 0*/
+	WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_SET(
+		resource_cfg->msdu_flow_override_config1,
+		WMI_CONFIG_MSDU_AST_INDEX_0,
+		tgt_res_cfg->ast_0_flow_mask_enable);
+
+	/*Enable Non UDP flow for Ast index 1*/
+	WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_SET(
+		resource_cfg->msdu_flow_override_config1,
+		WMI_CONFIG_MSDU_AST_INDEX_1,
+		tgt_res_cfg->ast_1_flow_mask_enable);
+
+	/*Enable Hi-Priority flow for Ast index 2*/
+	WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_SET(
+		resource_cfg->msdu_flow_override_config1,
+		WMI_CONFIG_MSDU_AST_INDEX_2,
+		tgt_res_cfg->ast_2_flow_mask_enable);
+
+	/*Enable Low-Priority flow for Ast index 3*/
+	WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_SET(
+		resource_cfg->msdu_flow_override_config1,
+		WMI_CONFIG_MSDU_AST_INDEX_3,
+		tgt_res_cfg->ast_3_flow_mask_enable);
+
+	/*Enable all 8 tid for Hi-Pririty Flow Queue*/
+	WMI_MSDU_FLOW_TID_VALID_HI_MASKS_SET(
+		resource_cfg->msdu_flow_override_config1,
+		tgt_res_cfg->ast_tid_high_mask_enable);
+
+	/*Enable all 8 tid for Low-Pririty Flow Queue*/
+	WMI_MSDU_FLOW_TID_VALID_LOW_MASKS_SET(
+		resource_cfg->msdu_flow_override_config1,
+		tgt_res_cfg->ast_tid_low_mask_enable);
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
