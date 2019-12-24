@@ -3698,9 +3698,11 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 		if (panel->panel_mode_switch_enabled) {
 			rc = dsi_panel_parse_panel_mode_caps(mode, utils);
 			if (rc) {
-				DSI_ERR("PMS: failed to parse panel mode\n");
 				rc = 0;
 				mode->panel_mode = panel->panel_mode;
+				DSI_INFO(
+				"POMS: panel mode isn't specified in timing[%d]\n",
+				child_idx);
 			}
 		} else {
 			mode->panel_mode = panel->panel_mode;
