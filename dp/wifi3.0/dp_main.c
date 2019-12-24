@@ -5539,6 +5539,9 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
 		peer->peer_ids[i] = HTT_INVALID_PEER;
 
+	/* reset the ast index to flowid table */
+	dp_peer_reset_flowq_map(peer);
+
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 
 	qdf_atomic_init(&peer->ref_cnt);

@@ -1625,6 +1625,11 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 		}
 	}
 
+	/*
+	 * Reset ast flow mapping table
+	 */
+	dp_peer_reset_flowq_map(peer);
+
 	if (soc->cdp_soc.ol_ops->peer_unmap_event) {
 		soc->cdp_soc.ol_ops->peer_unmap_event(soc->ctrl_psoc,
 				peer_id, vdev_id);

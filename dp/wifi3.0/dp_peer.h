@@ -239,6 +239,42 @@ void dp_peer_multipass_list_init(struct dp_vdev *vdev);
 void dp_peer_multipass_list_remove(struct dp_peer *peer);
 #endif
 
+
+#ifndef QCA_PEER_MULTIQ_SUPPORT
+/**
+ * dp_peer_reset_flowq_map() - reset peer flowq map table
+ * @peer - dp peer handle
+ *
+ * Return: none
+ */
+static inline
+void dp_peer_reset_flowq_map(struct dp_peer *peer)
+{
+}
+
+/**
+ * dp_peer_ast_index_flow_queue_map_create() - create ast index flow queue map
+ * @soc - genereic soc handle
+ * @is_wds - flag to indicate if peer is wds
+ * @peer_id - peer_id from htt peer map message
+ * @peer_mac_addr - mac address of the peer
+ * @ast_info - ast flow override information from peer map
+ *
+ * Return: none
+ */
+static inline
+void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
+		    bool is_wds, uint16_t peer_id, uint8_t *peer_mac_addr,
+		    struct dp_ast_flow_override_info *ast_info)
+{
+}
+#else
+void dp_peer_reset_flowq_map(struct dp_peer *peer);
+void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
+		    bool is_wds, uint16_t peer_id, uint8_t *peer_mac_addr,
+		    struct dp_ast_flow_override_info *ast_info);
+#endif
+
 /**
  * dp_peer_update_pkt_capture_params: Set Rx & Tx Capture flags for a peer
  * @soc: DP SOC handle
