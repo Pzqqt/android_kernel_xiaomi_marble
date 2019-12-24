@@ -743,7 +743,7 @@ int pld_srng_free_irq(struct device *dev, int irq, void *ctx);
 void pld_srng_enable_irq(struct device *dev, int irq);
 
 /**
- * pld_disable_irq() - Disable IRQ for SRNG
+ * pld_srng_disable_irq() - Disable IRQ for SRNG
  * @dev: device
  * @irq: IRQ number
  *
@@ -839,4 +839,52 @@ static inline int pld_nbuf_pre_alloc_free(struct sk_buff *skb)
  * Return: PLD bus type
  */
 enum pld_bus_type pld_get_bus_type(struct device *dev);
+
+static inline int pfrm_request_irq(struct device *dev, unsigned int ce_id,
+				   irqreturn_t (*handler)(int, void *),
+				   unsigned long flags, const char *name,
+				   void *ctx)
+{
+	return pld_srng_request_irq(dev, ce_id, handler, flags, name, ctx);
+}
+
+static inline int pfrm_free_irq(struct device *dev, int irq, void *ctx)
+{
+	return pld_srng_free_irq(dev, irq, ctx);
+}
+
+static inline void pfrm_enable_irq(struct device *dev, int irq)
+{
+	pld_srng_enable_irq(dev, irq);
+}
+
+static inline void pfrm_disable_irq(struct device *dev, int irq)
+{
+	pld_srng_disable_irq(dev, irq);
+}
+
+static inline int pfrm_read_config_word(struct pci_dev *pdev, int offset,
+					uint16_t *val)
+{
+	return pld_pci_read_config_word(pdev, offset, val);
+}
+
+static inline int pfrm_write_config_word(struct pci_dev *pdev, int offset,
+					 uint16_t val)
+{
+	return pld_pci_write_config_word(pdev, offset, val);
+}
+
+static inline int pfrm_read_config_dword(struct pci_dev *pdev, int offset,
+					 uint32_t *val)
+{
+	return pld_pci_read_config_dword(pdev, offset, val);
+}
+
+static inline int pfrm_write_config_dword(struct pci_dev *pdev, int offset,
+					  uint32_t val)
+{
+	return pld_pci_write_config_dword(pdev, offset, val);
+}
+
 #endif
