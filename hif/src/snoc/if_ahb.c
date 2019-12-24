@@ -605,7 +605,6 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
 
-	/* QCA_WIFI_QCA8074_VP:Should not be executed on 8074 VP platform */
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
@@ -624,7 +623,6 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 
 	return QDF_STATUS_SUCCESS;
 err_target_sync:
-	/* QCA_WIFI_QCA8074_VP:Should not be executed on 8074 VP platform */
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
