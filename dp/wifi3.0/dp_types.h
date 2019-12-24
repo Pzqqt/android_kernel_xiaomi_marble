@@ -600,6 +600,14 @@ struct dp_rx_tid {
 	/* Delba reason code for retries */
 	uint8_t delba_rcode;
 
+#ifdef WLAN_PEER_JITTER
+	/* Tx Jitter stats */
+	uint32_t tx_avg_jitter;
+	uint32_t tx_avg_delay;
+	uint64_t tx_avg_err;
+	uint64_t tx_total_success;
+	uint64_t tx_drop;
+#endif /* WLAN_PEER_JITTER */
 };
 
 /**

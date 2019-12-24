@@ -5131,6 +5131,45 @@ static void dp_print_nss(char *nss, uint32_t *pnss, uint32_t ss_count)
 	}
 }
 
+/**
+ * dp_print_jitter_stats(): Print per-tid jitter stats
+ * @peer: DP peer object
+ * @pdev: DP pdev object
+ *
+ * Return: void
+ */
+#ifdef WLAN_PEER_JITTER
+static void dp_print_jitter_stats(struct dp_peer *peer, struct dp_pdev *pdev)
+{
+	uint8_t tid = 0;
+
+	if (pdev && !wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx))
+		return;
+
+	DP_PRINT_STATS("Per TID Tx HW Enqueue-Comp Jitter Stats:\n");
+	for (tid = 0; tid < qdf_min(CDP_DATA_TID_MAX, DP_MAX_TIDS); tid++) {
+		struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+
+		DP_PRINT_STATS("Node tid = %d\n"
+				"Average Jiiter            : %u (us)\n"
+				"Average Delay             : %u (us)\n"
+				"Total Average error count : %llu\n"
+				"Total Success Count       : %llu\n"
+				"Total Drop                : %llu\n",
+				rx_tid->tid,
+				rx_tid->tx_avg_jitter,
+				rx_tid->tx_avg_delay,
+				rx_tid->tx_avg_err,
+				rx_tid->tx_total_success,
+				rx_tid->tx_drop);
+	}
+}
+#else
+static void dp_print_jitter_stats(struct dp_peer *peer, struct dp_pdev *pdev)
+{
+}
+#endif /* WLAN_PEER_JITTER */
+
 void dp_print_peer_stats(struct dp_peer *peer)
 {
 	uint8_t i;
@@ -5279,6 +5318,8 @@ void dp_print_peer_stats(struct dp_peer *peer)
 		       peer->stats.tx.tx_byte_rate);
 	DP_PRINT_STATS("	Data transmitted in last sec: %d",
 		       peer->stats.tx.tx_data_rate);
+
+	dp_print_jitter_stats(peer, pdev);
 
 	DP_PRINT_STATS("Node Rx Stats:");
 	DP_PRINT_STATS("Packets Sent To Stack = %d",
