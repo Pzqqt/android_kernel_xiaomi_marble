@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2013-2014, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2017, 2019 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _MSM_DS2_DAP_CONFIG_H_
@@ -9,7 +9,7 @@
 #include <sound/soc.h>
 #include "msm-dolby-common.h"
 #include <sound/hwdep.h>
-#include <uapi/sound/devdep_params.h>
+#include <uapi/audio/sound/devdep_params.h>
 
 #ifdef CONFIG_COMPAT
 struct dolby_param_data32 {
