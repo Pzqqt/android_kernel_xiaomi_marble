@@ -2564,7 +2564,8 @@ policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
 	 */
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 
-	if (forced && reason == CSA_REASON_UNSAFE_CHANNEL)
+	if (forced && (reason == CSA_REASON_UNSAFE_CHANNEL ||
+		       reason == CSA_REASON_DCS))
 		policy_mgr_store_and_del_conn_info_by_chan_and_mode(
 			psoc, old_ch_freq, mode, info, &num_cxn_del);
 	else
@@ -3065,6 +3066,44 @@ bool policy_mgr_is_multiple_active_sta_sessions(struct wlan_objmgr_psoc *psoc)
 		psoc, PM_STA_MODE, NULL) > 1;
 }
 
+bool policy_mgr_is_sta_gc_active_on_mac(struct wlan_objmgr_psoc *psoc,
+					uint8_t mac_id)
+{
+	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t index, count;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	count = policy_mgr_mode_specific_connection_count(
+		psoc, PM_STA_MODE, list);
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (index = 0; index < count; index++) {
+		if (mac_id == pm_conc_connection_list[list[index]].mac) {
+			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+			return true;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	count = policy_mgr_mode_specific_connection_count(
+		psoc, PM_P2P_CLIENT_MODE, list);
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (index = 0; index < count; index++) {
+		if (mac_id == pm_conc_connection_list[list[index]].mac) {
+			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+			return true;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return false;
+}
+
 /**
  * policy_mgr_is_sta_active_connection_exists() - Check if a STA
  * connection is active
@@ -3359,6 +3398,38 @@ QDF_STATUS policy_mgr_get_mac_id_by_session_id(struct wlan_objmgr_psoc *psoc,
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	return QDF_STATUS_E_FAILURE;
+}
+
+uint32_t policy_mgr_get_sap_go_count_on_mac(struct wlan_objmgr_psoc *psoc,
+					    uint32_t *list, uint8_t mac_id)
+{
+	uint32_t conn_index;
+	uint32_t count = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return count;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++) {
+		if (pm_conc_connection_list[conn_index].mac == mac_id &&
+		    pm_conc_connection_list[conn_index].in_use &&
+		    (pm_conc_connection_list[conn_index].mode == PM_SAP_MODE ||
+		     pm_conc_connection_list[conn_index].mode ==
+		     PM_P2P_GO_MODE)) {
+			if (list)
+				list[count] =
+				    pm_conc_connection_list[conn_index].vdev_id;
+			count++;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return count;
 }
 
 QDF_STATUS policy_mgr_get_mcc_session_id_on_mac(struct wlan_objmgr_psoc *psoc,
