@@ -1211,7 +1211,7 @@ static int msm_transcode_add_audio_effects_control(struct snd_soc_pcm_runtime *r
 
 	pr_debug("%s: added new compr FE with name %s, id %d, cpu dai %s, device no %d\n", __func__,
 						rtd->dai_link->name, rtd->dai_link->id,
-						rtd->dai_link->cpu_dai_name, rtd->pcm->device);
+						rtd->dai_link->cpus->dai_name, rtd->pcm->device);
 
 	ctl_len = strlen(mixer_ctl_name) + 1 + strlen(deviceNo) + 1;
 	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
