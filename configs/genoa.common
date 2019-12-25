@@ -87,6 +87,10 @@ else
 CONFIG_WDI_EVENT_ENABLE := y
 endif
 
+ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
+CONFIG_PKTLOG_LEGACY := y
+endif
+
 #Enable the type_specific_data in the ath_pktlog_arg
 ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 CONFIG_PKTLOG_HAS_SPECIFIC_DATA := y
