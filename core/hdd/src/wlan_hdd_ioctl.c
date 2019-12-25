@@ -4864,6 +4864,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	uint8_t channel = 0;
+	uint32_t ch_freq;
 	tSirMacAddr bssid;
 	uint32_t roam_id = INVALID_ROAM_ID;
 	tCsrRoamModifyProfileFields mod_fields;
@@ -4896,7 +4897,6 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
-
 	/*
 	 * if the target bssid is same as currently associated AP,
 	 * issue reassoc to same AP
@@ -4905,11 +4905,8 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 			 QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {
-			channel = wlan_reg_freq_to_chan(
-					hdd_ctx->pdev,
-					sta_ctx->conn_info.chan_freq);
-			hdd_wma_send_fastreassoc_cmd(adapter, bssid,
-						     channel);
+			ch_freq = sta_ctx->conn_info.chan_freq;
+			hdd_wma_send_fastreassoc_cmd(adapter, bssid, ch_freq);
 		} else {
 			sme_get_modify_profile_fields(mac_handle,
 				adapter->vdev_id,
@@ -4927,12 +4924,13 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
+	ch_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, channel);
 	if (roaming_offload_enabled(hdd_ctx)) {
-		hdd_wma_send_fastreassoc_cmd(adapter, bssid, (int)channel);
+		hdd_wma_send_fastreassoc_cmd(adapter, bssid, ch_freq);
 		goto exit;
 	}
 	/* Proceed with reassoc */
-	req.ch_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, channel);
+	req.ch_freq = ch_freq;
 	req.src = FASTREASSOC;
 	qdf_mem_copy(req.bssid.bytes, bssid, sizeof(tSirMacAddr));
 	sme_handoff_request(mac_handle, adapter->vdev_id, &req);
