@@ -1424,6 +1424,14 @@ static bool lim_chk_wmm(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	return true;
 }
 
+static void lim_update_sta_ds_op_classes(tpSirAssocReq assoc_req,
+					 tpDphHashNode sta_ds)
+{
+	qdf_mem_copy(&sta_ds->supp_operating_classes,
+		     &assoc_req->supp_operating_classes,
+		     sizeof(tDot11fIESuppOperatingClasses));
+}
+
 /**
  * lim_update_sta_ds() - updates ds dph entry
  * @mac_ctx: pointer to Global MAC structure
@@ -1705,7 +1713,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 				== MCSMAPMASK2x2) ? 1 : 2;
 	}
 	lim_update_stads_he_6ghz_op(session, sta_ds);
-
+	lim_update_sta_ds_op_classes(assoc_req, sta_ds);
 	/* Add STA context at MAC HW (BMU, RHP & TFP) */
 	sta_ds->qosMode = false;
 	sta_ds->lleEnabled = false;

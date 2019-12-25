@@ -329,6 +329,7 @@ typedef struct sSirAssocReq {
 	tSirMacSupportedChannelIE supportedChannels;
 	tDot11fIEHTCaps HTCaps;
 	tDot11fIEWMMInfoStation WMMInfoStation;
+	tDot11fIESuppOperatingClasses supp_operating_classes;
 	/* / This is set if the frame is a reassoc request: */
 	uint8_t reassocRequest;
 	uint8_t ssidPresent;

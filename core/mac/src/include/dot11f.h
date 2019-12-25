@@ -10574,6 +10574,7 @@ typedef struct sDot11fReAssocRequest{
 	tDot11fIEFTInfo                    FTInfo;
 	uint16_t                           num_RICDataDesc;
 	tDot11fIERICDataDesc               RICDataDesc[2];
+	tDot11fIESuppOperatingClasses      SuppOperatingClasses;
 	tDot11fIEWPAOpaque                 WPAOpaque;
 	tDot11fIEHTCaps                    HTCaps;
 	tDot11fIEWMMCaps                   WMMCaps;

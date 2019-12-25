@@ -2762,6 +2762,19 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 			ext_cap->timing_meas, ext_cap->fine_time_meas_initiator,
 			ext_cap->fine_time_meas_responder);
 	}
+	if (ar->SuppOperatingClasses.present) {
+		uint8_t num_classes = ar->SuppOperatingClasses.num_classes;
+
+		if (num_classes > sizeof(ar->SuppOperatingClasses.classes))
+			num_classes =
+				sizeof(ar->SuppOperatingClasses.classes);
+		qdf_mem_copy(&pAssocReq->supp_operating_classes,
+			     &ar->SuppOperatingClasses,
+			     sizeof(tDot11fIESuppOperatingClasses));
+		QDF_TRACE_HEX_DUMP(
+			QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			ar->SuppOperatingClasses.classes, num_classes);
+	}
 
 	pAssocReq->vendor_vht_ie.present = ar->vendor_vht_ie.present;
 	if (ar->vendor_vht_ie.present) {
@@ -3413,7 +3426,19 @@ sir_convert_reassoc_req_frame2_struct(struct mac_context *mac,
 		convert_wfd_opaque(mac, &pAssocReq->addIE, &ar->WFDIEOpaque);
 	}
 #endif
+	if (ar->SuppOperatingClasses.present) {
+		uint8_t num_classes = ar->SuppOperatingClasses.num_classes;
 
+		if (num_classes > sizeof(ar->SuppOperatingClasses.classes))
+			num_classes =
+				sizeof(ar->SuppOperatingClasses.classes);
+		qdf_mem_copy(&pAssocReq->supp_operating_classes,
+			     &ar->SuppOperatingClasses,
+			     sizeof(tDot11fIESuppOperatingClasses));
+		QDF_TRACE_HEX_DUMP(
+			QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			ar->SuppOperatingClasses.classes, num_classes);
+	}
 	if (ar->VHTCaps.present) {
 		qdf_mem_copy(&pAssocReq->VHTCaps, &ar->VHTCaps,
 			     sizeof(tDot11fIEVHTCaps));

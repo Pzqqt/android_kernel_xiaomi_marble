@@ -6035,6 +6035,9 @@ QDF_STATUS lim_strip_supp_op_class_update_struct(struct mac_context *mac_ctx,
 		pe_err("dot11f_unpack Parse Error");
 		return QDF_STATUS_E_FAILURE;
 	}
+	if (dst->num_classes)
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   &dst->classes[0], dst->num_classes);
 
 	return QDF_STATUS_SUCCESS;
 }

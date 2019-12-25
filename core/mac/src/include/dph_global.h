@@ -184,7 +184,8 @@ typedef struct sDphHashNode {
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_config;
 #endif
-
+	/* Peer operation class, extracted from ASSOC request frame*/
+	tDot11fIESuppOperatingClasses supp_operating_classes;
 	/*
 	 * When a station with already an existing dph entry tries to
 	 * associate again, the old dph entry will be zeroed out except
