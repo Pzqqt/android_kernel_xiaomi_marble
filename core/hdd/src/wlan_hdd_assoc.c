@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5503,6 +5503,24 @@ static void hdd_set_mfp_enable(struct csr_roam_profile *roam_profile)
 }
 #endif
 
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
+static inline QDF_STATUS
+hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
+				    uint8_t *ie_ptr,
+				    uint16_t ie_len)
+{
+	return wlan_set_vdev_crypto_prarams_from_ie(vdev, ie_ptr, ie_len);
+}
+#else
+static inline QDF_STATUS
+hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
+				    uint8_t *ie_ptr,
+				    uint16_t ie_len)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * hdd_set_genie_to_csr() - set genie to csr
  * @adapter: pointer to adapter
@@ -5583,12 +5601,11 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 		hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
 			 *rsn_auth_type, rsn_encrypt_type, mc_rsn_encrypt_type);
 	}
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
-	if (QDF_STATUS_SUCCESS != wlan_set_vdev_crypto_prarams_from_ie(
+
+	if (QDF_STATUS_SUCCESS != hdd_set_vdev_crypto_prarams_from_ie(
 				  adapter->vdev, security_ie,
 				  (security_ie[1] + 2)))
 		hdd_err("Failed to set the crypto params from IE");
-#endif
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (hdd_ctx->force_rsne_override &&

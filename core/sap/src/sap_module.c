@@ -689,6 +689,24 @@ void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
 	sap_ctx->acs_cfg = &sap_config->acs_cfg;
 }
 
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
+static inline QDF_STATUS
+wlansap_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
+					uint8_t *ie_ptr,
+					uint16_t ie_len)
+{
+	return wlan_set_vdev_crypto_prarams_from_ie(vdev, ie_ptr, ie_len);
+}
+#else
+static inline QDF_STATUS
+wlansap_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
+					uint8_t *ie_ptr,
+					uint16_t ie_len)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     sap_event_cb sap_event_cb,
 			     struct sap_config *config, void *user_context)
@@ -721,7 +739,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 
 	sap_ctx->fsm_state = SAP_INIT;
 
-	qdf_status = wlan_set_vdev_crypto_prarams_from_ie(
+	qdf_status = wlansap_set_vdev_crypto_prarams_from_ie(
 			sap_ctx->vdev,
 			config->RSNWPAReqIE,
 			config->RSNWPAReqIELength);
