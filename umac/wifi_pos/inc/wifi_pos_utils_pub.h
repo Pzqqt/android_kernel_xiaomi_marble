@@ -30,6 +30,7 @@
 #define OEM_TARGET_SIGNATURE_LEN   8
 #define OEM_TARGET_SIGNATURE       "QUALCOMM"
 
+#define MAX_CHANNELS               255
 #define OEM_CAP_MAX_NUM_CHANNELS   128
 
 #define WIFI_POS_RSP_V1_FLAT_MEMORY  0x00000001
@@ -72,6 +73,28 @@ struct qdf_packed wifi_pos_driver_version {
 	uint8_t minor;
 	uint8_t patch;
 	uint8_t build;
+};
+
+/**
+ * struct wifi_pos_channel_power
+ * @center_freq: Channel Center Frequency
+ * @chan_num: channel number
+ * @tx_power: TX power
+ */
+struct wifi_pos_channel_power {
+	uint32_t center_freq;
+	uint32_t chan_num;
+	uint32_t tx_power;
+};
+
+/**
+ * struct wifi_pos_channel_list
+ * @valid_channels: no of valid channels
+ * @chan_info: channel info
+ */
+struct qdf_packed wifi_pos_channel_list {
+	uint16_t num_channels;
+	struct wifi_pos_channel_power chan_info[MAX_CHANNELS];
 };
 
 /**

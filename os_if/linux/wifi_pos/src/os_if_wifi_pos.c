@@ -62,6 +62,19 @@ cap_resp_sub_attr_len[CLD80211_SUB_ATTR_CAPS_MAX + 1] = {
 	[CLD80211_SUB_ATTR_CAPS_USER_DEFINED_CAPS] =
 				sizeof(struct wifi_pos_user_defined_caps),
 };
+
+static const uint32_t
+ch_resp_sub_attr_len[CLD80211_SUB_ATTR_CH_MAX + 1] = {
+	[CLD80211_SUB_ATTR_CHANNEL_NUM_CHAN] = sizeof(uint32_t),
+	[CLD80211_SUB_ATTR_CH_LIST] = sizeof(uint32_t),
+	[CLD80211_SUB_ATTR_CH_CHAN_ID] = sizeof(uint32_t),
+	[CLD80211_SUB_ATTR_CH_MHZ] = sizeof(uint32_t),
+	[CLD80211_SUB_ATTR_CH_BAND_CF_1] = sizeof(uint32_t),
+	[CLD80211_SUB_ATTR_CH_BAND_CF_2] = sizeof(uint32_t),
+	[CLD80211_SUB_ATTR_CH_INFO] = sizeof(uint32_t),
+	[CLD80211_SUB_ATTR_CH_REG_INFO_1] = sizeof(uint32_t),
+	[CLD80211_SUB_ATTR_CH_REG_INFO_2] = sizeof(uint32_t),
+};
 #endif
 
 static int map_wifi_pos_cmd_to_ani_msg_rsp(
@@ -216,6 +229,151 @@ static void os_if_send_cap_nl_resp(uint32_t pid, uint8_t *buf)
 	cld80211_oem_send_reply(msg, hdr, nest1, flags);
 }
 
+static void
+os_if_get_chan_nl_resp_len(uint32_t *chan_info, uint32_t *attr_headers)
+{
+	uint32_t i;
+	struct nlattr more_data;
+	struct nlattr attr_tag_data;
+	struct nlattr cld80211_subattr_ch_list;
+	struct nlattr chan_iter;
+
+	*attr_headers = NLA_ALIGN(sizeof(attr_tag_data));
+	*attr_headers += NLA_ALIGN(sizeof(more_data));
+	*attr_headers += nla_total_size(
+		ch_resp_sub_attr_len[CLD80211_SUB_ATTR_CHANNEL_NUM_CHAN]);
+	*attr_headers += sizeof(cld80211_subattr_ch_list);
+
+	*chan_info = NLA_ALIGN(sizeof(chan_iter));
+	i = CLD80211_SUB_ATTR_CH_LIST;
+	for (; i <= CLD80211_SUB_ATTR_CH_MAX; i++)
+		*chan_info += nla_total_size(ch_resp_sub_attr_len[i]);
+}
+
+static uint8_t os_if_get_max_chan_nl_resp(uint8_t chan_num)
+{
+	struct nlattr vendor_data;
+	struct nlattr attr_cmd;
+	uint32_t chan_info = 0, attr_headers = 0;
+	uint32_t chan_info_msg_len, chan_allow = 0;
+
+	os_if_get_chan_nl_resp_len(&chan_info, &attr_headers);
+	attr_headers += NLA_ALIGN(sizeof(vendor_data));
+	attr_headers += NLA_ALIGN(sizeof(attr_cmd));
+
+	chan_info_msg_len = WLAN_CLD80211_MAX_SIZE;
+	chan_info_msg_len -= WIFIPOS_RESERVE_BYTES;
+	chan_info_msg_len -= attr_headers;
+
+	chan_allow = chan_info_msg_len / chan_info;
+
+	if (chan_num > chan_allow)
+		return chan_allow;
+	else
+		return chan_num;
+}
+
+static int
+os_if_create_ch_nl_resp(uint32_t pid, uint8_t *buf, uint16_t num_chan,
+			bool is_frag)
+{
+	void *hdr;
+	int i;
+	int flags = GFP_KERNEL;
+	struct sk_buff *msg = NULL;
+	struct nlattr *nest1, *nest2;
+	struct nlattr *nest3, *nest4;
+	struct wifi_pos_ch_info_rsp *channel_rsp;
+
+	channel_rsp = (struct wifi_pos_ch_info_rsp *)buf;
+
+	msg = cld80211_oem_rsp_alloc_skb(pid, &hdr, &nest1, &flags);
+	if (!msg) {
+		osif_err("alloc_skb failed");
+		return -EPERM;
+	}
+
+	nla_put_u32(msg, CLD80211_ATTR_CMD,
+		    CLD80211_VENDOR_SUB_CMD_GET_CH_INFO);
+
+	nest2 = nla_nest_start(msg, CLD80211_ATTR_CMD_TAG_DATA);
+	if (!nest2)
+		goto fail;
+
+	if (is_frag)
+		nla_put_flag(msg, CLD80211_SUB_ATTR_CH_MORE_DATA);
+
+	nla_put_u32(msg, CLD80211_SUB_ATTR_CHANNEL_NUM_CHAN, num_chan);
+
+	nest3 = nla_nest_start(msg, CLD80211_SUB_ATTR_CH_LIST);
+	if (!nest3)
+		goto fail;
+	for (i = 0; i < num_chan; i++) {
+		nest4 = nla_nest_start(msg, i);
+		if (!nest4)
+			goto fail;
+
+		nla_put_u32(msg, CLD80211_SUB_ATTR_CH_CHAN_ID,
+			    channel_rsp->chan_id);
+		nla_put_u32(msg, CLD80211_SUB_ATTR_CH_MHZ, channel_rsp->mhz);
+		nla_put_u32(msg, CLD80211_SUB_ATTR_CH_BAND_CF_1,
+			    channel_rsp->band_center_freq1);
+		nla_put_u32(msg, CLD80211_SUB_ATTR_CH_BAND_CF_2,
+			    channel_rsp->band_center_freq2);
+		nla_put_u32(msg, CLD80211_SUB_ATTR_CH_INFO, channel_rsp->info);
+		nla_put_u32(msg, CLD80211_SUB_ATTR_CH_REG_INFO_1,
+			    channel_rsp->reg_info_1);
+		nla_put_u32(msg, CLD80211_SUB_ATTR_CH_REG_INFO_2,
+			    channel_rsp->reg_info_2);
+		nla_nest_end(msg, nest4);
+		channel_rsp++;
+	}
+
+	nla_nest_end(msg, nest3);
+	nla_nest_end(msg, nest2);
+
+	osif_debug("sending oem rsp: type: %d to pid (%d)",
+		   CLD80211_VENDOR_SUB_CMD_GET_CH_INFO, pid);
+
+	cld80211_oem_send_reply(msg, hdr, nest1, flags);
+	return 0;
+
+fail:
+	osif_err("failed to fill CHAN_RESP attributes");
+	dev_kfree_skb(msg);
+	return -EPERM;
+}
+
+static void os_if_send_chan_nl_resp(uint32_t pid, uint8_t *buf)
+{
+	int err;
+	uint8_t check_chans = 0;
+	uint8_t  *chnk_ptr, chan_allow = 0;
+	bool resp_frag = false;
+
+	check_chans = buf[0];
+	chnk_ptr = &buf[1];
+
+	do {
+		chan_allow = os_if_get_max_chan_nl_resp(check_chans);
+
+		if (check_chans > chan_allow)
+			resp_frag = true;
+		else
+			resp_frag = false;
+		check_chans -= chan_allow;
+
+		err = os_if_create_ch_nl_resp(pid, chnk_ptr,
+					      chan_allow, resp_frag);
+		if (err) {
+			osif_err("failed to alloc memory for ch_nl_resp");
+			return;
+		}
+		chnk_ptr += (sizeof(struct wifi_pos_ch_info_rsp) *
+				      chan_allow);
+	} while (resp_frag);
+}
+
 
 static void os_if_send_nl_resp(uint32_t pid, uint8_t *buf,
 			       enum wifi_pos_cmd_ids cmd)
@@ -223,6 +381,9 @@ static void os_if_send_nl_resp(uint32_t pid, uint8_t *buf,
 	switch (cmd) {
 	case WIFI_POS_CMD_GET_CAPS:
 		os_if_send_cap_nl_resp(pid, buf);
+		break;
+	case WIFI_POS_CMD_GET_CH_INFO:
+		os_if_send_chan_nl_resp(pid, buf);
 		break;
 	default:
 		osif_err("response message is invalid :%d", cmd);

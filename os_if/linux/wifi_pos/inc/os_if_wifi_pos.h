@@ -173,5 +173,43 @@ enum cld80211_sub_attr_cap_rsp {
 	CLD80211_SUB_ATTR_CAPS_MAX =
 		CLD80211_SUB_ATTR_CAPS_AFTER_LAST - 1
 };
+
+/**
+ * enum cld80211_sub_attr_channel_rsp - Chan info response sub attribute
+ * @CLD80211_SUB_ATTR_CH_RESP_INVALID: Invalid channel resp
+ * @CLD80211_SUB_ATTR_CH_MORE_DATA: More date sub attr for frag response
+ * @CLD80211_SUB_ATTR_CHANNEL_NUM_CHAN: Number of channels in response
+ * @CLD80211_SUB_ATTR_CHANNEL_LIST: Channel list nesting
+ * @CLD80211_SUB_ATTR_CH_CHAN_ID: Channel number
+ * @CLD80211_SUB_ATTR_CH_MHZ: Channel frequency
+ * @CLD80211_SUB_ATTR_CH_BAND_CF_1: Center frequency 1
+ * @CLD80211_SUB_ATTR_CH_BAND_CF_2: Center frequency 2
+ * @CLD80211_SUB_ATTR_CH_INFO: channel info
+ * @CLD80211_SUB_ATTR_CH_REG_INFO_1: regulatory info field 1
+ * @CLD80211_SUB_ATTR_CH_REG_INFO_2: regulatory info field 2
+ * @CLD80211_SUB_ATTR_CAPS_MAX: Max number for CHAN Info sub attribute
+ *
+ */
+enum cld80211_sub_attr_channel_rsp {
+	CLD80211_SUB_ATTR_CH_RESP_INVALID = 0,
+	CLD80211_SUB_ATTR_CH_MORE_DATA = 1,
+	CLD80211_SUB_ATTR_CHANNEL_NUM_CHAN = 2,
+	CLD80211_SUB_ATTR_CH_LIST = 3,
+	/* CH_* belongs to CH_LIST */
+	CLD80211_SUB_ATTR_CH_CHAN_ID = 4,
+	CLD80211_SUB_ATTR_CH_MHZ = 5,
+	CLD80211_SUB_ATTR_CH_BAND_CF_1 = 6,
+	CLD80211_SUB_ATTR_CH_BAND_CF_2 = 7,
+	CLD80211_SUB_ATTR_CH_INFO = 8,
+	CLD80211_SUB_ATTR_CH_REG_INFO_1 = 9,
+	CLD80211_SUB_ATTR_CH_REG_INFO_2 = 10,
+
+	/* keep last */
+	CLD80211_SUB_ATTR_CH_AFTER_LAST,
+	CLD80211_SUB_ATTR_CH_MAX =
+		CLD80211_SUB_ATTR_CH_AFTER_LAST - 1
+
+};
+
 #endif
 #endif /* _OS_IF_WIFI_POS_H_ */
