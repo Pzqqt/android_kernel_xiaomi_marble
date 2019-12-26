@@ -749,6 +749,53 @@ cdp_cfr_filter(ol_txrx_soc_handle soc,
 
 	soc->ops->cfr_ops->txrx_cfr_filter(soc, pdev_id, enable, filter_val);
 }
+
+/**
+ * cdp_get_cfr_rcc() - get cfr rcc config
+ * @soc: Datapath soc handle
+ * @pdev_id: id of objmgr pdev
+ *
+ * Return: true/false based on cfr mode setting
+ */
+static inline
+bool cdp_get_cfr_rcc(ol_txrx_soc_handle soc, uint8_t pdev_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cfr_ops || !soc->ops->cfr_ops->txrx_get_cfr_rcc)
+		return 0;
+
+	return soc->ops->cfr_ops->txrx_get_cfr_rcc(soc, pdev_id);
+}
+
+/**
+ * cdp_set_cfr_rcc() - enable/disable cfr rcc config
+ * @soc: Datapath soc handle
+ * @pdev_id: id of objmgr pdev
+ * @enable: Enable/Disable cfr rcc mode
+ *
+ * Return: none
+ */
+static inline
+void cdp_set_cfr_rcc(ol_txrx_soc_handle soc, uint8_t pdev_id, bool enable)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cfr_ops || !soc->ops->cfr_ops->txrx_set_cfr_rcc)
+		return;
+
+	return soc->ops->cfr_ops->txrx_set_cfr_rcc(soc, pdev_id, enable);
+}
 #endif
 
 #if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(WLAN_RX_PKT_CAPTURE_ENH)

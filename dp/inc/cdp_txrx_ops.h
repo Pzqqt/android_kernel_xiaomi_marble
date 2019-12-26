@@ -1619,12 +1619,19 @@ struct cdp_rx_offld_ops {
 /**
  * struct cdp_cfr_ops - host cfr ops
  * @txrx_cfr_filter: Handler to configure host rx monitor status ring
+ * @txrx_get_cfr_rcc: Handler to get CFR mode
+ * @txrx_set_cfr_rcc: Handler to enable/disable CFR mode
  */
 struct cdp_cfr_ops {
 	void (*txrx_cfr_filter)(struct cdp_soc_t *soc_hdl,
 				uint8_t pdev_id,
 				bool enable,
 				struct cdp_monitor_filter *filter_val);
+	bool (*txrx_get_cfr_rcc)(struct cdp_soc_t *soc_hdl,
+				 uint8_t pdev_id);
+	void (*txrx_set_cfr_rcc)(struct cdp_soc_t *soc_hdl,
+				 uint8_t pdev_id,
+				 bool enable);
 };
 #endif
 

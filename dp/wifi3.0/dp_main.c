@@ -156,6 +156,9 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 			  uint8_t pdev_id,
 			  bool enable,
 			  struct cdp_monitor_filter *filter_val);
+static bool dp_get_cfr_rcc(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
+static void dp_set_cfr_rcc(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			   bool enable);
 #endif
 static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
 					    enum hal_ring_type ring_type,
@@ -9848,6 +9851,8 @@ static struct cdp_pflow_ops dp_ops_pflow = {
 #if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
 static struct cdp_cfr_ops dp_ops_cfr = {
 	.txrx_cfr_filter = dp_cfr_filter,
+	.txrx_get_cfr_rcc = dp_get_cfr_rcc,
+	.txrx_set_cfr_rcc = dp_set_cfr_rcc,
 };
 #endif
 
@@ -10806,6 +10811,41 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 				    RX_BUFFER_SIZE,
 				    &htt_tlv_filter);
 	}
+}
+
+/**
+ * dp_get_cfr_rcc() - get cfr rcc config
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of objmgr pdev
+ *
+ * Return: true/false based on cfr mode setting
+ */
+static
+bool dp_get_cfr_rcc(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	return pdev->cfr_rcc_mode;
+}
+
+/**
+ * dp_set_cfr_rcc() - enable/disable cfr rcc config
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of objmgr pdev
+ * @enable: Enable/Disable cfr rcc mode
+ *
+ * Return: none
+ */
+static
+void dp_set_cfr_rcc(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, bool enable)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	pdev->cfr_rcc_mode = enable;
 }
 #endif
 
