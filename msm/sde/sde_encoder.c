@@ -4200,7 +4200,7 @@ int sde_encoder_prepare_commit(struct drm_encoder *drm_enc)
 		if (phys && phys->ops.prepare_commit)
 			phys->ops.prepare_commit(phys);
 
-		if (phys->enable_state == SDE_ENC_ERR_NEEDS_HW_RESET)
+		if (phys && phys->enable_state == SDE_ENC_ERR_NEEDS_HW_RESET)
 			ret = -ETIMEDOUT;
 
 		if (phys && phys->hw_ctl) {
