@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1905,6 +1905,9 @@ struct cdp_rx_indication_ppdu {
 	uint32_t nf;
 	uint8_t  per_chain_rssi[MAX_CHAIN];
 	uint8_t is_mcast_bcast;
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+	struct cdp_rx_ppdu_cfr_info cfr_info;
+#endif
 };
 
 /**
