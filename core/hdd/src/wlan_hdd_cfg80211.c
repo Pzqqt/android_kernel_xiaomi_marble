@@ -19136,7 +19136,6 @@ static inline void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
 {}
 #endif
 
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 /**
  * hdd_populate_crypto_auth_type() - populate auth type for crypto
  * @vdev: pointed to vdev obmgr
@@ -19284,40 +19283,6 @@ static void hdd_set_crypto_key_mgmt_param(struct hdd_adapter *adapter)
 	wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT, key_mgmt);
 	hdd_objmgr_put_vdev(vdev);
 }
-
-#else
-
-static inline
-void hdd_populate_crypto_auth_type(struct wlan_objmgr_vdev *vdev,
-				   enum nl80211_auth_type auth_type)
-{
-}
-
-static inline
-void hdd_populate_crypto_akm_type(struct wlan_objmgr_vdev *vdev,
-				  u32 key_mgmt)
-{
-}
-
-static inline
-void hdd_populate_crypto_cipher_type(u32 cipher,
-				     struct wlan_objmgr_vdev *vdev,
-				     wlan_crypto_param_type
-				     cipher_param_type)
-{
-}
-
-static inline
-void hdd_populate_crypto_params(struct wlan_objmgr_vdev *vdev,
-				struct cfg80211_connect_params *req)
-{
-}
-
-static inline void hdd_set_crypto_key_mgmt_param(struct hdd_adapter *adapter)
-{
-}
-
-#endif
 
 /**
  * wlan_hdd_cfg80211_set_ie() - set IEs

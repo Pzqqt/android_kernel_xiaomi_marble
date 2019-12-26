@@ -5298,9 +5298,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 	uint8_t *rsn_ie;
 	uint16_t rsn_ie_len;
 	uint32_t parse_status;
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 	uint16_t rsn_cap = 0;
-#endif
 
 	/*
 	 * Clear struct of tDot11fIERSN and tDot11fIEWPA specifically
@@ -5353,11 +5351,9 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 		*mfp_required = (dot11_rsn_ie.RSN_Cap[0] >> 6) & 0x1;
 		*mfp_capable = csr_is_mfpc_capable(&dot11_rsn_ie);
 #endif
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 		qdf_mem_copy(&rsn_cap, dot11_rsn_ie.RSN_Cap, sizeof(rsn_cap));
 		wlan_crypto_set_vdev_param(adapter->vdev,
 					   WLAN_CRYPTO_PARAM_RSN_CAP, rsn_cap);
-#endif
 	} else if (gen_ie[0] == DOT11F_EID_WPA) {
 		/* Validity checks */
 		if ((gen_ie_len < DOT11F_IE_WPA_MIN_LEN) ||
@@ -5503,24 +5499,6 @@ static void hdd_set_mfp_enable(struct csr_roam_profile *roam_profile)
 }
 #endif
 
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
-static inline QDF_STATUS
-hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
-				    uint8_t *ie_ptr,
-				    uint16_t ie_len)
-{
-	return wlan_set_vdev_crypto_prarams_from_ie(vdev, ie_ptr, ie_len);
-}
-#else
-static inline QDF_STATUS
-hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
-				    uint8_t *ie_ptr,
-				    uint16_t ie_len)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 /**
  * hdd_set_genie_to_csr() - set genie to csr
  * @adapter: pointer to adapter
@@ -5602,7 +5580,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 			 *rsn_auth_type, rsn_encrypt_type, mc_rsn_encrypt_type);
 	}
 
-	if (QDF_STATUS_SUCCESS != hdd_set_vdev_crypto_prarams_from_ie(
+	if (QDF_STATUS_SUCCESS != wlan_set_vdev_crypto_prarams_from_ie(
 				  adapter->vdev, security_ie,
 				  (security_ie[1] + 2)))
 		hdd_err("Failed to set the crypto params from IE");
