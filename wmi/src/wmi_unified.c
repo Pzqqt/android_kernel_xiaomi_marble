@@ -27,6 +27,7 @@
 #include "qdf_platform.h"
 #ifdef WMI_EXT_DBG
 #include "qdf_list.h"
+#include "qdf_atomic.h"
 #endif
 
 #ifndef WMI_NON_TLV_SUPPORT
@@ -35,271 +36,6 @@
 
 #include <linux/debugfs.h>
 #include <target_if.h>
-#ifdef WMI_EXT_DBG
-#include "qdf_atomic.h"
-
-/**
- * wmi_ext_dbg_msg_enqueue() - enqueue wmi message
- *
- * @wmi_handle: wmi handler
- *
- * Return: size of wmi message queue after enqueue
- */
-static uint32_t wmi_ext_dbg_msg_enqueue(struct wmi_unified *wmi_handle,
-					struct wmi_ext_dbg_msg *msg)
-{
-	uint32_t list_size;
-
-	qdf_spinlock_acquire(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
-	qdf_list_insert_back_size(&wmi_handle->wmi_ext_dbg_msg_queue,
-				  &msg->node, &list_size);
-	qdf_spinlock_release(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
-
-	return list_size;
-}
-
-/**
- * wmi_ext_dbg_msg_dequeue() - dequeue wmi message
- *
- * @wmi_handle: wmi handler
- *
- * Return: wmi msg on success else NULL
- */
-static struct wmi_ext_dbg_msg *wmi_ext_dbg_msg_dequeue(struct wmi_unified
-						       *wmi_handle)
-{
-	qdf_list_node_t *list_node = NULL;
-
-	qdf_spinlock_acquire(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
-	qdf_list_remove_front(&wmi_handle->wmi_ext_dbg_msg_queue, &list_node);
-	qdf_spinlock_release(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
-
-	if (!list_node)
-		return NULL;
-
-	return qdf_container_of(list_node, struct wmi_ext_dbg_msg, node);
-}
-
-/**
- * wmi_ext_dbg_msg_record() - record wmi messages
- *
- * @wmi_handle: wmi handler
- * @buf: wmi message buffer
- * @len: wmi message length
- * @type: wmi message type
- *
- * Return: QDF_STATUS_SUCCESS on successful recording else failure.
- */
-static QDF_STATUS wmi_ext_dbg_msg_record(struct wmi_unified *wmi_handle,
-					 uint8_t *buf, uint32_t len,
-					 enum WMI_MSG_TYPE type)
-{
-	struct wmi_ext_dbg_msg *msg;
-	uint32_t list_size;
-
-	msg = wmi_ext_dbg_msg_get(len);
-	if (!msg)
-		return QDF_STATUS_E_NOMEM;
-
-	msg->len = len;
-	msg->type = type;
-	qdf_mem_copy(msg->buf, buf, len);
-	msg->ts = qdf_get_log_timestamp();
-	list_size = wmi_ext_dbg_msg_enqueue(wmi_handle, msg);
-
-	if (list_size >= wmi_handle->wmi_ext_dbg_msg_queue_size) {
-		msg = wmi_ext_dbg_msg_dequeue(wmi_handle);
-		wmi_ext_dbg_msg_put(msg);
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wmi_ext_dbg_msg_cmd_record() - record wmi command messages
- *
- * @wmi_handle: wmi handler
- * @buf: wmi command buffer
- * @len: wmi command message length
- *
- * Return: QDF_STATUS_SUCCESS on successful recording else failure.
- */
-static QDF_STATUS wmi_ext_dbg_msg_cmd_record(struct wmi_unified *wmi_handle,
-					     uint8_t *buf, uint32_t len)
-{
-	return wmi_ext_dbg_msg_record(wmi_handle, buf, len,
-				      WMI_MSG_TYPE_CMD);
-}
-
-/**
- * wmi_ext_dbg_msg_event_record() - record wmi event messages
- *
- * @wmi_handle: wmi handler
- * @buf: wmi event buffer
- * @len: wmi event message length
- *
- * Return: QDF_STATUS_SUCCESS on successful recording else failure.
- */
-static QDF_STATUS wmi_ext_dbg_msg_event_record(struct wmi_unified *wmi_handle,
-					       uint8_t *buf, uint32_t len)
-{
-	uint32_t id;
-
-	id = WMI_GET_FIELD(buf, WMI_CMD_HDR, COMMANDID);
-	if (id != wmi_handle->wmi_events[wmi_diag_event_id])
-		return wmi_ext_dbg_msg_record(wmi_handle, buf, len,
-					      WMI_MSG_TYPE_EVENT);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wmi_ext_dbg_msg_queue_init() - create debugfs queue and associated lock
- *
- * @wmi_handle: wmi handler
- *
- * Return: none
- */
-static void wmi_ext_dbg_msg_queue_init(struct wmi_unified *wmi_handle)
-{
-	qdf_list_create(&wmi_handle->wmi_ext_dbg_msg_queue,
-			wmi_handle->wmi_ext_dbg_msg_queue_size);
-	qdf_spinlock_create(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
-}
-
-/**
- * wmi_ext_dbg_msg_queue_deinit() - destroy debugfs queue and associated lock
- *
- * @wmi_handle: wmi handler
- *
- * Return: none
- */
-static void wmi_ext_dbg_msg_queue_deinit(struct wmi_unified *wmi_handle)
-{
-	qdf_list_destroy(&wmi_handle->wmi_ext_dbg_msg_queue);
-	qdf_spinlock_destroy(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
-}
-
-/**
- * wmi_ext_dbg_msg_show() - debugfs function to display whole content of
- * wmi command/event messages including headers.
- *
- * @file: qdf debugfs file handler
- * @arg: pointer to wmi handler
- *
- * Return: QDF_STATUS_SUCCESS if all the messages are shown successfully,
- * else QDF_STATUS_E_AGAIN if more data to show.
- */
-static QDF_STATUS wmi_ext_dbg_msg_show(qdf_debugfs_file_t file, void *arg)
-{
-	struct wmi_unified *wmi_handle = (struct wmi_unified *)arg;
-	struct wmi_ext_dbg_msg *msg;
-	uint64_t secs, usecs;
-
-	msg = wmi_ext_dbg_msg_dequeue(wmi_handle);
-	if (!msg)
-		return QDF_STATUS_SUCCESS;
-
-	qdf_debugfs_printf(file, "%s: 0x%x\n",
-			   msg->type == WMI_MSG_TYPE_CMD ? "COMMAND" :
-			   "EVENT", WMI_GET_FIELD(msg->buf, WMI_CMD_HDR,
-						  COMMANDID));
-	qdf_log_timestamp_to_secs(msg->ts, &secs, &usecs);
-	qdf_debugfs_printf(file, "Time: %llu.%llu\n", secs, usecs);
-	qdf_debugfs_printf(file, "Length:%d\n", msg->len);
-	qdf_debugfs_hexdump(file, msg->buf, msg->len,
-			    WMI_EXT_DBG_DUMP_ROW_SIZE,
-			    WMI_EXT_DBG_DUMP_GROUP_SIZE);
-	qdf_debugfs_printf(file, "\n");
-
-	if (qdf_debugfs_overflow(file)) {
-		qdf_spinlock_acquire(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
-		qdf_list_insert_front(&wmi_handle->wmi_ext_dbg_msg_queue,
-				      &msg->node);
-		qdf_spinlock_release(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
-
-	} else {
-		wmi_ext_dbg_msg_put(msg);
-	}
-
-	return QDF_STATUS_E_AGAIN;
-}
-
-/**
- * wmi_ext_dbg_msg_write() - debugfs write not supported
- *
- * @priv: private data
- * @buf: received data buffer
- * @len: length of received buffer
- *
- * Return: QDF_STATUS_E_NOSUPPORT.
- */
-static QDF_STATUS wmi_ext_dbg_msg_write(void *priv, const char *buf,
-					qdf_size_t len)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
-static struct qdf_debugfs_fops wmi_ext_dbgfs_ops = {
-	.show		= wmi_ext_dbg_msg_show,
-	.write		= wmi_ext_dbg_msg_write,
-	.priv		= NULL,
-};
-
-/**
- * wmi_ext_debugfs_init() - init debugfs items for extended wmi dump.
- *
- * @wmi_handle: wmi handler
- *
- * Return: QDF_STATUS_SUCCESS if debugfs is initialized else
- * QDF_STATUS_E_FAILURE
- */
-static QDF_STATUS wmi_ext_dbgfs_init(struct wmi_unified *wmi_handle)
-{
-	qdf_dentry_t dentry;
-
-	dentry  = qdf_debugfs_create_dir(WMI_EXT_DBG_DIR, NULL);
-	if (!dentry) {
-		WMI_LOGE("error while creating extended wmi debugfs dir");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	wmi_ext_dbgfs_ops.priv = wmi_handle;
-	if (!qdf_debugfs_create_file(WMI_EXT_DBG_FILE, WMI_EXT_DBG_FILE_PERM,
-				     dentry, &wmi_ext_dbgfs_ops)) {
-		qdf_debugfs_remove_dir(dentry);
-		WMI_LOGE("error while creating extended wmi debugfs file");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	wmi_handle->wmi_ext_dbg_dentry = dentry;
-	wmi_handle->wmi_ext_dbg_msg_queue_size = WMI_EXT_DBG_QUEUE_SIZE;
-	wmi_ext_dbg_msg_queue_init(wmi_handle);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wmi_ext_debugfs_deinit() - cleanup/deinit debugfs items of extended wmi dump.
- *
- * @wmi_handle: wmi handler
- *
- * Return: QDF_STATUS_SUCCESS if cleanup is successful
- */
-static QDF_STATUS wmi_ext_dbgfs_deinit(struct wmi_unified *wmi_handle)
-{
-	struct wmi_ext_dbg_msg *msg;
-
-	while ((msg = wmi_ext_dbg_msg_dequeue(wmi_handle)))
-		wmi_ext_dbg_msg_put(msg);
-
-	wmi_ext_dbg_msg_queue_deinit(wmi_handle);
-	qdf_debugfs_remove_dir_recursive(wmi_handle->wmi_ext_dbg_dentry);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif /*WMI_EXT_DBG */
 
 /* This check for CONFIG_WIN temporary added due to redeclaration compilation
 error in MCL. Error is caused due to inclusion of wmi.h in wmi_unified_api.h
@@ -590,6 +326,271 @@ uint32_t wmi_mgmt_log_max_entry = WMI_MGMT_EVENT_DEBUG_MAX_ENTRY;
 uint32_t wmi_diag_log_max_entry = WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY;
 uint32_t wmi_record_max_length = WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH;
 uint32_t wmi_display_size = 100;
+
+#ifdef WMI_EXT_DBG
+
+/**
+ * wmi_ext_dbg_msg_enqueue() - enqueue wmi message
+ *
+ * @wmi_handle: wmi handler
+ *
+ * Return: size of wmi message queue after enqueue
+ */
+static uint32_t wmi_ext_dbg_msg_enqueue(struct wmi_unified *wmi_handle,
+					struct wmi_ext_dbg_msg *msg)
+{
+	uint32_t list_size;
+
+	qdf_spinlock_acquire(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
+	qdf_list_insert_back_size(&wmi_handle->wmi_ext_dbg_msg_queue,
+				  &msg->node, &list_size);
+	qdf_spinlock_release(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
+
+	return list_size;
+}
+
+/**
+ * wmi_ext_dbg_msg_dequeue() - dequeue wmi message
+ *
+ * @wmi_handle: wmi handler
+ *
+ * Return: wmi msg on success else NULL
+ */
+static struct wmi_ext_dbg_msg *wmi_ext_dbg_msg_dequeue(struct wmi_unified
+						       *wmi_handle)
+{
+	qdf_list_node_t *list_node = NULL;
+
+	qdf_spinlock_acquire(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
+	qdf_list_remove_front(&wmi_handle->wmi_ext_dbg_msg_queue, &list_node);
+	qdf_spinlock_release(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
+
+	if (!list_node)
+		return NULL;
+
+	return qdf_container_of(list_node, struct wmi_ext_dbg_msg, node);
+}
+
+/**
+ * wmi_ext_dbg_msg_record() - record wmi messages
+ *
+ * @wmi_handle: wmi handler
+ * @buf: wmi message buffer
+ * @len: wmi message length
+ * @type: wmi message type
+ *
+ * Return: QDF_STATUS_SUCCESS on successful recording else failure.
+ */
+static QDF_STATUS wmi_ext_dbg_msg_record(struct wmi_unified *wmi_handle,
+					 uint8_t *buf, uint32_t len,
+					 enum WMI_MSG_TYPE type)
+{
+	struct wmi_ext_dbg_msg *msg;
+	uint32_t list_size;
+
+	msg = wmi_ext_dbg_msg_get(len);
+	if (!msg)
+		return QDF_STATUS_E_NOMEM;
+
+	msg->len = len;
+	msg->type = type;
+	qdf_mem_copy(msg->buf, buf, len);
+	msg->ts = qdf_get_log_timestamp();
+	list_size = wmi_ext_dbg_msg_enqueue(wmi_handle, msg);
+
+	if (list_size >= wmi_handle->wmi_ext_dbg_msg_queue_size) {
+		msg = wmi_ext_dbg_msg_dequeue(wmi_handle);
+		wmi_ext_dbg_msg_put(msg);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wmi_ext_dbg_msg_cmd_record() - record wmi command messages
+ *
+ * @wmi_handle: wmi handler
+ * @buf: wmi command buffer
+ * @len: wmi command message length
+ *
+ * Return: QDF_STATUS_SUCCESS on successful recording else failure.
+ */
+static QDF_STATUS wmi_ext_dbg_msg_cmd_record(struct wmi_unified *wmi_handle,
+					     uint8_t *buf, uint32_t len)
+{
+	return wmi_ext_dbg_msg_record(wmi_handle, buf, len,
+				      WMI_MSG_TYPE_CMD);
+}
+
+/**
+ * wmi_ext_dbg_msg_event_record() - record wmi event messages
+ *
+ * @wmi_handle: wmi handler
+ * @buf: wmi event buffer
+ * @len: wmi event message length
+ *
+ * Return: QDF_STATUS_SUCCESS on successful recording else failure.
+ */
+static QDF_STATUS wmi_ext_dbg_msg_event_record(struct wmi_unified *wmi_handle,
+					       uint8_t *buf, uint32_t len)
+{
+	uint32_t id;
+
+	id = WMI_GET_FIELD(buf, WMI_CMD_HDR, COMMANDID);
+	if (id != wmi_handle->wmi_events[wmi_diag_event_id])
+		return wmi_ext_dbg_msg_record(wmi_handle, buf, len,
+					      WMI_MSG_TYPE_EVENT);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wmi_ext_dbg_msg_queue_init() - create debugfs queue and associated lock
+ *
+ * @wmi_handle: wmi handler
+ *
+ * Return: none
+ */
+static void wmi_ext_dbg_msg_queue_init(struct wmi_unified *wmi_handle)
+{
+	qdf_list_create(&wmi_handle->wmi_ext_dbg_msg_queue,
+			wmi_handle->wmi_ext_dbg_msg_queue_size);
+	qdf_spinlock_create(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
+}
+
+/**
+ * wmi_ext_dbg_msg_queue_deinit() - destroy debugfs queue and associated lock
+ *
+ * @wmi_handle: wmi handler
+ *
+ * Return: none
+ */
+static void wmi_ext_dbg_msg_queue_deinit(struct wmi_unified *wmi_handle)
+{
+	qdf_list_destroy(&wmi_handle->wmi_ext_dbg_msg_queue);
+	qdf_spinlock_destroy(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
+}
+
+/**
+ * wmi_ext_dbg_msg_show() - debugfs function to display whole content of
+ * wmi command/event messages including headers.
+ *
+ * @file: qdf debugfs file handler
+ * @arg: pointer to wmi handler
+ *
+ * Return: QDF_STATUS_SUCCESS if all the messages are shown successfully,
+ * else QDF_STATUS_E_AGAIN if more data to show.
+ */
+static QDF_STATUS wmi_ext_dbg_msg_show(qdf_debugfs_file_t file, void *arg)
+{
+	struct wmi_unified *wmi_handle = (struct wmi_unified *)arg;
+	struct wmi_ext_dbg_msg *msg;
+	uint64_t secs, usecs;
+
+	msg = wmi_ext_dbg_msg_dequeue(wmi_handle);
+	if (!msg)
+		return QDF_STATUS_SUCCESS;
+
+	qdf_debugfs_printf(file, "%s: 0x%x\n",
+			   msg->type == WMI_MSG_TYPE_CMD ? "COMMAND" :
+			   "EVENT", WMI_GET_FIELD(msg->buf, WMI_CMD_HDR,
+						  COMMANDID));
+	qdf_log_timestamp_to_secs(msg->ts, &secs, &usecs);
+	qdf_debugfs_printf(file, "Time: %llu.%llu\n", secs, usecs);
+	qdf_debugfs_printf(file, "Length:%d\n", msg->len);
+	qdf_debugfs_hexdump(file, msg->buf, msg->len,
+			    WMI_EXT_DBG_DUMP_ROW_SIZE,
+			    WMI_EXT_DBG_DUMP_GROUP_SIZE);
+	qdf_debugfs_printf(file, "\n");
+
+	if (qdf_debugfs_overflow(file)) {
+		qdf_spinlock_acquire(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
+		qdf_list_insert_front(&wmi_handle->wmi_ext_dbg_msg_queue,
+				      &msg->node);
+		qdf_spinlock_release(&wmi_handle->wmi_ext_dbg_msg_queue_lock);
+
+	} else {
+		wmi_ext_dbg_msg_put(msg);
+	}
+
+	return QDF_STATUS_E_AGAIN;
+}
+
+/**
+ * wmi_ext_dbg_msg_write() - debugfs write not supported
+ *
+ * @priv: private data
+ * @buf: received data buffer
+ * @len: length of received buffer
+ *
+ * Return: QDF_STATUS_E_NOSUPPORT.
+ */
+static QDF_STATUS wmi_ext_dbg_msg_write(void *priv, const char *buf,
+					qdf_size_t len)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static struct qdf_debugfs_fops wmi_ext_dbgfs_ops = {
+	.show		= wmi_ext_dbg_msg_show,
+	.write		= wmi_ext_dbg_msg_write,
+	.priv		= NULL,
+};
+
+/**
+ * wmi_ext_debugfs_init() - init debugfs items for extended wmi dump.
+ *
+ * @wmi_handle: wmi handler
+ *
+ * Return: QDF_STATUS_SUCCESS if debugfs is initialized else
+ * QDF_STATUS_E_FAILURE
+ */
+static QDF_STATUS wmi_ext_dbgfs_init(struct wmi_unified *wmi_handle)
+{
+	qdf_dentry_t dentry;
+
+	dentry  = qdf_debugfs_create_dir(WMI_EXT_DBG_DIR, NULL);
+	if (!dentry) {
+		WMI_LOGE("error while creating extended wmi debugfs dir");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wmi_ext_dbgfs_ops.priv = wmi_handle;
+	if (!qdf_debugfs_create_file(WMI_EXT_DBG_FILE, WMI_EXT_DBG_FILE_PERM,
+				     dentry, &wmi_ext_dbgfs_ops)) {
+		qdf_debugfs_remove_dir(dentry);
+		WMI_LOGE("error while creating extended wmi debugfs file");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wmi_handle->wmi_ext_dbg_dentry = dentry;
+	wmi_handle->wmi_ext_dbg_msg_queue_size = WMI_EXT_DBG_QUEUE_SIZE;
+	wmi_ext_dbg_msg_queue_init(wmi_handle);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wmi_ext_debugfs_deinit() - cleanup/deinit debugfs items of extended wmi dump.
+ *
+ * @wmi_handle: wmi handler
+ *
+ * Return: QDF_STATUS_SUCCESS if cleanup is successful
+ */
+static QDF_STATUS wmi_ext_dbgfs_deinit(struct wmi_unified *wmi_handle)
+{
+	struct wmi_ext_dbg_msg *msg;
+
+	while ((msg = wmi_ext_dbg_msg_dequeue(wmi_handle)))
+		wmi_ext_dbg_msg_put(msg);
+
+	wmi_ext_dbg_msg_queue_deinit(wmi_handle);
+	qdf_debugfs_remove_dir_recursive(wmi_handle->wmi_ext_dbg_dentry);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif /*WMI_EXT_DBG */
 
 /**
  * wmi_log_init() - Initialize WMI event logging
