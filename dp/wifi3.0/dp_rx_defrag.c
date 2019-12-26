@@ -1026,11 +1026,21 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 		peer->rx_tid[tid].dst_ring_desc;
 	hal_ring_handle_t hal_srng = soc->reo_reinject_ring.hal_srng;
 	struct dp_rx_desc *rx_desc = peer->rx_tid[tid].head_frag_desc;
+	struct dp_rx_reorder_array_elem *rx_reorder_array_elem =
+						peer->rx_tid[tid].array;
+	qdf_nbuf_t nbuf_head;
 
-	head = dp_ipa_handle_rx_reo_reinject(soc, head);
-	if (qdf_unlikely(!head)) {
+	nbuf_head = dp_ipa_handle_rx_reo_reinject(soc, head);
+	if (qdf_unlikely(!nbuf_head)) {
 		dp_err_rl("IPA RX REO reinject failed");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* update new allocated skb in case IPA is enabled */
+	if (nbuf_head != head) {
+		head = nbuf_head;
+		rx_desc->nbuf = head;
+		rx_reorder_array_elem->head = head;
 	}
 
 	ent_ring_desc = hal_srng_src_get_next(soc->hal_soc, hal_srng);

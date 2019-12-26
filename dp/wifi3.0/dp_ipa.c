@@ -1802,6 +1802,69 @@ bool dp_ipa_is_mdm_platform(void)
 #endif
 
 /**
+ * dp_ipa_frag_nbuf_linearize - linearize nbuf for IPA
+ * @soc: soc
+ * @nbuf: source skb
+ *
+ * Return: new nbuf if success and otherwise NULL
+ */
+static qdf_nbuf_t dp_ipa_frag_nbuf_linearize(struct dp_soc *soc,
+					     qdf_nbuf_t nbuf)
+{
+	uint8_t *src_nbuf_data;
+	uint8_t *dst_nbuf_data;
+	qdf_nbuf_t dst_nbuf;
+	qdf_nbuf_t temp_nbuf = nbuf;
+	uint32_t nbuf_len = qdf_nbuf_len(nbuf);
+	bool is_nbuf_head = true;
+	uint32_t copy_len = 0;
+
+	dst_nbuf = qdf_nbuf_alloc(soc->osdev, RX_BUFFER_SIZE,
+				  RX_BUFFER_RESERVATION, RX_BUFFER_ALIGNMENT,
+				  FALSE);
+
+	if (!dst_nbuf) {
+		dp_err_rl("nbuf allocate fail");
+		return NULL;
+	}
+
+	if ((nbuf_len + L3_HEADER_PADDING) > RX_BUFFER_SIZE) {
+		qdf_nbuf_free(dst_nbuf);
+		dp_err_rl("nbuf is jumbo data");
+		return NULL;
+	}
+
+	/* prepeare to copy all data into new skb */
+	dst_nbuf_data = qdf_nbuf_data(dst_nbuf);
+	while (temp_nbuf) {
+		src_nbuf_data = qdf_nbuf_data(temp_nbuf);
+		/* first head nbuf */
+		if (is_nbuf_head) {
+			qdf_mem_copy(dst_nbuf_data, src_nbuf_data,
+				     RX_PKT_TLVS_LEN);
+			/* leave extra 2 bytes L3_HEADER_PADDING */
+			dst_nbuf_data += (RX_PKT_TLVS_LEN + L3_HEADER_PADDING);
+			src_nbuf_data += RX_PKT_TLVS_LEN;
+			copy_len = qdf_nbuf_headlen(temp_nbuf) -
+						RX_PKT_TLVS_LEN;
+			temp_nbuf = qdf_nbuf_get_ext_list(temp_nbuf);
+			is_nbuf_head = false;
+		} else {
+			copy_len = qdf_nbuf_len(temp_nbuf);
+			temp_nbuf = qdf_nbuf_queue_next(temp_nbuf);
+		}
+		qdf_mem_copy(dst_nbuf_data, src_nbuf_data, copy_len);
+		dst_nbuf_data += copy_len;
+	}
+
+	qdf_nbuf_set_len(dst_nbuf, nbuf_len);
+	/* copy is done, free original nbuf */
+	qdf_nbuf_free(nbuf);
+
+	return dst_nbuf;
+}
+
+/**
  * dp_ipa_handle_rx_reo_reinject - Handle RX REO reinject skb buffer
  * @soc: soc
  * @nbuf: skb
@@ -1810,7 +1873,6 @@ bool dp_ipa_is_mdm_platform(void)
  */
 qdf_nbuf_t dp_ipa_handle_rx_reo_reinject(struct dp_soc *soc, qdf_nbuf_t nbuf)
 {
-	uint8_t *rx_pkt_tlvs;
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return nbuf;
@@ -1819,33 +1881,11 @@ qdf_nbuf_t dp_ipa_handle_rx_reo_reinject(struct dp_soc *soc, qdf_nbuf_t nbuf)
 	if (!qdf_atomic_read(&soc->ipa_pipes_enabled))
 		return nbuf;
 
-	/* Linearize the skb since IPA assumes linear buffer */
-	if (qdf_likely(qdf_nbuf_is_frag(nbuf))) {
-		if (qdf_nbuf_linearize(nbuf)) {
-			dp_err_rl("nbuf linearize failed");
-			return NULL;
-		}
-	}
+	if (!qdf_nbuf_is_frag(nbuf))
+		return nbuf;
 
-	rx_pkt_tlvs = qdf_mem_malloc(RX_PKT_TLVS_LEN);
-	if (!rx_pkt_tlvs) {
-		dp_err_rl("rx_pkt_tlvs alloc failed");
-		return NULL;
-	}
-
-	qdf_mem_copy(rx_pkt_tlvs, qdf_nbuf_data(nbuf), RX_PKT_TLVS_LEN);
-
-	/* Pad L3_HEADER_PADDING before ethhdr and after rx_pkt_tlvs */
-	qdf_nbuf_push_head(nbuf, L3_HEADER_PADDING);
-
-	qdf_mem_copy(qdf_nbuf_data(nbuf), rx_pkt_tlvs, RX_PKT_TLVS_LEN);
-
-	/* L3_HEADDING_PADDING is not accounted for real skb length */
-	qdf_nbuf_set_len(nbuf, qdf_nbuf_len(nbuf) - L3_HEADER_PADDING);
-
-	qdf_mem_free(rx_pkt_tlvs);
-
-	return nbuf;
+	/* linearize skb for IPA */
+	return dp_ipa_frag_nbuf_linearize(soc, nbuf);
 }
 
 #endif

@@ -1244,7 +1244,8 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 
 		if (qdf_unlikely((msdu_list.rbm[0] != DP_WBM2SW_RBM) &&
 				(msdu_list.rbm[0] !=
-					HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST))) {
+					HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST) &&
+				(msdu_list.rbm[0] != DP_DEFRAG_RBM))) {
 			/* TODO */
 			/* Call appropriate handler */
 			if (!wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx)) {
