@@ -79,6 +79,7 @@ static uint32_t voc_session_id = ALL_SESSION_VSID;
 static int msm_route_ext_ec_ref;
 static bool is_custom_stereo_on;
 static bool is_ds2_on;
+static bool ffecns_freeze_event;
 static bool swap_ch;
 static bool hifi_filter_enabled;
 static int aanc_level;
@@ -22685,6 +22686,36 @@ static const struct snd_kcontrol_new hifi_filter_controls[] = {
 		msm_routing_put_hifi_filter_control),
 };
 
+static int msm_routing_get_ffecns_freeze_event_control(
+					struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = ffecns_freeze_event;
+	return 0;
+}
+
+static int msm_routing_put_ffecns_freeze_event_control(
+					struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	int ret = -EINVAL;
+
+	ffecns_freeze_event = ucontrol->value.integer.value[0];
+
+	ret = adm_set_ffecns_freeze_event(ffecns_freeze_event);
+	if (ret)
+		pr_err("%s: failed to set ffecns imc event to%d\n",
+			__func__, ffecns_freeze_event);
+
+	return ret;
+}
+
+static const struct snd_kcontrol_new use_ffecns_freeze_event_controls[] = {
+	SOC_SINGLE_EXT("FFECNS Freeze Event", SND_SOC_NOPM, 0,
+	1, 0, msm_routing_get_ffecns_freeze_event_control,
+	msm_routing_put_ffecns_freeze_event_control),
+};
+
 int msm_routing_get_rms_value_control(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol) {
 	int rc = 0;
@@ -30215,6 +30246,10 @@ static int msm_routing_probe(struct snd_soc_component *component)
 	snd_soc_add_component_controls(component,
 			hifi_filter_controls,
 			ARRAY_SIZE(hifi_filter_controls));
+
+	snd_soc_add_component_controls(component,
+			use_ffecns_freeze_event_controls,
+			ARRAY_SIZE(use_ffecns_freeze_event_controls));
 
 	snd_soc_add_component_controls(component,
 				device_pp_params_mixer_controls,
