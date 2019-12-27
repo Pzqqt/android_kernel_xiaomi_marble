@@ -105,6 +105,8 @@ int get_next_record_index(qdf_atomic_t *table_index, int array_size)
 	return record_index;
 }
 
+qdf_export_symbol(get_next_record_index);
+
 #ifdef HIF_CE_DEBUG_DATA_BUF
 void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 {
@@ -129,16 +131,22 @@ void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 	}
 }
 
+qdf_export_symbol(hif_ce_desc_data_record);
+
 void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event)
 {
 	qdf_mem_zero(event,
 		     offsetof(struct hif_ce_desc_event, data));
 }
+
+qdf_export_symbol(hif_clear_ce_desc_debug_data);
 #else
 void hif_clear_ce_desc_debug_data(struct hif_ce_desc_event *event)
 {
 	qdf_mem_zero(event, sizeof(struct hif_ce_desc_event));
 }
+
+qdf_export_symbol(hif_clear_ce_desc_debug_data);
 #endif /* HIF_CE_DEBUG_DATA_BUF */
 
 #if defined(HIF_RECORD_PADDR)
