@@ -1338,6 +1338,7 @@ struct policy_mgr_sme_cbacks {
  * @hdd_is_chan_switch_in_progress: Check if in any adater channel switch is in
  * progress
  * @wlan_hdd_set_sap_csa_reason: Set the sap csa reason in cases like NAN.
+ * @hdd_get_ap_6ghz_capable: get ap vdev 6ghz capable info from hdd ap adapter.
  */
 struct policy_mgr_hdd_cbacks {
 	void (*sap_restart_chan_switch_cb)(struct wlan_objmgr_psoc *psoc,
@@ -1356,6 +1357,8 @@ struct policy_mgr_hdd_cbacks {
 	bool (*hdd_is_cac_in_progress)(void);
 	void (*wlan_hdd_set_sap_csa_reason)(struct wlan_objmgr_psoc *psoc,
 					    uint8_t vdev_id, uint8_t reason);
+	uint32_t (*hdd_get_ap_6ghz_capable)(struct wlan_objmgr_psoc *psoc,
+					    uint8_t vdev_id);
 };
 
 
@@ -3162,18 +3165,89 @@ QDF_STATUS policy_mgr_get_hw_mode_from_idx(
  * @psoc: Pointer to soc
  * @mode: new connection mode
  *
- * Current PORed 6ghz connection is STA, SAP.
+ * Current PORed 6ghz connection modes are STA, SAP.
  *
  * Return: true if supports else false.
  */
 bool policy_mgr_is_6ghz_conc_mode_supported(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
+
+/**
+ * policy_mgr_init_ap_6ghz_capable - Init 6Ghz capable flags
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ * @ap_6ghz_capable: vdev 6ghz capable flag
+ *
+ * Init 6Ghz capable flags for active connection in policy mgr conn table
+ *
+ * Return: void
+ */
+void policy_mgr_init_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id,
+				     enum conn_6ghz_flag ap_6ghz_capable);
+
+/**
+ * policy_mgr_set_ap_6ghz_capable - Set 6Ghz capable flags to connection list
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ * @set: set or clear
+ * @ap_6ghz_capable: vdev 6ghz capable flag
+ *
+ * Set/Clear 6Ghz capable flags for active connection in policy mgr conn table
+ *
+ * Return: void
+ */
+void policy_mgr_set_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id,
+				    bool set,
+				    enum conn_6ghz_flag ap_6ghz_capable);
+
+/**
+ * policy_mgr_get_ap_6ghz_capable - Get 6Ghz capable info for a vdev
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ * @conn_flag: output conntion flags
+ *
+ * Get 6Ghz capable flag for ap vdev (SAP). When SAP on 5G, for same reason
+ * the AP needs to be moved to 6G and this API will be called to check whether
+ * AP is 6Ghz capable or not.
+ * AP is allowed on 6G band only when all of below statements are true:
+ * a. SAP config includes WPA3 security - SAE,OWE,SuiteB.
+ * b. SAP is configured by ACS range which includes any 6G channel or
+      configured by 6G Fixed channel.
+ * c. SAP has no legacy clients (client doesn't support 6G band).
+ *    legacy client (non 6ghz capable): association request frame has no
+ *    6G band global operating Class.
+ *
+ * Return: true if AP is 6ghz capable
+ */
+bool policy_mgr_get_ap_6ghz_capable(
+	struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint32_t *conn_flag);
 #else
 static inline bool policy_mgr_is_6ghz_conc_mode_supported(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode)
 {
 	return false;
 }
+
+static inline void policy_mgr_init_ap_6ghz_capable(
+	struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+	enum conn_6ghz_flag ap_6ghz_capable)
+{}
+
+static inline
+void policy_mgr_set_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id,
+				    bool set,
+				    enum conn_6ghz_flag ap_6ghz_capable)
+{}
+
+static inline bool policy_mgr_get_ap_6ghz_capable(
+	struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint32_t *conn_flag)
+{
+	return false;
+}
+
 #endif
 
 /**

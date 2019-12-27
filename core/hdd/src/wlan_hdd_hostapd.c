@@ -3198,6 +3198,90 @@ sap_restart:
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#if defined(CONFIG_BAND_6GHZ) && defined(WLAN_FEATURE_11AX)
+uint32_t hdd_get_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t keymgmt;
+	struct hdd_adapter *ap_adapter;
+	struct hdd_ap_ctx *ap_ctx;
+	struct sap_context *sap_context;
+	struct sap_config *sap_config;
+	uint32_t capable = 0;
+
+	if (!psoc) {
+		hdd_err("PSOC is NULL");
+		return 0;
+	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_HDD_ID_OBJ_MGR);
+	if (!vdev) {
+		hdd_err("vdev is NULL %d", vdev_id);
+		return 0;
+	}
+
+	ap_adapter = wlan_hdd_get_adapter_from_vdev(
+					psoc, vdev_id);
+	if (!ap_adapter) {
+		hdd_err("ap_adapter is NULL %d", vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+		return 0;
+	}
+	if (ap_adapter->device_mode != QDF_SAP_MODE) {
+		hdd_err("unexpected device mode %d", ap_adapter->device_mode);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+		return 0;
+	}
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
+	sap_config = &ap_ctx->sap_config;
+	sap_context = ap_ctx->sap_context;
+	if (QDF_IS_STATUS_ERROR(wlansap_context_get(sap_context))) {
+		hdd_err("sap_context is get failed %d", vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+		return 0;
+	}
+	/* SAP is allowed on 6GHz with explicit indication from user space:
+	 * a. SAP is started on 6Ghz already.
+	 * b. SAP is configured on 6Ghz fixed channel from userspace.
+	 * c. SAP is configured by ACS range which includes any 6Ghz channel.
+	 */
+	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
+		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(
+				ap_ctx->operating_chan_freq))
+			capable |= CONN_6GHZ_FLAG_ACS_OR_USR_ALLOWED;
+	} else {
+		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_config->chan_freq))
+			capable |= CONN_6GHZ_FLAG_ACS_OR_USR_ALLOWED;
+		else if (sap_context && WLAN_REG_IS_6GHZ_CHAN_FREQ(
+				sap_context->chan_freq))
+			capable |= CONN_6GHZ_FLAG_ACS_OR_USR_ALLOWED;
+	}
+	if (wlansap_is_6ghz_included_in_acs_range(sap_context))
+		capable |= CONN_6GHZ_FLAG_ACS_OR_USR_ALLOWED;
+
+	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (!keymgmt || (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_NONE |
+		       1 << WLAN_CRYPTO_KEY_MGMT_SAE |
+		       1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B |
+		       1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192 |
+		       1 << WLAN_CRYPTO_KEY_MGMT_OWE))) {
+		capable |= CONN_6GHZ_FLAG_SECURITY_ALLOWED;
+	}
+	capable |= CONN_6GHZ_FLAG_VALID;
+	hdd_debug("vdev_id %d keymgmt 0x%08x capable 0x%x",
+		  vdev_id, keymgmt, capable);
+	wlansap_context_put(sap_context);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+
+	return capable;
+}
+#else
+uint32_t hdd_get_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return 0;
+}
+#endif
 #endif
 
 #ifdef WLAN_FEATURE_TSF_PTP

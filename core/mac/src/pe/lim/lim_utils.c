@@ -6585,6 +6585,64 @@ void lim_update_last_processed_frame(last_processed_msg *last_processed_frm,
 	last_processed_frm->seq_num = seq_num;
 }
 
+#if defined(CONFIG_BAND_6GHZ) && defined(WLAN_FEATURE_11AX)
+static bool lim_support_6ghz_band_op_class(struct mac_context *mac_ctx,
+					   tDot11fIESuppOperatingClasses *
+					   op_class_ie)
+{
+	uint16_t i;
+
+	if (!op_class_ie->present)
+		return false;
+	for (i = 0; i < op_class_ie->num_classes; i++) {
+		if (wlan_reg_is_6ghz_op_class(mac_ctx->pdev,
+					      op_class_ie->classes[i]))
+			break;
+	}
+	if (i < op_class_ie->num_classes)
+		return true;
+
+	return false;
+}
+
+void lim_ap_check_6g_compatible_peer(struct mac_context *mac_ctx,
+				     struct pe_session *session)
+{
+	uint16_t i;
+	tpDphHashNode sta_ds;
+	bool legacy_client_present = false;
+
+	if (!LIM_IS_AP_ROLE(session))
+		return;
+
+	for (i = 1; i < session->dph.dphHashTable.size; i++) {
+		sta_ds = dph_get_hash_entry(mac_ctx, i,
+					    &session->dph.dphHashTable);
+		if (!sta_ds)
+			continue;
+		if (sta_ds->staType != STA_ENTRY_PEER)
+			continue;
+		if (!lim_support_6ghz_band_op_class(
+			mac_ctx, &sta_ds->supp_operating_classes)) {
+			legacy_client_present = true;
+			pe_debug("peer %pM 6ghz not supported",
+				 sta_ds->staAddr);
+			break;
+		}
+		pe_debug("peer %pM 6ghz supported",
+			 sta_ds->staAddr);
+	}
+	if (legacy_client_present)
+		policy_mgr_set_ap_6ghz_capable(
+			mac_ctx->psoc, session->vdev_id, false,
+			CONN_6GHZ_FLAG_NO_LEGACY_CLIENT);
+	else
+		policy_mgr_set_ap_6ghz_capable(
+			mac_ctx->psoc, session->vdev_id, true,
+			CONN_6GHZ_FLAG_NO_LEGACY_CLIENT);
+}
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 void lim_add_he_cap(tpAddStaParams add_sta_params, tpSirAssocReq assoc_req)
 {

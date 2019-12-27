@@ -1807,6 +1807,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		sta_ds->timingMeasCap = 0;
 		pe_debug("ExtCap not present");
 	}
+	lim_ap_check_6g_compatible_peer(mac_ctx, session);
 	return true;
 }
 

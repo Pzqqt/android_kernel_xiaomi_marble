@@ -1901,4 +1901,19 @@ QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 QDF_STATUS
 lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode);
 
+#if defined(CONFIG_BAND_6GHZ) && defined(WLAN_FEATURE_11AX)
+/**
+ * lim_ap_check_6g_compatible_peer() - check all client support 6Ghz band
+ * @mac_ctx: mac context
+ * @session: pe session
+ *
+ * Return: void
+ */
+void lim_ap_check_6g_compatible_peer(struct mac_context *mac_ctx,
+				     struct pe_session *session);
+#else
+static inline void lim_ap_check_6g_compatible_peer(
+	struct mac_context *mac_ctx, struct pe_session *session)
+{}
+#endif
 #endif /* __LIM_UTILS_H */

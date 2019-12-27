@@ -1446,6 +1446,15 @@ QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
 				       uint32_t *ch_cnt);
 
 /**
+ * wlansap_is_6ghz_included_in_acs_range() - check 6ghz channel included in
+ * ACS range
+ * @sap_ctx: sap context
+ *
+ * Return: QDF_STATUS
+ */
+bool wlansap_is_6ghz_included_in_acs_range(struct sap_context *sap_ctx);
+
+/**
  * wlansap_get_safe_channel_from_pcl_and_acs_range() - Get safe channel for SAP
  * restart
  * @sap_ctx: sap context

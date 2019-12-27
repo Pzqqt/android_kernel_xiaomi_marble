@@ -635,6 +635,8 @@ QDF_STATUS policy_mgr_register_hdd_cb(struct wlan_objmgr_psoc *psoc,
 		hdd_cbacks->hdd_is_chan_switch_in_progress;
 	pm_ctx->hdd_cbacks.hdd_is_cac_in_progress =
 		hdd_cbacks->hdd_is_cac_in_progress;
+	pm_ctx->hdd_cbacks.hdd_get_ap_6ghz_capable =
+		hdd_cbacks->hdd_get_ap_6ghz_capable;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -655,6 +657,7 @@ QDF_STATUS policy_mgr_deregister_hdd_cb(struct wlan_objmgr_psoc *psoc)
 	pm_ctx->hdd_cbacks.hdd_get_device_mode = NULL;
 	pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress = NULL;
 	pm_ctx->hdd_cbacks.hdd_is_cac_in_progress = NULL;
+	pm_ctx->hdd_cbacks.hdd_get_ap_6ghz_capable = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }

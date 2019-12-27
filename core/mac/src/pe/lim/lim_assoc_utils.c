@@ -3196,6 +3196,7 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 	if (dph_delete_hash_entry(mac_ctx, sta_addr, sta_id,
 		 &session_entry->dph.dphHashTable) != QDF_STATUS_SUCCESS)
 		pe_err("error deleting hash entry");
+	lim_ap_check_6g_compatible_peer(mac_ctx, session_entry);
 }
 
 /**

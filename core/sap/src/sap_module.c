@@ -2959,6 +2959,25 @@ QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool wlansap_is_6ghz_included_in_acs_range(struct sap_context *sap_ctx)
+{
+	uint32_t i;
+	uint32_t *ch_freq_list;
+
+	if (!sap_ctx || !sap_ctx->acs_cfg ||
+	    !sap_ctx->acs_cfg->master_freq_list ||
+	    !sap_ctx->acs_cfg->master_ch_list_count) {
+		sap_err("NULL parameters");
+		return false;
+	}
+	ch_freq_list = sap_ctx->acs_cfg->master_freq_list;
+	for (i = 0; i < sap_ctx->acs_cfg->master_ch_list_count; i++) {
+		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq_list[i]))
+			return true;
+	}
+	return false;
+}
+
 #if defined(FEATURE_WLAN_CH_AVOID)
 /**
  * wlansap_get_safe_channel() - Get safe channel from current regulatory

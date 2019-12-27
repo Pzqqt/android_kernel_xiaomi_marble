@@ -1014,6 +1014,31 @@ enum dbs_support {
 };
 
 /**
+ * enum conn_6ghz_flag - structure to define connection 6ghz capable info
+ * in policy mgr conn info struct
+ *
+ * @CONN_6GHZ_FLAG_VALID: The 6ghz flag is valid (has been initialized)
+ * @CONN_6GHZ_FLAG_ACS_OR_USR_ALLOWED: AP is configured in 6ghz band capable
+ *   by user:
+ *   a. ACS channel range includes 6ghz.
+ *   b. SAP is started in 6ghz fix channel.
+ * @CONN_6GHZ_FLAG_SECURITY_ALLOWED: AP has security mode which is permitted in
+ *   6ghz band.
+ * @CONN_6GHZ_FLAG_NO_LEGACY_CLIENT: AP has no legacy client connected
+ */
+enum conn_6ghz_flag {
+	CONN_6GHZ_FLAG_VALID = 0x0001,
+	CONN_6GHZ_FLAG_ACS_OR_USR_ALLOWED = 0x0002,
+	CONN_6GHZ_FLAG_SECURITY_ALLOWED = 0x0004,
+	CONN_6GHZ_FLAG_NO_LEGACY_CLIENT = 0x0008,
+};
+
+#define CONN_6GHZ_CAPABLIE (CONN_6GHZ_FLAG_VALID | \
+			     CONN_6GHZ_FLAG_ACS_OR_USR_ALLOWED | \
+			     CONN_6GHZ_FLAG_SECURITY_ALLOWED | \
+			     CONN_6GHZ_FLAG_NO_LEGACY_CLIENT)
+
+/**
  * struct policy_mgr_conc_connection_info - information of all existing
  * connections in the wlan system
  *
@@ -1026,6 +1051,7 @@ enum dbs_support {
  * @vdev_id: vdev id of the connection
  * @in_use: if the table entry is active
  * @ch_flagext: Channel extension flags.
+ * @conn_6ghz_flag: connection 6ghz capable flags
  */
 struct policy_mgr_conc_connection_info {
 	enum policy_mgr_con_mode mode;
@@ -1037,6 +1063,7 @@ struct policy_mgr_conc_connection_info {
 	uint32_t      vdev_id;
 	bool          in_use;
 	uint16_t      ch_flagext;
+	enum conn_6ghz_flag conn_6ghz_flag;
 };
 
 /**
@@ -1233,10 +1260,12 @@ struct dbs_nss {
  * @mac_id: The HW mac it is running
  * @vdev_id: vdev id
  * @channel: channel of the connection
+ * @ch_freq: channel freq in Mhz
  */
 struct connection_info {
 	uint8_t mac_id;
 	uint8_t vdev_id;
 	uint8_t channel;
+	uint32_t ch_freq;
 };
 #endif /* __WLAN_POLICY_MGR_PUBLIC_STRUCT_H */

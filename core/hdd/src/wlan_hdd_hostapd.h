@@ -109,6 +109,19 @@ void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint32_t *ch_freq);
+
+/**
+ * hdd_get_ap_6ghz_capable() - Get ap vdev 6ghz capable flags
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ *
+ * This function gets 6ghz capable information based on hdd ap adapter
+ * context.
+ *
+ * Return: uint32_t, vdev 6g capable flags from enum conn_6ghz_flag
+ */
+uint32_t hdd_get_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id);
 #endif
 
 /**
