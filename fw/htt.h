@@ -195,9 +195,10 @@
  *      htt_tx_data_hdr_information
  * 3.73 Add channel pre-calibration data upload and download messages defs for
  *      HTT_T2H_MSG_TYPE_CHAN_CALDATA and HTT_H2T_MSG_TYPE_CHAN_CALDATA
+ * 3.74 Add HTT_T2HMSG_TYPE_RX_FISA_CFG msg.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 73
+#define HTT_CURRENT_VERSION_MINOR 74
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -539,6 +540,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG      = 0x12,
     HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG  = 0x13,
     HTT_H2T_MSG_TYPE_CHAN_CALDATA          = 0x14,
+    HTT_H2T_MSG_TYPE_RX_FISA_CFG           = 0x15,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -5926,6 +5928,310 @@ enum htt_ip_da_sa_prefix {
         HTT_RX_IPV6_64FF9B,
 };
 
+
+/**
+ * @brief Host-->target HTT RX FISA configure and enable
+ * @details
+ * The host will send this command down to configure and enable the FISA
+ * operational params.
+ * Configure RXOLE_RXOLE_R0_FISA_CTRL and RXOLE_RXOLE_R0_FISA_TIMEOUT_THRESH
+ * register.
+ * Should configure both the MACs.
+ *
+ * dword0 - b'7:0   - msg_type: This will be set to HTT_H2T_MSG_TYPE_RX_FISA_CFG
+ *
+ *          b'15:8  - pdev_id:  0 indicates msg is for all LMAC rings, i.e. soc
+ *                    1, 2, 3 indicates pdev_id 0,1,2 and the msg is for that
+ *                    pdev's LMAC ring.
+ *          b'31:16 - reserved : Reserved for future use
+ *
+ * dword1 - b'0     - enable: Global FISA Enable, 0-FISA Disable, 1-Enable
+ *          b'1     - IPSEC_SKIP_SEARCH: Flow search will be skipped for IP_SEC
+ *                    packets. 1 flow search will be skipped
+ *          b'2     - NON_TCP_SKIP_SEARCH: Flow search will be skipped for Non
+ *                    tcp,udp packets
+ *          b'3     - ADD_IPV4_FIXED_HDR_LEN: Add IPV4 Fixed HDR to length
+ *                    calculation
+ *          b'4     - ADD_IPV6_FIXED_HDR_LEN: Add IPV6 Fixed HDR to length
+ *                    calculation
+ *          b'5     - ADD_TCP_FIXED_HDR_LEN: Add TCP Fixed HDR to length
+ *                    calculation
+ *          b'6     - ADD_UDP_HDR_LEN: Add UDP HDR to length calculation
+ *          b'7     - CHKSUM_CUM_IP_LEN_EN: IPV4 hdr Checksum over cumulative IP
+ *                    length
+ *                    0  L4 checksum will be provided in the RX_MSDU_END tlv
+ *                    1  IPV4 hdr checksum after adjusting for cumulative IP
+ *                       length
+ *          b'8     - DISABLE_TID_CHECK: 1- Disable TID check for MPDU Sequence
+ *                    num jump
+ *          b'9     - DISABLE_TA_CHECK: 1- Disable TA check for MPDU Sequence
+ *                    num jump
+ *          b'10    - DISABLE_QOS_CHECK: 1- Disable checking if qos/nonqos
+ *            data type switch has happend for MPDU Sequence num jump
+ *          b'11    - DISABLE_RAW_CHECK: 1- Disable checking for raw packet type
+ *            for MPDU Sequence num jump
+ *          b'12    - DISABLE_DECRYPT_ERR_CHECK: 1- Disable fisa cache commands
+ *            for decrypt errors
+ *          b'13    - DISABLE_MSDU_DROP_CHECK: 1- Ignore checking of msdu drop
+ *            while aggregating a msdu
+ *          b'17:14 - LIMIT, Aggregtion limit for number of MSDUs.
+ *                    The aggregation is done until (number of MSDUs aggregated
+ *                    < LIMIT + 1)
+ *          b'31:18 - Reserved
+ *
+ *          fisa_control_value - 32bit value FW can write to register
+ *
+ * dword2 - b'31:0  - FISA_TIMEOUT_THRESH, Timeout threshold for aggregation
+ *            Threshold value for FISA timeout (units are microseconds).
+ *            When the global timestamp exceeds this threshold, FISA
+ *            aggregation will be restarted.
+ *            A value of 0 means timeout is disabled.
+ *            Compare the threshold register with timestamp field in
+ *            flow entry to generate timeout for the flow.
+ *
+ * |31                   18 |17  16|15           8|7            0|
+ * |-------------------------------------------------------------|
+ * |        reserved               |   pdev_mask  |   msg type   |
+ * |-------------------------------------------------------------|
+ * |        reserved        |            FISA_CTRL               |
+ * |-------------------------------------------------------------|
+ * |                    FISA_TIMEOUT_THRESH                      |
+ * |-------------------------------------------------------------|
+ */
+PREPACK struct htt_h2t_msg_type_fisa_config_t {
+    A_UINT32 msg_type:8,
+             pdev_id:8,
+             reserved0:16;
+
+    /**
+     * @brief fisa_control - RXOLE_RXOLE_R0_FISA_CTRL  FISA control register
+     * [17:0]
+     */
+     union {
+         struct {
+             A_UINT32 fisa_enable:                1,
+                      ipsec_skip_search:          1,
+                      nontcp_skip_search:         1,
+                      add_ipv4_fixed_hdr_len:     1,
+                      add_ipv6_fixed_hdr_len:     1,
+                      add_tcp_fixed_hdr_len:      1,
+                      add_udp_hdr_len:            1,
+                      chksum_cum_ip_len_en:       1,
+                      disable_tid_check:          1,
+                      disable_ta_check:           1,
+                      disable_qos_check:          1,
+                      disable_raw_check:          1,
+                      disable_decrypt_err_check:  1,
+                      disable_msdu_drop_check:    1,
+                      fisa_aggr_limit:            4,
+                      reserved:                   14;
+         } fisa_control_bits;
+
+         A_UINT32 fisa_control_value;
+    } u_fisa_control;
+
+    /**
+     * @brief fisa_timeout_threshold - RXOLE_RXOLE_R0_FISA_TIMEOUT_THRESH FISA
+     * timeout threshold for aggregation. Unit in usec.
+     * [31:0]
+     */
+     A_UINT32 fisa_timeout_threshold;
+} POSTPACK;
+
+
+/* DWord 0: pdev-ID */
+#define HTT_RX_FISA_CONFIG_PDEV_ID_M                  0x0000ff00
+#define HTT_RX_FISA_CONFIG_PDEV_ID_S                  8
+#define HTT_RX_FISA_CONFIG_PDEV_ID_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_PDEV_ID_M) >> \
+                HTT_RX_FISA_CONFIG_PDEV_ID_S)
+#define HTT_RX_FISA_CONFIG_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_PDEV_ID_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value fisa config */
+#define HTT_RX_FISA_CONFIG_FISA_ENABLE_M             0x00000001
+#define HTT_RX_FISA_CONFIG_FISA_ENABLE_S             0
+#define HTT_RX_FISA_CONFIG_FISA_ENABLE_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_FISA_ENABLE_M) >> \
+                HTT_RX_FISA_CONFIG_FISA_ENABLE_S)
+#define HTT_RX_FISA_CONFIG_FISA_ENABLE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_FISA_ENABLE, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_FISA_ENABLE_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value ipsec_skip_search */
+#define HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH_M             0x00000002
+#define HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH_S             1
+#define HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH_M) >> \
+                HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH_S)
+#define HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value non_tcp_skip_search */
+#define HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH_M             0x00000004
+#define HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH_S             2
+#define HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH_M) >> \
+                HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH_S)
+#define HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value add_ipv4_fixed_hdr */
+#define HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN_M             0x00000008
+#define HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN_S             3
+#define HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN_M) >> \
+                HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN_S)
+#define HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value add_ipv6_fixed_hdr */
+#define HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN_M             0x00000010
+#define HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN_S             4
+#define HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN_M) >> \
+                HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN_S)
+#define HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value tcp_fixed_hdr_len */
+#define HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN_M           0x00000020
+#define HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN_S           5
+#define HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN_M) >> \
+                HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN_S)
+#define HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value add_udp_hdr_len */
+#define HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN_M             0x00000040
+#define HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN_S             6
+#define HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN_M) >> \
+                HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN_S)
+#define HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value chksum_cum_ip_len_en */
+#define HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN_M        0x00000080
+#define HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN_S        7
+#define HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN_M) >> \
+                HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN_S)
+#define HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value disable_tid_check */
+#define HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK_M        0x00000100
+#define HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK_S        8
+#define HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK_M) >> \
+                HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK_S)
+#define HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value disable_ta_check */
+#define HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK_M        0x00000200
+#define HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK_S        9
+#define HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK_M) >> \
+                HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK_S)
+#define HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value disable_qos_check */
+#define HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK_M        0x00000400
+#define HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK_S        10
+#define HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK_M) >> \
+                HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK_S)
+#define HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value  disable_raw_check */
+#define HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK_M        0x00000800
+#define HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK_S        11
+#define HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK_M) >> \
+                HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK_S)
+#define HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value disable_decrypt_err_check */
+#define HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK_M        0x00001000
+#define HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK_S        12
+#define HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK_M) >> \
+                HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK_S)
+#define HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value disable_msdu_drop_check */
+#define HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK_M        0x00002000
+#define HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK_S        13
+#define HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK_M) >> \
+                HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK_S)
+#define HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value fisa_aggr_limit */
+#define HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_M        0x0003c000
+#define HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_S        14
+#define HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_M) >> \
+                HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_S)
+#define HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_S)); \
+        } while (0)
+
+
 PREPACK struct htt_h2t_msg_rx_fse_setup_t {
         A_UINT32 msg_type:8,  /* HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG */
                  pdev_id:8,
@@ -5951,6 +6257,7 @@ PREPACK struct htt_h2t_msg_rx_fse_setup_t {
 
 #define HTT_RX_FSE_SETUP_SZ  (sizeof(struct htt_h2t_msg_rx_fse_setup_t))
 #define HTT_RX_FSE_OPERATION_SZ (sizeof(struct htt_h2t_msg_rx_fse_operation_t))
+#define HTT_RX_FISA_CONFIG_SZ (sizeof(struct htt_h2t_msg_type_fisa_config_t))
 
 #define HTT_RX_FSE_SETUP_HASH_314_288_M 0x07ffffff
 #define HTT_RX_FSE_SETUP_HASH_314_288_S 0
