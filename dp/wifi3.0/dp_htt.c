@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2809,10 +2809,19 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 	uint8_t trim_size;
 	size_t head_size;
 	struct cdp_tx_mgmt_comp_info *ptr_mgmt_comp_info;
+	uint32_t *msg_word;
+	uint32_t tsf_hdr;
 
 	if ((!pdev->tx_sniffer_enable) && (!pdev->mcopy_mode) &&
 	    (!pdev->bpr_enable) && (!pdev->tx_capture_enabled))
 		return QDF_STATUS_SUCCESS;
+
+	/*
+	 * get timestamp from htt_t2h_ppdu_stats_ind_hdr_t
+	 */
+	msg_word = (uint32_t *)qdf_nbuf_data(tag_buf);
+	msg_word = msg_word + 2;
+	tsf_hdr = *msg_word;
 
 	trim_size = ((pdev->mgmtctrl_frm_info.mgmt_buf +
 		      HTT_MGMT_CTRL_TLV_HDR_RESERVERD_LEN) -
@@ -2837,6 +2846,7 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 		qdf_assert_always(ptr_mgmt_comp_info);
 		ptr_mgmt_comp_info->ppdu_id = ppdu_id;
 		ptr_mgmt_comp_info->is_sgen_pkt = true;
+		ptr_mgmt_comp_info->tx_tsf = tsf_hdr;
 	} else {
 		head_size = sizeof(ppdu_id);
 		nbuf_ptr = (uint32_t *)qdf_nbuf_push_head(tag_buf, head_size);
