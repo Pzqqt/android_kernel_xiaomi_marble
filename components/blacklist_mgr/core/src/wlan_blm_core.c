@@ -719,6 +719,12 @@ blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (qdf_is_macaddr_zero(&ap_info->bssid) ||
+	    qdf_is_macaddr_group(&ap_info->bssid)) {
+		blm_err("Zero/Broadcast BSSID received, entry not added");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		blm_err("failed to acquire reject_ap_list_lock");
