@@ -2167,6 +2167,7 @@ static void sde_connector_check_status_work(struct work_struct *work)
 {
 	struct sde_connector *conn;
 	int rc = 0;
+	struct device *dev;
 
 	conn = container_of(to_delayed_work(work),
 			struct sde_connector, status_work);
@@ -2176,7 +2177,9 @@ static void sde_connector_check_status_work(struct work_struct *work)
 	}
 
 	mutex_lock(&conn->lock);
-	if (!conn->ops.check_status ||
+	dev = conn->base.dev->dev;
+
+	if (!conn->ops.check_status || dev->power.is_suspended ||
 			(conn->dpms_mode != DRM_MODE_DPMS_ON)) {
 		SDE_DEBUG("dpms mode: %d\n", conn->dpms_mode);
 		mutex_unlock(&conn->lock);
