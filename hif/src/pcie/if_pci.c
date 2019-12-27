@@ -3363,19 +3363,25 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	struct hif_pci_softc *pci_sc = HIF_GET_PCI_SOFTC(scn);
 	struct CE_attr *host_ce_conf = ce_sc->host_ce_config;
 
-	/* do wake irq assignment */
-	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "WAKE",
-					  &msi_data_count, &msi_data_start,
-					  &msi_irq_start);
-	if (ret)
-		return ret;
+	if (!scn->disable_wake_irq) {
+		/* do wake irq assignment */
+		ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "WAKE",
+						  &msi_data_count,
+						  &msi_data_start,
+						  &msi_irq_start);
+		if (ret)
+			return ret;
 
-	scn->wake_irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_irq_start);
-	ret = pfrm_request_irq(scn->qdf_dev->dev, scn->wake_irq,
-			       hif_wake_interrupt_handler,
-			       IRQF_NO_SUSPEND, "wlan_wake_irq", scn);
-	if (ret)
-		return ret;
+		scn->wake_irq = pld_get_msi_irq(scn->qdf_dev->dev,
+						msi_irq_start);
+
+		ret = pfrm_request_irq(scn->qdf_dev->dev, scn->wake_irq,
+				       hif_wake_interrupt_handler,
+				       IRQF_NO_SUSPEND, "wlan_wake_irq", scn);
+
+		if (ret)
+			return ret;
+	}
 
 	/* do ce irq assignments */
 	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
@@ -3436,9 +3442,11 @@ free_irq:
 	}
 
 free_wake_irq:
-	pfrm_free_irq(scn->qdf_dev->dev,
-		      scn->wake_irq, scn->qdf_dev->dev);
-	scn->wake_irq = 0;
+	if (!scn->disable_wake_irq) {
+		pfrm_free_irq(scn->qdf_dev->dev,
+			      scn->wake_irq, scn->qdf_dev->dev);
+		scn->wake_irq = 0;
+	}
 
 	return ret;
 }

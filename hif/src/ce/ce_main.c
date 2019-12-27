@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3194,6 +3194,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		hif_state->target_ce_config_sz =
 					sizeof(target_ce_config_wlan_qcn9000);
 		scn->ce_count = QCN_9000_CE_COUNT;
+		scn->disable_wake_irq = 1;
 		break;
 	case TARGET_TYPE_QCA6390:
 		hif_state->host_ce_config = host_ce_config_wlan_qca6390;
