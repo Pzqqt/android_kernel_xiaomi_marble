@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,8 +23,8 @@
 #define PCI_CFG_TO_DISABLE_L1SS_STATES(pdev, addr) \
 { \
 	uint32_t lcr_val; \
-	pci_read_config_dword(pdev, addr, &lcr_val); \
-	pci_write_config_dword(pdev, addr, (lcr_val & ~0x0000000f)); \
+	pfrm_read_config_dword(pdev, addr, &lcr_val); \
+	pfrm_write_config_dword(pdev, addr, (lcr_val & ~0x0000000f)); \
 }
 #else
 #define PCI_CFG_TO_DISABLE_L1SS_STATES(pdev, addr)

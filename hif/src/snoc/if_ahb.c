@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -271,13 +271,21 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 	for (i = 0; i < scn->ce_count; i++) {
 		if (host_ce_conf[i].flags & CE_ATTR_DISABLE_INTR)
 			continue;
-		qal_vbus_get_irq((struct qdf_pfm_hndl *)pdev,
-				 ic_irqname[HIF_IC_CE0_IRQ_OFFSET + i], &irq);
+		ret = pfrm_get_irq(&pdev->dev, (struct qdf_pfm_hndl *)pdev,
+				   ic_irqname[HIF_IC_CE0_IRQ_OFFSET + i],
+				   HIF_IC_CE0_IRQ_OFFSET + i, &irq);
+		if (ret) {
+			dev_err(&pdev->dev, "get irq failed\n");
+			ret = -1;
+			goto end;
+		}
+
 		ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + i] = irq;
-		ret = request_irq(irq ,
-				hif_ahb_interrupt_handler,
-				IRQF_TRIGGER_RISING, ic_irqname[HIF_IC_CE0_IRQ_OFFSET + i],
-				&hif_state->tasklets[i]);
+		ret = pfrm_request_irq(&pdev->dev, irq,
+				       hif_ahb_interrupt_handler,
+				       IRQF_TRIGGER_RISING,
+				       ic_irqname[HIF_IC_CE0_IRQ_OFFSET + i],
+				       &hif_state->tasklets[i]);
 		if (ret) {
 			dev_err(&pdev->dev, "ath_request_irq failed\n");
 			ret = -1;
@@ -308,18 +316,23 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
 
 	for (j = 0; j < hif_ext_group->numirq; j++) {
-		qal_vbus_get_irq((struct qdf_pfm_hndl *)pdev,
-				 ic_irqname[hif_ext_group->irq[j]], &irq);
-
+		ret = pfrm_get_irq(&pdev->dev, (struct qdf_pfm_hndl *)pdev,
+				   ic_irqname[hif_ext_group->irq[j]],
+				   hif_ext_group->irq[j], &irq);
+		if (ret) {
+			dev_err(&pdev->dev, "get irq failed\n");
+			ret = -1;
+			goto end;
+		}
 		ic_irqnum[hif_ext_group->irq[j]] = irq;
 		irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
-		ret = request_irq(irq, hif_ext_group_interrupt_handler,
-				  IRQF_TRIGGER_RISING,
-				  ic_irqname[hif_ext_group->irq[j]],
-				  hif_ext_group);
+		ret = pfrm_request_irq(scn->qdf_dev->dev,
+				       irq, hif_ext_group_interrupt_handler,
+				       IRQF_TRIGGER_RISING,
+				       ic_irqname[hif_ext_group->irq[j]],
+				       hif_ext_group);
 		if (ret) {
-			dev_err(&pdev->dev,
-				"ath_request_irq failed\n");
+			dev_err(&pdev->dev, "ath_request_irq failed\n");
 			ret = -1;
 			goto end;
 		}
@@ -363,7 +376,8 @@ void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn)
 			 */
 			for (j = 0; j < hif_ext_group->numirq; j++) {
 				irq = hif_ext_group->os_irq[j];
-				free_irq(irq, hif_ext_group);
+				pfrm_free_irq(scn->qdf_dev->dev,
+					      irq, hif_ext_group);
 			}
 		}
 	}
@@ -450,19 +464,23 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 	int mem_pa_size = 0;
 	struct hif_target_info *tgt_info = NULL;
 	struct qdf_vbus_resource *vmres = NULL;
+	QDF_STATUS status;
 
 	tgt_info = &scn->target_info;
 	/*Disable WIFI clock input*/
 	if (sc->mem) {
-		qal_vbus_get_resource((struct qdf_pfm_hndl *)pdev, &vmres,
-				      IORESOURCE_MEM, 0);
-		memres = (struct resource *)vmres;
-		if (!memres) {
+		status = pfrm_platform_get_resource(
+				scn->qdf_dev->dev,
+				(struct qdf_pfm_hndl *)pdev, &vmres,
+				IORESOURCE_MEM, 0);
+		if (QDF_IS_STATUS_ERROR(status)) {
 			HIF_INFO("%s: Failed to get IORESOURCE_MEM\n",
-								__func__);
+				 __func__);
 			return;
 		}
-		mem_pa_size = memres->end - memres->start + 1;
+		memres = (struct resource *)vmres;
+		if (memres)
+			mem_pa_size = memres->end - memres->start + 1;
 
 		/* Should not be executed on 8074 platform */
 		if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
@@ -474,9 +492,9 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 		}
 		mem = (void __iomem *)sc->mem;
 		if (mem) {
-			devm_iounmap(&pdev->dev, mem);
-			devm_release_mem_region(&pdev->dev, scn->mem_pa,
-								mem_pa_size);
+			pfrm_devm_iounmap(&pdev->dev, mem);
+			pfrm_devm_release_mem_region(&pdev->dev, scn->mem_pa,
+						     mem_pa_size);
 			sc->mem = NULL;
 		}
 	}
@@ -510,6 +528,8 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	void __iomem *mem = NULL;
 	uint32_t revision_id = 0;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
+	QDF_STATUS status;
+	struct qdf_vbus_resource *vmres = NULL;
 
 	sc->pdev = (struct pci_dev *)pdev;
 	sc->dev = &pdev->dev;
@@ -523,22 +543,30 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	memres = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	status = pfrm_platform_get_resource(&pdev->dev,
+					    (struct qdf_pfm_hndl *)pdev,
+					    &vmres,
+					    IORESOURCE_MEM, 0);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		HIF_INFO("%s: Failed to get IORESOURCE_MEM\n", __func__);
+		return -EIO;
+	}
+	memres = (struct resource *)vmres;
 	if (!memres) {
 		HIF_INFO("%s: Failed to get IORESOURCE_MEM\n", __func__);
 		return -EIO;
 	}
 
-	ret = dma_set_mask(dev, DMA_BIT_MASK(32));
+	ret = pfrm_dma_set_mask(dev, 32);
 	if (ret) {
 		HIF_INFO("ath: 32-bit DMA not available\n");
 		goto err_cleanup1;
 	}
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
-	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
+	ret = pfrm_dma_set_mask_and_coherent(dev, 32);
 #else
-	ret = dma_set_coherent_mask(dev, DMA_BIT_MASK(32));
+	ret = pfrm_dma_set_coherent_mask(dev, 32);
 #endif
 	if (ret) {
 		HIF_ERROR("%s: failed to set dma mask error = %d",
@@ -548,11 +576,16 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 
 	/* Arrange for access to Target SoC registers. */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
-	mem = devm_ioremap_resource(&pdev->dev, memres);
+	status = pfrm_devm_ioremap_resource(dev,
+					    (struct qdf_vbus_resource *)memres,
+					    &mem);
 #else
-	mem = devm_request_and_ioremap(&pdev->dev, memres);
+	status = pfrm_devm_request_and_ioremap(
+					dev,
+					(struct qdf_vbus_resource *)memres,
+					&mem);
 #endif
-	if (IS_ERR(mem)) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		HIF_INFO("ath: ioremap error\n");
 		ret = PTR_ERR(mem);
 		goto err_cleanup1;
@@ -640,20 +673,22 @@ void hif_ahb_nointrs(struct hif_softc *scn)
 	if (sc->num_msi_intrs > 0) {
 		/* MSI interrupt(s) */
 		for (i = 0; i < sc->num_msi_intrs; i++) {
-			free_irq(sc->irq + i, sc);
+			pfrm_free_irq(scn->qdf_dev->dev, sc->irq + i, sc);
 		}
 		sc->num_msi_intrs = 0;
 	} else {
 		if (!scn->per_ce_irq) {
-			free_irq(sc->irq, sc);
+			pfrm_free_irq(scn->qdf_dev->dev, sc->irq, sc);
 		} else {
 			for (i = 0; i < scn->ce_count; i++) {
 				if (host_ce_conf[i].flags
 						& CE_ATTR_DISABLE_INTR)
 					continue;
 
-				free_irq(ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + i],
-						&hif_state->tasklets[i]);
+				pfrm_free_irq(
+					scn->qdf_dev->dev,
+					ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + i],
+					&hif_state->tasklets[i]);
 			}
 			hif_ahb_deconfigure_grp_irq(scn);
 		}
