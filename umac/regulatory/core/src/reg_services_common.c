@@ -1880,6 +1880,7 @@ QDF_STATUS reg_program_default_cc(struct wlan_objmgr_pdev *pdev,
 
 	reg_info->psoc = psoc;
 	reg_info->phy_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	reg_info->num_phy = 1;
 
 	if (regdmn == 0) {
 		reg_get_default_country(&regdmn);
