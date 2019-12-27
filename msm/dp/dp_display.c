@@ -246,6 +246,30 @@ static bool dp_display_is_ready(struct dp_display_private *dp)
 		dp->hpd->alt_mode_cfg_done;
 }
 
+static void dp_audio_enable(struct dp_display_private *dp, bool enable)
+{
+	struct dp_panel *dp_panel;
+	int idx;
+
+	for (idx = DP_STREAM_0; idx < DP_STREAM_MAX; idx++) {
+		if (!dp->active_panels[idx])
+			continue;
+		dp_panel = dp->active_panels[idx];
+
+		if (dp_panel->audio_supported) {
+			if (enable) {
+				dp_panel->audio->bw_code =
+					dp->link->link_params.bw_code;
+				dp_panel->audio->lane_count =
+					dp->link->link_params.lane_count;
+				dp_panel->audio->on(dp_panel->audio);
+			} else {
+				dp_panel->audio->off(dp_panel->audio);
+			}
+		}
+	}
+}
+
 static void dp_display_update_hdcp_status(struct dp_display_private *dp,
 					bool reset)
 {
@@ -1065,7 +1089,7 @@ static int dp_display_process_hpd_low(struct dp_display_private *dp)
 
 	dp_display_state_remove(DP_STATE_CONNECTED);
 	dp->process_hpd_connect = false;
-
+	dp_audio_enable(dp, false);
 	dp_display_process_mst_hpd_low(dp);
 
 	if ((dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) ||
@@ -1148,30 +1172,6 @@ static void dp_display_stream_disable(struct dp_display_private *dp,
 	dp->ctrl->stream_off(dp->ctrl, dp_panel);
 	dp->active_panels[dp_panel->stream_id] = NULL;
 	dp->active_stream_cnt--;
-}
-
-static void dp_audio_enable(struct dp_display_private *dp, bool enable)
-{
-	struct dp_panel *dp_panel;
-	int idx;
-
-	for (idx = DP_STREAM_0; idx < DP_STREAM_MAX; idx++) {
-		if (!dp->active_panels[idx])
-			continue;
-		dp_panel = dp->active_panels[idx];
-
-		if (dp_panel->audio_supported) {
-			if (enable) {
-				dp_panel->audio->bw_code =
-					dp->link->link_params.bw_code;
-				dp_panel->audio->lane_count =
-					dp->link->link_params.lane_count;
-				dp_panel->audio->on(dp_panel->audio);
-			} else {
-				dp_panel->audio->off(dp_panel->audio);
-			}
-		}
-	}
 }
 
 static void dp_display_clean(struct dp_display_private *dp)
