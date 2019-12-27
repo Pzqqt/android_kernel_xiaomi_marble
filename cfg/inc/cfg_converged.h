@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +25,7 @@
 
 #include <wlan_scan_cfg.h>
 #include "cfg_dp.h"
+#include "cfg_hif.h"
 #include <wlan_extscan_cfg.h>
 #ifdef WLAN_SUPPORT_GREEN_AP
 #include "cfg_green_ap_params.h"
@@ -38,7 +39,8 @@
 		CFG_DP \
 		CFG_EXTSCAN_ALL \
 		CFG_GREEN_AP_ALL \
-		CFG_SPECTRAL_ALL
+		CFG_SPECTRAL_ALL \
+		CFG_HIF
 
 #endif /* __CFG_CONVERGED_H */
 

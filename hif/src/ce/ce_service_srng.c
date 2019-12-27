@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -820,6 +820,34 @@ static void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			&ring_params);
 }
 
+#ifdef WLAN_CE_INTERRUPT_THRESHOLD_CONFIG
+/**
+ * ce_status_ring_config_int_threshold() - configure ce status ring interrupt
+ *                                         thresholds
+ * @scn: hif handle
+ * @ring_params: ce srng params
+ *
+ * Return: None
+ */
+static inline
+void ce_status_ring_config_int_threshold(struct hif_softc *scn,
+					 struct hal_srng_params *ring_params)
+{
+	ring_params->intr_timer_thres_us =
+			scn->ini_cfg.ce_status_ring_timer_threshold;
+	ring_params->intr_batch_cntr_thres_entries =
+			scn->ini_cfg.ce_status_ring_batch_count_threshold;
+}
+#else
+static inline
+void ce_status_ring_config_int_threshold(struct hif_softc *scn,
+					 struct hal_srng_params *ring_params)
+{
+	ring_params->intr_timer_thres_us = 0x1000;
+	ring_params->intr_batch_cntr_thres_entries = 0x1;
+}
+#endif /* WLAN_CE_INTERRUPT_THRESHOLD_CONFIG */
+
 static void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 				struct CE_ring_state *status_ring,
 				struct CE_attr *attr)
@@ -835,8 +863,7 @@ static void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 	ring_params.num_entries = status_ring->nentries;
 
 	if (!(CE_ATTR_DISABLE_INTR & attr->flags)) {
-		ring_params.intr_timer_thres_us = 0x1000;
-		ring_params.intr_batch_cntr_thres_entries = 0x1;
+		ce_status_ring_config_int_threshold(scn, &ring_params);
 	}
 
 	status_ring->srng_ctx = hal_srng_setup(scn->hal_soc, CE_DST_STATUS,

@@ -396,20 +396,41 @@ void *hif_get_dev_ba(struct hif_opaque_softc *hif_handle)
 	return scn->mem;
 }
 qdf_export_symbol(hif_get_dev_ba);
+
+#ifdef WLAN_CE_INTERRUPT_THRESHOLD_CONFIG
 /**
- * hif_open(): hif_open
- * @qdf_ctx: QDF Context
- * @mode: Driver Mode
- * @bus_type: Bus Type
- * @cbk: CDS Callbacks
+ * hif_get_cfg_from_psoc() - Retrieve ini cfg from psoc
+ * @scn: hif context
+ * @psoc: psoc objmgr handle
  *
- * API to open HIF Context
- *
- * Return: HIF Opaque Pointer
+ * Return: None
  */
-struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
+static inline
+void hif_get_cfg_from_psoc(struct hif_softc *scn,
+			   struct wlan_objmgr_psoc *psoc)
+{
+	if (psoc) {
+		scn->ini_cfg.ce_status_ring_timer_threshold =
+			cfg_get(psoc,
+				CFG_CE_STATUS_RING_TIMER_THRESHOLD);
+		scn->ini_cfg.ce_status_ring_batch_count_threshold =
+			cfg_get(psoc,
+				CFG_CE_STATUS_RING_BATCH_COUNT_THRESHOLD);
+	}
+}
+#else
+static inline
+void hif_get_cfg_from_psoc(struct hif_softc *scn,
+			   struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif /* WLAN_CE_INTERRUPT_THRESHOLD_CONFIG */
+
+struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
+				  uint32_t mode,
 				  enum qdf_bus_type bus_type,
-				  struct hif_driver_state_callbacks *cbk)
+				  struct hif_driver_state_callbacks *cbk,
+				  struct wlan_objmgr_psoc *psoc)
 {
 	struct hif_softc *scn;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -436,6 +457,9 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 	qdf_mem_copy(&scn->callbacks, cbk,
 		     sizeof(struct hif_driver_state_callbacks));
 	scn->bus_type  = bus_type;
+
+	hif_get_cfg_from_psoc(scn, psoc);
+
 	hif_set_event_hist_mask(GET_HIF_OPAQUE_HDL(scn));
 	status = hif_bus_open(scn, bus_type);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -496,6 +520,7 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	hif_uninit_rri_on_ddr(scn);
 
 	hif_bus_close(scn);
+
 	qdf_mem_free(scn);
 }
 
