@@ -88,6 +88,59 @@ struct wlan_lmac_if_wifi_pos_tx_ops *
 	return &psoc->soc_cb.tx_ops.wifi_pos_tx_ops;
 }
 
+#ifdef CNSS_GENL
+static uint8_t *
+wifi_pos_prepare_reg_resp(uint32_t *rsp_len,
+			  struct app_reg_rsp_vdev_info *vdevs_info)
+{
+	uint32_t *nl_sign;
+	uint8_t *resp_buf;
+	struct wifi_app_reg_rsp *app_reg_rsp;
+
+	/*
+	 * allocate ENHNC_FLAGS_LEN i.e. 4bytes extra memory in app_reg_resp
+	 * to indicate NLA type response is supported for OEM request
+	 * commands.
+	 */
+	*rsp_len = (sizeof(struct app_reg_rsp_vdev_info) * vdev_idx)
+			+ sizeof(uint8_t) + ENHNC_FLAGS_LEN;
+	resp_buf = qdf_mem_malloc(*rsp_len);
+	if (!resp_buf)
+		return NULL;
+
+	app_reg_rsp = (struct wifi_app_reg_rsp *)resp_buf;
+	app_reg_rsp->num_inf = vdev_idx;
+	qdf_mem_copy(&app_reg_rsp->vdevs, vdevs_info,
+		     sizeof(struct app_reg_rsp_vdev_info) * vdev_idx);
+
+	nl_sign = (uint32_t *)&app_reg_rsp->vdevs[vdev_idx];
+	*nl_sign |= NL_ENABLE_OEM_REQ_RSP;
+
+	return resp_buf;
+}
+#else
+static uint8_t *
+wifi_pos_prepare_reg_resp(uint32_t *rsp_len,
+			  struct app_reg_rsp_vdev_info *vdevs_info)
+{
+	uint8_t *resp_buf;
+	struct wifi_app_reg_rsp *app_reg_rsp;
+
+	*rsp_len = (sizeof(struct app_reg_rsp_vdev_info) * vdev_idx)
+			+ sizeof(uint8_t);
+	resp_buf = qdf_mem_malloc(*rsp_len);
+	if (!resp_buf)
+		return NULL;
+
+	app_reg_rsp = (struct wifi_app_reg_rsp *)resp_buf;
+	app_reg_rsp->num_inf = vdev_idx;
+	qdf_mem_copy(&app_reg_rsp->vdevs, vdevs_info,
+		     sizeof(struct app_reg_rsp_vdev_info) * vdev_idx);
+
+	return resp_buf;
+}
+#endif
+
 static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
@@ -182,13 +235,15 @@ static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 
 		pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id,
 						  WLAN_WIFI_POS_CORE_ID);
-		if (pdev) {
-			data_req.data_len = req->buf_len;
-			data_req.data = req->buf;
-			tx_ops->data_req_tx(pdev, &data_req);
-			wlan_objmgr_pdev_release_ref(pdev,
-						     WLAN_WIFI_POS_CORE_ID);
+		if (!pdev) {
+			wifi_pos_err("pdev null");
+			return QDF_STATUS_E_INVAL;
 		}
+		data_req.data_len = req->buf_len;
+		data_req.data = req->buf;
+		tx_ops->data_req_tx(pdev, &data_req);
+		wlan_objmgr_pdev_release_ref(pdev,
+					     WLAN_WIFI_POS_CORE_ID);
 		break;
 	}
 
@@ -505,59 +560,6 @@ static void wifi_pos_vdev_iterator(struct wlan_objmgr_psoc *psoc,
 	vdev_info[vdev_idx].vdev_id = wlan_vdev_get_id(vdev);
 	vdev_idx++;
 }
-
-#ifdef CNSS_GENL
-static uint8_t *
-wifi_pos_prepare_reg_resp(uint32_t *rsp_len,
-			  struct app_reg_rsp_vdev_info *vdevs_info)
-{
-	uint32_t *nl_sign;
-	uint8_t *resp_buf;
-	struct wifi_app_reg_rsp *app_reg_rsp;
-
-	/*
-	 * allocate ENHNC_FLAGS_LEN i.e. 4bytes extra memory in app_reg_resp
-	 * to indicate NLA type resoponse is supported for OEM request
-	 * commands.
-	 */
-	*rsp_len = (sizeof(struct app_reg_rsp_vdev_info) * vdev_idx)
-			+ sizeof(uint8_t) + ENHNC_FLAGS_LEN;
-	resp_buf = qdf_mem_malloc(*rsp_len);
-	if (!resp_buf)
-		return NULL;
-
-	app_reg_rsp = (struct wifi_app_reg_rsp *)resp_buf;
-	app_reg_rsp->num_inf = vdev_idx;
-	qdf_mem_copy(&app_reg_rsp->vdevs, vdevs_info,
-		     sizeof(struct app_reg_rsp_vdev_info) * vdev_idx);
-
-	nl_sign = (uint32_t *)&app_reg_rsp->vdevs[vdev_idx];
-	*nl_sign |= NL_ENABLE_OEM_REQ_RSP;
-
-	return resp_buf;
-}
-#else
-static uint8_t *
-wifi_pos_prepare_reg_resp(uint32_t *rsp_len,
-			  struct app_reg_rsp_vdev_info *vdevs_info)
-{
-	uint8_t *resp_buf;
-	struct wifi_app_reg_rsp *app_reg_rsp;
-
-	*rsp_len = (sizeof(struct app_reg_rsp_vdev_info) * vdev_idx)
-			+ sizeof(uint8_t);
-	resp_buf = qdf_mem_malloc(*rsp_len);
-	if (!resp_buf)
-		return NULL;
-
-	app_reg_rsp = (struct wifi_app_reg_rsp *)resp_buf;
-	app_reg_rsp->num_inf = vdev_idx;
-	qdf_mem_copy(&app_reg_rsp->vdevs, vdevs_info,
-		     sizeof(struct app_reg_rsp_vdev_info) * vdev_idx);
-
-	return resp_buf;
-}
-#endif
 
 static QDF_STATUS wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)

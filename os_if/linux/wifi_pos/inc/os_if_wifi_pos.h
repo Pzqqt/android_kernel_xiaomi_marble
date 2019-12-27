@@ -211,5 +211,76 @@ enum cld80211_sub_attr_channel_rsp {
 
 };
 
+/**
+ * enum cld80211_sub_attr_oem_data_req - OEM data req sub attribute
+ * @CLD80211_SUB_ATTR_MSG_OEM_DATA_INVALID: Invalid OEM data request
+ * @CLD80211_SUB_ATTR_MSG_OEM_DATA_FW: Data to Firmware
+ * @CLD80211_SUB_ATTR_MSG_OEM_DATA_DRIVER: Data to driver
+ * @CLD80211_SUB_ATTR_MSG_OEM_DATA_REQ_MAX: Max number for OEM data req sub
+ * attribute
+ *
+ * OEM data request sub attributes are NLA attributes in NLA type OEM data
+ * request.
+ *
+ */
+enum cld80211_sub_attr_oem_data_req {
+	CLD80211_SUB_ATTR_MSG_OEM_DATA_INVALID = 0,
+	CLD80211_SUB_ATTR_MSG_OEM_DATA_FW = 1,
+	CLD80211_SUB_ATTR_MSG_OEM_DATA_DRIVER = 2,
+
+	/* keep last */
+	CLD80211_SUB_ATTR_MSG_OEM_DATA_REQ_AFTER_LAST,
+	CLD80211_SUB_ATTR_MSG_OEM_DATA_REQ_MAX =
+		CLD80211_SUB_ATTR_MSG_OEM_DATA_REQ_AFTER_LAST - 1
+};
+
+/**
+ * enum cld80211_sub_attr_oem_data_resp - OEM message sub attribute
+ * @CLD80211_SUB_ATTR_OEM_DATA_INVALID: Invalid oem data resp
+ * @CLD80211_SUB_ATTR_OEM_MORE_DATA: more date sub attribute
+ * @CLD80211_SUB_ATTR_BINARY_DATA: Binary data sub attribute
+ * @CLD80211_SUB_ATTR_OEM_DATA_RESP_MAX: Max number for OEM data resp
+ * sub attribute
+ *
+ * OEM message sub attributes are interface between apps and driver to
+ * process NLA type request and response messages.
+ *
+ */
+enum cld80211_sub_attr_oem_data_resp {
+	CLD80211_SUB_ATTR_OEM_DATA_INVALID = 0,
+	CLD80211_SUB_ATTR_OEM_MORE_DATA = 1,
+	CLD80211_SUB_ATTR_BINARY_DATA = 2,
+
+	/* keep last */
+	CLD80211_SUB_ATTR_OEM_DATA_RESP_AFTER_LAST,
+	CLD80211_SUB_ATTR_OEM_DATA_RESP_MAX =
+		CLD80211_SUB_ATTR_OEM_DATA_RESP_AFTER_LAST - 1
+};
+
+/**
+ * enum cld80211_sub_attr_peer_info - peer info sub attribute
+ * @CLD80211_SUB_ATTR_PEER_INVALID: Invalid peer info
+ * @CLD80211_SUB_ATTR_PEER_MAC_ADDR: peer mac address
+ * @CLD80211_SUB_ATTR_PEER_STATUS: peer status
+ * @CLD80211_SUB_ATTR_PEER_VDEV_ID: peer vdevid
+ * @CLD80211_SUB_ATTR_PEER_CAPABILITY: peer capabilities
+ * @CLD80211_SUB_ATTR_PEER_RESERVED: reserved bytes
+ * @CLD80211_SUB_ATTR_PEER_CHAN_INFO: peer channel info
+ *
+ */
+enum cld80211_sub_attr_peer_info {
+	CLD80211_SUB_ATTR_PEER_INVALID = 0,
+	CLD80211_SUB_ATTR_PEER_MAC_ADDR = 1,
+	CLD80211_SUB_ATTR_PEER_STATUS = 2,
+	CLD80211_SUB_ATTR_PEER_VDEV_ID = 3,
+	CLD80211_SUB_ATTR_PEER_CAPABILITY = 4,
+	CLD80211_SUB_ATTR_PEER_RESERVED = 5,
+	CLD80211_SUB_ATTR_PEER_CHAN_INFO = 6,
+
+	/* keep last */
+	CLD80211_SUB_ATTR_PEER_AFTER_LAST,
+	CLD80211_SUB_ATTR_PEER_MAX =
+		CLD80211_SUB_ATTR_PEER_AFTER_LAST - 1
+};
 #endif
 #endif /* _OS_IF_WIFI_POS_H_ */
