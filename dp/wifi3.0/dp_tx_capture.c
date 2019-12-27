@@ -119,12 +119,22 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 
 	ptr_tx_cap = &(pdev->tx_capture);
 
-	DP_PRINT_STATS("tx capture stats\n");
+	DP_PRINT_STATS("tx capture stats:");
+	DP_PRINT_STATS(" mgmt control enqueue stats:");
 	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
 		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
 			if (ptr_tx_cap->ctl_mgmt_q[i][j].qlen)
-				DP_PRINT_STATS(" ctl_mgmt_q[%d][%d] = queue_len[%d]\n",
-				       i, j, ptr_tx_cap->ctl_mgmt_q[i][j].qlen);
+				DP_PRINT_STATS(" ctl_mgmt_q[%d][%d] = queue_len[%d]",
+				i, j, ptr_tx_cap->ctl_mgmt_q[i][j].qlen);
+		}
+	}
+	DP_PRINT_STATS(" mgmt control retry queue stats:");
+	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
+		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
+			if (ptr_tx_cap->ctl_mgmt_q[i][j].qlen)
+				DP_PRINT_STATS(" retries_ctl_mgmt_q[%d][%d] = queue_len[%d]",
+				i, j,
+				ptr_tx_cap->retries_ctl_mgmt_q[i][j].qlen);
 		}
 	}
 
@@ -279,7 +289,8 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 		subtype = (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) >>
 			IEEE80211_FC0_SUBTYPE_SHIFT;
 
-		if (!ptr_mgmt_hdr->ppdu_id || !ptr_mgmt_hdr->tx_tsf) {
+		if (!ptr_mgmt_hdr->ppdu_id || !ptr_mgmt_hdr->tx_tsf ||
+		    (!type && !subtype)) {
 			/*
 			 * if either ppdu_id and tx_tsf are zero then
 			 * storing the payload won't be useful
@@ -2250,6 +2261,7 @@ get_mgmt_pkt_from_queue:
 				wh->i_fc[1] = (frame_ctrl_le & 0xFF00) >> 8;
 				wh->i_fc[0] = (frame_ctrl_le & 0xFF);
 
+				tx_capture_info.ppdu_desc = tmp_ppdu_desc;
 				/*
 				 * send MPDU to osif layer
 				 */
@@ -2282,6 +2294,7 @@ get_mgmt_pkt_from_queue:
 			wh->i_fc[1] = (frame_ctrl_le & 0xFF00) >> 8;
 			wh->i_fc[0] = (frame_ctrl_le & 0xFF);
 
+			tx_capture_info.ppdu_desc = ppdu_desc;
 			/*
 			 * send MPDU to osif layer
 			 */
