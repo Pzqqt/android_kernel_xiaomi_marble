@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1044,4 +1044,34 @@ bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return psoc_nan_obj->nan_caps.nan_vdev_allowed;
+}
+
+QDF_STATUS ucfg_disable_nan_discovery(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *data, uint32_t data_len)
+{
+	struct nan_disable_req *nan_req;
+	QDF_STATUS status;
+
+	nan_req = qdf_mem_malloc(sizeof(*nan_req) + data_len);
+	if (!nan_req)
+		return -ENOMEM;
+
+	nan_req->psoc = psoc;
+	nan_req->disable_2g_discovery = true;
+	nan_req->disable_5g_discovery = true;
+	if (data_len && data) {
+		nan_req->params.request_data_len = data_len;
+		qdf_mem_copy(nan_req->params.request_data, data, data_len);
+	}
+
+	nan_debug("sending NAN Disable Req");
+	status = ucfg_nan_discovery_req(nan_req, NAN_DISABLE_REQ);
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		nan_debug("Successfully sent NAN Disable request");
+	else
+		nan_err("Unable to send NAN Disable request: %u", status);
+
+	qdf_mem_free(nan_req);
+	return status;
 }

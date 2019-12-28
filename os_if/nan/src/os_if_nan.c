@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2610,34 +2610,15 @@ int os_if_nan_legacy_req(struct wlan_objmgr_psoc *psoc, const void *data,
 static int os_if_process_nan_disable_req(struct wlan_objmgr_psoc *psoc,
 					 struct nlattr **tb)
 {
-	struct nan_disable_req *nan_req;
-	uint32_t buf_len;
+	uint8_t *data;
+	uint32_t data_len;
 	QDF_STATUS status;
 
-	buf_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]);
+	data = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]);
+	data_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]);
 
-	nan_req = qdf_mem_malloc(sizeof(*nan_req) +  buf_len);
-	if (!nan_req) {
-		osif_err("Request allocation failure");
-		return -ENOMEM;
-	}
+	status = ucfg_disable_nan_discovery(psoc, data, data_len);
 
-	nan_req->psoc = psoc;
-	nan_req->disable_2g_discovery = true;
-	nan_req->disable_5g_discovery = true;
-	nan_req->params.request_data_len = buf_len;
-	nla_memcpy(nan_req->params.request_data,
-		   tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA], buf_len);
-
-	osif_debug("sending NAN Disable Req");
-	status = ucfg_nan_discovery_req(nan_req, NAN_DISABLE_REQ);
-
-	if (QDF_IS_STATUS_SUCCESS(status))
-		osif_debug("Successfully sent NAN Disable request");
-	else
-		osif_err("Unable to send NAN Disable request");
-
-	qdf_mem_free(nan_req);
 	return qdf_status_to_os_return(status);
 }
 
