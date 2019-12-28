@@ -1405,11 +1405,18 @@ typedef struct {
     (((_var) & HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS_IS_MAC_ADDR_M) >> \
      HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS_IS_MAC_ADDR_S)
 
-#define HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS_IS_peer_MAC_ADDR_SET(_var, _val) \
+#define HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS_IS_MAC_ADDR_SET(_var, _val) \
     do { \
         HTT_CHECK_SET_VAL(HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS_IS_MAC_ADDR, _val); \
         ((_var) |= ((_val) << HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS_IS_MAC_ADDR_S)); \
     } while (0)
+/* DEPRECATED
+ * The old IS_peer_MAC_ADDR_SET macro name is being retained for now,
+ * as an alias for the corrected macro name.
+ * If/when all references to the old name are removed, the definition of
+ * the old name will also be removed.
+ */
+#define HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS_IS_peer_MAC_ADDR_SET HTT_DBG_EXT_PEER_CTRL_PATH_TXRX_STATS_IS_MAC_ADDR_SET
 
 #define HTT_DBG_EXT_STATS_PEER_INFO_IS_MAC_ADDR_M 0x00000001
 #define HTT_DBG_EXT_STATS_PEER_INFO_IS_MAC_ADDR_S 0
