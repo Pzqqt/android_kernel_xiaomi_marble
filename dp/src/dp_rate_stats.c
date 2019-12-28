@@ -75,7 +75,7 @@ wlan_peer_flush_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		      WLANSTATS_COOKIE_PEER_COOKIE_OFFSET)));
 	qdf_mem_copy(buf.peer_mac, stats_ctx->mac_addr, WLAN_MAC_ADDR_LEN);
 	cdp_peer_flush_rate_stats(soc_stats_ctx->soc,
-				  stats_ctx->pdev, &buf);
+				  stats_ctx->pdev_id, &buf);
 
 	soc_stats_ctx->rxs_cache_flush++;
 	qdf_info("rxs_cache_flush: %d", soc_stats_ctx->rxs_cache_flush);
@@ -118,7 +118,7 @@ wlan_peer_flush_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 	wlan_peer_read_sojourn_average(tx_stats);
 	qdf_mem_copy(buf.peer_mac, stats_ctx->mac_addr, WLAN_MAC_ADDR_LEN);
 	cdp_peer_flush_rate_stats(soc_stats_ctx->soc,
-				  stats_ctx->pdev, &buf);
+				  stats_ctx->pdev_id, &buf);
 
 	soc_stats_ctx->txs_cache_flush++;
 	qdf_info("txs_cache_flush: %d", soc_stats_ctx->txs_cache_flush);
@@ -469,7 +469,7 @@ void wlan_peer_create_event_handler(void *pdev, enum WDI_EVENT event,
 	RATE_STATS_LOCK_CREATE(&stats->rx.lock);
 	qdf_mem_copy(stats->mac_addr, peer_info->mac_addr, QDF_MAC_ADDR_SIZE);
 	stats->peer_cookie = peer_info->cookie;
-	stats->pdev = pdev;
+	stats->pdev_id = peer_info->pdev_id;
 
 	for (idx = 0; idx < WLANSTATS_CACHE_SIZE; idx++) {
 		stats->tx.stats[idx].rix = INVALID_CACHE_IDX;
