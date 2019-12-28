@@ -3874,7 +3874,7 @@ int sde_cp_ltm_hist_interrupt(struct drm_crtc *crtc, bool en,
 	hw_dspp = sde_crtc->mixers[0].hw_dspp;
 	if (!hw_dspp) {
 		DRM_ERROR("invalid dspp\n");
-		return -EINVAL;
+		return -ENODEV;
 	}
 
 	if (en) {
