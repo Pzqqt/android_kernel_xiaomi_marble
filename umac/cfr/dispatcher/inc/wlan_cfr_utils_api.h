@@ -47,6 +47,8 @@
 #define MAX_CFR_MU_USERS 4
 #define NUM_CHAN_CAPTURE_STATUS 4
 #define NUM_CHAN_CAPTURE_REASON 6
+#define MAX_TA_RA_ENTRIES 16
+#define MAX_RESET_CFG_ENTRY 0xFFFF
 #endif
 
 enum cfrmetaversion {
@@ -326,6 +328,117 @@ struct unassoc_pool_entry {
 	bool is_valid;
 };
 
+#ifdef WLAN_ENH_CFR_ENABLE
+/**
+ * struct ta_ra_cfr_cfg - structure to store configuration of 16 groups in
+ * M_TA_RA mode
+ * filter_group_id: Filter group number for which the below filters needs to be
+ * applied
+ * bw: CFR capture will be done for packets matching the bandwidths specified
+ * within this bitmask
+ * nss: CFR capture will be done for packets matching the Nss specified within
+ * this bitmask
+ * valid_ta: Ta_addr is valid if set
+ * valid_ta_mask: Ta_addr_mask is valid if set
+ * valid_ra: Ra_addr is valid if set
+ * valid_ra_mask: Ra_addr_mask is valid if set
+ * valid_bw_mask: Bandwidth is valid if set
+ * valid_nss_mask: NSS is valid if set
+ * valid_mgmt_subtype: Mgmt_subtype is valid if set
+ * valid_ctrl_subtype: Ctrl_subtype is valid if set
+ * valid_data_subtype: Data_subtype is valid if set
+ * mgmt_subtype_filter: Managments Packets matching the subtype filter
+ * categories will be filtered in by MAC for CFR capture.
+ * ctrl_subtype_filter: Control Packets matching the subtype filter
+ * categories will be filtered in by MAC for CFR capture.
+ * data_subtype_filter: Data Packets matching the subtype filter
+ * categories will be filtered in by MAC for CFR capture.
+ * tx_addr: Packets whose transmitter address matches (tx_addr & tx_addr_mask)
+ * will be filtered in by MAC
+ * tx_addr_mask: Packets whose transmitter address matches (tx_addr &
+ * tx_addr_mask) will be filtered in by MAC
+ * rx_addr: Packets whose receiver address matches (rx_addr & rx_addr_mask)
+ * will be filtered in by MAC
+ * rx_addr_mask: Packets whose receiver address matches (rx_addr &
+ * rx_addr_mask) will be filtered in by MAC
+ */
+struct ta_ra_cfr_cfg {
+	uint8_t filter_group_id;
+	uint16_t bw                          :5,
+		 nss                         :8,
+		 rsvd0                       :3;
+	uint16_t valid_ta                    :1,
+		 valid_ta_mask               :1,
+		 valid_ra                    :1,
+		 valid_ra_mask               :1,
+		 valid_bw_mask               :1,
+		 valid_nss_mask              :1,
+		 valid_mgmt_subtype          :1,
+		 valid_ctrl_subtype          :1,
+		 valid_data_subtype          :1,
+		 rsvd1                       :7;
+	uint16_t mgmt_subtype_filter;
+	uint16_t ctrl_subtype_filter;
+	uint16_t data_subtype_filter;
+	uint8_t tx_addr[QDF_MAC_ADDR_SIZE];
+	uint8_t rx_addr[QDF_MAC_ADDR_SIZE];
+	uint8_t tx_addr_mask[QDF_MAC_ADDR_SIZE];
+	uint8_t rx_addr_mask[QDF_MAC_ADDR_SIZE];
+
+} qdf_packed;
+
+/**
+ * struct cfr_rcc_param - structure to store cfr config param
+ * pdev_id: pdev_id for identifying the MAC
+ * capture_duration: Capture Duration field for which CFR capture has to happen,
+ * in microsecond units
+ * capture_interval: Capture interval field which is time in between
+ * consecutive CFR capture, in microsecond units
+ * ul_mu_user_mask_lower: Bitfields indicates which of the users in the current
+ * UL MU tranmission are enabled for CFR capture.
+ * ul_mu_user_mask_upper: This is contiuation of the above lower mask.
+ * freeze_tlv_delay_cnt_en: Enable Freeze TLV delay counter in MAC
+ * freeze_tlv_delay_cnt_thr: Indicates the number of consecutive Rx packets to
+ * be skipped before CFR capture is enabled again.
+ * filter_group_bitmap: Bitfields set indicates which of the CFR group config is
+ * enabled
+ * m_directed_ftm: Filter Directed FTM ACK frames for CFR capture
+ * m_all_ftm_ack: Filter All FTM ACK frames for CFR capture
+ * m_ndpa_ndp_directed: Filter NDPA NDP Directed Frames for CFR capture
+ * m_ndpa_ndp_all: Filter all NDPA NDP for CFR capture
+ * m_ta_ra_filter: Filter Frames based on TA/RA/Subtype as provided in CFR Group
+ * config
+ * m_all_packet: Filter in All packets for CFR Capture
+ * num_grp_tlvs: Indicates the number of groups in M_TA_RA mode, that have
+ * changes in the current commit session, use to construct WMI group TLV(s)
+ * curr: Placeholder for M_TA_RA group config in current commit session
+ * modified_in_curr_session: Bitmap indicating number of groups in M_TA_RA mode
+ * that have changed in current commit session.
+ */
+struct cfr_rcc_param {
+	uint8_t pdev_id;
+	uint32_t capture_duration;
+	uint32_t capture_interval;
+	uint32_t ul_mu_user_mask_lower;
+	uint32_t ul_mu_user_mask_upper;
+	uint16_t freeze_tlv_delay_cnt_en  :1,
+		 freeze_tlv_delay_cnt_thr :8,
+		 rsvd0 :7;
+	uint16_t filter_group_bitmap;
+	uint8_t m_directed_ftm      : 1,
+		m_all_ftm_ack       : 1,
+		m_ndpa_ndp_directed : 1,
+		m_ndpa_ndp_all      : 1,
+		m_ta_ra_filter      : 1,
+		m_all_packet        : 1,
+		rsvd1               : 2;
+	uint8_t num_grp_tlvs;
+
+	struct ta_ra_cfr_cfg curr[MAX_TA_RA_ENTRIES];
+	uint16_t modified_in_curr_session;
+};
+#endif /* WLAN_ENH_CFR_ENABLE */
+
 /**
  * struct pdev_cfr - private pdev object for cfr
  * pdev_obj: pointer to pdev object
@@ -464,4 +577,24 @@ QDF_STATUS wlan_cfr_pdev_open(struct wlan_objmgr_pdev *pdev);
  * Return: status of pdev_close pass/fail
  */
 QDF_STATUS wlan_cfr_pdev_close(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * count_set_bits() - function to count set bits in a bitmap
+ * @value: input bitmap
+ *
+ * Return: No. of set bits
+ */
+uint8_t count_set_bits(uint32_t value);
+
+#ifdef WLAN_ENH_CFR_ENABLE
+/**
+ * wlan_cfr_rx_tlv_process() - Process PPDU status TLVs and store info in
+ * lookup table
+ * @pdev_obj: PDEV object
+ * @nbuf: ppdu info
+ *
+ * Return: none
+ */
+void wlan_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf);
+#endif
 #endif

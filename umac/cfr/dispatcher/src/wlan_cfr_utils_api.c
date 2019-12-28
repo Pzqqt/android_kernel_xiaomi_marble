@@ -159,3 +159,26 @@ QDF_STATUS cfr_deinitialize_pdev(struct wlan_objmgr_pdev *pdev)
 	return status;
 }
 qdf_export_symbol(cfr_deinitialize_pdev);
+
+uint8_t count_set_bits(uint32_t value)
+{
+	uint8_t count = 0;
+
+	while (value) {
+		value &= (value - 1);
+		count++;
+	}
+
+	return count;
+}
+
+qdf_export_symbol(count_set_bits);
+
+#ifdef WLAN_ENH_CFR_ENABLE
+void wlan_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
+{
+	tgt_cfr_rx_tlv_process(pdev, nbuf);
+}
+
+qdf_export_symbol(wlan_cfr_rx_tlv_process);
+#endif
