@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -368,6 +368,21 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
  * Return: True if NAN vdev creation is allowed else false
  */
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_disable_nan_discovery() - Disable NAN discovery
+ * @psoc: pointer to psoc object
+ * @data: Data to be sent to NAN discovery engine, which runs in firmware
+ * @data_len: Length of the data
+ *
+ * Send NAN disable request to firmware by setting the mandatory
+ * params(disable_2g_discovery, disable_5g_discovery) along
+ * with the data, if provided.
+ *
+ * Return: status of operation
+ */
+QDF_STATUS ucfg_disable_nan_discovery(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *data, uint32_t data_len);
 #else /* WLAN_FEATURE_NAN */
 
 static inline
@@ -424,6 +439,13 @@ static inline
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
+}
+
+static inline
+QDF_STATUS ucfg_disable_nan_discovery(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *data, uint32_t data_len)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */
