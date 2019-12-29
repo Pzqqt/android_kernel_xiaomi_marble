@@ -1855,9 +1855,8 @@ static void os_if_new_peer_ind_handler(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	osif_debug("vdev_id: %d, peer_mac: %pM, sta_id: %d",
-		   vdev_id, peer_ind->peer_mac_addr.bytes,
-		   peer_ind->sta_id);
+	osif_debug("vdev_id: %d, peer_mac: %pM",
+		   vdev_id, peer_ind->peer_mac_addr.bytes);
 	ret = cb_obj.new_peer_ind(vdev_id, peer_ind->sta_id,
 				&peer_ind->peer_mac_addr,
 				(active_peers == 0 ? true : false));
@@ -1897,9 +1896,8 @@ static void os_if_peer_departed_ind_handler(struct wlan_objmgr_vdev *vdev,
 		osif_err("Invalid new NDP peer params");
 		return;
 	}
-	osif_debug("vdev_id: %d, peer_mac: %pM, sta_id: %d",
-		   vdev_id, peer_ind->peer_mac_addr.bytes,
-		   peer_ind->sta_id);
+	osif_debug("vdev_id: %d, peer_mac: %pM",
+		   vdev_id, peer_ind->peer_mac_addr.bytes);
 	active_peers--;
 	ucfg_nan_set_active_peers(vdev, active_peers);
 	cb_obj.peer_departed_ind(vdev_id, peer_ind->sta_id,
