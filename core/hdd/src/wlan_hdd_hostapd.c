@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3093,6 +3093,8 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 					psoc, vdev_id);
 	uint32_t sap_ch_freq, intf_ch_freq;
 	struct sap_context *sap_context;
+	enum sap_csa_reason_code csa_reason =
+		CSA_REASON_CONCURRENT_STA_CHANGED_CHANNEL;
 
 	if (!ap_adapter) {
 		hdd_err("ap_adapter is NULL");
@@ -3131,6 +3133,11 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	intf_ch_freq = wlansap_get_chan_band_restrict(sap_context);
+	if (intf_ch_freq) {
+		csa_reason = CSA_REASON_BAND_RESTRICTED;
+		goto sap_restart;
+	}
 	/*
 	 * If STA+SAP sessions are on DFS channel and STA+SAP SCC is
 	 * enabled on DFS channel then move the SAP out of DFS channel
@@ -3143,6 +3150,12 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		goto sap_restart;
 	}
 
+	if (ap_adapter->device_mode == QDF_P2P_GO_MODE &&
+	    !policy_mgr_go_scc_enforced(psoc)) {
+		wlansap_context_put(sap_context);
+		hdd_debug("p2p go no scc required");
+		return QDF_STATUS_E_FAILURE;
+	}
 	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
 					   &mcc_to_scc_switch);
 	/*
@@ -3169,18 +3182,12 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 
 sap_restart:
 	if (!intf_ch_freq) {
-		intf_ch_freq = wlansap_get_chan_band_restrict(sap_context);
-		if (intf_ch_freq == sap_ch_freq)
-			intf_ch_freq = 0;
-	} else
-		sap_context->csa_reason =
-				CSA_REASON_CONCURRENT_STA_CHANGED_CHANNEL;
-	if (!intf_ch_freq) {
 		wlansap_context_put(sap_context);
 		hdd_debug("interface channel is 0");
 		return QDF_STATUS_E_FAILURE;
+	} else {
+		sap_context->csa_reason = csa_reason;
 	}
-
 	hdd_info("SAP restart orig chan freq: %d, new freq: %d",
 		 hdd_ap_ctx->sap_config.chan_freq, intf_ch_freq);
 	ch_params.ch_width = CH_WIDTH_MAX;

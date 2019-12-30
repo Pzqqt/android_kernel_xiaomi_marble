@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3238,7 +3238,7 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx)
 		restart_freq = intf_ch_freq;
 	vdev_id = sap_ctx->vdev->vdev_objmgr.vdev_id;
 	sap_debug("vdev: %d, CSA target freq: %d", vdev_id, restart_freq);
-	sap_ctx->csa_reason = CSA_REASON_BAND_RESTRICTED;
+
 	return restart_freq;
 }
 
