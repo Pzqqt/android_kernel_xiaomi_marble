@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1575,6 +1575,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	uint16_t aid = 0;
 	uint16_t chan_space = 0;
 	struct ch_params ch_params = {0};
+	uint32_t channel_bonding_mode;
 
 	tLimWiderBWChannelSwitchInfo *chnl_switch_info = NULL;
 	tLimChannelSwitchInfo *lim_ch_switch = NULL;
@@ -1632,12 +1633,21 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	chnl_switch_info =
 		&session_entry->gLimWiderBWChannelSwitch;
 
-	pe_debug("vht: %d ht: %d flag: %x chan: %d, sec_ch_offset %d",
+	if (WLAN_REG_IS_24GHZ_CH(csa_params->channel)) {
+		channel_bonding_mode =
+			mac_ctx->roam.configParam.channelBondingMode24GHz;
+	} else {
+		channel_bonding_mode =
+			mac_ctx->roam.configParam.channelBondingMode5GHz;
+	}
+
+	pe_debug("vht: %d ht: %d flag: %x chan: %d, sec_ch_offset %d cbmode %d",
 		 session_entry->vhtCapability,
 		 session_entry->htSupportedChannelWidthSet,
 		 csa_params->ies_present_flag,
 		 csa_params->channel,
-		 csa_params->sec_chan_offset);
+		 csa_params->sec_chan_offset,
+		 channel_bonding_mode);
 	pe_debug("seg1: %d seg2: %d width: %d country: %s class: %d",
 		 csa_params->new_ch_freq_seg1,
 		 csa_params->new_ch_freq_seg2,
@@ -1645,8 +1655,10 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 		 mac_ctx->scan.countryCodeCurrent,
 		 csa_params->new_op_class);
 
-	if (session_entry->vhtCapability &&
-			session_entry->htSupportedChannelWidthSet) {
+	session_entry->htSupportedChannelWidthSet = false;
+
+	if (session_entry->vhtCapability && channel_bonding_mode &&
+	    session_entry->htCapability) {
 		if ((csa_params->ies_present_flag & lim_wbw_ie_present) &&
 			(QDF_STATUS_SUCCESS == lim_process_csa_wbw_ie(mac_ctx,
 					csa_params, chnl_switch_info,
@@ -1662,6 +1674,8 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				else
 					lim_ch_switch->sec_ch_offset =
 						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
+				session_entry->htSupportedChannelWidthSet =
+									true;
 			}
 		} else if (csa_params->ies_present_flag
 				& lim_xcsa_ie_present) {
@@ -1676,9 +1690,13 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 			if (chan_space == 80) {
 				chnl_switch_info->newChanWidth =
 					CH_WIDTH_80MHZ;
+				session_entry->htSupportedChannelWidthSet =
+									true;
 			} else if (chan_space == 40) {
 				chnl_switch_info->newChanWidth =
 					CH_WIDTH_40MHZ;
+				session_entry->htSupportedChannelWidthSet =
+									true;
 			} else {
 				chnl_switch_info->newChanWidth =
 					CH_WIDTH_20MHZ;
@@ -1716,6 +1734,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 			chnl_switch_info->newCenterChanFreq0 =
 				ch_params.center_freq_seg0;
 			chnl_switch_info->newCenterChanFreq1 = 0;
+			session_entry->htSupportedChannelWidthSet = true;
 		}
 		session_entry->gLimChannelSwitch.ch_center_freq_seg0 =
 			chnl_switch_info->newCenterChanFreq0;
@@ -1724,7 +1743,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 		session_entry->gLimChannelSwitch.ch_width =
 			chnl_switch_info->newChanWidth;
 
-	} else if (session_entry->htSupportedChannelWidthSet) {
+	} else if (channel_bonding_mode && session_entry->htCapability) {
 		if (csa_params->ies_present_flag
 				& lim_xcsa_ie_present) {
 			chan_space =
@@ -1748,11 +1767,13 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 					ch_params.center_freq_seg0;
 				lim_ch_switch->sec_ch_offset =
 					ch_params.sec_ch_offset;
+				session_entry->htSupportedChannelWidthSet =
+									true;
 			} else {
 				lim_ch_switch->ch_width =
 					CH_WIDTH_20MHZ;
 				chnl_switch_info->newChanWidth =
-					CH_WIDTH_40MHZ;
+					CH_WIDTH_20MHZ;
 				lim_ch_switch->state =
 					eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
 				lim_ch_switch->sec_ch_offset =
@@ -1770,11 +1791,12 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				ch_params.center_freq_seg0;
 			lim_ch_switch->sec_ch_offset =
 				ch_params.sec_ch_offset;
+			session_entry->htSupportedChannelWidthSet = true;
 		}
-
 	}
-	pe_debug("new ch width: %d space: %d",
-			session_entry->gLimChannelSwitch.ch_width, chan_space);
+	pe_debug("new ch width: %d space: %d new ht width %d",
+			session_entry->gLimChannelSwitch.ch_width, chan_space,
+			session_entry->htSupportedChannelWidthSet);
 	if ((wlan_reg_freq_to_chan(mac_ctx->pdev,
 				   session_entry->curr_op_freq) ==
 		csa_params->channel) &&
