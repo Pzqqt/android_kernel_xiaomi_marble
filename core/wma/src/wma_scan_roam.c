@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,6 +39,7 @@
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
+#include "wlan_blm_api.h"
 
 #include "wma_types.h"
 #include "lim_api.h"
@@ -3933,11 +3934,18 @@ int wma_rssi_breached_event_handler(void *handle,
  *
  * Return: none
  */
-static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
+static void
+wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id,
+			 struct qdf_mac_addr bssid)
 {
 	struct handoff_failure_ind *ho_failure_ind;
 	struct scheduler_msg sme_msg = { 0 };
 	QDF_STATUS qdf_status;
+	struct reject_ap_info ap_info;
+
+	ap_info.bssid = bssid;
+	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
+	wlan_blm_add_bssid_to_reject_list(wma->pdev, &ap_info);
 
 	ho_failure_ind = qdf_mem_malloc(sizeof(*ho_failure_ind));
 	if (!ho_failure_ind)
@@ -5778,6 +5786,9 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	wmi_roam_event_fixed_param *wmi_event;
 	struct roam_offload_synch_ind *roam_synch_data;
 	uint8_t *frame = NULL;
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	struct qdf_mac_addr bssid;
+#endif
 
 	param_buf = (WMI_ROAM_EVENTID_param_tlvs *) event_buf;
 	if (!param_buf) {
@@ -5857,10 +5868,17 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		 */
 		WMA_LOGE("LFR3:Hand-Off Failed for vdevid %x",
 			 wmi_event->vdev_id);
+		bssid.bytes[0] = wmi_event->notif_params >> 0 & 0xFF;
+		bssid.bytes[1] = wmi_event->notif_params >> 8 & 0xFF;
+		bssid.bytes[2] = wmi_event->notif_params >> 16 & 0xFF;
+		bssid.bytes[3] = wmi_event->notif_params >> 24 & 0xFF;
+		bssid.bytes[4] = wmi_event->notif_params1 >> 0 & 0xFF;
+		bssid.bytes[5] = wmi_event->notif_params1 >> 8 & 0xFF;
+		WMA_LOGE("mac addr to avoid %pM", bssid.bytes);
 		wma_handle_hw_mode_transition(wma_handle, param_buf);
-		wma_roam_ho_fail_handler(wma_handle, wmi_event->vdev_id);
-		wma_handle->interfaces[wmi_event->vdev_id].
-			roaming_in_progress = false;
+		wma_roam_ho_fail_handler(wma_handle, wmi_event->vdev_id, bssid);
+		wma_handle->interfaces[wmi_event->vdev_id].roaming_in_progress =
+								false;
 		break;
 #endif
 	case WMI_ROAM_REASON_INVALID:
