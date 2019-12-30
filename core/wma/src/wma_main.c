@@ -217,6 +217,20 @@ static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported,
 }
 #endif
 
+#if (defined(IPA_DISABLE_OVERRIDE)) && (!defined(IPA_OFFLOAD))
+static void wma_set_ipa_disable_config(
+					target_resource_config *tgt_cfg)
+{
+	tgt_cfg->ipa_disable = true;
+}
+#else
+static void wma_set_ipa_disable_config(
+					target_resource_config *tgt_cfg)
+{
+	tgt_cfg->ipa_disable = false;
+}
+#endif
+
 #ifndef NUM_OF_ADDITIONAL_FW_PEERS
 #define NUM_OF_ADDITIONAL_FW_PEERS	2
 #endif
@@ -302,6 +316,8 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 
 	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
 		tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE_RAW;
+
+	wma_set_ipa_disable_config(tgt_cfg);
 }
 
 /**
