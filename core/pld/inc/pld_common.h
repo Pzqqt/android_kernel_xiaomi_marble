@@ -858,7 +858,7 @@ static inline void pfrm_enable_irq(struct device *dev, int irq)
 	pld_srng_enable_irq(dev, irq);
 }
 
-static inline void pfrm_disable_irq(struct device *dev, int irq)
+static inline void pfrm_disable_irq_nosync(struct device *dev, int irq)
 {
 	pld_srng_disable_irq(dev, irq);
 }
