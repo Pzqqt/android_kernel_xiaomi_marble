@@ -528,8 +528,8 @@ enum ctl_value {
 struct ch_params {
 	enum phy_ch_width ch_width;
 	uint8_t sec_ch_offset;
-	qdf_freq_t center_freq_seg0;
-	qdf_freq_t center_freq_seg1;
+	uint8_t center_freq_seg0;
+	uint8_t center_freq_seg1;
 	qdf_freq_t mhz_freq_seg0;
 	qdf_freq_t mhz_freq_seg1;
 };
