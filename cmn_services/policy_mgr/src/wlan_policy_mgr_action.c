@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1724,7 +1724,7 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	struct wlan_objmgr_psoc *psoc;
 	struct policy_mgr_psoc_priv_obj *pm_ctx = NULL;
 	struct sta_ap_intf_check_work_ctx *work_info = NULL;
-	uint32_t mcc_to_scc_switch, cc_count = 0, i, go_index_start;
+	uint32_t mcc_to_scc_switch, cc_count = 0, i;
 	QDF_STATUS status;
 	uint32_t ch_freq;
 	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
@@ -1760,7 +1760,6 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 				psoc, &op_ch_freq_list[cc_count],
 				&vdev_id[cc_count], PM_SAP_MODE);
 	policy_mgr_debug("Number of concurrent SAP: %d", cc_count);
-	go_index_start = cc_count;
 	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
 		cc_count = cc_count +
 				policy_mgr_get_mode_specific_conn_info(
@@ -1789,9 +1788,6 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	}
 	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
 		for (i = 0; i < cc_count; i++) {
-			if (i >= go_index_start &&
-			    !policy_mgr_go_scc_enforced(psoc))
-				continue;
 			status = pm_ctx->hdd_cbacks.
 				wlan_hdd_get_channel_for_sap_restart
 					(psoc, vdev_id[i], &ch_freq);
