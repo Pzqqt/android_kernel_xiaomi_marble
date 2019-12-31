@@ -1079,6 +1079,8 @@ struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	hal_rx_get_rx_sequence_6290,
 	NULL,
 	NULL,
+	/* rx - msdu end fast path info fields */
+	hal_rx_msdu_packet_metadata_get_generic,
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {

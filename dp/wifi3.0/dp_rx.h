@@ -786,7 +786,8 @@ static inline void
 dp_rx_wds_srcport_learn(struct dp_soc *soc,
 			uint8_t *rx_tlv_hdr,
 			struct dp_peer *ta_peer,
-			qdf_nbuf_t nbuf)
+			qdf_nbuf_t nbuf,
+			struct hal_rx_msdu_metadata msdu_metadata)
 {
 }
 #endif

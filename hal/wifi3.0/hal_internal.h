@@ -462,6 +462,8 @@ struct hal_hw_txrx_ops {
 	uint16_t (*hal_rx_get_rx_sequence)(uint8_t *buf);
 	void (*hal_rx_get_bb_info)(void *rx_tlv, void *ppdu_info_handle);
 	void (*hal_rx_get_rtt_info)(void *rx_tlv, void *ppdu_info_handle);
+	void (*hal_rx_msdu_packet_metadata_get)(uint8_t *buf,
+						void *msdu_pkt_metadata);
 };
 
 /**

@@ -73,6 +73,22 @@ struct hal_wbm_err_desc_info {
 };
 
 /**
+ * struct hal_rx_msdu_metadata:Structure to hold rx fast path information.
+ *
+ * @l3_hdr_pad:	l3 header padding
+ * @reserved:	Reserved bits
+ * @sa_sw_peer_id: sa sw peer id
+ * @sa_idx: sa index
+ * @da_idx: da index
+ */
+struct hal_rx_msdu_metadata {
+	uint32_t l3_hdr_pad:16,
+		 sa_sw_peer_id:16;
+	uint32_t sa_idx:16,
+		 da_idx:16;
+};
+
+/**
  * enum hal_reo_error_code: Enum which encapsulates "reo_push_reason"
  *
  * @ HAL_REO_ERROR_DETECTED: Packets arrived because of an error detected
@@ -3424,5 +3440,23 @@ hal_rx_get_rtt_info(hal_soc_handle_t hal_soc_hdl,
 
 	if (hal_soc->ops->hal_rx_get_rtt_info)
 		hal_soc->ops->hal_rx_get_rtt_info(rx_tlv, ppdu_info);
+}
+
+/**
+ * hal_rx_msdu_metadata_get(): API to get the
+ * fast path information from rx_msdu_end TLV
+ *
+ * @ hal_soc_hdl: DP soc handle
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * @ msdu_metadata: Structure to hold msdu end information
+ * Return: none
+ */
+static inline void
+hal_rx_msdu_metadata_get(hal_soc_handle_t hal_soc_hdl, uint8_t *buf,
+			 struct hal_rx_msdu_metadata *msdu_md)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_msdu_packet_metadata_get(buf, msdu_md);
 }
 #endif /* _HAL_RX_H */

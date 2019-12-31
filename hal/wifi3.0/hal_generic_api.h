@@ -2316,4 +2316,27 @@ void hal_tx_update_tidmap_prty_generic(struct hal_soc *soc, uint8_t value)
 		      (value & HWIO_TCL_R0_TID_MAP_PRTY_RMSK));
 }
 
+/**
+ * hal_rx_msdu_packet_metadata_get(): API to get the
+ * msdu information from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * @ hal_rx_msdu_metadata: pointer to the msdu info structure
+ */
+static void
+hal_rx_msdu_packet_metadata_get_generic(uint8_t *buf,
+					void *pkt_msdu_metadata)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	struct hal_rx_msdu_metadata *msdu_metadata =
+		(struct hal_rx_msdu_metadata *)pkt_msdu_metadata;
+
+	msdu_metadata->l3_hdr_pad =
+		HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(msdu_end);
+	msdu_metadata->sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
+	msdu_metadata->da_idx = HAL_RX_MSDU_END_DA_IDX_GET(msdu_end);
+	msdu_metadata->sa_sw_peer_id =
+		HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(msdu_end);
+}
 #endif /* _HAL_GENERIC_API_H_ */

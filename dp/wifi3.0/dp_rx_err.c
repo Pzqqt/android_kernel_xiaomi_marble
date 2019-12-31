@@ -730,11 +730,12 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			 uint8_t *rx_tlv_hdr, uint8_t pool_id,
 			 struct dp_peer *peer)
 {
-	uint32_t pkt_len, l2_hdr_offset;
+	uint32_t pkt_len;
 	uint16_t msdu_len;
 	struct dp_vdev *vdev;
 	uint8_t tid;
 	qdf_ether_header_t *eh;
+	struct hal_rx_msdu_metadata msdu_metadata;
 
 	qdf_nbuf_set_rx_chfrag_start(nbuf,
 				hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
@@ -751,10 +752,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			      hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc,
 							      rx_tlv_hdr));
 
-	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc,
-							   rx_tlv_hdr);
+	hal_rx_msdu_metadata_get(soc->hal_soc, rx_tlv_hdr, &msdu_metadata);
 	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
-	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
+	pkt_len = msdu_len + msdu_metadata.l3_hdr_pad + RX_PKT_TLVS_LEN;
 
 	if (qdf_likely(!qdf_nbuf_is_frag(nbuf))) {
 		if (dp_rx_check_pkt_len(soc, pkt_len))
@@ -819,7 +819,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	if (qdf_nbuf_is_frag(nbuf))
 		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
 	else
-		qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
+		qdf_nbuf_pull_head(nbuf, (msdu_metadata.l3_hdr_pad +
+				   RX_PKT_TLVS_LEN));
 
 	dp_vdev_peer_stats_update_protocol_cnt(vdev, nbuf, NULL, 0, 1);
 
@@ -855,7 +856,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	/* WDS Source Port Learning */
 	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet &&
 		vdev->wds_enabled))
-		dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer, nbuf);
+		dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer, nbuf,
+					msdu_metadata);
 
 	if (hal_rx_is_unicast(soc->hal_soc, rx_tlv_hdr)) {
 		tid = hal_rx_tid_get(soc->hal_soc, rx_tlv_hdr);

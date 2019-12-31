@@ -401,9 +401,9 @@ static bool
 dp_rx_intrabss_fwd(struct dp_soc *soc,
 			struct dp_peer *ta_peer,
 			uint8_t *rx_tlv_hdr,
-			qdf_nbuf_t nbuf)
+			qdf_nbuf_t nbuf,
+			struct hal_rx_msdu_metadata msdu_metadata)
 {
-	uint16_t da_idx;
 	uint16_t len;
 	uint8_t is_frag;
 	struct dp_peer *da_peer;
@@ -420,9 +420,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	 */
 
 	if ((qdf_nbuf_is_da_valid(nbuf) && !qdf_nbuf_is_da_mcbc(nbuf))) {
-		da_idx = hal_rx_msdu_end_da_idx_get(soc->hal_soc, rx_tlv_hdr);
 
-		ast_entry = soc->ast_table[da_idx];
+		ast_entry = soc->ast_table[msdu_metadata.da_idx];
 		if (!ast_entry)
 			return false;
 
@@ -1526,15 +1525,14 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 
 static inline bool is_sa_da_idx_valid(struct dp_soc *soc,
 				      uint8_t *rx_tlv_hdr,
-				      qdf_nbuf_t nbuf)
+				      qdf_nbuf_t nbuf,
+				      struct hal_rx_msdu_metadata msdu_info)
 {
 	if ((qdf_nbuf_is_sa_valid(nbuf) &&
-	     (hal_rx_msdu_end_sa_idx_get(soc->hal_soc, rx_tlv_hdr) >
-		wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) ||
+	    (msdu_info.sa_idx > wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) ||
 	    (!qdf_nbuf_is_da_mcbc(nbuf) &&
 	     qdf_nbuf_is_da_valid(nbuf) &&
-	     (hal_rx_msdu_end_da_idx_get(soc->hal_soc, rx_tlv_hdr) >
-	      wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))))
+	     (msdu_info.da_idx > wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))))
 		return false;
 
 	return true;
@@ -1766,7 +1764,6 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT];
 	uint32_t num_pending;
 	uint32_t rx_bufs_used = 0, rx_buf_cookie;
-	uint32_t l2_hdr_offset = 0;
 	uint16_t msdu_len = 0;
 	uint16_t peer_id;
 	uint8_t vdev_id;
@@ -1799,6 +1796,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	uint32_t num_entries_avail = 0;
 	uint32_t rx_ol_pkt_cnt = 0;
 	uint32_t num_entries = 0;
+	struct hal_rx_msdu_metadata msdu_metadata;
 
 	DP_HIST_INIT();
 
@@ -2144,6 +2142,7 @@ done:
 		 * This is the most likely case, we receive 802.3 pkts
 		 * decapsulated by HW, here we need to set the pkt length.
 		 */
+		hal_rx_msdu_metadata_get(hal_soc, rx_tlv_hdr, &msdu_metadata);
 		if (qdf_unlikely(qdf_nbuf_is_frag(nbuf))) {
 			bool is_mcbc, is_sa_vld, is_da_vld;
 
@@ -2179,17 +2178,16 @@ done:
 				continue;
 			}
 		} else {
-			l2_hdr_offset =
-				hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc,
-								   rx_tlv_hdr);
 
 			msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
-			pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
+			pkt_len = msdu_len +
+				  msdu_metadata.l3_hdr_pad +
+				  RX_PKT_TLVS_LEN;
 
 			qdf_nbuf_set_pktlen(nbuf, pkt_len);
 			qdf_nbuf_pull_head(nbuf,
 					   RX_PKT_TLVS_LEN +
-					   l2_hdr_offset);
+					   msdu_metadata.l3_hdr_pad);
 		}
 
 		/*
@@ -2278,7 +2276,8 @@ done:
 			 * Drop the packet if sa_idx and da_idx OOB or
 			 * sa_sw_peerid is 0
 			 */
-			if (!is_sa_da_idx_valid(soc, rx_tlv_hdr, nbuf)) {
+			if (!is_sa_da_idx_valid(soc, rx_tlv_hdr, nbuf,
+						msdu_metadata)) {
 				qdf_nbuf_free(nbuf);
 				nbuf = next;
 				DP_STATS_INC(soc, rx.err.invalid_sa_da_idx, 1);
@@ -2287,15 +2286,19 @@ done:
 			}
 			/* WDS Source Port Learning */
 			if (qdf_likely(vdev->wds_enabled))
-				dp_rx_wds_srcport_learn(soc, rx_tlv_hdr,
-							peer, nbuf);
+				dp_rx_wds_srcport_learn(soc,
+							rx_tlv_hdr,
+							peer,
+							nbuf,
+							msdu_metadata);
 
 			/* Intrabss-fwd */
 			if (dp_rx_check_ap_bridge(vdev))
 				if (dp_rx_intrabss_fwd(soc,
 							peer,
 							rx_tlv_hdr,
-							nbuf)) {
+							nbuf,
+							msdu_metadata)) {
 					nbuf = next;
 					dp_peer_unref_del_find_by_id(peer);
 					tid_stats->intrabss_cnt++;

@@ -1285,6 +1285,30 @@ uint16_t hal_rx_get_rx_sequence_6750(uint8_t *buf)
 }
 
 /**
+ * hal_rx_msdu_packet_metadata_get_6750(): API to get the
+ * msdu information from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * @ hal_rx_msdu_metadata: pointer to the msdu info structure
+ */
+static void
+hal_rx_msdu_packet_metadata_get_6750(uint8_t *buf,
+				     void *msdu_pkt_metadata)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	struct hal_rx_msdu_metadata *msdu_metadata =
+		(struct hal_rx_msdu_metadata *)msdu_pkt_metadata;
+
+	msdu_metadata->l3_hdr_pad =
+		HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(msdu_end);
+	msdu_metadata->sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
+	msdu_metadata->da_idx = HAL_RX_MSDU_END_DA_IDX_GET(msdu_end);
+	msdu_metadata->sa_sw_peer_id =
+		HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(msdu_end);
+}
+
+/**
  * hal_get_window_address_6750(): Function to get hp/tp address
  * @hal_soc: Pointer to hal_soc
  * @addr: address offset of register
@@ -1385,6 +1409,10 @@ struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	NULL,
 	hal_rx_tlv_get_tcp_chksum_6750,
 	hal_rx_get_rx_sequence_6750,
+	NULL,
+	NULL,
+	/* rx - msdu end fast path info fields */
+	hal_rx_msdu_packet_metadata_get_6750,
 };
 
 struct hal_hw_srng_config hw_srng_table_6750[] = {
