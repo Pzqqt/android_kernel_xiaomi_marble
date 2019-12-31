@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1454,6 +1454,8 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 		hdd_ch_avoid_ind(hdd_ctx, &avoid_freq_ind->chan_list,
 				&avoid_freq_ind->freq_list);
 	} else {
+		hdd_config_tdls_with_band_switch(hdd_ctx);
+
 		sme_generic_change_country_code(hdd_ctx->mac_handle,
 				hdd_ctx->reg.alpha2);
 		/*Check whether need restart SAP/P2p Go*/

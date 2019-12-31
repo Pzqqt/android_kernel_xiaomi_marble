@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1806,26 +1806,32 @@ void tdls_scan_serialization_comp_info_cb(struct wlan_objmgr_vdev *vdev,
 
 
 uint8_t tdls_get_opclass_from_bandwidth(struct tdls_soc_priv_obj *soc_obj,
-					uint8_t channel, uint8_t bw_offset)
+					uint8_t channel, uint8_t bw_offset,
+					uint8_t *reg_bw_offset)
 {
 	uint8_t opclass;
 
 	if (bw_offset & (1 << BW_80_OFFSET_BIT)) {
 		opclass = tdls_find_opclass(soc_obj->soc,
 					    channel, BW80);
+		*reg_bw_offset = BW80;
 	} else if (bw_offset & (1 << BW_40_OFFSET_BIT)) {
 		opclass = tdls_find_opclass(soc_obj->soc,
 					    channel, BW40_LOW_PRIMARY);
+		*reg_bw_offset = BW40_LOW_PRIMARY;
 		if (!opclass) {
 			opclass = tdls_find_opclass(soc_obj->soc,
 						    channel, BW40_HIGH_PRIMARY);
+			*reg_bw_offset = BW40_HIGH_PRIMARY;
 		}
 	} else if (bw_offset & (1 << BW_20_OFFSET_BIT)) {
 		opclass = tdls_find_opclass(soc_obj->soc,
 					    channel, BW20);
+		*reg_bw_offset = BW20;
 	} else {
 		opclass = tdls_find_opclass(soc_obj->soc,
 					    channel, BWALL);
+		*reg_bw_offset = BWALL;
 	}
 
 	return opclass;

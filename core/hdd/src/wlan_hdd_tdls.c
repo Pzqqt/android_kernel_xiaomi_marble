@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,6 +43,7 @@
 #include <qca_vendor.h>
 #include "wlan_tdls_cfg_api.h"
 #include "wlan_hdd_object_manager.h"
+#include <wlan_reg_ucfg_api.h>
 
 /**
  * enum qca_wlan_vendor_tdls_trigger_mode_hdd_map: Maps the user space TDLS
@@ -767,6 +768,18 @@ int hdd_set_tdls_offchannelmode(struct hdd_context *hdd_ctx,
 {
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	bool tdls_off_ch;
+
+	if (cfg_tdls_get_off_channel_enable(
+		hdd_ctx->psoc, &tdls_off_ch) !=
+	    QDF_STATUS_SUCCESS) {
+		hdd_err("cfg get tdls off ch failed");
+		return qdf_status_to_os_return(status);
+	}
+	if (!tdls_off_ch) {
+		hdd_debug("tdls off ch is false, do nothing");
+		return qdf_status_to_os_return(status);
+	}
 
 	if (hdd_ctx->tdls_umac_comp_active) {
 		vdev = hdd_objmgr_get_vdev(adapter);
@@ -880,4 +893,66 @@ void hdd_init_tdls_config(struct tdls_start_params *tdls_cfg)
 	tdls_cfg->tdls_add_sta_req = eWNI_SME_TDLS_ADD_STA_REQ;
 	tdls_cfg->tdls_del_sta_req = eWNI_SME_TDLS_DEL_STA_REQ;
 	tdls_cfg->tdls_update_peer_state = WMA_UPDATE_TDLS_PEER_STATE;
+}
+
+void hdd_config_tdls_with_band_switch(struct hdd_context *hdd_ctx)
+{
+	struct wlan_objmgr_vdev *tdls_obj_vdev;
+	int offchmode;
+	enum band_info current_band;
+	bool tdls_off_ch;
+
+	if (!hdd_ctx) {
+		hdd_err("Invalid hdd_ctx");
+		return;
+	}
+
+	if (ucfg_reg_get_curr_band(hdd_ctx->pdev, &current_band) !=
+	    QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to get current band config");
+		return;
+	}
+
+	/**
+	 * If all bands are supported, in below condition off channel enable
+	 * orig is false and nothing is need to do
+	 * 1. band switch does not happen.
+	 * 2. band switch happens and it already restores
+	 * 3. tdls off channel is disabled by default.
+	 * If 2g or 5g is not supported. Disable tdls off channel only when
+	 * tdls off channel is enabled currently.
+	 */
+	if (current_band == BAND_ALL) {
+		if (cfg_tdls_get_off_channel_enable_orig(
+			hdd_ctx->psoc, &tdls_off_ch) !=
+		    QDF_STATUS_SUCCESS) {
+			hdd_err("cfg get tdls off ch orig failed");
+			return;
+		}
+		if (!tdls_off_ch) {
+			hdd_debug("tdls off ch orig is false, do nothing");
+			return;
+		}
+		offchmode = ENABLE_CHANSWITCH;
+		cfg_tdls_restore_off_channel_enable(hdd_ctx->psoc);
+	} else {
+		if (cfg_tdls_get_off_channel_enable(
+			hdd_ctx->psoc, &tdls_off_ch) !=
+		    QDF_STATUS_SUCCESS) {
+			hdd_err("cfg get tdls off ch failed");
+			return;
+		}
+		if (!tdls_off_ch) {
+			hdd_debug("tdls off ch is false, do nothing");
+			return;
+		}
+		offchmode = DISABLE_CHANSWITCH;
+		cfg_tdls_store_off_channel_enable(hdd_ctx->psoc);
+		cfg_tdls_set_off_channel_enable(hdd_ctx->psoc, false);
+	}
+	tdls_obj_vdev = ucfg_get_tdls_vdev(hdd_ctx->psoc, WLAN_TDLS_NB_ID);
+	if (tdls_obj_vdev) {
+		ucfg_set_tdls_offchan_mode(tdls_obj_vdev, offchmode);
+		wlan_objmgr_vdev_release_ref(tdls_obj_vdev, WLAN_TDLS_NB_ID);
+	}
 }

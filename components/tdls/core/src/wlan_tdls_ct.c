@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1074,6 +1074,15 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 				tdls_debug("oper_class:%d",
 					    chan_switch_params.oper_class);
 			}
+		} else if (conn_peer->off_channel_capable &&
+			   conn_peer->pref_off_chan_num) {
+			chan_switch_params.tdls_off_ch =
+				conn_peer->pref_off_chan_num;
+			chan_switch_params.oper_class =
+				tdls_get_opclass_from_bandwidth(
+				tdls_soc, conn_peer->pref_off_chan_num,
+				tdls_soc->tdls_configs.tdls_pre_off_chan_bw,
+				&chan_switch_params.tdls_off_ch_bw_offset);
 		} else {
 			tdls_err("TDLS off-channel parameters are not set yet!!!");
 			return -EINVAL;

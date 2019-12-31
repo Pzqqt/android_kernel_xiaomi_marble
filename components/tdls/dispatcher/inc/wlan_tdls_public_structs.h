@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -461,6 +461,7 @@ enum tdls_feature_bit {
  * @tdls_vdev_nss_5g: tdls NSS setting for 5G band
  * @tdls_buffer_sta_enable: tdls buffer station enable
  * @tdls_off_chan_enable: tdls off channel enable
+ * @tdls_off_chan_enable_orig: original tdls off channel enable
  * @tdls_wmm_mode_enable: tdls wmm mode enable
  * @tdls_external_control: tdls external control enable
  * @tdls_implicit_trigger_enable: tdls implicit trigger enable
@@ -492,6 +493,7 @@ struct tdls_user_config {
 	uint8_t tdls_vdev_nss_5g;
 	bool tdls_buffer_sta_enable;
 	bool tdls_off_chan_enable;
+	bool tdls_off_chan_enable_orig;
 	bool tdls_wmm_mode_enable;
 	bool tdls_external_control;
 	bool tdls_implicit_trigger_enable;
@@ -929,7 +931,7 @@ struct tdls_peer_update_state {
 struct tdls_channel_switch_params {
 	uint32_t    vdev_id;
 	uint8_t     peer_mac_addr[QDF_MAC_ADDR_SIZE];
-	uint16_t    tdls_off_ch_bw_offset;
+	uint8_t    tdls_off_ch_bw_offset;
 	uint8_t     tdls_off_ch;
 	uint8_t     tdls_sw_mode;
 	uint8_t     oper_class;
