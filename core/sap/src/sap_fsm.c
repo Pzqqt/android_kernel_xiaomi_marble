@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3329,10 +3329,6 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		/* go to next channel if rf_channel is out of range */
 		if (start_ch_freq > WLAN_REG_CH_TO_FREQ(loop_count) ||
 		    end_ch_freq < WLAN_REG_CH_TO_FREQ(loop_count))
-			continue;
-		/* Skip channel 12, and 13 for IOT issues for now */
-		if (loop_count == CHAN_ENUM_2467 ||
-		    loop_count == CHAN_ENUM_2472)
 			continue;
 		/*
 		 * go to next channel if none of these condition pass

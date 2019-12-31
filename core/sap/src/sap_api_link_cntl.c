@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -275,6 +275,36 @@ wlansap_filter_unsafe_ch(struct wlan_objmgr_psoc *psoc,
 		sap_debug("Safe freq %d", sap_ctx->acs_cfg->freq_list[i]);
 }
 
+static void
+wlan_sap_filter_non_preferred_channels(struct wlan_objmgr_pdev *pdev,
+				       struct sap_context *sap_ctx)
+{
+	uint16_t i;
+	uint16_t num_ch = 0;
+	bool preferred_freq_found = false;
+
+	for (i = 0; i < sap_ctx->acs_cfg->ch_list_count; i++) {
+		if (sap_ctx->acs_cfg->freq_list[i] == 2467 ||
+		    sap_ctx->acs_cfg->freq_list[i] == 2472 ||
+		    sap_ctx->acs_cfg->freq_list[i] == 2477) {
+			sap_debug("Skip freq %d if preferred freq present",
+				  sap_ctx->acs_cfg->freq_list[i]);
+			continue;
+		}
+		sap_ctx->acs_cfg->freq_list[num_ch++] =
+						sap_ctx->acs_cfg->freq_list[i];
+		preferred_freq_found = true;
+	}
+
+	if (!preferred_freq_found) {
+		sap_debug("No preferred freq, list unchanged");
+		return;
+	}
+	sap_debug("preferred frequencies found updated ACS ch list len %d",
+		  num_ch);
+	sap_ctx->acs_cfg->ch_list_count = num_ch;
+}
+
 QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 						   struct sap_context *sap_ctx,
 						   uint8_t sessionid,
@@ -290,6 +320,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	/* This has to be done before the ACS selects default channel */
 	wlansap_filter_unsafe_ch(mac_ctx->psoc, sap_ctx);
 
+	wlan_sap_filter_non_preferred_channels(mac_ctx->pdev, sap_ctx);
 	if (!sap_ctx->acs_cfg->ch_list_count) {
 		sap_err("No channel left for SAP operation, hotspot fail");
 		sap_ctx->chan_freq = SAP_CHANNEL_NOT_SELECTED;
