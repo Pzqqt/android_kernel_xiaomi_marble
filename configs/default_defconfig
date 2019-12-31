@@ -721,6 +721,12 @@ CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_BENGAL), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
+endif
+endif
+
 ifeq ($(CONFIG_ARCH_SDX20), y)
 ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
 ifeq ($(CONFIG_WCNSS_SKB_PRE_ALLOC), y)
