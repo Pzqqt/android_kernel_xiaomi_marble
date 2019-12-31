@@ -1393,9 +1393,10 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_common[] = {
 	TX_MACRO_DAPM_MUX("TX SMIC MUX2", 0, tx_smic2_v2),
 	TX_MACRO_DAPM_MUX("TX SMIC MUX3", 0, tx_smic3_v2),
 
-	SND_SOC_DAPM_MICBIAS_E("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
-			       tx_macro_enable_micbias,
-			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_SUPPLY("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
+		tx_macro_enable_micbias,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
 	SND_SOC_DAPM_ADC_E("TX DMIC0", NULL, SND_SOC_NOPM, 0, 0,
 		tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_POST_PMD),
@@ -1577,9 +1578,9 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets[] = {
 	TX_MACRO_DAPM_MUX("TX SMIC MUX6", 0, tx_smic6),
 	TX_MACRO_DAPM_MUX("TX SMIC MUX7", 0, tx_smic7),
 
-	SND_SOC_DAPM_MICBIAS_E("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
-			       tx_macro_enable_micbias,
-			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_SUPPLY("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
+		tx_macro_enable_micbias,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_ADC_E("TX DMIC0", NULL, SND_SOC_NOPM, 0, 0,
 		tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_POST_PMD),
