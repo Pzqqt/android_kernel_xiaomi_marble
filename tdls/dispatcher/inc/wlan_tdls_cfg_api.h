@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -136,6 +136,35 @@ cfg_tdls_get_off_channel_enable(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 cfg_tdls_set_off_channel_enable(struct wlan_objmgr_psoc *psoc,
 				bool val);
+
+/**
+ * cfg_tdls_get_off_channel_enable_orig() - get tdls off channel enable orig
+ * @psoc:        pointer to psoc object
+ * @val:         pointer to tdls off channel enable
+ *
+ * This function gets tdls off channel enable orig
+ */
+QDF_STATUS
+cfg_tdls_get_off_channel_enable_orig(struct wlan_objmgr_psoc *psoc,
+				     bool *val);
+
+/**
+ * cfg_tdls_restore_off_channel_enable() - set tdls off channel enable to
+ *                                         tdls_off_chan_enable_orig
+ * @psoc:        pointer to psoc object
+ *
+ * Return: NULL
+ */
+void cfg_tdls_restore_off_channel_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * cfg_tdls_store_off_channel_enable() - save tdls off channel enable to
+ *                                       tdls_off_chan_enable_orig
+ * @psoc:        pointer to psoc object
+ *
+ * Return: NULL
+ */
+void cfg_tdls_store_off_channel_enable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * cfg_tdls_get_wmm_mode_enable() - get tdls wmm mode enable
