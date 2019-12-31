@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1903,11 +1903,18 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 	eCsrPhyMode phyMode2 = eCSR_DOT11_MODE_AUTO;
 	enum csr_cfgdot11mode cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_AUTO;
 	uint32_t bitMask, loopCount;
-	uint8_t bss_chan_id;
+	uint32_t bss_chan_freq;
 
 	if (!QDF_IS_STATUS_SUCCESS(csr_get_phy_mode_from_bss(mac, pSirBssDesc,
 					&phyModeInBssDesc, pIes)))
 		return fMatch;
+
+	bss_chan_freq = pSirBssDesc->chan_freq;
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(bss_chan_freq)) {
+		if (pReturnCfgDot11Mode)
+			*pReturnCfgDot11Mode = eCSR_CFG_DOT11_MODE_11AX;
+		return true;
+	}
 
 	if ((0 == phyMode) || (eCSR_DOT11_MODE_AUTO & phyMode)) {
 		if (eCSR_CFG_DOT11_MODE_ABG ==
@@ -1927,7 +1934,6 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 		}
 	}
 
-	bss_chan_id = wlan_reg_freq_to_chan(mac->pdev, pSirBssDesc->chan_freq);
 	if ((0 == phyMode) || (eCSR_DOT11_MODE_AUTO & phyMode)) {
 		if (0 != phyMode) {
 			if (eCSR_DOT11_MODE_AUTO & phyMode) {
@@ -1939,8 +1945,8 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 		}
 		fMatch = csr_get_phy_mode_in_use(mac, phyMode2,
 						 phyModeInBssDesc,
-						 WLAN_REG_IS_5GHZ_CH(
-						 bss_chan_id),
+						 !WLAN_REG_IS_24GHZ_CH_FREQ
+							(bss_chan_freq),
 						 &cfgDot11ModeToUse);
 	} else {
 		bitMask = 1;
@@ -1950,7 +1956,7 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 			if (0 != phyMode2 &&
 			    csr_get_phy_mode_in_use(mac, phyMode2,
 			    phyModeInBssDesc,
-			    WLAN_REG_IS_5GHZ_CH(bss_chan_id),
+			    !WLAN_REG_IS_24GHZ_CH_FREQ(bss_chan_freq),
 			    &cfgDot11ModeToUse)) {
 				fMatch = true;
 				break;
@@ -1975,7 +1981,7 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 					(eCSR_CFG_DOT11_MODE_11AX ==
 						cfgDot11ModeToUse))) {
 				/* We cannot do 11n here */
-				if (!WLAN_REG_IS_5GHZ_CH(bss_chan_id)) {
+				if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_chan_freq)) {
 					cfgDot11ModeToUse =
 						eCSR_CFG_DOT11_MODE_11G;
 				} else {
