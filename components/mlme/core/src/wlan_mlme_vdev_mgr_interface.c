@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1241,6 +1241,9 @@ static QDF_STATUS mlme_get_vdev_types(enum QDF_OPMODE mode, uint8_t *type,
 		break;
 	case QDF_NDI_MODE:
 		*type = WLAN_VDEV_MLME_TYPE_NDI;
+		break;
+	case QDF_NAN_DISC_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_NAN;
 		break;
 	default:
 		mlme_err("Invalid device mode %d", mode);
