@@ -15,7 +15,7 @@
 #include <linux/debugfs.h>
 #include <linux/regulator/consumer.h>
 #include <linux/dma-direction.h>
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 #include <soc/qcom/secure_buffer.h>
 #include <asm/cacheflush.h>
 #include <uapi/linux/sched/types.h>
@@ -554,16 +554,14 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 {
 	struct sde_rot_data_type *mdata = sde_rot_get_mdata();
 	uint32_t *sid_info = NULL;
-	struct scm_desc desc = {0};
-	unsigned int resp = 0;
 	int ret = 0;
+	phys_addr_t mem_addr;
+	u64 mem_size;
+	u32 vmid;
 	struct qtee_shm shm;
 	bool qtee_en = qtee_shmbridge_is_enabled();
 
 	if (test_bit(SDE_CAPS_SEC_ATTACH_DETACH_SMMU, mdata->sde_caps_map)) {
-
-		desc.arginfo = SCM_ARGS(4, SCM_VAL, SCM_RW, SCM_VAL, SCM_VAL);
-		desc.args[0] = SDE_ROTATOR_DEVICE;
 
 		if (qtee_en) {
 			ret = qtee_shmbridge_allocate_shm(sizeof(uint32_t),
@@ -572,15 +570,15 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 				return -ENOMEM;
 
 			sid_info = (uint32_t *) shm.vaddr;
-			desc.args[1] = shm.paddr;
-			desc.args[2] = shm.size;
+			mem_addr = shm.paddr;
+			mem_size = shm.size;
 		} else {
 			sid_info = kzalloc(sizeof(uint32_t), GFP_KERNEL);
 			if (!sid_info)
 				return -ENOMEM;
 
-			desc.args[1] = SCM_BUFFER_PHYS(sid_info);
-			desc.args[2] = sizeof(uint32_t);
+			mem_addr = virt_to_phys(sid_info);
+			mem_size = sizeof(uint32_t);
 		}
 
 		sid_info[0] = mdata->sde_smmu[SDE_IOMMU_DOMAIN_ROT_SECURE].sid;
@@ -591,18 +589,16 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 			 * Send SCM call to hypervisor to switch the
 			 * secure_vmid to secure context
 			 */
-			desc.args[3] = VMID_CP_CAMERA_PREVIEW;
+			vmid = VMID_CP_CAMERA_PREVIEW;
 
 			mdata->sec_cam_en = 1;
 			sde_smmu_secure_ctrl(0);
 
 			dmac_flush_range(sid_info, sid_info + 1);
-			ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-					MEM_PROTECT_SD_CTRL_SWITCH), &desc);
-			resp = desc.ret[0];
+			ret = qcom_scm_mem_protect_sd_ctrl(SDE_ROTATOR_DEVICE,
+						mem_addr, mem_size, vmid);
 			if (ret) {
-				SDEROT_ERR("scm_call(1) ret=%d, resp=%x\n",
-					ret, resp);
+				SDEROT_ERR("qcom_scm_mem_protect ret=%d\n", ret);
 				/* failure, attach smmu */
 				mdata->sec_cam_en = 0;
 				sde_smmu_secure_ctrl(1);
@@ -611,35 +607,36 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 			}
 
 			SDEROT_DBG(
-			  "scm(1) sid0x%x dev0x%llx vmid0x%llx qtee_en%d ret%d resp%x\n",
-				sid_info[0], desc.args[0], desc.args[3],
-				qtee_en, ret, resp);
-			SDEROT_EVTLOG(1, sid_info, sid_info[0], desc.args[0],
-					desc.args[3], qtee_en, ret, resp);
+			  "scm(1) sid0x%x dev0x%llx vmid0x%llx qtee_en%d ret%d\n",
+				sid_info[0], SDE_ROTATOR_DEVICE, vmid,
+				qtee_en, ret);
+			SDEROT_EVTLOG(1, sid_info, sid_info[0], SDE_ROTATOR_DEVICE,
+					vmid, qtee_en, ret);
 		} else if (mdata->sec_cam_en && !enable) {
 			/*
 			 * Disable secure camera operation
 			 * Send SCM call to hypervisor to switch the
 			 * secure_vmid to non-secure context
 			 */
-			desc.args[3] = VMID_CP_PIXEL;
+			vmid = VMID_CP_PIXEL;
 			mdata->sec_cam_en = 0;
 
 			dmac_flush_range(sid_info, sid_info + 1);
-			ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				MEM_PROTECT_SD_CTRL_SWITCH), &desc);
-			resp = desc.ret[0];
+			ret = qcom_scm_mem_protect_sd_ctrl(SDE_ROTATOR_DEVICE,
+					mem_addr, mem_size, vmid);
+			if (ret)
+				SDEROT_ERR("qcom_scm_mem_protect ret=%d\n", ret);
 
 			SDEROT_DBG(
-			  "scm(0) sid0x%x dev0x%llx vmid0x%llx qtee_en%d ret%d resp%d\n",
-				sid_info[0], desc.args[0], desc.args[3],
-				qtee_en, ret, resp);
+			  "scm(0) sid0x%x dev0x%llx vmid0x%llx qtee_en%d ret%d\n",
+				sid_info[0], SDE_ROTATOR_DEVICE, vmid,
+				qtee_en, ret);
 
 			/* force smmu to reattach */
 			sde_smmu_secure_ctrl(1);
 
-			SDEROT_EVTLOG(0, sid_info, sid_info[0], desc.args[0],
-					desc.args[3], qtee_en, ret, resp);
+			SDEROT_EVTLOG(0, sid_info, sid_info[0], SDE_ROTATOR_DEVICE,
+					vmid, qtee_en, ret);
 		}
 	} else {
 		return 0;
@@ -651,10 +648,7 @@ end:
 	else
 		kfree(sid_info);
 
-	if (ret)
-		return ret;
-
-	return resp;
+	return ret;
 }
 
 
