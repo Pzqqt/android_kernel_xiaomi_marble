@@ -1395,7 +1395,7 @@ void hif_pci_display_stats(struct hif_softc *hif_ctx)
 		HIF_ERROR("%s, hif_ctx null", __func__);
 		return;
 	}
-	hif_display_ce_stats(&pci_ctx->ce_sc);
+	hif_display_ce_stats(hif_ctx);
 
 	hif_print_pci_stats(pci_ctx);
 }

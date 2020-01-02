@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -480,6 +480,15 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
  * Return: None
  */
 void htc_dump(HTC_HANDLE HTCHandle, uint8_t CmdId, bool start);
+
+/**
+ * htc_ce_taklet_debug_dump - Dump ce tasklet rings debug data
+ * @HTCHandle - HTC handle
+ *
+ * Debug logs will be printed.
+ * Return: None
+ */
+void htc_ce_tasklet_debug_dump(HTC_HANDLE htc_handle);
 
 /**
  * htc_send_pkt - Send an HTC packet

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016,2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016,2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +28,6 @@ QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 irqreturn_t ce_dispatch_interrupt(int irq,
 				  struct ce_tasklet_entry *tasklet_entry);
-void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state);
+void hif_display_ce_stats(struct hif_softc *hif_ctx);
 void hif_clear_ce_stats(struct HIF_CE_state *hif_ce_state);
 #endif /* __CE_TASKLET_H__ */

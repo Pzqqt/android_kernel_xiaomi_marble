@@ -835,3 +835,23 @@ bool hif_ahb_needs_bmi(struct hif_softc *scn)
 {
 	return !ce_srng_based(scn);
 }
+
+void hif_ahb_display_stats(struct hif_softc *scn)
+{
+	if (!scn) {
+		HIF_ERROR("%s, hif_scn null", __func__);
+		return;
+	}
+	hif_display_ce_stats(scn);
+}
+
+void hif_ahb_clear_stats(struct hif_softc *scn)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	if (!hif_state) {
+		HIF_ERROR("%s, hif_state null", __func__);
+		return;
+	}
+	hif_clear_ce_stats(hif_state);
+}

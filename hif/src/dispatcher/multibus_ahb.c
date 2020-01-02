@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,7 +69,8 @@ QDF_STATUS hif_initialize_ahb_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_grp_irq_configure = &hif_ahb_configure_grp_irq;
 	bus_ops->hif_addr_in_boundary = &hif_dummy_addr_in_boundary;
 	bus_ops->hif_needs_bmi = &hif_ahb_needs_bmi;
-
+	bus_ops->hif_display_stats = &hif_ahb_display_stats;
+	bus_ops->hif_clear_stats = &hif_ahb_clear_stats;
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -78,13 +78,11 @@ int hif_snoc_dump_registers(struct hif_softc *hif_ctx)
 
 void hif_snoc_display_stats(struct hif_softc *hif_ctx)
 {
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
-
-	if (!hif_state) {
+	if (!hif_ctx) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
 		return;
 	}
-	hif_display_ce_stats(hif_state);
+	hif_display_ce_stats(hif_ctx);
 }
 
 void hif_snoc_clear_stats(struct hif_softc *hif_ctx)

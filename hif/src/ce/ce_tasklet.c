@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,7 +34,6 @@
 #include "pld_common.h"
 #include "hif_debug.h"
 #include "hif_napi.h"
-
 
 /**
  * struct tasklet_work
@@ -139,6 +138,199 @@ static inline void ce_schedule_tasklet(struct ce_tasklet_entry *tasklet_entry)
 	tasklet_schedule(&tasklet_entry->intr_tq);
 }
 
+#ifdef CE_TASKLET_DEBUG_ENABLE
+/**
+ * hif_record_tasklet_exec_entry_ts() - Record ce tasklet execution
+ *                                      entry time
+ * @scn: hif_softc
+ * @ce_id: ce_id
+ *
+ * Return: None
+ */
+static inline void
+hif_record_tasklet_exec_entry_ts(struct hif_softc *scn, uint8_t ce_id)
+{
+	struct HIF_CE_state *hif_ce_state = HIF_GET_CE_STATE(scn);
+
+	hif_ce_state->stats.tasklet_exec_entry_ts[ce_id] =
+					qdf_get_log_timestamp_usecs();
+}
+
+/**
+ * hif_record_tasklet_sched_entry_ts() - Record ce tasklet scheduled
+ *                                       entry time
+ * @scn: hif_softc
+ * @ce_id: ce_id
+ *
+ * Return: None
+ */
+static inline void
+hif_record_tasklet_sched_entry_ts(struct hif_softc *scn, uint8_t ce_id)
+{
+	struct HIF_CE_state *hif_ce_state = HIF_GET_CE_STATE(scn);
+
+	hif_ce_state->stats.tasklet_sched_entry_ts[ce_id] =
+					qdf_get_log_timestamp_usecs();
+}
+
+/**
+ * hif_ce_latency_stats() - Display ce latency information
+ * @hif_ctx: hif_softc struct
+ *
+ * Return: None
+ */
+static void
+hif_ce_latency_stats(struct hif_softc *hif_ctx)
+{
+	uint8_t i, j;
+	uint32_t index, start_index;
+	static const char * const buck_str[] = {"0 - 0.5", "0.5 - 1", "1  -  2",
+					       "2  -  5", "5  - 10", "  >  10"};
+	struct HIF_CE_state *hif_ce_state = HIF_GET_CE_STATE(hif_ctx);
+	struct ce_stats *stats = &hif_ce_state->stats;
+
+	for (i = 0; i < CE_COUNT_MAX; i++) {
+		qdf_nofl_info("\n\t\tCE Ring %d Tasklet Execution Bucket", i);
+		for (j = 0; j < CE_BUCKET_MAX; j++) {
+			qdf_nofl_info("\t Bucket %sms :%llu\t last update:%llu",
+				      buck_str[j],
+				      stats->ce_tasklet_exec_bucket[i][j],
+				      stats->ce_tasklet_exec_last_update[i][j]);
+		}
+
+		qdf_nofl_info("\n\t\tCE Ring %d Tasklet Scheduled Bucket", i);
+		for (j = 0; j < CE_BUCKET_MAX; j++) {
+			qdf_nofl_info("\t Bucket %sms :%llu\t last update :%lld",
+				      buck_str[j],
+				      stats->ce_tasklet_sched_bucket[i][j],
+				      stats->
+					   ce_tasklet_sched_last_update[i][j]);
+		}
+
+		qdf_nofl_info("\n\t\t CE RING %d Last %d time records",
+			      i, HIF_REQUESTED_EVENTS);
+		index = stats->record_index[i];
+		start_index = stats->record_index[i];
+
+		for (j = 0; j < HIF_REQUESTED_EVENTS; j++) {
+			qdf_nofl_info("\t Execuiton time:  %luus Total Scheduled time: %luus",
+				      stats->tasklet_exec_time_record[i][index],
+				      stats->
+					   tasklet_sched_time_record[i][index]);
+			index = (index - 1) % HIF_REQUESTED_EVENTS;
+			if (index == start_index)
+				break;
+		}
+	}
+}
+
+/**
+ * ce_tasklet_update_bucket() - update ce execution and scehduled time latency
+ *                              in corresponding time buckets
+ * @stats: struct ce_stats
+ * @ce_id: ce_id_type
+ * @entry_us: timestamp when tasklet is started to execute
+ * @exit_us: timestamp when tasklet is completed execution
+ *
+ * Return: N/A
+ */
+static void ce_tasklet_update_bucket(struct HIF_CE_state *hif_ce_state,
+				     uint8_t ce_id)
+{
+	uint32_t index;
+	uint64_t exec_time, exec_ms;
+	uint64_t sched_time, sched_ms;
+	uint64_t curr_time = qdf_get_log_timestamp_usecs();
+	struct ce_stats *stats = &hif_ce_state->stats;
+
+	exec_time = curr_time - (stats->tasklet_exec_entry_ts[ce_id]);
+	sched_time = (stats->tasklet_exec_entry_ts[ce_id]) -
+		      (stats->tasklet_sched_entry_ts[ce_id]);
+
+	index = stats->record_index[ce_id];
+	index = (index + 1) % HIF_REQUESTED_EVENTS;
+
+	stats->tasklet_exec_time_record[ce_id][index] = exec_time;
+	stats->tasklet_sched_time_record[ce_id][index] = sched_time;
+	stats->record_index[ce_id] = index;
+
+	exec_ms = (exec_time) / (1000);
+	sched_ms = (sched_time) / (1000);
+
+	if (exec_ms > 10) {
+		stats->ce_tasklet_exec_bucket[ce_id][CE_BUCKET_BEYOND]++;
+		stats->ce_tasklet_exec_last_update[ce_id][CE_BUCKET_BEYOND]
+								= curr_time;
+	} else if (exec_ms > 5) {
+		stats->ce_tasklet_exec_bucket[ce_id][CE_BUCKET_10_MS]++;
+		stats->ce_tasklet_exec_last_update[ce_id][CE_BUCKET_10_MS]
+								= curr_time;
+	} else if (exec_ms > 2) {
+		stats->ce_tasklet_exec_bucket[ce_id][CE_BUCKET_5_MS]++;
+		stats->ce_tasklet_exec_last_update[ce_id][CE_BUCKET_5_MS]
+								= curr_time;
+	} else if (exec_ms > 1) {
+		stats->ce_tasklet_exec_bucket[ce_id][CE_BUCKET_2_MS]++;
+		stats->ce_tasklet_exec_last_update[ce_id][CE_BUCKET_2_MS]
+								= curr_time;
+	} else if (exec_time > 500) {
+		stats->ce_tasklet_exec_bucket[ce_id][CE_BUCKET_1_MS]++;
+		stats->ce_tasklet_exec_last_update[ce_id][CE_BUCKET_1_MS]
+								= curr_time;
+	} else {
+		stats->ce_tasklet_exec_bucket[ce_id][CE_BUCKET_500_US]++;
+		stats->ce_tasklet_exec_last_update[ce_id][CE_BUCKET_500_US]
+								= curr_time;
+	}
+
+	if (sched_ms > 10) {
+		stats->ce_tasklet_sched_bucket[ce_id][CE_BUCKET_BEYOND]++;
+		stats->ce_tasklet_sched_last_update[ce_id][CE_BUCKET_BEYOND]
+								= curr_time;
+	} else if (sched_ms > 5) {
+		stats->ce_tasklet_sched_bucket[ce_id][CE_BUCKET_10_MS]++;
+		stats->ce_tasklet_sched_last_update[ce_id][CE_BUCKET_10_MS]
+								= curr_time;
+	} else if (sched_ms > 2) {
+		stats->ce_tasklet_sched_bucket[ce_id][CE_BUCKET_5_MS]++;
+		stats->ce_tasklet_sched_last_update[ce_id][CE_BUCKET_5_MS]
+								= curr_time;
+	} else if (sched_ms > 1) {
+		stats->ce_tasklet_sched_bucket[ce_id][CE_BUCKET_2_MS]++;
+		stats->ce_tasklet_sched_last_update[ce_id][CE_BUCKET_2_MS]
+								= curr_time;
+	} else if (sched_time > 500) {
+		stats->ce_tasklet_sched_bucket[ce_id][CE_BUCKET_1_MS]++;
+		stats->ce_tasklet_sched_last_update[ce_id][CE_BUCKET_1_MS]
+								= curr_time;
+	} else {
+		stats->ce_tasklet_sched_bucket[ce_id][CE_BUCKET_500_US]++;
+		stats->ce_tasklet_sched_last_update[ce_id][CE_BUCKET_500_US]
+								= curr_time;
+	}
+}
+#else
+static inline void
+hif_record_tasklet_exec_entry_ts(struct hif_softc *scn, uint8_t ce_id)
+{
+}
+
+static void ce_tasklet_update_bucket(struct HIF_CE_state *hif_ce_state,
+				     uint8_t ce_id)
+{
+}
+
+static inline void
+hif_record_tasklet_sched_entry_ts(struct hif_softc *scn, uint8_t ce_id)
+{
+}
+
+static void
+hif_ce_latency_stats(struct hif_softc *hif_ctx)
+{
+}
+#endif /*CE_TASKLET_DEBUG_ENABLE*/
+
 /**
  * ce_tasklet() - ce_tasklet
  * @data: data
@@ -153,8 +345,9 @@ static void ce_tasklet(unsigned long data)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 	struct CE_state *CE_state = scn->ce_id_to_state[tasklet_entry->ce_id];
 
+	hif_record_tasklet_exec_entry_ts(scn, tasklet_entry->ce_id);
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
-			HIF_CE_TASKLET_ENTRY, NULL, NULL, -1, 0);
+				 HIF_CE_TASKLET_ENTRY, NULL, NULL, -1, 0);
 
 	if (qdf_atomic_read(&scn->link_suspended)) {
 		HIF_ERROR("%s: ce %d tasklet fired after link suspend.",
@@ -182,7 +375,7 @@ static void ce_tasklet(unsigned long data)
 
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,
 				NULL, NULL, -1, 0);
-
+	ce_tasklet_update_bucket(hif_ce_state, tasklet_entry->ce_id);
 	qdf_atomic_dec(&scn->active_tasklet_cnt);
 }
 
@@ -339,12 +532,13 @@ hif_ce_increment_interrupt_count(struct HIF_CE_state *hif_ce_state, int ce_id)
  *
  * Return: none
  */
-void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
+void hif_display_ce_stats(struct hif_softc *hif_ctx)
 {
 #define STR_SIZE 128
 	uint8_t i, j, pos;
 	char str_buffer[STR_SIZE];
 	int size, ret;
+	struct HIF_CE_state *hif_ce_state = HIF_GET_CE_STATE(hif_ctx);
 
 	qdf_debug("CE interrupt statistics:");
 	for (i = 0; i < CE_COUNT_MAX; i++) {
@@ -352,7 +546,7 @@ void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
 		pos = 0;
 		for (j = 0; j < QDF_MAX_AVAILABLE_CPU; j++) {
 			ret = snprintf(str_buffer + pos, size, "[%d]:%d ",
-				j, hif_ce_state->stats.ce_per_cpu[i][j]);
+				       j, hif_ce_state->stats.ce_per_cpu[i][j]);
 			if (ret <= 0 || ret >= size)
 				break;
 			size -= ret;
@@ -360,6 +554,8 @@ void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
 		}
 		qdf_debug("CE id[%2d] - %s", i, str_buffer);
 	}
+
+	hif_ce_latency_stats(hif_ctx);
 #undef STR_SIZE
 }
 
@@ -393,6 +589,7 @@ static inline bool hif_tasklet_schedule(struct hif_opaque_softc *hif_ctx,
 	}
 
 	tasklet_schedule(&tasklet_entry->intr_tq);
+	hif_record_tasklet_sched_entry_ts(scn, tasklet_entry->ce_id);
 	return true;
 }
 

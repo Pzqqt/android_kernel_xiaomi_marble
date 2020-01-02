@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -468,6 +468,8 @@ enum hif_ce_event_type {
 	HIF_RX_DESC_PRE_NBUF_ALLOC,
 	HIF_RX_DESC_PRE_NBUF_MAP,
 	HIF_RX_DESC_POST_NBUF_MAP,
+
+	HIF_EVENT_TYPE_MAX,
 };
 
 void ce_init_ce_desc_event_log(struct hif_softc *scn, int ce_id, int size);
