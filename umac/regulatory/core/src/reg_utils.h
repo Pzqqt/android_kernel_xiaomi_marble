@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -516,7 +516,7 @@ bool reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq)
  * Return: true or false
  */
 #ifdef CONFIG_CHAN_FREQ_API
-bool reg_is_dsrc_freq(uint16_t freq);
+bool reg_is_dsrc_freq(qdf_freq_t freq);
 #endif /* CONFIG_CHAN_FREQ_API*/
 
 #ifdef CONFIG_CHAN_NUM_API
@@ -567,7 +567,7 @@ static inline bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev,
 	return false;
 }
 
-static inline bool reg_is_dsrc_freq(uint16_t freq)
+static inline bool reg_is_dsrc_freq(qdf_freq_t freq)
 {
 	return false;
 }
@@ -612,7 +612,7 @@ static inline bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev,
 	return false;
 }
 
-static inline bool reg_is_dsrc_freq(uint16_t freq)
+static inline bool reg_is_dsrc_freq(qdf_freq_t freq)
 {
 	return false;
 }
