@@ -591,6 +591,8 @@ static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
 		srcobj->tx.last_ack_rssi;
 	tgtobj->stats.rx.mec_drop.num += srcobj->rx.mec_drop.num;
 	tgtobj->stats.rx.mec_drop.bytes += srcobj->rx.mec_drop.bytes;
+	tgtobj->stats.rx.multipass_rx_pkt_drop +=
+		srcobj->rx.multipass_rx_pkt_drop;
 }
 
 static inline void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
@@ -774,6 +776,8 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 		srcobj->stats.tx.last_ack_rssi;
 	tgtobj->rx.mec_drop.num += srcobj->stats.rx.mec_drop.num;
 	tgtobj->rx.mec_drop.bytes += srcobj->stats.rx.mec_drop.bytes;
+	tgtobj->rx.multipass_rx_pkt_drop +=
+		srcobj->stats.rx.multipass_rx_pkt_drop;
 }
 
 #define DP_UPDATE_STATS(_tgtobj, _srcobj)	\
@@ -868,6 +872,7 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 								  \
 		_tgtobj->stats.tx.last_ack_rssi =	\
 			_srcobj->stats.tx.last_ack_rssi; \
+		DP_STATS_AGGR(_tgtobj, _srcobj, rx.multipass_rx_pkt_drop); \
 	}  while (0)
 
 extern int dp_peer_find_attach(struct dp_soc *soc);

@@ -5282,6 +5282,8 @@ void dp_print_peer_stats(struct dp_peer *peer)
 		       peer->stats.rx.rx_byte_rate);
 	DP_PRINT_STATS("	Data received in last sec: %d",
 		       peer->stats.rx.rx_data_rate);
+	DP_PRINT_STATS("Multipass Rx Packet Drop = %d",
+		       peer->stats.rx.multipass_rx_pkt_drop);
 }
 
 void dp_print_per_ring_stats(struct dp_soc *soc)

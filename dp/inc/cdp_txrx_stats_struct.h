@@ -839,6 +839,7 @@ struct cdp_tx_stats {
  * @rx_rssi_measured_time: Time at which rssi is measured
  * @rssi: RSSI of received signal
  * @last_rssi: Previous rssi
+ * @multipass_rx_pkt_drop: Dropped multipass rx pkt
  */
 struct cdp_rx_stats {
 	struct cdp_pkt_info to_stack;
@@ -902,6 +903,7 @@ struct cdp_rx_stats {
 	uint32_t rx_rssi_measured_time;
 	uint8_t rssi;
 	uint8_t last_rssi;
+	uint32_t multipass_rx_pkt_drop;
 };
 
 /* struct cdp_tx_ingress_stats - Tx ingress Stats

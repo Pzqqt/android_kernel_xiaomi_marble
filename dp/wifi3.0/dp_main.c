@@ -4974,6 +4974,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	vdev->safemode = 0;
 	vdev->drop_unenc = 1;
 	vdev->sec_type = cdp_sec_type_none;
+	vdev->multipass_en = false;
 #ifdef notyet
 	vdev->filters_num = 0;
 #endif

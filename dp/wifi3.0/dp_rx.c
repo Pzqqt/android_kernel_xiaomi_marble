@@ -2129,7 +2129,13 @@ done:
 		 * process frame for mulitpass phrase processing
 		 */
 		if (qdf_unlikely(vdev->multipass_en)) {
-			dp_rx_multipass_process(peer, nbuf, tid);
+			if (dp_rx_multipass_process(peer, nbuf, tid) == false) {
+				DP_STATS_INC(peer, rx.multipass_rx_pkt_drop, 1);
+				qdf_nbuf_free(nbuf);
+				nbuf = next;
+				dp_peer_unref_del_find_by_id(peer);
+				continue;
+			}
 		}
 
 		if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer)) {
