@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3810,26 +3810,6 @@ dp_is_tx_desc_flush_match(struct dp_pdev *pdev,
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /**
- * dp_tx_desc_reset_vdev() - reset vdev to NULL in TX Desc
- *
- * @soc: Handle to DP SoC structure
- * @tx_desc: pointer of one TX desc
- * @desc_pool_id: TX Desc pool id
- */
-static inline void
-dp_tx_desc_reset_vdev(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
-		      uint8_t desc_pool_id)
-{
-	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
-
-	qdf_spin_lock_bh(&pool->flow_pool_lock);
-
-	tx_desc->vdev = NULL;
-
-	qdf_spin_unlock_bh(&pool->flow_pool_lock);
-}
-
-/**
  * dp_tx_desc_flush() - release resources associated
  *                      to TX Desc
  *
@@ -3872,6 +3852,17 @@ static void dp_tx_desc_flush(struct dp_pdev *pdev,
 		    !(tx_desc_pool->desc_pages.cacheable_pages))
 			continue;
 
+		/*
+		 * Add flow pool lock protection in case pool is freed
+		 * due to all tx_desc is recycled when handle TX completion.
+		 * this is not necessary when do force flush as:
+		 * a. double lock will happen if dp_tx_desc_release is
+		 *    also trying to acquire it.
+		 * b. dp interrupt has been disabled before do force TX desc
+		 *    flush in dp_pdev_deinit().
+		 */
+		if (!force_free)
+			qdf_spin_lock_bh(&tx_desc_pool->flow_pool_lock);
 		num_desc = tx_desc_pool->pool_size;
 		num_desc_per_page =
 			tx_desc_pool->desc_pages.num_element_per_page;
@@ -3895,15 +3886,22 @@ static void dp_tx_desc_flush(struct dp_pdev *pdev,
 					dp_tx_comp_free_buf(soc, tx_desc);
 					dp_tx_desc_release(tx_desc, i);
 				} else {
-					dp_tx_desc_reset_vdev(soc, tx_desc,
-							      i);
+					tx_desc->vdev = NULL;
 				}
 			}
 		}
+		if (!force_free)
+			qdf_spin_unlock_bh(&tx_desc_pool->flow_pool_lock);
 	}
 }
 #else /* QCA_LL_TX_FLOW_CONTROL_V2! */
-
+/**
+ * dp_tx_desc_reset_vdev() - reset vdev to NULL in TX Desc
+ *
+ * @soc: Handle to DP soc structure
+ * @tx_desc: pointer of one TX desc
+ * @desc_pool_id: TX Desc pool id
+ */
 static inline void
 dp_tx_desc_reset_vdev(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 		      uint8_t desc_pool_id)
