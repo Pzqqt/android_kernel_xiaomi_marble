@@ -1580,6 +1580,7 @@ struct wlan_lmac_if_dfs_rx_ops {
  * @psoc_get_wakelock_info: function to get wakelock info
  * @psoc_get_vdev_response_timer_info: function to get vdev response timer
  * structure for a specific vdev id
+ * @vdev_mgr_multi_vdev_restart_resp: function to handle mvr response
  */
 struct wlan_lmac_if_mlme_rx_ops {
 	QDF_STATUS (*vdev_mgr_start_response)(
@@ -1600,6 +1601,9 @@ struct wlan_lmac_if_mlme_rx_ops {
 	QDF_STATUS (*vdev_mgr_peer_delete_all_response)(
 					struct wlan_objmgr_psoc *psoc,
 					struct peer_delete_all_response *rsp);
+	QDF_STATUS (*vdev_mgr_multi_vdev_restart_resp)(
+					struct wlan_objmgr_psoc *psoc,
+					struct multi_vdev_restart_resp *rsp);
 #ifdef FEATURE_VDEV_RSP_WAKELOCK
 	struct vdev_mlme_wakelock *(*psoc_get_wakelock_info)(
 				    struct wlan_objmgr_psoc *psoc);

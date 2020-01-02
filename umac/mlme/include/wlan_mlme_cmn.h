@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,6 +47,8 @@
  *                                   command
  * @mlme_vdev_enqueue_exp_cmd:       callback to enqueue exception command
  *                                   required by serialization
+ * @mlme_multi_vdev_restart_resp:    callback to process multivdev restart
+ *				     response
  */
 struct mlme_ext_ops {
 	QDF_STATUS (*mlme_psoc_ext_hdl_create)(
@@ -75,6 +77,9 @@ struct mlme_ext_ops {
 	QDF_STATUS (*mlme_vdev_ext_delete_rsp)(
 					   struct wlan_objmgr_psoc *psoc,
 					   struct vdev_delete_response *rsp);
+	QDF_STATUS (*mlme_multi_vdev_restart_resp)(
+				struct wlan_objmgr_psoc *psoc,
+				struct multi_vdev_restart_resp *resp);
 };
 
 /**
@@ -215,6 +220,19 @@ QDF_STATUS mlme_vdev_ops_stop_fw_send(struct wlan_objmgr_vdev *vdev);
  *         Else FAILURE
  */
 QDF_STATUS mlme_vdev_ops_down_fw_send(struct wlan_objmgr_vdev *vdev);
+
+/*
+ * mlme_vdev_ops_ext_hdl_multivdev_restart_resp() - Handler multivdev restart
+ * response event
+ * @psoc: PSOC object manager handle
+ * @resp: Restart response event
+ *
+ * Return: Success on successful handling of the response event,
+ *         Else failure
+ */
+QDF_STATUS mlme_vdev_ops_ext_hdl_multivdev_restart_resp(
+		struct wlan_objmgr_psoc *psoc,
+		struct multi_vdev_restart_resp *resp);
 
 /**
  * mlme_set_ops_register_cb - Sets ops registration callback

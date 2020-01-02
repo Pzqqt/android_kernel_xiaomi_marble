@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -199,6 +199,13 @@ tgt_vdev_mgr_ext_tbttoffset_update_handle(uint32_t num_vdevs, bool is_ext)
 	return status;
 }
 
+static QDF_STATUS tgt_vdev_mgr_multi_vdev_restart_resp_handler(
+					struct wlan_objmgr_psoc *psoc,
+					struct multi_vdev_restart_resp *resp)
+{
+	return mlme_vdev_ops_ext_hdl_multivdev_restart_resp(psoc, resp);
+}
+
 #ifdef FEATURE_VDEV_RSP_WAKELOCK
 static struct psoc_mlme_wakelock *
 tgt_psoc_get_wakelock_info(struct wlan_objmgr_psoc *psoc)
@@ -247,5 +254,7 @@ void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 		tgt_vdev_mgr_peer_delete_all_response_handler;
 	mlme_rx_ops->psoc_get_vdev_response_timer_info =
 		tgt_vdev_mgr_get_response_timer_info;
+	mlme_rx_ops->vdev_mgr_multi_vdev_restart_resp =
+		tgt_vdev_mgr_multi_vdev_restart_resp_handler;
 	tgt_psoc_reg_wakelock_info_rx_op(&rx_ops->mops);
 }

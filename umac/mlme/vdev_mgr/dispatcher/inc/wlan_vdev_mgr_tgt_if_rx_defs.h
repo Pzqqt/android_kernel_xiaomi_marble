@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -148,6 +148,19 @@ struct vdev_delete_response {
 struct peer_delete_all_response {
 	uint8_t vdev_id;
 	uint8_t status;
+};
+
+#define VDEV_ID_BMAP_SIZE 2
+/**
+ * struct multi_vdev_restart_resp - multi-vdev restart response structure
+ * @pdev_id: pdev id
+ * @status: FW status for multi vdev restart request
+ * @vdev_id_bmap: Bitmap of vdev_ids
+ */
+struct multi_vdev_restart_resp {
+	uint8_t pdev_id;
+	uint8_t status;
+	unsigned long vdev_id_bmap[VDEV_ID_BMAP_SIZE];
 };
 
 #endif /* __WLAN_VDEV_MGR_TGT_IF_RX_DEFS_H__ */

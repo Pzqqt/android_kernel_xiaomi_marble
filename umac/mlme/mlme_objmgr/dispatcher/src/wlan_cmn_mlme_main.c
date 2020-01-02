@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -201,6 +201,18 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_delete_rsp(struct wlan_objmgr_psoc *psoc,
 
 	if ((glbl_ops) && glbl_ops->mlme_vdev_ext_delete_rsp)
 		ret = glbl_ops->mlme_vdev_ext_delete_rsp(psoc, rsp);
+
+	return ret;
+}
+
+QDF_STATUS mlme_vdev_ops_ext_hdl_multivdev_restart_resp(
+					struct wlan_objmgr_psoc *psoc,
+					struct multi_vdev_restart_resp *resp)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_multi_vdev_restart_resp)
+		ret = glbl_ops->mlme_multi_vdev_restart_resp(psoc, resp);
 
 	return ret;
 }
