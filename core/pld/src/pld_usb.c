@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -311,6 +311,20 @@ int pld_usb_is_fw_down(struct device *dev)
 	return cnss_usb_is_device_down(dev);
 }
 
+int pld_usb_athdiag_read(struct device *dev, uint32_t offset,
+			 uint32_t memtype, uint32_t datalen,
+			 uint8_t *output)
+{
+	return cnss_athdiag_read(dev, offset, memtype, datalen, output);
+}
+
+int pld_usb_athdiag_write(struct device *dev, uint32_t offset,
+			  uint32_t memtype, uint32_t datalen,
+			  uint8_t *input)
+{
+	return cnss_athdiag_write(dev, offset, memtype, datalen, input);
+}
+
 #else /* CONFIG_PLD_USB_CNSS */
 
 struct usb_driver pld_usb_ops = {
@@ -377,6 +391,20 @@ int pld_usb_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 }
 
 int pld_usb_is_fw_down(struct device *dev)
+{
+	return 0;
+}
+
+int pld_usb_athdiag_read(struct device *dev, uint32_t offset,
+			 uint32_t memtype, uint32_t datalen,
+			 uint8_t *output)
+{
+	return 0;
+}
+
+int pld_usb_athdiag_write(struct device *dev, uint32_t offset,
+			  uint32_t memtype, uint32_t datalen,
+			  uint8_t *input)
 {
 	return 0;
 }

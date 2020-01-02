@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,34 @@ int pld_usb_get_ce_id(int irq);
 int pld_usb_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 			enum pld_driver_mode mode, const char *host_version);
 int pld_usb_is_fw_down(struct device *dev);
+/**
+ * pld_usb_athdiag_read() - Read data from WLAN FW through USB interface
+ * @dev: pointer of device
+ * @offset: address offset
+ * @memtype: memory type
+ * @datalen: data length
+ * @output: pointer of output buffer
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_usb_athdiag_read(struct device *dev, uint32_t offset,
+			 uint32_t memtype, uint32_t datalen,
+			 uint8_t *output);
+/**
+ * pld_usb_athdiag_write() - Write data to WLAN FW through USB interface
+ * @dev: pointer of device
+ * @offset: address offset
+ * @memtype: memory type
+ * @datalen: data length
+ * @output: pointer of input buffer
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_usb_athdiag_write(struct device *dev, uint32_t offset,
+			  uint32_t memtype, uint32_t datalen,
+			  uint8_t *input);
 
 #else
 static inline int pld_usb_register_driver(void)
@@ -50,6 +78,19 @@ static inline int pld_usb_is_fw_down(struct device *dev)
 	return  0;
 }
 
+static inline int pld_usb_athdiag_read(struct device *dev, uint32_t offset,
+				       uint32_t memtype, uint32_t datalen,
+				       uint8_t *output)
+{
+	return 0;
+}
+
+static inline int pld_usb_athdiag_write(struct device *dev, uint32_t offset,
+					uint32_t memtype, uint32_t datalen,
+					uint8_t *input)
+{
+	return 0;
+}
 #endif
 
 static inline int
