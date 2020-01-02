@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,13 +91,12 @@ QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc, enum hal_reo_cmd_type type,
 		break;
 	default:
 		dp_err_log("Invalid REO command type: %d", type);
-		return QDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_INVAL;
 	};
 
 	dp_reo_cmd_srng_event_record(soc, type, num);
 
 	if (num < 0) {
-		dp_err_log("Error with sending REO command type: %d", type);
 		return QDF_STATUS_E_FAILURE;
 	}
 

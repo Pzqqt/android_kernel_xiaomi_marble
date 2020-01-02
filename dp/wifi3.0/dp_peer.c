@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1740,8 +1740,12 @@ QDF_STATUS dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 	} else {
 	    dp_set_ssn_valid_flag(&params, 0);
 	}
-	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
-			dp_rx_tid_update_cb, rx_tid);
+
+	if (dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
+			    dp_rx_tid_update_cb, rx_tid)) {
+		dp_err_log("failed to send reo cmd CMD_UPDATE_RX_REO_QUEUE");
+		DP_STATS_INC(soc, rx.err.reo_cmd_send_fail, 1);
+	}
 
 	rx_tid->ba_win_size = ba_window_size;
 
@@ -2071,6 +2075,7 @@ static void dp_resend_update_reo_cmd(struct dp_soc *soc,
 		desc->free_ts = qdf_get_system_timestamp();
 		qdf_list_insert_back(&soc->reo_desc_freelist,
 				     (qdf_list_node_t *)desc);
+		dp_err_log("failed to send reo cmd CMD_UPDATE_RX_REO_QUEUE");
 		DP_STATS_INC(soc, rx.err.reo_cmd_send_fail, 1);
 	}
 }
@@ -2158,9 +2163,10 @@ void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 							&params,
 							NULL,
 							NULL)) {
-				dp_err_log("fail to send CMD_CACHE_FLUSH:"
-					   "tid %d desc %pK", rx_tid->tid,
-					   (void *)(rx_tid->hw_qdesc_paddr));
+				dp_err_rl("fail to send CMD_CACHE_FLUSH:"
+					  "tid %d desc %pK", rx_tid->tid,
+					  (void *)(rx_tid->hw_qdesc_paddr));
+				DP_STATS_INC(soc, rx.err.reo_cmd_send_fail, 1);
 			}
 		}
 
@@ -2190,6 +2196,7 @@ void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 			dp_err_log("%s: fail to send REO cmd to flush cache: tid %d",
 				   __func__, rx_tid->tid);
 			dp_reo_desc_clean_up(soc, desc, &reo_status);
+			DP_STATS_INC(soc, rx.err.reo_cmd_send_fail, 1);
 		}
 	}
 	qdf_spin_unlock_bh(&soc->reo_desc_freelist_lock);
@@ -3017,9 +3024,16 @@ dp_set_pn_check_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 				params.u.upd_queue_params.pn_127_96 = rx_pn[3];
 			}
 			rx_tid->pn_size = pn_size;
-			dp_reo_send_cmd((struct dp_soc *)soc,
-					CMD_UPDATE_RX_REO_QUEUE, &params,
-					dp_rx_tid_update_cb, rx_tid);
+			if (dp_reo_send_cmd(cdp_soc_t_to_dp_soc(soc),
+					    CMD_UPDATE_RX_REO_QUEUE,
+					    &params, dp_rx_tid_update_cb,
+					    rx_tid)) {
+				dp_err_log("fail to send CMD_UPDATE_RX_REO_QUEUE"
+					   "tid %d desc %pK", rx_tid->tid,
+					   (void *)(rx_tid->hw_qdesc_paddr));
+				DP_STATS_INC(cdp_soc_t_to_dp_soc(soc),
+					     rx.err.reo_cmd_send_fail, 1);
+			}
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  "PN Check not setup for TID :%d ", i);
