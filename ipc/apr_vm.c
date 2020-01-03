@@ -581,7 +581,9 @@ static int apr_vm_cb_process_evt(char *buf, int len)
 static int apr_vm_cb_thread(void *data)
 {
 	uint32_t apr_rx_buf_len;
+#ifdef APRV2_VM_BE_ASYNC_SEND_RSP
 	struct aprv2_vm_ack_rx_pkt_available_t apr_ack;
+#endif
 	unsigned long delay = jiffies + (HZ / 2);
 	int status = 0;
 	int ret = 0;
@@ -604,11 +606,15 @@ static int apr_vm_cb_thread(void *data)
 
 		status = apr_vm_cb_process_evt(apr_rx_buf, apr_rx_buf_len);
 
+#ifdef APRV2_VM_BE_ASYNC_SEND_RSP
 		apr_ack.status = status;
 		ret = habmm_socket_send(hab_handle_rx,
 				(void *)&apr_ack,
 				sizeof(apr_ack),
 				0);
+#else
+		ret = status;
+#endif
 		if (ret) {
 			pr_err("%s: habmm_socket_send failed %d\n",
 					__func__, ret);
@@ -827,8 +833,10 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 		(struct aprv2_vm_cmd_async_send_t *)(apr_tx_buf +
 			sizeof(uint32_t));
 	uint32_t apr_send_len;
+#ifdef APRV2_VM_BE_ASYNC_SEND_RSP
 	struct aprv2_vm_cmd_async_send_rsp_t apr_rsp;
 	uint32_t apr_rsp_len;
+#endif
 	int ret = 0;
 
 	if (!handle || !buf) {
@@ -894,6 +902,7 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 				__func__, ret);
 		goto done;
 	}
+#ifdef APRV2_VM_BE_ASYNC_SEND_RSP
 	/* wait for response */
 	apr_rsp_len = sizeof(apr_rsp);
 	ret = apr_vm_nb_receive(hab_handle_tx,
@@ -912,6 +921,7 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 		ret = -ECOMM;
 		goto done;
 	}
+#endif
 
 	/* upon successful send, return packet size */
 	ret = hdr->pkt_size;
