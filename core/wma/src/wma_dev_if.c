@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2459,6 +2459,28 @@ QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme)
 	return status;
 }
 
+#define DOT11AX_HEMU_MODE 0x30
+#define HE_SUBFEE 0
+#define HE_SUBFER 1
+#define HE_MUBFEE 2
+#define HE_MUBFER 3
+
+#ifdef WLAN_FEATURE_11AX
+static inline uint32_t wma_get_txbf_cap(struct mac_context *mac)
+{
+	return
+	(mac->mlme_cfg->he_caps.dot11_he_cap.su_beamformer << HE_SUBFER) |
+	(mac->mlme_cfg->he_caps.dot11_he_cap.su_beamformee << HE_SUBFEE) |
+	(1 << HE_MUBFEE) |
+	(mac->mlme_cfg->he_caps.dot11_he_cap.mu_beamformer << HE_MUBFER);
+}
+#else
+static inline uint32_t wma_get_txbf_cap(struct mac_context *mac)
+{
+	return 0;
+}
+#endif
+
 QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 {
 	struct cdp_vdev *txrx_vdev_handle = NULL;
@@ -2474,6 +2496,7 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	struct vdev_mlme_obj *vdev_mlme;
 	tp_wma_handle wma_handle;
 	uint8_t amsdu_val;
+	uint32_t hemu_mode;
 
 	if (!mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
@@ -2644,6 +2667,8 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 
 	wma_set_vdev_mgmt_rate(wma_handle, vdev_id);
 	if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
+		hemu_mode = DOT11AX_HEMU_MODE;
+		hemu_mode |= wma_get_txbf_cap(mac);
 		/*
 		 * Enable / disable trigger access for a AP vdev's peers.
 		 * For a STA mode vdev this will enable/disable triggered
@@ -2663,7 +2688,8 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		status = wma_vdev_set_param(wma_handle->wmi_handle,
 					    vdev_id,
 					    WMI_VDEV_PARAM_SET_HEMU_MODE,
-					    0x37);
+					    hemu_mode);
+		WMA_LOGD("set HEMU_MODE (hemu_mode = 0x%x)", hemu_mode);
 		if (QDF_IS_STATUS_ERROR(status))
 			WMA_LOGE("failed to set HEMU_MODE(status = %d)",
 				 status);
