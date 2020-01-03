@@ -5,3 +5,6 @@ CONFIG_BAND_6GHZ := y
 CONFIG_WLAN_FEATURE_11AX := y
 
 include $(WLAN_ROOT)/configs/default_defconfig
+
+#Enable BUS bandwidth Feature
+CONFIG_WLAN_FEATURE_DP_BUS_BANDWIDTH := y
