@@ -1986,6 +1986,8 @@ static void mlme_init_wifi_pos_cfg(struct wlan_objmgr_psoc *psoc,
 {
 	wifi_pos_cfg->fine_time_meas_cap =
 		cfg_get(psoc, CFG_FINE_TIME_MEAS_CAPABILITY);
+	wifi_pos_cfg->oem_6g_support_disable =
+		cfg_get(psoc, CFG_OEM_SIXG_SUPPORT_DISABLE);
 }
 
 #ifdef FEATURE_WLAN_ESE
