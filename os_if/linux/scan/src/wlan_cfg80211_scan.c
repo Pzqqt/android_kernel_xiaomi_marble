@@ -1407,6 +1407,24 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	if (is_p2p_scan && request->no_cck)
 		req->scan_req.scan_type = SCAN_TYPE_P2P_SEARCH;
 
+	if (params->dwell_time_active)
+		req->scan_req.dwell_time_active = params->dwell_time_active;
+
+	if (params->dwell_time_active_2g)
+		req->scan_req.dwell_time_active_2g =
+			params->dwell_time_active_2g;
+
+	if (params->dwell_time_passive)
+		req->scan_req.dwell_time_passive = params->dwell_time_passive;
+
+	if (params->dwell_time_active_6g)
+		req->scan_req.dwell_time_active_6g =
+			params->dwell_time_active_6g;
+
+	if (params->dwell_time_passive_6g)
+		req->scan_req.dwell_time_passive_6g =
+			params->dwell_time_passive_6g;
+
 	/* Set dwell time mode according to scan policy type flags */
 	if (ucfg_scan_cfg_honour_nl_scan_policy_flags(psoc)) {
 		if (req->scan_req.scan_policy_high_accuracy)
