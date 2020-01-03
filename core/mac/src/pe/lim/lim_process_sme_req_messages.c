@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -488,6 +488,42 @@ lim_send_start_vdev_req(struct pe_session *session, tLimMlmStartReq *mlm_start_r
 					     mlm_start_req);
 }
 
+#ifdef WLAN_FEATURE_11AX
+static void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
+					  struct pe_session *session)
+{
+	struct add_ie_params *add_ie = &session->add_ie_params;
+	QDF_STATUS status;
+	uint8_t he_cap_buff[DOT11F_IE_HE_CAP_MAX_LEN + 2];
+	uint8_t he_op_buff[DOT11F_IE_HE_OP_MAX_LEN + 2];
+
+	qdf_mem_zero(he_cap_buff, sizeof(he_cap_buff));
+	qdf_mem_zero(he_op_buff, sizeof(he_op_buff));
+
+	status = lim_strip_ie(mac_ctx, add_ie->probeRespBCNData_buff,
+			      &add_ie->probeRespBCNDataLen,
+			      DOT11F_EID_HE_CAP, ONE_BYTE,
+			      HE_CAP_OUI_TYPE, (uint8_t)HE_CAP_OUI_SIZE,
+			      he_cap_buff, DOT11F_IE_HE_CAP_MAX_LEN);
+	if (status != QDF_STATUS_SUCCESS)
+		pe_debug("Failed to strip HE cap IE status: %d", status);
+
+
+	status = lim_strip_ie(mac_ctx, add_ie->probeRespBCNData_buff,
+			      &add_ie->probeRespBCNDataLen,
+			      DOT11F_EID_HE_OP, ONE_BYTE,
+			      HE_OP_OUI_TYPE, (uint8_t)HE_OP_OUI_SIZE,
+			      he_op_buff, DOT11F_IE_HE_OP_MAX_LEN);
+	if (status != QDF_STATUS_SUCCESS)
+		pe_debug("Failed to strip HE op IE status: %d", status);
+}
+#else
+static inline void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
+						 struct pe_session *session)
+{
+}
+#endif
+
 /**
  * __lim_handle_sme_start_bss_request() - process SME_START_BSS_REQ message
  *@mac_ctx: Pointer to Global MAC structure
@@ -652,6 +688,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			       session->curr_op_freq, session->dot11mode);
 			ret_code = eSIR_SME_INVALID_PARAMETERS;
 			goto free;
+		} else {
+			lim_strip_he_ies_from_add_ies(mac_ctx, session);
 		}
 
 		session->txLdpcIniFeatureEnabled =
