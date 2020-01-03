@@ -1850,10 +1850,10 @@ void lim_handle_delete_bss_rsp(struct mac_context *mac,
 	struct pe_session *pe_session;
 
 	pe_session =
-		pe_find_session_by_vdev_id(mac, del_bss_rsp->vdev_id);
+	   pe_find_session_by_vdev_id_and_state(mac,
+						del_bss_rsp->vdev_id,
+						eLIM_MLM_WT_DEL_BSS_RSP_STATE);
 	if (!pe_session) {
-		pe_err("Session Does not exist for vdev id: %d",
-		       del_bss_rsp->vdev_id);
 		qdf_mem_free(del_bss_rsp);
 		return;
 	}
