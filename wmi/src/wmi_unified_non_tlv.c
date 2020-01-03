@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1179,6 +1179,22 @@ static QDF_STATUS send_peer_create_cmd_non_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(buf);
 	}
 	return ret;
+}
+
+/**
+ * send_peer_vlan_config_cmd_non_tlv() - Send PEER vlan hw accel cmdd to fw
+ * @wmi: wmi handle
+ * @peer_addr: peer mac addr
+ * @param: struct peer_vlan_config_param *
+ *
+ * It is not supported for legacy.
+ * Return: QDF_STATUS_E_NOSUPPORT
+ */
+static QDF_STATUS send_peer_vlan_config_cmd_non_tlv(wmi_unified_t wmi,
+					uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
+					struct peer_vlan_config_param *param)
+{
+	return QDF_STATUS_E_NOSUPPORT;
 }
 
 /**
@@ -9954,6 +9970,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_peer_param_cmd = send_peer_param_cmd_non_tlv,
 	.send_vdev_up_cmd = send_vdev_up_cmd_non_tlv,
 	.send_peer_create_cmd = send_peer_create_cmd_non_tlv,
+	.send_peer_vlan_config_cmd = send_peer_vlan_config_cmd_non_tlv,
 	.send_peer_delete_cmd = send_peer_delete_cmd_non_tlv,
 	.send_peer_delete_all_cmd = send_peer_delete_all_cmd_non_tlv,
 	.send_peer_ft_roam_cmd = send_peer_ft_roam_cmd_non_tlv,

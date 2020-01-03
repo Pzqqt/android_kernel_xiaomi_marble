@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -752,4 +752,18 @@ QDF_STATUS wmi_unified_set_rx_pkt_type_routing_tag(
 		wmi_unified_t wmi_handle,
 		struct wmi_rx_pkt_protocol_routing_info *param);
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+
+/**
+ * wmi_unified_peer_vlan_config_send() - WMI function to send vlan command
+ *
+ * @wmi_hdl: WMI handle
+ * @peer_addr: Peer mac address
+ * @param: struct peer_vlan_config_param *
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS wmi_unified_peer_vlan_config_send(wmi_unified_t wmi_handle,
+		uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
+		struct peer_vlan_config_param *param);
+
 #endif /* _WMI_UNIFIED_AP_API_H_ */

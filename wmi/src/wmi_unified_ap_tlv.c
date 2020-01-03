@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1702,6 +1702,93 @@ static QDF_STATUS set_rx_pkt_type_routing_tag_update_tlv(
 }
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
+/**
+ * send_peer_vlan_config_cmd_tlv() - Send PEER vlan hw acceleration cmd to fw
+ * @wmi: wmi handle
+ * @peer_addr: peer mac addr
+ * @param: struct peer_vlan_config_param *
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS send_peer_vlan_config_cmd_tlv(wmi_unified_t wmi,
+					uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
+					struct peer_vlan_config_param *param)
+{
+	wmi_peer_config_vlan_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_peer_config_vlan_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_config_vlan_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_peer_config_vlan_cmd_fixed_param));
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
+
+	/* vdev id */
+	cmd->vdev_id = param->vdev_id;
+
+	/* Tx command - Check if cmd is Tx then configure Tx cmd */
+	if (param->tx_cmd) {
+		WMI_VLAN_TX_SET(cmd->peer_vlan_config_mask, param->tx_cmd);
+
+		/* Setting insert_or_strip bit for Tx */
+		WMI_TX_INSERT_OR_STRIP_SET(cmd->peer_vlan_config_mask,
+					   param->tx_strip_insert);
+
+		if (param->tx_strip_insert_inner && param->tx_strip_insert) {
+		/* Setting the strip_insert_vlan_inner bit fo Tx */
+			WMI_TX_STRIP_INSERT_VLAN_INNER_SET(cmd->peer_vlan_config_mask,
+				param->tx_strip_insert_inner);
+		/* If Insert inner tag bit is set, then fill inner_tci */
+			WMI_TX_INSERT_VLAN_INNER_TCI_SET(cmd->insert_vlan_tci,
+						param->insert_vlan_inner_tci);
+		}
+
+		if (param->tx_strip_insert_outer && param->tx_strip_insert) {
+			/* Setting the strip_insert_vlan_outer bit fo Tx */
+			WMI_TX_STRIP_INSERT_VLAN_OUTER_SET(cmd->peer_vlan_config_mask,
+					param->tx_strip_insert_outer);
+			/* If Insert outer tag bit is set, then fill outer_tci */
+			WMI_TX_INSERT_VLAN_OUTER_TCI_SET(cmd->insert_vlan_tci,
+						param->insert_vlan_outer_tci);
+		}
+	}
+
+	/* Rx command - Check if cmd is Rx then configure Rx cmd */
+	if (param->rx_cmd) {
+		WMI_VLAN_RX_SET(cmd->peer_vlan_config_mask, param->rx_cmd);
+
+		/* Setting the strip_vlan_c_tag_decap bit in RX */
+		WMI_RX_STRIP_VLAN_C_TAG_SET(cmd->peer_vlan_config_mask,
+				param->rx_strip_c_tag);
+
+		/* Setting the strip_vlan_s_tag_decap bit in RX */
+		WMI_RX_STRIP_VLAN_S_TAG_SET(cmd->peer_vlan_config_mask,
+					    param->rx_strip_s_tag);
+
+		/* Setting the insert_vlan_c_tag_decap bit in RX */
+		WMI_RX_INSERT_VLAN_C_TAG_SET(cmd->peer_vlan_config_mask,
+					     param->rx_insert_c_tag);
+
+		/* Setting the insert_vlan_s_tag_decap bit in RX */
+		WMI_RX_INSERT_VLAN_S_TAG_SET(cmd->peer_vlan_config_mask,
+					     param->rx_insert_s_tag);
+	}
+
+	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_CONFIG_VLAN_CMDID)) {
+		WMI_LOGE("%s: Failed to send peer hw vlan acceleration command", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WLAN_SUPPORT_FILS
 /**
  * send_vdev_fils_enable_cmd_tlv() - enable/Disable FD Frame command to fw
@@ -2469,4 +2556,5 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->set_rx_pkt_type_routing_tag_cmd =
 					set_rx_pkt_type_routing_tag_update_tlv;
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+	ops->send_peer_vlan_config_cmd = send_peer_vlan_config_cmd_tlv;
 }
