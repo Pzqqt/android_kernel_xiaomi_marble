@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -663,14 +663,6 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 	return 0;
 }
 EXPORT_SYMBOL(wsa883x_codec_info_create_codec_entry);
-
-static void wsa883x_regcache_sync(struct wsa883x_priv *wsa883x)
-{
-	mutex_lock(&wsa883x->res_lock);
-	regcache_mark_dirty(wsa883x->regmap);
-	regcache_sync(wsa883x->regmap);
-	mutex_unlock(&wsa883x->res_lock);
-}
 
 static int wsa883x_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)

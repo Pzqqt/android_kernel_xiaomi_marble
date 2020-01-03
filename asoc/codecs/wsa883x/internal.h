@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef WSA883X_INTERNAL_H
@@ -120,6 +120,4 @@ struct wsa883x_priv {
 				struct notifier_block *nblock, bool enable);
 };
 
-static int32_t wsa883x_resource_acquire(struct snd_soc_component *component,
-						bool enable);
 #endif /* WSA883X_INTERNAL_H */
