@@ -762,10 +762,13 @@ static void wifi_pos_pdev_iterator(struct wlan_objmgr_psoc *psoc,
 				   void *obj, void *arg)
 {
 	QDF_STATUS status;
-	uint8_t i, num_channels, size;
+	uint8_t i, num_channels, size, valid_ch = 0;
 	struct wlan_objmgr_pdev *pdev = obj;
 	struct wifi_pos_driver_caps *caps = arg;
 	struct channel_power *ch_list;
+	bool oem_6g_support_disable;
+	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
+					wifi_pos_get_psoc_priv_obj(psoc);
 
 	size = QDF_MAX(OEM_CAP_MAX_NUM_CHANNELS, NUM_CHANNELS);
 	ch_list = qdf_mem_malloc(size * sizeof(*ch_list));
@@ -783,9 +786,17 @@ static void wifi_pos_pdev_iterator(struct wlan_objmgr_psoc *psoc,
 	if (num_channels > OEM_CAP_MAX_NUM_CHANNELS)
 		num_channels = OEM_CAP_MAX_NUM_CHANNELS;
 
-	for (i = 0; i < num_channels; i++)
-		caps->channel_list[i] = ch_list[i].chan_num;
-	caps->num_channels = num_channels;
+	qdf_spin_lock_bh(&wifi_pos_obj->wifi_pos_lock);
+	oem_6g_support_disable = wifi_pos_obj->oem_6g_support_disable;
+	qdf_spin_unlock_bh(&wifi_pos_obj->wifi_pos_lock);
+
+	for (i = 0; i < num_channels; i++) {
+		if (oem_6g_support_disable &&
+		    WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_list[i].center_freq))
+			continue;
+		caps->channel_list[valid_ch++] = ch_list[i].chan_num;
+	}
+	caps->num_channels = valid_ch;
 	qdf_mem_free(ch_list);
 }
 

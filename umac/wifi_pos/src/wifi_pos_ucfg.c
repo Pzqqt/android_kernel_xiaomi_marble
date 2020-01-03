@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -101,3 +101,17 @@ void ucfg_wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val)
 	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
 }
 
+void ucfg_wifi_pos_set_oem_6g_supported(struct wlan_objmgr_psoc *psoc,
+					bool val)
+{
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc =
+			wifi_pos_get_psoc_priv_obj(psoc);
+	if (!wifi_pos_psoc) {
+		wifi_pos_alert("unable to get wifi_pos psoc obj");
+		return;
+	}
+
+	qdf_spin_lock_bh(&wifi_pos_psoc->wifi_pos_lock);
+	wifi_pos_psoc->oem_6g_support_disable = val;
+	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
+}

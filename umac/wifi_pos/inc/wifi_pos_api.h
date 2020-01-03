@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -329,6 +329,16 @@ uint32_t ucfg_wifi_pos_get_ftm_cap(struct wlan_objmgr_psoc *psoc);
  * Return: None
  */
 void ucfg_wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val);
+
+/**
+ * ucfg_wifi_pos_set_oem_6g_supported: API to set oem target 6g enabled/disabled
+ * @psoc: psoc object
+ * @val: value to set
+ *
+ * Return: None
+ */
+void ucfg_wifi_pos_set_oem_6g_supported(struct wlan_objmgr_psoc *psoc,
+					bool val);
 
 /**
  * wifi_pos_get_app_pid: returns oem app pid.
