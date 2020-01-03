@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -598,17 +598,15 @@ util_scan_is_hidden_ssid(struct ie_ssid *ssid)
 static QDF_STATUS
 util_scan_update_rnr(struct rnr_bss_info *rnr,
 		     struct neighbor_ap_info_field *ap_info,
-		     uint8_t **data)
+		     uint8_t *data)
 {
-	uint16_t fieldtype;
-	uint8_t *tmp = *data;
+	uint8_t tbtt_info_length;
 
-	fieldtype = ap_info->tbtt_header.tbbt_info_fieldtype;
+	tbtt_info_length = ap_info->tbtt_header.tbtt_info_length;
 
-	switch (fieldtype) {
+	switch (tbtt_info_length) {
 	case TBTT_NEIGHBOR_AP_OFFSET_ONLY:
 		/* Dont store it skip*/
-		*data = tmp + NEIGHBOR_AP_LEN;
 		break;
 
 	case TBTT_NEIGHBOR_AP_BSS_PARAM:
@@ -618,51 +616,42 @@ util_scan_update_rnr(struct rnr_bss_info *rnr,
 	case TBTT_NEIGHBOR_AP_SHORTSSID:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->short_ssid, &tmp[1], SHORT_SSID_LEN);
-		*data = tmp + NEIGHBOR_AP_LEN + SHORT_SSID_LEN;
+		qdf_mem_copy(&rnr->short_ssid, &data[1], SHORT_SSID_LEN);
 		break;
 
 	case TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->short_ssid, &tmp[1], SHORT_SSID_LEN);
-		rnr->bss_params = tmp[5];
-		*data = tmp + NEIGHBOR_AP_LEN + SHORT_SSID_LEN + BSS_PARAMS_LEN;
+		qdf_mem_copy(&rnr->short_ssid, &data[1], SHORT_SSID_LEN);
+		rnr->bss_params = data[5];
 		break;
 
 	case TBTT_NEIGHBOR_AP_BSSID:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &tmp[1], QDF_MAC_ADDR_SIZE);
-		*data = tmp + NEIGHBOR_AP_LEN + QDF_MAC_ADDR_SIZE;
+		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
 		break;
 
 	case TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &tmp[1], QDF_MAC_ADDR_SIZE);
-		rnr->bss_params = tmp[7];
-		*data = tmp + NEIGHBOR_AP_LEN + QDF_MAC_ADDR_SIZE
-			+ BSS_PARAMS_LEN;
+		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
+		rnr->bss_params = data[7];
 		break;
 
 	case TBTT_NEIGHBOR_AP_BSSSID_S_SSID:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &tmp[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->short_ssid, &tmp[7], SHORT_SSID_LEN);
-		*data = tmp + NEIGHBOR_AP_LEN + QDF_MAC_ADDR_SIZE
-			+ SHORT_SSID_LEN;
+		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
 		break;
 
 	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM:
 		rnr->channel_number = ap_info->channel_number;
 		rnr->operating_class = ap_info->operting_class;
-		qdf_mem_copy(&rnr->bssid, &tmp[1], QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&rnr->short_ssid, &tmp[7], SHORT_SSID_LEN);
-		rnr->bss_params = tmp[11];
-		*data = tmp + NEIGHBOR_AP_LEN + QDF_MAC_ADDR_SIZE
-			+ SHORT_SSID_LEN + BSS_PARAMS_LEN;
+		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
+		rnr->bss_params = data[11];
 		break;
 
 	default:
@@ -684,7 +673,7 @@ util_scan_parse_rnr_ie(struct scan_cache_entry *scan_entry,
 	rnr_ie_len = ie->ie_len;
 	data = (uint8_t *)ie + sizeof(struct ie_header);
 
-	while (data < (uint8_t *)ie + rnr_ie_len + 2) {
+	while (data < ((uint8_t *)ie + rnr_ie_len + 2)) {
 		neighbor_ap_info = (struct neighbor_ap_info_field *)data;
 		tbtt_count = neighbor_ap_info->tbtt_header.tbtt_info_count;
 		tbtt_length = neighbor_ap_info->tbtt_header.tbtt_info_length;
@@ -694,11 +683,14 @@ util_scan_parse_rnr_ie(struct scan_cache_entry *scan_entry,
 			  neighbor_ap_info->operting_class);
 		scm_debug("tbtt_count %d, tbtt_length %d, fieldtype %d",
 			  tbtt_count, tbtt_length, fieldtype);
-		for (i = 0; i < (tbtt_count + 1) && i < MAX_RNR_BSS; i++) {
-			data = data + sizeof(struct neighbor_ap_info_field);
-			util_scan_update_rnr(&scan_entry->rnr.bss_info[i],
-					     neighbor_ap_info,
-					     &data);
+		data += sizeof(struct neighbor_ap_info_field);
+		for (i = 0; i < (tbtt_count + 1) ; i++) {
+			if (i < MAX_RNR_BSS)
+				util_scan_update_rnr(
+					&scan_entry->rnr.bss_info[i],
+					neighbor_ap_info,
+					data);
+			data += tbtt_length;
 		}
 	}
 
