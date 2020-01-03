@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -481,6 +481,26 @@ static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx)
 }
 
 /**
+ * hdd_set_oem_6g_supported() - set oem 6g support enabled/disable
+ * @hdd_ctx: HDD context
+ *
+ * This function is used to pass oem 6g support enabled/disable value
+ * coming from INI to SME. This function make sure that configure
+ * INI is supported by the device.
+ *
+ * Return: None
+ */
+static void hdd_set_oem_6g_supported(struct hdd_context *hdd_ctx)
+{
+	bool oem_6g_disable = 1;
+
+	ucfg_mlme_get_oem_6g_supported(hdd_ctx->psoc, &oem_6g_disable);
+	ucfg_wifi_pos_set_oem_6g_supported(hdd_ctx->psoc, oem_6g_disable);
+	hdd_debug("oem 6g support is - %s",
+		  oem_6g_disable ? "Enabled" : "Disbaled");
+}
+
+/**
  * hdd_convert_string_to_u8_array() - used to convert string into u8 array
  * @str: String to be converted
  * @hex_array: Array where converted value is stored
@@ -891,6 +911,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	sme_config->csr_config.max_intf_count = hdd_ctx->max_intf_count;
 
 	hdd_set_fine_time_meas_cap(hdd_ctx);
+	hdd_set_oem_6g_supported(hdd_ctx);
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 

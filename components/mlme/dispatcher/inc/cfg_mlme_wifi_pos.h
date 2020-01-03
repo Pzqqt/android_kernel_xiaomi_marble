@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,7 +68,34 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"fine timing measurement capability")
 
+/*
+ * <ini>
+ * oem_6g_support_disable - oem 6g support is disabled
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to show OEM is 6Ghz disabled. For legacy OEM apps
+ * having no support for 6Ghz, the default value is 1 and thus driver will
+ * not serve 6Ghz info to legacy oem application.
+ * OEM apps supporting 6Ghz sets the ini value to 0 to get 6Ghz
+ * information from driver.
+ *
+ * Related: None
+ *
+ * Supported Feature: WIFI POS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_OEM_SIXG_SUPPORT_DISABLE CFG_INI_BOOL( \
+		"oem_6g_support_disable", \
+		1, \
+		"oem 6Ghz support Enabled/disabled")
+
 #define CFG_WIFI_POS_ALL \
-	CFG(CFG_FINE_TIME_MEAS_CAPABILITY)
+	CFG(CFG_FINE_TIME_MEAS_CAPABILITY) \
+	CFG(CFG_OEM_SIXG_SUPPORT_DISABLE)
 
 #endif /* __CFG_MLME_WIFI_POS_H */
