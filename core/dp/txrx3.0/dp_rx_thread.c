@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -703,6 +703,11 @@ void dp_rx_thread_flush_by_vdev_id(struct dp_rx_thread *rx_thread,
 		}
 	}
 	qdf_nbuf_queue_head_unlock(&rx_thread->nbuf_queue);
+
+	if (qdf_atomic_read(&rx_thread->gro_flush_ind))
+		qdf_atomic_set(&rx_thread->gro_flush_ind, 0);
+
+	dp_rx_thread_gro_flush(rx_thread);
 }
 
 /**
