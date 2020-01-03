@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -244,7 +244,8 @@ enum eWniMsgTypes {
 	eWNI_SME_VDEV_DELETE_REQ = SIR_SME_MSG_TYPES_BEGIN + 157,
 	eWNI_SME_VDEV_DELETE_RSP = SIR_SME_MSG_TYPES_BEGIN + 158,
 	eWNI_SME_ROAM_INIT_PARAM = SIR_SME_MSG_TYPES_BEGIN + 159,
-	eWNI_SME_MSG_TYPES_END = SIR_SME_MSG_TYPES_BEGIN + 160
+	eWNI_SME_ROAM_SEND_PER_REQ = SIR_SME_MSG_TYPES_BEGIN + 160,
+	eWNI_SME_MSG_TYPES_END = SIR_SME_MSG_TYPES_BEGIN + 161
 };
 
 typedef struct sAniCfgTxRateCtrs {
