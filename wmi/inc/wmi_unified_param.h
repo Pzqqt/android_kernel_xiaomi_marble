@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -7679,6 +7679,38 @@ struct vap_pcp_tid_map_params {
 struct vap_tidmap_prec_params {
 	uint32_t vdev_id;
 	uint32_t map_precedence;
+};
+
+/**
+ * struct peer_vlan_config_param - peer vlan config command
+ * @tx_cmd: Tx command
+ * @rx_cmd: Rx command
+ * @tx_strip_insert: Strip or Insert vlan in Tx[0:Strip, 1: Insert]
+ * @tx_strip_insert_inner: Enable tx_strip_insert operation for inner vlan tag.
+ * @tx_strip_insert_outer: Enable tx_strip_insert operation for outer vlan tag.
+ * @rx_strip_c_tag: Strip c_tag
+ * @rx_strip_s_tag: Strip s_tag
+ * @rx_insert_c_tag: Insert c_tag
+ * @rx_insert_s_tag: Insert s_tag
+ *
+ * @insert_vlan_inner_tci: Vlan inner tci
+ * @insert_vlan_inner_tci: Vlan outer tci
+ *
+ * @vdev_id: vdev id corresponding to peer.
+ */
+struct peer_vlan_config_param {
+	uint16_t tx_cmd:1,
+		rx_cmd:1,
+		tx_strip_insert:1,
+		tx_strip_insert_inner:1,
+		tx_strip_insert_outer:1,
+		rx_strip_c_tag:1,
+		rx_strip_s_tag:1,
+		rx_insert_c_tag:1,
+		rx_insert_s_tag:1;
+	uint16_t insert_vlan_inner_tci;
+	uint16_t insert_vlan_outer_tci;
+	uint8_t vdev_id;
 };
 #endif
 
