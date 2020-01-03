@@ -3238,7 +3238,7 @@ QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 	}
 	peer->state = state;
 
-	DP_TRACE(INFO, "peer %pK state %d", peer, peer->state);
+	dp_info("peer %pK state %d", peer, peer->state);
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
 	 */
@@ -3323,7 +3323,7 @@ uint8_t *dp_peer_get_peer_mac_addr(void *peer_handle)
 	uint8_t *mac;
 
 	mac = peer->mac_addr.raw;
-	DP_TRACE(INFO, "peer %pK mac 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
+	dp_info("peer %pK mac 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
 		peer, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	return peer->mac_addr.raw;
 }
@@ -3398,7 +3398,7 @@ void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer)
 		pdev->local_peer_ids.map[i] = peer;
 	}
 	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
-	DP_TRACE(INFO, "peer %pK, local id %d", peer, peer->local_id);
+	dp_info("peer %pK, local id %d", peer, peer->local_id);
 }
 
 /**
