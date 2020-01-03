@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5025,7 +5025,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 		return -ENONET;
 
 	if (sta_ctx->hdd_reassoc_scenario) {
-		hdd_info("Roaming in progress, hence return");
+		hdd_debug("Roaming in progress, hence return");
 		return -ENONET;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -385,7 +385,7 @@ static void lim_update_ese_tsm(struct mac_context *mac_ctx,
 	 * Ie is present in the reassoc rsp
 	 */
 	if (!assoc_rsp->tspecPresent) {
-		pe_err("TSM present but TSPEC IE not present");
+		pe_debug("TSM present but TSPEC IE not present");
 		return;
 	}
 	tsm_ctx = &session_entry->eseContext.tsm;

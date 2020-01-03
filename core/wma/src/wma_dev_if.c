@@ -4358,8 +4358,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	}
 
 	if (wma_is_vdev_up(params->smesessionId)) {
-		WMA_LOGE("%s: vdev id %d is already UP for %pM", __func__,
-			params->smesessionId, params->bssId);
+		WMA_LOGD("%s: vdev id %d is already UP for %pM", __func__,
+			 params->smesessionId, params->bssId);
 		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
