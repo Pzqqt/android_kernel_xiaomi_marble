@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015, 2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/regmap.h>
 #include <linux/device.h>
 #include "wsa883x-registers.h"
 
-const u8 wsa883x_reg_readable[WSA883X_NUM_REGISTERS] = {
+const u8 wsa883x_reg_access[WSA883X_NUM_REGISTERS] = {
 	[WSA883X_REG(WSA883X_REF_CTRL)] = RD_WR_REG,
 	[WSA883X_REG(WSA883X_TEST_CTL_0)] = RD_WR_REG,
 	[WSA883X_REG(WSA883X_BIAS_0)] = RD_WR_REG,
