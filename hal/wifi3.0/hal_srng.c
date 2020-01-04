@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,6 +38,9 @@ void hal_qca6490_attach(struct hal_soc *hal);
 #endif
 #ifdef QCA_WIFI_QCN9000
 void hal_qcn9000_attach(struct hal_soc *hal);
+#endif
+#ifdef QCA_WIFI_QCA6750
+void hal_qca6750_attach(struct hal_soc *hal);
 #endif
 
 #ifdef ENABLE_VERBOSE_DEBUG
@@ -251,6 +254,12 @@ static void hal_target_based_configure(struct hal_soc *hal)
 		hal->use_register_windowing = true;
 		hal_qca6490_attach(hal);
 	break;
+#endif
+#ifdef QCA_WIFI_QCA6750
+		case TARGET_TYPE_QCA6750:
+			hal->use_register_windowing = true;
+			hal_qca6750_attach(hal);
+		break;
 #endif
 #if defined(QCA_WIFI_QCA8074) && defined(WIFI_TARGET_TYPE_3_0)
 	case TARGET_TYPE_QCA8074:

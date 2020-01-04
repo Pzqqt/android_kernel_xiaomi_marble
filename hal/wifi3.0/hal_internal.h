@@ -515,6 +515,7 @@ struct hal_soc {
 	bool init_phase;
 };
 
+void hal_qca6750_attach(struct hal_soc *hal_soc);
 void hal_qca6490_attach(struct hal_soc *hal_soc);
 void hal_qca6390_attach(struct hal_soc *hal_soc);
 void hal_qca6290_attach(struct hal_soc *hal_soc);

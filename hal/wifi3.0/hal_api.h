@@ -28,7 +28,8 @@
 #include "qdf_platform.h"
 
 /* calculate the register address offset from bar0 of shadow register x */
-#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490)
+#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
+    defined(QCA_WIFI_QCA6750)
 #define SHADOW_REGISTER_START_ADDRESS_OFFSET 0x000008FC
 #define SHADOW_REGISTER_END_ADDRESS_OFFSET \
 	((SHADOW_REGISTER_START_ADDRESS_OFFSET) + (4 * (MAX_SHADOW_REGISTERS)))
@@ -38,11 +39,11 @@
 #define SHADOW_REGISTER_END_ADDRESS_OFFSET \
 	((SHADOW_REGISTER_START_ADDRESS_OFFSET) + (4 * (MAX_SHADOW_REGISTERS)))
 #define SHADOW_REGISTER(x) ((SHADOW_REGISTER_START_ADDRESS_OFFSET) + (4 * (x)))
-#endif /* QCA_WIFI_QCA6390 || QCA_WIFI_QCA6490 */
+#endif /* QCA_WIFI_QCA6390 || QCA_WIFI_QCA6490 || QCA_WIFI_QCA6750 */
 
 #define MAX_UNWINDOWED_ADDRESS 0x80000
 #if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
-	defined(QCA_WIFI_QCN9000)
+    defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6750)
 #define WINDOW_ENABLE_BIT 0x40000000
 #else
 #define WINDOW_ENABLE_BIT 0x80000000
@@ -117,7 +118,8 @@ static inline void hal_reg_write_result_check(struct hal_soc *hal_soc,
 	}
 }
 
-#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
+#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490) || \
+    !defined(QCA_WIFI_QCA6750)
 static inline void hal_lock_reg_access(struct hal_soc *soc,
 				       unsigned long *flags)
 {
@@ -232,7 +234,8 @@ static inline qdf_iomem_t hal_get_window_address(struct hal_soc *hal_soc,
  * note3: WINDOW_VALUE_MASK = big enough that trying to write past
  *                            that window would be a bug
  */
-#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
+#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490) && \
+    !defined(QCA_WIFI_QCA6750)
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 				  uint32_t value)
 {
@@ -403,7 +406,8 @@ void hal_write_address_32_mb(struct hal_soc *hal_soc,
 		hal_write_address_32_mb(_a, _b, _c)
 #endif
 
-#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
+#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490) && \
+    !defined(QCA_WIFI_QCA6750)
 /**
  * hal_read32_mb() - Access registers to read configuration
  * @hal_soc: hal soc handle
