@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -891,19 +891,19 @@ out:
 	if (soc->cdp_soc.ol_ops->rx_invalid_peer)
 		soc->cdp_soc.ol_ops->rx_invalid_peer(vdev->vdev_id, wh);
 free:
-	/* reset the head and tail pointers */
-	pdev = dp_get_pdev_for_mac_id(soc, mac_id);
-	if (pdev) {
-		pdev->invalid_peer_head_msdu = NULL;
-		pdev->invalid_peer_tail_msdu = NULL;
-	}
-
 	/* Drop and free packet */
 	curr_nbuf = mpdu;
 	while (curr_nbuf) {
 		next_nbuf = qdf_nbuf_next(curr_nbuf);
 		qdf_nbuf_free(curr_nbuf);
 		curr_nbuf = next_nbuf;
+	}
+
+	/* Reset the head and tail pointers */
+	pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	if (pdev) {
+		pdev->invalid_peer_head_msdu = NULL;
+		pdev->invalid_peer_tail_msdu = NULL;
 	}
 
 	return 0;

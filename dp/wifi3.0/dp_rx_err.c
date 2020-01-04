@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -427,8 +427,8 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
  *  Return: bool: true for last msdu of mpdu
  */
 static bool
-dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
-								uint8_t mac_id)
+dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
+		  uint8_t *rx_tlv_hdr, uint8_t mac_id)
 {
 	bool mpdu_done = false;
 	qdf_nbuf_t curr_nbuf = NULL;
@@ -447,8 +447,9 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 	 * up
 	 */
 	if (!dp_pdev->first_nbuf ||
+	    (dp_pdev->invalid_peer_head_msdu &&
 	    QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST
-		(dp_pdev->invalid_peer_head_msdu) >= DP_MAX_INVALID_BUFFERS) {
+	    (dp_pdev->invalid_peer_head_msdu) >= DP_MAX_INVALID_BUFFERS)) {
 		qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
 		dp_pdev->ppdu_id = hal_rx_hw_desc_get_ppduid_get(soc->hal_soc,
 								 rx_tlv_hdr);
@@ -804,6 +805,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			pdev->invalid_peer_head_msdu = NULL;
 			pdev->invalid_peer_tail_msdu = NULL;
 		}
+
 		return QDF_STATUS_E_FAILURE;
 	}
 
