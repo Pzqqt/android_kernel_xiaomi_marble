@@ -453,7 +453,7 @@ static inline uint32_t qdf_mem_map_nbytes_single(qdf_device_t osdev, void *buf,
 						 qdf_dma_dir_t dir, int nbytes,
 						 qdf_dma_addr_t *phy_addr)
 {
-#if defined(HIF_PCI)
+#if defined(HIF_PCI) || defined(HIF_IPCI)
 	return __qdf_mem_map_nbytes_single(osdev, buf, dir, nbytes, phy_addr);
 #else
 	return 0;
@@ -482,7 +482,7 @@ static inline void qdf_mem_unmap_nbytes_single(qdf_device_t osdev,
 					       qdf_dma_dir_t dir,
 					       int nbytes)
 {
-#if defined(HIF_PCI)
+#if defined(HIF_PCI) || defined(HIF_IPCI)
 	__qdf_mem_unmap_nbytes_single(osdev, phy_addr, dir, nbytes);
 #endif
 }

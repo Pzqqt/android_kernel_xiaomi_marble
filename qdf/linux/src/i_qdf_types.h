@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -224,6 +224,7 @@ struct __qdf_mempool_ctxt;
  * @QDF_BUS_TYPE_SNOC: SNOC Bus
  * @QDF_BUS_TYPE_SIM: Simulator
  * @QDF_BUS_TYPE_USB: USB Bus
+ * @QDF_BUS_TYPE_IPCI: IPCI Bus
  */
 enum qdf_bus_type {
 	QDF_BUS_TYPE_NONE = -1,
@@ -232,7 +233,8 @@ enum qdf_bus_type {
 	QDF_BUS_TYPE_SNOC,
 	QDF_BUS_TYPE_SIM,
 	QDF_BUS_TYPE_SDIO,
-	QDF_BUS_TYPE_USB
+	QDF_BUS_TYPE_USB,
+	QDF_BUS_TYPE_IPCI
 };
 
 /**
