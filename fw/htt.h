@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -195,10 +195,11 @@
  *      htt_tx_data_hdr_information
  * 3.73 Add channel pre-calibration data upload and download messages defs for
  *      HTT_T2H_MSG_TYPE_CHAN_CALDATA and HTT_H2T_MSG_TYPE_CHAN_CALDATA
- * 3.74 Add HTT_T2HMSG_TYPE_RX_FISA_CFG msg.
+ * 3.74 Add HTT_T2H_MSG_TYPE_RX_FISA_CFG msg.
+ * 3.75 Add fp_ndp and mo_ndp flags in HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 74
+#define HTT_CURRENT_VERSION_MINOR 75
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -4821,8 +4822,8 @@ enum htt_srng_ring_id {
  *
  *    The message would appear as follows:
  *
- *    |31 28|27|26|25|24|23            16|15          |9 8|7             0|
- *    |-----+--+--+--+--+----------------+------------+---+---------------|
+ *    |31 28|27|26|25|24|23            16|15  | 11| 10|9 8|7             0|
+ *    |-----+--+--+--+--+----------------+----+---+---+---+---------------|
  *    |rsvd1|DT|OV|PS|SS|     ring_id    |     pdev_id    |    msg_type   |
  *    |-------------------------------------------------------------------|
  *    |              rsvd2               |           ring_buffer_size     |
@@ -4845,7 +4846,8 @@ enum htt_srng_ring_id {
  *    |-------------------------------------------------------------------|
  *    |              rsvd3               |      rx_attention_offset       |
  *    |-------------------------------------------------------------------|
- *    |              rsvd4                            | rx_drop_threshold |
+ *    |              rsvd4                    | mo| fp| rx_drop_threshold |
+ *    |                                       |ndp|ndp|                   |
  *    |-------------------------------------------------------------------|
  * Where:
  *     PS = pkt_swap
@@ -4939,6 +4941,10 @@ enum htt_srng_ring_id {
  *                    to source rings. Consumer drops packets if the available
  *                    words in the ring falls below the configured threshold
  *                    value.
+ *        - b'10    - fp_ndp: Flag to indicate FP NDP status tlv is subscribed
+ *                    by host. 1 -> subscribed
+ *        - b`11    - mo_ndp: Flag to indicate MO NDP status tlv is subscribed
+ *                    by host. 1 -> subscribed
  */
 PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 msg_type:          8,
@@ -4965,7 +4971,9 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 rx_attn_offset:       16,
              rsvd3:                16;
     A_UINT32 rx_drop_threshold:    10,
-             rsvd4:                22;
+             fp_ndp:               1,
+             mo_ndp:               1,
+             rsvd4:                20;
 } POSTPACK;
 
 #define HTT_RX_RING_SELECTION_CFG_SZ    (sizeof(struct htt_rx_ring_selection_cfg_t))
@@ -5189,6 +5197,29 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
                 HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD, _val); \
                 ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_S)); \
             } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_FP_NDP_M         0x00000400
+#define HTT_RX_RING_SELECTION_CFG_FP_NDP_S         10
+#define HTT_RX_RING_SELECTION_CFG_FP_NDP_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_FP_NDP_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_FP_NDP_S)
+#define HTT_RX_RING_SELECTION_CFG_FP_NDP_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_FP_NDP, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_FP_NDP_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_MO_NDP_M         0x00000800
+#define HTT_RX_RING_SELECTION_CFG_MO_NDP_S         11
+#define HTT_RX_RING_SELECTION_CFG_MO_NDP_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_MO_NDP_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_MO_NDP_S)
+#define HTT_RX_RING_SELECTION_CFG_MO_NDP_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_MO_NDP, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_MO_NDP_S)); \
+            } while (0)
+
 
 /*
  * Subtype based MGMT frames enable bits.
