@@ -3058,8 +3058,6 @@ int qdf_print_ctrl_register(const struct category_info *cinfo,
 		}
 	}
 
-	pr_info("%s: Allocated print control object %d\n",
-		__func__, idx);
 	return idx;
 }
 qdf_export_symbol(qdf_print_ctrl_register);

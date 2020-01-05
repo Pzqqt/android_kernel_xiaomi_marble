@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -774,8 +774,8 @@ QDF_STATUS target_if_dbr_stop_ring_debug(struct wlan_objmgr_pdev *pdev,
 	for (srng_id = 0; srng_id < DBR_SRNG_NUM; srng_id++) {
 		ring_debug = &mod_debug->dbr_ring_debug[srng_id];
 		if (!ring_debug->entries) {
-			direct_buf_rx_err("DBR ring debug for module %d srng %d was already disabled",
-					  mod_id, srng_id);
+			direct_buf_rx_debug("DBR ring debug for module %d srng %d was already disabled",
+					   mod_id, srng_id);
 			continue;
 		}
 		/* De-init debugsfs for this ring */
