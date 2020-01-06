@@ -566,14 +566,19 @@ htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
  *
  * Return: None
  */
-static inline void DP_HTT_SEND_HTC_PKT(struct htt_soc *soc,
-				       struct dp_htt_htc_pkt *pkt, uint8_t cmd,
-				       uint8_t *buf)
+static inline QDF_STATUS DP_HTT_SEND_HTC_PKT(struct htt_soc *soc,
+					     struct dp_htt_htc_pkt *pkt,
+					     uint8_t cmd, uint8_t *buf)
 {
+	QDF_STATUS status;
+
 	htt_command_record(soc->htt_logger_handle, cmd, buf);
-	if (htc_send_pkt(soc->htc_soc, &pkt->htc_pkt) ==
-	    QDF_STATUS_SUCCESS)
+
+	status = htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
+	if (status == QDF_STATUS_SUCCESS)
 		htt_htc_misc_pkt_list_add(soc, pkt);
+
+	return status;
 }
 
 /*
@@ -695,6 +700,7 @@ static int htt_h2t_ver_req_msg(struct htt_soc *soc)
 	struct dp_htt_htc_pkt *pkt;
 	qdf_nbuf_t msg;
 	uint32_t *msg_word;
+	QDF_STATUS status;
 
 	msg = qdf_nbuf_alloc(
 		soc->osdev,
@@ -739,8 +745,15 @@ static int htt_h2t_ver_req_msg(struct htt_soc *soc)
 		1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_VERSION_REQ, NULL);
-	return 0;
+	status = DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_VERSION_REQ,
+				     NULL);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		qdf_nbuf_free(msg);
+		htt_htc_pkt_free(soc, pkt);
+	}
+
+	return status;
 }
 
 /*
@@ -767,6 +780,7 @@ int htt_srng_setup(struct htt_soc *soc, int mac_id,
 	uint8_t *htt_logger_bufp;
 	int target_pdev_id;
 	int lmac_id = dp_get_lmac_id_for_pdev_id(soc->dp_soc, 0, mac_id);
+	QDF_STATUS status;
 
 	/* Sizes should be set in 4-byte words */
 	ring_entry_size = ring_entry_size >> 2;
@@ -999,10 +1013,15 @@ int htt_srng_setup(struct htt_soc *soc, int mac_id,
 		HTC_TX_PACKET_TAG_RUNTIME_PUT); /* tag for no FW response msg */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
-	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_SRING_SETUP,
-			    htt_logger_bufp);
+	status = DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_SRING_SETUP,
+				     htt_logger_bufp);
 
-	return QDF_STATUS_SUCCESS;
+	if (status != QDF_STATUS_SUCCESS) {
+		qdf_nbuf_free(htt_msg);
+		htt_htc_pkt_free(soc, pkt);
+	}
+
+	return status;
 
 fail1:
 	qdf_nbuf_free(htt_msg);
@@ -1037,6 +1056,7 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 	struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx = soc->dp_soc->wlan_cfg_ctx;
 	uint32_t mon_drop_th = wlan_cfg_get_mon_drop_thresh(wlan_cfg_ctx);
 	int target_pdev_id;
+	QDF_STATUS status;
 
 	htt_msg = qdf_nbuf_alloc(soc->osdev,
 		HTT_MSG_BUF_SIZE(HTT_RX_RING_SELECTION_CFG_SZ),
@@ -1727,9 +1747,16 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 		1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
-	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG,
-			    htt_logger_bufp);
-	return QDF_STATUS_SUCCESS;
+	status = DP_HTT_SEND_HTC_PKT(soc, pkt,
+				     HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG,
+				     htt_logger_bufp);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		qdf_nbuf_free(htt_msg);
+		htt_htc_pkt_free(soc, pkt);
+	}
+
+	return status;
 
 fail1:
 	qdf_nbuf_free(htt_msg);
@@ -4331,6 +4358,7 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 	uint8_t *htt_logger_bufp;
 	int mac_for_pdev;
 	int target_pdev_id;
+	QDF_STATUS status;
 
 	msg = qdf_nbuf_alloc(
 			soc->osdev,
@@ -4433,9 +4461,15 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 			HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_EXT_STATS_REQ,
-			    htt_logger_bufp);
-	return 0;
+	status = DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_EXT_STATS_REQ,
+				     htt_logger_bufp);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		qdf_nbuf_free(msg);
+		htt_htc_pkt_free(soc, pkt);
+	}
+
+	return status;
 }
 
 /* This macro will revert once proper HTT header will define for
@@ -4458,6 +4492,7 @@ QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 	uint8_t pdev_mask;
+	QDF_STATUS status;
 
 	msg = qdf_nbuf_alloc(
 			soc->osdev,
@@ -4520,9 +4555,15 @@ QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 			1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_PPDU_STATS_CFG,
-			    (uint8_t *)msg_word);
-	return 0;
+	status = DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_PPDU_STATS_CFG,
+				     (uint8_t *)msg_word);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		qdf_nbuf_free(msg);
+		htt_htc_pkt_free(soc, pkt);
+	}
+
+	return status;
 }
 #endif
 
@@ -4579,6 +4620,7 @@ dp_htt_rx_flow_fst_setup(struct dp_pdev *pdev,
 	struct htt_h2t_msg_rx_fse_setup_t *fse_setup;
 	uint8_t *htt_logger_bufp;
 	u_int32_t *key;
+	QDF_STATUS status;
 
 	msg = qdf_nbuf_alloc(
 		soc->osdev,
@@ -4683,16 +4725,22 @@ dp_htt_rx_flow_fst_setup(struct dp_pdev *pdev,
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
-	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG,
-			    htt_logger_bufp);
+	status = DP_HTT_SEND_HTC_PKT(soc, pkt,
+				     HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG,
+				     htt_logger_bufp);
 
-	dp_info("HTT_H2T RX_FSE_SETUP sent to FW for pdev = %u",
-		fse_setup_info->pdev_id);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_DEBUG,
-			   (void *)fse_setup_info->hash_key,
-			   fse_setup_info->hash_key_len);
+	if (status == QDF_STATUS_SUCCESS) {
+		dp_info("HTT_H2T RX_FSE_SETUP sent to FW for pdev = %u",
+			fse_setup_info->pdev_id);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_DEBUG,
+				   (void *)fse_setup_info->hash_key,
+				   fse_setup_info->hash_key_len);
+	} else {
+		qdf_nbuf_free(msg);
+		htt_htc_pkt_free(soc, pkt);
+	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
@@ -4713,6 +4761,7 @@ dp_htt_rx_flow_fse_operation(struct dp_pdev *pdev,
 	u_int32_t *msg_word;
 	struct htt_h2t_msg_rx_fse_operation_t *fse_operation;
 	uint8_t *htt_logger_bufp;
+	QDF_STATUS status;
 
 	msg = qdf_nbuf_alloc(
 		soc->osdev,
@@ -4827,13 +4876,19 @@ dp_htt_rx_flow_fse_operation(struct dp_pdev *pdev,
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
-	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG,
-			    htt_logger_bufp);
+	status = DP_HTT_SEND_HTC_PKT(soc, pkt,
+				     HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG,
+				     htt_logger_bufp);
 
-	dp_info("HTT_H2T RX_FSE_OPERATION_CFG sent to FW for pdev = %u",
-		fse_op_info->pdev_id);
+	if (status == QDF_STATUS_SUCCESS) {
+		dp_info("HTT_H2T RX_FSE_OPERATION_CFG sent to FW for pdev = %u",
+			fse_op_info->pdev_id);
+	} else {
+		qdf_nbuf_free(msg);
+		htt_htc_pkt_free(soc, pkt);
+	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
@@ -4854,6 +4909,7 @@ dp_htt_rx_fisa_config(struct dp_pdev *pdev,
 	struct htt_h2t_msg_type_fisa_config_t *htt_fisa_config;
 	uint8_t *htt_logger_bufp;
 	uint32_t len;
+	QDF_STATUS status;
 
 	len = HTT_MSG_BUF_SIZE(sizeof(struct htt_h2t_msg_type_fisa_config_t));
 
@@ -4933,11 +4989,16 @@ dp_htt_rx_fisa_config(struct dp_pdev *pdev,
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
-	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FISA_CFG,
-			    htt_logger_bufp);
+	status = DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FISA_CFG,
+				     htt_logger_bufp);
 
-	dp_info("HTT_H2T_MSG_TYPE_RX_FISA_CFG sent to FW for pdev = %u",
-		fisa_config->pdev_id);
+	if (status == QDF_STATUS_SUCCESS) {
+		dp_info("HTT_H2T_MSG_TYPE_RX_FISA_CFG sent to FW for pdev = %u",
+			fisa_config->pdev_id);
+	} else {
+		qdf_nbuf_free(msg);
+		htt_htc_pkt_free(soc, pkt);
+	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
