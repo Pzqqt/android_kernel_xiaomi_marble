@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,6 +57,11 @@ extern "C" {
 /* HastingsPrime */
 #ifndef TARGET_TYPE_QCA6490
 #define TARGET_TYPE_QCA6490   27
+#endif
+
+/* Moselle */
+#ifndef TARGET_TYPE_QCA6750
+#define TARGET_TYPE_QCA6750 28
 #endif
 
 #ifdef __cplusplus

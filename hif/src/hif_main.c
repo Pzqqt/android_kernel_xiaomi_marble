@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,7 +30,8 @@
 #include <a_debug.h>
 #include "hif_main.h"
 #include "hif_hw_version.h"
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
+#if (defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
+     defined(HIF_IPCI))
 #include "ce_tasklet.h"
 #include "ce_api.h"
 #endif
@@ -498,9 +499,10 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	qdf_mem_free(scn);
 }
 
-#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
-	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490)
+#if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
+     defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
+     defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
+     defined(QCA_WIFI_QCA6750))
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
@@ -857,6 +859,13 @@ int hif_get_device_type(uint32_t device_id,
 		HIF_INFO(" *********** QCA6490 *************\n");
 		break;
 
+	case QCA6750_DEVICE_ID:
+	case QCA6750_EMULATION_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCA6750;
+		*target_type = TARGET_TYPE_QCA6750;
+		HIF_INFO(" *********** QCA6750 *************\n");
+		break;
+
 	case QCA8074V2_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA8074V2;
 		*target_type = TARGET_TYPE_QCA8074V2;
@@ -1116,7 +1125,8 @@ bool hif_is_recovery_in_progress(struct hif_softc *scn)
 	return false;
 }
 
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
+    defined(HIF_IPCI)
 
 /**
  * hif_update_pipe_callback() - API to register pipe specific callbacks

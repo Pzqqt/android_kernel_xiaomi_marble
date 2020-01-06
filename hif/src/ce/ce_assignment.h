@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1147,6 +1147,55 @@ static struct CE_attr host_ce_config_wlan_qca6490[] = {
 };
 
 static struct CE_pipe_config target_ce_config_wlan_qca6490[] = {
+	/* host->target HTC control and raw streams */
+	{ /* CE0 */ 0, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	/* target->host HTT */
+	{ /* CE1 */ 1, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	/* target->host WMI  + HTC control */
+	{ /* CE2 */ 2, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	/* host->target WMI */
+	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	/* host->target HTT */
+	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
+		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
+	/* Target -> host PKTLOG */
+	{ /* CE5 */ 5, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	/* Reserved for target autonomous HIF_memcpy */
+	{ /* CE6 */ 6, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
+	/* CE7 used only by Host */
+	{ /* CE7 */ 7, PIPEDIR_INOUT_H2H, 0, 0,
+		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
+	/* Reserved for target */
+	{ /* CE8 */ 8, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
+	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
+};
+
+#define QCA_6750_CE_COUNT 9
+static struct CE_attr host_ce_config_wlan_qca6750[] = {
+	/* host->target HTC control and raw streams */
+	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 2048, 0, NULL,},
+	/* target->host HTT + HTC control */
+	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
+	/* target->host WMI */
+	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  2048, 32, NULL,},
+	/* host->target WMI */
+	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
+	/* host->target HTT */
+	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
+		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
+	/* target -> host PKTLOG */
+	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
+	/* Target autonomous HIF_memcpy */
+	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	/* ce_diag, the Diagnostic Window */
+	{ /* CE7 */ (CE_ATTR_DIAG_FLAGS | CE_ATTR_DISABLE_INTR), 0,
+		0, DIAG_TRANSFER_LIMIT, 0, NULL,},
+	/* Reserved for target */
+	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
+};
+
+static struct CE_pipe_config target_ce_config_wlan_qca6750[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ 0, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host HTT */

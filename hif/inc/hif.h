@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +64,7 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_QCA6018  20
 #define HIF_TYPE_QCN9000 21
 #define HIF_TYPE_QCA6490 22
+#define HIF_TYPE_QCA6750 23
 
 #ifdef IPA_OFFLOAD
 #define DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE   37

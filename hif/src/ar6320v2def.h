@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -182,7 +182,8 @@
 #if defined(HIF_SDIO)
 #define AR6320V2_FW_IND_HELPER                            4
 #endif
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
+    defined(HIF_IPCI)
 #define AR6320V2_CE_WRAPPER_BASE_ADDRESS                  0x00034000
 #define AR6320V2_CE0_BASE_ADDRESS                         0x00034400
 #define AR6320V2_CE1_BASE_ADDRESS                         0x00034800
@@ -459,7 +460,8 @@ struct targetdef_s ar6320v2_targetdef = {
 	.d_DRAM_BASE_ADDRESS = AR6320V2_DRAM_BASE_ADDRESS,
 	.d_SOC_CORE_BASE_ADDRESS = AR6320V2_SOC_CORE_BASE_ADDRESS,
 	.d_CORE_CTRL_ADDRESS = AR6320V2_CORE_CTRL_ADDRESS,
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
+    defined(HIF_IPCI)
 	.d_MSI_NUM_REQUEST = MSI_NUM_REQUEST,
 	.d_MSI_ASSIGN_FW = MSI_ASSIGN_FW,
 #endif
@@ -526,7 +528,8 @@ struct targetdef_s ar6320v2_targetdef = {
 		AR6320V2_RX_ATTENTION_0_MSDU_DONE_MASK,
 	.d_RX_ATTENTION_0_TCP_UDP_CHKSUM_FAIL_MASK =
 		AR6320V2_RX_ATTENTION_0_TCP_UDP_CHKSUM_FAIL_MASK,
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
+    defined(HIF_IPCI)
 	.d_CE_COUNT = AR6320V2_CE_COUNT,
 	.d_MSI_ASSIGN_CE_INITIAL = MSI_ASSIGN_CE_INITIAL,
 	.d_PCIE_INTR_ENABLE_ADDRESS = AR6320V2_PCIE_INTR_ENABLE_ADDRESS,
@@ -728,7 +731,8 @@ struct hostdef_s ar6320v2_hostdef = {
 	.d_HOST_INT_STATUS_MBOX_DATA_LSB =
 		AR6320V2_HOST_INT_STATUS_MBOX_DATA_LSB,
 #endif
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
+    defined(HIF_IPCI)
 	.d_FW_IND_HELPER = AR6320V2_FW_IND_HELPER,
 	.d_MUX_ID_MASK = AR6320V2_MUX_ID_MASK,
 	.d_TRANSACTION_ID_MASK = AR6320V2_TRANSACTION_ID_MASK,
@@ -749,7 +753,8 @@ struct hostdef_s ar6320v2_hostdef = {
 #endif
 };
 
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
+    defined(HIF_IPCI)
 struct ce_reg_def ar6320v2_ce_targetdef = {
 	/* copy_engine.c  */
 	.d_DST_WR_INDEX_ADDRESS = AR6320V2_DST_WR_INDEX_ADDRESS,

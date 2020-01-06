@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,7 +87,9 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	     (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCA8074V2) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCN9000) ||
-	     (tgt_info->target_type == TARGET_TYPE_QCA6018)))) {
+	     (tgt_info->target_type == TARGET_TYPE_QCA6018))) ||
+	    (scn->bus_type ==  QDF_BUS_TYPE_IPCI &&
+	     (tgt_info->target_type == TARGET_TYPE_QCA6750))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;
 		HIF_DBG("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
@@ -164,7 +166,9 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 	      (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCA8074V2) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCN9000) ||
-	      (tgt_info->target_type == TARGET_TYPE_QCA6018)))) {
+	      (tgt_info->target_type == TARGET_TYPE_QCA6018))) ||
+	    (scn->bus_type ==  QDF_BUS_TYPE_IPCI &&
+	     (tgt_info->target_type == TARGET_TYPE_QCA6750))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;
 		HIF_DBG("%s: offset 0x%x memtype 0x%x, datalen %zu\n",

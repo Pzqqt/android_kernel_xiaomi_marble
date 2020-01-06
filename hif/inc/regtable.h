@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,4 +32,8 @@
 #include "regtable_usb.h"
 #endif
 
+#if defined(HIF_IPCI)
+#include "reg_struct.h"
+#include "regtable_ipcie.h"
+#endif
 #endif

@@ -92,6 +92,10 @@
 #define QCA6490_EMULATION_DEVICE_ID (0x010a)
 #define QCA6490_DEVICE_ID (0x1103)
 
+/* TODO: change IDs for Moselle */
+#define QCA6750_EMULATION_DEVICE_ID (0x010c)
+#define QCA6750_DEVICE_ID (0x1105)
+
 #define ADRASTEA_DEVICE_ID_P2_E12 (0x7021)
 #define AR9887_DEVICE_ID    (0x0050)
 #define AR900B_DEVICE_ID    (0x0040)
@@ -121,6 +125,7 @@
 #define RUMIM2M_DEVICE_ID_NODE5	0xaa11
 
 #define HIF_GET_PCI_SOFTC(scn) ((struct hif_pci_softc *)scn)
+#define HIF_GET_IPCI_SOFTC(scn) ((struct hif_ipci_softc *)scn)
 #define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)
 #define HIF_GET_SDIO_SOFTC(scn) ((struct hif_sdio_softc *)scn)
 #define HIF_GET_USB_SOFTC(scn) ((struct hif_usb_softc *)scn)
