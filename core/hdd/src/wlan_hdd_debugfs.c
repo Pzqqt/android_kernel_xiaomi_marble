@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,6 +41,8 @@
 
 #define MAX_DEBUGFS_WAIT_ITERATIONS 20
 #define DEBUGFS_WAIT_SLEEP_TIME 100
+
+static bool hdd_periodic_pattern_map[MAXNUM_PERIODIC_TX_PTRNS];
 
 static qdf_atomic_t debugfs_thread_count;
 
@@ -301,6 +303,14 @@ static ssize_t __wcnss_patterngen_write(struct net_device *net_dev,
 
 	/* Delete pattern using index if duration is 0 */
 	if (!pattern_duration) {
+		if (!hdd_periodic_pattern_map[pattern_idx]) {
+			hdd_debug_rl("WoW pattern %d is not in the table.",
+				     pattern_idx);
+
+			qdf_mem_free(cmd);
+			return -EINVAL;
+		}
+
 		delPeriodicTxPtrnParams =
 			qdf_mem_malloc(sizeof(tSirDelPeriodicTxPtrn));
 		if (!delPeriodicTxPtrnParams) {
@@ -308,6 +318,7 @@ static ssize_t __wcnss_patterngen_write(struct net_device *net_dev,
 			qdf_mem_free(cmd);
 			return -ENOMEM;
 		}
+
 		delPeriodicTxPtrnParams->ucPtrnId = pattern_idx;
 		qdf_copy_macaddr(&delPeriodicTxPtrnParams->mac_address,
 				 &adapter->mac_addr);
@@ -321,6 +332,9 @@ static ssize_t __wcnss_patterngen_write(struct net_device *net_dev,
 			qdf_mem_free(delPeriodicTxPtrnParams);
 			goto failure;
 		}
+
+		hdd_periodic_pattern_map[pattern_idx] = false;
+
 		qdf_mem_free(cmd);
 		qdf_mem_free(delPeriodicTxPtrnParams);
 		return count;
@@ -393,6 +407,10 @@ static ssize_t __wcnss_patterngen_write(struct net_device *net_dev,
 		qdf_mem_free(addPeriodicTxPtrnParams);
 		goto failure;
 	}
+
+	if (!hdd_periodic_pattern_map[pattern_idx])
+		hdd_periodic_pattern_map[pattern_idx] = true;
+
 	qdf_mem_free(cmd);
 	qdf_mem_free(addPeriodicTxPtrnParams);
 	hdd_exit();
