@@ -1778,24 +1778,25 @@ static inline int cdp_set_pn_check(ol_txrx_soc_handle soc,
 	return 0;
 }
 
-static inline int cdp_set_key(ol_txrx_soc_handle soc,
-			      struct cdp_peer *peer_handle,
-			      bool is_unicast, uint32_t *key)
+static inline QDF_STATUS
+cdp_set_key(ol_txrx_soc_handle soc,
+	    uint8_t vdev_id,
+	    uint8_t *mac,
+	    bool is_unicast, uint32_t *key)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return 0;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->ctrl_ops ||
 	    !soc->ops->ctrl_ops->set_key)
-		return 0;
+		return QDF_STATUS_E_FAILURE;
 
-	soc->ops->ctrl_ops->set_key(peer_handle,
+	return soc->ops->ctrl_ops->set_key(soc, vdev_id, mac,
 			is_unicast, key);
-	return 0;
 }
 
 /**

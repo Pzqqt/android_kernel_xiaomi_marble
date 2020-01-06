@@ -2075,7 +2075,8 @@ __dp_tx_send_exception(ol_txrx_soc_handle soc, uint8_t vdev_id, qdf_nbuf_t nbuf,
 
 /**
  * dp_tx_send_exception() - Transmit a frame on a given VAP in exception path
- * @vap_dev: DP vdev handle
+ * @soc: DP soc handle
+ * @vdev_id: id of DP vdev handle
  * @nbuf: skb
  * @tx_exc_metadata: Handle that holds exception path meta data
  *
@@ -2086,12 +2087,17 @@ __dp_tx_send_exception(ol_txrx_soc_handle soc, uint8_t vdev_id, qdf_nbuf_t nbuf,
  *         nbuf when it fails to send
  */
 qdf_nbuf_t
-dp_tx_send_exception(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf,
+dp_tx_send_exception(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf,
 		     struct cdp_tx_exception_metadata *tx_exc_metadata)
 {
 	qdf_ether_header_t *eh = NULL;
-	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
 	struct dp_tx_msdu_info_s msdu_info;
+
+	if (qdf_unlikely(!vdev))
+		goto fail;
 
 	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
 

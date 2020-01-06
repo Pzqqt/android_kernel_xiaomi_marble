@@ -3511,20 +3511,32 @@ void dp_peer_rxtid_stats(struct dp_peer *peer, void (*dp_stats_cmd_cb),
 	}
 }
 
-void dp_set_michael_key(struct cdp_peer *peer_handle,
-			bool is_unicast, uint32_t *key)
+QDF_STATUS
+dp_set_michael_key(struct cdp_soc_t *soc,
+		   uint8_t vdev_id,
+		   uint8_t *peer_mac,
+		   bool is_unicast, uint32_t *key)
 {
-	struct dp_peer *peer =  (struct dp_peer *)peer_handle;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t sec_index = is_unicast ? 1 : 0;
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+						      peer_mac, 0, vdev_id);
 
-	if (!peer) {
+	if (!peer || peer->delete_in_progress) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "peer not found ");
-		return;
+		status = QDF_STATUS_E_FAILURE;
+		goto fail;
 	}
 
 	qdf_mem_copy(&peer->security[sec_index].michael_key[0],
 		     key, IEEE80211_WEP_MICLEN);
+
+fail:
+	if (peer)
+		dp_peer_unref_delete(peer);
+
+	return status;
 }
 
 bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id)

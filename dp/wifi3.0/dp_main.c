@@ -5943,30 +5943,41 @@ static void dp_get_ba_aging_timeout(struct cdp_soc_t *txrx_soc,
 
 /*
  * dp_set_pdev_reo_dest() - set the reo destination ring for this pdev
- * @pdev_handle: physical device object
+ * @txrx_soc: cdp soc handle
+ * @pdev_id: id of physical device object
  * @val: reo destination ring index (1 - 4)
  *
- * Return: void
+ * Return: QDF_STATUS
  */
-static void dp_set_pdev_reo_dest(struct cdp_pdev *pdev_handle,
-	 enum cdp_host_reo_dest_ring val)
+static QDF_STATUS
+dp_set_pdev_reo_dest(struct cdp_soc_t *txrx_soc, uint8_t pdev_id,
+		     enum cdp_host_reo_dest_ring val)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)txrx_soc,
+						   pdev_id);
 
-	if (pdev)
+	if (pdev) {
 		pdev->reo_dest = val;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
 }
 
 /*
  * dp_get_pdev_reo_dest() - get the reo destination for this pdev
- * @pdev_handle: physical device object
+ * @txrx_soc: cdp soc handle
+ * @pdev_id: id of physical device object
  *
  * Return: reo destination ring index
  */
 static enum cdp_host_reo_dest_ring
-dp_get_pdev_reo_dest(struct cdp_pdev *pdev_handle)
+dp_get_pdev_reo_dest(struct cdp_soc_t *txrx_soc, uint8_t pdev_id)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)txrx_soc,
+						   pdev_id);
 
 	if (pdev)
 		return pdev->reo_dest;
@@ -5996,20 +6007,29 @@ static int dp_set_filter_neighbour_peers(struct cdp_pdev *pdev_handle,
 /*
  * dp_update_filter_neighbour_peers() - set neighbour peers(nac clients)
  * address for smart mesh filtering
- * @vdev_handle: virtual device object
+ * @txrx_soc: cdp soc handle
+ * @vdev_id: id of virtual device object
  * @cmd: Add/Del command
  * @macaddr: nac client mac address
  *
- * Return: void
+ * Return: success/failure
  */
-static int dp_update_filter_neighbour_peers(struct cdp_vdev *vdev_handle,
+static int dp_update_filter_neighbour_peers(struct cdp_soc_t *soc,
+					    uint8_t vdev_id,
 					    uint32_t cmd, uint8_t *macaddr)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
-	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_pdev *pdev;
 	struct dp_neighbour_peer *peer = NULL;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
 
-	if (!macaddr)
+	if (!vdev || !macaddr)
+		goto fail0;
+
+	pdev = vdev->pdev;
+
+	if (!pdev)
 		goto fail0;
 
 	/* Store address of NAC (neighbour peer) which will be checked
@@ -6077,16 +6097,31 @@ fail0:
 
 /*
  * dp_get_sec_type() - Get the security type
- * @peer:		Datapath peer handle
+ * @soc: soc handle
+ * @vdev_id: id of dp handle
+ * @peer_mac: mac of datapath PEER handle
  * @sec_idx:    Security id (mcast, ucast)
  *
  * return sec_type: Security type
  */
-static int dp_get_sec_type(struct cdp_peer *peer, uint8_t sec_idx)
+static int dp_get_sec_type(struct cdp_soc_t *soc, uint8_t vdev_id,
+			   uint8_t *peer_mac, uint8_t sec_idx)
 {
-	struct dp_peer *dpeer = (struct dp_peer *)peer;
+	int sec_type = 0;
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+						       peer_mac, 0, vdev_id);
 
-	return dpeer->security[sec_idx].sec_type;
+	if (!peer || peer->delete_in_progress) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Peer is NULL!\n", __func__);
+		goto fail;
+	}
+
+	sec_type = peer->security[sec_idx].sec_type;
+fail:
+	if (peer)
+		dp_peer_unref_delete(peer);
+	return sec_type;
 }
 
 /*
@@ -9377,27 +9412,36 @@ static QDF_STATUS dp_vdev_get_neighbour_rssi(struct cdp_vdev *vdev_hdl,
 	return status;
 }
 
-static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
-		enum cdp_nac_param_cmd cmd, char *bssid, char *client_macaddr,
-		uint8_t chan_num)
+static QDF_STATUS
+dp_config_for_nac_rssi(struct cdp_soc_t *cdp_soc,
+		       uint8_t vdev_id,
+		       enum cdp_nac_param_cmd cmd, char *bssid,
+		       char *client_macaddr,
+		       uint8_t chan_num)
 {
+	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3(soc,
+						   vdev_id);
+	struct dp_pdev *pdev;
 
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
-	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
-	struct dp_soc *soc = (struct dp_soc *) vdev->pdev->soc;
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
 
+	pdev = (struct dp_pdev *)vdev->pdev;
 	pdev->nac_rssi_filtering = 1;
 	/* Store address of NAC (neighbour peer) which will be checked
 	 * against TA of received packets.
 	 */
 
 	if (cmd == CDP_NAC_PARAM_ADD) {
-		dp_update_filter_neighbour_peers(vdev_handle, DP_NAC_PARAM_ADD,
-						 client_macaddr);
+		dp_update_filter_neighbour_peers(cdp_soc, vdev->vdev_id,
+						 DP_NAC_PARAM_ADD,
+						 (uint8_t *)client_macaddr);
 	} else if (cmd == CDP_NAC_PARAM_DEL) {
-		dp_update_filter_neighbour_peers(vdev_handle,
+		dp_update_filter_neighbour_peers(cdp_soc, vdev->vdev_id,
 						 DP_NAC_PARAM_DEL,
-						 client_macaddr);
+						 (uint8_t *)client_macaddr);
 	}
 
 	if (soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi)
@@ -9412,21 +9456,29 @@ static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
 /**
  * dp_enable_peer_based_pktlog() - Set Flag for peer based filtering
  * for pktlog
- * @txrx_pdev_handle: cdp_pdev handle
+ * @soc: cdp_soc handle
+ * @pdev_id: id of dp pdev handle
+ * @mac_addr: Peer mac address
  * @enb_dsb: Enable or disable peer based filtering
  *
  * Return: QDF_STATUS
  */
 static int
-dp_enable_peer_based_pktlog(
-	struct cdp_pdev *txrx_pdev_handle,
-	char *mac_addr, uint8_t enb_dsb)
+dp_enable_peer_based_pktlog(struct cdp_soc_t *soc, uint8_t pdev_id,
+			    uint8_t *mac_addr, uint8_t enb_dsb)
 {
 	struct dp_peer *peer;
-	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev_handle;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
 
-	peer = (struct dp_peer *)dp_find_peer_by_addr(txrx_pdev_handle,
-			mac_addr);
+	if (!pdev) {
+		dp_err("Invalid Pdev for pdev_id %d", pdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer = (struct dp_peer *)dp_find_peer_by_addr((struct cdp_pdev *)pdev,
+						      mac_addr);
 
 	if (!peer) {
 		dp_err("Invalid Peer");
@@ -9443,13 +9495,14 @@ dp_enable_peer_based_pktlog(
 /**
  * dp_dump_pdev_rx_protocol_tag_stats - dump the number of packets tagged for
  * given protocol type (RX_PROTOCOL_TAG_ALL indicates for all protocol)
- * @pdev_handle: cdp_pdev handle
+ * @soc: cdp_soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @protocol_type: protocol type for which stats should be displayed
  *
  * Return: none
  */
 static inline void
-dp_dump_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
+dp_dump_pdev_rx_protocol_tag_stats(struct cdp_soc_t  *soc, uint8_t pdev_id,
 				   uint16_t protocol_type)
 {
 }
@@ -9459,7 +9512,8 @@ dp_dump_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
 /**
  * dp_update_pdev_rx_protocol_tag - Add/remove a protocol tag that should be
  * applied to the desired protocol type packets
- * @txrx_pdev_handle: cdp_pdev handle
+ * @soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @enable_rx_protocol_tag - bitmask that indicates what protocol types
  * are enabled for tagging. zero indicates disable feature, non-zero indicates
  * enable feature
@@ -9469,7 +9523,7 @@ dp_dump_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
  * Return: Success
  */
 static inline QDF_STATUS
-dp_update_pdev_rx_protocol_tag(struct cdp_pdev *pdev_handle,
+dp_update_pdev_rx_protocol_tag(struct cdp_soc_t  *soc, uint8_t pdev_id,
 			       uint32_t enable_rx_protocol_tag,
 			       uint16_t protocol_type,
 			       uint16_t tag)
@@ -9481,13 +9535,14 @@ dp_update_pdev_rx_protocol_tag(struct cdp_pdev *pdev_handle,
 #ifndef WLAN_SUPPORT_RX_FLOW_TAG
 /**
  * dp_set_rx_flow_tag - add/delete a flow
- * @pdev_handle: cdp_pdev handle
+ * @soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @flow_info: flow tuple that is to be added to/deleted from flow search table
  *
  * Return: Success
  */
 static inline QDF_STATUS
-dp_set_rx_flow_tag(struct cdp_pdev *pdev_handle,
+dp_set_rx_flow_tag(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 		   struct cdp_rx_flow_info *flow_info)
 {
 	return QDF_STATUS_SUCCESS;
@@ -9495,13 +9550,14 @@ dp_set_rx_flow_tag(struct cdp_pdev *pdev_handle,
 /**
  * dp_dump_rx_flow_tag_stats - dump the number of packets tagged for
  * given flow 5-tuple
- * @pdev_handle: cdp_pdev handle
+ * @cdp_soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @flow_info: flow 5-tuple for which stats should be displayed
  *
  * Return: Success
  */
 static inline QDF_STATUS
-dp_dump_rx_flow_tag_stats(struct cdp_pdev *pdev_handle,
+dp_dump_rx_flow_tag_stats(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 			  struct cdp_rx_flow_info *flow_info)
 {
 	return QDF_STATUS_SUCCESS;

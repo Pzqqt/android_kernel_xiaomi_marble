@@ -685,11 +685,12 @@ typedef qdf_nbuf_t (*ol_txrx_tx_fp)(struct cdp_soc_t *soc, uint8_t vdev_id,
 
 /**
  * ol_txrx_tx_exc_fp - top-level transmit function on exception path
- * @data_vdev - handle to the virtual device object
+ * @soc - dp soc handle
+ * @vdev_id - handle to the virtual device object
  * @msdu_list - list of network buffers
  * @tx_exc_metadata - structure that holds parameters to exception path
  */
-typedef qdf_nbuf_t (*ol_txrx_tx_exc_fp)(struct cdp_vdev *data_vdev,
+typedef qdf_nbuf_t (*ol_txrx_tx_exc_fp)(struct cdp_soc_t *soc, uint8_t vdev_id,
 					qdf_nbuf_t msdu_list,
 					struct cdp_tx_exception_metadata
 						*tx_exc_metadata);

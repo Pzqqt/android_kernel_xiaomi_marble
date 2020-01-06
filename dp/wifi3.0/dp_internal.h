@@ -1028,8 +1028,11 @@ dp_set_pn_check_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 		      uint32_t *rx_pn);
 
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
-void dp_set_michael_key(struct cdp_peer *peer_handle,
-			bool is_unicast, uint32_t *key);
+
+QDF_STATUS
+dp_set_michael_key(struct cdp_soc_t *soc, uint8_t vdev_id,
+		   uint8_t *peer_mac,
+		   bool is_unicast, uint32_t *key);
 
 /**
  * dp_check_pdev_exists() - Validate pdev before use
@@ -1377,13 +1380,13 @@ QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 				uint32_t stats_type_upload_mask,
 				uint8_t mac_id);
 
-int dp_wdi_event_unsub(struct cdp_pdev *txrx_pdev_handle,
-	void *event_cb_sub_handle,
-	uint32_t event);
+int dp_wdi_event_unsub(struct cdp_soc_t *soc, uint8_t pdev_id,
+		       wdi_event_subscribe *event_cb_sub_handle,
+		       uint32_t event);
 
-int dp_wdi_event_sub(struct cdp_pdev *txrx_pdev_handle,
-	void *event_cb_sub_handle,
-	uint32_t event);
+int dp_wdi_event_sub(struct cdp_soc_t *soc, uint8_t pdev_id,
+		     wdi_event_subscribe *event_cb_sub_handle,
+		     uint32_t event);
 
 void dp_wdi_event_handler(enum WDI_EVENT event, struct dp_soc *soc,
 			  void *data, u_int16_t peer_id,
@@ -1418,16 +1421,16 @@ dp_hif_update_pipe_callback(struct dp_soc *dp_soc,
 QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev, struct dp_peer *peer);
 
 #else
-static inline int dp_wdi_event_unsub(struct cdp_pdev *txrx_pdev_handle,
-	void *event_cb_sub_handle,
-	uint32_t event)
+static inline int dp_wdi_event_unsub(struct cdp_soc_t *soc, uint8_t pdev_id,
+				     wdi_event_subscribe *event_cb_sub_handle,
+				     uint32_t event)
 {
 	return 0;
 }
 
-static inline int dp_wdi_event_sub(struct cdp_pdev *txrx_pdev_handle,
-	void *event_cb_sub_handle,
-	uint32_t event)
+static inline int dp_wdi_event_sub(struct cdp_soc_t *soc, uint8_t pdev_id,
+				   wdi_event_subscribe *event_cb_sub_handle,
+				   uint32_t event)
 {
 	return 0;
 }

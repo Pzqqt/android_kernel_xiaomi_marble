@@ -539,7 +539,7 @@ struct cdp_ctrl_ops {
 				uint32_t val);
 	int
 		(*txrx_update_filter_neighbour_peers)(
-				struct cdp_vdev *vdev,
+				struct cdp_soc_t *soc, uint8_t vdev_id,
 				uint32_t cmd, uint8_t *macaddr);
 	/**
 	 * @brief set the safemode of the device
@@ -643,7 +643,7 @@ struct cdp_ctrl_ops {
 
 	void (*tx_flush_buffers)(struct cdp_vdev *vdev);
 
-	int (*txrx_is_target_ar900b)(struct cdp_vdev *vdev);
+	int (*txrx_is_target_ar900b)(struct cdp_soc_t *soc_hdl);
 
 	void (*txrx_set_vdev_param)(struct cdp_vdev *vdev,
 			enum cdp_vdev_param_type param, uint32_t val);
@@ -655,11 +655,14 @@ struct cdp_ctrl_ops {
 	 *  Set the reo destination ring no on which we will receive
 	 *  pkts for this radio.
 	 *
-	 * @param pdev - the data physical device object
+	 * @txrx_soc - soc handle
+	 * @param pdev_id - id of physical device
+	 * @return the reo destination ring number
 	 * @param reo_dest_ring_num - value ranges between 1 - 4
 	 */
-	void (*txrx_set_pdev_reo_dest)(
-			struct cdp_pdev *pdev,
+	QDF_STATUS (*txrx_set_pdev_reo_dest)(
+			struct cdp_soc_t *txrx_soc,
+			uint8_t pdev_id,
 			enum cdp_host_reo_dest_ring reo_dest_ring_num);
 
 	/**
@@ -668,21 +671,26 @@ struct cdp_ctrl_ops {
 	 *  Get the reo destination ring no on which we will receive
 	 *  pkts for this radio.
 	 *
-	 * @param pdev - the data physical device object
+	 * @txrx_soc - soc handle
+	 * @param pdev_id - id of physical device
 	 * @return the reo destination ring number
 	 */
 	enum cdp_host_reo_dest_ring (*txrx_get_pdev_reo_dest)(
-						struct cdp_pdev *pdev);
+				     struct cdp_soc_t *txrx_soc,
+				     uint8_t pdev_id);
 
-	int (*txrx_wdi_event_sub)(struct cdp_pdev *pdev, void *event_cb_sub,
-			uint32_t event);
+	int (*txrx_wdi_event_sub)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				  wdi_event_subscribe *event_cb_sub,
+				  uint32_t event);
 
-	int (*txrx_wdi_event_unsub)(struct cdp_pdev *pdev, void *event_cb_sub,
-			uint32_t event);
-	int (*txrx_get_sec_type)(struct cdp_peer *peer, uint8_t sec_idx);
+	int (*txrx_wdi_event_unsub)(struct cdp_soc_t *soc, uint8_t pdev_id,
+				    wdi_event_subscribe *event_cb_sub,
+				    uint32_t event);
 
-	void (*txrx_update_mgmt_txpow_vdev)(struct cdp_vdev *vdev,
-			uint8_t subtype, uint8_t tx_power);
+	QDF_STATUS
+	(*txrx_update_mgmt_txpow_vdev)(struct cdp_soc_t *soc,
+				       uint8_t vdev_id,
+				       uint8_t subtype, uint8_t tx_power);
 
 	/**
 	 * txrx_set_pdev_param() - callback to set pdev parameter
@@ -698,49 +706,58 @@ struct cdp_ctrl_ops {
 	void * (*txrx_get_pldev)(struct cdp_pdev *pdev);
 
 #ifdef ATH_SUPPORT_NAC_RSSI
-	QDF_STATUS (*txrx_vdev_config_for_nac_rssi)(struct cdp_vdev *vdev,
-		enum cdp_nac_param_cmd cmd, char *bssid, char *client_macaddr,
-		uint8_t chan_num);
-	QDF_STATUS (*txrx_vdev_get_neighbour_rssi)(struct cdp_vdev *vdev,
+	QDF_STATUS (*txrx_vdev_config_for_nac_rssi)(struct cdp_soc_t *cdp_soc,
+						    uint8_t vdev_id,
+						    enum cdp_nac_param_cmd cmd,
+						    char *bssid,
+						    char *client_macaddr,
+						    uint8_t chan_num);
+
+	QDF_STATUS (*txrx_vdev_get_neighbour_rssi)(struct cdp_soc_t *cdp_soc,
+						   uint8_t vdev_id,
 						   char *macaddr,
 						   uint8_t *rssi);
 #endif
-	void (*set_key)(struct cdp_peer *peer_handle,
-			bool is_unicast, uint32_t *key);
+	QDF_STATUS
+	(*set_key)(struct cdp_soc_t *soc, uint8_t vdev_id, uint8_t *mac,
+		   bool is_unicast, uint32_t *key);
 
 	uint32_t (*txrx_get_vdev_param)(struct cdp_vdev *vdev,
 					enum cdp_vdev_param_type param);
-	int (*enable_peer_based_pktlog)(struct cdp_pdev
-			*txrx_pdev_handle, char *macaddr, uint8_t enb_dsb);
+	int (*enable_peer_based_pktlog)(struct cdp_soc_t *cdp_soc,
+					uint8_t pdev_id,
+					uint8_t *macaddr, uint8_t enb_dsb);
 
-	void (*calculate_delay_stats)(struct cdp_vdev *vdev, qdf_nbuf_t nbuf);
+	QDF_STATUS
+	(*calculate_delay_stats)(struct cdp_soc_t *cdp_soc,
+				 uint8_t vdev_id, qdf_nbuf_t nbuf);
 #ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 	QDF_STATUS (*txrx_update_pdev_rx_protocol_tag)(
-			struct cdp_pdev *txrx_pdev_handle,
+			struct cdp_soc_t  *soc, uint8_t pdev_id,
 			uint32_t protocol_mask, uint16_t protocol_type,
 			uint16_t tag);
 #ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
 	void (*txrx_dump_pdev_rx_protocol_tag_stats)(
-				struct cdp_pdev *txrx_pdev_handle,
+				struct cdp_soc_t  *soc, uint8_t pdev_id,
 				uint16_t protocol_type);
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 #ifdef WLAN_SUPPORT_RX_FLOW_TAG
 	QDF_STATUS (*txrx_set_rx_flow_tag)(
-		struct cdp_pdev *txrx_pdev_handle,
+		struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 		struct cdp_rx_flow_info *flow_info);
 	QDF_STATUS (*txrx_dump_rx_flow_tag_stats)(
-		struct cdp_pdev *txrx_pdev_handle,
+		struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 		struct cdp_rx_flow_info *flow_info);
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG */
 #ifdef QCA_MULTIPASS_SUPPORT
-	void (*txrx_peer_set_vlan_id)(ol_txrx_soc_handle soc,
-				      struct cdp_vdev *vdev, uint8_t *peer_mac,
+	void (*txrx_peer_set_vlan_id)(struct cdp_soc_t *cdp_soc,
+				      uint8_t vdev_id, uint8_t *peer_mac,
 				      uint16_t vlan_id);
 #endif
 #if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(WLAN_RX_PKT_CAPTURE_ENH)
 	QDF_STATUS (*txrx_update_peer_pkt_capture_params)(
-			struct cdp_pdev *txrx_pdev_handle,
+			ol_txrx_soc_handle soc, uint8_t pdev_id,
 			bool is_rx_pkt_cap_enable, bool is_tx_pkt_cap_enable,
 			uint8_t *peer_mac);
 #endif /* WLAN_TX_PKT_CAPTURE_ENH || WLAN_RX_PKT_CAPTURE_ENH */
