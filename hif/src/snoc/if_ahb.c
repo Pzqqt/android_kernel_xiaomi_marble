@@ -233,14 +233,14 @@ int hif_ahb_configure_legacy_irq(struct hif_pci_softc *sc)
 	qal_vbus_get_irq((struct qdf_pfm_hndl *)pdev, "legacy", &irq);
 	if (irq < 0) {
 		dev_err(&pdev->dev, "Unable to get irq\n");
-		ret = -1;
+		ret = -EFAULT;
 		goto end;
 	}
 	ret = request_irq(irq, hif_pci_legacy_ce_interrupt_handler,
 				IRQF_DISABLED, "wlan_ahb", sc);
 	if (ret) {
 		dev_err(&pdev->dev, "ath_request_irq failed\n");
-		ret = -1;
+		ret = -EFAULT;
 		goto end;
 	}
 	sc->irq = irq;
@@ -276,7 +276,7 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 				   HIF_IC_CE0_IRQ_OFFSET + i, &irq);
 		if (ret) {
 			dev_err(&pdev->dev, "get irq failed\n");
-			ret = -1;
+			ret = -EFAULT;
 			goto end;
 		}
 
@@ -288,7 +288,7 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 				       &hif_state->tasklets[i]);
 		if (ret) {
 			dev_err(&pdev->dev, "ath_request_irq failed\n");
-			ret = -1;
+			ret = -EFAULT;
 			goto end;
 		}
 		hif_ahb_irq_enable(scn, i);
@@ -321,7 +321,7 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 				   hif_ext_group->irq[j], &irq);
 		if (ret) {
 			dev_err(&pdev->dev, "get irq failed\n");
-			ret = -1;
+			ret = -EFAULT;
 			goto end;
 		}
 		ic_irqnum[hif_ext_group->irq[j]] = irq;
@@ -333,7 +333,7 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 				       hif_ext_group);
 		if (ret) {
 			dev_err(&pdev->dev, "ath_request_irq failed\n");
-			ret = -1;
+			ret = -EFAULT;
 			goto end;
 		}
 		hif_ext_group->os_irq[j] = irq;
