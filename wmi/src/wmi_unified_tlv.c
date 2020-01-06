@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -6750,6 +6750,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	resource_cfg->peer_map_unmap_v2_support =
 		tgt_res_cfg->peer_map_unmap_v2;
 	resource_cfg->smart_ant_cap = tgt_res_cfg->smart_ant_cap;
+	if (tgt_res_cfg->re_ul_resp)
+		WMI_SET_BITS(resource_cfg->flags2, 0, 4,
+			     tgt_res_cfg->re_ul_resp);
+
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
