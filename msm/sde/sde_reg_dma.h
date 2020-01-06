@@ -59,6 +59,7 @@ enum sde_reg_dma_read_sel {
  * @LTM_ROI: LTM ROI
  * @LTM_VLUT: LTM VLUT
  * @RC_DATA: Rounded corner data
+ * @DEMURA_CFG: Demura feature
  * @REG_DMA_FEATURES_MAX: invalid selection
  */
 enum sde_reg_dma_features {
@@ -79,6 +80,7 @@ enum sde_reg_dma_features {
 	LTM_ROI,
 	LTM_VLUT,
 	RC_DATA,
+	DEMURA_CFG,
 	REG_DMA_FEATURES_MAX,
 };
 

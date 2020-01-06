@@ -3565,8 +3565,11 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 			psde->pipe_sblk->max_per_pipe_bw_high * 1000LL);
 	index = (master_plane_id == 0) ? 0 : 1;
 	if (catalog->has_demura &&
-	    catalog->demura_supported[psde->pipe][index] != ~0x0)
+	    catalog->demura_supported[psde->pipe][index] != ~0x0) {
 		sde_kms_info_add_keyint(info, "demura_block", index);
+		sde_kms_info_add_keyint(info, "demura_pipe_id",
+				psde->pipe - SSPP_DMA0);
+	}
 
 	if ((is_master &&
 		(psde->features & BIT(SDE_SSPP_INVERSE_PMA))) ||

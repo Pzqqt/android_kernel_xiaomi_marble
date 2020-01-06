@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 #include <drm/msm_drm_pp.h>
 #include "sde_hw_color_proc_common_v4.h"
@@ -391,4 +391,20 @@ void sde_ltm_read_intr_status(struct sde_hw_dspp *ctx, u32 *status)
 	clear = SDE_REG_READ(&ctx->hw, ctx->cap->sblk->ltm.base + 0x58);
 	clear |= BIT(1) | BIT(2);
 	SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->ltm.base + 0x58, clear);
+}
+
+void sde_demura_backlight_cfg(struct sde_hw_dspp *dspp, u64 val)
+{
+	u32 demura_base;
+	u32 backlight;
+
+	if (!dspp) {
+		DRM_ERROR("invalid parameter ctx %pK", dspp);
+		return;
+	}
+	demura_base = dspp->cap->sblk->demura.base;
+	backlight = (val & REG_MASK(11));
+	backlight |= ((val & REG_MASK_SHIFT(11, 32)) >> 16);
+	SDE_REG_WRITE(&dspp->hw, dspp->cap->sblk->demura.base + 0x8,
+			backlight);
 }

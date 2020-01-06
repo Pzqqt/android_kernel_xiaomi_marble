@@ -295,4 +295,11 @@ void reg_dmav2_setup_vig_gamutv61(struct sde_hw_pipe *ctx, void *cfg);
  */
 void reg_dmav1_setup_spr_init_cfgv1(struct sde_hw_dspp *ctx, void *cfg);
 
+/**
+ * reg_dmav1_setup_demurav1() - function to set up the demurav1 configuration.
+ * @ctx: dspp ctx info
+ * @cfg: pointer to struct sde_hw_cp_cfg
+ */
+void reg_dmav1_setup_demurav1(struct sde_hw_dspp *ctx, void *cfg);
+
 #endif /* _SDE_HW_REG_DMA_V1_COLOR_PROC_H */
