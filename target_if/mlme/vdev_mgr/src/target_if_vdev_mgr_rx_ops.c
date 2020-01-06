@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -688,7 +688,7 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 			wmi_handle,
 			wmi_peer_delete_all_response_event_id,
 			target_if_vdev_mgr_peer_delete_all_response_handler,
-			WMI_RX_UMAC_CTX);
+			VDEV_RSP_RX_CTX);
 	if (retval)
 		mlme_err("failed to register for peer delete all response");
 
