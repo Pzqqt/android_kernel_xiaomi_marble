@@ -254,8 +254,8 @@ static void ce_tasklet_update_bucket(struct HIF_CE_state *hif_ce_state,
 	stats->tasklet_sched_time_record[ce_id][index] = sched_time;
 	stats->record_index[ce_id] = index;
 
-	exec_ms = (exec_time) / (1000);
-	sched_ms = (sched_time) / (1000);
+	exec_ms = qdf_do_div(exec_time, 1000);
+	sched_ms = qdf_do_div(sched_time, 1000);
 
 	if (exec_ms > 10) {
 		stats->ce_tasklet_exec_bucket[ce_id][CE_BUCKET_BEYOND]++;
