@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -7126,18 +7126,18 @@ static int msm_populate_dai_link_component_of_node(
 	}
 
 	for (i = 0; i < card->num_links; i++) {
-		if (dai_link[i].platform_of_node && dai_link[i].cpu_of_node)
+		if (dai_link[i].platforms->of_node && dai_link[i].cpus->of_node)
 			continue;
 
 		/* populate platform_of_node for snd card dai links */
-		if (dai_link[i].platform_name &&
-		    !dai_link[i].platform_of_node) {
+		if (dai_link[i].platforms->name &&
+		    !dai_link[i].platforms->of_node) {
 			index = of_property_match_string(cdev->of_node,
 						"asoc-platform-names",
-						dai_link[i].platform_name);
+						dai_link[i].platforms->name);
 			if (index < 0) {
 				dev_err(cdev, "%s: No match found for platform name: %s\n",
-					__func__, dai_link[i].platform_name);
+					__func__, dai_link[i].platforms->name);
 				ret = index;
 				goto err;
 			}
@@ -7145,52 +7145,52 @@ static int msm_populate_dai_link_component_of_node(
 					      index);
 			if (!np) {
 				dev_err(cdev, "%s: retrieving phandle for platform %s, index %d failed\n",
-					__func__, dai_link[i].platform_name,
+					__func__, dai_link[i].platforms->name,
 					index);
 				ret = -ENODEV;
 				goto err;
 			}
-			dai_link[i].platform_of_node = np;
-			dai_link[i].platform_name = NULL;
+			dai_link[i].platforms->of_node = np;
+			dai_link[i].platforms->name = NULL;
 		}
 
 		/* populate cpu_of_node for snd card dai links */
-		if (dai_link[i].cpu_dai_name && !dai_link[i].cpu_of_node) {
+		if (dai_link[i].cpus->dai_name && !dai_link[i].cpus->of_node) {
 			index = of_property_match_string(cdev->of_node,
 						 "asoc-cpu-names",
-						 dai_link[i].cpu_dai_name);
+						 dai_link[i].cpus->dai_name);
 			if (index >= 0) {
 				np = of_parse_phandle(cdev->of_node, "asoc-cpu",
 						index);
 				if (!np) {
 					dev_err(cdev, "%s: retrieving phandle for cpu dai %s failed\n",
 						__func__,
-						dai_link[i].cpu_dai_name);
+						dai_link[i].cpus->dai_name);
 					ret = -ENODEV;
 					goto err;
 				}
-				dai_link[i].cpu_of_node = np;
-				dai_link[i].cpu_dai_name = NULL;
+				dai_link[i].cpus->of_node = np;
+				dai_link[i].cpus->dai_name = NULL;
 			}
 		}
 
 		/* populate codec_of_node for snd card dai links */
-		if (dai_link[i].codec_name && !dai_link[i].codec_of_node) {
+		if (dai_link[i].codecs->name && !dai_link[i].codecs->of_node) {
 			index = of_property_match_string(cdev->of_node,
 						 "asoc-codec-names",
-						 dai_link[i].codec_name);
+						 dai_link[i].codecs->name);
 			if (index < 0)
 				continue;
 			np = of_parse_phandle(cdev->of_node, "asoc-codec",
 					      index);
 			if (!np) {
 				dev_err(cdev, "%s: retrieving phandle for codec %s failed\n",
-					__func__, dai_link[i].codec_name);
+					__func__, dai_link[i].codecs->name);
 				ret = -ENODEV;
 				goto err;
 			}
-			dai_link[i].codec_of_node = np;
-			dai_link[i].codec_name = NULL;
+			dai_link[i].codecs->of_node = np;
+			dai_link[i].codecs->name = NULL;
 		}
 	}
 
@@ -7615,12 +7615,16 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 	int i;
 	struct msm_wsa881x_dev_info *wsa881x_dev_info;
 	struct aux_codec_dev_info *aux_cdc_dev_info;
+	struct snd_soc_dai_link_component *dlc;
 	const char *auxdev_name_prefix[1];
 	char *dev_name_str = NULL;
 	int found = 0;
 	int codecs_found = 0;
 	int ret = 0;
 
+	dlc = devm_kcalloc(&pdev->dev, 1,
+			sizeof(struct snd_soc_dai_link_component),
+			GFP_KERNEL);
 	/* Get maximum WSA device count for this platform */
 	ret = of_property_read_u32(pdev->dev.of_node,
 				   "qcom,wsa-max-devs", &wsa_max_devs);
@@ -7705,7 +7709,9 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 			ret = -EINVAL;
 			goto err;
 		}
-		if (soc_find_component(wsa_of_node, NULL)) {
+		dlc->of_node = wsa_of_node;
+		dlc->name = NULL;
+		if (soc_find_component(dlc)) {
 			/* WSA device registered with ALSA core */
 			wsa881x_dev_info[found].of_node = wsa_of_node;
 			wsa881x_dev_info[found].index = i;
@@ -7802,7 +7808,9 @@ codec_aux_dev:
 			ret = -EINVAL;
 			goto err;
 		}
-		if (soc_find_component(aux_codec_of_node, NULL)) {
+		dlc->of_node = aux_codec_of_node;
+		dlc->name = NULL;
+		if (soc_find_component(dlc)) {
 			/* AUX codec registered with ALSA core */
 			aux_cdc_dev_info[codecs_found].of_node =
 						aux_codec_of_node;
@@ -7864,9 +7872,9 @@ aux_dev_register:
 		}
 
 		snprintf(dev_name_str, strlen("wsa881x.%d"), "wsa881x.%d", i);
-		msm_aux_dev[i].name = dev_name_str;
-		msm_aux_dev[i].codec_name = NULL;
-		msm_aux_dev[i].codec_of_node =
+		msm_aux_dev[i].dlc.name = dev_name_str;
+		msm_aux_dev[i].dlc.dai_name = NULL;
+		msm_aux_dev[i].dlc.of_node =
 					wsa881x_dev_info[i].of_node;
 		msm_aux_dev[i].init = msm_wsa881x_init;
 		msm_codec_conf[i].dev_name = NULL;
@@ -7876,9 +7884,9 @@ aux_dev_register:
 	}
 
 	for (i = 0; i < codec_aux_dev_cnt; i++) {
-		msm_aux_dev[wsa_max_devs + i].name = NULL;
-		msm_aux_dev[wsa_max_devs + i].codec_name = NULL;
-		msm_aux_dev[wsa_max_devs + i].codec_of_node =
+		msm_aux_dev[wsa_max_devs + i].dlc.name = NULL;
+		msm_aux_dev[wsa_max_devs + i].dlc.dai_name = NULL;
+		msm_aux_dev[wsa_max_devs + i].dlc.of_node =
 					aux_cdc_dev_info[i].of_node;
 		msm_aux_dev[wsa_max_devs + i].init =  msm_aux_codec_init;
 		msm_codec_conf[wsa_max_devs + i].dev_name = NULL;
