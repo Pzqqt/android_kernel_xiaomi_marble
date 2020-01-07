@@ -1244,7 +1244,8 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 		 * result in smmu write faults with DSI as client.
 		 */
 		if (flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE) {
-			dsi_hw_ops.soft_reset(&dsi_ctrl->hw);
+			if (dsi_ctrl->version < DSI_CTRL_VERSION_2_4)
+				dsi_hw_ops.soft_reset(&dsi_ctrl->hw);
 			dsi_ctrl->cmd_len = 0;
 		}
 	}
@@ -3185,7 +3186,8 @@ int dsi_ctrl_cmd_tx_trigger(struct dsi_ctrl *dsi_ctrl, u32 flags)
 					BIT(DSI_FIFO_OVERFLOW), false);
 
 		if (flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE) {
-			dsi_hw_ops.soft_reset(&dsi_ctrl->hw);
+			if (dsi_ctrl->version < DSI_CTRL_VERSION_2_4)
+				dsi_hw_ops.soft_reset(&dsi_ctrl->hw);
 			dsi_ctrl->cmd_len = 0;
 		}
 	}
