@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_CATALOG_H
@@ -218,6 +218,7 @@ enum {
  * @SDE_SSPP_SCALER_QSEED3LITE Qseed3lite algorithm support
  * @SDE_SSPP_TRUE_INLINE_ROT Support of SSPP true inline rotation v1
  * @SDE_SSPP_PREDOWNSCALE    Support pre-downscale X-direction by 2 for inline
+ * @SDE_SSPP_PREDOWNSCALE_Y  Support pre-downscale Y-direction for inline
  * @SDE_SSPP_INLINE_CONST_CLR Inline rotation requires const clr disabled
  * @SDE_SSPP_MAX             maximum value
  */
@@ -248,6 +249,7 @@ enum {
 	SDE_SSPP_SCALER_QSEED3LITE,
 	SDE_SSPP_TRUE_INLINE_ROT,
 	SDE_SSPP_PREDOWNSCALE,
+	SDE_SSPP_PREDOWNSCALE_Y,
 	SDE_SSPP_INLINE_CONST_CLR,
 	SDE_SSPP_MAX
 };

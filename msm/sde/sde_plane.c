@@ -2425,17 +2425,25 @@ static int _sde_plane_validate_scaler_v2(struct sde_plane *psde,
 
 static int _sde_atomic_check_pre_downscale(struct sde_plane *psde,
 		struct sde_plane_state *pstate, struct sde_rect *dst,
-		u32 scaler_src_w, u32 scaler_src_h)
+		u32 src_w, u32 src_h)
 {
 	int ret = 0;
 	u32 min_ratio_numer, min_ratio_denom;
+	struct sde_hw_inline_pre_downscale_cfg *pd_cfg = &pstate->pre_down;
+	bool pd_x = pd_cfg->pre_downscale_x_0 > 1;
+	bool pd_y = pd_cfg->pre_downscale_y_0 > 1;
 
 	min_ratio_numer = psde->pipe_sblk->in_rot_minpredwnscale_num;
 	min_ratio_denom = psde->pipe_sblk->in_rot_minpredwnscale_denom;
 
-	if (!(psde->features & BIT(SDE_SSPP_PREDOWNSCALE))) {
+	if (pd_x && !(psde->features & BIT(SDE_SSPP_PREDOWNSCALE))) {
 		SDE_ERROR_PLANE(psde,
-			"hw does not support pre-downscaler: 0x%x\n",
+			"hw does not support pre-downscale X: 0x%x\n",
+			psde->features);
+		ret = -EINVAL;
+	} else if (pd_y && !(psde->features & BIT(SDE_SSPP_PREDOWNSCALE_Y))) {
+		SDE_ERROR_PLANE(psde,
+			"hw does not support pre-downscale Y: 0x%x\n",
 			psde->features);
 		ret = -EINVAL;
 	} else if (!min_ratio_numer || !min_ratio_denom) {
@@ -2443,13 +2451,18 @@ static int _sde_atomic_check_pre_downscale(struct sde_plane *psde,
 			"min downscale ratio not set! %u / %u\n",
 			min_ratio_numer, min_ratio_denom);
 		ret = -EINVAL;
-	} else if ((scaler_src_w < mult_frac(dst->w, min_ratio_numer,
-			min_ratio_denom)) || (scaler_src_h < mult_frac(
-			dst->h, min_ratio_numer, min_ratio_denom))) {
+	/* compare pre-rotated src w/h with post-rotated dst h/w resp. */
+	} else if (pd_x && (src_w < mult_frac(dst->h, min_ratio_numer,
+			min_ratio_denom))) {
 		SDE_ERROR_PLANE(psde,
-			"failed min downscale check %ux%u->%ux%u, %u/%u\n",
-			scaler_src_w, scaler_src_h, dst->w, dst->h,
-			min_ratio_numer, min_ratio_denom);
+			"failed min downscale-x check %u->%u, %u/%u\n",
+			src_w, dst->h, min_ratio_numer, min_ratio_denom);
+		ret = -EINVAL;
+	} else if (pd_y && (src_h < mult_frac(dst->w, min_ratio_numer,
+			min_ratio_denom))) {
+		SDE_ERROR_PLANE(psde,
+			"failed min downscale-y check %u->%u, %u/%u\n",
+			src_h, dst->w, min_ratio_numer, min_ratio_denom);
 		ret = -EINVAL;
 	}
 
@@ -2551,9 +2564,9 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	/* check max scaler capability */
 	} else if (((scaler_src_w * max_upscale) < dst->w) ||
 		((scaler_src_h * max_upscale) < dst->h) ||
-		(((dst->w * max_downscale_num) / max_downscale_denom)
+		(mult_frac(dst->w, max_downscale_num, max_downscale_denom)
 			< scaler_src_w) ||
-		(((dst->h * max_downscale_num) / max_downscale_denom)
+		(mult_frac(dst->h, max_downscale_num, max_downscale_denom)
 			< scaler_src_h)) {
 		SDE_ERROR_PLANE(psde,
 			"too much scaling %ux%u->%ux%u rot:%d dwn:%d/%d\n",
@@ -2565,7 +2578,7 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	/* check inline pre-downscale support */
 	} else if (inline_rotation && pre_down_en &&
 			_sde_atomic_check_pre_downscale(psde, pstate, dst,
-			scaler_src_w, scaler_src_h)) {
+			src_deci_w, src_deci_h)) {
 		ret = -EINVAL;
 
 	/* QSEED validation */
