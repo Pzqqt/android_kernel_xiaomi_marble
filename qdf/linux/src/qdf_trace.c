@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3241,7 +3241,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_SOC] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_OS_IF] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_TARGET_IF] = QDF_TRACE_LEVEL_INFO,
-		[QDF_MODULE_ID_SCHEDULER] = QDF_TRACE_LEVEL_NONE,
+		[QDF_MODULE_ID_SCHEDULER] = QDF_TRACE_LEVEL_FATAL,
 		[QDF_MODULE_ID_MGMT_TXRX] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_SERIALIZATION] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_PMO] = QDF_TRACE_LEVEL_NONE,
