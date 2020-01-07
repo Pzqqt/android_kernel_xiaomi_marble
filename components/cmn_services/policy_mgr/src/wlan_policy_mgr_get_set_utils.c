@@ -3154,44 +3154,6 @@ uint32_t policy_mgr_get_dfs_beaconing_session_id(
 	return session_id;
 }
 
-bool policy_mgr_is_dfs_beaconing_present_except_vdev(
-		struct wlan_objmgr_psoc *psoc, uint32_t *ch_freq,
-		uint8_t vdev_id)
-{
-	struct policy_mgr_conc_connection_info *conn_info;
-	bool status = false;
-	uint32_t conn_index = 0;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	struct policy_mgr_conc_connection_info info;
-	uint8_t num_cxn_del;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return false;
-	}
-	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	policy_mgr_store_and_del_conn_info_by_vdev_id(
-		psoc, vdev_id, &info, &num_cxn_del);
-
-	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
-			conn_index++) {
-		conn_info = &pm_conc_connection_list[conn_index];
-		if (conn_info->in_use &&
-		    wlan_reg_is_dfs_for_freq(pm_ctx->pdev, conn_info->freq) &&
-		    (conn_info->mode == PM_SAP_MODE ||
-		     conn_info->mode == PM_P2P_GO_MODE)) {
-			*ch_freq = pm_conc_connection_list[conn_index].freq;
-			status = true;
-		}
-	}
-	if (num_cxn_del)
-		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
-	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
-	return status;
-}
-
 bool policy_mgr_is_any_dfs_beaconing_session_present(
 		struct wlan_objmgr_psoc *psoc, uint32_t *ch_freq)
 {

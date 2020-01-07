@@ -8215,7 +8215,6 @@ QDF_STATUS lim_ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 {
 	struct pe_session *session = (struct pe_session *)data;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t ap_dfs_ch_freq;
 
 	if (!data) {
 		pe_err("data is NULL");
@@ -8223,15 +8222,10 @@ QDF_STATUS lim_ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 	}
 
 	if (LIM_IS_IBSS_ROLE(session) &&
-	    session->mac_ctx->lim.gLimIbssCoalescingHappened) {
+	    session->mac_ctx->lim.gLimIbssCoalescingHappened)
 		ibss_bss_delete(session->mac_ctx, session);
-	} else {
-		if (!policy_mgr_is_dfs_beaconing_present_except_vdev(
-		    session->mac_ctx->psoc, &ap_dfs_ch_freq, session->vdev_id))
-			tgt_dfs_radar_enable(
-				session->mac_ctx->pdev, 0, 0, false);
+	else
 		status =  lim_send_vdev_stop(session);
-	}
 
 	return status;
 }
