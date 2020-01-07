@@ -3412,13 +3412,16 @@ wma_diag_log_roam_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 
 	scan_data->version = 1;
 	scan_data->type = scan->type;
-	scan_data->num_ap = scan->num_ap;
 	scan_data->num_chan = scan->num_chan;
 	scan_data->next_rssi_threshold = scan->next_rssi_threshold;
 	scan_data->vdev_id = vdev_id;
 	scan_data->timestamp = timestamp;
 	for (i = 0; i < scan_data->num_chan; i++)
 		scan_data->chan_freq[i] = scan->chan_freq[i];
+
+	scan_data->num_ap = scan->num_ap;
+	if (scan->num_ap > MAX_ROAM_CANDIDATE_AP)
+		scan_data->num_ap = MAX_ROAM_CANDIDATE_AP;
 
 	for (i = 0; i < scan_data->num_ap; i++) {
 		scan_data->ap[i].version = 1;
