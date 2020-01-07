@@ -7991,15 +7991,15 @@ hdd_rx_mic_error_ind(struct cdp_ctrl_objmgr_psoc *psoc, uint8_t pdev_id,
 	hdd_ctx = wiphy_priv(wiphy);
 
 	if (wlan_hdd_validate_context(hdd_ctx))
-		return;
+		goto release_ref_and_return;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, mic_failure_info->vdev_id);
 	if (hdd_validate_adapter(adapter))
-		return;
+		goto release_ref_and_return;
 
 	hdd_mic_info = qdf_mem_malloc(sizeof(*hdd_mic_info));
 	if (!hdd_mic_info)
-		return;
+		goto release_ref_and_return;
 
 	qdf_copy_macaddr(&hdd_mic_info->ta_mac_addr,
 			 &mic_failure_info->ta_mac_addr);
@@ -8013,7 +8013,7 @@ hdd_rx_mic_error_ind(struct cdp_ctrl_objmgr_psoc *psoc, uint8_t pdev_id,
 	if (adapter->mic_work.status != MIC_INITIALIZED) {
 		qdf_spin_unlock_bh(&adapter->mic_work.lock);
 		qdf_mem_free(hdd_mic_info);
-		return;
+		goto release_ref_and_return;
 	}
 	/*
 	 * Store mic error info pointer in adapter
@@ -8024,6 +8024,9 @@ hdd_rx_mic_error_ind(struct cdp_ctrl_objmgr_psoc *psoc, uint8_t pdev_id,
 	adapter->mic_work.info = hdd_mic_info;
 	qdf_sched_work(0, &adapter->mic_work.work);
 	qdf_spin_unlock_bh(&adapter->mic_work.lock);
+
+release_ref_and_return:
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_SB_ID);
 }
 
 /* wake lock APIs for HDD */
