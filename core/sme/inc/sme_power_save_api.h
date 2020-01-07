@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,7 +34,8 @@ QDF_STATUS sme_ps_uapsd_enable(mac_handle_t mac_handle, uint32_t session_id);
 QDF_STATUS sme_ps_uapsd_disable(mac_handle_t mac_handle, uint32_t session_id);
 
 QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx,
-				   uint32_t session_id);
+				   uint32_t session_id,
+				   enum sme_ps_cmd command);
 
 QDF_STATUS sme_ps_process_command(struct mac_context *mac_ctx,
 				  uint32_t session_id,
