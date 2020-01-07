@@ -34,6 +34,11 @@
 #include "dp_ratetable.h"
 #endif
 
+static inline void
+dp_rx_populate_cfr_non_assoc_sta(struct dp_pdev *pdev,
+				 struct hal_rx_ppdu_info *ppdu_info,
+				 qdf_nbuf_t ppdu_nbuf);
+
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
 #include "dp_rx_mon_feature.h"
 #else
@@ -335,18 +340,18 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	ast_index = ppdu_info->rx_status.ast_index;
 	if (ast_index >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
-		return;
+		goto end;
 	}
 
 	ast_entry = soc->ast_table[ast_index];
 	if (!ast_entry) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
-		return;
+		goto end;
 	}
 	peer = ast_entry->peer;
 	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
-		return;
+		goto end;
 	}
 
 	qdf_mem_copy(cdp_rx_ppdu->mac_addr,
@@ -393,6 +398,10 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->num_msdu = 0;
 
 	dp_rx_populate_cdp_indication_ppdu_user(pdev, ppdu_info, ppdu_nbuf);
+
+	return;
+end:
+	dp_rx_populate_cfr_non_assoc_sta(pdev, ppdu_info, ppdu_nbuf);
 }
 #else
 static inline void
@@ -1067,6 +1076,27 @@ dp_rx_handle_cfr(struct dp_soc *soc, struct dp_pdev *pdev,
 				     WDI_NO_VAL, pdev->pdev_id);
 	}
 }
+
+/**
+ * dp_rx_populate_cfr_non_assoc_sta() - Populate cfr ppdu info for PPDUs from
+ * non-associated stations
+ * @pdev: pdev ctx
+ * @ppdu_info: ppdu info structure from ppdu ring
+ * @ppdu_nbuf: qdf nbuf abstraction for linux skb
+ *
+ * Return: none
+ */
+static inline void
+dp_rx_populate_cfr_non_assoc_sta(struct dp_pdev *pdev,
+				 struct hal_rx_ppdu_info *ppdu_info,
+				 qdf_nbuf_t ppdu_nbuf)
+{
+	if (!pdev->cfr_rcc_mode)
+		return;
+
+	if (ppdu_info->cfr_info.bb_captured_channel)
+		dp_rx_mon_populate_cfr_ppdu_info(pdev, ppdu_info, ppdu_nbuf);
+}
 #else
 static inline void
 dp_rx_mon_handle_cfr_mu_info(struct dp_pdev *pdev,
@@ -1092,6 +1122,13 @@ dp_rx_mon_populate_cfr_info(struct dp_pdev *pdev,
 static inline void
 dp_rx_handle_cfr(struct dp_soc *soc, struct dp_pdev *pdev,
 		 struct hal_rx_ppdu_info *ppdu_info)
+{
+}
+
+static inline void
+dp_rx_populate_cfr_non_assoc_sta(struct dp_pdev *pdev,
+				 struct hal_rx_ppdu_info *ppdu_info,
+				 qdf_nbuf_t ppdu_nbuf)
 {
 }
 #endif
@@ -1159,8 +1196,8 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 	ppdu_nbuf = qdf_nbuf_alloc(soc->osdev,
 			sizeof(struct cdp_rx_indication_ppdu), 0, 0, FALSE);
 	if (ppdu_nbuf) {
-		dp_rx_populate_cdp_indication_ppdu(pdev, ppdu_info, ppdu_nbuf);
 		dp_rx_mon_populate_cfr_info(pdev, ppdu_info, ppdu_nbuf);
+		dp_rx_populate_cdp_indication_ppdu(pdev, ppdu_info, ppdu_nbuf);
 		qdf_nbuf_put_tail(ppdu_nbuf,
 				sizeof(struct cdp_rx_indication_ppdu));
 		cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)ppdu_nbuf->data;
