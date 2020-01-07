@@ -362,7 +362,8 @@ static int vblank_ctrl_queue_work(struct msm_drm_private *priv,
 	cur_work->enable = enable;
 	cur_work->priv = priv;
 
-	kthread_queue_work(&priv->disp_thread[crtc_id].worker, &cur_work->work);
+	kthread_queue_work(&priv->event_thread[crtc_id].worker,
+						&cur_work->work);
 
 	return 0;
 }
