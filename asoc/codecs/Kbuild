@@ -122,13 +122,13 @@ ifdef CONFIG_SND_SOC_WCD9XXX_V2
 ifdef CONFIG_WCD9XXX_CODEC_CORE
 	WCD9XXX_OBJS += wcd9xxx-common-v2.o
 	WCD9XXX_OBJS += wcd9xxx-resmgr-v2.o
+	WCD9XXX_OBJS += wcd-dsp-utils.o
+	WCD9XXX_OBJS += wcd-dsp-mgr.o
 else
 	WCD9XXX_OBJS += wcd-clsh.o
 endif
 	WCD9XXX_OBJS += wcdcal-hwdep.o
 	WCD9XXX_OBJS += wcd9xxx-soc-init.o
-	WCD9XXX_OBJS += wcd-dsp-utils.o
-	WCD9XXX_OBJS += wcd-dsp-mgr.o
 	WCD9XXX_OBJS += audio-ext-clk-up.o
 endif
 
