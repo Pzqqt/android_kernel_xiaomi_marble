@@ -10444,6 +10444,32 @@ hdd_init_dhcp_server_ip(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef SAR_SAFETY_FEATURE
+static void hdd_sar_cfg_update(struct hdd_config *config,
+			       struct wlan_objmgr_psoc *psoc)
+{
+	config->sar_safety_timeout = cfg_get(psoc, CFG_SAR_SAFETY_TIMEOUT);
+	config->sar_safety_unsolicited_timeout =
+			cfg_get(psoc, CFG_SAR_SAFETY_UNSOLICITED_TIMEOUT);
+	config->sar_safety_req_resp_timeout =
+				cfg_get(psoc, CFG_SAR_SAFETY_REQ_RESP_TIMEOUT);
+	config->sar_safety_req_resp_retry =
+				cfg_get(psoc, CFG_SAR_SAFETY_REQ_RESP_RETRIES);
+	config->sar_safety_index = cfg_get(psoc, CFG_SAR_SAFETY_INDEX);
+	config->sar_safety_sleep_index =
+				cfg_get(psoc, CFG_SAR_SAFETY_SLEEP_INDEX);
+	config->enable_sar_safety =
+				cfg_get(psoc, CFG_ENABLE_SAR_SAFETY_FEATURE);
+	config->config_sar_safety_sleep_index =
+			cfg_get(psoc, CFG_CONFIG_SAR_SAFETY_SLEEP_MODE_INDEX);
+}
+#else
+static void hdd_sar_cfg_update(struct hdd_config *config,
+			       struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 /**
  * hdd_cfg_params_init() - Initialize hdd params in hdd_config strucuture
  * @hdd_ctx - Pointer to HDD context
@@ -10542,6 +10568,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	hdd_init_mtrace_log(config, psoc);
 	hdd_init_dhcp_server_ip(hdd_ctx);
 	hdd_dp_cfg_update(psoc, hdd_ctx);
+	hdd_sar_cfg_update(config, psoc);
 }
 
 struct hdd_context *hdd_context_create(struct device *dev)
