@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -239,7 +239,6 @@ struct qdf_nbuf_cb {
 				} priv_cb_m;
 			} dev;
 			uint32_t lro_eligible:1,
-				is_raw_frame:1,
 				tcp_proto:1,
 				tcp_pure_ack:1,
 				ipv6_proto:1,
@@ -247,6 +246,7 @@ struct qdf_nbuf_cb {
 				tcp_offset:7,
 				rx_ctx_id:4,
 				fcs_err:1,
+				is_raw_frame:1,
 				num_elements_in_list:8;
 			uint32_t tcp_udp_chksum:16,
 				 tcp_win:16;
