@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -317,10 +317,12 @@ static QDF_STATUS extract_tbttoffset_update_params_tlv(
 		return QDF_STATUS_E_INVAL;
 	tbtt_param->tbttoffset =
 		param_buf->tbttoffset_list[tbtt_param->vdev_id];
-	tbtt_param->vdev_tbtt_qtime_lo =
-		param_buf->tbtt_qtime_low_us_list[tbtt_param->vdev_id];
-	tbtt_param->vdev_tbtt_qtime_hi =
-		param_buf->tbtt_qtime_high_us_list[tbtt_param->vdev_id];
+	if (param_buf->tbtt_qtime_low_us_list)
+		tbtt_param->vdev_tbtt_qtime_lo =
+		    param_buf->tbtt_qtime_low_us_list[tbtt_param->vdev_id];
+	if (param_buf->tbtt_qtime_high_us_list)
+		tbtt_param->vdev_tbtt_qtime_hi =
+		    param_buf->tbtt_qtime_high_us_list[tbtt_param->vdev_id];
 
 	return QDF_STATUS_SUCCESS;
 }
