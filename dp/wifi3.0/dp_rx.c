@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2237,9 +2237,20 @@ done:
 		dp_peer_unref_del_find_by_id(peer);
 	}
 
-	if (deliver_list_head && peer)
-		dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
-				       deliver_list_tail);
+	if (qdf_likely(deliver_list_head)) {
+		if (qdf_likely(peer))
+			dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
+					       deliver_list_tail);
+		else {
+			nbuf = deliver_list_head;
+			while (nbuf) {
+				next = nbuf->next;
+				nbuf->next = NULL;
+				dp_rx_deliver_to_stack_no_peer(soc, nbuf);
+				nbuf = next;
+			}
+		}
+	}
 
 	if (dp_rx_enable_eol_data_check(soc) && rx_bufs_used) {
 		if (quota) {
