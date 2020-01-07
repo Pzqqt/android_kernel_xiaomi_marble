@@ -3348,7 +3348,7 @@ qdf_export_symbol(qdf_shared_print_ctrl_cleanup);
  * Set this to invalid value to differentiate with user-provided
  * value.
  */
-int qdf_dbg_mask = 0;
+int qdf_dbg_mask = QDF_TRACE_LEVEL_MAX;
 qdf_export_symbol(qdf_dbg_mask);
 qdf_declare_param(qdf_dbg_mask, int);
 
@@ -3574,14 +3574,14 @@ void qdf_shared_print_ctrl_init(void)
 	/*
 	 * User specified across-module single debug level
 	 */
-	if ((qdf_dbg_mask > 0) && (qdf_dbg_mask <= QDF_TRACE_LEVEL_MAX)) {
+	if ((qdf_dbg_mask >= 0) && (qdf_dbg_mask < QDF_TRACE_LEVEL_MAX)) {
 		pr_info("User specified module debug level of %d\n",
 			qdf_dbg_mask);
 		for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
 			cinfo[i].category_verbose_mask =
 			set_cumulative_verbose_mask(qdf_dbg_mask);
 		}
-	} else {
+	} else if (qdf_dbg_mask != QDF_TRACE_LEVEL_MAX) {
 		pr_info("qdf_dbg_mask value is invalid\n");
 		pr_info("Using the default module debug levels instead\n");
 	}
