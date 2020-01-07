@@ -1156,6 +1156,9 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 		csa_ie = (struct ieee80211_channelswitch_ie *)
 						(&csa_event->csa_ie[0]);
 		csa_offload_event->channel = csa_ie->newchannel;
+		csa_offload_event->csa_chan_freq =
+			wlan_reg_legacy_chan_to_freq(wma->pdev,
+						     csa_ie->newchannel);
 		csa_offload_event->switch_mode = csa_ie->switchmode;
 	} else if (csa_event->ies_present_flag & WMI_XCSA_IE_PRESENT) {
 		xcsa_ie = (struct ieee80211_extendedchannelswitch_ie *)
@@ -1163,6 +1166,16 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 		csa_offload_event->channel = xcsa_ie->newchannel;
 		csa_offload_event->switch_mode = xcsa_ie->switchmode;
 		csa_offload_event->new_op_class = xcsa_ie->newClass;
+		if (wlan_reg_is_6ghz_op_class(wma->pdev, xcsa_ie->newClass)) {
+			csa_offload_event->csa_chan_freq =
+				wlan_reg_chan_band_to_freq
+					(wma->pdev, xcsa_ie->newchannel,
+					 BIT(REG_BAND_6G));
+		} else {
+			csa_offload_event->csa_chan_freq =
+				wlan_reg_legacy_chan_to_freq
+					(wma->pdev, xcsa_ie->newchannel);
+		}
 	} else {
 		WMA_LOGE("CSA Event error: No CSA IE present");
 		qdf_mem_free(csa_offload_event);
@@ -1193,8 +1206,9 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 
 	csa_offload_event->ies_present_flag = csa_event->ies_present_flag;
 
-	WMA_LOGD("CSA: New Channel = %d BSSID:%pM",
-		 csa_offload_event->channel, csa_offload_event->bssId);
+	WMA_LOGD("CSA: New Channel = %d freq %d BSSID:%pM",
+		 csa_offload_event->channel, csa_offload_event->csa_chan_freq,
+		 csa_offload_event->bssId);
 	WMA_LOGD("CSA: IEs Present Flag = 0x%x new ch width = %d ch center freq1 = %d ch center freq2 = %d new op class = %d",
 		 csa_event->ies_present_flag,
 		 csa_offload_event->new_ch_width,

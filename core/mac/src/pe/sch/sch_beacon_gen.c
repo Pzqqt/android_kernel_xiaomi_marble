@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -245,6 +245,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 	uint8_t *addn_ie = NULL;
 	tDot11fIEExtCap extracted_extcap;
 	bool extcap_present = true, addnie_present = false;
+	bool is_6ghz_chsw;
 
 	bcn_1 = qdf_mem_malloc(sizeof(tDot11fBeacon1));
 	if (!bcn_1)
@@ -344,11 +345,14 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 		 session->schBeaconOffsetBegin);
 
 	/* Initialize the 'new' fields at the end of the beacon */
-
-	if ((session->limSystemRole == eLIM_AP_ROLE) &&
+	is_6ghz_chsw =
+		WLAN_REG_IS_6GHZ_CHAN_FREQ(session->curr_op_freq) ||
+		WLAN_REG_IS_6GHZ_CHAN_FREQ
+			(session->gLimChannelSwitch.sw_target_freq);
+	if (session->limSystemRole == eLIM_AP_ROLE &&
 	    session->dfsIncludeChanSwIe == true) {
 		if (!CHAN_HOP_ALL_BANDS_ENABLE ||
-		    session->lim_non_ecsa_cap_num == 0) {
+		    session->lim_non_ecsa_cap_num == 0 || is_6ghz_chsw) {
 			tDot11fIEext_chan_switch_ann *ext_csa =
 						&bcn_2->ext_chan_switch_ann;
 			populate_dot_11_f_ext_chann_switch_ann(mac_ctx,
@@ -390,12 +394,15 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 			 * and SAP has instructed to announce channel switch IEs
 			 * in beacon and probe responses
 			 */
-			populate_dot11f_chan_switch_ann(mac_ctx,
-						&bcn_2->ChanSwitchAnn, session);
-			pe_debug("csa: mode:%d chan:%d count:%d",
-				 bcn_2->ChanSwitchAnn.switchMode,
-				 bcn_2->ChanSwitchAnn.newChannel,
-				 bcn_2->ChanSwitchAnn.switchCount);
+			if (!is_6ghz_chsw) {
+				populate_dot11f_chan_switch_ann
+					(mac_ctx, &bcn_2->ChanSwitchAnn,
+					 session);
+				pe_debug("csa: mode:%d chan:%d count:%d",
+					 bcn_2->ChanSwitchAnn.switchMode,
+					 bcn_2->ChanSwitchAnn.newChannel,
+					 bcn_2->ChanSwitchAnn.switchCount);
+			}
 			/*
 			 * TODO: depending the CB mode, extended channel switch
 			 * announcement need to be called

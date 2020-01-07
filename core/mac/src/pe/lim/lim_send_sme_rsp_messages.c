@@ -1623,6 +1623,8 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	session_entry->gLimChannelSwitch.switchCount = 0;
 	session_entry->gLimChannelSwitch.primaryChannel =
 		csa_params->channel;
+	session_entry->gLimChannelSwitch.sw_target_freq =
+		csa_params->csa_chan_freq;
 	session_entry->gLimChannelSwitch.state =
 		eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
 	session_entry->gLimChannelSwitch.ch_width = CH_WIDTH_20MHZ;
@@ -1633,7 +1635,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	chnl_switch_info =
 		&session_entry->gLimWiderBWChannelSwitch;
 
-	if (WLAN_REG_IS_24GHZ_CH(csa_params->channel)) {
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(csa_params->csa_chan_freq)) {
 		channel_bonding_mode =
 			mac_ctx->roam.configParam.channelBondingMode24GHz;
 	} else {
@@ -1641,14 +1643,16 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 			mac_ctx->roam.configParam.channelBondingMode5GHz;
 	}
 
-	pe_debug("vht: %d ht: %d flag: %x chan: %d, sec_ch_offset %d cbmode %d",
+	pe_debug("vht: %d ht: %d he %d flag: %x chan: %d, sec_ch_offset %d cbmode %d",
 		 session_entry->vhtCapability,
 		 session_entry->htSupportedChannelWidthSet,
+		 lim_is_session_he_capable(session_entry),
 		 csa_params->ies_present_flag,
 		 csa_params->channel,
 		 csa_params->sec_chan_offset,
 		 channel_bonding_mode);
-	pe_debug("seg1: %d seg2: %d width: %d country: %s class: %d",
+	pe_debug("freq %d seg1: %d seg2: %d width: %d country: %s class: %d",
+		 csa_params->csa_chan_freq,
 		 csa_params->new_ch_freq_seg1,
 		 csa_params->new_ch_freq_seg2,
 		 csa_params->new_ch_width,
@@ -1657,8 +1661,9 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 
 	session_entry->htSupportedChannelWidthSet = false;
 
-	if (session_entry->vhtCapability && channel_bonding_mode &&
-	    session_entry->htCapability) {
+	if (channel_bonding_mode &&
+	    ((session_entry->vhtCapability && session_entry->htCapability) ||
+	      lim_is_session_he_capable(session_entry))) {
 		if ((csa_params->ies_present_flag & lim_wbw_ie_present) &&
 			(QDF_STATUS_SUCCESS == lim_process_csa_wbw_ie(mac_ctx,
 					csa_params, chnl_switch_info,
@@ -1679,15 +1684,29 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 			}
 		} else if (csa_params->ies_present_flag
 				& lim_xcsa_ie_present) {
-			chan_space =
+			uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
+
+			if (wlan_reg_is_6ghz_op_class
+				(mac_ctx->pdev, csa_params->new_op_class)) {
+				chan_space = wlan_reg_get_op_class_width
+					(mac_ctx->pdev,
+					 csa_params->new_op_class, true);
+			} else {
+				chan_space =
 				wlan_reg_dmn_get_chanwidth_from_opclass(
 						mac_ctx->scan.countryCodeCurrent,
 						csa_params->channel,
 						csa_params->new_op_class);
+			}
+			if (chan_space >= 160 && fw_vht_ch_wd <
+					WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
+				chan_space = 80;
 			session_entry->gLimChannelSwitch.state =
 				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
-
-			if (chan_space == 80) {
+			if (chan_space == 160) {
+				chnl_switch_info->newChanWidth =
+					CH_WIDTH_160MHZ;
+			} else if (chan_space == 80) {
 				chnl_switch_info->newChanWidth =
 					CH_WIDTH_80MHZ;
 				session_entry->htSupportedChannelWidthSet =
@@ -1797,19 +1816,17 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	pe_debug("new ch width: %d space: %d new ht width %d",
 			session_entry->gLimChannelSwitch.ch_width, chan_space,
 			session_entry->htSupportedChannelWidthSet);
-	if ((wlan_reg_freq_to_chan(mac_ctx->pdev,
-				   session_entry->curr_op_freq) ==
-		csa_params->channel) &&
-		session_entry->ch_width ==
-		session_entry->gLimChannelSwitch.ch_width) {
+	if (session_entry->curr_op_freq == csa_params->csa_chan_freq &&
+	    session_entry->ch_width ==
+			session_entry->gLimChannelSwitch.ch_width) {
 		pe_debug("Ignore CSA, no change in ch and bw");
 		goto err;
 	}
 
-	if (WLAN_REG_IS_24GHZ_CH(csa_params->channel) &&
-	    (session_entry->dot11mode == MLME_DOT11_MODE_11A))
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(csa_params->csa_chan_freq) &&
+	    session_entry->dot11mode == MLME_DOT11_MODE_11A)
 		session_entry->dot11mode = MLME_DOT11_MODE_11G;
-	else if (WLAN_REG_IS_5GHZ_CH(csa_params->channel) &&
+	else if (WLAN_REG_IS_5GHZ_CH_FREQ(csa_params->csa_chan_freq) &&
 		 ((session_entry->dot11mode == MLME_DOT11_MODE_11G) ||
 		 (session_entry->dot11mode == MLME_DOT11_MODE_11G_ONLY)))
 		session_entry->dot11mode = MLME_DOT11_MODE_11A;

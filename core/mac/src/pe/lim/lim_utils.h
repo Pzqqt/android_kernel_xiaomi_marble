@@ -331,13 +331,45 @@ QDF_STATUS lim_start_channel_switch(struct mac_context *mac,
 void lim_update_channel_switch(struct mac_context *, tpSirProbeRespBeacon,
 		struct pe_session *pe_session);
 
-void lim_switch_primary_channel(struct mac_context *, uint8_t, struct pe_session *);
+/**
+ * lim_switch_primary_channel() - switch primary channel of session
+ * @mac: Global MAC structure
+ * @new_channel_freq: new chnannel freq in Mhz
+ * @pe_session: pe session context
+ *
+ * This function changes the current operating channel frequency.
+ *
+ * return NONE
+ */
+void lim_switch_primary_channel(struct mac_context *mac,
+				uint32_t new_channel_freq,
+				struct pe_session *pe_session);
+
+/**
+ * lim_switch_primary_secondary_channel() - switch primary and secondary
+ * channel of session
+ * @mac: Global MAC structure
+ * @pe_session: session context
+ * @new_channel_freq: new channel frequency (MHz)
+ * @ch_center_freq_seg0: channel center freq seg0
+ * @ch_center_freq_seg1: channel center freq seg1
+ * @ch_width: ch width of enum phy_ch_width
+ *
+ *  This function changes the primary and secondary channel.
+ *  If 11h is enabled and user provides a "new channel freq"
+ *  that is different from the current operating channel,
+ *  then we must set this new channel in session context and
+ *  assign notify LIM of such change.
+ *
+ * @return NONE
+ */
 void lim_switch_primary_secondary_channel(struct mac_context *mac,
-					struct pe_session *pe_session,
-					uint8_t newChannel,
-					uint8_t ch_center_freq_seg0,
-					uint8_t ch_center_freq_seg1,
-					enum phy_ch_width ch_width);
+					  struct pe_session *pe_session,
+					  uint32_t new_channel_freq,
+					  uint8_t ch_center_freq_seg0,
+					  uint8_t ch_center_freq_seg1,
+					  enum phy_ch_width ch_width);
+
 void lim_update_sta_run_time_ht_capability(struct mac_context *mac,
 		tDot11fIEHTCaps *pHTCaps);
 void lim_update_sta_run_time_ht_info(struct mac_context *mac,
@@ -345,8 +377,20 @@ void lim_update_sta_run_time_ht_info(struct mac_context *mac,
 		struct pe_session *pe_session);
 void lim_cancel_dot11h_channel_switch(struct mac_context *mac,
 		struct pe_session *pe_session);
+
+/**
+ * lim_is_channel_valid_for_channel_switch - check channel valid for switching
+ * @mac: Global mac context
+ * @channel_freq: channel freq (MHz)
+ *
+ * This function checks if the channel to which AP is expecting us to switch,
+ * is a valid channel for us.
+ *
+ * Return bool, true if channel is valid
+ */
 bool lim_is_channel_valid_for_channel_switch(struct mac_context *mac,
-		uint8_t channel);
+					     uint32_t channel_freq);
+
 QDF_STATUS lim_restore_pre_channel_switch_state(struct mac_context *mac,
 		struct pe_session *pe_session);
 
@@ -589,6 +633,26 @@ struct pe_session *lim_is_ibss_session_active(struct mac_context *mac)
 	return NULL;
 }
 #endif
+
+static inline uint8_t ch_width_in_mhz(enum phy_ch_width ch_width)
+{
+	switch (ch_width) {
+	case CH_WIDTH_40MHZ:
+		return 40;
+	case CH_WIDTH_80MHZ:
+		return 80;
+	case CH_WIDTH_160MHZ:
+		return 160;
+	case CH_WIDTH_80P80MHZ:
+		return 160;
+	case CH_WIDTH_5MHZ:
+		return 5;
+	case CH_WIDTH_10MHZ:
+		return 10;
+	default:
+		return 20;
+	}
+}
 
 struct pe_session *lim_is_ap_session_active(struct mac_context *mac);
 void lim_handle_heart_beat_failure_timeout(struct mac_context *mac);
@@ -1556,16 +1620,38 @@ void lim_send_start_bss_confirm(struct mac_context *mac_ctx,
  * sta capability.
  *
  * @mac_ctx: pointer to global mac structure
- * @new_channel: new channel to switch to.
- * @ch_bandwidth: BW of channel to calculate op_class
+ * @new_channel_freq: new channel freq(Mhz) to switch to.
+ * @ch_bandwidth: ch bw of enum phy_ch_width
+ * @offset: BW of type enum offset_t
  * @session_entry: pe session
  *
  * Return: void
  */
 void lim_send_chan_switch_action_frame(struct mac_context *mac_ctx,
-				       uint16_t new_channel,
-				       uint8_t ch_bandwidth,
+				       uint16_t new_channel_freq,
+				       enum phy_ch_width ch_bandwidth,
+				       enum offset_t offset,
 				       struct pe_session *session_entry);
+
+/**
+ * send_extended_chan_switch_action_frame()- function to send ECSA
+ * action frame for each sta connected to SAP/GO and AP in case of
+ * STA .
+ * @mac_ctx: pointer to global mac structure
+ * @new_channel_freq: new channel to switch to.
+ * @ch_bandwidth: channel bw of type enum phy_ch_width
+ * @offset: BW of enum offset_t
+ * @session_entry: pe session
+ *
+ * This function is called to send ECSA frame for STA/CLI and SAP/GO.
+ *
+ * Return: void
+ */
+void send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
+					    uint16_t new_channel_freq,
+					    enum phy_ch_width ch_bandwidth,
+					    enum offset_t offset,
+					    struct pe_session *session_entry);
 
 /**
  * lim_process_obss_detection_ind() - Process obss detection indication

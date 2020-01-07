@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -415,6 +415,7 @@ typedef enum eLimChannelSwitchState {
 /* Channel Switch Info */
 typedef struct sLimChannelSwitchInfo {
 	tLimChannelSwitchState state;
+	uint32_t sw_target_freq;
 	uint8_t primaryChannel;
 	uint8_t ch_center_freq_seg0;
 	uint8_t ch_center_freq_seg1;

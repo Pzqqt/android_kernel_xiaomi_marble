@@ -56,6 +56,7 @@
 #include "wlan_utility.h"
 #include <wlan_crypto_global_api.h>
 #include "../../core/src/vdev_mgr_ops.h"
+#include "wma.h"
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
@@ -5398,33 +5399,28 @@ end:
 	update_ie->pAdditionIEBuffer = NULL;
 }
 
-/**
- * send_extended_chan_switch_action_frame()- function to send ECSA
- * action frame for each sta connected to SAP/GO and AP in case of
- * STA .
- * @mac_ctx: pointer to global mac structure
- * @new_channel: new channel to switch to.
- * @ch_bandwidth: BW of channel to calculate op_class
- * @session_entry: pe session
- *
- * This function is called to send ECSA frame for STA/CLI and SAP/GO.
- *
- * Return: void
- */
-
-static void send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
-				uint16_t new_channel, uint8_t ch_bandwidth,
-						struct pe_session *session_entry)
+void send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
+					    uint16_t new_channel_freq,
+					    enum phy_ch_width ch_bandwidth,
+					    enum offset_t offset,
+					    struct pe_session *session_entry)
 {
-	uint16_t op_class;
+	uint8_t op_class = 0;
 	uint8_t switch_mode = 0, i;
 	tpDphHashNode psta;
 	uint8_t switch_count;
+	uint8_t new_channel = 0;
 
-	op_class = wlan_reg_dmn_get_opclass_from_channel(
-				mac_ctx->scan.countryCodeCurrent,
-				new_channel,
-				ch_bandwidth);
+	new_channel = wlan_reg_freq_to_chan(mac_ctx->pdev, new_channel_freq);
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(new_channel_freq))
+		wlan_reg_freq_width_to_chan_op_class
+			(mac_ctx->pdev, new_channel_freq,
+			 ch_width_in_mhz(ch_bandwidth),
+			 true, BIT(BEHAV_NONE), &op_class,
+			 &new_channel);
+	else
+		op_class = wlan_reg_dmn_get_opclass_from_channel
+			(mac_ctx->scan.countryCodeCurrent, new_channel, offset);
 
 	if (LIM_IS_AP_ROLE(session_entry) &&
 		(mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false))
@@ -5453,11 +5449,12 @@ static void send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 }
 
 void lim_send_chan_switch_action_frame(struct mac_context *mac_ctx,
-				       uint16_t new_channel,
-				       uint8_t ch_bandwidth,
+				       uint16_t new_channel_freq,
+				       enum phy_ch_width ch_bandwidth,
+				       enum offset_t offset,
 				       struct pe_session *session_entry)
 {
-	uint16_t op_class;
+	uint8_t op_class = 0, new_channel;
 	uint8_t switch_mode = 0, i;
 	uint8_t switch_count;
 	tpDphHashNode psta;
@@ -5465,10 +5462,17 @@ void lim_send_chan_switch_action_frame(struct mac_context *mac_ctx,
 
 	dph_node_array_ptr = session_entry->dph.dphHashTable.pDphNodeArray;
 
-	op_class = wlan_reg_dmn_get_opclass_from_channel(
-			mac_ctx->scan.countryCodeCurrent,
-			new_channel, ch_bandwidth);
-
+	new_channel = wlan_reg_freq_to_chan(mac_ctx->pdev, new_channel_freq);
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(new_channel_freq))
+		wlan_reg_freq_width_to_chan_op_class
+			(mac_ctx->pdev, new_channel_freq,
+			 ch_width_in_mhz(ch_bandwidth),
+			 true, BIT(BEHAV_NONE), &op_class,
+			 &new_channel);
+	else
+		op_class = wlan_reg_dmn_get_opclass_from_channel
+			(mac_ctx->scan.countryCodeCurrent,
+			 new_channel, offset);
 	if (LIM_IS_AP_ROLE(session_entry) &&
 	    (false == mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch))
 		switch_mode = session_entry->gLimChannelSwitch.switchMode;
@@ -5518,6 +5522,8 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 	tLimWiderBWChannelSwitchInfo *wider_bw_ch_switch;
 	enum offset_t ch_offset;
 	QDF_STATUS status;
+	enum phy_ch_width ch_width;
+	uint32_t target_ch_freq;
 
 	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
@@ -5541,14 +5547,21 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 
 	/* target channel */
 	session_entry->gLimChannelSwitch.primaryChannel =
-		wlan_reg_freq_to_chan(mac_ctx->pdev, dfs_csa_ie_req->target_chan_freq);
-
+		wlan_reg_freq_to_chan(mac_ctx->pdev,
+				      dfs_csa_ie_req->target_chan_freq);
+	session_entry->gLimChannelSwitch.sw_target_freq =
+		dfs_csa_ie_req->target_chan_freq;
+	target_ch_freq = dfs_csa_ie_req->target_chan_freq;
 	/* Channel switch announcement needs to be included in beacon */
 	session_entry->dfsIncludeChanSwIe = true;
 	session_entry->gLimChannelSwitch.switchCount =
 		 dfs_csa_ie_req->ch_switch_beacon_cnt;
-	session_entry->gLimChannelSwitch.ch_width =
-				 dfs_csa_ie_req->ch_params.ch_width;
+	ch_width = dfs_csa_ie_req->ch_params.ch_width;
+	if (ch_width >= CH_WIDTH_160MHZ &&
+	    wma_get_vht_ch_width() < WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ) {
+		ch_width = CH_WIDTH_80MHZ;
+	}
+	session_entry->gLimChannelSwitch.ch_width = ch_width;
 	session_entry->gLimChannelSwitch.sec_ch_offset =
 				 dfs_csa_ie_req->ch_params.sec_ch_offset;
 	if (mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false)
@@ -5564,7 +5577,7 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 
 	/* Now encode the Wider Ch BW element depending on the ch width */
 	wider_bw_ch_switch = &session_entry->gLimWiderBWChannelSwitch;
-	switch (dfs_csa_ie_req->ch_params.ch_width) {
+	switch (ch_width) {
 	case CH_WIDTH_20MHZ:
 		/*
 		 * Wide channel BW sublement in channel wrapper element is not
@@ -5645,27 +5658,31 @@ skip_vht:
 	if (QDF_IS_STATUS_ERROR(status))
 		pe_err("cannot start ap_ecsa_timer");
 
-	if (dfs_csa_ie_req->ch_params.ch_width == CH_WIDTH_80MHZ)
+	if (ch_width == CH_WIDTH_80MHZ || ch_width == CH_WIDTH_160MHZ ||
+	    ch_width == CH_WIDTH_80P80MHZ)
 		ch_offset = BW80;
 	else
 		ch_offset = dfs_csa_ie_req->ch_params.sec_ch_offset;
 
-	pe_debug("IE count:%d chan:%d width:%d wrapper:%d ch_offset:%d",
-			session_entry->gLimChannelSwitch.switchCount,
-			session_entry->gLimChannelSwitch.primaryChannel,
-			session_entry->gLimChannelSwitch.ch_width,
-			session_entry->dfsIncludeChanWrapperIe,
-			ch_offset);
+	pe_debug("IE count:%d chan:%d freq %d width:%d wrapper:%d ch_offset:%d",
+		 session_entry->gLimChannelSwitch.switchCount,
+		 session_entry->gLimChannelSwitch.primaryChannel,
+		 session_entry->gLimChannelSwitch.sw_target_freq,
+		 session_entry->gLimChannelSwitch.ch_width,
+		 session_entry->dfsIncludeChanWrapperIe,
+		 ch_offset);
 
 	/* Send ECSA/CSA Action frame after updating the beacon */
-	if (CHAN_HOP_ALL_BANDS_ENABLE)
-		lim_send_chan_switch_action_frame(mac_ctx,
-			session_entry->gLimChannelSwitch.primaryChannel,
-			ch_offset, session_entry);
+	if (CHAN_HOP_ALL_BANDS_ENABLE &&
+	    !WLAN_REG_IS_6GHZ_CHAN_FREQ(target_ch_freq))
+		lim_send_chan_switch_action_frame
+			(mac_ctx,
+			 session_entry->gLimChannelSwitch.primaryChannel,
+			 ch_width, ch_offset, session_entry);
 	else
-		send_extended_chan_switch_action_frame(mac_ctx,
-			session_entry->gLimChannelSwitch.primaryChannel,
-			ch_offset, session_entry);
+		send_extended_chan_switch_action_frame
+			(mac_ctx, target_ch_freq, ch_width, ch_offset,
+			 session_entry);
 }
 
 /**
@@ -5685,6 +5702,7 @@ static void lim_process_ext_change_channel(struct mac_context *mac_ctx,
 	struct sir_sme_ext_cng_chan_req *ext_chng_channel =
 				(struct sir_sme_ext_cng_chan_req *) msg;
 	struct pe_session *session_entry = NULL;
+	uint32_t new_ext_chan_freq;
 
 	if (!msg) {
 		pe_err("Buffer is Pointing to NULL");
@@ -5701,9 +5719,11 @@ static void lim_process_ext_change_channel(struct mac_context *mac_ctx,
 		pe_err("not an STA/CLI session");
 		return;
 	}
-	send_extended_chan_switch_action_frame(mac_ctx,
-			ext_chng_channel->new_channel,
-				0, session_entry);
+	new_ext_chan_freq =
+		wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
+					     ext_chng_channel->new_channel);
+	send_extended_chan_switch_action_frame(mac_ctx, new_ext_chan_freq, 0,
+					       0, session_entry);
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -85,8 +85,7 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 	mac->lim.lim_timers.gLimChannelSwitchTimer.sessionId = sessionId;
 	status = policy_mgr_check_and_set_hw_mode_for_channel_switch(mac->psoc,
 				pe_session->smeSessionId,
-				wlan_chan_to_freq(
-				pe_session->gLimChannelSwitch.primaryChannel),
+				pe_session->gLimChannelSwitch.sw_target_freq,
 				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA);
 
 	/*
@@ -100,8 +99,9 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 	 * So contunue with CSA from here.
 	 */
 	if (status == QDF_STATUS_E_FAILURE) {
-		pe_err("Failed to set required HW mode for channel %d, ignore CSA",
-		       pe_session->gLimChannelSwitch.primaryChannel);
+		pe_err("Failed to set required HW mode for channel %d freq %d, ignore CSA",
+		       pe_session->gLimChannelSwitch.primaryChannel,
+		       pe_session->gLimChannelSwitch.sw_target_freq);
 		return;
 	}
 
@@ -240,6 +240,9 @@ static void __lim_process_channel_switch_action_frame(struct mac_context *mac_ct
 	bcn_period = (uint16_t)val;
 	ch_switch_params->primaryChannel =
 		chnl_switch_frame->ChanSwitchAnn.newChannel;
+	ch_switch_params->sw_target_freq = wlan_reg_legacy_chan_to_freq
+			(mac_ctx->pdev,
+			chnl_switch_frame->ChanSwitchAnn.newChannel);
 	ch_switch_params->switchCount =
 		chnl_switch_frame->ChanSwitchAnn.switchCount;
 	ch_switch_params->switchTimeoutValue =

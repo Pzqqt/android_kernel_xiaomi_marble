@@ -180,29 +180,47 @@ void populate_dot_11_f_ext_chann_switch_ann(struct mac_context *mac_ptr,
 		struct pe_session *session_entry)
 {
 	uint8_t ch_offset;
+	uint8_t op_class = 0;
+	uint8_t chan_num = 0;
+	uint32_t sw_target_freq;
+	uint8_t primary_channel;
+	enum phy_ch_width ch_width;
 
-	if (session_entry->gLimChannelSwitch.ch_width == CH_WIDTH_80MHZ)
+	ch_width = session_entry->gLimChannelSwitch.ch_width;
+	if (ch_width == CH_WIDTH_80MHZ)
 		ch_offset = BW80;
 	else
 		ch_offset = session_entry->gLimChannelSwitch.sec_ch_offset;
 
 	dot_11_ptr->switch_mode = session_entry->gLimChannelSwitch.switchMode;
-	dot_11_ptr->new_reg_class = wlan_reg_dmn_get_opclass_from_channel(
-			mac_ptr->scan.countryCodeCurrent,
-			session_entry->gLimChannelSwitch.primaryChannel,
-			ch_offset);
+	sw_target_freq = session_entry->gLimChannelSwitch.sw_target_freq;
+	primary_channel = session_entry->gLimChannelSwitch.primaryChannel;
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sw_target_freq)) {
+		wlan_reg_freq_width_to_chan_op_class
+			(mac_ptr->pdev, sw_target_freq,
+			 ch_width_in_mhz(ch_width),
+			 true, BIT(BEHAV_NONE), &op_class, &chan_num);
+		dot_11_ptr->new_reg_class = op_class;
+	} else {
+		dot_11_ptr->new_reg_class =
+			wlan_reg_dmn_get_opclass_from_channel
+				(mac_ptr->scan.countryCodeCurrent,
+				 primary_channel, ch_offset);
+	}
+
 	dot_11_ptr->new_channel =
 		session_entry->gLimChannelSwitch.primaryChannel;
 	dot_11_ptr->switch_count =
 		session_entry->gLimChannelSwitch.switchCount;
 	dot_11_ptr->present = 1;
 
-	pe_debug("country:%s chan:%d width:%d reg:%d off:%d",
-			mac_ptr->scan.countryCodeCurrent,
-			session_entry->gLimChannelSwitch.primaryChannel,
-			session_entry->gLimChannelSwitch.ch_width,
-			dot_11_ptr->new_reg_class,
-			session_entry->gLimChannelSwitch.sec_ch_offset);
+	pe_debug("country:%s chan:%d freq %d width:%d reg:%d off:%d",
+		 mac_ptr->scan.countryCodeCurrent,
+		 session_entry->gLimChannelSwitch.primaryChannel,
+		 sw_target_freq,
+		 session_entry->gLimChannelSwitch.ch_width,
+		 dot_11_ptr->new_reg_class,
+		 session_entry->gLimChannelSwitch.sec_ch_offset);
 }
 
 void
