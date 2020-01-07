@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -337,6 +337,13 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT    = 30,
 
+    /* HTT_DBG_EXT_STATS_PDEV_TX_RATE_TXBF
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_tx_pdev_rate_txbf_stats_t
+     */
+    HTT_DBG_EXT_STATS_PDEV_TX_RATE_TXBF   = 31,
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -466,9 +473,36 @@ typedef enum {
     HTT_STATS_PEER_CTRL_PATH_TXRX_STATS_TAG        = 101, /* htt_peer_ctrl_path_txrx_stats_tlv */
     HTT_STATS_PDEV_CTRL_PATH_TX_STATS_TAG          = 102, /* htt_pdev_ctrl_path_tx_stats_tlv */
     HTT_STATS_RX_PDEV_RATE_EXT_STATS_TAG           = 103, /* htt_rx_pdev_rate_ext_stats_tlv */
+    HTT_STATS_TX_PDEV_DL_MU_MIMO_STATS_TAG         = 104, /* htt_tx_pdev_dl_mu_mimo_sch_stats_tlv */
+    HTT_STATS_TX_PDEV_UL_MU_MIMO_STATS_TAG         = 105, /* htt_tx_pdev_ul_mu_mimo_sch_stats_tlv */
+    HTT_STATS_TX_PDEV_DL_MU_OFDMA_STATS_TAG        = 106, /* htt_tx_pdev_dl_mu_ofdma_sch_stats_tlv */
+    HTT_STATS_TX_PDEV_UL_MU_OFDMA_STATS_TAG        = 107, /* htt_tx_pdev_ul_mu_ofdma_sch_stats_tlv */
+    HTT_STATS_PDEV_TX_RATE_TXBF_STATS_TAG          = 108, /* htt_tx_peer_rate_txbf_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
+
+/* htt_mu_stats_upload_t
+ * Enumerations for specifying whether to upload all MU stats in response to
+ * HTT_DBG_EXT_STATS_PDEV_TX_MU, or if not all, then which subset.
+ */
+typedef enum {
+    /* HTT_UPLOAD_MU_STATS: upload all MU stats:
+     * UL MU-MIMO + DL MU-MIMO + UL MU-OFDMA + DL MU-OFDMA
+     */
+    HTT_UPLOAD_MU_STATS,
+
+    /* HTT_UPLOAD_MU_MIMO_STATS: upload UL MU-MIMO + DL MU-MIMO stats */
+    HTT_UPLOAD_MU_MIMO_STATS,
+
+    /* HTT_UPLOAD_MU_OFDMA_STATS: upload UL MU-OFDMA + DL MU-OFDMA stats */
+    HTT_UPLOAD_MU_OFDMA_STATS,
+
+    HTT_UPLOAD_DL_MU_MIMO_STATS,
+    HTT_UPLOAD_UL_MU_MIMO_STATS,
+    HTT_UPLOAD_DL_MU_OFDMA_STATS,
+    HTT_UPLOAD_UL_MU_OFDMA_STATS,
+} htt_mu_stats_upload_t;
 
 #define HTT_STATS_TLV_TAG_M 0x00000fff
 #define HTT_STATS_TLV_TAG_S 0
@@ -1782,7 +1816,11 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AC */
+    /* 11AC
+     *
+     * Fields with suffix as tried -> Selfgen frames tried out in the air,
+     * Fields with suffix as queued -> Selfgen frames queued to hw
+     */
     A_UINT32 ac_su_ndpa;
     A_UINT32 ac_su_ndp;
     A_UINT32 ac_mu_mimo_ndpa;
@@ -1790,32 +1828,60 @@ typedef struct {
     A_UINT32 ac_mu_mimo_brpoll_1; /* MU user 1 */
     A_UINT32 ac_mu_mimo_brpoll_2; /* MU user 2 */
     A_UINT32 ac_mu_mimo_brpoll_3; /* MU user 3 */
+    A_UINT32 ac_su_ndpa_queued;
+    A_UINT32 ac_su_ndp_queued;
+    A_UINT32 ac_mu_mimo_ndpa_queued;
+    A_UINT32 ac_mu_mimo_ndp_queued;
+    A_UINT32 ac_mu_mimo_brpoll_1_queued;
+    A_UINT32 ac_mu_mimo_brpoll_2_queued;
+    A_UINT32 ac_mu_mimo_brpoll_3_queued;
 } htt_tx_selfgen_ac_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AX */
+    /* 11AX
+     *
+     * Fields with suffix as tried -> Selfgen frames tried out in the air,
+     * Fields with suffix as queued -> Selfgen frames queued to hw
+     */
     A_UINT32 ax_su_ndpa;
     A_UINT32 ax_su_ndp;
     A_UINT32 ax_mu_mimo_ndpa;
     A_UINT32 ax_mu_mimo_ndp;
-    A_UINT32 ax_mu_mimo_brpoll_1; /* MU user 1 */
-    A_UINT32 ax_mu_mimo_brpoll_2; /* MU user 2 */
-    A_UINT32 ax_mu_mimo_brpoll_3; /* MU user 3 */
-    A_UINT32 ax_mu_mimo_brpoll_4; /* MU user 4 */
-    A_UINT32 ax_mu_mimo_brpoll_5; /* MU user 5 */
-    A_UINT32 ax_mu_mimo_brpoll_6; /* MU user 6 */
-    A_UINT32 ax_mu_mimo_brpoll_7; /* MU user 7 */
+    union {
+        struct {
+            /* deprecated old names */
+            A_UINT32 ax_mu_mimo_brpoll_1; /* MU user 1 */
+            A_UINT32 ax_mu_mimo_brpoll_2; /* MU user 2 */
+            A_UINT32 ax_mu_mimo_brpoll_3; /* MU user 3 */
+            A_UINT32 ax_mu_mimo_brpoll_4; /* MU user 4 */
+            A_UINT32 ax_mu_mimo_brpoll_5; /* MU user 5 */
+            A_UINT32 ax_mu_mimo_brpoll_6; /* MU user 6 */
+            A_UINT32 ax_mu_mimo_brpoll_7; /* MU user 7 */
+        };
+        /* MU users 1-7 */
+        A_UINT32 ax_mu_mimo_brpoll[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
+    };
     A_UINT32 ax_basic_trigger;
     A_UINT32 ax_bsr_trigger;
     A_UINT32 ax_mu_bar_trigger;
     A_UINT32 ax_mu_rts_trigger;
     A_UINT32 ax_ulmumimo_trigger;
+    A_UINT32 ax_su_ndpa_queued;
+    A_UINT32 ax_su_ndp_queued;
+    A_UINT32 ax_mu_mimo_ndpa_queued;
+    A_UINT32 ax_mu_mimo_ndp_queued;
+    A_UINT32 ax_mu_mimo_brpoll_queued[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
 } htt_tx_selfgen_ax_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AC error stats */
+    /* 11AC error stats
+     *
+     * Fields with suffix as err -> Selfgen frames failed after being tried out,
+     * Fields with suffix as flushed - Selfgen frames flushed out from hw queue
+     *     due to various reasons
+     */
     A_UINT32 ac_su_ndp_err;
     A_UINT32 ac_su_ndpa_err;
     A_UINT32 ac_mu_mimo_ndpa_err;
@@ -1823,28 +1889,51 @@ typedef struct {
     A_UINT32 ac_mu_mimo_brp1_err;
     A_UINT32 ac_mu_mimo_brp2_err;
     A_UINT32 ac_mu_mimo_brp3_err;
+    A_UINT32 ac_su_ndpa_flushed;
+    A_UINT32 ac_su_ndp_flushed;
+    A_UINT32 ac_mu_mimo_ndpa_flushed;
+    A_UINT32 ac_mu_mimo_ndp_flushed;
+    A_UINT32 ac_mu_mimo_brpoll1_flushed;
+    A_UINT32 ac_mu_mimo_brpoll2_flushed;
+    A_UINT32 ac_mu_mimo_brpoll3_flushed;
 } htt_tx_selfgen_ac_err_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AX error stats */
+    /* 11AX error stats
+     *
+     * Fields with suffix as err -> Selfgen frames failed after being tried out,
+     * Fields with suffix as flushed - Selfgen frames flushed out from hw queue
+     *     due to various reasons
+     */
     A_UINT32 ax_su_ndp_err;
     A_UINT32 ax_su_ndpa_err;
     A_UINT32 ax_mu_mimo_ndpa_err;
     A_UINT32 ax_mu_mimo_ndp_err;
-    A_UINT32 ax_mu_mimo_brp1_err;
-    A_UINT32 ax_mu_mimo_brp2_err;
-    A_UINT32 ax_mu_mimo_brp3_err;
-    A_UINT32 ax_mu_mimo_brp4_err;
-    A_UINT32 ax_mu_mimo_brp5_err;
-    A_UINT32 ax_mu_mimo_brp6_err;
-    A_UINT32 ax_mu_mimo_brp7_err;
+    union {
+        struct {
+            /* deprecated old names */
+            A_UINT32 ax_mu_mimo_brp1_err;
+            A_UINT32 ax_mu_mimo_brp2_err;
+            A_UINT32 ax_mu_mimo_brp3_err;
+            A_UINT32 ax_mu_mimo_brp4_err;
+            A_UINT32 ax_mu_mimo_brp5_err;
+            A_UINT32 ax_mu_mimo_brp6_err;
+            A_UINT32 ax_mu_mimo_brp7_err;
+        };
+        A_UINT32 ax_mu_mimo_brp_err[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
+    };
     A_UINT32 ax_basic_trigger_err;
     A_UINT32 ax_bsr_trigger_err;
     A_UINT32 ax_mu_bar_trigger_err;
     A_UINT32 ax_mu_rts_trigger_err;
     A_UINT32 ax_ulmumimo_trigger_err;
     A_UINT32 ax_mu_mimo_brp_err_num_cbf_received[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+    A_UINT32 ax_su_ndpa_flushed;
+    A_UINT32 ax_su_ndp_flushed;
+    A_UINT32 ax_mu_mimo_ndpa_flushed;
+    A_UINT32 ax_mu_mimo_ndp_flushed;
+    A_UINT32 ax_mu_mimo_brpoll_flushed[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
 } htt_tx_selfgen_ax_err_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SELFGEN_INFO
@@ -1905,7 +1994,72 @@ typedef struct {
      * for (i+1) users
      */
     A_UINT32 ax_ul_mumimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
+    A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
+    A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
 } htt_tx_pdev_mu_mimo_sch_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* mu-mimo sw sched cmd stats */
+    A_UINT32 mu_mimo_sch_posted;
+    A_UINT32 mu_mimo_sch_failed;
+    /* MU PPDU stats per hwQ */
+    A_UINT32 mu_mimo_ppdu_posted;
+    /*
+     * Counts the number of users in each transmission of
+     * the given TX mode.
+     *
+     * Index is the number of users - 1.
+     */
+    A_UINT32 ac_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
+    A_UINT32 ax_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+    A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
+    A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+} htt_tx_pdev_dl_mu_mimo_sch_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 ax_mu_ofdma_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+} htt_tx_pdev_dl_mu_ofdma_sch_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 ax_ul_mu_ofdma_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ul_mu_ofdma_bsr_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ul_mu_ofdma_bar_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ul_mu_ofdma_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+} htt_tx_pdev_ul_mu_ofdma_sch_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* UL MUMIMO */
+    /*
+     * ax_ul_mu_mimo_basic_sch_nusers[i] is the number of basic triggers sent
+     * for (i+1) users
+     */
+    A_UINT32 ax_ul_mu_mimo_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
+    /*
+     * ax_ul_mu_mimo_brp_sch_nusers[i] is the number of brp triggers sent
+     * for (i+1) users
+     */
+    A_UINT32 ax_ul_mu_mimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
+} htt_tx_pdev_ul_mu_mimo_sch_stats_tlv;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -1968,6 +2122,10 @@ typedef struct {
  */
 typedef struct {
     htt_tx_pdev_mu_mimo_sch_stats_tlv mu_mimo_sch_stats_tlv[1]; /* WAL_TX_STATS_MAX_GROUP_SIZE */
+    htt_tx_pdev_dl_mu_mimo_sch_stats_tlv dl_mu_mimo_sch_stats_tlv[1];
+    htt_tx_pdev_ul_mu_mimo_sch_stats_tlv ul_mu_mimo_sch_stats_tlv[1];
+    htt_tx_pdev_dl_mu_ofdma_sch_stats_tlv dl_mu_ofdma_sch_stats_tlv[1];
+    htt_tx_pdev_ul_mu_ofdma_sch_stats_tlv ul_mu_ofdma_sch_stats_tlv[1];
     /*
      * Note that though mu_mimo_mpdu_stats_tlv is named MU-MIMO,
      * it can also hold MU-OFDMA stats.
@@ -4481,5 +4639,29 @@ typedef struct {
     htt_rx_fse_stats_tlv rx_fse_stats;
 } htt_rx_fse_stats_t;
 
+#define HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS 14
+#define HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS 5 /* 20, 40, 80, 160, 320 */
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* Counters to track TxBF and OL separately */
+    A_UINT32 tx_su_txbf_mcs[HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 tx_su_ibf_mcs[HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 tx_su_ol_mcs[HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 tx_su_txbf_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 tx_su_ibf_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 tx_su_ol_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 tx_su_txbf_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    A_UINT32 tx_su_ibf_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    A_UINT32 tx_su_ol_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+} htt_tx_pdev_txbf_rate_stats_tlv;
+
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_tx_pdev_txbf_rate_stats_tlv txbf_rate_stats;
+} htt_pdev_txbf_rate_stats_t;
 
 #endif /* __HTT_STATS_H__ */
