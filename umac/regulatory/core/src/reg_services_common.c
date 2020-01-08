@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +34,7 @@
 #include "reg_db_parser.h"
 #include "reg_build_chan_list.h"
 #include <wlan_objmgr_pdev_obj.h>
+#include <target_if.h>
 
 const struct chan_map *channel_map;
 #ifdef CONFIG_CHAN_NUM_API
@@ -2654,11 +2655,13 @@ QDF_STATUS reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev)
 	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
 	struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap_ptr;
 	uint32_t cnt;
-	uint32_t pdev_id;
+	uint32_t phy_id;
 	enum direction dir;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct target_pdev_info *tgt_pdev;
 
-	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	tgt_pdev = wlan_pdev_get_tgt_if_handle(pdev);
+	phy_id = (uint32_t)target_pdev_get_phy_idx(tgt_pdev);
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
 		reg_err("pdev reg component is NULL");
@@ -2686,7 +2689,7 @@ QDF_STATUS reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev)
 			return QDF_STATUS_E_FAULT;
 		}
 
-		if (reg_cap_ptr->phy_id == pdev_id)
+		if (reg_cap_ptr->phy_id == phy_id)
 			break;
 		reg_cap_ptr++;
 	}
