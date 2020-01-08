@@ -1768,9 +1768,9 @@ QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
 	 */
 	if (!rx_reorder_array_elem) {
 		dp_verbose_debug(
-			"peer id:%d mac:" QDF_MAC_ADDR_STR "drop rx frame!",
+			"peer id:%d mac: %pM drop rx frame!",
 			peer->peer_ids[0],
-			QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
+			peer->mac_addr.raw);
 		DP_STATS_INC(soc, rx.err.defrag_peer_uninit, 1);
 		qdf_nbuf_free(nbuf);
 		goto fail;

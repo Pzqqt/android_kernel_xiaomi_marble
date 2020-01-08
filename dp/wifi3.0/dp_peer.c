@@ -486,10 +486,8 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		  "%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x",
-		  __func__, peer, hw_peer_id, vdev_id, mac_addr[0],
-		  mac_addr[1], mac_addr[2], mac_addr[3],
-		  mac_addr[4], mac_addr[5]);
+		  "%s: peer %pK ID %d vid %d mac %pM",
+		  __func__, peer, hw_peer_id, vdev_id, mac_addr);
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
@@ -1428,10 +1426,8 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 	peer = dp_peer_find_hash_find(soc, peer_mac_addr,
 		0 /* is aligned */, vdev_id);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		  "%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x",
-		  __func__, peer, peer_id, vdev_id, peer_mac_addr[0],
-		  peer_mac_addr[1], peer_mac_addr[2], peer_mac_addr[3],
-		  peer_mac_addr[4], peer_mac_addr[5]);
+		  "%s: peer %pK ID %d vid %d mac %pM",
+		  __func__, peer, peer_id, vdev_id, peer_mac_addr);
 
 	if (peer) {
 		/* peer's ref count was already incremented by
@@ -1485,10 +1481,9 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 	struct dp_peer *peer = NULL;
 	enum cdp_txrx_ast_entry_type type = CDP_TXRX_AST_TYPE_STATIC;
 
-	dp_info("peer_map_event (soc:%pK): peer_id %d, hw_peer_id %d, peer_mac %02x:%02x:%02x:%02x:%02x:%02x, vdev_id %d",
-		soc, peer_id, hw_peer_id, peer_mac_addr[0], peer_mac_addr[1],
-		  peer_mac_addr[2], peer_mac_addr[3], peer_mac_addr[4],
-		  peer_mac_addr[5], vdev_id);
+	dp_info("peer_map_event (soc:%pK): peer_id %d, hw_peer_id %d, peer_mac %pM, vdev_id %d",
+		soc, peer_id, hw_peer_id,
+		  peer_mac_addr, vdev_id);
 
 	/* Peer map event for WDS ast entry get the peer from
 	 * obj map
@@ -3069,11 +3064,9 @@ dp_rx_sec_ind_handler(struct dp_soc *soc, uint16_t peer_id,
 		return;
 	}
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "sec spec for peer %pK (%02x:%02x:%02x:%02x:%02x:%02x): %s key of type %d",
+		  "sec spec for peer %pK %pM: %s key of type %d",
 		  peer,
-		  peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-		  peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-		  peer->mac_addr.raw[4], peer->mac_addr.raw[5],
+		  peer->mac_addr.raw,
 		  is_unicast ? "ucast" : "mcast",
 		  sec_type);
 	sec_index = is_unicast ? dp_sec_ucast : dp_sec_mcast;
@@ -3260,16 +3253,16 @@ dp_get_vdev_by_peer_addr(struct cdp_pdev *pdev_handle,
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "PDEV not found for peer_addr: " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(peer_addr.bytes));
+			  "PDEV not found for peer_addr: %pM",
+			  peer_addr.bytes);
 		return NULL;
 	}
 
 	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, peer_addr.bytes);
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "PDEV not found for peer_addr:" QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(peer_addr.bytes));
+			  "PDEV not found for peer_addr: %pM",
+			  peer_addr.bytes);
 		return NULL;
 	}
 

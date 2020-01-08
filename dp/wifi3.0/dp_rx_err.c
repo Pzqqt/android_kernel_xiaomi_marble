@@ -355,12 +355,8 @@ dp_rx_pn_error_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 		 * TODO: Check for peer specific policies & set peer_pn_policy
 		 */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"discard rx due to PN error for peer  %pK  "
-			"(%02x:%02x:%02x:%02x:%02x:%02x)",
-			peer,
-			peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-			peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-			peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+			"discard rx due to PN error for peer  %pK  %pM",
+			peer, peer->mac_addr.raw);
 
 		dp_peer_unref_del_find_by_id(peer);
 	}
