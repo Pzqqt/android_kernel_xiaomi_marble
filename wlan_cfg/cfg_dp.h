@@ -753,6 +753,27 @@
 	CFG_INI_BOOL("dp_rx_monitor_protocol_flow_tag_enable", true, \
 		     "Enable/Disable Rx Protocol & Flow tags in Monitor mode")
 
+/*
+ * <ini>
+ * dp_rx_fisa_enable - Control Rx datapath FISA
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable DP Rx FISA feature
+ *
+ * Related: dp_rx_flow_search_table_size
+ *
+ * Supported Feature: STA,P2P and SAP IPA disabled terminating
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_DP_RX_FISA_ENABLE \
+	CFG_INI_BOOL("dp_rx_fisa_enable", false, \
+		     "Enable/Disable DP Rx FISA")
+
 #define CFG_DP_RXDMA_MONITOR_RX_DROP_THRESHOLD \
 		CFG_INI_UINT("mon_drop_thresh", \
 		WLAN_CFG_RXDMA_MONITOR_RX_DROP_THRESH_SIZE_MIN, \
@@ -838,6 +859,7 @@
 		CFG(CFG_DP_RX_FLOW_SEARCH_TABLE_PER_PDEV) \
 		CFG(CFG_DP_RX_MON_PROTOCOL_FLOW_TAG_ENABLE) \
 		CFG(CFG_DP_RXDMA_MONITOR_RX_DROP_THRESHOLD) \
-		CFG(CFG_DP_PKTLOG_BUFFER_SIZE)
+		CFG(CFG_DP_PKTLOG_BUFFER_SIZE) \
+		CFG(CFG_DP_RX_FISA_ENABLE)
 
 #endif /* _CFG_DP_H_ */
