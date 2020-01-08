@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -51,6 +51,7 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	size_t pwr_count_sec80 = 0;
 	enum spectral_msg_type msg_type;
 	QDF_STATUS ret;
+	struct spectral_fft_bin_len_adj_swar *swar = &spectral->len_adj_swar;
 
 	ret = target_if_get_spectral_msg_type(params->smode, &msg_type);
 	if (QDF_IS_STATUS_ERROR(ret))
@@ -147,12 +148,12 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		qdf_mem_copy(cp, pcp,
 			     sizeof(struct spectral_classifier_params));
 
-		if (spectral->fftbin_size_war ==
+		if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
 			binptr_32 = (uint32_t *)bin_pwr_data;
 			for (idx = 0; idx < pwr_count; idx++)
 				samp_data->bin_pwr[idx] = *(binptr_32++);
-		} else if (spectral->fftbin_size_war ==
+		} else if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
 			binptr_16 = (uint16_t *)bin_pwr_data;
 			for (idx = 0; idx < pwr_count; idx++)
@@ -218,12 +219,12 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		samp_data->bin_pwr_count_sec80 = pwr_count_sec80;
 
 		bin_pwr_data = params->bin_pwr_data_sec80;
-		if (spectral->fftbin_size_war ==
+		if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
 			binptr_32 = (uint32_t *)bin_pwr_data;
 			for (idx = 0; idx < pwr_count_sec80; idx++)
 				samp_data->bin_pwr_sec80[idx] = *(binptr_32++);
-		} else if (spectral->fftbin_size_war ==
+		} else if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
 			binptr_16 = (uint16_t *)bin_pwr_data;
 			for (idx = 0; idx < pwr_count_sec80; idx++)

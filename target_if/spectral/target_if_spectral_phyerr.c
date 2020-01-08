@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1194,7 +1194,72 @@ target_if_spectral_dump_phyerr_data_gen2(uint8_t *data, uint32_t datalen,
 	return 0;
 }
 
-int
+#ifdef DIRECT_BUF_RX_ENABLE
+/**
+ * target_if_spectral_get_bin_count_after_len_adj() - Get number of FFT bins in
+ * Spectral FFT report
+ * @fft_bin_len: FFT bin length reported by target
+ * @rpt_mode: Spectral report mode
+ * @swar: Spectral FFT bin length adjustments SWAR parameters
+ *
+ * Get actual number of FFT bins in the FFT report after adjusting the length
+ * by applying the SWARs for getting correct length.
+ *
+ * Return: FFT bin count
+ */
+static size_t
+target_if_spectral_get_bin_count_after_len_adj(
+				size_t fft_bin_len, uint8_t rpt_mode,
+				struct spectral_fft_bin_len_adj_swar *swar)
+{
+	size_t fft_bin_count = fft_bin_len;
+
+	if (rpt_mode == 1 && swar->null_fftbin_adj) {
+		/*
+		 * No FFT bins are expected. Explicitly set FFT bin
+		 * count to 0.
+		 */
+		fft_bin_count = 0;
+	} else {
+		/*
+		 * Divide fft bin length by appropriate factor depending
+		 * on the value of fftbin_size_war.
+		 */
+		switch (swar->fftbin_size_war) {
+		case SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE:
+			fft_bin_count >>= 2;
+			break;
+		case SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE:
+			/* Ideally we should be dividing fft bin length
+			 * by 2. Due to a HW bug, actual length is two
+			 * times the expected length.
+			 */
+			fft_bin_count >>= 2;
+			break;
+		case SPECTRAL_FFTBIN_SIZE_NO_WAR:
+			/* No length adjustment */
+			break;
+		default:
+			qdf_assert_always(0);
+		}
+
+		if (rpt_mode == 2 && swar->inband_fftbin_size_adj)
+			fft_bin_count >>= 1;
+	}
+
+	return fft_bin_count;
+}
+
+/**
+ * target_if_process_sfft_report_gen3() - Process Search FFT Report for gen3
+ * @p_fft_report: Pointer to fft report
+ * @p_sfft: Pointer to search fft report
+ *
+ * Process Search FFT Report for gen3
+ *
+ * Return: Success/Failure
+ */
+static int
 target_if_process_sfft_report_gen3(
 	struct spectral_phyerr_fft_report_gen3 *p_fft_report,
 	struct spectral_search_fft_info_gen3 *p_sfft)
@@ -1242,106 +1307,106 @@ target_if_process_sfft_report_gen3(
 	return 0;
 }
 
-int
+/**
+ * target_if_dump_fft_report_gen3() - Dump FFT Report for gen3
+ * @spectral: Pointer to Spectral object
+ * @smode: Spectral scan mode
+ * @p_fft_report: Pointer to fft report
+ * @p_sfft: Pointer to search fft report
+ *
+ * Dump FFT Report for gen3
+ *
+ * Return: void
+ */
+static void
 target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 			enum spectral_scan_mode smode,
 			struct spectral_phyerr_fft_report_gen3 *p_fft_report,
 			struct spectral_search_fft_info_gen3 *p_sfft)
 {
-	int i = 0;
-	int fft_mag = 0;
-	int fft_hdr_length = (p_fft_report->fft_hdr_length * 4);
-	int report_len = (fft_hdr_length + 8);
-	int fft_bin_len = (fft_hdr_length - 16);
-	int fft_bin_len_to_dump = fft_bin_len;
-	int fft_bin_len_adj = 0;
-	int fft_bin_len_inband_tfer = 0;
+	size_t fft_hdr_length = (p_fft_report->fft_hdr_length * 4);
+	size_t report_len = (fft_hdr_length + 8);
+	size_t fft_bin_len = (fft_hdr_length - 16);
+	size_t fft_bin_count;
+	size_t fft_bin_len_inband_tfer = 0;
+	uint8_t *fft_bin_buf = NULL;
 
-	if ((spectral->params[smode].ss_rpt_mode == 1) &&
-	    spectral->null_fftbin_adj) {
-		/* fft_bin_len_adj is intentionally left at 0. */
-		fft_bin_len_to_dump = 0;
-	} else {
-		/*
-		 * Divide fft bin length by appropriate factor depending
-		 * on the value of fftbin_size_war.
-		 */
-		if (spectral->fftbin_size_war ==
-				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE)
-			fft_bin_len_adj = fft_bin_len >> 2;
-		else if (spectral->fftbin_size_war ==
-				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
-			/* Ideally we should be dividing fft bin length by 2.
-			 * Due to a HW bug, actual length is two times the
-			 * expected length.
-			 */
-			fft_bin_len_adj = fft_bin_len >> 2;
-		} else
-			fft_bin_len_adj = fft_bin_len;
+	fft_bin_count = target_if_spectral_get_bin_count_after_len_adj(
+			fft_bin_len,
+			spectral->params[smode].ss_rpt_mode,
+			&spectral->len_adj_swar);
 
-		if ((spectral->params[smode].ss_rpt_mode == 2) &&
-		    spectral->inband_fftbin_size_adj) {
-			fft_bin_len_adj >>= 1;
-			fft_bin_len_inband_tfer = fft_bin_len >> 1;
-			fft_bin_len_to_dump = fft_bin_len_inband_tfer;
-		}
-	}
+	if ((spectral->params[smode].ss_rpt_mode == 2) &&
+	    spectral->len_adj_swar.inband_fftbin_size_adj)
+		fft_bin_len_inband_tfer = fft_bin_len >> 1;
 
-	spectral_debug("#############################################################");
-	spectral_debug("Spectral search fft_report");
-	spectral_debug("fft_timestamp  = 0x%x\nfft_hdr_length = %d(32 bit words)\nfft_hdr_tag    = 0x%x\nfft_hdr_sig    = 0x%x",
-		       p_fft_report->fft_timestamp,
-		       p_fft_report->fft_hdr_length,
-		       p_fft_report->fft_hdr_tag, p_fft_report->fft_hdr_sig);
+	spectral_debug("Spectral FFT Report");
+	spectral_debug("fft_timestamp = 0x%x", p_fft_report->fft_timestamp);
+	spectral_debug("fft_hdr_length = %u(32 bit words)",
+		       p_fft_report->fft_hdr_length);
+	spectral_debug("fft_hdr_tag = 0x%x", p_fft_report->fft_hdr_tag);
+	spectral_debug("fft_hdr_sig = 0x%x", p_fft_report->fft_hdr_sig);
 
-	spectral_debug("Length field in search fft report is %d(0x%x) bytes",
+	spectral_debug("Length field in search fft report is %zu(0x%zx) bytes",
 		       fft_hdr_length, fft_hdr_length);
-	spectral_debug("Total length of search fft report is %d(0x%x) bytes",
+	spectral_debug("Total length of search fft report is %zu(0x%zx) bytes",
 		       report_len, report_len);
-	spectral_debug("Target reported fftbins in report is %d(0x%x)",
-		       fft_bin_len,
-		       fft_bin_len);
+	spectral_debug("Target reported fftbins in report is %zu(0x%zx)",
+		       fft_bin_len, fft_bin_len);
 
 	if ((spectral->params[smode].ss_rpt_mode == 1) &&
-	    spectral->null_fftbin_adj)
+	    spectral->len_adj_swar.null_fftbin_adj)
 		spectral_debug("WAR: Considering number of FFT bins as 0");
 	else if ((spectral->params[smode].ss_rpt_mode == 2) &&
-		 spectral->inband_fftbin_size_adj) {
-		spectral_debug("FW fftbins actually transferred (in-band report mode) "
-					"%d(0x%x)",
-					fft_bin_len_inband_tfer, fft_bin_len_inband_tfer);
+		 spectral->len_adj_swar.inband_fftbin_size_adj) {
+		spectral_debug("FW fftbins actually transferred (in-band report mode) %zu(0x%zx)",
+			       fft_bin_len_inband_tfer,
+			       fft_bin_len_inband_tfer);
 	}
 
-	spectral_debug("Actual number of fftbins in report is %d(0x%x)\n",
-			fft_bin_len_adj, fft_bin_len_adj);
+	spectral_debug("Actual number of fftbins in report is %zu(0x%zx)",
+		       fft_bin_count, fft_bin_count);
 
-	spectral_debug("fft_detector_id = %u\nfft_num = %u\nfft_radar_check = %u\nfft_peak_sidx = %d\nfft_chn_idx = %u\nfft_base_pwr_db = %u\nfft_total_gain_db   = %u\nfft_num_str_bins_ib = %u\nfft_peak_mag   = %d\nfft_avgpwr_db  = %u\nfft_relpwr_db  = %u",
-		       p_sfft->fft_detector_id,
-		       p_sfft->fft_num,
-		       p_sfft->fft_radar_check,
-		       p_sfft->fft_peak_sidx,
-		       p_sfft->fft_chn_idx,
-		       p_sfft->fft_base_pwr_db,
-		       p_sfft->fft_total_gain_db,
-		       p_sfft->fft_num_str_bins_ib,
-		       p_sfft->fft_peak_mag,
-		       p_sfft->fft_avgpwr_db, p_sfft->fft_relpwr_db);
+	spectral_debug("fft_detector_id = %u", p_sfft->fft_detector_id);
+	spectral_debug("fft_num = %u", p_sfft->fft_num);
+	spectral_debug("fft_radar_check = %u", p_sfft->fft_radar_check);
+	spectral_debug("fft_peak_sidx = %d",  p_sfft->fft_peak_sidx);
+	spectral_debug("fft_chn_idx = %u", p_sfft->fft_chn_idx);
+	spectral_debug("fft_base_pwr_db = %u", p_sfft->fft_base_pwr_db);
+	spectral_debug("fft_total_gain_db = %u", p_sfft->fft_total_gain_db);
+	spectral_debug("fft_num_str_bins_ib = %u", p_sfft->fft_num_str_bins_ib);
+	spectral_debug("fft_peak_mag = %d", p_sfft->fft_peak_mag);
+	spectral_debug("fft_avgpwr_db = %u", p_sfft->fft_avgpwr_db);
+	spectral_debug("fft_relpwr_db = %u", p_sfft->fft_relpwr_db);
 
-	if (fft_bin_len_to_dump > 0) {
+	if (fft_bin_count > 0) {
+		int idx;
+
 		spectral_debug("FFT bins:");
-		for (i = 0; i < fft_bin_len_to_dump; i++) {
-			if (i % 16 == 0)
-				spectral_debug("\n%d :", i);
-			fft_mag =
-			   ((uint8_t *)p_fft_report)[SPECTRAL_FFT_BINS_POS + i];
-			spectral_debug("%d ", fft_mag);
-		}
-	}
-	spectral_debug("\n");
-	spectral_debug("#############################################################");
+		if (spectral->len_adj_swar.fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
+			uint32_t *binptr_32 = (uint32_t *)&p_fft_report->buf;
 
-	return 0;
+			fft_bin_buf = (uint8_t *)qdf_mem_malloc(MAX_NUM_BINS);
+			for (idx = 0; idx < fft_bin_count; idx++)
+				fft_bin_buf[idx] = *(binptr_32++);
+		} else if (spectral->len_adj_swar.fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
+			uint16_t *binptr_16 = (uint16_t *)&p_fft_report->buf;
+
+			fft_bin_buf = (uint8_t *)qdf_mem_malloc(MAX_NUM_BINS);
+			for (idx = 0; idx < fft_bin_count; idx++)
+				fft_bin_buf[idx] = *(binptr_16++);
+		} else {
+			fft_bin_buf = (uint8_t *)&p_fft_report->buf;
+		}
+		target_if_spectral_hexdump(fft_bin_buf, fft_bin_count);
+		if ((spectral->len_adj_swar.fftbin_size_war !=
+				SPECTRAL_FFTBIN_SIZE_NO_WAR) && fft_bin_buf)
+			qdf_mem_free(fft_bin_buf);
+	}
 }
+#endif
 
 QDF_STATUS
 target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,
@@ -1573,10 +1638,10 @@ static void target_if_spectral_check_buffer_poisoning(
 	/* Now add the number of FFT bins */
 	if (spectral->params[smode].ss_rpt_mode > 1) {
 		/* Caller should take care to pass correct number of FFT bins */
-		if (spectral->fftbin_size_war ==
+		if (spectral->len_adj_swar.fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE)
 			words_to_check += num_fft_bins;
-		else if (spectral->fftbin_size_war ==
+		else if (spectral->len_adj_swar.fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE)
 			words_to_check += (num_fft_bins >> 1);
 	}
@@ -1675,7 +1740,7 @@ target_if_consume_spectral_report_gen3(
 	int8_t chn_idx_lowest_enabled  = 0;
 	int fft_hdr_length = 0;
 	int report_len = 0;
-	int fft_bin_len = 0;
+	size_t fft_bin_count;
 	struct target_if_spectral_ops *p_sops =
 		GET_TARGET_IF_SPECTRAL_OPS(spectral);
 	struct spectral_phyerr_fft_report_gen3 *p_fft_report;
@@ -1761,37 +1826,10 @@ target_if_consume_spectral_report_gen3(
 			goto fail;
 		}
 
-		if ((spectral->params[params.smode].ss_rpt_mode == 1) &&
-		    spectral->null_fftbin_adj) {
-			/*
-			 * No FFT bins are expected. Explicitly set FFT bin
-			 * length to 0.
-			 */
-			fft_bin_len = 0;
-		} else {
-			fft_bin_len = (fft_hdr_length - 16);
-
-			/*
-			 * Divide fft bin length by appropriate factor depending
-			 * on the value of fftbin_size_war.
-			 */
-			if (spectral->fftbin_size_war ==
-					SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE)
-				fft_bin_len >>= 2;
-			else if (spectral->fftbin_size_war ==
-				 SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
-				/* Ideally we should be dividing fft bin length
-				 * by 2. Due to a HW bug, actual length is two
-				 * times the expected length.
-				 */
-				fft_bin_len >>= 2;
-			}
-			if ((spectral->params[params.smode].ss_rpt_mode == 2) &&
-			    spectral->inband_fftbin_size_adj) {
-				fft_bin_len >>= 1;
-			}
-		}
-
+		fft_bin_count = target_if_spectral_get_bin_count_after_len_adj(
+				fft_hdr_length - 16,
+				spectral->params[params.smode].ss_rpt_mode,
+				&spectral->len_adj_swar);
 		params.last_raw_timestamp =
 				spectral->last_fft_timestamp[params.smode];
 		params.reset_delay = 0;
@@ -1874,7 +1912,7 @@ target_if_consume_spectral_report_gen3(
 		params.noise_floor       =
 			report->noisefloor[chn_idx_lowest_enabled];
 		params.datalen           = (fft_hdr_length * 4);
-		params.pwr_count         = fft_bin_len;
+		params.pwr_count         = fft_bin_count;
 		params.tstamp            = (tsf64 & SPECTRAL_TSMASK);
 
 		target_if_spectral_verify_ts(spectral, report->data,
@@ -1930,38 +1968,10 @@ target_if_consume_spectral_report_gen3(
 			goto fail;
 		}
 
-		if ((spectral->params[params.smode].ss_rpt_mode == 1) &&
-		    spectral->null_fftbin_adj) {
-			/*
-			 * No FFT bins are expected. Explicitly set FFT bin
-			 * length to 0.
-			 */
-			fft_bin_len = 0;
-		} else {
-			fft_bin_len = (fft_hdr_length - 16);
-
-			/*
-			 * Divide fft bin length by appropriate factor depending
-			 * on the value of fftbin_size_war.
-			 */
-			if (spectral->fftbin_size_war ==
-					SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE)
-				fft_bin_len >>= 2;
-			else if (spectral->fftbin_size_war ==
-				 SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
-				/* Ideally we should be dividing fft bin length
-				 * by 2. Due to a HW bug, actual length is two
-				 * times the expected length.
-				 */
-				fft_bin_len >>= 2;
-			}
-
-			if ((spectral->params[params.smode].ss_rpt_mode == 2) &&
-			    spectral->inband_fftbin_size_adj) {
-				fft_bin_len >>= 1;
-			}
-		}
-
+		fft_bin_count = target_if_spectral_get_bin_count_after_len_adj(
+				fft_hdr_length - 16,
+				spectral->params[params.smode].ss_rpt_mode,
+				&spectral->len_adj_swar);
 		params.raw_timestamp_sec80 = p_sfft->timestamp;
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
@@ -2009,7 +2019,7 @@ target_if_consume_spectral_report_gen3(
 		/* params.max_index_sec80      = p_sfft->peak_inx; */
 		/* XXX Does this definition of datalen *still hold? */
 		params.datalen_sec80        = fft_hdr_length * 4;
-		params.pwr_count_sec80      = fft_bin_len;
+		params.pwr_count_sec80      = fft_bin_count;
 		params.bin_pwr_data_sec80   =
 			(uint8_t *)((uint8_t *)p_fft_report +
 			 SPECTRAL_FFT_BINS_POS);
@@ -2019,7 +2029,7 @@ target_if_consume_spectral_report_gen3(
 	}
 
 	target_if_spectral_check_buffer_poisoning(spectral, report,
-						  fft_bin_len, params.smode);
+						  fft_bin_count, params.smode);
 	qdf_mem_copy(&params.classifier_params,
 		     &spectral->classifier_params,
 		     sizeof(struct spectral_classifier_params));

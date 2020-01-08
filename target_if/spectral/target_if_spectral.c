@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -2009,6 +2009,41 @@ target_if_spectral_attach_simulation(struct target_if_spectral *spectral)
 #endif
 
 /**
+ * target_if_spectral_len_adj_swar_init() - Initialize FFT bin length adjustment
+ * related info
+ * @swar: Pointer to Spectral FFT bin length adjustment SWAR params
+ * @target_type: Target type
+ *
+ * Function to Initialize parameters related to Spectral FFT bin
+ * length adjustment SWARs.
+ *
+ * Return: void
+ */
+static void
+target_if_spectral_len_adj_swar_init(struct spectral_fft_bin_len_adj_swar *swar,
+				     uint32_t target_type)
+{
+	if (target_type == TARGET_TYPE_QCA8074V2)
+		swar->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE;
+	else if (target_type == TARGET_TYPE_QCA8074 ||
+		 target_type == TARGET_TYPE_QCA6018 ||
+		 target_type == TARGET_TYPE_QCA6390)
+		swar->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE;
+	else
+		swar->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_NO_WAR;
+
+	if (target_type == TARGET_TYPE_QCA8074 ||
+	    target_type == TARGET_TYPE_QCA8074V2 ||
+	    target_type == TARGET_TYPE_QCA6018) {
+		swar->inband_fftbin_size_adj = 1;
+		swar->null_fftbin_adj = 1;
+	} else {
+		swar->inband_fftbin_size_adj = 0;
+		swar->null_fftbin_adj = 0;
+	}
+}
+
+/**
  * target_if_pdev_spectral_init() - Initialize target_if Spectral
  * functionality for the given pdev
  * @pdev: Pointer to pdev object
@@ -2088,26 +2123,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	    target_type == TARGET_TYPE_QCA6390)
 		spectral->direct_dma_support = true;
 
-	if (target_type == TARGET_TYPE_QCA8074V2)
-		spectral->fftbin_size_war =
-			SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE;
-	else if (target_type == TARGET_TYPE_QCA8074 ||
-		 target_type == TARGET_TYPE_QCA6018 ||
-		 target_type == TARGET_TYPE_QCA6390)
-		spectral->fftbin_size_war =
-			SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE;
-	else
-		spectral->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_NO_WAR;
-
-	if (target_type == TARGET_TYPE_QCA8074 ||
-	    target_type == TARGET_TYPE_QCA8074V2 ||
-	    target_type == TARGET_TYPE_QCA6018) {
-		spectral->inband_fftbin_size_adj = 1;
-		spectral->null_fftbin_adj = 1;
-	} else {
-		spectral->inband_fftbin_size_adj = 0;
-		spectral->null_fftbin_adj = 0;
-	}
+	target_if_spectral_len_adj_swar_init(&spectral->len_adj_swar,
+					     target_type);
 
 	if ((target_type == TARGET_TYPE_QCA8074) ||
 	    (target_type == TARGET_TYPE_QCA8074V2) ||

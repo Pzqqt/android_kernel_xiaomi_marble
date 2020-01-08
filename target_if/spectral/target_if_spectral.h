@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -438,6 +438,34 @@ enum spectral_fftbin_size_war {
 	SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE = 2,
 };
 
+/**
+ * struct spectral_fft_bin_len_adj_swar - Encapsulate information required for
+ * Spectral FFT bin length adjusting software WARS.
+ * @inband_fftbin_size_adj: Whether to carry out FFT bin size adjustment for
+ * in-band report format. This would be required on some chipsets under the
+ * following circumstances: In report mode 2 only the in-band bins are DMA'ed.
+ * Scatter/gather is used. However, the HW generates all bins, not just in-band,
+ * and reports the number of bins accordingly. The subsystem arranging for the
+ * DMA cannot change this value. On such chipsets the adjustment required at the
+ * host driver is to check if report format is 2, and if so halve the number of
+ * bins reported to get the number actually DMA'ed.
+ * @null_fftbin_adj: Whether to remove NULL FFT bins for report mode (1) in
+ * which only summary of metrics for each completed FFT + spectral scan summary
+ * report are to be provided. This would be required on some chipsets under the
+ * following circumstances: In report mode 1, HW reports a length corresponding
+ * to all bins, and provides bins with value 0. This is because the subsystem
+ * arranging for the FFT information does not arrange for DMA of FFT bin values
+ * (as expected), but cannot arrange for a smaller length to be reported by HW.
+ * In these circumstances, the driver would have to disregard the NULL bins and
+ * report a bin count of 0 to higher layers.
+ * @fftbin_size_war: Type of FFT bin size SWAR
+ */
+struct spectral_fft_bin_len_adj_swar {
+	u_int8_t inband_fftbin_size_adj;
+	u_int8_t null_fftbin_adj;
+	enum spectral_fftbin_size_war fftbin_size_war;
+};
+
 #if ATH_PERF_PWR_OFFLOAD
 /**
  * enum target_if_spectral_info - Enumerations for specifying which spectral
@@ -820,23 +848,7 @@ struct spectral_param_properties {
  * @nl_cb: Netlink callbacks
  * @use_nl_bcast: Whether to use Netlink broadcast/unicast
  * @send_phy_data: Send data to the application layer for a particular msg type
- * @inband_fftbin_size_adj: Whether to carry out FFT bin size adjustment for
- * in-band report format. This would be required on some chipsets under the
- * following circumstances: In report mode 2 only the in-band bins are DMA'ed.
- * Scatter/gather is used. However, the HW generates all bins, not just in-band,
- * and reports the number of bins accordingly. The subsystem arranging for the
- * DMA cannot change this value. On such chipsets the adjustment required at the
- * host driver is to check if report format is 2, and if so halve the number of
- * bins reported to get the number actually DMA'ed.
- * @null_fftbin_adj: Whether to remove NULL FFT bins for report mode (1) in
- * which only summary of metrics for each completed FFT + spectral scan summary
- * report are to be provided. This would be required on some chipsets under the
- * following circumstances: In report mode 1, HW reports a length corresponding
- * to all bins, and provides bins with value 0. This is because the subsystem
- * arranging for the FFT information does not arrange for DMA of FFT bin values
- * (as expected), but cannot arrange for a smaller length to be reported by HW.
- * In these circumstances, the driver would have to disregard the NULL bins and
- * report a bin count of 0 to higher layers.
+ * @len_adj_swar: Spectral fft bin length adjustment SWAR related info
  * @last_fft_timestamp: last fft report timestamp
  * @timestamp_war_offset: Offset to be added to correct timestamp
  * @dbr_ring_debug: Whether Spectral DBR ring debug is enabled
@@ -951,9 +963,7 @@ struct target_if_spectral {
 	bool use_nl_bcast;
 	int (*send_phy_data)(struct wlan_objmgr_pdev *pdev,
 			     enum spectral_msg_type smsg_type);
-	enum spectral_fftbin_size_war          fftbin_size_war;
-	u_int8_t                               inband_fftbin_size_adj;
-	u_int8_t                               null_fftbin_adj;
+	struct spectral_fft_bin_len_adj_swar len_adj_swar;
 	enum spectral_160mhz_report_delivery_state state_160mhz_delivery;
 	void *spectral_report_cache;
 	uint32_t last_fft_timestamp[SPECTRAL_SCAN_MODE_MAX];
@@ -1262,22 +1272,6 @@ int target_if_spectral_dump_phyerr_data_gen2(
 	bool is_160_format);
 
 /**
- * target_if_dump_fft_report_gen3() - Dump FFT Report for gen3
- * @spectral: Pointer to Spectral object
- * @smode: Spectral scan mode
- * @p_fft_report: Pointer to fft report
- * @p_sfft: Pointer to search fft report
- *
- * Dump FFT Report for gen3
- *
- * Return: Success/Failure
- */
-int target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
-		enum spectral_scan_mode smode,
-		struct spectral_phyerr_fft_report_gen3 *p_fft_report,
-		struct spectral_search_fft_info_gen3 *p_sfft);
-
-/**
  * target_if_dbg_print_samp_msg() - Print contents of SAMP Message
  * @p: Pointer to SAMP message
  *
@@ -1286,19 +1280,6 @@ int target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
  * Return: Void
  */
 void target_if_dbg_print_samp_msg(struct spectral_samp_msg *pmsg);
-
-/**
- * target_if_process_sfft_report_gen3() - Process Search FFT Report for gen3
- * @p_fft_report: Pointer to fft report
- * @p_sfft: Pointer to search fft report
- *
- * Process Search FFT Report for gen3
- *
- * Return: Success/Failure
- */
-int target_if_process_sfft_report_gen3(
-	struct spectral_phyerr_fft_report_gen3 *p_fft_report,
-	struct spectral_search_fft_info_gen3 *p_fft_info);
 
 /**
  * get_target_if_spectral_handle_from_pdev() - Get handle to target_if internal
