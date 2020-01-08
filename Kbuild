@@ -1392,6 +1392,12 @@ TXRX3.0_DIR :=     core/dp/txrx3.0
 TXRX3.0_INC :=     -I$(WLAN_ROOT)/$(TXRX3.0_DIR)
 TXRX3.0_OBJS := $(TXRX3.0_DIR)/dp_txrx.o \
 		$(TXRX3.0_DIR)/dp_rx_thread.o
+
+ifeq ($(CONFIG_RX_FISA), y)
+TXRX3.0_OBJS += $(TXRX3.0_DIR)/dp_fisa_rx.o
+TXRX3.0_OBJS += $(TXRX3.0_DIR)/dp_rx_fst.o
+endif
+
 ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_INC)/dp/inc \
