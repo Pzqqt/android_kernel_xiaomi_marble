@@ -43,6 +43,9 @@
 #define DP_IEEE80211_BA_S_SEQ_S 4
 #define DP_IEEE80211_BAR_CTL_COMBA 0x0004
 
+#define INVALID_PPDU_ID 0xFFFF
+#define MAX_END_TSF 0xFFFFFFFF
+
 /* Macros to handle sequence number bitmaps */
 
 /* HW generated rts frame flag */
@@ -1111,6 +1114,13 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 	if (qdf_unlikely(!peer))
 		return 0;
 
+	/* Non-QOS frames are being indicated with TID 0
+	 * in WBM completion path, an hence we should
+	 * TID 0 to reap MSDUs from completion path
+	 */
+	if (qdf_unlikely(tid == DP_NON_QOS_TID))
+		tid = 0;
+
 	tx_tid = &peer->tx_capture.tx_tid[tid];
 
 	if (qdf_unlikely(!tx_tid))
@@ -1853,6 +1863,7 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 			qdf_assert_always(0);
 			return;
 		}
+
 		for (i = 0; (i < ppdu_desc->user[0].ba_size) && cur_ppdu_desc;
 		     i++) {
 			if (!(i & (SEQ_SEG_SZ_BITS(
@@ -1877,6 +1888,7 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 			if (!(SEQ_SEG_BIT(failed_seq, i)))
 				continue;
 			failed_seq ^= SEQ_SEG_MSK(failed_seq, i);
+
 			mpdu_nbuf = cur_ppdu_desc->mpdus[cur_index];
 			if (mpdu_nbuf) {
 				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
@@ -1893,7 +1905,17 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 					    i);
 				ppdu_desc->pending_retries--;
 			}
+
 			cur_index++;
+			if (cur_index >= cur_ppdu_desc->user[0].ba_size) {
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					  QDF_TRACE_LEVEL_INFO,
+					  "%s: ba_size[%d] cur_index[%d]\n",
+					__func__,
+					cur_ppdu_desc->user[0].ba_size,
+					cur_index);
+				break;
+			}
 			/* Skip through empty slots in current PPDU */
 			while (!(SEQ_BIT(cur_ppdu_desc->user[0].enq_bitmap,
 			       cur_index))) {
@@ -2329,6 +2351,65 @@ free_ppdu_desc:
 }
 
 /**
+ * dp_peer_tx_cap_tid_queue_flush_tlv(): Function to dequeue peer queue
+ * @pdev: DP pdev handle
+ * @peer; DP peer handle
+ * @ppdu_desc: ppdu_desc
+ *
+ * return: void
+ */
+static void
+dp_peer_tx_cap_tid_queue_flush_tlv(struct dp_pdev *pdev,
+				   struct dp_peer *peer,
+				   struct cdp_tx_completion_ppdu *ppdu_desc)
+{
+	int tid;
+	struct dp_tx_tid *tx_tid;
+	qdf_nbuf_queue_t head_xretries;
+	qdf_nbuf_queue_t head_msdu;
+	uint32_t qlen = 0;
+	uint32_t qlen_curr = 0;
+
+	tid = ppdu_desc->user[0].tid;
+	tx_tid = &peer->tx_capture.tx_tid[tid];
+
+	qdf_nbuf_queue_init(&head_msdu);
+	qdf_nbuf_queue_init(&head_xretries);
+
+	qlen = qdf_nbuf_queue_len(&tx_tid->msdu_comp_q);
+
+	dp_tx_msdu_dequeue(peer, INVALID_PPDU_ID,
+			   tid, ppdu_desc->num_msdu,
+			   &head_msdu,
+			   &head_xretries,
+			   0, MAX_END_TSF);
+
+	if (!qdf_nbuf_is_queue_empty(&head_xretries)) {
+		struct cdp_tx_completion_ppdu *xretry_ppdu =
+						&tx_tid->xretry_ppdu;
+
+		xretry_ppdu->ppdu_id = peer->tx_capture.tx_wifi_ppdu_id;
+
+		/* Restitch MPDUs from xretry MSDUs */
+		dp_tx_mon_restitch_mpdu(pdev, peer,
+					xretry_ppdu,
+					&head_xretries,
+					&xretry_ppdu->mpdu_q);
+	}
+	qdf_nbuf_queue_free(&head_msdu);
+	qdf_nbuf_queue_free(&head_xretries);
+	qlen_curr = qdf_nbuf_queue_len(&tx_tid->msdu_comp_q);
+
+	dp_tx_mon_proc_xretries(pdev, peer, tid);
+
+	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+		  QDF_TRACE_LEVEL_INFO_MED,
+		  "peer_id [%d 0x%x] tid[%d] qlen[%d -> %d]",
+		  ppdu_desc->user[0].peer_id, peer, tid, qlen, qlen_curr);
+
+}
+
+/**
  * dp_tx_ppdu_stats_flush(): Function to flush pending retried ppdu desc
  * @pdev: DP pdev handle
  * @nbuf: ppdu_desc
@@ -2347,11 +2428,7 @@ dp_tx_ppdu_stats_flush(struct dp_pdev *pdev,
 	if (!peer)
 		return;
 
-	/*
-	 * for all drop reason we are invoking
-	 * proc xretries
-	 */
-	dp_tx_mon_proc_xretries(pdev, peer, ppdu_desc->user[0].tid);
+	dp_peer_tx_cap_tid_queue_flush_tlv(pdev, peer, ppdu_desc);
 
 	dp_peer_unref_del_find_by_id(peer);
 	return;
@@ -2564,6 +2641,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 			nbuf_ppdu_desc_list[i] = NULL;
 			qdf_nbuf_queue_free(&cur_ppdu_desc->mpdu_q);
 			qdf_mem_free(cur_ppdu_desc->mpdus);
+			cur_ppdu_desc->mpdus = NULL;
 			qdf_nbuf_free(tmp_nbuf);
 			continue;
 		}
@@ -2813,16 +2891,7 @@ void dp_tx_ppdu_stats_process(void *context)
 					continue;
 				}
 
-				/* Non-QOS frames are being indicated with TID 0
-				 * in WBM completion path, an hence we should
-				 * TID 0 to reap MSDUs from completion path
-				 */
-				if (qdf_unlikely(ppdu_desc->user[0].tid ==
-				    DP_NON_QOS_TID))
-					tid = 0;
-				else
-					tid = ppdu_desc->user[0].tid;
-
+				tid = ppdu_desc->user[0].tid;
 dequeue_msdu_again:
 				num_msdu = ppdu_desc->user[0].num_msdu;
 				start_tsf = ppdu_desc->ppdu_start_timestamp;
@@ -2836,7 +2905,8 @@ dequeue_msdu_again:
 				 */
 				ret = dp_tx_msdu_dequeue(peer,
 							 ppdu_desc->ppdu_id,
-							 tid, num_msdu,
+							 ppdu_desc->user[0].tid,
+							 num_msdu,
 							 &head_msdu,
 							 &head_xretries,
 							 start_tsf, end_tsf);
