@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1101,19 +1101,19 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		return;
 
 	if (!peer) {
-		dp_err_rl("peer not found");
+		dp_info_rl("peer not found");
 		goto fail;
 	}
 
 	vdev = peer->vdev;
 	if (!vdev) {
-		dp_err_rl("VDEV not found");
+		dp_info_rl("VDEV not found");
 		goto fail;
 	}
 
 	pdev = vdev->pdev;
 	if (!pdev) {
-		dp_err_rl("PDEV not found");
+		dp_info_rl("PDEV not found");
 		goto fail;
 	}
 
@@ -1516,9 +1516,9 @@ done:
 		peer = dp_peer_find_by_id(soc, peer_id);
 
 		if (!peer)
-			dp_err_rl("peer is null! peer_id %u err_src %u err_rsn %u",
-				  peer_id, wbm_err_info.wbm_err_src,
-				  wbm_err_info.reo_psh_rsn);
+			dp_info_rl("peer is null peer_id%u err_src%u err_rsn%u",
+				   peer_id, wbm_err_info.wbm_err_src,
+				   wbm_err_info.reo_psh_rsn);
 
 		/* Set queue_mapping in nbuf to 0 */
 		dp_set_rx_queue(nbuf, 0);
@@ -1583,8 +1583,8 @@ done:
 					break;
 
 				default:
-					dp_err_rl("Got pkt with REO ERROR: %d",
-						  wbm_err_info.reo_err_code);
+					dp_info_rl("Got pkt with REO ERROR: %d",
+						   wbm_err_info.reo_err_code);
 					break;
 				}
 			}
