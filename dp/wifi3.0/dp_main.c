@@ -4885,7 +4885,7 @@ dp_rx_target_fst_config(struct dp_soc *soc)
 	}
 	return status;
 }
-#else
+#elif WLAN_SUPPORT_RX_FISA
 /**
  * dp_rx_target_fst_config() - Configure RX OLE FSE engine in HW
  * @soc: SoC handle
@@ -4895,10 +4895,15 @@ dp_rx_target_fst_config(struct dp_soc *soc)
 static inline QDF_STATUS
 dp_rx_target_fst_config(struct dp_soc *soc)
 {
+	return dp_rx_flow_send_fst_fw_setup(soc, soc->pdev_list[0]);
+}
+#else /* WLAN_SUPPORT_RX_FISA */
+static inline QDF_STATUS
+dp_rx_target_fst_config(struct dp_soc *soc)
+{
 	return QDF_STATUS_SUCCESS;
 }
-
-#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+#endif
 
 /*
  * dp_soc_attach_target_wifi3() - SOC initialization in the target
