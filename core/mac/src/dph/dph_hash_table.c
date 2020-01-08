@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -196,8 +196,6 @@ tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 
 	sta->added = 1;
 	sta->is_disassoc_deauth_in_progress = 0;
-	sta->last_assoc_received_time = 0;
-	sta->last_disassoc_deauth_received_time = 0;
 	sta->sta_deletion_in_progress = false;
 	sta->valid = 1;
 	return sta;
@@ -334,8 +332,6 @@ QDF_STATUS dph_delete_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 			prev->next = ptr->next;
 		ptr->added = 0;
 		ptr->is_disassoc_deauth_in_progress = 0;
-		ptr->last_assoc_received_time = 0;
-		ptr->last_disassoc_deauth_received_time = 0;
 		ptr->sta_deletion_in_progress = false;
 		ptr->next = 0;
 	} else {
