@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2790,7 +2790,7 @@ QDF_STATUS wlan_objmgr_psoc_set_user_config(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-void wlan_objmgr_psoc_check_for_pdev_leaks(struct wlan_objmgr_psoc *psoc)
+uint32_t wlan_objmgr_psoc_check_for_pdev_leaks(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_objmgr_psoc_objmgr *_psoc;
 	struct wlan_objmgr_pdev *pdev;
@@ -2799,13 +2799,13 @@ void wlan_objmgr_psoc_check_for_pdev_leaks(struct wlan_objmgr_psoc *psoc)
 
 	QDF_BUG(psoc);
 	if (!psoc)
-		return;
+		return leaks;
 
 	wlan_psoc_obj_lock(psoc);
 	_psoc = &psoc->soc_objmgr;
 	if (!_psoc->wlan_pdev_count) {
 		wlan_psoc_obj_unlock(psoc);
-		return;
+		return leaks;
 	}
 
 	obj_mgr_alert("objmgr pdev leaks detected for psoc %u!",
@@ -2830,14 +2830,12 @@ void wlan_objmgr_psoc_check_for_pdev_leaks(struct wlan_objmgr_psoc *psoc)
 		wlan_pdev_obj_unlock(pdev);
 	}
 
-	QDF_DEBUG_PANIC("%u objmgr pdev leaks detected for psoc %u!",
-			leaks, _psoc->psoc_id);
-
 	wlan_psoc_obj_unlock(psoc);
+	return leaks;
 }
 qdf_export_symbol(wlan_objmgr_psoc_check_for_pdev_leaks);
 
-void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc)
+uint32_t wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_objmgr_psoc_objmgr *_psoc;
 	struct wlan_objmgr_vdev *vdev;
@@ -2846,13 +2844,13 @@ void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc)
 
 	QDF_BUG(psoc);
 	if (!psoc)
-		return;
+		return leaks;
 
 	wlan_psoc_obj_lock(psoc);
 	_psoc = &psoc->soc_objmgr;
 	if (!_psoc->wlan_vdev_count) {
 		wlan_psoc_obj_unlock(psoc);
-		return;
+		return leaks;
 	}
 
 	obj_mgr_alert("objmgr vdev leaks detected for psoc %u!",
@@ -2876,10 +2874,8 @@ void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc)
 		wlan_vdev_obj_unlock(vdev);
 	}
 
-	QDF_DEBUG_PANIC("%u objmgr vdev leaks detected for psoc %u!",
-			leaks, _psoc->psoc_id);
-
 	wlan_psoc_obj_unlock(psoc);
+	return leaks;
 }
 qdf_export_symbol(wlan_objmgr_psoc_check_for_vdev_leaks);
 
@@ -2912,7 +2908,7 @@ wlan_objmgr_print_peer_ref_leaks(struct wlan_objmgr_peer *peer, int vdev_id)
 }
 #endif
 
-void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc)
+uint32_t wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_objmgr_psoc_objmgr *_psoc;
 	struct wlan_objmgr_vdev *vdev;
@@ -2921,13 +2917,13 @@ void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc)
 
 	QDF_BUG(psoc);
 	if (!psoc)
-		return;
+		return leaks;
 
 	wlan_psoc_obj_lock(psoc);
 	_psoc = &psoc->soc_objmgr;
 	if (!_psoc->temp_peer_count && !_psoc->wlan_peer_count) {
 		wlan_psoc_obj_unlock(psoc);
-		return;
+		return leaks;
 	}
 
 	obj_mgr_alert("objmgr peer leaks detected for psoc %u!",
@@ -2949,12 +2945,33 @@ void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc)
 		wlan_vdev_obj_unlock(vdev);
 	}
 
-	QDF_DEBUG_PANIC("%u objmgr peer leaks detected for psoc %u!",
-			leaks, _psoc->psoc_id);
-
 	wlan_psoc_obj_unlock(psoc);
+	return leaks;
 }
 qdf_export_symbol(wlan_objmgr_psoc_check_for_peer_leaks);
+
+void wlan_objmgr_psoc_check_for_leaks(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_objmgr_psoc_objmgr *_psoc;
+	uint32_t peer_leaks = 0;
+	uint32_t vdev_leaks = 0;
+	uint32_t pdev_leaks = 0;
+
+	_psoc = &psoc->soc_objmgr;
+
+	peer_leaks = wlan_objmgr_psoc_check_for_peer_leaks(psoc);
+	vdev_leaks = wlan_objmgr_psoc_check_for_vdev_leaks(psoc);
+	pdev_leaks = wlan_objmgr_psoc_check_for_pdev_leaks(psoc);
+
+	if (peer_leaks || vdev_leaks || pdev_leaks) {
+		QDF_DEBUG_PANIC("%u objmgr peer leaks %u objmgr vdev leaks"
+				"%u objmgr pdev leaks detected for psoc %u!",
+				peer_leaks, vdev_leaks, pdev_leaks,
+				_psoc->psoc_id);
+	}
+}
+
+qdf_export_symbol(wlan_objmgr_psoc_check_for_leaks);
 
 #ifdef WLAN_OBJMGR_DEBUG
 void wlan_print_psoc_info(struct wlan_objmgr_psoc *psoc)

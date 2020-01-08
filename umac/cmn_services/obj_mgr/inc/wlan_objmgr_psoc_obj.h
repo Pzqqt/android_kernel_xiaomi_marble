@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1610,25 +1610,33 @@ QDF_STATUS wlan_objmgr_psoc_set_user_config(struct wlan_objmgr_psoc *psoc,
  * wlan_objmgr_psoc_check_for_pdev_leaks() - Assert no pdevs attached to @psoc
  * @psoc: The psoc to check
  *
- * Return: None
+ * Return: No. of psoc leaks
  */
-void wlan_objmgr_psoc_check_for_pdev_leaks(struct wlan_objmgr_psoc *psoc);
+uint32_t wlan_objmgr_psoc_check_for_pdev_leaks(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_objmgr_psoc_check_for_vdev_leaks() - Assert no vdevs attached to @psoc
  * @psoc: The psoc to check
  *
- * Return: None
+ * Return: No. of vdev leaks
  */
-void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc);
+uint32_t wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_objmgr_psoc_check_for_peer_leaks() - Assert no peers attached to @psoc
  * @psoc: The psoc to check
  *
+ * Return: No. of peer leaks
+ */
+uint32_t wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_objmgr_psoc_check_for_leaks() - Assert on leak
+ * @psoc: The psoc to check
+ *
  * Return: None
  */
-void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc);
+void wlan_objmgr_psoc_check_for_leaks(struct wlan_objmgr_psoc *psoc);
 
 /**
 * wlan_objmgr_psoc_get_band_capability () - get user config
