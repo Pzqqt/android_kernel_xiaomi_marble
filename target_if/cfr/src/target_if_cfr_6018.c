@@ -598,25 +598,12 @@ int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 			 * event since multiple PPDUs are likely to have same
 			 * dma addr, due to ucode aborts
 			 */
-			if (module_id == CORRELATE_TXRX_EV_MODULE_ID) {
-				cfr_debug("Received new tx event for same "
-					  "cookie %u",
-					  cookie);
-				lut->dbr_recv = false;
-				lut->data = NULL;
-				lut->data_len = 0;
-				lut->dbr_ppdu_id = 0;
-				qdf_mem_zero(&lut->dbr_address,
-					     sizeof(lut->dbr_address));
-				pcfr->clear_dbr_event++;
-			} else if (module_id == CORRELATE_DBR_MODULE_ID) {
-				cfr_debug("Received new dbr event for same "
-					  "cookie %u",
-					  cookie);
-				lut->tx_recv = false;
-				lut->tx_ppdu_id = 0;
-				pcfr->clear_txrx_event++;
-			}
+			cfr_debug("Received new dbr event for same "
+				  "cookie %u",
+				  cookie);
+			lut->tx_recv = false;
+			lut->tx_ppdu_id = 0;
+			pcfr->clear_txrx_event++;
 			status = STATUS_HOLD;
 		}
 	} else {
@@ -1426,7 +1413,6 @@ static os_timer_func(lut_ageout_timer_task)
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct look_up_table *lut = NULL;
 	uint64_t diff, cur_tstamp;
-	qdf_dma_addr_t buf_addr = 0, buf_addr_temp = 0;
 
 	OS_GET_TIMER_ARG(pcfr, struct pdev_cfr*);
 
@@ -1465,23 +1451,6 @@ static os_timer_func(lut_ageout_timer_task)
 							  lut->dbr_address,
 							  i, 0);
 				pcfr->flush_timeout_dbr_cnt++;
-				release_lut_entry_enh(pdev, lut);
-			}
-		} else if (lut->tx_recv && !lut->dbr_recv) {
-			diff = cur_tstamp - lut->txrx_tstamp;
-			if (diff > LUT_AGE_THRESHOLD) {
-				buf_addr_temp = (lut->tx_address2 & 0x0f);
-				buf_addr = (lut->tx_address1
-					    | ((uint64_t)buf_addr_temp << 32));
-				cfr_err("<%d>DBR event not received for "
-					"%llu ms, release lut entry : "
-					"dma_addr = 0x%pK\n", i, diff,
-					(void *)((uintptr_t)buf_addr));
-				target_if_dbr_buf_release(pdev,
-							  DBR_MODULE_CFR,
-							  buf_addr,
-							  i, 0);
-				pcfr->flush_timeout_txrx_cnt++;
 				release_lut_entry_enh(pdev, lut);
 			}
 		}
@@ -1635,9 +1604,7 @@ QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 	pcfr->flush_all_dbr_cnt = 0;
 	pcfr->flush_all_txrx_cnt = 0;
 	pcfr->flush_timeout_dbr_cnt = 0;
-	pcfr->flush_timeout_txrx_cnt = 0;
 	pcfr->invalid_dma_length_cnt = 0;
-	pcfr->clear_dbr_event = 0;
 	pcfr->clear_txrx_event = 0;
 	pcfr->bb_captured_channel_cnt = 0;
 	pcfr->bb_captured_timeout_cnt = 0;
