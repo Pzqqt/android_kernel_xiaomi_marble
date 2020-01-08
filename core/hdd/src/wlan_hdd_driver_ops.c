@@ -255,7 +255,7 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 
 	hdd_hif_init_driver_state_callbacks(dev, &cbk);
 
-	hif_ctx = hif_open(qdf_ctx, mode, bus_type, &cbk);
+	hif_ctx = hif_open(qdf_ctx, mode, bus_type, &cbk, hdd_ctx->psoc);
 	if (!hif_ctx) {
 		hdd_err("hif_open error");
 		return -ENOMEM;
