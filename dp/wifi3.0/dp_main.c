@@ -6713,6 +6713,19 @@ QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
 						pdev->pdev_id);
+		/*
+		 * If two back to back HTT msg sending happened in
+		 * short time, the second HTT msg source SRNG HP
+		 * writing has chance to fail, this has been confirmed
+		 * by HST HW.
+		 * for monitor mode, here is the last HTT msg for sending.
+		 * if the 2nd HTT msg for monitor status ring sending failed,
+		 * HW won't provide anything into 2nd monitor status ring.
+		 * as a WAR, add some delay before 2nd HTT msg start sending,
+		 * > 2us is required per HST HW, delay 100 us for safe.
+		 */
+		if (mac_id)
+			qdf_udelay(100);
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
 			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
