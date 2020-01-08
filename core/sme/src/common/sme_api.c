@@ -6878,7 +6878,10 @@ QDF_STATUS sme_roam_control_restore_default_config(mac_handle_t mac_handle,
 
 	sme_restore_default_roaming_params(mac, neighbor_roam_info);
 
+	/* Flush static and dynamic channels in ROAM scan list in firmware */
+	csr_roam_update_cfg(mac, vdev_id, REASON_FLUSH_CHANNEL_LIST);
 	csr_roam_update_cfg(mac, vdev_id, REASON_SCORING_CRITERIA_CHANGED);
+
 out:
 	sme_release_global_lock(&mac->sme);
 
