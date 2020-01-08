@@ -113,12 +113,12 @@ void target_if_cfr_dump_lut_enh(struct wlan_objmgr_pdev *pdev)
 			diff = (lut->dbr_tstamp > lut->txrx_tstamp) ?
 				(lut->dbr_tstamp - lut->txrx_tstamp) :
 				(lut->txrx_tstamp - lut->dbr_tstamp);
-			cfr_info("idx:%d dbrevnt: %d txrxevent: %d "
-				 "dbrppdu:0x%x txrxppdu:0x%x dbr_tstamp: %llu "
-				 "txrx_tstamp: %llu diff: %llu\n",
-				 i, lut->dbr_recv, lut->tx_recv,
-				 lut->dbr_ppdu_id, lut->tx_ppdu_id,
-				 lut->dbr_tstamp, lut->txrx_tstamp, diff);
+			cfr_err("idx:%d dbrevnt: %d txrxevent: %d "
+				"dbrppdu:0x%x txrxppdu:0x%x dbr_tstamp: %llu "
+				"txrx_tstamp: %llu diff: %llu\n",
+				i, lut->dbr_recv, lut->tx_recv,
+				lut->dbr_ppdu_id, lut->tx_ppdu_id,
+				lut->dbr_tstamp, lut->txrx_tstamp, diff);
 		}
 
 	}
