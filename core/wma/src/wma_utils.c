@@ -2027,6 +2027,20 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	 * num_channels * size of(struct wmi_channel_stats)
 	 */
 	fixed_param = param_tlvs->fixed_param;
+	if (fixed_param && !fixed_param->num_radio &&
+	    !fixed_param->more_radio_events) {
+		WMA_LOGD("FW indicates dummy link radio stats");
+		if (!wma_handle->link_stats_results) {
+			wma_handle->link_stats_results = qdf_mem_malloc(
+						sizeof(*link_stats_results));
+			if (!wma_handle->link_stats_results)
+				return -ENOMEM;
+		}
+		link_stats_results = wma_handle->link_stats_results;
+		link_stats_results->num_radio = fixed_param->num_radio;
+		goto link_radio_stats_cb;
+	}
+
 	radio_stats = param_tlvs->radio_stats;
 	channel_stats = param_tlvs->channel_stats;
 
@@ -2099,21 +2113,6 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	WMA_LOGD("on_time_host_scan: %u, on_time_lpi_scan: %u",
 		radio_stats->on_time_host_scan, radio_stats->on_time_lpi_scan);
 
-	link_stats_results->paramId = WMI_LINK_STATS_RADIO;
-	link_stats_results->rspId = fixed_param->request_id;
-	link_stats_results->ifaceId = 0;
-	link_stats_results->peer_event_number = 0;
-
-	/*
-	 * Backward compatibility:
-	 * There are firmware(s) which will send Radio stats only with
-	 * more_radio_events set to 0 and firmware which sends Radio stats
-	 * followed by tx_power level stats with more_radio_events set to 1.
-	 * if more_radio_events is set to 1, buffer the radio stats and
-	 * wait for tx_power_level stats.
-	 */
-	link_stats_results->moreResultToFollow = fixed_param->more_radio_events;
-
 	results = (uint8_t *) link_stats_results->results;
 	t_radio_stats = (uint8_t *) radio_stats;
 	t_channel_stats = (uint8_t *) channel_stats;
@@ -2172,15 +2171,34 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		}
 	}
 
+link_radio_stats_cb:
+	link_stats_results->paramId = WMI_LINK_STATS_RADIO;
+	link_stats_results->rspId = fixed_param->request_id;
+	link_stats_results->ifaceId = 0;
+	link_stats_results->peer_event_number = 0;
+
+	/*
+	 * Backward compatibility:
+	 * There are firmware(s) which will send Radio stats only with
+	 * more_radio_events set to 0 and firmware which sends Radio stats
+	 * followed by tx_power level stats with more_radio_events set to 1.
+	 * if more_radio_events is set to 1, buffer the radio stats and
+	 * wait for tx_power_level stats.
+	 */
+	link_stats_results->moreResultToFollow = fixed_param->more_radio_events;
+
 	if (link_stats_results->moreResultToFollow) {
 		/* More results coming, don't post yet */
 		return 0;
 	}
-	link_stats_results->nr_received++;
+	if (link_stats_results->num_radio) {
+		link_stats_results->nr_received++;
 
-	if (link_stats_results->num_radio != link_stats_results->nr_received) {
-		/* Not received all radio stats yet, don't post yet */
-		return 0;
+		if (link_stats_results->num_radio !=
+		    link_stats_results->nr_received) {
+			/* Not received all radio stats yet, don't post yet */
+			return 0;
+		}
 	}
 
 	mac->sme.link_layer_stats_cb(mac->hdd_handle,
