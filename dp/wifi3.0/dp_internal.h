@@ -2031,4 +2031,7 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 				int *max_mac_rings);
 
 
+#if defined(WLAN_SUPPORT_RX_FISA)
+void dp_rx_dump_fisa_table(struct dp_soc *soc);
+#endif /* WLAN_SUPPORT_RX_FISA */
 #endif /* #ifndef _DP_INTERNAL_H_ */

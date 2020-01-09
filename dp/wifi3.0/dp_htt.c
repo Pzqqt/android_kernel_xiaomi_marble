@@ -4686,8 +4686,8 @@ dp_htt_rx_flow_fst_setup(struct dp_pdev *pdev,
 	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG,
 			    htt_logger_bufp);
 
-	qdf_info("HTT_H2T RX_FSE_SETUP sent to FW for pdev = %u",
-		 fse_setup_info->pdev_id);
+	dp_info("HTT_H2T RX_FSE_SETUP sent to FW for pdev = %u",
+		fse_setup_info->pdev_id);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_DEBUG,
 			   (void *)fse_setup_info->hash_key,
 			   fse_setup_info->hash_key_len);
@@ -4731,6 +4731,7 @@ dp_htt_rx_flow_fse_operation(struct dp_pdev *pdev,
 	if (!qdf_nbuf_put_tail(msg,
 			       sizeof(struct htt_h2t_msg_rx_fse_operation_t))) {
 		qdf_err("Failed to expand head for HTT_RX_FSE_OPERATION msg");
+		qdf_nbuf_free(msg);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -4829,8 +4830,114 @@ dp_htt_rx_flow_fse_operation(struct dp_pdev *pdev,
 	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG,
 			    htt_logger_bufp);
 
-	qdf_info("HTT_H2T RX_FSE_OPERATION_CFG sent to FW for pdev = %u",
-		 fse_op_info->pdev_id);
+	dp_info("HTT_H2T RX_FSE_OPERATION_CFG sent to FW for pdev = %u",
+		fse_op_info->pdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_htt_rx_fisa_config(): Send HTT msg to configure FISA
+ * @pdev: DP pdev handle
+ * @fse_op_info: Flow entry parameters
+ *
+ * Return: Success when HTT message is sent, error on failure
+ */
+QDF_STATUS
+dp_htt_rx_fisa_config(struct dp_pdev *pdev,
+		      struct dp_htt_rx_fisa_cfg *fisa_config)
+{
+	struct htt_soc *soc = pdev->soc->htt_handle;
+	struct dp_htt_htc_pkt *pkt;
+	qdf_nbuf_t msg;
+	u_int32_t *msg_word;
+	struct htt_h2t_msg_type_fisa_config_t *htt_fisa_config;
+	uint8_t *htt_logger_bufp;
+	uint32_t len;
+
+	len = HTT_MSG_BUF_SIZE(sizeof(struct htt_h2t_msg_type_fisa_config_t));
+
+	msg = qdf_nbuf_alloc(soc->osdev,
+			     len,
+			     /* reserve room for the HTC header */
+			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING,
+			     4,
+			     TRUE);
+	if (!msg)
+		return QDF_STATUS_E_NOMEM;
+
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	if (!qdf_nbuf_put_tail(msg,
+			       sizeof(struct htt_h2t_msg_type_fisa_config_t))) {
+		qdf_err("Failed to expand head for HTT_RX_FSE_OPERATION msg");
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* fill in the message contents */
+	msg_word = (u_int32_t *)qdf_nbuf_data(msg);
+
+	memset(msg_word, 0, sizeof(struct htt_h2t_msg_type_fisa_config_t));
+	/* rewind beyond alignment pad to get to the HTC header reserved area */
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	htt_logger_bufp = (uint8_t *)msg_word;
+
+	*msg_word = 0;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_RX_FISA_CFG);
+
+	htt_fisa_config = (struct htt_h2t_msg_type_fisa_config_t *)msg_word;
+
+	HTT_RX_FSE_OPERATION_PDEV_ID_SET(*msg_word, htt_fisa_config->pdev_id);
+
+	msg_word++;
+	HTT_RX_FISA_CONFIG_FISA_ENABLE_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH_SET(*msg_word, 0);
+	HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN_SET(*msg_word, 0);
+	HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN_SET(*msg_word, 0);
+	HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN_SET(*msg_word, 0);
+	HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN_SET(*msg_word, 0);
+	HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_SET(*msg_word, 0xf);
+
+	msg_word++;
+	htt_fisa_config->fisa_timeout_threshold = fisa_config->fisa_timeout;
+
+	pkt = htt_htc_pkt_alloc(soc);
+	if (!pkt) {
+		qdf_err("Fail to allocate dp_htt_htc_pkt buffer");
+		qdf_assert(0);
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_RESOURCES; /* failure */
+	}
+
+	pkt->soc_ctxt = NULL; /* not used during send-done callback */
+
+	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
+			       dp_htt_h2t_send_complete_free_netbuf,
+			       qdf_nbuf_data(msg),
+			       qdf_nbuf_len(msg),
+			       soc->htc_endpoint,
+			       1); /* tag - not relevant here */
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
+
+	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FISA_CFG,
+			    htt_logger_bufp);
+
+	dp_info("HTT_H2T_MSG_TYPE_RX_FISA_CFG sent to FW for pdev = %u",
+		fisa_config->pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }

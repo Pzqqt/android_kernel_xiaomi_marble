@@ -46,6 +46,9 @@
 #include "dp_rx_mon.h"
 #include "htt_stats.h"
 #include "dp_htt.h"
+#ifdef WLAN_SUPPORT_RX_FISA
+#include <dp_fisa_rx.h>
+#endif
 #include "htt_ppdu_stats.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 #include "cfg_ucfg_api.h"
@@ -314,6 +317,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_SOC_CFG_PARAMS},
 	{TXRX_FW_STATS_INVALID, TXRX_PDEV_CFG_PARAMS},
 	{TXRX_FW_STATS_INVALID, TXRX_SOC_INTERRUPT_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_SOC_FSE_STATS},
 };
 
 /* MCL specific functions */
@@ -4885,25 +4889,57 @@ dp_rx_target_fst_config(struct dp_soc *soc)
 	}
 	return status;
 }
-#elif WLAN_SUPPORT_RX_FISA
+#elif defined(WLAN_SUPPORT_RX_FISA)
 /**
  * dp_rx_target_fst_config() - Configure RX OLE FSE engine in HW
  * @soc: SoC handle
  *
  * Return: Success
  */
-static inline QDF_STATUS
-dp_rx_target_fst_config(struct dp_soc *soc)
+static inline QDF_STATUS dp_rx_target_fst_config(struct dp_soc *soc)
 {
+	/* Check if it is enabled in the INI */
+	if (!soc->fisa_enable) {
+		dp_err("RX FISA feature is disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
 	return dp_rx_flow_send_fst_fw_setup(soc, soc->pdev_list[0]);
 }
-#else /* WLAN_SUPPORT_RX_FISA */
-static inline QDF_STATUS
-dp_rx_target_fst_config(struct dp_soc *soc)
+
+#define FISA_MAX_TIMEOUT 0xffffffff
+#define FISA_DISABLE_TIMEOUT 0
+static QDF_STATUS dp_rx_fisa_config(struct dp_soc *soc)
+{
+	struct dp_htt_rx_fisa_cfg fisa_config;
+
+	fisa_config.pdev_id = 0;
+	fisa_config.fisa_timeout = FISA_MAX_TIMEOUT;
+
+	return dp_htt_rx_fisa_config(soc->pdev_list[0], &fisa_config);
+}
+#else /* !WLAN_SUPPORT_RX_FISA */
+static inline QDF_STATUS dp_rx_target_fst_config(struct dp_soc *soc)
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif
+#endif /* !WLAN_SUPPORT_RX_FISA */
+
+#ifndef WLAN_SUPPORT_RX_FISA
+static QDF_STATUS dp_rx_fisa_config(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dp_rx_dump_fisa_stats(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void dp_rx_dump_fisa_table(struct dp_soc *soc)
+{
+}
+#endif /* !WLAN_SUPPORT_RX_FISA */
 
 /*
  * dp_soc_attach_target_wifi3() - SOC initialization in the target
@@ -4932,9 +4968,18 @@ dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 	}
 
 	status = dp_rx_target_fst_config(soc);
-	if (status != QDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS &&
+	    status != QDF_STATUS_E_NOSUPPORT) {
 		dp_err("Failed to send htt fst setup config message to target");
 		return status;
+	}
+
+	if (status == QDF_STATUS_SUCCESS) {
+		status = dp_rx_fisa_config(soc);
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send htt FISA config message to target");
+			return status;
+		}
 	}
 
 	DP_STATS_INIT(soc);
@@ -5096,6 +5141,8 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc,
 	vdev->osif_rx_flush = txrx_ops->rx.rx_flush;
 	vdev->osif_gro_flush = txrx_ops->rx.rx_gro_flush;
 	vdev->osif_rsim_rx_decap = txrx_ops->rx.rsim_rx_decap;
+	vdev->osif_fisa_rx = txrx_ops->rx.osif_fisa_rx;
+	vdev->osif_fisa_flush = txrx_ops->rx.osif_fisa_flush;
 	vdev->osif_get_key = txrx_ops->get_key;
 	vdev->osif_rx_mon = txrx_ops->rx.mon;
 	vdev->osif_tx_free_ext = txrx_ops->tx.tx_free_ext;
@@ -7440,6 +7487,7 @@ static void dp_txrx_stats_help(void)
 	dp_info(" 28 -- Host REO Queue Statistics");
 	dp_info(" 29 -- Host Soc cfg param Statistics");
 	dp_info(" 30 -- Host pdev cfg param Statistics");
+	dp_info(" 31 -- Host FISA stats");
 }
 
 /**
@@ -7502,6 +7550,8 @@ dp_print_host_stats(struct dp_vdev *vdev,
 	case TXRX_SOC_INTERRUPT_STATS:
 		dp_print_soc_interrupt_stats(pdev->soc);
 		break;
+	case TXRX_SOC_FSE_STATS:
+		dp_rx_dump_fisa_table(pdev->soc);
 	default:
 		dp_info("Wrong Input For TxRx Host Stats");
 		dp_txrx_stats_help();
@@ -8950,6 +9000,10 @@ static QDF_STATUS dp_txrx_dump_stats(struct cdp_soc_t *psoc, uint16_t value,
 
 	case CDP_TXRX_DESC_STATS:
 		/* TODO: NOT IMPLEMENTED */
+		break;
+
+	case CDP_DP_RX_FISA_STATS:
+		dp_rx_dump_fisa_stats(soc);
 		break;
 
 	default:

@@ -1252,6 +1252,9 @@ struct dp_soc {
 	 * TBD: rx_fst[num_macs] if we decide to have per mac FST
 	 */
 	struct dp_rx_fst *rx_fst;
+#ifdef WLAN_SUPPORT_RX_FISA
+	uint8_t fisa_enable;
+#endif
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG || WLAN_SUPPORT_RX_FISA */
 };
 
@@ -1810,6 +1813,10 @@ struct dp_vdev {
 	ol_txrx_rx_fp osif_rx;
 	/* callback to deliver rx frames to the OS */
 	ol_txrx_rx_fp osif_rx_stack;
+	/* Callback to handle rx fisa frames */
+	ol_txrx_fisa_rx_fp osif_fisa_rx;
+	ol_txrx_fisa_flush_fp osif_fisa_flush;
+
 	/* call back function to flush out queued rx packets*/
 	ol_txrx_rx_flush_fp osif_rx_flush;
 	ol_txrx_rsim_rx_decap_fp osif_rsim_rx_decap;
@@ -2241,9 +2248,16 @@ struct dp_rx_fst {
 
 #define DP_RX_GET_SW_FT_ENTRY_SIZE sizeof(struct dp_rx_fse)
 #elif WLAN_SUPPORT_RX_FISA
+
+enum fisa_aggr_ret {
+	FISA_AGGR_DONE,
+	FISA_AGGR_NOT_ELIGIBLE,
+	FISA_FLUSH_FLOW
+};
+
 struct dp_fisa_rx_sw_ft {
 	/* HAL Rx Flow Search Entry which matches HW definition */
-	void *hal_rx_fse;
+	void *hw_fse;
 	/* Toeplitz hash value */
 	uint32_t flow_hash;
 	/* Flow index, equivalent to hash value truncated to FST size */
@@ -2254,7 +2268,26 @@ struct dp_fisa_rx_sw_ft {
 	uint8_t is_ipv4_addr_entry;
 	/* Flag indicating whether flow is valid */
 	uint8_t is_valid;
-	qdf_nbuf_t *head_skb;
+	uint8_t is_populated;
+	uint8_t is_flow_udp;
+	uint8_t is_flow_tcp;
+	qdf_nbuf_t head_skb;
+	uint16_t cumulative_l4_checksum;
+	uint16_t adjusted_cumulative_ip_length;
+	uint16_t cur_aggr;
+	uint16_t napi_flush_cumulative_l4_checksum;
+	uint16_t napi_flush_cumulative_ip_length;
+	qdf_nbuf_t last_skb;
+	uint32_t head_skb_ip_hdr_offset;
+	uint32_t head_skb_l4_hdr_offset;
+	struct cdp_rx_flow_tuple_info rx_flow_tuple_info;
+	uint8_t napi_id;
+	struct dp_vdev *vdev;
+	uint64_t bytes_aggregated;
+	uint32_t flush_count;
+	uint32_t aggr_count;
+	uint8_t do_not_aggregate;
+	uint16_t hal_cumultive_ip_len;
 };
 
 #define DP_RX_GET_SW_FT_ENTRY_SIZE sizeof(struct dp_fisa_rx_sw_ft)
@@ -2276,6 +2309,10 @@ struct dp_rx_fst {
 	uint32_t hash_mask;
 	/* Lock for adding/deleting entries of FST */
 	qdf_spinlock_t dp_rx_fst_lock;
+	uint32_t add_flow_count;
+	uint32_t del_flow_count;
+	uint32_t hash_collision_cnt;
+	struct dp_soc *soc_hdl;
 };
 
 #endif /* WLAN_SUPPORT_RX_FISA */
