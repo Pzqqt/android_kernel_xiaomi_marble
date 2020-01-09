@@ -269,6 +269,10 @@ ifeq ($(CONFIG_QCACLD_FEATURE_HW_CAPABILITY), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_hw_capability.o
 endif
 
+ifeq ($(CONFIG_FW_THERMAL_THROTTLE), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_thermal.o
+endif
+
 ###### OSIF_SYNC ########
 SYNC_DIR := os_if/sync
 SYNC_INC_DIR := $(SYNC_DIR)/inc
@@ -2822,6 +2826,9 @@ cppflags-$(CONFIG_DISABLE_CHANNEL_LIST) += -DDISABLE_CHANNEL_LIST
 
 #Flag to enable/disable WIPS feature
 cppflags-$(CONFIG_WLAN_BCN_RECV_FEATURE) += -DWLAN_BCN_RECV_FEATURE
+
+#Flag to enable/disable thermal mitigation
+cppflags-$(CONFIG_FW_THERMAL_THROTTLE) += -DFW_THERMAL_THROTTLE
 
 #Flag to enable/disable LTE COEX support
 cppflags-$(CONFIG_LTE_COEX) += -DLTE_COEX

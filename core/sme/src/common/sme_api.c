@@ -15541,7 +15541,9 @@ QDF_STATUS sme_motion_det_base_line_enable(
 	return qdf_status;
 }
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+
 #ifdef FW_THERMAL_THROTTLE_SUPPORT
+
 /**
  * sme_set_thermal_throttle_cfg() - SME API to set the thermal throttle
  * configuration parameters
@@ -15577,6 +15579,7 @@ QDF_STATUS sme_set_thermal_throttle_cfg(mac_handle_t mac_handle, bool enable,
 		therm_cfg_params->levelconf[0].dcoffpercent = dc_off_percent;
 		therm_cfg_params->levelconf[0].priority = prio;
 		therm_cfg_params->levelconf[0].tmplwm = target_temp;
+		therm_cfg_params->num_thermal_conf = 1;
 
 		qdf_mem_set(&msg, sizeof(msg), 0);
 		msg.type = WMA_SET_THERMAL_THROTTLE_CFG;
@@ -15587,6 +15590,8 @@ QDF_STATUS sme_set_thermal_throttle_cfg(mac_handle_t mac_handle, bool enable,
 						     QDF_MODULE_ID_WMA,
 						     QDF_MODULE_ID_WMA, &msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			sme_err("failed to schedule throttle config req %d",
+				qdf_status);
 			qdf_mem_free(therm_cfg_params);
 			qdf_status = QDF_STATUS_E_FAILURE;
 		}
