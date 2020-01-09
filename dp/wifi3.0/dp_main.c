@@ -10605,6 +10605,7 @@ void *dp_soc_init(struct dp_soc *dpsoc, HTC_HANDLE htc_handle,
 		break;
 	}
 
+	dp_soc_set_interrupt_mode(soc);
 	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx,
 			     cfg_get(soc->ctrl_psoc, CFG_DP_RX_HASH));
 	soc->cce_disable = false;
