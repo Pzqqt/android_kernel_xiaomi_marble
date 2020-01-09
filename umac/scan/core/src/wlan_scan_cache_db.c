@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,7 +62,7 @@ struct meta_rnr_channel *scm_get_chan_meta(uint32_t chan_freq)
 {
 	int i;
 
-	for (i = 0; i <= MAX_6GHZ_CHANNEL; i++)
+	for (i = 0; i <= NUM_6GHZ_CHANNELS; i++)
 		if (rnr_channel_db.channel[i].chan_freq == chan_freq)
 			return &rnr_channel_db.channel[i];
 
@@ -104,10 +104,6 @@ static void scm_add_rnr_channel_db(struct scan_cache_entry *entry)
 
 	for (i = 0; i < MAX_RNR_BSS; i++) {
 		rnr_bss = &entry->rnr.bss_info[i];
-		channel->bss_beacon_probe_count++;
-		/* Don't add RNR entry if list is full */
-		if (qdf_list_size(&channel->rnr_list) >= WLAN_MAX_RNR_COUNT)
-			continue;
 		/* Skip if entry is not valid */
 		if (!rnr_bss->channel_number)
 			continue;
@@ -117,12 +113,19 @@ static void scm_add_rnr_channel_db(struct scan_cache_entry *entry)
 		chan_freq = wlan_reg_chan_opclass_to_freq(rnr_bss->channel_number,
 							  rnr_bss->operating_class,
 							  false);
+		/* continue if the BSS channel is not 6Ghz*/
+		if (!wlan_reg_is_6ghz_chan_freq(chan_freq))
+			continue;
 		channel = scm_get_chan_meta(chan_freq);
 		if (!channel) {
 			scm_debug("Failed to get chan Meta freq %d", chan_freq);
 			qdf_mem_free(rnr_node);
 			return;
 		}
+		channel->bss_beacon_probe_count++;
+		/* Don't add RNR entry if list is full */
+		if (qdf_list_size(&channel->rnr_list) >= WLAN_MAX_RNR_COUNT)
+			continue;
 		rnr_node->entry.timestamp = entry->scan_entry_time;
 		if (!qdf_is_macaddr_zero(&rnr_bss->bssid))
 			qdf_mem_copy(&rnr_node->entry.bssid,
@@ -1622,14 +1625,14 @@ QDF_STATUS scm_channel_list_db_init(struct wlan_objmgr_psoc *psoc)
 	min_freq = wlan_reg_min_6ghz_chan_freq();
 	max_freq = wlan_reg_max_6ghz_chan_freq();
 
-	scm_debug("min_freq %d max_freq %d", min_freq, max_freq);
+	scm_info("min_freq %d max_freq %d", min_freq, max_freq);
 	i = min_freq;
 	for (j = 0; j < NUM_6GHZ_CHANNELS; j++) {
-		if (i >= min_freq && i <= max_freq)
+		if (i >= min_freq && i <= max_freq) {
 			rnr_channel_db.channel[j].chan_freq = i;
-		qdf_list_create(&rnr_channel_db.channel[j].rnr_list,
-				WLAN_MAX_RNR_COUNT);
-		scm_debug("freq %d", i);
+			qdf_list_create(&rnr_channel_db.channel[j].rnr_list,
+					WLAN_MAX_RNR_COUNT);
+		}
 		i += 20;
 	}
 	return QDF_STATUS_SUCCESS;
