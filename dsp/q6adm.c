@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -513,6 +513,17 @@ int adm_programable_channel_mixer(int port_id, int copp_idx, int session_id,
 		pr_err("%s: Invalid port_id %#x\n", __func__, port_id);
 		return -EINVAL;
 	}
+
+	/*
+	 * check if PSPD is already configured
+	 * if it is configured already, return 0 without applying PSPD.
+	 */
+	if (atomic_read(&this_adm.copp.cnt[port_idx][copp_idx]) > 1) {
+		pr_debug("%s: copp.cnt:%#x\n", __func__,
+			atomic_read(&this_adm.copp.cnt[port_idx][copp_idx]));
+		return 0;
+	}
+
 	/*
 	 * First 8 bytes are 4 bytes as rule number, 2 bytes as output
 	 * channel and 2 bytes as input channel.
