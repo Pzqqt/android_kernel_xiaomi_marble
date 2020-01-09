@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -450,10 +450,15 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 	if (!filter)
 		return QDF_STATUS_E_NOMEM;
 
-	/* update filter to get scan result with just target BSSID */
-	filter->num_of_bssid = 1;
-	qdf_mem_copy(filter->bssid_list[0].bytes,
-		     rrm_ctx->bssId, sizeof(struct qdf_mac_addr));
+	if (qdf_is_macaddr_zero(filter->bssid_list) ||
+	    qdf_is_macaddr_group(filter->bssid_list)) {
+		filter->num_of_bssid = 0;
+	} else {
+		/* update filter to get scan result with just target BSSID */
+		filter->num_of_bssid = 1;
+		qdf_mem_copy(filter->bssid_list[0].bytes,
+			     rrm_ctx->bssId, sizeof(struct qdf_mac_addr));
+	}
 
 	if (rrm_ctx->ssId.length) {
 		filter->num_of_ssid = 1;
