@@ -104,6 +104,13 @@ struct sde_hw_uidle_ops {
 	void (*uidle_get_status)(struct sde_hw_uidle *uidle,
 		struct sde_uidle_status *status);
 
+	/**
+	 * active_override_enable - enable/disable qactive signal override
+	 * @uidle: uidle context driver
+	 * @enable: enable/disable
+	 */
+	void (*active_override_enable)(struct sde_hw_uidle *uidle,
+			bool enable);
 };
 
 struct sde_hw_uidle {

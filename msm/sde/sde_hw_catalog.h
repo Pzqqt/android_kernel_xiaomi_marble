@@ -105,9 +105,15 @@
 /*
  * UIDLE supported versions
  */
-#define SDE_UIDLE_VERSION_1_0_0	0x100
+#define SDE_UIDLE_VERSION_1_0_0		0x100
+#define SDE_UIDLE_VERSION_1_0_1		0x101
+
 #define IS_SDE_UIDLE_REV_100(rev) \
 	((rev) == SDE_UIDLE_VERSION_1_0_0)
+#define IS_SDE_UIDLE_REV_101(rev) \
+	((rev) == SDE_UIDLE_VERSION_1_0_1)
+
+#define SDE_UIDLE_MAJOR(rev)		((rev) >> 8)
 
 #define SDE_HW_UBWC_VER(rev) \
 	SDE_HW_VER((((rev) >> 8) & 0xF), (((rev) >> 4) & 0xF), ((rev) & 0xF))
@@ -501,6 +507,16 @@ enum {
 	SDE_VBIF_QOS_REMAP,
 	SDE_VBIF_DISABLE_SHAREABLE,
 	SDE_VBIF_MAX
+};
+
+/**
+ * uidle features
+ * @SDE_UIDLE_QACTIVE_OVERRIDE    uidle sends qactive signal
+ * @SDE_UIDLE_MAX                 maximum value
+ */
+enum {
+	SDE_UIDLE_QACTIVE_OVERRIDE = 0x1,
+	SDE_UIDLE_MAX
 };
 
 /**

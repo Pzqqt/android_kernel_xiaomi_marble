@@ -1740,7 +1740,7 @@ static int sde_ctl_parse_dt(struct device_node *np,
 			set_bit(SDE_CTL_PINGPONG_SPLIT, &ctl->features);
 		if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 			set_bit(SDE_CTL_ACTIVE_CFG, &ctl->features);
-		if (IS_SDE_UIDLE_REV_100(sde_cfg->uidle_cfg.uidle_rev))
+		if (SDE_UIDLE_MAJOR(sde_cfg->uidle_cfg.uidle_rev))
 			set_bit(SDE_CTL_UIDLE, &ctl->features);
 		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
 				SDE_HW_MAJOR(SDE_HW_VER_700))
@@ -4222,7 +4222,8 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 	if (!uidle_cfg->uidle_rev)
 		return;
 
-	if (IS_SDE_UIDLE_REV_100(uidle_cfg->uidle_rev)) {
+	if ((IS_SDE_UIDLE_REV_101(uidle_cfg->uidle_rev)) ||
+			(IS_SDE_UIDLE_REV_100(uidle_cfg->uidle_rev))) {
 		uidle_cfg->fal10_exit_cnt = SDE_UIDLE_FAL10_EXIT_CNT;
 		uidle_cfg->fal10_exit_danger = SDE_UIDLE_FAL10_EXIT_DANGER;
 		uidle_cfg->fal10_danger = SDE_UIDLE_FAL10_DANGER;
@@ -4232,6 +4233,9 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 		uidle_cfg->max_dwnscale = SDE_UIDLE_MAX_DWNSCALE;
 		uidle_cfg->max_fps = SDE_UIDLE_MAX_FPS;
 		uidle_cfg->debugfs_ctrl = true;
+		if (IS_SDE_UIDLE_REV_101(uidle_cfg->uidle_rev))
+			set_bit(SDE_UIDLE_QACTIVE_OVERRIDE,
+					&uidle_cfg->features);
 	} else {
 		pr_err("invalid uidle rev:0x%x, disabling uidle\n",
 			uidle_cfg->uidle_rev);
@@ -4436,7 +4440,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		set_bit(SDE_MDP_DHDR_MEMPOOL_4K, &sde_cfg->mdp[0].features);
 		sde_cfg->has_vig_p010 = true;
 		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_0;
-		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_0;
+		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_1;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);

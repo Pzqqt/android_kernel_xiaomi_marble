@@ -2901,6 +2901,23 @@ static void _sde_kms_set_lutdma_vbif_remap(struct sde_kms *sde_kms)
 	sde_vbif_set_qos_remap(sde_kms, &qos_params);
 }
 
+static int _sde_kms_active_override(struct sde_kms *sde_kms, bool enable)
+{
+	struct sde_hw_uidle *uidle;
+
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
+		return -EINVAL;
+	}
+
+	uidle = sde_kms->hw_uidle;
+
+	if (uidle && uidle->ops.active_override_enable)
+		uidle->ops.active_override_enable(uidle, enable);
+
+	return 0;
+}
+
 static void sde_kms_handle_power_event(u32 event_type, void *usr)
 {
 	struct sde_kms *sde_kms = usr;
@@ -2922,6 +2939,7 @@ static void sde_kms_handle_power_event(u32 event_type, void *usr)
 	} else if (event_type == SDE_POWER_EVENT_PRE_DISABLE) {
 		sde_irq_update(msm_kms, false);
 		sde_kms->first_kickoff = false;
+		_sde_kms_active_override(sde_kms, true);
 	}
 }
 
