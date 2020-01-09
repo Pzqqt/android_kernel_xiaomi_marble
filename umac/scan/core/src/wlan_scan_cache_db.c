@@ -87,7 +87,7 @@ static void scm_add_rnr_channel_db(struct scan_cache_entry *entry)
 	scm_debug("scan entry channel freq %d", chan_freq);
 	if (is_6g_bss) {
 		channel = scm_get_chan_meta(chan_freq);
-		if (channel) {
+		if (!channel) {
 			scm_debug("Failed to get chan Meta freq %d", chan_freq);
 			return;
 		}
@@ -107,9 +107,6 @@ static void scm_add_rnr_channel_db(struct scan_cache_entry *entry)
 		/* Skip if entry is not valid */
 		if (!rnr_bss->channel_number)
 			continue;
-		rnr_node = qdf_mem_malloc(sizeof(struct scan_rnr_node));
-		if (!rnr_node)
-			return;
 		chan_freq = wlan_reg_chan_opclass_to_freq(rnr_bss->channel_number,
 							  rnr_bss->operating_class,
 							  false);
@@ -119,13 +116,16 @@ static void scm_add_rnr_channel_db(struct scan_cache_entry *entry)
 		channel = scm_get_chan_meta(chan_freq);
 		if (!channel) {
 			scm_debug("Failed to get chan Meta freq %d", chan_freq);
-			qdf_mem_free(rnr_node);
 			return;
 		}
 		channel->bss_beacon_probe_count++;
 		/* Don't add RNR entry if list is full */
 		if (qdf_list_size(&channel->rnr_list) >= WLAN_MAX_RNR_COUNT)
 			continue;
+
+		rnr_node = qdf_mem_malloc(sizeof(struct scan_rnr_node));
+		if (!rnr_node)
+			return;
 		rnr_node->entry.timestamp = entry->scan_entry_time;
 		if (!qdf_is_macaddr_zero(&rnr_bss->bssid))
 			qdf_mem_copy(&rnr_node->entry.bssid,
