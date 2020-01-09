@@ -267,6 +267,14 @@ struct mlme_channel_param {
 };
 
 /**
+ * struct vdev_mlme_mvr_param - Multiple vdev restart params
+ * @phymode: phymode information
+ */
+struct vdev_mlme_mvr_param {
+	uint32_t phymode;
+};
+
+/**
  * struct multiple_vdev_restart_params - Multiple vdev restart cmd parameter
  * @pdev_id: Pdev identifier
  * @requestor_id: Unique id identifying the module
@@ -275,6 +283,7 @@ struct mlme_channel_param {
  * @num_vdevs: No. of vdevs that need to be restarted
  * @ch_param: Pointer to channel_param
  * @vdev_ids: Pointer to array of vdev_ids
+ * @mvr_param: array holding multi vdev restart param
  */
 struct multiple_vdev_restart_params {
 	uint32_t pdev_id;
@@ -284,6 +293,7 @@ struct multiple_vdev_restart_params {
 	uint32_t num_vdevs;
 	struct mlme_channel_param ch_param;
 	uint32_t vdev_ids[WLAN_UMAC_PDEV_MAX_VDEVS];
+	struct vdev_mlme_mvr_param mvr_param[WLAN_UMAC_PDEV_MAX_VDEVS];
 };
 
 /**

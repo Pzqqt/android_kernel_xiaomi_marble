@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -219,14 +219,17 @@ QDF_STATUS vdev_mgr_bcn_miss_offload_send(struct vdev_mlme_obj *mlme_obj);
  * @disable_hw_ack: ddisable hw ack value
  * @vdev_ids: pointer to list of vdev ids which require restart
  * @num_vdevs: number of vdevs in list
+ * @mvr_param: multiple vdev restart param
  *
  * Return: QDF_STATUS - Success or Failure
  */
-QDF_STATUS vdev_mgr_multiple_restart_send(struct wlan_objmgr_pdev *pdev,
-					  struct mlme_channel_param *chan,
-					  uint32_t disable_hw_ack,
-					  uint32_t *vdev_ids,
-					  uint32_t num_vdevs);
+QDF_STATUS vdev_mgr_multiple_restart_send(
+					struct wlan_objmgr_pdev *pdev,
+					struct mlme_channel_param *chan,
+					uint32_t disable_hw_ack,
+					uint32_t *vdev_ids,
+					uint32_t num_vdevs,
+					struct vdev_mlme_mvr_param *mvr_param);
 
 /**
  * vdev_mgr_peer_delete_all_send() – MLME API to send peer delete all request

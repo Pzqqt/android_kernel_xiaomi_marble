@@ -483,6 +483,7 @@ static QDF_STATUS vdev_mgr_multiple_restart_param_update(
 				uint32_t disable_hw_ack,
 				uint32_t *vdev_ids,
 				uint32_t num_vdevs,
+				struct vdev_mlme_mvr_param *mvr_param,
 				struct multiple_vdev_restart_params *param)
 {
 	param->pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
@@ -495,6 +496,8 @@ static QDF_STATUS vdev_mgr_multiple_restart_param_update(
 		     sizeof(uint32_t) * (param->num_vdevs));
 	qdf_mem_copy(&param->ch_param, chan,
 		     sizeof(struct mlme_channel_param));
+	qdf_mem_copy(param->mvr_param, mvr_param,
+		     sizeof(*mvr_param) * (param->num_vdevs));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -503,14 +506,15 @@ QDF_STATUS vdev_mgr_multiple_restart_send(struct wlan_objmgr_pdev *pdev,
 					  struct mlme_channel_param *chan,
 					  uint32_t disable_hw_ack,
 					  uint32_t *vdev_ids,
-					  uint32_t num_vdevs)
+					  uint32_t num_vdevs,
+					  struct vdev_mlme_mvr_param *mvr_param)
 {
 	struct multiple_vdev_restart_params param = {0};
 
 	vdev_mgr_multiple_restart_param_update(pdev, chan,
 					       disable_hw_ack,
 					       vdev_ids, num_vdevs,
-					       &param);
+					       mvr_param, &param);
 
 	return tgt_vdev_mgr_multiple_vdev_restart_send(pdev, &param);
 }
