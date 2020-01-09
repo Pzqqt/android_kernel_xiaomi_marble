@@ -6562,7 +6562,8 @@ static QDF_STATUS send_thermal_mitigation_param_cmd_tlv(
 	int i;
 
 	len = sizeof(*tt_conf) + WMI_TLV_HDR_SIZE +
-			THERMAL_LEVELS * sizeof(wmi_therm_throt_level_config_info);
+			param->num_thermal_conf *
+			sizeof(wmi_therm_throt_level_config_info);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
@@ -6581,15 +6582,16 @@ static QDF_STATUS send_thermal_mitigation_param_cmd_tlv(
 	tt_conf->enable = param->enable;
 	tt_conf->dc = param->dc;
 	tt_conf->dc_per_event = param->dc_per_event;
-	tt_conf->therm_throt_levels = THERMAL_LEVELS;
+	tt_conf->therm_throt_levels = param->num_thermal_conf;
 
 	buf_ptr = (uint8_t *) ++tt_conf;
 	/* init TLV params */
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
-			(THERMAL_LEVELS * sizeof(wmi_therm_throt_level_config_info)));
+			(param->num_thermal_conf *
+			sizeof(wmi_therm_throt_level_config_info)));
 
 	lvl_conf = (wmi_therm_throt_level_config_info *) (buf_ptr +  WMI_TLV_HDR_SIZE);
-	for (i = 0; i < THERMAL_LEVELS; i++) {
+	for (i = 0; i < param->num_thermal_conf; i++) {
 		WMITLV_SET_HDR(&lvl_conf->tlv_header,
 			WMITLV_TAG_STRUC_wmi_therm_throt_level_config_info,
 			WMITLV_GET_STRUCT_TLVLEN(wmi_therm_throt_level_config_info));

@@ -2865,6 +2865,7 @@ typedef struct {
  * @enable: Enable/Disable Thermal mitigation
  * @dc: DC
  * @dc_per_event: DC per event
+ * @num_thermal_conf: Number of thermal configurations to be sent
  * @tt_level_config: TT level config params
  */
 struct thermal_mitigation_params {
@@ -2872,6 +2873,7 @@ struct thermal_mitigation_params {
 	uint32_t enable;
 	uint32_t dc;
 	uint32_t dc_per_event;
+	uint8_t num_thermal_conf;
 	tt_level_config levelconf[THERMAL_LEVELS];
 };
 
