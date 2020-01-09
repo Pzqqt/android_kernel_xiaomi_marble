@@ -4536,6 +4536,7 @@ typedef enum {
 	wmi_roam_stats_event_id,
 	wmi_oem_data_event_id,
 	wmi_mgmt_offload_data_event_id,
+	wmi_pdev_multi_vdev_restart_response_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 

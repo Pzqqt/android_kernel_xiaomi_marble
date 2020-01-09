@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -147,4 +147,18 @@ wmi_extract_ext_tbttoffset_num_vdevs(struct wmi_unified *wmi_handle,
 QDF_STATUS
 wmi_extract_tbttoffset_num_vdevs(struct wmi_unified *wmi_handle, void *evt_buf,
 				 uint32_t *num_vdevs);
+
+/**
+ * wmi_extract_multi_vdev_restart_resp_event() - extract multi vdev restart
+ * response
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @restart_rsp: Pointer to hold multi vdev restart response
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_multi_vdev_restart_resp_event(
+		struct wmi_unified *wmi_handle,
+		void *evt_buf,
+		struct multi_vdev_restart_resp *restart_rsp);
 #endif

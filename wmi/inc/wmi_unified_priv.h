@@ -2125,6 +2125,10 @@ QDF_STATUS (*extract_ani_level)(uint8_t *evt_buf,
 				struct wmi_host_ani_level_event **info,
 				uint32_t *num_freqs);
 #endif /* FEATURE_ANI_LEVEL_REQUEST */
+
+QDF_STATUS (*extract_multi_vdev_restart_resp_event)(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		struct multi_vdev_restart_resp *restart_rsp);
 };
 
 /* Forward declartion for psoc*/

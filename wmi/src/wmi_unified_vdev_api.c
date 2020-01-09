@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -152,6 +152,18 @@ QDF_STATUS wmi_unified_vdev_set_neighbour_rx_cmd_send(
 		return wmi_handle->ops->send_vdev_set_neighbour_rx_cmd(
 							wmi_handle,
 							macaddr, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_multi_vdev_restart_resp_event(
+	struct wmi_unified *wmi_handle,
+	void *evt_buf,
+	struct multi_vdev_restart_resp *restart_rsp)
+{
+	if (wmi_handle->ops->extract_multi_vdev_restart_resp_event)
+		return wmi_handle->ops->extract_multi_vdev_restart_resp_event(
+				wmi_handle, evt_buf, restart_rsp);
 
 	return QDF_STATUS_E_FAILURE;
 }
