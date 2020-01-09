@@ -2592,7 +2592,7 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		status = wma_set_sw_retry_threshold(
 				vdev_id,
 				qos_aggr->tx_non_aggr_sw_retry_threshold,
-				WMI_PDEV_PARAM_AGG_SW_RETRY_TH);
+				WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH);
 		if (QDF_IS_STATUS_ERROR(status))
 			WMA_LOGE("failed to set sw retry threshold tx non aggr(status = %d)",
 				 status);
