@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -402,7 +402,7 @@
  * gTxAggSwRetry - Configure Tx aggregation sw retry
  * @Min: 0
  * @Max: 64
- * @Default: 0
+ * @Default: 16
  *
  * gTxAggSwRetry gives an option to configure Tx aggregation sw
  * retry. This can be useful in debugging throughput issues.
@@ -419,7 +419,7 @@
 			"gTxAggSwRetry", \
 			0, \
 			64, \
-			0, \
+			16, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Tx aggregation retry value")
 /*
@@ -427,7 +427,7 @@
  * gTxNonAggSwRetry - Configure Tx non aggregation sw retry
  * @Min: 0
  * @Max: 64
- * @Default: 0
+ * @Default: 16
  *
  * gTxNonAggSwRetry gives an option to configure Tx non aggregation sw
  * retry. This can be useful in debugging throughput issues.
@@ -444,7 +444,7 @@
 			"gTxNonAggSwRetry", \
 			0, \
 			64, \
-			0, \
+			16, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Tx non aggregation retry value")
 /*
