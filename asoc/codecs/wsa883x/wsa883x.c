@@ -26,6 +26,7 @@
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
 #include <asoc/msm-cdc-pinctrl.h>
+#include <asoc/msm-cdc-supply.h>
 #include "wsa883x.h"
 #include "internal.h"
 
@@ -594,13 +595,58 @@ static ssize_t wsa883x_codec_version_read(struct snd_info_entry *entry,
 		return -EINVAL;
 	}
 
-	len = snprintf(buffer, sizeof(buffer), "WSA883X-SOUNDWIRE_1_0\n");
+	switch (wsa883x->version) {
+	case WSA883X_VERSION_1_0:
+		len = snprintf(buffer, sizeof(buffer), "WSA883X_1_0\n");
+		break;
+	case WSA883X_VERSION_1_1:
+		len = snprintf(buffer, sizeof(buffer), "WSA883X_1_1\n");
+		break;
+	default:
+		len = snprintf(buffer, sizeof(buffer), "VER_UNDEFINED\n");
+		break;
+	}
 
 	return simple_read_from_buffer(buf, count, &pos, buffer, len);
 }
 
 static struct snd_info_entry_ops wsa883x_codec_info_ops = {
 	.read = wsa883x_codec_version_read,
+};
+
+static ssize_t wsa883x_variant_read(struct snd_info_entry *entry,
+				    void *file_private_data,
+				    struct file *file,
+				    char __user *buf, size_t count,
+				    loff_t pos)
+{
+	struct wsa883x_priv *wsa883x;
+	char buffer[WSA883X_VARIANT_ENTRY_SIZE];
+	int len = 0;
+
+	wsa883x = (struct wsa883x_priv *) entry->private_data;
+	if (!wsa883x) {
+		pr_err("%s: wsa883x priv is null\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (wsa883x->variant) {
+	case WSA8830:
+		len = snprintf(buffer, sizeof(buffer), "WSA8830\n");
+		break;
+	case WSA8835:
+		len = snprintf(buffer, sizeof(buffer), "WSA8835\n");
+		break;
+	default:
+		len = snprintf(buffer, sizeof(buffer), "UNDEFINED\n");
+		break;
+	}
+
+	return simple_read_from_buffer(buf, count, &pos, buffer, len);
+}
+
+static struct snd_info_entry_ops wsa883x_variant_ops = {
+	.read = wsa883x_variant_read,
 };
 
 /*
@@ -617,6 +663,7 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 					  struct snd_soc_component *component)
 {
 	struct snd_info_entry *version_entry;
+	struct snd_info_entry *variant_entry;
 	struct wsa883x_priv *wsa883x;
 	struct snd_soc_card *card;
 	char name[80];
@@ -625,7 +672,13 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 		return -EINVAL;
 
 	wsa883x = snd_soc_component_get_drvdata(component);
+	if (wsa883x->entry) {
+		dev_dbg(wsa883x->dev,
+			"%s:wsa883x module already created\n", __func__);
+		return 0;
+	}
 	card = component->card;
+
 	snprintf(name, sizeof(name), "%s.%x", "wsa883x",
 		 (u32)wsa883x->swr_slave->addr);
 
@@ -664,6 +717,31 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 		return -ENOMEM;
 	}
 	wsa883x->version_entry = version_entry;
+
+	variant_entry = snd_info_create_card_entry(card->snd_card,
+						   "variant",
+						   wsa883x->entry);
+	if (!variant_entry) {
+		dev_dbg(component->dev,
+			"%s: failed to create wsa883x variant entry\n",
+			__func__);
+		snd_info_free_entry(version_entry);
+		snd_info_free_entry(wsa883x->entry);
+		return -ENOMEM;
+	}
+
+	variant_entry->private_data = wsa883x;
+	variant_entry->size = WSA883X_VARIANT_ENTRY_SIZE;
+	variant_entry->content = SNDRV_INFO_CONTENT_DATA;
+	variant_entry->c.ops = &wsa883x_variant_ops;
+
+	if (snd_info_register(variant_entry) < 0) {
+		snd_info_free_entry(variant_entry);
+		snd_info_free_entry(version_entry);
+		snd_info_free_entry(wsa883x->entry);
+		return -ENOMEM;
+	}
+	wsa883x->variant_entry = variant_entry;
 
 	return 0;
 }
@@ -1113,6 +1191,7 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 {
 	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
 	struct swr_device *dev;
+	int variant = 0, version = 0;
 
 	if (!wsa883x)
 		return -EINVAL;
@@ -1120,6 +1199,15 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 
 	dev = wsa883x->swr_slave;
 	wsa883x->component = component;
+
+	variant = (snd_soc_component_read32(component, WSA883X_OTP_REG_0)
+					    & 0x0F);
+	wsa883x->variant = variant;
+
+	version = (snd_soc_component_read32(component, WSA883X_CHIP_ID0)
+					    & 0xFF);
+	wsa883x->version = version;
+
 	wsa883x_codec_init(component);
 	wsa883x->global_pa_cnt = 0;
 	INIT_DELAYED_WORK(&wsa883x->vbat_work, wsa883x_vbat_monitor_work);
@@ -1196,6 +1284,37 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 	return 0;
 }
 
+static int wsa883x_enable_supplies(struct device * dev,
+				   struct wsa883x_priv *priv)
+{
+	int ret = 0;
+
+	/* Parse power supplies */
+	msm_cdc_get_power_supplies(dev, &priv->regulator,
+				   &priv->num_supplies);
+	if (!priv->regulator || (priv->num_supplies <= 0)) {
+		dev_err(dev, "%s: no power supplies defined\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = msm_cdc_init_supplies(dev, &priv->supplies,
+				    priv->regulator, priv->num_supplies);
+	if (!priv->supplies) {
+		dev_err(dev, "%s: Cannot init wsa supplies\n",
+			__func__);
+		return ret;
+	}
+
+	ret = msm_cdc_enable_static_supplies(dev, priv->supplies,
+					     priv->regulator,
+					     priv->num_supplies);
+	if (ret)
+		dev_err(dev, "%s: wsa static supply enable failed!\n",
+			__func__);
+
+	return ret;
+}
+
 static int wsa883x_swr_probe(struct swr_device *pdev)
 {
 	int ret = 0, i = 0;
@@ -1208,6 +1327,10 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 			    GFP_KERNEL);
 	if (!wsa883x)
 		return -ENOMEM;
+
+	ret = wsa883x_enable_supplies(&pdev->dev, wsa883x);
+	if (ret)
+		return -EINVAL;
 
 	wsa883x->wsa_rst_np = of_parse_phandle(pdev->dev.of_node,
 					     "qcom,spkr-sd-n-node", 0);

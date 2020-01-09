@@ -26,7 +26,11 @@
 #define WSA883X_DRV_NAME "wsa883x-codec"
 #define WSA883X_NUM_RETRY	5
 
-#define WSA883X_VERSION_ENTRY_SIZE 27
+#define WSA883X_VERSION_ENTRY_SIZE 32
+#define WSA883X_VARIANT_ENTRY_SIZE 32
+
+#define WSA883X_VERSION_1_0 0
+#define WSA883X_VERSION_1_1 1
 
 enum {
 	G_18DB = 0,
@@ -98,10 +102,12 @@ struct wsa883x_priv {
 	struct mutex res_lock;
 	struct snd_info_entry *entry;
 	struct snd_info_entry *version_entry;
+	struct snd_info_entry *variant_entry;
 	struct device_node *wsa_rst_np;
 	int pa_mute;
 	int curr_temp;
 	int variant;
+	int version;
 	u8 pa_gain;
 	struct irq_domain *virq;
 	struct wcd_irq_info irq_info;
@@ -119,6 +125,9 @@ struct wsa883x_priv {
 	int (*register_notifier)(void *handle,
 				struct notifier_block *nblock, bool enable);
 	struct delayed_work vbat_work;
+	struct cdc_regulator *regulator;
+	int num_supplies;
+	struct regulator_bulk_data *supplies;
 };
 
 static int32_t wsa883x_resource_acquire(struct snd_soc_component *component,
