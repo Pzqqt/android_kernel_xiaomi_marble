@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -239,15 +239,18 @@ static bool dsi_parser_parse_prop(struct device *dev,
 {
 	bool found = false;
 	char *out = strsep(&buf, "=");
+	size_t buf_len;
 
 	if (!out || !buf)
 		goto end;
 
-	prop->raw = devm_kzalloc(dev, strlen(buf) + 1, GFP_KERNEL);
+	buf_len = strlen(buf);
+
+	prop->raw = devm_kzalloc(dev, buf_len + 1, GFP_KERNEL);
 	if (!prop->raw)
 		goto end;
 
-	strlcpy(prop->raw, buf, strlen(buf) + 1);
+	strlcpy(prop->raw, buf, buf_len + 1);
 
 	found = true;
 
