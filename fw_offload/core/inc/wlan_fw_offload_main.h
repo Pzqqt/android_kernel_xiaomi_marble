@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012 - 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,7 +100,7 @@ struct wlan_fwol_coex_config {
 };
 
 #define FWOL_THERMAL_LEVEL_MAX 4
-#define FWOL_THERMAL_THROTTLE_LEVEL_MAX 4
+#define FWOL_THERMAL_THROTTLE_LEVEL_MAX 6
 /*
  * struct wlan_fwol_thermal_temp - Thermal temperature config items
  * @thermal_temp_min_level: Array of temperature minimum levels
@@ -108,6 +108,7 @@ struct wlan_fwol_coex_config {
  * @thermal_mitigation_enable: Control for Thermal mitigation feature
  * @throttle_period: Thermal throttle period value
  * @throttle_dutycycle_level: Array of throttle duty cycle levels
+ * @thermal_sampling_time: sampling time for thermal mitigation in ms
  */
 struct wlan_fwol_thermal_temp {
 	bool     thermal_mitigation_enable;
@@ -115,6 +116,7 @@ struct wlan_fwol_thermal_temp {
 	uint16_t thermal_temp_min_level[FWOL_THERMAL_LEVEL_MAX];
 	uint16_t thermal_temp_max_level[FWOL_THERMAL_LEVEL_MAX];
 	uint32_t throttle_dutycycle_level[FWOL_THERMAL_THROTTLE_LEVEL_MAX];
+	uint16_t thermal_sampling_time;
 };
 
 /**
