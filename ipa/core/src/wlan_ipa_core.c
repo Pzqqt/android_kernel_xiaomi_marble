@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1238,6 +1238,9 @@ QDF_STATUS wlan_ipa_uc_enable_pipes(struct wlan_ipa_priv *ipa_ctx)
 	}
 	ipa_ctx->pipes_enable_in_progress = true;
 	qdf_spin_unlock_bh(&ipa_ctx->enable_disable_lock);
+
+	if (qdf_atomic_read(&ipa_ctx->waiting_on_pending_tx))
+		wlan_ipa_reset_pending_tx_timer(ipa_ctx);
 
 	if (qdf_atomic_read(&ipa_ctx->pipes_disabled)) {
 		result = cdp_ipa_enable_pipes(ipa_ctx->dp_soc,
