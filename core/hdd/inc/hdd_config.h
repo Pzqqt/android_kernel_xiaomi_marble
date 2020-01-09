@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -453,11 +453,14 @@ enum hdd_dot11_mode {
  * <ini>
  * gRuntimePM - enable runtime suspend
  * @Min: 0
- * @Max: 1
+ * @Max: 2
  * @Default: 0
  *
- * This ini is used to enable runtime_suspend
+ * This ini is used to enable runtime PM
  *
+ * 0: RTPM disabled, so CxPC aware RTPM will be disabled as well
+ * 1: RTPM enabled, but CxPC aware RTPM disabled
+ * 2: RTPM enabled and CxPC aware RTPM enabled as well
  * Related: None
  *
  * Supported Feature: Power Save
@@ -466,9 +469,12 @@ enum hdd_dot11_mode {
  *
  * </ini>
  */
-#define CFG_ENABLE_RUNTIME_PM CFG_INI_BOOL( \
+#define CFG_ENABLE_RUNTIME_PM CFG_INI_UINT( \
 		"gRuntimePM", \
 		0, \
+		2, \
+		0, \
+		CFG_VALUE_OR_DEFAULT, \
 		"This ini is used to enable runtime_suspend")
 #define CFG_ENABLE_RUNTIME_PM_ALL \
 	CFG(CFG_ENABLE_RUNTIME_PM)
