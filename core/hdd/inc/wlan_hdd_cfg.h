@@ -245,6 +245,7 @@ struct hdd_config {
 	bool config_sar_safety_sleep_index;
 #endif
 
+	uint32_t fisa_enable;
 };
 
 /**

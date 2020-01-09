@@ -2076,6 +2076,28 @@ static QDF_STATUS hdd_conn_change_peer_state(struct hdd_adapter *adapter,
 }
 #endif
 
+#if defined(WLAN_SUPPORT_RX_FISA)
+/**
+ * hdd_rx_register_fisa_ops() - FISA callback functions
+ * @txrx_ops: operations handle holding callback functions
+ * @hdd_rx_fisa_cbk: callback for fisa aggregation handle function
+ * @hdd_rx_fisa_flush: callback function to flush fisa aggregation
+ *
+ * Return: None
+ */
+static inline void
+hdd_rx_register_fisa_ops(struct ol_txrx_ops *txrx_ops)
+{
+	txrx_ops->rx.osif_fisa_rx = hdd_rx_fisa_cbk;
+	txrx_ops->rx.osif_fisa_flush = hdd_rx_fisa_flush;
+}
+#else
+static inline void
+hdd_rx_register_fisa_ops(struct ol_txrx_ops *txrx_ops)
+{
+}
+#endif
+
 /**
  * hdd_roam_register_sta() - register station
  * @adapter: pointer to adapter
@@ -2132,6 +2154,12 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 		txrx_ops.rx.rx = hdd_rx_packet_cbk;
 		txrx_ops.rx.rx_stack = NULL;
 		txrx_ops.rx.rx_flush = NULL;
+	}
+
+	if (adapter->hdd_ctx->config->fisa_enable &&
+		(adapter->device_mode != QDF_MONITOR_MODE)) {
+		hdd_debug("FISA feature enabled");
+		hdd_rx_register_fisa_ops(&txrx_ops);
 	}
 
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;

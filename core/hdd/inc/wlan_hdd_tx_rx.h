@@ -115,6 +115,27 @@ QDF_STATUS hdd_rx_flush_packet_cbk(void *adapter_context, uint8_t vdev_id);
  */
 QDF_STATUS hdd_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rxBuf);
 
+#if defined(WLAN_SUPPORT_RX_FISA)
+/**
+ * hdd_rx_fisa_cbk() - Entry function to FISA to handle aggregation
+ * @soc: core txrx main context
+ * @vdev: Handle DP vdev
+ * @nbuf_list: List nbufs to be aggregated
+ *
+ * Return: Success on aggregation
+ */
+QDF_STATUS hdd_rx_fisa_cbk(void *dp_soc, void *dp_vdev, qdf_nbuf_t rxbuf_list);
+
+/**
+ * hdd_rx_fisa_flush() - Flush function to end of context flushing of aggregates
+ * @soc: core txrx main context
+ * @napi_id: REO number to flush the flow Rxed on the REO
+ *
+ * Return: Success on flushing the flows for the REO
+ */
+QDF_STATUS hdd_rx_fisa_flush(void *dp_soc, int ring_num);
+#endif
+
 /**
  * hdd_rx_deliver_to_stack() - HDD helper function to deliver RX pkts to stack
  * @adapter: pointer to HDD adapter context
@@ -490,4 +511,5 @@ wlan_hdd_dump_queue_history_state(struct hdd_netif_queue_history *q_hist,
  */
 bool wlan_hdd_rx_rpm_mark_last_busy(struct hdd_context *hdd_ctx,
 				    void *hif_ctx);
+
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */
