@@ -118,6 +118,7 @@ struct wsa883x_priv {
 	void *handle;
 	int (*register_notifier)(void *handle,
 				struct notifier_block *nblock, bool enable);
+	struct delayed_work vbat_work;
 };
 
 #endif /* WSA883X_INTERNAL_H */
