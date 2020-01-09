@@ -285,7 +285,7 @@ struct qca_napi_data {
 struct hif_config_info {
 	bool enable_self_recovery;
 #ifdef FEATURE_RUNTIME_PM
-	bool enable_runtime_pm;
+	uint8_t enable_runtime_pm;
 	u_int32_t runtime_pm_delay;
 #endif
 	uint64_t rx_softirq_max_yield_duration_ns;
