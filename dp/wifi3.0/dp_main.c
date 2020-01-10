@@ -5264,11 +5264,12 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
-	dp_tx_vdev_detach(vdev);
-	dp_rx_vdev_detach(vdev);
 	/* remove the vdev from its parent pdev's list */
 	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+
+	dp_tx_vdev_detach(vdev);
+	dp_rx_vdev_detach(vdev);
 
 free_vdev:
 	if (wlan_op_mode_monitor == vdev->opmode)
