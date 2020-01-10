@@ -1082,6 +1082,12 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 #endif
 	/* rx - msdu fast path info fields */
 	hal_rx_msdu_packet_metadata_get_generic,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

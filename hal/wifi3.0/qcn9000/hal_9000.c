@@ -1460,6 +1460,12 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	NULL,
 	/* rx - msdu fast path info fields */
 	hal_rx_msdu_packet_metadata_get_9000,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 struct hal_hw_srng_config hw_srng_table_9000[] = {
