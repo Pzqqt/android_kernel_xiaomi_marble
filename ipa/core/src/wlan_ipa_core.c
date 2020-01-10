@@ -313,9 +313,10 @@ static void wlan_ipa_send_pkt_to_tl(
 
 	qdf_spin_lock_bh(&ipa_ctx->q_lock);
 	/* get free Tx desc and assign ipa_tx_desc pointer */
-	if (qdf_list_remove_front(&ipa_ctx->tx_desc_free_list,
+	if (ipa_ctx->tx_desc_free_list.count &&
+	    qdf_list_remove_front(&ipa_ctx->tx_desc_free_list,
 				  (qdf_list_node_t **)&tx_desc) ==
-	    QDF_STATUS_SUCCESS) {
+							QDF_STATUS_SUCCESS) {
 		tx_desc->ipa_tx_desc_ptr = ipa_tx_desc;
 		ipa_ctx->stats.num_tx_desc_q_cnt++;
 		qdf_spin_unlock_bh(&ipa_ctx->q_lock);
@@ -2638,9 +2639,10 @@ static inline void wlan_ipa_free_tx_desc_list(struct wlan_ipa_priv *ipa_ctx)
 		if (ipa_tx_desc)
 			qdf_ipa_free_skb(ipa_tx_desc);
 
-		if (qdf_list_remove_node(&ipa_ctx->tx_desc_free_list,
+		if (ipa_ctx->tx_desc_free_list.count &&
+		    qdf_list_remove_node(&ipa_ctx->tx_desc_free_list,
 					 &ipa_ctx->tx_desc_pool[i].node) !=
-		    QDF_STATUS_SUCCESS)
+							QDF_STATUS_SUCCESS)
 			ipa_err("Failed to remove node from tx desc freelist");
 	}
 	qdf_spin_unlock_bh(&ipa_ctx->q_lock);
