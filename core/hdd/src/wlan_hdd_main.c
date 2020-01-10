@@ -4539,13 +4539,6 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id)
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
-	/*
-	 * For NAN Data interface, the close session results in the final
-	 * indication to the userspace
-	 */
-	if (adapter->device_mode == QDF_NDI_MODE)
-		hdd_ndp_session_end_handler(adapter);
-
 	clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 
 	/*
@@ -4649,9 +4642,6 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 					 SME_CMD_VDEV_CREATE_DELETE_TIMEOUT);
 	if (rc) {
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
-
-		if (adapter->device_mode == QDF_NDI_MODE)
-			hdd_ndp_session_end_handler(adapter);
 
 		if (status == QDF_STATUS_E_TIMEOUT) {
 			hdd_err("timed out waiting for sme vdev delete");

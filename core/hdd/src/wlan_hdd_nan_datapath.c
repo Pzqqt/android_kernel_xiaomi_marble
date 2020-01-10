@@ -797,6 +797,13 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 
+	/*
+	 * For NAN Data interface, the close session results in the final
+	 * indication to the userspace
+	 */
+	if (adapter->device_mode == QDF_NDI_MODE)
+		hdd_ndp_session_end_handler(adapter);
+
 	complete(&adapter->disconnect_comp_var);
 }
 
