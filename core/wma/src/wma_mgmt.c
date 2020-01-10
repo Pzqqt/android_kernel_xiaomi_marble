@@ -3140,6 +3140,7 @@ rel_peer_ref:
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_11W
 /**
  * wma_process_bip() - process mmie in rmf frame
  * @wma_handle: wma handle
@@ -3250,6 +3251,7 @@ int wma_process_bip(tp_wma_handle wma_handle,
 
 	return 0;
 }
+#endif
 
 /**
  * wma_process_rmf_frame() - process rmf frame

@@ -162,6 +162,19 @@ void lim_process_mlm_req_messages(struct mac_context *mac_ctx,
 	} /* switch (msg->type) */
 }
 
+#ifdef WLAN_FEATURE_11W
+static void update_rmfEnabled(struct bss_params *addbss_param,
+			      struct pe_session *session)
+{
+	addbss_param->rmfEnabled = session->limRmfEnabled;
+}
+#else
+static void update_rmfEnabled(struct bss_params *addbss_param,
+			      struct pe_session *session)
+{
+}
+#endif
+
 /**
  * lim_mlm_add_bss() - HAL interface for WMA_ADD_BSS_REQ
  * @mac_ctx: global MAC context
@@ -213,7 +226,7 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	addbss_param->vhtCapable = mlm_start_req->htCapable;
 	addbss_param->htCapable = session->vhtCapability;
 	addbss_param->ch_width = session->ch_width;
-	addbss_param->rmfEnabled = session->limRmfEnabled;
+	update_rmfEnabled(addbss_param, session);
 	addbss_param->staContext.fShortGI20Mhz =
 		lim_get_ht_capability(mac_ctx, eHT_SHORT_GI_20MHZ, session);
 	addbss_param->staContext.fShortGI40Mhz =

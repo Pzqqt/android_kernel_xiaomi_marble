@@ -632,7 +632,6 @@ struct wma_version_info {
 	u_int32_t revision;
 };
 
-#ifdef WLAN_FEATURE_11W
 #define CMAC_IPN_LEN         (6)
 #define WMA_IGTK_KEY_INDEX_4 (4)
 #define WMA_IGTK_KEY_INDEX_5 (5)
@@ -663,7 +662,6 @@ typedef struct {
 	wma_igtk_ipn_t key_id[2];
 	uint32_t key_cipher;
 } wma_igtk_key_t;
-#endif
 
 struct roam_synch_frame_ind {
 	uint32_t bcn_probe_rsp_len;
@@ -759,9 +757,7 @@ struct wma_txrx_node {
 	tAddStaParams *addBssStaContext;
 	uint8_t aid;
 	uint8_t rmfEnabled;
-#ifdef WLAN_FEATURE_11W
 	wma_igtk_key_t key;
-#endif /* WLAN_FEATURE_11W */
 	uint32_t uapsd_cached_val;
 	void *del_staself_req;
 	bool is_del_sta_defered;

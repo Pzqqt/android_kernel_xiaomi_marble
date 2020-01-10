@@ -2627,6 +2627,7 @@ bool csr_is_profile_wapi(struct csr_roam_profile *pProfile)
 }
 #endif /* FEATURE_WLAN_WAPI */
 
+#ifdef WLAN_FEATURE_11W
 static bool csr_is_wpa_oui_equal(struct mac_context *mac, uint8_t *Oui1,
 				 uint8_t *Oui2)
 {
@@ -2686,6 +2687,7 @@ static bool csr_is_group_mgmt_gmac_256(struct mac_context *mac,
 	return csr_is_oui_match(mac, AllSuites, cAllSuites,
 				csr_group_mgmt_oui[ENUM_GMAC_256], Oui);
 }
+#endif
 
 bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 				 struct csr_roam_session *session,

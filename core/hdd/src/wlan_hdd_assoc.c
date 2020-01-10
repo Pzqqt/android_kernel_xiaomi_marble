@@ -5267,15 +5267,22 @@ bool hdd_is_fils_connection(struct hdd_adapter *adapter)
  *
  * Return: 0 on success, error number otherwise
  */
+#ifdef WLAN_FEATURE_11W
 static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 				 u8 *bssid,
 				 eCsrEncryptionType *encrypt_type,
 				 eCsrEncryptionType *mc_encrypt_type,
 				 enum csr_akm_type *auth_type,
-#ifdef WLAN_FEATURE_11W
 				 uint8_t *mfp_required, uint8_t *mfp_capable,
-#endif
 				 uint16_t gen_ie_len, uint8_t *gen_ie)
+#else
+static int32_t hdd_process_genie(struct hdd_adapter *adapter,
+				 u8 *bssid,
+				 eCsrEncryptionType *encrypt_type,
+				 eCsrEncryptionType *mc_encrypt_type,
+				 enum csr_akm_type *auth_type,
+				 uint16_t gen_ie_len, uint8_t *gen_ie)
+#endif
 {
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	tDot11fIERSN dot11_rsn_ie = {0};
@@ -5484,6 +5491,45 @@ static void hdd_set_mfp_enable(struct csr_roam_profile *roam_profile)
 }
 #endif
 
+#ifdef WLAN_FEATURE_11W
+static uint32_t wlan_hdd_process_genie(struct hdd_adapter *adapter,
+				   u8 *bssid,
+				   eCsrEncryptionType *encrypt_type,
+				   eCsrEncryptionType *mc_encrypt_type,
+				   enum csr_akm_type *auth_type,
+				   uint8_t *mfp_required,
+				   uint8_t *mfp_capable,
+				   uint16_t gen_ie_len, uint8_t *gen_ie)
+{
+	uint32_t status;
+
+	status = hdd_process_genie(adapter, bssid,
+				   encrypt_type, mc_encrypt_type,
+				   auth_type, mfp_required, mfp_capable,
+				   gen_ie_len, gen_ie);
+
+	return status;
+}
+#else
+static uint32_t wlan_hdd_process_genie(struct hdd_adapter *adapter,
+				   u8 *bssid,
+				   eCsrEncryptionType *encrypt_type,
+				   eCsrEncryptionType *mc_encrypt_type,
+				   enum csr_akm_type *auth_type,
+				   uint8_t *mfp_required,
+				   uint8_t *mfp_capable,
+				   uint16_t gen_ie_len, uint8_t *gen_ie)
+{
+	uint32_t status;
+
+	status = hdd_process_genie(adapter, bssid,
+				   encrypt_type, mc_encrypt_type,
+				   auth_type, gen_ie_len, gen_ie);
+
+	return status;
+}
+#endif
+
 /**
  * hdd_set_genie_to_csr() - set genie to csr
  * @adapter: pointer to adapter
@@ -5519,12 +5565,12 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 
 	/* The actual processing may eventually be more extensive than this. */
 	/* Right now, just consume any PMKIDs that are  sent in by the app. */
-	status = hdd_process_genie(adapter, bssid,
-				   &rsn_encrypt_type,
-				   &mc_rsn_encrypt_type, rsn_auth_type,
-				   &mfp_required, &mfp_capable,
-				   security_ie[1] + 2,
-				   security_ie);
+	status = wlan_hdd_process_genie(adapter, bssid,
+					&rsn_encrypt_type,
+					&mc_rsn_encrypt_type, rsn_auth_type,
+					&mfp_required, &mfp_capable,
+					security_ie[1] + 2,
+					security_ie);
 
 	if (status == 0) {
 		/*

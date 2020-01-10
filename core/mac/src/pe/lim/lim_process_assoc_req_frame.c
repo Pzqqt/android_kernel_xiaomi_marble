@@ -907,7 +907,7 @@ static enum mac_status_code lim_check_wpa_ie(struct pe_session *session,
   *
   * Return: mac_status_code
   */
-#ifdef WLAN_FEATURE_SAE
+#if defined(WLAN_FEATURE_SAE) && defined(WLAN_FEATURE_11W)
 static enum mac_status_code lim_check_sae_pmf_cap(struct pe_session *session,
 						  tDot11fIERSN *rsn,
 						  enum ani_akm_type akm_type)

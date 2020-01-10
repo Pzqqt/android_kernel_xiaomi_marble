@@ -2374,6 +2374,7 @@ static void wma_update_tx_send_params(struct tx_send_params *tx_param,
 		     tx_param->preamble_type);
 }
 
+#ifdef WLAN_FEATURE_11W
 uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len)
 {
 	struct wlan_crypto_key *crypto_key;
@@ -2388,6 +2389,7 @@ uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len)
 
 	return &crypto_key->keyval[0];
 }
+#endif
 
 QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 eFrameType frmType, eFrameTxDir txDir, uint8_t tid,
@@ -2411,6 +2413,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	uint8_t *pFrame = NULL;
 	void *pPacket = NULL;
 	uint16_t newFrmLen = 0;
+	uint8_t *igtk;
+	uint16_t key_len;
 #endif /* WLAN_FEATURE_11W */
 	struct wma_txrx_node *iface;
 	struct mac_context *mac;
@@ -2424,8 +2428,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	void *mac_addr;
 	bool is_5g = false;
 	uint8_t pdev_id;
-	uint8_t *igtk;
-	uint16_t key_len;
 
 	if (!wma_handle) {
 		WMA_LOGE("wma_handle is NULL");
