@@ -555,6 +555,42 @@ static uint32_t convert_target_pdev_id_to_host_pdev_id(wmi_unified_t wmi_handle,
 }
 
 /**
+ * convert_host_phy_id_to_target_phy_id() - Convert phy_id from
+ *	   host to target defines.
+ * @wmi_handle: pointer to wmi_handle
+ * @param phy_id: host pdev_id to be converted.
+ * Return: target phy_id after conversion.
+ */
+static uint32_t convert_host_phy_id_to_target_phy_id(wmi_unified_t wmi_handle,
+						     uint32_t phy_id)
+{
+	if (!wmi_handle->soc->is_phy_id_map_enable ||
+	    phy_id >= WMI_MAX_RADIOS) {
+		return phy_id;
+	}
+
+	return wmi_handle->cmd_phy_id_map[phy_id];
+}
+
+/**
+ * convert_target_phy_id_to_host_phy_id() - Convert phy_id from
+ *	   target to host defines.
+ * @wmi_handle: pointer to wmi_handle
+ * @param phy_id: target phy_id to be converted.
+ * Return: host phy_id after conversion.
+ */
+static uint32_t convert_target_phy_id_to_host_phy_id(wmi_unified_t wmi_handle,
+						     uint32_t phy_id)
+{
+	if (!wmi_handle->soc->is_phy_id_map_enable ||
+	    phy_id >= WMI_MAX_RADIOS) {
+		return phy_id;
+	}
+
+	return wmi_handle->evt_phy_id_map[phy_id];
+}
+
+/**
  * wmi_tlv_pdev_id_conversion_enable() - Enable pdev_id conversion
  *
  * Return None.
@@ -570,24 +606,40 @@ static void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle,
 			wmi_handle->cmd_pdev_id_map[i] = pdev_id_map[i];
 			wmi_handle->evt_pdev_id_map[i] =
 				WMI_HOST_PDEV_ID_INVALID;
+			wmi_handle->cmd_phy_id_map[i] = pdev_id_map[i] - 1;
+			wmi_handle->evt_phy_id_map[i] =
+				WMI_HOST_PDEV_ID_INVALID;
 		}
 
 		for (i = 0; i < size; i++) {
 			if (wmi_handle->cmd_pdev_id_map[i] !=
 					WMI_HOST_PDEV_ID_INVALID) {
 				wmi_handle->evt_pdev_id_map
-					[wmi_handle->cmd_pdev_id_map[i] - 1] = i;
+				[wmi_handle->cmd_pdev_id_map[i] - 1] = i;
+			}
+			if (wmi_handle->cmd_phy_id_map[i] !=
+					WMI_HOST_PDEV_ID_INVALID) {
+				wmi_handle->evt_phy_id_map
+					[wmi_handle->cmd_phy_id_map[i]] = i;
 			}
 		}
 		wmi_handle->soc->is_pdev_is_map_enable = true;
+		wmi_handle->soc->is_phy_id_map_enable = true;
 	} else {
 		wmi_handle->soc->is_pdev_is_map_enable = false;
+		wmi_handle->soc->is_phy_id_map_enable = false;
 	}
 
 	wmi_handle->ops->convert_pdev_id_host_to_target =
 		convert_host_pdev_id_to_target_pdev_id;
 	wmi_handle->ops->convert_pdev_id_target_to_host =
 		convert_target_pdev_id_to_host_pdev_id;
+
+	/* phy_id convert function assignments */
+	wmi_handle->ops->convert_phy_id_host_to_target =
+		convert_host_phy_id_to_target_phy_id;
+	wmi_handle->ops->convert_phy_id_target_to_host =
+		convert_target_phy_id_to_host_phy_id;
 }
 
 /* copy_vdev_create_pdev_id() - copy pdev from host params to target command
@@ -10892,7 +10944,8 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	reg_info->phybitmap = chan_list_event_hdr->phybitmap;
 	reg_info->offload_enabled = true;
 	reg_info->num_phy = chan_list_event_hdr->num_phy;
-	reg_info->phy_id = chan_list_event_hdr->phy_id;
+	reg_info->phy_id = wmi_handle->ops->convert_phy_id_target_to_host(
+				wmi_handle, chan_list_event_hdr->phy_id);
 	reg_info->ctry_code = chan_list_event_hdr->country_id;
 	reg_info->reg_dmn_pair = chan_list_event_hdr->domain_code;
 	if (chan_list_event_hdr->status_code == WMI_REG_SET_CC_STATUS_PASS)
@@ -11366,6 +11419,36 @@ static uint32_t convert_target_pdev_id_to_host_pdev_id_legacy(
 {
 	/*No conversion required*/
 	return pdev_id;
+}
+
+/**
+ * convert_host_phy_id_to_target_phy_id_legacy() - Convert phy_id from
+ *	   host to target defines. For legacy there is not conversion
+ *	   required. Just return phy_id as it is.
+ * @param pdev_id: host phy_id to be converted.
+ * Return: target phy_id after conversion.
+ */
+static uint32_t convert_host_phy_id_to_target_phy_id_legacy(
+						       wmi_unified_t wmi_handle,
+						       uint32_t phy_id)
+{
+	/*No conversion required*/
+	return phy_id;
+}
+
+/**
+ * convert_target_phy_id_to_host_phy_id_legacy() - Convert phy_id from
+ *	   target to host defines. For legacy there is not conversion
+ *	   required. Just return phy_id as it is.
+ * @param pdev_id: target phy_id to be converted.
+ * Return: host phy_id after conversion.
+ */
+static uint32_t convert_target_phy_id_to_host_phy_id_legacy(
+						       wmi_unified_t wmi_handle,
+						       uint32_t phy_id)
+{
+	/*No conversion required*/
+	return phy_id;
 }
 
 /**
@@ -13024,6 +13107,16 @@ struct wmi_ops tlv_ops =  {
 		convert_host_pdev_id_to_target_pdev_id,
 	.convert_target_pdev_id_to_host =
 		convert_target_pdev_id_to_host_pdev_id,
+
+	.convert_phy_id_host_to_target =
+		convert_host_phy_id_to_target_phy_id_legacy,
+	.convert_phy_id_target_to_host =
+		convert_target_phy_id_to_host_phy_id_legacy,
+
+	.convert_host_phy_id_to_target =
+		convert_host_phy_id_to_target_phy_id,
+	.convert_target_phy_id_to_host =
+		convert_target_phy_id_to_host_phy_id,
 
 	.send_start_11d_scan_cmd = send_start_11d_scan_cmd_tlv,
 	.send_stop_11d_scan_cmd = send_stop_11d_scan_cmd_tlv,

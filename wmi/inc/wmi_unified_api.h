@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -459,8 +459,9 @@ void
 wmi_flush_endpoint(wmi_unified_t wmi_handle);
 
 /**
- * wmi_pdev_id_conversion_enable() - API to enable pdev_id conversion in WMI
- *                     By default pdev_id conversion is not done in WMI.
+ * wmi_pdev_id_conversion_enable() - API to enable pdev_id and phy_id
+ *                     conversion in WMI. By default pdev_id and
+ *                     phyid conversion is not done in WMI.
  *                     This API can be used enable conversion in WMI.
  * @param wmi_handle   : handle to WMI
  * @param *pdev_id_map : pdev conversion map
@@ -468,7 +469,8 @@ wmi_flush_endpoint(wmi_unified_t wmi_handle);
  * Return none
  */
 void wmi_pdev_id_conversion_enable(wmi_unified_t wmi_handle,
-				   uint32_t *pdev_id_map, uint8_t size);
+				   uint32_t *pdev_id_map,
+				   uint8_t size);
 
 /**
  * API to handle wmi rx event after UMAC has taken care of execution

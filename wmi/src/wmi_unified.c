@@ -2630,6 +2630,8 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 		wmi_handle->soc = soc;
 		wmi_handle->cmd_pdev_id_map = soc->cmd_pdev_id_map;
 		wmi_handle->evt_pdev_id_map = soc->evt_pdev_id_map;
+		wmi_handle->cmd_phy_id_map = soc->cmd_phy_id_map;
+		wmi_handle->evt_phy_id_map = soc->evt_phy_id_map;
 		wmi_interface_logging_init(wmi_handle, pdev_idx);
 		qdf_atomic_init(&wmi_handle->pending_cmds);
 		qdf_atomic_init(&wmi_handle->is_target_suspended);
@@ -2740,6 +2742,8 @@ void *wmi_unified_attach(void *scn_handle,
 	wmi_handle->scn_handle = scn_handle;
 	wmi_handle->cmd_pdev_id_map = soc->cmd_pdev_id_map;
 	wmi_handle->evt_pdev_id_map = soc->evt_pdev_id_map;
+	wmi_handle->cmd_phy_id_map = soc->cmd_phy_id_map;
+	wmi_handle->evt_phy_id_map = soc->evt_phy_id_map;
 	soc->scn_handle = scn_handle;
 	qdf_atomic_init(&wmi_handle->pending_cmds);
 	qdf_atomic_init(&wmi_handle->is_target_suspended);
@@ -3161,8 +3165,8 @@ wmi_flush_endpoint(wmi_unified_t wmi_handle)
 qdf_export_symbol(wmi_flush_endpoint);
 
 /**
- * wmi_pdev_id_conversion_enable() - API to enable pdev_id conversion in WMI
- *                     By default pdev_id conversion is not done in WMI.
+ * wmi_pdev_id_conversion_enable() - API to enable pdev_id/phy_id conversion
+ *                     in WMI. By default pdev_id conversion is not done in WMI.
  *                     This API can be used enable conversion in WMI.
  * @param wmi_handle   : handle to WMI
  * @param pdev_map     : pointer to pdev_map
@@ -3170,7 +3174,8 @@ qdf_export_symbol(wmi_flush_endpoint);
  * Return none
  */
 void wmi_pdev_id_conversion_enable(wmi_unified_t wmi_handle,
-				   uint32_t *pdev_id_map, uint8_t size)
+				   uint32_t *pdev_id_map,
+				   uint8_t size)
 {
 	if (wmi_handle->target_type == WMI_TLV_TARGET)
 		wmi_handle->ops->wmi_pdev_id_conversion_enable(wmi_handle,

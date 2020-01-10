@@ -1848,6 +1848,10 @@ uint32_t (*convert_pdev_id_host_to_target)(wmi_unified_t wmi_handle,
 					   uint32_t pdev_id);
 uint32_t (*convert_pdev_id_target_to_host)(wmi_unified_t wmi_handle,
 					   uint32_t pdev_id);
+uint32_t (*convert_phy_id_host_to_target)(wmi_unified_t wmi_handle,
+					  uint32_t phy_id);
+uint32_t (*convert_phy_id_target_to_host)(wmi_unified_t wmi_handle,
+					  uint32_t phy_id);
 
 /*
  * For MCL, convert_pdev_id_host_to_target returns legacy pdev id value.
@@ -1863,6 +1867,11 @@ uint32_t (*convert_host_pdev_id_to_target)(wmi_unified_t wmi_handle,
 					   uint32_t pdev_id);
 uint32_t (*convert_target_pdev_id_to_host)(wmi_unified_t wmi_handle,
 					   uint32_t pdev_id);
+
+uint32_t (*convert_host_phy_id_to_target)(wmi_unified_t wmi_handle,
+					  uint32_t phy_id);
+uint32_t (*convert_target_phy_id_to_host)(wmi_unified_t wmi_handle,
+					  uint32_t phy_id);
 
 QDF_STATUS (*send_user_country_code_cmd)(wmi_unified_t wmi_handle,
 		uint8_t pdev_id, struct cc_regdmn_s *rd);
@@ -1955,7 +1964,8 @@ QDF_STATUS
 			   uint8_t idx, uint8_t rpt_idx);
 
 void (*wmi_pdev_id_conversion_enable)(wmi_unified_t wmi_handle,
-				      uint32_t *pdev_map, uint8_t size);
+				      uint32_t *pdev_map,
+				      uint8_t size);
 void (*send_time_stamp_sync_cmd)(wmi_unified_t wmi_handle);
 void (*wmi_free_allocated_event)(uint32_t cmd_event_id,
 				void **wmi_cmd_struct_ptr);
@@ -2203,6 +2213,8 @@ struct wmi_unified {
 #endif /*WMI_EXT_DBG*/
 	uint32_t *cmd_pdev_id_map;
 	uint32_t *evt_pdev_id_map;
+	uint32_t *cmd_phy_id_map;
+	uint32_t *evt_phy_id_map;
 	qdf_atomic_t num_stats_over_qmi;
 };
 
@@ -2233,7 +2245,10 @@ struct wmi_soc {
 	uint32_t soc_idx;
 	uint32_t cmd_pdev_id_map[WMI_MAX_RADIOS];
 	uint32_t evt_pdev_id_map[WMI_MAX_RADIOS];
+	uint32_t cmd_phy_id_map[WMI_MAX_RADIOS];
+	uint32_t evt_phy_id_map[WMI_MAX_RADIOS];
 	bool is_pdev_is_map_enable;
+	bool is_phy_id_map_enable;
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	uint32_t buf_offset_command;
 	uint32_t buf_offset_event;
