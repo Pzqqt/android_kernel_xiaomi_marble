@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,6 +74,14 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 #define QDF_DEBUG_ERROR         0x20
 #define QDF_DEBUG_CFG           0x40
 
+/*
+ * Rate limit based on pkt prototype
+ */
+#define QDF_MAX_DHCP_PKTS_PER_SEC       (10)
+#define QDF_MAX_EAPOL_PKTS_PER_SEC      (10)
+#define QDF_MAX_ARP_PKTS_PER_SEC        (5)
+#define QDF_MAX_DNS_PKTS_PER_SEC        (5)
+#define QDF_MAX_OTHER_PKTS_PER_SEC      (1)
 
 /* DP Trace Implementation */
 #ifdef CONFIG_DP_TRACE
@@ -105,6 +113,7 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 #define QDF_TRACE_DEFAULT_PDEV_ID 0xff
 #define INVALID_QDF_TRACE_ADDR 0xffffffff
 #define DEFAULT_QDF_TRACE_DUMP_COUNT 0
+#define QDF_TRACE_DEFAULT_MSDU_ID 0
 
 /*
  * first parameter to iwpriv command - dump_dp_trace
@@ -459,6 +468,9 @@ struct qdf_dp_trace_record_s {
  * @icmpv6_na: stats for icmpv6 nas
  * @icmpv6_rs: stats for icmpv6 rss
  * @icmpv6_ra: stats for icmpv6 ras
+ * @proto_event_bitmap: defines which protocol to be diag logged.
+ *  refer QDF_NBUF_PKT_TRAC_TYPE_DNS to QDF_NBUF_PKT_TRAC_TYPE_ARP
+ *  for bitmap.
  */
 struct s_qdf_dp_trace_data {
 	uint32_t head;
@@ -504,6 +516,7 @@ struct s_qdf_dp_trace_data {
 	u16 icmpv6_na;
 	u16 icmpv6_rs;
 	u16 icmpv6_ra;
+	uint32_t proto_event_bitmap;
 };
 
 /**
@@ -880,6 +893,35 @@ void qdf_dp_display_event_record(struct qdf_dp_trace_record_s *record,
 void qdf_dp_trace_record_event(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 			       uint8_t pdev_id, enum qdf_proto_type type,
 			       enum qdf_proto_subtype subtype);
+
+/**
+ * qdf_dp_set_proto_event_bitmap() - Set the protocol event bitmap
+ * @value: proto event bitmap value.
+ *
+ * QDF_NBUF_PKT_TRAC_TYPE_DNS       0x01
+ * QDF_NBUF_PKT_TRAC_TYPE_EAPOL     0x02
+ * QDF_NBUF_PKT_TRAC_TYPE_DHCP      0x04
+ * QDF_NBUF_PKT_TRAC_TYPE_ARP       0x10
+ *
+ * Return: none
+ */
+void qdf_dp_set_proto_event_bitmap(uint32_t value);
+
+/**
+ * qdf_dp_log_proto_pkt_info() - Send diag log event
+ * @sa: source MAC address
+ * @da: destination MAC address
+ * @type: pkt type
+ * @subtype: pkt subtype
+ * @dir: tx or rx
+ * @msdu_id: msdu id
+ * @status: status
+ *
+ * Return: none
+ */
+void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
+			       uint8_t subtype, uint8_t dir, uint8_t msdu_id,
+			       uint8_t status);
 #else
 static inline
 bool qdf_dp_trace_log_pkt(uint8_t vdev_id, struct sk_buff *skb,
@@ -967,6 +1009,13 @@ static inline
 void qdf_dp_trace_data_pkt(qdf_nbuf_t nbuf, uint8_t pdev_id,
 			   enum QDF_DP_TRACE_ID code, uint16_t msdu_id,
 			   enum qdf_proto_dir dir)
+{
+}
+
+static inline
+void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
+			       uint8_t subtype, uint8_t dir, uint8_t msdu_id,
+			       uint8_t status)
 {
 }
 #endif
