@@ -379,11 +379,15 @@ QDF_STATUS vdev_mgr_up_send(struct vdev_mlme_obj *mlme_obj)
 					WLAN_VDEV_FEXT_FILS_DISC_6G_SAP);
 	mlme_debug("SAP FD enabled %d", is_6g_sap_fd_enabled);
 	if (opmode == QDF_SAP_MODE && mlme_obj->vdev->vdev_mlme.des_chan &&
-	    is_6g_sap_fd_enabled &&
 	    WLAN_REG_IS_6GHZ_CHAN_FREQ(
 			mlme_obj->vdev->vdev_mlme.des_chan->ch_freq)) {
 		fils_param.vdev_id = wlan_vdev_get_id(mlme_obj->vdev);
-		fils_param.fd_period = DEFAULT_FILS_DISCOVERY_PERIOD;
+		if (is_6g_sap_fd_enabled) {
+			fils_param.fd_period = DEFAULT_FILS_DISCOVERY_PERIOD;
+		} else {
+			fils_param.send_prb_rsp_frame = true;
+			fils_param.fd_period = DEFAULT_PROBE_RESP_PERIOD;
+		}
 		status = tgt_vdev_mgr_fils_enable_send(mlme_obj,
 						       &fils_param);
 	}

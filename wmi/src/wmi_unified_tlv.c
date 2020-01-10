@@ -12337,8 +12337,10 @@ send_vdev_fils_enable_cmd_send(struct wmi_unified *wmi_handle,
 		       (wmi_enable_fils_cmd_fixed_param));
 	cmd->vdev_id = param->vdev_id;
 	cmd->fd_period = param->fd_period;
-	WMI_LOGD("%s: vdev id: %d fd_period: %d",
-		 __func__, cmd->vdev_id, cmd->fd_period);
+	if (param->send_prb_rsp_frame)
+		cmd->flags |= WMI_FILS_FLAGS_BITMAP_BCAST_PROBE_RSP;
+	WMI_LOGD("%s: vdev id: %d fd_period: %d cmd->Flags %d",
+		 __func__, cmd->vdev_id, cmd->fd_period, cmd->flags);
 	wmi_mtrace(WMI_ENABLE_FILS_CMDID, cmd->vdev_id, cmd->fd_period);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_ENABLE_FILS_CMDID)) {

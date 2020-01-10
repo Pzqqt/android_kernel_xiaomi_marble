@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -298,8 +298,9 @@ struct peer_flush_params {
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 };
 
-/* Default FILS DISCOVERY sent in period of 20TU */
+/* Default FILS DISCOVERY/probe response sent in period of 20TU */
 #define DEFAULT_FILS_DISCOVERY_PERIOD 20
+#define DEFAULT_PROBE_RESP_PERIOD 20
 
 /**
  * struct config_fils_params - FILS config params
