@@ -340,17 +340,20 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	ast_index = ppdu_info->rx_status.ast_index;
 	if (ast_index >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
+		cdp_rx_ppdu->num_users = 0;
 		goto end;
 	}
 
 	ast_entry = soc->ast_table[ast_index];
 	if (!ast_entry) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
+		cdp_rx_ppdu->num_users = 0;
 		goto end;
 	}
 	peer = ast_entry->peer;
 	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
+		cdp_rx_ppdu->num_users = 0;
 		goto end;
 	}
 
