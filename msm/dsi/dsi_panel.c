@@ -34,26 +34,37 @@
 #define DEFAULT_PANEL_PREFILL_LINES	25
 #define MIN_PREFILL_LINES      35
 
-
-int dsi_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc, char *buf,
-				int pps_id, u32 size)
+static void dsi_dce_prepare_pps_header(char *buf, u32 pps_delay_ms)
 {
 	char *bp;
-	char *dbgbp;
-	u32 header_size = 7;
 
-	dbgbp = buf;
 	bp = buf;
 	/* First 7 bytes are cmd header */
 	*bp++ = 0x0A;
 	*bp++ = 1;
 	*bp++ = 0;
 	*bp++ = 0;
-	*bp++ = dsc->pps_delay_ms;
+	*bp++ = pps_delay_ms;
 	*bp++ = 0;
 	*bp++ = 128;
+}
 
-	return sde_dsc_create_pps_buf_cmd(dsc, bp, pps_id, size - header_size);
+static int dsi_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc,
+	char *buf, int pps_id, u32 size)
+{
+	dsi_dce_prepare_pps_header(buf, dsc->pps_delay_ms);
+	buf += DSI_CMD_PPS_HDR_SIZE;
+	return sde_dsc_create_pps_buf_cmd(dsc, buf, pps_id,
+			size);
+}
+
+static int dsi_vdc_create_pps_buf_cmd(struct msm_display_vdc_info *vdc,
+	char *buf, int pps_id, u32 size)
+{
+	dsi_dce_prepare_pps_header(buf, vdc->pps_delay_ms);
+	buf += DSI_CMD_PPS_HDR_SIZE;
+	return sde_vdc_create_pps_buf_cmd(vdc, buf, pps_id,
+			size);
 }
 
 static int dsi_panel_vreg_get(struct dsi_panel *panel)
@@ -3771,17 +3782,22 @@ int dsi_panel_update_pps(struct dsi_panel *panel)
 
 	set = &priv_info->cmd_sets[DSI_CMD_SET_PPS];
 
-	rc = dsi_dsc_create_pps_buf_cmd(&priv_info->dsc, panel->dsc_pps_cmd, 0,
-			DSI_CMD_PPS_SIZE);
-	if (rc) {
-		DSI_ERR("failed to create pps cmd, rc=%d\n", rc);
-		goto error;
-	}
-	rc = dsi_panel_create_cmd_packets(panel->dsc_pps_cmd,
-					  DSI_CMD_PPS_SIZE, 1, set->cmds);
-	if (rc) {
-		DSI_ERR("failed to create cmd packets, rc=%d\n", rc);
-		goto error;
+	if (priv_info->dsc_enabled)
+		dsi_dsc_create_pps_buf_cmd(&priv_info->dsc,
+				panel->dce_pps_cmd, 0,
+				DSI_CMD_PPS_SIZE - DSI_CMD_PPS_HDR_SIZE);
+	else if (priv_info->vdc_enabled)
+		dsi_vdc_create_pps_buf_cmd(&priv_info->vdc,
+				panel->dce_pps_cmd, 0,
+				DSI_CMD_PPS_SIZE - DSI_CMD_PPS_HDR_SIZE);
+
+	if (priv_info->dsc_enabled || priv_info->vdc_enabled) {
+		rc = dsi_panel_create_cmd_packets(panel->dce_pps_cmd,
+				DSI_CMD_PPS_SIZE, 1, set->cmds);
+		if (rc) {
+			DSI_ERR("failed to create cmd packets, rc=%d\n", rc);
+			goto error;
+		}
 	}
 
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_PPS);

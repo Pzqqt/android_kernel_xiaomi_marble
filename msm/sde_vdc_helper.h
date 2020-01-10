@@ -42,8 +42,20 @@
 #define NUM_ACTIVE_HS 1
 #define MAX_PIXELS_PER_HS_LINE 5120
 
+#define SDE_VDC_PPS_SIZE 128
+
+/**
+ * sde_vdc_populate_config - populates the VDC encoder parameters
+ * for a given panel configuration
+ */
 int sde_vdc_populate_config(struct msm_display_vdc_info *vdc_info,
 	int intf_width, int traffic_mode);
 
-#endif /* __SDE_VDC_HELPER_H__ */
+/**
+ * sde_vdc_create_pps_buf_cmd- creates the PPS buffer from the VDC
+ * parameters according to the VDC specification
+ */
+int sde_vdc_create_pps_buf_cmd(struct msm_display_vdc_info *vdc_info,
+	char *buf, int pps_id, u32 size);
 
+#endif /* __SDE_VDC_HELPER_H__ */

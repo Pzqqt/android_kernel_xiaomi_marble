@@ -7237,8 +7237,9 @@ int dsi_display_enable(struct dsi_display *display)
 	}
 
 	/* Block sending pps command if modeset is due to fps difference */
-	if ((mode->priv_info->dsc_enabled) &&
-			!(mode->dsi_mode_flags & DSI_MODE_FLAG_DMS_FPS)) {
+	if ((mode->priv_info->dsc_enabled ||
+			mode->priv_info->vdc_enabled) &&
+		!(mode->dsi_mode_flags & DSI_MODE_FLAG_DMS_FPS)) {
 		rc = dsi_panel_update_pps(display->panel);
 		if (rc) {
 			DSI_ERR("[%s] panel pps cmd update failed, rc=%d\n",
@@ -7406,7 +7407,7 @@ int dsi_display_update_pps(char *pps_cmd, void *disp)
 
 	display = disp;
 	mutex_lock(&display->display_lock);
-	memcpy(display->panel->dsc_pps_cmd, pps_cmd, DSI_CMD_PPS_SIZE);
+	memcpy(display->panel->dce_pps_cmd, pps_cmd, DSI_CMD_PPS_SIZE);
 	mutex_unlock(&display->display_lock);
 
 	return 0;

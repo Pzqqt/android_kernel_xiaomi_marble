@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_PANEL_H_
@@ -26,6 +26,7 @@
 #define MAX_SV_BL_SCALE_LEVEL 65535
 #define DSI_CMD_PPS_SIZE 135
 
+#define DSI_CMD_PPS_HDR_SIZE 7
 #define DSI_MODE_MAX 32
 
 enum dsi_panel_rotation {
@@ -198,7 +199,7 @@ struct dsi_panel {
 	bool te_using_watchdog_timer;
 	u32 qsync_min_fps;
 
-	char dsc_pps_cmd[DSI_CMD_PPS_SIZE];
+	char dce_pps_cmd[DSI_CMD_PPS_SIZE];
 	enum dsi_dms_mode dms_mode;
 
 	bool sync_broadcast_en;

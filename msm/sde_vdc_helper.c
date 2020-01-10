@@ -790,3 +790,168 @@ int sde_vdc_populate_config(struct msm_display_vdc_info *vdc_info,
 
 	return ret;
 }
+
+int sde_vdc_create_pps_buf_cmd(struct msm_display_vdc_info *vdc_info,
+	char *buf, int pps_id, u32 len)
+{
+	char *bp = buf;
+	u32 i;
+	u32 slice_num_bits_ub, slice_num_bits_ldw;
+
+	if (len < SDE_VDC_PPS_SIZE)
+		return -EINVAL;
+
+	memset(buf, 0, len);
+	/* b0 */
+	*bp++ = vdc_info->version_major;
+	/* b1 */
+	*bp++ = vdc_info->version_minor;
+	/* b2 */
+	*bp++ = vdc_info->version_release;
+	/* b3 */
+	*bp++ = (pps_id & 0xff);		/* pps1 */
+	/* b4-b5 */
+	*bp++ = ((vdc_info->frame_width >> 8) & 0xff);
+	*bp++ = (vdc_info->frame_width & 0x0ff);
+	/* b6-b7 */
+	*bp++ = ((vdc_info->frame_height >> 8) & 0xff);
+	*bp++ = (vdc_info->frame_height & 0x0ff);
+	/* b8-b9 */
+	*bp++ = ((vdc_info->slice_width >> 8) & 0xff);
+	*bp++ = (vdc_info->slice_width & 0x0ff);
+	/* b10-b11 */
+	*bp++ = ((vdc_info->slice_height >> 8) & 0xff);
+	*bp++ = (vdc_info->slice_height & 0x0ff);
+	/* b12-b15 */
+	*bp++ = ((vdc_info->slice_num_px >> 24) & 0xff);
+	*bp++ = ((vdc_info->slice_num_px >> 16) & 0xff);
+	*bp++ = ((vdc_info->slice_num_px >> 8) & 0xff);
+	*bp++ = (vdc_info->slice_num_px & 0x0ff);
+	/* b16-b17 */
+	*bp++ = ((vdc_info->bits_per_pixel >> 8) & 0x3);
+	*bp++ = (vdc_info->bits_per_pixel & 0xff);
+	/* b18 */
+	bp++; /* reserved */
+	/* b19 */
+	*bp++ = ((((vdc_info->bits_per_component - 8) >> 1) & 0x3) << 4)|
+		((vdc_info->source_color_space & 0x3) << 2)|
+		(vdc_info->chroma_format & 0x3);
+	/* b20-b21 */
+	bp++; /* reserved */
+	bp++; /* reserved */
+
+	/* b22-b23 */
+	*bp++ = ((vdc_info->chunk_size >> 8) & 0xff);
+	*bp++ = (vdc_info->chunk_size & 0x0ff);
+
+	/* b24-b25 */
+	bp++; /* reserved */
+	bp++; /* reserved */
+
+	/* b26-b27 */
+	*bp++ = ((vdc_info->rc_buffer_init_size >> 8) & 0xff);
+	*bp++ = (vdc_info->rc_buffer_init_size & 0x0ff);
+
+	/* b28 */
+	*bp++ = vdc_info->rc_stuffing_bits;
+
+	/* b29 */
+	*bp++ = vdc_info->rc_init_tx_delay;
+
+	/* b30-b31 */
+	*bp++ = ((vdc_info->rc_buffer_max_size >> 8) & 0xff);
+	*bp++ = (vdc_info->rc_buffer_max_size & 0x0ff);
+
+	/* b32-b35 */
+	*bp++ = ((vdc_info->rc_target_rate_threshold >> 24) & 0xff);
+	*bp++ = ((vdc_info->rc_target_rate_threshold >> 16) & 0xff);
+	*bp++ = ((vdc_info->rc_target_rate_threshold >> 8) & 0xff);
+	*bp++ = (vdc_info->rc_target_rate_threshold & 0x0ff);
+
+	/* b36 */
+	*bp++ = vdc_info->rc_tar_rate_scale;
+	/* b37 */
+	*bp++ = vdc_info->rc_buffer_fullness_scale;
+
+	/* b38-b39 */
+	*bp++ = ((vdc_info->rc_fullness_offset_thresh >> 8) & 0xff);
+	*bp++ = (vdc_info->rc_fullness_offset_thresh & 0x0ff);
+
+	/* b40-b42 */
+	*bp++ = ((vdc_info->rc_fullness_offset_slope >> 16) & 0xff);
+	*bp++ = ((vdc_info->rc_fullness_offset_slope >> 8) & 0xff);
+	*bp++ = ((vdc_info->rc_fullness_offset_slope) & 0xff);
+
+	/* b43 */
+	*bp++ = (RC_TARGET_RATE_EXTRA_FTBLS & 0x0f);
+	/* b44 */
+	*bp++ = vdc_info->flatqp_vf_fbls;
+	/* b45 */
+	*bp++ = vdc_info->flatqp_vf_nbls;
+	/* b46 */
+	*bp++ = vdc_info->flatqp_sw_fbls;
+	/* b47 */
+	*bp++ = vdc_info->flatqp_sw_nbls;
+
+	/* b48-b55 */
+	for (i = 0; i < VDC_FLAT_QP_LUT_SIZE; i++)
+		*bp++ = vdc_info->flatness_qp_lut[i];
+
+	/* b56-b63 */
+	for (i = 0; i < VDC_MAX_QP_LUT_SIZE; i++)
+		*bp++ = vdc_info->max_qp_lut[i];
+
+	/* b64-b79 */
+	for (i = 0; i < VDC_TAR_DEL_LUT_SIZE; i++)
+		*bp++ = vdc_info->tar_del_lut[i];
+
+	/* b80 */
+	bp++; /* reserved */
+
+	/* b81 */
+	*bp++ = (((vdc_info->mppf_bpc_r_y & 0xf) << 4) |
+		(vdc_info->mppf_bpc_g_cb & 0xf));
+	/* b82 */
+	*bp++ = (((vdc_info->mppf_bpc_b_cr & 0xf) << 4) |
+		(vdc_info->mppf_bpc_y & 0xf));
+	/* b83 */
+	*bp++ = (((vdc_info->mppf_bpc_co & 0xf) << 4) |
+		(vdc_info->mppf_bpc_cg & 0xf));
+
+	/* b84 */
+	bp++; /* reserved */
+	/* b85 */
+	bp++; /* reserved */
+	/* b86 */
+	bp++; /* reserved */
+
+	/* b87 */
+	*bp++ = SSM_MAX_SE_SIZE;
+
+	/* b88 */
+	bp++; /* reserved */
+	/* b89 */
+	bp++; /* reserved */
+	/* b90 */
+	bp++; /* reserved */
+
+	/* b91 */
+	slice_num_bits_ub = (vdc_info->slice_num_bits >> 32);
+	*bp++ = (slice_num_bits_ub & 0x0ff);
+	/* b92-b95 */
+	slice_num_bits_ldw = (u32)vdc_info->slice_num_bits;
+	*bp++ = ((slice_num_bits_ldw >> 24) & 0xff);
+	*bp++ = ((slice_num_bits_ldw >> 16) & 0xff);
+	*bp++ = ((slice_num_bits_ldw >> 8) & 0xff);
+	*bp++ = (slice_num_bits_ldw & 0x0ff);
+
+	/* b96 */
+	bp++;
+	/* b97 */
+	*bp++ = vdc_info->chunk_adj_bits;
+	/* b98-b99 */
+	*bp++ = ((vdc_info->num_extra_mux_bits >> 8) & 0xff);
+	*bp++ = (vdc_info->num_extra_mux_bits & 0x0ff);
+
+	return 0;
+}
