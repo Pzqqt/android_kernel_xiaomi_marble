@@ -45,6 +45,7 @@
 #define MC_SUSPEND_EVENT            0x002
 #define RX_POST_EVENT               0x001
 #define RX_SUSPEND_EVENT            0x002
+#define RX_VDEV_DEL_EVENT           0x004
 #define RX_SHUTDOWN_EVENT           0x010
 
 #ifdef QCA_CONFIG_SMP

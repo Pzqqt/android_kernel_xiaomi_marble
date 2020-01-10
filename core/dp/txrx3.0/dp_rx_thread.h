@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,6 +44,7 @@ struct dp_rx_tm_handle_cmn;
  * @nbuf_sent_to_stack: packets sent to the stack. some dequeued packets may be
  *			dropped due to no peer or vdev, hence this stat.
  * @gro_flushes: number of GRO flushes
+ * @gro_flushes_by_vdev_del: number of GRO flushes triggered by vdev del.
  * @nbufq_max_len: maximum number of nbuf_lists queued for the thread
  * @dropped_invalid_vdev: packets(nbuf_list) dropped due to no vdev
  * @rx_flushed: packets flushed after vdev delete
@@ -56,6 +57,7 @@ struct dp_rx_thread_stats {
 	unsigned int nbuf_dequeued;
 	unsigned int nbuf_sent_to_stack;
 	unsigned int gro_flushes;
+	unsigned int gro_flushes_by_vdev_del;
 	unsigned int nbufq_max_len;
 	unsigned int dropped_invalid_vdev;
 	unsigned int rx_flushed;
@@ -72,6 +74,8 @@ struct dp_rx_thread_stats {
  * @suspend_event: handle of Event for DP Rx thread to signal suspend
  * @resume_event: handle of Event for DP Rx thread to signal resume
  * @shutdown_event: handle of Event for DP Rx thread to signal shutdown
+ * @vdev_del_event: handle of Event for vdev del thread to signal completion
+ *		    for gro flush
  * @event_flag: event flag to post events to DP Rx thread
  * @nbuf_queue:nbuf queue used to store RX packets
  * @nbufq_len: length of the nbuf queue
@@ -89,6 +93,7 @@ struct dp_rx_thread {
 	qdf_event_t suspend_event;
 	qdf_event_t resume_event;
 	qdf_event_t shutdown_event;
+	qdf_event_t vdev_del_event;
 	qdf_atomic_t gro_flush_ind;
 	unsigned long event_flag;
 	qdf_nbuf_queue_head_t nbuf_queue;
