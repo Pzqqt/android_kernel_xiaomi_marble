@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -193,7 +193,6 @@ struct wlan_objmgr_pdev_objmgr {
  * @obj_status[]:      object status of each component object
  * @obj_state:         object state
  * @tgt_if_handle:     Target interface handle
- * @dp_handle:         DP module handle
  * @pdev_lock:         lock to protect object
 */
 struct wlan_objmgr_pdev {
@@ -205,7 +204,6 @@ struct wlan_objmgr_pdev {
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
 	target_pdev_info_t *tgt_if_handle;
-	void *dp_handle;
 	qdf_spinlock_t pdev_lock;
 };
 
@@ -1038,40 +1036,6 @@ static inline void wlan_pdev_decr_temp_peer_count(struct wlan_objmgr_pdev *pdev)
 static inline uint8_t wlan_pdev_get_vdev_count(struct wlan_objmgr_pdev *pdev)
 {
 	return pdev->pdev_objmgr.wlan_vdev_count;
-}
-
-/**
- * wlan_pdev_set_dp_handle() - set dp handle
- * @pdev: pdev object pointer
- * @dp_handle: Data path module handle
- *
- * Return: void
- */
-static inline void wlan_pdev_set_dp_handle(struct wlan_objmgr_pdev *pdev,
-		void *dp_handle)
-{
-	if (qdf_unlikely(!pdev)) {
-		QDF_BUG(0);
-		return;
-	}
-
-	pdev->dp_handle = dp_handle;
-}
-
-/**
- * wlan_pdev_get_dp_handle() - get dp handle
- * @pdev: pdev object pointer
- *
- * Return: dp handle
- */
-static inline void *wlan_pdev_get_dp_handle(struct wlan_objmgr_pdev *pdev)
-{
-	if (qdf_unlikely(!pdev)) {
-		QDF_BUG(0);
-		return NULL;
-	}
-
-	return pdev->dp_handle;
 }
 
 /**
