@@ -2257,17 +2257,6 @@ uint32_t sap_select_channel(mac_handle_t mac_handle,
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "In %s, Running SAP Ch Select", __func__);
 
-	/*
-	 * If ACS weight is not enabled on noise_floor/channel_free/tx_power,
-	 * then skip acs process if no bss found.
-	 */
-	if ((!scan_list || !qdf_list_size(scan_list)) &&
-	    !(sap_ctx->auto_channel_select_weight & 0xffff00)) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("No external AP present, select default channel"));
-		return sap_select_default_oper_chan(sap_ctx->acs_cfg);
-	}
-
 	/* Initialize the structure pointed by spect_info */
 	if (sap_chan_sel_init(mac_handle, spect_info, sap_ctx) != true) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
