@@ -41,6 +41,21 @@ ifeq ($(CONFIG_CNSS_QCA6490), y)
 	CONFIG_WDI3_IPA_OVER_GSI :=y
 endif
 
+ifeq ($(CONFIG_CNSS_QCA6750), y)
+	ifeq ($(CONFIG_CNSS_EMULATION), y)
+		CONFIG_QCA_WIFI_NAPIER_EMULATION := y
+	endif
+	CONFIG_LITHIUM := y
+	CONFIG_WLAN_FEATURE_11AX := y
+	CONFIG_WLAN_FEATURE_DFS_OFFLOAD := y
+	ifeq ($(CONFIG_ARCH_SDM845), y)
+		CONFIG_IPA3 := n
+	endif
+	CONFIG_SCALE_INCLUDES := y
+	CONFIG_HASTINGS_BT_WAR := y
+	CONFIG_WDI3_IPA_OVER_GSI :=y
+endif
+
 ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
 	CONFIG_QCA_WIFI_SDIO := y
 ifndef CONFIG_SDIO_TRANSFER
@@ -54,6 +69,10 @@ endif
 
 ifdef CONFIG_ICNSS
 	CONFIG_ROME_IF = snoc
+endif
+
+ifdef CONFIG_ICNSS2
+	CONFIG_ROME_IF = ipci
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2)))
@@ -219,7 +238,7 @@ CONFIG_ADAPTIVE_11R := y
 #Flag to enable FILS Feature (11ai)
 CONFIG_WLAN_FEATURE_FILS := y
 ifneq ($(CONFIG_QCA_CLD_WLAN),)
-	ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2) $(CONFIG_ICNSS)))
+	ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2) $(CONFIG_ICNSS)$(CONFIG_ICNSS2)))
 	#Flag to enable Protected Management Frames (11w) feature
 	CONFIG_WLAN_FEATURE_11W := y
 	#Flag to enable LTE CoEx feature
@@ -230,7 +249,7 @@ ifneq ($(CONFIG_QCA_CLD_WLAN),)
 		endif
 	endif
 
-	ifeq (m,$(findstring m,$(CONFIG_CNSS2)))
+	ifeq (m,$(findstring m,$(CONFIG_CNSS2) $(CONFIG_ICNSS2)))
 	#Flag to enable Protected Management Frames (11w) feature
 	CONFIG_WLAN_FEATURE_11W := y
 	#Flag to enable LTE CoEx feature
@@ -404,6 +423,11 @@ ifeq ($(CONFIG_CNSS_QCA6490), y)
 	CONFIG_QCA_WIFI_QCA6490 := y
 endif
 
+ifeq ($(CONFIG_CNSS_QCA6750), y)
+	CONFIG_QCA6750_HEADERS_DEF := y
+	CONFIG_QCA_WIFI_QCA6750 := y
+endif
+
 ifeq ($(CONFIG_LITHIUM), y)
 #
 # Enable VERBOSE debug INI mechanism
@@ -519,6 +543,10 @@ ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_ATH_11AC_TXCOMPACT := y
 endif
 
+ifeq ($(CONFIG_ROME_IF),ipci)
+	CONFIG_ATH_11AC_TXCOMPACT := y
+endif
+
 ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_ATH_11AC_TXCOMPACT := n
 endif
@@ -526,6 +554,10 @@ endif
 #Enable PCI specific APIS (dma, etc)
 ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_HIF_PCI := y
+endif
+
+ifeq ($(CONFIG_ROME_IF),ipci)
+	CONFIG_HIF_IPCI := y
 endif
 
 #Enable USB specific APIS
@@ -966,6 +998,10 @@ endif
 ifeq ($(CONFIG_HIF_PCI), y)
 CONFIG_PLD_PCIE_CNSS_FLAG := y
 endif
+endif
+
+ifeq ($(CONFIG_ICNSS2), y)
+CONFIG_PLD_IPCI_ICNSS_FLAG := y
 endif
 
 ifeq ($(CONFIG_CNSS2), y)
