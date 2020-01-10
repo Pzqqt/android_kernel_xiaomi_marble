@@ -890,7 +890,8 @@ static int sde_encoder_virt_atomic_check(
 	sde_conn_state = to_sde_connector_state(conn_state);
 	sde_crtc_state = to_sde_crtc_state(crtc_state);
 
-	SDE_EVT32(DRMID(drm_enc), drm_atomic_crtc_needs_modeset(crtc_state));
+	SDE_EVT32(DRMID(drm_enc), crtc_state->mode_changed,
+		crtc_state->active_changed, crtc_state->connectors_changed);
 
 	ret = _sde_encoder_atomic_check_phys_enc(sde_enc, crtc_state,
 			conn_state);
@@ -2293,19 +2294,41 @@ static const struct input_device_id sde_input_ids[] = {
 	{ },
 };
 
-static int _sde_encoder_input_handler_register(
-		struct input_handler *input_handler)
+static void _sde_encoder_input_handler_register(
+		struct drm_encoder *drm_enc)
 {
-	int rc = 0;
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+	int rc;
 
-	rc = input_register_handler(input_handler);
-	if (rc) {
-		pr_err("input_register_handler failed, rc= %d\n", rc);
-		kfree(input_handler);
-		return rc;
+	if (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
+		return;
+
+	if (sde_enc->input_handler && !sde_enc->input_handler->private) {
+		sde_enc->input_handler->private = sde_enc;
+
+		/* register input handler if not already registered */
+		rc = input_register_handler(sde_enc->input_handler);
+		if (rc) {
+			SDE_ERROR("input_handler_register failed, rc= %d\n",
+						 rc);
+			kfree(sde_enc->input_handler);
+		}
+	}
+}
+
+static void _sde_encoder_input_handler_unregister(
+		struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+
+	if (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
+		return;
+
+	if (sde_enc->input_handler && sde_enc->input_handler->private) {
+		input_unregister_handler(sde_enc->input_handler);
+		sde_enc->input_handler->private = NULL;
 	}
 
-	return rc;
 }
 
 static int _sde_encoder_input_handler(
@@ -2329,7 +2352,6 @@ static int _sde_encoder_input_handler(
 	input_handler->disconnect = _sde_encoder_input_disconnect;
 	input_handler->name = "sde";
 	input_handler->id_table = sde_input_ids;
-	input_handler->private = sde_enc;
 
 	sde_enc->input_handler = input_handler;
 
@@ -2545,16 +2567,7 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 		return;
 	}
 
-	/* register input handler if not already registered */
-	if (sde_enc->input_handler && !msm_is_mode_seamless_dms(cur_mode) &&
-		sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE) &&
-			!msm_is_mode_seamless_dyn_clk(cur_mode)) {
-		ret = _sde_encoder_input_handler_register(
-				sde_enc->input_handler);
-		if (ret)
-			SDE_ERROR(
-			"input handler registration failed, rc = %d\n", ret);
-	}
+	_sde_encoder_input_handler_register(drm_enc);
 
 	if (!(msm_is_mode_seamless_vrr(cur_mode)
 			|| msm_is_mode_seamless_dms(cur_mode)
@@ -2655,9 +2668,7 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	/* wait for idle */
 	sde_encoder_wait_for_event(drm_enc, MSM_ENC_TX_COMPLETE);
 
-	if (sde_enc->input_handler &&
-		sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
-		input_unregister_handler(sde_enc->input_handler);
+	_sde_encoder_input_handler_unregister(drm_enc);
 
 	/*
 	 * For primary command mode and video mode encoders, execute the
