@@ -3412,23 +3412,11 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	/* Initialize the data path module */
 	hdd_softap_init_tx_rx(adapter);
 
-	status = hdd_sta_info_init(&adapter->sta_info_list);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("sta info init failed");
-		goto error_release_softap_tx_rx;
-	}
-
-	status = hdd_sta_info_init(&adapter->cache_sta_info_list);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("cache sta info init failed");
-		goto error_release_sta_info;
-	}
-
 	status = hdd_wmm_adapter_init(adapter);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("hdd_wmm_adapter_init() failed code: %08d [x%08x]",
 		       status, status);
-		goto error_release_wmm;
+		goto error_release_softap_tx_rx;
 	}
 
 	set_bit(WMM_INIT_DONE, &adapter->event_flags);
@@ -3468,10 +3456,6 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	return status;
 
-error_release_wmm:
-	hdd_sta_info_deinit(&adapter->cache_sta_info_list);
-error_release_sta_info:
-	hdd_sta_info_deinit(&adapter->sta_info_list);
 error_release_softap_tx_rx:
 	hdd_unregister_wext(adapter->dev);
 	hdd_softap_deinit_tx_rx(adapter);
