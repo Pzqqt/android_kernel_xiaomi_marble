@@ -127,7 +127,7 @@ cdp_soc_attach_target(ol_txrx_soc_handle soc)
 
 }
 
-static inline struct cdp_vdev *
+static inline QDF_STATUS
 cdp_vdev_attach(ol_txrx_soc_handle soc, uint8_t pdev_id,
 		uint8_t *vdev_mac_addr, uint8_t vdev_id,
 		enum wlan_op_mode op_mode, enum wlan_op_subtype subtype)
@@ -136,12 +136,12 @@ cdp_vdev_attach(ol_txrx_soc_handle soc, uint8_t pdev_id,
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->cmn_drv_ops ||
 	    !soc->ops->cmn_drv_ops->txrx_vdev_attach)
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 
 	return soc->ops->cmn_drv_ops->txrx_vdev_attach(soc, pdev_id,
 						       vdev_mac_addr, vdev_id,
@@ -242,7 +242,7 @@ cdp_pdev_attach_target(ol_txrx_soc_handle soc, uint8_t pdev_id)
 	return soc->ops->cmn_drv_ops->txrx_pdev_attach_target(soc, pdev_id);
 }
 
-static inline struct cdp_pdev *cdp_pdev_attach
+static inline QDF_STATUS cdp_pdev_attach
 	(ol_txrx_soc_handle soc, HTC_HANDLE htc_pdev, qdf_device_t osdev,
 	 uint8_t pdev_id)
 {
@@ -250,12 +250,12 @@ static inline struct cdp_pdev *cdp_pdev_attach
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->cmn_drv_ops ||
 	    !soc->ops->cmn_drv_ops->txrx_pdev_attach)
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 
 	return soc->ops->cmn_drv_ops->txrx_pdev_attach(soc, htc_pdev, osdev,
 						       pdev_id);
@@ -351,7 +351,7 @@ cdp_pdev_deinit(ol_txrx_soc_handle soc, uint8_t pdev_id, int force)
 	soc->ops->cmn_drv_ops->txrx_pdev_deinit(soc, pdev_id, force);
 }
 
-static inline void *cdp_peer_create
+static inline QDF_STATUS cdp_peer_create
 	(ol_txrx_soc_handle soc, uint8_t vdev_id,
 	uint8_t *peer_mac_addr)
 {
@@ -359,12 +359,12 @@ static inline void *cdp_peer_create
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!soc->ops->cmn_drv_ops ||
 	    !soc->ops->cmn_drv_ops->txrx_peer_create)
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 
 	return soc->ops->cmn_drv_ops->txrx_peer_create(soc, vdev_id,
 			peer_mac_addr);

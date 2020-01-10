@@ -69,7 +69,7 @@ struct cdp_cmn_ops {
 
 	int (*txrx_pdev_attach_target)(ol_txrx_soc_handle soc, uint8_t pdev_id);
 
-	struct cdp_vdev *(*txrx_vdev_attach)
+	QDF_STATUS (*txrx_vdev_attach)
 		(struct cdp_soc_t *soc, uint8_t pdev_id, uint8_t *mac,
 		 uint8_t vdev_id, enum wlan_op_mode op_mode,
 		 enum wlan_op_subtype subtype);
@@ -79,7 +79,7 @@ struct cdp_cmn_ops {
 			    ol_txrx_vdev_delete_cb callback,
 			    void *cb_context);
 
-	struct cdp_pdev *(*txrx_pdev_attach)
+	QDF_STATUS (*txrx_pdev_attach)
 		(ol_txrx_soc_handle soc, HTC_HANDLE htc_pdev,
 		 qdf_device_t osdev, uint8_t pdev_id);
 
@@ -105,7 +105,8 @@ struct cdp_cmn_ops {
 	(*txrx_pdev_deinit)(struct cdp_soc_t *soc, uint8_t pdev_id,
 			    int force);
 
-	void *(*txrx_peer_create)
+	QDF_STATUS
+	(*txrx_peer_create)
 		(ol_txrx_soc_handle soc, uint8_t vdev_id,
 		uint8_t *peer_mac_addr);
 
