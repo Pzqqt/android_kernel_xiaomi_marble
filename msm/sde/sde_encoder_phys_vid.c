@@ -135,7 +135,8 @@ static void drm_mode_to_intf_timing_params(
 	 * compression ratio
 	 */
 	if (phys_enc->hw_intf->cap->type == INTF_DP &&
-		(timing->wide_bus_en || vid_enc->base.comp_ratio)) {
+			(timing->wide_bus_en ||
+			(vid_enc->base.comp_ratio > 1))) {
 		timing->width = timing->width >> 1;
 		timing->xres = timing->xres >> 1;
 		timing->h_back_porch = timing->h_back_porch >> 1;
@@ -143,7 +144,7 @@ static void drm_mode_to_intf_timing_params(
 		timing->hsync_pulse_width = timing->hsync_pulse_width >> 1;
 
 		if (vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_DSC &&
-				vid_enc->base.comp_ratio) {
+				(vid_enc->base.comp_ratio > 1)) {
 			timing->compression_en = true;
 			timing->extra_dto_cycles =
 				vid_enc->base.dsc_extra_pclk_cycle_cnt;

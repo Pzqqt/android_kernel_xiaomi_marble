@@ -1002,7 +1002,7 @@ static void dp_ctrl_mst_calculate_rg(struct dp_ctrl_private *ctrl,
 	u32 x_int = 0, y_frac_enum = 0;
 	u64 target_strm_sym, ts_int_fixp, ts_frac_fixp, y_frac_enum_fixp;
 
-	if (panel->pinfo.comp_info.comp_ratio)
+	if (panel->pinfo.comp_info.comp_ratio > 1)
 		bpp = DSC_BPP(panel->pinfo.comp_info.dsc_info.config);
 
 	/* min_slot_cnt */
