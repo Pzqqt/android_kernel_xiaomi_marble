@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1610,6 +1610,19 @@ struct cdp_rx_offld_ops {
 };
 #endif
 
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+/**
+ * struct cdp_cfr_ops - host cfr ops
+ * @txrx_cfr_filter: Handler to configure host rx monitor status ring
+ */
+struct cdp_cfr_ops {
+	void (*txrx_cfr_filter)(struct cdp_soc_t *soc_hdl,
+				uint8_t pdev_id,
+				bool enable,
+				struct cdp_monitor_filter *filter_val);
+};
+#endif
+
 struct cdp_ops {
 	struct cdp_cmn_ops          *cmn_drv_ops;
 	struct cdp_ctrl_ops         *ctrl_ops;
@@ -1644,6 +1657,9 @@ struct cdp_ops {
 #endif
 #ifdef WLAN_FEATURE_PKT_CAPTURE
 	struct cdp_pktcapture_ops   *pktcapture_ops;
+#endif
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+	struct cdp_cfr_ops          *cfr_ops;
 #endif
 
 };

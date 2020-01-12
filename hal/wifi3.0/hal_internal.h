@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -459,6 +459,8 @@ struct hal_hw_txrx_ops {
 					  uint32_t *flow_index);
 	uint16_t (*hal_rx_tlv_get_tcp_chksum)(uint8_t *buf);
 	uint16_t (*hal_rx_get_rx_sequence)(uint8_t *buf);
+	void (*hal_rx_get_bb_info)(void *rx_tlv, void *ppdu_info_handle);
+	void (*hal_rx_get_rtt_info)(void *rx_tlv, void *ppdu_info_handle);
 };
 
 /**

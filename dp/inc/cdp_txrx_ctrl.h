@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -722,6 +722,34 @@ cdp_get_pldev(ol_txrx_soc_handle soc,
 
 	return soc->ops->ctrl_ops->txrx_get_pldev(pdev);
 }
+
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+/**
+ * cdp_cfr_filter() - Configure Host RX monitor status ring for CFR
+ * @soc: SOC TXRX handle
+ * @pdev_id: ID of the physical device object
+ * @enable: Enable or disable CFR
+ * @filter_val: Flag to select filter for monitor mode
+ */
+static inline void
+cdp_cfr_filter(ol_txrx_soc_handle soc,
+	       uint8_t pdev_id,
+	       bool enable,
+	       struct cdp_monitor_filter *filter_val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cfr_ops || !soc->ops->cfr_ops->txrx_cfr_filter)
+		return;
+
+	soc->ops->cfr_ops->txrx_cfr_filter(soc, pdev_id, enable, filter_val);
+}
+#endif
 
 #if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(WLAN_RX_PKT_CAPTURE_ENH)
 /**

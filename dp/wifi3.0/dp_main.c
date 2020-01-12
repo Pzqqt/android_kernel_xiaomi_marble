@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -151,6 +151,12 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle,
 bool is_dp_verbose_debug_enabled;
 #endif
 
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
+			  uint8_t pdev_id,
+			  bool enable,
+			  struct cdp_monitor_filter *filter_val);
+#endif
 static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
 					    enum hal_ring_type ring_type,
 					    int ring_num);
@@ -9749,6 +9755,12 @@ static struct cdp_pflow_ops dp_ops_pflow = {
 };
 #endif /* CONFIG_WIN */
 
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+static struct cdp_cfr_ops dp_ops_cfr = {
+	.txrx_cfr_filter = dp_cfr_filter,
+};
+#endif
+
 #ifdef FEATURE_RUNTIME_PM
 /**
  * dp_runtime_suspend() - ensure DP is ready to runtime suspend
@@ -10179,6 +10191,9 @@ static struct cdp_ops dp_txrx_ops = {
 #ifdef DP_POWER_SAVE
 	.bus_ops = &dp_ops_bus,
 #endif
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+	.cfr_ops = &dp_ops_cfr,
+#endif
 };
 
 /*
@@ -10505,6 +10520,76 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 
 	*max_mac_rings = (dbs_enable)?(*max_mac_rings):1;
 }
+
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+/*
+ * dp_cfr_filter() -  Configure HOST RX monitor status ring for CFR
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ * @enable: Enable/Disable CFR
+ * @filter_val: Flag to select Filter for monitor mode
+ */
+static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
+			  uint8_t pdev_id,
+			  bool enable,
+			  struct cdp_monitor_filter *filter_val)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};
+	int max_mac_rings = wlan_cfg_get_num_mac_rings(pdev->wlan_cfg_ctx);
+	uint8_t mac_id = 0;
+
+	if (pdev->monitor_vdev) {
+		dp_info("No action is needed since monitor mode is enabled\n");
+		return;
+	}
+	soc = pdev->soc;
+	pdev->cfr_rcc_mode = false;
+	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+
+	dp_debug("Max_mac_rings %d", max_mac_rings);
+	dp_info("enable : %d, mode: 0x%x", enable, filter_val->mode);
+
+	if (enable) {
+		pdev->cfr_rcc_mode = true;
+
+		htt_tlv_filter.ppdu_start = 1;
+		htt_tlv_filter.ppdu_end = 1;
+		htt_tlv_filter.ppdu_end_user_stats = 1;
+		htt_tlv_filter.ppdu_end_user_stats_ext = 1;
+		htt_tlv_filter.ppdu_end_status_done = 1;
+		htt_tlv_filter.mpdu_start = 1;
+		htt_tlv_filter.offset_valid = false;
+
+		htt_tlv_filter.enable_fp =
+			(filter_val->mode & MON_FILTER_PASS) ? 1 : 0;
+		htt_tlv_filter.enable_md = 0;
+		htt_tlv_filter.enable_mo =
+			(filter_val->mode & MON_FILTER_OTHER) ? 1 : 0;
+		htt_tlv_filter.fp_mgmt_filter = filter_val->fp_mgmt;
+		htt_tlv_filter.fp_ctrl_filter = filter_val->fp_ctrl;
+		htt_tlv_filter.fp_data_filter = filter_val->fp_data;
+		htt_tlv_filter.mo_mgmt_filter = filter_val->mo_mgmt;
+		htt_tlv_filter.mo_ctrl_filter = filter_val->mo_ctrl;
+		htt_tlv_filter.mo_data_filter = filter_val->mo_data;
+	}
+
+	for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
+		int mac_for_pdev =
+			dp_get_mac_id_for_pdev(mac_id,
+					       pdev->pdev_id);
+
+		htt_h2t_rx_ring_cfg(soc->htt_handle,
+				    mac_for_pdev,
+				    pdev->rxdma_mon_status_ring[mac_id]
+				    .hal_srng,
+				    RXDMA_MONITOR_STATUS,
+				    RX_BUFFER_SIZE,
+				    &htt_tlv_filter);
+	}
+}
+#endif
 
 /*
 * dp_is_soc_reinit() - Check if soc reinit is true
