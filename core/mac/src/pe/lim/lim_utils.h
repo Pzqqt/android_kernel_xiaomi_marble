@@ -1280,6 +1280,20 @@ void lim_update_stads_he_capable(tpDphHashNode sta_ds, tpSirAssocReq assoc_req);
 void lim_update_session_he_capable(struct mac_context *mac, struct pe_session *session);
 
 /**
+ * lim_update_session_he_capable_chan_switch(): Update he_capable in PE session
+ * @mac: pointer to MAC context
+ * @session: pointer to PE session
+ * @new_chan_freq: new channel frequency Mhz
+ *
+ * Update session he capable during AP channel switching
+ *
+ * Return: None
+ */
+void lim_update_session_he_capable_chan_switch(struct mac_context *mac,
+					       struct pe_session *session,
+					       uint32_t new_chan_freq);
+
+/**
  * lim_set_he_caps() - update HE caps to be sent to FW as part of scan IE
  * @mac: pointer to MAC
  * @session: pointer to PE session
@@ -1471,6 +1485,13 @@ static inline void lim_update_stads_he_capable(tpDphHashNode sta_ds,
 
 static inline void lim_update_session_he_capable(struct mac_context *mac,
 			struct pe_session *session)
+{
+}
+
+static inline
+void lim_update_session_he_capable_chan_switch(struct mac_context *mac,
+					       struct pe_session *session,
+					       uint32_t new_chan_freq)
 {
 }
 

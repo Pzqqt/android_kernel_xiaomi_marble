@@ -7195,6 +7195,28 @@ void lim_update_session_he_capable(struct mac_context *mac, struct pe_session *s
 	pe_debug("he_capable: %d", session->he_capable);
 }
 
+void lim_update_session_he_capable_chan_switch(struct mac_context *mac,
+					       struct pe_session *session,
+					       uint32_t new_chan_freq)
+{
+	session->he_capable = true;
+	if (wlan_reg_is_6ghz_chan_freq(session->curr_op_freq) &&
+	    !wlan_reg_is_6ghz_chan_freq(new_chan_freq)) {
+		session->htCapability = 1;
+		session->vhtCapability = 1;
+		session->he_6ghz_band = 0;
+	} else if (!wlan_reg_is_6ghz_chan_freq(session->curr_op_freq) &&
+		   wlan_reg_is_6ghz_chan_freq(new_chan_freq)) {
+		session->htCapability = 0;
+		session->vhtCapability = 0;
+		session->he_6ghz_band = 1;
+	}
+
+	pe_debug("he_capable: %d ht %d vht %d 6ghz_band %d new freq %d",
+		 session->he_capable, session->htCapability,
+		 session->vhtCapability, session->he_6ghz_band, new_chan_freq);
+}
+
 void lim_set_he_caps(struct mac_context *mac, struct pe_session *session, uint8_t *ie_start,
 		     uint32_t num_bytes)
 {

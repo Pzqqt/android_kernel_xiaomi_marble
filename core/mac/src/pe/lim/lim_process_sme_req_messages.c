@@ -4964,6 +4964,17 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 		 ch_change_req->nw_type,
 		 ch_change_req->dot11mode);
 
+	if (IS_DOT11_MODE_HE(ch_change_req->dot11mode) &&
+	    lim_is_session_he_capable(session_entry)) {
+		lim_update_session_he_capable_chan_switch
+			(mac_ctx, session_entry, target_freq);
+	} else if (wlan_reg_is_6ghz_chan_freq(target_freq)) {
+		pe_debug("Invalid target_freq %d for dot11mode %d cur HE %d",
+			 target_freq, ch_change_req->dot11mode,
+			 lim_is_session_he_capable(session_entry));
+		return;
+	}
+
 	/* Store the New Channel Params in session_entry */
 	session_entry->ch_width = ch_change_req->ch_width;
 	session_entry->ch_center_freq_seg0 =
