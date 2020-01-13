@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -4630,3 +4630,56 @@ void dfs_set_fw_adfs_support(struct wlan_dfs *dfs,
 	dfs->dfs_fw_adfs_support_160 = fw_adfs_support_160;
 }
 #endif
+
+void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
+			     struct wlan_dfs *dest_dfs,
+			     uint16_t low_5g_freq,
+			     uint16_t high_5g_freq)
+{
+	struct dfs_precac_entry *tmp_precac_entry, *tmp_precac_entry2;
+
+	/* If the destination DFS is not adhering ETSI (or)
+	 * if the source DFS does not have any lists, return (nothing to do).
+	 */
+	if (utils_get_dfsdomain(dest_dfs->dfs_pdev_obj) != DFS_ETSI_DOMAIN ||
+	    TAILQ_EMPTY(&src_dfs->dfs_precac_list))
+		return;
+
+	/* If dest_dfs and src_dfs are same it will cause dead_lock. */
+	if (dest_dfs == src_dfs)
+	       return;
+
+	PRECAC_LIST_LOCK(dest_dfs);
+	if (TAILQ_EMPTY(&dest_dfs->dfs_precac_list))
+		TAILQ_INIT(&dest_dfs->dfs_precac_list);
+	PRECAC_LIST_LOCK(src_dfs);
+	TAILQ_FOREACH(tmp_precac_entry,
+		      &src_dfs->dfs_precac_list,
+		      pe_list) {
+		if (low_5g_freq <= tmp_precac_entry->vht80_ch_freq &&
+		    high_5g_freq >= tmp_precac_entry->vht80_ch_freq) {
+			/* If the destination DFS already have the entries for
+			 * some reason, remove them and update with the active
+			 * entry in the source DFS list.
+			 */
+			TAILQ_FOREACH(tmp_precac_entry2,
+				      &dest_dfs->dfs_precac_list,
+				      pe_list) {
+				if (tmp_precac_entry2->vht80_ch_freq ==
+				    tmp_precac_entry->vht80_ch_freq)
+					TAILQ_REMOVE(&dest_dfs->dfs_precac_list,
+						     tmp_precac_entry2,
+						     pe_list);
+			}
+			TAILQ_REMOVE(&src_dfs->dfs_precac_list,
+				     tmp_precac_entry,
+				     pe_list);
+			tmp_precac_entry->dfs = dest_dfs;
+			TAILQ_INSERT_TAIL(&dest_dfs->dfs_precac_list,
+					  tmp_precac_entry,
+					  pe_list);
+		}
+	}
+	PRECAC_LIST_UNLOCK(src_dfs);
+	PRECAC_LIST_UNLOCK(dest_dfs);
+}
