@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -702,8 +702,6 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		(void *)ipa_res->tx_comp_doorbell_paddr,
 		(void *)ipa_res->tx_comp_doorbell_vaddr);
 
-	hal_srng_dst_init_hp(wbm_srng, ipa_res->tx_comp_doorbell_vaddr);
-
 	/*
 	 * For RX, REO module on Napier/Hastings does reordering on incoming
 	 * Ethernet packets and writes one or more descriptors to REO2IPA Rx
@@ -1233,6 +1231,8 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	ipa_res->rx_ready_doorbell_paddr =
 		QDF_IPA_WDI_CONN_OUT_PARAMS_RX_UC_DB_PA(&pipe_out);
 
+	soc->ipa_first_tx_db_access = true;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1445,6 +1445,8 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	ipa_res->rx_ready_doorbell_paddr =
 		QDF_IPA_WDI_CONN_OUT_PARAMS_RX_UC_DB_PA(&pipe_out);
 
+	soc->ipa_first_tx_db_access = true;
+
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Tx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
 		  __func__,
@@ -1604,12 +1606,17 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct hal_srng *wbm_srng = (struct hal_srng *)
+			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
+	struct dp_ipa_resources *ipa_res;
 	QDF_STATUS result;
 
 	if (!pdev) {
 		dp_err("%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	ipa_res = &pdev->ipa_resource;
 
 	qdf_atomic_set(&soc->ipa_pipes_enabled, 1);
 	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, true);
@@ -1622,6 +1629,11 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		qdf_atomic_set(&soc->ipa_pipes_enabled, 0);
 		dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, false);
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (soc->ipa_first_tx_db_access) {
+		hal_srng_dst_init_hp(wbm_srng, ipa_res->tx_comp_doorbell_vaddr);
+		soc->ipa_first_tx_db_access = false;
 	}
 
 	return QDF_STATUS_SUCCESS;

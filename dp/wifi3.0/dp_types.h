@@ -1190,6 +1190,7 @@ struct dp_soc {
 	} ipa_uc_rx_rsc;
 
 	qdf_atomic_t ipa_pipes_enabled;
+	bool ipa_first_tx_db_access;
 #endif
 
 #ifdef WLAN_FEATURE_STATS_EXT
