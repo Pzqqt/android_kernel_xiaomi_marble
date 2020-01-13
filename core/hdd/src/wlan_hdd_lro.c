@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,7 +39,7 @@
 	 LRO_TCP_DATA_CSUM | LRO_TCP_SEQ_NUM | LRO_TCP_WIN)
 
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-	defined(QCA_WIFI_QCA6490)
+    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
 static qdf_lro_ctx_t wlan_hdd_get_lro_ctx(struct sk_buff *skb)
 {
 	return (qdf_lro_ctx_t)QDF_NBUF_CB_RX_LRO_CTX(skb);

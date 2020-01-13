@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,7 +48,8 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_handle.h>
 
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB) || \
+    defined(HIF_IPCI)
 #include <ce_api.h>
 #endif
 
