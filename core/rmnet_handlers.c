@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -68,6 +68,21 @@ void rmnet_set_skb_proto(struct sk_buff *skb)
 	}
 }
 EXPORT_SYMBOL(rmnet_set_skb_proto);
+
+bool (*rmnet_shs_slow_start_detect)(u32 hash_key) __rcu __read_mostly;
+EXPORT_SYMBOL(rmnet_shs_slow_start_detect);
+
+bool rmnet_slow_start_on(u32 hash_key)
+{
+	bool (*rmnet_shs_slow_start_on)(u32 hash_key);
+
+	rmnet_shs_slow_start_on = rcu_dereference(rmnet_shs_slow_start_detect);
+	if (rmnet_shs_slow_start_on)
+		return rmnet_shs_slow_start_on(hash_key);
+
+	return false;
+}
+EXPORT_SYMBOL(rmnet_slow_start_on);
 
 /* Shs hook handler */
 int (*rmnet_shs_skb_entry)(struct sk_buff *skb,
@@ -245,7 +260,7 @@ rmnet_map_ingress_handler(struct sk_buff *skb,
 					   struct rmnet_port *port);
 
 	if (skb->dev->type == ARPHRD_ETHER) {
-		if (pskb_expand_head(skb, ETH_HLEN, 0, GFP_KERNEL)) {
+		if (pskb_expand_head(skb, ETH_HLEN, 0, GFP_ATOMIC)) {
 			kfree_skb(skb);
 			return;
 		}
@@ -311,7 +326,8 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 	if (port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV4) {
 		additional_header_len = sizeof(struct rmnet_map_ul_csum_header);
 		csum_type = RMNET_FLAGS_EGRESS_MAP_CKSUMV4;
-	} else if (port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV5) {
+	} else if ((port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV5) ||
+		   (port->data_format & RMNET_EGRESS_FORMAT_PRIORITY)) {
 		additional_header_len = sizeof(struct rmnet_map_v5_csum_header);
 		csum_type = RMNET_FLAGS_EGRESS_MAP_CKSUMV5;
 	}
@@ -323,8 +339,12 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 			return -ENOMEM;
 	}
 
+	if (port->data_format & RMNET_INGRESS_FORMAT_PS)
+		qmi_rmnet_work_maybe_restart(port);
+
 	if (csum_type)
-		rmnet_map_checksum_uplink_packet(skb, orig_dev, csum_type);
+		rmnet_map_checksum_uplink_packet(skb, port, orig_dev,
+						 csum_type);
 
 	map_header = rmnet_map_add_map_header(skb, additional_header_len, 0,
 					      port);
@@ -334,18 +354,8 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 	map_header->mux_id = mux_id;
 
 	if (port->data_format & RMNET_EGRESS_FORMAT_AGGREGATION) {
-		int non_linear_skb;
-
 		if (rmnet_map_tx_agg_skip(skb, required_headroom))
 			goto done;
-
-		non_linear_skb = (orig_dev->features & NETIF_F_GSO) &&
-				 skb_is_nonlinear(skb);
-
-		if (non_linear_skb) {
-			if (unlikely(__skb_linearize(skb)))
-				goto done;
-		}
 
 		rmnet_map_tx_aggregate(skb, port);
 		return -EINPROGRESS;
@@ -430,9 +440,9 @@ void rmnet_egress_handler(struct sk_buff *skb)
 
 	skb_len = skb->len;
 	err = rmnet_map_egress_handler(skb, port, mux_id, orig_dev);
-	if (err == -ENOMEM)
+	if (err == -ENOMEM) {
 		goto drop;
-	else if (err == -EINPROGRESS) {
+	} else if (err == -EINPROGRESS) {
 		rmnet_vnd_tx_fixup(orig_dev, skb_len);
 		return;
 	}

@@ -12,7 +12,18 @@ LOCAL_CLANG :=true
 LOCAL_MODULE_PATH := $(KERNEL_MODULES_OUT)
 LOCAL_MODULE := rmnet_core.ko
 
-LOCAL_SRC_FILES := rmnet_config.c rmnet_descriptor.c rmnet_handlers.c rmnet_map_command.c rmnet_map_data.c rmnet_vnd.c dfc_qmi.c qmi_rmnet.c wda_qmi.c
+LOCAL_SRC_FILES := \
+	rmnet_config.c \
+	rmnet_descriptor.c \
+	rmnet_genl.c \
+	rmnet_handlers.c \
+	rmnet_map_command.c \
+	rmnet_map_data.c \
+	rmnet_vnd.c \
+	dfc_qmap.c \
+	dfc_qmi.c \
+	qmi_rmnet.c \
+	wda_qmi.c
 
 RMNET_BLD_DIR := ../../vendor/qcom/opensource/datarmnet/core
 DLKM_DIR := $(TOP)/device/qcom/common/dlkm

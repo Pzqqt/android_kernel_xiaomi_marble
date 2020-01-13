@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <net/pkt_sched.h>
-#include <soc/qcom/rmnet_qmi.h>
-#include <soc/qcom/qmi_rmnet.h>
-#include <trace/events/dfc.h>
-#include <soc/qcom/rmnet_ctl.h>
+#include "rmnet_ctl.h"
 #include "dfc_defs.h"
+#include "rmnet_qmi.h"
+#include "qmi_rmnet.h"
+#include "dfc.h"
 
 #define QMAP_DFC_VER		1
 
@@ -148,6 +148,7 @@ static void dfc_qmap_send_inband_ack(struct dfc_qmi_data *dfc,
 	skb->protocol = htons(ETH_P_MAP);
 	skb->dev = rmnet_get_real_dev(dfc->rmnet_port);
 
+	rmnet_ctl_log_debug("TXI", skb->data, skb->len);
 	trace_dfc_qmap(skb->data, skb->len, false);
 	dev_queue_xmit(skb);
 }
@@ -433,6 +434,7 @@ static void dfc_qmap_send_end_marker_cnf(struct qos_info *qos,
 	skb->dev = qos->real_dev;
 
 	/* This cmd needs to be sent in-band */
+	rmnet_ctl_log_info("TXI", skb->data, skb->len);
 	trace_dfc_qmap(skb->data, skb->len, false);
 	rmnet_map_tx_qmap_cmd(skb);
 }

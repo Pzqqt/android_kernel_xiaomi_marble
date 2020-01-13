@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -80,7 +80,9 @@ struct rmnet_map_header {
 struct rmnet_map_v5_csum_header {
 	u8  next_hdr:1;
 	u8  header_type:7;
-	u8  hw_reserved:7;
+	u8  hw_reserved:5;
+	u8  priority:1;
+	u8  hw_reserved_bit:1;
 	u8  csum_valid_required:1;
 	__be16 reserved;
 } __aligned(1);
@@ -122,7 +124,7 @@ struct rmnet_map_dl_csum_trailer {
 struct rmnet_map_ul_csum_header {
 	__be16 csum_start_offset;
 	u16 csum_insert_offset:14;
-	u16 udp_ip4_ind:1;
+	u16 udp_ind:1;
 	u16 csum_enabled:1;
 } __aligned(1);
 
@@ -179,16 +181,18 @@ struct rmnet_map_dl_ind_trl {
 struct rmnet_map_dl_ind {
 	u8 priority;
 	union {
-		void (*dl_hdr_handler)(struct rmnet_map_dl_ind_hdr *);
-		void (*dl_hdr_handler_v2)(struct rmnet_map_dl_ind_hdr *,
+		void (*dl_hdr_handler)(struct rmnet_map_dl_ind_hdr *dlhdr);
+		void (*dl_hdr_handler_v2)(struct rmnet_map_dl_ind_hdr *dlhdr,
 					  struct
-					  rmnet_map_control_command_header *);
+					  rmnet_map_control_command_header
+					  * qcmd);
 	} __aligned(1);
 	union {
-		void (*dl_trl_handler)(struct rmnet_map_dl_ind_trl *);
-		void (*dl_trl_handler_v2)(struct rmnet_map_dl_ind_trl *,
+		void (*dl_trl_handler)(struct rmnet_map_dl_ind_trl *dltrl);
+		void (*dl_trl_handler_v2)(struct rmnet_map_dl_ind_trl *dltrl,
 					  struct
-					  rmnet_map_control_command_header *);
+					  rmnet_map_control_command_header
+					  * qcmd);
 	} __aligned(1);
 	struct list_head list;
 };
@@ -258,8 +262,10 @@ struct rmnet_map_header *rmnet_map_add_map_header(struct sk_buff *skb,
 void rmnet_map_command(struct sk_buff *skb, struct rmnet_port *port);
 int rmnet_map_checksum_downlink_packet(struct sk_buff *skb, u16 len);
 void rmnet_map_checksum_uplink_packet(struct sk_buff *skb,
+				      struct rmnet_port *port,
 				      struct net_device *orig_dev,
 				      int csum_type);
+bool rmnet_map_v5_csum_buggy(struct rmnet_map_v5_coal_header *coal_hdr);
 int rmnet_map_process_next_hdr_packet(struct sk_buff *skb,
 				      struct sk_buff_head *list,
 				      u16 len);
@@ -267,6 +273,8 @@ int rmnet_map_tx_agg_skip(struct sk_buff *skb, int offset);
 void rmnet_map_tx_aggregate(struct sk_buff *skb, struct rmnet_port *port);
 void rmnet_map_tx_aggregate_init(struct rmnet_port *port);
 void rmnet_map_tx_aggregate_exit(struct rmnet_port *port);
+void rmnet_map_update_ul_agg_config(struct rmnet_port *port, u16 size,
+				    u8 count, u8 features, u32 time);
 void rmnet_map_dl_hdr_notify(struct rmnet_port *port,
 			     struct rmnet_map_dl_ind_hdr *dl_hdr);
 void rmnet_map_dl_hdr_notify_v2(struct rmnet_port *port,
