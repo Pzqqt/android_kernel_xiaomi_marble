@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -373,9 +373,8 @@ static const char *ol_tx_flow_pool_status_to_str
 	}
 }
 
-void ol_tx_dump_flow_pool_info_compact(void *ctx)
+void ol_tx_dump_flow_pool_info_compact(struct ol_txrx_pdev_t *pdev)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	char *comb_log_str;
 	int bytes_written = 0;
 	uint32_t free_size;

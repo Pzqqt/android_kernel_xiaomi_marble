@@ -2277,9 +2277,8 @@ int ol_txrx_set_vdev_tx_desc_limit(struct cdp_soc_t *soc_hdl, u8 vdev_id,
 	return 0;
 }
 
-void ol_tx_dump_flow_pool_info_compact(void *ctx)
+void ol_tx_dump_flow_pool_info_compact(struct ol_txrx_pdev_t *pdev)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	char *comb_log_str;
 	int bytes_written = 0;
 	uint32_t free_size;

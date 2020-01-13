@@ -497,7 +497,6 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 	WMI_OFFLOAD_BCN_TX_STATUS_EVENTID_param_tlvs *param_buf;
 	wmi_offload_bcn_tx_status_event_fixed_param *resp_event;
 	tSirFirstBeaconTxCompleteInd *beacon_tx_complete_ind;
-	struct cdp_vdev *dp_handle;
 
 	param_buf =
 		(WMI_OFFLOAD_BCN_TX_STATUS_EVENTID_param_tlvs *) cmd_param_info;
@@ -521,13 +520,6 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 	 */
 	if (!wma->interfaces[resp_event->vdev_id].vdev) {
 		WMA_LOGE("%s: vdev is NULL for vdev_%d",
-			 __func__, resp_event->vdev_id);
-		return -EINVAL;
-	}
-	dp_handle = wlan_vdev_get_dp_handle
-			(wma->interfaces[resp_event->vdev_id].vdev);
-	if (!dp_handle) {
-		WMA_LOGE("%s: Failed to get dp handle for vdev id %d",
 			 __func__, resp_event->vdev_id);
 		return -EINVAL;
 	}
@@ -1826,23 +1818,19 @@ void wma_update_rts_params(tp_wma_handle wma, uint32_t value)
 {
 	uint8_t vdev_id;
 	QDF_STATUS ret;
-	struct cdp_vdev *handle;
 	struct wlan_objmgr_vdev *vdev;
 
 	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
 		vdev = wma->interfaces[vdev_id].vdev;
 		if (!vdev)
 			continue;
-		handle = wlan_vdev_get_dp_handle(vdev);
-		if (handle) {
-			ret = wma_vdev_set_param(wma->wmi_handle,
-						 vdev_id,
-						 WMI_VDEV_PARAM_RTS_THRESHOLD,
-						 value);
-			if (QDF_IS_STATUS_ERROR(ret))
-				WMA_LOGE("Update cfg param fail for vdevId %d",
-					 vdev_id);
-		}
+		ret = wma_vdev_set_param(wma->wmi_handle,
+					 vdev_id,
+					 WMI_VDEV_PARAM_RTS_THRESHOLD,
+					 value);
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("Update cfg param fail for vdevId %d",
+				 vdev_id);
 	}
 }
 
@@ -1850,23 +1838,18 @@ void wma_update_frag_params(tp_wma_handle wma, uint32_t value)
 {
 	uint8_t vdev_id;
 	QDF_STATUS ret;
-	struct cdp_vdev *handle;
 	struct wlan_objmgr_vdev *vdev;
 
 	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
 		vdev = wma->interfaces[vdev_id].vdev;
 		if (!vdev)
 			continue;
-		handle = wlan_vdev_get_dp_handle(vdev);
-		if (handle) {
-			ret = wma_vdev_set_param(wma->wmi_handle,
-					vdev_id,
-					WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
-					value);
-			if (QDF_IS_STATUS_ERROR(ret))
-				WMA_LOGE("Update cfg params failed for vdevId %d",
-					vdev_id);
-		}
+		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+					 WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
+					 value);
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("Update cfg params failed for vdevId %d",
+				 vdev_id);
 	}
 }
 
@@ -2342,8 +2325,7 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 		if (!intf[if_id].vdev)
 			continue;
 
-		if (!(vdev_map & 0x1) ||
-		    (!wlan_vdev_get_dp_handle(intf[if_id].vdev)))
+		if (!(vdev_map & 0x1))
 			continue;
 
 		bcn = intf[if_id].beacon;

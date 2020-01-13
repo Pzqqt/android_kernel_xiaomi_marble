@@ -505,10 +505,8 @@ wma_cdp_vdev_detach(ol_txrx_soc_handle soc, tp_wma_handle wma_handle,
 		return;
 	}
 
-	if (soc && wlan_vdev_get_id(vdev) != WLAN_INVALID_VDEV_ID) {
-		wlan_vdev_set_dp_handle(vdev, NULL);
+	if (soc && wlan_vdev_get_id(vdev) != WLAN_INVALID_VDEV_ID)
 		cdp_vdev_detach(soc, vdev_id, NULL, NULL);
-	}
 }
 
 /**
@@ -793,12 +791,6 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 
 	if (!iface->vdev) {
 		WMA_LOGE("vdev %d is NULL", vdev_id);
-		goto send_rsp;
-	}
-
-	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-		WMA_LOGE("%s: Failed to get dp handle for vdev id %d",
-			 __func__, vdev_id);
 		goto send_rsp;
 	}
 
@@ -1694,6 +1686,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma,
 	struct wlan_objmgr_psoc *psoc = wma->psoc;
 	target_resource_config *wlan_res_cfg;
 	struct wlan_objmgr_peer *obj_peer = NULL;
+	QDF_STATUS status;
 
 	if (!psoc) {
 		WMA_LOGE("%s: psoc is NULL", __func__);
@@ -1741,11 +1734,13 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma,
 	 * where the HTT peer map event is received before the peer object
 	 * is created in the data path
 	 */
-	if (!cdp_peer_create(dp_soc, vdev_id, peer_addr)) {
+	status = cdp_peer_create(dp_soc, vdev_id, peer_addr);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
 		wlan_objmgr_peer_obj_delete(obj_peer);
 		goto err;
 	}
+
 	WMA_LOGD("%s: attaching peer_addr %pM to vdev_id %d, peer_count %d",
 		 __func__, peer_addr, vdev_id,
 		 wma->interfaces[vdev_id].peer_count);
@@ -2259,13 +2254,6 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 	} else if (vdev_stop_type == WMA_DELETE_BSS_REQ ||
 	    vdev_stop_type == WMA_SET_LINK_STATE) {
 		uint8_t type;
-
-		if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-			WMA_LOGE("%s: Failed to get dp handle for vdev id %d",
-				 __func__, resp_event->vdev_id);
-			status = -EINVAL;
-			goto free_params;
-		}
 
 		/* CCA is required only for sta interface */
 		if (iface->type == WMI_VDEV_TYPE_STA)
@@ -3838,7 +3826,6 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	enum ol_txrx_peer_state state = OL_TXRX_PEER_STATE_CONN;
 	uint8_t pdev_id = OL_TXRX_PDEV_ID;
-	struct cdp_vdev *vdev;
 	QDF_STATUS status;
 	int32_t ret;
 	struct wma_txrx_node *iface = NULL;
@@ -3863,13 +3850,6 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		goto send_rsp;
 	}
 
-	vdev = wma_find_vdev_by_id(wma, add_sta->smesessionId);
-	if (!vdev) {
-		WMA_LOGE("%s: Failed to find vdev", __func__);
-		add_sta->status = QDF_STATUS_E_FAILURE;
-		goto send_rsp;
-	}
-
 	iface = &wma->interfaces[add_sta->smesessionId];
 
 	if (cdp_find_peer_exist_on_vdev(soc, add_sta->smesessionId,
@@ -3886,8 +3866,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	 * here.
 	 */
 	if (cdp_find_peer_exist(soc, pdev_id, add_sta->staMac)) {
-		WMA_LOGE("%s: My vdev:%pK, but Peer exists on other vdev with peer_addr %pM",
-			 __func__, vdev, add_sta->staMac);
+		WMA_LOGE("%s: My vdev id %d, but Peer exists on other vdev with peer_addr %pM",
+			 __func__, add_sta->smesessionId, add_sta->staMac);
 		add_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_rsp;
 	}
@@ -4874,7 +4854,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 	uint8_t *addr, *bssid_addr;
 
 	iface = &wma->interfaces[vdev_id];
-	if (!iface || !iface->vdev || !wlan_vdev_get_dp_handle(iface->vdev)) {
+	if (!iface || !iface->vdev) {
 		WMA_LOGE("%s vdev id %d is already deleted",
 			 __func__, vdev_id);
 		goto out;

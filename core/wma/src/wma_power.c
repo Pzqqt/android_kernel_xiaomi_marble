@@ -731,10 +731,6 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 		return;
 	}
 
-	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-		WMA_LOGE("vdev id %d is not active", vdev_id);
-		return;
-	}
 	if (eSIR_ADDON_NOTHING == ps_req->psSetting) {
 		if (qpower_config && iface->uapsd_cached_val) {
 			qpower_config = 0;
@@ -876,10 +872,6 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 
 	if (!iface->vdev) {
 		WMA_LOGE("%s: vdev is NULL for vdev_%d", __func__, vdev_id);
-		return;
-	}
-	if (!wlan_vdev_get_dp_handle(iface->vdev)) {
-		WMA_LOGE("vdev id %d is not active", vdev_id);
 		return;
 	}
 

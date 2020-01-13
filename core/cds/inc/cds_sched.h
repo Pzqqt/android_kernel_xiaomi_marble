@@ -276,7 +276,6 @@ struct cds_context {
 	 */
 	qdf_device_t qdf_ctx;
 
-	struct cdp_pdev *pdev_txrx_ctx;
 	void *dp_soc;
 
 	/* Configuration handle used to get system configuration */

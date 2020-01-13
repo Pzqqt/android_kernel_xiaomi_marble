@@ -1791,9 +1791,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 		if (!vdev)
 			continue;
 
-		if (!wlan_vdev_get_dp_handle(iface->vdev))
-			continue;
-
 		status = wma_get_vdev_rate_flag(iface->vdev, &rate_flag);
 		if (QDF_IS_STATUS_ERROR(status))
 			continue;
@@ -4273,10 +4270,10 @@ QDF_STATUS wma_stop(void)
 		vdev = wma_handle->interfaces[i].vdev;
 		if (!vdev)
 			continue;
-		if (wlan_vdev_get_dp_handle(vdev) && wma_is_vdev_up(i)) {
+
+		if (wma_is_vdev_up(i))
 			cdp_fc_vdev_flush(cds_get_context(QDF_MODULE_ID_SOC),
 					  i);
-		}
 	}
 
 	if (!mac->mlme_cfg->gen.enable_remove_time_stamp_sync_cmd &&

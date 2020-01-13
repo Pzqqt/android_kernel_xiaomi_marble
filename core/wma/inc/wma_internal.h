@@ -578,26 +578,6 @@ static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
 QDF_STATUS wma_find_vdev_id_by_addr(tp_wma_handle wma, uint8_t *addr,
 				    uint8_t *vdev_id);
 
-/**
- * wma_find_vdev_by_id() - Returns vdev handle for given vdev id.
- * @wma - wma handle
- * @vdev_id - vdev ID
- *
- * Return: Returns vdev handle if given vdev id is valid.
- *         Otherwise returns NULL.
- */
-static inline
-struct cdp_vdev *wma_find_vdev_by_id(tp_wma_handle wma, uint8_t vdev_id)
-{
-	if (vdev_id >= wma->max_bssid)
-		return NULL;
-
-	if (!wma->interfaces[vdev_id].vdev)
-		return NULL;
-
-	return wlan_vdev_get_dp_handle(wma->interfaces[vdev_id].vdev);
-}
-
 bool wma_is_vdev_in_ap_mode(tp_wma_handle wma, uint8_t vdev_id);
 
 #ifdef QCA_IBSS_SUPPORT

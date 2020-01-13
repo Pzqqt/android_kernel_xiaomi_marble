@@ -2301,12 +2301,6 @@ QDF_STATUS wma_process_ll_stats_clear_req(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!wlan_vdev_get_dp_handle(vdev)) {
-		WMA_LOGE("%s: vdev_id %d dp handle is NULL",
-			 __func__, clearReq->staId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	cmd.stop_req = clearReq->stopReq;
 	cmd.vdev_id = clearReq->staId;
 	cmd.stats_clear_mask = clearReq->statsClearReqMask;

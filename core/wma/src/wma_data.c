@@ -1508,7 +1508,6 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 	wmi_tx_pause_event_fixed_param *wmi_event;
 	uint8_t vdev_id;
 	A_UINT32 vdev_map;
-	struct cdp_vdev *dp_handle;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	param_buf = (WMI_TX_PAUSE_EVENTID_param_tlvs *) event;
@@ -1540,15 +1539,6 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 		} else {
 			if (!wma->interfaces[vdev_id].vdev) {
 				WMA_LOGE("%s: vdev is NULL for %d", __func__,
-					 vdev_id);
-				/* Test Next VDEV */
-				vdev_map >>= 1;
-				continue;
-			}
-			dp_handle = wlan_vdev_get_dp_handle
-					(wma->interfaces[vdev_id].vdev);
-			if (!dp_handle) {
-				WMA_LOGE("%s: invalid vdev ID %d", __func__,
 					 vdev_id);
 				/* Test Next VDEV */
 				vdev_map >>= 1;

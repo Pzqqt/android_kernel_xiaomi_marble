@@ -780,11 +780,10 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS qdf_status;
 	struct dp_txrx_config dp_config;
 
-	cds_set_context(QDF_MODULE_ID_TXRX,
-		cdp_pdev_attach(cds_get_context(QDF_MODULE_ID_SOC),
-				gp_cds_context->htc_ctx,
-				gp_cds_context->qdf_ctx, 0));
-	if (!gp_cds_context->pdev_txrx_ctx) {
+	qdf_status = cdp_pdev_attach(cds_get_context(QDF_MODULE_ID_SOC),
+				     gp_cds_context->htc_ctx,
+				     gp_cds_context->qdf_ctx, 0);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_alert("Failed to open TXRX");
 		QDF_ASSERT(0);
@@ -1241,16 +1240,12 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 {
-	void *ctx;
-
 	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
-	ctx = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	dp_txrx_deinit(cds_get_context(QDF_MODULE_ID_SOC));
 
 	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC), OL_TXRX_PDEV_ID, 1);
 
-	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
 	ucfg_pmo_psoc_set_txrx_pdev_id(psoc, OL_TXRX_INVALID_PDEV_ID);
 
 	return QDF_STATUS_SUCCESS;
@@ -1328,12 +1323,6 @@ void *cds_get_context(QDF_MODULE_ID module_id)
 	case QDF_MODULE_ID_BMI:
 	{
 		context = gp_cds_context->g_ol_context;
-		break;
-	}
-
-	case QDF_MODULE_ID_TXRX:
-	{
-		context = (void *)gp_cds_context->pdev_txrx_ctx;
 		break;
 	}
 
@@ -1540,9 +1529,6 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
 	case QDF_MODULE_ID_HDD:
 		p_cds_context->hdd_context = context;
 		break;
-	case QDF_MODULE_ID_TXRX:
-		p_cds_context->pdev_txrx_ctx = context;
-		break;
 	case QDF_MODULE_ID_HIF:
 		p_cds_context->hif_context = context;
 		break;
@@ -1588,10 +1574,6 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *module_context)
 
 	case QDF_MODULE_ID_HIF:
 		cds_mod_context = &gp_cds_context->hif_context;
-		break;
-
-	case QDF_MODULE_ID_TXRX:
-		cds_mod_context = (void **)&gp_cds_context->pdev_txrx_ctx;
 		break;
 
 	case QDF_MODULE_ID_BMI:

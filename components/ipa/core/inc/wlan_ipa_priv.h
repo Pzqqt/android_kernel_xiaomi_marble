@@ -585,7 +585,6 @@ struct wlan_ipa_priv {
 	struct wlan_ipa_iface_context iface_context[WLAN_IPA_MAX_IFACE];
 	uint8_t num_iface;
 	void *dp_soc;
-	void *dp_pdev;
 	uint8_t dp_pdev_id;
 	struct wlan_ipa_config *config;
 	enum wlan_ipa_rm_state rm_state;

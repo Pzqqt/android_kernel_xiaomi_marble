@@ -2132,9 +2132,6 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	 */
 	hdd_component_cfg_chan_to_freq(hdd_ctx->pdev);
 
-	wlan_pdev_set_dp_handle(hdd_ctx->pdev,
-				cds_get_context(QDF_MODULE_ID_TXRX));
-
 	hdd_objmgr_update_tgt_max_vdev_psoc(hdd_ctx, cfg->max_intf_count);
 
 	ucfg_ipa_set_dp_handle(hdd_ctx->psoc,
