@@ -883,8 +883,9 @@ void cfr_set_filter(struct wlan_objmgr_pdev *pdev,
 	cfr_info("pdev_id=%d\n", wlan_objmgr_pdev_get_pdev_id(pdev));
 
 	cdp_cfr_filter(wlan_psoc_get_dp_handle(psoc),
-		       wlan_pdev_get_dp_handle(pdev),
-		       enable, filter_val);
+		       wlan_objmgr_pdev_get_pdev_id(pdev),
+		       enable,
+		       filter_val);
 }
 
 static bool cfr_is_filter_enabled(struct cfr_rcc_param *rcc_param)
