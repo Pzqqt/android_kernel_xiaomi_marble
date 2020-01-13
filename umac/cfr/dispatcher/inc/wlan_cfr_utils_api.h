@@ -507,8 +507,6 @@ struct pdev_cfr {
 	uint64_t flush_all_txrx_cnt;
 	uint64_t invalid_dma_length_cnt;
 	uint64_t flush_timeout_dbr_cnt;
-	uint64_t flush_timeout_txrx_cnt;
-	uint64_t clear_dbr_event;
 	uint64_t clear_txrx_event;
 #endif
 	struct unassoc_pool_entry unassoc_pool[MAX_CFR_ENABLED_CLIENTS];
