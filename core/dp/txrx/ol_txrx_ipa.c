@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -315,7 +315,8 @@ static inline void ol_txrx_setup_mcc_sys_pipes(
  */
 static inline void ol_txrx_ipa_wdi_tx_smmu_params(
 				struct ol_txrx_ipa_resources *ipa_res,
-				qdf_ipa_wdi_pipe_setup_info_smmu_t *tx_smmu)
+				qdf_ipa_wdi_pipe_setup_info_smmu_t *tx_smmu,
+				bool over_gsi)
 {
 	QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(tx_smmu) =
 		IPA_CLIENT_WLAN1_CONS;
@@ -333,6 +334,8 @@ static inline void ol_txrx_ipa_wdi_tx_smmu_params(
 		ipa_res->ce_sr_ring_size;
 	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(tx_smmu) =
 		ipa_res->ce_reg_paddr;
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_SMMU_IS_EVT_RN_DB_PCIE_ADDR(tx_smmu) = true;
 	QDF_IPA_WDI_SETUP_INFO_SMMU_NUM_PKT_BUFFERS(tx_smmu) =
 		ipa_res->tx_num_alloc_buffer;
 	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(tx_smmu) = 0;
@@ -348,7 +351,8 @@ static inline void ol_txrx_ipa_wdi_tx_smmu_params(
  */
 static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 				struct ol_txrx_ipa_resources *ipa_res,
-				qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu)
+				qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu,
+				bool over_gsi)
 {
 	QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(rx_smmu) =
 		IPA_CLIENT_WLAN1_PROD;
@@ -360,6 +364,8 @@ static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 		ipa_res->rx_rdy_ring->mem_info.size;
 	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_DOORBELL_PA(rx_smmu) =
 		ipa_res->rx_proc_done_idx->mem_info.pa;
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_SMMU_IS_TXR_RN_DB_PCIE_ADDR(rx_smmu) = false;
 	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_BASE(
 				rx_smmu),
 		     &ipa_res->rx2_rdy_ring->sgtable,
@@ -368,13 +374,16 @@ static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 		ipa_res->rx2_rdy_ring->mem_info.size;
 	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(rx_smmu) =
 		ipa_res->rx2_proc_done_idx->mem_info.pa;
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_SMMU_IS_EVT_RN_DB_PCIE_ADDR(rx_smmu) = false;
 	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(rx_smmu) = 0;
 
 }
 #else
 static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 				struct ol_txrx_ipa_resources *ipa_res,
-				qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu)
+				qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu,
+				bool over_gsi)
 {
 	QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(rx_smmu) =
 		IPA_CLIENT_WLAN1_PROD;
@@ -395,13 +404,15 @@ static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 
 static inline void ol_txrx_ipa_wdi_tx_smmu_params(
 				struct ol_txrx_ipa_resources *ipa_res,
-				qdf_ipa_wdi_pipe_setup_info_smmu_t *tx_smmu)
+				qdf_ipa_wdi_pipe_setup_info_smmu_t *tx_smmu,
+				bool over_gsi)
 {
 }
 
 static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 				struct ol_txrx_ipa_resources *ipa_res,
-				qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu)
+				qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu,
+				bool over_gsi)
 {
 }
 #endif
@@ -415,7 +426,8 @@ static inline void ol_txrx_ipa_wdi_rx_smmu_params(
  */
 static inline void ol_txrx_ipa_wdi_tx_params(
 				struct ol_txrx_ipa_resources *ipa_res,
-				qdf_ipa_wdi_pipe_setup_info_t *tx)
+				qdf_ipa_wdi_pipe_setup_info_t *tx,
+				bool over_gsi)
 {
 	qdf_device_t osdev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
@@ -438,6 +450,8 @@ static inline void ol_txrx_ipa_wdi_tx_params(
 		ipa_res->ce_sr_ring_size;
 	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(tx) =
 		ipa_res->ce_reg_paddr;
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_IS_EVT_RN_DB_PCIE_ADDR(tx) = true;
 	QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(tx) =
 		ipa_res->tx_num_alloc_buffer;
 	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(tx) = 0;
@@ -453,7 +467,8 @@ static inline void ol_txrx_ipa_wdi_tx_params(
  */
 static inline void ol_txrx_ipa_wdi_rx_params(
 				struct ol_txrx_ipa_resources *ipa_res,
-				qdf_ipa_wdi_pipe_setup_info_t *rx)
+				qdf_ipa_wdi_pipe_setup_info_t *rx,
+				bool over_gsi)
 {
 	QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) = IPA_CLIENT_WLAN1_PROD;
 	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(rx) =
@@ -462,12 +477,16 @@ static inline void ol_txrx_ipa_wdi_rx_params(
 		ipa_res->rx_rdy_ring->mem_info.size;
 	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(rx) =
 		ipa_res->rx_proc_done_idx->mem_info.pa;
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_IS_TXR_RN_DB_PCIE_ADDR(rx) = false;
 	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(rx) =
 		ipa_res->rx2_rdy_ring->mem_info.pa;
 	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(rx) =
 		ipa_res->rx2_rdy_ring->mem_info.size;
 	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(rx) =
 		ipa_res->rx2_proc_done_idx->mem_info.pa;
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_IS_EVT_RN_DB_PCIE_ADDR(rx) = false;
 	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx) = 0;
 }
 
@@ -475,7 +494,8 @@ static inline void ol_txrx_ipa_wdi_rx_params(
 
 static inline void ol_txrx_ipa_wdi_rx_params(
 				struct ol_txrx_ipa_resources *ipa_res,
-				qdf_ipa_wdi_pipe_setup_info_t *rx)
+				qdf_ipa_wdi_pipe_setup_info_t *rx,
+				bool over_gsi)
 {
 	QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) = IPA_CLIENT_WLAN1_PROD;
 	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(rx) =
@@ -551,9 +571,9 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	QDF_IPA_EP_CFG_HDR_LITTLE_ENDIAN(tx_cfg) = true;
 
 	if (is_smmu_enabled)
-		ol_txrx_ipa_wdi_tx_smmu_params(ipa_res, tx_smmu);
+		ol_txrx_ipa_wdi_tx_smmu_params(ipa_res, tx_smmu, over_gsi);
 	else
-		ol_txrx_ipa_wdi_tx_params(ipa_res, tx);
+		ol_txrx_ipa_wdi_tx_params(ipa_res, tx, over_gsi);
 
 
 	/* RX PIPE */
@@ -577,9 +597,9 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	QDF_IPA_EP_CFG_HDR_LITTLE_ENDIAN(rx_cfg) = true;
 
 	if (is_smmu_enabled)
-		ol_txrx_ipa_wdi_rx_smmu_params(ipa_res, rx_smmu);
+		ol_txrx_ipa_wdi_rx_smmu_params(ipa_res, rx_smmu, over_gsi);
 	else
-		ol_txrx_ipa_wdi_rx_params(ipa_res, rx);
+		ol_txrx_ipa_wdi_rx_params(ipa_res, rx, over_gsi);
 
 	QDF_IPA_WDI_CONN_IN_PARAMS_NOTIFY(&pipe_in) = ipa_w2i_cb;
 	QDF_IPA_WDI_CONN_IN_PARAMS_PRIV(&pipe_in) = ipa_priv;
