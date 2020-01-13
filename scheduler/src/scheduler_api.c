@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,12 +54,12 @@ static inline void scheduler_watchdog_notify(struct scheduler_ctx *sched)
 	if (sched->watchdog_callback)
 		qdf_sprint_symbol(symbol, sched->watchdog_callback);
 
-	sched_err("WLAN_BUG_RCA: Callback %s (type 0x%x) exceeded its allotted time of %ds",
-		  sched->watchdog_callback ? symbol : "<null>",
-		  sched->watchdog_msg_type, SCHEDULER_WATCHDOG_TIMEOUT / 1000);
+	sched_fatal("Callback %s (type 0x%x) exceeded its allotted time of %ds",
+		    sched->watchdog_callback ? symbol : "<null>",
+		    sched->watchdog_msg_type,
+		    SCHEDULER_WATCHDOG_TIMEOUT / 1000);
 }
 
-#ifdef CONFIG_SLUB_DEBUG_ON
 static void scheduler_watchdog_timeout(void *arg)
 {
 	struct scheduler_ctx *sched = arg;
@@ -74,12 +74,6 @@ static void scheduler_watchdog_timeout(void *arg)
 
 	QDF_DEBUG_PANIC("Going down for Scheduler Watchdog Bite!");
 }
-#else
-static void scheduler_watchdog_timeout(void *arg)
-{
-	scheduler_watchdog_notify((struct scheduler_ctx *)arg);
-}
-#endif
 
 QDF_STATUS scheduler_enable(void)
 {
@@ -101,7 +95,7 @@ QDF_STATUS scheduler_enable(void)
 	sched_ctx->sch_thread = qdf_create_thread(scheduler_thread, sched_ctx,
 						  "scheduler_thread");
 	if (!sched_ctx->sch_thread) {
-		sched_err("Failed to create scheduler thread");
+		sched_fatal("Failed to create scheduler thread");
 		return QDF_STATUS_E_RESOURCES;
 	}
 
@@ -125,7 +119,7 @@ QDF_STATUS scheduler_init(void)
 
 	status = scheduler_create_ctx();
 	if (QDF_IS_STATUS_ERROR(status)) {
-		sched_err("Failed to create context; status:%d", status);
+		sched_fatal("Failed to create context; status:%d", status);
 		return status;
 	}
 
@@ -138,25 +132,26 @@ QDF_STATUS scheduler_init(void)
 
 	status = scheduler_queues_init(sched_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		sched_err("Failed to init queues; status:%d", status);
+		sched_fatal("Failed to init queues; status:%d", status);
 		goto ctx_destroy;
 	}
 
 	status = qdf_event_create(&sched_ctx->sch_start_event);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		sched_err("Failed to create start event; status:%d", status);
+		sched_fatal("Failed to create start event; status:%d", status);
 		goto queues_deinit;
 	}
 
 	status = qdf_event_create(&sched_ctx->sch_shutdown);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		sched_err("Failed to create shutdown event; status:%d", status);
+		sched_fatal("Failed to create shutdown event; status:%d",
+			    status);
 		goto start_event_destroy;
 	}
 
 	status = qdf_event_create(&sched_ctx->resume_sch_event);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		sched_err("Failed to create resume event; status:%d", status);
+		sched_fatal("Failed to create resume event; status:%d", status);
 		goto shutdown_event_destroy;
 	}
 
