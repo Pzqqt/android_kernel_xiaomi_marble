@@ -681,13 +681,12 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 		goto done; /* HW registers have not captured FFT bins */
 	}
 
+	pcfr->chan_capture_status[cfr_info->chan_capture_status]++;
 	if (cfr_info->rx_location_info_valid) {
 		pcfr->rx_loc_info_valid_cnt++;
 	} else {
 		goto done;
 	}
-
-	pcfr->chan_capture_status[cfr_info->chan_capture_status]++;
 
 	if (cfr_info->chan_capture_status != CAPTURE_ACTIVE) {
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
