@@ -1004,6 +1004,31 @@ policy_mgr_validate_dbs_switch(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * policy_mgr_validate_unsupported_action() - unsupported action validation
+ * @psoc: psoc object
+ * @action: action type
+ *
+ * The help function checks the Action supported by HW or not.
+ *
+ * Return: QDF_STATUS_SUCCESS if supported by HW, otherwise
+ *         return QDF_STATUS_E_NOSUPPORT
+ */
+static QDF_STATUS policy_mgr_validate_unsupported_action
+		(struct wlan_objmgr_psoc *psoc,
+		 enum policy_mgr_conc_next_action action)
+{
+	if (action == PM_SBS || action == PM_SBS_DOWNGRADE) {
+		if (!policy_mgr_is_hw_sbs_capable(psoc)) {
+			/* No action */
+			policy_mgr_notice("firmware is not sbs capable");
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_next_actions(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t session_id,
@@ -1019,7 +1044,9 @@ QDF_STATUS policy_mgr_next_actions(
 		policy_mgr_err("driver isn't dbs capable, no further action needed");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
-
+	status = policy_mgr_validate_unsupported_action(psoc, action);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return status;
 	/* check for the current HW index to see if really need any action */
 	status = policy_mgr_get_current_hw_mode(psoc, &hw_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
