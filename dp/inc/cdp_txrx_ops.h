@@ -954,7 +954,8 @@ struct ol_if_ops {
 				  uint8_t *peer_macaddr,
 				  const uint8_t *dest_macaddr,
 				  uint8_t *next_node_mac,
-				  uint32_t flags);
+				  uint32_t flags,
+				  uint8_t type);
 	int (*peer_update_wds_entry)(struct cdp_ctrl_objmgr_psoc *soc,
 				     uint8_t vdev_id,
 				     uint8_t *dest_macaddr,
