@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -187,7 +187,7 @@ struct wlan_ipa_tx_hdr {
  * @reserved2: Reserved not used
  */
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-	defined(QCA_WIFI_QCA6490)
+    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
 struct frag_header {
 	uint8_t reserved[0];
 };
@@ -213,7 +213,7 @@ struct frag_header {
  */
 
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-	defined(QCA_WIFI_QCA6490)
+    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
 struct ipa_header {
 	uint8_t reserved[0];
 };
