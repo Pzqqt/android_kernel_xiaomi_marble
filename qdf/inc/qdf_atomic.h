@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -152,6 +152,17 @@ static inline int32_t qdf_atomic_inc_return(qdf_atomic_t *v)
 static inline int32_t qdf_atomic_dec_return(qdf_atomic_t *v)
 {
 	return __qdf_atomic_dec_return(v);
+}
+
+/**
+ * qdf_atomic_inc_not_zero() - increment if not zero
+ * @v: A pointer to an opaque atomic variable
+ *
+ * Return: Returns non-zero on successful increment and zero otherwise
+ */
+static inline int32_t qdf_atomic_inc_not_zero(qdf_atomic_t *v)
+{
+	return __qdf_atomic_inc_not_zero(v);
 }
 
 /**
