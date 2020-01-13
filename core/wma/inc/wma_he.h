@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -117,12 +117,14 @@ void wma_he_update_tgt_services(struct wmi_unified *wmi_handle,
 
 /**
  * wma_populate_peer_he_cap() - populate peer HE capabilities in peer assoc cmd
+ * @wma: pointer to wma handle
  * @peer: pointer to peer assoc params
  * @params: pointer to ADD STA params
  *
  * Return: None
  */
-void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
+void wma_populate_peer_he_cap(tp_wma_handle wma,
+			      struct peer_assoc_params *peer,
 			      tpAddStaParams params);
 
 /**
@@ -247,7 +249,8 @@ static inline void wma_he_update_tgt_services(struct wmi_unified *wmi_handle,
 	return;
 }
 
-static inline void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
+static inline void wma_populate_peer_he_cap(tp_wma_handle wma,
+					    struct peer_assoc_params *peer,
 					    tpAddStaParams params)
 {
 }

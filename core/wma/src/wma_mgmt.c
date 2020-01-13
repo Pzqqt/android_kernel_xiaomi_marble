@@ -1686,7 +1686,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		cmd->peer_nss = WMA_MAX_NSS;
 	}
 
-	wma_populate_peer_he_cap(cmd, params);
+	wma_populate_peer_he_cap(wma, cmd, params);
 	if (!wma_is_vdev_in_ap_mode(wma, params->smesessionId))
 		intr->nss = cmd->peer_nss;
 

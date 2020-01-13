@@ -1098,7 +1098,8 @@ static void wma_parse_he_ppet(int8_t *rcvd_ppet,
 	}
 }
 
-void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
+void wma_populate_peer_he_cap(tp_wma_handle wma,
+			      struct peer_assoc_params *peer,
 			      tpAddStaParams params)
 {
 	tDot11fIEhe_cap *he_cap = &params->he_config;
@@ -1106,11 +1107,14 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	uint32_t *phy_cap = peer->peer_he_cap_phyinfo;
 	uint32_t mac_cap[PSOC_HOST_MAX_MAC_SIZE] = {0}, he_ops = 0;
 	uint8_t temp, i, chan_width;
+	struct wma_txrx_node *intr = NULL;
 
 	if (params->he_capable)
 		peer->he_flag = 1;
 	else
 		return;
+
+	intr = &wma->interfaces[params->smesessionId];
 
 	/* HE MAC capabilities */
 	WMI_HECAP_MAC_HECTRL_SET(mac_cap[0], he_cap->htc_he);
@@ -1168,7 +1172,8 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HECAP_PHY_CBW_SET(phy_cap, chan_width);
 	WMI_HECAP_PHY_PREAMBLEPUNCRX_SET(phy_cap, he_cap->rx_pream_puncturing);
 	WMI_HECAP_PHY_COD_SET(phy_cap, he_cap->device_class);
-	WMI_HECAP_PHY_LDPC_SET(phy_cap, he_cap->ldpc_coding);
+	temp = he_cap->ldpc_coding && intr->config.ldpc;
+	WMI_HECAP_PHY_LDPC_SET(phy_cap, temp);
 	WMI_HECAP_PHY_LTFGIFORHE_SET(phy_cap, he_cap->he_1x_ltf_800_gi_ppdu);
 	WMI_HECAP_PHY_MIDAMBLETXRXMAXNSTS_SET(phy_cap,
 					      he_cap->midamble_tx_rx_max_nsts);
