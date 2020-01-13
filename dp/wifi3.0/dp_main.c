@@ -2634,6 +2634,8 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 
 	/* loop and reset the mask for only offloaded ring */
 	for (j = 0; j < MAX_PDEV_CNT; j++) {
+		int lmac_id = wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
+
 		if (!dp_soc_ring_if_nss_offloaded(soc, RXDMA_BUF, j)) {
 			continue;
 		}
@@ -2641,18 +2643,18 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		/*
 		 * Group number corresponding to rx offloaded ring.
 		 */
-		group_number = dp_srng_find_ring_in_mask(j, grp_mask);
+		group_number = dp_srng_find_ring_in_mask(lmac_id, grp_mask);
 		if (group_number < 0) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 					FL("ring not part of any group; ring_type: %d,ring_num %d"),
-					REO_DST, j);
+					REO_DST, lmac_id);
 			return;
 		}
 
 		/* set the interrupt mask for offloaded ring */
 		mask =  wlan_cfg_get_host2rxdma_ring_mask(soc->wlan_cfg_ctx,
 				group_number);
-		mask &= (~(1 << j));
+		mask &= (~(1 << lmac_id));
 
 		/*
 		 * set the interrupt mask to zero for rx offloaded radio.
