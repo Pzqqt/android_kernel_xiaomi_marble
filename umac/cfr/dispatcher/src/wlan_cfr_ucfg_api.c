@@ -671,79 +671,79 @@ QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
-	cfr_info("CAPTURE MODE:\n");
+	cfr_err("CAPTURE MODE:\n");
 
-	cfr_info("m_directed_ftm is : %s\n",
-		 pcfr->rcc_param.m_directed_ftm ?
-		 "enabled" : "disabled");
-	cfr_info("m_all_ftm_ack is : %s\n",
-		 pcfr->rcc_param.m_all_ftm_ack ?
-		 "enabled" : "disabled");
-	cfr_info("m_ndpa_ndp_directed is: %s\n",
-		 pcfr->rcc_param.m_ndpa_ndp_directed ?
-		 "enabled" : "disabled");
-	cfr_info("m_ndpa_ndp_all is : %s\n",
-		 pcfr->rcc_param.m_ndpa_ndp_all ?
-		 "enabled" : "disabled");
-	cfr_info("m_ta_ra_filter is : %s\n",
-		 pcfr->rcc_param.m_ta_ra_filter ?
-		 "enabled" : "disabled");
-	cfr_info("m_all_packet is : %s\n",
-		 pcfr->rcc_param.m_all_packet ?
-		 "enabled" : "disabled");
+	cfr_err("m_directed_ftm is : %s\n",
+		pcfr->rcc_param.m_directed_ftm ?
+		"enabled" : "disabled");
+	cfr_err("m_all_ftm_ack is : %s\n",
+		pcfr->rcc_param.m_all_ftm_ack ?
+		"enabled" : "disabled");
+	cfr_err("m_ndpa_ndp_directed is: %s\n",
+		pcfr->rcc_param.m_ndpa_ndp_directed ?
+		"enabled" : "disabled");
+	cfr_err("m_ndpa_ndp_all is : %s\n",
+		pcfr->rcc_param.m_ndpa_ndp_all ?
+		"enabled" : "disabled");
+	cfr_err("m_ta_ra_filter is : %s\n",
+		pcfr->rcc_param.m_ta_ra_filter ?
+		"enabled" : "disabled");
+	cfr_err("m_all_packet is : %s\n",
+		pcfr->rcc_param.m_all_packet ?
+		"enabled" : "disabled");
 
-	cfr_info("capture duration : %u usec\n",
-		 pcfr->rcc_param.capture_duration);
-	cfr_info("capture interval : %u usec\n",
-		 pcfr->rcc_param.capture_interval);
-	cfr_info("UL MU User mask lower : %u\n",
-		 pcfr->rcc_param.ul_mu_user_mask_lower);
-	cfr_info("UL MU User mask upper : %u\n",
-		 pcfr->rcc_param.ul_mu_user_mask_upper);
-	cfr_info("Freeze TLV delay count is : %s\n",
-		 pcfr->rcc_param.freeze_tlv_delay_cnt_en ?
-		 "enabled" : "disabled");
-	cfr_info("Freeze TLV delay count threshold : %u\n",
-		 pcfr->rcc_param.freeze_tlv_delay_cnt_thr);
-	cfr_info("Enabled CFG id bitmap : 0x%x\n",
-		 pcfr->rcc_param.filter_group_bitmap);
-	cfr_info(" Modified cfg id bitmap : 0x%x\n",
-		 pcfr->rcc_param.modified_in_curr_session);
+	cfr_err("capture duration : %u usec\n",
+		pcfr->rcc_param.capture_duration);
+	cfr_err("capture interval : %u usec\n",
+		pcfr->rcc_param.capture_interval);
+	cfr_err("UL MU User mask lower : %u\n",
+		pcfr->rcc_param.ul_mu_user_mask_lower);
+	cfr_err("UL MU User mask upper : %u\n",
+		pcfr->rcc_param.ul_mu_user_mask_upper);
+	cfr_err("Freeze TLV delay count is : %s\n",
+		pcfr->rcc_param.freeze_tlv_delay_cnt_en ?
+		"enabled" : "disabled");
+	cfr_err("Freeze TLV delay count threshold : %u\n",
+		pcfr->rcc_param.freeze_tlv_delay_cnt_thr);
+	cfr_err("Enabled CFG id bitmap : 0x%x\n",
+		pcfr->rcc_param.filter_group_bitmap);
+	cfr_err(" Modified cfg id bitmap : 0x%x\n",
+		pcfr->rcc_param.modified_in_curr_session);
 
-	cfr_info("TARA_CONFIG details:\n");
+	cfr_err("TARA_CONFIG details:\n");
 
 	for (grp_id = 0; grp_id < MAX_TA_RA_ENTRIES; grp_id++) {
 		glbl_cfg = &pcfr->global[grp_id];
 
-		cfr_info("Config ID: %d\n", grp_id);
-		cfr_info("Bandwidth :0x%x\n", glbl_cfg->bw);
-		cfr_info("NSS : 0x%x\n", glbl_cfg->nss);
-		cfr_info("valid_ta: %d\n", glbl_cfg->valid_ta);
-		cfr_info("valid_ta_mask: %d\n", glbl_cfg->valid_ta_mask);
-		cfr_info("valid_ra: %d\n", glbl_cfg->valid_ra);
-		cfr_info("valid_ra_mask: %d\n", glbl_cfg->valid_ra_mask);
-		cfr_info("valid_bw_mask: %d\n", glbl_cfg->valid_bw_mask);
-		cfr_info("valid_nss_mask: %d\n", glbl_cfg->valid_nss_mask);
-		cfr_info("valid_mgmt_subtype: %d\n",
-			 glbl_cfg->valid_mgmt_subtype);
-		cfr_info("valid_ctrl_subtype: %d\n",
-			 glbl_cfg->valid_ctrl_subtype);
-		cfr_info("valid_data_subtype: %d\n",
-			 glbl_cfg->valid_data_subtype);
-		cfr_info("Mgmt subtype : 0x%x\n",
-			 glbl_cfg->mgmt_subtype_filter);
-		cfr_info("CTRL subtype : 0x%x\n",
-			 glbl_cfg->ctrl_subtype_filter);
-		cfr_info("Data subtype : 0x%x\n",
-			 glbl_cfg->data_subtype_filter);
-		cfr_info("TX Addr : %s\n",
-			 ether_sprintf(glbl_cfg->tx_addr));
-		cfr_info("TX Addr Mask : %s\n",
-			 ether_sprintf(glbl_cfg->tx_addr_mask));
-		cfr_info("RX Addr : %s\n",
-			 ether_sprintf(glbl_cfg->rx_addr));
-		cfr_info("RX Addr Mask: %s\n",
-			 ether_sprintf(glbl_cfg->rx_addr_mask));
+		cfr_err("Config ID: %d\n", grp_id);
+		cfr_err("Bandwidth :0x%x\n", glbl_cfg->bw);
+		cfr_err("NSS : 0x%x\n", glbl_cfg->nss);
+		cfr_err("valid_ta: %d\n", glbl_cfg->valid_ta);
+		cfr_err("valid_ta_mask: %d\n", glbl_cfg->valid_ta_mask);
+		cfr_err("valid_ra: %d\n", glbl_cfg->valid_ra);
+		cfr_err("valid_ra_mask: %d\n", glbl_cfg->valid_ra_mask);
+		cfr_err("valid_bw_mask: %d\n", glbl_cfg->valid_bw_mask);
+		cfr_err("valid_nss_mask: %d\n", glbl_cfg->valid_nss_mask);
+		cfr_err("valid_mgmt_subtype: %d\n",
+			glbl_cfg->valid_mgmt_subtype);
+		cfr_err("valid_ctrl_subtype: %d\n",
+			glbl_cfg->valid_ctrl_subtype);
+		cfr_err("valid_data_subtype: %d\n",
+			glbl_cfg->valid_data_subtype);
+		cfr_err("Mgmt subtype : 0x%x\n",
+			glbl_cfg->mgmt_subtype_filter);
+		cfr_err("CTRL subtype : 0x%x\n",
+			glbl_cfg->ctrl_subtype_filter);
+		cfr_err("Data subtype : 0x%x\n",
+			glbl_cfg->data_subtype_filter);
+		cfr_err("TX Addr : %s\n",
+			ether_sprintf(glbl_cfg->tx_addr));
+		cfr_err("TX Addr Mask : %s\n",
+			ether_sprintf(glbl_cfg->tx_addr_mask));
+		cfr_err("RX Addr : %s\n",
+			ether_sprintf(glbl_cfg->rx_addr));
+		cfr_err("RX Addr Mask: %s\n",
+			ether_sprintf(glbl_cfg->rx_addr_mask));
 	}
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
@@ -799,49 +799,45 @@ QDF_STATUS ucfg_cfr_rcc_dump_dbg_counters(struct wlan_objmgr_vdev *vdev)
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
-	cfr_info("bb_captured_channel_cnt = %llu\n",
+	cfr_err("bb_captured_channel_cnt = %llu\n",
 		 pcfr->bb_captured_channel_cnt);
-	cfr_info("bb_captured_timeout_cnt = %llu\n",
+	cfr_err("bb_captured_timeout_cnt = %llu\n",
 		 pcfr->bb_captured_timeout_cnt);
-	cfr_info("rx_loc_info_valid_cnt = %llu\n",
+	cfr_err("rx_loc_info_valid_cnt = %llu\n",
 		 pcfr->rx_loc_info_valid_cnt);
-	cfr_info("tx_evt_cnt = %llu\n",
+	cfr_err("tx_evt_cnt = %llu\n",
 		 pcfr->tx_evt_cnt);
-	cfr_info("dbr_evt_cnt = %llu\n",
+	cfr_err("dbr_evt_cnt = %llu\n",
 		 pcfr->dbr_evt_cnt);
-	cfr_info("rx_tlv_evt_cnt = %llu\n",
+	cfr_err("rx_tlv_evt_cnt = %llu\n",
 		 pcfr->rx_tlv_evt_cnt);
-	cfr_info("release_cnt = %llu\n",
+	cfr_err("release_cnt = %llu\n",
 		 pcfr->release_cnt);
-	cfr_info("Error cnt:\n");
-	cfr_info("flush_dbr_cnt = %llu\n",
+	cfr_err("Error cnt:\n");
+	cfr_err("flush_dbr_cnt = %llu\n",
 		 pcfr->flush_dbr_cnt);
-	cfr_info("invalid_dma_length_cnt = %llu\n",
+	cfr_err("invalid_dma_length_cnt = %llu\n",
 		 pcfr->invalid_dma_length_cnt);
-	cfr_info("flush_all_dbr_cnt = %llu\n",
+	cfr_err("flush_all_dbr_cnt = %llu\n",
 		 pcfr->flush_all_dbr_cnt);
-	cfr_info("flush_all_txrx_cnt = %llu\n",
+	cfr_err("flush_all_txrx_cnt = %llu\n",
 		 pcfr->flush_all_txrx_cnt);
-	cfr_info("flush_timeout_dbr_cnt = %llu\n",
+	cfr_err("flush_timeout_dbr_cnt = %llu\n",
 		 pcfr->flush_timeout_dbr_cnt);
-	cfr_info("flush_timeout_txrx_cnt = %llu\n",
-		 pcfr->flush_timeout_txrx_cnt);
-	cfr_info("PPDU id mismatch for same cookie:\n");
-	cfr_info("clear_dbr_event = %llu\n",
-		 pcfr->clear_dbr_event);
-	cfr_info("clear_txrx_event = %llu\n",
+	cfr_err("PPDU id mismatch for same cookie:\n");
+	cfr_err("clear_txrx_event = %llu\n",
 		 pcfr->clear_txrx_event);
 
-	cfr_info("Channel capture status:\n");
+	cfr_err("Channel capture status:\n");
 	for (counter = 0; counter < CAPTURE_MAX; counter++) {
-		cfr_info("%s = %llu\n",
+		cfr_err("%s = %llu\n",
 			 chan_capture_status_to_str(counter),
 			 pcfr->chan_capture_status[counter]);
 	}
 
-	cfr_info("Freeze reason:\n");
+	cfr_err("Freeze reason:\n");
 	for (counter = 0; counter < FREEZE_REASON_MAX; counter++) {
-		cfr_info("%s = %llu\n",
+		cfr_err("%s = %llu\n",
 			 mac_freeze_reason_to_str(counter),
 			 pcfr->bb_captured_reason_cnt[counter]);
 	}
@@ -872,7 +868,7 @@ QDF_STATUS ucfg_cfr_rcc_dump_lut(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	cfr_info("LUT table:\n");
+	cfr_err("LUT table:\n");
 	tgt_cfr_dump_lut_enh(pdev);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 
