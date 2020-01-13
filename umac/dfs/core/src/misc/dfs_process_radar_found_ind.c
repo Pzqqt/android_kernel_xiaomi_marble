@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -951,16 +951,50 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	bool wait_for_csa = false;
 	uint16_t freq_list[NUM_CHANNELS_160MHZ];
 	uint8_t num_channels;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t freq_center;
 	uint32_t radarfound_freq;
 	struct dfs_channel *dfs_curchan;
+
+	/* Acquire a lock to avoid initiating mode switch till radar
+	 * processing is completed.
+	 */
+	DFS_RADAR_MODE_SWITCH_LOCK(dfs);
+
+	/* Before processing radar, check if HW mode switch is in progress.
+	 * If in progress, defer the processing of radar event received till
+	 * the mode switch is completed.
+	 */
+	if (dfs_is_hw_mode_switch_in_progress(dfs)) {
+		struct radar_found_info *radar_params = NULL;
+
+		radar_params = qdf_mem_malloc(sizeof(*radar_params));
+		if (!radar_params)
+			goto exit;
+
+		/* If CAC timer is running, cancel it here rather than
+		 * after processing to avoid handling unnecessary CAC timeouts.
+		 */
+		if (dfs->dfs_cac_timer_running)
+			dfs_cac_stop(dfs);
+
+		/* If CAC timer is to be handled after mode switch and then
+		 * we receive radar, no point in handling CAC completion.
+		 */
+		if (dfs->dfs_defer_params.is_cac_completed)
+			dfs->dfs_defer_params.is_cac_completed = false;
+		qdf_mem_copy(radar_params, radar_found, sizeof(*radar_params));
+		dfs->dfs_defer_params.radar_params = radar_params;
+		dfs->dfs_defer_params.is_radar_detected = true;
+		status = QDF_STATUS_SUCCESS;
+		goto exit;
+	}
 
 	dfs_curchan = dfs->dfs_curchan;
 
 	if (!dfs_curchan) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs->dfs_curchan is NULL");
-		return QDF_STATUS_E_FAILURE;
+		goto exit;
 	}
 
 	/* Check if the current channel is a non DFS channel
@@ -972,7 +1006,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	    !(radar_found->detector_id == AGILE_DETECTOR_ID)) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
 			"radar event on a non-DFS channel");
-		return QDF_STATUS_E_FAILURE;
+		goto exit;
 	}
 
 	/* Sanity checks for radar on Agile detector */
@@ -981,7 +1015,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	{
 		dfs_err(dfs, WLAN_DEBUG_DFS,
 			"radar on Agile detector when ADFS is not running");
-		return QDF_STATUS_E_FAILURE;
+		goto exit;
 	}
 
 	/* For Full Offload, FW sends segment id,freq_offset and chirp
@@ -1019,7 +1053,8 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	if (!dfs->dfs_use_nol) {
 		dfs_reset_bangradar(dfs);
 		dfs_send_csa_to_current_chan(dfs);
-		return QDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
+		goto exit;
 	}
 
 	if (dfs->dfs_bangradar_type == DFS_BANGRADAR_FOR_ALL_SUBCHANS)
@@ -1049,7 +1084,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
 			"radar event received on invalid channel");
-		return status;
+		goto exit;
 	}
 
 	dfs->dfs_is_nol_ie_sent = false;
@@ -1105,7 +1140,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 * channel change is not required.
 	 */
 	if (radar_found->detector_id == AGILE_DETECTOR_ID)
-		return QDF_STATUS_SUCCESS;
+		goto exit;
 	if (!dfs->dfs_is_offload_enabled &&
 	    dfs->is_radar_found_on_secondary_seg) {
 		dfs_second_segment_radar_disable(dfs);
@@ -1113,7 +1148,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 
 		if (dfs->is_radar_during_precac) {
 			dfs->is_radar_during_precac = 0;
-			return QDF_STATUS_SUCCESS;
+			goto exit;
 		}
 	}
 
@@ -1124,7 +1159,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 * needs to be fixed. See EV 105776.
 	 */
 	if (wait_for_csa)
-		return QDF_STATUS_SUCCESS;
+		goto exit;
 
 	/*
 	 * EV 129487 : We have detected radar in the channel,
@@ -1144,6 +1179,8 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				   dfs->dfs_curchan->dfs_ch_mhz_freq_seg2,
 				   dfs->dfs_curchan->dfs_ch_flags);
 
-	return QDF_STATUS_SUCCESS;
+exit:
+	DFS_RADAR_MODE_SWITCH_UNLOCK(dfs);
+	return status;
 }
 #endif

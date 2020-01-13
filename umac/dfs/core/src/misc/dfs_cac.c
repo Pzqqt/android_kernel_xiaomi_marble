@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -122,24 +122,16 @@ static void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
 		     sizeof(dfs->dfs_cac_started_chan));
 }
 
-/**
- * dfs_cac_timeout() - DFS cactimeout function.
- *
- * Sets dfs_cac_timer_running to 0  and dfs_cac_valid_timer.
- */
-#ifdef CONFIG_CHAN_FREQ_API
-static os_timer_func(dfs_cac_timeout)
+void dfs_process_cac_completion(struct wlan_dfs *dfs)
 {
-	struct wlan_dfs *dfs = NULL;
 	enum phy_ch_width ch_width = CH_WIDTH_INVALID;
 	uint16_t primary_chan_freq = 0, secondary_chan_freq = 0;
 	struct dfs_channel *dfs_curchan;
 
-	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
 	dfs->dfs_cac_timer_running = 0;
 	dfs_curchan = dfs->dfs_curchan;
 
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "cac expired, chan %d curr time %d",
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "cac expired, chan %d cur time %d",
 		 dfs->dfs_curchan->dfs_ch_freq,
 		 (qdf_system_ticks_to_msecs(qdf_system_ticks()) / 1000));
 
@@ -154,12 +146,13 @@ static os_timer_func(dfs_cac_timeout)
 					   dfs_curchan->dfs_ch_mhz_freq_seg2,
 					   dfs_curchan->dfs_ch_flags);
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			  "CAC timer on channel %u (%u MHz) stopped due to radar",
+			  "CAC timer on chan %u (%u MHz) stopped due to radar",
 			  dfs_curchan->dfs_ch_ieee,
 			  dfs_curchan->dfs_ch_freq);
 	} else {
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			  "CAC timer on channel %u (%u MHz) expired; no radar detected",
+			  "CAC timer on channel %u (%u MHz) expired;"
+			  "no radar detected",
 			  dfs_curchan->dfs_ch_ieee,
 			  dfs_curchan->dfs_ch_freq);
 
@@ -194,6 +187,24 @@ static os_timer_func(dfs_cac_timeout)
 		dfs_mlme_channel_change_by_precac(dfs->dfs_pdev_obj);
 		dfs->dfs_defer_precac_channel_change = 0;
 	}
+}
+
+/**
+ * dfs_cac_timeout() - DFS cactimeout function.
+ *
+ * Sets dfs_cac_timer_running to 0  and dfs_cac_valid_timer.
+ */
+#ifdef CONFIG_CHAN_FREQ_API
+static os_timer_func(dfs_cac_timeout)
+{
+	struct wlan_dfs *dfs = NULL;
+
+	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
+
+	if (dfs_is_hw_mode_switch_in_progress(dfs))
+		dfs->dfs_defer_params.is_cac_completed = true;
+	else
+		dfs_process_cac_completion(dfs);
 }
 #else
 #ifdef CONFIG_CHAN_NUM_API

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2019 The Linux Foundation.  All rights reserved.
+ * Copyright (c) 2013, 2016-2020 The Linux Foundation.  All rights reserved.
  * Copyright (c) 2005-2006 Atheros Communications, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -196,6 +196,12 @@
 	qdf_spinlock_create(&(_dfs)->dfs_data_struct_lock)
 #define WLAN_DFS_DATA_STRUCT_LOCK_DESTROY(_dfs) \
 	qdf_spinlock_destroy(&(_dfs)->dfs_data_struct_lock)
+
+/* Wrappers to call MLME radar during mode switch lock. */
+#define DFS_RADAR_MODE_SWITCH_LOCK(_dfs) \
+	dfs_mlme_acquire_radar_mode_switch_lock((_dfs)->dfs_pdev_obj)
+#define DFS_RADAR_MODE_SWITCH_UNLOCK(_dfs) \
+	dfs_mlme_release_radar_mode_switch_lock((_dfs)->dfs_pdev_obj)
 
 /* Mask for time stamp from descriptor */
 #define DFS_TSMASK    0xFFFFFFFF
@@ -898,6 +904,20 @@ struct dfs_event_log {
 #define FREQ_OFFSET_BOUNDARY_FOR_80MHZ 40
 
 /**
+ * struct dfs_mode_switch_defer_params - Parameters storing DFS information
+ * before defer, as part of HW mode switch.
+ *
+ * @radar_params: Deferred radar parameters.
+ * @is_cac_completed: Boolean representing CAC completion event.
+ * @is_radar_detected: Boolean representing radar event.
+ */
+struct dfs_mode_switch_defer_params {
+	struct radar_found_info *radar_params;
+	bool is_cac_completed;
+	bool is_radar_detected;
+};
+
+/**
  * struct wlan_dfs -                 The main dfs structure.
  * @dfs_debug_mask:                  Current debug bitmask.
  * @dfs_curchan_radindex:            Current channel radar index.
@@ -1061,6 +1081,9 @@ struct dfs_event_log {
  *                                   be blocked and this variable should be
  *                                   false so that HW pulses and synthetic
  *                                   pulses do not get mixed up.
+ *                                   defer timer running.
+ * @dfs_defer_params:                DFS deferred event parameters (allocated
+ *                                   only for the duration of defer alone).
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1224,6 +1247,7 @@ struct wlan_dfs {
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(WLAN_DFS_SYNTHETIC_RADAR)
 	bool           dfs_allow_hw_pulses;
 #endif
+	struct dfs_mode_switch_defer_params dfs_defer_params;
 };
 
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
@@ -1254,6 +1278,7 @@ struct wlan_dfs_priv {
  * @dfs_precac_timer: agile precac timer
  * @dfs_precac_timer_running: precac timer running flag
  * @ocac_status: Off channel CAC complete status
+ * @dfs_nol_ctx: dfs NOL data for all radios.
  */
 struct dfs_soc_priv_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -1268,6 +1293,7 @@ struct dfs_soc_priv_obj {
 	bool precac_state_started;
 	bool ocac_status;
 #endif
+	struct dfsreq_nolinfo *dfs_psoc_nolinfo;
 };
 
 /**
@@ -2725,4 +2751,81 @@ int dfs_reinit_timers(struct wlan_dfs *dfs);
  * Return: None.
  */
 void dfs_reset_dfs_prevchan(struct wlan_dfs *dfs);
+
+/**
+ * dfs_init_tmp_psoc_nol() - Init temporary psoc NOL structure.
+ * @dfs: Pointer to wlan_dfs object.
+ * @num_radios: Num of radios in the PSOC.
+ *
+ * Return: void.
+ */
+void dfs_init_tmp_psoc_nol(struct wlan_dfs *dfs, uint8_t num_radios);
+
+/**
+ * dfs_deinit_tmp_psoc_nol() - De-init temporary psoc NOL structure.
+ * @dfs: Pointer to wlan_dfs object.
+ *
+ * Return: void.
+ */
+void dfs_deinit_tmp_psoc_nol(struct wlan_dfs *dfs);
+
+/**
+ * dfs_save_dfs_nol_in_psoc() - Save NOL data of given pdev.
+ * @dfs: Pointer to wlan_dfs object.
+ * @pdev_id: The pdev ID which will have the NOL data.
+ * @low_5ghz_freq: The low 5GHz frequency value of the target pdev id.
+ * @high_5ghz_freq: The high 5GHz frequency value of the target pdev id.
+ *
+ * Based on the frequency of the NOL channel, copy it to the target pdev_id
+ * structure in psoc.
+ *
+ * Return: void.
+ */
+void dfs_save_dfs_nol_in_psoc(struct wlan_dfs *dfs,
+			      uint8_t pdev_id,
+			      uint16_t low_5ghz_freq,
+			      uint16_t high_5ghz_freq);
+
+/**
+ * dfs_reinit_nol_from_psoc_copy() - Reinit saved NOL data to corresponding
+ * DFS object.
+ * @dfs: Pointer to wlan_dfs object.
+ * @pdev_id: pdev_id of the given dfs object.
+ *
+ * Return: void.
+ */
+void dfs_reinit_nol_from_psoc_copy(struct wlan_dfs *dfs, uint8_t pdev_id);
+
+/**
+ * dfs_is_hw_mode_switch_in_progress() - Check if HW mode switch in progress.
+ * @dfs: Pointer to wlan_dfs object.
+ *
+ * Return: True if mode switch is in progress, else false.
+ */
+bool dfs_is_hw_mode_switch_in_progress(struct wlan_dfs *dfs);
+
+/**
+ * dfs_start_mode_switch_defer_timer() - start mode switch defer timer.
+ * @dfs: Pointer to wlan_dfs object.
+ *
+ * Return: void.
+ */
+void dfs_start_mode_switch_defer_timer(struct wlan_dfs *dfs);
+
+/**
+ * dfs_complete_deferred_tasks() - Process mode switch completion event and
+ * handle deffered tasks.
+ * @dfs: Pointer to wlan_dfs object.
+ *
+ * Return: void.
+ */
+void dfs_complete_deferred_tasks(struct wlan_dfs *dfs);
+
+/**
+ * dfs_process_cac_completion() - Process DFS CAC completion event.
+ * @dfs: Pointer to wlan_dfs object.
+ *
+ * Return: void.
+ */
+void dfs_process_cac_completion(struct wlan_dfs *dfs);
 #endif  /* _DFS_H_ */

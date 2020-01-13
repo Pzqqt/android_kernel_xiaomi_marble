@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -944,3 +944,102 @@ void tgt_dfs_set_fw_adfs_support(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(tgt_dfs_set_fw_adfs_support);
 #endif
+
+void tgt_dfs_init_tmp_psoc_nol(struct wlan_objmgr_pdev *pdev,
+			       uint8_t num_radios)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs_init_tmp_psoc_nol(dfs, num_radios);
+}
+
+qdf_export_symbol(tgt_dfs_init_tmp_psoc_nol);
+
+void tgt_dfs_deinit_tmp_psoc_nol(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs_deinit_tmp_psoc_nol(dfs);
+}
+
+qdf_export_symbol(tgt_dfs_deinit_tmp_psoc_nol);
+
+void tgt_dfs_save_dfs_nol_in_psoc(struct wlan_objmgr_pdev *pdev,
+				  uint8_t pdev_id,
+				  uint16_t low_5ghz_freq,
+				  uint16_t high_5ghz_freq)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs_save_dfs_nol_in_psoc(dfs, pdev_id, low_5ghz_freq, high_5ghz_freq);
+}
+
+qdf_export_symbol(tgt_dfs_save_dfs_nol_in_psoc);
+
+void tgt_dfs_reinit_nol_from_psoc_copy(struct wlan_objmgr_pdev *pdev,
+				       uint8_t pdev_id)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs_reinit_nol_from_psoc_copy(dfs, pdev_id);
+}
+
+qdf_export_symbol(tgt_dfs_reinit_nol_from_psoc_copy);
+
+void tgt_dfs_reinit_precac_lists(struct wlan_objmgr_pdev *src_pdev,
+				 struct wlan_objmgr_pdev *dest_pdev,
+				 uint16_t low_5g_freq,
+				 uint16_t high_5g_freq)
+{
+	struct wlan_dfs *src_dfs, *dest_dfs;
+
+	src_dfs = wlan_pdev_get_dfs_obj(src_pdev);
+	if (!src_dfs) {
+		dfs_err(src_dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+	dest_dfs = wlan_pdev_get_dfs_obj(dest_pdev);
+	if (!dest_dfs) {
+		dfs_err(dest_dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs_reinit_precac_lists(src_dfs, dest_dfs, low_5g_freq, high_5g_freq);
+}
+
+void tgt_dfs_complete_deferred_tasks(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs_complete_deferred_tasks(dfs);
+}

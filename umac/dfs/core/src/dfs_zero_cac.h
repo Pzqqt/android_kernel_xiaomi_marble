@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -822,6 +822,32 @@ dfs_get_precac_chan_state_for_freq(struct wlan_dfs *dfs,
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_zero_cac_reset(struct wlan_dfs *dfs);
+
+/**
+ * dfs_reinit_precac_lists() - Reinit DFS preCAC lists.
+ * @src_dfs: Source DFS from which the preCAC list is copied.
+ * @dest_dfs: Destination DFS to which the preCAC list is copied.
+ * @low_5g_freq: Low 5G frequency value of the destination DFS.
+ * @high_5g_freq: High 5G frequency value of the destination DFS.
+ *
+ * Copy all the preCAC list entries from the source DFS to the destination DFS
+ * which fall within the frequency range of low_5g_freq and high_5g_freq.
+ *
+ * Return: None (void).
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
+void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
+			     struct wlan_dfs *dest_dfs,
+			     uint16_t low_5g_freq,
+			     uint16_t high_5g_freq);
+#else
+static inline void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
+					   struct wlan_dfs *dest_dfs,
+					   uint16_t low_5g_freq,
+					   uint16_t high_5g_freq)
+{
+}
+#endif
 
 /**
  * dfs_is_precac_done_on_ht20_40_80_chan() - Is precac done on a

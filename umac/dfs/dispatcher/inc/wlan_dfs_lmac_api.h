@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -118,4 +118,13 @@ static inline bool lmac_is_host_dfs_check_support_enabled(
 	return false;
 }
 #endif
+
+/**
+ * lmac_dfs_is_hw_mode_switch_in_progress() - Check if HW mode switch is in
+ * progress.
+ * @pdev: Pointer to PDEV structure.
+ *
+ * Return: true if HW mode switch is in progress, else false.
+ */
+bool lmac_dfs_is_hw_mode_switch_in_progress(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_LMAC_API_H_ */

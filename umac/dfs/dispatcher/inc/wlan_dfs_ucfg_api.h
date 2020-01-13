@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -73,6 +73,10 @@
  *                                     list.
  * @mlme_get_cac_timeout_for_freq:     Get CAC timeout for a given channel
  *                                     frequency.
+ * @mlme_acquire_radar_mode_switch_lock: Acquire lock for radar processing over
+ *                                     mode switch.
+ * @mlme_release_radar_mode_switch_lock: Release lock taken for radar processing
+ *                                     over mode switch.
  */
 struct dfs_to_mlme {
 	QDF_STATUS (*pdev_component_obj_attach)(struct wlan_objmgr_pdev *pdev,
@@ -242,6 +246,10 @@ struct dfs_to_mlme {
 			(struct wlan_objmgr_pdev *pdev,
 			 uint16_t freq,
 			 enum WLAN_DFS_EVENTS event);
+	void (*mlme_acquire_radar_mode_switch_lock)
+			(struct wlan_objmgr_pdev *pdev);
+	void (*mlme_release_radar_mode_switch_lock)
+			(struct wlan_objmgr_pdev *pdev);
 };
 
 extern struct dfs_to_mlme global_dfs_to_mlme;

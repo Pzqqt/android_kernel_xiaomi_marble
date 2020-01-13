@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2016-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2010, Atheros Communications Inc.
  * All Rights Reserved.
  *
@@ -77,7 +77,7 @@
 #define DFS_LAST_IOCTL 29
 
 #ifndef DFS_CHAN_MAX
-#define DFS_CHAN_MAX 1023
+#define DFS_CHAN_MAX 25
 #endif
 
 /**

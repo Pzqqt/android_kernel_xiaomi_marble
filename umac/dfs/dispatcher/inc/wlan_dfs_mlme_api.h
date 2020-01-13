@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -440,4 +440,22 @@ void dfs_mlme_handle_dfs_scan_violation(struct wlan_objmgr_pdev *pdev)
  * Return: true if pdev opmode is STA, else false.
  */
 bool dfs_mlme_is_opmode_sta(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * dfs_mlme_acquire_radar_mode_switch_lock() - Acquire lock for radar processing
+ * over mode switch handling.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: void.
+ */
+void dfs_mlme_acquire_radar_mode_switch_lock(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * dfs_mlme_release_radar_mode_switch_lock() - Release lock taken for radar
+ * processing over mode switch handling.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: void.
+ */
+void dfs_mlme_release_radar_mode_switch_lock(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_MLME_API_H_ */
