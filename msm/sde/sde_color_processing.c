@@ -2368,6 +2368,7 @@ static void dspp_pcc_install_property(struct drm_crtc *crtc)
 	switch (version) {
 	case 1:
 	case 4:
+	case 5:
 		sde_cp_crtc_install_blob_property(crtc, feature_name,
 			SDE_CP_CRTC_DSPP_PCC, sizeof(struct drm_msm_pcc));
 		break;
