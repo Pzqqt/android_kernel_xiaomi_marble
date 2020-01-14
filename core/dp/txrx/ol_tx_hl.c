@@ -1622,19 +1622,6 @@ ol_tx_hl_pdev_queue_send_all(struct ol_txrx_pdev_t *pdev)
  *
  * Return: none
  */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
-void
-ol_tx_hl_vdev_bundle_timer(struct timer_list *t)
-{
-	qdf_nbuf_t msdu_list;
-	struct ol_txrx_vdev_t *vdev = from_timer(vdev, t, bundle_queue.timer);
-
-	vdev->no_of_bundle_sent_in_timer++;
-	msdu_list = ol_tx_hl_vdev_queue_send_all(vdev, true, true);
-	if (msdu_list)
-		qdf_nbuf_tx_free(msdu_list, 1/*error*/);
-}
-#else
 void
 ol_tx_hl_vdev_bundle_timer(void *ctx)
 {
@@ -1646,7 +1633,6 @@ ol_tx_hl_vdev_bundle_timer(void *ctx)
 	if (msdu_list)
 		qdf_nbuf_tx_free(msdu_list, 1/*error*/);
 }
-#endif
 
 qdf_nbuf_t
 ol_tx_hl(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu_list)
