@@ -159,6 +159,7 @@ enum sde_cp_crtc_features {
 	SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF2,
 	SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3,
 	SDE_CP_CRTC_DSPP_LTM_VLUT,
+	SDE_CP_CRTC_DSPP_SB,
 	SDE_CP_CRTC_DSPP_MAX,
 	/* DSPP features end */
 
@@ -1370,13 +1371,14 @@ static const int dspp_feature_to_sub_blk_tbl[SDE_CP_CRTC_MAX_FEATURES] = {
 	[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF2] = SDE_DSPP_LTM,
 	[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3] = SDE_DSPP_LTM,
 	[SDE_CP_CRTC_DSPP_LTM_VLUT] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_SB] = SDE_DSPP_SB,
 	[SDE_CP_CRTC_DSPP_MAX] = SDE_DSPP_MAX,
 	[SDE_CP_CRTC_LM_GC] = SDE_DSPP_MAX,
 };
 
 void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
 {
-	u32 i, sub_blk, num_mixers;
+	u32 i, sub_blk, num_mixers, dspp_sb;
 	enum sde_dspp dspp;
 	struct sde_hw_ctl *ctl;
 
@@ -1388,13 +1390,19 @@ void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
 
 	num_mixers = sde_crtc->num_mixers;
 	sub_blk = dspp_feature_to_sub_blk_tbl[feature];
+	dspp_sb = dspp_feature_to_sub_blk_tbl[SDE_CP_CRTC_DSPP_SB];
 
 	for (i = 0; i < num_mixers; i++) {
 		ctl = sde_crtc->mixers[i].hw_ctl;
 		dspp = sde_crtc->mixers[i].hw_dspp->idx;
-		if (ctl && ctl->ops.update_bitmask_dspp_subblk)
+		if (ctl && ctl->ops.update_bitmask_dspp_subblk) {
 			ctl->ops.update_bitmask_dspp_subblk(
 					ctl, dspp, sub_blk, true);
+			if (feature == SDE_CP_CRTC_DSPP_IGC ||
+					feature == SDE_CP_CRTC_DSPP_GAMUT)
+				ctl->ops.update_bitmask_dspp_subblk(
+						ctl, dspp, dspp_sb, true);
+		}
 	}
 }
 

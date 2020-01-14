@@ -319,7 +319,7 @@ enum {
  * @SDE_DSPP_HSIC            Global HSIC block
  * @SDE_DSPP_MEMCOLOR        Memory Color block
  * @SDE_DSPP_SIXZONE         Six zone block
- * @SDE_DSPP_GAMUT           Gamut bloc
+ * @SDE_DSPP_GAMUT           Gamut block
  * @SDE_DSPP_DITHER          Dither block
  * @SDE_DSPP_HIST            Histogram block
  * @SDE_DSPP_VLUT            PA VLUT block
