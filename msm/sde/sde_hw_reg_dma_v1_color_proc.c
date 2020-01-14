@@ -4196,3 +4196,144 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg)
 exit:
 	kfree(data);
 }
+
+void reg_dmav2_setup_vig_gamutv61(struct sde_hw_pipe *ctx, void *cfg)
+{
+	struct sde_hw_cp_cfg *hw_cfg = cfg;
+	struct drm_msm_3d_gamut *payload;
+	struct sde_hw_reg_dma_ops *dma_ops;
+	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
+	struct sde_reg_dma_kickoff_cfg kick_off;
+	int rc;
+	enum sde_sspp_multirect_index idx = SDE_SSPP_RECT_0;
+
+	u32 gamut_base = ctx->cap->sblk->gamut_blk.base - REG_DMA_VIG_SWI_DIFF;
+	u32 i, j, k = 0, len, table_select = 0;
+	u32 op_mode, scale_offset, scale_tbl_offset, transfer_size_bytes;
+	u16 *data;
+
+	rc = reg_dma_sspp_check(ctx, cfg, GAMUT, idx);
+	if (rc)
+		return;
+
+	if (!hw_cfg->payload) {
+		DRM_DEBUG_DRIVER("disable gamut feature\n");
+		/* v5 and v6 call the same off version */
+		vig_gamutv5_off(ctx, cfg);
+		return;
+	}
+
+	if (hw_cfg->len != sizeof(struct drm_msm_3d_gamut)) {
+		DRM_ERROR("invalid size of payload len %d exp %zd\n",
+				hw_cfg->len, sizeof(struct drm_msm_3d_gamut));
+		return;
+	}
+
+	payload = hw_cfg->payload;
+	if (payload->mode != GAMUT_3D_MODE_17) {
+		DRM_ERROR("invalid mode %d", payload->mode);
+		return;
+	}
+
+	op_mode = SDE_REG_READ(&ctx->hw, ctx->cap->sblk->gamut_blk.base);
+	op_mode = (op_mode & (BIT(5) - 1)) >> 2;
+	if (op_mode == gamut_mode_17b) {
+		op_mode = gamut_mode_17;
+		table_select = 0;
+		scale_offset = GAMUT_SCALEA_OFFSET_OFF;
+	} else {
+		op_mode = gamut_mode_17b;
+		table_select = 1;
+		scale_offset = GAMUT_SCALEB_OFFSET_OFF;
+	}
+
+	op_mode <<= 2;
+	if (payload->flags & GAMUT_3D_MAP_EN)
+		op_mode |= GAMUT_MAP_EN;
+	op_mode |= GAMUT_EN;
+
+	dma_ops = sde_reg_dma_get_ops();
+	dma_ops->reset_reg_dma_buf(sspp_buf[idx][GAMUT][ctx->idx]);
+
+	REG_DMA_INIT_OPS(dma_write_cfg, sspp_mapping[ctx->idx], GAMUT,
+			sspp_buf[idx][GAMUT][ctx->idx]);
+
+	REG_DMA_SETUP_OPS(dma_write_cfg, 0, NULL, 0, HW_BLK_SELECT, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write decode select failed ret %d\n", rc);
+		return;
+	}
+
+	len = GAMUT_3D_TBL_NUM * GAMUT_3D_MODE17_TBL_SZ * 3 * sizeof(u16);
+	/* Data size must be aligned with word size AND LUT transfer size */
+	transfer_size_bytes = LUTBUS_GAMUT_TRANS_SIZE * sizeof(u32);
+	if (len % transfer_size_bytes)
+		len = len + (transfer_size_bytes - len % transfer_size_bytes);
+
+	data = kzalloc(len, GFP_KERNEL);
+	if (!data)
+		return;
+
+	k = 0;
+	for (j = 0; j < GAMUT_3D_MODE17_TBL_SZ; j++) {
+		for (i = 0; i < GAMUT_3D_TBL_NUM; i++) {
+			/* 10 bit entries, 16 bit per LUTBUS entry and MSB
+			 * aligned to allow expansion, hence, sw needs to
+			 * left shift 6 bits before sending to HW.
+			 */
+			data[k++] = (u16)(payload->col[i][j].c0 << 6);
+			data[k++] = (u16)
+					((payload->col[i][j].c2_c1 >> 16) << 6);
+			data[k++] = (u16)((payload->col[i][j].c2_c1) << 6);
+		}
+	}
+
+	REG_DMA_SETUP_OPS(dma_write_cfg, 0, (u32 *)data, len,
+			REG_BLK_LUT_WRITE, 0, 0, 0);
+	dma_write_cfg.table_sel = table_select;
+	dma_write_cfg.block_sel = LUTBUS_BLOCK_GAMUT;
+	dma_write_cfg.trans_size = LUTBUS_GAMUT_TRANS_SIZE;
+	dma_write_cfg.lut_size = len / transfer_size_bytes;
+
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("lut write failed ret %d\n", rc);
+		goto exit;
+	}
+
+	if (op_mode & GAMUT_MAP_EN) {
+		for (i = 0; i < GAMUT_3D_SCALE_OFF_TBL_NUM; i++) {
+			scale_tbl_offset = gamut_base + scale_offset +
+					(i * GAMUT_SCALE_OFF_LEN);
+			REG_DMA_SETUP_OPS(dma_write_cfg, scale_tbl_offset,
+					&payload->scale_off[i][0],
+					GAMUT_SCALE_OFF_LEN,
+					REG_BLK_WRITE_SINGLE, 0, 0, 0);
+			rc = dma_ops->setup_payload(&dma_write_cfg);
+			if (rc) {
+				DRM_ERROR("write scale/off reg failed ret %d\n",
+						rc);
+				goto exit;
+			}
+		}
+	}
+
+	REG_DMA_SETUP_OPS(dma_write_cfg, gamut_base,
+			&op_mode, sizeof(op_mode), REG_SINGLE_WRITE, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("opmode write single reg failed ret %d\n", rc);
+		goto exit;
+	}
+
+	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
+			sspp_buf[idx][GAMUT][ctx->idx], REG_DMA_WRITE,
+			DMA_CTL_QUEUE0, WRITE_IMMEDIATE);
+	rc = dma_ops->kick_off(&kick_off);
+	if (rc)
+		DRM_ERROR("failed to kick off ret %d\n", rc);
+
+exit:
+	kfree(data);
+}

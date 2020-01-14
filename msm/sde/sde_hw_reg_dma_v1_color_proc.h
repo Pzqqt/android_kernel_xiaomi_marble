@@ -271,4 +271,13 @@ void reg_dmav2_setup_dspp_igcv32(struct sde_hw_dspp *ctx, void *cfg);
  */
 void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg);
 
+/**
+ * reg_dmav2_setup_vig_gamutv61() - VIG 3D lut gamut v61 implementation
+ *                                 using reg dma v2.
+ * @ctx: sspp ctx info
+ * @cfg: pointer to struct sde_hw_cp_cfg
+ */
+void reg_dmav2_setup_vig_gamutv61(struct sde_hw_pipe *ctx, void *cfg);
+
+
 #endif /* _SDE_HW_REG_DMA_V1_COLOR_PROC_H */

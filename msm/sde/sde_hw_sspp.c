@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hwio.h"
@@ -1083,6 +1083,15 @@ static void _setup_layer_ops_colorproc(struct sde_hw_pipe *c,
 			if (!ret)
 				c->ops.setup_vig_gamut =
 					reg_dmav1_setup_vig_gamutv6;
+			else
+				c->ops.setup_vig_gamut = NULL;
+		} else if (c->cap->sblk->gamut_blk.version ==
+			(SDE_COLOR_PROCESS_VER(0x6, 0x1))) {
+			ret = reg_dmav1_init_sspp_op_v4(SDE_SSPP_VIG_GAMUT,
+							c->idx);
+			if (!ret)
+				c->ops.setup_vig_gamut =
+					reg_dmav2_setup_vig_gamutv61;
 			else
 				c->ops.setup_vig_gamut = NULL;
 		}
