@@ -939,7 +939,7 @@ QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 
 	if (enable2x2 || !enable_bt_chain_sep || as_enabled ||
 	   (!hw_dbs_2x2_cap && dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN)) {
-		mlme_legacy_err("Cannot configure chainmask to FW");
+		mlme_legacy_debug("Cannot configure chainmask to FW");
 		return QDF_STATUS_E_FAILURE;
 	}
 
