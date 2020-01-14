@@ -1186,12 +1186,35 @@ struct sde_vbif_cfg {
 	u32 memtype_count;
 	u32 memtype[MAX_XIN_COUNT];
 };
+
 /**
- * struct sde_reg_dma_cfg - information of lut dma blocks
- * @id                 enum identifying this block
- * @base               register offset of this block
- * @features           bit mask identifying sub-blocks/features
- * @version            version of lutdma hw block
+ * enum sde_reg_dma_type - defines reg dma block type
+ * @REG_DMA_TYPE_DB: DB LUT DMA block
+ * @REG_DMA_TYPE_SB: SB LUT DMA block
+ * @REG_DMA_TYPE_MAX: invalid selection
+ */
+enum sde_reg_dma_type {
+	REG_DMA_TYPE_DB,
+	REG_DMA_TYPE_SB,
+	REG_DMA_TYPE_MAX,
+};
+
+/**
+ * struct sde_reg_dma_blk_info - definition of lut dma block.
+ * @valid              bool indicating if the definiton is valid.
+ * @base               register offset of this block.
+ * @features           bit mask identifying sub-blocks/features.
+ */
+struct sde_reg_dma_blk_info {
+	bool valid;
+	u32 base;
+	u32 features;
+};
+
+/**
+ * struct sde_reg_dma_cfg - overall config struct of lut dma blocks.
+ * @reg_dma_blks       Reg DMA blk info for each possible block type
+ * @version            version of lutdma hw blocks
  * @trigger_sel_off    offset to trigger select registers of lutdma
  * @broadcast_disabled flag indicating if broadcast usage should be avoided
  * @xin_id             VBIF xin client-id for LUTDMA
@@ -1199,7 +1222,7 @@ struct sde_vbif_cfg {
  * @clk_ctrl           VBIF xin client clk-ctrl
  */
 struct sde_reg_dma_cfg {
-	SDE_HW_BLK_INFO;
+	struct sde_reg_dma_blk_info reg_dma_blks[REG_DMA_TYPE_MAX];
 	u32 version;
 	u32 trigger_sel_off;
 	u32 broadcast_disabled;

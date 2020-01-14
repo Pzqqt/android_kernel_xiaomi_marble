@@ -434,6 +434,7 @@ enum {
 
 enum {
 	REG_DMA_OFF,
+	REG_DMA_ID,
 	REG_DMA_VERSION,
 	REG_DMA_TRIGGER_OFF,
 	REG_DMA_BROADCAST_DISABLED,
@@ -781,7 +782,9 @@ static struct sde_prop_type uidle_prop[] = {
 
 static struct sde_prop_type reg_dma_prop[REG_DMA_PROP_MAX] = {
 	[REG_DMA_OFF] =  {REG_DMA_OFF, "qcom,sde-reg-dma-off", false,
-		PROP_TYPE_U32},
+		PROP_TYPE_U32_ARRAY},
+	[REG_DMA_ID] =  {REG_DMA_ID, "qcom,sde-reg-dma-id", false,
+		PROP_TYPE_U32_ARRAY},
 	[REG_DMA_VERSION] = {REG_DMA_VERSION, "qcom,sde-reg-dma-version",
 		false, PROP_TYPE_U32},
 	[REG_DMA_TRIGGER_OFF] = {REG_DMA_TRIGGER_OFF,
@@ -3702,6 +3705,8 @@ static int sde_parse_reg_dma_dt(struct device_node *np,
 	struct sde_prop_value *prop_value = NULL;
 	u32 off_count;
 	bool prop_exists[REG_DMA_PROP_MAX];
+	bool dma_type_exists[REG_DMA_TYPE_MAX];
+	enum sde_reg_dma_type dma_type;
 
 	prop_value = kcalloc(REG_DMA_PROP_MAX,
 			sizeof(struct sde_prop_value), GFP_KERNEL);
@@ -3720,8 +3725,26 @@ static int sde_parse_reg_dma_dt(struct device_node *np,
 	if (rc)
 		goto end;
 
-	sde_cfg->reg_dma_count = off_count;
-	sde_cfg->dma_cfg.base = PROP_VALUE_ACCESS(prop_value, REG_DMA_OFF, 0);
+	sde_cfg->reg_dma_count = 0;
+	memset(&dma_type_exists, 0, sizeof(dma_type_exists));
+	for (i = 0; i < off_count; i++) {
+		dma_type = PROP_VALUE_ACCESS(prop_value, REG_DMA_ID, i);
+		if (dma_type >= REG_DMA_TYPE_MAX) {
+			SDE_ERROR("Invalid DMA type %d\n", dma_type);
+			goto end;
+		} else if (dma_type_exists[dma_type]) {
+			SDE_ERROR("DMA type ID %d exists more than once\n",
+					dma_type);
+			goto end;
+		}
+
+		dma_type_exists[dma_type] = true;
+		sde_cfg->dma_cfg.reg_dma_blks[dma_type].base =
+				PROP_VALUE_ACCESS(prop_value, REG_DMA_OFF, i);
+		sde_cfg->dma_cfg.reg_dma_blks[dma_type].valid = true;
+		sde_cfg->reg_dma_count++;
+	}
+
 	sde_cfg->dma_cfg.version = PROP_VALUE_ACCESS(prop_value,
 						REG_DMA_VERSION, 0);
 	sde_cfg->dma_cfg.trigger_sel_off = PROP_VALUE_ACCESS(prop_value,

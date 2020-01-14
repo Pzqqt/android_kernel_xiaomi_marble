@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 #include <drm/msm_drm_pp.h>
 #include "sde_reg_dma.h"
@@ -224,6 +224,7 @@ static u32 ltm_mapping[LTM_MAX] = {
 		(cfg).ctl = hw_ctl; \
 		(cfg).dma_buf = feature_dma_buf; \
 		(cfg).op = ops; \
+		(cfg).dma_type = REG_DMA_TYPE_DB; \
 		(cfg).queue_select = ctl_q; \
 		(cfg).trigger_mode = mode; \
 	} while (0)
