@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 #include <drm/msm_drm_pp.h>
 #include "sde_hw_mdss.h"
@@ -46,6 +46,12 @@ static void dspp_igc(struct sde_hw_dspp *c)
 			c->ops.setup_igc = reg_dmav1_setup_dspp_igcv31;
 		else
 			c->ops.setup_igc = sde_setup_dspp_igcv3;
+	} else if (c->cap->sblk->igc.version ==
+			SDE_COLOR_PROCESS_VER(0x3, 0x2)) {
+		c->ops.setup_igc = NULL;
+		ret = reg_dmav2_init_dspp_op_v4(SDE_DSPP_IGC, c->idx);
+		if (!ret)
+			c->ops.setup_igc = reg_dmav2_setup_dspp_igcv32;
 	}
 }
 
@@ -159,6 +165,12 @@ static void dspp_gamut(struct sde_hw_dspp *c)
 		c->ops.setup_gamut = NULL;
 		if (!ret)
 			c->ops.setup_gamut = reg_dmav1_setup_dspp_3d_gamutv42;
+	} else if (c->cap->sblk->gamut.version ==
+			SDE_COLOR_PROCESS_VER(0x4, 3)) {
+		c->ops.setup_gamut = NULL;
+		ret = reg_dmav2_init_dspp_op_v4(SDE_DSPP_GAMUT, c->idx);
+		if (!ret)
+			c->ops.setup_gamut = reg_dmav2_setup_dspp_3d_gamutv43;
 	}
 }
 

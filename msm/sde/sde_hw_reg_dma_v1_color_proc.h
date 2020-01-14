@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 #ifndef _SDE_HW_REG_DMA_V1_COLOR_PROC_H
 #define _SDE_HW_REG_DMA_V1_COLOR_PROC_H
@@ -249,5 +249,26 @@ void reg_dmav1_setup_ltm_vlutv1(struct sde_hw_dspp *ctx, void *cfg);
  */
 int reg_dmav1_deinit_ltm_ops(enum sde_dspp idx);
 
+/**
+ * reg_dmav2_init_dspp_op_v4() - initialize the dspp feature op for sde v4
+ *                               using reg dma v2.
+ * @feature: dspp feature
+ * @idx: dspp idx
+ */
+int reg_dmav2_init_dspp_op_v4(int feature, enum sde_dspp idx);
+
+/**
+ * reg_dmav2_setup_dspp_igcv32() - igc v32 implementation using reg dma v2.
+ * @ctx: dspp ctx info
+ * @cfg: pointer to struct sde_hw_cp_cfg
+ */
+void reg_dmav2_setup_dspp_igcv32(struct sde_hw_dspp *ctx, void *cfg);
+
+/**
+ * reg_dmav2_setup_3d_gamutv43() - gamut v4_3 implementation using reg dma v2.
+ * @ctx: dspp ctx info
+ * @cfg: pointer to struct sde_hw_cp_cfg
+ */
+void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg);
 
 #endif /* _SDE_HW_REG_DMA_V1_COLOR_PROC_H */
