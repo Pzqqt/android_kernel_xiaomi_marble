@@ -735,6 +735,9 @@ struct dp_soc_stats {
 		uint32_t hp_oos2;
 		/* Rx ring near full */
 		uint32_t near_full;
+		/* Break ring reaping as not all scattered msdu received */
+		uint32_t msdu_scatter_wait_break;
+
 		struct {
 			/* Invalid RBM error count */
 			uint32_t invalid_rbm;
@@ -775,6 +778,8 @@ struct dp_soc_stats {
 			uint32_t hal_rxdma_err_dup;
 			/* REO cmd send fail/requeue count */
 			uint32_t reo_cmd_send_fail;
+			/* RX msdu drop count due to scatter */
+			uint32_t scatter_msdu;
 		} err;
 
 		/* packet count per core - per ring */
