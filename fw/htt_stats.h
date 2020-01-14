@@ -1812,6 +1812,8 @@ typedef struct {
     A_UINT32 delayed_bar_5; /* MU user 5 */
     A_UINT32 delayed_bar_6; /* MU user 6 */
     A_UINT32 delayed_bar_7; /* MU user 7 */
+    A_UINT32 bar_with_tqm_head_seq_num;
+    A_UINT32 bar_with_tid_seq_num;
 } htt_tx_selfgen_cmn_stats_tlv;
 
 typedef struct {
