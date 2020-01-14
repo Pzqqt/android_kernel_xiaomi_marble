@@ -31,9 +31,12 @@ struct drm_msm_pcc_coeff {
 	__u32 rgb;
 };
 
+#define PCC_BEFORE (1 << 0)
+
 /**
  * struct drm_msm_pcc - pcc feature structure
- * @flags: for customizing operations
+ * @flags: for customizing operations. Values can be
+ *         - PCC_BEFORE: Operate PCC using a 'before' arrangement
  * @r: red coefficients.
  * @g: green coefficients.
  * @b: blue coefficients.
