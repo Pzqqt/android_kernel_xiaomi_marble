@@ -646,4 +646,11 @@ dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint32_t val)
 	return dp_pdev_configure_monitor_rings(pdev);
 }
 
+void
+dp_peer_set_rx_capture_enabled(struct cdp_peer *peer_handle, bool value)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+
+	peer->rx_cap_enabled = value;
+}
 #endif /* WLAN_RX_PKT_CAPTURE_ENH */
