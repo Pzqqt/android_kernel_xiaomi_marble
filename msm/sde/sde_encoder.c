@@ -149,6 +149,33 @@ void sde_encoder_uidle_enable(struct drm_encoder *drm_enc, bool enable)
 	}
 }
 
+static void _sde_encoder_pm_qos_add_request(struct drm_encoder *drm_enc,
+	struct sde_kms *sde_kms)
+{
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+	u32 cpu_dma_latency;
+
+	if (!sde_kms->catalog)
+		return;
+
+	cpu_dma_latency = sde_kms->catalog->perf.cpu_dma_latency;
+	pm_qos_add_request(&sde_enc->pm_qos_cpu_req,
+			PM_QOS_CPU_DMA_LATENCY, cpu_dma_latency);
+
+	SDE_EVT32_VERBOSE(DRMID(drm_enc), cpu_dma_latency);
+}
+
+static void _sde_encoder_pm_qos_remove_request(struct drm_encoder *drm_enc,
+	struct sde_kms *sde_kms)
+{
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+
+	if (!sde_kms->catalog)
+		return;
+
+	pm_qos_remove_request(&sde_enc->pm_qos_cpu_req);
+}
+
 static bool _sde_encoder_is_autorefresh_enabled(
 		struct sde_encoder_virt *sde_enc)
 {
@@ -1392,7 +1419,12 @@ static int _sde_encoder_resource_control_helper(struct drm_encoder *drm_enc,
 		/* enable all the irq */
 		_sde_encoder_irq_control(drm_enc, true);
 
+		if (is_cmd_mode)
+			_sde_encoder_pm_qos_add_request(drm_enc, sde_kms);
+
 	} else {
+		if (is_cmd_mode)
+			_sde_encoder_pm_qos_remove_request(drm_enc, sde_kms);
 
 		/* disable all the irq */
 		_sde_encoder_irq_control(drm_enc, false);
