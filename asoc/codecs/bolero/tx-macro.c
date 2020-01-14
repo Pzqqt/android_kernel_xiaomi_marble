@@ -2821,7 +2821,7 @@ undefined_rate:
 }
 
 static const struct tx_macro_reg_mask_val tx_macro_reg_init[] = {
-	{BOLERO_CDC_TX0_TX_PATH_SEC7, 0x3F, 0x02},
+	{BOLERO_CDC_TX0_TX_PATH_SEC7, 0x3F, 0x0A},
 };
 
 static int tx_macro_init(struct snd_soc_component *component)
