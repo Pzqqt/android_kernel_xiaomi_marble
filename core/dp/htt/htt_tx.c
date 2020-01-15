@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1097,12 +1097,12 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	unsigned int  tx_buffer_count_pwr2;
 	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
-	qdf_dma_addr_t *ring_vaddr;
+	target_paddr_t *ring_vaddr;
 	uint16_t idx;
 	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
 	qdf_shared_mem_t *shared_tx_buffer;
 
-	ring_vaddr = (qdf_dma_addr_t *)pdev->ipa_uc_tx_rsc.tx_comp_ring->vaddr;
+	ring_vaddr = (target_paddr_t *)pdev->ipa_uc_tx_rsc.tx_comp_ring->vaddr;
 	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
 		mem_map_table = qdf_mem_map_table_alloc(uc_tx_buf_cnt);
 		if (!mem_map_table) {
