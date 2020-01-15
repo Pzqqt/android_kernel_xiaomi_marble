@@ -302,6 +302,10 @@ struct sde_kms {
 
 	bool first_kickoff;
 	bool qdss_enabled;
+
+	cpumask_t irq_cpu_mask;
+	struct dev_pm_qos_request pm_qos_irq_req[NR_CPUS];
+	struct irq_affinity_notify affinity_notify;
 };
 
 struct vsync_info {
