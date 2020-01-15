@@ -73,6 +73,9 @@ struct dp_tx_tid {
 	qdf_nbuf_queue_t msdu_comp_q;
 	qdf_nbuf_queue_t pending_ppdu_q;
 	struct cdp_tx_completion_ppdu xretry_ppdu;
+	uint16_t first_data_seq_ctrl;
+	uint32_t mpdu_cnt;
+	uint32_t mpdu_fcs_ok_bitmap[QDF_MON_STATUS_MPDU_FCS_BMAP_NWORDS];
 };
 
 struct dp_peer_tx_capture {
