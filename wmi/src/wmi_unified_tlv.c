@@ -6799,6 +6799,9 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		WMI_RSRC_CFG_FLAG_IPHR_PAD_CONFIG_ENABLE_SET(
 			resource_cfg->flag1, 1);
 
+	WMI_RSRC_CFG_FLAG_IPA_DISABLE_SET(resource_cfg->flag1,
+					  tgt_res_cfg->ipa_disable);
+
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 	resource_cfg->peer_map_unmap_v2_support =
 		tgt_res_cfg->peer_map_unmap_v2;

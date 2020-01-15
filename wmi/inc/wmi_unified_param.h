@@ -5165,6 +5165,7 @@ struct wmi_host_fw_abi_ver {
  * @three_way_coex_config_legacy_en: enable three way coex legacy feature
  * @max_num_group_keys: max number of group keys supported for VLAN
  * @re_ul_resp: enable 11ax UL response feature (UL-OFDMA) for repeater
+ * @ipa_disable: disable IPA feature
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5251,6 +5252,7 @@ typedef struct {
 	bool three_way_coex_config_legacy_en;
 	uint32_t max_num_group_keys;
 	uint32_t re_ul_resp;
+	bool ipa_disable;
 } target_resource_config;
 
 /**
