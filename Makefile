@@ -9,6 +9,15 @@ ifeq ($(CONFIG_ARCH_KONA), y)
 LINUXINCLUDE    += -include $(srctree)/techpack/display/config/konadispconf.h
 endif
 
+ifeq ($(CONFIG_ARCH_LAHAINA), y)
+include $(srctree)/techpack/display/config/lahainadisp.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/display/config/lahainadispconf.h
+LINUXINCLUDE    += \
+		   -I$(srctree)/techpack/display/include/uapi/display \
+		   -I$(srctree)/techpack/display/include
+USERINCLUDE     += -I$(srctree)/techpack/display/include/uapi/display
+endif
+
 ifeq ($(CONFIG_ARCH_LITO), y)
 include $(srctree)/techpack/display/config/saipdisp.conf
 endif
