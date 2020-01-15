@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1106,7 +1106,8 @@ scm_update_channel_list(struct scan_start_request *req,
 	if ((scan_obj->scan_def.allow_dfs_chan_in_scan &&
 	    (scan_obj->scan_def.allow_dfs_chan_in_first_scan ||
 	     first_scan_done)) &&
-	     !(scan_obj->scan_def.skip_dfs_chan_in_p2p_search && p2p_search))
+	     !(scan_obj->scan_def.skip_dfs_chan_in_p2p_search && p2p_search) &&
+	     !scan_obj->miracast_enabled)
 		skip_dfs_ch = false;
 
 	for (i = 0; i < req->scan_req.chan_list.num_chan; i++) {
