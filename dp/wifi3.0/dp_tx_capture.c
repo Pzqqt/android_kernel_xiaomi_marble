@@ -2127,6 +2127,16 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 		subtype = 0;
 	}
 
+	switch (ppdu_desc->htt_frame_type) {
+	case HTT_STATS_FTYPE_TIDQ_DATA_SU:
+	case HTT_STATS_FTYPE_TIDQ_DATA_MU:
+		is_sgen_pkt = false;
+	break;
+	default:
+		is_sgen_pkt = true;
+	break;
+	}
+
 	retries_q = &pdev->tx_capture.retries_ctl_mgmt_q[type][subtype];
 get_mgmt_pkt_from_queue:
 	qdf_spin_lock_bh(
@@ -2185,6 +2195,11 @@ get_mgmt_pkt_from_queue:
 				}
 			}
 
+			/*
+			 * only for the packets send over the air are handled
+			 * packets drop by firmware is not handled in this
+			 * feature
+			 */
 			if (ppdu_desc->user[0].completion_status ==
 			    HTT_PPDU_STATS_USER_STATUS_FILTERED) {
 				qdf_nbuf_free(nbuf_ppdu_desc);
@@ -2215,6 +2230,11 @@ get_mgmt_pkt_from_queue:
 			uint16_t frame_ctrl_le;
 			struct ieee80211_frame *wh;
 
+			/*
+			 * only for the packets send over the air are handled
+			 * packets drop by firmware is not handled in this
+			 * feature
+			 */
 			if (ppdu_desc->user[0].completion_status ==
 			    HTT_PPDU_STATS_USER_STATUS_FILTERED) {
 				qdf_nbuf_free(nbuf_ppdu_desc);
@@ -2301,10 +2321,32 @@ get_mgmt_pkt_from_queue:
 						   &tx_capture_info,
 						   mgmt_ctl_nbuf, true);
 		}
+	} else if (!is_sgen_pkt) {
+		/*
+		 * only for the packets send over the air are handled
+		 * packets drop by firmware is not handled in this
+		 * feature
+		 */
+		if (ppdu_desc->user[0].completion_status ==
+		    HTT_PPDU_STATS_USER_STATUS_FILTERED) {
+			qdf_nbuf_free(nbuf_ppdu_desc);
+			status = 0;
+			goto free_ppdu_desc;
+		}
+		/*
+		 * add the ppdu_desc into retry queue
+		 */
+		qdf_nbuf_queue_add(retries_q, nbuf_ppdu_desc);
+		status = 0;
 	} else if ((ppdu_desc->frame_ctrl &
 		   IEEE80211_FC0_TYPE_MASK) ==
 		   IEEE80211_FC0_TYPE_CTL) {
 
+		/*
+		 * only for the packets send over the air are handled
+		 * packets drop by firmware is not handled in this
+		 * feature
+		 */
 		if (ppdu_desc->user[0].completion_status ==
 		    HTT_PPDU_STATS_USER_STATUS_FILTERED) {
 			qdf_nbuf_free(nbuf_ppdu_desc);
