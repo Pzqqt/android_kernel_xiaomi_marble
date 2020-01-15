@@ -253,6 +253,9 @@
 #define HAL_RX_GET_TO_DS_FLAG(rx_mpdu_start)	\
 	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_2, TO_DS)
 
+#define HAL_RX_GET_MAC_ADDR1_VALID(rx_mpdu_start) \
+	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_2, MAC_ADDR_AD1_VALID)
+
 #define HAL_RX_GET_MAC_ADDR2_VALID(rx_mpdu_start) \
 	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_2, MAC_ADDR_AD2_VALID)
 
