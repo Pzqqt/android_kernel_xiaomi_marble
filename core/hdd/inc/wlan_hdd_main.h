@@ -1742,6 +1742,11 @@ struct hdd_context {
 	/* IPv4 notifier callback for handling ARP offload on change in IP */
 	struct notifier_block ipv4_notifier;
 
+#ifdef FEATURE_RUNTIME_PM
+	struct notifier_block pm_qos_notifier;
+	bool runtime_pm_prevented;
+	qdf_spinlock_t pm_qos_lock;
+#endif
 	/* number of rf chains supported by target */
 	uint32_t  num_rf_chains;
 	/* Is htTxSTBC supported by target */

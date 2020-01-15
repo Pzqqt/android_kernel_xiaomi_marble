@@ -946,6 +946,32 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 	return NOTIFY_DONE;
 }
 
+#ifdef FEATURE_RUNTIME_PM
+int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
+			   void *context)
+{
+	struct hdd_context *hdd_ctx = container_of(nb, struct hdd_context,
+						   pm_qos_notifier);
+
+	hdd_debug("PM QOS update. Current value: %ld", curr_val);
+	qdf_spin_lock_irqsave(&hdd_ctx->pm_qos_lock);
+
+	if (!hdd_ctx->runtime_pm_prevented &&
+	    curr_val != PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE) {
+		pm_runtime_get_noresume(hdd_ctx->parent_dev);
+		hdd_ctx->runtime_pm_prevented = true;
+	} else if (hdd_ctx->runtime_pm_prevented &&
+		   curr_val == PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE) {
+		pm_runtime_put_noidle(hdd_ctx->parent_dev);
+		hdd_ctx->runtime_pm_prevented = false;
+	}
+
+	qdf_spin_unlock_irqrestore(&hdd_ctx->pm_qos_lock);
+
+	return NOTIFY_DONE;
+}
+#endif
+
 /**
  * hdd_get_ipv4_local_interface() - get ipv4 local interafce from iface list
  * @adapter: Adapter context for which ARP offload is to be configured

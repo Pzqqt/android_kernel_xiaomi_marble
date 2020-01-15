@@ -26,6 +26,8 @@
  */
 
 #include "wlan_hdd_main.h"
+#include <linux/pm_qos.h>
+#include <linux/pm_runtime.h>
 
 #define HDD_WAKELOCK_TIMEOUT_CONNECT 1000
 #define HDD_WAKELOCK_TIMEOUT_RESUME 1000
@@ -408,6 +410,21 @@ int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 			  unsigned long data, void *arg);
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * wlan_hdd_pm_qos_notify() - PM QOS notifier call back function
+ * @nb: Pointer to notifier block kernel structure
+ * @curr_val: PM QOS current value
+ * @context: call back context
+ *
+ * This callback function for PM QOS change notification is used to setup
+ * dynamic runtime PM.
+ *
+ * Return: NOTIFY_DONE for success
+ */
+int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
+			   void *context);
+#endif
 /**
  * wlan_hdd_ipv6_changed() - IPv6 change notifier callback
  * @nb: pointer to notifier block

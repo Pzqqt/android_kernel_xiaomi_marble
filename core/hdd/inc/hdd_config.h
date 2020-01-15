@@ -449,6 +449,19 @@ enum hdd_dot11_mode {
 #endif
 
 #ifdef FEATURE_RUNTIME_PM
+
+/**
+ * enum hdd_runtime_pm_cfg - Runtime PM (RTPM) configuration options
+ * @hdd_runtime_pm_disabled: RTPM and CxPC aware RTPM  disabled
+ * @hdd_runtime_pm_static: RTPM enabled, but CxPC aware RTPM disabled
+ * @hdd_runtime_pm_dynamic: RTPM and CxPC aware RTPM enabled
+ */
+enum hdd_runtime_pm_cfg {
+	hdd_runtime_pm_disabled = 0,
+	hdd_runtime_pm_static = 1,
+	hdd_runtime_pm_dynamic = 2,
+};
+
 /*
  * <ini>
  * gRuntimePM - enable runtime suspend
