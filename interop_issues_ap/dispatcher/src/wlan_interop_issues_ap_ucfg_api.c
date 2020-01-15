@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,10 +26,10 @@
 #include <wlan_interop_issues_ap_api.h>
 
 QDF_STATUS
-ucfg_set_interop_issues_ap_config(struct wlan_objmgr_vdev *vdev,
+ucfg_set_interop_issues_ap_config(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_interop_issues_ap_info *rap)
 {
-	return tgt_set_interop_issues_ap_req(wlan_vdev_get_psoc(vdev), rap);
+	return tgt_set_interop_issues_ap_req(psoc, rap);
 }
 
 void ucfg_register_interop_issues_ap_callback(struct wlan_objmgr_pdev *pdev,

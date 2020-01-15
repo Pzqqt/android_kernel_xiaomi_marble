@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,10 +31,12 @@
 
 /**
  * struct wlan_interop_issues_ap_info - interop issues ap info
+ * @detect_enable: the flag to enable detect issue ap
  * @count: the number of interop issues ap
  * @rap_items: interop issues ap items
  */
 struct wlan_interop_issues_ap_info {
+	bool detect_enable;
 	uint32_t count;
 	struct qdf_mac_addr rap_items[MAX_INTEROP_ISSUES_AP_NUM];
 };
