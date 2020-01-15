@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -178,6 +178,13 @@ __wlan_cfg80211_set_interop_issues_ap_config(struct wiphy *wiphy,
 	struct nlattr *attr;
 	uint32_t count = 0;
 	struct wlan_interop_issues_ap_info interop_issues_ap = {0};
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(adapter->vdev);
+	if (!psoc) {
+		osif_err("Invalid psoc");
+		return -EINVAL;
+	}
 
 	if (wlan_cfg80211_nla_parse(tb,
 				    QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_MAX,
@@ -198,12 +205,13 @@ __wlan_cfg80211_set_interop_issues_ap_config(struct wiphy *wiphy,
 
 	osif_debug("Num of interop issues ap: %d", count);
 	interop_issues_ap.count = count;
+	interop_issues_ap.detect_enable = true;
 
 	/*
 	 * need to figure out a converged way of obtaining the vdev for
 	 * a given netdev that doesn't involve the legacy mechanism.
 	 */
-	ucfg_set_interop_issues_ap_config(adapter->vdev, &interop_issues_ap);
+	ucfg_set_interop_issues_ap_config(psoc, &interop_issues_ap);
 
 	return 0;
 }
@@ -234,9 +242,19 @@ void wlan_cfg80211_init_interop_issues_ap(struct wlan_objmgr_pdev *pdev)
 	 * cnss-daemon does not restart.
 	 */
 	uint8_t fmac[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+	struct wlan_interop_issues_ap_info interop_issues_ap = {0};
 	struct wlan_interop_issues_ap_event data;
+	struct wlan_objmgr_psoc *psoc;
 
 	wlan_interop_issues_ap_register_cbk(pdev);
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		osif_err("Invalid psoc");
+		return;
+	}
+	interop_issues_ap.detect_enable = true;
+	ucfg_set_interop_issues_ap_config(psoc, &interop_issues_ap);
 
 	data.pdev = pdev;
 	qdf_mem_copy(data.rap_addr.bytes, fmac, QDF_MAC_ADDR_SIZE);
