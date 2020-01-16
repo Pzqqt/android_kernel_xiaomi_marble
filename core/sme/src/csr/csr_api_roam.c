@@ -15425,18 +15425,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (pSession->nss == 1)
 			pSession->supported_nss_1x1 = true;
 
-		follow_ap_edca = ucfg_action_oui_search(mac->psoc,
-					    &vendor_ap_search_attr,
-					    ACTION_OUI_DISABLE_AGGRESSIVE_EDCA);
-
-		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
-							sessionId,
-							WLAN_LEGACY_MAC_ID);
-		if (vdev) {
-			mlme_set_follow_ap_edca_flag(vdev, follow_ap_edca);
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-		}
-
 		is_vendor_ap_present =
 				ucfg_action_oui_search(mac->psoc,
 						       &vendor_ap_search_attr,
@@ -15513,6 +15501,22 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		     dot11mode == MLME_DOT11_MODE_11AC ||
 		     dot11mode == MLME_DOT11_MODE_11AC_ONLY))
 			dot11mode = MLME_DOT11_MODE_11N;
+
+		follow_ap_edca =
+		    ucfg_action_oui_search(mac->psoc,
+					   &vendor_ap_search_attr,
+					   ACTION_OUI_DISABLE_AGGRESSIVE_EDCA);
+		/* If both sta and ap supports 11ax follow ap edca*/
+		if (IS_DOT11_MODE_HE(dot11mode) && pIes->he_cap.present)
+			follow_ap_edca = true;
+
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
+							    sessionId,
+							    WLAN_LEGACY_MAC_ID);
+		if (vdev) {
+			mlme_set_follow_ap_edca_flag(vdev, follow_ap_edca);
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		}
 
 		csr_join_req->supported_nss_1x1 = pSession->supported_nss_1x1;
 		csr_join_req->vdev_nss = pSession->vdev_nss;
@@ -20902,6 +20906,45 @@ void csr_update_fils_erp_seq_num(struct csr_roam_profile *roam_profile,
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/*
+ * is_dis_aggre_edca_available() - is disable aggressive edca action oui id
+ *                                 available
+ * @mac: mac context
+ * @bss_desc: bss description
+ * @pies: beacon ie
+ * @dot11mode: dot11 mode
+ *
+ * Return true if isable aggressive edca action oui id is available
+ */
+static bool is_dis_aggre_edca_available(struct mac_context *mac,
+					struct bss_description *bss_desc,
+					tDot11fBeaconIEs *pies,
+					uint32_t dot11mode)
+{
+	struct action_oui_search_attr vendor_ap_search_attr;
+	uint16_t ielen;
+
+	ielen = csr_get_ielen_from_bss_description(bss_desc);
+	/* Fill the Vendor AP search params */
+	vendor_ap_search_attr.ie_data =
+			(uint8_t *)&bss_desc->ieFields[0];
+	vendor_ap_search_attr.ie_length = ielen;
+	vendor_ap_search_attr.mac_addr = &bss_desc->bssId[0];
+	vendor_ap_search_attr.nss = csr_get_nss_supported_by_sta_and_ap(
+					&pies->VHTCaps, &pies->HTCaps,
+					&pies->he_cap, dot11mode);
+	vendor_ap_search_attr.ht_cap = pies->HTCaps.present;
+	vendor_ap_search_attr.vht_cap = pies->VHTCaps.present;
+	vendor_ap_search_attr.enable_2g =
+				wlan_reg_is_24ghz_ch_freq(bss_desc->chan_freq);
+	vendor_ap_search_attr.enable_5g =
+				wlan_reg_is_5ghz_ch_freq(bss_desc->chan_freq);
+
+	return ucfg_action_oui_search(mac->psoc,
+				    &vendor_ap_search_attr,
+				    ACTION_OUI_DISABLE_AGGRESSIVE_EDCA);
+}
+
 static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		struct roam_offload_synch_ind *roam_synch_data,
 		struct bss_description *bss_desc, enum sir_roam_op_code reason)
@@ -20924,6 +20967,8 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 #endif
 	struct wlan_objmgr_vdev *vdev;
 	struct mlme_roam_after_data_stall *vdev_roam_params;
+	bool follow_ap_edca;
+	uint32_t dot11mode;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, session_id,
 						    WLAN_LEGACY_SME_ID);
@@ -21310,6 +21355,15 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			(csr_is_concurrent_session_running(mac_ctx))) {
 		mac_ctx->roam.configParam.doBMPSWorkaround = 1;
 	}
+
+	dot11mode = session->bssParams.uCfgDot11Mode;
+	follow_ap_edca = is_dis_aggre_edca_available(mac_ctx, bss_desc,
+						     ies_local,
+						     dot11mode);
+	if (IS_DOT11_MODE_HE(dot11mode) && ies_local->he_cap.present)
+		follow_ap_edca = true;
+	mlme_set_follow_ap_edca_flag(vdev, follow_ap_edca);
+
 	roam_info->roamSynchInProgress = true;
 	roam_info->synchAuthStatus = roam_synch_data->authStatus;
 	roam_info->kck_len = roam_synch_data->kck_len;
