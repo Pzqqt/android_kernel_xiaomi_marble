@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2018, 2019 The Linux Foundation.
+ * Copyright (c) 2013-2016, 2018, 2019-2020 The Linux Foundation.
  * All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -59,7 +59,6 @@ typedef struct sFTSMEContext {
 	/* Saved pFTPreAuthRsp */
 	tpSirFTPreAuthRsp psavedFTPreAuthRsp;
 	bool setFTPreAuthState;
-	bool setFTPTKState;
 	/* Time to trigger reassoc once pre-auth is successful */
 	qdf_mc_timer_t preAuthReassocIntvlTimer;
 	bool addMDIE;
@@ -115,7 +114,4 @@ void sme_preauth_reassoc_intvl_timer_callback(void *context);
 void sme_set_ft_pre_auth_state(mac_handle_t mac_handle, uint32_t sessionId,
 			       bool state);
 bool sme_get_ft_pre_auth_state(mac_handle_t mac_handle, uint32_t sessionId);
-bool sme_get_ftptk_state(mac_handle_t mac_handle, uint32_t sessionId);
-void sme_set_ftptk_state(mac_handle_t mac_handle, uint32_t sessionId,
-			 bool state);
 #endif

@@ -16567,18 +16567,9 @@ static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
 				mac_handle_t mac_handle, bool *ft_mode)
 {
 	struct wlan_objmgr_vdev *vdev;
-	struct hdd_station_ctx *sta_ctx =
-		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int errno;
 	QDF_STATUS status;
 
-	if (!pairwise) {
-		/* set group key */
-		if (sta_ctx->roam_info.defer_key_complete) {
-			hdd_debug("Perform Set key Complete");
-			hdd_perform_roam_set_key_complete(adapter);
-		}
-	}
 	/* The supplicant may attempt to set the PTK once
 	 * pre-authentication is done. Save the key in the
 	 * UMAC and include it in the ADD BSS request

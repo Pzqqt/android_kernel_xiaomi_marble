@@ -221,31 +221,6 @@ void sme_set_ft_ies(mac_handle_t mac_handle, uint32_t session_id,
 	sme_release_global_lock(&mac_ctx->sme);
 }
 
-bool sme_get_ftptk_state(mac_handle_t mac_handle, uint32_t sessionId)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-
-	if (!pSession) {
-		sme_err("pSession is NULL");
-		return false;
-	}
-	return pSession->ftSmeContext.setFTPTKState;
-}
-
-void sme_set_ftptk_state(mac_handle_t mac_handle, uint32_t sessionId,
-			 bool state)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-
-	if (!pSession) {
-		sme_err("pSession is NULL");
-		return;
-	}
-	pSession->ftSmeContext.setFTPTKState = state;
-}
-
 QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -454,7 +429,6 @@ void sme_ft_reset(mac_handle_t mac_handle, uint32_t sessionId)
 			pSession->ftSmeContext.psavedFTPreAuthRsp = NULL;
 		}
 		pSession->ftSmeContext.setFTPreAuthState = false;
-		pSession->ftSmeContext.setFTPTKState = false;
 
 		qdf_mem_zero(pSession->ftSmeContext.preAuthbssId,
 			     QDF_MAC_ADDR_SIZE);

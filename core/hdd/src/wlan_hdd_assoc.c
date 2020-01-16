@@ -2834,40 +2834,6 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_perform_roam_set_key_complete() - perform set key complete
- * @adapter: pointer to adapter
- *
- * Return: none
- */
-void hdd_perform_roam_set_key_complete(struct hdd_adapter *adapter)
-{
-	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct csr_roam_info *roam_info;
-
-	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (!roam_info)
-		return;
-	roam_info->fAuthRequired = false;
-	qdf_mem_copy(roam_info->bssid.bytes,
-		     sta_ctx->roam_info.bssid, QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(roam_info->peerMac.bytes,
-		     sta_ctx->roam_info.peer_mac, QDF_MAC_ADDR_SIZE);
-
-	qdf_ret_status =
-			hdd_roam_set_key_complete_handler(adapter,
-					   roam_info,
-					   sta_ctx->roam_info.roam_id,
-					   sta_ctx->roam_info.roam_status,
-					   eCSR_ROAM_RESULT_AUTHENTICATED);
-	if (qdf_ret_status != QDF_STATUS_SUCCESS)
-		hdd_err("Set Key complete failure");
-
-	sta_ctx->roam_info.defer_key_complete = false;
-	qdf_mem_free(roam_info);
-}
-
 #if defined(WLAN_FEATURE_FILS_SK) && \
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
@@ -3295,31 +3261,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							assoc_rsp,
 							assoc_rsp_len,
 							roam_info);
-					}
-					if (sme_get_ftptk_state
-						    (mac_handle,
-						    adapter->vdev_id)) {
-						sme_set_ftptk_state
-							(mac_handle,
-							adapter->vdev_id,
-							false);
-						roam_info->fAuthRequired =
-							false;
-
-						qdf_mem_copy(sta_ctx->
-							     roam_info.bssid,
-							     roam_info->bssid.bytes,
-							     QDF_MAC_ADDR_SIZE);
-						qdf_mem_copy(sta_ctx->
-							     roam_info.peer_mac,
-							     roam_info->peerMac.bytes,
-							     QDF_MAC_ADDR_SIZE);
-						sta_ctx->roam_info.roam_id =
-							roam_id;
-						sta_ctx->roam_info.roam_status =
-							roam_status;
-						sta_ctx->roam_info.
-						defer_key_complete = true;
 					}
 				} else if (!hddDisconInProgress) {
 					hdd_debug("ft_carrier_on is %d, sending connect indication",

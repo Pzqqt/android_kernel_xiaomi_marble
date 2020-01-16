@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -354,15 +354,6 @@ inline QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-
-
-/**
- * hdd_perform_roam_set_key_complete() - perform set key complete
- * @adapter: pointer to adapter
- *
- * Return: none
- */
-void hdd_perform_roam_set_key_complete(struct hdd_adapter *adapter);
 
 #ifdef FEATURE_WLAN_ESE
 /**
