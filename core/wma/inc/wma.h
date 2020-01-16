@@ -646,15 +646,10 @@ typedef struct {
 
 /**
  * struct wma_igtk_key_t - GTK key
- * @key_length: key length
- * @key: key
  * @key_id: key id
  * @key_cipher: key type
  */
 typedef struct {
-	uint16_t key_length;
-	uint8_t key[CSR_AES_GMAC_256_KEY_LEN];
-
 	/* IPN is maintained per iGTK keyID
 	 * 0th index for iGTK keyID = 4;
 	 * 1st index for iGTK KeyID = 5
