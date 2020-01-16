@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -1128,14 +1128,14 @@ static int msm_compr_send_media_format_block(struct snd_compr_stream *cstream,
 		wma_pro_cfg.format_tag = prtd->codec_param.codec.format;
 		wma_pro_cfg.ch_cfg = prtd->codec_param.codec.ch_in;
 		wma_pro_cfg.sample_rate = prtd->sample_rate;
-		wma_cfg.avg_bytes_per_sec = codec_options->wma.avg_bit_rate/8;
-		wma_pro_cfg.block_align = codec_options->wma.super_block_align;
+		wma_cfg.avg_bytes_per_sec = codec_options->wma_dec.avg_bit_rate/8;
+		wma_pro_cfg.block_align = codec_options->wma_dec.super_block_align;
 		wma_pro_cfg.valid_bits_per_sample =
-			codec_options->wma.bits_per_sample;
-		wma_pro_cfg.ch_mask = codec_options->wma.channelmask;
-		wma_pro_cfg.encode_opt = codec_options->wma.encodeopt;
-		wma_pro_cfg.adv_encode_opt = codec_options->wma.encodeopt1;
-		wma_pro_cfg.adv_encode_opt2 = codec_options->wma.encodeopt2;
+			codec_options->wma_dec.bits_per_sample;
+		wma_pro_cfg.ch_mask = codec_options->wma_dec.channelmask;
+		wma_pro_cfg.encode_opt = codec_options->wma_dec.encodeopt;
+		wma_pro_cfg.adv_encode_opt = codec_options->wma_dec.encodeopt1;
+		wma_pro_cfg.adv_encode_opt2 = codec_options->wma_dec.encodeopt2;
 		ret = q6asm_media_format_block_wmapro(prtd->audio_client,
 				&wma_pro_cfg, stream_id);
 		if (ret < 0)
