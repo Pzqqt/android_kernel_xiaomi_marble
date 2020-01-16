@@ -738,7 +738,6 @@ struct hdd_station_ctx {
 	tSirPeerInfoRspParams ibss_peer_info;
 	bool hdd_reassoc_scenario;
 	int sta_debug_state;
-	uint8_t broadcast_sta_id;
 	struct hdd_mon_set_ch_info ch_info;
 	bool ap_supports_immediate_power_save;
 };
