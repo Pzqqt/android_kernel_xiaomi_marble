@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2020 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -728,6 +728,8 @@ typedef enum {
     WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID,
     /** Pre-Authentication completion status command */
     WMI_ROAM_PREAUTH_STATUS_CMDID,
+    /** Command to get roam scan channels list */
+    WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -1603,6 +1605,8 @@ typedef enum {
     WMI_ROAM_PMKID_REQUEST_EVENTID,
     /** roam stats */
     WMI_ROAM_STATS_EVENTID,
+    /** Roam scan channels list */
+    WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -12785,6 +12789,9 @@ typedef struct {
 #define WMI_ROAM_SCAN_CHAN_LIST_TYPE_NONE 0x1
 #define WMI_ROAM_SCAN_CHAN_LIST_TYPE_STATIC 0x2
 #define WMI_ROAM_SCAN_CHAN_LIST_TYPE_DYNAMIC 0x3
+
+#define WMI_ROAM_SCAN_LIST_FLAG_FLUSH 0x1 /* Flush roam scan channel list in FW */
+
 /**
  * TLV for roaming channel list
  */
@@ -12796,6 +12803,7 @@ typedef struct {
     A_UINT32 chan_list_type;
     /** # if channels to scan */
     A_UINT32 num_chan;
+    A_UINT32 flags; /* refer to WMI_ROAM_SCAN_LIST_FLAG_xxx defs */
 /**
  * TLV (tag length value) parameters follow the wmi_roam_chan_list
  * structure. The TLV's are:
@@ -25155,6 +25163,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_SET_GROUP_PROBE_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_AUDIO_SYNC_TRIGGER_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_AUDIO_SYNC_QTIMER_CMDID);
+        WMI_RETURN_STRING(WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -26831,6 +26840,32 @@ typedef struct {
     A_UINT32 vdev_id;
     A_UINT32 roam_scan_trigger_count; /* Number of roam scans triggered */
 } wmi_roam_stats_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_get_scan_channel_list_cmd_fixed_param */
+    A_UINT32 vdev_id;
+} wmi_roam_get_scan_channel_list_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_channel_list_event_fixed_param */
+    A_UINT32 vdev_id;
+    wmi_ssid ssid; /* SSID of connected AP */
+    /*
+     * This event can be sent as a response to
+     * WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID or
+     * can be sent asynchronously during disconnection.
+     * command_response = 1, when it is sent as a response to
+     *                       WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID
+     *                  = 0, for other cases
+     */
+    A_UINT32 command_response;
+/*
+ * This fixed_param TLV is followed by the below TLVs:
+ *
+ * List of roam scan channel frequencies in MHz
+ * A_UINT32 channel_list[];
+ */
+} wmi_roam_scan_channel_list_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_txpower_query_cmd_fixed_param  */
