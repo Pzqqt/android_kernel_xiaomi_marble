@@ -9316,11 +9316,10 @@ dp_peer_teardown_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			dp_peer_find_hash_find(soc, peer_mac, 0, vdev_id);
 
 	/* Peer can be null for monitor vap mac address */
-	if (!peer || peer->delete_in_progress) {
+	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Invalid peer\n", __func__);
-		status = QDF_STATUS_E_FAILURE;
-		goto fail;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/*
 	 * For BSS peer, new peer is not created on alloc_node if the
