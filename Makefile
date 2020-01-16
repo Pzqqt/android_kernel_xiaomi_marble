@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: GPL-2.0-only
-#obj-$(CONFIG_GSI) += gsi/
-obj-n += gsi/
-#obj-$(CONFIG_IPA3) += ipa/
-obj-n += ipa/
+
+obj-n += drivers/platform/msm/
+#obj-$(CONFIG_ARCH_QCOM) += drivers/platform/msm
