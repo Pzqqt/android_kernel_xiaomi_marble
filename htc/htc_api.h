@@ -655,6 +655,15 @@ bool htc_is_endpoint_active(HTC_HANDLE HTCHandle,
 			      HTC_ENDPOINT_ID Endpoint);
 
 /**
+ * htc_set_pkt_dbg - Set up debug flag for HTC packets
+ * @HTCHandle - HTC handle
+ * @dbg_flag - enable or disable flag
+ *
+ * Return: none
+ */
+void htc_set_pkt_dbg(HTC_HANDLE handle, A_BOOL dbg_flag);
+
+/**
  * htc_set_nodrop_pkt - Set up nodrop pkt flag for mboxping nodrop pkt
  * @HTCHandle - HTC handle
  * @isNodropPkt - indicates whether it is nodrop pkt

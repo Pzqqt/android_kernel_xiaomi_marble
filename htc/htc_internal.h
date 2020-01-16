@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -167,6 +167,12 @@ typedef struct _HTC_ENDPOINT {
 	bool TxCreditFlowEnabled;
 	bool async_update;  /* packets can be queued asynchronously */
 	qdf_spinlock_t lookup_queue_lock;
+
+	/* number of consecutive requeue attempts used for print */
+	uint32_t num_requeues_warn;
+	/* total number of requeue attempts */
+	uint32_t total_num_requeues;
+
 } HTC_ENDPOINT;
 
 #ifdef HTC_EP_STAT_PROFILING
@@ -248,6 +254,10 @@ typedef struct _HTC_TARGET {
 	uint8_t wmi_ep_count;
 	/* Flag to indicate whether htc header length check is required */
 	bool htc_hdr_length_check;
+
+	/* flag to enable packet send debug */
+	bool htc_pkt_dbg;
+
 } HTC_TARGET;
 
 

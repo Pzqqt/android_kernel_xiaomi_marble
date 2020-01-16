@@ -30,6 +30,9 @@
 #define HTC_DATA_RESOURCE_THRS 256
 #define HTC_DATA_MINDESC_PERPACKET 2
 
+/* maximum number of requeue attempts before print */
+#define MAX_REQUEUE_WARN 5
+
 enum HTC_SEND_QUEUE_RESULT {
 	HTC_SEND_QUEUE_OK = 0,  /* packet was queued */
 	HTC_SEND_QUEUE_DROP = 1, /* this packet should be dropped */
@@ -871,6 +874,13 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 						("hif_send Failed status:%d\n",
 						 status));
+			} else {
+				if (target->htc_pkt_dbg) {
+					if (pEndpoint->num_requeues_warn >
+						MAX_REQUEUE_WARN) {
+						hif_print_napi_stats(target->hif_dev);
+					}
+				}
 			}
 
 			/* only unmap if we mapped in this function */
@@ -907,10 +917,16 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 			rt_put = false;
 		}
 	}
+
 	if (qdf_unlikely(QDF_IS_STATUS_ERROR(status))) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-			("htc_issue_packets, failed pkt:0x%pK status:%d",
-			 pPacket, status));
+		if (((status == QDF_STATUS_E_RESOURCES) &&
+		     (pEndpoint->num_requeues_warn > MAX_REQUEUE_WARN)) ||
+		     (status != QDF_STATUS_E_RESOURCES)) {
+			QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO,
+				  "failed pkt:0x%pK status:%d endpoint:%d",
+				  pPacket, status, pEndpoint->Id);
+		}
+
 	}
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("-htc_issue_packets\n"));
@@ -1230,6 +1246,7 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 	int tx_resources;
 	int overflow;
 	enum HTC_SEND_QUEUE_RESULT result = HTC_SEND_QUEUE_OK;
+	QDF_STATUS status;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("+htc_try_send (Queue:%pK Depth:%d)\n",
 					 pCallersSendQueue,
@@ -1487,13 +1504,29 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 			UNLOCK_HTC_TX(target);
 
 		/* send what we can */
-		if (htc_issue_packets(target, pEndpoint, &sendQueue)) {
+		status = htc_issue_packets(target, pEndpoint, &sendQueue);
+		if (status) {
 			int i;
 
 			result = HTC_SEND_QUEUE_DROP;
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("htc_issue_packets, failed status:%d put it back to head of callersSendQueue",
-				 result));
+
+			switch (status) {
+			case  QDF_STATUS_E_RESOURCES:
+				if (pEndpoint->num_requeues_warn <= MAX_REQUEUE_WARN) {
+					pEndpoint->num_requeues_warn++;
+					pEndpoint->total_num_requeues++;
+					break;
+				} else {
+					pEndpoint->total_num_requeues++;
+					pEndpoint->num_requeues_warn = 0;
+				}
+			default:
+				QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO,
+					  "htc_issue_packets, failed status:%d"
+					  "endpoint:%d, put it back to head of"
+					  "callersSendQueue", result, pEndpoint->Id);
+				break;
+			}
 
 			for (i = HTC_PACKET_QUEUE_DEPTH(&sendQueue); i > 0; i--)
 				hif_pm_runtime_put(target->hif_dev);
@@ -1503,6 +1536,9 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 			HTC_PACKET_QUEUE_TRANSFER_TO_HEAD(&pEndpoint->TxQueue,
 							  &sendQueue);
 			break;
+		}  else {
+			if (pEndpoint->num_requeues_warn)
+				pEndpoint->num_requeues_warn = 0;
 		}
 
 		if (!IS_TX_CREDIT_FLOW_ENABLED(pEndpoint)) {
@@ -2439,6 +2475,13 @@ void htc_indicate_activity_change(HTC_HANDLE HTCHandle,
 bool htc_is_endpoint_active(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID Endpoint)
 {
 	return true;
+}
+
+void htc_set_pkt_dbg(HTC_HANDLE handle, A_BOOL dbg_flag)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(handle);
+
+	target->htc_pkt_dbg = dbg_flag;
 }
 
 void htc_set_nodrop_pkt(HTC_HANDLE HTCHandle, A_BOOL isNodropPkt)

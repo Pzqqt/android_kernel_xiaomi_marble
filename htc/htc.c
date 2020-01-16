@@ -726,6 +726,8 @@ static void reset_endpoint_states(HTC_TARGET *target)
 		INIT_HTC_PACKET_QUEUE(&pEndpoint->RxBufferHoldQueue);
 		pEndpoint->target = target;
 		pEndpoint->TxCreditFlowEnabled = (bool)htc_credit_flow;
+		pEndpoint->num_requeues_warn = 0;
+		pEndpoint->total_num_requeues = 0;
 		qdf_atomic_init(&pEndpoint->TxProcessCount);
 	}
 }
