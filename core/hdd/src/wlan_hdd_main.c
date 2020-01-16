@@ -8378,7 +8378,7 @@ static void hdd_clear_rps_cpu_mask(struct hdd_context *hdd_ctx)
 }
 
 #if defined(CLD_PM_QOS) && \
-	(LINUX_VERSION_CODE <= KERNEL_VERSION(4, 19, 0))
+	(LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
 #define PLD_REMOVE_PM_QOS(x)
 #define PLD_REQUEST_PM_QOS(x, y)
 /**

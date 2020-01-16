@@ -110,7 +110,7 @@
 #endif
 
 #if defined(CLD_PM_QOS) && \
-	(LINUX_VERSION_CODE <= KERNEL_VERSION(4, 19, 0))
+	(LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
 #include <linux/pm_qos.h>
 #endif
 
@@ -1887,7 +1887,7 @@ struct hdd_context {
 	qdf_time_t runtime_resume_start_time_stamp;
 	qdf_time_t runtime_suspend_done_time_stamp;
 #if defined(CLD_PM_QOS) && \
-	(LINUX_VERSION_CODE <= KERNEL_VERSION(4, 19, 0))
+	(LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
 	struct pm_qos_request pm_qos_req;
 #endif
 #ifdef WLAN_FEATURE_PKT_CAPTURE
