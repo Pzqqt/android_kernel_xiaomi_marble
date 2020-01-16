@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -9,16 +9,17 @@
 #include "dp_power.h"
 #include "dp_catalog.h"
 #include "dp_debug.h"
+#include "dp_pll.h"
 
 #define DP_CLIENT_NAME_SIZE	20
 
 struct dp_power_private {
 	struct dp_parser *parser;
+	struct dp_pll *pll;
 	struct platform_device *pdev;
 	struct clk *pixel_clk_rcg;
 	struct clk *pixel_parent;
 	struct clk *pixel1_clk_rcg;
-	struct clk *pixel1_parent;
 
 	struct dp_power dp_power;
 
@@ -84,6 +85,17 @@ static int dp_power_regulator_ctrl(struct dp_power_private *power, bool enable)
 	parser = power->parser;
 
 	for (i = DP_CORE_PM; i < DP_MAX_PM; i++) {
+		/*
+		 * The DP_PLL_PM regulator is controlled by dp_display based
+		 * on the link configuration.
+		 */
+		if (i == DP_PLL_PM) {
+			DP_DEBUG("skipping: '%s' vregs for %s\n",
+					enable ? "enable" : "disable",
+					dp_parser_pm_name(i));
+			continue;
+		}
+
 		rc = msm_dss_enable_vreg(
 			parser->mp[i].vreg_config,
 			parser->mp[i].num_vreg, enable);
@@ -151,6 +163,20 @@ static int dp_power_pinctrl_set(struct dp_power_private *power, bool active)
 	return rc;
 }
 
+static void dp_power_clk_put(struct dp_power_private *power)
+{
+	enum dp_pm_type module;
+
+	for (module = DP_CORE_PM; module < DP_MAX_PM; module++) {
+		struct dss_module_power *pm = &power->parser->mp[module];
+
+		if (!pm->num_clk)
+			continue;
+
+		msm_dss_put_clk(pm->clk_config, pm->num_clk);
+	}
+}
+
 static int dp_power_clk_init(struct dp_power_private *power, bool enable)
 {
 	int rc = 0;
@@ -175,52 +201,53 @@ static int dp_power_clk_init(struct dp_power_private *power, bool enable)
 			}
 		}
 
-		power->pixel_clk_rcg = devm_clk_get(dev, "pixel_clk_rcg");
+		power->pixel_clk_rcg = clk_get(dev, "pixel_clk_rcg");
 		if (IS_ERR(power->pixel_clk_rcg)) {
-			DP_DEBUG("Unable to get DP pixel clk RCG\n");
+			DP_ERR("Unable to get DP pixel clk RCG: %d\n",
+					PTR_ERR(power->pixel_clk_rcg));
+			rc = PTR_ERR(power->pixel_clk_rcg);
 			power->pixel_clk_rcg = NULL;
+			goto err_pixel_clk_rcg;
 		}
 
-		power->pixel_parent = devm_clk_get(dev, "pixel_parent");
+		power->pixel_parent = clk_get(dev, "pixel_parent");
 		if (IS_ERR(power->pixel_parent)) {
-			DP_DEBUG("Unable to get DP pixel RCG parent\n");
+			DP_DEBUG("Unable to get DP pixel RCG parent: %d\n",
+					PTR_ERR(power->pixel_parent));
+			rc = PTR_ERR(power->pixel_parent);
 			power->pixel_parent = NULL;
+			goto err_pixel_parent;
 		}
 
-		power->pixel1_clk_rcg = devm_clk_get(dev, "pixel1_clk_rcg");
+		power->pixel1_clk_rcg = clk_get(dev, "pixel1_clk_rcg");
 		if (IS_ERR(power->pixel1_clk_rcg)) {
-			DP_DEBUG("Unable to get DP pixel1 clk RCG\n");
+			DP_DEBUG("Unable to get DP pixel1 clk RCG: %d\n",
+					PTR_ERR(power->pixel1_clk_rcg));
+			rc = PTR_ERR(power->pixel1_clk_rcg);
 			power->pixel1_clk_rcg = NULL;
-		}
-
-		power->pixel1_parent = devm_clk_get(dev, "pixel1_parent");
-		if (IS_ERR(power->pixel1_parent)) {
-			DP_DEBUG("Unable to get DP pixel1 RCG parent\n");
-			power->pixel1_parent = NULL;
+			goto err_pixel1_clk_rcg;
 		}
 	} else {
+		if (power->pixel1_clk_rcg)
+			clk_put(power->pixel1_clk_rcg);
+
 		if (power->pixel_parent)
-			devm_clk_put(dev, power->pixel_parent);
+			clk_put(power->pixel_parent);
 
 		if (power->pixel_clk_rcg)
-			devm_clk_put(dev, power->pixel_clk_rcg);
+			clk_put(power->pixel_clk_rcg);
 
-		if (power->pixel1_parent)
-			devm_clk_put(dev, power->pixel1_parent);
-
-		if (power->pixel1_clk_rcg)
-			devm_clk_put(dev, power->pixel1_clk_rcg);
-
-		for (module = DP_CORE_PM; module < DP_MAX_PM; module++) {
-			struct dss_module_power *pm =
-				&power->parser->mp[module];
-
-			if (!pm->num_clk)
-				continue;
-
-			msm_dss_put_clk(pm->clk_config, pm->num_clk);
-		}
+		dp_power_clk_put(power);
 	}
+
+	return rc;
+
+err_pixel1_clk_rcg:
+	clk_put(power->pixel_parent);
+err_pixel_parent:
+	clk_put(power->pixel_clk_rcg);
+err_pixel_clk_rcg:
+	dp_power_clk_put(power);
 exit:
 	return rc;
 }
@@ -373,7 +400,7 @@ static int dp_power_request_gpios(struct dp_power_private *power)
 		unsigned int gpio = mp->gpio_config[i].gpio;
 
 		if (gpio_is_valid(gpio)) {
-			rc = devm_gpio_request(dev, gpio, gpio_names[i]);
+			rc = gpio_request(gpio, gpio_names[i]);
 			if (rc) {
 				DP_ERR("request %s gpio failed, rc=%d\n",
 					       gpio_names[i], rc);
@@ -521,13 +548,20 @@ static int dp_power_set_pixel_clk_parent(struct dp_power *dp_power, u32 strm_id)
 
 	if (strm_id == DP_STREAM_0) {
 		if (power->pixel_clk_rcg && power->pixel_parent)
-			clk_set_parent(power->pixel_clk_rcg,
+			rc = clk_set_parent(power->pixel_clk_rcg,
 					power->pixel_parent);
+		else
+			DP_WARN("skipped for strm_id=%d\n", strm_id);
 	} else if (strm_id == DP_STREAM_1) {
-		if (power->pixel1_clk_rcg && power->pixel1_parent)
-			clk_set_parent(power->pixel1_clk_rcg,
-					power->pixel1_parent);
+		if (power->pixel1_clk_rcg && power->pixel_parent)
+			rc = clk_set_parent(power->pixel1_clk_rcg,
+					power->pixel_parent);
+		else
+			DP_WARN("skipped for strm_id=%d\n", strm_id);
 	}
+
+	if (rc)
+		DP_ERR("failed. strm_id=%d, rc=%d\n", strm_id, rc);
 exit:
 	return rc;
 }
@@ -653,25 +687,26 @@ exit:
 	return rc;
 }
 
-struct dp_power *dp_power_get(struct dp_parser *parser)
+struct dp_power *dp_power_get(struct dp_parser *parser, struct dp_pll *pll)
 {
 	int rc = 0;
 	struct dp_power_private *power;
 	struct dp_power *dp_power;
 
-	if (!parser) {
+	if (!parser || !pll) {
 		DP_ERR("invalid input\n");
 		rc = -EINVAL;
 		goto error;
 	}
 
-	power = devm_kzalloc(&parser->pdev->dev, sizeof(*power), GFP_KERNEL);
+	power = kzalloc(sizeof(*power), GFP_KERNEL);
 	if (!power) {
 		rc = -ENOMEM;
 		goto error;
 	}
 
 	power->parser = parser;
+	power->pll = pll;
 	power->pdev = parser->pdev;
 
 	dp_power = &power->dp_power;
@@ -698,5 +733,5 @@ void dp_power_put(struct dp_power *dp_power)
 
 	power = container_of(dp_power, struct dp_power_private, dp_power);
 
-	devm_kfree(&power->pdev->dev, power);
+	kfree(power);
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_gpio.h>
@@ -297,6 +297,7 @@ static const char *dp_parser_supply_node_name(enum dp_pm_type module)
 	case DP_CORE_PM:	return "qcom,core-supply-entries";
 	case DP_CTRL_PM:	return "qcom,ctrl-supply-entries";
 	case DP_PHY_PM:		return "qcom,phy-supply-entries";
+	case DP_PLL_PM:		return "qcom,pll-supply-entries";
 	default:		return "???";
 	}
 }

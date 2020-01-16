@@ -1528,6 +1528,18 @@ skip_dpcd_read:
 
 	link_info->num_lanes = dpcd[DP_MAX_LANE_COUNT] & DP_MAX_LANE_COUNT_MASK;
 
+	if (is_link_rate_valid(panel->dp_panel.link_bw_code)) {
+		DP_DEBUG("debug link bandwidth code: 0x%x\n",
+				panel->dp_panel.link_bw_code);
+		link_info->rate = drm_dp_bw_code_to_link_rate(
+				panel->dp_panel.link_bw_code);
+	}
+
+	if (is_lane_count_valid(panel->dp_panel.lane_count)) {
+		DP_DEBUG("debug lane count: %d\n", panel->dp_panel.lane_count);
+		link_info->num_lanes = panel->dp_panel.lane_count;
+	}
+
 	if (multi_func)
 		link_info->num_lanes = min_t(unsigned int,
 			link_info->num_lanes, 2);
@@ -2272,11 +2284,6 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 	struct drm_connector *connector;
 	struct sde_connector_state *c_state;
 
-	if (!dp_panel) {
-		DP_ERR("invalid input\n");
-		return -EINVAL;
-	}
-
 	if (flags & DP_PANEL_SRC_INITIATED_POWER_DOWN) {
 		DP_DEBUG("retain states in src initiated power down request\n");
 		return 0;
@@ -2317,6 +2324,9 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 
 	memset(&c_state->hdr_meta, 0, sizeof(c_state->hdr_meta));
 	memset(&c_state->dyn_hdr_meta, 0, sizeof(c_state->dyn_hdr_meta));
+
+	dp_panel->link_bw_code = 0;
+	dp_panel->lane_count = 0;
 
 	return rc;
 }
@@ -3001,6 +3011,8 @@ struct dp_panel *dp_panel_get(struct dp_panel_in *in)
 	dp_panel = &panel->dp_panel;
 	dp_panel->max_bw_code = DP_LINK_BW_8_1;
 	dp_panel->spd_enabled = true;
+	dp_panel->link_bw_code = 0;
+	dp_panel->lane_count = 0;
 	memcpy(panel->spd_vendor_name, vendor_name, (sizeof(u8) * 8));
 	memcpy(panel->spd_product_description, product_desc, (sizeof(u8) * 16));
 	dp_panel->connector = in->connector;

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_REG_H_
@@ -387,7 +387,7 @@
 #define TXn_HIGHZ_DRVR_EN_V420			(0x0058)
 #define TXn_TX_POL_INV_V420			(0x005C)
 
-#define QSERDES_COM_BIAS_EN_CLKBUFLR_EN		(0x004)
+#define QSERDES_COM_BIAS_EN_CLKBUFLR_EN		(0x044)
 
 /* DP MMSS_CC registers */
 #define MMSS_DP_LINK_CMD_RCGR			(0x0138)

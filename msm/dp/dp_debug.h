@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_DEBUG_H_
@@ -12,6 +12,7 @@
 #include "dp_usbpd.h"
 #include "dp_aux.h"
 #include "dp_display.h"
+#include "dp_pll.h"
 
 #define DP_WARN(fmt, ...)	DRM_WARN("[msm-dp-warn] "fmt, ##__VA_ARGS__)
 #define DP_ERR(fmt, ...)	DRM_DEV_ERROR(NULL, "[msm-dp-error]" fmt, \
@@ -35,6 +36,7 @@
  * @tpg_state: specifies whether tpg feature is enabled
  * @max_pclk_khz: max pclk supported
  * @force_encryption: enable/disable forced encryption for HDCP 2.2
+ * @skip_uevent: skip hotplug uevent to the user space
  * @hdcp_status: string holding hdcp status information
  * @dp_mst_connector_list: list containing all dp mst connectors
  * @mst_hpd_sim: specifies whether simulated hpd enabled
@@ -56,6 +58,7 @@ struct dp_debug {
 	bool tpg_state;
 	u32 max_pclk_khz;
 	bool force_encryption;
+	bool skip_uevent;
 	char hdcp_status[SZ_128];
 	struct dp_mst_connector dp_mst_connector_list;
 	bool mst_hpd_sim;
@@ -78,6 +81,8 @@ struct dp_debug {
  * @connector: double pointer to display connector
  * @catalog: instance of catalog module
  * @parser: instance of parser module
+ * @ctrl: instance of controller module
+ * @pll: instance of pll module
  */
 struct dp_debug_in {
 	struct device *dev;
@@ -89,6 +94,7 @@ struct dp_debug_in {
 	struct dp_catalog *catalog;
 	struct dp_parser *parser;
 	struct dp_ctrl *ctrl;
+	struct dp_pll *pll;
 };
 
 /**

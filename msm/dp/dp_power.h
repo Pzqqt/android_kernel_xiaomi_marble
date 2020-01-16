@@ -1,12 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_POWER_H_
 #define _DP_POWER_H_
 
 #include "dp_parser.h"
+#include "dp_pll.h"
 #include "sde_power_handle.h"
 
 /**
@@ -17,6 +18,8 @@
  * @clk_enable: enable/disable the DP clocks
  * @set_pixel_clk_parent: set the parent of DP pixel clock
  * @clk_get_rate: get the current rate for provided clk_name
+ * @power_client_init: configures clocks and regulators
+ * @power_client_deinit: frees clock and regulator resources
  */
 struct dp_power {
 	struct drm_device *drm_dev;
@@ -37,13 +40,14 @@ struct dp_power {
  * dp_power_get() - configure and get the DisplayPort power module data
  *
  * @parser: instance of parser module
+ * @pll: instance of pll module
  * return: pointer to allocated power module data
  *
  * This API will configure the DisplayPort's power module and provides
  * methods to be called by the client to configure the power related
  * modueles.
  */
-struct dp_power *dp_power_get(struct dp_parser *parser);
+struct dp_power *dp_power_get(struct dp_parser *parser, struct dp_pll *pll);
 
 /**
  * dp_power_put() - release the power related resources

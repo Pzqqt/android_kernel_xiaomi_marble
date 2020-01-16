@@ -24,6 +24,8 @@ msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_usbpd.o \
 	dp/dp_hdcp2p2.o \
 	sde_hdcp_1x.o \
 	sde_hdcp_2x.o \
+	dp/dp_pll.o \
+	dp/dp_pll_5nm.o \
 
 msm_drm-$(CONFIG_DRM_MSM_DP_MST) += dp/dp_mst_drm.o \
 
