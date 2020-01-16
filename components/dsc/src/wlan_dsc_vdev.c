@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,7 @@
 #include "qdf_types.h"
 #include "__wlan_dsc.h"
 #include "wlan_dsc.h"
+#include "cds_api.h"
 
 #define __dsc_driver_lock(vdev) __dsc_lock((vdev)->psoc->driver)
 #define __dsc_driver_unlock(vdev) __dsc_unlock((vdev)->psoc->driver)
@@ -115,9 +116,18 @@ void dsc_vdev_destroy(struct dsc_vdev **out_vdev)
  * This function checks if the vdev transition can occur or not by checking if
  * any other down the tree/up the tree transition/operation is taking place.
  *
- * If there are any driver/psoc transition taking place, then the vdev trans/ops
+ * If there are any driver transition taking place, then the vdev trans/ops
  * should be rejected and not queued in the DSC queue. Return QDF_STATUS_E_INVAL
  * in this case.
+ *
+ * If there are any psoc transition taking place becasue of ssr or driver
+ * unload, then the vdev trans/ops should be rejected and not queued in the
+ * DSC queue. Return QDF_STATUS_E_INVAL in this case.
+ *
+ * If there is a psoc transition taking place becasue of psoc idle shutdown,
+ * then the vdev trans/ops should be rejected and queued in the DSC queue so
+ * that it may be resumed after the current trans/ops is completed. Return
+ * QDF_STATUS_E_AGAIN in this case.
  *
  * If there are any vdev trans/ops taking place, then the vdev trans/ops
  * should be rejected and queued in the DSC queue so that it may be resumed
@@ -128,9 +138,19 @@ void dsc_vdev_destroy(struct dsc_vdev **out_vdev)
  */
 static QDF_STATUS __dsc_vdev_can_trans(struct dsc_vdev *vdev)
 {
-	if (__dsc_trans_active_or_queued(&vdev->psoc->driver->trans) ||
-	    __dsc_trans_active_or_queued(&vdev->psoc->trans))
+	if (__dsc_trans_active_or_queued(&vdev->psoc->driver->trans))
 		return QDF_STATUS_E_INVAL;
+
+	if (__dsc_trans_active_or_queued(&vdev->psoc->trans)) {
+		/* psoc idle shutdown(wifi off) needs to be added in DSC queue
+		 * to avoid wifi on failure while previous psoc idle shutdown
+		 * is in progress and wifi is turned on.
+		 */
+		if (cds_is_driver_unloading() || qdf_is_recovering())
+			return QDF_STATUS_E_INVAL;
+		else
+			return QDF_STATUS_E_AGAIN;
+	}
 
 	if (__dsc_trans_active_or_queued(&vdev->trans))
 		return QDF_STATUS_E_AGAIN;
