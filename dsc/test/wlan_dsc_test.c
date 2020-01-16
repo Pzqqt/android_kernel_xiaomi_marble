@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +23,7 @@
 #include "qdf_types.h"
 #include "wlan_dsc.h"
 #include "wlan_dsc_test.h"
+#include "cds_api.h"
 
 #define dsc_driver_trans_start(driver) dsc_driver_trans_start(driver, __func__)
 #define dsc_psoc_trans_start(psoc) dsc_psoc_trans_start(psoc, __func__)
@@ -264,9 +265,29 @@ static uint32_t dsc_test_psoc_trans_blocks(void)
 
 	/* ... children vdev trans/ops to fail */
 	dsc_for_each_psoc_vdev(psoc, vdev) {
+		action_expect(vdev, trans, QDF_STATUS_E_AGAIN, errors);
+		action_expect(vdev, op, QDF_STATUS_E_AGAIN, errors);
+	}
+
+	/* ... while driver unload in progress vdev op and trans should be
+	 * rejected with EINVAL
+	 */
+	cds_set_unload_in_progress(true);
+	dsc_for_each_psoc_vdev(psoc, vdev) {
 		action_expect(vdev, trans, QDF_STATUS_E_INVAL, errors);
 		action_expect(vdev, op, QDF_STATUS_E_INVAL, errors);
 	}
+	cds_set_unload_in_progress(false);
+
+	/* ... while SSR recovery in progress vdev op and trans should be
+	 * rejected with EINVAL
+	 */
+	cds_set_recovery_in_progress(true);
+	dsc_for_each_psoc_vdev(psoc, vdev) {
+		action_expect(vdev, trans, QDF_STATUS_E_INVAL, errors);
+		action_expect(vdev, op, QDF_STATUS_E_INVAL, errors);
+	}
+	cds_set_recovery_in_progress(false);
 
 	/* a sibling psoc in transition should succeed and cause ... */
 	psoc = nth_psoc(driver, 2);
@@ -282,8 +303,8 @@ static uint32_t dsc_test_psoc_trans_blocks(void)
 
 	/* ... children vdev trans/ops to fail */
 	dsc_for_each_psoc_vdev(psoc, vdev) {
-		action_expect(vdev, trans, QDF_STATUS_E_INVAL, errors);
-		action_expect(vdev, op, QDF_STATUS_E_INVAL, errors);
+		action_expect(vdev, trans, QDF_STATUS_E_AGAIN, errors);
+		action_expect(vdev, op, QDF_STATUS_E_AGAIN, errors);
 	}
 
 	/* teardown */
