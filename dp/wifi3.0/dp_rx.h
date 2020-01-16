@@ -582,7 +582,8 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
 
 	((union dp_rx_desc_list_elem_t *)new)->next = *head;
 	*head = (union dp_rx_desc_list_elem_t *)new;
-	if (!*tail)
+	/* reset tail if head->next is NULL */
+	if (!*tail || !(*head)->next)
 		*tail = *head;
 
 }

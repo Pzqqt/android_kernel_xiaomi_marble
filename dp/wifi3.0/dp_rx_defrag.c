@@ -1578,7 +1578,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 		}
 	} else {
 		dp_rx_add_to_free_desc_list(head, tail, rx_desc);
-		*rx_bfs = 1;
+		(*rx_bfs)++;
 
 		/* Return the non-head link desc */
 		if (ring_desc &&
@@ -1619,7 +1619,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 
 		dp_rx_add_to_free_desc_list(head, tail,
 				peer->rx_tid[tid].head_frag_desc);
-		*rx_bfs = 1;
+		(*rx_bfs)++;
 
 		if (dp_rx_link_desc_return(soc,
 					peer->rx_tid[tid].dst_ring_desc,
@@ -1660,7 +1660,7 @@ discard_frag:
 	    QDF_STATUS_SUCCESS)
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to return link desc", __func__);
-	*rx_bfs = 1;
+	(*rx_bfs)++;
 
 end:
 	if (peer)
@@ -1698,7 +1698,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	uint32_t rx_bufs_used = 0;
 	qdf_nbuf_t msdu = NULL;
 	uint32_t tid;
-	int rx_bfs = 0;
+	uint32_t rx_bfs = 0;
 	struct dp_pdev *pdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -1737,7 +1737,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 					     tid, rx_desc, &rx_bfs);
 
 	if (rx_bfs)
-		rx_bufs_used++;
+		rx_bufs_used += rx_bfs;
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		dp_info_rl("Rx Defrag err seq#:0x%x msdu_count:%d flags:%d",
