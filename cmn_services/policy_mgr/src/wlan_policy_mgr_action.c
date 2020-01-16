@@ -1330,6 +1330,7 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
 	bool sta_sap_scc_on_lte_coex_chan =
 		policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc);
+	uint8_t sta_sap_scc_on_dfs_chnl_config_value = 0;
 	uint32_t cc_count, i, go_index_start, pcl_len = 0;
 	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
@@ -1350,6 +1351,8 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 		return false;
 	if (!sta_sap_scc_on_dfs_chan && !sta_sap_scc_on_lte_coex_chan)
 		return false;
+
+	policy_mgr_get_sta_sap_scc_on_dfs_chnl(psoc, &sta_sap_scc_on_dfs_chnl_config_value);
 
 	if (!policy_mgr_is_hw_dbs_capable(psoc))
 		if (policy_mgr_get_connection_count(psoc) > 1)
@@ -1375,12 +1378,14 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 				POLICY_MGR_BAND_24 : POLICY_MGR_BAND_5))
 			continue;
 		if (sta_sap_scc_on_dfs_chan &&
+		    (sta_sap_scc_on_dfs_chnl_config_value != 2) &&
 		    wlan_reg_is_dfs_for_freq(pm_ctx->pdev,
 					     op_ch_freq_list[i])) {
 			sap_vdev_id = vdev_id[i];
 			curr_sap_freq = op_ch_freq_list[i];
-			policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, dfs sap_ch_freq %u",
+			policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sta_sap_scc_on_dfs_chnl_config_value %u, dfs sap_ch_freq %u",
 					 sta_sap_scc_on_dfs_chan,
+					 sta_sap_scc_on_dfs_chnl_config_value,
 					 curr_sap_freq);
 			break;
 		}
