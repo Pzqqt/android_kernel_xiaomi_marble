@@ -934,6 +934,7 @@ static int bolero_soc_codec_probe(struct snd_soc_component *component)
 {
 	struct bolero_priv *priv = dev_get_drvdata(component->dev);
 	int macro_idx, ret = 0;
+	u8 core_id_0 = 0, core_id_1 = 0;
 
 	snd_soc_component_init_regmap(component, priv->regmap);
 
@@ -953,11 +954,14 @@ static int bolero_soc_codec_probe(struct snd_soc_component *component)
 			priv->version = BOLERO_VERSION_1_2;
 	}
 
-	/* Assign bolero version 2.1 for bolero 2.1 */
-	if ((snd_soc_component_read32(component,
-		BOLERO_CDC_VA_TOP_CSR_CORE_ID_0) == 0x2) &&
-		(snd_soc_component_read32(component,
-			BOLERO_CDC_VA_TOP_CSR_CORE_ID_1) == 0xE))
+	/* Assign bolero version */
+	core_id_0 = snd_soc_component_read32(component,
+					BOLERO_CDC_VA_TOP_CSR_CORE_ID_0);
+	core_id_1 = snd_soc_component_read32(component,
+					BOLERO_CDC_VA_TOP_CSR_CORE_ID_1);
+	if ((core_id_0 == 0x01) && (core_id_1 == 0x0F))
+		priv->version = BOLERO_VERSION_2_0;
+	if ((core_id_0 == 0x02) && (core_id_1 == 0x0E))
 		priv->version = BOLERO_VERSION_2_1;
 
 	/* call init for supported macros */

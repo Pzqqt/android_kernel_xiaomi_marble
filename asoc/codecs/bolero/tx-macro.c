@@ -174,6 +174,7 @@ struct tx_macro_priv {
 	int tx_clk_status;
 	bool bcs_enable;
 	int dec_mode[NUM_DECIMATORS];
+	int bcs_ch;
 	bool bcs_clk_en;
 	bool hs_slow_insert_complete;
 };
@@ -716,6 +717,39 @@ static int tx_macro_dec_mode_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int tx_macro_bcs_ch_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.enumerated.item[0] = tx_priv->bcs_ch;
+
+	return 0;
+}
+
+static int tx_macro_bcs_ch_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+	int value = ucontrol->value.enumerated.item[0];
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	tx_priv->bcs_ch = value;
+
+	return 0;
+}
+
 static int tx_macro_get_bcs(struct snd_kcontrol *kcontrol,
                             struct snd_ctl_elem_value *ucontrol)
 {
@@ -923,6 +957,15 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			      snd_soc_component_read32(component,
 					tx_gain_ctl_reg));
 		if (tx_priv->bcs_enable) {
+			if (tx_priv->version == BOLERO_VERSION_2_1)
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F,
+					tx_priv->bcs_ch);
+			else if (tx_priv->version == BOLERO_VERSION_2_0)
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_CTRL, 0xF0,
+					(tx_priv->bcs_ch << 4));
+
 			snd_soc_component_update_bits(component, dec_cfg_reg,
 					0x01, 0x01);
 			tx_priv->bcs_clk_en = true;
@@ -973,6 +1016,14 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_TX0_TX_PATH_SEC7, 0x40, 0x00);
 			tx_priv->bcs_clk_en = false;
+			if (tx_priv->version == BOLERO_VERSION_2_1)
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F,
+					0x00);
+			else if (tx_priv->version == BOLERO_VERSION_2_0)
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_CTRL, 0xF0,
+					0x00);
 		}
 		break;
 	}
@@ -1282,6 +1333,15 @@ static const char * const dec_mode_mux_text[] = {
 static const struct soc_enum dec_mode_mux_enum =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(dec_mode_mux_text),
 			    dec_mode_mux_text);
+
+static const char * const bcs_ch_enum_text[] = {
+	"CH0", "CH1", "CH2", "CH3", "CH4", "CH5", "CH6", "CH7", "CH8", "CH9",
+	"CH10", "CH11",
+};
+
+static const struct soc_enum bcs_ch_enum =
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(bcs_ch_enum_text),
+			    bcs_ch_enum_text);
 
 static const struct snd_kcontrol_new tx_aif1_cap_mixer[] = {
 	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, TX_MACRO_DEC0, 1, 0,
@@ -2213,6 +2273,9 @@ static const struct snd_kcontrol_new tx_macro_snd_controls_common[] = {
 
 	SOC_SINGLE_EXT("DEC0_BCS Switch", SND_SOC_NOPM, 0, 1, 0,
 		       tx_macro_get_bcs, tx_macro_set_bcs),
+
+	SOC_ENUM_EXT("BCS Channel", bcs_ch_enum,
+			tx_macro_bcs_ch_get, tx_macro_bcs_ch_put),
 };
 
 static const struct snd_kcontrol_new tx_macro_snd_controls_v3[] = {
@@ -2849,13 +2912,6 @@ static int tx_macro_init(struct snd_soc_component *component)
 				tx_macro_reg_init[i].reg,
 				tx_macro_reg_init[i].mask,
 				tx_macro_reg_init[i].val);
-
-	if (tx_priv->version == BOLERO_VERSION_2_1)
-		snd_soc_component_update_bits(component,
-			BOLERO_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F, 0x0A);
-	else if (tx_priv->version == BOLERO_VERSION_2_0)
-		snd_soc_component_update_bits(component,
-			BOLERO_CDC_TX_TOP_CSR_SWR_CTRL, 0x0F, 0x0A);
 
 	return 0;
 }
