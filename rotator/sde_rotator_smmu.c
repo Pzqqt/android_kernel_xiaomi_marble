@@ -432,13 +432,19 @@ int sde_smmu_secure_ctrl(int enable)
 void sde_smmu_device_create(struct device *dev)
 {
 	struct device_node *parent, *child;
+	struct sde_rot_data_type *mdata = sde_rot_get_mdata();
 
 	parent = dev->of_node;
 	for_each_child_of_node(parent, child) {
-		if (of_device_is_compatible(child, SMMU_SDE_ROT_SEC))
+		if (of_device_is_compatible(child, SMMU_SDE_ROT_SEC)) {
 			of_platform_device_create(child, NULL, dev);
-		else if (of_device_is_compatible(child, SMMU_SDE_ROT_UNSEC))
+			mdata->sde_smmu
+			[SDE_IOMMU_DOMAIN_ROT_SECURE].domain_attached = true;
+		} else if (of_device_is_compatible(child, SMMU_SDE_ROT_UNSEC)) {
 			of_platform_device_create(child, NULL, dev);
+			mdata->sde_smmu
+			[SDE_IOMMU_DOMAIN_ROT_UNSECURE].domain_attached = true;
+		}
 	}
 }
 
