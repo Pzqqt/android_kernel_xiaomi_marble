@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -863,6 +863,8 @@ typedef struct {
 
     /* qdepth bytes : Contains Number of bytes of TIDQ depth */
     A_UINT32 qdepth_bytes;
+    A_UINT32 full_aid : 12,
+             reserved : 20;
 } htt_ppdu_stats_user_common_tlv;
 
 #define HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_M     0x000000ff
