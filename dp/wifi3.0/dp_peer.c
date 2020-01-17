@@ -1583,6 +1583,9 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 				dp_info("STA vdev bss_peer!!!!");
 				peer->bss_peer = 1;
 				peer->vdev->vap_bss_peer = peer;
+				qdf_mem_copy(peer->vdev->vap_bss_peer_mac_addr,
+					     peer->mac_addr.raw,
+					     QDF_MAC_ADDR_SIZE);
 			}
 
 			if (peer->vdev->opmode == wlan_op_mode_sta) {
