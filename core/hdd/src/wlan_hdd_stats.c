@@ -42,6 +42,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_hdd_sta_info.h"
+#include "cdp_txrx_misc.h"
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 #define HDD_INFO_SIGNAL                 STATION_INFO_SIGNAL
@@ -2892,6 +2893,7 @@ static int __wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 	int ret_val;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	hdd_enter_dev(dev);
 
@@ -2907,10 +2909,19 @@ static int __wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 	stats_ext_req.request_data_len = data_len;
 	stats_ext_req.request_data = (void *)data;
 
+	status = cdp_request_rx_hw_stats(soc, adapter->vdev_id);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err_rl("Failed to get hw stats: %u", status);
+		ret_val = -EINVAL;
+	}
+
 	status = sme_stats_ext_request(adapter->vdev_id, &stats_ext_req);
 
-	if (QDF_STATUS_SUCCESS != status)
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err_rl("Failed to get fw stats: %u", status);
 		ret_val = -EINVAL;
+	}
 
 	return ret_val;
 }
