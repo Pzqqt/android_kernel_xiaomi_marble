@@ -107,6 +107,23 @@ QDF_STATUS qdf_wmi_send_recv_qmi(void *buf, uint32_t len, void *cb_ctx,
 				 qdf_wmi_recv_qmi_cb wmi_rx_cb);
 
 /**
+ * qdf_is_driver_unloading_callback() - callback to get driver unloading in progress
+ * or not
+ *
+ * Return: true if driver is unloading else false
+ */
+typedef bool (*qdf_is_driver_unloading_callback)(void);
+
+/**
+ * qdf_register_is_driver_unloading_callback() - driver unloading callback
+ * @callback:  driver unloading callback
+ *
+ * Return: None
+ */
+void qdf_register_is_driver_unloading_callback(
+				qdf_is_driver_unloading_callback callback);
+
+/**
  * qdf_register_self_recovery_callback() - register self recovery callback
  * @callback:  self recovery callback
  *
@@ -130,8 +147,8 @@ void __qdf_trigger_self_recovery(enum qdf_hang_reason reason,
 				 const char *func, const uint32_t line);
 
 /**
- * qdf_is_recovering_callback() - callback to get driver recovering in progress
- * or not
+ * qdf_is_recovering_callback() - callback to get driver recovering in
+ * progress or not
  *
  * Return: true if driver is doing recovering else false
  */
@@ -145,6 +162,14 @@ typedef bool (*qdf_is_recovering_callback)(void);
  */
 void qdf_register_recovering_state_query_callback(
 	qdf_is_recovering_callback is_recovering);
+
+/**
+ * qdf_is_driver_unloading() - get driver unloading in progress status
+ * or not
+ *
+ * Return: true if driver is unloading else false
+ */
+bool qdf_is_driver_unloading(void);
 
 /**
  * qdf_is_recovering() - get driver recovering in progress status

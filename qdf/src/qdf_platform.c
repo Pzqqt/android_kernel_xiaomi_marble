@@ -26,6 +26,7 @@
  */
 static qdf_self_recovery_callback	self_recovery_cb;
 static qdf_is_fw_down_callback		is_fw_down_cb;
+static qdf_is_driver_unloading_callback is_driver_unloading_cb;
 static qdf_is_recovering_callback	is_recovering_cb;
 static qdf_is_drv_connected_callback    is_drv_connected_cb;
 static qdf_wmi_send_over_qmi_callback _wmi_send_recv_qmi_cb;
@@ -71,6 +72,14 @@ QDF_STATUS qdf_wmi_send_recv_qmi(void *buf, uint32_t len, void *cb_ctx,
 
 qdf_export_symbol(qdf_wmi_send_recv_qmi);
 
+void qdf_register_is_driver_unloading_callback(
+				qdf_is_driver_unloading_callback callback)
+{
+	is_driver_unloading_cb = callback;
+}
+
+qdf_export_symbol(qdf_register_is_driver_unloading_callback);
+
 void qdf_register_self_recovery_callback(qdf_self_recovery_callback callback)
 {
 	self_recovery_cb = callback;
@@ -94,6 +103,15 @@ void qdf_register_recovering_state_query_callback(
 {
 	is_recovering_cb = is_recovering;
 }
+
+bool qdf_is_driver_unloading(void)
+{
+	if (is_driver_unloading_cb)
+		return is_driver_unloading_cb();
+	return false;
+}
+
+qdf_export_symbol(qdf_is_driver_unloading);
 
 bool qdf_is_recovering(void)
 {
