@@ -12790,7 +12790,8 @@ typedef struct {
 #define WMI_ROAM_SCAN_CHAN_LIST_TYPE_STATIC 0x2
 #define WMI_ROAM_SCAN_CHAN_LIST_TYPE_DYNAMIC 0x3
 
-#define WMI_ROAM_SCAN_LIST_FLAG_FLUSH 0x1 /* Flush roam scan channel list in FW */
+#define WMI_ROAM_SCAN_LIST_FLAG_FLUSH_STATIC 0x1 /* Flush static roam scan channel list in FW */
+#define WMI_ROAM_SCAN_LIST_FLAG_FLUSH_DYNAMIC 0x2 /* Flush dynamic roam scan channel list in FW */
 
 /**
  * TLV for roaming channel list
