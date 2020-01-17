@@ -548,7 +548,8 @@ static int msm_compr_read_buffer(struct msm_compr_audio *prtd)
 						prtd->ts_header_offset;
 	param.len = buffer_length;
 	param.uid = buffer_length;
-	param.flags = prtd->codec_param.codec.flags;
+	/* reserved[1] is for flags */
+	param.flags = prtd->codec_param.codec.reserved[1];
 
 	pr_debug("%s: reading %d bytes from DSP byte_offset = %llu\n",
 			__func__, buffer_length, prtd->bytes_read);
@@ -1488,7 +1489,8 @@ static int msm_compr_configure_dsp_for_playback
 	prtd->buffer_size  = runtime->fragments * runtime->fragment_size;
 
 	/* Bit-0 of flags represent timestamp mode */
-	if (prtd->codec_param.codec.flags & COMPRESSED_TIMESTAMP_FLAG)
+	/* reserved[1] is for flags */
+	if (prtd->codec_param.codec.reserved[1] & COMPRESSED_TIMESTAMP_FLAG)
 		prtd->ts_header_offset = sizeof(struct snd_codec_metadata);
 	else
 		prtd->ts_header_offset = 0;
@@ -1561,7 +1563,9 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 			return ret;
 		}
 	} else {
-		if (prtd->codec_param.codec.flags & COMPRESSED_TIMESTAMP_FLAG)
+		/* reserved[1] is for flags */
+		if (prtd->codec_param.codec.reserved[1]
+			& COMPRESSED_TIMESTAMP_FLAG)
 			compress_ts = true;
 
 		if (q6core_get_avcs_api_version_per_service(
@@ -1626,7 +1630,8 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 	prtd->buffer_size    = runtime->fragments * runtime->fragment_size;
 
 	/* Bit-0 of flags represent timestamp mode */
-	if (prtd->codec_param.codec.flags & COMPRESSED_TIMESTAMP_FLAG)
+	/* reserved[1] is for flags */
+	if (prtd->codec_param.codec.reserved[1] & COMPRESSED_TIMESTAMP_FLAG)
 		prtd->ts_header_offset = sizeof(struct snd_codec_metadata);
 	else
 		prtd->ts_header_offset = 0;
@@ -2091,12 +2096,13 @@ static int msm_compr_set_params(struct snd_compr_stream *cstream,
 	prtd->sample_rate = prtd->codec_param.codec.sample_rate;
 	pr_debug("%s: sample_rate %d\n", __func__, prtd->sample_rate);
 
-	if ((prtd->codec_param.codec.compr_passthr >= LEGACY_PCM &&
+	/* prtd->codec_param.codec.reserved[0] is for compr_passthr */
+	if ((prtd->codec_param.codec.reserved[0] >= LEGACY_PCM &&
 	    prtd->codec_param.
-	    codec.compr_passthr <= COMPRESSED_PASSTHROUGH_DSD) ||
+	    codec.reserved[0] <= COMPRESSED_PASSTHROUGH_DSD) ||
 	    (prtd->codec_param.
-	    codec.compr_passthr == COMPRESSED_PASSTHROUGH_IEC61937))
-		prtd->compr_passthr = prtd->codec_param.codec.compr_passthr;
+	    codec.reserved[0] == COMPRESSED_PASSTHROUGH_IEC61937))
+		prtd->compr_passthr = prtd->codec_param.codec.reserved[0];
 	else
 		prtd->compr_passthr = LEGACY_PCM;
 	pr_debug("%s: compr_passthr = %d", __func__, prtd->compr_passthr);
@@ -2111,7 +2117,8 @@ static int msm_compr_set_params(struct snd_compr_stream *cstream,
 		}
 	}
 
-	if (params->codec.flags & COMPRESSED_PERF_MODE_FLAG) {
+	/* reserved[1] is for flags */
+	if (params->codec.reserved[1] & COMPRESSED_PERF_MODE_FLAG) {
 		pr_debug("%s: setting perf mode = %d", __func__, LOW_LATENCY_PCM_MODE);
 		prtd->audio_client->perf_mode = LOW_LATENCY_PCM_MODE;
 	}
