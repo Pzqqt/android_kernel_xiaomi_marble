@@ -22,7 +22,7 @@
 #include "qdf_types.h"
 #include "__wlan_dsc.h"
 #include "wlan_dsc.h"
-#include "cds_api.h"
+#include "qdf_platform.h"
 
 #define __dsc_driver_lock(vdev) __dsc_lock((vdev)->psoc->driver)
 #define __dsc_driver_unlock(vdev) __dsc_unlock((vdev)->psoc->driver)
@@ -146,7 +146,7 @@ static QDF_STATUS __dsc_vdev_can_trans(struct dsc_vdev *vdev)
 		 * to avoid wifi on failure while previous psoc idle shutdown
 		 * is in progress and wifi is turned on.
 		 */
-		if (cds_is_driver_unloading() || qdf_is_recovering())
+		if (qdf_is_driver_unloading() || qdf_is_recovering())
 			return QDF_STATUS_E_INVAL;
 		else
 			return QDF_STATUS_E_AGAIN;
