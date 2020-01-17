@@ -2052,7 +2052,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	 * capability change.
 	 * If sta exist, sap/p2p go may need switch channel to force scc
 	 */
-	bool sta_check;
+	bool sta_check = false, gc_check = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2097,6 +2097,16 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	sta_check = !cc_count ||
 		    policy_mgr_valid_sta_channel_check(psoc, op_ch_freq_list[0]);
 
+	cc_count = 0;
+	cc_count = policy_mgr_get_mode_specific_conn_info(
+				psoc, &op_ch_freq_list[cc_count],
+				&vdev_id[cc_count], PM_P2P_CLIENT_MODE);
+	if (!cc_count)
+		policy_mgr_debug("Could not get GC operating channel&vdevid");
+
+	gc_check = !!cc_count;
+	policy_mgr_debug("gc_check: %d", gc_check);
+
 	mcc_to_scc_switch =
 		policy_mgr_get_mcc_to_scc_switch_mode(psoc);
 	policy_mgr_info("MCC to SCC switch: %d chan: %d",
@@ -2113,7 +2123,7 @@ sap_restart:
 	 */
 	if (restart_sap ||
 	    ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
-	    sta_check)) {
+	    (sta_check || gc_check))) {
 		if (pm_ctx->sta_ap_intf_check_work_info) {
 			qdf_sched_work(0, &pm_ctx->sta_ap_intf_check_work);
 			policy_mgr_info(
