@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -10,6 +10,7 @@
 #include <linux/slab.h>
 #include <linux/regulator/consumer.h>
 #include <asoc/msm-cdc-supply.h>
+#include <sound/soc.h>
 
 #define CODEC_DT_MAX_PROP_SIZE 40
 
@@ -564,3 +565,71 @@ err_mem_alloc:
 	return rc;
 }
 EXPORT_SYMBOL(msm_cdc_get_power_supplies);
+
+/*
+ * msm_cdc_init_wcd_supply:
+ *	Initialize wcd supply parameters.
+ *
+ * @np: device node pointer to codec device
+ * @name: power supply name
+ * @cdc_supply: codec supply struct to hold wcd params
+ *
+ * Return error code if init failed
+ */
+int msm_cdc_init_wcd_supply(struct device_node *np, const char *name,
+			    struct cdc_wcd_supply *cdc_supply)
+{
+	struct platform_device *pdev = NULL;
+
+	if (!np || !cdc_supply)
+		return -EINVAL;
+
+	pdev = of_find_device_by_node(np);
+	if (!pdev)
+		return -EINVAL;
+
+	cdc_supply->dev = &pdev->dev;
+	cdc_supply->name = name;
+	cdc_supply->component = snd_soc_lookup_component(&pdev->dev, NULL);
+
+	return 0;
+}
+EXPORT_SYMBOL(msm_cdc_init_wcd_supply);
+
+/*
+ * msm_cdc_enable_wcd_supply:
+ *	Enable/Disable wcd supply.
+ *
+ * @cdc_supply: codec supply struct to hold wcd params
+ * @enable: bool to inform whether to enable or disable
+ *
+ * Return error code if enable/disable failed
+ */
+int msm_cdc_enable_wcd_supply(struct cdc_wcd_supply *cdc_supply, bool enable)
+{
+	struct snd_soc_component *component = cdc_supply->component;
+	int rc;
+
+	if (!component) {
+		pr_err("%s: Component memory is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (enable)
+		rc = snd_soc_dapm_force_enable_pin(
+					snd_soc_component_get_dapm(component),
+					cdc_supply->name);
+	else
+		rc = snd_soc_dapm_disable_pin(
+					snd_soc_component_get_dapm(component),
+					cdc_supply->name);
+
+	if (!rc)
+		snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
+	else
+		dev_err(component->dev, "%s: micbias %s force %s pin failed\n",
+			__func__, cdc_supply->name, (enable ? "enable" : "disable"));
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_cdc_enable_wcd_supply);

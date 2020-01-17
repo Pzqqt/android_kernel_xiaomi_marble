@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2016, 2018-2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016, 2018-2020 The Linux Foundation. All rights reserved.
  */
 
 #ifndef __CODEC_POWER_SUPPLY_H__
@@ -16,6 +16,12 @@ struct cdc_regulator {
 	int optimum_uA;
 	bool ondemand;
 	struct regulator *regulator;
+};
+
+struct cdc_wcd_supply {
+	const char *name;
+	struct device *dev;
+	struct snd_soc_component *component;
 };
 
 extern int msm_cdc_get_power_supplies(struct device *dev,
@@ -50,4 +56,8 @@ extern int msm_cdc_init_supplies_v2(struct device *dev,
 				 struct cdc_regulator *cdc_vreg,
 				 int num_supplies,
 				 u32 vote_regulator_on_demand);
+int msm_cdc_init_wcd_supply(struct device_node *np, const char *name,
+			    struct cdc_wcd_supply *cdc_supply);
+int msm_cdc_enable_wcd_supply(struct cdc_wcd_supply *cdc_supply, bool enable);
+
 #endif
