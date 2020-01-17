@@ -4379,6 +4379,7 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 	dp_get_target_pdev_id_for_host_pdev_id(pdev->soc, mac_for_pdev);
 
 	pdev_mask = 1 << target_pdev_id;
+
 	/*
 	 * Set the length of the message.
 	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
@@ -4470,6 +4471,97 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 	}
 
 	return status;
+}
+
+/**
+ * dp_h2t_3tuple_config_send(): function to contruct 3 tuple configuration
+ * HTT message to pass to FW
+ * @pdev: DP PDEV handle
+ * @tuple_mask: tuple configuration to report 3 tuple hash value in either
+ * toeplitz_2_or_4 or flow_id_toeplitz in MSDU START TLV.
+ *
+ * tuple_mask[1:0]:
+ *   00 - Do not report 3 tuple hash value
+ *   10 - Report 3 tuple hash value in toeplitz_2_or_4
+ *   01 - Report 3 tuple hash value in flow_id_toeplitz
+ *   11 - Report 3 tuple hash value in both toeplitz_2_or_4 & flow_id_toeplitz
+ *
+ * return: QDF STATUS
+ */
+QDF_STATUS dp_h2t_3tuple_config_send(struct dp_pdev *pdev,
+				     uint32_t tuple_mask, uint8_t mac_id)
+{
+	struct htt_soc *soc = pdev->soc->htt_handle;
+	struct dp_htt_htc_pkt *pkt;
+	qdf_nbuf_t msg;
+	uint32_t *msg_word;
+	uint8_t *htt_logger_bufp;
+	int mac_for_pdev;
+	int target_pdev_id;
+
+	msg = qdf_nbuf_alloc(
+			soc->osdev,
+			HTT_MSG_BUF_SIZE(HTT_3_TUPLE_HASH_CFG_REQ_BYTES),
+			HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4, TRUE);
+
+	if (!msg)
+		return QDF_STATUS_E_NOMEM;
+
+	mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev->pdev_id);
+	target_pdev_id =
+	dp_get_target_pdev_id_for_host_pdev_id(pdev->soc, mac_for_pdev);
+
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	if (!qdf_nbuf_put_tail(msg, HTT_3_TUPLE_HASH_CFG_REQ_BYTES)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "Failed to expand head for HTT_3TUPLE_CONFIG");
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		  "config_param_sent %s:%d 0x%x for target_pdev %d\n -------------",
+		  __func__, __LINE__, tuple_mask, target_pdev_id);
+
+	msg_word = (uint32_t *)qdf_nbuf_data(msg);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	htt_logger_bufp = (uint8_t *)msg_word;
+
+	*msg_word = 0;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG);
+	HTT_RX_3_TUPLE_HASH_PDEV_ID_SET(*msg_word, target_pdev_id);
+
+	msg_word++;
+	*msg_word = 0;
+	HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_SET(*msg_word, tuple_mask);
+	HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_SET(*msg_word, tuple_mask);
+
+	pkt = htt_htc_pkt_alloc(soc);
+	if (!pkt) {
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	pkt->soc_ctxt = NULL; /* not used during send-done callback */
+
+	SET_HTC_PACKET_INFO_TX(
+			&pkt->htc_pkt,
+			dp_htt_h2t_send_complete_free_netbuf,
+			qdf_nbuf_data(msg),
+			qdf_nbuf_len(msg),
+			soc->htc_endpoint,
+			1);
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
+	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG,
+			    htt_logger_bufp);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /* This macro will revert once proper HTT header will define for
