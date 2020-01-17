@@ -13604,6 +13604,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 				WMI_VDEV_MGMT_OFFLOAD_EVENTID;
 	event_ids[wmi_pdev_multi_vdev_restart_response_event_id] =
 				WMI_PDEV_MULTIPLE_VDEV_RESTART_RESP_EVENTID;
+	event_ids[wmi_roam_pmkid_request_event_id] =
+				WMI_ROAM_PMKID_REQUEST_EVENTID;
 }
 
 /**
