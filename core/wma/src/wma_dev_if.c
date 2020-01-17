@@ -4797,13 +4797,9 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	if (BSS_OPERATIONAL_MODE_IBSS == oper_mode ||
 	    BSS_OPERATIONAL_MODE_AP == oper_mode ||
 	    BSS_OPERATIONAL_MODE_NDI == oper_mode) {
-		if (qdf_is_drv_connected()) {
-			wma_debug("drv wow enabled prevent runtime pm");
-			wma_sap_prevent_runtime_pm(wma);
-		} else {
-			wma_debug("non-drv wow enabled vote for link up");
-			htc_vote_link_up(htc_handle);
-		}
+		wma_debug("disable runtime pm and vote for link up");
+		htc_vote_link_up(htc_handle);
+		wma_sap_prevent_runtime_pm(wma);
 	}
 
 	/* adjust heart beat thresold timer value for detecting ibss peer
@@ -4882,13 +4878,9 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	if (BSS_OPERATIONAL_MODE_IBSS == oper_mode ||
 	    BSS_OPERATIONAL_MODE_AP == oper_mode ||
 	    BSS_OPERATIONAL_MODE_NDI == oper_mode) {
-		if (qdf_is_drv_connected()) {
-			wma_debug("drv wow enabled allow runtime pm");
-			wma_sap_allow_runtime_pm(wma);
-		} else {
-			wma_debug("drv wow disabled vote for link down");
-			htc_vote_link_down(htc_handle);
-		}
+		wma_debug("allow runtime pm and vote for link down");
+		htc_vote_link_down(htc_handle);
+		wma_sap_allow_runtime_pm(wma);
 	}
 
 	/* adjust heart beat thresold timer value for
