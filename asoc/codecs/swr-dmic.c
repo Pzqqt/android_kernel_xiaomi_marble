@@ -25,14 +25,15 @@
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
 #include <asoc/msm-cdc-pinctrl.h>
+#include <asoc/msm-cdc-supply.h>
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include "swr-dmic.h"
 
-#define itoa(x)               ('0' + x)
-#define DAI_NAME_NUM_INDEX    11
-#define AIF_NAME_NUM_INDEX    12
-#define DEFAULT_CODEC_NAME    "swr_dmic_tx0"
-#define DEFAULT_AIF_NAME      "SWR_DMIC_AIF0 Playback"
+#define itoa(x)                   ('0' + x)
+#define DAI_NAME_NUM_INDEX        11
+#define AIF_NAME_NUM_INDEX        12
+#define DEFAULT_CODEC_NAME        "swr_dmic_tx0"
+#define DEFAULT_AIF_NAME          "SWR_DMIC_AIF0 Playback"
 
 /*
  * Private data Structure for swr-dmic. All parameters related to
@@ -44,7 +45,10 @@ struct swr_dmic_priv {
 	struct snd_soc_component *component;
 	struct snd_soc_component_driver *driver;
 	struct snd_soc_dai_driver *dai_driver;
-	struct device_node *swr_dmic_vdd_np;
+	const char *supply_name;
+	struct device_node *wcd_handle;
+	struct cdc_wcd_supply *cdc_supply;
+	bool is_wcd_supply;
 	int tx_mode;
 	u8 tx_master_port_map[SWR_DMIC_MAX_PORTS];
 };
@@ -237,28 +241,6 @@ static int swr_dmic_tx_master_port_put(struct snd_kcontrol *kcontrol,
 					ucontrol->value.enumerated.item[0]);
 
 	return 0;
-}
-
-static int swr_dmic_vdd_ctrl(struct swr_dmic_priv *swr_dmic, bool enable)
-{
-	int ret = 0;
-
-	if (swr_dmic->swr_dmic_vdd_np) {
-		if (enable)
-			ret = msm_cdc_pinctrl_select_active_state(
-							swr_dmic->swr_dmic_vdd_np);
-		else
-			ret = msm_cdc_pinctrl_select_sleep_state(
-							swr_dmic->swr_dmic_vdd_np);
-		if (ret != 0)
-			dev_err(swr_dmic->dev, "%s: Failed to turn state %d; ret=%d\n",
-				__func__, enable, ret);
-	} else {
-		dev_err(swr_dmic->dev, "%s: invalid pinctrl node\n", __func__);
-		ret = -EINVAL;
-	}
-
-	return ret;
 }
 
 static int dmic_swr_ctrl(struct snd_soc_dapm_widget *w,
@@ -458,12 +440,41 @@ static int swr_dmic_probe(struct swr_device *pdev)
 			    GFP_KERNEL);
 	if (!swr_dmic)
 		return -ENOMEM;
-	swr_dmic->swr_dmic_vdd_np = of_parse_phandle(pdev->dev.of_node,
-					     "qcom,swr-dmic-vdd-node", 0);
-	if (!swr_dmic->swr_dmic_vdd_np) {
-		ret = -EINVAL;
-		dev_dbg(&pdev->dev, "%s: Not using pinctrl\n", __func__);
+
+	swr_dmic->cdc_supply = devm_kzalloc(&pdev->dev,
+					sizeof(struct cdc_wcd_supply),
+					GFP_KERNEL);
+	if (!swr_dmic->cdc_supply)
+		return -ENOMEM;
+
+	ret = of_property_read_string(pdev->dev.of_node, "qcom,swr-dmic-supply",
+				&swr_dmic->supply_name);
+	if (ret) {
+		dev_dbg(&pdev->dev, "%s: Looking up %s property in node %s failed\n",
+		__func__, "qcom,swr-dmic-supply",
+		pdev->dev.of_node->full_name);
+		goto err;
 	}
+	swr_dmic->wcd_handle = of_parse_phandle(pdev->dev.of_node,
+						"qcom,wcd-handle", 0);
+	if (!swr_dmic->wcd_handle) {
+		dev_dbg(&pdev->dev, "%s: no wcd handle listed\n",
+			__func__);
+		swr_dmic->is_wcd_supply = false;
+	} else {
+		msm_cdc_init_wcd_supply(swr_dmic->wcd_handle,
+				swr_dmic->supply_name, swr_dmic->cdc_supply);
+		swr_dmic->is_wcd_supply = true;
+	}
+
+	if (swr_dmic->is_wcd_supply) {
+		ret = msm_cdc_enable_wcd_supply(swr_dmic->cdc_supply, true);
+		if (ret) {
+			ret = -EPROBE_DEFER;
+			goto err;
+		}
+	}
+
 	swr_set_dev_data(pdev, swr_dmic);
 
 	swr_dmic->swr_slave = pdev;
@@ -486,7 +497,6 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		goto err;
 	}
 
-	swr_dmic_vdd_ctrl(swr_dmic, true);
 	/*
 	 * Add 5msec delay to provide sufficient time for
 	 * soundwire auto enumeration of slave devices as
@@ -578,7 +588,8 @@ static int swr_dmic_probe(struct swr_device *pdev)
 	return 0;
 
 dev_err:
-	swr_dmic_vdd_ctrl(swr_dmic, false);
+	if (swr_dmic->is_wcd_supply)
+		msm_cdc_enable_wcd_supply(swr_dmic->cdc_supply, false);
 	swr_remove_device(pdev);
 err:
 	return ret;
@@ -609,7 +620,8 @@ static int swr_dmic_up(struct swr_device *pdev)
 		dev_err(&pdev->dev, "%s: swr_dmic is NULL\n", __func__);
 		return -EINVAL;
 	}
-	swr_dmic_vdd_ctrl(swr_dmic, true);
+	if (swr_dmic->is_wcd_supply)
+		ret = msm_cdc_enable_wcd_supply(swr_dmic->cdc_supply, true);
 
 	return ret;
 }
@@ -624,7 +636,8 @@ static int swr_dmic_down(struct swr_device *pdev)
 		dev_err(&pdev->dev, "%s: swr_dmic is NULL\n", __func__);
 		return -EINVAL;
 	}
-	swr_dmic_vdd_ctrl(swr_dmic, false);
+	if (swr_dmic->is_wcd_supply)
+		ret = msm_cdc_enable_wcd_supply(swr_dmic->cdc_supply, false);
 
 	return ret;
 }
