@@ -1070,6 +1070,24 @@ static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
 }
 #endif /* RX_DESC_DEBUG_CHECK */
 
+#ifdef RXDMA_ERR_PKT_DROP
+/**
+ * dp_rxdma_err_nbuf_drop(): Function to drop rxdma err frame
+ * @nbuf: buffer pointer
+ *
+ * return: bool: true if RXDMA_ERR_PKT_DROP is enabled
+ */
+static inline bool dp_rxdma_err_nbuf_drop(void)
+{
+	return true;
+}
+#else
+static inline bool dp_rxdma_err_nbuf_drop(void)
+{
+	return false;
+}
+#endif
+
 void dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			     uint8_t *rx_tlv_hdr, struct dp_peer *peer,
 			     uint8_t err_code, uint8_t mac_id);
