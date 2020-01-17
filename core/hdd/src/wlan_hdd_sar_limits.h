@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,70 @@
  */
 
 #ifdef FEATURE_SAR_LIMITS
+
+#ifdef SAR_SAFETY_FEATURE
+
+/**
+ * wlan_hdd_sar_safety_timer_reset() - Reset SAR sefety timer
+ * @hdd_ctx: Pointer to HDD context
+ *
+ * This function checks the state of the sar safety timer, if the
+ * sar_safety_timer is not runnig, it starts the timer else it stops
+ * the timer and start the timer again.
+ *
+ * Return: None
+ */
+void wlan_hdd_sar_timers_reset(struct hdd_context *hdd_ctx);
+
+/**
+ * wlan_hdd_sar_timers_init() - Initialize SAR timers
+ * @hdd_ctx: Pointer to HDD context
+ *
+ * This function initializes sar timers.
+ * Return: None
+ */
+void wlan_hdd_sar_timers_init(struct hdd_context *hdd_ctx);
+
+/**
+ * wlan_hdd_sar_timers_deinit() - De-initialize SAR timers
+ * @hdd_ctx: Pointer to HDD context
+ *
+ * This function de-initializes sar timers.
+ * Return: None
+ */
+void wlan_hdd_sar_timers_deinit(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_configure_sar_index() - configures SAR index to the FW
+ * @hdd_ctx: Pointer to HDD context
+ * @sar_index: sar index which needs to be configured to FW
+ *
+ * This function configures SAR power index on both the chains
+ * for SAR version2
+ *
+ * Return: None
+ */
+void hdd_configure_sar_index(struct hdd_context *hdd_ctx, uint32_t sar_index);
+
+#else
+static inline void wlan_hdd_sar_timers_reset(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void wlan_hdd_sar_timers_init(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void wlan_hdd_sar_timers_deinit(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void hdd_configure_sar_index(struct hdd_context *hdd_ctx,
+					   uint32_t sar_index)
+{
+}
+#endif
+
 /**
  * wlan_hdd_cfg80211_get_sar_power_limits() - Get SAR power limits
  * @wiphy: Pointer to wireless phy

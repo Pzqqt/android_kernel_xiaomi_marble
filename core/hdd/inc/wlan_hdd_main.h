@@ -1883,7 +1883,9 @@ struct hdd_context {
 	unsigned long derived_intf_addr_mask;
 
 	struct sar_limit_cmd_params *sar_cmd_params;
-
+#ifdef SAR_SAFETY_FEATURE
+	qdf_mc_timer_t sar_safety_timer;
+#endif
 	qdf_time_t runtime_resume_start_time_stamp;
 	qdf_time_t runtime_suspend_done_time_stamp;
 #if defined(CLD_PM_QOS) && \

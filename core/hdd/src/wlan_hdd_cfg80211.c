@@ -12102,6 +12102,8 @@ static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
 	if (!sar_limit_cmd)
 		return -ENOMEM;
 
+	wlan_hdd_sar_timers_reset(hdd_ctx);
+
 	/* is special SAR V1 => SAR V2 logic enabled and applicable? */
 	if (hdd_ctx->config->enable_sar_conversion &&
 	    (hdd_convert_sarv1_to_sarv2(hdd_ctx, tb, sar_limit_cmd)))
