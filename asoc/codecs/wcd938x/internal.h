@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _WCD938X_INTERNAL_H
@@ -55,6 +55,7 @@ struct wcd938x_priv {
 	struct device_node *wcd_rst_np;
 
 	struct mutex micb_lock;
+	struct mutex wakeup_lock;
 	s32 dmic_0_1_clk_cnt;
 	s32 dmic_2_3_clk_cnt;
 	s32 dmic_4_5_clk_cnt;

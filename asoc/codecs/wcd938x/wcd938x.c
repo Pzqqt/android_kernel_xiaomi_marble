@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -42,6 +42,11 @@
 #define ADC_MODE_VAL_ULP2     0x0B
 
 #define NUM_ATTEMPTS 5
+
+#define DAPM_MICBIAS1_STANDALONE "MIC BIAS1 Standalone"
+#define DAPM_MICBIAS2_STANDALONE "MIC BIAS2 Standalone"
+#define DAPM_MICBIAS3_STANDALONE "MIC BIAS3 Standalone"
+#define DAPM_MICBIAS4_STANDALONE "MIC BIAS4 Standalone"
 
 enum {
 	CODEC_TX = 0,
@@ -2033,6 +2038,55 @@ static int wcd938x_codec_enable_micbias_pullup(struct snd_soc_dapm_widget *w,
 	return __wcd938x_codec_enable_micbias_pullup(w, event);
 }
 
+static int wcd938x_wakeup(void *handle, bool enable)
+{
+	struct wcd938x_priv *priv;
+	int ret = 0;
+
+	if (!handle) {
+		pr_err("%s: NULL handle\n", __func__);
+		return -EINVAL;
+	}
+	priv = (struct wcd938x_priv *)handle;
+	if (!priv->tx_swr_dev) {
+		pr_err("%s: tx swr dev is NULL\n", __func__);
+		return -EINVAL;
+	}
+	mutex_lock(&priv->wakeup_lock);
+	if (enable)
+		ret = swr_device_wakeup_vote(priv->tx_swr_dev);
+	else
+		ret = swr_device_wakeup_unvote(priv->tx_swr_dev);
+	mutex_unlock(&priv->wakeup_lock);
+
+	return ret;
+}
+
+static int wcd938x_codec_force_enable_micbias(struct snd_soc_dapm_widget *w,
+					    struct snd_kcontrol *kcontrol,
+					    int event)
+{
+	int ret = 0;
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		wcd938x_wakeup(wcd938x, true);
+		ret = __wcd938x_codec_enable_micbias(w, SND_SOC_DAPM_PRE_PMU);
+		wcd938x_wakeup(wcd938x, false);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		wcd938x_wakeup(wcd938x, true);
+		ret = __wcd938x_codec_enable_micbias(w, SND_SOC_DAPM_POST_PMD);
+		wcd938x_wakeup(wcd938x, false);
+		break;
+	}
+
+	return ret;
+}
+
 static inline int wcd938x_tx_path_get(const char *wname,
 				      unsigned int *path_num)
 {
@@ -2640,6 +2694,19 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 				wcd938x_codec_enable_micbias,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 				SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY(DAPM_MICBIAS1_STANDALONE, SND_SOC_NOPM, 0, 0,
+		wcd938x_codec_force_enable_micbias,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_SUPPLY(DAPM_MICBIAS2_STANDALONE, SND_SOC_NOPM, 0, 0,
+		wcd938x_codec_force_enable_micbias,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_SUPPLY(DAPM_MICBIAS3_STANDALONE, SND_SOC_NOPM, 0, 0,
+		wcd938x_codec_force_enable_micbias,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_SUPPLY(DAPM_MICBIAS4_STANDALONE, SND_SOC_NOPM, 0, 0,
+		wcd938x_codec_force_enable_micbias,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_SUPPLY_S("CLS_H_PORT", 1, SND_SOC_NOPM, 0, 0,
 			     wcd938x_enable_clsh,
@@ -3537,25 +3604,6 @@ static int wcd938x_add_slave_components(struct device *dev,
 	return 0;
 }
 
-static int wcd938x_wakeup(void *handle, bool enable)
-{
-	struct wcd938x_priv *priv;
-
-	if (!handle) {
-		pr_err("%s: NULL handle\n", __func__);
-		return -EINVAL;
-	}
-	priv = (struct wcd938x_priv *)handle;
-	if (!priv->tx_swr_dev) {
-		pr_err("%s: tx swr dev is NULL\n", __func__);
-		return -EINVAL;
-	}
-	if (enable)
-		return swr_device_wakeup_vote(priv->tx_swr_dev);
-	else
-		return swr_device_wakeup_unvote(priv->tx_swr_dev);
-}
-
 static int wcd938x_probe(struct platform_device *pdev)
 {
 	struct component_match *match = NULL;
@@ -3633,6 +3681,7 @@ static int wcd938x_probe(struct platform_device *pdev)
 		goto err;
 	}
 
+	mutex_init(&wcd938x->wakeup_lock);
 	mutex_init(&wcd938x->micb_lock);
 	ret = wcd938x_add_slave_components(dev, &match);
 	if (ret)
@@ -3647,6 +3696,7 @@ static int wcd938x_probe(struct platform_device *pdev)
 
 err_lock_init:
 	mutex_destroy(&wcd938x->micb_lock);
+	mutex_destroy(&wcd938x->wakeup_lock);
 err:
 	return ret;
 }
@@ -3658,6 +3708,7 @@ static int wcd938x_remove(struct platform_device *pdev)
 	wcd938x = platform_get_drvdata(pdev);
 	component_master_del(&pdev->dev, &wcd938x_comp_ops);
 	mutex_destroy(&wcd938x->micb_lock);
+	mutex_destroy(&wcd938x->wakeup_lock);
 	dev_set_drvdata(&pdev->dev, NULL);
 
 	return 0;
