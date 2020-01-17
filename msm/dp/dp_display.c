@@ -11,7 +11,6 @@
 #include <linux/of_irq.h>
 #include <linux/extcon.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
-#include <linux/usb/usbpd.h>
 
 #include "sde_connector.h"
 
@@ -1539,10 +1538,12 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 
 	dp_display_get_usb_extcon(dp);
 
-	rc = dp->hpd->register_hpd(dp->hpd);
-	if (rc) {
-		DP_ERR("failed register hpd\n");
-		goto error_hpd_reg;
+	if (dp->hpd->register_hpd) {
+		rc = dp->hpd->register_hpd(dp->hpd);
+		if (rc) {
+			DP_ERR("failed register hpd\n");
+			goto error_hpd_reg;
+		}
 	}
 
 	return rc;

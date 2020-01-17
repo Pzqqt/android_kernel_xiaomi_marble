@@ -9,7 +9,6 @@
 #include "dp_panel.h"
 #include "dp_ctrl.h"
 #include "dp_link.h"
-#include "dp_usbpd.h"
 #include "dp_aux.h"
 #include "dp_display.h"
 #include "dp_pll.h"

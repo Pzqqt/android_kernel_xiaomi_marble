@@ -390,8 +390,6 @@
 #define QSERDES_COM_BIAS_EN_CLKBUFLR_EN		(0x044)
 
 /* DP MMSS_CC registers */
-#define MMSS_DP_LINK_CMD_RCGR			(0x0138)
-#define MMSS_DP_LINK_CFG_RCGR			(0x013C)
 #define MMSS_DP_PIXEL_M				(0x01B4)
 #define MMSS_DP_PIXEL_N				(0x01B8)
 #define MMSS_DP_PIXEL1_M			(0x01CC)
@@ -400,10 +398,10 @@
 #define MMSS_DP_PIXEL_N_V200			(0x0134)
 #define MMSS_DP_PIXEL1_M_V200			(0x0148)
 #define MMSS_DP_PIXEL1_N_V200			(0x014C)
-#define MMSS_DP_PIXEL_M_V420			(0x01B4)
-#define MMSS_DP_PIXEL_N_V420			(0x01B8)
-#define MMSS_DP_PIXEL1_M_V420			(0x01CC)
-#define MMSS_DP_PIXEL1_N_V420			(0x01D0)
+#define MMSS_DP_PIXEL_M_V420			(0x01B0)
+#define MMSS_DP_PIXEL_N_V420			(0x01B4)
+#define MMSS_DP_PIXEL1_M_V420			(0x01C8)
+#define MMSS_DP_PIXEL1_N_V420			(0x01CC)
 
 /* DP HDCP 1.3 registers */
 #define DP_HDCP_CTRL                                   (0x0A0)
@@ -431,13 +429,11 @@
 #define HDCP_SEC_DP_TZ_HV_HLOS_HDCP_RCVPORT_DATA12     (0x020)
 
 /* USB3 DP COM registers */
-#define USB3_DP_COM_RESET_OVRD_CTRL (0x1C)
 #define USB3_DP_COM_PHY_MODE_CTRL   (0x00)
 #define USB3_DP_COM_SW_RESET        (0x04)
-#define USB3_DP_COM_TYPEC_CTRL      (0x10)
-#define USB3_DP_COM_SWI_CTRL        (0x0c)
 #define USB3_DP_COM_POWER_DOWN_CTRL (0x08)
-
-
+#define USB3_DP_COM_SWI_CTRL        (0x0C)
+#define USB3_DP_COM_TYPEC_CTRL      (0x10)
+#define USB3_DP_COM_RESET_OVRD_CTRL (0x1C)
 
 #endif /* _DP_REG_H_ */

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/soc/qcom/fsa4480-i2c.h>
-#include <linux/usb/usbpd.h>
 #include <linux/delay.h>
 
 #include "dp_aux.h"
+#include "dp_hpd.h"
 #include "dp_debug.h"
 
 #define DP_AUX_ENUM_STR(x)		#x

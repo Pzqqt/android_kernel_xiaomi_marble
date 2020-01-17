@@ -10,7 +10,6 @@
 
 #include "dp_aux.h"
 #include "dp_link.h"
-#include "dp_usbpd.h"
 #include "sde_edid_parser.h"
 #include "sde_connector.h"
 #include "msm_drv.h"

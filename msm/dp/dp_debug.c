@@ -14,6 +14,7 @@
 #include "sde_connector.h"
 #include "dp_display.h"
 #include "dp_pll.h"
+#include "dp_hpd.h"
 
 #define DEBUG_NAME "drm_dp"
 
@@ -2147,6 +2148,15 @@ static int dp_debug_init_sim(struct dp_debug_private *debug, struct dentry *dir)
 	if (IS_ERR_OR_NULL(file)) {
 		rc = PTR_ERR(file);
 		DP_ERR("[%s] debugfs skip_uevent failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_bool("force_multi_func", 0644, dir,
+			&debug->hpd->force_multi_func);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs force_multi_func failed, rc=%d\n",
 		       DEBUG_NAME, rc);
 		return rc;
 	}
