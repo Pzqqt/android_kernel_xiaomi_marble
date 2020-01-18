@@ -1018,6 +1018,10 @@ static int dsi_ctrl_copy_and_pad_cmd(struct dsi_ctrl *dsi_ctrl,
 	if (packet->payload_length > 0)
 		buf[3] |= BIT(6);
 
+	/* Swap BYTE order in the command buffer for MSM */
+	buf[0] = packet->header[1];
+	buf[1] = packet->header[2];
+	buf[2] = packet->header[0];
 
 	/* send embedded BTA for read commands */
 	cmd_type = buf[2] & 0x3f;
