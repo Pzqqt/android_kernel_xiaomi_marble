@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[sde_rsc_hw:%s:%d]: " fmt, __func__, __LINE__
@@ -561,6 +561,50 @@ int rsc_hw_bwi_status_v3(struct sde_rsc_priv *rsc, bool bw_indication)
 	return rc;
 }
 
+static int rsc_hw_profiling_counter_ctrl(struct sde_rsc_priv *rsc, bool enable)
+{
+	int i;
+
+	if (!rsc) {
+		pr_debug("invalid input param\n");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < NUM_RSC_PROFILING_COUNTERS; ++i) {
+		dss_reg_w(&rsc->drv_io,
+			SDE_RSCC_LPM_PROFILING_COUNTER0_EN_DRV0 +
+			(0x20 * i), enable ? 1 : 0, rsc->debug_mode);
+		dss_reg_w(&rsc->drv_io,
+			SDE_RSCC_LPM_PROFILING_COUNTER0_CLR_DRV0 +
+			(0x20 * i), 1, rsc->debug_mode);
+	}
+
+	wmb(); /* make sure counters are cleared now */
+	pr_debug("rsc profiling counters %s and cleared\n",
+			enable ? "enabled" : "disabled");
+
+	return 0;
+}
+
+static int rsc_hw_get_profiling_counter_status(struct sde_rsc_priv *rsc,
+		u32 *counters)
+{
+	int i;
+
+	if (!rsc || !counters) {
+		pr_debug("invalid input param, %d %d\n",
+				rsc ? 0 : 1, counters ? 0 : 1);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < NUM_RSC_PROFILING_COUNTERS; ++i)
+		counters[i] = dss_reg_r(&rsc->drv_io,
+				SDE_RSCC_LPM_PROFILING_COUNTER0_STATUS_DRV0 +
+				(0x20 * i), rsc->debug_mode);
+
+	return 0;
+}
+
 static int rsc_hw_timer_update_v3(struct sde_rsc_priv *rsc)
 {
 	if (!rsc) {
@@ -620,6 +664,10 @@ int sde_rsc_hw_register_v3(struct sde_rsc_priv *rsc)
 	rsc->hw_ops.debug_show = sde_rsc_debug_show;
 	rsc->hw_ops.mode_ctrl = rsc_hw_mode_ctrl;
 	rsc->hw_ops.debug_dump = rsc_hw_debug_dump;
+	if (rsc->profiling_supp) {
+		rsc->hw_ops.setup_counters = rsc_hw_profiling_counter_ctrl;
+		rsc->hw_ops.get_counters = rsc_hw_get_profiling_counter_status;
+	}
 
 	return 0;
 }

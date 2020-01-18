@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_RSC_HW_H_
@@ -64,6 +64,10 @@
 #define SDE_RSC_SOLVER_MODE_PARM3_DRV0_MODE2		0xc78
 
 #define SDE_RSCC_TCS_DRV0_CONTROL			0x1c14
+
+#define SDE_RSCC_LPM_PROFILING_COUNTER0_EN_DRV0		0x4d00
+#define SDE_RSCC_LPM_PROFILING_COUNTER0_CLR_DRV0	0x4d04
+#define SDE_RSCC_LPM_PROFILING_COUNTER0_STATUS_DRV0	0x4d08
 
 #define SDE_RSCC_WRAPPER_CTRL				0x000
 #define SDE_RSCC_WRAPPER_OVERRIDE_CTRL			0x004
