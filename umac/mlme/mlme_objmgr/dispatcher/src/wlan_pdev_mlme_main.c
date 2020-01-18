@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,14 +26,22 @@
 #include "include/wlan_pdev_mlme.h"
 #include "wlan_pdev_mlme_main.h"
 #include "wlan_pdev_mlme_api.h"
+#include <wlan_utility.h>
 
 static QDF_STATUS mlme_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev,
 					       void *arg)
 {
 	struct pdev_mlme_obj *pdev_mlme;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (!pdev) {
 		mlme_err(" PDEV is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -42,7 +50,8 @@ static QDF_STATUS mlme_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev,
 		mlme_err(" MLME component object alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
-
+	wlan_minidump_log(pdev_mlme, sizeof(*pdev_mlme), psoc,
+			  WLAN_MD_OBJMGR_PDEV_MLME, "pdev_mlme");
 	pdev_mlme->pdev = pdev;
 
 	if (mlme_pdev_ops_ext_hdl_create(pdev_mlme) != QDF_STATUS_SUCCESS)
@@ -55,6 +64,7 @@ static QDF_STATUS mlme_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 
 init_failed:
+	wlan_minidump_remove(pdev_mlme);
 	qdf_mem_free(pdev_mlme);
 
 	return QDF_STATUS_E_FAILURE;
@@ -75,6 +85,7 @@ static QDF_STATUS mlme_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 
 	wlan_objmgr_pdev_component_obj_detach(pdev, WLAN_UMAC_COMP_MLME,
 					      (void *)pdev_mlme);
+	wlan_minidump_remove(pdev_mlme);
 	qdf_mem_free(pdev_mlme);
 
 	return QDF_STATUS_SUCCESS;

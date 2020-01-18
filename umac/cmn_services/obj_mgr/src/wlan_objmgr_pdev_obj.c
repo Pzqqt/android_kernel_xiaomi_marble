@@ -29,7 +29,7 @@
 #include "wlan_objmgr_global_obj_i.h"
 #include "wlan_objmgr_psoc_obj_i.h"
 #include "wlan_objmgr_pdev_obj_i.h"
-
+#include <wlan_utility.h>
 
 /**
  ** APIs to Create/Delete Global object APIs
@@ -121,6 +121,8 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 		qdf_mem_free(pdev);
 		return NULL;
 	}
+	wlan_minidump_log(pdev, sizeof(*pdev), psoc,
+			  WLAN_MD_OBJMGR_PDEV, "wlan_objmgr_pdev");
 	/* Save PSOC object pointer in PDEV */
 	wlan_pdev_set_psoc(pdev, psoc);
 	/* Initialize PDEV's VDEV list, assign default values */
@@ -231,6 +233,7 @@ static QDF_STATUS wlan_objmgr_pdev_obj_destroy(struct wlan_objmgr_pdev *pdev)
 		return QDF_STATUS_COMP_ASYNC;
 	}
 
+	wlan_minidump_remove(pdev);
 	/* Free PDEV object */
 	return wlan_objmgr_pdev_obj_free(pdev);
 }

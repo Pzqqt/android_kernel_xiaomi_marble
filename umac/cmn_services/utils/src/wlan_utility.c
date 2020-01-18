@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include <net/cfg80211.h>
 #include <qdf_module.h>
 #include <wlan_vdev_mlme_api.h>
+#include "cfg_ucfg_api.h"
 
 uint32_t wlan_chan_to_freq(uint8_t chan)
 {
@@ -518,3 +519,125 @@ uint16_t wlan_util_get_peer_count_for_mode(struct wlan_objmgr_pdev *pdev,
 	return count.peer_count;
 }
 
+#ifdef CONFIG_QCA_MINIDUMP
+void wlan_minidump_log(void *start_addr, size_t size,
+		       void *psoc_obj,
+		       enum wlan_minidump_host_data type,
+		       const char *name)
+{
+	int setval = 0;
+
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!psoc_obj) {
+		qdf_debug("Minidump: Psoc is NULL");
+		return;
+	}
+
+	psoc = (struct wlan_objmgr_psoc *)psoc_obj;
+
+	switch (type) {
+	case WLAN_MD_CP_EXT_PDEV:
+		if (cfg_get(psoc, CFG_OL_MD_CP_EXT_PDEV))
+			setval = 1;
+		break;
+	case WLAN_MD_CP_EXT_PSOC:
+		if (cfg_get(psoc, CFG_OL_MD_CP_EXT_PSOC))
+			setval = 1;
+		break;
+	case WLAN_MD_CP_EXT_VDEV:
+		if (cfg_get(psoc, CFG_OL_MD_CP_EXT_VDEV))
+			setval = 1;
+		break;
+	case WLAN_MD_CP_EXT_PEER:
+		if (cfg_get(psoc, CFG_OL_MD_CP_EXT_PEER))
+			setval = 1;
+		break;
+	case WLAN_MD_DP_SOC:
+		if (cfg_get(psoc, CFG_OL_MD_DP_SOC))
+			setval = 1;
+		break;
+	case WLAN_MD_DP_PDEV:
+		if (cfg_get(psoc, CFG_OL_MD_DP_PDEV))
+			setval = 1;
+		break;
+	case WLAN_MD_DP_PEER:
+		if (cfg_get(psoc, CFG_OL_MD_DP_PEER))
+			setval = 1;
+		break;
+	case WLAN_MD_DP_SRNG_REO_DEST:
+	case WLAN_MD_DP_SRNG_REO_EXCEPTION:
+	case WLAN_MD_DP_SRNG_RX_REL:
+	case WLAN_MD_DP_SRNG_REO_REINJECT:
+	case WLAN_MD_DP_SRNG_REO_CMD:
+	case WLAN_MD_DP_SRNG_REO_STATUS:
+		if (cfg_get(psoc, CFG_OL_MD_DP_SRNG_REO))
+			setval = 1;
+		break;
+	case WLAN_MD_DP_SRNG_TCL_DATA:
+	case WLAN_MD_DP_SRNG_TCL_CMD:
+	case WLAN_MD_DP_SRNG_TCL_STATUS:
+	case WLAN_MD_DP_SRNG_TX_COMP:
+		if (cfg_get(psoc, CFG_OL_MD_DP_SRNG_TCL))
+			setval = 1;
+		break;
+	case WLAN_MD_DP_SRNG_WBM_DESC_REL:
+	case WLAN_MD_DP_SRNG_WBM_IDLE_LINK:
+		if (cfg_get(psoc, CFG_OL_MD_DP_SRNG_WBM))
+			setval = 1;
+		break;
+	case WLAN_MD_DP_LINK_DESC_BANK:
+		if (cfg_get(psoc, CFG_OL_MD_DP_LINK_DESC_BANK))
+			setval = 1;
+		break;
+	case WLAN_MD_DP_SRNG_RXDMA_MON_BUF:
+	case WLAN_MD_DP_SRNG_RXDMA_MON_DST:
+	case WLAN_MD_DP_SRNG_RXDMA_MON_DESC:
+	case WLAN_MD_DP_SRNG_RXDMA_ERR_DST:
+	case WLAN_MD_DP_SRNG_RXDMA_MON_STATUS:
+		if (cfg_get(psoc, CFG_OL_MD_DP_SRNG_RXDMA))
+			setval = 1;
+		break;
+	case WLAN_MD_DP_HAL_SOC:
+		if (cfg_get(psoc, CFG_OL_MD_DP_HAL_SOC))
+			setval = 1;
+		break;
+	case WLAN_MD_OBJMGR_PSOC:
+	case WLAN_MD_OBJMGR_PSOC_TGT_INFO:
+		if (cfg_get(psoc, CFG_OL_MD_OBJMGR_PSOC))
+			setval = 1;
+		break;
+	case WLAN_MD_OBJMGR_PDEV:
+	case WLAN_MD_OBJMGR_PDEV_MLME:
+		if (cfg_get(psoc, CFG_OL_MD_OBJMGR_PDEV))
+			setval = 1;
+		break;
+	case WLAN_MD_OBJMGR_VDEV_MLME:
+	case WLAN_MD_OBJMGR_VDEV_SM:
+	case WLAN_MD_OBJMGR_VDEV:
+		if (cfg_get(psoc, CFG_OL_MD_OBJMGR_VDEV))
+			setval = 1;
+		break;
+	default:
+		qdf_debug("Minidump: Type not implemented");
+	}
+	if (setval)
+		qdf_minidump_log(start_addr, size, name);
+}
+qdf_export_symbol(wlan_minidump_log);
+
+void wlan_minidump_remove(void *addr)
+{
+	qdf_minidump_remove(addr);
+}
+qdf_export_symbol(wlan_minidump_remove);
+#else
+void wlan_minidump_log(void *start_addr, size_t size,
+		       void *psoc_obj,
+		       enum wlan_minidump_host_data type,
+		       const char *name) {}
+qdf_export_symbol(wlan_minidump_log);
+
+void wlan_minidump_remove(void *addr) {}
+qdf_export_symbol(wlan_minidump_remove);
+#endif /* CONFIG_QCA_MINIDUMP */

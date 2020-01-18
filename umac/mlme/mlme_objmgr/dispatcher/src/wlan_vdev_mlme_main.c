@@ -88,6 +88,8 @@ static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 	vdev_mlme = qdf_mem_malloc(sizeof(*vdev_mlme));
 	if (!vdev_mlme)
 		return QDF_STATUS_E_NOMEM;
+	wlan_minidump_log(vdev_mlme, sizeof(*vdev_mlme), psoc,
+			  WLAN_MD_OBJMGR_VDEV_MLME, "vdev_mlme");
 
 	vdev_mlme->vdev = vdev;
 
@@ -127,8 +129,8 @@ ext_hdl_post_create_failed:
 ext_hdl_create_failed:
 	mlme_vdev_sm_destroy(vdev_mlme);
 init_failed:
+	wlan_minidump_remove(vdev_mlme);
 	qdf_mem_free(vdev_mlme);
-
 	return QDF_STATUS_E_FAILURE;
 }
 
@@ -154,6 +156,7 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 
 	wlan_objmgr_vdev_component_obj_detach(vdev, WLAN_UMAC_COMP_MLME,
 					      vdev_mlme);
+	wlan_minidump_remove(vdev_mlme);
 	qdf_mem_free(vdev_mlme);
 
 	return QDF_STATUS_SUCCESS;

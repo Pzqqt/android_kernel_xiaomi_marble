@@ -364,7 +364,6 @@ void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev)
 			"%s: hal_soc allocation failed", __func__);
 		goto fail0;
 	}
-	qdf_minidump_log(hal, sizeof(*hal), "hal_soc");
 	hal->hif_handle = hif_handle;
 	hal->dev_base_addr = hif_get_dev_ba(hif_handle);
 	hal->qdf_dev = qdf_dev;
@@ -409,6 +408,8 @@ void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev)
 	 * as umac power collapse is not enabled yet
 	 */
 	hal->init_phase = true;
+
+	qdf_minidump_log(hal, sizeof(*hal), "hal_soc");
 
 	return (void *)hal;
 

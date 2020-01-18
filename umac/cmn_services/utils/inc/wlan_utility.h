@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -316,5 +316,87 @@ QDF_STATUS wlan_util_is_pdev_scan_allowed(struct wlan_objmgr_pdev *pdev,
  */
 uint16_t wlan_util_get_peer_count_for_mode(struct wlan_objmgr_pdev *pdev,
 					   enum QDF_OPMODE mode);
+
+/**
+ * wlan_minidump_host_data - Data structure type logged in Minidump
+ * @WLAN_MD_CP_EXT_PDEV - ol_ath_softc_net80211
+ * @WLAN_MD_CP_EXT_PSOC - ol_ath_soc_softc
+ * @WLAN_MD_CP_EXT_VDEV - ieee80211vap
+ * @WLAN_MD_CP_EXT_PEER - ieee80211_node
+ * @WLAN_MD_DP_SOC - dp_soc
+ * @WLAN_MD_DP_PDEV - dp_pdev
+ * @WLAN_MD_DP_VDEV - dp_vdev
+ * @WLAN_MD_DP_PEER - dp_peer
+ * @WLAN_MD_DP_SRNG_REO_DEST - dp_srng type for reo dest
+ * @WLAN_MD_DP_SRNG_REO_EXCEPTION - dp_srng type for reo exception
+ * @WLAN_MD_DP_SRNG_REO_CMD - dp_srng type for reo cmd
+ * @WLAN_MD_DP_SRNG_RX_REL - dp_srng type for reo release
+ * @WLAN_MD_DP_SRNG_REO_REINJECT - dp_srng type for reo reinject
+ * @WLAN_MD_DP_SRNG_REO_STATUS - dp_srng type for reo status
+ * @WLAN_MD_DP_SRNG_TCL_DATA - dp_srng type for tcl data
+ * @WLAN_MD_DP_SRNG_TCL_STATUS - dp_srng type for tcl status
+ * @WLAN_MD_DP_SRNG_TX_COMP - dp_srng type for tcl comp
+ * @WLAN_MD_DP_SRNG_WBM_DESC_REL - dp_srng_type for wbm desc rel
+ * @WLAN_MD_DP_SRNG_WBM_IDLE_LINK - dp_srng type for wbm idle link
+ * @WLAN_MD_DP_LINK_DESC_BANK - Wbm link_desc_bank
+ * @WLAN_MD_DP_SRNG_RXDMA_MON_STATUS - dp_srng type for rxdma mon status
+ * @WLAN_MD_DP_SRNG_RXDMA_MON_BUF - dp_srng type for rxdma mon buf
+ * @WLAN_MD_DP_SRNG_RXDMA_MON_DST - dp_srng type for rxdma mon dest
+ * @WLAN_MD_DP_SRNG_RXDMA_MON_DESC - dp_srng type for rxdma mon desc
+ * @WLAN_MD_DP_SRNG_RXDMA_ERR_DST - dp_srng type for rxdma err dst
+ * @WLAN_MD_DP_HAL_SOC - hal_soc
+ * @WLAN_MD_OBJMGR_PSOC - wlan_objmgr_psoc
+ * @WLAN_MD_OBJMGR_PSOC_TGT_INFO - wlan_objmgr_tgt_psoc_info
+ * @WLAN_MD_OBJMGR_PDEV - wlan_objmgr_pdev
+ * @WLAN_MD_OBJMGR_PDEV_MLME - pdev_mlme
+ * @WLAN_MD_OBJMGR_VDEV - wlan_objmgr_vdev
+ * @WLAN_MD_OBJMGR_VDEV_MLME -vdev mlme
+ * @WLAN_MD_OBJMGR_VDEV_SM - wlan_sm
+ * @WLAN_MD_MAX - Max value
+ */
+enum wlan_minidump_host_data {
+	WLAN_MD_CP_EXT_PDEV,
+	WLAN_MD_CP_EXT_PSOC,
+	WLAN_MD_CP_EXT_VDEV,
+	WLAN_MD_CP_EXT_PEER,
+	WLAN_MD_DP_SOC,
+	WLAN_MD_DP_PDEV,
+	WLAN_MD_DP_VDEV,
+	WLAN_MD_DP_PEER,
+	WLAN_MD_DP_SRNG_REO_DEST,
+	WLAN_MD_DP_SRNG_REO_EXCEPTION,
+	WLAN_MD_DP_SRNG_REO_CMD,
+	WLAN_MD_DP_SRNG_RX_REL,
+	WLAN_MD_DP_SRNG_REO_REINJECT,
+	WLAN_MD_DP_SRNG_REO_STATUS,
+	WLAN_MD_DP_SRNG_TCL_DATA,
+	WLAN_MD_DP_SRNG_TCL_CMD,
+	WLAN_MD_DP_SRNG_TCL_STATUS,
+	WLAN_MD_DP_SRNG_TX_COMP,
+	WLAN_MD_DP_SRNG_WBM_DESC_REL,
+	WLAN_MD_DP_SRNG_WBM_IDLE_LINK,
+	WLAN_MD_DP_LINK_DESC_BANK,
+	WLAN_MD_DP_SRNG_RXDMA_MON_STATUS,
+	WLAN_MD_DP_SRNG_RXDMA_MON_BUF,
+	WLAN_MD_DP_SRNG_RXDMA_MON_DST,
+	WLAN_MD_DP_SRNG_RXDMA_MON_DESC,
+	WLAN_MD_DP_SRNG_RXDMA_ERR_DST,
+	WLAN_MD_DP_HAL_SOC,
+	WLAN_MD_OBJMGR_PSOC,
+	WLAN_MD_OBJMGR_PSOC_TGT_INFO,
+	WLAN_MD_OBJMGR_PDEV,
+	WLAN_MD_OBJMGR_PDEV_MLME,
+	WLAN_MD_OBJMGR_VDEV,
+	WLAN_MD_OBJMGR_VDEV_MLME,
+	WLAN_MD_OBJMGR_VDEV_SM,
+	WLAN_MD_MAX
+};
+
+void wlan_minidump_log(void *start_addr, size_t size,
+		       void *psoc,
+		       enum wlan_minidump_host_data type,
+		       const char *name);
+
+void wlan_minidump_remove(void *addr);
 
 #endif /* _WLAN_UTILITY_H_ */
