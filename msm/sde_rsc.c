@@ -1176,7 +1176,8 @@ static int _sde_debugfs_status_open(struct inode *inode, struct file *file)
 	return single_open(file, _sde_debugfs_status_show, inode->i_private);
 }
 
-static int _sde_debugfs_mode_ctrl_open(struct inode *inode, struct file *file)
+static int _sde_debugfs_generic_noseek_open(struct inode *inode,
+		struct file *file)
 {
 	/* non-seekable */
 	file->private_data = inode->i_private;
@@ -1271,13 +1272,6 @@ state_check:
 end:
 	kfree(input);
 	return count;
-}
-
-static int _sde_debugfs_vsync_mode_open(struct inode *inode, struct file *file)
-{
-	/* non-seekable */
-	file->private_data = inode->i_private;
-	return nonseekable_open(inode, file);
 }
 
 static ssize_t _sde_debugfs_vsync_mode_read(struct file *file, char __user *buf,
@@ -1375,13 +1369,13 @@ static const struct file_operations debugfs_status_fops = {
 };
 
 static const struct file_operations mode_control_fops = {
-	.open =		_sde_debugfs_mode_ctrl_open,
+	.open =		_sde_debugfs_generic_noseek_open,
 	.read =		_sde_debugfs_mode_ctrl_read,
 	.write =	_sde_debugfs_mode_ctrl_write,
 };
 
 static const struct file_operations vsync_status_fops = {
-	.open =		_sde_debugfs_vsync_mode_open,
+	.open =		_sde_debugfs_generic_noseek_open,
 	.read =		_sde_debugfs_vsync_mode_read,
 	.write =	_sde_debugfs_vsync_mode_write,
 };
