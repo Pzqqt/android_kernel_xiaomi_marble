@@ -2488,6 +2488,48 @@ send_peer_chan_width_switch_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS extract_multi_vdev_restart_resp_event_tlv(
+		wmi_unified_t wmi_hdl, void *evt_buf,
+		struct multi_vdev_restart_resp *param)
+{
+	WMI_PDEV_MULTIPLE_VDEV_RESTART_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_multiple_vdev_restart_resp_event_fixed_param *ev;
+
+	param_buf =
+	(WMI_PDEV_MULTIPLE_VDEV_RESTART_RESP_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid buf multi_vdev restart response");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ev = (wmi_pdev_multiple_vdev_restart_resp_event_fixed_param *)
+							param_buf->fixed_param;
+	if (!ev) {
+		WMI_LOGE("Invalid ev multi_vdev restart response");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param->pdev_id = ev->pdev_id;
+	param->status = ev->status;
+
+	if (!param_buf->num_vdev_ids_bitmap)
+		return QDF_STATUS_E_FAILURE;
+
+	if (param_buf->num_vdev_ids_bitmap > sizeof(param->vdev_id_bmap)) {
+		WMI_LOGE("vdevId bitmap overflow size:%d",
+			 param_buf->num_vdev_ids_bitmap);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_copy(param->vdev_id_bmap, param_buf->vdev_ids_bitmap,
+		     param_buf->num_vdev_ids_bitmap);
+
+	WMI_LOGD("vdev_id_bmap :0x%x%x", param->vdev_id_bmap[1],
+		 param->vdev_id_bmap[0]);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -2557,4 +2599,6 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 					set_rx_pkt_type_routing_tag_update_tlv;
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 	ops->send_peer_vlan_config_cmd = send_peer_vlan_config_cmd_tlv;
+	ops->extract_multi_vdev_restart_resp_event =
+				extract_multi_vdev_restart_resp_event_tlv;
 }
