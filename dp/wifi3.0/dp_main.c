@@ -10978,10 +10978,16 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 			  struct cdp_monitor_filter *filter_val)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct dp_pdev *pdev = NULL;
 	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};
-	int max_mac_rings = wlan_cfg_get_num_mac_rings(pdev->wlan_cfg_ctx);
+	int max_mac_rings;
 	uint8_t mac_id = 0;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return;
+	}
 
 	if (pdev->monitor_vdev) {
 		dp_info("No action is needed since monitor mode is enabled\n");
@@ -10989,6 +10995,7 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 	}
 	soc = pdev->soc;
 	pdev->cfr_rcc_mode = false;
+	max_mac_rings = wlan_cfg_get_num_mac_rings(pdev->wlan_cfg_ctx);
 	dp_is_hw_dbs_enable(soc, &max_mac_rings);
 
 	dp_debug("Max_mac_rings %d", max_mac_rings);
@@ -11025,7 +11032,7 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle,
 				    mac_for_pdev,
-				    pdev->rxdma_mon_status_ring[mac_id]
+				    soc->rxdma_mon_status_ring[mac_id]
 				    .hal_srng,
 				    RXDMA_MONITOR_STATUS,
 				    RX_BUFFER_SIZE,
@@ -11044,8 +11051,13 @@ static
 bool dp_get_cfr_rcc(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_pdev *pdev =
-		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct dp_pdev *pdev = NULL;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return false;
+	}
 
 	return pdev->cfr_rcc_mode;
 }
@@ -11062,8 +11074,13 @@ static
 void dp_set_cfr_rcc(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, bool enable)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_pdev *pdev =
-		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	struct dp_pdev *pdev = NULL;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	if (!pdev) {
+		dp_err("pdev is NULL");
+		return;
+	}
 
 	pdev->cfr_rcc_mode = enable;
 }
