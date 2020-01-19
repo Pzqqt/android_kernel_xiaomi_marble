@@ -1131,14 +1131,22 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param *cmd;
 	int i;
 	uint8_t *buf_ptr;
-	uint32_t *vdev_ids;
+	uint32_t *vdev_ids, *phymode;
 	wmi_channel *chan_info;
 	struct mlme_channel_param *tchan_info;
 	uint16_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
 
+	if (!param->num_vdevs) {
+		WMI_LOGE("vdev's not found for MVR cmd");
+		qdf_status = QDF_STATUS_E_FAULT;
+		goto end;
+	}
 	len += sizeof(wmi_channel);
-	if (param->num_vdevs)
+	if (param->num_vdevs) {
+		len += sizeof(uint32_t) * param->num_vdevs + WMI_TLV_HDR_SIZE;
+		/* for phymode */
 		len += sizeof(uint32_t) * param->num_vdevs;
+	}
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -1223,6 +1231,23 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 		tchan_info->minpower, tchan_info->maxpower,
 		tchan_info->maxregpower, tchan_info->reg_class_id,
 		tchan_info->maxregpower);
+
+	buf_ptr += sizeof(*chan_info);
+	WMITLV_SET_HDR(buf_ptr,
+		       WMITLV_TAG_ARRAY_UINT32,
+		       sizeof(uint32_t) * param->num_vdevs);
+	phymode = (uint32_t *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	for (i = 0; i < param->num_vdevs; i++)
+		WMI_MULTIPLE_VDEV_RESTART_FLAG_SET_PHYMODE(
+				phymode[i], param->mvr_param[i].phymode);
+
+	/* Target expects flag for phymode processing */
+	WMI_MULTIPLE_VDEV_RESTART_FLAG_SET_PHYMODE_PRESENT(cmd->flags, 1);
+	/*
+	 * Target expects to be informed that MVR response is
+	 * expected by host corresponding to this request.
+	 */
+	WMI_MULTIPLE_VDEV_RESTART_FLAG_SET_MVRR_EVENT_SUPPORT(cmd->flags, 1);
 
 	wmi_mtrace(WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID, NO_SESSION, 0);
 	qdf_status = wmi_unified_cmd_send(wmi_handle, buf, len,
