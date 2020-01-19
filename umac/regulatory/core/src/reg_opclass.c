@@ -652,6 +652,53 @@ uint16_t reg_chan_opclass_to_freq(uint8_t chan,
 	return 0;
 }
 
+#ifdef HOST_OPCLASS_EXT
+qdf_freq_t reg_country_chan_opclass_to_freq(struct wlan_objmgr_pdev *pdev,
+					    const uint8_t country[3],
+					    uint8_t chan, uint8_t op_class,
+					    bool strict)
+{
+	const struct reg_dmn_op_class_map_t *op_class_tbl, *op_class_tbl_org;
+	uint16_t i;
+
+	if (reg_is_6ghz_op_class(pdev, op_class))
+		op_class_tbl_org = global_op_class;
+	else
+		op_class_tbl_org =
+			reg_get_class_from_country((uint8_t *)country);
+	op_class_tbl = op_class_tbl_org;
+	while (op_class_tbl && op_class_tbl->op_class) {
+		if  (op_class_tbl->op_class == op_class) {
+			for (i = 0; (i < REG_MAX_CHANNELS_PER_OPERATING_CLASS &&
+				     op_class_tbl->channels[i]); i++) {
+				if (op_class_tbl->channels[i] == chan)
+					return op_class_tbl->start_freq +
+						(chan * FREQ_TO_CHAN_SCALE);
+			}
+		}
+		op_class_tbl++;
+	}
+	reg_debug_rl("Not found ch %d in op class %d ch list, strict %d",
+		     chan, op_class, strict);
+	if (strict)
+		return 0;
+
+	op_class_tbl = op_class_tbl_org;
+	while (op_class_tbl && op_class_tbl->op_class) {
+		for (i = 0; (i < REG_MAX_CHANNELS_PER_OPERATING_CLASS &&
+			     op_class_tbl->channels[i]); i++) {
+			if (op_class_tbl->channels[i] == chan)
+				return op_class_tbl->start_freq +
+					(chan * FREQ_TO_CHAN_SCALE);
+		}
+		op_class_tbl++;
+	}
+	reg_debug_rl("Got invalid freq 0 for ch %d", chan);
+
+	return 0;
+}
+#endif
+
 static void
 reg_get_op_class_tbl_by_chan_map(const struct
 				 reg_dmn_op_class_map_t **op_class_tbl)

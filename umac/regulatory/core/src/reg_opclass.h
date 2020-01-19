@@ -196,6 +196,29 @@ uint16_t reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
 				uint8_t op_class,
 				bool global_tbl_lookup);
 
+#ifdef HOST_OPCLASS_EXT
+/**
+ * reg_country_chan_opclass_to_freq() - Convert channel number to frequency
+ * based on country code and op class
+ * @pdev: pdev object.
+ * @country: country code.
+ * @chan: IEEE Channel Number.
+ * @op_class: Opclass.
+ * @strict: flag to find channel from matched operating class code.
+ *
+ * Look up (channel, operating class) pair in country operating class tables
+ * and return the channel frequency.
+ * If not found and "strict" flag is false, try to get frequency (Mhz) by
+ * channel number only.
+ *
+ * Return: Channel center frequency else return 0.
+ */
+qdf_freq_t reg_country_chan_opclass_to_freq(struct wlan_objmgr_pdev *pdev,
+					    const uint8_t country[3],
+					    uint8_t chan, uint8_t op_class,
+					    bool strict);
+#endif
+
 /**
  * reg_chan_opclass_to_freq() - Convert channel number and opclass to frequency
  * @chan: IEEE Channel Number.
@@ -308,6 +331,17 @@ static inline uint16_t reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
 {
 	return 0;
 }
+
+#ifdef HOST_OPCLASS_EXT
+static inline
+qdf_freq_t reg_country_chan_opclass_to_freq(struct wlan_objmgr_pdev *pdev,
+					    const uint8_t country[3],
+					    uint8_t chan, uint8_t op_class,
+					    bool strict)
+{
+	return 0;
+}
+#endif
 
 static inline uint16_t
 reg_chan_opclass_to_freq(uint8_t chan,

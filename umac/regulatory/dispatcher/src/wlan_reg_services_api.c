@@ -1073,6 +1073,18 @@ bool wlan_reg_is_6ghz_supported(struct wlan_objmgr_pdev *pdev)
 	return reg_is_6ghz_supported(pdev);
 }
 
+#ifdef HOST_OPCLASS_EXT
+qdf_freq_t
+wlan_reg_country_chan_opclass_to_freq(struct wlan_objmgr_pdev *pdev,
+				      const uint8_t country[3],
+				      uint8_t chan, uint8_t op_class,
+				      bool strict)
+{
+	return reg_country_chan_opclass_to_freq(pdev, country, chan, op_class,
+						strict);
+}
+#endif
+
 uint16_t wlan_reg_chan_opclass_to_freq(uint8_t chan,
 				       uint8_t op_class,
 				       bool global_tbl_lookup)
