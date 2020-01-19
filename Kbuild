@@ -3011,6 +3011,7 @@ cppflags-$(CONFIG_LTE_COEX) += -DLTE_COEX
 
 #Flag to enable/disable HOST_OPCLASS
 cppflags-$(CONFIG_HOST_OPCLASS) += -DHOST_OPCLASS
+cppflags-$(CONFIG_HOST_OPCLASS) += -DHOST_OPCLASS_EXT
 
 #Flag to enable/disable TARGET_11D_SCAN
 cppflags-$(CONFIG_TARGET_11D_SCAN) += -DTARGET_11D_SCAN
