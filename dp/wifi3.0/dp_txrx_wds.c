@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -596,7 +596,12 @@ bool dp_tx_multipass_process(struct dp_soc *soc, struct dp_vdev *vdev,
  * @nbuf: skb
  * @tid: traffic priority
  *
- * Return: bool: true if tag is inserted else false
+ * Return: bool: true in case of success else false
+ * Success is considered if:
+ *  i. If frame doesn't come from special peer and do not need multipass processing.
+ *  ii. Successfully processed multipass processing.
+ * Failure is considered if:
+ *  i. If frame needs to be dropped.
  */
 bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf, uint8_t tid)
 {
@@ -604,10 +609,10 @@ bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf, uint8_t tid)
 	struct vlan_ethhdr vethhdr;
 
 	if (qdf_unlikely(!peer->vlan_id))
-	       return false;
+	       return true;
 
 	if (qdf_unlikely(qdf_nbuf_headroom(nbuf) < ETHERTYPE_VLAN_LEN))
-		return false;
+		return true;
 
 	/*
 	 * Form the VLAN header and insert in nbuf
