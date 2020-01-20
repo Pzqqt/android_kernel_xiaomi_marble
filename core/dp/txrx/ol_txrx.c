@@ -3225,9 +3225,8 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 				  debug_id,
 				  qdf_atomic_read(&peer->access_list[debug_id]),
 				  peer, rc,
-				  qdf_atomic_read(&peer->fw_create_pending)
-									== 1 ?
-				  "(No Maps received)" : "");
+				  qdf_atomic_read(&peer->fw_create_pending) ==
+				  1 ? "(No Maps received)" : "");
 
 		ol_txrx_peer_tx_queue_free(pdev, peer);
 
@@ -3251,9 +3250,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		if (!ref_silent)
 			ol_txrx_info_high("[%d][%d]: ref delete peer %pK ref_cnt -> %d",
-					  debug_id,
-					  access_list,
-					  peer, rc);
+					  debug_id, access_list, peer, rc);
 	}
 	return rc;
 ERR_STATE:
