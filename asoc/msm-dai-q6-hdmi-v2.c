@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -54,7 +54,7 @@ struct msm_dai_q6_hdmi_dai_data {
 static int get_port_id(int dai_id)
 {
 	/* Currently, display devices share a common AFE port */
-	if (dai_id != HDMI_RX)
+	if (dai_id != HDMI_RX || dai_id != HDMI_RX_MS)
 		return DISPLAY_PORT_RX;
 
 	return dai_id;
@@ -436,7 +436,7 @@ static int msm_dai_q6_hdmi_dai_probe(struct snd_soc_dai *dai)
 
 	msm_dai_q6_hdmi_set_dai_id(dai);
 
-	if (dai->driver->id == HDMI_RX) {
+	if (dai->driver->id == HDMI_RX || dai->driver->id == HDMI_RX_MS) {
 		kcontrol = &hdmi_config_controls[0];
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				 snd_ctl_new1(kcontrol, dai_data));
@@ -563,6 +563,28 @@ static struct snd_soc_dai_driver msm_dai_q6_hdmi_hdmi_rx_dai = {
 	.remove = msm_dai_q6_hdmi_dai_remove,
 };
 
+static struct snd_soc_dai_driver msm_dai_q6_hdmi_hdmi_ms_rx_dai = {
+	.playback = {
+		.stream_name = "HDMI MS Playback",
+		.aif_name = "HDMI_MS",
+		.rates = SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
+			 SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 |
+			 SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 |
+			 SNDRV_PCM_RATE_192000,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE |
+			   SNDRV_PCM_FMTBIT_S24_LE |
+			   SNDRV_PCM_FMTBIT_S24_3LE,
+		.channels_min = 2,
+		.channels_max = 8,
+		.rate_max = 192000,
+		.rate_min = 48000,
+	},
+	.ops = &msm_dai_q6_hdmi_ops,
+	.id = HDMI_RX_MS,
+	.probe = msm_dai_q6_hdmi_dai_probe,
+	.remove = msm_dai_q6_hdmi_dai_remove,
+};
+
 static struct snd_soc_dai_driver msm_dai_q6_display_port_rx_dai[] = {
 	{
 		.playback = {
@@ -646,6 +668,12 @@ static int msm_dai_q6_hdmi_dev_probe(struct platform_device *pdev)
 			&msm_dai_hdmi_q6_component,
 			&msm_dai_q6_display_port_rx_dai[1], 1);
 		break;
+	case HDMI_RX_MS:
+		rc = snd_soc_register_component(&pdev->dev,
+			&msm_dai_hdmi_q6_component,
+			&msm_dai_q6_hdmi_hdmi_ms_rx_dai, 1);
+		break;
+
 	default:
 		dev_err(&pdev->dev, "invalid device ID %d\n", pdev->id);
 		rc = -ENODEV;

@@ -147,6 +147,7 @@ struct msm_pcm_route_bdai_pp_params {
 static struct msm_pcm_route_bdai_pp_params
 	msm_bedais_pp_params[MSM_BACKEND_DAI_PP_PARAMS_REQ_MAX] = {
 	{HDMI_RX, 0, 0, 0},
+	{HDMI_RX_MS, 0, 0, 0},
 	{DISPLAY_PORT_RX, 0, 0, 0},
 };
 
@@ -699,6 +700,7 @@ struct msm_pcm_routing_bdai_data msm_bedais[MSM_BACKEND_DAI_MAX] = {
 	  LPASS_BE_SEC_META_MI2S_RX},
 	{ RT_PROXY_PORT_002_RX, 0, {0}, {0}, 0, 0, 0, 0, LPASS_BE_PROXY_RX},
 	{ RT_PROXY_PORT_002_TX, 0, {0}, {0}, 0, 0, 0, 0, LPASS_BE_PROXY_TX},
+	{ HDMI_RX_MS, 0, {0}, {0}, 0, 0, 0, 0, LPASS_BE_HDMI_MS},
 };
 
 /* Track ASM playback & capture sessions of DAI
@@ -3534,7 +3536,7 @@ static const char *const be_name[] = {
 "RX_CDC_DMA_RX_6", "RX_CDC_DMA_RX_7",
 "PRI_SPDIF_TX", "SEC_SPDIF_RX", "SEC_SPDIF_TX",
 "SLIM_9_RX", "SLIM_9_TX", "AFE_LOOPBACK_TX", "PRI_META_MI2S_RX",
-"SEC_META_MI2S_RX", "PROXY_RX", "PROXY_TX"
+"SEC_META_MI2S_RX", "PROXY_RX", "PROXY_TX", "HDMI_RX_MS"
 };
 
 static SOC_ENUM_SINGLE_DECL(mm1_channel_mux,
@@ -7545,6 +7547,101 @@ static const struct snd_kcontrol_new hdmi_mixer_controls[] = {
 	msm_routing_put_audio_mixer),
 	SOC_DOUBLE_EXT("MultiMedia30", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_HDMI_RX,
+	MSM_FRONTEND_DAI_MULTIMEDIA30, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+};
+
+static const struct snd_kcontrol_new hdmi_ms_mixer_controls[] = {
+	SOC_DOUBLE_EXT("MultiMedia1", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA1, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia2", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA2, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia3", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA3, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia4", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA4, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia5", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA5, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia6", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA6, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia7", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA7, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia8", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA8, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia9", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA9, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia10", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA10, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia11", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA11, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia12", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA12, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia13", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA13, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia14", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA14, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia15", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA15, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia16", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA16, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia17", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA17, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia18", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA18, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia19", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA19, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia26", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia28", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA28, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia29", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_FRONTEND_DAI_MULTIMEDIA29, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia30", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
 	MSM_FRONTEND_DAI_MULTIMEDIA30, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
 };
@@ -18458,6 +18555,13 @@ static const struct snd_kcontrol_new hdmi_rx_port_mixer_controls[] = {
 	msm_routing_put_port_mixer),
 };
 
+static const struct snd_kcontrol_new hdmi_rx_ms_port_mixer_controls[] = {
+	SOC_DOUBLE_EXT("MI2S_TX", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
+	MSM_BACKEND_DAI_MI2S_TX, 1, 0, msm_routing_get_port_mixer,
+	msm_routing_put_port_mixer),
+};
+
 static const struct snd_kcontrol_new display_port_rx_port_mixer_controls[] = {
 	SOC_DOUBLE_EXT("MI2S_TX", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_DISPLAY_PORT_RX,
@@ -24225,6 +24329,7 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT("SLIMBUS_2_RX", "Slimbus2 Playback", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("SLIMBUS_5_RX", "Slimbus5 Playback", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("HDMI", "HDMI Playback", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_OUT("HDMI_MS", "HDMI MS Playback", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("DISPLAY_PORT", "Display Port Playback",
 			     0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("DISPLAY_PORT1", "Display Port1 Playback",
@@ -24673,6 +24778,8 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	slimbus_9_rx_mixer_controls, ARRAY_SIZE(slimbus_9_rx_mixer_controls)),
 	SND_SOC_DAPM_MIXER("HDMI Mixer", SND_SOC_NOPM, 0, 0,
 	hdmi_mixer_controls, ARRAY_SIZE(hdmi_mixer_controls)),
+	SND_SOC_DAPM_MIXER("HDMI_MS Mixer", SND_SOC_NOPM, 0, 0,
+	hdmi_ms_mixer_controls, ARRAY_SIZE(hdmi_ms_mixer_controls)),
 	SND_SOC_DAPM_MIXER("DISPLAY_PORT Mixer", SND_SOC_NOPM, 0, 0,
 	display_port_mixer_controls, ARRAY_SIZE(display_port_mixer_controls)),
 	SND_SOC_DAPM_MIXER("DISPLAY_PORT1 Mixer", SND_SOC_NOPM, 0, 0,
@@ -25125,6 +25232,9 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_MIXER("HDMI_RX Port Mixer",
 	SND_SOC_NOPM, 0, 0, hdmi_rx_port_mixer_controls,
 	ARRAY_SIZE(hdmi_rx_port_mixer_controls)),
+	SND_SOC_DAPM_MIXER("HDMI_RX_MS Port Mixer",
+	SND_SOC_NOPM, 0, 0, hdmi_rx_ms_port_mixer_controls,
+	ARRAY_SIZE(hdmi_rx_ms_port_mixer_controls)),
 	SND_SOC_DAPM_MIXER("DISPLAY_PORT_RX Port Mixer",
 	SND_SOC_NOPM, 0, 0, display_port_rx_port_mixer_controls,
 	ARRAY_SIZE(display_port_rx_port_mixer_controls)),
@@ -25665,6 +25775,25 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"HDMI Mixer", "MultiMedia16", "MM_DL16"},
 	{"HDMI Mixer", "MultiMedia26", "MM_DL26"},
 	{"HDMI", NULL, "HDMI Mixer"},
+
+	{"HDMI_MS Mixer", "MultiMedia1", "MM_DL1"},
+	{"HDMI_MS Mixer", "MultiMedia2", "MM_DL2"},
+	{"HDMI_MS Mixer", "MultiMedia3", "MM_DL3"},
+	{"HDMI_MS Mixer", "MultiMedia4", "MM_DL4"},
+	{"HDMI_MS Mixer", "MultiMedia5", "MM_DL5"},
+	{"HDMI_MS Mixer", "MultiMedia6", "MM_DL6"},
+	{"HDMI_MS Mixer", "MultiMedia7", "MM_DL7"},
+	{"HDMI_MS Mixer", "MultiMedia8", "MM_DL8"},
+	{"HDMI_MS Mixer", "MultiMedia9", "MM_DL9"},
+	{"HDMI_MS Mixer", "MultiMedia10", "MM_DL10"},
+	{"HDMI_MS Mixer", "MultiMedia11", "MM_DL11"},
+	{"HDMI_MS Mixer", "MultiMedia12", "MM_DL12"},
+	{"HDMI_MS Mixer", "MultiMedia13", "MM_DL13"},
+	{"HDMI_MS Mixer", "MultiMedia14", "MM_DL14"},
+	{"HDMI_MS Mixer", "MultiMedia15", "MM_DL15"},
+	{"HDMI_MS Mixer", "MultiMedia16", "MM_DL16"},
+	{"HDMI_MS Mixer", "MultiMedia26", "MM_DL26"},
+	{"HDMI_MS", NULL, "HDMI_MS Mixer"},
 
 	{"DISPLAY_PORT Mixer", "MultiMedia1", "MM_DL1"},
 	{"DISPLAY_PORT Mixer", "MultiMedia2", "MM_DL2"},
@@ -29345,6 +29474,9 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"HDMI_RX Port Mixer", "MI2S_TX", "MI2S_TX"},
 	{"HDMI", NULL, "HDMI_RX Port Mixer"},
 
+	{"HDMI_RX_MS Port Mixer", "MI2S_TX", "MI2S_TX"},
+	{"HDMI_MS", NULL, "HDMI_RX_MS Port Mixer"},
+
 	{"DISPLAY_PORT_RX Port Mixer", "MI2S_TX", "MI2S_TX"},
 	{"DISPLAY_PORT", NULL, "DISPLAY_PORT_RX Port Mixer"},
 
@@ -29440,6 +29572,7 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"BE_OUT", NULL, "SLIMBUS_9_RX"},
 	{"BE_OUT", NULL, "USB_AUDIO_RX"},
 	{"BE_OUT", NULL, "HDMI"},
+	{"BE_OUT", NULL, "HDMI_MS"},
 	{"BE_OUT", NULL, "DISPLAY_PORT"},
 	{"BE_OUT", NULL, "DISPLAY_PORT1"},
 	{"BE_OUT", NULL, "PRI_SPDIF_RX"},
@@ -29928,7 +30061,8 @@ static int msm_routing_send_device_pp_params(int port_id, int copp_idx,
 
 	pr_debug("%s: port_id %d, copp_idx %d\n", __func__, port_id, copp_idx);
 
-	if (port_id != HDMI_RX && port_id != DISPLAY_PORT_RX) {
+	if (port_id != HDMI_RX && port_id != DISPLAY_PORT_RX
+			&& port_id != HDMI_RX_MS) {
 		pr_err("%s: Device pp params on invalid port %d, copp_idx %d, fe_id %d\n",
 			__func__, port_id, copp_idx, fe_id);
 		return  -EINVAL;
@@ -30065,7 +30199,8 @@ static int msm_routing_put_device_pp_params_mixer(struct snd_kcontrol *kcontrol,
 
 	for (be_idx = 0; be_idx < MSM_BACKEND_DAI_MAX; be_idx++) {
 		port_id = msm_bedais[be_idx].port_id;
-		if (port_id == HDMI_RX || port_id == DISPLAY_PORT_RX)
+		if (port_id == HDMI_RX || port_id == DISPLAY_PORT_RX
+				|| port_id == HDMI_RX_MS)
 			break;
 	}
 

@@ -1356,6 +1356,7 @@ struct adm_cmd_connect_afe_port_v5 {
 #define RT_PROXY_PORT_001_RX	0x2000
 #define RT_PROXY_PORT_001_TX	0x2001
 #define AFE_LOOPBACK_TX	0x6001
+#define HDMI_RX_MS			0x6002
 #define DISPLAY_PORT_RX	0x6020
 
 #define AFE_LANE_MASK_INVALID 0
@@ -1562,6 +1563,8 @@ struct adm_cmd_connect_afe_port_v5 {
 #define AFE_PORT_ID_SLIMBUS_MULTI_CHAN_9_RX      0x4012
 /* SLIMbus Tx port on channel 9. */
 #define AFE_PORT_ID_SLIMBUS_MULTI_CHAN_9_TX      0x4013
+/*AFE Rx port for audio over hdmi*/
+#define AFE_PORT_ID_HDMI_MS					0x6002
 /* AFE Rx port for audio over Display port */
 #define AFE_PORT_ID_HDMI_OVER_DP_RX              0x6020
 /*USB AFE port */
