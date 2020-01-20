@@ -1505,6 +1505,7 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 		hdd_ctx->reg_offload = true;
 		ucfg_reg_get_current_chan_list(hdd_ctx->pdev,
 					       cur_chan_list);
+		hdd_regulatory_chanlist_dump(cur_chan_list);
 		fill_wiphy_band_channels(wiphy, cur_chan_list,
 					 NL80211_BAND_2GHZ);
 		fill_wiphy_band_channels(wiphy, cur_chan_list,
