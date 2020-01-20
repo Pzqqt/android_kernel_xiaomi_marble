@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,7 +19,6 @@
 #if !defined(__LIM_SESSION_UTILS_H)
 #define __LIM_SESSION_UTILS_H
 
-uint8_t is_lim_session_off_channel(struct mac_context *mac, uint8_t sessionId);
 uint8_t lim_is_chan_switch_running(struct mac_context *mac);
 uint8_t lim_is_in_mcc(struct mac_context *mac);
 uint8_t pe_get_current_stas_count(struct mac_context *mac);

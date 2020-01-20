@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,40 +31,6 @@
 #include "lim_session.h"
 #include "lim_session_utils.h"
 #include "lim_utils.h"
-
-/**
- * is_lim_session_off_channel() - checks if any other off channel session exists
- * @mac_ctx: Global MAC context.
- * @sessionId: PE session ID.
- *
- * Return: This function returns true if the session Id passed needs to be on
- *         a different channel than atleast one session already active.
- **/
-uint8_t is_lim_session_off_channel(struct mac_context *mac_ctx, uint8_t session_id)
-{
-	uint8_t i;
-
-	if (session_id >= mac_ctx->lim.maxBssId) {
-		pe_warn("Invalid session_id: %d", session_id);
-		return false;
-	}
-
-	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
-		/* Skip the session_id that is to be joined. */
-		if (i == session_id)
-			continue;
-		/*
-		 * if another session is valid and it is on different channel
-		 * then it is an off channel operation.
-		 */
-		if ((mac_ctx->lim.gpSession[i].valid) &&
-		    (mac_ctx->lim.gpSession[i].curr_op_freq !=
-		     mac_ctx->lim.gpSession[session_id].curr_op_freq))
-			return true;
-	}
-	return false;
-
-}
 
 /**
  * lim_is_chan_switch_running() - check if channel switch is happening

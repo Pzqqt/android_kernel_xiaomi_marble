@@ -370,10 +370,8 @@ failure:
 /**
  * lim_process_mlm_post_join_suspend_link() - This function is called after the
  * suspend link while joining off channel.
- *
  * @mac_ctx:    Pointer to Global MAC structure
- * @status:  status of suspend link.
- * @ctx:     passed while calling suspend link(session)
+ * @session:     session
  *
  * This function does following:
  *   Check for suspend state.
@@ -386,15 +384,10 @@ failure:
  */
 static void
 lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
-				       QDF_STATUS status,
-				       uint32_t *ctx)
+				       struct pe_session *session)
 {
-	struct pe_session *session = (struct pe_session *) ctx;
+	QDF_STATUS status;
 
-	if (QDF_STATUS_SUCCESS != status) {
-		pe_err("Sessionid %d Suspend link(NOTIFY_BSS) failed. Still proceeding with join",
-			session->peSessionId);
-	}
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_JOIN_FAIL_TIMER);
 
 	/* assign appropriate sessionId to the timer object */
@@ -456,42 +449,22 @@ void lim_process_mlm_join_req(struct mac_context *mac_ctx,
 		(mlm_join_req->bssDescription.capabilityInfo) !=
 		SIR_MAC_GET_IBSS(mlm_join_req->bssDescription.
 			capabilityInfo))) {
-		/* Hold onto Join request parameters */
-
 		session->pLimMlmJoinReq = mlm_join_req;
-		if (is_lim_session_off_channel(mac_ctx, sessionid)) {
-			pe_debug("SessionId:%d LimSession is on OffChannel",
-				sessionid);
-			/* suspend link */
-			pe_debug("Suspend link, sessionid %d is off channel",
-				sessionid);
-			lim_process_mlm_post_join_suspend_link(mac_ctx,
-				QDF_STATUS_SUCCESS, (uint32_t *)session);
-		} else {
-			pe_debug("No need to Suspend link");
-			 /*
-			  * No need to Suspend link as LimSession is not
-			  * off channel, calling
-			  * lim_process_mlm_post_join_suspend_link with
-			  * status as SUCCESS.
-			  */
-			pe_debug("SessionId:%d Join req on current chan",
-				sessionid);
-			lim_process_mlm_post_join_suspend_link(mac_ctx,
-				QDF_STATUS_SUCCESS, (uint32_t *)session);
-		}
+		pe_debug("vdev_id:%d Join req on current freq %d",
+			 session->vdev_id, session->curr_op_freq);
+		lim_process_mlm_post_join_suspend_link(mac_ctx, session);
 		return;
-	} else {
-		/**
-		 * Should not have received JOIN req in states other than
-		 * Idle state or on AP.
-		 * Return join confirm with invalid parameters code.
-		 */
-		pe_err("Session:%d Unexpected Join req, role %d state %X",
-			session->peSessionId, GET_LIM_SYSTEM_ROLE(session),
-			session->limMlmState);
-		lim_print_mlm_state(mac_ctx, LOGE, session->limMlmState);
 	}
+
+	/**
+	 * Should not have received JOIN req in states other than
+	 * Idle state or on AP.
+	 * Return join confirm with invalid parameters code.
+	 */
+	pe_err("Session:%d Unexpected Join req, role %d state %X",
+		session->peSessionId, GET_LIM_SYSTEM_ROLE(session),
+		session->limMlmState);
+	lim_print_mlm_state(mac_ctx, LOGE, session->limMlmState);
 
 error:
 	qdf_mem_free(mlm_join_req);
