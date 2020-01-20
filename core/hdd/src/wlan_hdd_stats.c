@@ -4520,6 +4520,13 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 				&adapter->rssi, &snr);
 	}
 
+	/* If RSSi is reported as positive then it is invalid */
+	if (adapter->rssi > 0) {
+		hdd_debug_rl("RSSI invalid %d", adapter->rssi);
+		adapter->rssi = 0;
+		adapter->hdd_stats.summary_stat.rssi = 0;
+	}
+
 	sinfo->signal = adapter->rssi;
 	hdd_debug("snr: %d, rssi: %d",
 		adapter->hdd_stats.summary_stat.snr,
