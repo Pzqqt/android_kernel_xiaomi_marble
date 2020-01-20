@@ -962,8 +962,8 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 	 */
 	qdf_mem_zero((uint8_t *) &dot11f_ie_rsn, sizeof(dot11f_ie_rsn));
 	qdf_mem_zero((uint8_t *) &dot11f_ie_wpa, sizeof(dot11f_ie_wpa));
-	pe_err("RSN enabled auth, Re/Assoc req from STA: "
-		QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(hdr->sa));
+	pe_debug("RSN enabled auth, Re/Assoc req from STA: "
+		 QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(hdr->sa));
 
 	if (assoc_req->rsnPresent) {
 		if (!(assoc_req->rsn.length)) {

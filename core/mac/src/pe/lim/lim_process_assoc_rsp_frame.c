@@ -604,12 +604,13 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		return;
 	}
 
-	pe_debug("received Re/Assoc: %d resp on sessionid: %d systemrole: %d"
-		" and mlmstate: %d RSSI: %d from "QDF_MAC_ADDR_STR, subtype,
-		session_entry->peSessionId, GET_LIM_SYSTEM_ROLE(session_entry),
-		session_entry->limMlmState,
-		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)),
-		QDF_MAC_ADDR_ARRAY(hdr->sa));
+	pe_nofl_info("Assoc RX %d vid %d sys role %d"
+		     " lim state %d rssi %d from "QDF_MAC_ADDR_STR, subtype,
+		     session_entry->peSessionId,
+		     GET_LIM_SYSTEM_ROLE(session_entry),
+		     session_entry->limMlmState,
+		     WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info),
+		     QDF_MAC_ADDR_ARRAY(hdr->sa));
 
 	beacon = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (!beacon)

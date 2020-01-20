@@ -358,8 +358,9 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
-	pe_debug("Received SAE Auth frame type %d subtype %d",
-		mac_hdr->fc.type, mac_hdr->fc.subType);
+	pe_nofl_info("SAE Auth RX type %d subtype %d from %pM",
+		     mac_hdr->fc.type, mac_hdr->fc.subType,
+		     mac_hdr->sa);
 
 	if (LIM_IS_STA_ROLE(pe_session) &&
 	    pe_session->limMlmState != eLIM_MLM_WT_SAE_AUTH_STATE)
@@ -1249,10 +1250,11 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	curr_seq_num = (mac_hdr->seqControl.seqNumHi << 4) |
 		(mac_hdr->seqControl.seqNumLo);
 
-	pe_debug("Sessionid: %d System role: %d limMlmState: %d: Auth response Received BSSID: "QDF_MAC_ADDR_STR" RSSI: %d",
-		 pe_session->peSessionId, GET_LIM_SYSTEM_ROLE(pe_session),
-		 pe_session->limMlmState, QDF_MAC_ADDR_ARRAY(mac_hdr->bssId),
-		 (uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)));
+	pe_nofl_info("vid %d sys role %d lim_state %d Auth RX from "QDF_MAC_ADDR_STR" rssi %d",
+		     pe_session->peSessionId, GET_LIM_SYSTEM_ROLE(pe_session),
+		     pe_session->limMlmState,
+		     QDF_MAC_ADDR_ARRAY(mac_hdr->bssId),
+		     WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info));
 
 	if (pe_session->prev_auth_seq_num == curr_seq_num &&
 	    mac_hdr->fc.retry) {

@@ -71,7 +71,7 @@ void lim_ft_cleanup(struct mac_context *mac, struct pe_session *pe_session)
 
 	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(pe_session)) {
-		pe_err("pe_session is not in STA mode");
+		pe_debug("pe_session is not in STA mode");
 		return;
 	}
 

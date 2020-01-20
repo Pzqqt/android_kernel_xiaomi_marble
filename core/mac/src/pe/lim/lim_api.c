@@ -2804,7 +2804,7 @@ QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx, uint8_t *ie_data,
 		populate_dot11f_twt_extended_caps(mac_ctx, session,
 						  &driver_ext_cap);
 	else
-		pe_err("Session NULL, cannot set TWT caps");
+		pe_debug("Session NULL, cannot set TWT caps");
 
 	local_ie_buf[*local_ie_len + 1] = driver_ext_cap.num_bytes;
 

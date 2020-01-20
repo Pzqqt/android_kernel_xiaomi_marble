@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -600,9 +600,9 @@ void lim_deactivate_and_change_timer(struct mac_context *mac, uint32_t timerId)
 			mac->lim.lim_timers.
 				g_lim_periodic_auth_retry_timer.sessionId);
 		if (!session_entry) {
-			pe_err("session does not exist for given SessionId : %d",
-			mac->lim.lim_timers.
-				g_lim_periodic_auth_retry_timer.sessionId);
+			pe_debug("session does not exist for given SessionId : %d",
+				 mac->lim.lim_timers.
+				 g_lim_periodic_auth_retry_timer.sessionId);
 			break;
 		}
 		/* 3/5 of the beacon interval */

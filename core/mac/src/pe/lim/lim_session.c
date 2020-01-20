@@ -817,7 +817,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 	struct wlan_objmgr_vdev *vdev;
 
 	if (!session || (session && !session->valid)) {
-		pe_err("session already deleted or not valid");
+		pe_debug("session already deleted or not valid");
 		return;
 	}
 

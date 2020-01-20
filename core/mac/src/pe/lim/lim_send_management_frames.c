@@ -1739,7 +1739,10 @@ static QDF_STATUS lim_assoc_tx_complete_cnf(void *context,
 	uint16_t reason_code;
 	struct mac_context *mac_ctx = (struct mac_context *)context;
 
-	pe_debug("tx_complete= %d", tx_complete);
+	pe_nofl_info("Assoc TX %s",
+		     (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
+		      "success" : "fail");
+
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
 		assoc_ack_status = ACKED;
 		reason_code = QDF_STATUS_SUCCESS;
@@ -2423,7 +2426,10 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
 
-	pe_debug("Sending Association Request length %d to ", bytes);
+	pe_nofl_info("vid %d Assoc TX to %pM seq num %d",
+		     pe_session->vdev_id, pe_session->bssId,
+		     mac_ctx->mgmtSeqNum);
+
 	min_rid = lim_get_min_session_txrate(pe_session);
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ASSOC_START_EVENT,
 			      pe_session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
@@ -2541,9 +2547,9 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 	uint16_t auth_ack_status;
 	uint16_t reason_code;
 
-	pe_debug("tx_complete = %d %s", tx_complete,
-		(tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
-		 "success" : "fail");
+	pe_nofl_info("Auth TX %s",
+		     (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
+		     "success" : "fail");
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
 		mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
 		auth_ack_status = ACKED;
@@ -2810,9 +2816,8 @@ alloc_packet:
 				qdf_mem_copy(body, auth_frame->challengeText,
 					     SIR_MAC_SAP_AUTH_CHALLENGE_LENGTH);
 				body += SIR_MAC_SAP_AUTH_CHALLENGE_LENGTH;
-
 				body_len -= SIR_MAC_SAP_AUTH_CHALLENGE_LENGTH +
-							SIR_MAC_CHALLENGE_ID_LEN;
+					    SIR_MAC_CHALLENGE_ID_LEN;
 			}
 		}
 
@@ -2851,13 +2856,12 @@ alloc_packet:
 			lim_add_fils_data_to_auth_frame(session, body);
 		}
 
-		pe_debug("*** Sending Auth seq# %d status %d (%d) to "
-				QDF_MAC_ADDR_STR,
-			auth_frame->authTransactionSeqNumber,
-			auth_frame->authStatusCode,
-			(auth_frame->authStatusCode ==
-				eSIR_MAC_SUCCESS_STATUS),
-			QDF_MAC_ADDR_ARRAY(mac_hdr->da));
+		pe_nofl_info("Auth TX seq %d seq num %d status %d to "
+			     QDF_MAC_ADDR_STR,
+			     auth_frame->authTransactionSeqNumber,
+			     mac_ctx->mgmtSeqNum,
+			     auth_frame->authStatusCode,
+			     QDF_MAC_ADDR_ARRAY(mac_hdr->da));
 	}
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
 			   QDF_TRACE_LEVEL_DEBUG,
