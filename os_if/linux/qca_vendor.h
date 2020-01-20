@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -574,6 +574,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_GET_SAR_LIMITS = 164,
 	QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO = 165,
 	QCA_NL80211_VENDOR_SUBCMD_SET_QDEPTH_THRESH = 166,
+	QCA_NL80211_VENDOR_SUBCMD_THERMAL_CMD = 167,
 	/* Wi-Fi test configuration subcommand */
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION = 169,
 	QCA_NL80211_VENDOR_SUBCMD_NAN_EXT = 171,
@@ -3555,6 +3556,11 @@ enum qca_wlan_vendor_attr_nd_offload {
  * @QCA_WLAN_VENDOR_FEATURE_TWT: Device supports TWT (Target Wake Time).
  * @QCA_WLAN_VENDOR_FEATURE_11AX: Device supports 802.11ax (HE)
  * @QCA_WLAN_VENDOR_FEATURE_6GHZ_SUPPORT: Device supports 6 GHz band operation
+ * @QCA_WLAN_VENDOR_FEATURE_THERMAL_CONFIG: Device is capable of receiving
+ *	and applying thermal configuration through
+ *	%QCA_WLAN_VENDOR_ATTR_THERMAL_LEVEL and
+ *	%QCA_WLAN_VENDOR_ATTR_THERMAL_COMPLETION_WINDOW attributes from
+ *	userspace.
  * @NUM_QCA_WLAN_VENDOR_FEATURES: Number of assigned feature bits
  */
 enum qca_wlan_vendor_features {
@@ -3569,6 +3575,7 @@ enum qca_wlan_vendor_features {
 	QCA_WLAN_VENDOR_FEATURE_TWT = 8,
 	QCA_WLAN_VENDOR_FEATURE_11AX = 9,
 	QCA_WLAN_VENDOR_FEATURE_6GHZ_SUPPORT = 10,
+	QCA_WLAN_VENDOR_FEATURE_THERMAL_CONFIG = 11,
 
 	NUM_QCA_WLAN_VENDOR_FEATURES /* keep last */
 };
@@ -4721,6 +4728,93 @@ enum qca_wlan_vendor_attr_wake_stats {
 	QCA_WLAN_VENDOR_GET_WAKE_STATS_AFTER_LAST,
 	QCA_WLAN_VENDOR_GET_WAKE_STATS_MAX =
 		QCA_WLAN_VENDOR_GET_WAKE_STATS_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_thermal_level - Defines various thermal levels
+ * configured by userspace to the driver/firmware. The values will be
+ * encapsulated in QCA_WLAN_VENDOR_ATTR_THERMAL_LEVEL attribute.
+ * The driver/firmware takes necessary actions requested by userspace
+ * such as throttling wifi tx etc. in order to mitigate high temperature.
+ *
+ * @QCA_WLAN_VENDOR_THERMAL_LEVEL_NONE: Stop/clear all throttling actions.
+ * @QCA_WLAN_VENDOR_THERMAL_LEVEL_LIGHT: Throttle tx lightly.
+ * @QCA_WLAN_VENDOR_THERMAL_LEVEL_MODERATE: Throttle tx moderately.
+ * @QCA_WLAN_VENDOR_THERMAL_LEVEL_SEVERE: Throttle tx severely.
+ * @QCA_WLAN_VENDOR_THERMAL_LEVEL_CRITICAL: Critical thermal level reached.
+ * @QCA_WLAN_VENDOR_THERMAL_LEVEL_EMERGENCY: Emergency thermal level reached.
+ */
+enum qca_wlan_vendor_thermal_level {
+	QCA_WLAN_VENDOR_THERMAL_LEVEL_NONE = 0,
+	QCA_WLAN_VENDOR_THERMAL_LEVEL_LIGHT = 1,
+	QCA_WLAN_VENDOR_THERMAL_LEVEL_MODERATE = 2,
+	QCA_WLAN_VENDOR_THERMAL_LEVEL_SEVERE = 3,
+	QCA_WLAN_VENDOR_THERMAL_LEVEL_CRITICAL = 4,
+	QCA_WLAN_VENDOR_THERMAL_LEVEL_EMERGENCY = 5,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_thermal_cmd - Vendor subcmd attributes to set
+ * cmd value. Used for NL attributes for data used by
+ * QCA_NL80211_VENDOR_SUBCMD_THERMAL_CMD sub command.
+ */
+enum qca_wlan_vendor_attr_thermal_cmd {
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_INVALID = 0,
+	/*
+	 * The value of command, driver will implement different operations
+	 * according to this value. It uses values defined in
+	 * enum qca_wlan_vendor_attr_thermal_cmd_type.
+	 * u32 attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_VALUE = 1,
+	/*
+	 * Userspace uses this attribute to configure thermal level to
+	 * driver/firmware. Used in request, u32 attribute, possible values
+	 * are defined in enum qca_wlan_vendor_thermal_level.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_LEVEL = 2,
+	/*
+	 * Userspace uses this attribute to configure the time in which the
+	 * driver/firmware should complete applying settings it received from
+	 * userspace with QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_SET_LEVEL
+	 * command type. Used in request, u32 attribute, value is in milli
+	 * seconds. A value of zero indicates to apply the settings
+	 * immediately. The driver/firmware can delay applying the configured
+	 * thermal settings within the time specified in this attribute if
+	 * there is any critical ongoing operation.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_COMPLETION_WINDOW = 3,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_MAX =
+		QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_AFTER_LAST - 1
+};
+
+/**
+ * qca_wlan_vendor_attr_thermal_cmd_type: Attribute values for
+ * QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_VALUE to the vendor subcmd
+ * QCA_NL80211_VENDOR_SUBCMD_THERMAL_CMD. This represents the
+ * thermal command types sent to driver.
+ * @QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_PARAMS: Request to
+ * get thermal shutdown configuration parameters for display. Parameters
+ * responded from driver are defined in
+ * enum qca_wlan_vendor_attr_get_thermal_params_rsp.
+ * @QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_TEMPERATURE: Request to
+ * get temperature. Host should respond with a temperature data. It is defined
+ * in enum qca_wlan_vendor_attr_thermal_get_temperature.
+ * @QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_SUSPEND: Request to execute thermal
+ * suspend action.
+ * @QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_RESUME: Request to execute thermal
+ * resume action.
+ * @QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_SET_LEVEL: Configure thermal level to
+ * the driver/firmware.
+ */
+enum qca_wlan_vendor_attr_thermal_cmd_type {
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_PARAMS,
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_TEMPERATURE,
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_SUSPEND,
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_RESUME,
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_SET_LEVEL,
 };
 
 /**
