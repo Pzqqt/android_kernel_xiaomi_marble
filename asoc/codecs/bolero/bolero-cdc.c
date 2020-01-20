@@ -834,6 +834,10 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 				priv->component,
 				BOLERO_MACRO_EVT_CLK_RESET, 0x0);
 	}
+
+	if (priv->rsc_clk_cb)
+		priv->rsc_clk_cb(priv->clk_dev, BOLERO_MACRO_EVT_SSR_GFMUX_UP);
+
 	trace_printk("%s: clk count reset\n", __func__);
 	regcache_cache_only(priv->regmap, false);
 	mutex_lock(&priv->clk_lock);
