@@ -1080,8 +1080,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 		intf_lfreq = intf_cfreq - intf_hbw;
 		intf_hfreq = intf_cfreq + intf_hbw;
 
-		sme_err("SAP:  OCH: %03d CCH: %03d BW: %d LF: %d HF: %d"
-			" INTF: OCH: %03d CF: %d BW: %d LF: %d HF: %d",
+		sme_debug("SAP:  OCH: %03d CCH: %03d BW: %d LF: %d HF: %d INTF: OCH: %03d CF: %d BW: %d LF: %d HF: %d",
 			sap_ch_freq, sap_cfreq, sap_hbw * 2,
 			sap_lfreq, sap_hfreq, intf_ch_freq,
 			intf_cfreq, intf_hbw * 2, intf_lfreq, intf_hfreq);
@@ -1123,8 +1122,8 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	if (intf_ch_freq == sap_ch_freq)
 		intf_ch_freq = 0;
 
-	sme_err("##Concurrent Channels %s Interfering",
-		intf_ch_freq == 0 ? "Not" : "Are");
+	sme_debug("##Concurrent Channels %s Interfering",
+		  intf_ch_freq == 0 ? "Not" : "Are");
 
 	return intf_ch_freq;
 }
@@ -2407,7 +2406,7 @@ static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 		 *  MCC should not be enabled so making it
 		 * false to enforce on same channel
 		 */
-		sme_err("*** MCC with SAP+STA sessions ****");
+		sme_debug("*** MCC with SAP+STA sessions ****");
 		*status = QDF_STATUS_SUCCESS;
 		return true;
 	}
