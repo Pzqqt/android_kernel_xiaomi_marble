@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -160,7 +160,7 @@ target_if_fwol_register_elna_event_handler(struct wlan_objmgr_psoc *psoc,
 					wmi_get_elna_bypass_event_id,
 					target_if_fwol_get_elna_bypass_resp);
 	if (rc)
-		target_if_err("Failed to register get eLNA bypass event cb");
+		target_if_debug("Failed to register get eLNA bypass event cb");
 }
 
 static void
@@ -173,7 +173,7 @@ target_if_fwol_unregister_elna_event_handler(struct wlan_objmgr_psoc *psoc,
 					    get_wmi_unified_hdl_from_psoc(psoc),
 					    wmi_get_elna_bypass_event_id);
 	if (rc)
-		target_if_err("Failed to unregister get eLNA bypass event cb");
+		target_if_debug("Failed to unregister get eLNA bypass event cb");
 }
 
 static void
