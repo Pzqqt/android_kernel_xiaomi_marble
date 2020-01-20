@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -262,7 +262,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		return NULL;
 	}
 
-	obj_mgr_info("Created vdev %d", vdev->vdev_objmgr.vdev_id);
+	obj_mgr_debug("Created vdev %d", vdev->vdev_objmgr.vdev_id);
 
 	return vdev;
 }
@@ -334,7 +334,7 @@ QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	obj_mgr_info("Logically deleting vdev %d", vdev->vdev_objmgr.vdev_id);
+	obj_mgr_debug("Logically deleting vdev %d", vdev->vdev_objmgr.vdev_id);
 
 	print_idx = qdf_get_pidx();
 	wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg,

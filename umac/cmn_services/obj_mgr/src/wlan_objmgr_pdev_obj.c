@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,7 +172,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 		return NULL;
 	}
 
-	obj_mgr_info("Created pdev %d", pdev->pdev_objmgr.wlan_pdev_id);
+	obj_mgr_debug("Created pdev %d", pdev->pdev_objmgr.wlan_pdev_id);
 
 	return pdev;
 }
@@ -195,7 +195,7 @@ static QDF_STATUS wlan_objmgr_pdev_obj_destroy(struct wlan_objmgr_pdev *pdev)
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 
 	wlan_print_pdev_info(pdev);
-	obj_mgr_info("Physically deleting pdev %d", pdev_id);
+	obj_mgr_debug("Physically deleting pdev %d", pdev_id);
 
 	if (pdev->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
 		obj_mgr_err("PDEV object delete is not invoked pdevid:%d objstate:%d",
@@ -244,8 +244,8 @@ QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	obj_mgr_info("Logically deleting pdev %d",
-		     pdev->pdev_objmgr.wlan_pdev_id);
+	obj_mgr_debug("Logically deleting pdev %d",
+		      pdev->pdev_objmgr.wlan_pdev_id);
 
 	print_idx = qdf_get_pidx();
 	wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg,
