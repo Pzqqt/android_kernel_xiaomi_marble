@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -356,7 +356,7 @@ QDF_STATUS ucfg_tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
 
-	tdls_notice("psoc tdls enable: 0x%pK", psoc);
+	tdls_debug("psoc tdls enable: 0x%pK", psoc);
 	if (!psoc) {
 		tdls_err("NULL psoc");
 		return QDF_STATUS_E_FAILURE;
@@ -389,7 +389,7 @@ QDF_STATUS ucfg_tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS status;
 	struct tdls_soc_priv_obj *soc_obj = NULL;
 
-	tdls_notice("psoc tdls disable: 0x%pK", psoc);
+	tdls_debug("psoc tdls disable: 0x%pK", psoc);
 	if (!psoc) {
 		tdls_err("NULL psoc");
 		return QDF_STATUS_E_FAILURE;
@@ -421,7 +421,7 @@ QDF_STATUS ucfg_tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct tdls_soc_priv_obj *tdls_soc;
 
-	tdls_notice("tdls psoc close");
+	tdls_debug("tdls psoc close");
 	tdls_soc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 							WLAN_UMAC_COMP_TDLS);
 	if (!tdls_soc) {
