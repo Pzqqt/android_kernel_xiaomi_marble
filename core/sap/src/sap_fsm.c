@@ -451,14 +451,14 @@ void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 	*cac_duration_ms = DEFAULT_CAC_TIMEOUT;
 
 	if (*dfs_region != DFS_ETSI_REGION) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			 FL("sapdfs: default cac duration"));
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  FL("sapdfs: default cac duration"));
 		return;
 	}
 
 	if (sap_is_channel_bonding_etsi_weather_channel(sap_ctx)) {
 		*cac_duration_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  FL("sapdfs: bonding_etsi_weather_channel"));
 		return;
 	}
@@ -468,7 +468,7 @@ void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 	for (i = 0; i < num_channels; i++) {
 		if (IS_ETSI_WEATHER_CH(channels[i])) {
 			*cac_duration_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("sapdfs: ch=%d is etsi weather channel"),
 				  channels[i]);
 			return;
@@ -503,7 +503,7 @@ void sap_dfs_set_current_channel(void *ctx)
 
 	is_dfs = wlan_reg_is_dfs_for_freq(pdev, sap_ctx->chan_freq);
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  FL("freq=%d, dfs %d seg0=%d, seg1=%d, bw %d"),
 		  sap_ctx->chan_freq, is_dfs, vht_seg0, vht_seg1,
 		  sap_ctx->csr_roamProfile.ch_params.ch_width);
@@ -749,10 +749,6 @@ sap_validate_chan(struct sap_context *sap_context,
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		if (sap_context->cc_switch_mode !=
 					QDF_MCC_TO_SCC_SWITCH_DISABLE) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-				FL("check for overlap: chan freq:%d mode:%d"),
-				sap_context->chan_freq,
-				sap_context->csr_roamProfile.phyMode);
 			con_ch_freq = sme_check_concurrent_channel_overlap(
 					mac_handle,
 					sap_context->chan_freq,
@@ -789,7 +785,7 @@ sap_validate_chan(struct sap_context *sap_context,
 					mac_ctx->pdev, con_ch_freq) ||
 			    sta_sap_scc_on_dfs_chan)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
-					QDF_TRACE_LEVEL_ERROR,
+					QDF_TRACE_LEVEL_DEBUG,
 					"%s: Override ch freq %d to %d due to CC Intf",
 					__func__, sap_context->chan_freq,
 					con_ch_freq);
@@ -1112,7 +1108,7 @@ void sap_release_vdev_ref(struct sap_context *sap_ctx)
 	struct wlan_objmgr_vdev *vdev;
 
 	if (!sap_ctx) {
-		sap_err("Invalid SAP pointer");
+		sap_debug("Invalid SAP pointer");
 		return;
 	}
 
@@ -1404,7 +1400,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	switch (sap_hddevent) {
 	case eSAP_STA_ASSOC_IND:
 		if (!csr_roaminfo) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
@@ -1519,7 +1515,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_STA_REASSOC_EVENT:
 
 		if (!csr_roaminfo) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
@@ -1613,7 +1609,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 	case eSAP_STA_DISASSOC_EVENT:
 		if (!csr_roaminfo) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
@@ -1641,7 +1637,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_STA_SET_KEY_EVENT:
 
 		if (!csr_roaminfo) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
@@ -1656,7 +1652,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_STA_MIC_FAILURE_EVENT:
 
 		if (!csr_roaminfo) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
@@ -1684,7 +1680,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_WPS_PBC_PROBE_REQ_EVENT:
 
 		if (!csr_roaminfo) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
@@ -1717,7 +1713,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_MAX_ASSOC_EXCEEDED:
 
 		if (!csr_roaminfo) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
@@ -1754,7 +1750,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_ECSA_CHANGE_CHAN_IND:
 
 		if (!csr_roaminfo) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
@@ -3287,22 +3283,17 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 	start_ch_freq = sap_ctx->acs_cfg->start_ch_freq;
 	end_ch_freq = sap_ctx->acs_cfg->end_ch_freq;
 	ch_width = sap_ctx->acs_cfg->ch_width;
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-		  FL("startChannel %d, EndChannel %d, ch_width %d, HW:%d"),
-		     start_ch_freq, end_ch_freq, ch_width,
-		     sap_ctx->acs_cfg->hw_mode);
+
+	sap_debug("startChannel %d, EndChannel %d, ch_width %d, HW:%d",
+		  start_ch_freq, end_ch_freq, ch_width,
+		  sap_ctx->acs_cfg->hw_mode);
 
 	wlansap_extend_to_acs_range(MAC_HANDLE(mac_ctx),
 				    &start_ch_freq, &end_ch_freq,
 				    &band_start_ch, &band_end_ch);
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL("expanded startChannel %d,EndChannel %d"),
-			  start_ch_freq, end_ch_freq);
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL("band_start_ch %d, band_end_ch %d"),
-			  band_start_ch, band_end_ch);
+	sap_debug("expanded startChannel %d,EndChannel %d band_start_ch %d, band_end_ch %d",
+		  start_ch_freq, end_ch_freq, band_start_ch, band_end_ch);
 
 	en_lte_coex = mac_ctx->mlme_cfg->sap_cfg.enable_lte_coex;
 
@@ -3442,40 +3433,31 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 				list[ch_count] =
 					WLAN_REG_CH_TO_FREQ(loop_count);
 				ch_count++;
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					  QDF_TRACE_LEVEL_INFO,
-					  FL("%d %d added to ACS ch range"),
+				sap_debug("%d %d added to ACS ch range",
 					  ch_count, ch_freq);
 			} else {
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					  QDF_TRACE_LEVEL_INFO_HIGH,
-					  FL("%d %d skipped from ACS ch range"),
+				sap_debug("%d %d skipped from ACS ch range",
 					  ch_count, ch_freq);
-		    }
+			}
 		} else {
 			list[ch_count] = WLAN_REG_CH_TO_FREQ(loop_count);
 			ch_count++;
-			QDF_TRACE(QDF_MODULE_ID_SAP,
-				QDF_TRACE_LEVEL_INFO,
-				FL("%d added to ACS ch range"),
-				ch_count);
+			sap_debug("%d added to ACS ch range", ch_count);
 		}
 #else
 		list[ch_count] = WLAN_REG_CH_TO_FREQ(loop_count);
 		ch_count++;
 #endif
 	}
-	if (0 == ch_count) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-		    FL("No active channels present for the current region"));
+	if (!ch_count) {
+		sap_info("No active channels present for the current region");
 		/*
 		 * LTE COEX: channel range outside the restricted 2.4GHz
 		 * band limits
 		 */
 		if (en_lte_coex &&
 		    start_ch_freq > WLAN_REG_CH_TO_FREQ(band_end_ch))
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-				FL("SAP can't be started as due to LTE COEX"));
+			sap_info("SAP can't be started as due to LTE COEX");
 	}
 
 	/* return the channel list and number of channels to scan */
