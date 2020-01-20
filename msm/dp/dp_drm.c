@@ -498,18 +498,20 @@ void dp_connector_post_open(struct drm_connector *connector, void *display)
 
 int dp_connector_atomic_check(struct drm_connector *connector,
 	void *display,
-	struct drm_connector_state *c_state)
+	struct drm_atomic_state *a_state)
 {
 	struct sde_connector *sde_conn;
 	struct drm_connector_state *old_state;
+	struct drm_connector_state *c_state;
 
-	if (!connector || !display)
+	if (!connector || !display || a_state)
 		return -EINVAL;
 
+	c_state = drm_atomic_get_new_connector_state(a_state, connector);
 	old_state =
-		drm_atomic_get_old_connector_state(c_state->state, connector);
+		drm_atomic_get_old_connector_state(a_state, connector);
 
-	if (!old_state)
+	if (!old_state || !c_state)
 		return -EINVAL;
 
 	sde_conn = to_sde_connector(connector);
