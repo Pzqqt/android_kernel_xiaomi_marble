@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -83,7 +83,7 @@ typedef enum {
 #define MAX_COOKIE_SLOT_SIZE 512
 #define MAX_TX_PKT_DUP_NUM   4
 
-#ifdef HIF_PCI
+#if defined(HIF_PCI) || defined(HIF_IPCI)
 #define WLAN_EPPING_DELAY_TIMEOUT_US     10
 #define EPPING_MAX_CE_NUMS               8
 #define EPPING_MAX_WATER_MARK            8
@@ -114,7 +114,7 @@ typedef struct epping_context {
 	unsigned int kperf_num_tx_acks[EPPING_MAX_NUM_EPIDS];
 	unsigned int total_rx_recv;
 	unsigned int total_tx_acks;
-#ifdef HIF_PCI
+#if defined(HIF_PCI) || defined(HIF_IPCI)
 	epping_poll_t epping_poll[EPPING_MAX_NUM_EPIDS];
 #endif
 	struct epping_cookie *cookie_list;
@@ -185,12 +185,12 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     bool rtnl_held);
 void epping_destroy_adapter(epping_adapter_t *adapter);
 int epping_connect_service(epping_context_t *pEpping_ctx);
-#ifdef HIF_PCI
+#if defined(HIF_PCI) || defined(HIF_IPCI)
 void epping_register_tx_copier(HTC_ENDPOINT_ID eid,
 			       epping_context_t *pEpping_ctx);
 void epping_unregister_tx_copier(HTC_ENDPOINT_ID eid,
 				 epping_context_t *pEpping_ctx);
 void epping_tx_copier_schedule(epping_context_t *pEpping_ctx,
 			       HTC_ENDPOINT_ID eid, qdf_nbuf_t skb);
-#endif /* HIF_PCI */
+#endif /* HIF_PCI || HIF_IPCI */
 #endif /* end #ifndef EPPING_INTERNAL_H */
