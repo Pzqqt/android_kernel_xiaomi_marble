@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -500,10 +500,9 @@ static QDF_STATUS process_peer_for_noa(struct wlan_objmgr_vdev *vdev,
 	}
 	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
 						WLAN_UMAC_COMP_P2P);
-	if (!p2p_vdev_obj) {
-		p2p_err("p2p_vdev_obj:%pK", p2p_vdev_obj);
+	if (!p2p_vdev_obj)
 		return QDF_STATUS_E_INVAL;
-	}
+
 	mode = wlan_vdev_mlme_get_opmode(vdev);
 
 	peer_type = wlan_peer_get_peer_type(peer);
@@ -1313,10 +1312,9 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
 	status = process_peer_for_noa(vdev, psoc, peer);
 	wlan_objmgr_peer_release_ref(peer, WLAN_P2P_ID);
 
-	if (status != QDF_STATUS_SUCCESS) {
-		p2p_err("status:%u", status);
+	if (status != QDF_STATUS_SUCCESS)
 		return;
-	}
+
 	p2p_debug("peer is authorized");
 }
 
