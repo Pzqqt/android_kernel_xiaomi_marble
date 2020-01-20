@@ -543,6 +543,13 @@ static int sde_rsc_switch_to_cmd(struct sde_rsc_priv *rsc,
 		}
 	}
 
+	/* vsync wait not needed during VID->CMD switch (rev 4+ HW only) */
+	if (rsc->current_state == SDE_RSC_VID_STATE &&
+			rsc->version >= SDE_RSC_REV_4) {
+		rc = 0;
+		goto end;
+	}
+
 vsync_wait:
 	/* indicate wait for vsync for vid to cmd state switch & cfg update */
 	if (!rc && (rsc->current_state == SDE_RSC_VID_STATE ||
@@ -687,6 +694,13 @@ static int sde_rsc_switch_to_vid(struct sde_rsc_priv *rsc,
 				rsc->version >= SDE_RSC_REV_3 ?
 				QCOM_ICC_TAG_WAKE : QCOM_ICC_TAG_AMC);
 		}
+	}
+
+	/* vsync wait not needed during CMD->VID switch (rev 4+ HW only) */
+	if (rsc->current_state == SDE_RSC_CMD_STATE &&
+			rsc->version >= SDE_RSC_REV_4) {
+		rc = 0;
+		goto end;
 	}
 
 vsync_wait:
