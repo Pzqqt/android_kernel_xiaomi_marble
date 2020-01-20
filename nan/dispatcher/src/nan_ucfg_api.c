@@ -883,7 +883,7 @@ ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc,
 							      NULL);
 	/* NDP force disable is done for unsupported concurrencies: NDI+SAP */
 	if (force) {
-		nan_warn("Force disable all NDPs");
+		nan_debug("Force disable all NDPs");
 		for (i = 0; i < ndi_count; i++) {
 			first_ndi_vdev_id =
 				policy_mgr_mode_specific_vdev_id(psoc,
