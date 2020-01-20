@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -949,8 +949,8 @@ QDF_STATUS wlan_ser_vdev_queue_disable(struct wlan_objmgr_vdev *vdev)
 	wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 	vdev_queue->queue_disable = true;
 	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
-	ser_info("Disabling the serialization for vdev:%d",
-		 wlan_vdev_get_id(vdev));
+	ser_debug("Disabling the serialization for vdev:%d",
+		  wlan_vdev_get_id(vdev));
 
 	return QDF_STATUS_SUCCESS;
 }

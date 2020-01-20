@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -173,10 +173,8 @@ wlan_serialization_peek_head_pending_cmd_using_psoc(
 		pdev_queue =
 		&ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
 	queue = &pdev_queue->pending_list;
-	if (wlan_serialization_list_empty(queue)) {
-		ser_err("Empty Queue");
+	if (wlan_serialization_list_empty(queue))
 		goto end;
-	}
 
 	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 	if (QDF_STATUS_SUCCESS != wlan_serialization_get_cmd_from_queue(
