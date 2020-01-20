@@ -46,6 +46,7 @@
 #include <wma_types.h>
 #include "wlan_hdd_sta_info.h"
 #include "ol_defines.h"
+#include <wlan_hdd_sar_limits.h>
 
 /* Preprocessor definitions and constants */
 #undef QCA_HDD_SAP_DUMP_SK_BUFF
@@ -605,6 +606,8 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		goto drop_pkt_and_release_skb;
 	}
 	netif_trans_update(dev);
+
+	wlan_hdd_sar_unsolicited_timer_start(hdd_ctx);
 
 	return;
 
