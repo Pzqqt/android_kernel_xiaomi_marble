@@ -1879,7 +1879,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	enum rateid min_rid = RATEID_DEFAULT;
 	uint8_t *mbo_ie = NULL, *adaptive_11r_ie = NULL, *vendor_ies = NULL;
 	uint8_t mbo_ie_len = 0, adaptive_11r_ie_len = 0, rsnx_ie_len = 0;
-	struct wlan_objmgr_peer *peer;
+	bool bss_mfp_capable;
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
@@ -2250,18 +2250,14 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			 mbo_ie_len, is_open_auth);
 
 		if (!is_open_auth) {
-			peer = wlan_objmgr_get_peer_by_mac(
-						mac_ctx->psoc,
-						mlm_assoc_req->peerMacAddr,
-						WLAN_MBO_ID);
-			if (peer && !mlme_get_peer_pmf_status(peer)) {
+			bss_mfp_capable =
+				lim_get_bss_rmf_capable(mac_ctx, pe_session);
+			if (!bss_mfp_capable) {
 				pe_debug("Peer doesn't support PMF, Don't add MBO IE");
 				qdf_mem_free(mbo_ie);
 				mbo_ie = NULL;
 				mbo_ie_len = 0;
 			}
-			if (peer)
-				wlan_objmgr_peer_release_ref(peer, WLAN_MBO_ID);
 		}
 	}
 

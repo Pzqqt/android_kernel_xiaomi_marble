@@ -921,6 +921,19 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst, tDot11fIEExtCap *src,
  * Return: none
  */
 void lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *pe_session);
+
+/**
+ * lim_get_bss_rmf_capable() - get rmf capable - MFPC
+ * @mac: mac context
+ * @session: pe session
+ *
+ * Get intersection of local & peer (BSS) RSN caps
+ * and check MFPC bit.
+ *
+ * Return: bool
+ */
+bool lim_get_bss_rmf_capable(struct mac_context *mac,
+			     struct pe_session *session);
 #else
 /**
  * lim_del_pmf_sa_query_timer() - This function deletes SA query timer
@@ -934,6 +947,13 @@ void lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *
 static inline void
 lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *pe_session)
 {
+}
+
+static inline
+bool lim_get_bss_rmf_capable(struct mac_context *mac,
+			     struct pe_session *session)
+{
+	return false;
 }
 #endif
 
