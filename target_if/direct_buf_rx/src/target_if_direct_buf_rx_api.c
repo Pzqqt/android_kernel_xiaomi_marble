@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,7 +168,7 @@ QDF_STATUS direct_buf_rx_deinit(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		direct_buf_rx_err("Failed to unregister psoc create handler");
 
-	direct_buf_rx_info("Direct Buffer RX pdev,psoc create and destroy handlers unregistered");
+	direct_buf_rx_debug("Direct Buffer RX pdev,psoc create and destroy handlers unregistered");
 
 	return status;
 }
@@ -187,7 +187,7 @@ QDF_STATUS direct_buf_rx_target_attach(struct wlan_objmgr_psoc *psoc,
 	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
 
-	direct_buf_rx_info("Dbr psoc obj %pK", dbr_psoc_obj);
+	direct_buf_rx_debug("Dbr psoc obj %pK", dbr_psoc_obj);
 
 	if (!dbr_psoc_obj) {
 		direct_buf_rx_err("dir buf rx psoc obj is null");
