@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1024,8 +1024,8 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 
 	frm_type = mgmt_txrx_get_frm_type(mgmt_subtype, mpdu_data_ptr);
 	if (frm_type == MGMT_FRM_UNSPECIFIED) {
-		mgmt_txrx_err_rl("Unspecified mgmt frame type fc: %x %x",
-				 wh->i_fc[0], wh->i_fc[1]);
+		mgmt_txrx_debug_rl("Unspecified mgmt frame type fc: %x %x",
+				   wh->i_fc[0], wh->i_fc[1]);
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
