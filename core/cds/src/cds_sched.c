@@ -854,7 +854,7 @@ static int cds_ol_rx_thread(void *arg)
 					complete
 						(&pSchedContext->ol_suspend_rx_event);
 				}
-				cds_info("Shutting down OL RX Thread");
+				cds_debug("Shutting down OL RX Thread");
 				shutdown = true;
 				break;
 			}
