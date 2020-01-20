@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -90,7 +90,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	ucfg_mlme_is_subnet_detection_enabled(hdd_ctx->psoc,
 					      &subnet_detection_enabled);
 	if (!subnet_detection_enabled) {
-		hdd_info("LFR Subnet Detection disabled in INI");
+		hdd_debug("LFR Subnet Detection disabled in INI");
 		return -ENOTSUPP;
 	}
 
@@ -98,12 +98,12 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	 * and only in the connected state.
 	 */
 	if (QDF_STA_MODE != adapter->device_mode) {
-		hdd_err("Received GW param update for non-STA mode adapter");
+		hdd_debug("Received GW param update for non-STA mode adapter");
 		return -ENOTSUPP;
 	}
 
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
-		hdd_err("Received GW param update in disconnected state!");
+		hdd_debug("Received GW param update in disconnected state!");
 		return -ENOTSUPP;
 	}
 

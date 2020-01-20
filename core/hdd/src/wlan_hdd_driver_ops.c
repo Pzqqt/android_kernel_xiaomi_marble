@@ -283,7 +283,7 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 		ret = hdd_napi_create();
 		hdd_debug("hdd_napi_create returned: %d", ret);
 		if (ret == 0)
-			hdd_warn("NAPI: no instances are created");
+			hdd_debug("NAPI: no instances are created");
 		else if (ret < 0) {
 			hdd_err("NAPI creation error, rc: 0x%x, reinit: %d",
 				ret, reinit);
@@ -1068,7 +1068,7 @@ int wlan_hdd_bus_suspend_noirq(void)
 	int errno;
 	uint32_t pending_events;
 
-	hdd_info("start bus_suspend_noirq");
+	hdd_debug("start bus_suspend_noirq");
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno) {
 		hdd_err("Invalid HDD context: errno %d", errno);
@@ -1109,7 +1109,7 @@ int wlan_hdd_bus_suspend_noirq(void)
 
 	hdd_ctx->suspend_resume_stats.suspends++;
 
-	hdd_info("bus_suspend_noirq done");
+	hdd_debug("bus_suspend_noirq done");
 	return 0;
 
 resume_hif_noirq:
@@ -1221,7 +1221,7 @@ int wlan_hdd_bus_resume_noirq(void)
 	int status;
 	QDF_STATUS qdf_status;
 
-	hdd_info("starting bus_resume_noirq");
+	hdd_debug("starting bus_resume_noirq");
 	if (cds_is_driver_recovering())
 		return 0;
 
@@ -1246,7 +1246,7 @@ int wlan_hdd_bus_resume_noirq(void)
 	status = hif_bus_resume_noirq(hif_ctx);
 	QDF_BUG(!status);
 
-	hdd_info("bus_resume_noirq done");
+	hdd_debug("bus_resume_noirq done");
 
 	return status;
 }

@@ -1107,7 +1107,7 @@ void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 							  adapter->vdev_id,
 							  trigger);
 	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("failed to enable mc list; status:%d", status);
+		hdd_debug("failed to enable mc list; status:%d", status);
 
 out:
 	hdd_exit();
@@ -1164,7 +1164,7 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 							   adapter->vdev_id,
 							   trigger);
 	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("failed to disable mc list; status:%d", status);
+		hdd_debug("failed to disable mc list; status:%d", status);
 
 flush_mc_list:
 	status = ucfg_pmo_flush_mc_addr_list(hdd_ctx->psoc,
@@ -2489,7 +2489,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
 		if (!test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-			hdd_err("SAP is not started yet");
+			hdd_debug("SAP is not started yet");
 			return 0;
 		}
 		break;

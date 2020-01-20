@@ -568,8 +568,8 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		}
 		if (eConnectionState_Connecting ==
 		    sta_ctx->conn_info.conn_state) {
-			hdd_err("Session ID %d, Connection is in progress",
-				adapter->vdev_id);
+			hdd_debug("Session ID %d, Connection is in progress",
+				  adapter->vdev_id);
 			info->state = WIFI_ASSOCIATING;
 		}
 		if ((eConnectionState_Associated ==
@@ -1484,8 +1484,8 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 		return -EINVAL;
 
 	if (!adapter->is_link_layer_stats_set) {
-		hdd_warn("is_link_layer_stats_set: %d",
-			 adapter->is_link_layer_stats_set);
+		hdd_nofl_debug("is_link_layer_stats_set: %d",
+			       adapter->is_link_layer_stats_set);
 		return -EINVAL;
 	}
 

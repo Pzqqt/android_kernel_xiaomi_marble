@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -257,7 +257,7 @@ struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
 	qdf_spin_unlock_bh(&adapter->vdev_lock);
 
 	if (!vdev)
-		hdd_err("VDEV is NULL (via %s)", func);
+		hdd_debug("VDEV is NULL (via %s)", func);
 
 	return vdev;
 }

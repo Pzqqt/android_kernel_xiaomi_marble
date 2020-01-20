@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -349,7 +349,7 @@ int wlan_hdd_create_mib_stats_file(struct hdd_adapter *adapter)
 
 	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
 				&mibstats_lock))) {
-		hdd_err("mibstats lock init failed!");
+		hdd_debug("mibstats lock init failed!");
 		return QDF_STATUS_E_FAILURE;
 	}
 

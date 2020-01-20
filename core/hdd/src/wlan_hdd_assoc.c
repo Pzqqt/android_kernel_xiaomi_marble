@@ -1379,10 +1379,12 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		ucfg_p2p_status_connect(adapter->vdev);
 
-		hdd_info("%s(vdevid-%d): " QDF_MAC_ADDR_STR " connected to "
-			QDF_MAC_ADDR_STR, dev->name, adapter->vdev_id,
-			QDF_MAC_ADDR_ARRAY(adapter->mac_addr.bytes),
-			QDF_MAC_ADDR_ARRAY(wrqu.ap_addr.sa_data));
+		hdd_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_STR
+			      " connected to "
+			      QDF_MAC_ADDR_STR, dev->name, adapter->vdev_id,
+			      QDF_MAC_ADDR_ARRAY(adapter->mac_addr.bytes),
+			      QDF_MAC_ADDR_ARRAY(wrqu.ap_addr.sa_data));
+
 		hdd_send_update_beacon_ies_event(adapter, roam_info);
 
 		/*
@@ -1454,8 +1456,8 @@ static void hdd_send_association_event(struct net_device *dev,
 			  dev->name, adapter->vdev_id,
 			  QDF_MAC_ADDR_ARRAY(sta_ctx->conn_info.bssid.bytes));
 	} else {                /* Not Associated */
-		hdd_info("%s(vdevid-%d): disconnected", dev->name,
-			 adapter->vdev_id);
+		hdd_nofl_info("%s(vdevid-%d): disconnected", dev->name,
+			      adapter->vdev_id);
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 				adapter->device_mode, adapter->vdev_id);
@@ -1809,7 +1811,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	sme_ft_reset(mac_handle, adapter->vdev_id);
 	sme_reset_key(mac_handle, adapter->vdev_id);
 	if (!hdd_remove_beacon_filter(adapter))
-		hdd_err("hdd_remove_beacon_filter() failed");
+		hdd_debug("hdd_remove_beacon_filter() failed");
 
 	if (sme_is_beacon_report_started(mac_handle, adapter->vdev_id)) {
 		hdd_debug("Sending beacon pause indication to userspace");
@@ -5550,7 +5552,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 	if (hdd_ctx->force_rsne_override &&
 	    (security_ie[0] == DOT11F_EID_RSN)) {
 		hdd_warn("Test mode enabled set def Auth and enc type. RSN IE passed in connect req: ");
-		qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
+		qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 				   roam_profile->pRSNReqIE,
 				   roam_profile->nRSNReqIELength);
 

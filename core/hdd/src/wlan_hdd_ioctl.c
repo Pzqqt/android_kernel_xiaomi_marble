@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -6461,7 +6461,7 @@ static int hdd_driver_rxfilter_command_handler(uint8_t *command,
 		ret = hdd_set_rx_filter(adapter, action, 0x01);
 		break;
 	default:
-		hdd_warn("Unsupported RXFILTER type %d", type);
+		hdd_debug("Unsupported RXFILTER type %d", type);
 		break;
 	}
 

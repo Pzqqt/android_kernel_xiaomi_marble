@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -109,7 +109,7 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_psoc *psoc)
 
 	vdev = ucfg_get_tdls_vdev(psoc, WLAN_OSIF_ID);
 	if (!vdev) {
-		osif_err("Unable to get the vdev");
+		osif_debug("Unable to get the vdev");
 		return;
 	}
 	osif_priv = wlan_vdev_get_ospriv(vdev);

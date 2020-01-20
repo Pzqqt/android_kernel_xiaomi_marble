@@ -512,7 +512,7 @@ void wlan_hdd_classify_pkt(struct sk_buff *skb)
  */
 static void hdd_clear_tx_rx_connectivity_stats(struct hdd_adapter *adapter)
 {
-	hdd_info("Clear txrx connectivity stats");
+	hdd_debug("Clear txrx connectivity stats");
 	qdf_mem_zero(&adapter->hdd_stats.hdd_arp_stats,
 		     sizeof(adapter->hdd_stats.hdd_arp_stats));
 	qdf_mem_zero(&adapter->hdd_stats.hdd_dns_stats,
@@ -1520,14 +1520,14 @@ static void hdd_resolve_rx_ol_mode(struct hdd_context *hdd_ctx)
 	    cdp_cfg_get(soc, cfg_dp_gro_enable))) {
 		cdp_cfg_get(soc, cfg_dp_lro_enable) &&
 			cdp_cfg_get(soc, cfg_dp_gro_enable) ?
-		hdd_err("Can't enable both LRO and GRO, disabling Rx offload") :
-		hdd_info("LRO and GRO both are disabled");
+		hdd_debug("Can't enable both LRO and GRO, disabling Rx offload") :
+		hdd_debug("LRO and GRO both are disabled");
 		hdd_ctx->ol_enable = 0;
 	} else if (cdp_cfg_get(soc, cfg_dp_lro_enable)) {
 		hdd_debug("Rx offload LRO is enabled");
 		hdd_ctx->ol_enable = CFG_LRO_ENABLED;
 	} else {
-		hdd_info("Rx offload: GRO is enabled");
+		hdd_debug("Rx offload: GRO is enabled");
 		hdd_ctx->ol_enable = CFG_GRO_ENABLED;
 	}
 }
@@ -1790,9 +1790,9 @@ static int hdd_rx_ol_send_config(struct hdd_context *hdd_ctx)
 	if (wma_lro_init(&lro_config))
 		return -EAGAIN;
 	else
-		hdd_dp_info("LRO Config: lro_enable: 0x%x tcp_flag 0x%x tcp_flag_mask 0x%x",
-			    lro_config.lro_enable, lro_config.tcp_flag,
-			    lro_config.tcp_flag_mask);
+		hdd_debug("LRO Config: lro_enable: 0x%x tcp_flag 0x%x tcp_flag_mask 0x%x",
+			  lro_config.lro_enable, lro_config.tcp_flag,
+			  lro_config.tcp_flag_mask);
 
 	return 0;
 }
@@ -2816,11 +2816,11 @@ void hdd_send_rps_ind(struct hdd_adapter *adapter)
 	hdd_ctxt = WLAN_HDD_GET_CTX(adapter);
 	rps_data.num_queues = NUM_TX_QUEUES;
 
-	hdd_info("cpu_map_list '%s'", hdd_ctxt->config->cpu_map_list);
+	hdd_debug("cpu_map_list '%s'", hdd_ctxt->config->cpu_map_list);
 
 	/* in case no cpu map list is provided, simply return */
 	if (!strlen(hdd_ctxt->config->cpu_map_list)) {
-		hdd_err("no cpu map list found");
+		hdd_debug("no cpu map list found");
 		goto err;
 	}
 
@@ -2838,8 +2838,8 @@ void hdd_send_rps_ind(struct hdd_adapter *adapter)
 				cpu_map_list_len : rps_data.num_queues;
 
 	for (i = 0; i < rps_data.num_queues; i++) {
-		hdd_info("cpu_map_list[%d] = 0x%x",
-			i, rps_data.cpu_map_list[i]);
+		hdd_debug("cpu_map_list[%d] = 0x%x",
+			  i, rps_data.cpu_map_list[i]);
 	}
 
 	strlcpy(rps_data.ifname, adapter->dev->name,
@@ -2853,7 +2853,7 @@ void hdd_send_rps_ind(struct hdd_adapter *adapter)
 	return;
 
 err:
-	hdd_err("Wrong RPS configuration. enabling rx_thread");
+	hdd_debug("Wrong RPS configuration. enabling rx_thread");
 	cds_cfg->rps_enabled = false;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2368,7 +2368,7 @@ void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 	status = hdd_tsf_set_gpio(hdd_ctx);
 
 	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("set tsf GPIO failed, status: %d", status);
+		hdd_debug("set tsf GPIO failed, status: %d", status);
 		goto fail;
 	}
 
