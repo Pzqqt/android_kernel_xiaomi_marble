@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -199,15 +199,14 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	status = qdf_idr_find(&p2p_soc_obj->p2p_idr,
 			      cookie, &roc_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		p2p_err("invalid id for cookie 0x%llx", cookie);
+		p2p_debug("invalid id for cookie 0x%llx", cookie);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	cancel_roc = qdf_mem_malloc(sizeof(*cancel_roc));
-	if (!cancel_roc) {
-		p2p_err("failed to allocate cancel p2p roc");
+	if (!cancel_roc)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 
 	cancel_roc->p2p_soc_obj = p2p_soc_obj;
 	cancel_roc->cookie = (uintptr_t)roc_ctx;
@@ -235,7 +234,7 @@ QDF_STATUS ucfg_p2p_cleanup_roc_by_vdev(struct wlan_objmgr_vdev *vdev)
 	p2p_debug("vdev:%pK", vdev);
 
 	if (!vdev) {
-		p2p_err("null vdev");
+		p2p_debug("null vdev");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -279,7 +278,7 @@ QDF_STATUS ucfg_p2p_cleanup_tx_by_vdev(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_psoc *psoc;
 
 	if (!vdev) {
-		p2p_err("null vdev");
+		p2p_debug("null vdev");
 		return QDF_STATUS_E_INVAL;
 	}
 
