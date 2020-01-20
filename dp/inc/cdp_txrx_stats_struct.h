@@ -1986,6 +1986,16 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_HW_MODE_SWITCH_OMN_ENABLE = 430,
 	/* set primary interface for hw-mode switch */
 	OL_ATH_PARAM_HW_MODE_SWITCH_PRIMARY_IF = 431,
+	/* Number of vdevs configured per PSOC */
+	OL_ATH_PARAM_GET_PSOC_NUM_VDEVS = 432,
+	/* Number of peers configured per PSOC */
+	OL_ATH_PARAM_GET_PSOC_NUM_PEERS = 433,
+	/* Number of vdevs configured per PDEV */
+	OL_ATH_PARAM_GET_PDEV_NUM_VDEVS = 434,
+	/* Number of peers configured per PDEV */
+	OL_ATH_PARAM_GET_PDEV_NUM_PEERS = 435,
+	/* Number of monitor vdevs configured per PDEV */
+	OL_ATH_PARAM_GET_PDEV_NUM_MONITOR_VDEVS = 436,
 };
 #endif
 /* Bitmasks for stats that can block */
