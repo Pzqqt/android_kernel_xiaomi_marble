@@ -412,10 +412,23 @@ static void hdd_send_sar_unsolicited_event(struct hdd_context *hdd_ctx)
 static void hdd_sar_unsolicited_timer_cb(void *user_data)
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *)user_data;
+	uint8_t i = 0;
+	QDF_STATUS status;
 
 	hdd_nofl_debug("Sar unsolicited timer expired");
 
-	hdd_send_sar_unsolicited_event(hdd_ctx);
+	for (i = 0; i < hdd_ctx->config->sar_safety_req_resp_retry; i++) {
+		hdd_send_sar_unsolicited_event(hdd_ctx);
+		status = qdf_wait_for_event_completion(
+				&hdd_ctx->sar_safety_req_resp_event,
+				hdd_ctx->config->sar_safety_req_resp_timeout);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			break;
+	}
+
+	if (i >= hdd_ctx->config->sar_safety_req_resp_retry)
+		hdd_configure_sar_index(hdd_ctx,
+					hdd_ctx->config->sar_safety_index);
 }
 
 static void hdd_sar_safety_timer_cb(void *user_data)
@@ -458,6 +471,8 @@ void wlan_hdd_sar_timers_reset(struct hdd_context *hdd_ctx)
 		qdf_mc_timer_get_current_state(
 				&hdd_ctx->sar_safety_unsolicited_timer))
 		qdf_mc_timer_stop(&hdd_ctx->sar_safety_unsolicited_timer);
+
+	qdf_event_set(&hdd_ctx->sar_safety_req_resp_event);
 }
 
 void wlan_hdd_sar_timers_init(struct hdd_context *hdd_ctx)
@@ -471,6 +486,8 @@ void wlan_hdd_sar_timers_init(struct hdd_context *hdd_ctx)
 	qdf_mc_timer_init(&hdd_ctx->sar_safety_unsolicited_timer,
 			  QDF_TIMER_TYPE_SW,
 			  hdd_sar_unsolicited_timer_cb, hdd_ctx);
+
+	qdf_event_create(&hdd_ctx->sar_safety_req_resp_event);
 }
 
 void wlan_hdd_sar_timers_deinit(struct hdd_context *hdd_ctx)
@@ -491,6 +508,7 @@ void wlan_hdd_sar_timers_deinit(struct hdd_context *hdd_ctx)
 
 	qdf_mc_timer_destroy(&hdd_ctx->sar_safety_unsolicited_timer);
 
+	qdf_event_destroy(&hdd_ctx->sar_safety_req_resp_event);
 }
 #endif
 
