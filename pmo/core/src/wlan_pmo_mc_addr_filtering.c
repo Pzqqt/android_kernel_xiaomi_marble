@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -231,7 +231,7 @@ static QDF_STATUS pmo_core_do_disable_mc_addr_list(
 	/* validate filter is applied before clearing in fwr */
 	if (!vdev_ctx->vdev_mc_list_req.is_filter_applied) {
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-		pmo_err("mc filter is not applied in fwr");
+		pmo_debug("mc filter is not applied in fwr");
 		status = QDF_STATUS_E_INVAL;
 		goto out;
 	}
@@ -241,7 +241,7 @@ static QDF_STATUS pmo_core_do_disable_mc_addr_list(
 
 	status = pmo_core_clear_mc_filter_req(vdev, op_mc_list_req);
 	if (status != QDF_STATUS_SUCCESS) {
-		pmo_err("cannot apply mc filter request");
+		pmo_debug("cannot apply mc filter request");
 		status = QDF_STATUS_E_INVAL;
 		goto out;
 	}

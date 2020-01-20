@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -241,7 +241,7 @@ static void fwol_parse_probe_req_ouis(struct wlan_objmgr_psoc *psoc,
 	whitelist->no_of_probe_req_ouis = 0;
 
 	if (!qdf_str_len(str)) {
-		fwol_info("NO OUIs to parse");
+		fwol_debug("NO OUIs to parse");
 		return;
 	}
 
