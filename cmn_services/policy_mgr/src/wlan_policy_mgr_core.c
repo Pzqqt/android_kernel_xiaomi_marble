@@ -694,11 +694,12 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 
 	if (!found_index) {
 		*num_cxn_del = 0;
-		policy_mgr_err("Mode:%d not available in the conn info", mode);
+		policy_mgr_debug("Mode:%d not available in the conn info",
+				 mode);
 	} else {
 		*num_cxn_del = found_index;
-		policy_mgr_err("Mode:%d number of conn %d temp del",
-				mode, *num_cxn_del);
+		policy_mgr_debug("Mode:%d number of conn %d temp del",
+				 mode, *num_cxn_del);
 	}
 
 	/*
@@ -923,7 +924,7 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 		POLICY_MGR_HW_MODE_NOT_IN_PROGRESS);
 
 	if (status != SET_HW_MODE_STATUS_OK) {
-		policy_mgr_err("Set HW mode failed with status %d", status);
+		policy_mgr_debug("Set HW mode failed with status %d", status);
 		goto next_action;
 	}
 
@@ -1265,7 +1266,7 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 	case 1:
 		policy_mgr_dump_current_concurrency_one_connection(cc_mode,
 					sizeof(cc_mode));
-		policy_mgr_err("%s Standalone", cc_mode);
+		policy_mgr_debug("%s Standalone", cc_mode);
 		break;
 	case 2:
 		count = policy_mgr_dump_current_concurrency_two_connection(
@@ -1280,7 +1281,7 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 		} else
 			strlcat(cc_mode, " DBS", sizeof(cc_mode));
 		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-		policy_mgr_err("%s", cc_mode);
+		policy_mgr_debug("%s", cc_mode);
 		break;
 	case 3:
 		count = policy_mgr_dump_current_concurrency_three_connection(
@@ -1305,11 +1306,11 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 			policy_mgr_dump_dbs_concurrency(psoc, cc_mode,
 					sizeof(cc_mode));
 		}
-		policy_mgr_err("%s", cc_mode);
+		policy_mgr_debug("%s", cc_mode);
 		break;
 	default:
-		policy_mgr_err("unexpected num_connections value %d",
-			num_connections);
+		policy_mgr_debug("unexpected num_connections value %d",
+				 num_connections);
 		break;
 	}
 
