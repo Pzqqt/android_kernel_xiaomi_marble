@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -691,13 +691,13 @@ static inline void mlme_vdev_cmd_mutex_release(struct vdev_mlme_obj *vdev_mlme)
 #else
 static inline void mlme_vdev_sm_spinlock_create(struct vdev_mlme_obj *vdev_mlme)
 {
-	mlme_info("VDEV SM lock is disabled!!!");
+	mlme_debug("VDEV SM lock is disabled!!!");
 }
 
 static inline void mlme_vdev_sm_spinlock_destroy(
 						struct vdev_mlme_obj *vdev_mlme)
 {
-	mlme_info("VDEV SM lock is disabled!!!");
+	mlme_debug("VDEV SM lock is disabled!!!");
 }
 
 static inline void mlme_vdev_sm_spin_lock(struct vdev_mlme_obj *vdev_mlme)
@@ -711,13 +711,13 @@ static inline void mlme_vdev_sm_spin_unlock(struct vdev_mlme_obj *vdev_mlme)
 static inline void
 mlme_vdev_cmd_mutex_create(struct vdev_mlme_obj *vdev_mlme)
 {
-	mlme_info("VDEV CMD lock is disabled!!!");
+	mlme_debug("VDEV CMD lock is disabled!!!");
 }
 
 static inline void
 mlme_vdev_cmd_mutex_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
-	mlme_info("VDEV CMD lock is disabled!!!");
+	mlme_debug("VDEV CMD lock is disabled!!!");
 }
 
 static inline void mlme_vdev_cmd_mutex_acquire(struct vdev_mlme_obj *vdev_mlme)
