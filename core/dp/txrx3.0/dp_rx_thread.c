@@ -664,6 +664,7 @@ QDF_STATUS dp_rx_tm_suspend(struct dp_rx_tm_handle *rx_tm_hdl)
 	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		if (!rx_tm_hdl->rx_thread[i])
 			continue;
+		qdf_event_reset(&rx_tm_hdl->rx_thread[i]->suspend_event);
 		qdf_set_bit(RX_SUSPEND_EVENT,
 			    &rx_tm_hdl->rx_thread[i]->event_flag);
 		qdf_wake_up_interruptible(&rx_tm_hdl->rx_thread[i]->wait_q);
