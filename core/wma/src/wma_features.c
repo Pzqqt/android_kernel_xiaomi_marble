@@ -542,7 +542,7 @@ enum wlan_phymode wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 	}
 
 	if (chan_width >= CH_WIDTH_INVALID) {
-		WMA_LOGE("%s : Invalid channel width", __func__);
+		wma_err_rl("%s : Invalid channel width", __func__);
 		return WLAN_PHYMODE_AUTO;
 	}
 
