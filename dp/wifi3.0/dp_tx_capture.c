@@ -34,7 +34,8 @@
 #define MAX_MONITOR_HEADER (512)
 #define MAX_DUMMY_FRM_BODY (128)
 #define DP_BA_ACK_FRAME_SIZE (sizeof(struct ieee80211_ctlframe_addr2) + 36)
-#define DP_ACK_FRAME_SIZE (struct ieee80211_frame_min_one)
+#define DP_ACK_FRAME_SIZE (sizeof(struct ieee80211_frame_min_one))
+#define DP_CTS_FRAME_SIZE (sizeof(struct ieee80211_frame_min_one))
 #define DP_MAX_MPDU_64 64
 #define DP_NUM_WORDS_PER_PPDU_BITMAP_64 (DP_MAX_MPDU_64 >> 5)
 #define DP_NUM_BYTES_PER_PPDU_BITMAP_64 (DP_MAX_MPDU_64 >> 3)
@@ -3265,6 +3266,108 @@ static void dp_gen_block_ack_frame(
 			    (frm - (uint8_t *)qdf_nbuf_data(mpdu_nbuf)));
 }
 
+static void dp_gen_cts_frame(struct hal_rx_ppdu_info *ppdu_info,
+			     struct dp_peer *peer,
+			     qdf_nbuf_t mpdu_nbuf)
+{
+	struct ieee80211_frame_min_one *wh_addr1;
+	uint16_t duration;
+
+	wh_addr1 = (struct ieee80211_frame_min_one *)
+		qdf_nbuf_data(mpdu_nbuf);
+
+	wh_addr1->i_fc[0] = 0;
+	wh_addr1->i_fc[1] = 0;
+	wh_addr1->i_fc[0] =  IEEE80211_FC0_VERSION_0 |
+		IEEE80211_FC0_TYPE_CTL |
+		IEEE80211_FC0_SUBTYPE_CTS;
+	qdf_mem_copy(wh_addr1->i_addr1, &peer->mac_addr.raw[0],
+		     QDF_MAC_ADDR_SIZE);
+	duration = (ppdu_info->rx_status.duration > SIFS_INTERVAL) ?
+		ppdu_info->rx_status.duration - SIFS_INTERVAL : 0;
+	wh_addr1->i_dur[0] = duration & 0xff;
+	wh_addr1->i_dur[1] = (duration >> 8) & 0xff;
+	qdf_nbuf_set_pktlen(mpdu_nbuf, sizeof(*wh_addr1));
+}
+
+/**
+ * dp_send_cts_frame_to_stack(): Function to deliver HW generated CTS frame
+ *	in reponse to RTS
+ * @soc: core txrx main context
+ * @pdev: DP pdev object
+ * @ppdu_info: HAL RX PPDU info retrieved from status ring TLV
+ *
+ * return: status
+ */
+QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
+				      struct dp_pdev *pdev,
+				      struct hal_rx_ppdu_info *ppdu_info)
+{
+	struct cdp_tx_indication_info tx_capture_info;
+	struct mon_rx_user_status *rx_user_status =
+		&ppdu_info->rx_user_status[0];
+	struct dp_ast_entry *ast_entry;
+	uint32_t peer_id;
+	struct dp_peer *peer;
+
+	if (rx_user_status->ast_index >=
+	    wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+	ast_entry = soc->ast_table[rx_user_status->ast_index];
+	if (!ast_entry) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer = ast_entry->peer;
+	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
+	peer_id = peer->peer_ids[0];
+	qdf_spin_unlock_bh(&soc->ast_lock);
+
+	peer = dp_peer_find_by_id(soc, peer_id);
+	if (!peer)
+		return QDF_STATUS_E_FAILURE;
+
+	if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
+					    peer)) {
+		dp_peer_unref_del_find_by_id(peer);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	set_mpdu_info(&tx_capture_info,
+		      &ppdu_info->rx_status, rx_user_status);
+	tx_capture_info.mpdu_info.mcs = rx_user_status->mcs;
+	/* ppdu_desc is not required for legacy frames */
+	tx_capture_info.ppdu_desc = NULL;
+
+	tx_capture_info.mpdu_nbuf =
+		qdf_nbuf_alloc(pdev->soc->osdev,
+			       MAX_MONITOR_HEADER +
+			       DP_CTS_FRAME_SIZE,
+			       MAX_MONITOR_HEADER,
+			       4, FALSE);
+
+	if (!tx_capture_info.mpdu_nbuf) {
+		dp_peer_unref_del_find_by_id(peer);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	dp_gen_cts_frame(ppdu_info, peer,
+				 tx_capture_info.mpdu_nbuf);
+	dp_peer_unref_del_find_by_id(peer);
+	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
+			     &tx_capture_info, HTT_INVALID_PEER,
+			     WDI_NO_VAL, pdev->pdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * dp_send_ack_frame_to_stack(): Function to generate BA or ACK frame and
  * send to upper layer on received unicast frame
@@ -3302,6 +3405,10 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 	    (ppdu_info->rx_info.mac_addr1[0] & 1)) {
 		return QDF_STATUS_SUCCESS;
 	}
+
+	if (ppdu_info->sw_frame_group_id ==
+	    HAL_MPDU_SW_FRAME_GROUP_CTRL_RTS)
+		return dp_send_cts_frame_to_stack(soc, pdev, ppdu_info);
 
 	if (ppdu_info->sw_frame_group_id == HAL_MPDU_SW_FRAME_GROUP_CTRL_BAR)
 		bar_frame = true;

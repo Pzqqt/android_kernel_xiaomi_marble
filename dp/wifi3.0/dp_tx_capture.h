@@ -35,6 +35,8 @@ struct dp_tx_desc_s;
 #define TXCAP_MAX_SUBTYPE \
 	((IEEE80211_FC0_SUBTYPE_MASK >> IEEE80211_FC0_SUBTYPE_SHIFT) + 1)
 
+#define SIFS_INTERVAL 16
+
 struct dp_pdev_tx_capture {
 	/* For deferred PPDU status processing */
 	qdf_spinlock_t ppdu_stats_lock;
