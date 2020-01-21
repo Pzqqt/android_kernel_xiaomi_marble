@@ -4679,7 +4679,7 @@ dp_htt_rx_flow_fst_setup(struct dp_pdev *pdev,
 		qdf_nbuf_data(msg),
 		qdf_nbuf_len(msg),
 		soc->htc_endpoint,
-		1); /* tag - not relevant here */
+		HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
@@ -4823,7 +4823,7 @@ dp_htt_rx_flow_fse_operation(struct dp_pdev *pdev,
 		qdf_nbuf_data(msg),
 		qdf_nbuf_len(msg),
 		soc->htc_endpoint,
-		1); /* tag - not relevant here */
+		HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
@@ -4929,7 +4929,7 @@ dp_htt_rx_fisa_config(struct dp_pdev *pdev,
 			       qdf_nbuf_data(msg),
 			       qdf_nbuf_len(msg),
 			       soc->htc_endpoint,
-			       1); /* tag - not relevant here */
+			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
