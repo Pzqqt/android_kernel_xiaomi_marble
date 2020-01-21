@@ -2154,6 +2154,16 @@ QDF_STATUS (*extract_ani_level)(uint8_t *evt_buf,
 QDF_STATUS (*extract_multi_vdev_restart_resp_event)(
 		wmi_unified_t wmi_handle, void *evt_buf,
 		struct multi_vdev_restart_resp *restart_rsp);
+
+#ifdef FEATURE_WLAN_TIME_SYNC_FTM
+QDF_STATUS (*send_wlan_time_sync_ftm_trigger_cmd)(wmi_unified_t wmi_handle,
+						  uint32_t vdev_id,
+						  bool burst_mode);
+QDF_STATUS (*send_wlan_ts_qtime_cmd)(wmi_unified_t wmi_handle,
+				     uint32_t vdev_id,
+				     uint64_t lpass_ts);
+#endif /* FEATURE_WLAN_TIME_SYNC_FTM */
+
 };
 
 /* Forward declartion for psoc*/

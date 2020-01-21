@@ -12934,6 +12934,78 @@ extract_roam_scan_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 }
 #endif
 
+#ifdef FEATURE_WLAN_TIME_SYNC_FTM
+/**
+ * send_wlan_ts_ftm_trigger_cmd_tlv(): send wlan time sync cmd to FW
+ *
+ * @wmi: wmi handle
+ * @vdev_id: vdev id
+ * @burst_mode: Indicates whether relation derived using FTM is needed for
+ *		each FTM frame or only aggregated result is required.
+ *
+ * Send WMI_AUDIO_SYNC_TRIGGER_CMDID to FW.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS send_wlan_ts_ftm_trigger_cmd_tlv(wmi_unified_t wmi,
+						   uint32_t vdev_id,
+						   bool burst_mode)
+{
+	wmi_audio_sync_trigger_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf) {
+		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_audio_sync_trigger_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_audio_sync_trigger_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_audio_sync_trigger_cmd_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->agg_relation = burst_mode ? false : true;
+	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_AUDIO_SYNC_TRIGGER_CMDID)) {
+		WMI_LOGE("%s: failed to send audio sync trigger cmd", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS send_wlan_ts_qtime_cmd_tlv(wmi_unified_t wmi,
+					     uint32_t vdev_id,
+					     uint64_t lpass_ts)
+{
+	wmi_audio_sync_qtimer_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf) {
+		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_audio_sync_qtimer_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_audio_sync_qtimer_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_audio_sync_qtimer_cmd_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->qtimer_u32 = (uint32_t)((lpass_ts & 0xffffffff00000000LL) >> 32);
+	cmd->qtimer_l32 = (uint32_t)(lpass_ts & 0xffffffffLL);
+
+	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_AUDIO_SYNC_QTIMER_CMDID)) {
+		WMI_LOGP("%s: Failed to send audio qtime command", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_WLAN_TIME_SYNC_FTM */
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -13248,6 +13320,11 @@ struct wmi_ops tlv_ops =  {
 	.extract_roam_scan_stats = extract_roam_scan_stats_tlv,
 	.extract_roam_result_stats = extract_roam_result_stats_tlv,
 	.extract_roam_11kv_stats = extract_roam_11kv_stats_tlv,
+
+#ifdef FEATURE_WLAN_TIME_SYNC_FTM
+	.send_wlan_time_sync_ftm_trigger_cmd = send_wlan_ts_ftm_trigger_cmd_tlv,
+	.send_wlan_ts_qtime_cmd = send_wlan_ts_qtime_cmd_tlv,
+#endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 };
 
 /**

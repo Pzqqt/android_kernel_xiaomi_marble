@@ -3817,4 +3817,34 @@ QDF_STATUS wmi_unified_extract_ani_level(wmi_unified_t wmi_handle,
 					 struct wmi_host_ani_level_event **info,
 					 uint32_t *num_freqs);
 #endif /* FEATURE_ANI_LEVEL_REQUEST */
+
+#ifdef FEATURE_WLAN_TIME_SYNC_FTM
+/**
+ * wmi_send_wlan_time_sync_ftm_trigger() - send wlan time sync ftm trigger cmd.
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @burst_mode: mode reg getting time sync relation from FW
+ *
+ * This function indicates the FW to trigger wlan time sync using FTM
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_send_wlan_time_sync_ftm_trigger(void *wmi_handle,
+					       uint32_t vdev_id,
+					       bool burst_mode);
+
+/**
+ * wmi_send_wlan_time_sync_qtime() - send wlan time sync qtime cmd.
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @lpass_ts: audio qtime
+ *
+ * This function sends the wmi cmd to FW having audio qtime
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_send_wlan_time_sync_qtime(void *wmi_handle, uint32_t vdev_id,
+					 uint64_t lpass_ts);
+#endif /* FEATURE_WLAN_TIME_SYNC_FTM */
+
 #endif /* _WMI_UNIFIED_API_H_ */
