@@ -923,6 +923,11 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	policy_mgr_set_hw_mode_change_in_progress(context,
 		POLICY_MGR_HW_MODE_NOT_IN_PROGRESS);
 
+	if (status == SET_HW_MODE_STATUS_OK ||
+	    status == SET_HW_MODE_STATUS_ALREADY) {
+		policy_mgr_set_connection_update(context);
+	}
+
 	if (status != SET_HW_MODE_STATUS_OK) {
 		policy_mgr_debug("Set HW mode failed with status %d", status);
 		goto next_action;
@@ -980,9 +985,6 @@ next_action:
 		policy_mgr_debug("No action needed right now");
 
 set_done_event:
-	ret = policy_mgr_set_connection_update(context);
-	if (!QDF_IS_STATUS_SUCCESS(ret))
-		policy_mgr_err("ERROR: set connection_update_done event failed");
 	ret = policy_mgr_set_opportunistic_update(context);
 	if (!QDF_IS_STATUS_SUCCESS(ret))
 		policy_mgr_err("ERROR: set opportunistic_update event failed");

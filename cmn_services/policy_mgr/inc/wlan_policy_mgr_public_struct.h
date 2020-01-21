@@ -949,22 +949,22 @@ enum hw_mode_bandwidth {
  * enum set_hw_mode_status - Status of set HW mode command
  * @SET_HW_MODE_STATUS_OK: command successful
  * @SET_HW_MODE_STATUS_EINVAL: Requested invalid hw_mode
- * @SET_HW_MODE_STATUS_ALREADY: Requested hw mode is already applied to FW.
  * @SET_HW_MODE_STATUS_ECANCELED: HW mode change cancelled
  * @SET_HW_MODE_STATUS_ENOTSUP: HW mode not supported
  * @SET_HW_MODE_STATUS_EHARDWARE: HW mode change prevented by hardware
  * @SET_HW_MODE_STATUS_EPENDING: HW mode change is pending
  * @SET_HW_MODE_STATUS_ECOEX: HW mode change conflict with Coex
+ * @SET_HW_MODE_STATUS_ALREADY: Requested hw mode is already applied to FW.
  */
 enum set_hw_mode_status {
 	SET_HW_MODE_STATUS_OK,
 	SET_HW_MODE_STATUS_EINVAL,
-	SET_HW_MODE_STATUS_ALREADY,
 	SET_HW_MODE_STATUS_ECANCELED,
 	SET_HW_MODE_STATUS_ENOTSUP,
 	SET_HW_MODE_STATUS_EHARDWARE,
 	SET_HW_MODE_STATUS_EPENDING,
 	SET_HW_MODE_STATUS_ECOEX,
+	SET_HW_MODE_STATUS_ALREADY,
 };
 
 typedef void (*dual_mac_cb)(enum set_hw_mode_status status,
