@@ -325,6 +325,63 @@ int wlan_hdd_cfg80211_get_sar_power_limits(struct wiphy *wiphy,
 }
 
 #ifdef SAR_SAFETY_FEATURE
+void hdd_disable_sar(struct hdd_context *hdd_ctx)
+{
+	struct sar_limit_cmd_params *sar_limit_cmd;
+	struct sar_limit_cmd_row *row;
+	QDF_STATUS status;
+
+	sar_limit_cmd = qdf_mem_malloc(sizeof(struct sar_limit_cmd_params));
+	if (!sar_limit_cmd)
+		return;
+
+	if (hdd_ctx->sar_version != SAR_VERSION_2) {
+		hdd_nofl_debug("FW SAR version: %d", hdd_ctx->sar_version);
+		return;
+	}
+
+	/*
+	 * Need two rows to hold the per-chain V2 power index
+	 */
+	row = qdf_mem_malloc(2 * sizeof(*row));
+	if (!row)
+		goto config_sar_failed;
+
+	sar_limit_cmd->sar_enable = WMI_SAR_FEATURE_OFF;
+	sar_limit_cmd->commit_limits = 1;
+	sar_limit_cmd->num_limit_rows = 2;
+	sar_limit_cmd->sar_limit_row_list = row;
+	row[0].limit_value = 0;
+	row[1].limit_value = 0;
+	row[0].chain_id = 0;
+	row[1].chain_id = 1;
+	row[0].validity_bitmap = WMI_SAR_CHAIN_ID_VALID_MASK;
+	row[1].validity_bitmap = WMI_SAR_CHAIN_ID_VALID_MASK;
+
+	hdd_nofl_debug("Disable the SAR limit index for both the chains");
+
+	status = sme_set_sar_power_limits(hdd_ctx->mac_handle, sar_limit_cmd);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_nofl_err("Failed to set sar power limits");
+		goto config_sar_failed;
+	}
+
+	/* After SSR, the SAR configuration is lost. As SSR is hidden from
+	 * userland, this command will not come from userspace after a SSR. To
+	 * restore this configuration, save this in hdd context and restore
+	 * after re-init.
+	 */
+	hdd_store_sar_config(hdd_ctx, sar_limit_cmd);
+	return;
+
+config_sar_failed:
+
+	if (sar_limit_cmd) {
+		qdf_mem_free(sar_limit_cmd->sar_limit_row_list);
+		qdf_mem_free(sar_limit_cmd);
+	}
+}
+
 void hdd_configure_sar_index(struct hdd_context *hdd_ctx, uint32_t sar_index)
 {
 	struct sar_limit_cmd_params *sar_limit_cmd;
@@ -382,6 +439,31 @@ config_sar_failed:
 		qdf_mem_free(sar_limit_cmd->sar_limit_row_list);
 		qdf_mem_free(sar_limit_cmd);
 	}
+}
+
+void hdd_configure_sar_sleep_index(struct hdd_context *hdd_ctx)
+{
+	if (!hdd_ctx->config->enable_sar_safety)
+		return;
+
+	if (hdd_ctx->config->config_sar_safety_sleep_index) {
+		hdd_nofl_debug("Configure SAR sleep index %d",
+			       hdd_ctx->config->sar_safety_sleep_index);
+		hdd_configure_sar_index(
+				hdd_ctx,
+				hdd_ctx->config->sar_safety_sleep_index);
+	} else {
+		hdd_nofl_debug("Disable SAR");
+		hdd_disable_sar(hdd_ctx);
+	}
+}
+
+void hdd_configure_sar_resume_index(struct hdd_context *hdd_ctx)
+{
+	hdd_nofl_debug("Configure SAR safety index %d on wlan resume",
+		       hdd_ctx->config->sar_safety_index);
+	hdd_configure_sar_index(hdd_ctx,
+				hdd_ctx->config->sar_safety_index);
 }
 
 static void hdd_send_sar_unsolicited_event(struct hdd_context *hdd_ctx)

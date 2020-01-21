@@ -81,6 +81,36 @@ void wlan_hdd_sar_timers_deinit(struct hdd_context *hdd_ctx);
  */
 void hdd_configure_sar_index(struct hdd_context *hdd_ctx, uint32_t sar_index);
 
+/**
+ * hdd_disable_sar() - Disable SAR feature to FW
+ * @hdd_ctx: Pointer to HDD context
+ *
+ * This function Disables SAR power index on both the chains
+ *
+ * Return: None
+ */
+void hdd_disable_sar(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_configure_sar_sleep_index() - Configure SAR sleep index to FW
+ * @hdd_ctx: Pointer to HDD context
+ *
+ * This function configures SAR sleep index on both the chains
+ *
+ * Return: None
+ */
+void hdd_configure_sar_sleep_index(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_configure_sar_resume_index() - Configure SAR resume index to FW
+ * @hdd_ctx: Pointer to HDD context
+ *
+ * This function configures SAR resume index on both the chains
+ *
+ * Return: None
+ */
+void hdd_configure_sar_resume_index(struct hdd_context *hdd_ctx);
+
 #else
 static inline void wlan_hdd_sar_unsolicited_timer_start(
 						struct hdd_context *hdd_ctx)
@@ -103,6 +133,19 @@ static inline void hdd_configure_sar_index(struct hdd_context *hdd_ctx,
 					   uint32_t sar_index)
 {
 }
+
+static inline void hdd_disable_sar(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void hdd_configure_sar_sleep_index(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void hdd_configure_sar_resume_index(struct hdd_context *hdd_ctx)
+{
+}
+
 #endif
 
 /**
