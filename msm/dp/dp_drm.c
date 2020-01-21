@@ -11,6 +11,7 @@
 #include "msm_kms.h"
 #include "sde_connector.h"
 #include "dp_drm.h"
+#include "dp_mst_drm.h"
 #include "dp_debug.h"
 
 #define DP_MST_DEBUG(fmt, ...) DP_DEBUG(fmt, ##__VA_ARGS__)
