@@ -3596,8 +3596,7 @@ wma_rso_print_trigger_info(struct wmi_roam_trigger_info *data, uint8_t vdev_id)
 
 	wma_get_trigger_detail_str(data, buf);
 	mlme_get_converted_timestamp(data->timestamp, time);
-	WMA_LOGD("[ROAM_DEBUG] %s [ROAM_TRIGGER]: VDEV[%d] Current_rssi: %d dBm %s",
-		 time, vdev_id, data->current_rssi, buf);
+	WMA_LOGI("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
 
 	qdf_mem_free(buf);
 }
@@ -3609,21 +3608,21 @@ wma_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 	uint16_t i;
 	char time[TIME_STRING_LEN];
 
-	WMA_LOGD("%40s%40s%40s", LINE_STR, LINE_STR, LINE_STR);
-	WMA_LOGD("%13s %20s %11s %6s %12s %8s %12s %8s %10s %13s",
-		 "AP BSSID", "TIMESTAMP", "CHANNEL", "TYPE", "ETP", "RSSI",
-		 "RSSI_SCORE", "CU_LOAD", "CU_SCORE", "TOTAL_SCORE");
-	WMA_LOGD("%40s%40s%40s", LINE_STR, LINE_STR, LINE_STR);
+	WMA_LOGD("%40s%40s", LINE_STR, LINE_STR);
+	WMA_LOGI("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s",
+		 "AP BSSID", "TSTAMP", "CH", "TY", "ETP", "RSSI",
+		 "SCR", "CU%", "SCR", "TOT_SCR");
+	WMA_LOGD("%40s%40s", LINE_STR, LINE_STR);
 
 	if (num_entries > MAX_ROAM_CANDIDATE_AP)
 		num_entries = MAX_ROAM_CANDIDATE_AP;
 
 	for (i = 0; i < num_entries; i++) {
 		mlme_get_converted_timestamp(ap->timestamp, time);
-		WMA_LOGD(QDF_MAC_ADDR_STR " %20s %5d  %-12s %4d(Mbps) %3d(dBm) %6d %7d %% %10d %12d",
+		WMA_LOGI(QDF_MAC_ADDR_STR " %17s %4d %-4s %4d %3d/%-4d %2d/%-4d %5d",
 			 QDF_MAC_ADDR_ARRAY(ap->bssid.bytes), time, ap->freq,
-			 ((ap->type == 0) ? "CANDIDATE_AP" :
-			  ((ap->type == 2) ? "ROAMED_AP" : "PREVIOUS_AP")),
+			 ((ap->type == 0) ? "C_AP" :
+			  ((ap->type == 2) ? "R_AP" : "P_AP")),
 			 ap->etp, ap->rssi, ap->rssi_score, ap->cu_load,
 			 ap->cu_score, ap->total_score);
 		ap++;
@@ -3674,7 +3673,7 @@ wma_rso_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 			    scan->next_rssi_threshold);
 
 	mlme_get_converted_timestamp(timestamp, time);
-	WMA_LOGD("[ROAM_DEBUG] %s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
+	WMA_LOGI("%s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
 		 time, vdev_id, (scan->type ? "FULL" : "PARTIAL"),
 		 buf1, buf);
 	wma_log_roam_scan_candidates(scan->ap, scan->num_ap);
@@ -3695,11 +3694,11 @@ wma_rso_print_roam_result(struct wmi_roam_result *res,
 		return;
 
 	if (!res->status)
-		qdf_snprint(buf, ROAM_FAILURE_BUF_SIZE, "Fail-Reason: %s",
+		qdf_snprint(buf, ROAM_FAILURE_BUF_SIZE, "Reason: %s",
 			    mlme_get_roam_fail_reason_str(res->fail_reason));
 
 	mlme_get_converted_timestamp(res->timestamp, time);
-	WMA_LOGD("[ROAM_DEBUG] %s [ROAM_RESULT]: VDEV[%d] status:%s %s",
+	WMA_LOGI("%s [ROAM_RESULT]: VDEV[%d] %s %s",
 		 time, vdev_id, (res->status) ? "SUCCESS" : "FAILED", buf);
 
 	qdf_mem_free(buf);
@@ -3719,7 +3718,7 @@ wma_rso_print_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
 		return;
 
 	if (!type) {
-		WMA_LOGD("[ROAM_DEBUG] AP doesn't support neighbor rpt/BTM");
+		WMA_LOGI("AP doesn't support neighbor rpt/BTM");
 		return;
 	}
 
@@ -3743,11 +3742,11 @@ wma_rso_print_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
 		tmp += buf_cons;
 	}
 	mlme_get_converted_timestamp(neigh_rpt->req_time, time);
-	WMA_LOGD("[ROAM_DEBUG] %s [%s] RX: VDEV[%d] %s", time,
+	WMA_LOGI("%s [%s] RX: VDEV[%d] %s", time,
 		 (type == 1) ? "BTM" : "NEIGH_RPT", vdev_id, buf);
 
 	mlme_get_converted_timestamp(neigh_rpt->resp_time, time1);
-	WMA_LOGD("[ROAM_DEBUG] %s [%s] TX: VDEV[%d]", time1,
+	WMA_LOGI("%s [%s] TX: VDEV[%d]", time1,
 		 (type == 1) ? "BTM" : "NEIGH_RPT", vdev_id);
 	qdf_mem_free(buf);
 }
@@ -5854,6 +5853,7 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
 	struct scheduler_msg cds_msg = {0};
 	tSirSmeCandidateFoundInd *candidate_ind;
+	QDF_STATUS status;
 
 	candidate_ind = qdf_mem_malloc(sizeof(tSirSmeCandidateFoundInd));
 	if (!candidate_ind)
@@ -5867,15 +5867,12 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 	cds_msg.type = eWNI_SME_CANDIDATE_FOUND_IND;
 	cds_msg.bodyptr = candidate_ind;
 	cds_msg.callback = sme_mc_process_handler;
-	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
-		  FL("posting candidate ind to SME, vdev %d"), vdev_id);
+	wma_debug("Posting candidate ind to SME, vdev %d", vdev_id);
 
-	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_WMA,
-							 QDF_MODULE_ID_SME,
-							 QDF_MODULE_ID_SCAN,
-							 &cds_msg)) {
+	status = scheduler_post_message(QDF_MODULE_ID_WMA, QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SCAN,  &cds_msg);
+	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(candidate_ind);
-	}
 }
 
 /**
@@ -5965,7 +5962,7 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 		wma_handle->interfaces[vdev_id].roaming_in_progress = false;
 		op_code = SIR_ROAMING_ABORT;
 	} else {
-		WMA_LOGE(FL("Invalid notif %d"), notif);
+		WMA_LOGD(FL("Invalid notif %d"), notif);
 		return;
 	}
 
