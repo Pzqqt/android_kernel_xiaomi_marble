@@ -278,7 +278,7 @@ dp_rx_msdus_drop(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 
 		/* all buffers from a MSDU link link belong to same pdev */
 		*mac_id = rx_desc->pool_id;
-		pdev = soc->pdev_list[rx_desc->pool_id];
+		pdev = dp_get_pdev_for_lmac_id(soc, rx_desc->pool_id);
 
 		if (!dp_rx_desc_check_magic(rx_desc)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -433,7 +433,7 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	/* TODO: Currently only single radio is supported, hence
 	 * pdev hard coded to '0' index
 	 */
-	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 
 	/* if invalid peer SG list has max values free the buffers in list
 	 * and treat current buffer as start of list
@@ -642,7 +642,7 @@ dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
 {
 	struct dp_peer *peer = NULL;
 	uint8_t *rx_pkt_hdr = hal_rx_pkt_hdr_get(rx_tlv_hdr);
-	struct dp_pdev *pdev = soc->pdev_list[pool_id];
+	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, pool_id);
 	struct ieee80211_frame *wh = (struct ieee80211_frame *)rx_pkt_hdr;
 
 	/*
@@ -786,7 +786,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 	if (!peer) {
 		bool mpdu_done = false;
-		struct dp_pdev *pdev = soc->pdev_list[pool_id];
+		struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, pool_id);
 
 		dp_err_rl("peer is NULL");
 		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
@@ -2039,7 +2039,7 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 		struct dp_srng *dp_rxdma_srng;
 
 		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED], 1);
-		dp_pdev = soc->pdev_list[pool_id];
+		dp_pdev = dp_get_pdev_for_lmac_id(soc, pool_id);
 		dp_rxdma_srng = &soc->rx_refill_buf_ring[pool_id];
 		rx_desc_pool = &soc->rx_desc_buf[pool_id];
 
