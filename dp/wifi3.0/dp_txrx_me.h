@@ -17,13 +17,13 @@
  */
 #ifndef _DP_TXRX_ME_H_
 #define _DP_TXRX_ME_H_
-uint16_t dp_tx_me_send_convert_ucast(ol_txrx_soc_handle soc, uint8_t vdev_id,
-				     qdf_nbuf_t nbuf,
-				     uint8_t newmac[][QDF_MAC_ADDR_SIZE],
-				     uint8_t new_mac_cnt);
-void dp_tx_me_alloc_descriptor(struct cdp_pdev *pdev);
-
-void dp_tx_me_free_descriptor(struct cdp_pdev *pdev);
+uint16_t
+dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc, uint8_t vdev_id,
+			    qdf_nbuf_t nbuf,
+			    uint8_t newmac[][QDF_MAC_ADDR_SIZE],
+			    uint8_t new_mac_cnt);
+void dp_tx_me_alloc_descriptor(struct cdp_soc_t *soc, uint8_t pdev_id);
+void dp_tx_me_free_descriptor(struct cdp_soc_t *soc, uint8_t pdev_id);
 void dp_tx_me_exit(struct dp_pdev *pdev);
 QDF_STATUS
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);

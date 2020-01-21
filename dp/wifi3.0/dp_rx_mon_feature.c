@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -597,9 +597,8 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
  * Return: 0 for success. nonzero for failure.
  */
 QDF_STATUS
-dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint32_t val)
+dp_config_enh_rx_capture(struct dp_pdev *pdev, uint32_t val)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	uint8_t rx_cap_mode = (val & CDP_RX_ENH_CAPTURE_MODE_MASK);
 	uint32_t rx_enh_capture_peer;
 	bool is_mpdu_hdr = false;
@@ -625,7 +624,7 @@ dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint32_t val)
 		pdev->rx_enh_monitor_vdev = pdev->monitor_vdev;
 	}
 
-	dp_reset_monitor_mode(pdev_handle);
+	dp_reset_monitor_mode((struct cdp_soc_t *)pdev->soc, pdev->pdev_id);
 
 	if (pdev->rx_enh_capture_mode != CDP_RX_ENH_CAPTURE_DISABLED &&
 	    rx_cap_mode == CDP_RX_ENH_CAPTURE_DISABLED) {
@@ -647,10 +646,8 @@ dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint32_t val)
 }
 
 void
-dp_peer_set_rx_capture_enabled(struct cdp_peer *peer_handle, bool value)
+dp_peer_set_rx_capture_enabled(struct dp_peer *peer, bool value)
 {
-	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-
 	peer->rx_cap_enabled = value;
 }
 #endif /* WLAN_RX_PKT_CAPTURE_ENH */

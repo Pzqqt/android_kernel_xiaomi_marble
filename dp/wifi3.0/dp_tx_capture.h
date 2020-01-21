@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -179,7 +179,7 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, uint8_t val);
+dp_config_enh_tx_capture(struct dp_pdev *pdev_handle, uint8_t val);
 
 /*
  * dp_deliver_mgmt_frm: Process
@@ -258,12 +258,12 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 
 /**
  * dp_peer_set_tx_capture_enabled: Set tx_cap_enabled bit in peer
- * @peer_handle: Peer handle
+ * @peer: Peer handle
  * @value: Enable/disable setting for tx_cap_enabled
  *
  * Return: None
  */
 void
-dp_peer_set_tx_capture_enabled(struct cdp_peer *peer_handle, bool value);
+dp_peer_set_tx_capture_enabled(struct dp_peer *peer, bool value);
 #endif
 #endif

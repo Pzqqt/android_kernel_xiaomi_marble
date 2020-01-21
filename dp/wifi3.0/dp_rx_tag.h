@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,17 +26,18 @@
 /**
  * dp_update_pdev_rx_protocol_tag - Add/remove a protocol tag that should be
  * applied to the desired protocol type packets
- * @txrx_pdev_handle: cdp_pdev handle
+ * @soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @enable_rx_protocol_tag - bitmask that indicates what protocol types
  * are enabled for tagging. zero indicates disable feature, non-zero indicates
  * enable feature
  * @protocol_type: new protocol type for which the tag is being added
  * @tag: user configured tag for the new protocol
  *
- * Return: QDF_STATUS
+ * Return: Success
  */
 QDF_STATUS
-dp_update_pdev_rx_protocol_tag(struct cdp_pdev *pdev_handle,
+dp_update_pdev_rx_protocol_tag(struct cdp_soc_t  *soc, uint8_t pdev_id,
 			       uint32_t enable_rx_protocol_tag,
 			       uint16_t protocol_type,
 			       uint16_t tag);
@@ -69,7 +70,7 @@ dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
  * Return: none
  */
 void
-dp_dump_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
+dp_dump_pdev_rx_protocol_tag_stats(struct cdp_soc_t  *soc, uint8_t pdev_id,
 				   uint16_t protocol_type);
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
@@ -92,25 +93,27 @@ dp_rx_update_flow_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 
 /**
  * dp_set_rx_flow_tag - add/delete a flow
- * @pdev_handle: cdp_pdev handle
+ * @soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @flow_info: flow tuple that is to be added to/deleted from flow search table
  *
- * Return: 0 for success, nonzero for failure
+ * Return: Success
  */
 QDF_STATUS
-dp_set_rx_flow_tag(struct cdp_pdev *pdev_handle,
+dp_set_rx_flow_tag(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 		   struct cdp_rx_flow_info *flow_info);
 
 /**
  * dp_dump_rx_flow_tag_stats - dump the number of packets tagged for
  * given flow 5-tuple
- * @pdev_handle: cdp_pdev handle
+ * @cdp_soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @flow_info: flow 5-tuple for which stats should be displayed
  *
- * Return: 0 for success, nonzero for failure
+ * Return: Success
  */
 QDF_STATUS
-dp_dump_rx_flow_tag_stats(struct cdp_pdev *pdev_handle,
+dp_dump_rx_flow_tag_stats(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 			  struct cdp_rx_flow_info *flow_info);
 
 /**
