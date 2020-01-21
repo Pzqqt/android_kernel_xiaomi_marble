@@ -1877,16 +1877,41 @@ cdp_soc_set_dp_txrx_handle(ol_txrx_soc_handle soc, void *dp_handle)
 }
 
 /**
+ * cdp_soc_handle_mode_change() - Update pdev_id to lmac_id mapping
+ * @soc: opaque soc handle
+ * @pdev_id: id of data path pdev handle
+ * @lmac_id: lmac id
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+cdp_soc_handle_mode_change(ol_txrx_soc_handle soc, uint8_t pdev_id,
+			   uint32_t lmac_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->map_pdev_to_lmac)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->cmn_drv_ops->handle_mode_change(soc, pdev_id,
+							 lmac_id);
+}
+
+/**
  * cdp_soc_map_pdev_to_lmac() - Save pdev_id to lmac_id mapping
  * @soc: opaque soc handle
  * @pdev_id: id of data path pdev handle
  * @lmac_id: lmac id
- * @mode_change: flag to indicate mode change (true) or init (false)
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
 cdp_soc_map_pdev_to_lmac(ol_txrx_soc_handle soc, uint8_t pdev_id,
-			 uint32_t lmac_id, bool mode_change)
+			 uint32_t lmac_id)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -1900,7 +1925,7 @@ cdp_soc_map_pdev_to_lmac(ol_txrx_soc_handle soc, uint8_t pdev_id,
 		return QDF_STATUS_E_FAILURE;
 
 	return soc->ops->cmn_drv_ops->map_pdev_to_lmac(soc, pdev_id,
-			lmac_id, mode_change);
+			lmac_id);
 }
 
 /**

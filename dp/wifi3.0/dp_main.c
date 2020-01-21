@@ -9419,20 +9419,48 @@ dp_soc_set_dp_txrx_handle(struct cdp_soc *soc_handle, void *txrx_handle)
  * @soc_hdl: datapath soc handle
  * @pdev_id: id of the datapath pdev handle
  * @lmac_id: lmac id
- * @mode_change: flag to indicate a mode change
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS
 dp_soc_map_pdev_to_lmac
 	(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
-	 uint32_t lmac_id, bool mode_change)
+	 uint32_t lmac_id)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
-	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc,
-								  pdev_id);
+
+	wlan_cfg_set_hw_mac_idx(soc->wlan_cfg_ctx,
+				pdev_id,
+				lmac_id);
+
+	/*Set host PDEV ID for lmac_id*/
+	wlan_cfg_set_pdev_idx(soc->wlan_cfg_ctx,
+			      pdev_id,
+			      lmac_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_soc_handle_pdev_mode_change() - Update pdev to lmac mapping
+ * @soc_hdl: datapath soc handle
+ * @pdev_id: id of the datapath pdev handle
+ * @lmac_id: lmac id
+ *
+ * In the event of a dynamic mode change, update the pdev to lmac mapping
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+dp_soc_handle_pdev_mode_change
+	(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+	 uint32_t lmac_id)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_vdev *vdev = NULL;
 	uint8_t hw_pdev_id, mac_id;
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc,
+								  pdev_id);
 	int nss_config = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
 
 	if (qdf_unlikely(!pdev))
@@ -9440,12 +9468,6 @@ dp_soc_map_pdev_to_lmac
 
 	pdev->lmac_id = lmac_id;
 	dp_info(" mode change %d %d\n", pdev->pdev_id, pdev->lmac_id);
-
-	if (!mode_change) {
-		wlan_cfg_set_hw_mac_idx(soc->wlan_cfg_ctx,
-					pdev->pdev_id,
-					lmac_id);
-	}
 
 	/*Set host PDEV ID for lmac_id*/
 	wlan_cfg_set_pdev_idx(soc->wlan_cfg_ctx,
@@ -9456,19 +9478,17 @@ dp_soc_map_pdev_to_lmac
 		dp_get_target_pdev_id_for_host_pdev_id(soc,
 						       pdev->pdev_id);
 
-	if (mode_change) {
-		/*
-		 * When NSS offload is enabled, send pdev_id->lmac_id
-		 * and pdev_id to hw_pdev_id to NSS FW
-		 */
-		if (nss_config) {
-			mac_id = pdev->lmac_id;
-			if (soc->cdp_soc.ol_ops->pdev_update_lmac_n_target_pdev_id)
-				soc->cdp_soc.ol_ops->
-					pdev_update_lmac_n_target_pdev_id(
-					soc->ctrl_psoc,
-					&pdev_id, &mac_id, &hw_pdev_id);
-		}
+	/*
+	 * When NSS offload is enabled, send pdev_id->lmac_id
+	 * and pdev_id to hw_pdev_id to NSS FW
+	 */
+	if (nss_config) {
+		mac_id = pdev->lmac_id;
+		if (soc->cdp_soc.ol_ops->pdev_update_lmac_n_target_pdev_id)
+			soc->cdp_soc.ol_ops->
+				pdev_update_lmac_n_target_pdev_id(
+				soc->ctrl_psoc,
+				&pdev_id, &mac_id, &hw_pdev_id);
 	}
 
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
@@ -10079,6 +10099,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.get_soc_dp_txrx_handle = dp_soc_get_dp_txrx_handle,
 	.set_soc_dp_txrx_handle = dp_soc_set_dp_txrx_handle,
 	.map_pdev_to_lmac = dp_soc_map_pdev_to_lmac,
+	.handle_mode_change = dp_soc_handle_pdev_mode_change,
 	.set_pdev_status_down = dp_soc_set_pdev_status_down,
 	.txrx_set_ba_aging_timeout = dp_set_ba_aging_timeout,
 	.txrx_get_ba_aging_timeout = dp_get_ba_aging_timeout,
