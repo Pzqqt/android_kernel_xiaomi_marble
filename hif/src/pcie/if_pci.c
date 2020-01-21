@@ -4119,9 +4119,9 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 }
 
 /**
- * hif_pm_runtime_put() - do a put opperation on the device
+ * hif_pm_runtime_put() - do a put operation on the device
  *
- * A put opperation will allow a runtime suspend after a corresponding
+ * A put operation will allow a runtime suspend after a corresponding
  * get was done.  This api should be used when sending data.
  *
  * This api will return a failure if runtime pm is stopped
@@ -4170,6 +4170,46 @@ int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx)
 	return 0;
 }
 
+/**
+ * hif_pm_runtime_put_noidle() - do a put operation with no idle
+ *
+ * This API will do a runtime put no idle operation
+ *
+ * @hif_ctx: pointer of HIF context
+ *
+ * Return: 0 for success otherwise an error code
+ */
+int hif_pm_runtime_put_noidle(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+	int usage_count, pm_state;
+	char *err = NULL;
+
+	if (!sc)
+		return -EINVAL;
+
+	if (!pm_runtime_enabled(sc->dev))
+		return 0;
+
+	usage_count = atomic_read(&sc->dev->power.usage_count);
+	if (usage_count == 1) {
+		pm_state = qdf_atomic_read(&sc->pm_state);
+		if (pm_state == HIF_PM_RUNTIME_STATE_NONE)
+			err = "Ignore unexpected Put as runtime PM is disabled";
+	} else if (usage_count == 0) {
+		err = "Put without a Get Operation";
+	}
+
+	if (err) {
+		hif_pci_runtime_pm_warn(sc, err);
+		return -EINVAL;
+	}
+
+	sc->pm_stats.runtime_put++;
+	pm_runtime_put_noidle(sc->dev);
+
+	return 0;
+}
 
 /**
  * __hif_pm_runtime_prevent_suspend() - prevent runtime suspend for a protocol
