@@ -243,11 +243,13 @@ dp_rx_fisa_setup_hw_fse(struct dp_rx_fst *fisa_hdl,
 static void dp_rx_fisa_update_sw_ft_entry(struct dp_fisa_rx_sw_ft *sw_ft_entry,
 					  uint32_t flow_hash,
 					  struct dp_vdev *vdev,
+					  struct dp_soc *soc_hdl,
 					  uint32_t flow_id)
 {
 	sw_ft_entry->flow_hash = flow_hash;
 	sw_ft_entry->flow_id = flow_id;
 	sw_ft_entry->vdev = vdev;
+	sw_ft_entry->soc_hdl = soc_hdl;
 }
 
 /**
@@ -362,6 +364,7 @@ dp_rx_fisa_add_ft_entry(struct dp_rx_fst *fisa_hdl,
 			/* Add SW FT entry */
 			dp_rx_fisa_update_sw_ft_entry(sw_ft_entry,
 						      flow_hash, vdev,
+						      fisa_hdl->soc_hdl,
 						      hashed_flow_idx);
 			if (!rx_flow_tuple_info.tuple_populated)
 				get_flow_tuple_from_nbuf(hal_soc_hdl,
@@ -716,6 +719,7 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 	struct udphdr *head_skb_udp_hdr;
 	struct skb_shared_info *shinfo;
 	qdf_nbuf_t linear_skb;
+	struct dp_vdev *fisa_flow_vdev;
 
 	dp_fisa_debug("head_skb %pk", head_skb);
 	dp_fisa_debug("cumulative ip length %d",
@@ -787,6 +791,12 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 
 	hex_dump_skb_data(fisa_flow->head_skb, false);
 
+	fisa_flow_vdev = dp_get_vdev_from_soc_vdev_id_wifi3(fisa_flow->soc_hdl,
+				QDF_NBUF_CB_RX_VDEV_ID(fisa_flow->head_skb));
+	if (qdf_unlikely(!fisa_flow_vdev ||
+					(fisa_flow_vdev != fisa_flow->vdev))) {
+		qdf_nbuf_free(fisa_flow->head_skb);
+	}
 	dp_fisa_debug("fisa_flow->curr_aggr %d", fisa_flow->cur_aggr);
 	linear_skb = dp_fisa_rx_linear_skb(vdev, fisa_flow->head_skb, 24000);
 	if (linear_skb) {
