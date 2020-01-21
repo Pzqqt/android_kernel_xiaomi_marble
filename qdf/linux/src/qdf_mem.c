@@ -1093,10 +1093,18 @@ static int qdf_mem_malloc_flags(void)
  *
  * Return: value of mem_debug_disabled qdf module argument
  */
+#ifdef DISABLE_MEM_DBG_LOAD_CONFIG
+bool qdf_mem_debug_config_get(void)
+{
+	/* Return false if DISABLE_LOAD_MEM_DBG_CONFIG flag is enabled */
+	return false;
+}
+#else
 bool qdf_mem_debug_config_get(void)
 {
 	return mem_debug_disabled;
 }
+#endif /* DISABLE_MEM_DBG_LOAD_CONFIG */
 
 /**
  * qdf_mem_debug_init() - initialize qdf memory debug functionality
