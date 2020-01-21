@@ -2382,7 +2382,7 @@ done:
 			}
 		}
 
-		if (vdev->osif_fisa_flush)
+		if (vdev && vdev->osif_fisa_flush)
 			vdev->osif_fisa_flush(soc, reo_ring_num);
 
 		if (vdev && vdev->osif_gro_flush && rx_ol_pkt_cnt) {

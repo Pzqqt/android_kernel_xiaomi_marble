@@ -2288,6 +2288,7 @@ struct dp_fisa_rx_sw_ft {
 	uint32_t aggr_count;
 	uint8_t do_not_aggregate;
 	uint16_t hal_cumultive_ip_len;
+	struct dp_soc *soc_hdl;
 };
 
 #define DP_RX_GET_SW_FT_ENTRY_SIZE sizeof(struct dp_fisa_rx_sw_ft)
