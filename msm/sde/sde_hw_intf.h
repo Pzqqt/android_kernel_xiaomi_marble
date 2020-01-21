@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_INTF_H
@@ -34,8 +34,9 @@ struct intf_timing_params {
 	u32 hsync_skew;
 	u32 v_front_porch_fixed;
 	bool wide_bus_en;	/* for DP only */
-	bool compression_en;	/* for DP only */
+	bool compression_en;
 	u32 extra_dto_cycles;	/* for DP only */
+	bool dsc_4hs_merge;	/* DSC 4HS merge */
 };
 
 struct intf_prog_fetch {
@@ -177,6 +178,12 @@ struct sde_hw_intf_ops {
 	 */
 	void (*avr_ctrl)(struct sde_hw_intf *intf,
 			const struct intf_avr_params *avr_params);
+
+	/**
+	 * Enable/disable 64 bit compressed data input to interface block
+	 */
+	void (*enable_compressed_input)(struct sde_hw_intf *intf,
+		bool compression_en, bool dsc_4hs_merge);
 };
 
 struct sde_hw_intf {

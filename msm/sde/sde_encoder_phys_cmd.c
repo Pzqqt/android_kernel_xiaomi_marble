@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -1102,7 +1102,10 @@ static void _sde_encoder_phys_cmd_pingpong_config(
 static void sde_encoder_phys_cmd_enable_helper(
 		struct sde_encoder_phys *phys_enc)
 {
-	if (!phys_enc || !phys_enc->hw_ctl || !phys_enc->hw_pp) {
+	struct sde_hw_intf *hw_intf;
+
+	if (!phys_enc || !phys_enc->hw_ctl || !phys_enc->hw_pp ||
+			!phys_enc->hw_intf) {
 		SDE_ERROR("invalid arg(s), encoder %d\n", !phys_enc);
 		return;
 	}
@@ -1110,6 +1113,12 @@ static void sde_encoder_phys_cmd_enable_helper(
 	sde_encoder_helper_split_config(phys_enc, phys_enc->intf_idx);
 
 	_sde_encoder_phys_cmd_pingpong_config(phys_enc);
+
+	hw_intf = phys_enc->hw_intf;
+	if (hw_intf->ops.enable_compressed_input)
+		hw_intf->ops.enable_compressed_input(phys_enc->hw_intf,
+				(phys_enc->comp_type !=
+				 MSM_DISPLAY_COMPRESSION_NONE), false);
 
 	/*
 	 * For pp-split, skip setting the flush bit for the slave intf, since

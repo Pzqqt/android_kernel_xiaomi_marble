@@ -103,7 +103,8 @@ static void drm_mode_to_intf_timing_params(
 	timing->underflow_clr = 0xff;
 	timing->hsync_skew = mode->hskew;
 	timing->v_front_porch_fixed = vid_enc->base.vfp_cached;
-	timing->compression_en = false;
+	if (vid_enc->base.comp_type != MSM_DISPLAY_COMPRESSION_NONE)
+		timing->compression_en = true;
 
 	/* DSI controller cannot handle active-low sync signals. */
 	if (phys_enc->hw_intf->cap->type == INTF_DSI) {
@@ -138,7 +139,6 @@ static void drm_mode_to_intf_timing_params(
 
 		if (vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_DSC &&
 				(vid_enc->base.comp_ratio > 1)) {
-			timing->compression_en = true;
 			timing->extra_dto_cycles =
 				vid_enc->base.dsc_extra_pclk_cycle_cnt;
 			timing->width += vid_enc->base.dsc_extra_disp_width;
