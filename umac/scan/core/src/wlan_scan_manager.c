@@ -998,9 +998,10 @@ static void scm_update_rnr_info(struct scan_start_request *req)
 	uint8_t total_count = MAX_HINTS_PER_SCAN_REQ;
 	uint32_t freq;
 	struct meta_rnr_channel *chan;
-	qdf_list_node_t *cur_node, *next_node;
+	qdf_list_node_t *cur_node, *next_node = NULL;
 	struct scan_rnr_node *rnr_node;
 	struct chan_list *chan_list;
+	QDF_STATUS status;
 
 	if (!req)
 		return;
@@ -1012,13 +1013,15 @@ static void scm_update_rnr_info(struct scan_start_request *req)
 			continue;
 
 		chan = scm_get_chan_meta(freq);
+		if (!chan) {
+			scm_debug("Failed to get meta, freq %d", freq);
+			continue;
+		}
 		if (qdf_list_empty(&chan->rnr_list))
 			continue;
 
 		qdf_list_peek_front(&chan->rnr_list, &cur_node);
 		while (cur_node && total_count) {
-			qdf_list_peek_next(&chan->rnr_list, cur_node,
-					   &next_node);
 			rnr_node = qdf_container_of(cur_node,
 						    struct scan_rnr_node,
 						    node);
@@ -1034,6 +1037,10 @@ static void scm_update_rnr_info(struct scan_start_request *req)
 				req->scan_req.num_hint_s_ssid++;
 				total_count--;
 			}
+			status = qdf_list_peek_next(&chan->rnr_list, cur_node,
+						    &next_node);
+			if (QDF_IS_STATUS_ERROR(status))
+				break;
 			cur_node = next_node;
 			next_node = NULL;
 		}

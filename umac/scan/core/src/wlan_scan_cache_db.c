@@ -184,7 +184,6 @@ static void scm_del_rnr_channel_db(struct scan_cache_entry *entry)
 				  chan_freq);
 			return;
 		}
-		channel->bss_beacon_probe_count--;
 		cur_node = NULL;
 		qdf_list_peek_front(&channel->rnr_list, &cur_node);
 		/* Free the Node */
@@ -200,11 +199,15 @@ static void scm_del_rnr_channel_db(struct scan_cache_entry *entry)
 				qdf_list_remove_node(&channel->rnr_list,
 						     &rnr_node->node);
 				qdf_mem_free(rnr_node);
+				channel->bss_beacon_probe_count--;
+				break;
 			} else if (rnr_node->entry.short_ssid ==
 					rnr_bss->short_ssid) {
 				qdf_list_remove_node(&channel->rnr_list,
 						     &rnr_node->node);
 				qdf_mem_free(rnr_node);
+				channel->bss_beacon_probe_count--;
+				break;
 			}
 			cur_node = next_node;
 			next_node = NULL;
