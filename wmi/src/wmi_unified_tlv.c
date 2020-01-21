@@ -6804,6 +6804,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	WMI_RSRC_CFG_FLAG_IPA_DISABLE_SET(resource_cfg->flag1,
 					  tgt_res_cfg->ipa_disable);
 
+	if (tgt_res_cfg->time_sync_ftm)
+		WMI_RSRC_CFG_FLAG_AUDIO_SYNC_SUPPORT_SET(resource_cfg->flag1,
+							 1);
+
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 	resource_cfg->peer_map_unmap_v2_support =
 		tgt_res_cfg->peer_map_unmap_v2;
@@ -14042,6 +14046,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 		WMI_SERVICE_PEER_DELETE_NO_PEER_FLUSH_TIDS_CMD;
 	wmi_service[wmi_service_multiple_vdev_restart_ext] =
 			WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_time_sync_ftm] =
+			WMI_SERVICE_AUDIO_SYNC_SUPPORT;
 }
 
 /**
