@@ -8946,7 +8946,7 @@ dp_txrx_stats_publish(struct cdp_soc_t *soc, uint8_t pdev_id,
 				req.cookie_val, 0);
 
 	msleep(DP_MAX_SLEEP_TIME);
-	qdf_mem_copy(buf, &pdev->stats, sizeof(struct cdp_stats_extd));
+	qdf_mem_copy(buf, &pdev->stats, sizeof(struct cdp_pdev_stats));
 
 	return TXRX_STATS_LEVEL;
 }
