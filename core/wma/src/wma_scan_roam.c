@@ -178,11 +178,13 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				chan_p->allow_vht = 1;
 		} else {
 			chan_p->phy_mode = MODE_11A;
-			if (chan_list->vht_en)
+			if (chan_list->vht_en &&
+			    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_p->mhz)))
 				chan_p->allow_vht = 1;
 		}
 
-		if (chan_list->ht_en)
+		if (chan_list->ht_en &&
+		    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_p->mhz)))
 			chan_p->allow_ht = 1;
 
 		if (chan_list->he_en)
