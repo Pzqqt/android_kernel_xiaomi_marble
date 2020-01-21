@@ -1481,19 +1481,24 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 		mpdu_info->mac_address,
 		QDF_MAC_ADDR_SIZE);
 
-	peer = dp_peer_find_by_id(pdev->soc, user->peer_id);
-	if (peer) {
-		struct dp_vdev *vdev = NULL;
-		vdev = peer->vdev;
-		if (vdev)
-			qdf_mem_copy(wh_min->i_addr2,
-				     vdev->mac_addr.raw,
-				     QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
+	if (subtype == IEEE80211_FC0_SUBTYPE_ACK)
+		qdf_nbuf_set_pktlen(tx_capture_info.mpdu_nbuf,
+				    sizeof(struct ieee80211_frame_min_one));
+	else {
+		peer = dp_peer_find_by_id(pdev->soc, user->peer_id);
+		if (peer) {
+			struct dp_vdev *vdev = NULL;
+
+			vdev = peer->vdev;
+			if (vdev)
+				qdf_mem_copy(wh_min->i_addr2,
+					     vdev->mac_addr.raw,
+					     QDF_MAC_ADDR_SIZE);
+			dp_peer_unref_del_find_by_id(peer);
+		}
+		qdf_nbuf_set_pktlen(tx_capture_info.mpdu_nbuf, sizeof(*wh_min));
 	}
 
-	qdf_nbuf_set_pktlen(tx_capture_info.mpdu_nbuf,
-		sizeof(*wh_min));
 	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 		QDF_TRACE_LEVEL_DEBUG,
 		"HTT_FTYPE[%d] frm(0x%08x): fc %x %x, dur 0x%x%x\n",
@@ -1594,6 +1599,47 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 	}
 }
 
+static void dp_gen_ack_rx_frame(struct dp_pdev *pdev,
+				struct cdp_tx_indication_info *tx_capture_info)
+{
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct dp_peer *peer;
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+
+	ptr_tx_cap = &pdev->tx_capture;
+	ppdu_desc = &ptr_tx_cap->dummy_ppdu_desc;
+	ppdu_desc->channel = tx_capture_info->ppdu_desc->channel;
+	ppdu_desc->num_mpdu = 1;
+	ppdu_desc->num_msdu = 1;
+	ppdu_desc->user[0].ppdu_type = HTT_PPDU_STATS_PPDU_TYPE_SU;
+	ppdu_desc->bar_num_users = 0;
+	ppdu_desc->num_users = 1;
+
+	ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
+	ppdu_desc->frame_ctrl = (IEEE80211_FC0_SUBTYPE_ACK |
+				 IEEE80211_FC0_TYPE_CTL);
+	ppdu_desc->ppdu_start_timestamp =
+			tx_capture_info->ppdu_desc->ppdu_start_timestamp;
+	ppdu_desc->ppdu_end_timestamp =
+			tx_capture_info->ppdu_desc->ppdu_end_timestamp;
+	ppdu_desc->user[0].peer_id =
+			tx_capture_info->ppdu_desc->user[0].peer_id;
+	peer = dp_peer_find_by_id(pdev->soc,
+				  tx_capture_info->ppdu_desc->user[0].peer_id);
+	if (peer) {
+		struct dp_vdev *vdev = NULL;
+
+		vdev = peer->vdev;
+		if (vdev)
+			qdf_mem_copy(&ppdu_desc->user[0].mac_addr,
+				     vdev->mac_addr.raw,
+				     QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_del_find_by_id(peer);
+	}
+
+	dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc);
+}
+
 /**
  * dp_send_data_to_stack(): Function to deliver mpdu info to stack
  * to upper layer
@@ -1673,6 +1719,9 @@ void dp_send_data_to_stack(struct dp_pdev *pdev,
 		if (tx_capture_info.mpdu_nbuf)
 			qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
 	}
+
+	if (ppdu_desc->resp_type == HTT_PPDU_STATS_ACK_EXPECTED_E)
+		dp_gen_ack_rx_frame(pdev, &tx_capture_info);
 }
 
 static void
