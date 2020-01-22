@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,6 +67,29 @@ static inline QDF_STATUS cdp_bus_resume(ol_txrx_soc_handle soc,
 	if (soc->ops->bus_ops->bus_resume)
 		return soc->ops->bus_ops->bus_resume(soc, pdev_id);
 	return QDF_STATUS_E_NOSUPPORT;
+}
+
+/**
+ * cdp_process_wow_ack() - Process wow ack response
+ * @soc: data path soc handle
+ * @pdev_id: id of dp pdev handle
+ *
+ * Do any required data path operations for target wow ack
+ * suspend response.
+ *
+ * Return: None
+ */
+static inline void cdp_process_wow_ack_rsp(ol_txrx_soc_handle soc,
+					   uint8_t pdev_id)
+{
+	if (!soc || !soc->ops || !soc->ops->bus_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->bus_ops->process_wow_ack_rsp)
+		return soc->ops->bus_ops->process_wow_ack_rsp(soc, pdev_id);
 }
 
 #endif /* _CDP_TXRX_BUS_H_ */
