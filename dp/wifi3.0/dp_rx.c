@@ -1252,9 +1252,8 @@ dp_rx_enqueue_rx(struct dp_peer *peer, qdf_nbuf_t rx_buf_list)
 	struct dp_peer_cached_bufq *bufqi = &peer->bufq_info;
 	int num_buff_elem;
 
-	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_TXRX, "bufq->curr %d bufq->drops %d",
-			   bufqi->entries, bufqi->dropped);
-
+	dp_debug_rl("bufq->curr %d bufq->drops %d", bufqi->entries,
+		    bufqi->dropped);
 	if (!peer->valid) {
 		bufqi->dropped = dp_rx_drop_nbuf_list(peer->vdev->pdev,
 						      rx_buf_list);
@@ -1311,11 +1310,11 @@ dp_rx_enqueue_rx(struct dp_peer *peer, qdf_nbuf_t rx_buf_list)
 }
 #endif
 
-static inline void dp_rx_deliver_to_stack(struct dp_soc *soc,
-					  struct dp_vdev *vdev,
-					  struct dp_peer *peer,
-					  qdf_nbuf_t nbuf_head,
-					  qdf_nbuf_t nbuf_tail)
+void dp_rx_deliver_to_stack(struct dp_soc *soc,
+			    struct dp_vdev *vdev,
+			    struct dp_peer *peer,
+			    qdf_nbuf_t nbuf_head,
+			    qdf_nbuf_t nbuf_tail)
 {
 	int num_nbuf = 0;
 
@@ -1335,11 +1334,13 @@ static inline void dp_rx_deliver_to_stack(struct dp_soc *soc,
 	 * callback function. if so let us free the nbuf_list.
 	 */
 	if (qdf_unlikely(!vdev->osif_rx)) {
-		if (dp_rx_is_peer_cache_bufq_supported())
+		if (peer && dp_rx_is_peer_cache_bufq_supported()) {
 			dp_rx_enqueue_rx(peer, nbuf_head);
-		else
-			dp_rx_drop_nbuf_list(vdev->pdev, nbuf_head);
-
+		} else {
+			num_nbuf = dp_rx_drop_nbuf_list(vdev->pdev,
+							nbuf_head);
+			DP_STATS_DEC(peer, rx.to_stack.num, num_nbuf);
+		}
 		return;
 	}
 
@@ -1348,7 +1349,6 @@ static inline void dp_rx_deliver_to_stack(struct dp_soc *soc,
 		vdev->osif_rsim_rx_decap(vdev->osif_vdev, &nbuf_head,
 				&nbuf_tail, peer->mac_addr.raw);
 	}
-
 	vdev->osif_rx(vdev->osif_vdev, nbuf_head);
 }
 
