@@ -1112,12 +1112,12 @@ static int msm_compr_send_media_format_block(struct snd_compr_stream *cstream,
 		wma_cfg.format_tag = prtd->codec_param.codec.format;
 		wma_cfg.ch_cfg = prtd->codec_param.codec.ch_in;
 		wma_cfg.sample_rate = prtd->sample_rate;
-		wma_cfg.avg_bytes_per_sec = codec_options->wma.avg_bit_rate/8;
-		wma_cfg.block_align = codec_options->wma.super_block_align;
+		wma_cfg.avg_bytes_per_sec = codec_options->wma_dec.avg_bit_rate/8;
+		wma_cfg.block_align = codec_options->wma_dec.super_block_align;
 		wma_cfg.valid_bits_per_sample =
-			codec_options->wma.bits_per_sample;
-		wma_cfg.ch_mask = codec_options->wma.channelmask;
-		wma_cfg.encode_opt = codec_options->wma.encodeopt;
+			codec_options->wma_dec.bits_per_sample;
+		wma_cfg.ch_mask = codec_options->wma_dec.channelmask;
+		wma_cfg.encode_opt = codec_options->wma_dec.encodeopt;
 		ret = q6asm_media_format_block_wma(prtd->audio_client,
 					&wma_cfg, stream_id);
 		if (ret < 0)
