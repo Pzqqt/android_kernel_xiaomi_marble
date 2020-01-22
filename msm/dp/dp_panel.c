@@ -2319,7 +2319,7 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 	connector->hdr_avg_luminance = 0;
 	connector->hdr_min_luminance = 0;
 	connector->hdr_supported = false;
-	connector->hdr_plus_app_ver = 0;
+	sde_conn->hdr_plus_app_ver = 0;
 
 	sde_conn->colorspace_updated = false;
 
