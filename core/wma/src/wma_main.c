@@ -6664,7 +6664,8 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		wlan_res_cfg->new_htt_msg_format = false;
 	}
 
-	if (cfg_get(wma_handle->psoc, CFG_DP_ENABLE_PEER_UMAP_CONF_SUPPORT) &&
+	if (QDF_GLOBAL_FTM_MODE  != cds_get_conparam() &&
+	    ucfg_mlme_get_peer_unmap_conf(wma_handle->psoc) &&
 	    wmi_service_enabled(wmi_handle,
 				wmi_service_peer_unmap_cnf_support)) {
 		wlan_res_cfg->peer_unmap_conf_support = true;

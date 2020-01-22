@@ -2344,4 +2344,13 @@ wlan_mlme_get_mgmt_max_retry(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_mlme_get_status_ring_buffer(struct wlan_objmgr_psoc *psoc,
 				 bool *enable_ring_buffer);
+
+/**
+ * wlan_mlme_get_peer_unmap_conf() - Indicate if peer unmap confirmation
+ * support is enabled or disabled
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if peer unmap confirmation support is enabled, else false
+ */
+bool wlan_mlme_get_peer_unmap_conf(struct wlan_objmgr_psoc *psoc);
 #endif /* _WLAN_MLME_API_H_ */

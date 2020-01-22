@@ -3957,4 +3957,16 @@ ucfg_mlme_get_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc,
 	return wlan_mlme_get_ignore_fw_reg_offload_ind(psoc, disabled);
 }
 
+/**
+ * ucfg_mlme_get_peer_unmap_conf() - Indicate if peer unmap confirmation
+ * support is enabled or disabled
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if peer unmap confirmation support is enabled, else false
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_peer_unmap_conf(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlme_get_peer_unmap_conf(psoc);
+}
 #endif /* _WLAN_MLME_UCFG_API_H_ */

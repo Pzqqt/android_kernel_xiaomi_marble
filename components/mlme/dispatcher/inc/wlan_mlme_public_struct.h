@@ -1126,6 +1126,7 @@ struct wlan_mlme_chainmask {
  * @bmiss_skip_full_scan: Decide if full scan can be skipped in firmware if no
  * candidate is found in partial scan based on channel map
  * @enable_ring_buffer: Decide to enable/disable ring buffer for bug report
+ * @enable_peer_unmap_conf_support: Indicate whether to send conf for peer unmap
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1160,6 +1161,7 @@ struct wlan_mlme_generic {
 	uint8_t mgmt_retry_max;
 	bool bmiss_skip_full_scan;
 	bool enable_ring_buffer;
+	bool enable_peer_unmap_conf_support;
 };
 
 /*
