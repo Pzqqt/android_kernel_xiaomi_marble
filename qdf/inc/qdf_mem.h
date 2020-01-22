@@ -555,8 +555,6 @@ int qdf_mem_multi_page_link(qdf_device_t osdev,
 		struct qdf_mem_multi_page_t *pages,
 		uint32_t elem_size, uint32_t elem_count, uint8_t cacheable);
 
-#ifdef WLAN_DEBUGFS
-
 /**
  * qdf_mem_kmalloc_inc() - increment kmalloc allocated bytes count
  * @size: number of bytes to increment by
@@ -573,13 +571,7 @@ void qdf_mem_kmalloc_inc(qdf_size_t size);
  */
 void qdf_mem_kmalloc_dec(qdf_size_t size);
 
-#else
-
-static inline void qdf_mem_kmalloc_inc(qdf_size_t size) { }
-static inline void qdf_mem_kmalloc_dec(qdf_size_t size) { }
-
-#endif /* WLAN_DEBUGFS */
-
+#ifdef CONFIG_WLAN_SYSFS_MEM_STATS
 /**
  * qdf_mem_skb_inc() - increment total skb allocation size
  * @size: size to be added
@@ -595,6 +587,16 @@ void qdf_mem_skb_inc(qdf_size_t size);
  * Return: none
  */
 void qdf_mem_skb_dec(qdf_size_t size);
+
+#else
+static inline void qdf_mem_skb_inc(qdf_size_t size)
+{
+}
+
+static inline void qdf_mem_skb_dec(qdf_size_t size)
+{
+}
+#endif /* CONFIG_WLAN_SYSFS_MEM_STATS */
 
 /**
  * qdf_mem_map_table_alloc() - Allocate shared memory info structure
@@ -845,5 +847,29 @@ static inline void qdf_mem_shared_mem_free(qdf_device_t osdev,
 	qdf_mem_free_sgtable(&shared_mem->sgtable);
 	qdf_mem_free(shared_mem);
 }
+
+/**
+ * qdf_dma_mem_stats_read() - Return the DMA memory allocated in
+ * host driver
+ *
+ * Return: None
+ */
+int32_t qdf_dma_mem_stats_read(void);
+
+/**
+ * qdf_heap_mem_stats_read() - Return the heap memory allocated
+ * in host driver
+ *
+ * Return: None
+ */
+int32_t qdf_heap_mem_stats_read(void);
+
+/**
+ * qdf_skb_mem_stats_read() - Return the SKB memory allocated in
+ * host driver
+ *
+ * Return: None
+ */
+int32_t qdf_skb_mem_stats_read(void);
 
 #endif /* __QDF_MEMORY_H */

@@ -1620,7 +1620,12 @@ static inline qdf_nbuf_t
 qdf_nbuf_alloc_fl(qdf_device_t osdev, qdf_size_t size, int reserve, int align,
 		  int prio, const char *func, uint32_t line)
 {
-	return __qdf_nbuf_alloc(osdev, size, reserve, align, prio, func, line);
+	qdf_nbuf_t nbuf;
+
+	nbuf = __qdf_nbuf_alloc(osdev, size, reserve, align, prio, func, line);
+	if (qdf_likely(nbuf))
+		qdf_mem_skb_inc(nbuf->truesize);
+	return nbuf;
 }
 
 static inline void qdf_nbuf_free(qdf_nbuf_t buf)

@@ -551,6 +551,7 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 		return;
 
 	qdf_nbuf_count_dec(skb);
+	qdf_mem_skb_dec(skb->truesize);
 	if (nbuf_free_cb)
 		nbuf_free_cb(skb);
 	else
