@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <drm/drm_edid.h>
@@ -8,6 +8,7 @@
 
 #include "sde_kms.h"
 #include "sde_edid_parser.h"
+#include "sde/sde_connector.h"
 
 #define DBC_START_OFFSET 4
 #define EDID_DTD_LEN 18
@@ -464,6 +465,75 @@ static void _sde_edid_extract_audio_data_blocks(
 	SDE_EDID_DEBUG("%s -", __func__);
 }
 
+static void sde_edid_parse_hdr_plus_info(struct drm_connector *connector,
+	const u8 *db)
+{
+	struct sde_connector *c_conn;
+
+	c_conn = to_sde_connector(connector);
+	c_conn->hdr_plus_app_ver = db[5] & VSVDB_HDR10_PLUS_APP_VER_MASK;
+}
+
+static void sde_edid_parse_vsvdb_info(struct drm_connector *connector,
+	const u8 *db)
+{
+	u8 db_len = 0;
+	u32 ieee_code = 0;
+
+	SDE_EDID_DEBUG("%s +\n", __func__);
+
+	db_len = sde_cea_db_payload_len(db);
+
+	if (db_len < 5)
+		return;
+
+	/* Bytes 2-4: IEEE 24-bit code, LSB first */
+	ieee_code = db[2] | (db[3] << 8) | (db[4] << 16);
+
+	if (ieee_code == VSVDB_HDR10_PLUS_IEEE_CODE)
+		sde_edid_parse_hdr_plus_info(connector, db);
+
+	SDE_EDID_DEBUG("%s -\n", __func__);
+}
+
+/*
+ * sde_edid_parse_extended_blk_info - Parse the HDMI extended tag blocks
+ * @connector: connector corresponding to external sink
+ * @edid: handle to the EDID structure
+ * Parses the all extended tag blocks extract sink info for @connector.
+ */
+static void
+sde_edid_parse_extended_blk_info(struct drm_connector *connector,
+	struct edid *edid)
+{
+	const u8 *cea = sde_find_cea_extension(edid);
+	const u8 *db = NULL;
+
+	if (cea && sde_cea_revision(cea) >= 3) {
+		int i, start, end;
+
+		if (sde_cea_db_offsets(cea, &start, &end))
+			return;
+
+		sde_for_each_cea_db(cea, i, start, end) {
+			db = &cea[i];
+
+			if (sde_cea_db_tag(db) == USE_EXTENDED_TAG) {
+				SDE_EDID_DEBUG("found ext tag block = %d\n",
+						db[1]);
+				switch (db[1]) {
+				case VENDOR_SPECIFIC_VIDEO_DATA_BLOCK:
+					sde_edid_parse_vsvdb_info(connector,
+							db);
+					break;
+				default:
+					break;
+				}
+			}
+		}
+	}
+}
+
 static void _sde_edid_extract_speaker_allocation_data(
 	struct sde_edid_ctrl *edid_ctrl)
 {
@@ -552,6 +622,8 @@ int _sde_edid_update_modes(struct drm_connector *connector,
 		rc = drm_add_edid_modes(connector, edid_ctrl->edid);
 		sde_edid_set_mode_format(connector, edid_ctrl);
 		_sde_edid_update_dc_modes(connector, edid_ctrl);
+		sde_edid_parse_extended_blk_info(connector,
+				edid_ctrl->edid);
 		SDE_EDID_DEBUG("%s -", __func__);
 		return rc;
 	}

@@ -471,6 +471,7 @@ struct sde_connector {
 	u32 unset_bl_level;
 	bool allow_bl_update;
 
+	u8 hdr_plus_app_ver;
 	u32 qsync_mode;
 	bool qsync_updated;
 
