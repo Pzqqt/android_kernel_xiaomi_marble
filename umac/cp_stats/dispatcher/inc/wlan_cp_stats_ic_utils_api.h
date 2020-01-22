@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -276,6 +276,10 @@ VDEV_CP_STATS_SET_FUNCS(peer_delete_all_resp);
 VDEV_CP_STATS_GET_FUNCS(rx_wrongbss);
 VDEV_CP_STATS_GET_FUNCS(rx_wrongdir);
 VDEV_CP_STATS_GET_FUNCS(rx_ssid_mismatch);
+VDEV_CP_STATS_GET_FUNCS(peer_delete_req);
+VDEV_CP_STATS_GET_FUNCS(peer_delete_resp);
+VDEV_CP_STATS_GET_FUNCS(peer_delete_all_req);
+VDEV_CP_STATS_GET_FUNCS(peer_delete_all_resp);
 
 static inline void vdev_cp_stats_reset(struct wlan_objmgr_vdev *vdev)
 {
