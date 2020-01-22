@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
+#include <linux/iopoll.h>
 
 #include "sde_hwio.h"
 #include "sde_hw_catalog.h"
@@ -9,6 +10,7 @@
 #include "sde_dbg.h"
 
 #define VBIF_VERSION			0x0000
+#define VBIF_CLKON			0x0004
 #define VBIF_CLK_FORCE_CTRL0		0x0008
 #define VBIF_CLK_FORCE_CTRL1		0x000C
 #define VBIF_QOS_REMAP_00		0x0020
@@ -33,6 +35,8 @@
 #define VBIF_XIN_CLR_ERR		0x019C
 #define VBIF_XIN_HALT_CTRL0		0x0200
 #define VBIF_XIN_HALT_CTRL1		0x0204
+#define VBIF_AXI_HALT_CTRL0		0x0208
+#define VBIF_AXI_HALT_CTRL1		0x020c
 #define VBIF_XINL_QOS_RP_REMAP_000	0x0550
 #define VBIF_XINL_QOS_LVL_REMAP_000	0x0590
 
@@ -154,7 +158,7 @@ static u32 sde_hw_get_limit_conf(struct sde_hw_vbif *vbif,
 	return limit;
 }
 
-static void sde_hw_set_halt_ctrl(struct sde_hw_vbif *vbif,
+static void sde_hw_set_xin_halt(struct sde_hw_vbif *vbif,
 		u32 xin_id, bool enable)
 {
 	struct sde_hw_blk_reg_map *c = &vbif->hw;
@@ -168,9 +172,10 @@ static void sde_hw_set_halt_ctrl(struct sde_hw_vbif *vbif,
 		reg_val &= ~BIT(xin_id);
 
 	SDE_REG_WRITE(c, VBIF_XIN_HALT_CTRL0, reg_val);
+	wmb(); /* make sure that xin client halted */
 }
 
-static bool sde_hw_get_halt_ctrl(struct sde_hw_vbif *vbif,
+static bool sde_hw_get_xin_halt_status(struct sde_hw_vbif *vbif,
 		u32 xin_id)
 {
 	struct sde_hw_blk_reg_map *c = &vbif->hw;
@@ -179,6 +184,24 @@ static bool sde_hw_get_halt_ctrl(struct sde_hw_vbif *vbif,
 	reg_val = SDE_REG_READ(c, VBIF_XIN_HALT_CTRL1);
 
 	return ((reg_val >> 16) & BIT(xin_id)) ? true : false;
+}
+
+static void sde_hw_set_axi_halt(struct sde_hw_vbif *vbif)
+{
+	struct sde_hw_blk_reg_map *c = &vbif->hw;
+
+	SDE_REG_WRITE(c, VBIF_CLKON, BIT(0));
+	SDE_REG_WRITE(c, VBIF_AXI_HALT_CTRL0, BIT(0));
+	wmb(); /* make sure that axi transactions are halted */
+}
+
+static int sde_hw_get_axi_halt_status(struct sde_hw_vbif *vbif)
+{
+	struct sde_hw_blk_reg_map *c = &vbif->hw;
+	int ctrl = 0;
+
+	return readl_poll_timeout(c->base_off + c->blk_off +
+		VBIF_AXI_HALT_CTRL1, ctrl, ctrl & BIT(0), 100, 4000);
 }
 
 static void sde_hw_set_qos_remap(struct sde_hw_vbif *vbif,
@@ -230,8 +253,10 @@ static void _setup_vbif_ops(const struct sde_mdss_cfg *m,
 {
 	ops->set_limit_conf = sde_hw_set_limit_conf;
 	ops->get_limit_conf = sde_hw_get_limit_conf;
-	ops->set_halt_ctrl = sde_hw_set_halt_ctrl;
-	ops->get_halt_ctrl = sde_hw_get_halt_ctrl;
+	ops->set_axi_halt = sde_hw_set_axi_halt;
+	ops->get_axi_halt_status = sde_hw_get_axi_halt_status;
+	ops->set_xin_halt = sde_hw_set_xin_halt;
+	ops->get_xin_halt_status = sde_hw_get_xin_halt_status;
 	if (test_bit(SDE_VBIF_QOS_REMAP, &cap))
 		ops->set_qos_remap = sde_hw_set_qos_remap;
 	if (test_bit(SDE_VBIF_DISABLE_SHAREABLE, &cap))

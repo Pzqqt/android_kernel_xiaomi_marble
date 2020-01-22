@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_VBIF_H__
@@ -97,6 +97,12 @@ void sde_vbif_clear_errors(struct sde_kms *sde_kms);
  * @sde_kms:	SDE handler
  */
 void sde_vbif_init_memtypes(struct sde_kms *sde_kms);
+
+/**
+ * sde_vbif_axi_halt_request - halt all axi transcations on vbif
+ * @sde_kms:	SDE handler
+ */
+void sde_vbif_axi_halt_request(struct sde_kms *sde_kms);
 
 /**
  * sde_vbif_halt_plane_xin - halts the xin client for the unused plane
