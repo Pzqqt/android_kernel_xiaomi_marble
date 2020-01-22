@@ -2023,7 +2023,8 @@ static void
 target_if_spectral_len_adj_swar_init(struct spectral_fft_bin_len_adj_swar *swar,
 				     uint32_t target_type)
 {
-	if (target_type == TARGET_TYPE_QCA8074V2)
+	if (target_type == TARGET_TYPE_QCA8074V2 ||
+	    target_type == TARGET_TYPE_QCN9000)
 		swar->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE;
 	else if (target_type == TARGET_TYPE_QCA8074 ||
 		 target_type == TARGET_TYPE_QCA6018 ||
@@ -2034,12 +2035,62 @@ target_if_spectral_len_adj_swar_init(struct spectral_fft_bin_len_adj_swar *swar,
 
 	if (target_type == TARGET_TYPE_QCA8074 ||
 	    target_type == TARGET_TYPE_QCA8074V2 ||
-	    target_type == TARGET_TYPE_QCA6018) {
+	    target_type == TARGET_TYPE_QCA6018 ||
+	    target_type == TARGET_TYPE_QCN9000) {
 		swar->inband_fftbin_size_adj = 1;
 		swar->null_fftbin_adj = 1;
 	} else {
 		swar->inband_fftbin_size_adj = 0;
 		swar->null_fftbin_adj = 0;
+	}
+
+	if (target_type == TARGET_TYPE_QCA8074V2)
+		swar->packmode_fftbin_size_adj = 1;
+	else
+		swar->packmode_fftbin_size_adj = 0;
+}
+
+/**
+ * target_if_spectral_report_params_init() - Initialize parameters which
+ * describes the structure of Spectral reports
+ *
+ * @rparams: Pointer to Spectral report parameter object
+ * @target_type: target type
+ *
+ * Function to Initialize parameters related to the structure of Spectral
+ * reports.
+ *
+ * Return: void
+ */
+static void
+target_if_spectral_report_params_init(
+			struct spectral_report_params *rparams,
+			uint32_t target_type)
+{
+	/* This entries are currently used by gen3 chipsets only. Hence
+	 * initialization is done for gen3 alone. In future if other generations
+	 * needs to use them they have to add proper initial values.
+	 */
+	if (target_type == TARGET_TYPE_QCN9000)
+		rparams->version = SPECTRAL_REPORT_FORMAT_VERSION_2;
+	else
+		rparams->version = SPECTRAL_REPORT_FORMAT_VERSION_1;
+
+	switch (rparams->version) {
+	case SPECTRAL_REPORT_FORMAT_VERSION_1:
+		rparams->ssumaary_padding_bytes =
+			NUM_PADDING_BYTES_SSCAN_SUMARY_REPORT_GEN3_V1;
+		rparams->fft_report_hdr_len =
+			FFT_REPORT_HEADER_LENGTH_GEN3_V1;
+		break;
+	case SPECTRAL_REPORT_FORMAT_VERSION_2:
+		rparams->ssumaary_padding_bytes =
+			NUM_PADDING_BYTES_SSCAN_SUMARY_REPORT_GEN3_V2;
+		rparams->fft_report_hdr_len =
+			FFT_REPORT_HEADER_LENGTH_GEN3_V2;
+		break;
+	default:
+		qdf_assert_always(0);
 	}
 }
 
@@ -2120,11 +2171,13 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	if (target_type == TARGET_TYPE_QCA8074 ||
 	    target_type == TARGET_TYPE_QCA8074V2 ||
 	    target_type == TARGET_TYPE_QCA6018 ||
-	    target_type == TARGET_TYPE_QCA6390)
+	    target_type == TARGET_TYPE_QCA6390 ||
+	    target_type == TARGET_TYPE_QCN9000)
 		spectral->direct_dma_support = true;
 
 	target_if_spectral_len_adj_swar_init(&spectral->len_adj_swar,
 					     target_type);
+	target_if_spectral_report_params_init(&spectral->rparams, target_type);
 
 	if ((target_type == TARGET_TYPE_QCA8074) ||
 	    (target_type == TARGET_TYPE_QCA8074V2) ||
@@ -2139,7 +2192,11 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN3;
 		spectral->tlvhdr_size = SPECTRAL_PHYERR_TLVSIZE_GEN3;
 		spectral->fft_size_min = SPECTRAL_PARAM_FFT_SIZE_MIN_GEN3;
-		spectral->fft_size_max = SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3;
+		spectral->fft_size_max =
+				SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_DEFAULT;
+		if (target_type == TARGET_TYPE_QCN9000)
+			spectral->fft_size_max =
+				SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_QCN9000;
 	} else {
 		spectral->spectral_gen = SPECTRAL_GEN2;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN2;

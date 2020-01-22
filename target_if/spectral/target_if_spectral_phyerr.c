@@ -1230,11 +1230,13 @@ target_if_spectral_get_bin_count_after_len_adj(
 			fft_bin_count >>= 2;
 			break;
 		case SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE:
+			fft_bin_count >>= 1;
 			/* Ideally we should be dividing fft bin length
 			 * by 2. Due to a HW bug, actual length is two
 			 * times the expected length.
 			 */
-			fft_bin_count >>= 2;
+			if (swar->packmode_fftbin_size_adj)
+				fft_bin_count >>= 1;
 			break;
 		case SPECTRAL_FFTBIN_SIZE_NO_WAR:
 			/* No length adjustment */
@@ -1326,11 +1328,12 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 {
 	size_t fft_hdr_length = (p_fft_report->fft_hdr_length * 4);
 	size_t report_len = (fft_hdr_length + 8);
-	size_t fft_bin_len = (fft_hdr_length - 16);
+	size_t fft_bin_len;
 	size_t fft_bin_count;
 	size_t fft_bin_len_inband_tfer = 0;
 	uint8_t *fft_bin_buf = NULL;
 
+	fft_bin_len = fft_hdr_length - spectral->rparams.fft_report_hdr_len;
 	fft_bin_count = target_if_spectral_get_bin_count_after_len_adj(
 			fft_bin_len,
 			spectral->params[smode].ss_rpt_mode,
@@ -1493,24 +1496,24 @@ target_if_get_detector_id_sscan_summary_report_gen3(uint8_t *data) {
 /**
  * target_if_consume_sscan_summary_report_gen3() - Consume Spectral summary
  * report
- * @spectral: Pointer to Spectral object
  * @data: Pointer to Spectral summary report
  * @fields: Pointer to structure to be populated with extracted fields
+ * @rparams: Pointer to structure with Spectral report params
  *
  * Consume Spectral summary report for gen3
  *
  * Return: void
  */
 static void
-target_if_consume_sscan_summary_report_gen3(struct target_if_spectral *spectral,
-					    uint8_t *data,
-					    struct sscan_report_fields_gen3
-						*fields) {
+target_if_consume_sscan_summary_report_gen3(
+				uint8_t *data,
+				struct sscan_report_fields_gen3 *fields,
+				struct spectral_report_params *rparams) {
 	struct spectral_sscan_summary_report_gen3 *psscan_summary_report;
 
-	qdf_assert_always(spectral);
 	qdf_assert_always(data);
 	qdf_assert_always(fields);
+	qdf_assert_always(rparams);
 
 	psscan_summary_report =
 		(struct spectral_sscan_summary_report_gen3 *)data;
@@ -1527,10 +1530,23 @@ target_if_consume_sscan_summary_report_gen3(struct target_if_spectral *spectral,
 			psscan_summary_report->hdr_a,
 			SSCAN_SUMMARY_REPORT_HDR_A_PRI80_SIZE_GEN3,
 			SSCAN_SUMMARY_REPORT_HDR_A_PRI80_POS_GEN3);
-	fields->sscan_gainchange = get_bitfield(
+
+	switch (rparams->version) {
+	case SPECTRAL_REPORT_FORMAT_VERSION_1:
+		fields->sscan_gainchange = get_bitfield(
 			psscan_summary_report->hdr_b,
-			SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3,
-			SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_POS_GEN3);
+			SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3_V1,
+			SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_POS_GEN3_V1);
+		break;
+	case SPECTRAL_REPORT_FORMAT_VERSION_2:
+		fields->sscan_gainchange = get_bitfield(
+			psscan_summary_report->hdr_c,
+			SSCAN_SUMMARY_REPORT_HDR_C_GAINCHANGE_SIZE_GEN3_V2,
+			SSCAN_SUMMARY_REPORT_HDR_C_GAINCHANGE_POS_GEN3_V2);
+		break;
+	default:
+		qdf_assert_always(0);
+	}
 }
 
 /**
@@ -1748,7 +1764,7 @@ target_if_consume_spectral_report_gen3(
 	uint8_t *data = report->data;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t vdev_rxchainmask;
-	struct sscan_report_fields_gen3 sscan_report_fields;
+	struct sscan_report_fields_gen3 sscan_report_fields = {0};
 	enum spectral_detector_id detector_id;
 	QDF_STATUS ret;
 
@@ -1769,10 +1785,11 @@ target_if_consume_spectral_report_gen3(
 			     detector_id);
 		goto fail;
 	}
-	target_if_consume_sscan_summary_report_gen3(spectral, data,
-						    &sscan_report_fields);
+	target_if_consume_sscan_summary_report_gen3(data, &sscan_report_fields,
+						    &spectral->rparams);
 	/* Advance buf pointer to the search fft report */
 	data += sizeof(struct spectral_sscan_summary_report_gen3);
+	data += spectral->rparams.ssumaary_padding_bytes;
 
 	if ((detector_id == SPECTRAL_DETECTOR_AGILE) ||
 	    is_primaryseg_expected(spectral)) {
@@ -1827,9 +1844,9 @@ target_if_consume_spectral_report_gen3(
 		}
 
 		fft_bin_count = target_if_spectral_get_bin_count_after_len_adj(
-				fft_hdr_length - 16,
-				spectral->params[params.smode].ss_rpt_mode,
-				&spectral->len_adj_swar);
+			fft_hdr_length - spectral->rparams.fft_report_hdr_len,
+			spectral->params[params.smode].ss_rpt_mode,
+			&spectral->len_adj_swar);
 		params.last_raw_timestamp =
 				spectral->last_fft_timestamp[params.smode];
 		params.reset_delay = 0;
@@ -1969,9 +1986,9 @@ target_if_consume_spectral_report_gen3(
 		}
 
 		fft_bin_count = target_if_spectral_get_bin_count_after_len_adj(
-				fft_hdr_length - 16,
-				spectral->params[params.smode].ss_rpt_mode,
-				&spectral->len_adj_swar);
+			fft_hdr_length - spectral->rparams.fft_report_hdr_len,
+			spectral->params[params.smode].ss_rpt_mode,
+			&spectral->len_adj_swar);
 		params.raw_timestamp_sec80 = p_sfft->timestamp;
 
 		/* Take care of state transitions for 160 MHz and 80p80 */

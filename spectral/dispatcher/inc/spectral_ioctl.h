@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -250,8 +250,10 @@ struct spectral_caps {
 
 #define SPECTRAL_IOCTL_PARAM_NOVAL (65535)
 
-#define MAX_SPECTRAL_CHAINS          3
-#define MAX_NUM_BINS                 520
+#define MAX_SPECTRAL_CHAINS           (3)
+#define MAX_NUM_BINS                  (1024)
+#define MAX_NUM_BINS_PRI80            (1024)
+#define MAX_NUM_BINS_SEC80            (520)
 /* 5 categories x (lower + upper) bands */
 #define MAX_INTERF                   10
 
@@ -425,8 +427,8 @@ struct spectral_samp_data {
 	uint8_t lb_edge_extrabins;
 	uint8_t rb_edge_extrabins;
 	uint16_t bin_pwr_count_sec80;
-	uint8_t bin_pwr[MAX_NUM_BINS];
-	uint8_t bin_pwr_sec80[MAX_NUM_BINS];
+	uint8_t bin_pwr[MAX_NUM_BINS_PRI80];
+	uint8_t bin_pwr_sec80[MAX_NUM_BINS_SEC80];
 	struct interf_src_rsp interf_list;
 	int16_t noise_floor;
 	int16_t noise_floor_sec80;

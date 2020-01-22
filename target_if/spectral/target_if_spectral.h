@@ -81,12 +81,13 @@
 #define OFFSET_CH_WIDTH_160	50
 
 /* Min and max for relevant Spectral params */
-#define SPECTRAL_PARAM_FFT_SIZE_MIN_GEN2   (1)
-#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN2   (9)
-#define SPECTRAL_PARAM_FFT_SIZE_MIN_GEN3   (5)
-#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3   (9)
-#define SPECTRAL_PARAM_RPT_MODE_MIN        (0)
-#define SPECTRAL_PARAM_RPT_MODE_MAX        (3)
+#define SPECTRAL_PARAM_FFT_SIZE_MIN_GEN2          (1)
+#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN2          (9)
+#define SPECTRAL_PARAM_FFT_SIZE_MIN_GEN3          (5)
+#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_DEFAULT  (9)
+#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_QCN9000  (10)
+#define SPECTRAL_PARAM_RPT_MODE_MIN               (0)
+#define SPECTRAL_PARAM_RPT_MODE_MAX               (3)
 
 /* DBR ring debug size for Spectral */
 #define SPECTRAL_DBR_RING_DEBUG_SIZE 512
@@ -252,13 +253,20 @@ struct spectral_phyerr_fft_gen2 {
 #define SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_SIZE_GEN3      (10)
 #define SSCAN_SUMMARY_REPORT_HDR_A_PRI80_POS_GEN3               (31)
 #define SSCAN_SUMMARY_REPORT_HDR_A_PRI80_SIZE_GEN3              (1)
-#define SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_POS_GEN3          (30)
-#define SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3         (1)
+#define SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_POS_GEN3_V1       (30)
+#define SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3_V1      (1)
+#define SSCAN_SUMMARY_REPORT_HDR_C_GAINCHANGE_POS_GEN3_V2       (16)
+#define SSCAN_SUMMARY_REPORT_HDR_C_GAINCHANGE_SIZE_GEN3_V2      (1)
 
 #define SPECTRAL_PHYERR_SIGNATURE_GEN3                          (0xFA)
 #define TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3                    (0x02)
 #define TLV_TAG_SEARCH_FFT_REPORT_GEN3                          (0x03)
 #define SPECTRAL_PHYERR_TLVSIZE_GEN3                            (4)
+
+#define FFT_REPORT_HEADER_LENGTH_GEN3_V2                   (24)
+#define FFT_REPORT_HEADER_LENGTH_GEN3_V1                   (16)
+#define NUM_PADDING_BYTES_SSCAN_SUMARY_REPORT_GEN3_V1      (0)
+#define NUM_PADDING_BYTES_SSCAN_SUMARY_REPORT_GEN3_V2      (16)
 
 #define PHYERR_HDR_SIG_POS    \
 	(offsetof(struct spectral_phyerr_fft_report_gen3, fft_hdr_sig))
@@ -374,7 +382,7 @@ struct sscan_report_fields_gen3 {
  * @hdr_a:          Header[0:31]
  * @resv:           Header[32:63]
  * @hdr_b:          Header[64:95]
- * @resv:           Header[96:127]
+ * @hdr_c:          Header[96:127]
  */
 struct spectral_sscan_summary_report_gen3 {
 	u_int32_t sscan_timestamp;
@@ -390,7 +398,7 @@ struct spectral_sscan_summary_report_gen3 {
 	u_int32_t hdr_a;
 	u_int32_t res1;
 	u_int32_t hdr_b;
-	u_int32_t res2;
+	u_int32_t hdr_c;
 } __ATTRIB_PACK;
 
 #ifdef DIRECT_BUF_RX_ENABLE
@@ -439,6 +447,17 @@ enum spectral_fftbin_size_war {
 };
 
 /**
+ * enum spectral_report_format_version - This represents the report format
+ * version number within each Spectral generation.
+ * @SPECTRAL_REPORT_FORMAT_VERSION_1 : version 1
+ * @SPECTRAL_REPORT_FORMAT_VERSION_2 : version 2
+ */
+enum spectral_report_format_version {
+	SPECTRAL_REPORT_FORMAT_VERSION_1,
+	SPECTRAL_REPORT_FORMAT_VERSION_2,
+};
+
+/**
  * struct spectral_fft_bin_len_adj_swar - Encapsulate information required for
  * Spectral FFT bin length adjusting software WARS.
  * @inband_fftbin_size_adj: Whether to carry out FFT bin size adjustment for
@@ -458,12 +477,34 @@ enum spectral_fftbin_size_war {
  * (as expected), but cannot arrange for a smaller length to be reported by HW.
  * In these circumstances, the driver would have to disregard the NULL bins and
  * report a bin count of 0 to higher layers.
+ * @packmode_fftbin_size_adj: Pack mode in HW refers to packing of each Spectral
+ * FFT bin into 2 bytes. But due to a bug HW reports 2 times the expected length
+ * when packmode is enabled. This SWAR compensates this bug by dividing the
+ * length with 2.
  * @fftbin_size_war: Type of FFT bin size SWAR
  */
 struct spectral_fft_bin_len_adj_swar {
 	u_int8_t inband_fftbin_size_adj;
 	u_int8_t null_fftbin_adj;
+	uint8_t packmode_fftbin_size_adj;
 	enum spectral_fftbin_size_war fftbin_size_war;
+};
+
+/**
+ * struct spectral_report_params - Parameters related to format of Spectral
+ * report.
+ * @version: This represents the report format version number within each
+ * Spectral generation.
+ * @ssumaary_padding_bytes: Number of bytes of padding after Spectral summary
+ * report
+ * @fft_report_hdr_len: Number of bytes in the header of the FFT report. This
+ * has to be subtracted from the length field of FFT report to find the length
+ * of FFT bins.
+ */
+struct spectral_report_params {
+	enum spectral_report_format_version version;
+	uint8_t ssumaary_padding_bytes;
+	uint8_t fft_report_hdr_len;
 };
 
 #if ATH_PERF_PWR_OFFLOAD
@@ -857,6 +898,7 @@ struct spectral_param_properties {
  * @prev_tstamp: Timestamp of the previously received sample, which has to be
  * compared with the current tstamp to check descrepancy
  * @target_reset_count: Number of times target excercised the reset routine
+ * @rparams: Parameters related to Spectral report structure
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -975,6 +1017,7 @@ struct target_if_spectral {
 	bool direct_dma_support;
 	uint32_t prev_tstamp;
 	uint32_t target_reset_count;
+	struct spectral_report_params rparams;
 };
 
 /**
