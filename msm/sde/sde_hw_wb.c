@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hw_mdss.h"
@@ -50,8 +50,6 @@
 
 #define CWB_CTRL_SRC_SEL		0x0
 #define CWB_CTRL_MODE			0x4
-#define CWB_CTRL_BLK_SIZE		0x100
-#define CWB_CTRL_BASE_OFFSET		0x83000
 
 /* WB_QOS_CTRL */
 #define WB_QOS_CTRL_DANGER_SAFE_EN	BIT(0)
@@ -79,15 +77,24 @@ static struct sde_wb_cfg *_wb_offset(enum sde_wb wb,
 static void _sde_hw_cwb_ctrl_init(struct sde_mdss_cfg *m,
 		void __iomem *addr, struct sde_hw_blk_reg_map *b)
 {
+	int i;
+	u32 blk_off;
+	char name[64] = {0};
+
 	if (b) {
 		b->base_off = addr;
-		b->blk_off = CWB_CTRL_BASE_OFFSET;
-		b->length = CWB_CTRL_BLK_SIZE * m->pingpong_count;
+		b->blk_off = m->cwb_blk_off;
+		b->length = 0x20;
 		b->hwversion = m->hwversion;
 		b->log_mask = SDE_DBG_MASK_WB;
+	}
 
-		sde_dbg_reg_register_dump_range(SDE_DBG_NAME, "cwb", b->blk_off,
-			b->blk_off + b->length, 0xff);
+	for (i = 0; i < m->pingpong_count; i++) {
+		snprintf(name, sizeof(name), "cwb%d", i);
+		blk_off = b->blk_off + (m->cwb_blk_stride * i);
+
+		sde_dbg_reg_register_dump_range(SDE_DBG_NAME, name,
+				blk_off, blk_off + b->length, 0xff);
 	}
 }
 
@@ -291,7 +298,7 @@ static void sde_hw_wb_program_cwb_ctrl(struct sde_hw_wb *ctx,
 		return;
 
 	c = &ctx->cwb_hw;
-	blk_base = CWB_CTRL_BLK_SIZE * (cur_idx - CWB_0);
+	blk_base  = ctx->catalog->cwb_blk_stride * (cur_idx - CWB_0);
 
 	if (enable) {
 		SDE_REG_WRITE(c, blk_base + CWB_CTRL_SRC_SEL, data_src - CWB_0);

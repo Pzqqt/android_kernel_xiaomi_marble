@@ -2117,7 +2117,7 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 	int rc, prop_count[WB_PROP_MAX], i, j;
 	struct sde_prop_value *prop_value = NULL;
 	bool prop_exists[WB_PROP_MAX];
-	u32 off_count;
+	u32 off_count, major_version;
 	struct sde_wb_cfg *wb;
 	struct sde_wb_sub_blocks *sblk;
 
@@ -2146,6 +2146,7 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 	if (rc)
 		goto end;
 
+	major_version = SDE_HW_MAJOR(sde_cfg->hwversion);
 	for (i = 0; i < off_count; i++) {
 		wb = sde_cfg->wb + i;
 		sblk = kzalloc(sizeof(*sblk), GFP_KERNEL);
@@ -2208,6 +2209,13 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 			set_bit(SDE_WB_HAS_CWB, &wb->features);
 			if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 				set_bit(SDE_WB_CWB_CTRL, &wb->features);
+			if (major_version >= SDE_HW_MAJOR(SDE_HW_VER_700)) {
+				sde_cfg->cwb_blk_off = 0x6A200;
+				sde_cfg->cwb_blk_stride = 0x1000;
+			} else {
+				sde_cfg->cwb_blk_off = 0x83000;
+				sde_cfg->cwb_blk_stride = 0x100;
+			}
 		}
 
 		for (j = 0; j < sde_cfg->mdp_count; j++) {
