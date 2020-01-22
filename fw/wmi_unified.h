@@ -13107,6 +13107,12 @@ typedef struct {
     A_UINT32 roam_score_delta_mask;
     /* Vendor specific roam score algorithm ID from WMI_VENDOR_ROAM_SCORE_ALGORITHM_ID enum */
     A_UINT32 vendor_roam_score_algorithm_id;
+    /*
+     * During CU and low rssi based roam triggers, consider AP as
+     * roam candidate only if its roam score is better than
+     * candidate_min_roam_score.
+     */
+    A_UINT32 candidate_min_roam_score;
 } wmi_roam_cnd_scoring_param;
 
 typedef struct {
