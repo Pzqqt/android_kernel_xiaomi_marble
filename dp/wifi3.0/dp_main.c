@@ -4193,7 +4193,7 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	}
 
 	if (dp_is_soc_reinit(soc)) {
-		rx_desc_pool = &soc->rx_desc_buf[pdev->pdev_id];
+		rx_desc_pool = &soc->rx_desc_buf[pdev->lmac_id];
 		dp_rx_desc_pool_free(soc, rx_desc_pool);
 	}
 
