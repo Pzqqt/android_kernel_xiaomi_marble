@@ -1742,6 +1742,9 @@ static int sde_ctl_parse_dt(struct device_node *np,
 			set_bit(SDE_CTL_ACTIVE_CFG, &ctl->features);
 		if (IS_SDE_UIDLE_REV_100(sde_cfg->uidle_cfg.uidle_rev))
 			set_bit(SDE_CTL_UIDLE, &ctl->features);
+		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
+				SDE_HW_MAJOR(SDE_HW_VER_700))
+			set_bit(SDE_CTL_UNIFIED_DSPP_FLUSH, &ctl->features);
 	}
 end:
 	kfree(prop_value);
