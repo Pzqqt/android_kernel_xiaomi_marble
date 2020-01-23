@@ -56,6 +56,7 @@ struct swr_dmic_priv {
 	struct swr_device *swr_slave;
 	struct snd_soc_component *component;
 	struct snd_soc_component_driver *driver;
+	struct snd_soc_dai_driver *dai_driver;
 	struct snd_soc_component *supply_component;
 	u32 micb_num;
 	struct device_node *wcd_handle;
@@ -66,10 +67,10 @@ struct swr_dmic_priv {
 };
 
 const char *codec_name_list[] = {
-	"swr-dmic-01",
-	"swr-dmic-02",
-	"swr-dmic-03",
-	"swr-dmic-04",
+	"swr-dmic.01",
+	"swr-dmic.02",
+	"swr-dmic.03",
+	"swr-dmic.04",
 };
 
 const char *dai_name_list[] = {
@@ -80,10 +81,10 @@ const char *dai_name_list[] = {
 };
 
 const char *aif_name_list[] = {
-	"SWR_DMIC_AIF0 Playback",
-	"SWR_DMIC_AIF1 Playback",
-	"SWR_DMIC_AIF2 Playback",
-	"SWR_DMIC_AIF3 Playback",
+	"SWR_DMIC_AIF0 Capture",
+	"SWR_DMIC_AIF1 Capture",
+	"SWR_DMIC_AIF2 Capture",
+	"SWR_DMIC_AIF3 Capture",
 };
 
 static int swr_dmic_reset(struct swr_device *pdev);
@@ -391,6 +392,26 @@ static int swr_dmic_parse_supply(struct device_node *np,
 	return 0;
 }
 
+static struct snd_soc_dai_driver swr_dmic_dai[] = {
+	{
+		.name = "",
+		.id = 0,
+		.capture = {
+			.stream_name = "",
+			.rates = (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000),
+			.formats = (SNDRV_PCM_FMTBIT_S16_LE |
+				SNDRV_PCM_FMTBIT_S24_LE |
+				SNDRV_PCM_FMTBIT_S32_LE),
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 2,
+		},
+	},
+};
+
 static int swr_dmic_probe(struct swr_device *pdev)
 {
 	int ret = 0;
@@ -497,10 +518,24 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		goto dev_err;
 	}
 
-	swr_dmic->driver->name = dai_name_list[dev_index];
+	swr_dmic->driver->name = codec_name_list[dev_index];
 
+	swr_dmic->dai_driver = devm_kzalloc(&pdev->dev,
+			sizeof(struct snd_soc_dai_driver), GFP_KERNEL);
+	if (!swr_dmic->dai_driver) {
+		ret = -ENOMEM;
+		goto dev_err;
+	}
+
+	memcpy(swr_dmic->dai_driver, swr_dmic_dai,
+			sizeof(struct snd_soc_dai_driver));
+	swr_dmic->dai_driver->id = dev_index;
+	swr_dmic->dai_driver->name = dai_name_list[dev_index];
+	swr_dmic->dai_driver->capture.stream_name = aif_name_list[dev_index];
+
+	/* Number of DAI's used is 1 */
 	ret = snd_soc_register_component(&pdev->dev, swr_dmic->driver,
-				NULL, 0);
+				swr_dmic->dai_driver, 1);
 	if (ret) {
 		dev_err(&pdev->dev, "%s: Codec registration failed\n",
 			__func__);
@@ -511,14 +546,14 @@ static int swr_dmic_probe(struct swr_device *pdev)
 						swr_dmic->driver->name);
 	swr_dmic->component = component;
 	prefix_name = devm_kzalloc(&pdev->dev,
-					strlen(swr_dmic_name_prefix_of),
+					strlen(swr_dmic_name_prefix_of) + 1,
 					GFP_KERNEL);
 	if (!prefix_name) {
 		ret = -ENOMEM;
 		goto dev_err;
 	}
 	strlcpy(prefix_name, swr_dmic_name_prefix_of,
-			strlen(swr_dmic_name_prefix_of));
+			strlen(swr_dmic_name_prefix_of) + 1);
 	component->name_prefix = prefix_name;
 
 	if (swr_dmic->is_en_supply == 1) {
