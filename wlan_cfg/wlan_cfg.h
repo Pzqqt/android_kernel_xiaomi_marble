@@ -1267,9 +1267,10 @@ wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
  *
  * @wlan_cfg_dp_soc_ctxt: soc configuration context
  * @interrupt_mode: interrupt_mode: MSI/LEGACY
+ * @is_monitor_mode: is monitor mode enabled
  *
  * Return: void
  */
 void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
-				  int interrupt_mode);
+				  int interrupt_mode, bool is_monitor_mode);
 #endif

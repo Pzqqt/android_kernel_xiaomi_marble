@@ -370,7 +370,8 @@ static const uint8_t rx_fst_toeplitz_key[WLAN_CFG_RX_FST_TOEPLITZ_KEYLEN] = {
 };
 
 void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
-				     int interrupt_mode) {
+				     int interrupt_mode,
+				     bool is_monitor_mode) {
 	int i = 0;
 
 	if (interrupt_mode == DP_INTR_INTEGRATED) {
@@ -396,10 +397,10 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 			wlan_cfg_ctx->int_rxdma2host_mon_ring_mask[i] =
 				rxdma2host_mon_ring_mask_integrated[i];
 		}
-	} else if (interrupt_mode == DP_INTR_MSI){
+	} else if (interrupt_mode == DP_INTR_MSI || interrupt_mode ==
+		   DP_INTR_POLL) {
 		for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
 			wlan_cfg_ctx->int_tx_ring_mask[i] = tx_ring_mask_msi[i];
-			wlan_cfg_ctx->int_rx_ring_mask[i] = rx_ring_mask_msi[i];
 			wlan_cfg_ctx->int_rx_mon_ring_mask[i] =
 				rx_mon_ring_mask_msi[i];
 			wlan_cfg_ctx->int_rx_err_ring_mask[i] =
@@ -408,8 +409,15 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 						rx_wbm_rel_ring_mask_msi[i];
 			wlan_cfg_ctx->int_reo_status_ring_mask[i] =
 						reo_status_ring_mask_msi[i];
-			wlan_cfg_ctx->int_rxdma2host_ring_mask[i] =
-				rxdma2host_ring_mask_msi[i];
+			if (is_monitor_mode) {
+				wlan_cfg_ctx->int_rx_ring_mask[i] = 0;
+				wlan_cfg_ctx->int_rxdma2host_ring_mask[i] = 0;
+			} else {
+				wlan_cfg_ctx->int_rx_ring_mask[i] =
+					rx_ring_mask_msi[i];
+				wlan_cfg_ctx->int_rxdma2host_ring_mask[i] =
+					rxdma2host_ring_mask_msi[i];
+			}
 			wlan_cfg_ctx->int_host2rxdma_ring_mask[i] =
 				host2rxdma_ring_mask_msi[i];
 			wlan_cfg_ctx->int_host2rxdma_mon_ring_mask[i] =

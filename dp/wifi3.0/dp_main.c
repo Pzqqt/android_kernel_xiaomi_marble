@@ -10865,6 +10865,7 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	}
 
 	dp_soc_set_interrupt_mode(soc);
+
 	htt_soc = htt_soc_attach(soc, htc_handle);
 
 	if (!htt_soc)
@@ -10897,6 +10898,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 {
 	int target_type;
 	struct htt_soc *htt_soc = (struct htt_soc *)soc->htt_handle;
+	bool is_monitor_mode = false;
 
 	htt_set_htc_handle(htt_soc, htc_handle);
 	soc->hif_handle = hif_handle;
@@ -10976,7 +10978,13 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	}
 
 	dp_soc_set_interrupt_mode(soc);
-	wlan_cfg_fill_interrupt_mask(soc->wlan_cfg_ctx, soc->intr_mode);
+	if (soc->cdp_soc.ol_ops->get_con_mode &&
+	    soc->cdp_soc.ol_ops->get_con_mode() ==
+	    QDF_GLOBAL_MONITOR_MODE)
+		is_monitor_mode = true;
+
+	wlan_cfg_fill_interrupt_mask(soc->wlan_cfg_ctx, soc->intr_mode,
+				     is_monitor_mode);
 	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx,
 			     cfg_get(soc->ctrl_psoc, CFG_DP_RX_HASH));
 	soc->cce_disable = false;
