@@ -515,9 +515,8 @@ void sap_dfs_set_current_channel(void *ctx)
 				sme_get_beaconing_concurrent_operation_channel(
 					handle, sap_ctx->sessionId);
 			if (!con_ch_freq ||
-			    !wlan_reg_is_dfs_ch(pdev,
-						wlan_reg_freq_to_chan(pdev,
-								con_ch_freq)))
+			    !wlan_reg_is_dfs_for_freq(pdev,
+							con_ch_freq))
 				tgt_dfs_get_radars(pdev);
 		} else {
 			tgt_dfs_get_radars(pdev);
@@ -1884,6 +1883,7 @@ static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 	uint8_t intf = 0;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+	qdf_freq_t ch_freq;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *sap_context =
@@ -1897,9 +1897,10 @@ static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 		    (false == sap_context->isCacStartNotified)) {
 			/* Don't start CAC for non-dfs channel, its violation */
 			profile = &sap_context->csr_roamProfile;
-			if (!wlan_reg_is_dfs_ch(mac->pdev,
-				wlan_reg_freq_to_chan(mac->pdev,
-						      profile->op_freq)))
+			ch_freq = wlan_reg_legacy_chan_to_freq(mac->pdev,
+						profile->op_freq);
+			if (!wlan_reg_is_dfs_for_freq(mac->pdev,
+						      ch_freq))
 				continue;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				  "sapdfs: Signaling eSAP_DFS_CAC_START to HDD for sapctx[%pK]",
@@ -2184,7 +2185,9 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 		 */
 		if ((!policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) ||
 		     WLAN_REG_IS_5GHZ_CH_FREQ(sap_ctx->chan_freq)) &&
-		     con_ch && wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch)) {
+		     con_ch &&
+		     wlan_reg_is_dfs_for_freq(mac_ctx->pdev,
+					      con_ch_freq)) {
 			sap_ctx->chan_freq = con_ch_freq;
 			wlan_reg_set_channel_params_for_freq(
 						    mac_ctx->pdev,
@@ -3775,14 +3778,16 @@ bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct sap_context *sap_ctx;
 	uint8_t intf = 0, scc_dfs_counter = 0;
+	qdf_freq_t ch_freq;
 
+	ch_freq = wlan_reg_legacy_chan_to_freq(mac->pdev,
+				given_sapctx->csr_roamProfile.op_freq);
 	/*
 	 * current SAP persona's channel itself is not DFS, so no need to check
 	 * what other persona's channel is
 	 */
-	if (!wlan_reg_is_dfs_ch(mac->pdev,
-		wlan_reg_freq_to_chan(mac->pdev,
-				      given_sapctx->csr_roamProfile.op_freq))) {
+	if (!wlan_reg_is_dfs_for_freq(mac->pdev,
+				      ch_freq)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  FL("skip this loop as provided channel is non-dfs"));
 		return false;

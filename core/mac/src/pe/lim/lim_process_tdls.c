@@ -202,6 +202,7 @@ static void populate_dot11f_tdls_offchannel_params(
 	uint32_t band;
 	uint8_t nss_2g;
 	uint8_t nss_5g;
+	qdf_freq_t ch_freq;
 
 	numChans = mac->mlme_cfg->reg.valid_channel_list_num;
 
@@ -222,10 +223,11 @@ static void populate_dot11f_tdls_offchannel_params(
 
 	/* validating the channel list for DFS and 2G channels */
 	for (i = 0U; i < numChans; i++) {
+		ch_freq = wlan_reg_legacy_chan_to_freq(mac->pdev, validChan[i]);
 		if ((band == BAND_5G) &&
 		    (NSS_2x2_MODE == nss_5g) &&
 		    (NSS_1x1_MODE == nss_2g) &&
-		    (wlan_reg_is_dfs_ch(mac->pdev, validChan[i]))) {
+		    (wlan_reg_is_dfs_for_freq(mac->pdev, ch_freq))) {
 			pe_debug("skipping channel: %d, nss_5g: %d, nss_2g: %d",
 				validChan[i], nss_5g, nss_2g);
 			continue;

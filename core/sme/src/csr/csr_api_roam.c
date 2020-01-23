@@ -1097,9 +1097,8 @@ static void csr_roam_arrange_ch_list(struct mac_context *mac_ctx,
 	/* Fist copy Non-DFS 5g channels */
 	for (i = 0; i < num_channel; i++) {
 		if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_list[i].freq) &&
-			!wlan_reg_is_dfs_ch(mac_ctx->pdev,
-				wlan_reg_freq_to_chan
-					(mac_ctx->pdev, chan_list[i].freq))) {
+			!wlan_reg_is_dfs_for_freq(mac_ctx->pdev,
+						  chan_list[i].freq)) {
 			qdf_mem_copy(&tmp_list[j++],
 				&chan_list[i], sizeof(tSirUpdateChanParam));
 			chan_list[i].freq = 0;

@@ -463,7 +463,8 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 		}
 
 		if (!include_dfs_ch || sta_sap_scc_on_dfs_chan) {
-			if (wlan_reg_is_dfs_ch(mac->pdev, channel)) {
+			if (wlan_reg_is_dfs_for_freq(mac->pdev,
+						     pSpectCh->chan_freq)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
 					  "In %s, DFS Ch %d not considered for ACS. include_dfs_ch %u, sta_sap_scc_on_dfs_chan %d",
