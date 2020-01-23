@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[sde_rsc:%s:%d]: " fmt, __func__, __LINE__
@@ -413,8 +413,8 @@ static u32 sde_rsc_timer_calculate(struct sde_rsc_priv *rsc,
 
 static int sde_rsc_resource_disable(struct sde_rsc_priv *rsc)
 {
+	struct sde_power_handle *phandle;
 	struct dss_module_power *mp;
-	u32 reg_bus_hdl;
 
 	if (!rsc) {
 		pr_err("invalid drv data\n");
@@ -430,12 +430,12 @@ static int sde_rsc_resource_disable(struct sde_rsc_priv *rsc)
 	if (atomic_dec_return(&rsc->resource_refcount) != 0)
 		return 0;
 
-	mp = &rsc->phandle.mp;
+	phandle = &rsc->phandle;
+	mp = &phandle->mp;
 	msm_dss_enable_clk(mp->clk_config, mp->num_clk, false);
-	reg_bus_hdl = rsc->phandle.reg_bus_hdl;
-	if (reg_bus_hdl)
-		msm_bus_scale_client_update_request(reg_bus_hdl,
-				VOTE_INDEX_DISABLE);
+	if (phandle->reg_bus_hdl)
+		sde_power_scale_reg_bus(phandle, VOTE_INDEX_DISABLE, false);
+
 	msm_dss_enable_vreg(mp->vreg_config, mp->num_vreg, false);
 
 	return 0;
@@ -443,9 +443,9 @@ static int sde_rsc_resource_disable(struct sde_rsc_priv *rsc)
 
 static int sde_rsc_resource_enable(struct sde_rsc_priv *rsc)
 {
+	struct sde_power_handle *phandle;
 	struct dss_module_power *mp;
 	int rc = 0;
-	u32 reg_bus_hdl;
 
 	if (!rsc) {
 		pr_err("invalid drv data\n");
@@ -455,17 +455,16 @@ static int sde_rsc_resource_enable(struct sde_rsc_priv *rsc)
 	if (atomic_inc_return(&rsc->resource_refcount) != 1)
 		return 0;
 
-	mp = &rsc->phandle.mp;
+	phandle = &rsc->phandle;
+	mp = &phandle->mp;
 	rc = msm_dss_enable_vreg(mp->vreg_config, mp->num_vreg, true);
 	if (rc) {
 		pr_err("failed to enable vregs rc=%d\n", rc);
 		goto end;
 	}
 
-	reg_bus_hdl = rsc->phandle.reg_bus_hdl;
-	if (reg_bus_hdl) {
-		rc = msm_bus_scale_client_update_request(reg_bus_hdl,
-				VOTE_INDEX_LOW);
+	if (phandle->reg_bus_hdl) {
+		rc = sde_power_scale_reg_bus(phandle, VOTE_INDEX_LOW, false);
 		if (rc) {
 			pr_err("failed to set reg bus vote rc=%d\n", rc);
 			goto reg_bus_hdl_err;
@@ -481,9 +480,9 @@ static int sde_rsc_resource_enable(struct sde_rsc_priv *rsc)
 	return rc;
 
 clk_err:
-	if (reg_bus_hdl)
-		msm_bus_scale_client_update_request(reg_bus_hdl,
-				VOTE_INDEX_DISABLE);
+	if (phandle->reg_bus_hdl)
+		sde_power_scale_reg_bus(phandle, VOTE_INDEX_DISABLE, false);
+
 reg_bus_hdl_err:
 	msm_dss_enable_vreg(mp->vreg_config, mp->num_vreg, false);
 end:
