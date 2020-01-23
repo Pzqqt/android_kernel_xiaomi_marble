@@ -4977,7 +4977,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 	cdp_txrx_get_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(wma->pdev),
 				CDP_TX_PENDING, &val);
 	if (tx_pending) {
-		WMA_LOGW(FL("Outstanding msdu packets before VDEV_STOP : %u"),
+		WMA_LOGD(FL("Outstanding msdu packets before VDEV_STOP : %u"),
 			 tx_pending);
 	}
 

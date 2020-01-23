@@ -704,17 +704,17 @@ static enum powersave_qpower_mode wma_get_qpower_config(tp_wma_handle wma)
 	switch (wma->powersave_mode) {
 	case PS_QPOWER_NODEEPSLEEP:
 	case PS_QPOWER_DEEPSLEEP:
-		WMA_LOGI("QPOWER is enabled in power save mode %d",
-			wma->powersave_mode);
+		WMA_LOGD("QPOWER is enabled in power save mode %d",
+			 wma->powersave_mode);
 		return QPOWER_ENABLED;
 	case PS_DUTY_CYCLING_QPOWER:
-		WMA_LOGI("DUTY cycling QPOWER is enabled in power save mode %d",
-			wma->powersave_mode);
+		WMA_LOGD("DUTY cycling QPOWER is enabled in power save mode %d",
+			 wma->powersave_mode);
 		return QPOWER_DUTY_CYCLING;
 
 	default:
-		WMA_LOGI("QPOWER is disabled in power save mode %d",
-			wma->powersave_mode);
+		WMA_LOGD("QPOWER is disabled in power save mode %d",
+			 wma->powersave_mode);
 		return QPOWER_DISABLED;
 	}
 }
