@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -409,6 +409,23 @@ QDF_STATUS
 csr_roam_auth_offload_callback(struct mac_context *mac_ctx,
 			       uint8_t vdev_id,
 			       struct qdf_mac_addr bssid);
+
+/**
+ * csr_fast_reassoc() - invokes FAST REASSOC command
+ * @mac_handle: handle returned by mac_open
+ * @profile: current connected profile
+ * @bssid: bssid to look for in scan cache
+ * @ch_freq: channel on which reassoc should be send
+ * @vdev_id: vdev id
+ * @connected_bssid: bssid of currently connected profile
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
+			    struct csr_roam_profile *profile,
+			    const tSirMacAddr bssid, uint32_t ch_freq,
+			    uint8_t vdev_id, const tSirMacAddr connected_bssid);
+
 #else
 static inline QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 	struct roam_offload_synch_ind *roam_synch_data,
@@ -423,6 +440,15 @@ csr_roam_auth_offload_callback(struct mac_context *mac_ctx,
 			       struct qdf_mac_addr bssid)
 {
 	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
+			    struct csr_roam_profile *profile,
+			    const tSirMacAddr bssid, uint32_t ch_freq,
+			    uint8_t vdev_id, const tSirMacAddr connected_bssid)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 void csr_neighbor_roam_state_transition(struct mac_context *mac_ctx,

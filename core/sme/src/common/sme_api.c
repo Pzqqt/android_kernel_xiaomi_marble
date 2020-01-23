@@ -13948,128 +13948,31 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
 			    const tSirMacAddr bssid, uint32_t ch_freq,
-			    uint8_t vdev_id, const tSirMacAddr connected_bssid)
+			    uint8_t vdev_id,
+			    const tSirMacAddr connected_bssid)
 {
-	QDF_STATUS status;
-	struct wma_roam_invoke_cmd *fastreassoc;
-	struct scheduler_msg msg = {0};
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *session;
-	struct wlan_objmgr_vdev *vdev;
-	struct mlme_roam_after_data_stall *vdev_roam_params;
-	bool roam_control_bitmap;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
-	session = CSR_GET_SESSION(mac_ctx, vdev_id);
-	if (!session) {
-		sme_err("session %d not found", vdev_id);
+	if (!mac)
 		return QDF_STATUS_E_FAILURE;
+
+	if (!CSR_IS_SESSION_VALID(mac, vdev_id)) {
+		sme_err("Invalid vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
 	}
 
-	roam_control_bitmap = mlme_get_operations_bitmap(mac_ctx->psoc,
-							 vdev_id);
-	if (roam_control_bitmap ||
-	    !MLME_IS_ROAM_INITIALIZED(mac_ctx->psoc, vdev_id)) {
-		sme_debug("ROAM: RSO Disabled internaly: vdev[%d] bitmap[0x%x]",
-			  vdev_id, roam_control_bitmap);
+	if (QDF_IS_STATUS_ERROR(sme_acquire_global_lock(&mac->sme)))
 		return QDF_STATUS_E_FAILURE;
-	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
-						    WLAN_LEGACY_SME_ID);
+	status = csr_fast_reassoc(mac_handle, profile, bssid, ch_freq, vdev_id,
+				  connected_bssid);
 
-	if (!vdev) {
-		sme_err("vdev is NULL, aborting roam invoke");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
+	sme_release_global_lock(&mac->sme);
 
-	vdev_roam_params = mlme_get_roam_invoke_params(vdev);
-
-	if (!vdev_roam_params) {
-		sme_err("Invalid vdev roam params, aborting roam invoke");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	if (vdev_roam_params->roam_invoke_in_progress) {
-		sme_debug("Roaming in progress set by source = %d, aborting this roam invoke",
-			  vdev_roam_params->source);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
-	if (!fastreassoc) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		return QDF_STATUS_E_NOMEM;
-	}
-	/* if both are same then set the flag */
-	if (!qdf_mem_cmp(connected_bssid, bssid, ETH_ALEN)) {
-		fastreassoc->is_same_bssid = true;
-		sme_debug("bssid same, bssid[%pM]", bssid);
-	}
-	fastreassoc->vdev_id = vdev_id;
-	fastreassoc->bssid[0] = bssid[0];
-	fastreassoc->bssid[1] = bssid[1];
-	fastreassoc->bssid[2] = bssid[2];
-	fastreassoc->bssid[3] = bssid[3];
-	fastreassoc->bssid[4] = bssid[4];
-	fastreassoc->bssid[5] = bssid[5];
-
-	status = sme_get_beacon_frm(mac_handle, profile, bssid,
-				    &fastreassoc->frame_buf,
-				    &fastreassoc->frame_len,
-				    &ch_freq);
-
-	if (!ch_freq) {
-		sme_err("channel retrieval from BSS desc fails!");
-		qdf_mem_free(fastreassoc->frame_buf);
-		fastreassoc->frame_buf = NULL;
-		fastreassoc->frame_len = 0;
-		qdf_mem_free(fastreassoc);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	fastreassoc->ch_freq = ch_freq;
-	if (QDF_STATUS_SUCCESS != status) {
-		sme_warn("sme_get_beacon_frm failed");
-		qdf_mem_free(fastreassoc->frame_buf);
-		fastreassoc->frame_buf = NULL;
-		fastreassoc->frame_len = 0;
-	}
-
-	if (csr_is_auth_type_ese(mac_ctx->roam.roamSession[vdev_id].
-				connectedProfile.AuthType)) {
-		sme_debug("Beacon is not required for ESE");
-		if (fastreassoc->frame_len) {
-			qdf_mem_free(fastreassoc->frame_buf);
-			fastreassoc->frame_buf = NULL;
-			fastreassoc->frame_len = 0;
-		}
-	}
-
-	msg.type = eWNI_SME_ROAM_INVOKE;
-	msg.reserved = 0;
-	msg.bodyptr = fastreassoc;
-	status = scheduler_post_message(QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_PE,
-					QDF_MODULE_ID_PE, &msg);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Not able to post ROAM_INVOKE_CMD message to PE");
-		qdf_mem_free(fastreassoc->frame_buf);
-		fastreassoc->frame_buf = NULL;
-		fastreassoc->frame_len = 0;
-		qdf_mem_free(fastreassoc);
-	} else {
-		vdev_roam_params->roam_invoke_in_progress = true;
-		vdev_roam_params->source = USERSPACE_INITIATED;
-		sme_debug("Trigger roaming for vdev id %d source = USERSPACE_INITIATED",
-			  session->sessionId);
-	}
-
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	return status;
 }
+
 #endif
 
 QDF_STATUS sme_set_del_pmkid_cache(mac_handle_t mac_handle, uint8_t session_id,

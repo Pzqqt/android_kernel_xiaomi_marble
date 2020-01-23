@@ -7537,13 +7537,11 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 		session = CSR_GET_SESSION(mac, sessionId);
 		roam_profile = session->pCurRoamProfile;
 		connected_profile = session->connectedProfile;
-		status = sme_fast_reassoc(
-			MAC_HANDLE(mac),
-			roam_profile,
-			connected_profile.bssid.bytes,
-			connected_profile.op_freq,
-			sessionId,
-			connected_profile.bssid.bytes);
+		status = sme_fast_reassoc(MAC_HANDLE(mac), roam_profile,
+					  connected_profile.bssid.bytes,
+					  connected_profile.op_freq,
+					  sessionId,
+					  connected_profile.bssid.bytes);
 	} else {
 		status = csr_reassoc(mac, sessionId, pModFields,
 				     &pSession->roamID, fForce);

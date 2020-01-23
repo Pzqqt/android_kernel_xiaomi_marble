@@ -20023,10 +20023,16 @@ static int wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 		qdf_mem_copy(sta_ctx->requested_bssid.bytes, bssid,
 			     QDF_MAC_ADDR_SIZE);
 
+		hdd_set_roaming_in_progress(true);
+
 		status = hdd_reassoc(adapter, bssid, ch_freq,
 				     CONNECT_CMD_USERSPACE);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_set_roaming_in_progress(false);
+
 		hdd_debug("hdd_reassoc: status: %d", status);
 	}
+
 	return status;
 }
 #else
@@ -20206,10 +20212,8 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	 * Check if this is reassoc to same bssid, if reassoc is success, return
 	 */
 	status = wlan_hdd_reassoc_bssid_hint(adapter, req);
-	if (!status) {
-		hdd_set_roaming_in_progress(true);
+	if (!status)
 		return status;
-	}
 
 	/* Try disconnecting if already in connected state */
 	status = wlan_hdd_try_disconnect(adapter);
