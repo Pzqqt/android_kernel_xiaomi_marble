@@ -149,15 +149,12 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	/* Get reasonCode from Deauthentication frame body */
 	reasonCode = sir_read_u16(pBody);
 
-	pe_debug("Received Deauth frame for Addr: " QDF_MAC_ADDR_STR
-			"(mlm state = %s, sme state = %d systemrole = %d "
-			"RSSI = %d) with reason code %d [%s] from "
-			QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(pHdr->da),
-			lim_mlm_state_str(pe_session->limMlmState),
-			pe_session->limSmeState,
-			GET_LIM_SYSTEM_ROLE(pe_session), frame_rssi,
-			reasonCode, lim_dot11_reason_str(reasonCode),
-			QDF_MAC_ADDR_ARRAY(pHdr->sa));
+	pe_nofl_info("Deauth from %pM for %pM mlm state = %d, sme state = %d systemrole = %d RSSI = %d reason %d",
+		     pHdr->sa, pHdr->da,
+		     pe_session->limMlmState,
+		     pe_session->limSmeState,
+		     GET_LIM_SYSTEM_ROLE(pe_session), frame_rssi,
+		     reasonCode);
 
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DEAUTH_FRAME_EVENT,
 		pe_session, 0, reasonCode);
