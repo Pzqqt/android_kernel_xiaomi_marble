@@ -3494,6 +3494,20 @@ typedef struct {
      *  Bits 31:4 - Reserved
      */
     A_UINT32 flags2;
+    /** @brief host_service_flags - can be used by Host to indicate
+     * services that host can support.
+     *
+     *  @details
+     *  Bit 0
+     *      The bit will be set when Host HDD supports seperate iface creation
+     *      for NAN.  More specifically Host can support creation of NAN vdev
+     *      in firmware.
+     *
+     *      Refer to WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET/SET
+     *      macros defined below.
+     *  Bits 31:1 - Reserved
+     */
+    A_UINT32 host_service_flags;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
@@ -3692,6 +3706,11 @@ typedef struct {
     WMI_GET_BITS(flags2, pdev_id, 1)
 #define WMI_RSRC_CFG_FLAGS2_RE_ULRESP_PDEV_CFG_SET(flags2, pdev_id, value) \
     WMI_SET_BITS(flags2, pdev_id, 1, value)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 0, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 0, 1, val)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
