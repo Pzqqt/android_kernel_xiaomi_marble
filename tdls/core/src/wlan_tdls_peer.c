@@ -477,6 +477,7 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 	struct wlan_objmgr_pdev *pdev;
 	uint8_t chan_id;
 	enum band_info cur_band = BAND_ALL;
+	qdf_freq_t ch_freq;
 
 	vdev_obj = peer->vdev_priv;
 	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev_obj->vdev);
@@ -516,7 +517,10 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 		peer_param->peer_cap.pref_off_channum = 0;
 		peer_param->peer_cap.opclass_for_prefoffchan = 0;
 	}
-	if (wlan_reg_is_dfs_ch(pdev, peer_param->peer_cap.pref_off_channum)) {
+
+	ch_freq = wlan_reg_legacy_chan_to_freq(pdev,
+				peer_param->peer_cap.pref_off_channum);
+	if (wlan_reg_is_dfs_for_freq(pdev, ch_freq)) {
 		tdls_err("Resetting TDLS off-channel from %d to %d",
 			 peer_param->peer_cap.pref_off_channum,
 			 WLAN_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEF);
