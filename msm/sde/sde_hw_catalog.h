@@ -176,6 +176,7 @@ struct sde_intr_irq_offsets {
  * @SDE_MDP_UBWC_1_5,      Universal Bandwidth compression version 1.5
  * @SDE_MDP_VSYNC_SEL      Vsync selection for command mode panels
  * @SDE_MDP_DHDR_MEMPOOL   Dynamic HDR Metadata mempool present
+ * @SDE_MDP_DHDR_MEMPOOL_4K Dynamic HDR mempool is 4k aligned
  * @SDE_MDP_MAX            Maximum value
 
  */
@@ -187,6 +188,7 @@ enum {
 	SDE_MDP_UBWC_1_5,
 	SDE_MDP_VSYNC_SEL,
 	SDE_MDP_DHDR_MEMPOOL,
+	SDE_MDP_DHDR_MEMPOOL_4K,
 	SDE_MDP_MAX
 };
 
