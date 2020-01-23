@@ -4998,7 +4998,8 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 		 ch_change_req->dot11mode);
 
 	if (IS_DOT11_MODE_HE(ch_change_req->dot11mode) &&
-	    lim_is_session_he_capable(session_entry)) {
+		((QDF_MONITOR_MODE == session_entry->opmode) ||
+		lim_is_session_he_capable(session_entry))) {
 		lim_update_session_he_capable_chan_switch
 			(mac_ctx, session_entry, target_freq);
 	} else if (wlan_reg_is_6ghz_chan_freq(target_freq)) {
