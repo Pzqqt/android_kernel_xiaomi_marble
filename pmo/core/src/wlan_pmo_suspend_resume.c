@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,6 +39,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_mlme_sap.h"
 #include "cfg_ucfg_api.h"
+#include "cdp_txrx_bus.h"
 
 /**
  * pmo_core_get_vdev_dtim_period() - Get vdev dtim period
@@ -1336,6 +1337,7 @@ void pmo_core_psoc_target_suspend_acknowledge(void *context, bool wow_nack)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	struct wlan_objmgr_psoc *psoc = (struct wlan_objmgr_psoc *)context;
+	void *dp_soc = pmo_core_psoc_get_dp_handle(psoc);
 	QDF_STATUS status;
 
 	pmo_enter();
@@ -1354,9 +1356,13 @@ void pmo_core_psoc_target_suspend_acknowledge(void *context, bool wow_nack)
 
 	pmo_core_set_wow_nack(psoc_ctx, wow_nack);
 	qdf_event_set(&psoc_ctx->wow.target_suspend);
-	if (wow_nack && !pmo_tgt_psoc_get_runtime_pm_in_progress(psoc)) {
-		qdf_wake_lock_timeout_acquire(&psoc_ctx->wow.wow_wake_lock,
-						PMO_WAKE_LOCK_TIMEOUT);
+	if (!pmo_tgt_psoc_get_runtime_pm_in_progress(psoc)) {
+		if (wow_nack)
+			qdf_wake_lock_timeout_acquire(
+				&psoc_ctx->wow.wow_wake_lock,
+				PMO_WAKE_LOCK_TIMEOUT);
+		else
+			cdp_process_wow_ack_rsp(dp_soc, OL_TXRX_PDEV_ID);
 	}
 
 	pmo_psoc_put_ref(psoc);
