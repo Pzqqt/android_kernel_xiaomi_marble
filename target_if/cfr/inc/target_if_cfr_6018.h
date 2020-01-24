@@ -59,8 +59,8 @@
 
 #define CYP_MAX_HEADER_LENGTH_WORDS 16
 
-/* Max(2048, 16016, 10240) */
-#define CYP_MAX_DATA_LENGTH_BYTES 16016
+/* payload_len = Max(2048, 16016, 10240) = 16064 (64-bit alignment) */
+#define CYP_MAX_DATA_LENGTH_BYTES 16064
 
 /* in ms */
 #define LUT_AGE_TIMER 3000
