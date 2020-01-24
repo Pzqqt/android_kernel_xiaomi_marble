@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -642,21 +642,6 @@ static inline bool utils_is_dfs_chan_for_freq(struct wlan_objmgr_pdev *pdev,
 					      uint32_t chan_freq)
 {
 	return wlan_reg_is_dfs_for_freq(pdev, chan_freq);
-}
-#endif
-
-/**
- * utils_is_dfs_ch() - is channel dfs.
- * @pdev: pdev handler.
- *
- * is channel dfs.
- *
- * Return: True if channel dfs, else false.
- */
-#ifdef CONFIG_CHAN_NUM_API
-static inline bool utils_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
-{
-	return wlan_reg_is_dfs_ch(pdev, chan);
 }
 #endif
 

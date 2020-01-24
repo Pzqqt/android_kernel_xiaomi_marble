@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -486,12 +486,6 @@ void wlan_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
 				    bool nol_history_ch)
 {
 	reg_update_nol_history_ch(pdev, ch_list, num_ch, nol_history_ch);
-}
-
-bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev,
-			uint8_t chan)
-{
-	return reg_is_dfs_ch(pdev, chan);
 }
 
 bool wlan_reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,

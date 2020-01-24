@@ -412,7 +412,7 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 		ch_info[idx].band_center_freq1 = ch_info[idx].mhz;
 		ch_info[idx].band_center_freq2 = 0;
 		ch_info[idx].info = 0;
-		if (wlan_reg_is_dfs_ch(pdev, valid_channel_list[idx]))
+		if (wlan_reg_is_dfs_for_freq(pdev, ch_info[idx].mhz))
 			WIFI_POS_SET_DFS(ch_info[idx].info);
 
 		wifi_update_channel_bw_info(psoc, pdev,

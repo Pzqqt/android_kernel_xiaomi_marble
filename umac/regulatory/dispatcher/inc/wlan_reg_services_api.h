@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -681,15 +681,6 @@ void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 			    uint8_t *ch_list,
 			    uint8_t num_ch,
 			    bool nol_ch);
-
-/**
- * wlan_reg_is_dfs_ch () - Checks the channel state for DFS
- * @pdev: pdev ptr
- * @chan: channel
- *
- * Return: true or false
- */
-bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
 
 /**
  * wlan_reg_is_dsrc_chan () - Checks if the channel is dsrc channel or not
