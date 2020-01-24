@@ -316,6 +316,7 @@ struct txrx_pdev_cfg_param_t {
 	uint16_t bundle_timer_value;
 	uint16_t bundle_size;
 #endif
+	uint8_t pktlog_buffer_size;
 };
 
 #ifdef IPA_OFFLOAD
