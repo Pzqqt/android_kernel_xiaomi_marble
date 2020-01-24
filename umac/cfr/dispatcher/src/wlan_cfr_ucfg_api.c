@@ -818,10 +818,6 @@ QDF_STATUS ucfg_cfr_rcc_dump_dbg_counters(struct wlan_objmgr_vdev *vdev)
 		 pcfr->flush_dbr_cnt);
 	cfr_err("invalid_dma_length_cnt = %llu\n",
 		 pcfr->invalid_dma_length_cnt);
-	cfr_err("flush_all_dbr_cnt = %llu\n",
-		 pcfr->flush_all_dbr_cnt);
-	cfr_err("flush_all_txrx_cnt = %llu\n",
-		 pcfr->flush_all_txrx_cnt);
 	cfr_err("flush_timeout_dbr_cnt = %llu\n",
 		 pcfr->flush_timeout_dbr_cnt);
 	cfr_err("PPDU id mismatch for same cookie:\n");

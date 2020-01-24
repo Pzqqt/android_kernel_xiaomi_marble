@@ -447,7 +447,6 @@ struct cfr_rcc_param {
  * rx_tlv_evt_cnt: Number of CFR WDI events from datapath
  * lut_age_timer: Timer to flush pending TXRX/DBR events in lookup table
  * lut_timer_init: flag to determine if lut_age_timer is initialized or not
- * cfr_data_subscriber: CFR WDI subscriber object
  * bb_captured_channel_cnt: No. of PPDUs for which MAC sent Freeze TLV to PHY
  * bb_captured_timeout_cnt: No. of PPDUs for which CFR filter criteria matched
  * but MAC did not send Freeze TLV to PHY as time exceeded freeze tlv delay
@@ -498,15 +497,12 @@ struct pdev_cfr {
 	uint64_t rx_tlv_evt_cnt;
 	qdf_timer_t lut_age_timer;
 	uint8_t lut_timer_init;
-	void *cfr_data_subscriber;
 	uint64_t bb_captured_channel_cnt;
 	uint64_t bb_captured_timeout_cnt;
 	uint64_t rx_loc_info_valid_cnt;
 	uint64_t chan_capture_status[CAPTURE_MAX];
 	uint64_t bb_captured_reason_cnt[FREEZE_REASON_MAX];
 	uint64_t flush_dbr_cnt;
-	uint64_t flush_all_dbr_cnt;
-	uint64_t flush_all_txrx_cnt;
 	uint64_t invalid_dma_length_cnt;
 	uint64_t flush_timeout_dbr_cnt;
 	uint64_t clear_txrx_event;
