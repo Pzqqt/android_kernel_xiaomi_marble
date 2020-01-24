@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -81,12 +81,14 @@ enum nan_disc_state {
  * @dp_enable: NAN Datapath feature enable
  * @ndi_mac_randomize: Randomize NAN datapath interface MAC
  * @ndp_inactivity_timeout: NDP inactivity timeout
+ * @nan_separate_iface_support: To supports separate iface creation for NAN
  */
 struct nan_cfg_params {
 	bool enable;
 	bool dp_enable;
 	bool ndi_mac_randomize;
 	uint16_t ndp_inactivity_timeout;
+	bool nan_separate_iface_support;
 };
 
 /**

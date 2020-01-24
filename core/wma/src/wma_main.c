@@ -5392,6 +5392,10 @@ static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 		return -EINVAL;
 	}
 
+	wlan_res_cfg->nan_separate_iface_support =
+		ucfg_nan_is_vdev_creation_allowed(wma_handle->psoc) &&
+		ucfg_nan_get_is_separate_nan_iface(wma_handle->psoc);
+
 	service_ext_param =
 			target_psoc_get_service_ext_param(tgt_hdl);
 	wmi_handle = get_wmi_unified_hdl_from_psoc(wma_handle->psoc);

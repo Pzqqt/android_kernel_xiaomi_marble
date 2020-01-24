@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -49,6 +49,30 @@
 #define CFG_NAN_ENABLE CFG_INI_BOOL("gEnableNanSupport", \
 				    0, \
 				    "Enable NAN Support")
+
+/*
+ * <ini>
+ * nan_separate_iface_support: Separate iface creation for NAN
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Value is 1 when Host HDD supports separate iface creation
+ * for NAN.
+ *
+ * Related: None
+ *
+ * Supported Feature: NAN
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_NAN_SEPARATE_IFACE_SUPP CFG_INI_BOOL("nan_separate_iface_support", \
+						 0, \
+						 "Seperate iface for NAN")
+
+
 /*
  * <ini>
  * genable_nan_datapath - Enable NaN data path feature. NaN data path
@@ -122,7 +146,8 @@
 #define CFG_NAN_DISC CFG(CFG_NAN_ENABLE)
 #define CFG_NAN_DP      CFG(CFG_NAN_DATAPATH_ENABLE) \
 			CFG(CFG_NAN_RANDOMIZE_NDI_MAC) \
-			CFG(CFG_NAN_NDP_INACTIVITY_TIMEOUT)
+			CFG(CFG_NAN_NDP_INACTIVITY_TIMEOUT) \
+			CFG(CFG_NAN_SEPARATE_IFACE_SUPP)
 #else
 #define CFG_NAN_DISC
 #define CFG_NAN_DP

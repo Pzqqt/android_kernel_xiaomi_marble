@@ -66,6 +66,9 @@ static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_NAN_RANDOMIZE_NDI_MAC);
 	nan_obj->cfg_param.ndp_inactivity_timeout =
 				cfg_get(psoc, CFG_NAN_NDP_INACTIVITY_TIMEOUT);
+	nan_obj->cfg_param.nan_separate_iface_support =
+				cfg_get(psoc, CFG_NAN_SEPARATE_IFACE_SUPP);
+
 }
 #else
 static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
@@ -1044,6 +1047,17 @@ bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return psoc_nan_obj->nan_caps.nan_vdev_allowed;
+}
+
+bool ucfg_nan_get_is_separate_nan_iface(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *nan_obj = nan_get_psoc_priv_obj(psoc);
+
+	if (!nan_obj) {
+		nan_err("NAN obj null");
+		return false;
+	}
+	return nan_obj->cfg_param.nan_separate_iface_support;
 }
 
 QDF_STATUS ucfg_disable_nan_discovery(struct wlan_objmgr_psoc *psoc,

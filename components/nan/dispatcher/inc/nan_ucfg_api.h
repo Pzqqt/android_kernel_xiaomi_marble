@@ -370,6 +370,15 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_nan_get_is_separate_nan_iface() - get is_separate_nan_iface value
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if host supports separate vdev for NAN, false otherwise
+ */
+bool
+ucfg_nan_get_is_separate_nan_iface(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_disable_nan_discovery() - Disable NAN discovery
  * @psoc: pointer to psoc object
  * @data: Data to be sent to NAN discovery engine, which runs in firmware
@@ -437,6 +446,12 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 
 static inline
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+bool ucfg_nan_get_is_separate_nan_iface(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }
