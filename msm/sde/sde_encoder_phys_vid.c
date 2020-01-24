@@ -1174,6 +1174,33 @@ static int sde_encoder_phys_vid_get_line_count(
 	return phys_enc->hw_intf->ops.get_line_count(phys_enc->hw_intf);
 }
 
+static u32 sde_encoder_phys_vid_get_underrun_line_count(
+		struct sde_encoder_phys *phys_enc)
+{
+	u32 underrun_linecount = 0xebadebad;
+	struct intf_status intf_status = {0};
+
+	if (!phys_enc)
+		return -EINVAL;
+
+	if (!sde_encoder_phys_vid_is_master(phys_enc) || !phys_enc->hw_intf)
+		return -EINVAL;
+
+	if (phys_enc->hw_intf->ops.get_status)
+		phys_enc->hw_intf->ops.get_status(phys_enc->hw_intf,
+			&intf_status);
+
+	if (phys_enc->hw_intf->ops.get_underrun_line_count)
+		underrun_linecount =
+		  phys_enc->hw_intf->ops.get_underrun_line_count(
+			phys_enc->hw_intf);
+
+	SDE_EVT32(DRMID(phys_enc->parent), underrun_linecount,
+		intf_status.frame_count, intf_status.line_count);
+
+	return underrun_linecount;
+}
+
 static int sde_encoder_phys_vid_wait_for_active(
 			struct sde_encoder_phys *phys_enc)
 {
@@ -1268,6 +1295,8 @@ static void sde_encoder_phys_vid_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->wait_dma_trigger = sde_encoder_phys_vid_wait_dma_trigger;
 	ops->wait_for_active = sde_encoder_phys_vid_wait_for_active;
 	ops->prepare_commit = sde_encoder_phys_vid_prepare_for_commit;
+	ops->get_underrun_line_count =
+		sde_encoder_phys_vid_get_underrun_line_count;
 }
 
 struct sde_encoder_phys *sde_encoder_phys_vid_init(

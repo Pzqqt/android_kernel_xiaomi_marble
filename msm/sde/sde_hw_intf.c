@@ -62,6 +62,7 @@
 #define INTF_MISR_SIGNATURE             0x184
 
 #define INTF_MUX                        0x25C
+#define INTF_UNDERRUN_COUNT             0x268
 #define INTF_STATUS                     0x26C
 #define INTF_AVR_CONTROL                0x270
 #define INTF_AVR_MODE                   0x274
@@ -484,6 +485,23 @@ static u32 sde_hw_intf_get_line_count(struct sde_hw_intf *intf)
 	return SDE_REG_READ(c, INTF_LINE_COUNT);
 }
 
+static u32 sde_hw_intf_get_underrun_line_count(struct sde_hw_intf *intf)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 hsync_period;
+
+	if (!intf)
+		return 0;
+
+	c = &intf->hw;
+	hsync_period = SDE_REG_READ(c, INTF_HSYNC_CTL);
+	hsync_period = ((hsync_period & 0xffff0000) >> 16);
+
+	return hsync_period ?
+		SDE_REG_READ(c, INTF_UNDERRUN_COUNT) / hsync_period :
+		0xebadebad;
+}
+
 static int sde_hw_intf_setup_te_config(struct sde_hw_intf *intf,
 		struct sde_hw_tear_check *te)
 {
@@ -695,6 +713,7 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 	ops->setup_misr = sde_hw_intf_setup_misr;
 	ops->collect_misr = sde_hw_intf_collect_misr;
 	ops->get_line_count = sde_hw_intf_get_line_count;
+	ops->get_underrun_line_count = sde_hw_intf_get_underrun_line_count;
 	ops->avr_setup = sde_hw_intf_avr_setup;
 	ops->avr_trigger = sde_hw_intf_avr_trigger;
 	ops->avr_ctrl = sde_hw_intf_avr_ctrl;

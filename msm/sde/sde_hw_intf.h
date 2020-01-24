@@ -68,6 +68,8 @@ struct intf_avr_params {
  * @ setup_misr: enables/disables MISR in HW register
  * @ collect_misr: reads and stores MISR data from HW register
  * @ get_line_count: reads current vertical line counter
+ * @ get_underrun_line_count: reads current underrun pixel clock count and
+ *                            converts it into line count
  * @bind_pingpong_blk: enable/disable the connection with pingpong which will
  *                     feed pixels to this interface
  */
@@ -100,6 +102,7 @@ struct sde_hw_intf_ops {
 	 * is used for command mode panels
 	 */
 	u32 (*get_line_count)(struct sde_hw_intf *intf);
+	u32 (*get_underrun_line_count)(struct sde_hw_intf *intf);
 
 	void (*bind_pingpong_blk)(struct sde_hw_intf *intf,
 			bool enable,

@@ -133,6 +133,8 @@ struct sde_encoder_virt_ops {
  *                              unitl transaction is complete.
  * @wait_for_active:		Wait for display scan line to be in active area
  * @setup_vsync_source:		Configure vsync source selection for cmd mode.
+ * @get_underrun_line_count:	Obtain and log current internal vertical line
+ *                              count and underrun line count
  */
 
 struct sde_encoder_phys_ops {
@@ -185,6 +187,7 @@ struct sde_encoder_phys_ops {
 	int (*wait_for_active)(struct sde_encoder_phys *phys);
 	void (*setup_vsync_source)(struct sde_encoder_phys *phys,
 			u32 vsync_source, bool is_dummy);
+	u32 (*get_underrun_line_count)(struct sde_encoder_phys *phys);
 };
 
 /**
