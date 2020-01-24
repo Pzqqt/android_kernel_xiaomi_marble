@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_DSPP_H
@@ -218,6 +218,7 @@ struct sde_hw_dspp_ops {
  * @hw_top: Block hardware top details
  * @idx: DSPP index
  * @cap: Pointer to layer_cfg
+ * @sb_dma_in_use: hint indicating if sb dma is being used for this dspp
  * @ops: Pointer to operations possible for this DSPP
  */
 struct sde_hw_dspp {
@@ -230,6 +231,7 @@ struct sde_hw_dspp {
 	/* dspp */
 	enum sde_dspp idx;
 	const struct sde_dspp_cfg *cap;
+	bool sb_dma_in_use;
 
 	/* Ops */
 	struct sde_hw_dspp_ops ops;

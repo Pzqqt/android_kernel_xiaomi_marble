@@ -1378,8 +1378,8 @@ static const int dspp_feature_to_sub_blk_tbl[SDE_CP_CRTC_MAX_FEATURES] = {
 
 void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
 {
-	u32 i, sub_blk, num_mixers, dspp_sb;
-	enum sde_dspp dspp;
+	u32 i, sub_blk, num_mixers;
+	struct sde_hw_dspp *dspp;
 	struct sde_hw_ctl *ctl;
 
 	if (!sde_crtc || feature >= SDE_CP_CRTC_MAX_FEATURES) {
@@ -1390,18 +1390,16 @@ void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
 
 	num_mixers = sde_crtc->num_mixers;
 	sub_blk = dspp_feature_to_sub_blk_tbl[feature];
-	dspp_sb = dspp_feature_to_sub_blk_tbl[SDE_CP_CRTC_DSPP_SB];
 
 	for (i = 0; i < num_mixers; i++) {
 		ctl = sde_crtc->mixers[i].hw_ctl;
-		dspp = sde_crtc->mixers[i].hw_dspp->idx;
+		dspp = sde_crtc->mixers[i].hw_dspp;
 		if (ctl && ctl->ops.update_bitmask_dspp_subblk) {
+			if (feature == SDE_CP_CRTC_DSPP_SB &&
+					!dspp->sb_dma_in_use)
+				continue;
 			ctl->ops.update_bitmask_dspp_subblk(
-					ctl, dspp, sub_blk, true);
-			if (feature == SDE_CP_CRTC_DSPP_IGC ||
-					feature == SDE_CP_CRTC_DSPP_GAMUT)
-				ctl->ops.update_bitmask_dspp_subblk(
-						ctl, dspp, dspp_sb, true);
+					ctl, dspp->idx, sub_blk, true);
 		}
 	}
 }
@@ -1714,6 +1712,8 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 		else
 			set_lm_flush = true;
 	}
+
+	sde_cp_dspp_flush_helper(sde_crtc, SDE_CP_CRTC_DSPP_SB);
 
 	if (!list_empty(&sde_crtc->ad_active)) {
 		sde_cp_ad_set_prop(sde_crtc, AD_IPC_RESET);

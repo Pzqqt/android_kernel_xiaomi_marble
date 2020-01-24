@@ -539,11 +539,18 @@ static int validate_dma_cfg(struct sde_reg_dma_setup_ops_cfg *cfg)
 static int validate_kick_off_v1(struct sde_reg_dma_kickoff_cfg *cfg)
 {
 
-	if (!cfg || !cfg->ctl || !cfg->dma_buf) {
-		DRM_ERROR("invalid cfg %pK ctl %pK dma_buf %pK\n",
-			cfg, ((!cfg) ? NULL : cfg->ctl),
-			((!cfg) ? NULL : cfg->dma_buf));
+	if (!cfg || !cfg->ctl || !cfg->dma_buf ||
+			cfg->dma_type >= REG_DMA_TYPE_MAX) {
+		DRM_ERROR("invalid cfg %pK ctl %pK dma_buf %pK dma type %d\n",
+				cfg, ((!cfg) ? NULL : cfg->ctl),
+				((!cfg) ? NULL : cfg->dma_buf),
+				((!cfg) ? 0 : cfg->dma_type));
 		return -EINVAL;
+	}
+
+	if (reg_dma->caps->reg_dma_blks[cfg->dma_type].valid == false) {
+		DRM_DEBUG("REG dma type %d is not supported\n", cfg->dma_type);
+		return -EOPNOTSUPP;
 	}
 
 	if (cfg->ctl->idx < CTL_0 && cfg->ctl->idx >= CTL_MAX) {
@@ -622,8 +629,8 @@ static int write_kick_off_v1(struct sde_reg_dma_kickoff_cfg *cfg)
 		SET_UP_REG_DMA_REG(hw, reg_dma, REG_DMA_TYPE_SB);
 
 	if (hw.hwversion == 0) {
-		DRM_ERROR("invalid dma type %d\n", cfg->dma_type);
-		return -EINVAL;
+		DRM_ERROR("DMA type %d is unsupported\n", cfg->dma_type);
+		return -EOPNOTSUPP;
 	}
 
 	SDE_REG_WRITE(&hw, reg_dma_opmode_offset, BIT(0));
@@ -825,7 +832,8 @@ int init_v2(struct sde_hw_reg_dma *cfg)
 
 	v1_supported[IGC] = GRP_DSPP_HW_BLK_SELECT | GRP_VIG_HW_BLK_SELECT |
 			GRP_DMA_HW_BLK_SELECT;
-	reg_dma->ops.last_command_sb = last_cmd_sb_v2;
+	if (cfg->caps->reg_dma_blks[REG_DMA_TYPE_SB].valid == true)
+		reg_dma->ops.last_command_sb = last_cmd_sb_v2;
 
 	return 0;
 }

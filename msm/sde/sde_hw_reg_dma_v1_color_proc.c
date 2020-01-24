@@ -3813,9 +3813,59 @@ int reg_dmav2_init_dspp_op_v4(int feature, enum sde_dspp idx)
 	return rc;
 }
 
+
+/* Attempt to submit a feature buffer to SB DMA.
+ * Note that if SB DMA is not supported, this function
+ * will quitely attempt to fallback to DB DMA
+ */
+static void _perform_sbdma_kickoff(struct sde_hw_dspp *ctx,
+		struct sde_hw_cp_cfg *hw_cfg,
+		struct sde_hw_reg_dma_ops *dma_ops,
+		u32 blk, enum sde_reg_dma_features feature)
+{
+	int rc, i;
+	struct sde_reg_dma_kickoff_cfg kick_off;
+
+	if ((feature != GAMUT && feature != IGC) ||
+			!(blk & (DSPP0 | DSPP1 | DSPP2 | DSPP3))) {
+		DRM_ERROR("SB DMA invalid for feature / block - %d/%d\n",
+				feature, blk);
+		return;
+	}
+
+	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
+			dspp_buf[feature][ctx->idx],
+			REG_DMA_WRITE, DMA_CTL_QUEUE1, WRITE_IMMEDIATE);
+	kick_off.dma_type = REG_DMA_TYPE_SB;
+	rc = dma_ops->kick_off(&kick_off);
+	if (!rc) {
+		rc = dma_ops->last_command_sb(hw_cfg->ctl, DMA_CTL_QUEUE1,
+				REG_DMA_NOWAIT);
+		if (rc) {
+			DRM_ERROR("failed to call last_command_sb ret %d\n",
+					rc);
+		} else {
+			for (i = 0; i < hw_cfg->num_of_mixers; ++i) {
+				if (blk & dspp_mapping[hw_cfg->dspp[i]->idx])
+					hw_cfg->dspp[i]->sb_dma_in_use = true;
+			}
+		}
+	} else if (rc == -EOPNOTSUPP) {
+		DRM_DEBUG("Falling back to dbdma\n", rc);
+
+		REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
+				dspp_buf[feature][ctx->idx], REG_DMA_WRITE,
+				DMA_CTL_QUEUE0, WRITE_IMMEDIATE);
+		rc = dma_ops->kick_off(&kick_off);
+		if (rc)
+			DRM_ERROR("failed dbdma kick off ret %d\n", rc);
+	} else {
+		DRM_ERROR("failed sbdma kick off ret %d\n", rc);
+	}
+}
+
 static void _dspp_igcv32_off(struct sde_hw_dspp *ctx, void *cfg)
 {
-	struct sde_reg_dma_kickoff_cfg kick_off;
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
 	struct sde_hw_reg_dma_ops *dma_ops;
 	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
@@ -3852,26 +3902,13 @@ static void _dspp_igcv32_off(struct sde_hw_dspp *ctx, void *cfg)
 		return;
 	}
 
-	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, dspp_buf[IGC][ctx->idx],
-			REG_DMA_WRITE, DMA_CTL_QUEUE1, WRITE_IMMEDIATE);
-	kick_off.dma_type = REG_DMA_TYPE_SB;
-	rc = dma_ops->kick_off(&kick_off);
-	if (rc) {
-		DRM_ERROR("failed to kick off ret %d\n", rc);
-		return;
-	}
-
-	rc = dma_ops->last_command_sb(hw_cfg->ctl, DMA_CTL_QUEUE1,
-			REG_DMA_NOWAIT);
-	if (rc)
-		DRM_ERROR("failed to call last_command_sb ret %d\n", rc);
+	_perform_sbdma_kickoff(ctx, hw_cfg, dma_ops, blk, IGC);
 }
 
 void reg_dmav2_setup_dspp_igcv32(struct sde_hw_dspp *ctx, void *cfg)
 {
 	struct drm_msm_igc_lut *lut_cfg;
 	struct sde_hw_reg_dma_ops *dma_ops;
-	struct sde_reg_dma_kickoff_cfg kick_off;
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
 	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
 	int rc = 0, i = 0, j = 0;
@@ -3972,19 +4009,7 @@ void reg_dmav2_setup_dspp_igcv32(struct sde_hw_dspp *ctx, void *cfg)
 		goto exit;
 	}
 
-	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, dspp_buf[IGC][ctx->idx],
-			REG_DMA_WRITE, DMA_CTL_QUEUE1, WRITE_IMMEDIATE);
-	kick_off.dma_type = REG_DMA_TYPE_SB;
-	rc = dma_ops->kick_off(&kick_off);
-	if (rc) {
-		DRM_ERROR("failed to kick off ret %d\n", rc);
-		goto exit;
-	}
-
-	rc = dma_ops->last_command_sb(hw_cfg->ctl, DMA_CTL_QUEUE1,
-			REG_DMA_NOWAIT);
-	if (rc)
-		DRM_ERROR("failed to call last_command_sb ret %d\n", rc);
+	_perform_sbdma_kickoff(ctx, hw_cfg, dma_ops, blk, IGC);
 
 exit:
 	kfree(data);
@@ -3995,7 +4020,6 @@ static void dspp_3d_gamutv43_off(struct sde_hw_dspp *ctx, void *cfg)
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
 	struct sde_hw_reg_dma_ops *dma_ops;
 	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
-	struct sde_reg_dma_kickoff_cfg kick_off;
 	int rc;
 	u32 op_mode = 0, num_of_mixers, blk = 0;
 
@@ -4029,19 +4053,7 @@ static void dspp_3d_gamutv43_off(struct sde_hw_dspp *ctx, void *cfg)
 		return;
 	}
 
-	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, dspp_buf[GAMUT][ctx->idx],
-			REG_DMA_WRITE, DMA_CTL_QUEUE1, WRITE_IMMEDIATE);
-	kick_off.dma_type = REG_DMA_TYPE_SB;
-	rc = dma_ops->kick_off(&kick_off);
-	if (rc) {
-		DRM_ERROR("failed to kick off ret %d\n", rc);
-		return;
-	}
-
-	rc = dma_ops->last_command_sb(hw_cfg->ctl, DMA_CTL_QUEUE1,
-			REG_DMA_NOWAIT);
-	if (rc)
-		DRM_ERROR("failed to call last_command_sb ret %d\n", rc);
+	_perform_sbdma_kickoff(ctx, hw_cfg, dma_ops, blk, GAMUT);
 }
 
 
@@ -4050,7 +4062,6 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg)
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
 	struct sde_hw_reg_dma_ops *dma_ops;
 	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
-	struct sde_reg_dma_kickoff_cfg kick_off;
 	struct drm_msm_3d_gamut *payload;
 	int rc;
 	u32 num_of_mixers, blk = 0, i, j, k = 0, len;
@@ -4178,20 +4189,7 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg)
 		goto exit;
 	}
 
-	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
-			dspp_buf[GAMUT][ctx->idx], REG_DMA_WRITE,
-			DMA_CTL_QUEUE1, WRITE_IMMEDIATE);
-	kick_off.dma_type = REG_DMA_TYPE_SB;
-	rc = dma_ops->kick_off(&kick_off);
-	if (rc) {
-		DRM_ERROR("failed to kick off ret %d\n", rc);
-		goto exit;
-	}
-
-	rc = dma_ops->last_command_sb(hw_cfg->ctl, DMA_CTL_QUEUE1,
-			REG_DMA_NOWAIT);
-	if (rc)
-		DRM_ERROR("failed to call last_command_sb ret %d\n", rc);
+	_perform_sbdma_kickoff(ctx, hw_cfg, dma_ops, blk, GAMUT);
 
 exit:
 	kfree(data);
