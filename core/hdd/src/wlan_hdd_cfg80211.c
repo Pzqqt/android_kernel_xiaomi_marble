@@ -19886,6 +19886,11 @@ static int wlan_hdd_wait_for_disconnect(mac_handle_t mac_handle,
 	unsigned long rc;
 	uint32_t wait_time = SME_DISCONNECT_TIMEOUT;
 
+	/* Return if already disconnected */
+	if (sta_ctx->conn_info.conn_state == eConnectionState_NotConnected ||
+	    sta_ctx->conn_info.conn_state == eConnectionState_IbssDisconnected)
+		return 0;
+
 	/* If already in disconnecting state just wait for its completion */
 	if (sta_ctx->conn_info.conn_state == eConnectionState_Disconnecting)
 		goto wait_for_disconnect;
@@ -19936,7 +19941,7 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 	struct hdd_context *hdd_ctx;
 	unsigned long rc;
 
-	if (adapter->device_mode !=  QDF_STA_MODE)
+	if (adapter->device_mode != QDF_STA_MODE)
 		return;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
