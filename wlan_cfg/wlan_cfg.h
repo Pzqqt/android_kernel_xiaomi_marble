@@ -179,6 +179,7 @@ struct wlan_srng_cfg {
  * @rx_flow_max_search: max skid length for each hash entry
  * @rx_toeplitz_hash_key: toeplitz key pointer used for hash computation over
  *                        5 tuple flow entry
+ * @pktlog_buffer_size: packet log buffer size
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -274,6 +275,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint16_t rx_flow_search_table_size;
 	uint16_t rx_flow_max_search;
 	uint8_t *rx_toeplitz_hash_key;
+	uint8_t pktlog_buffer_size;
 };
 
 /**

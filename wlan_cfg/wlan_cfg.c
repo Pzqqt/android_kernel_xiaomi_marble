@@ -473,6 +473,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_DP_INT_BATCH_THRESHOLD_OTHER);
 	wlan_cfg_ctx->int_timer_threshold_other =
 		cfg_get(psoc, CFG_DP_INT_TIMER_THRESHOLD_OTHER);
+	wlan_cfg_ctx->pktlog_buffer_size =
+		cfg_get(psoc, CFG_DP_PKTLOG_BUFFER_SIZE);
 
 	/* This is default mapping and can be overridden by HW config
 	 * received from FW */
