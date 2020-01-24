@@ -919,6 +919,7 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
+	struct wlan_objmgr_psoc *psoc = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct cdp_monitor_filter filter_val = {0};
 
@@ -926,6 +927,12 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc) {
+		cfr_err("psoc is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 	/*
 	 * If capture mode is valid, then Host:
 	 * Subscribes for PPDU status TLVs in monitor status ring.
@@ -990,11 +997,15 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 			filter_val.fp_ctrl |= FILTER_CTRL_VHT_NDP;
 		}
 
+		if (!cdp_get_cfr_rcc(wlan_psoc_get_dp_handle(psoc),
+				    wlan_objmgr_pdev_get_pdev_id(pdev)))
+			tgt_cfr_start_lut_age_timer(pdev);
 		cfr_set_filter(pdev, 1, &filter_val);
-		tgt_cfr_start_lut_age_timer(pdev);
 	} else {
+		if (cdp_get_cfr_rcc(wlan_psoc_get_dp_handle(psoc),
+				    wlan_objmgr_pdev_get_pdev_id(pdev)))
+			tgt_cfr_stop_lut_age_timer(pdev);
 		cfr_set_filter(pdev, 0, &filter_val);
-		tgt_cfr_stop_lut_age_timer(pdev);
 	}
 
 	/* Trigger wmi to start the TLV processing. */

@@ -1462,6 +1462,8 @@ static os_timer_func(lut_ageout_timer_task)
 		}
 	}
 
+	if (pcfr->lut_timer_init)
+		qdf_timer_mod(&pcfr->lut_age_timer, LUT_AGE_TIMER);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 }
 
@@ -1479,7 +1481,9 @@ QDF_STATUS target_if_cfr_start_lut_age_timer(struct wlan_objmgr_pdev *pdev)
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						     WLAN_UMAC_COMP_CFR);
 
-	qdf_timer_mod(&pcfr->lut_age_timer, LUT_AGE_TIMER);
+	if (pcfr->lut_timer_init)
+		qdf_timer_mod(&pcfr->lut_age_timer, LUT_AGE_TIMER);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1497,7 +1501,9 @@ QDF_STATUS target_if_cfr_stop_lut_age_timer(struct wlan_objmgr_pdev *pdev)
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						     WLAN_UMAC_COMP_CFR);
 
-	qdf_timer_stop(&pcfr->lut_age_timer);
+	if (pcfr->lut_timer_init)
+		qdf_timer_stop(&pcfr->lut_age_timer);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1598,6 +1604,7 @@ QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (pcfr->lut_timer_init) {
+		qdf_timer_stop(&pcfr->lut_age_timer);
 		qdf_timer_free(&(pcfr->lut_age_timer));
 		pcfr->lut_timer_init = 0;
 	}
