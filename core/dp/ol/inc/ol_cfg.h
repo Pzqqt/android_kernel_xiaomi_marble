@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -133,6 +133,7 @@ struct txrx_pdev_cfg_t {
 	uint16_t bundle_timer_value;
 	uint16_t bundle_size;
 #endif
+	uint8_t pktlog_buffer_size;
 };
 
 /**

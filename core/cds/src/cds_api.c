@@ -392,6 +392,8 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_DP_FLOW_STEERING_ENABLED);
 	cdp_cfg.disable_intra_bss_fwd =
 		cfg_get(psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
+	cdp_cfg.pktlog_buffer_size =
+		cfg_get(psoc, CFG_DP_PKTLOG_BUFFER_SIZE);
 
 	cds_cdp_update_del_ack_params(psoc, &cdp_cfg);
 

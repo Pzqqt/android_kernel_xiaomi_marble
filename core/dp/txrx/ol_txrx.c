@@ -5775,6 +5775,9 @@ static uint32_t ol_txrx_get_cfg(struct cdp_soc_t *soc_hdl, enum cdp_dp_cfg cfg)
 	case cfg_dp_disable_intra_bss_fwd:
 		value = cfg_ctx->disable_intra_bss_fwd;
 		break;
+	case cfg_dp_pktlog_buffer_size:
+		value = cfg_ctx->pktlog_buffer_size;
+		break;
 	default:
 		value =  0;
 		break;

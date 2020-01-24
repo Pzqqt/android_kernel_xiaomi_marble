@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -208,6 +208,7 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 		cfg_param->enable_data_stall_detection;
 	cfg_ctx->enable_flow_steering = cfg_param->enable_flow_steering;
 	cfg_ctx->disable_intra_bss_fwd = cfg_param->disable_intra_bss_fwd;
+	cfg_ctx->pktlog_buffer_size = cfg_param->pktlog_buffer_size;
 
 	ol_cfg_update_del_ack_params(cfg_ctx, cfg_param);
 
