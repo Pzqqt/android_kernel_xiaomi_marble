@@ -584,8 +584,13 @@ int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 				pcfr->invalid_dma_length_cnt++;
 				cfr_err("<CORRELATE><%u>:CFR buffers "
 					"received with invalid length "
-					"length : ppdu_id:0x%04x\n",
-					cookie, lut->tx_ppdu_id);
+					"header_length_words = %d "
+					"cfr_payload_length_bytes = %d "
+					"ppdu_id:0x%04x\n",
+					cookie,
+					lut->header_length,
+					lut->payload_length,
+					lut->tx_ppdu_id);
 				/*
 				 * Assert here as length exceeding the allowed
 				 * limit would anyway manifest as random crash
