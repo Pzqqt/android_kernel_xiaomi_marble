@@ -313,8 +313,6 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 	hif_ext_group->irq_name = &hif_ahb_get_irq_name;
 	hif_ext_group->work_complete = &hif_dummy_grp_done;
 
-	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
-
 	for (j = 0; j < hif_ext_group->numirq; j++) {
 		ret = pfrm_get_irq(&pdev->dev, (struct qdf_pfm_hndl *)pdev,
 				   ic_irqname[hif_ext_group->irq[j]],
@@ -325,6 +323,13 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 			goto end;
 		}
 		ic_irqnum[hif_ext_group->irq[j]] = irq;
+		hif_ext_group->os_irq[j] = irq;
+	}
+
+	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
+
+	for (j = 0; j < hif_ext_group->numirq; j++) {
+		irq = hif_ext_group->os_irq[j];
 		irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
 		ret = pfrm_request_irq(scn->qdf_dev->dev,
 				       irq, hif_ext_group_interrupt_handler,
@@ -336,7 +341,6 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 			ret = -EFAULT;
 			goto end;
 		}
-		hif_ext_group->os_irq[j] = irq;
 	}
 	qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
 
