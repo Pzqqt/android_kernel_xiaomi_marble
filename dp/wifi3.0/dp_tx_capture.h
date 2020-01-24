@@ -37,6 +37,14 @@ struct dp_tx_desc_s;
 
 #define SIFS_INTERVAL 16
 
+#define MAX_MGMT_PEER_FILTER 16
+struct dp_peer_mgmt_list {
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+	uint32_t mgmt_pkt_counter;
+	uint16_t peer_id;
+	bool avail;
+};
+
 struct dp_pdev_tx_capture {
 	/* For deferred PPDU status processing */
 	qdf_spinlock_t ppdu_stats_lock;
@@ -62,6 +70,7 @@ struct dp_pdev_tx_capture {
 	qdf_spinlock_t config_lock;
 	uint32_t htt_frame_type[TX_CAP_HTT_MAX_FTYPE];
 	struct cdp_tx_completion_ppdu dummy_ppdu_desc;
+	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
 };
 
 /* Tx TID */
@@ -263,12 +272,73 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 
 /**
  * dp_peer_set_tx_capture_enabled: Set tx_cap_enabled bit in peer
+ * @pdev: DP PDEV handle
  * @peer: Peer handle
  * @value: Enable/disable setting for tx_cap_enabled
+ * @peer_mac: peer_mac Enable/disable setting for tx_cap_enabled
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void
-dp_peer_set_tx_capture_enabled(struct dp_peer *peer, bool value);
+QDF_STATUS
+dp_peer_set_tx_capture_enabled(struct dp_pdev *pdev,
+			       struct dp_peer *peer, uint8_t value,
+			       uint8_t *peer_mac);
+
+/*
+ * dp_peer_tx_cap_add_filter: add peer filter mgmt pkt based on peer
+ * and mac address
+ * @pdev: DP PDEV handle
+ * @peer_id: DP PEER ID
+ * @mac_addr: pointer to mac address
+ *
+ * return: true on added and false on not failed
+ */
+bool dp_pdev_tx_cap_add_filter(struct dp_pdev *pdev,
+			       uint16_t peer_id, uint8_t *mac_addr);
+
+/*
+ * dp_peer_tx_cap_del_filter: delete peer filter mgmt pkt based on peer
+ * and mac address
+ * @pdev: DP PDEV handle
+ * @peer_id: DP PEER ID
+ * @mac_addr: pointer to mac address
+ *
+ * return: true on added and false on not failed
+ */
+bool dp_peer_tx_cap_del_filter(struct dp_pdev *pdev,
+			       uint16_t peer_id, uint8_t *mac_addr);
+
+/*
+ * dp_peer_tx_cap_print_mgmt_filter: pradd peer filter mgmt pkt based on peer
+ * and mac address
+ * @pdev: DP PDEV handle
+ * @peer_id: DP PEER ID
+ * @mac_addr: pointer to mac address
+ *
+ * return: true on added and false on not failed
+ */
+void dp_peer_tx_cap_print_mgmt_filter(struct dp_pdev *pdev,
+				      uint16_t peer_id, uint8_t *mac_addr);
+
+/*
+ * dp_peer_mgmt_pkt_filter: filter mgmt pkt based on peer and mac address
+ * @pdev: DP PDEV handle
+ * @nbuf: buffer containing the ppdu_desc
+ *
+ * return: status
+ */
+bool is_dp_peer_mgmt_pkt_filter(struct dp_pdev *pdev,
+				uint32_t peer_id, uint8_t *mac_addr);
+
+/*
+ * dp_peer_tx_capture_filter_check: check filter is enable for the filter
+ * and update tx_cap_enabled flag
+ * @pdev: DP PDEV handle
+ * @peer: DP PEER handle
+ *
+ * return: void
+ */
+void dp_peer_tx_capture_filter_check(struct dp_pdev *pdev,
+				     struct dp_peer *peer);
 #endif
 #endif

@@ -76,12 +76,15 @@ dp_config_enh_rx_capture(struct dp_pdev *pdev, uint8_t val);
 
 /**
  * dp_peer_set_rx_capture_enabled: Set rx_cap_enabled bit in peer
+ * @pdev: DP_PDEV handle
  * @peer_handle: Peer handle
  * @value: Enable/disable setting for rx_cap_enabled
+ * @mac_addr: peer mac address
  *
- * Return: None
+ * Return: status
  */
-void
-dp_peer_set_rx_capture_enabled(struct dp_peer *peer, bool value);
+QDF_STATUS dp_peer_set_rx_capture_enabled(struct dp_pdev *pdev,
+					  struct dp_peer *peer_handle,
+					  bool value, uint8_t *mac_addr);
 #endif /* WLAN_RX_PKT_CAPTURE_ENH */
 #endif /* _DP_RX_MON_FEATURE_H_ */
