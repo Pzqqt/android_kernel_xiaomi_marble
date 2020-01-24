@@ -1802,6 +1802,19 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 {
 }
 
+/*
+ * dp_peer_tx_capture_filter_check: check filter is enable for the filter
+ * and update tx_cap_enabled flag
+ * @pdev: DP PDEV handle
+ * @peer: DP PEER handle
+ *
+ * return: void
+ */
+static inline
+void dp_peer_tx_capture_filter_check(struct dp_pdev *pdev,
+				     struct dp_peer *peer)
+{
+}
 #endif
 
 #ifdef FEATURE_PERPKT_INFO

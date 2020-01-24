@@ -5581,6 +5581,12 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		DP_STATS_INIT(peer);
 		DP_STATS_UPD(peer, rx.avg_rssi, INVALID_RSSI);
 
+		/*
+		 * In tx_monitor mode, filter may be set for unassociated peer
+		 * when unassociated peer get associated peer need to
+		 * update tx_cap_enabled flag to support peer filter.
+		 */
+		dp_peer_tx_capture_filter_check(pdev, peer);
 		return QDF_STATUS_SUCCESS;
 	} else {
 		/*
@@ -5704,6 +5710,14 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 						peer_cookie.ctx;
 		}
 	}
+
+	/*
+	 * In tx_monitor mode, filter may be set for unassociated peer
+	 * when unassociated peer get associated peer need to
+	 * update tx_cap_enabled flag to support peer filter.
+	 */
+	dp_peer_tx_capture_filter_check(pdev, peer);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -8399,7 +8413,8 @@ static QDF_STATUS dp_get_psoc_param(struct cdp_soc_t *cdp_soc,
  * @soc: DP_SOC handle
  * @pdev_id: id of DP_PDEV handle
  * @is_rx_pkt_cap_enable: enable/disable Rx packet capture in monitor mode
- * @is_tx_pkt_cap_enable: enable/disable Tx packet capture in monitor mode
+ * @is_tx_pkt_cap_enable: enable/disable/delete/print
+ * Tx packet capture in monitor mode
  * @peer_mac: MAC address for which the above need to be enabled/disabled
  *
  * Return: Success if Rx & Tx capture is enabled for peer, false otherwise
@@ -8408,28 +8423,30 @@ QDF_STATUS
 dp_peer_update_pkt_capture_params(ol_txrx_soc_handle soc,
 				  uint8_t pdev_id,
 				  bool is_rx_pkt_cap_enable,
-				  bool is_tx_pkt_cap_enable,
+				  uint8_t is_tx_pkt_cap_enable,
 				  uint8_t *peer_mac)
 {
+	QDF_STATUS status;
 	struct dp_peer *peer;
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
 						   pdev_id);
-
 	if (!pdev)
 		return QDF_STATUS_E_FAILURE;
 
 	peer = (struct dp_peer *)dp_find_peer_by_addr((struct cdp_pdev *)pdev,
 						      peer_mac);
-	if (!peer) {
-		dp_err("Invalid Peer");
-		return QDF_STATUS_E_FAILURE;
-	}
 
-	dp_peer_set_rx_capture_enabled(peer, is_rx_pkt_cap_enable);
-	dp_peer_set_tx_capture_enabled(peer, is_tx_pkt_cap_enable);
+	/* we need to set tx pkt capture for non associated peer */
+	status = dp_peer_set_tx_capture_enabled(pdev, peer,
+						is_tx_pkt_cap_enable,
+						peer_mac);
 
-	return QDF_STATUS_SUCCESS;
+	status = dp_peer_set_rx_capture_enabled(pdev, peer,
+						is_rx_pkt_cap_enable,
+						peer_mac);
+
+	return status;
 }
 
 /*
