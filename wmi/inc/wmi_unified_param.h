@@ -5189,6 +5189,7 @@ struct wmi_host_fw_abi_ver {
  * @ast_3_flow_mask_enable: mask to enable flow support for ast index 3
  * @ast_tid_high_mask_enable: enable tid valid mask for high priority flow
  * @ast_tid_low_mask_enable: enable tid valid mask for low priority flow
+ * @nan_separate_iface_support: Separate iface creation for NAN
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5285,6 +5286,7 @@ typedef struct {
 		 ast_3_flow_mask_enable:4,
 		 ast_tid_high_mask_enable:8,
 		 ast_tid_low_mask_enable:8;
+	bool nan_separate_iface_support;
 } target_resource_config;
 
 /**

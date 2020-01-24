@@ -6868,6 +6868,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	WMI_MSDU_FLOW_TID_VALID_LOW_MASKS_SET(
 		resource_cfg->msdu_flow_override_config1,
 		tgt_res_cfg->ast_tid_low_mask_enable);
+	WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_SET(
+		resource_cfg->host_service_flags,
+		tgt_res_cfg->nan_separate_iface_support);
+
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
