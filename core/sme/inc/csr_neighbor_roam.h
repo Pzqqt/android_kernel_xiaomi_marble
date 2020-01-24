@@ -426,6 +426,40 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 			    const tSirMacAddr bssid, uint32_t ch_freq,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid);
 
+#ifdef WLAN_FEATURE_FIPS
+/**
+ * csr_roam_pmkid_req_callback() - Registered CSR Callback function to handle
+ * roam event from firmware for pmkid generation fallback.
+ * @vdev_id: Vdev id
+ * @bss_list: candidate AP bssid list
+ */
+QDF_STATUS
+csr_roam_pmkid_req_callback(uint8_t vdev_id,
+			    struct roam_pmkid_req_event *bss_list);
+
+/**
+ * csr_process_roam_pmkid_req_callback() - API to trigger the pmkid
+ * generation fallback event for candidate AP received from firmware.
+ * @mac_ctx: Global mac context pointer
+ * @vdev_id: Vdev id
+ * @roam_bsslist: roam candidate AP bssid list
+ *
+ * This function calls the hdd_sme_roam_callback with reason
+ * eCSR_ROAM_FIPS_PMK_REQUEST to trigger pmkid generation in supplicant.
+ */
+QDF_STATUS
+csr_process_roam_pmkid_req_callback(struct mac_context *mac_ctx,
+				    uint8_t vdev_id,
+				    struct roam_pmkid_req_event *roam_bsslist);
+#else
+static inline QDF_STATUS
+csr_roam_pmkid_req_callback(uint8_t vdev_id,
+			    struct roam_pmkid_req_event *bss_list)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_FIPS */
+
 #else
 static inline QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 	struct roam_offload_synch_ind *roam_synch_data,
@@ -449,6 +483,13 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+csr_roam_pmkid_req_callback(uint8_t vdev_id,
+			    struct roam_pmkid_req_event *bss_list)
+{
+	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
 void csr_neighbor_roam_state_transition(struct mac_context *mac_ctx,

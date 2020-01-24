@@ -6389,6 +6389,104 @@ QDF_STATUS wma_set_roam_triggers(tp_wma_handle wma,
 	return wmi_unified_set_roam_triggers(wma->wmi_handle, triggers);
 }
 
+#ifdef WLAN_FEATURE_FIPS
+void wma_register_pmkid_req_event_handler(tp_wma_handle wma_handle)
+{
+	if (!wma_handle) {
+		wma_err("%s: pmkid req wma_handle is NULL", __func__);
+		return;
+	}
+
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_roam_pmkid_request_event_id,
+					   wma_roam_pmkid_request_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
+}
+
+int wma_roam_pmkid_request_event_handler(void *handle, uint8_t *event,
+					 uint32_t len)
+{
+	WMI_ROAM_PMKID_REQUEST_EVENTID_param_tlvs *param_buf;
+	wmi_roam_pmkid_request_event_fixed_param *roam_pmkid_req_ev;
+	wmi_roam_pmkid_request_tlv_param *src_list;
+	tp_wma_handle wma = (tp_wma_handle)handle;
+	struct roam_pmkid_req_event *dst_list;
+	struct qdf_mac_addr *roam_bsslist;
+	uint32_t num_entries, i;
+	QDF_STATUS status;
+
+	if (!event) {
+		wma_err("%s: received null event from target", __func__);
+		return -EINVAL;
+	}
+
+	param_buf = (WMI_ROAM_PMKID_REQUEST_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		wma_err("%s: received null buf from target", __func__);
+		return -EINVAL;
+	}
+
+	roam_pmkid_req_ev = param_buf->fixed_param;
+	if (!roam_pmkid_req_ev) {
+		wma_err("%s: received null event data from target", __func__);
+		return -EINVAL;
+	}
+
+	if (roam_pmkid_req_ev->vdev_id >= wma->max_bssid) {
+		wma_err("%s: received invalid vdev_id %d",
+			 __func__, roam_pmkid_req_ev->vdev_id);
+		return -EINVAL;
+	}
+
+	num_entries = param_buf->num_pmkid_request;
+	if (num_entries > MAX_RSSI_AVOID_BSSID_LIST) {
+		wma_err("%s: num bssid entries:%d exceeds maximum value",
+			 __func__, num_entries);
+		return -EINVAL;
+	}
+
+	src_list = param_buf->pmkid_request;
+	if (len < (sizeof(*roam_pmkid_req_ev) +
+		(num_entries * sizeof(*src_list)))) {
+		wma_err("%s: Invalid length:%d", __func__, len);
+		return -EINVAL;
+	}
+
+	dst_list = qdf_mem_malloc(sizeof(struct roam_pmkid_req_event) +
+				 (sizeof(struct qdf_mac_addr) * num_entries));
+	if (!dst_list)
+		return -ENOMEM;
+
+	for (i = 0; i < num_entries; i++) {
+		roam_bsslist = &dst_list->ap_bssid[i];
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_list->bssid,
+					   roam_bsslist->bytes);
+		if (qdf_is_macaddr_zero(roam_bsslist) ||
+		    qdf_is_macaddr_broadcast(roam_bsslist) ||
+		    qdf_is_macaddr_group(roam_bsslist)) {
+			wma_err("%s: Invalid bssid", __func__);
+			qdf_mem_free(dst_list);
+			return -EINVAL;
+		}
+		WMA_LOGD("%s:Received pmkid fallback for bssid: %pM vdev_id:%d",
+			 __func__, roam_bsslist->bytes,
+			 roam_pmkid_req_ev->vdev_id);
+		src_list++;
+	}
+	dst_list->num_entries = num_entries;
+
+	status = wma->csr_roam_pmkid_req_cb(roam_pmkid_req_ev->vdev_id,
+					    dst_list);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err("%s: Pmkid request failed", __func__);
+		qdf_mem_free(dst_list);
+		return -EINVAL;
+	}
+
+	qdf_mem_free(dst_list);
+	return 0;
+}
+#endif /* WLAN_FEATURE_FIPS */
 #else
 inline QDF_STATUS
 wma_set_roam_triggers(tp_wma_handle wma, struct roam_triggers *triggers)

@@ -391,6 +391,7 @@ struct sme_ready_req {
 					uint8_t vdev_id,
 					uint8_t *deauth_disassoc_frame,
 					uint16_t deauth_disassoc_frame_len);
+	void *csr_roam_pmkid_req_cb;
 };
 
 /**
