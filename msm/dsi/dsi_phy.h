@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_PHY_H_
@@ -356,9 +356,9 @@ void dsi_phy_dynamic_refresh_clear(struct msm_dsi_phy *phy);
  * @dst:	   Pointer to cache location.
  * @size:	   Number of phy lane settings.
  */
-int dsi_phy_dyn_refresh_cache_phy_timings(struct msm_dsi_phy *phy,
+int dsi_phy_dyn_refresh_cache_phy_timings(struct msm_dsi_phy *phy, u32 *dst,
+		u32 size);
 
-		u32 *dst, u32 size);
 /**
  * dsi_phy_set_continuous_clk() - API to set/unset force clock lane HS request.
  * @phy:	DSI PHY Handle.
@@ -375,4 +375,31 @@ void dsi_phy_set_continuous_clk(struct msm_dsi_phy *phy, bool enable);
  */
 int dsi_phy_get_io_resources(struct msm_io_res *io_res);
 
+/**
+ * dsi_phy_configure() -   Configure DSI PHY PLL
+ * @dsi_phy:               DSI PHY handle.
+ * @commit:		   boolean to specify if calculated PHY configuration
+ *			   needs to be committed. Set to false in case of
+ *			   dynamic clock switch.
+ *
+ * Return: error code.
+ */
+int dsi_phy_configure(struct msm_dsi_phy *dsi_phy, bool commit);
+
+/**
+ * dsi_phy_pll_toggle() -   Toggle DSI PHY PLL
+ * @dsi_phy:                DSI PHY handle.
+ * @prepare:		    specifies if PLL needs to be turned on or not.
+ *
+ * Return: error code.
+ */
+int dsi_phy_pll_toggle(struct msm_dsi_phy *dsi_phy, bool prepare);
+
+/**
+ * dsi_phy_dynclk_configure() -   Configure DSI PHY PLL during dynamic clock
+ * @dsi_phy:			  DSI PHY handle.
+ *
+ * Return: error code.
+ */
+int dsi_phy_dynclk_configure(struct msm_dsi_phy *phy);
 #endif /* _DSI_PHY_H_ */

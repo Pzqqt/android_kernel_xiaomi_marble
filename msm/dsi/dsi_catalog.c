@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/errno.h>
@@ -339,6 +339,29 @@ int dsi_catalog_phy_setup(struct dsi_phy_hw *phy,
 	case DSI_PHY_VERSION_1_0:
 	default:
 		return -ENOTSUPP;
+	}
+
+	return rc;
+}
+
+int dsi_catalog_phy_pll_setup(struct dsi_phy_hw *phy, u32 pll_ver)
+{
+	int rc = 0;
+
+	if (pll_ver >= DSI_PLL_VERSION_UNKNOWN) {
+		DSI_ERR("Unsupported version: %d\n", pll_ver);
+		return -EOPNOTSUPP;
+	}
+
+	switch (pll_ver) {
+	case DSI_PLL_VERSION_5NM:
+		phy->ops.configure = dsi_pll_5nm_configure;
+		phy->ops.pll_toggle = dsi_pll_5nm_toggle;
+		break;
+	default:
+		phy->ops.configure = NULL;
+		phy->ops.pll_toggle = NULL;
+		break;
 	}
 
 	return rc;

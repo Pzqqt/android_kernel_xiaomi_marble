@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of.h>
@@ -33,6 +33,8 @@ struct dsi_clk_mngr {
 	u32 core_clk_state;
 	u32 link_clk_state;
 
+	phy_configure_cb phy_config_cb;
+	pll_toggle_cb phy_pll_toggle_cb;
 	pre_clockoff_cb pre_clkoff_cb;
 	post_clockoff_cb post_clkoff_cb;
 	post_clockon_cb post_clkon_cb;
@@ -498,10 +500,6 @@ error:
  */
 static int dsi_link_hs_clk_stop(struct dsi_link_hs_clk_info *link_hs_clks)
 {
-	struct dsi_link_clks *l_clks;
-
-	l_clks = container_of(link_hs_clks, struct dsi_link_clks, hs_clks);
-
 	dsi_link_hs_clk_disable(link_hs_clks);
 	dsi_link_hs_clk_unprepare(link_hs_clks);
 
@@ -616,6 +614,9 @@ static int dsi_display_link_clk_enable(struct dsi_link_clks *clks,
 	int rc = 0;
 	int i;
 	struct dsi_link_clks *clk, *m_clks;
+	struct dsi_clk_mngr *mngr;
+
+	mngr = container_of(clks, struct dsi_clk_mngr, link_clks[master_ndx]);
 
 	/*
 	 * In case of split DSI usecases, the clock for master controller should
@@ -635,6 +636,10 @@ static int dsi_display_link_clk_enable(struct dsi_link_clks *clks,
 	}
 
 	if (l_type & DSI_LINK_HS_CLK) {
+		if (!mngr->is_cont_splash_enabled) {
+			mngr->phy_config_cb(mngr->priv_data, true);
+			mngr->phy_pll_toggle_cb(mngr->priv_data, true);
+		}
 		rc = dsi_link_hs_clk_start(&m_clks->hs_clks,
 			DSI_LINK_CLK_START, master_ndx);
 		if (rc) {
@@ -724,6 +729,9 @@ static int dsi_display_link_clk_disable(struct dsi_link_clks *clks,
 	int rc = 0;
 	int i;
 	struct dsi_link_clks *clk, *m_clks;
+	struct dsi_clk_mngr *mngr;
+
+	mngr = container_of(clks, struct dsi_clk_mngr, link_clks[master_ndx]);
 
 	/*
 	 * In case of split DSI usecases, clock for slave DSI controllers should
@@ -767,6 +775,8 @@ static int dsi_display_link_clk_disable(struct dsi_link_clks *clks,
 		if (rc)
 			DSI_ERR("failed to turn off master hs link clocks, rc=%d\n",
 					rc);
+		if (!mngr->is_cont_splash_enabled)
+			mngr->phy_pll_toggle_cb(mngr->priv_data, false);
 	}
 
 	return rc;
@@ -1439,6 +1449,8 @@ void *dsi_display_clk_mngr_register(struct dsi_clk_info *info)
 	mngr->post_clkon_cb = info->post_clkon_cb;
 	mngr->pre_clkoff_cb = info->pre_clkoff_cb;
 	mngr->post_clkoff_cb = info->post_clkoff_cb;
+	mngr->phy_config_cb = info->phy_config_cb;
+	mngr->phy_pll_toggle_cb = info->phy_pll_toggle_cb;
 	mngr->priv_data = info->priv_data;
 	memcpy(mngr->name, info->name, MAX_STRING_LEN);
 

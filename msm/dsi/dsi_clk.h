@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_CLK_H_
@@ -174,6 +174,25 @@ typedef int (*pre_clockon_cb)(void *priv,
 
 
 /**
+ * typedef *phy_configure_cb() - Callback to configure PHY for PLL clocks
+ * @priv: private data pointer.
+ * @commit: boolean to specify if calculated PHY configuration needs to be
+ *          committed. Set to false in case of dynamic clock switch.
+ *
+ * @return: error code.
+ */
+typedef int (*phy_configure_cb)(void *priv, bool commit);
+
+/**
+ * typedef *pll_toggle_cb() - Callback to toggle PHY PLL
+ * @priv: private data pointer.
+ * @prepare: specifies if the PLL needs to be turned on or off.
+ *
+ * @return: error code.
+ */
+typedef int (*pll_toggle_cb)(void *priv, bool prepare);
+
+/**
  * struct dsi_clk_info - clock information for DSI hardware.
  * @name:                    client name.
  * @c_clks[MAX_DSI_CTRL]     array of core clock configurations
@@ -185,6 +204,8 @@ typedef int (*pre_clockon_cb)(void *priv,
  * @post_clkoff_cb           callback after clock is turned off
  * @post_clkon_cb            callback after clock is turned on
  * @pre_clkon_cb             callback before clock is turned on
+ * @phy_config_cb            callback to configure PHY PLL
+ * @phy_pll_toggle_cb        callback to toggle PHY PLL state
  * @priv_data                pointer to private data
  * @master_ndx               master DSI controller index
  * @dsi_ctrl_count           number of DSI controllers
@@ -199,6 +220,8 @@ struct dsi_clk_info {
 	post_clockoff_cb post_clkoff_cb;
 	post_clockon_cb post_clkon_cb;
 	pre_clockon_cb pre_clkon_cb;
+	phy_configure_cb phy_config_cb;
+	pll_toggle_cb phy_pll_toggle_cb;
 	void *priv_data;
 	u32 master_ndx;
 	u32 dsi_ctrl_count;
