@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2018, 2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -868,10 +868,12 @@ static irqreturn_t wcd_mbhc_hs_rem_irq(int irq, void *data)
 					MBHC_PLUG_TYPE_HEADPHONE)
 				wcd_mbhc_report_plug(
 					mbhc, 0, SND_JACK_HEADPHONE);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			else if (mbhc->current_plug ==
 					MBHC_PLUG_TYPE_GND_MIC_SWAP)
 				wcd_mbhc_report_plug(
 					mbhc, 0, SND_JACK_UNSUPPORTED);
+#endif /* CONFIG_AUDIO_QGKI */
 			else if (mbhc->current_plug ==
 					MBHC_PLUG_TYPE_HIGH_HPH)
 				wcd_mbhc_report_plug(

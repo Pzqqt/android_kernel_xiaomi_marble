@@ -33,6 +33,7 @@ void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
 }
 EXPORT_SYMBOL(wcd_mbhc_jack_report);
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static void __hphocp_off_report(struct wcd_mbhc *mbhc, u32 jack_status,
 				int irq)
 {
@@ -70,6 +71,7 @@ static void hphlocp_off_report(struct wcd_mbhc *mbhc, u32 jack_status)
 	__hphocp_off_report(mbhc, SND_JACK_OC_HPHL,
 			    mbhc->intr_ids->hph_left_ocp);
 }
+#endif /* CONFIG_AUDIO_QGKI */
 
 static void wcd_program_hs_vref(struct wcd_mbhc *mbhc)
 {
@@ -311,8 +313,10 @@ out_micb_en:
 		break;
 	case WCD_EVENT_POST_HPHL_PA_OFF:
 		clear_bit(WCD_MBHC_HPHL_PA_OFF_ACK, &mbhc->hph_pa_dac_state);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		if (mbhc->hph_status & SND_JACK_OC_HPHL)
 			hphlocp_off_report(mbhc, SND_JACK_OC_HPHL);
+#endif /* CONFIG_AUDIO_QGKI */
 		clear_bit(WCD_MBHC_EVENT_PA_HPHL, &mbhc->event_state);
 		/* check if micbias is enabled */
 		if (micbias2)
@@ -329,8 +333,10 @@ out_micb_en:
 		break;
 	case WCD_EVENT_POST_HPHR_PA_OFF:
 		clear_bit(WCD_MBHC_HPHR_PA_OFF_ACK, &mbhc->hph_pa_dac_state);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		if (mbhc->hph_status & SND_JACK_OC_HPHR)
 			hphrocp_off_report(mbhc, SND_JACK_OC_HPHR);
+#endif /* CONFIG_AUDIO_QGKI */
 		clear_bit(WCD_MBHC_EVENT_PA_HPHR, &mbhc->event_state);
 		/* check if micbias is enabled */
 		if (micbias2)
@@ -599,8 +605,10 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
 				mbhc->hph_status, WCD_MBHC_JACK_MASK);
 		wcd_mbhc_set_and_turnoff_hph_padac(mbhc);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		hphrocp_off_report(mbhc, SND_JACK_OC_HPHR);
 		hphlocp_off_report(mbhc, SND_JACK_OC_HPHL);
+#endif /* CONFIG_AUDIO_QGKI */
 		mbhc->current_plug = MBHC_PLUG_TYPE_NONE;
 		mbhc->force_linein = false;
 	} else {
@@ -651,10 +659,15 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 						     WCD_MBHC_ELEC_HS_REM,
 						     true);
 			}
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			mbhc->hph_status &= ~(SND_JACK_HEADSET |
 						SND_JACK_LINEOUT |
 						SND_JACK_ANC_HEADPHONE |
 						SND_JACK_UNSUPPORTED);
+#else
+			mbhc->hph_status &= ~(SND_JACK_HEADSET |
+						SND_JACK_LINEOUT);
+#endif /* CONFIG_AUDIO_QGKI */
 		}
 
 		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET &&
@@ -664,15 +677,19 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		/* Report insertion */
 		if (jack_type == SND_JACK_HEADPHONE)
 			mbhc->current_plug = MBHC_PLUG_TYPE_HEADPHONE;
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		else if (jack_type == SND_JACK_UNSUPPORTED)
 			mbhc->current_plug = MBHC_PLUG_TYPE_GND_MIC_SWAP;
+#endif /* CONFIG_AUDIO_QGKI */
 		else if (jack_type == SND_JACK_HEADSET) {
 			mbhc->current_plug = MBHC_PLUG_TYPE_HEADSET;
 			mbhc->jiffies_atreport = jiffies;
-		} else if (jack_type == SND_JACK_LINEOUT) {
+		} else if (jack_type == SND_JACK_LINEOUT)
 			mbhc->current_plug = MBHC_PLUG_TYPE_HIGH_HPH;
-		} else if (jack_type == SND_JACK_ANC_HEADPHONE)
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		else if (jack_type == SND_JACK_ANC_HEADPHONE)
 			mbhc->current_plug = MBHC_PLUG_TYPE_ANC_HEADPHONE;
+#endif /* CONFIG_AUDIO_QGKI */
 
 		if (mbhc->mbhc_cb->hph_pa_on_status)
 			is_pa_on = mbhc->mbhc_cb->hph_pa_on_status(component);
@@ -698,9 +715,14 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 				mbhc->force_linein = true;
 				mbhc->current_plug = MBHC_PLUG_TYPE_HIGH_HPH;
 				if (mbhc->hph_status) {
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 					mbhc->hph_status &= ~(SND_JACK_HEADSET |
 							SND_JACK_LINEOUT |
 							SND_JACK_UNSUPPORTED);
+#else
+					mbhc->hph_status &= ~(SND_JACK_HEADSET |
+							SND_JACK_LINEOUT);
+#endif /* CONFIG_AUDIO_QGKI */
 					wcd_mbhc_jack_report(mbhc,
 							&mbhc->headset_jack,
 							mbhc->hph_status,
@@ -720,9 +742,14 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 			jack_type = SND_JACK_LINEOUT;
 			mbhc->current_plug = MBHC_PLUG_TYPE_HIGH_HPH;
 			if (mbhc->hph_status) {
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 				mbhc->hph_status &= ~(SND_JACK_HEADSET |
 						SND_JACK_LINEOUT |
 						SND_JACK_UNSUPPORTED);
+#else
+				mbhc->hph_status &= ~(SND_JACK_HEADSET |
+						SND_JACK_LINEOUT);
+#endif /* CONFIG_AUDIO_QGKI */
 				wcd_mbhc_jack_report(mbhc,
 						&mbhc->headset_jack,
 						mbhc->hph_status,
@@ -814,15 +841,19 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 			wcd_mbhc_report_plug(mbhc, 0, SND_JACK_HEADPHONE);
 		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET)
 			wcd_mbhc_report_plug(mbhc, 0, SND_JACK_HEADSET);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		wcd_mbhc_report_plug(mbhc, 1, SND_JACK_UNSUPPORTED);
+#endif /* CONFIG_AUDIO_QGKI */
 	} else if (plug_type == MBHC_PLUG_TYPE_HEADSET) {
 		if (mbhc->mbhc_cfg->enable_anc_mic_detect &&
 		    mbhc->mbhc_fn->wcd_mbhc_detect_anc_plug_type)
 			anc_mic_found =
 			mbhc->mbhc_fn->wcd_mbhc_detect_anc_plug_type(mbhc);
 		jack_type = SND_JACK_HEADSET;
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		if (anc_mic_found)
 			jack_type = SND_JACK_ANC_HEADPHONE;
+#endif /* CONFIG_AUDIO_QGKI */
 
 		/*
 		 * If Headphone was reported previously, this will
@@ -983,9 +1014,11 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 		case MBHC_PLUG_TYPE_HEADPHONE:
 			jack_type = SND_JACK_HEADPHONE;
 			break;
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		case MBHC_PLUG_TYPE_GND_MIC_SWAP:
 			jack_type = SND_JACK_UNSUPPORTED;
 			break;
+#endif /* CONFIG_AUDIO_QGKI */
 		case MBHC_PLUG_TYPE_HEADSET:
 			/* make sure to turn off Rbias */
 			if (mbhc->mbhc_cb->micb_internal)
@@ -1001,13 +1034,19 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 			mbhc->is_extn_cable = false;
 			jack_type = SND_JACK_LINEOUT;
 			break;
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		case MBHC_PLUG_TYPE_ANC_HEADPHONE:
 			jack_type = SND_JACK_ANC_HEADPHONE;
 			break;
+#endif /* CONFIG_AUDIO_QGKI */
 		default:
 			pr_info("%s: Invalid current plug: %d\n",
 				__func__, mbhc->current_plug);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			jack_type = SND_JACK_UNSUPPORTED;
+#else
+			jack_type = SND_JACK_HEADPHONE;
+#endif /* CONFIG_AUDIO_QGKI */
 			break;
 		}
 		wcd_mbhc_hs_elec_irq(mbhc, WCD_MBHC_ELEC_HS_REM, false);
@@ -1295,7 +1334,9 @@ static irqreturn_t wcd_mbhc_hphl_ocp_irq(int irq, void *data)
 			mbhc->mbhc_cb->irq_control(mbhc->component,
 						   mbhc->intr_ids->hph_left_ocp,
 						   false);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			mbhc->hph_status |= SND_JACK_OC_HPHL;
+#endif /* CONFIG_AUDIO_QGKI */
 			wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
 					    mbhc->hph_status,
 					    WCD_MBHC_JACK_MASK);
@@ -1338,7 +1379,9 @@ static irqreturn_t wcd_mbhc_hphr_ocp_irq(int irq, void *data)
 		mbhc->mbhc_cb->irq_control(mbhc->component,
 					   mbhc->intr_ids->hph_right_ocp,
 					   false);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		mbhc->hph_status |= SND_JACK_OC_HPHR;
+#endif /* CONFIG_AUDIO_QGKI */
 		wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
 				    mbhc->hph_status, WCD_MBHC_JACK_MASK);
 	}

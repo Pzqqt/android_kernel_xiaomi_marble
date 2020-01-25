@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2014, 2016-2017 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014, 2016-2017, 2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -11,7 +11,7 @@
 #include "msm-pcm-routing-devdep.h"
 #include "msm-ds2-dap-config.h"
 
-#ifdef CONFIG_SND_HWDEP
+#if IS_ENABLED(CONFIG_SND_HWDEP) && IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_pcm_routing_hwdep_open(struct snd_hwdep *hw, struct file *file)
 {
 	pr_debug("%s\n", __func__);
@@ -125,7 +125,7 @@ int msm_pcm_routing_hwdep_new(struct snd_soc_pcm_runtime *runtime,
 	hwdep->ops.release = msm_pcm_routing_hwdep_release;
 #ifdef CONFIG_COMPAT
 	hwdep->ops.ioctl_compat = msm_pcm_routing_hwdep_compat_ioctl;
-#endif
+#endif /* CONFIG_COMPAT */
 	return rc;
 }
-#endif
+#endif /* CONFIG_AUDIO_QGKI && CONFIG_SND_HWDEP */

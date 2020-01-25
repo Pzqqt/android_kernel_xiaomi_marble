@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/init.h>
 #include <linux/err.h>
@@ -1682,6 +1682,7 @@ enum {
 		_IOW('U', 0x13, struct snd_lsm_module_params_32),
 };
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			  unsigned int cmd, void __user *arg)
 {
@@ -2081,6 +2082,7 @@ done:
 	mutex_unlock(&prtd->lsm_api_lock);
 	return err;
 }
+#endif /* CONFIG_AUDIO_QGKI */
 #else
 #define msm_lsm_ioctl_compat NULL
 #endif
@@ -2913,6 +2915,7 @@ static int msm_lsm_pcm_copy(struct snd_pcm_substream *substream, int ch,
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_lsm_app_type_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
@@ -2994,7 +2997,14 @@ static int msm_lsm_add_app_type_controls(struct snd_soc_pcm_runtime *rtd)
 	kctl->get = msm_lsm_app_type_cfg_ctl_get;
 	return 0;
 }
+#else
+static int msm_lsm_add_app_type_controls(struct snd_soc_pcm_runtime *rtd)
+{
+	return 0;
+}
+#endif /* CONFIG_AUDIO_QGKI */
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_lsm_afe_data_ctl_put(struct snd_kcontrol *kcontrol,
 				    struct snd_ctl_elem_value *ucontrol)
 {
@@ -3058,6 +3068,12 @@ static int msm_lsm_add_afe_data_controls(struct snd_soc_pcm_runtime *rtd)
 
 	return 0;
 }
+#else
+static int msm_lsm_add_afe_data_controls(struct snd_soc_pcm_runtime *rtd)
+{
+	return 0;
+}
+#endif /* CONFIG_AUDIO_QGKI */
 
 static int msm_lsm_add_controls(struct snd_soc_pcm_runtime *rtd)
 {
@@ -3079,7 +3095,9 @@ static const struct snd_pcm_ops msm_lsm_ops = {
 	.close          = msm_lsm_close,
 	.ioctl          = msm_lsm_ioctl,
 	.prepare	= msm_lsm_prepare,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	.compat_ioctl   = msm_lsm_ioctl_compat,
+#endif /* CONFIG_AUDIO_QGKI */
 	.hw_params      = msm_lsm_hw_params,
 	.copy_user      = msm_lsm_pcm_copy,
 	.pointer        = msm_lsm_pcm_pointer,

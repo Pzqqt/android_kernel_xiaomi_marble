@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -13755,8 +13755,10 @@ static int tasha_device_down(struct wcd9xxx *wcd9xxx)
 				SWR_DEVICE_DOWN, NULL);
 	}
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	if (!is_snd_event_fwk_enabled())
 		snd_soc_card_change_online_state(component->card, 0);
+#endif /* CONFIG_AUDIO_QGKI */
 	for (count = 0; count < NUM_CODEC_DAIS; count++)
 		priv->dai[count].bus_down_in_recovery = true;
 
@@ -13791,8 +13793,10 @@ static int tasha_post_reset_cb(struct wcd9xxx *wcd9xxx)
 	if (tasha->machine_codec_event_cb)
 		tasha->machine_codec_event_cb(component,
 				WCD9335_CODEC_EVENT_CODEC_UP);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	if (!is_snd_event_fwk_enabled())
 		snd_soc_card_change_online_state(component->card, 1);
+#endif /* CONFIG_AUDIO_QGKI */
 
 	/* Class-H Init*/
 	wcd_clsh_init(&tasha->clsh_d);

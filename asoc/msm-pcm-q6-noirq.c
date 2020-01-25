@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -444,7 +444,7 @@ static int msm_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	return ret;
 }
 
-
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_pcm_mmap_fd(struct snd_pcm_substream *substream,
 			   struct snd_pcm_mmap_fd *mmap_fd)
 {
@@ -500,6 +500,7 @@ static int msm_pcm_mmap_fd(struct snd_pcm_substream *substream,
 buf_fd_fail:
         return rc;
 }
+#endif /* CONFIG_AUDIO_QGKI */
 
 static int msm_pcm_ioctl(struct snd_pcm_substream *substream,
 			 unsigned int cmd, void *arg)
@@ -525,7 +526,7 @@ static int msm_pcm_ioctl(struct snd_pcm_substream *substream,
 	return snd_pcm_lib_ioctl(substream, cmd, arg);
 }
 
-#ifdef CONFIG_COMPAT
+#if IS_ENABLED(CONFIG_COMPAT) && IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_pcm_compat_ioctl(struct snd_pcm_substream *substream,
 				unsigned int cmd, void *arg)
 {
@@ -699,6 +700,7 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_pcm_set_volume(struct msm_audio *prtd, uint32_t volume)
 {
 	int rc = 0;
@@ -826,6 +828,13 @@ static int msm_pcm_add_volume_control(struct snd_soc_pcm_runtime *rtd,
 	kctl->tlv.p = msm_pcm_vol_gain;
 	return 0;
 }
+#else
+static int msm_pcm_add_volume_control(struct snd_soc_pcm_runtime *rtd,
+				      int stream)
+{
+	return 0;
+}
+#endif /* CONFIG_AUDIO_QGKI */
 
 static int msm_pcm_channel_map_put(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
@@ -1051,6 +1060,7 @@ static int msm_pcm_add_fe_topology_control(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_pcm_playback_app_type_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
@@ -1208,7 +1218,14 @@ static int msm_pcm_add_app_type_controls(struct snd_soc_pcm_runtime *rtd)
 
 	return 0;
 }
+#else
+static int msm_pcm_add_app_type_controls(struct snd_soc_pcm_runtime *rtd)
+{
+	return 0;
+}
+#endif /* CONFIG_AUDIO_QGKI */
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_pcm_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
 			       unsigned int cmd, unsigned long arg)
 {
@@ -1304,6 +1321,12 @@ static int msm_pcm_add_hwdep_dev(struct snd_soc_pcm_runtime *runtime)
 	hwdep->ops.ioctl_compat = msm_pcm_hwdep_compat_ioctl;
 	return 0;
 }
+#else
+static int msm_pcm_add_hwdep_dev(struct snd_soc_pcm_runtime *runtime)
+{
+	return 0;
+}
+#endif /* CONFIG_AUDIO_GKI */
 
 static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 {
@@ -1356,7 +1379,7 @@ static const struct snd_pcm_ops msm_pcm_ops = {
 	.copy_user      = msm_pcm_copy,
 	.hw_params	= msm_pcm_hw_params,
 	.ioctl          = msm_pcm_ioctl,
-#ifdef CONFIG_COMPAT
+#if IS_ENABLED(CONFIG_COMPAT) && IS_ENABLED(CONFIG_AUDIO_QGKI)
 	.compat_ioctl   = msm_pcm_compat_ioctl,
 #endif
 	.trigger        = msm_pcm_trigger,

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -742,7 +742,9 @@ static const struct snd_pcm_ops msm_pcm_ops = {
 	.prepare		= msm_pcm_prepare,
 	.trigger		= msm_pcm_trigger,
 	.ioctl			= msm_pcm_ioctl,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	.compat_ioctl		= msm_pcm_ioctl,
+#endif /* CONFIG_AUDIO_QGKI */
 };
 
 

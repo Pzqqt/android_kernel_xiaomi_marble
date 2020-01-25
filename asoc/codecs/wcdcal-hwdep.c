@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015, 2017-2018, 2020 The Linux Foundation. All rights reserved.
  *
  */
 #include <linux/kernel.h>
@@ -52,6 +52,7 @@ struct firmware_cal *wcdcal_get_fw_cal(struct fw_info *fw_data,
 }
 EXPORT_SYMBOL(wcdcal_get_fw_cal);
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int wcdcal_hwdep_ioctl_shared(struct snd_hwdep *hw,
 			struct wcdcal_ioctl_buffer fw_user)
 {
@@ -86,6 +87,7 @@ static int wcdcal_hwdep_ioctl_shared(struct snd_hwdep *hw,
 	mutex_unlock(&fw_data->lock);
 	return 0;
 }
+#endif /* CONFIG_AUDIO_QGKI */
 
 #ifdef CONFIG_COMPAT
 struct wcdcal_ioctl_buffer32 {
@@ -99,6 +101,7 @@ enum {
 		_IOW('U', 0x1, struct wcdcal_ioctl_buffer32),
 };
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int wcdcal_hwdep_ioctl_compat(struct snd_hwdep *hw, struct file *file,
 		unsigned int cmd, unsigned long arg)
 {
@@ -119,10 +122,12 @@ static int wcdcal_hwdep_ioctl_compat(struct snd_hwdep *hw, struct file *file,
 	fw_user_compat.cal_type = fw_user32.cal_type;
 	return wcdcal_hwdep_ioctl_shared(hw, fw_user_compat);
 }
+#endif /* CONFIG_AUDIO_QGKI */
 #else
 #define wcdcal_hwdep_ioctl_compat NULL
 #endif
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int wcdcal_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
 		unsigned int cmd, unsigned long arg)
 {
@@ -213,4 +218,11 @@ end:
 	}
 	return -ENOMEM;
 }
+#else
+int wcd_cal_create_hwdep(void *data, int node,
+			 struct snd_soc_component *component)
+{
+	return 0;
+}
+#endif /* CONFIG_AUDIO_QGKI */
 EXPORT_SYMBOL(wcd_cal_create_hwdep);

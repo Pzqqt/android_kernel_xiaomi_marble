@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -1268,11 +1268,13 @@ done:
 }
 
 #ifdef CONFIG_COMPAT
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_pcm_compat_ioctl(struct snd_pcm_substream *substream,
 			 unsigned int cmd, void __user *arg)
 {
 	return msm_pcm_ioctl(substream, cmd, arg);
 }
+#endif /* CONFIG_AUDIO_QGKI */
 #else
 #define msm_pcm_compat_ioctl NULL
 #endif
@@ -1283,7 +1285,9 @@ static const struct snd_pcm_ops msm_pcm_ops = {
 	.hw_params	= msm_pcm_hw_params,
 	.close          = msm_pcm_close,
 	.ioctl          = msm_pcm_ioctl,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	.compat_ioctl   = msm_pcm_compat_ioctl,
+#endif /* CONFIG_AUDIO_QGKI */
 	.prepare        = msm_pcm_prepare,
 	.trigger        = msm_pcm_trigger,
 	.pointer        = msm_pcm_pointer,
@@ -1493,6 +1497,7 @@ done:
 	return ret;
 }
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_pcm_set_volume(struct msm_audio *prtd, uint32_t volume)
 {
 	int rc = 0;
@@ -1622,6 +1627,13 @@ static int msm_pcm_add_volume_control(struct snd_soc_pcm_runtime *rtd,
 	kctl->tlv.p = msm_pcm_vol_gain;
 	return 0;
 }
+#else
+static int msm_pcm_add_volume_control(struct snd_soc_pcm_runtime *rtd,
+				      int stream)
+{
+	return 0;
+}
+#endif /* CONFIG_AUDIO_QGKI */
 
 static int msm_pcm_compress_ctl_info(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_info *uinfo)
@@ -1912,6 +1924,7 @@ static int msm_pcm_add_chmap_controls(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_pcm_playback_app_type_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
@@ -2069,6 +2082,12 @@ static int msm_pcm_add_app_type_controls(struct snd_soc_pcm_runtime *rtd)
 
 	return 0;
 }
+#else
+static int msm_pcm_add_app_type_controls(struct snd_soc_pcm_runtime *rtd)
+{
+	return 0;
+}
+#endif /* CONFIG_AUDIO_QGKI */
 
 static struct msm_pcm_channel_mixer *msm_pcm_get_chmixer(
 			struct msm_plat_data *pdata,
@@ -2795,6 +2814,7 @@ static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static snd_pcm_sframes_t msm_pcm_delay_blk(struct snd_pcm_substream *substream,
 		struct snd_soc_dai *dai)
 {
@@ -2821,12 +2841,15 @@ static snd_pcm_sframes_t msm_pcm_delay_blk(struct snd_pcm_substream *substream,
 
 	return frames;
 }
+#endif /* CONFIG_AUDIO_QGKI */
 
 static struct snd_soc_component_driver msm_soc_component = {
 	.name		= DRV_NAME,
 	.ops		= &msm_pcm_ops,
 	.pcm_new	= msm_asoc_pcm_new,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	.delay_blk      = msm_pcm_delay_blk,
+#endif /* CONFIG_AUDIO_QGKI */
 };
 
 static int msm_pcm_probe(struct platform_device *pdev)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -10334,8 +10334,10 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 				SWR_DEVICE_DOWN, NULL);
 	}
 	tavil_dsd_reset(priv->dsd_config);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	if (!is_snd_event_fwk_enabled())
 		snd_soc_card_change_online_state(component->card, 0);
+#endif /* CONFIG_AUDIO_QGKI */
 	wcd_dsp_ssr_event(priv->wdsp_cntl, WCD_CDC_DOWN_EVENT);
 	wcd_resmgr_set_sido_input_src_locked(priv->resmgr,
 					     SIDO_SOURCE_INTERNAL);
@@ -10373,8 +10375,10 @@ static int tavil_post_reset_cb(struct wcd9xxx *wcd9xxx)
 	tavil_slimbus_slave_port_cfg.slave_dev_pgd_la =
 					control->slim->laddr;
 	tavil_init_slim_slave_cfg(component);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	if (!is_snd_event_fwk_enabled())
 		snd_soc_card_change_online_state(component->card, 1);
+#endif /* CONFIG_AUDIO_QGKI */
 
 	for (i = 0; i < TAVIL_MAX_MICBIAS; i++)
 		tavil->micb_ref[i] = 0;

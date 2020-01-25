@@ -3313,6 +3313,7 @@ static int msm_compr_get_metadata(struct snd_compr_stream *cstream,
 }
 
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_compr_set_next_track_param(struct snd_compr_stream *cstream,
 				union snd_codec_options *codec_options)
 {
@@ -3362,6 +3363,7 @@ static int msm_compr_set_next_track_param(struct snd_compr_stream *cstream,
 
 	return ret;
 }
+#endif /* CONFIG_AUDIO_QGKI */
 
 static int msm_compr_volume_put(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
@@ -5492,7 +5494,9 @@ static struct snd_compr_ops msm_compr_ops = {
 	.set_params		= msm_compr_set_params,
 	.set_metadata		= msm_compr_set_metadata,
 	.get_metadata		= msm_compr_get_metadata,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	.set_next_track_param	= msm_compr_set_next_track_param,
+#endif /* CONFIG_AUDIO_QGKI */
 	.ack			= msm_compr_ack,
 	.copy			= msm_compr_copy,
 	.get_caps		= msm_compr_get_caps,
