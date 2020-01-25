@@ -1036,6 +1036,17 @@ ACTION_OUI_OBJS := $(ACTION_OUI_DIR)/core/src/wlan_action_oui_main.o \
 		$(ACTION_OUI_DIR)/dispatcher/src/wlan_action_oui_ucfg_api.o
 endif
 
+######## PACKET CAPTURE ########
+
+PKT_CAPTURE_DIR := components/pkt_capture
+PKT_CAPTURE_INC := -I$(WLAN_ROOT)/$(PKT_CAPTURE_DIR)/core/inc \
+		  -I$(WLAN_ROOT)/$(PKT_CAPTURE_DIR)/dispatcher/inc
+
+ifeq ($(CONFIG_WLAN_FEATURE_PKT_CAPTURE), y)
+PKT_CAPTURE_OBJS := $(PKT_CAPTURE_DIR)/core/src/wlan_pkt_capture_main.o \
+		$(PKT_CAPTURE_DIR)/dispatcher/src/wlan_pkt_capture_ucfg_api.o
+endif
+
 ########## CLD TARGET_IF #######
 CLD_TARGET_IF_DIR := components/target_if
 
@@ -1984,6 +1995,7 @@ INCS +=		$(HOST_DIAG_LOG_INC)
 
 INCS +=		$(DISA_INC)
 INCS +=		$(ACTION_OUI_INC)
+INCS +=		$(PKT_CAPTURE_INC)
 
 INCS +=		$(UMAC_DISP_INC)
 INCS +=		$(UMAC_SCAN_INC)
@@ -2090,6 +2102,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_ACTION_OUI), y)
 OBJS +=		$(ACTION_OUI_OBJS)
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_PKT_CAPTURE), y)
+OBJS +=		$(PKT_CAPTURE_OBJS)
 endif
 
 OBJS +=		$(UMAC_DISP_OBJS)
@@ -2686,6 +2702,8 @@ cppflags-$(CONFIG_LFR_SUBNET_DETECTION) += -DFEATURE_LFR_SUBNET_DETECTION
 cppflags-$(CONFIG_MCC_TO_SCC_SWITCH) += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
 
 cppflags-$(CONFIG_FEATURE_WLAN_D0WOW) += -DFEATURE_WLAN_D0WOW
+
+cppflags-$(CONFIG_WLAN_FEATURE_PKT_CAPTURE) += -DWLAN_FEATURE_PKT_CAPTURE
 
 cppflags-$(CONFIG_QCA_WIFI_NAPIER_EMULATION) += -DQCA_WIFI_NAPIER_EMULATION
 cppflags-$(CONFIG_SHADOW_V2) += -DCONFIG_SHADOW_V2
