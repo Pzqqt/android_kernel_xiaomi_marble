@@ -24048,6 +24048,74 @@ typedef enum wmi_hw_mode_config_type {
 #define WMI_MAX_MUBFEE_GET(flags) WMI_GET_BITS(flags, 28, 4)
 #define WMI_MAX_MUBFEE_SET(flags, value) WMI_SET_BITS(flags, 28, 4, value)
 
+/*
+ * +-----------------------------+------------------------------------+
+ * | Transmitted VHT Capablities |         NSS Support of STA         |
+ * |       Information Field     |    transmitted VHT Capablites      |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |   Supported   |   Extended  |      |      |      |      |        |
+ * |   Channel     |   NSS BW    |      |      |      |      |        |
+ * |   WidthSet    |   Suppport  |20 Mhz|40 Mhz|80 Mhz|160Mhz|80+80Mhz|
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        0      |      0      |  1   |  1   |  1   |      |        |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        0      |      1      |  1   |  1   |  1   | 1/2  |        |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        0      |      2      |  1   |  1   |  1   | 1/2  |  1/2   |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        0      |      3      |  1   |  1   |  1   | 3/4  |  3/4   |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        1      |      0      |  1   |  1   |  1   |  1   |        |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        1      |      1      |  1   |  1   |  1   |  1   |  1/2   |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        1      |      2      |  1   |  1   |  1   |  1   |  3/4   |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        1      |      3      |  2   |  2   |  2   |  2   |   1    |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        2      |      0      |  1   |  1   |  1   |  1   |   1    |
+ * +---------------+-------------+------+------+------+------+--------+
+ * |        2      |      3      |  2   |  2   |  2   |  1   |   1    |
+ * +---------------+-------------+------+------+------+------+--------+
+ */
+
+/*
+ *  [0]   : WMI_NSS_RATIO_ENABLE_DISABLE_BITPOS
+ *  [4:1] : WMI_NSS_RATIO_INFO_BITPOS
+ */
+#define  WMI_NSS_RATIO_ENABLE_DISABLE_BITPOS        0x0
+#define  WMI_NSS_RATIO_INFO_BITPOS                  0x1
+
+/*
+ * WMI_NSS_RATIO_ENABLE_DISABLE values:
+ * [0] : 0 - WMI_NSS_RATIO_DISABLE
+ * [0] : 1 - WMI_NSS_RATIO_ENABLE
+ */
+#define  WMI_NSS_RATIO_DISABLE                      0x0
+#define  WMI_NSS_RATIO_ENABLE                       0x1
+
+/*
+ * WMI_NSS_RATIO_INFO values:
+ *  [4:1] : 0000 - WMI_NSS_RATIO_1BY2_NSS
+ *  [4:1] : 0001 - WMI_NSS_RATIO_3BY4_NSS
+ *  [4:1] : 0010 - WMI_NSS_RATIO_1_NSS
+ *  [4:1] : 0011 - WMI_NSS_RATIO_2_NSS
+ */
+#define  WMI_NSS_RATIO_1BY2_NSS                     0x0
+#define  WMI_NSS_RATIO_3BY4_NSS                     0x1
+#define  WMI_NSS_RATIO_1_NSS                        0x2
+#define  WMI_NSS_RATIO_2_NSS                        0x3
+
+#define WMI_NSS_RATIO_ENABLE_DISABLE_SET(param, value) \
+    WMI_SET_BITS(param, WMI_NSS_RATIO_ENABLE_DISABLE_BITPOS, 1, value)
+#define WMI_NSS_RATIO_ENABLE_DISABLE_GET(dword) \
+    WMI_GET_BITS(dword, WMI_NSS_RATIO_ENABLE_DISABLE_BITPOS, 1)
+
+#define WMI_NSS_RATIO_INFO_SET(param, value) \
+    WMI_SET_BITS(param, WMI_NSS_RATIO_INFO_BITPOS, 4, value)
+#define WMI_NSS_RATIO_INFO_GET(dword) \
+    WMI_GET_BITS(dword, WMI_NSS_RATIO_INFO_BITPOS, 4)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_MAC_PHY_CAPABILITIES */
     /* hw_mode_id - identify a particular set of HW characteristics, as specified
@@ -24199,6 +24267,23 @@ typedef struct {
     A_UINT32 high_2ghz_chan_freq; /* units = MHz */
     A_UINT32 low_5ghz_chan_freq;  /* units = MHz */
     A_UINT32 high_5ghz_chan_freq; /* units = MHz */
+
+    /*
+     * NSS ratio to be sent to Host during boot-up capabilities negotiation
+     *
+     * Bit 0 - refer to WMI_NSS_RATIO_ENABLE_DISABLE_ definitions
+     * [0]    :  0 - WMI_NSS_RATIO_DISABLE
+     * [0]    :  1 - WMI_NSS_RATIO_ENABLE
+     *
+     * Bits 4:1 - refer to WMI_NSS_RATIO_INFO_ definitions
+     * [4:1]  : 0000 - WMI_NSS_RATIO_1BY2_NSS
+     * [4:1]  : 0001 - WMI_NSS_RATIO_3BY4_NSS
+     * [4:1]  : 0010 - WMI_NSS_RATIO_1_NSS
+     * [4:1]  : 0011 - WMI_NSS_RATIO_2_NSS
+     *
+     * [31:5] : Reserved
+     */
+    A_UINT32 nss_ratio;
 } WMI_MAC_PHY_CAPABILITIES;
 
 typedef struct {
