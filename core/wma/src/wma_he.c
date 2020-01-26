@@ -1366,6 +1366,48 @@ QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma, uint8_t vdev_id,
 	return ret;
 }
 
+void wma_set_he_txbf_cfg(struct mac_context *mac, uint8_t vdev_id)
+{
+	wma_set_he_txbf_params(vdev_id,
+			mac->mlme_cfg->he_caps.dot11_he_cap.su_beamformer,
+			mac->mlme_cfg->he_caps.dot11_he_cap.su_beamformee,
+			mac->mlme_cfg->he_caps.dot11_he_cap.mu_beamformer);
+}
+
+void wma_set_he_txbf_params(uint8_t vdev_id, bool su_bfer,
+			    bool su_bfee, bool mu_bfer)
+{
+	uint32_t hemu_mode;
+	QDF_STATUS status;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	hemu_mode = DOT11AX_HEMU_MODE;
+	hemu_mode |= ((su_bfer << HE_SUBFER) | (su_bfee << HE_SUBFEE) |
+		      (mu_bfer << HE_MUBFER) | (su_bfee << HE_MUBFEE));
+	/*
+	 * Enable / disable trigger access for a AP vdev's peers.
+	 * For a STA mode vdev this will enable/disable triggered
+	 * access and enable/disable Multi User mode of operation.
+	 * A value of 0 in a given bit disables corresponding mode.
+	 * bit | hemu mode
+	 * ---------------
+	 *  0  | HE SUBFEE
+	 *  1  | HE SUBFER
+	 *  2  | HE MUBFEE
+	 *  3  | HE MUBFER
+	 *  4  | DL OFDMA, for AP its DL Tx OFDMA for Sta its Rx OFDMA
+	 *  5  | UL OFDMA, for AP its Tx OFDMA trigger for Sta its
+	 *                 Rx OFDMA trigger receive & UL response
+	 *  6  | UL MUMIMO
+	 */
+	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+				    WMI_VDEV_PARAM_SET_HEMU_MODE, hemu_mode);
+	WMA_LOGD("set HEMU_MODE (hemu_mode = 0x%x)", hemu_mode);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("failed to set HEMU_MODE(status = %d)", status);
+}
+
 QDF_STATUS wma_get_he_capabilities(struct he_capability *he_cap)
 {
 	tp_wma_handle wma_handle;

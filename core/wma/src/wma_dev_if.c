@@ -2481,28 +2481,6 @@ QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme)
 	return status;
 }
 
-#define DOT11AX_HEMU_MODE 0x30
-#define HE_SUBFEE 0
-#define HE_SUBFER 1
-#define HE_MUBFEE 2
-#define HE_MUBFER 3
-
-#ifdef WLAN_FEATURE_11AX
-static inline uint32_t wma_get_txbf_cap(struct mac_context *mac)
-{
-	return
-	(mac->mlme_cfg->he_caps.dot11_he_cap.su_beamformer << HE_SUBFER) |
-	(mac->mlme_cfg->he_caps.dot11_he_cap.su_beamformee << HE_SUBFEE) |
-	(1 << HE_MUBFEE) |
-	(mac->mlme_cfg->he_caps.dot11_he_cap.mu_beamformer << HE_MUBFER);
-}
-#else
-static inline uint32_t wma_get_txbf_cap(struct mac_context *mac)
-{
-	return 0;
-}
-#endif
-
 QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -2517,7 +2495,6 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	struct vdev_mlme_obj *vdev_mlme;
 	tp_wma_handle wma_handle;
 	uint8_t amsdu_val;
-	uint32_t hemu_mode;
 
 	if (!mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
@@ -2684,34 +2661,8 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		WMA_LOGE("failed to set TX_STBC(status = %d)", status);
 
 	wma_set_vdev_mgmt_rate(wma_handle, vdev_id);
-	if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
-		hemu_mode = DOT11AX_HEMU_MODE;
-		hemu_mode |= wma_get_txbf_cap(mac);
-		/*
-		 * Enable / disable trigger access for a AP vdev's peers.
-		 * For a STA mode vdev this will enable/disable triggered
-		 * access and enable/disable Multi User mode of operation.
-		 * A value of 0 in a given bit disables corresponding mode.
-		 * bit | hemu mode
-		 * ---------------
-		 *  0  | HE SUBFEE
-		 *  1  | HE SUBFER
-		 *  2  | HE MUBFEE
-		 *  3  | HE MUBFER
-		 *  4  | DL OFDMA, for AP its DL Tx OFDMA for Sta its Rx OFDMA
-		 *  5  | UL OFDMA, for AP its Tx OFDMA trigger for Sta its
-		 *                 Rx OFDMA trigger receive & UL response
-		 *  6  | UL MUMIMO
-		 */
-		status = wma_vdev_set_param(wma_handle->wmi_handle,
-					    vdev_id,
-					    WMI_VDEV_PARAM_SET_HEMU_MODE,
-					    hemu_mode);
-		WMA_LOGD("set HEMU_MODE (hemu_mode = 0x%x)", hemu_mode);
-		if (QDF_IS_STATUS_ERROR(status))
-			WMA_LOGE("failed to set HEMU_MODE(status = %d)",
-				 status);
-	}
+	if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+		wma_set_he_txbf_cfg(mac, vdev_id);
 
 	/* Initialize roaming offload state */
 	if (vdev_mlme->mgmt.generic.type == WMI_VDEV_TYPE_STA &&
