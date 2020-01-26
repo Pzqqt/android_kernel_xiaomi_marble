@@ -261,6 +261,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_FWOL_SB_ID:            fw offload southbound operations
  * @WLAN_PSOC_TARGET_IF_ID      PSOC related target_if operations
  * @FTM_TIME_SYNC_ID:           ftm time sync operations
+ * @WLAN_PKT_CAPTURE_ID         Packet capture operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -341,6 +342,7 @@ typedef enum {
 	WLAN_FWOL_SB_ID       = 71,
 	WLAN_PSOC_TARGET_IF_ID = 72,
 	FTM_TIME_SYNC_ID       = 73,
+	WLAN_PKT_CAPTURE_ID   = 74,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
