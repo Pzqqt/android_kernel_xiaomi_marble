@@ -58,7 +58,7 @@
  *
  * Allocate and attach vdev private object.
  *
- * Return: QDF_STATUS status in case of success else return error.
+ * Return: QDF_STATUS
  */
 QDF_STATUS
 pkt_capture_vdev_create_notification(struct wlan_objmgr_vdev *vdev, void *arg);
@@ -70,9 +70,40 @@ pkt_capture_vdev_create_notification(struct wlan_objmgr_vdev *vdev, void *arg);
  *
  * Deallocate and detach vdev private object.
  *
- * Return QDF_STATUS status in case of success else return error
+ * Return: QDF_STATUS
  */
 QDF_STATUS
 pkt_capture_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev, void *arg);
 
+/**
+ * pkt_capture_get_mode() - get packet capture mode
+ * @psoc: pointer to psoc object
+ *
+ * Return: enum pkt_capture_mode
+ */
+enum pkt_capture_mode pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pkt_capture_psoc_create_notification() - Handler for psoc create notify.
+ * @psoc: psoc which is going to be created by objmgr
+ * @arg: argument for notification handler.
+ *
+ * Allocate and attach psoc private object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+pkt_capture_psoc_create_notification(struct wlan_objmgr_psoc *psoc, void *arg);
+
+/**
+ * pkt_capture_psoc_destroy_notification() - Handler for psoc destroy notify.
+ * @psoc: psoc which is going to be destroyed by objmgr
+ * @arg: argument for notification handler.
+ *
+ * Deallocate and detach psoc private object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+pkt_capture_psoc_destroy_notification(struct wlan_objmgr_psoc *psoc, void *arg);
 #endif /* end of _WLAN_PKT_CAPTURE_MAIN_H_ */

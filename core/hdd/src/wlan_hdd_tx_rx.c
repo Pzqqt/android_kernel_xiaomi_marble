@@ -3193,31 +3193,6 @@ static void hdd_dp_hl_bundle_cfg_update(struct hdd_config *config,
 }
 #endif
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE
-/**
- * hdd_set_pktcapture_mode_value() - set pktcapture_mode values
- * @hdd_ctx: hdd context
- * @psoc: pointer to psoc obj
- *
- * Return: none
- */
-static inline void
-hdd_dp_pktcapture_mode_cfg_update(struct hdd_context *hdd_ctx,
-				  struct wlan_objmgr_psoc *psoc)
-{
-	hdd_ctx->enable_pkt_capture_support = cfg_get(
-					psoc, CFG_DP_PKT_CAPTURE_MODE_ENABLE);
-	hdd_ctx->val_pkt_capture_mode = cfg_get(
-					psoc, CFG_DP_PKT_CAPTURE_MODE_VALUE);
-}
-#else
-static inline void
-hdd_dp_pktcapture_mode_cfg_update(struct hdd_context *hdd_ctx,
-				  struct wlan_objmgr_psoc *psoc)
-{
-}
-#endif /* WLAN_FEATURE_PKT_CAPTURE */
-
 void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 		       struct hdd_context *hdd_ctx)
 {
@@ -3253,7 +3228,6 @@ void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 	config->cfg_wmi_credit_cnt = cfg_get(psoc, CFG_DP_HTC_WMI_CREDIT_CNT);
 	hdd_dp_dp_trace_cfg_update(config, psoc);
 	hdd_dp_nud_tracking_cfg_update(config, psoc);
-	hdd_dp_pktcapture_mode_cfg_update(hdd_ctx, psoc);
 }
 
 bool wlan_hdd_rx_rpm_mark_last_busy(struct hdd_context *hdd_ctx,

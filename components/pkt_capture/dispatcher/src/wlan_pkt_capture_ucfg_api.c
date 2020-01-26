@@ -24,63 +24,93 @@
 #include "wlan_pkt_capture_main.h"
 #include "wlan_pkt_capture_ucfg_api.h"
 
-/**
- * ucfg_pkt_capture_init() - Packet capture component initialization.
- *
- * This function gets called when packet capture initializing.
- *
- * Return: QDF_STATUS_SUCCESS - in case of success.
- */
+enum pkt_capture_mode ucfg_pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
+{
+	return pkt_capture_get_mode(psoc);
+}
+
 QDF_STATUS ucfg_pkt_capture_init(void)
 {
 	QDF_STATUS status;
 
+	status = wlan_objmgr_register_psoc_create_handler(
+				WLAN_UMAC_COMP_PKT_CAPTURE,
+				pkt_capture_psoc_create_notification,
+				NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("Failed to register psoc create handler");
+		return status;
+	}
+
+	status = wlan_objmgr_register_psoc_destroy_handler(
+				WLAN_UMAC_COMP_PKT_CAPTURE,
+				pkt_capture_psoc_destroy_notification,
+				NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("Failed to register psoc delete handler");
+		goto fail_destroy_psoc;
+	}
+
 	status = wlan_objmgr_register_vdev_create_handler(
 				WLAN_UMAC_COMP_PKT_CAPTURE,
 				pkt_capture_vdev_create_notification, NULL);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		pkt_capture_err("Failed to register vdev create handler");
-		goto exit;
+		goto fail_create_vdev;
 	}
 
 	status = wlan_objmgr_register_vdev_destroy_handler(
 				WLAN_UMAC_COMP_PKT_CAPTURE,
 				pkt_capture_vdev_destroy_notification, NULL);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pkt_capture_debug("vdev create/del notifications registered");
-		goto exit;
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("Failed to register vdev destroy handler");
+		goto fail_destroy_vdev;
 	}
+	return status;
 
-	pkt_capture_err("Failed to register vdev delete handler");
-	wlan_objmgr_unregister_vdev_create_handler(
-					WLAN_UMAC_COMP_PKT_CAPTURE,
-					pkt_capture_vdev_create_notification,
-					NULL);
-exit:
+fail_destroy_vdev:
+	wlan_objmgr_unregister_vdev_create_handler(WLAN_UMAC_COMP_PKT_CAPTURE,
+		pkt_capture_vdev_create_notification, NULL);
+
+fail_create_vdev:
+	wlan_objmgr_unregister_psoc_destroy_handler(WLAN_UMAC_COMP_PKT_CAPTURE,
+		pkt_capture_psoc_destroy_notification, NULL);
+
+fail_destroy_psoc:
+	wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_PKT_CAPTURE,
+		pkt_capture_psoc_create_notification, NULL);
+
 	return status;
 }
 
-/**
- * ucfg_pkt_capture_deinit() - Packet capture component de-init.
- *
- * This function gets called when packet capture de-init.
- *
- * Return: None
- */
 void ucfg_pkt_capture_deinit(void)
 {
 	QDF_STATUS status;
-
-	status = wlan_objmgr_unregister_vdev_create_handler(
-				WLAN_UMAC_COMP_PKT_CAPTURE,
-				pkt_capture_vdev_create_notification, NULL);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		pkt_capture_err("Failed to unregister vdev create handler");
 
 	status = wlan_objmgr_unregister_vdev_destroy_handler(
 				WLAN_UMAC_COMP_PKT_CAPTURE,
 				pkt_capture_vdev_destroy_notification,
 				NULL);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		pkt_capture_err("Failed to unregister vdev delete handler");
+	if (QDF_IS_STATUS_ERROR(status))
+		pkt_capture_err("Failed to unregister vdev destroy handler");
+
+	status = wlan_objmgr_unregister_vdev_create_handler(
+				WLAN_UMAC_COMP_PKT_CAPTURE,
+				pkt_capture_vdev_create_notification, NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		pkt_capture_err("Failed to unregister vdev create handler");
+
+	status = wlan_objmgr_unregister_psoc_destroy_handler(
+				WLAN_UMAC_COMP_PKT_CAPTURE,
+				pkt_capture_psoc_destroy_notification,
+				NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		pkt_capture_err("Failed to unregister psoc destroy handler");
+
+	status = wlan_objmgr_unregister_psoc_create_handler(
+				WLAN_UMAC_COMP_PKT_CAPTURE,
+				pkt_capture_psoc_create_notification,
+				NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		pkt_capture_err("Failed to unregister psoc create handler");
 }
