@@ -42,8 +42,11 @@
 
 /* Module IDs using corrlation function */
 #define CORRELATE_DBR_MODULE_ID   0
-#define CORRELATE_TX_EV_MODULE_ID 1 /* HKV2 */
-#define CORRELATE_TXRX_EV_MODULE_ID 1 /* Cypress */
+/*
+ * HKV2 - Tx completion event for one-shot capture
+ * Cypress - Tx completion event for one-shot capture (or) RXTLV event for RCC
+ */
+#define CORRELATE_TX_EV_MODULE_ID 1
 
 /**
  * target_if_cfr_init_pdev() - Inits cfr pdev and registers necessary handlers.

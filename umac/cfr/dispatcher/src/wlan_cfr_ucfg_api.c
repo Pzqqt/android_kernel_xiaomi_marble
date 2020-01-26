@@ -726,7 +726,7 @@ static const char *chan_capture_status_to_str(enum chan_capture_status type)
 	case CAPTURE_NO_BUFFER:
 		return "CAPTURE_NO_BUFFER";
 	default:
-		return "NONE";
+		return "INVALID";
 	}
 }
 
@@ -747,7 +747,7 @@ char *mac_freeze_reason_to_str(enum mac_freeze_capture_reason type)
 	case FREEZE_REASON_ALL_PACKET:
 		return "FREEZE_REASON_ALL_PACKET";
 	default:
-		return "NONE";
+		return "INVALID";
 	}
 }
 
@@ -755,19 +755,22 @@ QDF_STATUS ucfg_cfr_rcc_dump_dbg_counters(struct wlan_objmgr_vdev *vdev)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
-	int counter;
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct cdp_cfr_rcc_stats *cfr_rcc_stats = NULL;
+	uint8_t stats_cnt;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	status = dev_sanity_check(vdev, &pdev, &pcfr);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
-	cfr_err("bb_captured_channel_cnt = %llu\n",
-		pcfr->bb_captured_channel_cnt);
-	cfr_err("bb_captured_timeout_cnt = %llu\n",
-		pcfr->bb_captured_timeout_cnt);
-	cfr_err("rx_loc_info_valid_cnt = %llu\n",
-		pcfr->rx_loc_info_valid_cnt);
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		cfr_err("psoc is null!");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
 	cfr_err("total_tx_evt_cnt = %llu\n",
 		pcfr->total_tx_evt_cnt);
 	cfr_err("dbr_evt_cnt = %llu\n",
@@ -789,20 +792,72 @@ QDF_STATUS ucfg_cfr_rcc_dump_dbg_counters(struct wlan_objmgr_vdev *vdev)
 	cfr_err("cfr_dma_aborts = %llu\n",
 		pcfr->cfr_dma_aborts);
 
+	cfr_rcc_stats = qdf_mem_malloc(sizeof(struct cdp_cfr_rcc_stats));
+	if (!cfr_rcc_stats) {
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cdp_get_cfr_dbg_stats(wlan_psoc_get_dp_handle(psoc),
+			      wlan_objmgr_pdev_get_pdev_id(pdev),
+			      cfr_rcc_stats);
+
+	cfr_err("bb_captured_channel_cnt: %llu\n",
+		cfr_rcc_stats->bb_captured_channel_cnt);
+	cfr_err("bb_captured_timeout_cnt: %llu\n",
+		cfr_rcc_stats->bb_captured_timeout_cnt);
+	cfr_err("rx_loc_info_valid_cnt: %llu\n",
+		cfr_rcc_stats->rx_loc_info_valid_cnt);
+
 	cfr_err("Channel capture status:\n");
-	for (counter = 0; counter < CAPTURE_MAX; counter++) {
+	for (stats_cnt = 0; stats_cnt < CAPTURE_MAX; stats_cnt++) {
 		cfr_err("%s = %llu\n",
-			 chan_capture_status_to_str(counter),
-			 pcfr->chan_capture_status[counter]);
+			chan_capture_status_to_str(stats_cnt),
+			cfr_rcc_stats->chan_capture_status[stats_cnt]);
 	}
 
 	cfr_err("Freeze reason:\n");
-	for (counter = 0; counter < FREEZE_REASON_MAX; counter++) {
+	for (stats_cnt = 0; stats_cnt < FREEZE_REASON_MAX; stats_cnt++) {
 		cfr_err("%s = %llu\n",
-			 mac_freeze_reason_to_str(counter),
-			 pcfr->bb_captured_reason_cnt[counter]);
+			mac_freeze_reason_to_str(stats_cnt),
+			cfr_rcc_stats->reason_cnt[stats_cnt]);
 	}
 
+	qdf_mem_free(cfr_rcc_stats);
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+
+	return status;
+}
+
+QDF_STATUS ucfg_cfr_rcc_clr_dbg_counters(struct wlan_objmgr_vdev *vdev)
+{
+	struct pdev_cfr *pcfr = NULL;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	struct wlan_objmgr_psoc *psoc = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = dev_sanity_check(vdev, &pdev, &pcfr);
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		cfr_err("psoc is null!");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	cdp_cfr_clr_dbg_stats(wlan_psoc_get_dp_handle(psoc),
+			      wlan_objmgr_pdev_get_pdev_id(pdev));
+
+	pcfr->dbr_evt_cnt = 0;
+	pcfr->release_cnt = 0;
+	pcfr->total_tx_evt_cnt = 0;
+	pcfr->rx_tlv_evt_cnt = 0;
+	pcfr->flush_dbr_cnt = 0;
+	pcfr->flush_timeout_dbr_cnt = 0;
+	pcfr->invalid_dma_length_cnt = 0;
+	pcfr->clear_txrx_event = 0;
+	pcfr->cfr_dma_aborts = 0;
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 
 	return status;

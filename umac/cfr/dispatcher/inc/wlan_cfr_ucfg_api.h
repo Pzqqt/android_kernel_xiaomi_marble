@@ -249,6 +249,14 @@ QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS ucfg_cfr_rcc_dump_dbg_counters(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * ucfg_cfr_rcc_clr_dbg_counters() - function to clear CFR PPDU counters
+ * @vdev: pointer to vdev object
+ *
+ * Return: status
+ */
+QDF_STATUS ucfg_cfr_rcc_clr_dbg_counters(struct wlan_objmgr_vdev *vdev);
+
+/**
  * ucfg_cfr_rcc_dump_lut() - function to display lookup table
  * @vdev: pointer to vdev object
  *
