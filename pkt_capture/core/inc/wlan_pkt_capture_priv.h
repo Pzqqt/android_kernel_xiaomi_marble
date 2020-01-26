@@ -28,6 +28,15 @@
 #define _WLAN_PKT_CAPTURE_PRIV_STRUCT_H_
 
 #include "wlan_pkt_capture_objmgr.h"
+#include "wlan_pkt_capture_public_structs.h"
+
+/**
+ * struct pkt_capture_cfg - packet capture cfg to store ini values
+ * @pkt_capture_mode: packet capture mode
+ */
+struct pkt_capture_cfg {
+	enum pkt_capture_mode pkt_capture_mode;
+};
 
 /**
  * struct pkt_capture_vdev_priv - Private object to be stored in vdev
@@ -35,5 +44,15 @@
  */
 struct pkt_capture_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
+};
+
+/**
+ * struct pkt_psoc_priv - Private object to be stored in psoc
+ * @psoc: pointer to psoc object
+ * @cfg_param: INI config params for packet capture
+ */
+struct pkt_psoc_priv {
+	struct wlan_objmgr_psoc *psoc;
+	struct pkt_capture_cfg cfg_param;
 };
 #endif /* End  of _WLAN_PKT_CAPTURE_PRIV_STRUCT_H_ */

@@ -54,7 +54,7 @@ QDF_STATUS pkt_capture_vdev_get_ref(struct wlan_objmgr_vdev *vdev)
 static inline
 void pkt_capture_vdev_put_ref(struct wlan_objmgr_vdev *vdev)
 {
-	return wlan_objmgr_vdev_release_ref(vdev, WLAN_PKT_CAPTURE_ID);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PKT_CAPTURE_ID);
 }
 
 /**
@@ -78,4 +78,52 @@ pkt_capture_vdev_get_priv(struct wlan_objmgr_vdev *vdev)
 	return vdev_priv;
 }
 
+/**
+ * pkt_capture_psoc_get_ref() - Wrapper to increment pkt_capture ref count
+ * @psoc: psoc object
+ *
+ * Wrapper for pkt_capture to increment ref count after checking valid
+ * object state.
+ *
+ * Return: QDF_STATUS
+ */
+static inline
+QDF_STATUS pkt_capture_psoc_get_ref(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_objmgr_psoc_try_get_ref(psoc, WLAN_PKT_CAPTURE_ID);
+}
+
+/**
+ * pkt_capture_psoc_put_ref() - Wrapper to decrement pkt_capture ref count
+ * @psoc: psoc object
+ *
+ * Wrapper for pkt_capture to decrement ref count of psoc.
+ *
+ * Return: None
+ */
+static inline
+void pkt_capture_psoc_put_ref(struct wlan_objmgr_psoc *psoc)
+{
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_PKT_CAPTURE_ID);
+}
+
+/**
+ * pkt_capture_psoc_get_priv(): Wrapper to retrieve psoc priv obj
+ * @psoc: psoc pointer
+ *
+ * Wrapper for pkt_capture to get psoc private object pointer.
+ *
+ * Return: pkt_capture psoc private object
+ */
+static inline struct pkt_psoc_priv *
+pkt_capture_psoc_get_priv(struct wlan_objmgr_psoc *psoc)
+{
+	struct pkt_psoc_priv *psoc_priv;
+
+	psoc_priv = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+					WLAN_UMAC_COMP_PKT_CAPTURE);
+	QDF_BUG(psoc_priv);
+
+	return psoc_priv;
+}
 #endif /* _WLAN_PKT_CAPTURE_OBJMGR_H */
