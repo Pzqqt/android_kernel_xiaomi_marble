@@ -201,40 +201,36 @@ tgt_cfr_config_rcc(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
-QDF_STATUS
-tgt_cfr_start_lut_age_timer(struct wlan_objmgr_pdev *pdev)
+void tgt_cfr_start_lut_age_timer(struct wlan_objmgr_pdev *pdev)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc) {
+		cfr_err("Invalid PSOC: Flush LUT Timer cannot be started\n");
+		return;
+	}
 
 	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
 
 	if (cfr_tx_ops->cfr_start_lut_timer)
-		status = cfr_tx_ops->cfr_start_lut_timer(pdev);
-
-	if (status != QDF_STATUS_SUCCESS)
-		cfr_err("Error occurred with exit code %d\n", status);
-
-	return status;
+		cfr_tx_ops->cfr_start_lut_timer(pdev);
 }
 
-QDF_STATUS
-tgt_cfr_stop_lut_age_timer(struct wlan_objmgr_pdev *pdev)
+void tgt_cfr_stop_lut_age_timer(struct wlan_objmgr_pdev *pdev)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc) {
+		cfr_err("Invalid PSOC: Flush LUT Timer cannot be stopped\n");
+		return;
+	}
 
 	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
 
 	if (cfr_tx_ops->cfr_stop_lut_timer)
-		status = cfr_tx_ops->cfr_stop_lut_timer(pdev);
-
-	if (status != QDF_STATUS_SUCCESS)
-		cfr_err("Error occurred with exit code %d\n", status);
-
-	return status;
+		cfr_tx_ops->cfr_stop_lut_timer(pdev);
 }
 
 void tgt_cfr_default_ta_ra_cfg(struct wlan_objmgr_pdev *pdev,
@@ -273,4 +269,19 @@ void tgt_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 		cfr_tx_ops->cfr_rx_tlv_process(pdev, nbuf);
 }
 
+void tgt_cfr_update_global_cfg(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc) {
+		cfr_err("Invalid PSOC:Cannot update global config.\n");
+		return;
+	}
+
+	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
+
+	if (cfr_tx_ops->cfr_update_global_cfg)
+		cfr_tx_ops->cfr_update_global_cfg(pdev);
+}
 #endif

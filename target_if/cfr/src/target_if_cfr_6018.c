@@ -1389,20 +1389,20 @@ static os_timer_func(lut_ageout_timer_task)
 		return;
 	}
 
+	cur_tstamp = qdf_ktime_to_ms(qdf_ktime_get());
+
 	for (i = 0; i < NUM_LUT_ENTRIES; i++) {
 		lut = get_lut_entry(pcfr, i);
 		if (!lut)
 			continue;
 
-		cur_tstamp = qdf_ktime_to_ms(qdf_ktime_get());
-
 		if (lut->dbr_recv && !lut->tx_recv) {
 			diff = cur_tstamp - lut->dbr_tstamp;
 			if (diff > LUT_AGE_THRESHOLD) {
 				cfr_debug("<%d>TXRX event not received for "
-					"%llu ms, release lut entry : "
-					"dma_addr = 0x%pK\n", i, diff,
-					(void *)((uintptr_t)lut->dbr_address));
+					  "%llu ms, release lut entry : "
+					  "dma_addr = 0x%pK\n", i, diff,
+					  (void *)((uintptr_t)lut->dbr_address));
 				target_if_dbr_buf_release(pdev, DBR_MODULE_CFR,
 							  lut->dbr_address,
 							  i, 0);
@@ -1422,19 +1422,16 @@ static os_timer_func(lut_ageout_timer_task)
  * entries
  * @pdev: pointer to pdev object
  *
- * Return: Success/Failure status
+ * Return: None
  */
-QDF_STATUS target_if_cfr_start_lut_age_timer(struct wlan_objmgr_pdev *pdev)
+void target_if_cfr_start_lut_age_timer(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_cfr *pcfr;
 
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						     WLAN_UMAC_COMP_CFR);
-
 	if (pcfr->lut_timer_init)
 		qdf_timer_mod(&pcfr->lut_age_timer, LUT_AGE_TIMER);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1442,19 +1439,83 @@ QDF_STATUS target_if_cfr_start_lut_age_timer(struct wlan_objmgr_pdev *pdev)
  * entries
  * @pdev: pointer to pdev object
  *
- * Return: Success/Failure status
+ * Return: None
  */
-QDF_STATUS target_if_cfr_stop_lut_age_timer(struct wlan_objmgr_pdev *pdev)
+void target_if_cfr_stop_lut_age_timer(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_cfr *pcfr;
 
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						     WLAN_UMAC_COMP_CFR);
-
 	if (pcfr->lut_timer_init)
 		qdf_timer_stop(&pcfr->lut_age_timer);
+}
 
-	return QDF_STATUS_SUCCESS;
+/**
+ * target_if_cfr_update_global_cfg() - Update global config after a successful
+ * commit
+ * @pdev: pointer to pdev object
+ *
+ * Return: None
+ */
+void target_if_cfr_update_global_cfg(struct wlan_objmgr_pdev *pdev)
+{
+	int grp_id;
+	struct pdev_cfr *pcfr;
+	struct ta_ra_cfr_cfg *curr_cfg = NULL;
+	struct ta_ra_cfr_cfg *glbl_cfg = NULL;
+	unsigned long *modified_in_this_session;
+
+	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+						     WLAN_UMAC_COMP_CFR);
+	modified_in_this_session =
+		(unsigned long *)&pcfr->rcc_param.modified_in_curr_session;
+
+	for (grp_id = 0; grp_id < MAX_TA_RA_ENTRIES; grp_id++) {
+		if (qdf_test_bit(grp_id, modified_in_this_session)) {
+			/* Populating global config based on user's input */
+			glbl_cfg = &pcfr->global[grp_id];
+			curr_cfg = &pcfr->rcc_param.curr[grp_id];
+
+			if (curr_cfg->valid_ta)
+				qdf_mem_copy(glbl_cfg->tx_addr,
+					     curr_cfg->tx_addr,
+					     QDF_MAC_ADDR_SIZE);
+
+			if (curr_cfg->valid_ra)
+				qdf_mem_copy(glbl_cfg->rx_addr,
+					     curr_cfg->rx_addr,
+					     QDF_MAC_ADDR_SIZE);
+
+			if (curr_cfg->valid_ta_mask)
+				qdf_mem_copy(glbl_cfg->tx_addr_mask,
+					     curr_cfg->tx_addr_mask,
+					     QDF_MAC_ADDR_SIZE);
+
+			if (curr_cfg->valid_ra_mask)
+				qdf_mem_copy(glbl_cfg->rx_addr_mask,
+					     curr_cfg->rx_addr_mask,
+					     QDF_MAC_ADDR_SIZE);
+
+			if (curr_cfg->valid_bw_mask)
+				glbl_cfg->bw = curr_cfg->bw;
+
+			if (curr_cfg->valid_nss_mask)
+				glbl_cfg->nss = curr_cfg->nss;
+
+			if (curr_cfg->valid_mgmt_subtype)
+				glbl_cfg->mgmt_subtype_filter =
+					curr_cfg->mgmt_subtype_filter;
+
+			if (curr_cfg->valid_ctrl_subtype)
+				glbl_cfg->ctrl_subtype_filter =
+					curr_cfg->ctrl_subtype_filter;
+
+			if (curr_cfg->valid_data_subtype)
+				glbl_cfg->data_subtype_filter =
+					curr_cfg->data_subtype_filter;
+		}
+	}
 }
 
 /**
@@ -1505,10 +1566,14 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 					   true, MAX_RESET_CFG_ENTRY);
 
 	status = target_if_cfr_config_rcc(pdev, &pcfr->rcc_param);
-	if (status != QDF_STATUS_SUCCESS) {
-		cfr_err("Failed sending WMI to configure default values\n");
+	if (status == QDF_STATUS_SUCCESS) {
+		/* Update global configuration */
+		target_if_cfr_update_global_cfg(pdev);
+	} else {
+		cfr_err("Sending WMI to configure default has failed\n");
 		return status;
 	}
+
 	pcfr->rcc_param.modified_in_curr_session = 0;
 
 	pcfr->cfr_max_sta_count = MAX_CFR_ENABLED_CLIENTS;
