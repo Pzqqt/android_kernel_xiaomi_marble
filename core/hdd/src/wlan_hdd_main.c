@@ -172,6 +172,7 @@
 #include <wlan_hdd_debugfs_coex.h>
 #include <wlan_hdd_debugfs_config.h>
 #include "wlan_blm_ucfg_api.h"
+#include "ftm_time_sync_ucfg_api.h"
 #include "ol_txrx.h"
 #include "wlan_hdd_sta_info.h"
 #include "mac_init_api.h"
@@ -344,6 +345,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_SPECTRAL] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_WIFIPOS] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_PKT_CAPTURE] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_FTM_TIME_SYNC] = {QDF_TRACE_LEVEL_ALL},
 };
 
 struct notifier_block hdd_netdev_notifier;
@@ -14274,13 +14276,18 @@ static QDF_STATUS hdd_component_init(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto blm_deinit;
 
+	status = ucfg_ftm_timesync_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto pkt_capture_deinit;
+
 	return QDF_STATUS_SUCCESS;
 
+pkt_capture_deinit:
+	ucfg_pkt_capture_deinit();
 blm_deinit:
 	ucfg_blm_deinit();
 tdls_deinit:
 	ucfg_tdls_deinit();
-
 policy_deinit:
 	policy_mgr_deinit();
 interop_issues_ap_deinit:
@@ -14321,6 +14328,7 @@ mlme_global_deinit:
 static void hdd_component_deinit(void)
 {
 	/* deinitialize non-converged components */
+	ucfg_ftm_timesync_deinit();
 	ucfg_pkt_capture_deinit();
 	ucfg_blm_deinit();
 	ucfg_tdls_deinit();
