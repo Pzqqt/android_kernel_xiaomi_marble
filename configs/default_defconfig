@@ -1014,3 +1014,7 @@ CONFIG_SAP_DHCP_FW_IND := y
 
 #Enable support to get ANI level
 CONFIG_ANI_LEVEL_REQUEST := y
+
+ifeq ($(CONFIG_ARCH_QCS405), y)
+CONFIG_FEATURE_WLAN_TIME_SYNC_FTM := y
+endif
