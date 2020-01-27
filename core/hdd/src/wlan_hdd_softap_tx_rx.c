@@ -1004,7 +1004,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 				      mac_addr->bytes) != QDF_STATUS_SUCCESS)
 			hdd_debug("WLAN_CLIENT_DISCONNECT event failed");
 	}
-	hdd_sta_info_detach(&adapter->sta_info_list, sta_info);
+	hdd_sta_info_detach(&adapter->sta_info_list, &sta_info);
 
 	ucfg_mlme_update_oce_flags(hdd_ctx->pdev);
 

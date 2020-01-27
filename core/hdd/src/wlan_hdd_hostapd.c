@@ -1557,7 +1557,7 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 
 			/* Remove the oldest and store the current */
 			hdd_sta_info_detach(&adapter->cache_sta_info_list,
-					    oldest_disassoc_sta_info);
+					    &oldest_disassoc_sta_info);
 			hdd_sta_info_attach(&adapter->cache_sta_info_list,
 					    cache_sta_info);
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,7 +73,7 @@ QDF_STATUS hdd_sta_info_attach(struct hdd_sta_info_obj *sta_info_container,
 }
 
 void hdd_sta_info_detach(struct hdd_sta_info_obj *sta_info_container,
-			 struct hdd_station_info *sta_info)
+			 struct hdd_station_info **sta_info)
 {
 	if (!sta_info_container || !sta_info) {
 		hdd_err("Parameter(s) null");
@@ -82,12 +82,12 @@ void hdd_sta_info_detach(struct hdd_sta_info_obj *sta_info_container,
 
 	qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
-	qdf_ht_remove(&sta_info->sta_node);
+	qdf_ht_remove(&((*sta_info)->sta_node));
 
 	qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 
-	qdf_mem_free(sta_info);
-	sta_info = NULL;
+	qdf_mem_free(*sta_info);
+	*sta_info = NULL;
 }
 
 struct hdd_station_info *hdd_get_sta_info_by_mac(
@@ -131,7 +131,7 @@ void hdd_clear_cached_sta_info(struct hdd_sta_info_obj *sta_info_container)
 	qdf_ht_for_each_safe(sta_info_container->sta_obj, index, tmp, sta_info,
 			     sta_node) {
 		if (sta_info) {
-			hdd_sta_info_detach(sta_info_container, sta_info);
+			hdd_sta_info_detach(sta_info_container, &sta_info);
 		}
 	}
 }

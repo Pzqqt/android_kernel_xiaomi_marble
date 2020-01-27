@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1084,7 +1084,7 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 		}
 	}
 
-	hdd_sta_info_detach(&adapter->cache_sta_info_list, stainfo);
+	hdd_sta_info_detach(&adapter->cache_sta_info_list, &stainfo);
 	qdf_atomic_dec(&adapter->cache_sta_count);
 
 	return cfg80211_vendor_cmd_reply(skb);

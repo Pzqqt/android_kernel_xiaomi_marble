@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -240,7 +240,7 @@ void hdd_sta_info_deinit(struct hdd_sta_info_obj *sta_info_container);
  * Return: None
  */
 void hdd_sta_info_detach(struct hdd_sta_info_obj *sta_info_container,
-			 struct hdd_station_info *sta_info);
+			 struct hdd_station_info **sta_info);
 
 /**
  * hdd_sta_info_attach() - Attach the station info structure into the list
