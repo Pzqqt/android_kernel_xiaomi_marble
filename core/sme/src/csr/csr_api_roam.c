@@ -6363,11 +6363,62 @@ bool csr_allow_concurrent_sta_connections(struct mac_context *mac,
 	return false;
 }
 
+static void csr_get_peer_rssi_cb(struct stats_event *ev, void *cookie)
+{
+	struct mac_context *mac = (struct mac_context *)cookie;
+
+	if (!mac)
+		return;
+	if (!ev->peer_stats) {
+		sme_debug("%s no peer stats\n", __func__);
+		return;
+	}
+	mac->peer_rssi = ev->peer_stats->peer_rssi;
+	mac->peer_txrate = ev->peer_stats->tx_rate;
+	mac->peer_rxrate = ev->peer_stats->rx_rate;
+	if (!ev->peer_extended_stats) {
+		sme_debug("%s no peer extended stats\n", __func__);
+		return;
+	}
+	mac->rx_mc_bc_cnt = ev->peer_extended_stats->rx_mc_bc_cnt;
+}
+
+static void csr_get_peer_rssi(struct mac_context *mac, uint32_t session_id,
+			      struct qdf_mac_addr peer_mac)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct request_info info = {0};
+	QDF_STATUS status;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+						mac->psoc,
+						session_id,
+						WLAN_LEGACY_SME_ID);
+	if (vdev) {
+		info.cookie = mac;
+		info.u.get_peer_rssi_cb = csr_get_peer_rssi_cb;
+		info.vdev_id = wlan_vdev_get_id(vdev);
+		info.pdev_id = wlan_objmgr_pdev_get_pdev_id(
+					wlan_vdev_get_pdev(vdev));
+		qdf_mem_copy(info.peer_mac_addr, &peer_mac, QDF_MAC_ADDR_SIZE);
+		status = ucfg_mc_cp_stats_send_stats_request(
+						vdev,
+						TYPE_PEER_STATS,
+						&info);
+		sme_debug("peer_mac" QDF_MAC_ADDR_STR,
+			QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
+		if (QDF_IS_STATUS_ERROR(status))
+			sme_err("stats req failed: %d", status);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+	}
+}
+
 QDF_STATUS csr_roam_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 {
 	QDF_STATUS lock_status, status = QDF_STATUS_SUCCESS;
 	uint32_t sessionId = pCommand->vdev_id;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+	struct qdf_mac_addr peer_mac;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -6455,6 +6506,11 @@ QDF_STATUS csr_roam_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 				sessionId);
 		sme_debug("Disassociate issued with reason: %d",
 			pCommand->u.roamCmd.reason);
+
+		qdf_mem_copy(&peer_mac, &pCommand->u.roamCmd.peerMac,
+			     QDF_MAC_ADDR_SIZE);
+		csr_get_peer_rssi(mac, sessionId, peer_mac);
+
 		status = csr_send_mb_disassoc_req_msg(mac, sessionId,
 				pCommand->u.roamCmd.peerMac,
 				pCommand->u.roamCmd.reason);
@@ -6465,6 +6521,13 @@ QDF_STATUS csr_roam_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 				sessionId);
 		csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_DEAUTH_REQ,
 				sessionId);
+		sme_debug("Deauth issued with reason: %d",
+			  pCommand->u.roamCmd.reason);
+
+		qdf_mem_copy(&peer_mac, &pCommand->u.roamCmd.peerMac,
+			     QDF_MAC_ADDR_SIZE);
+		csr_get_peer_rssi(mac, sessionId, peer_mac);
+
 		status = csr_send_mb_deauth_req_msg(mac, sessionId,
 				pCommand->u.roamCmd.peerMac,
 				pCommand->u.roamCmd.reason);
@@ -13176,26 +13239,6 @@ void csr_roam_completion(struct mac_context *mac, uint32_t vdev_id,
 	}
 }
 
-static void csr_get_peer_rssi_cb(struct stats_event *ev, void *cookie)
-{
-	struct mac_context *mac = (struct mac_context *)cookie;
-
-	if (!mac)
-		return;
-	if (!ev->peer_stats) {
-		sme_debug("%s no peer stats\n", __func__);
-		return;
-	}
-	mac->peer_rssi = ev->peer_stats->peer_rssi;
-	mac->peer_txrate = ev->peer_stats->tx_rate;
-	mac->peer_rxrate = ev->peer_stats->rx_rate;
-	if (!ev->peer_extended_stats) {
-		sme_debug("%s no peer extended stats\n", __func__);
-		return;
-	}
-	mac->rx_mc_bc_cnt = ev->peer_extended_stats->rx_mc_bc_cnt;
-}
-
 static
 QDF_STATUS csr_roam_lost_link(struct mac_context *mac, uint32_t sessionId,
 			      uint32_t type, tSirSmeRsp *pSirMsg)
@@ -13243,33 +13286,9 @@ QDF_STATUS csr_roam_lost_link(struct mac_context *mac, uint32_t sessionId,
 	mlme_set_discon_reason_n_from_ap(mac->psoc, sessionId, from_ap,
 				      pSession->joinFailStatusCode.reasonCode);
 
-	if (type == eWNI_SME_DISASSOC_IND || type == eWNI_SME_DEAUTH_IND) {
-		struct wlan_objmgr_vdev *vdev;
-		struct request_info info = {0};
+	if (type == eWNI_SME_DISASSOC_IND || type == eWNI_SME_DEAUTH_IND)
+		csr_get_peer_rssi(mac, sessionId, roam_info->peerMac);
 
-		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-							mac->psoc,
-							sessionId,
-							WLAN_LEGACY_SME_ID);
-		if (!vdev) {
-			sme_err("Invalid vdev");
-		} else {
-			info.cookie = mac;
-			info.u.get_peer_rssi_cb = csr_get_peer_rssi_cb;
-			info.vdev_id = wlan_vdev_get_id(vdev);
-			info.pdev_id = wlan_objmgr_pdev_get_pdev_id(
-						wlan_vdev_get_pdev(vdev));
-			qdf_mem_copy(info.peer_mac_addr, &roam_info->peerMac,
-				     QDF_MAC_ADDR_SIZE);
-			status = ucfg_mc_cp_stats_send_stats_request(
-							vdev,
-							TYPE_PEER_STATS,
-							&info);
-			if (QDF_IS_STATUS_ERROR(status))
-				sme_err("stats req failed: %d", status);
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		}
-	}
 	csr_roam_call_callback(mac, sessionId, NULL, 0,
 			       eCSR_ROAM_LOSTLINK_DETECTED, result);
 
