@@ -1562,7 +1562,7 @@ static void rrm_iter_meas_timer_handle(void *userData)
 {
 	struct mac_context *mac = (struct mac_context *) userData;
 
-	sme_warn("Randomization timer expired...send on next channel");
+	sme_debug("Randomization timer expired...send on next channel");
 	/* Issue a scan req for next channel. */
 	sme_rrm_issue_scan_req(mac);
 }

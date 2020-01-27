@@ -4547,8 +4547,6 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 
 	smeSessionId = pe_session->smeSessionId;
 
-	pe_debug("dialog_token %d num_report %d is_last_frame %d",
-		 dialog_token, num_report, is_last_frame);
 
 	frm->Category.category = ACTION_CATEGORY_RRM;
 	frm->Action.action = RRM_RADIO_MEASURE_RPT;
@@ -4594,11 +4592,12 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 		}
 	}
 
+
 	nStatus =
 		dot11f_get_packed_radio_measurement_report_size(mac, frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
-		pe_err("Failed to calculate the packed size for a Radio Measure Report (0x%08x)",
-			nStatus);
+		pe_nofl_err("TX: [802.11 RRM] Failed to get packed size for RM Report (0x%08x)",
+		       nStatus);
 		/* We'll fall back on the worst case scenario: */
 		nPayload = sizeof(tDot11fLinkMeasurementReport);
 		qdf_mem_free(frm);
@@ -4614,7 +4613,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 		cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pe_err("Failed to allocate %d bytes for a Radio Measure "
+		pe_nofl_err("TX: [802.11 RRM] Allocation of %d bytes failed for RM"
 			   "Report", nBytes);
 		qdf_mem_free(frm);
 		return QDF_STATUS_E_FAILURE;
@@ -4641,7 +4640,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 						       nPayload, &nPayload);
 
 	if (DOT11F_FAILED(nStatus)) {
-		pe_err("Failed to pack an Radio Measure Report (0x%08x)",
+		pe_nofl_err("Failed to pack an Radio Measure Report (0x%08x)",
 			nStatus);
 
 		/* FIXME - Need to convert to QDF_STATUS */
@@ -4652,8 +4651,18 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 			nStatus);
 	}
 
-	pe_warn("Sending a Radio Measure Report to");
-	lim_print_mac_addr(mac, peer, LOGW);
+	pe_debug("Sending Radio Measure Report to %pM", peer);
+	if (frm->MeasurementReport[0].type == SIR_MAC_RRM_BEACON_TYPE)
+		pe_nofl_info("TX: [802.11 BCN_RPT] seq_no:%d dialog_token:%d no. of APs:%d is_last_rpt:%d",
+			     (pMacHdr->seqControl.seqNumHi << HIGH_SEQ_NUM_OFFSET |
+			      pMacHdr->seqControl.seqNumLo),
+			     dialog_token, frm->num_MeasurementReport,
+			     is_last_report);
+	else
+		pe_nofl_info("TX: [802.11 RRM] seq_no:%d dialog_token %d num_report %d is_last_frm %d",
+			     (pMacHdr->seqControl.seqNumHi << HIGH_SEQ_NUM_OFFSET |
+			      pMacHdr->seqControl.seqNumLo),
+			     dialog_token, num_report, is_last_frame);
 
 	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
@@ -4662,25 +4671,21 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, pMacHdr->fc.subType));
-	qdf_status = wma_tx_frame(mac,
-				pPacket,
-				(uint16_t) nBytes,
-				TXRX_FRM_802_11_MGMT,
-				ANI_TXDIR_TODS,
-				7, lim_tx_complete, pFrame, txFlag,
-				smeSessionId, 0, RATEID_DEFAULT);
+	qdf_status = wma_tx_frame(mac, pPacket, (uint16_t)nBytes,
+				  TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
+				  7, lim_tx_complete, pFrame, txFlag,
+				  smeSessionId, 0, RATEID_DEFAULT);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 			 pe_session->peSessionId, qdf_status));
 	if (QDF_STATUS_SUCCESS != qdf_status) {
-		pe_err("wma_tx_frame FAILED! Status [%d]", qdf_status);
+		pe_nofl_err("TX: [802.11 RRM] Send FAILED! err_status [%d]",
+		       qdf_status);
 		status_code = QDF_STATUS_E_FAILURE;
 		/* Pkt will be freed up by the callback */
-		qdf_mem_free(frm);
-		return status_code;
-	} else {
-		qdf_mem_free(frm);
-		return QDF_STATUS_SUCCESS;
 	}
+
+	qdf_mem_free(frm);
+	return status_code;
 
 returnAfterError:
 	qdf_mem_free(frm);

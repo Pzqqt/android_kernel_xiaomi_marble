@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,6 +31,7 @@
 
 #define RRM_BCN_RPT_NO_BSS_INFO    0
 #define RRM_BCN_RPT_MIN_RPT        1
+#define RRM_CH_BUF_LEN             45
 
 QDF_STATUS rrm_initialize(struct mac_context *mac);
 
