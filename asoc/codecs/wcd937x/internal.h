@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _WCD937X_INTERNAL_H
@@ -9,6 +9,7 @@
 #include <asoc/wcd-mbhc-v2.h>
 #include <asoc/wcd-irq.h>
 #include "wcd937x-mbhc.h"
+#include "wcd937x.h"
 
 #define WCD937X_MAX_MICBIAS 3
 
@@ -17,6 +18,7 @@
 #define MAX_PORT 8
 #define MAX_CH_PER_PORT 8
 
+#define WCD937X_MAX_SLAVE_PORT_TYPES 10
 extern struct regmap_config wcd937x_regmap_config;
 
 struct codec_port_info {
@@ -87,6 +89,7 @@ struct wcd937x_priv {
 	int ear_rx_path;
 	int ana_clk_count;
 	struct mutex ana_tx_clk_lock;
+	u8 tx_master_ch_map[WCD937X_MAX_SLAVE_CH_TYPES];
 };
 
 struct wcd937x_micbias_setting {

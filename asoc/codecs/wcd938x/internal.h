@@ -10,6 +10,7 @@
 #include <asoc/wcd-irq.h>
 #include <asoc/wcd-clsh.h>
 #include "wcd938x-mbhc.h"
+#include "wcd938x.h"
 
 #define SWR_SCP_CONTROL    0x44
 #define SWR_SCP_HOST_CLK_DIV2_CTL_BANK 0xE0
@@ -101,6 +102,7 @@ struct wcd938x_priv {
 	int flyback_cur_det_disable;
 	int ear_rx_path;
 	bool dev_up;
+	u8 tx_master_ch_map[WCD938X_MAX_SLAVE_CH_TYPES];
 };
 
 struct wcd938x_micbias_setting {

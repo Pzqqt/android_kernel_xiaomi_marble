@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -17,13 +17,14 @@
 #include <soc/soundwire.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
-#include "internal.h"
-#include "wcd937x.h"
 #include <asoc/wcdcal-hwdep.h>
-#include "wcd937x-registers.h"
 #include <asoc/msm-cdc-pinctrl.h>
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include <asoc/msm-cdc-supply.h>
+
+#include "wcd937x-registers.h"
+#include "wcd937x.h"
+#include "internal.h"
 
 #define DRV_NAME "wcd937x_codec"
 
@@ -266,24 +267,32 @@ static int wcd937x_tx_connect_port(struct snd_soc_component *component,
 	u8 num_ch;
 	u8 ch_mask;
 	u32 ch_rate;
-	u8 port_type;
+	u8 ch_type;
+	int slave_port_idx;
 	u8 num_port = 1;
 	int ret = 0;
 
 	ret = wcd937x_set_port_params(component, slv_port_type, &port_id,
 				&num_ch, &ch_mask, &ch_rate,
-				&port_type, CODEC_TX);
+				&ch_type, CODEC_TX);
 
 	if (ret)
 		return ret;
 
+	slave_ch_idx = wcd937x_slave_get_slave_ch_val(slv_port_type);
+	if (slave_ch_idx != -EINVAL)
+		ch_type = wcd937x_slave_get_master_ch_val(slave_ch_idx);
+
+	dev_dbg(component->dev, "%s slv_ch_idx: %d, mstr_ch_type: %d\n",
+		__func__, slave_ch_idx, ch_type);
+
 	if (enable)
 		ret = swr_connect_port(wcd937x->tx_swr_dev, &port_id,
 					num_port, &ch_mask, &ch_rate,
-					 &num_ch, &port_type);
+					 &num_ch, &ch_type);
 	else
 		ret = swr_disconnect_port(wcd937x->tx_swr_dev, &port_id,
-					num_port, &ch_mask, &port_type);
+					num_port, &ch_mask, &ch_type);
 	return ret;
 
 }
@@ -1871,6 +1880,92 @@ static const char * const rx_hph_mode_mux_text[] = {
 	"CLS_H_ULP", "CLS_AB_HIFI",
 };
 
+const char * const tx_master_ch_text[] = {
+	"ZERO", "SWRM_TX1_CH1", "SWRM_TX1_CH2", "SWRM_TX1_CH3", "SWRM_TX1_CH4",
+	"SWRM_TX2_CH1", "SWRM_TX2_CH2", "SWRM_TX2_CH3", "SWRM_TX2_CH4",
+	"SWRM_TX3_CH1", "SWRM_TX3_CH2", "SWRM_TX3_CH3", "SWRM_TX3_CH4",
+	"SWRM_PCM_IN",
+};
+
+const struct soc_enum tx_master_ch_enum =
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(tx_master_ch_text),
+					tx_master_ch_text);
+
+static void wcd937x_tx_get_slave_ch_type_idx(const char *wname, int *ch_idx)
+{
+	u8 ch_type = 0;
+
+	if (strnstr(wname, "ADC1", sizeof("ADC1")))
+		ch_type = ADC1;
+	else if (strnstr(wname, "ADC2", sizeof("ADC2")))
+		ch_type = ADC2;
+	else if (strnstr(wname, "ADC3", sizeof("ADC3")))
+		ch_type = ADC3;
+	else if (strnstr(wname, "DMIC0", sizeof("DMIC0")))
+		ch_type = DMIC0;
+	else if (strnstr(wname, "DMIC1", sizeof("DMIC1")))
+		ch_type = DMIC1;
+	else if (strnstr(wname, "MBHC", sizeof("MBHC")))
+		ch_type = MBHC;
+	else if (strnstr(wname, "DMIC2", sizeof("DMIC2")))
+		ch_type = DMIC2;
+	else if (strnstr(wname, "DMIC3", sizeof("DMIC3")))
+		ch_type = DMIC3;
+	else if (strnstr(wname, "DMIC4", sizeof("DMIC4")))
+		ch_type = DMIC4;
+	else if (strnstr(wname, "DMIC5", sizeof("DMIC5")))
+		ch_type = DMIC5;
+	else
+		pr_err("%s: ch name: %s is not listed\n", __func__, wname);
+
+	if (ch_type)
+		*ch_idx = wcd937x_slave_get_slave_ch_val(ch_type);
+	else
+		*ch_idx = -EINVAL;
+}
+
+static int wcd937x_tx_master_ch_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
+	int slave_ch_idx;
+
+	wcd937x_tx_get_slave_ch_type_idx(kcontrol->id.name, &slave_ch_idx);
+
+	if (slave_ch_idx != -EINVAL)
+		ucontrol->value.integer.value[0] =
+				wcd937x_slave_get_master_ch_val(
+				wcd937x->tx_master_ch_map[slave_ch_idx]);
+
+	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+	return 0;
+}
+
+static int wcd937x_tx_master_ch_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
+	int slave_ch_idx;
+
+	wcd937x_tx_get_slave_ch_type_idx(kcontrol->id.name, &slave_ch_idx);
+
+	dev_dbg(component->dev, "%s: slave_ch_idx: %d",	__func__, slave_ch_idx);
+	dev_dbg(component->dev, "%s: ucontrol->value.enumerated.item[0] = %ld\n",
+			__func__, ucontrol->value.enumerated.item[0]);
+
+	if (slave_ch_idx != -EINVAL)
+		wcd937x->tx_master_ch_map[slave_ch_idx] =
+				wcd937x_slave_get_master_ch(
+					ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
 static const char * const wcd937x_ear_pa_gain_text[] = {
 	"G_6_DB", "G_4P5_DB", "G_3_DB", "G_1P5_DB", "G_0_DB",
 	"G_M1P5_DB", "G_M3_DB", "G_M4P5_DB",
@@ -1904,6 +1999,26 @@ static const struct snd_kcontrol_new wcd937x_snd_controls[] = {
 			analog_gain),
 	SOC_SINGLE_TLV("ADC3 Volume", WCD937X_ANA_TX_CH3, 0, 20, 0,
 			analog_gain),
+	SOC_ENUM_EXT("ADC1 ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("ADC2 ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("ADC3 ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("DMIC0 ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("DMIC1 ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("MBHC ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("DMIC2 ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("DMIC3 ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("DMIC4 ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("DMIC5 ChMap", tx_master_ch_enum,
+			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
 };
 
 static const struct snd_kcontrol_new adc1_switch[] = {
@@ -2104,6 +2219,7 @@ static const struct snd_soc_dapm_widget wcd937x_dapm_widgets[] = {
 
 	SND_SOC_DAPM_OUTPUT("ADC1_OUTPUT"),
 	SND_SOC_DAPM_OUTPUT("ADC2_OUTPUT"),
+	SND_SOC_DAPM_OUTPUT("WCD_TX_OUTPUT"),
 
 	/*output widgets rx*/
 	SND_SOC_DAPM_OUTPUT("EAR"),
@@ -2201,12 +2317,12 @@ static const struct snd_soc_dapm_widget wcd9375_dapm_widgets[] = {
 };
 
 static const struct snd_soc_dapm_route wcd937x_audio_map[] = {
-	{"ADC1_OUTPUT", NULL, "ADC1_MIXER"},
+	{"WCD_TX_OUTPUT", NULL, "ADC1_MIXER"},
 	{"ADC1_MIXER", "Switch", "ADC1 REQ"},
 	{"ADC1 REQ", NULL, "ADC1"},
 	{"ADC1", NULL, "AMIC1"},
 
-	{"ADC2_OUTPUT", NULL, "ADC2_MIXER"},
+	{"WCD_TX_OUTPUT", NULL, "ADC2_MIXER"},
 	{"ADC2_MIXER", "Switch", "ADC2 REQ"},
 	{"ADC2 REQ", NULL, "ADC2"},
 	{"ADC2", NULL, "ADC2 MUX"},
@@ -2247,26 +2363,33 @@ static const struct snd_soc_dapm_route wcd937x_audio_map[] = {
 
 static const struct snd_soc_dapm_route wcd9375_audio_map[] = {
 
+	{"WCD_TX_OUTPUT", NULL, "ADC3_MIXER"},
 	{"ADC3_OUTPUT", NULL, "ADC3_MIXER"},
 	{"ADC3_MIXER", "Switch", "ADC3 REQ"},
 	{"ADC3 REQ", NULL, "ADC3"},
 	{"ADC3", NULL, "AMIC4"},
 
+	{"WCD_TX_OUTPUT", NULL, "DMIC1_MIXER"},
 	{"DMIC1_OUTPUT", NULL, "DMIC1_MIXER"},
 	{"DMIC1_MIXER", "Switch", "DMIC1"},
 
+	{"WCD_TX_OUTPUT", NULL, "DMIC2_MIXER"},
 	{"DMIC2_OUTPUT", NULL, "DMIC2_MIXER"},
 	{"DMIC2_MIXER", "Switch", "DMIC2"},
 
+	{"WCD_TX_OUTPUT", NULL, "DMIC3_MIXER"},
 	{"DMIC3_OUTPUT", NULL, "DMIC3_MIXER"},
 	{"DMIC3_MIXER", "Switch", "DMIC3"},
 
+	{"WCD_TX_OUTPUT", NULL, "DMIC4_MIXER"},
 	{"DMIC4_OUTPUT", NULL, "DMIC4_MIXER"},
 	{"DMIC4_MIXER", "Switch", "DMIC4"},
 
+	{"WCD_TX_OUTPUT", NULL, "DMIC5_MIXER"},
 	{"DMIC5_OUTPUT", NULL, "DMIC5_MIXER"},
 	{"DMIC5_MIXER", "Switch", "DMIC5"},
 
+	{"WCD_TX_OUTPUT", NULL, "DMIC6_MIXER"},
 	{"DMIC6_OUTPUT", NULL, "DMIC6_MIXER"},
 	{"DMIC6_MIXER", "Switch", "DMIC6"},
 
@@ -2497,6 +2620,7 @@ static int wcd937x_soc_codec_probe(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "IN3_AUX");
 	snd_soc_dapm_ignore_suspend(dapm, "ADC1_OUTPUT");
 	snd_soc_dapm_ignore_suspend(dapm, "ADC2_OUTPUT");
+	snd_soc_dapm_ignore_suspend(dapm, "WCD_TX_OUTPUT");
 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL");
