@@ -7503,7 +7503,7 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrChannelInfo *specific_chan_info;
+	tCsrChannelInfo *chan_info;
 
 	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -7515,18 +7515,21 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
-	specific_chan_info = &pNeighborRoamInfo->cfgParams.specific_chan_info;
-	if (!specific_chan_info->freq_list) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
-			FL("Roam Scan channel list is NOT yet initialized"));
-		*pNumChannels = 0;
-		sme_release_global_lock(&mac->sme);
-		return status;
+
+	chan_info = &pNeighborRoamInfo->cfgParams.specific_chan_info;
+	if (!chan_info->numOfChannels) {
+		chan_info = &pNeighborRoamInfo->cfgParams.pref_chan_info;
+		if (!chan_info->numOfChannels) {
+			sme_err("Roam Scan channel list is NOT yet initialized");
+			*pNumChannels = 0;
+			sme_release_global_lock(&mac->sme);
+			return status;
+		}
 	}
 
-	*pNumChannels = specific_chan_info->numOfChannels;
+	*pNumChannels = chan_info->numOfChannels;
 	for (i = 0; i < (*pNumChannels); i++)
-		freq_list[i] = specific_chan_info->freq_list[i];
+		freq_list[i] = chan_info->freq_list[i];
 	freq_list[i] = '\0';
 	sme_release_global_lock(&mac->sme);
 
