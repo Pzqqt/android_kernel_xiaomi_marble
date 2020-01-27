@@ -22,6 +22,7 @@
 #include "wlan_mlme_vdev_mgr_interface.h"
 #include "lim_utils.h"
 #include "wma_api.h"
+#include "wma.h"
 #include "lim_types.h"
 #include <include/wlan_mlme_cmn.h>
 #include <../../core/src/vdev_mgr_ops.h>
@@ -924,11 +925,23 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 static
 QDF_STATUS vdevmgr_mlme_ext_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
-	mlme_legacy_debug("vdev id = %d ",
-			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct vdev_delete_response rsp;
+	uint8_t vdev_id;
+
+	vdev_id = vdev_mlme->vdev->vdev_objmgr.vdev_id;
+	mlme_legacy_debug("Sending vdev delete to firmware for vdev id = %d ",
+			  vdev_id);
 
 	if (!vdev_mlme->ext_vdev_ptr)
-		return QDF_STATUS_E_FAILURE;
+		return status;
+
+	status = vdev_mgr_delete_send(vdev_mlme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Failed to send vdev delete to firmware");
+			 rsp.vdev_id = vdev_id;
+		wma_vdev_detach_callback(&rsp);
+	}
 
 	mlme_free_self_disconnect_ies(vdev_mlme->vdev);
 	mlme_free_peer_disconnect_ies(vdev_mlme->vdev);
@@ -1276,6 +1289,73 @@ QDF_STATUS vdevmgr_mlme_ext_post_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 			 wlan_vdev_get_id(vdev_mlme->vdev));
 		return status;
 	}
+
+	return status;
+}
+
+bool mlme_vdev_uses_self_peer(uint32_t vdev_type, uint32_t vdev_subtype)
+{
+	switch (vdev_type) {
+	case WMI_VDEV_TYPE_AP:
+		return vdev_subtype == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE;
+
+	case WMI_VDEV_TYPE_MONITOR:
+	case WMI_VDEV_TYPE_OCB:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
+void mlme_vdev_del_resp(uint8_t vdev_id)
+{
+	sme_vdev_del_resp(vdev_id);
+}
+
+static
+QDF_STATUS mlme_vdev_self_peer_delete_resp_flush_cb(struct scheduler_msg *msg)
+{
+	/*
+	 * sme should be the last component to hold the reference invoke the
+	 * same to release the reference gracefully
+	 */
+	sme_vdev_self_peer_delete_resp(msg->bodyptr);
+	return QDF_STATUS_SUCCESS;
+}
+
+void mlme_vdev_self_peer_delete_resp(struct del_vdev_params *param)
+{
+	struct scheduler_msg peer_del_rsp = {0};
+	QDF_STATUS status;
+
+	peer_del_rsp.type = eWNI_SME_VDEV_DELETE_RSP;
+	peer_del_rsp.bodyptr = param;
+	peer_del_rsp.flush_callback = mlme_vdev_self_peer_delete_resp_flush_cb;
+
+	status = scheduler_post_message(QDF_MODULE_ID_MLME,
+					QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &peer_del_rsp);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		/* In the error cases release the final sme referene */
+		wlan_objmgr_vdev_release_ref(param->vdev, WLAN_LEGACY_SME_ID);
+		qdf_mem_free(param);
+	}
+}
+
+QDF_STATUS mlme_vdev_self_peer_delete(struct scheduler_msg *self_peer_del_msg)
+{
+	QDF_STATUS status;
+	struct del_vdev_params *del_vdev = self_peer_del_msg->bodyptr;
+
+	if (!del_vdev) {
+		mlme_err("Invalid del self peer params");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wma_vdev_detach(del_vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("Failed to detach vdev");
 
 	return status;
 }
