@@ -61,10 +61,6 @@
 #include "wmi_unified_ap_api.h"
 #endif
 
-#ifdef WLAN_CFR_ENABLE
-#include "wmi_unified_cfr_api.h"
-#endif
-
 #include <wmi_unified_vdev_api.h>
 #include <wmi_unified_vdev_tlv.h>
 

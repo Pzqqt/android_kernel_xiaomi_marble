@@ -528,6 +528,8 @@ struct wlan_lmac_if_sa_api_tx_ops {
  * @cfr_default_ta_ra_cfg: Function to configure default values for TA_RA mode
  * @cfr_dump_lut_enh: Function to dump LUT entries
  * @cfr_rx_tlv_process: Function to process PPDU status TLVs
+ * @cfr_update_global_cfg: Function to update the global config for
+ * a successful commit session.
  */
 struct wlan_lmac_if_cfr_tx_ops {
 	int (*cfr_init_pdev)(struct wlan_objmgr_psoc *psoc,
@@ -544,12 +546,13 @@ struct wlan_lmac_if_cfr_tx_ops {
 #ifdef WLAN_ENH_CFR_ENABLE
 	QDF_STATUS (*cfr_config_rcc)(struct wlan_objmgr_pdev *pdev,
 				     struct cfr_rcc_param *params);
-	QDF_STATUS (*cfr_start_lut_timer)(struct wlan_objmgr_pdev *pdev);
-	QDF_STATUS (*cfr_stop_lut_timer)(struct wlan_objmgr_pdev *pdev);
+	void (*cfr_start_lut_timer)(struct wlan_objmgr_pdev *pdev);
+	void (*cfr_stop_lut_timer)(struct wlan_objmgr_pdev *pdev);
 	void (*cfr_default_ta_ra_cfg)(struct cfr_rcc_param *params,
 				      bool allvalid, uint16_t reset_cfg);
 	void (*cfr_dump_lut_enh)(struct wlan_objmgr_pdev *pdev);
 	void (*cfr_rx_tlv_process)(struct wlan_objmgr_pdev *pdev, void *nbuf);
+	void (*cfr_update_global_cfg)(struct wlan_objmgr_pdev *pdev);
 #endif
 };
 #endif /* WLAN_CFR_ENABLE */
