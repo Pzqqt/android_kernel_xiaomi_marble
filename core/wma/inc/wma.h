@@ -1843,6 +1843,7 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 				qdf_nbuf_t buf, uint32_t desc_id,
 				void *mgmt_tx_params);
 
+#ifndef CONFIG_HL_SUPPORT
 /**
  * wma_mgmt_nbuf_unmap_cb() - dma unmap for pending mgmt pkts
  * @pdev: objmgr pdev
@@ -1852,13 +1853,29 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
  *
  * Return: None
  */
-#ifndef CONFIG_HL_SUPPORT
 void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
 			    qdf_nbuf_t buf);
+/**
+ * wma_mgmt_nbuf_unmap_cb() - dma unmap for pending mgmt pkts
+ * @pdev: objmgr pdev
+ * @buf: buffer
+ *
+ * This is a cb function drains all mgmt packets of a vdev.
+ * This is called in event of target going down without sending completions.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_mgmt_frame_fill_peer_cb(struct wlan_objmgr_peer *peer,
+				       qdf_nbuf_t buf);
 #else
 static inline void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
 					  qdf_nbuf_t buf)
 {}
+static inline QDF_STATUS wma_mgmt_frame_fill_peer_cb(struct wlan_objmgr_peer *peer,
+						     qdf_nbuf_t buf)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 /**
@@ -2615,5 +2632,14 @@ QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
 QDF_STATUS wma_send_ani_level_request(tp_wma_handle wma_handle,
 				      uint32_t *freqs, uint8_t num_freqs);
 #endif /* FEATURE_ANI_LEVEL_REQUEST */
+
+/**
+ * wma_vdev_detach() - send vdev delete command to fw
+ * @wma_handle: wma handle
+ * @pdel_vdev_req_param: del vdev params
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_vdev_detach(struct del_vdev_params *pdel_vdev_req_param);
 #endif
 

@@ -359,15 +359,15 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 					*channelTable);
 
 /*
- * csr_roam_vdev_delete() - CSR api to delete vdev
+ * csr_prepare_vdev_delete() - CSR api to delete vdev
  * @mac_ctx: pointer to mac context
  * @vdev_id: vdev id to be deleted.
  * @cleanup: clean up vdev session on true
  *
  * Return QDF_STATUS
  */
-QDF_STATUS csr_roam_vdev_delete(struct mac_context *mac_ctx,
-				uint8_t vdev_id, bool cleanup);
+QDF_STATUS csr_prepare_vdev_delete(struct mac_context *mac_ctx,
+				   uint8_t vdev_id, bool cleanup);
 
 /*
  * csr_cleanup_vdev_session() - CSR api to cleanup vdev

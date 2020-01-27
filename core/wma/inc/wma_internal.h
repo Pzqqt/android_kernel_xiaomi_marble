@@ -794,16 +794,6 @@ static inline uint8_t *wma_find_bssid_by_vdev_id(tp_wma_handle wma,
 QDF_STATUS wma_find_vdev_id_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 				     uint8_t *vdev_id);
 
-/**
- * wma_vdev_detach() - send vdev delete command to fw
- * @wma_handle: wma handle
- * @pdel_vdev_req_param: del vdev params
- *
- * Return: QDF status
- */
-QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
-			struct del_vdev_params *pdel_vdev_req_param);
-
 QDF_STATUS wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value);
 

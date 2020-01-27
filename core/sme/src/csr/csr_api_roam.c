@@ -1665,7 +1665,7 @@ QDF_STATUS csr_stop(struct mac_context *mac)
 	 */
 	csr_purge_pdev_all_ser_cmd_list(mac);
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
-		csr_roam_vdev_delete(mac, sessionId, true);
+		csr_prepare_vdev_delete(mac, sessionId, true);
 
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
 		csr_neighbor_roam_close(mac, sessionId);
@@ -1822,7 +1822,7 @@ static QDF_STATUS csr_roam_close(struct mac_context *mac)
 	 */
 	csr_purge_pdev_all_ser_cmd_list(mac);
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
-		csr_roam_vdev_delete(mac, sessionId, true);
+		csr_prepare_vdev_delete(mac, sessionId, true);
 
 	qdf_mc_timer_stop(&mac->roam.hTimerWaitForKey);
 	qdf_mc_timer_destroy(&mac->roam.hTimerWaitForKey);
@@ -17070,84 +17070,6 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 	return status;
 }
 
-QDF_STATUS csr_process_vdev_del_rsp(struct mac_context *mac_ctx,
-				    uint8_t *pmsg)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct del_vdev_params *rsp;
-	uint8_t vdev_id;
-
-	if (!pmsg) {
-		sme_err("msg ptr is NULL");
-		return status;
-	}
-
-	rsp = (struct del_vdev_params *)pmsg;
-	vdev_id = rsp->vdev_id;
-	sme_debug("vdev delete rsp status = %d", rsp->status);
-
-	/*
-	 * This session is done. This will also flush all the pending command
-	 * for this vdev, as vdev is deleted and no command should be sent
-	 * for this vdev. Active cmnd is e_sme_command_del_vdev and will
-	 * be removed anyway next.
-	 */
-	csr_cleanup_vdev_session(mac_ctx, vdev_id);
-
-	if (rsp->sme_callback) {
-		status = sme_release_global_lock(&mac_ctx->sme);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			sme_debug("Failed to Release Lock");
-		else {
-			rsp->sme_callback(rsp->vdev_id);
-			status = sme_acquire_global_lock(&mac_ctx->sme);
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				return status;
-		}
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS
-csr_issue_vdev_del_req(struct mac_context *mac_ctx, uint8_t vdev_id,
-		       tSirMacAddr session_mac_addr,
-		       csr_session_close_cb callback,
-		       void *context)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct del_vdev_params *del_vdev_req;
-	struct scheduler_msg msg = {0};
-
-	del_vdev_req = qdf_mem_malloc(sizeof(struct del_vdev_params));
-	if (!del_vdev_req)
-		return QDF_STATUS_E_NOMEM;
-
-	qdf_mem_copy(del_vdev_req->self_mac_addr,
-		     session_mac_addr, sizeof(tSirMacAddr));
-
-	del_vdev_req->vdev_id = vdev_id;
-	del_vdev_req->sme_callback = callback;
-	del_vdev_req->sme_ctx = context;
-	msg.type = eWNI_SME_VDEV_DELETE_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = del_vdev_req;
-	msg.bodyval = 0;
-
-	sme_debug("sending eWNI_SME_VDEV_DELETE_REQ");
-	status = scheduler_post_message(
-				QDF_MODULE_ID_SME,
-				QDF_MODULE_ID_PE,
-				QDF_MODULE_ID_PE, &msg);
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("wma_post_ctrl_msg failed");
-		qdf_mem_free(del_vdev_req);
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
-	return status;
-}
-
 void csr_cleanup_vdev_session(struct mac_context *mac, uint8_t vdev_id)
 {
 	if (CSR_IS_SESSION_VALID(mac, vdev_id)) {
@@ -17168,13 +17090,12 @@ void csr_cleanup_vdev_session(struct mac_context *mac, uint8_t vdev_id)
 					     &pSession->prev_assoc_ap_info);
 		qdf_mc_timer_destroy(&pSession->hTimerRoaming);
 		qdf_mc_timer_destroy(&pSession->roaming_offload_timer);
-		csr_purge_vdev_pending_ser_cmd_list(mac, vdev_id);
 		csr_init_session(mac, vdev_id);
 	}
 }
 
-QDF_STATUS csr_roam_vdev_delete(struct mac_context *mac_ctx,
-				uint8_t vdev_id, bool cleanup)
+QDF_STATUS csr_prepare_vdev_delete(struct mac_context *mac_ctx,
+				   uint8_t vdev_id, bool cleanup)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *session;
@@ -17202,13 +17123,13 @@ QDF_STATUS csr_roam_vdev_delete(struct mac_context *mac_ctx,
 	 * as expected by firmware and should not be flushed.
 	 */
 	csr_purge_vdev_all_scan_ser_cmd_list(mac_ctx, vdev_id);
+	/* Flush all the pending commands */
+	csr_purge_vdev_pending_ser_cmd_list(mac_ctx, vdev_id);
 	if (!mac_ctx->session_close_cb) {
 		sme_err("no close session callback registered");
 		return QDF_STATUS_E_FAILURE;
 	}
-	status = csr_issue_vdev_del_req(mac_ctx, vdev_id,
-					session->self_mac_addr.bytes,
-					mac_ctx->session_close_cb, NULL);
+
 	return status;
 }
 

@@ -214,28 +214,6 @@ int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx)
 	return qdf_status_to_os_return(status);
 }
 
-
-int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter)
-{
-	QDF_STATUS status;
-	struct wlan_objmgr_vdev *vdev;
-
-	qdf_spin_lock_bh(&adapter->vdev_lock);
-	vdev = adapter->vdev;
-	adapter->vdev = NULL;
-	adapter->vdev_id = WLAN_UMAC_VDEV_ID_MAX;
-	qdf_spin_unlock_bh(&adapter->vdev_lock);
-
-	QDF_BUG(vdev);
-	if (!vdev)
-		return -EINVAL;
-
-	status = wlan_objmgr_vdev_obj_delete(vdev);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
-
-	return qdf_status_to_os_return(status);
-}
-
 struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
 					       const char *func)
 {

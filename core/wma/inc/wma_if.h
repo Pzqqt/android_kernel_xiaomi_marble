@@ -713,14 +713,14 @@ struct set_dtim_params {
  * struct del_vdev_params - Del Sta Self params
  * @session_id: SME Session ID
  * @status: response status code
- * @sme_callback: callback to be called from WMA to SME
+ * @vdev: Object to vdev
  * @sme_ctx: pointer to context provided by SME
  */
 struct del_vdev_params {
 	tSirMacAddr self_mac_addr;
 	uint8_t vdev_id;
 	uint32_t status;
-	csr_session_close_cb sme_callback;
+	struct wlan_objmgr_vdev *vdev;
 	void *sme_ctx;
 };
 

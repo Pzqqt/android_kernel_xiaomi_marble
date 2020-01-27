@@ -4758,6 +4758,9 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id)
 	}
 
 	clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
+	qdf_spin_lock_bh(&adapter->vdev_lock);
+	adapter->vdev_id = WLAN_UMAC_VDEV_ID_MAX;
+	qdf_spin_unlock_bh(&adapter->vdev_lock);
 
 	/*
 	 * We can be blocked while waiting for scheduled work to be
@@ -4806,7 +4809,6 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 int hdd_vdev_destroy(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
-	int errno;
 	struct hdd_context *hdd_ctx;
 	uint8_t vdev_id;
 	struct wlan_objmgr_vdev *vdev;
@@ -4847,12 +4849,19 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	/* Disable serialization for vdev before sending vdev delete */
 	wlan_ser_vdev_queue_disable(adapter->vdev);
 
+	qdf_spin_lock_bh(&adapter->vdev_lock);
+	adapter->vdev = NULL;
+	qdf_spin_unlock_bh(&adapter->vdev_lock);
+
+	/* Release the hdd reference */
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	INIT_COMPLETION(adapter->vdev_destroy_event);
 	status = sme_vdev_delete(hdd_ctx->mac_handle, vdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to delete vdev; status:%d", status);
-		goto release_vdev;
+		goto send_status;
 	}
 
 	/* block on a completion variable until sme session is closed */
@@ -4868,18 +4877,10 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 		}
 	}
 
-release_vdev:
-
-	/* do vdev logical destroy via objmgr */
-	errno = hdd_objmgr_release_and_destroy_vdev(adapter);
-	if (errno) {
-		hdd_err("failed to destroy objmgr vdev; errno:%d", errno);
-		return errno;
-	}
-
 	hdd_nofl_debug("vdev %d destroyed successfully", vdev_id);
 
-	return 0;
+send_status:
+	return qdf_status_to_os_return(status);
 }
 
 void
@@ -4940,7 +4941,7 @@ hdd_init_vdev_os_priv(struct hdd_adapter *adapter)
 int hdd_vdev_create(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
-	int errno;
+	int errno = 0;
 	bool bval;
 	struct hdd_context *hdd_ctx;
 	struct wlan_objmgr_vdev *vdev;
@@ -4981,15 +4982,21 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 	    QDF_STATUS_SUCCESS) {
 		errno = QDF_STATUS_E_INVAL;
 		sme_vdev_delete(hdd_ctx->mac_handle, vdev);
-		wlan_objmgr_vdev_obj_delete(vdev);
 		return -EINVAL;
 	}
 
-	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
 	qdf_spin_lock_bh(&adapter->vdev_lock);
 	adapter->vdev_id = wlan_vdev_get_id(vdev);
 	adapter->vdev = vdev;
 	qdf_spin_unlock_bh(&adapter->vdev_lock);
+
+	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
+	status = sme_vdev_post_vdev_create_setup(hdd_ctx->mac_handle, vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to setup the vdev");
+		errno = qdf_status_to_os_return(status);
+		goto hdd_vdev_destroy_procedure;
+	}
 
 	/* firmware ready for component communication, raise vdev_ready event */
 	errno = hdd_vdev_ready(adapter);
@@ -5035,7 +5042,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 
 	hdd_nofl_debug("vdev %d created successfully", adapter->vdev_id);
 
-	return 0;
+	return errno;
 
 hdd_vdev_destroy_procedure:
 	QDF_BUG(!hdd_vdev_destroy(adapter));
@@ -6658,7 +6665,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		    adapter->device_mode != QDF_P2P_GO_MODE &&
 		    adapter->device_mode != QDF_FTM_MODE)
 			hdd_set_disconnect_status(adapter, false);
-
+		hdd_debug("Flush any mgmt references held by peer");
 		hdd_stop_adapter(hdd_ctx, adapter);
 	}
 

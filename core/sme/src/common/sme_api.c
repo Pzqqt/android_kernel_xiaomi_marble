@@ -2148,12 +2148,10 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		}
 		break;
 	case eWNI_SME_VDEV_DELETE_RSP:
-		if (pMsg->bodyptr) {
-			status = csr_process_vdev_del_rsp(mac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
+		if (pMsg->bodyptr)
+			sme_vdev_self_peer_delete_resp(pMsg->bodyptr);
+		else
 			sme_err("Empty message for: %d", pMsg->type);
-		}
 		break;
 	case eWNI_SME_GENERIC_CHANGE_COUNTRY_CODE:
 		if (pMsg->bodyptr) {
@@ -4508,14 +4506,55 @@ release_ref:
 	return status;
 }
 
-struct wlan_objmgr_vdev *sme_vdev_create(mac_handle_t mac_handle,
-				    struct wlan_vdev_create_params *vdev_params)
+QDF_STATUS sme_vdev_post_vdev_create_setup(mac_handle_t mac_handle,
+					   struct wlan_objmgr_vdev *vdev)
 {
+	struct vdev_mlme_obj *vdev_mlme;
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	uint8_t vdev_id;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		sme_err("Failed to get vdev mlme obj!");
+		QDF_BUG(0);
+		return status;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	status = wma_post_vdev_create_setup(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to setup wma for vdev: %d", vdev_id);
+		return status;
+	}
+
+	status = csr_setup_vdev_session(vdev_mlme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to setup CSR layer for vdev: %d", vdev_id);
+		goto cleanup_wma;
+	}
+
+	status = mlme_vdev_self_peer_create(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to create vdev selfpeer for vdev:%d", vdev_id);
+		goto csr_cleanup_vdev_session;
+	}
+
+	return status;
+
+csr_cleanup_vdev_session:
+	csr_cleanup_vdev_session(mac_ctx, vdev_id);
+cleanup_wma:
+	wma_cleanup_vdev(vdev);
+	return status;
+}
+
+struct wlan_objmgr_vdev
+*sme_vdev_create(mac_handle_t mac_handle,
+		 struct wlan_vdev_create_params *vdev_params)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct wlan_objmgr_vdev *vdev;
-	struct vdev_mlme_obj *vdev_mlme;
 
 	sme_debug("addr:%pM opmode:%d", vdev_params->macaddr,
 		  vdev_params->opmode);
@@ -4532,45 +4571,47 @@ struct wlan_objmgr_vdev *sme_vdev_create(mac_handle_t mac_handle,
 		return NULL;
 	}
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		sme_err("Failed to get vdev mlme obj!");
-		QDF_BUG(0);
-		goto vdev_obj_del;
-	}
-
-	vdev_id = wlan_vdev_get_id(vdev);
-	status = wma_post_vdev_create_setup(vdev);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Failed to setup wma for vdev: %d", vdev_id);
-		goto vdev_obj_del;
-	}
-
-	status = csr_setup_vdev_session(vdev_mlme);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Failed to setup CSR layer for vdev: %d", vdev_id);
-		goto cleanup_wma;
-	}
-
-	status = mlme_vdev_self_peer_create(vdev);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Failed to create vdev selfpeer for vdev:%d", vdev_id);
-		goto csr_cleanup_vdev_session;
-	}
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
-			 vdev_id, 0));
+			 wlan_vdev_get_id(vdev), 0));
 
 	return vdev;
+}
 
-csr_cleanup_vdev_session:
-	csr_cleanup_vdev_session(mac_ctx, vdev_id);
-cleanup_wma:
-	wma_cleanup_vdev(vdev);
-vdev_obj_del:
-	wlan_objmgr_vdev_obj_delete(vdev);
+void sme_vdev_del_resp(uint8_t vdev_id)
+{
+	mac_handle_t mac_handle;
+	struct mac_context *mac;
+
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_handle) {
+		QDF_ASSERT(0);
+		return;
+	}
+
+	mac = MAC_CONTEXT(mac_handle);
+	csr_cleanup_vdev_session(mac, vdev_id);
+
+	if (mac->session_close_cb)
+		mac->session_close_cb(vdev_id);
+}
+
+QDF_STATUS sme_vdev_self_peer_delete_resp(struct del_vdev_params *del_vdev_req)
+{
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+
+	vdev = del_vdev_req->vdev;
+	if (!vdev) {
+		qdf_mem_free(del_vdev_req);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-	return NULL;
+
+	status = del_vdev_req->status;
+	qdf_mem_free(del_vdev_req);
+	return status;
 }
 
 QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle,
@@ -4579,17 +4620,61 @@ QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle,
 	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct scheduler_msg self_peer_delete_msg = {0};
+	struct del_vdev_params *del_self_peer;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_CLOSE_SESSION, vdev_id, 0));
+
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_roam_vdev_delete(mac, vdev_id, false);
+		status = csr_prepare_vdev_delete(mac, vdev_id, false);
 		sme_release_global_lock(&mac->sme);
 	}
 
-	/* Release the reference acquired during vdev create */
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+	/*
+	 * While this vdev delete is invoked we will still have following
+	 * references held:
+	 * WLAN_LEGACY_WMA_ID -- 1
+	 * WLAN_LEGACY_SME_ID -- 1
+	 * WLAN_OBJMGR_ID -- 2
+	 * Following message will release the self and delete the self peer
+	 * and release the wma references so the objmgr and wma_legacy will be
+	 * released because of this.
+	 *
+	 * In the message callback the legacy_sme reference will be released
+	 * resulting in the last reference of vdev object and sending the
+	 * vdev_delete to firmware.
+	 */
+	status = wlan_objmgr_vdev_obj_delete(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_nofl_err("Failed to mark vdev as logical delete %d",
+			     status);
+		return status;
+	}
+
+	del_self_peer = qdf_mem_malloc(sizeof(*del_self_peer));
+	if (!del_self_peer)
+		return QDF_STATUS_E_NOMEM;
+
+	del_self_peer->vdev = vdev;
+	del_self_peer->vdev_id = wlan_vdev_get_id(vdev);
+	qdf_mem_copy(del_self_peer->self_mac_addr,
+		     wlan_vdev_mlme_get_macaddr(vdev), sizeof(tSirMacAddr));
+
+	self_peer_delete_msg.bodyptr = del_self_peer;
+	self_peer_delete_msg.callback = mlme_vdev_self_peer_delete;
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_MLME,
+					QDF_MODULE_ID_TARGET_IF,
+					&self_peer_delete_msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to post vdev selfpeer for vdev:%d", vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		qdf_mem_free(del_self_peer);
+	}
+
 	return status;
 }
 

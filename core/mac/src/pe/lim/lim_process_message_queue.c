@@ -1577,20 +1577,6 @@ static void lim_process_sme_obss_scan_ind(struct mac_context *mac_ctx,
 	return;
 }
 
-static void
-lim_process_vdev_delete(struct mac_context *mac_ctx,
-			struct del_vdev_params *vdev_param)
-{
-	tp_wma_handle wma_handle;
-
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		WMA_LOGE("%s: WMA context is invalid", __func__);
-		return;
-	}
-	wma_vdev_detach(wma_handle, vdev_param);
-}
-
 /**
  * lim_process_messages() - Process messages from upper layers.
  *
@@ -2116,11 +2102,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 					  (struct roam_blacklist_event *)
 					  msg->bodyptr);
 		qdf_mem_free((void *)msg->bodyptr);
-		msg->bodyptr = NULL;
-		break;
-	case eWNI_SME_VDEV_DELETE_REQ:
-		lim_process_vdev_delete(mac_ctx, msg->bodyptr);
-		/* Do not free msg->bodyptr, same memory used to send resp */
 		msg->bodyptr = NULL;
 		break;
 	default:

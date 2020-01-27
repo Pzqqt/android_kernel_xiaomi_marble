@@ -37,6 +37,7 @@
 #include "wma_tgt_cfg.h"
 #include "wma_fips_public_structs.h"
 #include "wma_sar_public_structs.h"
+#include "wma_if.h"
 #include "wlan_mlme_public_struct.h"
 #include "sme_rrm_internal.h"
 #include "sir_types.h"
@@ -369,7 +370,6 @@ sme_nss_chains_update(mac_handle_t mac_handle,
  * by below modules:
  * 1) WLAN_OBJMGR_ID
  * 2) WLAN_LEGACY_SME_ID
- * 3) WLAN_LEGACY_WMA_ID
  *
  * Return: Newly created Vdev object or NULL incase in any error
  */
@@ -377,6 +377,21 @@ struct wlan_objmgr_vdev *sme_vdev_create(mac_handle_t mac_handle,
 				  struct wlan_vdev_create_params *vdev_params);
 
 
+/**
+ * sme_vdev_post_vdev_create_setup() - setup the lower layers for the new vdev
+ * @mac_handle: The handle returned by mac_open
+ * @vdev: Object manger vdev
+ *
+ * This api will setup the csr/mlme/wma layer for the newly created vdev.
+ *
+ * If the post vdev setup is successfull, we will have following vdev refs
+ * 1) WLAN_OBJMGR_ID  for self peer
+ * 2) WLAN_LEGACY_WMA_ID for vdev
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_vdev_post_vdev_create_setup(mac_handle_t mac_handle,
+					   struct wlan_objmgr_vdev *vdev);
 /**
  * sme_vdev_delete() - Delete vdev for given id
  * @mac_handle: The handle returned by mac_open.
@@ -4141,4 +4156,25 @@ static inline void sme_reset_oem_data_event_handler_cb(mac_handle_t  mac_handle)
 QDF_STATUS sme_get_prev_connected_bss_ies(mac_handle_t mac_handle,
 					  uint8_t vdev_id,
 					  uint8_t **ies, uint32_t *ie_len);
+/*
+ * sme_vdev_self_peer_delete_resp() - Response for self peer delete
+ * @del_vdev_params: parameters for which vdev self peer has been deleted
+ *
+ * This function is called by the lower level function as a response to
+ * vdev self peer delete request.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS sme_vdev_self_peer_delete_resp(struct del_vdev_params *param);
+
+/**
+ * sme_vdev_del_resp() - Vdev delete response function
+ * @vdev_id: vdevid which  has been deleted
+ *
+ * This function is called by the lower level function as a response to
+ * vdev delete request
+ *
+ * Return: None
+ */
+void sme_vdev_del_resp(uint8_t vdev_id);
 #endif /* #if !defined( __SME_API_H ) */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,16 +108,6 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx);
  * Return: 0 for success, negative error code for failure
  */
 int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx);
-
-/**
- * hdd_objmgr_release_and_destroy_vdev() - Delete vdev and remove from adapter
- * @adapter: hdd adapter
- *
- * This API deletes vdev object and release its reference from hdd adapter
- *
- * Return: 0 for success, negative error code for failure
- */
-int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter);
 
 /**
  * hdd_objmgr_get_vdev() - Get reference of vdev from adapter

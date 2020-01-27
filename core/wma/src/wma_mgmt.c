@@ -4010,4 +4010,29 @@ void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
 	if (wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_WMI_MGMT_REF))
 		qdf_nbuf_unmap_single(dev, buf, QDF_DMA_TO_DEVICE);
 }
+
+QDF_STATUS wma_mgmt_frame_fill_peer_cb(struct wlan_objmgr_peer *peer,
+				       qdf_nbuf_t buf)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+
+	psoc = wlan_peer_get_psoc(peer);
+	if (!psoc) {
+		WMA_LOGE("%s: Psoc handle NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = wlan_objmgr_get_pdev_by_id((struct wlan_objmgr_psoc *)psoc,
+					  wlan_peer_get_pdev_id(peer),
+					  WLAN_LEGACY_WMA_ID);
+	if (!pdev) {
+		WMA_LOGE("%s: Pdev handle NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	wma_mgmt_nbuf_unmap_cb(pdev, buf);
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_WMA_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif

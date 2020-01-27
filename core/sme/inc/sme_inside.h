@@ -152,9 +152,6 @@ QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint32_t freq);
 QDF_STATUS sme_acquire_global_lock(struct sme_context *sme);
 QDF_STATUS sme_release_global_lock(struct sme_context *sme);
 
-QDF_STATUS
-csr_process_vdev_del_rsp(struct mac_context *mac, uint8_t *pmsg);
-
 /**
  * csr_flush_cfg_bg_scan_roam_channel_list() - Flush the channel list
  * @channel_info: Channel list to be flushed
