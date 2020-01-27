@@ -273,6 +273,7 @@
  * @WLAN_UMAC_COMP_INTEROP_ISSUES_AP       interop issues ap component
  * @WLAN_UMAC_COMP_BLACKLIST_MGR:      Blacklist mgr component
  * @WLAN_UMAC_COMP_COEX:          Coex config component
+ * @WLAN_UMAC_COMP_FTM_TIME_SYNC: WLAN FTM TIMESYNC
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -313,6 +314,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_INTEROP_ISSUES_AP  = 31,
 	WLAN_UMAC_COMP_BLACKLIST_MGR      = 32,
 	WLAN_UMAC_COMP_COEX               = 33,
+	WLAN_UMAC_COMP_FTM_TIME_SYNC      = 34,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 
