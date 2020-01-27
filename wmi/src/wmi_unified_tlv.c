@@ -12729,11 +12729,12 @@ extract_roam_trigger_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_roam_trigger_reason *src_data = NULL;
 
 	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
-	if (!param_buf)
+	if (!param_buf || !param_buf->roam_trigger_reason)
 		return QDF_STATUS_E_FAILURE;
 
 	src_data = &param_buf->roam_trigger_reason[idx];
 
+	trig->present = true;
 	trig->trigger_reason = src_data->trigger_reason;
 	trig->trigger_sub_reason = src_data->trigger_sub_reason;
 	trig->current_rssi = src_data->current_rssi;
@@ -12809,9 +12810,6 @@ extract_roam_scan_ap_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	src = &param_buf->roam_ap_info[ap_idx];
 
-	if (num_cand > MAX_ROAM_CANDIDATE_AP)
-		num_cand = MAX_ROAM_CANDIDATE_AP;
-
 	for (i = 0; i < num_cand; i++) {
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&src->bssid, dst->bssid.bytes);
 		dst->type = src->candidate_type;
@@ -12853,13 +12851,13 @@ extract_roam_scan_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	uint8_t i;
 
 	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
-	if (!param_buf)
+	if (!param_buf || !param_buf->roam_scan_info)
 		return QDF_STATUS_E_FAILURE;
 
 	src_data = &param_buf->roam_scan_info[idx];
 
+	dst->present = true;
 	dst->type = src_data->roam_scan_type;
-	dst->num_ap = src_data->roam_ap_count;
 	dst->num_chan = src_data->roam_scan_channel_count;
 	dst->next_rssi_threshold = src_data->next_rssi_trigger_threshold;
 
@@ -12875,8 +12873,12 @@ extract_roam_scan_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		}
 	}
 
-	if (!dst->num_ap)
+	if (!src_data->roam_ap_count)
 		return QDF_STATUS_SUCCESS;
+
+	dst->num_ap = src_data->roam_ap_count;
+	if (dst->num_ap > MAX_ROAM_CANDIDATE_AP)
+		dst->num_ap = MAX_ROAM_CANDIDATE_AP;
 
 	status = extract_roam_scan_ap_stats_tlv(wmi_handle, evt_buf, dst->ap,
 						ap_idx, dst->num_ap);
@@ -12904,11 +12906,12 @@ extract_roam_result_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_roam_result *src_data = NULL;
 
 	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
-	if (!param_buf)
+	if (!param_buf || !param_buf->roam_result)
 		return QDF_STATUS_E_FAILURE;
 
 	src_data = &param_buf->roam_result[idx];
 
+	dst->present = true;
 	dst->status = src_data->roam_status ? false : true;
 	dst->timestamp = src_data->timestamp;
 	dst->fail_reason = src_data->roam_fail_reason;
@@ -12936,11 +12939,12 @@ extract_roam_11kv_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	uint8_t i;
 
 	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
-	if (!param_buf)
+	if (!param_buf || !param_buf->roam_neighbor_report_info)
 		return QDF_STATUS_E_FAILURE;
 
 	src_data = &param_buf->roam_neighbor_report_info[idx];
 
+	dst->present = true;
 	dst->req_type = src_data->request_type;
 	dst->num_freq = src_data->neighbor_report_channel_count;
 	dst->req_time = src_data->neighbor_report_request_timestamp;

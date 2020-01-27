@@ -7498,8 +7498,9 @@ struct wmi_roam_scan_stats_res {
 	struct wmi_roam_scan_stats_params roam_scan[0];
 };
 
-#define MAX_ROAM_CANDIDATE_AP      8
+#define MAX_ROAM_CANDIDATE_AP      9
 #define MAX_ROAM_SCAN_CHAN         38
+#define MAX_ROAM_SCAN_STATS_TLV    5
 
 /**
  * struct wmi_roam_btm_trigger_data - BTM roam trigger related information
@@ -7574,6 +7575,7 @@ struct wmi_roam_candidate_info {
 
 /**
  * struct wmi_roam_scan_data - Roam scan event details
+ * @present:            Flag to check if the roam scan tlv is present
  * @type:      0 - Partial roam scan; 1 - Full roam scan
  * @num_ap:    Number of candidate APs.
  * @num_chan:  Number of channels.
@@ -7582,6 +7584,7 @@ struct wmi_roam_candidate_info {
  * @ap: List of candidate AP info
  */
 struct wmi_roam_scan_data {
+	bool present;
 	uint16_t type;
 	uint16_t num_ap;
 	uint16_t num_chan;
@@ -7592,11 +7595,13 @@ struct wmi_roam_scan_data {
 
 /**
  * struct wmi_roam_result - Roam result related info.
+ * @present:            Flag to check if the roam result tlv is present
  * @timestamp:          Host timestamp in millisecs
  * @status:             0 - Roaming is success ; 1 - Roaming failed
  * @fail_reason:        One of WMI_ROAM_FAIL_REASON_ID
  */
 struct wmi_roam_result {
+	bool present;
 	uint32_t timestamp;
 	bool status;
 	uint32_t fail_reason;
@@ -7605,6 +7610,7 @@ struct wmi_roam_result {
 /**
  *  struct wmi_neighbor_report_data - Neighbor report/BTM request related
  *  data.
+ *  @present:    Flag to check if the roam 11kv tlv is present
  *  @timestamp:  Host timestamp in millisecs
  *  @req_type:   1 - BTM query ; 2 - 11K neighbor report request
  *  @req_time:   Request timestamp in ms
@@ -7612,6 +7618,7 @@ struct wmi_roam_result {
  *  @freq:       Channel frequency in Mhz
  */
 struct wmi_neighbor_report_data {
+	bool present;
 	uint32_t timestamp;
 	uint8_t req_type;
 	uint32_t req_time;
@@ -7622,6 +7629,7 @@ struct wmi_neighbor_report_data {
 
 /**
  * struct wmi_roam_trigger_info() - Roam trigger related details
+ * @present:            Flag to check if the roam_trigger_info tlv is present
  * @trigger_reason:     Roam trigger reason(enum WMI_ROAM_TRIGGER_REASON_ID)
  * @trigger_sub_reason: Sub reason for roam trigger if multiple roam scans
  * @current_rssi:       Connected AP RSSI
@@ -7632,6 +7640,7 @@ struct wmi_neighbor_report_data {
  * @deauth_trig_data:   Deauth roam trigger related info
  */
 struct wmi_roam_trigger_info {
+	bool present;
 	uint32_t trigger_reason;
 	uint32_t trigger_sub_reason;
 	uint32_t current_rssi;
