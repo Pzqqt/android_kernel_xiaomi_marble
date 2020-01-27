@@ -1445,7 +1445,8 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 	tx_capture_info.ppdu_desc = ppdu_desc;
 
 	mpdu_info->ppdu_id = ppdu_desc->ppdu_id;
-	mpdu_info->channel_num = pdev->operating_channel;
+
+	mpdu_info->channel_num = pdev->operating_channel.num;
 	mpdu_info->channel = ppdu_desc->channel;
 	mpdu_info->frame_type = ppdu_desc->frame_type;
 	mpdu_info->ppdu_start_timestamp = ppdu_desc->ppdu_start_timestamp;
@@ -1694,9 +1695,7 @@ void dp_send_data_to_stack(struct dp_pdev *pdev,
 				    &tx_capture_info.mpdu_info,
 				    &ppdu_desc->user[0]);
 	tx_capture_info.ppdu_desc = ppdu_desc;
-
-	tx_capture_info.mpdu_info.channel_num =
-		pdev->operating_channel;
+	tx_capture_info.mpdu_info.channel_num = pdev->operating_channel.num;
 
 	if (ppdu_desc->mprot_type)
 		dp_send_dummy_rts_cts_frame(pdev, ppdu_desc);
@@ -2145,8 +2144,8 @@ dp_update_tx_cap_info(struct dp_pdev *pdev,
 				    &tx_capture_info->mpdu_info,
 				    &ppdu_desc->user[0]);
 	tx_capture_info->ppdu_desc = ppdu_desc;
+	tx_capture_info->mpdu_info.channel_num = pdev->operating_channel.num;
 
-	tx_capture_info->mpdu_info.channel_num = pdev->operating_channel;
 	tx_capture_info->mpdu_info.ppdu_id = ppdu_desc->ppdu_id;
 	if (is_payload)
 		tx_capture_info->mpdu_nbuf = qdf_nbuf_alloc(pdev->soc->osdev,
