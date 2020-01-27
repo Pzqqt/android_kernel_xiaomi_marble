@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -141,7 +141,7 @@ static int __wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 	}
 
 	if (!wlan_hdd_nan_is_supported(hdd_ctx)) {
-		hdd_err_rl("NAN is not supported");
+		hdd_debug("NAN is not supported");
 		return -EPERM;
 	}
 

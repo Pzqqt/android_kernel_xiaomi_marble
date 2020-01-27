@@ -408,7 +408,7 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 	}
 
 	if (!WLAN_HDD_IS_NDP_ENABLED(hdd_ctx)) {
-		hdd_err_rl("NAN datapath is not enabled");
+		hdd_debug("NAN datapath is not enabled");
 		return -EPERM;
 	}
 
