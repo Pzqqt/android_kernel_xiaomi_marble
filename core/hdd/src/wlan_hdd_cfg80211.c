@@ -9766,7 +9766,9 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	int i, ret = 0;
 	QDF_STATUS status;
 	uint32_t pcl_len = 0;
+	uint32_t pcl_len_legacy = 0;
 	uint32_t freq_list[QDF_MAX_NUM_CHAN];
+	uint32_t freq_list_legacy[QDF_MAX_NUM_CHAN];
 	enum policy_mgr_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
 	struct sk_buff *reply_skb;
@@ -9817,6 +9819,15 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 		qdf_mem_free(chan_weights);
 		return -EINVAL;
 	}
+	/*
+	 * save the pcl in freq_list_legacy to be sent up with
+	 * QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST.
+	 * freq_list will carry the extended pcl in
+	 * QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_WEIGHED_PCL.
+	 */
+	pcl_len_legacy = chan_weights->pcl_len;
+	for (i = 0; i < pcl_len_legacy; i++)
+		freq_list_legacy[i] = chan_weights->pcl_list[i];
 	chan_weights->saved_num_chan = POLICY_MGR_MAX_CHANNEL_LIST;
 	sme_get_valid_channels(chan_weights->saved_chan_list,
 			       &chan_weights->saved_num_chan);
@@ -9836,7 +9847,7 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(
 			wiphy,
 			(sizeof(u32) + NLA_HDRLEN) +
-			(sizeof(u32) * pcl_len + NLA_HDRLEN) +
+			(sizeof(u32) * pcl_len_legacy + NLA_HDRLEN) +
 			NLA_HDRLEN +
 			(NLA_HDRLEN * 4 + sizeof(u32) * 3) * pcl_len +
 			NLMSG_HDRLEN);
@@ -9852,8 +9863,8 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 			intf_mode) ||
 	    nla_put(reply_skb,
 		    QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST,
-		    sizeof(uint32_t) * pcl_len,
-		    freq_list)) {
+		    sizeof(uint32_t) * pcl_len_legacy,
+		    freq_list_legacy)) {
 		hdd_err("nla put fail");
 		kfree_skb(reply_skb);
 		qdf_mem_free(w_pcl);
