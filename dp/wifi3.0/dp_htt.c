@@ -2201,24 +2201,8 @@ static void dp_process_ppdu_stats_user_common_tlv(
 					    peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 
-	if (peer_id == DP_SCAN_PEER_ID) {
-		ppdu_desc->vdev_id =
-			HTT_PPDU_STATS_USER_COMMON_TLV_VAP_ID_GET(*tag_buf);
-		vdev =
-		       dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
-							  ppdu_desc->vdev_id);
-		if (!vdev)
-			return;
-		qdf_mem_copy(ppdu_user_desc->mac_addr, vdev->mac_addr.raw,
-			     QDF_MAC_ADDR_SIZE);
-	} else {
-		peer = dp_peer_find_by_id(pdev->soc, peer_id);
-		if (!peer)
-			return;
-		qdf_mem_copy(ppdu_user_desc->mac_addr,
-			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
-	}
+	ppdu_desc->vdev_id =
+		HTT_PPDU_STATS_USER_COMMON_TLV_VAP_ID_GET(*tag_buf);
 
 	ppdu_user_desc->peer_id = peer_id;
 
@@ -2256,6 +2240,39 @@ static void dp_process_ppdu_stats_user_common_tlv(
 		ppdu_user_desc->ppdu_cookie =
 			HTT_PPDU_STATS_HOST_OPAQUE_COOKIE_GET(*tag_buf);
 		ppdu_user_desc->is_ppdu_cookie_valid = 1;
+	}
+
+	/* returning earlier causes other feilds unpopulated */
+	if (peer_id == DP_SCAN_PEER_ID) {
+		vdev =
+		       dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
+							  ppdu_desc->vdev_id);
+		if (!vdev)
+			return;
+		qdf_mem_copy(ppdu_user_desc->mac_addr, vdev->mac_addr.raw,
+			     QDF_MAC_ADDR_SIZE);
+	} else {
+		peer = dp_peer_find_by_id(pdev->soc, peer_id);
+		if (!peer) {
+			/*
+			 * fw sends peer_id which is about to removed but
+			 * it was already removed in host.
+			 * eg: for disassoc, fw send ppdu stats
+			 * with peer id equal to previously associated
+			 * peer's peer_id but it was removed
+			 */
+			vdev =
+			dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
+							   ppdu_desc->vdev_id);
+			if (!vdev)
+				return;
+			qdf_mem_copy(ppdu_user_desc->mac_addr,
+				     vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+			return;
+		}
+		qdf_mem_copy(ppdu_user_desc->mac_addr,
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_del_find_by_id(peer);
 	}
 }
 
