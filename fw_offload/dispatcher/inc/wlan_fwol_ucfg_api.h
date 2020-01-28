@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -543,6 +543,27 @@ QDF_STATUS ucfg_fwol_get_elna_bypass(struct wlan_objmgr_vdev *vdev,
 				     struct get_elna_bypass_response *response),
 				     void *context);
 #endif /* WLAN_FEATURE_ELNA */
+
+#ifdef WLAN_SEND_DSCP_UP_MAP_TO_FW
+/**
+ * ucfg_fwol_send_dscp_up_map_to_fw() - send dscp_up map to FW
+ * @vdev: vdev handle
+ * @dscp_to_up_map: DSCP to UP map array
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS ucfg_fwol_send_dscp_up_map_to_fw(
+		struct wlan_objmgr_vdev *vdev,
+		uint32_t *dscp_to_up_map);
+#else
+static inline
+QDF_STATUS ucfg_fwol_send_dscp_up_map_to_fw(
+		struct wlan_objmgr_vdev *vdev,
+		uint32_t *dscp_to_up_map)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #else
 static inline QDF_STATUS ucfg_fwol_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
