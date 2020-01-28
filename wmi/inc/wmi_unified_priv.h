@@ -2164,9 +2164,18 @@ QDF_STATUS (*extract_multi_vdev_restart_resp_event)(
 QDF_STATUS (*send_wlan_time_sync_ftm_trigger_cmd)(wmi_unified_t wmi_handle,
 						  uint32_t vdev_id,
 						  bool burst_mode);
+
 QDF_STATUS (*send_wlan_ts_qtime_cmd)(wmi_unified_t wmi_handle,
 				     uint32_t vdev_id,
 				     uint64_t lpass_ts);
+
+QDF_STATUS (*extract_time_sync_ftm_start_stop_event)(
+				wmi_unified_t wmi_hdl, void *evt_buf,
+				struct ftm_time_sync_start_stop_params *param);
+
+QDF_STATUS (*extract_time_sync_ftm_offset_event)(
+					wmi_unified_t wmi_hdl, void *evt_buf,
+					struct ftm_time_sync_offset *param);
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 
 };

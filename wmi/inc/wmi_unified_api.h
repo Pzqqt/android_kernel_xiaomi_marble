@@ -3820,7 +3820,7 @@ QDF_STATUS wmi_unified_extract_ani_level(wmi_unified_t wmi_handle,
 
 #ifdef FEATURE_WLAN_TIME_SYNC_FTM
 /**
- * wmi_send_wlan_time_sync_ftm_trigger() - send wlan time sync ftm trigger cmd.
+ * wmi_unified_send_wlan_time_sync_ftm_trigger() - send ftm timesync trigger cmd
  * @wmi_handle: wmi handle
  * @vdev_id: vdev id
  * @burst_mode: mode reg getting time sync relation from FW
@@ -3829,12 +3829,13 @@ QDF_STATUS wmi_unified_extract_ani_level(wmi_unified_t wmi_handle,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_send_wlan_time_sync_ftm_trigger(void *wmi_handle,
-					       uint32_t vdev_id,
-					       bool burst_mode);
+QDF_STATUS
+wmi_unified_send_wlan_time_sync_ftm_trigger(wmi_unified_t wmi_handle,
+					    uint32_t vdev_id,
+					    bool burst_mode);
 
 /**
- * wmi_send_wlan_time_sync_qtime() - send wlan time sync qtime cmd.
+ * wmi_unified_send_wlan_time_sync_qtime() - send ftm time sync qtime cmd.
  * @wmi_handle: wmi handle
  * @vdev_id: vdev id
  * @lpass_ts: audio qtime
@@ -3843,8 +3844,40 @@ QDF_STATUS wmi_send_wlan_time_sync_ftm_trigger(void *wmi_handle,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_send_wlan_time_sync_qtime(void *wmi_handle, uint32_t vdev_id,
-					 uint64_t lpass_ts);
+QDF_STATUS
+wmi_unified_send_wlan_time_sync_qtime(wmi_unified_t wmi_handle,
+				      uint32_t vdev_id, uint64_t lpass_ts);
+
+/**
+ * wmi_unified_extract_time_sync_ftm_start_stop_params() - extract FTM time sync
+ *							   params
+ * @wmi_handle: wmi handle
+ * @evt_buf: event buffer
+ * @param: params received in start stop ftm timesync event
+ *
+ * This function extracts the params from ftm timesync start stop event
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_extract_time_sync_ftm_start_stop_params(
+				wmi_unified_t wmi_handle, void *evt_buf,
+				struct ftm_time_sync_start_stop_params *param);
+
+/**
+ * wmi_unified_extract_time_sync_ftm_offset() - extract timesync FTM offset
+ * @wmi_handle: wmi handle
+ * @evt_buf: event buffer
+ * @param: params received in ftm timesync offset event
+ *
+ * This function extracts the params from ftm timesync offset event
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_extract_time_sync_ftm_offset(wmi_unified_t wmi_handle,
+					 void *evt_buf,
+					 struct ftm_time_sync_offset *param);
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 
 #endif /* _WMI_UNIFIED_API_H_ */
