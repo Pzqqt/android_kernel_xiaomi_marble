@@ -373,6 +373,12 @@
 #define WMI_HOST_TPC_REGINDEX_MAX           4
 #define WMI_HOST_ARRAY_GAIN_NUM_STREAMS     2
 
+/* AST Index for flow override */
+#define WMI_CONFIG_MSDU_AST_INDEX_0         0x0
+#define WMI_CONFIG_MSDU_AST_INDEX_1         0x1
+#define WMI_CONFIG_MSDU_AST_INDEX_2         0x2
+#define WMI_CONFIG_MSDU_AST_INDEX_3         0x3
+
 #include "qdf_atomic.h"
 
 #ifdef BIG_ENDIAN_HOST
@@ -5170,6 +5176,15 @@ struct wmi_host_fw_abi_ver {
  * @max_num_group_keys: max number of group keys supported for VLAN
  * @re_ul_resp: enable 11ax UL response feature (UL-OFDMA) for repeater
  * @ipa_disable: disable IPA feature
+ * @ast_1_valid_mask_enable: mask to enable ast index 1
+ * @ast_2_valid_mask_enable: mask to enable ast index 2
+ * @ast_3_valid_mask_enable: mask to enable ast index 3
+ * @ast_0_flow_mask_enable: mask to enable flow support for ast index 0
+ * @ast_1_flow_mask_enable: mask to enable flow support for ast index 1
+ * @ast_2_flow_mask_enable: mask to enable flow support for ast index 2
+ * @ast_3_flow_mask_enable: mask to enable flow support for ast index 3
+ * @ast_tid_high_mask_enable: enable tid valid mask for high priority flow
+ * @ast_tid_low_mask_enable: enable tid valid mask for low priority flow
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5257,6 +5272,15 @@ typedef struct {
 	uint32_t max_num_group_keys;
 	uint32_t re_ul_resp;
 	bool ipa_disable;
+	uint32_t ast_1_valid_mask_enable:1,
+		 ast_2_valid_mask_enable:1,
+		 ast_3_valid_mask_enable:1;
+	uint32_t ast_0_flow_mask_enable:4,
+		 ast_1_flow_mask_enable:4,
+		 ast_2_flow_mask_enable:4,
+		 ast_3_flow_mask_enable:4,
+		 ast_tid_high_mask_enable:8,
+		 ast_tid_low_mask_enable:8;
 } target_resource_config;
 
 /**
