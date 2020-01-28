@@ -8,3 +8,6 @@ include $(WLAN_ROOT)/configs/default_defconfig
 
 #Enable BUS bandwidth Feature
 CONFIG_WLAN_FEATURE_DP_BUS_BANDWIDTH := y
+
+#Disable PM_QOS not supported in WHUNT
+CONFIG_WLAN_CLD_PM_QOS := n
