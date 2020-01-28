@@ -4018,6 +4018,10 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			u_int8_t vdev_id;
 			bool is_wds;
 			u_int16_t ast_hash;
+			struct dp_ast_flow_override_info ast_flow_info;
+
+			qdf_mem_set(&ast_flow_info, 0,
+					    sizeof(struct dp_ast_flow_override_info));
 
 			peer_id = HTT_RX_PEER_MAP_V2_SW_PEER_ID_GET(*msg_word);
 			hw_peer_id =
@@ -4030,6 +4034,40 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			HTT_RX_PEER_MAP_V2_NEXT_HOP_GET(*(msg_word + 3));
 			ast_hash =
 			HTT_RX_PEER_MAP_V2_AST_HASH_VALUE_GET(*(msg_word + 3));
+			/*
+			 * Update 4 ast_index per peer, ast valid mask
+			 * and TID flow valid mask.
+			 * AST valid mask is 3 bit field corresponds to
+			 * ast_index[3:1]. ast_index 0 is always valid.
+			 */
+			ast_flow_info.ast_valid_mask =
+			HTT_RX_PEER_MAP_V2_AST_VALID_MASK_GET(*(msg_word + 3));
+			ast_flow_info.ast_idx[0] = hw_peer_id;
+			ast_flow_info.ast_flow_mask[0] =
+			HTT_RX_PEER_MAP_V2_AST_0_FLOW_MASK_GET(*(msg_word + 4));
+			ast_flow_info.ast_idx[1] =
+			HTT_RX_PEER_MAP_V2_AST_INDEX_1_GET(*(msg_word + 4));
+			ast_flow_info.ast_flow_mask[1] =
+			HTT_RX_PEER_MAP_V2_AST_1_FLOW_MASK_GET(*(msg_word + 4));
+			ast_flow_info.ast_idx[2] =
+			HTT_RX_PEER_MAP_V2_AST_INDEX_2_GET(*(msg_word + 5));
+			ast_flow_info.ast_flow_mask[2] =
+			HTT_RX_PEER_MAP_V2_AST_2_FLOW_MASK_GET(*(msg_word + 4));
+			ast_flow_info.ast_idx[3] =
+			HTT_RX_PEER_MAP_V2_AST_INDEX_3_GET(*(msg_word + 6));
+			ast_flow_info.ast_flow_mask[3] =
+			HTT_RX_PEER_MAP_V2_AST_3_FLOW_MASK_GET(*(msg_word + 4));
+			/*
+			 * TID valid mask is applicable only
+			 * for HI and LOW priority flows.
+			 * tid_valid_mas is 8 bit field corresponds
+			 * to TID[7:0]
+			 */
+			ast_flow_info.tid_valid_low_pri_mask =
+			HTT_RX_PEER_MAP_V2_TID_VALID_LOW_PRI_GET(*(msg_word + 5));
+			ast_flow_info.tid_valid_hi_pri_mask =
+			HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI_GET(*(msg_word + 5));
+
 			QDF_TRACE(QDF_MODULE_ID_TXRX,
 				  QDF_TRACE_LEVEL_INFO,
 				  "HTT_T2H_MSG_TYPE_PEER_MAP msg for peer id %d vdev id %d n",
@@ -4039,6 +4077,16 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 					       hw_peer_id, vdev_id,
 					       peer_mac_addr, ast_hash,
 					       is_wds);
+
+			/*
+			 * Update ast indexes for flow override support
+			 * Applicable only for non wds peers
+			 */
+			dp_peer_ast_index_flow_queue_map_create(
+					    soc->dp_soc, is_wds,
+					    peer_id, peer_mac_addr,
+					    &ast_flow_info);
+
 			break;
 		}
 	case HTT_T2H_MSG_TYPE_PEER_UNMAP_V2:

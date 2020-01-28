@@ -1998,6 +1998,51 @@ struct dp_peer_cached_bufq {
 	uint32_t dropped;
 };
 
+/**
+ * enum dp_peer_ast_flowq
+ * @DP_PEER_AST_FLOWQ_HI_PRIO: Hi Priority flow queue
+ * @DP_PEER_AST_FLOWQ_LOW_PRIO: Low priority flow queue
+ * @DP_PEER_AST_FLOWQ_UDP: flow queue type is UDP
+ * @DP_PEER_AST_FLOWQ_NON_UDP: flow queue type is Non UDP
+ */
+enum dp_peer_ast_flowq {
+	DP_PEER_AST_FLOWQ_HI_PRIO,
+	DP_PEER_AST_FLOWQ_LOW_PRIO,
+	DP_PEER_AST_FLOWQ_UDP,
+	DP_PEER_AST_FLOWQ_NON_UDP,
+	DP_PEER_AST_FLOWQ_MAX,
+};
+
+/*
+ * struct dp_ast_flow_override_info - ast override info
+ * @ast_index - ast indexes in peer map message
+ * @ast_valid_mask - ast valid mask for each ast index
+ * @ast_flow_mask - ast flow mask for each ast index
+ * @tid_valid_low_pri_mask - per tid mask for low priority flow
+ * @tid_valid_hi_pri_mask - per tid mask for hi priority flow
+ */
+struct dp_ast_flow_override_info {
+	uint16_t ast_idx[DP_PEER_AST_FLOWQ_MAX];
+	uint8_t ast_valid_mask;
+	uint8_t ast_flow_mask[DP_PEER_AST_FLOWQ_MAX];
+	uint8_t tid_valid_low_pri_mask;
+	uint8_t tid_valid_hi_pri_mask;
+};
+
+/*
+ * struct dp_peer_ast_params - ast parameters for a msdu flow-queue
+ * @ast_index - ast index populated by FW
+ * @is_valid - ast flow valid mask
+ * @valid_tid_mask - per tid mask for this ast index
+ * @flowQ - flow queue id associated with this ast index
+ */
+struct dp_peer_ast_params {
+	uint16_t ast_idx;
+	uint8_t is_valid;
+	uint8_t valid_tid_mask;
+	uint8_t flowQ;
+};
+
 /* Peer structure for data path state */
 struct dp_peer {
 	/* VDEV to which this peer is associated */
@@ -2096,6 +2141,9 @@ struct dp_peer {
 	bool last_delayed_ba;
 	/* delayed ba ppdu id */
 	uint32_t last_delayed_ba_ppduid;
+#endif
+#ifdef QCA_PEER_MULTIQ_SUPPORT
+	struct dp_peer_ast_params peer_ast_flowq_idx[DP_PEER_AST_FLOWQ_MAX];
 #endif
 };
 

@@ -1045,6 +1045,10 @@ struct ol_if_ops {
 					    uint8_t *target_pdev_id);
 	bool (*is_roam_inprogress)(uint32_t vdev_id);
 	enum QDF_GLOBAL_MODE (*get_con_mode)(void);
+#ifdef QCA_PEER_MULTIQ_SUPPORT
+	int  (*peer_ast_flowid_map)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
+			       uint16_t peer_id, uint8_t vdev_id, uint8_t *peer_mac_addr);
+#endif
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 
 };
