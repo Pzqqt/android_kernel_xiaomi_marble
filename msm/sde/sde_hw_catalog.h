@@ -270,7 +270,6 @@ enum {
  * @SDE_PERF_SSPP_TS_PREFILL      Supports prefill with traffic shaper
  * @SDE_PERF_SSPP_TS_PREFILL_REC1 Supports prefill with traffic shaper multirec
  * @SDE_PERF_SSPP_CDP             Supports client driven prefetch
- * @SDE_PERF_SSPP_QOS_FL_NOCALC   Avoid fill level calc for QoS/danger/safe
  * @SDE_PERF_SSPP_SYS_CACHE,      SSPP supports system cache
  * @SDE_PERF_SSPP_UIDLE,          sspp supports uidle
  * @SDE_PERF_SSPP_MAX             Maximum value
@@ -281,7 +280,6 @@ enum {
 	SDE_PERF_SSPP_TS_PREFILL,
 	SDE_PERF_SSPP_TS_PREFILL_REC1,
 	SDE_PERF_SSPP_CDP,
-	SDE_PERF_SSPP_QOS_FL_NOCALC,
 	SDE_PERF_SSPP_SYS_CACHE,
 	SDE_PERF_SSPP_UIDLE,
 	SDE_PERF_SSPP_MAX
@@ -640,27 +638,8 @@ enum sde_qos_lut_usage {
 	SDE_QOS_LUT_USAGE_NRT,
 	SDE_QOS_LUT_USAGE_CWB,
 	SDE_QOS_LUT_USAGE_MACROTILE_QSEED,
+	SDE_QOS_LUT_USAGE_LINEAR_QSEED,
 	SDE_QOS_LUT_USAGE_MAX,
-};
-
-/**
- * struct sde_qos_lut_entry - define QoS LUT table entry
- * @fl: fill level, or zero on last entry to indicate default lut
- * @lut: lut to use if equal to or less than fill level
- */
-struct sde_qos_lut_entry {
-	u32 fl;
-	u64 lut;
-};
-
-/**
- * struct sde_qos_lut_tbl - define QoS LUT table
- * @nentry: number of entry in this table
- * @entries: Pointer to table entries
- */
-struct sde_qos_lut_tbl {
-	u32 nentry;
-	struct sde_qos_lut_entry *entries;
 };
 
 /**
@@ -1302,9 +1281,11 @@ struct sde_sc_cfg {
  * @downscaling_prefill_lines  downscaling latency in lines
  * @amortizable_theshold minimum y position for traffic shaping prefill
  * @min_prefill_lines  minimum pipeline latency in lines
- * @danger_lut_tbl: LUT tables for danger signals
- * @sfe_lut_tbl: LUT tables for safe signals
- * @qos_lut_tbl: LUT tables for QoS signals
+ * @danger_lut: liner, linear_qseed, macrotile, etc. danger luts
+ * @sfe_lut: linear, macrotile, macrotile_qseed, etc. safe luts
+ * @creq_lut: linear, macrotile, non_realtime, cwb, etc. creq luts
+ * @qos_refresh_count: total refresh count for possible different luts
+ * @qos_refresh_rate: different refresh rates for luts
  * @cdp_cfg            cdp use case configurations
  * @cpu_mask:          pm_qos cpu mask value
  * @cpu_dma_latency:   pm_qos cpu dma latency value
@@ -1330,9 +1311,11 @@ struct sde_perf_cfg {
 	u32 downscaling_prefill_lines;
 	u32 amortizable_threshold;
 	u32 min_prefill_lines;
-	u32 danger_lut_tbl[SDE_QOS_LUT_USAGE_MAX];
-	struct sde_qos_lut_tbl sfe_lut_tbl[SDE_QOS_LUT_USAGE_MAX];
-	struct sde_qos_lut_tbl qos_lut_tbl[SDE_QOS_LUT_USAGE_MAX];
+	u64 *danger_lut;
+	u64 *safe_lut;
+	u64 *creq_lut;
+	u32 qos_refresh_count;
+	u32 *qos_refresh_rate;
 	struct sde_perf_cdp_cfg cdp_cfg[SDE_PERF_CDP_USAGE_MAX];
 	u32 cpu_mask;
 	u32 cpu_dma_latency;
@@ -1422,7 +1405,6 @@ struct sde_limit_cfg {
  * @has_qsync	       Supports qsync feature
  * @has_3d_merge_reset Supports 3D merge reset
  * @has_decimation     Supports decimation
- * @has_qos_fl_nocalc  flag to indicate QoS fill level needs no calculation
  * @has_mixer_combined_alpha     Mixer has single register for FG & BG alpha
  * @vbif_disable_inner_outer_shareable     VBIF requires disabling shareables
  * @inline_disable_const_clr     Disable constant color during inline rotate
@@ -1483,7 +1465,6 @@ struct sde_mdss_cfg {
 	bool has_qsync;
 	bool has_3d_merge_reset;
 	bool has_decimation;
-	bool has_qos_fl_nocalc;
 	bool has_mixer_combined_alpha;
 	bool vbif_disable_inner_outer_shareable;
 	bool inline_disable_const_clr;
