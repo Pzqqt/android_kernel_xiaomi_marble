@@ -1553,6 +1553,82 @@ struct cdp_htt_rx_pdev_stats {
 #define OFDMA_NUM_RU_SIZE 7
 
 #define OFDMA_NUM_USERS	37
+
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+/*
+ * mac_freeze_capture_reason - capture reason counters
+ * @FREEZE_REASON_TM: When m_directed_ftm is enabled, this CFR data is
+ * captured for a Timing Measurement (TM) frame.
+ * @FREEZE_REASON_FTM: When m_directed_ftm is enabled, this CFR data is
+ * captured for a Fine Timing Measurement (FTM) frame.
+ * @FREEZE_REASON_ACK_RESP_TO_TM_FTM: When m_all_ftm_ack is enabled, this CFR
+ * data is captured for an ACK received for the FTM/TM frame sent to a station.
+ * @FREEZE_REASON_TA_RA_TYPE_FILTER: When m_ta_ra_filter is enabled, this CFR
+ * data is captured for a PPDU received,since the CFR TA_RA filter is met.
+ * @FREEZE_REASON_NDPA_NDP: When m_ndpa_ndp_directed(or)m_ndpa_ndp_all is
+ * enabled, this CFR data is captured for an NDP frame received.
+ * @FREEZE_REASON_ALL_PACKET: When m_all_packet is enabled, this CFR data is
+ * captured for an incoming PPDU.
+ */
+enum mac_freeze_capture_reason {
+	FREEZE_REASON_TM = 0,
+	FREEZE_REASON_FTM,
+	FREEZE_REASON_ACK_RESP_TO_TM_FTM,
+	FREEZE_REASON_TA_RA_TYPE_FILTER,
+	FREEZE_REASON_NDPA_NDP,
+	FREEZE_REASON_ALL_PACKET,
+	FREEZE_REASON_MAX,
+};
+
+/*
+ * chan_capture_status: capture status counters
+ * @CAPTURE_IDLE: CFR data is not captured, since VCSR setting for CFR/RCC is
+ * not enabled.
+ * @CAPTURE_BUSY: CFR data is not available, since previous channel
+ * upload is in progress
+ * @CAPTURE_ACTIVE: CFR data is captured in HW registers
+ * @CAPTURE_NO_BUFFER: CFR data is not captured, since no buffer is available
+ * in IPC ring to DMA CFR data
+ */
+enum chan_capture_status {
+	CAPTURE_IDLE = 0,
+	CAPTURE_BUSY,
+	CAPTURE_ACTIVE,
+	CAPTURE_NO_BUFFER,
+	CAPTURE_MAX,
+};
+
+/* struct cdp_cfr_rcc_stats - CFR RCC debug statistics
+ * @bb_captured_channel_cnt: No. of PPDUs for which MAC sent Freeze TLV to PHY
+ * @bb_captured_timeout_cnt: No. of PPDUs for which CFR filter criteria matched
+ * but MAC did not send Freeze TLV to PHY as time exceeded freeze tlv delay
+ * count threshold
+ * @rx_loc_info_valid_cnt: No. of PPDUs for which PHY could find a valid buffer
+ * in ucode IPC ring
+ * @chan_capture_status[]: capture status counters
+ *	[0] - No. of PPDUs with capture status CAPTURE_IDLE
+ *	[1] - No. of PPDUs with capture status CAPTURE_BUSY
+ *	[2] - No. of PPDUs with capture status CAPTURE_ACTIVE
+ *	[3] - No. of PPDUs with capture status CAPTURE_NO_BUFFER
+ * @reason_cnt[]: capture reason counters
+ *	[0] - No. PPDUs filtered due to freeze_reason_TM
+ *	[1] - No. PPDUs filtered due to freeze_reason_FTM
+ *	[2] - No. PPDUs filtered due to freeze_reason_ACK_resp_to_TM_FTM
+ *	[3] - No. PPDUs filtered due to freeze_reason_TA_RA_TYPE_FILTER
+ *	[4] - No. PPDUs filtered due to freeze_reason_NDPA_NDP
+ *	[5] - No. PPDUs filtered due to freeze_reason_ALL_PACKET
+ */
+struct cdp_cfr_rcc_stats {
+	uint64_t bb_captured_channel_cnt;
+	uint64_t bb_captured_timeout_cnt;
+	uint64_t rx_loc_info_valid_cnt;
+	uint64_t chan_capture_status[CAPTURE_MAX];
+	uint64_t reason_cnt[FREEZE_REASON_MAX];
+};
+#else
+struct cdp_cfr_rcc_stats {
+};
+#endif
 /* struct cdp_pdev_stats - pdev stats
  * @msdu_not_done: packets dropped because msdu done bit not set
  * @mec:Multicast Echo check
@@ -1649,6 +1725,7 @@ struct cdp_pdev_stats {
 	} ul_ofdma;
 
 	struct cdp_tso_stats tso_stats;
+	struct cdp_cfr_rcc_stats rcc;
 };
 
 #ifdef QCA_ENH_V3_STATS_SUPPORT

@@ -1599,6 +1599,8 @@ struct cdp_rx_offld_ops {
  * @txrx_cfr_filter: Handler to configure host rx monitor status ring
  * @txrx_get_cfr_rcc: Handler to get CFR mode
  * @txrx_set_cfr_rcc: Handler to enable/disable CFR mode
+ * @txrx_get_cfr_dbg_stats: Handler to get debug statistics for CFR mode
+ * @txrx_clear_cfr_dbg_stats: Handler to clear debug statistics for CFR mode
  */
 struct cdp_cfr_ops {
 	void (*txrx_cfr_filter)(struct cdp_soc_t *soc_hdl,
@@ -1610,6 +1612,11 @@ struct cdp_cfr_ops {
 	void (*txrx_set_cfr_rcc)(struct cdp_soc_t *soc_hdl,
 				 uint8_t pdev_id,
 				 bool enable);
+	void (*txrx_get_cfr_dbg_stats)(struct cdp_soc_t *soc_hdl,
+				       uint8_t pdev_id,
+				       struct cdp_cfr_rcc_stats *buf);
+	void (*txrx_clear_cfr_dbg_stats)(struct cdp_soc_t *soc_hdl,
+					 uint8_t pdev_id);
 };
 #endif
 

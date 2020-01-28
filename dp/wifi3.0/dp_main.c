@@ -180,6 +180,11 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 static bool dp_get_cfr_rcc(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
 static void dp_set_cfr_rcc(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 			   bool enable);
+static inline void
+dp_get_cfr_dbg_stats(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+		     struct cdp_cfr_rcc_stats *cfr_rcc_stats);
+static inline void
+dp_clear_cfr_dbg_stats(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
 #endif
 static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
 					    enum hal_ring_type ring_type,
@@ -10240,6 +10245,8 @@ static struct cdp_cfr_ops dp_ops_cfr = {
 	.txrx_cfr_filter = dp_cfr_filter,
 	.txrx_get_cfr_rcc = dp_get_cfr_rcc,
 	.txrx_set_cfr_rcc = dp_set_cfr_rcc,
+	.txrx_get_cfr_dbg_stats = dp_get_cfr_dbg_stats,
+	.txrx_clear_cfr_dbg_stats = dp_clear_cfr_dbg_stats,
 };
 #endif
 
@@ -11327,6 +11334,51 @@ void dp_set_cfr_rcc(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, bool enable)
 	}
 
 	pdev->cfr_rcc_mode = enable;
+}
+
+/*
+ * dp_get_cfr_dbg_stats - Get the debug statistics for CFR
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ * @cfr_rcc_stats: CFR RCC debug statistics buffer
+ *
+ * Return: none
+ */
+static inline void
+dp_get_cfr_dbg_stats(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+		     struct cdp_cfr_rcc_stats *cfr_rcc_stats)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev) {
+		dp_err("Invalid pdev");
+		return;
+	}
+
+	qdf_mem_copy(cfr_rcc_stats, &pdev->stats.rcc,
+		     sizeof(struct cdp_cfr_rcc_stats));
+}
+
+/*
+ * dp_clear_cfr_dbg_stats - Clear debug statistics for CFR
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ *
+ * Return: none
+ */
+static void dp_clear_cfr_dbg_stats(struct cdp_soc_t *soc_hdl,
+				   uint8_t pdev_id)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev) {
+		dp_err("dp pdev is NULL");
+		return;
+	}
+
+	qdf_mem_zero(&pdev->stats.rcc, sizeof(pdev->stats.rcc));
 }
 #endif
 

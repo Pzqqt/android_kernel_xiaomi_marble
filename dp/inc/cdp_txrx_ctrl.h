@@ -889,6 +889,54 @@ void cdp_set_cfr_rcc(ol_txrx_soc_handle soc, uint8_t pdev_id, bool enable)
 
 	return soc->ops->cfr_ops->txrx_set_cfr_rcc(soc, pdev_id, enable);
 }
+
+/**
+ * cdp_get_cfr_dbg_stats() - Get debug statistics for CFR
+ *
+ * @soc: SOC TXRX handle
+ * @pdev_id: ID of the physical device object
+ * @buf: CFR RCC debug statistics buffer
+ *
+ * Return: None
+ */
+static inline void
+cdp_get_cfr_dbg_stats(ol_txrx_soc_handle soc, uint8_t pdev_id,
+		      struct cdp_cfr_rcc_stats *buf)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cfr_ops || !soc->ops->cfr_ops->txrx_get_cfr_dbg_stats)
+		return;
+
+	soc->ops->cfr_ops->txrx_get_cfr_dbg_stats(soc, pdev_id, buf);
+}
+
+/**
+ * cdp_cfr_clr_dbg_stats() - Clear debug statistics for CFR
+ *
+ * @soc: SOC TXRX handle
+ * @pdev_id: ID of the physical device object
+ */
+static inline void
+cdp_cfr_clr_dbg_stats(ol_txrx_soc_handle soc, uint8_t pdev_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cfr_ops || !soc->ops->cfr_ops->txrx_clear_cfr_dbg_stats)
+		return;
+
+	soc->ops->cfr_ops->txrx_clear_cfr_dbg_stats(soc, pdev_id);
+}
 #endif
 
 #if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(WLAN_RX_PKT_CAPTURE_ENH)
