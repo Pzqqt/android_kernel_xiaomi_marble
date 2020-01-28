@@ -1699,23 +1699,23 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 }
 
 /**
- * wma_unified_radio_tx_mem_free() - Free radio tx power stats memory
- * @handle: WMI handle
+ * wma_unified_link_stats_results_mem_free() - Free link stats results memory
+ * #link_stats_results: pointer to link stats result
  *
  * Return: 0 on success, error number otherwise.
  */
-int wma_unified_radio_tx_mem_free(void *handle)
+void wma_unified_link_stats_results_mem_free(
+			tSirLLStatsResults *link_stats_results)
 {
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	struct wifi_radio_stats *rs_results;
 	uint32_t i = 0;
 
-	if (!wma_handle->link_stats_results)
-		return 0;
+	if (!link_stats_results)
+		return;
 
 	rs_results = (struct wifi_radio_stats *)
-				&wma_handle->link_stats_results->results[0];
-	for (i = 0; i < wma_handle->link_stats_results->num_radio; i++) {
+				&link_stats_results->results[0];
+	for (i = 0; i < link_stats_results->num_radio; i++) {
 		if (rs_results->tx_time_per_power_level) {
 			qdf_mem_free(rs_results->tx_time_per_power_level);
 			rs_results->tx_time_per_power_level = NULL;
@@ -1727,6 +1727,22 @@ int wma_unified_radio_tx_mem_free(void *handle)
 		}
 		rs_results++;
 	}
+}
+
+/**
+ * wma_unified_radio_tx_mem_free() - Free radio tx power stats memory
+ * @handle: WMI handle
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+int wma_unified_radio_tx_mem_free(void *handle)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
+	if (!wma_handle->link_stats_results)
+		return 0;
+
+	wma_unified_link_stats_results_mem_free(wma_handle->link_stats_results);
 
 	qdf_mem_free(wma_handle->link_stats_results);
 	wma_handle->link_stats_results = NULL;
@@ -1961,6 +1977,14 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 			if (!wma_handle->link_stats_results)
 				return -ENOMEM;
 		}
+
+		/*
+		 * Free the already allocated memory, if any, before setting
+		 * the num_radio to 0
+		 */
+		wma_unified_link_stats_results_mem_free(
+					wma_handle->link_stats_results);
+
 		link_stats_results = wma_handle->link_stats_results;
 		link_stats_results->num_radio = fixed_param->num_radio;
 		goto link_radio_stats_cb;

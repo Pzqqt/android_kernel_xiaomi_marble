@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -186,6 +186,17 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t ch_freq);
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 int wma_unified_radio_tx_mem_free(void *handle);
+
+/*
+ * wma_unified_link_stats_results_mem_free() - Free the memory for
+ * link_stats_results->results allocated when event comes.
+ * @link_stats_results: pointer to the memory that is to be freed
+ *
+ * Return: None
+ */
+void
+wma_unified_link_stats_results_mem_free(tSirLLStatsResults *link_stats_results);
+
 #else /* WLAN_FEATURE_LINK_LAYER_STATS */
 static inline int wma_unified_radio_tx_mem_free(void *handle)
 {
