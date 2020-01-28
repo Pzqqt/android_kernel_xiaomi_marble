@@ -201,6 +201,45 @@ target_if_fwol_register_elna_tx_ops(struct wlan_fwol_tx_ops *tx_ops)
 }
 #endif /* WLAN_FEATURE_ELNA */
 
+#ifdef WLAN_SEND_DSCP_UP_MAP_TO_FW
+/**
+ * target_if_fwol_send_dscp_up_map_to_fw() - send dscp up map to FW
+ * @psoc: pointer to PSOC object
+ * @dscp_to_up_map: DSCP to UP map array
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS
+target_if_fwol_send_dscp_up_map_to_fw(struct wlan_objmgr_psoc *psoc,
+				     uint32_t *dscp_to_up_map)
+{
+	QDF_STATUS status;
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi_handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_send_dscp_tip_map_cmd(wmi_handle, dscp_to_up_map);
+	if (status)
+		target_if_err("Failed to send dscp_up_map_to_fw %d", status);
+
+	return status;
+}
+
+static void
+target_if_fwol_register_dscp_up_tx_ops(struct wlan_fwol_tx_ops *tx_ops)
+{
+	tx_ops->send_dscp_up_map_to_fw = target_if_fwol_send_dscp_up_map_to_fw;
+}
+#else
+static void
+target_if_fwol_register_dscp_up_tx_ops(struct wlan_fwol_tx_ops *tx_ops)
+{
+}
+#endif
+
 QDF_STATUS target_if_fwol_register_event_handler(struct wlan_objmgr_psoc *psoc,
 						 void *arg)
 {
@@ -221,6 +260,7 @@ target_if_fwol_unregister_event_handler(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS target_if_fwol_register_tx_ops(struct wlan_fwol_tx_ops *tx_ops)
 {
 	target_if_fwol_register_elna_tx_ops(tx_ops);
+	target_if_fwol_register_dscp_up_tx_ops(tx_ops);
 
 	tx_ops->reg_evt_handler = target_if_fwol_register_event_handler;
 	tx_ops->unreg_evt_handler = target_if_fwol_unregister_event_handler;

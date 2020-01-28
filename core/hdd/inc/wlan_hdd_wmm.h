@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012,2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012,2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -203,6 +203,17 @@ extern const uint8_t hdd_linux_up_to_ac_map[];
  * Return: Zero on success, appropriate error on failure.
  */
 int hdd_wmmps_helper(struct hdd_adapter *adapter, uint8_t *ptr);
+
+/**
+ * hdd_send_dscp_up_map_to_fw() - send dscp to up map to FW
+ * @adapter : [in]  pointer to Adapter context
+ *
+ * This function will send the WMM DSCP configuration of an
+ * adapter to FW.
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS hdd_send_dscp_up_map_to_fw(struct hdd_adapter *adapter);
 
 /**
  * hdd_wmm_init() - initialize the WMM DSCP configuation

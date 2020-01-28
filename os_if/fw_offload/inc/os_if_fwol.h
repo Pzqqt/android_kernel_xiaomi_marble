@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,5 +63,23 @@ static inline int os_if_fwol_get_elna_bypass(struct wlan_objmgr_vdev *vdev,
 	return 0;
 }
 #endif /* WLAN_FEATURE_ELNA */
+
+#ifdef WLAN_SEND_DSCP_UP_MAP_TO_FW
+/**
+ * os_if_fwol_send_dscp_up_map_to_fw() - Send DSCP to UP map to FW
+ * @vdev: Pointer to vdev
+ * @dscp_to_up_map: Array of DSCP to UP map values
+ *
+ * Return: 0 on success; error number otherwise
+ */
+int os_if_fwol_send_dscp_up_map_to_fw(struct wlan_objmgr_vdev *vdev,
+				     uint32_t *dscp_to_up_map);
+#else
+static inline int os_if_fwol_send_dscp_up_map_to_fw(
+		struct wlan_objmgr_vdev *vdev, uint32_t *dscp_to_up_map)
+{
+	return -EOPNOTSUPP;
+}
+#endif /* WLAN_SEND_DSCP_UP_MAP_TO_FW */
 
 #endif /* __OS_IF_FWOL_H__ */

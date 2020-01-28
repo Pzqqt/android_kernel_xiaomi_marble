@@ -3140,6 +3140,9 @@ ccflags-$(CONFIG_WMI_SEND_RECV_QMI) += -DWLAN_FEATURE_WMI_SEND_RECV_QMI
 
 cppflags-$(CONFIG_WDI3_STATS_UPDATE) += -DWDI3_STATS_UPDATE
 
+cppflags-$(CONFIG_WLAN_CUSTOM_DSCP_UP_MAP) += -DWLAN_CUSTOM_DSCP_UP_MAP
+cppflags-$(CONFIG_WLAN_SEND_DSCP_UP_MAP_TO_FW) += -DWLAN_SEND_DSCP_UP_MAP_TO_FW
+
 KBUILD_CPPFLAGS += $(cppflags-y)
 
 # Currently, for versions of gcc which support it, the kernel Makefile

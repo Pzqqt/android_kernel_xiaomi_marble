@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -131,3 +131,17 @@ end:
 	return ret;
 }
 #endif /* #ifdef WLAN_FEATURE_ELNA */
+
+#ifdef WLAN_SEND_DSCP_UP_MAP_TO_FW
+int os_if_fwol_send_dscp_up_map_to_fw(struct wlan_objmgr_vdev *vdev,
+				     uint32_t *dscp_to_up_map)
+{
+	QDF_STATUS status;
+
+	status = ucfg_fwol_send_dscp_up_map_to_fw(vdev, dscp_to_up_map);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		osif_err("Failed to send dscp_up_map to FW, %d", status);
+
+	return qdf_status_to_os_return(status);
+}
+#endif

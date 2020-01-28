@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,6 +47,7 @@
 #include <linux/semaphore.h>
 #include <linux/ipv6.h>
 #include "osif_sync.h"
+#include "os_if_fwol.h"
 #include <wlan_hdd_tx_rx.h>
 #include <wlan_hdd_wmm.h>
 #include <wlan_hdd_ether.h>
@@ -55,8 +56,10 @@
 #include <cds_sched.h>
 #include "sme_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "cfg_ucfg_api.h"
 
 #define HDD_WMM_UP_TO_AC_MAP_SIZE 8
+#define DSCP(x)	x
 
 const uint8_t hdd_wmm_up_to_ac_map[] = {
 	SME_AC_BE,
@@ -1456,6 +1459,92 @@ static void hdd_wmm_do_implicit_qos(struct work_struct *work)
 	osif_vdev_sync_op_stop(vdev_sync);
 }
 
+QDF_STATUS hdd_send_dscp_up_map_to_fw(struct hdd_adapter *adapter)
+{
+	uint32_t *dscp_to_up_map = adapter->dscp_to_up_map;
+	struct wlan_objmgr_vdev *vdev = adapter->vdev;
+	int ret;
+
+	if (vdev) {
+		/* Send DSCP to TID map table to FW */
+		ret = os_if_fwol_send_dscp_up_map_to_fw(vdev, dscp_to_up_map);
+		if (ret && ret != -EOPNOTSUPP)
+			return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_fill_dscp_to_up_map() - Fill up dscp_to_up_map table with default values
+ * @dscp_to_up_map: Array of DSCP-to-UP map
+ *
+ * This function will fill up the DSCP-to-UP map table with default values.
+ *
+ * Return: QDF_STATUS enumeration
+ */
+static inline void hdd_fill_dscp_to_up_map(
+		enum sme_qos_wmmuptype *dscp_to_up_map)
+{
+	uint8_t dscp;
+
+	/*
+	 * DSCP to User Priority Lookup Table
+	 * By default use the 3 Precedence bits of DSCP as the User Priority
+	 *
+	 * In case of changing the default map values, need to take care of
+	 * hdd_custom_dscp_up_map as well.
+	 */
+	for (dscp = 0; dscp <= WLAN_MAX_DSCP; dscp++)
+		dscp_to_up_map[dscp] = dscp >> 3;
+
+	/* Special case for Expedited Forwarding (DSCP 46) in default mapping */
+	dscp_to_up_map[DSCP(46)] = SME_QOS_WMM_UP_VO;
+}
+
+#ifdef WLAN_CUSTOM_DSCP_UP_MAP
+/**
+ * hdd_custom_dscp_up_map() - Customize dscp_to_up_map based on RFC8325
+ * @dscp_to_up_map: Array of DSCP-to-UP map
+ *
+ * This function will customize the DSCP-to-UP map table based on RFC8325..
+ *
+ * Return: QDF_STATUS enumeration
+ */
+static inline QDF_STATUS hdd_custom_dscp_up_map(
+		enum sme_qos_wmmuptype *dscp_to_up_map)
+{
+	/*
+	 * Customizing few of DSCP to UP mapping based on RFC8325,
+	 * those are different from default hdd_fill_dscp_to_up_map values.
+	 * So, below changes are always relative to hdd_fill_dscp_to_up_map.
+	 */
+	dscp_to_up_map[DSCP(10)] = SME_QOS_WMM_UP_BE;
+	dscp_to_up_map[DSCP(12)] = SME_QOS_WMM_UP_BE;
+	dscp_to_up_map[DSCP(14)] = SME_QOS_WMM_UP_BE;
+	dscp_to_up_map[DSCP(16)] = SME_QOS_WMM_UP_BE;
+
+	dscp_to_up_map[DSCP(18)] = SME_QOS_WMM_UP_EE;
+	dscp_to_up_map[DSCP(20)] = SME_QOS_WMM_UP_EE;
+	dscp_to_up_map[DSCP(22)] = SME_QOS_WMM_UP_EE;
+
+	dscp_to_up_map[DSCP(24)] = SME_QOS_WMM_UP_CL;
+	dscp_to_up_map[DSCP(26)] = SME_QOS_WMM_UP_CL;
+	dscp_to_up_map[DSCP(28)] = SME_QOS_WMM_UP_CL;
+	dscp_to_up_map[DSCP(30)] = SME_QOS_WMM_UP_CL;
+
+	dscp_to_up_map[DSCP(44)] = SME_QOS_WMM_UP_VO;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS hdd_custom_dscp_up_map(
+		enum sme_qos_wmmuptype *dscp_to_up_map)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* WLAN_CUSTOM_DSCP_UP_MAP */
+
 /**
  * hdd_wmm_init() - initialize the WMM DSCP configuation
  * @adapter : [in]  pointer to Adapter context
@@ -1469,20 +1558,24 @@ static void hdd_wmm_do_implicit_qos(struct work_struct *work)
 QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter)
 {
 	enum sme_qos_wmmuptype *dscp_to_up_map = adapter->dscp_to_up_map;
-	uint8_t dscp;
+	struct wlan_objmgr_psoc *psoc = adapter->hdd_ctx->psoc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	hdd_enter();
 
-	/* DSCP to User Priority Lookup Table
-	 * By default use the 3 Precedence bits of DSCP as the User Priority
-	 */
-	for (dscp = 0; dscp <= WLAN_MAX_DSCP; dscp++)
-		dscp_to_up_map[dscp] = dscp >> 3;
+	if (!psoc) {
+		hdd_err("Invalid psoc handle");
+		return QDF_STATUS_E_FAILURE;
+	}
 
-	/* Special case for Expedited Forwarding (DSCP 46) */
-	dscp_to_up_map[46] = SME_QOS_WMM_UP_VO;
+	hdd_fill_dscp_to_up_map(dscp_to_up_map);
 
-	return QDF_STATUS_SUCCESS;
+	if (hdd_custom_dscp_up_map(dscp_to_up_map) == QDF_STATUS_SUCCESS) {
+		/* Send DSCP to TID map table to FW */
+		status = hdd_send_dscp_up_map_to_fw(adapter);
+	}
+
+	return status;
 }
 
 /**

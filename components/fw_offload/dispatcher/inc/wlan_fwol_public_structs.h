@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,6 +76,7 @@ struct wlan_fwol_callbacks {
  * @get_elna_bypass: get eLNA bypass
  * @reg_evt_handler: register event handler
  * @unreg_evt_handler: unregister event handler
+ * @send_dscp_up_map_to_fw: send dscp-to-up map values to FW
  */
 struct wlan_fwol_tx_ops {
 #ifdef WLAN_FEATURE_ELNA
@@ -88,6 +89,11 @@ struct wlan_fwol_tx_ops {
 				      void *arg);
 	QDF_STATUS (*unreg_evt_handler)(struct wlan_objmgr_psoc *psoc,
 					void *arg);
+#ifdef WLAN_SEND_DSCP_UP_MAP_TO_FW
+	QDF_STATUS (*send_dscp_up_map_to_fw)(
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t *dscp_to_up_map);
+#endif
 };
 
 /**

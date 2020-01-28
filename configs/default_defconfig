@@ -615,6 +615,12 @@ ifeq ($(CONFIG_HELIUMPLUS), y)
 CONFIG_PKTLOG_LEGACY := y
 endif
 
+#Customize DSCP_to-UP map based on RFC8325
+ifeq ($(CONFIG_HELIUMPLUS), y)
+CONFIG_WLAN_CUSTOM_DSCP_UP_MAP := y
+CONFIG_WLAN_SEND_DSCP_UP_MAP_TO_FW := y
+endif
+
 ifeq ($(CONFIG_ROME_IF), sdio)
 CONFIG_PKTLOG_LEGACY := y
 endif
