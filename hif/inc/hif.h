@@ -38,6 +38,7 @@ extern "C" {
 #ifdef IPA_OFFLOAD
 #include <linux/ipa.h>
 #endif
+#include "cfg_ucfg_api.h"
 #define ENABLE_MBOX_DUMMY_SPACE_FEATURE 1
 
 typedef void __iomem *A_target_id_t;
@@ -834,9 +835,25 @@ void hif_disable_isr(struct hif_opaque_softc *hif_ctx);
 void hif_reset_soc(struct hif_opaque_softc *hif_ctx);
 void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 				      int htc_htt_tx_endpoint);
-struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
+
+/**
+ * hif_open() - Create hif handle
+ * @qdf_ctx: qdf context
+ * @mode: Driver Mode
+ * @bus_type: Bus Type
+ * @cbk: CDS Callbacks
+ * @psoc: psoc object manager
+ *
+ * API to open HIF Context
+ *
+ * Return: HIF Opaque Pointer
+ */
+struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
+				  uint32_t mode,
 				  enum qdf_bus_type bus_type,
-				  struct hif_driver_state_callbacks *cbk);
+				  struct hif_driver_state_callbacks *cbk,
+				  struct wlan_objmgr_psoc *psoc);
+
 void hif_close(struct hif_opaque_softc *hif_ctx);
 QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		      void *bdev, const struct hif_bus_id *bid,
@@ -1237,7 +1254,8 @@ hif_get_ce_service_max_yield_time(struct hif_opaque_softc *hif);
  * Return: void
  */
 void hif_set_ce_service_max_rx_ind_flush(struct hif_opaque_softc *hif,
-				       uint8_t ce_service_max_rx_ind_flush);
+					 uint8_t ce_service_max_rx_ind_flush);
+
 #ifdef OL_ATH_SMART_LOGGING
 /*
  * hif_log_ce_dump() - Copy all the CE DEST ring to buf

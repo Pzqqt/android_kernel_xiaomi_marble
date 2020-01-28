@@ -154,6 +154,16 @@ struct ce_desc_hist {
 };
 #endif /*defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)*/
 
+/**
+ * struct hif_cfg() - store ini config parameters in hif layer
+ * @ce_status_ring_timer_threshold: ce status ring timer threshold
+ * @ce_status_ring_batch_count_threshold: ce status ring batch count threshold
+ */
+struct hif_cfg {
+	uint16_t ce_status_ring_timer_threshold;
+	uint8_t ce_status_ring_batch_count_threshold;
+};
+
 struct hif_softc {
 	struct hif_opaque_softc osc;
 	struct hif_config_info hif_config;
@@ -227,6 +237,7 @@ struct hif_softc {
 #ifdef IPA_OFFLOAD
 	qdf_shared_mem_t *ipa_ce_ring;
 #endif
+	struct hif_cfg ini_cfg;
 };
 
 static inline
