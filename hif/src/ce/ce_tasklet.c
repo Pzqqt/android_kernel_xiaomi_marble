@@ -189,33 +189,34 @@ hif_ce_latency_stats(struct hif_softc *hif_ctx)
 	struct HIF_CE_state *hif_ce_state = HIF_GET_CE_STATE(hif_ctx);
 	struct ce_stats *stats = &hif_ce_state->stats;
 
+	hif_err("\tCE TASKLET ARRIVAL AND EXECUTION STATS");
 	for (i = 0; i < CE_COUNT_MAX; i++) {
-		qdf_nofl_info("\n\t\tCE Ring %d Tasklet Execution Bucket", i);
+		hif_nofl_err("\n\t\tCE Ring %d Tasklet Execution Bucket", i);
 		for (j = 0; j < CE_BUCKET_MAX; j++) {
-			qdf_nofl_info("\t Bucket %sms :%llu\t last update:%llu",
-				      buck_str[j],
-				      stats->ce_tasklet_exec_bucket[i][j],
-				      stats->ce_tasklet_exec_last_update[i][j]);
+			hif_nofl_err("\t Bucket %sms :%llu\t last update:%llu",
+				     buck_str[j],
+				     stats->ce_tasklet_exec_bucket[i][j],
+				     stats->ce_tasklet_exec_last_update[i][j]);
 		}
 
-		qdf_nofl_info("\n\t\tCE Ring %d Tasklet Scheduled Bucket", i);
+		hif_nofl_err("\n\t\tCE Ring %d Tasklet Scheduled Bucket", i);
 		for (j = 0; j < CE_BUCKET_MAX; j++) {
-			qdf_nofl_info("\t Bucket %sms :%llu\t last update :%lld",
-				      buck_str[j],
-				      stats->ce_tasklet_sched_bucket[i][j],
-				      stats->
+			hif_nofl_err("\t Bucket %sms :%llu\t last update :%lld",
+				     buck_str[j],
+				     stats->ce_tasklet_sched_bucket[i][j],
+				     stats->
 					   ce_tasklet_sched_last_update[i][j]);
 		}
 
-		qdf_nofl_info("\n\t\t CE RING %d Last %d time records",
-			      i, HIF_REQUESTED_EVENTS);
+		hif_nofl_err("\n\t\t CE RING %d Last %d time records",
+			     i, HIF_REQUESTED_EVENTS);
 		index = stats->record_index[i];
 		start_index = stats->record_index[i];
 
 		for (j = 0; j < HIF_REQUESTED_EVENTS; j++) {
-			qdf_nofl_info("\t Execuiton time:  %luus Total Scheduled time: %luus",
-				      stats->tasklet_exec_time_record[i][index],
-				      stats->
+			hif_nofl_err("\t Execuiton time:  %luus Total Scheduled time: %luus",
+				     stats->tasklet_exec_time_record[i][index],
+				     stats->
 					   tasklet_sched_time_record[i][index]);
 			index = (index - 1) % HIF_REQUESTED_EVENTS;
 			if (index == start_index)
@@ -345,7 +346,9 @@ static void ce_tasklet(unsigned long data)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 	struct CE_state *CE_state = scn->ce_id_to_state[tasklet_entry->ce_id];
 
-	hif_record_tasklet_exec_entry_ts(scn, tasklet_entry->ce_id);
+	if (scn->ce_latency_stats)
+		hif_record_tasklet_exec_entry_ts(scn, tasklet_entry->ce_id);
+
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
 				 HIF_CE_TASKLET_ENTRY, NULL, NULL, -1, 0);
 
@@ -375,7 +378,10 @@ static void ce_tasklet(unsigned long data)
 
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,
 				NULL, NULL, -1, 0);
-	ce_tasklet_update_bucket(hif_ce_state, tasklet_entry->ce_id);
+
+	if (scn->ce_latency_stats)
+		ce_tasklet_update_bucket(hif_ce_state, tasklet_entry->ce_id);
+
 	qdf_atomic_dec(&scn->active_tasklet_cnt);
 }
 
@@ -555,7 +561,8 @@ void hif_display_ce_stats(struct hif_softc *hif_ctx)
 		qdf_debug("CE id[%2d] - %s", i, str_buffer);
 	}
 
-	hif_ce_latency_stats(hif_ctx);
+	if (hif_ctx->ce_latency_stats)
+		hif_ce_latency_stats(hif_ctx);
 #undef STR_SIZE
 }
 
@@ -589,7 +596,9 @@ static inline bool hif_tasklet_schedule(struct hif_opaque_softc *hif_ctx,
 	}
 
 	tasklet_schedule(&tasklet_entry->intr_tq);
-	hif_record_tasklet_sched_entry_ts(scn, tasklet_entry->ce_id);
+	if (scn->ce_latency_stats)
+		hif_record_tasklet_sched_entry_ts(scn, tasklet_entry->ce_id);
+
 	return true;
 }
 

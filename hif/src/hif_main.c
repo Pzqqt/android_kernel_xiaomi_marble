@@ -653,6 +653,18 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 	HIF_DBG("%s: X", __func__);
 }
 
+#ifdef CE_TASKLET_DEBUG_ENABLE
+void hif_enable_ce_latency_stats(struct hif_opaque_softc *hif_ctx, uint8_t val)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (!scn)
+		return;
+
+	scn->ce_latency_stats = val;
+}
+#endif
+
 void hif_display_stats(struct hif_opaque_softc *hif_ctx)
 {
 	hif_display_bus_stats(hif_ctx);

@@ -1996,6 +1996,10 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_GET_PDEV_NUM_PEERS = 435,
 	/* Number of monitor vdevs configured per PDEV */
 	OL_ATH_PARAM_GET_PDEV_NUM_MONITOR_VDEVS = 436,
+#ifdef CE_TASKLET_DEBUG_ENABLE
+	/* Enable/disable CE stats print */
+	OL_ATH_PARAM_ENABLE_CE_LATENCY_STATS = 437,
+#endif
 };
 #endif
 /* Bitmasks for stats that can block */

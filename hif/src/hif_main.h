@@ -176,6 +176,7 @@ struct hif_softc {
 	bool hif_init_done;
 	bool request_irq_done;
 	bool ext_grp_irq_configured;
+	uint8_t ce_latency_stats;
 	/* Packet statistics */
 	struct hif_ce_stats pkt_stats;
 	enum hif_target_status target_status;
@@ -233,7 +234,6 @@ struct hif_softc {
 #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 	struct ce_desc_hist hif_ce_desc_hist;
 #endif /*defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)*/
-
 #ifdef IPA_OFFLOAD
 	qdf_shared_mem_t *ipa_ce_ring;
 #endif
