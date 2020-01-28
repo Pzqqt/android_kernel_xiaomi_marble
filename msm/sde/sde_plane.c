@@ -2423,6 +2423,11 @@ static int _sde_plane_validate_scaler_v2(struct sde_plane *psde,
 	return 0;
 }
 
+static inline bool _sde_plane_has_pre_downscale(struct sde_plane *psde)
+{
+	return (psde->features & BIT(SDE_SSPP_PREDOWNSCALE));
+}
+
 static int _sde_atomic_check_pre_downscale(struct sde_plane *psde,
 		struct sde_plane_state *pstate, struct sde_rect *dst,
 		u32 src_w, u32 src_h)
@@ -2436,7 +2441,7 @@ static int _sde_atomic_check_pre_downscale(struct sde_plane *psde,
 	min_ratio_numer = psde->pipe_sblk->in_rot_minpredwnscale_num;
 	min_ratio_denom = psde->pipe_sblk->in_rot_minpredwnscale_denom;
 
-	if (pd_x && !(psde->features & BIT(SDE_SSPP_PREDOWNSCALE))) {
+	if (pd_x && !_sde_plane_has_pre_downscale(psde)) {
 		SDE_ERROR_PLANE(psde,
 			"hw does not support pre-downscale X: 0x%x\n",
 			psde->features);
@@ -2506,7 +2511,7 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 
 	max_upscale = psde->pipe_sblk->maxupscale;
 	max_linewidth = psde->pipe_sblk->maxlinewidth;
-	if (psde->features & BIT(SDE_SSPP_PREDOWNSCALE))
+	if (_sde_plane_has_pre_downscale(psde))
 		pre_down_en = _sde_plane_is_pre_downscale_enabled(
 				&pstate->pre_down);
 
@@ -3906,7 +3911,7 @@ static inline void _sde_plane_set_scaler_v2(struct sde_plane *psde,
 	/* populate from user space */
 	sde_set_scaler_v2(cfg, &scale_v2);
 
-	if (psde->features & BIT(SDE_SSPP_PREDOWNSCALE)) {
+	if (_sde_plane_has_pre_downscale(psde)) {
 		pd_cfg->pre_downscale_x_0 = scale_v2.pre_downscale_x_0;
 		pd_cfg->pre_downscale_x_1 = scale_v2.pre_downscale_x_1;
 		pd_cfg->pre_downscale_y_0 = scale_v2.pre_downscale_y_0;
