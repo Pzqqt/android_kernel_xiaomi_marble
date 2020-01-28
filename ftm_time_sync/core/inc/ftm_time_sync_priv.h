@@ -28,6 +28,7 @@
 #include <qdf_list.h>
 #include <qdf_types.h>
 #include "ftm_time_sync_objmgr.h"
+#include "wlan_ftm_time_sync_public_struct.h"
 
 #define WLAN_FTM_TIME_SYNC_PAIR_MAX 32
 
@@ -58,10 +59,14 @@ struct ftm_timesync_priv {
  * struct ftm_timesync_vdev_priv - Private object to be stored in vdev
  * @vdev: pointer to vdev object
  * @ftm_ts_priv: time sync private struct
+ * @rx_ops: rx operations for ftm time sync
+ * @tx_ops: tx operations for ftm time sync
  */
 struct ftm_timesync_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
 	struct ftm_timesync_priv ftm_ts_priv;
+	struct wlan_ftm_timesync_rx_ops rx_ops;
+	struct wlan_ftm_timesync_tx_ops tx_ops;
 };
 
 #endif /* End  of _FTM_TIME_SYNC_PRIV_STRUCT_H_ */
