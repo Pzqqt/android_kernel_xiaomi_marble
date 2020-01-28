@@ -13128,10 +13128,10 @@ typedef struct {
     A_UINT32 vendor_roam_score_algorithm_id;
     /*
      * During CU and low rssi based roam triggers, consider AP as
-     * roam candidate only if its roam score is better than
-     * candidate_min_roam_score.
+     * roam candidate only if its roam score is better than connected AP score
+     * by at least candidate_min_roam_score_delta.
      */
-    A_UINT32 candidate_min_roam_score;
+    A_UINT32 candidate_min_roam_score_delta;
 } wmi_roam_cnd_scoring_param;
 
 typedef struct {
