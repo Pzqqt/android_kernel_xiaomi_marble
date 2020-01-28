@@ -1719,6 +1719,44 @@ static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
 }
 #endif
 
+/**
+ * target_if_spectral_get_adjusted_timestamp() - Adjust Spectral time
+ * stamp to account for reset in time stamp due to target reset
+ * @twar: Spectral time stamp WAR related information
+ * @raw_timestamp: Spectral time stamp reported by target
+ * @reset_delay: Reset delay at target
+ * @smode: Spectral scan mode
+ *
+ * Correct time stamp to account for reset in time stamp due to target reset
+ *
+ * Return: Adjusted time stamp
+ */
+static uint32_t
+target_if_spectral_get_adjusted_timestamp(struct spectral_timestamp_war *twar,
+					  uint32_t raw_timestamp,
+					  uint32_t reset_delay,
+					  enum spectral_scan_mode smode) {
+	qdf_assert_always(smode < SPECTRAL_SCAN_MODE_MAX);
+
+	if (reset_delay) {
+		enum spectral_scan_mode m =
+					SPECTRAL_SCAN_MODE_NORMAL;
+
+		/* Adjust the offset for all the Spectral modes.
+		 * Target will be sending the non zero reset delay for
+		 * the first Spectral report after reset. This delay is
+		 * common for all the Spectral modes.
+		 */
+		for (; m < SPECTRAL_SCAN_MODE_MAX; m++)
+			twar->timestamp_war_offset[m] += (reset_delay +
+					twar->last_fft_timestamp[m]);
+		twar->target_reset_count++;
+	}
+	twar->last_fft_timestamp[smode] = raw_timestamp;
+
+	return raw_timestamp + twar->timestamp_war_offset[smode];
+}
+
 int
 target_if_consume_spectral_report_gen3(
 	 struct target_if_spectral *spectral,
@@ -1749,7 +1787,6 @@ target_if_consume_spectral_report_gen3(
 	 *          1. Order of FFT bin values
 	 *
 	 */
-	uint64_t tsf64 = 0;
 	struct target_if_samp_msg_params params = {0};
 	struct spectral_search_fft_info_gen3 search_fft_info;
 	struct spectral_search_fft_info_gen3 *p_sfft = &search_fft_info;
@@ -1847,33 +1884,19 @@ target_if_consume_spectral_report_gen3(
 			fft_hdr_length - spectral->rparams.fft_report_hdr_len,
 			spectral->params[params.smode].ss_rpt_mode,
 			&spectral->len_adj_swar);
-		params.last_raw_timestamp =
-				spectral->last_fft_timestamp[params.smode];
-		params.reset_delay = 0;
 
-		if (report->reset_delay) {
-			enum spectral_scan_mode mode =
-						SPECTRAL_SCAN_MODE_NORMAL;
-
-			/* Adjust the offset for all the Spectral modes.
-			 * Target will be sending the non zero reset delay for
-			 * the first Spectral report after reset. This delay is
-			 * common for all the Spectral modes.
-			 */
-			for (; mode < SPECTRAL_SCAN_MODE_MAX; mode++)
-				spectral->timestamp_war_offset[mode] +=
-					(report->reset_delay +
-					 spectral->last_fft_timestamp[mode]);
-			params.reset_delay = report->reset_delay;
-			spectral->target_reset_count++;
-		}
-		params.target_reset_count = spectral->target_reset_count;
-		params.timestamp_war_offset =
-				   spectral->timestamp_war_offset[params.smode];
-		tsf64 = p_sfft->timestamp;
-		params.raw_timestamp = tsf64;
-		spectral->last_fft_timestamp[params.smode] = p_sfft->timestamp;
-		tsf64 += spectral->timestamp_war_offset[params.smode];
+		params.last_raw_timestamp = spectral->timestamp_war.
+				last_fft_timestamp[params.smode];
+		params.reset_delay = report->reset_delay;
+		params.raw_timestamp = p_sfft->timestamp;
+		params.tstamp = target_if_spectral_get_adjusted_timestamp(
+					&spectral->timestamp_war,
+					p_sfft->timestamp, report->reset_delay,
+					params.smode);
+		params.timestamp_war_offset = spectral->timestamp_war.
+				timestamp_war_offset[params.smode];
+		params.target_reset_count = spectral->timestamp_war.
+				target_reset_count;
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
 		if (spectral->ch_width == CH_WIDTH_160MHZ) {
@@ -1930,7 +1953,6 @@ target_if_consume_spectral_report_gen3(
 			report->noisefloor[chn_idx_lowest_enabled];
 		params.datalen           = (fft_hdr_length * 4);
 		params.pwr_count         = fft_bin_count;
-		params.tstamp            = (tsf64 & SPECTRAL_TSMASK);
 
 		target_if_spectral_verify_ts(spectral, report->data,
 					     params.tstamp);

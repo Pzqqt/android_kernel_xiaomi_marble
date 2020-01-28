@@ -507,6 +507,18 @@ struct spectral_report_params {
 	uint8_t fft_report_hdr_len;
 };
 
+/**
+ * struct spectral_timestamp_swar - Spectral time stamp WAR related parameters
+ * @timestamp_war_offset: Offset to be added to correct timestamp
+ * @target_reset_count: Number of times target exercised the reset routine
+ * @last_fft_timestamp: last fft report timestamp
+ */
+struct spectral_timestamp_war {
+	uint32_t timestamp_war_offset[SPECTRAL_SCAN_MODE_MAX];
+	uint64_t target_reset_count;
+	uint32_t last_fft_timestamp[SPECTRAL_SCAN_MODE_MAX];
+};
+
 #if ATH_PERF_PWR_OFFLOAD
 /**
  * enum target_if_spectral_info - Enumerations for specifying which spectral
@@ -890,14 +902,12 @@ struct spectral_param_properties {
  * @use_nl_bcast: Whether to use Netlink broadcast/unicast
  * @send_phy_data: Send data to the application layer for a particular msg type
  * @len_adj_swar: Spectral fft bin length adjustment SWAR related info
- * @last_fft_timestamp: last fft report timestamp
- * @timestamp_war_offset: Offset to be added to correct timestamp
+ * @timestamp_war: Spectral time stamp WAR related info
  * @dbr_ring_debug: Whether Spectral DBR ring debug is enabled
  * @dbr_buff_debug: Whether Spectral DBR buffer debug is enabled
  * @direct_dma_support: Whether Direct-DMA is supported on the current radio
  * @prev_tstamp: Timestamp of the previously received sample, which has to be
  * compared with the current tstamp to check descrepancy
- * @target_reset_count: Number of times target excercised the reset routine
  * @rparams: Parameters related to Spectral report structure
  */
 struct target_if_spectral {
@@ -1006,17 +1016,14 @@ struct target_if_spectral {
 	int (*send_phy_data)(struct wlan_objmgr_pdev *pdev,
 			     enum spectral_msg_type smsg_type);
 	struct spectral_fft_bin_len_adj_swar len_adj_swar;
+	struct spectral_timestamp_war timestamp_war;
 	enum spectral_160mhz_report_delivery_state state_160mhz_delivery;
-	void *spectral_report_cache;
-	uint32_t last_fft_timestamp[SPECTRAL_SCAN_MODE_MAX];
-	uint32_t timestamp_war_offset[SPECTRAL_SCAN_MODE_MAX];
 	uint16_t fft_size_min;
 	uint16_t fft_size_max;
 	bool dbr_ring_debug;
 	bool dbr_buff_debug;
 	bool direct_dma_support;
 	uint32_t prev_tstamp;
-	uint32_t target_reset_count;
 	struct spectral_report_params rparams;
 };
 

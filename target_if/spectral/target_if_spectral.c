@@ -2095,6 +2095,28 @@ target_if_spectral_report_params_init(
 }
 
 /**
+ * target_if_spectral_timestamp_war_init() - Initialize Spectral timestamp WAR
+ * related info
+ * @twar: Pointer to Spectral timstamp WAR related info
+ *
+ * Function to Initialize parameters related to Spectral timestamp WAR
+ *
+ * Return: void
+ */
+static void
+target_if_spectral_timestamp_war_init(struct spectral_timestamp_war *twar)
+{
+	enum spectral_scan_mode smode;
+
+	smode = SPECTRAL_SCAN_MODE_NORMAL;
+	for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++) {
+		twar->last_fft_timestamp[smode] = 0;
+		twar->timestamp_war_offset[smode] = 0;
+	}
+	twar->target_reset_count = 0;
+}
+
+/**
  * target_if_pdev_spectral_init() - Initialize target_if Spectral
  * functionality for the given pdev
  * @pdev: Pointer to pdev object
@@ -2219,12 +2241,10 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		return NULL;
 
 	target_if_init_spectral_ops(spectral);
+	target_if_spectral_timestamp_war_init(&spectral->timestamp_war);
 
 	/* Spectral mode specific init */
-	spectral->target_reset_count = 0;
 	for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++) {
-		spectral->last_fft_timestamp[smode] = 0;
-		spectral->timestamp_war_offset[smode] = 0;
 		spectral->params_valid[smode] = false;
 		qdf_spinlock_create(&spectral->param_info[smode].osps_lock);
 		spectral->param_info[smode].osps_cache.osc_is_valid = 0;
@@ -3269,8 +3289,8 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 	if (!p_sops->is_spectral_active(spectral, smode)) {
 		p_sops->configure_spectral(spectral, spectral_params, smode);
 		p_sops->start_spectral_scan(spectral, smode, err);
-		spectral->timestamp_war_offset[smode] = 0;
-		spectral->last_fft_timestamp[smode] = 0;
+		spectral->timestamp_war.timestamp_war_offset[smode] = 0;
+		spectral->timestamp_war.last_fft_timestamp[smode] = 0;
 	}
 
 	/* get current spectral configuration */
