@@ -25,13 +25,15 @@
 #include "dp_internal.h"
 
 #ifdef RXDMA_OPTIMIZATION
-#ifdef NO_RX_PKT_HDR_TLV
-#define RX_BUFFER_ALIGNMENT     0
-#else
-#define RX_BUFFER_ALIGNMENT     128
-#endif /* NO_RX_PKT_HDR_TLV */
+#ifndef RX_DATA_BUFFER_ALIGNMENT
+#define RX_DATA_BUFFER_ALIGNMENT        128
+#endif
+#ifndef RX_MONITOR_BUFFER_ALIGNMENT
+#define RX_MONITOR_BUFFER_ALIGNMENT     128
+#endif
 #else /* RXDMA_OPTIMIZATION */
-#define RX_BUFFER_ALIGNMENT     4
+#define RX_DATA_BUFFER_ALIGNMENT        4
+#define RX_MONITOR_BUFFER_ALIGNMENT     4
 #endif /* RXDMA_OPTIMIZATION */
 
 #ifdef QCA_HOST2FW_RXBUF_RING
@@ -613,14 +615,14 @@ void dp_2k_jump_handle(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 /*for qcn9000 emulation the pcie is complete phy and no address restrictions*/
 #if !defined(BUILD_X86) || defined(QCA_WIFI_QCN9000)
 static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
-		qdf_dma_addr_t *paddr, struct dp_pdev *pdev)
+		qdf_dma_addr_t *paddr, struct rx_desc_pool *rx_desc_pool)
 {
 	return QDF_STATUS_SUCCESS;
 }
 #else
 #define MAX_RETRY 100
 static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
-		qdf_dma_addr_t *paddr, struct dp_pdev *pdev)
+		qdf_dma_addr_t *paddr, struct rx_desc_pool *rx_desc_pool)
 {
 	uint32_t nbuf_retry = 0;
 	int32_t ret;
@@ -651,10 +653,10 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 			}
 
 			*rx_netbuf = qdf_nbuf_alloc(dp_soc->osdev,
-							RX_BUFFER_SIZE,
-							RX_BUFFER_RESERVATION,
-							RX_BUFFER_ALIGNMENT,
-							FALSE);
+						    rx_desc_pool->buf_size,
+						    RX_BUFFER_RESERVATION,
+						    rx_desc_pool->buf_alignment,
+						    FALSE);
 
 			if (qdf_unlikely(!(*rx_netbuf)))
 				return QDF_STATUS_E_FAILURE;

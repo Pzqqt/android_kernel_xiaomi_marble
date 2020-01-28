@@ -292,6 +292,8 @@ enum dp_cpu_ring_map_types {
  * @freelist: pointer to free RX descriptor link list
  * @lock: Protection for the RX descriptor pool
  * @owner: owner for nbuf
+ * @buf_size: Buffer size
+ * @buf_alignment: Buffer alignment
  */
 struct rx_desc_pool {
 	uint32_t pool_size;
@@ -304,6 +306,8 @@ struct rx_desc_pool {
 	union dp_rx_desc_list_elem_t *freelist;
 	qdf_spinlock_t lock;
 	uint8_t owner;
+	uint16_t buf_size;
+	uint8_t buf_alignment;
 };
 
 /**

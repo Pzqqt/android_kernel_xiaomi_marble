@@ -513,8 +513,7 @@ void dp_rx_wbm_err_handle_bar(struct dp_soc *soc,
 	 */
 
 	rx_tlv_hdr = qdf_nbuf_data(nbuf);
-	bar = (struct ieee80211_frame_bar *)(rx_tlv_hdr +
-					     sizeof(struct rx_pkt_tlvs));
+	bar = (struct ieee80211_frame_bar *)(rx_tlv_hdr + SIZE_OF_DATA_RX_TLV);
 
 	type = bar->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	subtype = bar->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
@@ -677,7 +676,7 @@ dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
 static inline
 bool dp_rx_null_q_check_pkt_len_exception(struct dp_soc *soc, uint32_t pkt_len)
 {
-	if (qdf_unlikely(pkt_len > RX_BUFFER_SIZE)) {
+	if (qdf_unlikely(pkt_len > RX_DATA_BUFFER_SIZE)) {
 		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_pkt_len,
 				 1, pkt_len);
 		return true;
@@ -762,8 +761,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			goto drop_nbuf;
 
 		/* Set length in nbuf */
-		qdf_nbuf_set_pktlen(nbuf,
-				    qdf_min(pkt_len, (uint32_t)RX_BUFFER_SIZE));
+		qdf_nbuf_set_pktlen(
+			nbuf, qdf_min(pkt_len, (uint32_t)RX_DATA_BUFFER_SIZE));
 		qdf_assert_always(nbuf->data == rx_tlv_hdr);
 	}
 

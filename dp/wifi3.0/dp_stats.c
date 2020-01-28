@@ -5682,8 +5682,6 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("Replenished:");
 	DP_PRINT_STATS("	Packets = %d",
 		       pdev->stats.replenish.pkts.num);
-	DP_PRINT_STATS("	Bytes = %llu",
-		       pdev->stats.replenish.pkts.bytes);
 	DP_PRINT_STATS("	Buffers Added To Freelist = %d",
 		       pdev->stats.buf_freelist);
 	DP_PRINT_STATS("	Low threshold intr = %d",

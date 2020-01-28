@@ -1420,7 +1420,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 
 				rx_tlv = hal_rx_status_get_next_tlv(rx_tlv);
 
-				if ((rx_tlv - rx_tlv_start) >= RX_BUFFER_SIZE)
+				if ((rx_tlv - rx_tlv_start) >=
+					RX_DATA_BUFFER_SIZE)
 					break;
 
 			} while ((tlv_status == HAL_TLV_STATUS_PPDU_NOT_DONE) ||
@@ -1599,7 +1600,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 				hal_srng_src_get_next(hal_soc, mon_status_srng);
 				continue;
 			}
-			qdf_nbuf_set_pktlen(status_nbuf, RX_BUFFER_SIZE);
+			qdf_nbuf_set_pktlen(status_nbuf, RX_DATA_BUFFER_SIZE);
 
 			qdf_nbuf_unmap_single(soc->osdev, status_nbuf,
 				QDF_DMA_FROM_DEVICE);
@@ -1933,6 +1934,9 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 				       rx_desc_pool);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
+
+	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
+	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
 
 	dp_debug("Mon RX Status Buffers Replenish ring_id=%d", ring_id);
 

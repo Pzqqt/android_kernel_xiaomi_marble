@@ -424,7 +424,7 @@ insert_fail:
 static QDF_STATUS dp_rx_defrag_tkip_decap(qdf_nbuf_t msdu, uint16_t hdrlen)
 {
 	uint8_t *ivp, *orig_hdr;
-	int rx_desc_len = sizeof(struct rx_pkt_tlvs);
+	int rx_desc_len = SIZE_OF_DATA_RX_TLV;
 
 	/* start of 802.11 header info */
 	orig_hdr = (uint8_t *)(qdf_nbuf_data(msdu) + rx_desc_len);
@@ -454,7 +454,7 @@ static QDF_STATUS dp_rx_defrag_tkip_decap(qdf_nbuf_t msdu, uint16_t hdrlen)
 static QDF_STATUS dp_rx_defrag_ccmp_demic(qdf_nbuf_t nbuf, uint16_t hdrlen)
 {
 	uint8_t *ivp, *orig_hdr;
-	int rx_desc_len = sizeof(struct rx_pkt_tlvs);
+	int rx_desc_len = SIZE_OF_DATA_RX_TLV;
 
 	/* start of the 802.11 header */
 	orig_hdr = (uint8_t *)(qdf_nbuf_data(nbuf) + rx_desc_len);
@@ -481,7 +481,7 @@ static QDF_STATUS dp_rx_defrag_ccmp_demic(qdf_nbuf_t nbuf, uint16_t hdrlen)
 static QDF_STATUS dp_rx_defrag_ccmp_decap(qdf_nbuf_t nbuf, uint16_t hdrlen)
 {
 	uint8_t *ivp, *origHdr;
-	int rx_desc_len = sizeof(struct rx_pkt_tlvs);
+	int rx_desc_len = SIZE_OF_DATA_RX_TLV;
 
 	origHdr = (uint8_t *) (qdf_nbuf_data(nbuf) + rx_desc_len);
 	ivp = origHdr + hdrlen;
@@ -506,7 +506,7 @@ static QDF_STATUS dp_rx_defrag_ccmp_decap(qdf_nbuf_t nbuf, uint16_t hdrlen)
 static QDF_STATUS dp_rx_defrag_wep_decap(qdf_nbuf_t msdu, uint16_t hdrlen)
 {
 	uint8_t *origHdr;
-	int rx_desc_len = sizeof(struct rx_pkt_tlvs);
+	int rx_desc_len = SIZE_OF_DATA_RX_TLV;
 
 	origHdr = (uint8_t *) (qdf_nbuf_data(msdu) + rx_desc_len);
 	qdf_mem_move(origHdr + dp_f_wep.ic_header, origHdr, hdrlen);
@@ -639,7 +639,7 @@ static QDF_STATUS dp_rx_defrag_mic(const uint8_t *key, qdf_nbuf_t wbuf,
 	uint32_t l, r;
 	const uint8_t *data;
 	uint32_t space;
-	int rx_desc_len = sizeof(struct rx_pkt_tlvs);
+	int rx_desc_len = SIZE_OF_DATA_RX_TLV;
 
 	dp_rx_defrag_michdr((struct ieee80211_frame *)(qdf_nbuf_data(wbuf)
 		+ rx_desc_len), hdr);
@@ -871,7 +871,7 @@ static void dp_rx_defrag_err(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 {
 	struct ol_if_ops *tops = NULL;
 	struct dp_pdev *pdev = vdev->pdev;
-	int rx_desc_len = sizeof(struct rx_pkt_tlvs);
+	int rx_desc_len = SIZE_OF_DATA_RX_TLV;
 	uint8_t *orig_hdr;
 	struct ieee80211_frame *wh;
 	struct cdp_rx_mic_err_info mic_failure_info;
@@ -1031,6 +1031,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	struct dp_rx_reorder_array_elem *rx_reorder_array_elem =
 						peer->rx_tid[tid].array;
 	qdf_nbuf_t nbuf_head;
+	struct rx_desc_pool *rx_desc_pool = NULL;
 
 	nbuf_head = dp_ipa_handle_rx_reo_reinject(soc, head);
 	if (qdf_unlikely(!nbuf_head)) {
@@ -1112,8 +1113,9 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	dp_ipa_handle_rx_buf_smmu_mapping(soc, head, true);
 
 	paddr = qdf_nbuf_get_frag_paddr(head, 0);
+	rx_desc_pool = &soc->rx_desc_buf[pdev->lmac_id];
 
-	ret = check_x86_paddr(soc, &head, &paddr, pdev);
+	ret = check_x86_paddr(soc, &head, &paddr, rx_desc_pool);
 
 	if (ret == QDF_STATUS_E_FAILURE) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,

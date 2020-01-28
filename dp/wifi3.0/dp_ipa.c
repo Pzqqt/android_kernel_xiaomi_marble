@@ -1831,16 +1831,16 @@ static qdf_nbuf_t dp_ipa_frag_nbuf_linearize(struct dp_soc *soc,
 	bool is_nbuf_head = true;
 	uint32_t copy_len = 0;
 
-	dst_nbuf = qdf_nbuf_alloc(soc->osdev, RX_BUFFER_SIZE,
-				  RX_BUFFER_RESERVATION, RX_BUFFER_ALIGNMENT,
-				  FALSE);
+	dst_nbuf = qdf_nbuf_alloc(soc->osdev, RX_DATA_BUFFER_SIZE,
+				  RX_BUFFER_RESERVATION,
+				  RX_DATA_BUFFER_ALIGNMENT, FALSE);
 
 	if (!dst_nbuf) {
 		dp_err_rl("nbuf allocate fail");
 		return NULL;
 	}
 
-	if ((nbuf_len + L3_HEADER_PADDING) > RX_BUFFER_SIZE) {
+	if ((nbuf_len + L3_HEADER_PADDING) > RX_DATA_BUFFER_SIZE) {
 		qdf_nbuf_free(dst_nbuf);
 		dp_err_rl("nbuf is jumbo data");
 		return NULL;

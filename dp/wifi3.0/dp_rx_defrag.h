@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,7 +69,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t  ring_desc,
 static inline
 struct ieee80211_frame *dp_rx_frag_get_mac_hdr(uint8_t *rx_desc_info)
 {
-	int rx_desc_len = hal_rx_get_desc_len();
+	int rx_desc_len = SIZE_OF_DATA_RX_TLV;
 	return (struct ieee80211_frame *)(rx_desc_info + rx_desc_len);
 }
 

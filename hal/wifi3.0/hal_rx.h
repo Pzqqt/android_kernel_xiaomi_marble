@@ -30,14 +30,13 @@
 	HAL_RX_MASk(block, field)) >> \
 	HAL_RX_LSB(block, field))
 
-#ifdef NO_RX_PKT_HDR_TLV
-/* RX_BUFFER_SIZE = 1536 data bytes + 256 RX TLV bytes. We are avoiding
- * 128 bytes of RX_PKT_HEADER_TLV.
- */
-#define RX_BUFFER_SIZE			1792
-#else
-/* RX_BUFFER_SIZE = 1536 data bytes + 384 RX TLV bytes + some spare bytes */
-#define RX_BUFFER_SIZE			2048
+/* BUFFER_SIZE = 1536 data bytes + 384 RX TLV bytes + some spare bytes */
+#ifndef RX_DATA_BUFFER_SIZE
+#define RX_DATA_BUFFER_SIZE     2048
+#endif
+
+#ifndef RX_MONITOR_BUFFER_SIZE
+#define RX_MONITOR_BUFFER_SIZE  2048
 #endif
 
 /* HAL_RX_NON_QOS_TID = NON_QOS_TID which is 16 */
@@ -577,6 +576,9 @@ struct rx_pkt_hdr_tlv {
 
 #define RXDMA_OPTIMIZATION
 
+/* rx_pkt_tlvs structure should be used to process Data buffers, monitor status
+ * buffers, monitor destination buffers and monitor descriptor buffers.
+ */
 #ifdef RXDMA_OPTIMIZATION
 /*
  * The RX_PADDING_BYTES is required so that the TLV's don't
@@ -611,7 +613,33 @@ struct rx_pkt_tlvs {
 };
 #endif /* RXDMA_OPTIMIZATION */
 
-#define RX_PKT_TLVS_LEN		(sizeof(struct rx_pkt_tlvs))
+/* rx_mon_pkt_tlvs structure should be used to process monitor data buffers */
+#ifdef RXDMA_OPTIMIZATION
+struct rx_mon_pkt_tlvs {
+	struct rx_msdu_end_tlv   msdu_end_tlv;	/*  72 bytes */
+	struct rx_attention_tlv  attn_tlv;	/*  16 bytes */
+	struct rx_msdu_start_tlv msdu_start_tlv;/*  40 bytes */
+	uint8_t rx_padding0[RX_PADDING0_BYTES];	/*   4 bytes */
+	struct rx_mpdu_start_tlv mpdu_start_tlv;/*  96 bytes */
+	struct rx_mpdu_end_tlv   mpdu_end_tlv;	/*  12 bytes */
+	uint8_t rx_padding1[RX_PADDING1_BYTES];	/*  16 bytes */
+	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;	/* 128 bytes */
+};
+#else /* RXDMA_OPTIMIZATION */
+struct rx_mon_pkt_tlvs {
+	struct rx_attention_tlv  attn_tlv;
+	struct rx_mpdu_start_tlv mpdu_start_tlv;
+	struct rx_msdu_start_tlv msdu_start_tlv;
+	struct rx_msdu_end_tlv   msdu_end_tlv;
+	struct rx_mpdu_end_tlv   mpdu_end_tlv;
+	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;
+};
+#endif
+
+#define SIZE_OF_MONITOR_TLV sizeof(struct rx_mon_pkt_tlvs)
+#define SIZE_OF_DATA_RX_TLV sizeof(struct rx_pkt_tlvs)
+
+#define RX_PKT_TLVS_LEN		SIZE_OF_DATA_RX_TLV
 
 #ifdef NO_RX_PKT_HDR_TLV
 static inline uint8_t
@@ -2826,7 +2854,7 @@ void hal_rx_defrag_save_info_from_ring_desc(void *msdu_link_desc_va,
 static inline
 uint16_t hal_rx_get_desc_len(void)
 {
-	return sizeof(struct rx_pkt_tlvs);
+	return SIZE_OF_DATA_RX_TLV;
 }
 
 /*
@@ -3086,10 +3114,13 @@ HAL_RX_DESC_GET_DECAP_FORMAT(void *hw_desc_addr) {
 static inline
 uint8_t *
 HAL_RX_DESC_GET_80211_HDR(void *hw_desc_addr) {
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "[%s][%d] decap format not raw", __func__, __LINE__);
-	QDF_ASSERT(0);
-	return 0;
+	uint8_t *rx_pkt_hdr;
+	struct rx_mon_pkt_tlvs *rx_desc =
+		(struct rx_mon_pkt_tlvs *)hw_desc_addr;
+
+	rx_pkt_hdr = &rx_desc->pkt_hdr_tlv.rx_pkt_hdr[0];
+
+	return rx_pkt_hdr;
 }
 #else
 static inline

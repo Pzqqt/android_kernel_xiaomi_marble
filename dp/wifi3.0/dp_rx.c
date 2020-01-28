@@ -123,6 +123,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	void *rxdma_ring_entry;
 	union dp_rx_desc_list_elem_t *next;
 	QDF_STATUS ret;
+	uint16_t buf_size = rx_desc_pool->buf_size;
+	uint8_t buf_alignment = rx_desc_pool->buf_alignment;
 
 	void *rxdma_srng;
 
@@ -190,9 +192,9 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 	while (count < num_req_buffers) {
 		rx_netbuf = qdf_nbuf_alloc(dp_soc->osdev,
-					RX_BUFFER_SIZE,
+					buf_size,
 					RX_BUFFER_RESERVATION,
-					RX_BUFFER_ALIGNMENT,
+					buf_alignment,
 					FALSE);
 
 		if (qdf_unlikely(!rx_netbuf)) {
@@ -217,7 +219,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		 * allocating new nbuf. We can try for 100 times.
 		 * this is a temp WAR till we fix it properly.
 		 */
-		ret = check_x86_paddr(dp_soc, &rx_netbuf, &paddr, dp_pdev);
+		ret = check_x86_paddr(dp_soc, &rx_netbuf, &paddr, rx_desc_pool);
 		if (ret == QDF_STATUS_E_FAILURE) {
 			DP_STATS_INC(dp_pdev, replenish.x86_fail, 1);
 			break;
@@ -256,8 +258,10 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	dp_verbose_debug("replenished buffers %d, rx desc added back to free list %u",
 			 count, num_desc_to_free);
 
-	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, count,
-			 (RX_BUFFER_SIZE * count));
+	/* No need to count the number of bytes received during replenish.
+	 * Therefore set replenish.pkts.bytes as 0.
+	 */
+	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, count, 0);
 
 free_descs:
 	DP_STATS_INC(dp_pdev, buf_freelist, num_desc_to_free);
@@ -1014,15 +1018,15 @@ static inline bool dp_rx_adjust_nbuf_len(qdf_nbuf_t nbuf, uint16_t *mpdu_len)
 {
 	bool last_nbuf;
 
-	if (*mpdu_len > (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN)) {
-		qdf_nbuf_set_pktlen(nbuf, RX_BUFFER_SIZE);
+	if (*mpdu_len > (RX_DATA_BUFFER_SIZE - RX_PKT_TLVS_LEN)) {
+		qdf_nbuf_set_pktlen(nbuf, RX_DATA_BUFFER_SIZE);
 		last_nbuf = false;
 	} else {
 		qdf_nbuf_set_pktlen(nbuf, (*mpdu_len + RX_PKT_TLVS_LEN));
 		last_nbuf = true;
 	}
 
-	*mpdu_len -= (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN);
+	*mpdu_len -= (RX_DATA_BUFFER_SIZE - RX_PKT_TLVS_LEN);
 
 	return last_nbuf;
 }
@@ -1901,8 +1905,8 @@ more_data:
 				 * reap this MPDU
 				 */
 				if (((msdu_desc_info.msdu_len /
-				     (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN) + 1)) >
-				     num_entries_avail) {
+				     (RX_DATA_BUFFER_SIZE - RX_PKT_TLVS_LEN) +
+				     1)) > num_entries_avail) {
 					DP_STATS_INC(
 						soc,
 						rx.msdu_scatter_wait_break,
@@ -2382,14 +2386,15 @@ dp_rx_pdev_detach(struct dp_pdev *pdev)
 
 static QDF_STATUS
 dp_pdev_nbuf_alloc_and_map(struct dp_soc *dp_soc, qdf_nbuf_t *nbuf,
-			   struct dp_pdev *dp_pdev)
+			   struct dp_pdev *dp_pdev,
+			   struct rx_desc_pool *rx_desc_pool)
 {
 	qdf_dma_addr_t paddr;
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
 
-	*nbuf = qdf_nbuf_alloc(dp_soc->osdev, RX_BUFFER_SIZE,
-			      RX_BUFFER_RESERVATION, RX_BUFFER_ALIGNMENT,
-			      FALSE);
+	*nbuf = qdf_nbuf_alloc(dp_soc->osdev, rx_desc_pool->buf_size,
+			       RX_BUFFER_RESERVATION,
+			       rx_desc_pool->buf_alignment, FALSE);
 	if (!(*nbuf)) {
 		dp_err("nbuf alloc failed");
 		DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
@@ -2407,7 +2412,7 @@ dp_pdev_nbuf_alloc_and_map(struct dp_soc *dp_soc, qdf_nbuf_t *nbuf,
 
 	paddr = qdf_nbuf_get_frag_paddr(*nbuf, 0);
 
-	ret = check_x86_paddr(dp_soc, nbuf, &paddr, dp_pdev);
+	ret = check_x86_paddr(dp_soc, nbuf, &paddr, rx_desc_pool);
 	if (ret == QDF_STATUS_E_FAILURE) {
 		qdf_nbuf_unmap_single(dp_soc->osdev, *nbuf,
 				      QDF_DMA_FROM_DEVICE);
@@ -2495,7 +2500,7 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 				break;
 			ret = dp_pdev_nbuf_alloc_and_map(dp_soc,
 							 &rx_nbuf_arr[nr_nbuf],
-							 dp_pdev);
+							 dp_pdev, rx_desc_pool);
 			if (QDF_IS_STATUS_ERROR(ret))
 				break;
 
@@ -2537,8 +2542,11 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 		QDF_BUG(0);
 		return QDF_STATUS_E_RESOURCES;
 	}
-	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, nr_nbuf,
-			 RX_BUFFER_SIZE * nr_nbuf_total);
+
+	/* No need to count the number of bytes received during replenish.
+	 * Therefore set replenish.pkts.bytes as 0.
+	 */
+	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, nr_nbuf, 0);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2588,6 +2596,9 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 			      rx_desc_pool);
 
 	rx_desc_pool->owner = DP_WBM2SW_RBM;
+	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
+	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
+
 	/* For Rx buffers, WBM release ring is SW RING 3,for all pdev's */
 
 	ret_val = dp_rx_fst_attach(soc, pdev);
@@ -2626,9 +2637,9 @@ dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev)
 			nbuf_retry_count++) {
 		/* Allocate a new skb */
 		nbuf = qdf_nbuf_alloc(soc->osdev,
-					RX_BUFFER_SIZE,
+					RX_DATA_BUFFER_SIZE,
 					RX_BUFFER_RESERVATION,
-					RX_BUFFER_ALIGNMENT,
+					RX_DATA_BUFFER_ALIGNMENT,
 					FALSE);
 
 		if (!nbuf) {
@@ -2639,7 +2650,7 @@ dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev)
 
 		buf = qdf_nbuf_data(nbuf);
 
-		memset(buf, 0, RX_BUFFER_SIZE);
+		memset(buf, 0, RX_DATA_BUFFER_SIZE);
 
 		ret = qdf_nbuf_map_single(soc->osdev, nbuf,
 				    QDF_DMA_FROM_DEVICE);

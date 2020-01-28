@@ -175,13 +175,6 @@ enum {
 };
 
 static inline
-uint32_t HAL_RX_MON_HW_RX_DESC_SIZE(void)
-{
-	/* return the HW_RX_DESC size */
-	return sizeof(struct rx_pkt_tlvs);
-}
-
-static inline
 uint8_t *HAL_RX_MON_DEST_GET_DESC(uint8_t *data)
 {
 	return data;
@@ -191,7 +184,8 @@ static inline
 uint32_t HAL_RX_DESC_GET_MPDU_LENGTH_ERR(void *hw_desc_addr)
 {
 	struct rx_attention *rx_attn;
-	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+	struct rx_mon_pkt_tlvs *rx_desc =
+		(struct rx_mon_pkt_tlvs *)hw_desc_addr;
 
 	rx_attn = &rx_desc->attn_tlv.rx_attn;
 
@@ -202,7 +196,8 @@ static inline
 uint32_t HAL_RX_DESC_GET_MPDU_FCS_ERR(void *hw_desc_addr)
 {
 	struct rx_attention *rx_attn;
-	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+	struct rx_mon_pkt_tlvs *rx_desc =
+		(struct rx_mon_pkt_tlvs *)hw_desc_addr;
 
 	rx_attn = &rx_desc->attn_tlv.rx_attn;
 
@@ -219,7 +214,8 @@ uint32_t HAL_RX_DESC_GET_MPDU_FCS_ERR(void *hw_desc_addr)
 static inline
 bool HAL_RX_HW_DESC_MPDU_VALID(void *hw_desc_addr)
 {
-	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+	struct rx_mon_pkt_tlvs *rx_desc =
+		(struct rx_mon_pkt_tlvs *)hw_desc_addr;
 	uint32_t tlv_tag;
 
 	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(
