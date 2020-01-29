@@ -4599,6 +4599,7 @@ int32_t dfs_set_precac_intermediate_chan(struct wlan_dfs *dfs, uint32_t value)
  * dfs_get_precac_intermediate_chan() - Get interCAC channel.
  * @dfs: Pointer to wlan_dfs.
  */
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 #ifdef CONFIG_CHAN_FREQ_API
 uint32_t dfs_get_precac_intermediate_chan(struct wlan_dfs *dfs)
 {
@@ -4610,6 +4611,7 @@ uint32_t dfs_get_precac_intermediate_chan(struct wlan_dfs *dfs)
 {
 	return dfs->dfs_precac_inter_chan;
 }
+#endif
 #endif
 #endif
 
